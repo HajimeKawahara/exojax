@@ -8,7 +8,7 @@ import jax.numpy as jnp
 line profile functions used in exospectral analysis.
 
 """
-
+@jit
 def Tc(a,x,crit=0.1):
     """
     Tc Function = Tepper Function w/ the inner correction: Tc(a,x)
@@ -28,6 +28,7 @@ def Tc(a,x,crit=0.1):
     g=jnp.where(jnp.abs(x)<crit,h - 2.0*a/jnp.sqrt(jnp.pi)*(1-2*x**2),gg)
     return g
 
+@jit
 def VoigtTc(nu,sigmaD,gammaL):
     """
     Voigt-Tepper C profile = Voigt profile using Tc function Vtc(nu,sigmaD,gammaL)
@@ -48,6 +49,7 @@ def VoigtTc(nu,sigmaD,gammaL):
     v=sfac*Tc(sfac*gammaL,sfac*nu)/jnp.sqrt(jnp.pi)
     return v
 
+@jit
 def FAbsVTc(nu,sigmaD,gammaL,A):
     """
     Absorption profile using Voigt-Tepper C profile (FAbsVTc)
