@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-
+from jax import jit
+from jax.lax import map
 import jax.numpy as jnp
 
 """lpf
@@ -70,4 +71,32 @@ def FAbsVTc(nu,sigmaD,gammaL,A):
     """
     tau=A*VoigtTc(nu,sigmaD,gammaL)
     f=jnp.exp(-tau)
+    return f
+
+@jit
+def MultiAbsVTc(nu,sigmaD,gammaL,A,S,hatnu):
+    """
+    Multi Absorption profile using Voigt-Tepper C profile (MultiAbsVTc)
+    f = exp(-tau)
+    tau = sum_k A*S_k*VTc(nu -hatnu_k,sigmaD,gammaL)
+
+    Parameters
+    ----------
+    nu : wavenumber
+    sigmaD : sigma parameter in Doppler profile 
+    gammaL : broadening coefficient in Lorentz profile 
+    A : amplitude
+    S : line strength
+    hatnu : line center
+
+    Returns
+    -------
+    f : MultiAbsVTc
+
+    """
+
+    g = lambda hatnu: VoigtTc(nu - hatnu,sigmaD,gammaL)
+    sigmaeach=map(g,hatnu)
+    tau=jnp.dot(S,sigmaeach)
+    f=jnp.exp(-A*tau)
     return f
