@@ -1,27 +1,34 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
+"""
+Summary
+--------
+line profile functions used in exospectral analysis.
+
+"""
+
 from jax import jit
 from jax.lax import map
 import jax.numpy as jnp
 
-"""lpf
-
-line profile functions used in exospectral analysis.
-
-"""
 @jit
 def Tc(a,x,crit=0.1):
     """
+    Summary
+    ---------
     Tc Function = Tepper Function w/ the inner correction: Tc(a,x)
 
     Parameters
     ----------
-    a : a parameter 
-    x : x parameter
+    a : float/nd array
+        parameter 
+    x : float/nd array
+        parameter
 
     Returns
     -------
-    g : Tc(a,x)
+    g : float/ndarary
+        Tc(a,x)
 
     """
     h=jnp.exp(-x*x)
@@ -32,17 +39,23 @@ def Tc(a,x,crit=0.1):
 @jit
 def VoigtTc(nu,sigmaD,gammaL):
     """
+    Summary
+    --------
     Voigt-Tepper C profile = Voigt profile using Tc function Vtc(nu,sigmaD,gammaL)
 
     Parameters
     ----------
-    nu : wavenumber
-    sigmaD : sigma parameter in Doppler profile 
-    gammaL : broadening coefficient in Lorentz profile 
+    nu : ndarray
+         wavenumber
+    sigmaD : float
+             sigma parameter in Doppler profile 
+    gammaL : float 
+             broadening coefficient in Lorentz profile 
 
     Returns
     -------
-    v : Vtc
+    v : ndarray
+        Vtc
 
     """
     
@@ -53,20 +66,27 @@ def VoigtTc(nu,sigmaD,gammaL):
 @jit
 def FAbsVTc(nu,sigmaD,gammaL,A):
     """
+    Summary
+    ---------
     Absorption profile using Voigt-Tepper C profile (FAbsVTc)
     f = exp(-tau)
     tau = A*VTc(nu,sigmaD,gammaL)
 
     Parameters
     ----------
-    nu : wavenumber
-    sigmaD : sigma parameter in Doppler profile 
-    gammaL : broadening coefficient in Lorentz profile 
-    A : amplitude
+    nu : ndarray
+         wavenumber
+    sigmaD : float
+             sigma parameter in Doppler profile 
+    gammaL : float 
+             broadening coefficient in Lorentz profile 
+    A : float 
+        amplitude
 
     Returns
     -------
-    f : FAbsVTc
+    f : ndarray
+        FAbsVTc
 
     """
     tau=A*VoigtTc(nu,sigmaD,gammaL)
@@ -76,22 +96,31 @@ def FAbsVTc(nu,sigmaD,gammaL,A):
 @jit
 def MultiAbsVTc(nu,sigmaD,gammaL,A,S,hatnu):
     """
+    Summary
+    ----------
     Multi Absorption profile using Voigt-Tepper C profile (MultiAbsVTc)
     f = exp(-tau)
     tau = sum_k A*S_k*VTc(nu -hatnu_k,sigmaD,gammaL)
 
     Parameters
     ----------
-    nu : wavenumber
-    sigmaD : sigma parameter in Doppler profile 
-    gammaL : broadening coefficient in Lorentz profile 
-    A : amplitude
-    S : line strength
-    hatnu : line center
+    nu : ndarray
+         wavenumber
+    sigmaD : float
+             sigma parameter in Doppler profile 
+    gammaL : float 
+             broadening coefficient in Lorentz profile 
+    A : float
+        amplitude
+    S : float
+        line strength
+    hatnu : ndarray
+            line center
 
     Returns
     -------
-    f : MultiAbsVTc
+    f : ndarray
+        MultiAbsVTc
 
     """
 

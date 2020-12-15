@@ -1,8 +1,9 @@
-#
-# JAX version of Markley (Markley 1995, CeMDA, 63, 101) E solver getE()
-# The original code is taken from PyAstronomy (MIT license)
-# https://github.com/sczesla/PyAstronomy
-#
+"""
+Summary
+--------
+ JAX autograd/jit compatible version of Markley (Markley 1995, CeMDA, 63, 101) E solver getE(). The original code is taken from PyAstronomy (MIT license).https://github.com/sczesla/PyAstronomy
+
+"""
 
 import jax.numpy as jnp
 from jax import grad
@@ -14,7 +15,7 @@ def _alpha(e, M):
     """
         Solve Eq. 20
     """
-    pi = np.pi
+    pi = jnp.pi
     pi2 = pi**2
     return (3. * pi2 + 1.6 * pi * (pi - jnp.abs(M)) / (1. + e)) / (pi2 - 6.)
 
@@ -87,13 +88,17 @@ def _d5(E, f, d4):
 @jit
 def getE(M, e):
     """
-    Solve Kepler's Equation for the "eccentric anomaly", E.
+    Summary
+    ----------
+    JAX autograd compatible version of the Solver of Kepler's Equation for the "eccentric anomaly", E.
+
     Parameters
     ----------
     M : float
         Mean anomaly.
     e : float
         Eccentricity
+
     Returns
     -------
     Eccentric anomaly: float
@@ -102,7 +107,7 @@ def getE(M, e):
     # For the mean anomaly, use values between
     # -pi and pi.
     flip = False
-    pi=np.pi
+    pi=jnp.pi
     Mt = M - (jnp.floor(M / (2. * pi)) * 2. * pi)
     Mt=jnp.where(M > pi,2.*pi - Mt,Mt)
     Mt=jnp.where(Mt==0.0,0.0,Mt)
