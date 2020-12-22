@@ -1,3 +1,5 @@
+<img src="https://github.com/HajimeKawahara/sot/blob/develop/documents/figures/logo.png" Titie="exojax" Width=300px>
+
 # exojax
 
 Python package for exoplanet characterization compatible to jax, numpyro.
