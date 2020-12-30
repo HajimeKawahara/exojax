@@ -108,7 +108,6 @@ if __name__=="__main__":
     Nmol=1000
     hatnufix = jnp.array((np.random.rand(Nmol)-0.5)*nur*2)
     Sfix=jnp.array(np.random.rand(Nmol))
-    print(jnp.shape(Sfix))
     Afix=jnp.array(0.03)
     nu0fix = 0.7
     numatrix=lpf.make_numatrix(nuarr,hatnufix,nu0fix)

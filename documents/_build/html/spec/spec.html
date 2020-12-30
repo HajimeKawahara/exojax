@@ -87,8 +87,13 @@
 <li class="toctree-l1 current"><a class="reference internal" href="modules.html">spec</a><ul class="current">
 <li class="toctree-l2 current"><a class="current reference internal" href="#">spec package</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="#submodules">Submodules</a></li>
-<li class="toctree-l3"><a class="reference internal" href="#module-spec.lpf">spec.lpf module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#module-spec.absorption">spec.absorption module</a><ul>
 <li class="toctree-l4"><a class="reference internal" href="#summary">Summary</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#spec-emission-module">spec.emission module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#module-spec.lpf">spec.lpf module</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#id1">Summary</a></li>
 </ul>
 </li>
 <li class="toctree-l3"><a class="reference internal" href="#module-spec">Module contents</a></li>
@@ -168,10 +173,76 @@
 <div class="section" id="submodules">
 <h2>Submodules<a class="headerlink" href="#submodules" title="Permalink to this headline">¶</a></h2>
 </div>
-<div class="section" id="module-spec.lpf">
-<span id="spec-lpf-module"></span><h2>spec.lpf module<a class="headerlink" href="#module-spec.lpf" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="module-spec.absorption">
+<span id="spec-absorption-module"></span><h2>spec.absorption module<a class="headerlink" href="#module-spec.absorption" title="Permalink to this headline">¶</a></h2>
 <div class="section" id="summary">
 <h3>Summary<a class="headerlink" href="#summary" title="Permalink to this headline">¶</a></h3>
+<p>line profile functions used in exospectral analysis.</p>
+<dl class="function">
+<dt id="spec.absorption.MultiAbsVTc">
+<code class="sig-prename descclassname">spec.absorption.</code><code class="sig-name descname">MultiAbsVTc</code><span class="sig-paren">(</span><em class="sig-param">numatrix</em>, <em class="sig-param">sigmaD</em>, <em class="sig-param">gammaL</em>, <em class="sig-param">A</em>, <em class="sig-param">S</em><span class="sig-paren">)</span><a class="headerlink" href="#spec.absorption.MultiAbsVTc" title="Permalink to this definition">¶</a></dt>
+<dd><p>Multi Absorption profile using Voigt-Tepper C profile (MultiAbsVTc)
+f = exp(-tau)
+tau = sum_k A*S_k*VTc(nu -hatnu_k,sigmaD,gammaL)</p>
+<dl class="simple">
+<dt>numatrix<span class="classifier">jnp array</span></dt><dd><p>wavenumber matrix (Nm, Nnu)</p>
+</dd>
+<dt>sigmaD<span class="classifier">float</span></dt><dd><p>sigma parameter in Doppler profile</p>
+</dd>
+<dt>gammaL<span class="classifier">float </span></dt><dd><p>broadening coefficient in Lorentz profile</p>
+</dd>
+<dt>A<span class="classifier">float</span></dt><dd><p>amplitude</p>
+</dd>
+<dt>S<span class="classifier">float</span></dt><dd><p>line strength</p>
+</dd>
+<dt>hatnu<span class="classifier">ndarray</span></dt><dd><p>line center</p>
+</dd>
+</dl>
+<dl class="simple">
+<dt>f<span class="classifier">ndarray</span></dt><dd><p>MultiAbsVTc</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="spec.absorption.MultiAbsVTc_Each">
+<code class="sig-prename descclassname">spec.absorption.</code><code class="sig-name descname">MultiAbsVTc_Each</code><span class="sig-paren">(</span><em class="sig-param">nu</em>, <em class="sig-param">sigmaD</em>, <em class="sig-param">gammaL</em>, <em class="sig-param">A</em>, <em class="sig-param">S</em>, <em class="sig-param">hatnu</em><span class="sig-paren">)</span><a class="headerlink" href="#spec.absorption.MultiAbsVTc_Each" title="Permalink to this definition">¶</a></dt>
+<dd><p>Slow version Multi Absorption profile using Voigt-Tepper C profile (MultiAbsVTc)
+f = exp(-tau)
+tau = sum_k A*S_k*VTc(nu -hatnu_k,sigmaD,gammaL)</p>
+<dl class="simple">
+<dt>nu<span class="classifier">ndarray</span></dt><dd><p>wavenumber</p>
+</dd>
+<dt>sigmaD<span class="classifier">float</span></dt><dd><p>sigma parameter in Doppler profile</p>
+</dd>
+<dt>gammaL<span class="classifier">float </span></dt><dd><p>broadening coefficient in Lorentz profile</p>
+</dd>
+<dt>A<span class="classifier">float</span></dt><dd><p>amplitude</p>
+</dd>
+<dt>S<span class="classifier">float</span></dt><dd><p>line strength</p>
+</dd>
+<dt>hatnu<span class="classifier">ndarray</span></dt><dd><p>line center</p>
+</dd>
+</dl>
+<dl class="simple">
+<dt>f<span class="classifier">ndarray</span></dt><dd><p>MultiAbsVTc</p>
+</dd>
+</dl>
+<p><code class="docutils literal notranslate"><span class="pre">`</span>
+<span class="pre">f</span> <span class="pre">=</span> <span class="pre">lambda</span> <span class="pre">nu:</span> <span class="pre">MultiAbsVTc(nu-nu0fix,sDfix,gLfix,Afix,Sfix,hatnufix)</span>
+<span class="pre">ans0=map(f,nuarr).block_until_ready()</span>
+<span class="pre">`</span></code></p>
+</dd></dl>
+
+</div>
+</div>
+<div class="section" id="spec-emission-module">
+<h2>spec.emission module<a class="headerlink" href="#spec-emission-module" title="Permalink to this headline">¶</a></h2>
+</div>
+<div class="section" id="module-spec.lpf">
+<span id="spec-lpf-module"></span><h2>spec.lpf module<a class="headerlink" href="#module-spec.lpf" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="id1">
+<h3>Summary<a class="headerlink" href="#id1" title="Permalink to this headline">¶</a></h3>
 <p>line profile functions used in exospectral analysis.</p>
 <dl class="function">
 <dt id="spec.lpf.FAbsVTc">
@@ -191,32 +262,6 @@ tau = A*VTc(nu,sigmaD,gammaL)</p>
 </dl>
 <dl class="simple">
 <dt>f<span class="classifier">ndarray</span></dt><dd><p>FAbsVTc</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="function">
-<dt id="spec.lpf.MultiAbsVTc">
-<code class="sig-prename descclassname">spec.lpf.</code><code class="sig-name descname">MultiAbsVTc</code><span class="sig-paren">(</span><em class="sig-param">nu</em>, <em class="sig-param">sigmaD</em>, <em class="sig-param">gammaL</em>, <em class="sig-param">A</em>, <em class="sig-param">S</em>, <em class="sig-param">hatnu</em><span class="sig-paren">)</span><a class="headerlink" href="#spec.lpf.MultiAbsVTc" title="Permalink to this definition">¶</a></dt>
-<dd><p>Multi Absorption profile using Voigt-Tepper C profile (MultiAbsVTc)
-f = exp(-tau)
-tau = sum_k A*S_k*VTc(nu -hatnu_k,sigmaD,gammaL)</p>
-<dl class="simple">
-<dt>nu<span class="classifier">ndarray</span></dt><dd><p>wavenumber</p>
-</dd>
-<dt>sigmaD<span class="classifier">float</span></dt><dd><p>sigma parameter in Doppler profile</p>
-</dd>
-<dt>gammaL<span class="classifier">float </span></dt><dd><p>broadening coefficient in Lorentz profile</p>
-</dd>
-<dt>A<span class="classifier">float</span></dt><dd><p>amplitude</p>
-</dd>
-<dt>S<span class="classifier">float</span></dt><dd><p>line strength</p>
-</dd>
-<dt>hatnu<span class="classifier">ndarray</span></dt><dd><p>line center</p>
-</dd>
-</dl>
-<dl class="simple">
-<dt>f<span class="classifier">ndarray</span></dt><dd><p>MultiAbsVTc</p>
 </dd>
 </dl>
 </dd></dl>
@@ -251,6 +296,24 @@ tau = sum_k A*S_k*VTc(nu -hatnu_k,sigmaD,gammaL)</p>
 </dl>
 <dl class="simple">
 <dt>v<span class="classifier">ndarray</span></dt><dd><p>Vtc</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="spec.lpf.make_numatrix">
+<code class="sig-prename descclassname">spec.lpf.</code><code class="sig-name descname">make_numatrix</code><span class="sig-paren">(</span><em class="sig-param">nu</em>, <em class="sig-param">hatnu</em>, <em class="sig-param">nu0</em><span class="sig-paren">)</span><a class="headerlink" href="#spec.lpf.make_numatrix" title="Permalink to this definition">¶</a></dt>
+<dd><p>Generate numatrix</p>
+<dl class="simple">
+<dt>nu<span class="classifier">jnp array</span></dt><dd><p>wavenumber matrix (Nnu,)</p>
+</dd>
+<dt>hatnu<span class="classifier">jnp array</span></dt><dd><p>line center wavenumber vector (Nline,), where Nm is the number of lines</p>
+</dd>
+<dt>nu0<span class="classifier">float</span></dt><dd><p>nu0</p>
+</dd>
+</dl>
+<dl class="simple">
+<dt>f<span class="classifier">jnp array or ndarray</span></dt><dd><p>numatrix (Nline,Nnu)</p>
 </dd>
 </dl>
 </dd></dl>

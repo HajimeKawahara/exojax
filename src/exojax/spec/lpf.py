@@ -14,7 +14,7 @@ import jax.numpy as jnp
 def Tc(a,x,crit=0.1):
     """
     Summary
-    ---------
+    ----------
     Tc Function = Tepper Function w/ the inner correction: Tc(a,x)
 
     Parameters
