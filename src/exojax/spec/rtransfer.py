@@ -56,11 +56,11 @@ def const_p_layer(logPtop=-2,logPbtm=2,NP=17):
 
     Returns: 
       Parr: pressure layer
-      k: k-factor, dP = P[i+1] - P[i] = k*P[i]
+      k: k-factor, P[i+1] = k*P[i]
     
     """
     dlogP=(logPbtm-logPtop)/(NP-1)
-    k=10**dlogP-1.0
+    k=10**-dlogP
     Parr=jnp.logspace(logPtop,logPbtm,NP)
     Parr=Parr[::-1]
     return Parr, k
