@@ -12,18 +12,18 @@ spec.absorption module
    :undoc-members:
    :show-inheritance:
 
-spec.emission module
---------------------
-
-.. automodule:: spec.emission
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
 spec.lpf module
 ---------------
 
 .. automodule:: spec.lpf
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+spec.rtransfer module
+---------------------
+
+.. automodule:: spec.rtransfer
    :members:
    :undoc-members:
    :show-inheritance:

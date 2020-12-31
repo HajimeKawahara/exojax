@@ -91,11 +91,11 @@
 <li class="toctree-l4"><a class="reference internal" href="#summary">Summary</a></li>
 </ul>
 </li>
-<li class="toctree-l3"><a class="reference internal" href="#spec-emission-module">spec.emission module</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#module-spec.lpf">spec.lpf module</a><ul>
 <li class="toctree-l4"><a class="reference internal" href="#id1">Summary</a></li>
 </ul>
 </li>
+<li class="toctree-l3"><a class="reference internal" href="#module-spec.rtransfer">spec.rtransfer module</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#module-spec">Module contents</a></li>
 </ul>
 </li>
@@ -236,9 +236,6 @@ tau = sum_k A*S_k*VTc(nu -hatnu_k,sigmaD,gammaL)</p>
 
 </div>
 </div>
-<div class="section" id="spec-emission-module">
-<h2>spec.emission module<a class="headerlink" href="#spec-emission-module" title="Permalink to this headline">¶</a></h2>
-</div>
 <div class="section" id="module-spec.lpf">
 <span id="spec-lpf-module"></span><h2>spec.lpf module<a class="headerlink" href="#module-spec.lpf" title="Permalink to this headline">¶</a></h2>
 <div class="section" id="id1">
@@ -271,13 +268,17 @@ tau = A*VTc(nu,sigmaD,gammaL)</p>
 <code class="sig-prename descclassname">spec.lpf.</code><code class="sig-name descname">Tc</code><span class="sig-paren">(</span><em class="sig-param">a</em>, <em class="sig-param">x</em>, <em class="sig-param">crit=0.1</em><span class="sig-paren">)</span><a class="headerlink" href="#spec.lpf.Tc" title="Permalink to this definition">¶</a></dt>
 <dd><p>Tc Function = Tepper Function w/ the inner correction: Tc(a,x)</p>
 <dl class="simple">
-<dt>a<span class="classifier">float/nd array</span></dt><dd><p>parameter</p>
+<dt>Args:</dt><dd><dl class="simple">
+<dt>a: float/nd array</dt><dd><p>parameter</p>
 </dd>
-<dt>x<span class="classifier">float/nd array</span></dt><dd><p>parameter</p>
+<dt>x: float/nd array</dt><dd><p>parameter</p>
 </dd>
 </dl>
-<dl class="simple">
-<dt>g<span class="classifier">float/ndarary</span></dt><dd><p>Tc(a,x)</p>
+</dd>
+<dt>Returns:</dt><dd><dl class="simple">
+<dt>g: float/ndarary</dt><dd><p>Tc(a,x)</p>
+</dd>
+</dl>
 </dd>
 </dl>
 </dd></dl>
@@ -287,15 +288,19 @@ tau = A*VTc(nu,sigmaD,gammaL)</p>
 <code class="sig-prename descclassname">spec.lpf.</code><code class="sig-name descname">VoigtTc</code><span class="sig-paren">(</span><em class="sig-param">nu</em>, <em class="sig-param">sigmaD</em>, <em class="sig-param">gammaL</em><span class="sig-paren">)</span><a class="headerlink" href="#spec.lpf.VoigtTc" title="Permalink to this definition">¶</a></dt>
 <dd><p>Voigt-Tepper C profile = Voigt profile using Tc function Vtc(nu,sigmaD,gammaL)</p>
 <dl class="simple">
-<dt>nu<span class="classifier">ndarray</span></dt><dd><p>wavenumber</p>
+<dt>Args:</dt><dd><dl class="simple">
+<dt>nu: ndarray</dt><dd><p>wavenumber</p>
 </dd>
-<dt>sigmaD<span class="classifier">float</span></dt><dd><p>sigma parameter in Doppler profile</p>
+<dt>sigmaD: float</dt><dd><p>sigma parameter in Doppler profile</p>
 </dd>
-<dt>gammaL<span class="classifier">float </span></dt><dd><p>broadening coefficient in Lorentz profile</p>
+<dt>gammaL: float </dt><dd><p>broadening coefficient in Lorentz profile</p>
 </dd>
 </dl>
-<dl class="simple">
-<dt>v<span class="classifier">ndarray</span></dt><dd><p>Vtc</p>
+</dd>
+<dt>Returns:</dt><dd><dl class="simple">
+<dt>v: ndarray</dt><dd><p>Vtc</p>
+</dd>
+</dl>
 </dd>
 </dl>
 </dd></dl>
@@ -305,20 +310,104 @@ tau = A*VTc(nu,sigmaD,gammaL)</p>
 <code class="sig-prename descclassname">spec.lpf.</code><code class="sig-name descname">make_numatrix</code><span class="sig-paren">(</span><em class="sig-param">nu</em>, <em class="sig-param">hatnu</em>, <em class="sig-param">nu0</em><span class="sig-paren">)</span><a class="headerlink" href="#spec.lpf.make_numatrix" title="Permalink to this definition">¶</a></dt>
 <dd><p>Generate numatrix</p>
 <dl class="simple">
-<dt>nu<span class="classifier">jnp array</span></dt><dd><p>wavenumber matrix (Nnu,)</p>
+<dt>Args:</dt><dd><dl class="simple">
+<dt>nu: jnp array</dt><dd><p>wavenumber matrix (Nnu,)</p>
 </dd>
-<dt>hatnu<span class="classifier">jnp array</span></dt><dd><p>line center wavenumber vector (Nline,), where Nm is the number of lines</p>
+<dt>hatnu: jnp array</dt><dd><p>line center wavenumber vector (Nline,), where Nm is the number of lines</p>
 </dd>
-<dt>nu0<span class="classifier">float</span></dt><dd><p>nu0</p>
+<dt>nu0: float</dt><dd><p>nu0</p>
 </dd>
 </dl>
-<dl class="simple">
-<dt>f<span class="classifier">jnp array or ndarray</span></dt><dd><p>numatrix (Nline,Nnu)</p>
+</dd>
+<dt>Returns:</dt><dd><dl class="simple">
+<dt>f: jnp array or ndarray</dt><dd><p>numatrix (Nline,Nnu)</p>
+</dd>
+</dl>
 </dd>
 </dl>
 </dd></dl>
 
 </div>
+</div>
+<div class="section" id="module-spec.rtransfer">
+<span id="spec-rtransfer-module"></span><h2>spec.rtransfer module<a class="headerlink" href="#module-spec.rtransfer" title="Permalink to this headline">¶</a></h2>
+<p>emission profile functions used in exospectral analysis.</p>
+<dl class="function">
+<dt id="spec.rtransfer.RT1">
+<code class="sig-prename descclassname">spec.rtransfer.</code><code class="sig-name descname">RT1</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#spec.rtransfer.RT1" title="Permalink to this definition">¶</a></dt>
+<dd><p>Multi Emission profile using Voigt-Tepper C profile (MultiAbsVTc)
+sigma = sum_l S_l*VTc(nu -hatnu_k,sigmaD,gammaL)</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="spec.rtransfer.calc_dtau">
+<code class="sig-prename descclassname">spec.rtransfer.</code><code class="sig-name descname">calc_dtau</code><span class="sig-paren">(</span><em class="sig-param">dP</em>, <em class="sig-param">cs</em>, <em class="sig-param">X</em>, <em class="sig-param">m</em>, <em class="sig-param">g</em><span class="sig-paren">)</span><a class="headerlink" href="#spec.rtransfer.calc_dtau" title="Permalink to this definition">¶</a></dt>
+<dd><p>None</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="spec.rtransfer.calc_tau">
+<code class="sig-prename descclassname">spec.rtransfer.</code><code class="sig-name descname">calc_tau</code><span class="sig-paren">(</span><em class="sig-param">dtau</em><span class="sig-paren">)</span><a class="headerlink" href="#spec.rtransfer.calc_tau" title="Permalink to this definition">¶</a></dt>
+<dd><p>None</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="spec.rtransfer.const_p_layer">
+<code class="sig-prename descclassname">spec.rtransfer.</code><code class="sig-name descname">const_p_layer</code><span class="sig-paren">(</span><em class="sig-param">logPtop=-2.0</em>, <em class="sig-param">logPbtm=2.0</em>, <em class="sig-param">NP=17</em><span class="sig-paren">)</span><a class="headerlink" href="#spec.rtransfer.const_p_layer" title="Permalink to this definition">¶</a></dt>
+<dd><p>constructing the pressure layer</p>
+<dl class="simple">
+<dt>Args: </dt><dd><dl class="simple">
+<dt>logPtop: float</dt><dd><p>log10(P[bar]) at the top layer</p>
+</dd>
+<dt>logPbtm: float</dt><dd><p>log10(P[bar]) at the bottom layer</p>
+</dd>
+<dt>NP: int</dt><dd><p>the number of the layers</p>
+</dd>
+</dl>
+</dd>
+</dl>
+<dl class="simple">
+<dt>Returns: </dt><dd><dl class="simple">
+<dt>Parr: jnp array</dt><dd><p>pressure layer</p>
+</dd>
+<dt>k: float</dt><dd><p>k-factor, P[i+1] = k*P[i]</p>
+</dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="spec.rtransfer.cross">
+<code class="sig-prename descclassname">spec.rtransfer.</code><code class="sig-name descname">cross</code><span class="sig-paren">(</span><em class="sig-param">numatrix</em>, <em class="sig-param">sigmaD</em>, <em class="sig-param">gammaL</em>, <em class="sig-param">A</em>, <em class="sig-param">S</em><span class="sig-paren">)</span><a class="headerlink" href="#spec.rtransfer.cross" title="Permalink to this definition">¶</a></dt>
+<dd><p>None</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="spec.rtransfer.nB">
+<code class="sig-prename descclassname">spec.rtransfer.</code><code class="sig-name descname">nB</code><span class="sig-paren">(</span><em class="sig-param">T</em>, <em class="sig-param">numic</em><span class="sig-paren">)</span><a class="headerlink" href="#spec.rtransfer.nB" title="Permalink to this definition">¶</a></dt>
+<dd><p>normalized Planck Function</p>
+<dl class="simple">
+<dt>Args:</dt><dd><dl class="simple">
+<dt>T: float</dt><dd><p>temperature [K]</p>
+</dd>
+<dt>numic: float</dt><dd><p>wavenumber normalized by nu at 1 micron</p>
+</dd>
+</dl>
+</dd>
+<dt>Returns:</dt><dd><dl class="simple">
+<dt>nB: float </dt><dd><p>normalized planck function</p>
+</dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="spec.rtransfer.tau_layer">
+<code class="sig-prename descclassname">spec.rtransfer.</code><code class="sig-name descname">tau_layer</code><span class="sig-paren">(</span><em class="sig-param">nu</em>, <em class="sig-param">T</em><span class="sig-paren">)</span><a class="headerlink" href="#spec.rtransfer.tau_layer" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
 </div>
 <div class="section" id="module-spec">
 <span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-spec" title="Permalink to this headline">¶</a></h2>

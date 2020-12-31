@@ -12,22 +12,17 @@ import jax.numpy as jnp
 
 @jit
 def Tc(a,x,crit=0.1):
-    """
-    Summary
-    ----------
-    Tc Function = Tepper Function w/ the inner correction: Tc(a,x)
+    """Tc Function = Tepper Function w/ the inner correction: Tc(a,x)
+    
+    Args:
+        a: float/nd array
+            parameter 
+        x: float/nd array
+           parameter
 
-    Parameters
-    ----------
-    a : float/nd array
-        parameter 
-    x : float/nd array
-        parameter
-
-    Returns
-    -------
-    g : float/ndarary
-        Tc(a,x)
+    Returns:
+        g: float/ndarary
+           Tc(a,x)
 
     """
     h=jnp.exp(-x*x)
@@ -37,24 +32,19 @@ def Tc(a,x,crit=0.1):
 
 @jit
 def VoigtTc(nu,sigmaD,gammaL):
-    """
-    Summary
-    --------
-    Voigt-Tepper C profile = Voigt profile using Tc function Vtc(nu,sigmaD,gammaL)
+    """Voigt-Tepper C profile = Voigt profile using Tc function Vtc(nu,sigmaD,gammaL)
 
-    Parameters
-    ----------
-    nu : ndarray
-         wavenumber
-    sigmaD : float
-             sigma parameter in Doppler profile 
-    gammaL : float 
-             broadening coefficient in Lorentz profile 
-
-    Returns
-    -------
-    v : ndarray
-        Vtc
+    Args:
+       nu: ndarray
+            wavenumber
+       sigmaD: float
+                sigma parameter in Doppler profile 
+       gammaL: float 
+                broadening coefficient in Lorentz profile 
+ 
+    Returns:
+       v: ndarray
+           Vtc
 
     """
     
@@ -94,24 +84,19 @@ def FAbsVTc(nu,sigmaD,gammaL,A):
 
 @jit
 def make_numatrix(nu,hatnu,nu0):
-    """
-    Summary
-    ----------
-    Generate numatrix
+    """Generate numatrix
 
-    Parameters
-    ----------
-    nu : jnp array
-         wavenumber matrix (Nnu,)
-    hatnu : jnp array
-         line center wavenumber vector (Nline,), where Nm is the number of lines
-    nu0 : float
-        nu0
+    Args:
+       nu: jnp array
+           wavenumber matrix (Nnu,)
+       hatnu: jnp array
+              line center wavenumber vector (Nline,), where Nm is the number of lines
+       nu0: float
+            nu0
 
-    Returns
-    -------
-    f : jnp array or ndarray
-        numatrix (Nline,Nnu)
+    Returns:
+       f: jnp array or ndarray
+          numatrix (Nline,Nnu)
 
     """
 
