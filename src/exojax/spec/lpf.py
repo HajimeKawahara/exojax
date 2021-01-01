@@ -12,7 +12,7 @@ import jax.numpy as jnp
 
 @jit
 def Tc(a,x,crit=0.1):
-    """Tc Function = Tepper Function w/ the inner correction: Tc(a,x)
+    """Tc Function = Tepper-Garc'ia  Function w/ the inner correction: Tc(a,x)
     
     Args:
         a: float/nd array
