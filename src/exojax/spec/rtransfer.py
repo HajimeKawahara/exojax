@@ -4,9 +4,11 @@
 
 """
 from jax import jit
+from jax.lax import scan
 from exojax.spec import lpf
 import jax.numpy as jnp
 from exojax.spec import planck
+from functools import partial
 
 __all__ = ['JaxRT']
 
@@ -14,8 +16,10 @@ class JaxRT(object):
     def __init__(self):
         self.nuarr = []
         self.numic = 0.5 # 0.5 micron for planck
+        self.Sfix = []
+        self.Parr = []
 
-    @jit
+    @partial(jit, static_argnums=(0,))        
     def add_layer(self,carry,x):
         """add an atmospheric layer
         Params:
@@ -31,27 +35,25 @@ class JaxRT(object):
         gi = planck.nB(Ti,self.numic)
         ####
         numatrix=lpf.make_numatrix(self.nuarr,self.hatnufix,nu0)
-        cs=cross(numatrix,sigmaD,gammaL,Sfix)
+        cs=cross(numatrix,sigmaD,gammaL,self.Sfix)
         ####
-        dtaui = 1.e-1*cs*(1.0-k)*Pi # delta P = (1.0-k)*Pi
+        dtaui = 1.e-1*cs*(1.0-self.k)*Pi # delta P = (1.0-k)*Pi
         Trans=(1.0-dtaui)*jnp.exp(-dtaui)
         F = F*Trans + gi*(1.0-Trans)
-        carry=[F,k*Pi,nu0,sigmaD,gammaL] #carryover 
+        carry=[F,self.k*Pi,nu0,sigmaD,gammaL] #carryover 
         return carry,dtaui
 
-    @jit
+    @partial(jit, static_argnums=(0,))
     def g(self,xs):
         """
         Params: 
         xs: free parameters
         """
         Tarr=xs
-        F0=jnp.ones(len(nuarr))*planck.nB(Tarr[0],self.numic)
-        init=[F0,Parr[0],0.7,1.0,0.5]
-        FP,null=scan(self.add_layer,init,Tarr,NP)
+        F0=jnp.ones(len(self.nuarr))*planck.nB(Tarr[0],self.numic)
+        init=[F0,self.Parr[0],0.7,1.0,0.5]
+        FP,null=(scan(self.add_layer,init,Tarr,self.NP))
         return FP[0]*3.e4 #TODO: 
-
-
 
 @jit
 def cross(numatrix,sigmaD,gammaL,S):
