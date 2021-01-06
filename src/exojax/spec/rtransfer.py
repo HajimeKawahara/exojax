@@ -44,17 +44,16 @@ class JaxRT(object):
         return carry,dtaui
 
     @partial(jit, static_argnums=(0,))
-    def g(self,xs):
-        """
+    def layerscan(self,init):
+        """Scanning layers
         Params: 
-        xs: free parameters
+           init: initial parameters
+           Tarr: temperature array        
         """
-        Tarr=xs
-        F0=jnp.ones(len(self.nuarr))*planck.nB(Tarr[0],self.numic)
-        init=[F0,self.Parr[0],0.7,1.0,0.5]
-        FP,null=(scan(self.add_layer,init,Tarr,self.NP))
+        FP,null=(scan(self.add_layer,init,self.Tarr,self.NP))
         return FP[0]*3.e4 #TODO: 
 
+    
 @jit
 def cross(numatrix,sigmaD,gammaL,S):
     """cross section
