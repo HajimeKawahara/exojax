@@ -13,6 +13,11 @@ from functools import partial
 __all__ = ['JaxRT']
 
 class JaxRT(object):
+    """Jax Radiative Transfer class
+    Summary
+    -----------
+    
+    """
     def __init__(self):
         self.nuarr = []
         self.numic = 0.5 # 0.5 micron for planck
