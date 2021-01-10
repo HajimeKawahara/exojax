@@ -75,7 +75,8 @@ def cross(numatrix,sigmaD,gammaL,S):
     Returns:
        cs: cross section
     """
-    cs = jnp.dot(lpf.VoigtTc(numatrix,sigmaD,gammaL).T,S)
+#    cs = jnp.dot(lpf.VoigtTc(numatrix,sigmaD,gammaL).T,S)
+    cs = jnp.dot((lpf.VoigtRewofz(numatrix.flatten(),sigmaD,gammaL)).reshape(jnp.shape(numatrix)).T,S)
     return cs
 
 #@jit
@@ -117,8 +118,11 @@ def const_p_layer(logPtop=-2.,logPbtm=2.,NP=17):
     return Parr, k
 
 def tau_layer(nu,T):
-    tau=jnp.dot(lpf.VoigtTc(numatrix,sigmaD,gammaL).T,S)
-    lpf.VoigtTc(nu,sigmaD,gammaL)
-    dtau=lpf.VoigtTc(nu,sigmaD,gammaL).T
+#    tau=jnp.dot(lpf.VoigtTc(numatrix,sigmaD,gammaL).T,S)
+#    lpf.VoigtTc(nu,sigmaD,gammaL)
+#    dtau=lpf.VoigtTc(nu,sigmaD,gammaL).T
+    tau=jnp.dot((lpf.VoigtRewofz(numatrix.flatten(),sigmaD,gammaL)).reshape(jnp.shape(numatrix)).T,S)
+    lpf.VoigtRewofz(nu,sigmaD,gammaL)
+    dtau=lpf.VoigtRewofz(nu,sigmaD,gammaL).T
     f=jnp.exp(-A*tau)
     return f

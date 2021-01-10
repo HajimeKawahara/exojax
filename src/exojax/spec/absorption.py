@@ -13,6 +13,41 @@ import jax.numpy as jnp
 from exojax.spec import lpf
 
 @jit
+def MultiAbsVRewofz(numatrix,sigmaD,gammaL,A,S):
+    """
+    Summary
+    ----------
+    Multi Absorption profile using Voigt-Tepper C profile (MultiAbsVTc)
+    f = exp(-tau)
+    tau = sum_k A*S_k*VTc(nu -hatnu_k,sigmaD,gammaL)
+
+    Parameters
+    ----------
+    numatrix : jnp array
+         wavenumber matrix (Nm, Nnu)
+    sigmaD : float
+             sigma parameter in Doppler profile 
+    gammaL : float 
+             broadening coefficient in Lorentz profile 
+    A : float
+        amplitude
+    S : float
+        line strength
+    hatnu : ndarray
+            line center
+
+    Returns
+    -------
+    f : ndarray
+        MultiAbsVTc
+
+    """
+    tau=jnp.dot((lpf.VoigtRewofz(numatrix.flatten(),sigmaD,gammaL)).reshape(jnp.shape(numatrix)).T,S)
+    f=jnp.exp(-A*tau)
+    return f
+
+
+@jit
 def MultiAbsVTc(numatrix,sigmaD,gammaL,A,S):
     """
     Summary

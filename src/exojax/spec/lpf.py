@@ -9,7 +9,7 @@ line profile functions used in exospectral analysis.
 
 from jax import jit, vmap
 import jax.numpy as jnp
-from exojax.scipy.special import rewofz
+from exojax.scipy.special import rewofz# as rewofz
 
 @jit
 def VoigtRewofz(nu,sigmaD,gammaL):
