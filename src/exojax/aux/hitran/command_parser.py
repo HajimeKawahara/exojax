@@ -14,8 +14,8 @@ import re
 import keyword
 import numpy as np
 
-from aeiou import commonExtension
-from pairTypes import Interval, PairOfInts, PairOfFloats,ListOfInts
+from exojax.aux.hitran.aeiou import commonExtension
+from exojax.aux.hitran.pairTypes import Interval, PairOfInts, PairOfFloats,ListOfInts
 
 standardOptions = [{'ID': 'h'},
                {'ID': 'c', 'type': str, 'default': '#'},
@@ -141,6 +141,9 @@ def check_type (id, name, given, oType):
             elif oType==Interval:
                 low, hi = list(map(float,typeChecked))
                 typeChecked=Interval(low,hi)
+            elif oType==exojax.aux.hitran.pairTypes.Interval:
+                low, hi = list(map(float,typeChecked))
+                typeChecked=Interval(low,hi)
             elif oType==PairOfInts:
                 left, right = list(map(int,typeChecked))
                 typeChecked=PairOfInts(left,right)
@@ -149,10 +152,13 @@ def check_type (id, name, given, oType):
                 typeChecked=PairOfFloats(left,right)
             elif oType==ListOfInts:
                 typeChecked=ListOfInts(list(map(int,typeChecked)))
+
             #else: print 'unrecognized type ', id, name, given, typeChecked, oType, oType==np.ndarray
         else:
+            print("--")
+            print(oType)
             raise SystemExit (6*'%s ' % ('ERROR --- check_type:', oType,
-                              'for option', repr(id), repr(name), 'not yet supported, sorry'))
+                              'for option', repr(id), repr(name), 'not yet supported, sorry *_*'))
     except ValueError as errMsg:
         raise SystemExit ('ERROR ---check_type:  option ' + id + ' = ' + name + '   ' + str(errMsg))
     except Exception as errMsg:

@@ -106,11 +106,11 @@ import os.path
 import numpy as np
 
 #from ir import c, h, k
-from aeiou import open_outFile, join_words
-from cgsUnits import change_frequency_units
-from molecules import molecules, mainMolecules, get_mol_id_nr, isotope_id
-from lines import lineArray
-from pairTypes import Interval
+from exojax.aux.hitran.aeiou import open_outFile, join_words
+from exojax.aux.hitran.cgsUnits import change_frequency_units
+from exojax.aux.hitran.molecules import molecules, mainMolecules, get_mol_id_nr, isotope_id
+from exojax.aux.hitran.lines import lineArray
+from exojax.aux.hitran.pairTypes import Interval
 
 
 ####################################################################################################################################
@@ -524,7 +524,7 @@ def higstract (lineFile, xLimits=None, molecule=None, isotope=None, strMin=0.0, 
 if __name__ == "__main__":
 
 	import re
-	from command_parser import parse_command, standardOptions
+	from exojax.aux.hitran.command_parser import parse_command, standardOptions
 
 	opts = standardOptions + [  # h=help, c=commentChar, o=outFile
 	       {'ID': 'help'},
@@ -554,8 +554,8 @@ if __name__ == "__main__":
 
 	if options.get('format','').lower().startswith('vs'):
 		dictOfLineLists = higstract (lineFiles[0], **options)
-		print(dictOfLineLists)
-#		save_lines_core (dictOfLineLists, outFile, options['format'], mainOnly, commentChar)
+#		print(dictOfLineLists)
+		save_lines_core (dictOfLineLists, outFile, options['format'], mainOnly, commentChar)
 	else:
 		lineList = higstract (lineFiles[0], **options)
 		save_lines_orig (lineList, lineFiles[0], outFile, format, mainOnly, commentChar)

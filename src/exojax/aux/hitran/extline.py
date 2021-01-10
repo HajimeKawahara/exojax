@@ -544,15 +544,15 @@ if __name__ == "__main__":
 
     options['verbose'] = 'verbose' in options
     mainOnly = options.get('molecule')=='main'
-    print("------------")
+    print("--YOUR options---")
     print(options)
     print("------------")
-    options={'format': 'vSEan', 'isotope': 0, 'molecule': 'CO', 'strMin': 0.0, 'xLimits': Interval(2290.0,2350.0), 'xUnit': 'nm', 'verbose': False}
-    print("------------")
+#    options={'format': 'vSEan', 'isotope': 0, 'molecule': 'CO', 'strMin': 0.0, 'xLimits': Interval(2290.0,2350.0), 'xUnit': 'nm', 'verbose': False}
+    print("---YOUR lineFile---")
     print(lineFiles[0]) #.par file
-    lineFiles[0]="../../../../data/hitemp/CO/05_HITEMP2019.par"
+#    lineFiles[0]="../../../../data/hitemp/CO/05_HITEMP2019.par"
     print("------------")
 
     dictOfLineLists = higstract (lineFiles[0], **options)
     print("\(*_*)")
-    print(dictOfLineLists)
+ #   print(dictOfLineLists)
