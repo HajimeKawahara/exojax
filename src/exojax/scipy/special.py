@@ -1,3 +1,11 @@
+""" 
+Summary
+--------------------------------------------
+
+   exojax.scipy.special  -- special functions
+
+"""
+
 from jax import jit
 from jax import custom_vjp
 import jax.numpy as jnp
@@ -6,7 +14,7 @@ from jax.interpreters.ad import defvjp
 
 @jit
 def erfcx(x):
-    """erfcx (float) based on Shepherd and Laframboise (1981)
+    """ erfcx (float) based on Shepherd and Laframboise (1981)
     
     Params:
         x: should be larger than -9.3

@@ -1,5 +1,5 @@
 .. exojax documentation master file, created by
-   sphinx-quickstart on Tue Dec 15 10:14:56 2020.
+   sphinx-quickstart on Mon Jan 11 14:38:51 2021.
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
@@ -9,10 +9,8 @@ Welcome to exojax's documentation!
 .. toctree::
    :maxdepth: 2
    :caption: Contents:
-
-   ./dynamics/modules
-   ./spec/modules
-	 
+   	     
+   
 
 Indices and tables
 ==================
