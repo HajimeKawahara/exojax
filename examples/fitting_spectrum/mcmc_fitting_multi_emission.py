@@ -44,7 +44,7 @@ sigin=0.01
 sDfix = jnp.array(1.0)
 gLfix = jnp.array(0.5)
 
-Nmol=100
+Nmol=10
 hatnufix = (np.random.rand(Nmol)-0.5)*nur*2
 Sfix=np.random.rand(Nmol)
 nu0fix = 0.7
@@ -53,7 +53,7 @@ nu0fix = 0.7
 numatrix=lpf.make_numatrix(nuarr,hatnufix,nu0fix)
 cs=rt.cross(numatrix,sDfix,gLfix,Sfix)
 
-NP=17
+NP=7
 Parr, k=rt.const_p_layer(NP=NP)
 Tarr = 1000.*(Parr/Parr[0])**-0.1
 
