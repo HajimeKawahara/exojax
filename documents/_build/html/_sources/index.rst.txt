@@ -10,7 +10,7 @@ Welcome to exojax's documentation!
    :maxdepth: 2
    :caption: Contents:
    	     
-   
+   exojax/modules
 
 Indices and tables
 ==================
