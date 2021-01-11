@@ -1,7 +1,6 @@
-"""
-Summary
---------
- JAX autograd/jit compatible version of Markley (Markley 1995, CeMDA, 63, 101) E solver getE(). The original code is taken from PyAstronomy (MIT license).https://github.com/sczesla/PyAstronomy
+"""Eccentric anomaly from Mean anomaly
+
+ JAX autograd/jit compatible version of Markley (Markley 1995, CeMDA, 63, 101) E solver getE(). The original code is taken from PyAstronomy (MIT license).https://github.com/sczesla/PyAstronomy.
 
 """
 

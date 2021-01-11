@@ -1,6 +1,4 @@
-""" 
-Summary
---------------------------------------------
+"""special functions in exojax
 
    exojax.scipy.special  -- special functions
 
@@ -14,13 +12,16 @@ from jax.interpreters.ad import defvjp
 
 @jit
 def erfcx(x):
-    """ erfcx (float) based on Shepherd and Laframboise (1981)
+    """erfcx (float) based on Shepherd and Laframboise (1981)
     
-    Params:
-        x: should be larger than -9.3
-        
-    Return:
-        f: erfcx(x)
+    Scaled complementary error function exp(-x*x) erfc(x)
+
+    Args:
+         x: should be larger than -9.3
+
+    Returns:
+         f: erfcx(x)
+
     """
     a=jnp.abs(x)
     q = (-a*(a-2.0)/(a+2.0)-2.0*((a-2.0)/(a+2.0)+1.0)+a)/(a+2.0) + (a-2.0)/(a+2.0)
@@ -44,12 +45,13 @@ def rewofz(x,y):
     
     We apply a=0.5 for Algorithm 916.
     
-    Params:
+    Args:
         x: x < nend/2 
         y:
         
-    Return:
+    Returns:
         f: Real(wofz(x+iy))
+
     """
     nend=4000
     xy=x*y
@@ -75,12 +77,13 @@ def imwofz(x, y):
     
     We apply a=0.5 for Algorithm 916.
     
-    Params:
+    Args:
         x: x < nend/2 
         y:
         
-    Return:
+    Returns:
         f: Imag(wofz(x+iy))
+
     """
     nend=4000     
     xy=x*y                             
@@ -106,12 +109,13 @@ def rewofzx(x, y):
     
     We apply a=0.5 for Algorithm 916.
     
-    Params:
+    Args:
         x: x < nend/2 
         y:
         
-    Return:
+    Returns:
         f: Real(wofz(x+iy))
+
     """
     nend=4000                                                                           
     xy=x*y                                                                              
@@ -135,9 +139,12 @@ def h_fwd(x, y):
     return hh, (hh, imwofz(x, y), x, y)
 
 def h_bwd(res, g):
-    """
-    Return:
-        g* partial_x h(x,y), g* partial_y h(x,y)
+    """backward
+    Args:
+        res, g:
+
+    Returns:
+        h1,h2: g* partial_x h(x,y), g* partial_y h(x,y)
 
     V=Real(wofz), L=Imag(wofz)
     """

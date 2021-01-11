@@ -1,6 +1,8 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-"""emission profile functions used in exospectral analysis.
+"""radiative transfer module used in exospectral analysis.
+
+
 
 """
 from jax import jit
@@ -14,8 +16,6 @@ __all__ = ['JaxRT']
 
 class JaxRT(object):
     """Jax Radiative Transfer class
-    Summary
-    -----------
     
     """
     def __init__(self):
@@ -26,22 +26,22 @@ class JaxRT(object):
 
     @partial(jit, static_argnums=(0,))        
     def add_layer(self,carry,x):
-        """add an atmospheric layer
+        """adding an atmospheric layer
+
         Params:
-        carry: F[i], P[i], nu0, sigmaD, gammaL
-        x: free parameters, T
+           carry: F[i], P[i], nu0, sigmaD, gammaL
+           x: free parameters, T
         
         Returns:
-        carry: F[i+1], P[i+1]=k*P[i]
-        dtaui: dtau of this layer
+           carry: F[i+1], P[i+1]=k*P[i]
+           dtaui: dtau of this layer
+
         """
         F,Pi,nu0,sigmaD,gammaL = carry
         Ti = x
         gi = planck.nB(Ti,self.numic)
-        ####
         numatrix=lpf.make_numatrix(self.nuarr,self.hatnufix,nu0)
         cs=cross(numatrix,sigmaD,gammaL,self.Sfix)
-        ####
         dtaui = 1.e-1*cs*(1.0-self.k)*Pi # delta P = (1.0-k)*Pi
         Trans=(1.0-dtaui)*jnp.exp(-dtaui)
         F = F*Trans + gi*(1.0-Trans)
@@ -51,9 +51,14 @@ class JaxRT(object):
     @partial(jit, static_argnums=(0,))
     def layerscan(self,init):
         """Scanning layers
+
         Params: 
            init: initial parameters
            Tarr: temperature array        
+        
+        Returns:
+           F: upward flux
+
         """
         FP,null=(scan(self.add_layer,init,self.Tarr,self.NP))
         return FP[0]*3.e4 #TODO: 
@@ -62,6 +67,7 @@ class JaxRT(object):
 @jit
 def cross(numatrix,sigmaD,gammaL,S):
     """cross section
+
     Params:
        numatrix: jnp array
                  wavenumber matrix
@@ -74,26 +80,15 @@ def cross(numatrix,sigmaD,gammaL,S):
     
     Returns:
        cs: cross section
+
     """
 #    cs = jnp.dot(lpf.VoigtTc(numatrix,sigmaD,gammaL).T,S)
     cs = jnp.dot((lpf.VoigtRewofz(numatrix.flatten(),sigmaD,gammaL)).reshape(jnp.shape(numatrix)).T,S)
     return cs
 
-#@jit
-#def calc_dtau(dP,cs,X,m,g):
-#    dtau=(dP.T*cs)*X/(m*g)
-#    return dtau
-
-#@jit
-#def calc_tau(dtau):
-#    return jnp.cumsum(dtau,axis=0)
-
-
 def const_p_layer(logPtop=-2.,logPbtm=2.,NP=17):
     """constructing the pressure layer
     
-    ::
-
     Args: 
        logPtop: float
                 log10(P[bar]) at the top layer
@@ -101,8 +96,6 @@ def const_p_layer(logPtop=-2.,logPbtm=2.,NP=17):
                 log10(P[bar]) at the bottom layer
        NP: int
                 the number of the layers
-
-    ::
 
     Returns: 
          Parr: jnp array
@@ -118,9 +111,6 @@ def const_p_layer(logPtop=-2.,logPbtm=2.,NP=17):
     return Parr, k
 
 def tau_layer(nu,T):
-#    tau=jnp.dot(lpf.VoigtTc(numatrix,sigmaD,gammaL).T,S)
-#    lpf.VoigtTc(nu,sigmaD,gammaL)
-#    dtau=lpf.VoigtTc(nu,sigmaD,gammaL).T
     tau=jnp.dot((lpf.VoigtRewofz(numatrix.flatten(),sigmaD,gammaL)).reshape(jnp.shape(numatrix)).T,S)
     lpf.VoigtRewofz(nu,sigmaD,gammaL)
     dtau=lpf.VoigtRewofz(nu,sigmaD,gammaL).T
