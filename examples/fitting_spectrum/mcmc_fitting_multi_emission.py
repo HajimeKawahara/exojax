@@ -71,6 +71,32 @@ plt.savefig("temp.png")
 
 # In[7]:
 
+@jit
+def add_layer(carry,x):
+    """add an atmospheric layer
+    Params:
+      carry: F[i], P[i], nu0, sigmaD, gammaL
+      x: free parameters, T
+      
+    Returns:
+      carry: F[i+1], P[i+1]=k*P[i]
+      dtaui: dtau of this layer
+    """
+    F,Pi,nu0,sigmaD,gammaL = carry
+    Ti = x
+    numic=1.0/2.0
+    #dP = k*Pi
+    gi = planck.nB(Ti,numic)
+    ####
+    numatrix=lpf.make_numatrix(nuarr,hatnufix,nu0)
+    cs=rt.cross(numatrix,sigmaD,gammaL,Sfix)
+    ####
+    #dtaui = 1.e-1*lpf.VoigtTc(nuarr-nu0,sigmaD,gammaL)*(1.0-k)*Pi
+    dtaui = 1.e-1*cs*(1.0-k)*Pi # delta P = (1.0-k)*Pi
+    Trans=(1.0-dtaui)*jnp.exp(-dtaui)
+    F = F*Trans + gi*(1.0-Trans)
+    carry=[F,k*Pi,nu0,sigmaD,gammaL] #carryover 
+    return carry,dtaui
 
 @jit
 def g(xs):
@@ -121,7 +147,6 @@ init=[F0,Parr[0],0.7,1.0,0.5]
 
 sigin=5.0
 data=g(Tarr)+np.random.normal(0,sigin,size=N)
-plt.plot(data,".")
 
 #probabilistic model using numpyro
 def model(nu,y):
@@ -148,6 +173,8 @@ num_warmup, num_samples = 1000, 2000
 
 kernel = NUTS(model)
 mcmc = MCMC(kernel, num_warmup, num_samples)
+
+
 mcmc.run(rng_key_, nu=nuarr, y=data)
 mcmc.print_summary()
 
