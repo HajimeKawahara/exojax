@@ -10,6 +10,7 @@ line profile functions used in exospectral analysis.
 from jax import jit, vmap
 import jax.numpy as jnp
 from exojax.scipy.special import rewofz# as rewofz
+from exojax.scipy.special import rewofzx
 
 @jit
 def VoigtRewofz(nu,sigmaD,gammaL):
@@ -61,6 +62,60 @@ def FAbsVRewofz(nu,sigmaD,gammaL,A):
 
     """
     tau=A*VoigtRewofz(nu,sigmaD,gammaL)
+    f=jnp.exp(-tau)
+    return f
+
+
+@jit
+def VoigtRewofzx(nu,sigmaD,gammaL):
+    """[custom] Voigt-Rewofz C profile = Voigt profile using Rewofz function VRewofz(nu,sigmaD,gammaL)
+
+    Args:
+       nu: ndarray
+            wavenumber
+       sigmaD: float
+                sigma parameter in Doppler profile 
+       gammaL: float 
+                broadening coefficient in Lorentz profile 
+ 
+    Returns:
+       v: ndarray
+           VRewofz
+
+    """
+    
+    sfac=1.0/(jnp.sqrt(2)*sigmaD)
+    vrewofz=vmap(rewofzx,(0,None),0)
+    v=sfac*vrewofz(sfac*nu,sfac*gammaL)/jnp.sqrt(jnp.pi)
+    return v
+
+@jit
+def FAbsVRewofzx(nu,sigmaD,gammaL,A):
+    """[custom] 
+    Summary
+    ---------
+    Absorption profile using Rewofz (FAbsVRewofz)
+    f = exp(-tau)
+    tau = A*VRewofz(nu,sigmaD,gammaL)
+
+    Parameters
+    ----------
+    nu : ndarray
+         wavenumber
+    sigmaD : float
+             sigma parameter in Doppler profile 
+    gammaL : float 
+             broadening coefficient in Lorentz profile 
+    A : float 
+        amplitude
+
+    Returns
+    -------
+    f : ndarray
+        FAbsVRewofz
+
+    """
+    tau=A*VoigtRewofzx(nu,sigmaD,gammaL)
     f=jnp.exp(-tau)
     return f
 
