@@ -13,11 +13,11 @@ import jax.numpy as jnp
 from exojax.spec import lpf
 
 @jit
-def MultiAbsVRewofz(numatrix,sigmaD,gammaL,A,S):
+def MultiAbsVHjert(numatrix,sigmaD,gammaL,A,S):
     """
     Summary
     ----------
-    Multi Absorption profile using Voigt-Tepper C profile (MultiAbsVTc)
+    Multi Absorption profile using Hjert
     f = exp(-tau)
     tau = sum_k A*S_k*VTc(nu -hatnu_k,sigmaD,gammaL)
 
@@ -42,7 +42,7 @@ def MultiAbsVRewofz(numatrix,sigmaD,gammaL,A,S):
         MultiAbsVTc
 
     """
-    tau=jnp.dot((lpf.VoigtRewofz(numatrix.flatten(),sigmaD,gammaL)).reshape(jnp.shape(numatrix)).T,S)
+    tau=jnp.dot((lpf.VoigtHjert(numatrix.flatten(),sigmaD,gammaL)).reshape(jnp.shape(numatrix)).T,S)
     f=jnp.exp(-A*tau)
     return f
 
