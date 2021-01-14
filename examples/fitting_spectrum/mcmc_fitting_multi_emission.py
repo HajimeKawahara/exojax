@@ -8,7 +8,7 @@
 # 
 # HMC-NUTS: Hamiltonian Monte Carlo No-U-Turn Sample using numpyro
 
-# In[1]:
+# In[8]:
 
 
 # importing lpf modile in exojax.spec
@@ -35,6 +35,7 @@ plt.style.use('bmh')
 #numpyro.set_platform("cpu")
 numpyro.set_platform("gpu")
 
+
 # generating mock absorption data
 np.random.seed(38)
 N=300
@@ -44,59 +45,39 @@ sigin=0.01
 sDfix = jnp.array(1.0)
 gLfix = jnp.array(0.5)
 
-Nmol=10
+Nmol=100
 hatnufix = (np.random.rand(Nmol)-0.5)*nur*2
 Sfix=np.random.rand(Nmol)
 nu0fix = 0.7
-#f = lambda nu: lpf.MultiAbsVTc(nu-nu0fix,sDfix,gLfix,Afix,Sfix,hatnufix)
-
 numatrix=lpf.make_numatrix(nuarr,hatnufix,nu0fix)
 cs=rt.cross(numatrix,sDfix,gLfix,Sfix)
 
-NP=7
+
+NP=17
 Parr, k=rt.const_p_layer(NP=NP)
 Tarr = 1000.*(Parr/Parr[0])**-0.1
 
-fig=plt.figure(figsize=(10,3))
-ax=fig.add_subplot(121)
-ax.plot(Parr,".")
-ax.plot(Parr/(k+1),"+")
-plt.yscale("log")
-ax=fig.add_subplot(122)
-ax.plot(Tarr,Parr,".")
-#plt.xscale("log")
-plt.yscale("log")
-plt.gca().invert_yaxis()
-plt.savefig("temp.png")
 
-# In[7]:
 
-@jit
-def add_layer(carry,x):
-    """add an atmospheric layer
-    Params:
-      carry: F[i], P[i], nu0, sigmaD, gammaL
-      x: free parameters, T
-      
-    Returns:
-      carry: F[i+1], P[i+1]=k*P[i]
-      dtaui: dtau of this layer
-    """
-    F,Pi,nu0,sigmaD,gammaL = carry
-    Ti = x
-    numic=1.0/2.0
-    #dP = k*Pi
-    gi = planck.nB(Ti,numic)
-    ####
-    numatrix=lpf.make_numatrix(nuarr,hatnufix,nu0)
-    cs=rt.cross(numatrix,sigmaD,gammaL,Sfix)
-    ####
-    #dtaui = 1.e-1*lpf.VoigtTc(nuarr-nu0,sigmaD,gammaL)*(1.0-k)*Pi
-    dtaui = 1.e-1*cs*(1.0-k)*Pi # delta P = (1.0-k)*Pi
-    Trans=(1.0-dtaui)*jnp.exp(-dtaui)
-    F = F*Trans + gi*(1.0-Trans)
-    carry=[F,k*Pi,nu0,sigmaD,gammaL] #carryover 
-    return carry,dtaui
+jaxrt=rt.JaxRT()
+jaxrt.nuarr=nuarr
+jaxrt.hatnufix=hatnufix
+jaxrt.Sfix=Sfix
+jaxrt.Parr=Parr
+jaxrt.NP=NP
+jaxrt.k=k
+
+numic=0.5
+F0=jnp.ones(len(nuarr))*planck.nB(Tarr[0],numic)
+init=[F0,Parr[0],0.7,1.0,0.5]
+jaxrt.Tarr=Tarr
+
+
+F0=jnp.zeros(len(nuarr))
+init=[F0,Parr[0],0.7,1.0,0.5]
+FP,tauarr=scan(jaxrt.add_layer,init,Tarr.T,NP)
+
+
 
 @jit
 def g(xs):
@@ -109,41 +90,8 @@ def g(xs):
     F0=jnp.ones(len(nuarr))*planck.nB(Tarr[0],numic)
     #F0=0.0
     init=[F0,Parr[0],0.7,1.0,0.5]
-    FP,null=scan(add_layer,init,Tarr,NP)
+    FP,null=scan(jaxrt.add_layer,init,Tarr,NP)
     return FP[0]*3.e4
-
-
-jaxrt=rt.JaxRT()
-jaxrt.nuarr=nuarr
-jaxrt.hatnufix=hatnufix
-jaxrt.Sfix=Sfix
-jaxrt.Parr=Parr
-jaxrt.NP=NP
-jaxrt.k=k
-
-
-numic=0.5
-F0=jnp.ones(len(nuarr))*planck.nB(Tarr[0],numic)
-init=[F0,Parr[0],0.7,1.0,0.5]
-jaxrt.Tarr=Tarr
-
-
-F0=jnp.zeros(len(nuarr))
-init=[F0,Parr[0],0.7,1.0,0.5]
-FP,tauarr=scan(jaxrt.add_layer,init,Tarr.T,NP)
-
-fig=plt.figure()
-ax=fig.add_subplot(111)
-c=ax.imshow(tauarr)
-plt.colorbar(c,shrink=0.7)
-ax.set_aspect(0.7/ax.get_data_ratio())
-plt.gca().invert_yaxis()
-plt.savefig("temp2.png")
-
-from jax import grad
-F0=jnp.zeros(len(nuarr))
-#F0=0.0
-init=[F0,Parr[0],0.7,1.0,0.5]
 
 sigin=5.0
 data=g(Tarr)+np.random.normal(0,sigin,size=N)
@@ -164,29 +112,16 @@ def model(nu,y):
     numpyro.sample('y', dist.Normal(mu, sigma), obs=y)
 
 
-# In[35]:
-
-
 rng_key = random.PRNGKey(0)
 rng_key, rng_key_ = random.split(rng_key)
 num_warmup, num_samples = 1000, 2000
 
 kernel = NUTS(model)
 mcmc = MCMC(kernel, num_warmup, num_samples)
-
-
 mcmc.run(rng_key_, nu=nuarr, y=data)
 mcmc.print_summary()
 
-
-# In[20]:
-
-
 import arviz
-arviz.plot_trace(mcmc, var_names=["gL", "sD","nu0","sigma"])
-plt.savefig("temp4.png")
-
-
 
 refs={}
 #refs["A"]=Afix
@@ -197,7 +132,7 @@ refs["nu0"]=nu0fix
 arviz.plot_pair(arviz.from_numpyro(mcmc),kind='kde',divergences=False,                marginals=True,
                 reference_values=refs,
                reference_values_kwargs={'color':"red", "marker":"o", "markersize":12}) 
-plt.savefig("temp5.png")
+plt.savefig("corner.png")
 
 # generating predictions
 # hpdi is "highest posterior density interval"
@@ -209,9 +144,6 @@ median_mu = jnp.median(predictions["y"],axis=0)
 hpdi_mu = hpdi(predictions["y"], 0.9)
 
 
-# In[23]:
-
-
 fig, ax = plt.subplots(nrows=1, ncols=1, figsize=(6, 3))
 ax.plot(nu_,median_mu,color="C0")
 ax.plot(nuarr,data,"+",color="C1",label="data")
@@ -219,6 +151,5 @@ ax.fill_between(nu_, hpdi_mu[0], hpdi_mu[1], alpha=0.3, interpolate=True,color="
                 label="90% area")
 plt.xlabel("$\\nu$")
 plt.legend()
-plt.savefig("temp6.png")
+plt.savefig("../../documents/figures/mcmc_fitting_emission.png")
 
-print("SYSEND")

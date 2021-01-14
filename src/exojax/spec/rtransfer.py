@@ -2,8 +2,6 @@
 # -*- coding: utf-8 -*-
 """radiative transfer module used in exospectral analysis.
 
-
-
 """
 from jax import jit
 from jax.lax import scan
@@ -11,6 +9,7 @@ from exojax.spec import lpf
 import jax.numpy as jnp
 from exojax.spec import planck
 from functools import partial
+
 
 __all__ = ['JaxRT']
 
@@ -83,7 +82,7 @@ def cross(numatrix,sigmaD,gammaL,S):
 
     """
 #    cs = jnp.dot(lpf.VoigtTc(numatrix,sigmaD,gammaL).T,S)
-    cs = jnp.dot((lpf.VoigtRewofz(numatrix.flatten(),sigmaD,gammaL)).reshape(jnp.shape(numatrix)).T,S)
+    cs = jnp.dot((lpf.VoigtHjert(numatrix.flatten(),sigmaD,gammaL)).reshape(jnp.shape(numatrix)).T,S)
     return cs
 
 def const_p_layer(logPtop=-2.,logPbtm=2.,NP=17):
@@ -111,8 +110,8 @@ def const_p_layer(logPtop=-2.,logPbtm=2.,NP=17):
     return Parr, k
 
 def tau_layer(nu,T):
-    tau=jnp.dot((lpf.VoigtRewofz(numatrix.flatten(),sigmaD,gammaL)).reshape(jnp.shape(numatrix)).T,S)
-    lpf.VoigtRewofz(nu,sigmaD,gammaL)
-    dtau=lpf.VoigtRewofz(nu,sigmaD,gammaL).T
+    tau=jnp.dot((lpf.VoigtHjert(numatrix.flatten(),sigmaD,gammaL)).reshape(jnp.shape(numatrix)).T,S)
+    lpf.VoigtHjert(nu,sigmaD,gammaL)
+    dtau=lpf.VoigtHjert(nu,sigmaD,gammaL).T
     f=jnp.exp(-A*tau)
     return f

@@ -9,12 +9,26 @@ line profile functions used in exospectral analysis.
 
 from jax import jit, vmap
 import jax.numpy as jnp
-from exojax.scipy.special import rewofz# as rewofz
-from exojax.scipy.special import rewofzx
+from exojax.scipy.special import rewofz,rewofzs2,rewofzx
 
 @jit
-def VoigtRewofz(nu,sigmaD,gammaL):
-    """Voigt-Rewofz C profile = Voigt profile using Rewofz function VRewofz(nu,sigmaD,gammaL)
+def hjert(x,a):
+    """exojax Voigt-Hjerting function, consisting of a combination of rewofz and rewofzs2
+    
+    Args:
+        x: 
+        a:
+        
+    Returns:
+        f: Real(wofz(x+ia))
+
+    """
+    r2=x*x+a*a
+    return jnp.where(r2<111., rewofz(x,a), rewofzs2(x,a))
+
+@jit
+def VoigtHjert(nu,sigmaD,gammaL):
+    """Voigt profile using Voigt-Hjerting function 
 
     Args:
        nu: ndarray
@@ -31,37 +45,33 @@ def VoigtRewofz(nu,sigmaD,gammaL):
     """
     
     sfac=1.0/(jnp.sqrt(2)*sigmaD)
-    vrewofz=vmap(rewofz,(0,None),0)
+    vrewofz=vmap(hjert,(0,None),0)
     v=sfac*vrewofz(sfac*nu,sfac*gammaL)/jnp.sqrt(jnp.pi)
     return v
 
 @jit
-def FAbsVRewofz(nu,sigmaD,gammaL,A):
-    """
-    Summary
-    ---------
-    Absorption profile using Rewofz (FAbsVRewofz)
+def FAbsVHjert(nu,sigmaD,gammaL,A):
+    """Absorption profile using Hjert (FAbsVHjert)
+
     f = exp(-tau)
     tau = A*VRewofz(nu,sigmaD,gammaL)
 
-    Parameters
-    ----------
-    nu : ndarray
+    Params:
+       nu : ndarray
          wavenumber
-    sigmaD : float
+       sigmaD : float
              sigma parameter in Doppler profile 
-    gammaL : float 
+       gammaL : float 
              broadening coefficient in Lorentz profile 
-    A : float 
-        amplitude
+       A : float 
+             amplitude
 
-    Returns
-    -------
-    f : ndarray
-        FAbsVRewofz
+    Returns:
+       f : ndarray
+           FAbsVHjert
 
     """
-    tau=A*VoigtRewofz(nu,sigmaD,gammaL)
+    tau=A*VoigtHjert(nu,sigmaD,gammaL)
     f=jnp.exp(-tau)
     return f
 

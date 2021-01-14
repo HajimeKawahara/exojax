@@ -10,6 +10,7 @@ import jax.numpy as jnp
 from jax.lax import scan
 from jax.interpreters.ad import defvjp
 
+
 @jit
 def erfcx(x):
     """erfcx (float) based on Shepherd and Laframboise (1981)
@@ -126,20 +127,6 @@ def rewofzs2(x,y):
     return jnp.real(q)
 
 
-@jit
-def rewofz_ej2(x,y):
-    """Combined version of rewofz and rewofzs2
-    
-    Args:
-        x: 
-        y:
-        
-    Returns:
-        f: Real(wofz(x+iy))
-
-    """
-    r2=x*x+y*y
-    return jnp.where(r2<111., rewofz(x,y), rewofzs2(x,y))
 
 @custom_vjp
 def rewofzx(x, y):
