@@ -22,22 +22,30 @@ class JaxRT(object):
         self.numic = 0.5 # 0.5 micron for planck
         self.Sfix = []
         self.Parr = []
-
+#        self.dParr = []
+        
     @partial(jit, static_argnums=(0,))
-    def run(self,nu0,sigmaD,gammaL):
+    def run(self,nu0,sigmaD,gammaL,source):
         """Running RT by linear algebra radiative transfer (default)
 
+        Params: 
+           nu0: reference wavenumber
+           sigmaD: STD of a Gaussian profile
+           gammaL: gamma factor of Lorentzian
+           source: source vector in the atmospheric layers
+           
+        Returns:
+           F: upward flux
+
         """
-        gi = planck.nB(self.Tarr,self.numic)
         numatrix=lpf.make_numatrix(self.nuarr,self.hatnufix,nu0)
         xsv = 1.e-1*cross(numatrix,sigmaD,gammaL,self.Sfix)
-        dParr = (1.0-self.k)*self.Parr
-        dtauM=dParr[:,None]*xsv[None,:]
+        dtauM=self.dParr[:,None]*xsv[None,:]
         TransM=(1.0-dtauM)*jnp.exp(-dtauM)
 
         #QN=jnp.ones(len(nuarr))*planck.nB(Tarr[0],numic)
         QN=jnp.zeros(len(self.nuarr))
-        Qv=(1-TransM)*gi[:,None]
+        Qv=(1-TransM)*source[:,None]
         Qv=jnp.vstack([Qv,QN])
     
         onev=jnp.ones(len(self.nuarr))
@@ -110,7 +118,7 @@ def cross(numatrix,sigmaD,gammaL,S):
     cs = jnp.dot((lpf.VoigtHjert(numatrix.flatten(),sigmaD,gammaL)).reshape(jnp.shape(numatrix)).T,S)
     return cs
 
-def const_p_layer(logPtop=-2.,logPbtm=2.,NP=17):
+def const_p_layer(logPtop=-2.,logPbtm=2.,NP=17,mode="ascending"):
     """constructing the pressure layer
     
     Args: 
@@ -124,15 +132,21 @@ def const_p_layer(logPtop=-2.,logPbtm=2.,NP=17):
     Returns: 
          Parr: jnp array
                pressure layer
+         dParr: jnp array
+               delta pressure layer
          k: float
-            k-factor, P[i+1] = k*P[i]
+            k-factor, P[i-1] = k*P[i]
     
     """
     dlogP=(logPbtm-logPtop)/(NP-1)
     k=10**-dlogP
     Parr=jnp.logspace(logPtop,logPbtm,NP)
-    Parr=Parr[::-1]
-    return Parr, k
+    dParr = (1.0-k)*Parr
+    if mode=="descending":
+        Parr=Parr[::-1] 
+        dParr=dParr[::-1]
+    
+    return Parr, dParr, k
 
 def tau_layer(nu,T):
     tau=jnp.dot((lpf.VoigtHjert(numatrix.flatten(),sigmaD,gammaL)).reshape(jnp.shape(numatrix)).T,S)
