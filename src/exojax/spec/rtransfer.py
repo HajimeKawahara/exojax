@@ -23,6 +23,31 @@ class JaxRT(object):
         self.Sfix = []
         self.Parr = []
 
+    @partial(jit, static_argnums=(0,))
+    def run(self,nu0,sigmaD,gammaL):
+        """Running RT by linear algebra radiative transfer (default)
+
+        """
+        gi = planck.nB(self.Tarr,self.numic)
+        numatrix=lpf.make_numatrix(self.nuarr,self.hatnufix,nu0)
+        xsv = 1.e-1*cross(numatrix,sigmaD,gammaL,self.Sfix)
+        dParr = (1.0-self.k)*self.Parr
+        dtauM=dParr[:,None]*xsv[None,:]
+        TransM=(1.0-dtauM)*jnp.exp(-dtauM)
+
+        #QN=jnp.ones(len(nuarr))*planck.nB(Tarr[0],numic)
+        QN=jnp.zeros(len(self.nuarr))
+        Qv=(1-TransM)*gi[:,None]
+        Qv=jnp.vstack([Qv,QN])
+    
+        onev=jnp.ones(len(self.nuarr))
+    
+        TransM=jnp.vstack([onev,TransM])
+        F=(jnp.sum(Qv*jnp.cumprod(TransM,axis=0),axis=0))
+        F=F*3.e7
+   
+        return F
+        
     @partial(jit, static_argnums=(0,))        
     def add_layer(self,carry,x):
         """adding an atmospheric layer
@@ -36,7 +61,7 @@ class JaxRT(object):
            dtaui: dtau of this layer
 
         """
-        F,Pi,nu0,sigmaD,gammaL = carry
+        F,Pi,nu0,sigmaD,gammaL = carry        
         Ti = x
         gi = planck.nB(Ti,self.numic)
         numatrix=lpf.make_numatrix(self.nuarr,self.hatnufix,nu0)
@@ -49,7 +74,7 @@ class JaxRT(object):
 
     @partial(jit, static_argnums=(0,))
     def layerscan(self,init):
-        """Scanning layers
+        """Runnin RT by scanning layers
 
         Params: 
            init: initial parameters
