@@ -32,8 +32,8 @@ from numpyro.infer import Predictive
 from numpyro.diagnostics import hpdi
 
 plt.style.use('bmh')
-#numpyro.set_platform("cpu")
-numpyro.set_platform("gpu")
+numpyro.set_platform("cpu")
+#numpyro.set_platform("gpu")
 
 
 # generating mock absorption data

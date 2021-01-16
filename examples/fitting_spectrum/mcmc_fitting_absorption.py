@@ -74,7 +74,8 @@ kernel = NUTS(model)
 mcmc = MCMC(kernel, num_warmup, num_samples)
 mcmc.run(rng_key_, nu=nuarr, y=data)
 mcmc.print_summary()
-
+import sys
+sys.exit()
 
 # In[21]:
 
