@@ -10,7 +10,6 @@ import jax.numpy as jnp
 from exojax.spec import planck
 from functools import partial
 
-
 __all__ = ['JaxRT']
 
 class JaxRT(object):
@@ -28,7 +27,7 @@ class JaxRT(object):
     def run(self,nu0,sigmaD,gammaL,source):
         """Running RT by linear algebra radiative transfer (default)
 
-        Params: 
+        Args: 
            nu0: reference wavenumber
            sigmaD: STD of a Gaussian profile
            gammaL: gamma factor of Lorentzian
@@ -55,12 +54,48 @@ class JaxRT(object):
         F=F*3.e7
    
         return F
-        
+
+    @partial(jit, static_argnums=(0,))
+    def runx(self,nu0,sigmaD,gammaL,source):
+        """Running RT by linear algebra radiative transfer using vmap
+
+        Note: 
+           Currently (Jan 16th 2021), 2 times slower than run.
+
+        Args: 
+           nu0: reference wavenumber
+           sigmaD: STD of a Gaussian profile
+           gammaL: gamma factor of Lorentzian
+           source: source vector in the atmospheric layers
+           
+        Returns:
+           F: upward flux
+
+        """
+        numatrix=lpf.make_numatrix(self.nuarr,self.hatnufix,nu0)
+        xsv = 1.e-1*crossx(numatrix,sigmaD,gammaL,self.Sfix)
+        dtauM=self.dParr[:,None]*xsv[None,:]
+        TransM=(1.0-dtauM)*jnp.exp(-dtauM)
+
+        #QN=jnp.ones(len(nuarr))*planck.nB(Tarr[0],numic)
+        QN=jnp.zeros(len(self.nuarr))
+        Qv=(1-TransM)*source[:,None]
+        Qv=jnp.vstack([Qv,QN])
+    
+        onev=jnp.ones(len(self.nuarr))
+    
+        TransM=jnp.vstack([onev,TransM])
+        F=(jnp.sum(Qv*jnp.cumprod(TransM,axis=0),axis=0))
+        F=F*3.e7
+   
+        return F
+
+    
     @partial(jit, static_argnums=(0,))        
     def add_layer(self,carry,x):
         """adding an atmospheric layer
 
-        Params:
+        Args:
            carry: F[i], P[i], nu0, sigmaD, gammaL
            x: free parameters, T
         
@@ -84,7 +119,7 @@ class JaxRT(object):
     def layerscan(self,init):
         """Runnin RT by scanning layers
 
-        Params: 
+        Args: 
            init: initial parameters
            Tarr: temperature array        
         
@@ -100,7 +135,7 @@ class JaxRT(object):
 def cross(numatrix,sigmaD,gammaL,S):
     """cross section
 
-    Params:
+    Args:
        numatrix: jnp array
                  wavenumber matrix
        sigmaD: float
@@ -117,6 +152,29 @@ def cross(numatrix,sigmaD,gammaL,S):
 #    cs = jnp.dot(lpf.VoigtTc(numatrix,sigmaD,gammaL).T,S)
     cs = jnp.dot((lpf.VoigtHjert(numatrix.flatten(),sigmaD,gammaL)).reshape(jnp.shape(numatrix)).T,S)
     return cs
+
+@jit
+def crossx(numatrix,sigmaD,gammaL,S):
+    """cross section using vmap
+
+    Args:
+       numatrix: jnp array
+                 wavenumber matrix
+       sigmaD: float
+               sigma parameter in Voigt profile
+       gammaL: float
+               gamma parameter in Voigt profile
+       S: jnp array
+          line strength array
+    
+    Returns:
+       cs: cross section
+
+    """
+    from jax import vmap
+    cs=jnp.dot(vmap(lpf.VoigtHjert,(0,None,None),0)(numatrix,sigmaD,gammaL).T,S)
+    return cs
+
 
 def const_p_layer(logPtop=-2.,logPbtm=2.,NP=17,mode="ascending"):
     """constructing the pressure layer

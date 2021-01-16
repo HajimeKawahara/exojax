@@ -42,7 +42,7 @@ def MultiAbsVHjert(numatrix,sigmaD,gammaL,A,S):
         MultiAbsVTc
 
     """
-    tau=jnp.dot((lpf.VoigtHjert(numatrix.flatten(),sigmaD,gammaL)).reshape(jnp.shape(numatrix)).T,S)
+    tau=jnp.dot((lpf.voigt(numatrix.flatten(),sigmaD,gammaL)).reshape(jnp.shape(numatrix)).T,S)
     f=jnp.exp(-A*tau)
     return f
 

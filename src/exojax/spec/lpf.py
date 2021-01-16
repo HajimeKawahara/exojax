@@ -27,20 +27,16 @@ def hjert(x,a):
     return jnp.where(r2<111., rewofz(x,a), rewofzs2(x,a))
 
 @jit
-def VoigtHjert(nu,sigmaD,gammaL):
+def voigt(nu,sigmaD,gammaL):
     """Voigt profile using Voigt-Hjerting function 
 
     Args:
-       nu: ndarray
-            wavenumber
-       sigmaD: float
-                sigma parameter in Doppler profile 
-       gammaL: float 
-                broadening coefficient in Lorentz profile 
+       nu: wavenumber
+       sigmaD: sigma parameter in Doppler profile 
+       gammaL: broadening coefficient in Lorentz profile 
  
     Returns:
-       v: ndarray
-           VRewofz
+       v: Voigt profile
 
     """
     
@@ -71,7 +67,7 @@ def FAbsVHjert(nu,sigmaD,gammaL,A):
            FAbsVHjert
 
     """
-    tau=A*VoigtHjert(nu,sigmaD,gammaL)
+    tau=A*voigt(nu,sigmaD,gammaL)
     f=jnp.exp(-tau)
     return f
 
