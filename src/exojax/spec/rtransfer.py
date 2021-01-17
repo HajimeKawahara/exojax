@@ -150,7 +150,7 @@ def cross(numatrix,sigmaD,gammaL,S):
 
     """
 #    cs = jnp.dot(lpf.VoigtTc(numatrix,sigmaD,gammaL).T,S)
-    cs = jnp.dot((lpf.hjert(numatrix.flatten(),sigmaD,gammaL)).reshape(jnp.shape(numatrix)).T,S)
+    cs = jnp.dot((lpf.voigt(numatrix.flatten(),sigmaD,gammaL)).reshape(jnp.shape(numatrix)).T,S)
     return cs
 
 @jit
@@ -172,7 +172,7 @@ def crossx(numatrix,sigmaD,gammaL,S):
 
     """
     from jax import vmap
-    cs=jnp.dot(vmap(lpf.hjert,(0,None,None),0)(numatrix,sigmaD,gammaL).T,S)
+    cs=jnp.dot(vmap(lpf.voigt,(0,None,None),0)(numatrix,sigmaD,gammaL).T,S)
     return cs
 
 
