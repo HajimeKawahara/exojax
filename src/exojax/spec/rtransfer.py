@@ -150,7 +150,7 @@ def cross(numatrix,sigmaD,gammaL,S):
 
     """
 #    cs = jnp.dot(lpf.VoigtTc(numatrix,sigmaD,gammaL).T,S)
-    cs = jnp.dot((lpf.VoigtHjert(numatrix.flatten(),sigmaD,gammaL)).reshape(jnp.shape(numatrix)).T,S)
+    cs = jnp.dot((lpf.hjert(numatrix.flatten(),sigmaD,gammaL)).reshape(jnp.shape(numatrix)).T,S)
     return cs
 
 @jit
@@ -172,28 +172,22 @@ def crossx(numatrix,sigmaD,gammaL,S):
 
     """
     from jax import vmap
-    cs=jnp.dot(vmap(lpf.VoigtHjert,(0,None,None),0)(numatrix,sigmaD,gammaL).T,S)
+    cs=jnp.dot(vmap(lpf.hjert,(0,None,None),0)(numatrix,sigmaD,gammaL).T,S)
     return cs
 
 
-def const_p_layer(logPtop=-2.,logPbtm=2.,NP=17,mode="ascending"):
+def pressure_layer(logPtop=-2.,logPbtm=2.,NP=17,mode="ascending"):
     """constructing the pressure layer
     
     Args: 
-       logPtop: float
-                log10(P[bar]) at the top layer
-       logPbtm: float
-                log10(P[bar]) at the bottom layer
-       NP: int
-                the number of the layers
+       logPtop: log10(P[bar]) at the top layer
+       logPbtm: log10(P[bar]) at the bottom layer
+       NP: the number of the layers
 
     Returns: 
-         Parr: jnp array
-               pressure layer
-         dParr: jnp array
-               delta pressure layer
-         k: float
-            k-factor, P[i-1] = k*P[i]
+         Parr: pressure layer
+         dParr: delta pressure layer
+         k: k-factor, P[i-1] = k*P[i]
     
     """
     dlogP=(logPbtm-logPtop)/(NP-1)
@@ -206,9 +200,3 @@ def const_p_layer(logPtop=-2.,logPbtm=2.,NP=17,mode="ascending"):
     
     return Parr, dParr, k
 
-def tau_layer(nu,T):
-    tau=jnp.dot((lpf.VoigtHjert(numatrix.flatten(),sigmaD,gammaL)).reshape(jnp.shape(numatrix)).T,S)
-    lpf.VoigtHjert(nu,sigmaD,gammaL)
-    dtau=lpf.VoigtHjert(nu,sigmaD,gammaL).T
-    f=jnp.exp(-A*tau)
-    return f

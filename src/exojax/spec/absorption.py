@@ -49,32 +49,21 @@ def MultiAbsVHjert(numatrix,sigmaD,gammaL,A,S):
 
 @jit
 def MultiAbsVTc(numatrix,sigmaD,gammaL,A,S):
-    """
-    Summary
-    ----------
-    Multi Absorption profile using Voigt-Tepper C profile (MultiAbsVTc)
+    """Multi Absorption profile using Voigt-Tepper C profile (MultiAbsVTc)
+
     f = exp(-tau)
     tau = sum_k A*S_k*VTc(nu -hatnu_k,sigmaD,gammaL)
 
-    Parameters
-    ----------
-    numatrix : jnp array
-         wavenumber matrix (Nm, Nnu)
-    sigmaD : float
-             sigma parameter in Doppler profile 
-    gammaL : float 
-             broadening coefficient in Lorentz profile 
-    A : float
-        amplitude
-    S : float
-        line strength
-    hatnu : ndarray
-            line center
+    Args:
+       numatrix : wavenumber matrix (Nm, Nnu)
+       sigmaD : sigma parameter in Doppler profile 
+       gammaL : broadening coefficient in Lorentz profile 
+       A : amplitude
+       S : line strength
 
-    Returns
-    -------
-    f : ndarray
-        MultiAbsVTc
+
+    Returns:
+       f : MultiAbsVTc
 
     """
     tau=jnp.dot(lpf.VoigtTc(numatrix,sigmaD,gammaL).T,S)
@@ -84,35 +73,23 @@ def MultiAbsVTc(numatrix,sigmaD,gammaL,A,S):
 
 @jit
 def MultiAbsVTc_Each(nu,sigmaD,gammaL,A,S,hatnu):
-    """
-    Summary
-    ----------
-    Slow version Multi Absorption profile using Voigt-Tepper C profile (MultiAbsVTc)
+    """Slow version Multi Absorption profile using Voigt-Tepper C profile (MultiAbsVTc)
+
     f = exp(-tau)
     tau = sum_k A*S_k*VTc(nu -hatnu_k,sigmaD,gammaL)
 
-    Parameters
-    ----------
-    nu : ndarray
-         wavenumber
-    sigmaD : float
-             sigma parameter in Doppler profile 
-    gammaL : float 
-             broadening coefficient in Lorentz profile 
-    A : float
-        amplitude
-    S : float
-        line strength
-    hatnu : ndarray
-            line center
+    Args:
+       nu : wavenumber
+    sigmaD : sigma parameter in Doppler profile 
+    gammaL : broadening coefficient in Lorentz profile 
+    A : amplitude
+    S : line strength
+    hatnu : line center
 
-    Returns
-    -------
-    f : ndarray
-        MultiAbsVTc
+    Returns:
+       f : MultiAbsVTc
 
-    Usage
-    ---------
+    Examples:
     ```
     f = lambda nu: MultiAbsVTc(nu-nu0fix,sDfix,gLfix,Afix,Sfix,hatnufix)
     ans0=map(f,nuarr).block_until_ready()

@@ -9,7 +9,7 @@ line profile functions used in exospectral analysis.
 
 from jax import jit, vmap
 import jax.numpy as jnp
-from exojax.scipy.special import rewofz,rewofzs2,rewofzx
+from exojax.special.faddeeva import rewofz,rewofzs2,rewofzx
 
 @jit
 def hjert(x,a):

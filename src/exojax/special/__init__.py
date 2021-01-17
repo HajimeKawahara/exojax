@@ -6,8 +6,12 @@ __author__ = "Hajime Kawahara"
 __email__ = "divrot@gmail.com"
 __license__ = ""
 __description__ = ""
-from exojax.spec.lpf import (
-    hjert,
-    voigt,
-    make_numatrix,
+
+from exojax.special.erfcx import (
+    erfcx,
+)
+from exojax.special.faddeeva import (
+    rewofz,
+    imwofz,
+    rewofzs2,
 )
