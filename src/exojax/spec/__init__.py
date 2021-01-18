@@ -9,5 +9,6 @@ __description__ = ""
 from exojax.spec.lpf import (
     hjert,
     voigt,
+    lorentz,
     make_numatrix,
 )

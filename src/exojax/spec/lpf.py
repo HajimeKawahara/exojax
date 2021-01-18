@@ -46,6 +46,12 @@ def voigt(nu,sigmaD,gammaL):
     return v
 
 @jit
+def lorentz(nu,gammaL):
+    def f(nu,gammaL):
+        return gammaL/(gammaL**2 + nu**2)/jnp.pi
+    return vmap(f,(0,None),0)
+
+@jit
 def FAbsVHjert(nu,sigmaD,gammaL,A):
     """Absorption profile using Hjert (FAbsVHjert)
 
