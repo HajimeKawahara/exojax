@@ -13,14 +13,31 @@ from exojax.special.faddeeva import rewofz,rewofzs2,rewofzx
 
 @jit
 def hjert(x,a):
-    """exojax Voigt-Hjerting function, consisting of a combination of rewofz and rewofzs2
+    """Voigt-Hjerting function, consisting of a combination of rewofz and rewofzs2.
     
     Args:
         x: 
         a:
         
     Returns:
-        f: Real(wofz(x+ia))
+        hjert: H(x,a) or Real(wofz(x+ia))
+
+    Examples:
+       
+       hjert provides a Voigt-Hjerting function. 
+       
+       >>> hjert(1.0,1.0)
+          DeviceArray(0.3047442, dtype=float32)
+
+       This function accepts a scalar value as an input. Use jax.vmap to use a vector as an input.
+
+       >>> from jax import vmap
+       >>> x=jnp.linspace(0.0,1.0,10)
+       >>> vmap(hjert,(0,None),0)(x,1.0)
+          DeviceArray([0.42758358, 0.42568347, 0.4200511 , 0.41088563, 0.39850432,0.3833214 , 0.3658225 , 0.34653533, 0.32600054, 0.3047442 ],dtype=float32)
+       >>> a=jnp.linspace(0.0,1.0,10)
+       >>> vmap(hjert,(0,0),0)(x,a)
+          DeviceArray([1.        , 0.8764037 , 0.7615196 , 0.6596299 , 0.5718791 ,0.49766064, 0.43553388, 0.3837772 , 0.34069115, 0.3047442 ],dtype=float32)
 
     """
     r2=x*x+a*a

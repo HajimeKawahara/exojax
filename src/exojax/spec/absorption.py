@@ -90,9 +90,9 @@ def MultiAbsVTc_Each(nu,sigmaD,gammaL,A,S,hatnu):
        f : MultiAbsVTc
 
     Examples:
-    ```
-    f = lambda nu: MultiAbsVTc(nu-nu0fix,sDfix,gLfix,Afix,Sfix,hatnufix)
-    ans0=map(f,nuarr).block_until_ready()
+       >>> f = lambda nu: MultiAbsVTc(nu-nu0fix,sDfix,gLfix,Afix,Sfix,hatnufix)
+       >>> ans0=map(f,nuarr).block_until_ready()
+
     ```
 
     """
