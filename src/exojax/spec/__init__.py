@@ -10,5 +10,8 @@ from exojax.spec.lpf import (
     hjert,
     voigt,
     lorentz,
-    make_numatrix,
+)
+from exojax.spec.make_numatrix import (
+    make_numatrix0,
+    make_numatrix_direct,
 )

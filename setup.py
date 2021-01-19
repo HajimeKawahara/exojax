@@ -14,6 +14,7 @@ CLASSIFIERS = [
     "Programming Language :: Python",
 ]
 INSTALL_REQUIRES = ["numpy","tqdm","scipy","jax","numpyro","arviz"]
+#require https://github.com/hitranonline/hapi
 
 # END PROJECT SPECIFIC
 
