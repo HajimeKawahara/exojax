@@ -2,12 +2,12 @@ from jax import jit, vmap
 import jax.numpy as jnp
 
 @jit
-def SijT(T,sij0,nu_ij,glower,elower,qT):
+def SijT(T,logsij0,nu_ij,glower,elower,qT):
     """Line strength as a function of temperature
 
     Args:
        T: temperature (K)
-       sij0: Sij(T=296K)
+       logsij0: log(Sij(Tref)) (Tref=296K)
        glower: g_lower or gpp
        elower: elower 
        qT: Q(Tref)/Q(T)
@@ -18,7 +18,7 @@ def SijT(T,sij0,nu_ij,glower,elower,qT):
     """
     Tref=296.0 #reference tempearture (K)
     c_2 = 1.4387773 #hc/k_B (cm K)
-    expow=sij0-c_2*(elower/T-elower/Tref)
+    expow=logsij0-c_2*(elower/T-elower/Tref)
     fac=(1.0-jnp.exp(-c_2*nu_ij/T) )/(1.0-jnp.exp(-c_2*nu_ij/Tref))
     return jnp.exp(expow)*qT*fac
 
