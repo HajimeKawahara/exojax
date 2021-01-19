@@ -208,20 +208,19 @@ def FAbsVTc(nu,sigmaD,gammaL,A):
 def make_numatrix(nu,hatnu,nu0):
     """Generate numatrix
 
+    Note: This routine autmatically convert the input to float32 to use XLA. Please check nu/your precision is much smaller than 1e7.
+
     Args:
-       nu: jnp array
-           wavenumber matrix (Nnu,)
-       hatnu: jnp array
-              line center wavenumber vector (Nline,), where Nm is the number of lines
-       nu0: float
-            nu0
+       nu: wavenumber matrix (Nnu,)
+       hatnu: line center wavenumber vector (Nline,), where Nm is the number of lines
+       nu0: nu0
 
     Returns:
-       f: jnp array or ndarray
-          numatrix (Nline,Nnu)
+       f: numatrix (Nline,Nnu)
 
     """
 
     numatrix=nu[None,:]-hatnu[:,None]-nu0
     return numatrix
+
 
