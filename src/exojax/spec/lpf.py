@@ -63,6 +63,38 @@ def voigt(nu,sigmaD,gammaL):
     return v
 
 @jit
+def vvoigt(numatrix,sigmaD,gammas):
+    """vmaped voigt profile
+
+    Args:
+       numatrix: wavenumber matrix in R^(Nline x Nwav)
+       sigmaD: doppler sigma vector in R^Nline
+       gammaL: gamma factor vector in R^Nline
+
+    Return:
+       Voigt profile vector in R^Nwav
+
+    """
+    vmap_voigt=vmap(voigt,(0,0,0),0)
+    return vmap_voigt(numatrix,sigmaD,gammas)
+
+@jit
+def xsvector(numatrix,sigmaD,gammaL,Sij):
+    """cross section vector 
+
+    Args:
+       numatrix: wavenumber matrix in R^(Nline x Nwav)
+       sigmaD: doppler sigma vector in R^Nline
+       gammaL: gamma factor vector in R^Nline
+       Sij: line strength vector in R^Nline
+
+    Return:
+       cross section vector in R^Nwav
+
+    """
+    return jnp.dot((vvoigt(numatrix,sigmaD,gammaL)).T,Sij)
+
+@jit
 def lorentz(nu,gammaL):
     def f(nu,gammaL):
         return gammaL/(gammaL**2 + nu**2)/jnp.pi

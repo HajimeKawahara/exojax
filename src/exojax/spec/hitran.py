@@ -22,6 +22,7 @@ def SijT(T,logsij0,nu_ij,glower,elower,qT):
     fac=(1.0-jnp.exp(-c_2*nu_ij/T) )/(1.0-jnp.exp(-c_2*nu_ij/Tref))
     return jnp.exp(expow)*qT*fac
 
+
 @jit
 def gamma_hitran(P, T, Pself, n_air, gamma_air_ref, gamma_self_ref):
     """gamma factor by a pressure broadening
