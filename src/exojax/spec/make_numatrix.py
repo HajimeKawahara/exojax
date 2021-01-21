@@ -6,7 +6,10 @@ def divwavnum(nu,Nz=1):
     """separate an integer part and a residual
     """
     if(nu.dtype!=np.float64):
-        print("Warning: type is not np.float64 but ",nu.dtype)
+        print("Warning!: Type is not np.float64 but ",nu.dtype)
+        # Float32 significantly decreases the accuracy of opacity.
+        # Consider to use float64 for wavenumber array.
+
     fn=np.floor(nu*Nz)
     dfn=nu*Nz-fn
     return fn,dfn,Nz
