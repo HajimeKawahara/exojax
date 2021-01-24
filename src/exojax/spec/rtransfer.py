@@ -176,7 +176,7 @@ def crossx(numatrix,sigmaD,gammaL,S):
     return cs
 
 
-def pressure_layer(logPtop=-2.,logPbtm=2.,NP=17,mode="ascending"):
+def pressure_layer(logPtop=-8.,logPbtm=2.,NP=20,mode="ascending"):
     """constructing the pressure layer
     
     Args: 
@@ -200,3 +200,19 @@ def pressure_layer(logPtop=-2.,logPbtm=2.,NP=17,mode="ascending"):
     
     return Parr, dParr, k
 
+def ASfactors():
+    A0=-0.57721566
+    A1= 0.99999193
+    A2=-0.24991055
+    A3= 0.05519968
+    A4=-0.00976004
+    A5= 0.00107857
+    B1=8.5733287401
+    B2=18.059016973
+    B3=8.6347608925
+    B4=0.2677737343
+    C1=9.5733223454
+    C2=25.6329561486
+    C3=21.0996530827
+    C4=3.9584969228
+    return A0,A1,A2,A3,A4,A5,B1,B2,B3,B4,C1,C2,C3,C4
