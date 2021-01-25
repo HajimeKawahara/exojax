@@ -94,6 +94,7 @@ def xsvector(numatrix,sigmaD,gammaL,Sij):
     """
     return jnp.dot((vvoigt(numatrix,sigmaD,gammaL)).T,Sij)
 
+
 @jit
 def lorentz(nu,gammaL):
     def f(nu,gammaL):

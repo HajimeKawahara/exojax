@@ -37,7 +37,7 @@ plt.style.use('bmh')
 
 # TP
 alpha_in=0.02
-NP=70
+NP=10
 Parr, dParr, k=rt.pressure_layer(NP=NP)
 Tarr = 1500.*(Parr/Parr[-1])**alpha_in
 
@@ -119,23 +119,44 @@ gammaLM = vmap(gamma_hitran,(0,0,0,None,None,None))(Parr,Tarr,Parr, n_air, gamma
 sigmaDM=vmap(doppler_sigma,(None,0,None))(nu_lines,Tarr,Mmol)
 
 numatrix=make_numatrix0(nus,nu_lines)
-xsmatrix=jit(vmap(xsvector,(None,0,0,0)))
+
+jxsvector=jit(xsvector)
 
 sigv=sigmaDM[0,:]
 gamv=gammaLM[0,:]
 sv=SijM[0,:]
 
-jxsvector=jit(xsvector)
-
 import time 
 ts=time.time()
 xsv=jxsvector(numatrix,sigv,gamv,sv).block_until_ready()
+xsv=jxsvector(numatrix,sigv,gamv,sv).block_until_ready()
+xsv=jxsvector(numatrix,sigv,gamv,sv).block_until_ready()
+xsv=jxsvector(numatrix,sigv,gamv,sv).block_until_ready()
+xsv=jxsvector(numatrix,sigv,gamv,sv).block_until_ready()
+xsv=jxsvector(numatrix,sigv,gamv,sv).block_until_ready()
+xsv=jxsvector(numatrix,sigv,gamv,sv).block_until_ready()
+xsv=jxsvector(numatrix,sigv,gamv,sv).block_until_ready()
+xsv=jxsvector(numatrix,sigv,gamv,sv).block_until_ready()
+xsv=jxsvector(numatrix,sigv,gamv,sv).block_until_ready()
+
 te=time.time()
-print(te-ts,"sec")
+print((te-ts)/10.0,"sec")
 
 # In[111]:
 
+xsmatrix=jit(vmap(xsvector,(None,0,0,0)))
+
 ts=time.time()
 xsm=xsmatrix(numatrix,sigmaDM,gammaLM,SijM).block_until_ready()
+xsm=xsmatrix(numatrix,sigmaDM,gammaLM,SijM).block_until_ready()
+xsm=xsmatrix(numatrix,sigmaDM,gammaLM,SijM).block_until_ready()
+xsm=xsmatrix(numatrix,sigmaDM,gammaLM,SijM).block_until_ready()
+xsm=xsmatrix(numatrix,sigmaDM,gammaLM,SijM).block_until_ready()
+xsm=xsmatrix(numatrix,sigmaDM,gammaLM,SijM).block_until_ready()
+xsm=xsmatrix(numatrix,sigmaDM,gammaLM,SijM).block_until_ready()
+xsm=xsmatrix(numatrix,sigmaDM,gammaLM,SijM).block_until_ready()
+xsm=xsmatrix(numatrix,sigmaDM,gammaLM,SijM).block_until_ready()
+xsm=xsmatrix(numatrix,sigmaDM,gammaLM,SijM).block_until_ready()
+
 te=time.time()
-print(te-ts,"sec")
+print((te-ts)/10,"sec")

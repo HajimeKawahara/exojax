@@ -8,6 +8,7 @@ def SijT(T,logsij0,nu_ij,glower,elower,qT):
     Args:
        T: temperature (K)
        logsij0: log(Sij(Tref)) (Tref=296K)
+       nu_ij: line center wavenumber (cm-1)
        glower: g_lower or gpp
        elower: elower 
        qT: Q(Tref)/Q(T)
@@ -23,16 +24,21 @@ def SijT(T,logsij0,nu_ij,glower,elower,qT):
     return jnp.exp(expow)*qT*fac
 
 
+
+
+
 @jit
 def gamma_hitran(P, T, Pself, n_air, gamma_air_ref, gamma_self_ref):
-    """gamma factor by a pressure broadening
+    """gamma factor by a pressure broadening 
     
     Args:
        P: pressure (atm)
        T: temperature (K)
+       gamma_air_ref: gamma air 
+       gamma_self_ref: gamma self 
 
     Returns:
-       gamma: pressure gamma factor (cm-1)
+       gamma: pressure gamma factor (cm-1) 
 
     """
     Tref=296.0 #reference tempearture (K)
@@ -54,15 +60,16 @@ def gamma_natural(A):
     """
     return 2.6544188e-12*A
 
+
 @jit
-def doppler_sigma(nu,T,M):
+def doppler_sigma(nu_ij,T,M):
     """Dopper width (sigma)
     
     Note:
        c3 is sqrt(kB/m_u)/c
 
     Args:
-       nu: wavenumber (cm-1)
+       nu_ij: line center wavenumber (cm-1)
        T: temperature (K)
        M: atom/molecular mass
     
@@ -71,4 +78,4 @@ def doppler_sigma(nu,T,M):
 
     """
     c3=3.0415595e-07
-    return c3*jnp.sqrt(T/M)*nu
+    return c3*jnp.sqrt(T/M)*nu_ij
