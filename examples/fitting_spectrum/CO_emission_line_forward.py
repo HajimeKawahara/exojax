@@ -37,7 +37,7 @@ plt.style.use('bmh')
 
 # TP
 alpha_in=0.02
-NP=10
+NP=50
 Parr, dParr, k=rt.pressure_layer(NP=NP)
 Tarr = 1500.*(Parr/Parr[-1])**alpha_in
 
@@ -63,7 +63,7 @@ elower_all = hapi.getColumn(molec, 'elower')
 gpp_all = hapi.getColumn(molec, 'gpp')
 
 
-margin=10
+margin=100
 crit=1.e-98
 #crit=1.e-300
 #mask=(S_ij_all>crit)
@@ -129,34 +129,18 @@ sv=SijM[0,:]
 import time 
 ts=time.time()
 xsv=jxsvector(numatrix,sigv,gamv,sv).block_until_ready()
-xsv=jxsvector(numatrix,sigv,gamv,sv).block_until_ready()
-xsv=jxsvector(numatrix,sigv,gamv,sv).block_until_ready()
-xsv=jxsvector(numatrix,sigv,gamv,sv).block_until_ready()
-xsv=jxsvector(numatrix,sigv,gamv,sv).block_until_ready()
-xsv=jxsvector(numatrix,sigv,gamv,sv).block_until_ready()
-xsv=jxsvector(numatrix,sigv,gamv,sv).block_until_ready()
-xsv=jxsvector(numatrix,sigv,gamv,sv).block_until_ready()
-xsv=jxsvector(numatrix,sigv,gamv,sv).block_until_ready()
-xsv=jxsvector(numatrix,sigv,gamv,sv).block_until_ready()
-
 te=time.time()
-print((te-ts)/10.0,"sec")
+print((te-ts),"sec")
 
 # In[111]:
 
 xsmatrix=jit(vmap(xsvector,(None,0,0,0)))
 
 ts=time.time()
+#Nit=10
+#for i in range(0,Nit):
+#    xsmatrix(numatrix,sigmaDM,gammaLM,SijM)
 xsm=xsmatrix(numatrix,sigmaDM,gammaLM,SijM).block_until_ready()
-xsm=xsmatrix(numatrix,sigmaDM,gammaLM,SijM).block_until_ready()
-xsm=xsmatrix(numatrix,sigmaDM,gammaLM,SijM).block_until_ready()
-xsm=xsmatrix(numatrix,sigmaDM,gammaLM,SijM).block_until_ready()
-xsm=xsmatrix(numatrix,sigmaDM,gammaLM,SijM).block_until_ready()
-xsm=xsmatrix(numatrix,sigmaDM,gammaLM,SijM).block_until_ready()
-xsm=xsmatrix(numatrix,sigmaDM,gammaLM,SijM).block_until_ready()
-xsm=xsmatrix(numatrix,sigmaDM,gammaLM,SijM).block_until_ready()
-xsm=xsmatrix(numatrix,sigmaDM,gammaLM,SijM).block_until_ready()
-xsm=xsmatrix(numatrix,sigmaDM,gammaLM,SijM).block_until_ready()
-
 te=time.time()
-print((te-ts)/10,"sec")
+print((te-ts),"sec")
+
