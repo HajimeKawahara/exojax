@@ -1,6 +1,7 @@
 from jax import jit, vmap
 import jax.numpy as jnp
 
+
 @jit
 def SijT(T,logsij0,nu_ij,glower,elower,qT):
     """Line strength as a function of temperature

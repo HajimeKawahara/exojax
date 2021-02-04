@@ -94,6 +94,22 @@ def xsvector(numatrix,sigmaD,gammaL,Sij):
     """
     return jnp.dot((vvoigt(numatrix,sigmaD,gammaL)).T,Sij)
 
+@jit
+def xsmatrix(numatrix,sigmaDM,gammaLM,SijM):
+    """cross section matrix
+
+    Args:
+       numatrix: wavenumber matrix in R^(Nline x Nwav)
+       sigmaDM: doppler sigma matrix in R^(Nlayer x Nline)
+       gammaLM: gamma factor matrix in R^(Nlayer x Nline)
+       SijM: line strength matrix in R^(Nlayer x Nline)
+
+    Return:
+       cross section matrix in R^(Nlayer x Nwav)
+
+    """
+    return vmap(xsvector,(None,0,0,0))(numatrix,sigmaDM,gammaLM,SijM)
+
 
 @jit
 def lorentz(nu,gammaL):

@@ -23,44 +23,12 @@ class JaxRT(object):
         self.Parr = []
 #        self.dParr = []
         
+
     @partial(jit, static_argnums=(0,))
     def run(self,nu0,sigmaD,gammaL,source):
-        """Running RT by linear algebra radiative transfer (default)
-
-        Args: 
-           nu0: reference wavenumber
-           sigmaD: STD of a Gaussian profile
-           gammaL: gamma factor of Lorentzian
-           source: source vector in the atmospheric layers
-           
-        Returns:
-           F: upward flux
-
-        """
-        numatrix=lpf.make_numatrix(self.nuarr,self.hatnufix,nu0)
-        xsv = 1.e-1*cross(numatrix,sigmaD,gammaL,self.Sfix)
-        dtauM=self.dParr[:,None]*xsv[None,:]
-        TransM=(1.0-dtauM)*jnp.exp(-dtauM)
-
-        #QN=jnp.ones(len(nuarr))*planck.nB(Tarr[0],numic)
-        QN=jnp.zeros(len(self.nuarr))
-        Qv=(1-TransM)*source[:,None]
-        Qv=jnp.vstack([Qv,QN])
-    
-        onev=jnp.ones(len(self.nuarr))
-    
-        TransM=jnp.vstack([onev,TransM])
-        F=(jnp.sum(Qv*jnp.cumprod(TransM,axis=0),axis=0))
-        F=F*3.e7
-   
-        return F
-
-    @partial(jit, static_argnums=(0,))
-    def runx(self,nu0,sigmaD,gammaL,source):
         """Running RT by linear algebra radiative transfer using vmap
 
         Note: 
-           Currently (Jan 16th 2021), 2 times slower than run.
 
         Args: 
            nu0: reference wavenumber
@@ -73,6 +41,8 @@ class JaxRT(object):
 
         """
         numatrix=lpf.make_numatrix(self.nuarr,self.hatnufix,nu0)
+        
+        xsm=xsmatrix(numatrix,sigmaDM,gammaLM,SijM)
         xsv = 1.e-1*crossx(numatrix,sigmaD,gammaL,self.Sfix)
         dtauM=self.dParr[:,None]*xsv[None,:]
         TransM=(1.0-dtauM)*jnp.exp(-dtauM)
@@ -93,7 +63,7 @@ class JaxRT(object):
     
     @partial(jit, static_argnums=(0,))        
     def add_layer(self,carry,x):
-        """adding an atmospheric layer
+        """adding an atmospheric layer (old)
 
         Args:
            carry: F[i], P[i], nu0, sigmaD, gammaL
@@ -117,7 +87,7 @@ class JaxRT(object):
 
     @partial(jit, static_argnums=(0,))
     def layerscan(self,init):
-        """Runnin RT by scanning layers
+        """Runnin RT by scanning layers (old)
 
         Args: 
            init: initial parameters
@@ -134,6 +104,9 @@ class JaxRT(object):
 @jit
 def cross(numatrix,sigmaD,gammaL,S):
     """cross section
+
+    Note:
+       This routine was replaced by lpf.xsvector or lpf.xsmatrix. Will be removed.
 
     Args:
        numatrix: jnp array
@@ -153,27 +126,6 @@ def cross(numatrix,sigmaD,gammaL,S):
     cs = jnp.dot((lpf.voigt(numatrix.flatten(),sigmaD,gammaL)).reshape(jnp.shape(numatrix)).T,S)
     return cs
 
-@jit
-def crossx(numatrix,sigmaD,gammaL,S):
-    """cross section using vmap
-
-    Args:
-       numatrix: jnp array
-                 wavenumber matrix
-       sigmaD: float
-               sigma parameter in Voigt profile
-       gammaL: float
-               gamma parameter in Voigt profile
-       S: jnp array
-          line strength array
-    
-    Returns:
-       cs: cross section
-
-    """
-    from jax import vmap
-    cs=jnp.dot(vmap(lpf.voigt,(0,None,None),0)(numatrix,sigmaD,gammaL).T,S)
-    return cs
 
 
 def pressure_layer(logPtop=-8.,logPbtm=2.,NP=20,mode="ascending"):
