@@ -44,7 +44,7 @@ def rewofz(x,y):
 
 
 @jit
-def imwofz(x, y):
+def imwofz(x,y):
     """Imaginary part of wofz function based on Algorithm 916
     
     We apply a=0.5 for Algorithm 916.
@@ -64,21 +64,27 @@ def imwofz(x, y):
     f=-exx*erfcx(y)*jnp.sin(2.0*xy)+x/jnp.pi*exx*jnp.sinc(xyp)           
     n=jnp.arange(1,ncut+1)             
     n2=n*n                             
-    vec0=0.5*n/(0.25*n2+ y*y)            
+    vec0=1.0/(0.25*n2+ y*y)
+    vecm=0.5*n*vec0
     vec1=jnp.exp(-(0.25*n2+x*x))   
     vec4=jnp.exp(-(0.5*n+x)*(0.5*n+x)) 
     vec5=jnp.exp(-(0.5*n-x)*(0.5*n-x)) 
     Sigma1=jnp.dot(vec0,vec1)
-    Sigma4=jnp.dot(vec0,vec4)
-    Sigma5=jnp.dot(vec0,vec5)
-    f = f + 1.0/jnp.pi*(y*jnp.sin(2.0*xy)*Sigma1 + 0.5*(Sigma5-Sigma4))
-    
+    Sigma4=jnp.dot(vecm,vec4)
+    Sigma5=jnp.dot(vecm,vec5)
+
+    #vecA=2.0/(1.0+0.25*n2/(y*y))
+    #vecB=jnp.exp(-0.25*n2)
+    #Sig=jnp.dot(vecA,vecB)
+    f = f + 1.0/jnp.pi*(y*jnp.sin(2.0*xy)*Sigma1 + 0.5*Sigma5 -0.5*Sigma4)
+#    f = exx*jnp.sin(2.0*xy)*(0.5/jnp.pi/y*(1.0+Sig)-erfcx(y))\
+#    +x/jnp.pi*exx*jnp.sinc(xyp)           
     return f
 
 
 @jit
-def rewofzs2(x,y):
-    """Real part of asymptotic representation of wofz function 1 for |z|**2 > 112 (for e = 10e-6)
+def wofzs2(x,y):
+    """Asymptotic representation of wofz function 1 for |z|**2 > 112 (for e = 10e-6)
 
     See Zaghloul (2018) arxiv:1806.01656
     
@@ -87,14 +93,15 @@ def rewofzs2(x,y):
         y:
         
     Returns:
-        f: Real(wofz(x+iy))
+        f: wofz(x+iy)
 
     """
 
     z=x+y*(1j)
     a=1.0/(2.0*z*z)
     q=(1j)/(z*jnp.sqrt(jnp.pi))*(1.0 + a*(1.0 + a*(3.0 + a*15.0)))
-    return jnp.real(q)
+    return q
+
 
 
 

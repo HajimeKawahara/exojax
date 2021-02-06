@@ -60,7 +60,7 @@ def make_numatrix_direct(nu,hatnu,nu0):
     """Generate numatrix (directly)
 
     Note: 
-       This routine autmatically convert the input to float32 to use XLA. Please check nu/your precision is much smaller than 1e7. Otherwise, use make_numatrix0.
+       This routine autmatically convert the input to float32 to use XLA. Please check nu/your precision is much smaller than 1e-7. Otherwise, use make_numatrix0.
 
     Args:
        nu: wavenumber matrix (Nnu,)

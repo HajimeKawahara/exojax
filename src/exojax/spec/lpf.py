@@ -9,11 +9,11 @@ line profile functions used in exospectral analysis.
 
 from jax import jit, vmap
 import jax.numpy as jnp
-from exojax.special.faddeeva import rewofz,rewofzs2,rewofzx
+from exojax.special.faddeeva import rewofz,imwofz,wofzs2,rewofzx
 
 @jit
 def hjert(x,a):
-    """Voigt-Hjerting function, consisting of a combination of rewofz and rewofzs2.
+    """Voigt-Hjerting function, consisting of a combination of rewofz and real(wofzs2).
     
     Args:
         x: 
@@ -41,7 +41,29 @@ def hjert(x,a):
 
     """
     r2=x*x+a*a
-    return jnp.where(r2<111., rewofz(x,a), rewofzs2(x,a))
+    return jnp.where(r2<111., rewofz(x,a), jnp.real(wofzs2(x,a)))
+
+@jit
+def ljert(x,a):
+    """ljert function, consisting of a combination of imwofz and imwofzs2.
+    
+    Args:
+        x: 
+        a:
+        
+    Returns:
+        ljert: L(x,a) or Imag(wofz(x+ia))
+
+    Examples:
+       
+       ljert provides a L(x,a) function. 
+       
+
+       This function accepts a scalar value as an input. Use jax.vmap to use a vector as an input.
+
+    """
+    r2=x*x+a*a
+    return jnp.where(r2<111., imwofz(x,a), jnp.imag(wofzs2(x,a)))
 
 @jit
 def voigt(nu,sigmaD,gammaL):

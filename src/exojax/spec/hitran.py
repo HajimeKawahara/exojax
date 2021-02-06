@@ -3,14 +3,13 @@ import jax.numpy as jnp
 
 
 @jit
-def SijT(T,logsij0,nu_ij,glower,elower,qT):
+def SijT(T,logsij0,nu_ij,elower,qT):
     """Line strength as a function of temperature
 
     Args:
        T: temperature (K)
        logsij0: log(Sij(Tref)) (Tref=296K)
        nu_ij: line center wavenumber (cm-1)
-       glower: g_lower or gpp
        elower: elower 
        qT: Q(Tref)/Q(T)
 
@@ -23,10 +22,6 @@ def SijT(T,logsij0,nu_ij,glower,elower,qT):
     expow=logsij0-c_2*(elower/T-elower/Tref)
     fac=(1.0-jnp.exp(-c_2*nu_ij/T) )/(1.0-jnp.exp(-c_2*nu_ij/Tref))
     return jnp.exp(expow)*qT*fac
-
-
-
-
 
 @jit
 def gamma_hitran(P, T, Pself, n_air, gamma_air_ref, gamma_self_ref):

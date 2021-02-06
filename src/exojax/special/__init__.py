@@ -13,5 +13,5 @@ from exojax.special.erfcx import (
 from exojax.special.faddeeva import (
     rewofz,
     imwofz,
-    rewofzs2,
+    wofzs2,
 )

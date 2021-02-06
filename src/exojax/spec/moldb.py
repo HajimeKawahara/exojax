@@ -8,7 +8,7 @@ class MdbHit(object):
 
         Args: 
            datapath: 
-           molec: 
+           molec: source table name (e.g. 05_hit12 etc)
            nurange: wavenumber range list (cm-1)
            margin: margin for nurange (cm-1)
            crit: line strength lower limit for extraction
@@ -46,6 +46,9 @@ class MdbHit(object):
     def Qr(self,Tarr):
         """Partition Function ratio using HAPI partition sum
 
+        Args:
+           Tarr: temperature array (K)
+
         """
         allT=list(np.concatenate([[self.Tref],Tarr]))
         Qrx=[]
@@ -57,10 +60,13 @@ class MdbHit(object):
 
 
 def search_molecid(molec):
-    """molec id from tag of HITRAN/HITEMP
+    """molec id from molec (source table name) of HITRAN/HITEMP
 
     Args:
-       molec:
+       molec: source table name
+
+    Return:
+       molecid: HITRAN molecular id
 
     """
     try:
