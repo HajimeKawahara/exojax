@@ -30,12 +30,12 @@ def rewofz(x,y):
     xyp=xy/jnp.pi
     exx=jnp.exp(-x*x)
     f=exx*erfcx(y)*jnp.cos(2.0*xy)+x*jnp.sin(xy)/jnp.pi*exx*jnp.sinc(xyp)
-    n=jnp.arange(1,ncut+1)
-    n2=n*n
-    vec0=1.0/(0.25*n2+ y*y)
-    vec1=jnp.exp(-(0.25*n2+x*x))
-    vec2=jnp.exp(-(0.5*n+x)*(0.5*n+x))
-    vec3=jnp.exp(-(0.5*n-x)*(0.5*n-x))
+    an=0.5*jnp.arange(1,ncut+1)
+    a2n2=an*an
+    vec0=1.0/(a2n2+ y*y)
+    vec1=jnp.exp(-(a2n2+x*x))
+    vec2=jnp.exp(-(an+x)**2)
+    vec3=jnp.exp(-(an-x)**2)
     Sigma1=jnp.dot(vec0,vec1)
     Sigma2=jnp.dot(vec0,vec2)
     Sigma3=jnp.dot(vec0,vec3)
@@ -62,23 +62,18 @@ def imwofz(x,y):
     xyp=2.0*xy/jnp.pi                      
     exx=jnp.exp(-x*x)                  
     f=-exx*erfcx(y)*jnp.sin(2.0*xy)+x/jnp.pi*exx*jnp.sinc(xyp)           
-    n=jnp.arange(1,ncut+1)             
-    n2=n*n                             
-    vec0=1.0/(0.25*n2+ y*y)
-    vecm=0.5*n*vec0
-    vec1=jnp.exp(-(0.25*n2+x*x))   
-    vec4=jnp.exp(-(0.5*n+x)*(0.5*n+x)) 
-    vec5=jnp.exp(-(0.5*n-x)*(0.5*n-x)) 
+    an=0.5*jnp.arange(1,ncut+1)             
+    a2n2=an*an                             
+    vec0=1.0/(a2n2+ y*y)
+    vec1=jnp.exp(-(a2n2+x*x))   
     Sigma1=jnp.dot(vec0,vec1)
+
+    vecm=an*vec0
+    vec4=jnp.exp(-(an+x)*(an+x)) 
+    vec5=jnp.exp(-(an-x)*(an-x)) 
     Sigma4=jnp.dot(vecm,vec4)
     Sigma5=jnp.dot(vecm,vec5)
-
-    #vecA=2.0/(1.0+0.25*n2/(y*y))
-    #vecB=jnp.exp(-0.25*n2)
-    #Sig=jnp.dot(vecA,vecB)
     f = f + 1.0/jnp.pi*(y*jnp.sin(2.0*xy)*Sigma1 + 0.5*Sigma5 -0.5*Sigma4)
-#    f = exx*jnp.sin(2.0*xy)*(0.5/jnp.pi/y*(1.0+Sig)-erfcx(y))\
-#    +x/jnp.pi*exx*jnp.sinc(xyp)           
     return f
 
 
@@ -93,15 +88,54 @@ def wofzs2(x,y):
         y:
         
     Returns:
-        f: wofz(x+iy)
+        H,L: real(wofz(x+iy)),imag(wofz(x+iy))
 
     """
 
     z=x+y*(1j)
     a=1.0/(2.0*z*z)
     q=(1j)/(z*jnp.sqrt(jnp.pi))*(1.0 + a*(1.0 + a*(3.0 + a*15.0)))
-    return q
+    return jnp.real(q),jnp.imag(q)
 
+@jit
+def rewofzs2(x,y):
+    """Real part of Asymptotic representation of wofz function 1 for |z|**2 > 112 (for e = 10e-6)
+
+    See Zaghloul (2018) arxiv:1806.01656
+    
+    Args:
+        x: 
+        y:
+        
+    Returns:
+        f: real(wofz(x+iy))
+
+    """
+
+    z=x+y*(1j)
+    a=1.0/(2.0*z*z)
+    q=(1j)/(z*jnp.sqrt(jnp.pi))*(1.0 + a*(1.0 + a*(3.0 + a*15.0)))
+    return jnp.real(q)
+
+@jit
+def imwofzs2(x,y):
+    """Imag part of Asymptotic representation of wofz function 1 for |z|**2 > 112 (for e = 10e-6)
+
+    See Zaghloul (2018) arxiv:1806.01656
+    
+    Args:
+        x: 
+        y:
+        
+    Returns:
+        f: imag(wofz(x+iy))
+
+    """
+
+    z=x+y*(1j)
+    a=1.0/(2.0*z*z)
+    q=(1j)/(z*jnp.sqrt(jnp.pi))*(1.0 + a*(1.0 + a*(3.0 + a*15.0)))
+    return jnp.imag(q)
 
 
 

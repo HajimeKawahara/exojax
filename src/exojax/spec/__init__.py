@@ -8,11 +8,18 @@ __license__ = ""
 __description__ = ""
 from exojax.spec.lpf import (
     hjert,
-    ljert,
     voigt,
     vvoigt,
     xsvector,
 )
+
+from exojax.spec.clpf import (
+    chjert,
+    cvoigt,
+    cvvoigt,
+    cxsvector,
+)
+
 from exojax.spec.make_numatrix import (
     make_numatrix0,
     make_numatrix_direct,
