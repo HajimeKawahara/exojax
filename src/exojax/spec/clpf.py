@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-"""custom JVP version of the line profile functions used in exospectral analysis.
+"""(Experimental) custom JVP version of the line profile functions used in exospectral analysis.
 
 """
 
