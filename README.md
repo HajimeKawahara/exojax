@@ -1,4 +1,4 @@
-<img src="https://github.com/HajimeKawahara/exojax/blob/develop/documents/logo.PNG" Titie="exojax" Width=0px>
+<img src="https://github.com/HajimeKawahara/exojax/blob/develop/documents/logo.PNG" Titie="exojax" Width=150px>
 
 # exojax
 
