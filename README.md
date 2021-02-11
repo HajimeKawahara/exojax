@@ -1,8 +1,9 @@
-<img src="https://github.com/HajimeKawahara/exojax/blob/develop/documents/logo.PNG" Titie="exojax" Width=150px>
-
 # exojax
 
 Python package for exoplanet characterization compatible to jax, numpyro.
+
+<img src="https://github.com/HajimeKawahara/exojax/blob/develop/documents/exojax.png" Titie="exojax" Width=850px>
+
 
 ## install
 
