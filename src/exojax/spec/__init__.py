@@ -20,6 +20,14 @@ from exojax.spec.clpf import (
     cxsvector,
 )
 
+from exojax.spec.rlpf import (
+    rhjert,
+    rvoigt,
+    rvvoigt,
+    rxsvector,
+)
+
+
 from exojax.spec.make_numatrix import (
     make_numatrix0,
     make_numatrix_direct,

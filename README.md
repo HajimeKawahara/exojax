@@ -2,7 +2,12 @@
 
 # exojax
 
-Python package for exoplanet characterization compatible to jax, numpyro.
+Automatic differentiable spectrum modeling of exoplanets/brown dwarfs compatible to JAX.
+
+- fast computation of the Voigt profile
+- fast opacity computation from HITRAN/HITEMP
+- auto-differentiable radiative transfer
+- HMC-NUTS fitting of emission spectra using NumPyro 
 
 ## install
 

@@ -74,6 +74,11 @@ def search_molecid(molec):
         if hitf[1]=="hit12":
             molecid=int(hitf[0])
             return molecid
+        elif hitf[1]=="hit08":
+            molecid=int(hitf[0])
+            return molecid
+
     except:
         print("Warning: Define molecid by yourself.")
         return None
+

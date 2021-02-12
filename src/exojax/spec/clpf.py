@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-"""(Experimental) custom JVP version of the line profile functions used in exospectral analysis.
+""" Custom JVP version of the line profile functions used in exospectral analysis.
 
 """
 
@@ -49,8 +49,8 @@ def chjert(x,a):
        
        chjert provides a Voigt-Hjerting function w/ custom JVP. 
        
-       >>> hjert(1.0,1.0)
-          DeviceArray(0.3047442, dtype=float32)
+       >>> chjert(1.0,1.0)
+          DeviceArray(0.30474418, dtype=float32)
 
        This function accepts a scalar value as an input. Use jax.vmap to use a vector as an input.
 
@@ -79,7 +79,7 @@ def chjert_jvp(primals, tangents):
 
 @jit
 def cvoigt(nu,sigmaD,gammaL):
-    """Voigt profile using Voigt-Hjerting function 
+    """Custom JVP version of Voigt profile using Voigt-Hjerting function 
 
     Args:
        nu: wavenumber
@@ -98,7 +98,7 @@ def cvoigt(nu,sigmaD,gammaL):
 
 @jit
 def cvvoigt(numatrix,sigmaD,gammas):
-    """vmaped voigt profile
+    """Custom JVP version of vmaped voigt profile
 
     Args:
        numatrix: wavenumber matrix in R^(Nline x Nwav)
@@ -114,7 +114,7 @@ def cvvoigt(numatrix,sigmaD,gammas):
 
 @jit
 def cxsvector(numatrix,sigmaD,gammaL,Sij):
-    """cross section vector 
+    """Custom JVP version of cross section vector 
 
     Args:
        numatrix: wavenumber matrix in R^(Nline x Nwav)
@@ -130,7 +130,7 @@ def cxsvector(numatrix,sigmaD,gammaL,Sij):
 
 @jit
 def cxsmatrix(numatrix,sigmaDM,gammaLM,SijM):
-    """cross section matrix
+    """Custom JVP version of cross section matrix
 
     Args:
        numatrix: wavenumber matrix in R^(Nline x Nwav)
