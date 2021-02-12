@@ -1,5 +1,3 @@
-<img src="https://github.com/HajimeKawahara/exojax/blob/develop/documents/figures/logo.png" Titie="exojax" Width=300px>
-
 # exojax
 
 Automatic differentiable spectrum modeling of exoplanets/brown dwarfs compatible to JAX.
@@ -8,6 +6,9 @@ Automatic differentiable spectrum modeling of exoplanets/brown dwarfs compatible
 - fast opacity computation from HITRAN/HITEMP
 - auto-differentiable radiative transfer
 - HMC-NUTS fitting of emission spectra using NumPyro 
+
+<img src="https://github.com/HajimeKawahara/exojax/blob/develop/documents/exojax.png" Titie="exojax" Width=850px>
+
 
 ## install
 
