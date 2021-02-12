@@ -3,7 +3,7 @@ from exojax.spec import hapi
 __all__ = ['MdbHit']
 
 class MdbHit(object):
-    def __init__(self,datapath,molec,nurange=[-np.inf,np.inf],margin=100.0,crit=-np.inf):
+    def __init__(self,datapath,molec,nurange=[-np.inf,np.inf],margin=250.0,crit=-np.inf):
         """Molecular database for HITRAN/HITEMP form
 
         Args: 
@@ -48,7 +48,11 @@ class MdbHit(object):
 
         Args:
            Tarr: temperature array (K)
-
+        
+        Returns:
+           Qr: partition function ratio array [N_Tarr x N_iso]
+               N_Tarr = len(Tarr)
+               N_iso = len(self.uniqiso)
         """
         allT=list(np.concatenate([[self.Tref],Tarr]))
         Qrx=[]
@@ -58,6 +62,25 @@ class MdbHit(object):
         qr=Qrx[:,0]/Qrx[:,1:].T #Q(Tref)/Q(T)
         return qr
 
+    def Qr_line(self,T):
+        """Partition Function ratio using HAPI partition sum
+
+        Args:
+           T: temperature (K)
+
+        Returns:
+           Qr_line: partition function ratio array for lines [Nlines]
+                    Nlines=len(self.nu_lines)
+
+        """
+        qr_line=np.ones_like(self.isoid,dtype=np.float64)
+        qrx=self.Qr([T])
+        for idx,iso in enumerate(self.uniqiso):
+            mask=self.isoid==iso
+            qr_line[mask]=qrx[0,idx]
+        return qr_line
+
+    
 
 def search_molecid(molec):
     """molec id from molec (source table name) of HITRAN/HITEMP
