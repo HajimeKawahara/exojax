@@ -28,8 +28,10 @@ def gamma_hitran(P, T, Pself, n_air, gamma_air_ref, gamma_self_ref):
     """gamma factor by a pressure broadening 
     
     Args:
-       P: pressure (atm)
+       P: pressure (bar)
        T: temperature (K)
+       Pself: partial pressure (bar)
+       n_air: coefficient of the  temperature  dependence  of  the  air-broadened halfwidth
        gamma_air_ref: gamma air 
        gamma_self_ref: gamma self 
 
@@ -37,8 +39,9 @@ def gamma_hitran(P, T, Pself, n_air, gamma_air_ref, gamma_self_ref):
        gamma: pressure gamma factor (cm-1) 
 
     """
+    Patm=1.01325 #atm (bar)
     Tref=296.0 #reference tempearture (K)
-    gamma=(Tref/T)**n_air *(gamma_air_ref*(P-Pself) + gamma_self_ref*(Pself))
+    gamma=(Tref/T)**n_air *(gamma_air_ref*((P-Pself)/Patm) + gamma_self_ref*(Pself/Patm))
     return gamma
 
 @jit
