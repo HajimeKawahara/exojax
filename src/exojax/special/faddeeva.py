@@ -22,7 +22,7 @@ def rewofz(x,y):
         y:
         
     Returns:
-        f: Real(wofz(x+iy))
+         jnp.array: Real(wofz(x+iy))
 
     """
     ncut=27
@@ -54,7 +54,7 @@ def imwofz(x,y):
         y:
         
     Returns:
-        f: Imag(wofz(x+iy))
+         jnp.array: Imag(wofz(x+iy))
 
     """
     ncut=27
@@ -88,7 +88,7 @@ def wofzs2(x,y):
         y:
         
     Returns:
-        H,L: real(wofz(x+iy)),imag(wofz(x+iy))
+         jnp.array, jnp.array: H=real(wofz(x+iy)),L=imag(wofz(x+iy))
 
     """
 
@@ -108,7 +108,7 @@ def rewofzs2(x,y):
         y:
         
     Returns:
-        f: real(wofz(x+iy))
+         jnp.array: real(wofz(x+iy))
 
     """
 
@@ -128,7 +128,7 @@ def imwofzs2(x,y):
         y:
         
     Returns:
-        f: imag(wofz(x+iy))
+         jnp.array: imag(wofz(x+iy))
 
     """
 
@@ -150,7 +150,7 @@ def rewofzx(x, y):
         y:
         
     Returns:
-        f: Real(wofz(x+iy))
+        jnp.array: Real(wofz(x+iy))
 
     """
     ncut=27           
@@ -176,13 +176,18 @@ def h_fwd(x, y):
 
 def h_bwd(res, g):
     """backward
+
+    Note: 
+        V=Real(wofz), L=Imag(wofz)
+
     Args:
-        res, g:
+        res: res  from h_fwd
+        g: g
 
     Returns:
-        h1,h2: g* partial_x h(x,y), g* partial_y h(x,y)
+           jnp.array, jnp.array: g* partial_x h(x,y), g* partial_y h(x,y)
 
-    V=Real(wofz), L=Imag(wofz)
+
     """
     V, L, x, y = res 
     return (2.0 * (y*L - x*V) * g , 2.0 * (x*L + y*V) * g - 2.0/jnp.sqrt(jnp.pi))

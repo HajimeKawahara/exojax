@@ -12,7 +12,10 @@ def erfcx(x):
          x: should be larger than -9.3
 
     Returns:
-         f: erfcx(x)
+         jnp.array: erfcx(x)
+
+    Note: 
+       We acknowledge the post in stack overflow (https://stackoverflow.com/questions/39777360/accurate-computation-of-scaled-complementary-error-function-erfcx)
 
     """
     a=jnp.abs(x)

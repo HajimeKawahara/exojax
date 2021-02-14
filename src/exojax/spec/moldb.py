@@ -50,9 +50,10 @@ class MdbHit(object):
            Tarr: temperature array (K)
         
         Returns:
-           Qr: partition function ratio array [N_Tarr x N_iso]
-               N_Tarr = len(Tarr)
-               N_iso = len(self.uniqiso)
+           numpy.array: Qr = partition function ratio array [N_Tarr x N_iso]
+
+        Notes: N_Tarr = len(Tarr), N_iso = len(self.uniqiso)
+
         """
         allT=list(np.concatenate([[self.Tref],Tarr]))
         Qrx=[]
@@ -69,8 +70,9 @@ class MdbHit(object):
            T: temperature (K)
 
         Returns:
-           Qr_line: partition function ratio array for lines [Nlines]
-                    Nlines=len(self.nu_lines)
+           numpy.array: Qr_line, partition function ratio array for lines [Nlines]
+
+        Notes: Nlines=len(self.nu_lines)
 
         """
         qr_line=np.ones_like(self.isoid,dtype=np.float64)
@@ -89,7 +91,7 @@ def search_molecid(molec):
        molec: source table name
 
     Return:
-       molecid: HITRAN molecular id
+       int: molecid (HITRAN molecular id)
 
     """
     try:

@@ -1,40 +1,15 @@
 # -*- coding: utf-8 -*-
 '''hapi
 
-THIS MODULE WAS IMPORTED FROM THE OFFICIAL HITRAN API 
-(HAPI version 1.1.2.0) UNDER THE FOLLOWING MIT LICENSE.
+Note:
+   THIS MODULE WAS IMPORTED FROM THE OFFICIAL HITRAN API (HAPI version 1.1.2.0) UNDER THE FOLLOWING MIT LICENSE.
 
-HITRAN Application Programming Interface (HAPI) MIT License
-Copyright 2018 HITRAN team (http://hitran.org/).
+Note:
+    HITRAN Application Programming Interface (HAPI) MIT License Copyright 2018 HITRAN team (http://hitran.org/). Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions: The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software. THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-Permission is hereby granted, free of charge, to any person obtaining a copy of 
-this software and associated documentation files (the "Software"), to deal in th
-e Software without restriction, including without limitation the rights to use, 
-copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the 
-Software, and to permit persons to whom the Software is furnished to do so, subj
-ect to the following conditions:
+Note:
+    This module provides an access to the HITRAN data. Data is downloaded and cached.This module serves as a simple database manager front end. API is aimed to be RESTful, which means that interaction between local API and remote data-server will be held  via sending RESTful queries (API->remote) and receiving data preferably in text format (remote->API). Object are supposed to be implemented by structures/dicts as they are present in almost any programming language. Trying to retain functional style for this API. 
 
-The above copyright notice and this permission notice shall be included in all c
-opies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
-ED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR 
-A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYR
-IGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN 
-ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WIT
-H THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
-
---------------------------------------------------
-This module provides an access to the HITRAN data.
-Data is downloaded and cached.
-This module serves as a simple database manager front end.
-API is aimed to be RESTful, which means that interaction
-between local API and remote data-server will be held 
-via sending RESTful queries (API->remote) and
-receiving data preferably in text format (remote->API).
-Object are supposed to be implemented by structures/dicts
-as they are present in almost any programming language.
-Trying to retain functional style for this API. 
 '''
 import sys
 import json
@@ -1374,10 +1349,13 @@ def cache2storage(TableName):
     
 def storage2cache(TableName,cast=True,ext=None,nlines=None,pos=None):
     """ edited by NHL
-    TableName: name of the HAPI table to read in
-    ext: file extension
-    nlines: number of line in the block; if None, read all line at once 
-    pos: file position to seek
+
+    Args:
+        TableName: name of the HAPI table to read in
+        ext: file extension
+        nlines: number of line in the block; if None, read all line at once 
+        pos: file position to seek
+
     """
     #print 'storage2cache:'
     #print('TableName',TableName)
@@ -1945,80 +1923,6 @@ OPERATORS = {\
 'COUNT' : lambda args : groupCOUNT(args[0]),
 }
     
-# new evaluateExpression function,
-#  accounting for groups
-"""
-def evaluateExpression(root,VarDictionary,GroupIndexKey=None):
-    # input = local tree root
-    # XXX: this could be very slow due to passing
-    #      every time VarDictionary as a parameter
-    # Two special cases: 1) root=varname
-    #                    2) root=list/tuple
-    # These cases must be processed in a separate way
-    if type(root) in set([list,tuple]):
-       # root is not a leaf
-       head = root[0].upper()
-       # string constants are treated specially
-       if head in set(['STR','STRING']): # one arg
-          return operationSTR(root[1])
-       elif head in set(['SET']):
-          return operationSET(root[1])
-       tail = root[1:]
-       args = []
-       # evaluate arguments recursively
-       for element in tail: # resolve tree by recursion
-           args.append(evaluateExpression(element,VarDictionary,GroupIndexKey))
-       # call functions with evaluated arguments
-       if head in set(['LIST']): # list arg
-          return operationLIST(args)
-       elif head in set(['&','&&','AND']): # many args 
-          return operationAND(args)
-       elif head in set(['|','||','OR']): # many args
-          return operationOR(args)
-       elif head in set(['!','NOT']): # one args
-          return operationNOT(args[0])
-       elif head in set(['RANGE','BETWEEN']): # three args
-          return operationRANGE(args[0],args[1],args[2])
-       elif head in set(['IN','SUBSET']): # two args
-          return operationSUBSET(args[0],args[1])
-       elif head in set(['<','LESS','LT']): # many args
-          return operationLESS(args)
-       elif head in set(['>','MORE','MT']): # many args
-          return operationMORE(args)
-       elif head in set(['<=','LESSOREQUAL','LTE']): # many args
-          return operationLESSOREQUAL(args)
-       elif head in set(['>=','MOREOREQUAL','MTE']): # many args
-          return operationMOREOREQUAL(args)
-       elif head in set(['=','==','EQ','EQUAL','EQUALS']): # many args
-          return operationEQUAL(args)
-       elif head in set(['!=','<>','~=','NE','NOTEQUAL']): # two args
-          return operationNOTEQUAL(args[0],args[1])
-       elif head in set(['+','SUM']): # many args
-          return operationSUM(args)
-       elif head in set(['-','DIFF']): # two args
-          return operationDIFF(args[0],args[1])
-       elif head in set(['*','MUL']): # many args
-          return operationMUL(args)
-       elif head in set(['/','DIV']): # two args
-          return operationDIV(args[0],args[1])
-       elif head in set(['MATCH','LIKE']): # two args
-          return operationMATCH(args[0],args[1])
-       elif head in set(['SEARCH']): # two args
-          return operationSEARCH(args[0],args[1])
-       elif head in set(['FINDALL']): # two args
-          return operationFINDALL(args[0],args[1])
-       # --- GROUPING OPERATIONS ---
-       elif head in set(['COUNT']):
-          return groupCOUNT(GroupIndexKey)
-       else:
-          raise Exception('Unknown operator: %s' % root[0])
-    elif type(root)==str:
-       # root is a par_name
-       return VarDictionary[root]
-    else: 
-       # root is a non-string constant
-       return root
-"""
 def evaluateExpression(root,VarDictionary,GroupIndexKey=None):
     # input = local tree root
     # XXX: this could be very slow due to passing
@@ -3967,6 +3871,7 @@ def print_data_tutorial():
 spectra_tutorial_text = \
 """
 CALCULATE YOUR SPECTRA!
+
 Welcome to tutorial on calculating a spectra from line-by-line data.
   ///////////////
  /// PREFACE ///
@@ -16806,7 +16711,7 @@ VARIABLES['CPF'] = hum1_wei
     
 # ------------------ Hartmann-Tran Profile (HTP) ------------------------
 def pcqsdhc(sg0,GamD,Gam0,Gam2,Shift0,Shift2,anuVC,eta,sg,Ylm=0.0):
-    #-------------------------------------------------
+    """
     #      "pCqSDHC": partially-Correlated quadratic-Speed-Dependent Hard-Collision
     #      Subroutine to Compute the complex normalized spectral shape of an 
     #      isolated line by the pCqSDHC model
@@ -16848,7 +16753,7 @@ def pcqsdhc(sg0,GamD,Gam0,Gam2,Shift0,Shift2,anuVC,eta,sg,Ylm=0.0):
     #-------------------------------------------------
     
     # sg is the only vector argument which is passed to function
-    
+    """
     if type(sg) not in set([array,ndarray,list,tuple]):
         sg = array([sg])
     

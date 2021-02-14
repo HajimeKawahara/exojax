@@ -18,7 +18,7 @@ def xsection(nu,nu0,sigmaD,gammaL,Sij,memory_size=15.):
        memory_size: memory size for numatrix0 (MB)
 
     Returns:
-       xsv: cross section
+       numpy.array: cross section (xsv)
 
     Examples:
 
