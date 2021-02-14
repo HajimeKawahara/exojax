@@ -41,3 +41,44 @@ def plotdtauM(nus,dtauM,Tarr=None,Parr=None,unit=None):
         plt.gca().invert_yaxis()
         plt.ylim(np.log10(Parr[-1]),np.log10(Parr[0]))
         ax.set_aspect(1.45/ax.get_data_ratio())
+
+
+def plottau(nus,dtauM,Tarr=None,Parr=None,unit=None):
+    """plot tau
+
+    Args:
+       nus: wavenumber
+       dtauM: dtau matrix
+       Tarr: temperature profile
+       Parr: perssure profile 
+       unit: x-axis unit = um (wavelength microns), nm  = (wavelength nm), AA  = (wavelength Angstrom), else (wavenumber cm)
+
+    """
+    ltau=np.log10(np.cumsum(dtauM[:,::-1],axis=0))
+    fig=plt.figure(figsize=(20,3))
+    ax=plt.subplot2grid((1, 20), (0, 3),colspan=18)
+    if unit=="um":
+        c=ax.imshow(ltau,vmin=-3,vmax=3,cmap="RdYlBu_r",alpha=0.9,extent=[1.e4/nus[-1],1.e4/nus[0],np.log10(Parr[-1]),np.log10(Parr[0])])
+        plt.xlabel("wavelength ($\mu \mathrm{m}$)")
+    elif unit=="nm":
+        c=ax.imshow(ltau,vmin=-3,vmax=3,cmap="RdYlBu_r",alpha=0.9,extent=[1.e7/nus[-1],1.e7/nus[0],np.log10(Parr[-1]),np.log10(Parr[0])])
+        plt.xlabel("wavelength (nm)")
+    elif unit=="AA":
+        c=ax.imshow(ltau,vmin=-3,vmax=3,cmap="RdYlBu_r",alpha=0.9,extent=[1.e8/nus[-1],1.e8/nus[0],np.log10(Parr[-1]),np.log10(Parr[0])])
+        plt.xlabel("wavelength ($\AA$)")
+    else:
+        c=ax.imshow(np.log10(dtauM),vmin=-3,vmax=3,cmap="RdYlBu_r",alpha=0.9\
+           ,extent=[nus[0],nus[-1],np.log10(Parr[-1]),np.log10(Parr[0])])
+        plt.xlabel("wavenumber ($\mathrm{cm}^{-1}$)")
+        
+    plt.colorbar(c,shrink=0.8)
+    plt.ylabel("log10 (P (bar))")
+    ax.set_aspect(0.2/ax.get_data_ratio())
+    if Tarr is not None and Parr is not None:
+        ax=plt.subplot2grid((1, 20), (0, 0),colspan=2)
+        plt.plot(Tarr,np.log10(Parr),color="gray")
+        plt.xlabel("temperature (K)")
+        plt.ylabel("log10 (P (bar))")
+        plt.gca().invert_yaxis()
+        plt.ylim(np.log10(Parr[-1]),np.log10(Parr[0]))
+        ax.set_aspect(1.45/ax.get_data_ratio())
