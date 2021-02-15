@@ -138,8 +138,11 @@ def pressure_layer(logPtop=-8.,logPbtm=2.,NP=20,mode="ascending"):
 
     Returns: 
          Parr: pressure layer
-         dParr: delta pressure layer
+         dParr: delta pressure layer 
          k: k-factor, P[i-1] = k*P[i]
+
+    Note:
+        dParr[i] = Parr[i] - Parr[i-1], dParr[0] = (1-k) Parr[0] for ascending mode
     
     """
     dlogP=(logPbtm-logPtop)/(NP-1)
