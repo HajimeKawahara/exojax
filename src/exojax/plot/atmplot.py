@@ -56,7 +56,7 @@ def plottau(nus,dtauM,Tarr=None,Parr=None,unit=None,mode=None,vmin=-3,vmax=3):
         ax.set_aspect(1.45/ax.get_data_ratio())
 
 
-def plotcf(nus,dtauM,Tarr,Parr,dParr,unit=None,cmap="magma"):
+def plotcf(nus,dtauM,Tarr,Parr,dParr,unit=None,normalize=True,cmap="magma"):
     from exojax.spec.planck import piBarr
     """plot contribution function
 
@@ -69,15 +69,22 @@ def plotcf(nus,dtauM,Tarr,Parr,dParr,unit=None,cmap="magma"):
        Parr: perssure profile 
        dParr: perssure difference profile 
        unit: x-axis unit=um (wavelength microns), nm  = (wavelength nm), AA  = (wavelength Angstrom), 
+       normalize: normalize cf for each wavenumber? 
        mode: mode=None (lotting tau), mode=dtau (plotting delta tau for each layer)
        cmap: colormap
     """
 
     hcperk=1.4387773538277202
     tau=np.cumsum(dtauM,axis=0)
-    cf=np.exp(-tau)*dtauM*Parr[:,None]/dParr[:,None]
-#nus**3/(np.exp(hcperk*nus/Tarr[:,None])-1.0)\
 
+    
+    cf=np.exp(-tau)*dtauM\
+        *(dtauM*Parr[:,None]/dParr[:,None])\
+        *nus**3/(np.exp(hcperk*nus/Tarr[:,None])-1.0)
+    
+        
+    if normalize==True:
+        cf=np.log10(cf/np.sum(cf,axis=0))
     
     fig=plt.figure(figsize=(20,3))
     ax=plt.subplot2grid((1, 20), (0, 3),colspan=18)
