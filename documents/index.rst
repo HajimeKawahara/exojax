@@ -9,13 +9,16 @@ Welcome to exojax's documentation!
 Exojax provides
 
 - an auto-differentiable Voigt profile,
-- an auto-differentiable spectrum model of exolpanets/brown dwarfs.
+- an auto-differentiable spectrum model of exoplanets/brown dwarfs.
 
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 1
    :caption: Contents:
    	     
-   exojax/modules
+   exojax/exojax.spec
+   exojax/exojax.special
+   exojax/exojax.utils
+   exojax/exojax.plot
 
 Indices and tables
 ==================

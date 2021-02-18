@@ -81,8 +81,14 @@
               
             
             
-              <!-- Local TOC -->
-              <div class="local-toc"></div>
+              <p class="caption"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="exojax/exojax.spec.html">exojax.spec package</a></li>
+<li class="toctree-l1"><a class="reference internal" href="exojax/exojax.special.html">exojax.special package</a></li>
+<li class="toctree-l1"><a class="reference internal" href="exojax/exojax.utils.html">exojax.utils package</a></li>
+<li class="toctree-l1"><a class="reference internal" href="exojax/exojax.plot.html">exojax.plot package</a></li>
+</ul>
+
             
           
         </div>
@@ -167,6 +173,7 @@
  | <a href="#R"><strong>R</strong></a>
  | <a href="#S"><strong>S</strong></a>
  | <a href="#T"><strong>T</strong></a>
+ | <a href="#U"><strong>U</strong></a>
  | <a href="#V"><strong>V</strong></a>
  | <a href="#W"><strong>W</strong></a>
  | <a href="#X"><strong>X</strong></a>
@@ -313,6 +320,8 @@
 </li>
       <li><a href="exojax/exojax.spec.html#exojax.spec.hitran.doppler_sigma">doppler_sigma() (in module exojax.spec.hitran)</a>
 </li>
+      <li><a href="exojax/exojax.spec.html#exojax.spec.moldb.MdbHit.download">download() (exojax.spec.moldb.MdbHit method)</a>
+</li>
       <li><a href="exojax/exojax.spec.html#exojax.spec.hapi.dropTable">dropTable() (in module exojax.spec.hapi)</a>
 </li>
   </ul></td>
@@ -361,10 +370,10 @@
 </li>
       <li><a href="exojax/exojax.spec.html#module-exojax.spec.absorption">exojax.spec.absorption (module)</a>
 </li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="exojax/exojax.spec.html#module-exojax.spec.clpf">exojax.spec.clpf (module)</a>
 </li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="exojax/exojax.spec.html#module-exojax.spec.download_moldb">exojax.spec.download_moldb (module)</a>
 </li>
       <li><a href="exojax/exojax.spec.html#module-exojax.spec.hapi">exojax.spec.hapi (module)</a>
@@ -398,6 +407,10 @@
       <li><a href="exojax/exojax.special.html#module-exojax.special.faddeeva">exojax.special.faddeeva (module)</a>
 </li>
       <li><a href="exojax/exojax.special.html#module-exojax.special.faddeeva_tmp">exojax.special.faddeeva_tmp (module)</a>
+</li>
+      <li><a href="exojax/exojax.utils.html#module-exojax.utils">exojax.utils (module)</a>
+</li>
+      <li><a href="exojax/exojax.utils.html#module-exojax.utils.url">exojax.utils.url (module)</a>
 </li>
       <li><a href="exojax/exojax.aux.html#exojax.aux.pf_bc.extract_pf_bc">extract_pf_bc() (in module exojax.aux.pf_bc)</a>
 </li>
@@ -687,6 +700,10 @@
 </li>
       <li><a href="exojax/exojax.spec.html#exojax.spec.hapi.pcqsdhc">pcqsdhc() (in module exojax.spec.hapi)</a>
 </li>
+      <li><a href="exojax/exojax.spec.html#exojax.spec.planck.piBarr">piBarr() (in module exojax.spec.planck)</a>
+</li>
+      <li><a href="exojax/exojax.plot.html#exojax.plot.atmplot.plotcf">plotcf() (in module exojax.plot.atmplot)</a>
+</li>
       <li><a href="exojax/exojax.plot.html#exojax.plot.atmplot.plottau">plottau() (in module exojax.plot.atmplot)</a>
 </li>
       <li><a href="exojax/exojax.spec.html#exojax.spec.rtcheck.CheckRT.plotxa">plotxa() (exojax.spec.rtcheck.CheckRT method)</a>
@@ -709,10 +726,10 @@
 </li>
       <li><a href="exojax/exojax.spec.html#exojax.spec.hapi.print_slit_functions">print_slit_functions() (in module exojax.spec.hapi)</a>
 </li>
-      <li><a href="exojax/exojax.spec.html#exojax.spec.hapi.print_spectra_tutorial">print_spectra_tutorial() (in module exojax.spec.hapi)</a>
-</li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="exojax/exojax.spec.html#exojax.spec.hapi.print_spectra_tutorial">print_spectra_tutorial() (in module exojax.spec.hapi)</a>
+</li>
       <li><a href="exojax/exojax.spec.html#exojax.spec.hapi.PROFILE_DOPPLER">PROFILE_DOPPLER() (in module exojax.spec.hapi)</a>
 </li>
       <li><a href="exojax/exojax.spec.html#exojax.spec.hapi.PROFILE_HT">PROFILE_HT() (in module exojax.spec.hapi)</a>
@@ -876,6 +893,14 @@
       <li><a href="exojax/exojax.spec.html#exojax.spec.lpf.Tc">Tc() (in module exojax.spec.lpf)</a>
 </li>
       <li><a href="exojax/exojax.spec.html#exojax.spec.hapi.transmittanceSpectrum">transmittanceSpectrum() (in module exojax.spec.hapi)</a>
+</li>
+  </ul></td>
+</tr></table>
+
+<h2 id="U">U</h2>
+<table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="exojax/exojax.utils.html#exojax.utils.url.url_HITRAN12">url_HITRAN12() (in module exojax.utils.url)</a>
 </li>
   </ul></td>
 </tr></table>

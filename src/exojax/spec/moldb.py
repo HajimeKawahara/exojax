@@ -1,22 +1,26 @@
 import numpy as np
+import pathlib
 from exojax.spec import hapi
 __all__ = ['MdbHit']
 
 class MdbHit(object):
-    def __init__(self,datapath,molec,nurange=[-np.inf,np.inf],margin=250.0,crit=-np.inf):
+    def __init__(self,path,nurange=[-np.inf,np.inf],margin=250.0,crit=-np.inf):
         """Molecular database for HITRAN/HITEMP form
 
         Args: 
-           datapath: 
-           molec: source table name (e.g. 05_hit12 etc)
+           path: path for HITRAN/HITEMP par file
            nurange: wavenumber range list (cm-1)
            margin: margin for nurange (cm-1)
            crit: line strength lower limit for extraction
 
-        """
-        hapi.db_begin(datapath)
-        self.Tref=296.0
-        self.molec = molec
+        """        
+        self.path = pathlib.Path(path)
+        molec=str(self.path.stem)
+        #downloading
+        if not self.path.exists():
+            self.download()
+        hapi.db_begin(str(self.path.parent))            
+        self.Tref=296.0        
         self.molecid = search_molecid(molec)
         self.crit = crit
         self.margin = margin
@@ -43,6 +47,19 @@ class MdbHit(object):
         self.logsij0=np.log(self.S_ij)
         self.uniqiso=np.unique(self.isoid)
 
+    def download(self):
+        """downloading HITRAN par file
+
+        """
+        import urllib.request
+        from exojax.utils.url import url_HITRAN12
+        print("Downloading parfile from "+url)
+        url = url_HITRAN12()+self.path.name
+        try:
+            urllib.request.urlretrieve(url,str(self.path))
+        except:
+            print("Couldn't download and save.")
+            
     def Qr(self,Tarr):
         """Partition Function ratio using HAPI partition sum
 
