@@ -16712,47 +16712,39 @@ VARIABLES['CPF'] = hum1_wei
 # ------------------ Hartmann-Tran Profile (HTP) ------------------------
 def pcqsdhc(sg0,GamD,Gam0,Gam2,Shift0,Shift2,anuVC,eta,sg,Ylm=0.0):
     """
-    #      "pCqSDHC": partially-Correlated quadratic-Speed-Dependent Hard-Collision
-    #      Subroutine to Compute the complex normalized spectral shape of an 
-    #      isolated line by the pCqSDHC model
-    #
-    #      Reference:
-    #      H. Tran, N.H. Ngo, J.-M. Hartmann.
-    #      Efficient computation of some speed-dependent isolated line profiles.
-    #      JQSRT, Volume 129, November 2013, Pages 199–203
-    #      http://dx.doi.org/10.1016/j.jqsrt.2013.06.015
-    #
-    #      Input/Output Parameters of Routine (Arguments or Common)
-    #      ---------------------------------
-    #      T          : Temperature in Kelvin (Input).
-    #      amM1       : Molar mass of the absorber in g/mol(Input).
-    #      sg0        : Unperturbed line position in cm-1 (Input).
-    #      GamD       : Doppler HWHM in cm-1 (Input)
-    #      Gam0       : Speed-averaged line-width in cm-1 (Input).       
-    #      Gam2       : Speed dependence of the line-width in cm-1 (Input).
-    #      anuVC      : Velocity-changing frequency in cm-1 (Input).
-    #      eta        : Correlation parameter, No unit (Input).
-    #      Shift0     : Speed-averaged line-shift in cm-1 (Input).
-    #      Shift2     : Speed dependence of the line-shift in cm-1 (Input)       
-    #      sg         : Current WaveNumber of the Computation in cm-1 (Input).
-    #      Ylm        : 1st order (Rosenkranz) line mixing coefficients in cm-1 (Input)
-    #
-    #      Output Quantities (through Common Statements)
-    #      -----------------
-    #      LS_pCqSDHC_R: Real part of the normalized spectral shape (cm)
-    #      LS_pCqSDHC_I: Imaginary part of the normalized spectral shape (cm)
-    #
-    #      Called Routines: 'CPF'      (Complex Probability Function)
-    #      ---------------  'CPF3'      (Complex Probability Function for the region 3)
-    #
-    #      Called By: Main Program
-    #      ---------
-    #
-    #     Double Precision Version
-    #
-    #-------------------------------------------------
+    Note:
+          "pCqSDHC": partially-Correlated quadratic-Speed-Dependent Hard-Collision
+          Subroutine to Compute the complex normalized spectral shape of an 
+          isolated line by the pCqSDHC model    
+
+    Note:
+          H. Tran, N.H. Ngo, J.-M. Hartmann.
+          Efficient computation of some speed-dependent isolated line profiles.
+          JQSRT, Volume 129, November 2013, Pages 199–203
+          http://dx.doi.org/10.1016/j.jqsrt.2013.06.015
     
-    # sg is the only vector argument which is passed to function
+    Args:
+          T          : Temperature in Kelvin (Input).
+          amM1       : Molar mass of the absorber in g/mol(Input).
+          sg0        : Unperturbed line position in cm-1 (Input).
+          GamD       : Doppler HWHM in cm-1 (Input)
+          Gam0       : Speed-averaged line-width in cm-1 (Input).       
+          Gam2       : Speed dependence of the line-width in cm-1 (Input).
+          anuVC      : Velocity-changing frequency in cm-1 (Input).
+          eta        : Correlation parameter, No unit (Input).
+          Shift0     : Speed-averaged line-shift in cm-1 (Input).
+          Shift2     : Speed dependence of the line-shift in cm-1 (Input)       
+          sg         : Current WaveNumber of the Computation in cm-1 (Input).
+          Ylm        : 1st order (Rosenkranz) line mixing coefficients in cm-1 (Input)
+  
+    Return:
+          LS_pCqSDHC_R, Real part of the normalized spectral shape (cm)
+          LS_pCqSDHC_I, Imaginary part of the normalized spectral shape (cm)    
+          Called Routines. 'CPF'      (Complex Probability Function)
+          ---------------  'CPF3'      (Complex Probability Function for the region 3)
+    
+    Note:
+       sg is the only vector argument which is passed to function
     """
     if type(sg) not in set([array,ndarray,list,tuple]):
         sg = array([sg])
@@ -16884,71 +16876,71 @@ def pcqsdhc(sg0,GamD,Gam0,Gam2,Shift0,Shift2,anuVC,eta,sg,Ylm=0.0):
 # set interfaces for profiles
 def PROFILE_HT(sg0,GamD,Gam0,Gam2,Shift0,Shift2,anuVC,eta,sg,Ylm=0.0):
     """
-    #-------------------------------------------------
-    #      "pCqSDHC": partially-Correlated quadratic-Speed-Dependent Hard-Collision
-    #      Subroutine to Compute the complex normalized spectral shape of an 
-    #      isolated line by the pCqSDHC model
-    #
-    #      References:
-    #
-    #      1) N.H. Ngo, D. Lisak, H. Tran, J.-M. Hartmann.
-    #         An isolated line-shape model to go beyond the Voigt profile in 
-    #         spectroscopic databases and radiative transfer codes.
-    #         JQSRT, Volume 129, November 2013, Pages 89–100
-    #         http://dx.doi.org/10.1016/j.jqsrt.2013.05.034
-    #
-    #      2) H. Tran, N.H. Ngo, J.-M. Hartmann.
-    #         Efficient computation of some speed-dependent isolated line profiles.
-    #         JQSRT, Volume 129, November 2013, Pages 199–203
-    #         http://dx.doi.org/10.1016/j.jqsrt.2013.06.015
-    #
-    #      3) H. Tran, N.H. Ngo, J.-M. Hartmann.
-    #         Erratum to “Efficient computation of some speed-dependent isolated line profiles”.
-    #         JQSRT, Volume 134, February 2014, Pages 104
-    #         http://dx.doi.org/10.1016/j.jqsrt.2013.10.015
-    #
-    #      Input/Output Parameters of Routine (Arguments or Common)
-    #      ---------------------------------
-    #      T       : Temperature in Kelvin (Input).
-    #      amM1    : Molar mass of the absorber in g/mol(Input).
-    #      sg0     : Unperturbed line position in cm-1 (Input).
-    #      GamD    : Doppler HWHM in cm-1 (Input)
-    #      Gam0    : Speed-averaged line-width in cm-1 (Input).       
-    #      Gam2    : Speed dependence of the line-width in cm-1 (Input).
-    #      anuVC   : Velocity-changing frequency in cm-1 (Input).
-    #      eta     : Correlation parameter, No unit (Input).
-    #      Shift0  : Speed-averaged line-shift in cm-1 (Input).
-    #      Shift2  : Speed dependence of the line-shift in cm-1 (Input)       
-    #      sg      : Current WaveNumber of the Computation in cm-1 (Input).
-    #      Ylm     : 1st order (Rosenkranz) line mixing coefficients in cm-1 (Input)
-    #
-    #      The function has two outputs:
-    #      -----------------
-    #      (1): Real part of the normalized spectral shape (cm)
-    #      (2): Imaginary part of the normalized spectral shape (cm)
-    #
-    #      Called Routines: 'CPF'       (Complex Probability Function)
-    #      ---------------  'CPF3'      (Complex Probability Function for the region 3)
-    #
-    #      Based on a double precision Fortran version
-    #
-    #-------------------------------------------------
+    Note:
+          "pCqSDHC": partially-Correlated quadratic-Speed-Dependent Hard-Collision
+          Subroutine to Compute the complex normalized spectral shape of an 
+          isolated line by the pCqSDHC model
+    
+    Note:
+          1) N.H. Ngo, D. Lisak, H. Tran, J.-M. Hartmann.
+             An isolated line-shape model to go beyond the Voigt profile in 
+             spectroscopic databases and radiative transfer codes.
+             JQSRT, Volume 129, November 2013, Pages 89–100
+             http://dx.doi.org/10.1016/j.jqsrt.2013.05.034
+    
+          2) H. Tran, N.H. Ngo, J.-M. Hartmann.
+             Efficient computation of some speed-dependent isolated line profiles.
+             JQSRT, Volume 129, November 2013, Pages 199–203
+             http://dx.doi.org/10.1016/j.jqsrt.2013.06.015
+    
+          3) H. Tran, N.H. Ngo, J.-M. Hartmann.
+             Erratum to “Efficient computation of some speed-dependent isolated line profiles”.
+             JQSRT, Volume 134, February 2014, Pages 104
+             http://dx.doi.org/10.1016/j.jqsrt.2013.10.015
+    
+    Args:
+          T       : Temperature in Kelvin (Input).
+          amM1    : Molar mass of the absorber in g/mol(Input).
+          sg0     : Unperturbed line position in cm-1 (Input).
+          GamD    : Doppler HWHM in cm-1 (Input)
+          Gam0    : Speed-averaged line-width in cm-1 (Input).       
+          Gam2    : Speed dependence of the line-width in cm-1 (Input).
+          anuVC   : Velocity-changing frequency in cm-1 (Input).
+          eta     : Correlation parameter, No unit (Input).
+          Shift0  : Speed-averaged line-shift in cm-1 (Input).
+          Shift2  : Speed dependence of the line-shift in cm-1 (Input)       
+          sg      : Current WaveNumber of the Computation in cm-1 (Input).
+          Ylm     : 1st order (Rosenkranz) line mixing coefficients in cm-1 (Input)
+    
+    Returns:
+          The function has two outputs:
+          -----------------
+          (1): Real part of the normalized spectral shape (cm)
+          (2): Imaginary part of the normalized spectral shape (cm)
+    
+          Called Routines: 'CPF'       (Complex Probability Function)
+          ---------------  'CPF3'      (Complex Probability Function for the region 3)
+    
+    Note:
+          Based on a double precision Fortran version
+    
+    -------------------------------------------------
     """
     return pcqsdhc(sg0,GamD,Gam0,Gam2,Shift0,Shift2,anuVC,eta,sg,Ylm)
 PROFILE_HTP = PROFILE_HT # stub for backwards compatibility
 def PROFILE_SDRAUTIAN(sg0,GamD,Gam0,Gam2,Shift0,Shift2,anuVC,sg,Ylm=0.0):
-    """
-    # Speed dependent Rautian profile based on HTP.
-    # Input parameters:
-    #      sg0     : Unperturbed line position in cm-1 (Input).
-    #      GamD    : Doppler HWHM in cm-1 (Input)
-    #      Gam0    : Speed-averaged line-width in cm-1 (Input).       
-    #      Gam2    : Speed dependence of the line-width in cm-1 (Input).
-    #      anuVC   : Velocity-changing frequency in cm-1 (Input).
-    #      Shift0  : Speed-averaged line-shift in cm-1 (Input).
-    #      Shift2  : Speed dependence of the line-shift in cm-1 (Input)       
-    #      sg      : Current WaveNumber of the Computation in cm-1 (Input).
-    #      Ylm     : 1st order (Rosenkranz) line mixing coefficients in cm-1 (Input)
+    """Speed dependent Rautian profile based on HTP.
+
+    Args:
+          sg0     : Unperturbed line position in cm-1 (Input).
+          GamD    : Doppler HWHM in cm-1 (Input)
+          Gam0    : Speed-averaged line-width in cm-1 (Input).       
+          Gam2    : Speed dependence of the line-width in cm-1 (Input).
+          anuVC   : Velocity-changing frequency in cm-1 (Input).
+          Shift0  : Speed-averaged line-shift in cm-1 (Input).
+          Shift2  : Speed dependence of the line-shift in cm-1 (Input)       
+          sg      : Current WaveNumber of the Computation in cm-1 (Input).
+          Ylm     : 1st order (Rosenkranz) line mixing coefficients in cm-1 (Input)
     """
     return pcqsdhc(sg0,GamD,Gam0,Gam2,Shift0,Shift2,anuVC,cZero,sg,Ylm)
 def PROFILE_RAUTIAN(sg0,GamD,Gam0,Shift0,anuVC,eta,sg,Ylm=0.0):
