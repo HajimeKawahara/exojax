@@ -56,11 +56,11 @@ def plottau(nus,dtauM,Tarr=None,Parr=None,unit=None,mode=None,vmin=-3,vmax=3):
         ax.set_aspect(1.45/ax.get_data_ratio())
 
 
-def plotcf(nus,dtauM,Tarr,Parr,dParr,unit=None,normalize=True,cmap="magma"):
+def plotcf(nus,dtauM,Tarr,Parr,dParr,unit=None,mode=None,log=False,normalize=True,cmap="bone_r"):
     from exojax.spec.planck import piBarr
     """plot contribution function
 
-       This function gives the color map of log10(cf), optionally w/ a T-P profile.
+       This function gives a plot of contribution function, optionally w/ a T-P profile.
 
     Args:
        nus: wavenumber
@@ -69,42 +69,61 @@ def plotcf(nus,dtauM,Tarr,Parr,dParr,unit=None,normalize=True,cmap="magma"):
        Parr: perssure profile 
        dParr: perssure difference profile 
        unit: x-axis unit=um (wavelength microns), nm  = (wavelength nm), AA  = (wavelength Angstrom), 
+       mode: None=contour, "cmap"=color map
+       log: True=use log10(cf)
        normalize: normalize cf for each wavenumber? 
-       mode: mode=None (lotting tau), mode=dtau (plotting delta tau for each layer)
        cmap: colormap
     """
 
     hcperk=1.4387773538277202
     tau=np.cumsum(dtauM,axis=0)
-
     
     cf=np.exp(-tau)*dtauM\
         *(dtauM*Parr[:,None]/dParr[:,None])\
         *nus**3/(np.exp(hcperk*nus/Tarr[:,None])-1.0)
     
-        
     if normalize==True:
-        cf=np.log10(cf/np.sum(cf,axis=0))
-    
+        cf=(cf/np.sum(cf,axis=0))
+    if log==True:
+        cf=np.log10(cf)
+            
     fig=plt.figure(figsize=(20,3))
     ax=plt.subplot2grid((1, 20), (0, 3),colspan=18)
-    if unit=="um":
-        c=ax.imshow(cf[:,::-1],cmap=cmap,alpha=0.9,extent=[1.e4/nus[-1],1.e4/nus[0],np.log10(Parr[-1]),np.log10(Parr[0])])
-        plt.xlabel("wavelength ($\mu \mathrm{m}$)")
-    elif unit=="nm":
-        c=ax.imshow(cf[:,::-1],cmap=cmap,alpha=0.9,extent=[1.e7/nus[-1],1.e7/nus[0],np.log10(Parr[-1]),np.log10(Parr[0])])
-        plt.xlabel("wavelength (nm)")
-    elif unit=="AA":
-        c=ax.imshow(cf[:,::-1],cmap=cmap,alpha=0.9,extent=[1.e8/nus[-1],1.e8/nus[0],np.log10(Parr[-1]),np.log10(Parr[0])])
-        plt.xlabel("wavelength ($\AA$)")
+    if mode=="cmap":
+        if unit=="um":
+            c=ax.imshow(cf[:,::-1],cmap=cmap,alpha=0.9,extent=[1.e4/nus[-1],1.e4/nus[0],np.log10(Parr[-1]),np.log10(Parr[0])])
+            plt.xlabel("wavelength ($\mu \mathrm{m}$)")
+        elif unit=="nm":
+            c=ax.imshow(cf[:,::-1],cmap=cmap,alpha=0.9,extent=[1.e7/nus[-1],1.e7/nus[0],np.log10(Parr[-1]),np.log10(Parr[0])])
+            plt.xlabel("wavelength (nm)")
+        elif unit=="AA":
+            c=ax.imshow(cf[:,::-1],cmap=cmap,alpha=0.9,extent=[1.e8/nus[-1],1.e8/nus[0],np.log10(Parr[-1]),np.log10(Parr[0])])
+            plt.xlabel("wavelength ($\AA$)")
+        else:
+            c=ax.imshow(cf,cmap=cmap,alpha=0.9\
+                        ,extent=[nus[0],nus[-1],np.log10(Parr[-1]),np.log10(Parr[0])])
+            plt.xlabel("wavenumber ($\mathrm{cm}^{-1}$)")            
     else:
-        c=ax.imshow(cf,cmap=cmap,alpha=0.9\
-           ,extent=[nus[0],nus[-1],np.log10(Parr[-1]),np.log10(Parr[0])])
-        plt.xlabel("wavenumber ($\mathrm{cm}^{-1}$)")
+        if unit=="um":
+            X, Y = np.meshgrid(1.e4/nus, np.log10(Parr))
+            plt.xlabel("wavelength ($\mu \mathrm{m}$)")
+        elif unit=="nm":
+            X, Y = np.meshgrid(1.e7/nus, np.log10(Parr))
+            plt.xlabel("wavelength (nm)")
+        elif unit=="AA":
+            X, Y = np.meshgrid(1.e8/nus, np.log10(Parr))
+            plt.xlabel("wavelength ($\AA$)")
+        else:
+            X, Y = np.meshgrid(nus, np.log10(Parr))
+            plt.xlabel("wavenumber ($\mathrm{cm}^{-1}$)")            
+            
+        c=ax.contourf(X,Y,cf,30,cmap=cmap)
+        plt.gca().invert_yaxis()
         
-    plt.colorbar(c,shrink=0.8)
     plt.ylabel("log10 (P (bar))")
+    plt.colorbar(c,shrink=0.8)
     ax.set_aspect(0.2/ax.get_data_ratio())
+    
     if Tarr is not None and Parr is not None:
         ax=plt.subplot2grid((1, 20), (0, 0),colspan=2)
         plt.plot(Tarr,np.log10(Parr),color="gray")
