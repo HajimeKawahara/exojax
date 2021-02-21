@@ -171,3 +171,56 @@ def ASfactors():
     C3=21.0996530827
     C4=3.9584969228
     return A0,A1,A2,A3,A4,A5,B1,B2,B3,B4,C1,C2,C3,C4
+
+
+
+@jit
+def rt_twos(xsm,tfac,gi,dParr):
+    """Radiative Transfer using 2 stream+AS (Helios-R1 type)
+    Args:
+        xsm: cross section matrix (cm2)
+        tfac: conversion factor pressure x cross section to tau
+        gi: blackbody emission layer
+        dParr: delta P array
+        
+    Returns:
+        flux in the unit of [erg/cm2/s/Hz]
+    """
+    Nnus=np.shape(xsm)[1]
+    
+    A0=-0.57721566
+    A1= 0.99999193
+    A2=-0.24991055
+    A3= 0.05519968
+    A4=-0.00976004
+    A5= 0.00107857
+    B1=8.5733287401
+    B2=18.059016973
+    B3=8.6347608925
+    B4=0.2677737343
+    C1=9.5733223454
+    C2=25.6329561486
+    C3=21.0996530827
+    C4=3.9584969228
+    
+    dtauM=dParr[:,None]*xsm*tfac[:,None]
+    dtauM2=dtauM**2
+    dtauM3=dtauM**3
+    dtauM4=dtauM**4
+    dtauM5=dtauM**5
+    ep1A=-jnp.log(dtauM)+A0+A1*dtauM+A2*dtauM2+A3*dtauM3+A4*dtauM4+A5*dtauM5
+    ep1B=jnp.exp(-dtauM)/dtauM*\
+    (dtauM4+B1*dtauM3+B2*dtauM2+B3*dtauM+B4)/\
+    (dtauM4+C1*dtauM3+C2*dtauM2+C3*dtauM+C4)
+    ep=jnp.where(dtauM<=1.0, ep1A, ep1B)
+
+    TransMx=(1.0-dtauM)*jnp.exp(-dtauM)+dtauM2*ep
+    TransM=jnp.where(dtauM==0, 1.0, TransMx)   
+    QN=jnp.zeros(Nnus)
+    Qv=(1-TransM)*gi
+    Qv=jnp.vstack([Qv,QN])
+    onev=jnp.ones(Nnus)
+    TransM=jnp.vstack([onev,TransM])
+    Fx=(jnp.sum(Qv*jnp.cumprod(TransM,axis=0),axis=0))
+    ccgs=29979245800.0 #c (cgs)
+    return Fx/ccgs
