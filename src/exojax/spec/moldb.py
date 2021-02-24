@@ -67,7 +67,7 @@ class MdbHit(object):
            Tarr: temperature array (K)
         
         Returns:
-           numpy.array: Qr = partition function ratio array [N_Tarr x N_iso]
+           Qr = partition function ratio array [N_Tarr x N_iso]
 
         Notes: N_Tarr = len(Tarr), N_iso = len(self.uniqiso)
 
@@ -87,7 +87,7 @@ class MdbHit(object):
            T: temperature (K)
 
         Returns:
-           numpy.array: Qr_line, partition function ratio array for lines [Nlines]
+           Qr_line, partition function ratio array for lines [Nlines]
 
         Notes: Nlines=len(self.nu_lines)
 
@@ -99,8 +99,29 @@ class MdbHit(object):
             qr_line[mask]=qrx[0,idx]
         return qr_line
 
-    
+    def Qr_layer(self,Tarr):
+        """Partition Function ratio using HAPI partition sum
 
+        Args:
+           Tarr: temperature array (K)
+
+        Returns:
+           Qr_layer, partition function ratio array for lines [N_Tarr x Nlines]
+
+        Notes: 
+           Nlines=len(self.nu_lines)
+           N_Tarr=len(Tarr)
+
+        """
+        NP=len(Tarr)
+        qt=np.zeros((NP,len(self.isoid)))
+        qr=self.Qr(Tarr)
+        for idx,iso in enumerate(self.uniqiso):
+            mask=self.isoid==iso
+            for ilayer in range(NP):
+                qt[ilayer,mask]=qr[ilayer,idx]
+        return qt
+    
 def search_molecid(molec):
     """molec id from molec (source table name) of HITRAN/HITEMP
 

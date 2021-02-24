@@ -9,6 +9,8 @@ from exojax.spec import lpf
 import jax.numpy as jnp
 from exojax.spec import planck
 from functools import partial
+from exojax.spec.clpf import cxsmatrix
+
 
 @jit
 def trans2E3(x):
@@ -27,123 +29,31 @@ def trans2E3(x):
     from exojax.special.expn import E1
     return ((1.0-x)*jnp.exp(-x) + x**2*E1(x))
 
-
-
-__all__ = ['JaxRT']
-
-class JaxRT(object):
-    """Jax Radiative Transfer class
-    
-    """
-    def __init__(self):
-        self.nuarr = []
-        self.numic = 0.5 # 0.5 micron for planck
-        self.Sfix = []
-        self.Parr = []
-#        self.dParr = []
-        
-
-    @partial(jit, static_argnums=(0,))
-    def run(self,nu0,sigmaD,gammaL,source):
-        """Running RT by linear algebra radiative transfer using vmap
-
-        Note: 
-
-        Args: 
-           nu0: reference wavenumber
-           sigmaD: STD of a Gaussian profile
-           gammaL: gamma factor of Lorentzian
-           source: source vector in the atmospheric layers
-           
-        Returns:
-           F: upward flux
-
-        """
-        numatrix=lpf.make_numatrix(self.nuarr,self.hatnufix,nu0)
-        
-        xsm=xsmatrix(numatrix,sigmaDM,gammaLM,SijM)
-        xsv = 1.e-1*crossx(numatrix,sigmaD,gammaL,self.Sfix)
-        dtauM=self.dParr[:,None]*xsv[None,:]
-        TransM=(1.0-dtauM)*jnp.exp(-dtauM)
-
-        #QN=jnp.ones(len(nuarr))*planck.nB(Tarr[0],numic)
-        QN=jnp.zeros(len(self.nuarr))
-        Qv=(1-TransM)*source[:,None]
-        Qv=jnp.vstack([Qv,QN])
-    
-        onev=jnp.ones(len(self.nuarr))
-    
-        TransM=jnp.vstack([onev,TransM])
-        F=(jnp.sum(Qv*jnp.cumprod(TransM,axis=0),axis=0))
-        F=F*3.e7
-   
-        return F
-
-    
-    @partial(jit, static_argnums=(0,))        
-    def add_layer(self,carry,x):
-        """adding an atmospheric layer (old)
-
-        Args:
-           carry: F[i], P[i], nu0, sigmaD, gammaL
-           x: free parameters, T
-        
-        Returns:
-           carry: F[i+1], P[i+1]=k*P[i]
-           dtaui: dtau of this layer
-
-        """
-        F,Pi,nu0,sigmaD,gammaL = carry        
-        Ti = x
-        gi = planck.nB(Ti,self.numic)
-        numatrix=lpf.make_numatrix(self.nuarr,self.hatnufix,nu0)
-        cs=cross(numatrix,sigmaD,gammaL,self.Sfix)
-        dtaui = 1.e-1*cs*(1.0-self.k)*Pi # delta P = (1.0-k)*Pi
-        Trans=(1.0-dtaui)*jnp.exp(-dtaui)
-        F = F*Trans + gi*(1.0-Trans)
-        carry=[F,self.k*Pi,nu0,sigmaD,gammaL] #carryover 
-        return carry,dtaui
-
-    @partial(jit, static_argnums=(0,))
-    def layerscan(self,init):
-        """Runnin RT by scanning layers (old)
-
-        Args: 
-           init: initial parameters
-           Tarr: temperature array        
-        
-        Returns:
-           F: upward flux
-
-        """
-        FP,null=(scan(self.add_layer,init,self.Tarr,self.NP))
-        return FP[0]*3.e4 #TODO: 
-
-    
 @jit
-def cross(numatrix,sigmaD,gammaL,S):
-    """cross section
-
-    Note:
-       This routine was replaced by lpf.xsvector or lpf.xsmatrix. Will be removed.
-
+def rtrun(xsm,tfac,gi,dParr,epsilon=1.e-20):
+    """Radiative Transfer using 2 stream+AS (Helios-R1 type)
     Args:
-       numatrix: jnp array
-                 wavenumber matrix
-       sigmaD: float
-               sigma parameter in Voigt profile
-       gammaL: float
-               gamma parameter in Voigt profile
-       S: jnp array
-          line strength array
-    
+        xsm: cross section matrix (cm2)
+        tfac: conversion factor pressure x cross section to tau
+        gi: blackbody emission layer
+        dParr: delta P 
+        epsilon: small number to avoid zero tau layer
+ 
     Returns:
-       cs: cross section
-
+        flux in the unit of [erg/cm2/s/Hz]
     """
-#    cs = jnp.dot(lpf.VoigtTc(numatrix,sigmaD,gammaL).T,S)
-    cs = jnp.dot((lpf.voigt(numatrix.flatten(),sigmaD,gammaL)).reshape(jnp.shape(numatrix)).T,S)
-    return cs
+    Nnus=jnp.shape(xsm)[1]
+    dtauM=dParr[:,None]*xsm*tfac[:,None]+epsilon
+    TransMx=trans2E3(dtauM)
+    TransM=jnp.where(dtauM==0, 1.0, TransMx)   
+    QN=jnp.zeros(Nnus)
+    Qv=(1-TransM)*gi
+    Qv=jnp.vstack([Qv,QN])
+    onev=jnp.ones(Nnus)
+    TransM=jnp.vstack([onev,TransM])
+    Fx=(jnp.sum(Qv*jnp.cumprod(TransM,axis=0),axis=0))
+    ccgs=29979245800.0 #c (cgs)
+    return Fx/ccgs
 
 
 
@@ -193,53 +103,3 @@ def ASfactors():
 
 
 
-@jit
-def rt_twos(xsm,tfac,gi,dParr):
-    """Radiative Transfer using 2 stream+AS (Helios-R1 type)
-    Args:
-        xsm: cross section matrix (cm2)
-        tfac: conversion factor pressure x cross section to tau
-        gi: blackbody emission layer
-        dParr: delta P array
-        
-    Returns:
-        flux in the unit of [erg/cm2/s/Hz]
-    """
-    Nnus=np.shape(xsm)[1]
-    
-    A0=-0.57721566
-    A1= 0.99999193
-    A2=-0.24991055
-    A3= 0.05519968
-    A4=-0.00976004
-    A5= 0.00107857
-    B1=8.5733287401
-    B2=18.059016973
-    B3=8.6347608925
-    B4=0.2677737343
-    C1=9.5733223454
-    C2=25.6329561486
-    C3=21.0996530827
-    C4=3.9584969228
-    
-    dtauM=dParr[:,None]*xsm*tfac[:,None]
-    dtauM2=dtauM**2
-    dtauM3=dtauM**3
-    dtauM4=dtauM**4
-    dtauM5=dtauM**5
-    ep1A=-jnp.log(dtauM)+A0+A1*dtauM+A2*dtauM2+A3*dtauM3+A4*dtauM4+A5*dtauM5
-    ep1B=jnp.exp(-dtauM)/dtauM*\
-    (dtauM4+B1*dtauM3+B2*dtauM2+B3*dtauM+B4)/\
-    (dtauM4+C1*dtauM3+C2*dtauM2+C3*dtauM+C4)
-    ep=jnp.where(dtauM<=1.0, ep1A, ep1B)
-
-    TransMx=(1.0-dtauM)*jnp.exp(-dtauM)+dtauM2*ep
-    TransM=jnp.where(dtauM==0, 1.0, TransMx)   
-    QN=jnp.zeros(Nnus)
-    Qv=(1-TransM)*gi
-    Qv=jnp.vstack([Qv,QN])
-    onev=jnp.ones(Nnus)
-    TransM=jnp.vstack([onev,TransM])
-    Fx=(jnp.sum(Qv*jnp.cumprod(TransM,axis=0),axis=0))
-    ccgs=29979245800.0 #c (cgs)
-    return Fx/ccgs
