@@ -117,6 +117,7 @@ def rewofzs2(x,y):
     q=(1j)/(z*jnp.sqrt(jnp.pi))*(1.0 + a*(1.0 + a*(3.0 + a*15.0)))
     return jnp.real(q)
 
+
 @jit
 def imwofzs2(x,y):
     """Imag part of Asymptotic representation of wofz function 1 for |z|**2 > 112 (for e = 10e-6)
