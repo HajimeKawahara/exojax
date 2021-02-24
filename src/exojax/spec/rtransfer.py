@@ -14,16 +14,16 @@ from exojax.spec.clpf import cxsmatrix
 
 @jit
 def trans2E3(x):
-    """transmission function given by 2 E3(x)
+    """transmission function 2E3 (two-stream approximation with no scattering) expressed by 2 E3(x)
 
     Notes:
-       The exponetial integral of the third order E3(x) is computed using Abramowitz Stegun (1970) approximation of E1
+       The exponetial integral of the third order E3(x) is computed using Abramowitz Stegun (1970) approximation of E1 (exojax.special.E1)
 
     Args:
-       x: input
+       x: input variable
 
     Returns:
-       2 E3(x)
+       Transmission function T=2 E3(x)
     
     """
     from exojax.special.expn import E1
@@ -31,11 +31,11 @@ def trans2E3(x):
 
 @jit
 def rtrun(xsm,tfac,gi,dParr,epsilon=1.e-20):
-    """Radiative Transfer using 2 stream+AS (Helios-R1 type)
+    """Radiative Transfer using two-stream approximaion + 2E3 (Helios-R1 type)
     Args:
         xsm: cross section matrix (cm2)
         tfac: conversion factor pressure x cross section to tau
-        gi: blackbody emission layer
+        gi: blackbody emission layer [N_Tarr x N_nus]
         dParr: delta P 
         epsilon: small number to avoid zero tau layer
  
@@ -56,9 +56,8 @@ def rtrun(xsm,tfac,gi,dParr,epsilon=1.e-20):
     return Fx/ccgs
 
 
-
 def pressure_layer(logPtop=-8.,logPbtm=2.,NP=20,mode="ascending"):
-    """constructing the pressure layer
+    """generating the pressure layer
     
     Args: 
        logPtop: log10(P[bar]) at the top layer
@@ -84,22 +83,6 @@ def pressure_layer(logPtop=-8.,logPbtm=2.,NP=20,mode="ascending"):
     
     return Parr, dParr, k
 
-def ASfactors():
-    A0=-0.57721566
-    A1= 0.99999193
-    A2=-0.24991055
-    A3= 0.05519968
-    A4=-0.00976004
-    A5= 0.00107857
-    B1=8.5733287401
-    B2=18.059016973
-    B3=8.6347608925
-    B4=0.2677737343
-    C1=9.5733223454
-    C2=25.6329561486
-    C3=21.0996530827
-    C4=3.9584969228
-    return A0,A1,A2,A3,A4,A5,B1,B2,B3,B4,C1,C2,C3,C4
 
 
 

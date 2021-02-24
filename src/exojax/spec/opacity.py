@@ -7,7 +7,7 @@ def xsection(nu,nu0,sigmaD,gammaL,Sij,memory_size=15.):
     """compute cross section
 
     Note:
-       This is not auto-differentiable routine.
+       This is NOT auto-differentiable function.
 
     Args:
        nu: wavenumber array
