@@ -1,3 +1,9 @@
+"""Molecular database (MDB) class
+
+   * MdbHit is the MDB for HITRAN or HITEMP  
+   
+"""
+
 import numpy as np
 import pathlib
 from exojax.spec import hapi
@@ -48,7 +54,10 @@ class MdbHit(object):
         self.uniqiso=np.unique(self.isoid)
 
     def download(self):
-        """downloading HITRAN par file
+        """Downloading HITRAN par file
+
+        Notes:
+           The download URL is written in exojax.utils.url.
 
         """
         import urllib.request
@@ -134,12 +143,8 @@ def search_molecid(molec):
     """
     try:
         hitf=molec.split("_")
-        if hitf[1]=="hit12":
-            molecid=int(hitf[0])
-            return molecid
-        elif hitf[1]=="hit08":
-            molecid=int(hitf[0])
-            return molecid
+        molecid=int(hitf[0])
+        return molecid
 
     except:
         print("Warning: Define molecid by yourself.")

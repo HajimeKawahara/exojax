@@ -11,7 +11,7 @@ def SijT(T,logsij0,nu_ij,elower,qT):
        logsij0: log(Sij(Tref)) (Tref=296K)
        nu_ij: line center wavenumber (cm-1)
        elower: elower 
-       qT: Q(Tref)/Q(T)
+       qT: Q(T)/Q(Tref)
 
     Returns:
        Sij(T): Line strength

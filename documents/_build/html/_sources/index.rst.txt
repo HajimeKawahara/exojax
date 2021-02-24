@@ -3,13 +3,15 @@
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
-Welcome to exojax's documentation!
+Welcome to ExoJAX's documentation!
 ==================================
 
-Exojax provides
+ExoJAX provides an auto-differentiable high-resolution spectrum model for exoplanets/brown dwarfs using `JAX <https://github.com/google/jax>`_. 
 
-- an auto-differentiable Voigt profile,
-- an auto-differentiable spectrum model of exoplanets/brown dwarfs.
+BASIC USAGE
+-----------------
+
+in prep.
 
 .. toctree::
    :maxdepth: 1

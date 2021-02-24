@@ -5,7 +5,7 @@ import matplotlib
 import matplotlib.pyplot as plt
 
 def cutput(xw,f,hxw,hf=None,silent=None):
-    """Cutting and putting. Redistributing the values
+    """Cutting, putting, and redistributing the values
    
     Args:
        xw: walls of the original (input) bins [X]
@@ -17,7 +17,6 @@ def cutput(xw,f,hxw,hf=None,silent=None):
        stacking array after redistribution of f
 
     """
-    #see note 14.8.12 and 14.9.02
     if hf is None:
         if silent is None:
             print("Reset master data (hf) to zero.")
