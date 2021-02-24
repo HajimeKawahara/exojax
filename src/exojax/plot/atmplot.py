@@ -1,6 +1,6 @@
 """plotting tool for atmospheric structure
 
-   * --
+   
 
 """
 import numpy as np
@@ -57,7 +57,6 @@ def plottau(nus,dtauM,Tarr=None,Parr=None,unit=None,mode=None,vmin=-3,vmax=3):
 
 
 def plotcf(nus,dtauM,Tarr,Parr,dParr,unit=None,mode=None,log=False,normalize=True,cmap="bone_r"):
-    from exojax.spec.planck import piBarr
     """plot contribution function
 
        This function gives a plot of contribution function, optionally w/ a T-P profile.
@@ -74,7 +73,7 @@ def plotcf(nus,dtauM,Tarr,Parr,dParr,unit=None,mode=None,log=False,normalize=Tru
        normalize: normalize cf for each wavenumber? 
        cmap: colormap
     """
-
+    from exojax.spec.planck import piBarr
     hcperk=1.4387773538277202
     tau=np.cumsum(dtauM,axis=0)
     

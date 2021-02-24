@@ -13,12 +13,15 @@ Exojax provides
 
 .. toctree::
    :maxdepth: 1
-   :caption: Contents:
-   	     
-   exojax/exojax.spec
-   exojax/exojax.special
-   exojax/exojax.utils
-   exojax/exojax.plot
+   :caption: Tutorials:
+
+   tutorials/opacity.rst	     
+
+.. toctree::
+   :maxdepth: 1
+   :caption: API:
+
+   exojax/exojax.rst
 
 Indices and tables
 ==================

@@ -10,6 +10,25 @@ import jax.numpy as jnp
 from exojax.spec import planck
 from functools import partial
 
+@jit
+def trans2E3(x):
+    """transmission function given by 2 E3(x)
+
+    Notes:
+       The exponetial integral of the third order E3(x) is computed using Abramowitz Stegun (1970) approximation of E1
+
+    Args:
+       x: input
+
+    Returns:
+       2 E3(x)
+    
+    """
+    from exojax.special.expn import E1
+    return ((1.0-x)*jnp.exp(-x) + x**2*E1(x))
+
+
+
 __all__ = ['JaxRT']
 
 class JaxRT(object):
