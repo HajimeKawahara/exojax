@@ -5,10 +5,6 @@ import numpy as np
 def divwavnum(nu,Nz=1):
     """separate an integer part and a residual
     """
-    if(nu.dtype!=np.float64):
-        print("Warning!: Type is not np.float64 but ",nu.dtype)
-        # Float32 significantly decreases the accuracy of opacity.
-        # Consider to use float64 for wavenumber array.
 
     fn=np.floor(nu*Nz)
     dfn=nu*Nz-fn
@@ -32,7 +28,7 @@ def add_nu(dd,fnu,fhatnu,Nz):
     intarray=fnu[None,:]-fhatnu[:,None]
     return (dd+intarray)/Nz
 
-def make_numatrix0(nu,hatnu,Nz=1):
+def make_numatrix0(nu,hatnu,Nz=1,warning=True):
     """Generate numatrix0
 
     Note: 
@@ -42,12 +38,18 @@ def make_numatrix0(nu,hatnu,Nz=1):
        nu: wavenumber matrix (Nnu,)
        hatnu: line center wavenumber vector (Nline,), where Nm is the number of lines
        Nz: boost factor (default=1)
+       warning: True=warning on for nu.dtype=float32
 
     Returns:
        numatrix0: wavenumber matrix w/ no shift
 
     """
 
+    if(nu.dtype!=np.float64 and warning):
+        print("Warning!: nu is not np.float64 but ",nu.dtype)
+        # Float32 significantly decreases the accuracy of opacity.
+        # Consider to use float64 for wavenumber array.
+    
     fnu,dnu,Nz=divwavnum(nu,Nz)
     fhatnu,dhatnu,Nz=divwavnum(hatnu,Nz)
     dd=subtract_nu(dnu,dhatnu)

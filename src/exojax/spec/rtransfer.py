@@ -123,7 +123,6 @@ def pressure_layer(logPtop=-8.,logPbtm=2.,NP=20,mode="ascending"):
         Parr=Parr[::-1] 
         dParr=dParr[::-1]
     
-#    return Parr, dParr, k
     return jnp.array(Parr), jnp.array(dParr), k
 
 

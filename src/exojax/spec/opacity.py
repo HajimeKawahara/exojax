@@ -41,11 +41,16 @@ def xsection(nu,nu0,sigmaD,gammaL,Sij,memory_size=15.):
         100%|████████████████████████████████████████████████████| 456/456 [00:03<00:00, 80.59it/s]
 
     """
+
     d=int(memory_size/(len(nu0)*4/1024./1024.))
     Ni=int(len(nu)/d)
     xsv=[]
     for i in tqdm.tqdm(range(0,Ni+1)):
         s=int(i*d);e=int((i+1)*d);e=min(e,len(nu))
-        numatrix=make_numatrix0(nu[s:e],nu0)
+        numatrix=make_numatrix0(nu[s:e],nu0,warning=False)
         xsv = np.concatenate([xsv,xsvector(numatrix,sigmaD,gammaL,Sij)])
+
+    if(nu.dtype!=np.float64):
+        print("Warning!: nu is not np.float64 but ",nu.dtype)
+
     return xsv

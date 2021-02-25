@@ -3,26 +3,6 @@ import jax.numpy as jnp
 from astropy import constants as const
 from astropy import units as u
 
-
-
-@jit
-def Sh0toSh(Sh0,nui,hatnu,QT,T,QT0,T0):
-    """line strength at 296 to line strength at T in HITRAN form
-
-    """
-    c=const.c.cgs.value
-    h=const.h.cgs.value
-    k=const.k_B.cgs.value    
-    w=-h*c/k
-    fac1T=w*nui/T
-    fac1T0=w*nui/T0
-    fac2T=w*hatnu/T
-    fac2T0=w*hatnu/T0
-
-    Sh=Sh0*jnp.exp(fac1T)/jnp.exp(fac1T0)*QT0/QT*jnp.expm1(fac2T)/jnp.expm1(fac2T0)
-
-    return Sh
-
 def gf2Sh(gf,nui,hatnu,QT,T):
     """line strength in the unit of cm2/s/species. see Sharps & Burrows equation(1)
     all quantities should be converted to the cgs unit
