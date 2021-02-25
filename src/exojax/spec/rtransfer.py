@@ -11,6 +11,28 @@ from exojax.spec import planck
 from functools import partial
 from exojax.spec.clpf import cxsmatrix
 
+def dtaux(dParr,xsm,MR,mass,g):
+    """dtau from the molecular cross section
+
+    Args:
+       dParr: delta pressure profile (bar) [N_layer]
+       xsm: cross section matrix (cm2) [N_layer, N_nus]
+       MR: volume mixing ratio [N_layer] or mass mixing ratio [N_layer]
+       mass: molecular mass for VMR or mean molecular weight for MMR
+       g: gravity (cm/s2)
+
+    Returns:
+       optical depth matrix [N_layer, N_nus]
+
+    Notes:
+       fac=bar_cgs/(m_u (g)). m_u: atomic mass unit
+       from scipy.constants import  m_u
+       print(1.e3/m_u)
+    """
+
+    fac=6.022140858549162e+29
+    return fac*xsm*dParr[:,None]*MR[:,None]/(mass*g)
+
 
 @jit
 def trans2E3(x):
@@ -27,34 +49,54 @@ def trans2E3(x):
     
     """
     from exojax.special.expn import E1
-    return ((1.0-x)*jnp.exp(-x) + x**2*E1(x))
+    return (1.0-x)*jnp.exp(-x) + x**2*E1(x)
 
 @jit
-def rtrun(xsm,tfac,gi,dParr,epsilon=1.e-20):
+def rtrun(dtauM,S,epsilon=1.e-20):
     """Radiative Transfer using two-stream approximaion + 2E3 (Helios-R1 type)
     Args:
-        xsm: cross section matrix (cm2)
-        tfac: conversion factor pressure x cross section to tau
-        gi: blackbody emission layer [N_Tarr x N_nus]
-        dParr: delta P 
+        dtauM: opacity matrix 
+        S: source matrix [N_layer, N_nus]
         epsilon: small number to avoid zero tau layer
  
     Returns:
         flux in the unit of [erg/cm2/s/Hz]
     """
-    Nnus=jnp.shape(xsm)[1]
-    dtauM=dParr[:,None]*xsm*tfac[:,None]+epsilon
-    TransMx=trans2E3(dtauM)
-    TransM=jnp.where(dtauM==0, 1.0, TransMx)   
+    ccgs=29979245800.0 #c (cgs)
+    Nnus=jnp.shape(dtauM)[1]
+    TransM=jnp.where(dtauM==0, 1.0, trans2E3(dtauM))   
     QN=jnp.zeros(Nnus)
-    Qv=(1-TransM)*gi
+    Qv=(1-TransM)*S
     Qv=jnp.vstack([Qv,QN])
     onev=jnp.ones(Nnus)
     TransM=jnp.vstack([onev,TransM])
     Fx=(jnp.sum(Qv*jnp.cumprod(TransM,axis=0),axis=0))
-    ccgs=29979245800.0 #c (cgs)
     return Fx/ccgs
 
+
+@jit
+def rtrun_surface(dtauM,S,Sb,epsilon=1.e-20):
+    """Radiative Transfer using two-stream approximaion + 2E3 (Helios-R1 type) with a planetary surface
+
+    Args:
+        dtauM: opacity matrix 
+        S: source matrix [N_layer, N_nus]
+        Sb: source from the surface [N_nus]
+        epsilon: small number to avoid zero tau layer
+ 
+    Returns:
+        flux in the unit of [erg/cm2/s/Hz]
+    """
+    ccgs=29979245800.0 #c (cgs)
+    Nnus=jnp.shape(dtauM)[1]
+    TransM=jnp.where(dtauM==0, 1.0, trans2E3(dtauM))   
+    QN=Sb
+    Qv=(1-TransM)*S
+    Qv=jnp.vstack([Qv,QN])
+    onev=jnp.ones(Nnus)
+    TransM=jnp.vstack([onev,TransM])
+    Fx=(jnp.sum(Qv*jnp.cumprod(TransM,axis=0),axis=0))
+    return Fx/ccgs
 
 def pressure_layer(logPtop=-8.,logPbtm=2.,NP=20,mode="ascending"):
     """generating the pressure layer

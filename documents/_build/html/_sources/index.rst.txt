@@ -8,7 +8,7 @@ Welcome to ExoJAX's documentation!
 
 ExoJAX provides an auto-differentiable high-resolution spectrum model for exoplanets/brown dwarfs using `JAX <https://github.com/google/jax>`_. 
 
-BASIC USAGE
+Basic Usage
 -----------------
 
 in prep.

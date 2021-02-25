@@ -5,8 +5,10 @@
 """
 
 import numpy as np
+import jax.numpy as jnp
 import pathlib
 from exojax.spec import hapi
+
 __all__ = ['MdbHit']
 
 class MdbHit(object):
@@ -38,21 +40,28 @@ class MdbHit(object):
         mask=(self.nu_lines>self.nurange[0]-self.margin)\
         *(self.nu_lines<self.nurange[1]+self.margin)\
         *(self.S_ij>self.crit)
-        
-        self.A = hapi.getColumn(molec, 'a')[mask]
-        self.n_air = hapi.getColumn(molec, 'n_air')[mask]
-        self.isoid = hapi.getColumn(molec,'local_iso_id')[mask]
-        self.gamma_air = hapi.getColumn(molec, 'gamma_air')[mask]
-        self.gamma_self = hapi.getColumn(molec, 'gamma_self')[mask]
-        self.delta_air = hapi.getColumn(molec, 'delta_air')[mask]
-        self.elower = hapi.getColumn(molec, 'elower')[mask]
-        self.gpp = hapi.getColumn(molec, 'gpp')[mask]
+
+        #numpy float 64
         self.nu_lines = hapi.getColumn(molec, 'nu')[mask]
-        self.S_ij = hapi.getColumn(molec, 'sw')[mask]
+        self.S_ij = hapi.getColumn(molec, 'sw')[mask]        
+
+        #
+        self.A = (hapi.getColumn(molec, 'a')[mask])
+        self.n_air = (hapi.getColumn(molec, 'n_air')[mask])
+        self.gamma_air = (hapi.getColumn(molec, 'gamma_air')[mask])
+        self.gamma_self = (hapi.getColumn(molec, 'gamma_self')[mask])
+        self.delta_air = (hapi.getColumn(molec, 'delta_air')[mask])
+        self.elower = (hapi.getColumn(molec, 'elower')[mask])
+        self.gpp = (hapi.getColumn(molec, 'gpp')[mask])
+        self.logsij0=(np.log(self.S_ij))
         
-        self.logsij0=np.log(self.S_ij)
+        #int
+        self.isoid = hapi.getColumn(molec,'local_iso_id')[mask]
         self.uniqiso=np.unique(self.isoid)
 
+        
+
+        
     def download(self):
         """Downloading HITRAN par file
 
