@@ -1,7 +1,4 @@
-"""
-Summary
-----------
-Functions for radial velocity curves, JAX autograd/jit compatible.
+"""Functions for radial velocity curves, JAX autograd/jit compatible.
 
 """
 import jax
@@ -14,32 +11,19 @@ from exojax.dynamics import getE
 
 @jit
 def rvf(t,T0,P,e,omegaA,Ksini,Vsys):
-    """
-    Summary
-    ----------
-    Unit-free radial velocity curve for SB1
+    """Unit-free radial velocity curve for SB1
 
-    Parameters
-    ----------
-    t : ndarray 
-        Time in your time unit
-    T0 : float 
-         Time of periastron passage in your time unit
-    P : float 
-        orbital period in your time unit
-    e : float 
-        eccentricity
-    omegaA : float 
-             argument of periastron
-    Ksini : float 
-            RV semi-amplitude in your velocity unit
-    Vsys : float 
-           systemic velocity in your velocity unit
+    Args:
+       t: Time in your time unit
+       T0: Time of periastron passage in your time unit
+       P: orbital period in your time unit
+       e: eccentricity
+       omegaA: argument of periastron
+       Ksini: RV semi-amplitude in your velocity unit
+       Vsys: systemic velocity in your velocity unit
 
-    Returns
-    ------------
-    model : ndarray
-            radial velocity curve in your velocity unit
+    Returns:
+       radial velocity curve in your velocity unit
 
     """
 
@@ -60,18 +44,10 @@ def rvf(t,T0,P,e,omegaA,Ksini,Vsys):
 
 def get_G_cuberoot():
     
-    """
-    Summary
-    ----------
-    This function computes cuberoot of Gravitaional constant (in the unit of [km/s]) normalized by day and Msun
+    """This function computes cuberoot of Gravitaional constant (in the unit of [km/s]) normalized by day and Msun
 
-    Parameters
-    -----------
-
-    Returns
-    ----------
-    Gcr_val: float
-             cuberoot of Gravitaional constant (km/s) normalized by day and Msun
+    Returns:
+       cuberoot of Gravitaional constant (km/s) normalized by day and Msun
 
     """
     from astropy.constants import G
@@ -92,32 +68,19 @@ m13=-1.0/3.0
 
 @jit
 def rvcoref(t,T0,P,e,omegaA,K,i):
-    """
-    Summary
-    --------
-    Unit-free radial velocity curve w/o systemic velocity, in addition, i and K are separated. 
+    """Unit-free radial velocity curve w/o systemic velocity, in addition, i and K are separated. 
 
-    Parameters
-    -----------
-    t: ndarray
-       Time in your time unit
-    T0: float
-        Time of periastron passage in your time unit
-    P: float 
-       orbital period in your time unit
-    e: float
-       eccentricity
-    omegaA: float
-            argument of periastron
-    K: float
-       RV semi-amplitude/sin i in your velocity unit
-    i: float
-       inclination
+    Args:
+       t: Time in your time unit
+       T0: Time of periastron passage in your time unit
+       P: orbital period in your time unit
+       e: eccentricity
+       omegaA: argument of periastron
+       K: RV semi-amplitude/sin i in your velocity unit
+       i: inclination
 
-    Returns
-    ------------
-    model : ndarray
-            radial velocity curve in your velocity unit
+    Returns:
+       radial velocity curve in your velocity unit
 
     """
     n=2*jnp.pi/P

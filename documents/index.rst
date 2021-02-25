@@ -3,7 +3,7 @@
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
-Welcome to ExoJAX's documentation!
+ExoJAX
 ==================================
 
 ExoJAX provides an auto-differentiable high-resolution spectrum model for exoplanets/brown dwarfs using `JAX <https://github.com/google/jax>`_. 
@@ -25,9 +25,11 @@ in prep.
 
    exojax/exojax.rst
 
-Indices and tables
-==================
+License & Attribution
+---------------------
 
-* :ref:`genindex`
-* :ref:`modindex`
-* :ref:`search`
+Copyright 2021 Hajime Kawahara.
+
+ExoJAX is free software made available under the MIT License. For details
+see the ``LICENSE``.
+   

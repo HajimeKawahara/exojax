@@ -1,9 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-"""
-Summary
---------
-line profile functions used in exospectral analysis.
+"""line profile functions used in exospectral analysis.
 
 """
 
