@@ -51,7 +51,7 @@ class MdbExomol(object):
     def download(self):
         """Downloading Exomol files
 
-        Notes:
+        Note:
            The download URL is written in exojax.utils.url.
 
         """
@@ -126,7 +126,7 @@ class MdbHit(object):
     def download(self):
         """Downloading HITRAN par file
 
-        Notes:
+        Note:
            The download URL is written in exojax.utils.url.
 
         """
@@ -148,7 +148,7 @@ class MdbHit(object):
         Returns:
            Qr = partition function ratio array [N_Tarr x N_iso]
 
-        Notes: N_Tarr = len(Tarr), N_iso = len(self.uniqiso)
+        Note: N_Tarr = len(Tarr), N_iso = len(self.uniqiso)
 
         """
         allT=list(np.concatenate([[self.Tref],Tarr]))
@@ -168,7 +168,7 @@ class MdbHit(object):
         Returns:
            Qr_line, partition function ratio array for lines [Nlines]
 
-        Notes: Nlines=len(self.nu_lines)
+        Note: Nlines=len(self.nu_lines)
 
         """
         qr_line=np.ones_like(self.isoid,dtype=np.float64)
@@ -187,7 +187,7 @@ class MdbHit(object):
         Returns:
            Qr_layer, partition function ratio array for lines [N_Tarr x Nlines]
 
-        Notes: 
+        Note: 
            Nlines=len(self.nu_lines)
            N_Tarr=len(Tarr)
 

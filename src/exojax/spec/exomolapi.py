@@ -6,7 +6,7 @@ import pandas as pd
 
 def read_trans(transf):
     """Exomol IO for a transition file
-    Notes:
+    Note:
         i=Upper state counting number
         f=Lower state counting number
         Aif=Einstein coefficient in s-1
@@ -28,7 +28,7 @@ def read_trans(transf):
 
 def read_states(statesf):        
     """Exomol IO for a state file
-    Notes:
+    Note:
         i=state counting number
         E=state energy
         g=state degeneracy
@@ -77,5 +77,5 @@ if __name__=="__main__":
     d0=read_trans(statesf)
     transf="/home/kawahara/exojax/data/exomol/CO/12C-16O/Li2015/12C-16O__Li2015.trans.bz2"
     d1=read_trans(transf)
-    print(d0)
-    print(d1)
+    print(len(d0))
+    print(len(d1))

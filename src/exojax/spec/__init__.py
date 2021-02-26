@@ -7,6 +7,11 @@ __email__ = "divrot@gmail.com"
 __license__ = ""
 __description__ = "auto-differentiable spectral modules in exojax"
 
+from exojax.spec.hitran import (
+    SijT,
+)
+
+
 from exojax.spec.opacity import (
     xsection,
 )

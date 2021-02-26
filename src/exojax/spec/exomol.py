@@ -1,21 +1,31 @@
 from jax import jit, vmap
 import jax.numpy as jnp
+import numpy as np
 
 @jit
-def SijT(T,A,g,nu_ij,elower,QT):
-    """Line strength as a function of temperature
+def Sij0(A,g,nu_ij,elower,QTref):
+    """Reference Line Strength in Tref=296K, S0.
+
+    Note:
+       Tref=296K
 
     Args:
-       T: temperature (K)
+       A: Einstein coefficient (s-1)
+       g: the upper state statistical weight
        nu_ij: line center wavenumber (cm-1)
        elower: elower 
-       QT: partition function Q(T)
+       QTref: partition function Q(Tref)
 
     Returns:
        Sij(T): Line strength
 
     """
-
+    ccgs=29979245800.0
+    hcperk=1.4387773538277202
+    Tref=296.0
+    S0=A*g*np.exp(-hcperk*elower/Tref)*(1.0-np.exp(-hcperk*nu_ij/Tref))\
+        /(8.0*np.pi*ccgs*nu_ij**2*QTref)
+    return S0
 
 @jit
 def gamma_exomol(P, T, n_air):

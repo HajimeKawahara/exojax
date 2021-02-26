@@ -14,6 +14,11 @@ from exojax.spec.clpf import cxsmatrix
 def dtaux(dParr,xsm,MR,mass,g):
     """dtau from the molecular cross section
 
+    Note:
+       fac=bar_cgs/(m_u (g)). m_u: atomic mass unit
+       from scipy.constants import  m_u
+       print(1.e3/m_u)
+
     Args:
        dParr: delta pressure profile (bar) [N_layer]
        xsm: cross section matrix (cm2) [N_layer, N_nus]
@@ -24,10 +29,7 @@ def dtaux(dParr,xsm,MR,mass,g):
     Returns:
        optical depth matrix [N_layer, N_nus]
 
-    Notes:
-       fac=bar_cgs/(m_u (g)). m_u: atomic mass unit
-       from scipy.constants import  m_u
-       print(1.e3/m_u)
+
     """
 
     fac=6.022140858549162e+29
@@ -38,7 +40,7 @@ def dtaux(dParr,xsm,MR,mass,g):
 def trans2E3(x):
     """transmission function 2E3 (two-stream approximation with no scattering) expressed by 2 E3(x)
 
-    Notes:
+    Note:
        The exponetial integral of the third order E3(x) is computed using Abramowitz Stegun (1970) approximation of E1 (exojax.special.E1)
 
     Args:
