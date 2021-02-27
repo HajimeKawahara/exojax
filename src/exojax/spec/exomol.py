@@ -23,7 +23,7 @@ def Sij0(A,g,nu_ij,elower,QTref):
     ccgs=29979245800.0
     hcperk=1.4387773538277202
     Tref=296.0
-    S0=A*g*np.exp(-hcperk*elower/Tref)*(1.0-np.exp(-hcperk*nu_ij/Tref))\
+    S0=-A*g*np.exp(-hcperk*elower/Tref)*np.expm1(-hcperk*nu_ij/Tref)\
         /(8.0*np.pi*ccgs*nu_ij**2*QTref)
     return S0
 

@@ -18,8 +18,12 @@ def SijT(T,logsij0,nu_ij,elower,qT):
     """
     Tref=296.0 #reference tempearture (K)
     c_2 = 1.4387773 #hc/k_B (cm K)
-    expow=logsij0-c_2*(elower/T-elower/Tref)
-    fac=(1.0-jnp.exp(-c_2*nu_ij/T) )/(1.0-jnp.exp(-c_2*nu_ij/Tref))
+    
+    #    ToDo: confirming behavier 2/26(2021)
+    #    expow=logsij0-c_2*(elower/T-elower/Tref)
+    #    fac=(1.0-jnp.exp(-c_2*nu_ij/T) )/(1.0-jnp.exp(-c_2*nu_ij/Tref))
+    expow=logsij0-c_2*elower*(1.0/T-1.0/Tref)
+    fac=jnp.expm1(-c_2*nu_ij/T)/jnp.expm1(-c_2*nu_ij/Tref)
     return jnp.exp(expow)*qT*fac
 
 @jit
