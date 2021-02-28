@@ -6,7 +6,7 @@
 import numpy as np
 import jax.numpy as jnp
 import pathlib
-from exojax.spec import hapi, exomolapi
+from exojax.spec import hapi, exomolapi, exomol
 from exojax.spec.hitran import gamma_natural as gn
 import pandas as pd
 
@@ -31,21 +31,29 @@ class MdbExomol(object):
 
         #downloading
         if not self.trans_file.exists():
-            self.download(self.trans_file)
-            
+            self.download()
+
+        #loading exomol files
         trans=exomolapi.read_trans(self.trans_file)
         states=exomolapi.read_states(self.states_file)
-        self.nu_lines=trans["nuif"]
+        pf=exomolapi.read_pf(self.pf_file)
+        self.n_Texp, self.alpha_ref=exomolapi.read_def(self.def_file)
+
+        #compute gup and elower
+        A, nu_lines, elower, gpp=exomolapi.pickup_gE(states,trans)
         
-        ### MASKING ###
-        mask=(self.nu_lines>self.nurange[0]-self.margin)\
-        *(self.nu_lines<self.nurange[1]+self.margin)\
-        *(self.S_ij>self.crit)
-
-        self.A=trans["Aij"][mask]
-        self.g=states["g"][mask]
-
-        print(self.trans["i"])
+        #Reference temperature, Q(Tref), S0=S(Tref)
+        self.Tref=296.0
+        iref=np.searchsorted(pf["T"].to_numpy(),self.Tref)
+        QTref=pf["QT"][iref] #T=296 K        
+        self.S_ij=exomol.Sij0(A,gpp,nu_lines,elower,QTref)
+        self.nu_lines=nu_lines
+        
+        #jnp arrays
+        self.elower=jnp.array(elower)
+        self.gpp=jnp.array(gpp)
+        self.logsij0=jnp.array(np.log(self.S_ij))
+        self.dev_nu_lines=jnp.array(self.nu_lines)
 
         
     def download(self):
@@ -103,7 +111,7 @@ class MdbHit(object):
         self.nu_lines = hapi.getColumn(molec, 'nu')[mask]
         self.S_ij = hapi.getColumn(molec, 'sw')[mask]        
 
-        #
+        #jnp array
         A=hapi.getColumn(molec, 'a')[mask]
         self.A = jnp.array(A)
         self.n_air = jnp.array(hapi.getColumn(molec, 'n_air')[mask])

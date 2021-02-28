@@ -2,13 +2,13 @@ from jax import jit, vmap
 import jax.numpy as jnp
 
 @jit
-def SijT(T,logsij0,nu_ij,elower,qT):
+def SijT(T,logsij0,nu_lines,elower,qT):
     """Line strength as a function of temperature
 
     Args:
        T: temperature (K)
        logsij0: log(Sij(Tref)) (Tref=296K)
-       nu_ij: line center wavenumber (cm-1)
+       nu_lines: line center wavenumber (cm-1)
        elower: elower 
        qT: Q(T)/Q(Tref)
 
@@ -21,9 +21,9 @@ def SijT(T,logsij0,nu_ij,elower,qT):
     
     #    ToDo: confirming behavier 2/26(2021)
     #    expow=logsij0-c_2*(elower/T-elower/Tref)
-    #    fac=(1.0-jnp.exp(-c_2*nu_ij/T) )/(1.0-jnp.exp(-c_2*nu_ij/Tref))
+    #    fac=(1.0-jnp.exp(-c_2*nu_lines/T) )/(1.0-jnp.exp(-c_2*nu_lines/Tref))
     expow=logsij0-c_2*elower*(1.0/T-1.0/Tref)
-    fac=jnp.expm1(-c_2*nu_ij/T)/jnp.expm1(-c_2*nu_ij/Tref)
+    fac=jnp.expm1(-c_2*nu_lines/T)/jnp.expm1(-c_2*nu_lines/Tref)
     return jnp.exp(expow)*qT*fac
 
 @jit
@@ -64,14 +64,14 @@ def gamma_natural(A):
 
 
 @jit
-def doppler_sigma(nu_ij,T,M):
+def doppler_sigma(nu_lines,T,M):
     """Dopper width (sigma)
     
     Note:
        c3 is sqrt(kB/m_u)/c
 
     Args:
-       nu_ij: line center wavenumber (cm-1)
+       nu_lines: line center wavenumber (cm-1)
        T: temperature (K)
        M: atom/molecular mass
     
@@ -80,4 +80,4 @@ def doppler_sigma(nu_ij,T,M):
 
     """
     c3=3.0415595e-07
-    return c3*jnp.sqrt(T/M)*nu_ij
+    return c3*jnp.sqrt(T/M)*nu_lines

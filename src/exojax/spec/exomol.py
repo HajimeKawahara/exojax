@@ -1,9 +1,6 @@
-from jax import jit, vmap
-import jax.numpy as jnp
 import numpy as np
 
-@jit
-def Sij0(A,g,nu_ij,elower,QTref):
+def Sij0(A,g,nu_lines,elower,QTref):
     """Reference Line Strength in Tref=296K, S0.
 
     Note:
@@ -12,7 +9,7 @@ def Sij0(A,g,nu_ij,elower,QTref):
     Args:
        A: Einstein coefficient (s-1)
        g: the upper state statistical weight
-       nu_ij: line center wavenumber (cm-1)
+       nu_lines: line center wavenumber (cm-1)
        elower: elower 
        QTref: partition function Q(Tref)
 
@@ -23,11 +20,10 @@ def Sij0(A,g,nu_ij,elower,QTref):
     ccgs=29979245800.0
     hcperk=1.4387773538277202
     Tref=296.0
-    S0=-A*g*np.exp(-hcperk*elower/Tref)*np.expm1(-hcperk*nu_ij/Tref)\
-        /(8.0*np.pi*ccgs*nu_ij**2*QTref)
+    S0=-A*g*np.exp(-hcperk*elower/Tref)*np.expm1(-hcperk*nu_lines/Tref)\
+        /(8.0*np.pi*ccgs*nu_lines**2*QTref)
     return S0
 
-@jit
 def gamma_exomol(P, T, n_air):
     """gamma factor by a pressure broadening 
     
@@ -47,7 +43,6 @@ def gamma_exomol(P, T, n_air):
     return gamma
 
 
-@jit
 def gamma_natural(A):
     """gamma factor by natural broadning
     
@@ -63,21 +58,3 @@ def gamma_natural(A):
     return 2.6544188e-12*A
 
 
-@jit
-def doppler_sigma(nu_ij,T,M):
-    """Dopper width (sigma)
-    
-    Note:
-       c3 is sqrt(kB/m_u)/c
-
-    Args:
-       nu_ij: line center wavenumber (cm-1)
-       T: temperature (K)
-       M: atom/molecular mass
-    
-    Returns:
-       sigma: doppler width (standard deviation) (cm-1)
-
-    """
-    c3=3.0415595e-07
-    return c3*jnp.sqrt(T/M)*nu_ij

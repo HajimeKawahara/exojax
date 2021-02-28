@@ -4,6 +4,22 @@
 import numpy as np
 import pandas as pd
 
+def read_pf(pff):
+    """Exomol IO for partition file
+
+    Note:
+        T=temperature
+        QT=partition function
+
+    Args: 
+        pff: partition file
+    Returns:
+        partition data in pandas DataFrame
+
+    """
+    dat = pd.read_csv(pff,sep="\s+",names=("T","QT"))
+    return dat
+
 def read_trans(transf):
     """Exomol IO for a transition file
     Note:
@@ -20,9 +36,9 @@ def read_trans(transf):
 
     """
     try:
-        dat = pd.read_csv(transf,sep="\s+",names=("i_upper","i_lower","A","nu_lines"))
-    except:
         dat = pd.read_csv(transf,compression="bz2",sep="\s+",names=("i_upper","i_lower","A","nu_lines"))
+    except:
+        dat = pd.read_csv(transf,sep="\s+",names=("i_upper","i_lower","A","nu_lines"))
 
     return dat 
 
@@ -41,10 +57,10 @@ def read_states(statesf):
         states data in pandas DataFrame
 
     """
-    try:
-        dat = pd.read_csv(statesf,sep="\s+",usecols=range(4),names=("i","E","g","J"))
-    except:
+    try:        
         dat = pd.read_csv(statesf,compression="bz2",sep="\s+",usecols=range(4),names=("i","E","g","J"))
+    except:
+        dat = pd.read_csv(statesf,sep="\s+",usecols=range(4),names=("i","E","g","J"))
         
     return dat
 
@@ -145,8 +161,11 @@ def pickup_gEslow(states,trans):
 
 if __name__=="__main__":
     import time
-
-    check=True
+    pff="/home/kawahara/exojax/data/exomol/CO/12C-16O/Li2015/12C-16O__Li2015.pf"
+    dat=read_pf(pff)
+    
+    print("Checking compution of Elower and gupper.")
+    check=False
     statesf="/home/kawahara/exojax/data/exomol/CO/12C-16O/Li2015/12C-16O__Li2015.states.bz2"
     states=read_states(statesf)    
     transf="/home/kawahara/exojax/data/exomol/CO/12C-16O/Li2015/12C-16O__Li2015.trans.bz2"

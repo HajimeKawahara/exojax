@@ -3,7 +3,7 @@ from exojax.spec.make_numatrix import make_numatrix0
 import numpy as np
 import tqdm
 
-def xsection(nu,nu0,sigmaD,gammaL,Sij,memory_size=15.):
+def xsection(nu,nu_lines,sigmaD,gammaL,Sij,memory_size=15.):
     """compute cross section
 
     Note:
@@ -11,7 +11,7 @@ def xsection(nu,nu0,sigmaD,gammaL,Sij,memory_size=15.):
 
     Args:
        nu: wavenumber array
-       nu0: line center
+       nu_lines: line center
        sigmaD: sigma parameter in Doppler profile 
        gammaL:  broadening coefficient in Lorentz profile 
        Sij: line strength
@@ -36,18 +36,18 @@ def xsection(nu,nu0,sigmaD,gammaL,Sij,memory_size=15.):
     >>> Sij=SijT(Tfix,mdbCO.logsij0,mdbCO.nu_lines,mdbCO.elower,qt)
     >>> gammaL = gamma_hitran(Pfix,Tfix, Ppart, mdbCO.n_air, mdbCO.gamma_air, mdbCO.gamma_self) + gamma_natural(mdbCO.A) 
     >>> sigmaD=doppler_sigma(mdbCO.nu_lines,Tfix,Mmol)
-    >>> nu0=mdbCO.nu_lines
-    >>> xsv=xsection(nus,nu0,sigmaD,gammaL,Sij,memory_size=30)
+    >>> nu_lines=mdbCO.nu_lines
+    >>> xsv=xsection(nus,nu_lines,sigmaD,gammaL,Sij,memory_size=30)
         100%|████████████████████████████████████████████████████| 456/456 [00:03<00:00, 80.59it/s]
 
     """
 
-    d=int(memory_size/(len(nu0)*4/1024./1024.))
+    d=int(memory_size/(len(nu_lines)*4/1024./1024.))
     Ni=int(len(nu)/d)
     xsv=[]
     for i in tqdm.tqdm(range(0,Ni+1)):
         s=int(i*d);e=int((i+1)*d);e=min(e,len(nu))
-        numatrix=make_numatrix0(nu[s:e],nu0,warning=False)
+        numatrix=make_numatrix0(nu[s:e],nu_lines,warning=False)
         xsv = np.concatenate([xsv,xsvector(numatrix,sigmaD,gammaL,Sij)])
 
     if(nu.dtype!=np.float64):
