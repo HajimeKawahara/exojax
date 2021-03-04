@@ -1,6 +1,6 @@
 import numpy as np
 
-def Sij0(A,g,nu_lines,elower,QTref):
+def Sij0(A,g,nu_lines,elower,QTref,Mmol):
     """Reference Line Strength in Tref=296K, S0.
 
     Note:
@@ -12,6 +12,7 @@ def Sij0(A,g,nu_lines,elower,QTref):
        nu_lines: line center wavenumber (cm-1)
        elower: elower 
        QTref: partition function Q(Tref)
+       Mmol: molecular mass (normalized by m_u)
 
     Returns:
        Sij(T): Line strength
@@ -21,10 +22,10 @@ def Sij0(A,g,nu_lines,elower,QTref):
     hcperk=1.4387773538277202
     Tref=296.0
     S0=-A*g*np.exp(-hcperk*elower/Tref)*np.expm1(-hcperk*nu_lines/Tref)\
-        /(8.0*np.pi*ccgs*nu_lines**2*QTref)
+        /(8.0*np.pi*Mmol*ccgs*nu_lines**2*QTref)
     return S0
 
-def gamma_exomol(P, T, n_air):
+def gamma_exomol(P, T, n_air, alpha_ref):
     """gamma factor by a pressure broadening 
     
     Args:

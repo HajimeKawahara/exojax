@@ -38,28 +38,37 @@ class MdbExomol(object):
         trans=exomolapi.read_trans(self.trans_file)
         states=exomolapi.read_states(self.states_file)
         pf=exomolapi.read_pf(self.pf_file)
-        self.n_Texp, self.alpha_ref=exomolapi.read_def(self.def_file)
+        self.gQT=jnp.array(pf["QT"].to_numpy()) #grid QT
+        self.T_gQT=jnp.array(pf["T"].to_numpy()) #T forgrid QT
+        self.n_Texp, self.alpha_ref, self.molmass=exomolapi.read_def(self.def_file)
 
         #compute gup and elower
         A, nu_lines, elower, gpp=exomolapi.pickup_gE(states,trans)
         
         #Reference temperature, Q(Tref), S0=S(Tref)
-        self.Tref=296.0
-        iref=np.searchsorted(pf["T"].to_numpy(),self.Tref)
-        QTref=pf["QT"][iref] #T=296 K        
-        self.S_ij=exomol.Sij0(A,gpp,nu_lines,elower,QTref)
+        self.Tref=296.0 #T=296 K        
+        self.QTref=np.array(self.QT_interp(self.Tref))
+        self.Sij0=exomol.Sij0(A,gpp,nu_lines,elower,self.QTref,self.molmass) #input should be ndarray not jnp array
+        
         self.nu_lines=nu_lines
 
-        #temporary qt
-        pf["QT"]=pf["QT"]/QTref
-        self.qT=pf
-        
         #jnp arrays
         self.elower=jnp.array(elower)
         self.gpp=jnp.array(gpp)
-        self.logsij0=jnp.array(np.log(self.S_ij))
+        self.logsij0=jnp.array(np.log(self.Sij0))
         self.dev_nu_lines=jnp.array(self.nu_lines)
 
+    def QT_interp(self,T):
+        """interpolated partition function
+        Args:
+           T: temperature
+        Returns:
+           Q(T) interpolated in jnp.array
+        """
+        return jnp.interp(T,self.T_gQT,self.gQT)
+    
+
+    
         
     def download(self):
         """Downloading Exomol files
@@ -105,16 +114,16 @@ class MdbHit(object):
         self.margin = margin
         self.nurange=[np.min(nurange),np.max(nurange)]
         self.nu_lines = hapi.getColumn(molec, 'nu')
-        self.S_ij = hapi.getColumn(molec, 'sw')
+        self.Sij0 = hapi.getColumn(molec, 'sw')
 
         ### MASKING ###
         mask=(self.nu_lines>self.nurange[0]-self.margin)\
         *(self.nu_lines<self.nurange[1]+self.margin)\
-        *(self.S_ij>self.crit)
+        *(self.Sij0>self.crit)
 
         #numpy float 64
         self.nu_lines = hapi.getColumn(molec, 'nu')[mask]
-        self.S_ij = hapi.getColumn(molec, 'sw')[mask]        
+        self.Sij0 = hapi.getColumn(molec, 'sw')[mask]        
 
         #jnp array
         A=hapi.getColumn(molec, 'a')[mask]
@@ -125,7 +134,7 @@ class MdbHit(object):
         self.delta_air = jnp.array(hapi.getColumn(molec, 'delta_air')[mask])
         self.elower = jnp.array(hapi.getColumn(molec, 'elower')[mask])
         self.gpp = jnp.array(hapi.getColumn(molec, 'gpp')[mask])
-        self.logsij0=jnp.array(np.log(self.S_ij))
+        self.logsij0=jnp.array(np.log(self.Sij0))
         self.gamma_natural=gn(A)
         self.dev_nu_lines=jnp.array(self.nu_lines)
         
@@ -235,4 +244,6 @@ def search_molecid(molec):
 
 if __name__ == "__main__":
     mdbCO=MdbExomol("/home/kawahara/exojax/data/exomol/CO/12C-16O/Li2015/12C-16O__Li2015")
+    print(mdbCO.Sij0)
 
+    print(mdbCO.logsij0)

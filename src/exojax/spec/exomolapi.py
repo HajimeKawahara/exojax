@@ -78,13 +78,23 @@ def read_def(deff):
     dat = pd.read_csv(deff,sep="#",names=("VAL","COMMENT"))
     alpha_ref=None
     texp=None
+    molmasssw=False
     for i, com in enumerate(dat["COMMENT"]):
         if "Default value of Lorentzian half-width" in com:
             alpha_ref=float(dat["VAL"][i])
+            print("gamma width=",alpha_ref)
         elif "Default value of temperature exponent" in com:
             n_Texp=float(dat["VAL"][i])
-
-    return n_Texp, alpha_ref
+            print("T exponent=",n_Texp)
+        elif "Element symbol 2" in com:
+            molmasssw=True
+        elif molmasssw:
+            c=np.unique(dat["VAL"][i].strip(" ").split(" "))
+            c=np.array(c,dtype=np.float)
+            molmass=(np.max(c))
+            print("Mol mass=",molmass)
+            molmasssw=False
+    return n_Texp, alpha_ref, molmass
 
 def pickup_gE(states,trans):
     """extract g_upper (gup) and E_lower (elower) from states DataFrame and insert them to transition DataFrame.
@@ -161,6 +171,11 @@ def pickup_gEslow(states,trans):
 
 if __name__=="__main__":
     import time
+    deff="/home/kawahara/exojax/data/exomol/CO/12C-16O/Li2015/12C-16O__Li2015.def"
+    n_Texp, alpha_ref, molmass=read_def(deff)
+    import sys
+    sys.exit()
+
     pff="/home/kawahara/exojax/data/exomol/CO/12C-16O/Li2015/12C-16O__Li2015.pf"
     dat=read_pf(pff)
     
