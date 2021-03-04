@@ -28,6 +28,7 @@ class MdbExomol(object):
         self.trans_file = self.path.parent/pathlib.Path(molec+".trans.bz2")
         self.states_file = self.path.parent/pathlib.Path(molec+".states.bz2")
         self.pf_file = self.path.parent/pathlib.Path(molec+".pf")
+        self.def_file = self.path.parent/pathlib.Path(molec+".def")
 
         #downloading
         if not self.trans_file.exists():
@@ -48,6 +49,10 @@ class MdbExomol(object):
         QTref=pf["QT"][iref] #T=296 K        
         self.S_ij=exomol.Sij0(A,gpp,nu_lines,elower,QTref)
         self.nu_lines=nu_lines
+
+        #temporary qt
+        pf["QT"]=pf["QT"]/QTref
+        self.qT=pf
         
         #jnp arrays
         self.elower=jnp.array(elower)
