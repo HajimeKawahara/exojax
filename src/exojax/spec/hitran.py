@@ -20,11 +20,11 @@ def SijT(T,logsij0,nu_lines,elower,qT):
     c_2 = 1.4387773 #hc/k_B (cm K)
     
     #    ToDo: confirming behavier 2/26(2021)
-    #    expow=logsij0-c_2*(elower/T-elower/Tref)
-    #    fac=(1.0-jnp.exp(-c_2*nu_lines/T) )/(1.0-jnp.exp(-c_2*nu_lines/Tref))
-    expow=logsij0-c_2*elower*(1.0/T-1.0/Tref)
-    fac=jnp.expm1(-c_2*nu_lines/T)/jnp.expm1(-c_2*nu_lines/Tref)
-    return jnp.exp(expow)*qT*fac
+    expow=logsij0-c_2*(elower/T-elower/Tref)
+    fac=(1.0-jnp.exp(-c_2*nu_lines/T) )/(1.0-jnp.exp(-c_2*nu_lines/Tref))
+    #expow=logsij0-c_2*elower*(1.0/T-1.0/Tref)
+    #fac=jnp.expm1(-c_2*nu_lines/T)/jnp.expm1(-c_2*nu_lines/Tref)
+    return jnp.exp(expow)/qT*fac
 
 @jit
 def gamma_hitran(P, T, Pself, n_air, gamma_air_ref, gamma_self_ref):

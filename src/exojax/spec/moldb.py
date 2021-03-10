@@ -72,9 +72,9 @@ class MdbExomol(object):
         Args:
            T: temperature
         Returns:
-           qr(T)=Q(Tref)/Q(T) interpolated in jnp.array
+           qr(T)=Q(T)/Q(Tref) interpolated in jnp.array
         """
-        return self.QT_interp(self.Tref)/self.QT_interp(T)
+        return self.QT_interp(T)/self.QT_interp(self.Tref)
     
         
     def download(self):
@@ -128,23 +128,24 @@ class MdbHit(object):
         *(self.nu_lines<self.nurange[1]+self.margin)\
         *(self.Sij0>self.crit)
 
-        #numpy float 64
+        #numpy float 64 Do not convert them jnp array
         self.nu_lines = hapi.getColumn(molec, 'nu')[mask]
         self.Sij0 = hapi.getColumn(molec, 'sw')[mask]        
+        self.delta_air = hapi.getColumn(molec, 'delta_air')[mask]
 
         #jnp array
         A=hapi.getColumn(molec, 'a')[mask]
         self.A = jnp.array(A)
+        self.gamma_natural=gn(A)
+
         self.n_air = jnp.array(hapi.getColumn(molec, 'n_air')[mask])
         self.gamma_air = jnp.array(hapi.getColumn(molec, 'gamma_air')[mask])
-        self.gamma_self = jnp.array(hapi.getColumn(molec, 'gamma_self')[mask])
-        self.delta_air = jnp.array(hapi.getColumn(molec, 'delta_air')[mask])
+        self.gamma_self = jnp.array(hapi.getColumn(molec, 'gamma_self')[mask])        
         self.elower = jnp.array(hapi.getColumn(molec, 'elower')[mask])
-        self.gpp = jnp.array(hapi.getColumn(molec, 'gpp')[mask])
-        self.logsij0=jnp.array(np.log(self.Sij0))
-        self.gamma_natural=gn(A)
+        self.gpp = jnp.array(hapi.getColumn(molec, 'gpp')[mask]) 
+        self.logsij0=jnp.array(np.log(self.Sij0)) 
         self.dev_nu_lines=jnp.array(self.nu_lines)
-        
+
         #int
         self.isoid = hapi.getColumn(molec,'local_iso_id')[mask]
         self.uniqiso=np.unique(self.isoid)
@@ -185,7 +186,7 @@ class MdbHit(object):
         for iso in self.uniqiso:
             Qrx.append(hapi.partitionSum(self.molecid,iso, allT))
         Qrx=np.array(Qrx)
-        qr=Qrx[:,0]/Qrx[:,1:].T #Q(Tref)/Q(T)
+        qr=Qrx[:,1:].T/Qrx[:,0] #Q(T)/Q(Tref)
         return qr
 
     def Qr_line(self,T):

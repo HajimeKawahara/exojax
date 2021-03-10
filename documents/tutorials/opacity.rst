@@ -51,7 +51,7 @@ Here, we use the partition function from HAPI
 
 Let us compute the line strength S(T) at temperature of Tfix.
 
-:math:`S (T;s_0,\nu_0,E_l,q(T)) = S_0 \frac{Q(T_{ref})}{Q(T)} \frac{e^{- h c E_l /k_B T}}{e^{- h c E_l /k_B T_{ref}}} \frac{1- e^{- h c \nu /k_B T}}{1-e^{- h c \nu /k_B T_{ref}}}= \frac{ \exp{ \{ s_0 - c_2 E_l (T^{-1} - T_{ref}^{-1}) \}} }{q(T)} \frac{1- e^{- c_2 \nu_0/ T}}{1-e^{- c_2 \nu_0/T_{ref}}}`
+:math:`S (T;s_0,\nu_0,E_l,q(T)) = S_0 \frac{Q(T_{ref})}{Q(T)} \frac{e^{- h c E_l /k_B T}}{e^{- h c E_l /k_B T_{ref}}} \frac{1- e^{- h c \nu /k_B T}}{1-e^{- h c \nu /k_B T_{ref}}}= q(T) \exp{ \{ s_0 - c_2 E_l (T^{-1} - T_{ref}^{-1}) \}}  \frac{1- e^{- c_2 \nu_0/ T}}{1-e^{- c_2 \nu_0/T_{ref}}}`
 
 :math:`s_0=\log_{10} S_0` : logsij0
 
