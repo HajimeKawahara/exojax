@@ -48,7 +48,7 @@ class MdbExomol(object):
         #Reference temperature, Q(Tref), S0=S(Tref)
         self.Tref=296.0 #T=296 K        
         self.QTref=np.array(self.QT_interp(self.Tref))
-        self.Sij0=exomol.Sij0(A,gpp,nu_lines,elower,self.QTref,self.molmass) #input should be ndarray not jnp array
+        self.Sij0=exomol.Sij0(A,gpp,nu_lines,elower,self.QTref) #input should be ndarray not jnp array
         
         self.nu_lines=nu_lines
 
@@ -67,7 +67,14 @@ class MdbExomol(object):
         """
         return jnp.interp(T,self.T_gQT,self.gQT)
     
-
+    def qr_interp(self,T):
+        """interpolated partition function ratio
+        Args:
+           T: temperature
+        Returns:
+           qr(T)=Q(Tref)/Q(T) interpolated in jnp.array
+        """
+        return self.QT_interp(self.Tref)/self.QT_interp(T)
     
         
     def download(self):

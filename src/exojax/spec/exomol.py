@@ -1,6 +1,6 @@
 import numpy as np
 
-def Sij0(A,g,nu_lines,elower,QTref,Mmol):
+def Sij0(A,g,nu_lines,elower,QTref):
     """Reference Line Strength in Tref=296K, S0.
 
     Note:
@@ -19,10 +19,10 @@ def Sij0(A,g,nu_lines,elower,QTref,Mmol):
 
     """
     ccgs=29979245800.0
-    hcperk=1.4387773538277202
+    hcperk=1.4387773538277202 #hc/kB in cgs
     Tref=296.0
     S0=-A*g*np.exp(-hcperk*elower/Tref)*np.expm1(-hcperk*nu_lines/Tref)\
-        /(8.0*np.pi*Mmol*ccgs*nu_lines**2*QTref)
+        /(8.0*np.pi*ccgs*nu_lines**2*QTref)
     return S0
 
 def gamma_exomol(P, T, n_air, alpha_ref):
