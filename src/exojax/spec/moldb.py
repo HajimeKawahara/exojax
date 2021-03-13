@@ -29,6 +29,9 @@ class MdbExomol(object):
         self.states_file = self.path.parent/pathlib.Path(molec+".states.bz2")
         self.pf_file = self.path.parent/pathlib.Path(molec+".pf")
         self.def_file = self.path.parent/pathlib.Path(molec+".def")
+        self.crit = crit
+        self.margin = margin
+        self.nurange=[np.min(nurange),np.max(nurange)]
 
         #downloading
         if not self.trans_file.exists():
@@ -43,21 +46,30 @@ class MdbExomol(object):
         self.n_Texp, self.alpha_ref, self.molmass=exomolapi.read_def(self.def_file)
 
         #compute gup and elower
-        A, nu_lines, elower, gpp=exomolapi.pickup_gE(states,trans)
-        
-        #Reference temperature, Q(Tref), S0=S(Tref)
-        self.Tref=296.0 #T=296 K        
+        A, self.nu_lines, elower, gpp=exomolapi.pickup_gE(states,trans)        
+        self.Tref=296.0        
         self.QTref=np.array(self.QT_interp(self.Tref))
-        self.Sij0=exomol.Sij0(A,gpp,nu_lines,elower,self.QTref) #input should be ndarray not jnp array
+        ##input should be ndarray not jnp array
+        self.Sij0=exomol.Sij0(A,gpp,self.nu_lines,elower,self.QTref)
         
-        self.nu_lines=nu_lines
+        ### MASKING ###
+        mask=(self.nu_lines>self.nurange[0]-self.margin)\
+        *(self.nu_lines<self.nurange[1]+self.margin)\
+        *(self.Sij0>self.crit)
+
+        #numpy float 64 Do not convert them jnp array
+        self.nu_lines = self.nu_lines[mask]
+        self.Sij0 = self.Sij0[mask]        
+
 
         #jnp arrays
-        self.elower=jnp.array(elower)
-        self.gpp=jnp.array(gpp)
+        self.A=jnp.array(A[mask])
+        self.gamma_natural=gn(self.A)
+        self.elower=jnp.array(elower[mask])
+        self.gpp=jnp.array(gpp[mask])
         self.logsij0=jnp.array(np.log(self.Sij0))
         self.dev_nu_lines=jnp.array(self.nu_lines)
-
+        
     def QT_interp(self,T):
         """interpolated partition function
         Args:
@@ -129,8 +141,8 @@ class MdbHit(object):
         *(self.Sij0>self.crit)
 
         #numpy float 64 Do not convert them jnp array
-        self.nu_lines = hapi.getColumn(molec, 'nu')[mask]
-        self.Sij0 = hapi.getColumn(molec, 'sw')[mask]        
+        self.nu_lines = self.nu_lines[mask]
+        self.Sij0 = self.Sij0[mask]        
         self.delta_air = hapi.getColumn(molec, 'delta_air')[mask]
 
         #jnp array

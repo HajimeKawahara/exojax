@@ -18,6 +18,7 @@ in prep.
    :caption: Tutorials:
 
    tutorials/opacity.rst	     
+   tutorials/opacity_exomol.rst	     
 
 .. toctree::
    :maxdepth: 1
