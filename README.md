@@ -2,17 +2,18 @@
 
 Automatic differentiable spectrum modeling of exoplanets/brown dwarfs compatible to JAX.
 
-**Functions:** Supported=:heavy_check_mark:,  Not yet=:x: 
 
-:heavy_check_mark: Computation of the Voigt profile
+<details><summary>Voigt Profile :heavy_check_mark: </summary></details>
 
-<details><summary> :heavy_check_mark:  Opacity computation from HITRAN/HITEMP/ExoMol</summary><img src="https://github.com/HajimeKawahara/exojax/blob/develop/documents/figures/plottau.png" Titie="exojax" Width=850px> </details>
+<details><summary>Opacity using HITRAN/HITEMP/ExoMol :heavy_check_mark: </summary><img src="https://github.com/HajimeKawahara/exojax/blob/develop/documents/figures/plottau.png" Titie="exojax" Width=850px> </details>
 
-<details><summary> :heavy_check_mark:  Auto-differentiable radiative transfer</summary> <img src="https://github.com/HajimeKawahara/exojax/blob/develop/documents/exojax.png" Titie="exojax" Width=850px> </details>
+<details><summary>Auto-differentiable Radiative Transfer :heavy_check_mark: </summary> <img src="https://github.com/HajimeKawahara/exojax/blob/develop/documents/exojax.png" Titie="exojax" Width=850px> </details>
 
-<details><summary> :heavy_check_mark: HMC-NUTS fitting of emission spectra using NumPyro</summary></details>
+<details><summary>HMC-NUTS of Emission Spectra :heavy_check_mark: </summary></details>
 
-:x: Cloud modeling
+<details><summary>HMC-NUTS of Transmission Spectra :x: </summary>Not supported yet. </details>
+
+<details><summary>Cloud modeling :x: </summary> Not supported yet. </details>
 
 
 
