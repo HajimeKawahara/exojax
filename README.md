@@ -1,9 +1,6 @@
 # exojax
 
-Automatic differentiable spectrum modeling of exoplanets/brown dwarfs compatible to JAX.
-
-
-<details><summary>Voigt Profile :heavy_check_mark: </summary>
+<details open><summary>Voigt Profile :heavy_check_mark: </summary>
 
 ```python
  from exojax.spec import voigt
