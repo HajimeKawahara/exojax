@@ -4,26 +4,20 @@
 
 """
 from jax import jit
-from jax.lax import scan
-from exojax.spec import lpf
 import jax.numpy as jnp
-from exojax.spec import planck
-from functools import partial
-from exojax.spec.clpf import cxsmatrix
+from exojax.special.expn import E1
 
 def dtaux(dParr,xsm,MR,mass,g):
     """dtau from the molecular cross section
 
     Note:
-       fac=bar_cgs/(m_u (g)). m_u: atomic mass unit
-       from scipy.constants import  m_u
-       print(1.e3/m_u)
+       fac=bar_cgs/(m_u (g)). m_u: atomic mass unit. It can be obtained by fac=1.e3/m_u, where m_u = scipy.constants.m_u.
 
     Args:
        dParr: delta pressure profile (bar) [N_layer]
        xsm: cross section matrix (cm2) [N_layer, N_nus]
-       MR: volume mixing ratio [N_layer] or mass mixing ratio [N_layer]
-       mass: molecular mass for VMR or mean molecular weight for MMR
+       MR: volume mixing ratio (VMR) or mass mixing ratio (MMR) [N_layer]
+       mass: mean molecular weight for VMR or molecular mass for MMR
        g: gravity (cm/s2)
 
     Returns:
@@ -41,7 +35,7 @@ def trans2E3(x):
     """transmission function 2E3 (two-stream approximation with no scattering) expressed by 2 E3(x)
 
     Note:
-       The exponetial integral of the third order E3(x) is computed using Abramowitz Stegun (1970) approximation of E1 (exojax.special.E1)
+       The exponetial integral of the third order E3(x) is computed using Abramowitz Stegun (1970) approximation of E1 (exojax.special.E1).
 
     Args:
        x: input variable
@@ -50,16 +44,14 @@ def trans2E3(x):
        Transmission function T=2 E3(x)
     
     """
-    from exojax.special.expn import E1
     return (1.0-x)*jnp.exp(-x) + x**2*E1(x)
 
 @jit
-def rtrun(dtauM,S,epsilon=1.e-20):
+def rtrun(dtauM,S):
     """Radiative Transfer using two-stream approximaion + 2E3 (Helios-R1 type)
     Args:
         dtauM: opacity matrix 
         S: source matrix [N_layer, N_nus]
-        epsilon: small number to avoid zero tau layer
  
     Returns:
         flux in the unit of [erg/cm2/s/Hz]
@@ -75,16 +67,34 @@ def rtrun(dtauM,S,epsilon=1.e-20):
     Fx=(jnp.sum(Qv*jnp.cumprod(TransM,axis=0),axis=0))
     return Fx/ccgs
 
+@jit
+def rtrun_direct(dtauM,S):
+    """Radiative Transfer using direct integration
+
+    Note: 
+        Use dtauM/mu instead of dtauM when you want to use non-unity, where mu=cos(theta)
+
+    Args:
+        dtauM: opacity matrix 
+        S: source matrix [N_layer, N_nus]
+
+    Returns:
+        flux in the unit of [erg/cm2/s/Hz]
+    """
+    ccgs=29979245800.0 #c (cgs)
+    taupmu=jnp.cumsum(dtauM,axis=0)
+    Fx=jnp.sum(S*jnp.exp(-taupmu)*dtauM,axis=0)
+    return Fx/ccgs
+
 
 @jit
-def rtrun_surface(dtauM,S,Sb,epsilon=1.e-20):
+def rtrun_surface(dtauM,S,Sb):
     """Radiative Transfer using two-stream approximaion + 2E3 (Helios-R1 type) with a planetary surface
 
     Args:
         dtauM: opacity matrix 
         S: source matrix [N_layer, N_nus]
         Sb: source from the surface [N_nus]
-        epsilon: small number to avoid zero tau layer
  
     Returns:
         flux in the unit of [erg/cm2/s/Hz]
