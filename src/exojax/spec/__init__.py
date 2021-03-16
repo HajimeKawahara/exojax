@@ -13,6 +13,11 @@ from exojax.spec.hitran import (
     gamma_natural
 )
 
+from exojax.spec.autospec import (
+    AutoXS
+)
+
+
 
 from exojax.spec.opacity import (
     xsection,

@@ -1,7 +1,7 @@
 from exojax.spec import defmol
 from exojax.spec import moldb
-from exojax.spec import xsection
-from exojax.spec import SijT, doppler_sigma,  gamma_natural
+from exojax.spec.opacity import xsection
+from exojax.spec.hitran import SijT, doppler_sigma,  gamma_natural
 from exojax.spec.exomol import gamma_exomol
 import pathlib
 __all__ = ['AutoXS']
@@ -38,7 +38,7 @@ class AutoXS(object):
         else:
             print("Select database from HITRAN, HITEMP, ExoMol.")
 
-    def xsec(self,T,P):
+    def xsection(self,T,P):
         """cross section
         Args: 
            T: temperature (K)
@@ -53,7 +53,7 @@ class AutoXS(object):
                  + gamma_natural(mdb.A) 
         sigmaD=doppler_sigma(mdb.nu_lines,T,mdb.molmass)
         nu0=mdb.nu_lines
-        xsv=xsection(nus,nu0,sigmaD,gammaL,Sij,memory_size=self.memory_size)
+        xsv=xsection(self.nus,nu0,sigmaD,gammaL,Sij,memory_size=self.memory_size)
         return xsv
         
 if __name__ == "__main__":
