@@ -54,6 +54,13 @@ def voigt(nu,sigmaD,gammaL):
  
     Returns:
        v: Voigt profile
+    
+    Examples:
+       
+       >>> from exojax.spec import voigt
+       >>> import jax.numpy as jnp
+       >>> nu=jnp.linspace(-10,10,100)
+       >>> voigt(nu,1.0,2.0) #sigma_D=1.0, gamma_L=2.0
 
     """
     

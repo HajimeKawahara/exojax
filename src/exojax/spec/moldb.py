@@ -13,29 +13,35 @@ import pandas as pd
 __all__ = ['MdbExomol','MdbHit']
 
 class MdbExomol(object):
-    def __init__(self,path,nurange=[-np.inf,np.inf],margin=250.0,crit=-np.inf):
+    def __init__(self,path,trans=None,nurange=[-np.inf,np.inf],margin=250.0,crit=-np.inf):
         """Molecular database for Exomol form
 
         Args: 
-           path: path for Exomol data directory/tag. For instance, "/home/CO/12C-16O/Li2015/12C-16O__Li2015"
+           path: path for Exomol data directory/tag. For instance, "/home/CO/12C-16O/Li2015"
+           trans: tag of transition file if exists. "11100-11200"
            nurange: wavenumber range list (cm-1)
            margin: margin for nurange (cm-1)
            crit: line strength lower limit for extraction
 
         """
         self.path = pathlib.Path(path)
-        molec=str(self.path.stem)
-        self.trans_file = self.path.parent/pathlib.Path(molec+".trans.bz2")
-        self.states_file = self.path.parent/pathlib.Path(molec+".states.bz2")
-        self.pf_file = self.path.parent/pathlib.Path(molec+".pf")
-        self.def_file = self.path.parent/pathlib.Path(molec+".def")
+        t0=self.path.parents[0].stem        
+        molec=t0+"__"+str(self.path.stem)
+
+        if trans is None:
+            self.trans_file = self.path/pathlib.Path(molec+".trans.bz2")
+        else:
+            self.trans_file = self.path/pathlib.Path(molec+"__"+trans+".trans.bz2")
+            
+        self.states_file = self.path/pathlib.Path(molec+".states.bz2")
+        self.pf_file = self.path/pathlib.Path(molec+".pf")
+        self.def_file = self.path/pathlib.Path(molec+".def")
         self.crit = crit
         self.margin = margin
         self.nurange=[np.min(nurange),np.max(nurange)]
-
         #downloading
         if not self.trans_file.exists():
-            self.download()
+            self.download(molec,trans)
 
         #loading exomol files
         trans=exomolapi.read_trans(self.trans_file)
@@ -89,26 +95,41 @@ class MdbExomol(object):
         return self.QT_interp(T)/self.QT_interp(self.Tref)
     
         
-    def download(self):
+    def download(self,molec,trans=None):
         """Downloading Exomol files
+
+        Args: 
+           molec: like "12C-16O__Li2015"
+           trans: tag of transition file if exists. "11100-11200"
 
         Note:
            The download URL is written in exojax.utils.url.
 
         """
         import urllib.request
+        from exojax.utils.molname import e2s
+        import os
         from exojax.utils.url import url_ExoMol
-        print("Downloading parfile from "+url)
-        url = url_ExoMol()+self.path.name
-#        try:
-#            urllib.request.urlretrieve(url,str(self.path))
-#        except:
-#            print("Couldn't download and save.")
+
+        tag=molec.split("__")
+        molname_simple=e2s(tag[0])        
+        url = url_ExoMol()+molname_simple+"/"+tag[0]+"/"+tag[1]+"/"
+
+        extension=[".pf",".def",".trans.bz2",".states.bz2"]
+        for ext in extension:
+            if ext==".trans.bz2" and trans is not None:
+                ext="__"+trans+ext
+            pfname=molec+ext
+            pfpath=url+pfname
+            os.makedirs(str(self.path), exist_ok=True)
+            print("Downloading "+pfpath)
+            try:
+                urllib.request.urlretrieve(pfpath,str(self.path/pfname))
+            except:
+                print("Error: Couldn't download "+ext+" file and save.")
 
 
 
-
-            
 
 class MdbHit(object):
     def __init__(self,path,nurange=[-np.inf,np.inf],margin=250.0,crit=-np.inf):
@@ -263,7 +284,7 @@ def search_molecid(molec):
         return None
 
 if __name__ == "__main__":
-    mdbCO=MdbExomol("/home/kawahara/exojax/data/exomol/CO/12C-16O/Li2015/12C-16O__Li2015")
-    print(mdbCO.Sij0)
-
-    print(mdbCO.logsij0)
+    mdb=MdbExomol("/home/kawahara/exojax/data/exomol/CO/12C-16O/Li2015/")
+#    mdb=MdbExomol("/home/kawahara/exojax/data/exomol/NO/14N-16O/NOname/14N-16O__NOname")
+#    mdb=MdbExomol("/home/kawahara/exojax/data/exomol/NO/14N-16O/NOname/14N-16O__NOname")
+#    mdb=MdbExomol("/home/kawahara/exojax/data/exomol/CH4/12C-1H4/YT34to10/","11100-11200")

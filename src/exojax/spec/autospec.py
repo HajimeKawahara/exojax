@@ -4,37 +4,32 @@ from exojax.spec.hitran import SijT, doppler_sigma, gamma_hitran, gamma_natural
 import hapi
 import numpy as np
 
-__all__ = ['AutoSpec']
+__all__ = ['AutoXS']
 
 
 
-class AutoSpec(object):
-    """exojax auto spectrum generator
+class AutoXS(object):
+    """exojax auto cross section generator
     
     """
-    def __init__(self):
-        self.database="HITRAN"
-        self.databasedir=".database"
+    def __init__(self,nus,database,molecules,databasedir=".database"):
+        self.molecules=molecules
+        self.database=database
+        self.nus=nus
+        self.databasedir=databasedir
         
-    def xsv(self,Tfix=1000.0,Pfix=1.e-3,Ppart=None):
-        uniqiso=np.unique(self.isoid)
+        defmol.search_molfile(database,molecules)
         
-        bar2atm=1.0/1.01325
-        Pfix=Pbar*bar2atm
-        if Ppart is None:
-            Ppart = Pfix
-
-    def 
-    
     def initialization_database(self):
         if self.database=="HITRAN" or self.database=="HITEMP":
             try:
-                hapi.db_begin(self.databasedir)
-                load_hitran()                
+                self.mdb=moldb.MdbHit(self.molfile,self.nus)
             except:
                 print("Define databasedir.")
+        elif self.database=="ExoMol":
+            
         else:
-            print("Define database from HITRAN/HITEMP.")
+            print("Select database from HITRAN, HITEMP, ExoMol.")
                     
     def load_hitran(self):
         self.A_all = hapi.getColumn(self.molec, 'a')

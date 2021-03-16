@@ -12,5 +12,5 @@ def url_HITRAN12():
 def url_ExoMol():
     """return URL for ExoMol
     """
-    url=u"http://exomol.com/data/molecules/"
+    url=u"http://www.exomol.com/db/"
     return url
