@@ -1,74 +1,67 @@
-from exojax.spec.make_numatrix import make_numatrix0
-from exojax.spec.lpf import xsvector
-from exojax.spec.hitran import SijT, doppler_sigma, gamma_hitran, gamma_natural
-import hapi
-import numpy as np
-
+from exojax.spec import defmol
+from exojax.spec import moldb
+from exojax.spec import xsection
+from exojax.spec import SijT, doppler_sigma,  gamma_natural
+from exojax.spec.exomol import gamma_exomol
+import pathlib
 __all__ = ['AutoXS']
-
 
 
 class AutoXS(object):
     """exojax auto cross section generator
     
     """
-    def __init__(self,nus,database,molecules,databasedir=".database"):
+    def __init__(self,nus,database,molecules,databasedir=".database",memory_size=30):
         self.molecules=molecules
         self.database=database
         self.nus=nus
         self.databasedir=databasedir
+        self.memory_size=memory_size
         
-        defmol.search_molfile(database,molecules)
+        self.identifier=defmol.search_molfile(database,molecules)
+        self.init_database()
         
-    def initialization_database(self):
+    def init_database(self):
         if self.database=="HITRAN" or self.database=="HITEMP":
             try:
-                self.mdb=moldb.MdbHit(self.molfile,self.nus)
+                self.mdb=moldb.MdbHit(self.molfile,nurange=[self.nus[0],self.nus[-1]])
             except:
-                print("Define databasedir.")
+                print("Not supported yet. Define by yourself.")
         elif self.database=="ExoMol":
-            
+            try:
+                molpath=pathlib.Path(self.databasedir)/pathlib.Path(self.identifier)
+                molpath=str(molpath)
+                self.mdb=moldb.MdbExomol(molpath,nurange=[self.nus[0],self.nus[-1]])
+            except:
+                print("Not supported yet. Define by yourself.")
+
         else:
             print("Select database from HITRAN, HITEMP, ExoMol.")
-                    
-    def load_hitran(self):
-        self.A_all = hapi.getColumn(self.molec, 'a')
-        self.n_air_all = hapi.getColumn(self.molec, 'n_air')
-        self.isoid_all = hapi.getColumn(self.molec,'local_iso_id')
-        self.gamma_air_all = hapi.getColumn(self.molec, 'gamma_air')
-        self.gamma_self_all = hapi.getColumn(self.molec, 'gamma_self')
-        self.nu_lines_all = hapi.getColumn(self.molec, 'nu')
-        self.delta_air_all = hapi.getColumn(self.molec, 'delta_air')
-        self.Sij0_all = hapi.getColumn(self.molec, 'sw')
-        self.elower_all = hapi.getColumn(self.molec, 'elower')
-        self.gpp_all = hapi.getColumn(self.molec, 'gpp')
 
-    def partition_function_hitran(self,Tfix):
-        Tref=296.0 # HITRAN reference temeprature is 296 K
-        Qr=[]
-        for iso in self.uniqiso:
-            Qr.append(hapi.partitionSum(self.molecid,iso, [Tref,Tfix]))
-            Qr=np.array(Qr)
-        qr=Qr[:,0]/Qr[:,1] #Q(Tref)/Q(T)
-        qt=np.zeros(len(self.isoid))
-        for idx,iso in enumerate(self.uniqiso):
-            mask=isoid==iso
-        qt[mask]=qr[idx]        
-        return qt
-
-    def compute_line_strength(self,Tfix):
-        if self.database == "HITRAN" or self.database == "HITEMP": 
-            logsij0=np.log(self.Sij0)
-            self.Sij=SijT(Tfix,logsij0,self.nu_lines,self.gpp,self.elower,self.qt)
-            
-    def compute_gamma(self,Tfix,Pfix,Ppart):
-        if self.database == "HITRAN" or self.database == "HITEMP": 
-            self.gammaL = gamma_hitran(Pfix,Tfix,Ppart, self.n_air, self.gamma_air, self.gamma_self) \
-                     + gamma_natural(self.A) 
-
-def hitran_molec():
-    molec_dict={"CO":'05_hit12'}
-    molecid_dict={"CO":5}
+    def xsec(self,T,P):
+        """cross section
+        Args: 
+           T: temperature (K)
+           P: pressure (bar)
+        Returns:
+           cross section (cm2)
+        """
+        mdb=self.mdb
+        qt=mdb.qr_interp(T)
+        Sij=SijT(T,mdb.logsij0,mdb.nu_lines,mdb.elower,qt)
+        gammaL = gamma_exomol(P,T,mdb.n_Texp,mdb.alpha_ref)\
+                 + gamma_natural(mdb.A) 
+        sigmaD=doppler_sigma(mdb.nu_lines,T,mdb.molmass)
+        nu0=mdb.nu_lines
+        xsv=xsection(nus,nu0,sigmaD,gammaL,Sij,memory_size=self.memory_size)
+        return xsv
+        
+if __name__ == "__main__":
+    import numpy as np
+    import matplotlib.pyplot as plt
     
-def default_molec_weight():
-    mweight_dict={"CO":28.010446441149536}
+    nus=np.linspace(1900.0,2300.0,4000,dtype=np.float64)
+    autoxs=AutoXS(nus,"ExoMol","CO")
+    xsv=autoxs.xsec(1000.0,1.0) #1000K, 1bar
+    plt.plot(nus,xsv)
+    plt.show()
