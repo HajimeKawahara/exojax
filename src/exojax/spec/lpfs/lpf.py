@@ -1,42 +1,17 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-""" Custom JVP version of the line profile functions used in exospectral analysis.
+"""line profile functions used in exospectral analysis.
 
 """
 
 from jax import jit, vmap
 import jax.numpy as jnp
 from exojax.special.faddeeva import rewofz,imwofz,rewofzx
-from exojax.special.faddeeva import wofzs2,rewofzs2,imwofzs2
-
-from jax import custom_jvp
+from exojax.special.faddeeva import rewofzs2
 
 @jit
-def ljert(x,a):
-    """ljert function, consisting of a combination of imwofz and imwofzs2.
-    
-    Args:
-        x: 
-        a:
-        
-    Returns:
-        ljert: L(x,a) or Imag(wofz(x+ia))
-
-    Examples:
-       
-       ljert provides a L(x,a) function. 
-       
-
-       This function accepts a scalar value as an input. Use jax.vmap to use a vector as an input.
-
-    """
-    r2=x*x+a*a
-    return jnp.where(r2<111., imwofz(x,a), imwofzs2(x,a))
-
-
-@custom_jvp
 def hjert(x,a):
-    """custom JVP version of the Voigt-Hjerting function, consisting of a combination of rewofz and real(wofzs2).
+    """Voigt-Hjerting function, consisting of a combination of rewofz and real(wofzs2).
     
     Args:
         x: 
@@ -47,10 +22,10 @@ def hjert(x,a):
 
     Examples:
        
-       hjert provides a Voigt-Hjerting function w/ custom JVP. 
+       hjert provides a Voigt-Hjerting function. 
        
        >>> hjert(1.0,1.0)
-          DeviceArray(0.30474418, dtype=float32)
+          DeviceArray(0.3047442, dtype=float32)
 
        This function accepts a scalar value as an input. Use jax.vmap to use a vector as an input.
 
@@ -64,22 +39,13 @@ def hjert(x,a):
 
     """
     r2=x*x+a*a
+#    return jnp.where(r2<111., rewofz(x,a), jnp.real(wofzs2(x,a)))
     return jnp.where(r2<111., rewofz(x,a), rewofzs2(x,a))
-
-@hjert.defjvp
-def hjert_jvp(primals, tangents):
-    x, a = primals
-    ux, ua = tangents
-    dHdx=2.0*a*ljert(x,a)-2.0*x*hjert(x,a)
-    dHda=2.0*x*ljert(x,a)+2.0*a*hjert(x,a)-2.0/jnp.sqrt(jnp.pi)
-    primal_out = hjert(x,a)
-    tangent_out = dHdx * ux  + dHda * ua
-    return primal_out, tangent_out
 
 
 @jit
 def voigt(nu,sigmaD,gammaL):
-    """Custom JVP version of Voigt profile using Voigt-Hjerting function 
+    """Voigt profile using Voigt-Hjerting function 
 
     Args:
        nu: wavenumber
@@ -88,6 +54,13 @@ def voigt(nu,sigmaD,gammaL):
  
     Returns:
        v: Voigt profile
+    
+    Examples:
+       
+       >>> from exojax.spec import voigt
+       >>> import jax.numpy as jnp
+       >>> nu=jnp.linspace(-10,10,100)
+       >>> voigt(nu,1.0,2.0) #sigma_D=1.0, gamma_L=2.0
 
     """
     
@@ -98,7 +71,7 @@ def voigt(nu,sigmaD,gammaL):
 
 @jit
 def vvoigt(numatrix,sigmaD,gammas):
-    """Custom JVP version of vmaped voigt profile
+    """vmaped voigt profile
 
     Args:
        numatrix: wavenumber matrix in R^(Nline x Nwav)
@@ -114,7 +87,7 @@ def vvoigt(numatrix,sigmaD,gammas):
 
 @jit
 def xsvector(numatrix,sigmaD,gammaL,Sij):
-    """Custom JVP version of cross section vector 
+    """cross section vector 
 
     Args:
        numatrix: wavenumber matrix in R^(Nline x Nwav)
@@ -130,7 +103,7 @@ def xsvector(numatrix,sigmaD,gammaL,Sij):
 
 @jit
 def xsmatrix(numatrix,sigmaDM,gammaLM,SijM):
-    """Custom JVP version of cross section matrix
+    """cross section matrix
 
     Args:
        numatrix: wavenumber matrix in R^(Nline x Nwav)
@@ -143,4 +116,46 @@ def xsmatrix(numatrix,sigmaDM,gammaLM,SijM):
 
     """
     return vmap(xsvector,(None,0,0,0))(numatrix,sigmaDM,gammaLM,SijM)
+
+@jit
+def Tc(a,x,crit=0.1):
+    """Tc Function = Tepper-Garc'ia  Function w/ the inner correction: Tc(a,x)
+    
+    Args:
+        a: float/nd array
+            parameter 
+        x: float/nd array
+           parameter
+
+    Returns:
+        g: float/ndarary
+           Tc(a,x)
+
+    """
+    h=jnp.exp(-x*x)
+    gg=h - a*(h*h*(4*x**4+7*x**2+4+1.5*x**-2)-1.5*x**-2-1)/x**2/jnp.sqrt(jnp.pi)
+    g=jnp.where(jnp.abs(x)<crit,h - 2.0*a/jnp.sqrt(jnp.pi)*(1-2*x**2),gg)
+    return g
+
+@jit
+def VoigtTc(nu,sigmaD,gammaL):
+    """Voigt-Tepper C profile = Voigt profile using Tc function Vtc(nu,sigmaD,gammaL)
+
+    Args:
+       nu: ndarray
+            wavenumber
+       sigmaD: float
+                sigma parameter in Doppler profile 
+       gammaL: float 
+                broadening coefficient in Lorentz profile 
+ 
+    Returns:
+       v: ndarray
+           Vtc
+
+    """
+    
+    sfac=1.0/(jnp.sqrt(2)*sigmaD)
+    v=sfac*Tc(sfac*gammaL,sfac*nu)/jnp.sqrt(jnp.pi)
+    return v
 

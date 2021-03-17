@@ -30,19 +30,6 @@ from exojax.spec.lpf import (
     xsvector,
 )
 
-from exojax.spec.clpf import (
-    chjert,
-    cvoigt,
-    cvvoigt,
-    cxsvector,
-)
-
-from exojax.spec.rlpf import (
-    rhjert,
-    rvoigt,
-    rvvoigt,
-    rxsvector,
-)
 
 
 from exojax.spec.make_numatrix import (
