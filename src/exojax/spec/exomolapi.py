@@ -79,6 +79,7 @@ def read_def(deff):
     alpha_ref=None
     texp=None
     molmasssw=False
+    n_Texp=None
     for i, com in enumerate(dat["COMMENT"]):
         if "Default value of Lorentzian half-width" in com:
             alpha_ref=float(dat["VAL"][i])

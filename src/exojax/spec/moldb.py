@@ -50,7 +50,13 @@ class MdbExomol(object):
         self.gQT=jnp.array(pf["QT"].to_numpy()) #grid QT
         self.T_gQT=jnp.array(pf["T"].to_numpy()) #T forgrid QT
         self.n_Texp, self.alpha_ref, self.molmass=exomolapi.read_def(self.def_file)
-
+        #default n_Texp value if not given
+        if self.n_Texp is None:
+            self.n_Texp=0.5
+        #default alpha_ref value if not given
+        if self.alpha_ref is None:
+            self.alpha_ref=0.07
+            
         #compute gup and elower
         A, self.nu_lines, elower, gpp=exomolapi.pickup_gE(states,trans)        
         self.Tref=296.0        
@@ -187,7 +193,7 @@ class MdbHit(object):
 
         
     def download(self):
-        """Downloading HITRAN par file
+        """Downloading HITRAN/HITEMP par file
 
         Note:
            The download URL is written in exojax.utils.url.
@@ -195,12 +201,21 @@ class MdbHit(object):
         """
         import urllib.request
         from exojax.utils.url import url_HITRAN12
-        print("Downloading parfile from "+url)
-        url = url_HITRAN12()+self.path.name
+        from exojax.utils.url import url_HITEMP
+
         try:
+            url = url_HITRAN12()+self.path.name
             urllib.request.urlretrieve(url,str(self.path))
         except:
-            print("Couldn't download and save.")
+            print(url)
+            print("HITRAN download failed")
+        try:
+            url = url_HITEMP()+self.path.name
+            print(url)
+            urllib.request.urlretrieve(url,str(self.path))
+        except:
+            print("HITEMP download failed")
+
             
     def Qr(self,Tarr):
         """Partition Function ratio using HAPI partition sum
