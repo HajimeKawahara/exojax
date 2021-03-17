@@ -74,9 +74,9 @@ if __name__ == "__main__":
     import matplotlib.pyplot as plt
     
     nus=np.linspace(1900.0,2300.0,40000,dtype=np.float64)
-    autoxs=AutoXS(nus,"HITRAN","CO")
+    #autoxs=AutoXS(nus,"HITRAN","CO")
     #autoxs=AutoXS(nus,"ExoMol","CO")
-    #    autoxs=AutoXS(nus,"HITEMP","CO")
+    autoxs=AutoXS(nus,"HITEMP","CO")
     xsv=autoxs.xsection(1000.0,1.0) #1000K, 1bar
     plt.plot(nus,xsv)
     plt.show()

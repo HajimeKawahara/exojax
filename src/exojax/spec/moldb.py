@@ -148,11 +148,23 @@ class MdbHit(object):
            crit: line strength lower limit for extraction
 
         """        
+        #downloading
         self.path = pathlib.Path(path)
         molec=str(self.path.stem)
-        #downloading
         if not self.path.exists():
             self.download()
+
+        #bunzip2 if suffix is .bz2
+        if self.path.suffix==".bz2":
+            import bz2,shutil
+            print("bunziping")
+            with bz2.BZ2File(str(self.path)) as fr:
+                with open(str(self.path.with_suffix('')),"wb") as fw:
+                    shutil.copyfileobj(fr,fw)
+            self.path=self.path.with_suffix('')
+            
+        molec=str(self.path.stem)
+            
         hapi.db_begin(str(self.path.parent))            
         self.Tref=296.0        
         self.molecid = search_molecid(molec)
