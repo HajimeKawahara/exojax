@@ -4,6 +4,65 @@
 import numpy as np
 import pandas as pd
 
+def read_def(deff):
+    """Exomol IO for a definition file
+
+    Args: 
+        deff: definition file
+    Returns:
+        temperature exponent n_Texp
+        broadening parameter alpha_ref
+        molecular mass
+        numinf: nu minimum for trans
+        numtag: tag for wavelength range
+
+    Note:
+       For some molecules, ExoMol provides multiple trans files. numinf and numtag are the ranges and identifiers for the multiple trans files.
+
+
+    """
+
+    dat = pd.read_csv(deff,sep="#",names=("VAL","COMMENT"))
+    alpha_ref=None
+    texp=None
+    molmasssw=False
+    n_Texp=None
+    ntransf=1
+    maxnu=0.0
+    for i, com in enumerate(dat["COMMENT"]):
+        if "Default value of Lorentzian half-width" in com:
+            alpha_ref=float(dat["VAL"][i])
+            print("gamma width=",alpha_ref)
+        elif "Default value of temperature exponent" in com:
+            n_Texp=float(dat["VAL"][i])
+            print("T exponent=",n_Texp)
+        elif "Element symbol 2" in com:
+            molmasssw=True
+        elif "No. of transition files" in com:
+            ntransf=int(dat["VAL"][i])
+        elif "Maximum wavenumber (in cm-1)" in com:
+            #maxnu=float(dat["VAL"][i])
+            maxnu=20000.0
+        elif molmasssw:
+            c=np.unique(dat["VAL"][i].strip(" ").split(" "))
+            c=np.array(c,dtype=np.float)
+            molmass=(np.max(c))
+            print("Mol mass=",molmass)
+            molmasssw=False
+    if ntransf>1:
+        dnufile=maxnu/ntransf
+        numinf=dnufile*np.array(range(ntransf+1))
+        numtag=[]
+        for i in range(len(numinf)-1):
+            imin='{:05}'.format(int(numinf[i]))
+            imax='{:05}'.format(int(numinf[i+1]))
+            numtag.append(imin+"-"+imax)
+    else:
+        numinf=None
+        numtag=""
+        
+    return n_Texp, alpha_ref, molmass, numinf, numtag
+
 def read_pf(pff):
     """Exomol IO for partition file
 
@@ -64,38 +123,6 @@ def read_states(statesf):
         
     return dat
 
-def read_def(deff):
-    """Exomol IO for a definition file
-
-    Args: 
-        deff: definition file
-    Returns:
-        temperature exponent n_Texp
-        broadening parameter alpha_ref
-
-    """
-
-    dat = pd.read_csv(deff,sep="#",names=("VAL","COMMENT"))
-    alpha_ref=None
-    texp=None
-    molmasssw=False
-    n_Texp=None
-    for i, com in enumerate(dat["COMMENT"]):
-        if "Default value of Lorentzian half-width" in com:
-            alpha_ref=float(dat["VAL"][i])
-            print("gamma width=",alpha_ref)
-        elif "Default value of temperature exponent" in com:
-            n_Texp=float(dat["VAL"][i])
-            print("T exponent=",n_Texp)
-        elif "Element symbol 2" in com:
-            molmasssw=True
-        elif molmasssw:
-            c=np.unique(dat["VAL"][i].strip(" ").split(" "))
-            c=np.array(c,dtype=np.float)
-            molmass=(np.max(c))
-            print("Mol mass=",molmass)
-            molmasssw=False
-    return n_Texp, alpha_ref, molmass
 
 def pickup_gE(states,trans):
     """extract g_upper (gup) and E_lower (elower) from states DataFrame and insert them to transition DataFrame.
@@ -172,9 +199,11 @@ def pickup_gEslow(states,trans):
 
 if __name__=="__main__":
     import time
-    deff="/home/kawahara/exojax/data/exomol/CO/12C-16O/Li2015/12C-16O__Li2015.def"
-    n_Texp, alpha_ref, molmass=read_def(deff)
-    import sys
+#    deff="/home/kawahara/exojax/data/exomol/CO/12C-16O/Li2015/12C-16O__Li2015.def"
+#    deff="/home/kawahara/exojax/data/exomol/CH4/12C-1H4/YT34to10/12C-1H4__YT34to10.def"
+    deff="/home/kawahara/exojax/data/exomol/NH3/14N-1H3/CoYuTe/14N-1H3__CoYuTe.def"
+    n_Texp, alpha_ref, molmass, numinf, numtag=read_def(deff)
+    import sys    
     sys.exit()
 
     pff="/home/kawahara/exojax/data/exomol/CO/12C-16O/Li2015/12C-16O__Li2015.pf"

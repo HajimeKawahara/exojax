@@ -1,7 +1,12 @@
 """Molecular database (MDB) class
 
+   * MdbExomol is the MDB for ExoMol
    * MdbHit is the MDB for HITRAN or HITEMP  
    
+ToDo:
+
+   * no nu_line in trans support
+
 """
 import numpy as np
 import jax.numpy as jnp
@@ -13,57 +18,105 @@ import pandas as pd
 __all__ = ['MdbExomol','MdbHit']
 
 class MdbExomol(object):
-    def __init__(self,path,trans=None,nurange=[-np.inf,np.inf],margin=250.0,crit=-np.inf):
+    def __init__(self,path,nurange=[-np.inf,np.inf],margin=250.0,crit=-np.inf):
         """Molecular database for Exomol form
 
         Args: 
            path: path for Exomol data directory/tag. For instance, "/home/CO/12C-16O/Li2015"
-           trans: tag of transition file if exists. "11100-11200"
            nurange: wavenumber range list (cm-1)
            margin: margin for nurange (cm-1)
            crit: line strength lower limit for extraction
 
+        Note:
+           The trans/states files can be very large. For the first time to read it, we convert it to the feather-format. After the second-time, we use the feather format instead.
+
         """
+        explanation="Note: Couldn't find the feather format. We convert data to the feather format. After the second time, it will become much faster."
+        
         self.path = pathlib.Path(path)
         t0=self.path.parents[0].stem        
         molec=t0+"__"+str(self.path.stem)
-
-        if trans is None:
-            self.trans_file = self.path/pathlib.Path(molec+".trans.bz2")
-        else:
-            self.trans_file = self.path/pathlib.Path(molec+"__"+trans+".trans.bz2")
+        self.crit = crit
+        self.margin = margin
+        self.nurange=[np.min(nurange),np.max(nurange)]
             
         self.states_file = self.path/pathlib.Path(molec+".states.bz2")
         self.pf_file = self.path/pathlib.Path(molec+".pf")
         self.def_file = self.path/pathlib.Path(molec+".def")
-        self.crit = crit
-        self.margin = margin
-        self.nurange=[np.min(nurange),np.max(nurange)]
-        #downloading
-        if not self.trans_file.exists():
-            self.download(molec,trans)
+        if not self.def_file.exists():
+                self.download(molec,extension=[".def",".pf",".states.bz2"])
 
-        #loading exomol files
-        trans=exomolapi.read_trans(self.trans_file)
-        states=exomolapi.read_states(self.states_file)
+        #load def 
+        self.n_Texp, self.alpha_ref, self.molmass, numinf, numtag=exomolapi.read_def(self.def_file)
+        #  default n_Texp value if not given
+        if self.n_Texp is None:
+            self.n_Texp=0.5
+        #  default alpha_ref value if not given
+        if self.alpha_ref is None:
+            self.alpha_ref=0.07
+
+        #load states
+        if self.states_file.with_suffix(".feather").exists():
+            states=pd.read_feather(self.states_file.with_suffix(".feather"))
+        else:
+            print(explanation)
+            states=exomolapi.read_states(self.states_file)
+            states.to_feather(self.states_file.with_suffix(".feather"))
+        #load pf
         pf=exomolapi.read_pf(self.pf_file)
         self.gQT=jnp.array(pf["QT"].to_numpy()) #grid QT
         self.T_gQT=jnp.array(pf["T"].to_numpy()) #T forgrid QT
-        self.n_Texp, self.alpha_ref, self.molmass=exomolapi.read_def(self.def_file)
-        #default n_Texp value if not given
-        if self.n_Texp is None:
-            self.n_Texp=0.5
-        #default alpha_ref value if not given
-        if self.alpha_ref is None:
-            self.alpha_ref=0.07
-            
-        #compute gup and elower
-        A, self.nu_lines, elower, gpp=exomolapi.pickup_gE(states,trans)        
+                
+        #trans file(s)
+        print("Reading transition file")
+        if numinf is None:
+            self.trans_file = self.path/pathlib.Path(molec+".trans.bz2")
+            if not self.trans_file.exists():
+                self.download(molec,[".trans.bz2"])
+
+            if self.trans_file.with_suffix(".feather").exists():
+                trans=pd.read_feather(self.trans_file.with_suffix(".feather"))
+            else:
+                print(explanation)
+                trans=exomolapi.read_trans(self.trans_file)
+                trans.to_feather(self.trans_file.with_suffix(".feather"))
+            #compute gup and elower
+            A, self.nu_lines, elower, gpp=exomolapi.pickup_gE(states,trans)        
+        else:
+            imin=np.searchsorted(numinf,nurange[0])
+            imax=np.searchsorted(numinf,nurange[1])
+            self.trans_file=[]
+            for k,i in enumerate(range(imin,imax+1)):
+                trans_file = self.path/pathlib.Path(molec+"__"+numtag[i]+".trans.bz2")
+                if not trans_file.exists():
+                    self.download(molec,extension=[".trans.bz2"],numtag=numtag[i])
+                if trans_file.with_suffix(".feather").exists():
+                    trans=pd.read_feather(trans_file.with_suffix(".feather"))
+                else:
+                    print(explanation)
+                    trans=exomolapi.read_trans(trans_file)
+                    trans.to_feather(trans_file.with_suffix(".feather"))
+                self.trans_file.append(trans_file)
+                #compute gup and elower                
+                if k==0:
+                    print(trans)
+                    A, self.nu_lines, elower, gpp=exomolapi.pickup_gE(states,trans)
+
+                else:
+                    Ax, nulx, elowerx, gppx=exomolapi.pickup_gE(states,trans)
+                    A=np.hstack([A,Ax])
+                    self.nu_lines=np.hstack([self.nu_lines,nulx])
+                    elower=np.hstack([elower,elowerx])
+                    gpp=np.hstack([gpp,gppx])
+
+                if self.nu_lines[0] != self.nu_lines[0]:
+                    print("To:Do nu_line...")
+                    
         self.Tref=296.0        
         self.QTref=np.array(self.QT_interp(self.Tref))
         ##input should be ndarray not jnp array
         self.Sij0=exomol.Sij0(A,gpp,self.nu_lines,elower,self.QTref)
-        
+        print(self.nu_lines)
         ### MASKING ###
         mask=(self.nu_lines>self.nurange[0]-self.margin)\
         *(self.nu_lines<self.nurange[1]+self.margin)\
@@ -72,6 +125,7 @@ class MdbExomol(object):
         #numpy float 64 Do not convert them jnp array
         self.nu_lines = self.nu_lines[mask]
         self.Sij0 = self.Sij0[mask]        
+        print(self.nu_lines)
 
 
         #jnp arrays
@@ -101,12 +155,13 @@ class MdbExomol(object):
         return self.QT_interp(T)/self.QT_interp(self.Tref)
     
         
-    def download(self,molec,trans=None):
+    def download(self,molec,extension,numtag=None):
         """Downloading Exomol files
 
         Args: 
            molec: like "12C-16O__Li2015"
-           trans: tag of transition file if exists. "11100-11200"
+           extension: extension list e.g. [".pf",".def",".trans.bz2",".states.bz2"]
+           numtag: number tag of transition file if exists. e.g. "11100-11200"
 
         Note:
            The download URL is written in exojax.utils.url.
@@ -121,10 +176,10 @@ class MdbExomol(object):
         molname_simple=e2s(tag[0])        
         url = url_ExoMol()+molname_simple+"/"+tag[0]+"/"+tag[1]+"/"
 
-        extension=[".pf",".def",".trans.bz2",".states.bz2"]
+        
         for ext in extension:
-            if ext==".trans.bz2" and trans is not None:
-                ext="__"+trans+ext
+            if ext==".trans.bz2" and numtag is not None:
+                ext="__"+numtag+ext
             pfname=molec+ext
             pfpath=url+pfname
             os.makedirs(str(self.path), exist_ok=True)
@@ -311,7 +366,9 @@ def search_molecid(molec):
         return None
 
 if __name__ == "__main__":
-    mdb=MdbExomol("/home/kawahara/exojax/data/exomol/CO/12C-16O/Li2015/")
+#    mdb=MdbExomol("/home/kawahara/exojax/data/exomol/CO/12C-16O/Li2015/")
 #    mdb=MdbExomol("/home/kawahara/exojax/data/exomol/NO/14N-16O/NOname/14N-16O__NOname")
 #    mdb=MdbExomol("/home/kawahara/exojax/data/exomol/NO/14N-16O/NOname/14N-16O__NOname")
-#    mdb=MdbExomol("/home/kawahara/exojax/data/exomol/CH4/12C-1H4/YT34to10/","11100-11200")
+#    mdb=MdbExomol("/home/kawahara/exojax/data/exomol/CH4/12C-1H4/YT34to10/",nurange=[6050.0,6150.0])
+    mdb=MdbExomol("/home/kawahara/exojax/data/exomol/NH3/14N-1H3/CoYuTe/",nurange=[6050.0,6150.0])
+#    mdb=MdbExomol("/home/kawahara/exojax/data/exomol/FeH/56Fe-1H/MoLLIST/",nurange=[6050.0,6150.0])

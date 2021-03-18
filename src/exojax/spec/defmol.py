@@ -21,12 +21,18 @@ EXOMOL_DEFMOL= \
 {\
  "12C-16O":"Li2015",\
  "16O-1H":"MoLLIST",
+ "14N-1H3":"CoYuTe",
+ "14N-16O":"NOname",
+ "56Fe-1H":"MoLLIST",
 }
 
 EXOMOL_SIMPLE2EXACT= \
 {\
  "CO":"12C-16O",\
  "OH":"16O-1H",\
+ "NH3":"14N-1H3",\
+ "NO":"14N-16O",
+ "FeH":"56Fe-1H",
 }
 
 
