@@ -71,9 +71,10 @@ class AutoXS(object):
 if __name__ == "__main__":
     import numpy as np
     import matplotlib.pyplot as plt
-    nus=np.linspace(6085.0,6115.0,3000,dtype=np.float64)
+#    nus=np.linspace(6085.0,6115.0,3000,dtype=np.float64)
+    nus=np.linspace(5085.0,5115.0,3000,dtype=np.float64)
     #autoxs=AutoXS(nus,"HITRAN","CO")
-    autoxs=AutoXS(nus,"ExoMol","H2S")
+    autoxs=AutoXS(nus,"ExoMol","SiO")
     #autoxs=AutoXS(nus,"HITEMP","CO")
     xsv=autoxs.xsection(1000.0,1.0) #1000K, 1bar
     plt.plot(nus,xsv)

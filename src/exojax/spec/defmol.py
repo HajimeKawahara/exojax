@@ -1,3 +1,7 @@
+"""Definition of Default dataset for autospec
+
+"""
+
 from exojax.utils.molname import e2s
 
 HITRAN_DEFMOL= \
@@ -25,7 +29,7 @@ EXOMOL_DEFMOL= \
  "14N-16O":"NOname",
  "56Fe-1H":"MoLLIST",
  "1H2-32S":"AYT2",
-
+ "28Si-16O2":"OYT3",
 }
 
 EXOMOL_SIMPLE2EXACT= \
@@ -36,11 +40,13 @@ EXOMOL_SIMPLE2EXACT= \
  "NO":"14N-16O",
  "FeH":"56Fe-1H",
  "H2S":"1H2-32S",
+ "SiO":"28Si-16O2",
 }
 
 
 def search_molfile(database,molecules):
     """name identifier of molecular databases
+
     Args:
        database: molecular database (HITRAN,HITEMP,ExoMol)
        molecules: molecular name such as (CO, 12C-16O)

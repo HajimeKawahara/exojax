@@ -8,10 +8,13 @@ ExoJAX
 
 ExoJAX provides an auto-differentiable high-resolution spectrum model for exoplanets/brown dwarfs using `JAX <https://github.com/google/jax>`_. 
 
-Basic Usage
------------------
 
-in prep.
+.. toctree::
+   :maxdepth: 1
+   :caption: User Guide:
+
+   userguide/installation.rst
+
 
 .. toctree::
    :maxdepth: 1
@@ -26,6 +29,8 @@ in prep.
 
    exojax/exojax.rst
 
+
+   
 License & Attribution
 ---------------------
 
