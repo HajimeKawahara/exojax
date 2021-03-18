@@ -124,12 +124,14 @@ def read_states(statesf):
     return dat
 
 
-def pickup_gE(states,trans):
+def pickup_gE(states,trans,trans_lines=False):
     """extract g_upper (gup) and E_lower (elower) from states DataFrame and insert them to transition DataFrame.
 
     Args:
        states: states pandas DataFrame
        trans: transition pandas DataFrame
+       trans_lines: By default (False) we use nu_lines computed using the state file, i.e. E_upper - E_lower. If trans_nuline=True, we use the nu_lines in the transition file. Note that some trans files do not this info.
+
 
     Returns:
        A, nu_lines, elower, gup
@@ -152,10 +154,24 @@ def pickup_gE(states,trans):
 
     #use the state counting numbers (upper and lower) as masking.  
     elower=newstates[i_lower,0]
+    eupper=newstates[i_upper,0]
     gup=newstates[i_upper,1]
     A=ndtrans[:,2]
-    nu_lines=ndtrans[:,3]
     
+    if trans_lines:
+        nu_lines=ndtrans[:,3]
+    else:
+        nu_lines=eupper-elower
+
+    #See Issue #16
+    #import matplotlib.pyplot as plt
+    #nu_lines_t=ndtrans[:,3]
+    #plt.plot(nu_lines_t-nu_lines,".",alpha=0.03)
+    #plt.ylabel("diff nu from trans and state (cm-1)")
+    #plt.xlabel("wavenuber (cm-1)")
+    #plt.savefig("nudiff.png", bbox_inches="tight", pad_inches=0.0)
+    #plt.show()
+
     return A, nu_lines, elower, gup
 
 
@@ -199,12 +215,6 @@ def pickup_gEslow(states,trans):
 
 if __name__=="__main__":
     import time
-#    deff="/home/kawahara/exojax/data/exomol/CO/12C-16O/Li2015/12C-16O__Li2015.def"
-#    deff="/home/kawahara/exojax/data/exomol/CH4/12C-1H4/YT34to10/12C-1H4__YT34to10.def"
-    deff="/home/kawahara/exojax/data/exomol/NH3/14N-1H3/CoYuTe/14N-1H3__CoYuTe.def"
-    n_Texp, alpha_ref, molmass, numinf, numtag=read_def(deff)
-    import sys    
-    sys.exit()
 
     pff="/home/kawahara/exojax/data/exomol/CO/12C-16O/Li2015/12C-16O__Li2015.pf"
     dat=read_pf(pff)
@@ -219,6 +229,7 @@ if __name__=="__main__":
     ts=time.time()
     A, nu_lines, elower, gup=pickup_gE(states,trans)
     te=time.time()
+
     
     tsx=time.time()
     if check:

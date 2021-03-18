@@ -99,18 +99,13 @@ class MdbExomol(object):
                 self.trans_file.append(trans_file)
                 #compute gup and elower                
                 if k==0:
-                    print(trans)
                     A, self.nu_lines, elower, gpp=exomolapi.pickup_gE(states,trans)
-
                 else:
                     Ax, nulx, elowerx, gppx=exomolapi.pickup_gE(states,trans)
                     A=np.hstack([A,Ax])
                     self.nu_lines=np.hstack([self.nu_lines,nulx])
                     elower=np.hstack([elower,elowerx])
                     gpp=np.hstack([gpp,gppx])
-
-                if self.nu_lines[0] != self.nu_lines[0]:
-                    print("To:Do nu_line...")
                     
         self.Tref=296.0        
         self.QTref=np.array(self.QT_interp(self.Tref))
