@@ -41,14 +41,19 @@ def read_def(deff):
         elif "No. of transition files" in com:
             ntransf=int(dat["VAL"][i])
         elif "Maximum wavenumber (in cm-1)" in com:
-            #maxnu=float(dat["VAL"][i])
-            maxnu=20000.0
+            maxnu=float(dat["VAL"][i])
+            #maxnu=20000.0
         elif molmasssw:
             c=np.unique(dat["VAL"][i].strip(" ").split(" "))
             c=np.array(c,dtype=np.float)
             molmass=(np.max(c))
             print("Mol mass=",molmass)
             molmasssw=False
+
+        ### EXCEPTION
+        if deff.stem=="14N-1H3__CoYuTe":
+            maxnu=20000.0
+            
     if ntransf>1:
         dnufile=maxnu/ntransf
         numinf=dnufile*np.array(range(ntransf+1))
@@ -162,7 +167,7 @@ def pickup_gE(states,trans,trans_lines=False):
         nu_lines=ndtrans[:,3]
     else:
         nu_lines=eupper-elower
-
+    
     #See Issue #16
     #import matplotlib.pyplot as plt
     #nu_lines_t=ndtrans[:,3]

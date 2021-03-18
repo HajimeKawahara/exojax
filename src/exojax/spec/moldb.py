@@ -83,8 +83,8 @@ class MdbExomol(object):
             #compute gup and elower
             A, self.nu_lines, elower, gpp=exomolapi.pickup_gE(states,trans)        
         else:
-            imin=np.searchsorted(numinf,nurange[0])
-            imax=np.searchsorted(numinf,nurange[1])
+            imin=np.searchsorted(numinf,nurange[0])-1 #left side
+            imax=np.searchsorted(numinf,nurange[1])-1 #left side
             self.trans_file=[]
             for k,i in enumerate(range(imin,imax+1)):
                 trans_file = self.path/pathlib.Path(molec+"__"+numtag[i]+".trans.bz2")
@@ -111,7 +111,6 @@ class MdbExomol(object):
         self.QTref=np.array(self.QT_interp(self.Tref))
         ##input should be ndarray not jnp array
         self.Sij0=exomol.Sij0(A,gpp,self.nu_lines,elower,self.QTref)
-        print(self.nu_lines)
         ### MASKING ###
         mask=(self.nu_lines>self.nurange[0]-self.margin)\
         *(self.nu_lines<self.nurange[1]+self.margin)\
@@ -120,7 +119,6 @@ class MdbExomol(object):
         #numpy float 64 Do not convert them jnp array
         self.nu_lines = self.nu_lines[mask]
         self.Sij0 = self.Sij0[mask]        
-        print(self.nu_lines)
 
 
         #jnp arrays
@@ -365,5 +363,6 @@ if __name__ == "__main__":
 #    mdb=MdbExomol("/home/kawahara/exojax/data/exomol/NO/14N-16O/NOname/14N-16O__NOname")
 #    mdb=MdbExomol("/home/kawahara/exojax/data/exomol/NO/14N-16O/NOname/14N-16O__NOname")
 #    mdb=MdbExomol("/home/kawahara/exojax/data/exomol/CH4/12C-1H4/YT34to10/",nurange=[6050.0,6150.0])
-    mdb=MdbExomol("/home/kawahara/exojax/data/exomol/NH3/14N-1H3/CoYuTe/",nurange=[6050.0,6150.0])
+#    mdb=MdbExomol("/home/kawahara/exojax/data/exomol/NH3/14N-1H3/CoYuTe/",nurange=[6050.0,6150.0])
+    mdb=MdbExomol("/home/kawahara/exojax/data/exomol/H2S/1H2-32S/AYT2/",nurange=[6050.0,6150.0])
 #    mdb=MdbExomol("/home/kawahara/exojax/data/exomol/FeH/56Fe-1H/MoLLIST/",nurange=[6050.0,6150.0])

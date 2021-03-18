@@ -24,6 +24,8 @@ EXOMOL_DEFMOL= \
  "14N-1H3":"CoYuTe",
  "14N-16O":"NOname",
  "56Fe-1H":"MoLLIST",
+ "1H2-32S":"AYT2",
+
 }
 
 EXOMOL_SIMPLE2EXACT= \
@@ -33,6 +35,7 @@ EXOMOL_SIMPLE2EXACT= \
  "NH3":"14N-1H3",\
  "NO":"14N-16O",
  "FeH":"56Fe-1H",
+ "H2S":"1H2-32S",
 }
 
 
