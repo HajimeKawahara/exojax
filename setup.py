@@ -13,7 +13,7 @@ META_PATH = os.path.join("src", "exojax", "__init__.py")
 CLASSIFIERS = [
     "Programming Language :: Python",
 ]
-INSTALL_REQUIRES = ["numpy","tqdm","scipy","jax","numpyro","arviz","feather-format"]
+INSTALL_REQUIRES = ["numpy","tqdm","scipy","jax","numpyro","arviz","pyarrow"]
 #require https://github.com/hitranonline/hapi
 
 # END PROJECT SPECIFIC
