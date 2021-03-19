@@ -83,8 +83,8 @@ class MdbExomol(object):
             #compute gup and elower
             A, self.nu_lines, elower, gpp=exomolapi.pickup_gE(states,trans)        
         else:
-            imin=np.searchsorted(numinf,nurange[0])-1 #left side
-            imax=np.searchsorted(numinf,nurange[1])-1 #left side
+            imin=np.searchsorted(numinf,nurange[0],side="right")-1 #left side
+            imax=np.searchsorted(numinf,nurange[1],side="right")-1 #left side
             self.trans_file=[]
             for k,i in enumerate(range(imin,imax+1)):
                 trans_file = self.path/pathlib.Path(molec+"__"+numtag[i]+".trans.bz2")
@@ -106,7 +106,7 @@ class MdbExomol(object):
                     self.nu_lines=np.hstack([self.nu_lines,nulx])
                     elower=np.hstack([elower,elowerx])
                     gpp=np.hstack([gpp,gppx])
-                    
+
         self.Tref=296.0        
         self.QTref=np.array(self.QT_interp(self.Tref))
         ##input should be ndarray not jnp array
@@ -119,7 +119,6 @@ class MdbExomol(object):
         #numpy float 64 Do not convert them jnp array
         self.nu_lines = self.nu_lines[mask]
         self.Sij0 = self.Sij0[mask]        
-
 
         #jnp arrays
         self.A=jnp.array(A[mask])
