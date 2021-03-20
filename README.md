@@ -24,12 +24,13 @@
 <details><summary>Emission Spectrum :heavy_check_mark: </summary>
 
 ```python
-from exojax.spec import AutoRT
-Parr, dParr, k=pressure_layer(NP=100) #100 pressure layers
-Tarr = 1500.*(Parr/Parr[-1])**0.02    #some T-P profile
-autort=AutoRT(nus,1.e5,Tarr,Parr)     #g=1.e5 cm/s2
-autort.addmol("HITRAN","CO",0.01)     #mmr=0.01
-F=autort.rtrun()
+ from exojax.spec import AutoRT
+ nus=numpy.linspace(1900.0,2300.0,40000,dtype=numpy.float64) #wavenumber (cm-1)
+ Parr=numpy.logspace(-8,2,100) #100 pressure layers (10**-8 to 100 bar)
+ Tarr = 1500.*(Parr/Parr[-1])**0.02    #some T-P profile
+ autort=AutoRT(nus,1.e5,Tarr,Parr)     #g=1.e5 cm/s2
+ autort.addmol("HITRAN","CO",0.01)     #mmr=0.01
+ F=autort.rtrun()
 ```
 </details>
 

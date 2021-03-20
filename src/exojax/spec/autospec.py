@@ -6,9 +6,9 @@ from exojax.spec import planck
 from exojax.spec.exomol import gamma_exomol
 from exojax.spec import molinfo
 from exojax.spec.rtransfer import rtrun, pressure_layer, dtaux
-from exojax.spec import make_numatrix0
+from exojax.spec.make_numatrix import make_numatrix0
 from exojax.spec.lpf import xsmatrix
-
+import numpy as np
 from jax import jit, vmap
 import pathlib
 import tqdm
@@ -112,19 +112,19 @@ class AutoXS(object):
 
         memory_size=15.0
         d=int(memory_size/(len(nu0)*4/1024./1024.))
-        Ni=int(len(nus)/d)        
+        Ni=int(len(self.nus)/d)        
         d2=100
         Nlayer=np.shape(SijM)[0]
         Nline=np.shape(SijM)[1]
         Nj=int(Nline/d2)
         xsm=[]
         for i in tqdm.tqdm(range(0,Ni+1)):
-            s=int(i*d);e=int((i+1)*d);e=min(e,len(nus))
+            s=int(i*d);e=int((i+1)*d);e=min(e,len(self.nus))
             xsmtmp=np.zeros((Nlayer,e-s))
             #line 
             for j in range(0,Nj+1):
                 s2=int(j*d2);e2=int((j+1)*d2);e2=min(e2,Nline)
-                numatrix=make_numatrix0(nus[s:e],nu0[s2:e2])
+                numatrix=make_numatrix0(self.nus[s:e],nu0[s2:e2])
                 xsmtmp=xsmtmp+\
                         xsmatrix(numatrix,sigmaDM[:,s2:e2],gammaLM[:,s2:e2],SijM[:,s2:e2])
             if i==0:
@@ -174,7 +174,7 @@ class AutoRT(object):
         mmr=mmr*np.ones_like(self.Tarr)
         axs=AutoXS(self.nus,database,molecules)
         xsm=axs.xsmatrix(self.Tarr,self.Parr) 
-        dtauMx=dtaux(dParr,xsm,mmr,axs.molmass,self.gravity)
+        dtauMx=dtaux(self.dParr,xsm,mmr,axs.molmass,self.gravity)
         self.dtauM=self.dtauM+dtauMx
 
     def rtrun(self):
@@ -182,7 +182,6 @@ class AutoRT(object):
         return Fx0
 
 if __name__ == "__main__":
-    import numpy as np
     import matplotlib.pyplot as plt
     #nus=np.linspace(6101.0,6115.0,3000,dtype=np.float64)
 #    nus=np.linspace(6101.0,6115.0,3000,dtype=np.float64)
@@ -195,7 +194,7 @@ if __name__ == "__main__":
 
     #RT
     nus=np.linspace(1900.0,2300.0,40000,dtype=np.float64)
-    Parr, dParr, k=pressure_layer(NP=100)
+    Parr=np.logspace(-8,2,100)
     Tarr = 1500.*(Parr/Parr[-1])**0.02    
     autort=AutoRT(nus,1.e5,Tarr,Parr) #g=1.e5 cm/s2
     autort.addmol("HITRAN","CO",0.01) #mmr=0.01
