@@ -14,7 +14,8 @@ from exojax.spec.hitran import (
 )
 
 from exojax.spec.autospec import (
-    AutoXS
+    AutoXS,
+    AutoRT,
 )
 
 

@@ -21,9 +21,21 @@
 
  <img src="https://user-images.githubusercontent.com/15956904/111430765-2eedf180-873e-11eb-9740-9e1a313d590c.png" Titie="exojax auto cross section" Width=850px> </details>
 
-<details><summary>Auto-differentiable Radiative Transfer :heavy_check_mark: </summary> <img src="https://github.com/HajimeKawahara/exojax/blob/develop/documents/exojax.png" Titie="exojax" Width=850px> </details>
+<details><summary>Emission Spectrum :heavy_check_mark: </summary>
 
-<details><summary>HMC-NUTS of Emission Spectra :heavy_check_mark: </summary></details>
+```python
+from exojax.spec import AutoRT
+Parr, dParr, k=pressure_layer(NP=100) #100 pressure layers
+Tarr = 1500.*(Parr/Parr[-1])**0.02    #some T-P profile
+autort=AutoRT(nus,1.e5,Tarr,Parr)     #g=1.e5 cm/s2
+autort.addmol("HITRAN","CO",0.01)     #mmr=0.01
+F=autort.rtrun()
+```
+</details>
+
+<details><summary>HMC-NUTS of Emission Spectra :heavy_check_mark: </summary>
+<img src="https://github.com/HajimeKawahara/exojax/blob/develop/documents/exojax.png" Titie="exojax" Width=850px>
+</details>
 
 <details><summary>HMC-NUTS of Transmission Spectra :x: </summary>Not supported yet. </details>
 
