@@ -29,7 +29,7 @@
  Parr=numpy.logspace(-8,2,100) #100 pressure layers (10**-8 to 100 bar)
  Tarr = 1500.*(Parr/Parr[-1])**0.02    #some T-P profile
  autort=AutoRT(nus,1.e5,Tarr,Parr)     #g=1.e5 cm/s2
- autort.addmol("HITRAN","CO",0.01)     #mmr=0.01
+ autort.addmol("ExoMol","CO",0.01)     #mmr=0.01
  F=autort.rtrun()
 ```
 </details>
