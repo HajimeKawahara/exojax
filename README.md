@@ -32,6 +32,9 @@
  autort.addmol("ExoMol","CO",0.01)     #mmr=0.01
  F=autort.rtrun()
 ```
+
+ <img src="https://user-images.githubusercontent.com/15956904/111872047-a76be100-89d0-11eb-8c09-3b4b84b40a86.png" Titie="exojax auto \emission spectrum" Width=850px> 
+
 </details>
 
 <details><summary>HMC-NUTS of Emission Spectra :heavy_check_mark: </summary>
