@@ -18,6 +18,7 @@ def read_cia(filename,nus,nue):
     """
     #read first line   
     com=filename.split("/")[-1].replace("_2011.cia","")
+    print(com)
     f = open(filename, "r")
     header = f.readline()
     info=header.strip().split()
@@ -71,3 +72,8 @@ def logacia(Tarr,nus,nucia,tcia,logac):
     mfcia=vmap(vfcia,(0,None),0)
     inus=jnp.digitize(nus,nucia)
     return mfcia(Tarr,inus)
+
+if __name__ == "__main__":
+    nucia,tcia,ac=read_cia("../../data/CIA/H2-H2_2011.cia",nus[0]-1.0,nus[-1]+1.0)
+    logac=jnp.array(np.log10(ac))
+    logacia(Tarr,nus,nucia,tcia,logac)

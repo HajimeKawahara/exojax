@@ -1,3 +1,13 @@
+"""Molecular database (MDB) class
+
+
+ToDo:
+ExoMol RT
+   
+"""
+
+
+
 from exojax.spec import defmol
 from exojax.spec import moldb
 from exojax.spec.opacity import xsection
@@ -12,7 +22,7 @@ import numpy as np
 from jax import jit, vmap
 import pathlib
 import tqdm
-__all__ = ['AutoXS']
+__all__ = ['AutoXS','AutoRT']
 
 
 class AutoXS(object):
@@ -84,12 +94,13 @@ class AutoXS(object):
         """
         mdb=self.mdb
         if self.database == "ExoMol":
-            qt=mdb.qr_interp(T)
-            gammaLM = jit(vmap(gamma_exomol,(0,0,None,None)))\
-                              (P,T,mdb.n_Texp,mdb.alpha_ref)\
-                     + gamma_natural(mdb.A)
+            qt=vmap(mdb.qr_interp)(Tarr)
+            gammaLMP = jit(vmap(gamma_exomol,(0,0,None,None)))\
+                              (Parr,Tarr,mdb.n_Texp,mdb.alpha_ref)
+            gammaLMN=gamma_natural(mdb.A)
+            gammaLM=gammaLMP[:,None]+gammaLMN[None,:]
             self.molmass=mdb.molmass
-            SijM=jit(vmap(SijT,(0,None,None,None,None)))\
+            SijM=jit(vmap(SijT,(0,None,None,None,0)))\
                   (Tarr,mdb.logsij0,mdb.nu_lines,mdb.elower,qt)
 
         elif self.database == "HITRAN" or self.database == "HITEMP":
@@ -197,7 +208,7 @@ if __name__ == "__main__":
     Parr=np.logspace(-8,2,100)
     Tarr = 1500.*(Parr/Parr[-1])**0.02    
     autort=AutoRT(nus,1.e5,Tarr,Parr) #g=1.e5 cm/s2
-    autort.addmol("HITRAN","CO",0.01) #mmr=0.01
+    autort.addmol("ExoMol","CO",0.01) #mmr=0.01
     F=autort.rtrun()
 
     plt.plot(nus,F)
