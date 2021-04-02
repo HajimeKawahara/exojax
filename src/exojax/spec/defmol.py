@@ -30,6 +30,11 @@ EXOMOL_DEFMOL= \
  "1H2-32S":"AYT2",
  "28Si-16O2":"OYT3",
  "12C-1H4":"YT34to10",
+ "1H-12C-14N":"Harris",
+ "12C2-1H2":"aCeTY",
+ "48Ti-16O":"Toto",
+ "12C-16O2":"UCL-4000",
+ "52Cr-1H":"MoLLIST",
 }
 
 EXOMOL_SIMPLE2EXACT= \
@@ -41,7 +46,12 @@ EXOMOL_SIMPLE2EXACT= \
  "FeH":"56Fe-1H",
  "H2S":"1H2-32S",
  "SiO":"28Si-16O2",
- "CH4":"12C-1H4"
+ "CH4":"12C-1H4",
+ "HCN":"1H-12C-14N",
+ "C2H2":"12C2-1H2",
+ "TiO":"48Ti-16O",
+ "CO2":"12C-16O2",
+ "CrH":"52Cr-1H",
 }
 
 
