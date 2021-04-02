@@ -44,7 +44,11 @@ class AutoXS(object):
         self.memory_size=memory_size
         
         self.identifier=defmol.search_molfile(database,molecules)
-        self.init_database()
+        print(self.identifier)
+        if self.identifier is None:
+            print("ERROR: "+molecules+" is an undefined molecule. Add your molecule in defmol.py and do pull-request!")
+        else:
+            self.init_database()
         
     def init_database(self):
         if self.database=="HITRAN" or self.database=="HITEMP":
