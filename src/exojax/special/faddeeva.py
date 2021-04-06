@@ -8,7 +8,7 @@ from jax import jit
 from jax import custom_vjp
 import jax.numpy as jnp
 from jax.lax import scan
-from jax.interpreters.ad import defvjp
+#from jax.interpreters.ad import defvjp
 from exojax.special.erfcx import erfcx
 
 @jit
