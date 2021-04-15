@@ -15,8 +15,6 @@ if __name__ == "__main__":
     RV=0.0
     vsini=15.0
     beta=3.0
-    u1=0.0
-    u2=0.0
 
     #grid for F0
     N=10000
@@ -31,15 +29,16 @@ if __name__ == "__main__":
     #dv matrix
     dvmat=jnp.array(c*np.log(nusd[:,None]/nus[None,:]))
 
-    
-    #compute a TOA spectrum
+    #Compute a TOA spectrum
     Parr=np.logspace(-8,2,100) #100 pressure layers (10**-8 to 100 bar)
     Tarr = 1500.*(Parr/Parr[-1])**0.02    #some T-P profile
     autort=AutoRT(nus,1.e5,Tarr,Parr)     #g=1.e5 cm/s2
     autort.addmol("ExoMol","CO",0.01)     #mmr=0.01
     F0=autort.rtrun()
-    Fr=response.response(dvmat,F0,u1,u2,vsini,beta,RV)
 
+    #apply the response
+    Fr=response.response(dvmat,F0,vsini,beta,RV)
+    
     #reference by PyAstronomy
     rF = pyasl.rotBroad(wav, F0[::-1], 0.0, vsini)[::-1]    
 

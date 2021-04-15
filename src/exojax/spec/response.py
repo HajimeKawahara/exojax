@@ -9,6 +9,7 @@ wi = jnp.array([0.0229353220105292249637,0.0630920926299785532907,0.104790010322
 @jit
 def kernel(varr, zeta, vsini, u1, u2, beta):
     """Response Kernel including rotation, a Gaussian broadening (IP+microturbulence), radial-tangential turbulence,   
+
     Args:
        varr: velocity array
        zeta: macroturbulence disturbunce (Gray 2005)
@@ -21,8 +22,7 @@ def kernel(varr, zeta, vsini, u1, u2, beta):
        normalized response kernel
 
     Note:
-       The unit of varr, zeta, vsini, and beta should be same, such as km/s.
-       A small beta (<~1 km/s) induces an instability of the kernel. 
+       This function uses the Gauss-Kronrod method for the integral, originally developed by K. Masuda. See Masuda and Hirano (2021) ApJL  910, L17, for the details. The unit of varr, zeta, vsini, and beta should be same, such as km/s. A small beta (<~1 km/s) induces an instability of the kernel. 
 
     """
     dv = varr[:,None] - vsini * xi
@@ -45,16 +45,36 @@ def kernel(varr, zeta, vsini, u1, u2, beta):
     return k/ksum
 
 
-def response(dvmat,F0,u1,u2,vsini,beta,RV,zeta=0.0):
+def response(dvmat,F0,vsini,beta,RV,u1=0.0,u2=0.0,zeta=0.0):
+    """Apply the response tp a spectrum F using jax.lax.scan
 
+    Args:
+        dvmat: velocity matrix (jnp.array)
+        F0: original spectrum (F0)
+        vsini: V sini for rotation
+        beta: STD of a Gaussian broadening (IP+microturbulence)
+        RV: radial velocity    
+        u1: Limb-darkening coefficient 1
+        u2: Limb-darkening coefficient 2
+        zeta: macroturbulence disturbunce (Gray 2005)
+
+    Return:
+        response-applied spectrum (F)
+
+    Note:
+        The unit of varr, zeta, vsini, and beta should be same, such as km/s. A small beta (<~1 km/s) induces an instability of the kernel. 
+
+    """
     def respense_fscan(carry,varr):
         """function for scanning response
+
         Args:
-        carry: dummy
-        varr: velocity array
+           carry: dummy
+           varr: velocity array
 
         Returns:
-        dummy, kernel multiplied F       
+           dummy, kernel multiplied F       
+
         """
         Fr=jnp.sum(F0*kernel(varr, zeta, vsini, u1, u2, beta))
         return carry,Fr
