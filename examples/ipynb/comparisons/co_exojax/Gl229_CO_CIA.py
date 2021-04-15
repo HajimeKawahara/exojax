@@ -25,7 +25,7 @@ atmosphere.setup_opa_structure(pressures)
 import petitRADTRANS.nat_cst as nc
 
 R_pl = 1.838*nc.r_jup_mean
-gravity = 1e1**5.0
+gravity = 1.e5
 P0 = 0.01
 
 kappa_IR = 0.01
@@ -34,15 +34,6 @@ T_int = 200.
 T_equ = 1500.
 temperature = nc.guillot_global(pressures, kappa_IR, gamma, gravity, T_int, T_equ)
 print(len(temperature))
-
-data = open('Gl229/MMR/eq.dat', 'r')
-line = data.read().split()
-data.close()
-
-molname = {}
-for a in range(0,160):
-  molname[a] = line[a+6]
-  print(a, molname[a])
 
   
 data = open('Gl229/MMR/eq.dat', 'r')
@@ -63,58 +54,10 @@ data.close()
 
 
 abundances = {}
-abundances['H2'] = 7.1383555382E-001 * np.ones_like(temperature)
-for a in range(0,130):
-  abundances['H2'][a] = MMR[1][a]
-
-abundances['He'] = 0.24 * np.ones_like(temperature)
-for a in range(0,130):
-  abundances['He'][a] = MMR[2][a]
-
-abundances['H2O_main_iso'] = 0.0 * np.ones_like(temperature)
-for a in range(0,130):
-  abundances['H2O_main_iso'][a] = MMR[59][a]
-
+abundances['H2'] = 0.75 * np.ones_like(temperature)
+#abundances['He'] = 0.24 * np.ones_like(temperature)
 abundances['COej_HITEMP19'] = 0.01 * np.ones_like(temperature)
-#for a in range(0,130):
-#  abundances['CO_all_iso'][a] = MMR[26][a]
-
-abundances['CO2_main_iso'] = 0.00001 * np.ones_like(temperature)
-for a in range(0,130):
-  abundances['CO2_main_iso'][a] = MMR[27][a]
-
-abundances['CH4_main_iso'] = 0.000001 * np.ones_like(temperature)
-for a in range(0,130):
-  abundances['CH4_main_iso'][a] = MMR[19][a]
-
-abundances['Na'] = 0.00001 * np.ones_like(temperature)
-for a in range(0,130):
-  abundances['Na'][a] = MMR[5][a]
-
-abundances['K'] = 0.000001 * np.ones_like(temperature)
-for a in range(0,130):
-  abundances['K'][a] = MMR[3][a]
-
-abundances['C2H2'] = 0.000001 * np.ones_like(temperature)
-for a in range(0,130):
-  abundances['C2H2'][a] = MMR[30][a]
-
-abundances['HCN_main_iso'] = 0.000001 * np.ones_like(temperature)
-for a in range(0,130):
-  abundances['HCN_main_iso'][a] = MMR[13][a]
-
-abundances['NH3'] = 0.000001 * np.ones_like(temperature)
-for a in range(0,130):
-  abundances['NH3'][a] = MMR[61][a]
-
-abundances['H2S_main_iso'] = 0.000001 * np.ones_like(temperature)
-for a in range(0,130):
-  abundances['H2S_main_iso'][a] = MMR[92][a]
-
-  
 MMW = 2.33 * np.ones_like(temperature)
-for a in range(0,130):
-  MMW[a] = MMW_k[a]
 
 plt.plot(temperature,pressures)
 plt.yscale("log")
