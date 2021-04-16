@@ -37,6 +37,19 @@
 
  <img src="https://user-images.githubusercontent.com/15956904/115021924-980c8480-9ef7-11eb-99bd-392ac12fbfaa.png" Titie="exojax auto \emission spectrum" Width=850px> 
 
+
+<details><summary>Are you an observer? </summary>
+
+```python
+    nusobs=np.linspace(1900.0,2300.0,10000,dtype=np.float64) #observation bin
+    F=autort.spectrum(nusobs,100000.0,20.0,0.0) #R=100000, vsini=10km/s, RV=0km/s
+```
+
+ <img src=https://user-images.githubusercontent.com/15956904/115093326-e2701e80-9f54-11eb-8e13-533178fca1b5.png" Titie="exojax auto \emission spectrum for observers" Width=850px> 
+
+</details>
+
+
 </details>
 
 <details><summary>HMC-NUTS of Emission Spectra :heavy_check_mark: </summary>
