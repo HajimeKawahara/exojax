@@ -118,6 +118,7 @@ def plotcf(nus,dtauM,Tarr,Parr,dParr,unit=None,mode=None,log=False,normalize=Tru
             
         c=ax.contourf(X,Y,cf,30,cmap=cmap)
         plt.gca().invert_yaxis()
+
         
     plt.ylabel("log10 (P (bar))")
     plt.colorbar(c,shrink=0.8)
