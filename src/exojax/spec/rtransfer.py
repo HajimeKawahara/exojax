@@ -5,7 +5,9 @@
 """
 from jax import jit
 import jax.numpy as jnp
+import numpy as np
 from exojax.special.expn import E1
+from exojax.spec.hitrancia import logacia
 
 def dtauCIA(nus,Tarr,Parr,dParr,vmr1,vmr2,mmw,g,nucia,tcia,logac):
     """dtau of the CIA continuum
