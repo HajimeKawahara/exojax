@@ -15,7 +15,7 @@ from exojax.spec.hitran import SijT, doppler_sigma,  gamma_natural, gamma_hitran
 from exojax.spec import planck
 from exojax.spec.exomol import gamma_exomol
 from exojax.spec import molinfo
-from exojax.spec.rtransfer import rtrun, pressure_layer, dtaux
+from exojax.spec.rtransfer import rtrun, pressure_layer, dtauM
 from exojax.spec.make_numatrix import make_numatrix0
 from exojax.spec.lpf import xsmatrix
 import numpy as np
@@ -189,7 +189,7 @@ class AutoRT(object):
         mmr=mmr*np.ones_like(self.Tarr)
         axs=AutoXS(self.nus,database,molecules)
         xsm=axs.xsmatrix(self.Tarr,self.Parr) 
-        dtauMx=dtaux(self.dParr,xsm,mmr,axs.molmass,self.gravity)
+        dtauMx=dtauM(self.dParr,xsm,mmr,axs.molmass,self.gravity)
         self.dtauM=self.dtauM+dtauMx
 
     def rtrun(self):

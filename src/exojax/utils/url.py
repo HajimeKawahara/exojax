@@ -9,6 +9,13 @@ def url_HITRAN12():
     url=u"https://www.cfa.harvard.edu/HITRAN/HITRAN2012/HITRAN2012/By-Molecule/Uncompressed-files/"
     return url
 
+def url_HITRANCIA():
+    """return URL for HITRAN CIA ciafile
+    """
+    url=u"https://hitran.org/data/CIA/"
+    return url
+
+
 def url_HITEMP():
     """return URL for HITEMP bz2 parfile
     """
