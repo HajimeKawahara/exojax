@@ -1,3 +1,4 @@
+
 import numpy as np
 from petitRADTRANS import Radtrans
 import matplotlib.pyplot as plt
@@ -7,8 +8,8 @@ atmosphere = Radtrans(line_species = ['COej_HITEMP19'], \
 #      'CH4_main_iso', 'CO2_main_iso', 'Na', 'K', \
 #      'C2H2', 'HCN_main_iso', 'NH3', 'H2S_main_iso'], \
       #rayleigh_species = ['H2', 'He'], \
-      continuum_opacities = ['H2-H2'], \
-#      continuum_opacities = ['H2-H2', 'H2-He'], \
+#      continuum_opacities = ['H2-H2'], \
+      continuum_opacities = ['H2-H2', 'H2-He'], \
       wlen_bords_micron = [2.3,2.4], \
       mode = 'lbl')
 
@@ -56,7 +57,7 @@ temperature=np.linspace(500.0,1000.0,len(temperature)) #linear
 
 abundances = {}
 abundances['H2'] = 0.75 * np.ones_like(temperature)
-#abundances['He'] = 0.24 * np.ones_like(temperature)
+abundances['He'] = 0.24 * np.ones_like(temperature)
 abundances['COej_HITEMP19'] = 0.01 * np.ones_like(temperature)
 MMW = 2.33 * np.ones_like(temperature)
 
@@ -94,7 +95,6 @@ with open('Gl229/Gl229B_spectrum_CO_CIA_Linear.dat', 'w') as f:
     f.write('{:e} {:e}\n'.format(nc.c/atmosphere.freq[a]/1e-4, atmosphere.flux[a]))
 
 
-
 import pylab as plt
 plt.rcParams['figure.figsize'] = (10, 6)
 
@@ -105,8 +105,6 @@ plt.ylabel(r'Planet flux $F_\nu$ (10$^{-6}$ erg cm$^{-2}$ s$^{-1}$ Hz$^{-1}$)')
 plt.show()
 plt.savefig('Gl229/emission-HR.pdf',bbox_inches='tight')
 plt.clf()
-
-
 
 plt.plot(nc.c/atmosphere.freq/1e-4, atmosphere.flux/1e-6)
 

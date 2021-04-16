@@ -2,21 +2,53 @@ EachMass = {'H': 1.00794, 'He': 4.002602, 'Li': 6.941, 'Be': 9.012182, 'B': 10.8
 
 def molmass(molecule):
     """provide molecular mass from the molecular name
+
     Args:
-       molecule: molecular name e.g. CO
+       molecule: molecular name e.g. CO2, He
+
     Returns: 
        molecular mass
+
+    Examples:
+
+    >>> from exojax.spec.moinfo import molmass
+    >>> print(molmass("H2"))
+    >>> 2.01588
+    >>> print(molmass("CO2"))
+    >>> 44.0095
+    >>> print(molmass("He"))
+    >>> 4.002602
+    >>> print(molmass("air"))
+    >>> 28.97
+
     """
+    if molecule=="air":
+        return 28.97
+    
     em=0.0
     tot=0.0
-    for i in list(molecule):
-        if  i.isdigit():
+    listmol=list(molecule)
+    ignore=False
+    for k,i in enumerate(listmol):
+        if ignore:
+            ignore=False
+        elif i.isdigit():
             tot=tot+em*(int(i)-1)
         else:
-            em=EachMass[i]
+            if k+1<len(listmol):
+                if listmol[k+1].islower():
+                    em=EachMass[listmol[k]+listmol[k+1]]
+                    ignore=True
+                else:
+                    em=EachMass[i]
+            else:
+                em=EachMass[i]
+                
             tot=tot+em
     return tot
 
 if __name__ == "__main__":
+    print(molmass("H2"))
     print(molmass("CO2"))
-    
+    print(molmass("He"))
+    print(molmass("air"))    
