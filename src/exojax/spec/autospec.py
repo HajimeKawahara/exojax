@@ -16,8 +16,10 @@ from exojax.spec import molinfo
 from exojax.spec.rtransfer import rtrun, pressure_layer, dtauM, dtauCIA
 from exojax.spec.make_numatrix import make_numatrix0
 from exojax.spec.lpf import xsmatrix
+from exojax.spec import response
 import numpy as np
 from jax import jit, vmap
+import jax.numpy as jnp
 import pathlib
 import tqdm
 __all__ = ['AutoXS','AutoRT']
@@ -213,9 +215,53 @@ class AutoRT(object):
         self.dtau=self.dtau+dtauc
         
     def rtrun(self):
-        Fx0=rtrun(self.dtau,self.sourcef)
-        return Fx0
+        """running radiative transfer
+        
+        Returns:
+           spectrum (F0)
 
+        """
+        self.F0=rtrun(self.dtau,self.sourcef)
+        return self.F0
+
+    def spectrum(self,nuobs,R,vsini,RV,u1=0.0,u2=0.0,zeta=0.,betamic=0.):
+        """generating spectrum
+        
+        Args:
+           nuobs: observation wavenumber array
+           R: resolving power
+           vsini: vsini for a stellar/planet rotation
+           RV: radial velocity (km/s)
+           u1: Limb-darkening coefficient 1
+           u2: Limb-darkening coefficient 2
+           zeta: macroturbulence distrubunce (km/s) in the radial-tangential model (Gray2005)
+           betamic: microturbulence beta (STD, km/s)
+
+        Returns:
+           spectrum (F)
+
+        """
+
+        self.nuobs=nuobs
+        self.R=R
+        self.vsini=vsini
+        self.u1=u1
+        self.u2=u2
+        self.zeta=zeta
+        self.betamic=betamic
+        self.RV=RV
+        
+        c=299792.458
+        dvmat=jnp.array(c*np.log(self.nuobs[:,None]/self.nus[None,:]))
+        self.betaIP=c/(2.0*np.sqrt(2.0*np.log(2.0))*self.R)
+        beta=np.sqrt((self.betaIP)**2+(self.betamic)**2)
+        print(self.betaIP,beta)
+
+        F0=self.rtrun()
+        self.F=response.response(dvmat,self.F0,self.vsini,beta,self.RV,u1=self.u1,u2=self.u2,zeta=self.zeta)
+        
+        return self.F
+        
 if __name__ == "__main__":
     import matplotlib.pyplot as plt
     #nus=np.linspace(6101.0,6115.0,3000,dtype=np.float64)
@@ -235,8 +281,13 @@ if __name__ == "__main__":
     autort.addcia("H2-H2",0.74,0.74) #CIA mmr(H)=0.74
     autort.addcia("H2-He",0.74,0.25) #CIA mmr(He)=0.25
     autort.addmol("ExoMol","CO",0.01) #mmr=0.01
-    F=autort.rtrun()
+    #autort.rtrun()
 
-    plt.plot(nus,F)
+    nusobs=np.linspace(1900.0,2300.0,10000,dtype=np.float64) #observation bin
+    F=autort.spectrum(nusobs,100000.0,20.0,0.0) #R=100000,vsini=10. km/s, RV=0. km/s
+    
+    plt.plot(nus,autort.F0,alpha=0.5,label="raw")
+    plt.plot(nusobs,F,lw=2,label="obs")
+    plt.legend()
     plt.show()
 
