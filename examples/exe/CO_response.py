@@ -10,7 +10,7 @@ from exojax.spec import response
 from exojax.spec.hitran import SijT, doppler_sigma, gamma_natural, gamma_hitran
 from exojax.plot.atmplot import plottau, plotcf
 from exojax.spec.hitrancia import read_cia, logacia 
-from exojax.spec.rtransfer import rtrun, dtaux 
+from exojax.spec.rtransfer import rtrun, dtauM
 import numpy as np
 import tqdm
 import seaborn as sns
@@ -55,7 +55,7 @@ mmw=2.33 #mean molecular weight
 molmass=28.01 #molecular mass
 MMR=0.01*np.ones_like(Tarr) #mass mixing ratio
 g=1.e5 # gravity cm/s2
-Xco=MMR*mmw/molmass #VMR
+#VMR=MMR*mmw/molmass #VMR
 
 #ExoMol 
 qt=vmap(mdbCO.qr_interp)(Tarr)
@@ -72,15 +72,17 @@ numatrix=make_numatrix0(nus,nu0)
 xsm=xsmatrix(numatrix,sigmaDM,gammaLM,SijM)
 
 #CIA
+
+
 #------------------------------------------------------
 
-dtauM=dtaux(dParr,xsm,MMR,molmass,g)
-#dtauM=dtaux(dParr,xsm,MMR,mmw,g)
-#plottau(nus,dtauM,Tarr,Parr,unit="AA") #tau
-#plotcf(nus,dtauM,Tarr,Parr,dParr,unit="AA") 
+dtauMx=dtauM(dParr,xsm,MMR,molmass,g)
+#dtauMx=dtauM(dParr,xsm,MMR,mmw,g)
+#plottau(nus,dtauMx,Tarr,Parr,unit="AA") #tau
+#plotcf(nus,dtauMx,Tarr,Parr,dParr,unit="AA") 
 
 sourcef=planck.piBarr(Tarr,nus)
-F0=rtrun(dtauM,sourcef)
+F0=rtrun(dtauMx,sourcef)
 
 #response
 F=response.response(dvmat,F0,vsini_in,beta,RV)
@@ -130,9 +132,9 @@ def model_c(nu,y):
     sourcef = planck.piBarr(Tarr,nus)
     
     xsm=xsmatrix(numatrix-nu0,sigmaDM,gammaLM,SijM)  
-    dtauM=dtaux(dParr,xsm,MMR,mmw,g)
+    dtauMx=dtauM(dParr,xsm,MMR,mmw,g)
     
-    F0=rtrun(dtauM,sourcef)
+    F0=rtrun(dtauMx,sourcef)
     mu=response.response(dvmat,F0,vsini,beta,RV)
     mu=intfac*A*mu
     numpyro.sample('y', dist.Normal(mu, sigma), obs=y)

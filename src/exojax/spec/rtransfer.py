@@ -7,8 +7,48 @@ from jax import jit
 import jax.numpy as jnp
 from exojax.special.expn import E1
 
-def dtaux(dParr,xsm,MR,mass,g):
-    """dtau from the molecular cross section
+def dtauC(nus,Tarr,Parr,dParr,vmr1,vmr2,mmw,g,nucia,tcia,logac):
+    """dtau of the continuum
+
+    Args:
+       nus: wavenumber matrix (cm-1)
+       Tarr: temperature array (K)
+       Parr: temperature array (bar)
+       dParr: delta temperature array (bar)
+       vmr1: volume mixing ratio (VMR) for molecules 1 [N_layer]
+       vmr2: volume mixing ratio (VMR) for molecules 2 [N_layer]
+       mmw: mean molecular weight of atmosphere
+       g: gravity (cm2/s)
+       nucia: wavenumber array for CIA
+       tcia: temperature array for CIA
+       logac: log10(absorption coefficient of CIA)
+
+    Returns:
+       optical depth matrix  [N_layer, N_nus] 
+
+    Note:
+       logm_ucgs=np.log10(m_u*1.e3) where m_u = scipy.constants.m_u.
+
+    """
+
+    kB=1.380649e-16
+    narr=(Parr*1.e6)/(kB*Tarr)
+    lognarr1=jnp.log10(vmr1*narr) #log number density
+    lognarr2=jnp.log10(vmr2*narr) #log number density
+    
+    logm_ucgs=-23.779750909492115
+    logkb=np.log10(kB)    
+    logg=np.log10(g)
+    ddParr=dParr/Parr
+    
+    dtaucia=(10**(logacia(Tarr,nus,nucia,tcia,logac)\
+            +lognarr1[:,None]+lognarr2[:,None]+logkb-logg-logm_ucgs)\
+            *Tarr[:,None]/mmw*ddParr[:,None])
+
+    return dtaucia
+    
+def dtauM(dParr,xsm,MR,mass,g):
+    """dtau of the molecular cross section
 
     Note:
        fac=bar_cgs/(m_u (g)). m_u: atomic mass unit. It can be obtained by fac=1.e3/m_u, where m_u = scipy.constants.m_u.
@@ -22,7 +62,6 @@ def dtaux(dParr,xsm,MR,mass,g):
 
     Returns:
        optical depth matrix [N_layer, N_nus]
-
 
     """
 
