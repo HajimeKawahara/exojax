@@ -9,6 +9,7 @@ from exojax.spec import response
 #from exojax.spec.clpf import cxsmatrix
 from exojax.spec.hitran import SijT, doppler_sigma, gamma_natural, gamma_hitran
 from exojax.plot.atmplot import plottau, plotcf
+from exojax.spec.hitrancia import read_cia, logacia 
 from exojax.spec.rtransfer import rtrun, dtaux 
 import numpy as np
 import tqdm
@@ -69,6 +70,8 @@ sigmaDM=jit(vmap(doppler_sigma,(None,0,None)))\
 nu0=mdbCO.nu_lines
 numatrix=make_numatrix0(nus,nu0)
 xsm=xsmatrix(numatrix,sigmaDM,gammaLM,SijM)
+
+#CIA
 #------------------------------------------------------
 
 dtauM=dtaux(dParr,xsm,MMR,molmass,g)
@@ -115,6 +118,7 @@ def model_c(nu,y):
     Tarr = 1500.*(Parr/Parr[-1])**alpha 
     
     #line computation
+    qt=vmap(mdbCO.qr_interp)(Tarr)
     SijM=jit(vmap(SijT,(0,None,None,None,0)))\
         (Tarr,mdbCO.logsij0,mdbCO.dev_nu_lines,mdbCO.elower,qt)
     gammaLMP = jit(vmap(gamma_exomol,(0,0,None,None)))\
