@@ -7,8 +7,8 @@ from jax import jit
 import jax.numpy as jnp
 from exojax.special.expn import E1
 
-def dtauC(nus,Tarr,Parr,dParr,vmr1,vmr2,mmw,g,nucia,tcia,logac):
-    """dtau of the continuum
+def dtauCIA(nus,Tarr,Parr,dParr,vmr1,vmr2,mmw,g,nucia,tcia,logac):
+    """dtau of the CIA continuum
 
     Args:
        nus: wavenumber matrix (cm-1)
@@ -41,11 +41,11 @@ def dtauC(nus,Tarr,Parr,dParr,vmr1,vmr2,mmw,g,nucia,tcia,logac):
     logg=np.log10(g)
     ddParr=dParr/Parr
     
-    dtaucia=(10**(logacia(Tarr,nus,nucia,tcia,logac)\
+    dtauc=(10**(logacia(Tarr,nus,nucia,tcia,logac)\
             +lognarr1[:,None]+lognarr2[:,None]+logkb-logg-logm_ucgs)\
             *Tarr[:,None]/mmw*ddParr[:,None])
 
-    return dtaucia
+    return dtauc
     
 def dtauM(dParr,xsm,MR,mass,g):
     """dtau of the molecular cross section
