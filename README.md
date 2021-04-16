@@ -35,7 +35,7 @@
  F=autort.rtrun()
 ```
 
- <img src="https://user-images.githubusercontent.com/15956904/111889136-16bff000-8a26-11eb-91f7-5ab311f473b0.png" Titie="exojax auto \emission spectrum" Width=850px> 
+ <img src="https://user-images.githubusercontent.com/15956904/115021924-980c8480-9ef7-11eb-99bd-392ac12fbfaa.png" Titie="exojax auto \emission spectrum" Width=850px> 
 
 </details>
 
