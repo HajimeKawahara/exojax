@@ -1,21 +1,19 @@
-"""Molecular database (MDB) class
-
-
-ToDo:
-ExoMol RT
+"""Automatic Opacity and Spectrum Generator
    
 """
 
 
 
 from exojax.spec import defmol
+from exojax.spec import defcia
 from exojax.spec import moldb
+from exojax.spec import contdb 
 from exojax.spec.opacity import xsection
 from exojax.spec.hitran import SijT, doppler_sigma,  gamma_natural, gamma_hitran
 from exojax.spec import planck
 from exojax.spec.exomol import gamma_exomol
 from exojax.spec import molinfo
-from exojax.spec.rtransfer import rtrun, pressure_layer, dtauM
+from exojax.spec.rtransfer import rtrun, pressure_layer, dtauM, dtauCIA
 from exojax.spec.make_numatrix import make_numatrix0
 from exojax.spec.lpf import xsmatrix
 import numpy as np
@@ -155,17 +153,19 @@ class AutoRT(object):
     """exojax auto radiative transfer
     
     """
-    def __init__(self,nus,gravity,Tarr,Parr,dParr=None):
+    def __init__(self,nus,gravity,mmw,Tarr,Parr,dParr=None,databasedir=".database"):
         """
         Args:
            nus: wavenumber bin (cm-1)
            gravity: gravity (cm/s2)
+           mmw: mean molecular weight of the atmosphere
            Tarr: temperature layer (K)
            Parr: pressure layer (bar)
            dParr: delta pressure (bar) optional
         """
         self.nus=nus
         self.gravity=gravity
+        self.mmw=mmw
         self.nlayer=len(Tarr)        
         self.Tarr=Tarr
         self.Parr=Parr
@@ -175,9 +175,10 @@ class AutoRT(object):
             self.dParr=wParr[1:]-wParr[0:-1]
         else:
             self.dParr=dParr
-            
+        self.databasedir=databasedir
+        
         self.sourcef=planck.piBarr(self.Tarr,self.nus)
-        self.dtauM=np.zeros((self.nlayer,len(nus)))
+        self.dtau=np.zeros((self.nlayer,len(nus)))
 
     def addmol(self,database,molecules,mmr):
         """
@@ -190,16 +191,35 @@ class AutoRT(object):
         axs=AutoXS(self.nus,database,molecules)
         xsm=axs.xsmatrix(self.Tarr,self.Parr) 
         dtauMx=dtauM(self.dParr,xsm,mmr,axs.molmass,self.gravity)
-        self.dtauM=self.dtauM+dtauMx
+        self.dtau=self.dtau+dtauMx
 
+    def addcia(self,interaction,mmr1,mmr2):
+        """
+        Args:
+           interaction: e.g. H2-H2, H2-He
+           mmr1: mass mixing ratio for molecule 1
+           mmr2: mass mixing ratio for molecule 2
+
+        """
+        mol1,mol2=defcia.interaction2mols(interaction)
+        molmass1=molinfo.molmass(mol1)
+        molmass2=molinfo.molmass(mol2)
+        vmr1=(mmr1*self.mmw/molmass1)
+        vmr2=(mmr2*self.mmw/molmass2)
+        ciapath=pathlib.Path(self.databasedir)/pathlib.Path(defcia.ciafile(interaction))
+        cdb=contdb.CdbCIA(str(ciapath),[self.nus[0],self.nus[-1]])
+        dtauc=dtauCIA(self.nus,self.Tarr,self.Parr,self.dParr,vmr2,vmr2,\
+                      self.mmw,self.gravity,cdb.nucia,cdb.tcia,cdb.logac)
+        self.dtau=self.dtau+dtauc
+        
     def rtrun(self):
-        Fx0=rtrun(self.dtauM,self.sourcef)
+        Fx0=rtrun(self.dtau,self.sourcef)
         return Fx0
 
 if __name__ == "__main__":
     import matplotlib.pyplot as plt
     #nus=np.linspace(6101.0,6115.0,3000,dtype=np.float64)
-#    nus=np.linspace(6101.0,6115.0,3000,dtype=np.float64)
+    #nus=np.linspace(6101.0,6115.0,3000,dtype=np.float64)
     #XS
     #autoxs=AutoXS(nus,"HITRAN","CO")
     #xsv=autoxs.xsection(1000.0,1.0) #1000K, 1bar
@@ -210,8 +230,10 @@ if __name__ == "__main__":
     #RT
     nus=np.linspace(1900.0,2300.0,40000,dtype=np.float64)
     Parr=np.logspace(-8,2,100)
-    Tarr = 1500.*(Parr/Parr[-1])**0.02    
-    autort=AutoRT(nus,1.e5,Tarr,Parr) #g=1.e5 cm/s2
+    Tarr = 500.*(Parr/Parr[-1])**0.02    
+    autort=AutoRT(nus,1.e5,2.33,Tarr,Parr) #g=1.e5 cm/s2, mmw=2.3
+    autort.addcia("H2-H2",0.74,0.74) #CIA mmr(H)=0.74
+    autort.addcia("H2-He",0.74,0.25) #CIA mmr(He)=0.25
     autort.addmol("ExoMol","CO",0.01) #mmr=0.01
     F=autort.rtrun()
 
