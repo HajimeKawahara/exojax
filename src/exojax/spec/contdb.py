@@ -16,16 +16,18 @@ class CdbCIA(object):
 
         Args: 
            path: path for HITRAN cia file
-           nurange: wavenumber range list (cm-1)
+           nurange: wavenumber range list (cm-1) or wavenumber array
            margin: margin for nurange (cm-1)
 
         """        
         #downloading
+        self.nurange=[np.min(nurange),np.max(nurange)]
+        self.margin = margin
         self.path = pathlib.Path(path)
         molec=str(self.path.stem)
         if not self.path.exists():
             self.download()
-        self.nucia,self.tcia,ac=read_cia(path,nurange[0]-margin,nurange[1]+margin)
+        self.nucia,self.tcia,ac=read_cia(path,self.nurange[0]-self.margin,self.nurange[1]+self.margin)
         #--------------------------------
         self.logac=jnp.array(np.log10(ac))
         self.tcia=jnp.array(self.tcia)

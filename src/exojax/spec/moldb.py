@@ -19,7 +19,7 @@ class MdbExomol(object):
 
         Args: 
            path: path for Exomol data directory/tag. For instance, "/home/CO/12C-16O/Li2015"
-           nurange: wavenumber range list (cm-1)
+           nurange: wavenumber range list (cm-1) or wavenumber array
            margin: margin for nurange (cm-1)
            crit: line strength lower limit for extraction
 
@@ -186,7 +186,7 @@ class MdbHit(object):
 
         Args: 
            path: path for HITRAN/HITEMP par file
-           nurange: wavenumber range list (cm-1)
+           nurange: wavenumber range list (cm-1) or wavenumber array
            margin: margin for nurange (cm-1)
            crit: line strength lower limit for extraction
 
