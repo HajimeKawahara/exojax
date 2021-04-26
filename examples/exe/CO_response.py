@@ -80,17 +80,21 @@ molmassHe=molinfo.molmass("He")
 vmrH2=(mmrH2*mmw/molmassH2)
 vmrHe=(mmrHe*mmw/molmassHe)
 ##H2-H2
-#cdbH2H2=contdb.CdbCIA('.database/H2-H2_2011.cia',nus)
-#dtaucH2H2=dtauCIA(nus,Tarr,Parr,dParr,vmrH2,vmrH2,\
-#              mmw,g,cdbH2H2.nucia,cdbH2H2.tcia,cdbH2H2.logac)
+cdbH2H2=contdb.CdbCIA('.database/H2-H2_2011.cia',nus)
+dtaucH2H2=dtauCIA(nus,Tarr,Parr,dParr,vmrH2,vmrH2,\
+              mmw,g,cdbH2H2.nucia,cdbH2H2.tcia,cdbH2H2.logac)
 ##H2-He
-#cdbH2He=contdb.CdbCIA('.database/H2-He_2011.cia',nus)
-#dtaucH2He=dtauCIA(nus,Tarr,Parr,dParr,vmrH2,vmrHe,\
-#              mmw,g,cdbH2He.nucia,cdbH2He.tcia,cdbH2He.logac)
+cdbH2He=contdb.CdbCIA('.database/H2-He_2011.cia',nus)
+dtaucH2He=dtauCIA(nus,Tarr,Parr,dParr,vmrH2,vmrHe,\
+              mmw,g,cdbH2He.nucia,cdbH2He.tcia,cdbH2He.logac)
 
+#print(jnp.sum(dtaucH2He))
+#print(jnp.sum(dtaucH2H2))
+
+#sys.exit()
 #------------------------------------------------------
 #Running Radiative Transfer
-dtau=dtaumCO#+dtaucH2H2+dtaucH2He
+dtau=dtaumCO+dtaucH2H2+dtaucH2He
 sourcef=planck.piBarr(Tarr,nus)
 F0=rtrun(dtau,sourcef)
 
@@ -126,12 +130,12 @@ from numpyro.diagnostics import hpdi
 
 #Model
 def model_c(nu,y):
-    A = numpyro.sample('A', dist.Uniform(0.5,1.5))
-    sigma = numpyro.sample('sigma', dist.Exponential(0.3))
-#    nu0 = numpyro.sample('nu0', dist.Uniform(-0.3,0.3))
-    alpha = numpyro.sample('alpha', dist.Uniform(0.019,0.021))
+    An = numpyro.sample('An', dist.Uniform(0.5,1.5))
+    sigma = numpyro.sample('sigma', dist.Exponential(0.5))
+    #    nu0 = numpyro.sample('nu0', dist.Uniform(-0.3,0.3))
+    alpha = numpyro.sample('alpha', dist.Uniform(0.01,0.03))
     vsini = numpyro.sample('vsini', dist.Uniform(1.0,30.0))
-    #T-P model
+    #T-P model//
     Tarr = 1500.*(Parr/Parr[-1])**alpha 
     
     #line computation
@@ -147,16 +151,17 @@ def model_c(nu,y):
     sourcef = planck.piBarr(Tarr,nus)
     
     xsm=xsmatrix(numatrix,sigmaDM,gammaLM,SijM) 
-    dtaumCO=dtauM(dParr,xsm,MMR,mmw,g)
-    #dtaucH2H2=dtauCIA(nus,Tarr,Parr,dParr,vmrH2,vmrH2,\
-    #          mmw,g,cdbH2H2.nucia,cdbH2H2.tcia,cdbH2H2.logac)
-    #dtaucH2He=dtauCIA(nus,Tarr,Parr,dParr,vmrH2,vmrHe,\
-    #          mmw,g,cdbH2He.nucia,cdbH2He.tcia,cdbH2He.logac)
-    dtau=dtaumCO#+dtaucH2H2+dtaucH2He
+    dtaumCO=dtauM(dParr,xsm,MMR,molmassCO,g)
+    dtaucH2H2=dtauCIA(nus,Tarr,Parr,dParr,vmrH2,vmrH2,\
+              mmw,g,cdbH2H2.nucia,cdbH2H2.tcia,cdbH2H2.logac)
+    dtaucH2He=dtauCIA(nus,Tarr,Parr,dParr,vmrH2,vmrHe,\
+              mmw,g,cdbH2He.nucia,cdbH2He.tcia,cdbH2He.logac)
+    dtau=dtaumCO+dtaucH2H2+dtaucH2He
 
     F0=rtrun(dtau,sourcef)
     mu=response.response(dvmat,F0,vsini,beta,RV)
-    mu=intfac*A*mu
+    mu=intfac*An*mu
+#    mu=intfac*An*F0
     numpyro.sample('y', dist.Normal(mu, sigma), obs=y)
 
 #--------------------------------------------------------
@@ -169,7 +174,7 @@ num_warmup, num_samples = 100, 200
 kernel = NUTS(model_c,forward_mode_differentiation=True)
 mcmc = MCMC(kernel, num_warmup, num_samples)
 mcmc.run(rng_key_, nu=nus, y=data)
-
+print("end")
 #mcmc.print_summary()
 
 #--------------------------------------------------------
@@ -193,18 +198,18 @@ plt.legend()
 plt.savefig("fig/results.png")
 plt.show()
 
-arviz.plot_trace(mcmc, var_names=["A","sigma","alpha","vsini"])
-#arviz.plot_trace(mcmc, var_names=["A","sigma","nu0","alpha","vsini"])
+
+arviz.plot_trace(mcmc, var_names=["An","sigma","alpha","vsini"])
+#arviz.plot_trace(mcmc, var_names=["An","sigma","nu0","alpha","vsini"])
 plt.savefig("fig/trace.png")
 
 
 refs={}
-refs["A"]=1.0
+refs["An"]=1.0
 refs["sigma"]=sigin
 #refs["nu0"]=0.0
 refs["alpha"]=0.02
 refs["vsini"]=vsini_in
-#refs["alpha"]=-0.1
 arviz.plot_pair(arviz.from_numpyro(mcmc),kind='kde',divergences=False,                marginals=True,
                 reference_values=refs,
                reference_values_kwargs={'color':"red", "marker":"o", "markersize":12}) 
