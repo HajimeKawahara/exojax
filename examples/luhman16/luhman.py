@@ -61,17 +61,10 @@ c=299792.458
 dvmat=jnp.array(c*np.log(nusd[:,jnp.newaxis]/nus[jnp.newaxis,:]))
 
 #Atmospheric parameters
-alpha_in=0.02
+alpha_in=0.05
 NP=100
 Parr, dParr, k=rt.pressure_layer(NP=NP)
-
-########################
-FCIA=2.5*e-16 #lambda F_lambda erg/s/cm2
-
-iPfix=87 #fix index for CIA
-
-Tarr = 1500.*(Parr/Parr[-1])**alpha_in
-
+Tarr = 1200.*(Parr/Parr[-1])**alpha_in
 
 mmw=2.33 #mean molecular weight
 molmassCO=molinfo.molmass("CO") #molecular mass (CO)
@@ -79,8 +72,9 @@ MMR=0.01*np.ones_like(Tarr) #mass mixing ratio
 g=1.e5 # gravity cm/s2
 
 #Macro response model
-RV=0.0
-vsini_in=15.0 #rotational vsini
+RV=-30.0 #inverse??
+
+vsini_in=10.0 #rotational vsini
 beta=3.0 #IP sigma
 
 #--------------------------------------------------
@@ -121,18 +115,12 @@ cdbH2He=contdb.CdbCIA('.database/H2-He_2011.cia',nus)
 dtaucH2He=dtauCIA(nus,Tarr,Parr,dParr,vmrH2,vmrHe,\
               mmw,g,cdbH2He.nucia,cdbH2He.tcia,cdbH2He.logac)
 
-#print(jnp.sum(dtaucH2He))
-#print(jnp.sum(dtaucH2H2))
-
-#sys.exit()
-#------------------------------------------------------
 #Running Radiative Transfer
 dtau=dtaumCO+dtaucH2H2+dtaucH2He
 
 #cf=plotcf(nus,dtau,Tarr,Parr,dParr,unit="AA")
 #print(Parr[np.argmax(cf,axis=0)])
 #plt.savefig("fig/cf.png")
-
 
 sourcef=planck.piBarr(Tarr,nus)
 F0=rtrun(dtau,sourcef)
@@ -146,5 +134,5 @@ F=response.ipgauss(nus,nusd,Frot,beta,RV)
 #some figures for checking
 fig=plt.figure(figsize=(20,6.0))
 plt.plot(wavd[::-1],F,lw=1,color="C2",label="F")
-plt.plot(wavd[::-1],fobs)
+plt.plot(wavd[::-1],fobs*Ftoa)
 plt.savefig("fig/spec.png")
