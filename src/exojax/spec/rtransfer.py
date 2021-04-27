@@ -95,9 +95,8 @@ def rtrun(dtau,S):
         S: source matrix [N_layer, N_nus]
  
     Returns:
-        flux in the unit of [erg/cm2/s/Hz]
+        flux in the unit of [erg/cm2/s/cm-1] if using piBarr as a source function.
     """
-    ccgs=29979245800.0 #c (cgs)
     Nnus=jnp.shape(dtau)[1]
     TransM=jnp.where(dtau==0, 1.0, trans2E3(dtau))   
     QN=jnp.zeros(Nnus)
@@ -106,7 +105,7 @@ def rtrun(dtau,S):
     onev=jnp.ones(Nnus)
     TransM=jnp.vstack([onev,TransM])
     Fx=(jnp.sum(Qv*jnp.cumprod(TransM,axis=0),axis=0))
-    return Fx/ccgs
+    return Fx
 
 @jit
 def rtrun_direct(dtau,S):
@@ -120,12 +119,11 @@ def rtrun_direct(dtau,S):
         S: source matrix [N_layer, N_nus]
 
     Returns:
-        flux in the unit of [erg/cm2/s/Hz]
+        flux in the unit of [erg/cm2/s/cm-1] if using piBarr as a source function.
     """
-    ccgs=29979245800.0 #c (cgs)
     taupmu=jnp.cumsum(dtau,axis=0)
     Fx=jnp.sum(S*jnp.exp(-taupmu)*dtau,axis=0)
-    return Fx/ccgs
+    return Fx
 
 
 @jit
@@ -138,9 +136,8 @@ def rtrun_surface(dtau,S,Sb):
         Sb: source from the surface [N_nus]
  
     Returns:
-        flux in the unit of [erg/cm2/s/Hz]
+        flux in the unit of [erg/cm2/s/cm-1] if using piBarr as a source function.
     """
-    ccgs=29979245800.0 #c (cgs)
     Nnus=jnp.shape(dtau)[1]
     TransM=jnp.where(dtau==0, 1.0, trans2E3(dtau))   
     QN=Sb
@@ -149,7 +146,7 @@ def rtrun_surface(dtau,S,Sb):
     onev=jnp.ones(Nnus)
     TransM=jnp.vstack([onev,TransM])
     Fx=(jnp.sum(Qv*jnp.cumprod(TransM,axis=0),axis=0))
-    return Fx/ccgs
+    return Fx
 
 def pressure_layer(logPtop=-8.,logPbtm=2.,NP=20,mode="ascending"):
     """generating the pressure layer
