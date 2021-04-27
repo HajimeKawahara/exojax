@@ -17,23 +17,14 @@ from jax import vmap, jit
 import pandas as pd
 from exojax.utils.constants import RJ, pc, Rs
 import sys
-########################
-FCIA=2.5e-16 #lambda F_lambda erg/s/cm2
-FCIA2=3.e16 #erg/s/cm2/A
-FCIA3=3.e24 #erg/s/cm2/cm
-FCIA4=2.5e-12 #erg/s/cm2/um 1303.7283
 
-#vega 8.6 10^-10 erg/s/cm2/A 8637A 9300K
 
-#nu0=1.e8/23000.0
-nu0=1.e8/8637.0
-#2.02+-0.019pc
-print(RJ**2/(2.02*pc)**2)
-fac=(2.73*Rs)**2/((7.68*pc)**2)
-print(nu0**2*planck.piBarr(np.array([9300.0]),nu0)*1.e8*fac)
-#*RJ**2/(2.02*pc)**2
+#FLUX reference
+Fabs_REF2=2.7e-12 #absolute flux (i.e. flux@10pc) erg/s/cm2/um Burgasser+ 1303.7283 @2.3um
+Rp=RJ #BD radius
+fac0=Rp**2/((10.0*pc)**2) 
+Ftoa=Fabs_REF2/fac0/1.e4 #erg/cm2/s/cm @ 2.3um
 
-sys.exit()
 #loading spectrum
 dat=pd.read_csv("data/luhman16a_spectra.csv",delimiter=",")
 wavd=dat["wavelength_micron"]*1.e4
@@ -150,13 +141,10 @@ F0=rtrun(dtau,sourcef)
 Frot=response.rigidrot(nus,F0,vsini_in,0.0,0.0)
 F=response.ipgauss(nus,nusd,Frot,beta,RV)
 
-intfac=1.e6/1.11
 #sigin=0.25
-data=F*intfac#+np.random.normal(0,sigin,size=M)
-
 #------------------------------------------------------
 #some figures for checking
 fig=plt.figure(figsize=(20,6.0))
-plt.plot(wavd[::-1],data,lw=1,color="C2",label="F")
+plt.plot(wavd[::-1],F,lw=1,color="C2",label="F")
 plt.plot(wavd[::-1],fobs)
 plt.savefig("fig/spec.png")
