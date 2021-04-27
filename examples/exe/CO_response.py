@@ -99,7 +99,10 @@ sourcef=planck.piBarr(Tarr,nus)
 F0=rtrun(dtau,sourcef)
 
 #Applying a Response and Noise
-F=response.response(dvmat,F0,vsini_in,beta,RV)
+
+#F=response.response(dvmat,F0,vsini_in,beta,RV)
+Frot=response.rigidrot(nus,F0,vsini_in,0.0,0.0)
+F=response.ipgauss(nus,nusd,Frot,beta,RV)
 
 intfac=1.e7
 sigin=0.25
@@ -159,7 +162,11 @@ def model_c(nu,y):
     dtau=dtaumCO+dtaucH2H2+dtaucH2He
 
     F0=rtrun(dtau,sourcef)
-    mu=response.response(dvmat,F0,vsini,beta,RV)
+
+    #    mu=response.response(dvmat,F0,vsini,beta,RV)
+    Frot=response.rigidrot(nus,F0,vsini,0.0,0.0)
+    mu=response.ipgauss(nus,nusd,Frot,beta,RV)
+
     mu=intfac*An*mu
 #    mu=intfac*An*F0
     numpyro.sample('y', dist.Normal(mu, sigma), obs=y)
