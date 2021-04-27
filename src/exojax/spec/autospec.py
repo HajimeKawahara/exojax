@@ -252,14 +252,15 @@ class AutoRT(object):
         self.RV=RV
         
         c=299792.458
-        dvmat=jnp.array(c*np.log(self.nuobs[:,None]/self.nus[None,:]))
         self.betaIP=c/(2.0*np.sqrt(2.0*np.log(2.0))*self.R)
         beta=np.sqrt((self.betaIP)**2+(self.betamic)**2)
-        print(self.betaIP,beta)
-
+        print("radiative transfer")
         F0=self.rtrun()
-        self.F=response.response(dvmat,self.F0,self.vsini,beta,self.RV,u1=self.u1,u2=self.u2,zeta=self.zeta)
-        
+        print("rotation")
+        Frot=response.rigidrot(self.nus,F0,self.vsini,u1=self.u1,u2=self.u2)
+        print("IP")
+        self.F=response.ipgauss(self.nus,self.nusd,Frot,beta,self.RV)
+        print("done")
         return self.F
         
 if __name__ == "__main__":
@@ -288,6 +289,7 @@ if __name__ == "__main__":
     
     plt.plot(nus,autort.F0,alpha=0.5,label="raw")
     plt.plot(nusobs,F,lw=2,label="obs")
+    plt.ylabel("flux (erg/cm2/s/cm)")
     plt.legend()
     plt.show()
 
