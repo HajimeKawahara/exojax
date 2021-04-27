@@ -109,7 +109,7 @@ def kernel_rigidrot(varr,vsini,u1,u2):
     return m/jnp.sum(m)
 
 
-
+@jit
 def rigidrot(nus,F0,vsini,u1=0.0,u2=0.0):
     """Apply the Rotation response tp a spectrum F using jax.lax.scan
 
@@ -147,14 +147,14 @@ def rigidrot(nus,F0,vsini,u1=0.0,u2=0.0):
 
     
     c=299792.458
-    dvmat0=jnp.array(c*np.log(nus[:,None]/nus[None,:]))
+    dvmat0=jnp.array(c*jnp.log(nus[:,None]/nus[None,:]))
 
     car,F=scan(rigidrot_fscan,0.0,dvmat0)
 
     return F
 
 
-
+@jit
 def ipgauss(nus,nusd,F0,beta,RV):
     """Apply the Gaussian IP response tp a spectrum F using jax.lax.scan
 
@@ -191,7 +191,7 @@ def ipgauss(nus,nusd,F0,beta,RV):
         return carry,Fr
 
     c=299792.458
-    dvmat=jnp.array(c*np.log(nusd[:,None]/nus[None,:]))
+    dvmat=jnp.array(c*jnp.log(nusd[:,None]/nus[None,:]))
     car,F=scan(ipgauss_fscan,0.0,dvmat-RV)
 
     return F
