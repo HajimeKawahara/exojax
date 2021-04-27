@@ -15,22 +15,39 @@ import jax.numpy as jnp
 from jax import random
 from jax import vmap, jit
 import pandas as pd
+from exojax.utils.constants import RJ, pc, Rs
+import sys
+########################
+FCIA=2.5e-16 #lambda F_lambda erg/s/cm2
+FCIA2=3.e16 #erg/s/cm2/A
+FCIA3=3.e24 #erg/s/cm2/cm
+FCIA4=2.5e-12 #erg/s/cm2/um 1303.7283
 
+#vega 8.6 10^-10 erg/s/cm2/A 8637A 9300K
 
+#nu0=1.e8/23000.0
+nu0=1.e8/8637.0
+#2.02+-0.019pc
+print(RJ**2/(2.02*pc)**2)
+fac=(2.73*Rs)**2/((7.68*pc)**2)
+print(nu0**2*planck.piBarr(np.array([9300.0]),nu0)*1.e8*fac)
+#*RJ**2/(2.02*pc)**2
+
+sys.exit()
 #loading spectrum
 dat=pd.read_csv("data/luhman16a_spectra.csv",delimiter=",")
-wavd=dat["wavelength_micron"]
-nusd=1.e4/wavd[::-1]
+wavd=dat["wavelength_micron"]*1.e4
+nusd=1.e8/wavd[::-1]
 fobs=dat["normalized_flux"][::-1]
 err=dat["err_normalized_flux"][::-1]
 
 #masking
-mask=wavd<2.301
+mask=wavd<23010.0
 fobs=fobs[mask]
 nusd=nusd[mask]
 wavd=wavd[mask]
 err=err[mask]
-
+M=len(nusd)
 #plt.plot(wavd[::-1],fobs)
 #plt.show()
 
@@ -50,13 +67,21 @@ nus=1.e8/wav[::-1]
 
 #dv matrix
 c=299792.458
-dvmat=jnp.array(c*np.log(nusd[:,None]/nus[None,:]))
+dvmat=jnp.array(c*np.log(nusd[:,jnp.newaxis]/nus[jnp.newaxis,:]))
 
 #Atmospheric parameters
 alpha_in=0.02
 NP=100
 Parr, dParr, k=rt.pressure_layer(NP=NP)
+
+########################
+FCIA=2.5*e-16 #lambda F_lambda erg/s/cm2
+
+iPfix=87 #fix index for CIA
+
 Tarr = 1500.*(Parr/Parr[-1])**alpha_in
+
+
 mmw=2.33 #mean molecular weight
 molmassCO=molinfo.molmass("CO") #molecular mass (CO)
 MMR=0.01*np.ones_like(Tarr) #mass mixing ratio
@@ -87,7 +112,6 @@ xsm=xsmatrix(numatrix,sigmaDM,gammaLM,SijM)
 
 dtaumCO=dtauM(dParr,xsm,MMR,molmassCO,g)
 #plottau(nus,dtauMx,Tarr,Parr,unit="AA") #tau
-#plotcf(nus,dtauMx,Tarr,Parr,dParr,unit="AA")
 
 #--------------------------------------------------
 #CIA
@@ -113,20 +137,26 @@ dtaucH2He=dtauCIA(nus,Tarr,Parr,dParr,vmrH2,vmrHe,\
 #------------------------------------------------------
 #Running Radiative Transfer
 dtau=dtaumCO+dtaucH2H2+dtaucH2He
+
+#cf=plotcf(nus,dtau,Tarr,Parr,dParr,unit="AA")
+#print(Parr[np.argmax(cf,axis=0)])
+#plt.savefig("fig/cf.png")
+
+
 sourcef=planck.piBarr(Tarr,nus)
 F0=rtrun(dtau,sourcef)
 
 #Applying a Response and Noise
-F=response.response(dvmat,F0,vsini_in,beta,RV)
+Frot=response.rigidrot(nus,F0,vsini_in,0.0,0.0)
+F=response.ipgauss(nus,nusd,Frot,beta,RV)
 
-intfac=1.e7
-sigin=0.25
-data=F*intfac+np.random.normal(0,sigin,size=M)
+intfac=1.e6/1.11
+#sigin=0.25
+data=F*intfac#+np.random.normal(0,sigin,size=M)
 
 #------------------------------------------------------
 #some figures for checking
 fig=plt.figure(figsize=(20,6.0))
-plt.plot(wav[::-1],F0,lw=1,color="C1",alpha=0.5,label="F0")
-plt.plot(wavd[::-1],F,lw=1,color="C2",label="F")
+plt.plot(wavd[::-1],data,lw=1,color="C2",label="F")
 plt.plot(wavd[::-1],fobs)
-plt.show()
+plt.savefig("fig/spec.png")

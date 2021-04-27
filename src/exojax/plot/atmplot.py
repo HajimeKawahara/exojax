@@ -72,6 +72,11 @@ def plotcf(nus,dtauM,Tarr,Parr,dParr,unit=None,mode=None,log=False,normalize=Tru
        log: True=use log10(cf)
        normalize: normalize cf for each wavenumber? 
        cmap: colormap
+
+    Returns:
+       contribution function
+
+
     """
     from exojax.spec.planck import piBarr
     hcperk=1.4387773538277202
@@ -132,3 +137,5 @@ def plotcf(nus,dtauM,Tarr,Parr,dParr,unit=None,mode=None,log=False,normalize=Tru
         plt.gca().invert_yaxis()
         plt.ylim(np.log10(Parr[-1]),np.log10(Parr[0]))
         ax.set_aspect(1.45/ax.get_data_ratio())
+
+    return cf
