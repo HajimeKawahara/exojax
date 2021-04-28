@@ -170,6 +170,7 @@ def ipgauss(nus,nusd,F0,beta,RV):
 
 
     """
+    @jit
     def ipgauss_fscan(carry,varr):
         """scanning response
 
@@ -192,8 +193,35 @@ def ipgauss(nus,nusd,F0,beta,RV):
 
     c=299792.458
     dvmat=jnp.array(c*jnp.log(nusd[:,None]/nus[None,:]))
-    car,F=scan(ipgauss_fscan,0.0,dvmat-RV)
+    car,F=scan(ipgauss_fscan,0.0,dvmat+RV)
 
+    return F
+
+
+@jit
+def ipgaussm(nus,nusd,F0,beta,RV):
+    """Apply the Gaussian IP response tp a spectrum F using jax.lax.scan
+
+    Args:
+        nus: input wavenumber
+        nusd: wavenumber in an IP frame
+        F0: original spectrum (F0)
+        beta: STD of a Gaussian broadening (IP+microturbulence)
+        RV: radial velocity    
+
+    Return:
+        response-applied spectrum (F)
+
+
+    """
+
+    c=299792.458
+    dvmat=jnp.array(c*jnp.log(nusd[:,None]/nus[None,:]))
+    kernel=jnp.exp(-(dvmat+RV)**2/(2.0*beta**2))
+    print(np.shape(kernel)) #M,N
+    kernel=kernel.T/jnp.sum(kernel,axis=1)
+    kernel=kernel.T
+    F=kernel@F0
     return F
 
 
@@ -243,7 +271,7 @@ if __name__ == "__main__":
 
     #new
     Frot=rigidrot(nus,F0,vsini_in,u1,u2)
-    Fg=ipgauss(nus,nusd,Frot,beta,RV)
+    Fg=ipgaussm(nus,nusd,Frot,beta,RV)
 
     plt.plot(wav,F0)
     plt.plot(wavd,Fr,".")
@@ -251,4 +279,4 @@ if __name__ == "__main__":
     plt.plot(wav,Frot)
     plt.plot(wavd,Fg)
 
-    plt.show()
+    plt.savefig("tmp.png")
