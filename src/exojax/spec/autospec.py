@@ -278,8 +278,8 @@ if __name__ == "__main__":
     #xsm=autoxs.xsmatrix(Tarr,Parr) 
 
     #RT
-    #nus=np.linspace(1900.0,2300.0,40000,dtype=np.float64)
-    nus=np.linspace(1900.0,1910.0,1000,dtype=np.float64)
+    nus=np.linspace(1900.0,2300.0,40000,dtype=np.float64)
+    #nus=np.linspace(1900.0,1910.0,1000,dtype=np.float64)
     Parr=np.logspace(-8,2,100)
     Tarr = 500.*(Parr/Parr[-1])**0.02    
     autort=AutoRT(nus,1.e5,2.33,Tarr,Parr) #g=1.e5 cm/s2, mmw=2.3
