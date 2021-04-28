@@ -197,6 +197,34 @@ def ipgauss(nus,nusd,F0,beta,RV):
 
     return F
 
+@jit
+def rigidrotm(nus,F0,vsini,u1=0.0,u2=0.0):
+    """Apply the Rotation response tp a spectrum F using jax.lax.scan
+
+    Args:
+        nus: wavenumber
+        F0: original spectrum (F0)
+        vsini: V sini for rotation
+        beta: STD of a Gaussian broadening (IP+microturbulence)
+        RV: radial velocity    
+        u1: Limb-darkening coefficient 1
+        u2: Limb-darkening coefficient 2
+
+    Return:
+        response-applied spectrum (F)
+
+
+    """
+    c=299792.458
+    dvmat=jnp.array(c*jnp.log(nusd[None,:]/nus[:,None]))
+#    kernel=jnp.exp(-(dvmat+RV)**2/(2.0*beta**2))
+    x=dvmat+RV/vsini
+    x2=x*x
+    kernel=jnp.where(x2<1.0,jnp.pi/2.0*u1*(1.0 - x2) - 2.0/3.0*jnp.sqrt(1.0-x2)*(-3.0+3.0*u1+u2*2.0*u2*x2),0.0)
+    kernel=kernel/jnp.sum(kernel,axis=0) #axis=N
+    F=kernel.T@F0
+
+    return F
 
 @jit
 def ipgaussm(nus,nusd,F0,beta,RV):
@@ -216,12 +244,10 @@ def ipgaussm(nus,nusd,F0,beta,RV):
     """
 
     c=299792.458
-    dvmat=jnp.array(c*jnp.log(nusd[:,None]/nus[None,:]))
+    dvmat=jnp.array(c*jnp.log(nusd[None,:]/nus[:,None]))
     kernel=jnp.exp(-(dvmat+RV)**2/(2.0*beta**2))
-    print(np.shape(kernel)) #M,N
-    kernel=kernel.T/jnp.sum(kernel,axis=1)
-    kernel=kernel.T
-    F=kernel@F0
+    kernel=kernel/jnp.sum(kernel,axis=0) #axis=N
+    F=kernel.T@F0
     return F
 
 
@@ -279,4 +305,4 @@ if __name__ == "__main__":
     plt.plot(wav,Frot)
     plt.plot(wavd,Fg)
 
-    plt.savefig("tmp.png")
+    plt.show()
