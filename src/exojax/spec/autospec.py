@@ -1,9 +1,7 @@
 """Automatic Opacity and Spectrum Generator
    
 """
-
-
-
+import time
 from exojax.spec import defmol
 from exojax.spec import defcia
 from exojax.spec import moldb
@@ -254,13 +252,18 @@ class AutoRT(object):
         c=299792.458
         self.betaIP=c/(2.0*np.sqrt(2.0*np.log(2.0))*self.R)
         beta=np.sqrt((self.betaIP)**2+(self.betamic)**2)
-        print("radiative transfer")
+        ts=time.time()
         F0=self.rtrun()
-        print("rotation")
+        te=time.time()
+        print("radiative transfer",te-ts,"s")
+        ts=time.time()
         Frot=response.rigidrot(self.nus,F0,self.vsini,u1=self.u1,u2=self.u2)
-        print("IP")
-        self.F=response.ipgauss(self.nus,self.nusd,Frot,beta,self.RV)
-        print("done")
+        te=time.time()
+        print("rotation",te-ts,"s")
+        ts=time.time()
+        self.F=response.ipgauss(self.nus,self.nuobs,Frot,beta,self.RV)
+        te=time.time()
+        print("IP",te-ts,"s")
         return self.F
         
 if __name__ == "__main__":
@@ -275,7 +278,8 @@ if __name__ == "__main__":
     #xsm=autoxs.xsmatrix(Tarr,Parr) 
 
     #RT
-    nus=np.linspace(1900.0,2300.0,40000,dtype=np.float64)
+    #nus=np.linspace(1900.0,2300.0,40000,dtype=np.float64)
+    nus=np.linspace(1900.0,1910.0,1000,dtype=np.float64)
     Parr=np.logspace(-8,2,100)
     Tarr = 500.*(Parr/Parr[-1])**0.02    
     autort=AutoRT(nus,1.e5,2.33,Tarr,Parr) #g=1.e5 cm/s2, mmw=2.3
