@@ -1,3 +1,7 @@
+"""Test plotting of Luhman16A
+
+
+"""
 from exojax.spec import rtransfer as rt
 from exojax.spec import planck, moldb, contdb, response, molinfo
 from exojax.spec import make_numatrix0,xsvector
@@ -8,7 +12,6 @@ from exojax.plot.atmplot import plottau, plotcf
 from exojax.spec.hitrancia import read_cia, logacia 
 from exojax.spec.rtransfer import rtrun, dtauM, dtauCIA
 import numpy as np
-import tqdm
 import seaborn as sns
 import matplotlib.pyplot as plt
 import jax.numpy as jnp
@@ -17,7 +20,6 @@ from jax import vmap, jit
 import pandas as pd
 from exojax.utils.constants import RJ, pc, Rs
 import sys
-
 
 #FLUX reference
 Fabs_REF2=2.7e-12 #absolute flux (i.e. flux@10pc) erg/s/cm2/um Burgasser+ 1303.7283 @2.3um
@@ -34,7 +36,8 @@ err=(dat["err_normalized_flux"].values)[::-1]
 plt.plot(wavd[::-1],fobs)
 
 #masking
-mask=wavd[::-1]<23010.0
+mask=(22936.0<wavd[::-1])*(wavd[::-1]<23010.0)
+mask=mask*((22980>wavd[::-1])+(wavd[::-1]>22990.0)) #other line masking
 fobs=fobs[mask]
 nusd=nusd[mask]
 err=err[mask]
@@ -52,11 +55,6 @@ N=1000
 wav=np.linspace(22900,23000,N,dtype=np.float64)#AA
 nus=1.e8/wav[::-1]
 
-#grid for F
-#M=1000
-#wavd=np.linspace(22900,23000,M,dtype=np.float64)#AA        
-#nusd=1.e8/wavd[::-1]
-
 #dv matrix
 c=299792.458
 dvmat=jnp.array(c*np.log(nusd[:,jnp.newaxis]/nus[jnp.newaxis,:]))
@@ -73,16 +71,13 @@ MMR=0.02*np.ones_like(Tarr) #mass mixing ratio
 g=1.e5 # gravity cm/s2
 
 #Macro response model
-RV=30.0 #inverse??
-
-vsini_in=10.0 #rotational vsini
-beta=3.0 #IP sigma
+RV=30.0 #km/s
+vsini_in=10.0 #rotational vsini km/s
+beta=3.0 #IP sigma km/s
 
 #--------------------------------------------------
 #ExoMol 
-
 mdbCO=moldb.MdbExomol('../exe/.database/CO/12C-16O/Li2015',nus) #loading molecular database 
-
 nu0=mdbCO.nu_lines
 qt=vmap(mdbCO.qr_interp)(Tarr)
 gammaLMP = jit(vmap(gamma_exomol,(0,0,None,None)))\
@@ -124,16 +119,15 @@ dtau=dtaumCO+dtaucH2H2+dtaucH2He
 #plt.savefig("fig/cf.png")
 
 sourcef=planck.piBarr(Tarr,nus)
-F0=rtrun(dtau,sourcef)
+F0=rtrun(dtau,sourcef)/Ftoa #divided by the normalization.
 
 #Applying a Response and Noise
 Frot=response.rigidrot(nus,F0,vsini_in,0.0,0.0)
 F=response.ipgauss(nus,nusd,Frot,beta,RV)
 
-#sigin=0.25
 #------------------------------------------------------
 #some figures for checking
 fig=plt.figure(figsize=(20,6.0))
 plt.plot(wavd[::-1],F,lw=1,color="C2",label="F")
-plt.plot(wavd[::-1],fobs*Ftoa)
+plt.plot(wavd[::-1],fobs)
 plt.savefig("fig/spec.png")
