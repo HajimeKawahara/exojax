@@ -27,20 +27,21 @@ Ftoa=Fabs_REF2/fac0/1.e4 #erg/cm2/s/cm @ 2.3um
 
 #loading spectrum
 dat=pd.read_csv("data/luhman16a_spectra.csv",delimiter=",")
-wavd=dat["wavelength_micron"]*1.e4
+wavd=(dat["wavelength_micron"].values)*1.e4 #AA
 nusd=1.e8/wavd[::-1]
-fobs=dat["normalized_flux"][::-1]
-err=dat["err_normalized_flux"][::-1]
+fobs=(dat["normalized_flux"].values)[::-1]
+err=(dat["err_normalized_flux"].values)[::-1]
+plt.plot(wavd[::-1],fobs)
 
 #masking
-mask=wavd<23010.0
+mask=wavd[::-1]<23010.0
 fobs=fobs[mask]
 nusd=nusd[mask]
-wavd=wavd[mask]
 err=err[mask]
+wavd=1.e8/nusd[::-1]
 M=len(nusd)
-#plt.plot(wavd[::-1],fobs)
-#plt.show()
+plt.plot(wavd[::-1],fobs)
+plt.savefig("fig/spec0.png")
 
 #######################################################
 #GENERATING A MOCK SPECTRUM PART
@@ -68,11 +69,11 @@ Tarr = 1200.*(Parr/Parr[-1])**alpha_in
 
 mmw=2.33 #mean molecular weight
 molmassCO=molinfo.molmass("CO") #molecular mass (CO)
-MMR=0.01*np.ones_like(Tarr) #mass mixing ratio
+MMR=0.02*np.ones_like(Tarr) #mass mixing ratio
 g=1.e5 # gravity cm/s2
 
 #Macro response model
-RV=-30.0 #inverse??
+RV=30.0 #inverse??
 
 vsini_in=10.0 #rotational vsini
 beta=3.0 #IP sigma
