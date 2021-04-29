@@ -31,11 +31,15 @@ ExoJAX provides an auto-differentiable high-resolution spectrum model for exopla
    exojax/exojax.rst
 
 
+Reference
+---------------------
+
+Kawahara et al. to be submitted.
    
 License & Attribution
 ---------------------
 
-Copyright 2021 Hajime Kawahara.
+Copyright 2021 `Hajime Kawahara <http://secondearths.sakura.ne.jp/en/index.html>`_.
 
 ExoJAX is free software made available under the MIT License. For details
 see the ``LICENSE``.

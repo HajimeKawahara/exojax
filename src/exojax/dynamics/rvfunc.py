@@ -1,5 +1,7 @@
 """Functions for radial velocity curves, JAX autograd/jit compatible.
 
+   * This code is for the PRV analysis of transmission/dayside close-in planets. Under developement. 
+
 """
 import jax
 from jax.lax import map
@@ -58,13 +60,10 @@ def get_G_cuberoot():
     Gcr_val=Gu**(1.0/3.0)*1.e-3
     return Gcr_val
 
-
 Gcr=get_G_cuberoot()
 fac=(2.0*jnp.pi)**(1.0/3.0)
 m23=-2.0/3.0
 m13=-1.0/3.0
-
-
 
 @jit
 def rvcoref(t,T0,P,e,omegaA,K,i):

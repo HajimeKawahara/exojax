@@ -90,12 +90,14 @@ def trans2E3(x):
 @jit
 def rtrun(dtau,S):
     """Radiative Transfer using two-stream approximaion + 2E3 (Helios-R1 type)
+
     Args:
         dtau: opacity matrix 
         S: source matrix [N_layer, N_nus]
  
     Returns:
         flux in the unit of [erg/cm2/s/cm-1] if using piBarr as a source function.
+
     """
     Nnus=jnp.shape(dtau)[1]
     TransM=jnp.where(dtau==0, 1.0, trans2E3(dtau))   

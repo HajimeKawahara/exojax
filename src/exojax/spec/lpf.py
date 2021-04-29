@@ -20,14 +20,10 @@ def ljert(x,a):
         a:
         
     Returns:
-        ljert: L(x,a) or Imag(wofz(x+ia))
+        L(x,a) or Imag(wofz(x+ia))
 
-    Examples:
-       
-       ljert provides a L(x,a) function. 
-       
-
-       This function accepts a scalar value as an input. Use jax.vmap to use a vector as an input.
+    Note:       
+        ljert provides a L(x,a) function. This function accepts a scalar value as an input. Use jax.vmap to use a vector as an input.
 
     """
     r2=x*x+a*a
@@ -43,7 +39,7 @@ def hjert(x,a):
         a:
         
     Returns:
-        hjert: H(x,a) or Real(wofz(x+ia))
+        H(x,a) or Real(wofz(x+ia))
 
     Examples:
        

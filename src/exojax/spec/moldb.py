@@ -126,19 +126,25 @@ class MdbExomol(object):
         
     def QT_interp(self,T):
         """interpolated partition function
+
         Args:
            T: temperature
+
         Returns:
            Q(T) interpolated in jnp.array
+
         """
         return jnp.interp(T,self.T_gQT,self.gQT)
     
     def qr_interp(self,T):
         """interpolated partition function ratio
+
         Args:
            T: temperature
+
         Returns:
            qr(T)=Q(T)/Q(Tref) interpolated in jnp.array
+
         """
         return self.QT_interp(T)/self.QT_interp(self.Tref)
     
@@ -281,7 +287,8 @@ class MdbHit(object):
         Returns:
            Qr = partition function ratio array [N_Tarr x N_iso]
 
-        Note: N_Tarr = len(Tarr), N_iso = len(self.uniqiso)
+        Note: 
+           N_Tarr = len(Tarr), N_iso = len(self.uniqiso)
 
         """
         allT=list(np.concatenate([[self.Tref],Tarr]))
@@ -301,7 +308,8 @@ class MdbHit(object):
         Returns:
            Qr_line, partition function ratio array for lines [Nlines]
 
-        Note: Nlines=len(self.nu_lines)
+        Note: 
+           Nlines=len(self.nu_lines)
 
         """
         qr_line=np.ones_like(self.isoid,dtype=np.float64)
