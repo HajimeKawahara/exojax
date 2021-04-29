@@ -35,7 +35,7 @@
  F=autort.rtrun()
 ```
 
- <img src="https://user-images.githubusercontent.com/15956904/115021924-980c8480-9ef7-11eb-99bd-392ac12fbfaa.png" Titie="exojax auto \emission spectrum" Width=850px> 
+ <img src="https://user-images.githubusercontent.com/15956904/116488770-286ea000-a8ce-11eb-982d-7884b423592c.png" Titie="exojax auto \emission spectrum" Width=850px> 
 
  <details><summary>:star2: Are you an observer? </summary>
  
@@ -44,7 +44,7 @@
   F=autort.spectrum(nusobs,100000.0,20.0,0.0) #R=100000, vsini=10km/s, RV=0km/s
  ```
  
-  <img src="https://user-images.githubusercontent.com/15956904/115093326-e2701e80-9f54-11eb-8e13-533178fca1b5.png" Titie="exojax auto \emission spectrum for observers" Width=850px> 
+  <img src="https://user-images.githubusercontent.com/15956904/116488769-273d7300-a8ce-11eb-8da1-661b23215c26.png" Titie="exojax auto \emission spectrum for observers" Width=850px> 
  
  </details>
 
