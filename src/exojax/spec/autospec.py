@@ -286,14 +286,22 @@ if __name__ == "__main__":
     autort.addcia("H2-H2",0.74,0.74) #CIA mmr(H)=0.74
     autort.addcia("H2-He",0.74,0.25) #CIA mmr(He)=0.25
     autort.addmol("ExoMol","CO",0.01) #mmr=0.01
-    #autort.rtrun()
+    
+    F0=autort.rtrun()
+    fig=plt.figure(figsize=(10,3))
+    plt.plot(nus,autort.F0,alpha=0.5)
+    plt.xlabel("wavenumber (cm-1)")
+    plt.ylabel("flux (erg/cm2/s/cm-1)")
+    plt.savefig("spec0.png", bbox_inches="tight", pad_inches=0.0)
 
     nusobs=np.linspace(1900.0,2300.0,10000,dtype=np.float64) #observation bin
     F=autort.spectrum(nusobs,100000.0,20.0,0.0) #R=100000,vsini=10. km/s, RV=0. km/s
-    
+
+    fig=plt.figure(figsize=(10,3))
     plt.plot(nus,autort.F0,alpha=0.5,label="raw")
     plt.plot(nusobs,F,lw=2,label="obs")
-    plt.ylabel("flux (erg/cm2/s/cm)")
+    plt.xlabel("wavenumber (cm-1)")
+    plt.ylabel("flux (erg/cm2/s/cm-1)")
     plt.legend()
-    plt.show()
+    plt.savefig("spec.png", bbox_inches="tight", pad_inches=0.0)
 
