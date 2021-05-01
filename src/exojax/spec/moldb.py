@@ -77,7 +77,7 @@ class MdbExomol(object):
                 trans=exomolapi.read_trans(self.trans_file)
                 trans.to_feather(self.trans_file.with_suffix(".feather"))
             #compute gup and elower
-            A, self.nu_lines, elower, gpp=exomolapi.pickup_gE(states,trans)        
+            self._A, self.nu_lines, self._elower, self._gpp=exomolapi.pickup_gE(states,trans)        
         else:
             imin=np.searchsorted(numinf,nurange[0],side="right")-1 #left side
             imax=np.searchsorted(numinf,nurange[1],side="right")-1 #left side
@@ -95,34 +95,49 @@ class MdbExomol(object):
                 self.trans_file.append(trans_file)
                 #compute gup and elower                
                 if k==0:
-                    A, self.nu_lines, elower, gpp=exomolapi.pickup_gE(states,trans)
+                    self._A, self.nu_lines, self._elower, self._gpp=exomolapi.pickup_gE(states,trans)
                 else:
                     Ax, nulx, elowerx, gppx=exomolapi.pickup_gE(states,trans)
-                    A=np.hstack([A,Ax])
+                    self._A=np.hstack([self._A,Ax])
                     self.nu_lines=np.hstack([self.nu_lines,nulx])
-                    elower=np.hstack([elower,elowerx])
-                    gpp=np.hstack([gpp,gppx])
+                    self._elower=np.hstack([self._elower,elowerx])
+                    self._gpp=np.hstack([self._gpp,gppx])
 
         self.Tref=296.0        
         self.QTref=np.array(self.QT_interp(self.Tref))
+        
         ##input should be ndarray not jnp array
-        self.Sij0=exomol.Sij0(A,gpp,self.nu_lines,elower,self.QTref)
+        self.Sij0=exomol.Sij0(self._A,self._gpp,self.nu_lines,self._elower,self.QTref)
+        
         ### MASKING ###
         mask=(self.nu_lines>self.nurange[0]-self.margin)\
         *(self.nu_lines<self.nurange[1]+self.margin)\
         *(self.Sij0>self.crit)
+        
+        self.masking(mask)
+        
+    def masking(self,mask):
+        """applying mask and (re)generate jnp.arrays
+        
+        Args:
+           mask: mask to be applied
 
+        """
         #numpy float 64 Do not convert them jnp array
         self.nu_lines = self.nu_lines[mask]
-        self.Sij0 = self.Sij0[mask]        
-
+        self.Sij0 = self.Sij0[mask]
+        self._A=self._A[mask]
+        self._elower=self._elower[mask]
+        self._gpp=self._gpp[mask]
+        
         #jnp arrays
-        self.A=jnp.array(A[mask])
-        self.gamma_natural=gn(self.A)
-        self.elower=jnp.array(elower[mask])
-        self.gpp=jnp.array(gpp[mask])
-        self.logsij0=jnp.array(np.log(self.Sij0))
         self.dev_nu_lines=jnp.array(self.nu_lines)
+        self.logsij0=jnp.array(np.log(self.Sij0))
+        self.A=jnp.array(self._A)
+        self.gamma_natural=gn(self.A)
+        self.elower=jnp.array(self._elower)
+        self.gpp=jnp.array(self._gpp)
+
         
     def QT_interp(self,T):
         """interpolated partition function

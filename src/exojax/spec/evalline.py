@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-""" Evaluation of molecular lines
+""" Evaluation of molecular lines (center)
 
 """
 
@@ -8,7 +8,52 @@ from jax import jit, vmap
 import jax.numpy as jnp
 from jax import custom_jvp
 from exojax.special.erfcx import erfcx
+from exojax.spec.rtransfer import dtauM, dtauCIA
 import numpy as np
+
+def mask_weakline(mdb_mol,Parr,dParr,Tarr,SijM,gammaLM,sigmaDM,MMR_mol,molmass_mol,mmw,g,vmrH2,cdbH2H2,margin=2,mask=None):
+    """masking weak lines compared to CIA H2-H2 continuum
+
+    Args:
+       mdb_mol: mdb
+       Parr: pressure layer (bar)
+       dParr: delta pressure layer (bar)
+       Tarr: temperature layer (K)
+       SijM: Sij matrix
+       gammaLM: gamma coefficient matrix
+       sigmaDM: Doppler broadening matrix
+       MMR_mol: Mass Mixing Ratio of the molecule
+       molmass_mol: molecualr mass of the molecule
+       mmw: mean molecular weight of the atmosphere
+       gravity: gravity (cm/s2)
+       vmrH2: volume mixing ratio of H2
+       cdbH2H2: cdb 
+
+    Returns:
+       mask (weak line mask), maxcf (P at max contribution function for the molecule), maxcia (P at max contribution function for CIA)
+
+    """
+    
+    xsm0=xsmatrix0(sigmaDM,gammaLM,SijM) #cross section at line centers
+    dtaumol=dtauM(dParr,xsm0,MMR_mol,molmass_mol,g)    
+    dtaucH2H2=dtauCIA(mdb_mol.nu_lines,Tarr,Parr,dParr,vmrH2,vmrH2,\
+                    mmw,g,cdbH2H2.nucia,cdbH2H2.tcia,cdbH2H2.logac)
+    cf_mol=contfunc(dtaumol,mdb_mol.nu_lines,Parr,dParr,Tarr)    
+    maxcf=np.argmax(cf_mol,axis=0)
+
+    cfCIA=contfunc(dtaucH2H2,mdb_mol.nu_lines,Parr,dParr,Tarr)
+    maxcia=np.argmax(cfCIA,axis=0)
+
+    mask1=(maxcf>0)*(maxcf<maxcia+margin)
+    if mask==None:
+        mask=mask1
+    else:
+        mask=mask1+mask
+        
+    print(len(mask),"->",np.sum(mask))
+
+    return mask,maxcf,maxcia
+    
 
 def contfunc(dtau,nu,Parr,dParr,Tarr):
     """contribution function

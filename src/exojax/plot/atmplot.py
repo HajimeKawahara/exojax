@@ -139,3 +139,28 @@ def plotcf(nus,dtauM,Tarr,Parr,dParr,unit=None,mode=None,log=False,normalize=Tru
         ax.set_aspect(1.45/ax.get_data_ratio())
 
     return cf
+
+def plot_maxpoint(mask,Parr,maxcf,maxcia,mol="CO"):
+    """plotting max contribution function  points
+
+    Args:
+       mask: weak line mask
+       Parr: Paressure array
+       maxcf: max contribution function of the molecules
+       maxcia: max contribution function of CIA
+       mol: molecular name
+
+    """
+    fig=plt.figure(figsize=(14,6))
+    xarr=np.array(range(0,len(mask)))
+    masknon0=(maxcf>0)
+    plt.plot(xarr[masknon0],Parr[maxcf[masknon0]],".",label=mol,alpha=1.0,color="gray")
+    plt.plot(xarr,Parr[maxcia],"-",label="CIA (H2-H2)",alpha=0.4,color="C2")
+    plt.plot(xarr[mask],Parr[maxcf[mask]],".",label=mol+" selected",alpha=1.0,color="C3")
+    plt.yscale("log")
+    plt.ylim(Parr[0],Parr[-1])
+    plt.gca().invert_yaxis()
+    plt.tick_params(labelsize=20)
+    plt.xlabel("#line",fontsize=20)
+    plt.ylabel("Pressure (bar)",fontsize=20)
+    plt.legend(fontsize=20)
