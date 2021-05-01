@@ -83,7 +83,7 @@ def plotcf(nus,dtauM,Tarr,Parr,dParr,unit=None,mode=None,log=False,normalize=Tru
     tau=np.cumsum(dtauM,axis=0)
     
     cf=np.exp(-tau)*dtauM\
-        *(dtauM*Parr[:,None]/dParr[:,None])\
+        *(Parr[:,None]/dParr[:,None])\
         *nus**3/(np.exp(hcperk*nus/Tarr[:,None])-1.0)
     
     if normalize==True:

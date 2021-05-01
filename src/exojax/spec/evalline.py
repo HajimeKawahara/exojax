@@ -75,7 +75,7 @@ def contfunc(dtau,nu,Parr,dParr,Tarr):
     tau=np.cumsum(dtau,axis=0)
     hcperk=1.4387773538277202
     cf=np.exp(-tau)*dtau\
-        *(dtau*Parr[:,None]/dParr[:,None])\
+        *(Parr[:,None]/dParr[:,None])\
         *nu**3/(np.exp(hcperk*nu/Tarr[:,None])-1.0)
     return cf
 
