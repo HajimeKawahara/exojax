@@ -2,6 +2,9 @@
 # -*- coding: utf-8 -*-
 """ Evaluation of molecular lines (center)
 
+    * This module evaluates the contibution of molecular lines to an emission spectrum. 
+    * This module only consider the line center to reduces computation complexity.
+
 """
 
 from jax import jit, vmap
@@ -64,6 +67,9 @@ def contfunc(dtau,nu,Parr,dParr,Tarr):
        Parr: pressure array  [N_layer]
        dParr: delta pressure array  [N_layer] 
        Tarr: temperature array  [N_layer]
+
+    Returns:
+       contribution function
 
     """
     tau=np.cumsum(dtau,axis=0)
