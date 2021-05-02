@@ -35,7 +35,7 @@ err=(dat["err_normalized_flux"].values)[::-1]
 plt.plot(wavd[::-1],fobs)
 
 #masking
-mask=(22936.0<wavd[::-1])*(wavd[::-1]<23010.0)
+mask=(22930.0<wavd[::-1])*(wavd[::-1]<23010.0)
 fobs=fobs[mask]
 nusd=nusd[mask]
 err=err[mask]
@@ -77,8 +77,9 @@ cdbH2He=contdb.CdbCIA('.database/H2-He_2011.cia',nus)
 
 
 ### REDUCING UNNECESSARY LINES
-MMR=0.05
-T0c=1500.0
+MMR=0.1
+maxMMR=MMR
+T0c=1700.0
 Tarr = T0c*np.ones_like(Parr)    
 qt=vmap(mdbCO.qr_interp)(Tarr)
 gammaLMP = jit(vmap(gamma_exomol,(0,0,None,None)))\
@@ -120,10 +121,10 @@ def model_c(nu,y):
     An = numpyro.sample('An', dist.Normal(1.0,0.1))
     sigma = numpyro.sample('sigma', dist.Exponential(0.5))
     RV = numpyro.sample('RV', dist.Uniform(25.0,35.0))
-    MMR = numpyro.sample('MMR', dist.Uniform(0.01,0.05))
+    MMR = numpyro.sample('MMR', dist.Uniform(0.01,maxMMR))
     #    nu0 = numpyro.sample('nu0', dist.Uniform(-0.3,0.3))
-    T0 = numpyro.sample('T0', dist.Uniform(1000.0,1500.0))
-    alpha = numpyro.sample('alpha', dist.Uniform(0.01,0.05))
+    T0 = numpyro.sample('T0', dist.Uniform(1200.0,T0c))
+    alpha = numpyro.sample('alpha', dist.Uniform(0.01,0.07))
     vsini = numpyro.sample('vsini', dist.Uniform(1.0,30.0))
     #T-P model//
     Tarr = T0*(Parr/Parr[-1])**alpha 

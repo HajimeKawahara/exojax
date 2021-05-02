@@ -14,7 +14,7 @@ import pandas as pd
 __all__ = ['MdbExomol','MdbHit']
 
 class MdbExomol(object):
-    def __init__(self,path,nurange=[-np.inf,np.inf],margin=250.0,crit=-np.inf):
+    def __init__(self,path,nurange=[-np.inf,np.inf],margin=1.0,crit=-np.inf):
         """Molecular database for Exomol form
 
         Args: 
