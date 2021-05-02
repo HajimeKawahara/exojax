@@ -60,10 +60,17 @@ mmw=2.33 #mean molecular weight
 g=1.e5 # gravity cm/s2
 beta=3.0 #IP sigma need check
 
+ONEARR=np.ones_like(Parr) #ones_array for MMR
+
 #LOADING CO
 mdbCO=moldb.MdbExomol('.database/CO/12C-16O/Li2015',nus) #loading molecular database 
-ONEARR=np.ones_like(Parr) #ones_array for MMR
 molmassCO=molinfo.molmass("CO") #molecular mass (CO)
+
+#LOADING H2O
+mdbH2O=moldb.MdbExomol('.database/H2O/1H2-16O/POKAZATEL',nus) #loading molecular dat
+print(len(mdbH2O.logsij0))
+
+molmassH2O=molinfo.molmass("H2O") #molecular mass (H2O)
 
 #LOADING CIA
 mmrH2=0.74
@@ -75,8 +82,34 @@ vmrHe=(mmrHe*mmw/molmassHe)
 cdbH2H2=contdb.CdbCIA('.database/H2-H2_2011.cia',nus)
 cdbH2He=contdb.CdbCIA('.database/H2-He_2011.cia',nus)
 
-
 ### REDUCING UNNECESSARY LINES
+#2. H2O
+MMR=0.01
+maxMMR=MMR
+T0c=1700.0
+Tarr = T0c*np.ones_like(Parr)    
+qt=vmap(mdbH2O.qr_interp)(Tarr)
+gammaLMP = jit(vmap(gamma_exomol,(0,0,None,None)))\
+    (Parr,Tarr,mdbH2O.n_Texp,mdbH2O.alpha_ref)
+gammaLMN=gamma_natural(mdbH2O.A)
+gammaLM=gammaLMP[:,None]+gammaLMN[None,:]
+SijM=jit(vmap(SijT,(0,None,None,None,0)))\
+    (Tarr,mdbH2O.logsij0,mdbH2O.nu_lines,mdbH2O.elower,qt)
+sigmaDM=jit(vmap(doppler_sigma,(None,0,None)))\
+    (mdbH2O.nu_lines,Tarr,molmassH2O)    
+
+mask,maxcf,maxcia=mask_weakline(mdbH2O,Parr,dParr,Tarr,SijM,gammaLM,sigmaDM,MMR*ONEARR,molmassH2O,mmw,g,vmrH2,cdbH2H2)
+
+plot_maxpoint(mask,Parr,maxcf,maxcia,mol="H2O")
+plt.savefig("maxpoint_H2O.pdf", bbox_inches="tight", pad_inches=0.0)
+plt.show()
+
+mdbH2O.masking(mask)
+import sys
+sys.exit()
+#######################################################
+
+#1. CO
 MMR=0.1
 maxMMR=MMR
 T0c=1700.0
@@ -94,11 +127,11 @@ sigmaDM=jit(vmap(doppler_sigma,(None,0,None)))\
 mask,maxcf,maxcia=mask_weakline(mdbCO,Parr,dParr,Tarr,SijM,gammaLM,sigmaDM,MMR*ONEARR,molmassCO,mmw,g,vmrH2,cdbH2H2)
 
 plot_maxpoint(mask,Parr,maxcf,maxcia,mol="CO")
-plt.savefig("maxpoint.pdf", bbox_inches="tight", pad_inches=0.0)
+plt.savefig("maxpoint_CO.pdf", bbox_inches="tight", pad_inches=0.0)
 plt.show()
 
 mdbCO.masking(mask)
-#######################################################
+
 
 #nu matrix
 nu0=mdbCO.nu_lines
