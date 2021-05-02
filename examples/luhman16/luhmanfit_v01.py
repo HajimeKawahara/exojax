@@ -4,9 +4,9 @@ from exojax.spec import make_numatrix0,xsvector
 from exojax.spec.lpf import xsmatrix
 from exojax.spec.exomol import gamma_exomol
 from exojax.spec.hitran import SijT, doppler_sigma, gamma_natural, gamma_hitran
+from exojax.plot.atmplot import plottau, plotcf
 from exojax.spec.hitrancia import read_cia, logacia 
 from exojax.spec.rtransfer import rtrun, dtauM, dtauCIA
-from exojax.plot.atmplot import plottau, plotcf, plot_maxpoint
 import numpy as np
 import tqdm
 import seaborn as sns
@@ -17,7 +17,6 @@ from jax import vmap, jit
 import pandas as pd
 from exojax.utils.constants import RJ, pc, Rs
 import sys
-from exojax.spec.evalline import mask_weakline
 
 
 #FLUX reference
@@ -50,22 +49,24 @@ plt.savefig("fig/spec0.png")
 
 #grid for F0
 N=1000
-wav=np.linspace(22900,23000,N,dtype=np.float64)#AA
+wav=np.linspace(22930,23010,N,dtype=np.float64)#AA
 nus=1.e8/wav[::-1]
-
-#ATMOSPHERE
 NP=100
 Parr, dParr, k=rt.pressure_layer(NP=NP)
 mmw=2.33 #mean molecular weight
-g=1.e5 # gravity cm/s2
-beta=3.0 #IP sigma need check
-
-#LOADING CO
-mdbCO=moldb.MdbExomol('.database/CO/12C-16O/Li2015',nus) #loading molecular database 
-ONEARR=np.ones_like(Parr) #ones_array for MMR
 molmassCO=molinfo.molmass("CO") #molecular mass (CO)
+g=1.e5 # gravity cm/s2
 
-#LOADING CIA
+#IP
+c=299792.458
+R=100000.0
+beta=c/(2.0*np.sqrt(2.0*np.log(2.0))*R)
+
+mdbCO=moldb.MdbExomol('.database/CO/12C-16O/Li2015',nus) #loading molecular database 
+nu0=mdbCO.nu_lines
+numatrix=make_numatrix0(nus,nu0)
+
+#CIA
 mmrH2=0.74
 mmrHe=0.25
 molmassH2=molinfo.molmass("H2")
@@ -75,34 +76,8 @@ vmrHe=(mmrHe*mmw/molmassHe)
 cdbH2H2=contdb.CdbCIA('.database/H2-H2_2011.cia',nus)
 cdbH2He=contdb.CdbCIA('.database/H2-He_2011.cia',nus)
 
-
-### REDUCING UNNECESSARY LINES
-MMR=0.1
-maxMMR=MMR
-T0c=1700.0
-Tarr = T0c*np.ones_like(Parr)    
-qt=vmap(mdbCO.qr_interp)(Tarr)
-gammaLMP = jit(vmap(gamma_exomol,(0,0,None,None)))\
-    (Parr,Tarr,mdbCO.n_Texp,mdbCO.alpha_ref)
-gammaLMN=gamma_natural(mdbCO.A)
-gammaLM=gammaLMP[:,None]+gammaLMN[None,:]
-SijM=jit(vmap(SijT,(0,None,None,None,0)))\
-    (Tarr,mdbCO.logsij0,mdbCO.nu_lines,mdbCO.elower,qt)
-sigmaDM=jit(vmap(doppler_sigma,(None,0,None)))\
-    (mdbCO.nu_lines,Tarr,molmassCO)    
-
-mask,maxcf,maxcia=mask_weakline(mdbCO,Parr,dParr,Tarr,SijM,gammaLM,sigmaDM,MMR*ONEARR,molmassCO,mmw,g,vmrH2,cdbH2H2)
-
-plot_maxpoint(mask,Parr,maxcf,maxcia,mol="CO")
-plt.savefig("maxpoint.pdf", bbox_inches="tight", pad_inches=0.0)
-plt.show()
-
-mdbCO.masking(mask)
-#######################################################
-
-#nu matrix
-nu0=mdbCO.nu_lines
-numatrix=make_numatrix0(nus,nu0)
+#MMR=0.01*np.ones_like(Parr) #mass mixing ratio
+ONEARR=np.ones_like(Parr) #ones_array
 
 #######################################################
 #HMC-NUTS FITTING PART
@@ -121,10 +96,10 @@ def model_c(nu,y):
     An = numpyro.sample('An', dist.Normal(1.0,0.1))
     sigma = numpyro.sample('sigma', dist.Exponential(0.5))
     RV = numpyro.sample('RV', dist.Uniform(25.0,35.0))
-    MMR = numpyro.sample('MMR', dist.Uniform(0.01,maxMMR))
+    MMR = numpyro.sample('MMR', dist.Uniform(0.01,0.1))
     #    nu0 = numpyro.sample('nu0', dist.Uniform(-0.3,0.3))
-    T0 = numpyro.sample('T0', dist.Uniform(1200.0,T0c))
-    alpha = numpyro.sample('alpha', dist.Uniform(0.01,0.07))
+    T0 = numpyro.sample('T0', dist.Uniform(1400.0,1700.0))
+    alpha = numpyro.sample('alpha', dist.Uniform(0.04,0.06))
     vsini = numpyro.sample('vsini', dist.Uniform(1.0,30.0))
     #T-P model//
     Tarr = T0*(Parr/Parr[-1])**alpha 
