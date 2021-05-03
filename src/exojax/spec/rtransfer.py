@@ -40,7 +40,7 @@ def dtauCIA(nus,Tarr,Parr,dParr,vmr1,vmr2,mmw,g,nucia,tcia,logac):
     lognarr2=jnp.log10(vmr2*narr) #log number density
     
     logkb=np.log10(kB)    
-    logg=np.log10(g)
+    logg=jnp.log10(g)
     ddParr=dParr/Parr
     
     dtauc=(10**(logacia(Tarr,nus,nucia,tcia,logac)\
