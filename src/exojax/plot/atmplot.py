@@ -155,8 +155,9 @@ def plot_maxpoint(mask,Parr,maxcf,maxcia,mol="CO"):
     xarr=np.array(range(0,len(mask)))
     masknon0=(maxcf>0)
     plt.plot(xarr[masknon0],Parr[maxcf[masknon0]],".",label=mol,alpha=1.0,color="gray",rasterized=True)
-    plt.plot(xarr,Parr[maxcia],"-",label="CIA (H2-H2)",alpha=0.4,color="C2",rasterized=True)
     plt.plot(xarr[mask],Parr[maxcf[mask]],".",label=mol+" selected",alpha=1.0,color="C3",rasterized=True)
+    plt.plot(xarr,Parr[maxcia],"-",label="CIA (H2-H2)",alpha=1.0,color="C2",rasterized=True)
+
     plt.yscale("log")
     plt.ylim(Parr[0],Parr[-1])
     plt.gca().invert_yaxis()
