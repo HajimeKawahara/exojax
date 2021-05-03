@@ -156,12 +156,12 @@ def model_c(nu,y):
     RV = numpyro.sample('RV', dist.Uniform(25.0,35.0))
     MMR_CO = numpyro.sample('MMR_CO', dist.Uniform(0.01,maxMMR_CO))
     MMR_H2O = numpyro.sample('MMR_H2O', dist.Uniform(0.0001,maxMMR_H2O))
-
-    #    nu0 = numpyro.sample('nu0', dist.Uniform(-0.3,0.3))
+    logg = numpyro.sample('logg', dist.Uniform(4.0,6.0))
     T0 = numpyro.sample('T0', dist.Uniform(1200.0,T0c))
     alpha = numpyro.sample('alpha', dist.Uniform(0.01,0.07))
     vsini = numpyro.sample('vsini', dist.Uniform(1.0,30.0))
 
+    g=10**(logg)
     #T-P model//
     Tarr = T0*(Parr/Parr[-1])**alpha 
     
@@ -231,7 +231,7 @@ pred = Predictive(model_c,posterior_sample)
 nu_ = nus
 predictions = pred(rng_key_,nu=nu_,y=None)
 #------------------
-np.savez("save.npz",[pred,posterior_sample,predictions])
+np.savez("save.npz",[pred,posterior_sample,predictions,mcmc])
 #------------------
 median_mu = jnp.median(predictions["y"],axis=0)
 hpdi_mu = hpdi(predictions["y"], 0.9)
@@ -247,7 +247,7 @@ plt.legend()
 plt.savefig("fig/results.png")
 plt.show()
 
-pararr=["An","sigma","MMR","RV","alpha","T0","vsini"]
+pararr=["An","sigma","MMR_CO","MMR_H2O","logg","RV","alpha","T0","vsini"]
 arviz.plot_trace(mcmc, var_names=pararr)
 plt.savefig("fig/trace.png")
 arviz.plot_pair(arviz.from_numpyro(mcmc),kind='kde',divergences=False,marginals=True) 
