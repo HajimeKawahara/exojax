@@ -13,8 +13,9 @@ from jax import custom_jvp
 from exojax.special.erfcx import erfcx
 from exojax.spec.rtransfer import dtauM, dtauCIA
 import numpy as np
+import tqdm
 
-def mask_weakline(mdb_mol,Parr,dParr,Tarr,SijM,gammaLM,sigmaDM,MMR_mol,molmass_mol,mmw,g,vmrH2,cdbH2H2,margin=2,mask=None):
+def mask_weakline(mdb_mol,Parr,dParr,Tarr,SijM,gammaLM,sigmaDM,MMR_mol,molmass_mol,mmw,g,vmrH2,cdbH2H2,margin=2,mask=None,Nlim=1000):
     """masking weak lines compared to CIA H2-H2 continuum
 
     Args:
@@ -39,13 +40,38 @@ def mask_weakline(mdb_mol,Parr,dParr,Tarr,SijM,gammaLM,sigmaDM,MMR_mol,molmass_m
     
     xsm0=xsmatrix0(sigmaDM,gammaLM,SijM) #cross section at line centers
     dtaumol=dtauM(dParr,xsm0,MMR_mol,molmass_mol,g)    
+    ndtaumol=np.asarray(dtaumol)
     dtaucH2H2=dtauCIA(mdb_mol.nu_lines,Tarr,Parr,dParr,vmrH2,vmrH2,\
                     mmw,g,cdbH2H2.nucia,cdbH2H2.tcia,cdbH2H2.logac)
-    cf_mol=contfunc(dtaumol,mdb_mol.nu_lines,Parr,dParr,Tarr)    
-    maxcf=np.argmax(cf_mol,axis=0)
+    ndtaucH2H2=np.asarray(dtaucH2H2)
 
-    cfCIA=contfunc(dtaucH2H2,mdb_mol.nu_lines,Parr,dParr,Tarr)
-    maxcia=np.argmax(cfCIA,axis=0)
+    Nl=len(mdb_mol.nu_lines)
+
+    if Nl<Nlim:
+        cf_mol=contfunc(dtaumol,mdb_mol.nu_lines,Parr,dParr,Tarr)    
+        maxcf=np.argmax(cf_mol,axis=0)
+    else:
+        M=int(float(Nl)/float(Nlim))+1
+        maxcf=np.array([],dtype=np.int)
+        for n in tqdm.tqdm(range(0,M)):
+            i=n*Nlim
+            j=min((n+1)*Nlim,Nl)
+            cf_mol=contfunc(ndtaumol[:,i:j],mdb_mol.nu_lines[i:j],Parr,dParr,Tarr)    
+            maxcf_tmp=np.argmax(cf_mol,axis=0)
+            maxcf=np.concatenate([maxcf,maxcf_tmp])
+
+    if Nl<Nlim:
+        cfCIA=contfunc(dtaucH2H2,mdb_mol.nu_lines,Parr,dParr,Tarr)
+        maxcia=np.argmax(cfCIA,axis=0)
+    else:
+        M=int(float(Nl)/float(Nlim))+1
+        maxcia=np.array([],dtype=np.int)
+        for n in tqdm.tqdm(range(0,M)):
+            i=n*Nlim
+            j=min((n+1)*Nlim,Nl)
+            cfCIA=contfunc(ndtaucH2H2[:,i:j],mdb_mol.nu_lines[i:j],Parr,dParr,Tarr)
+            maxcia_tmp=np.argmax(cfCIA,axis=0)
+            maxcia=np.concatenate([maxcia,maxcia_tmp])
 
     mask1=(maxcf>0)*(maxcf<maxcia+margin)
     if mask==None:
@@ -72,11 +98,12 @@ def contfunc(dtau,nu,Parr,dParr,Tarr):
        contribution function
 
     """
+    
     tau=np.cumsum(dtau,axis=0)
     hcperk=1.4387773538277202
-    cf=np.exp(-tau)*dtau\
-        *(Parr[:,None]/dParr[:,None])\
-        *nu**3/(np.exp(hcperk*nu/Tarr[:,None])-1.0)
+    cf=np.exp(-tau)*dtau \
+    *(Parr[:,None]/dParr[:,None]) \
+    *nu[None,:]**3/(np.exp(hcperk*nu[None,:]/Tarr[:,None])-1.0)
     return cf
 
 
