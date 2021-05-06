@@ -34,7 +34,7 @@ def nlp_rigidrot(nus,F0,varr_kernel,vsini,u1=0.0,u2=0.0):
     x=varr_kernel/vsini
     x2=x*x
     kernel=jnp.where(x2<1.0,jnp.pi/2.0*u1*(1.0 - x2) - 2.0/3.0*jnp.sqrt(1.0-x2)*(-3.0+3.0*u1+u2*2.0*u2*x2),0.0)
-    kernel=kernel/jnp.sum(kernel,axis=0) #axis=N    
+    kernel=kernel/jnp.sum(kernel,axis=0)
     F=jnp.convolve(F0,kernel,mode="same")
 
     return F
@@ -88,11 +88,8 @@ if __name__ == "__main__":
     RV=0.0
     u1=0.0
     u2=0.0
-    zeta=0.0
 
     #new
-
-
     c=299792.458
     dv=c*(np.log(nus[1])-np.log(nus[0]))
     Nv=int(vsini_in/dv)+1
