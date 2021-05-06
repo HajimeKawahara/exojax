@@ -157,7 +157,8 @@ def model_c(nu,y):
     RV = numpyro.sample('RV', dist.Uniform(25.0,35.0))
     MMR_CO = numpyro.sample('MMR_CO', dist.Uniform(0.0,maxMMR_CO))
     MMR_H2O = numpyro.sample('MMR_H2O', dist.Uniform(0.0,maxMMR_H2O))
-    logg = numpyro.sample('logg', dist.Uniform(4.0,6.0))
+    logg=5.07
+#    logg = numpyro.sample('logg', dist.Uniform(4.0,6.0))
     T0 = numpyro.sample('T0', dist.Uniform(900.0,1200.0))
     alpha = numpyro.sample('alpha', dist.Uniform(0.01,0.2))
     vsini = numpyro.sample('vsini', dist.Uniform(1.0,30.0))
@@ -249,7 +250,8 @@ plt.savefig("fig/results.png")
 plt.show()
 
 #pararr=["An","sigma","MMR_CO","MMR_H2O","logg","RV","alpha","T0","vsini"]
-pararr=["sigma","MMR_CO","MMR_H2O","logg","RV","alpha","T0","vsini"]
+#pararr=["sigma","MMR_CO","MMR_H2O","logg","RV","alpha","T0","vsini"]
+pararr=["sigma","MMR_CO","MMR_H2O","RV","alpha","T0","vsini"]
 arviz.plot_trace(mcmc, var_names=pararr)
 plt.savefig("fig/trace.png")
 arviz.plot_pair(arviz.from_numpyro(mcmc),kind='kde',divergences=False,marginals=True) 
