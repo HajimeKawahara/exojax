@@ -138,6 +138,10 @@ numatrix_CO=make_numatrix0(nus,nu0_CO)
 nu0_H2O=mdbH2O.nu_lines
 numatrix_H2O=make_numatrix0(nus,nu0_H2O)
 
+Nw=10
+logP=jnp.log10(Parr)
+logPref=jnp.linspace(logP[0],logP[-1],Nw)
+
 #######################################################
 #HMC-NUTS FITTING PART
 #######################################################
@@ -153,18 +157,32 @@ from numpyro.diagnostics import hpdi
 def model_c(nu,y):
 #    An = numpyro.sample('An', dist.Normal(1.0,0.1))
     An=1.0
+    Tlow=500.0
+    Thigh=1500.0
     sigma = numpyro.sample('sigma', dist.Exponential(0.5))
     RV = numpyro.sample('RV', dist.Uniform(25.0,35.0))
     MMR_CO = numpyro.sample('MMR_CO', dist.Uniform(0.0,maxMMR_CO))
     MMR_H2O = numpyro.sample('MMR_H2O', dist.Uniform(0.0,maxMMR_H2O))
     logg = numpyro.sample('logg', dist.Uniform(4.0,6.0))
-    T0 = numpyro.sample('T0', dist.Uniform(900.0,1200.0))
+    T0 = numpyro.sample('T0', dist.Uniform(Tlow,Thigh))
+    T1 = numpyro.sample('T1', dist.Uniform(Tlow,Thigh))
+    T2 = numpyro.sample('T2', dist.Uniform(Tlow,Thigh))
+    T3 = numpyro.sample('T3', dist.Uniform(Tlow,Thigh))
+    T4 = numpyro.sample('T4', dist.Uniform(Tlow,Thigh))
+    T5 = numpyro.sample('T5', dist.Uniform(Tlow,Thigh))
+    T6 = numpyro.sample('T6', dist.Uniform(Tlow,Thigh))
+    T7 = numpyro.sample('T7', dist.Uniform(Tlow,Thigh))
+    T8 = numpyro.sample('T8', dist.Uniform(Tlow,Thigh))
+    T9 = numpyro.sample('T9', dist.Uniform(Tlow,Thigh))
+
     alpha = numpyro.sample('alpha', dist.Uniform(0.01,0.2))
     vsini = numpyro.sample('vsini', dist.Uniform(1.0,30.0))
 
     g=10**(logg)
     #T-P model//
-    Tarr = T0*(Parr/Parr[icia])**alpha 
+    Tref=jnp.array([T0,T1,T2,T3,T4,T5,T6,T7,T8,T9])
+    Tarr=jnp.interp(logP,logPref, Tref)
+    #Tarr = T0*(Parr/Parr[icia])**alpha 
     
     #line computation CO
     qt_CO=vmap(mdbCO.qr_interp)(Tarr)
@@ -249,7 +267,8 @@ plt.savefig("fig/results.png")
 plt.show()
 
 #pararr=["An","sigma","MMR_CO","MMR_H2O","logg","RV","alpha","T0","vsini"]
-pararr=["sigma","MMR_CO","MMR_H2O","logg","RV","alpha","T0","vsini"]
+#pararr=["sigma","MMR_CO","MMR_H2O","logg","RV","alpha","T0","vsini"]
+pararr=["sigma","MMR_CO","MMR_H2O","logg","RV","alpha","T0","T1","T2","T3","T4","T5","T6","T7","T8","T9","vsini"]
 arviz.plot_trace(mcmc, var_names=pararr)
 plt.savefig("fig/trace.png")
 arviz.plot_pair(arviz.from_numpyro(mcmc),kind='kde',divergences=False,marginals=True) 
