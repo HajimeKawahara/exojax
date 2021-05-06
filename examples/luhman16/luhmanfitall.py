@@ -35,8 +35,11 @@ err=(dat["err_normalized_flux"].values)[::-1]
 plt.plot(wavd[::-1],fobs)
 
 #masking
-#mask=(22930.0<wavd[::-1])*(wavd[::-1]<23010.0)
-mask=(23038.6<wavd[::-1])*(wavd[::-1]<23159.3)
+mask1=(22876.0<wavd[::-1])*(wavd[::-1]<23010.0)
+mask2=(23038.6<wavd[::-1])*(wavd[::-1]<23159.3)
+mask3=(23193.5<wavd[::-1])*(wavd[::-1]<23310.0)
+mask4=(23341.6<wavd[::-1])*(wavd[::-1]<23453.2)
+mask=mask1+mask2+mask3+mask4
 mask=mask*((23074.6>wavd[::-1])+(wavd[::-1]>23075.8))
 fobs=fobs[mask]
 nusd=nusd[mask]
@@ -51,9 +54,8 @@ plt.savefig("fig/spec0.png")
 #######################################################
 
 #grid for F0
-N=1000
-#wav=np.linspace(22900,23000,N,dtype=np.float64)#AA
-wav=np.linspace(23030,23180,N,dtype=np.float64)#AA
+N=6000
+wav=np.linspace(22870,23460,N,dtype=np.float64)#AA
 nus=1.e8/wav[::-1]
 
 #ATMOSPHERE
@@ -72,7 +74,7 @@ mdbCO=moldb.MdbExomol('.database/CO/12C-16O/Li2015',nus) #loading molecular data
 molmassCO=molinfo.molmass("CO") #molecular mass (CO)
 
 #LOADING H2O
-mdbH2O=moldb.MdbExomol('.database/H2O/1H2-16O/POKAZATEL',nus) #loading molecular dat
+mdbH2O=moldb.MdbExomol('.database/H2O/1H2-16O/POKAZATEL',nus,crit=1.e-45) #loading molecular dat
 print(len(mdbH2O.logsij0))
 
 molmassH2O=molinfo.molmass("H2O") #molecular mass (H2O)
