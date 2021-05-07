@@ -64,7 +64,7 @@ def ipgauss(nus,F0,beta):
     return F
 
 @jit
-def ipgauss_sampling(nusd,nus,F0,beta):
+def ipgauss_sampling(nusd,nus,F0,beta,RV):
     """Apply the Gaussian IP response + sampling to a spectrum F 
 
     Args:
@@ -72,6 +72,7 @@ def ipgauss_sampling(nusd,nus,F0,beta):
         nus: input wavenumber, evenly log-spaced
         F0: original spectrum (F0)
         beta: STD of a Gaussian broadening (IP+microturbulence)
+        RV: radial velocity (km/s)
 
     Return:
         response-applied spectrum (F)
@@ -81,7 +82,7 @@ def ipgauss_sampling(nusd,nus,F0,beta):
 
     c=299792.458
     dvmat=jnp.array(c*jnp.log(nusd[None,:]/nus[:,None]))    
-    kernel=jnp.exp(-(dvmat)**2/(2.0*beta**2))    
+    kernel=jnp.exp(-(dvmat+RV)**2/(2.0*beta**2))    
     kernel=kernel/jnp.sum(kernel,axis=0) #axis=N
     F=kernel.T@F0
     return F
@@ -205,7 +206,7 @@ if __name__ == "__main__":
     
     #    Fgrotd=jnp.interp(nusd,nus,Fgrot)
     Fgrotd=sampling(nusd,nus,Fgrot,RV)
-    Fgrotc=ipgauss_sampling(nusd,nusn,Frotc,beta)
+    Fgrotc=ipgauss_sampling(nusd,nusn,Frotc,beta,RV)
 
     #    nusd=np.logspace(np.log10(1.e8/23000),np.log10(1.e8/22900),M,dtype=np.float64) #NLP
     #    wavd=1.e8/nusd[::-1]
