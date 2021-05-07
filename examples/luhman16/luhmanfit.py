@@ -53,7 +53,7 @@ plt.savefig("fig/spec0.png")
 #grid for F0
 N=1000
 #wav=np.linspace(22900,23000,N,dtype=np.float64)#AA
-wav=np.linspace(23030,23180,N,dtype=np.float64)#AA
+wav=np.logspace(np.log10(23030.),np.log10(23180.0),N,dtype=np.float64)#AA
 nus=1.e8/wav[::-1]
 
 #ATMOSPHERE
@@ -164,8 +164,10 @@ def model_c(nu,y):
     T0 = numpyro.sample('T0', dist.Uniform(900.0,1200.0))
     alpha = numpyro.sample('alpha', dist.Uniform(0.01,0.2))
     vsini = numpyro.sample('vsini', dist.Uniform(1.0,30.0))
-    u1 = numpyro.sample('u1', dist.Uniform(0.37,0.94))
-    u2 = numpyro.sample('u2', dist.Uniform(-0.04,0.39))
+    u1=0.0
+    u2=0.0
+#    u1 = numpyro.sample('u1', dist.Uniform(0.37,0.94))
+#    u2 = numpyro.sample('u2', dist.Uniform(-0.04,0.39))
 
     g=10**(logg)
     #T-P model//
@@ -208,8 +210,13 @@ def model_c(nu,y):
 
     F0=rtrun(dtau,sourcef)/Ftoa
     Frot=response.rigidrot(nus,F0,vsini,u1,u2)
+
+    # using ipgauss_sampling
+    #    mu=response.ipgauss_sampling(nu,nus,Frot,beta,RV)
+
+    # using ipgauss*sampling
     Fgrot=response.ipgauss(nus,Frot,beta)
-    mu=response.sampling(nusd,nus,Fgrot,RV)    
+    mu=response.sampling(nusd,nus,Fgrot,RV)
     numpyro.sample('y', dist.Normal(mu, sigma), obs=y)
 
 #--------------------------------------------------------
@@ -230,8 +237,7 @@ print("end")
 
 posterior_sample = mcmc.get_samples()
 pred = Predictive(model_c,posterior_sample)
-nu_ = nus
-predictions = pred(rng_key_,nu=nu_,y=None)
+predictions = pred(rng_key_,nu=nusd,y=None)
 #------------------
 np.savez("save.npz",[pred,posterior_sample,predictions,mcmc])
 #------------------
@@ -249,8 +255,8 @@ plt.legend()
 plt.savefig("fig/results.png")
 
 #pararr=["An","sigma","MMR_CO","MMR_H2O","logg","RV","alpha","T0","vsini"]
-#pararr=["sigma","MMR_CO","MMR_H2O","logg","RV","alpha","T0","vsini"]
-pararr=["sigma","MMR_CO","MMR_H2O","RV","alpha","T0","vsini","u1","u2"]
+pararr=["sigma","MMR_CO","MMR_H2O","logg","RV","alpha","T0","vsini"]
+#pararr=["sigma","MMR_CO","MMR_H2O","RV","alpha","T0","vsini","u1","u2"]
 arviz.plot_trace(mcmc, var_names=pararr)
 plt.savefig("fig/trace.png")
 arviz.plot_pair(arviz.from_numpyro(mcmc),kind='kde',divergences=False,marginals=True) 
