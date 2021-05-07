@@ -212,11 +212,11 @@ def model_c(nu,y):
     Frot=response.rigidrot(nus,F0,vsini,u1,u2)
 
     # using ipgauss_sampling
-    #    mu=response.ipgauss_sampling(nu,nus,Frot,beta,RV)
+    mu=response.ipgauss_sampling(nu,nus,Frot,beta,RV)
 
     # using ipgauss*sampling
-    Fgrot=response.ipgauss(nus,Frot,beta)
-    mu=response.sampling(nusd,nus,Fgrot,RV)
+    #Fgrot=response.ipgauss(nus,Frot,beta)
+    #mu=response.sampling(nusd,nus,Fgrot,RV)
     numpyro.sample('y', dist.Normal(mu, sigma), obs=y)
 
 #--------------------------------------------------------
@@ -255,7 +255,8 @@ plt.legend()
 plt.savefig("fig/results.png")
 
 #pararr=["An","sigma","MMR_CO","MMR_H2O","logg","RV","alpha","T0","vsini"]
-pararr=["sigma","MMR_CO","MMR_H2O","logg","RV","alpha","T0","vsini"]
+#pararr=["sigma","MMR_CO","MMR_H2O","logg","RV","alpha","T0","vsini"]
+pararr=["sigma","MMR_CO","MMR_H2O","RV","alpha","T0","vsini","u1","u2"]
 #pararr=["sigma","MMR_CO","MMR_H2O","RV","alpha","T0","vsini","u1","u2"]
 arviz.plot_trace(mcmc, var_names=pararr)
 plt.savefig("fig/trace.png")
