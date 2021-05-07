@@ -164,10 +164,10 @@ def model_c(nu,y):
     T0 = numpyro.sample('T0', dist.Uniform(900.0,1200.0))
     alpha = numpyro.sample('alpha', dist.Uniform(0.01,0.2))
     vsini = numpyro.sample('vsini', dist.Uniform(1.0,30.0))
-    u1=0.0
-    u2=0.0
-#    u1 = numpyro.sample('u1', dist.Uniform(0.37,0.94))
-#    u2 = numpyro.sample('u2', dist.Uniform(-0.04,0.39))
+#    u1=0.0
+#    u2=0.0
+    u1 = numpyro.sample('u1', dist.Uniform(0.0,1.0))
+    u2 = numpyro.sample('u2', dist.Uniform(-0.1,0.4))
 
     g=10**(logg)
     #T-P model//
