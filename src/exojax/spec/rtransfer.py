@@ -9,6 +9,63 @@ import numpy as np
 from exojax.special.expn import E1
 from exojax.spec.hitrancia import logacia
 
+def nugrid(nu0,nu1,N,unit="cm-1"):
+    """generating wavenumber grid
+
+    Args:
+       nu0: start wavenumber (cm-1) or wavelength (nm)
+       nu1: end wavenumber (cm-1) or wavelength (nm)
+       N: the number of the wavenumber grid
+       unit: unit of the input grid
+    
+    Returns:
+       wavenumber grid evenly spaced in log space
+       corresponding wavelength grid
+       resolution
+
+    """
+    if unit=="cm-1":
+        nus=np.logspace(np.log10(nu0),np.log10(nu1),N,dtype=np.float64)#AA
+        wav=1.e8/nus[::-1]
+
+    elif unit=="nm":
+        wav=np.logspace(np.log10(wav0),np.log10(wav1),N,dtype=np.float64)#AA
+        nus=1.e8/wav[::-1]
+
+    dlognu=(np.log10(nus[-1])-np.log10(nus[0]))/N
+    resolution=1.0/dlognu
+        
+    return nus, wav, resolution
+    
+    
+def pressure_layer(logPtop=-8.,logPbtm=2.,NP=20,mode="ascending"):
+    """generating the pressure layer
+    
+    Args: 
+       logPtop: log10(P[bar]) at the top layer
+       logPbtm: log10(P[bar]) at the bottom layer
+       NP: the number of the layers
+
+    Returns: 
+         Parr: pressure layer
+         dParr: delta pressure layer 
+         k: k-factor, P[i-1] = k*P[i]
+
+    Note:
+        dParr[i] = Parr[i] - Parr[i-1], dParr[0] = (1-k) Parr[0] for ascending mode
+    
+    """
+    dlogP=(logPbtm-logPtop)/(NP-1)
+    k=10**-dlogP
+    Parr=jnp.logspace(logPtop,logPbtm,NP)
+    dParr = (1.0-k)*Parr
+    if mode=="descending":
+        Parr=Parr[::-1] 
+        dParr=dParr[::-1]
+    
+    return jnp.array(Parr), jnp.array(dParr), k
+
+
 def dtauCIA(nus,Tarr,Parr,dParr,vmr1,vmr2,mmw,g,nucia,tcia,logac):
     """dtau of the CIA continuum
 
@@ -150,32 +207,6 @@ def rtrun_surface(dtau,S,Sb):
     Fx=(jnp.sum(Qv*jnp.cumprod(TransM,axis=0),axis=0))
     return Fx
 
-def pressure_layer(logPtop=-8.,logPbtm=2.,NP=20,mode="ascending"):
-    """generating the pressure layer
-    
-    Args: 
-       logPtop: log10(P[bar]) at the top layer
-       logPbtm: log10(P[bar]) at the bottom layer
-       NP: the number of the layers
-
-    Returns: 
-         Parr: pressure layer
-         dParr: delta pressure layer 
-         k: k-factor, P[i-1] = k*P[i]
-
-    Note:
-        dParr[i] = Parr[i] - Parr[i-1], dParr[0] = (1-k) Parr[0] for ascending mode
-    
-    """
-    dlogP=(logPbtm-logPtop)/(NP-1)
-    k=10**-dlogP
-    Parr=jnp.logspace(logPtop,logPbtm,NP)
-    dParr = (1.0-k)*Parr
-    if mode=="descending":
-        Parr=Parr[::-1] 
-        dParr=dParr[::-1]
-    
-    return jnp.array(Parr), jnp.array(dParr), k
 
 
 
