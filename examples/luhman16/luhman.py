@@ -44,6 +44,10 @@ err=err[mask]
 wavd=1.e8/nusd[::-1]
 M=len(nusd)
 plt.plot(wavd[::-1],fobs)
+plt.show()
+import sys
+sys.exit()
+
 plt.savefig("fig/spec0.png")
 
 #######################################################
