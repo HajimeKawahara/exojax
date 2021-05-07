@@ -25,7 +25,7 @@
 
 ```python
  from exojax.spec import AutoRT
- nus=numpy.linspace(1900.0,2300.0,40000,dtype=numpy.float64) #wavenumber (cm-1)
+ nus=numpy.logspace(np.log10(1900.0),np.log10(2300.0),40000,dtype=numpy.float64) #wavenumber (cm-1)
  Parr=numpy.logspace(-8,2,100)
  Tarr = 500.*(Parr/Parr[-1])**0.02    
  autort=AutoRT(nus,1.e5,2.33,Tarr,Parr) #g=1.e5 cm/s2, mmw=2.33
