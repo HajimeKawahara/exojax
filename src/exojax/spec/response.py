@@ -183,73 +183,73 @@ if __name__ == "__main__":
     #    Fgrotd=jnp.interp(nusd,nus,Fgrot)
     Fgrotd=sampling(nusd,nus,Fgrot,RV)
 
-#    nusd=np.logspace(np.log10(1.e8/23000),np.log10(1.e8/22900),M,dtype=np.float64) #NLP
-#    wavd=1.e8/nusd[::-1]
-
+    #    nusd=np.logspace(np.log10(1.e8/23000),np.log10(1.e8/22900),M,dtype=np.float64) #NLP
+    #    wavd=1.e8/nusd[::-1]
     
-if False:
-    #    plt.plot(wav,F0)
-    #    plt.plot(wavd,Fr,".")
-    plt.plot(wav[::-1],F0)
-    plt.plot(wav[::-1],Frot,".",color="C0",lw=1)
-    plt.plot(wav[::-1],Fgrot,".",color="C2",lw=1)
-    plt.plot(wavd[::-1],Fgrotd,"+",color="C4",lw=1)
-
-    plt.plot(wav[::-1],Frot,alpha=0.3,color="C0",lw=1)
-    plt.plot(wav[::-1],Fgrot,alpha=0.3,color="C2",lw=1)
-
-    plt.plot(wavn[::-1],Frotc,".",color="C1",lw=1)
-    plt.plot(wavn[::-1],Fgrotc,".",color="C3",lw=1)
-    plt.plot(wavn[::-1],Frotc,alpha=0.3,color="C1",lw=1)
-    plt.plot(wavn[::-1],Fgrotc,alpha=0.3,color="C3",lw=1)
-
     
-    plt.ylim(0.95,1.03)
-    plt.xlim(22947,22953)
-    plt.savefig("res.png")
-#    plt.show()
-    import sys
-    sys.exit()
-    
-else:
-    #TIME CHALLAENGE
-    ts=time.time()
-    for i in range(0,100):
-        Frot=rigidrot2(nus,F0,varr_kernel,vsini_in,u1,u2)
-        Fgrot=ipgauss2(nus,Frot,varr_kernel,beta)                      
-        Fgrotd=sampling(nusd,nus,Fgrot,RV)
+    if False:
+        #    plt.plot(wav,F0)
+        #    plt.plot(wavd,Fr,".")
+        plt.plot(wav[::-1],F0)
+        plt.plot(wav[::-1],Frot,".",color="C0",lw=1)
+        plt.plot(wav[::-1],Fgrot,".",color="C2",lw=1)
+        plt.plot(wavd[::-1],Fgrotd,"+",color="C4",lw=1)
+        
+        plt.plot(wav[::-1],Frot,alpha=0.3,color="C0",lw=1)
+        plt.plot(wav[::-1],Fgrot,alpha=0.3,color="C2",lw=1)
+        
+        plt.plot(wavn[::-1],Frotc,".",color="C1",lw=1)
+        plt.plot(wavn[::-1],Fgrotc,".",color="C3",lw=1)
+        plt.plot(wavn[::-1],Frotc,alpha=0.3,color="C1",lw=1)
+        plt.plot(wavn[::-1],Fgrotc,alpha=0.3,color="C3",lw=1)
+        
+        
+        plt.ylim(0.95,1.03)
+        plt.xlim(22947,22953)
+        plt.savefig("res.png")
+        #    plt.show()
+        import sys
+        sys.exit()
+        
+    else:
+        #TIME CHALLAENGE
+        ts=time.time()
+        for i in range(0,100):
+            Frot=rigidrot2(nus,F0,varr_kernel,vsini_in,u1,u2)
+            Fgrot=ipgauss2(nus,Frot,varr_kernel,beta)                      
+            Fgrotd=sampling(nusd,nus,Fgrot,RV)
+            
+        Fgrot.block_until_ready()
+        te=time.time()
+        print("rotation 2",te-ts,"sec")
 
-    Fgrot.block_until_ready()
-    te=time.time()
-    print("rotation 2",te-ts,"sec")
+        ts=time.time()
+        for i in range(0,100):
+            Frotc=rigidrot(nus,F0,vsini_in,u1,u2)
+            Fgrotc=ipgauss(nus,Frotc,beta)
+            Fgrotcd=sampling(nusd,nus,Fgrotc,RV)
 
-    ts=time.time()
-    for i in range(0,100):
-        Frotc=rigidrot(nus,F0,vsini_in,u1,u2)
-        Fgrotc=ipgauss(nus,Frotc,beta)
-        Fgrotcd=sampling(nusd,nus,Fgrotc,RV)
+        Fgrotc.block_until_ready()
+        te=time.time()
+        print("rotation",te-ts,"sec")
 
-    Fgrotc.block_until_ready()
-    te=time.time()
-    print("rotation",te-ts,"sec")
-
-    ts=time.time()
-    for i in range(0,100):
-        Frot=rigidrot2(nus,F0,varr_kernel,vsini_in,u1,u2)
-        Fgrot=ipgauss2(nus,Frot,varr_kernel,beta)                      
-        Fgrotd=sampling(nusd,nus,Fgrot,RV)
-
-    Fgrot.block_until_ready()
-    te=time.time()
-    print("rotation 2",te-ts,"sec")
-
-    ts=time.time()
-    for i in range(0,100):
-        Frotc=rigidrot(nus,F0,vsini_in,u1,u2)
-        Fgrotc=ipgauss(nus,Frotc,beta)
-        Fgrotcd=sampling(nusd,nus,Fgrotc,RV)
-
-    Fgrotc.block_until_ready()
-    te=time.time()
-    print("rotation",te-ts,"sec")
+        ts=time.time()
+        for i in range(0,100):
+            Frot=rigidrot2(nus,F0,varr_kernel,vsini_in,u1,u2)
+            Fgrot=ipgauss2(nus,Frot,varr_kernel,beta)                      
+            Fgrotd=sampling(nusd,nus,Fgrot,RV)
+            
+        Fgrot.block_until_ready()
+        te=time.time()
+        print("rotation 2",te-ts,"sec")
+        
+        ts=time.time()
+        for i in range(0,100):
+            Frotc=rigidrot(nus,F0,vsini_in,u1,u2)
+            Fgrotc=ipgauss(nus,Frotc,beta)
+            Fgrotcd=sampling(nusd,nus,Fgrotc,RV)
+        
+        Fgrotc.block_until_ready()
+        te=time.time()
+        print("rotation",te-ts,"sec")
 
