@@ -225,11 +225,9 @@ if __name__ == "__main__":
         plt.plot(wavn[::-1],Frotc,".",color="C1",lw=1)
         plt.plot(wavn[::-1],Frotc,alpha=0.3,color="C1",lw=1)
 
-        print(Fgrotc)
         plt.plot(wavd[::-1],Fgrotc,"s",color="C3",lw=3)
         plt.plot(wavd[::-1],Fgrotc,alpha=0.3,color="C3",lw=1)
-        
-        
+                
         plt.ylim(0.95,1.03)
         plt.xlim(22947,22953)
         #plt.savefig("res.png")
