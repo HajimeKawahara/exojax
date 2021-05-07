@@ -53,7 +53,7 @@ def mask_weakline(mdb_mol,Parr,dParr,Tarr,SijM,gammaLM,sigmaDM,MMR_mol,molmass_m
     else:
         M=int(float(Nl)/float(Nlim))+1
         maxcf=np.array([],dtype=np.int)
-        for n in tqdm.tqdm(range(0,M)):
+        for n in tqdm.tqdm(range(0,M),desc="eval:line"):
             i=n*Nlim
             j=min((n+1)*Nlim,Nl)
             cf_mol=contfunc(ndtaumol[:,i:j],mdb_mol.nu_lines[i:j],Parr,dParr,Tarr)    
@@ -66,7 +66,7 @@ def mask_weakline(mdb_mol,Parr,dParr,Tarr,SijM,gammaLM,sigmaDM,MMR_mol,molmass_m
     else:
         M=int(float(Nl)/float(Nlim))+1
         maxcia=np.array([],dtype=np.int)
-        for n in tqdm.tqdm(range(0,M)):
+        for n in tqdm.tqdm(range(0,M),desc="eval:cia"):
             i=n*Nlim
             j=min((n+1)*Nlim,Nl)
             cfCIA=contfunc(ndtaucH2H2[:,i:j],mdb_mol.nu_lines[i:j],Parr,dParr,Tarr)

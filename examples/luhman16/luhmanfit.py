@@ -72,7 +72,7 @@ mdbCO=moldb.MdbExomol('.database/CO/12C-16O/Li2015',nus) #loading molecular data
 molmassCO=molinfo.molmass("CO") #molecular mass (CO)
 
 #LOADING H2O
-mdbH2O=moldb.MdbExomol('.database/H2O/1H2-16O/POKAZATEL',nus) #loading molecular dat
+mdbH2O=moldb.MdbExomol('.database/H2O/1H2-16O/POKAZATEL',nus,crit=1.e-45) #loading molecular dat
 print(len(mdbH2O.logsij0))
 
 molmassH2O=molinfo.molmass("H2O") #molecular mass (H2O)
@@ -155,8 +155,6 @@ from numpyro.diagnostics import hpdi
 
 #Model
 def model_c(nu,y):
-#    An = numpyro.sample('An', dist.Normal(1.0,0.1))
-    An=1.0
     sigma = numpyro.sample('sigma', dist.Exponential(0.5))
     RV = numpyro.sample('RV', dist.Uniform(25.0,35.0))
     MMR_CO = numpyro.sample('MMR_CO', dist.Uniform(0.0,maxMMR_CO))
@@ -166,6 +164,8 @@ def model_c(nu,y):
     T0 = numpyro.sample('T0', dist.Uniform(900.0,1200.0))
     alpha = numpyro.sample('alpha', dist.Uniform(0.01,0.2))
     vsini = numpyro.sample('vsini', dist.Uniform(1.0,30.0))
+    u1 = numpyro.sample('u1', dist.Uniform(0.37,0.94))
+    u2 = numpyro.sample('u2', dist.Uniform(-0.04,0.39))
 
     g=10**(logg)
     #T-P model//
@@ -207,13 +207,9 @@ def model_c(nu,y):
     sourcef = planck.piBarr(Tarr,nus)
 
     F0=rtrun(dtau,sourcef)/Ftoa
-#    print("mean",jnp.mean(F0))
-#    print("An,sigma,MMR,RV,alpha,T0,vsini")
-#    print(An,sigma,MMR,RV,alpha,T0,vsini)
-    Frot=response.rigidrot(nus,F0,vsini,0.0,0.0)
-    mu=response.ipgauss(nus,nusd,Frot,beta,RV)
-
-    mu=An*mu
+    Frot=response.rigidrot(nus,F0,vsini,u1,u2)
+    Fgrot=response.ipgauss(nus,Frot,beta)
+    mu=response.sampling(nusd,nus,Fgrot,RV)    
     numpyro.sample('y', dist.Normal(mu, sigma), obs=y)
 
 #--------------------------------------------------------
@@ -251,11 +247,10 @@ ax.fill_between(wavd[::-1], hpdi_mu[0], hpdi_mu[1], alpha=0.3, interpolate=True,
 plt.xlabel("wavelength ($\AA$)",fontsize=16)
 plt.legend()
 plt.savefig("fig/results.png")
-plt.show()
 
 #pararr=["An","sigma","MMR_CO","MMR_H2O","logg","RV","alpha","T0","vsini"]
 #pararr=["sigma","MMR_CO","MMR_H2O","logg","RV","alpha","T0","vsini"]
-pararr=["sigma","MMR_CO","MMR_H2O","RV","alpha","T0","vsini"]
+pararr=["sigma","MMR_CO","MMR_H2O","RV","alpha","T0","vsini","u1","u2"]
 arviz.plot_trace(mcmc, var_names=pararr)
 plt.savefig("fig/trace.png")
 arviz.plot_pair(arviz.from_numpyro(mcmc),kind='kde',divergences=False,marginals=True) 
