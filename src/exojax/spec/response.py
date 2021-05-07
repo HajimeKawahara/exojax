@@ -63,30 +63,6 @@ def ipgauss(nus,F0,beta):
     F=kernel.T@F0
     return F
 
-@jit
-def ipgauss_sampling(nusd,nus,F0,beta):
-    """Apply the Gaussian IP response + sampling to a spectrum F 
-
-    Args:
-        nusd: sampling wavenumber
-        nus: input wavenumber, evenly log-spaced
-        F0: original spectrum (F0)
-        beta: STD of a Gaussian broadening (IP+microturbulence)
-
-    Return:
-        response-applied spectrum (F)
-
-
-    """
-
-    c=299792.458
-    dvmat=jnp.array(c*jnp.log(nus[None,:]/nus[:,None]))    
-    kernel=jnp.exp(-(dvmat)**2/(2.0*beta**2))
-    kernel=kernel/jnp.sum(kernel,axis=0) #axis=N
-    F=kernel.T@F0
-    return F
-
-
 
 @jit
 def rigidrot2(nus,F0,varr_kernel,vsini,u1=0.0,u2=0.0):
@@ -197,6 +173,7 @@ if __name__ == "__main__":
     Fgrot=ipgauss2(nus,Frot,varr_kernel,beta)                      
 
     Frotc=rigidrot(nusn,F0,vsini_in,u1,u2)
+    Fgrotc=ipgauss(nusn,Frotc,beta)
 
     #grid for F
     M=450
@@ -205,19 +182,18 @@ if __name__ == "__main__":
     
     #    Fgrotd=jnp.interp(nusd,nus,Fgrot)
     Fgrotd=sampling(nusd,nus,Fgrot,RV)
-    Fgrotc=ipgauss_sampling(nusd,nusn,Frotc,beta)
 
     #    nusd=np.logspace(np.log10(1.e8/23000),np.log10(1.e8/22900),M,dtype=np.float64) #NLP
     #    wavd=1.e8/nusd[::-1]
     
     
-    if True:
+    if False:
         #    plt.plot(wav,F0)
         #    plt.plot(wavd,Fr,".")
         plt.plot(wav[::-1],F0)
         plt.plot(wav[::-1],Frot,".",color="C0",lw=1)
         plt.plot(wav[::-1],Fgrot,".",color="C2",lw=1)
-        plt.plot(wavd[::-1],Fgrotd,"+",color="C4",lw=2)
+        plt.plot(wavd[::-1],Fgrotd,"+",color="C4",lw=1)
         
         plt.plot(wav[::-1],Frot,alpha=0.3,color="C0",lw=1)
         plt.plot(wav[::-1],Fgrot,alpha=0.3,color="C2",lw=1)
@@ -230,8 +206,8 @@ if __name__ == "__main__":
         
         plt.ylim(0.95,1.03)
         plt.xlim(22947,22953)
-        #plt.savefig("res.png")
-        plt.show()
+        plt.savefig("res.png")
+        #    plt.show()
         import sys
         sys.exit()
         
