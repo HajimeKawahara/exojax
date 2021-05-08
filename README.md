@@ -38,7 +38,7 @@
 
  <img src="https://user-images.githubusercontent.com/15956904/116488770-286ea000-a8ce-11eb-982d-7884b423592c.png" Titie="exojax auto \emission spectrum" Width=850px> 
 
- <details><summary>:star2: Are you an observer? </summary>
+ <details><summary>:telescope: Are you an observer? </summary>
  
  ```python
   nusobs=numpy.linspace(1900.0,2300.0,10000,dtype=np.float64) #observation wavenumber bin (cm-1)
@@ -68,15 +68,43 @@
 python setup.py install
 ```
 
-<details><summary>Notes on GPU</summary>
+<details><summary> Note on GPU support</summary>
 
-You need to install CUDA, cuDNN, and JAX w/ NVIDIA GPU support. To install cuDNN, for instance, get .deb from NVIDIA and install like
+:books: You need to install CUDA, NumPyro, JAX w/ NVIDIA GPU support, and cuDNN. 
+
+- NumPyro
+
+exojax supports NumPyro >0.6.0, which enables the forward differentiation. Please check the required JAX version by NumPyro. In May 2021, it seems the recent version of [NumPyro](https://github.com/pyro-ppl/numpyro) requires jaxlib>=0.1.62 (see [setup.py](https://github.com/pyro-ppl/numpyro/blob/master/setup.py) of NumPyro for instance). 
+
+- JAX
+
+Check you cuda version:
+
+```
+nvcc -V
+```
+
+Install such as
+
+```
+pip install --upgrade jax jaxlib==0.1.62+cuda112  -f https://storage.googleapis.com/jax-releases/jax_releases.html
+```
+
+In this case, jaxlib version is 0.1.62 and cuda version is 11.2. You can check which cuda version is avaiable at [here](https://storage.googleapis.com/jax-releases/jax_releases.html)
+
+Visit [here](https://github.com/google/jax) for the details.
+
+
+- cuDNN
+
+For instance, get .deb from NVIDIA and install such as
 
 ```
 sudo dpkg -i libcudnn8_8.2.0.53-1+cuda11.3_amd64.deb
 ```
 
-For JAX, visit https://github.com/google/jax
+cuDNN is used for to compute the astronomical/instrumental response for the large number of wave number grid (exojax.spec.response). Otherwise, we do not use it. 
+
 
 </details>
 
