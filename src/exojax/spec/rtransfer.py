@@ -9,12 +9,12 @@ import numpy as np
 from exojax.special.expn import E1
 from exojax.spec.hitrancia import logacia
 
-def nugrid(nu0,nu1,N,unit="cm-1"):
+def nugrid(x0,x1,N,unit="cm-1"):
     """generating wavenumber grid
 
     Args:
-       nu0: start wavenumber (cm-1) or wavelength (nm)
-       nu1: end wavenumber (cm-1) or wavelength (nm)
+       x0: start wavenumber (cm-1) or wavelength (nm) or (AA)
+       x1: end wavenumber (cm-1) or wavelength (nm) or (AA)
        N: the number of the wavenumber grid
        unit: unit of the input grid
     
@@ -25,19 +25,45 @@ def nugrid(nu0,nu1,N,unit="cm-1"):
 
     """
     if unit=="cm-1":
-        nus=np.logspace(np.log10(nu0),np.log10(nu1),N,dtype=np.float64)#AA
+        nus=np.logspace(np.log10(x0),np.log10(x1),N,dtype=np.float64)#AA
         wav=1.e8/nus[::-1]
-
     elif unit=="nm":
-        wav=np.logspace(np.log10(wav0),np.log10(wav1),N,dtype=np.float64)#AA
+        wav=np.logspace(np.log10(x0),np.log10(x1),N,dtype=np.float64)#AA
+        nus=1.e7/wav[::-1]
+    elif unit=="AA":
+        wav=np.logspace(np.log10(x0),np.log10(x1),N,dtype=np.float64)#AA
         nus=1.e8/wav[::-1]
-
+        
     dlognu=(np.log10(nus[-1])-np.log10(nus[0]))/N
     resolution=1.0/dlognu
+    if resolution<300000.0:
+        print("WARNING: resolution may be too small. R=",resolution)
         
     return nus, wav, resolution
+
+def check_nugrid(nus,crit1=1.e-5,crit2=1.e-14):
+    """checking if nugrid is evenly spaced in a logarithm scale (ESLOG)
+
+    Args:
+       nus: wavenumber grid
+       crit1: criterion for the maximum deviation of log10(nu)/median(log10(nu)) from ESLOG 
+       crit2: criterion for the maximum deviation of log10(nu) from ESLOG 
+
+    Returns:
+       True (nugrid is ESLOG) or False (not)
+
+    """
+    q=np.log10(nus)
+    p=q[1:]-q[:-1]
+    w=(p-np.mean(p))
+    val1=np.max(np.abs(w))/np.median(p)
+    val2=np.max(np.abs(w))
+    if val1<crit1 and val2 < crit2:
+        return True
+    else:
+        return False
     
-    
+
 def pressure_layer(logPtop=-8.,logPbtm=2.,NP=20,mode="ascending"):
     """generating the pressure layer
     
@@ -209,4 +235,19 @@ def rtrun_surface(dtau,S,Sb):
 
 
 
+if __name__ == "__main__":
+    
+    nus,wav,res=nugrid(22999,23000,1000,"AA")
+    print(check_nugrid(nus))
+    nus,wav,res=nugrid(22999,23000,10000,"AA")
+    print(check_nugrid(nus))
+    nus,wav,res=nugrid(22999,23000,100000,"AA")
+    print(check_nugrid(nus))
+    nus=np.linspace(1.e8/23000.,1.e8/22999.,1000)
+    print(check_nugrid(nus))
+    nus=np.linspace(1.e8/23000.,1.e8/22999.,10000)
+    print(check_nugrid(nus))
+    nus=np.linspace(1.e8/23000.,1.e8/22999.,100000)
+    print(check_nugrid(nus))
 
+    

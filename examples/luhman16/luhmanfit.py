@@ -5,7 +5,7 @@ from exojax.spec.lpf import xsmatrix
 from exojax.spec.exomol import gamma_exomol
 from exojax.spec.hitran import SijT, doppler_sigma, gamma_natural, gamma_hitran
 from exojax.spec.hitrancia import read_cia, logacia 
-from exojax.spec.rtransfer import rtrun, dtauM, dtauCIA
+from exojax.spec.rtransfer import rtrun, dtauM, dtauCIA, nugrid
 from exojax.plot.atmplot import plottau, plotcf, plot_maxpoint
 import numpy as np
 import tqdm
@@ -52,9 +52,7 @@ plt.savefig("fig/spec0.png")
 
 #grid for F0
 N=1000
-#wav=np.linspace(22900,23000,N,dtype=np.float64)#AA
-wav=np.logspace(np.log10(23030.),np.log10(23180.0),N,dtype=np.float64)#AA
-nus=1.e8/wav[::-1]
+nus,wav,res=nugrid(22900,23000,N,unit="AA")
 
 #ATMOSPHERE
 NP=100
