@@ -7,7 +7,6 @@ from exojax.spec.hitran import SijT, doppler_sigma, gamma_natural, gamma_hitran
 from exojax.spec.hitrancia import read_cia, logacia 
 from exojax.spec.rtransfer import rtrun, dtauM, dtauCIA, nugrid
 from exojax.plot.atmplot import plottau, plotcf, plot_maxpoint
-from exojax.utils.afunc import getjov_logg
 import numpy as np
 import tqdm
 import seaborn as sns
@@ -36,12 +35,9 @@ err=(dat["err_normalized_flux"].values)[::-1]
 plt.plot(wavd[::-1],fobs)
 
 #masking
-mask1=(22876.0<wavd[::-1])*(wavd[::-1]<23010.0)
-mask2=(23038.6<wavd[::-1])*(wavd[::-1]<23159.3)
-mask3=(23193.5<wavd[::-1])*(wavd[::-1]<23310.0)
-mask4=(23341.6<wavd[::-1])*(wavd[::-1]<23453.2)
-mask=mask1+mask2+mask3+mask4
-mask=mask*((23074.6>wavd[::-1])+(wavd[::-1]>23075.8))
+#mask=(22876.0<wavd[::-1])*(wavd[::-1]<23010.0)
+mask=(23038.6<wavd[::-1])*(wavd[::-1]<23159.3)
+
 fobs=fobs[mask]
 nusd=nusd[mask]
 err=err[mask]
@@ -55,8 +51,10 @@ plt.savefig("fig/spec0.png")
 #######################################################
 
 #grid for F0
-N=5600
-nus,wav,res=nugrid(22870,23460,N,unit="AA")
+N=1500
+#nus,wav,res=nugrid(22850,23030,N,unit="AA")
+nus,wav,res=nugrid(23030,23170,N,unit="AA")
+
 print("resolution=",res)
 #ATMOSPHERE
 NP=100
@@ -75,8 +73,6 @@ molmassCO=molinfo.molmass("CO") #molecular mass (CO)
 
 #LOADING H2O
 mdbH2O=moldb.MdbExomol('.database/H2O/1H2-16O/POKAZATEL',nus,crit=1.e-45) #loading molecular dat
-print(len(mdbH2O.logsij0))
-
 molmassH2O=molinfo.molmass("H2O") #molecular mass (H2O)
 
 #LOADING CIA
@@ -93,9 +89,9 @@ cdbH2He=contdb.CdbCIA('.database/H2-He_2011.cia',nus)
 #######################################################
 
 #1. CO
-MMR=0.02
+MMR=0.1
 maxMMR_CO=MMR
-T0c=1700.0
+T0c=1300.0
 Tarr = T0c*np.ones_like(Parr)    
 qt=vmap(mdbCO.qr_interp)(Tarr)
 gammaLMP = jit(vmap(gamma_exomol,(0,0,None,None)))\
@@ -115,7 +111,7 @@ mdbCO.masking(mask_CO)
 
 
 #2. H2O
-MMR=0.01
+MMR=0.02
 maxMMR_H2O=MMR
 Tarr = T0c*np.ones_like(Parr)    
 qt=vmap(mdbH2O.qr_interp)(Tarr)
@@ -145,48 +141,24 @@ nu0_H2O=mdbH2O.nu_lines
 numatrix_H2O=make_numatrix0(nus,nu0_H2O)
 
 #######################################################
-#HMC-NUTS FITTING PART
+#TEST PLOT
 #######################################################
-
-import arviz
-import numpyro.distributions as dist
-import numpyro
-from numpyro.infer import MCMC, NUTS
-from numpyro.infer import Predictive
-from numpyro.diagnostics import hpdi
-
-vsinimax=15.0
-c=299792.458
-dv=c*(np.log(nus[1])-np.log(nus[0]))
-Nv=int(vsinimax/dv)+1
-vlim_rot=Nv*dv
-Nkernel_rot=2*Nv+1
-varr_kernel_rot=jnp.linspace(-vlim_rot,vlim_rot,Nkernel_rot)
-
-maxp=5.0 #5sigma
-Nvg=int(maxp*beta/dv)+1
-vlim_gauss=Nvg*dv
-Nkernel_gauss=2*Nvg+1
-varr_kernel_gauss=jnp.linspace(-vlim_gauss,vlim_gauss,Nkernel_gauss)
-
-
-#Model
-def model_c(nu,y):
-    An = numpyro.sample('An', dist.Uniform(0.0,1.0))
-    Rp = numpyro.sample('Rp', dist.Uniform(0.5,1.1))
-    Mp = numpyro.sample('Mp', dist.Normal(34.2,1.2))
-    sigma = numpyro.sample('sigma', dist.Exponential(0.5))
-    RV = numpyro.sample('RV', dist.Uniform(27.0,29.0))
-    MMR_CO = numpyro.sample('MMR_CO', dist.Uniform(0.0,maxMMR_CO))
-    MMR_H2O = numpyro.sample('MMR_H2O', dist.Uniform(0.0,maxMMR_H2O))
-    T0 = numpyro.sample('T0', dist.Uniform(900.0,1700.0))
-    alpha = numpyro.sample('alpha', dist.Uniform(0.01,0.2))
-    vsini = numpyro.sample('vsini', dist.Uniform(10.0,15.0))
-#    logg = numpyro.sample('logg', dist.Uniform(4.0,6.0))
-
-    g=2478.57730044555*Mp/Rp**2 #gravity
+if True:
+    sigma = 0.02
+    RV = 28.10
+    MMR_CO = 0.01
+    MMR_H2O = 0.005
+    logg=5.07
+    #T0 = 1500.0
+    #norm=0.2
+    T0 = 1100.0
+    norm=1.0
+    
+    alpha = 0.08
+    vsini = 13.0
     u1=0.0
     u2=0.0
+    g=10**(logg)
     #T-P model//
     Tarr = T0*(Parr/Parr[icia])**alpha 
     
@@ -226,17 +198,115 @@ def model_c(nu,y):
     sourcef = planck.piBarr(Tarr,nus)
 
     F0=rtrun(dtau,sourcef)/Ftoa
-    #Frot=response.rigidrot(nus,F0,vsini,u1,u2)
-    #mu=response.ipgauss_sampling(nusd,nus,Frot,beta,RV)
+    Frot=response.rigidrot(nus,F0,vsini,u1,u2)
 
-    # many
-    Frot=response.rigidrot2(nus,F0,varr_kernel_rot,vsini,u1,u2)
-    Fgrot=response.ipgauss2(nus,Frot,varr_kernel_gauss,beta)            
+    # using ipgauss_sampling
+    mu=response.ipgauss_sampling(nusd,nus,Frot,beta,RV)
+
+    # using ipgauss*sampling
+    #Fgrot=response.ipgauss(nus,Frot,beta)
+    #mu=response.sampling(nusd,nus,Fgrot,RV)
+    plt.clf()
+    fig=plt.figure(figsize=(20,5))
+    plt.plot(wav[::-1]*(1.+RV/c),F0*norm,label="model0",alpha=0.3,color="gray")
+    plt.plot(wavd[::-1],mu*norm,label="model")
+    plt.plot(wavd[::-1],fobs,label="obs")
+    print(np.shape(SijM_CO))
+    xS=np.sum(SijM_CO,axis=0)
+    maxS=np.max(xS)
+    for i,nu in enumerate(mdbCO.nu_lines):
+        st=float(xS[i]/maxS)
+        plt.axvline(1.e8/nu*(1.+RV/c),alpha=st,color="orange")
+
+    xS=np.sum(SijM_H2O,axis=0)
+    maxS=np.max(xS)
+    for i,nu in enumerate(mdbH2O.nu_lines):
+        st=float(xS[i]/maxS)
+        plt.axvline(1.e8/nu*(1.+RV/c),alpha=st,color="blue")
+
+        
+    plt.legend()
+    plt.savefig("fig/spec_test2.png")
+
     
-    #Frot=response.rigidrot2(nus,F0,vsini,u1,u2)
-    #Fgrot=response.ipgauss2(nus,Frot,beta)
-    mu=response.sampling(nu,nus,Fgrot,RV)
+    import sys
+    sys.exit()
 
+#######################################################
+#HMC-NUTS FITTING PART
+#######################################################
+
+import arviz
+import numpyro.distributions as dist
+import numpyro
+from numpyro.infer import MCMC, NUTS
+from numpyro.infer import Predictive
+from numpyro.diagnostics import hpdi
+
+#Model
+def model_c(nu,y):
+    sigma = numpyro.sample('sigma', dist.Exponential(0.5))
+    RV = numpyro.sample('RV', dist.Uniform(27.0,29.0))
+    MMR_CO = numpyro.sample('MMR_CO', dist.Uniform(0.0,maxMMR_CO))
+    MMR_H2O = numpyro.sample('MMR_H2O', dist.Uniform(0.0,maxMMR_H2O))
+    logg=5.07
+#    logg = numpyro.sample('logg', dist.Uniform(4.0,6.0))
+    T0 = numpyro.sample('T0', dist.Uniform(1000.0,1200.0))
+    alpha = numpyro.sample('alpha', dist.Uniform(0.01,0.2))
+    vsini = numpyro.sample('vsini', dist.Uniform(10.0,15.0))
+    u1=0.0
+    u2=0.0
+#    u1 = numpyro.sample('u1', dist.Uniform(0.0,1.0))
+#    u2 = numpyro.sample('u2', dist.Uniform(-0.1,0.4))
+
+    g=10**(logg)
+    #T-P model//
+    Tarr = T0*(Parr/Parr[icia])**alpha 
+    
+    #line computation CO
+    qt_CO=vmap(mdbCO.qr_interp)(Tarr)
+    SijM_CO=jit(vmap(SijT,(0,None,None,None,0)))\
+        (Tarr,mdbCO.logsij0,mdbCO.dev_nu_lines,mdbCO.elower,qt_CO)
+    gammaLMP_CO = jit(vmap(gamma_exomol,(0,0,None,None)))\
+        (Parr,Tarr,mdbCO.n_Texp,mdbCO.alpha_ref)
+    gammaLMN_CO=gamma_natural(mdbCO.A)
+    gammaLM_CO=gammaLMP_CO[:,None]+gammaLMN_CO[None,:]
+    sigmaDM_CO=jit(vmap(doppler_sigma,(None,0,None)))\
+        (mdbCO.dev_nu_lines,Tarr,molmassCO)    
+    xsm_CO=xsmatrix(numatrix_CO,sigmaDM_CO,gammaLM_CO,SijM_CO) 
+    dtaumCO=dtauM(dParr,xsm_CO,MMR_CO*ONEARR,molmassCO,g)
+
+    #line computation H2O
+    qt_H2O=vmap(mdbH2O.qr_interp)(Tarr)
+    SijM_H2O=jit(vmap(SijT,(0,None,None,None,0)))\
+        (Tarr,mdbH2O.logsij0,mdbH2O.dev_nu_lines,mdbH2O.elower,qt_H2O)
+    gammaLMP_H2O = jit(vmap(gamma_exomol,(0,0,None,None)))\
+        (Parr,Tarr,mdbH2O.n_Texp,mdbH2O.alpha_ref)
+    gammaLMN_H2O=gamma_natural(mdbH2O.A)
+    gammaLM_H2O=gammaLMP_H2O[:,None]+gammaLMN_H2O[None,:]
+    sigmaDM_H2O=jit(vmap(doppler_sigma,(None,0,None)))\
+        (mdbH2O.dev_nu_lines,Tarr,molmassH2O)
+    xsm_H2O=xsmatrix(numatrix_H2O,sigmaDM_H2O,gammaLM_H2O,SijM_H2O) 
+    dtaumH2O=dtauM(dParr,xsm_H2O,MMR_H2O*ONEARR,molmassH2O,g)
+
+    #CIA
+    dtaucH2H2=dtauCIA(nus,Tarr,Parr,dParr,vmrH2,vmrH2,\
+              mmw,g,cdbH2H2.nucia,cdbH2H2.tcia,cdbH2H2.logac)
+    dtaucH2He=dtauCIA(nus,Tarr,Parr,dParr,vmrH2,vmrHe,\
+              mmw,g,cdbH2He.nucia,cdbH2He.tcia,cdbH2He.logac)
+    
+    dtau=dtaumCO+dtaumH2O+dtaucH2H2+dtaucH2He    
+    sourcef = planck.piBarr(Tarr,nus)
+
+    F0=rtrun(dtau,sourcef)/Ftoa
+    Frot=response.rigidrot(nus,F0,vsini,u1,u2)
+
+    # using ipgauss_sampling
+    mu=response.ipgauss_sampling(nu,nus,Frot,beta,RV)
+
+    # using ipgauss*sampling
+    #Fgrot=response.ipgauss(nus,Frot,beta)
+    #mu=response.sampling(nusd,nus,Fgrot,RV)
     numpyro.sample('y', dist.Normal(mu, sigma), obs=y)
 
 #--------------------------------------------------------
@@ -257,17 +327,12 @@ print("end")
 
 posterior_sample = mcmc.get_samples()
 pred = Predictive(model_c,posterior_sample)
-nu_ = nus
-predictions = pred(rng_key_,nu=nu_,y=None)
+predictions = pred(rng_key_,nu=nusd,y=None)
 #------------------
-np.savez("saveall.npz",[pred,posterior_sample,predictions,mcmc,nus,nusd,fobs])
+np.savez("save.npz",[pred,posterior_sample,predictions,mcmc])
 #------------------
 median_mu = jnp.median(predictions["y"],axis=0)
 hpdi_mu = hpdi(predictions["y"], 0.9)
-#------------------
-np.savez("saveall0.npz",[median_mu,hpdi_mu])
-#------------------
-
 
 fig, ax = plt.subplots(nrows=1, ncols=1, figsize=(20,6.0))
 #plt.plot(wav[::-1],Fx0,lw=1,color="C1",label="in")
@@ -278,12 +343,13 @@ ax.fill_between(wavd[::-1], hpdi_mu[0], hpdi_mu[1], alpha=0.3, interpolate=True,
 plt.xlabel("wavelength ($\AA$)",fontsize=16)
 plt.legend()
 plt.savefig("fig/results.png")
-plt.show()
 
-pararr=["An","Mp","Rp","T0","alpha","MMR_CO","MMR_H2O","vsini","RV","sigma"]
-arviz.plot_pair(arviz.from_numpyro(mcmc),kind='kde',divergences=False,marginals=True) 
-plt.savefig("fig/corner.png")
-
+#pararr=["An","sigma","MMR_CO","MMR_H2O","logg","RV","alpha","T0","vsini"]
+#pararr=["sigma","MMR_CO","MMR_H2O","logg","RV","alpha","T0","vsini"]
+pararr=["sigma","MMR_CO","MMR_H2O","RV","alpha","T0","vsini"]
+#pararr=["sigma","MMR_CO","MMR_H2O","RV","alpha","T0","vsini","u1","u2"]
 arviz.plot_trace(mcmc, var_names=pararr)
 plt.savefig("fig/trace.png")
+arviz.plot_pair(arviz.from_numpyro(mcmc),kind='kde',divergences=False,marginals=True) 
+plt.savefig("fig/corner.png")
 

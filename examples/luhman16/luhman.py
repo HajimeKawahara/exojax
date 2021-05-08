@@ -10,7 +10,7 @@ from exojax.spec.exomol import gamma_exomol
 from exojax.spec.hitran import SijT, doppler_sigma, gamma_natural, gamma_hitran
 from exojax.plot.atmplot import plottau, plotcf
 from exojax.spec.hitrancia import read_cia, logacia 
-from exojax.spec.rtransfer import rtrun, dtauM, dtauCIA
+from exojax.spec.rtransfer import rtrun, dtauM, dtauCIA, nugrid
 import numpy as np
 import seaborn as sns
 import matplotlib.pyplot as plt
@@ -36,8 +36,8 @@ err=(dat["err_normalized_flux"].values)[::-1]
 plt.plot(wavd[::-1],fobs)
 
 #masking
-mask=(22936.0<wavd[::-1])*(wavd[::-1]<23010.0)
-mask=mask*((22980>wavd[::-1])+(wavd[::-1]>22990.0)) #other line masking
+mask=(22876.0<wavd[::-1])*(wavd[::-1]<23010.0)
+#mask=mask*((22980>wavd[::-1])+(wavd[::-1]>22990.0)) #other line masking
 fobs=fobs[mask]
 nusd=nusd[mask]
 err=err[mask]
@@ -51,9 +51,9 @@ plt.savefig("fig/spec0.png")
 #######################################################
 
 #grid for F0
-N=1000
-wav=np.linspace(22900,23000,N,dtype=np.float64)#AA
-nus=1.e8/wav[::-1]
+N=1500
+nus,wav,res=nugrid(22850,23030,N,unit="AA")
+print("resolution=",res)
 
 #dv matrix
 c=299792.458
@@ -77,8 +77,15 @@ beta=3.0 #IP sigma km/s
 
 #--------------------------------------------------
 #ExoMol 
-mdbCO=moldb.MdbExomol('../exe/.database/CO/12C-16O/Li2015',nus) #loading molecular database 
-nu0=mdbCO.nu_lines
+#LOADING CO
+mdbCO=moldb.MdbExomol('.database/CO/12C-16O/Li2015',nus) #loading molecular database 
+molmassCO=molinfo.molmass("CO") #molecular mass (CO)
+
+#LOADING H2O
+mdbH2O=moldb.MdbExomol('.database/H2O/1H2-16O/POKAZATEL',nus,crit=1.e-45) #loading molecular dat
+molmassH2O=molinfo.molmass("H2O") #molecular mass (H2O)
+
+
 qt=vmap(mdbCO.qr_interp)(Tarr)
 gammaLMP = jit(vmap(gamma_exomol,(0,0,None,None)))\
     (Parr,Tarr,mdbCO.n_Texp,mdbCO.alpha_ref)
@@ -121,13 +128,16 @@ dtau=dtaumCO+dtaucH2H2+dtaucH2He
 sourcef=planck.piBarr(Tarr,nus)
 F0=rtrun(dtau,sourcef)/Ftoa #divided by the normalization.
 
-#Applying a Response and Noise
-Frot=response.rigidrot(nus,F0,vsini_in,0.0,0.0)
-F=response.ipgauss(nus,nusd,Frot,beta,RV)
+u1=0.0
+u2=0.0
+Frot=response.rigidrot(nus,F0,vsini_in,u1,u2)
+F=response.ipgauss_sampling(nusd,nus,Frot,beta,RV)
+
 
 #------------------------------------------------------
 #some figures for checking
 fig=plt.figure(figsize=(20,6.0))
+plt.plot(wav[::-1],F0,lw=1,color="C1",label="F0")
 plt.plot(wavd[::-1],F,lw=1,color="C2",label="F")
 plt.plot(wavd[::-1],fobs)
 plt.savefig("fig/spec.png")
