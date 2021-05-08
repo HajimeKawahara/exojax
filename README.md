@@ -24,8 +24,9 @@
 <details><summary>Emission Spectrum :heavy_check_mark: </summary>
 
 ```python
+ from exojax.rtransfer import nugrid
  from exojax.spec import AutoRT
- nus=numpy.logspace(np.log10(1900.0),np.log10(2300.0),40000,dtype=numpy.float64) #wavenumber (cm-1)
+ nus,wav,res=nugrid(1900.0,2300.0,40000,"cm-1")
  Parr=numpy.logspace(-8,2,100)
  Tarr = 500.*(Parr/Parr[-1])**0.02    
  autort=AutoRT(nus,1.e5,2.33,Tarr,Parr) #g=1.e5 cm/s2, mmw=2.33
@@ -66,5 +67,18 @@
 ```
 python setup.py install
 ```
+
+<details><summary>Notes on GPU</summary>
+
+You need to install CUDA, cuDNN, and JAX w/ NVIDIA GPU support. To install cuDNN, for instance, get .deb from NVIDIA and install like
+
+```
+sudo dpkg -i libcudnn8_8.2.0.53-1+cuda11.3_amd64.deb
+```
+
+For JAX, visit https://github.com/google/jax
+
+</details>
+
 
 under development since Dec. 2020.

@@ -183,7 +183,6 @@ if __name__ == "__main__":
     #new
     c=299792.458
     dv=c*(np.log(nus[1])-np.log(nus[0]))
-
     Nv=int(vsini_in/dv)+1
     vlim=Nv*dv
     Nkernel=2*Nv+1

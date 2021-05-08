@@ -11,7 +11,7 @@ from exojax.spec.hitran import SijT, doppler_sigma,  gamma_natural, gamma_hitran
 from exojax.spec import planck
 from exojax.spec.exomol import gamma_exomol
 from exojax.spec import molinfo
-from exojax.spec.rtransfer import rtrun, pressure_layer, dtauM, dtauCIA
+from exojax.spec.rtransfer import rtrun, pressure_layer, dtauM, dtauCIA, check_nugrid
 from exojax.spec.make_numatrix import make_numatrix0
 from exojax.spec.lpf import xsmatrix
 from exojax.spec import response
@@ -169,6 +169,17 @@ class AutoRT(object):
         self.nlayer=len(Tarr)        
         self.Tarr=Tarr
         self.Parr=Parr
+        
+        if check_nugrid(nus):
+            print("nu grid is evenly spaced in log space (ESLOG).")
+        else:
+            print("**************************************************")
+            print("WARNING!")
+            print("nu grid is NOT evenly spaced in log space (ESLOG).")
+            print("astro/inst responses won't work properly.")
+            print("Consider to use rtransfer.nugrid instead.")
+            print("**************************************************")
+            
         if dParr is None:
             from exojax.utils.chopstacks import buildwall 
             wParr=buildwall(Parr)
@@ -222,7 +233,7 @@ class AutoRT(object):
         self.F0=rtrun(self.dtau,self.sourcef)
         return self.F0
 
-    def spectrum(self,nuobs,R,vsini,RV,u1=0.0,u2=0.0,zeta=0.,betamic=0.):
+    def spectrum(self,nuobs,R,vsini,RV,u1=0.0,u2=0.0,zeta=0.,betamic=0.,direct=True):
         """generating spectrum
         
         Args:
@@ -234,6 +245,7 @@ class AutoRT(object):
            u2: Limb-darkening coefficient 2
            zeta: macroturbulence distrubunce (km/s) in the radial-tangential model (Gray2005)
            betamic: microturbulence beta (STD, km/s)
+           direct: True=use rigidrot/ipgauss_sampling, False=use rigidrot2, ipgauss2, sampling
 
         Returns:
            spectrum (F)
@@ -256,18 +268,43 @@ class AutoRT(object):
         F0=self.rtrun()
         te=time.time()
         print("radiative transfer",te-ts,"s")
-        ts=time.time()
-        Frot=response.rigidrot(self.nus,F0,self.vsini,u1=self.u1,u2=self.u2)
-        te=time.time()
-        print("rotation",te-ts,"s")
-        ts=time.time()
-        self.F=response.ipgauss(self.nus,self.nuobs,Frot,beta,self.RV)
-        te=time.time()
-        print("IP",te-ts,"s")
+        if len(self.nus)<50000 and direct==True:
+            ts=time.time()
+            Frot=response.rigidrot(self.nus,F0,self.vsini,u1=self.u1,u2=self.u2)
+            te=time.time()
+            print("rotation",te-ts,"s")
+            ts=time.time()
+            self.F=response.ipgauss_sampling(self.nuobs,self.nus,Frot,beta,self.RV)
+            te=time.time()
+            print("IP",te-ts,"s")
+        else:
+            ts=time.time()
+            c=299792.458
+            dv=c*(np.log(self.nus[1])-np.log(self.nus[0]))
+            Nv=int(self.vsini/dv)+1
+            vlim=Nv*dv
+            Nkernel=2*Nv+1
+            varr_kernel=jnp.linspace(-vlim,vlim,Nkernel)
+            Frot=response.rigidrot2(self.nus,F0,varr_kernel,self.vsini,u1=self.u1,u2=self.u2)
+            te=time.time()
+            print("rotation(2)",te-ts,"s")
+            ts=time.time()
+            maxp=5.0 #5sigma
+            Nv=int(maxp*beta/dv)+1
+            vlim=Nv*dv
+            Nkernel=2*Nv+1
+            varr_kernel=jnp.linspace(-vlim,vlim,Nkernel)
+            Fgrot=response.ipgauss2(self.nus,Frot,varr_kernel,beta)                      
+            self.F=response.sampling(self.nuobs,self.nus,Fgrot,self.RV)
+            te=time.time()
+            print("IP(2)",te-ts,"s")
+            
         return self.F
         
 if __name__ == "__main__":
     import matplotlib.pyplot as plt
+    from exojax.spec.rtransfer import nugrid
+
     #nus=np.linspace(6101.0,6115.0,3000,dtype=np.float64)
     #nus=np.linspace(6101.0,6115.0,3000,dtype=np.float64)
     #XS
@@ -278,7 +315,8 @@ if __name__ == "__main__":
     #xsm=autoxs.xsmatrix(Tarr,Parr) 
 
     #RT
-    nus=np.linspace(1900.0,2300.0,40000,dtype=np.float64)
+    nus,wav,res=nugrid(1900.0,2300.0,400000,"nm")
+    #nus=np.linspace(1900.0,2300.0,40000,dtype=np.float64)
     #nus=np.linspace(1900.0,1910.0,1000,dtype=np.float64)
     Parr=np.logspace(-8,2,100)
     Tarr = 500.*(Parr/Parr[-1])**0.02    
