@@ -55,15 +55,14 @@ plt.savefig("fig/spec0.png")
 #######################################################
 
 #grid for F0
-N=5600
-nus,wav,res=nugrid(22870,23460,N,unit="AA")
+N=4500
+nus,wav,res=nugrid(22871.,23458.,N,unit="AA")
 print("resolution=",res)
 #ATMOSPHERE
 NP=100
 Parr, dParr, k=rt.pressure_layer(NP=NP)
 icia=87#CIA layer
 mmw=2.33 #mean molecular weight
-g=1.e5 # gravity cm/s2
 R=100000.
 beta=c/(2.0*np.sqrt(2.0*np.log(2.0))*R) #IP sigma need check
 print("beta=",beta,"km/s")
@@ -91,12 +90,13 @@ cdbH2He=contdb.CdbCIA('.database/H2-He_2011.cia',nus)
 
 ### REDUCING UNNECESSARY LINES
 #######################################################
+g=1.e5
+T0c=1700.0
+Tarr = T0c*np.ones_like(Parr)    
 
 #1. CO
 MMR=0.02
 maxMMR_CO=MMR
-T0c=1700.0
-Tarr = T0c*np.ones_like(Parr)    
 qt=vmap(mdbCO.qr_interp)(Tarr)
 gammaLMP = jit(vmap(gamma_exomol,(0,0,None,None)))\
     (Parr,Tarr,mdbCO.n_Texp,mdbCO.alpha_ref)
@@ -117,7 +117,6 @@ mdbCO.masking(mask_CO)
 #2. H2O
 MMR=0.01
 maxMMR_H2O=MMR
-Tarr = T0c*np.ones_like(Parr)    
 qt=vmap(mdbH2O.qr_interp)(Tarr)
 gammaLMP = jit(vmap(gamma_exomol,(0,0,None,None)))\
     (Parr,Tarr,mdbH2O.n_Texp,mdbH2O.alpha_ref)
@@ -134,7 +133,6 @@ mdbH2O.masking(mask_H2O)
 
 #plot_maxpoint(mask_H2O,Parr,maxcf,maxcia,mol="H2O")
 #plt.savefig("maxpoint_H2O.pdf", bbox_inches="tight", pad_inches=0.0)
-
 
 
 #nu matrix
@@ -155,19 +153,20 @@ from numpyro.infer import MCMC, NUTS
 from numpyro.infer import Predictive
 from numpyro.diagnostics import hpdi
 
-vsinimax=15.0
-c=299792.458
-dv=c*(np.log(nus[1])-np.log(nus[0]))
-Nv=int(vsinimax/dv)+1
-vlim_rot=Nv*dv
-Nkernel_rot=2*Nv+1
-varr_kernel_rot=jnp.linspace(-vlim_rot,vlim_rot,Nkernel_rot)
-
-maxp=5.0 #5sigma
-Nvg=int(maxp*beta/dv)+1
-vlim_gauss=Nvg*dv
-Nkernel_gauss=2*Nvg+1
-varr_kernel_gauss=jnp.linspace(-vlim_gauss,vlim_gauss,Nkernel_gauss)
+if False:
+    vsinimax=15.0
+    c=299792.458
+    dv=c*(np.log(nus[1])-np.log(nus[0]))
+    Nv=int(vsinimax/dv)+1
+    vlim_rot=Nv*dv
+    Nkernel_rot=2*Nv+1
+    varr_kernel_rot=jnp.linspace(-vlim_rot,vlim_rot,Nkernel_rot)
+    
+    maxp=5.0 #5sigma
+    Nvg=int(maxp*beta/dv)+1
+    vlim_gauss=Nvg*dv
+    Nkernel_gauss=2*Nvg+1
+    varr_kernel_gauss=jnp.linspace(-vlim_gauss,vlim_gauss,Nkernel_gauss)
 
 
 #Model
@@ -179,8 +178,8 @@ def model_c(nu,y):
     RV = numpyro.sample('RV', dist.Uniform(27.0,29.0))
     MMR_CO = numpyro.sample('MMR_CO', dist.Uniform(0.0,maxMMR_CO))
     MMR_H2O = numpyro.sample('MMR_H2O', dist.Uniform(0.0,maxMMR_H2O))
-    T0 = numpyro.sample('T0', dist.Uniform(900.0,1700.0))
-    alpha = numpyro.sample('alpha', dist.Uniform(0.01,0.2))
+    T0 = numpyro.sample('T0', dist.Uniform(1000.0,1700.0))
+    alpha = numpyro.sample('alpha', dist.Uniform(0.05,0.15))
     vsini = numpyro.sample('vsini', dist.Uniform(10.0,15.0))
 #    logg = numpyro.sample('logg', dist.Uniform(4.0,6.0))
 
@@ -226,16 +225,16 @@ def model_c(nu,y):
     sourcef = planck.piBarr(Tarr,nus)
 
     F0=rtrun(dtau,sourcef)/Ftoa
-    #Frot=response.rigidrot(nus,F0,vsini,u1,u2)
-    #mu=response.ipgauss_sampling(nusd,nus,Frot,beta,RV)
+    Frot=response.rigidrot(nus,F0,vsini,u1,u2)
+    mu=response.ipgauss_sampling(nusd,nus,Frot,beta,RV)
 
     # many
-    Frot=response.rigidrot2(nus,F0,varr_kernel_rot,vsini,u1,u2)
-    Fgrot=response.ipgauss2(nus,Frot,varr_kernel_gauss,beta)            
+    #Frot=response.rigidrot2(nus,F0,varr_kernel_rot,vsini,u1,u2)
+    #Fgrot=response.ipgauss2(nus,Frot,varr_kernel_gauss,beta)            
     
     #Frot=response.rigidrot2(nus,F0,vsini,u1,u2)
     #Fgrot=response.ipgauss2(nus,Frot,beta)
-    mu=response.sampling(nu,nus,Fgrot,RV)
+    #mu=response.sampling(nu,nus,Fgrot,RV)
 
     numpyro.sample('y', dist.Normal(mu, sigma), obs=y)
 
