@@ -157,10 +157,10 @@ from numpyro.diagnostics import hpdi
 #Model
 def model_c(nu1,y1,nu2,y2,nu3,y3,nu4,y4):
     f = numpyro.sample('f', dist.Uniform(0.0,1.0))
-    A1 = numpyro.sample('A1', dist.Normal(1.0,0.1))
-    A2 = numpyro.sample('A2', dist.Normal(1.0,0.1))
-    A3 = numpyro.sample('A3', dist.Normal(1.0,0.1))
-    A4 = numpyro.sample('A4', dist.Normal(1.0,0.1))    
+    A1 = numpyro.sample('A1', dist.Normal(1.0,0.06))
+    A2 = numpyro.sample('A2', dist.Normal(1.0,0.06))
+    A3 = numpyro.sample('A3', dist.Normal(1.0,0.06))
+    A4 = numpyro.sample('A4', dist.Normal(1.0,0.06))    
     Rp = numpyro.sample('Rp', dist.Uniform(0.5,1.1))
     Mp = numpyro.sample('Mp', dist.Normal(34.2,1.2))
     sigma = numpyro.sample('sigma', dist.Exponential(0.5))
@@ -214,7 +214,7 @@ def model_c(nu1,y1,nu2,y2,nu3,y3,nu4,y4):
         dtau=dtaumCO+dtaumH2O+dtaucH2H2+dtaucH2He    
         sourcef = planck.piBarr(Tarr,nus)
 
-        F0=rtrun(dtau,sourcef)/(Ftoa*Ax)
+        F0=f*rtrun(dtau,sourcef)/(Ftoa*Ax)
         Frot=response.rigidrot(nus,F0,vsini,u1,u2)
         mu=response.ipgauss_sampling(nusd,nus,Frot,beta,RV)
         numpyro.sample(tag, dist.Normal(mu, sigma), obs=y)
