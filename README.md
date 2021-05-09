@@ -1,5 +1,7 @@
 # exojax
 
+## Functions
+
 <details open><summary>Voigt Profile :heavy_check_mark: </summary>
 
 ```python
@@ -53,7 +55,7 @@
 </details>
 
 <details><summary>HMC-NUTS of Emission Spectra :heavy_check_mark: </summary>
-<img src="https://github.com/HajimeKawahara/exojax/blob/develop/documents/exojax.png" Titie="exojax" Width=850px>
+<img src="https://user-images.githubusercontent.com/15956904/117563416-b02f8800-b0e0-11eb-8c0c-3a5087aa31c6.png" Titie="exojax" Width=850px>
 </details>
 
 <details><summary>HMC-NUTS of Transmission Spectra :x: </summary>Not supported yet. </details>
@@ -62,19 +64,19 @@
 
 
 
-## install
+## Installation
 
 ```
 python setup.py install
 ```
 
-<details><summary> Note on GPU support</summary>
+<details><summary> Note on installation w/ GPU support</summary>
 
 :books: You need to install CUDA, NumPyro, JAX w/ NVIDIA GPU support, and cuDNN. 
 
 - NumPyro
 
-exojax supports NumPyro >0.6.0, which enables the forward differentiation. Please check the required JAX version by NumPyro. In May 2021, it seems the recent version of [NumPyro](https://github.com/pyro-ppl/numpyro) requires jaxlib>=0.1.62 (see [setup.py](https://github.com/pyro-ppl/numpyro/blob/master/setup.py) of NumPyro for instance). 
+exojax supports NumPyro >0.5.0, which enables [the forward differentiation of HMC-NUTS](http://num.pyro.ai/en/latest/mcmc.html#numpyro.infer.hmc.NUTS). Please check the required JAX version by NumPyro. In May 2021, it seems the recent version of [NumPyro](https://github.com/pyro-ppl/numpyro) requires jaxlib>=0.1.62 (see [setup.py](https://github.com/pyro-ppl/numpyro/blob/master/setup.py) of NumPyro for instance). 
 
 - JAX
 
@@ -94,7 +96,6 @@ In this case, jaxlib version is 0.1.62 and cuda version is 11.2. You can check w
 
 Visit [here](https://github.com/google/jax) for the details.
 
-
 - cuDNN
 
 For instance, get .deb from NVIDIA and install such as
@@ -105,8 +106,8 @@ sudo dpkg -i libcudnn8_8.2.0.53-1+cuda11.3_amd64.deb
 
 cuDNN is used for to compute the astronomical/instrumental response for the large number of wave number grid (exojax.spec.response). Otherwise, we do not use it. 
 
-
 </details>
 
+## License
 
-under development since Dec. 2020.
+Copyright 2020-2021 [Hajime Kawahara](http://secondearths.sakura.ne.jp/en/index.html). exojax is publicly available under the MIT license. Under development since Dec. 2020.
