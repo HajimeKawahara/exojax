@@ -1,5 +1,7 @@
 # exojax
 
+## Functions
+
 <details open><summary>Voigt Profile :heavy_check_mark: </summary>
 
 ```python
@@ -62,13 +64,13 @@
 
 
 
-## install
+## Installation
 
 ```
 python setup.py install
 ```
 
-<details><summary> Note on GPU support</summary>
+<details><summary> Note on installation w/ GPU support</summary>
 
 :books: You need to install CUDA, NumPyro, JAX w/ NVIDIA GPU support, and cuDNN. 
 
@@ -108,8 +110,4 @@ cuDNN is used for to compute the astronomical/instrumental response for the larg
 
 ## License
 
-Copyright 2020-2021 [Hajime Kawahara](http://secondearths.sakura.ne.jp/en/index.html)
-
-exojax is publicly available under the MIT license.
-
-Under development since Dec. 2020.
+Copyright 2020-2021 [Hajime Kawahara](http://secondearths.sakura.ne.jp/en/index.html). exojax is publicly available under the MIT license. Under development since Dec. 2020.
