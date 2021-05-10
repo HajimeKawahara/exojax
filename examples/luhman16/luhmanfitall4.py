@@ -22,10 +22,10 @@ from exojax.spec.evalline import mask_weakline
 
 
 #FLUX reference
-Fabs_REF2=2.7e-12 #absolute flux (i.e. flux@10pc) erg/s/cm2/um Burgasser+ 1303.7283 @2.3um
+Fabs_REF2=2.7e-12 #absolute flux (i.e. flux@10pc) erg/s/cm2/um Burgasser+ 1303.7283 @2.29um
 Rp=0.85*RJ #BD radius
 fac0=Rp**2/((10.0*pc)**2) 
-Ftoa=Fabs_REF2/fac0/1.e4 #erg/cm2/s/cm-1 @ 2.3um
+Ftoa=(2.29**2)*Fabs_REF2/fac0/1.e4 #erg/cm2/s/cm-1 @ 2.3um
 
 #loading spectrum
 dat=pd.read_csv("data/luhman16a_spectra.csv",delimiter=",")
@@ -156,11 +156,7 @@ from numpyro.diagnostics import hpdi
 
 #Model
 def model_c(nu1,y1,nu2,y2,nu3,y3,nu4,y4):
-    f = numpyro.sample('f', dist.Uniform(0.0,1.0))
-    A1 = numpyro.sample('A1', dist.Normal(1.0,0.06))
-    A2 = numpyro.sample('A2', dist.Normal(1.0,0.06))
-    A3 = numpyro.sample('A3', dist.Normal(1.0,0.06))
-    A4 = numpyro.sample('A4', dist.Normal(1.0,0.06))    
+#    f = numpyro.sample('f', dist.Uniform(0.0,1.0))
     Rp = numpyro.sample('Rp', dist.Uniform(0.5,1.1))
     Mp = numpyro.sample('Mp', dist.Normal(34.2,1.2))
     sigma = numpyro.sample('sigma', dist.Exponential(0.5))
@@ -182,7 +178,7 @@ def model_c(nu1,y1,nu2,y2,nu3,y3,nu4,y4):
     qt_CO=vmap(mdbCO1.qr_interp)(Tarr)
     qt_H2O=vmap(mdbH2O1.qr_interp)(Tarr)
     
-    def obyo(y,tag,Ax,nusd,nus,numatrix_CO,numatrix_H2O,mdbCO,mdbH2O,cdbH2H2,cdbH2He):
+    def obyo(y,tag,nusd,nus,numatrix_CO,numatrix_H2O,mdbCO,mdbH2O,cdbH2H2,cdbH2He):
         #CO
         SijM_CO=jit(vmap(SijT,(0,None,None,None,0)))\
             (Tarr,mdbCO.logsij0,mdbCO.dev_nu_lines,mdbCO.elower,qt_CO)
@@ -214,15 +210,15 @@ def model_c(nu1,y1,nu2,y2,nu3,y3,nu4,y4):
         dtau=dtaumCO+dtaumH2O+dtaucH2H2+dtaucH2He    
         sourcef = planck.piBarr(Tarr,nus)
 
-        F0=f*rtrun(dtau,sourcef)/(Ftoa*Ax)
+        F0=rtrun(dtau,sourcef)/(Ftoa)
         Frot=response.rigidrot(nus,F0,vsini,u1,u2)
         mu=response.ipgauss_sampling(nusd,nus,Frot,beta,RV)
         numpyro.sample(tag, dist.Normal(mu, sigma), obs=y)
 
-    obyo(y1,"y1",A1,nusd1,nus1,numatrix_CO1,numatrix_H2O1,mdbCO1,mdbH2O1,cdbH2H21,cdbH2He1)
-    obyo(y2,"y2",A2,nusd2,nus2,numatrix_CO2,numatrix_H2O2,mdbCO2,mdbH2O2,cdbH2H22,cdbH2He2)
-    obyo(y3,"y3",A3,nusd3,nus3,numatrix_CO3,numatrix_H2O3,mdbCO3,mdbH2O3,cdbH2H23,cdbH2He3)
-    obyo(y4,"y4",A4,nusd4,nus4,numatrix_CO4,numatrix_H2O4,mdbCO4,mdbH2O4,cdbH2H24,cdbH2He4)
+    obyo(y1,"y1",nusd1,nus1,numatrix_CO1,numatrix_H2O1,mdbCO1,mdbH2O1,cdbH2H21,cdbH2He1)
+    obyo(y2,"y2",nusd2,nus2,numatrix_CO2,numatrix_H2O2,mdbCO2,mdbH2O2,cdbH2H22,cdbH2He2)
+    obyo(y3,"y3",nusd3,nus3,numatrix_CO3,numatrix_H2O3,mdbCO3,mdbH2O3,cdbH2H23,cdbH2He3)
+    obyo(y4,"y4",nusd4,nus4,numatrix_CO4,numatrix_H2O4,mdbCO4,mdbH2O4,cdbH2H24,cdbH2He4)
 #--------------------------------------------------------
 #Running a HMC-NUTS
 
@@ -288,22 +284,19 @@ plt.xlabel("wavelength ($\AA$)",fontsize=16)
 plt.legend()
 plt.savefig("fig/results.png")
 
-pararr=["f","Mp","Rp","T0","alpha","MMR_CO","MMR_H2O","vsini","RV","sigma","A1","A2","A3","A4"]
+pararr=["Mp","Rp","T0","alpha","MMR_CO","MMR_H2O","vsini","RV","sigma"]
 arviz.plot_trace(mcmc, var_names=pararr)
 plt.savefig("fig/trace.png")
 
-pararr=["f","Mp","Rp","T0","alpha","MMR_CO","MMR_H2O","sigma"]
+pararr=["Mp","Rp","T0","alpha","MMR_CO","MMR_H2O","sigma"]
 arviz.plot_pair(arviz.from_numpyro(mcmc),kind='kde',divergences=False,marginals=True) 
 plt.savefig("fig/corner1.png")
 
-pararr=["f","Mp","Rp","T0","A1","A2","A3","A4"]
-arviz.plot_pair(arviz.from_numpyro(mcmc),kind='kde',divergences=False,marginals=True) 
-plt.savefig("fig/corner2.png")
 
-pararr=["f","Mp","Rp","T0","alpha","vsini","RV"]
+pararr=["Mp","Rp","T0","alpha","vsini","RV"]
 arviz.plot_pair(arviz.from_numpyro(mcmc),kind='kde',divergences=False,marginals=True) 
 plt.savefig("fig/corner3.png")
 
-pararr=["f","Mp","Rp","T0","alpha","MMR_CO","MMR_H2O","vsini","RV","sigma","A1","A2","A3","A4"]
+pararr=["Mp","Rp","T0","alpha","MMR_CO","MMR_H2O","vsini","RV","sigma"]
 arviz.plot_pair(arviz.from_numpyro(mcmc),kind='kde',divergences=False,marginals=True) 
 plt.savefig("fig/cornerall.png")

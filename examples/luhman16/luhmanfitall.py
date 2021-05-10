@@ -22,10 +22,10 @@ from exojax.spec.evalline import mask_weakline
 
 
 #FLUX reference
-Fabs_REF2=2.7e-12 #absolute flux (i.e. flux@10pc) erg/s/cm2/um Burgasser+ 1303.7283 @2.3um
+Fabs_REF2=2.7e-12 #absolute flux (i.e. flux@10pc) erg/s/cm2/um Burgasser+ 1303.7283 @2.29um
 Rp=0.85*RJ #BD radius
 fac0=Rp**2/((10.0*pc)**2) 
-Ftoa=Fabs_REF2/fac0/1.e4 #erg/cm2/s/cm-1 @ 2.3um
+Ftoa=(2.29**2)*Fabs_REF2/fac0/1.e4 #erg/cm2/s/cm-1 @ 2.3um
 
 #loading spectrum
 dat=pd.read_csv("data/luhman16a_spectra.csv",delimiter=",")
