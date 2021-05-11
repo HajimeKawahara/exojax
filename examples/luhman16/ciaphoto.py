@@ -70,36 +70,6 @@ molmassCO=molinfo.molmass("CO") #molecular mass (CO)
 MMR=0.02*np.ones_like(Tarr) #mass mixing ratio
 g=10**(4.5) # gravity cm/s2
 
-#Macro response model
-RV=30.0 #km/s
-vsini_in=10.0 #rotational vsini km/s
-beta=3.0 #IP sigma km/s
-
-#--------------------------------------------------
-#ExoMol 
-#LOADING CO
-mdbCO=moldb.MdbExomol('.database/CO/12C-16O/Li2015',nus) #loading molecular database 
-molmassCO=molinfo.molmass("CO") #molecular mass (CO)
-
-#LOADING H2O
-mdbH2O=moldb.MdbExomol('.database/H2O/1H2-16O/POKAZATEL',nus,crit=1.e-45) #loading molecular dat
-molmassH2O=molinfo.molmass("H2O") #molecular mass (H2O)
-
-
-qt=vmap(mdbCO.qr_interp)(Tarr)
-gammaLMP = jit(vmap(gamma_exomol,(0,0,None,None)))\
-    (Parr,Tarr,mdbCO.n_Texp,mdbCO.alpha_ref)
-gammaLMN=gamma_natural(mdbCO.A)
-gammaLM=gammaLMP[:,None]+gammaLMN[None,:]
-SijM=jit(vmap(SijT,(0,None,None,None,0)))\
-    (Tarr,mdbCO.logsij0,mdbCO.nu_lines,mdbCO.elower,qt)
-sigmaDM=jit(vmap(doppler_sigma,(None,0,None)))\
-    (mdbCO.nu_lines,Tarr,molmassCO)
-numatrix=make_numatrix0(nus,nu0)
-xsm=xsmatrix(numatrix,sigmaDM,gammaLM,SijM)
-
-dtaumCO=dtauM(dParr,xsm,MMR,molmassCO,g)
-#plottau(nus,dtauMx,Tarr,Parr,unit="AA") #tau
 
 #--------------------------------------------------
 #CIA
@@ -119,27 +89,11 @@ dtaucH2He=dtauCIA(nus,Tarr,Parr,dParr,vmrH2,vmrHe,\
               mmw,g,cdbH2He.nucia,cdbH2He.tcia,cdbH2He.logac)
 
 #Running Radiative Transfer
-dtau=dtaumCO+dtaucH2H2+dtaucH2He
+dtau=dtaucH2H2+dtaucH2He
 
 cf=plotcf(nus,dtau,Tarr,Parr,dParr,unit="AA")
-print(Parr[np.argmax(cf,axis=0)])
+print("icia=",np.median(np.argmax(cf,axis=0)))
+print("Pcia=",Parr[np.argmax(cf,axis=0)])
 plt.savefig("fig/cf.png")
 
 sys.exit()
-
-sourcef=planck.piBarr(Tarr,nus)
-F0=rtrun(dtau,sourcef)/Ftoa #divided by the normalization.
-
-u1=0.0
-u2=0.0
-Frot=response.rigidrot(nus,F0,vsini_in,u1,u2)
-F=response.ipgauss_sampling(nusd,nus,Frot,beta,RV)
-
-
-#------------------------------------------------------
-#some figures for checking
-fig=plt.figure(figsize=(20,6.0))
-plt.plot(wav[::-1],F0,lw=1,color="C1",label="F0")
-plt.plot(wavd[::-1],F,lw=1,color="C2",label="F")
-plt.plot(wavd[::-1],fobs)
-plt.savefig("fig/spec.png")
