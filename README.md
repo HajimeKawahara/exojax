@@ -32,7 +32,7 @@ Auto-differentiable line-by-line spectral modeling of exoplanets/brown dwarfs us
  plt.plot(autoxs.mdb.nu_lines,ls,".")
 ```
 
-🌊 [mdb](http://secondearths.sakura.ne.jp/exojax/exojax/exojax.spec.html#module-exojax.spec.moldb) is a class for molecular database. OK. Here is a entrance to a deeper level. exojax is more flexible in the way it calculates the molecular lines. Go to [the docs](http://secondearths.sakura.ne.jp/exojax) for the deeper level. 
+🌊 autoxs.mdb is the [moldb class](http://secondearths.sakura.ne.jp/exojax/exojax/exojax.spec.html#module-exojax.spec.moldb) for molecular database. Here is a entrance to a deeper level. exojax is more flexible in the way it calculates the molecular lines. Go to [the docs](http://secondearths.sakura.ne.jp/exojax) for the deeper level. 
 
 </details>
  
