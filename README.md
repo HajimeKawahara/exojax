@@ -23,12 +23,16 @@
 
  <img src="https://user-images.githubusercontent.com/15956904/111430765-2eedf180-873e-11eb-9740-9e1a313d590c.png" Titie="exojax auto cross section" Width=850px> 
  
- When you want to plot the line strength...
+<details><summary> 🐈 Do you just want to plot the line strength? </summary>
 
 ```python
  ls=autoxs.linest(1000.0,1.0) #line strength for 1000K, 1bar (cm)
  plt.plot(autoxs.mdb.nu_lines,ls,".")
 ```
+
+🌊 **mdb** is a class for molecular database. OK. Here is a entrance to a deeper level. exojax is more flexible in the way it calculates the molecular lines. Go to the document for the deeper level. 
+
+</details>
  
  </details>
 
