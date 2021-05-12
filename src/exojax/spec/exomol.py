@@ -15,7 +15,7 @@ def Sij0(A,g,nu_lines,elower,QTref):
        Mmol: molecular mass (normalized by m_u)
 
     Returns:
-       Sij(T): Line strength
+       Sij(T): Line strength (cm)
 
     """
     ccgs=29979245800.0
