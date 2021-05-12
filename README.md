@@ -44,7 +44,7 @@ Auto-differentiable line-by-line spectral modeling of exoplanets/brown dwarfs us
  from exojax.spec.rtransfer import nugrid
  from exojax.spec import AutoRT
  nus,wav,res=nugrid(1900.0,2300.0,40000,"cm-1")
- Parr=numpy.logspace(-8,2,100)
+ Parr=numpy.logspace(-8,2,100) #100 layers from 10^-8 bar to 10^2 bar
  Tarr = 500.*(Parr/Parr[-1])**0.02    
  autort=AutoRT(nus,1.e5,2.33,Tarr,Parr) #g=1.e5 cm/s2, mmw=2.33
  autort.addcia("H2-H2",0.74,0.74)       #CIA, mmr(H)=0.74
@@ -58,7 +58,7 @@ Auto-differentiable line-by-line spectral modeling of exoplanets/brown dwarfs us
  <details><summary>:telescope: Are you an observer? </summary>
  
  ```python
-  nusobs=numpy.linspace(1900.0,2300.0,10000,dtype=np.float64) #observation wavenumber bin (cm-1)
+  nusobs=numpy.linspace(1900.0,2300.0,10000,dtype=numpy.float64) #observation wavenumber bin (cm-1)
   F=autort.spectrum(nusobs,100000.0,20.0,0.0) #R=100000, vsini=10km/s, RV=0km/s
  ```
  
