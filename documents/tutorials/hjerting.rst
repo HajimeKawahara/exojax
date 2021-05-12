@@ -1,21 +1,22 @@
 Voigt-Hjerting Function
 ------------------------
+*Update: May 10/2021, Hajime Kawahara*
 
 
-The Voigt-Hjerting is defined as
+The Voigt-Hjerting function is the real part of `the Faddeeva function <https://en.wikipedia.org/wiki/Faddeeva_function>`_, defined as
 
 :math:`H(x,a) = \frac{a}{\pi}`
 :math:`\int_{-\infty}^{\infty}`
 :math:`\frac{e^{-y^2}}{(x-y)^2 + a^2} dy` .
 
-In exojax, hjert is the Voigt-Hjerting function.
+In exojax,
+*hjert*
+provides the Voigt-Hjerting function.
 
 .. code:: ipython3
 
     from exojax.spec import hjert
     hjert(1.0,1.0)
-
-
 
 
 .. parsed-literal::
@@ -63,15 +64,6 @@ need to wrap it by jax.vmap.
     plt.plot(x, vhjert(x,1.0),label="$H(x,a)$")
     plt.plot(x, vdhjert_dx(x,1.0),label="$\\partial_x H(x,a)$")
     plt.legend()
-
-
-
-
-.. parsed-literal::
-
-    <matplotlib.legend.Legend at 0x7fd09929c3c8>
-
-
 
 
 .. image:: hjerting/output_5_1.png
