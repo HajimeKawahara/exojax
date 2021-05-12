@@ -41,7 +41,7 @@ Auto-differentiable line-by-line spectral modeling of exoplanets/brown dwarfs us
 <details><summary>Emission Spectrum :heavy_check_mark: </summary>
 
 ```python
- from exojax.rtransfer import nugrid
+ from exojax.spec.rtransfer import nugrid
  from exojax.spec import AutoRT
  nus,wav,res=nugrid(1900.0,2300.0,40000,"cm-1")
  Parr=numpy.logspace(-8,2,100)
