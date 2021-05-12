@@ -1,5 +1,7 @@
 # exojax
 
+Auto-differentiable line-by-line spectral modeling of exoplanets/brown dwarfs using JAX. Read [the docs](http://secondearths.sakura.ne.jp/exojax).
+
 ## Functions
 
 <details open><summary>Voigt Profile :heavy_check_mark: </summary>
@@ -30,7 +32,7 @@
  plt.plot(autoxs.mdb.nu_lines,ls,".")
 ```
 
-🌊 **mdb** is a class for molecular database. OK. Here is a entrance to a deeper level. exojax is more flexible in the way it calculates the molecular lines. Go to the document for the deeper level. 
+🌊 **mdb** is a class for molecular database. OK. Here is a entrance to a deeper level. exojax is more flexible in the way it calculates the molecular lines. Go to [the docs](http://secondearths.sakura.ne.jp/exojax) for the deeper level. 
 
 </details>
  
