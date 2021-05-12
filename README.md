@@ -23,6 +23,14 @@
 
  <img src="https://user-images.githubusercontent.com/15956904/111430765-2eedf180-873e-11eb-9740-9e1a313d590c.png" Titie="exojax auto cross section" Width=850px> </details>
 
+
+When you want to plot the line strength...
+
+```python
+ ls=autoxs.linest(1000.0,1.0) #line strength for 1000K, 1bar (cm)
+ plt.plot(autoxs.mdb.nu_lines,ls,".")
+```
+
 <details><summary>Emission Spectrum :heavy_check_mark: </summary>
 
 ```python
