@@ -26,7 +26,7 @@ Pref=1.0 #bar
 #FLUX reference
 Fabs_REF2=2.7e-12 #absolute flux (i.e. flux@10pc) erg/s/cm2/um Burgasser+ 1303.7283 @2.29um
 fac0=RJ**2/((10.0*pc)**2)  #nomralize by RJ
-Ftoa=(2.29**2)*Fabs_REF2/fac0/1.e4 #erg/cm2/s/cm-1 @ 2.3um
+Fref=(2.29**2)*Fabs_REF2/fac0/1.e4 #erg/cm2/s/cm-1 @ 2.3um
 
 #loading spectrum
 dat=pd.read_csv("data/luhman16a_spectra.csv",delimiter=",")
@@ -147,7 +147,6 @@ def ap(fobs,nusd,ws,we,Nx):
     cdbH2H2=contdb.CdbCIA('.database/H2-H2_2011.cia',nus)
     cdbH2He=contdb.CdbCIA('.database/H2-He_2011.cia',nus)
 
-    print("in",len(wavdx))
     return fobsx,nusdx,wavdx,errx,nus,wav,res,mdbCO,mdbH2O,numatrix_CO,numatrix_H2O,cdbH2H2,cdbH2He
     
 #plot_maxpoint(mask_H2O,Parr,maxcf,maxcia,mol="H2O")
@@ -155,11 +154,6 @@ def ap(fobs,nusd,ws,we,Nx):
 
 N=1500
 fobs1,nusd1,wavd1,err1,nus1,wav1,res1,mdbCO1,mdbH2O1,numatrix_CO1,numatrix_H2O1,cdbH2H21,cdbH2He1=ap(fobs,nusd,22876.0,23010.0,N)
-print("a",len(wavd1))
-
-plt.plot(wavd1[::-1],fobs1)
-plt.savefig("fig/tmp_.png")
-sys.exit()
 
 #fobs2,nusd2,wavd2,err2,nus2,wav2,res2,mdbCO2,mdbH2O2,numatrix_CO2,numatrix_H2O2,cdbH2H22,cdbH2He2=ap(fobs,nusd,23038.6,23159.3,N)
 #fobs3,nusd3,wavd3,err3,nus3,wav3,res3,mdbCO3,mdbH2O3,numatrix_CO3,numatrix_H2O3,cdbH2H23,cdbH2He3=ap(fobs,nusd,23193.5,23310.0,N)
@@ -186,6 +180,8 @@ def model_c(nu1,y1,e1):
     Rp = numpyro.sample('Rp', dist.Uniform(0.6,2.0))
 #    Mp = numpyro.sample('Mp', dist.Normal(34.2,1.2))
     Mp = numpyro.sample('Mp', dist.Uniform(10.0,50.0))
+    fA=0.5
+
     sigma = numpyro.sample('sigma', dist.Exponential(0.1))
     RV = numpyro.sample('RV', dist.Uniform(27.0,29.0))
     MMR_CO = numpyro.sample('MMR_CO', dist.Uniform(0.0,maxMMR_CO))
@@ -236,7 +232,8 @@ def model_c(nu1,y1,e1):
     
         dtau=dtaumCO+dtaumH2O+dtaucH2H2+dtaucH2He    
         sourcef = planck.piBarr(Tarr,nus)
-
+        
+        Ftoa=Fref/(fA*Rp**2)
         F0=rtrun(dtau,sourcef)*Rp**2/baseline/(Ftoa)
         
         Frot=response.rigidrot(nus,F0,vsini,u1,u2)
@@ -279,11 +276,6 @@ nu_1 = nus1
 #nu_4 = nus4
 
 predictions = pred(rng_key_,nu1=nu_1,y1=None,e1=err1)
-#predictions = pred(rng_key_,nu1=nu_1,y1=None,nu2=nu_2,y2=None,nu3=nu_3,y3=None,nu4=nu_4,y4=None)
-#------------------
-np.savez("saveres.npz",[pred,predictions,mcmc])
-#np.savez("savenus.npz",[nus1,nus2,nus3,nus4])
-#np.savez("savedata.npz",[nusd1, fobs1, nusd2, fobs2, nusd3, fobs3, nusd4, fobs4])
 #------------------
 median_mu1 = jnp.median(predictions["y1"],axis=0)
 hpdi_mu1 = hpdi(predictions["y1"], 0.9)
@@ -295,7 +287,7 @@ hpdi_mu1 = hpdi(predictions["y1"], 0.9)
 #hpdi_mu4 = hpdi(predictions["y4"], 0.9)
 
 #------------------
-np.savez("saveplotpred.npz",[wavd1,fobs1,median_mu1,hpdi_mu1])
+#np.savez("saveplotpred.npz",[wavd1,fobs1,median_mu1,hpdi_mu1])
 #------------------
 
 
@@ -322,6 +314,7 @@ plt.tick_params(labelsize=16)
 plt.savefig("fig/results.pdf", bbox_inches="tight", pad_inches=0.0)
 plt.savefig("fig/results.png", bbox_inches="tight", pad_inches=0.0)
 
+mcmc=np.load("savemcmc.npz",allow_pickle=True)["arr_0"]
 ########## ARVIZ ###########
 rc = {
     "plot.max_subplots": 200,

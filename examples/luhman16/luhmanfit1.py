@@ -178,10 +178,11 @@ baseline=1.07 #(baseline for CIA photosphere)
 def model_c(nu1,y1,e1):
 #    f = numpyro.sample('f', dist.Uniform(0.0,1.0))
     Rp = numpyro.sample('Rp', dist.Uniform(0.6,2.0))
-    #    Mp = numpyro.sample('Mp', dist.Normal(33.5,0.3))
-    Mp = numpyro.sample('Mp', dist.Uniform(10.0,50.0))
+    Mp = numpyro.sample('Mp', dist.Normal(33.5,0.3))
+    #Mp = numpyro.sample('Mp', dist.Uniform(10.0,50.0))
     #Mp=33.5
-    fA=0.5
+    fA = numpyro.sample('fA', dist.Uniform(0.0,1.0))
+    #fA=0.5
     sigma = numpyro.sample('sigma', dist.Exponential(0.1))
     RV = numpyro.sample('RV', dist.Uniform(27.0,29.0))
     MMR_CO = numpyro.sample('MMR_CO', dist.Uniform(0.0,maxMMR_CO))
@@ -265,7 +266,7 @@ print("end")
 
 posterior_sample = mcmc.get_samples()
 np.savez("savepos.npz",[posterior_sample])
-np.savez("savemcmc",mcmc)
+np.savez("savemcmc.npz",mcmc)
 
 pred = Predictive(model_c,posterior_sample,return_sites=["y1"])
 #pred = Predictive(model_c,posterior_sample,return_sites=["y1","y2","y3","y4"])
@@ -274,7 +275,7 @@ nu_1 = nus1
 #nu_3 = nus3
 #nu_4 = nus4
 
-predictions = pred(rng_key_,nu1=nu_1,y1=None,e1=None)
+predictions = pred(rng_key_,nu1=nu_1,y1=None,e1=err1)
 #predictions = pred(rng_key_,nu1=nu_1,y1=None,nu2=nu_2,y2=None,nu3=nu_3,y3=None,nu4=nu_4,y4=None)
 #------------------
 np.savez("saveres.npz",[pred,predictions])
@@ -320,26 +321,15 @@ plt.savefig("fig/results.png", bbox_inches="tight", pad_inches=0.0)
 
 ########## ARVIZ ###########
 rc = {
-    "plot.max_subplots": 200,
+    "plot.max_subplots": 250,
 }
 arviz.rcParams.update(rc)
-
-pararr=["Mp","Rp","T0","alpha","MMR_CO","MMR_H2O","vsini","RV","sigma"]
+pararr=["fA","Mp","Rp","T0","alpha","MMR_CO","MMR_H2O","vsini","RV","sigma"]
+#pararr=["Mp","Rp","T0","alpha","MMR_CO","MMR_H2O","vsini","RV","sigma"]
 #pararr=["Rp","T0","alpha","MMR_CO","MMR_H2O","vsini","RV","sigma"]
 arviz.plot_trace(mcmc, var_names=pararr)
 plt.savefig("fig/trace.png")
 
-pararr=["Mp","Rp","T0","alpha","MMR_CO","MMR_H2O","sigma"]
-#pararr=["Rp","T0","alpha","MMR_CO","MMR_H2O","sigma"]
-arviz.plot_pair(arviz.from_numpyro(mcmc),kind='kde',divergences=False,marginals=True) 
-plt.savefig("fig/corner1.png")
-
-pararr=["Mp","Rp","T0","alpha","vsini","RV"]
-#pararr=["Rp","T0","alpha","vsini","RV"]
-arviz.plot_pair(arviz.from_numpyro(mcmc),kind='kde',divergences=False,marginals=True) 
-plt.savefig("fig/corner3.png")
-
-pararr=["Mp","Rp","T0","alpha","MMR_CO","MMR_H2O","vsini","RV","sigma"]
-#pararr=["Rp","T0","alpha","MMR_CO","MMR_H2O","vsini","RV","sigma"]
+pararr=["fA","Mp","Rp","T0","alpha","MMR_CO","MMR_H2O","vsini","RV","sigma"]
 arviz.plot_pair(arviz.from_numpyro(mcmc),kind='kde',divergences=False,marginals=True) 
 plt.savefig("fig/cornerall.png")
