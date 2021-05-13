@@ -27,6 +27,7 @@ from exojax.spec.opacity import (
 from exojax.spec.lpf import (
     hjert,
     voigt,
+    voigtone,
     vvoigt,
     xsvector,
 )

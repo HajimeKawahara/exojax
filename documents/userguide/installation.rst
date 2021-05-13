@@ -6,8 +6,21 @@ At a minimum, you can start to use exojax by
 .. code:: sh
 	  
 	  python setup.py install
-	  
-However, to leverage the power of JAX, numpyro, you need to prepare a GPU environment. For this purpose, jaxlib and numpyro must be linked. Here is an example of installation for python 3.7 environment.
+
+installation w/ GPU support
+==============================
+
+However, to leverage the power of JAX, numpyro, you need to prepare a GPU environment. For this purpose, jaxlib and numpyro must be linked.
+
+You should check cuda version of your environment as
+
+.. code:: sh
+
+	  nvcc -V
+
+Also, check required jaxlib versions by numpyro at
+`NumPyro <https://github.com/pyro-ppl/numpyro>`_.
+Here is an example of installation for jaxlib for cuda 11.2 and jaxlib 0.1.62
 
 .. code:: sh
 	  
@@ -18,3 +31,8 @@ However, to leverage the power of JAX, numpyro, you need to prepare a GPU enviro
 	   cd ../exojax/
 	   python setup.py install
 
+
+In addition, you may need cuDNN for exojax.spec.ipgauss2 and exojax.spec.rigidrot2. For ubuntu, download .deb from NVIDIA and install it:
+	   
+.. code:: sh
+	  sudo dpkg -i libcudnn8_8.2.0.53-1+cuda11.3_amd64.deb

@@ -72,13 +72,31 @@ def hjert_jvp(primals, tangents):
     tangent_out = dHdx * ux  + dHda * ua
     return primal_out, tangent_out
 
+@jit
+def voigtone(nu,sigmaD,gammaL):
+    """Custom JVP version of (non-vmapped) Voigt function using Voigt-Hjerting function 
+
+    Args:
+       nu: wavenumber 
+       sigmaD: sigma parameter in Doppler profile 
+       gammaL: broadening coefficient in Lorentz profile 
+ 
+    Returns:
+       v: Voigt funtion
+
+    """
+    
+    sfac=1.0/(jnp.sqrt(2)*sigmaD)
+    v=sfac*hjert(sfac*nu,sfac*gammaL)/jnp.sqrt(jnp.pi)
+    return v
+
 
 @jit
-def voigt(nu,sigmaD,gammaL):
+def voigt(nuvector,sigmaD,gammaL):
     """Custom JVP version of Voigt profile using Voigt-Hjerting function 
 
     Args:
-       nu: wavenumber
+       nu: wavenumber array
        sigmaD: sigma parameter in Doppler profile 
        gammaL: broadening coefficient in Lorentz profile 
  
@@ -89,7 +107,7 @@ def voigt(nu,sigmaD,gammaL):
     
     sfac=1.0/(jnp.sqrt(2)*sigmaD)
     vhjert=vmap(hjert,(0,None),0)
-    v=sfac*vhjert(sfac*nu,sfac*gammaL)/jnp.sqrt(jnp.pi)
+    v=sfac*vhjert(sfac*nuvector,sfac*gammaL)/jnp.sqrt(jnp.pi)
     return v
 
 @jit

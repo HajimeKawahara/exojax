@@ -13,7 +13,7 @@ def SijT(T,logsij0,nu_lines,elower,qT):
        qT: Q(Tref)/Q(T)
 
     Returns:
-       Sij(T): Line strength
+       Sij(T): Line strength (cm)
 
     """
     Tref=296.0 #reference tempearture (K)

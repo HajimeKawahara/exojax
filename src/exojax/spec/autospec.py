@@ -59,28 +59,50 @@ class AutoXS(object):
         else:
             print("Select database from HITRAN, HITEMP, ExoMol.")
 
-    def xsection(self,T,P):
-        """cross section
+    def linest(self,T,P):
+        """line strength 
+
         Args: 
            T: temperature (K)
            P: pressure (bar)
+
         Returns:
-           cross section (cm2)
+           line strength (cm)
+
         """
         mdb=self.mdb
         if self.database == "ExoMol":
             qt=mdb.qr_interp(T)
+        elif self.database == "HITRAN" or self.database == "HITEMP":
+            qt=mdb.Qr_line(T)
+            
+        Sij=SijT(T,mdb.logsij0,mdb.nu_lines,mdb.elower,qt)
+        return Sij
+        
+    def xsection(self,T,P):
+        """cross section
+
+        Args: 
+           T: temperature (K)
+           P: pressure (bar)
+
+        Returns:
+           cross section (cm2)
+
+        """
+
+        mdb=self.mdb
+        if self.database == "ExoMol":
             gammaL = gamma_exomol(P,T,mdb.n_Texp,mdb.alpha_ref)\
                      + gamma_natural(mdb.A)
             molmass=mdb.molmass
         elif self.database == "HITRAN" or self.database == "HITEMP":
-            qt=mdb.Qr_line(T)
             gammaL = gamma_hitran(P,T, P, mdb.n_air, \
                       mdb.gamma_air, mdb.gamma_self) \
                       + gamma_natural(mdb.A)
             molmass=molinfo.molmass(self.molecules)
-            
-        Sij=SijT(T,mdb.logsij0,mdb.nu_lines,mdb.elower,qt)
+        
+        Sij=self.linest(T,P)
         sigmaD=doppler_sigma(mdb.nu_lines,T,molmass)
         nu0=mdb.nu_lines
         xsv=xsection(self.nus,nu0,sigmaD,gammaL,Sij,memory_size=self.memory_size)
