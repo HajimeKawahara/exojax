@@ -221,6 +221,9 @@ class MdbHit(object):
         #bunzip2 if suffix is .bz2
         if self.path.suffix==".bz2":
             import bz2,shutil
+            if self.path.with_suffix('').exists():
+                import os
+                os.remove(self.path.with_suffix(''))
             print("bunziping")
             with bz2.BZ2File(str(self.path)) as fr:
                 with open(str(self.path.with_suffix('')),"wb") as fw:
@@ -292,8 +295,84 @@ class MdbHit(object):
         except:
             print("HITEMP download failed")
 
-            
-    def Qr(self,Tarr):
+    ####################################
+
+    def ExomolQT(self,path):
+        """use a partition function from ExoMol
+
+        Args:
+           path: path for Exomol data directory/tag. For instance, "/home/CO/12C-16O/Li2015"
+
+        """
+        #load pf
+
+        self.empath = pathlib.Path(path)
+        t0=self.empath.parents[0].stem        
+        molec=t0+"__"+str(self.empath.stem)
+        self.pf_file = self.empath/pathlib.Path(molec+".pf")
+        if not self.pf_file.exists():
+                self.exomol_pf_download(molec)
+
+        pf=exomolapi.read_pf(self.pf_file)
+        self.gQT=jnp.array(pf["QT"].to_numpy()) #grid QT
+        self.T_gQT=jnp.array(pf["T"].to_numpy()) #T forgrid QT
+
+    def exomol_pf_download(self,molec):
+        """Downloading Exomol pf files
+
+        Args: 
+           molec: like "12C-16O__Li2015"
+
+        Note:
+           The download URL is written in exojax.utils.url.
+
+        """
+        import urllib.request
+        from exojax.utils.molname import e2s
+        import os
+        from exojax.utils.url import url_ExoMol
+
+        tag=molec.split("__")
+        molname_simple=e2s(tag[0])        
+        url = url_ExoMol()+molname_simple+"/"+tag[0]+"/"+tag[1]+"/"
+
+        ext=".pf"
+        pfname=molec+ext
+        pfpath=url+pfname
+        os.makedirs(str(self.empath), exist_ok=True)
+        print("Downloading "+pfpath)
+        try:
+            urllib.request.urlretrieve(pfpath,str(self.empath/pfname))
+        except:
+            print("Error: Couldn't download "+ext+" file and save.")
+
+        
+    def QT_interp(self,T):
+        """interpolated partition function
+
+        Args:
+           T: temperature
+
+        Returns:
+           Q(T) interpolated in jnp.array
+
+        """
+        return jnp.interp(T,self.T_gQT,self.gQT)
+    
+    def qr_interp(self,T):
+        """interpolated partition function ratio
+
+        Args:
+           T: temperature
+
+        Returns:
+           qr(T)=Q(T)/Q(Tref) interpolated in jnp.array
+
+        """
+        return self.QT_interp(T)/self.QT_interp(self.Tref)
+    
+
+    def Qr_HAPI(self,Tarr):
         """Partition Function ratio using HAPI partition sum
 
         Args:
@@ -314,7 +393,7 @@ class MdbHit(object):
         qr=Qrx[:,1:].T/Qrx[:,0] #Q(T)/Q(Tref)
         return qr
 
-    def Qr_line(self,T):
+    def Qr_line_HAPI(self,T):
         """Partition Function ratio using HAPI partition sum
 
         Args:
@@ -334,7 +413,7 @@ class MdbHit(object):
             qr_line[mask]=qrx[0,idx]
         return qr_line
 
-    def Qr_layer(self,Tarr):
+    def Qr_layer_HAPI(self,Tarr):
         """Partition Function ratio using HAPI partition sum
 
         Args:
