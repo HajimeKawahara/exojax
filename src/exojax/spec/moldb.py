@@ -29,6 +29,9 @@ class MdbExomol(object):
         gpp (jnp array): statistical weight
         jlower (jnp array): J_lower
         jupper (jnp array): J_upper
+        n_Tref_def: default temperature exponent in def file
+        alpha_ref_def: default alpha_ref (gamma0) in def file
+
 
 
     """
@@ -53,21 +56,24 @@ class MdbExomol(object):
         self.crit = crit
         self.margin = margin
         self.nurange=[np.min(nurange),np.max(nurange)]
-            
+
+        #Where exomol files are
         self.states_file = self.path/pathlib.Path(molec+".states.bz2")
         self.pf_file = self.path/pathlib.Path(molec+".pf")
         self.def_file = self.path/pathlib.Path(molec+".def")
-        if not self.def_file.exists():
-                self.download(molec,extension=[".def",".pf",".states.bz2"])
+        self.broad_file = self.path/pathlib.Path(molec+".broad")
 
+        if not self.def_file.exists():
+                self.download(molec,extension=[".def",".pf",".states.bz2",".broad"])
+        
         #load def 
-        self.n_Texp, self.alpha_ref, self.molmass, numinf, numtag=exomolapi.read_def(self.def_file)
+        self.n_Texp_def, self.alpha_ref_def, self.molmass, numinf, numtag=exomolapi.read_def(self.def_file)
         #  default n_Texp value if not given
-        if self.n_Texp is None:
-            self.n_Texp=0.5
+        if self.n_Texp_def is None:
+            self.n_Texp_def=0.5
         #  default alpha_ref value if not given
-        if self.alpha_ref is None:
-            self.alpha_ref=0.07
+        if self.alpha_ref_def is None:
+            self.alpha_ref_def=0.07
 
         #load states
         if self.states_file.with_suffix(".feather").exists():
@@ -197,12 +203,12 @@ class MdbExomol(object):
 
         Args: 
            molec: like "12C-16O__Li2015"
-           extension: extension list e.g. [".pf",".def",".trans.bz2",".states.bz2"]
+           extension: extension list e.g. [".pf",".def",".trans.bz2",".states.bz2",".broad"]
            numtag: number tag of transition file if exists. e.g. "11100-11200"
 
         Note:
            The download URL is written in exojax.utils.url.
-
+        
         """
         import urllib.request
         from exojax.utils.molname import e2s
@@ -210,21 +216,27 @@ class MdbExomol(object):
         from exojax.utils.url import url_ExoMol
 
         tag=molec.split("__")
-        molname_simple=e2s(tag[0])        
-        url = url_ExoMol()+molname_simple+"/"+tag[0]+"/"+tag[1]+"/"
-
+        molname_simple=e2s(tag[0])
         
         for ext in extension:
             if ext==".trans.bz2" and numtag is not None:
                 ext="__"+numtag+ext
-            pfname=molec+ext
-            pfpath=url+pfname
-            os.makedirs(str(self.path), exist_ok=True)
-            print("Downloading "+pfpath)
-            try:
-                urllib.request.urlretrieve(pfpath,str(self.path/pfname))
-            except:
-                print("Error: Couldn't download "+ext+" file and save.")
+                
+            if ext==".broad":
+                pfname_arr=[tag[0]+"__H2"+ext,tag[0]+"__He"+ext]
+                url = url_ExoMol()+molname_simple+"/"+tag[0]+"/"
+            else:
+                pfname_arr=[molec+ext]
+                url = url_ExoMol()+molname_simple+"/"+tag[0]+"/"+tag[1]+"/"
+                
+            for pfname in pfname_arr:
+                pfpath=url+pfname
+                os.makedirs(str(self.path), exist_ok=True)
+                print("Downloading "+pfpath)
+                try:
+                    urllib.request.urlretrieve(pfpath,str(self.path/pfname))
+                except:
+                    print("Error: Couldn't download "+ext+" file and save.")
 
 
 
@@ -529,10 +541,9 @@ def search_molecid(molec):
         return None
 
 if __name__ == "__main__":
-#    mdb=MdbExomol("/home/kawahara/exojax/data/exomol/CO/12C-16O/Li2015/")
-#    mdb=MdbExomol("/home/kawahara/exojax/data/exomol/NO/14N-16O/NOname/14N-16O__NOname")
-#    mdb=MdbExomol("/home/kawahara/exojax/data/exomol/NO/14N-16O/NOname/14N-16O__NOname")
-#    mdb=MdbExomol("/home/kawahara/exojax/data/exomol/CH4/12C-1H4/YT34to10/",nurange=[6050.0,6150.0])
+#    mdb=MdbExomol("/home/kawahara/exojax/data/CO/12C-16O/Li2015/")
+    mdb=MdbExomol("/home/kawahara/exojax/data/exomol/CH4/12C-1H4/YT34to10/",nurange=[6050.0,6150.0])
 #    mdb=MdbExomol("/home/kawahara/exojax/data/exomol/NH3/14N-1H3/CoYuTe/",nurange=[6050.0,6150.0])
-    mdb=MdbExomol("/home/kawahara/exojax/data/exomol/H2S/1H2-32S/AYT2/",nurange=[6050.0,6150.0])
+#    mdb=MdbExomol("/home/kawahara/exojax/data/exomol/H2S/1H2-32S/AYT2/",nurange=[6050.0,6150.0])
 #    mdb=MdbExomol("/home/kawahara/exojax/data/exomol/FeH/56Fe-1H/MoLLIST/",nurange=[6050.0,6150.0])
+#    mdb=MdbExomol("/home/kawahara/exojax/data/exomol/NO/14N-16O/NOname/14N-16O__NOname")

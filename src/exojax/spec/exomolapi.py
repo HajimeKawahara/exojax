@@ -32,10 +32,8 @@ def read_def(deff):
     for i, com in enumerate(dat["COMMENT"]):
         if "Default value of Lorentzian half-width" in com:
             alpha_ref=float(dat["VAL"][i])
-            print("gamma width=",alpha_ref)
         elif "Default value of temperature exponent" in com:
             n_Texp=float(dat["VAL"][i])
-            print("T exponent=",n_Texp)
         elif "Element symbol 2" in com:
             molmasssw=True
         elif "No. of transition files" in com:
@@ -47,7 +45,6 @@ def read_def(deff):
             c=np.unique(dat["VAL"][i].strip(" ").split(" "))
             c=np.array(c,dtype=np.float)
             molmass=(np.max(c))
-            print("Mol mass=",molmass)
             molmasssw=False
 
         ### EXCEPTION
@@ -220,23 +217,31 @@ def pickup_gEslow(states,trans):
     return A, nu_lines, elower, gup
 
 
-def read_braod(broadf):
-    """ Reading braodening file
+def read_broad(broadf):
+    """ Reading braodening file (.broad)
 
     Args: 
        broadf: .broad file
 
     """
-
+    dat = pd.read_csv(broadf,sep="\s+",usecols=range(4),names=("method","alpha_ref","n_Texp","jlower"))
+    return dat
 
 if __name__=="__main__":
     import time
+    import sys
 
+    #broad file
+    broadf="/home/kawahara/exojax/data/CO/12C-16O/12C-16O__H2.broad"
+    dat=read_broad(broadf)
+
+    #partition file
     pff="/home/kawahara/exojax/data/exomol/CO/12C-16O/Li2015/12C-16O__Li2015.pf"
     dat=read_pf(pff)
-    
-    print("Checking compution of Elower and gupper.")
+
     check=False
+    if check:
+        print("Checking compution of Elower and gupper.")
     statesf="/home/kawahara/exojax/data/exomol/CO/12C-16O/Li2015/12C-16O__Li2015.states.bz2"
     states=read_states(statesf)    
     transf="/home/kawahara/exojax/data/exomol/CO/12C-16O/Li2015/12C-16O__Li2015.trans.bz2"
@@ -244,6 +249,8 @@ if __name__=="__main__":
     
     ts=time.time()
     A, nu_lines, elower, gup, jlower, jupper=pickup_gE(states,trans)
+    for i in range(0,len(A)):
+        print(jlower[i],"-",jupper[i])
     te=time.time()
     
     tsx=time.time()
