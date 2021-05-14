@@ -93,6 +93,7 @@
 <li class="toctree-l1"><a class="reference internal" href="tutorials/voigt_function.html">Voigt Profile</a></li>
 <li class="toctree-l1"><a class="reference internal" href="tutorials/opacity.html">CO cross section using HITRAN</a></li>
 <li class="toctree-l1"><a class="reference internal" href="tutorials/opacity_exomol.html">CO cross section using ExoMol</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tutorials/comparison_db.html">Comparing HITEMP and ExoMol</a></li>
 </ul>
 <p class="caption"><span class="caption-text">API:</span></p>
 <ul>
@@ -418,10 +419,10 @@
 </li>
       <li><a href="exojax/exojax.spec.html#module-exojax.spec.exomol">exojax.spec.exomol (module)</a>
 </li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="exojax/exojax.spec.html#module-exojax.spec.exomolapi">exojax.spec.exomolapi (module)</a>
 </li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="exojax/exojax.spec.html#module-exojax.spec.hapi">exojax.spec.hapi (module)</a>
 </li>
       <li><a href="exojax/exojax.spec.html#module-exojax.spec.hitran">exojax.spec.hitran (module)</a>
@@ -471,6 +472,10 @@
       <li><a href="exojax/exojax.utils.html#module-exojax.utils.molname">exojax.utils.molname (module)</a>
 </li>
       <li><a href="exojax/exojax.utils.html#module-exojax.utils.url">exojax.utils.url (module)</a>
+</li>
+      <li><a href="exojax/exojax.spec.html#exojax.spec.moldb.MdbHit.exomol_pf_download">exomol_pf_download() (exojax.spec.moldb.MdbHit method)</a>
+</li>
+      <li><a href="exojax/exojax.spec.html#exojax.spec.moldb.MdbHit.ExomolQT">ExomolQT() (exojax.spec.moldb.MdbHit method)</a>
 </li>
       <li><a href="exojax/exojax.aux.html#exojax.aux.pf_bc.extract_pf_bc">extract_pf_bc() (in module exojax.aux.pf_bc)</a>
 </li>
@@ -635,6 +640,8 @@
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="exojax/exojax.spec.html#exojax.spec.hapi.length">length() (in module exojax.spec.hapi)</a>
+</li>
+      <li><a href="exojax/exojax.spec.html#exojax.spec.autospec.AutoXS.linest">linest() (exojax.spec.autospec.AutoXS method)</a>
 </li>
       <li><a href="exojax/exojax.spec.html#exojax.spec.hapi.listOfTuples">listOfTuples() (in module exojax.spec.hapi)</a>
 </li>
@@ -826,18 +833,26 @@
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="exojax/exojax.spec.html#exojax.spec.partf.qfunc_hitran">qfunc_hitran() (in module exojax.spec.partf)</a>
 </li>
-      <li><a href="exojax/exojax.spec.html#exojax.spec.moldb.MdbHit.Qr">Qr() (exojax.spec.moldb.MdbHit method)</a>
+      <li><a href="exojax/exojax.spec.html#exojax.spec.moldb.MdbHit.Qr_HAPI">Qr_HAPI() (exojax.spec.moldb.MdbHit method)</a>
 </li>
       <li><a href="exojax/exojax.spec.html#exojax.spec.moldb.MdbExomol.qr_interp">qr_interp() (exojax.spec.moldb.MdbExomol method)</a>
+
+      <ul>
+        <li><a href="exojax/exojax.spec.html#exojax.spec.moldb.MdbHit.qr_interp">(exojax.spec.moldb.MdbHit method)</a>
 </li>
-      <li><a href="exojax/exojax.spec.html#exojax.spec.moldb.MdbHit.Qr_layer">Qr_layer() (exojax.spec.moldb.MdbHit method)</a>
+      </ul></li>
+      <li><a href="exojax/exojax.spec.html#exojax.spec.moldb.MdbHit.Qr_layer_HAPI">Qr_layer_HAPI() (exojax.spec.moldb.MdbHit method)</a>
 </li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="exojax/exojax.spec.html#exojax.spec.moldb.MdbHit.Qr_line">Qr_line() (exojax.spec.moldb.MdbHit method)</a>
+      <li><a href="exojax/exojax.spec.html#exojax.spec.moldb.MdbHit.Qr_line_HAPI">Qr_line_HAPI() (exojax.spec.moldb.MdbHit method)</a>
 </li>
       <li><a href="exojax/exojax.spec.html#exojax.spec.moldb.MdbExomol.QT_interp">QT_interp() (exojax.spec.moldb.MdbExomol method)</a>
+
+      <ul>
+        <li><a href="exojax/exojax.spec.html#exojax.spec.moldb.MdbHit.QT_interp">(exojax.spec.moldb.MdbHit method)</a>
 </li>
+      </ul></li>
       <li><a href="exojax/exojax.spec.html#exojax.spec.hapi.queryHITRAN">queryHITRAN() (in module exojax.spec.hapi)</a>
 </li>
       <li><a href="exojax/exojax.spec.html#exojax.spec.hapi.quickSort">quickSort() (in module exojax.spec.hapi)</a>

@@ -25,6 +25,7 @@ ExoJAX provides an auto-differentiable high-resolution spectrum model for exopla
    tutorials/voigt_function.rst   
    tutorials/opacity.rst	     
    tutorials/opacity_exomol.rst	     
+   tutorials/comparison_db.rst	     
 
 .. toctree::
    :maxdepth: 1
