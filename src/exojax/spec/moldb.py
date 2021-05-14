@@ -220,7 +220,7 @@ class MdbExomol(object):
 
 
 class MdbHit(object):
-        """ molecular database of ExoMol
+    """ molecular database of ExoMol
 
     MdbExomol is a class for ExoMol.
 
