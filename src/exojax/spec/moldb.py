@@ -27,6 +27,9 @@ class MdbExomol(object):
         gamma_natural (jnp array): gamma factor of the natural broadening
         elower (jnp array): the lower state energy (cm-1)
         gpp (jnp array): statistical weight
+        jlower (jnp array): J_lower
+        jupper (jnp array): J_upper
+
 
     """
     def __init__(self,path,nurange=[-np.inf,np.inf],margin=1.0,crit=-np.inf):
@@ -92,7 +95,7 @@ class MdbExomol(object):
                 trans=exomolapi.read_trans(self.trans_file)
                 trans.to_feather(self.trans_file.with_suffix(".feather"))
             #compute gup and elower
-            self._A, self.nu_lines, self._elower, self._gpp=exomolapi.pickup_gE(states,trans)        
+            self._A, self.nu_lines, self._elower, self._gpp, self._jlower, self._jupper=exomolapi.pickup_gE(states,trans)        
         else:
             imin=np.searchsorted(numinf,nurange[0],side="right")-1 #left side
             imax=np.searchsorted(numinf,nurange[1],side="right")-1 #left side
@@ -110,13 +113,16 @@ class MdbExomol(object):
                 self.trans_file.append(trans_file)
                 #compute gup and elower                
                 if k==0:
-                    self._A, self.nu_lines, self._elower, self._gpp=exomolapi.pickup_gE(states,trans)
+                    self._A, self.nu_lines, self._elower, self._gpp, self._jlower, self._jupper=exomolapi.pickup_gE(states,trans)
                 else:
-                    Ax, nulx, elowerx, gppx=exomolapi.pickup_gE(states,trans)
+                    Ax, nulx, elowerx, gppx, jlowerx, jupperx=exomolapi.pickup_gE(states,trans)
                     self._A=np.hstack([self._A,Ax])
                     self.nu_lines=np.hstack([self.nu_lines,nulx])
                     self._elower=np.hstack([self._elower,elowerx])
                     self._gpp=np.hstack([self._gpp,gppx])
+                    self._jlower=np.hstack([self._jlower,jlowerx])
+                    self._jupper=np.hstack([self._jupper,jupperx])
+                    
 
         self.Tref=296.0        
         self.QTref=np.array(self.QT_interp(self.Tref))
@@ -147,6 +153,8 @@ class MdbExomol(object):
         self._A=self._A[mask]
         self._elower=self._elower[mask]
         self._gpp=self._gpp[mask]
+        self._jlower=self._jlower[mask]
+        self._jupper=self._jupper[mask]
         
         #jnp arrays
         self.dev_nu_lines=jnp.array(self.nu_lines)
@@ -155,6 +163,8 @@ class MdbExomol(object):
         self.gamma_natural=gn(self.A)
         self.elower=jnp.array(self._elower)
         self.gpp=jnp.array(self._gpp)
+        self.jlower=jnp.array(self._jlower,dtype=int)
+        self.jupper=jnp.array(self._jupper,dtype=int)
 
         
     def QT_interp(self,T):

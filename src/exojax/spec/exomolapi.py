@@ -130,7 +130,7 @@ def read_states(statesf):
 
 
 def pickup_gE(states,trans,trans_lines=False):
-    """extract g_upper (gup) and E_lower (elower) from states DataFrame and insert them to transition DataFrame.
+    """extract g_upper (gup), E_lower (elower), and J_lower and J_upper from states DataFrame and insert them to transition DataFrame.
 
     Args:
        states: states pandas DataFrame
@@ -139,7 +139,7 @@ def pickup_gE(states,trans,trans_lines=False):
 
 
     Returns:
-       A, nu_lines, elower, gup
+       A, nu_lines, elower, gup, jlower, jupper
 
     Note:
        We first convert pandas DataFrame to ndarray. The state counting numbers in states DataFrame is used as indices of the new array for states (newstates). We remove the state count numbers as the column of newstate, i.e. newstates[:,k] k=0: E, 1: g, 2: J. Then, we can directly use the state counting numbers as mask.
@@ -161,6 +161,9 @@ def pickup_gE(states,trans,trans_lines=False):
     elower=newstates[i_lower,0]
     eupper=newstates[i_upper,0]
     gup=newstates[i_upper,1]
+    jlower=np.array(newstates[i_lower,2],dtype=int)
+    jupper=np.array(newstates[i_upper,2],dtype=int)
+        
     A=ndtrans[:,2]
     
     if trans_lines:
@@ -177,7 +180,7 @@ def pickup_gE(states,trans,trans_lines=False):
     #plt.savefig("nudiff.png", bbox_inches="tight", pad_inches=0.0)
     #plt.show()
 
-    return A, nu_lines, elower, gup
+    return A, nu_lines, elower, gup, jlower, jupper
 
 
 def pickup_gEslow(states,trans):
@@ -217,6 +220,14 @@ def pickup_gEslow(states,trans):
     return A, nu_lines, elower, gup
 
 
+def read_braod(broadf):
+    """ Reading braodening file
+
+    Args: 
+       broadf: .broad file
+
+    """
+
 
 if __name__=="__main__":
     import time
@@ -232,9 +243,8 @@ if __name__=="__main__":
     trans=read_trans(transf)
     
     ts=time.time()
-    A, nu_lines, elower, gup=pickup_gE(states,trans)
+    A, nu_lines, elower, gup, jlower, jupper=pickup_gE(states,trans)
     te=time.time()
-
     
     tsx=time.time()
     if check:
