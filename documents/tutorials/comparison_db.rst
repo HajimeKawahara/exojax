@@ -114,8 +114,7 @@ or
 
 the pressure broadning for ExoMol
 
-$:raw-latex:`\gamma`^p_L = :raw-latex:`\alpha`\ *{ref} ( T/T*\ {ref}
-)^{-n_{texp}} ( P/P_{ref}), $
+:math:`\gamma^p_L = \alpha_{ref} ( T/T_{ref})^{-n_{texp}} ( P/P_{ref}),`
 
 and the natural broadening
 
@@ -141,10 +140,6 @@ Thermal broadening
     sigmaD_Li2015=doppler_sigma(mdbCO_Li2015.nu_lines,Tfix,Mmol)
 
 Then, the line center…
-
-In HITRAN database, a slight pressure shift can be included using
-:math:`\delta_{air}`: :math:`\nu_0(P) = \nu_0 + \delta_{air} P`. But
-this shift is quite a bit.
 
 .. code:: ipython3
 
