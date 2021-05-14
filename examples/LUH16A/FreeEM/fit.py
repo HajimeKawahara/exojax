@@ -91,7 +91,10 @@ def ap(fobs,nusd,ws,we,Nx):
     gammaLMP = jit(vmap(gamma_exomol,(0,0,None,None)))\
         (Parr,Tarr,mdbCO.n_Texp,mdbCO.alpha_ref)
     gammaLMN=gamma_natural(mdbCO.A)
+
+    #(Nlayer, None)+(None, Nlines)=(Nlayers, Nlines)
     gammaLM=gammaLMP[:,None]+gammaLMN[None,:]
+    
     SijM=jit(vmap(SijT,(0,None,None,None,0)))\
         (Tarr,mdbCO.logsij0,mdbCO.nu_lines,mdbCO.elower,qt)
     sigmaDM=jit(vmap(doppler_sigma,(None,0,None)))\

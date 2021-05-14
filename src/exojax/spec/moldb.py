@@ -14,6 +14,21 @@ import pandas as pd
 __all__ = ['MdbExomol','MdbHit']
 
 class MdbExomol(object):
+    """ molecular database of ExoMol
+
+    MdbExomol is a class for ExoMol.
+
+    Attributes:
+        nu_lines (nd array): line center (cm-1)
+        Sij0 (nd array): line strength at T=Tref (cm)
+        dev_nu_lines (jnp array): line center in device (cm-1)
+        logsij0 (jnp array): log line strength at T=Tref
+        A (jnp array): Einstein A coeeficient
+        gamma_natural (jnp array): gamma factor of the natural broadening
+        elower (jnp array): the lower state energy (cm-1)
+        gpp (jnp array): statistical weight
+
+    """
     def __init__(self,path,nurange=[-np.inf,np.inf],margin=1.0,crit=-np.inf):
         """Molecular database for Exomol form
 
@@ -122,6 +137,9 @@ class MdbExomol(object):
         Args:
            mask: mask to be applied
 
+        Note:
+           We have nd arrays and jnp arrays. We apply the mask to nd arrays and generate jnp array from the corresponding nd array. For instance, self._A is nd array and self.A is jnp array.
+
         """
         #numpy float 64 Do not convert them jnp array
         self.nu_lines = self.nu_lines[mask]
@@ -202,6 +220,24 @@ class MdbExomol(object):
 
 
 class MdbHit(object):
+        """ molecular database of ExoMol
+
+    MdbExomol is a class for ExoMol.
+
+    Attributes:
+        nu_lines (nd array): line center (cm-1)
+        Sij0 (nd array): line strength at T=Tref (cm)
+        dev_nu_lines (jnp array): line center in device (cm-1)
+        logsij0 (jnp array): log line strength at T=Tref
+        A (jnp array): Einstein A coeeficient
+        gamma_natural (jnp array): gamma factor of the natural broadening
+        gamma_air (jnp array): gamma factor of air pressure broadening
+        gamma_self (jnp array): gamma factor of self pressure broadening
+        elower (jnp array): the lower state energy (cm-1)
+        gpp (jnp array): statistical weight
+
+    """
+
     def __init__(self,path,nurange=[-np.inf,np.inf],margin=250.0,crit=-np.inf):
         """Molecular database for HITRAN/HITEMP form
 
@@ -238,37 +274,64 @@ class MdbHit(object):
         self.crit = crit
         self.margin = margin
         self.nurange=[np.min(nurange),np.max(nurange)]
+
+        #nd arrays using DRAM (not jnp, not in GPU)
         self.nu_lines = hapi.getColumn(molec, 'nu')
         self.Sij0 = hapi.getColumn(molec, 'sw')
+        self.delta_air = hapi.getColumn(molec, 'delta_air')
+        self.isoid = hapi.getColumn(molec,'local_iso_id')
+        self.uniqiso=np.unique(self.isoid)
+
+        self._A=hapi.getColumn(molec, 'a')
+        self._n_air = hapi.getColumn(molec, 'n_air')
+        self._gamma_air = hapi.getColumn(molec, 'gamma_air')
+        self._gamma_self =hapi.getColumn(molec, 'gamma_self')
+        self._elower = hapi.getColumn(molec, 'elower')
+        self._gpp = hapi.getColumn(molec, 'gpp')
 
         ### MASKING ###
         mask=(self.nu_lines>self.nurange[0]-self.margin)\
         *(self.nu_lines<self.nurange[1]+self.margin)\
         *(self.Sij0>self.crit)
+        
+        self.masking(mask)
+        
+    def masking(self,mask):
+        """applying mask and (re)generate jnp.arrays
+        
+        Args:
+           mask: mask to be applied
 
+        Note:
+           We have nd arrays and jnp arrays. We apply the mask to nd arrays and generate jnp array from the corresponding nd array. For instance, self._A is nd array and self.A is jnp array.
+
+        """
+        
         #numpy float 64 Do not convert them jnp array
         self.nu_lines = self.nu_lines[mask]
-        self.Sij0 = self.Sij0[mask]        
-        self.delta_air = hapi.getColumn(molec, 'delta_air')[mask]
-
-        #jnp array
-        A=hapi.getColumn(molec, 'a')[mask]
-        self.A = jnp.array(A)
-        self.gamma_natural=gn(A)
-
-        self.n_air = jnp.array(hapi.getColumn(molec, 'n_air')[mask])
-        self.gamma_air = jnp.array(hapi.getColumn(molec, 'gamma_air')[mask])
-        self.gamma_self = jnp.array(hapi.getColumn(molec, 'gamma_self')[mask])        
-        self.elower = jnp.array(hapi.getColumn(molec, 'elower')[mask])
-        self.gpp = jnp.array(hapi.getColumn(molec, 'gpp')[mask]) 
-        self.logsij0=jnp.array(np.log(self.Sij0)) 
-        self.dev_nu_lines=jnp.array(self.nu_lines)
-
-        #int
-        self.isoid = hapi.getColumn(molec,'local_iso_id')[mask]
+        self.Sij0 = self.Sij0[mask]
+        self.delta_air=self.delta_air[mask]
+        self.isoid = self.isoid[mask]
         self.uniqiso=np.unique(self.isoid)
 
-        
+        ##numpy float 64 copy source for jnp
+        self._A=self._A[mask]
+        self._n_air = self._n_air[mask]
+        self._gamma_air = self._gamma_air[mask]
+        self._gamma_self = self._gamma_self[mask]
+        self._elower = self._elower[mask]
+        self._gpp = self._gpp[mask]
+
+        #jnp.array copy from the copy sources
+        self.dev_nu_lines=jnp.array(self.nu_lines)
+        self.logsij0=jnp.array(np.log(self.Sij0))
+        self.A=jnp.array(self._A)
+        self.n_air=jnp.array(self._n_air)
+        self.gamma_air = jnp.array(self._gamma_air)
+        self.gamma_self = jnp.array(self._gamma_self)
+        self.elower=jnp.array(self._elower)
+        self.gpp=jnp.array(self._gpp)
+        self.gamma_natural=gn(self.A)
 
         
     def download(self):
