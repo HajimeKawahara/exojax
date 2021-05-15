@@ -222,19 +222,59 @@ def read_broad(broadf):
 
     Args: 
        broadf: .broad file
+    
+    Return:
+       broadening info in bdat form (pandas), defined by this instance.
 
     """
-    dat = pd.read_csv(broadf,sep="\s+",usecols=range(4),names=("method","alpha_ref","n_Texp","jlower"))
-    return dat
+    bdat = pd.read_csv(broadf,sep="\s+",usecols=range(4),names=("method","alpha_ref","n_Texp","jlower"))
 
+    return bdat
+
+def make_j2b(bdat,alpha_ref_default=0.07,n_Texp_default=0.5,jlower_max=None):
+    """compute j2b (map from jlower to alpha_ref)
+    
+    Args: 
+       bdat: exomol .broad data given by exomolapi.read_broad
+       alpha_ref_default: default value      
+       n_Texp_default: default value      
+       jlower_max: maximum number of jlower    
+
+    Returns:
+       j2alpha_ref[jlower] provides alpha_ref for jlower
+       j2n_Texp[jlower]  provides nT_exp for jlower
+
+    """
+    
+    jlower_arr=np.array(bdat["jlower"],dtype=int)
+    alpha_ref_arr=np.array(bdat["alpha_ref"])
+    n_Texp_arr=np.array(bdat["n_Texp"])
+
+    if jlower_max==None:
+        Nbr=np.max(jlower_arr)+1
+    else:
+        Nbr=jlower_max+1
+    j2alpha_ref=np.ones(Nbr)*alpha_ref_default
+    j2n_Texp=np.ones(Nbr)*n_Texp_default
+    
+    j2alpha_ref[jlower_arr]=alpha_ref_arr
+    j2n_Texp[jlower_arr]=n_Texp_arr
+    Ndef=Nbr-(np.max(jlower_arr)+1)
+    if Ndef>0:
+        print("default broading is used for ",Ndef," J lower states in ",Nbr," states")
+    
+    return j2alpha_ref, j2n_Texp
+    
+    
 if __name__=="__main__":
     import time
     import sys
 
     #broad file
     broadf="/home/kawahara/exojax/data/CO/12C-16O/12C-16O__H2.broad"
-    dat=read_broad(broadf)
-
+    bdat=read_broad(broadf)
+    j2alpha_ref, j2n_Texp=make_j2b(bdat,jlower_max=100)
+    
     #partition file
     pff="/home/kawahara/exojax/data/exomol/CO/12C-16O/Li2015/12C-16O__Li2015.pf"
     dat=read_pf(pff)
@@ -249,8 +289,8 @@ if __name__=="__main__":
     
     ts=time.time()
     A, nu_lines, elower, gup, jlower, jupper=pickup_gE(states,trans)
-    for i in range(0,len(A)):
-        print(jlower[i],"-",jupper[i])
+#    for i in range(0,len(A)):
+#        print(jlower[i],"-",jupper[i])
     te=time.time()
     
     tsx=time.time()
@@ -266,3 +306,4 @@ if __name__=="__main__":
         print(np.sum((elower_s-elower)**2))
         print(np.sum((gup_s-gup)**2))
     
+    #computing alpha_ref, n_Texp

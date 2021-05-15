@@ -29,13 +29,13 @@ class MdbExomol(object):
         gpp (jnp array): statistical weight
         jlower (jnp array): J_lower
         jupper (jnp array): J_upper
-        n_Tref_def: default temperature exponent in def file
-        alpha_ref_def: default alpha_ref (gamma0) in def file
-
-
+        n_Tref (jnp array): temperature exponent
+        alpha_ref (jnp array): alpha_ref (gamma0)
+        n_Tref_def: default temperature exponent in .def file, used for jlower not given in .broad
+        alpha_ref_def: default alpha_ref (gamma0) in .def file, used for jlower not given in .broad
 
     """
-    def __init__(self,path,nurange=[-np.inf,np.inf],margin=1.0,crit=-np.inf):
+    def __init__(self,path,nurange=[-np.inf,np.inf],margin=1.0,crit=-np.inf, bkgdatm="H2"):
         """Molecular database for Exomol form
 
         Args: 
@@ -43,6 +43,7 @@ class MdbExomol(object):
            nurange: wavenumber range list (cm-1) or wavenumber array
            margin: margin for nurange (cm-1)
            crit: line strength lower limit for extraction
+           bkgdatm: background atmosphere for broadening. e.g. H2, He, 
 
         Note:
            The trans/states files can be very large. For the first time to read it, we convert it to the feather-format. After the second-time, we use the feather format instead.
@@ -53,6 +54,10 @@ class MdbExomol(object):
         self.path = pathlib.Path(path)
         t0=self.path.parents[0].stem        
         molec=t0+"__"+str(self.path.stem)
+        self.bkgdatm=bkgdatm
+        print("Background atmosphere: ",self.bkgdatm)
+        molecbroad=t0+"__"+self.bkgdatm
+
         self.crit = crit
         self.margin = margin
         self.nurange=[np.min(nurange),np.max(nurange)]
@@ -61,7 +66,7 @@ class MdbExomol(object):
         self.states_file = self.path/pathlib.Path(molec+".states.bz2")
         self.pf_file = self.path/pathlib.Path(molec+".pf")
         self.def_file = self.path/pathlib.Path(molec+".def")
-        self.broad_file = self.path/pathlib.Path(molec+".broad")
+        self.broad_file = self.path/pathlib.Path(molecbroad+".broad")
 
         if not self.def_file.exists():
                 self.download(molec,extension=[".def",".pf",".states.bz2",".broad"])
@@ -133,8 +138,17 @@ class MdbExomol(object):
         self.Tref=296.0        
         self.QTref=np.array(self.QT_interp(self.Tref))
         
-        ##input should be ndarray not jnp array
+        ##Line strength: input should be ndarray not jnp array
         self.Sij0=exomol.Sij0(self._A,self._gpp,self.nu_lines,self._elower,self.QTref)
+
+        ##Broadening parameters
+        bdat=exomolapi.read_broad(self.broad_file)
+        self.j2alpha_ref, self.j2n_Texp = exomolapi.make_j2b(bdat,\
+            alpha_ref_default=self.alpha_ref_def,\
+            n_Texp_default=self.n_Texp_def,\
+            jlower_max=np.max(self._jlower))
+        self._alpha_ref=self.j2alpha_ref[self._jlower]
+        self._n_Texp=self.j2n_Texp[self._jlower]
         
         ### MASKING ###
         mask=(self.nu_lines>self.nurange[0]-self.margin)\
@@ -161,6 +175,8 @@ class MdbExomol(object):
         self._gpp=self._gpp[mask]
         self._jlower=self._jlower[mask]
         self._jupper=self._jupper[mask]
+        self._alpha_ref=self._alpha_ref[mask]
+        self._n_Texp=self._n_Texp[mask]
         
         #jnp arrays
         self.dev_nu_lines=jnp.array(self.nu_lines)
@@ -171,6 +187,8 @@ class MdbExomol(object):
         self.gpp=jnp.array(self._gpp)
         self.jlower=jnp.array(self._jlower,dtype=int)
         self.jupper=jnp.array(self._jupper,dtype=int)
+        self.alpha_ref=jnp.array(self._alpha_ref)
+        self.n_Texp=jnp.array(self._n_Texp)
 
         
     def QT_interp(self,T):
@@ -541,8 +559,8 @@ def search_molecid(molec):
         return None
 
 if __name__ == "__main__":
-#    mdb=MdbExomol("/home/kawahara/exojax/data/CO/12C-16O/Li2015/")
-    mdb=MdbExomol("/home/kawahara/exojax/data/exomol/CH4/12C-1H4/YT34to10/",nurange=[6050.0,6150.0])
+    mdb=MdbExomol("/home/kawahara/exojax/data/CO/12C-16O/Li2015/")
+#    mdb=MdbExomol("/home/kawahara/exojax/data/exomol/CH4/12C-1H4/YT34to10/",nurange=[6050.0,6150.0])
 #    mdb=MdbExomol("/home/kawahara/exojax/data/exomol/NH3/14N-1H3/CoYuTe/",nurange=[6050.0,6150.0])
 #    mdb=MdbExomol("/home/kawahara/exojax/data/exomol/H2S/1H2-32S/AYT2/",nurange=[6050.0,6150.0])
 #    mdb=MdbExomol("/home/kawahara/exojax/data/exomol/FeH/56Fe-1H/MoLLIST/",nurange=[6050.0,6150.0])
