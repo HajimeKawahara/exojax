@@ -285,7 +285,7 @@ def make_j2b(bdat,alpha_ref_default=0.07,n_Texp_default=0.5,jlower_max=None):
     if jlower_max==None:
         Nblower=np.max(jlower_arr)+1
     else:
-        Nblower=jlower_max+1        
+        Nblower=np.max([jlower_max,np.max(jlower_arr)])+1        
     j2alpha_ref=np.ones(Nblower)*alpha_ref_default
     j2n_Texp=np.ones(Nblower)*n_Texp_default
     
@@ -328,7 +328,7 @@ def make_jj2b(bdat,j2alpha_ref_def,j2n_Texp_def,jupper_max=None):
     if jupper_max==None:
         Nbupper=np.max(jupper_arr)+1
     else:
-        Nbupper=jupper_max+1        
+        Nbupper=np.max([jupper_max,np.max(jupper_arr)])+1        
 
     jj2alpha_ref=j2alpha_ref_def[:,np.newaxis]*np.ones(Nbupper)
     jj2n_Texp=j2n_Texp_def[:,np.newaxis]*np.ones(Nbupper)

@@ -202,17 +202,17 @@ class MdbExomol(object):
                 j2alpha_ref, j2n_Texp = exomolapi.make_j2b(bdat,\
                     alpha_ref_default=self.alpha_ref_def,\
                     n_Texp_default=self.n_Texp_def,\
-                    jlower_max=np.max(self._jlower))
+                        jlower_max=np.max(self._jlower))
                 self.alpha_ref=jnp.array(j2alpha_ref[self._jlower])
                 self.n_Texp=jnp.array(j2n_Texp[self._jlower])                
             elif codelv=="a1":
                 j2alpha_ref, j2n_Texp = exomolapi.make_j2b(bdat,\
                     alpha_ref_default=self.alpha_ref_def,\
                     n_Texp_default=self.n_Texp_def,\
-                    jlower_max=np.max(self._jlower))                
+                        jlower_max=np.max(self._jlower))                
                 jj2alpha_ref, jj2n_Texp=exomolapi.make_jj2b(bdat,\
-                    j2alpha_ref=j2alpha_ref,j2n_Texp=j2n_Texp,\
-                    jupper_max=np.max(self._jupper))
+                    j2alpha_ref_def=j2alpha_ref,j2n_Texp_def=j2n_Texp,\
+                        jupper_max=np.max(self._jupper))
                 self.alpha_ref=jnp.array(jj2alpha_ref[self._jlower,self._jupper])
                 self.n_Texp=jnp.array(jj2n_Texp[self._jlower,self._jupper])            
         else:
@@ -592,7 +592,11 @@ def search_molecid(molec):
 
 if __name__ == "__main__":
     #mdb=MdbExomol("/home/kawahara/exojax/data/CO/12C-16O/Li2015/")    
-    mdb=MdbExomol("/home/kawahara/exojax/data/CH4/12C-1H4/YT34to10/",nurange=[6050.0,6150.0])
+    #mdb=MdbExomol("/home/kawahara/exojax/data/CH4/12C-1H4/YT34to10/",nurange=[6050.0,6150.0])
+    mdb=MdbExomol('.database/H2O/1H2-16O/POKAZATEL',[4310.0,4320.0],crit=1.e-45) 
+
+#    mask=mdb.A>1.e-42
+#    mdb.masking(mask)
 #    mdb=MdbExomol("/home/kawahara/exojax/data/exomol/NH3/14N-1H3/CoYuTe/",nurange=[6050.0,6150.0])
 #    mdb=MdbExomol("/home/kawahara/exojax/data/exomol/H2S/1H2-32S/AYT2/",nurange=[6050.0,6150.0])
 #    mdb=MdbExomol("/home/kawahara/exojax/data/exomol/FeH/56Fe-1H/MoLLIST/",nurange=[6050.0,6150.0])
