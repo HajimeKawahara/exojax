@@ -261,7 +261,7 @@ def make_j2b(bdat,alpha_ref_default=0.07,n_Texp_default=0.5,jlower_max=None):
     j2n_Texp[jlower_arr]=n_Texp_arr
     Ndef=Nbr-(np.max(jlower_arr)+1)
     if Ndef>0:
-        print("default broading is used for ",Ndef," J lower states in ",Nbr," states")
+        print("default broadening parameters are used for ",Ndef," J lower states in ",Nbr," states")
     
     return j2alpha_ref, j2n_Texp
     

@@ -140,15 +140,6 @@ class MdbExomol(object):
         
         ##Line strength: input should be ndarray not jnp array
         self.Sij0=exomol.Sij0(self._A,self._gpp,self.nu_lines,self._elower,self.QTref)
-
-        ##Broadening parameters
-        bdat=exomolapi.read_broad(self.broad_file)
-        self.j2alpha_ref, self.j2n_Texp = exomolapi.make_j2b(bdat,\
-            alpha_ref_default=self.alpha_ref_def,\
-            n_Texp_default=self.n_Texp_def,\
-            jlower_max=np.max(self._jlower))
-        self._alpha_ref=self.j2alpha_ref[self._jlower]
-        self._n_Texp=self.j2n_Texp[self._jlower]
         
         ### MASKING ###
         mask=(self.nu_lines>self.nurange[0]-self.margin)\
@@ -161,7 +152,7 @@ class MdbExomol(object):
         """applying mask and (re)generate jnp.arrays
         
         Args:
-           mask: mask to be applied
+           mask: mask to be applied. self.mask is updated.
 
         Note:
            We have nd arrays and jnp arrays. We apply the mask to nd arrays and generate jnp array from the corresponding nd array. For instance, self._A is nd array and self.A is jnp array.
@@ -175,8 +166,6 @@ class MdbExomol(object):
         self._gpp=self._gpp[mask]
         self._jlower=self._jlower[mask]
         self._jupper=self._jupper[mask]
-        self._alpha_ref=self._alpha_ref[mask]
-        self._n_Texp=self._n_Texp[mask]
         
         #jnp arrays
         self.dev_nu_lines=jnp.array(self.nu_lines)
@@ -187,9 +176,38 @@ class MdbExomol(object):
         self.gpp=jnp.array(self._gpp)
         self.jlower=jnp.array(self._jlower,dtype=int)
         self.jupper=jnp.array(self._jupper,dtype=int)
-        self.alpha_ref=jnp.array(self._alpha_ref)
-        self.n_Texp=jnp.array(self._n_Texp)
 
+        ##Broadening parameters 
+        self.set_broadening()
+        
+
+    def set_broadening(self,broadf=True,alpha_ref_def=None,n_Texp_def=None):
+        """setting broadening parameters
+        
+        Args:
+           broadf: True=use .broad file for available jlower.
+           alpha_ref: set default alpha_ref and apply it. None=use self.alpha_ref_def
+           n_Texp_def: set default n_Texp and apply it. None=use self.n_Texp_def
+        """
+        if alpha_ref_def:
+            self.alpha_ref_def = alpha_ref_def
+        if n_Texp_def:
+            self.n_Texp_def = n_Texp_def
+            
+        if broadf:
+            bdat=exomolapi.read_broad(self.broad_file)
+            self.j2alpha_ref, self.j2n_Texp = exomolapi.make_j2b(bdat,\
+                alpha_ref_default=self.alpha_ref_def,\
+                n_Texp_default=self.n_Texp_def,\
+            jlower_max=np.max(self._jlower))
+            self.alpha_ref=jnp.array(self.j2alpha_ref[self._jlower])
+            self.n_Texp=jnp.array(self.j2n_Texp[self._jlower])
+        else:
+            self.alpha_ref=jnp.array(self.alpha_ref_def*np.ones_like(self._jlower))
+            self.n_Texp=jnp.array(self.n_Texp_def*np.ones_like(self._jlower))
+
+
+            
         
     def QT_interp(self,T):
         """interpolated partition function

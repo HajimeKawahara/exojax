@@ -122,7 +122,8 @@ class AutoXS(object):
             gammaLMP = jit(vmap(gamma_exomol,(0,0,None,None)))\
                               (Parr,Tarr,mdb.n_Texp,mdb.alpha_ref)
             gammaLMN=gamma_natural(mdb.A)
-            gammaLM=gammaLMP[:,None]+gammaLMN[None,:]
+            #gammaLM=gammaLMP[:,None]+gammaLMN[None,:]
+            gammaLM=gammaLMP+gammaLMN[None,:]
             self.molmass=mdb.molmass
             SijM=jit(vmap(SijT,(0,None,None,None,0)))\
                   (Tarr,mdb.logsij0,mdb.nu_lines,mdb.elower,qt)
@@ -337,7 +338,7 @@ if __name__ == "__main__":
     #xsm=autoxs.xsmatrix(Tarr,Parr) 
 
     #RT
-    nus,wav,res=nugrid(1900.0,2300.0,400000,"nm")
+    nus,wav,res=nugrid(1900.0,2300.0,40000,"cm-1")
     #nus=np.linspace(1900.0,2300.0,40000,dtype=np.float64)
     #nus=np.linspace(1900.0,1910.0,1000,dtype=np.float64)
     Parr=np.logspace(-8,2,100)
