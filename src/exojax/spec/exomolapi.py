@@ -226,13 +226,44 @@ def read_broad(broadf):
     Return:
        broadening info in bdat form (pandas), defined by this instance.
 
-    """
-    bdat = pd.read_csv(broadf,sep="\s+",usecols=range(4),names=("method","alpha_ref","n_Texp","jlower"))
+    Note:
+       See Table 16 in https://arxiv.org/pdf/1603.05890.pdf
 
+    """
+    bdat = pd.read_csv(broadf,sep="\s+",\
+                names=("code","alpha_ref","n_Texp","jlower","jupper",\
+               "kalower","kclower","kaupper","kcupper",\
+               "v1lower","v2lower","v3lower",\
+               "v1upper","v2upper","v3upper"))
     return bdat
 
+def check_bdat(bdat):
+    """ cheking codes in .broad
+
+    Args: 
+       bdat: exomol .broad data given by exomolapi.read_broad
+
+    Returns:
+       code level: None, a0, a1, other codes unavailable currently,
+
+    """
+
+    def checkcode(code):
+        cmask=bdat["code"]==code
+        if len(bdat["code"][cmask])>0:
+            return True
+        else:
+            return False
+
+    codelv=None            
+    for code in ["a0","a1"]:
+        if checkcode(code):
+            codelv=code
+
+    return codelv
+        
 def make_j2b(bdat,alpha_ref_default=0.07,n_Texp_default=0.5,jlower_max=None):
-    """compute j2b (map from jlower to alpha_ref)
+    """compute j2b (code a0, map from jlower to alpha_ref)
     
     Args: 
        bdat: exomol .broad data given by exomolapi.read_broad
@@ -245,31 +276,89 @@ def make_j2b(bdat,alpha_ref_default=0.07,n_Texp_default=0.5,jlower_max=None):
        j2n_Texp[jlower]  provides nT_exp for jlower
 
     """
-    
-    jlower_arr=np.array(bdat["jlower"],dtype=int)
-    alpha_ref_arr=np.array(bdat["alpha_ref"])
-    n_Texp_arr=np.array(bdat["n_Texp"])
+    #a0
+    cmask=bdat["code"]=="a0"
+    jlower_arr=np.array(bdat["jlower"][cmask],dtype=int)
+    alpha_ref_arr=np.array(bdat["alpha_ref"][cmask])
+    n_Texp_arr=np.array(bdat["n_Texp"][cmask])
 
     if jlower_max==None:
-        Nbr=np.max(jlower_arr)+1
+        Nblower=np.max(jlower_arr)+1
     else:
-        Nbr=jlower_max+1
-    j2alpha_ref=np.ones(Nbr)*alpha_ref_default
-    j2n_Texp=np.ones(Nbr)*n_Texp_default
+        Nblower=jlower_max+1        
+    j2alpha_ref=np.ones(Nblower)*alpha_ref_default
+    j2n_Texp=np.ones(Nblower)*n_Texp_default
     
     j2alpha_ref[jlower_arr]=alpha_ref_arr
     j2n_Texp[jlower_arr]=n_Texp_arr
-    Ndef=Nbr-(np.max(jlower_arr)+1)
+    
+    
+    Ndef=Nblower-(np.max(jlower_arr)+1)
     if Ndef>0:
-        print("default broadening parameters are used for ",Ndef," J lower states in ",Nbr," states")
+        print("default broadening parameters are used for ",Ndef," J lower states in ",Nblower," states")
     
     return j2alpha_ref, j2n_Texp
+
+def make_jj2b(bdat,j2alpha_ref_def,j2n_Texp_def,jupper_max=None):
+    """compute jj2b (code a1, map from (jlower, jupper) to alpha_ref and n_Texp)
     
+    Args: 
+       bdat: exomol .broad data given by exomolapi.read_broad
+       j2alpha_ref_def: default value from a0
+       j2n_Texp_def: default value from a0
+       jupper_max: maximum number of jupper
+
+    Returns:
+       jj2alpha_ref[jlower,jupper] provides alpha_ref for (jlower, jupper)
+       jj2n_Texp[jlower,jupper]  provides nT_exp for (jlower, jupper)
+
+    Note:
+       The pair of (jlower, jupper) for which broadening parameters are not given, jj2XXX contains None. 
+
+    """
+    #a1
+    cmask=bdat["code"]=="a1"
+    jlower_arr=np.array(bdat["jlower"][cmask],dtype=int)
+    jupper_arr=np.array(bdat["jupper"][cmask],dtype=int)
+    alpha_ref_arr=np.array(bdat["alpha_ref"][cmask])
+    n_Texp_arr=np.array(bdat["n_Texp"][cmask])
+
+    Nblower=len(j2alpha_ref_def)
+    
+    if jupper_max==None:
+        Nbupper=np.max(jupper_arr)+1
+    else:
+        Nbupper=jupper_max+1        
+
+    jj2alpha_ref=j2alpha_ref_def[:,np.newaxis]*np.ones(Nbupper)
+    jj2n_Texp=j2n_Texp_def[:,np.newaxis]*np.ones(Nbupper)
+
+    jj2alpha_ref[jlower_arr,jupper_arr]=alpha_ref_arr
+    jj2n_Texp[jlower_arr,jupper_arr]=n_Texp_arr
+    
+    return  jj2alpha_ref, jj2n_Texp
+
     
 if __name__=="__main__":
     import time
     import sys
 
+    #various broad file
+#    broadf="/home/kawahara/exojax/data/broad/12C-16O__H2.broad"
+    broadf="/home/kawahara/exojax/data/broad/1H2-16O__H2.broad"
+    bdat=read_broad(broadf)
+    codelv=check_bdat(bdat)
+    print(codelv)
+    if codelv=="a0":
+        j2alpha_ref, j2n_Texp=make_j2b(bdat,jlower_max=100)
+    elif codelv=="a1":
+        j2alpha_ref, j2n_Texp=make_j2b(bdat,jlower_max=100)
+        jj2alpha_ref, jj2n_Texp=make_jj2b(bdat,j2alpha_ref,j2n_Texp,jupper_max=100)
+        print(jj2alpha_ref[1,2])
+        print(jj2alpha_ref[1,15])
+
+    
+    sys.exit()
     #broad file
     broadf="/home/kawahara/exojax/data/CO/12C-16O/12C-16O__H2.broad"
     bdat=read_broad(broadf)
