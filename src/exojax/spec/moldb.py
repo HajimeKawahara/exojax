@@ -27,9 +27,15 @@ class MdbExomol(object):
         gamma_natural (jnp array): gamma factor of the natural broadening
         elower (jnp array): the lower state energy (cm-1)
         gpp (jnp array): statistical weight
+        jlower (jnp array): J_lower
+        jupper (jnp array): J_upper
+        n_Tref (jnp array): temperature exponent
+        alpha_ref (jnp array): alpha_ref (gamma0)
+        n_Tref_def: default temperature exponent in .def file, used for jlower not given in .broad
+        alpha_ref_def: default alpha_ref (gamma0) in .def file, used for jlower not given in .broad
 
     """
-    def __init__(self,path,nurange=[-np.inf,np.inf],margin=1.0,crit=-np.inf):
+    def __init__(self,path,nurange=[-np.inf,np.inf],margin=1.0,crit=-np.inf, bkgdatm="H2"):
         """Molecular database for Exomol form
 
         Args: 
@@ -37,6 +43,7 @@ class MdbExomol(object):
            nurange: wavenumber range list (cm-1) or wavenumber array
            margin: margin for nurange (cm-1)
            crit: line strength lower limit for extraction
+           bkgdatm: background atmosphere for broadening. e.g. H2, He, 
 
         Note:
            The trans/states files can be very large. For the first time to read it, we convert it to the feather-format. After the second-time, we use the feather format instead.
@@ -47,24 +54,31 @@ class MdbExomol(object):
         self.path = pathlib.Path(path)
         t0=self.path.parents[0].stem        
         molec=t0+"__"+str(self.path.stem)
+        self.bkgdatm=bkgdatm
+        print("Background atmosphere: ",self.bkgdatm)
+        molecbroad=t0+"__"+self.bkgdatm
+
         self.crit = crit
         self.margin = margin
         self.nurange=[np.min(nurange),np.max(nurange)]
-            
+
+        #Where exomol files are
         self.states_file = self.path/pathlib.Path(molec+".states.bz2")
         self.pf_file = self.path/pathlib.Path(molec+".pf")
         self.def_file = self.path/pathlib.Path(molec+".def")
-        if not self.def_file.exists():
-                self.download(molec,extension=[".def",".pf",".states.bz2"])
+        self.broad_file = self.path/pathlib.Path(molecbroad+".broad")
 
+        if not self.def_file.exists():
+                self.download(molec,extension=[".def",".pf",".states.bz2",".broad"])
+        
         #load def 
-        self.n_Texp, self.alpha_ref, self.molmass, numinf, numtag=exomolapi.read_def(self.def_file)
+        self.n_Texp_def, self.alpha_ref_def, self.molmass, numinf, numtag=exomolapi.read_def(self.def_file)
         #  default n_Texp value if not given
-        if self.n_Texp is None:
-            self.n_Texp=0.5
+        if self.n_Texp_def is None:
+            self.n_Texp_def=0.5
         #  default alpha_ref value if not given
-        if self.alpha_ref is None:
-            self.alpha_ref=0.07
+        if self.alpha_ref_def is None:
+            self.alpha_ref_def=0.07
 
         #load states
         if self.states_file.with_suffix(".feather").exists():
@@ -92,7 +106,7 @@ class MdbExomol(object):
                 trans=exomolapi.read_trans(self.trans_file)
                 trans.to_feather(self.trans_file.with_suffix(".feather"))
             #compute gup and elower
-            self._A, self.nu_lines, self._elower, self._gpp=exomolapi.pickup_gE(states,trans)        
+            self._A, self.nu_lines, self._elower, self._gpp, self._jlower, self._jupper=exomolapi.pickup_gE(states,trans)        
         else:
             imin=np.searchsorted(numinf,nurange[0],side="right")-1 #left side
             imax=np.searchsorted(numinf,nurange[1],side="right")-1 #left side
@@ -110,18 +124,21 @@ class MdbExomol(object):
                 self.trans_file.append(trans_file)
                 #compute gup and elower                
                 if k==0:
-                    self._A, self.nu_lines, self._elower, self._gpp=exomolapi.pickup_gE(states,trans)
+                    self._A, self.nu_lines, self._elower, self._gpp, self._jlower, self._jupper=exomolapi.pickup_gE(states,trans)
                 else:
-                    Ax, nulx, elowerx, gppx=exomolapi.pickup_gE(states,trans)
+                    Ax, nulx, elowerx, gppx, jlowerx, jupperx=exomolapi.pickup_gE(states,trans)
                     self._A=np.hstack([self._A,Ax])
                     self.nu_lines=np.hstack([self.nu_lines,nulx])
                     self._elower=np.hstack([self._elower,elowerx])
                     self._gpp=np.hstack([self._gpp,gppx])
+                    self._jlower=np.hstack([self._jlower,jlowerx])
+                    self._jupper=np.hstack([self._jupper,jupperx])
+                    
 
         self.Tref=296.0        
         self.QTref=np.array(self.QT_interp(self.Tref))
         
-        ##input should be ndarray not jnp array
+        ##Line strength: input should be ndarray not jnp array
         self.Sij0=exomol.Sij0(self._A,self._gpp,self.nu_lines,self._elower,self.QTref)
         
         ### MASKING ###
@@ -135,7 +152,7 @@ class MdbExomol(object):
         """applying mask and (re)generate jnp.arrays
         
         Args:
-           mask: mask to be applied
+           mask: mask to be applied. self.mask is updated.
 
         Note:
            We have nd arrays and jnp arrays. We apply the mask to nd arrays and generate jnp array from the corresponding nd array. For instance, self._A is nd array and self.A is jnp array.
@@ -147,6 +164,8 @@ class MdbExomol(object):
         self._A=self._A[mask]
         self._elower=self._elower[mask]
         self._gpp=self._gpp[mask]
+        self._jlower=self._jlower[mask]
+        self._jupper=self._jupper[mask]
         
         #jnp arrays
         self.dev_nu_lines=jnp.array(self.nu_lines)
@@ -155,7 +174,54 @@ class MdbExomol(object):
         self.gamma_natural=gn(self.A)
         self.elower=jnp.array(self._elower)
         self.gpp=jnp.array(self._gpp)
+        self.jlower=jnp.array(self._jlower,dtype=int)
+        self.jupper=jnp.array(self._jupper,dtype=int)
 
+        ##Broadening parameters 
+        self.set_broadening()
+        
+
+    def set_broadening(self,broadf=True,alpha_ref_def=None,n_Texp_def=None):
+        """setting broadening parameters
+        
+        Args:
+           broadf: True=use .broad file for available jlower.
+           alpha_ref: set default alpha_ref and apply it. None=use self.alpha_ref_def
+           n_Texp_def: set default n_Texp and apply it. None=use self.n_Texp_def
+        """
+        if alpha_ref_def:
+            self.alpha_ref_def = alpha_ref_def
+        if n_Texp_def:
+            self.n_Texp_def = n_Texp_def
+            
+        if broadf:
+            bdat=exomolapi.read_broad(self.broad_file)
+            codelv=exomolapi.check_bdat(bdat)
+            print("Broadening code level=",codelv)
+            if codelv=="a0":
+                j2alpha_ref, j2n_Texp = exomolapi.make_j2b(bdat,\
+                    alpha_ref_default=self.alpha_ref_def,\
+                    n_Texp_default=self.n_Texp_def,\
+                    jlower_max=np.max(self._jlower))
+                self.alpha_ref=jnp.array(j2alpha_ref[self._jlower])
+                self.n_Texp=jnp.array(j2n_Texp[self._jlower])                
+            elif codelv=="a1":
+                j2alpha_ref, j2n_Texp = exomolapi.make_j2b(bdat,\
+                    alpha_ref_default=self.alpha_ref_def,\
+                    n_Texp_default=self.n_Texp_def,\
+                    jlower_max=np.max(self._jlower))                
+                jj2alpha_ref, jj2n_Texp=exomolapi.make_jj2b(bdat,\
+                    j2alpha_ref=j2alpha_ref,j2n_Texp=j2n_Texp,\
+                    jupper_max=np.max(self._jupper))
+                self.alpha_ref=jnp.array(jj2alpha_ref[self._jlower,self._jupper])
+                self.n_Texp=jnp.array(jj2n_Texp[self._jlower,self._jupper])            
+        else:
+            print("No .broad file is given.")
+            self.alpha_ref=jnp.array(self.alpha_ref_def*np.ones_like(self._jlower))
+            self.n_Texp=jnp.array(self.n_Texp_def*np.ones_like(self._jlower))
+
+
+            
         
     def QT_interp(self,T):
         """interpolated partition function
@@ -187,12 +253,12 @@ class MdbExomol(object):
 
         Args: 
            molec: like "12C-16O__Li2015"
-           extension: extension list e.g. [".pf",".def",".trans.bz2",".states.bz2"]
+           extension: extension list e.g. [".pf",".def",".trans.bz2",".states.bz2",".broad"]
            numtag: number tag of transition file if exists. e.g. "11100-11200"
 
         Note:
            The download URL is written in exojax.utils.url.
-
+        
         """
         import urllib.request
         from exojax.utils.molname import e2s
@@ -200,21 +266,27 @@ class MdbExomol(object):
         from exojax.utils.url import url_ExoMol
 
         tag=molec.split("__")
-        molname_simple=e2s(tag[0])        
-        url = url_ExoMol()+molname_simple+"/"+tag[0]+"/"+tag[1]+"/"
-
+        molname_simple=e2s(tag[0])
         
         for ext in extension:
             if ext==".trans.bz2" and numtag is not None:
                 ext="__"+numtag+ext
-            pfname=molec+ext
-            pfpath=url+pfname
-            os.makedirs(str(self.path), exist_ok=True)
-            print("Downloading "+pfpath)
-            try:
-                urllib.request.urlretrieve(pfpath,str(self.path/pfname))
-            except:
-                print("Error: Couldn't download "+ext+" file and save.")
+                
+            if ext==".broad":
+                pfname_arr=[tag[0]+"__H2"+ext,tag[0]+"__He"+ext]
+                url = url_ExoMol()+molname_simple+"/"+tag[0]+"/"
+            else:
+                pfname_arr=[molec+ext]
+                url = url_ExoMol()+molname_simple+"/"+tag[0]+"/"+tag[1]+"/"
+                
+            for pfname in pfname_arr:
+                pfpath=url+pfname
+                os.makedirs(str(self.path), exist_ok=True)
+                print("Downloading "+pfpath)
+                try:
+                    urllib.request.urlretrieve(pfpath,str(self.path/pfname))
+                except:
+                    print("Error: Couldn't download "+ext+" file and save.")
 
 
 
@@ -519,10 +591,9 @@ def search_molecid(molec):
         return None
 
 if __name__ == "__main__":
-#    mdb=MdbExomol("/home/kawahara/exojax/data/exomol/CO/12C-16O/Li2015/")
-#    mdb=MdbExomol("/home/kawahara/exojax/data/exomol/NO/14N-16O/NOname/14N-16O__NOname")
-#    mdb=MdbExomol("/home/kawahara/exojax/data/exomol/NO/14N-16O/NOname/14N-16O__NOname")
-#    mdb=MdbExomol("/home/kawahara/exojax/data/exomol/CH4/12C-1H4/YT34to10/",nurange=[6050.0,6150.0])
+    #mdb=MdbExomol("/home/kawahara/exojax/data/CO/12C-16O/Li2015/")    
+    mdb=MdbExomol("/home/kawahara/exojax/data/CH4/12C-1H4/YT34to10/",nurange=[6050.0,6150.0])
 #    mdb=MdbExomol("/home/kawahara/exojax/data/exomol/NH3/14N-1H3/CoYuTe/",nurange=[6050.0,6150.0])
-    mdb=MdbExomol("/home/kawahara/exojax/data/exomol/H2S/1H2-32S/AYT2/",nurange=[6050.0,6150.0])
+#    mdb=MdbExomol("/home/kawahara/exojax/data/exomol/H2S/1H2-32S/AYT2/",nurange=[6050.0,6150.0])
 #    mdb=MdbExomol("/home/kawahara/exojax/data/exomol/FeH/56Fe-1H/MoLLIST/",nurange=[6050.0,6150.0])
+#    mdb=MdbExomol("/home/kawahara/exojax/data/exomol/NO/14N-16O/NOname/14N-16O__NOname")

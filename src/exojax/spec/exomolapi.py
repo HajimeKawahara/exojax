@@ -32,10 +32,8 @@ def read_def(deff):
     for i, com in enumerate(dat["COMMENT"]):
         if "Default value of Lorentzian half-width" in com:
             alpha_ref=float(dat["VAL"][i])
-            print("gamma width=",alpha_ref)
         elif "Default value of temperature exponent" in com:
             n_Texp=float(dat["VAL"][i])
-            print("T exponent=",n_Texp)
         elif "Element symbol 2" in com:
             molmasssw=True
         elif "No. of transition files" in com:
@@ -47,7 +45,6 @@ def read_def(deff):
             c=np.unique(dat["VAL"][i].strip(" ").split(" "))
             c=np.array(c,dtype=np.float)
             molmass=(np.max(c))
-            print("Mol mass=",molmass)
             molmasssw=False
 
         ### EXCEPTION
@@ -130,7 +127,7 @@ def read_states(statesf):
 
 
 def pickup_gE(states,trans,trans_lines=False):
-    """extract g_upper (gup) and E_lower (elower) from states DataFrame and insert them to transition DataFrame.
+    """extract g_upper (gup), E_lower (elower), and J_lower and J_upper from states DataFrame and insert them to transition DataFrame.
 
     Args:
        states: states pandas DataFrame
@@ -139,7 +136,7 @@ def pickup_gE(states,trans,trans_lines=False):
 
 
     Returns:
-       A, nu_lines, elower, gup
+       A, nu_lines, elower, gup, jlower, jupper
 
     Note:
        We first convert pandas DataFrame to ndarray. The state counting numbers in states DataFrame is used as indices of the new array for states (newstates). We remove the state count numbers as the column of newstate, i.e. newstates[:,k] k=0: E, 1: g, 2: J. Then, we can directly use the state counting numbers as mask.
@@ -161,6 +158,9 @@ def pickup_gE(states,trans,trans_lines=False):
     elower=newstates[i_lower,0]
     eupper=newstates[i_upper,0]
     gup=newstates[i_upper,1]
+    jlower=np.array(newstates[i_lower,2],dtype=int)
+    jupper=np.array(newstates[i_upper,2],dtype=int)
+        
     A=ndtrans[:,2]
     
     if trans_lines:
@@ -177,7 +177,7 @@ def pickup_gE(states,trans,trans_lines=False):
     #plt.savefig("nudiff.png", bbox_inches="tight", pad_inches=0.0)
     #plt.show()
 
-    return A, nu_lines, elower, gup
+    return A, nu_lines, elower, gup, jlower, jupper
 
 
 def pickup_gEslow(states,trans):
@@ -217,24 +217,170 @@ def pickup_gEslow(states,trans):
     return A, nu_lines, elower, gup
 
 
+def read_broad(broadf):
+    """ Reading braodening file (.broad)
 
+    Args: 
+       broadf: .broad file
+    
+    Return:
+       broadening info in bdat form (pandas), defined by this instance.
+
+    Note:
+       See Table 16 in https://arxiv.org/pdf/1603.05890.pdf
+
+    """
+    bdat = pd.read_csv(broadf,sep="\s+",\
+                names=("code","alpha_ref","n_Texp","jlower","jupper",\
+               "kalower","kclower","kaupper","kcupper",\
+               "v1lower","v2lower","v3lower",\
+               "v1upper","v2upper","v3upper"))
+    return bdat
+
+def check_bdat(bdat):
+    """ cheking codes in .broad
+
+    Args: 
+       bdat: exomol .broad data given by exomolapi.read_broad
+
+    Returns:
+       code level: None, a0, a1, other codes unavailable currently,
+
+    """
+
+    def checkcode(code):
+        cmask=bdat["code"]==code
+        if len(bdat["code"][cmask])>0:
+            return True
+        else:
+            return False
+
+    codelv=None            
+    for code in ["a0","a1"]:
+        if checkcode(code):
+            codelv=code
+
+    return codelv
+        
+def make_j2b(bdat,alpha_ref_default=0.07,n_Texp_default=0.5,jlower_max=None):
+    """compute j2b (code a0, map from jlower to alpha_ref)
+    
+    Args: 
+       bdat: exomol .broad data given by exomolapi.read_broad
+       alpha_ref_default: default value      
+       n_Texp_default: default value      
+       jlower_max: maximum number of jlower    
+
+    Returns:
+       j2alpha_ref[jlower] provides alpha_ref for jlower
+       j2n_Texp[jlower]  provides nT_exp for jlower
+
+    """
+    #a0
+    cmask=bdat["code"]=="a0"
+    jlower_arr=np.array(bdat["jlower"][cmask],dtype=int)
+    alpha_ref_arr=np.array(bdat["alpha_ref"][cmask])
+    n_Texp_arr=np.array(bdat["n_Texp"][cmask])
+
+    if jlower_max==None:
+        Nblower=np.max(jlower_arr)+1
+    else:
+        Nblower=jlower_max+1        
+    j2alpha_ref=np.ones(Nblower)*alpha_ref_default
+    j2n_Texp=np.ones(Nblower)*n_Texp_default
+    
+    j2alpha_ref[jlower_arr]=alpha_ref_arr
+    j2n_Texp[jlower_arr]=n_Texp_arr
+    
+    
+    Ndef=Nblower-(np.max(jlower_arr)+1)
+    if Ndef>0:
+        print("default broadening parameters are used for ",Ndef," J lower states in ",Nblower," states")
+    
+    return j2alpha_ref, j2n_Texp
+
+def make_jj2b(bdat,j2alpha_ref_def,j2n_Texp_def,jupper_max=None):
+    """compute jj2b (code a1, map from (jlower, jupper) to alpha_ref and n_Texp)
+    
+    Args: 
+       bdat: exomol .broad data given by exomolapi.read_broad
+       j2alpha_ref_def: default value from a0
+       j2n_Texp_def: default value from a0
+       jupper_max: maximum number of jupper
+
+    Returns:
+       jj2alpha_ref[jlower,jupper] provides alpha_ref for (jlower, jupper)
+       jj2n_Texp[jlower,jupper]  provides nT_exp for (jlower, jupper)
+
+    Note:
+       The pair of (jlower, jupper) for which broadening parameters are not given, jj2XXX contains None. 
+
+    """
+    #a1
+    cmask=bdat["code"]=="a1"
+    jlower_arr=np.array(bdat["jlower"][cmask],dtype=int)
+    jupper_arr=np.array(bdat["jupper"][cmask],dtype=int)
+    alpha_ref_arr=np.array(bdat["alpha_ref"][cmask])
+    n_Texp_arr=np.array(bdat["n_Texp"][cmask])
+
+    Nblower=len(j2alpha_ref_def)
+    
+    if jupper_max==None:
+        Nbupper=np.max(jupper_arr)+1
+    else:
+        Nbupper=jupper_max+1        
+
+    jj2alpha_ref=j2alpha_ref_def[:,np.newaxis]*np.ones(Nbupper)
+    jj2n_Texp=j2n_Texp_def[:,np.newaxis]*np.ones(Nbupper)
+
+    jj2alpha_ref[jlower_arr,jupper_arr]=alpha_ref_arr
+    jj2n_Texp[jlower_arr,jupper_arr]=n_Texp_arr
+    
+    return  jj2alpha_ref, jj2n_Texp
+
+    
 if __name__=="__main__":
     import time
+    import sys
 
+    #various broad file
+#    broadf="/home/kawahara/exojax/data/broad/12C-16O__H2.broad"
+    broadf="/home/kawahara/exojax/data/broad/1H2-16O__H2.broad"
+    bdat=read_broad(broadf)
+    codelv=check_bdat(bdat)
+    print(codelv)
+    if codelv=="a0":
+        j2alpha_ref, j2n_Texp=make_j2b(bdat,jlower_max=100)
+    elif codelv=="a1":
+        j2alpha_ref, j2n_Texp=make_j2b(bdat,jlower_max=100)
+        jj2alpha_ref, jj2n_Texp=make_jj2b(bdat,j2alpha_ref,j2n_Texp,jupper_max=100)
+        print(jj2alpha_ref[1,2])
+        print(jj2alpha_ref[1,15])
+
+    
+    sys.exit()
+    #broad file
+    broadf="/home/kawahara/exojax/data/CO/12C-16O/12C-16O__H2.broad"
+    bdat=read_broad(broadf)
+    j2alpha_ref, j2n_Texp=make_j2b(bdat,jlower_max=100)
+    
+    #partition file
     pff="/home/kawahara/exojax/data/exomol/CO/12C-16O/Li2015/12C-16O__Li2015.pf"
     dat=read_pf(pff)
-    
-    print("Checking compution of Elower and gupper.")
+
     check=False
+    if check:
+        print("Checking compution of Elower and gupper.")
     statesf="/home/kawahara/exojax/data/exomol/CO/12C-16O/Li2015/12C-16O__Li2015.states.bz2"
     states=read_states(statesf)    
     transf="/home/kawahara/exojax/data/exomol/CO/12C-16O/Li2015/12C-16O__Li2015.trans.bz2"
     trans=read_trans(transf)
     
     ts=time.time()
-    A, nu_lines, elower, gup=pickup_gE(states,trans)
+    A, nu_lines, elower, gup, jlower, jupper=pickup_gE(states,trans)
+#    for i in range(0,len(A)):
+#        print(jlower[i],"-",jupper[i])
     te=time.time()
-
     
     tsx=time.time()
     if check:
@@ -249,3 +395,4 @@ if __name__=="__main__":
         print(np.sum((elower_s-elower)**2))
         print(np.sum((gup_s-gup)**2))
     
+    #computing alpha_ref, n_Texp
