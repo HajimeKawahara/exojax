@@ -38,7 +38,7 @@ def gamma_exomol(P, T, n_air, alpha_ref):
        gamma: pressure gamma factor (cm-1) 
 
     """
-    Pref=1.01325 #atm (bar)
+    Pref=1.0 #bar
     Tref=296.0 #reference tempearture (K)
     gamma=alpha_ref*(P/Pref)*(Tref/T)**n_air
     return gamma
