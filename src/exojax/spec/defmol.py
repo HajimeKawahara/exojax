@@ -35,6 +35,7 @@ EXOMOL_DEFMOL= \
  "48Ti-16O":"Toto",
  "12C-16O2":"UCL-4000",
  "52Cr-1H":"MoLLIST",
+ "1H2-16O":"POKAZATEL",
 }
 
 EXOMOL_SIMPLE2EXACT= \
@@ -52,6 +53,7 @@ EXOMOL_SIMPLE2EXACT= \
  "TiO":"48Ti-16O",
  "CO2":"12C-16O2",
  "CrH":"52Cr-1H",
+ "H2O":"1H2-16O",
 }
 
 
