@@ -1,8 +1,8 @@
 HITRAN/HITEMP
 --------------
 
-Line Database
-===============
+Molecular Database
+======================
 
 An example to use
 `HITRAN <https://hitran.org/>`_
@@ -18,6 +18,38 @@ from exojax is like that.
 	  >>> mdbCO=moldb.MdbHit('.database/05_HITEMP2019.par.bz2',nus)
 	  bunziping
 	  
+
+Basic Quantities
+==================
+
+These are the basic quantities of MdbHit.
+
++-----------------------+-------------+----+------+
+|**quantity**           |**instance** |unit|np/jnp|
++-----------------------+-------------+----+------+
+|line center            |nu_lines     |cm-1|np    |
++-----------------------+-------------+----+------+
+|line center            |dev_nu_lines |cm-1|jnp   |
++-----------------------+-------------+----+------+
+|lower state energy     |elower       |cm-1|jnp   |
++-----------------------+-------------+----+------+
+|natural broadening     |gamma_natural|cm-1|jnp   |
++-----------------------+-------------+----+------+
+|air pressure broadening|gamma_air    |cm-1|jnp   |
++-----------------------+-------------+----+------+
+|self broadning         |gamma_self   |cm-1|jnp   |
++-----------------------+-------------+----+------+
+|Einstein coefficient   |A            |s-1 |jnp   |
++-----------------------+-------------+----+------+
+|reference line strength|Sij0         |cm  |np    |
++-----------------------+-------------+----+------+
+|log10 Sij0             |logsij0      |    |jnp   |
++-----------------------+-------------+----+------+
+|statistical weight     |gpp          |    |jnp   |
++-----------------------+-------------+----+------+
+|temperature exponent   |n_air        |    |jnp   |
++-----------------------+-------------+----+------+
+
 Collision Induced Absorption (CIA)
 ==================================
 
@@ -31,3 +63,5 @@ HITRAN provides
 
 	  >>> from exojax.spec import contdb	  
 	  >>> cdbH2H2=contdb.CdbCIA('.database/H2-H2_2011.cia',nus)
+
+

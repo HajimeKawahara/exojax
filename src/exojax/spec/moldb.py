@@ -307,6 +307,7 @@ class MdbHit(object):
         gamma_self (jnp array): gamma factor of self pressure broadening
         elower (jnp array): the lower state energy (cm-1)
         gpp (jnp array): statistical weight
+        n_air (jnp array): air temperature exponent
 
     """
 
