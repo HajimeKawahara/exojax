@@ -86,6 +86,9 @@
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="userguide/installation.html">Installation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="userguide/exomol.html">ExoMol</a></li>
+<li class="toctree-l1"><a class="reference internal" href="userguide/hitran.html">HITRAN/HITEMP</a></li>
+<li class="toctree-l1"><a class="reference internal" href="userguide/opacity.html">Opacity</a></li>
+<li class="toctree-l1"><a class="reference internal" href="userguide/rtransfer.html">Radiative Transfer</a></li>
 </ul>
 <p class="caption"><span class="caption-text">Tutorials:</span></p>
 <ul>
@@ -223,10 +226,10 @@
 </li>
       <li><a href="exojax/exojax.spec.html#exojax.spec.hapi.absorptionCoefficient_SDVoigt">absorptionCoefficient_SDVoigt() (in module exojax.spec.hapi)</a>
 </li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="exojax/exojax.spec.html#exojax.spec.hapi.absorptionCoefficient_Voigt">absorptionCoefficient_Voigt() (in module exojax.spec.hapi)</a>
 </li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="exojax/exojax.spec.html#exojax.spec.hapi.absorptionCrossSection">absorptionCrossSection() (in module exojax.spec.hapi)</a>
 </li>
       <li><a href="exojax/exojax.spec.html#exojax.spec.hapi.absorptionSpectrum">absorptionSpectrum() (in module exojax.spec.hapi)</a>
@@ -242,6 +245,10 @@
       <li><a href="exojax/exojax.spec.html#exojax.spec.autospec.AutoRT.addmol">addmol() (exojax.spec.autospec.AutoRT method)</a>
 </li>
       <li><a href="exojax/exojax.spec.html#exojax.spec.hapi.addRowObject">addRowObject() (in module exojax.spec.hapi)</a>
+</li>
+      <li><a href="exojax/exojax.spec.html#exojax.spec.moldb.MdbExomol.alpha_ref">alpha_ref (exojax.spec.moldb.MdbExomol attribute)</a>
+</li>
+      <li><a href="exojax/exojax.spec.html#exojax.spec.moldb.MdbExomol.alpha_ref_def">alpha_ref_def (exojax.spec.moldb.MdbExomol attribute)</a>
 </li>
       <li><a href="exojax/exojax.spec.html#exojax.spec.hapi.arange_">arange_() (in module exojax.spec.hapi)</a>
 </li>
@@ -280,6 +287,8 @@
       <li><a href="exojax/exojax.spec.html#exojax.spec.contdb.CdbCIA">CdbCIA (class in exojax.spec.contdb)</a>
 </li>
       <li><a href="exojax/exojax.spec.html#exojax.spec.hapi.cef">cef() (in module exojax.spec.hapi)</a>
+</li>
+      <li><a href="exojax/exojax.spec.html#exojax.spec.exomolapi.check_bdat">check_bdat() (in module exojax.spec.exomolapi)</a>
 </li>
       <li><a href="exojax/exojax.spec.html#exojax.spec.rtcheck.CheckRT.check_hjert">check_hjert() (exojax.spec.rtcheck.CheckRT method)</a>
 </li>
@@ -668,6 +677,12 @@
       <li><a href="exojax/exojax.special.html#exojax.special.j0.j0">j0() (in module exojax.special.j0)</a>
 </li>
   </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="exojax/exojax.spec.html#exojax.spec.moldb.MdbExomol.jlower">jlower (exojax.spec.moldb.MdbExomol attribute)</a>
+</li>
+      <li><a href="exojax/exojax.spec.html#exojax.spec.moldb.MdbExomol.jupper">jupper (exojax.spec.moldb.MdbExomol attribute)</a>
+</li>
+  </ul></td>
 </tr></table>
 
 <h2 id="L">L</h2>
@@ -699,6 +714,10 @@
 <h2 id="M">M</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="exojax/exojax.spec.html#exojax.spec.exomolapi.make_j2b">make_j2b() (in module exojax.spec.exomolapi)</a>
+</li>
+      <li><a href="exojax/exojax.spec.html#exojax.spec.exomolapi.make_jj2b">make_jj2b() (in module exojax.spec.exomolapi)</a>
+</li>
       <li><a href="exojax/exojax.spec.html#exojax.spec.make_numatrix.make_numatrix0">make_numatrix0() (in module exojax.spec.make_numatrix)</a>
 </li>
       <li><a href="exojax/exojax.spec.html#exojax.spec.make_numatrix.make_numatrix_direct">make_numatrix_direct() (in module exojax.spec.make_numatrix)</a>
@@ -731,16 +750,20 @@
 <h2 id="N">N</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="exojax/exojax.spec.html#exojax.spec.moldb.MdbExomol.n_Tref">n_Tref (exojax.spec.moldb.MdbExomol attribute)</a>
+</li>
+      <li><a href="exojax/exojax.spec.html#exojax.spec.moldb.MdbExomol.n_Tref_def">n_Tref_def (exojax.spec.moldb.MdbExomol attribute)</a>
+</li>
       <li><a href="exojax/exojax.spec.html#exojax.spec.hapi.newRowObject">newRowObject() (in module exojax.spec.hapi)</a>
 </li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="exojax/exojax.spec.html#exojax.spec.moldb.MdbExomol.nu_lines">nu_lines (exojax.spec.moldb.MdbExomol attribute)</a>
 
       <ul>
         <li><a href="exojax/exojax.spec.html#exojax.spec.moldb.MdbHit.nu_lines">(exojax.spec.moldb.MdbHit attribute)</a>
 </li>
       </ul></li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="exojax/exojax.spec.html#exojax.spec.rtransfer.nugrid">nugrid() (in module exojax.spec.rtransfer)</a>
 </li>
   </ul></td>
@@ -915,6 +938,8 @@
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="exojax/exojax.spec.html#exojax.spec.hapi.radianceSpectrum">radianceSpectrum() (in module exojax.spec.hapi)</a>
 </li>
+      <li><a href="exojax/exojax.spec.html#exojax.spec.exomolapi.read_broad">read_broad() (in module exojax.spec.exomolapi)</a>
+</li>
       <li><a href="exojax/exojax.spec.html#exojax.spec.hitrancia.read_cia">read_cia() (in module exojax.spec.hitrancia)</a>
 </li>
       <li><a href="exojax/exojax.spec.html#exojax.spec.exomolapi.read_def">read_def() (in module exojax.spec.exomolapi)</a>
@@ -937,10 +962,10 @@
 </li>
       <li><a href="exojax/exojax.spec.html#exojax.spec.hapi.REGEX_STRING_FIXCOL">REGEX_STRING_FIXCOL() (in module exojax.spec.hapi)</a>
 </li>
-      <li><a href="exojax/exojax.spec.html#exojax.spec.hapi.renameColumn">renameColumn() (in module exojax.spec.hapi)</a>
-</li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="exojax/exojax.spec.html#exojax.spec.hapi.renameColumn">renameColumn() (in module exojax.spec.hapi)</a>
+</li>
       <li><a href="exojax/exojax.special.html#exojax.special.faddeeva.rewofz">rewofz() (in module exojax.special.faddeeva)</a>
 </li>
       <li><a href="exojax/exojax.special.html#exojax.special.faddeeva.rewofzs2">rewofzs2() (in module exojax.special.faddeeva)</a>
@@ -990,6 +1015,8 @@
       <li><a href="exojax/exojax.spec.html#exojax.spec.hapi.select">select() (in module exojax.spec.hapi)</a>
 </li>
       <li><a href="exojax/exojax.spec.html#exojax.spec.hapi.selectInto">selectInto() (in module exojax.spec.hapi)</a>
+</li>
+      <li><a href="exojax/exojax.spec.html#exojax.spec.moldb.MdbExomol.set_broadening">set_broadening() (exojax.spec.moldb.MdbExomol method)</a>
 </li>
       <li><a href="exojax/exojax.spec.html#exojax.spec.hapi.setRowObject">setRowObject() (in module exojax.spec.hapi)</a>
 </li>

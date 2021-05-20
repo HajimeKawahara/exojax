@@ -15,7 +15,9 @@ exojax provides an auto-differentiable high-resolution spectrum model for exopla
 
    userguide/installation.rst
    userguide/exomol.rst
-
+   userguide/hitran.rst
+   userguide/opacity.rst
+   userguide/rtransfer.rst
 
 .. toctree::
    :maxdepth: 1
