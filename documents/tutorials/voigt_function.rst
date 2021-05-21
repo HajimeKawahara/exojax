@@ -1,5 +1,5 @@
-Voigt Profile
-=============
+Fitting the Voigt Profile
+===========================================
 *Update: May 10/2021, Hajime Kawahara*
 
 Let’s compute
