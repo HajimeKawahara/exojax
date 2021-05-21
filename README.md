@@ -70,7 +70,8 @@ Auto-differentiable line-by-line spectral modeling of exoplanets/brown dwarfs us
 </details>
 
 <details><summary>HMC-NUTS of Emission Spectra :heavy_check_mark: </summary>
-<img src="https://user-images.githubusercontent.com/15956904/117563416-b02f8800-b0e0-11eb-8c0c-3a5087aa31c6.png" Titie="exojax" Width=850px>
+
+<img src="https://user-images.githubusercontent.com/15956904/119144463-a5cba180-ba83-11eb-8a26-687075d43883.png" Titie="exojax" Width=850px>
 </details>
 
 <details><summary>HMC-NUTS of Transmission Spectra :x: </summary>Not supported yet. </details>
