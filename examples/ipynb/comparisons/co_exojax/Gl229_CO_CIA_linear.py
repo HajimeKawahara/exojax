@@ -10,7 +10,7 @@ atmosphere = Radtrans(line_species = ['COej_HITEMP19'], \
       #rayleigh_species = ['H2', 'He'], \
 #      continuum_opacities = ['H2-H2'], \
       continuum_opacities = ['H2-H2', 'H2-He'], \
-      wlen_bords_micron = [2.3,2.4], \
+      wlen_bords_micron = [2.287,2.410], \
       mode = 'lbl')
 
 pressures = np.logspace(-10, 2, 130)
