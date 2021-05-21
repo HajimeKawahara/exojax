@@ -1,7 +1,10 @@
-Voigt-Hjerting Function
-------------------------
-*Update: May 10/2021, Hajime Kawahara*
+Voigt-Hjerting Function and Voigt Profile
+---------------------------------------------------
+*Update: May 21/2021, Hajime Kawahara*
 
+
+Voigt-Hjerting Function
+=============================
 
 The Voigt-Hjerting function is the real part of `the Faddeeva function <https://en.wikipedia.org/wiki/Faddeeva_function>`_, defined as
 
@@ -68,3 +71,28 @@ need to wrap it by jax.vmap.
 
 .. image:: hjerting/output_5_1.png
 
+Voigt Profile
+===================
+
+Using the Voigt-Hjerting function, the Voigt profile is expressed as  
+
+:math:`V(\nu, \beta, \gamma_L) = \frac{1}{\sqrt{2 \pi} \beta} H\left( \frac{\nu}{\sqrt{2} \beta},\frac{\gamma_L}{\sqrt{2} \beta} \right)`
+
+:math:`V(\nu, \beta, \gamma_L)` is a convolution of a Gaussian
+with a STD of :math:`\beta` and a Lorentian with a gamma parameter of
+:math:`\gamma_L`.
+
+.. code:: ipython3
+
+    from exojax.spec import voigt
+    import jax.numpy as jnp
+    import matplotlib.pyplot as plt
+      
+.. code:: ipython3
+
+    nu=jnp.linspace(-10,10,100)
+    plt.plot(nu, voigt(nu,1.0,2.0)) #beta=1.0, gamma_L=2.0
+
+.. image:: ../tutorials/voigt_function/output_3_1.png
+
+See " :doc:`../tutorials/voigt_function` " for the tutorial of the Voigt profile.

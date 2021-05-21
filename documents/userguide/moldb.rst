@@ -1,7 +1,14 @@
 Molecular Database and Conversion
 =====================================
 
-exojax uses a specific mdb (molecular database) class for each molecular/atom database, exojax.spec.moldb.MdbExomol is for ExoMol, exojax.spec.moldb.MdbHit is for HITRAN/HITEMP. Here, we use MdbExomol for explanation because most instances are common in mdb classes.
+*Update: May 21/2021, Hajime Kawahara*
+
+exojax uses a specific mdb (molecular database) class for each molecular/atom database, exojax.spec.moldb.MdbExomol is for ExoMol, exojax.spec.moldb.MdbHit is for HITRAN/HITEMP. Here, we use MdbExomol for explanation because most instances are common in mdb classes. 
+
+Click below for the details for mdb class for each database.
+
+- :doc:`exomol`
+- :doc:`hitran`
 
 
 .. code:: ipython
@@ -50,11 +57,11 @@ The line strength is a function of temperature, expressed as
 
 :math:`S (T) = S_0 \frac{Q(T_\mathrm{ref})}{Q(T)} \frac{e^{- h c E_\mathrm{low} /k_B T}}{e^{- h c E_\mathrm{low}  /k_B T_\mathrm{ref}}} \frac{1- e^{- h c \hat{\nu} /k_B T}}{1-e^{- h c \hat{\nu} /k_B T_\mathrm{ref}}}`
 
-The reference line strength S0 is the line strength at Tref=296K (Sij0). exojax can compute S(T) in jax based. As I said, s0=logsij0 is used to compute S(T) as
+The reference line strength `S_0` is the line strength at :math:`T_\mathrm{ref}=296` K (Sij0). exojax can compute S(T) in jax based. As I said, s0=logsij0 is used to compute S(T) as
 
-:math:`S (T) = \frac{Q(T_\mathrm{ref})}{Q(T)} e^{  s_0 - c_2 E_\mathrm{low}  (T^{-1} - T_\mathrm{ref}^{-1}) }  \frac{1- e^{- c_2 \hat{\nu}/ T}}{1-e^{- c_2 \hat{\nu}/T_\mathrm{ref}}}`
+:math:`S (T) = q_t^{-1} e^{  s_0 - c_2 E_\mathrm{low}  (T^{-1} - T_\mathrm{ref}^{-1}) }  \frac{1- e^{- c_2 \hat{\nu}/ T}}{1-e^{- c_2 \hat{\nu}/T_\mathrm{ref}}}`
 
-where c_2 = hc/kB. In exojax, S(T) is computed using qt=Q(T)/Q(Tref) as
+where :math:`c_2 = h c/k_B`. In exojax, S(T) is computed using the normalized partition function :math:`q_t=Q(T)/Q(T_\mathrm{ref})` as
 
 
 .. code:: ipython
@@ -62,3 +69,4 @@ where c_2 = hc/kB. In exojax, S(T) is computed using qt=Q(T)/Q(Tref) as
 	  >>> from exojax.spec import SijT
 	  >>> qt=mdbCO.qr_interp(Tfix)
 	  >>> Sij=SijT(Tfix,mdbCO.logsij0,mdbCO.nu_lines,mdbCO.elower,qt)
+
