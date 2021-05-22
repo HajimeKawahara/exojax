@@ -1,0 +1,111 @@
+Fitting a Spectrum Model to Luhman 16A
+-----------------------------------------
+*Update: May 22/2021, Hajime Kawahara*
+
+
+The full code for fitting to the high-dispersion spectrum of Luhman 16A (Crossfield+2014) is given in examples/LUH16A/FidEMb/fit.py. Here, I explain some parts of the code.
+
+.. code:: python3
+	  
+	  def ap(fobs,nusd,ws,we,Nx):
+	      mask=(ws<wavd[::-1])*(wavd[::-1]<we)
+
+In this function, we mask the data, load the molecular databases, exclude unnecessary lines. The reason why we define this part as a independent function is one can easily extend the code to a multiple orders fitting although here we fit the model to a single order of the spectrum.   
+
+
+.. code:: python3
+	  
+	  nus,wav,res=nugrid(ws-5.0,we+5.0,Nx,unit="AA")
+	  #loading molecular database 
+	  mdbCO=moldb.MdbExomol('.database/CO/12C-16O/Li2015',nus) 
+	  mdbH2O=moldb.MdbExomol('.database/H2O/1H2-16O/POKAZATEL',nus,crit=1.e-45) 
+	  #LOADING CIA
+	  cdbH2H2=contdb.CdbCIA('.database/H2-H2_2011.cia',nus)
+	  cdbH2He=contdb.CdbCIA('.database/H2-He_2011.cia',nus)
+
+In the *ap* function, we define the wavenumber grid using `nugrid <../exojax/exojax.spec.html#exojax.spec.rtransfer.nugrid>`_ and call `moldb.MdbExomol <../exojax/exojax.spec.html#exojax.spec.moldb.MdbExomol>`_ for both CO and H2O. So, we use Li2015 for CO and POKAZATEL for H2O from ExoMol. We also load the CIA database using `contdb.CdbCIA <../exojax/exojax.spec.html#exojax.spec.contdb.CdbCIA>`_ .
+
+.. code:: python3
+
+	  Tarr = T0c*np.ones_like(Parr)    
+	  qt=vmap(mdbCO.qr_interp)(Tarr)
+	  gammaLMP = jit(vmap(gamma_exomol,(0,0,None,None)))\
+          (Parr,Tarr,mdbCO.n_Texp,mdbCO.alpha_ref)
+	  gammaLMN=gamma_natural(mdbCO.A)
+	  gammaLM=gammaLMP+gammaLMN[None,:]
+	  SijM=jit(vmap(SijT,(0,None,None,None,0)))\
+          (Tarr,mdbCO.logsij0,mdbCO.nu_lines,mdbCO.elower,qt)
+	  sigmaDM=jit(vmap(doppler_sigma,(None,0,None)))\
+          (mdbCO.nu_lines,Tarr,molmassCO)        
+	  mask_CO,maxcf,maxcia=mask_weakline(mdbCO,Parr,dParr,Tarr,SijM,gammaLM,sigmaDM,maxMMR_CO*ONEARR,molmassCO,mmw,g,vmrH2,cdbH2H2)
+	  mdbCO.masking(mask_CO)
+
+This part excludes unnecessary lines comparing a CIA photosphere and line strengths assuming a 1700K isothermal atmosphere for CO. For H2O, we change the temperature range because the line strenght of H2O is sensitive to the temperature. 
+
+
+.. code:: python3
+
+	  #nu matrix
+	  numatrix_CO=make_numatrix0(nus,mdbCO.nu_lines)    
+	  numatrix_H2O=make_numatrix0(nus,mdbH2O.nu_lines)
+
+We need to precompute nu-matrices. These matrices will be used in a HMC-NUTS fitting.
+
+.. code:: python3
+
+	  def model_c(nu1,y1,e1):
+	      Rp = numpyro.sample('Rp', dist.Uniform(0.5,1.5))
+	      Mp = numpyro.sample('Mp', dist.Normal(33.5,0.3))
+	      sigma = numpyro.sample('sigma', dist.Exponential(0.1))
+
+Here is the NumPyro part.
+
+.. code:: python3
+
+	  def obyo(y,tag,nusd,nus,numatrix_CO,numatrix_H2O,mdbCO,mdbH2O,cdbH2H2,cdbH2He):
+
+
+Again, for the extension to the multi order fitting, we define the *obyo* function, which defines the spectrum model (y0) for each order, though we here use a single order.   
+
+.. code:: python3
+	  
+	  #CO
+          SijM_CO=jit(vmap(SijT,(0,None,None,None,0)))\
+              (Tarr,mdbCO.logsij0,mdbCO.dev_nu_lines,mdbCO.elower,qt_CO)
+          gammaLMP_CO = jit(vmap(gamma_exomol,(0,0,None,None)))\
+              (Parr,Tarr,mdbCO.n_Texp,mdbCO.alpha_ref)
+	  gammaLMN_CO=gamma_natural(mdbCO.A)
+          gammaLM_CO=gammaLMP_CO+gammaLMN_CO[None,:]
+          sigmaDM_CO=jit(vmap(doppler_sigma,(None,0,None)))\
+              (mdbCO.dev_nu_lines,Tarr,molmassCO)    
+          xsm_CO=xsmatrix(numatrix_CO,sigmaDM_CO,gammaLM_CO,SijM_CO) 
+          dtaumCO=dtauM(dParr,xsm_CO,MMR_CO*ONEARR,molmassCO,g)
+	  
+This part defines the opacity model. The line strength, pressure and natural boradening, thermal broadening, and compute cross section by `rtransfer.xsmatrix <../exojax/exojax.spec.html#exojax.spec.rtransfer.xsmatrix>`_ .
+
+
+.. code:: python3
+	  
+        sourcef = planck.piBarr(Tarr,nus)
+        Ftoa=Fref/Rp**2
+        F0=rtrun(dtau,sourcef)/baseline/Ftoa        
+        Frot=response.rigidrot(nus,F0,vsini,u1,u2)
+        mu=response.ipgauss_sampling(nusd,nus,Frot,beta,RV)        
+        errall=jnp.sqrt(e1**2+sigma**2)
+        numpyro.sample(tag, dist.Normal(mu, errall), obs=y)
+
+The source function is a Planck function multiplied by pi. A raw spectrum is computed using  `rtransfer.rtrun <../exojax/exojax.spec.html#exojax.spec.rtransfer.rtrun>`_. Then, the rotational broadening and the instrumental profile are applied. The last sentence defines the likelihood.
+
+.. code:: python3
+
+	  #Running a HMC-NUTS
+	  rng_key = random.PRNGKey(0)
+	  rng_key, rng_key_ = random.split(rng_key)
+	  num_warmup, num_samples = 500, 1000
+	  kernel = NUTS(model_c,forward_mode_differentiation=True)
+	  mcmc = MCMC(kernel, num_warmup, num_samples)
+	  mcmc.run(rng_key_, nu1=nusd1, y1=fobs1, e1=err1)
+
+Finally, we run a HMC-NUTS!
+
+
