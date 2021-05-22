@@ -40,7 +40,7 @@ In the *ap* function, we define the wavenumber grid using `nugrid <../exojax/exo
 	  mask_CO,maxcf,maxcia=mask_weakline(mdbCO,Parr,dParr,Tarr,SijM,gammaLM,sigmaDM,maxMMR_CO*ONEARR,molmassCO,mmw,g,vmrH2,cdbH2H2)
 	  mdbCO.masking(mask_CO)
 
-This part excludes unnecessary lines comparing a CIA photosphere and line strengths assuming a 1700K isothermal atmosphere for CO. For H2O, we change the temperature range because the line strenght of H2O is sensitive to the temperature. 
+This part excludes unnecessary lines comparing a CIA photosphere and line strengths assuming a T0c=1700K isothermal atmosphere for CO. For H2O, we change the temperature range because the line strenght of H2O is sensitive to the temperature. 
 
 
 .. code:: python3
