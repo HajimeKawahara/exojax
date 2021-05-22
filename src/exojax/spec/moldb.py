@@ -69,7 +69,13 @@ class MdbExomol(object):
         self.broad_file = self.path/pathlib.Path(molecbroad+".broad")
 
         if not self.def_file.exists():
-                self.download(molec,extension=[".def",".pf",".states.bz2",".broad"])
+                self.download(molec,extension=[".def"])
+        if not self.pf_file.exists():
+                self.download(molec,extension=[".pf"])
+        if not self.states_file.exists():
+                self.download(molec,extension=[".states.bz2"])
+        if not self.broad_file.exists():
+                self.download(molec,extension=[".broad"])
         
         #load def 
         self.n_Texp_def, self.alpha_ref_def, self.molmass, numinf, numtag=exomolapi.read_def(self.def_file)
@@ -273,7 +279,7 @@ class MdbExomol(object):
                 ext="__"+numtag+ext
                 
             if ext==".broad":
-                pfname_arr=[tag[0]+"__H2"+ext,tag[0]+"__He"+ext]
+                pfname_arr=[tag[0]+"__H2"+ext,tag[0]+"__He"+ext,tag[0]+"__air"+ext]
                 url = url_ExoMol()+molname_simple+"/"+tag[0]+"/"
             else:
                 pfname_arr=[molec+ext]
