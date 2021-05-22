@@ -47,7 +47,9 @@ def read_def(deff):
             molmass=(np.max(c))
             molmasssw=False
 
-        ### EXCEPTION
+        #SOME DEF FILES CONTAINS ERRORS. THESE ARE THE EXCEPTIONS
+        if deff.stem=="12C-16O2__UCL-4000":
+            ntransf=20
         if deff.stem=="14N-1H3__CoYuTe":
             maxnu=20000.0
             
@@ -342,7 +344,11 @@ def make_jj2b(bdat,j2alpha_ref_def,j2n_Texp_def,jupper_max=None):
 if __name__=="__main__":
     import time
     import sys
-
+    import pathlib
+    deff=pathlib.Path("/home/kawahara/exojax/examples/luhman16/.database/CO2/12C-16O2/UCL-4000/12C-16O2__UCL-4000.def")
+    n_Texp, alpha_ref, molmass, numinf, numtag = read_def(deff)
+    print(numtag)
+    sys.exit()
     #various broad file
 #    broadf="/home/kawahara/exojax/data/broad/12C-16O__H2.broad"
     broadf="/home/kawahara/exojax/data/broad/1H2-16O__H2.broad"
