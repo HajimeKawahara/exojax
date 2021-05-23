@@ -25,14 +25,14 @@ Auto-differentiable line-by-line spectral modeling of exoplanets/brown dwarfs us
 
  <img src="https://user-images.githubusercontent.com/15956904/111430765-2eedf180-873e-11eb-9740-9e1a313d590c.png" Titie="exojax auto cross section" Width=850px> 
  
-<details><summary> 🐈 Do you just want to plot the line strength? </summary>
+<details><summary> Do you just want to plot the line strength 🐈? </summary>
 
 ```python
  ls=autoxs.linest(1000.0,1.0) #line strength for 1000K, 1bar (cm)
  plt.plot(autoxs.mdb.nu_lines,ls,".")
 ```
 
-🌊 autoxs.mdb is the [moldb.MdbExomol class](http://secondearths.sakura.ne.jp/exojax/exojax/exojax.spec.html#exojax.spec.moldb.MdbExomol) for molecular database. Here is a entrance to a deeper level. exojax is more flexible in the way it calculates the molecular lines. Go to [the docs](http://secondearths.sakura.ne.jp/exojax) for the deeper level. 
+autoxs.mdb is the [moldb.MdbExomol class](http://secondearths.sakura.ne.jp/exojax/exojax/exojax.spec.html#exojax.spec.moldb.MdbExomol) for molecular database. Here is a entrance to a deeper level. exojax is more flexible in the way it calculates the molecular lines. Go to [the docs](http://secondearths.sakura.ne.jp/exojax) for the deeper level 🌊.  
 
 </details>
  
@@ -55,7 +55,7 @@ Auto-differentiable line-by-line spectral modeling of exoplanets/brown dwarfs us
 
  <img src="https://user-images.githubusercontent.com/15956904/116488770-286ea000-a8ce-11eb-982d-7884b423592c.png" Titie="exojax auto \emission spectrum" Width=850px> 
 
- <details><summary>:telescope: Are you an observer? </summary>
+ <details><summary>Are you an observer :telescope:? </summary>
  
  ```python
   nusobs=numpy.linspace(1900.0,2300.0,10000,dtype=numpy.float64) #observation wavenumber bin (cm-1)
@@ -71,7 +71,10 @@ Auto-differentiable line-by-line spectral modeling of exoplanets/brown dwarfs us
 
 <details><summary>HMC-NUTS of Emission Spectra :heavy_check_mark: </summary>
 
+To fit a spectrum model to real data, you need to know a little more about exojax. See [here](http://secondearths.sakura.ne.jp/exojax/tutorials/fitbd.html) 🐈.
+
 <img src="https://user-images.githubusercontent.com/15956904/119144463-a5cba180-ba83-11eb-8a26-687075d43883.png" Titie="exojax" Width=850px>
+
 </details>
 
 <details><summary>HMC-NUTS of Transmission Spectra :x: </summary>Not supported yet. </details>
