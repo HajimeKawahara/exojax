@@ -2,6 +2,12 @@
 Forward Modeling of an Emission Spectrum
 ========================================
 
+First, we set a planet atmosphere model as
+
+:math:`T = T_0 P^{0.1}`
+
+in the unit of K and bar for T and P.
+      
 .. code:: ipython3
 
     from exojax.spec import rtransfer as rt
@@ -14,7 +20,7 @@ Forward Modeling of an Emission Spectrum
     Parr, dParr, k=rt.pressure_layer(NP=NP)
     Tarr = T0*(Parr)**0.1
 
-A T-P profile we assume is ...
+A T-P profile we assume is like that.
 
 .. code:: ipython3
 
@@ -28,15 +34,14 @@ A T-P profile we assume is ...
 
 .. image:: forward_modeling/output_4_0.png
 
-
-We set a wavenumber grid using nugrid.
+We set a wavenumber grid using `nugrid <../exojax/exojax.spec.html#exojax.spec.rtransfer.nugrid>`_. Note that `nugrid <../exojax/exojax.spec.html#exojax.spec.rtransfer.nugrid>`_ sets the wavenumber grid evenly spaced in log space. We need such the grid to apply an instrumental and rotational responses to a raw spectrum. 
 
 .. code:: ipython3
 
     from exojax.spec.rtransfer import nugrid
     nus,wav,res=nugrid(22920,23000,1000,unit="AA")
 
-Loading a molecular database of CO and CIA (H2-H2)…
+Loading a molecular database of CO and CIA (H2-H2)...
 
 .. code:: ipython3
 
@@ -53,20 +58,21 @@ Loading a molecular database of CO and CIA (H2-H2)…
     default broadening parameters are used for  71  J lower states in  152  states
     H2-H2
 
-
+The molecular mass is given as
+    
 .. code:: ipython3
 
     from exojax.spec import molinfo
     molmassCO=molinfo.molmass("CO")
 
-Computing the relative partition function,
+Computing the normalized partition function :math:`q_t = Q(T)/Q(T_\mathrm{ref})` ...
 
 .. code:: ipython3
 
     from jax import vmap
     qt=vmap(mdbCO.qr_interp)(Tarr)
 
-Pressure and Natural broadenings
+Computing the gamma parameters for the pressure and natural broadenings...
 
 .. code:: ipython3
 
@@ -79,7 +85,7 @@ Pressure and Natural broadenings
     gammaLMN=gamma_natural(mdbCO.A)
     gammaLM=gammaLMP+gammaLMN[None,:]
 
-Doppler broadening
+The sigma for the Doppler broadening is given as
 
 .. code:: ipython3
 
@@ -87,7 +93,7 @@ Doppler broadening
     sigmaDM=jit(vmap(doppler_sigma,(None,0,None)))\
             (mdbCO.nu_lines,Tarr,molmassCO)
 
-And line strength
+We also compute the line strength matrix as
 
 .. code:: ipython3
 
@@ -95,7 +101,7 @@ And line strength
     SijM=jit(vmap(SijT,(0,None,None,None,0)))\
         (Tarr,mdbCO.logsij0,mdbCO.nu_lines,mdbCO.elower,qt)
 
-nu matrix
+nu matrix is a matrix that contains wavenumber grids around line centers.
 
 .. code:: ipython3
 
@@ -124,7 +130,7 @@ xsmatrix has the shape of (# of layers, # of nu grid)
 
     (100, 1000)
 
-
+So, this is a visualization of xsmatrix.
 
 .. code:: ipython3
 
@@ -137,7 +143,7 @@ xsmatrix has the shape of (# of layers, # of nu grid)
 .. image:: forward_modeling/output_24_0.png
 
 
-computing delta tau for CO
+We compute delta tau (tau in layers) for CO,
 
 .. code:: ipython3
 
@@ -146,7 +152,7 @@ computing delta tau for CO
     MMR=0.01 #mass mixing ratio
     dtaum=dtauM(dParr,xsm,MMR*np.ones_like(Tarr),molmassCO,g)
 
-computing delta tau for CIA
+and  delta tau for CIA
 
 .. code:: ipython3
 
@@ -164,7 +170,7 @@ The total delta tau is a summation of them
 
     dtau=dtaum+dtaucH2H2
 
-you can plot a contribution function using exojax.plot.atmplot
+We can plot a contribution function using exojax.plot.atmplot as
 
 .. code:: ipython3
 
@@ -177,7 +183,7 @@ you can plot a contribution function using exojax.plot.atmplot
 .. image:: forward_modeling/output_32_0.png
 
 
-radiative transfering...
+We perform a radiative transfer. Here, the source function is the Planck function (multiplied by pi).
 
 .. code:: ipython3
 
@@ -194,8 +200,8 @@ radiative transfering...
 .. image:: forward_modeling/output_35_1.png
 
 
-applying an instrumental response and planet/stellar rotation to the raw
-spectrum
+We apply an instrumental response and planet/stellar rotation to the raw
+spectrum as
 
 .. code:: ipython3
 
@@ -217,6 +223,8 @@ spectrum
     Frot=response.rigidrot(nus,F0,vsini,u1,u2)
     F=response.ipgauss_sampling(nusd,nus,Frot,beta,RV)
 
+Finally, we get an emission spectrum model.
+    
 .. code:: ipython3
 
     plt.plot(wav[::-1],F0)
