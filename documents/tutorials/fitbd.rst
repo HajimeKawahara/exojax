@@ -81,7 +81,7 @@ Again, for the extension to the multi order fitting, we define the *obyo* functi
           xsm_CO=xsmatrix(numatrix_CO,sigmaDM_CO,gammaLM_CO,SijM_CO) 
           dtaumCO=dtauM(dParr,xsm_CO,MMR_CO*ONEARR,molmassCO,g)
 	  
-This part defines the opacity model. The line strength, pressure and natural boradening, thermal broadening, and compute cross section by `rtransfer.xsmatrix <../exojax/exojax.spec.html#exojax.spec.rtransfer.xsmatrix>`_ .
+This part defines the opacity model. The line strength, pressure and natural boradening, thermal broadening, and compute cross section by `rtransfer.xsmatrix <../exojax/exojax.spec.html#exojax.spec.autospec.AutoXS.xsmatrix>`_ .
 
 
 .. code:: python3

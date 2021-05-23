@@ -28,6 +28,7 @@ exojax provides an auto-differentiable high-resolution spectrum model for exopla
    tutorials/opacity.rst	     
    tutorials/opacity_exomol.rst	     
    tutorials/comparison_db.rst	     
+   tutorials/forward_modeling.rst	     
    tutorials/fitbd.rst	     
 
 .. toctree::
