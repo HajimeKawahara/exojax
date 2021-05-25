@@ -7,6 +7,7 @@
 
 import exojax.utils.constants as const
 import numpy as np
+import jax.numpy as jnp
 
 def getjov_logg(Rp,Mp):
     """logg
