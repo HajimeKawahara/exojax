@@ -2,8 +2,6 @@
 Comparing HITEMP and ExoMol
 ---------------------------
 
-*Update: May 14/2021, Hajime Kawahara*
-
 .. code:: ipython3
 
     from exojax.spec import xsection
@@ -15,9 +13,12 @@ Comparing HITEMP and ExoMol
     import matplotlib.pyplot as plt
     plt.style.use('bmh')
 
+First of all, set a wavenumber bin in the unit of wavenumber (cm-1).
+Here we set the wavenumber range as :math:`1000 \le \nu \le 10000`
+(1/cm) with the resolution of 0.01 (1/cm).
 
 We call moldb instance with the path of par file. If the par file does
-not exist, moldb will try to download it from HITEMP website.
+not exist, moldb will try to download it from HITRAN website.
 
 .. code:: ipython3
 
@@ -29,14 +30,9 @@ not exist, moldb will try to download it from HITEMP website.
 
 .. parsed-literal::
 
-    https://www.cfa.harvard.edu/HITRAN/HITRAN2012/HITRAN2012/By-Molecule/Uncompressed-files/05_HITEMP2019.par.bz2
-    HITRAN download failed
-    https://hitran.org/hitemp/data/bzip2format/05_HITEMP2019.par.bz2
     bunziping
 
-Also, we use ExoMol/Li2015.
 
-    
 .. code:: ipython3
 
     emf='/home/kawahara/exojax/data/CO/12C-16O/Li2015'
@@ -45,20 +41,14 @@ Also, we use ExoMol/Li2015.
 
 .. parsed-literal::
 
-    Downloading http://www.exomol.com/db/CO/12C-16O/Li2015/12C-16O__Li2015.def
-    Downloading http://www.exomol.com/db/CO/12C-16O/Li2015/12C-16O__Li2015.pf
-    Downloading http://www.exomol.com/db/CO/12C-16O/Li2015/12C-16O__Li2015.states.bz2
-    Mol mass= 28.0101
-    gamma width= 0.07
-    T exponent= 0.5
-    Note: Couldn't find the feather format. We convert data to the feather format. After the second time, it will become much faster.
+    Background atmosphere:  H2
     Reading transition file
-    Downloading http://www.exomol.com/db/CO/12C-16O/Li2015/12C-16O__Li2015.trans.bz2
-    Note: Couldn't find the feather format. We convert data to the feather format. After the second time, it will become much faster.
+    Broadening code level= a0
+    default broadening parameters are used for  71  J lower states in  152  states
 
 
 Define molecular weight of CO (:math:`\sim 12+16=28`), temperature (K),
-and pressure (bar). Also, we here assume the 1 % CO partial pressure,
+and pressure (bar). Also, we here assume the 100 % CO atmosphere,
 i.e. the partial pressure = pressure.
 
 .. code:: ipython3
@@ -73,7 +63,7 @@ partition function ratio :math:`q(T)` is defined by
 
 :math:`q(T) = Q(T)/Q(T_{ref})`; :math:`T_{ref}`\ =296 K
 
-Here, we use the partition function from ExoMol for both databases.
+Here, we use the partition function from HAPI
 
 .. code:: ipython3
 
@@ -91,7 +81,9 @@ Let us compute the line strength S(T) at temperature of Tfix.
 
 :math:`E_l` : elower
 
-Computing line strength...
+Why the input is :math:`s_0 = \log_{e} S_0` instead of :math:`S_0` in
+SijT? This is because the direct value of :math:`S_0` is quite small and
+we need to use float32 for jax.
 
 .. code:: ipython3
 
@@ -100,11 +92,11 @@ Computing line strength...
     Sij_Li2015=SijT(Tfix,mdbCO_Li2015.logsij0,mdbCO_Li2015.nu_lines,\
                     mdbCO_Li2015.elower,qt_Li2015)
 
-Then, compute the Lorentz gamma factor (pressure+natural broadening). This causes a main difference between tow databases as we will see later.
+Then, compute the Lorentz gamma factor (pressure+natural broadening)
 
 :math:`\gamma_L = \gamma^p_L + \gamma^n_L`
 
-where the pressure broadning for HITEMP
+where the pressure broadning (HITEMP)
 
 :math:`\gamma^p_L = (T/296K)^{-n_{air}} [ \alpha_{air} ( P - P_{part})/P_{atm} + \alpha_{self} P_{part}/P_{atm}]`
 
@@ -112,7 +104,7 @@ where the pressure broadning for HITEMP
 
 or
 
-the pressure broadning for ExoMol
+the pressure broadning (ExoMol)
 
 :math:`\gamma^p_L = \alpha_{ref} ( T/T_{ref})^{-n_{texp}} ( P/P_{ref}),`
 
@@ -141,15 +133,21 @@ Thermal broadening
 
 Then, the line center…
 
+In HITRAN database, a slight pressure shift can be included using
+:math:`\delta_{air}`: :math:`\nu_0(P) = \nu_0 + \delta_{air} P`. But
+this shift is quite a bit.
+
 .. code:: ipython3
 
     #line center
     nu0_HITEMP=mdbCO_HITEMP.nu_lines
     nu0_Li2015=mdbCO_Li2015.nu_lines
 
+Although it depends on your GPU, you might need to devide the
+computation into multiple loops because of the limitation of the GPU
+memory. Here we assume 30MB for GPU memory (not exactly, memory size for
+numatrix).
 
-Let us compute the cross sections!
-    
 .. code:: ipython3
 
     xsv_HITEMP=xsection(nus,nu0_HITEMP,sigmaD_HITEMP,gammaL_HITEMP\
@@ -160,19 +158,16 @@ Let us compute the cross sections!
 
 .. parsed-literal::
 
-    100%|██████████| 12/12 [00:00<00:00, 15.44it/s]
-    100%|██████████| 1/1 [00:00<00:00,  1.92it/s]
+    100%|██████████| 12/12 [00:08<00:00,  1.31it/s]
+    100%|██████████| 1/1 [00:00<00:00,  1.08it/s]
 
-
-Plot them.
 
 .. code:: ipython3
 
     fig=plt.figure(figsize=(10,3))
     ax=fig.add_subplot(111)
     plt.plot(wav[::-1],xsv_HITEMP,lw=2,label="HITEMP2019")
-    plt.plot(wav[::-1],xsv_Li2015,lw=2,ls="dashed",label="Exomol $(\\alpha_\\mathrm{ref}=0.07,\
-             n_\\mathrm{texp}=0.5$)")
+    plt.plot(wav[::-1],xsv_Li2015,lw=2,ls="dashed",label="Exomol w/ .broad")
     plt.xlim(22970,22988)
     plt.xlabel("wavelength ($\AA$)",fontsize=14)
     plt.ylabel("cross section ($cm^{2}$)",fontsize=14)
@@ -185,11 +180,60 @@ Plot them.
 
 
 
-.. image:: comparison_db/output_20_0.png
+.. image:: comparison_db/output_19_0.png
 
 
-Oh, so different! This is beacuse of the different gamma factors.
-	   
+Here, we test to use the default broadening parameters in def file of
+exomol
+
+.. code:: ipython3
+
+    mdbCO_Li2015.set_broadening(broadf=False) #use default broadning
+    gammaL_Li2015_def = gamma_exomol(Pfix,Tfix,mdbCO_Li2015.n_Texp,mdbCO_Li2015.alpha_ref)\
+    + gamma_natural(mdbCO_Li2015.A) 
+    xsv_Li2015_def=xsection(nus,nu0_Li2015,sigmaD_Li2015,gammaL_Li2015_def\
+                         ,Sij_Li2015,memory_size=30) #use 30MB GPU MEMORY for numax
+
+
+.. parsed-literal::
+
+    100%|██████████| 1/1 [00:00<00:00, 20.04it/s]
+
+.. parsed-literal::
+
+    No .broad file is given.
+
+
+.. parsed-literal::
+
+    
+
+
+Plot it!
+
+.. code:: ipython3
+
+    fig=plt.figure(figsize=(10,3))
+    ax=fig.add_subplot(111)
+    plt.plot(wav[::-1],xsv_HITEMP,lw=1,ls="dashed",label="HITEMP2019")
+    plt.plot(wav[::-1],xsv_Li2015_def,color="C3",lw=2,alpha=0.75,label="Exomol (default)")
+    plt.plot(wav[::-1],xsv_Li2015,lw=1,label="Exomol .broad")
+    
+    plt.xlim(22970,22988)
+    plt.xlabel("wavelength ($\AA$)",fontsize=14)
+    plt.ylabel("cross section ($cm^{2}$)",fontsize=14)
+    plt.legend(loc="upper left",fontsize=12)
+    plt.tick_params(labelsize=12)
+    plt.savefig("co_comparison.pdf", bbox_inches="tight", pad_inches=0.0)
+    plt.savefig("co_comparison.png", bbox_inches="tight", pad_inches=0.0)
+    plt.title("T=1300K,P=1bar")
+    plt.show()
+
+
+
+.. image:: comparison_db/output_23_0.png
+
+
 .. code:: ipython3
 
     np.min(gammaL_HITEMP),np.max(gammaL_HITEMP)
@@ -213,8 +257,21 @@ Oh, so different! This is beacuse of the different gamma factors.
 
 .. parsed-literal::
 
-    (DeviceArray(0.03263554, dtype=float32),
-     DeviceArray(0.03263554, dtype=float32))
+    (DeviceArray(0.02603155, dtype=float32),
+     DeviceArray(0.03306796, dtype=float32))
 
+
+
+.. code:: ipython3
+
+    np.min(gammaL_Li2015_def),np.max(gammaL_Li2015_def)
+
+
+
+
+.. parsed-literal::
+
+    (DeviceArray(0.03306796, dtype=float32),
+     DeviceArray(0.03306796, dtype=float32))
 
 
