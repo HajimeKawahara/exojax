@@ -29,7 +29,7 @@ fac0=RJ**2/((10.0*pc)**2)  #nomralize by RJ
 Fref=(2.29**2)*Fabs_REF2/fac0/1.e4 #erg/cm2/s/cm-1 @ 2.3um
 
 #loading spectrum
-dat=pd.read_csv("../data/luhman16a_spectra.csv",delimiter=",")
+dat=pd.read_csv("../data/luhman16a_spectra_detector1.csv",delimiter=",")
 wavd=(dat["wavelength_micron"].values)*1.e4 #AA
 nusd=1.e8/wavd[::-1]
 fobs=(dat["normalized_flux"].values)[::-1]
@@ -128,8 +128,6 @@ def ap(fobs,nusd,ws,we,Nx):
     #nu matrix
     numatrix_CO=make_numatrix0(nus,mdbCO.nu_lines)    
     numatrix_H2O=make_numatrix0(nus,mdbH2O.nu_lines)
-    cdbH2H2=contdb.CdbCIA('.database/H2-H2_2011.cia',nus)
-    cdbH2He=contdb.CdbCIA('.database/H2-He_2011.cia',nus)
 
     return fobsx,nusdx,wavdx,errx,nus,wav,res,mdbCO,mdbH2O,numatrix_CO,numatrix_H2O,cdbH2H2,cdbH2He
     
