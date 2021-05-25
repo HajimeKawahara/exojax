@@ -1,6 +1,9 @@
 HITRAN/HITEMP
 --------------
 
+See ":doc:`../tutorials/opacity`" for tutorial to compute a cross section profile using HITRAN/HITEMP.
+
+
 Molecular Database
 ======================
 
@@ -19,6 +22,8 @@ from exojax is like that.
 	  bunziping
 	  
 
+
+	  
 Basic Quantities
 ==================
 
@@ -64,4 +69,4 @@ HITRAN provides
 	  >>> from exojax.spec import contdb	  
 	  >>> cdbH2H2=contdb.CdbCIA('.database/H2-H2_2011.cia',nus)
 
-
+See ":doc:`../tutorials/CIA_opacity`" for tutorial.

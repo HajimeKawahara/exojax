@@ -1,6 +1,10 @@
 ExoMol
 --------------
 
+
+See ":doc:`../tutorials/opacity_exomol`" for tutorial to compute a cross section profile using ExoMol.
+
+
 Molecular Database
 ======================
 
@@ -27,6 +31,8 @@ An example to use the ExoMol database from exojax is like that.
 	  Reading transition file
 	  Broadening code level= a0
 	  default broadening parameters are used for  71  J lower states in  152  states
+
+
 
 Broadening Parameters
 ======================
@@ -97,3 +103,72 @@ Basic Quantities
 +-----------------------+-------------+----+------+
 |alpha_ref (gamma0)     |alpha_ref    |    |jnp   |
 +-----------------------+-------------+----+------+
+
+Exomol API
+======================
+
+`moldb.MdbExomol <../exojax/exojax.spec.html#exojax.spec.moldb.MdbExomol>`_ uses function in `exomolapi <../exojax/exojax.spec.html#exojax.spec.exomolapi>`_ to read the ExoMol files, to download if these file do not exist, and to compute some quantities.
+
+Read .def file
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+The path to the def file should be given using pathlib.Path. 
+
+.. code:: python
+	  
+    from exojax.spec.exomolapi import read_def
+    import pathlib
+    deff=pathlib.Path("/home/kawahara/exojax/examples/luhman16/.database/CO2/12C-16O2/UCL-4000/12C-16O2__UCL-4000.def")
+    n_Texp, alpha_ref, molmass, numinf, numtag = read_def(deff)
+
+Note that we have not check all the molecules in ExoMol database yet. In some case, there is inconsistency in the definition file and due to this inconsistency, one cannot load the ExoMol files. Let `me <http://secondearths.sakura.ne.jp/en/index.html>`_ know if you find that case. 
+
+    
+Read the partition, states, transition files
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+For these files, the path can be just string.
+
+.. code:: python
+	  
+    from exojax.spec.exomolapi import read_pf, read_states, read_transf
+    pff="/home/kawahara/exojax/data/exomol/CO/12C-16O/Li2015/12C-16O__Li2015.pf"
+    dat=read_pf(pff)
+    statesf="/home/kawahara/exojax/data/exomol/CO/12C-16O/Li2015/12C-16O__Li2015.states.bz2"
+    states=read_states(statesf)    
+    transf="/home/kawahara/exojax/data/exomol/CO/12C-16O/Li2015/12C-16O__Li2015.trans.bz2"
+    trans=read_trans(transf)
+
+
+Compute gup and Elower 
+^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+`exomolapi.pickup_gE <../exojax/exojax.spec.html#exojax.spec.exomolapi.pickup_gE>`_ picks gup and Elower for all of the transitions from quantum states.
+
+.. code:: python
+	  
+    from exojax.spec.exomolapi import pickup_gE
+    A, nu_lines, elower, gup, jlower, jupper=pickup_gE(states,trans)
+
+    
+Read .broad file
+^^^^^^^^^^^^^^^^^^^^^^^
+
+`exomolapi.read_broad <../exojax/exojax.spec.html#exojax.spec.exomolapi.read_broad>`_ can read .def file. The broad file defines its algorithm to compute the broadening parameters. Curreny, we support a0 and a1 only. this level can be checked using `exomolapi.codelv <../exojax/exojax.spec.html#exojax.spec.exomolapi.codelv>`_. If codelv="a0", we can use `exomolapi.make_j2b <../exojax/exojax.spec.html#exojax.spec.exomolapi.make_j2b>`_. If codelv="a1", then use make_j2b first and then use `exomolapi.make_jj2b <../exojax/exojax.spec.html#exojax.spec.exomolapi.make_jj2b>`_. These functions provide mapping arrays from J values to alpha_ref and n_Texp. For instance, j2alpha_ref[1] gives alpha_ref for Jlower=1, and jj2n_Texp[1,2] gives n_Texp for Jlower=1, Jupper=2.
+
+
+.. code:: python
+	  
+    from exojax.spec.exomolapi import read_broad, check_bdat
+    from exojax.spec.exomolapi import make_j2b, make_jj2b
+
+    broadf="/home/kawahara/exojax/data/broad/1H2-16O__H2.broad"
+    bdat=read_broad(broadf)
+    codelv=check_bdat(bdat)
+    print(codelv)
+    if codelv=="a0":
+        j2alpha_ref, j2n_Texp=make_j2b(bdat,jlower_max=100)
+    elif codelv=="a1":
+        j2alpha_ref, j2n_Texp=make_j2b(bdat,jlower_max=100)
+        jj2alpha_ref, jj2n_Texp=make_jj2b(bdat,j2alpha_ref,j2n_Texp,jupper_max=100)
+
