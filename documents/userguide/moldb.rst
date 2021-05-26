@@ -1,9 +1,9 @@
 Molecular Database and Conversion
 =====================================
 
-*Update: May 21/2021, Hajime Kawahara*
+*Update: May 27/2021, Hajime Kawahara*
 
-exojax uses a specific mdb (molecular database) class for each molecular/atom database, exojax.spec.moldb.MdbExomol is for ExoMol, exojax.spec.moldb.MdbHit is for HITRAN/HITEMP. Here, we use MdbExomol for explanation because most instances are common in mdb classes. 
+exojax uses a specific mdb (molecular database) class for each molecular/atom database, `moldb.MdbExomol <../exojax/exojax.spec.html#exojax.spec.moldb.MdbExomol>`_ is for ExoMol, `moldb.MdbExoHit <../exojax/exojax.spec.html#exojax.spec.moldb.MdbHit>`_ is for HITRAN/HITEMP. Here, we use MdbExomol for explanation because most instances are common in mdb classes. 
 
 Click below for the details for mdb class for each database.
 
