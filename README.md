@@ -89,6 +89,12 @@ autoxs.mdb is the [moldb.MdbExomol class](http://secondearths.sakura.ne.jp/exoja
 ## Installation
 
 ```
+pip install exojax
+```
+
+or
+
+```
 python setup.py install
 ```
 
