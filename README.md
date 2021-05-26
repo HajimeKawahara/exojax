@@ -2,6 +2,8 @@
 
 Auto-differentiable line-by-line spectral modeling of exoplanets/brown dwarfs using [JAX](https://jax.readthedocs.io/en/latest/). 🐈 Read [the docs](http://secondearths.sakura.ne.jp/exojax). 
 
+[![License](http://img.shields.io/badge/license-MIT-blue.svg?style=flat)](https://github.com/HajimeKawahara/exojax/blob/develop/LICENSE)
+
 ## Functions
 
 <details open><summary>Voigt Profile :heavy_check_mark: </summary>
