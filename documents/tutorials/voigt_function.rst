@@ -24,7 +24,7 @@ with a STD of :math:`\beta` and a Lorentian with a gamma parameter of
 .. image:: voigt_function/output_3_1.png
 
 
-The function `voigt <../exojax/exojax.spec.html#exojax.spec.lpf.voigt>`_ is vmapped for nu (input=0), therefore a bit hard
+The function `voigt <../exojax/exojax.spec.html#exojax.spec.lpf.voigt>`_ is `vmapped <https://jax.readthedocs.io/en/latest/jax.html#jax.vmap>`_ for nu (input=0), therefore a bit hard
 to handle when you want to differentiate. Instead, you can use
 `voigtone <../exojax/exojax.spec.html#exojax.spec.lpf.voigtone>`_, which is not vmapped for all of the input arguments.
 

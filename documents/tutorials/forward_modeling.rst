@@ -231,8 +231,10 @@ Finally, we get an emission spectrum model.
     plt.plot(wavd[::-1],F)
 
 
-
-
 .. image:: forward_modeling/output_38_1.png
 
-
+Save it!
+	   
+.. code:: ipython3
+	  
+    np.savetxt("spectrum.txt",np.array([wavd[::-1],F]).T,delimiter=",")

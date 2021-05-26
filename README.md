@@ -1,6 +1,6 @@
 # exojax
 
-Auto-differentiable line-by-line spectral modeling of exoplanets/brown dwarfs using JAX. 🐈 Read [the docs](http://secondearths.sakura.ne.jp/exojax).
+Auto-differentiable line-by-line spectral modeling of exoplanets/brown dwarfs using [JAX](https://jax.readthedocs.io/en/latest/). 🐈 Read [the docs](http://secondearths.sakura.ne.jp/exojax). 
 
 ## Functions
 
@@ -53,9 +53,9 @@ autoxs.mdb is the [moldb.MdbExomol class](http://secondearths.sakura.ne.jp/exoja
  F=autort.rtrun()
 ```
 
- <img src="https://user-images.githubusercontent.com/15956904/116488770-286ea000-a8ce-11eb-982d-7884b423592c.png" Titie="exojax auto \emission spectrum" Width=850px> 
+<img src="https://user-images.githubusercontent.com/15956904/116488770-286ea000-a8ce-11eb-982d-7884b423592c.png" Titie="exojax auto \emission spectrum" Width=850px> 
 
- Are you an observer? 
+<details><summary>Are you an observer? </summary>
  
  ```python
   nusobs=numpy.linspace(1900.0,2300.0,10000,dtype=numpy.float64) #observation wavenumber bin (cm-1)
@@ -63,7 +63,9 @@ autoxs.mdb is the [moldb.MdbExomol class](http://secondearths.sakura.ne.jp/exoja
  ```
  
   <img src="https://user-images.githubusercontent.com/15956904/116488769-273d7300-a8ce-11eb-8da1-661b23215c26.png" Titie="exojax auto \emission spectrum for observers" Width=850px> 
- 
+
+ </details>
+
 🐈 If you want to customize the model, see [here](http://secondearths.sakura.ne.jp/exojax/tutorials/forward_modeling.html).
 
 </details>

@@ -1,5 +1,4 @@
-
-CO cross section using ExoMol
+CO Cross Section using ExoMol
 ---------------------------------------
 
 This tutorial demonstrates how to compute the opacity of CO using ExoMol

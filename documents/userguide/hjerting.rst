@@ -47,7 +47,7 @@ We can differentiate the Voigt-Hjerting function by :math:`x`.
 
 
 hjert is compatible to JAX. So, when you want to use array as input, you
-need to wrap it by jax.vmap.
+need to wrap it by `jax.vmap <https://jax.readthedocs.io/en/latest/jax.html#jax.vmap>`_.
 
 .. code:: ipython3
 

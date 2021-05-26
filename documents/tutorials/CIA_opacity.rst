@@ -1,4 +1,4 @@
-CIA absorption coefficient
+CIA Absorption Coefficient
 ===============================
 
 Use `contdb.CdbCIA <../exojax/exojax.spec.html#exojax.spec.contdb.CdbCIA>`_ for loading the CIA database.
@@ -40,8 +40,6 @@ Plotting...
     plt.ylabel("absorption coefficient ($cm^5$)")
     plt.legend()
     plt.savefig("cia.png")
-
-
 
 .. image:: CIA_opacity/output_5_0.png
 

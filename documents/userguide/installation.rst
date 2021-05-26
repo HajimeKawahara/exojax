@@ -7,7 +7,7 @@ At a minimum, you can start to use exojax by
 	  
 	  python setup.py install
 
-installation w/ GPU support
+Installation w/ GPU support
 ==============================
 
 However, to leverage the power of JAX, numpyro, you need to prepare a GPU environment. For this purpose, jaxlib and numpyro must be linked.

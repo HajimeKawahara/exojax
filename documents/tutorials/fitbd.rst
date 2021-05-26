@@ -1,7 +1,6 @@
-Fitting a Spectrum Model to Luhman 16A
------------------------------------------
-*Update: May 22/2021, Hajime Kawahara*
-
+|:cat:|  Fitting to a Real Spectrum of Luhman 16A  
+--------------------------------------------------------
+*Update: May 25/2021, Hajime Kawahara*
 
 The full code for fitting to the high-dispersion spectrum of Luhman 16A (Crossfield+2014) is given in examples/LUH16A/FidEMb/fit.py. Here, I explain some parts of the code.
 

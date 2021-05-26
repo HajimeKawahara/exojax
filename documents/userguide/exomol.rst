@@ -2,7 +2,7 @@ ExoMol
 --------------
 
 
-See ":doc:`../tutorials/opacity_exomol`" for tutorial to compute a cross section profile using ExoMol.
+See ":doc:`../tutorials/opacity_exomol`" as the tutorial to compute a cross section profile using ExoMol.
 
 
 Molecular Database

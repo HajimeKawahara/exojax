@@ -1,5 +1,4 @@
-
-CO cross section using HITRAN
+CO Cross Section using HITRAN
 ---------------------------------------
 
 This tutorial demonstrates how to compute the opacity of CO using HITRAN
