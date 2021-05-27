@@ -1,9 +1,12 @@
 # exojax
+ [![License](http://img.shields.io/badge/license-MIT-blue.svg?style=flat)](https://github.com/HajimeKawahara/exojax/blob/develop/LICENSE)
+ 
+Auto-differentiable line-by-line spectral modeling of exoplanets/brown dwarfs using [JAX](https://jax.readthedocs.io/en/latest/).  
 
-Auto-differentiable line-by-line spectral modeling of exoplanets/brown dwarfs using [JAX](https://jax.readthedocs.io/en/latest/). 🐈 Read [the docs](http://secondearths.sakura.ne.jp/exojax). 
+ <img src="https://github.com/HajimeKawahara/exojax/blob/master/documents/tutorials/results.png">
 
-[![License](http://img.shields.io/badge/license-MIT-blue.svg?style=flat)](https://github.com/HajimeKawahara/exojax/blob/develop/LICENSE)
-
+ 🐈 Read [the docs](http://secondearths.sakura.ne.jp/exojax). 
+ 
 ## Functions
 
 <details open><summary>Voigt Profile :heavy_check_mark: </summary>
