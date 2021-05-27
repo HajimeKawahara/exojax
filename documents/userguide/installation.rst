@@ -5,6 +5,14 @@ At a minimum, you can start to use exojax by
 
 .. code:: sh
 	  
+	  pip install exojax
+
+via `pypi <https://pypi.org/project/exojax/>`_.
+
+Alternatively, clone the code from `github page <https://github.com/HajimeKawahara/exojax>`_ and run
+
+.. code:: sh
+	  
 	  python setup.py install
 
 Installation w/ GPU support
@@ -32,7 +40,7 @@ Here is an example of installation for jaxlib for cuda 11.2 and jaxlib 0.1.62
 	   python setup.py install
 
 
-In addition, you may need cuDNN for exojax.spec.ipgauss2 and exojax.spec.rigidrot2. For ubuntu, download .deb from NVIDIA and install it:
+In addition, you may need cuDNN for `response.ipgauss2 <../exojax/exojax.spec.html#exojax.spec.response.ipgauss2>`_ and `response.rigidrot2 <../exojax/exojax.spec.html#exojax.spec.response.rigidrot2>`_. For ubuntu, download .deb from NVIDIA and install it:
 	   
 .. code:: sh
 	  sudo dpkg -i libcudnn8_8.2.0.53-1+cuda11.3_amd64.deb

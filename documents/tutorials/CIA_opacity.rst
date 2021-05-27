@@ -16,7 +16,7 @@ Use `contdb.CdbCIA <../exojax/exojax.spec.html#exojax.spec.contdb.CdbCIA>`_ for 
     WARNING: resolution may be too small. R= 1000.0
     H2-H2
 
-`hitrancia.logacia <../exojax/exojax.spec.html#exojax.spec.hitrancia.logacia>`_ can provide an absorption coeffcient as a function of
+`hitrancia.logacia <../exojax/exojax.spec.html#exojax.spec.hitrancia.logacia>`_ can provide a log10 of absorption coeffcient as a function of
 temperature
 
 .. code:: ipython3

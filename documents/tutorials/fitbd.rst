@@ -1,8 +1,11 @@
-|:cat:|  Fitting to a Real Spectrum of Luhman 16A  
---------------------------------------------------------
-*Update: May 25/2021, Hajime Kawahara*
+|:cat:|  Bayes Inference of a Real Spectrum of Luhman 16A  
+--------------------------------------------------------------------
+*Update: May 27/2021, Hajime Kawahara*
 
-The full code for fitting to the high-dispersion spectrum of Luhman 16A (Crossfield+2014) is given in examples/LUH16A/FidEMb/fit.py. Here, I explain some parts of the code.
+The full code for the HMC-NUTS fitting using NumPyro to the high-dispersion spectrum of Luhman 16A (`Crossfield+2014 <https://www.nature.com/articles/nature12955?proof=t>`_) is given in examples/LUH16A/FidEMb/fit.py. I confirmed the code worked using `NVIDIA A100 <https://www.nvidia.com/en-us/data-center/a100/>`_ or `V100 <https://www.nvidia.com/en-us/data-center/v100/>`_, at least. When using A100, it took 8.5 hr. Here, I explain some parts of the code.
+
+.. image:: results.png
+
 
 .. code:: python3
 	  
