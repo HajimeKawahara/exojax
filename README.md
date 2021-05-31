@@ -3,10 +3,11 @@
  [![Docs](https://img.shields.io/badge/docs-exojax-brightgreen)](http://secondearths.sakura.ne.jp/exojax/)
  [![arxiv](https://img.shields.io/badge/arxiv-wating-blue)](https://arxiv.org/)
  
-Auto-differentiable line-by-line spectral modeling of exoplanets/brown dwarfs using JAX.  🐈 Read [the docs](http://secondearths.sakura.ne.jp/exojax). 
+Auto-differentiable line-by-line spectral modeling of exoplanets/brown dwarfs using JAX. Read [the docs](http://secondearths.sakura.ne.jp/exojax) 🐕. 
 
  <img src="https://github.com/HajimeKawahara/exojax/blob/master/documents/tutorials/results.png">
 
+🌟 HMC-NUTS modeling of a brown dwarf, [Luhman 16 A](https://en.wikipedia.org/wiki/Luhman_16) using exojax.  
  
 ## Functions
 
