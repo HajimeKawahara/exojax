@@ -1,5 +1,7 @@
 # exojax
- [![License](http://img.shields.io/badge/license-MIT-blue.svg?style=flat)](https://github.com/HajimeKawahara/exojax/blob/develop/LICENSE)
+ [![License](https://img.shields.io/github/license/HajimeKawahara/exojax)](https://github.com/HajimeKawahara/exojax/blob/develop/LICENSE)
+ [![Docs](https://img.shields.io/badge/docs-exojax-brightgreen)](http://secondearths.sakura.ne.jp/exojax/)
+ [![arxiv](https://img.shields.io/badge/arxiv-wating-blue)](https://arxiv.org/)
  
 Auto-differentiable line-by-line spectral modeling of exoplanets/brown dwarfs using JAX.  🐈 Read [the docs](http://secondearths.sakura.ne.jp/exojax). 
 
