@@ -74,7 +74,7 @@ class AutoXS(object):
         if self.database == "ExoMol":
             qt=mdb.qr_interp(T)
         elif self.database == "HITRAN" or self.database == "HITEMP":
-            qt=mdb.Qr_line(T)
+            qt=mdb.Qr_line_HAPI(T)
             
         Sij=SijT(T,mdb.logsij0,mdb.nu_lines,mdb.elower,qt)
         return Sij
