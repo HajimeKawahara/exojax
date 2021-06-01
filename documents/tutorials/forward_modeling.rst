@@ -1,6 +1,6 @@
-
 Forward Modeling of an Emission Spectrum
 ========================================
+*Update: June 1/2021, Hajime Kawahara*
 
 First, we set a planet atmosphere model as
 
@@ -237,4 +237,7 @@ Save it!
 	   
 .. code:: ipython3
 	  
-    np.savetxt("spectrum.txt",np.array([wavd[::-1],F]).T,delimiter=",")
+    np.savetxt("spectrum.txt",np.array([wavd,F]).T,delimiter=",")	  
+
+
+This data is used in the next section ":doc:`reverse_modeling`".
