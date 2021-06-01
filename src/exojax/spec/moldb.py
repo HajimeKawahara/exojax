@@ -549,7 +549,7 @@ class MdbHit(object):
 
         """
         qr_line=np.ones_like(self.isoid,dtype=np.float64)
-        qrx=self.Qr([T])
+        qrx=self.Qr_HAPI([T])
         for idx,iso in enumerate(self.uniqiso):
             mask=self.isoid==iso
             qr_line[mask]=qrx[0,idx]
@@ -571,7 +571,7 @@ class MdbHit(object):
         """
         NP=len(Tarr)
         qt=np.zeros((NP,len(self.isoid)))
-        qr=self.Qr(Tarr)
+        qr=self.Qr_HAPI(Tarr)
         for idx,iso in enumerate(self.uniqiso):
             mask=self.isoid==iso
             for ilayer in range(NP):
