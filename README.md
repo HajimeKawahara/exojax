@@ -1,13 +1,11 @@
 # exojax
  [![License](https://img.shields.io/github/license/HajimeKawahara/exojax)](https://github.com/HajimeKawahara/exojax/blob/develop/LICENSE)
  [![Docs](https://img.shields.io/badge/docs-exojax-brightgreen)](http://secondearths.sakura.ne.jp/exojax/)
- [![arxiv](https://img.shields.io/badge/arxiv-wating-blue)](https://arxiv.org/)
+ [![arxiv](https://img.shields.io/badge/arxiv-2105.14782-blue)](http://arxiv.org/abs/2105.14782)
  
 Auto-differentiable line-by-line spectral modeling of exoplanets/brown dwarfs using JAX. Read [the docs](http://secondearths.sakura.ne.jp/exojax) 🐕. 
 
- <img src="https://github.com/HajimeKawahara/exojax/blob/master/documents/tutorials/results.png">
-
-🌟 HMC-NUTS modeling of a brown dwarf, [Luhman 16 A](https://en.wikipedia.org/wiki/Luhman_16) using exojax.  
+<img src="https://user-images.githubusercontent.com/15956904/119144463-a5cba180-ba83-11eb-8a26-687075d43883.png" Titie="exojax" Width=850px>
  
 ## Functions
 
@@ -73,16 +71,19 @@ F=autort.spectrum(nusobs,100000.0,20.0,0.0) #R=100000, vsini=10km/s, RV=0km/s
 
  </details>
 
-🐈 If you want to customize the model, see [here](http://secondearths.sakura.ne.jp/exojax/tutorials/forward_modeling.html).
+If you want to customize the model, see [here](http://secondearths.sakura.ne.jp/exojax/tutorials/forward_modeling.html).
 
 </details>
 
 <details><summary>HMC-NUTS of Emission Spectra :heavy_check_mark: </summary>
 
-🐈 To fit a spectrum model to real data, you need to know a little more about exojax. See [here](http://secondearths.sakura.ne.jp/exojax/tutorials/fitbd.html).
+To fit a spectrum model to real data, you need to know a little more about exojax. See [here](http://secondearths.sakura.ne.jp/exojax/tutorials/reverse_modeling.html).
 
-<img src="https://user-images.githubusercontent.com/15956904/119144463-a5cba180-ba83-11eb-8a26-687075d43883.png" Titie="exojax" Width=850px>
+ 
+  <img src="https://github.com/HajimeKawahara/exojax/blob/master/documents/tutorials/results.png">
 
+🥥 HMC-NUTS modeling of a brown dwarf, [Luhman 16 A](https://en.wikipedia.org/wiki/Luhman_16) using exojax.  See [here](http://secondearths.sakura.ne.jp/exojax/tutorials/fitbd.html) for an example of the Bayes inference using the real spectrum.
+ 
 </details>
 
 <details><summary>HMC-NUTS of Transmission Spectra :x: </summary>Not supported yet. </details>
@@ -140,6 +141,10 @@ sudo dpkg -i libcudnn8_8.2.0.53-1+cuda11.3_amd64.deb
 cuDNN is used for to compute the astronomical/instrumental response for the large number of wave number grid (exojax.spec.response). Otherwise, we do not use it. 
 
 </details>
+
+## References
+
+- Kawahara, Kawashima, Masuda, and Crossfield (2021) under review: [arXiv:2105.14782](http://arxiv.org/abs/2105.14782)
 
 ## License
 
