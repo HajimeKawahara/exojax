@@ -32,7 +32,7 @@ def xsection(nu,nu_lines,sigmaD,gammaL,Sij,memory_size=15.):
     >>> Tfix=1000.0 # we assume T=1000K
     >>> Pfix=1.e-3 # we compute P=1.e-3 bar
     >>> Ppart=Pfix #partial pressure of CO. here we assume a 100% CO atmosphere. 
-    >>> qt=mdbCO.Qr_line(Tfix)
+    >>> qt=mdbCO.Qr_line_HAPI([Tfix])[0]
     >>> Sij=SijT(Tfix,mdbCO.logsij0,mdbCO.nu_lines,mdbCO.elower,qt)
     >>> gammaL = gamma_hitran(Pfix,Tfix, Ppart, mdbCO.n_air, mdbCO.gamma_air, mdbCO.gamma_self) + gamma_natural(mdbCO.A) 
     >>> sigmaD=doppler_sigma(mdbCO.nu_lines,Tfix,Mmol)
