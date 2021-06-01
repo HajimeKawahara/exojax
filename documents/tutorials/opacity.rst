@@ -46,7 +46,7 @@ Here, we use the partition function from HAPI
 
 .. code:: ipython3
 
-    qt=mdbCO.Qr_line(Tfix)
+    qt=mdbCO.Qr_layer_HAPI([Tfix])[0]
 
 Let us compute the line strength S(T) at temperature of Tfix.
 
