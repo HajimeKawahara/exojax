@@ -27,12 +27,14 @@ class AutoXS(object):
     """exojax auto cross section generator
     
     """
-    def __init__(self,nus,database,molecules,databasedir=".database",memory_size=30):
+    def __init__(self,nus,database,molecules,databasedir=".database",memory_size=30,broadf=True):
         """
         Args:
            nus: wavenumber bin (cm-1)
            database: database= HITRAN, HITEMP, ExoMol
            molecules: molecule name
+           memory_size: memory_size required
+           broadf: if False, the default broadening parameters in .def file is used
 
         """
         self.molecules=molecules
@@ -40,7 +42,7 @@ class AutoXS(object):
         self.nus=nus
         self.databasedir=databasedir
         self.memory_size=memory_size
-        
+        self.broadf=broadf
         self.identifier=defmol.search_molfile(database,molecules)
         print(self.identifier)
         if self.identifier is None:
@@ -55,7 +57,8 @@ class AutoXS(object):
         elif self.database=="ExoMol":
             molpath=pathlib.Path(self.databasedir)/pathlib.Path(self.identifier)
             molpath=str(molpath)
-            self.mdb=moldb.MdbExomol(molpath,nurange=[self.nus[0],self.nus[-1]])
+            print("broadf=",self.broadf)
+            self.mdb=moldb.MdbExomol(molpath,nurange=[self.nus[0],self.nus[-1]],broadf=self.broadf)
         else:
             print("Select database from HITRAN, HITEMP, ExoMol.")
 
