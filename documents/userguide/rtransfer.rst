@@ -57,4 +57,4 @@ where :math:`\Delta \tau_n` is delta opacity in the n-th layer, :math:`E_j(x)` i
 	  
 	 F0=rtrun(dtau,sourcef) 
 
-See ":doc:`../tutorials/rtransfer`" to know how to use `rtrun <../exojax/exojax.spec.html#exojax.spec.rtransfer.rtrun>`_ in a forward modeling. Note that exojax uses a linear algebraic formulation to solve the RT. The detail description is provided in Kawahara et al.
+See ":doc:`../tutorials/forward_modeling`" to know how to use `rtrun <../exojax/exojax.spec.html#exojax.spec.rtransfer.rtrun>`_ in a forward modeling. Note that exojax uses a linear algebraic formulation to solve the RT. The detail description is provided in Kawahara et al.

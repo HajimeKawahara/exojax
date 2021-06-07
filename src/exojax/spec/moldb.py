@@ -35,7 +35,7 @@ class MdbExomol(object):
         alpha_ref_def: default alpha_ref (gamma0) in .def file, used for jlower not given in .broad
 
     """
-    def __init__(self,path,nurange=[-np.inf,np.inf],margin=1.0,crit=-np.inf, bkgdatm="H2"):
+    def __init__(self,path,nurange=[-np.inf,np.inf],margin=1.0,crit=-np.inf, bkgdatm="H2", broadf=True):
         """Molecular database for Exomol form
 
         Args: 
@@ -44,6 +44,7 @@ class MdbExomol(object):
            margin: margin for nurange (cm-1)
            crit: line strength lower limit for extraction
            bkgdatm: background atmosphere for broadening. e.g. H2, He, 
+           broadf: if False, the default broadening parameters in .def file is used
 
         Note:
            The trans/states files can be very large. For the first time to read it, we convert it to the feather-format. After the second-time, we use the feather format instead.
@@ -61,7 +62,7 @@ class MdbExomol(object):
         self.crit = crit
         self.margin = margin
         self.nurange=[np.min(nurange),np.max(nurange)]
-
+        self.broadf=broadf
         #Where exomol files are
         self.states_file = self.path/pathlib.Path(molec+".states.bz2")
         self.pf_file = self.path/pathlib.Path(molec+".pf")
@@ -182,16 +183,13 @@ class MdbExomol(object):
         self.gpp=jnp.array(self._gpp)
         self.jlower=jnp.array(self._jlower,dtype=int)
         self.jupper=jnp.array(self._jupper,dtype=int)
-
         ##Broadening parameters 
         self.set_broadening()
-        
 
-    def set_broadening(self,broadf=True,alpha_ref_def=None,n_Texp_def=None):
+    def set_broadening(self,alpha_ref_def=None,n_Texp_def=None):
         """setting broadening parameters
         
         Args:
-           broadf: True=use .broad file for available jlower.
            alpha_ref: set default alpha_ref and apply it. None=use self.alpha_ref_def
            n_Texp_def: set default n_Texp and apply it. None=use self.n_Texp_def
         """
@@ -200,29 +198,36 @@ class MdbExomol(object):
         if n_Texp_def:
             self.n_Texp_def = n_Texp_def
             
-        if broadf:
-            bdat=exomolapi.read_broad(self.broad_file)
-            codelv=exomolapi.check_bdat(bdat)
-            print("Broadening code level=",codelv)
-            if codelv=="a0":
-                j2alpha_ref, j2n_Texp = exomolapi.make_j2b(bdat,\
-                    alpha_ref_default=self.alpha_ref_def,\
-                    n_Texp_default=self.n_Texp_def,\
+        if self.broadf:
+            try:
+                print(".broad is used.")
+                bdat=exomolapi.read_broad(self.broad_file)
+                codelv=exomolapi.check_bdat(bdat)
+                print("Broadening code level=",codelv)
+                if codelv=="a0":
+                    j2alpha_ref, j2n_Texp = exomolapi.make_j2b(bdat,\
+                        alpha_ref_default=self.alpha_ref_def,\
+                        n_Texp_default=self.n_Texp_def,\
                         jlower_max=np.max(self._jlower))
-                self.alpha_ref=jnp.array(j2alpha_ref[self._jlower])
-                self.n_Texp=jnp.array(j2n_Texp[self._jlower])                
-            elif codelv=="a1":
-                j2alpha_ref, j2n_Texp = exomolapi.make_j2b(bdat,\
-                    alpha_ref_default=self.alpha_ref_def,\
-                    n_Texp_default=self.n_Texp_def,\
+                    self.alpha_ref=jnp.array(j2alpha_ref[self._jlower])
+                    self.n_Texp=jnp.array(j2n_Texp[self._jlower])                
+                elif codelv=="a1":
+                    j2alpha_ref, j2n_Texp = exomolapi.make_j2b(bdat,\
+                        alpha_ref_default=self.alpha_ref_def,\
+                        n_Texp_default=self.n_Texp_def,\
                         jlower_max=np.max(self._jlower))                
-                jj2alpha_ref, jj2n_Texp=exomolapi.make_jj2b(bdat,\
-                    j2alpha_ref_def=j2alpha_ref,j2n_Texp_def=j2n_Texp,\
+                    jj2alpha_ref, jj2n_Texp=exomolapi.make_jj2b(bdat,\
+                        j2alpha_ref_def=j2alpha_ref,j2n_Texp_def=j2n_Texp,\
                         jupper_max=np.max(self._jupper))
-                self.alpha_ref=jnp.array(jj2alpha_ref[self._jlower,self._jupper])
-                self.n_Texp=jnp.array(jj2n_Texp[self._jlower,self._jupper])            
+                    self.alpha_ref=jnp.array(jj2alpha_ref[self._jlower,self._jupper])
+                    self.n_Texp=jnp.array(jj2n_Texp[self._jlower,self._jupper])            
+            except:
+                print("Warning: Cannot load .broad. The default broadening parameters are used.")
+                self.alpha_ref=jnp.array(self.alpha_ref_def*np.ones_like(self._jlower))
+                self.n_Texp=jnp.array(self.n_Texp_def*np.ones_like(self._jlower))
+                
         else:
-            print("No .broad file is given.")
+            print("The default broadening parameters are used.")
             self.alpha_ref=jnp.array(self.alpha_ref_def*np.ones_like(self._jlower))
             self.n_Texp=jnp.array(self.n_Texp_def*np.ones_like(self._jlower))
 
