@@ -2,18 +2,27 @@
 --------------------------------------------------------------------
 *Update: May 27/2021, Hajime Kawahara*
 
-The full code for the HMC-NUTS fitting using NumPyro to the high-dispersion spectrum of Luhman 16A (`Crossfield+2014 <https://www.nature.com/articles/nature12955?proof=t>`_) is given in examples/LUH16A/FidEMb/fit.py. I confirmed the code worked using `NVIDIA A100 <https://www.nvidia.com/en-us/data-center/a100/>`_ or `V100 <https://www.nvidia.com/en-us/data-center/v100/>`_, at least. When using A100, it took 8.5 hr. Here, I explain some parts of the code.
+The full code for the HMC-NUTS fitting using NumPyro to the high-dispersion spectrum of Luhman 16A (`Crossfield+2014 <https://www.nature.com/articles/nature12955?proof=t>`_) is given in examples/LUH16A/FidEMb/fit.py. I confirmed the code worked using `NVIDIA A100 <https://www.nvidia.com/en-us/data-center/a100/>`_ or `V100 <https://www.nvidia.com/en-us/data-center/v100/>`_, at least. When using A100, it took 8.5 hr. Here, I explain some parts of the code. As the goal of  this tutorial, we want to fit the exojax model to the high-dispersion data as
 
 .. image:: results.png
 
+and get a posterior sampling.
 
+We use a 100 atmospheric layer model for radiative transfer.
+
+.. code:: python3
+	  
+	  NP=100
+	  Parr, dParr, k=rt.pressure_layer(NP=NP)
+
+In the following function, we mask the data, load the molecular databases, exclude unnecessary lines. The reason why we define this part as a independent function is one can easily extend the code to a multiple orders fitting although here we fit the model to a single order of the spectrum.   
+	  
 .. code:: python3
 	  
 	  def ap(fobs,nusd,ws,we,Nx):
 	      mask=(ws<wavd[::-1])*(wavd[::-1]<we)
-
-In this function, we mask the data, load the molecular databases, exclude unnecessary lines. The reason why we define this part as a independent function is one can easily extend the code to a multiple orders fitting although here we fit the model to a single order of the spectrum.   
-
+	      
+In the *ap* function, we define the wavenumber grid using `nugrid <../exojax/exojax.spec.html#exojax.spec.rtransfer.nugrid>`_ and call `moldb.MdbExomol <../exojax/exojax.spec.html#exojax.spec.moldb.MdbExomol>`_ for both CO and H2O. So, we use Li2015 for CO and POKAZATEL for H2O from ExoMol. We also load the CIA database using `contdb.CdbCIA <../exojax/exojax.spec.html#exojax.spec.contdb.CdbCIA>`_ .
 
 .. code:: python3
 	  
@@ -25,7 +34,7 @@ In this function, we mask the data, load the molecular databases, exclude unnece
 	  cdbH2H2=contdb.CdbCIA('.database/H2-H2_2011.cia',nus)
 	  cdbH2He=contdb.CdbCIA('.database/H2-He_2011.cia',nus)
 
-In the *ap* function, we define the wavenumber grid using `nugrid <../exojax/exojax.spec.html#exojax.spec.rtransfer.nugrid>`_ and call `moldb.MdbExomol <../exojax/exojax.spec.html#exojax.spec.moldb.MdbExomol>`_ for both CO and H2O. So, we use Li2015 for CO and POKAZATEL for H2O from ExoMol. We also load the CIA database using `contdb.CdbCIA <../exojax/exojax.spec.html#exojax.spec.contdb.CdbCIA>`_ .
+The following part excludes unnecessary lines comparing a CIA photosphere and line strengths assuming a T0c=1700K isothermal atmosphere for CO. For H2O, we change the temperature range because the line strenght of H2O is sensitive to the temperature. 
 
 .. code:: python3
 
@@ -42,7 +51,7 @@ In the *ap* function, we define the wavenumber grid using `nugrid <../exojax/exo
 	  mask_CO,maxcf,maxcia=mask_weakline(mdbCO,Parr,dParr,Tarr,SijM,gammaLM,sigmaDM,maxMMR_CO*ONEARR,molmassCO,mmw,g,vmrH2,cdbH2H2)
 	  mdbCO.masking(mask_CO)
 
-This part excludes unnecessary lines comparing a CIA photosphere and line strengths assuming a T0c=1700K isothermal atmosphere for CO. For H2O, we change the temperature range because the line strenght of H2O is sensitive to the temperature. 
+We need to precompute nu-matrices. These matrices will be used in a HMC-NUTS fitting.
 
 
 .. code:: python3
@@ -51,7 +60,7 @@ This part excludes unnecessary lines comparing a CIA photosphere and line streng
 	  numatrix_CO=make_numatrix0(nus,mdbCO.nu_lines)    
 	  numatrix_H2O=make_numatrix0(nus,mdbH2O.nu_lines)
 
-We need to precompute nu-matrices. These matrices will be used in a HMC-NUTS fitting.
+The following is the NumPyro part.
 
 .. code:: python3
 
@@ -60,14 +69,14 @@ We need to precompute nu-matrices. These matrices will be used in a HMC-NUTS fit
 	      Mp = numpyro.sample('Mp', dist.Normal(33.5,0.3))
 	      sigma = numpyro.sample('sigma', dist.Exponential(0.1))
 
-Here is the NumPyro part.
+Again, for the extension to the multi order fitting, we define the *obyo* function, which defines the spectrum model (y0) for each order, though we here use a single order.   
 
 .. code:: python3
 
 	  def obyo(y,tag,nusd,nus,numatrix_CO,numatrix_H2O,mdbCO,mdbH2O,cdbH2H2,cdbH2He):
 
+The following part defines the opacity model. The line strength, pressure and natural boradening, thermal broadening, and compute cross section by `rtransfer.xsmatrix <../exojax/exojax.spec.html#exojax.spec.autospec.AutoXS.xsmatrix>`_ .
 
-Again, for the extension to the multi order fitting, we define the *obyo* function, which defines the spectrum model (y0) for each order, though we here use a single order.   
 
 .. code:: python3
 	  
@@ -83,7 +92,7 @@ Again, for the extension to the multi order fitting, we define the *obyo* functi
           xsm_CO=xsmatrix(numatrix_CO,sigmaDM_CO,gammaLM_CO,SijM_CO) 
           dtaumCO=dtauM(dParr,xsm_CO,MMR_CO*ONEARR,molmassCO,g)
 	  
-This part defines the opacity model. The line strength, pressure and natural boradening, thermal broadening, and compute cross section by `rtransfer.xsmatrix <../exojax/exojax.spec.html#exojax.spec.autospec.AutoXS.xsmatrix>`_ .
+The source function is a Planck function multiplied by pi. A raw spectrum is computed using  `rtransfer.rtrun <../exojax/exojax.spec.html#exojax.spec.rtransfer.rtrun>`_. Then, the rotational broadening and the instrumental profile are applied. The last sentence defines the likelihood.
 
 
 .. code:: python3
@@ -96,7 +105,7 @@ This part defines the opacity model. The line strength, pressure and natural bor
         errall=jnp.sqrt(e1**2+sigma**2)
         numpyro.sample(tag, dist.Normal(mu, errall), obs=y)
 
-The source function is a Planck function multiplied by pi. A raw spectrum is computed using  `rtransfer.rtrun <../exojax/exojax.spec.html#exojax.spec.rtransfer.rtrun>`_. Then, the rotational broadening and the instrumental profile are applied. The last sentence defines the likelihood.
+Finally, we run a HMC-NUTS!
 
 .. code:: python3
 
@@ -108,6 +117,19 @@ The source function is a Planck function multiplied by pi. A raw spectrum is com
 	  mcmc = MCMC(kernel, num_warmup, num_samples)
 	  mcmc.run(rng_key_, nu1=nusd1, y1=fobs1, e1=err1)
 
-Finally, we run a HMC-NUTS!
+The posterior can be visualized using arviz, for instance. 
 
+.. code:: python3
+	  
+	  posterior_sample = mcmc.get_samples()
+	  arviz.plot_pair(arviz.from_numpyro(mcmc),kind='kde',divergences=False,marginals=True) 
 
+Here is the results.
+   
+.. image:: cornerall.png
+
+Here is the 5-95 \% interval.
+
+.. image:: results.png
+
+That's it. Using the posterior sampling, we can compute other quantities such as C/O ratio.

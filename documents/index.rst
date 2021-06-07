@@ -6,7 +6,7 @@
 ExoJAX
 ==================================
 
-exojax provides an auto-differentiable high-resolution spectrum model for exoplanets/brown dwarfs using `JAX <https://github.com/google/jax>`_. 
+`ExoJAX <https://github.com/HajimeKawahara/exojax>`_ provides an auto-differentiable high-resolution spectrum model for exoplanets/brown dwarfs using `JAX <https://github.com/google/jax>`_.
 
 .. toctree::
    :maxdepth: 1
@@ -26,6 +26,7 @@ exojax provides an auto-differentiable high-resolution spectrum model for exopla
    tutorials/CIA_opacity.rst
    tutorials/rigid_rotation.rst   
    tutorials/forward_modeling.rst	     
+   tutorials/reverse_modeling.rst	     
    tutorials/fitbd.rst	     
 
 .. toctree::
@@ -40,11 +41,12 @@ exojax provides an auto-differentiable high-resolution spectrum model for exopla
 
 .. toctree::
    :maxdepth: 1
-   :caption: For Developers:
+   :caption: For Developers :
 
    developers/doc.rst   
 
-	     
+Collaborations using exojax is `welcome <http://secondearths.sakura.ne.jp/en/index.html>`_!
+   
 .. toctree::
    :maxdepth: 1
    :caption: API:
@@ -55,13 +57,13 @@ exojax provides an auto-differentiable high-resolution spectrum model for exopla
 Reference
 ---------------------
 
-Kawahara et al. to be submitted.
+Kawahara et al. under review.
    
 License & Attribution
 ---------------------
 
-Copyright 2021 `Hajime Kawahara <http://secondearths.sakura.ne.jp/en/index.html>`_.
+Copyright 2021 `Hajime Kawahara <http://secondearths.sakura.ne.jp/en/index.html>`_. 
 
-exojax is free software made available under the MIT License. For details
+ExoJAX is free software made available under the MIT License. For details
 see the ``LICENSE``.
    

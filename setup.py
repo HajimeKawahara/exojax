@@ -13,7 +13,7 @@ META_PATH = os.path.join("src", "exojax", "__init__.py")
 CLASSIFIERS = [
     "Programming Language :: Python",
 ]
-INSTALL_REQUIRES = ["numpy","tqdm","scipy","jax","numpyro","arviz","pyarrow"]
+INSTALL_REQUIRES = ["numpy","tqdm","scipy","jax","numpyro","arviz","pyarrow","optax"]
 #require https://github.com/hitranonline/hapi
 
 # END PROJECT SPECIFIC
@@ -45,7 +45,7 @@ if __name__ == "__main__":
             ),
             "write_to_template": '__version__ = "{version}"\n',
         },
-        version='0.5.0',
+        version='0.5.4',
         author=find_meta("author"),
         author_email=find_meta("email"),
         maintainer=find_meta("author"),
