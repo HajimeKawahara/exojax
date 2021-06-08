@@ -61,7 +61,7 @@ class AutoXS(object):
             molpath=pathlib.Path(self.databasedir)/pathlib.Path(self.identifier)
             molpath=str(molpath)
             print("broadf=",self.broadf)
-            self.mdb=moldb.MdbExomol(molpath,nurange=[self.nus[0],self.nus[-1]],broadf=self.broadf)
+            self.mdb=moldb.MdbExomol(molpath,nurange=[self.nus[0],self.nus[-1]],broadf=self.broadf,crit=self.crit)
         else:
             print("Select database from HITRAN, HITEMP, ExoMol.")
 
@@ -151,9 +151,9 @@ class AutoXS(object):
         #numatrix=make_numatrix0(nus,nu0)
         #xsm=xsmatrix(numatrix,sigmaDM,gammaLM,SijM)
         ####
-
+        print("# of lines",len(nu0))
         memory_size=15.0
-        d=int(memory_size/(len(nu0)*4/1024./1024.))
+        d=int(memory_size/(len(nu0)*4/1024./1024.))+1
         Ni=int(len(self.nus)/d)        
         d2=100
         Nlayer=np.shape(SijM)[0]
