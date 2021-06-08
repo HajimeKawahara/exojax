@@ -12,8 +12,7 @@ ExoJAX
    :maxdepth: 1
 
    userguide/installation.rst
-   userguide/ref.rst
-
+   userguide/ql.rst	     
 
 .. toctree::
    :maxdepth: 1
@@ -29,11 +28,6 @@ ExoJAX
    tutorials/reverse_modeling.rst	     
    tutorials/fitbd.rst	     
 
-.. toctree::
-   :maxdepth: 1
-   :caption: Casual Usage:
-	     
-   casualuse/casual1.rst	     
 
    
 .. toctree::
