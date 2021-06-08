@@ -1,4 +1,4 @@
-Casual Emission Spectrum
+Quick Look for Observers
 ------------------------------
 
 The difficulty with high-dispersion spectral analysis is that it takes a lot of work to make a small example spectrum. In my personal experience, it is surprisingly annoying to quickly find out if, for example, the water line was here or not during an observation. `AutoRT <../exojax/exojax.spec.html#exojax.spec.autospec.AutoRT>`_ was made for that purpose. Here is an example to quickly make the spectrum assuming water, CO, and CIA. 
@@ -27,3 +27,20 @@ The difficulty with high-dispersion spectral analysis is that it takes a lot of 
 
 .. image:: cu1.png
 
+`AutoXS <../exojax/exojax.spec.html#exojax.spec.autospec.AutoRT>`_ was made for quick analysis of the cross section of molecules.
+
+.. code:: ipython3
+	  
+	  import numpy as np
+	  import matplotlib.pyplot as plt
+	  from exojax.spec import AutoXS, AutoRT
+	  from exojax.spec.rtransfer import nugrid
+	  
+	  nus,wav,res=nugrid(23200,23300,1000,"AA")
+	  autoxs=AutoXS(nus,"ExoMol","CO",memory_size=30)
+	  xsv=autoxs.xsection(1000.0,1.0)
+	  plt.plot(wav[::-1],xsv,label="CO")
+	  plt.yscale("log")
+	  plt.show()
+	  
+.. image:: cu2.png
