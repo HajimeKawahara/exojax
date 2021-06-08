@@ -27,12 +27,15 @@ class AutoXS(object):
     """exojax auto cross section generator
     
     """
-    def __init__(self,nus,database,molecules,databasedir=".database",memory_size=30):
+    def __init__(self,nus,database,molecules,databasedir=".database",memory_size=30,broadf=True,crit=-np.inf):
         """
         Args:
            nus: wavenumber bin (cm-1)
            database: database= HITRAN, HITEMP, ExoMol
            molecules: molecule name
+           memory_size: memory_size required
+           broadf: if False, the default broadening parameters in .def file is used
+           crit: line strength criterion, ignore lines whose line strength are below crit.
 
         """
         self.molecules=molecules
@@ -40,6 +43,8 @@ class AutoXS(object):
         self.nus=nus
         self.databasedir=databasedir
         self.memory_size=memory_size
+        self.broadf=broadf
+        self.crit=crit
         
         self.identifier=defmol.search_molfile(database,molecules)
         print(self.identifier)
@@ -51,11 +56,12 @@ class AutoXS(object):
     def init_database(self):
         if self.database=="HITRAN" or self.database=="HITEMP":
             molpath=pathlib.Path(self.databasedir)/pathlib.Path(self.identifier)
-            self.mdb=moldb.MdbHit(molpath,nurange=[self.nus[0],self.nus[-1]])
+            self.mdb=moldb.MdbHit(molpath,nurange=[self.nus[0],self.nus[-1]],crit=self.crit)
         elif self.database=="ExoMol":
             molpath=pathlib.Path(self.databasedir)/pathlib.Path(self.identifier)
             molpath=str(molpath)
-            self.mdb=moldb.MdbExomol(molpath,nurange=[self.nus[0],self.nus[-1]])
+            print("broadf=",self.broadf)
+            self.mdb=moldb.MdbExomol(molpath,nurange=[self.nus[0],self.nus[-1]],broadf=self.broadf,crit=self.crit)
         else:
             print("Select database from HITRAN, HITEMP, ExoMol.")
 
@@ -145,9 +151,9 @@ class AutoXS(object):
         #numatrix=make_numatrix0(nus,nu0)
         #xsm=xsmatrix(numatrix,sigmaDM,gammaLM,SijM)
         ####
-
+        print("# of lines",len(nu0))
         memory_size=15.0
-        d=int(memory_size/(len(nu0)*4/1024./1024.))
+        d=int(memory_size/(len(nu0)*4/1024./1024.))+1
         Ni=int(len(self.nus)/d)        
         d2=100
         Nlayer=np.shape(SijM)[0]
@@ -214,15 +220,17 @@ class AutoRT(object):
         self.sourcef=planck.piBarr(self.Tarr,self.nus)
         self.dtau=np.zeros((self.nlayer,len(nus)))
 
-    def addmol(self,database,molecules,mmr):
+    def addmol(self,database,molecules,mmr,crit=-np.inf):
         """
         Args:
            database: database= HITRAN, HITEMP, ExoMol
            molecules: molecule name
            mmr: mass mixing ratio (float or ndarray for the layer)
+           crit: line strength criterion, ignore lines whose line strength are below crit
+
         """
         mmr=mmr*np.ones_like(self.Tarr)
-        axs=AutoXS(self.nus,database,molecules)
+        axs=AutoXS(self.nus,database,molecules,crit=crit)
         xsm=axs.xsmatrix(self.Tarr,self.Parr) 
         dtauMx=dtauM(self.dParr,xsm,mmr,axs.molmass,self.gravity)
         self.dtau=self.dtau+dtauMx

@@ -54,7 +54,7 @@ vmrH2=(mmrH2*mmw/molmassH2)
 vmrHe=(mmrHe*mmw/molmassHe)
 
 #LINES
-g=10**(4.5)
+g=10**(5.0)
 T0c=1700.0
 Tarr = T0c*np.ones_like(Parr)    
 maxMMR_CO=0.01
@@ -76,7 +76,7 @@ def ap(fobs,nusd,ws,we,Nx):
     nus,wav,res=nugrid(ws-5.0,we+5.0,Nx,unit="AA")
     #loading molecular database 
     mdbCO=moldb.MdbExomol('.database/CO/12C-16O/Li2015',nus) 
-    mdbH2O=moldb.MdbExomol('.database/H2O/1H2-16O/POKAZATEL',nus,crit=1.e-45) 
+    mdbH2O=moldb.MdbExomol('.database/H2O/1H2-16O/POKAZATEL',nus,crit=1.e-46) 
     #LOADING CIA
     cdbH2H2=contdb.CdbCIA('.database/H2-H2_2011.cia',nus)
     cdbH2He=contdb.CdbCIA('.database/H2-He_2011.cia',nus)
@@ -96,8 +96,8 @@ def ap(fobs,nusd,ws,we,Nx):
     mask_CO,maxcf,maxcia=mask_weakline(mdbCO,Parr,dParr,Tarr,SijM,gammaLM,sigmaDM,maxMMR_CO*ONEARR,molmassCO,mmw,g,vmrH2,cdbH2H2)
     mdbCO.masking(mask_CO)
 
-    #plot_maxpoint(mask_CO,Parr,maxcf,maxcia,mol="CO")
-    #plt.savefig("npz/maxpoint_CO.pdf", bbox_inches="tight", pad_inches=0.0)
+    plot_maxpoint(mask_CO,Parr,maxcf,maxcia,mol="CO")
+    plt.savefig("maxpoint_CO.pdf", bbox_inches="tight", pad_inches=0.0)
         
     #2. H2O
     T0xarr=list(range(500,1800,100))
@@ -118,13 +118,14 @@ def ap(fobs,nusd,ws,we,Nx):
         else:
             mask_H2O=mask_H2O+mask_H2O_tmp
 
-        #if k==len(T0xarr)-1:
-        #    plot_maxpoint(mask_H2O_tmp,Parr,maxcf,maxcia,mol="H2O")
-        #    plt.savefig("maxpoint_H2O.pdf", bbox_inches="tight", pad_inches=0.0)
+        if k==len(T0xarr)-1:
+            print("H2O ")
+            plot_maxpoint(mask_H2O_tmp,Parr,maxcf,maxcia,mol="H2O")
+            plt.savefig("maxpoint_H2O.pdf", bbox_inches="tight", pad_inches=0.0)
+            print("H2O saved")
             
     mdbH2O.masking(mask_H2O)
     print("Final:",len(mask_H2O),"->",np.sum(mask_H2O))
-
     #nu matrix
     numatrix_CO=make_numatrix0(nus,mdbCO.nu_lines)    
     numatrix_H2O=make_numatrix0(nus,mdbH2O.nu_lines)
@@ -154,11 +155,14 @@ def model_c(nu1,y1,e1):
     MMR_H2O = numpyro.sample('MMR_H2O', dist.Uniform(0.0,maxMMR_H2O))
     T0 = numpyro.sample('T0', dist.Uniform(1000.0,1700.0))
     alpha = numpyro.sample('alpha', dist.Uniform(0.05,0.15))
-    vsini = numpyro.sample('vsini', dist.Uniform(10.0,15.0))
+    vsini = numpyro.sample('vsini', dist.Uniform(10.0,20.0))
 
     g=2478.57730044555*Mp/Rp**2 #gravity
-    u1=0.0
-    u2=0.0
+    
+    #Limb Darkening from 2013A&A...552A..16C (1500K, logg=5, K)
+    #0.5969 	0.1125
+    u1=0.6
+    u2=0.1
     #T-P model//
     Tarr = T0*(Parr/Pref)**alpha 
     
