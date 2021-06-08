@@ -31,6 +31,13 @@ ExoJAX
 
 .. toctree::
    :maxdepth: 1
+   :caption: Casual Usage:
+	     
+   casualuse/casual1.rst	     
+
+   
+.. toctree::
+   :maxdepth: 1
    :caption: User Guide:
 
    userguide/hjerting.rst   
