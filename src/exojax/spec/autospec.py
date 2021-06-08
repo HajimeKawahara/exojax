@@ -27,7 +27,7 @@ class AutoXS(object):
     """exojax auto cross section generator
     
     """
-    def __init__(self,nus,database,molecules,databasedir=".database",memory_size=30,broadf=True):
+    def __init__(self,nus,database,molecules,databasedir=".database",memory_size=30,broadf=True,crit=-np.inf):
         """
         Args:
            nus: wavenumber bin (cm-1)
@@ -35,6 +35,7 @@ class AutoXS(object):
            molecules: molecule name
            memory_size: memory_size required
            broadf: if False, the default broadening parameters in .def file is used
+           crit: line strength criterion, ignore lines whose line strength are below crit.
 
         """
         self.molecules=molecules
@@ -43,6 +44,8 @@ class AutoXS(object):
         self.databasedir=databasedir
         self.memory_size=memory_size
         self.broadf=broadf
+        self.crit=crit
+        
         self.identifier=defmol.search_molfile(database,molecules)
         print(self.identifier)
         if self.identifier is None:
@@ -53,7 +56,7 @@ class AutoXS(object):
     def init_database(self):
         if self.database=="HITRAN" or self.database=="HITEMP":
             molpath=pathlib.Path(self.databasedir)/pathlib.Path(self.identifier)
-            self.mdb=moldb.MdbHit(molpath,nurange=[self.nus[0],self.nus[-1]])
+            self.mdb=moldb.MdbHit(molpath,nurange=[self.nus[0],self.nus[-1]],crit=self.crit)
         elif self.database=="ExoMol":
             molpath=pathlib.Path(self.databasedir)/pathlib.Path(self.identifier)
             molpath=str(molpath)
@@ -217,15 +220,17 @@ class AutoRT(object):
         self.sourcef=planck.piBarr(self.Tarr,self.nus)
         self.dtau=np.zeros((self.nlayer,len(nus)))
 
-    def addmol(self,database,molecules,mmr):
+    def addmol(self,database,molecules,mmr,crit=-np.inf):
         """
         Args:
            database: database= HITRAN, HITEMP, ExoMol
            molecules: molecule name
            mmr: mass mixing ratio (float or ndarray for the layer)
+           crit: line strength criterion, ignore lines whose line strength are below crit
+
         """
         mmr=mmr*np.ones_like(self.Tarr)
-        axs=AutoXS(self.nus,database,molecules)
+        axs=AutoXS(self.nus,database,molecules,crit=crit)
         xsm=axs.xsmatrix(self.Tarr,self.Parr) 
         dtauMx=dtauM(self.dParr,xsm,mmr,axs.molmass,self.gravity)
         self.dtau=self.dtau+dtauMx
