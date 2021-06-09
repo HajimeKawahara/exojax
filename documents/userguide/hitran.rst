@@ -48,7 +48,7 @@ These are the basic quantities of MdbHit.
 +-----------------------+-------------+----+------+
 |reference line strength|Sij0         |cm  |np    |
 +-----------------------+-------------+----+------+
-|log10 Sij0             |logsij0      |    |jnp   |
+|log_e Sij0             |logsij0      |    |jnp   |
 +-----------------------+-------------+----+------+
 |statistical weight     |gpp          |    |jnp   |
 +-----------------------+-------------+----+------+
