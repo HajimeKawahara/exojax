@@ -36,12 +36,12 @@ optimization of a simple absorption model
 Next, we try to fit a simple absorption model to mock data. The
 absorption model is
 
-:math:`f= 1 - e^{-a V(\nu,\beta,\gamma_L)}`
+:math:`f= e^{-a V(\nu,\beta,\gamma_L)}`
 
 .. code:: ipython3
 
     def absmodel(nu,a,beta,gamma_L):
-        return 1.0 - jnp.exp(a*rvoigt(nu,beta,gamma_L))
+        return jnp.exp(-a*rvoigt(nu,beta,gamma_L))
 
 Adding a noise…
 
