@@ -45,7 +45,7 @@ Examples of the other quantities in mdb are listed in the table below.
 +-----------------------+-------------+----+------+
 |reference line strength|Sij0         |cm  |np    |
 +-----------------------+-------------+----+------+
-|log10 Sij0             |logsij0      |    |jnp   |
+|log_e Sij0             |logsij0      |    |jnp   |
 +-----------------------+-------------+----+------+
 
 The fourth column indicates the data type of the array; np means the array is numpy nd array (float64). jnp is jax.numpy array on device. Remember that the jnp array is float32. Why do we have both np and jnp versions of the line center? This is because the float64 is needed to keep precision for some conversions. See the last section of "  :doc:`../tutorials/opacity` " for more details. Because the lien strength is small number in general, we have np version of S0 and jnp version of **logarithm** of S0. In fact, logsij0 is used to compute the line strength.

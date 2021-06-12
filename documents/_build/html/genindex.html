@@ -8,7 +8,7 @@
   
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
-  <title>Index &mdash; exojax 0.5.3 documentation</title>
+  <title>Index &mdash; exojax 0.5.5 documentation</title>
   
 
   
@@ -83,12 +83,12 @@
             
             
               <ul>
-<li class="toctree-l1"><a class="reference internal" href="userguide/installation.html">Installation</a></li>
-<li class="toctree-l1"><a class="reference internal" href="userguide/ref.html">References</a></li>
+<li class="toctree-l1"><a class="reference internal" href="userguide/installation.html">Installation and References</a></li>
+<li class="toctree-l1"><a class="reference internal" href="userguide/ql.html">Quick Look for Observers</a></li>
 </ul>
 <p class="caption"><span class="caption-text">Tutorials:</span></p>
 <ul>
-<li class="toctree-l1"><a class="reference internal" href="tutorials/voigt_function.html">Fitting the Voigt Profile</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tutorials/voigt_function.html">Fitting a Voigt Profile</a></li>
 <li class="toctree-l1"><a class="reference internal" href="tutorials/opacity.html">CO Cross Section using HITRAN</a></li>
 <li class="toctree-l1"><a class="reference internal" href="tutorials/opacity_exomol.html">CO Cross Section using ExoMol</a></li>
 <li class="toctree-l1"><a class="reference internal" href="tutorials/comparison_db.html">Comparing HITEMP and ExoMol</a></li>
@@ -97,6 +97,7 @@
 <li class="toctree-l1"><a class="reference internal" href="tutorials/forward_modeling.html">Forward Modeling of an Emission Spectrum</a></li>
 <li class="toctree-l1"><a class="reference internal" href="tutorials/reverse_modeling.html">Reverse Modeling of an Emission Spectrum</a></li>
 <li class="toctree-l1"><a class="reference internal" href="tutorials/fitbd.html">🐱  Bayes Inference of a Real Spectrum of Luhman 16A</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tutorials/optimize_voigt.html">Optimization of a Voigt profile</a></li>
 </ul>
 <p class="caption"><span class="caption-text">User Guide:</span></p>
 <ul>
@@ -109,6 +110,7 @@
 <p class="caption"><span class="caption-text">For Developers :</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="developers/doc.html">Generate Documents</a></li>
+<li class="toctree-l1"><a class="reference internal" href="developers/experimental.html">Experimental module</a></li>
 </ul>
 <p class="caption"><span class="caption-text">API:</span></p>
 <ul>
@@ -454,10 +456,10 @@
 </li>
       <li><a href="exojax/exojax.spec.html#module-exojax.spec.exomol">exojax.spec.exomol (module)</a>
 </li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="exojax/exojax.spec.html#module-exojax.spec.exomolapi">exojax.spec.exomolapi (module)</a>
 </li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="exojax/exojax.spec.html#module-exojax.spec.hapi">exojax.spec.hapi (module)</a>
 </li>
       <li><a href="exojax/exojax.spec.html#module-exojax.spec.hitran">exojax.spec.hitran (module)</a>
@@ -481,6 +483,8 @@
       <li><a href="exojax/exojax.spec.html#module-exojax.spec.planck">exojax.spec.planck (module)</a>
 </li>
       <li><a href="exojax/exojax.spec.html#module-exojax.spec.response">exojax.spec.response (module)</a>
+</li>
+      <li><a href="exojax/exojax.spec.html#module-exojax.spec.rlpf">exojax.spec.rlpf (module)</a>
 </li>
       <li><a href="exojax/exojax.spec.html#module-exojax.spec.rtcheck">exojax.spec.rtcheck (module)</a>
 </li>
@@ -636,10 +640,18 @@
 <h2 id="H">H</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="exojax/exojax.special.html#exojax.special.faddeeva.h_bwd">h_bwd() (in module exojax.special.faddeeva)</a>
+      <li><a href="exojax/exojax.spec.html#exojax.spec.rlpf.h_bwd">h_bwd() (in module exojax.spec.rlpf)</a>
+
+      <ul>
+        <li><a href="exojax/exojax.special.html#exojax.special.faddeeva.h_bwd">(in module exojax.special.faddeeva)</a>
 </li>
-      <li><a href="exojax/exojax.special.html#exojax.special.faddeeva.h_fwd">h_fwd() (in module exojax.special.faddeeva)</a>
+      </ul></li>
+      <li><a href="exojax/exojax.spec.html#exojax.spec.rlpf.h_fwd">h_fwd() (in module exojax.spec.rlpf)</a>
+
+      <ul>
+        <li><a href="exojax/exojax.special.html#exojax.special.faddeeva.h_fwd">(in module exojax.special.faddeeva)</a>
 </li>
+      </ul></li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="exojax/exojax.spec.html#exojax.spec.hapi.hcpf">hcpf() (in module exojax.spec.hapi)</a>
@@ -701,7 +713,11 @@
       <li><a href="exojax/exojax.spec.html#exojax.spec.hapi.listOfTuples">listOfTuples() (in module exojax.spec.hapi)</a>
 </li>
       <li><a href="exojax/exojax.spec.html#exojax.spec.lpf.ljert">ljert() (in module exojax.spec.lpf)</a>
+
+      <ul>
+        <li><a href="exojax/exojax.spec.html#exojax.spec.rlpf.ljert">(in module exojax.spec.rlpf)</a>
 </li>
+      </ul></li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="exojax/exojax.spec.html#exojax.spec.hapi.loadCache">loadCache() (in module exojax.spec.hapi)</a>
@@ -970,14 +986,14 @@
 </li>
       <li><a href="exojax/exojax.spec.html#exojax.spec.hapi.REGEX_STRING_FIXCOL">REGEX_STRING_FIXCOL() (in module exojax.spec.hapi)</a>
 </li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="exojax/exojax.spec.html#exojax.spec.hapi.renameColumn">renameColumn() (in module exojax.spec.hapi)</a>
 </li>
       <li><a href="exojax/exojax.special.html#exojax.special.faddeeva.rewofz">rewofz() (in module exojax.special.faddeeva)</a>
 </li>
       <li><a href="exojax/exojax.special.html#exojax.special.faddeeva.rewofzs2">rewofzs2() (in module exojax.special.faddeeva)</a>
 </li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="exojax/exojax.spec.html#exojax.spec.response.rigidrot">rigidrot() (in module exojax.spec.response)</a>
 </li>
       <li><a href="exojax/exojax.spec.html#exojax.spec.response.rigidrot2">rigidrot2() (in module exojax.spec.response)</a>
@@ -1001,6 +1017,16 @@
       <li><a href="exojax/exojax.dynamics.html#exojax.dynamics.rvfunc.rvf2">rvf2() (in module exojax.dynamics.rvfunc)</a>
 </li>
       <li><a href="exojax/exojax.dynamics.html#exojax.dynamics.rvfunc.rvf2c">rvf2c() (in module exojax.dynamics.rvfunc)</a>
+</li>
+      <li><a href="exojax/exojax.spec.html#exojax.spec.rlpf.rvoigt">rvoigt() (in module exojax.spec.rlpf)</a>
+</li>
+      <li><a href="exojax/exojax.spec.html#exojax.spec.rlpf.rvoigtone">rvoigtone() (in module exojax.spec.rlpf)</a>
+</li>
+      <li><a href="exojax/exojax.spec.html#exojax.spec.rlpf.rvvoigt">rvvoigt() (in module exojax.spec.rlpf)</a>
+</li>
+      <li><a href="exojax/exojax.spec.html#exojax.spec.rlpf.rxsmatrix">rxsmatrix() (in module exojax.spec.rlpf)</a>
+</li>
+      <li><a href="exojax/exojax.spec.html#exojax.spec.rlpf.rxsvector">rxsvector() (in module exojax.spec.rlpf)</a>
 </li>
   </ul></td>
 </tr></table>

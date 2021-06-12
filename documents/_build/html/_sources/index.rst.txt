@@ -12,14 +12,13 @@ ExoJAX
    :maxdepth: 1
 
    userguide/installation.rst
-   userguide/ref.rst
-
+   userguide/ql.rst	     
 
 .. toctree::
    :maxdepth: 1
    :caption: Tutorials:
 	     
-   tutorials/voigt_function.rst   
+   tutorials/voigt_function.rst
    tutorials/opacity.rst	     
    tutorials/opacity_exomol.rst	     
    tutorials/comparison_db.rst	     
@@ -28,7 +27,10 @@ ExoJAX
    tutorials/forward_modeling.rst	     
    tutorials/reverse_modeling.rst	     
    tutorials/fitbd.rst	     
+   tutorials/optimize_voigt.rst   
 
+
+   
 .. toctree::
    :maxdepth: 1
    :caption: User Guide:
@@ -44,6 +46,7 @@ ExoJAX
    :caption: For Developers :
 
    developers/doc.rst   
+   developers/experimental.rst   
 
 Collaborations using exojax is `welcome <http://secondearths.sakura.ne.jp/en/index.html>`_!
    

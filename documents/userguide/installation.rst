@@ -1,5 +1,5 @@
-Installation
-------------------
+Installation and References
+----------------------------------
 
 At a minimum, you can start to use exojax by
 
@@ -44,3 +44,8 @@ In addition, you may need cuDNN for `response.ipgauss2 <../exojax/exojax.spec.ht
 	   
 .. code:: sh
 	  sudo dpkg -i libcudnn8_8.2.0.53-1+cuda11.3_amd64.deb
+
+References
+=================
+
+- Kawahara, Kawashima, Masuda, Crossfield (2021) `arXiv <https://arxiv.org/abs/2105.14782>`_.
