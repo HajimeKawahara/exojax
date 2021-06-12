@@ -1,4 +1,4 @@
-Fitting the Voigt Profile
+Fitting a Voigt Profile
 ===========================================
 *Update: May 10/2021, Hajime Kawahara*
 
@@ -151,3 +151,4 @@ We got a posterior sampling.
 .. image:: voigt_function/output_20_0.png
 
 
+To optimize this model, for instance using `ADAM <https://arxiv.org/abs/1412.6980>`_, see ":doc:`optimize_voigt`".

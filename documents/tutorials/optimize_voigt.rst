@@ -36,8 +36,7 @@ optimization of a simple absorption model
 Next, we try to fit a simple absorption model to mock data. The
 absorption model is
 
-$ f= 1 - e^{-a
-V(:raw-latex:`\nu`,:raw-latex:`\beta`,:raw-latex:`\gamma`\_L)}$
+:math:`f= 1 - e^{-a V(\nu,\beta,\gamma_L)}`
 
 .. code:: ipython3
 

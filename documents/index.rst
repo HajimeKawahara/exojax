@@ -19,7 +19,6 @@ ExoJAX
    :caption: Tutorials:
 	     
    tutorials/voigt_function.rst
-   tutorials/optimize_voigt.rst   
    tutorials/opacity.rst	     
    tutorials/opacity_exomol.rst	     
    tutorials/comparison_db.rst	     
@@ -28,6 +27,7 @@ ExoJAX
    tutorials/forward_modeling.rst	     
    tutorials/reverse_modeling.rst	     
    tutorials/fitbd.rst	     
+   tutorials/optimize_voigt.rst   
 
 
    
