@@ -1,6 +1,6 @@
-Fitting a Voigt Profile
+Voigt Profile
 ===========================================
-*Update: May 10/2021, Hajime Kawahara*
+*Update: June 12/2021, Hajime Kawahara*
 
 Let’s compute
 `the Voigt profile <https://en.wikipedia.org/wiki/Voigt_profile>`_
@@ -152,3 +152,77 @@ We got a posterior sampling.
 
 
 To optimize this model, for instance using `ADAM <https://arxiv.org/abs/1412.6980>`_, see ":doc:`optimize_voigt`".
+
+Curve of Growth
+---------------
+
+As an application, we consider `the curve of growth <https://en.wikipedia.org/wiki/Curve_of_growth>`_. The curve of growth is the equivalent width evolution as a function of the absorption strength. Here, it corresponds to :math:`a`. Let’s see, the growth of absorption feature as
+
+.. code:: ipython3
+
+    nu=jnp.linspace(-100,100,10000)
+    aarr=jnp.logspace(-3,3,10)
+    for a in aarr:
+        plt.plot(nu,absmodel(nu,a,0.1,0.1))
+
+
+.. image:: voigt_function/output_23_0.png
+
+
+Let us define the equivalent width by a simple summation of the
+absorption.
+
+.. code:: ipython3
+
+    def EW(a):
+        return jnp.sum(1-absmodel(nu,a,0.1,0.1))
+    vEW=vmap(EW,0,0)
+
+This is the curve of growth. As you see, when the absorption is weak,
+the power law index of the curve (hereby "power") is proportional to unity (linear region). But, as
+increasing the absorption sterength, the power converges to 1/2 (damped region).
+
+.. code:: ipython3
+
+    aarr=jnp.logspace(-3,3,100)
+    plt.plot(aarr,vEW(aarr))
+    plt.yscale("log")
+    plt.xscale("log")
+    plt.xlabel("a")
+    plt.ylabel("equivalent width")
+    plt.show()
+
+
+
+.. image:: voigt_function/output_27_0.png
+
+
+Now we have auto-diff for the Voigt. So, we can directly compute the power as a function of :math:`a`.
+
+:math:`power = \frac{\partial}{\partial \log_{10} a } \log_{10} ( EW )`
+
+.. code:: ipython3
+
+    def logEW(loga):
+        return jnp.log10(jnp.sum(1-absmodel(nu,10**(loga),0.1,0.1)))
+
+.. code:: ipython3
+
+    dlogEW=grad(logEW)
+    vlogdEW=vmap(dlogEW,0,0)
+
+.. code:: ipython3
+
+    logaarr=jnp.linspace(-3,3,100)
+    plt.plot(10**(logaarr),vlogdEW(logaarr))
+    plt.axhline(1.0,label="linear limit",color="gray",ls="dashed")
+    plt.axhline(0.5,label="damped limit",color="gray",ls="dotted")
+    plt.xscale("log")
+    plt.xlabel("a")
+    plt.ylabel("power")
+    plt.legend()
+    plt.show()
+
+.. image:: voigt_function/output_31_0.png
+
+
