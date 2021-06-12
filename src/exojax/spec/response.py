@@ -35,7 +35,7 @@ def rigidrot(nus,F0,vsini,u1=0.0,u2=0.0):
     dvmat=jnp.array(c*jnp.log(nus[None,:]/nus[:,None]))
     x=dvmat/vsini
     x2=x*x
-    kernel=jnp.where(x2<1.0,jnp.pi/2.0*u1*(1.0 - x2) - 2.0/3.0*jnp.sqrt(1.0-x2)*(-3.0+3.0*u1+u2*2.0*u2*x2),0.0)
+    kernel=jnp.where(x2<1.0,jnp.pi/2.0*u1*(1.0 - x2) - 2.0/3.0*jnp.sqrt(1.0-x2)*(-3.0+3.0*u1+u2+2.0*u2*x2),0.0)
     kernel=kernel/jnp.sum(kernel,axis=0) #axis=N
     F=kernel.T@F0
 
