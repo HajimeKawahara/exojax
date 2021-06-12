@@ -18,7 +18,8 @@ ExoJAX
    :maxdepth: 1
    :caption: Tutorials:
 	     
-   tutorials/voigt_function.rst   
+   tutorials/voigt_function.rst
+   tutorials/optimize_voigt.rst   
    tutorials/opacity.rst	     
    tutorials/opacity_exomol.rst	     
    tutorials/comparison_db.rst	     
@@ -45,6 +46,7 @@ ExoJAX
    :caption: For Developers :
 
    developers/doc.rst   
+   developers/experimental.rst   
 
 Collaborations using exojax is `welcome <http://secondearths.sakura.ne.jp/en/index.html>`_!
    
