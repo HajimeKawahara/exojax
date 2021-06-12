@@ -80,6 +80,25 @@ rhjert.defvjp(h_fwd, h_bwd)
 
 
 @jit
+def rvoigtone(nu,sigmaD,gammaL):
+    """Custom VJP version of (non-vmapped) Voigt function using Voigt-Hjerting function 
+
+    Args:
+       nu: wavenumber 
+       sigmaD: sigma parameter in Doppler profile 
+       gammaL: broadening coefficient in Lorentz profile 
+ 
+    Returns:
+       v: Voigt funtion
+
+    """
+    
+    sfac=1.0/(jnp.sqrt(2)*sigmaD)
+    v=sfac*rhjert(sfac*nu,sfac*gammaL)/jnp.sqrt(jnp.pi)
+    return v
+
+
+@jit
 def rvoigt(nu,sigmaD,gammaL):
     """Custom VJP version of Voigt profile using Voigt-Hjerting function 
 
