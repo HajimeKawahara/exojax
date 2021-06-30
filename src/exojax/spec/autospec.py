@@ -258,7 +258,10 @@ class AutoRT(object):
         """running radiative transfer
         
         Returns:
-           spectrum (F0)
+           spectrum (F0) in the unit of erg/s/cm2/cm-1
+
+        Note:
+           If you want to use the unit of erg/cm2/s/Hz, divide the output by the speed of light in cgs as Fx0=Fx0/ccgs, where  ccgs=29979245800.0. See #84
 
         """
         self.F0=rtrun(self.dtau,self.sourcef)

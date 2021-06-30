@@ -19,6 +19,7 @@ class MdbExomol(object):
     MdbExomol is a class for ExoMol.
 
     Attributes:
+        nurange: nu range [min,max] (cm-1)
         nu_lines (nd array): line center (cm-1)
         Sij0 (nd array): line strength at T=Tref (cm)
         dev_nu_lines (jnp array): line center in device (cm-1)
@@ -40,7 +41,7 @@ class MdbExomol(object):
 
         Args: 
            path: path for Exomol data directory/tag. For instance, "/home/CO/12C-16O/Li2015"
-           nurange: wavenumber range list (cm-1) or wavenumber array
+           nurange: wavenumber range list (cm-1) [min,max] or wavenumber grid 
            margin: margin for nurange (cm-1)
            crit: line strength lower limit for extraction
            bkgdatm: background atmosphere for broadening. e.g. H2, He, 
@@ -115,8 +116,8 @@ class MdbExomol(object):
             #compute gup and elower
             self._A, self.nu_lines, self._elower, self._gpp, self._jlower, self._jupper=exomolapi.pickup_gE(states,trans)        
         else:
-            imin=np.searchsorted(numinf,nurange[0],side="right")-1 #left side
-            imax=np.searchsorted(numinf,nurange[1],side="right")-1 #left side
+            imin=np.searchsorted(numinf,self.nurange[0],side="right")-1 #left side
+            imax=np.searchsorted(numinf,self.nurange[1],side="right")-1 #left side
             self.trans_file=[]
             for k,i in enumerate(range(imin,imax+1)):
                 trans_file = self.path/pathlib.Path(molec+"__"+numtag[i]+".trans.bz2")
@@ -308,6 +309,7 @@ class MdbHit(object):
     MdbExomol is a class for ExoMol.
 
     Attributes:
+        nurange: nu range [min,max] (cm-1)
         nu_lines (nd array): line center (cm-1)
         Sij0 (nd array): line strength at T=Tref (cm)
         dev_nu_lines (jnp array): line center in device (cm-1)
@@ -327,7 +329,7 @@ class MdbHit(object):
 
         Args: 
            path: path for HITRAN/HITEMP par file
-           nurange: wavenumber range list (cm-1) or wavenumber array
+           nurange: wavenumber range list (cm-1) [min,max] or wavenumber grid 
            margin: margin for nurange (cm-1)
            crit: line strength lower limit for extraction
 
