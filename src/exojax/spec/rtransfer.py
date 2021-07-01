@@ -8,6 +8,7 @@ import jax.numpy as jnp
 import numpy as np
 from exojax.special.expn import E1
 from exojax.spec.hitrancia import logacia
+from exojax.spec.contdb import log_hminus_continuum
 
 def nugrid(x0,x1,N,unit="cm-1"):
     """generating wavenumber grid
@@ -152,6 +153,44 @@ def dtauM(dParr,xsm,MR,mass,g):
 
     fac=6.022140858549162e+29
     return fac*xsm*dParr[:,None]*MR[:,None]/(mass*g)
+
+
+def dtauHminus(nus,Tarr,Parr,dParr,number_density_e,number_density_h,mmw,g):
+    """dtau of the H- continuum
+
+    Args:
+       nus: wavenumber matrix (cm-1)
+       Tarr: temperature array (K)
+       Parr: temperature array (bar)
+       dParr: delta temperature array (bar)
+       number_density_e: number density for e- [N_layer]
+       number_density_h: number density for H atoms [N_layer]
+       mmw: mean molecular weight of atmosphere
+       g: gravity (cm2/s)
+
+    Returns:
+       optical depth matrix  [N_layer, N_nus] 
+
+    Note:
+       logm_ucgs=np.log10(m_u*1.e3) where m_u = scipy.constants.m_u.
+
+    """
+    kB=1.380649e-16
+    logm_ucgs=-23.779750909492115
+
+    narr=(Parr*1.e6)/(kB*Tarr)
+    lognarr1=jnp.log10(number_density_e) #log number density
+    lognarr2=jnp.log10(number_density_h) #log number density
+    
+    logkb=np.log10(kB)    
+    logg=jnp.log10(g)
+    ddParr=dParr/Parr
+    wavelength_um = 1e4/nus[::-1]
+    dtauctm = (10**(log_hminus_continuum(wavelength_um, Tarr[:, None], number_density_e, number_density_h)
+            +lognarr1[:,None]+lognarr2[:,None]+logkb-logg-logm_ucgs)
+            *Tarr[:,None]/mmw*ddParr[:,None])
+
+    return dtauctm
 
 
 @jit
