@@ -128,12 +128,12 @@ def read_states(statesf):
     return dat
 
 
-def pickup_gE(states,trans,trans_lines=False):
+def pickup_gE(states,ndtrans,trans_lines=False):
     """extract g_upper (gup), E_lower (elower), and J_lower and J_upper from states DataFrame and insert them to transition DataFrame.
 
     Args:
        states: states pandas DataFrame
-       trans: transition pandas DataFrame
+       ndtrans: transition numpy array
        trans_lines: By default (False) we use nu_lines computed using the state file, i.e. E_upper - E_lower. If trans_nuline=True, we use the nu_lines in the transition file. Note that some trans files do not this info.
 
 
@@ -146,7 +146,6 @@ def pickup_gE(states,trans,trans_lines=False):
 
     """
     ndstates=states.to_numpy()
-    ndtrans=trans.to_numpy()
 
     iorig=np.array(ndstates[:,0],dtype=int)
     maxii=int(np.max(iorig)+1) 
