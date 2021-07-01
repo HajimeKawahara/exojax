@@ -55,7 +55,6 @@ class CdbCIA(object):
             
 CONST_K, CONST_C, CONST_H = 1.380649e-16, 29979245800.0, 6.62607015e-27 # cgs
 
-@jit
 def log_hminus_continuum(wavelength_um, temperature, number_density_e, number_density_h):
     """
     John (1988) H- continuum opacity
