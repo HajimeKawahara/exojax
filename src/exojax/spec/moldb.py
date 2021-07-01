@@ -109,12 +109,16 @@ class MdbExomol(object):
 
             if self.trans_file.with_suffix(".feather").exists():
                 trans=pd.read_feather(self.trans_file.with_suffix(".feather"))
+                ndtrans=trans.to_numpy()
+                del trans
             else:
                 print(explanation)
                 trans=exomolapi.read_trans(self.trans_file)
                 trans.to_feather(self.trans_file.with_suffix(".feather"))
+                ndtrans=trans.to_numpy()
+                del trans
             #compute gup and elower
-            self._A, self.nu_lines, self._elower, self._gpp, self._jlower, self._jupper=exomolapi.pickup_gE(states,trans)        
+            self._A, self.nu_lines, self._elower, self._gpp, self._jlower, self._jupper=exomolapi.pickup_gE(states,ndtrans)
         else:
             imin=np.searchsorted(numinf,self.nurange[0],side="right")-1 #left side
             imax=np.searchsorted(numinf,self.nurange[1],side="right")-1 #left side
@@ -125,16 +129,20 @@ class MdbExomol(object):
                     self.download(molec,extension=[".trans.bz2"],numtag=numtag[i])
                 if trans_file.with_suffix(".feather").exists():
                     trans=pd.read_feather(trans_file.with_suffix(".feather"))
+                    ndtrans=trans.to_numpy()
+                    del trans
                 else:
                     print(explanation)
                     trans=exomolapi.read_trans(trans_file)
                     trans.to_feather(trans_file.with_suffix(".feather"))
+                    ndtrans=trans.to_numpy()
+                    del trans
                 self.trans_file.append(trans_file)
                 #compute gup and elower                
                 if k==0:
-                    self._A, self.nu_lines, self._elower, self._gpp, self._jlower, self._jupper=exomolapi.pickup_gE(states,trans)
+                    self._A, self.nu_lines, self._elower, self._gpp, self._jlower, self._jupper=exomolapi.pickup_gE(states,ndtrans)
                 else:
-                    Ax, nulx, elowerx, gppx, jlowerx, jupperx=exomolapi.pickup_gE(states,trans)
+                    Ax, nulx, elowerx, gppx, jlowerx, jupperx=exomolapi.pickup_gE(states,ndtrans)
                     self._A=np.hstack([self._A,Ax])
                     self.nu_lines=np.hstack([self.nu_lines,nulx])
                     self._elower=np.hstack([self._elower,elowerx])
