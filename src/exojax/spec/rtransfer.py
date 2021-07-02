@@ -8,7 +8,7 @@ import jax.numpy as jnp
 import numpy as np
 from exojax.special.expn import E1
 from exojax.spec.hitrancia import logacia
-from exojax.spec.contdb import log_hminus_continuum
+from exojax.spec.hminus import log_hminus_continuum
 
 def nugrid(x0,x1,N,unit="cm-1"):
     """generating wavenumber grid
@@ -155,7 +155,8 @@ def dtauM(dParr,xsm,MR,mass,g):
     return fac*xsm*dParr[:,None]*MR[:,None]/(mass*g)
 
 
-def dtauHminus(nus,Tarr,Parr,dParr,number_density_e,number_density_h,mmw,g):
+#def dtauHminus(nus,Tarr,Parr,dParr,number_density_e,number_density_h,mmw,g):
+def dtauHminus(nus,Tarr,Parr,dParr,vmre,vmrh,mmw,g):
     """dtau of the H- continuum
 
     Args:
@@ -163,10 +164,11 @@ def dtauHminus(nus,Tarr,Parr,dParr,number_density_e,number_density_h,mmw,g):
        Tarr: temperature array (K)
        Parr: temperature array (bar)
        dParr: delta temperature array (bar)
-       number_density_e: number density for e- [N_layer]
-       number_density_h: number density for H atoms [N_layer]
+       vmre: volume mixing ratio (VMR) for e- [N_layer]
+       vmrH: volume mixing ratio (VMR) for H atoms [N_layer]
        mmw: mean molecular weight of atmosphere
        g: gravity (cm2/s)
+
 
     Returns:
        optical depth matrix  [N_layer, N_nus] 
@@ -179,17 +181,25 @@ def dtauHminus(nus,Tarr,Parr,dParr,number_density_e,number_density_h,mmw,g):
     logm_ucgs=-23.779750909492115
 
     narr=(Parr*1.e6)/(kB*Tarr)
+    #       number_density_e: number density for e- [N_layer]
+    #       number_density_h: number density for H atoms [N_layer]
+    number_density_e=vmre*narr
+    number_density_h=vmrh*narr
     lognarr1=jnp.log10(number_density_e) #log number density
-    lognarr2=jnp.log10(number_density_h) #log number density
-    
+    lognarr2=jnp.log10(number_density_h) #log number density    
+
     logkb=np.log10(kB)    
     logg=jnp.log10(g)
     ddParr=dParr/Parr
-    wavelength_um = 1e4/nus[::-1]
-    dtauctm = (10**(log_hminus_continuum(wavelength_um, Tarr[:, None], number_density_e, number_density_h)
+    dtauctm = (10**(log_hminus_continuum(nus, Tarr, number_density_e, number_density_h)
             +lognarr1[:,None]+lognarr2[:,None]+logkb-logg-logm_ucgs)
             *Tarr[:,None]/mmw*ddParr[:,None])
 
+#    dtauc=(10**(logacia(Tarr,nus,nucia,tcia,logac)\
+#            +lognarr1[:,None]+lognarr2[:,None]+logkb-logg-logm_ucgs)\
+#            *Tarr[:,None]/mmw*ddParr[:,None])
+
+    
     return dtauctm
 
 
