@@ -147,7 +147,6 @@ def xsvector(nu_lines,sigmaD,gammaL,S,nu_grid,sigmaD_grid,gammaL_grid):
     
     log_sigmaD_grid = jnp.log(sigmaD_grid)
     log_gammaL_grid = jnp.log(gammaL_grid)
-    
     dnu = (nu_grid[-1]-nu_grid[0])/(Ng_nu-1)
     k = jnp.fft.rfftfreq(2*Ng_nu,dnu)
     val=inc3D(S,nu_lines,log_sigmaD,log_gammaL,nu_grid,log_sigmaD_grid,log_gammaL_grid)
@@ -178,3 +177,56 @@ def xsmatrix(nu_lines,sigmaDM,gammaLM,SijM,nu_grid,sigmaD_grid,gammaL_grid):
     """
 #    xsvector(S,nu_lines,sigmaD,gammaL,nu_grid,sigmaD_grid,gammaL_grid):
     return vmap(xsvector,(None,0,0,0,None,None,None))(nu_lines,sigmaDM,gammaLM,SijM,nu_grid,sigmaD_grid,gammaL_grid)
+
+def set_ditgrid(x,res=1,adopt=True):
+    """
+    Args:
+        x: simgaD or gammaL array (Nline)
+        res: grid resolution. res=1 (defaut) means a grid point per digit
+        adopt: if True, min, max grid points are used at min and max values of x. 
+               In this case, the grid width does not need to be res exactly.
+        
+    Returns:
+        grid for DIT
+        
+    """
+    lxmin=np.log10(np.min(x))
+    lxmax=np.log10(np.max(x))
+    dlog=lxmax-lxmin
+    Ng=int(dlog/res)+2
+    if adopt==False:
+        grid=np.logspace(lxmin,lxmin+(Ng-1)*res,Ng)
+    else:
+        grid=np.logspace(lxmin,lxmax,Ng)
+    return grid
+
+if __name__ == "__main__":
+
+    from exojax.spec import xsection
+    from exojax.spec.hitran import SijT, doppler_sigma, gamma_hitran, gamma_natural
+    from exojax.spec import moldb
+    import numpy as np
+    import seaborn as sns
+    import matplotlib.pyplot as plt
+    import jax.numpy as jnp
+
+    nus=np.linspace(1900.0,2300.0,200000,dtype=np.float64) 
+    mdbCO=moldb.MdbHit('05_hit12.par',nus)
+    Mmol=28.010446441149536 # molecular weight
+    Tfix=1000.0 # we assume T=1000K
+    Pfix=1.e-3 # we compute P=1.e-3 bar
+    Ppart=Pfix #partial pressure of CO. here we assume a 100% CO atmosphere.
+    qt=mdbCO.Qr_layer_HAPI([Tfix])[0]
+    Sij=SijT(Tfix,mdbCO.logsij0,mdbCO.nu_lines,mdbCO.elower,qt)
+    gammaL = gamma_hitran(Pfix,Tfix, Ppart, mdbCO.n_air, \
+                          mdbCO.gamma_air, mdbCO.gamma_self) \
+                          + gamma_natural(mdbCO.A)
+    # thermal doppler sigma
+    sigmaD=doppler_sigma(mdbCO.nu_lines,Tfix,Mmol)
+    sigmaD_grid=set_ditgrid(sigmaD,res=1)
+    gammaL_grid=set_ditgrid(gammaL,res=1)
+
+    xs=xsvector(mdbCO.nu_lines,sigmaD,gammaL,Sij,nus,sigmaD_grid,gammaL_grid)
+    plt.plot(nus,xs)
+#    plt.yscale("log")
+    plt.show()
