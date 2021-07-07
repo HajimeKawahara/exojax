@@ -200,6 +200,34 @@ def set_ditgrid(x,res=1,adopt=True):
         grid=np.logspace(lxmin,lxmax,Ng)
     return grid
 
+def dgmatrix(x,res,adopt=True):
+    """
+        x: simgaD or gammaL matrix (Nlayer x Nline)
+        res: grid resolution. res=1 (defaut) means a grid point per digit
+        adopt: if True, min, max grid points are used at min and max values of x. 
+               In this case, the grid width does not need to be res exactly.
+        
+    Returns:
+        grid for DIT
+
+    """
+    mmax=np.max(np.log10(x),axis=1)
+    mmin=np.min(np.log10(x),axis=1)
+    Nlayer=np.shape(mmax)[0]
+    gm=[]
+    dlog=np.max(mmax-mmin)
+    Ng=(dlog/res).astype(int)+2
+    for i in range(0,Nlayer):
+        lxmin=mmin[i]
+        lxmax=mmax[i]
+        if adopt==False:
+            grid=np.logspace(lxmin,lxmin+(Ng-1)*res,Ng)
+        else:
+            grid=np.logspace(lxmin,lxmax,Ng)
+        gm.append(grid)
+    gm=np.array(gm)
+    return gm
+
 if __name__ == "__main__":
 
     from exojax.spec import xsection
