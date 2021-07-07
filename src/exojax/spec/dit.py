@@ -128,7 +128,7 @@ def xsvector(nu_lines,sigmaD,gammaL,S,nu_grid,sigmaD_grid,gammaL_grid):
     Args:
        nu_lines: line center (Nlines)
        sigmaD: Gaussian STD (Nlines)
-       gammaL: Lorentian half width (Nlines)
+       gammaL: Lorentzian half width (Nlines)
        S: line strength (Nlines)
        nu_grid: linear wavenumber grid
        sigmaD_grid: sigmaD grid
