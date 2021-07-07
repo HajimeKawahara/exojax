@@ -105,7 +105,7 @@ def voigt_kernel(k, beta,gammaL):
     Args:
         k: conjugated of wavenumber
         beta: Gaussian standard deviation
-        gammaL: Lorentian Half Width
+        gammaL: Lorentzian Half Width
         
     Returns:
         kernel (N_x,N_beta,N_gammaL)
