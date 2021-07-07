@@ -9,14 +9,15 @@ import numpy as np
 from exojax.special.expn import E1
 from exojax.spec.hitrancia import logacia
 
-def nugrid(x0,x1,N,unit="cm-1"):
-    """generating wavenumber grid
+def nugrid(x0,x1,N,unit="cm-1",xsmode="lpf"):
+    """generating the recommended wavenumber grid based on the cross section computation mode
 
     Args:
        x0: start wavenumber (cm-1) or wavelength (nm) or (AA)
        x1: end wavenumber (cm-1) or wavelength (nm) or (AA)
        N: the number of the wavenumber grid
        unit: unit of the input grid
+       xsmode: cross section computation mode (lpf, dit, hybrid)
     
     Returns:
        wavenumber grid evenly spaced in log space
@@ -24,43 +25,76 @@ def nugrid(x0,x1,N,unit="cm-1"):
        resolution
 
     """
-    if unit=="cm-1":
-        nus=np.logspace(np.log10(x0),np.log10(x1),N,dtype=np.float64)#AA
-        wav=1.e8/nus[::-1]
-    elif unit=="nm":
-        wav=np.logspace(np.log10(x0),np.log10(x1),N,dtype=np.float64)#AA
-        nus=1.e7/wav[::-1]
-    elif unit=="AA":
-        wav=np.logspace(np.log10(x0),np.log10(x1),N,dtype=np.float64)#AA
-        nus=1.e8/wav[::-1]
+    if xsmode=="lpf":
+        print("nugrid is log: mode=",xsmode)
+        if unit=="cm-1":
+            nus=np.logspace(np.log10(x0),np.log10(x1),N,dtype=np.float64)
+            wav=1.e8/nus[::-1]
+        elif unit=="nm":
+            wav=np.logspace(np.log10(x0),np.log10(x1),N,dtype=np.float64)
+            nus=1.e7/wav[::-1]
+        elif unit=="AA":
+            wav=np.logspace(np.log10(x0),np.log10(x1),N,dtype=np.float64)
+            nus=1.e8/wav[::-1]
         
-    dlognu=(np.log10(nus[-1])-np.log10(nus[0]))/N
-    resolution=1.0/dlognu
-    if resolution<300000.0:
-        print("WARNING: resolution may be too small. R=",resolution)
+        dlognu=(np.log10(nus[-1])-np.log10(nus[0]))/N
+        resolution=1.0/dlognu
+        if resolution<300000.0:
+            print("WARNING: resolution may be too small. R=",resolution)
+
+    elif xsmode=="dit" or xsmode=="hybrid":
+        print("nugrid is linear: mode=",xsmode)
+        if unit=="cm-1":
+            nus=np.linspace((x0),(x1),N,dtype=np.float64)
+            wav=1.e8/nus[::-1]
+        elif unit=="nm":
+            cx1=1.e7/x0
+            cx0=1.e7/x1
+            nus=np.linspace((cx0),(cx1),N,dtype=np.float64)
+            wav=1.e7/nus[::-1]
+        elif unit=="AA":
+            cx1=1.e8/x0
+            cx0=1.e8/x1
+            nus=np.linspace((cx0),(cx1),N,dtype=np.float64)
+            wav=1.e8/nus[::-1]
+            
+        dlognu=np.median(np.log10(nus[1:])-np.log10(nus[:-1]))/N
+        resolution=1.0/dlognu
+        if resolution<300000.0:
+            print("WARNING: median resolution may be too small. R=",resolution)
         
+            
     return nus, wav, resolution
 
-def check_nugrid(nus,crit1=1.e-5,crit2=1.e-14):
-    """checking if nugrid is evenly spaced in a logarithm scale (ESLOG)
+def check_nugrid(nus,crit1=1.e-5,crit2=1.e-14,gridmode="ESLOG"):
+    """checking if nugrid is evenly spaced in a logarithm scale (ESLOG) or a liner scale (ESLIN)
 
     Args:
        nus: wavenumber grid
        crit1: criterion for the maximum deviation of log10(nu)/median(log10(nu)) from ESLOG 
        crit2: criterion for the maximum deviation of log10(nu) from ESLOG 
-
+       gridmode: ESLOG or ESLIN
     Returns:
        True (nugrid is ESLOG) or False (not)
 
     """
-    q=np.log10(nus)
+    if gridmode=="ESLOG":    
+        q=np.log10(nus)
+    elif gridmode=="ESLIN":
+        q=nus
     p=q[1:]-q[:-1]
     w=(p-np.mean(p))
-    val1=np.max(np.abs(w))/np.median(p)
-    val2=np.max(np.abs(w))
+    if gridmode=="ESLOG":
+        val1=np.max(np.abs(w))/np.median(p)
+        val2=np.max(np.abs(w))
+    elif gridmode=="ESLIN":
+        val1=np.abs(np.max(np.abs(w))/np.median(p))
+        val2=-np.inf #do not check
     if val1<crit1 and val2 < crit2:
+#        print(val1,val2)
         return True
     else:
+#        print(val1,val2)
         return False
     
 
@@ -236,6 +270,18 @@ def rtrun_surface(dtau,S,Sb):
 
 
 if __name__ == "__main__":
+
+    nus,wav,res=nugrid(22920,23000,1000,unit="AA",xsmode="hybrid")
+    print(nus)
+    print("----------------------")
+    
+
+    print(check_nugrid(nus, gridmode="ESLIN"))
+
+    wav=np.linspace(22920.23000,1000)
+    nus=1.e8/wav[::-1]
+    print(check_nugrid(nus, gridmode="ESLIN"))
+    print("----------------------")
     
     nus,wav,res=nugrid(22999,23000,1000,"AA")
     print(check_nugrid(nus))
@@ -243,6 +289,7 @@ if __name__ == "__main__":
     print(check_nugrid(nus))
     nus,wav,res=nugrid(22999,23000,100000,"AA")
     print(check_nugrid(nus))
+    
     nus=np.linspace(1.e8/23000.,1.e8/22999.,1000)
     print(check_nugrid(nus))
     nus=np.linspace(1.e8/23000.,1.e8/22999.,10000)
