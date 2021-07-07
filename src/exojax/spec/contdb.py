@@ -151,7 +151,7 @@ def free_free_absorption(wavelength_um, temperature):
 
     kappa_ff = jnp.where(
         wavelength_um > 0.3645, 
-        lax.scan(body_fun, jnp.zeros_like(wavelength_um), coeffs)[-1].sum(0) * 1e-29, 
+        lax.scan(body_fun, jnp.zeros_like(wavelength_um), coeffs1)[-1].sum(0) * 1e-29, 
         0
     ) + jnp.where(
         (wavelength_um >= 0.1823) & (wavelength_um <= 0.3645),
