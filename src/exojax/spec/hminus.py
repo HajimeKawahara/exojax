@@ -5,6 +5,7 @@
 import numpy as np
 import jax.numpy as jnp
 from jax import jit, vmap
+from jax.lax import scan            
 
 CONST_K, CONST_C, CONST_H = 1.380649e-16, 29979245800.0, 6.62607015e-27 # cgs
 
@@ -56,20 +57,20 @@ def bound_free_absorption(wavelength_um, temperature):
     lambda_0 = 1.6419  # photo-detachment threshold
 
     #   //tabulated constant from John (1988)
-    C_n = [0.0, 152.519, 49.534, -118.858, 92.536, -34.194, 4.982]
-
     def f(wavelength_um):
-        x = 0 
+        C_n = jnp.vstack(
+            [jnp.arange(7), [0.0, 152.519, 49.534, -118.858, 92.536, -34.194, 4.982]]
+        ).T
 
-        for i in range(1, 7):
-            x += C_n[i] * jnp.power((1.0/wavelength_um - 1.0/lambda_0), (i-1)/2.0) 
+        def body_fun(val, x):
+            i, C_n_i = x
+            return val, val + C_n_i * jnp.power(jnp.clip(1.0/wavelength_um - 1.0/lambda_0, a_min=0, a_max=None), (i-1)/2.0)
 
-        return x 
-
+        return scan(body_fun, jnp.zeros_like(wavelength_um), C_n)[-1].sum(0)
 
     # first, we calculate the photo-detachment cross-section (in cm2)
     kappa_bf = (1e-18 * wavelength_um ** 3 * 
-        jnp.power(1.0/wavelength_um - 1.0/lambda_0, 1.5) * f(wavelength_um)
+        jnp.power(jnp.clip(1.0/wavelength_um - 1.0/lambda_0, a_min=0, a_max=None), 1.5) * f(wavelength_um)
     )
 
     kappa_bf = jnp.where(

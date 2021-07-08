@@ -5,6 +5,7 @@
 """
 import numpy as np
 import jax.numpy as jnp
+from jax import lax
 import pathlib
 from exojax.spec.hitrancia import read_cia, logacia
 
@@ -52,7 +53,6 @@ class CdbCIA(object):
             print(url)
             print("HITRAN download failed")
 
-        
 if __name__ == "__main__":
     ciaH2H2=CdbCIA("/home/kawahara/exojax/data/CIA/H2-H2_2011.cia",nurange=[4050.0,4150.0])
     print(ciaH2H2.tcia)

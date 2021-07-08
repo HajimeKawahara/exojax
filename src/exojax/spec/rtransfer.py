@@ -185,22 +185,14 @@ def dtauHminus(nus,Tarr,Parr,dParr,vmre,vmrh,mmw,g):
     #       number_density_h: number density for H atoms [N_layer]
     number_density_e=vmre*narr
     number_density_h=vmrh*narr
-    lognarr1=jnp.log10(number_density_e) #log number density
-    lognarr2=jnp.log10(number_density_h) #log number density    
-
     logkb=np.log10(kB)    
     logg=jnp.log10(g)
     ddParr=dParr/Parr
-    dtauctm = (10**(log_hminus_continuum(nus, Tarr, number_density_e, number_density_h)
-            +lognarr1[:,None]+lognarr2[:,None]+logkb-logg-logm_ucgs)
-            *Tarr[:,None]/mmw*ddParr[:,None])
-
-#    dtauc=(10**(logacia(Tarr,nus,nucia,tcia,logac)\
-#            +lognarr1[:,None]+lognarr2[:,None]+logkb-logg-logm_ucgs)\
-#            *Tarr[:,None]/mmw*ddParr[:,None])
-
     
-    return dtauctm
+    logabc=(log_hminus_continuum(nus, Tarr, number_density_e, number_density_h))
+    dtauh=10**(logabc+logkb-logg-logm_ucgs)*Tarr[:,None]/mmw*ddParr[:,None]
+
+    return dtauh
 
 
 @jit
