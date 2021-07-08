@@ -4,6 +4,16 @@ import numpy as np
 
 def divwavnum(nu,Nz=1):
     """separate an integer part and a residual
+
+    Args:
+       nu: wavenumber array
+       Nz: boost factor (default=1)
+
+    Returns:
+       fn:  integer part of wavenumber
+       dfn: residual wavenumber
+       Nz: boost factor used
+
     """
 
     fn=np.floor(nu*Nz)
@@ -13,6 +23,14 @@ def divwavnum(nu,Nz=1):
 @jit
 def subtract_nu(dnu,dhatnu):
     """compute nu - hatnu using subtract an integer part w/JIT
+
+    Args:
+       dnu: residual wavenumber array
+       dhatnu: residual line center array
+
+    Returns:
+       difference matrix
+
     """
     jdnu=jnp.array(dnu)
     jdhatnu=jnp.array(dhatnu)
