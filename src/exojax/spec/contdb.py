@@ -5,6 +5,7 @@
 """
 import numpy as np
 import jax.numpy as jnp
+from jax import lax
 import pathlib
 from exojax.spec.hitrancia import read_cia, logacia
 
