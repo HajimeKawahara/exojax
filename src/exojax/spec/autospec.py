@@ -229,9 +229,12 @@ class AutoXS(object):
         elif xsmode=="dit" or xsmode=="DIT":
             dgm_sigmaD=dit.dgmatrix(sigmaDM,0.1)
             dgm_gammaL=dit.dgmatrix(gammaLM,0.2)
-#            xsmdit=dit.xsmatrix3D(mdb.nu_lines-np.median(self.nus),sigmaDM,\
-#                                  gammaLM,SijM,self.nus-np.median(self.nus),\
-#                                  dgm_sigmaD,dgm_gammaL)
+            xsm=dit.xsmatrix3D(mdb.nu_lines-np.median(self.nus),sigmaDM,\
+                                  gammaLM,SijM,self.nus-np.median(self.nus),\
+                                  dgm_sigmaD,dgm_gammaL)
+            xsmnp=np.array(xsm)
+            xsmnp[xsmnp<0.0]=0.0
+            xsm=jnp.array(xsmnp)
         else:
             print("No such xsmode=",xsmode)
             xsm=None
