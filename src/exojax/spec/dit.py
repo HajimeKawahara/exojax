@@ -200,24 +200,40 @@ def xsvector3D(nu_lines,sigmaD,gammaL,S,nu_grid,sigmaD_grid,gammaL_grid):
     xs=jnp.fft.irfft(fftvalsum)[:Ng_nu]/dnu
     return xs
 
-@jit
-def xsmatrix3D(nu_lines,sigmaDM,gammaLM,SijM,nu_grid,sigmaD_grid,gammaL_grid):
-    """Cross section matrix for xsvector3D (DIT version)
 
+@jit
+def xsmatrix3D(nu_lines,sigmaDM,gammaLM,SijM,nu_grid,dgm_sigmaD,dgm_gammaL):
+    """Cross section matrix for xsvector3D (DIT/reduced memory version)
     Args:
        nu_lines: line center (Nlines)
        sigmaDM: doppler sigma matrix in R^(Nlayer x Nline)
        gammaLM: gamma factor matrix in R^(Nlayer x Nline)
        SijM: line strength matrix in R^(Nlayer x Nline)
        nu_grid: linear wavenumber grid
-       sigmaD_grid: sigmaD grid
-       gammaL_grid: gammaL grid
+       dgm_sigmaD: DIT Grid Matrix for sigmaD R^(Nlayer, NDITgrid)
+       dgm_gammaL: DIT Grid Matrix for gammaL R^(Nlayer, NDITgrid)
 
     Return:
        cross section matrix in R^(Nlayer x Nwav)
 
     """
-    return vmap(xsvector3D,(None,0,0,0,None,None,None))(nu_lines,sigmaDM,gammaLM,SijM,nu_grid,sigmaD_grid,gammaL_grid)
+    NDITgrid=jnp.shape(dgm_sigmaD)[1]
+    Nline=len(nu_lines)
+    Mat=jnp.hstack([sigmaDM,gammaLM,SijM,dgm_sigmaD,dgm_gammaL])
+    def fxs(x,arr):
+        carry=0.0
+        sigmaD=arr[0:Nline]
+        gammaL=arr[Nline:2*Nline]
+        Sij=arr[2*Nline:3*Nline]
+        sigmaD_grid=arr[3*Nline:3*Nline+NDITgrid]
+        gammaL_grid=arr[3*Nline+NDITgrid:3*Nline+2*NDITgrid]
+        arr=xsvector3D(nu_lines,sigmaD,gammaL,Sij,nu_grid,sigmaD_grid,gammaL_grid)
+        return carry, arr
+    
+    val,xsm=scan(fxs,0.0,Mat)
+    return xsm
+    
+
 
 @jit
 def inc2Dplus(w,fx,y,z,yv,zv):
@@ -314,7 +330,7 @@ def xsvector(nu_ncf,sigmaD,gammaL,S,nu_grid,sigmaD_grid,gammaL_grid):
     return xs
 
 @jit
-def xsmatrix(nu_ncf,sigmaDM,gammaLM,SijM,nu_grid,sigmaD_grid,gammaL_grid):
+def xsmatrix(nu_ncf,sigmaDM,gammaLM,SijM,nu_grid,dgm_sigmaD,dgm_gammaL):
     """Cross section matrix (DIT/2D+ version)
 
     Args:
@@ -323,15 +339,28 @@ def xsmatrix(nu_ncf,sigmaDM,gammaLM,SijM,nu_grid,sigmaD_grid,gammaL_grid):
        gammaLM: gamma factor matrix in R^(Nlayer x Nline)
        SijM: line strength matrix in R^(Nlayer x Nline)
        nu_grid: linear wavenumber grid
-       sigmaD_grid: sigmaD grid
-       gammaL_grid: gammaL grid
+       dgm_sigmaD: DIT Grid Matrix for sigmaD R^(Nlayer, NDITgrid)
+       dgm_gammaL: DIT Grid Matrix for gammaL R^(Nlayer, NDITgrid)
 
     Return:
        cross section matrix in R^(Nlayer x Nwav)
 
     """
-
-    return vmap(xsvector,(None,0,0,0,None,None,None))(nu_ncf,sigmaDM,gammaLM,SijM,nu_grid,sigmaD_grid,gammaL_grid)
+    NDITgrid=jnp.shape(dgm_sigmaD)[1]
+    Nline=jnp.shape(SijM)[1]
+    Mat=jnp.hstack([sigmaDM,gammaLM,SijM,dgm_sigmaD,dgm_gammaL])
+    def fxs(x,arr):
+        carry=0.0
+        sigmaD=arr[0:Nline]
+        gammaL=arr[Nline:2*Nline]
+        Sij=arr[2*Nline:3*Nline]
+        sigmaD_grid=arr[3*Nline:3*Nline+NDITgrid]
+        gammaL_grid=arr[3*Nline+NDITgrid:3*Nline+2*NDITgrid]
+        arr=xsvector(nu_ncf,sigmaD,gammaL,Sij,nu_grid,sigmaD_grid,gammaL_grid)
+        return carry, arr
+    
+    val,xsm=scan(fxs,0.0,Mat)
+    return xsm
 
 def set_ditgrid(x,res=0.1,adopt=True):
     """
@@ -356,7 +385,7 @@ def set_ditgrid(x,res=0.1,adopt=True):
     return grid
 
 def dgmatrix(x,res=0.1,adopt=True):
-    """
+    """DIT GRID MATRIX 
         x: simgaD or gammaL matrix (Nlayer x Nline)
         res: grid resolution. res=0.1 (defaut) means a grid point per digit
         adopt: if True, min, max grid points are used at min and max values of x. 
