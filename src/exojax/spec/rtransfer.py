@@ -26,7 +26,7 @@ def nugrid(x0,x1,N,unit="cm-1",xsmode="lpf"):
        resolution
 
     """
-    if xsmode=="lpf":
+    if xsmode=="lpf" or xsmode=="LPF" :
         print("nugrid is log: mode=",xsmode)
         if unit=="cm-1":
             nus=np.logspace(np.log10(x0),np.log10(x1),N,dtype=np.float64)
@@ -43,7 +43,7 @@ def nugrid(x0,x1,N,unit="cm-1",xsmode="lpf"):
         if resolution<300000.0:
             print("WARNING: resolution may be too small. R=",resolution)
 
-    elif xsmode=="dit" or xsmode=="hybrid":
+    elif xsmode=="dit" or xsmode=="hybrid" or xsmode=="DIT":
         print("nugrid is linear: mode=",xsmode)
         if unit=="cm-1":
             nus=np.linspace((x0),(x1),N,dtype=np.float64)
