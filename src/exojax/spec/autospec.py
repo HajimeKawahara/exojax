@@ -13,7 +13,9 @@ from exojax.spec.exomol import gamma_exomol
 from exojax.spec import molinfo
 from exojax.spec.rtransfer import rtrun, pressure_layer, dtauM, dtauCIA, check_nugrid
 from exojax.spec.make_numatrix import make_numatrix0
-from exojax.spec.lpf import xsmatrix
+from exojax.spec import lpf
+from exojax.spec import dit
+
 from exojax.spec import response
 import numpy as np
 from jax import jit, vmap
@@ -27,7 +29,7 @@ class AutoXS(object):
     """exojax auto cross section generator
     
     """
-    def __init__(self,nus,database,molecules,databasedir=".database",memory_size=30,broadf=True,crit=-np.inf):
+    def __init__(self,nus,database,molecules,databasedir=".database",memory_size=30,broadf=True,crit=-np.inf,xsmode="auto"):
         """
         Args:
            nus: wavenumber bin (cm-1)
@@ -36,6 +38,7 @@ class AutoXS(object):
            memory_size: memory_size required
            broadf: if False, the default broadening parameters in .def file is used
            crit: line strength criterion, ignore lines whose line strength are below crit.
+           xsmode: xsmode for opacity computation (auto/LPF/DIT)
 
         """
         self.molecules=molecules
@@ -45,7 +48,7 @@ class AutoXS(object):
         self.memory_size=memory_size
         self.broadf=broadf
         self.crit=crit
-        
+        self.xsmode=xsmode
         self.identifier=defmol.search_molfile(database,molecules)
         print(self.identifier)
         if self.identifier is None:
@@ -65,6 +68,7 @@ class AutoXS(object):
         else:
             print("Select database from HITRAN, HITEMP, ExoMol.")
 
+            
     def linest(self,T,P):
         """line strength 
 
@@ -111,9 +115,49 @@ class AutoXS(object):
         Sij=self.linest(T,P)
         sigmaD=doppler_sigma(mdb.nu_lines,T,molmass)
         nu0=mdb.nu_lines
-        xsv=xsection(self.nus,nu0,sigmaD,gammaL,Sij,memory_size=self.memory_size)
+
+        if self.xsmode == "auto":
+            xsmode = self.select_xsmode(len(nu0))
+        else:
+            xsmode = self.xsmode
+            
+        if xsmode=="lpf" or xsmode=="LPF":
+            xsv=xsection(self.nus,nu0,sigmaD,gammaL,Sij,memory_size=self.memory_size)
+        elif xsmode=="dit" or xsmode=="DIT":
+            from exojax.spec.dit import xsvector3D,set_ditgrid
+
+            checknus=check_nugrid(self.nus,gridmode="ESLIN")
+            if ~checknus:
+                print("WARNING: the wavenumber grid does not look ESLIN.")
+                nus=jnp.linspace(self.nus[0],self.nus[-1],len(self.nus))
+            else:
+                nus=self.nus
+                
+            sigmaD_grid=set_ditgrid(sigmaD,res=0.1)
+            gammaL_grid=set_ditgrid(gammaL,res=0.2)
+            dfnus=nus-np.median(nus)
+            dfnu_lines=mdb.nu_lines-np.median(nus)
+            xsv=xsvector3D(dfnu_lines,sigmaD,gammaL,Sij,dfnus,sigmaD_grid,gammaL_grid)
+            if ~checknus:
+                xsv=jnp.interp(self.nus,nus,xsv)
+                
+        else:
+            print("Error:",xsmode," is unavailable (auto/LPF/DIT).")
+            xsv=None
+            
         return xsv
 
+                
+    def select_xsmode(self,Nline):
+        checknus=check_nugrid(self.nus,gridmode="ESLIN")
+        print("# of lines=",Nline)
+        if Nline > 10000:
+            print("DIT selected")
+            return "DIT"
+        else:
+            print("LPF selected")
+            return "LPF"
+        
     def xsmatrix(self,Tarr,Parr):
         """cross section matrix
         Args: 
@@ -158,23 +202,43 @@ class AutoXS(object):
         d2=100
         Nlayer=np.shape(SijM)[0]
         Nline=np.shape(SijM)[1]
-        Nj=int(Nline/d2)
-        xsm=[]
-        for i in tqdm.tqdm(range(0,Ni+1)):
-            s=int(i*d);e=int((i+1)*d);e=min(e,len(self.nus))
-            xsmtmp=np.zeros((Nlayer,e-s))
-            #line 
-            for j in range(0,Nj+1):
-                s2=int(j*d2);e2=int((j+1)*d2);e2=min(e2,Nline)
-                numatrix=make_numatrix0(self.nus[s:e],nu0[s2:e2])
-                xsmtmp=xsmtmp+\
-                        xsmatrix(numatrix,sigmaDM[:,s2:e2],gammaLM[:,s2:e2],SijM[:,s2:e2])
-            if i==0:
-                xsm=np.copy(xsmtmp.T)
-            else:
-                xsm = np.concatenate([xsm,xsmtmp.T])
-        xsm=xsm.T
-        
+
+
+        if self.xsmode == "auto":
+            xsmode = self.select_xsmode(Nline)
+        else:
+            xsmode = self.xsmode
+
+        if xsmode=="lpf" or xsmode=="LPF":
+            Nj=int(Nline/d2)
+            xsm=[]
+            for i in tqdm.tqdm(range(0,Ni+1)):
+                s=int(i*d);e=int((i+1)*d);e=min(e,len(self.nus))
+                xsmtmp=np.zeros((Nlayer,e-s))
+                #line 
+                for j in range(0,Nj+1):
+                    s2=int(j*d2);e2=int((j+1)*d2);e2=min(e2,Nline)
+                    numatrix=make_numatrix0(self.nus[s:e],nu0[s2:e2])
+                    xsmtmp=xsmtmp+\
+                            lpf.xsmatrix(numatrix,sigmaDM[:,s2:e2],gammaLM[:,s2:e2],SijM[:,s2:e2])
+                if i==0:
+                    xsm=np.copy(xsmtmp.T)
+                else:
+                    xsm = np.concatenate([xsm,xsmtmp.T])
+            xsm=xsm.T
+        elif xsmode=="dit" or xsmode=="DIT":
+            dgm_sigmaD=dit.dgmatrix(sigmaDM,0.1)
+            dgm_gammaL=dit.dgmatrix(gammaLM,0.2)
+            xsm=dit.xsmatrix3D(mdb.nu_lines-np.median(self.nus),sigmaDM,\
+                                  gammaLM,SijM,self.nus-np.median(self.nus),\
+                                  dgm_sigmaD,dgm_gammaL)
+            xsmnp=np.array(xsm)
+            xsmnp[xsmnp<0.0]=0.0
+            xsm=jnp.array(xsmnp)
+        else:
+            print("No such xsmode=",xsmode)
+            xsm=None
+            
         return xsm
         
 class AutoRT(object):
@@ -182,7 +246,7 @@ class AutoRT(object):
     """exojax auto radiative transfer
     
     """
-    def __init__(self,nus,gravity,mmw,Tarr,Parr,dParr=None,databasedir=".database"):
+    def __init__(self,nus,gravity,mmw,Tarr,Parr,dParr=None,databasedir=".database",xsmode="auto"):
         """
         Args:
            nus: wavenumber bin (cm-1)
@@ -198,16 +262,14 @@ class AutoRT(object):
         self.nlayer=len(Tarr)        
         self.Tarr=Tarr
         self.Parr=Parr
-        
-        if check_nugrid(nus):
+        self.xsmode=xsmode
+        print(self.xsmode)
+        if check_nugrid(nus,gridmode="ESLOG"):
             print("nu grid is evenly spaced in log space (ESLOG).")
+        elif check_nugrid(nus,gridmode="ESLIN"):
+            print("nu grid is evenly spaced in linear space (ESLIN).")    
         else:
-            print("**************************************************")
-            print("WARNING!")
-            print("nu grid is NOT evenly spaced in log space (ESLOG).")
-            print("astro/inst responses won't work properly.")
-            print("Consider to use rtransfer.nugrid instead.")
-            print("**************************************************")
+            print("nu grid is NOT evenly spaced in log nor linear space.")
             
         if dParr is None:
             from exojax.utils.chopstacks import buildwall 
@@ -230,8 +292,10 @@ class AutoRT(object):
 
         """
         mmr=mmr*np.ones_like(self.Tarr)
-        axs=AutoXS(self.nus,database,molecules,crit=crit)
+        axs=AutoXS(self.nus,database,molecules,crit=crit,xsmode=self.xsmode)
+        
         xsm=axs.xsmatrix(self.Tarr,self.Parr) 
+
         dtauMx=dtauM(self.dParr,xsm,mmr,axs.molmass,self.gravity)
         self.dtau=self.dtau+dtauMx
 

@@ -8,6 +8,7 @@ import jax.numpy as jnp
 import numpy as np
 from exojax.special.expn import E1
 from exojax.spec.hitrancia import logacia
+from exojax.spec.hminus import log_hminus_continuum
 
 def nugrid(x0,x1,N,unit="cm-1",xsmode="lpf"):
     """generating the recommended wavenumber grid based on the cross section computation mode
@@ -25,7 +26,7 @@ def nugrid(x0,x1,N,unit="cm-1",xsmode="lpf"):
        resolution
 
     """
-    if xsmode=="lpf":
+    if xsmode=="lpf" or xsmode=="LPF" :
         print("nugrid is log: mode=",xsmode)
         if unit=="cm-1":
             nus=np.logspace(np.log10(x0),np.log10(x1),N,dtype=np.float64)
@@ -42,7 +43,7 @@ def nugrid(x0,x1,N,unit="cm-1",xsmode="lpf"):
         if resolution<300000.0:
             print("WARNING: resolution may be too small. R=",resolution)
 
-    elif xsmode=="dit" or xsmode=="hybrid":
+    elif xsmode=="dit" or xsmode=="hybrid" or xsmode=="DIT":
         print("nugrid is linear: mode=",xsmode)
         if unit=="cm-1":
             nus=np.linspace((x0),(x1),N,dtype=np.float64)
@@ -186,6 +187,46 @@ def dtauM(dParr,xsm,MR,mass,g):
 
     fac=6.022140858549162e+29
     return fac*xsm*dParr[:,None]*MR[:,None]/(mass*g)
+
+
+#def dtauHminus(nus,Tarr,Parr,dParr,number_density_e,number_density_h,mmw,g):
+def dtauHminus(nus,Tarr,Parr,dParr,vmre,vmrh,mmw,g):
+    """dtau of the H- continuum
+
+    Args:
+       nus: wavenumber matrix (cm-1)
+       Tarr: temperature array (K)
+       Parr: temperature array (bar)
+       dParr: delta temperature array (bar)
+       vmre: volume mixing ratio (VMR) for e- [N_layer]
+       vmrH: volume mixing ratio (VMR) for H atoms [N_layer]
+       mmw: mean molecular weight of atmosphere
+       g: gravity (cm2/s)
+
+
+    Returns:
+       optical depth matrix  [N_layer, N_nus] 
+
+    Note:
+       logm_ucgs=np.log10(m_u*1.e3) where m_u = scipy.constants.m_u.
+
+    """
+    kB=1.380649e-16
+    logm_ucgs=-23.779750909492115
+
+    narr=(Parr*1.e6)/(kB*Tarr)
+    #       number_density_e: number density for e- [N_layer]
+    #       number_density_h: number density for H atoms [N_layer]
+    number_density_e=vmre*narr
+    number_density_h=vmrh*narr
+    logkb=np.log10(kB)    
+    logg=jnp.log10(g)
+    ddParr=dParr/Parr
+    
+    logabc=(log_hminus_continuum(nus, Tarr, number_density_e, number_density_h))
+    dtauh=10**(logabc+logkb-logg-logm_ucgs)*Tarr[:,None]/mmw*ddParr[:,None]
+
+    return dtauh
 
 
 @jit
