@@ -29,7 +29,7 @@ class AutoXS(object):
     """exojax auto cross section generator
     
     """
-    def __init__(self,nus,database,molecules,databasedir=".database",memory_size=30,broadf=True,crit=-np.inf,xsmode="auto"):
+    def __init__(self,nus,database,molecules,databasedir=".database",memory_size=30,broadf=True,crit=-np.inf,xsmode="auto",pdit=1.5):
         """
         Args:
            nus: wavenumber bin (cm-1)
@@ -39,6 +39,7 @@ class AutoXS(object):
            broadf: if False, the default broadening parameters in .def file is used
            crit: line strength criterion, ignore lines whose line strength are below crit.
            xsmode: xsmode for opacity computation (auto/LPF/DIT)
+           pdit: thresold for DIT folding to x=pdit*STD_voigt 
 
         """
         self.molecules=molecules
@@ -50,6 +51,8 @@ class AutoXS(object):
         self.crit=crit
         self.xsmode=xsmode
         self.identifier=defmol.search_molfile(database,molecules)
+        self.pdit=pdit
+
         print(self.identifier)
         if self.identifier is None:
             print("ERROR: "+molecules+" is an undefined molecule. Add your molecule in defmol.py and do pull-request!")
@@ -160,11 +163,14 @@ class AutoXS(object):
         
     def xsmatrix(self,Tarr,Parr):
         """cross section matrix
+
         Args: 
            Tarr: temperature layer (K)
            Parr: pressure layer (bar)
+
         Returns:
            cross section (cm2)
+
         """
         mdb=self.mdb
         if self.database == "ExoMol":
@@ -191,10 +197,6 @@ class AutoXS(object):
                  (mdb.nu_lines,Tarr,self.molmass)
         nu0=mdb.nu_lines
 
-        #####
-        #numatrix=make_numatrix0(nus,nu0)
-        #xsm=xsmatrix(numatrix,sigmaDM,gammaLM,SijM)
-        ####
         print("# of lines",len(nu0))
         memory_size=15.0
         d=int(memory_size/(len(nu0)*4/1024./1024.))+1
@@ -202,7 +204,6 @@ class AutoXS(object):
         d2=100
         Nlayer=np.shape(SijM)[0]
         Nline=np.shape(SijM)[1]
-
 
         if self.xsmode == "auto":
             xsmode = self.select_xsmode(Nline)
@@ -229,12 +230,27 @@ class AutoXS(object):
         elif xsmode=="dit" or xsmode=="DIT":
             dgm_sigmaD=dit.dgmatrix(sigmaDM,0.1)
             dgm_gammaL=dit.dgmatrix(gammaLM,0.2)
+            dnu=self.nus[1]-self.nus[0]
+            print(jnp.shape(dgm_gammaL),"<<=")
+            mdgm_gammaL=jnp.min(dgm_gammaL,axis=1)
+            mdgm_sigmaD=jnp.min(dgm_sigmaD,axis=1)
+            sigma=jnp.min(0.5*mdgm_gammaL+jnp.sqrt(0.25*mdgm_gammaL**2+mdgm_sigmaD**2))
+            
+            relres=sigma/dnu
+            print("relative resolution (sigma/dnu)=",relres)
+            self.Nfold=np.max([int(self.pdit/relres-0.5),1])
+            print("Nfold=",self.Nfold)
+            dLarray=jnp.linspace(1,self.Nfold,self.Nfold)/dnu                
             xsm=dit.xsmatrix3D(mdb.nu_lines-np.median(self.nus),sigmaDM,\
                                   gammaLM,SijM,self.nus-np.median(self.nus),\
-                                  dgm_sigmaD,dgm_gammaL)
-            xsmnp=np.array(xsm)
-            xsmnp[xsmnp<0.0]=0.0
-            xsm=jnp.array(xsmnp)
+                                  dgm_sigmaD,dgm_gammaL,dLarray)
+            Nneg=len(xsm[xsm<0.0])
+            if Nneg>0:
+                print("Warning: negative cross section detected #=",Nneg," fraction=",Nneg/float(jnp.shape(xsm)[0]*jnp.shape(xsm)[1]))
+
+                xsmnp=np.array(xsm)
+                xsmnp[xsmnp<0.0]=0.0
+                xsm=jnp.array(xsmnp)
         else:
             print("No such xsmode=",xsmode)
             xsm=None

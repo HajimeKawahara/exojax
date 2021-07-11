@@ -10,29 +10,8 @@ from jax import jit
 from jax import vmap
 from jax.lax import scan
 import tqdm
-
-
-
-def voigt_kernel(k, beta,gammaL):
-    """Fourier Kernel of the Voigt Profile
-    
-    Args:
-        k: conjugated of wavenumber
-        beta: Gaussian standard deviation
-        gammaL: Lorentzian Half Width
-        
-    Returns:
-        kernel (N_x,N_beta,N_gammaL)
-    
-    Note:
-        Conversions to the (full) width, wG and wL are as follows: 
-        wG=2*sqrt(2*ln2) beta
-        wL=2*gamma
-    
-    """
-    val=(jnp.pi*beta[None,:,None]*k[:,None,None])**2 + jnp.pi*gammaL[None,None,:]*k[:,None,None]
-    return jnp.exp(-2.0*val)
-
+from exojax.spec.ditkernel import folded_voigt_kernel
+from functools import partial
 
 @jit
 def Xncf(i,x,xv):
@@ -152,8 +131,9 @@ def npnc1D(x,xv):
                  
     return vcl
 
+#@partial(jit, static_argnums=(0,))
 @jit
-def xsvector3D(nu_lines,sigmaD,gammaL,S,nu_grid,sigmaD_grid,gammaL_grid):
+def xsvector3D(nu_lines,sigmaD,gammaL,S,nu_grid,sigmaD_grid,gammaL_grid,dLarray):
     """Cross section vector (DIT/3D version)
     
     The original code is rundit in [addit package](https://github.com/HajimeKawahara/addit)
@@ -166,6 +146,7 @@ def xsvector3D(nu_lines,sigmaD,gammaL,S,nu_grid,sigmaD_grid,gammaL_grid):
        nu_grid: linear wavenumber grid
        sigmaD_grid: sigmaD grid
        gammaL_grid: gammaL grid
+       Nfold: folding number for the Voigt kernel
 
     Returns:
        Cross section in the linear nu grid
@@ -194,15 +175,17 @@ def xsvector3D(nu_lines,sigmaD,gammaL,S,nu_grid,sigmaD_grid,gammaL_grid):
 
     valbuf=jnp.vstack([val,jnp.zeros_like(val)])
     fftval = jnp.fft.rfft(valbuf,axis=0)
-    vk=voigt_kernel(k, sigmaD_grid,gammaL_grid)
+    #vk=voigt_kernel(k, sigmaD_grid,gammaL_grid)
+    #vk=f1_voigt_kernel(k, sigmaD_grid,gammaL_grid, dnu)
+    vk=folded_voigt_kernel(k, sigmaD_grid,gammaL_grid, dLarray)
+
     fftvalsum = jnp.sum(fftval*vk,axis=(1,2))
-    #F0=jnp.fft.irfft(fftvalsum)[:Ng_nu]
     xs=jnp.fft.irfft(fftvalsum)[:Ng_nu]/dnu
     return xs
 
 
 @jit
-def xsmatrix3D(nu_lines,sigmaDM,gammaLM,SijM,nu_grid,dgm_sigmaD,dgm_gammaL):
+def xsmatrix3D(nu_lines,sigmaDM,gammaLM,SijM,nu_grid,dgm_sigmaD,dgm_gammaL,dLarray):
     """Cross section matrix for xsvector3D (DIT/reduced memory version)
     Args:
        nu_lines: line center (Nlines)
@@ -212,7 +195,8 @@ def xsmatrix3D(nu_lines,sigmaDM,gammaLM,SijM,nu_grid,dgm_sigmaD,dgm_gammaL):
        nu_grid: linear wavenumber grid
        dgm_sigmaD: DIT Grid Matrix for sigmaD R^(Nlayer, NDITgrid)
        dgm_gammaL: DIT Grid Matrix for gammaL R^(Nlayer, NDITgrid)
-
+       dLarray: folding number for the Voigt kernel
+      
     Return:
        cross section matrix in R^(Nlayer x Nwav)
 
@@ -227,7 +211,7 @@ def xsmatrix3D(nu_lines,sigmaDM,gammaLM,SijM,nu_grid,dgm_sigmaD,dgm_gammaL):
         Sij=arr[2*Nline:3*Nline]
         sigmaD_grid=arr[3*Nline:3*Nline+NDITgrid]
         gammaL_grid=arr[3*Nline+NDITgrid:3*Nline+2*NDITgrid]
-        arr=xsvector3D(nu_lines,sigmaD,gammaL,Sij,nu_grid,sigmaD_grid,gammaL_grid)
+        arr=xsvector3D(nu_lines,sigmaD,gammaL,Sij,nu_grid,sigmaD_grid,gammaL_grid,dLarray)
         return carry, arr
     
     val,xsm=scan(fxs,0.0,Mat)
@@ -281,8 +265,8 @@ def inc2Dplus(w,fx,y,z,yv,zv):
     val,null=scan(fsum,init0,fxyz_w)
     return val
 
-@jit
-def xsvector(nu_ncf,sigmaD,gammaL,S,nu_grid,sigmaD_grid,gammaL_grid):
+@partial(jit, static_argnums=(7,))
+def xsvector(nu_ncf,sigmaD,gammaL,S,nu_grid,sigmaD_grid,gammaL_grid, Nfold):
     """Cross section vector (DIT/2D+ version; default)
     
     The original code is rundit in [addit package](https://github.com/HajimeKawahara/addit)
@@ -295,6 +279,7 @@ def xsvector(nu_ncf,sigmaD,gammaL,S,nu_grid,sigmaD_grid,gammaL_grid):
        nu_grid: linear wavenumber grid
        sigmaD_grid: sigmaD grid
        gammaL_grid: gammaL grid
+       Nfold: folding number of the Voigt kernel
 
     Returns:
        Cross section in the linear nu grid
@@ -323,14 +308,15 @@ def xsvector(nu_ncf,sigmaD,gammaL,S,nu_grid,sigmaD_grid,gammaL_grid):
 
     valbuf=jnp.vstack([val,jnp.zeros_like(val)])
     fftval = jnp.fft.rfft(valbuf,axis=0)
-    vk=voigt_kernel(k, sigmaD_grid,gammaL_grid)
+#    vk=f1_voigt_kernel(k, sigmaD_grid,gammaL_grid,dnu)
+    vk=folded_voigt_kernel(k, sigmaD_grid,gammaL_grid, Nfold, dnu)
     fftvalsum = jnp.sum(fftval*vk,axis=(1,2))
     #F0=jnp.fft.irfft(fftvalsum)[:Ng_nu]
     xs=jnp.fft.irfft(fftvalsum)[:Ng_nu]/dnu
     return xs
 
 @jit
-def xsmatrix(nu_ncf,sigmaDM,gammaLM,SijM,nu_grid,dgm_sigmaD,dgm_gammaL):
+def xsmatrix(nu_ncf,sigmaDM,gammaLM,SijM,nu_grid,dgm_sigmaD,dgm_gammaL,Nfold=2):
     """Cross section matrix (DIT/2D+ version)
 
     Args:
@@ -341,6 +327,7 @@ def xsmatrix(nu_ncf,sigmaDM,gammaLM,SijM,nu_grid,dgm_sigmaD,dgm_gammaL):
        nu_grid: linear wavenumber grid
        dgm_sigmaD: DIT Grid Matrix for sigmaD R^(Nlayer, NDITgrid)
        dgm_gammaL: DIT Grid Matrix for gammaL R^(Nlayer, NDITgrid)
+       Nfold: folding number for the Voigt kernel
 
     Return:
        cross section matrix in R^(Nlayer x Nwav)
@@ -356,7 +343,7 @@ def xsmatrix(nu_ncf,sigmaDM,gammaLM,SijM,nu_grid,dgm_sigmaD,dgm_gammaL):
         Sij=arr[2*Nline:3*Nline]
         sigmaD_grid=arr[3*Nline:3*Nline+NDITgrid]
         gammaL_grid=arr[3*Nline+NDITgrid:3*Nline+2*NDITgrid]
-        arr=xsvector(nu_ncf,sigmaD,gammaL,Sij,nu_grid,sigmaD_grid,gammaL_grid)
+        arr=xsvector(nu_ncf,sigmaD,gammaL,Sij,nu_grid,sigmaD_grid,gammaL_grid,Nfold)
         return carry, arr
     
     val,xsm=scan(fxs,0.0,Mat)
@@ -392,7 +379,7 @@ def dgmatrix(x,res=0.1,adopt=True):
                In this case, the grid width does not need to be res exactly.
         
     Returns:
-        grid for DIT
+        grid for DIT (Nlayer x NDITgrid)
 
     """
     mmax=np.max(np.log10(x),axis=1)
