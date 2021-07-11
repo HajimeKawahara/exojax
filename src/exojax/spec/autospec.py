@@ -39,7 +39,7 @@ class AutoXS(object):
            broadf: if False, the default broadening parameters in .def file is used
            crit: line strength criterion, ignore lines whose line strength are below crit.
            xsmode: xsmode for opacity computation (auto/LPF/DIT)
-           pdit: thresold for DIT folding to x=pdit*STD_voigt 
+           pdit: threshold for DIT folding to x=pdit*STD_voigt 
 
         """
         self.molecules=molecules
@@ -209,6 +209,7 @@ class AutoXS(object):
             xsmode = self.select_xsmode(Nline)
         else:
             xsmode = self.xsmode
+        print("xsmode=",xsmode)
 
         if xsmode=="lpf" or xsmode=="LPF":
             Nj=int(Nline/d2)
@@ -233,12 +234,10 @@ class AutoXS(object):
             dnu=self.nus[1]-self.nus[0]
             mdgm_gammaL=jnp.min(dgm_gammaL,axis=1)
             mdgm_sigmaD=jnp.min(dgm_sigmaD,axis=1)
-            sigma=jnp.min(0.5*mdgm_gammaL+jnp.sqrt(0.25*mdgm_gammaL**2+mdgm_sigmaD**2))            
-            relres=sigma/dnu
-            print("Relative Resolution (sigma/dnu) = ",relres)
-            self.Nfold=np.max([int(self.pdit/relres-0.5),1])
-            print("Nfold for DIT = ",self.Nfold)
-            dLarray=jnp.linspace(1,self.Nfold,self.Nfold)/dnu                
+            sigma=jnp.min(0.5*mdgm_gammaL+jnp.sqrt(0.25*mdgm_gammaL**2+mdgm_sigmaD**2))
+            relres,self.Nfold=dit.autoNfold(sigma,dnu,self.pdit)
+            print("relative resolution=",relres,", Nfold=",self.Nfold)
+            dLarray=dit.make_dLarray(self.Nfold,dnu)
             xsm=dit.xsmatrix3D(mdb.nu_lines-np.median(self.nus),sigmaDM,\
                                   gammaLM,SijM,self.nus-np.median(self.nus),\
                                   dgm_sigmaD,dgm_gammaL,dLarray)

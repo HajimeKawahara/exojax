@@ -11,7 +11,7 @@ from jax import vmap
 from jax.lax import scan
 import tqdm
 from exojax.spec.ditkernel import folded_voigt_kernel
-from functools import partial
+#from functools import partial
 
 @jit
 def Xncf(i,x,xv):
@@ -131,7 +131,6 @@ def npnc1D(x,xv):
                  
     return vcl
 
-#@partial(jit, static_argnums=(0,))
 @jit
 def xsvector3D(nu_lines,sigmaD,gammaL,S,nu_grid,sigmaD_grid,gammaL_grid,dLarray):
     """Cross section vector (DIT/3D version)
@@ -268,7 +267,7 @@ def inc2Dplus(w,fx,y,z,yv,zv):
     val,null=scan(fsum,init0,fxyz_w)
     return val
 
-@partial(jit, static_argnums=(7,))
+@jit
 def xsvector(nu_ncf,sigmaD,gammaL,S,nu_grid,sigmaD_grid,gammaL_grid, dLarray):
     """Cross section vector (DIT/2D+ version; default)
     
@@ -401,6 +400,37 @@ def dgmatrix(x,res=0.1,adopt=True):
         gm.append(grid)
     gm=np.array(gm)
     return gm
+
+def make_dLarray(Nfold,dnu):
+    """compute dLarray for the DIT folding
+    
+    Args:
+       Nfold: # of the folding
+       dnu: linear wavenumber grid interval
+
+    Returns:
+       dLarray: ifold/dnu (ifold=1,..,Nfold) array
+
+    """
+    dLarray=jnp.linspace(1,Nfold,Nfold)/dnu                
+    return dLarray
+
+def autoNfold(sigma,dnu,pdit=1.5):
+    """ determine an adequate Nfold
+
+    Args:
+       sigma: sigma for the voigt or gaussian    
+       dnu: linear wavenumber grid interval
+       pdit: threshold for DIT folding to x=pdit*sigma
+
+    Returns:
+       relres: relative resolution of wavenumber grid
+       Nfold: suggested Nfold
+
+    """
+    relres=sigma/dnu
+    Nfold=np.max([int(pdit/relres-0.5),1])
+    return relres, Nfold
 
 if __name__ == "__main__":
 

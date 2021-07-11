@@ -8,7 +8,7 @@
 import jax.numpy as jnp
 from jax import jit
 from jax.lax import scan
-from functools import partial
+#from functools import partial
 
 def voigt_kernel(k, beta,gammaL):
     """Fourier Kernel of the Voigt Profile
@@ -61,7 +61,6 @@ def f1_voigt_kernel(k,beta,gammaL,dnu):
     
     return val
 
-#@partial(jit, static_argnums=(3,))
 @jit
 def folded_voigt_kernel(k,beta,gammaL,dLarray):
     """Folded Fourier Kernel of the Voigt Profile
