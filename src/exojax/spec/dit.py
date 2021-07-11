@@ -1,7 +1,8 @@
 """Line profile computation using Discrete Integral Transform
 
-   * Line profile computation of [Discrete Integral Transform](https://www.sciencedirect.com/science/article/abs/pii/S0022407320310049) for rapid spectral synthesis, originally proposed by D.C.M van den Bekeroma and E.Pannier.
-   * This module consists of selected functions in [addit package](https://github.com/HajimeKawahara/addit).
+   * Line profile computation of `Discrete Integral Transform <https://www.sciencedirect.com/science/article/abs/pii/S0022407320310049>`_ for rapid spectral synthesis, originally proposed by D.C.M van den Bekeroma and E.Pannier.
+   * This module consists of selected functions in `addit package <https://github.com/HajimeKawahara/addit>`_.
+   * The concept of "folding" can be understood by reading `the discussion <https://github.com/radis/radis/issues/186#issuecomment-764465580>`_ by D.C.M van den Bekeroma.
 
 """
 import jax.numpy as jnp
@@ -189,6 +190,7 @@ def xsvector3D(nu_lines,sigmaD,gammaL,S,nu_grid,sigmaD_grid,gammaL_grid,dLarray)
 @jit
 def xsmatrix3D(nu_lines,sigmaDM,gammaLM,SijM,nu_grid,dgm_sigmaD,dgm_gammaL,dLarray):
     """Cross section matrix for xsvector3D (DIT/reduced memory version)
+
     Args:
        nu_lines: line center (Nlines)
        sigmaDM: doppler sigma matrix in R^(Nlayer x Nline)
@@ -197,7 +199,7 @@ def xsmatrix3D(nu_lines,sigmaDM,gammaLM,SijM,nu_grid,dgm_sigmaD,dgm_gammaL,dLarr
        nu_grid: linear wavenumber grid
        dgm_sigmaD: DIT Grid Matrix for sigmaD R^(Nlayer, NDITgrid)
        dgm_gammaL: DIT Grid Matrix for gammaL R^(Nlayer, NDITgrid)
-       dLarray: folding number for the Voigt kernel
+       dLarray: ifold/dnu (ifold=1,..,Nfold) array
       
     Return:
        cross section matrix in R^(Nlayer x Nwav)
@@ -375,6 +377,8 @@ def set_ditgrid(x,res=0.1,adopt=True):
 
 def dgmatrix(x,res=0.1,adopt=True):
     """DIT GRID MATRIX 
+
+    Args:
         x: simgaD or gammaL matrix (Nlayer x Nline)
         res: grid resolution. res=0.1 (defaut) means a grid point per digit
         adopt: if True, min, max grid points are used at min and max values of x. 
@@ -426,6 +430,9 @@ def autoNfold(sigma,dnu,pdit=1.5):
     Returns:
        relres: relative resolution of wavenumber grid
        Nfold: suggested Nfold
+
+    Note:
+       In DIT w/ folding, we fold the profile to x = 1/dnu * (Nfold + 1/2). We want x > p*sigma, where sigma is sigma in Gaussian or its equivalence of the VOigt profile (0.5*gammaL+sqrt(0.25*gammaL**2+sigmaD**2)). Then, we obtain Nfold > p*dnu/sigma - 1/2 > 0. The relative resolution to the line width is defined by relres = sigma/dnu.
 
     """
     relres=sigma/dnu
