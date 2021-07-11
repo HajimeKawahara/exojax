@@ -148,4 +148,4 @@ cuDNN is used for to compute the astronomical/instrumental response for the larg
 
 ## License
 
-🐈 Copyright 2020-2021 [Hajime Kawahara](http://secondearths.sakura.ne.jp/en/index.html). exojax is publicly available under the MIT license. Under development since Dec. 2020.
+🐈 Copyright 2020-2021 [Hajime Kawahara](http://secondearths.sakura.ne.jp/en/index.html) and contributors. exojax is publicly available under the MIT license. Under development since Dec. 2020.
