@@ -1,2 +1,2 @@
-# How to exojax
+# How to contribute to exojax
 
