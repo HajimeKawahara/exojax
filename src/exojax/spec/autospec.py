@@ -232,9 +232,7 @@ class AutoXS(object):
             dgm_sigmaD=dit.dgmatrix(sigmaDM,0.1)
             dgm_gammaL=dit.dgmatrix(gammaLM,0.2)
             dnu=self.nus[1]-self.nus[0]
-            mdgm_gammaL=jnp.min(dgm_gammaL,axis=1)
-            mdgm_sigmaD=jnp.min(dgm_sigmaD,axis=1)
-            sigma=jnp.min(0.5*mdgm_gammaL+jnp.sqrt(0.25*mdgm_gammaL**2+mdgm_sigmaD**2))
+            sigma=dit.sigma_voigt(dgm_sigmaD,dgm_gammaL)
             relres,self.Nfold=dit.autoNfold(sigma,dnu,self.pdit)
             print("relative resolution=",relres,", Nfold=",self.Nfold)
             dLarray=dit.make_dLarray(self.Nfold,dnu)

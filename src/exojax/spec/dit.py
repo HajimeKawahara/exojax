@@ -419,6 +419,24 @@ def make_dLarray(Nfold,dnu):
     dLarray=jnp.linspace(1,Nfold,Nfold)/dnu                
     return dLarray
 
+def sigma_voigt(dgm_sigmaD,dgm_gammaL):
+    """compute sigma of the Voigt profile
+    
+    Args:
+       dgm_sigmaD: DIT grid matrix for sigmaD
+       dgm_gammaL: DIT grid matrix for gammaL
+
+    Returns:
+       sigma
+
+    """
+    fac=2.*np.sqrt(2.*np.log(2.0))
+    fdgm_gammaL=jnp.min(dgm_gammaL,axis=1)*2.0
+    fdgm_sigmaD=jnp.min(dgm_sigmaD,axis=1)*fac
+    fv=jnp.min(0.5346*fdgm_gammaL+jnp.sqrt(0.2166*fdgm_gammaL**2+fdgm_sigmaD**2))
+    sigma=fv/fac
+    return sigma
+
 def autoNfold(sigma,dnu,pdit=1.5):
     """ determine an adequate Nfold
 
