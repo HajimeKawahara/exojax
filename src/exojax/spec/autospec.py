@@ -231,15 +231,13 @@ class AutoXS(object):
             dgm_sigmaD=dit.dgmatrix(sigmaDM,0.1)
             dgm_gammaL=dit.dgmatrix(gammaLM,0.2)
             dnu=self.nus[1]-self.nus[0]
-            print(jnp.shape(dgm_gammaL),"<<=")
             mdgm_gammaL=jnp.min(dgm_gammaL,axis=1)
             mdgm_sigmaD=jnp.min(dgm_sigmaD,axis=1)
-            sigma=jnp.min(0.5*mdgm_gammaL+jnp.sqrt(0.25*mdgm_gammaL**2+mdgm_sigmaD**2))
-            
+            sigma=jnp.min(0.5*mdgm_gammaL+jnp.sqrt(0.25*mdgm_gammaL**2+mdgm_sigmaD**2))            
             relres=sigma/dnu
-            print("relative resolution (sigma/dnu)=",relres)
+            print("Relative Resolution (sigma/dnu) = ",relres)
             self.Nfold=np.max([int(self.pdit/relres-0.5),1])
-            print("Nfold=",self.Nfold)
+            print("Nfold for DIT = ",self.Nfold)
             dLarray=jnp.linspace(1,self.Nfold,self.Nfold)/dnu                
             xsm=dit.xsmatrix3D(mdb.nu_lines-np.median(self.nus),sigmaDM,\
                                   gammaLM,SijM,self.nus-np.median(self.nus),\
