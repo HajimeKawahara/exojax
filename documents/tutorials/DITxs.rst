@@ -1,5 +1,7 @@
 Cross Section for Many Lines using DIT
 ==================================================================================================
+*Update: July 11/2021, Hajime Kawahara*
+
 
 We demonstarte the `Discrete Integral Transform <https://www.sciencedirect.com/science/article/abs/pii/S0022407320310049>`_ (DIT) method proposed by
 D.C.M van den Bekeroma and E.Pannier. DIT takes advantage especially for

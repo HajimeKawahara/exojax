@@ -29,6 +29,7 @@ ExoJAX
    tutorials/fitbd.rst	     
    tutorials/optimize_voigt.rst   
    tutorials/DITxs.rst   
+   tutorials/DITrt.rst   
 
 
    
