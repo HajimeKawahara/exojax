@@ -94,10 +94,12 @@
 <li class="toctree-l1"><a class="reference internal" href="tutorials/comparison_db.html">Comparing HITEMP and ExoMol</a></li>
 <li class="toctree-l1"><a class="reference internal" href="tutorials/CIA_opacity.html">CIA Absorption Coefficient</a></li>
 <li class="toctree-l1"><a class="reference internal" href="tutorials/rigid_rotation.html">Rigid Stellar Rotation and Gaussian Convolution</a></li>
-<li class="toctree-l1"><a class="reference internal" href="tutorials/forward_modeling.html">Forward Modeling of an Emission Spectrum</a></li>
-<li class="toctree-l1"><a class="reference internal" href="tutorials/reverse_modeling.html">Reverse Modeling of an Emission Spectrum</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tutorials/forward_modeling.html">Forward Modelling of an Emission Spectrum</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tutorials/reverse_modeling.html">Reverse Modelling of an Emission Spectrum</a></li>
 <li class="toctree-l1"><a class="reference internal" href="tutorials/fitbd.html">🐱  Bayes Inference of a Real Spectrum of Luhman 16A</a></li>
 <li class="toctree-l1"><a class="reference internal" href="tutorials/optimize_voigt.html">Optimization of a Voigt profile</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tutorials/DITxs.html">Cross Section for Many Lines using DIT</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tutorials/DITrt.html">Forward Modelling of a Many Lines Spectrum using DIT</a></li>
 </ul>
 <p class="caption"><span class="caption-text">User Guide:</span></p>
 <ul>
@@ -270,6 +272,8 @@
 </li>
       <li><a href="exojax/exojax.spec.html#exojax.spec.hapi.AtoB">AtoB() (in module exojax.spec.hapi)</a>
 </li>
+      <li><a href="exojax/exojax.spec.html#exojax.spec.dit.autoNfold">autoNfold() (in module exojax.spec.dit)</a>
+</li>
       <li><a href="exojax/exojax.spec.html#exojax.spec.autospec.AutoRT">AutoRT (class in exojax.spec.autospec)</a>
 </li>
       <li><a href="exojax/exojax.spec.html#exojax.spec.autospec.AutoXS">AutoXS (class in exojax.spec.autospec)</a>
@@ -287,6 +291,8 @@
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="exojax/exojax.spec.html#exojax.spec.hapi.BD_TIPS_2017_PYTHON_SLICE">BD_TIPS_2017_PYTHON_SLICE() (in module exojax.spec.hapi)</a>
+</li>
+      <li><a href="exojax/exojax.spec.html#exojax.spec.hminus.bound_free_absorption">bound_free_absorption() (in module exojax.spec.hminus)</a>
 </li>
       <li><a href="exojax/exojax.utils.html#exojax.utils.chopstacks.buildwall">buildwall() (in module exojax.utils.chopstacks)</a>
 </li>
@@ -392,6 +398,8 @@
 </li>
       <li><a href="exojax/exojax.spec.html#exojax.spec.rtransfer.dtauCIA">dtauCIA() (in module exojax.spec.rtransfer)</a>
 </li>
+      <li><a href="exojax/exojax.spec.html#exojax.spec.rtransfer.dtauHminus">dtauHminus() (in module exojax.spec.rtransfer)</a>
+</li>
       <li><a href="exojax/exojax.spec.html#exojax.spec.rtransfer.dtauM">dtauM() (in module exojax.spec.rtransfer)</a>
 </li>
   </ul></td>
@@ -456,6 +464,8 @@
 </li>
       <li><a href="exojax/exojax.spec.html#module-exojax.spec.dit">exojax.spec.dit (module)</a>
 </li>
+      <li><a href="exojax/exojax.spec.html#module-exojax.spec.ditkernel">exojax.spec.ditkernel (module)</a>
+</li>
       <li><a href="exojax/exojax.spec.html#module-exojax.spec.download_moldb">exojax.spec.download_moldb (module)</a>
 </li>
       <li><a href="exojax/exojax.spec.html#module-exojax.spec.evalline">exojax.spec.evalline (module)</a>
@@ -471,6 +481,8 @@
       <li><a href="exojax/exojax.spec.html#module-exojax.spec.hitran">exojax.spec.hitran (module)</a>
 </li>
       <li><a href="exojax/exojax.spec.html#module-exojax.spec.hitrancia">exojax.spec.hitrancia (module)</a>
+</li>
+      <li><a href="exojax/exojax.spec.html#module-exojax.spec.hminus">exojax.spec.hminus (module)</a>
 </li>
       <li><a href="exojax/exojax.spec.html#module-exojax.spec.line_strength">exojax.spec.line_strength (module)</a>
 </li>
@@ -530,6 +542,8 @@
 <h2 id="F">F</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="exojax/exojax.spec.html#exojax.spec.ditkernel.f1_voigt_kernel">f1_voigt_kernel() (in module exojax.spec.ditkernel)</a>
+</li>
       <li><a href="exojax/exojax.spec.html#exojax.spec.hapi.fetch">fetch() (in module exojax.spec.hapi)</a>
 </li>
       <li><a href="exojax/exojax.spec.html#exojax.spec.hapi.fetch_by_ids">fetch_by_ids() (in module exojax.spec.hapi)</a>
@@ -538,7 +552,11 @@
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="exojax/exojax.spec.html#exojax.spec.hapi.filter">filter() (in module exojax.spec.hapi)</a>
 </li>
+      <li><a href="exojax/exojax.spec.html#exojax.spec.ditkernel.folded_voigt_kernel">folded_voigt_kernel() (in module exojax.spec.ditkernel)</a>
+</li>
       <li><a href="exojax/exojax.spec.html#exojax.spec.hapi.formatString">formatString() (in module exojax.spec.hapi)</a>
+</li>
+      <li><a href="exojax/exojax.spec.html#exojax.spec.hminus.free_free_absorption">free_free_absorption() (in module exojax.spec.hminus)</a>
 </li>
   </ul></td>
 </tr></table>
@@ -674,6 +692,8 @@
 </li>
       <li><a href="exojax/exojax.special.html#exojax.special.faddeeva.imwofzs2">imwofzs2() (in module exojax.special.faddeeva)</a>
 </li>
+      <li><a href="exojax/exojax.spec.html#exojax.spec.dit.inc2Dplus">inc2Dplus() (in module exojax.spec.dit)</a>
+</li>
       <li><a href="exojax/exojax.spec.html#exojax.spec.dit.inc3D">inc3D() (in module exojax.spec.dit)</a>
 </li>
       <li><a href="exojax/exojax.spec.html#exojax.spec.autospec.AutoXS.init_database">init_database() (exojax.spec.autospec.AutoXS method)</a>
@@ -730,6 +750,8 @@
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="exojax/exojax.spec.html#exojax.spec.hapi.loadCache">loadCache() (in module exojax.spec.hapi)</a>
 </li>
+      <li><a href="exojax/exojax.spec.html#exojax.spec.hminus.log_hminus_continuum">log_hminus_continuum() (in module exojax.spec.hminus)</a>
+</li>
       <li><a href="exojax/exojax.spec.html#exojax.spec.hitrancia.logacia">logacia() (in module exojax.spec.hitrancia)</a>
 </li>
       <li><a href="exojax/exojax.spec.html#exojax.spec.moldb.MdbExomol.logsij0">logsij0 (exojax.spec.moldb.MdbExomol attribute)</a>
@@ -744,6 +766,8 @@
 <h2 id="M">M</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="exojax/exojax.spec.html#exojax.spec.dit.make_dLarray">make_dLarray() (in module exojax.spec.dit)</a>
+</li>
       <li><a href="exojax/exojax.spec.html#exojax.spec.exomolapi.make_j2b">make_j2b() (in module exojax.spec.exomolapi)</a>
 </li>
       <li><a href="exojax/exojax.spec.html#exojax.spec.exomolapi.make_jj2b">make_jj2b() (in module exojax.spec.exomolapi)</a>
@@ -787,6 +811,8 @@
       <li><a href="exojax/exojax.spec.html#exojax.spec.moldb.MdbExomol.n_Tref_def">n_Tref_def (exojax.spec.moldb.MdbExomol attribute)</a>
 </li>
       <li><a href="exojax/exojax.spec.html#exojax.spec.hapi.newRowObject">newRowObject() (in module exojax.spec.hapi)</a>
+</li>
+      <li><a href="exojax/exojax.spec.html#exojax.spec.dit.npnc1D">npnc1D() (in module exojax.spec.dit)</a>
 </li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
@@ -1064,6 +1090,8 @@
 </li>
       <li><a href="exojax/exojax.spec.html#exojax.spec.hapi.select">select() (in module exojax.spec.hapi)</a>
 </li>
+      <li><a href="exojax/exojax.spec.html#exojax.spec.autospec.AutoXS.select_xsmode">select_xsmode() (exojax.spec.autospec.AutoXS method)</a>
+</li>
       <li><a href="exojax/exojax.spec.html#exojax.spec.hapi.selectInto">selectInto() (in module exojax.spec.hapi)</a>
 </li>
       <li><a href="exojax/exojax.spec.html#exojax.spec.moldb.MdbExomol.set_broadening">set_broadening() (exojax.spec.moldb.MdbExomol method)</a>
@@ -1073,6 +1101,8 @@
       <li><a href="exojax/exojax.spec.html#exojax.spec.hapi.setRowObject">setRowObject() (in module exojax.spec.hapi)</a>
 </li>
       <li><a href="exojax/exojax.spec.html#exojax.spec.hapi.setValueToGroupIndex">setValueToGroupIndex() (in module exojax.spec.hapi)</a>
+</li>
+      <li><a href="exojax/exojax.spec.html#exojax.spec.dit.sigma_voigt">sigma_voigt() (in module exojax.spec.dit)</a>
 </li>
       <li><a href="exojax/exojax.spec.html#exojax.spec.moldb.MdbExomol.Sij0">Sij0 (exojax.spec.moldb.MdbExomol attribute)</a>
 
@@ -1152,7 +1182,7 @@
 </li>
       <li><a href="exojax/exojax.spec.html#exojax.spec.evalline.voigt0">voigt0() (in module exojax.spec.evalline)</a>
 </li>
-      <li><a href="exojax/exojax.spec.html#exojax.spec.dit.voigt_kernel">voigt_kernel() (in module exojax.spec.dit)</a>
+      <li><a href="exojax/exojax.spec.html#exojax.spec.ditkernel.voigt_kernel">voigt_kernel() (in module exojax.spec.ditkernel)</a>
 </li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
@@ -1200,6 +1230,8 @@
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="exojax/exojax.spec.html#exojax.spec.evalline.xsmatrix0">xsmatrix0() (in module exojax.spec.evalline)</a>
 </li>
+      <li><a href="exojax/exojax.spec.html#exojax.spec.dit.xsmatrix3D">xsmatrix3D() (in module exojax.spec.dit)</a>
+</li>
       <li><a href="exojax/exojax.spec.html#exojax.spec.dit.xsvector">xsvector() (in module exojax.spec.dit)</a>
 
       <ul>
@@ -1207,6 +1239,8 @@
 </li>
       </ul></li>
       <li><a href="exojax/exojax.spec.html#exojax.spec.evalline.xsvector0">xsvector0() (in module exojax.spec.evalline)</a>
+</li>
+      <li><a href="exojax/exojax.spec.html#exojax.spec.dit.xsvector3D">xsvector3D() (in module exojax.spec.dit)</a>
 </li>
   </ul></td>
 </tr></table>

@@ -1,7 +1,8 @@
 """Line profile computation using Discrete Integral Transform
 
-   * Line profile computation of [Discrete Integral Transform](https://www.sciencedirect.com/science/article/abs/pii/S0022407320310049) for rapid spectral synthesis, originally proposed by D.C.M van den Bekeroma and E.Pannier.
-   * This module consists of selected functions in [addit package](https://github.com/HajimeKawahara/addit).
+   * Line profile computation of `Discrete Integral Transform <https://www.sciencedirect.com/science/article/abs/pii/S0022407320310049>`_ for rapid spectral synthesis, originally proposed by D.C.M van den Bekeroma and E.Pannier.
+   * This module consists of selected functions in `addit package <https://github.com/HajimeKawahara/addit>`_.
+   * The concept of "folding" can be understood by reading `the discussion <https://github.com/radis/radis/issues/186#issuecomment-764465580>`_ by D.C.M van den Bekeroma.
 
 """
 import jax.numpy as jnp
@@ -10,29 +11,8 @@ from jax import jit
 from jax import vmap
 from jax.lax import scan
 import tqdm
-
-
-
-def voigt_kernel(k, beta,gammaL):
-    """Fourier Kernel of the Voigt Profile
-    
-    Args:
-        k: conjugated of wavenumber
-        beta: Gaussian standard deviation
-        gammaL: Lorentzian Half Width
-        
-    Returns:
-        kernel (N_x,N_beta,N_gammaL)
-    
-    Note:
-        Conversions to the (full) width, wG and wL are as follows: 
-        wG=2*sqrt(2*ln2) beta
-        wL=2*gamma
-    
-    """
-    val=(jnp.pi*beta[None,:,None]*k[:,None,None])**2 + jnp.pi*gammaL[None,None,:]*k[:,None,None]
-    return jnp.exp(-2.0*val)
-
+from exojax.spec.ditkernel import folded_voigt_kernel
+#from functools import partial
 
 @jit
 def Xncf(i,x,xv):
@@ -153,7 +133,7 @@ def npnc1D(x,xv):
     return vcl
 
 @jit
-def xsvector3D(nu_lines,sigmaD,gammaL,S,nu_grid,sigmaD_grid,gammaL_grid):
+def xsvector3D(nu_lines,sigmaD,gammaL,S,nu_grid,sigmaD_grid,gammaL_grid,dLarray):
     """Cross section vector (DIT/3D version)
     
     The original code is rundit in [addit package](https://github.com/HajimeKawahara/addit)
@@ -166,6 +146,7 @@ def xsvector3D(nu_lines,sigmaD,gammaL,S,nu_grid,sigmaD_grid,gammaL_grid):
        nu_grid: linear wavenumber grid
        sigmaD_grid: sigmaD grid
        gammaL_grid: gammaL grid
+       dLarray: ifold/dnu (ifold=1,..,Nfold) array
 
     Returns:
        Cross section in the linear nu grid
@@ -176,7 +157,10 @@ def xsvector3D(nu_lines,sigmaD,gammaL,S,nu_grid,sigmaD_grid,gammaL_grid):
     Example:
        >>> dfnus=nus-np.median(nus)
        >>> dfnu_lines=nu_lines-np.median(nus)
-       >>> xs=xsvector3D(nu_lines,sigmaD,gammaL,Sij,nus,sigmaD_grid,gammaL_grid)
+       >>> dnus=nus[1]-nus[0]
+       >>> Nfold=3
+       >>> dLarray=jnp.linspace(1,Nfold,Nfold)/dnus 
+       >>> xs=xsvector3D(nu_lines,sigmaD,gammaL,Sij,nus,sigmaD_grid,gammaL_grid,dLarray)
 
     """
     Ng_nu=len(nu_grid)
@@ -194,15 +178,18 @@ def xsvector3D(nu_lines,sigmaD,gammaL,S,nu_grid,sigmaD_grid,gammaL_grid):
 
     valbuf=jnp.vstack([val,jnp.zeros_like(val)])
     fftval = jnp.fft.rfft(valbuf,axis=0)
-    vk=voigt_kernel(k, sigmaD_grid,gammaL_grid)
+    #vk=voigt_kernel(k, sigmaD_grid,gammaL_grid)
+    #vk=f1_voigt_kernel(k, sigmaD_grid,gammaL_grid, dnu)
+    vk=folded_voigt_kernel(k, sigmaD_grid,gammaL_grid, dLarray)
+
     fftvalsum = jnp.sum(fftval*vk,axis=(1,2))
-    #F0=jnp.fft.irfft(fftvalsum)[:Ng_nu]
     xs=jnp.fft.irfft(fftvalsum)[:Ng_nu]/dnu
     return xs
 
+
 @jit
-def xsmatrix3D(nu_lines,sigmaDM,gammaLM,SijM,nu_grid,sigmaD_grid,gammaL_grid):
-    """Cross section matrix for xsvector3D (DIT version)
+def xsmatrix3D(nu_lines,sigmaDM,gammaLM,SijM,nu_grid,dgm_sigmaD,dgm_gammaL,dLarray):
+    """Cross section matrix for xsvector3D (DIT/reduced memory version)
 
     Args:
        nu_lines: line center (Nlines)
@@ -210,14 +197,31 @@ def xsmatrix3D(nu_lines,sigmaDM,gammaLM,SijM,nu_grid,sigmaD_grid,gammaL_grid):
        gammaLM: gamma factor matrix in R^(Nlayer x Nline)
        SijM: line strength matrix in R^(Nlayer x Nline)
        nu_grid: linear wavenumber grid
-       sigmaD_grid: sigmaD grid
-       gammaL_grid: gammaL grid
-
+       dgm_sigmaD: DIT Grid Matrix for sigmaD R^(Nlayer, NDITgrid)
+       dgm_gammaL: DIT Grid Matrix for gammaL R^(Nlayer, NDITgrid)
+       dLarray: ifold/dnu (ifold=1,..,Nfold) array
+      
     Return:
        cross section matrix in R^(Nlayer x Nwav)
 
     """
-    return vmap(xsvector3D,(None,0,0,0,None,None,None))(nu_lines,sigmaDM,gammaLM,SijM,nu_grid,sigmaD_grid,gammaL_grid)
+    NDITgrid=jnp.shape(dgm_sigmaD)[1]
+    Nline=len(nu_lines)
+    Mat=jnp.hstack([sigmaDM,gammaLM,SijM,dgm_sigmaD,dgm_gammaL])
+    def fxs(x,arr):
+        carry=0.0
+        sigmaD=arr[0:Nline]
+        gammaL=arr[Nline:2*Nline]
+        Sij=arr[2*Nline:3*Nline]
+        sigmaD_grid=arr[3*Nline:3*Nline+NDITgrid]
+        gammaL_grid=arr[3*Nline+NDITgrid:3*Nline+2*NDITgrid]
+        arr=xsvector3D(nu_lines,sigmaD,gammaL,Sij,nu_grid,sigmaD_grid,gammaL_grid,dLarray)
+        return carry, arr
+    
+    val,xsm=scan(fxs,0.0,Mat)
+    return xsm
+    
+
 
 @jit
 def inc2Dplus(w,fx,y,z,yv,zv):
@@ -266,7 +270,7 @@ def inc2Dplus(w,fx,y,z,yv,zv):
     return val
 
 @jit
-def xsvector(nu_ncf,sigmaD,gammaL,S,nu_grid,sigmaD_grid,gammaL_grid):
+def xsvector(nu_ncf,sigmaD,gammaL,S,nu_grid,sigmaD_grid,gammaL_grid, dLarray):
     """Cross section vector (DIT/2D+ version; default)
     
     The original code is rundit in [addit package](https://github.com/HajimeKawahara/addit)
@@ -279,6 +283,7 @@ def xsvector(nu_ncf,sigmaD,gammaL,S,nu_grid,sigmaD_grid,gammaL_grid):
        nu_grid: linear wavenumber grid
        sigmaD_grid: sigmaD grid
        gammaL_grid: gammaL grid
+       dLarray: ifold/dnu (ifold=1,..,Nfold) array
 
     Returns:
        Cross section in the linear nu grid
@@ -288,7 +293,9 @@ def xsvector(nu_ncf,sigmaD,gammaL,S,nu_grid,sigmaD_grid,gammaL_grid):
 
     Example:
        >>> nu_ncf=npnc1D(mdbCO.nu_lines,nus)
-       >>> xs=xsvector(nu_ncf,sigmaD,gammaL,Sij,nus,sigmaD_grid,gammaL_grid)
+       >>> Nfold=3
+       >>> dLarray=jnp.linspace(1,Nfold,Nfold)/dnus 
+       >>> xs=xsvector(nu_ncf,sigmaD,gammaL,Sij,nus,sigmaD_grid,gammaL_grid,dLarray)
 
     """
     Ng_nu=len(nu_grid)
@@ -307,14 +314,13 @@ def xsvector(nu_ncf,sigmaD,gammaL,S,nu_grid,sigmaD_grid,gammaL_grid):
 
     valbuf=jnp.vstack([val,jnp.zeros_like(val)])
     fftval = jnp.fft.rfft(valbuf,axis=0)
-    vk=voigt_kernel(k, sigmaD_grid,gammaL_grid)
+    vk=folded_voigt_kernel(k, sigmaD_grid,gammaL_grid, dLarray)
     fftvalsum = jnp.sum(fftval*vk,axis=(1,2))
-    #F0=jnp.fft.irfft(fftvalsum)[:Ng_nu]
     xs=jnp.fft.irfft(fftvalsum)[:Ng_nu]/dnu
     return xs
 
 @jit
-def xsmatrix(nu_ncf,sigmaDM,gammaLM,SijM,nu_grid,sigmaD_grid,gammaL_grid):
+def xsmatrix(nu_ncf,sigmaDM,gammaLM,SijM,nu_grid,dgm_sigmaD,dgm_gammaL,dLarray):
     """Cross section matrix (DIT/2D+ version)
 
     Args:
@@ -323,15 +329,29 @@ def xsmatrix(nu_ncf,sigmaDM,gammaLM,SijM,nu_grid,sigmaD_grid,gammaL_grid):
        gammaLM: gamma factor matrix in R^(Nlayer x Nline)
        SijM: line strength matrix in R^(Nlayer x Nline)
        nu_grid: linear wavenumber grid
-       sigmaD_grid: sigmaD grid
-       gammaL_grid: gammaL grid
+       dgm_sigmaD: DIT Grid Matrix for sigmaD R^(Nlayer, NDITgrid)
+       dgm_gammaL: DIT Grid Matrix for gammaL R^(Nlayer, NDITgrid)
+       dLarray: ifold/dnu (ifold=1,..,Nfold) array
 
     Return:
        cross section matrix in R^(Nlayer x Nwav)
 
     """
-
-    return vmap(xsvector,(None,0,0,0,None,None,None))(nu_ncf,sigmaDM,gammaLM,SijM,nu_grid,sigmaD_grid,gammaL_grid)
+    NDITgrid=jnp.shape(dgm_sigmaD)[1]
+    Nline=jnp.shape(SijM)[1]
+    Mat=jnp.hstack([sigmaDM,gammaLM,SijM,dgm_sigmaD,dgm_gammaL])
+    def fxs(x,arr):
+        carry=0.0
+        sigmaD=arr[0:Nline]
+        gammaL=arr[Nline:2*Nline]
+        Sij=arr[2*Nline:3*Nline]
+        sigmaD_grid=arr[3*Nline:3*Nline+NDITgrid]
+        gammaL_grid=arr[3*Nline+NDITgrid:3*Nline+2*NDITgrid]
+        arr=xsvector(nu_ncf,sigmaD,gammaL,Sij,nu_grid,sigmaD_grid,gammaL_grid,dLarray)
+        return carry, arr
+    
+    val,xsm=scan(fxs,0.0,Mat)
+    return xsm
 
 def set_ditgrid(x,res=0.1,adopt=True):
     """
@@ -356,14 +376,16 @@ def set_ditgrid(x,res=0.1,adopt=True):
     return grid
 
 def dgmatrix(x,res=0.1,adopt=True):
-    """
+    """DIT GRID MATRIX 
+
+    Args:
         x: simgaD or gammaL matrix (Nlayer x Nline)
         res: grid resolution. res=0.1 (defaut) means a grid point per digit
         adopt: if True, min, max grid points are used at min and max values of x. 
                In this case, the grid width does not need to be res exactly.
         
     Returns:
-        grid for DIT
+        grid for DIT (Nlayer x NDITgrid)
 
     """
     mmax=np.max(np.log10(x),axis=1)
@@ -382,6 +404,58 @@ def dgmatrix(x,res=0.1,adopt=True):
         gm.append(grid)
     gm=np.array(gm)
     return gm
+
+def make_dLarray(Nfold,dnu):
+    """compute dLarray for the DIT folding
+    
+    Args:
+       Nfold: # of the folding
+       dnu: linear wavenumber grid interval
+
+    Returns:
+       dLarray: ifold/dnu (ifold=1,..,Nfold) array
+
+    """
+    dLarray=jnp.linspace(1,Nfold,Nfold)/dnu                
+    return dLarray
+
+def sigma_voigt(dgm_sigmaD,dgm_gammaL):
+    """compute sigma of the Voigt profile
+    
+    Args:
+       dgm_sigmaD: DIT grid matrix for sigmaD
+       dgm_gammaL: DIT grid matrix for gammaL
+
+    Returns:
+       sigma
+
+    """
+    fac=2.*np.sqrt(2.*np.log(2.0))
+    fdgm_gammaL=jnp.min(dgm_gammaL,axis=1)*2.0
+    fdgm_sigmaD=jnp.min(dgm_sigmaD,axis=1)*fac
+    fv=jnp.min(0.5346*fdgm_gammaL+jnp.sqrt(0.2166*fdgm_gammaL**2+fdgm_sigmaD**2))
+    sigma=fv/fac
+    return sigma
+
+def autoNfold(sigma,dnu,pdit=1.5):
+    """ determine an adequate Nfold
+
+    Args:
+       sigma: sigma for the voigt or gaussian    
+       dnu: linear wavenumber grid interval
+       pdit: threshold for DIT folding to x=pdit*sigma
+
+    Returns:
+       relres: relative resolution of wavenumber grid
+       Nfold: suggested Nfold
+
+    Note:
+       In DIT w/ folding, we fold the profile to x = 1/dnu * (Nfold + 1/2). We want x > p*sigma, where sigma is sigma in Gaussian or its equivalence of the VOigt profile (0.5*gammaL+sqrt(0.25*gammaL**2+sigmaD**2)). Then, we obtain Nfold > p*dnu/sigma - 1/2 > 0. The relative resolution to the line width is defined by relres = sigma/dnu.
+
+    """
+    relres=sigma/dnu
+    Nfold=np.max([int(pdit/relres-0.5),1])
+    return relres, Nfold
 
 if __name__ == "__main__":
 

@@ -1,4 +1,4 @@
-Forward Modeling of an Emission Spectrum
+Forward Modelling of an Emission Spectrum
 ========================================
 *Update: June 1/2021, Hajime Kawahara*
 

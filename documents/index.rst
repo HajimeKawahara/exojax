@@ -21,13 +21,15 @@ ExoJAX
    tutorials/voigt_function.rst
    tutorials/opacity.rst	     
    tutorials/opacity_exomol.rst	     
-   tutorials/comparison_db.rst	     
+   tutorials/comparison_db.rst
    tutorials/CIA_opacity.rst
    tutorials/rigid_rotation.rst   
    tutorials/forward_modeling.rst	     
    tutorials/reverse_modeling.rst	     
    tutorials/fitbd.rst	     
    tutorials/optimize_voigt.rst   
+   tutorials/DITxs.rst   
+   tutorials/DITrt.rst   
 
 
    
