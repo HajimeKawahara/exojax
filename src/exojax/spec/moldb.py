@@ -127,14 +127,32 @@ class MdbExomol(object):
                 trans_file = self.path/pathlib.Path(molec+"__"+numtag[i]+".trans.bz2")
                 if not trans_file.exists():
                     self.download(molec,extension=[".trans.bz2"],numtag=numtag[i])
-                if trans_file.with_suffix(".feather").exists():
-                    trans=pd.read_feather(trans_file.with_suffix(".feather"))
+                # if trans_file.with_suffix(".feather").exists():
+                #     trans=pd.read_feather(trans_file.with_suffix(".feather"))
+                #     ndtrans=trans.to_numpy()
+                #     del trans
+                if trans_file.with_suffix(".hdf").exists():
+                # import h5py
+                # with h5py.File("/home/kawashima/database/CH4/12C-1H4/YT34to10/all.hdf", 'r') as f:
+                #     key_list=list(f.keys())
+                # print(key_list)
+                # key=("nurange"+"__"+numtag[i]).replace('-','_')
+                # if key in key_list:
+                    trans=pd.read_hdf(trans_file.with_suffix(".hdf"))
+#                    trans=pd.read_hdf("/home/kawashima/database/CH4/12C-1H4/YT34to10/all.hdf", key=key)
                     ndtrans=trans.to_numpy()
                     del trans
                 else:
                     print(explanation)
+                    # trans=exomolapi.read_trans(trans_file)
+                    # trans.to_feather(trans_file.with_suffix(".feather"))
+                    # ndtrans=trans.to_numpy()
                     trans=exomolapi.read_trans(trans_file)
-                    trans.to_feather(trans_file.with_suffix(".feather"))
+                    print(numtag[i])
+                    key=("nurange"+"__"+numtag[i]).replace('-','_')
+                    print(key)
+                    trans.to_hdf(trans_file.with_suffix(".hdf"), key=key)
+#                    trans.to_hdf("/home/kawashima/database/CH4/12C-1H4/YT34to10/all.hdf", key=key)
                     ndtrans=trans.to_numpy()
                     del trans
                 self.trans_file.append(trans_file)
