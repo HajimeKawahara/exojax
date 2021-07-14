@@ -7,7 +7,7 @@ from exojax.spec import defcia
 from exojax.spec import moldb
 from exojax.spec import contdb 
 from exojax.spec.opacity import xsection
-from exojax.spec.hitran import SijT, doppler_sigma,  gamma_natural, gamma_hitran
+from exojax.spec.hitran import SijT, doppler_sigma,  gamma_natural, gamma_hitran, normalized_doppler_sigma
 from exojax.spec import planck
 from exojax.spec.exomol import gamma_exomol
 from exojax.spec import molinfo
@@ -117,7 +117,6 @@ class AutoXS(object):
             molmass=molinfo.molmass(self.molecules)
         
         Sij=self.linest(T,P)
-        sigmaD=doppler_sigma(mdb.nu_lines,T,molmass)
         nu0=mdb.nu_lines
 
         if self.xsmode == "auto":
@@ -126,34 +125,42 @@ class AutoXS(object):
             xsmode = self.xsmode
             
         if xsmode=="lpf" or xsmode=="LPF":
+            sigmaD=doppler_sigma(mdb.nu_lines,T,molmass)
             xsv=xsection(self.nus,nu0,sigmaD,gammaL,Sij,memory_size=self.memory_size)
         elif xsmode=="modit" or xsmode=="MODIT":
             from exojax.spec.dit import make_dLarray
             checknus=check_nugrid(self.nus,gridmode="ESLOG")
-            if ~checknus:
-                print("WARNING: the wavenumber grid does not look ESLOG.")
-                nus=jnp.logspace(jnp.log10(self.nus[0]),jnp.log10(self.nus[-1]),len(self.nus))
-            else:
-                nus=self.nus
+            nus=self.nus
+
+            #            if ~checknus:
+#                print("WARNING: the wavenumber grid does not look ESLOG.")
+#                nus=jnp.logspace(jnp.log10(self.nus[0]),jnp.log10(self.nus[-1]),len(self.nus))
+#            else:
+#                nus=self.nus
                 
-            gammaL_grid=dit.set_ditgrid(gammaL,res=0.2)
-            dfnus=nus-np.median(nus)
-            dfnu_lines=mdb.nu_lines-np.median(nus)
+            nn=np.median(nus)
+            nn=2000.0
+            dfnus=nus-nn
+            dfnu_lines=mdb.nu_lines-nn
             R=(len(nus)-1)/np.log(nus[-1]/nus[0]) #resolution
             dv_lines=mdb.nu_lines/R
             dv=nus/R
-            Nfold=1
-            dnu=nus[1]-nus[0]
-            dLarray=make_dLarray(Nfold,1)
+            Nfold=2
+            dLarray=make_dLarray(Nfold,1.0)
+            nsigmaD=normalized_doppler_sigma(T,molmass,R)
 
-#            F0f2_=rundit_fold_logredst(S,nu_lines-nn,cnbeta,gammaL,nus-nn,ngammaL_grid_,dLarray,dv_lines,dv)
+            ngammaL_grid=dit.set_ditgrid(gammaL/dv_lines,res=0.1)
+#            ngammaL_grid=np.logspace(np.log10(np.min(gammaL/dv_lines)),np.log10(np.max(gammaL/dv_lines)),10)
 
-            xsv=modit.xsvector(dfnu_lines,cnsigmaD,gammaL,Sij,dfnus,gammaL_grid,dLarray,dv_lines,dv)
-            if ~checknus:
-                xsv=jnp.interp(self.nus,nus,xsv)
+            xsv=modit.xsvector(dfnu_lines,nsigmaD,gammaL,Sij,dfnus,ngammaL_grid,dLarray,dv_lines,dv)
+#            xsv=modit.xsvector(mdb.nu_lines,nsigmaD,gammaL,Sij,nus,ngammaL_grid,dLarray,dv_lines,dv)
+
+#            if ~checknus:
+#                xsv=jnp.interp(self.nus,nus,xsv)
        
         elif xsmode=="dit" or xsmode=="DIT":
             from exojax.spec.dit import make_dLarray
+            sigmaD=doppler_sigma(mdb.nu_lines,T,molmass)
             checknus=check_nugrid(self.nus,gridmode="ESLIN")
             if ~checknus:
                 print("WARNING: the wavenumber grid does not look ESLIN.")
@@ -163,9 +170,10 @@ class AutoXS(object):
                 
             sigmaD_grid=dit.set_ditgrid(sigmaD,res=0.1)
             gammaL_grid=dit.set_ditgrid(gammaL,res=0.2)
-            dfnus=nus-np.median(nus)
-            dfnu_lines=mdb.nu_lines-np.median(nus)
-            Nfold=1
+            nn=np.median(nus)
+            dfnus=nus-nn
+            dfnu_lines=mdb.nu_lines-nn
+            Nfold=2
             dnu=nus[1]-nus[0]
             dLarray=make_dLarray(Nfold,dnu)
             xsv=dit.xsvector3D(dfnu_lines,sigmaD,gammaL,Sij,dfnus,sigmaD_grid,gammaL_grid,dLarray)

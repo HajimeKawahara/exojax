@@ -123,19 +123,19 @@ def npnc1D(x,xv):
                  
     return vcl
     
+#            xsv=modit.xsvector(dfnu_lines,nsigmaD,gammaL,Sij,dfnus,gammaL_grid,dLarray,dv_lines,dv)
 @jit
-def xsvector(nu_lines,sigmaD,gammaL,S,nu_grid,sigmaD_grid,gammaL_grid,dLarray,dv_lines,dv_grid):
+def xsvector(nu_lines,nsigmaD,gammaL,S,nu_grid,ngammaL_grid,dLarray,dv_lines,dv_grid):
     """Cross section vector (DIT/3D version)
     
     The original code is rundit_fold_logredst in [addit package](https://github.com/HajimeKawahara/addit). DIT folded voigt for ESLOG for reduced wavenumebr inputs (against the truncation error) for a constant normalized beta
 
     Args:
        nu_lines: line center (Nlines)
-       sigmaD: Gaussian STD (Nlines)
+       nsigmaD: normaized Gaussian STD (Nlines)
        gammaL: Lorentzian half width (Nlines)
        S: line strength (Nlines)
        nu_grid: linear wavenumber grid
-       sigmaD_grid: sigmaD grid
        gammaL_grid: gammaL grid
        dLarray: ifold/dnu (ifold=1,..,Nfold) array
        dv_lines: delta wavenumber for lines i.e. nu_lines/R
@@ -160,9 +160,8 @@ def xsvector(nu_lines,sigmaD,gammaL,S,nu_grid,sigmaD_grid,gammaL_grid,dLarray,dv
     Ng_gammaL=len(ngammaL_grid)
 
     ngammaL=gammaL/dv_lines
-    log_nstbeta=jnp.log(cnbeta)
+    log_nstbeta=jnp.log(nsigmaD)
     log_ngammaL=jnp.log(ngammaL)
-    
     log_ngammaL_grid = jnp.log(ngammaL_grid)
 
     k = jnp.fft.rfftfreq(2*Ng_nu,1)
