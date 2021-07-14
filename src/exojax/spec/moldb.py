@@ -107,18 +107,45 @@ class MdbExomol(object):
             if not self.trans_file.exists():
                 self.download(molec,[".trans.bz2"])
 
-            if self.trans_file.with_suffix(".feather").exists():
-                trans=pd.read_feather(self.trans_file.with_suffix(".feather"))
+            if self.trans_file.with_suffix(".hdf").exists():
+                where=[]
+                nu_lines_min=self.nurange[0]-self.margin
+                nu_lines_max=self.nurange[1]+self.margin
+                where.append("nu_lines>nu_lines_min")
+                where.append("nu_lines<nu_lines_max")
+                if not np.isneginf(self.crit):
+                    where.append("Sij0>self.crit")
+
+                trans=pd.read_hdf(self.trans_file.with_suffix(".hdf"), where=where)
                 ndtrans=trans.to_numpy()
                 del trans
+
+                #compute gup and elower
+                self._A, self.nu_lines, self._elower, self._gpp, self._jlower, self._jupper=exomolapi.pickup_gE(states,ndtrans)
+
+                self.Tref=296.0
+                self.QTref=np.array(self.QT_interp(self.Tref))
+
+                self.Sij0=ndtrans[:,4]
             else:
                 print(explanation)
                 trans=exomolapi.read_trans(self.trans_file)
-                trans.to_feather(self.trans_file.with_suffix(".feather"))
                 ndtrans=trans.to_numpy()
+
+                #compute gup and elower
+                self._A, self.nu_lines, self._elower, self._gpp, self._jlower, self._jupper=exomolapi.pickup_gE(states,ndtrans)
+
+                self.Tref=296.0
+                self.QTref=np.array(self.QT_interp(self.Tref))
+
+                ##Line strength: input should be ndarray not jnp array
+                self.Sij0=exomol.Sij0(self._A,self._gpp,self.nu_lines,self._elower,self.QTref)
+
+                trans["nu_lines"]=self.nu_lines
+                trans["Sij0"]=self.Sij0
+                key=("nurange"+"__"+numtag[i]).replace("-","_")
+                trans.to_hdf(trans_file.with_suffix(".hdf"), key=key, format="table", data_columns=True)
                 del trans
-            #compute gup and elower
-            self._A, self.nu_lines, self._elower, self._gpp, self._jlower, self._jupper=exomolapi.pickup_gE(states,ndtrans)
         else:
             imin=np.searchsorted(numinf,self.nurange[0],side="right")-1 #left side
             imax=np.searchsorted(numinf,self.nurange[1],side="right")-1 #left side
