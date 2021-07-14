@@ -128,7 +128,15 @@ class MdbExomol(object):
                 if not trans_file.exists():
                     self.download(molec,extension=[".trans.bz2"],numtag=numtag[i])
                 if trans_file.with_suffix(".hdf").exists():
-                    trans=pd.read_hdf(trans_file.with_suffix(".hdf"))
+                    where=[]
+                    nu_lines_min=self.nurange[0]-self.margin
+                    nu_lines_max=self.nurange[1]+self.margin
+                    where.append("nu_lines>nu_lines_min")
+                    where.append("nu_lines<nu_lines_max")
+                    if not np.isneginf(self.crit):
+                        where.append("Sij0>self.crit")
+
+                    trans=pd.read_hdf(trans_file.with_suffix(".hdf"), where=where)
                     ndtrans=trans.to_numpy()
                     del trans
 
@@ -152,8 +160,6 @@ class MdbExomol(object):
                 else:
                     print(explanation)
                     trans=exomolapi.read_trans(trans_file)
-                    key=("nurange"+"__"+numtag[i]).replace('-','_')
-                    trans.to_hdf(trans_file.with_suffix(".hdf"), key=key)
                     ndtrans=trans.to_numpy()
                     
                     self.trans_file.append(trans_file)
@@ -175,9 +181,10 @@ class MdbExomol(object):
                     ##Line strength: input should be ndarray not jnp array
                     self.Sij0=exomol.Sij0(self._A,self._gpp,self.nu_lines,self._elower,self.QTref)
 
-                    trans['Sij0']=self.Sij0
-                    key=("nurange"+"__"+numtag[i]).replace('-','_')
-                    trans.to_hdf(trans_file.with_suffix(".hdf"), key=key)
+                    trans["nu_lines"]=self.nu_lines
+                    trans["Sij0"]=self.Sij0
+                    key=("nurange"+"__"+numtag[i]).replace("-","_")
+                    trans.to_hdf(trans_file.with_suffix(".hdf"), key=key, format="table", data_columns=True)
                     del trans
         
         ### MASKING ###
