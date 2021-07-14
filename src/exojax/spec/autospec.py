@@ -15,6 +15,7 @@ from exojax.spec.rtransfer import rtrun, pressure_layer, dtauM, dtauCIA, check_n
 from exojax.spec.make_numatrix import make_numatrix0
 from exojax.spec import lpf
 from exojax.spec import dit
+from exojax.spec import modit
 
 from exojax.spec import response
 import numpy as np
@@ -126,9 +127,33 @@ class AutoXS(object):
             
         if xsmode=="lpf" or xsmode=="LPF":
             xsv=xsection(self.nus,nu0,sigmaD,gammaL,Sij,memory_size=self.memory_size)
-        elif xsmode=="dit" or xsmode=="DIT":
-            from exojax.spec.dit import xsvector3D,set_ditgrid
+        elif xsmode=="modit" or xsmode=="MODIT":
+            from exojax.spec.dit import make_dLarray
+            checknus=check_nugrid(self.nus,gridmode="ESLOG")
+            if ~checknus:
+                print("WARNING: the wavenumber grid does not look ESLOG.")
+                nus=jnp.logspace(jnp.log10(self.nus[0]),jnp.log10(self.nus[-1]),len(self.nus))
+            else:
+                nus=self.nus
+                
+            gammaL_grid=dit.set_ditgrid(gammaL,res=0.2)
+            dfnus=nus-np.median(nus)
+            dfnu_lines=mdb.nu_lines-np.median(nus)
+            R=(len(nus)-1)/np.log(nus[-1]/nus[0]) #resolution
+            dv_lines=mdb.nu_lines/R
+            dv=nus/R
+            Nfold=1
+            dnu=nus[1]-nus[0]
+            dLarray=make_dLarray(Nfold,1)
 
+#            F0f2_=rundit_fold_logredst(S,nu_lines-nn,cnbeta,gammaL,nus-nn,ngammaL_grid_,dLarray,dv_lines,dv)
+
+            xsv=modit.xsvector(dfnu_lines,cnsigmaD,gammaL,Sij,dfnus,gammaL_grid,dLarray,dv_lines,dv)
+            if ~checknus:
+                xsv=jnp.interp(self.nus,nus,xsv)
+       
+        elif xsmode=="dit" or xsmode=="DIT":
+            from exojax.spec.dit import make_dLarray
             checknus=check_nugrid(self.nus,gridmode="ESLIN")
             if ~checknus:
                 print("WARNING: the wavenumber grid does not look ESLIN.")
@@ -136,11 +161,14 @@ class AutoXS(object):
             else:
                 nus=self.nus
                 
-            sigmaD_grid=set_ditgrid(sigmaD,res=0.1)
-            gammaL_grid=set_ditgrid(gammaL,res=0.2)
+            sigmaD_grid=dit.set_ditgrid(sigmaD,res=0.1)
+            gammaL_grid=dit.set_ditgrid(gammaL,res=0.2)
             dfnus=nus-np.median(nus)
             dfnu_lines=mdb.nu_lines-np.median(nus)
-            xsv=xsvector3D(dfnu_lines,sigmaD,gammaL,Sij,dfnus,sigmaD_grid,gammaL_grid)
+            Nfold=1
+            dnu=nus[1]-nus[0]
+            dLarray=make_dLarray(Nfold,dnu)
+            xsv=dit.xsvector3D(dfnu_lines,sigmaD,gammaL,Sij,dfnus,sigmaD_grid,gammaL_grid,dLarray)
             if ~checknus:
                 xsv=jnp.interp(self.nus,nus,xsv)
                 

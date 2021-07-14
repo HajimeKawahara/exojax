@@ -10,10 +10,10 @@ import pytest
 )
 
 def test_methods(nus):
-    autoxs=AutoXS(nus,"ExoMol","CO",method="DIT") #using ExoMol CO (12C-16O). HITRAN and HITEMP are also supported.  
+    autoxs=AutoXS(nus,"ExoMol","CO",xsmode="DIT") #using ExoMol CO (12C-16O). HITRAN and HITEMP are also supported.  
     xsv0=autoxs.xsection(1000.0,1.0) #cross section for 1000K, 1bar (cm2)
 
-    autoxs=AutoXS(nus,"ExoMol","CO",method="LPF") #using ExoMol CO (12C-16O). HITRAN and HITEMP are also supported.  
+    autoxs=AutoXS(nus,"ExoMol","CO",xsmode="LPF") #using ExoMol CO (12C-16O). HITRAN and HITEMP are also supported.  
     xsv1=autoxs.xsection(1000.0,1.0) #cross section for 1000K, 1bar (cm2)
     dif=(numpy.sum((xsv0-xsv1)**2))
     assert dif<1.e-36 
