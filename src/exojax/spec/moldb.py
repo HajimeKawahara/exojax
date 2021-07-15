@@ -61,6 +61,7 @@ class MdbExomol(object):
         molecbroad=t0+"__"+self.bkgdatm
 
         self.crit = crit
+        self.log_crit = np.log10(crit)
         self.margin = margin
         self.nurange=[np.min(nurange),np.max(nurange)]
         self.broadf=broadf
@@ -149,6 +150,7 @@ class MdbExomol(object):
 
                 trans["nu_lines"]=self.nu_lines
                 trans["Sij0"]=self.Sij0
+                trans['logSij0']=np.log10(self.Sij0)
                 key="all_nurange"
                 trans.to_hdf(self.trans_file.with_suffix(".hdf"), key=key, format="table", data_columns=True)
                 del trans
@@ -167,7 +169,7 @@ class MdbExomol(object):
                     where.append("nu_lines>nu_lines_min")
                     where.append("nu_lines<nu_lines_max")
                     if not np.isneginf(self.crit):
-                        where.append("Sij0>self.crit")
+                        where.append("logSij0>self.log_crit")
 
                     trans=pd.read_hdf(trans_file.with_suffix(".hdf"), where=where)
                     ndtrans=trans.to_numpy()
