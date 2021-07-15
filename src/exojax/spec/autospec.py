@@ -39,8 +39,8 @@ class AutoXS(object):
            memory_size: memory_size required
            broadf: if False, the default broadening parameters in .def file is used
            crit: line strength criterion, ignore lines whose line strength are below crit.
-           xsmode: xsmode for opacity computation (auto/LPF/DIT)
-           autogridconv: automatic wavenumber grid conversion
+           xsmode: xsmode for opacity computation (auto/LPF/DIT/MODIT)
+           autogridconv: automatic wavenumber grid conversion (True/False). If you are quite sure the wavenumber grid you use, set False.
            pdit: threshold for DIT folding to x=pdit*STD_voigt 
 
         """
@@ -369,6 +369,10 @@ class AutoRT(object):
            Tarr: temperature layer (K)
            Parr: pressure layer (bar)
            dParr: delta pressure (bar) optional
+           databasedir: directory for saving database
+           xsmode: xsmode for opacity computation (auto/LPF/DIT/MODIT)
+           autogridconv: automatic wavenumber grid conversion (True/False). If you are quite sure the wavenumber grid you use, set False.
+
 
         """
         self.nus=nus
