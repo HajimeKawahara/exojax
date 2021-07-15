@@ -149,8 +149,8 @@ class MdbExomol(object):
 
                 trans["nu_lines"]=self.nu_lines
                 trans["Sij0"]=self.Sij0
-                key=("nurange"+"__"+numtag[i]).replace("-","_")
-                trans.to_hdf(trans_file.with_suffix(".hdf"), key=key, format="table", data_columns=True)
+                key="all_nurange"
+                trans.to_hdf(self.trans_file.with_suffix(".hdf"), key=key, format="table", data_columns=True)
                 del trans
         else:
             imin=np.searchsorted(numinf,self.nurange[0],side="right")-1 #left side
