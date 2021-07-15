@@ -51,7 +51,7 @@ class MdbExomol(object):
            The trans/states files can be very large. For the first time to read it, we convert it to the feather-format. After the second-time, we use the feather format instead.
 
         """
-        explanation="Note: Couldn't find the feather format. We convert data to the feather format. After the second time, it will become much faster."
+        explanation="Note: Couldn't find the hdf format. We convert data to the hdf format. After the second time, it will become much faster."
         
         self.path = pathlib.Path(path)
         t0=self.path.parents[0].stem        
@@ -107,18 +107,51 @@ class MdbExomol(object):
             if not self.trans_file.exists():
                 self.download(molec,[".trans.bz2"])
 
-            if self.trans_file.with_suffix(".feather").exists():
-                trans=pd.read_feather(self.trans_file.with_suffix(".feather"))
+            if self.trans_file.with_suffix(".hdf").exists():
+                where=[]
+                nu_lines_min=self.nurange[0]-self.margin
+                nu_lines_max=self.nurange[1]+self.margin
+                where.append("nu_lines>nu_lines_min")
+                where.append("nu_lines<nu_lines_max")
+                if not np.isneginf(self.crit):
+                    where.append("Sij0>self.crit")
+
+                trans=pd.read_hdf(self.trans_file.with_suffix(".hdf"), where=where)
                 ndtrans=trans.to_numpy()
                 del trans
+
+                #mask has been alraedy applied when reading the hdf file in the above
+                mask_needed=False
+
+                #compute gup and elower
+                self._A, self.nu_lines, self._elower, self._gpp, self._jlower, self._jupper=exomolapi.pickup_gE(states,ndtrans)
+
+                self.Tref=296.0
+                self.QTref=np.array(self.QT_interp(self.Tref))
+
+                self.Sij0=ndtrans[:,4]
             else:
                 print(explanation)
                 trans=exomolapi.read_trans(self.trans_file)
-                trans.to_feather(self.trans_file.with_suffix(".feather"))
                 ndtrans=trans.to_numpy()
+
+                #mask needs to be applied
+                mask_needed=True
+
+                #compute gup and elower
+                self._A, self.nu_lines, self._elower, self._gpp, self._jlower, self._jupper=exomolapi.pickup_gE(states,ndtrans)
+
+                self.Tref=296.0
+                self.QTref=np.array(self.QT_interp(self.Tref))
+
+                ##Line strength: input should be ndarray not jnp array
+                self.Sij0=exomol.Sij0(self._A,self._gpp,self.nu_lines,self._elower,self.QTref)
+
+                trans["nu_lines"]=self.nu_lines
+                trans["Sij0"]=self.Sij0
+                key="all_nurange"
+                trans.to_hdf(self.trans_file.with_suffix(".hdf"), key=key, format="table", data_columns=True)
                 del trans
-            #compute gup and elower
-            self._A, self.nu_lines, self._elower, self._gpp, self._jlower, self._jupper=exomolapi.pickup_gE(states,ndtrans)
         else:
             imin=np.searchsorted(numinf,self.nurange[0],side="right")-1 #left side
             imax=np.searchsorted(numinf,self.nurange[1],side="right")-1 #left side
@@ -127,61 +160,99 @@ class MdbExomol(object):
                 trans_file = self.path/pathlib.Path(molec+"__"+numtag[i]+".trans.bz2")
                 if not trans_file.exists():
                     self.download(molec,extension=[".trans.bz2"],numtag=numtag[i])
-                if trans_file.with_suffix(".feather").exists():
-                    trans=pd.read_feather(trans_file.with_suffix(".feather"))
+                if trans_file.with_suffix(".hdf").exists():
+                    where=[]
+                    nu_lines_min=self.nurange[0]-self.margin
+                    nu_lines_max=self.nurange[1]+self.margin
+                    where.append("nu_lines>nu_lines_min")
+                    where.append("nu_lines<nu_lines_max")
+                    if not np.isneginf(self.crit):
+                        where.append("Sij0>self.crit")
+
+                    trans=pd.read_hdf(trans_file.with_suffix(".hdf"), where=where)
                     ndtrans=trans.to_numpy()
                     del trans
+
+                    #mask has been alraedy applied when reading the hdf file in the above
+                    mask_needed=False
+
+                    self.trans_file.append(trans_file)
+                    #compute gup and elower
+                    if k==0:
+                        self._A, self.nu_lines, self._elower, self._gpp, self._jlower, self._jupper=exomolapi.pickup_gE(states,ndtrans)
+                    else:
+                        Ax, nulx, elowerx, gppx, jlowerx, jupperx=exomolapi.pickup_gE(states,ndtrans)
+                        self._A=np.hstack([self._A,Ax])
+                        self.nu_lines=np.hstack([self.nu_lines,nulx])
+                        self._elower=np.hstack([self._elower,elowerx])
+                        self._gpp=np.hstack([self._gpp,gppx])
+                        self._jlower=np.hstack([self._jlower,jlowerx])
+                        self._jupper=np.hstack([self._jupper,jupperx])
+
+                    self.Tref=296.0
+                    self.QTref=np.array(self.QT_interp(self.Tref))
+
+                    self.Sij0=ndtrans[:,4]
                 else:
                     print(explanation)
                     trans=exomolapi.read_trans(trans_file)
-                    trans.to_feather(trans_file.with_suffix(".feather"))
                     ndtrans=trans.to_numpy()
-                    del trans
-                self.trans_file.append(trans_file)
-                #compute gup and elower                
-                if k==0:
-                    self._A, self.nu_lines, self._elower, self._gpp, self._jlower, self._jupper=exomolapi.pickup_gE(states,ndtrans)
-                else:
-                    Ax, nulx, elowerx, gppx, jlowerx, jupperx=exomolapi.pickup_gE(states,ndtrans)
-                    self._A=np.hstack([self._A,Ax])
-                    self.nu_lines=np.hstack([self.nu_lines,nulx])
-                    self._elower=np.hstack([self._elower,elowerx])
-                    self._gpp=np.hstack([self._gpp,gppx])
-                    self._jlower=np.hstack([self._jlower,jlowerx])
-                    self._jupper=np.hstack([self._jupper,jupperx])
                     
+                    #mask needs to be applied
+                    mask_needed=True
 
-        self.Tref=296.0        
-        self.QTref=np.array(self.QT_interp(self.Tref))
+                    self.trans_file.append(trans_file)
+                    #compute gup and elower
+                    if k==0:
+                        self._A, self.nu_lines, self._elower, self._gpp, self._jlower, self._jupper=exomolapi.pickup_gE(states,ndtrans)
+                    else:
+                        Ax, nulx, elowerx, gppx, jlowerx, jupperx=exomolapi.pickup_gE(states,ndtrans)
+                        self._A=np.hstack([self._A,Ax])
+                        self.nu_lines=np.hstack([self.nu_lines,nulx])
+                        self._elower=np.hstack([self._elower,elowerx])
+                        self._gpp=np.hstack([self._gpp,gppx])
+                        self._jlower=np.hstack([self._jlower,jlowerx])
+                        self._jupper=np.hstack([self._jupper,jupperx])
+
+                    self.Tref=296.0
+                    self.QTref=np.array(self.QT_interp(self.Tref))
         
-        ##Line strength: input should be ndarray not jnp array
-        self.Sij0=exomol.Sij0(self._A,self._gpp,self.nu_lines,self._elower,self.QTref)
+                    ##Line strength: input should be ndarray not jnp array
+                    self.Sij0=exomol.Sij0(self._A,self._gpp,self.nu_lines,self._elower,self.QTref)
+
+                    trans["nu_lines"]=self.nu_lines
+                    trans["Sij0"]=self.Sij0
+                    key=("nurange"+"__"+numtag[i]).replace("-","_")
+                    trans.to_hdf(trans_file.with_suffix(".hdf"), key=key, format="table", data_columns=True)
+                    del trans
         
         ### MASKING ###
         mask=(self.nu_lines>self.nurange[0]-self.margin)\
         *(self.nu_lines<self.nurange[1]+self.margin)\
         *(self.Sij0>self.crit)
+
+        self.masking(mask,mask_needed)
         
-        self.masking(mask)
-        
-    def masking(self,mask):
+    def masking(self,mask,mask_needed=True):
         """applying mask and (re)generate jnp.arrays
         
         Args:
            mask: mask to be applied. self.mask is updated.
+           mask_needed: whether mask needs to be applied or not
 
         Note:
            We have nd arrays and jnp arrays. We apply the mask to nd arrays and generate jnp array from the corresponding nd array. For instance, self._A is nd array and self.A is jnp array.
 
         """
-        #numpy float 64 Do not convert them jnp array
-        self.nu_lines = self.nu_lines[mask]
-        self.Sij0 = self.Sij0[mask]
-        self._A=self._A[mask]
-        self._elower=self._elower[mask]
-        self._gpp=self._gpp[mask]
-        self._jlower=self._jlower[mask]
-        self._jupper=self._jupper[mask]
+        if mask_needed:
+            #numpy float 64 Do not convert them jnp array
+            self.nu_lines = self.nu_lines[mask]
+            self.Sij0 = self.Sij0[mask]
+            self._A=self._A[mask]
+            self._elower=self._elower[mask]
+            self._gpp=self._gpp[mask]
+            self._jlower=self._jlower[mask]
+            self._jupper=self._jupper[mask]
         
         #jnp arrays
         self.dev_nu_lines=jnp.array(self.nu_lines)
