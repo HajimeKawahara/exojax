@@ -133,7 +133,6 @@ class MdbExomol(object):
             else:
                 print(explanation)
                 trans=exomolapi.read_trans(self.trans_file)
-                ndtrans=trans.to_numpy()
 
                 #mask needs to be applied
                 mask_needed=True
@@ -149,6 +148,8 @@ class MdbExomol(object):
 
                 trans["nu_lines"]=self.nu_lines
                 trans["Sij0"]=self.Sij0
+                ndtrans=trans.to_numpy()
+
                 key=("nurange"+"__"+numtag[i]).replace("-","_")
                 trans.to_hdf(trans_file.with_suffix(".hdf"), key=key, format="table", data_columns=True)
                 del trans
@@ -196,7 +197,6 @@ class MdbExomol(object):
                 else:
                     print(explanation)
                     trans=exomolapi.read_trans(trans_file)
-                    ndtrans=trans.to_numpy()
                     
                     #mask needs to be applied
                     mask_needed=True
@@ -222,6 +222,8 @@ class MdbExomol(object):
 
                     trans["nu_lines"]=self.nu_lines
                     trans["Sij0"]=self.Sij0
+                    ndtrans=trans.to_numpy()
+
                     key=("nurange"+"__"+numtag[i]).replace("-","_")
                     trans.to_hdf(trans_file.with_suffix(".hdf"), key=key, format="table", data_columns=True)
                     del trans
