@@ -99,4 +99,4 @@ def normalized_doppler_sigma(T,M,R):
 
     """
     c3=3.0415595e-07
-    return c3*jnp.sqrt(T/M)/R
+    return c3*jnp.sqrt(T/M)*R

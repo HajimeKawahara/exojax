@@ -30,7 +30,7 @@ class AutoXS(object):
     """exojax auto cross section generator
     
     """
-    def __init__(self,nus,database,molecules,databasedir=".database",memory_size=30,broadf=True,crit=-np.inf,xsmode="auto",pdit=1.5):
+    def __init__(self,nus,database,molecules,databasedir=".database",memory_size=30,broadf=True,crit=-np.inf,xsmode="auto",autogridconv=True,pdit=1.5):
         """
         Args:
            nus: wavenumber bin (cm-1)
@@ -40,6 +40,7 @@ class AutoXS(object):
            broadf: if False, the default broadening parameters in .def file is used
            crit: line strength criterion, ignore lines whose line strength are below crit.
            xsmode: xsmode for opacity computation (auto/LPF/DIT)
+           autogridconv: automatic wavenumber grid conversion
            pdit: threshold for DIT folding to x=pdit*STD_voigt 
 
         """
@@ -53,7 +54,8 @@ class AutoXS(object):
         self.xsmode=xsmode
         self.identifier=defmol.search_molfile(database,molecules)
         self.pdit=pdit
-
+        self.autogridconv=autogridconv
+        
         print(self.identifier)
         if self.identifier is None:
             print("ERROR: "+molecules+" is an undefined molecule. Add your molecule in defmol.py and do pull-request!")
@@ -132,16 +134,16 @@ class AutoXS(object):
             checknus=check_nugrid(self.nus,gridmode="ESLOG")
             nus=self.nus
 
-            #            if ~checknus:
-#                print("WARNING: the wavenumber grid does not look ESLOG.")
-#                nus=jnp.logspace(jnp.log10(self.nus[0]),jnp.log10(self.nus[-1]),len(self.nus))
-#            else:
-#                nus=self.nus
+            if ~checknus:
+                print("WARNING: the wavenumber grid does not look ESLOG.")
+                if self.autogridconv:
+                    print("the wavenumber grid is interpolated.")
+                    nus=jnp.logspace(jnp.log10(self.nus[0]),jnp.log10(self.nus[-1]),len(self.nus))
                 
             nn=np.median(nus)
-            nn=2000.0
-            dfnus=nus-nn
+            dfnus=nus-nn            
             dfnu_lines=mdb.nu_lines-nn
+            
             R=(len(nus)-1)/np.log(nus[-1]/nus[0]) #resolution
             dv_lines=mdb.nu_lines/R
             dv=nus/R
@@ -149,24 +151,24 @@ class AutoXS(object):
             dLarray=make_dLarray(Nfold,1.0)
             nsigmaD=normalized_doppler_sigma(T,molmass,R)
 
-            ngammaL_grid=dit.set_ditgrid(gammaL/dv_lines,res=0.1)
-#            ngammaL_grid=np.logspace(np.log10(np.min(gammaL/dv_lines)),np.log10(np.max(gammaL/dv_lines)),10)
+            ngammaL=gammaL/dv_lines
+            ngammaL_grid=dit.set_ditgrid(ngammaL,res=0.1)
 
-            xsv=modit.xsvector(dfnu_lines,nsigmaD,gammaL,Sij,dfnus,ngammaL_grid,dLarray,dv_lines,dv)
-#            xsv=modit.xsvector(mdb.nu_lines,nsigmaD,gammaL,Sij,nus,ngammaL_grid,dLarray,dv_lines,dv)
+            xsv=modit.xsvector(dfnu_lines,nsigmaD,ngammaL,Sij,dfnus,ngammaL_grid,dLarray,dv_lines,dv)
 
-#            if ~checknus:
-#                xsv=jnp.interp(self.nus,nus,xsv)
+            if ~checknus and self.autogridconv:
+                xsv=jnp.interp(self.nus,nus,xsv)
        
         elif xsmode=="dit" or xsmode=="DIT":
             from exojax.spec.dit import make_dLarray
             sigmaD=doppler_sigma(mdb.nu_lines,T,molmass)
             checknus=check_nugrid(self.nus,gridmode="ESLIN")
+            nus=self.nus
             if ~checknus:
                 print("WARNING: the wavenumber grid does not look ESLIN.")
-                nus=jnp.linspace(self.nus[0],self.nus[-1],len(self.nus))
-            else:
-                nus=self.nus
+                if self.autogridconv:
+                    print("the wavenumber grid is interpolated.")
+                    nus=jnp.linspace(self.nus[0],self.nus[-1],len(self.nus))
                 
             sigmaD_grid=dit.set_ditgrid(sigmaD,res=0.1)
             gammaL_grid=dit.set_ditgrid(gammaL,res=0.2)
@@ -177,7 +179,7 @@ class AutoXS(object):
             dnu=nus[1]-nus[0]
             dLarray=make_dLarray(Nfold,dnu)
             xsv=dit.xsvector3D(dfnu_lines,sigmaD,gammaL,Sij,dfnus,sigmaD_grid,gammaL_grid,dLarray)
-            if ~checknus:
+            if ~checknus and self.autogridconv:
                 xsv=jnp.interp(self.nus,nus,xsv)
                 
         else:

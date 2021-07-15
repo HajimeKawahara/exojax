@@ -125,7 +125,7 @@ def npnc1D(x,xv):
     
 #            xsv=modit.xsvector(dfnu_lines,nsigmaD,gammaL,Sij,dfnus,gammaL_grid,dLarray,dv_lines,dv)
 @jit
-def xsvector(nu_lines,nsigmaD,gammaL,S,nu_grid,ngammaL_grid,dLarray,dv_lines,dv_grid):
+def xsvector(nu_lines,nsigmaD,ngammaL,S,nu_grid,ngammaL_grid,dLarray,dv_lines,dv_grid):
     """Cross section vector (DIT/3D version)
     
     The original code is rundit_fold_logredst in [addit package](https://github.com/HajimeKawahara/addit). DIT folded voigt for ESLOG for reduced wavenumebr inputs (against the truncation error) for a constant normalized beta
@@ -159,7 +159,6 @@ def xsvector(nu_lines,nsigmaD,gammaL,S,nu_grid,ngammaL_grid,dLarray,dv_lines,dv_
     Ng_nu=len(nu_grid)
     Ng_gammaL=len(ngammaL_grid)
 
-    ngammaL=gammaL/dv_lines
     log_nstbeta=jnp.log(nsigmaD)
     log_ngammaL=jnp.log(ngammaL)
     log_ngammaL_grid = jnp.log(ngammaL_grid)
