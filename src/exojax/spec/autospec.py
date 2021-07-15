@@ -132,14 +132,18 @@ class AutoXS(object):
         elif xsmode=="modit" or xsmode=="MODIT":
             from exojax.spec.dit import make_dLarray
             checknus=check_nugrid(self.nus,gridmode="ESLOG")
-            nus=self.nus
 
             if ~checknus:
                 print("WARNING: the wavenumber grid does not look ESLOG.")
                 if self.autogridconv:
                     print("the wavenumber grid is interpolated.")
-                    nus=jnp.logspace(jnp.log10(self.nus[0]),jnp.log10(self.nus[-1]),len(self.nus))
-                
+                    nus=np.logspace(jnp.log10(self.nus[0]),jnp.log10(self.nus[-1]),len(self.nus))
+                else:
+                    nus=self.nus
+            else:
+                nus=self.nus
+    
+                    
             nn=np.median(nus)
             dfnus=nus-nn            
             dfnu_lines=mdb.nu_lines-nn
@@ -150,7 +154,6 @@ class AutoXS(object):
             Nfold=2
             dLarray=make_dLarray(Nfold,1.0)
             nsigmaD=normalized_doppler_sigma(T,molmass,R)
-
             ngammaL=gammaL/dv_lines
             ngammaL_grid=dit.set_ditgrid(ngammaL,res=0.1)
 
@@ -163,15 +166,18 @@ class AutoXS(object):
             from exojax.spec.dit import make_dLarray
             sigmaD=doppler_sigma(mdb.nu_lines,T,molmass)
             checknus=check_nugrid(self.nus,gridmode="ESLIN")
-            nus=self.nus
             if ~checknus:
                 print("WARNING: the wavenumber grid does not look ESLIN.")
                 if self.autogridconv:
                     print("the wavenumber grid is interpolated.")
-                    nus=jnp.linspace(self.nus[0],self.nus[-1],len(self.nus))
-                
+                    nus=np.linspace(self.nus[0],self.nus[-1],len(self.nus))
+                else:
+                    nus=self.nus
+            else:
+                nus=self.nus
+
             sigmaD_grid=dit.set_ditgrid(sigmaD,res=0.1)
-            gammaL_grid=dit.set_ditgrid(gammaL,res=0.2)
+            gammaL_grid=dit.set_ditgrid(gammaL,res=0.1)
             nn=np.median(nus)
             dfnus=nus-nn
             dfnu_lines=mdb.nu_lines-nn
@@ -231,8 +237,6 @@ class AutoXS(object):
             SijM=jit(vmap(SijT,(0,None,None,None,0)))\
                   (Tarr,mdb.logsij0,mdb.nu_lines,mdb.elower,qt)
             
-        sigmaDM=jit(vmap(doppler_sigma,(None,0,None)))\
-                 (mdb.nu_lines,Tarr,self.molmass)
         nu0=mdb.nu_lines
 
         print("# of lines",len(nu0))
@@ -250,6 +254,8 @@ class AutoXS(object):
         print("xsmode=",xsmode)
 
         if xsmode=="lpf" or xsmode=="LPF":
+            sigmaDM=jit(vmap(doppler_sigma,(None,0,None)))\
+                     (mdb.nu_lines,Tarr,self.molmass)
             Nj=int(Nline/d2)
             xsm=[]
             for i in tqdm.tqdm(range(0,Ni+1)):
@@ -266,7 +272,63 @@ class AutoXS(object):
                 else:
                     xsm = np.concatenate([xsm,xsmtmp.T])
             xsm=xsm.T
+        elif xsmode=="modit" or xsmode=="MODIT":
+            from exojax.spec.dit import make_dLarray
+            checknus=check_nugrid(self.nus,gridmode="ESLOG")
+            if ~checknus:
+                print("WARNING: the wavenumber grid does not look ESLOG.")
+                if self.autogridconv:
+                    print("the wavenumber grid is interpolated.")
+                    nus=np.logspace(jnp.log10(self.nus[0]),jnp.log10(self.nus[-1]),len(self.nus))
+                else:
+                    nus=self.nus
+            else:
+                nus=self.nus
+
+            Nfold=3
+            nn=np.median(nus)
+            dfnus=nus-nn            
+            dfnu_lines=mdb.nu_lines-nn
+            
+            R=(len(nus)-1)/np.log(nus[-1]/nus[0]) #resolution
+            dv_lines=mdb.nu_lines/R
+            dv=nus/R
+            Nfold=2
+            dLarray=make_dLarray(Nfold,1.0)
+            nsigmaDl=normalized_doppler_sigma(Tarr,self.molmass,R)[:,np.newaxis]
+
+            
+            ngammaLM=gammaLM/dv_lines
+            dgm_ngammaL=dit.dgmatrix(ngammaLM,0.1)
+
+            xsm=modit.xsmatrix(dfnu_lines,nsigmaDl,ngammaLM,SijM,dfnus,dgm_ngammaL,dLarray,dv_lines,dv)
+            
+            Nneg=len(xsm[xsm<0.0])
+            if Nneg>0:
+                print("Warning: negative cross section detected #=",Nneg," fraction=",Nneg/float(jnp.shape(xsm)[0]*jnp.shape(xsm)[1]))
+
+                xsmnp=np.array(xsm)
+                xsmnp[xsmnp<0.0]=0.0
+                xsm=jnp.array(xsmnp)
+
+            if ~checknus and self.autogridconv:
+                xsm=vmap(jnp.interp,(None,None,0),0)(self.nus,nus,xsm)
+
+                
         elif xsmode=="dit" or xsmode=="DIT":
+            sigmaDM=jit(vmap(doppler_sigma,(None,0,None)))\
+                     (mdb.nu_lines,Tarr,self.molmass)
+            checknus=check_nugrid(self.nus,gridmode="ESLIN")
+            if ~checknus:
+                print("WARNING: the wavenumber grid does not look ESLIN.")
+                if self.autogridconv:
+                    print("the wavenumber grid is interpolated.")
+                    nus=np.linspace(self.nus[0],self.nus[-1],len(self.nus))
+                else:
+                    nus=self.nus
+            else:
+                nus=self.nus
+            
             dgm_sigmaD=dit.dgmatrix(sigmaDM,0.1)
             dgm_gammaL=dit.dgmatrix(gammaLM,0.2)
             dnu=self.nus[1]-self.nus[0]
@@ -284,6 +346,9 @@ class AutoXS(object):
                 xsmnp=np.array(xsm)
                 xsmnp[xsmnp<0.0]=0.0
                 xsm=jnp.array(xsmnp)
+                
+            if ~checknus and self.autogridconv:
+                xsm=vmap(jnp.interp,(None,None,0),0)(self.nus,nus,xsm)
         else:
             print("No such xsmode=",xsmode)
             xsm=None
@@ -295,7 +360,7 @@ class AutoRT(object):
     """exojax auto radiative transfer
     
     """
-    def __init__(self,nus,gravity,mmw,Tarr,Parr,dParr=None,databasedir=".database",xsmode="auto"):
+    def __init__(self,nus,gravity,mmw,Tarr,Parr,dParr=None,databasedir=".database",xsmode="auto",autogridconv=True):
         """
         Args:
            nus: wavenumber bin (cm-1)
@@ -304,6 +369,7 @@ class AutoRT(object):
            Tarr: temperature layer (K)
            Parr: pressure layer (bar)
            dParr: delta pressure (bar) optional
+
         """
         self.nus=nus
         self.gravity=gravity
@@ -313,6 +379,7 @@ class AutoRT(object):
         self.Parr=Parr
         self.xsmode=xsmode
         print(self.xsmode)
+        self.autogridconv=autogridconv
         if check_nugrid(nus,gridmode="ESLOG"):
             print("nu grid is evenly spaced in log space (ESLOG).")
         elif check_nugrid(nus,gridmode="ESLIN"):
@@ -341,7 +408,7 @@ class AutoRT(object):
 
         """
         mmr=mmr*np.ones_like(self.Tarr)
-        axs=AutoXS(self.nus,database,molecules,crit=crit,xsmode=self.xsmode)
+        axs=AutoXS(self.nus,database,molecules,crit=crit,xsmode=self.xsmode, autogridconv=self.autogridconv)
         
         xsm=axs.xsmatrix(self.Tarr,self.Parr) 
 

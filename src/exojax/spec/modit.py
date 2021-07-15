@@ -172,3 +172,37 @@ def xsvector(nu_lines,nsigmaD,ngammaL,S,nu_grid,ngammaL_grid,dLarray,dv_lines,dv
     xs=jnp.fft.irfft(fftvalsum)[:Ng_nu]/dv_grid
     
     return xs
+
+@jit
+def xsmatrix(nu_lines,nsigmaDl,ngammaLM,SijM,nu_grid,dgm_ngammaL,dLarray,dv_lines,dv_grid):
+    """Cross section matrix for xsvector (MODIT)
+
+    Args:
+       nu_lines: line center (Nlines)
+       nsigmaDl: normalized doppler sigma in layers in R^(Nlayer x 1)
+       ngammaLM: gamma factor matrix in R^(Nlayer x Nline)
+       SijM: line strength matrix in R^(Nlayer x Nline)
+       nu_grid: linear wavenumber grid
+       dgm_ngammaL: DIT Grid Matrix for normalized gammaL R^(Nlayer, NDITgrid)
+       dLarray: ifold/dnu (ifold=1,..,Nfold) array
+       dv_lines: delta wavenumber for lines i.e. nu_lines/R
+       dv_grid: delta wavenumber for nu_grid i.e. nu_grid/R
+      
+    Return:
+       cross section matrix in R^(Nlayer x Nwav)
+
+    """
+    NDITgrid=jnp.shape(dgm_ngammaL)[1]
+    Nline=len(nu_lines)
+    Mat=jnp.hstack([nsigmaDl,ngammaLM,SijM,dgm_ngammaL])
+    def fxs(x,arr):
+        carry=0.0
+        nsigmaD=arr[0:1]
+        ngammaL=arr[1:Nline+1]
+        Sij=arr[Nline+1:2*Nline+1]
+        ngammaL_grid=arr[2*Nline+1:2*Nline+NDITgrid+1]
+        arr=xsvector(nu_lines,nsigmaD,ngammaL,Sij,nu_grid,ngammaL_grid,dLarray,dv_lines,dv_grid)
+        return carry, arr
+    
+    val,xsm=scan(fxs,0.0,Mat)
+    return xsm
