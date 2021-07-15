@@ -120,6 +120,9 @@ class MdbExomol(object):
                 ndtrans=trans.to_numpy()
                 del trans
 
+                #mask has been alraedy applied when reading the hdf file in the above
+                mask_needed=False
+
                 #compute gup and elower
                 self._A, self.nu_lines, self._elower, self._gpp, self._jlower, self._jupper=exomolapi.pickup_gE(states,ndtrans)
 
@@ -131,6 +134,9 @@ class MdbExomol(object):
                 print(explanation)
                 trans=exomolapi.read_trans(self.trans_file)
                 ndtrans=trans.to_numpy()
+
+                #mask needs to be applied
+                mask_needed=True
 
                 #compute gup and elower
                 self._A, self.nu_lines, self._elower, self._gpp, self._jlower, self._jupper=exomolapi.pickup_gE(states,ndtrans)
@@ -167,6 +173,9 @@ class MdbExomol(object):
                     ndtrans=trans.to_numpy()
                     del trans
 
+                    #mask has been alraedy applied when reading the hdf file in the above
+                    mask_needed=False
+
                     self.trans_file.append(trans_file)
                     #compute gup and elower
                     if k==0:
@@ -189,6 +198,9 @@ class MdbExomol(object):
                     trans=exomolapi.read_trans(trans_file)
                     ndtrans=trans.to_numpy()
                     
+                    #mask needs to be applied
+                    mask_needed=True
+
                     self.trans_file.append(trans_file)
                     #compute gup and elower
                     if k==0:
@@ -218,27 +230,29 @@ class MdbExomol(object):
         mask=(self.nu_lines>self.nurange[0]-self.margin)\
         *(self.nu_lines<self.nurange[1]+self.margin)\
         *(self.Sij0>self.crit)
+
+        self.masking(mask,mask_needed)
         
-        self.masking(mask)
-        
-    def masking(self,mask):
+    def masking(self,mask,mask_needed=True):
         """applying mask and (re)generate jnp.arrays
         
         Args:
            mask: mask to be applied. self.mask is updated.
+           mask_needed: whether mask needs to be applied or not
 
         Note:
            We have nd arrays and jnp arrays. We apply the mask to nd arrays and generate jnp array from the corresponding nd array. For instance, self._A is nd array and self.A is jnp array.
 
         """
-        #numpy float 64 Do not convert them jnp array
-        self.nu_lines = self.nu_lines[mask]
-        self.Sij0 = self.Sij0[mask]
-        self._A=self._A[mask]
-        self._elower=self._elower[mask]
-        self._gpp=self._gpp[mask]
-        self._jlower=self._jlower[mask]
-        self._jupper=self._jupper[mask]
+        if mask_needed:
+            #numpy float 64 Do not convert them jnp array
+            self.nu_lines = self.nu_lines[mask]
+            self.Sij0 = self.Sij0[mask]
+            self._A=self._A[mask]
+            self._elower=self._elower[mask]
+            self._gpp=self._gpp[mask]
+            self._jlower=self._jlower[mask]
+            self._jupper=self._jupper[mask]
         
         #jnp arrays
         self.dev_nu_lines=jnp.array(self.nu_lines)
