@@ -28,6 +28,18 @@ ExoJAX
    tutorials/reverse_modeling.rst	     
    tutorials/fitbd.rst	     
    tutorials/optimize_voigt.rst   
+
+.. toctree::
+   :maxdepth: 1
+   :caption: MODIT:
+	     
+   tutorials/MODITrt.rst
+   tutorials/MODITch4.rst
+
+.. toctree::
+   :maxdepth: 1
+   :caption: DIT:
+
    tutorials/DITxs.rst   
    tutorials/DITrt.rst   
 
