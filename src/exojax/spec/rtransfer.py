@@ -38,8 +38,8 @@ def nugrid(x0,x1,N,unit="cm-1",xsmode="lpf"):
             wav=np.logspace(np.log10(x0),np.log10(x1),N,dtype=np.float64)
             nus=1.e8/wav[::-1]
         
-        dlognu=(np.log10(nus[-1])-np.log10(nus[0]))/N
-        resolution=1.0/dlognu
+        resolution=(len(nus)-1)/np.log(nus[-1]/nus[0])
+
         if resolution<300000.0:
             print("WARNING: resolution may be too small. R=",resolution)
 
@@ -59,7 +59,7 @@ def nugrid(x0,x1,N,unit="cm-1",xsmode="lpf"):
             nus=np.linspace((cx0),(cx1),N,dtype=np.float64)
             wav=1.e8/nus[::-1]
             
-        dlognu=np.median(np.log10(nus[1:])-np.log10(nus[:-1]))/N
+        dlognu=np.median(np.log(nus[1:])-np.log(nus[:-1]))/N
         resolution=1.0/dlognu
         if resolution<300000.0:
             print("WARNING: median resolution may be too small. R=",resolution)
