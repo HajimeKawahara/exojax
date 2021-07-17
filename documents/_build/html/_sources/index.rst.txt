@@ -16,23 +16,23 @@ ExoJAX
 
 .. toctree::
    :maxdepth: 1
-   :caption: Tutorials:
+   :caption: Basics:
 	     
    tutorials/voigt_function.rst
    tutorials/opacity.rst	     
    tutorials/opacity_exomol.rst	     
    tutorials/comparison_db.rst
    tutorials/CIA_opacity.rst
-   tutorials/rigid_rotation.rst   
+   tutorials/rigid_rotation.rst
    tutorials/forward_modeling.rst	     
    tutorials/reverse_modeling.rst	     
    tutorials/fitbd.rst	     
-   tutorials/optimize_voigt.rst   
 
 .. toctree::
    :maxdepth: 1
    :caption: MODIT:
-	     
+
+   tutorials/MODITxs.rst      
    tutorials/MODITrt.rst
    tutorials/MODITch4.rst
 
@@ -43,7 +43,11 @@ ExoJAX
    tutorials/DITxs.rst   
    tutorials/DITrt.rst   
 
+.. toctree::
+   :maxdepth: 1
+   :caption: Optimization:
 
+   tutorials/optimize_voigt.rst   
    
 .. toctree::
    :maxdepth: 1

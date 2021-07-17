@@ -1,4 +1,4 @@
-Cross section computation using the Modified Discrete Integral Transform (MODIT) for rapid spectral synthesis
+Cross Section for Many Lines using MODIT
 =============================================================================================================
 *Update: July 17/2021, Hajime Kawahara*
 
@@ -84,7 +84,7 @@ grid for ngamma.
 
 
 
-.. image:: output_8_1.png
+.. image:: MODITxs/output_8_1.png
 
 
 For MODIT in exojax, we also need to specify Nfold and precompute
@@ -159,7 +159,7 @@ The difference is <~ 1%.
 
 
 
-.. image:: output_18_0.png
+.. image:: MODITxs/output_18_0.png
 
 
 But, the use of the raw wavenumber for 3D exhibits larger errors
@@ -184,6 +184,6 @@ But, the use of the raw wavenumber for 3D exhibits larger errors
 
 
 
-.. image:: output_20_0.png
+.. image:: MODITxs/output_20_0.png
 
 

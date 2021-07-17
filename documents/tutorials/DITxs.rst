@@ -1,4 +1,4 @@
-Cross Section for Many Lines using DIT
+Cross Section using DIT
 ==================================================================================================
 *Update: July 11/2021, Hajime Kawahara*
 

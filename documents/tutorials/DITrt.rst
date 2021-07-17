@@ -1,4 +1,4 @@
-Forward Modelling of a Many Lines Spectrum using DIT
+Forward Modelling using DIT
 ====================================================
 *Update: July 11/2021, Hajime Kawahara*
 

@@ -1,4 +1,4 @@
-Forward Modeling of an Emission Spectrum of CH4 using the MODIT Cross Section
+Forward Modeling of CH4 emission 
 =================================================================================
 *Update: July 17/2021, Hajime Kawahara*
 

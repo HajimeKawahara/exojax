@@ -139,7 +139,7 @@ plot.ditplot.plot_dgm
 
 
 
-.. image:: output_22_2.png
+.. image:: MODITrt/output_22_2.png
 
 
 We need to specify Nfold. But, I do not want to check Nfold for each
@@ -219,7 +219,7 @@ Let’s see the cross section matrix!
 
 
 
-.. image:: output_32_1.png
+.. image:: MODITrt/output_32_1.png
 
 
 computing delta tau for CO
@@ -267,7 +267,7 @@ you can plot a contribution function using exojax.plot.atmplot
 
 
 
-.. image:: output_41_0.png
+.. image:: MODITrt/output_41_0.png
 
 
 radiative transfering…
@@ -299,7 +299,7 @@ only 1%).
 
 
 
-.. image:: output_45_0.png
+.. image:: MODITrt/output_45_0.png
 
 
 MODIT uses ESLOG as the wavenumebr grid. So, we can directly apply the
@@ -344,6 +344,6 @@ spectrum
 
 
 
-.. image:: output_49_1.png
+.. image:: MODITrt/output_49_1.png
 
 
