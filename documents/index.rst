@@ -10,63 +10,23 @@ ExoJAX
 
 .. toctree::
    :maxdepth: 1
-
+	      
    userguide/installation.rst
    userguide/ql.rst	     
 
 .. toctree::
-   :maxdepth: 1
-   :caption: Basics:
+   :maxdepth: 2
+   :caption: Tutorials:
 	     
-   tutorials/voigt_function.rst
-   tutorials/opacity.rst	     
-   tutorials/opacity_exomol.rst	     
-   tutorials/comparison_db.rst
-   tutorials/CIA_opacity.rst
-   tutorials/rigid_rotation.rst
-   tutorials/forward_modeling.rst	     
-   tutorials/reverse_modeling.rst	     
-   tutorials/fitbd.rst	     
+   tutorials.rst
 
+	     
 .. toctree::
-   :maxdepth: 1
-   :caption: MODIT:
-
-   tutorials/MODITxs.rst      
-   tutorials/MODITrt.rst
-   tutorials/MODITch4.rst
-
-.. toctree::
-   :maxdepth: 1
-   :caption: DIT:
-
-   tutorials/DITxs.rst   
-   tutorials/DITrt.rst   
-
-.. toctree::
-   :maxdepth: 1
-   :caption: Optimization:
-
-   tutorials/optimize_voigt.rst   
-   
-.. toctree::
-   :maxdepth: 1
+   :maxdepth: 2
    :caption: User Guide:
 
-   userguide/hjerting.rst   
-   userguide/moldb.rst
-   userguide/exomol.rst
-   userguide/hitran.rst
-   userguide/rtransfer.rst
+   userguide.rst   
 
-.. toctree::
-   :maxdepth: 1
-   :caption: For Developers :
-
-   developers/doc.rst   
-   developers/experimental.rst   
-
-Collaborations using exojax is `welcome <http://secondearths.sakura.ne.jp/en/index.html>`_!
    
 .. toctree::
    :maxdepth: 1
