@@ -19,4 +19,4 @@ User Guide
    developers/experimental.rst   
 
    
-   Collaborations using exojax is `welcome <http://secondearths.sakura.ne.jp/en/index.html>`_! Use the issue tracker for starting.
+Collaborations using exojax is `welcome <http://secondearths.sakura.ne.jp/en/index.html>`_! Use the issue tracker for starting.
