@@ -135,7 +135,7 @@ class MdbExomol(object):
                 mask_needed=True
 
             #compute gup and elower
-            self._A, self.nu_lines, self._elower, self._gpp, self._jlower, self._jupper=exomolapi.pickup_gE(states,ndtrans)
+            self._A, self.nu_lines, self._elower, self._gpp, self._jlower, self._jupper, mask_zeronu=exomolapi.pickup_gE(states,ndtrans,self.trans_file)
 
             if self.trans_file.with_suffix(".hdf").exists():
                 self.Sij0=ndtrans[:,4]
@@ -143,6 +143,7 @@ class MdbExomol(object):
                 ##Line strength: input should be ndarray not jnp array
                 self.Sij0=exomol.Sij0(self._A,self._gpp,self.nu_lines,self._elower,self.QTref)
 
+                trans=trans[mask_zeronu]
                 trans["nu_lines"]=self.nu_lines
                 trans["Sij0"]=self.Sij0
                 key="all_nurange"
@@ -176,21 +177,23 @@ class MdbExomol(object):
 
                 #compute gup and elower
                 if k==0:
-                    self._A, self.nu_lines, self._elower, self._gpp, self._jlower, self._jupper=exomolapi.pickup_gE(states,ndtrans)
+                    self._A, self.nu_lines, self._elower, self._gpp, self._jlower, self._jupper, mask_zeronu=exomolapi.pickup_gE(states,ndtrans,trans_file)
                     if trans_file.with_suffix(".hdf").exists():
                         self.Sij0=ndtrans[:,4]
                     else:
                         ##Line strength: input should be ndarray not jnp array
                         self.Sij0=exomol.Sij0(self._A,self._gpp,self.nu_lines,self._elower,self.QTref)
+                        trans=trans[mask_zeronu]
                         trans["nu_lines"]=self.nu_lines
                         trans["Sij0"]=self.Sij0
                 else:
-                    Ax, nulx, elowerx, gppx, jlowerx, jupperx=exomolapi.pickup_gE(states,ndtrans)
+                    Ax, nulx, elowerx, gppx, jlowerx, jupperx, mask_zeronu=exomolapi.pickup_gE(states,ndtrans,trans_file)
                     if trans_file.with_suffix(".hdf").exists():
                         Sij0x=ndtrans[:,4]
                     else:
                         ##Line strength: input should be ndarray not jnp array
                         Sij0x=exomol.Sij0(Ax,gppx,nulx,elowerx,self.QTref)
+                        trans=trans[mask_zeronu]
                         trans["nu_lines"]=nulx
                         trans["Sij0"]=Sij0x
 
