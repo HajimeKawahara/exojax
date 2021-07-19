@@ -7,7 +7,7 @@ from exojax.spec import defcia
 from exojax.spec import moldb
 from exojax.spec import contdb 
 from exojax.spec.opacity import xsection
-from exojax.spec.hitran import SijT, doppler_sigma,  gamma_natural, gamma_hitran
+from exojax.spec.hitran import SijT, doppler_sigma,  gamma_natural, gamma_hitran, normalized_doppler_sigma
 from exojax.spec import planck
 from exojax.spec.exomol import gamma_exomol
 from exojax.spec import molinfo
@@ -15,6 +15,7 @@ from exojax.spec.rtransfer import rtrun, pressure_layer, dtauM, dtauCIA, check_n
 from exojax.spec.make_numatrix import make_numatrix0
 from exojax.spec import lpf
 from exojax.spec import dit
+from exojax.spec import modit
 
 from exojax.spec import response
 import numpy as np
@@ -29,7 +30,7 @@ class AutoXS(object):
     """exojax auto cross section generator
     
     """
-    def __init__(self,nus,database,molecules,databasedir=".database",memory_size=30,broadf=True,crit=-np.inf,xsmode="auto",pdit=1.5):
+    def __init__(self,nus,database,molecules,databasedir=".database",memory_size=30,broadf=True,crit=-np.inf,xsmode="auto",autogridconv=True,pdit=1.5):
         """
         Args:
            nus: wavenumber bin (cm-1)
@@ -38,7 +39,8 @@ class AutoXS(object):
            memory_size: memory_size required
            broadf: if False, the default broadening parameters in .def file is used
            crit: line strength criterion, ignore lines whose line strength are below crit.
-           xsmode: xsmode for opacity computation (auto/LPF/DIT)
+           xsmode: xsmode for opacity computation (auto/LPF/DIT/MODIT)
+           autogridconv: automatic wavenumber grid conversion (True/False). If you are quite sure the wavenumber grid you use, set False.
            pdit: threshold for DIT folding to x=pdit*STD_voigt 
 
         """
@@ -52,7 +54,8 @@ class AutoXS(object):
         self.xsmode=xsmode
         self.identifier=defmol.search_molfile(database,molecules)
         self.pdit=pdit
-
+        self.autogridconv=autogridconv
+        
         print(self.identifier)
         if self.identifier is None:
             print("ERROR: "+molecules+" is an undefined molecule. Add your molecule in defmol.py and do pull-request!")
@@ -116,7 +119,6 @@ class AutoXS(object):
             molmass=molinfo.molmass(self.molecules)
         
         Sij=self.linest(T,P)
-        sigmaD=doppler_sigma(mdb.nu_lines,T,molmass)
         nu0=mdb.nu_lines
 
         if self.xsmode == "auto":
@@ -125,23 +127,64 @@ class AutoXS(object):
             xsmode = self.xsmode
             
         if xsmode=="lpf" or xsmode=="LPF":
+            sigmaD=doppler_sigma(mdb.nu_lines,T,molmass)
             xsv=xsection(self.nus,nu0,sigmaD,gammaL,Sij,memory_size=self.memory_size)
-        elif xsmode=="dit" or xsmode=="DIT":
-            from exojax.spec.dit import xsvector3D,set_ditgrid
+        elif xsmode=="modit" or xsmode=="MODIT":
+            from exojax.spec.dit import make_dLarray
+            checknus=check_nugrid(self.nus,gridmode="ESLOG")
 
+            if ~checknus:
+                print("WARNING: the wavenumber grid does not look ESLOG.")
+                if self.autogridconv:
+                    print("the wavenumber grid is interpolated.")
+                    nus=np.logspace(jnp.log10(self.nus[0]),jnp.log10(self.nus[-1]),len(self.nus))
+                else:
+                    nus=self.nus
+            else:
+                nus=self.nus
+                    
+            nn=np.median(nus)
+            dfnus=nus-nn            
+            dfnu_lines=mdb.nu_lines-nn
+            
+            R=(len(nus)-1)/np.log(nus[-1]/nus[0]) #resolution
+            dv_lines=mdb.nu_lines/R
+            dv=nus/R
+            Nfold=2
+            dLarray=make_dLarray(Nfold,1.0)
+            nsigmaD=normalized_doppler_sigma(T,molmass,R)
+            ngammaL=gammaL/dv_lines
+            ngammaL_grid=dit.set_ditgrid(ngammaL,res=0.1)
+
+            xsv=modit.xsvector(dfnu_lines,nsigmaD,ngammaL,Sij,dfnus,ngammaL_grid,dLarray,dv_lines,dv)
+
+            if ~checknus and self.autogridconv:
+                xsv=jnp.interp(self.nus,nus,xsv)
+       
+        elif xsmode=="dit" or xsmode=="DIT":
+            from exojax.spec.dit import make_dLarray
+            sigmaD=doppler_sigma(mdb.nu_lines,T,molmass)
             checknus=check_nugrid(self.nus,gridmode="ESLIN")
             if ~checknus:
                 print("WARNING: the wavenumber grid does not look ESLIN.")
-                nus=jnp.linspace(self.nus[0],self.nus[-1],len(self.nus))
+                if self.autogridconv:
+                    print("the wavenumber grid is interpolated.")
+                    nus=np.linspace(self.nus[0],self.nus[-1],len(self.nus))
+                else:
+                    nus=self.nus
             else:
                 nus=self.nus
-                
-            sigmaD_grid=set_ditgrid(sigmaD,res=0.1)
-            gammaL_grid=set_ditgrid(gammaL,res=0.2)
-            dfnus=nus-np.median(nus)
-            dfnu_lines=mdb.nu_lines-np.median(nus)
-            xsv=xsvector3D(dfnu_lines,sigmaD,gammaL,Sij,dfnus,sigmaD_grid,gammaL_grid)
-            if ~checknus:
+
+            sigmaD_grid=dit.set_ditgrid(sigmaD,res=0.1)
+            gammaL_grid=dit.set_ditgrid(gammaL,res=0.1)
+            nn=np.median(nus)
+            dfnus=nus-nn
+            dfnu_lines=mdb.nu_lines-nn
+            Nfold=2
+            dnu=nus[1]-nus[0]
+            dLarray=make_dLarray(Nfold,dnu)
+            xsv=dit.xsvector3D(dfnu_lines,sigmaD,gammaL,Sij,dfnus,sigmaD_grid,gammaL_grid,dLarray)
+            if ~checknus and self.autogridconv:
                 xsv=jnp.interp(self.nus,nus,xsv)
                 
         else:
@@ -193,8 +236,6 @@ class AutoXS(object):
             SijM=jit(vmap(SijT,(0,None,None,None,0)))\
                   (Tarr,mdb.logsij0,mdb.nu_lines,mdb.elower,qt)
             
-        sigmaDM=jit(vmap(doppler_sigma,(None,0,None)))\
-                 (mdb.nu_lines,Tarr,self.molmass)
         nu0=mdb.nu_lines
 
         print("# of lines",len(nu0))
@@ -212,6 +253,8 @@ class AutoXS(object):
         print("xsmode=",xsmode)
 
         if xsmode=="lpf" or xsmode=="LPF":
+            sigmaDM=jit(vmap(doppler_sigma,(None,0,None)))\
+                     (mdb.nu_lines,Tarr,self.molmass)
             Nj=int(Nline/d2)
             xsm=[]
             for i in tqdm.tqdm(range(0,Ni+1)):
@@ -228,7 +271,40 @@ class AutoXS(object):
                 else:
                     xsm = np.concatenate([xsm,xsmtmp.T])
             xsm=xsm.T
+        elif xsmode=="modit" or xsmode=="MODIT":
+            from exojax.spec.dit import make_dLarray
+
+            Nfold=3
+            nus=self.nus
+            nn=np.median(nus)
+            dfnus=nus-nn            
+            dfnu_lines=mdb.nu_lines-nn
+            
+            R=(len(nus)-1)/np.log(nus[-1]/nus[0]) #resolution
+            dv_lines=mdb.nu_lines/R
+            dv=nus/R
+            Nfold=2
+            dLarray=make_dLarray(Nfold,1.0)
+            nsigmaDl=normalized_doppler_sigma(Tarr,self.molmass,R)[:,np.newaxis]
+            
+            ngammaLM=gammaLM/dv_lines
+            dgm_ngammaL=dit.dgmatrix(ngammaLM,0.1)
+
+            xsm=modit.xsmatrix(dfnu_lines,nsigmaDl,ngammaLM,SijM,dfnus,dgm_ngammaL,dLarray,dv_lines,dv)
+            
+            Nneg=len(xsm[xsm<0.0])
+            if Nneg>0:
+                print("Warning: negative cross section detected #=",Nneg," fraction=",Nneg/float(jnp.shape(xsm)[0]*jnp.shape(xsm)[1]))
+
+                xsmnp=np.array(xsm)
+                xsmnp[xsmnp<0.0]=0.0
+                xsm=jnp.array(xsmnp)
+
+                
         elif xsmode=="dit" or xsmode=="DIT":
+            sigmaDM=jit(vmap(doppler_sigma,(None,0,None)))\
+                     (mdb.nu_lines,Tarr,self.molmass)
+            
             dgm_sigmaD=dit.dgmatrix(sigmaDM,0.1)
             dgm_gammaL=dit.dgmatrix(gammaLM,0.2)
             dnu=self.nus[1]-self.nus[0]
@@ -246,6 +322,7 @@ class AutoXS(object):
                 xsmnp=np.array(xsm)
                 xsmnp[xsmnp<0.0]=0.0
                 xsm=jnp.array(xsmnp)
+                
         else:
             print("No such xsmode=",xsmode)
             xsm=None
@@ -257,7 +334,7 @@ class AutoRT(object):
     """exojax auto radiative transfer
     
     """
-    def __init__(self,nus,gravity,mmw,Tarr,Parr,dParr=None,databasedir=".database",xsmode="auto"):
+    def __init__(self,nus,gravity,mmw,Tarr,Parr,dParr=None,databasedir=".database",xsmode="auto",autogridconv=True):
         """
         Args:
            nus: wavenumber bin (cm-1)
@@ -266,6 +343,11 @@ class AutoRT(object):
            Tarr: temperature layer (K)
            Parr: pressure layer (bar)
            dParr: delta pressure (bar) optional
+           databasedir: directory for saving database
+           xsmode: xsmode for opacity computation (auto/LPF/DIT/MODIT)
+           autogridconv: automatic wavenumber grid conversion (True/False). If you are quite sure the wavenumber grid you use, set False.
+
+
         """
         self.nus=nus
         self.gravity=gravity
@@ -275,6 +357,8 @@ class AutoRT(object):
         self.Parr=Parr
         self.xsmode=xsmode
         print(self.xsmode)
+        self.autogridconv=autogridconv
+
         if check_nugrid(nus,gridmode="ESLOG"):
             print("nu grid is evenly spaced in log space (ESLOG).")
         elif check_nugrid(nus,gridmode="ESLIN"):
@@ -303,7 +387,7 @@ class AutoRT(object):
 
         """
         mmr=mmr*np.ones_like(self.Tarr)
-        axs=AutoXS(self.nus,database,molecules,crit=crit,xsmode=self.xsmode)
+        axs=AutoXS(self.nus,database,molecules,crit=crit,xsmode=self.xsmode, autogridconv=self.autogridconv)
         
         xsm=axs.xsmatrix(self.Tarr,self.Parr) 
 

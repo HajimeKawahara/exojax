@@ -65,7 +65,7 @@ def gamma_natural(A):
 
 @jit
 def doppler_sigma(nu_lines,T,M):
-    """Dopper width (sigma)
+    """Dopper width (sigmaD)
     
     Note:
        c3 is sqrt(kB/m_u)/c
@@ -81,3 +81,22 @@ def doppler_sigma(nu_lines,T,M):
     """
     c3=3.0415595e-07
     return c3*jnp.sqrt(T/M)*nu_lines
+
+@jit
+def normalized_doppler_sigma(T,M,R):
+    """Normalized Dopper width (nsigmaD) by wavenumber difference at line centers
+    
+    Note:
+       This quantity is used in MODIT. c3 is sqrt(kB/m_u)/c
+
+    Args:
+       T: temperature (K)
+       M: atom/molecular mass
+       R: spectral resolution
+
+    Returns:
+       nsigma: normalized Doppler width (standard deviation)
+
+    """
+    c3=3.0415595e-07
+    return c3*jnp.sqrt(T/M)*R

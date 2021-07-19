@@ -10,47 +10,23 @@ ExoJAX
 
 .. toctree::
    :maxdepth: 1
-
+	      
    userguide/installation.rst
    userguide/ql.rst	     
 
 .. toctree::
-   :maxdepth: 1
+   :maxdepth: 2
    :caption: Tutorials:
 	     
-   tutorials/voigt_function.rst
-   tutorials/opacity.rst	     
-   tutorials/opacity_exomol.rst	     
-   tutorials/comparison_db.rst
-   tutorials/CIA_opacity.rst
-   tutorials/rigid_rotation.rst   
-   tutorials/forward_modeling.rst	     
-   tutorials/reverse_modeling.rst	     
-   tutorials/fitbd.rst	     
-   tutorials/optimize_voigt.rst   
-   tutorials/DITxs.rst   
-   tutorials/DITrt.rst   
+   tutorials.rst
 
-
-   
+	     
 .. toctree::
-   :maxdepth: 1
+   :maxdepth: 2
    :caption: User Guide:
 
-   userguide/hjerting.rst   
-   userguide/moldb.rst
-   userguide/exomol.rst
-   userguide/hitran.rst
-   userguide/rtransfer.rst
+   userguide.rst   
 
-.. toctree::
-   :maxdepth: 1
-   :caption: For Developers :
-
-   developers/doc.rst   
-   developers/experimental.rst   
-
-Collaborations using exojax is `welcome <http://secondearths.sakura.ne.jp/en/index.html>`_!
    
 .. toctree::
    :maxdepth: 1
@@ -67,7 +43,17 @@ Kawahara et al. under review.
 License & Attribution
 ---------------------
 
-Copyright 2021 `Hajime Kawahara <http://secondearths.sakura.ne.jp/en/index.html>`_. 
+Copyright 2021 `Hajime Kawahara <http://secondearths.sakura.ne.jp/en/index.html>`_ (@HajimeKawahara) and the contributors (2021/7/19):
+
+- Yui Kawashima (@ykawashima)
+- Kento Masuda
+- Ian Crossfield
+- Dirk van den Bekerom (@dcmvdbekerom)
+- Daniel Kitzmann (@daniel-kitzmann)
+- Brett Morris (@bmorris3)
+- Erwan Pannier (@erwanp) and `RADIS <https://github.com/radis/radis>`_ community
+- Stevanus Nugroho
+
 
 ExoJAX is free software made available under the MIT License. For details
 see the ``LICENSE``.
