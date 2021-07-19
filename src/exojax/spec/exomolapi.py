@@ -183,7 +183,7 @@ def pickup_gE(states,ndtrans,trans_file,trans_lines=False):
         jupper=jupper[mask]
         print("WARNING: {0:,} transitions with the wavenumber=zero in {1} have been ignored.".format(len_org - len(nu_lines), trans_file))
         if trans_lines:
-            print("This is because the value for the wavenumber culumn in the transition file is zero for those transitions.")
+            print("This is because the value for the wavenumber column in the transition file is zero for those transitions.")
         else:
             print("This is because the upper and lower state IDs in the transition file indicate the same energy level when referring to the states file for those transitions.")
 
