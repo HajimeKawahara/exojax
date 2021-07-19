@@ -81,6 +81,7 @@ class MdbExomol(object):
         
         #load def 
         self.n_Texp_def, self.alpha_ref_def, self.molmass, numinf, numtag=exomolapi.read_def(self.def_file)
+
         #  default n_Texp value if not given
         if self.n_Texp_def is None:
             self.n_Texp_def=0.5

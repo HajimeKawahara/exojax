@@ -27,6 +27,7 @@ def read_def(deff):
     texp=None
     molmasssw=False
     n_Texp=None
+    exception=False
     ntransf=1
     maxnu=0.0
     for i, com in enumerate(dat["COMMENT"]):
@@ -52,20 +53,45 @@ def read_def(deff):
             ntransf=20
         if deff.stem=="14N-1H3__CoYuTe":
             maxnu=20000.0
+        if deff.stem=="1H2-16O__BT2":
+            ntransf=16
+            maxnu=30000.0
+            exception=True
+            numinf=np.array([0.0,250.0,500.,750.0,1000.,1500.0,2000,2250.,2750.,3500.,4500.,5500.,7000.,9000.,14000.,20000.])
+            numtag=make_numtag(numinf,maxnu)
             
-    if ntransf>1:
+    if ntransf>1 and exception==False:
         dnufile=maxnu/ntransf
         numinf=dnufile*np.array(range(ntransf+1))
-        numtag=[]
-        for i in range(len(numinf)-1):
-            imin='{:05}'.format(int(numinf[i]))
-            imax='{:05}'.format(int(numinf[i+1]))
-            numtag.append(imin+"-"+imax)
-    else:
+        numtag=make_numtag(numinf,maxnu)
+    elif exception==False:
         numinf=None
         numtag=""
         
     return n_Texp, alpha_ref, molmass, numinf, numtag
+
+def make_numtag(numinf,maxnu):
+    """making numtag from numinf
+    
+    Args: 
+        numinf: nu minimum for trans
+        maxnu:  maximum nu
+
+    Returns:
+        numtag: tag for wavelength range
+
+    """
+    numtag=[]
+    for i in range(len(numinf)-1):
+        imin='{:05}'.format(int(numinf[i]))
+        imax='{:05}'.format(int(numinf[i+1]))
+        numtag.append(imin+"-"+imax)
+
+    imin=imax
+    imax='{:05}'.format(int(maxnu))
+    numtag.append(imin+"-"+imax)
+
+    return numtag
 
 def read_pf(pff):
     """Exomol IO for partition file
