@@ -128,12 +128,13 @@ def read_states(statesf):
     return dat
 
 
-def pickup_gE(states,ndtrans,trans_lines=False):
+def pickup_gE(states,ndtrans,trans_file,trans_lines=False):
     """extract g_upper (gup), E_lower (elower), and J_lower and J_upper from states DataFrame and insert them to transition DataFrame.
 
     Args:
        states: states pandas DataFrame
        ndtrans: transition numpy array
+       trans_file: name of the transition file
        trans_lines: By default (False) we use nu_lines computed using the state file, i.e. E_upper - E_lower. If trans_nuline=True, we use the nu_lines in the transition file. Note that some trans files do not this info.
 
 
@@ -169,6 +170,23 @@ def pickup_gE(states,ndtrans,trans_lines=False):
     else:
         nu_lines=eupper-elower
     
+    ### MASKING ###
+    mask=(nu_lines>0.0)
+    if False in mask:
+        len_org = len(nu_lines)
+
+        A=A[mask]
+        nu_lines=nu_lines[mask]
+        elower=elower[mask]
+        gup=gup[mask]
+        jlower=jlower[mask]
+        jupper=jupper[mask]
+        print("WARNING: {0:,} transitions with the wavenumber=zero in {1} have been ignored.".format(len_org - len(nu_lines), trans_file))
+        if trans_lines:
+            print("This is because the value for the wavenumber culumn in the transition file is zero for those transitions.")
+        else:
+            print("This is because the upper and lower state IDs in the transition file indicate the same energy level when referring to the states file for those transitions.")
+
     #See Issue #16
     #import matplotlib.pyplot as plt
     #nu_lines_t=ndtrans[:,3]
@@ -178,7 +196,7 @@ def pickup_gE(states,ndtrans,trans_lines=False):
     #plt.savefig("nudiff.png", bbox_inches="tight", pad_inches=0.0)
     #plt.show()
 
-    return A, nu_lines, elower, gup, jlower, jupper
+    return A, nu_lines, elower, gup, jlower, jupper, mask
 
 
 def pickup_gEslow(states,trans):
