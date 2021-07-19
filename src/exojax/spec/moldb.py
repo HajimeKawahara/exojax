@@ -100,8 +100,6 @@ class MdbExomol(object):
         self.gQT=jnp.array(pf["QT"].to_numpy()) #grid QT
         self.T_gQT=jnp.array(pf["T"].to_numpy()) #T forgrid QT
                 
-        #trans file(s)
-        print("Reading transition file")
         self.Tref=296.0
         self.QTref=np.array(self.QT_interp(self.Tref))
 
@@ -113,6 +111,8 @@ class MdbExomol(object):
         if not np.isneginf(self.crit):
             where.append("Sij0>self.crit")
 
+        #trans file(s)
+        print("Reading transition file")
         if numinf is None:
             self.trans_file = self.path/pathlib.Path(molec+".trans.bz2")
             if not self.trans_file.exists():
@@ -125,10 +125,6 @@ class MdbExomol(object):
 
                 #mask has been alraedy applied when reading the hdf file in the above
                 mask_needed=False
-
-                #compute gup and elower
-                self._A, self.nu_lines, self._elower, self._gpp, self._jlower, self._jupper=exomolapi.pickup_gE(states,ndtrans)
-                self.Sij0=ndtrans[:,4]
             else:
                 print(explanation)
                 trans=exomolapi.read_trans(self.trans_file)
@@ -137,8 +133,12 @@ class MdbExomol(object):
                 #mask needs to be applied
                 mask_needed=True
 
-                #compute gup and elower
-                self._A, self.nu_lines, self._elower, self._gpp, self._jlower, self._jupper=exomolapi.pickup_gE(states,ndtrans)
+            #compute gup and elower
+            self._A, self.nu_lines, self._elower, self._gpp, self._jlower, self._jupper=exomolapi.pickup_gE(states,ndtrans)
+
+            if self.trans_file.with_suffix(".hdf").exists():
+                self.Sij0=ndtrans[:,4]
+            else:
                 ##Line strength: input should be ndarray not jnp array
                 self.Sij0=exomol.Sij0(self._A,self._gpp,self.nu_lines,self._elower,self.QTref)
 
@@ -164,22 +164,6 @@ class MdbExomol(object):
 
                     #mask has been alraedy applied when reading the hdf file in the above
                     mask_needed=False
-
-                    #compute gup and elower
-                    if k==0:
-                        self._A, self.nu_lines, self._elower, self._gpp, self._jlower, self._jupper=exomolapi.pickup_gE(states,ndtrans)
-                        self.Sij0=ndtrans[:,4]
-                    else:
-                        Ax, nulx, elowerx, gppx, jlowerx, jupperx=exomolapi.pickup_gE(states,ndtrans)
-                        Sij0x=ndtrans[:,4]
-
-                        self._A=np.hstack([self._A,Ax])
-                        self.nu_lines=np.hstack([self.nu_lines,nulx])
-                        self._elower=np.hstack([self._elower,elowerx])
-                        self._gpp=np.hstack([self._gpp,gppx])
-                        self._jlower=np.hstack([self._jlower,jlowerx])
-                        self._jupper=np.hstack([self._jupper,jupperx])
-                        self.Sij0=np.hstack([self.Sij0,Sij0x])
                 else:
                     print(explanation)
                     trans=exomolapi.read_trans(trans_file)
@@ -189,30 +173,35 @@ class MdbExomol(object):
                     #mask needs to be applied
                     mask_needed=True
 
-                    #compute gup and elower
-                    if k==0:
-                        self._A, self.nu_lines, self._elower, self._gpp, self._jlower, self._jupper=exomolapi.pickup_gE(states,ndtrans)
+                #compute gup and elower
+                if k==0:
+                    self._A, self.nu_lines, self._elower, self._gpp, self._jlower, self._jupper=exomolapi.pickup_gE(states,ndtrans)
+                    if trans_file.with_suffix(".hdf").exists():
+                        self.Sij0=ndtrans[:,4]
+                    else:
                         ##Line strength: input should be ndarray not jnp array
                         self.Sij0=exomol.Sij0(self._A,self._gpp,self.nu_lines,self._elower,self.QTref)
-
                         trans["nu_lines"]=self.nu_lines
                         trans["Sij0"]=self.Sij0
+                else:
+                    Ax, nulx, elowerx, gppx, jlowerx, jupperx=exomolapi.pickup_gE(states,ndtrans)
+                    if trans_file.with_suffix(".hdf").exists():
+                        Sij0x=ndtrans[:,4]
                     else:
-                        Ax, nulx, elowerx, gppx, jlowerx, jupperx=exomolapi.pickup_gE(states,ndtrans)
                         ##Line strength: input should be ndarray not jnp array
                         Sij0x=exomol.Sij0(Ax,gppx,nulx,elowerx,self.QTref)
-
                         trans["nu_lines"]=nulx
                         trans["Sij0"]=Sij0x
 
-                        self._A=np.hstack([self._A,Ax])
-                        self.nu_lines=np.hstack([self.nu_lines,nulx])
-                        self._elower=np.hstack([self._elower,elowerx])
-                        self._gpp=np.hstack([self._gpp,gppx])
-                        self._jlower=np.hstack([self._jlower,jlowerx])
-                        self._jupper=np.hstack([self._jupper,jupperx])
-                        self.Sij0=np.hstack([self.Sij0,Sij0x])
+                    self._A=np.hstack([self._A,Ax])
+                    self.nu_lines=np.hstack([self.nu_lines,nulx])
+                    self._elower=np.hstack([self._elower,elowerx])
+                    self._gpp=np.hstack([self._gpp,gppx])
+                    self._jlower=np.hstack([self._jlower,jlowerx])
+                    self._jupper=np.hstack([self._jupper,jupperx])
+                    self.Sij0=np.hstack([self.Sij0,Sij0x])
 
+                if not trans_file.with_suffix(".hdf").exists():
                     key=("nurange"+"__"+numtag[i]).replace("-","_")
                     trans.to_hdf(trans_file.with_suffix(".hdf"), key=key, format="table", data_columns=True)
                     del trans
