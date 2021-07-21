@@ -3,6 +3,7 @@
 """
 
 from exojax.utils.molname import e2s
+from exojax.utils.recexomol import get_exomol_database_list
 
 HITRAN_DEFMOL= \
 {\
@@ -71,14 +72,29 @@ def search_molfile(database,molecules):
     """
     if database=="ExoMol":
         try:
+            #online
             try:
-                return e2s(molecules)+"/"+molecules+"/"+EXOMOL_DEFMOL[molecules]
+                rec=get_exomol_database_list(e2s(molecules),molecules)
+                exomol_defmol=rec[1] #default (recommended) database by ExoMol
+                return e2s(molecules)+"/"+molecules+"/"+exomol_defmol
             except:
                 molname_exact=EXOMOL_SIMPLE2EXACT[molecules]
                 print("Warning:",molecules,"is interpreted as",molname_exact)
-                return molecules+"/"+molname_exact+"/"+EXOMOL_DEFMOL[molname_exact]
+                rec=get_exomol_database_list(molecules, molname_exact)
+                exomol_defmol=rec[1] #default (recommended) database by ExoMol
+                return molecules+"/"+molname_exact+"/"+exomol_defmol
         except:
-            return None
+            #offline
+            try:
+                print("Warning: try off-line mode in defmol.py.")
+                try:
+                    return e2s(molecules)+"/"+molecules+"/"+EXOMOL_DEFMOL[molecules]
+                except:
+                    molname_exact=EXOMOL_SIMPLE2EXACT[molecules]
+                    print("Warning:",molecules,"is interpreted as",molname_exact)
+                    return molecules+"/"+molname_exact+"/"+EXOMOL_DEFMOL[molname_exact]
+            except:                
+                return None
 
     elif database=="HITRAN":
         try:
