@@ -1,5 +1,8 @@
-"""
-
+"""monitoring log
+    
+   in your shell
+   $ nohup python -u FidEMu/fit.py >& FidEMu/log &
+   $ python monitor_log.py FidEMu/log
 
 """
 
