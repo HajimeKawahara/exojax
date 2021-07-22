@@ -9,7 +9,8 @@ from jax import random
 from jax import vmap, jit
 
 from exojax.spec import rtransfer as rt
-from exojax.spec import planck, moldb, contdb, response, molinfo, make_numatrix0,xsvector
+from exojax.spec import planck, moldb, contdb, response, molinfo, make_numatrix0
+from exojax.spec.lpf import xsvector
 from exojax.spec.lpf import xsmatrix
 from exojax.spec.exomol import gamma_exomol
 from exojax.spec.hitran import SijT, doppler_sigma, gamma_natural, gamma_hitran
