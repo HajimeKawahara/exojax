@@ -33,10 +33,8 @@ from exojax.spec.lpf import (
 )
 
 
-
 from exojax.spec.make_numatrix import (
     make_numatrix0,
-    make_numatrix_direct,
 )
 from exojax.spec.partf import (
     qfunc_hitran,
