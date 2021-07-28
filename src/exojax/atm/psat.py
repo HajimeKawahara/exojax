@@ -3,7 +3,8 @@
 """
 import jax.numpy as jnp
 
-def Psat_enstatite(T):
+
+def Psat_enstatite_AM01(T):
     """Saturation Vapor Pressure for Enstatite (MgSiO3)
 
     Note:
