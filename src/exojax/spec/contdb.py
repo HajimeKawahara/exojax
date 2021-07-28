@@ -7,7 +7,7 @@ import numpy as np
 import jax.numpy as jnp
 from jax import lax
 import pathlib
-from exojax.spec.hitrancia import read_cia, logacia
+from exojax.spec.hitrancia import read_cia
 
 __all__ = ['CdbCIA']
 
@@ -25,7 +25,6 @@ class CdbCIA(object):
         self.nurange=[np.min(nurange),np.max(nurange)]
         self.margin = margin
         self.path = pathlib.Path(path)
-        molec=str(self.path.stem)
         if not self.path.exists():
             self.download()
         self.nucia,self.tcia,ac=read_cia(path,self.nurange[0]-self.margin,self.nurange[1]+self.margin)

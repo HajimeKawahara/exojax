@@ -9,7 +9,6 @@
 
 from jax import jit, vmap
 import jax.numpy as jnp
-from jax import custom_jvp
 from exojax.special.erfcx import erfcx
 from exojax.spec.rtransfer import dtauM, dtauCIA
 import numpy as np
@@ -74,7 +73,7 @@ def mask_weakline(mdb_mol,Parr,dParr,Tarr,SijM,gammaLM,sigmaDM,MMR_mol,molmass_m
             maxcia=np.concatenate([maxcia,maxcia_tmp])
 
     mask1=(maxcf>0)*(maxcf<maxcia+margin)
-    if mask==None:
+    if mask is None:
         mask=mask1
     else:
         mask=mask1+mask
