@@ -161,7 +161,7 @@ class MdbExomol(object):
                     self.download(molec,extension=[".trans.bz2"],numtag=numtag[i])
 
                 if trans_file.with_suffix(".hdf5").exists():
-                    trans=vaex.open(self.trans_file.with_suffix(".hdf5"))
+                    trans=vaex.open(trans_file.with_suffix(".hdf5"))
                     cdt=(trans.nu_lines>self.nurange[0]-self.margin) \
                         * (trans.nu_lines<self.nurange[1]+self.margin)
                     if not np.isneginf(self.crit):
