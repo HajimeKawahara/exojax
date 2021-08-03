@@ -52,7 +52,8 @@ class MdbExomol(object):
            The trans/states files can be very large. For the first time to read it, we convert it to the feather-format. After the second-time, we use the feather format instead.
 
         """
-        explanation="Note: Couldn't find the hdf5 format. We convert data to the hdf5 format. After the second time, it will become much faster."
+        explanation_states="Note: Couldn't find the feather format. We convert data to the feather format. After the second time, it will become much faster."
+        explanation_trans="Note: Couldn't find the hdf5 format. We convert data to the hdf5 format. After the second time, it will become much faster."
         
         self.path = pathlib.Path(path)
         t0=self.path.parents[0].stem        
@@ -94,7 +95,7 @@ class MdbExomol(object):
         if self.states_file.with_suffix(".feather").exists():
             states=pd.read_feather(self.states_file.with_suffix(".feather"))
         else:
-            print(explanation)
+            print(explanation_states)
             states=exomolapi.read_states(self.states_file)
             states.to_feather(self.states_file.with_suffix(".feather"))
         #load pf
@@ -125,7 +126,7 @@ class MdbExomol(object):
                 #mask has been alraedy applied
                 mask_needed=False
             else:
-                print(explanation)
+                print(explanation_trans)
                 trans=exomolapi.read_trans(self.trans_file)
                 ndtrans=vaex.array_types.to_numpy(trans)
 
@@ -173,7 +174,7 @@ class MdbExomol(object):
                     #mask has been alraedy applied
                     mask_needed=False
                 else:
-                    print(explanation)
+                    print(explanation_trans)
                     trans=exomolapi.read_trans(trans_file)
                     ndtrans=vaex.array_types.to_numpy(trans)
                     self.trans_file.append(trans_file)
