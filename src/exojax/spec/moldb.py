@@ -10,6 +10,7 @@ import pathlib
 from exojax.spec import hapi, exomolapi, exomol
 from exojax.spec.hitran import gamma_natural as gn
 import pandas as pd
+import vaex
 
 __all__ = ['MdbExomol','MdbHit']
 
@@ -51,7 +52,8 @@ class MdbExomol(object):
            The trans/states files can be very large. For the first time to read it, we convert it to the feather-format. After the second-time, we use the feather format instead.
 
         """
-        explanation="Note: Couldn't find the hdf format. We convert data to the hdf format. After the second time, it will become much faster."
+        explanation_states="Note: Couldn't find the feather format. We convert data to the feather format. After the second time, it will become much faster."
+        explanation_trans="Note: Couldn't find the hdf5 format. We convert data to the hdf5 format. After the second time, it will become much faster."
         
         self.path = pathlib.Path(path)
         t0=self.path.parents[0].stem        
@@ -93,7 +95,7 @@ class MdbExomol(object):
         if self.states_file.with_suffix(".feather").exists():
             states=pd.read_feather(self.states_file.with_suffix(".feather"))
         else:
-            print(explanation)
+            print(explanation_states)
             states=exomolapi.read_states(self.states_file)
             states.to_feather(self.states_file.with_suffix(".feather"))
         #load pf
@@ -104,14 +106,6 @@ class MdbExomol(object):
         self.Tref=296.0
         self.QTref=np.array(self.QT_interp(self.Tref))
 
-        where=[]
-        nu_lines_min=self.nurange[0]-self.margin
-        nu_lines_max=self.nurange[1]+self.margin
-        where.append("nu_lines>nu_lines_min")
-        where.append("nu_lines<nu_lines_max")
-        if not np.isneginf(self.crit):
-            where.append("Sij0>self.crit")
-
         #trans file(s)
         print("Reading transition file")
         if numinf is None:
@@ -119,17 +113,21 @@ class MdbExomol(object):
             if not self.trans_file.exists():
                 self.download(molec,[".trans.bz2"])
 
-            if self.trans_file.with_suffix(".hdf").exists():
-                trans=pd.read_hdf(self.trans_file.with_suffix(".hdf"), where=where)
-                ndtrans=trans.to_numpy()
-                del trans
+            if self.trans_file.with_suffix(".hdf5").exists():
+                trans=vaex.open(self.trans_file.with_suffix(".hdf5"))
+                cdt=(trans.nu_lines>self.nurange[0]-self.margin) \
+                    * (trans.nu_lines<self.nurange[1]+self.margin)
+                if not np.isneginf(self.crit):
+                    cdt=cdt * (trans.Sij0>self.crit)
+                trans=trans[cdt]
+                ndtrans=vaex.array_types.to_numpy(trans)
 
-                #mask has been alraedy applied when reading the hdf file in the above
+                #mask has been alraedy applied
                 mask_needed=False
             else:
-                print(explanation)
+                print(explanation_trans)
                 trans=exomolapi.read_trans(self.trans_file)
-                ndtrans=trans.to_numpy()
+                ndtrans=vaex.array_types.to_numpy(trans)
 
                 #mask needs to be applied
                 mask_needed=True
@@ -137,18 +135,20 @@ class MdbExomol(object):
             #compute gup and elower
             self._A, self.nu_lines, self._elower, self._gpp, self._jlower, self._jupper, mask_zeronu=exomolapi.pickup_gE(states,ndtrans,self.trans_file)
 
-            if self.trans_file.with_suffix(".hdf").exists():
+            if self.trans_file.with_suffix(".hdf5").exists():
                 self.Sij0=ndtrans[:,4]
             else:
                 ##Line strength: input should be ndarray not jnp array
                 self.Sij0=exomol.Sij0(self._A,self._gpp,self.nu_lines,self._elower,self.QTref)
 
-                trans=trans[mask_zeronu]
+                #exclude the lines whose nu_lines evaluated inside exomolapi.pickup_gE (thus sometimes different from the "nu_lines" column in trans) is not positive
+                trans["nu_positive"]=mask_zeronu
+                trans=trans[trans.nu_positive].extract()
+                trans.drop('nu_positive',inplace=True)
+
                 trans["nu_lines"]=self.nu_lines
                 trans["Sij0"]=self.Sij0
-                key="all_nurange"
-                trans.to_hdf(self.trans_file.with_suffix(".hdf"), key=key, format="table", data_columns=True)
-                del trans
+                trans.export(self.trans_file.with_suffix(".hdf5"))
         else:
             imin=np.searchsorted(numinf,self.nurange[0],side="right")-1 #left side
             imax=np.searchsorted(numinf,self.nurange[1],side="right")-1 #left side
@@ -158,18 +158,22 @@ class MdbExomol(object):
                 if not trans_file.exists():
                     self.download(molec,extension=[".trans.bz2"],numtag=numtag[i])
 
-                if trans_file.with_suffix(".hdf").exists():
-                    trans=pd.read_hdf(trans_file.with_suffix(".hdf"), where=where)
-                    ndtrans=trans.to_numpy()
-                    del trans
+                if trans_file.with_suffix(".hdf5").exists():
+                    trans=vaex.open(trans_file.with_suffix(".hdf5"))
+                    cdt=(trans.nu_lines>self.nurange[0]-self.margin) \
+                        * (trans.nu_lines<self.nurange[1]+self.margin)
+                    if not np.isneginf(self.crit):
+                        cdt=cdt * (trans.Sij0>self.crit)
+                    trans=trans[cdt]
+                    ndtrans=vaex.array_types.to_numpy(trans)
                     self.trans_file.append(trans_file)
 
-                    #mask has been alraedy applied when reading the hdf file in the above
+                    #mask has been alraedy applied
                     mask_needed=False
                 else:
-                    print(explanation)
+                    print(explanation_trans)
                     trans=exomolapi.read_trans(trans_file)
-                    ndtrans=trans.to_numpy()
+                    ndtrans=vaex.array_types.to_numpy(trans)
                     self.trans_file.append(trans_file)
                     
                     #mask needs to be applied
@@ -178,22 +182,32 @@ class MdbExomol(object):
                 #compute gup and elower
                 if k==0:
                     self._A, self.nu_lines, self._elower, self._gpp, self._jlower, self._jupper, mask_zeronu=exomolapi.pickup_gE(states,ndtrans,trans_file)
-                    if trans_file.with_suffix(".hdf").exists():
+                    if trans_file.with_suffix(".hdf5").exists():
                         self.Sij0=ndtrans[:,4]
                     else:
                         ##Line strength: input should be ndarray not jnp array
                         self.Sij0=exomol.Sij0(self._A,self._gpp,self.nu_lines,self._elower,self.QTref)
-                        trans=trans[mask_zeronu]
+
+                        #exclude the lines whose nu_lines evaluated inside exomolapi.pickup_gE (thus sometimes different from the "nu_lines" column in trans) is not positive
+                        trans["nu_positive"]=mask_zeronu
+                        trans=trans[trans.nu_positive].extract()
+                        trans.drop('nu_positive',inplace=True)
+
                         trans["nu_lines"]=self.nu_lines
                         trans["Sij0"]=self.Sij0
                 else:
                     Ax, nulx, elowerx, gppx, jlowerx, jupperx, mask_zeronu=exomolapi.pickup_gE(states,ndtrans,trans_file)
-                    if trans_file.with_suffix(".hdf").exists():
+                    if trans_file.with_suffix(".hdf5").exists():
                         Sij0x=ndtrans[:,4]
                     else:
                         ##Line strength: input should be ndarray not jnp array
                         Sij0x=exomol.Sij0(Ax,gppx,nulx,elowerx,self.QTref)
-                        trans=trans[mask_zeronu]
+
+                        #exclude the lines whose nu_lines evaluated inside exomolapi.pickup_gE (thus sometimes different from the "nu_lines" column in trans) is not positive
+                        trans["nu_positive"]=mask_zeronu
+                        trans=trans[trans.nu_positive].extract()
+                        trans.drop('nu_positive',inplace=True)
+
                         trans["nu_lines"]=nulx
                         trans["Sij0"]=Sij0x
 
@@ -205,10 +219,8 @@ class MdbExomol(object):
                     self._jupper=np.hstack([self._jupper,jupperx])
                     self.Sij0=np.hstack([self.Sij0,Sij0x])
 
-                if not trans_file.with_suffix(".hdf").exists():
-                    key=("nurange"+"__"+numtag[i]).replace("-","_")
-                    trans.to_hdf(trans_file.with_suffix(".hdf"), key=key, format="table", data_columns=True)
-                    del trans
+                if not trans_file.with_suffix(".hdf5").exists():
+                    trans.export(trans_file.with_suffix(".hdf5"))
         
         ### MASKING ###
         mask=(self.nu_lines>self.nurange[0]-self.margin)\
