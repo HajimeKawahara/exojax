@@ -121,7 +121,6 @@ class MdbExomol(object):
                     cdt=cdt * (trans.Sij0>self.crit)
                 trans=trans[cdt]
                 ndtrans=vaex.array_types.to_numpy(trans)
-                del trans
 
                 #mask has been alraedy applied
                 mask_needed=False
@@ -150,7 +149,6 @@ class MdbExomol(object):
                 trans["nu_lines"]=self.nu_lines
                 trans["Sij0"]=self.Sij0
                 trans.export(self.trans_file.with_suffix(".hdf5"))
-                del trans
         else:
             imin=np.searchsorted(numinf,self.nurange[0],side="right")-1 #left side
             imax=np.searchsorted(numinf,self.nurange[1],side="right")-1 #left side
@@ -168,7 +166,6 @@ class MdbExomol(object):
                         cdt=cdt * (trans.Sij0>self.crit)
                     trans=trans[cdt]
                     ndtrans=vaex.array_types.to_numpy(trans)
-                    del trans
                     self.trans_file.append(trans_file)
 
                     #mask has been alraedy applied
@@ -224,7 +221,6 @@ class MdbExomol(object):
 
                 if not trans_file.with_suffix(".hdf5").exists():
                     trans.export(trans_file.with_suffix(".hdf5"))
-                    del trans
         
         ### MASKING ###
         mask=(self.nu_lines>self.nurange[0]-self.margin)\

@@ -125,9 +125,9 @@ def read_trans(transf):
 
     """
     try:
-        dat = vaex.from_csv(transf,compression="bz2",sep="\s+",names=("i_upper","i_lower","A","nu_lines"))
+        dat = vaex.from_csv(transf,compression="bz2",sep="\s+",names=("i_upper","i_lower","A","nu_lines"),convert=True)
     except:
-        dat = vaex.read_csv(transf,sep="\s+",names=("i_upper","i_lower","A","nu_lines"))
+        dat = vaex.read_csv(transf,sep="\s+",names=("i_upper","i_lower","A","nu_lines"),convert=True)
 
     return dat 
 
