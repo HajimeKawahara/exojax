@@ -27,3 +27,9 @@ def url_ExoMol():
     """
     url=u"http://www.exomol.com/db/"
     return url
+
+def url_Exomol_iso(molecule,isotope_full_name):
+    """return URL for ExoMol for isotope
+    """    
+    url=u"https://exomol.com/data/molecules/"+str(molecule)+"/"+str(isotope_full_name)
+    return url
