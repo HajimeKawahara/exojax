@@ -187,7 +187,9 @@ def pickup_gE(states,ndtrans,trans_file,trans_lines=False):
     eupper=newstates[i_upper,0]
     gup=newstates[i_upper,1]
     jlower=np.array(newstates[i_lower,2],dtype=int)
+    del i_lower
     jupper=np.array(newstates[i_upper,2],dtype=int)
+    del i_upper
         
     A=ndtrans[:,2]
     
@@ -195,7 +197,8 @@ def pickup_gE(states,ndtrans,trans_file,trans_lines=False):
         nu_lines=ndtrans[:,3]
     else:
         nu_lines=eupper-elower
-    
+    del eupper
+
     ### MASKING ###
     mask=(nu_lines>0.0)
     if False in mask:
