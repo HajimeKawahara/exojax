@@ -3,6 +3,7 @@
 """
 import numpy as np
 import pandas as pd
+import vaex
 
 def read_def(deff):
     """Exomol IO for a definition file
@@ -120,13 +121,13 @@ def read_trans(transf):
     Args: 
         transf: transition file
     Returns:
-        transition data in pandas DataFrame
+        transition data in vaex DataFrame
 
     """
     try:
-        dat = pd.read_csv(transf,compression="bz2",sep="\s+",names=("i_upper","i_lower","A","nu_lines"))
+        dat = vaex.from_csv(transf,compression="bz2",sep="\s+",names=("i_upper","i_lower","A","nu_lines"),convert=True)
     except:
-        dat = pd.read_csv(transf,sep="\s+",names=("i_upper","i_lower","A","nu_lines"))
+        dat = vaex.read_csv(transf,sep="\s+",names=("i_upper","i_lower","A","nu_lines"),convert=True)
 
     return dat 
 
