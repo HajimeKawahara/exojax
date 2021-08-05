@@ -8,6 +8,7 @@ from jax import jit
 import jax.numpy as jnp
 from jax import vmap
 
+@jit
 def VMRcloud(P,Pbase,fsed,VMRbase,kc=1):
     """VMR of clouds based on AM01
     
@@ -24,24 +25,6 @@ def VMRcloud(P,Pbase,fsed,VMRbase,kc=1):
     """
     VMRc=jnp.where(Pbase>P,VMRbase*(P/Pbase)**(fsed/kc),0.0)
     return VMRc
-
-@jit
-def get_VMRc(P,Pbase,fsed,VMRbase,kc=1):
-    """VMR array of clouds based on AM01
-    
-    Args:
-        Parr: Pressure array [Nlayer] (bar)
-        Pbase: base pressure (bar)
-        fsed: fsed
-        VMRbase: VMR of condensate at cloud base
-        kc: constant ratio of condenstates to total mixing ratio
-        
-    Returns:
-        VMR array of condensates [Nlayer]
-        
-    """
-    return vmap(VMRcloud,(0,None,None,None),0)(P,Pbase,fsed,VMRbase,kc)
-
 
 @jit
 def get_Pbase(Parr,Psat,VMR):
