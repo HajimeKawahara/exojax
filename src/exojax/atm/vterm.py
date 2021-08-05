@@ -1,3 +1,10 @@
+""" Terminal velocity of cloud particles
+
+    Note:
+       The code in this module is based on Hans R Pruppacher and James D Klett. Microstructure of atmospheric clouds and precipitation and Akerman and Marley 2001. 
+
+"""
+
 import jax.numpy as jnp
 from jax import jit
 def vf_stokes(r,g,eta,drho,Nkn=0.):
@@ -18,7 +25,7 @@ def vf_stokes(r,g,eta,drho,Nkn=0.):
         (1.0+1.255*Nkn) is the Cunningham factor
 
     Note:
-       See also (10-138) p415 in Hans R Pruppacher and James D Klett. Microstructure of atmospheric clouds and precipitation. In Microphysics of clouds and precipitation, pages 10–73. Springer, 2010. Equation (B1) in Appendix B of Ackerman and Marley 01. 
+       See also (10-138) p415 in Hans R Pruppacher and James D Klett. Microstructure of atmospheric clouds and precipitation. In Microphysics of clouds and precipitation, pages 10–73. Springer, 2010. Equation (B1) in Appendix B of Ackerman and Marley 2001. 
 
         
     """

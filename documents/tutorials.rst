@@ -15,26 +15,26 @@ Basics
    tutorials/reverse_modeling.rst	     
    tutorials/fitbd.rst	     
 
-MODIT
-==============
+Clouds and Chemistry
+=====================
 
-   
 .. toctree::
    :maxdepth: 1
-   :caption: Modified Discrete Integral Transform for Many Molecular Lines
+   :caption: Clouds and Chemistry
+	     
+   tutorials/vterm.rst
+
+
+MODIT and DIT
+==============
+
+.. toctree::
+   :maxdepth: 1
+   :caption: (Modified) Discrete Integral Transform for Many Molecular Lines
 	      
    tutorials/MODITxs.rst      
    tutorials/MODITrt.rst
    tutorials/MODITch4.rst
-
-DIT
-==============
-
-   
-.. toctree::
-   :maxdepth: 1
-   :caption: Discrete Integral Transform for Many Molecular Lines
-
    tutorials/DITxs.rst   
    tutorials/DITrt.rst   
 
