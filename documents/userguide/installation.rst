@@ -32,7 +32,7 @@ Here is an example of installation for jaxlib for cuda 11.2 and jaxlib 0.1.62
 
 .. code:: sh
 	  
-	   pip install --upgrade jax jaxlib==0.1.62+cuda112 -f https://storage.googleapis.com/jax-releases/cuda112/jaxlib-0.1.62+cuda112-cp37-none-manylinux2010_x86_64.whl
+	   pip install --upgrade jax jaxlib==0.1.62+cuda112 -f https://storage.googleapis.com/jax-releases/jax_releases.html
 	   git clone https://github.com/pyro-ppl/numpyro.git
 	   cd numpyro
 	   python setup.py install

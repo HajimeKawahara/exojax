@@ -93,6 +93,17 @@ def vf(r,g,eta,rhoc,rho,Nkn=0.0):
 
     Return:
         terminal velocity (cm/s)    
+
+    Example:
+
+        >>> #terminal velocity at T=300K, for Earth atmosphere/gravity.
+        >>> g=980.
+        >>> drho=1.0
+        >>> rho=1.29*1.e-3 #g/cm3
+        >>> vfactor,Tr=vc.calc_vfactor(atm="Air")
+        >>> eta=vc.eta_Rosner(300.0,vfactor)
+        >>> r=jnp.logspace(-5,0,70)
+        >>> vf(r,g,eta,drho,rho) #terminal velocity (cm/s)
     
     """
     drho=rhoc-rho
@@ -106,14 +117,17 @@ if __name__ == "__main__":
     import matplotlib.pyplot as plt
     import exojax.atm.viscosity as vc
 
-    r=1.e-4
-    g=1.e5
+    g=980.
     drho=1.0
     rho=1.29*1.e-3 #g/cm3
-    vfactor=vc.calc_vfactor(atm="H2")
+    vfactor,Tr=vc.calc_vfactor(atm="Air")
     eta=vc.eta_Rosner(300.0,vfactor)
-    r=jnp.logspace(-5,-1,70)
-    plt.plot(r,vf(r,g,eta,drho,rho))
+    r=jnp.logspace(-5,0,70)
+    plt.figure(figsize=(5,3))
+    plt.plot(r*1.e4,vf(r,g,eta,drho,rho),color="black")
     plt.xscale("log")
     plt.yscale("log")
+    plt.xlabel("r (micron)")
+    plt.ylabel("terminal velocity (cm/s)")
+    plt.savefig("vterm.pdf", bbox_inches="tight", pad_inches=0.0)
     plt.show()
