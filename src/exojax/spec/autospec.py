@@ -11,7 +11,7 @@ from exojax.spec.hitran import SijT, doppler_sigma,  gamma_natural, gamma_hitran
 from exojax.spec import planck
 from exojax.spec.exomol import gamma_exomol
 from exojax.spec import molinfo
-from exojax.spec.rtransfer import rtrun, pressure_layer, dtauM, dtauCIA, check_nugrid
+from exojax.spec.rtransfer import rtrun, dtauM, dtauCIA, check_nugrid
 from exojax.spec.make_numatrix import make_numatrix0
 from exojax.spec import lpf
 from exojax.spec import dit
@@ -409,7 +409,7 @@ class AutoRT(object):
         vmr2=(mmr2*self.mmw/molmass2)
         ciapath=pathlib.Path(self.databasedir)/pathlib.Path(defcia.ciafile(interaction))
         cdb=contdb.CdbCIA(str(ciapath),[self.nus[0],self.nus[-1]])
-        dtauc=dtauCIA(self.nus,self.Tarr,self.Parr,self.dParr,vmr2,vmr2,\
+        dtauc=dtauCIA(self.nus,self.Tarr,self.Parr,self.dParr,vmr1,vmr2,\
                       self.mmw,self.gravity,cdb.nucia,cdb.tcia,cdb.logac)
         self.dtau=self.dtau+dtauc
         

@@ -3,6 +3,7 @@
 """
 import numpy as np
 import pandas as pd
+import vaex
 
 def read_def(deff):
     """Exomol IO for a definition file
@@ -24,7 +25,6 @@ def read_def(deff):
 
     dat = pd.read_csv(deff,sep="#",names=("VAL","COMMENT"))
     alpha_ref=None
-    texp=None
     molmasssw=False
     n_Texp=None
     exception=False
@@ -121,13 +121,13 @@ def read_trans(transf):
     Args: 
         transf: transition file
     Returns:
-        transition data in pandas DataFrame
+        transition data in vaex DataFrame
 
     """
     try:
-        dat = pd.read_csv(transf,compression="bz2",sep="\s+",names=("i_upper","i_lower","A","nu_lines"))
+        dat = vaex.from_csv(transf,compression="bz2",sep="\s+",names=("i_upper","i_lower","A","nu_lines"),convert=True)
     except:
-        dat = pd.read_csv(transf,sep="\s+",names=("i_upper","i_lower","A","nu_lines"))
+        dat = vaex.read_csv(transf,sep="\s+",names=("i_upper","i_lower","A","nu_lines"),convert=True)
 
     return dat 
 
@@ -187,7 +187,9 @@ def pickup_gE(states,ndtrans,trans_file,trans_lines=False):
     eupper=newstates[i_upper,0]
     gup=newstates[i_upper,1]
     jlower=np.array(newstates[i_lower,2],dtype=int)
+    del i_lower
     jupper=np.array(newstates[i_upper,2],dtype=int)
+    del i_upper
         
     A=ndtrans[:,2]
     
@@ -195,7 +197,8 @@ def pickup_gE(states,ndtrans,trans_file,trans_lines=False):
         nu_lines=ndtrans[:,3]
     else:
         nu_lines=eupper-elower
-    
+    del eupper
+
     ### MASKING ###
     mask=(nu_lines>0.0)
     if False in mask:
@@ -258,7 +261,7 @@ def pickup_gEslow(states,trans):
     A=trans["A"].to_numpy()
     nu_lines=trans["nu_lines"].to_numpy()
     elower=trans["elower"].to_numpy()
-    gpu=trans["gup"].to_numpy()
+    gup=trans["gup"].to_numpy()
     return A, nu_lines, elower, gup
 
 
@@ -327,7 +330,7 @@ def make_j2b(bdat,alpha_ref_default=0.07,n_Texp_default=0.5,jlower_max=None):
     alpha_ref_arr=np.array(bdat["alpha_ref"][cmask])
     n_Texp_arr=np.array(bdat["n_Texp"][cmask])
 
-    if jlower_max==None:
+    if jlower_max is None:
         Nblower=np.max(jlower_arr)+1
     else:
         Nblower=np.max([jlower_max,np.max(jlower_arr)])+1        
@@ -368,9 +371,7 @@ def make_jj2b(bdat,j2alpha_ref_def,j2n_Texp_def,jupper_max=None):
     alpha_ref_arr=np.array(bdat["alpha_ref"][cmask])
     n_Texp_arr=np.array(bdat["n_Texp"][cmask])
 
-    Nblower=len(j2alpha_ref_def)
-    
-    if jupper_max==None:
+    if jupper_max is None:
         Nbupper=np.max(jupper_arr)+1
     else:
         Nbupper=np.max([jupper_max,np.max(jupper_arr)])+1        

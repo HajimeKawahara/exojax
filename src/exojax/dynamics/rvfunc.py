@@ -3,12 +3,10 @@
    * This code is for the PRV analysis of transmission/dayside close-in planets. Under developement. 
 
 """
-import jax
 from jax.lax import map
 import jax.numpy as jnp
 from jax import jit
 import numpy as np
-import sys
 from exojax.dynamics import getE
 
 @jit

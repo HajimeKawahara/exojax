@@ -1,4 +1,4 @@
-from jax import jit, vmap
+from jax import jit
 import jax.numpy as jnp
 
 @jit

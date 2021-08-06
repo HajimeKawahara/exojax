@@ -5,7 +5,6 @@
 """
 import numpy as np
 import matplotlib.pyplot as plt
-import seaborn as sns
 
 def plottau(nus,dtauM,Tarr=None,Parr=None,unit=None,mode=None,vmin=-3,vmax=3):
     """plot tau
@@ -27,7 +26,7 @@ def plottau(nus,dtauM,Tarr=None,Parr=None,unit=None,mode=None,vmin=-3,vmax=3):
     else:
         ltau=np.log10(np.cumsum(dtauM,axis=0))
         
-    fig=plt.figure(figsize=(20,3))
+    plt.figure(figsize=(20,3))
     ax=plt.subplot2grid((1, 20), (0, 3),colspan=18)
     if unit=="um":
         c=ax.imshow(ltau[:,::-1],vmin=vmin,vmax=vmax,cmap="RdYlBu_r",alpha=0.9,extent=[1.e4/nus[-1],1.e4/nus[0],np.log10(Parr[-1]),np.log10(Parr[0])])
@@ -91,7 +90,7 @@ def plotcf(nus,dtauM,Tarr,Parr,dParr,unit=None,mode=None,log=False,normalize=Tru
     if log==True:
         cf=np.log10(cf)
             
-    fig=plt.figure(figsize=(20,3))
+    plt.figure(figsize=(20,3))
     ax=plt.subplot2grid((1, 20), (0, 3),colspan=18)
     if mode=="cmap":
         if unit=="um":
@@ -151,7 +150,7 @@ def plot_maxpoint(mask,Parr,maxcf,maxcia,mol="CO"):
        mol: molecular name
 
     """
-    fig=plt.figure(figsize=(14,6))
+    plt.figure(figsize=(14,6))
     xarr=np.array(range(0,len(mask)))
     masknon0=(maxcf>0)
     plt.plot(xarr[masknon0],Parr[maxcf[masknon0]],".",label=mol,alpha=1.0,color="gray",rasterized=True)

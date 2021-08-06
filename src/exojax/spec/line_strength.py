@@ -1,4 +1,3 @@
-from jax import jit
 import jax.numpy as jnp
 from astropy import constants as const
 from astropy import units as u
