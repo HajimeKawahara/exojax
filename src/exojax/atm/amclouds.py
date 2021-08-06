@@ -75,6 +75,22 @@ def get_rg(rw,fsed,alpha,sigmag):
     return rg
 
 
+def find_rw(rarr,vf,KzzpL):
+    """finding rw from rarr and terminal velocity array
+    
+    Args:
+        rarr: particle radius array (cm)
+        vf: terminal velocity (cm/s)
+        KzzpL: Kzz/L in Ackerman and Marley 2001
+
+    Returns:
+        rw in Ackerman and Marley 2001
+
+    """
+    iscale=jnp.searchsorted(vf,KzzpL)
+    rw=rarr[iscale]
+    return rw
+
 def dtau_cloudgeo(Parr,muc,rhoc,mu,VMRc,rg,sigmag,g):
     """the optical depth using a geometric cross-section approximation, based on (16) in AM01
 
