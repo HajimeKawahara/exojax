@@ -14,6 +14,13 @@ an=jnp.array([ 0.5,  1. ,  1.5,  2. ,  2.5,  3. ,  3.5,  4. ,  4.5,  5. ,5.5,  6
 
 a2n2=jnp.array([  0.25,   1.  ,   2.25,   4.  ,   6.25,   9.  ,  12.25, 16.  ,  20.25,  25.  ,  30.25,  36.  ,  42.25,  49.  ,56.25,  64.  ,  72.25,  81.  ,  90.25, 100.  , 110.25, 121.  , 132.25, 144.  , 156.25, 169.  , 182.25])
 
+#expma2n2=jnp.array([7.78800786e-01, 3.67879450e-01, 1.05399221e-01,1.83156393e-02, 1.93045416e-03, 1.23409802e-04,4.78511765e-06, 1.12535176e-07, 1.60522795e-09,1.38879429e-11, 7.28772443e-14, 2.31952270e-16,4.47773235e-19, 5.24288570e-22, 3.72336308e-25,1.60381082e-28, 4.19009311e-32, 6.63967696e-36,6.38149919e-40, 3.78350585e-44, 0.00000000e+00,0.00000000e+00, 0.00000000e+00, 0.00000000e+00,0.00000000e+00, 0.00000000e+00, 0.00000000e+00])
+
+expma2n2_=jnp.array([7.78800786e-01, 3.67879450e-01, 1.05399221e-01,1.83156393e-02, 1.93045416e-03, 1.23409802e-04,4.78511765e-06, 1.12535176e-07])
+
+a2n2_=jnp.array([  0.25,   1.  ,   2.25,   4.  ,   6.25,   9.  ,  12.25, 16. ])
+
+
 @jit
 def rewofz(x,y):
     """Real part of wofz function based on Algorithm 916
@@ -37,14 +44,17 @@ def rewofz(x,y):
     exx=jnp.exp(-x*x)
     f=exx*erfcx(y)*jnp.cos(2.0*xy)+x*jnp.sin(xy)/jnp.pi*exx*jnp.sinc(xyp)
 
-    vec0=1.0/(a2n2+ y*y)
-    vec1=jnp.exp(-(a2n2+x*x))
-    vec2=jnp.exp(-(an+x)**2)
-    vec3=jnp.exp(-(an-x)**2)
-    Sigma1=jnp.dot(vec0,vec1)
-    Sigma23=jnp.dot(vec0,vec2+vec3)
-    f = f + 1.0/jnp.pi*(-y*jnp.cos(2.0*xy)*Sigma1 + 0.5*y*Sigma23)
-    
+    vec23=jnp.exp(-(an+x)**2)+jnp.exp(-(an-x)**2)
+    Sigma23=jnp.sum(vec23/(a2n2+y*y))
+    vecbase=exx*expma2n2_/(a2n2_+y*y)
+    Sigma1=jnp.sum(vecbase)
+    f = f + y/jnp.pi*(-jnp.cos(2.0*xy)*Sigma1 + 0.5*Sigma23)
+
+#    vec0=1.0/(a2n2+ y*y)
+#    vec1=jnp.exp(-(a2n2+x*x))
+#    vec2=jnp.exp(-(0.5*n+x)*(0.5*n+x))        
+#    vec3=jnp.exp(-(0.5*n-x)*(0.5*n-x))        
+#    Sigma1=jnp.dot(vec0,vec1)    
 #    Sigma2=jnp.dot(vec0,vec2)
 #    Sigma3=jnp.dot(vec0,vec3)
 #    f = f + 1.0/jnp.pi*(-y*jnp.cos(2.0*xy)*Sigma1 + 0.5*y*Sigma2 + 0.5*y*Sigma3)
