@@ -10,6 +10,76 @@ import jax.numpy as jnp
 from jax.lax import scan
 from jax.interpreters.ad import defvjp
 
+
+
+@jit
+def rewofz_naive(x,y):
+    """Real part of wofz function based on Algorithm 916 (naive implementation)
+    
+    We apply a=0.5 for Algorithm 916.
+    
+    Args:
+        x: x < ncut/2 
+        y:
+        
+    Returns:
+         jnp.array: Real(wofz(x+iy))
+
+    """
+    ncut=27
+    an=0.5*jnp.arange(1,ncut+1)
+    a2n2=an*an
+
+    xy=x*y
+    xyp=xy/jnp.pi
+    exx=jnp.exp(-x*x)
+    f=exx*erfcx(y)*jnp.cos(2.0*xy)+x*jnp.sin(xy)/jnp.pi*exx*jnp.sinc(xyp)
+    vec0=1.0/(a2n2+ y*y)
+    vec1=jnp.exp(-(a2n2+x*x))
+    vec2=jnp.exp(-(0.5*n+x)*(0.5*n+x))        
+    vec3=jnp.exp(-(0.5*n-x)*(0.5*n-x))        
+    Sigma1=jnp.dot(vec0,vec1)    
+    Sigma2=jnp.dot(vec0,vec2)
+    Sigma3=jnp.dot(vec0,vec3)
+    f = f + 1.0/jnp.pi*(-y*jnp.cos(2.0*xy)*Sigma1 + 0.5*y*Sigma2 + 0.5*y*Sigma3)
+
+    return f
+
+@jit
+def imwofz_naive(x,y):
+    """Imaginary part of wofz function based on Algorithm 916 (naive implementation)
+    
+    We apply a=0.5 for Algorithm 916.
+    
+    Args:
+        x: x < ncut/2 
+        y:
+        
+    Returns:
+         jnp.array: Imag(wofz(x+iy))
+
+    """
+    ncut=27
+    an=0.5*jnp.arange(1,ncut+1)             
+    a2n2=an*an
+
+    xy=x*y                             
+    xyp=2.0*xy/jnp.pi                      
+    exx=jnp.exp(-x*x)                  
+    f=-exx*erfcx(y)*jnp.sin(2.0*xy)+x/jnp.pi*exx*jnp.sinc(xyp)           
+
+    vec0=1.0/(a2n2+ y*y)
+    vec1=jnp.exp(-(a2n2+x*x))   
+    Sigma1=jnp.dot(vec0,vec1)
+    vecm=an*vec0
+    vec4=jnp.exp(-(an+x)*(an+x)) 
+    vec5=jnp.exp(-(an-x)*(an-x))
+    
+    Sigma4=jnp.dot(vecm,vec4)
+    Sigma5=jnp.dot(vecm,vec5)
+    f = f + 1.0/jnp.pi*(y*jnp.sin(2.0*xy)*Sigma1 + 0.5*Sigma5 -0.5*Sigma4)
+    return f
+
 @jit
 def rewofz_vectorized(x, y):
     """Real part of wofz function based on Algorithm 916

@@ -35,10 +35,6 @@ def rewofz(x,y):
          jnp.array: Real(wofz(x+iy))
 
     """
-#    ncut=27
-#    an=0.5*jnp.arange(1,ncut+1)
-#    a2n2=an*an
-
     xy=x*y
     xyp=xy/jnp.pi
     exx=jnp.exp(-x*x)
@@ -49,17 +45,9 @@ def rewofz(x,y):
     vecbase=exx*expma2n2_/(a2n2_+y*y)
     Sigma1=jnp.sum(vecbase)
     f = f + y/jnp.pi*(-jnp.cos(2.0*xy)*Sigma1 + 0.5*Sigma23)
-
-#    vec0=1.0/(a2n2+ y*y)
-#    vec1=jnp.exp(-(a2n2+x*x))
-#    vec2=jnp.exp(-(0.5*n+x)*(0.5*n+x))        
-#    vec3=jnp.exp(-(0.5*n-x)*(0.5*n-x))        
-#    Sigma1=jnp.dot(vec0,vec1)    
-#    Sigma2=jnp.dot(vec0,vec2)
-#    Sigma3=jnp.dot(vec0,vec3)
-#    f = f + 1.0/jnp.pi*(-y*jnp.cos(2.0*xy)*Sigma1 + 0.5*y*Sigma2 + 0.5*y*Sigma3)
-
     return f
+
+
 
 
 @jit
