@@ -1,3 +1,10 @@
+""" test for hjert
+    
+   - This test compares hjert with scipy wofz, see Appendix in Paper I.
+
+
+"""
+
 import pytest
 from exojax.spec import hjert
 from scipy.special import wofz as sc_wofz
@@ -27,9 +34,9 @@ def test_comparison_hjert_scipy():
     
     vvhjert=jit(vmap(vhjert,0,0))
     diffarr=(vvhjert(aarrv).T-H(aarr,xarr))/H(aarr,xarr)
+    print("MEDIAN=",np.median(diffarr),"MAX=",np.max(diffarr))
 
-    print(np.median(diffarr),np.max(diffarr))
-
+    #figure
     import matplotlib.pyplot as plt
     from matplotlib.ticker import MultipleLocator, FormatStrFormatter
     fig=plt.figure()
@@ -47,5 +54,4 @@ def test_comparison_hjert_scipy():
     assert np.max(diffarr)<1.e-6
 
 if __name__ == "__main__":
-
     test_comparison_hjert_scipy()

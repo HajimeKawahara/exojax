@@ -9,15 +9,15 @@ import numpy as np
 
 def xs(Nc,Nline=10000):
 
-    #test1
-    nu0=2000.0
-    nu1=2100.0
-    nus=np.linspace(nu0,nu1,10000,dtype=np.float64)
-
-    #test2
+    #test1 (gpu.dat)
     #nu0=2000.0
-    #nu1=3000.0
-    #nus=np.linspace(nu0,nu1,100000,dtype=np.float64)
+    #nu1=2100.0
+    #nus=np.linspace(nu0,nu1,10000,dtype=np.float64)
+
+    #test2 (gpu2.dat)
+    nu0=2000.0
+    nu1=3000.0
+    nus=np.linspace(nu0,nu1,100000,dtype=np.float64)
     
     nu_lines=np.random.rand(Nline)*(nu1-nu0)+nu0
     sigmaD=np.random.rand(Nline)
@@ -60,6 +60,6 @@ if __name__ == "__main__":
     Nc=100
     xs(Nc,10000)
 
-    Nc=10
-    xs(Nc,100000)
+#    Nc=10
+#    xs(Nc,100000)
     

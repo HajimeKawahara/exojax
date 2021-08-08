@@ -9,8 +9,12 @@ import numpy as np
 
 def xs(Nline=10000):
     nu0=2000.0
-    nu1=3000.0
-    nus=np.linspace(nu0,nu1,100000,dtype=np.float64)
+    nu1=2100.0
+    nus=np.linspace(nu0,nu1,10000,dtype=np.float64)
+
+    #    nu0=2000.0
+    #    nu1=3000.0
+    #    nus=np.linspace(nu0,nu1,100000,dtype=np.float64)
     nu_lines=np.random.rand(Nline)*(nu1-nu0)+nu0
     sigmaD=np.random.rand(Nline)
     gammaL=np.random.rand(Nline)
@@ -38,7 +42,7 @@ def test_benchmark_d(benchmark):
     ret = benchmark(xs,10000)
     assert ret
 
-#def test_benchmark_e(benchmark):
-#    ret = benchmark(xs,100000)
-#    assert ret
+def test_benchmark_e(benchmark):
+    ret = benchmark(xs,100000)
+    assert ret
 
