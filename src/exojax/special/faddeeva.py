@@ -68,14 +68,11 @@ def imwofz(x,y):
     xyp=2.0*xy/jnp.pi                      
     exx=jnp.exp(-x*x)                  
     f=-exx*erfcx(y)*jnp.sin(2.0*xy)+x/jnp.pi*exx*jnp.sinc(xyp)           
-    vec0=1.0/(a2n2+ y*y)
-    vec1=jnp.exp(-(a2n2+x*x))   
-    Sigma1=jnp.dot(vec0,vec1)
-    vecm=an*vec0
-    vec4=jnp.exp(-(an+x)*(an+x)) 
-    vec5=jnp.exp(-(an-x)*(an-x))
+    vecbase=exx*expma2n2_/(a2n2_+y*y)
+    Sigma1=jnp.sum(vecbase)
     
-    Sigma45=jnp.dot(vecm,vec5-vec4)
+    vec45=-jnp.exp(-(an+x)**2)+jnp.exp(-(an-x)**2)
+    Sigma45=jnp.sum(an*vec45/(a2n2+y*y))
     f = f + 1.0/jnp.pi*(y*jnp.sin(2.0*xy)*Sigma1 + 0.5*Sigma45)
 
     return f

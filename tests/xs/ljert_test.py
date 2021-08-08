@@ -51,7 +51,7 @@ def test_comparison_ljert_scipy():
     cb.set_label("(ljert - scipy)/scipy",size=14)
     plt.savefig("ljert.pdf", bbox_inches="tight", pad_inches=0.0)
 
-    assert np.max(diffarr)<1.e-4
+    assert np.max(diffarr)<5.1e-5
 
 if __name__ == "__main__":
     test_comparison_ljert_scipy()
