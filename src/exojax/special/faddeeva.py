@@ -14,10 +14,6 @@ an=jnp.array([ 0.5,  1. ,  1.5,  2. ,  2.5,  3. ,  3.5,  4. ,  4.5,  5. ,5.5,  6
 
 a2n2=jnp.array([  0.25,   1.  ,   2.25,   4.  ,   6.25,   9.  ,  12.25, 16.  ,  20.25,  25.  ,  30.25,  36.  ,  42.25,  49.  ,56.25,  64.  ,  72.25,  81.  ,  90.25, 100.  , 110.25, 121.  , 132.25, 144.  , 156.25, 169.  , 182.25])
 
-expma2n2_=jnp.array([7.78800786e-01, 3.67879450e-01, 1.05399221e-01,1.83156393e-02, 1.93045416e-03, 1.23409802e-04,4.78511765e-06, 1.12535176e-07]) #exp(-a2n2) but truncated
-
-a2n2_=jnp.array([  0.25,   1.  ,   2.25,   4.  ,   6.25,   9.  ,  12.25, 16. ]) #a2n2 truncated
-
 
 @jit
 def rewofz(x,y):
@@ -38,10 +34,12 @@ def rewofz(x,y):
     exx=jnp.exp(-x*x)
     f=exx*erfcx(y)*jnp.cos(2.0*xy)+x*jnp.sin(xy)/jnp.pi*exx*jnp.sinc(xyp)
 
+    y2=y*y
+
     vec23=jnp.exp(-(an+x)**2)+jnp.exp(-(an-x)**2)
-    Sigma23=jnp.sum(vec23/(a2n2+y*y))
-    vecbase=exx*expma2n2_/(a2n2_+y*y)
-    Sigma1=jnp.sum(vecbase)
+    Sigma23=jnp.sum(vec23/(a2n2+y2))
+             
+    Sigma1=exx*(7.78800786e-01/(0.25+y2)+3.67879450e-01/(1.+y2)+1.05399221e-01/(2.25+y2)+1.83156393e-02/(4.+y2)+1.93045416e-03/(6.25+y2)+1.23409802e-04/(9.+y2)+4.78511765e-06/(12.25+y2)+1.12535176e-07/(16.+y2))
     f = f + y/jnp.pi*(-jnp.cos(2.0*xy)*Sigma1 + 0.5*Sigma23)
     return f
 
@@ -63,11 +61,12 @@ def imwofz(x,y):
     xy=x*y                             
     xyp=2.0*xy/jnp.pi                      
     exx=jnp.exp(-x*x)                  
-    f=-exx*erfcx(y)*jnp.sin(2.0*xy)+x/jnp.pi*exx*jnp.sinc(xyp)           
-    vecbase=exx*expma2n2_/(a2n2_+y*y)
-    Sigma1=jnp.sum(vecbase)
+    f=-exx*erfcx(y)*jnp.sin(2.0*xy)+x/jnp.pi*exx*jnp.sinc(xyp)
+    y2=y*y
+    Sigma1=exx*(7.78800786e-01/(0.25+y2)+3.67879450e-01/(1.+y2)+1.05399221e-01/(2.25+y2)+1.83156393e-02/(4.+y2)+1.93045416e-03/(6.25+y2)+1.23409802e-04/(9.+y2)+4.78511765e-06/(12.25+y2)+1.12535176e-07/(16.+y2))
+
     vec45=-jnp.exp(-(an+x)**2)+jnp.exp(-(an-x)**2)
-    Sigma45=jnp.sum(an*vec45/(a2n2+y*y))
+    Sigma45=jnp.sum(an*vec45/(a2n2+y2))
     f = f + 1.0/jnp.pi*(y*jnp.sin(2.0*xy)*Sigma1 + 0.5*Sigma45)
 
     return f
