@@ -2,6 +2,7 @@ import jax.numpy as jnp
 from jax import jit
 from jax.lax import scan
 
+
 @jit
 def erfcx(x):
     """erfcx (float) based on Shepherd and Laframboise (1981)
@@ -15,7 +16,7 @@ def erfcx(x):
          jnp.array: erfcx(x)
 
     Note: 
-       We acknowledge the post in stack overflow (https://stackoverflow.com/questions/39777360/accurate-computation-of-scaled-complementary-error-function-erfcx)
+       We acknowledge the post in stack overflow (https://stackoverflow.com/questions/39777360/accurate-computation-of-scaled-complementary-error-function-erfcx). Note that the expansion of scan does not much affect computation time (Aug/2021).
 
     """
     a=jnp.abs(x)
