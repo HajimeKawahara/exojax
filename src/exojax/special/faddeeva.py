@@ -64,10 +64,6 @@ def imwofz(x,y):
          jnp.array: Imag(wofz(x+iy))
 
     """
-#    ncut=27
-#    an=0.5*jnp.arange(1,ncut+1)             
-#    a2n2=an*an
-
     xy=x*y                             
     xyp=2.0*xy/jnp.pi                      
     exx=jnp.exp(-x*x)                  
@@ -79,10 +75,6 @@ def imwofz(x,y):
     vec4=jnp.exp(-(an+x)*(an+x)) 
     vec5=jnp.exp(-(an-x)*(an-x))
     
-#    Sigma4=jnp.dot(vecm,vec4)
-#    Sigma5=jnp.dot(vecm,vec5)
-#    f = f + 1.0/jnp.pi*(y*jnp.sin(2.0*xy)*Sigma1 + 0.5*Sigma5 -0.5*Sigma4)
-
     Sigma45=jnp.dot(vecm,vec5-vec4)
     f = f + 1.0/jnp.pi*(y*jnp.sin(2.0*xy)*Sigma1 + 0.5*Sigma45)
 
@@ -167,31 +159,15 @@ def rewofzx(x, y):
 
     """
     xy=x*y
-    xyp=xy/jnp.pi       
-    exx=jnp.exp(-x*x)   
-    f=exx*erfcx(y)*jnp.cos(2.0*xy)+x*jnp.sin(xy)/jnp.pi*exx*jnp.sinc(xyp)    
+    xyp=xy/jnp.pi
+    exx=jnp.exp(-x*x)
+    f=exx*erfcx(y)*jnp.cos(2.0*xy)+x*jnp.sin(xy)/jnp.pi*exx*jnp.sinc(xyp)
 
-    vec0=1.0/(a2n2+ y*y)
-    vec1=jnp.exp(-(a2n2+x*x))
-    vec2=jnp.exp(-(an+x)**2)
-    vec3=jnp.exp(-(an-x)**2)
-
-    Sigma1=jnp.dot(vec0,vec1)
-    Sigma23=jnp.dot(vec0,vec2+vec3)
-    f = f + 1.0/jnp.pi*(-y*jnp.cos(2.0*xy)*Sigma1 + 0.5*y*Sigma23)
-
-#OLD
-#    ncut=27           
-#    n=jnp.arange(1,ncut+1)      
-#    n2=n*n
-#    vec0=1.0/(0.25*n2+ y*y)     
-#    vec1=jnp.exp(-(0.25*n2+x*x))
-#    vec2=jnp.exp(-(0.5*n+x)*(0.5*n+x))        
-#    vec3=jnp.exp(-(0.5*n-x)*(0.5*n-x))        
-#    Sigma2=jnp.dot(vec0,vec2)
-#    Sigma3=jnp.dot(vec0,vec3)
-#    f = f + 1.0/jnp.pi*(-y*jnp.cos(2.0*xy)*Sigma1 + 0.5*y*Sigma2 + 0.5*y*Sigma3)
-
+    vec23=jnp.exp(-(an+x)**2)+jnp.exp(-(an-x)**2)
+    Sigma23=jnp.sum(vec23/(a2n2+y*y))
+    vecbase=exx*expma2n2_/(a2n2_+y*y)
+    Sigma1=jnp.sum(vecbase)
+    f = f + y/jnp.pi*(-jnp.cos(2.0*xy)*Sigma1 + 0.5*Sigma23)
     return f
 
 def h_fwd(x, y):
