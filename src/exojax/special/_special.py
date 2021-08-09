@@ -8,15 +8,48 @@ from jax import jit
 from jax import custom_vjp
 import jax.numpy as jnp
 from jax.lax import scan
-from jax.interpreters.ad import defvjp
 
+@jit
+def erfcx_scan(x):
+    """erfcx (float) based on Shepherd and Laframboise (1981) using lax.scan
+    
+    Scaled complementary error function exp(-x*x) erfc(x)
+    
+    Note:
+       erfcx_scan is slightly slower than special.erfcx (about 30-40%)
+
+    Args:
+         x: should be larger than -9.3
+
+    Returns:
+         jnp.array: erfcx(x)
+
+    Note: 
+       We acknowledge the post in stack overflow (https://stackoverflow.com/questions/39777360/accurate-computation-of-scaled-complementary-error-function-erfcx). Note that the expansion of scan does not much affect computation time (Aug/2021).
+
+    """
+    a=jnp.abs(x)
+    q = (-a*(a-2.0)/(a+2.0)-2.0*((a-2.0)/(a+2.0)+1.0)+a)/(a+2.0) + (a-2.0)/(a+2.0)
+    _CHEV_COEFS_=[5.92470169e-5,1.61224554e-4, -3.46481771e-4,-1.39681227e-3,1.20588380e-3, 8.69014394e-3,-8.01387429e-3,-5.42122945e-2,1.64048523e-1,-1.66031078e-1, -9.27637145e-2, 2.76978403e-1]
+    
+    chev=jnp.array(_CHEV_COEFS_)    
+    def fmascan(c,x):
+        return c*q + x,None    
+    p,n = scan(fmascan, 0.0, chev)
+
+    q = (p+1.0)/(1.0+2.0*a)
+    d = (p+1.0)-q*(1.0+2.0*a)
+    f = 0.5*d/(a+0.5) + q    
+    f=jnp.where(x>=0.0, f, 2.0*jnp.exp(x**2) - f) 
+    
+    return f
 
 
 @jit
 def rewofz_naive(x,y):
     """Real part of wofz function based on Algorithm 916 (naive implementation)
     
-    We apply a=0.5 for Algorithm 916.
+    We apply a=0.5 for Algorithm 916. This function is a slower version of faddeeva.rewofz (about 2 times slower). See PRs #117 and #118.
     
     Args:
         x: x < ncut/2 
@@ -49,7 +82,8 @@ def rewofz_naive(x,y):
 def imwofz_naive(x,y):
     """Imaginary part of wofz function based on Algorithm 916 (naive implementation)
     
-    We apply a=0.5 for Algorithm 916.
+    We apply a=0.5 for Algorithm 916. We apply a=0.5 for Algorithm 916. This function is a slower version of faddeeva.rewofz (about 2 times slower). See PRs #117 and #118.
+
     
     Args:
         x: x < ncut/2 
