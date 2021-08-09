@@ -1,3 +1,7 @@
+"""Viscosity of droplets
+
+"""
+
 import numpy as np
 
 def eta_Rosner_H2(T):
