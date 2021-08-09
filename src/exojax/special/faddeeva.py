@@ -1,6 +1,7 @@
-"""special functions in exojax
+"""Faddeeva (wofz) functions (real and imag parts), an asymptotic form of wofz
 
-   exojax.scipy.special  -- special functions
+   Note:
+      We adopt ncut=27 as the summation of n in Algorithm 916. For Sigma1, we use ncut=8 because higher order than 9 does not affect the results. 
 
 """
 
@@ -8,12 +9,15 @@ from jax import jit
 from jax import custom_vjp
 import jax.numpy as jnp
 from jax.lax import scan
-#from jax.interpreters.ad import defvjp
 from exojax.special.erfcx import erfcx
+
+an=jnp.array([ 0.5,  1. ,  1.5,  2. ,  2.5,  3. ,  3.5,  4. ,  4.5,  5. ,5.5,  6. ,  6.5,  7. ,  7.5,  8. ,  8.5,  9. ,  9.5, 10. ,10.5, 11. , 11.5, 12. , 12.5, 13. , 13.5])
+
+a2n2=jnp.array([  0.25,   1.  ,   2.25,   4.  ,   6.25,   9.  ,  12.25, 16.  ,  20.25,  25.  ,  30.25,  36.  ,  42.25,  49.  ,56.25,  64.  ,  72.25,  81.  ,  90.25, 100.  , 110.25, 121.  , 132.25, 144.  , 156.25, 169.  , 182.25])
 
 @jit
 def rewofz(x,y):
-    """Real part of wofz function based on Algorithm 916
+    """Real part of wofz (Faddeeva) function based on Algorithm 916
     
     We apply a=0.5 for Algorithm 916.
     
@@ -25,27 +29,19 @@ def rewofz(x,y):
          jnp.array: Real(wofz(x+iy))
 
     """
-    ncut=27
     xy=x*y
-    xyp=xy/jnp.pi
     exx=jnp.exp(-x*x)
-    f=exx*erfcx(y)*jnp.cos(2.0*xy)+x*jnp.sin(xy)/jnp.pi*exx*jnp.sinc(xyp)
-    an=0.5*jnp.arange(1,ncut+1)
-    a2n2=an*an
-    vec0=1.0/(a2n2+ y*y)
-    vec1=jnp.exp(-(a2n2+x*x))
-    vec2=jnp.exp(-(an+x)**2)
-    vec3=jnp.exp(-(an-x)**2)
-    Sigma1=jnp.dot(vec0,vec1)
-    Sigma2=jnp.dot(vec0,vec2)
-    Sigma3=jnp.dot(vec0,vec3)
-    f = f + 1.0/jnp.pi*(-y*jnp.cos(2.0*xy)*Sigma1 + 0.5*y*Sigma2 + 0.5*y*Sigma3)
+    f=exx*(erfcx(y)*jnp.cos(2.0*xy)+x*jnp.sin(xy)/jnp.pi*jnp.sinc(xy/jnp.pi))
+    y2=y*y
+    Sigma23=jnp.sum((jnp.exp(-(an+x)**2)+jnp.exp(-(an-x)**2))/(a2n2+y2))       
+    Sigma1=exx*(7.78800786e-01/(0.25+y2)+3.67879450e-01/(1.+y2)+1.05399221e-01/(2.25+y2)+1.83156393e-02/(4.+y2)+1.93045416e-03/(6.25+y2)+1.23409802e-04/(9.+y2)+4.78511765e-06/(12.25+y2)+1.12535176e-07/(16.+y2))
+    f = f + y/jnp.pi*(-jnp.cos(2.0*xy)*Sigma1 + 0.5*Sigma23)
     return f
 
 
 @jit
 def imwofz(x,y):
-    """Imaginary part of wofz function based on Algorithm 916
+    """Imaginary part of wofz (Faddeeva) function based on Algorithm 916
     
     We apply a=0.5 for Algorithm 916.
     
@@ -57,29 +53,20 @@ def imwofz(x,y):
          jnp.array: Imag(wofz(x+iy))
 
     """
-    ncut=27
-    xy=x*y                             
-    xyp=2.0*xy/jnp.pi                      
+    wxy=2.0*x*y                             
     exx=jnp.exp(-x*x)                  
-    f=-exx*erfcx(y)*jnp.sin(2.0*xy)+x/jnp.pi*exx*jnp.sinc(xyp)           
-    an=0.5*jnp.arange(1,ncut+1)             
-    a2n2=an*an                             
-    vec0=1.0/(a2n2+ y*y)
-    vec1=jnp.exp(-(a2n2+x*x))   
-    Sigma1=jnp.dot(vec0,vec1)
+    f=-exx*erfcx(y)*jnp.sin(wxy)+x/jnp.pi*exx*jnp.sinc(wxy/jnp.pi)
+    y2=y*y
+    Sigma1=exx*(7.78800786e-01/(0.25+y2)+3.67879450e-01/(1.+y2)+1.05399221e-01/(2.25+y2)+1.83156393e-02/(4.+y2)+1.93045416e-03/(6.25+y2)+1.23409802e-04/(9.+y2)+4.78511765e-06/(12.25+y2)+1.12535176e-07/(16.+y2))
+    Sigma45=jnp.sum(an*(-jnp.exp(-(an+x)**2)+jnp.exp(-(an-x)**2))/(a2n2+y2))
+    f = f + 1.0/jnp.pi*(y*jnp.sin(wxy)*Sigma1 + 0.5*Sigma45)
 
-    vecm=an*vec0
-    vec4=jnp.exp(-(an+x)*(an+x)) 
-    vec5=jnp.exp(-(an-x)*(an-x)) 
-    Sigma4=jnp.dot(vecm,vec4)
-    Sigma5=jnp.dot(vecm,vec5)
-    f = f + 1.0/jnp.pi*(y*jnp.sin(2.0*xy)*Sigma1 + 0.5*Sigma5 -0.5*Sigma4)
     return f
 
 
 @jit
 def wofzs2(x,y):
-    """Asymptotic representation of wofz function 1 for |z|**2 > 112 (for e = 10e-6)
+    """Asymptotic representation of wofz (Faddeeva) function 1 for |z|**2 > 112 (for e = 10e-6)
 
     See Zaghloul (2018) arxiv:1806.01656
     
@@ -99,7 +86,7 @@ def wofzs2(x,y):
 
 @jit
 def rewofzs2(x,y):
-    """Real part of Asymptotic representation of wofz function 1 for |z|**2 > 112 (for e = 10e-6)
+    """Real part of Asymptotic representation of wofz (Faddeeva) function 1 for |z|**2 > 112 (for e = 10e-6)
 
     See Zaghloul (2018) arxiv:1806.01656
     
@@ -120,7 +107,7 @@ def rewofzs2(x,y):
 
 @jit
 def imwofzs2(x,y):
-    """Imag part of Asymptotic representation of wofz function 1 for |z|**2 > 112 (for e = 10e-6)
+    """Imag part of Asymptotic representation of wofz (Faddeeva) function 1 for |z|**2 > 112 (for e = 10e-6)
 
     See Zaghloul (2018) arxiv:1806.01656
     
@@ -142,7 +129,7 @@ def imwofzs2(x,y):
 
 @custom_vjp
 def rewofzx(x, y):
-    """[VJP custom defined] Real part of wofz function based on Algorithm 916
+    """[VJP custom defined] Real part of wofz (Faddeeva) function based on Algorithm 916
     
     We apply a=0.5 for Algorithm 916.
     
@@ -154,21 +141,14 @@ def rewofzx(x, y):
         jnp.array: Real(wofz(x+iy))
 
     """
-    ncut=27           
     xy=x*y
-    xyp=xy/jnp.pi       
-    exx=jnp.exp(-x*x)   
-    f=exx*erfcx(y)*jnp.cos(2.0*xy)+x*jnp.sin(xy)/jnp.pi*exx*jnp.sinc(xyp)    
-    n=jnp.arange(1,ncut+1)      
-    n2=n*n
-    vec0=1.0/(0.25*n2+ y*y)     
-    vec1=jnp.exp(-(0.25*n2+x*x))
-    vec2=jnp.exp(-(0.5*n+x)*(0.5*n+x))        
-    vec3=jnp.exp(-(0.5*n-x)*(0.5*n-x))        
-    Sigma1=jnp.dot(vec0,vec1)
-    Sigma2=jnp.dot(vec0,vec2)
-    Sigma3=jnp.dot(vec0,vec3)
-    f = f + 1.0/jnp.pi*(-y*jnp.cos(2.0*xy)*Sigma1 + 0.5*y*Sigma2 + 0.5*y*Sigma3)
+    exx=jnp.exp(-x*x)
+    f=exx*erfcx(y)*jnp.cos(2.0*xy)+x*jnp.sin(xy)/jnp.pi*exx*jnp.sinc(xy/jnp.pi)
+    y2=y*y
+    Sigma1=exx*(7.78800786e-01/(0.25+y2)+3.67879450e-01/(1.+y2)+1.05399221e-01/(2.25+y2)+1.83156393e-02/(4.+y2)+1.93045416e-03/(6.25+y2)+1.23409802e-04/(9.+y2)+4.78511765e-06/(12.25+y2)+1.12535176e-07/(16.+y2))
+    Sigma23=jnp.sum((jnp.exp(-(an+x)**2)+jnp.exp(-(an-x)**2))/(a2n2+y*y))
+    
+    f = f + y/jnp.pi*(-jnp.cos(2.0*xy)*Sigma1 + 0.5*Sigma23)
     return f
 
 def h_fwd(x, y):
