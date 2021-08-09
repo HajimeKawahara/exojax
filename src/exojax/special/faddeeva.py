@@ -31,7 +31,7 @@ def rewofz(x,y):
     """
     xy=x*y
     exx=jnp.exp(-x*x)
-    f=exx*erfcx(y)*jnp.cos(2.0*xy)+x*jnp.sin(xy)/jnp.pi*exx*jnp.sinc(xy/jnp.pi)
+    f=exx*(erfcx(y)*jnp.cos(2.0*xy)+x*jnp.sin(xy)/jnp.pi*jnp.sinc(xy/jnp.pi))
     y2=y*y
     Sigma23=jnp.sum((jnp.exp(-(an+x)**2)+jnp.exp(-(an-x)**2))/(a2n2+y2))       
     Sigma1=exx*(7.78800786e-01/(0.25+y2)+3.67879450e-01/(1.+y2)+1.05399221e-01/(2.25+y2)+1.83156393e-02/(4.+y2)+1.93045416e-03/(6.25+y2)+1.23409802e-04/(9.+y2)+4.78511765e-06/(12.25+y2)+1.12535176e-07/(16.+y2))
