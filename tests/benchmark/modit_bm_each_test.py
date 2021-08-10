@@ -45,13 +45,13 @@ def test_benchmark_e(benchmark):
     ret = benchmark(xs,100000)
     assert ret
 
-def test_benchmark_f(benchmark):
-    ret = benchmark(xs,1000000)
-    assert ret
+#def test_benchmark_f(benchmark):
+#    ret = benchmark(xs,1000000)
+#    assert ret
 
-def test_benchmark_g(benchmark):
-    ret = benchmark(xs,10000000)
-    assert ret
+#def test_benchmark_g(benchmark):
+#    ret = benchmark(xs,10000000)
+#    assert ret
 
     
 #if __name__ == "__main__":

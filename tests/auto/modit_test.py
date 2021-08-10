@@ -45,7 +45,7 @@ autort=AutoRT(nus,1.e5,2.33,Tarr,Parr,xsmode=xsmode,autogridconv=False) #g=1.e5 
 autort.addcia("H2-H2",0.74,0.74)       #CIA, mmr(H)=0.74
 autort.addmol("ExoMol","CO",0.01)      #CO line, mmr(CO)=0.01
 F1=autort.rtrun()
-F1o=autort.spectrum(nusobs,100000.0,20.0,0.0)
+#F1o=autort.spectrum(nusobs,100000.0,20.0,0.0)
 
 xsmode="DIT"
 nus,wav,res=nugrid(1900.0,2300.0,160000,"cm-1",xsmode=xsmode)
@@ -55,7 +55,7 @@ autort=AutoRT(nus,1.e5,2.33,Tarr,Parr,xsmode=xsmode) #g=1.e5 cm/s2, mmw=2.33
 autort.addcia("H2-H2",0.74,0.74)       #CIA, mmr(H)=0.74
 autort.addmol("ExoMol","CO",0.01)      #CO line, mmr(CO)=0.01
 F2=autort.rtrun()
-F2o=autort.spectrum(nusobs,100000.0,20.0,0.0)
+#F2o=autort.spectrum(nusobs,100000.0,20.0,0.0)
    
 xsmode="LPF"
 nus,wav,res=nugrid(1900.0,2300.0,160000,"cm-1",xsmode=xsmode)
@@ -65,29 +65,29 @@ autort=AutoRT(nus,1.e5,2.33,Tarr,Parr,xsmode=xsmode) #g=1.e5 cm/s2, mmw=2.33
 autort.addcia("H2-H2",0.74,0.74)       #CIA, mmr(H)=0.74
 autort.addmol("ExoMol","CO",0.01)      #CO line, mmr(CO)=0.01
 F0=autort.rtrun()
-F0o=autort.spectrum(nusobs,100000.0,20.0,0.0)
+#F0o=autort.spectrum(nusobs,100000.0,20.0,0.0)
 
 fig=plt.figure()
-ax=fig.add_subplot(411)
+ax=fig.add_subplot(211)
 plt.plot(nus,F0,label="LPF",color="C0",alpha=0.4)
 plt.plot(nus,F1,label="MODIT",color="C1",alpha=0.4)
 plt.plot(nus,F1-F0,color="C1",alpha=0.4)
 plt.legend(loc="upper right")
 
 
-ax=fig.add_subplot(412)
+ax=fig.add_subplot(212)
 plt.plot(nus,F1-F0,label="MODIT-LPF",color="C1",alpha=0.4)
 plt.legend(loc="upper right")
 
 
-ax=fig.add_subplot(413)
-plt.plot(nusobs,F0o,label="LPF (obs)",color="C0",alpha=0.4,ls="dashed",lw=2)
-plt.plot(nusobs,F1o,label="MODIT (obs)",color="C1",alpha=0.4,ls="dashed",lw=2)
-plt.plot(nusobs,F1o-F0o,color="C1",alpha=0.4)
-plt.legend(loc="upper right")
+#ax=fig.add_subplot(413)
+#plt.plot(nusobs,F0o,label="LPF (obs)",color="C0",alpha=0.4,ls="dashed",lw=2)
+#plt.plot(nusobs,F1o,label="MODIT (obs)",color="C1",alpha=0.4,ls="dashed",lw=2)
+#plt.plot(nusobs,F1o-F0o,color="C1",alpha=0.4)
+#plt.legend(loc="upper right")
 
-ax=fig.add_subplot(414)
-plt.plot(nusobs,F1o-F0o,color="C1",alpha=0.4,lw=2,label="MODIT-LPF (obs)")
-plt.legend(loc="upper right")
+#ax=fig.add_subplot(414)
+#plt.plot(nusobs,F1o-F0o,color="C1",alpha=0.4,lw=2,label="MODIT-LPF (obs)")
+#plt.legend(loc="upper right")
 
 plt.show()

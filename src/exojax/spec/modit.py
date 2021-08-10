@@ -13,27 +13,16 @@ from jax import vmap
 from jax.lax import scan
 import tqdm
 from exojax.spec.ditkernel import folded_voigt_kernel_logst
+from jax.ops import index_add
+from jax.ops import index as joi
 
-@jit
-def Xncf(i,x,xv):
-    """neighbouring contribution function for index i.  
-    
-    Args:
-        i: index 
-        x: x value
-        xv: x-grid
-            
-    Returns:
-        neighbouring contribution function of x to the i-th component of the array with the same dimension as xv.
-            
-    """
+
+def getix(x,xv):
     indarr=jnp.arange(len(xv))
     pos = jnp.interp(x,xv,indarr)
     index = (pos).astype(int)
-    cont = pos-index
-    f=jnp.where(index==i,1.0-cont,0.0)
-    g=jnp.where(index+1==i,cont,0.0)
-    return f+g
+    cont = (pos-index)
+    return cont,index
 
 
 @jit
@@ -73,57 +62,17 @@ def inc2D(w,x,y,xv,yv):
         >>> print(jnp.sqrt(jnp.mean((val-valdirect)**2))/jnp.mean(valdirect)*100,"%") #%
         >>> 1.6135311e-05 %
     """
-    Ngx=len(xv)
-    Ngy=len(yv)
-    indarrx=jnp.arange(Ngx)
-    indarry=jnp.arange(Ngy)
-    vcl=vmap(Xncf,(0,None,None),0)
-    fx=vcl(indarrx,x,xv) # Ngx x N  memory
-    fy=vcl(indarry,y,yv) # Ngy x N memory
-    fxy_w=jnp.vstack([fx,fy,w]).T
-    
-    def fsum(x,arr):
-        null=0.0
-        fx=arr[0:Ngx]
-        fy=arr[Ngx:Ngx+Ngy]
-        w=arr[Ngx+Ngy]
-        val=x+w*fx[:,None]*fy[None,:]
-        return val, null
-    
-    init0=jnp.zeros((Ngx,Ngy))
-    val,null=scan(fsum,init0,fxy_w)
-    return val
 
+    cx,ix=getix(x,xv)
+    cy,iy=getix(y,yv)
+    ncfarray=jnp.zeros((len(xv),len(yv)))
+    ncfarray=index_add(ncfarray,joi[ix,iy],w*(1-cx)*(1-cy))
+    ncfarray=index_add(ncfarray,joi[ix,iy+1],w*(1-cx)*cy)
+    ncfarray=index_add(ncfarray,joi[ix+1,iy],w*cx*(1-cy))
+    ncfarray=index_add(ncfarray,joi[ix+1,iy+1],w*cx*cy)
+    return ncfarray
 
-def npnc1D(x,xv):
-    """numpy version of neighbouring contribution for 1D.
     
-    Args:
-        x: x value
-        xv: x grid
-            
-    Returns:
-        neighbouring contribution function
-        
-
-    """
-    indarr=np.arange(len(xv))
-    pos = np.interp(x,xv,indarr)
-    index = (pos).astype(int)
-    cont = pos-index
-
-    def npXncf(i,x,xv):
-        f=np.where(index==i,1.0-cont,0.0)
-        g=np.where(index+1==i,cont,0.0)
-        return f+g
-    vcl=[]
-    for i in tqdm.tqdm(indarr):
-        vcl.append(npXncf(i,x,xv))
-    vcl=jnp.array(np.array(vcl))
-                 
-    return vcl
-    
-#            xsv=modit.xsvector(dfnu_lines,nsigmaD,gammaL,Sij,dfnus,gammaL_grid,dLarray,dv_lines,dv)
 @jit
 def xsvector(nu_lines,nsigmaD,ngammaL,S,nu_grid,ngammaL_grid,dLarray,dv_lines,dv_grid):
     """Cross section vector (DIT/3D version)
@@ -165,6 +114,7 @@ def xsvector(nu_lines,nsigmaD,ngammaL,S,nu_grid,ngammaL_grid,dLarray,dv_lines,dv
 
     k = jnp.fft.rfftfreq(2*Ng_nu,1)
     val=inc2D(S,nu_lines,log_ngammaL,nu_grid,log_ngammaL_grid)
+    #val=jnp.zeros((len(nu_grid),len(log_ngammaL_grid)))
     valbuf=jnp.vstack([val,jnp.zeros_like(val)])
     fftval = jnp.fft.rfft(valbuf,axis=0)
     vk=folded_voigt_kernel_logst(k, log_nstbeta,log_ngammaL_grid,dLarray)
