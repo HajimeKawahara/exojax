@@ -183,7 +183,7 @@ class AutoXS(object):
             Nfold=2
             dnu=nus[1]-nus[0]
             dLarray=make_dLarray(Nfold,dnu)
-            xsv=dit.xsvector3D(dfnu_lines,sigmaD,gammaL,Sij,dfnus,sigmaD_grid,gammaL_grid,dLarray)
+            xsv=dit.xsvector(dfnu_lines,sigmaD,gammaL,Sij,dfnus,sigmaD_grid,gammaL_grid,dLarray)
             if ~checknus and self.autogridconv:
                 xsv=jnp.interp(self.nus,nus,xsv)
                 
@@ -312,7 +312,7 @@ class AutoXS(object):
             relres,self.Nfold=dit.autoNfold(sigma,dnu,self.pdit)
             print("relative resolution=",relres,", Nfold=",self.Nfold)
             dLarray=dit.make_dLarray(self.Nfold,dnu)
-            xsm=dit.xsmatrix3D(mdb.nu_lines-np.median(self.nus),sigmaDM,\
+            xsm=dit.xsmatrix(mdb.nu_lines-np.median(self.nus),sigmaDM,\
                                   gammaLM,SijM,self.nus-np.median(self.nus),\
                                   dgm_sigmaD,dgm_gammaL,dLarray)
             Nneg=len(xsm[xsm<0.0])

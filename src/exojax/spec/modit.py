@@ -15,14 +15,7 @@ import tqdm
 from exojax.spec.ditkernel import folded_voigt_kernel_logst
 from jax.ops import index_add
 from jax.ops import index as joi
-
-
-def getix(x,xv):
-    indarr=jnp.arange(len(xv))
-    pos = jnp.interp(x,xv,indarr)
-    index = (pos).astype(int)
-    cont = (pos-index)
-    return cont,index
+from exojax.spec.dit import getix
 
 
 @jit
