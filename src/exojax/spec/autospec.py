@@ -197,7 +197,7 @@ class AutoXS(object):
     def select_xsmode(self,Nline):
         checknus=check_nugrid(self.nus,gridmode="ESLIN")
         print("# of lines=",Nline)
-        if Nline > 10000:
+        if Nline > 1000:
             print("DIT selected")
             return "DIT"
         else:
