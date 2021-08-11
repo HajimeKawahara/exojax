@@ -159,7 +159,7 @@ def inc3D(w,x,y,z,xv,yv,zv):
 
 @jit
 def xsvector(nu_lines,sigmaD,gammaL,S,nu_grid,sigmaD_grid,gammaL_grid,dLarray):
-    """Cross section vector (DIT/3D version)
+    """Cross section vector (DIT/3D version, default)
     
     The original code is rundit in [addit package](https://github.com/HajimeKawahara/addit)
 
@@ -214,7 +214,7 @@ def xsvector(nu_lines,sigmaD,gammaL,S,nu_grid,sigmaD_grid,gammaL_grid,dLarray):
 
 @jit
 def xsmatrix(nu_lines,sigmaDM,gammaLM,SijM,nu_grid,dgm_sigmaD,dgm_gammaL,dLarray):
-    """Cross section matrix for xsvector3D (DIT/reduced memory version)
+    """Cross section matrix for xsvector (DIT/reduced memory version)
 
     Args:
        nu_lines: line center (Nlines)
@@ -445,12 +445,6 @@ if __name__ == "__main__":
     import matplotlib.pyplot as plt
     import jax.numpy as jnp
 
-#    xv=np.linspace(0,1,11) #grid
-#    x=np.array([0.23,0.34])
-#    print(npnc1D(x,xv))
-#    import sys
-#    sys.exit()
-    
     nus=np.linspace(1900.0,2300.0,80000,dtype=np.float64) 
     mdbCO=moldb.MdbHit('05_hit12.par',nus)
     Mmol=28.010446441149536 # molecular weight
@@ -467,11 +461,10 @@ if __name__ == "__main__":
     sigmaD_grid=set_ditgrid(sigmaD,res=0.1)
     gammaL_grid=set_ditgrid(gammaL,res=0.2)
 
-
-    nu_ncf=npnc1D(mdbCO.nu_lines,nus)
-    print(np.shape(nu_ncf))
-    xs=xsvector(nu_ncf,mdbCO.nu_lines,sigmaD,gammaL,Sij,nus,sigmaD_grid,gammaL_grid)
+    Nfold=1
+    dnu=nus[1]-nus[0]
+    dLarray=make_dLarray(Nfold,dnu)
+    xs=xsvector(mdbCO.nu_lines,sigmaD,gammaL,Sij,nus,sigmaD_grid,gammaL_grid,dLarray)
 
     plt.plot(nus,xs)
-#    plt.yscale("log")
     plt.show()
