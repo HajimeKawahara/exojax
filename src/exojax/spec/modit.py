@@ -149,3 +149,59 @@ def xsmatrix(nu_lines,nsigmaDl,ngammaLM,SijM,nu_grid,dgm_ngammaL,dLarray,dv_line
     
     val,xsm=scan(fxs,0.0,Mat)
     return xsm
+
+def minmax_dgmatrix(x,res=0.1,adopt=True):
+    """compute MIN and MAX DIT GRID MATRIX
+
+    Args:                                                                       
+        x: gammaL matrix (Nlayer x Nline)                             
+        res: grid resolution. res=0.1 (defaut) means a grid point per digit     
+        adopt: if True, min, max grid points are used at min and max values of x. In this case, the grid width does not need to be res exactly. 
+                                                                                
+    Returns:                                                                    
+        minimum and maximum for DIT (dgm_minmax)
+                                                                                
+    """
+    mmax=np.max(np.log10(x),axis=1)
+    mmin=np.min(np.log10(x),axis=1)
+    Nlayer=np.shape(mmax)[0]
+    gm_minmax=[]
+    dlog=np.max(mmax-mmin)
+    Ng=(dlog/res).astype(int)+2
+    for i in range(0,Nlayer):
+        lxmin=mmin[i]
+        lxmax=mmax[i]
+        grid=[lxmin,lxmax]
+        gm_minmax.append(grid)
+    gm_minmax=np.array(gm_minmax)
+    return gm_minmax
+
+def precompute_dgmatrix(set_gm_minmax,res=0.1,adopt=True):
+    """Precomputing MODIT GRID MATRIX for normalized GammaL
+
+    Args:
+        set_gm_minmax: set of gm_minmax for different parameters [Nsample, Nlayers, 2], 2=min,max
+        res: grid resolution. res=0.1 (defaut) means a grid point per digit
+        adopt: if True, min, max grid points are used at min and max values of x. In this case, the grid width does not need to be res exactly.
+
+    Returns:
+        grid for DIT (Nlayer x NDITgrid)  
+
+    """
+                      
+    lminarray=np.min(set_gm_minmax[:,:,0],axis=0) #min
+    lmaxarray=np.max(set_gm_minmax[:,:,1],axis=0)  #max
+    dlog=np.max(lmaxarray-lminarray)
+    gm=[]
+    Ng=(dlog/res).astype(int)+2
+    Nlayer=len(lminarray)
+    for i in range(0,Nlayer):
+        lxmin=lminarray[i]
+        lxmax=lmaxarray[i]
+        if adopt==False:
+            grid=np.logspace(lxmin,lxmin+(Ng-1)*res,Ng)
+        else:
+            grid=np.logspace(lxmin,lxmax,Ng)
+        gm.append(grid)
+    gm=np.array(gm)
+    return gm
