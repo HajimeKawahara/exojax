@@ -7,7 +7,7 @@ from exojax.spec.lpf import xsvector
 from exojax.spec.make_numatrix import make_numatrix0
 import numpy as np
 
-def xs(Nline=10000):
+def xs(Nline):
     nu0=2000.0
     nu1=2100.0
     nus=np.linspace(nu0,nu1,10000,dtype=np.float64)

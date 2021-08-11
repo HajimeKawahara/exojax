@@ -4,10 +4,10 @@ from exojax.spec.modit import xsvector
 from exojax.spec.dit import make_dLarray,set_ditgrid
 import numpy as np
 
-def xs(Nline=10000):
+def xs(Nline):
     nu0=2000.0
-    nu1=2040.0
-    nus=np.logspace(np.log10(nu0),np.log10(nu1),4000,dtype=np.float64)
+    nu1=2100.0
+    nus=np.logspace(np.log10(nu0),np.log10(nu1),10000,dtype=np.float64)
     nu_lines=np.random.rand(Nline)*(nu1-nu0)+nu0
     nsigmaD=1.0
     gammaL=np.random.rand(Nline)+0.1
@@ -49,9 +49,9 @@ def test_benchmark_f(benchmark):
     ret = benchmark(xs,1000000)
     assert ret
 
-def test_benchmark_g(benchmark):
-    ret = benchmark(xs,10000000)
-    assert ret
+#def test_benchmark_g(benchmark):
+#    ret = benchmark(xs,10000000)
+#    assert ret
 
     
 #if __name__ == "__main__":

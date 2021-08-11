@@ -13,27 +13,9 @@ from jax import vmap
 from jax.lax import scan
 import tqdm
 from exojax.spec.ditkernel import folded_voigt_kernel_logst
-
-@jit
-def Xncf(i,x,xv):
-    """neighbouring contribution function for index i.  
-    
-    Args:
-        i: index 
-        x: x value
-        xv: x-grid
-            
-    Returns:
-        neighbouring contribution function of x to the i-th component of the array with the same dimension as xv.
-            
-    """
-    indarr=jnp.arange(len(xv))
-    pos = jnp.interp(x,xv,indarr)
-    index = (pos).astype(int)
-    cont = pos-index
-    f=jnp.where(index==i,1.0-cont,0.0)
-    g=jnp.where(index+1==i,cont,0.0)
-    return f+g
+from jax.ops import index_add
+from jax.ops import index as joi
+from exojax.spec.dit import getix
 
 
 @jit
@@ -73,57 +55,17 @@ def inc2D(w,x,y,xv,yv):
         >>> print(jnp.sqrt(jnp.mean((val-valdirect)**2))/jnp.mean(valdirect)*100,"%") #%
         >>> 1.6135311e-05 %
     """
-    Ngx=len(xv)
-    Ngy=len(yv)
-    indarrx=jnp.arange(Ngx)
-    indarry=jnp.arange(Ngy)
-    vcl=vmap(Xncf,(0,None,None),0)
-    fx=vcl(indarrx,x,xv) # Ngx x N  memory
-    fy=vcl(indarry,y,yv) # Ngy x N memory
-    fxy_w=jnp.vstack([fx,fy,w]).T
-    
-    def fsum(x,arr):
-        null=0.0
-        fx=arr[0:Ngx]
-        fy=arr[Ngx:Ngx+Ngy]
-        w=arr[Ngx+Ngy]
-        val=x+w*fx[:,None]*fy[None,:]
-        return val, null
-    
-    init0=jnp.zeros((Ngx,Ngy))
-    val,null=scan(fsum,init0,fxy_w)
-    return val
 
+    cx,ix=getix(x,xv)
+    cy,iy=getix(y,yv)
+    ncfarray=jnp.zeros((len(xv),len(yv)))
+    ncfarray=index_add(ncfarray,joi[ix,iy],w*(1-cx)*(1-cy))
+    ncfarray=index_add(ncfarray,joi[ix,iy+1],w*(1-cx)*cy)
+    ncfarray=index_add(ncfarray,joi[ix+1,iy],w*cx*(1-cy))
+    ncfarray=index_add(ncfarray,joi[ix+1,iy+1],w*cx*cy)
+    return ncfarray
 
-def npnc1D(x,xv):
-    """numpy version of neighbouring contribution for 1D.
     
-    Args:
-        x: x value
-        xv: x grid
-            
-    Returns:
-        neighbouring contribution function
-        
-
-    """
-    indarr=np.arange(len(xv))
-    pos = np.interp(x,xv,indarr)
-    index = (pos).astype(int)
-    cont = pos-index
-
-    def npXncf(i,x,xv):
-        f=np.where(index==i,1.0-cont,0.0)
-        g=np.where(index+1==i,cont,0.0)
-        return f+g
-    vcl=[]
-    for i in tqdm.tqdm(indarr):
-        vcl.append(npXncf(i,x,xv))
-    vcl=jnp.array(np.array(vcl))
-                 
-    return vcl
-    
-#            xsv=modit.xsvector(dfnu_lines,nsigmaD,gammaL,Sij,dfnus,gammaL_grid,dLarray,dv_lines,dv)
 @jit
 def xsvector(nu_lines,nsigmaD,ngammaL,S,nu_grid,ngammaL_grid,dLarray,dv_lines,dv_grid):
     """Cross section vector (DIT/3D version)
@@ -165,6 +107,7 @@ def xsvector(nu_lines,nsigmaD,ngammaL,S,nu_grid,ngammaL_grid,dLarray,dv_lines,dv
 
     k = jnp.fft.rfftfreq(2*Ng_nu,1)
     val=inc2D(S,nu_lines,log_ngammaL,nu_grid,log_ngammaL_grid)
+    #val=jnp.zeros((len(nu_grid),len(log_ngammaL_grid)))
     valbuf=jnp.vstack([val,jnp.zeros_like(val)])
     fftval = jnp.fft.rfft(valbuf,axis=0)
     vk=folded_voigt_kernel_logst(k, log_nstbeta,log_ngammaL_grid,dLarray)
@@ -206,3 +149,59 @@ def xsmatrix(nu_lines,nsigmaDl,ngammaLM,SijM,nu_grid,dgm_ngammaL,dLarray,dv_line
     
     val,xsm=scan(fxs,0.0,Mat)
     return xsm
+
+def minmax_dgmatrix(x,res=0.1,adopt=True):
+    """compute MIN and MAX DIT GRID MATRIX
+
+    Args:                                                                       
+        x: gammaL matrix (Nlayer x Nline)                             
+        res: grid resolution. res=0.1 (defaut) means a grid point per digit     
+        adopt: if True, min, max grid points are used at min and max values of x. In this case, the grid width does not need to be res exactly. 
+                                                                                
+    Returns:                                                                    
+        minimum and maximum for DIT (dgm_minmax)
+                                                                                
+    """
+    mmax=np.max(np.log10(x),axis=1)
+    mmin=np.min(np.log10(x),axis=1)
+    Nlayer=np.shape(mmax)[0]
+    gm_minmax=[]
+    dlog=np.max(mmax-mmin)
+    Ng=(dlog/res).astype(int)+2
+    for i in range(0,Nlayer):
+        lxmin=mmin[i]
+        lxmax=mmax[i]
+        grid=[lxmin,lxmax]
+        gm_minmax.append(grid)
+    gm_minmax=np.array(gm_minmax)
+    return gm_minmax
+
+def precompute_dgmatrix(set_gm_minmax,res=0.1,adopt=True):
+    """Precomputing MODIT GRID MATRIX for normalized GammaL
+
+    Args:
+        set_gm_minmax: set of gm_minmax for different parameters [Nsample, Nlayers, 2], 2=min,max
+        res: grid resolution. res=0.1 (defaut) means a grid point per digit
+        adopt: if True, min, max grid points are used at min and max values of x. In this case, the grid width does not need to be res exactly.
+
+    Returns:
+        grid for DIT (Nlayer x NDITgrid)  
+
+    """
+                      
+    lminarray=np.min(set_gm_minmax[:,:,0],axis=0) #min
+    lmaxarray=np.max(set_gm_minmax[:,:,1],axis=0)  #max
+    dlog=np.max(lmaxarray-lminarray)
+    gm=[]
+    Ng=(dlog/res).astype(int)+2
+    Nlayer=len(lminarray)
+    for i in range(0,Nlayer):
+        lxmin=lminarray[i]
+        lxmax=lmaxarray[i]
+        if adopt==False:
+            grid=np.logspace(lxmin,lxmin+(Ng-1)*res,Ng)
+        else:
+            grid=np.logspace(lxmin,lxmax,Ng)
+        gm.append(grid)
+    gm=np.array(gm)
+    return gm

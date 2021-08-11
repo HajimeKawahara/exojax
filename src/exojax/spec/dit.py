@@ -12,28 +12,91 @@ from jax import vmap
 from jax.lax import scan
 import tqdm
 from exojax.spec.ditkernel import folded_voigt_kernel
-#from functools import partial
+from jax.ops import index_add
+from jax.ops import index as joi
 
-@jit
-def Xncf(i,x,xv):
-    """neighbouring contribution function for index i.  
-    
+def getix(x,xv):
+    """ jnp version of getix
+
     Args:
-        i: index 
-        x: x value
-        xv: x-grid
-            
+        x: x array
+        xv: x grid 
+
     Returns:
-        neighbouring contribution function of x to the i-th component of the array with the same dimension as xv.
-            
+        cont (contribution)
+        index (index)
+
+    Note:
+       cont is the contribution for i=index. 1 - cont is the contribution for i=index+1. For other i, the contribution should be zero.
+
     """
     indarr=jnp.arange(len(xv))
     pos = jnp.interp(x,xv,indarr)
     index = (pos).astype(int)
-    cont = pos-index
-    f=jnp.where(index==i,1.0-cont,0.0)
-    g=jnp.where(index+1==i,cont,0.0)
-    return f+g
+    cont = (pos-index)
+    return cont,index
+
+def npgetix(x,xv):
+    """numpy version of getix
+
+    Args:
+        x: x array
+        xv: x grid 
+
+    Returns:
+        cont (contribution)
+        index (index)
+
+    Note:
+       cont is the contribution for i=index. 1 - cont is the contribution for i=index+1. For other i, the contribution should be zero.
+
+
+    """
+    indarr=np.arange(len(xv))
+    pos = np.interp(x,xv,indarr)
+    index = (pos).astype(int)
+    cont = (pos-index)
+    return cont,index
+
+@jit
+def inc3D_givenx(w,cx,ix,y,z,xv,yv,zv):
+    """The lineshape distribution matrix = integrated neighbouring contribution for 3D (memory reduced sum) but using given contribution and index for x .
+    
+    Args:
+        w: weight (N)
+        cx: given contribution for x 
+        ix: given index for x 
+        y: y values (N)
+        z: z values (N)
+        xv: x grid
+        yv: y grid
+        zv: z grid            
+        
+    Returns:
+        lineshape distribution matrix (integrated neighbouring contribution for 3D)
+        
+    Note:
+        This function computes \sum_n w_n fx_n \otimes fy_n \otimes fz_n, 
+        where w_n is the weight, fx_n, fy_n, and fz_n are the n-th NCFs for 1D. 
+        A direct sum uses huge RAM. 
+        In this function, we use jax.lax.scan to compute the sum
+
+    """
+
+    cy,iy=getix(y,yv)
+    cz,iz=getix(z,zv)
+
+    a=jnp.zeros((len(xv),len(yv),len(zv)))
+    a=index_add(a,joi[ix,iy,iz],w*(1-cx)*(1-cy)*(1-cz))
+    a=index_add(a,joi[ix,iy+1,iz],w*(1-cx)*cy*(1-cz))
+    a=index_add(a,joi[ix+1,iy,iz],w*cx*(1-cy)*(1-cz))
+    a=index_add(a,joi[ix+1,iy+1,iz],w*cx*cy*(1-cz))
+    a=index_add(a,joi[ix,iy,iz+1],w*(1-cx)*(1-cy)*cz)
+    a=index_add(a,joi[ix,iy+1,iz+1],w*(1-cx)*cy*cz)
+    a=index_add(a,joi[ix+1,iy,iz+1],w*cx*(1-cy)*cz)
+    a=index_add(a,joi[ix+1,iy+1,iz+1],w*cx*cy*cz)
+
+    return a
 
 @jit
 def inc3D(w,x,y,z,xv,yv,zv):
@@ -76,65 +139,27 @@ def inc3D(w,x,y,z,xv,yv,zv):
         >>> print(jnp.sqrt(jnp.mean((val-valdirect)**2))/jnp.mean(valdirect)*100,"%") #%
         >>> 8.418057e-06 %
     """
-    Ngx=len(xv)
-    Ngy=len(yv)
-    Ngz=len(zv)
-    indarrx=jnp.arange(Ngx)
-    indarry=jnp.arange(Ngy)
-    indarrz=jnp.arange(Ngz)
-    
-    vcl=vmap(Xncf,(0,None,None),0)
-    fx=vcl(indarrx,x,xv) # Ngx x N  memory
-    fy=vcl(indarry,y,yv) # Ngy x N memory
-    fz=vcl(indarrz,z,zv) # Ngz x N memory
 
-    fxyz_w=jnp.vstack([fx,fy,fz,w]).T
-    def fsum(x,arr):
-        null=0.0
-        fx=arr[0:Ngx]
-        fy=arr[Ngx:Ngx+Ngy]
-        fz=arr[Ngx+Ngy:Ngx+Ngy+Ngz]
-        w=arr[Ngx+Ngy+Ngz]
-        val=x+w*fx[:,None,None]*fy[None,:,None]*fz[None,None,:]
-        return val, null
-    
-    init0=jnp.zeros((Ngx,Ngy,Ngz))
-    val,null=scan(fsum,init0,fxyz_w)
-    return val
+    cx,ix=getix(x,xv)
+    cy,iy=getix(y,yv)
+    cz,iz=getix(z,zv)
 
+    a=jnp.zeros((len(xv),len(yv),len(zv)))
+    a=index_add(a,joi[ix,iy,iz],w*(1-cx)*(1-cy)*(1-cz))
+    a=index_add(a,joi[ix,iy+1,iz],w*(1-cx)*cy*(1-cz))
+    a=index_add(a,joi[ix+1,iy,iz],w*cx*(1-cy)*(1-cz))
+    a=index_add(a,joi[ix+1,iy+1,iz],w*cx*cy*(1-cz))
+    a=index_add(a,joi[ix,iy,iz+1],w*(1-cx)*(1-cy)*cz)
+    a=index_add(a,joi[ix,iy+1,iz+1],w*(1-cx)*cy*cz)
+    a=index_add(a,joi[ix+1,iy,iz+1],w*cx*(1-cy)*cz)
+    a=index_add(a,joi[ix+1,iy+1,iz+1],w*cx*cy*cz)
 
+    return a
 
-def npnc1D(x,xv):
-    """numpy version of neighbouring contribution for 1D.
-    
-    Args:
-        x: x value
-        xv: x grid
-            
-    Returns:
-        neighbouring contribution function
-        
-
-    """
-    indarr=np.arange(len(xv))
-    pos = np.interp(x,xv,indarr)
-    index = (pos).astype(int)
-    cont = pos-index
-
-    def npXncf(i,x,xv):
-        f=np.where(index==i,1.0-cont,0.0)
-        g=np.where(index+1==i,cont,0.0)
-        return f+g
-    vcl=[]
-    for i in tqdm.tqdm(indarr):
-        vcl.append(npXncf(i,x,xv))
-    vcl=jnp.array(np.array(vcl))
-                 
-    return vcl
 
 @jit
-def xsvector3D(nu_lines,sigmaD,gammaL,S,nu_grid,sigmaD_grid,gammaL_grid,dLarray):
-    """Cross section vector (DIT/3D version)
+def xsvector(nu_lines,sigmaD,gammaL,S,nu_grid,sigmaD_grid,gammaL_grid,dLarray):
+    """Cross section vector (DIT/3D version, default)
     
     The original code is rundit in [addit package](https://github.com/HajimeKawahara/addit)
 
@@ -188,8 +213,8 @@ def xsvector3D(nu_lines,sigmaD,gammaL,S,nu_grid,sigmaD_grid,gammaL_grid,dLarray)
 
 
 @jit
-def xsmatrix3D(nu_lines,sigmaDM,gammaLM,SijM,nu_grid,dgm_sigmaD,dgm_gammaL,dLarray):
-    """Cross section matrix for xsvector3D (DIT/reduced memory version)
+def xsmatrix(nu_lines,sigmaDM,gammaLM,SijM,nu_grid,dgm_sigmaD,dgm_gammaL,dLarray):
+    """Cross section matrix for xsvector (DIT/reduced memory version)
 
     Args:
        nu_lines: line center (Nlines)
@@ -215,68 +240,21 @@ def xsmatrix3D(nu_lines,sigmaDM,gammaLM,SijM,nu_grid,dgm_sigmaD,dgm_gammaL,dLarr
         Sij=arr[2*Nline:3*Nline]
         sigmaD_grid=arr[3*Nline:3*Nline+NDITgrid]
         gammaL_grid=arr[3*Nline+NDITgrid:3*Nline+2*NDITgrid]
-        arr=xsvector3D(nu_lines,sigmaD,gammaL,Sij,nu_grid,sigmaD_grid,gammaL_grid,dLarray)
+        arr=xsvector(nu_lines,sigmaD,gammaL,Sij,nu_grid,sigmaD_grid,gammaL_grid,dLarray)
         return carry, arr
     
     val,xsm=scan(fxs,0.0,Mat)
     return xsm
     
-
-
 @jit
-def inc2Dplus(w,fx,y,z,yv,zv):
-    """The lineshape distribution matrix = integrated neighbouring contribution for 2D+precomputed (memory reduced sum).
-    
-    Args:
-        w: weight (N)
-        fx: precomputed nu nc1D
-        y: y values (N)
-        z: z values (N)
-        yv: y grid
-        zv: z grid            
-        
-    Returns:
-        lineshape distribution matrix (integrated neighbouring contribution for 3D)
-        
-    Note:
-        This function computes \sum_n w_n fx_n \otimes fy_n \otimes fz_n, 
-        where w_n is the weight, fx_n, fy_n, and fz_n are the n-th NCFs for 1D. 
-        A direct sum uses huge RAM. 
-        In this function, we use jax.lax.scan to compute the sum
-        
-    """
-    Ngx=len(fx)
-    Ngy=len(yv)
-    Ngz=len(zv)
-    indarry=jnp.arange(Ngy)
-    indarrz=jnp.arange(Ngz)
-    
-    vcl=vmap(Xncf,(0,None,None),0)
-    fy=vcl(indarry,y,yv) # Ngy x N memory
-    fz=vcl(indarrz,z,zv) # Ngz x N memory
-    
-    fxyz_w=jnp.vstack([fx,fy,fz,w]).T
-    def fsum(x,arr):
-        null=0.0
-        fx=arr[0:Ngx]
-        fy=arr[Ngx:Ngx+Ngy]
-        fz=arr[Ngx+Ngy:Ngx+Ngy+Ngz]
-        w=arr[Ngx+Ngy+Ngz]
-        val=x+w*fx[:,None,None]*fy[None,:,None]*fz[None,None,:]
-        return val, null
-    
-    init0=jnp.zeros((Ngx,Ngy,Ngz))
-    val,null=scan(fsum,init0,fxyz_w)
-    return val
-
-@jit
-def xsvector(nu_ncf,sigmaD,gammaL,S,nu_grid,sigmaD_grid,gammaL_grid, dLarray):
+def xsvector_np(cnu,indexnu,sigmaD,gammaL,S,nu_grid,sigmaD_grid,gammaL_grid, dLarray):
     """Cross section vector (DIT/2D+ version; default)
     
     The original code is rundit in [addit package](https://github.com/HajimeKawahara/addit)
 
     Args:
-       nu_ncf: neibouring contribution function for wavenumber
+       cnu: contribution by npgetix for wavenumber
+       indexnu: index by npgetix for wavenumber
        sigmaD: Gaussian STD (Nlines)
        gammaL: Lorentzian half width (Nlines)
        S: line strength (Nlines)
@@ -309,8 +287,7 @@ def xsvector(nu_ncf,sigmaD,gammaL,S,nu_grid,sigmaD_grid,gammaL_grid, dLarray):
     log_gammaL_grid = jnp.log(gammaL_grid)
     dnu = (nu_grid[-1]-nu_grid[0])/(Ng_nu-1)
     k = jnp.fft.rfftfreq(2*Ng_nu,dnu)
-    val=inc2Dplus(S,nu_ncf,log_sigmaD,log_gammaL,log_sigmaD_grid,log_gammaL_grid)
-#    val=inc3D(S,nu_lines,log_sigmaD,log_gammaL,nu_grid,log_sigmaD_grid,log_gammaL_grid)
+    val=inc3D_givenx(S,cnu,indexnu,log_sigmaD,log_gammaL,nu_grid,log_sigmaD_grid,log_gammaL_grid)
 
     valbuf=jnp.vstack([val,jnp.zeros_like(val)])
     fftval = jnp.fft.rfft(valbuf,axis=0)
@@ -320,11 +297,12 @@ def xsvector(nu_ncf,sigmaD,gammaL,S,nu_grid,sigmaD_grid,gammaL_grid, dLarray):
     return xs
 
 @jit
-def xsmatrix(nu_ncf,sigmaDM,gammaLM,SijM,nu_grid,dgm_sigmaD,dgm_gammaL,dLarray):
+def xsmatrix_np(cnu, indexnu, sigmaDM,gammaLM,SijM,nu_grid,dgm_sigmaD,dgm_gammaL,dLarray):
     """Cross section matrix (DIT/2D+ version)
 
     Args:
-       nu_ncf: neibouring contribution function for wavenumber
+       cnu: contribution by npgetix for wavenumber
+       indexnu: index by npgetix for wavenumber
        sigmaDM: doppler sigma matrix in R^(Nlayer x Nline)
        gammaLM: gamma factor matrix in R^(Nlayer x Nline)
        SijM: line strength matrix in R^(Nlayer x Nline)
@@ -347,7 +325,7 @@ def xsmatrix(nu_ncf,sigmaDM,gammaLM,SijM,nu_grid,dgm_sigmaD,dgm_gammaL,dLarray):
         Sij=arr[2*Nline:3*Nline]
         sigmaD_grid=arr[3*Nline:3*Nline+NDITgrid]
         gammaL_grid=arr[3*Nline+NDITgrid:3*Nline+2*NDITgrid]
-        arr=xsvector(nu_ncf,sigmaD,gammaL,Sij,nu_grid,sigmaD_grid,gammaL_grid,dLarray)
+        arr=xsvector_np(cnu,indexnu,sigmaD,gammaL,Sij,nu_grid,sigmaD_grid,gammaL_grid,dLarray)
         return carry, arr
     
     val,xsm=scan(fxs,0.0,Mat)
@@ -467,12 +445,6 @@ if __name__ == "__main__":
     import matplotlib.pyplot as plt
     import jax.numpy as jnp
 
-#    xv=np.linspace(0,1,11) #grid
-#    x=np.array([0.23,0.34])
-#    print(npnc1D(x,xv))
-#    import sys
-#    sys.exit()
-    
     nus=np.linspace(1900.0,2300.0,80000,dtype=np.float64) 
     mdbCO=moldb.MdbHit('05_hit12.par',nus)
     Mmol=28.010446441149536 # molecular weight
@@ -489,11 +461,10 @@ if __name__ == "__main__":
     sigmaD_grid=set_ditgrid(sigmaD,res=0.1)
     gammaL_grid=set_ditgrid(gammaL,res=0.2)
 
-
-    nu_ncf=npnc1D(mdbCO.nu_lines,nus)
-    print(np.shape(nu_ncf))
-    xs=xsvector(nu_ncf,mdbCO.nu_lines,sigmaD,gammaL,Sij,nus,sigmaD_grid,gammaL_grid)
+    Nfold=1
+    dnu=nus[1]-nus[0]
+    dLarray=make_dLarray(Nfold,dnu)
+    xs=xsvector(mdbCO.nu_lines,sigmaD,gammaL,Sij,nus,sigmaD_grid,gammaL_grid,dLarray)
 
     plt.plot(nus,xs)
-#    plt.yscale("log")
     plt.show()
