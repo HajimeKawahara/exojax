@@ -4,6 +4,7 @@ from exojax.spec.modit import xsvector
 from exojax.spec.dit import make_dLarray,set_ditgrid
 import numpy as np
 import jax.numpy as jnp
+from exojax.spec import initspec
 
 def xs(Nc,Nline=10000):
     nu0=2000.0
@@ -13,20 +14,17 @@ def xs(Nc,Nline=10000):
     nsigmaD=1.0
     gammaL=np.random.rand(Nline)+0.1
 
-    R=(len(nus)-1)/np.log(nus[-1]/nus[0]) #resolution
-    dv_lines=jnp.array(nu_lines/R)
-    dv=jnp.array(nus/R)
     Nfold=2
-    dLarray=make_dLarray(Nfold,1.0)
-    ngammaL=gammaL/dv_lines
-    
-    ngammaL_grid=jnp.array(set_ditgrid(ngammaL,res=0.1))
+    cnu,indexnu,R,dLarray=initspec.init_modit(nu_lines,nus,Nfold)
+    ngammaL=gammaL/(nu_lines/R)
+    ngammaL_grid=set_ditgrid(ngammaL,res=0.1)
     S=jnp.array(np.random.normal(size=Nline))
+    
     ts=time.time()
     a=[]
     for i in range(0,Nc):
         tsx=time.time()
-        xsv=xsvector(nu_lines,nsigmaD,ngammaL,S,nus,ngammaL_grid,dLarray,dv_lines,dv)
+        xsv=xsvector(cnu,indexnu,R,dLarray,nsigmaD,ngammaL,S,nus,ngammaL_grid)
         xsv.block_until_ready()
         tex=time.time()
         a.append(tex-tsx)

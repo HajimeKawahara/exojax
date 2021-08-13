@@ -124,7 +124,8 @@ def folded_voigt_kernel_logst(k,log_nstbeta,log_ngammaL,dLarray):
         null=0.0
         return val, null
     val=jnp.exp(-2.0*((jnp.pi*beta*k[:,None])**2 + jnp.pi*gammaL[None,:]*k[:,None]))
-    
+
     val,nullstack=scan(ffold, val, dLarray)
+    
     
     return val
