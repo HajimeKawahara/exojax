@@ -2,6 +2,8 @@ import pytest
 import time 
 from exojax.spec.modit import xsvector
 from exojax.spec.dit import make_dLarray,set_ditgrid
+from exojax.spec import initspec
+import jax.numpy as jnp
 import numpy as np
 
 def xs(Nline):
@@ -11,16 +13,12 @@ def xs(Nline):
     nu_lines=np.random.rand(Nline)*(nu1-nu0)+nu0
     nsigmaD=1.0
     gammaL=np.random.rand(Nline)+0.1
-
-    R=(len(nus)-1)/np.log(nus[-1]/nus[0]) #resolution
-    dv_lines=nu_lines/R
-    dv=nus/R
     Nfold=2
-    dLarray=make_dLarray(Nfold,1.0)
-    ngammaL=gammaL/dv_lines
+    cnu,indexnu,R,dLarray=initspec.init_modit(nu_lines,nus,Nfold)
+    ngammaL=gammaL/(nu_lines/R)
     ngammaL_grid=set_ditgrid(ngammaL,res=0.1)
-    S=np.random.normal(size=Nline)
-    xsv=xsvector(nu_lines,nsigmaD,ngammaL,S,nus,ngammaL_grid,dLarray,dv_lines,dv)
+    S=jnp.array(np.random.normal(size=Nline))
+    xsv=xsvector(cnu,indexnu,R,dLarray,nsigmaD,ngammaL,S,nus,ngammaL_grid)
     xsv.block_until_ready()
     return True
 
