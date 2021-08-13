@@ -18,15 +18,15 @@ from jax.ops import index as joi
 from exojax.spec.dit import getix
 
 @jit
-def inc2D_givenx(w,cx,ix,y,xv,yv):
+def inc2D_givenx(a,w,cx,ix,y,yv):
     """The lineshape distribution matrix = integrated neighbouring contribution for 2D (memory reduced sum) but using given contribution and index for x .
     
     Args:
+        a: lineshape density array (jnp.array)
         w: weight (N)
         cx: given contribution for x 
         ix: given index for x 
         y: y values (N)
-        xv: x grid
         yv: y grid
         
     Returns:
@@ -42,7 +42,6 @@ def inc2D_givenx(w,cx,ix,y,xv,yv):
 
     cy,iy=getix(y,yv)
 
-    a=jnp.zeros((len(xv),len(yv)))
     a=index_add(a,joi[ix,iy],w*(1-cx)*(1-cy))
     a=index_add(a,joi[ix,iy+1],w*(1-cx)*cy)
     a=index_add(a,joi[ix+1,iy],w*cx*(1-cy))
@@ -51,57 +50,10 @@ def inc2D_givenx(w,cx,ix,y,xv,yv):
     return a
 
 
-@jit
-def inc2D(w,x,y,xv,yv):
-    """integrated neighbouring contribution function for 2D (memory reduced sum).
-    
-    Args:
-        w: weight (N)
-        x: x values (N)
-        y: y values (N)
-        xv: x grid
-        yv: y grid
-            
-    Returns:
-        integrated neighbouring contribution function
-        
-    Note:
-        This function computes \sum_n w_n fx_n \otimes fy_n, 
-        where w_n is the weight, fx_n and fy_n are the n-th NCFs for 1D. 
-        A direct sum uses huge RAM. 
-        In this function, we use jax.lax.scan to compute the sum
-        
-    Example:
-        >>> N=10000
-        >>> xv=jnp.linspace(0,1,11) #grid
-        >>> yv=jnp.linspace(0,1,13) #grid
-        >>> w=np.logspace(1.0,3.0,N)
-        >>> x=np.random.rand(N)
-        >>> y=np.random.rand(N)
-        >>> val=inc2D(w,x,y,xv,yv)
-        >>> #the comparision with the direct sum
-        >>> valdirect=jnp.sum(nc2D(x,y,xv,yv)*w,axis=2)        
-        >>> #maximum deviation
-        >>> print(jnp.max(jnp.abs((val-valdirect)/jnp.mean(valdirect)))*100,"%") #%
-        >>> 5.196106e-05 %
-        >>> #mean deviation
-        >>> print(jnp.sqrt(jnp.mean((val-valdirect)**2))/jnp.mean(valdirect)*100,"%") #%
-        >>> 1.6135311e-05 %
-    """
-
-    cx,ix=getix(x,xv)
-    cy,iy=getix(y,yv)
-    ncfarray=jnp.zeros((len(xv),len(yv)))
-    ncfarray=index_add(ncfarray,joi[ix,iy],w*(1.-cx)*(1.-cy))
-    ncfarray=index_add(ncfarray,joi[ix,iy+1],w*(1.-cx)*cy)
-    ncfarray=index_add(ncfarray,joi[ix+1,iy],w*cx*(1.-cy))
-    ncfarray=index_add(ncfarray,joi[ix+1,iy+1],w*cx*cy)
-    return ncfarray
-
 
 
 @jit
-def xsvector_np(cnu,indexnu,nsigmaD,ngammaL,S,nu_grid,ngammaL_grid,dLarray,dv_lines,dv_grid):
+def xsvector(cnu,indexnu,R,dLarray,nsigmaD,ngammaL,S,nu_grid,ngammaL_grid):
     """Cross section vector (DIT/3D version)
     
     The original code is rundit_fold_logredst in [addit package](https://github.com/HajimeKawahara/addit). DIT folded voigt for ESLOG for reduced wavenumebr inputs (against the truncation error) for a constant normalized beta
@@ -109,14 +61,13 @@ def xsvector_np(cnu,indexnu,nsigmaD,ngammaL,S,nu_grid,ngammaL_grid,dLarray,dv_li
     Args:
        cnu: contribution by npgetix for wavenumber
        indexnu: index by npgetix for wavenumber
+       R: spectral resolution
+       dLarray: ifold/dnu (ifold=1,..,Nfold) array
        nsigmaD: normaized Gaussian STD (Nlines)
        gammaL: Lorentzian half width (Nlines)
        S: line strength (Nlines)
        nu_grid: linear wavenumber grid
        gammaL_grid: gammaL grid
-       dLarray: ifold/dnu (ifold=1,..,Nfold) array
-       dv_lines: delta wavenumber for lines i.e. nu_lines/R
-       dv_grid: delta wavenumber for nu_grid i.e. nu_grid/R
 
     Returns:
        Cross section in the linear nu grid
@@ -140,35 +91,35 @@ def xsvector_np(cnu,indexnu,nsigmaD,ngammaL,S,nu_grid,ngammaL_grid,dLarray,dv_li
     log_ngammaL=jnp.log(ngammaL)
     log_ngammaL_grid = jnp.log(ngammaL_grid)
 
-    k = jnp.fft.rfftfreq(2*Ng_nu,1)
-    Slsd=inc2D_givenx(S,cnu,indexnu,log_ngammaL,nu_grid,log_ngammaL_grid) #Lineshape Density
+    k = jnp.fft.rfftfreq(2*Ng_nu,1)    
+    lsda=jnp.zeros((len(nu_grid),len(ngammaL_grid))) #LSD array
+    Slsd=inc2D_givenx(lsda, S,cnu,indexnu,log_ngammaL,log_ngammaL_grid) #Lineshape Density
     Sbuf=jnp.vstack([Slsd,jnp.zeros_like(Slsd)])
     til_Slsd = jnp.fft.rfft(Sbuf,axis=0)
     
     til_Voigt=folded_voigt_kernel_logst(k, log_nstbeta,log_ngammaL_grid,dLarray)
     fftvalsum = jnp.sum(til_Slsd*til_Voigt,axis=(1,))
     
-    xs=jnp.fft.irfft(fftvalsum)[:Ng_nu]/dv_grid
+    xs=jnp.fft.irfft(fftvalsum)[:Ng_nu]*R/nu_grid
     
     return xs
 
 
 @jit
-def xsmatrix_np(cnu, indexnu,nsigmaDl,ngammaLM,SijM,nu_grid,dgm_ngammaL,dLarray,dv_lines,dv_grid):
+def xsmatrix(cnu,indexnu,R,dLarray,nsigmaDl,ngammaLM,SijM,nu_grid,dgm_ngammaL):
     """Cross section matrix for xsvector (MODIT)
 
     Args:
        cnu: contribution by npgetix for wavenumber
        indexnu: index by npgetix for wavenumber
+       R: spectral resolution
+       dLarray: ifold/dnu (ifold=1,..,Nfold) array
        nu_lines: line center (Nlines)
        nsigmaDl: normalized doppler sigma in layers in R^(Nlayer x 1)
        ngammaLM: gamma factor matrix in R^(Nlayer x Nline)
        SijM: line strength matrix in R^(Nlayer x Nline)
        nu_grid: linear wavenumber grid
        dgm_ngammaL: DIT Grid Matrix for normalized gammaL R^(Nlayer, NDITgrid)
-       dLarray: ifold/dnu (ifold=1,..,Nfold) array
-       dv_lines: delta wavenumber for lines i.e. nu_lines/R
-       dv_grid: delta wavenumber for nu_grid i.e. nu_grid/R
       
     Return:
        cross section matrix in R^(Nlayer x Nwav)
@@ -183,100 +134,13 @@ def xsmatrix_np(cnu, indexnu,nsigmaDl,ngammaLM,SijM,nu_grid,dgm_ngammaL,dLarray,
         ngammaL=arr[1:Nline+1]
         Sij=arr[Nline+1:2*Nline+1]
         ngammaL_grid=arr[2*Nline+1:2*Nline+NDITgrid+1]
-        arr=xsvector_np(cnu,indexnu,nsigmaD,ngammaL,Sij,nu_grid,ngammaL_grid,dLarray,dv_lines,dv_grid)
+        arr=xsvector(cnu,indexnu,nsigmaD,ngammaL,Sij,nu_grid,ngammaL_grid,dLarray,dv_lines,R)
         return carry, arr
     
     val,xsm=scan(fxs,0.0,Mat)
     return xsm
 
     
-@jit
-def xsvector(nu_lines,nsigmaD,ngammaL,S,nu_grid,ngammaL_grid,dLarray,dv_lines,dv_grid):
-    """Cross section vector (DIT/3D version)
-    
-    The original code is rundit_fold_logredst in [addit package](https://github.com/HajimeKawahara/addit). DIT folded voigt for ESLOG for reduced wavenumebr inputs (against the truncation error) for a constant normalized beta
-
-    Args:
-       nu_lines: line center (Nlines)
-       nsigmaD: normaized Gaussian STD (Nlines)
-       gammaL: Lorentzian half width (Nlines)
-       S: line strength (Nlines)
-       nu_grid: linear wavenumber grid
-       gammaL_grid: gammaL grid
-       dLarray: ifold/dnu (ifold=1,..,Nfold) array
-       dv_lines: delta wavenumber for lines i.e. nu_lines/R
-       dv_grid: delta wavenumber for nu_grid i.e. nu_grid/R
-
-    Returns:
-       Cross section in the linear nu grid
-
-    Note:
-       This version uses inc3D. So, nu grid is also auto-differentiable. However, be careful for the precision of wavenumber grid, because inc3D uses float32 in JAX/GPU. For instance, consider to use dfnus=nus-np.median(nus) and dfnu_lines=mdbCO.nu_lines-np.median(nus) instead of nus (nu_grid) and nu_lines, to mitigate the problem. 
-
-    Example:
-       >>> dfnus=nus-np.median(nus)
-       >>> dfnu_lines=nu_lines-np.median(nus)
-       >>> dnus=nus[1]-nus[0]
-       >>> Nfold=3
-       >>> dLarray=jnp.linspace(1,Nfold,Nfold)/dnus 
-
-    """
-
-    Ng_nu=len(nu_grid)
-    Ng_gammaL=len(ngammaL_grid)
-
-    log_nstbeta=jnp.log(nsigmaD)
-    log_ngammaL=jnp.log(ngammaL)
-    log_ngammaL_grid = jnp.log(ngammaL_grid)
-
-    k = jnp.fft.rfftfreq(2*Ng_nu,1)
-    Slsd=inc2D(S,nu_lines,log_ngammaL,nu_grid,log_ngammaL_grid) #Lineshape Density
-    Sbuf=jnp.vstack([Slsd,jnp.zeros_like(Slsd)])
-    til_Slsd = jnp.fft.rfft(Sbuf,axis=0)
-    
-    til_Voigt=folded_voigt_kernel_logst(k, log_nstbeta,log_ngammaL_grid,dLarray)
-    fftvalsum = jnp.sum(til_Slsd*til_Voigt,axis=(1,))
-    
-    xs=jnp.fft.irfft(fftvalsum)[:Ng_nu]/dv_grid
-    
-    return xs
-
-
-
-
-@jit
-def xsmatrix(nu_lines,nsigmaDl,ngammaLM,SijM,nu_grid,dgm_ngammaL,dLarray,dv_lines,dv_grid):
-    """Cross section matrix for xsvector (MODIT)
-
-    Args:
-       nu_lines: line center (Nlines)
-       nsigmaDl: normalized doppler sigma in layers in R^(Nlayer x 1)
-       ngammaLM: gamma factor matrix in R^(Nlayer x Nline)
-       SijM: line strength matrix in R^(Nlayer x Nline)
-       nu_grid: linear wavenumber grid
-       dgm_ngammaL: DIT Grid Matrix for normalized gammaL R^(Nlayer, NDITgrid)
-       dLarray: ifold/dnu (ifold=1,..,Nfold) array
-       dv_lines: delta wavenumber for lines i.e. nu_lines/R
-       dv_grid: delta wavenumber for nu_grid i.e. nu_grid/R
-      
-    Return:
-       cross section matrix in R^(Nlayer x Nwav)
-
-    """
-    NDITgrid=jnp.shape(dgm_ngammaL)[1]
-    Nline=len(nu_lines)
-    Mat=jnp.hstack([nsigmaDl,ngammaLM,SijM,dgm_ngammaL])
-    def fxs(x,arr):
-        carry=0.0
-        nsigmaD=arr[0:1]
-        ngammaL=arr[1:Nline+1]
-        Sij=arr[Nline+1:2*Nline+1]
-        ngammaL_grid=arr[2*Nline+1:2*Nline+NDITgrid+1]
-        arr=xsvector(nu_lines,nsigmaD,ngammaL,Sij,nu_grid,ngammaL_grid,dLarray,dv_lines,dv_grid)
-        return carry, arr
-    
-    val,xsm=scan(fxs,0.0,Mat)
-    return xsm
 
 def minmax_dgmatrix(x,res=0.1,adopt=True):
     """compute MIN and MAX DIT GRID MATRIX
