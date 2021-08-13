@@ -145,19 +145,19 @@ def xsvector(cnu,indexnu,dLarray,sigmaD,gammaL,S,nu_grid,sigmaD_grid,gammaL_grid
     return xs
 
 @jit
-def xsmatrix(cnu, indexnu, sigmaDM,gammaLM,SijM,nu_grid,dgm_sigmaD,dgm_gammaL,dLarray):
+def xsmatrix(cnu,indexnu,dLarray,sigmaDM,gammaLM,SijM,nu_grid,dgm_sigmaD,dgm_gammaL):
     """Cross section matrix (DIT/2D+ version)
 
     Args:
        cnu: contribution by npgetix for wavenumber
        indexnu: index by npgetix for wavenumber
+       dLarray: ifold/dnu (ifold=1,..,Nfold) array
        sigmaDM: doppler sigma matrix in R^(Nlayer x Nline)
        gammaLM: gamma factor matrix in R^(Nlayer x Nline)
        SijM: line strength matrix in R^(Nlayer x Nline)
        nu_grid: linear wavenumber grid
        dgm_sigmaD: DIT Grid Matrix for sigmaD R^(Nlayer, NDITgrid)
        dgm_gammaL: DIT Grid Matrix for gammaL R^(Nlayer, NDITgrid)
-       dLarray: ifold/dnu (ifold=1,..,Nfold) array
 
     Return:
        cross section matrix in R^(Nlayer x Nwav)

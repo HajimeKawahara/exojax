@@ -143,11 +143,8 @@ class AutoXS(object):
             else:
                 nus=self.nus
                     
-            nn=np.median(nus)
-            dfnus=nus-nn            
-            dfnu_lines=mdb.nu_lines-nn
-            Nfold=2
-            cnu,indexnu,R,dLarray=initspec.init_modit(mdb.nu_lines,nus,Nfold)
+            self.Nfold=2
+            cnu,indexnu,R,dLarray=initspec.init_modit(mdb.nu_lines,nus,self.Nfold)
             nsigmaD=normalized_doppler_sigma(T,molmass,R)
             ngammaL=gammaL/(mdb.nu_lines/R)
             ngammaL_grid=dit.set_ditgrid(ngammaL,res=0.1)
@@ -172,8 +169,8 @@ class AutoXS(object):
 
             sigmaD_grid=dit.set_ditgrid(sigmaD,res=0.1)
             gammaL_grid=dit.set_ditgrid(gammaL,res=0.1)
-            Nfold=2
-            cnu,indexnu,dLarray=initspec.init_dit(mdb.nu_lines,nus,Nfold)
+            self.Nfold=2
+            cnu,indexnu,dLarray=initspec.init_dit(mdb.nu_lines,nus,self.Nfold)
             xsv=dit.xsvector(cnu,indexnu,dLarray,sigmaD,gammaL,Sij,nus,sigmaD_grid,gammaL_grid)
             
             if ~checknus and self.autogridconv:
@@ -266,54 +263,35 @@ class AutoXS(object):
         elif xsmode=="modit" or xsmode=="MODIT":
             from exojax.spec.dit import make_dLarray
 
-            Nfold=3
+            self.Nfold=2
             nus=self.nus
-            nn=np.median(nus)
-            dfnus=nus-nn            
-            dfnu_lines=mdb.nu_lines-nn
-            
-            R=(len(nus)-1)/np.log(nus[-1]/nus[0]) #resolution
-            dv_lines=mdb.nu_lines/R
-            dv=nus/R
-            Nfold=2
-            dLarray=make_dLarray(Nfold,1.0)
-            nsigmaDl=normalized_doppler_sigma(Tarr,self.molmass,R)[:,np.newaxis]
-            
-            ngammaLM=gammaLM/dv_lines
+            cnu,indexnu,R,dLarray=initspec.init_modit(mdb.nu_lines,nus,self.Nfold)
+            nsigmaDl=normalized_doppler_sigma(Tarr,self.molmass,R)[:,np.newaxis]            
+            ngammaLM=gammaLM/(mdb.nu_lines/R)
             dgm_ngammaL=dit.dgmatrix(ngammaLM,0.1)
-
-            xsm=modit.xsmatrix(dfnu_lines,nsigmaDl,ngammaLM,SijM,dfnus,dgm_ngammaL,dLarray,dv_lines,dv)
+            xsm=modit.xsmatrix(cnu,indexnu,R,dLarray,nsigmaDl,ngammaLM,SijM,nus,dgm_ngammaL)
             
             Nneg=len(xsm[xsm<0.0])
             if Nneg>0:
                 print("Warning: negative cross section detected #=",Nneg," fraction=",Nneg/float(jnp.shape(xsm)[0]*jnp.shape(xsm)[1]))
-
-                xsmnp=np.array(xsm)
-                xsmnp[xsmnp<0.0]=0.0
-                xsm=jnp.array(xsmnp)
-
+                xsm=jnp.abs(xsm)
                 
         elif xsmode=="dit" or xsmode=="DIT":
+            nus=self.nus
+            self.Nfold=2
+            cnu,indexnu,dLarray=initspec.init_dit(mdb.nu_lines,nus,self.Nfold)            
             sigmaDM=jit(vmap(doppler_sigma,(None,0,None)))\
                      (mdb.nu_lines,Tarr,self.molmass)
-            
             dgm_sigmaD=dit.dgmatrix(sigmaDM,0.1)
             dgm_gammaL=dit.dgmatrix(gammaLM,0.2)
-            dnu=self.nus[1]-self.nus[0]
-            sigma=dit.sigma_voigt(dgm_sigmaD,dgm_gammaL)
-            relres,self.Nfold=dit.autoNfold(sigma,dnu,self.pdit)
-            print("relative resolution=",relres,", Nfold=",self.Nfold)
-            dLarray=dit.make_dLarray(self.Nfold,dnu)
-            xsm=dit.xsmatrix(mdb.nu_lines-np.median(self.nus),sigmaDM,\
-                                  gammaLM,SijM,self.nus-np.median(self.nus),\
-                                  dgm_sigmaD,dgm_gammaL,dLarray)
+            #sigma=dit.sigma_voigt(dgm_sigmaD,dgm_gammaL)
+            xsm=dit.xsmatrix(cnu,indexnu,dLarray,sigmaDM,\
+                                  gammaLM,SijM,nus,\
+                                  dgm_sigmaD,dgm_gammaL)
             Nneg=len(xsm[xsm<0.0])
             if Nneg>0:
                 print("Warning: negative cross section detected #=",Nneg," fraction=",Nneg/float(jnp.shape(xsm)[0]*jnp.shape(xsm)[1]))
-
-                xsmnp=np.array(xsm)
-                xsmnp[xsmnp<0.0]=0.0
-                xsm=jnp.array(xsmnp)
+                xsm=jnp.abs(xsm)
                 
         else:
             print("No such xsmode=",xsmode)

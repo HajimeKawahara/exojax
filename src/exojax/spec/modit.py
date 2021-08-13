@@ -125,7 +125,7 @@ def xsmatrix(cnu,indexnu,R,dLarray,nsigmaDl,ngammaLM,SijM,nu_grid,dgm_ngammaL):
         ngammaL=arr[1:Nline+1]
         Sij=arr[Nline+1:2*Nline+1]
         ngammaL_grid=arr[2*Nline+1:2*Nline+NDITgrid+1]
-        arr=xsvector(cnu,indexnu,nsigmaD,ngammaL,Sij,nu_grid,ngammaL_grid,dLarray,dv_lines,R)
+        arr=xsvector(cnu,indexnu,R,dLarray,nsigmaD,ngammaL,Sij,nu_grid,ngammaL_grid)
         return carry, arr
     
     val,xsm=scan(fxs,0.0,Mat)
