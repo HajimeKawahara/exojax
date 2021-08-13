@@ -316,7 +316,7 @@ def xsmatrix_np(cnu, indexnu, sigmaDM,gammaLM,SijM,nu_grid,dgm_sigmaD,dgm_gammaL
 
     """
     NDITgrid=jnp.shape(dgm_sigmaD)[1]
-    Nline=jnp.shape(SijM)[1]
+    Nline=len(cnu)
     Mat=jnp.hstack([sigmaDM,gammaLM,SijM,dgm_sigmaD,dgm_gammaL])
     def fxs(x,arr):
         carry=0.0
