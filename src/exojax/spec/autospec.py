@@ -16,7 +16,7 @@ from exojax.spec.make_numatrix import make_numatrix0
 from exojax.spec import lpf
 from exojax.spec import dit
 from exojax.spec import modit
-
+from exojax.spec import initspec
 from exojax.spec import response
 import numpy as np
 from jax import jit, vmap
@@ -146,17 +146,12 @@ class AutoXS(object):
             nn=np.median(nus)
             dfnus=nus-nn            
             dfnu_lines=mdb.nu_lines-nn
-            
-            R=(len(nus)-1)/np.log(nus[-1]/nus[0]) #resolution
-            dv_lines=mdb.nu_lines/R
-            dv=nus/R
             Nfold=2
-            dLarray=make_dLarray(Nfold,1.0)
+            cnu,indexnu,R,dLarray=initspec.init_modit(mdb.nu_lines,nus,Nfold)
             nsigmaD=normalized_doppler_sigma(T,molmass,R)
-            ngammaL=gammaL/dv_lines
+            ngammaL=gammaL/(mdb.nu_lines/R)
             ngammaL_grid=dit.set_ditgrid(ngammaL,res=0.1)
-
-            xsv=modit.xsvector(dfnu_lines,nsigmaD,ngammaL,Sij,dfnus,ngammaL_grid,dLarray,dv_lines,dv)
+            xsv=modit.xsvector(cnu,indexnu,R,dLarray,nsigmaD,ngammaL,Sij,nus,ngammaL_grid)
 
             if ~checknus and self.autogridconv:
                 xsv=jnp.interp(self.nus,nus,xsv)
@@ -177,13 +172,10 @@ class AutoXS(object):
 
             sigmaD_grid=dit.set_ditgrid(sigmaD,res=0.1)
             gammaL_grid=dit.set_ditgrid(gammaL,res=0.1)
-            nn=np.median(nus)
-            dfnus=nus-nn
-            dfnu_lines=mdb.nu_lines-nn
             Nfold=2
-            dnu=nus[1]-nus[0]
-            dLarray=make_dLarray(Nfold,dnu)
-            xsv=dit.xsvector(dfnu_lines,sigmaD,gammaL,Sij,dfnus,sigmaD_grid,gammaL_grid,dLarray)
+            cnu,indexnu,dLarray=initspec.init_dit(mdb.nu_lines,nus,Nfold)
+            xsv=dit.xsvector(cnu,indexnu,dLarray,sigmaD,gammaL,Sij,nus,sigmaD_grid,gammaL_grid)
+            
             if ~checknus and self.autogridconv:
                 xsv=jnp.interp(self.nus,nus,xsv)
                 

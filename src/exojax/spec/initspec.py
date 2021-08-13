@@ -22,22 +22,26 @@ def init_lpf(nu_lines,nu_grid):
     numatrix=make_numatrix0(nu_grid,nu_lines,warning=True)
     return numatrix
 
-def init_dit(nu_lines,nu_grid):
+def init_dit(nu_lines,nu_grid,Nfold=1):
     """Initialization for DIT. i.e. Generate nu contribution and index for the line shape density (actually, this is a numpy version of getix)
 
     Args:
         nu_lines: wavenumber list of lines [Nline]
         nu_grid: wavenumenr grid [Nnugrid]
+        Nfold: number of folding
 
     Returns:
         cont (contribution) jnp.array
         index (index) jnp.array
+        dLarray: folding array
 
     Note:
        cont is the contribution for i=index. 1 - cont is the contribution for i=index+1. For other i, the contribution should be zero.
     """
     cont,index=npgetix(nu_lines,nu_grid)
-    return jnp.array(cont), jnp.array(index)
+    dnu=nu_grid[1]-nu_grid[0]
+    dLarray=make_dLarray(Nfold,dnu)
+    return jnp.array(cont), jnp.array(index), dLarray
 
 def init_modit(nu_lines,nu_grid,Nfold=1):
     """Initialization for MODIT. i.e. Generate nu contribution and index for the line shape density (actually, this is a numpy version of getix)
@@ -48,12 +52,14 @@ def init_modit(nu_lines,nu_grid,Nfold=1):
         Nfold: number of folding
 
     Returns:
-        R: spectral resolution
         cont: (contribution) jnp.array
         index: (index) jnp.array
+        R: spectral resolution
+        dLarray: folding array
 
     Note:
        cont is the contribution for i=index. 1 - cont is the contribution for i=index+1. For other i, the contribution should be zero.
+
     """
 
     R=(len(nu_grid)-1)/np.log(nu_grid[-1]/nu_grid[0]) #resolution

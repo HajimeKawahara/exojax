@@ -72,15 +72,6 @@ def xsvector(cnu,indexnu,R,dLarray,nsigmaD,ngammaL,S,nu_grid,ngammaL_grid):
     Returns:
        Cross section in the linear nu grid
 
-    Note:
-       This version uses inc3D. So, nu grid is also auto-differentiable. However, be careful for the precision of wavenumber grid, because inc3D uses float32 in JAX/GPU. For instance, consider to use dfnus=nus-np.median(nus) and dfnu_lines=mdbCO.nu_lines-np.median(nus) instead of nus (nu_grid) and nu_lines, to mitigate the problem. 
-
-    Example:
-       >>> dfnus=nus-np.median(nus)
-       >>> dfnu_lines=nu_lines-np.median(nus)
-       >>> dnus=nus[1]-nus[0]
-       >>> Nfold=3
-       >>> dLarray=jnp.linspace(1,Nfold,Nfold)/dnus 
 
     """
 

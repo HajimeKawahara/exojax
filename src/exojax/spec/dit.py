@@ -99,7 +99,7 @@ def inc3D_givenx(a,w,cx,ix,y,z,xv,yv,zv):
     return a
 
 @jit
-def xsvector(cnu,indexnu,sigmaD,gammaL,S,nu_grid,sigmaD_grid,gammaL_grid, dLarray):
+def xsvector(cnu,indexnu,dLarray,sigmaD,gammaL,S,nu_grid,sigmaD_grid,gammaL_grid):
     """Cross section vector (DIT/2D+ version; default)
     
     The original code is rundit in [addit package](https://github.com/HajimeKawahara/addit)
@@ -107,25 +107,19 @@ def xsvector(cnu,indexnu,sigmaD,gammaL,S,nu_grid,sigmaD_grid,gammaL_grid, dLarra
     Args:
        cnu: contribution by npgetix for wavenumber
        indexnu: index by npgetix for wavenumber
+       dLarray: ifold/dnu (ifold=1,..,Nfold) array
        sigmaD: Gaussian STD (Nlines)
        gammaL: Lorentzian half width (Nlines)
        S: line strength (Nlines)
        nu_grid: linear wavenumber grid
        sigmaD_grid: sigmaD grid
        gammaL_grid: gammaL grid
-       dLarray: ifold/dnu (ifold=1,..,Nfold) array
 
     Returns:
        Cross section in the linear nu grid
 
     Note:
        This function uses the precomputed neibouring contribution function for wavenumber (nu_ncf). Use npnc1D to compute nu_ncf in float64 precision.
-
-    Example:
-       >>> nu_ncf=npnc1D(mdbCO.nu_lines,nus)
-       >>> Nfold=3
-       >>> dLarray=jnp.linspace(1,Nfold,Nfold)/dnus 
-       >>> xs=xsvector(nu_ncf,sigmaD,gammaL,Sij,nus,sigmaD_grid,gammaL_grid,dLarray)
 
     """
     Ng_nu=len(nu_grid)
@@ -179,7 +173,7 @@ def xsmatrix(cnu, indexnu, sigmaDM,gammaLM,SijM,nu_grid,dgm_sigmaD,dgm_gammaL,dL
         Sij=arr[2*Nline:3*Nline]
         sigmaD_grid=arr[3*Nline:3*Nline+NDITgrid]
         gammaL_grid=arr[3*Nline+NDITgrid:3*Nline+2*NDITgrid]
-        arr=xsvector(cnu,indexnu,sigmaD,gammaL,Sij,nu_grid,sigmaD_grid,gammaL_grid,dLarray)
+        arr=xsvector(cnu,indexnu,dLarray,sigmaD,gammaL,Sij,nu_grid,sigmaD_grid,gammaL_grid)
         return carry, arr
     
     val,xsm=scan(fxs,0.0,Mat)
