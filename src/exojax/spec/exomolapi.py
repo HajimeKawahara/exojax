@@ -147,18 +147,18 @@ def read_states(statesf):
 
     """
     try:        
-        dat = pd.read_csv(statesf,compression="bz2",sep="\s+",usecols=range(4),names=("i","E","g","J"))
+        dat = vaex.from_csv(statesf,compression="bz2",sep="\s+",usecols=range(4),names=("i","E","g","J"),convert=True)
     except:
-        dat = pd.read_csv(statesf,sep="\s+",usecols=range(4),names=("i","E","g","J"))
+        dat = vaex.read_csv(statef,sep="\s+",usecols=range(4),names=("i","E","g","J"),convert=True)
         
     return dat
 
 
-def pickup_gE(states,ndtrans,trans_file,trans_lines=False):
+def pickup_gE(ndstates,ndtrans,trans_file,trans_lines=False):
     """extract g_upper (gup), E_lower (elower), and J_lower and J_upper from states DataFrame and insert them to transition DataFrame.
 
     Args:
-       states: states pandas DataFrame
+       ndstates: states numpy array
        ndtrans: transition numpy array
        trans_file: name of the transition file
        trans_lines: By default (False) we use nu_lines computed using the state file, i.e. E_upper - E_lower. If trans_nuline=True, we use the nu_lines in the transition file. Note that some trans files do not this info.
@@ -172,11 +172,11 @@ def pickup_gE(states,ndtrans,trans_file,trans_lines=False):
 
 
     """
-    ndstates=states.to_numpy()
-
+    #ndstates=states.to_numpy()
+    
     iorig=np.array(ndstates[:,0],dtype=int)
     maxii=int(np.max(iorig)+1) 
-    newstates=np.zeros((maxii,np.shape(states)[1]-1),dtype=float)
+    newstates=np.zeros((maxii,np.shape(ndstates)[1]-1),dtype=float)
     newstates[iorig,:]=ndstates[:,1:] 
 
     i_upper=np.array(ndtrans[:,0],dtype=int)

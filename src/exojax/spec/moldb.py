@@ -9,7 +9,6 @@ import jax.numpy as jnp
 import pathlib
 from exojax.spec import hapi, exomolapi, exomol
 from exojax.spec.hitran import gamma_natural as gn
-import pandas as pd
 import vaex
 
 __all__ = ['MdbExomol','MdbHit']
@@ -49,10 +48,10 @@ class MdbExomol(object):
            broadf: if False, the default broadening parameters in .def file is used
 
         Note:
-           The trans/states files can be very large. For the first time to read it, we convert it to the feather-format. After the second-time, we use the feather format instead.
+           The trans/states files can be very large. For the first time to read it, we convert it to HDF/vaex. After the second-time, we use the HDF5 format with vaex instead.
 
         """
-        explanation_states="Note: Couldn't find the feather format. We convert data to the feather format. After the second time, it will become much faster."
+        explanation_states="Note: Couldn't find the hdf5 format. We convert data to the hdf5 format. After the second time, it will become much faster."
         explanation_trans="Note: Couldn't find the hdf5 format. We convert data to the hdf5 format. After the second time, it will become much faster."
         
         self.path = pathlib.Path(path)
@@ -92,12 +91,15 @@ class MdbExomol(object):
             self.alpha_ref_def=0.07
 
         #load states
-        if self.states_file.with_suffix(".feather").exists():
-            states=pd.read_feather(self.states_file.with_suffix(".feather"))
+        if self.states_file.with_suffix(".hdf5").exists():
+            states=vaex.open(self.states_file.with_suffix(".hdf5"))
+            ndstates=vaex.array_types.to_numpy(states)
         else:
             print(explanation_states)
             states=exomolapi.read_states(self.states_file)
-            states.to_feather(self.states_file.with_suffix(".feather"))
+            states.export(self.states_file.with_suffix(".hdf5"))
+            ndstates=vaex.array_types.to_numpy(states)
+
         #load pf
         pf=exomolapi.read_pf(self.pf_file)
         self.gQT=jnp.array(pf["QT"].to_numpy()) #grid QT
@@ -133,7 +135,7 @@ class MdbExomol(object):
                 mask_needed=True
 
             #compute gup and elower
-            self._A, self.nu_lines, self._elower, self._gpp, self._jlower, self._jupper, mask_zeronu=exomolapi.pickup_gE(states,ndtrans,self.trans_file)
+            self._A, self.nu_lines, self._elower, self._gpp, self._jlower, self._jupper, mask_zeronu=exomolapi.pickup_gE(ndstates,ndtrans,self.trans_file)
 
             if self.trans_file.with_suffix(".hdf5").exists():
                 self.Sij0=ndtrans[:,4]
@@ -181,7 +183,7 @@ class MdbExomol(object):
 
                 #compute gup and elower
                 if k==0:
-                    self._A, self.nu_lines, self._elower, self._gpp, self._jlower, self._jupper, mask_zeronu=exomolapi.pickup_gE(states,ndtrans,trans_file)
+                    self._A, self.nu_lines, self._elower, self._gpp, self._jlower, self._jupper, mask_zeronu=exomolapi.pickup_gE(ndstates,ndtrans,trans_file)
                     if trans_file.with_suffix(".hdf5").exists():
                         self.Sij0=ndtrans[:,4]
                     else:
@@ -196,7 +198,7 @@ class MdbExomol(object):
                         trans["nu_lines"]=self.nu_lines
                         trans["Sij0"]=self.Sij0
                 else:
-                    Ax, nulx, elowerx, gppx, jlowerx, jupperx, mask_zeronu=exomolapi.pickup_gE(states,ndtrans,trans_file)
+                    Ax, nulx, elowerx, gppx, jlowerx, jupperx, mask_zeronu=exomolapi.pickup_gE(ndstates,ndtrans,trans_file)
                     if trans_file.with_suffix(".hdf5").exists():
                         Sij0x=ndtrans[:,4]
                     else:
