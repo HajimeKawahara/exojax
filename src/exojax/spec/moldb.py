@@ -91,13 +91,12 @@ class MdbExomol(object):
             self.alpha_ref_def=0.07
 
         #load states
-        if self.states_file.with_suffix(".hdf5").exists():
-            states=vaex.open(self.states_file.with_suffix(".hdf5"))
+        if self.states_file.with_suffix(".bz2.hdf5").exists():
+            states=vaex.open(self.states_file.with_suffix(".bz2.hdf5"))
             ndstates=vaex.array_types.to_numpy(states)
         else:
             print(explanation_states)
             states=exomolapi.read_states(self.states_file)
-            states.export(self.states_file.with_suffix(".hdf5"))
             ndstates=vaex.array_types.to_numpy(states)
 
         #load pf
