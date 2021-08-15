@@ -50,8 +50,6 @@ def inc2D_givenx(a,w,cx,ix,y,yv):
     return a
 
 
-
-
 @jit
 def xsvector(cnu,indexnu,R,dLarray,nsigmaD,ngammaL,S,nu_grid,ngammaL_grid):
     """Cross section vector (DIT/3D version)
