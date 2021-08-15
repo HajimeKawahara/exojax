@@ -15,7 +15,7 @@ from exojax.spec.modit import inc2D_givenx
 from exojax.spec.lpf import voigt
 
 @jit
-def xsvector(cnu,indexnu,R,nsigmaD,ngammaL,S,nu_grid,ngammaL_grid):
+def xsvector(cnu,indexnu,R,nsigmaD,ngammaL,S,nu_grid,ngammaL_grid,qvector):
     """Cross section vector (REDIT/3D version)
     
     The original code is rundit_fold_logredst in [addit package](https://github.com/HajimeKawahara/addit). DIT folded voigt for ESLOG for reduced wavenumebr inputs (against the truncation error) for a constant normalized beta
@@ -35,11 +35,9 @@ def xsvector(cnu,indexnu,R,nsigmaD,ngammaL,S,nu_grid,ngammaL_grid):
 
 
     """
-
     Ng_nu=len(nu_grid)
     Ng_gammaL=len(ngammaL_grid)
 
-    log_nstbeta=jnp.log(nsigmaD)
     log_ngammaL=jnp.log(ngammaL)
     log_ngammaL_grid = jnp.log(ngammaL_grid)
 
@@ -47,19 +45,18 @@ def xsvector(cnu,indexnu,R,nsigmaD,ngammaL,S,nu_grid,ngammaL_grid):
     lsda=jnp.zeros((len(nu_grid),len(ngammaL_grid))) #LSD array init
     Slsd=inc2D_givenx(lsda, S,cnu,indexnu,log_ngammaL,log_ngammaL_grid) #LSD
 
-    qvector=
-    
-    Mat=jnp.hstack([log_ngammaL_grid,Slsd])
+    al=ngammaL_grid[jnp.newaxis,:]
+    Mat=jnp.hstack([al.T,Slsd.T])
     def seqconv(x,arr):        
         carry=0.0
-        log_ngammaL_each=arr[0]
+        ngammaL_each=arr[0]
         se=arr[1:]        
-        kernel=voigt(qvector,log_nstbeta,log_ngammaL_each)
+        kernel=voigt(qvector,nsigmaD,ngammaL_each)
         arr=jnp.convolve(se,kernel,mode="same")  
         return carry, arr
     
     val,xsmm=scan(seqconv,0.0,Mat)
-    xsm=jnp.sum(xsmm,axis=0)
+    xsm=jnp.sum(xsmm,axis=0)*R/nu_grid
     
     return xsm
 
