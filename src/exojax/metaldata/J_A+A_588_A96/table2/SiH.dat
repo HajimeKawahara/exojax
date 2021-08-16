@@ -1,0 +1,11 @@
+        D0        I1        I2
+ 3.0400000       0.0       0.5
+                                   label   name Lambda   2S+1    +/-    u/g             Te             we            wxe            wye             Be           alfe           game             De           bete             re   references
+                                                                                    [cm-1]         [cm-1]         [cm-1]         [cm-1]         [cm-1]         [cm-1]         [cm-1]         [cm-1]         [cm-1]           [AA]             
+                            E ^2 Sigma^+      E      0      2      +      .      [53411.2]         1950.7              .              .        [7.528]              .              .      [3.92E-4]              .       [1.5172]     HH    EST     HH     HH     HH     HH     HH     HH     HH     HH
+                              D ^2 Delta      D      2      2      .      .      [49522.1]         1950.7              .              .         [7.90]              .              .              .              .        [1.481]     HH    EST     HH     HH     HH     HH     HH     HH     HH     HH
+                            B ^2 Sigma^+      B      0      2      +      .      [31842.2]         1950.7              .              .         [6.62]              .              .              .              .        [1.618]     HH    EST     HH     HH     HH     HH     HH     HH     HH     HH
+                            C ^2 Sigma^+      C      0      2      +      .      [31832.4]         1950.7              .              .         [1.17]              .              .              .              .         [3.85]     HH    EST     HH     HH     HH     HH     HH     HH     HH     HH
+                              A ^2 Delta      A      2      2      .      .        24300.4        1858.90         99.175              .         7.4664         0.3445       -0.04185      [5.24E-4]              .        1.52347     HH     HH     HH     HH     HH     HH     HH     HH     HH     HH
+                               X ^2 Pi_r      X      1      2      .      .              0      2042.5229      36.055200     0.12540000      7.5038980     0.21814000         0.0017      [3.97E-4]              .        1.52010     HH     IR     IR     IR     IR     IR     HH     HH     HH     HH
+END

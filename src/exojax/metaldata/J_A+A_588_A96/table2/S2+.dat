@@ -1,0 +1,11 @@
+        D0        I1        I2
+ 5.1430000       0.0       0.0
+                                   label   name Lambda   2S+1    +/-    u/g             Te             we            wxe            wye             Be           alfe           game             De           bete             re   references
+                                                                                    [cm-1]         [cm-1]         [cm-1]         [cm-1]         [cm-1]         [cm-1]         [cm-1]         [cm-1]         [cm-1]           [AA]             
+                         B ^2 Sigma_g ^-      B      0      2      -      g          41820            540              .              .          0.276              .              .              .              .        (1.983)     HH     HH     HH     HH    EST     HH     HH     HH     HH     HH
+                         b ^4 Sigma_g ^-      b      0      4      -      g          30920            580              .              .          0.276              .              .              .              .        (1.936)     HH     HH     HH     HH    EST     HH     HH     HH     HH     HH
+                               A ^2 Pi_u      A      1      2      .      u          22390            530              .              .          0.276              .              .              .              .        (2.042)     HH     HH     HH     HH    EST     HH     HH     HH     HH     HH
+                               a ^2 Pi_u      a      1      2      .      u          17440            600              .              .          0.276              .              .              .              .        (2.058)     HH     HH     HH     HH    EST     HH     HH     HH     HH     HH
+                             X ^2 Pi_g,r      X      1      1      .      g            470            790              .              .          0.276              .              .              .              .        (1.825)     HH     HH     HH     HH    EST     HH     HH     HH     HH     HH
+                             X ^2 Pi_g,r      X      1      1      .      g              0            790              .              .          0.276              .              .              .              .        (1.825)     HH     HH     HH     HH    EST     HH     HH     HH     HH     HH
+END

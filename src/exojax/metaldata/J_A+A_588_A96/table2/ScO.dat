@@ -1,0 +1,10 @@
+        D0        I1        I2
+ 6.9214000       3.5       0.0
+                                   label   name Lambda   2S+1    +/-    u/g             Te             we            wxe            wye             Be           alfe           game             De           bete             re   references
+                                                                                    [cm-1]         [cm-1]         [cm-1]         [cm-1]         [cm-1]         [cm-1]         [cm-1]         [cm-1]         [cm-1]           [AA]             
+                            B ^2 Sigma^+      B      0      2      +      .        20645.1         825.47           4.21              .      [0.48308]         0.0032              .      [6.74E-7]              .      [1.71986]     HH     HH     HH     HH     HH     HH     HH     HH     HH     HH
+                               A ^2 Pi_r      A      1      2      .      .        16547.0          876.0           5.00              .      [0.50277]       (0.0037)              .      [6.54E-7]              .      [1.68585]     HH     HH     HH     HH     HH     HH     HH     HH     HH     HH
+                           A' ^2 Delta_r     A'      2      1      .      .        15135.9          845.9            4.9              .          0.500              .              .              .              .              .     HH     HH     HH     HH    EST     HH     HH     HH     HH     HH
+                           A' ^2 Delta_r     A'      2      1      .      .        15029.8          878.1              .              .          0.500              .              .              .              .              .     HH    EST     HH     HH    EST     HH     HH     HH     HH     HH
+                            X ^2 Sigma^+      X      0      2      +      .              0       [964.95]           4.20              .      [0.51343]         0.0033              .      [5.85E-7]              .      [1.66826]     HH     HH     HH     HH     HH     HH     HH     HH     HH     HH
+END

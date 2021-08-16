@@ -21,7 +21,7 @@ class AdbVald(object):
         #\\\\
     
     """
-    def __init__(self,path,nurange=[-np.inf,np.inf],margin=1.0,crit=-np.inf, bkgdatm="H2", broadf=True): #tako210721
+    def __init__(self,path,nurange=[-np.inf,np.inf],margin=1.0,crit=-np.inf, bkgdatm="H2", broadf=True, pathdat=pathlib.Path("~/ghR/exojax/src/exojax/metaldata")): #tako210721
     
         """Atomic database for VALD3 "Long format"
 
@@ -57,8 +57,9 @@ class AdbVald(object):
 
 
         #load partition function (for 284 atomic species) from Barklem et al. (2016)
-        pff = "/home/tako/work/.database/Barklem_2016/J_A+A_588_A96/table8.dat"
-        pfTf = "/home/tako/work/.database/Barklem_2016/J_A+A_588_A96/table8_T.dat"
+        pff = pathdat/"J_A+A_588_A96/table8.dat"
+        pfTf = pathdat/"J_A+A_588_A96/table8_T.dat"
+        #"/home/tako/work/.database/Barklem_2016/J_A+A_588_A96/...
 
         pfTdat = pd.read_csv(pfTf, sep="\s+")
         self.T_gQT = jnp.array(pfTdat.columns[1:].to_numpy(dtype=float)) #T for grid QT    #self.
@@ -101,7 +102,7 @@ class AdbVald(object):
 
 
         #Compile atomic-specific data for each line
-        ipccf = "/home/tako/ghR/exojax_0/src/exojax/spec/ipcc_Asplund2009_pre.dat" #tako210804
+        ipccf = pathdat/"ipcc_Asplund2009_pre.dat"
         ipccc = ('ielem', 'ionizationE1', 'dam1', 'dam2', 'solarA', 'mass', 'ionizationE2')
         self.ipccd = pd.read_csv(ipccf, sep="\s+", skiprows=1, usecols=[1,2,3,4,5,6,7], names=ipccc)
         

@@ -1,0 +1,7 @@
+        D0        I1        I2
+ 3.3000000       0.0       1.5
+                                   label   name Lambda   2S+1    +/-    u/g             Te             we            wxe            wye             Be           alfe           game             De           bete             re   references
+                                                                                    [cm-1]         [cm-1]         [cm-1]         [cm-1]         [cm-1]         [cm-1]         [cm-1]         [cm-1]         [cm-1]           [AA]             
+                             A (^2 Pi_i)      A      1      2      .      .              .          [595]              .              .              .              .              .              .              .              .     HH     HH     HH     HH     HH     HH     HH     HH     HH     HH
+                             X (^2 Pi_i)      X      1      2      .      .              0          595.0              .              .          0.150              .              .              .              .              .     HH    EST     HH     HH    EST     HH     HH     HH     HH     HH
+END

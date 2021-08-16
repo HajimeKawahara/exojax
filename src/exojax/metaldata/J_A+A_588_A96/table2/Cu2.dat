@@ -1,0 +1,8 @@
+        D0        I1        I2
+ 2.0430000       1.5       1.5
+                                   label   name Lambda   2S+1    +/-    u/g             Te             we            wxe            wye             Be           alfe           game             De           bete             re   references
+                                                                                    [cm-1]         [cm-1]         [cm-1]         [cm-1]         [cm-1]         [cm-1]         [cm-1]         [cm-1]         [cm-1]           [AA]             
+                            B ^1 Sigma^+      B      0      1      +      u       21758.35       [242.15]            2.0          -0.02       0.098890       0.000606              .       6.30E-08              .         2.3276     HH     HH     HH     HH     HH     HH     HH     HH     HH     HH
+                             A (^1 Pi_u)      A      1      1      .      u        20433.2          191.9          0.348         -0.018      (0.08185)      (0.00062)              .  (0.000000038)              .       (2.5584)     HH     HH     HH     HH     HH     HH     HH     HH     HH     HH
+                            X ^1 Sigma^+      X      0      1      +      g              0       [264.55]          1.025         0.0008       0.108743       0.000614              .       7.16E-08              .         2.2197     HH     HH     HH     HH     HH     HH     HH     HH     HH     HH
+END

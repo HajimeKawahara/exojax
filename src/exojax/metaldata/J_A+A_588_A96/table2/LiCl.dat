@@ -1,0 +1,11 @@
+        D0        I1        I2
+ 4.8180000       1.5       1.5
+                                   label   name Lambda   2S+1    +/-    u/g             Te             we            wxe            wye             Be           alfe           game             De           bete             re   references
+                                                                                    [cm-1]         [cm-1]         [cm-1]         [cm-1]         [cm-1]         [cm-1]         [cm-1]         [cm-1]         [cm-1]           [AA]             
+                           K 3p-pi ^2 Pi K3p-pi      1      2      .      .         513500           1090              .              .          0.707              .              .              .              .              .     HH     HH     HH     HH    EST     HH     HH     HH     HH     HH
+                      J 3-sigma ^2 SigmaJ3-sigm      0      2      .      .         505900           1030              .              .          0.707              .              .              .              .              .     HH     HH     HH     HH    EST     HH     HH     HH     HH     HH
+                           I 2p-pi ^2 Pi I2p-pi      1      2      .      .         479200            850              .              .          0.707              .              .              .              .              .     HH     HH     HH     HH    EST     HH     HH     HH     HH     HH
+                      H 2-sigma ^2 SigmaH2-sigm      0      2      .      .         463900            950              .              .          0.707              .              .              .              .              .     HH     HH     HH     HH    EST     HH     HH     HH     HH     HH
+                                       A      A      .      .      .      .              .              .              .              .              .              .              .              .              .              .     HH     HH     HH     HH     HH     HH     HH     HH     HH     HH
+                            X ^1 Sigma^+      X      0      1      +      .              0      642.95453      4.4725300    0.020118000     0.70652247   0.0080101900     0.00003966      3.4087E-6     -0.0190E-6       2.020673     HH     IR     IR     IR     IR     IR     HH     HH     HH     HH
+END

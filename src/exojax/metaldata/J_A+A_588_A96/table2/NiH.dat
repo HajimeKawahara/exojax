@@ -1,0 +1,11 @@
+        D0        I1        I2
+ 2.4510000       0.0       0.5
+                                   label   name Lambda   2S+1    +/-    u/g             Te             we            wxe            wye             Be           alfe           game             De           bete             re   references
+                                                                                    [cm-1]         [cm-1]         [cm-1]         [cm-1]         [cm-1]         [cm-1]         [cm-1]         [cm-1]         [cm-1]           [AA]             
+                       C_2  ^2 Delta_3/2    C_2      2      1      .      .              .              .              .              .        [6.311]              .              .       [7.6E-4]              .        [1.642]     HH     HH     HH     HH     HH     HH     HH     HH     HH     HH
+                       C_1  ^2 Delta_5/2    C_1      2      2      .      .              .              .              .              .        [6.156]              .              .       [6.1E-4]              .       [1.6627]     HH     HH     HH     HH     HH     HH     HH     HH     HH     HH
+                          B ^2 Delta_5/2      B      2      2      .      .          16193         1570.9          34.55              .          6.846              .              .              .              .              .     HH     HH     HH     HH    EST     HH     HH     HH     HH     HH
+                          A ^2 Delta_5/2      A      2      2      .      .              .              .              .              .        [6.283]              .              .      [4.75E-4]              .       [1.6458]     HH     HH     HH     HH     HH     HH     HH     HH     HH     HH
+                       X_2  ^2 Delta_3/2    X_2      2      2      .      .          (980)         1748.8              .              .        [7.781]              .              .       [5.9E-4]              .       [1.4789]     HH    EST     HH     HH     HH     HH     HH     HH     HH     HH
+                       X_1  ^2 Delta_5/2    X_1      2      2      .      .              0       [1926.6]           (38)              .        [7.700]          0.231              .      [4.81E-4]              .         1.4756     HH     HH     HH     HH     HH     HH     HH     HH     HH     HH
+END

@@ -1,0 +1,11 @@
+        D0        I1        I2
+ 2.9000000       4.5       0.5
+                                   label   name Lambda   2S+1    +/-    u/g             Te             we            wxe            wye             Be           alfe           game             De           bete             re   references
+                                                                                    [cm-1]         [cm-1]         [cm-1]         [cm-1]         [cm-1]         [cm-1]         [cm-1]         [cm-1]         [cm-1]           [AA]             
+                                   E 0^+     E0      .      .      .      .        32940.3      [1105.58]           30.1              .         3.5456         0.0525              .    [0.0001401]              .         2.1772     HH     HH     HH     HH     HH     HH     HH     HH     HH     HH
+                              D ^1 Sigma      D      0      1      .      .              .              .              .              .         [3.88]              0              .              .              .        [2.081]     HH     HH     HH     HH     HH     HH     HH     HH     HH     HH
+                              C ^1 Sigma      C      0      1      .      .              .       [1313.6]              .              .           4.37           0.11              .              .              .          1.961     HH     HH     HH     HH     HH     HH     HH     HH     HH     HH
+                                   B 0^+     B0      .      1      .      .          21263      [1643.07]           (47)              .         5.3078         0.1861              .    [0.0002010]              .         1.7795     HH     HH     HH     HH     HH     HH     HH     HH     HH     HH
+                        A 1 (^3 Sigma^-)     A1      0      3      -      .         4917.1      [1669.16]           35.4              .         5.2386         0.1546              .    [0.0001904]              .         1.7912     HH     HH     HH     HH     HH     HH     HH     HH     HH     HH
+                     X 0^+  (^3 Sigma^-)     X0      0      3      -      .              0      [1635.73]           31.6              .          5.137          0.148              .     [0.000183]              .          1.805     HH     HH     HH     HH     HH     HH     HH     HH     HH     HH
+END
