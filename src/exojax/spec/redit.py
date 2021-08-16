@@ -13,6 +13,7 @@ from jax.ops import index as joi
 from exojax.spec.dit import getix
 from exojax.spec.modit import inc2D_givenx
 from exojax.spec.lpf import voigt
+from jax import scipy as jsc
 
 @jit
 def xsvector(cnu,indexnu,R,nsigmaD,ngammaL,S,nu_grid,ngammaL_grid,qvector):
@@ -53,7 +54,8 @@ def xsvector(cnu,indexnu,R,nsigmaD,ngammaL,S,nu_grid,ngammaL_grid,qvector):
         ngammaL_each=arr[0]
         se=arr[1:]        
         kernel=voigt(qvector,nsigmaD,ngammaL_each)
-        arr=jnp.convolve(se,kernel,mode="same")  
+        #arr=jnp.convolve(se,kernel,mode="same")
+        arr=jsc.signal.convolve(se,kernel,mode="same")
         return carry, arr
     
     val,xsmm=scan(seqconv,0.0,Mat)

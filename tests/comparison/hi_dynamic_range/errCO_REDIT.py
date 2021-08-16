@@ -45,9 +45,9 @@ def comperr(Nnu,plotfig=False):
     nsigmaD=normalized_doppler_sigma(Tfix,Mmol,R)
     ngammaL=gammaL/(mdbCO.nu_lines/R)
     ngammaL_grid=set_ditgrid(ngammaL)
-    Nc=int(len(nus)/2.0)-1
-    qvector=jnp.arange(-Nc,Nc+1,1)*dq
-    print(Nc)
+    Nq=int(len(nus)/2.0)-1
+    qvector=jnp.arange(-Nq,Nq+1,1)*dq
+    print(Nq)
     xs_redit_lp=redit_xsvector(cnu,indexnu,R,nsigmaD,ngammaL,Sij,nus,ngammaL_grid,qvector)
     wls_redit = 100000000/nus
     
