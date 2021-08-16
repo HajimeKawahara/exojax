@@ -8,8 +8,6 @@ import pandas as pd
 def read_ExStellar(stellarf):
     """VALD IO for "Extract stellar" file (long format)
     Note:
-        =
-        =
         See https://www.astro.uu.se/valdwiki/select_output
 
     Args:
@@ -26,8 +24,6 @@ def read_ExStellar(stellarf):
 def read_ExAll(allf):
     """VALD IO for "Extract all" file (long format)
     Note:
-        =
-        =
         See https://www.astro.uu.se/valdwiki/presformat_output
 
     Args:
@@ -75,11 +71,11 @@ def pickup_param(ExAll):
     
     Returns:
         A:  Einstein coefficient in [s-1]
-        nu_lines:  transition waveNUMBER in [cm-1] (NOT frequency in [s-1])
-        elower: lower excitation potential [eV]
+        nu_lines:  transition waveNUMBER in [cm-1] (#NOT frequency in [s-1])
+        elower: lower excitation potential [cm-1] (#converted from eV)
         gupper: upper statistical weight
-        jlower: lower rotational quantum number (total angular momentum)
-        jupper
+        jlower: lower J (rotational quantum number, total angular momentum)
+        jupper: upper J
         ielem:  atomic number (e.g., Fe=26)
         iion:  ionized level (e.g., neutral=1, singly)
         vdWdamp:  van der Waals damping parameters

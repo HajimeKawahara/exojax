@@ -10,64 +10,56 @@ import pandas as pd
 __all__ = ['AdbVald',]
 
 class AdbVald(object):
-    """ molecular database of ExoMol
+    """ atomic database of VALD3
     
     AdbVald is a class for VALD3.
     
     Attributes:
-        ...
+        nu_lines (nd array):      line center (cm-1) (#NOT frequency in (s-1))
+        dev_nu_lines (jnp array): line center (cm-1) in device
+        Sij0 (nd array): line strength at T=Tref (cm)
+        logsij0 (jnp array): log line strength at T=Tref
+        A (jnp array): Einstein A coeeficient in (s-1)
+        gamma_natural (jnp array): gamma factor of the natural broadening
         elower (jnp array): the lower state energy (cm-1)
-        ...
-        #\\\\
-    
+        gupper: (jnp array): upper statistical weight
+        jlower (jnp array): lower J (rotational quantum number, total angular momentum)
+        jupper (jnp array): upper J
+        QTmask (jnp array): identifier of species for Q(T)
+        ielem (jnp array):  atomic number (e.g., Fe=26)
+        iion (jnp array):  ionized level (e.g., neutral=1, singly)
+        vdWdamp (jnp array):  van der Waals damping parameters
+        gamRad (jnp array): gamma(HWHM of Lorentzian) of radiation damping
+            
     """
-    def __init__(self,path,nurange=[-np.inf,np.inf],margin=1.0,crit=-np.inf, bkgdatm="H2", broadf=True, pathdat=pathlib.Path("~/ghR/exojax/src/exojax/metaldata")): #tako210721
+    def __init__(self, path, nurange=[-np.inf,np.inf], margin=1.0, crit=-np.inf, pathdat=pathlib.Path("~/ghR/exojax/src/exojax/metaldata")): #tako210721
     
         """Atomic database for VALD3 "Long format"
 
         Args:
-           #\\\\
+           path: path for linelist obtained from VALD3 with a query of "Long format"
+           nurange: wavenumber range list (cm-1) or wavenumber array
+           margin: margin for nurange (cm-1)
+           crit: line strength lower limit for extraction
+           %\\\\20210816 bkgdatm: background atmosphere for broadening. e.g. H2, He,
+           %\\\\20210816 broadf: if False, the default broadening parameters in .def file is used
            
         Note:
-           #\\\\
+           (written with reference to moldb.py, but without using feather format)
 
         """
         #explanation="
         
-        self.path = pathlib.Path(path)
-        #t0=self.path.parents[0].stem
-        #molec=t0+"__"+str(self.path.stem)
-        self.bkgdatm=bkgdatm
-        print("Background atmosphere: ",self.bkgdatm)
-        #molecbroad=t0+"__"+self.bkgdatm
-        
-        self.crit = crit
+        #load args
+        self.vald3_file = pathlib.Path(path) #VALD3 output
+        #self.path = pathlib.Path(path) #molec=t0+"__"+str(self.path.stem) #t0=self.path.parents[0].stem
+        self.nurange = [np.min(nurange),np.max(nurange)]
         self.margin = margin
-        self.nurange=[np.min(nurange),np.max(nurange)]
-        self.broadf=broadf
-        #VALD3 output
-        self.vald3_file = self.path #tako210721
-        #Where exomol files are
-        #self.states_file = self.path/pathlib.Path(molec+".states.bz2")
-        #self.pf_file = self.path/pathlib.Path(molec+".pf")
-        #self.def_file = self.path/pathlib.Path(molec+".def")
-        #self.broad_file = self.path/pathlib.Path(molecbroad+".broad")
-
-
-
-
-        #load partition function (for 284 atomic species) from Barklem et al. (2016)
-        pff = pathdat/"J_A+A_588_A96/table8.dat"
-        pfTf = pathdat/"J_A+A_588_A96/table8_T.dat"
-        #"/home/tako/work/.database/Barklem_2016/J_A+A_588_A96/...
-
-        pfTdat = pd.read_csv(pfTf, sep="\s+")
-        self.T_gQT = jnp.array(pfTdat.columns[1:].to_numpy(dtype=float)) #T for grid QT    #self.
-        self.pfdat = pd.read_csv(pff, sep="\s+", comment="#", names=pfTdat.columns)
-        self.gQT_284species = jnp.array(self.pfdat.iloc[:, 1:].to_numpy(dtype=float)) #grid Q vs T vs Species
-
+        self.crit = crit
+        #self.bkgdatm=bkgdatm
+        #self.broadf=broadf
         
-
+        
 
         #load vald file ("Extract Stellar" request)
         print("Reading VALD file")
@@ -81,14 +73,24 @@ class AdbVald(object):
         
         
         
+        #load partition function (for 284 atomic species) from Barklem et al. (2016)
+        pff = pathdat/"J_A+A_588_A96/table8.dat"
+        pfTf = pathdat/"J_A+A_588_A96/table8_T.dat"
+        #"/home/tako/work/.database/Barklem_2016/J_A+A_588_A96/...
+
+        pfTdat = pd.read_csv(pfTf, sep="\s+")
+        self.T_gQT = jnp.array(pfTdat.columns[1:].to_numpy(dtype=float)) #T for grid QT    #self.
+        self.pfdat = pd.read_csv(pff, sep="\s+", comment="#", names=pfTdat.columns)
+        self.gQT_284species = jnp.array(self.pfdat.iloc[:, 1:].to_numpy(dtype=float)) #grid Q vs T vs Species
+
         self.Tref=296.0 #\\\\
         self.QTref_284 = np.array(self.QT_interp_284(self.Tref))
-        self.QTmask = self.make_QTmask(valdd) #identify species for each line
+        self._QTmask = self.make_QTmask(valdd) #identify species for each line
 
 
 
         ##Line strength: input shoud be ndarray not jnp array
-        self.Sij0 = vald3.Sij0(self._A, self._gupper, self.nu_lines, self._elower, self.QTref_284, self.QTmask)
+        self.Sij0 = vald3.Sij0(self._A, self._gupper, self.nu_lines, self._elower, self.QTref_284, self._QTmask)
 
 
 
@@ -113,11 +115,14 @@ class AdbVald(object):
         self.atomicmass = jnp.array(list(map(lambda x: self.ipccd[self.ipccd['ielem']==x].iat[0, 5], self.ielem)))
         
             
+            
     #End of the CONSTRUCTOR definition ↑
 
 
 
+
     #Defining METHODS ↓
+    
     
     
     def masking(self,mask):
@@ -138,7 +143,7 @@ class AdbVald(object):
         self._gupper=self._gupper[mask]
         self._jlower=self._jlower[mask]
         self._jupper=self._jupper[mask]
-        self.QTmask=self.QTmask[mask]
+        self._QTmask=self._QTmask[mask]
         self._ielem=self._ielem[mask]
         self._iion=self._iion[mask]
         self._vdWdamp=self._vdWdamp[mask]
@@ -148,17 +153,19 @@ class AdbVald(object):
         self.dev_nu_lines=jnp.array(self.nu_lines)
         self.logsij0=jnp.array(np.log(self.Sij0))
         self.A=jnp.array(self._A)
-        self.gamma_natural=vald3.gamma_natural(self.A) #gamma_natural [cm-1] #natural broadeningの原理はmoleculeと同様のはず(tako210802)
+        self.gamma_natural=vald3.gamma_natural(self.A) #gamma_natural [cm-1]
         self.elower=jnp.array(self._elower)
         self.gupper=jnp.array(self._gupper)
         self.jlower=jnp.array(self._jlower,dtype=int)
         self.jupper=jnp.array(self._jupper,dtype=int)
         
-        self.QTmask=jnp.array(self.QTmask,dtype=int)
+        self.QTmask=jnp.array(self._QTmask,dtype=int)
         self.ielem=jnp.array(self._ielem,dtype=int)
         self.iion=jnp.array(self._iion,dtype=int)
         self.vdWdamp=jnp.array(self._vdWdamp)
         self.gamRad=jnp.array(self._gamRad)
+
+
 
     def Atomic_gQT(self, atomspecies):
         """Select grid of partition function especially for the species of interest
@@ -175,6 +182,8 @@ class AdbVald(object):
         gQT = self.gQT_284species[ np.where(self.pfdat['T[K]']==atomspecies_Roman) ][0]
         return gQT
     
+    
+    
     def QT_interp(self, atomspecies, T):
         """interpolated partition function
 
@@ -189,6 +198,8 @@ class AdbVald(object):
         gQT = self.Atomic_gQT(atomspecies)
         return jnp.interp(T, self.T_gQT, gQT)
 
+
+
     def qr_interp(self, atomspecies, T):
         """interpolated partition function ratio
 
@@ -201,6 +212,8 @@ class AdbVald(object):
 
         """
         return self.QT_interp(atomspecies,T)/self.QT_interp(atomspecies,self.Tref)
+
+
 
     def QT_interp_284(self, T):
         """interpolated partition function of all 284 species
@@ -219,6 +232,8 @@ class AdbVald(object):
         listofQT = list(map(lambda x: jnp.interp(T, self.T_gQT, x), listofDA_gQT_eachspecies))
         QT_284 = jnp.array(listofQT)
         return QT_284
+
+
 
     def make_QTmask(self, ExAll): #identify species for each line
         """Make array for assigning identifier of Q(Tref) to each line
