@@ -104,24 +104,31 @@ def xsvector(cnu,indexnu,R,dq,nsigmaD,ngammaL,S,nu_grid,ngammaL_grid):
     w=2.0*ngammaL_grid #Ngw
     vmax=dv*Ng_nu/2.0 #N_v*dv 
     x=jnp.log(w/vmax) #Ngw
-    A = w*jnp.exp(0.23299924*jnp.exp(x/0.53549119) + 6.74408847) #Ngw
-    B = w*jnp.exp(0.09226203*jnp.exp(x/0.49589094) + 6.82193751) #Ngw
+    A = w*jnp.exp(-(0.23299924*jnp.exp(x/0.53549119) + 6.74408847)) #Ngw
+    B = w*jnp.exp(-(0.09226203*jnp.exp(x/0.49589094) + 6.82193751)) #Ngw
     w_corr = vmax*jnp.exp(0.18724358*jnp.exp(x/0.50806536) - 0.93309186) #Ngw
     w = w_corr/dv #Ngw
     gE_FT = 2.*w[None,:]/(1. + 4.*jnp.pi**2*k[:,None]**2*w[None,:]**2)  #Nnu x Ngw
     Err_corr = A[None,:]*gE_FT*100/vmax**2 #Nnu x Ngw
-    zeroindex=jnp.zeros(len(k),dtype=int) #0 [Nnu]
-    zeroindex=index_add(zeroindex, 0, 1.0)
-    Err_corr = Err_corr + zeroindex[:,None]*B[None,:]*200/vmax/dv
-    I_alternate = 1-(jnp.arange(len(k))&1)*2 #Nnu
-    Err_corr = Err_corr*I_alternate[:,None]
+
+ #   zeroindex=jnp.zeros(len(k),dtype=int) #0 [Nnu]
+ #   zeroindex=index_add(zeroindex, 0, 1.0)
+ #   Err_corr = Err_corr + zeroindex[:,None]*B[None,:]*200/vmax/dv
+ #   I_alternate = 1-(jnp.arange(len(k))&1)*2 #Nnu
+ #   Err_corr = Err_corr*I_alternate[:,None]
 
 
+    I_g_FT= fftval[:Ng_nu]
+    Err_corr=Err_corr[:Ng_nu]
+    print(jnp.shape(Err_corr))
+    print(jnp.shape(nu_grid))
 
-    I_g_FT= fftval[:Ng_nu]#*R/nu_grid
-    I_g_FT = I_g_FT - Err_corr[:Ng_nu]
+    I_g_FT = I_g_FT - (Err_corr)/(R/nu_grid[:,None])
     xs = jnp.sum(jnp.fft.irfft(I_g_FT,axis=0),axis=(1,))[:Ng_nu]*R/nu_grid
+    print(xs)
     
+#    import sys
+#    sys.exit()
     
     return xs
 

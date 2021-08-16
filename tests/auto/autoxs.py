@@ -11,7 +11,7 @@ nuslog=numpy.logspace(numpy.log10(1900.0),numpy.log10(2300.0),40000,dtype=numpy.
 autoxs=AutoXS(nuslog,"ExoMol","CO",xsmode="MODIT") #using ExoMol CO (12C-16O). HITRAN and HITEMP are also supported.  
 xsv0=autoxs.xsection(1000.0,1.0) #cross section for 1000K, 1bar (cm2)
 print(xsv0)
-plt.plot(nus,xsv0,label="MODIT")
+plt.plot(nuslog,xsv0,label="MODIT")
 plt.legend()
 plt.show()
 
