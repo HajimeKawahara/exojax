@@ -12,7 +12,9 @@ from jax import jit
 from jax import vmap
 from jax.lax import scan
 import tqdm
-from exojax.spec.ditkernel import folded_voigt_kernel_logst
+#from exojax.spec.ditkernel import folded_voigt_kernel_logst
+from exojax.spec.ditkernel import voigt_kernel_logst
+
 from jax.ops import index_add
 from jax.ops import index as joi
 from exojax.spec.dit import getix
@@ -50,8 +52,8 @@ def inc2D_givenx(a,w,cx,ix,y,yv):
     return a
 
 
-@jit
-def xsvector(cnu,indexnu,R,dLarray,nsigmaD,ngammaL,S,nu_grid,ngammaL_grid):
+#@jit
+def xsvector(cnu,indexnu,R,dq,nsigmaD,ngammaL,S,nu_grid,ngammaL_grid):
     """Cross section vector (MODIT)
     
     The original code is rundit_fold_logredst in [addit package](https://github.com/HajimeKawahara/addit). MODIT folded voigt for ESLOG for reduced wavenumebr inputs (against the truncation error) for a constant normalized beta
@@ -60,7 +62,7 @@ def xsvector(cnu,indexnu,R,dLarray,nsigmaD,ngammaL,S,nu_grid,ngammaL_grid):
        cnu: contribution by npgetix for wavenumber
        indexnu: index by npgetix for wavenumber
        R: spectral resolution
-       dLarray: ifold/dnu (ifold=1,..,Nfold) array
+       dq: 
        nsigmaD: normaized Gaussian STD (Nlines)
        gammaL: Lorentzian half width (Nlines)
        S: line strength (Nlines)
@@ -81,17 +83,53 @@ def xsvector(cnu,indexnu,R,dLarray,nsigmaD,ngammaL,S,nu_grid,ngammaL_grid):
     log_ngammaL_grid = jnp.log(ngammaL_grid)
 
     k = jnp.fft.rfftfreq(2*Ng_nu,1)
-#    k = jnp.fft.rfftfreq(4*Ng_nu,1) #Nv=4   
     lsda=jnp.zeros((len(nu_grid),len(ngammaL_grid))) #LSD array
     Slsd=inc2D_givenx(lsda, S,cnu,indexnu,log_ngammaL,log_ngammaL_grid) #Lineshape Density
     Sbuf=jnp.vstack([Slsd,jnp.zeros_like(Slsd)])
-    #Sbuf=jnp.vstack([Slsd,jnp.zeros_like(Slsd),jnp.zeros_like(Slsd),jnp.zeros_like(Slsd)]) #Nv=4
-    til_Slsd = jnp.fft.rfft(Sbuf,axis=0)
+    til_Slsd = jnp.fft.rfft(Sbuf,axis=0)    
+    til_Voigt=voigt_kernel_logst(k, log_nstbeta,log_ngammaL_grid)
+#    til_Voigt=folded_voigt_kernel_logst(k, log_nstbeta,log_ngammaL_grid,dLarray) #OLD folding
+    #-----------------------------------------------
+    #normal MODIT
+    #fftvalsum = jnp.sum(til_Slsd*til_Voigt,axis=(1,))    
+    #xs=jnp.fft.irfft(fftvalsum)[:Ng_nu]*R/nu_grid
+    #-----------------------------------------------
+    #normal MODIT separate sum
+    #fftval = til_Slsd*til_Voigt
+    #xs = jnp.sum(jnp.fft.irfft(fftval,axis=0),axis=(1,))[:Ng_nu]*R/nu_grid
     
-    til_Voigt=folded_voigt_kernel_logst(k, log_nstbeta,log_ngammaL_grid,dLarray)
-    fftvalsum = jnp.sum(til_Slsd*til_Voigt,axis=(1,))
     
-    xs=jnp.fft.irfft(fftvalsum)[:Ng_nu]*R/nu_grid
+    #correction factor
+    dv=dq #
+    w=2.0*ngammaL_grid #Ngw
+    vmax=nu_grid[-1]/2.0
+    x=jnp.log(w/vmax) #Ngw
+    A = w*jnp.exp(0.23299924*jnp.exp(x/0.53549119) + 6.74408847) #Ngw
+    B = w*jnp.exp(0.09226203*jnp.exp(x/0.49589094) + 6.82193751) #Ngw
+    w_corr = vmax*jnp.exp(0.18724358*jnp.exp(x/0.50806536) - 0.93309186) #Ngw
+    w = w_corr/dv #Ngw
+    #gE_FT = lambda x,w: 2*w / (1 + 4*pi**2*x**2*w**2) 
+    #Err_corr = A*gE_FT(x_lin, w_corr/dv)*100/vmax**2
+    gE_FT = 2.*w[None,:]/(1. + 4.*jnp.pi**2*k[:,None]**2*w[None,:]**2)  #Nnu x Ngw
+    #(k, w_corr/dv)
+    Err_corr = A[None,:]*gE_FT*100/vmax**2 #Nnu x Ngw
+    #    Err_corr[0] += B*200/vmax/dv #Ngw
+    zeroindex=jnp.zeros(len(k),dtype=int) #0 [Nnu]
+    zeroindex=index_add(zeroindex, 0, 1.0)
+    Err_corr = Err_corr + zeroindex[:,None]*B[None,:]*200/vmax/dv
+    
+    #index_add(Err_corr,zeroindex,B*200/vmax/dv)
+    I_alternate = 1-(jnp.arange(len(k))&1)*2 #Nnu
+    Err_corr = Err_corr*I_alternate[:,None]
+
+
+    fftval=til_Slsd*til_Voigt
+    #fftvalsum = jnp.sum(fftval,axis=(1,))
+    I_g_FT= fftval[:Ng_nu]#*R/nu_grid
+    I_g_FT = I_g_FT# - Err_corr[:Ng_nu]
+    #    xs = jnp.sum(jnp.fft.ifftshift(jnp.fft.irfft(I_g_FT)),axis=(1,))*R/nu_grid
+    xs = jnp.sum(jnp.fft.irfft(I_g_FT,axis=0),axis=(1,))[:Ng_nu]*R/nu_grid
+    
     
     return xs
 
@@ -190,59 +228,4 @@ def precompute_dgmatrix(set_gm_minmax,res=0.1,adopt=True):
     return gm
 
 if __name__ == "__main__":
-    import matplotlib.pyplot as plt
-    from exojax.spec.hitran import SijT, doppler_sigma, gamma_hitran, gamma_natural
-    from exojax.spec import rtcheck, moldb
-    from exojax.spec.dit import make_dLarray
-    from exojax.spec.dit import set_ditgrid
-    from exojax.spec.hitran import normalized_doppler_sigma
-
-    nus_modit=np.logspace(np.log10(3000),np.log10(6000.0),1000000,dtype=np.float64)
-
-    mdbCO=moldb.MdbHit('/home/kawahara/exojax/data/CO/05_hit12.par',nus_modit)
-    #USE TIPS partition function
-    Q296=np.array([107.25937215917970,224.38496958496091,112.61710362499998,\
-                   660.22969049609367,236.14433662109374,1382.8672147421873])
-    Q1000=np.array([382.19096582031250,802.30952197265628,402.80326733398437,\
-                    2357.1041210937501,847.84866308593757,4928.7215078125000])
-    qr=Q1000/Q296
-    qt=np.ones_like(mdbCO.isoid,dtype=np.float64)
-    for idx,iso in enumerate(mdbCO.uniqiso):
-        mask=mdbCO.isoid==iso
-        qt[mask]=qr[idx]
-    
-    Mmol=28.010446441149536
-    Tref=296.0
-    Tfix=1000.0
-    Pfix=1.e-3 #
-    
-    Sij=SijT(Tfix,mdbCO.logsij0,mdbCO.nu_lines,mdbCO.elower,qt)
-    gammaL = gamma_hitran(Pfix,Tfix,Pfix, mdbCO.n_air, mdbCO.gamma_air, mdbCO.gamma_self)
-    #+ gamma_natural(A) #uncomment if you inclide a natural width
-    sigmaD=doppler_sigma(mdbCO.nu_lines,Tfix,Mmol)
-    
-    
-    R=(len(nus_modit)-1)/np.log(nus_modit[-1]/nus_modit[0]) #resolution
-    dv_lines=mdbCO.nu_lines/R
-    nsigmaD=normalized_doppler_sigma(Tfix,Mmol,R)
-    ngammaL=gammaL/dv_lines
-    ngammaL_grid=set_ditgrid(ngammaL)
-    
-    Nfold=1
-    dLarray=make_dLarray(Nfold,1)
-    
-    dfnus=nus_modit-np.median(nus_modit) #remove median
-    dfnu_lines=mdbCO.nu_lines-np.median(nus_modit) #remove median
-    dv=nus_modit/R #delta wavenumber grid
-    xs_modit_lp=xsvector(dfnu_lines,nsigmaD,ngammaL,Sij,dfnus,ngammaL_grid,dLarray,dv_lines,dv)
-    wls_modit = 100000000/nus_modit
-
-    plt.plot(wls_modit,xs_modit_lp,ls="dashed",color="C1",alpha=0.7,label="MODIT")
-
-    plt.ylim(1.e-27,3.e-19)
-    plt.yscale("log")
-    tip=20.0
-    llow=2300.4
-    lhigh=2300.7
-    plt.xlim(llow*10.0-tip,lhigh*10.0+tip)
-    plt.show()
+    print("test")

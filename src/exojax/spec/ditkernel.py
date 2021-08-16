@@ -129,3 +129,28 @@ def folded_voigt_kernel_logst(k,log_nstbeta,log_ngammaL,dLarray):
     
     
     return val
+
+def voigt_kernel_logst(k,log_nstbeta,log_ngammaL):
+    """Fourier Kernel of the Voigt Profile for a common normalized beta.
+    
+    Args:
+        k: conjugate wavenumber
+        log_nstbeta: log normalized Gaussian standard deviation (scalar)
+        log_ngammaL: log normalized Lorentian Half Width (Nlines)
+        
+    Returns:
+        kernel (N_x,N_gammaL)
+    
+    Note:
+        Conversions to the (full) width, wG and wL are as follows: 
+        wG=2*sqrt(2*ln2) beta
+        wL=2*gamma
+    
+    """
+
+    beta=jnp.exp(log_nstbeta)
+    gammaL=jnp.exp(log_ngammaL)
+    val=jnp.exp(-2.0*((jnp.pi*beta*k[:,None])**2 + jnp.pi*gammaL[None,:]*k[:,None]))
+        
+    return val
+

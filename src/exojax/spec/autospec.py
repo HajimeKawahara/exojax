@@ -169,11 +169,11 @@ class AutoXS(object):
                 nus=self.nus
                     
             self.Nfold=2
-            cnu,indexnu,R,dLarray=initspec.init_modit(mdb.nu_lines,nus,self.Nfold)
+            cnu,indexnu,R,dq=initspec.init_modit(mdb.nu_lines,nus,self.Nfold)
             nsigmaD=normalized_doppler_sigma(T,molmass,R)
             ngammaL=gammaL/(mdb.nu_lines/R)
             ngammaL_grid=dit.set_ditgrid(ngammaL,res=0.1)
-            xsv=modit.xsvector(cnu,indexnu,R,dLarray,nsigmaD,ngammaL,Sij,nus,ngammaL_grid)
+            xsv=modit.xsvector(cnu,indexnu,R,dq,nsigmaD,ngammaL,Sij,nus,ngammaL_grid)
 
             if ~checknus and self.autogridconv:
                 xsv=jnp.interp(self.nus,nus,xsv)

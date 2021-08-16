@@ -55,17 +55,19 @@ def init_modit(nu_lines,nu_grid,Nfold=1):
         cont: (contribution) jnp.array
         index: (index) jnp.array
         R: spectral resolution
-        dLarray: folding array
+        dq: delta q = delta (R log(nu))
 
     Note:
-       cont is the contribution for i=index. 1 - cont is the contribution for i=index+1. For other i, the contribution should be zero.
+       cont is the contribution for i=index. 1 - cont is the contribution for i=index+1. For other i, the contribution should be zero. dq is computed using numpy not jnp.numpy. If you use jnp, you might observe a significant residual because of the float32 truncation error.
+
 
     """
 
     R=(len(nu_grid)-1)/np.log(nu_grid[-1]/nu_grid[0]) #resolution
     cont,index=npgetix(nu_lines,nu_grid)
-    dLarray=make_dLarray(Nfold,1)
-    return jnp.array(cont), jnp.array(index), R, dLarray
+    dq=R*(np.log(nu_grid[1])-np.log(nu_grid[0]))
+
+    return jnp.array(cont), jnp.array(index), R, dq
 
 def init_redit(nu_lines,nu_grid):
     """Initialization for REDIT. i.e. Generate nu contribution and index for the line shape density (actually, this is a numpy version of getix)
