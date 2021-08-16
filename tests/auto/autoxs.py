@@ -2,7 +2,7 @@ import numpy
 from exojax.spec import AutoXS
 import pytest
 import jax.numpy as jnp
-
+logplot=True
 nus=numpy.linspace(1900.0,2300.0,40000,dtype=numpy.float64)
 nuslog=numpy.logspace(numpy.log10(1900.0),numpy.log10(2300.0),40000,dtype=numpy.float64)
 
@@ -17,7 +17,9 @@ print("REDIT-LPF:",dif)
 
 import matplotlib.pyplot as plt
 plt.plot(nus,xsv0,label="REDIT")
-plt.plot(nus,xsv1,".",label="LPF")
+plt.plot(nus,xsv1,".",label="LPF",alpha=0.1)
+if logplot:
+    plt.yscale("log")
 plt.legend()
 plt.show()
 
@@ -31,7 +33,9 @@ dif=(numpy.sum((xsv0-xsv1)**2))
 
 import matplotlib.pyplot as plt
 plt.plot(nus,xsv0,label="DIT")
-plt.plot(nus,xsv1,".",label="LPF")
+plt.plot(nus,xsv1,".",label="LPF",alpha=0.1)
+if logplot:
+    plt.yscale("log")
 plt.legend()
 plt.show()
 
@@ -50,6 +54,8 @@ print("MODIT-LPF:",dif)
 
 import matplotlib.pyplot as plt
 plt.plot(nus,xsv0,label="MODIT")
-plt.plot(nus,xsv1,".",label="LPF")
+plt.plot(nus,xsv1,".",label="LPF",alpha=0.1)
+if logplot:
+    plt.yscale("log")
 plt.legend()
 plt.show()

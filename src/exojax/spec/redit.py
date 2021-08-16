@@ -1,4 +1,4 @@
-""" Real space evaluation of DIT
+""" Real space evaluation of DIT (REDIT)
 
 """
 import jax.numpy as jnp
@@ -16,7 +16,7 @@ from exojax.spec.lpf import voigt
 
 @jit
 def xsvector(cnu,indexnu,R,nsigmaD,ngammaL,S,nu_grid,ngammaL_grid,qvector):
-    """Cross section vector (REDIT/3D version)
+    """Cross section vector (REDIT version)
     
     The original code is rundit_fold_logredst in [addit package](https://github.com/HajimeKawahara/addit). DIT folded voigt for ESLOG for reduced wavenumebr inputs (against the truncation error) for a constant normalized beta
 
@@ -29,6 +29,7 @@ def xsvector(cnu,indexnu,R,nsigmaD,ngammaL,S,nu_grid,ngammaL_grid,qvector):
        S: line strength (Nlines)
        nu_grid: linear wavenumber grid
        gammaL_grid: gammaL grid
+       qvector: kernel length zero array
 
     Returns:
        Cross section in the linear nu grid
@@ -60,37 +61,43 @@ def xsvector(cnu,indexnu,R,nsigmaD,ngammaL,S,nu_grid,ngammaL_grid,qvector):
     
     return xsm
 
-if __name__=="__main__":
-    print("test")
-    # a_i
 
-    #convolution
-    v=jnp.array([1,9,1])
-    s=jnp.array([0,0,0,0,1,2,0,0,0,2,0,0,0,0,0,1])
-    c=jnp.convolve(s,v,mode="same")
-    print(jnp.shape(c),jnp.shape(s))
-    print(c)
+@jit
+def xsmatrix(cnu,indexnu,R,nsigmaDl,ngammaLM,SijM,nu_grid,dgm_ngammaL,qvector):
+    """Cross section matrix for xsvector (REDIT)
 
+    Args:
+       cnu: contribution by npgetix for wavenumber
+       indexnu: index by npgetix for wavenumber
+       R: spectral resolution
+       dLarray: ifold/dnu (ifold=1,..,Nfold) array
+       nu_lines: line center (Nlines)
+       nsigmaDl: normalized doppler sigma in layers in R^(Nlayer x 1)
+       ngammaLM: gamma factor matrix in R^(Nlayer x Nline)
+       SijM: line strength matrix in R^(Nlayer x Nline)
+       nu_grid: linear wavenumber grid
+       dgm_ngammaL: DIT Grid Matrix for normalized gammaL R^(Nlayer, NDITgrid)
+       qvector: kernel length zero array
+      
+    Return:
+       cross section matrix in R^(Nlayer x Nwav)
 
-    #convolution
-    va=jnp.array([[1,9,1],[1,3,1]])
-    Nkernel=jnp.shape(va)[1]
-    sa=jnp.array([[0,0,0,0,1,2,0,0,0,2,0,0,0,0,0,1],\
-                  [0,0,1,2,0,0,0,0,0,2,0,0,0,0,1,0]])
-    Mat=jnp.hstack([va,sa])
-    def seqconv(x,arr):        
+    """
+    NDITgrid=jnp.shape(dgm_ngammaL)[1]
+    Nline=len(cnu)
+    Mat=jnp.hstack([nsigmaDl,ngammaLM,SijM,dgm_ngammaL])
+    def fxs(x,arr):
         carry=0.0
-        ve=arr[0:Nkernel]
-        se=arr[Nkernel:]
-        arr=jnp.convolve(se,ve,mode="same")  
+        nsigmaD=arr[0:1]
+        ngammaL=arr[1:Nline+1]
+        Sij=arr[Nline+1:2*Nline+1]
+        ngammaL_grid=arr[2*Nline+1:2*Nline+NDITgrid+1]
+        arr=xsvector(cnu,indexnu,R,nsigmaD,ngammaL,Sij,nu_grid,ngammaL_grid,qvector)
         return carry, arr
     
-    val,xsmm=scan(seqconv,0.0,Mat)
-    print(jnp.sum(xsmm,axis=0))
-    
-#    c=
-#    print(jnp.shape(c),jnp.shape(s))
-#    print(c)
+    val,xsm=scan(fxs,0.0,Mat)
+    return xsm
 
 
-        
+if __name__=="__main__":
+    print("test")

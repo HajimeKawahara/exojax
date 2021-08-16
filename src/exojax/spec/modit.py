@@ -52,9 +52,9 @@ def inc2D_givenx(a,w,cx,ix,y,yv):
 
 @jit
 def xsvector(cnu,indexnu,R,dLarray,nsigmaD,ngammaL,S,nu_grid,ngammaL_grid):
-    """Cross section vector (DIT/3D version)
+    """Cross section vector (MODIT)
     
-    The original code is rundit_fold_logredst in [addit package](https://github.com/HajimeKawahara/addit). DIT folded voigt for ESLOG for reduced wavenumebr inputs (against the truncation error) for a constant normalized beta
+    The original code is rundit_fold_logredst in [addit package](https://github.com/HajimeKawahara/addit). MODIT folded voigt for ESLOG for reduced wavenumebr inputs (against the truncation error) for a constant normalized beta
 
     Args:
        cnu: contribution by npgetix for wavenumber
