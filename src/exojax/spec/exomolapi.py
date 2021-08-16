@@ -214,7 +214,7 @@ def pickup_gEslow(states,trans):
     A=trans["A"].to_numpy()
     nu_lines=trans["nu_lines"].to_numpy()
     elower=trans["elower"].to_numpy()
-    gpu=trans["gup"].to_numpy()
+    gup=trans["gup"].to_numpy()
     return A, nu_lines, elower, gup
 
 
