@@ -41,11 +41,10 @@ def comperr(Nnu,plotfig=False):
     gammaL = gamma_hitran(Pfix,Tfix,Pfix, mdbCO.n_air, mdbCO.gamma_air, mdbCO.gamma_self)
     #+ gamma_natural(A) #uncomment if you inclide a natural width
 
-    cnu,indexnu,R=initspec.init_redit(mdbCO.nu_lines,nus)
+    cnu,indexnu,R, dq=initspec.init_redit(mdbCO.nu_lines,nus)
     nsigmaD=normalized_doppler_sigma(Tfix,Mmol,R)
     ngammaL=gammaL/(mdbCO.nu_lines/R)
     ngammaL_grid=set_ditgrid(ngammaL)
-    dq=R*(np.log(nus[1])-np.log(nus[0])) #if you use jnp severe error will appers because of float32 truncation error
     Nc=int(len(nus)/2.0)-1
     qvector=jnp.arange(-Nc,Nc+1,1)*dq
     print(Nc)
@@ -71,16 +70,11 @@ def comperr(Nnu,plotfig=False):
 
 if __name__=="__main__":
     import matplotlib
-    m,std,R,ijd,iju,wls_redit,xs_redit_lp,xsv_lpf_lp,dif=comperr(100000)
-    m1,std1,R1,ijd1,iju1,wls_redit1,xs_redit_lp1,xsv_lpf_lp1,dif1=comperr(200000)
+    m,std,R,ijd,iju,wls_redit,xs_redit_lp,xsv_lpf_lp,dif=comperr(200000)
 #
     #    m1,std1,R1,ijd1,iju1,wls_redit1,xs_redit_lp1,xsv_lpf_lp1,dif1=comperr(3000000)
 
     print(m,std,R)
-    print(m1,std1,R1)
-
-
-
     
     #PLOT
     plotfig=True
@@ -91,10 +85,8 @@ if __name__=="__main__":
         tip=2.0
         fig=plt.figure(figsize=(12,3))
         ax=plt.subplot2grid((12, 1), (0, 0),rowspan=8)
-        plt.plot(wls_redit1,xsv_lpf_lp1,label="Direct",color="C0",alpha=0.3,markersize=3)
+        plt.plot(wls_redit,xsv_lpf_lp,label="Direct",color="C0",alpha=0.3,markersize=3)
         plt.plot(wls_redit,xs_redit_lp,color="C1",lw=1,alpha=0.3,label="R="+str(R))
-        plt.plot(wls_redit1,xsv_lpf_lp1,color="C0",lw=1,alpha=0.5,label="DIRECT",ls="dashed")
-        plt.plot(wls_redit1,xs_redit_lp1,color="C2",lw=1,alpha=0.5,label="R="+str(R1),ls="dashed")
 
         
         plt.xlim(ijd,iju)    
@@ -111,14 +103,12 @@ if __name__=="__main__":
         plt.xlabel('wavelength [$\AA$]')
         
         ax=plt.subplot2grid((12, 1), (8, 0),rowspan=4)
-        plt.plot(wls_redit,np.abs((dif)),alpha=0.2,color="C1",label="R="+str(R))
-        plt.plot(wls_redit1,np.abs((dif1)),alpha=0.5,color="C2",label="R="+str(R1))
-        
+        plt.plot(wls_redit,np.abs((dif)*100),alpha=0.2,color="C1",label="R="+str(R))
         plt.ylabel("difference (%)",fontsize=10)
         plt.xlim(ijd,iju)
 #        plt.xlim(llow*10-tip,lhigh*10+tip)    
 
-        plt.ylim(0.1,100.0)
+        plt.ylim(0.1,10000.0)
 #        plt.ylim(-10*100*std,10*100*std)
         plt.yscale("log")
         plt.xlabel('wavelength [$\AA$]')

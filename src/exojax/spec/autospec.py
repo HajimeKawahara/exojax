@@ -144,11 +144,10 @@ class AutoXS(object):
             #else:
             #    nus=self.nus
                     
-            cnu,indexnu,R=initspec.init_redit(mdb.nu_lines,nus)
+            cnu,indexnu,R,dq=initspec.init_redit(mdb.nu_lines,nus)
             nsigmaD=normalized_doppler_sigma(T,molmass,R)
             ngammaL=gammaL/(mdb.nu_lines/R)
             ngammaL_grid=dit.set_ditgrid(ngammaL,res=0.1)
-            dq=R*(jnp.log(nus[1])-jnp.log(nus[0]))
             Nc=int(len(nus)/2.0)-1
             qvector=jnp.arange(-Nc,Nc+1,1)*dq
             xsv=redit.xsvector(cnu,indexnu,R,nsigmaD,ngammaL,Sij,nus,ngammaL_grid,qvector)

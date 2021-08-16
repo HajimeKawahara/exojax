@@ -71,7 +71,7 @@ def comperr(Nnu,plotfig=False):
 
 if __name__=="__main__":
     import matplotlib
-    m,std,R,ijd,iju,wls_modit,xs_modit_lp,xsv_lpf_lp,dif=comperr(100000)
+    m,std,R,ijd,iju,wls_modit,xs_modit_lp,xsv_lpf_lp,dif=comperr(200000)
     m1,std1,R1,ijd1,iju1,wls_modit1,xs_modit_lp1,xsv_lpf_lp1,dif1=comperr(3000000)
 
     print(m,std,R)
@@ -107,14 +107,14 @@ if __name__=="__main__":
         plt.xlabel('wavelength [$\AA$]')
         
         ax=plt.subplot2grid((12, 1), (8, 0),rowspan=4)
-        plt.plot(wls_modit,np.abs((dif)),alpha=0.2,color="C1",label="R="+str(R))
-        plt.plot(wls_modit1,np.abs((dif1)),alpha=0.5,color="C2",label="R="+str(R1))
+        plt.plot(wls_modit,np.abs((dif)*100),alpha=0.2,color="C1",label="R="+str(R))
+        plt.plot(wls_modit1,np.abs((dif1)*100),alpha=0.5,color="C2",label="R="+str(R1))
         
         plt.ylabel("difference (%)",fontsize=10)
         plt.xlim(ijd,iju)
 #        plt.xlim(llow*10-tip,lhigh*10+tip)    
 
-        plt.ylim(0.1,100.0)
+        plt.ylim(0.1,10000.0)
 #        plt.ylim(-10*100*std,10*100*std)
         plt.yscale("log")
         plt.xlabel('wavelength [$\AA$]')

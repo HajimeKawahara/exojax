@@ -77,10 +77,15 @@ def init_redit(nu_lines,nu_grid):
     Returns:
         cont (contribution) jnp.array
         index (index) jnp.array
-    
+        R: spectral resolution
+        dq: delta q = delta (R log(nu))
+
     Note:
-       cont is the contribution for i=index. 1 - cont is the contribution for i=index+1. For other i, the contribution should be zero.
+       cont is the contribution for i=index. 1 - cont is the contribution for i=index+1. For other i, the contribution should be zero. dq is computed using numpy not jnp.numpy. If you use jnp, you might observe a significant residual because of the float32 truncation error.
+
     """
     R=(len(nu_grid)-1)/np.log(nu_grid[-1]/nu_grid[0]) #resolution
     cont,index=npgetix(nu_lines,nu_grid)
-    return jnp.array(cont), jnp.array(index), R
+    dq=R*(np.log(nu_grid[1])-np.log(nu_grid[0]))
+    
+    return jnp.array(cont), jnp.array(index), R, dq
