@@ -18,7 +18,7 @@ def nugrid(x0,x1,N,unit="cm-1",xsmode="lpf"):
        x1: end wavenumber (cm-1) or wavelength (nm) or (AA)
        N: the number of the wavenumber grid
        unit: unit of the input grid
-       xsmode: cross section computation mode (lpf, dit, modit)
+       xsmode: cross section computation mode (lpf, dit, modit, redit)
     
     Returns:
        wavenumber grid evenly spaced in log space
@@ -26,7 +26,7 @@ def nugrid(x0,x1,N,unit="cm-1",xsmode="lpf"):
        resolution
 
     """
-    if xsmode=="lpf" or xsmode=="LPF" or xsmode=="modit" or xsmode=="MODIT":
+    if xsmode=="lpf" or xsmode=="LPF" or xsmode=="modit" or xsmode=="MODIT" or xsmode=="redit" or xsmode=="REDIT":
         print("nugrid is log: mode=",xsmode)
         if unit=="cm-1":
             nus=np.logspace(np.log10(x0),np.log10(x1),N,dtype=np.float64)

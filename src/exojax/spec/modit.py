@@ -50,13 +50,11 @@ def inc2D_givenx(a,w,cx,ix,y,yv):
     return a
 
 
-
-
 @jit
 def xsvector(cnu,indexnu,R,dLarray,nsigmaD,ngammaL,S,nu_grid,ngammaL_grid):
-    """Cross section vector (DIT/3D version)
+    """Cross section vector (MODIT)
     
-    The original code is rundit_fold_logredst in [addit package](https://github.com/HajimeKawahara/addit). DIT folded voigt for ESLOG for reduced wavenumebr inputs (against the truncation error) for a constant normalized beta
+    The original code is rundit_fold_logredst in [addit package](https://github.com/HajimeKawahara/addit). MODIT folded voigt for ESLOG for reduced wavenumebr inputs (against the truncation error) for a constant normalized beta
 
     Args:
        cnu: contribution by npgetix for wavenumber
@@ -82,10 +80,12 @@ def xsvector(cnu,indexnu,R,dLarray,nsigmaD,ngammaL,S,nu_grid,ngammaL_grid):
     log_ngammaL=jnp.log(ngammaL)
     log_ngammaL_grid = jnp.log(ngammaL_grid)
 
-    k = jnp.fft.rfftfreq(2*Ng_nu,1)    
+    k = jnp.fft.rfftfreq(2*Ng_nu,1)
+#    k = jnp.fft.rfftfreq(4*Ng_nu,1) #Nv=4   
     lsda=jnp.zeros((len(nu_grid),len(ngammaL_grid))) #LSD array
     Slsd=inc2D_givenx(lsda, S,cnu,indexnu,log_ngammaL,log_ngammaL_grid) #Lineshape Density
     Sbuf=jnp.vstack([Slsd,jnp.zeros_like(Slsd)])
+    #Sbuf=jnp.vstack([Slsd,jnp.zeros_like(Slsd),jnp.zeros_like(Slsd),jnp.zeros_like(Slsd)]) #Nv=4
     til_Slsd = jnp.fft.rfft(Sbuf,axis=0)
     
     til_Voigt=folded_voigt_kernel_logst(k, log_nstbeta,log_ngammaL_grid,dLarray)
