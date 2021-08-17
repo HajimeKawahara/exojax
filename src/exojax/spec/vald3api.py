@@ -7,6 +7,9 @@ import pandas as pd
 
 def read_ExStellar(stellarf):
     """VALD IO for "Extract stellar" file (long format)
+    Warning:
+        Deprecated to use! It's incomplete and untested. #210817
+
     Note:
         See https://www.astro.uu.se/valdwiki/select_output
 
@@ -23,6 +26,7 @@ def read_ExStellar(stellarf):
     
 def read_ExAll(allf):
     """VALD IO for "Extract all" file (long format)
+    
     Note:
         See https://www.astro.uu.se/valdwiki/presformat_output
 
@@ -94,6 +98,7 @@ def pickup_param(ExAll):
 
     # insert new columns in VALD line list
     ExAll["nu_lines"] = 1.e8 / ExAll["wav_lines"] #[cm-1]<-[AA]
+    ExAll = ExAll.iloc[::-1].reset_index(drop=True) #Sort by wavenumber
     ExAll["elower"] = ExAll["elowereV"] * 8065.541
     ExAll["eupper"] = ExAll["euppereV"] * 8065.541
     ExAll["gupper"] = ExAll["jupper"]*2+1

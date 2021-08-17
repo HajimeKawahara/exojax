@@ -1,5 +1,21 @@
                                                                     Lande factors       Damping parameters
 Elm Ion      WL_vac(A)   log gf* E_low(eV) J lo E_up(eV)  J up  lower   upper    mean    Rad.  Stark  Waals
+'Fe 1',      10381.8432,  -4.148,  2.2227,  1.0,  3.4170,  2.0,  2.500,  1.000,  0.260, 7.240,-6.150,-7.800,
+'  LS                                                                       3d7.(4P).4s a5P'
+'  LS                                                             3d6.(5D).4s.4p.(3P*) z5F*'
+'_          Kurucz Fe I 2014   9 wl:K14   9 gf:K14   9 K14   9 K14   9 K14   9 K14   9 K14   9 K14   9 K14             Fe'
+'Fe 1',      10397.5460,  -4.761,  5.8834,  4.0,  7.0758,  3.0,  1.030,  1.580,  0.200, 7.770,-4.270,-7.300,
+'  LS                                                                      3d7.(2G).4p z1G*'
+'  LS                                                                     3d6.4s.(6D).5d 7D'
+'_          Kurucz Fe I 2014   9 wl:K14   9 gf:K14   9 K14   9 K14   9 K14   9 K14   9 K14   9 K14   9 K14             Fe'
+'Fe 1',      10398.6434,  -3.393,  2.1759,  3.0,  3.3683,  4.0,  1.670,  1.360,  0.890, 7.260,-6.150,-7.800,
+'  LS                                                                       3d7.(4P).4s a5P'
+'  LS                                                             3d6.(5D).4s.4p.(3P*) z5F*'
+'_          Kurucz Fe I 2014   9 wl:K14   9 gf:K14   9 K14   9 K14   9 K14   9 K14   9 K14   9 K14   9 K14             Fe'
+'Ti 1',      10399.6492,  -1.539,  0.8484,  5.0,  2.0406,  6.0,  1.410,  1.330,  1.130, 5.140,-6.090,-7.810,
+'  LS                                                                       3d3.(4F).4s a5F'
+'  LS                                                             3d2.(3F).4s.4p.(3P*) z5G*'
+'_          Kurucz TiI 2016   13 wl:K16  13 gf:K16  13 K16  13 K16  13 K16  13 K16  13 K16  13 K16  13 K16             Ti'
 'TiO 1',     10749.3921,  -5.646,  1.0260, 27.0,  2.1794, 27.0, 99.000, 99.000, 99.000, 7.210, 0.000, 0.000,
 '  Hb                                                         8s2.9s1.3p4.1d1  X,3,2,+,28,8'
 '  Hb                                                         8s2.3p4.4p1.1d1  B,3,1,-,28,1'
@@ -20,22 +36,6 @@ Elm Ion      WL_vac(A)   log gf* E_low(eV) J lo E_up(eV)  J up  lower   upper   
 '  JK                                                4f13.(2F*<5/2>).5d2.(3F)       3[1/2]*'
 '                                                            4f13.(2F*<5/2>).6s.6p.(1P*<1>)'
 'C 0.002    Yb 2: DREAM data  17 wl:BDMQ  17 gf:BDMQ  17 BDMQ  17 BDMQ  17 BDMQ  17 BDMQ  17 BDMQ  17 BDMQ  17 BDMQ            Yb+'
-'Fe 1',      10381.8432,  -4.148,  2.2227,  1.0,  3.4170,  2.0,  2.500,  1.000,  0.260, 7.240,-6.150,-7.800,
-'  LS                                                                       3d7.(4P).4s a5P'
-'  LS                                                             3d6.(5D).4s.4p.(3P*) z5F*'
-'_          Kurucz Fe I 2014   9 wl:K14   9 gf:K14   9 K14   9 K14   9 K14   9 K14   9 K14   9 K14   9 K14             Fe'
-'Fe 1',      10397.5460,  -4.761,  5.8834,  4.0,  7.0758,  3.0,  1.030,  1.580,  0.200, 7.770,-4.270,-7.300,
-'  LS                                                                      3d7.(2G).4p z1G*'
-'  LS                                                                     3d6.4s.(6D).5d 7D'
-'_          Kurucz Fe I 2014   9 wl:K14   9 gf:K14   9 K14   9 K14   9 K14   9 K14   9 K14   9 K14   9 K14             Fe'
-'Fe 1',      10398.6434,  -3.393,  2.1759,  3.0,  3.3683,  4.0,  1.670,  1.360,  0.890, 7.260,-6.150,-7.800,
-'  LS                                                                       3d7.(4P).4s a5P'
-'  LS                                                             3d6.(5D).4s.4p.(3P*) z5F*'
-'_          Kurucz Fe I 2014   9 wl:K14   9 gf:K14   9 K14   9 K14   9 K14   9 K14   9 K14   9 K14   9 K14             Fe'
-'Ti 1',      10399.6492,  -1.539,  0.8484,  5.0,  2.0406,  6.0,  1.410,  1.330,  1.130, 5.140,-6.090,-7.810,
-'  LS                                                                       3d3.(4F).4s a5F'
-'  LS                                                             3d2.(3F).4s.4p.(3P*) z5G*'
-'_          Kurucz TiI 2016   13 wl:K16  13 gf:K16  13 K16  13 K16  13 K16  13 K16  13 K16  13 K16  13 K16             Ti'
 * oscillator strengths were scaled by the solar isotopic ratios.
  References:
   1. Plez 2012 Ti47O, polynomial fits to Phillips obs. wavelengths, Nordlander molecular constants
