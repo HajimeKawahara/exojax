@@ -111,6 +111,7 @@ def xsvector(cnu,indexnu,R,dq,nsigmaD,ngammaL,S,nu_grid,ngammaL_grid):
     gE_FT = 2.*w[None,:]/(1. + 4.*jnp.pi**2*k[:,None]**2*w[None,:]**2)  #Nnu x Ngw
     Err_corr = A[None,:]*gE_FT*100/vmax**2 #Nnu x Ngw
 
+ #   later   
  #   zeroindex=jnp.zeros(len(k),dtype=int) #0 [Nnu]
  #   zeroindex=index_add(zeroindex, 0, 1.0)
  #   Err_corr = Err_corr + zeroindex[:,None]*B[None,:]*200/vmax/dv
@@ -120,8 +121,6 @@ def xsvector(cnu,indexnu,R,dq,nsigmaD,ngammaL,S,nu_grid,ngammaL_grid):
 
     I_g_FT= fftval[:Ng_nu]
     Err_corr=Err_corr[:Ng_nu]
-    print(jnp.shape(Err_corr))
-    print(jnp.shape(nu_grid))
 
     I_g_FT = I_g_FT - (Err_corr)/(R/nu_grid[:,None])
     xs = jnp.sum(jnp.fft.irfft(I_g_FT,axis=0),axis=(1,))[:Ng_nu]*R/nu_grid
