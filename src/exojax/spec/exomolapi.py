@@ -150,7 +150,7 @@ def read_states(statesf):
     try:        
         dat = vaex.from_csv(statesf,compression="bz2",sep="\s+",usecols=range(4),names=("i","E","g","J"),convert=True)
     except:
-        dat = vaex.read_csv(statef,sep="\s+",usecols=range(4),names=("i","E","g","J"),convert=True)
+        dat = vaex.read_csv(statesf,sep="\s+",usecols=range(4),names=("i","E","g","J"),convert=True)
         
     return dat
 
