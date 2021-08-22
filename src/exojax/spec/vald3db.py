@@ -32,17 +32,15 @@ class AdbVald(object):
         gamRad (jnp array): gamma(HWHM of Lorentzian) of radiation damping
             
     """
-    def __init__(self, path, nurange=[-np.inf,np.inf], margin=1.0, crit=-np.inf, pathdat=pathlib.Path("~/ghR/exojax/src/exojax/metaldata")): #tako210721
+    def __init__(self, path, nurange=[-np.inf,np.inf], margin=1.0, crit=-np.inf): #tako210721
     
         """Atomic database for VALD3 "Long format"
 
         Args:
-           path: path for linelist obtained from VALD3 with a query of "Long format"
+           path: path for linelists downloaded from VALD3 with a query of "Long format" in the format of "Extract All" and "Extract Element" (NOT "Extract Stellar")
            nurange: wavenumber range list (cm-1) or wavenumber array
            margin: margin for nurange (cm-1)
            crit: line strength lower limit for extraction
-           %\\\\20210816 bkgdatm: background atmosphere for broadening. e.g. H2, He,
-           %\\\\20210816 broadf: if False, the default broadening parameters in .def file is used
            
         Note:
            (written with reference to moldb.py, but without using feather format)
@@ -64,7 +62,6 @@ class AdbVald(object):
         #load vald file ("Extract Stellar" request)
         print("Reading VALD file")
         valdd=vald3api.read_ExAll(self.vald3_file)
-        #valdd=vald3api.read_ExStellar(self.vald3_file)
         #better to use .feather format? #\\\\
         #valdd.to_feather(self.vald3_file.with_suffix(".feather"))
         
@@ -73,16 +70,10 @@ class AdbVald(object):
         
         
         
-        #load partition function (for 284 atomic species) from Barklem et al. (2016)
-        pff = pathdat/"J_A+A_588_A96/table8.dat"
-        pfTf = pathdat/"J_A+A_588_A96/table8_T.dat"
-        #"/home/tako/work/.database/Barklem_2016/J_A+A_588_A96/...
-
-        pfTdat = pd.read_csv(pfTf, sep="\s+")
-        self.T_gQT = jnp.array(pfTdat.columns[1:].to_numpy(dtype=float)) #T for grid QT    #self.
-        self.pfdat = pd.read_csv(pff, sep="\s+", comment="#", names=pfTdat.columns)
+        #load the partition functions (for 284 atomic species)
+        pfTdat, self.pfdat = vald3api.load_pf_Barklem2016() #Barklem & Collet (2016)
+        self.T_gQT = jnp.array(pfTdat.columns[1:], dtype=float)
         self.gQT_284species = jnp.array(self.pfdat.iloc[:, 1:].to_numpy(dtype=float)) #grid Q vs T vs Species
-
         self.Tref=296.0 #\\\\
         self.QTref_284 = np.array(self.QT_interp_284(self.Tref))
         self._QTmask = self.make_QTmask(valdd) #identify species for each line
@@ -103,11 +94,9 @@ class AdbVald(object):
         
 
 
-        #Compile atomic-specific data for each line
-        ipccf = pathdat/"ipcc_Asplund2009_pre.dat"
-        ipccc = ('ielem', 'ionizationE1', 'dam1', 'dam2', 'solarA', 'mass', 'ionizationE2')
-        self.ipccd = pd.read_csv(ipccf, sep="\s+", skiprows=1, usecols=[1,2,3,4,5,6,7], names=ipccc)
-        
+        #Compile atomic-specific data for each absorption line of interest
+        self.ipccd = vald3api.load_atomicdata()
+        #print(self.ipccd)#test
         ionE = jnp.array(list(map(lambda x: self.ipccd[self.ipccd['ielem']==x].iat[0, 1], self.ielem)))
         ionE2 = jnp.array(list(map(lambda x: self.ipccd[self.ipccd['ielem']==x].iat[0, 6], self.ielem)))
         self.ionE = ionE * np.where(self.iion==1, 1, 0) + ionE2 * np.where(self.iion==2, 1, 0)
@@ -188,8 +177,8 @@ class AdbVald(object):
         """interpolated partition function
 
         Args:
-           T: temperature
            atomspecies: species e.g., "Fe 1"
+           T: temperature
 
         Returns:
            Q(T): interpolated in jnp.array for the Atomic Species

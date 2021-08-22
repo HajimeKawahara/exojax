@@ -52,7 +52,7 @@ def gamma_natural(A):
 
 def gamma_vald3(P, T, PH, PHH, PHe, \
     nu_lines, elower, ionE, gamRad, vdWdamp, enh_damp=1.0):
-    #%\\\\20210804 原子ごとにenh_dampも場合分け（Turbospectrumに倣う？）するならielemが入力に必要.
+    #%\\\\20210804 #tako 原子ごとにenh_dampも場合分け（Turbospectrumに倣う？）するならielemが入力(Args)に必要.
     """gamma factor by a pressure broadening
       based on Gray+2005(2005oasp.book.....G)
 
