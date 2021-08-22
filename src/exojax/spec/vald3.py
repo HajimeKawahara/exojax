@@ -94,6 +94,7 @@ def gamma_vald3(P, T, PH, PHH, PHe, \
     gamma6 = enh_damp * gam6H * \
        (1.+ PHe/PH*0.41336 + PHH/PH*0.85)
     gamma_case1 = gamma6 #+ 10**gamRad
+    gamma_case1 = np.where(np.isnan(gamma_case1), 0., gamma_case1) #avoid nan (appeared by jnp.log10(negative C6))
 
     #CASE2 (van der Waars broadening based on gamma6 at 10000 K)
     Texp = 0.38 #Barklem+2000
