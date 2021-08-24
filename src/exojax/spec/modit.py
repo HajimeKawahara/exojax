@@ -12,7 +12,7 @@ from jax import jit
 from jax import vmap
 from jax.lax import scan
 import tqdm
-#from exojax.spec.ditkernel import folded_voigt_kernel_logst
+from exojax.spec.ditkernel import newfold_voigt_kernel_logst
 from exojax.spec.ditkernel import voigt_kernel_logst
 
 from jax.ops import index_add
@@ -53,7 +53,7 @@ def inc2D_givenx(a,w,cx,ix,y,yv):
 
 
 #@jit
-def xsvector(cnu,indexnu,R,dq,nsigmaD,ngammaL,S,nu_grid,ngammaL_grid):
+def xsvector(cnu,indexnu,R,pmarray,nsigmaD,ngammaL,S,nu_grid,ngammaL_grid):
     """Cross section vector (MODIT)
     
     The original code is rundit_fold_logredst in [addit package](https://github.com/HajimeKawahara/addit). MODIT folded voigt for ESLOG for reduced wavenumebr inputs (against the truncation error) for a constant normalized beta
@@ -62,7 +62,7 @@ def xsvector(cnu,indexnu,R,dq,nsigmaD,ngammaL,S,nu_grid,ngammaL_grid):
        cnu: contribution by npgetix for wavenumber
        indexnu: index by npgetix for wavenumber
        R: spectral resolution
-       dq: 
+       pmarray: (+1,-1) array whose length of len(nu_grid)+1
        nsigmaD: normaized Gaussian STD (Nlines)
        gammaL: Lorentzian half width (Nlines)
        S: line strength (Nlines)
@@ -84,50 +84,22 @@ def xsvector(cnu,indexnu,R,dq,nsigmaD,ngammaL,S,nu_grid,ngammaL_grid):
 
     k = jnp.fft.rfftfreq(2*Ng_nu,1)
     lsda=jnp.zeros((len(nu_grid),len(ngammaL_grid))) #LSD array
-    Slsd=inc2D_givenx(lsda, S,cnu,indexnu,log_ngammaL,log_ngammaL_grid) #Lineshape Density
+    Slsd=inc2D_givenx(lsda,S,cnu,indexnu,log_ngammaL,log_ngammaL_grid) #Lineshape Density
     Sbuf=jnp.vstack([Slsd,jnp.zeros_like(Slsd)])
-    til_Slsd = jnp.fft.rfft(Sbuf,axis=0)    
-    til_Voigt=voigt_kernel_logst(k, log_nstbeta,log_ngammaL_grid)
-#    til_Voigt=folded_voigt_kernel_logst(k, log_nstbeta,log_ngammaL_grid,dLarray) #OLD folding
+
     #-----------------------------------------------
-    #normal MODIT
+    #MODIT w/o new folding
+    #til_Voigt=voigt_kernel_logst(k, log_nstbeta,log_ngammaL_grid)
+    #til_Slsd = jnp.fft.rfft(Sbuf,axis=0)    
     #fftvalsum = jnp.sum(til_Slsd*til_Voigt,axis=(1,))    
     #xs=jnp.fft.irfft(fftvalsum)[:Ng_nu]*R/nu_grid
     #-----------------------------------------------
-    #normal MODIT separate sum
-    fftval = til_Slsd*til_Voigt
-    #xs = jnp.sum(jnp.fft.irfft(fftval,axis=0),axis=(1,))[:Ng_nu]*R/nu_grid
     
-    
-    #correction factor
-    dv=dq #
-    w=2.0*ngammaL_grid #Ngw
-    vmax=dv*Ng_nu/2.0 #N_v*dv 
-    x=jnp.log(w/vmax) #Ngw
-    A = w*jnp.exp(-(0.23299924*jnp.exp(x/0.53549119) + 6.74408847)) #Ngw
-    B = w*jnp.exp(-(0.09226203*jnp.exp(x/0.49589094) + 6.82193751)) #Ngw
-    w_corr = vmax*jnp.exp(0.18724358*jnp.exp(x/0.50806536) - 0.93309186) #Ngw
-    w = w_corr/dv #Ngw
-    gE_FT = 2.*w[None,:]/(1. + 4.*jnp.pi**2*k[:,None]**2*w[None,:]**2)  #Nnu x Ngw
-    Err_corr = A[None,:]*gE_FT*100/vmax**2 #Nnu x Ngw
-
- #   later   
- #   zeroindex=jnp.zeros(len(k),dtype=int) #0 [Nnu]
- #   zeroindex=index_add(zeroindex, 0, 1.0)
- #   Err_corr = Err_corr + zeroindex[:,None]*B[None,:]*200/vmax/dv
- #   I_alternate = 1-(jnp.arange(len(k))&1)*2 #Nnu
- #   Err_corr = Err_corr*I_alternate[:,None]
-
-
-    I_g_FT= fftval[:Ng_nu]
-    Err_corr=Err_corr[:Ng_nu]
-
-    I_g_FT = I_g_FT - (Err_corr)/(R/nu_grid[:,None])
-    xs = jnp.sum(jnp.fft.irfft(I_g_FT,axis=0),axis=(1,))[:Ng_nu]*R/nu_grid
-    print(xs)
-    
-#    import sys
-#    sys.exit()
+    fftval = jnp.fft.rfft(Sbuf,axis=0)
+    vmax=Ng_nu
+    vk=newfold_voigt_kernel_logst(k, log_nstbeta,log_ngammaL_grid, vmax, pmarray)
+    fftvalsum = jnp.sum(fftval*vk,axis=(1,))
+    xs=jnp.fft.irfft(fftvalsum)[:Ng_nu]*R/nu_grid
     
     return xs
 

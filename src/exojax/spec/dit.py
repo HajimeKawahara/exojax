@@ -11,7 +11,7 @@ from jax import jit
 from jax import vmap
 from jax.lax import scan
 import tqdm
-from exojax.spec.ditkernel import folded_voigt_kernel
+from exojax.spec.ditkernel import newfold_voigt_kernel
 from jax.ops import index_add
 from jax.ops import index as joi
 
@@ -99,7 +99,7 @@ def inc3D_givenx(a,w,cx,ix,y,z,xv,yv,zv):
     return a
 
 @jit
-def xsvector(cnu,indexnu,dLarray,sigmaD,gammaL,S,nu_grid,sigmaD_grid,gammaL_grid):
+def xsvector(cnu,indexnu,pmarray,sigmaD,gammaL,S,nu_grid,sigmaD_grid,gammaL_grid):
     """Cross section vector (DIT/2D+ version; default)
     
     The original code is rundit in [addit package](https://github.com/HajimeKawahara/addit)
@@ -107,7 +107,7 @@ def xsvector(cnu,indexnu,dLarray,sigmaD,gammaL,S,nu_grid,sigmaD_grid,gammaL_grid
     Args:
        cnu: contribution by npgetix for wavenumber
        indexnu: index by npgetix for wavenumber
-       dLarray: ifold/dnu (ifold=1,..,Nfold) array
+       pmarray: (+1,-1) array whose length of len(nu_grid)+1
        sigmaD: Gaussian STD (Nlines)
        gammaL: Lorentzian half width (Nlines)
        S: line strength (Nlines)
@@ -139,7 +139,8 @@ def xsvector(cnu,indexnu,dLarray,sigmaD,gammaL,S,nu_grid,sigmaD_grid,gammaL_grid
 
     valbuf=jnp.vstack([val,jnp.zeros_like(val)])
     fftval = jnp.fft.rfft(valbuf,axis=0)
-    vk=folded_voigt_kernel(k, sigmaD_grid,gammaL_grid, dLarray)
+    vmax=Ng_nu*dnu
+    vk=newfold_voigt_kernel(k, sigmaD_grid,gammaL_grid, vmax, pmarray)
     fftvalsum = jnp.sum(fftval*vk,axis=(1,2))
     xs=jnp.fft.irfft(fftvalsum)[:Ng_nu]/dnu
     return xs

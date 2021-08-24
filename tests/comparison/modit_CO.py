@@ -40,12 +40,12 @@ gammaL = gamma_hitran(Pfix,Tfix,Pfix, mdbCO.n_air, mdbCO.gamma_air, mdbCO.gamma_
 #+ gamma_natural(A) #uncomment if you inclide a natural width
 sigmaD=doppler_sigma(mdbCO.nu_lines,Tfix,Mmol)
 
-cnu,indexnu,R,dLarray=initspec.init_modit(mdbCO.nu_lines,nus)
+cnu,indexnu,R,pmarray=initspec.init_modit(mdbCO.nu_lines,nus)
 nsigmaD=normalized_doppler_sigma(Tfix,Mmol,R)
 ngammaL=gammaL/(mdbCO.nu_lines/R)
 ngammaL_grid=set_ditgrid(ngammaL)
 
-xs_modit_lp=modit_xsvector(cnu,indexnu,R,dLarray,nsigmaD,ngammaL,Sij,nus,ngammaL_grid)
+xs_modit_lp=modit_xsvector(cnu,indexnu,R,pmarray,nsigmaD,ngammaL,Sij,nus,ngammaL_grid)
 wls_modit = 100000000/nus
 
 #ref (direct)
