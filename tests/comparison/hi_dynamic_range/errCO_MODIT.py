@@ -15,6 +15,9 @@ from exojax.spec import rtcheck, moldb
 from exojax.spec.dit import set_ditgrid
 from exojax.spec.hitran import normalized_doppler_sigma
 
+#F64/F32
+from jax.config import config
+config.update("jax_enable_x64", True)
 
 def comperr(Nnu,plotfig=False):
 
@@ -45,12 +48,12 @@ def comperr(Nnu,plotfig=False):
     #+ gamma_natural(A) #uncomment if you inclide a natural width
     sigmaD=doppler_sigma(mdbCO.nu_lines,Tfix,Mmol)
     
-    cnu,indexnu,R,dLarray=initspec.init_modit(mdbCO.nu_lines,nus)
+    cnu,indexnu,R,dq=initspec.init_modit(mdbCO.nu_lines,nus)
     nsigmaD=normalized_doppler_sigma(Tfix,Mmol,R)
     ngammaL=gammaL/(mdbCO.nu_lines/R)
     ngammaL_grid=set_ditgrid(ngammaL)
     
-    xs_modit_lp=modit_xsvector(cnu,indexnu,R,dLarray,nsigmaD,ngammaL,Sij,nus,ngammaL_grid)
+    xs_modit_lp=modit_xsvector(cnu,indexnu,R,dq,nsigmaD,ngammaL,Sij,nus,ngammaL_grid)
     wls_modit = 100000000/nus
     
     #ref (direct)
@@ -72,7 +75,7 @@ def comperr(Nnu,plotfig=False):
 if __name__=="__main__":
     import matplotlib
     m,std,R,ijd,iju,wls_modit,xs_modit_lp,xsv_lpf_lp,dif=comperr(200000)
-    m1,std1,R1,ijd1,iju1,wls_modit1,xs_modit_lp1,xsv_lpf_lp1,dif1=comperr(3000000)
+    m1,std1,R1,ijd1,iju1,wls_modit1,xs_modit_lp1,xsv_lpf_lp1,dif1=comperr(400000)
 
     print(m,std,R)
     print(m1,std1,R1)

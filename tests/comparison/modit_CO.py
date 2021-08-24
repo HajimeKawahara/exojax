@@ -14,8 +14,10 @@ from exojax.spec.hitran import SijT, doppler_sigma, gamma_hitran, gamma_natural
 from exojax.spec import rtcheck, moldb
 from exojax.spec.dit import set_ditgrid
 from exojax.spec.hitran import normalized_doppler_sigma
+from jax.config import config
+config.update("jax_enable_x64", True)
 
-nus=np.logspace(np.log10(3000),np.log10(6000.0),3000000,dtype=np.float64)
+nus=np.logspace(np.log10(4200),np.log10(4400.0),3000000,dtype=np.float64)
 mdbCO=moldb.MdbHit('/home/kawahara/exojax/data/CO/05_hit12.par',nus)
 
 Mmol=28.010446441149536
@@ -40,12 +42,12 @@ gammaL = gamma_hitran(Pfix,Tfix,Pfix, mdbCO.n_air, mdbCO.gamma_air, mdbCO.gamma_
 #+ gamma_natural(A) #uncomment if you inclide a natural width
 sigmaD=doppler_sigma(mdbCO.nu_lines,Tfix,Mmol)
 
-cnu,indexnu,R,dLarray=initspec.init_modit(mdbCO.nu_lines,nus)
+cnu,indexnu,R,pmarray=initspec.init_modit(mdbCO.nu_lines,nus)
 nsigmaD=normalized_doppler_sigma(Tfix,Mmol,R)
 ngammaL=gammaL/(mdbCO.nu_lines/R)
 ngammaL_grid=set_ditgrid(ngammaL)
 
-xs_modit_lp=modit_xsvector(cnu,indexnu,R,dLarray,nsigmaD,ngammaL,Sij,nus,ngammaL_grid)
+xs_modit_lp=modit_xsvector(cnu,indexnu,R,pmarray,nsigmaD,ngammaL,Sij,nus,ngammaL_grid)
 wls_modit = 100000000/nus
 
 #ref (direct)
@@ -77,7 +79,7 @@ plt.plot(wls_modit,(xs_modit_lp/xsv_lpf_lp-1.)*100,alpha=0.3,color="C1")
 
 plt.ylabel("difference (%)",fontsize=10)
 plt.xlim(llow*10.0-tip,lhigh*10.0+tip)
-plt.ylim(-20,20)
+plt.ylim(-1.0,1.0)
 plt.xlabel('wavelength [$\AA$]')
 plt.legend(loc="upper left")
 
