@@ -72,12 +72,6 @@ if __name__=="__main__":
     import matplotlib
     m,std,ijd,iju,wls_dit,xs_dit_lp,xsv_lpf_lp,dif=comperr(200000)
     m1,std1,ijd1,iju1,wls_dit1,xs_dit_lp1,xsv_lpf_lp1,dif1=comperr(3000000)
-
-    print(m,std)
-    print(m1,std1)
-
-
-
     
     #PLOT
     plotfig=True

@@ -15,6 +15,9 @@ from exojax.spec import rtcheck, moldb
 from exojax.spec.dit import set_ditgrid
 from exojax.spec.hitran import normalized_doppler_sigma
 
+#F64/F32
+from jax.config import config
+config.update("jax_enable_x64", True)
 
 def comperr(Nnu,plotfig=False):
 
@@ -72,6 +75,7 @@ def comperr(Nnu,plotfig=False):
 if __name__=="__main__":
     import matplotlib
     m,std,R,ijd,iju,wls_modit,xs_modit_lp,xsv_lpf_lp,dif=comperr(200000)
+    m1,std1,R1,ijd1,iju1,wls_modit1,xs_modit_lp1,xsv_lpf_lp1,dif1=comperr(400000)
 
     print(m,std,R)
     print(m1,std1,R1)
