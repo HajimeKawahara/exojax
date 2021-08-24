@@ -14,10 +14,8 @@ from exojax.spec.hitran import SijT, doppler_sigma, gamma_hitran, gamma_natural
 from exojax.spec import rtcheck, moldb
 from exojax.spec.dit import set_ditgrid
 from exojax.spec.hitran import normalized_doppler_sigma
-from jax.config import config
-config.update("jax_enable_x64", True)
 
-nus=np.logspace(np.log10(4200),np.log10(4400.0),3000000,dtype=np.float64)
+nus=np.logspace(np.log10(4000),np.log10(4500.0),3000000,dtype=np.float64)
 mdbCO=moldb.MdbHit('/home/kawahara/exojax/data/CO/05_hit12.par',nus)
 
 Mmol=28.010446441149536
@@ -55,14 +53,23 @@ d=10000
 ll=mdbCO.nu_lines
 xsv_lpf_lp=lpf_xsection(nus,ll,sigmaD,gammaL,Sij,memory_size=30)
 
+from jax.config import config
+config.update("jax_enable_x64", True)
+
+xs_modit_lp_f64=modit_xsvector(cnu,indexnu,R,pmarray,nsigmaD,ngammaL,Sij,nus,ngammaL_grid)
+
+
+
 #PLOT
 llow=2300.4
 lhigh=2300.7
 tip=20.0
 fig=plt.figure(figsize=(12,3))
 ax=plt.subplot2grid((12, 1), (0, 0),rowspan=8)
-plt.plot(wls_modit,xsv_lpf_lp,label="Direct",color="C0",markersize=3,alpha=0.99)
-plt.plot(wls_modit,xs_modit_lp,ls="dashed",color="C1",alpha=0.7,label="MODIT")
+plt.plot(wls_modit,xsv_lpf_lp,label="Direct",color="C0",markersize=3,alpha=0.3)
+plt.plot(wls_modit,xs_modit_lp,lw=1,color="C1",alpha=1,label="MODIT (F32)")
+plt.plot(wls_modit,xs_modit_lp_f64,lw=1,color="C2",alpha=1,label="MODIT (F64)")
+
 
 plt.ylim(1.1e-28,1.e-17)
 #plt.ylim(1.e-27,3.e-20)
@@ -70,16 +77,17 @@ plt.yscale("log")
 
 plt.xlim(llow*10.0-tip,lhigh*10.0+tip)
 plt.legend(loc="upper right")
-plt.ylabel("       cross section",fontsize=10)
+plt.ylabel("   cross section $(\mathrm{cm}^2)$",fontsize=10)
 #plt.text(22986,3.e-21,"$P=10^{-3}$ bar")
 plt.xlabel('wavelength [$\AA$]')
 
 ax=plt.subplot2grid((12, 1), (8, 0),rowspan=4)
-plt.plot(wls_modit,(xs_modit_lp/xsv_lpf_lp-1.)*100,alpha=0.3,color="C1")
-
+plt.plot(wls_modit,np.abs(xs_modit_lp/xsv_lpf_lp-1.)*100,lw=1,alpha=0.5,color="C1",label="MODIT (F32)")
+plt.plot(wls_modit,np.abs(xs_modit_lp_f64/xsv_lpf_lp-1.)*100,lw=1,alpha=1,color="C2",label="MODIT (F64)")
+plt.yscale("log")
 plt.ylabel("difference (%)",fontsize=10)
 plt.xlim(llow*10.0-tip,lhigh*10.0+tip)
-plt.ylim(-1.0,1.0)
+plt.ylim(0.01,100.0)
 plt.xlabel('wavelength [$\AA$]')
 plt.legend(loc="upper left")
 
