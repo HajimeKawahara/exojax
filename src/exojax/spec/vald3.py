@@ -93,7 +93,7 @@ def gamma_vald3(P, T, PH, PHH, PHe, \
     gam6H = 10**logg6
     gamma6 = enh_damp * gam6H * \
        (1.+ PHe/PH*0.41336 + PHH/PH*0.85)
-    gamma_case1 = gamma6 #+ 10**gamRad
+    gamma_case1 = gamma6 + 10**gamRad
     gamma_case1 = np.where(np.isnan(gamma_case1), 0., gamma_case1) #avoid nan (appeared by jnp.log10(negative C6))
 
     #CASE2 (van der Waars broadening based on gamma6 at 10000 K)
@@ -101,10 +101,10 @@ def gamma_vald3(P, T, PH, PHH, PHe, \
     gam6H = 10**vdWdamp * (T/10000.)**Texp * PH*1e6/(kcgs*T)
     gamma6 = gam6H * \
        (1.+ PHe/PH*0.41336 + PHH/PH*0.85)
-    gamma_case2 = gamma6 #+ 10**gamRad
+    gamma_case2 = gamma6 + 10**gamRad
 
     #Prioritize Case2 (Case1 if w/o vdW)
     gamma = (gamma_case1 * jnp.where(vdWdamp>=0., 1, 0) + gamma_case2 * jnp.where(vdWdamp<0., 1, 0))\
-        /ccgs  #Note that gamma in VALD is in [s-1] (https://www.astro.uu.se/valdwiki/Vald3Format)
+        /ccgs  #Note that gamRad in VALD is in [s-1] (https://www.astro.uu.se/valdwiki/Vald3Format)
 
     return(gamma)
