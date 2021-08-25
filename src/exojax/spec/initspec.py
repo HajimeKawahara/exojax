@@ -6,7 +6,6 @@ import jax.numpy as jnp
 import numpy as np
 from exojax.spec.dit import npgetix
 from exojax.spec.make_numatrix import make_numatrix0
-from exojax.spec.dit import make_dLarray
 
 def init_lpf(nu_lines,nu_grid):
     """Initialization for LPF

@@ -1,7 +1,7 @@
 import pytest
 import time 
 from exojax.spec.modit import xsvector
-from exojax.spec.dit import make_dLarray,set_ditgrid
+from exojax.spec.dit import set_ditgrid
 import numpy as np
 import jax.numpy as jnp
 from exojax.spec import initspec
@@ -14,8 +14,7 @@ def xs(Nc,Nline=10000):
     nsigmaD=1.0
     gammaL=np.random.rand(Nline)+0.1
 
-    Nfold=2
-    cnu,indexnu,R,dLarray=initspec.init_modit(nu_lines,nus,Nfold)
+    cnu,indexnu,R,pmarray=initspec.init_modit(nu_lines,nus)
     ngammaL=gammaL/(nu_lines/R)
     ngammaL_grid=set_ditgrid(ngammaL,res=0.1)
     S=jnp.array(np.random.normal(size=Nline))
@@ -24,7 +23,7 @@ def xs(Nc,Nline=10000):
     a=[]
     for i in range(0,Nc):
         tsx=time.time()
-        xsv=xsvector(cnu,indexnu,R,dLarray,nsigmaD,ngammaL,S,nus,ngammaL_grid)
+        xsv=xsvector(cnu,indexnu,R,pmarray,nsigmaD,ngammaL,S,nus,ngammaL_grid)
         xsv.block_until_ready()
         tex=time.time()
         a.append(tex-tsx)

@@ -16,7 +16,6 @@ from exojax.spec.make_numatrix import make_numatrix0
 from exojax.spec import lpf
 from exojax.spec import dit
 from exojax.spec import modit
-from exojax.spec import redit
 from exojax.spec import initspec
 from exojax.spec import response
 import numpy as np
@@ -40,7 +39,7 @@ class AutoXS(object):
            memory_size: memory_size required
            broadf: if False, the default broadening parameters in .def file is used
            crit: line strength criterion, ignore lines whose line strength are below crit.
-           xsmode: xsmode for opacity computation (auto/LPF/DIT/MODIT/REDIT)
+           xsmode: xsmode for opacity computation (auto/LPF/DIT/MODIT)
            autogridconv: automatic wavenumber grid conversion (True/False). If you are quite sure the wavenumber grid you use, set False.
            pdit: threshold for DIT folding to x=pdit*STD_voigt 
 
@@ -130,32 +129,7 @@ class AutoXS(object):
         if xsmode=="lpf" or xsmode=="LPF":
             sigmaD=doppler_sigma(mdb.nu_lines,T,molmass)
             xsv=xsection(self.nus,nu0,sigmaD,gammaL,Sij,memory_size=self.memory_size)
-        elif xsmode=="redit" or xsmode=="REDIT":
-            checknus=check_nugrid(self.nus,gridmode="ESLOG")
-            print(checknus)
-            nus=self.nus
-            #if ~checknus:
-            #    print("WARNING: the wavenumber grid does not look ESLOG.")
-            #    if self.autogridconv:
-            #        print("the wavenumber grid is interpolated.")
-            #        nus=np.logspace(jnp.log10(self.nus[0]),jnp.log10(self.nus[-1]),len(self.nus))
-            #    else:
-            #        nus=self.nus
-            #else:
-            #    nus=self.nus
-                    
-            cnu,indexnu,R,dq=initspec.init_redit(mdb.nu_lines,nus)
-            nsigmaD=normalized_doppler_sigma(T,molmass,R)
-            ngammaL=gammaL/(mdb.nu_lines/R)
-            ngammaL_grid=dit.set_ditgrid(ngammaL,res=0.1)
-            Nc=int(len(nus)/2.0)-1
-            qvector=jnp.arange(-Nc,Nc+1,1)*dq
-            xsv=redit.xsvector(cnu,indexnu,R,nsigmaD,ngammaL,Sij,nus,ngammaL_grid,qvector)
-            #if ~checknus and self.autogridconv:
-            #    xsv=jnp.interp(self.nus,nus,xsv)
-            
         elif xsmode=="modit" or xsmode=="MODIT":
-            from exojax.spec.dit import make_dLarray
             checknus=check_nugrid(self.nus,gridmode="ESLOG")
 
             if ~checknus:
@@ -167,19 +141,17 @@ class AutoXS(object):
                     nus=self.nus
             else:
                 nus=self.nus
-                    
-            self.Nfold=2
-            cnu,indexnu,R,dq=initspec.init_modit(mdb.nu_lines,nus,self.Nfold)
+
+            cnu,indexnu,R,pmarray=initspec.init_modit(mdb.nu_lines,nus)
             nsigmaD=normalized_doppler_sigma(T,molmass,R)
             ngammaL=gammaL/(mdb.nu_lines/R)
             ngammaL_grid=dit.set_ditgrid(ngammaL,res=0.1)
-            xsv=modit.xsvector(cnu,indexnu,R,dq,nsigmaD,ngammaL,Sij,nus,ngammaL_grid)
+            xsv=modit.xsvector(cnu,indexnu,R,pmarray,nsigmaD,ngammaL,Sij,nus,ngammaL_grid)
 
             if ~checknus and self.autogridconv:
                 xsv=jnp.interp(self.nus,nus,xsv)
        
         elif xsmode=="dit" or xsmode=="DIT":
-            from exojax.spec.dit import make_dLarray
             sigmaD=doppler_sigma(mdb.nu_lines,T,molmass)
             checknus=check_nugrid(self.nus,gridmode="ESLIN")
             if ~checknus:
@@ -194,9 +166,8 @@ class AutoXS(object):
 
             sigmaD_grid=dit.set_ditgrid(sigmaD,res=0.1)
             gammaL_grid=dit.set_ditgrid(gammaL,res=0.1)
-            self.Nfold=2
-            cnu,indexnu,dLarray=initspec.init_dit(mdb.nu_lines,nus,self.Nfold)
-            xsv=dit.xsvector(cnu,indexnu,dLarray,sigmaD,gammaL,Sij,nus,sigmaD_grid,gammaL_grid)
+            cnu,indexnu,pmarray=initspec.init_dit(mdb.nu_lines,nus)
+            xsv=dit.xsvector(cnu,indexnu,pmarray,sigmaD,gammaL,Sij,nus,sigmaD_grid,gammaL_grid)
             
             if ~checknus and self.autogridconv:
                 xsv=jnp.interp(self.nus,nus,xsv)
@@ -286,15 +257,12 @@ class AutoXS(object):
                     xsm = np.concatenate([xsm,xsmtmp.T])
             xsm=xsm.T
         elif xsmode=="modit" or xsmode=="MODIT":
-            from exojax.spec.dit import make_dLarray
-
-            self.Nfold=2
             nus=self.nus
-            cnu,indexnu,R,dLarray=initspec.init_modit(mdb.nu_lines,nus,self.Nfold)
+            cnu,indexnu,R,pmarray=initspec.init_modit(mdb.nu_lines,nus)
             nsigmaDl=normalized_doppler_sigma(Tarr,self.molmass,R)[:,np.newaxis]            
             ngammaLM=gammaLM/(mdb.nu_lines/R)
             dgm_ngammaL=dit.dgmatrix(ngammaLM,0.1)
-            xsm=modit.xsmatrix(cnu,indexnu,R,dLarray,nsigmaDl,ngammaLM,SijM,nus,dgm_ngammaL)
+            xsm=modit.xsmatrix(cnu,indexnu,R,pmarray,nsigmaDl,ngammaLM,SijM,nus,dgm_ngammaL)
             
             Nneg=len(xsm[xsm<0.0])
             if Nneg>0:
@@ -303,14 +271,13 @@ class AutoXS(object):
                 
         elif xsmode=="dit" or xsmode=="DIT":
             nus=self.nus
-            self.Nfold=2
-            cnu,indexnu,dLarray=initspec.init_dit(mdb.nu_lines,nus,self.Nfold)            
+            cnu,indexnu,pmarray=initspec.init_dit(mdb.nu_lines,nus)            
             sigmaDM=jit(vmap(doppler_sigma,(None,0,None)))\
                      (mdb.nu_lines,Tarr,self.molmass)
             dgm_sigmaD=dit.dgmatrix(sigmaDM,0.1)
             dgm_gammaL=dit.dgmatrix(gammaLM,0.2)
             #sigma=dit.sigma_voigt(dgm_sigmaD,dgm_gammaL)
-            xsm=dit.xsmatrix(cnu,indexnu,dLarray,sigmaDM,\
+            xsm=dit.xsmatrix(cnu,indexnu,pmarray,sigmaDM,\
                                   gammaLM,SijM,nus,\
                                   dgm_sigmaD,dgm_gammaL)
             Nneg=len(xsm[xsm<0.0])
