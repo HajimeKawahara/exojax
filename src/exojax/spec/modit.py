@@ -12,7 +12,7 @@ from jax import jit
 from jax import vmap
 from jax.lax import scan
 import tqdm
-from exojax.spec.ditkernel import newfold_voigt_kernel_logst
+from exojax.spec.ditkernel import fold_voigt_kernel_logst
 from exojax.spec.ditkernel import voigt_kernel_logst
 
 from jax.ops import index_add
@@ -97,22 +97,21 @@ def xsvector(cnu,indexnu,R,pmarray,nsigmaD,ngammaL,S,nu_grid,ngammaL_grid):
     
     fftval = jnp.fft.rfft(Sbuf,axis=0)
     vmax=Ng_nu
-    vk=newfold_voigt_kernel_logst(k, log_nstbeta,log_ngammaL_grid, vmax, pmarray)
+    vk=fold_voigt_kernel_logst(k, log_nstbeta,log_ngammaL_grid, vmax, pmarray)
     fftvalsum = jnp.sum(fftval*vk,axis=(1,))
     xs=jnp.fft.irfft(fftvalsum)[:Ng_nu]*R/nu_grid
     
     return xs
 
-
 @jit
-def xsmatrix(cnu,indexnu,R,dLarray,nsigmaDl,ngammaLM,SijM,nu_grid,dgm_ngammaL):
+def xsmatrix(cnu,indexnu,R,pmarray,nsigmaDl,ngammaLM,SijM,nu_grid,dgm_ngammaL):
     """Cross section matrix for xsvector (MODIT)
 
     Args:
        cnu: contribution by npgetix for wavenumber
        indexnu: index by npgetix for wavenumber
        R: spectral resolution
-       dLarray: ifold/dnu (ifold=1,..,Nfold) array
+       pmarray: (+1,-1) array whose length of len(nu_grid)+1
        nu_lines: line center (Nlines)
        nsigmaDl: normalized doppler sigma in layers in R^(Nlayer x 1)
        ngammaLM: gamma factor matrix in R^(Nlayer x Nline)
@@ -133,7 +132,7 @@ def xsmatrix(cnu,indexnu,R,dLarray,nsigmaDl,ngammaLM,SijM,nu_grid,dgm_ngammaL):
         ngammaL=arr[1:Nline+1]
         Sij=arr[Nline+1:2*Nline+1]
         ngammaL_grid=arr[2*Nline+1:2*Nline+NDITgrid+1]
-        arr=xsvector(cnu,indexnu,R,dLarray,nsigmaD,ngammaL,Sij,nu_grid,ngammaL_grid)
+        arr=xsvector(cnu,indexnu,R,pmarray,nsigmaD,ngammaL,Sij,nu_grid,ngammaL_grid)
         return carry, arr
     
     val,xsm=scan(fxs,0.0,Mat)

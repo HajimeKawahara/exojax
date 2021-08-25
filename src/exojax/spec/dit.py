@@ -11,7 +11,7 @@ from jax import jit
 from jax import vmap
 from jax.lax import scan
 import tqdm
-from exojax.spec.ditkernel import newfold_voigt_kernel
+from exojax.spec.ditkernel import fold_voigt_kernel
 from jax.ops import index_add
 from jax.ops import index as joi
 
@@ -140,19 +140,19 @@ def xsvector(cnu,indexnu,pmarray,sigmaD,gammaL,S,nu_grid,sigmaD_grid,gammaL_grid
     valbuf=jnp.vstack([val,jnp.zeros_like(val)])
     fftval = jnp.fft.rfft(valbuf,axis=0)
     vmax=Ng_nu*dnu
-    vk=newfold_voigt_kernel(k, sigmaD_grid,gammaL_grid, vmax, pmarray)
+    vk=fold_voigt_kernel(k, sigmaD_grid,gammaL_grid, vmax, pmarray)
     fftvalsum = jnp.sum(fftval*vk,axis=(1,2))
     xs=jnp.fft.irfft(fftvalsum)[:Ng_nu]/dnu
     return xs
 
 @jit
-def xsmatrix(cnu,indexnu,dLarray,sigmaDM,gammaLM,SijM,nu_grid,dgm_sigmaD,dgm_gammaL):
+def xsmatrix(cnu,indexnu,pmarray,sigmaDM,gammaLM,SijM,nu_grid,dgm_sigmaD,dgm_gammaL):
     """Cross section matrix (DIT/2D+ version)
 
     Args:
        cnu: contribution by npgetix for wavenumber
        indexnu: index by npgetix for wavenumber
-       dLarray: ifold/dnu (ifold=1,..,Nfold) array
+       pmarray: (+1,-1) array whose length of len(nu_grid)+1
        sigmaDM: doppler sigma matrix in R^(Nlayer x Nline)
        gammaLM: gamma factor matrix in R^(Nlayer x Nline)
        SijM: line strength matrix in R^(Nlayer x Nline)
@@ -174,7 +174,7 @@ def xsmatrix(cnu,indexnu,dLarray,sigmaDM,gammaLM,SijM,nu_grid,dgm_sigmaD,dgm_gam
         Sij=arr[2*Nline:3*Nline]
         sigmaD_grid=arr[3*Nline:3*Nline+NDITgrid]
         gammaL_grid=arr[3*Nline+NDITgrid:3*Nline+2*NDITgrid]
-        arr=xsvector(cnu,indexnu,dLarray,sigmaD,gammaL,Sij,nu_grid,sigmaD_grid,gammaL_grid)
+        arr=xsvector(cnu,indexnu,pmarray,sigmaD,gammaL,Sij,nu_grid,sigmaD_grid,gammaL_grid)
         return carry, arr
     
     val,xsm=scan(fxs,0.0,Mat)
@@ -232,20 +232,6 @@ def dgmatrix(x,res=0.1,adopt=True):
     gm=np.array(gm)
     return gm
 
-def make_dLarray(Nfold,dnu):
-    """compute dLarray for the DIT folding
-    
-    Args:
-       Nfold: # of the folding
-       dnu: linear wavenumber grid interval
-
-    Returns:
-       dLarray: ifold/dnu (ifold=1,..,Nfold) array
-
-    """
-    dLarray=jnp.linspace(1,Nfold,Nfold)/dnu                
-    return dLarray
-
 def sigma_voigt(dgm_sigmaD,dgm_gammaL):
     """compute sigma of the Voigt profile
     
@@ -264,56 +250,3 @@ def sigma_voigt(dgm_sigmaD,dgm_gammaL):
     sigma=fv/fac
     return sigma
 
-def autoNfold(sigma,dnu,pdit=1.5):
-    """ determine an adequate Nfold
-
-    Args:
-       sigma: sigma for the voigt or gaussian    
-       dnu: linear wavenumber grid interval
-       pdit: threshold for DIT folding to x=pdit*sigma
-
-    Returns:
-       relres: relative resolution of wavenumber grid
-       Nfold: suggested Nfold
-
-    Note:
-       In DIT w/ folding, we fold the profile to x = 1/dnu * (Nfold + 1/2). We want x > p*sigma, where sigma is sigma in Gaussian or its equivalence of the VOigt profile (0.5*gammaL+sqrt(0.25*gammaL**2+sigmaD**2)). Then, we obtain Nfold > p*dnu/sigma - 1/2 > 0. The relative resolution to the line width is defined by relres = sigma/dnu.
-
-    """
-    relres=sigma/dnu
-    Nfold=np.max([int(pdit/relres-0.5),1])
-    return relres, Nfold
-
-if __name__ == "__main__":
-
-    from exojax.spec import xsection
-    from exojax.spec.hitran import SijT, doppler_sigma, gamma_hitran, gamma_natural
-    from exojax.spec import moldb
-    import numpy as np
-    import seaborn as sns
-    import matplotlib.pyplot as plt
-    import jax.numpy as jnp
-
-    nus=np.linspace(1900.0,2300.0,80000,dtype=np.float64) 
-    mdbCO=moldb.MdbHit('05_hit12.par',nus)
-    Mmol=28.010446441149536 # molecular weight
-    Tfix=1000.0 # we assume T=1000K
-    Pfix=1.e-3 # we compute P=1.e-3 bar
-    Ppart=Pfix #partial pressure of CO. here we assume a 100% CO atmosphere.
-    qt=mdbCO.Qr_layer_HAPI([Tfix])[0]
-    Sij=SijT(Tfix,mdbCO.logsij0,mdbCO.nu_lines,mdbCO.elower,qt)
-    gammaL = gamma_hitran(Pfix,Tfix, Ppart, mdbCO.n_air, \
-                          mdbCO.gamma_air, mdbCO.gamma_self) \
-                          + gamma_natural(mdbCO.A)
-    # thermal doppler sigma
-    sigmaD=doppler_sigma(mdbCO.nu_lines,Tfix,Mmol)
-    sigmaD_grid=set_ditgrid(sigmaD,res=0.1)
-    gammaL_grid=set_ditgrid(gammaL,res=0.2)
-
-    Nfold=1
-    dnu=nus[1]-nus[0]
-    dLarray=make_dLarray(Nfold,dnu)
-    xs=xsvector(mdbCO.nu_lines,sigmaD,gammaL,Sij,nus,sigmaD_grid,gammaL_grid,dLarray)
-
-    plt.plot(nus,xs)
-    plt.show()
