@@ -52,7 +52,7 @@ def inc2D_givenx(a,w,cx,ix,y,yv):
     return a
 
 
-#@jit
+@jit
 def xsvector(cnu,indexnu,R,pmarray,nsigmaD,ngammaL,S,nu_grid,ngammaL_grid):
     """Cross section vector (MODIT)
     

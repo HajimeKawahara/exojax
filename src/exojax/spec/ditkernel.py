@@ -218,8 +218,8 @@ def newfold_voigt_kernel_logst(k,log_nstbeta,log_ngammaL,vmax, pmarray):
     Nk=len(k)
     valG=jnp.exp(-2.0*(jnp.pi*beta*k[:,None])**2)
     valL=jnp.exp(-2.0*jnp.pi*gammaL[None,:]*k[:,None])
+
     q = 2.0*gammaL/(vmax) #Ngamma w=2*gamma
-    
     w_corr = vmax*(0.39560962 * jnp.exp(0.19461568*q**2)) #Ngamma
     A_corr = q*(0.09432246 * jnp.exp(-0.06592025*q**2)) #Ngamma
     B_corr = q*(0.11202818 * jnp.exp(-0.09048447*q**2)) #Ngamma
