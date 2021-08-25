@@ -16,7 +16,6 @@ from exojax.spec.make_numatrix import make_numatrix0
 from exojax.spec import lpf
 from exojax.spec import dit
 from exojax.spec import modit
-from exojax.spec import redit
 from exojax.spec import initspec
 from exojax.spec import response
 import numpy as np
@@ -40,7 +39,7 @@ class AutoXS(object):
            memory_size: memory_size required
            broadf: if False, the default broadening parameters in .def file is used
            crit: line strength criterion, ignore lines whose line strength are below crit.
-           xsmode: xsmode for opacity computation (auto/LPF/DIT/MODIT/REDIT)
+           xsmode: xsmode for opacity computation (auto/LPF/DIT/MODIT)
            autogridconv: automatic wavenumber grid conversion (True/False). If you are quite sure the wavenumber grid you use, set False.
            pdit: threshold for DIT folding to x=pdit*STD_voigt 
 
@@ -130,30 +129,6 @@ class AutoXS(object):
         if xsmode=="lpf" or xsmode=="LPF":
             sigmaD=doppler_sigma(mdb.nu_lines,T,molmass)
             xsv=xsection(self.nus,nu0,sigmaD,gammaL,Sij,memory_size=self.memory_size)
-        elif xsmode=="redit" or xsmode=="REDIT":
-            checknus=check_nugrid(self.nus,gridmode="ESLOG")
-            print(checknus)
-            nus=self.nus
-            #if ~checknus:
-            #    print("WARNING: the wavenumber grid does not look ESLOG.")
-            #    if self.autogridconv:
-            #        print("the wavenumber grid is interpolated.")
-            #        nus=np.logspace(jnp.log10(self.nus[0]),jnp.log10(self.nus[-1]),len(self.nus))
-            #    else:
-            #        nus=self.nus
-            #else:
-            #    nus=self.nus
-                    
-            cnu,indexnu,R,dq=initspec.init_redit(mdb.nu_lines,nus)
-            nsigmaD=normalized_doppler_sigma(T,molmass,R)
-            ngammaL=gammaL/(mdb.nu_lines/R)
-            ngammaL_grid=dit.set_ditgrid(ngammaL,res=0.1)
-            Nc=int(len(nus)/2.0)-1
-            qvector=jnp.arange(-Nc,Nc+1,1)*dq
-            xsv=redit.xsvector(cnu,indexnu,R,nsigmaD,ngammaL,Sij,nus,ngammaL_grid,qvector)
-            #if ~checknus and self.autogridconv:
-            #    xsv=jnp.interp(self.nus,nus,xsv)
-            
         elif xsmode=="modit" or xsmode=="MODIT":
             checknus=check_nugrid(self.nus,gridmode="ESLOG")
 
