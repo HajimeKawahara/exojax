@@ -27,8 +27,20 @@ import jax.numpy as jnp
 
 
 import pandas as pd
+
+
+dats=pd.read_csv("data/Gl229B/Gl229B_spectrum_CH4.dat",names=("wav","flux"),delimiter="\s")
+wavmic=dats["wav"].values*1.e4
+ccgs=29979245800.0
+flux=dats["flux"].values*ccgs
+#print(wavmic)
+#plt.plot(wavmic,flux)
+#plt.show()
+#import sys
+#sys.exit()
+
+
 dat=pd.read_csv("data/profile.dat")
-print(dat)
 
 Parr=dat["P"].values
 NP=len(Parr)
@@ -42,7 +54,7 @@ MMR=dat["C1H4"].values
 #Tarr = T0*(Parr)**0.1
 nus,wav,R=nugrid(15900,16300,30000,unit="AA",xsmode="modit")
 print("R=",R)
-mdbCH4=moldb.MdbExomol('.database/CH4/12C-1H4/YT10to10/',nus,crit=1.e-30)
+mdbCH4=moldb.MdbExomol('.database/CH4/12C-1H4/YT10to10/',nus,crit=1.e-32)
 cdbH2H2=contdb.CdbCIA('.database/H2-H2_2011.cia',nus)
 print("N=",len(mdbCH4.A))
 molmassCH4=molinfo.molmass("CH4")
@@ -114,11 +126,16 @@ Frot=response.rigidrot(nus,F0,vsini,u1,u2)
 F=response.ipgauss_sampling(nusd,nus,Frot,beta,RV)
 
 
+###
+
 # In[42]:
 
 fig=plt.figure(figsize=(20,4))
-plt.plot(wav[::-1],F0,alpha=0.5,color="gray")
-plt.plot(wavd[::-1],F)
+plt.plot(wav[::-1],F0,alpha=0.5,color="C1",label="exojax (CH4 only)")
+#plt.plot(wavd[::-1],F)
+plt.plot(wavmic,flux,alpha=0.5,color="C2",label="petit?")
+plt.legend()
+plt.xlim(np.min(wav),np.max(wav))
 plt.xlabel("wavelength ($\AA$)")
 plt.savefig("moditCH4.png")
 plt.show()
