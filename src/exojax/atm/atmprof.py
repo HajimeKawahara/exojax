@@ -5,6 +5,7 @@
 
 from exojax.utils.constants import kB
 from exojax.utils.constants import m_u
+import jax.numpy as jnp
 
 def Hatm(g,T,mu):
     """pressure scale height assuming an isothermal atmosphere
@@ -61,12 +62,11 @@ def atmprof_Guillot(Parr,g,kappa,Tint,Tirr,f=0.25):
 
     return Tarr
 
-
-def get_Tirr(Teq,Tint):
+def Teq2Tirr(Teq,Tint):
     """Tirr from equilibrium temperature and intrinsic temperature
 
     Args:
-       Teq: radiative equilibrium temperature
+       Teq: equilibrium temperature
        Tint: intrinsic temperature
 
     Return:
@@ -76,4 +76,20 @@ def get_Tirr(Teq,Tint):
        Here we assume A=0 (albedo) and beta=1 (fully-energy distributed)
 
     """
-    return (4.0*Teq**4 - Tint**4)**0.25
+    return (2.0**0.5)*Teff
+
+def Teff2Tirr(Teff,Tint):
+    """Tirr from effective temperature and intrinsic temperature
+
+    Args:
+       Teff: effective temperature
+       Tint: intrinsic temperature
+
+    Return:
+       Tirr: iradiation temperature
+    
+    Note:
+       Here we assume A=0 (albedo) and beta=1 (fully-energy distributed)
+
+    """
+    return (4.0*Teff**4 - Tint**4)**0.25
