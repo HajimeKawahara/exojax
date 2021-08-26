@@ -89,18 +89,19 @@ def gamma_vald3(P, T, PH, PHH, PHe, \
     chi_lam = nu_lines/8065.54 #[cm-1] -> [eV]
     chi = elower/8065.54 #[cm-1] -> [eV]
     C6 = 0.3e-30 * ((1/(ionE-chi-chi_lam)**2) - (1/(ionE-chi)**2)) #possibly need "ION**2" factor as turbospectrum?
-    logg6 = 20 + 0.4*jnp.log10(C6) + jnp.log10(PH*1e6) - 0.7*jnp.log10(T)
-    gam6H = 10**logg6
-    gamma6 = enh_damp * gam6H * \
-       (1.+ PHe/PH*0.41336 + PHH/PH*0.85)
+    #logg6 = 20 + 0.4*jnp.log10(C6) + jnp.log10(PH*1e6) - 0.7*jnp.log10(T)
+    gam6H = 1e20 * C6**0.4 * PH*1e6 / T**0.7  # = 10**logg6
+    gam6He = 1e20 * C6**0.4 * PHe*1e6*0.41336 / T**0.7
+    gam6HH = 1e20 * C6**0.4 * PHH*1e6*0.85 / T**0.7
+    gamma6 = enh_damp * (gam6H + gam6He + gam6HH)
     gamma_case1 = gamma6 + 10**gamRad
     gamma_case1 = np.where(np.isnan(gamma_case1), 0., gamma_case1) #avoid nan (appeared by jnp.log10(negative C6))
 
     #CASE2 (van der Waars broadening based on gamma6 at 10000 K)
     Texp = 0.38 #Barklem+2000
-    gam6H = 10**vdWdamp * (T/10000.)**Texp * PH * 1e6/(kcgs*T)
-    gam6He = 10**vdWdamp * (T/10000.)**Texp * PHe*0.41336 * 1e6/(kcgs*T)
-    gam6HH = 10**vdWdamp * (T/10000.)**Texp * PHH*0.85 * 1e6/(kcgs*T)
+    gam6H = 10**vdWdamp * (T/10000.)**Texp * PH*1e6 /(kcgs*T)
+    gam6He = 10**vdWdamp * (T/10000.)**Texp * PHe*1e6*0.41336 /(kcgs*T)
+    gam6HH = 10**vdWdamp * (T/10000.)**Texp * PHH*1e6*0.85 /(kcgs*T)
     gamma6 = gam6H + gam6He + gam6HH
     gamma_case2 = gamma6 + 10**gamRad
 
