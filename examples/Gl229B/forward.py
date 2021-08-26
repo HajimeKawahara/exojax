@@ -26,10 +26,20 @@ from exojax.utils.constants import c
 import jax.numpy as jnp
 
 
-NP=100
-T0=1495.0 #K
-Parr, dParr, k=rt.pressure_layer(NP=NP)
-Tarr = T0*(Parr)**0.1
+import pandas as pd
+dat=pd.read_csv("data/profile.dat")
+print(dat)
+
+Parr=dat["P"].values
+NP=len(Parr)
+Parrx, dParr, k=rt.pressure_layer(NP=NP,logPtop=np.log10(Parr[0]),logPbtm=np.log10(Parr[-1]))
+Tarr=dat["T"].values
+MMR=dat["C1H4"].values
+
+
+
+#Parr, dParr, k=rt.pressure_layer(NP=NP)
+#Tarr = T0*(Parr)**0.1
 nus,wav,R=nugrid(15900,16300,30000,unit="AA",xsmode="modit")
 print("R=",R)
 mdbCH4=moldb.MdbExomol('.database/CH4/12C-1H4/YT10to10/',nus,crit=1.e-30)
@@ -58,7 +68,7 @@ Rp=0.88
 Mp=33.2
 g=2478.57730044555*Mp/Rp**2
 #g=1.e5 #gravity cm/s2
-MMR=0.0059 #mass mixing ratio
+#MMR=0.0059 #mass mixing ratio
 
 # 0-padding for negative values
 xsmnp=np.array(xsmmodit)
@@ -105,7 +115,6 @@ F=response.ipgauss_sampling(nusd,nus,Frot,beta,RV)
 
 
 # In[42]:
-
 
 fig=plt.figure(figsize=(20,4))
 plt.plot(wav[::-1],F0,alpha=0.5,color="gray")
