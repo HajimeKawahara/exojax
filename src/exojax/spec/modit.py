@@ -25,30 +25,6 @@ from exojax.spec import gamma_natural
 from exojax.spec.hitran import SijT
 from exojax.spec import normalized_doppler_sigma
 
-def exomol(mdb,Tarr,Parr,R,molmass):
-    """compute molecular line information required for MODIT using Exomol mdb.
-
-    Args:
-       mdb: mdb
-       Tarr: Temperature array
-       Parr: Pressure array
-       R: spectral resolution
-       molmass: molecular mass
-
-    Returns:
-       SijM
-       ngammaLM
-       nsigmaDl
-
-    """
-    qt=vmap(mdb.qr_interp)(Tarr)
-    SijM=jit(vmap(SijT,(0,None,None,None,0)))(Tarr,mdb.logsij0,mdb.dev_nu_lines,mdb.elower,qt)
-    gammaLMP = jit(vmap(gamma_exomol,(0,0,None,None)))(Parr,Tarr,mdb.n_Texp,mdb.alpha_ref)
-    gammaLMN=gamma_natural(mdb.A)
-    gammaLM=gammaLMP+gammaLMN[None,:]
-    ngammaLM=gammaLM/(mdb.dev_nu_lines/R)
-    nsigmaDl=normalized_doppler_sigma(Tarr,molmass,R)[:,jnp.newaxis]
-    return SijM,ngammaLM,nsigmaDl
 
 
 @jit
@@ -210,7 +186,7 @@ def precompute_dgmatrix(set_gm_minmax,res=0.1,adopt=True):
         grid for DIT (Nlayer x NDITgrid)  
 
     """
-    set_dgm_minmax=np.array(set_dgm_minmax)             
+    set_gm_minmax=np.array(set_gm_minmax)             
     lminarray=np.min(set_gm_minmax[:,:,0],axis=0) #min
     lmaxarray=np.max(set_gm_minmax[:,:,1],axis=0)  #max
     dlog=np.max(lmaxarray-lminarray)
@@ -227,6 +203,45 @@ def precompute_dgmatrix(set_gm_minmax,res=0.1,adopt=True):
         gm.append(grid)
     gm=np.array(gm)
     return gm
+
+def exomol(mdb,Tarr,Parr,R,molmass):
+    """compute molecular line information required for MODIT using Exomol mdb.
+
+    Args:
+       mdb: mdb
+       Tarr: Temperature array
+       Parr: Pressure array
+       R: spectral resolution
+       molmass: molecular mass
+
+    Returns:
+       SijM
+       ngammaLM
+       nsigmaDl
+
+    """
+    qt=vmap(mdb.qr_interp)(Tarr)
+    SijM=jit(vmap(SijT,(0,None,None,None,0)))(Tarr,mdb.logsij0,mdb.dev_nu_lines,mdb.elower,qt)
+    gammaLMP = jit(vmap(gamma_exomol,(0,0,None,None)))(Parr,Tarr,mdb.n_Texp,mdb.alpha_ref)
+    gammaLMN=gamma_natural(mdb.A)
+    gammaLM=gammaLMP+gammaLMN[None,:]
+    ngammaLM=gammaLM/(mdb.dev_nu_lines/R)
+    nsigmaDl=normalized_doppler_sigma(Tarr,molmass,R)[:,jnp.newaxis]
+    return SijM,ngammaLM,nsigmaDl
+
+def setdgm_exomol(mdb,fT,Parr,R,molmass,res,*kargs):
+    """
+    
+    """
+    set_dgm_minmax=[]
+    Tarr_list = fT(*kargs)
+    for Tarr in Tarr_list:
+        SijM,ngammaLM,nsigmaDl=exomol(mdb,Tarr,Parr,R,molmass)    
+        #append dgm_minmax
+        set_dgm_minmax.append(minmax_dgmatrix(ngammaLM,res))        
+    dgm_ngammaL=precompute_dgmatrix(set_dgm_minmax,res=res)
+    return dgm_ngammaL
+
 
 if __name__ == "__main__":
     print("test")
