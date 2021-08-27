@@ -76,10 +76,8 @@ cnu,indexnu,R,pmarray=initspec.init_modit(mdbCH4.nu_lines,nus)
 xsmmodit=modit.xsmatrix(cnu,indexnu,R,pmarray,nsigmaDl,ngammaLM,SijM,nus,dgm_ngammaL)
 
 
-Rp=0.88
-Mp=33.2
-g=2478.57730044555*Mp/Rp**2
-#g=1.e5 #gravity cm/s2
+#g=2478.57730044555*Mp/Rp**2
+g=1.e5 #gravity cm/s2
 #MMR=0.0059 #mass mixing ratio
 
 # 0-padding for negative values
