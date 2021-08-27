@@ -25,8 +25,6 @@ from exojax.spec import gamma_natural
 from exojax.spec.hitran import SijT
 from exojax.spec import normalized_doppler_sigma
 
-
-
 @jit
 def inc2D_givenx(a,w,cx,ix,y,yv):
     """The lineshape distribution matrix = integrated neighbouring contribution for 2D (memory reduced sum) but using given contribution and index for x .
@@ -96,11 +94,11 @@ def xsvector(cnu,indexnu,R,pmarray,nsigmaD,ngammaL,S,nu_grid,ngammaL_grid):
     Sbuf=jnp.vstack([Slsd,jnp.zeros_like(Slsd)])
 
     #-----------------------------------------------
-    #MODIT w/o new folding
-    #til_Voigt=voigt_kernel_logst(k, log_nstbeta,log_ngammaL_grid)
-    #til_Slsd = jnp.fft.rfft(Sbuf,axis=0)    
-    #fftvalsum = jnp.sum(til_Slsd*til_Voigt,axis=(1,))    
-    #xs=jnp.fft.irfft(fftvalsum)[:Ng_nu]*R/nu_grid
+    ##MODIT w/o new folding
+    # til_Voigt=voigt_kernel_logst(k, log_nstbeta,log_ngammaL_grid)
+    # til_Slsd = jnp.fft.rfft(Sbuf,axis=0)    
+    # fftvalsum = jnp.sum(til_Slsd*til_Voigt,axis=(1,))    
+    # xs=jnp.fft.irfft(fftvalsum)[:Ng_nu]*R/nu_grid
     #-----------------------------------------------
     
     fftval = jnp.fft.rfft(Sbuf,axis=0)
@@ -208,16 +206,16 @@ def exomol(mdb,Tarr,Parr,R,molmass):
     """compute molecular line information required for MODIT using Exomol mdb.
 
     Args:
-       mdb: mdb
+       mdb: mdb instance
        Tarr: Temperature array
        Parr: Pressure array
        R: spectral resolution
        molmass: molecular mass
 
     Returns:
-       SijM
-       ngammaLM
-       nsigmaDl
+       line intensity matrix,
+       normalized gammaL matrix,
+       normalized sigmaD matrix
 
     """
     qt=vmap(mdb.qr_interp)(Tarr)
@@ -230,14 +228,33 @@ def exomol(mdb,Tarr,Parr,R,molmass):
     return SijM,ngammaLM,nsigmaDl
 
 def setdgm_exomol(mdb,fT,Parr,R,molmass,res,*kargs):
-    """
+    """Easy Setting of DIT Grid Matrix (dgm) using Exomol
     
+    Args:
+       mdb: mdb instance
+       fT: function of temperature array
+       Parr: pressure array
+       R: spectral resolution
+       molmass: molecular mass
+       res: resolution of dgm
+       *kargs: arguments for fT
+
+    Returns:
+       DIT Grid Matrix (dgm) of normalized gammaL
+
+    Example:
+       
+       >>> fT = lambda T0,alpha: T0[:,None]*(Parr[None,:]/Pref)**alpha[:,None]
+       >>> T0_test=np.array([1100.0,1500.0,1100.0,1500.0])
+       >>> alpha_test=np.array([0.2,0.2,0.05,0.05])
+       >>> res=0.2
+       >>> dgm_ngammaL=setdgm_exomol(mdbCH4,fT,Parr,R,molmassCH4,res,T0_test,alpha_test)
+
     """
     set_dgm_minmax=[]
     Tarr_list = fT(*kargs)
     for Tarr in Tarr_list:
         SijM,ngammaLM,nsigmaDl=exomol(mdb,Tarr,Parr,R,molmass)    
-        #append dgm_minmax
         set_dgm_minmax.append(minmax_dgmatrix(ngammaLM,res))        
     dgm_ngammaL=precompute_dgmatrix(set_dgm_minmax,res=res)
     return dgm_ngammaL
