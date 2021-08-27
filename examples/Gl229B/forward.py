@@ -54,7 +54,7 @@ MMR=dat["C1H4"].values
 #Tarr = T0*(Parr)**0.1
 nus,wav,R=nugrid(15900,16300,30000,unit="AA",xsmode="modit")
 print("R=",R)
-mdbCH4=moldb.MdbExomol('.database/CH4/12C-1H4/YT10to10/',nus,crit=1.e-32)
+mdbCH4=moldb.MdbExomol('.database/CH4/12C-1H4/YT10to10/',nus,crit=1.e-36)
 cdbH2H2=contdb.CdbCIA('.database/H2-H2_2011.cia',nus)
 print("N=",len(mdbCH4.A))
 molmassCH4=molinfo.molmass("CH4")
@@ -135,10 +135,11 @@ plt.plot(wav[::-1],F0,alpha=0.5,color="C1",label="exojax (CH4 only)")
 #plt.plot(wavd[::-1],F)
 plt.plot(wavmic,flux,alpha=0.5,color="C2",label="petit?")
 plt.legend()
+plt.ylim(0,15000)
 plt.xlim(np.min(wav),np.max(wav))
 plt.xlabel("wavelength ($\AA$)")
 plt.savefig("moditCH4.png")
-plt.show()
+#plt.show()
 
 np.savez("ch4.npz",[wav,F0,wavd,F])
 # In[ ]:
