@@ -29,7 +29,7 @@ from scipy.stats import median_absolute_deviation as mad
 norm=20000.
 
 
-dat=pd.read_csv("order15.txt",delimiter=",",names=("wav","flux"))
+dat=pd.read_csv("dat/order10.txt",delimiter=",",names=("wav","flux"))
 wavd=dat["wav"].values*1.e1
 flux=dat["flux"].values
 plt.plot(wavd,flux,alpha=0.4,label="raw")
@@ -39,13 +39,17 @@ te=-100
 wavd=wavd[ts:te]
 flux=flux[ts:te]
 #outlier
-md=medfilt(flux,kernel_size=7)
+md=medfilt(flux,kernel_size=17) #IRD/MMF
+#md=medfilt(flux,kernel_size=7) #REACH
+
 medf=flux-md
-plt.plot(wavd,flux-md,color="gray",alpha=0.4,label="flux-median_filt")
+plt.plot(wavd,medf,color="gray",alpha=0.4,label="flux-median_filt")
 sn=5.0
 
 plt.axhline(sn*mad(medf),color="gray",ls="dashed",alpha=0.4)
 mask=np.abs(medf-np.median(medf))<sn*mad(medf)
+plt.plot(wavd[mask],medf[mask],"+",color="C5",alpha=0.4,label="flux-median_filt")
+
 flux=flux[mask]
 wavd=wavd[mask]
 plt.plot(wavd,flux,alpha=0.7,color="C2",label="cleaned")
@@ -53,6 +57,8 @@ plt.legend()
 plt.ylim(-1000,5000)
 plt.show()
 
+#import sys
+#sys.exit()
 nflux=flux/np.median(flux)
 nusd=jnp.array(1.e8/wavd[::-1])
 
@@ -139,12 +145,12 @@ def frun(Tarr,MMR_H2O,MMR_CO,Mp,Rp,u1,u2,RV,vsini):
 
 #test
 if True:
-    MMR_H2O=0.01 #mass mixing ratio
-    MMR_CO=0.01 #mass mixing ratio
+    MMR_H2O=0.005 #mass mixing ratio
+    MMR_CO=0.0 #mass mixing ratio
 
-    T0=1495.0 #K
-    Tarr = T0*(Parr/Pref)**0.3
-    mu=frun(Tarr,MMR_H2O=MMR_H2O,MMR_CO=MMR_CO,Mp=33.2,Rp=0.88,u1=0.0,u2=0.0,RV=+100.0,vsini=80.0)
+    T0=1295.0 #K
+    Tarr = T0*(Parr/Pref)**0.1
+    mu=frun(Tarr,MMR_H2O=MMR_H2O,MMR_CO=MMR_CO,Mp=33.2,Rp=0.88,u1=0.0,u2=0.0,RV=0.0,vsini=1.0)
     plt.plot(wavd,mu/np.median(mu))
     plt.plot(wavd,nflux,alpha=0.3)
 
