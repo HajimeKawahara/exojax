@@ -29,8 +29,8 @@ from scipy.stats import median_absolute_deviation as mad
 norm=20000.
 
 
-dat=pd.read_csv("dat/order10.txt",delimiter=",",names=("wav","flux"))
-wavd=dat["wav"].values*1.e1
+dat=pd.read_csv("datJ1645/order9.txt",delimiter=",",names=("wav","flux"))
+wavd=dat["wav"].values*1.e1 #AA
 flux=dat["flux"].values
 plt.plot(wavd,flux,alpha=0.4,label="raw")
 #edge removal
@@ -38,6 +38,7 @@ ts=10
 te=-100
 wavd=wavd[ts:te]
 flux=flux[ts:te]
+
 #outlier
 md=medfilt(flux,kernel_size=17) #IRD/MMF
 #md=medfilt(flux,kernel_size=7) #REACH
@@ -50,6 +51,9 @@ plt.axhline(sn*mad(medf),color="gray",ls="dashed",alpha=0.4)
 mask=np.abs(medf-np.median(medf))<sn*mad(medf)
 plt.plot(wavd[mask],medf[mask],"+",color="C5",alpha=0.4,label="flux-median_filt")
 
+###
+mask=mask*(wavd<15690.)
+###
 flux=flux[mask]
 wavd=wavd[mask]
 plt.plot(wavd,flux,alpha=0.7,color="C2",label="cleaned")
@@ -59,14 +63,14 @@ plt.show()
 
 #import sys
 #sys.exit()
-nflux=flux/np.median(flux)
+nflux=flux[::-1]/np.median(flux)
 nusd=jnp.array(1.e8/wavd[::-1])
 
 
 NP=100
 Parr, dParr, k=rt.pressure_layer(NP=NP)
 Nx=5000
-nus,wav,res=nugrid(np.min(wavd)-5.0,np.max(wavd)+5.0,Nx,unit="AA",xsmode="modit")
+nus,wav,res=nugrid(np.min(wavd)-10.0,np.max(wavd)+10.0,Nx,unit="AA",xsmode="modit")
 Rinst=100000.
 beta_inst=R2STD(Rinst)
 
@@ -146,13 +150,13 @@ def frun(Tarr,MMR_H2O,MMR_CO,Mp,Rp,u1,u2,RV,vsini):
 #test
 if True:
     MMR_H2O=0.005 #mass mixing ratio
-    MMR_CO=0.0 #mass mixing ratio
+    MMR_CO=0.01 #mass mixing ratio
 
-    T0=1295.0 #K
+    T0=1695.0 #K
     Tarr = T0*(Parr/Pref)**0.1
-    mu=frun(Tarr,MMR_H2O=MMR_H2O,MMR_CO=MMR_CO,Mp=33.2,Rp=0.88,u1=0.0,u2=0.0,RV=0.0,vsini=1.0)
-    plt.plot(wavd,mu/np.median(mu))
-    plt.plot(wavd,nflux,alpha=0.3)
+    mu=frun(Tarr,MMR_H2O=MMR_H2O,MMR_CO=MMR_CO,Mp=33.2,Rp=0.88,u1=0.0,u2=0.0,RV=50.0,vsini=10.0)
+    plt.plot(wavd[::-1],mu/np.median(mu))
+    plt.plot(wavd[::-1],nflux,alpha=0.3)
 
     plt.show()
 
@@ -162,12 +166,12 @@ Mp=33.2
 sigmain=0.1
 def model_c(nu1,y1):
     Rp = numpyro.sample('Rp', dist.Uniform(0.4,1.2))
-    RV = numpyro.sample('RV', dist.Uniform(-50.0,50.0))
+    RV = numpyro.sample('RV', dist.Uniform(40.0,60.0))
     MMR_H2O = numpyro.sample('MMR_H2O', dist.Uniform(0.0,0.015))
     MMR_CO = numpyro.sample('MMR_CO', dist.Uniform(0.0,0.03))
     T0 = numpyro.sample('T0', dist.Uniform(1000.0,1700.0))
     alpha=numpyro.sample('alpha', dist.Uniform(0.05,0.2))
-    vsini = numpyro.sample('vsini', dist.Uniform(50.0,120.0))
+    vsini = numpyro.sample('vsini', dist.Uniform(1.0,20.0))
     g=2478.57730044555*Mp/Rp**2 #gravity 
     u1=0.0
     u2=0.0
