@@ -191,10 +191,18 @@ mcmc.run(rng_key_, nu1=nusd, y1=nflux)
 
 #SAMPLING
 posterior_sample = mcmc.get_samples()
+
+np.savez("npz/savepos.npz",[posterior_sample])
+
+
 pred = Predictive(model_c,posterior_sample,return_sites=["y1"])
 predictions = pred(rng_key_,nu1=nusd,y1=None)
 median_mu1 = jnp.median(predictions["y1"],axis=0)
 hpdi_mu1 = hpdi(predictions["y1"], 0.9)                                      
+
+err=np.ones_like(nflux)
+np.savez("npz/saveplotpred.npz",[wavd,nflux,err,median_mu1,hpdi_mu1])
+
 
 #PLOT
 fig, ax = plt.subplots(nrows=1, ncols=1, figsize=(20,6.0))
@@ -205,10 +213,15 @@ plt.xlabel("wavelength ($\AA$)",fontsize=16)
 plt.legend(fontsize=16)
 plt.tick_params(labelsize=16)
 plt.savefig("pred.png")
-plt.show()
+#plt.show()
 
 import arviz
-pararr=["Rp","T0","alpha","MMR_H2O","vsini","RV"]
+rc = {
+    "plot.max_subplots": 250,
+}
+
+pararr=["Rp","T0","alpha","MMR_CO","MMR_H2O","vsini","RV"]
 arviz.plot_pair(arviz.from_numpyro(mcmc),kind='kde',divergences=False,marginals=True)
+plt.savefig("corner.png")
 plt.show()
 
