@@ -163,7 +163,7 @@ if True:
 
 nn=np.median(mu)
 Mp=33.2
-sigmain=0.1
+sigmain=0.01
 def model_c(nu1,y1):
     Rp = numpyro.sample('Rp', dist.Uniform(0.4,1.2))
     RV = numpyro.sample('RV', dist.Uniform(40.0,60.0))

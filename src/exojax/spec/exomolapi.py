@@ -44,6 +44,7 @@ def read_def(deff):
             #maxnu=20000.0
         elif molmasssw:
             c=np.unique(dat["VAL"][i].strip(" ").split(" "))
+            c= [a for a in c if a != '']
             c=np.array(c,dtype=np.float)
             molmass=(np.max(c))
             molmasssw=False
