@@ -23,7 +23,6 @@ def plot_dgmn(Parr,dgm_ngammaL,ngammaLM,js,je):
     Nlines=np.shape(ngammaLM)[1]
     fig=plt.figure()
     ax=fig.add_subplot(111)
-    print(Ngy)
     for i in range(js,je):
         plt.plot(ngammaLM[i,:],Parr[i]*np.ones(Nlines),".")
         for k in range(0,Ngy):

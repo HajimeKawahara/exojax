@@ -1,4 +1,4 @@
-Comaprison MODIT with LPF
+Comparing MODIT with LPF
 ==========================
 
 Here, we try to compute a emission spectrum using MODIT.
@@ -6,7 +6,7 @@ Here, we try to compute a emission spectrum using MODIT.
 .. code:: ipython3
 
     from exojax.spec import rtransfer as rt
-    from exojax.spec import dit, modit
+    from exojax.spec import modit
     from exojax.spec import lpf
     import numpy as np
     import matplotlib.pyplot as plt
@@ -105,12 +105,12 @@ And line strength
         (Tarr,mdbCO.logsij0,mdbCO.nu_lines,mdbCO.elower,qt)
 
 MODIT requires the grids of ngammaL, and wavenumber. For the emission
-spectrum, this grids should be prepared for each layer. dit.dgmatrix can
+spectrum, this grids should be prepared for each layer. modit.dgmatrix can
 compute these grids.
 
 .. code:: ipython3
 
-    dgm_ngammaL=dit.dgmatrix(ngammaLM)
+    dgm_ngammaL=modit.dgmatrix(ngammaLM)
     #you can change the resolution 
     #dgm_gammaL=dit.dgmatrix(ngammaLM,res=0.1)
 

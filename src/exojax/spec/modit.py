@@ -211,7 +211,7 @@ def dgmatrix(x,res=0.1,adopt=True):
         grid for DIT (Nlayer x NDITgrid)
 
     """
-    from exojax.spec.dit import ditgrid as dgmatrix_
+    from exojax.spec.dit import dgmatrix as dgmatrix_
     return dgmatrix_(x,res,adopt)
 
     

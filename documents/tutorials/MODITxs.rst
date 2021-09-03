@@ -94,7 +94,8 @@ can be computed using `init_modit <../exojax/exojax.spec.html#exojax.spec.initsp
     from exojax.spec import initspec 
     cnu,indexnu,R,pmarray=initspec.init_modit(mdbCO.nu_lines,nus)
 
-Let’s compute the cross sectio using `modit.xsvector <../exojax/exojax.spec.html#exojax.spec.modit.xsvector`_!
+Let’s compute the cross sectio using
+`modit.xsvector <../exojax/exojax.spec.html#exojax.spec.modit.xsvector>`_.
 
 .. code:: ipython3
 
