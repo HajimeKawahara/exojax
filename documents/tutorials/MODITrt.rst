@@ -1,13 +1,12 @@
-Forward Modelling of a Many Lines Spectrum using MODIT
-======================================================
-*Update: July 17/2021, Hajime Kawahara*
+Comparing MODIT with LPF
+==========================
 
 Here, we try to compute a emission spectrum using MODIT.
 
 .. code:: ipython3
 
     from exojax.spec import rtransfer as rt
-    from exojax.spec import dit, modit
+    from exojax.spec import modit
     from exojax.spec import lpf
     import numpy as np
     import matplotlib.pyplot as plt
@@ -88,8 +87,6 @@ MODIT uses the normalized gammaL.
 
     dv_lines=mdbCO.nu_lines/R
     ngammaLM=gammaLM/dv_lines
-    
-    dv=nus/R
 
 normalized Doppler broadening is common for the lines, so we compute the
 vector for the layers.
@@ -108,12 +105,12 @@ And line strength
         (Tarr,mdbCO.logsij0,mdbCO.nu_lines,mdbCO.elower,qt)
 
 MODIT requires the grids of ngammaL, and wavenumber. For the emission
-spectrum, this grids should be prepared for each layer. dit.dgmatrix can
+spectrum, this grids should be prepared for each layer. modit.dgmatrix can
 compute these grids.
 
 .. code:: ipython3
 
-    dgm_ngammaL=dit.dgmatrix(ngammaLM)
+    dgm_ngammaL=modit.dgmatrix(ngammaLM)
     #you can change the resolution 
     #dgm_gammaL=dit.dgmatrix(ngammaLM,res=0.1)
 
@@ -129,48 +126,43 @@ plot.ditplot.plot_dgm
 
 .. parsed-literal::
 
-    /home/kawahara/anaconda3/lib/python3.7/site-packages/statsmodels/tools/_testing.py:19: FutureWarning: pandas.util.testing is deprecated. Use the functions in the public API at pandas.testing instead.
-      import pandas.util.testing as tm
-
-
-.. parsed-literal::
-
     3
 
 
 
-.. image:: MODITrt/output_22_2.png
+.. image:: MODITrt/output_22_1.png
 
 
-We need to specify Nfold. But, I do not want to check Nfold for each
-layer.
-
-.. code:: ipython3
-
-    #
-    Nfold=1
-
-For MODIT in exojax, we also need to precompute “dLarray”. The aliasing
-effect may results in some negative values in the computed cross
-section, in particular, when the grid resolution is comparable or
-smaller than to the line width. We can avoid this effect by including
-the aliased part of the distribution. Nfold is the number of aliasing to
-be included. dLarray is just a list (1,2,3,…,Nfold), where dnu is the
-wavenumber interval. We can use dit.make_dLarray to compute dLarray.
+Initialize modit!
 
 .. code:: ipython3
 
-    dLarray=dit.make_dLarray(Nfold,1)
+    from exojax.spec import initspec 
+    cnu,indexnu,R,pmarray=initspec.init_modit(mdbCO.nu_lines,nus)
 
-We can compute a 2D grid for ngammaL, wavenumber, simultaneously, using
-modit.xsvector. We should be careful for the truncation error of
-wavenumber. Here, we subtract large number from both wavenumber grids
-and line centers to avoid the truncatino error.
+Compute the cross section array!
 
 .. code:: ipython3
 
-    xsmmodit=modit.xsmatrix(mdbCO.nu_lines-np.median(nus),nsigmaDl,ngammaLM,\
-    SijM,nus-np.median(nus),dgm_ngammaL,dLarray,dv_lines,dv)
+    xsmmodit=modit.xsmatrix(cnu,indexnu,R,pmarray,nsigmaDl,ngammaLM,SijM,nus,dgm_ngammaL)
+
+Some elements may be small negative values because of error for DIT. you
+can just use jnp.abs
+
+.. code:: ipython3
+
+    import jax.numpy as jnp
+    print(len(xsmmodit[xsmmodit<0.0]),"/",len((xsmmodit).flatten()))
+
+
+.. parsed-literal::
+
+    147790 / 1000000
+
+
+.. code:: ipython3
+
+    xsmmodit=jnp.abs(xsmmodit)
 
 We also compute the cross section using the direct computation (LPF) for
 the comparison purpose.
@@ -184,10 +176,32 @@ the comparison purpose.
     sigmaDM=jit(vmap(doppler_sigma,(None,0,None)))\
             (mdbCO.nu_lines,Tarr,molmassCO)
     
-    from exojax.spec import make_numatrix0
     from exojax.spec.lpf import xsmatrix
-    numatrix=make_numatrix0(nus,mdbCO.nu_lines)
+    numatrix=initspec.init_lpf(mdbCO.nu_lines,nus)
     xsmdirect=xsmatrix(numatrix,sigmaDM,gammaLM,SijM)
+
+BTW, if you are not busy, check the computational time for both LPF and
+MODIT.
+
+.. code:: ipython3
+
+    %timeit modit.xsmatrix(cnu,indexnu,R,pmarray,nsigmaDl,ngammaLM,SijM,nus,dgm_ngammaL)
+
+
+.. parsed-literal::
+
+    10.9 ms ± 103 µs per loop (mean ± std. dev. of 7 runs, 100 loops each)
+
+
+.. code:: ipython3
+
+    %timeit xsmatrix(numatrix,sigmaDM,gammaLM,SijM)
+
+
+.. parsed-literal::
+
+    71.9 ms ± 1.17 ms per loop (mean ± std. dev. of 7 runs, 100 loops each)
+
 
 Let’s see the cross section matrix!
 
@@ -212,14 +226,12 @@ Let’s see the cross section matrix!
 
 .. parsed-literal::
 
-    /home/kawahara/anaconda3/lib/python3.7/site-packages/ipykernel_launcher.py:5: RuntimeWarning: divide by zero encountered in log10
-      """
-    /home/kawahara/anaconda3/lib/python3.7/site-packages/ipykernel_launcher.py:5: RuntimeWarning: invalid value encountered in log10
-      """
+    /tmp/ipykernel_29941/2412046399.py:5: RuntimeWarning: divide by zero encountered in log10
+      c=plt.imshow(np.log10(xsmmodit),cmap="bone_r",vmin=-23,vmax=-19)
 
 
 
-.. image:: MODITrt/output_32_1.png
+.. image:: MODITrt/output_36_1.png
 
 
 computing delta tau for CO
@@ -267,7 +279,7 @@ you can plot a contribution function using exojax.plot.atmplot
 
 
 
-.. image:: MODITrt/output_41_0.png
+.. image:: MODITrt/output_45_0.png
 
 
 radiative transfering…
@@ -293,13 +305,30 @@ only 1%).
     ax=fig.add_subplot(212)
     plt.plot(wav[::-1],(F0-F0direct)/np.median(F0direct)*100,label="MODIT")
     plt.legend()
+    #plt.ylim(-0.1,0.1)
     plt.ylabel("residual (%)")
     plt.xlabel("wavelength ($\AA$)")
     plt.show()
 
 
 
-.. image:: MODITrt/output_45_0.png
+.. image:: MODITrt/output_49_0.png
+
+
+.. code:: ipython3
+
+    ax=fig.add_subplot(212)
+    plt.plot(wav[::-1],(F0-F0direct)/np.median(F0direct)*100,label="MODIT")
+    plt.legend()
+    plt.ylim(-0.1,0.1)
+    plt.xlim(22938,22945)
+    plt.ylabel("residual (%)")
+    plt.xlabel("wavelength ($\AA$)")
+    plt.show()
+
+
+
+.. image:: MODITrt/output_50_0.png
 
 
 MODIT uses ESLOG as the wavenumebr grid. So, we can directly apply the
@@ -339,11 +368,12 @@ spectrum
 
 .. parsed-literal::
 
-    (22920, 23000)
+    (22920.0, 23000.0)
 
 
 
 
-.. image:: MODITrt/output_49_1.png
+.. image:: MODITrt/output_54_1.png
+
 
 

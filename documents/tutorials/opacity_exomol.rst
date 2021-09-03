@@ -1,6 +1,12 @@
 CO Cross Section using ExoMol
 ---------------------------------------
 
+.. note::
+   
+   If the number of lines is large (typically > 1000), consider to use MODIT.
+   See ":doc:`MODITxs`".
+
+
 This tutorial demonstrates how to compute the opacity of CO using ExoMol
 step by step.
 

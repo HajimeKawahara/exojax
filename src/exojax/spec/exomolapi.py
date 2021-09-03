@@ -45,7 +45,7 @@ def read_def(deff):
         elif molmasssw:
             c=np.unique(dat["VAL"][i].strip(" ").split(" "))
             c= [a for a in c if a != '']
-            c=np.array(c,dtype=np.float)
+            c=np.array(c,dtype=np.float64)
             molmass=(np.max(c))
             molmasssw=False
 

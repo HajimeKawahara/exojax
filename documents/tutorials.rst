@@ -15,35 +15,33 @@ Basics
    tutorials/reverse_modeling.rst	     
    tutorials/fitbd.rst	     
 
+MODIT
+==============
+
+.. toctree::
+   :maxdepth: 1
+   :caption: Rapid Spectral Synthesis for Many Molecular Lines
+	      
+   tutorials/MODITxs.rst      
+   tutorials/MODITch4.rst
+
+
 Clouds and Chemistry
 =====================
 
 .. toctree::
    :maxdepth: 1
-   :caption: Clouds and Chemistry
 	     
    tutorials/vterm.rst
 
 
-MODIT and DIT
-==============
+Miscellaneous
+=============
 
 .. toctree::
    :maxdepth: 1
-   :caption: (Modified) Discrete Integral Transform for Many Molecular Lines
-	      
-   tutorials/MODITxs.rst      
-   tutorials/MODITrt.rst
-   tutorials/MODITch4.rst
+
+   tutorials/MODITrt.rst	     
    tutorials/DITxs.rst   
    tutorials/DITrt.rst   
-
-Optimization
-==============
-
-   
-.. toctree::
-   :maxdepth: 1
-   :caption: Optimization using ExoJAX
-
    tutorials/optimize_voigt.rst   
