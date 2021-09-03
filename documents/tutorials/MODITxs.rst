@@ -1,7 +1,7 @@
 Cross Section for Many Lines using MODIT
 ========================================
 
-Update: August 13/2021, Hajime Kawahara
+*Update: September 3/2021, Hajime Kawahara*
 
 We demonstarte the Modified Discrete Integral Transform (MODIT), which
 is the modified version of DIT for exojax. MODIT uses the evenly-spaced
@@ -41,10 +41,20 @@ direct computation (LPF).
                           mdbCO.gamma_air, mdbCO.gamma_self) \
     + gamma_natural(mdbCO.A)
 
-MODIT uses the normalized quantities by wavenumber/R, where R is the
+MODIT uses the normalized quantities by
+:math:`d \nu_\mathrm{line} \equiv \nu/R`,
+where R is the
 spectral resolution. In this case, the normalized Doppler width
-(nsigmaD) is common for the same isotope. Then, we use a 2D DIT grid
-with the normalized gammaL and q = R log(nu).
+(nsigmaD) is common for the same isotope,
+:math:`\sqrt{\frac{k_B T}{m_u M}}*R`,
+where
+:math:`M`
+is molecular mass
+:math:`m_u`
+is the atomic mass unit.
+This can be computed using `hitran.normalized_doppler_sigma <../exojax/exojax.spec.html#exojax.spec.hitran.normalized_doppler_sigma>`_. Then, we use a 2D DIT grid
+with the dimensions of the normalized gammaL and ESLOG grid
+:math:`q = R \log{\nu}`.
 
 .. code:: ipython3
 
@@ -53,16 +63,15 @@ with the normalized gammaL and q = R log(nu).
     nsigmaD=normalized_doppler_sigma(Tfix,Mmol,R)
     ngammaL=gammaL/dv_lines
 
-MODIT uses a grid of ngammaL, and wavenumber. set_ditgrid makes a 1D
-grid for ngamma.
+MODIT uses a grid of ngammaL, and wavenumber. `ditgrid <../exojax/exojax.spec.html#exojax.spec.modit.ditgrid>`_ makes a 1D grid for ngamma.
 
 .. code:: ipython3
 
-    from exojax.spec.dit import set_ditgrid
-    ngammaL_grid=set_ditgrid(ngammaL)
+    from exojax.spec.modit import ditgrid
+    ngammaL_grid=ditgrid(ngammaL)
     
     # we can change the resolution using res option
-    #ngammaL_grid=set_ditgrid(ngammaL,res=0.1)
+    #ngammaL_grid=ditgrid(ngammaL,res=0.1)
 
 .. code:: ipython3
 
@@ -72,15 +81,6 @@ grid for ngamma.
         plt.axhline(i,lw=1,alpha=0.5,color="C1")
     plt.xlabel("wavenumber")
     plt.ylabel("normalized gammaL")
-
-
-
-
-.. parsed-literal::
-
-    Text(0, 0.5, 'normalized gammaL')
-
-
 
 
 .. image:: MODITxs/output_7_1.png
@@ -94,7 +94,7 @@ can be computed using `init_modit <../exojax/exojax.spec.html#exojax.spec.initsp
     from exojax.spec import initspec 
     cnu,indexnu,R,pmarray=initspec.init_modit(mdbCO.nu_lines,nus)
 
-Let’s compute the cross section!
+Let’s compute the cross sectio using `modit.xsvector <../exojax/exojax.spec.html#exojax.spec.modit.xsvector`_!
 
 .. code:: ipython3
 
@@ -151,9 +151,7 @@ There is about 1 % deviation between LPF and MODIT.
     plt.legend(loc="upper left")
     plt.ylabel("Difference (cm2)")
     plt.xlim(2050.8,2050.9)
-    #plt.yscale("log")
     plt.savefig("fine_grid.png")
-
 
 
 .. image:: MODITxs/output_16_0.png

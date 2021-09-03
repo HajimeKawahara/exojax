@@ -43,8 +43,9 @@ Kawahara et al. under review.
 License & Attribution
 ---------------------
 
-Copyright 2021 `Hajime Kawahara <http://secondearths.sakura.ne.jp/en/index.html>`_ (@HajimeKawahara) and the contributors (2021/7/19):
+Copyright 2021, Contributors
 
+- `Hajime Kawahara <http://secondearths.sakura.ne.jp/en/index.html>`_ (@HajimeKawahara, maintainer)
 - Yui Kawashima (@ykawashima)
 - Kento Masuda
 - Ian Crossfield
@@ -53,7 +54,7 @@ Copyright 2021 `Hajime Kawahara <http://secondearths.sakura.ne.jp/en/index.html>
 - Brett Morris (@bmorris3)
 - Erwan Pannier (@erwanp) and `RADIS <https://github.com/radis/radis>`_ community
 - Stevanus Nugroho
-
+- Tako Ishikawa
 
 ExoJAX is free software made available under the MIT License. For details
 see the ``LICENSE``.
