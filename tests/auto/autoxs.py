@@ -15,9 +15,6 @@ plt.plot(nuslog,xsv0,label="MODIT")
 plt.legend()
 plt.show()
 
-import sys
-sys.exit()
-
 autoxs=AutoXS(nuslog,"ExoMol","CO",xsmode="LPF") #using ExoMol CO (12C-16O). HITRAN and HITEMP are also supported.  
 xsv1=autoxs.xsection(1000.0,1.0) #cross section for 1000K, 1bar (cm2)
 dif=(numpy.sum((xsv0-xsv1)**2))
@@ -50,21 +47,3 @@ plt.show()
 
 print("difference")
 print("DIT-LPF:",dif)
-
-autoxs=AutoXS(nuslog,"ExoMol","CO",xsmode="REDIT") #using ExoMol CO (12C-16O). HITRAN and HITEMP are also supported.  
-xsv0=autoxs.xsection(1000.0,1.0) #cross section for 1000K, 1bar (cm2)
-autoxs=AutoXS(nuslog,"ExoMol","CO",xsmode="LPF") #using ExoMol CO (12C-16O). HITRAN and HITEMP are also supported.  
-xsv1=autoxs.xsection(1000.0,1.0) #cross section for 1000K, 1bar (cm2)
-dif=(numpy.sum((xsv0-xsv1)**2))
-
-print("difference")
-print("REDIT-LPF:",dif)
-
-import matplotlib.pyplot as plt
-plt.plot(nus,xsv0,label="REDIT")
-plt.plot(nus,xsv1,".",label="LPF",alpha=0.1)
-if logplot:
-    plt.yscale("log")
-plt.legend()
-plt.show()
-
