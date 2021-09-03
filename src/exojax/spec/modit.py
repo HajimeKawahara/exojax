@@ -19,6 +19,12 @@ from jax.ops import index_add
 from jax.ops import index as joi
 from exojax.spec.dit import getix
 
+#exomol
+from exojax.spec.exomol import gamma_exomol
+from exojax.spec import gamma_natural
+from exojax.spec.hitran import SijT
+from exojax.spec import normalized_doppler_sigma
+
 @jit
 def inc2D_givenx(a,w,cx,ix,y,yv):
     """The lineshape distribution matrix = integrated neighbouring contribution for 2D (memory reduced sum) but using given contribution and index for x .
@@ -88,11 +94,11 @@ def xsvector(cnu,indexnu,R,pmarray,nsigmaD,ngammaL,S,nu_grid,ngammaL_grid):
     Sbuf=jnp.vstack([Slsd,jnp.zeros_like(Slsd)])
 
     #-----------------------------------------------
-    #MODIT w/o new folding
-    #til_Voigt=voigt_kernel_logst(k, log_nstbeta,log_ngammaL_grid)
-    #til_Slsd = jnp.fft.rfft(Sbuf,axis=0)    
-    #fftvalsum = jnp.sum(til_Slsd*til_Voigt,axis=(1,))    
-    #xs=jnp.fft.irfft(fftvalsum)[:Ng_nu]*R/nu_grid
+    ##MODIT w/o new folding
+    # til_Voigt=voigt_kernel_logst(k, log_nstbeta,log_ngammaL_grid)
+    # til_Slsd = jnp.fft.rfft(Sbuf,axis=0)    
+    # fftvalsum = jnp.sum(til_Slsd*til_Voigt,axis=(1,))    
+    # xs=jnp.fft.irfft(fftvalsum)[:Ng_nu]*R/nu_grid
     #-----------------------------------------------
     
     fftval = jnp.fft.rfft(Sbuf,axis=0)
@@ -178,7 +184,7 @@ def precompute_dgmatrix(set_gm_minmax,res=0.1,adopt=True):
         grid for DIT (Nlayer x NDITgrid)  
 
     """
-                      
+    set_gm_minmax=np.array(set_gm_minmax)             
     lminarray=np.min(set_gm_minmax[:,:,0],axis=0) #min
     lmaxarray=np.max(set_gm_minmax[:,:,1],axis=0)  #max
     dlog=np.max(lmaxarray-lminarray)
@@ -195,7 +201,6 @@ def precompute_dgmatrix(set_gm_minmax,res=0.1,adopt=True):
         gm.append(grid)
     gm=np.array(gm)
     return gm
-
 
 
 def dgmatrix(x,res=0.1,adopt=True):
@@ -231,5 +236,63 @@ def ditgrid(x,res=0.1,adopt=True):
     from exojax.spec.dit import ditgrid as ditgrid_
     return ditgrid_(x,res,adopt)
     
+def exomol(mdb,Tarr,Parr,R,molmass):
+    """compute molecular line information required for MODIT using Exomol mdb.
+
+    Args:
+       mdb: mdb instance
+       Tarr: Temperature array
+       Parr: Pressure array
+       R: spectral resolution
+       molmass: molecular mass
+
+    Returns:
+       line intensity matrix,
+       normalized gammaL matrix,
+       normalized sigmaD matrix
+
+    """
+    qt=vmap(mdb.qr_interp)(Tarr)
+    SijM=jit(vmap(SijT,(0,None,None,None,0)))(Tarr,mdb.logsij0,mdb.dev_nu_lines,mdb.elower,qt)
+    gammaLMP = jit(vmap(gamma_exomol,(0,0,None,None)))(Parr,Tarr,mdb.n_Texp,mdb.alpha_ref)
+    gammaLMN=gamma_natural(mdb.A)
+    gammaLM=gammaLMP+gammaLMN[None,:]
+    ngammaLM=gammaLM/(mdb.dev_nu_lines/R)
+    nsigmaDl=normalized_doppler_sigma(Tarr,molmass,R)[:,jnp.newaxis]
+    return SijM,ngammaLM,nsigmaDl
+
+def setdgm_exomol(mdb,fT,Parr,R,molmass,res,*kargs):
+    """Easy Setting of DIT Grid Matrix (dgm) using Exomol
+    
+    Args:
+       mdb: mdb instance
+       fT: function of temperature array
+       Parr: pressure array
+       R: spectral resolution
+       molmass: molecular mass
+       res: resolution of dgm
+       *kargs: arguments for fT
+
+    Returns:
+       DIT Grid Matrix (dgm) of normalized gammaL
+
+    Example:
+       
+       >>> fT = lambda T0,alpha: T0[:,None]*(Parr[None,:]/Pref)**alpha[:,None]
+       >>> T0_test=np.array([1100.0,1500.0,1100.0,1500.0])
+       >>> alpha_test=np.array([0.2,0.2,0.05,0.05])
+       >>> res=0.2
+       >>> dgm_ngammaL=setdgm_exomol(mdbCH4,fT,Parr,R,molmassCH4,res,T0_test,alpha_test)
+
+    """
+    set_dgm_minmax=[]
+    Tarr_list = fT(*kargs)
+    for Tarr in Tarr_list:
+        SijM,ngammaLM,nsigmaDl=exomol(mdb,Tarr,Parr,R,molmass)    
+        set_dgm_minmax.append(minmax_dgmatrix(ngammaLM,res))        
+    dgm_ngammaL=precompute_dgmatrix(set_dgm_minmax,res=res)
+    return dgm_ngammaL
+
+
 if __name__ == "__main__":
     print("test")
