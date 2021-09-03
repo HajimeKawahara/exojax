@@ -180,8 +180,9 @@ def xsmatrix(cnu,indexnu,pmarray,sigmaDM,gammaLM,SijM,nu_grid,dgm_sigmaD,dgm_gam
     val,xsm=scan(fxs,0.0,Mat)
     return xsm
 
-def set_ditgrid(x,res=0.1,adopt=True):
-    """
+def ditgrid(x,res=0.1,adopt=True):
+    """DIT GRID
+
     Args:
         x: simgaD or gammaL array (Nline)
         res: grid resolution. res=0.1 (defaut) means a grid point per digit
@@ -202,6 +203,21 @@ def set_ditgrid(x,res=0.1,adopt=True):
         grid=np.logspace(lxmin,lxmax,Ng)
     return grid
 
+def set_ditgrid(x,res=0.1,adopt=True):
+    """alias of ditgrid
+
+    Args:
+        x: simgaD or gammaL array (Nline)
+        res: grid resolution. res=0.1 (defaut) means a grid point per digit
+        adopt: if True, min, max grid points are used at min and max values of x. 
+               In this case, the grid width does not need to be res exactly.
+        
+    Returns:
+        grid for DIT
+
+    """
+    return ditgrid(x,res,adopt)
+    
 def dgmatrix(x,res=0.1,adopt=True):
     """DIT GRID MATRIX 
 

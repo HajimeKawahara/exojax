@@ -145,7 +145,7 @@ class AutoXS(object):
             cnu,indexnu,R,pmarray=initspec.init_modit(mdb.nu_lines,nus)
             nsigmaD=normalized_doppler_sigma(T,molmass,R)
             ngammaL=gammaL/(mdb.nu_lines/R)
-            ngammaL_grid=dit.set_ditgrid(ngammaL,res=0.1)
+            ngammaL_grid=modit.ditgrid(ngammaL,res=0.1)
             xsv=modit.xsvector(cnu,indexnu,R,pmarray,nsigmaD,ngammaL,Sij,nus,ngammaL_grid)
 
             if ~checknus and self.autogridconv:
@@ -164,8 +164,8 @@ class AutoXS(object):
             else:
                 nus=self.nus
 
-            sigmaD_grid=dit.set_ditgrid(sigmaD,res=0.1)
-            gammaL_grid=dit.set_ditgrid(gammaL,res=0.1)
+            sigmaD_grid=dit.ditgrid(sigmaD,res=0.1)
+            gammaL_grid=dit.ditgrid(gammaL,res=0.1)
             cnu,indexnu,pmarray=initspec.init_dit(mdb.nu_lines,nus)
             xsv=dit.xsvector(cnu,indexnu,pmarray,sigmaD,gammaL,Sij,nus,sigmaD_grid,gammaL_grid)
             
@@ -261,7 +261,7 @@ class AutoXS(object):
             cnu,indexnu,R,pmarray=initspec.init_modit(mdb.nu_lines,nus)
             nsigmaDl=normalized_doppler_sigma(Tarr,self.molmass,R)[:,np.newaxis]            
             ngammaLM=gammaLM/(mdb.nu_lines/R)
-            dgm_ngammaL=dit.dgmatrix(ngammaLM,0.1)
+            dgm_ngammaL=modit.dgmatrix(ngammaLM,0.1)
             xsm=modit.xsmatrix(cnu,indexnu,R,pmarray,nsigmaDl,ngammaLM,SijM,nus,dgm_ngammaL)
             
             Nneg=len(xsm[xsm<0.0])
