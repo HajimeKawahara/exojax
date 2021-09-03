@@ -1,12 +1,15 @@
-Forward Modeling of CH4 emission 
-=================================================================================
-*Update: July 17/2021, Hajime Kawahara*
+Forward Modeling of an Emission Spectrum using the MODIT Cross Section
+======================================================================
+
+*Last update: September 3rd (2021) Hajime Kawahara*
+
+We try to compute an emission spectrum in which many methane lines
+exist. This situation mocks a T-type brown dwarf.
 
 .. code:: ipython3
 
     from exojax.spec import rtransfer as rt
     from exojax.spec import dit, modit
-    from exojax.spec import lpf
 
 .. code:: ipython3
 
@@ -16,7 +19,7 @@ Forward Modeling of CH4 emission
     Parr, dParr, k=rt.pressure_layer(NP=NP)
     Tarr = T0*(Parr)**0.1
 
-A T-P profile we assume is …
+A T-P profile we assume is here.
 
 .. code:: ipython3
 
@@ -29,10 +32,12 @@ A T-P profile we assume is …
 
 
 
-.. image:: MODITch4/output_4_0.png
+.. image:: MODITch4/output_5_0.png
 
 
-We set a wavenumber grid using nugrid.
+We set a wavenumber grid using nugrid. Specify xsmode=“modit” though it
+is not mandatory. MODIT uses FFT, so the (internal) wavenumber grid
+should be evenly spaced in log.
 
 .. code:: ipython3
 
@@ -57,19 +62,23 @@ Loading a molecular database of CH4 and CIA (H2-H2)…
 .. parsed-literal::
 
     Background atmosphere:  H2
+    Note: Couldn't find the hdf5 format. We convert data to the hdf5 format. After the second time, it will become much faster.
     Reading transition file
+    Note: Couldn't find the hdf5 format. We convert data to the hdf5 format. After the second time, it will become much faster.
+    Note: Couldn't find the hdf5 format. We convert data to the hdf5 format. After the second time, it will become much faster.
     .broad is used.
     Broadening code level= a1
     default broadening parameters are used for  12  J lower states in  29  states
     H2-H2
 
 
-So many lines we have....
-
+We have 140031 lines
 
 .. code:: ipython3
 
     len(mdbCH4.A)
+
+
 
 
 .. parsed-literal::
@@ -103,15 +112,6 @@ Pressure and Natural broadenings
     gammaLMN=gamma_natural(mdbCH4.A)
     gammaLM=gammaLMP+gammaLMN[None,:]
 
-Doppler broadening
-
-.. code:: ipython3
-
-    from exojax.spec import normalized_doppler_sigma
-    import numpy as np
-    nsigmaDl=normalized_doppler_sigma(Tarr,molmassCH4,R)[:,np.newaxis]
-
-
 And line strength
 
 .. code:: ipython3
@@ -120,64 +120,96 @@ And line strength
     SijM=jit(vmap(SijT,(0,None,None,None,0)))\
         (Tarr,mdbCH4.logsij0,mdbCH4.nu_lines,mdbCH4.elower,qt)
 
+MODIT uses the normalized quantities by
+:math:`d \nu_\mathrm{line} \equiv \nu/R`,
+where R is the
+spectral resolution. In this case, the normalized Doppler width
+(nsigmaD) is common for the same isotope,
+:math:`\sqrt{\frac{k_B T}{m_u M}}*R`,
+where
+:math:`M`
+is molecular mass
+:math:`m_u`
+is the atomic mass unit.
+This can be computed using `hitran.normalized_doppler_sigma <../exojax/exojax.spec.html#exojax.spec.hitran.normalized_doppler_sigma>`_. Then, we use a 2D DIT grid
+with the dimensions of the normalized gammaL and ESLOG grid
+:math:`q = R \log{\nu}`.
+
+.. code:: ipython3
+
+    from exojax.spec import normalized_doppler_sigma
+    import numpy as np
+    nsigmaDl=normalized_doppler_sigma(Tarr,molmassCH4,R)[:,np.newaxis]
+
 .. code:: ipython3
 
     dv_lines=mdbCH4.nu_lines/R
     ngammaLM=gammaLM/dv_lines
-    dv=nus/R
 
-MODIT
-
-.. code:: ipython3
-
-    dgm_ngammaL=dit.dgmatrix(ngammaLM,0.2)
+MODIT uses a grid of ngammaL and wavenumber. `modit.dgmatrix <../exojax/exojax.spec.html#exojax.spec.modit.dgmatrix>`_ makes a matrix of ngamma and layers.
 
 .. code:: ipython3
 
-    #show the DIT grids 
+    dgm_ngammaL=modit.dgmatrix(ngammaLM,0.2)
+
+.. code:: ipython3
+
+    #show the normalized DGM
     from exojax.plot.ditplot import plot_dgmn
     plot_dgmn(Parr,dgm_ngammaL,ngammaLM,0,6)
 
-
-.. parsed-literal::
-
-    2
+.. image:: MODITch4/output_24_1.png
 
 
-
-.. image:: MODITch4/output_22_1.png
-
+We need to precompute the contribution for wavenumber and pmarray. These
+can be computed using init_dit.
 
 .. code:: ipython3
 
-    Nfold=1
+    from exojax.spec import initspec 
+    cnu,indexnu,R,pmarray=initspec.init_modit(mdbCH4.nu_lines,nus)
+
+Let’s compute a cross section matrix usin `modit.xsmatrix <../exojax/exojax.spec.html#exojax.spec.modit.xsmatrix>`_.
 
 .. code:: ipython3
 
-    from jax import jit
-    import numpy as np
-    dLarray=dit.make_dLarray(Nfold,1)
-    # 3D version
-    xsmmodit=modit.xsmatrix(mdbCH4.nu_lines-np.median(nus),nsigmaDl,ngammaLM,\
-    SijM,nus-np.median(nus),dgm_ngammaL,dLarray,dv_lines,dv)
+    xsm=modit.xsmatrix(cnu,indexnu,R,pmarray,nsigmaDl,ngammaLM,SijM,nus,dgm_ngammaL)
 
 .. code:: ipython3
 
     import numpy as np
     fig=plt.figure(figsize=(20,4))
     ax=fig.add_subplot(111)
-    c=plt.imshow(np.log10(xsmmodit),cmap="bone_r",vmin=-23,vmax=-19)
+    c=plt.imshow(np.log10(xsm),cmap="bone_r",vmin=-23,vmax=-19)
     plt.colorbar(c,shrink=0.8)
     plt.text(50,30,"MODIT")
-    ax.set_aspect(0.4/ax.get_data_ratio())
+    ax.set_aspect(0.2/ax.get_data_ratio())
     plt.show()
 
 
+.. image:: MODITch4/output_29_1.png
 
-.. image:: MODITch4/output_25_0.png
+
+Sometimes, xsm includes negative elements due to error. Check it.
+
+.. code:: ipython3
+
+    len(xsm[xsm<0.0]), np.min(xsm)
 
 
-computing delta tau for CH4
+
+.. parsed-literal::
+
+    (4555, DeviceArray(-1.1067142e-22, dtype=float32))
+
+We have some negative elements. These negative values are very small but will cause severe error in radiative transfer. For instance, jnp.abs can remove them.
+
+.. code:: ipython3
+
+    import jax.numpy as jnp
+    xsm=jnp.abs(xsm)
+
+Computing delta tau for CH4...
 
 .. code:: ipython3
 
@@ -185,26 +217,11 @@ computing delta tau for CH4
     import jax.numpy as jnp
     Rp=0.88
     Mp=33.2
-    g=2478.57730044555*Mp/Rp**2
-    #g=1.e5 #gravity cm/s2
+    g=2478.57730044555*Mp/Rp**2 #gravity cm/s2
     MMR=0.0059 #mass mixing ratio
-    
-    # 0-padding for negative values
-    xsmnp=np.array(xsmmodit)
-    print(len(xsmnp[xsmnp<0.0]))
-    xsmnp[xsmnp<0.0]=0.0
-    xsmditc=jnp.array(xsmnp)
-    #-------------------------------
-    
-    dtaum=dtauM(dParr,xsmditc,MMR*np.ones_like(Tarr),molmassCH4,g)
+    dtaum=dtauM(dParr,xsm,MMR*np.ones_like(Tarr),molmassCH4,g)
 
-
-.. parsed-literal::
-
-    0
-
-
-computing delta tau for CIA
+Computing delta tau for CIA
 
 .. code:: ipython3
 
@@ -232,7 +249,7 @@ you can plot a contribution function using exojax.plot.atmplot
 
 
 
-.. image:: MODITch4/output_33_0.png
+.. image:: MODITch4/output_41_0.png
 
 
 radiative transfering…
@@ -255,7 +272,7 @@ radiative transfering…
 
 
 
-.. image:: MODITch4/output_36_0.png
+.. image:: MODITch4/output_44_0.png
 
 
 MODIT uses ESLOG as the wavenunmber grid. We can directly apply the
@@ -275,8 +292,8 @@ response to the raw spectrum.
     u1=0.0 #limb darkening u1
     u2=0.0 #limb darkening u2
     
-    Rinst=100000.
-    beta=c/(2.0*np.sqrt(2.0*np.log(2.0))*Rinst) #IP sigma need check 
+    Rinst=100000. #spectral resolution of the spectrograph
+    beta=c/(2.0*np.sqrt(2.0*np.log(2.0))*Rinst) #IP sigma (STD of Gaussian)
     
     Frot=response.rigidrot(nus,F0,vsini,u1,u2)
     F=response.ipgauss_sampling(nusd,nus,Frot,beta,RV)
@@ -290,6 +307,13 @@ response to the raw spectrum.
     plt.savefig("moditCH4.png")
 
 
-.. image:: MODITch4/output_39_0.png
 
+.. image:: MODITch4/output_47_0.png
+
+
+Let’s save the spectrum for the retrieval.
+
+.. code:: ipython3
+
+    np.savetxt("spectrum_ch4.txt",np.array([wavd,F]).T,delimiter=",")
 
