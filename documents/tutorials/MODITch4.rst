@@ -1,4 +1,4 @@
-Forward Modeling of an Emission Spectrum w/ Many Lines
+Forward Modeling of an Emission Spectrum with Many Lines
 ======================================================================
 
 *Septempber 3rd (2021) Hajime Kawahara*
