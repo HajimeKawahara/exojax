@@ -10,6 +10,7 @@ User Guide
    userguide/exomol.rst
    userguide/hitran.rst
    userguide/rtransfer.rst
+   userguide/modit.rst
 
 .. toctree::
    :maxdepth: 1

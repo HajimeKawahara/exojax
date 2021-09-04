@@ -28,14 +28,11 @@ You should check cuda version of your environment as
 
 Also, check required jaxlib versions by numpyro at
 `NumPyro <https://github.com/pyro-ppl/numpyro>`_.
-Here is an example of installation for jaxlib for cuda 11.2 and jaxlib 0.1.62
+Here is an example of installation for jaxlib for cuda 11.1 to 11.4.
 
 .. code:: sh
-	  
-	   pip install --upgrade jax jaxlib==0.1.62+cuda112 -f https://storage.googleapis.com/jax-releases/jax_releases.html
-	   git clone https://github.com/pyro-ppl/numpyro.git
-	   cd numpyro
-	   python setup.py install
+
+           pip install --upgrade "jax[cuda111]"  -f https://storage.googleapis.com/jax-releases/jax_releases.html
 	   cd ../exojax/
 	   python setup.py install
 
@@ -48,4 +45,5 @@ In addition, you may need cuDNN for `response.ipgauss2 <../exojax/exojax.spec.ht
 References
 =================
 
-- Kawahara, Kawashima, Masuda, Crossfield (2021) `arXiv <https://arxiv.org/abs/2105.14782>`_.
+
+- Kawahara, Kawashima, Masuda, Crossfield, van den Bekerom, Parker (2021) under review: [arXiv:2105.14782](http://arxiv.org/abs/2105.14782)
