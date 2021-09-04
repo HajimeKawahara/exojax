@@ -11,6 +11,8 @@ from scipy.special import wofz as sc_wofz
 import jax.numpy as jnp
 from jax import jit, vmap
 import numpy as np
+from jax.config import config                                                 #
+config.update("jax_enable_x64", True)
 
 def test_comparison_hjert_scipy():
 
@@ -34,7 +36,6 @@ def test_comparison_hjert_scipy():
     
     vvhjert=jit(vmap(vhjert,0,0))
     diffarr=(vvhjert(aarrv).T-H(aarr,xarr))/H(aarr,xarr)
-
     assert np.max(diffarr)<1.e-6
 
 if __name__ == "__main__":

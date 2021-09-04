@@ -4,6 +4,13 @@ from scipy.special import expn
 from exojax.special.expn import E1
 from exojax.spec import rtransfer as rt
 import jax.numpy as jnp
+
+import numpy as np
+import matplotlib.pyplot as plt
+from scipy.special import expn
+from exojax.special.expn import E1
+from exojax.spec import rtransfer as rt
+import jax.numpy as jnp
 x=np.logspace(-4,1.9,1000)
 
 d_f32=np.abs(rt.trans2E3(x)-(2.0*expn(3,x)))

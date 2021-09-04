@@ -21,4 +21,4 @@ def test_vterm():
     eta=viscosity.eta_Rosner(300.0,vfactor)
     r=jnp.logspace(-5,0,70)
     vfall=vterm.vf(r,g,eta,drho,rho)
-    assert jnp.mean(vfall)==328.12296
+    assert jnp.mean(vfall)-328.12296 < 1.e-5

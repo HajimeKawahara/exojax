@@ -14,8 +14,8 @@ from exojax.special import erfcx
 from exojax.special._special import erfcx_scan
 from matplotlib.ticker import FormatStrFormatter
 import matplotlib.pyplot as plt
-from jax.config import config                                                  
-config.update("jax_enable_x64", True)
+#from jax.config import config                                                 # 
+#config.update("jax_enable_x64", True)
 
 N=10000
 xv=jnp.logspace(-5,5,N)
@@ -35,9 +35,9 @@ def test_comparison_erfcx_scipy():
     plt.ylabel("(our erfcx - scipy)/scipy")
     plt.xscale("log")
     plt.xlabel("$x$")
-    plt.ylim(-3.e-8,3.e-8)
-    plt.savefig("erfcx_f64.png", bbox_inches="tight", pad_inches=0.0)
-    plt.savefig("erfcx_f64.pdf", bbox_inches="tight", pad_inches=0.0)
+    plt.ylim(-3.e-6,3.e-6)
+    plt.savefig("erfcx.png", bbox_inches="tight", pad_inches=0.0)
+    plt.savefig("erfcx.pdf", bbox_inches="tight", pad_inches=0.0)
     
     assert np.max(d)<2.e-6
 

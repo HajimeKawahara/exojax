@@ -11,8 +11,6 @@ from scipy.special import wofz as sc_wofz
 import jax.numpy as jnp
 from jax import jit, vmap
 import numpy as np
-from jax.config import config                                                 #
-config.update("jax_enable_x64", True)
 
 def test_comparison_hjert_scipy():
 
@@ -43,7 +41,7 @@ def test_comparison_hjert_scipy():
     from matplotlib.ticker import MultipleLocator, FormatStrFormatter
     fig=plt.figure()
     ax=fig.add_subplot(111)
-    c=ax.imshow((vvhjert(aarrv).T-H(aarr,xarr))/H(aarr,xarr),vmin=-3.e-7,vmax=3.e-7,
+    c=ax.imshow((vvhjert(aarrv).T-H(aarr,xarr))/H(aarr,xarr),vmin=-1.e-6,vmax=1.e-6,
                 cmap="RdBu",extent=([vl,vm,vm,vl]),rasterized=True)
     plt.gca().invert_yaxis()
     plt.ylabel("$\log_{10}(x)$")
@@ -51,8 +49,8 @@ def test_comparison_hjert_scipy():
     cb=plt.colorbar(c)
     cb.formatter.set_powerlimits((0, 0))
     cb.set_label("(hjert - scipy)/scipy",size=14)
-    plt.savefig("hjert_f64.png", bbox_inches="tight", pad_inches=0.0)
-    plt.savefig("hjert_f64.pdf", bbox_inches="tight", pad_inches=0.0)
+    plt.savefig("hjert.png", bbox_inches="tight", pad_inches=0.0)
+    plt.savefig("hjert.pdf", bbox_inches="tight", pad_inches=0.0)
 
     assert np.max(diffarr)<1.e-6
 

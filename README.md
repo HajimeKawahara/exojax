@@ -90,9 +90,6 @@ To fit a spectrum model to real data, you need to know a little more about exoja
 
 <details><summary>HMC-NUTS of Transmission Spectra :x: </summary>Not supported yet. </details>
 
-
-
-
 ## Installation
 
 ```
@@ -124,12 +121,10 @@ nvcc -V
 Install such as
 
 ```
-pip install --upgrade jax jaxlib==0.1.62+cuda112  -f https://storage.googleapis.com/jax-releases/jax_releases.html
+pip install --upgrade "jax[cuda111]"  -f https://storage.googleapis.com/jax-releases/jax_releases.html
 ```
 
-In this case, jaxlib version is 0.1.62 and cuda version is 11.2. You can check which cuda version is avaiable at [here](https://storage.googleapis.com/jax-releases/jax_releases.html)
-
-Visit [here](https://github.com/google/jax) for the details.
+This is the case for cuda11.1 to 11.4. Visit [here](https://github.com/google/jax) for the details.
 
 - cuDNN
 
