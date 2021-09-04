@@ -24,6 +24,7 @@ MODIT
 	      
    tutorials/MODITxs.rst      
    tutorials/MODITch4.rst
+   tutorials/MODITrv.rst
 
 
 Clouds and Chemistry

@@ -1,10 +1,11 @@
-Forward Modeling of an Emission Spectrum using the MODIT Cross Section
+Forward Modeling of an Emission Spectrum w/ Many Lines
 ======================================================================
 
-*Last update: September 3rd (2021) Hajime Kawahara*
+*Septempber 3rd (2021) Hajime Kawahara*
 
 We try to compute an emission spectrum in which many methane lines
 exist. This situation mocks a T-type brown dwarf.
+The spectrum computed in this section will be used in ":doc:`MODITrv`".
 
 .. code:: ipython3
 
@@ -62,10 +63,7 @@ Loading a molecular database of CH4 and CIA (H2-H2)…
 .. parsed-literal::
 
     Background atmosphere:  H2
-    Note: Couldn't find the hdf5 format. We convert data to the hdf5 format. After the second time, it will become much faster.
     Reading transition file
-    Note: Couldn't find the hdf5 format. We convert data to the hdf5 format. After the second time, it will become much faster.
-    Note: Couldn't find the hdf5 format. We convert data to the hdf5 format. After the second time, it will become much faster.
     .broad is used.
     Broadening code level= a1
     default broadening parameters are used for  12  J lower states in  29  states
@@ -120,20 +118,10 @@ And line strength
     SijM=jit(vmap(SijT,(0,None,None,None,0)))\
         (Tarr,mdbCH4.logsij0,mdbCH4.nu_lines,mdbCH4.elower,qt)
 
-MODIT uses the normalized quantities by
-:math:`d \nu_\mathrm{line} \equiv \nu/R`,
-where R is the
+MODIT uses the normalized quantities by wavenumber/R, where R is the
 spectral resolution. In this case, the normalized Doppler width
-(nsigmaD) is common for the same isotope,
-:math:`\sqrt{\frac{k_B T}{m_u M}}*R`,
-where
-:math:`M`
-is molecular mass
-:math:`m_u`
-is the atomic mass unit.
-This can be computed using `hitran.normalized_doppler_sigma <../exojax/exojax.spec.html#exojax.spec.hitran.normalized_doppler_sigma>`_. Then, we use a 2D DIT grid
-with the dimensions of the normalized gammaL and ESLOG grid
-:math:`q = R \log{\nu}`.
+(nsigmaD) is common for the same isotope. Then, we use a 2D DIT grid
+with the normalized gammaL and q = R log(nu).
 
 .. code:: ipython3
 
@@ -146,7 +134,8 @@ with the dimensions of the normalized gammaL and ESLOG grid
     dv_lines=mdbCH4.nu_lines/R
     ngammaLM=gammaLM/dv_lines
 
-MODIT uses a grid of ngammaL and wavenumber. `modit.dgmatrix <../exojax/exojax.spec.html#exojax.spec.modit.dgmatrix>`_ makes a matrix of ngamma and layers.
+MODIT uses a grid of ngammaL and wavenumber. `dgmatrix <../exojax/exojax.spec.html#exojax.spec.modit.dgmatrix>`_ makes a 1D grid
+for ngamma for n-th layers.
 
 .. code:: ipython3
 
@@ -154,22 +143,25 @@ MODIT uses a grid of ngammaL and wavenumber. `modit.dgmatrix <../exojax/exojax.s
 
 .. code:: ipython3
 
-    #show the normalized DGM
+    #show the DIT grids 
     from exojax.plot.ditplot import plot_dgmn
     plot_dgmn(Parr,dgm_ngammaL,ngammaLM,0,6)
 
-.. image:: MODITch4/output_24_1.png
+
+
+.. image:: MODITch4/output_24_0.png
 
 
 We need to precompute the contribution for wavenumber and pmarray. These
-can be computed using init_dit.
+can be computed using `init_dit <../exojax/exojax.spec.html#exojax.spec.modit.init_dit>`_.
 
 .. code:: ipython3
 
     from exojax.spec import initspec 
     cnu,indexnu,R,pmarray=initspec.init_modit(mdbCH4.nu_lines,nus)
 
-Let’s compute a cross section matrix usin `modit.xsmatrix <../exojax/exojax.spec.html#exojax.spec.modit.xsmatrix>`_.
+Let’s compute a cross section matrix using
+`modit.xsmatrix <../exojax/exojax.spec.html#exojax.spec.modit.xsmatrix>`_.
 
 .. code:: ipython3
 
@@ -187,6 +179,15 @@ Let’s compute a cross section matrix usin `modit.xsmatrix <../exojax/exojax.sp
     plt.show()
 
 
+.. parsed-literal::
+
+    /tmp/ipykernel_41828/2860296713.py:4: RuntimeWarning: divide by zero encountered in log10
+      c=plt.imshow(np.log10(xsm),cmap="bone_r",vmin=-23,vmax=-19)
+    /tmp/ipykernel_41828/2860296713.py:4: RuntimeWarning: invalid value encountered in log10
+      c=plt.imshow(np.log10(xsm),cmap="bone_r",vmin=-23,vmax=-19)
+
+
+
 .. image:: MODITch4/output_29_1.png
 
 
@@ -198,18 +199,21 @@ Sometimes, xsm includes negative elements due to error. Check it.
 
 
 
+
 .. parsed-literal::
 
-    (4555, DeviceArray(-1.1067142e-22, dtype=float32))
+    (4552, DeviceArray(-1.1067153e-22, dtype=float32))
 
-We have some negative elements. These negative values are very small but will cause severe error in radiative transfer. For instance, jnp.abs can remove them.
+
+
+This negative value is very small. For instance, jnp.abs can remove it.
 
 .. code:: ipython3
 
     import jax.numpy as jnp
     xsm=jnp.abs(xsm)
 
-Computing delta tau for CH4...
+computing delta tau for CH4
 
 .. code:: ipython3
 
@@ -221,7 +225,7 @@ Computing delta tau for CH4...
     MMR=0.0059 #mass mixing ratio
     dtaum=dtauM(dParr,xsm,MMR*np.ones_like(Tarr),molmassCH4,g)
 
-Computing delta tau for CIA
+computing delta tau for CIA
 
 .. code:: ipython3
 
@@ -239,7 +243,8 @@ The total delta tau is a summation of them
 
     dtau=dtaum+dtaucH2H2
 
-you can plot a contribution function using exojax.plot.atmplot
+you can plot a contribution function using
+`plot.atmplot <../exojax/exojax.spec.html#exojax.plot.atmplot>`_.
 
 .. code:: ipython3
 
