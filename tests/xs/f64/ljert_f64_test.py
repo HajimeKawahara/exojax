@@ -34,22 +34,6 @@ def test_comparison_ljert_scipy():
     
     vvljert=jit(vmap(vljert,0,0))
     diffarr=(vvljert(aarrv).T-H(aarr,xarr))/H(aarr,xarr)
-    print("MEDIAN=",np.median(diffarr),"MAX=",np.max(diffarr))
-
-    #figure
-    import matplotlib.pyplot as plt
-    from matplotlib.ticker import MultipleLocator, FormatStrFormatter
-    fig=plt.figure()
-    ax=fig.add_subplot(111)
-    c=ax.imshow((vvljert(aarrv).T-H(aarr,xarr))/H(aarr,xarr),vmin=-1.e-4,vmax=1.e-4,
-                cmap="RdBu",extent=([vl,vm,vm,vl]),rasterized=True)
-    plt.gca().invert_yaxis()
-    plt.ylabel("$\log_{10}(x)$")
-    plt.xlabel("$\log_{10}(a)$")
-    cb=plt.colorbar(c)
-    cb.formatter.set_powerlimits((0, 0))
-    cb.set_label("(ljert - scipy)/scipy",size=14)
-    plt.savefig("ljert.pdf", bbox_inches="tight", pad_inches=0.0)
 
     assert np.max(diffarr)<6.e-5
 

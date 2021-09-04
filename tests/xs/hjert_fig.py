@@ -34,6 +34,23 @@ def test_comparison_hjert_scipy():
     
     vvhjert=jit(vmap(vhjert,0,0))
     diffarr=(vvhjert(aarrv).T-H(aarr,xarr))/H(aarr,xarr)
+    print("MEDIAN=",np.median(diffarr),"MAX=",np.max(diffarr))
+
+    #figure
+    import matplotlib.pyplot as plt
+    from matplotlib.ticker import MultipleLocator, FormatStrFormatter
+    fig=plt.figure()
+    ax=fig.add_subplot(111)
+    c=ax.imshow((vvhjert(aarrv).T-H(aarr,xarr))/H(aarr,xarr),vmin=-1.e-6,vmax=1.e-6,
+                cmap="RdBu",extent=([vl,vm,vm,vl]),rasterized=True)
+    plt.gca().invert_yaxis()
+    plt.ylabel("$\log_{10}(x)$")
+    plt.xlabel("$\log_{10}(a)$")
+    cb=plt.colorbar(c)
+    cb.formatter.set_powerlimits((0, 0))
+    cb.set_label("(hjert - scipy)/scipy",size=14)
+    plt.savefig("hjert.png", bbox_inches="tight", pad_inches=0.0)
+    plt.savefig("hjert.pdf", bbox_inches="tight", pad_inches=0.0)
 
     assert np.max(diffarr)<1.e-6
 
