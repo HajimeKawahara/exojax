@@ -20,12 +20,13 @@ def plot_dgmn(Parr,dgm_ngammaL,ngammaLM,js,je):
     """
 
     Ngy=np.shape(dgm_ngammaL)[1]
-    Nlines=np.shape(ngammaLM)[1]
+    if ngammaLM is not None:
+        Nlines=np.shape(ngammaLM)[1]
     fig=plt.figure()
     ax=fig.add_subplot(111)
-    print(Ngy)
     for i in range(js,je):
-        plt.plot(ngammaLM[i,:],Parr[i]*np.ones(Nlines),".")
+        if ngammaLM is not None:
+            plt.plot(ngammaLM[i,:],Parr[i]*np.ones(Nlines),".")
         for k in range(0,Ngy):
                 plt.plot(dgm_ngammaL[i,k],Parr[i],"+",color="black")
     plt.yscale("log")

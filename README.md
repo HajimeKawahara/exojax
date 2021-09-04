@@ -86,9 +86,10 @@ To fit a spectrum model to real data, you need to know a little more about exoja
  
 </details>
 
+<details><summary>Clouds :white_check_mark: </summary> Only for brave users. </details>
+
 <details><summary>HMC-NUTS of Transmission Spectra :x: </summary>Not supported yet. </details>
 
-<details><summary>Cloud modeling :x: </summary> Not supported yet. </details>
 
 
 

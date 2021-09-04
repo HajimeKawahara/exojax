@@ -93,3 +93,5 @@ def init_redit(nu_lines,nu_grid):
     dq=R*(np.log(nu_grid[1])-np.log(nu_grid[0]))
     
     return jnp.array(cont), jnp.array(index), R, dq
+
+
