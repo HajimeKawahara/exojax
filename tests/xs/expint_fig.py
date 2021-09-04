@@ -5,7 +5,19 @@ from exojax.special.expn import E1
 from exojax.spec import rtransfer as rt
 import jax.numpy as jnp
 
+import numpy as np
+import matplotlib.pyplot as plt
+from scipy.special import expn
+from exojax.special.expn import E1
+from exojax.spec import rtransfer as rt
+import jax.numpy as jnp
 x=np.logspace(-4,1.9,1000)
+
+d_f32=np.abs(rt.trans2E3(x)-(2.0*expn(3,x)))
+
+from jax.config import config                                                 #
+config.update("jax_enable_x64", True)
+
 
 fig=plt.figure(figsize=(15,5))
 ax=fig.add_subplot(211)
@@ -24,7 +36,9 @@ plt.xscale("log")
 plt.yscale("log")
 
 ax=fig.add_subplot(212)
-plt.plot(x,np.abs(rt.trans2E3(x)-(2.0*expn(3,x))),".",alpha=0.5,color="gray")
+plt.plot(x,d_f32,".",alpha=0.5,color="C1",label="F32")
+plt.plot(x,np.abs(rt.trans2E3(x)-(2.0*expn(3,x))),"+",alpha=0.5,color="C2",label="F64")
+plt.legend(loc="center right")
 plt.xscale("log")
 plt.yscale("log")
 plt.ylabel("|ours-scipy| ",fontsize=14)
