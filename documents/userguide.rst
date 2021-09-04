@@ -14,7 +14,8 @@ User Guide
 .. toctree::
    :maxdepth: 1
    :caption: Information For Developers
-
+	     
+   developers/pytest.rst   
    developers/doc.rst   
    developers/experimental.rst   
 
