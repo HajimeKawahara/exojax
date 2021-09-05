@@ -11,7 +11,8 @@ User Guide
    userguide/hitran.rst
    userguide/rtransfer.rst
    userguide/modit.rst
-
+   userguide/comp.rst
+   
 .. toctree::
    :maxdepth: 1
    :caption: Information For Developers
