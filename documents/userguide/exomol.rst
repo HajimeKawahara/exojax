@@ -1,6 +1,8 @@
 ExoMol
 --------------
 
+*Sep 5 (2021) Hajime Kawahara*
+
 
 See ":doc:`../tutorials/opacity_exomol`" as the tutorial to compute a cross section profile using ExoMol.
 
