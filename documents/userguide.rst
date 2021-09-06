@@ -12,7 +12,8 @@ User Guide
    userguide/rtransfer.rst
    userguide/modit.rst
    userguide/comp.rst
-   
+   userguide/vterm.rst
+	     
 .. toctree::
    :maxdepth: 1
    :caption: Information For Developers
