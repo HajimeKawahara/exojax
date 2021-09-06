@@ -1,12 +1,10 @@
 #!/usr/bin/env python
-
 import codecs
 import os
 import re
 from setuptools import find_packages, setup
 
 # PROJECT SPECIFIC
-
 NAME = "exojax"
 PACKAGES = find_packages(where="src")
 META_PATH = os.path.join("src", "exojax", "__init__.py")
@@ -16,7 +14,6 @@ CLASSIFIERS = [
 INSTALL_REQUIRES = ["numpy","pandas","tqdm","scipy","jax","numpyro","pyarrow","bs4","vaex"]
 
 # END PROJECT SPECIFIC
-
 HERE = os.path.dirname(os.path.realpath(__file__))
 
 
