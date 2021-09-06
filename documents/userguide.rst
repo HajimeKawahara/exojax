@@ -3,14 +3,18 @@ User Guide
 
 .. toctree::
    :maxdepth: 1
-   :caption: For Developers
 
    userguide/hjerting.rst   
    userguide/moldb.rst
    userguide/exomol.rst
    userguide/hitran.rst
    userguide/rtransfer.rst
-
+   userguide/modit.rst
+   userguide/benchmark.rst
+   userguide/fp.rst
+   userguide/vterm.rst
+   userguide/comp.rst
+	     
 .. toctree::
    :maxdepth: 1
    :caption: Information For Developers

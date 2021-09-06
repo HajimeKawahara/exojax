@@ -27,15 +27,19 @@ MODIT
    tutorials/MODITrv.rst
 
 
-Clouds and Chemistry
-=====================
+Clouds
+==============
 
 .. toctree::
    :maxdepth: 1
-	     
-   tutorials/vterm.rst
+	      
+   tutorials/amclouds.rst
 
+.. warning::
+   
+   Cloud modeling in ExoJAX is under development
 
+   
 Miscellaneous
 =============
 

@@ -1,8 +1,8 @@
 Terminal Velocity of Cloud Particles
 ====================================
 
-Here, we compute a terminal velocity as a function of the condensate
-(cloud) radius.
+Here, we explain how `atm.vterm.vf <../exojax/exojax.atm.html#exojax.atm.vterm.vf>`_ computes a terminal velocity as a function of the condensate (cloud) radius.
+
 
 .. code:: ipython3
 

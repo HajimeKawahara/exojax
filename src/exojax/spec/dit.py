@@ -1,6 +1,6 @@
 """Line profile computation using Discrete Integral Transform
 
-   * Line profile computation of `Discrete Integral Transform <https://www.sciencedirect.com/science/article/abs/pii/S0022407320310049>`_ for rapid spectral synthesis, originally proposed by D.C.M van den Bekeroma and E.Pannier.
+   * Line profile computation of `Discrete Integral Transform <https://www.sciencedirect.com/science/article/abs/pii/S0022407320310049>`_ for rapid spectral synthesis, originally proposed by D.C.M van den Bekerom and E.Pannier.
    * This module consists of selected functions in `addit package <https://github.com/HajimeKawahara/addit>`_.
    * The concept of "folding" can be understood by reading `the discussion <https://github.com/radis/radis/issues/186#issuecomment-764465580>`_ by D.C.M van den Bekeroma.
 
@@ -27,7 +27,17 @@ def getix(x,xv):
         index (index)
 
     Note:
-       cont is the contribution for i=index. 1 - cont is the contribution for i=index+1. For other i, the contribution should be zero.
+       cont is the contribution for i=index+1. 1 - cont is the contribution for i=index. For other i, the contribution should be zero.
+
+    Example:
+       
+       >>> from exojax.spec.dit import getix
+       >>> import jax.numpy as jnp
+       >>> y=jnp.array([1.1,4.3])
+       >>> yv=jnp.arange(6)
+       >>> getix(y,yv)
+       (DeviceArray([0.10000002, 0.3000002 ], dtype=float32), DeviceArray([1, 4], dtype=int32))    
+
 
     """
     indarr=jnp.arange(len(xv))
@@ -48,7 +58,8 @@ def npgetix(x,xv):
         index (index)
 
     Note:
-       cont is the contribution for i=index. 1 - cont is the contribution for i=index+1. For other i, the contribution should be zero.
+       cont is the contribution for i=index+1. 1 - cont is the contribution for i=index. For other i, the contribution should be zero.
+
 
 
     """
