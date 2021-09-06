@@ -182,8 +182,8 @@ We need a density of condensates.
     muc_enstatite=molmass("MgSiO3")
     muc_Fe=molmass("Fe")
 
-Let’s compute the terminal velocity. We can compute the terminal
-velocity of cloud particle using atm.vterm.vf. vmap is again applied to
+Let’s compute the terminal velocity. We can compute the terminalvelocity of cloud particle using `atm.vterm.vf <../exojax/exojax.atm.html#exojax.atm.vterm.vf>`_. See ":doc:`../userguide/vterm`" in the userguide for the details.
+vmap is again applied to
 vf.
 
 .. code:: ipython3

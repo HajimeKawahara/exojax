@@ -3,7 +3,6 @@ User Guide
 
 .. toctree::
    :maxdepth: 1
-   :caption: For Developers
 
    userguide/hjerting.rst   
    userguide/moldb.rst
@@ -11,8 +10,8 @@ User Guide
    userguide/hitran.rst
    userguide/rtransfer.rst
    userguide/modit.rst
-   userguide/comp.rst
    userguide/vterm.rst
+   userguide/comp.rst
 	     
 .. toctree::
    :maxdepth: 1
