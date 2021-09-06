@@ -76,7 +76,7 @@ def make_numatrix0_subtract(nu,hatnu,Nz=1,warning=True):
     """Generate numatrix0 using gpu
 
     Note: 
-       This function computes a wavenumber matrix using XLA. Because XLA does not support float64, a direct computation sometimes results in large uncertainity. For instace, let's assum nu=2000.0396123 cm-1 and hatnu=2000.0396122 cm-1. If applying float32, we get np.float32(2000.0396123)-np.float32(2000.0396122) = 0.0. But, after subtracting 2000 from both nu and hatnu, we get np.float32(0.0396123)-np.float32(0.0396122)=1.0058284e-07. make_numatrix0 does such computation. Nz=1 means we subtract a integer part (i.e. 2000), Nz=10 means we subtract 2000.0, and Nz=10 means we subtract 2000.00.
+       This function computes a wavenumber matrix using XLA. Because XLA does not support float64, a direct computation sometimes results in large uncertainity. For instace, let's assume nu=2000.0396123 cm-1 and hatnu=2000.0396122 cm-1. If applying float32, we get np.float32(2000.0396123)-np.float32(2000.0396122) = 0.0. But, after subtracting 2000 from both nu and hatnu, we get np.float32(0.0396123)-np.float32(0.0396122)=1.0058284e-07. make_numatrix0 does such computation. Nz=1 means we subtract a integer part (i.e. 2000), Nz=10 means we subtract 2000.0, and Nz=10 means we subtract 2000.00.
 
     Args:
        nu: wavenumber matrix (Nnu,)

@@ -10,6 +10,7 @@ User Guide
    userguide/hitran.rst
    userguide/rtransfer.rst
    userguide/modit.rst
+   userguide/fp.rst
    userguide/vterm.rst
    userguide/comp.rst
 	     
