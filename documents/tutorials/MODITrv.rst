@@ -292,3 +292,12 @@ Let’s define the model for a HMC.
 .. image:: MODITrv/output_33_0.png
 
 
+Real data challenge
+---------------------------
+
+For brave users, we prepared a real data of a brown dwarf 2MASS J16452211-1319516 as observed by IRD/Subaru (PI:Hajime Kawahara/S20A-019) at examples/bd/. The sample code is reverse_J1645.py. Many water lines are in the spectrum. Have a fun!
+
+.. image:: MODITrv/pred.png
+
+
+If you are interested in such real spectrum, check `REACH <http://secondearths.sakura.ne.jp/reach/>`_ on Subaru telescope!

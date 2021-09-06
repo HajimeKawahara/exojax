@@ -27,8 +27,6 @@ from scipy.signal import medfilt
 from scipy.stats import median_absolute_deviation as mad
 
 norm=20000.
-
-
 dat=pd.read_csv("datJ1645/order9.txt",delimiter=",",names=("wav","flux"))
 wavd=dat["wav"].values*1.e1 #AA
 flux=dat["flux"].values
@@ -51,9 +49,10 @@ plt.axhline(sn*mad(medf),color="gray",ls="dashed",alpha=0.4)
 mask=np.abs(medf-np.median(medf))<sn*mad(medf)
 plt.plot(wavd[mask],medf[mask],"+",color="C5",alpha=0.4,label="flux-median_filt")
 
-###
+#Wavelength mask
 mask=mask*(wavd<15690.)
 ###
+
 flux=flux[mask]
 wavd=wavd[mask]
 plt.plot(wavd,flux,alpha=0.7,color="C2",label="cleaned")
@@ -61,8 +60,6 @@ plt.legend()
 plt.ylim(-1000,5000)
 plt.show()
 
-#import sys
-#sys.exit()
 nflux=flux[::-1]/np.median(flux)
 nusd=jnp.array(1.e8/wavd[::-1])
 
@@ -123,9 +120,8 @@ if False:
     Tarr=1300.*(Parr/Pref)**0.1
     SijM_H2O,ngammaLM_H2O,nsigmaDl_H2O=modit.exomol(mdbH2O,Tarr,Parr,R_H2O,molmassH2O)
     SijM_CO,ngammaLM_CO,nsigmaDl_CO=modit.exomol(mdbCO,Tarr,Parr,R_CO,molmassCO)
-
-#    plot_dgmn(Parr,dgm_ngammaL,ngammaLM_H2O,0,6)
-#    plt.show()
+    plot_dgmn(Parr,dgm_ngammaL,ngammaLM_H2O,0,6)
+    plt.show()
 
 #a core driver
 def frun(Tarr,MMR_H2O,MMR_CO,Mp,Rp,u1,u2,RV,vsini):        
@@ -151,19 +147,15 @@ def frun(Tarr,MMR_H2O,MMR_CO,Mp,Rp,u1,u2,RV,vsini):
 if True:
     MMR_H2O=0.005 #mass mixing ratio
     MMR_CO=0.01 #mass mixing ratio
-
     T0=1695.0 #K
     Tarr = T0*(Parr/Pref)**0.1
     mu=frun(Tarr,MMR_H2O=MMR_H2O,MMR_CO=MMR_CO,Mp=33.2,Rp=0.88,u1=0.0,u2=0.0,RV=50.0,vsini=10.0)
     plt.plot(wavd[::-1],mu/np.median(mu))
     plt.plot(wavd[::-1],nflux,alpha=0.3)
-
     plt.show()
 
-
 nn=np.median(mu)
-Mp=33.2
-sigmain=0.01
+Mp=33.2 #companion mass (assumption)
 def model_c(nu1,y1):
     Rp = numpyro.sample('Rp', dist.Uniform(0.4,1.2))
     RV = numpyro.sample('RV', dist.Uniform(40.0,60.0))
@@ -172,6 +164,7 @@ def model_c(nu1,y1):
     T0 = numpyro.sample('T0', dist.Uniform(1000.0,1700.0))
     alpha=numpyro.sample('alpha', dist.Uniform(0.05,0.2))
     vsini = numpyro.sample('vsini', dist.Uniform(1.0,20.0))
+    sigma = numpyro.sample('sigma',dist.Exponential(100.0))
     g=2478.57730044555*Mp/Rp**2 #gravity 
     u1=0.0
     u2=0.0
@@ -191,7 +184,6 @@ mcmc.run(rng_key_, nu1=nusd, y1=nflux)
 
 #SAMPLING
 posterior_sample = mcmc.get_samples()
-
 np.savez("npz/savepos.npz",[posterior_sample])
 
 
@@ -220,7 +212,6 @@ rc = {
     "plot.max_subplots": 250,
 }
 
-pararr=["Rp","T0","alpha","MMR_CO","MMR_H2O","vsini","RV"]
 arviz.plot_pair(arviz.from_numpyro(mcmc),kind='kde',divergences=False,marginals=True)
 plt.savefig("corner.png")
 plt.show()
