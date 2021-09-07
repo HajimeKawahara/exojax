@@ -30,9 +30,9 @@ class MdbExomol(object):
         gpp (jnp array): statistical weight
         jlower (jnp array): J_lower
         jupper (jnp array): J_upper
-        n_Tref (jnp array): temperature exponent
+        n_Texp (jnp array): temperature exponent
         alpha_ref (jnp array): alpha_ref (gamma0)
-        n_Tref_def: default temperature exponent in .def file, used for jlower not given in .broad
+        n_Texp_def: default temperature exponent in .def file, used for jlower not given in .broad
         alpha_ref_def: default alpha_ref (gamma0) in .def file, used for jlower not given in .broad
 
     """
@@ -269,6 +269,7 @@ class MdbExomol(object):
         Args:
            alpha_ref: set default alpha_ref and apply it. None=use self.alpha_ref_def
            n_Texp_def: set default n_Texp and apply it. None=use self.n_Texp_def
+
         """
         if alpha_ref_def:
             self.alpha_ref_def = alpha_ref_def
@@ -307,10 +308,7 @@ class MdbExomol(object):
             print("The default broadening parameters are used.")
             self.alpha_ref=jnp.array(self.alpha_ref_def*np.ones_like(self._jlower))
             self.n_Texp=jnp.array(self.n_Texp_def*np.ones_like(self._jlower))
-
-
-            
-        
+                  
     def QT_interp(self,T):
         """interpolated partition function
 
