@@ -291,7 +291,7 @@ def setdgm_exomol(mdb,fT,Parr,R,molmass,res,*kargs):
         SijM,ngammaLM,nsigmaDl=exomol(mdb,Tarr,Parr,R,molmass)    
         set_dgm_minmax.append(minmax_dgmatrix(ngammaLM,res))        
     dgm_ngammaL=precompute_dgmatrix(set_dgm_minmax,res=res)
-    return dgm_ngammaL
+    return jnp.array(dgm_ngammaL)
 
 
 if __name__ == "__main__":
