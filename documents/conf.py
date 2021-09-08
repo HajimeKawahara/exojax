@@ -18,11 +18,11 @@ sys.path.insert(0, os.path.abspath('/home/kawahara/exojax'))
 # -- Project information -----------------------------------------------------
 
 project = 'exojax'
-copyright = '2021, Hajime Kawahara'
-author = 'Hajime Kawahara'
+copyright = '2021, exojax contributors (see top page)'
+author = 'exojax contributors (see top page)'
 
 # The full version, including alpha/beta/rc tags
-release = '0.5.5'
+release = '0.8'
 
 
 # -- General configuration ---------------------------------------------------
@@ -53,3 +53,4 @@ html_theme = "sphinx_rtd_theme"
 # relative to this directory. They are copied after the builtin static files,
 # so a file named "default.css" will overwrite the builtin "default.css".
 html_static_path = ['_static']
+html_logo = "_static/logo.png"

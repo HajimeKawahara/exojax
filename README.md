@@ -86,11 +86,9 @@ To fit a spectrum model to real data, you need to know a little more about exoja
  
 </details>
 
+<details><summary>Clouds :white_check_mark: </summary> Only for brave users. </details>
+
 <details><summary>HMC-NUTS of Transmission Spectra :x: </summary>Not supported yet. </details>
-
-<details><summary>Cloud modeling :x: </summary> Not supported yet. </details>
-
-
 
 ## Installation
 
@@ -123,12 +121,10 @@ nvcc -V
 Install such as
 
 ```
-pip install --upgrade jax jaxlib==0.1.62+cuda112  -f https://storage.googleapis.com/jax-releases/jax_releases.html
+pip install --upgrade "jax[cuda111]"  -f https://storage.googleapis.com/jax-releases/jax_releases.html
 ```
 
-In this case, jaxlib version is 0.1.62 and cuda version is 11.2. You can check which cuda version is avaiable at [here](https://storage.googleapis.com/jax-releases/jax_releases.html)
-
-Visit [here](https://github.com/google/jax) for the details.
+This is the case for cuda11.1 to 11.4. Visit [here](https://github.com/google/jax) for the details.
 
 - cuDNN
 
@@ -144,8 +140,8 @@ cuDNN is used for to compute the astronomical/instrumental response for the larg
 
 ## References
 
-- Kawahara, Kawashima, Masuda, and Crossfield (2021) under review: [arXiv:2105.14782](http://arxiv.org/abs/2105.14782)
+- Kawahara, Kawashima, Masuda, Crossfield, van den Bekerom, Parker (2021) under review: [arXiv:2105.14782](http://arxiv.org/abs/2105.14782)
 
 ## License
 
-🐈 Copyright 2020-2021 [Hajime Kawahara](http://secondearths.sakura.ne.jp/en/index.html). exojax is publicly available under the MIT license. Under development since Dec. 2020.
+🐈 Copyright 2020-2021 [Hajime Kawahara](http://secondearths.sakura.ne.jp/en/index.html) and contributors. exojax is publicly available under the MIT license. Under development since Dec. 2020.

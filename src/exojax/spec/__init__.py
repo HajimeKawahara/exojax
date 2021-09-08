@@ -10,7 +10,8 @@ __description__ = "auto-differentiable spectral modules in exojax"
 from exojax.spec.hitran import (
     SijT,
     doppler_sigma,
-    gamma_natural
+    gamma_natural,
+    normalized_doppler_sigma
 )
 
 from exojax.spec.autospec import (
@@ -29,14 +30,11 @@ from exojax.spec.lpf import (
     voigt,
     voigtone,
     vvoigt,
-    xsvector,
 )
-
 
 
 from exojax.spec.make_numatrix import (
     make_numatrix0,
-    make_numatrix_direct,
 )
 from exojax.spec.partf import (
     qfunc_hitran,

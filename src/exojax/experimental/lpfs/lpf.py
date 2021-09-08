@@ -6,7 +6,7 @@
 
 from jax import jit, vmap
 import jax.numpy as jnp
-from exojax.special.faddeeva import rewofz,imwofz,rewofzx
+from exojax.special.faddeeva import rewofz
 from exojax.special.faddeeva import rewofzs2
 
 @jit
