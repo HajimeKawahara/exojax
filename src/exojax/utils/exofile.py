@@ -1,6 +1,9 @@
 """Exojax File Format
-    
-   - EFF contains .json and main file (normally hdf5 for vaex)
+   
+   Note:
+       EFF contains .json and main file (normally hdf5 for vaex)
+
+   - emif: Exomol MODIT Input Format
 
 """
 import pathlib
