@@ -19,8 +19,18 @@ nus=np.logspace(np.log10(6110),np.log10(6190.0),80000,dtype=np.float64)
 mdbCH4=moldb.MdbExomol('.database/CH4/12C-1H4/YT10to10',nus)
 
 print(np.min(mdbCH4.elower),np.max(mdbCH4.elower))
+mask=(mdbCH4.elower>6500.0)*(mdbCH4.elower<6565.0)
+print(np.unique(mdbCH4.alpha_ref*mdbCH4.n_Texp))
+import sys
+sys.exit()
+#        n_Tref (jnp array): temperature exponent
+#        alpha_ref (jnp array): alpha_ref (gamma0)
 
-c=plt.hist2d(mdbCH4.nu_lines,(mdbCH4.elower),bins=[len(nus),100],rasterized=True)
+
+from matplotlib.colors import LogNorm
+c=plt.hist2d(mdbCH4.nu_lines,mdbCH4.elower,bins=[len(nus),100],rasterized=True,norm=LogNorm())
+plt.xlabel("wavenumber (cm-1)")
+plt.ylabel("Elow (cm-1)")
 plt.colorbar(c[3])
 plt.savefig("enux.png")
 
