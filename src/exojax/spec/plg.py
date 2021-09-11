@@ -34,11 +34,14 @@ def plg_exomol(cnu,indexnu,logsij0,elower,elower_grid=None,Nelower=10):
     else:
         expme_grid=np.exp(-elower_grid/kT0)
         
-    qlogsij0,qcnu=get_qlogsij0(cnu,indexnu,logsij0,expme,expme_grid,Nelower=10)
+    qlogsij0,qcnu,zo=get_qlogsij0(cnu,indexnu,logsij0,expme,expme_grid,Nelower=10)
+
+    print("# of unfrozen lines:",np.sum(1-zo))
+    print("# of pseudo lines:",len(qlogsij0[qlogsij0>0.0]))
     
     return qlogsij0,qcnu,elower_grid
 
-def get_qlogsij0(cnu,indexnu,logsij0,expme,expme_grid,Nelower=10):
+def get_qlogsij0(cnu,indexnu,logsij0,expme,expme_grid,Nelower=10,Ncrit=120):
     """gether (freeze) lines 
 
     Args:
@@ -50,27 +53,40 @@ def get_qlogsij0(cnu,indexnu,logsij0,expme,expme_grid,Nelower=10):
        Nelower: # of division of elower between min to max values
 
     """
-    
     cont,index=npgetix(expme,expme_grid) #elower contribution and elower index of lines
     m=np.max(index)+2
     eindex=index+m*indexnu #extended index
-    num_unique=np.bincount(eindex)
-    
+
+    #frozen criterion
+    num_unique=np.bincount(eindex) # number of the lines in a bin    
+    frozen_mask=(num_unique>=Ncrit)
+    frozen_mask=np.append(frozen_mask,False)
+    Nql=len(frozen_mask)
+    erange=range(0,np.max(eindex)+2)
+    frozen_eindex=np.array(erange)[frozen_mask]
+    zo=np.zeros_like(index,dtype=int) #one for frozen/zero for unfrozen
+    for fei in frozen_eindex:
+        zo[eindex==fei]=1
+        
     Sij=np.exp(logsij0)
     #qlogsij0
-    qlogsij0=np.append(np.bincount(eindex,weights=Sij*(1.0-cont)),0.0)
-    qlogsij0=(qlogsij0+np.bincount(eindex+1,weights=Sij*cont))
+    qlogsij0=np.append(np.bincount(eindex,weights=Sij*(1.0-cont)*zo),0.0)
+    qlogsij0=qlogsij0+np.bincount(eindex+1,weights=Sij*cont*zo)    
     qlogsij0=np.log(qlogsij0)
-    #qcnu
-    qcnu_den=np.append(np.bincount(eindex,weights=Sij),0.0)
-    qcnu_den=qcnu_den+np.bincount(eindex+1,weights=Sij)
-    qcnu_num=np.append(np.bincount(eindex,weights=Sij*cnu),0.0)
-    qcnu_num=qcnu_num+np.bincount(eindex+1,weights=Sij*cnu)
-    qcnu=qcnu_num/qcnu_den
-    qlogsij0=qlogsij0.reshape((int(len(qlogsij0)/m),m))
-    qcnu=qcnu.reshape((int(len(qcnu)/m),m))
 
-    return qlogsij0,qcnu
+    #qcnu
+    qcnu_den=np.append(np.bincount(eindex,weights=Sij*zo),0.0)
+    qcnu_den=qcnu_den+np.bincount(eindex+1,weights=Sij*zo)
+    qcnu_den[qcnu_den==0.0]=1.0
+    
+    qcnu_num=np.append(np.bincount(eindex,weights=Sij*cnu*zo),0.0)
+    qcnu_num=qcnu_num+np.bincount(eindex+1,weights=Sij*cnu*zo)
+    qcnu=qcnu_num/qcnu_den
+
+    #print(np.append(num_unique,0.0)[frozen_mask])
+    qlogsij0=qlogsij0.reshape((int(Nql/m),m))
+    qcnu=qcnu.reshape((int(Nql/m),m))
+    return qlogsij0,qcnu,zo
 
 
 def plg_exomol_slow(cnu,indexnu,logsij0,elower,elower_grid=None,Nelower=10):
@@ -142,7 +158,7 @@ if __name__ == "__main__":
     nus=np.random.rand(Nline)*10.0
 
     #init modit
-    Nnus=8
+    Nnus=10
     nu_grid=np.linspace(0,10,Nnus)
     cnu,indexnu,R,pmarray=init_modit(nus,nu_grid)
 
