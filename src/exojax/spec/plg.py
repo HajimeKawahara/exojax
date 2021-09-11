@@ -7,7 +7,7 @@ import tqdm
 
 
 
-def plg_exomol(cnu,indexnu,logsij0,elower,elower_grid=None,Nelower=10):
+def plg_exomol(cnu,indexnu,logsij0,elower,elower_grid=None,Nelower=10,Ncrit=0):
 #(nu_grid,nu_lines,elower,alpha_ref,n_Texp,Nlimit=30):
     """PLG for exomol
     
@@ -34,14 +34,14 @@ def plg_exomol(cnu,indexnu,logsij0,elower,elower_grid=None,Nelower=10):
     else:
         expme_grid=np.exp(-elower_grid/kT0)
         
-    qlogsij0,qcnu,frozen_mask=get_qlogsij0(cnu,indexnu,logsij0,expme,expme_grid,Nelower=10)
+    qlogsij0,qcnu,frozen_mask=get_qlogsij0(cnu,indexnu,logsij0,expme,expme_grid,Nelower=10,Ncrit=Ncrit)
 
     print("# of unfrozen lines:",np.sum(~frozen_mask))
     print("# of pseudo lines:",len(qlogsij0[qlogsij0>0.0]))
     
     return qlogsij0,qcnu,elower_grid
 
-def get_qlogsij0(cnu,indexnu,logsij0,expme,expme_grid,Nelower=10,Ncrit=11):
+def get_qlogsij0(cnu,indexnu,logsij0,expme,expme_grid,Nelower=10,Ncrit=0):
     """gether (freeze) lines 
 
     Args:
@@ -159,10 +159,10 @@ if __name__ == "__main__":
     Nnus=10001
     nu_grid=np.linspace(0,10,Nnus)
     cnu,indexnu,R,pmarray=init_modit(nus,nu_grid)
-
+    Ncrit=90
 
     ts=time.time()
-    qlogsij0,qcnu,elower_grid=plg_exomol(cnu,indexnu,logsij0,elower)
+    qlogsij0,qcnu,elower_grid=plg_exomol(cnu,indexnu,logsij0,elower,Ncrit=Ncrit)
     te=time.time()
     print(te-ts,"sec")
 
