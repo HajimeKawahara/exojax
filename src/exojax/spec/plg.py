@@ -98,15 +98,13 @@ if __name__ == "__main__":
     from exojax.spec.initspec import init_modit
     import time
     import matplotlib.pyplot as plt
-    np.random.seed(2)
+    np.random.seed(1)
     Nline=10001
 #    Nline=1001
 
     logsij0=np.random.rand(Nline)
     elower=(np.random.rand(Nline))**0.2*5000.+2000.0
     nus=np.random.rand(Nline)*10.0
-    plt.plot(nus,elower,".")
-    plt.show()
 
     #init modit
     Nnus=101
