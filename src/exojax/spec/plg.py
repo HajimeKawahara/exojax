@@ -10,6 +10,16 @@ from exojax.spec.dit import npgetix
 def plg_exomol(cnu,indexnu,logsij0,elower,elower_grid=None,Nelower=10):
 #(nu_grid,nu_lines,elower,alpha_ref,n_Texp,Nlimit=30):
     """PLG for exomol
+    
+    Args:
+       cnu: contribution of wavenumber for LSD
+       indexnu: index of wavenumber
+       logsij0: log line strength
+       elower: elower
+       elower_grid: elower_grid (optional)
+       Nelower: # of division of elower between min to max values when elower_grid is not given
+
+    Returns:
 
     """
     
@@ -23,47 +33,48 @@ def plg_exomol(cnu,indexnu,logsij0,elower,elower_grid=None,Nelower=10):
         elower_grid=-np.log(expme_grid)*kT0
     else:
         expme_grid=np.exp(-elower_grid/kT0)
-    qlogsij0,qcnu,frozen_mask=get_qlogsij0(cnu,indexnu,logsij0,expme,expme_grid,Nelower=10)
+        
+    qlogsij0,qcnu=get_qlogsij0(cnu,indexnu,logsij0,expme,expme_grid,Nelower=10)
     
-    return qlogsij0,qcnu,elower_grid,frozen_mask
+    return qlogsij0,qcnu,elower_grid
 
-def get_qlogsij0(cnu,indexnu,logsij0,expme,expme_grid,Nelower=10,Ncrit=10):
+def get_qlogsij0(cnu,indexnu,logsij0,expme,expme_grid,Nelower=10):
     """gether (freeze) lines 
 
     Args:
+       cnu: contribution of wavenumber for LSD
+       indexnu: index of wavenumber
+       logsij0: log line strength
+       expme: exp(-elower/kT0)
+       expme_grid: exp(-elower/kT0)_grid
        Nelower: # of division of elower between min to max values
-       Ncrit: if # of lines in indices exceeds Ncrit
 
     """
-
     
     cont,index=npgetix(expme,expme_grid) #elower contribution and elower index of lines
     m=np.max(index)+2
     eindex=index+m*indexnu #extended index
     num_unique=np.bincount(eindex)
+    
     Sij=np.exp(logsij0)
-
     #qlogsij0
     qlogsij0=np.append(np.bincount(eindex,weights=Sij*(1.0-cont)),0.0)
     qlogsij0=(qlogsij0+np.bincount(eindex+1,weights=Sij*cont))
     qlogsij0=np.log(qlogsij0)
-
     #qcnu
     qcnu_den=np.append(np.bincount(eindex,weights=Sij),0.0)
     qcnu_den=qcnu_den+np.bincount(eindex+1,weights=Sij)
     qcnu_num=np.append(np.bincount(eindex,weights=Sij*cnu),0.0)
     qcnu_num=qcnu_num+np.bincount(eindex+1,weights=Sij*cnu)
     qcnu=qcnu_num/qcnu_den
-    
-
-    frozen_mask=0.0
     qlogsij0=qlogsij0.reshape((int(len(qlogsij0)/m),m))
-    return qlogsij0,qcnu,frozen_mask
+    qcnu=qcnu.reshape((int(len(qcnu)/m),m))
+
+    return qlogsij0,qcnu
 
 
 def plg_exomol_slow(cnu,indexnu,logsij0,elower,elower_grid=None,Nelower=10):
-#(nu_grid,nu_lines,elower,alpha_ref,n_Texp,Nlimit=30):
-    """PLG for exomol
+    """slow version of PLG for exomol, but easy to understand
 
     """
     
@@ -85,24 +96,21 @@ def plg_exomol_slow(cnu,indexnu,logsij0,elower,elower_grid=None,Nelower=10):
         cnu_=cnu[mask]
         logsij0_=logsij0[mask]
         expme_=expme[mask]
-        each_qlogsij0,each_qcnu,frozen_mask=get_qlogsij0_slow(cnu_,logsij0_,expme_,expme_grid,Nelower=10)
+        each_qlogsij0,each_qcnu=get_qlogsij0_each(cnu_,logsij0_,expme_,expme_grid,Nelower=10)
         qlogsij0.append(each_qlogsij0)
         qcnu.append(each_qcnu)
     qlogsij0=np.array(qlogsij0)
     qcnu=np.array(qcnu)
     
-    return qlogsij0,qcnu,elower_grid,frozen_mask
+    return qlogsij0,qcnu,elower_grid
 
-def get_qlogsij0_slow(cnu,logsij0,expme,expme_grid,Nelower=10,Ncrit=10):
+def get_qlogsij0_each(cnu,logsij0,expme,expme_grid,Nelower=10):
     """gether (freeze) lines 
 
     Args:
        Nelower: # of division of elower between min to max values
-       Ncrit: if # of lines in indices exceeds Ncrit
 
-    """
-
-    
+    """    
     cont,index=npgetix(expme,expme_grid) #elower contribution and elower index of lines
     num_unique=np.bincount(index)
     Sij=np.exp(logsij0)
@@ -117,12 +125,9 @@ def get_qlogsij0_slow(cnu,logsij0,expme,expme_grid,Nelower=10,Ncrit=10):
     qcnu_den=qcnu_den+np.bincount(index+1,weights=Sij)
     qcnu_num=np.append(np.bincount(index,weights=Sij*cnu),0.0)
     qcnu_num=qcnu_num+np.bincount(index+1,weights=Sij*cnu)
-    qcnu=qcnu_num/qcnu_den
+    qcnu=qcnu_num/qcnu_den    
     
-
-    frozen_mask=0.0
-    
-    return qlogsij0,qcnu,frozen_mask
+    return qlogsij0,qcnu
 
 
 
@@ -130,26 +135,27 @@ if __name__ == "__main__":
     import numpy as np
     from exojax.spec.initspec import init_modit
     import time
-    Nline=10000
+    
+    Nline=10001
     logsij0=np.random.rand(Nline)
     elower=np.linspace(2000.0,7000.0,Nline)
     nus=np.random.rand(Nline)*10.0
 
     #init modit
-    Nnus=101
+    Nnus=8
     nu_grid=np.linspace(0,10,Nnus)
     cnu,indexnu,R,pmarray=init_modit(nus,nu_grid)
 
 
     ts=time.time()
-    qlogsij0,qcnu,elower_grid,frozen_mask=plg_exomol(cnu,indexnu,logsij0,elower)
+    qlogsij0,qcnu,elower_grid=plg_exomol(cnu,indexnu,logsij0,elower)
     te=time.time()
     print(te-ts,"sec")
 
     print("==========================")
-    if Nline<1000000:
+    if Nline<20000:
         ts=time.time()
-        qlogsij0_slow,qcnu_slow,elower_grid,frozen_mask=plg_exomol_slow(cnu,indexnu,logsij0,elower)
+        qlogsij0_slow,qcnu_slow,elower_grid=plg_exomol_slow(cnu,indexnu,logsij0,elower)
         te=time.time()
         print(te-ts,"sec")
         print(np.sum((qlogsij0-qlogsij0_slow)**2))
