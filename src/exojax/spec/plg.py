@@ -130,29 +130,28 @@ if __name__ == "__main__":
     import numpy as np
     from exojax.spec.initspec import init_modit
     import time
-    Nline=10000000
+    Nline=10000
     logsij0=np.random.rand(Nline)
     elower=np.linspace(2000.0,7000.0,Nline)
     nus=np.random.rand(Nline)*10.0
 
     #init modit
-    Nnus=10001
+    Nnus=101
     nu_grid=np.linspace(0,10,Nnus)
     cnu,indexnu,R,pmarray=init_modit(nus,nu_grid)
 
 
     ts=time.time()
-    qlogsij0,qcn,elower_grid,frozen_mask=plg_exomol(cnu,indexnu,logsij0,elower)
+    qlogsij0,qcnu,elower_grid,frozen_mask=plg_exomol(cnu,indexnu,logsij0,elower)
     te=time.time()
-    #    print(qcn)
     print(te-ts,"sec")
 
     print("==========================")
     if Nline<1000000:
         ts=time.time()
-        qlogsij0_slow,qcn_slow,elower_grid,frozen_mask=plg_exomol_slow(cnu,indexnu,logsij0,elower)
+        qlogsij0_slow,qcnu_slow,elower_grid,frozen_mask=plg_exomol_slow(cnu,indexnu,logsij0,elower)
         te=time.time()
-        #    print(qcn)
         print(te-ts,"sec")
         print(np.sum((qlogsij0-qlogsij0_slow)**2))
+        print(np.sum((qcnu-qcnu_slow)**2))
         
