@@ -3,7 +3,7 @@
 """
 import numpy as np
 from exojax.spec.dit import npgetix
-
+import tqdm
 
 
 
@@ -34,14 +34,14 @@ def plg_exomol(cnu,indexnu,logsij0,elower,elower_grid=None,Nelower=10):
     else:
         expme_grid=np.exp(-elower_grid/kT0)
         
-    qlogsij0,qcnu,zo=get_qlogsij0(cnu,indexnu,logsij0,expme,expme_grid,Nelower=10)
+    qlogsij0,qcnu,frozen_mask=get_qlogsij0(cnu,indexnu,logsij0,expme,expme_grid,Nelower=10)
 
-    print("# of unfrozen lines:",np.sum(1-zo))
+    print("# of unfrozen lines:",np.sum(~frozen_mask))
     print("# of pseudo lines:",len(qlogsij0[qlogsij0>0.0]))
     
     return qlogsij0,qcnu,elower_grid
 
-def get_qlogsij0(cnu,indexnu,logsij0,expme,expme_grid,Nelower=10,Ncrit=120):
+def get_qlogsij0(cnu,indexnu,logsij0,expme,expme_grid,Nelower=10,Ncrit=11):
     """gether (freeze) lines 
 
     Args:
@@ -59,34 +59,32 @@ def get_qlogsij0(cnu,indexnu,logsij0,expme,expme_grid,Nelower=10,Ncrit=120):
 
     #frozen criterion
     num_unique=np.bincount(eindex) # number of the lines in a bin    
-    frozen_mask=(num_unique>=Ncrit)
-    frozen_mask=np.append(frozen_mask,False)
-    Nql=len(frozen_mask)
+    lmask=(num_unique>=Ncrit)
+    lmask=np.append(lmask,False)
+    Nql=len(lmask)
     erange=range(0,np.max(eindex)+2)
-    frozen_eindex=np.array(erange)[frozen_mask]
-    zo=np.zeros_like(index,dtype=int) #one for frozen/zero for unfrozen
-    for fei in frozen_eindex:
-        zo[eindex==fei]=1
+    frozen_eindex=np.array(erange)[lmask]
+    frozen_mask=np.isin(eindex,frozen_eindex)
         
     Sij=np.exp(logsij0)
     #qlogsij0
-    qlogsij0=np.append(np.bincount(eindex,weights=Sij*(1.0-cont)*zo),0.0)
-    qlogsij0=qlogsij0+np.bincount(eindex+1,weights=Sij*cont*zo)    
+    qlogsij0=np.append(np.bincount(eindex,weights=Sij*(1.0-cont)*frozen_mask),0.0)
+    qlogsij0=qlogsij0+np.bincount(eindex+1,weights=Sij*cont*frozen_mask)    
     qlogsij0=np.log(qlogsij0)
 
     #qcnu
-    qcnu_den=np.append(np.bincount(eindex,weights=Sij*zo),0.0)
-    qcnu_den=qcnu_den+np.bincount(eindex+1,weights=Sij*zo)
+    qcnu_den=np.append(np.bincount(eindex,weights=Sij*frozen_mask),0.0)
+    qcnu_den=qcnu_den+np.bincount(eindex+1,weights=Sij*frozen_mask)
     qcnu_den[qcnu_den==0.0]=1.0
     
-    qcnu_num=np.append(np.bincount(eindex,weights=Sij*cnu*zo),0.0)
-    qcnu_num=qcnu_num+np.bincount(eindex+1,weights=Sij*cnu*zo)
+    qcnu_num=np.append(np.bincount(eindex,weights=Sij*cnu*frozen_mask),0.0)
+    qcnu_num=qcnu_num+np.bincount(eindex+1,weights=Sij*cnu*frozen_mask)
     qcnu=qcnu_num/qcnu_den
 
-    #print(np.append(num_unique,0.0)[frozen_mask])
+    #print(np.append(num_unique,0.0)[lmask])
     qlogsij0=qlogsij0.reshape((int(Nql/m),m))
     qcnu=qcnu.reshape((int(Nql/m),m))
-    return qlogsij0,qcnu,zo
+    return qlogsij0,qcnu,frozen_mask
 
 
 def plg_exomol_slow(cnu,indexnu,logsij0,elower,elower_grid=None,Nelower=10):
@@ -152,13 +150,13 @@ if __name__ == "__main__":
     from exojax.spec.initspec import init_modit
     import time
     
-    Nline=10001
+    Nline=10000001
     logsij0=np.random.rand(Nline)
     elower=np.linspace(2000.0,7000.0,Nline)
     nus=np.random.rand(Nline)*10.0
 
     #init modit
-    Nnus=10
+    Nnus=10001
     nu_grid=np.linspace(0,10,Nnus)
     cnu,indexnu,R,pmarray=init_modit(nus,nu_grid)
 
