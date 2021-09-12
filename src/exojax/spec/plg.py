@@ -7,14 +7,13 @@ import tqdm
 
 
 
-def plg_elower_addcon(indexa,Na,cnu,indexnu,nu_grid,logsij0,elower,elower_grid=None,Nelower=10,Ncrit=0,reshape=False):
+def plg_elower_addcon(indexa,Na,cnu,nu_grid,logsij0,elower,elower_grid=None,Nelower=10,Ncrit=0,reshape=False):
     """PLG for elower w/ an additional condition
     
     Args:
        indexa: the indexing of the additional condition
        Na: the number of the additional condition grid
        cnu: contribution of wavenumber for LSD
-       indexnu: index of wavenumber
        nugrid: nu grid
        logsij0: log line strength
        elower: elower
@@ -26,6 +25,7 @@ def plg_elower_addcon(indexa,Na,cnu,indexnu,nu_grid,logsij0,elower,elower_grid=N
     Returns:
        qlogsij0: pseudo logsij0
        qcnu: pseudo cnu
+       qindexnu: pseudo indexnu
        num_unique: number of lines in grids
        elower_grid: elower of pl
        frozen_mask: mask for frozen lines into pseudo lines 
@@ -57,6 +57,8 @@ def plg_elower_addcon(indexa,Na,cnu,indexnu,nu_grid,logsij0,elower,elower_grid=N
     print("# of pseudo lines:",Npl)
     arrone=np.ones((Na,Nelower))
     qnu_grid=arrone[:,np.newaxis,:]*nu_grid[np.newaxis,:,np.newaxis]
+    indexnu_grid=np.array(range(0,len(nu_grid)),dtype=int)
+    qindexnu=arrone[:,np.newaxis,:]*indexnu_grid[np.newaxis,:,np.newaxis]
 
     if reshape==True:
         qlogsij0=qlogsij0.reshape(Na,Nnugrid,Nelower)
@@ -64,9 +66,9 @@ def plg_elower_addcon(indexa,Na,cnu,indexnu,nu_grid,logsij0,elower,elower_grid=N
         num_unique=num_unique.reshape(Na,Nnugrid,Nelower)
     else:
         qnu_grid=qnu_grid.flatten
-
-            
-    return qlogsij0,qcnu,qnu_grid,num_unique,elower_grid,frozen_mask,nonzeropl_mask
+        qindexnu=qindexnu.flatten
+        
+    return qlogsij0,qcnu,qindexnu,qnu_grid,num_unique,elower_grid,frozen_mask,nonzeropl_mask
 
 def get_qlogsij0_addcon(indexa,Na,cnu,indexnu,Nnugrid,logsij0,expme,expme_grid,Nelower=10,Ncrit=0):
     """gether (freeze) lines w/ additional indexing
@@ -224,19 +226,16 @@ if __name__ == "__main__":
     index_gamma=np.zeros_like(mdb.alpha_ref,dtype=int)
     alpha_ref_grid=gammaL_set_unique.real
     n_Texp_grid=gammaL_set_unique.imag
-    print(alpha_ref_grid)
     for j,a in tqdm.tqdm(enumerate(gammaL_set_unique)):
         index_gamma=np.where(gammaL_set==a,j,index_gamma)        
     print("done.")
     #-------------------------------------------------------
-    import sys
-    sys.exit()
     Ncrit=10
     Nelower=7
 
-    reshape=True
+    reshape=False
     ts=time.time()
-    qlogsij0,qcnu,qnu_grid,num_unique,elower_grid,frozen_mask,nonzeropl_mask=plg_elower_addcon(index_gamma,Ngamma,cnu,indexnu,nus,mdb.logsij0,mdb.elower,Ncrit=Ncrit,Nelower=Nelower,reshape=reshape)    
+    qlogsij0,qcnu,qindexnu,qnu_grid,num_unique,elower_grid,frozen_mask,nonzeropl_mask=plg_elower_addcon(index_gamma,Ngamma,cnu,nus,mdb.logsij0,mdb.elower,Ncrit=Ncrit,Nelower=Nelower,reshape=reshape)    
     te=time.time()
     print(te-ts,"sec")
     print("elower_grid",elower_grid)
@@ -258,7 +257,6 @@ if __name__ == "__main__":
         c=plt.imshow(qnu_grid[0,:,:].T)
         plt.colorbar(c,shrink=0.2)
         ax.set_aspect(0.1/ax.get_data_ratio())        
-
         plt.show()
         import sys
         sys.exit()
@@ -266,15 +264,23 @@ if __name__ == "__main__":
     #gathering
     mdb.logsij0=np.hstack([qlogsij0[nonzeropl_mask],mdb.logsij0[~frozen_mask]])
     mdb.elower=np.hstack([elower_grid,mdb.elower[~frozen_mask]])
-    cnu=np.hstack([qcnu[nonzeropl_mask],mdb.cnu[~frozen_mask]])
-    indexnu=np.hstack([qcnu[nonzeropl_mask],mdb.cnu[~frozen_mask]])
+    cnu=np.hstack([qcnu[nonzeropl_mask],cnu[~frozen_mask]])
+    indexnu=np.hstack([qindexnu[nonzeropl_mask],indexnu[~frozen_mask]])
     mdb.nu_lines=np.hstack([qnu_line[nonzeropl_mask],mdb.nu_line[~frozen_mask]])
     import jax.numpy as jnp
     mdb,dev_nu_lines=jnp.array(mdb.nu_lines)
-    mdb.n_Texp
-    mdb.alpha_ref
-    mdb.A=jnp.zeros_like(mdb.A)
+    
+    #gamma     #Na,Nnugrid,Nelower
+    onearr=np.ones((Nnugrid,Nelower))
+    alpha_ref_grid=alpha_ref_grid[:,np.newaxis,np.newaxis]*onearr
+    n_Texp_grid=n_Texp_grid[:,np.newaxis,np.newaxis]*onearr
 
+    mdb.n_Texp=np.hstack([alpha_ref_grid,mdb.alpha_ref[~frozen_mask]])
+    mdb.alpha_ref=np.hstack([n_Texp_grid,mdb.n_Texp[~frozen_mask]])
+    #mdb.A=jnp.zeros_like(mdb.A) #no natural width
+    import sys
+    sys.exit()
+    
     # Precomputing gdm_ngammaL
     from exojax.spec.modit import setdgm_exomol
     from jax import jit, vmap
