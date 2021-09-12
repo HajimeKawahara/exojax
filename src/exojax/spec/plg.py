@@ -189,3 +189,4 @@ def get_qlogsij0(cnu,indexnu,Nnugrid,logsij0,expme,expme_grid,Nelower=10,Ncrit=0
 
 
 if __name__ == "__main__":
+    print("tmp")
