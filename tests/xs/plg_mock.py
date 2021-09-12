@@ -1,3 +1,8 @@
+"""Pseudo line generator using mock line databases
+
+"""
+
+
 import numpy as np
 from exojax.spec.initspec import init_modit
 import time
