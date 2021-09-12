@@ -45,9 +45,9 @@ def plg_elower_addcon(indexa,Na,cnu,indexnu,Nnugrid,logsij0,elower,elower_grid=N
         qcnu=qcnu.reshape(Na,Nnugrid,Nelower)
         num_unique=num_unique.reshape(Na,Nnugrid,Nelower)
 
-    Nline=np.sum(logsij0)
+    Nline=len(logsij0)
     Nunf=np.sum(~frozen_mask)
-    Npl=len(qlogsij0[qlogsij0>0.0])
+    Npl=len(qlogsij0[qlogsij0>-np.inf])
     print("# of original lines:",Nline)        
     print("# of unfrozen lines:",Nunf)
     print("# of pseudo lines:",Npl)
@@ -190,3 +190,52 @@ def get_qlogsij0(cnu,indexnu,Nnugrid,logsij0,expme,expme_grid,Nelower=10,Ncrit=0
 
 if __name__ == "__main__":
     print("tmp")
+    from exojax.spec import moldb
+    from exojax.spec.rtransfer import nugrid
+    from exojax.spec import initspec
+    import matplotlib.pyplot as plt
+    import time
+    import tqdm
+    Nx=10000
+    nus,wav,res=nugrid(16300.0,16600.0,Nx,unit="AA",xsmode="modit")
+    print(res)
+    mdb=moldb.MdbExomol('.database/CH4/12C-1H4/YT10to10/',nus,crit=1.e-40)
+    print(len(mdb.A))
+
+    cnu,indexnu,R,pmarray=initspec.init_modit(mdb.nu_lines,nus)
+    Nnus=len(nus)
+    #make index_gamma
+    gammaL_set=mdb.alpha_ref+mdb.n_Texp*(1j) #complex value
+    gammaL_set_unique=np.unique(gammaL_set,axis=0)
+    Ngamma=np.shape(gammaL_set_unique)[0]
+    index_gamma=np.zeros_like(mdb.alpha_ref,dtype=int)
+    for j,a in tqdm.tqdm(enumerate(gammaL_set_unique)):
+        index_gamma=np.where(gammaL_set==a,j,index_gamma)        
+    print("done.")
+
+    Ncrit=10
+    Nelower=10
+    
+    ts=time.time()
+    qlogsij0,qcnu,num_unique,elower_grid=plg_elower_addcon(index_gamma,Ngamma,cnu,indexnu,Nnus,mdb.logsij0,mdb.elower,Ncrit=Ncrit,Nelower=Nelower)
+    te=time.time()
+    print(te-ts,"sec")
+    num_unique=np.array(num_unique,dtype=float)
+    num_unique[num_unique<Ncrit]=None
+    
+    fig=plt.figure(figsize=(10,3))
+    ax=fig.add_subplot(211)
+    c=plt.imshow(num_unique[0,:,:].T)
+#    c=plt.imshow(np.sum(num_unique[:,:,:],axis=0).T)
+    plt.colorbar(c,shrink=0.2)
+    ax.set_aspect(0.1/ax.get_data_ratio())        
+
+    ax=fig.add_subplot(212)
+    
+    c=plt.imshow(qlogsij0[0,:,:].T)
+    plt.colorbar(c,shrink=0.2)
+    ax.set_aspect(0.1/ax.get_data_ratio())        
+
+    plt.show()
+    
+    
