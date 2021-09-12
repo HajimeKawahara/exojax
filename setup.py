@@ -11,7 +11,7 @@ META_PATH = os.path.join("src", "exojax", "__init__.py")
 CLASSIFIERS = [
     "Programming Language :: Python",
 ]
-INSTALL_REQUIRES = ["numpy","pandas","tqdm","scipy","jax","numpyro","json","pyarrow","bs4","vaex"]
+INSTALL_REQUIRES = ["numpy","pandas","tqdm","scipy","jax","numpyro","pyarrow","bs4","vaex"]
 
 # END PROJECT SPECIFIC
 HERE = os.path.dirname(os.path.realpath(__file__))
