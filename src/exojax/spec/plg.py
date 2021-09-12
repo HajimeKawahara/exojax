@@ -189,8 +189,8 @@ if __name__ == "__main__":
     import time
     import matplotlib.pyplot as plt
     np.random.seed(1)
-    Nline=1000001
-    Ngamma=3
+    Nline=10000001
+    Ngamma=20
 
     logsij0=np.random.rand(Nline)
     elower=(np.random.rand(Nline))**0.2*5000.+2000.0
@@ -203,7 +203,7 @@ if __name__ == "__main__":
     cnu,indexnu,R,pmarray=init_modit(nus,nu_grid)
 
     #elower setting
-    Ncrit=10
+    Ncrit=30
     Nelower=11
     
     ts=time.time()
