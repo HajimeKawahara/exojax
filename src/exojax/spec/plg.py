@@ -56,13 +56,14 @@ def plg_elower_addcon(indexa,Na,cnu,indexnu,nu_grid,logsij0,elower,elower_grid=N
     print("# compression:",(Npl+Nunf)/Nline)
     print("# of pseudo lines:",Npl)
     arrone=np.ones((Na,Nelower))
+    qnu_grid=arrone[:,np.newaxis,:]*nu_grid[np.newaxis,:,np.newaxis]
+
     if reshape==True:
         qlogsij0=qlogsij0.reshape(Na,Nnugrid,Nelower)
         qcnu=qcnu.reshape(Na,Nnugrid,Nelower)
         num_unique=num_unique.reshape(Na,Nnugrid,Nelower)
-        qnu_grid=arrone[:,np.newaxis,:]*nu_grid[np.newaxis,:,np.newaxis]
     else:
-        qnu_grid=(arrone[:,np.newaxis,:]*nu_grid[np.newaxis,:,np.newaxis]).flatten
+        qnu_grid=qnu_grid.flatten
 
             
     return qlogsij0,qcnu,qnu_grid,num_unique,elower_grid,frozen_mask,nonzeropl_mask
@@ -215,15 +216,21 @@ if __name__ == "__main__":
     print(len(mdb.A))
 
     cnu,indexnu,R,pmarray=initspec.init_modit(mdb.nu_lines,nus)
+
     #make index_gamma
     gammaL_set=mdb.alpha_ref+mdb.n_Texp*(1j) #complex value
-    gammaL_set_unique=np.unique(gammaL_set,axis=0)
+    gammaL_set_unique=np.unique(gammaL_set)
     Ngamma=np.shape(gammaL_set_unique)[0]
     index_gamma=np.zeros_like(mdb.alpha_ref,dtype=int)
+    alpha_ref_grid=gammaL_set_unique.real
+    n_Texp_grid=gammaL_set_unique.imag
+    print(alpha_ref_grid)
     for j,a in tqdm.tqdm(enumerate(gammaL_set_unique)):
         index_gamma=np.where(gammaL_set==a,j,index_gamma)        
     print("done.")
-
+    #-------------------------------------------------------
+    import sys
+    sys.exit()
     Ncrit=10
     Nelower=7
 
@@ -261,7 +268,9 @@ if __name__ == "__main__":
     mdb.elower=np.hstack([elower_grid,mdb.elower[~frozen_mask]])
     cnu=np.hstack([qcnu[nonzeropl_mask],mdb.cnu[~frozen_mask]])
     indexnu=np.hstack([qcnu[nonzeropl_mask],mdb.cnu[~frozen_mask]])
-    mdb.dev_nu_lines=np.hstack([qlogsij0[nonzeropl_mask],mdb.logsij0[~frozen_mask]])
+    mdb.nu_lines=np.hstack([qnu_line[nonzeropl_mask],mdb.nu_line[~frozen_mask]])
+    import jax.numpy as jnp
+    mdb,dev_nu_lines=jnp.array(mdb.nu_lines)
     mdb.n_Texp
     mdb.alpha_ref
     mdb.A=jnp.zeros_like(mdb.A)
