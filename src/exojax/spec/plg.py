@@ -44,9 +44,14 @@ def plg_elower_addcon(indexa,Na,cnu,indexnu,Nnugrid,logsij0,elower,elower_grid=N
         qlogsij0=qlogsij0.reshape(Na,Nnugrid,Nelower)
         qcnu=qcnu.reshape(Na,Nnugrid,Nelower)
         num_unique=num_unique.reshape(Na,Nnugrid,Nelower)
-    
-    print("# of unfrozen lines:",np.sum(~frozen_mask))
-    print("# of pseudo lines:",len(qlogsij0[qlogsij0>0.0]))
+
+    Nline=np.sum(logsij0)
+    Nunf=np.sum(~frozen_mask)
+    Npl=len(qlogsij0[qlogsij0>0.0])
+    print("# of original lines:",Nline)        
+    print("# of unfrozen lines:",Nunf)
+    print("# of pseudo lines:",Npl)
+    print("# compression:",(Npl+Nunf)/Nline)
     
     return qlogsij0,qcnu,num_unique,elower_grid
 
