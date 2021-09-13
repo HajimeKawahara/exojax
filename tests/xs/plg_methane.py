@@ -7,6 +7,14 @@ if __name__ == "__main__":
     import matplotlib.pyplot as plt
     import time
     import tqdm
+
+    import pandas as pd
+#    dats=pd.read_csv("Gl229B_spectrum_CH4.dat",names=("wav","flux"),delimiter="\s")
+#    wavmic=dats["wav"].values*1.e4
+#    ccgs=29979245800.0
+#    flux=dats["flux"].values*ccgs
+
+    
     Nx=10000
     nus,wav,res=nugrid(16300.0,16600.0,Nx,unit="AA",xsmode="modit")
     print(res)
@@ -115,7 +123,8 @@ if __name__ == "__main__":
     if True:
         Tarr = 1200.0*(Parr/Pref)**0.1
         mu=frun(Tarr,MMR_=0.0059,Mp=33.2,Rp=0.88,u1=0.0,u2=0.0,RV=10.0,vsini=20.0)
-        plt.plot(nus,mu)
+        plt.plot(wav[::-1],mu)
+        #plt.plot(wavmic,flux,alpha=0.5,color="C2",label="petit?")
         plt.show()
         
     
