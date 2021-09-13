@@ -21,7 +21,7 @@ def plg_elower_addcon(indexa,Na,cnu,indexnu,nu_grid,logsij0,elower,elower_grid=N
        elower_grid: elower_grid (optional)
        Nelower: # of division of elower between min to max values when elower_grid is not given
        Ncrit: frrozen line number per bin
-       form: "reshape","gather" 
+       reshape: reshaping output arrays
 
     Returns:
        qlogsij0: pseudo logsij0
@@ -195,7 +195,35 @@ def get_qlogsij0(cnu,indexnu,Nnugrid,logsij0,expme,expme_grid,Nelower=10,Ncrit=0
 
 
 def gather_lines(mdb,Na,Nnugrid,Nelower,nu_grid,cnu,indexnu,qlogsij0,qcnu,elower_grid,alpha_ref_grid,n_Texp_grid,frozen_mask,nonzeropl_mask):
-        #gathering
+    """gather pseudo lines and unfrozen lines into lines for exomol
+
+    Args:
+
+       mdb: molecular database
+       Na: the number of the additional condition grid (gammaL set for Exomol)
+       Nnugrid: # of nu_grid
+       Nelower: # of elower grid
+       nu_grid: nu grid
+       cnu: contribution of wavenumber for LSD
+       indexnu: index nu
+       qlogsij0: log line strength
+       qcnu: pseudo line, contribution of wavenumber for LSD
+       elower_grid: elower_grid
+       alpha_ref_grid: grid of alpha_ref
+       n_Texp_grid: grid of n_Texp
+       frozen_mask: mask for frozen lines into pseudo lines 
+       nonzeropl_mask: mask for pseudo-lines w/ non-zero
+
+    Returns:
+       mdb for the gathered lines
+       cnu for the gathered lines
+       indexnu for the gathered lines
+
+
+    """
+    
+    
+    #gathering
     ## q-part should be ((Na,Nnugrid,Nelower).flatten)[nonzeropl_mask]
     import jax.numpy as jnp
 
@@ -236,7 +264,4 @@ def gather_lines(mdb,Na,Nnugrid,Nelower,nu_grid,cnu,indexnu,qlogsij0,qcnu,elower
     
     return mdb, cnu, indexnu
 
-
-if __name__ == "__main__":
-    print("tmp")
     
