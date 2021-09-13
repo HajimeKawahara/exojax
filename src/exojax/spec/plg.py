@@ -7,13 +7,14 @@ import tqdm
 
 
 
-def plg_elower_addcon(indexa,Na,cnu,nu_grid,logsij0,elower,elower_grid=None,Nelower=10,Ncrit=0,reshape=False):
+def plg_elower_addcon(indexa,Na,cnu,indexnu,nu_grid,logsij0,elower,elower_grid=None,Nelower=10,Ncrit=0,reshape=False):
     """PLG for elower w/ an additional condition
     
     Args:
        indexa: the indexing of the additional condition
        Na: the number of the additional condition grid
        cnu: contribution of wavenumber for LSD
+       indexnu: nu index
        nugrid: nu grid
        logsij0: log line strength
        elower: elower
@@ -204,8 +205,8 @@ def gather_lines(mdb,Na,Nnugrid,Nelower,nu_grid,cnu,indexnu,qlogsij0,qcnu,elower
     indexnu_grid=np.array(range(0,len(nu_grid)),dtype=int)
     qindexnu=(arrone[:,np.newaxis,:]*indexnu_grid[np.newaxis,:,np.newaxis]).flatten()
     cnu=np.hstack([qcnu[nonzeropl_mask],cnu[~frozen_mask]])
-    indexnu=np.hstack([qindexnu[nonzeropl_mask],indexnu[~frozen_mask]])
-
+    indexnu=np.array(np.hstack([qindexnu[nonzeropl_mask],indexnu[~frozen_mask]]),dtype=int)
+    
     #mdb
     mdb.logsij0=np.hstack([qlogsij0[nonzeropl_mask],mdb.logsij0[~frozen_mask]])
     mdb.nu_lines=np.hstack([qnu_grid[nonzeropl_mask],mdb.nu_lines[~frozen_mask]])
@@ -226,6 +227,7 @@ def gather_lines(mdb,Na,Nnugrid,Nelower,nu_grid,cnu,indexnu,qlogsij0,qcnu,elower
     mdb.A=jnp.zeros_like(mdb.logsij0) #no natural width
 
     lenarr=[len(mdb.logsij0),len(mdb.elower),len(cnu),len(indexnu),len(mdb.nu_lines),len(mdb.dev_nu_lines),len(mdb.alpha_ref),len(mdb.n_Texp),len(mdb.A)]
+    
     Ngat=np.unique(lenarr)
     if len(Ngat)>1:
         print("Error: Length mismatch")
@@ -237,114 +239,4 @@ def gather_lines(mdb,Na,Nnugrid,Nelower,nu_grid,cnu,indexnu,qlogsij0,qcnu,elower
 
 if __name__ == "__main__":
     print("tmp")
-    from exojax.spec import moldb
-    from exojax.spec.rtransfer import nugrid
-    from exojax.spec import initspec
-    import matplotlib.pyplot as plt
-    import time
-    import tqdm
-    Nx=10000
-    nus,wav,res=nugrid(16300.0,16600.0,Nx,unit="AA",xsmode="modit")
-    print(res)
-    mdb=moldb.MdbExomol('.database/CH4/12C-1H4/YT10to10/',nus,crit=1.e-40)
-    print("Nline=",len(mdb.A))
-
-    cnu,indexnu,R,pmarray=initspec.init_modit(mdb.nu_lines,nus)
-
-    #make index_gamma
-    gammaL_set=mdb.alpha_ref+mdb.n_Texp*(1j) #complex value
-    gammaL_set_unique=np.unique(gammaL_set)
-    Ngamma=np.shape(gammaL_set_unique)[0]
-    index_gamma=np.zeros_like(mdb.alpha_ref,dtype=int)
-    alpha_ref_grid=gammaL_set_unique.real
-    n_Texp_grid=gammaL_set_unique.imag
-    for j,a in tqdm.tqdm(enumerate(gammaL_set_unique)):
-        index_gamma=np.where(gammaL_set==a,j,index_gamma)        
-    print("done.")
-    #-------------------------------------------------------
-    Ncrit=10
-    Nelower=7
-
-    reshape=False
-    ts=time.time()
-    qlogsij0,qcnu,num_unique,elower_grid,frozen_mask,nonzeropl_mask=plg_elower_addcon(index_gamma,Ngamma,cnu,nus,mdb.logsij0,mdb.elower,Ncrit=Ncrit,Nelower=Nelower,reshape=reshape)    
-    te=time.time()
-    print(te-ts,"sec")
-    print("elower_grid",elower_grid)
-
-    if reshape:
-        num_unique=np.array(num_unique,dtype=float)
-        num_unique[num_unique<Ncrit]=None
-        fig=plt.figure(figsize=(10,4.5))
-        ax=fig.add_subplot(311)
-        c=plt.imshow(num_unique[0,:,:].T)
-        #    c=plt.imshow(np.sum(num_unique[:,:,:],axis=0).T)
-        plt.colorbar(c,shrink=0.2)
-        ax.set_aspect(0.1/ax.get_data_ratio())                
-        ax=fig.add_subplot(312)
-        c=plt.imshow(qlogsij0[0,:,:].T)
-        plt.colorbar(c,shrink=0.2)
-        ax.set_aspect(0.1/ax.get_data_ratio())
-        plt.show()
-        import sys
-        sys.exit()
-    Nnugrid=len(nus)
-    
-    mdb, cnu, indexnu=gather_lines(mdb,Ngamma,Nnugrid,Nelower,nus,cnu,indexnu,qlogsij0,qcnu,elower_grid,alpha_ref_grid,n_Texp_grid,frozen_mask,nonzeropl_mask)
-    
-    ##
-    from exojax.spec import rtransfer as rt
-    from exojax.spec import dit, modit
-    from exojax.spec.rtransfer import rtrun, dtauM, dtauCIA, nugrid
-    from exojax.spec import planck, response
-    from exojax.spec import molinfo
-
-    
-    #atm
-    NP=100
-    Parr, dParr, k=rt.pressure_layer(NP=NP)
-    molmassCH4=molinfo.molmass("CH4")
-    mmw=2.33 #mean molecular weight
-    mmrH2=0.74
-    molmassH2=molinfo.molmass("H2")
-    vmrH2=(mmrH2*mmw/molmassH2) #VMR
-    Pref=1.0 #bar
-    
-    # Precomputing gdm_ngammaL
-    from exojax.spec.modit import setdgm_exomol
-    from jax import jit, vmap
-    
-    fT = lambda T0,alpha: T0[:,None]*(Parr[None,:]/Pref)**alpha[:,None]
-    T0_test=np.array([1100.0,1500.0,1100.0,1500.0])
-    alpha_test=np.array([0.2,0.2,0.05,0.05])
-    res=0.2
-    dgm_ngammaL=setdgm_exomol(mdb,fT,Parr,R,molmassCH4,res,T0_test,alpha_test)
-
-    
-    #a core driver
-    def frun(Tarr,MMR_,Mp,Rp,u1,u2,RV,vsini):        
-        g=2478.57730044555*Mp/Rp**2
-        SijM_,ngammaLM_,nsigmaDl_=modit.exomol(mdb,Tarr,Parr,R,molmassCH4)    
-        xsm_=modit.xsmatrix(cnu,indexnu,R,pmarray,nsigmaDl_,ngammaLM_,SijM_,nus,dgm_ngammaL)
-        #abs is used to remove negative values in xsv
-        dtaum=dtauM(dParr,jnp.abs(xsm_),MMR_*ONEARR,molmassCH4,g) 
-        #CIA                                                                    
-        dtaucH2H2=dtauCIA(nus,Tarr,Parr,dParr,vmrH2,vmrH2,mmw,g,cdbH2H2.nucia,cdbH2H2.tcia,cdbH2H2.logac)
-        dtau=dtaum+dtaucH2H2
-        sourcef = planck.piBarr(Tarr,nus)
-        F0=rtrun(dtau,sourcef)/norm
-        Frot=response.rigidrot(nus,F0,vsini,u1,u2)
-        #mu=response.ipgauss_sampling(nusd,nus,Frot,beta_inst,RV)
-        mu=Frot
-        return mu
-
-    #test
-    if True:
-        Tarr = 1200.0*(Parr/Pref)**0.1
-        mu=frun(Tarr,MMR_=0.0059,Mp=33.2,Rp=0.88,u1=0.0,u2=0.0,RV=10.0,vsini=20.0)
-        plt.plot(nus,mu)
-        plt.show()
-        
-    
-    
     
