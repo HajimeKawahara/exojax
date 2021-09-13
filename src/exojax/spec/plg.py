@@ -25,7 +25,6 @@ def plg_elower_addcon(indexa,Na,cnu,nu_grid,logsij0,elower,elower_grid=None,Nelo
     Returns:
        qlogsij0: pseudo logsij0
        qcnu: pseudo cnu
-       qindexnu: pseudo indexnu
        num_unique: number of lines in grids
        elower_grid: elower of pl
        frozen_mask: mask for frozen lines into pseudo lines 
@@ -55,20 +54,13 @@ def plg_elower_addcon(indexa,Na,cnu,nu_grid,logsij0,elower,elower_grid=None,Nelo
     print("# of pseudo lines:",Npl)
     print("# compression:",(Npl+Nunf)/Nline)
     print("# of pseudo lines:",Npl)
-    arrone=np.ones((Na,Nelower))
-    qnu_grid=arrone[:,np.newaxis,:]*nu_grid[np.newaxis,:,np.newaxis]
-    indexnu_grid=np.array(range(0,len(nu_grid)),dtype=int)
-    qindexnu=arrone[:,np.newaxis,:]*indexnu_grid[np.newaxis,:,np.newaxis]
 
     if reshape==True:
         qlogsij0=qlogsij0.reshape(Na,Nnugrid,Nelower)
         qcnu=qcnu.reshape(Na,Nnugrid,Nelower)
         num_unique=num_unique.reshape(Na,Nnugrid,Nelower)
-    else:
-        qnu_grid=qnu_grid.flatten
-        qindexnu=qindexnu.flatten
         
-    return qlogsij0,qcnu,qindexnu,qnu_grid,num_unique,elower_grid,frozen_mask,nonzeropl_mask
+    return qlogsij0,qcnu,num_unique,elower_grid,frozen_mask,nonzeropl_mask
 
 def get_qlogsij0_addcon(indexa,Na,cnu,indexnu,Nnugrid,logsij0,expme,expme_grid,Nelower=10,Ncrit=0):
     """gether (freeze) lines w/ additional indexing
@@ -201,6 +193,46 @@ def get_qlogsij0(cnu,indexnu,Nnugrid,logsij0,expme,expme_grid,Nelower=10,Ncrit=0
     return qlogsij0,qcnu,num_unique,frozen_mask
 
 
+def gather_lines(mdb,Na,Nnugrid,Nelower,nu_grid,cnu,indexnu,qlogsij0,qcnu,elower_grid,alpha_ref_grid,n_Texp_grid,frozen_mask,nonzeropl_mask):
+        #gathering
+    ## q-part should be ((Na,Nnugrid,Nelower).flatten)[nonzeropl_mask]
+    import jax.numpy as jnp
+
+    ## MODIT
+    arrone=np.ones((Na,Nelower))    
+    qnu_grid=(arrone[:,np.newaxis,:]*nu_grid[np.newaxis,:,np.newaxis]).flatten()
+    indexnu_grid=np.array(range(0,len(nu_grid)),dtype=int)
+    qindexnu=(arrone[:,np.newaxis,:]*indexnu_grid[np.newaxis,:,np.newaxis]).flatten()
+    cnu=np.hstack([qcnu[nonzeropl_mask],cnu[~frozen_mask]])
+    indexnu=np.hstack([qindexnu[nonzeropl_mask],indexnu[~frozen_mask]])
+
+    #mdb
+    mdb.logsij0=np.hstack([qlogsij0[nonzeropl_mask],mdb.logsij0[~frozen_mask]])
+    mdb.nu_lines=np.hstack([qnu_grid[nonzeropl_mask],mdb.nu_lines[~frozen_mask]])
+    mdb.dev_nu_lines=jnp.array(mdb.nu_lines)
+
+    onearr=np.ones((Na,Nnugrid))
+    qelower=(onearr[:,:,np.newaxis]*elower_grid[np.newaxis,np.newaxis,:]).flatten()
+    mdb.elower=np.hstack([qelower[nonzeropl_mask],mdb.elower[~frozen_mask]])
+    
+    #gamma     #Na,Nnugrid,Nelower
+    onearr_=np.ones((Nnugrid,Nelower))
+    alpha_ref_grid=alpha_ref_grid[:,np.newaxis,np.newaxis]*onearr_
+    alpha_ref_grid=alpha_ref_grid.flatten()
+    n_Texp_grid=n_Texp_grid[:,np.newaxis,np.newaxis]*onearr_
+    n_Texp_grid=n_Texp_grid.flatten()    
+    mdb.alpha_ref=np.hstack([alpha_ref_grid[nonzeropl_mask],mdb.alpha_ref[~frozen_mask]])
+    mdb.n_Texp=np.hstack([n_Texp_grid[nonzeropl_mask],mdb.n_Texp[~frozen_mask]])
+    mdb.A=jnp.zeros_like(mdb.logsij0) #no natural width
+
+    lenarr=[len(mdb.logsij0),len(mdb.elower),len(cnu),len(indexnu),len(mdb.nu_lines),len(mdb.dev_nu_lines),len(mdb.alpha_ref),len(mdb.n_Texp),len(mdb.A)]
+    Ngat=np.unique(lenarr)
+    if len(Ngat)>1:
+        print("Error: Length mismatch")
+    else:
+        print("Nline gathered=",Ngat[0])
+    
+    return mdb, cnu, indexnu
 
 
 if __name__ == "__main__":
@@ -215,7 +247,7 @@ if __name__ == "__main__":
     nus,wav,res=nugrid(16300.0,16600.0,Nx,unit="AA",xsmode="modit")
     print(res)
     mdb=moldb.MdbExomol('.database/CH4/12C-1H4/YT10to10/',nus,crit=1.e-40)
-    print(len(mdb.A))
+    print("Nline=",len(mdb.A))
 
     cnu,indexnu,R,pmarray=initspec.init_modit(mdb.nu_lines,nus)
 
@@ -235,7 +267,7 @@ if __name__ == "__main__":
 
     reshape=False
     ts=time.time()
-    qlogsij0,qcnu,qindexnu,qnu_grid,num_unique,elower_grid,frozen_mask,nonzeropl_mask=plg_elower_addcon(index_gamma,Ngamma,cnu,nus,mdb.logsij0,mdb.elower,Ncrit=Ncrit,Nelower=Nelower,reshape=reshape)    
+    qlogsij0,qcnu,num_unique,elower_grid,frozen_mask,nonzeropl_mask=plg_elower_addcon(index_gamma,Ngamma,cnu,nus,mdb.logsij0,mdb.elower,Ncrit=Ncrit,Nelower=Nelower,reshape=reshape)    
     te=time.time()
     print(te-ts,"sec")
     print("elower_grid",elower_grid)
@@ -253,33 +285,30 @@ if __name__ == "__main__":
         c=plt.imshow(qlogsij0[0,:,:].T)
         plt.colorbar(c,shrink=0.2)
         ax.set_aspect(0.1/ax.get_data_ratio())
-        ax=fig.add_subplot(313)
-        c=plt.imshow(qnu_grid[0,:,:].T)
-        plt.colorbar(c,shrink=0.2)
-        ax.set_aspect(0.1/ax.get_data_ratio())        
         plt.show()
         import sys
         sys.exit()
+    Nnugrid=len(nus)
     
-    #gathering
-    mdb.logsij0=np.hstack([qlogsij0[nonzeropl_mask],mdb.logsij0[~frozen_mask]])
-    mdb.elower=np.hstack([elower_grid,mdb.elower[~frozen_mask]])
-    cnu=np.hstack([qcnu[nonzeropl_mask],cnu[~frozen_mask]])
-    indexnu=np.hstack([qindexnu[nonzeropl_mask],indexnu[~frozen_mask]])
-    mdb.nu_lines=np.hstack([qnu_line[nonzeropl_mask],mdb.nu_line[~frozen_mask]])
-    import jax.numpy as jnp
-    mdb,dev_nu_lines=jnp.array(mdb.nu_lines)
+    mdb, cnu, indexnu=gather_lines(mdb,Ngamma,Nnugrid,Nelower,nus,cnu,indexnu,qlogsij0,qcnu,elower_grid,alpha_ref_grid,n_Texp_grid,frozen_mask,nonzeropl_mask)
     
-    #gamma     #Na,Nnugrid,Nelower
-    onearr=np.ones((Nnugrid,Nelower))
-    alpha_ref_grid=alpha_ref_grid[:,np.newaxis,np.newaxis]*onearr
-    n_Texp_grid=n_Texp_grid[:,np.newaxis,np.newaxis]*onearr
+    ##
+    from exojax.spec import rtransfer as rt
+    from exojax.spec import dit, modit
+    from exojax.spec.rtransfer import rtrun, dtauM, dtauCIA, nugrid
+    from exojax.spec import planck, response
+    from exojax.spec import molinfo
 
-    mdb.n_Texp=np.hstack([alpha_ref_grid,mdb.alpha_ref[~frozen_mask]])
-    mdb.alpha_ref=np.hstack([n_Texp_grid,mdb.n_Texp[~frozen_mask]])
-    #mdb.A=jnp.zeros_like(mdb.A) #no natural width
-    import sys
-    sys.exit()
+    
+    #atm
+    NP=100
+    Parr, dParr, k=rt.pressure_layer(NP=NP)
+    molmassCH4=molinfo.molmass("CH4")
+    mmw=2.33 #mean molecular weight
+    mmrH2=0.74
+    molmassH2=molinfo.molmass("H2")
+    vmrH2=(mmrH2*mmw/molmassH2) #VMR
+    Pref=1.0 #bar
     
     # Precomputing gdm_ngammaL
     from exojax.spec.modit import setdgm_exomol
@@ -289,37 +318,31 @@ if __name__ == "__main__":
     T0_test=np.array([1100.0,1500.0,1100.0,1500.0])
     alpha_test=np.array([0.2,0.2,0.05,0.05])
     res=0.2
-    dgm_ngammaL=setdgm_exomol(mdbCH4,fT,Parr,R,molmassCH4,res,T0_test,alpha_test)
-    
-    #check dgm
-    if False:
-        from exojax.plot.ditplot import plot_dgmn
-        Tarr=1300.*(Parr/Pref)**0.1
-        SijM_CH4,ngammaLM_CH4,nsigmaDl_CH4=modit.exomol(mdb,Tarr,Parr,R,molmassCH4)
-        plot_dgmn(Parr,dgm_ngammaL,ngammaLM_CH4,0,6)
-        plt.show()
+    dgm_ngammaL=setdgm_exomol(mdb,fT,Parr,R,molmassCH4,res,T0_test,alpha_test)
 
+    
     #a core driver
-    def frun(Tarr,MMR_CH4,Mp,Rp,u1,u2,RV,vsini):        
+    def frun(Tarr,MMR_,Mp,Rp,u1,u2,RV,vsini):        
         g=2478.57730044555*Mp/Rp**2
-        SijM_CH4,ngammaLM_CH4,nsigmaDl_CH4=modit.exomol(mdbCH4,Tarr,Parr,R,molmassCH4)    
-        xsm_CH4=modit.xsmatrix(cnu,indexnu,R,pmarray,nsigmaDl_CH4,ngammaLM_CH4,SijM_CH4,nus,dgm_ngammaL)
+        SijM_,ngammaLM_,nsigmaDl_=modit.exomol(mdb,Tarr,Parr,R,molmassCH4)    
+        xsm_=modit.xsmatrix(cnu,indexnu,R,pmarray,nsigmaDl_,ngammaLM_,SijM_,nus,dgm_ngammaL)
         #abs is used to remove negative values in xsv
-        dtaumCH4=dtauM(dParr,jnp.abs(xsm_CH4),MMR_CH4*ONEARR,molmassCH4,g) 
+        dtaum=dtauM(dParr,jnp.abs(xsm_),MMR_*ONEARR,molmassCH4,g) 
         #CIA                                                                    
         dtaucH2H2=dtauCIA(nus,Tarr,Parr,dParr,vmrH2,vmrH2,mmw,g,cdbH2H2.nucia,cdbH2H2.tcia,cdbH2H2.logac)
-        dtau=dtaumCH4+dtaucH2H2
+        dtau=dtaum+dtaucH2H2
         sourcef = planck.piBarr(Tarr,nus)
         F0=rtrun(dtau,sourcef)/norm
         Frot=response.rigidrot(nus,F0,vsini,u1,u2)
-        mu=response.ipgauss_sampling(nusd,nus,Frot,beta_inst,RV)
+        #mu=response.ipgauss_sampling(nusd,nus,Frot,beta_inst,RV)
+        mu=Frot
         return mu
 
     #test
-    if False:
+    if True:
         Tarr = 1200.0*(Parr/Pref)**0.1
-        mu=frun(Tarr,MMR_CH4=0.0059,Mp=33.2,Rp=0.88,u1=0.0,u2=0.0,RV=10.0,vsini=20.0)
-        plt.plot(wavd,mu)
+        mu=frun(Tarr,MMR_=0.0059,Mp=33.2,Rp=0.88,u1=0.0,u2=0.0,RV=10.0,vsini=20.0)
+        plt.plot(nus,mu)
         plt.show()
         
     
