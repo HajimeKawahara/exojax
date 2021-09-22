@@ -50,7 +50,7 @@ def gamma_natural(A):
     return(2.6544188e-12*A)
     
 
-def gamma_vald3(P, T, PH, PHH, PHe, \
+def gamma_vald3(T, PH, PHH, PHe, \
     nu_lines, elower, ionE, gamRad, vdWdamp, enh_damp=1.0):
     #%\\\\20210804 #tako 原子ごとにenh_dampも場合分け（Turbospectrumに倣う？）するならielemが入力(Args)に必要.
     """gamma factor by a pressure broadening
@@ -58,15 +58,14 @@ def gamma_vald3(P, T, PH, PHH, PHe, \
 
     Args(inputs):
       T: temperature (K) (array)
-      P: pressure (bar)  #1 bar = 1e6 dyn/cm2 (array)
-      PH: hydrogen pressure (bar) (array)
+      PH: hydrogen pressure (bar) (array)  #1 bar = 1e6 dyn/cm2 (array)
       PHH: H2 molecule pressure (bar) (array)
       PHe: helium pressure (bar) (array)
       nu_lines:  transition waveNUMBER in [cm-1] (NOT frequency in [s-1])
       elower: excitation potential (lower level) [cm-1]
       ionE: ionization potential [eV]
       vdWdamp:  van der Waals damping parameters
-      gamRad: gamma(HWHM of Lorentzian) of radiation damping
+      gamRad: log of gamma(HWHM of Lorentzian) of radiation damping
       enh_damp: empirical "enhancement factor" for classical Unsoeld's damping constant
 
     Args(calculated):
