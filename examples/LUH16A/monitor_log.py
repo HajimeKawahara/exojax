@@ -25,11 +25,13 @@ def count_steps(logfile):
     for i in w:
         j=i.split(",")
         if len(j)==3:
-            istep=int(j[2].split("steps")[0])
-            step.append(istep)
-            itime=float(j[1].replace("s/it","").replace("it/s",""))
-            ctime.append(itime)
-            
+            try:
+                istep=int(j[2].split("steps")[0])
+                step.append(istep)
+                itime=float(j[1].replace("s/it","").replace("it/s",""))
+                ctime.append(itime)
+            except:
+                print("Some error whne reading")
     f.close()
     step=np.array(step,dtype=np.int)
 
