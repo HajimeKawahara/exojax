@@ -157,7 +157,7 @@ baseline=1.07 #(baseline for a CIA photosphere in the observed (normaized) spect
 def model_c(nu1,y1,e1):
     Rp = numpyro.sample('Rp', dist.Uniform(0.5,1.5))
     Mp = numpyro.sample('Mp', dist.Normal(33.5,0.3))
-    sigma = numpyro.sample('sigma', dist.Exponential(10.0))
+    #sigma = numpyro.sample('sigma', dist.Exponential(10.0))
     RV = numpyro.sample('RV', dist.Uniform(26.0,30.0))
     MMR_CO = numpyro.sample('MMR_CO', dist.Uniform(0.0,maxMMR_CO))
     MMR_H2O = numpyro.sample('MMR_H2O', dist.Uniform(0.0,maxMMR_H2O))
@@ -174,9 +174,9 @@ def model_c(nu1,y1,e1):
     u1=2.0*sqrtq1*q2
     u2=sqrtq1*(1.0-2.0*q2)
     #GP
-    logtau = numpyro.sample('logtau', dist.Uniform(-0.2,1.0)) #tau=1 <=> 5A
+    logtau = numpyro.sample('logtau', dist.Uniform(-1.0,1.0)) #tau=1 <=> 5A
     tau=10**(logtau)
-    loga = numpyro.sample('loga', dist.Uniform(-3.0,-2.0))
+    loga = numpyro.sample('loga', dist.Uniform(-4.0,-2.0))
     a=10**(loga)
     
     g=2478.57730044555*Mp/Rp**2 #gravity
@@ -226,7 +226,8 @@ def model_c(nu1,y1,e1):
         Frot=response.rigidrot(nus,F0,vsini,u1,u2)
         mu=response.ipgauss_sampling(nusd,nus,Frot,beta,RV)
 
-        errall=jnp.sqrt(e1**2+sigma**2)
+        #errall=jnp.sqrt(e1**2+sigma**2)
+        errall=e1
         cov = modelcov(nusd,tau,a,errall)
         #cov = modelcov(nusd,tau,a,e1)
         #numpyro.sample(tag, dist.Normal(mu, e1), obs=y)

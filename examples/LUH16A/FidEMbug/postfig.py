@@ -164,7 +164,7 @@ def predmod(nu1,y1,e1,pos,i):
     Rp = pos['Rp'][i]#Uniform(0.5,1.5))
     Mp = pos['Mp'][i]#Normal(33.5,0.3))
     RV = pos['RV'][i]#Uniform(26.0,30.0))
-    sigma=pos["sigma"][i]
+#    sigma=pos["sigma"][i]
     MMR_CO = pos['MMR_CO'][i]#Uniform(0.0,maxMMR_CO))
     MMR_H2O = pos['MMR_H2O'][i]#Uniform(0.0,maxMMR_H2O))
     T0 = pos['T0'][i]#Uniform(1000.0,1700.0))
@@ -239,13 +239,14 @@ def predmod(nu1,y1,e1,pos,i):
 
     t=nusd1
     td=t
-    errall=np.sqrt(e1**2+sigma**2)
-    cov = a*RBF(t,t,tau,a) + jnp.diag(errall**2)
-    covx= a*RBF(t,td,tau,a)
-    covxx = a*RBF(td,td,tau,a) + jnp.diag(errall**2)
+ #   errall=np.sqrt(e1**2+sigma**2)
+    errall=e1
+    cov = RBF(t,t,tau,a) + jnp.diag(errall**2)
+    covx= RBF(t,td,tau,a)
+    covxx = RBF(td,td,tau,a) + jnp.diag(errall**2)
     IKw=cov 
-    A=jnp.linalg.solve(IKw,y1-mu)#,assume_a="pos")
-    IKw = jnp.linalg.inv(IKw)
+    A=scipy.linalg.solve(IKw,y1-mu,assume_a="pos")
+    IKw = scipy.linalg.inv(IKw)
     return mu,covx@A,covxx - covx@IKw@covx.T
 
 
@@ -276,6 +277,9 @@ hpdi_mu1 = hpdi(marrs, 0.9)
 
 median_mu1_gp = np.median(marrs_gp, axis=0)
 hpdi_mu1_gp = hpdi(marrs_gp, 0.9)
+
+#SAVE
+np.savez("npz/gppred.npz",[nusd1,wavd1,fobs1,err1,marrs,marrs_gp])
 
 
 red=(1.0+28.07/300000.0) #for annotation
