@@ -1,9 +1,6 @@
 # LUH16A
 
-HMC-NUTS fitting of exojax to a real spectrum of a brown dwarf Luhman 16 A.
-
-## Fiducial model
-LUH16A/FidEMb/fit.py -- ExoMol Mp prior from astrometry, fA=1, .broad applied
+HMC-NUTS fitting of exojax to a real spectrum of a brown dwarf [Luhman 16 A](https://en.wikipedia.org/wiki/Luhman_16).
 
 ## Luhman 16 A spectrum
 - data/luhman16a_spectra_detector1.csv
@@ -12,6 +9,10 @@ The high-dispersion spectrum of Luhman 16 A as observed by VLT/CRIRES (detector1
 
 Contact for this spectrum: [Ian J. M. Crossfield](https://crossfield.ku.edu/)
 
+
+## Models
+
+ExoMol Mp prior from astrometry, fA=1, .broad applied
 
 |  directroy       | opacity calculator |  Limb Darkening  | Gaussian Process |        |
 | ---------------- |  ----------------- | ---------------- | ---------------- | ------ |
