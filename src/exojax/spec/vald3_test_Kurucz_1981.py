@@ -178,12 +178,12 @@ def gamma_vald3_Kurucz1981(T, PH, PHH, PHe, \
     
     
     Rcgs = 1.0973731568e5 #[cm-1]
-    ucgs = 1.660539067e-24 #unified atomic mass unit [g]
+    #ucgs = 1.660539067e-24 #unified atomic mass unit [g]
     ecgs = 4.803204e-10 #elementary charge [esu]
     Zeff = 1
     n_eff2_upper = Rcgs * Zeff**2 / (ionE*8065.54 - eupper) #Square of effective quantum number of the upper state #UNIT-TBC?? %\\\\20210928
     n_eff2_lower = Rcgs * Zeff**2 / (ionE*8065.54 - elower)
-    msr_upper = 2.5 * (n_eff2_upper/Zeff)**2 #Mean of square of radius of the upper level
+    msr_upper = np.where(n_eff2_upper>0., (2.5 * (n_eff2_upper/Zeff)**2), 25) #Mean of square of radius of the upper level
     msr_lower = 2.5 * (n_eff2_lower/Zeff)**2 #Mean of square of radius of the upper level
 
     """gamma_case3 = 17 * (8*kcgs*T*(1/atomicmass+1/1)/(jnp.pi*ucgs))**0.3 * (6.63e-25*ecgs**2/hcgs*(gap_msr_rev))**0.4 * PH*1e6 /(kcgs*T) + \
@@ -192,13 +192,13 @@ def gamma_vald3_Kurucz1981(T, PH, PHH, PHe, \
                   
     gap_msr = msr_upper - msr_lower
     gap_msr_rev = gap_msr * np.where(gap_msr < 0, -1., 1.) #Reverse upper and lower (TBC)_210928
-    gam6H = 17 * (8*kcgs*T*(1./atomicmass+1./1.)/(jnp.pi*ucgs))**0.3 \
+    gam6H = 17 * (8*kcgs*T*(1./atomicmass+1./1.)/(jnp.pi*1.008000))**0.3 \
         * (6.63e-25*ecgs**2/hcgs*(gap_msr_rev))**0.4 \
         * PH*1e6 /(kcgs*T)
-    gam6He = 17 * (8*kcgs*T*(1./atomicmass+1./4.)/(jnp.pi*ucgs))**0.3 \
+    gam6He = 17 * (8*kcgs*T*(1./atomicmass+1./4.)/(jnp.pi*4.002600))**0.3 \
         * (2.07e-25*ecgs**2/hcgs*(gap_msr_rev))**0.4 \
         * PHe*1e6 /(kcgs*T)
-    gam6HH = 17 * (8*kcgs*T*(1./atomicmass+1./2.)/(jnp.pi*ucgs))**0.3 \
+    gam6HH = 17 * (8*kcgs*T*(1./atomicmass+1./2.)/(jnp.pi*1.008000*2))**0.3 \
         * (8.04e-25*ecgs**2/hcgs*(gap_msr_rev))**0.4 \
         * PHH*1e6 /(kcgs*T)
     gamma6 = gam6H + gam6He + gam6HH
