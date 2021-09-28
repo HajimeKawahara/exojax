@@ -183,7 +183,7 @@ def gamma_vald3_Kurucz1981(T, PH, PHH, PHe, \
     Zeff = 1.
     #test210928
     eupper = elower+nu_lines
-    print('test210928')
+    #print('test210928')
     #test210928
     n_eff2_upper = Rcgs * Zeff**2 / (ionE*8065.54 - eupper) #Square of effective quantum number of the upper state #UNIT-TBC?? %\\\\20210928
     n_eff2_lower = Rcgs * Zeff**2 / (ionE*8065.54 - elower)
