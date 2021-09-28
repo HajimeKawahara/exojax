@@ -94,7 +94,7 @@ def gamma_vald3(P, T, PH, PHH, PHe, \
     gam6He = 1e20 * C6**0.4 * PHe*1e6*0.41336 / T**0.7
     gam6HH = 1e20 * C6**0.4 * PHH*1e6*0.85 / T**0.7
     gamma6 = enh_damp * (gam6H + gam6He + gam6HH)
-    gamma_case1 = gamma6 + 10**gamRad
+    gamma_case1 = gamma6 #+ 10**gamRad
     gamma_case1 = np.where(np.isnan(gamma_case1), 0., gamma_case1) #avoid nan (appeared by jnp.log10(negative C6))
 
     #CASE2 (van der Waars broadening based on gamma6 at 10000 K)
@@ -103,7 +103,7 @@ def gamma_vald3(P, T, PH, PHH, PHe, \
     gam6He = 10**vdWdamp * (T/10000.)**Texp * PHe*1e6*0.41336 /(kcgs*T)
     gam6HH = 10**vdWdamp * (T/10000.)**Texp * PHH*1e6*0.85 /(kcgs*T)
     gamma6 = gam6H + gam6He + gam6HH
-    gamma_case2 = gamma6 + 10**gamRad
+    gamma_case2 = gamma6 #+ 10**gamRad
 
     #Prioritize Case2 (Case1 if w/o vdW)
     gamma = (gamma_case1 * jnp.where(vdWdamp>=0., 1, 0) + gamma_case2 * jnp.where(vdWdamp<0., 1, 0))\
@@ -156,7 +156,7 @@ def gamma_vald3_Kurucz1981(T, PH, PHH, PHe, \
     gam6He = 1e20 * C6**0.4 * PHe*1e6*0.41336 / T**0.7
     gam6HH = 1e20 * C6**0.4 * PHH*1e6*0.85 / T**0.7
     gamma6 = enh_damp * (gam6H + gam6He + gam6HH)
-    gamma_case1 = gamma6 + 10**gamRad
+    gamma_case1 = gamma6 #+ 10**gamRad
     gamma_case1 = np.where(np.isnan(gamma_case1), 0., gamma_case1) #avoid nan (appeared by jnp.log10(negative C6))
 
     #CASE2 (van der Waars broadening based on gamma6 at 10000 K)
@@ -165,12 +165,12 @@ def gamma_vald3_Kurucz1981(T, PH, PHH, PHe, \
     gam6He = 10**vdWdamp * (T/10000.)**Texp * PHe*1e6*0.41336 /(kcgs*T)
     gam6HH = 10**vdWdamp * (T/10000.)**Texp * PHH*1e6*0.85 /(kcgs*T)
     gamma6 = gam6H + gam6He + gam6HH
-    gamma_case2 = gamma6 + 10**gamRad
+    gamma_case2 = gamma6 #+ 10**gamRad
 
 
     #CASE3 (Kurucz_1981_solar_spectrum_synthesis_SAOSR_391_____K.pdf)
     ##test210917
-    gamma_case3 = 10**vdWdamp * ((PH+0.42*PHe+0.85*PHH)*1e6/(kcgs*T)) * (T/10000.)**0.3    + 10**gamRad
+    gamma_case3 = 10**vdWdamp * ((PH+0.42*PHe+0.85*PHH)*1e6/(kcgs*T)) * (T/10000.)**0.3    #+ 10**gamRad
     #ってこれ結局CASE2のTexpが0.30になっただけ…
 
     #Prioritize Case2 (Case1 if w/o vdW)
