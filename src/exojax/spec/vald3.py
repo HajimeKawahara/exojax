@@ -65,7 +65,7 @@ def gamma_vald3(T, PH, PHH, PHe, \
       elower: excitation potential (lower level) [cm-1]
       ionE: ionization potential [eV]
       vdWdamp:  van der Waals damping parameters
-      gamRad: log of gamma(HWHM of Lorentzian) of radiation damping
+      gamRad: log of gamma(HWHM of Lorentzian) of radiation damping (s-1) #(https://www.astro.uu.se/valdwiki/Vald3Format)
       enh_damp: empirical "enhancement factor" for classical Unsoeld's damping constant
 
     Args(calculated):

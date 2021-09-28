@@ -66,7 +66,7 @@ def gamma_vald3(P, T, PH, PHH, PHe, \
       elower: excitation potential (lower level) [cm-1]
       ionE: ionization potential [eV]
       vdWdamp:  van der Waals damping parameters
-      gamRad: gamma(HWHM of Lorentzian) of radiation damping
+      gamRad: log of gamma(HWHM of Lorentzian) of radiation damping (s-1) #(https://www.astro.uu.se/valdwiki/Vald3Format)
       enh_damp: empirical "enhancement factor" for classical Unsoeld's damping constant
 
     Args(calculated):
@@ -158,7 +158,7 @@ def gamma_vald3_Kurucz1981(T, PH, PHH, PHe, \
     gam6He = 1e20 * C6**0.4 * PHe*1e6*0.41336 / T**0.7
     gam6HH = 1e20 * C6**0.4 * PHH*1e6*0.85 / T**0.7
     gamma6 = enh_damp * (gam6H + gam6He + gam6HH)
-    gamma_case1 = gamma6 + 10**gamRad
+    gamma_case1 = (gamma6 + 10**gamRad)/ccgs
     gamma_case1 = np.where(np.isnan(gamma_case1), 0., gamma_case1) #avoid nan (appeared by jnp.log10(negative C6))
 
     #CASE2 (van der Waars broadening based on gamma6 at 10000 K)
@@ -167,7 +167,7 @@ def gamma_vald3_Kurucz1981(T, PH, PHH, PHe, \
     gam6He = 10**vdWdamp * (T/10000.)**Texp * PHe*1e6*0.41336 /(kcgs*T)
     gam6HH = 10**vdWdamp * (T/10000.)**Texp * PHH*1e6*0.85 /(kcgs*T)
     gamma6 = gam6H + gam6He + gam6HH
-    gamma_case2 = gamma6 + 10**gamRad
+    gamma_case2 = (gamma6 + 10**gamRad)/ccgs
 
 
     #CASE3 (3rd equation in p.4 of Kurucz_1981_solar_spectrum_synthesis_SAOSR_391_____K.pdf)
@@ -206,24 +206,22 @@ def gamma_vald3_Kurucz1981(T, PH, PHH, PHe, \
         * (8.04e-25*ecgs**2/hcgs*(gap_msr_rev))**0.4 \
         * PHH*1e6 /(kcgs*T)
     gamma6 = gam6H + gam6He + gam6HH
-    gamma_case3 = gamma6 #+ 10**gamRad
+    gamma_case3 = (gamma6 + 10**gamRad)/ccgs
 
 
 
 
     #4th equation in p.4 of Kurucz_1981
-    gamma_case4 = 4.5e-9 * msr_upper**0.4 \
+    gamma6 = 4.5e-9 * msr_upper**0.4 \
         * ((PH + 0.42*PHe + 0.85*PHH)*1e6/(kcgs*T)) * (T/10000.)**0.3
-    
+    gamma_case4 = (gamma6 + 10**gamRad)/ccgs
+
     
     
     
     #Prioritize Case2 (Case1 if w/o vdW)
-    #gamma = (gamma_case1 * jnp.where(vdWdamp>=0., 1, 0) + gamma_case2 * jnp.where(vdWdamp<0., 1, 0))\
-    #    /ccgs  #Note that gamRad in VALD is in [s-1] (https://www.astro.uu.se/valdwiki/Vald3Format)
-    gamma = gamma_case4 /ccgs
-    
-    gammatest = gamma_case3 /ccgs
+    #gamma = (gamma_case1 * jnp.where(vdWdamp>=0., 1, 0) + gamma_case2 * jnp.where(vdWdamp<0., 1, 0))
 
     #return(gamma)
-    return(gamma, n_eff2_upper, n_eff2_lower, msr_upper, msr_lower, gam6H, gam6He, gam6HH, gammatest)
+    #return(gamma, n_eff2_upper, n_eff2_lower, msr_upper, msr_lower, gam6H, gam6He, gam6HH, gammatest)
+    return(gamma_c2, gamma_c3, gamma_c4)
