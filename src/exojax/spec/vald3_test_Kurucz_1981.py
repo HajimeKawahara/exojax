@@ -186,13 +186,21 @@ def gamma_vald3_Kurucz1981(T, PH, PHH, PHe, \
     msr_upper = 2.5 * (n_eff2_upper/Zeff)**2 #Mean of square of radius of the upper level
     msr_lower = 2.5 * (n_eff2_lower/Zeff)**2 #Mean of square of radius of the upper level
 
-    """gamma_case3 = 17 * (8*kcgs*T*(1/atomicmass+1/1)/(jnp.pi*ucgs))**0.3 * (6.63e-25*ecgs**2/hcgs*(msr_upper-msr_lower))**0.4 * PH*1e6 /(kcgs*T) + \
-                    17 * (8*kcgs*T*(1/atomicmass+1/4)/(jnp.pi*ucgs))**0.3 * (2.07e-25*ecgs**2/hcgs*(msr_upper-msr_lower))**0.4 * PHe*1e6 /(kcgs*T) + \
-                    17 * (8*kcgs*T*(1/atomicmass+1/2)/(jnp.pi*ucgs))**0.3 * (8.04e-25*ecgs**2/hcgs*(msr_upper-msr_lower))**0.4 * PHH*1e6 /(kcgs*T) #"""
+    """gamma_case3 = 17 * (8*kcgs*T*(1/atomicmass+1/1)/(jnp.pi*ucgs))**0.3 * (6.63e-25*ecgs**2/hcgs*(gap_msr_rev))**0.4 * PH*1e6 /(kcgs*T) + \
+                    17 * (8*kcgs*T*(1/atomicmass+1/4)/(jnp.pi*ucgs))**0.3 * (2.07e-25*ecgs**2/hcgs*(gap_msr_rev))**0.4 * PHe*1e6 /(kcgs*T) + \
+                    17 * (8*kcgs*T*(1/atomicmass+1/2)/(jnp.pi*ucgs))**0.3 * (8.04e-25*ecgs**2/hcgs*(gap_msr_rev))**0.4 * PHH*1e6 /(kcgs*T) #"""
                   
-    gam6H = 17 * (8*kcgs*T*(1./atomicmass+1./1.)/(jnp.pi*ucgs))**0.3 * (6.63e-25*ecgs**2/hcgs*(msr_upper-msr_lower))**0.4 * PH*1e6 /(kcgs*T)
-    gam6He = 17 * (8*kcgs*T*(1./atomicmass+1./4.)/(jnp.pi*ucgs))**0.3 * (2.07e-25*ecgs**2/hcgs*(msr_upper-msr_lower))**0.4 * PHe*1e6 /(kcgs*T)
-    gam6HH = 17 * (8*kcgs*T*(1./atomicmass+1./2.)/(jnp.pi*ucgs))**0.3 * (8.04e-25*ecgs**2/hcgs*(msr_upper-msr_lower))**0.4 * PHH*1e6 /(kcgs*T)
+    gap_msr = msr_upper - msr_lower
+    gap_msr_rev = gap_msr * np.where(gap_msr < 0, -1., 1.) #Reverse upper and lower (TBC)_210928
+    gam6H = 17 * (8*kcgs*T*(1./atomicmass+1./1.)/(jnp.pi*ucgs))**0.3 \
+        * (6.63e-25*ecgs**2/hcgs*(gap_msr_rev))**0.4 \
+        * PH*1e6 /(kcgs*T)
+    gam6He = 17 * (8*kcgs*T*(1./atomicmass+1./4.)/(jnp.pi*ucgs))**0.3 \
+        * (2.07e-25*ecgs**2/hcgs*(gap_msr_rev))**0.4 \
+        * PHe*1e6 /(kcgs*T)
+    gam6HH = 17 * (8*kcgs*T*(1./atomicmass+1./2.)/(jnp.pi*ucgs))**0.3 \
+        * (8.04e-25*ecgs**2/hcgs*(gap_msr_rev))**0.4 \
+        * PHH*1e6 /(kcgs*T)
     gamma6 = gam6H + gam6He + gam6HH
     gamma_case3 = gamma6 #+ 10**gamRad
 
