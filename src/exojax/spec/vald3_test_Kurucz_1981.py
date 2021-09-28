@@ -186,9 +186,9 @@ def gamma_vald3_Kurucz1981(T, PH, PHH, PHe, \
     msr_upper = 2.5 * (n_eff2_upper/Zeff)**2 #Mean of square of radius of the upper level
     msr_lower = 2.5 * (n_eff2_lower/Zeff)**2 #Mean of square of radius of the upper level
 
-    gamma_case3 = 17 * (8*kcgs*T*(1/atomicmass+1/1)/(jnp.pi*ucgs))**0.3 * (6.63e-25*ecgs**2/hcgs*(msr_upper-msr_lower))**0.4 * PH*1e6 /(kcgs*T) + \
-                    17 * (8*kcgs*T*(1/atomicmass+1/4)/(jnp.pi*ucgs))**0.3 * (2.07e-25*ecgs**2/hcgs*(msr_upper-msr_lower))**0.4 * PHe*1e6 /(kcgs*T) + \
-                    17 * (8*kcgs*T*(1/atomicmass+1/2)/(jnp.pi*ucgs))**0.3 * (8.04e-25*ecgs**2/hcgs*(msr_upper-msr_lower))**0.4 * PHH*1e6 /(kcgs*T)
+    gamma_case3 = 17 * (8*kcgs*T*(1/atomicmass+1/1)/(np.pi*ucgs))**0.3 * (6.63e-25*ecgs**2/hcgs*(msr_upper-msr_lower))**0.4 * PH*1e6 /(kcgs*T) + \
+                    17 * (8*kcgs*T*(1/atomicmass+1/4)/(np.pi*ucgs))**0.3 * (2.07e-25*ecgs**2/hcgs*(msr_upper-msr_lower))**0.4 * PHe*1e6 /(kcgs*T) + \
+                    17 * (8*kcgs*T*(1/atomicmass+1/2)/(np.pi*ucgs))**0.3 * (8.04e-25*ecgs**2/hcgs*(msr_upper-msr_lower))**0.4 * PHH*1e6 /(kcgs*T)
 
 
     #4th equation in p.4 of Kurucz_1981

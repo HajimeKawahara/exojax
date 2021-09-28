@@ -640,6 +640,7 @@ class AdbVald(object):  #integrated from vald3db.py
         A (jnp array): Einstein A coeeficient in (s-1)
         gamma_natural (jnp array): gamma factor of the natural broadening
         elower (jnp array): the lower state energy (cm-1)
+        eupper (jnp array): the upper state energy (cm-1)
         gupper: (jnp array): upper statistical weight
         jlower (jnp array): lower J (rotational quantum number, total angular momentum)
         jupper (jnp array): upper J
