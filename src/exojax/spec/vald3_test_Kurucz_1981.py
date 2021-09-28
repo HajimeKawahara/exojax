@@ -81,7 +81,7 @@ def gamma_vald3(P, T, PH, PHH, PHe, \
       gamma: pressure gamma factor (cm-1)
 
     """
-    #hcgs = 6.62607015e-27 #[erg*s]
+    hcgs = 6.62607015e-27 #[erg*s]
     ccgs = 2.99792458e10 #[cm/s]
     kcgs = 1.38064852e-16 #[erg/K]
 
@@ -94,7 +94,7 @@ def gamma_vald3(P, T, PH, PHH, PHe, \
     gam6He = 1e20 * C6**0.4 * PHe*1e6*0.41336 / T**0.7
     gam6HH = 1e20 * C6**0.4 * PHH*1e6*0.85 / T**0.7
     gamma6 = enh_damp * (gam6H + gam6He + gam6HH)
-    gamma_case1 = gamma6 #+ 10**gamRad
+    gamma_case1 = gamma6 + 10**gamRad
     gamma_case1 = np.where(np.isnan(gamma_case1), 0., gamma_case1) #avoid nan (appeared by jnp.log10(negative C6))
 
     #CASE2 (van der Waars broadening based on gamma6 at 10000 K)
@@ -103,7 +103,7 @@ def gamma_vald3(P, T, PH, PHH, PHe, \
     gam6He = 10**vdWdamp * (T/10000.)**Texp * PHe*1e6*0.41336 /(kcgs*T)
     gam6HH = 10**vdWdamp * (T/10000.)**Texp * PHH*1e6*0.85 /(kcgs*T)
     gamma6 = gam6H + gam6He + gam6HH
-    gamma_case2 = gamma6 #+ 10**gamRad
+    gamma_case2 = gamma6 + 10**gamRad
 
     #Prioritize Case2 (Case1 if w/o vdW)
     gamma = (gamma_case1 * jnp.where(vdWdamp>=0., 1, 0) + gamma_case2 * jnp.where(vdWdamp<0., 1, 0))\
@@ -113,7 +113,7 @@ def gamma_vald3(P, T, PH, PHH, PHe, \
 
 
 def gamma_vald3_Kurucz1981(T, PH, PHH, PHe, \
-    nu_lines, elower, ionE, gamRad, vdWdamp, enh_damp=1.0):
+    nu_lines, elower, eupper, atomicmass, ionE, gamRad, vdWdamp, enh_damp=1.0):
     #%\\\\20210917 #tako 原子ごとにenh_dampも場合分け（Turbospectrumに倣う？）するならielemが入力(Args)に必要.
     """testing210917 18:51
       gamma factor by a pressure broadening
@@ -126,6 +126,8 @@ def gamma_vald3_Kurucz1981(T, PH, PHH, PHe, \
       PHe: helium pressure (bar) (array)
       nu_lines:  transition waveNUMBER in [cm-1] (NOT frequency in [s-1])
       elower: excitation potential (lower level) [cm-1]
+      eupper: excitation potential (upper level) [cm-1]
+      atomicmass: atomic mass [amu]
       ionE: ionization potential [eV]
       vdWdamp:  van der Waals damping parameters
       gamRad: gamma(HWHM of Lorentzian) of radiation damping
@@ -143,7 +145,7 @@ def gamma_vald3_Kurucz1981(T, PH, PHH, PHe, \
       gamma: pressure gamma factor (cm-1)
 
     """
-    #hcgs = 6.62607015e-27 #[erg*s]
+    hcgs = 6.62607015e-27 #[erg*s]
     ccgs = 2.99792458e10 #[cm/s]
     kcgs = 1.38064852e-16 #[erg/K]
 
@@ -156,7 +158,7 @@ def gamma_vald3_Kurucz1981(T, PH, PHH, PHe, \
     gam6He = 1e20 * C6**0.4 * PHe*1e6*0.41336 / T**0.7
     gam6HH = 1e20 * C6**0.4 * PHH*1e6*0.85 / T**0.7
     gamma6 = enh_damp * (gam6H + gam6He + gam6HH)
-    gamma_case1 = gamma6 #+ 10**gamRad
+    gamma_case1 = gamma6 + 10**gamRad
     gamma_case1 = np.where(np.isnan(gamma_case1), 0., gamma_case1) #avoid nan (appeared by jnp.log10(negative C6))
 
     #CASE2 (van der Waars broadening based on gamma6 at 10000 K)
@@ -165,14 +167,34 @@ def gamma_vald3_Kurucz1981(T, PH, PHH, PHe, \
     gam6He = 10**vdWdamp * (T/10000.)**Texp * PHe*1e6*0.41336 /(kcgs*T)
     gam6HH = 10**vdWdamp * (T/10000.)**Texp * PHH*1e6*0.85 /(kcgs*T)
     gamma6 = gam6H + gam6He + gam6HH
-    gamma_case2 = gamma6 #+ 10**gamRad
+    gamma_case2 = gamma6 + 10**gamRad
 
 
-    #CASE3 (Kurucz_1981_solar_spectrum_synthesis_SAOSR_391_____K.pdf)
+    #CASE3 (3rd equation in p.4 of Kurucz_1981_solar_spectrum_synthesis_SAOSR_391_____K.pdf)
     ##test210917
-    gamma_case3 = 10**vdWdamp * ((PH+0.42*PHe+0.85*PHH)*1e6/(kcgs*T)) * (T/10000.)**0.3    #+ 10**gamRad
+    
+    #gamma_case3 = 10**vdWdamp * ((PH+0.42*PHe+0.85*PHH)*1e6/(kcgs*T)) * (T/10000.)**0.3    + 10**gamRad
     #ってこれ結局CASE2のTexpが0.30になっただけ…
+    
+    
+    Rcgs = 1.0973731568e5 #[cm-1]
+    ucgs = 1.660539067e-24 #unified atomic mass unit [g]
+    ecgs = 4.803204e-10 #elementary charge [esu]
+    Zeff = 1
+    n_eff2_upper = Rcgs * Zeff**2 / (ionE*8065.54 - eupper) #Square of effective quantum number of the upper state #UNIT-TBC?? %\\\\20210928
+    n_eff2_lower = Rcgs * Zeff**2 / (ionE*8065.54 - elower)
+    msr_upper = 2.5 * (n_eff2_upper/Zeff)**2 #Mean of square of radius of the upper level
+    msr_lower = 2.5 * (n_eff2_lower/Zeff)**2 #Mean of square of radius of the upper level
 
+    gamma_case3 = 17 * (8*kcgs*T*(1/atomicmass+1/1)/(jnp.pi*ucgs))**0.3 * (6.63e-25*ecgs**2/hcgs*(msr_upper-msr_lower))**0.4 * PH*1e6 /(kcgs*T) + \
+                    17 * (8*kcgs*T*(1/atomicmass+1/4)/(jnp.pi*ucgs))**0.3 * (2.07e-25*ecgs**2/hcgs*(msr_upper-msr_lower))**0.4 * PHe*1e6 /(kcgs*T) + \
+                    17 * (8*kcgs*T*(1/atomicmass+1/2)/(jnp.pi*ucgs))**0.3 * (8.04e-25*ecgs**2/hcgs*(msr_upper-msr_lower))**0.4 * PHH*1e6 /(kcgs*T)
+
+
+    #4th equation in p.4 of Kurucz_1981
+    #gamma_case3 = 4.5e-9 * msr_upper**0.4 * ((PH+0.42*PHe+0.85*PHH)*1e6/(kcgs*T)) * (T/10000.)**0.3
+    
+    
     #Prioritize Case2 (Case1 if w/o vdW)
     #gamma = (gamma_case1 * jnp.where(vdWdamp>=0., 1, 0) + gamma_case2 * jnp.where(vdWdamp<0., 1, 0))\
     #    /ccgs  #Note that gamRad in VALD is in [s-1] (https://www.astro.uu.se/valdwiki/Vald3Format)
