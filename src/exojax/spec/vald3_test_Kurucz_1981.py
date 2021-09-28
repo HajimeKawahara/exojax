@@ -205,14 +205,17 @@ def gamma_vald3_Kurucz1981(T, PH, PHH, PHe, \
     gamma_case3 = gamma6 #+ 10**gamRad
 
 
+
+
     #4th equation in p.4 of Kurucz_1981
-    #gamma_case3 = 4.5e-9 * msr_upper**0.4 * ((PH+0.42*PHe+0.85*PHH)*1e6/(kcgs*T)) * (T/10000.)**0.3
+    gamma_case4 = 4.5e-9 * msr_upper**0.4 \
+        * ((PH + 0.42*PHe + 0.85*PHH)*1e6/(kcgs*T)) * (T/10000.)**0.3
     
     
     #Prioritize Case2 (Case1 if w/o vdW)
     #gamma = (gamma_case1 * jnp.where(vdWdamp>=0., 1, 0) + gamma_case2 * jnp.where(vdWdamp<0., 1, 0))\
     #    /ccgs  #Note that gamRad in VALD is in [s-1] (https://www.astro.uu.se/valdwiki/Vald3Format)
-    gamma = gamma_case3 /ccgs
+    gamma = gamma_case4 /ccgs
 
     #return(gamma)
-    return(gamma, n_eff2_upper, n_eff2_lower, msr_upper, msr_lower, gam6H, gam6He, gam6HH, gamma6)
+    return(gamma, n_eff2_upper, n_eff2_lower, msr_upper, msr_lower, gam6H, gam6He, gam6HH, gamma_case3)
