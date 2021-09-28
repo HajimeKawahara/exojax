@@ -684,7 +684,7 @@ class AdbVald(object):  #integrated from vald3db.py
         #valdd.to_feather(self.vald3_file.with_suffix(".feather"))
         
         #compute additional transition parameters
-        self._A, self.nu_lines, self._elower, self._gupper, self._jlower, self._jupper, self._ielem, self._iion, self._vdWdamp, self._gamRad = vald3api.pickup_param(valdd)
+        self._A, self.nu_lines, self._elower, self._eupper, self._gupper, self._jlower, self._jupper, self._ielem, self._iion, self._vdWdamp, self._gamRad = vald3api.pickup_param(valdd)
         
         
         
@@ -747,6 +747,7 @@ class AdbVald(object):  #integrated from vald3db.py
         self.Sij0 = self.Sij0[mask]
         self._A=self._A[mask]
         self._elower=self._elower[mask]
+        self._eupper=self._eupper[mask]
         self._gupper=self._gupper[mask]
         self._jlower=self._jlower[mask]
         self._jupper=self._jupper[mask]
@@ -762,6 +763,7 @@ class AdbVald(object):  #integrated from vald3db.py
         self.A=jnp.array(self._A)
         self.gamma_natural=vald3.gamma_natural(self.A) #gamma_natural [cm-1]
         self.elower=jnp.array(self._elower)
+        self.eupper=jnp.array(self._eupper)
         self.gupper=jnp.array(self._gupper)
         self.jlower=jnp.array(self._jlower,dtype=int)
         self.jupper=jnp.array(self._jupper,dtype=int)

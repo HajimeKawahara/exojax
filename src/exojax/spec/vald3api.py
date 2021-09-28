@@ -112,6 +112,7 @@ def pickup_param(ExAll):
     A=ExAll["A"].to_numpy()
     nu_lines=ExAll["nu_lines"].to_numpy()
     elower=ExAll["elower"].to_numpy()
+    eupper=ExAll["eupper"].to_numpy()
     gupper=ExAll["gupper"].to_numpy()
     jlower=ExAll["jlower"].to_numpy()
     jupper=ExAll["jupper"].to_numpy()
@@ -125,7 +126,7 @@ def pickup_param(ExAll):
         ielem[i] = np.where(PeriodicTable==symbol)[0][0] if (symbol in PeriodicTable) else 0
         iion[i] = int(sp.strip("'").split(' ')[-1])
 
-    return A, nu_lines, elower, gupper, jlower, jupper, ielem, iion, vdWdamp, gamRad
+    return A, nu_lines, elower, eupper, gupper, jlower, jupper, ielem, iion, vdWdamp, gamRad
 
 
 def load_atomicdata():
