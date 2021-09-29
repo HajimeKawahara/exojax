@@ -170,6 +170,8 @@ def gamma_vald3_Kurucz1981(T, PH, PHH, PHe, \
     gamma_case2 = (gamma6 + 10**gamRad)/ccgs
 
 
+
+
     #CASE3 (3rd equation in p.4 of Kurucz_1981_solar_spectrum_synthesis_SAOSR_391_____K.pdf)
     ##test210917
     
