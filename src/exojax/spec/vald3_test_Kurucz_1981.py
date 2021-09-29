@@ -115,7 +115,7 @@ def gamma_vald3(P, T, PH, PHH, PHe, \
 def gamma_vald3_Kurucz1981(T, PH, PHH, PHe, \
     nu_lines, elower, eupper, atomicmass, ionE, gamRad, vdWdamp, enh_damp=1.0):
     #%\\\\20210917 #tako 原子ごとにenh_dampも場合分け（Turbospectrumに倣う？）するならielemが入力(Args)に必要.
-    """testing210917 18:51
+    """
       gamma factor by a pressure broadening
       based on Gray+2005(2005oasp.book.....G)
 
@@ -176,26 +176,23 @@ def gamma_vald3_Kurucz1981(T, PH, PHH, PHe, \
     #gamma_case3 = 10**vdWdamp * ((PH+0.42*PHe+0.85*PHH)*1e6/(kcgs*T)) * (T/10000.)**0.3    + 10**gamRad
     #ってこれ結局CASE2のTexpが0.30になっただけ…
     
+    eupper = elower+nu_lines #tesTako\\\\202109
     
     Rcgs = 1.0973731568e5 #[cm-1]
     #ucgs = 1.660539067e-24 #unified atomic mass unit [g]
     ecgs = 4.803204e-10 #elementary charge [esu]
     Zeff = 1.
-    #test210928
-    eupper = elower+nu_lines
-    #print('test210928')
-    #test210928
-    n_eff2_upper = Rcgs * Zeff**2 / (ionE*8065.54 - eupper) #Square of effective quantum number of the upper state #UNIT-TBC?? %\\\\20210928
+    n_eff2_upper = Rcgs * Zeff**2 / (ionE*8065.54 - eupper) #Square of effective quantum number of the upper state
     n_eff2_lower = Rcgs * Zeff**2 / (ionE*8065.54 - elower)
     msr_upper = np.where(n_eff2_upper>0., (2.5 * (n_eff2_upper/Zeff)**2), 25) #Mean of square of radius of the upper level
     msr_lower = 2.5 * (n_eff2_lower/Zeff)**2 #Mean of square of radius of the upper level
 
-    """gamma_case3 = 17 * (8*kcgs*T*(1/atomicmass+1/1)/(jnp.pi*ucgs))**0.3 * (6.63e-25*ecgs**2/hcgs*(gap_msr_rev))**0.4 * PH*1e6 /(kcgs*T) + \
-                    17 * (8*kcgs*T*(1/atomicmass+1/4)/(jnp.pi*ucgs))**0.3 * (2.07e-25*ecgs**2/hcgs*(gap_msr_rev))**0.4 * PHe*1e6 /(kcgs*T) + \
-                    17 * (8*kcgs*T*(1/atomicmass+1/2)/(jnp.pi*ucgs))**0.3 * (8.04e-25*ecgs**2/hcgs*(gap_msr_rev))**0.4 * PHH*1e6 /(kcgs*T) #"""
+    """gamma_case3 = 17 * (8*kcgs*T*(1/atomicmass+1/1)/(jnp.pi*1.008000))**0.3 * (6.63e-25*ecgs**2/hcgs*(gap_msr_rev))**0.4 * PH*1e6 /(kcgs*T) + \
+                    17 * (8*kcgs*T*(1/atomicmass+1/4)/(jnp.pi*4.002600))**0.3 * (2.07e-25*ecgs**2/hcgs*(gap_msr_rev))**0.4 * PHe*1e6 /(kcgs*T) + \
+                    17 * (8*kcgs*T*(1/atomicmass+1/2)/(jnp.pi*1.008000*2))**0.3 * (8.04e-25*ecgs**2/hcgs*(gap_msr_rev))**0.4 * PHH*1e6 /(kcgs*T) #"""
                   
     gap_msr = msr_upper - msr_lower
-    gap_msr_rev = gap_msr * np.where(gap_msr < 0, -1., 1.) #Reverse upper and lower if necessary(TBC)_210928
+    gap_msr_rev = gap_msr * np.where(gap_msr < 0, -1., 1.) #Reverse upper and lower if necessary(TBC)_\\\\
     gam6H = 17 * (8*kcgs*T*(1./atomicmass+1./1.)/(jnp.pi*1.008000))**0.3 \
         * (6.63e-25*ecgs**2/hcgs*(gap_msr_rev))**0.4 \
         * PH*1e6 /(kcgs*T)
@@ -211,7 +208,7 @@ def gamma_vald3_Kurucz1981(T, PH, PHH, PHe, \
 
 
 
-    #4th equation in p.4 of Kurucz_1981
+    #CASE4 (4th equation in p.4 of Kurucz_1981)
     gamma6 = 4.5e-9 * msr_upper**0.4 \
         * ((PH + 0.42*PHe + 0.85*PHH)*1e6/(kcgs*T)) * (T/10000.)**0.3
     gamma_case4 = (gamma6 + 10**gamRad)/ccgs
@@ -221,7 +218,8 @@ def gamma_vald3_Kurucz1981(T, PH, PHH, PHe, \
     
     #Prioritize Case2 (Case1 if w/o vdW)
     #gamma = (gamma_case1 * jnp.where(vdWdamp>=0., 1, 0) + gamma_case2 * jnp.where(vdWdamp<0., 1, 0))
-
     #return(gamma)
-    #return(gamma, n_eff2_upper, n_eff2_lower, msr_upper, msr_lower, gam6H, gam6He, gam6HH, gammatest)
+    
+    
     return(gamma_case2, gamma_case3, gamma_case4)
+    #return(gamma, n_eff2_upper, n_eff2_lower, msr_upper, msr_lower, gam6H, gam6He, gam6HH, gammatest)
