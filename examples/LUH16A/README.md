@@ -21,3 +21,16 @@ ExoMol Mp prior from astrometry, fA=1, .broad applied
 | FidEMbug         |     LPF (direct)   |:heavy_check_mark:|:heavy_check_mark:|        |
 | FidEMb_modit     |     MODIT          |                  |                  |        |
 | FidEMbu_modit    |     MODIT          |:heavy_check_mark:|                  |        |
+
+
+### Comparisons
+
+Do the lines below the CIA photosphere affect the results? -> No. See the posteriors.
+
+|  directroy       | opacity calculator |  Limb Darkening  | # of water lines |        |
+| ---------------- |  ----------------- | ---------------- | ---------------- | ------ |
+| FidEMbu          |     LPF (direct)   |:heavy_check_mark:|   334            | 11.2 h |
+| FidEMbux         |     LPF (direct)   |:heavy_check_mark:|   802            | 18.3 h |
+
+
+<img src="https://user-images.githubusercontent.com/15956904/135429319-ee298bac-6448-47a7-a0f0-3d2dbfbd18e2.png" Titie="comparison" Width=850px>
