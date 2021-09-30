@@ -120,7 +120,7 @@ baseline=1.07 #(baseline for a CIA photosphere in the observed (normaized) spect
 def model_c(nu1,y1,e1):
     Rp = numpyro.sample('Rp', dist.Uniform(0.5,1.5))
     Mp = numpyro.sample('Mp', dist.Normal(33.5,0.3))
-    sigma = numpyro.sample('sigma', dist.Exponential(0.1))
+    sigma = numpyro.sample('sigma', dist.Exponential(10.0))
     RV = numpyro.sample('RV', dist.Uniform(26.0,30.0))
     MMR_CO = numpyro.sample('MMR_CO', dist.Uniform(0.0,maxMMR_CO))
     MMR_H2O = numpyro.sample('MMR_H2O', dist.Uniform(0.0,maxMMR_H2O))
