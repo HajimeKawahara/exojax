@@ -253,5 +253,5 @@ def gamma_vald3_Kurucz1981(T, PH, PHH, PHe, \
     #return(gamma)
     
     
-    return(gamma_case2, gamma_case3, gamma_case4, gamma_case5, msr_upper, msr_lower, msr_upper_anothereq)
+    return(gamma_case2, gamma_case3, gamma_case4, gamma_case5, gamma_case6, msr_upper, msr_lower, msr_upper_anothereq)
     #return(gamma, n_eff2_upper, n_eff2_lower, msr_upper, msr_lower, gam6H, gam6He, gam6HH, gammatest)
