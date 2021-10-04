@@ -113,7 +113,7 @@ def gamma_vald3(P, T, PH, PHH, PHe, \
 
 
 def gamma_vald3_Kurucz1981(T, PH, PHH, PHe, \
-    nu_lines, elower, eupper, atomicmass, ionE, gamRad, vdWdamp, enh_damp=1.0):
+    nu_lines, elower, eupper, atomicmass, ionE, gamRad, vdWdamp, ielem, enh_damp=1.0):
     #%\\\\20210917 #tako 原子ごとにenh_dampも場合分け（Turbospectrumに倣う？）するならielemが入力(Args)に必要.
     """
       gamma factor by a pressure broadening
@@ -158,7 +158,7 @@ def gamma_vald3_Kurucz1981(T, PH, PHH, PHe, \
     gam6He = 1e20 * C6**0.4 * PHe*1e6*0.41336 / T**0.7
     gam6HH = 1e20 * C6**0.4 * PHH*1e6*0.85 / T**0.7
     gamma6 = enh_damp * (gam6H + gam6He + gam6HH)
-    gamma_case1 = (gamma6 + 10**gamRad)/ccgs
+    gamma_case1 = (gamma6 )/ccgs # + 10**gamRad)/ccgs
     gamma_case1 = np.where(np.isnan(gamma_case1), 0., gamma_case1) #avoid nan (appeared by jnp.log10(negative C6))
 
     #CASE2 (van der Waars broadening based on gamma6 at 10000 K)
@@ -167,7 +167,7 @@ def gamma_vald3_Kurucz1981(T, PH, PHH, PHe, \
     gam6He = 10**vdWdamp * (T/10000.)**Texp * PHe*1e6*0.41336 /(kcgs*T)
     gam6HH = 10**vdWdamp * (T/10000.)**Texp * PHH*1e6*0.85 /(kcgs*T)
     gamma6 = gam6H + gam6He + gam6HH
-    gamma_case2 = (gamma6 + 10**gamRad)/ccgs
+    gamma_case2 = (gamma6 )/ccgs # + 10**gamRad)/ccgs
 
 
 
@@ -187,9 +187,10 @@ def gamma_vald3_Kurucz1981(T, PH, PHH, PHe, \
     Zeff = 1.
     n_eff2_upper = Rcgs * Zeff**2 / (ionE*8065.54 - eupper) #Square of effective quantum number of the upper state
     n_eff2_lower = Rcgs * Zeff**2 / (ionE*8065.54 - elower)
-    msr_upper = a0**2 * np.where(n_eff2_upper>0., (2.5 * (n_eff2_upper/Zeff)**2), 25) #Mean of square of radius of the upper level
-    msr_lower = a0**2 * 2.5 * (n_eff2_lower/Zeff)**2 #Mean of square of radius of the upper level
-    #a0**2: advised by Kawashima-san (ref. Aller (1963))
+    msr_upper = np.where(n_eff2_upper>0., (2.5 * (n_eff2_upper/Zeff)**2), 25) #Mean of square of radius of the upper level
+    msr_lower = 2.5 * (n_eff2_lower/Zeff)**2 #Mean of square of radius of the upper level
+    msr_upper_anothereq = (45-ielem)/Zeff #5ht equation in Kurucz_1981
+    #in units of a0, the radius of the first Bohr orbit (noticed by Kawashima-san (ref. p.320 in Aller (1963))
 
     """gamma_case3 = 17 * (8*kcgs*T*(1/atomicmass+1/1)/(jnp.pi*1.008000))**0.3 * (6.63e-25*ecgs**2/hcgs*(gap_msr_rev))**0.4 * PH*1e6 /(kcgs*T) + \
                     17 * (8*kcgs*T*(1/atomicmass+1/4)/(jnp.pi*4.002600))**0.3 * (2.07e-25*ecgs**2/hcgs*(gap_msr_rev))**0.4 * PHe*1e6 /(kcgs*T) + \
@@ -197,17 +198,18 @@ def gamma_vald3_Kurucz1981(T, PH, PHH, PHe, \
                   
     gap_msr = msr_upper - msr_lower
     gap_msr_rev = gap_msr * np.where(gap_msr < 0, -1., 1.) #Reverse upper and lower if necessary(TBC)_\\\\
+    gap_msr_rev_cm = a0**2 * gap_msr_rev #[Bohr radius -> cm]
     gam6H = 17 * (8*kcgs*T*(1./atomicmass+1./1.)/(jnp.pi*ucgs))**0.3 \
-        * (6.63e-25*ecgs**2/hcgs*(gap_msr_rev))**0.4 \
+        * (6.63e-25*ecgs**2/hcgs*(gap_msr_rev_cm))**0.4 \
         * PH*1e6 /(kcgs*T)
     gam6He = 17 * (8*kcgs*T*(1./atomicmass+1./4.)/(jnp.pi*ucgs))**0.3 \
-        * (2.07e-25*ecgs**2/hcgs*(gap_msr_rev))**0.4 \
+        * (2.07e-25*ecgs**2/hcgs*(gap_msr_rev_cm))**0.4 \
         * PHe*1e6 /(kcgs*T)
     gam6HH = 17 * (8*kcgs*T*(1./atomicmass+1./2.)/(jnp.pi*ucgs))**0.3 \
-        * (8.04e-25*ecgs**2/hcgs*(gap_msr_rev))**0.4 \
+        * (8.04e-25*ecgs**2/hcgs*(gap_msr_rev_cm))**0.4 \
         * PHH*1e6 /(kcgs*T)
     gamma6 = gam6H + gam6He + gam6HH
-    gamma_case3 = (gamma6 + 10**gamRad)/ccgs
+    gamma_case3 = (gamma6 )/ccgs # + 10**gamRad)/ccgs
 
 
 
@@ -215,15 +217,41 @@ def gamma_vald3_Kurucz1981(T, PH, PHH, PHe, \
     #CASE4 (4th equation in p.4 of Kurucz_1981)
     gamma6 = 4.5e-9 * msr_upper**0.4 \
         * ((PH + 0.42*PHe + 0.85*PHH)*1e6/(kcgs*T)) * (T/10000.)**0.3
-    gamma_case4 = (gamma6 + 10**gamRad)/ccgs
+    gamma_case4 = (gamma6 )/ccgs # + 10**gamRad)/ccgs
 
     
     
     
+    gap_msr = msr_upper_anothereq - msr_lower
+    gap_msr_rev = gap_msr * np.where(gap_msr < 0, -1., 1.) #Reverse upper and lower if necessary(TBC)_\\\\
+    gap_msr_rev_cm = a0**2 * gap_msr_rev #[Bohr radius -> cm]
+    gam6H = 17 * (8*kcgs*T*(1./atomicmass+1./1.)/(jnp.pi*ucgs))**0.3 \
+        * (6.63e-25*ecgs**2/hcgs*(gap_msr_rev_cm))**0.4 \
+        * PH*1e6 /(kcgs*T)
+    gam6He = 17 * (8*kcgs*T*(1./atomicmass+1./4.)/(jnp.pi*ucgs))**0.3 \
+        * (2.07e-25*ecgs**2/hcgs*(gap_msr_rev_cm))**0.4 \
+        * PHe*1e6 /(kcgs*T)
+    gam6HH = 17 * (8*kcgs*T*(1./atomicmass+1./2.)/(jnp.pi*ucgs))**0.3 \
+        * (8.04e-25*ecgs**2/hcgs*(gap_msr_rev_cm))**0.4 \
+        * PHH*1e6 /(kcgs*T)
+    gamma6 = gam6H + gam6He + gam6HH
+    gamma_case5 = (gamma6 )/ccgs # + 10**gamRad)/ccgs
+
+
+
+
+    #CASE4 (4th equation in p.4 of Kurucz_1981)
+    gamma6 = 4.5e-9 * msr_upper_anothereq**0.4 \
+        * ((PH + 0.42*PHe + 0.85*PHH)*1e6/(kcgs*T)) * (T/10000.)**0.3
+    gamma_case6 = (gamma6 )/ccgs # + 10**gamRad)/ccgs
+
+
+
+
     #Prioritize Case2 (Case1 if w/o vdW)
     #gamma = (gamma_case1 * jnp.where(vdWdamp>=0., 1, 0) + gamma_case2 * jnp.where(vdWdamp<0., 1, 0))
     #return(gamma)
     
     
-    return(gamma_case2, gamma_case3, gamma_case4)
+    return(gamma_case2, gamma_case3, gamma_case4, gamma_case5, msr_upper, msr_lower, msr_upper_anothereq)
     #return(gamma, n_eff2_upper, n_eff2_lower, msr_upper, msr_lower, gam6H, gam6He, gam6HH, gammatest)
