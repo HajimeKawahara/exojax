@@ -213,15 +213,8 @@ def gamma_vald3_Kurucz1981(T, PH, PHH, PHe, \
 
 
 
-
-    #CASE4 (4th equation in p.4 of Kurucz_1981)
-    gamma6 = 4.5e-9 * msr_upper**0.4 \
-        * ((PH + 0.42*PHe + 0.85*PHH)*1e6/(kcgs*T)) * (T/10000.)**0.3
-    gamma_case4 = (gamma6 )/ccgs # + 10**gamRad)/ccgs
-
     
-    
-    
+    #CASE3.5: minor change from CASE3
     gap_msr = msr_upper_anothereq - msr_lower
     gap_msr_rev = gap_msr * np.where(gap_msr < 0, -1., 1.) #Reverse upper and lower if necessary(TBC)_\\\\
     gap_msr_rev_cm = a0**2 * gap_msr_rev #[Bohr radius -> cm]
@@ -235,15 +228,18 @@ def gamma_vald3_Kurucz1981(T, PH, PHH, PHe, \
         * (8.04e-25*ecgs**2/hcgs*(gap_msr_rev_cm))**0.4 \
         * PHH*1e6 /(kcgs*T)
     gamma6 = gam6H + gam6He + gam6HH
-    gamma_case5 = (gamma6 )/ccgs # + 10**gamRad)/ccgs
-
-
+    gamma_case3half = (gamma6 )/ccgs # + 10**gamRad)/ccgs
 
 
     #CASE4 (4th equation in p.4 of Kurucz_1981)
+    gamma6 = 4.5e-9 * msr_upper**0.4 \
+        * ((PH + 0.42*PHe + 0.85*PHH)*1e6/(kcgs*T)) * (T/10000.)**0.3
+    gamma_case4 = (gamma6 )/ccgs # + 10**gamRad)/ccgs
+
+    #CASE5: minor change from CASE4 (4th equation in p.4 of Kurucz_1981)
     gamma6 = 4.5e-9 * msr_upper_anothereq**0.4 \
         * ((PH + 0.42*PHe + 0.85*PHH)*1e6/(kcgs*T)) * (T/10000.)**0.3
-    gamma_case6 = (gamma6 )/ccgs # + 10**gamRad)/ccgs
+    gamma_case5 = (gamma6 )/ccgs # + 10**gamRad)/ccgs
 
 
 
@@ -253,5 +249,5 @@ def gamma_vald3_Kurucz1981(T, PH, PHH, PHe, \
     #return(gamma)
     
     
-    return(gamma_case2, gamma_case3, gamma_case4, gamma_case5, gamma_case6, msr_upper, msr_lower, msr_upper_anothereq)
+    return(gamma_case2, gamma_case3, gamma_case4, gamma_case5, gamma_case3half, msr_upper, msr_lower, msr_upper_anothereq)
     #return(gamma, n_eff2_upper, n_eff2_lower, msr_upper, msr_lower, gam6H, gam6He, gam6HH, gammatest)
