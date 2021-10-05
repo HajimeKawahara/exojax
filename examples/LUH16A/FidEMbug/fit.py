@@ -293,8 +293,10 @@ except:
     print("failed corner")
 
 try:
-    pararr=["Mp","Rp","T0","alpha","MMR_CO","MMR_H2O","vsini","RV","q1","q2","logtau","loga","sigma"]
+    pararr=["Mp","Rp","T0","alpha","MMR_CO","MMR_H2O","vsini","RV","q1","q2","logtau","loga"]
     arviz.plot_trace(mcmc, var_names=pararr)
     plt.savefig("npz/trace.png")
 except:
     print("failed trace")
+
+    
