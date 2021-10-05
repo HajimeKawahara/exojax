@@ -49,7 +49,7 @@ def init_dit(nu_lines,nu_grid, warning=False):
 
     return jnp.array(cont), jnp.array(index), pmarray
 
-def init_modit(nu_lines,nu_grid):
+def init_modit(nu_lines,nu_grid, warning=False):
     """Initialization for MODIT. i.e. Generate nu contribution and index for the line shape density (actually, this is a numpy version of getix)
 
     Args:
