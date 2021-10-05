@@ -22,9 +22,11 @@ from exojax.spec.evalline import mask_weakline
 
 from exojax.spec import dit, modit
 
-#FP64
-#from jax.config import config                                                  
-#config.update("jax_enable_x64", True)
+FP64=True
+if FP64==True:
+    #FP64
+    from jax.config import config                                                  
+    config.update("jax_enable_x64", True)
 
 #reference pressure for a T-P model
 Pref=1.0 #bar
@@ -244,4 +246,7 @@ def predmod(nu1,y1,e1):
 #mcmc.run(rng_key_, nu1=nusd1, y1=fobs1, e1=err1)
 mu=predmod(nusdx,fobsx,errx)
 print(mu)
-np.savez("cmodit.npz",[nusdx,mu])
+if FP64==True:
+    np.savez("cmodit64.npz",[nusdx,mu])
+else:
+    np.savez("cmodit.npz",[nusdx,mu])
