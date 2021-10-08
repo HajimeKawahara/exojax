@@ -114,6 +114,5 @@ if __name__ == "__main__":
     print(search_molfile("ExoMol","12C-16O"))
     print(search_molfile("ExoMol","CO"))
     print(search_molfile("ExoMol","CN"))
-
     print(search_molfile("HITRAN","CO"))
     print(search_molfile("HITEMP","CO"))
