@@ -37,7 +37,8 @@ EXOMOL_DEFMOL= \
  "12C-16O2":"UCL-4000",
  "52Cr-1H":"MoLLIST",
  "1H2-16O":"POKAZATEL",
- "51V-16O": "VOMYT"
+ "51V-16O":"VOMYT",
+ "12C-14N":"Trihybrid"
 }
 
 EXOMOL_SIMPLE2EXACT= \
@@ -56,7 +57,8 @@ EXOMOL_SIMPLE2EXACT= \
  "CO2":"12C-16O2",
  "CrH":"52Cr-1H",
  "H2O":"1H2-16O",
- "VO":"51V-16O"
+ "VO":"51V-16O",
+ "CN":"12C-14N",
 }
 
 
@@ -111,5 +113,7 @@ def search_molfile(database,molecules):
 if __name__ == "__main__":
     print(search_molfile("ExoMol","12C-16O"))
     print(search_molfile("ExoMol","CO"))
+    print(search_molfile("ExoMol","CN"))
+
     print(search_molfile("HITRAN","CO"))
     print(search_molfile("HITEMP","CO"))
