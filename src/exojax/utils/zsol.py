@@ -1,7 +1,12 @@
 """solar abundance
 
+   - Solar abundance data
+   - AAG21 = Asplund, M., Amarsi, A. M., & Grevesse, N. 2021, arXiv:2105.01661
+
 """
 import numpy as np
+
+
 AAG21= { \
 "H":[12.00,0.00,8.22,0.04],
 "He":[10.914,0.013,1.29,0.18],
@@ -90,10 +95,13 @@ AAG21= { \
 
 def nsol(database="AAG21"):
     """
-
+    
+    Args: 
+       database: name of database. 
 
     Returns:
        nsun: number ratio of solar abundance
+
 
     """
     #compute total number

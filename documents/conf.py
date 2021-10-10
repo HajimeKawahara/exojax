@@ -22,7 +22,7 @@ copyright = '2021, exojax contributors (see top page)'
 author = 'exojax contributors (see top page)'
 
 # The full version, including alpha/beta/rc tags
-release = '0.8'
+release = '0.8.1'
 
 
 # -- General configuration ---------------------------------------------------
