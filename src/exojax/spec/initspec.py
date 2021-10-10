@@ -21,7 +21,7 @@ def init_lpf(nu_lines,nu_grid):
     numatrix=make_numatrix0(nu_grid,nu_lines,warning=True)
     return numatrix
 
-def init_dit(nu_lines,nu_grid):
+def init_dit(nu_lines,nu_grid, warning=False):
     """Initialization for DIT. i.e. Generate nu contribution and index for the line shape density (actually, this is a numpy version of getix)
 
     Args:
@@ -49,7 +49,7 @@ def init_dit(nu_lines,nu_grid):
 
     return jnp.array(cont), jnp.array(index), pmarray
 
-def init_modit(nu_lines,nu_grid):
+def init_modit(nu_lines,nu_grid, warning=False):
     """Initialization for MODIT. i.e. Generate nu contribution and index for the line shape density (actually, this is a numpy version of getix)
 
     Args:

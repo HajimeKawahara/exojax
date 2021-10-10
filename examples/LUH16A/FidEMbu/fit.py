@@ -158,12 +158,18 @@ def model_c(nu1,y1,e1):
     alpha = numpyro.sample('alpha', dist.Uniform(0.05,0.15))
     vsini = numpyro.sample('vsini', dist.Uniform(10.0,20.0))
 
-    g=2478.57730044555*Mp/Rp**2 #gravity
-    
     #Limb Darkening from 2013A&A...552A..16C (1500K, logg=5, K)
-    #0.5969 	0.1125
-    u1=0.6
-    u2=0.1
+    # u1=0.5969 	
+    # u2=0.1125
+    #Kipping Limb Darkening Prior arxiv:1308.0009
+    q1 = numpyro.sample('q1', dist.Uniform(0.0,1.0))
+    q2 = numpyro.sample('q2', dist.Uniform(0.0,1.0))
+    sqrtq1=jnp.sqrt(q1)
+    u1=2.0*sqrtq1*q2
+    u2=sqrtq1*(1.0-2.0*q2)
+    
+    g=2478.57730044555*Mp/Rp**2 #gravity
+        
     #T-P model//
     Tarr = T0*(Parr/Pref)**alpha 
     
@@ -219,7 +225,7 @@ rng_key = random.PRNGKey(0)
 rng_key, rng_key_ = random.split(rng_key)
 num_warmup, num_samples = 500, 1000
 kernel = NUTS(model_c,forward_mode_differentiation=True)
-mcmc = MCMC(kernel, num_warmup, num_samples)
+mcmc = MCMC(kernel, num_warmup=num_warmup, num_samples=num_samples)
 mcmc.run(rng_key_, nu1=nusd1, y1=fobs1, e1=err1)
 print("end HMC")
 
@@ -260,13 +266,13 @@ plt.savefig("npz/results.png", bbox_inches="tight", pad_inches=0.0)
 #ARVIZ part
 import arviz
 rc = {
-    "plot.max_subplots": 250,
+    "plot.max_subplots": 1024,
 }
 
 arviz.rcParams.update(rc)
-pararr=["Mp","Rp","T0","alpha","MMR_CO","MMR_H2O","vsini","RV","sigma"]
+pararr=["Mp","Rp","T0","alpha","MMR_CO","MMR_H2O","vsini","RV","sigma","q1","q2"]
 arviz.plot_trace(mcmc, var_names=pararr)
 plt.savefig("npz/trace.png")
-pararr=["Mp","Rp","T0","alpha","MMR_CO","MMR_H2O","vsini","RV","sigma"]
+pararr=["Mp","Rp","T0","alpha","MMR_CO","MMR_H2O","vsini","RV","sigma","q1","q2"]
 arviz.plot_pair(arviz.from_numpyro(mcmc),kind='kde',divergences=False,marginals=True) 
 plt.savefig("npz/cornerall.png")

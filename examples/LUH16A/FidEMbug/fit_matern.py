@@ -133,7 +133,7 @@ def ap(fobs,nusd,ws,we,Nx):
 
     return fobsx,nusdx,wavdx,errx,nus,wav,res,mdbCO,mdbH2O,numatrix_CO,numatrix_H2O,cdbH2H2,cdbH2He
     
-N=4500
+N=3000
 fobs1,nusd1,wavd1,err1,nus1,wav1,res1,mdbCO1,mdbH2O1,numatrix_CO1,numatrix_H2O1,cdbH2H21,cdbH2He1=ap(fobs,nusd,22876.0,23010.0,N)
 
 #######################################################
@@ -144,6 +144,14 @@ import numpyro
 from numpyro.infer import MCMC, NUTS
 from numpyro.infer import Predictive
 from numpyro.diagnostics import hpdi
+
+#GP model covariance
+def modelcov(t,tau,a,err):
+    Dt = t - jnp.array([t]).T
+    fac=jnp.sqrt(3.0)*jnp.abs(Dt)/tau
+    K=a*(1.0+fac)*jnp.exp(-fac)+jnp.diag(err**2)
+    return K
+
 
 baseline=1.07 #(baseline for a CIA photosphere in the observed (normaized) spectrum)
 # Model
@@ -156,14 +164,24 @@ def model_c(nu1,y1,e1):
     MMR_H2O = numpyro.sample('MMR_H2O', dist.Uniform(0.0,maxMMR_H2O))
     T0 = numpyro.sample('T0', dist.Uniform(1000.0,1700.0))
     alpha = numpyro.sample('alpha', dist.Uniform(0.05,0.15))
-    vsini = numpyro.sample('vsini', dist.Uniform(10.0,20.0))
-
-    g=2478.57730044555*Mp/Rp**2 #gravity
-    
+    vsini = numpyro.sample('vsini', dist.Uniform(10.0,20.0))    
     #Limb Darkening from 2013A&A...552A..16C (1500K, logg=5, K)
-    #0.5969 	0.1125
-    u1=0.6
-    u2=0.1
+    # u1=0.5969 	
+    # u2=0.1125
+    #Kipping Limb Darkening Prior arxiv:1308.0009
+    q1 = numpyro.sample('q1', dist.Uniform(0.0,1.0))
+    q2 = numpyro.sample('q2', dist.Uniform(0.0,1.0))
+    sqrtq1=jnp.sqrt(q1)
+    u1=2.0*sqrtq1*q2
+    u2=sqrtq1*(1.0-2.0*q2)
+    #GP
+    logtau = numpyro.sample('logtau', dist.Uniform(0.0,1.0)) #tau=1 <=> 5A
+    tau=10**(logtau)
+    loga = numpyro.sample('loga', dist.Uniform(-4.0,-2.0))
+    a=10**(loga)
+    
+    g=2478.57730044555*Mp/Rp**2 #gravity
+        
     #T-P model//
     Tarr = T0*(Parr/Pref)**alpha 
     
@@ -208,18 +226,22 @@ def model_c(nu1,y1,e1):
         
         Frot=response.rigidrot(nus,F0,vsini,u1,u2)
         mu=response.ipgauss_sampling(nusd,nus,Frot,beta,RV)
-        
-        errall=jnp.sqrt(e1**2+sigma**2)
-        numpyro.sample(tag, dist.Normal(mu, errall), obs=y)
 
+        errall=jnp.sqrt(e1**2+sigma**2)
+        cov = modelcov(nusd,tau,a,errall)
+        #cov = modelcov(nusd,tau,a,e1)
+        #numpyro.sample(tag, dist.Normal(mu, e1), obs=y)
+        numpyro.sample(tag, dist.MultivariateNormal(loc=mu, covariance_matrix=cov), obs=y)
+        
     obyo(y1,"y1",nusd1,nus1,numatrix_CO1,numatrix_H2O1,mdbCO1,mdbH2O1,cdbH2H21,cdbH2He1)
 
 #Running a HMC-NUTS
 rng_key = random.PRNGKey(0)
 rng_key, rng_key_ = random.split(rng_key)
 num_warmup, num_samples = 500, 1000
+#num_warmup, num_samples = 100, 300
 kernel = NUTS(model_c,forward_mode_differentiation=True)
-mcmc = MCMC(kernel, num_warmup, num_samples)
+mcmc = MCMC(kernel, num_warmup=num_warmup, num_samples=num_samples)
 mcmc.run(rng_key_, nu1=nusd1, y1=fobs1, e1=err1)
 print("end HMC")
 
@@ -260,13 +282,19 @@ plt.savefig("npz/results.png", bbox_inches="tight", pad_inches=0.0)
 #ARVIZ part
 import arviz
 rc = {
-    "plot.max_subplots": 250,
+    "plot.max_subplots": 1024,
 }
 
-arviz.rcParams.update(rc)
-pararr=["Mp","Rp","T0","alpha","MMR_CO","MMR_H2O","vsini","RV","sigma"]
-arviz.plot_trace(mcmc, var_names=pararr)
-plt.savefig("npz/trace.png")
-pararr=["Mp","Rp","T0","alpha","MMR_CO","MMR_H2O","vsini","RV","sigma"]
-arviz.plot_pair(arviz.from_numpyro(mcmc),kind='kde',divergences=False,marginals=True) 
-plt.savefig("npz/cornerall.png")
+try:
+    arviz.rcParams.update(rc)
+    arviz.plot_pair(arviz.from_numpyro(mcmc),kind='kde',divergences=False,marginals=True) 
+    plt.savefig("npz/cornerall.png")
+except:
+    print("failed corner")
+
+try:
+    pararr=["Mp","Rp","T0","alpha","MMR_CO","MMR_H2O","vsini","RV","q1","q2","logtau","loga","sigma"]
+    arviz.plot_trace(mcmc, var_names=pararr)
+    plt.savefig("npz/trace.png")
+except:
+    print("failed trace")

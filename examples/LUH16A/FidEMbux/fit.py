@@ -94,7 +94,7 @@ def ap(fobs,nusd,ws,we,Nx):
         (Tarr,mdbCO.logsij0,mdbCO.nu_lines,mdbCO.elower,qt)
     sigmaDM=jit(vmap(doppler_sigma,(None,0,None)))\
         (mdbCO.nu_lines,Tarr,molmassCO)        
-    mask_CO,maxcf,maxcia=mask_weakline(mdbCO,Parr,dParr,Tarr,SijM,gammaLM,sigmaDM,maxMMR_CO*ONEARR,molmassCO,mmw,g,vmrH2,cdbH2H2)
+    mask_CO,maxcf,maxcia=mask_weakline(mdbCO,Parr,dParr,Tarr,SijM,gammaLM,sigmaDM,maxMMR_CO*ONEARR,molmassCO,mmw,g,vmrH2,cdbH2H2,margin=5)
     mdbCO.masking(mask_CO)
 
     plot_maxpoint(mask_CO,Parr,maxcf,maxcia,mol="CO")
@@ -113,7 +113,7 @@ def ap(fobs,nusd,ws,we,Nx):
             (Tarr,mdbH2O.logsij0,mdbH2O.nu_lines,mdbH2O.elower,qt)
         sigmaDM=jit(vmap(doppler_sigma,(None,0,None)))\
             (mdbH2O.nu_lines,Tarr,molmassH2O)    
-        mask_H2O_tmp,maxcf,maxcia=mask_weakline(mdbH2O,Parr,dParr,Tarr,SijM,gammaLM,sigmaDM,maxMMR_H2O*ONEARR,molmassH2O,mmw,g,vmrH2,cdbH2H2)
+        mask_H2O_tmp,maxcf,maxcia=mask_weakline(mdbH2O,Parr,dParr,Tarr,SijM,gammaLM,sigmaDM,maxMMR_H2O*ONEARR,molmassH2O,mmw,g,vmrH2,cdbH2H2,margin=5)
         if k==0:
             mask_H2O=np.copy(mask_H2O_tmp)
         else:
@@ -133,7 +133,7 @@ def ap(fobs,nusd,ws,we,Nx):
 
     return fobsx,nusdx,wavdx,errx,nus,wav,res,mdbCO,mdbH2O,numatrix_CO,numatrix_H2O,cdbH2H2,cdbH2He
     
-N=4500
+N=1500
 fobs1,nusd1,wavd1,err1,nus1,wav1,res1,mdbCO1,mdbH2O1,numatrix_CO1,numatrix_H2O1,cdbH2H21,cdbH2He1=ap(fobs,nusd,22876.0,23010.0,N)
 
 #######################################################
@@ -158,12 +158,18 @@ def model_c(nu1,y1,e1):
     alpha = numpyro.sample('alpha', dist.Uniform(0.05,0.15))
     vsini = numpyro.sample('vsini', dist.Uniform(10.0,20.0))
 
-    g=2478.57730044555*Mp/Rp**2 #gravity
-    
     #Limb Darkening from 2013A&A...552A..16C (1500K, logg=5, K)
-    #0.5969 	0.1125
-    u1=0.6
-    u2=0.1
+    # u1=0.5969 	
+    # u2=0.1125
+    #Kipping Limb Darkening Prior arxiv:1308.0009
+    q1 = numpyro.sample('q1', dist.Uniform(0.0,1.0))
+    q2 = numpyro.sample('q2', dist.Uniform(0.0,1.0))
+    sqrtq1=jnp.sqrt(q1)
+    u1=2.0*sqrtq1*q2
+    u2=sqrtq1*(1.0-2.0*q2)
+    
+    g=2478.57730044555*Mp/Rp**2 #gravity
+        
     #T-P model//
     Tarr = T0*(Parr/Pref)**alpha 
     
@@ -219,7 +225,7 @@ rng_key = random.PRNGKey(0)
 rng_key, rng_key_ = random.split(rng_key)
 num_warmup, num_samples = 500, 1000
 kernel = NUTS(model_c,forward_mode_differentiation=True)
-mcmc = MCMC(kernel, num_warmup, num_samples)
+mcmc = MCMC(kernel, num_warmup=num_warmup, num_samples=num_samples)
 mcmc.run(rng_key_, nu1=nusd1, y1=fobs1, e1=err1)
 print("end HMC")
 
@@ -260,13 +266,13 @@ plt.savefig("npz/results.png", bbox_inches="tight", pad_inches=0.0)
 #ARVIZ part
 import arviz
 rc = {
-    "plot.max_subplots": 250,
+    "plot.max_subplots": 1024,
 }
 
 arviz.rcParams.update(rc)
-pararr=["Mp","Rp","T0","alpha","MMR_CO","MMR_H2O","vsini","RV","sigma"]
+pararr=["Mp","Rp","T0","alpha","MMR_CO","MMR_H2O","vsini","RV","sigma","q1","q2"]
 arviz.plot_trace(mcmc, var_names=pararr)
 plt.savefig("npz/trace.png")
-pararr=["Mp","Rp","T0","alpha","MMR_CO","MMR_H2O","vsini","RV","sigma"]
+pararr=["Mp","Rp","T0","alpha","MMR_CO","MMR_H2O","vsini","RV","sigma","q1","q2"]
 arviz.plot_pair(arviz.from_numpyro(mcmc),kind='kde',divergences=False,marginals=True) 
 plt.savefig("npz/cornerall.png")
