@@ -92,23 +92,24 @@ smalldiag=smalla**2*jnp.identity(NP)
 # Now we write the model, which is used in HMC-NUTS.
 
 # In[15]:
+
+
 def modelcov(t,tau,a):
-    fac=1.e-4
+    fac=1.e-5
     Dt = t - jnp.array([t]).T
-    K=a*jnp.exp(-(Dt)**2/2/(tau**2))+a*fac*jnp.identity(NP)
+    amp=a
+    K=amp*jnp.exp(-(Dt)**2/2/(tau**2))+amp*fac*jnp.identity(NP)
     return K
+
 
 # In[16]:
 
 
 ZEROARR=jnp.zeros_like(Parr)
-ONEARR=jnp.ones_like(Parr)
-
 lnParr=jnp.log10(Parr)
 
 
 # In[17]:
-
 
 
 def model_c(nu1,y1):
@@ -119,17 +120,19 @@ def model_c(nu1,y1):
     g=2478.57730044555*Mp/Rp**2 #gravity                                        
     u1=0.0
     u2=0.0
-
-    #Layer-by-layer T-P model//
-    lnsT = numpyro.sample('lnsT', dist.Uniform(3,5))
+    
+    #Layer-by-layer T-P model//   
+#    lnsT=4.0
+    lnsT = numpyro.sample('lnsT', dist.Uniform(3.0,5.0))
     sT=10**lnsT
+#    lntaup=0.5
     lntaup =  numpyro.sample('lntaup', dist.Uniform(0,1))
-    taup=10**lntaup
+    taup=10**lntaup    
     cov=modelcov(lnParr,taup,sT)
 
-    T0 =  numpyro.sample('T0', dist.Uniform(1000,1500))
-    Tarr=numpyro.sample("Tarr", dist.MultivariateNormal(loc=T0*ONEARR, covariance_matrix=cov))
-
+#    T0=numpyro.sample('T0', dist.Uniform(1000.0,1100.0))
+    T0 =  numpyro.sample('T0', dist.Uniform(800,1500))
+    Tarr=numpyro.sample("Tarr", dist.MultivariateNormal(loc=ONEARR, covariance_matrix=cov))+T0
     #line computation CO                                                        
     qt_CO=vmap(mdbCO.qr_interp)(Tarr)
 
