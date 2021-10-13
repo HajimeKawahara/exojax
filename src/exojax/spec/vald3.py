@@ -28,6 +28,11 @@ def Sij0(A, gupper, nu_lines, elower, QTref_284, QTmask):
     QTref = np.zeros_like(QTmask, dtype=float)
     for i, mask in enumerate(QTmask):
         QTref[i] = QTref_284[mask]
+        
+    #test211013Tako
+    #Use Irwin_1981 for Fe I (mask==76)
+    from exojax.spec import vald3api
+    QTref[np.where(QTmask == 76)[0][0]] = vald3api.partfn_Fe(Tref)
 
     S0 = -A*gupper*np.exp(-hcperk*elower/Tref)*np.expm1(-hcperk*nu_lines/Tref)\
         /(8.0*np.pi*ccgs*nu_lines**2*QTref)

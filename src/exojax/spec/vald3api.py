@@ -525,3 +525,23 @@ def load_pf_Barklem2016():
     pfTdat = pd.read_csv(io.StringIO(pfT_str), sep='\s+') #T label for grid QT
     pfdat = pd.read_csv(io.StringIO(pff_str), sep="\s+", comment="#", names=pfTdat.columns)
     return pfTdat, pfdat
+
+
+
+
+#Partition function of Fe I from Irwin_1981  #test211013Tako
+def partfn_Fe(T):
+    #Irwin_1981
+    a=np.zeros(6)
+    a[0]=-1.15609527e3
+    a[1]= 7.46597652e2
+    a[2]=-1.92865672e2
+    a[3]= 2.49658410e1
+    a[4]=-1.61934455e0
+    a[5]= 4.21182087e-2
+
+    Qln=0.0
+    for i, a in enumerate(a):
+        Qln = Qln + a*np.log(T)**i
+    Q = np.exp(Qln)
+    return(Q)

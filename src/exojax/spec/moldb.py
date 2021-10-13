@@ -806,7 +806,12 @@ class AdbVald(object):  #integrated from vald3db.py
 
         """
         gQT = self.Atomic_gQT(atomspecies)
-        return jnp.interp(T, self.T_gQT, gQT)
+        #test211013Tako
+        if atomspecies == "Fe 1":
+            QT = vald3api.partfn_Fe(T)
+        else:
+            QT = jnp.interp(T, self.T_gQT, gQT)
+        return QT
 
 
 
