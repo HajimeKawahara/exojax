@@ -22,7 +22,7 @@ from exojax.spec.evalline import mask_weakline
 
 from exojax.spec import dit, modit
 
-FP64=True
+FP64=False
 if FP64==True:
     #FP64
     from jax.config import config                                                  
@@ -237,7 +237,10 @@ def predmod(nu1,y1,e1):
         
         Frot=response.rigidrot(nus,F0,vsini,u1,u2)
         mu=response.ipgauss_sampling(nusdx,nus,Frot,beta,RV)
-        np.savez("dtau_modit.npz",[nus,dtaumCO,dtaumH2O])
+        if FP64==True:
+            np.savez("dtau_modit64.npz",[nus,dtaumCO,dtaumH2O])        
+        else:
+            np.savez("dtau_modit.npz",[nus,dtaumCO,dtaumH2O])
         return mu
 
     mu=obyo(y1,"y1",nusdx,nus,mdbCO,mdbH2O,cdbH2H2,cdbH2He)
