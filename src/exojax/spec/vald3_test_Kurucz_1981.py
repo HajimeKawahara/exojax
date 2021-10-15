@@ -129,8 +129,8 @@ def gamma_vald3_Kurucz1981(T, PH, PHH, PHe, \
       eupper: excitation potential (upper level) [cm-1]
       atomicmass: atomic mass [amu]
       ionE: ionization potential [eV]
-      vdWdamp:  van der Waals damping parameters
-      gamRad: gamma(HWHM of Lorentzian) of radiation damping
+      vdWdamp:  van der Waals damping parameters (s-1)
+      gamRad: log of gamma(HWHM of Lorentzian) of radiation damping (s-1) #(https://www.astro.uu.se/valdwiki/Vald3Format)
       enh_damp: empirical "enhancement factor" for classical Unsoeld's damping constant
 
     Args(calculated):
@@ -167,7 +167,9 @@ def gamma_vald3_Kurucz1981(T, PH, PHH, PHe, \
     gam6He = 10**vdWdamp * (T/10000.)**Texp * PHe*1e6*0.41336 /(kcgs*T)
     gam6HH = 10**vdWdamp * (T/10000.)**Texp * PHH*1e6*0.85 /(kcgs*T)
     gamma6 = gam6H + gam6He + gam6HH
-    gamma_case2 = (gamma6 ) /ccgs /(4*np.pi) # + 10**gamRad)/ccgs
+    gamma_case2 = (gamma6 ) /(4*np.pi) /ccgs # + 10**gamRad)/ccgs
+    #/(4*np.pi) means:  damping constant -> HWHM of Lorentzian
+    #/ccgs means:  [s-1] -> [cm-1]
 
 
 
@@ -209,7 +211,7 @@ def gamma_vald3_Kurucz1981(T, PH, PHH, PHe, \
         * (8.04e-25*ecgs**2/hcgs*(gap_msr_rev_cm))**0.4 \
         * PHH*1e6 /(kcgs*T)
     gamma6 = gam6H + gam6He + gam6HH
-    gamma_case3 = (gamma6 ) /ccgs /(4*np.pi) # + 10**gamRad)/ccgs
+    gamma_case3 = (gamma6 ) /(4*np.pi) /ccgs # + 10**gamRad)/ccgs
 
 
 
@@ -228,18 +230,18 @@ def gamma_vald3_Kurucz1981(T, PH, PHH, PHe, \
         * (8.04e-25*ecgs**2/hcgs*(gap_msr_rev_cm))**0.4 \
         * PHH*1e6 /(kcgs*T)
     gamma6 = gam6H + gam6He + gam6HH
-    gamma_case3half = (gamma6 ) /ccgs /(4*np.pi) # + 10**gamRad)/ccgs
+    gamma_case3half = (gamma6 ) /(4*np.pi) /ccgs # + 10**gamRad)/ccgs
 
 
     #CASE4 (4th equation in p.4 of Kurucz_1981)
     gamma6 = 4.5e-9 * msr_upper**0.4 \
         * ((PH + 0.42*PHe + 0.85*PHH)*1e6/(kcgs*T)) * (T/10000.)**0.3
-    gamma_case4 = (gamma6 ) /ccgs /(4*np.pi) # + 10**gamRad)/ccgs
+    gamma_case4 = (gamma6 ) /(4*np.pi) /ccgs # + 10**gamRad)/ccgs
 
     #CASE5: minor change from CASE4 (4th equation in p.4 of Kurucz_1981)
     gamma6 = 4.5e-9 * msr_upper_anothereq**0.4 \
         * ((PH + 0.42*PHe + 0.85*PHH)*1e6/(kcgs*T)) * (T/10000.)**0.3
-    gamma_case5 = (gamma6 ) /ccgs /(4*np.pi) # + 10**gamRad)/ccgs
+    gamma_case5 = (gamma6 ) /(4*np.pi) /ccgs # + 10**gamRad)/ccgs
 
 
 
