@@ -122,7 +122,7 @@ def model_c(nu1,y1):
     u2=0.0
     
     #Layer-by-layer T-P model//   
-    lnsT=4.0
+    lnsT=6.0
 #    lnsT = numpyro.sample('lnsT', dist.Uniform(3.0,5.0))
     sT=10**lnsT
     lntaup=0.5
@@ -131,7 +131,7 @@ def model_c(nu1,y1):
     cov=modelcov(lnParr,taup,sT)
 
 #    T0=numpyro.sample('T0', dist.Uniform(1000.0,1100.0))
-    T0 =  numpyro.sample('T0', dist.Uniform(800,1500))
+    T0 =  numpyro.sample('T0', dist.Uniform(1000,2000))
     Tarr=numpyro.sample("Tarr", dist.MultivariateNormal(loc=ONEARR, covariance_matrix=cov))+T0
     #line computation CO                                                        
     qt_CO=vmap(mdbCO.qr_interp)(Tarr)
@@ -174,13 +174,14 @@ mcmc.run(rng_key_, nu1=nusd, y1=nflux)
 #Post-processing
 posterior_sample = mcmc.get_samples()
 np.savez("npz/savepos.npz",[posterior_sample])
+#posterior_sample=np.load("npz/savepos.npz",allow_pickle=True)["arr_0"][0]
 
 pred = Predictive(model_c,posterior_sample,return_sites=["y1"])
 nu_1 = nusd
-predictions = pred(rng_key_,nu1=nu_1,y1=None,e1=np.ones_like(nusd)*sigmain)
+predictions = pred(rng_key_,nu1=nu_1,y1=None)
 median_mu1 = jnp.median(predictions["y1"],axis=0)
 hpdi_mu1 = hpdi(predictions["y1"], 0.9)
-np.savez("npz/saveplotpred.npz",[wavd1,nflux,err1,median_mu1,hpdi_mu1])
+np.savez("npz/saveplotpred.npz",[nusd,nflux,median_mu1,hpdi_mu1])
 
 
 
