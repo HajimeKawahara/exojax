@@ -106,7 +106,7 @@ def gamma_vald3(T, PH, PHH, PHe, ielem, iion, \
             gamma = gamma_case1
 
     #CASE2 (van der Waars broadening based on gamma6 at 10000 K)
-        elif: #"V"
+        else: #"V"
             Texp = 0.38 #Barklem+2000
             gam6H = 10**vdWdamp * (T/10000.)**Texp * PH*1e6 /(kcgs*T)
             gam6He = 10**vdWdamp * (T/10000.)**Texp * PHe*1e6*0.41336 /(kcgs*T)
@@ -149,7 +149,7 @@ def gamma_vald3(T, PH, PHH, PHe, ielem, iion, \
             gamma = gamma_case3
             
     #CASE4 (4th equation in p.4 of Kurucz&Avrett1981)
-        elif: #"KA4"
+        else: #"KA4"
             gamma6 = 4.5e-9 * msr_upper**0.4 \
                 * ((PH + 0.42*PHe + 0.85*PHH)*1e6/(kcgs*T)) * (T/10000.)**0.3
             gamma_case4 = (gamma6 + 10**gamRad) /(4*np.pi*ccgs)
