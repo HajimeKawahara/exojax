@@ -67,7 +67,7 @@ def gamma_vald3(T, PH, PHH, PHe, ielem, iion, \
             "V": van der Waars damping constant gamma at 10000 K for lines with the value in the line list (VALD or Kurucz), otherwise Unsoeld (1955)
             "KA3": 3rd equation in p.4 of Kurucz&Avrett1981
             "KA4": 4th equation in p.4 of Kurucz&Avrett1981
-            "KA3s" (supplemetary): 3rd equation in p.4 of Kurucz&Avrett1981 but without distinguishing iron group elements
+            "KA3s" (supplemetary): 3rd equation in p.4 of Kurucz&Avrett1981 but without discriminating iron group elements
 
     Args(calculated):
       chi_lam (=h*nu=1.2398e4/wvl[AA]): energy of a photon in the line
@@ -88,8 +88,6 @@ def gamma_vald3(T, PH, PHH, PHe, ielem, iion, \
       Barklem+1998: https://ui.adsabs.harvard.edu/abs/1998MNRAS.300..863B
       Barklem+2000: https://ui.adsabs.harvard.edu/abs/2000A&AS..142..467B
       Gray+2005: https://ui.adsabs.harvard.edu/abs/2005oasp.book.....G
-      #test211018
-      \supplement\
     """
     ccgs = 2.99792458e10 #[cm/s]
     kcgs = 1.38064852e-16 #[erg/K]
