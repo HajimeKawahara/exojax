@@ -90,8 +90,8 @@ def gamma_vald3(T, PH, PHH, PHe, ielem, iion, \
     """
     ccgs = 2.99792458e10 #[cm/s]
     kcgs = 1.38064852e-16 #[erg/K]
-    gamRad = jnp.where(gamRad==0., -99, gamRad))
-    gamSta = jnp.where(gamSta==0., -99, gamSta))
+    gamRad = jnp.where(gamRad==0., -99, gamRad)
+    gamSta = jnp.where(gamSta==0., -99, gamSta)
 
     #CASE1 (classical approximation by Unsoeld (1955))
     if vdW_meth in ("U", "V"):
