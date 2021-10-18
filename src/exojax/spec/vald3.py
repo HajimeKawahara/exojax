@@ -67,6 +67,7 @@ def gamma_vald3(T, PH, PHH, PHe, ielem, iion, \
             "V": van der Waars damping constant gamma at 10000 K for lines with the value in the line list (VALD or Kurucz), otherwise Unsoeld (1955)
             "KA3": 3rd equation in p.4 of Kurucz&Avrett1981
             "KA4": 4th equation in p.4 of Kurucz&Avrett1981
+            "KA3s" (supplemetary): 3rd equation in p.4 of Kurucz&Avrett1981 but without distinguishing iron group elements
 
     Args(calculated):
       chi_lam (=h*nu=1.2398e4/wvl[AA]): energy of a photon in the line
@@ -87,7 +88,8 @@ def gamma_vald3(T, PH, PHH, PHe, ielem, iion, \
       Barklem+1998: https://ui.adsabs.harvard.edu/abs/1998MNRAS.300..863B
       Barklem+2000: https://ui.adsabs.harvard.edu/abs/2000A&AS..142..467B
       Gray+2005: https://ui.adsabs.harvard.edu/abs/2005oasp.book.....G
-      #test211018 27
+      #test211018
+      \supplement\
     """
     ccgs = 2.99792458e10 #[cm/s]
     kcgs = 1.38064852e-16 #[erg/K]
@@ -121,7 +123,7 @@ def gamma_vald3(T, PH, PHH, PHe, ielem, iion, \
             gamma = (gamma_case1 * jnp.where(vdWdamp>=0., 1, 0) + gamma_case2 * jnp.where(vdWdamp<0., 1, 0))
         
     #CASE3 (3rd equation in p.4 of Kurucz&Avrett1981)
-    if vdW_meth in ("KA3", "KA4"):
+    if vdW_meth in ("KA3", "KA4", "KA3s"):
         hcgs = 6.62607015e-27 #Planck constant [erg*s]
         Rcgs = 1.0973731568e5 #Rydberg constant [cm-1]
         ucgs = 1.660539067e-24 #unified atomic mass unit [g]
@@ -133,9 +135,12 @@ def gamma_vald3(T, PH, PHH, PHe, ielem, iion, \
         #Mean of square of radius (in units of a0, the radius of the first Bohr orbit; p.320 in Aller (1963); https://ui.adsabs.harvard.edu/abs/1963aass.book.....A)
         msr_upper_iron = (45-ielem)/Zeff #for iron group elements (5th equation in Kurucz&Avrett1981)
         msr_upper_noiron = np.where(n_eff2_upper>0., (2.5 * (n_eff2_upper/Zeff)**2), 25) #for other elements (6th equation in Kurucz&Avrett1981)
-        msr_upper = np.where((ielem >= 27)  & (ielem <= 28), msr_upper_iron, msr_upper_noiron)
+        if vdW_meth=="KA3s":
+            msr_upper = msr_upper_noiron
+        else: #KA3", "KA4"
+            msr_upper = np.where((ielem >= 26)  & (ielem <= 28), msr_upper_iron, msr_upper_noiron)
         msr_lower = 2.5 * (n_eff2_lower/Zeff)**2
-        if vdW_meth=="KA3":
+        if vdW_meth in ("KA3", "KA3s"):
             gap_msr = msr_upper - msr_lower
             gap_msr_rev = gap_msr * np.where(gap_msr < 0, -1., 1.) #Reverse upper and lower if necessary (TBC) #test2109\\\\
             gap_msr_rev_cm = a0**2 * gap_msr_rev #[Bohr radius -> cm]
