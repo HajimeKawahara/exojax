@@ -84,9 +84,10 @@ def pickup_param(ExAll):
         jupper: upper J
         ielem:  atomic number (e.g., Fe=26)
         iion:  ionized level (e.g., neutral=1, singly)
-        vdWdamp:  van der Waals damping parameters
-        gamRad: gamma(HWHM) of radiation damping
-       
+        gamRad: log of gamma of radiation damping (s-1) #(https://www.astro.uu.se/valdwiki/Vald3Format)
+        gamSta: log of gamma of Stark damping (s-1)
+        vdWdamp:  log of (van der Waals damping constant / neutral hydrogen number) (s-1)
+
     Note:
     
     """
@@ -116,8 +117,9 @@ def pickup_param(ExAll):
     gupper=ExAll["gupper"].to_numpy()
     jlower=ExAll["jlower"].to_numpy()
     jupper=ExAll["jupper"].to_numpy()
-    vdWdamp=ExAll["waals_damping"].to_numpy()
     gamRad=ExAll["rad_damping"].to_numpy()
+    gamSta=ExAll["stark_damping"].to_numpy()
+    vdWdamp=ExAll["waals_damping"].to_numpy()
 
     ielem = np.zeros(len(ExAll), dtype='int') #atomic number (e.g., Fe=26)
     iion = np.zeros(len(ExAll), dtype='int') #e.g., neutral=1, singly ionized=2, ...
@@ -126,7 +128,7 @@ def pickup_param(ExAll):
         ielem[i] = np.where(PeriodicTable==symbol)[0][0] if (symbol in PeriodicTable) else 0
         iion[i] = int(sp.strip("'").split(' ')[-1])
 
-    return A, nu_lines, elower, eupper, gupper, jlower, jupper, ielem, iion, vdWdamp, gamRad
+    return A, nu_lines, elower, eupper, gupper, jlower, jupper, ielem, iion, gamRad, gamSta, vdWdamp
 
 
 def load_atomicdata():

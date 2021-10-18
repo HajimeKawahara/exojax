@@ -646,8 +646,9 @@ class AdbVald(object):  #integrated from vald3db.py
         QTmask (jnp array): identifier of species for Q(T)
         ielem (jnp array):  atomic number (e.g., Fe=26)
         iion (jnp array):  ionized level (e.g., neutral=1, singly ionized=2, etc.)
-        vdWdamp (jnp array):  van der Waals damping parameters
-        gamRad (jnp array): gamma(HWHM of Lorentzian) of radiation damping
+        gamRad (jnp array): log of gamma of radiation damping (s-1) #(https://www.astro.uu.se/valdwiki/Vald3Format)
+        gamSta (jnp array): log of gamma of Stark damping (s-1)
+        vdWdamp (jnp array):  log of (van der Waals damping constant / neutral hydrogen number) (s-1)
             
     """
     def __init__(self, path, nurange=[-np.inf,np.inf], margin=1.0, crit=-np.inf, Irwin=False): #tako210721
@@ -683,7 +684,7 @@ class AdbVald(object):  #integrated from vald3db.py
         #valdd.to_feather(self.vald3_file.with_suffix(".feather"))
         
         #compute additional transition parameters
-        self._A, self.nu_lines, self._elower, self._eupper, self._gupper, self._jlower, self._jupper, self._ielem, self._iion, self._vdWdamp, self._gamRad = vald3api.pickup_param(valdd)
+        self._A, self.nu_lines, self._elower, self._eupper, self._gupper, self._jlower, self._jupper, self._ielem, self._iion, self._gamRad, self._gamSta, self._vdWdamp = vald3api.pickup_param(valdd)
         
         
         
@@ -753,9 +754,10 @@ class AdbVald(object):  #integrated from vald3db.py
         self._QTmask=self._QTmask[mask]
         self._ielem=self._ielem[mask]
         self._iion=self._iion[mask]
-        self._vdWdamp=self._vdWdamp[mask]
         self._gamRad=self._gamRad[mask]
-        
+        self._gamSta=self._gamSta[mask]
+        self._vdWdamp=self._vdWdamp[mask]
+
         #jnp arrays
         self.dev_nu_lines=jnp.array(self.nu_lines)
         self.logsij0=jnp.array(np.log(self.Sij0))
@@ -769,8 +771,9 @@ class AdbVald(object):  #integrated from vald3db.py
         self.QTmask=jnp.array(self._QTmask,dtype=int)
         self.ielem=jnp.array(self._ielem,dtype=int)
         self.iion=jnp.array(self._iion,dtype=int)
-        self.vdWdamp=jnp.array(self._vdWdamp)
         self.gamRad=jnp.array(self._gamRad)
+        self.gamSta=jnp.array(self._gamSta)
+        self.vdWdamp=jnp.array(self._vdWdamp)
 
 
 

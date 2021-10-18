@@ -42,7 +42,7 @@ def Sij0(A, gupper, nu_lines, elower, QTref_284, QTmask, Irwin=False):
 
 def gamma_vald3(T, PH, PHH, PHe, ielem, iion, \
     nu_lines, elower, eupper, atomicmass, ionE, \
-    gamRad, vdWdamp, enh_damp=1.0, vdW_meth="V"):
+    gamRad, gamSta, vdWdamp, enh_damp=1.0, vdW_meth="V"):
     """HWHM of Lorentzian (cm-1) based on gamma factor by a radiation and pressure broadening
 
     Args(inputs):
@@ -58,7 +58,8 @@ def gamma_vald3(T, PH, PHH, PHe, ielem, iion, \
       atomicmass: atomic mass [amu]
       ionE: ionization potential [eV]
       gamRad: log of gamma of radiation damping (s-1) #(https://www.astro.uu.se/valdwiki/Vald3Format)
-      vdWdamp:  log of (van der Waals damping constant/neutral hydrogen number) (s-1)
+      gamSta (jnp array): log of gamma of Stark damping (s-1)
+      vdWdamp:  log of (van der Waals damping constant / neutral hydrogen number) (s-1)
       enh_damp: empirical "enhancement factor" for classical Unsoeld's damping constant
           #cf.) This coefficient (enh_damp) depends on  each species in some codes such as Turbospectrum. #tako210917
       vdW_meth: method to calculate gamma
@@ -99,7 +100,7 @@ def gamma_vald3(T, PH, PHH, PHe, ielem, iion, \
         gam6He = 1e20 * C6**0.4 * PHe*1e6*0.41336 / T**0.7
         gam6HH = 1e20 * C6**0.4 * PHH*1e6*0.85 / T**0.7
         gamma6 = enh_damp * (gam6H + gam6He + gam6HH)
-        gamma_case1 = (gamma6 + 10**gamRad) /(4*np.pi*ccgs)
+        gamma_case1 = (gamma6 + 10**gamRad + 10**gamSta) /(4*np.pi*ccgs)
         #Avoid nan (appeared by jnp.log10(negative C6))
         gamma_case1 = jnp.where(jnp.isnan(gamma_case1), 0., gamma_case1)
         if vdW_meth=="U":
@@ -112,7 +113,7 @@ def gamma_vald3(T, PH, PHH, PHe, ielem, iion, \
             gam6He = 10**vdWdamp * (T/10000.)**Texp * PHe*1e6*0.41336 /(kcgs*T)
             gam6HH = 10**vdWdamp * (T/10000.)**Texp * PHH*1e6*0.85 /(kcgs*T)
             gamma6 = gam6H + gam6He + gam6HH
-            gamma_case2 = (gamma6 + 10**gamRad) /(4*np.pi*ccgs)
+            gamma_case2 = (gamma6 + 10**gamRad + 10**gamSta) /(4*np.pi*ccgs)
             #Adopt case2 for lines with vdW in VALD, otherwise Case1
             gamma = (gamma_case1 * jnp.where(vdWdamp>=0., 1, 0) + gamma_case2 * jnp.where(vdWdamp<0., 1, 0))
         
@@ -145,14 +146,14 @@ def gamma_vald3(T, PH, PHH, PHe, ielem, iion, \
                 * (8.04e-25*ecgs**2/hcgs*(gap_msr_rev_cm))**0.4 \
                 * PHH*1e6 /(kcgs*T)
             gamma6 = gam6H + gam6He + gam6HH
-            gamma_case3 = (gamma6 + 10**gamRad) /(4*np.pi*ccgs)
+            gamma_case3 = (gamma6 + 10**gamRad + 10**gamSta) /(4*np.pi*ccgs)
             gamma = gamma_case3
             
     #CASE4 (4th equation in p.4 of Kurucz&Avrett1981)
         else: #"KA4"
             gamma6 = 4.5e-9 * msr_upper**0.4 \
                 * ((PH + 0.42*PHe + 0.85*PHH)*1e6/(kcgs*T)) * (T/10000.)**0.3
-            gamma_case4 = (gamma6 + 10**gamRad) /(4*np.pi*ccgs)
+            gamma_case4 = (gamma6 + 10**gamRad + 10**gamSta) /(4*np.pi*ccgs)
             gamma = gamma_case4
             #Note that the approximation of case4 assume "that the atomic weight A is much greater than 4, and that the mean-square-radius of the lower level <r^2>_lo is small compared to <r^2>_up"
 
