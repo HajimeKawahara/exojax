@@ -87,6 +87,7 @@ def gamma_vald3(T, PH, PHH, PHe, ielem, iion, \
       Barklem+1998: https://ui.adsabs.harvard.edu/abs/1998MNRAS.300..863B
       Barklem+2000: https://ui.adsabs.harvard.edu/abs/2000A&AS..142..467B
       Gray+2005: https://ui.adsabs.harvard.edu/abs/2005oasp.book.....G
+      #test211018 27
     """
     ccgs = 2.99792458e10 #[cm/s]
     kcgs = 1.38064852e-16 #[erg/K]
@@ -132,7 +133,7 @@ def gamma_vald3(T, PH, PHH, PHe, ielem, iion, \
         #Mean of square of radius (in units of a0, the radius of the first Bohr orbit; p.320 in Aller (1963); https://ui.adsabs.harvard.edu/abs/1963aass.book.....A)
         msr_upper_iron = (45-ielem)/Zeff #for iron group elements (5th equation in Kurucz&Avrett1981)
         msr_upper_noiron = np.where(n_eff2_upper>0., (2.5 * (n_eff2_upper/Zeff)**2), 25) #for other elements (6th equation in Kurucz&Avrett1981)
-        msr_upper = np.where((ielem >= 26)  & (ielem <= 28), msr_upper_iron, msr_upper_noiron)
+        msr_upper = np.where((ielem >= 27)  & (ielem <= 28), msr_upper_iron, msr_upper_noiron)
         msr_lower = 2.5 * (n_eff2_lower/Zeff)**2
         if vdW_meth=="KA3":
             gap_msr = msr_upper - msr_lower
