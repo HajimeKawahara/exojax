@@ -646,26 +646,25 @@ class AdbVald(object):  #integrated from vald3db.py
         jupper (jnp array): upper J
         QTmask (jnp array): identifier of species for Q(T)
         ielem (jnp array):  atomic number (e.g., Fe=26)
-        iion (jnp array):  ionized level (e.g., neutral=1, singly)
+        iion (jnp array):  ionized level (e.g., neutral=1, singly ionized=2, etc.)
         vdWdamp (jnp array):  van der Waals damping parameters
         gamRad (jnp array): gamma(HWHM of Lorentzian) of radiation damping
             
     """
-    def __init__(self, path, nurange=[-np.inf,np.inf], margin=1.0, crit=-np.inf): #tako210721
+    def __init__(self, path, nurange=[-np.inf,np.inf], margin=1.0, crit=-np.inf, Irwin=False): #tako210721
     
         """Atomic database for VALD3 "Long format"
 
         Args:
-           path: path for linelists downloaded from VALD3 with a query of "Long format" in the format of "Extract All" and "Extract Element" (NOT "Extract Stellar")
-           nurange: wavenumber range list (cm-1) or wavenumber array
-           margin: margin for nurange (cm-1)
-           crit: line strength lower limit for extraction
-           
-        Note:
-           (written with reference to moldb.py, but without using feather format)
+          path: path for linelists downloaded from VALD3 with a query of "Long format" in the format of "Extract All" and "Extract Element" (NOT "Extract Stellar")
+          nurange: wavenumber range list (cm-1) or wavenumber array
+          margin: margin for nurange (cm-1)
+          crit: line strength lower limit for extraction
+          Irwin: if True(1), the partition functions of Irwin1981 is used, otherwise those of Barklem&Collet2016
 
+        Note:
+          (written with reference to moldb.py, but without using feather format)
         """
-        #explanation="
         
         #load args
         self.vald3_file = pathlib.Path(path) #VALD3 output
@@ -700,7 +699,7 @@ class AdbVald(object):  #integrated from vald3db.py
 
 
         ##Line strength: input shoud be ndarray not jnp array
-        self.Sij0 = vald3.Sij0(self._A, self._gupper, self.nu_lines, self._elower, self.QTref_284, self._QTmask)
+        self.Sij0 = vald3.Sij0(self._A, self._gupper, self.nu_lines, self._elower, self.QTref_284, self._QTmask, Irwin) #211013
 
 
 
@@ -794,23 +793,26 @@ class AdbVald(object):  #integrated from vald3db.py
     
     
     
-    def QT_interp(self, atomspecies, T):
+    def QT_interp(self, atomspecies, T, Irwin=False):
         """interpolated partition function
 
         Args:
-           atomspecies: species e.g., "Fe 1"
-           T: temperature
+          atomspecies: species e.g., "Fe 1"
+          T: temperature
+          Irwin: if True(1), the partition functions of Irwin1981 is used, otherwise those of Barklem&Collet2016
 
         Returns:
-           Q(T): interpolated in jnp.array for the Atomic Species
+          Q(T): interpolated in jnp.array for the Atomic Species
 
         """
         gQT = self.Atomic_gQT(atomspecies)
-        #test211013Tako
-        if atomspecies == "Fe 1":
-            QT = vald3api.partfn_Fe(T)
-        else:
-            QT = jnp.interp(T, self.T_gQT, gQT)
+        QT = jnp.interp(T, self.T_gQT, gQT)
+        #Use Irwin_1981 for Fe I (mask==76)  #test211013Tako
+        if Irwin==True:
+            if atomspecies == "Fe 1":
+                QT = vald3api.partfn_Fe(T)
+            else:
+                QT = jnp.interp(T, self.T_gQT, gQT)
         return QT
 
 

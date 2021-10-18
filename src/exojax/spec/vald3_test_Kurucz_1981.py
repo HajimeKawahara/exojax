@@ -35,21 +35,6 @@ def Sij0(A, gupper, nu_lines, elower, QTref_284, QTmask):
     return(S0)
 
 
-def gamma_natural(A):
-    """gamma factor by natural broadning
-    
-    1/(4 pi c) = 2.6544188e-12 (cm-1 s)
-
-    Args:
-       A: Einstein A-factor (1/s)
-
-    Returns:
-       gamma_natural: natural width (cm-1)
-
-    """
-    return(2.6544188e-12*A)
-    
-
 def gamma_vald3(P, T, PH, PHH, PHe, \
     nu_lines, elower, ionE, gamRad, vdWdamp, enh_damp=1.0):
     #%\\\\20210804 #tako 原子ごとにenh_dampも場合分け（Turbospectrumに倣う？）するならielemが入力(Args)に必要.
@@ -113,11 +98,9 @@ def gamma_vald3(P, T, PH, PHH, PHe, \
 
 
 def gamma_vald3_Kurucz1981(T, PH, PHH, PHe, \
-    nu_lines, elower, eupper, atomicmass, ionE, gamRad, vdWdamp, ielem, enh_damp=1.0):
-    #%\\\\20210917 #tako 原子ごとにenh_dampも場合分け（Turbospectrumに倣う？）するならielemが入力(Args)に必要.
-    """
-      gamma factor by a pressure broadening
-      based on Gray+2005(2005oasp.book.....G)
+    nu_lines, elower, eupper, atomicmass, ionE, \
+    gamRad, vdWdamp, ielem, enh_damp=1.0, vdW_meth="V"):
+    """HWHM of Lorentzian (cm-1) based on gamma factor by a radiation and pressure broadening
 
     Args(inputs):
       T: temperature (K) (array)
@@ -129,14 +112,21 @@ def gamma_vald3_Kurucz1981(T, PH, PHH, PHe, \
       eupper: excitation potential (upper level) [cm-1]
       atomicmass: atomic mass [amu]
       ionE: ionization potential [eV]
-      vdWdamp:  van der Waals damping parameters (s-1)
       gamRad: log of gamma(HWHM of Lorentzian) of radiation damping (s-1) #(https://www.astro.uu.se/valdwiki/Vald3Format)
+      vdWdamp:  log of (van der Waals damping constant/neutral hydrogen number) (s-1)
+      ielem:  atomic number (e.g., Fe=26)
       enh_damp: empirical "enhancement factor" for classical Unsoeld's damping constant
+          #cf.) This coefficient (enh_damp) depends on  each species in some codes such as Turbospectrum. #tako210917
+      vdW_meth: method to calculate gamma
+            "U": Classical approximation by Unsoeld (1955)
+            "V": van der Waars damping constant gamma at 10000 K for lines with the value in the line list (VALD or Kurucz), otherwise Unsoeld (1955)
+            "KA3": 3rd equation in p.4 of Kurucz&Avrett1981
+            "KA4": 4th equation in p.4 of Kurucz&Avrett1981
 
     Args(calculated):
       chi_lam (=h*nu=1.2398e4/wvl[AA]): energy of a photon in the line
-      C6: interaction constant (Eq.11.17 in Gray)
-      logg6: log(gamma6) (Eq.11.29 in Gray)
+      C6: interaction constant (Eq.11.17 in Gray2005)
+      logg6: log(gamma6) (Eq.11.29 in Gray2005)
       gam6H: 17*v**(0.6)*C6**(0.4)*N
            #(v:relative velocity, N:number density of neutral perturber)
       Texp: temperature dependency (gamma6 \sim T**((1-α)/2) ranging 0.3–0.4)
@@ -144,32 +134,44 @@ def gamma_vald3_Kurucz1981(T, PH, PHH, PHe, \
     Returns:
       gamma: pressure gamma factor (cm-1)
 
+    Notes:
+    "/(4*np.pi*ccgs)" means:  damping constant -> HWHM of Lorentzian in [cm^-1]
+    
+    Reference of van der Waals damping constant (pressure/collision gamma):
+      Kurucz+1981: https://ui.adsabs.harvard.edu/abs/1981SAOSR.391.....K
+      Barklem+1998: https://ui.adsabs.harvard.edu/abs/1998MNRAS.300..863B
+      Barklem+2000: https://ui.adsabs.harvard.edu/abs/2000A&AS..142..467B
+      Gray+2005: https://ui.adsabs.harvard.edu/abs/2005oasp.book.....G
     """
     hcgs = 6.62607015e-27 #[erg*s]
     ccgs = 2.99792458e10 #[cm/s]
     kcgs = 1.38064852e-16 #[erg/K]
 
+
     #CASE1 (classical approximation by Unsoeld (1955))
-    chi_lam = nu_lines/8065.54 #[cm-1] -> [eV]
-    chi = elower/8065.54 #[cm-1] -> [eV]
-    C6 = 0.3e-30 * ((1/(ionE-chi-chi_lam)**2) - (1/(ionE-chi)**2)) #possibly need "ION**2" factor as turbospectrum?
-    #logg6 = 20 + 0.4*jnp.log10(C6) + jnp.log10(PH*1e6) - 0.7*jnp.log10(T)
-    gam6H = 1e20 * C6**0.4 * PH*1e6 / T**0.7  # = 10**logg6
-    gam6He = 1e20 * C6**0.4 * PHe*1e6*0.41336 / T**0.7
-    gam6HH = 1e20 * C6**0.4 * PHH*1e6*0.85 / T**0.7
-    gamma6 = enh_damp * (gam6H + gam6He + gam6HH)
-    gamma_case1 = (gamma6 )/ccgs # + 10**gamRad)/ccgs
-    gamma_case1 = np.where(np.isnan(gamma_case1), 0., gamma_case1) #avoid nan (appeared by jnp.log10(negative C6))
+    if vdW_meth in ("U", "V"):
+        chi_lam = nu_lines/8065.54 #[cm-1] -> [eV]
+        chi = elower/8065.54 #[cm-1] -> [eV]
+        C6 = 0.3e-30 * ((1/(ionE-chi-chi_lam)**2) - (1/(ionE-chi)**2)) #possibly need "ION**2" factor as turbospectrum?
+        #logg6 = 20 + 0.4*jnp.log10(C6) + jnp.log10(PH*1e6) - 0.7*jnp.log10(T)
+        #gam6H = 10**logg6
+        gam6H = 1e20 * C6**0.4 * PH*1e6 / T**0.7
+        gam6He = 1e20 * C6**0.4 * PHe*1e6*0.41336 / T**0.7
+        gam6HH = 1e20 * C6**0.4 * PHH*1e6*0.85 / T**0.7
+        gamma6 = enh_damp * (gam6H + gam6He + gam6HH)
+        gamma_case1 = (gamma6 + 10**gamRad)/ccgs
+        gamma_case1 = np.where(np.isnan(gamma_case1), 0., gamma_case1) #avoid nan (appeared by jnp.log10(negative C6))
+
 
     #CASE2 (van der Waars broadening based on gamma6 at 10000 K)
-    Texp = 0.38 #Barklem+2000
-    gam6H = 10**vdWdamp * (T/10000.)**Texp * PH*1e6 /(kcgs*T)
-    gam6He = 10**vdWdamp * (T/10000.)**Texp * PHe*1e6*0.41336 /(kcgs*T)
-    gam6HH = 10**vdWdamp * (T/10000.)**Texp * PHH*1e6*0.85 /(kcgs*T)
-    gamma6 = gam6H + gam6He + gam6HH
-    gamma_case2 = (gamma6 ) /(4*np.pi) /ccgs # + 10**gamRad)/ccgs
-    #/(4*np.pi) means:  damping constant -> HWHM of Lorentzian
-    #/ccgs means:  [s-1] -> [cm-1]
+    if vdW_meth=="V":
+        Texp = 0.38 #Barklem+2000
+        gam6H = 10**vdWdamp * (T/10000.)**Texp * PH*1e6 /(kcgs*T)
+        gam6He = 10**vdWdamp * (T/10000.)**Texp * PHe*1e6*0.41336 /(kcgs*T)
+        gam6HH = 10**vdWdamp * (T/10000.)**Texp * PHH*1e6*0.85 /(kcgs*T)
+        gamma6 = gam6H + gam6He + gam6HH
+        gamma_case2 = (gamma6 + 10**gamRad) /(4*np.pi*ccgs)
+        #/(4*np.pi*ccgs) means:  damping constant -> HWHM of Lorentzian in [cm^-1]
 
 
 
@@ -179,6 +181,7 @@ def gamma_vald3_Kurucz1981(T, PH, PHH, PHe, \
     
     #gamma_case3 = 10**vdWdamp * ((PH+0.42*PHe+0.85*PHH)*1e6/(kcgs*T)) * (T/10000.)**0.3    + 10**gamRad
     #ってこれ結局CASE2のTexpが0.30になっただけ…
+    #っていうとこまでは僕の勘違いで、川島さんが言ってらしたKuruczの指揮っていうのは<r^2>も自分で計算するパターンのことだった！
     
     eupper = elower+nu_lines #tesTako\\\\202109
     
@@ -194,10 +197,6 @@ def gamma_vald3_Kurucz1981(T, PH, PHH, PHe, \
     msr_upper_anothereq = (45-ielem)/Zeff #5ht equation in Kurucz_1981
     #in units of a0, the radius of the first Bohr orbit (noticed by Kawashima-san (ref. p.320 in Aller (1963))
 
-    """gamma_case3 = 17 * (8*kcgs*T*(1/atomicmass+1/1)/(jnp.pi*1.008000))**0.3 * (6.63e-25*ecgs**2/hcgs*(gap_msr_rev))**0.4 * PH*1e6 /(kcgs*T) + \
-                    17 * (8*kcgs*T*(1/atomicmass+1/4)/(jnp.pi*4.002600))**0.3 * (2.07e-25*ecgs**2/hcgs*(gap_msr_rev))**0.4 * PHe*1e6 /(kcgs*T) + \
-                    17 * (8*kcgs*T*(1/atomicmass+1/2)/(jnp.pi*1.008000*2))**0.3 * (8.04e-25*ecgs**2/hcgs*(gap_msr_rev))**0.4 * PHH*1e6 /(kcgs*T) #"""
-                  
     gap_msr = msr_upper - msr_lower
     gap_msr_rev = gap_msr * np.where(gap_msr < 0, -1., 1.) #Reverse upper and lower if necessary(TBC)_\\\\
     gap_msr_rev_cm = a0**2 * gap_msr_rev #[Bohr radius -> cm]
@@ -211,13 +210,15 @@ def gamma_vald3_Kurucz1981(T, PH, PHH, PHe, \
         * (8.04e-25*ecgs**2/hcgs*(gap_msr_rev_cm))**0.4 \
         * PHH*1e6 /(kcgs*T)
     gamma6 = gam6H + gam6He + gam6HH
-    gamma_case3 = (gamma6 ) /(4*np.pi) /ccgs # + 10**gamRad)/ccgs
+    gamma_case3 = (gamma6 ) /(4*np.pi*ccgs) # + 10**gamRad)/ccgs
 
 
 
     
     #CASE3.5: minor change from CASE3
+          #(Difference:  msr_upper is calculated with the 5th equation in p.4 of Kurucz_1981, which is appropriate for iron group elements (26, 27, 28), while the 6th equation is preferred for other elements.)
     gap_msr = msr_upper_anothereq - msr_lower
+    
     gap_msr_rev = gap_msr * np.where(gap_msr < 0, -1., 1.) #Reverse upper and lower if necessary(TBC)_\\\\
     gap_msr_rev_cm = a0**2 * gap_msr_rev #[Bohr radius -> cm]
     gam6H = 17 * (8*kcgs*T*(1./atomicmass+1./1.)/(jnp.pi*ucgs))**0.3 \
@@ -230,18 +231,20 @@ def gamma_vald3_Kurucz1981(T, PH, PHH, PHe, \
         * (8.04e-25*ecgs**2/hcgs*(gap_msr_rev_cm))**0.4 \
         * PHH*1e6 /(kcgs*T)
     gamma6 = gam6H + gam6He + gam6HH
-    gamma_case3half = (gamma6 ) /(4*np.pi) /ccgs # + 10**gamRad)/ccgs
+    gamma_case3half = (gamma6 ) /(4*np.pi*ccgs) # + 10**gamRad)/ccgs
 
 
     #CASE4 (4th equation in p.4 of Kurucz_1981)
     gamma6 = 4.5e-9 * msr_upper**0.4 \
         * ((PH + 0.42*PHe + 0.85*PHH)*1e6/(kcgs*T)) * (T/10000.)**0.3
-    gamma_case4 = (gamma6 ) /(4*np.pi) /ccgs # + 10**gamRad)/ccgs
+    gamma_case4 = (gamma6 ) /(4*np.pi*ccgs) # + 10**gamRad)/ccgs
+
 
     #CASE5: minor change from CASE4 (4th equation in p.4 of Kurucz_1981)
+          #(Difference:  msr_upper is calculated with the 5th equation in p.4 of Kurucz_1981, which is appropriate for iron group elements (26, 27, 28), while the 6th equation is preferred for other elements.)
     gamma6 = 4.5e-9 * msr_upper_anothereq**0.4 \
         * ((PH + 0.42*PHe + 0.85*PHH)*1e6/(kcgs*T)) * (T/10000.)**0.3
-    gamma_case5 = (gamma6 ) /(4*np.pi) /ccgs # + 10**gamRad)/ccgs
+    gamma_case5 = (gamma6 ) /(4*np.pi*ccgs) # + 10**gamRad)/ccgs
 
 
 

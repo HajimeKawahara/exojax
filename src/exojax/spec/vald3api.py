@@ -529,7 +529,7 @@ def load_pf_Barklem2016():
 
 
 
-#Partition function of Fe I from Irwin_1981  #test211013Tako
+#Partition function of Fe I from Irwin_1981  #tako211013
 def partfn_Fe(T):
     #Irwin_1981
     a=np.zeros(6)
