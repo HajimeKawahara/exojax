@@ -818,18 +818,19 @@ class AdbVald(object):  #integrated from vald3db.py
 
 
 
-    def qr_interp(self, atomspecies, T):
+    def qr_interp(self, atomspecies, T, Irwin=False):
         """interpolated partition function ratio
 
         Args:
            T: temperature
            atomspecies: species e.g., "Fe 1"
+           Irwin: if True(1), the partition functions of Irwin1981 is used, otherwise those of Barklem&Collet2016
 
         Returns:
            qr(T)=Q(T)/Q(Tref): interpolated in jnp.array
 
         """
-        return self.QT_interp(atomspecies,T)/self.QT_interp(atomspecies,self.Tref)
+        return self.QT_interp(atomspecies,T,Irwin)/self.QT_interp(atomspecies,self.Tref,Irwin)
 
 
 
