@@ -638,7 +638,6 @@ class AdbVald(object):  #integrated from vald3db.py
         Sij0 (nd array): line strength at T=Tref (cm)
         logsij0 (jnp array): log line strength at T=Tref
         A (jnp array): Einstein A coeeficient in (s-1)
-        gamma_natural (jnp array): gamma factor of the natural broadening
         elower (jnp array): the lower state energy (cm-1)
         eupper (jnp array): the upper state energy (cm-1)
         gupper: (jnp array): upper statistical weight
@@ -761,7 +760,6 @@ class AdbVald(object):  #integrated from vald3db.py
         self.dev_nu_lines=jnp.array(self.nu_lines)
         self.logsij0=jnp.array(np.log(self.Sij0))
         self.A=jnp.array(self._A)
-        self.gamma_natural=vald3.gamma_natural(self.A) #gamma_natural [cm-1]
         self.elower=jnp.array(self._elower)
         self.eupper=jnp.array(self._eupper)
         self.gupper=jnp.array(self._gupper)
