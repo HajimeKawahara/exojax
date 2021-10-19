@@ -189,7 +189,7 @@ def model_c(nu1,y1,e1):
     u1=2.0*sqrtq1*q2
     u2=sqrtq1*(1.0-2.0*q2)
     #GP
-    logtau = numpyro.sample('logtau', dist.Uniform(-1.0,1.0)) #tau=1 <=> 5A
+    logtau = numpyro.sample('logtau', dist.Uniform(-1.5,0.5)) #tau=1 <=> 5A
     tau=10**(logtau)
     loga = numpyro.sample('loga', dist.Uniform(-4.0,-2.0))
     a=10**(loga)
