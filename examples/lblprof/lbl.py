@@ -131,7 +131,7 @@ def model_c(nu1,y1):
     cov=modelcov(lnParr,taup,sT)
 
 #    T0=numpyro.sample('T0', dist.Uniform(1000.0,1100.0))
-    T0 =  numpyro.sample('T0', dist.Uniform(800,1500))
+    T0 =  numpyro.sample('T0', dist.Uniform(800,2000))
     Tarr=numpyro.sample("Tarr", dist.MultivariateNormal(loc=ONEARR, covariance_matrix=cov))+T0
     #line computation CO                                                        
     qt_CO=vmap(mdbCO.qr_interp)(Tarr)
