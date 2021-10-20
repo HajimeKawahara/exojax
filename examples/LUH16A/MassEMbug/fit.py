@@ -177,7 +177,7 @@ def model_c(nu1,y1,e1):
     MMR_H2O = numpyro.sample('MMR_H2O', dist.Uniform(0.0,maxMMR_H2O))
     T0 = numpyro.sample('T0', dist.Uniform(1000.0,1700.0))
     alpha = numpyro.sample('alpha', dist.Uniform(0.05,0.15))
-    vsini = numpyro.sample('vsini', dist.Uniform(10.0,15.0))
+    vsini = numpyro.sample('vsini', dist.Uniform(10.0,20.0))
 
     g=2478.57730044555*Mp/Rp**2 #gravity
     #u1=0.0
