@@ -679,8 +679,7 @@ class AdbVald(object):  #integrated from vald3db.py
 
         #load vald file ("Extract Stellar" request)
         print("Reading VALD file")
-        valdd=vald3api.read_ExAll(self.vald3_file)
-        #better to use .feather format? #\\\\
+        valdd=vald3api.read_ExAll(self.vald3_file) #pandas.DataFrame
         #valdd.to_feather(self.vald3_file.with_suffix(".feather"))
         
         #compute additional transition parameters
@@ -859,10 +858,10 @@ class AdbVald(object):  #integrated from vald3db.py
         
         Input: ExAll: Dataframe outputted from read_ExAll
         """
-        QTmask_sp = np.zeros(len(ExAll))
+        QTmask_sp = jnp.zeros(len(ExAll))
         for i, sp in enumerate(ExAll['species']):
             sp_Roman = sp.strip("'").split(' ')[0] + '_' + 'I'*int(sp.strip("'").split(' ')[-1])
-            QTmask_sp[i] = np.where(self.pfdat['T[K]']==sp_Roman)[0][0]
+            QTmask_sp[i] = jnp.where(self.pfdat['T[K]']==sp_Roman)[0][0]
 
         QTmask_sp = QTmask_sp.astype('int')
         return(QTmask_sp)
