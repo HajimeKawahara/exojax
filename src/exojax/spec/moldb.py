@@ -780,14 +780,14 @@ class AdbVald(object):  #integrated from vald3db.py
         """Select grid of partition function especially for the species of interest
         
         Args:
-            atomspecies: species e.g., "Fe 1"
+            atomspecies: species e.g., "Fe 1", "Sr 2", etc.
             
         Returns:
             gQT: grid Q(T) for the species
         
         """
-        if len(atomspecies.split(' '))==2:
-            atomspecies_Roman = atomspecies.split(' ')[0] + '_' + 'I'*int(atomspecies.split(' ')[-1])
+        #if len(atomspecies.split(' '))==2:
+        atomspecies_Roman = atomspecies.split(' ')[0] + '_' + 'I'*int(atomspecies.split(' ')[-1])
         gQT = self.gQT_284species[ np.where(self.pfdat['T[K]']==atomspecies_Roman) ][0]
         return gQT
     
