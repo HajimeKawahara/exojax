@@ -808,11 +808,11 @@ class AdbVald(object):  #integrated from vald3db.py
         gQT = self.Atomic_gQT(atomspecies)
         QT = jnp.interp(T, self.T_gQT, gQT)
         #Use Irwin_1981 for Fe I (mask==76)  #test211013Tako
-        #if Irwin==True:
-        #    if atomspecies == "Fe 1":
-        #        QT = vald3api.partfn_Fe(T)
-        #    else:
-        QT = jnp.interp(T, self.T_gQT, gQT)
+        if Irwin==True:
+            if atomspecies == "Fe 1":
+                QT = vald3api.partfn_Fe(T)
+            else:
+                QT = jnp.interp(T, self.T_gQT, gQT)
         return QT
 
 
