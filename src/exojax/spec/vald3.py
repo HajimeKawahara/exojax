@@ -115,7 +115,7 @@ def gamma_vald3(T, PH, PHH, PHe, ielem, iion, \
 
 
 
-def gamma_Uns(T, PH, PHH, PHe, ielem, iion, \
+def gamma_uns(T, PH, PHH, PHe, ielem, iion, \
     nu_lines, elower, eupper, atomicmass, ionE, \
     gamRad, gamSta, vdWdamp, enh_damp=1.0): #, vdW_meth="U"):
     """HWHM of Lorentzian (cm-1) estimated with the classical approximation by Unsoeld (1955)
@@ -386,7 +386,6 @@ def gamma_KA3s(T, PH, PHH, PHe, ielem, iion, \
     n_eff2_upper = Rcgs * Zeff**2 / (ionE*8065.54 - eupper) #Square of effective quantum number of the upper state
     n_eff2_lower = Rcgs * Zeff**2 / (ionE*8065.54 - elower)
     #Mean of square of radius (in units of a0, the radius of the first Bohr orbit; p.320 in Aller (1963); https://ui.adsabs.harvard.edu/abs/1963aass.book.....A)
-    msr_upper_iron = (45-ielem)/Zeff #for iron group elements (5th equation in Kurucz&Avrett1981)
     msr_upper_noiron = np.where(n_eff2_upper>0., (2.5 * (n_eff2_upper/Zeff)**2), 25) #for other elements (6th equation in Kurucz&Avrett1981)
     msr_upper = msr_upper_noiron
     msr_lower = 2.5 * (n_eff2_lower/Zeff)**2
