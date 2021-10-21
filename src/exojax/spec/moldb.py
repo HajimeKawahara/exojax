@@ -858,10 +858,10 @@ class AdbVald(object):  #integrated from vald3db.py
         
         Input: ExAll: Dataframe outputted from read_ExAll
         """
-        QTmask_sp = np.zeros(len(ExAll))
-        for i, sp in enumerate(ExAll['species']):
+        def species_to_QTmask(sp):
             sp_Roman = sp.strip("'").split(' ')[0] + '_' + 'I'*int(sp.strip("'").split(' ')[-1])
-            QTmask_sp[i] = np.where(self.pfdat['T[K]']==sp_Roman)[0][0]
+            QTmask = np.where(self.pfdat['T[K]']==sp_Roman)[0][0]
+            return QTmask
+        QTmask_sp = np.array(list(map(species_to_QTmask, ExAll['species']))).astype('int')
 
-        QTmask_sp = QTmask_sp.astype('int')
         return(QTmask_sp)
