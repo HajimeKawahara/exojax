@@ -25,8 +25,9 @@ def read_ExStellar(stellarf):
     return dat
     
     
+    
 def read_ExAll(allf):
-    """VALD IO for linelists downloaded from VALD3 with a query of "Long format" in the format of "Extract All" and "Extract Element"
+    """IO for linelists downloaded from VALD3 with a query of "Long format" in the format of "Extract All" or "Extract Element"
     
     Note:
         See https://www.astro.uu.se/valdwiki/presformat_output
@@ -69,6 +70,82 @@ def read_ExAll(allf):
     return dat
     
 
+
+def read_kurucz(kuruczf):
+    """Input Kurucz line list (http://kurucz.harvard.edu/linelists/)
+    
+    Args:
+        kuruczf: file path
+    
+    Returns:
+        A:  Einstein coefficient in [s-1]
+        nu_lines:  transition waveNUMBER in [cm-1] (#NOT frequency in [s-1])
+        elower: lower excitation potential [cm-1] (#converted from eV)
+        eupper: upper excitation potential [cm-1] (#converted from eV)
+        gupper: upper statistical weight
+        jlower: lower J (rotational quantum number, total angular momentum)
+        jupper: upper J
+        ielem:  atomic number (e.g., Fe=26)
+        iion:  ionized level (e.g., neutral=1, singly)
+        gamRad: log of gamma of radiation damping (s-1) #(https://www.astro.uu.se/valdwiki/Vald3Format)
+        gamSta: log of gamma of Stark damping (s-1)
+        vdWdamp:  log of (van der Waals damping constant / neutral hydrogen number) (s-1)
+    
+    """
+    ccgs = 2.99792458e10 #[cm/s]
+    ecgs = 4.80320450e-10 #[esu]=[dyn^0.5*cm] !elementary charge
+    mecgs  = 9.10938356e-28 #[g] !electron mass
+
+    with open(kuruczf) as f:
+        lines = f.readlines()
+    wlnmair, loggf, species, elower, jlower, labellower, eupper, jupper, labelupper, \
+        gamRad, gamSta, gamvdW, ref, \
+        NLTElower, NLTEupper, isonum, hyperfrac, isonumdi, isofrac, \
+        hypershiftlower, hypershiftupper, hyperFlower, hypernotelower, hyperFupper, hypternoteupper, \
+        strenclass, auto, landeglower, landegupper, isoshiftmA \
+        = \
+        np.zeros(len(lines)),np.zeros(len(lines)),np.array(['']*len(lines), dtype=object),np.zeros(len(lines)),np.zeros(len(lines)),np.zeros(len(lines)),np.zeros(len(lines)),np.zeros(len(lines)),np.zeros(len(lines)), \
+        np.zeros(len(lines)),np.zeros(len(lines)),np.zeros(len(lines)),np.zeros(len(lines)), \
+        np.zeros(len(lines)),np.zeros(len(lines)),np.zeros(len(lines)),np.zeros(len(lines)),np.zeros(len(lines)),np.zeros(len(lines)), \
+        np.zeros(len(lines)),np.zeros(len(lines)),np.zeros(len(lines)),np.zeros(len(lines)),np.zeros(len(lines)),np.zeros(len(lines)), \
+        np.zeros(len(lines)),np.zeros(len(lines)),np.zeros(len(lines)),np.zeros(len(lines)),np.zeros(len(lines))
+    ielem, iion = np.zeros(len(lines),dtype=int), np.zeros(len(lines),dtype=int)
+
+    for i, line in enumerate(lines):
+        wlnmair[i] = float(line[0:11])
+        loggf[i] = float(line[11:18])
+        species[i] = str(line[18:24])
+        ielem[i] = int(species[i].split('.')[0])
+        iion[i] = int(species[i].split('.')[1])+1
+        elower[i] = float(line[24:36])
+        jlower[i] = float(line[36:41])
+        eupper[i] = float(line[52:64])
+        jupper[i] = float(line[64:69])
+        gamRad[i] = float(line[80:86])
+        gamSta[i] = float(line[86:92])
+        gamvdW[i] = float(line[92:98])
+
+    wlaa =  np.where(wlnmair<200, wlnmair*10, air_to_vac(wlnmair*10))
+    nu_lines = 1e8 / wlaa[::-1] #[cm-1]<-[AA]
+    loggf = loggf[::-1]
+    ielem = ielem[::-1]
+    iion = iion[::-1]
+    elower = elower[::-1]
+    eupper = eupper[::-1]
+    jlower = jlower[::-1]
+    jupper = jupper[::-1]
+    glower = jlower*2+1
+    gupper = jupper*2+1
+    A = 10**loggf / gupper * (ccgs*nu_lines)**2 \
+            *(8*np.pi**2*ecgs**2) / (mecgs*ccgs**3)
+    gamRad = gamRad[::-1]
+    gamSta = gamSta[::-1]
+    gamvdW = gamvdW[::-1]
+
+    return (A, nu_lines, elower, eupper, gupper, jlower, jupper, ielem, iion, gamRad, gamSta, gamvdW)
+
+
+
 def pickup_param(ExAll):
     """ extract transition parameters from VALD3 line list and insert the same DataFrame.
     
@@ -79,6 +156,7 @@ def pickup_param(ExAll):
         A:  Einstein coefficient in [s-1]
         nu_lines:  transition waveNUMBER in [cm-1] (#NOT frequency in [s-1])
         elower: lower excitation potential [cm-1] (#converted from eV)
+        eupper: upper excitation potential [cm-1] (#converted from eV)
         gupper: upper statistical weight
         jlower: lower J (rotational quantum number, total angular momentum)
         jupper: upper J
@@ -95,10 +173,6 @@ def pickup_param(ExAll):
     ecgs = 4.80320450e-10 #[esu]=[dyn^0.5*cm] !elementary charge
     mecgs  = 9.10938356e-28 #[g] !electron mass
     
-    # Correspondence between Atomic Number and Element Symbol
-    PeriodicTable = np.zeros([119], dtype=object) #PeriodicTable = np.empty([100], dtype=object)
-    PeriodicTable[:] = [' 0', 'H', 'He', 'Li', 'Be', 'B', 'C', 'N', 'O', 'F', 'Ne', 'Na', 'Mg', 'Al', 'Si', 'P', 'S', 'Cl', 'Ar', 'K', 'Ca', 'Sc', 'Ti', 'V', 'Cr', 'Mn', 'Fe', 'Co', 'Ni', 'Cu', 'Zn', 'Ga', 'Ge', 'As', 'Se', 'Br', 'Kr', 'Rb', 'Sr', 'Y', 'Zr', 'Nb', 'Mo', 'Tc', 'Ru', 'Rh', 'Pd', 'Ag', 'Cd', 'In', 'Sn', 'Sb', 'Te', 'I', 'Xe', 'Cs', 'Ba', 'La', 'Ce', 'Pr', 'Nd', 'Pm', 'Sm', 'Eu', 'Gd', 'Tb', 'Dy', 'Ho', 'Er', 'Tm', 'Yb', 'Lu', 'Hf', 'Ta', 'W', 'Re', 'Os', 'Ir', 'Pt', 'Au', 'Hg', 'Tl', 'Pb', 'Bi', 'Po', 'At', 'Rn', 'Fr', 'Ra', 'Ac', 'Th', 'Pa', 'U', 'Np', 'Pu', 'Am', 'Cm', 'Bk', 'Cf', 'Es', 'Fm', 'Md', 'No', 'Lr', 'Rf', 'Db', 'Sg', 'Bh', 'Hs', 'Mt', 'Ds', 'Rg', 'Cn', 'Nh', 'Fl', 'Mc', 'Lv', 'Ts', 'Og']
-
     # insert new columns in VALD line list
     ExAll["nu_lines"] = 1.e8 / ExAll["wav_lines"] #[cm-1]<-[AA]
     ExAll = ExAll.iloc[::-1].reset_index(drop=True) #Sort by wavenumber
@@ -129,6 +203,38 @@ def pickup_param(ExAll):
         iion[i] = int(sp.strip("'").split(' ')[-1])
 
     return A, nu_lines, elower, eupper, gupper, jlower, jupper, ielem, iion, gamRad, gamSta, vdWdamp
+
+
+
+def vac_to_air(wlvac):
+    """Convert wavelengths [AA] in vacuum to those in air
+        http://www.astro.uu.se/valdwiki/Air-to-vacuum%20conversion
+    Args:
+        wlvac:  wavelength in vacuum [Angstrom]
+    Returns:
+        wlair:  wavelengthe in air [Angstrom]
+    """
+    s = 1e4 / wlvac
+    n = 1 + 0.0000834254 + 0.02406147 / (130 - s*s) + 0.00015998 / (38.9 - s*s)
+    wlair = wlvac / n
+    return(wlair)
+
+
+
+def air_to_vac(wlair):
+    """Convert wavelengths [AA] in air to those in vacuum
+        http://www.astro.uu.se/valdwiki/Air-to-vacuum%20conversion
+    Args:
+        wlair:  wavelengthe in air [Angstrom]
+    Returns:
+        wlvac:  wavelength in vacuum [Angstrom]
+    """
+    s = 1e4 / wlair
+    n = 1. + 0.00008336624212083 + 0.02408926869968 / (130.1065924522 - s*s) + \
+        0.0001599740894897 / (38.92568793293 - s*s)
+    wlvac = wlair * n
+    return(wlvac)
+
 
 
 def load_atomicdata():
@@ -220,6 +326,7 @@ def load_atomicdata():
     ipccd = pd.read_csv(io.StringIO(ipcc_str), sep="\s+", skiprows=1, usecols=[1,2,3,4,5,6,7], names=ipccc)
     return ipccd
     
+
 
 def load_pf_Barklem2016():
     """ load a table of the partition functions for 284 atomic species
@@ -528,6 +635,11 @@ def load_pf_Barklem2016():
     pfdat = pd.read_csv(io.StringIO(pff_str), sep="\s+", comment="#", names=pfTdat.columns)
     return pfTdat, pfdat
 
+
+
+# Correspondence between Atomic Number and Element Symbol
+PeriodicTable = np.zeros([119], dtype=object) #PeriodicTable = np.empty([100], dtype=object)
+PeriodicTable[:] = [' 0', 'H', 'He', 'Li', 'Be', 'B', 'C', 'N', 'O', 'F', 'Ne', 'Na', 'Mg', 'Al', 'Si', 'P', 'S', 'Cl', 'Ar', 'K', 'Ca', 'Sc', 'Ti', 'V', 'Cr', 'Mn', 'Fe', 'Co', 'Ni', 'Cu', 'Zn', 'Ga', 'Ge', 'As', 'Se', 'Br', 'Kr', 'Rb', 'Sr', 'Y', 'Zr', 'Nb', 'Mo', 'Tc', 'Ru', 'Rh', 'Pd', 'Ag', 'Cd', 'In', 'Sn', 'Sb', 'Te', 'I', 'Xe', 'Cs', 'Ba', 'La', 'Ce', 'Pr', 'Nd', 'Pm', 'Sm', 'Eu', 'Gd', 'Tb', 'Dy', 'Ho', 'Er', 'Tm', 'Yb', 'Lu', 'Hf', 'Ta', 'W', 'Re', 'Os', 'Ir', 'Pt', 'Au', 'Hg', 'Tl', 'Pb', 'Bi', 'Po', 'At', 'Rn', 'Fr', 'Ra', 'Ac', 'Th', 'Pa', 'U', 'Np', 'Pu', 'Am', 'Cm', 'Bk', 'Cf', 'Es', 'Fm', 'Md', 'No', 'Lr', 'Rf', 'Db', 'Sg', 'Bh', 'Hs', 'Mt', 'Ds', 'Rg', 'Cn', 'Nh', 'Fl', 'Mc', 'Lv', 'Ts', 'Og']
 
 
 
