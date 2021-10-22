@@ -633,6 +633,7 @@ class AdbVald(object):  #integrated from vald3db.py
     AdbVald is a class for VALD3.
     
     Attributes:
+        nurange: nu range [min,max] (cm-1)
         nu_lines (nd array):      line center (cm-1) (#NOT frequency in (s-1))
         dev_nu_lines (jnp array): line center (cm-1) in device
         Sij0 (nd array): line strength at T=Tref (cm)
@@ -880,6 +881,7 @@ class AdbKurucz(object):
     AdbKurucz is a class for Kurucz line list.
     
     Attributes:
+        nurange: nu range [min,max] (cm-1)
         nu_lines (nd array):      line center (cm-1) (#NOT frequency in (s-1))
         dev_nu_lines (jnp array): line center (cm-1) in device
         Sij0 (nd array): line strength at T=Tref (cm)
