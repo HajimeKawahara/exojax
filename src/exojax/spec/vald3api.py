@@ -207,25 +207,31 @@ def pickup_param(ExAll):
 
 
 def vac_to_air(wlvac):
-    """Convert wavelengths [AA] in vacuum to those in air
+    """Convert wavelengths [AA] in vacuum into those in air
         http://www.astro.uu.se/valdwiki/Air-to-vacuum%20conversion
+        
     Args:
         wlvac:  wavelength in vacuum [Angstrom]
+        n:  Refractive Index in dry air at 1 atm pressure and 15ºC with 0.045% CO2 by volume (Birch and Downs, 1994, Metrologia, 31, 315)
+
     Returns:
         wlair:  wavelengthe in air [Angstrom]
     """
     s = 1e4 / wlvac
-    n = 1 + 0.0000834254 + 0.02406147 / (130 - s*s) + 0.00015998 / (38.9 - s*s)
+    n = 1. + 0.0000834254 + 0.02406147 / (130 - s*s) + 0.00015998 / (38.9 - s*s)
     wlair = wlvac / n
     return(wlair)
 
 
 
 def air_to_vac(wlair):
-    """Convert wavelengths [AA] in air to those in vacuum
+    """Convert wavelengths [AA] in air into those in vacuum
         http://www.astro.uu.se/valdwiki/Air-to-vacuum%20conversion
+        
     Args:
         wlair:  wavelengthe in air [Angstrom]
+        n:  Refractive Index in dry air at 1 atm pressure and 15ºC with 0.045% CO2 by volume (Birch and Downs, 1994, Metrologia, 31, 315)
+        
     Returns:
         wlvac:  wavelength in vacuum [Angstrom]
     """
