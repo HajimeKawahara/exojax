@@ -1,5 +1,5 @@
 import numpy as np
-import jax.numpy as jnp
+#import jax.numpy as jnp
 
 def Sij0(A, gupper, nu_lines, elower, QTref_284, QTmask, Irwin=False):
     """Reference Line Strength in Tref=296K, S0.
@@ -47,10 +47,10 @@ def gamma_vald3(T, PH, PHH, PHe, ielem, iion, \
     """HWHM of Lorentzian (cm-1) caluculated as gamma/(4*pi*c) [cm-1] for lines with the van der Waals gamma in the line list (VALD or Kurucz), otherwise estimated according to the Unsoeld (1955)
 
     Args(inputs):
-      T: temperature (K) (array)
-      PH: hydrogen pressure (bar) (array)  #1 bar = 1e6 dyn/cm2 (array)
-      PHH: H2 molecule pressure (bar) (array)
-      PHe: helium pressure (bar) (array)
+      T: temperature (K)
+      PH: hydrogen pressure (bar) #1 bar = 1e6 dyn/cm2
+      PHH: H2 molecule pressure (bar)
+      PHe: helium pressure (bar)
       ielem:  atomic number (e.g., Fe=26)
       iion:  ionized level (e.g., neutral=1, singly ionized=2, etc.)
       nu_lines:  transition waveNUMBER in [cm-1] (NOT frequency in [s-1])
@@ -59,7 +59,7 @@ def gamma_vald3(T, PH, PHH, PHe, ielem, iion, \
       atomicmass: atomic mass [amu]
       ionE: ionization potential [eV]
       gamRad: log of gamma of radiation damping (s-1) #(https://www.astro.uu.se/valdwiki/Vald3Format)
-      gamSta (jnp array): log of gamma of Stark damping (s-1)
+      gamSta: log of gamma of Stark damping (s-1)
       vdWdamp:  log of (van der Waals damping constant / neutral hydrogen number) (s-1)
       enh_damp: empirical "enhancement factor" for classical Unsoeld's damping constant
           #cf.) This coefficient (enh_damp) depends on  each species in some codes such as Turbospectrum. #tako210917
@@ -87,8 +87,8 @@ def gamma_vald3(T, PH, PHH, PHe, ielem, iion, \
     """
     ccgs = 2.99792458e10 #[cm/s]
     kcgs = 1.38064852e-16 #[erg/K]
-    gamRad = jnp.where(gamRad==0., -99, gamRad)
-    gamSta = jnp.where(gamSta==0., -99, gamSta)
+    gamRad = np.where(gamRad==0., -99, gamRad)
+    gamSta = np.where(gamSta==0., -99, gamSta)
     chi_lam = nu_lines/8065.54 #[cm-1] -> [eV]
     chi = elower/8065.54 #[cm-1] -> [eV]
 
@@ -98,8 +98,8 @@ def gamma_vald3(T, PH, PHH, PHe, ielem, iion, \
     gam6HH = 1e20 * C6**0.4 * PHH*1e6*0.85 / T**0.7
     gamma6 = enh_damp * (gam6H + gam6He + gam6HH)
     gamma_case1 = (gamma6 + 10**gamRad + 10**gamSta) /(4*np.pi*ccgs)
-    #Avoid nan (appeared by jnp.log10(negative C6))
-    gamma_case1 = jnp.where(jnp.isnan(gamma_case1), 0., gamma_case1)
+    #Avoid nan (appeared by np.log10(negative C6))
+    gamma_case1 = np.where(np.isnan(gamma_case1), 0., gamma_case1)
 
     Texp = 0.38 #Barklem+2000
     gam6H = 10**vdWdamp * (T/10000.)**Texp * PH*1e6 /(kcgs*T)
@@ -109,7 +109,7 @@ def gamma_vald3(T, PH, PHH, PHe, ielem, iion, \
     gamma_case2 = (gamma6 + 10**gamRad + 10**gamSta) /(4*np.pi*ccgs)
     #Adopt case2 for lines with vdW in VALD, otherwise Case1
     
-    gamma = (gamma_case1 * jnp.where(vdWdamp>=0., 1, 0) + gamma_case2 * jnp.where(vdWdamp<0., 1, 0))
+    gamma = (gamma_case1 * np.where(vdWdamp>=0., 1, 0) + gamma_case2 * np.where(vdWdamp<0., 1, 0))
     
     return(gamma)
 
@@ -121,10 +121,10 @@ def gamma_uns(T, PH, PHH, PHe, ielem, iion, \
     """HWHM of Lorentzian (cm-1) estimated with the classical approximation by Unsoeld (1955)
 
     Args(inputs):
-      T: temperature (K) (array)
-      PH: hydrogen pressure (bar) (array)  #1 bar = 1e6 dyn/cm2 (array)
-      PHH: H2 molecule pressure (bar) (array)
-      PHe: helium pressure (bar) (array)
+      T: temperature (K)
+      PH: hydrogen pressure (bar)  #1 bar = 1e6 dyn/cm2
+      PHH: H2 molecule pressure (bar)
+      PHe: helium pressure (bar)
       ielem:  atomic number (e.g., Fe=26)
       iion:  ionized level (e.g., neutral=1, singly ionized=2, etc.)
       nu_lines:  transition waveNUMBER in [cm-1] (NOT frequency in [s-1])
@@ -133,7 +133,7 @@ def gamma_uns(T, PH, PHH, PHe, ielem, iion, \
       atomicmass: atomic mass [amu]
       ionE: ionization potential [eV]
       gamRad: log of gamma of radiation damping (s-1) #(https://www.astro.uu.se/valdwiki/Vald3Format)
-      gamSta (jnp array): log of gamma of Stark damping (s-1)
+      gamSta: log of gamma of Stark damping (s-1)
       vdWdamp:  log of (van der Waals damping constant / neutral hydrogen number) (s-1)
       enh_damp: empirical "enhancement factor" for classical Unsoeld's damping constant
           #cf.) This coefficient (enh_damp) depends on  each species in some codes such as Turbospectrum. #tako210917
@@ -161,8 +161,8 @@ def gamma_uns(T, PH, PHH, PHe, ielem, iion, \
     """
     ccgs = 2.99792458e10 #[cm/s]
     kcgs = 1.38064852e-16 #[erg/K]
-    gamRad = jnp.where(gamRad==0., -99, gamRad)
-    gamSta = jnp.where(gamSta==0., -99, gamSta)
+    gamRad = np.where(gamRad==0., -99, gamRad)
+    gamSta = np.where(gamSta==0., -99, gamSta)
     chi_lam = nu_lines/8065.54 #[cm-1] -> [eV]
     chi = elower/8065.54 #[cm-1] -> [eV]
     
@@ -172,8 +172,8 @@ def gamma_uns(T, PH, PHH, PHe, ielem, iion, \
     gam6HH = 1e20 * C6**0.4 * PHH*1e6*0.85 / T**0.7
     gamma6 = enh_damp * (gam6H + gam6He + gam6HH)
     gamma_case1 = (gamma6 + 10**gamRad + 10**gamSta) /(4*np.pi*ccgs)
-    #Avoid nan (appeared by jnp.log10(negative C6))
-    gamma = jnp.where(jnp.isnan(gamma_case1), 0., gamma_case1)
+    #Avoid nan (appeared by np.log10(negative C6))
+    gamma = np.where(np.isnan(gamma_case1), 0., gamma_case1)
 
     return(gamma)
 
@@ -185,10 +185,10 @@ def gamma_KA3(T, PH, PHH, PHe, ielem, iion, \
     """HWHM of Lorentzian (cm-1) caluculated with the 3rd equation in p.4 of Kurucz&Avrett1981
 
     Args(inputs):
-      T: temperature (K) (array)
-      PH: hydrogen pressure (bar) (array)  #1 bar = 1e6 dyn/cm2 (array)
-      PHH: H2 molecule pressure (bar) (array)
-      PHe: helium pressure (bar) (array)
+      T: temperature (K)
+      PH: hydrogen pressure (bar)  #1 bar = 1e6 dyn/cm2
+      PHH: H2 molecule pressure (bar)
+      PHe: helium pressure (bar)
       ielem:  atomic number (e.g., Fe=26)
       iion:  ionized level (e.g., neutral=1, singly ionized=2, etc.)
       nu_lines:  transition waveNUMBER in [cm-1] (NOT frequency in [s-1])
@@ -197,7 +197,7 @@ def gamma_KA3(T, PH, PHH, PHe, ielem, iion, \
       atomicmass: atomic mass [amu]
       ionE: ionization potential [eV]
       gamRad: log of gamma of radiation damping (s-1) #(https://www.astro.uu.se/valdwiki/Vald3Format)
-      gamSta (jnp array): log of gamma of Stark damping (s-1)
+      gamSta: log of gamma of Stark damping (s-1)
       vdWdamp:  log of (van der Waals damping constant / neutral hydrogen number) (s-1)
       enh_damp: empirical "enhancement factor" for classical Unsoeld's damping constant
           #cf.) This coefficient (enh_damp) depends on  each species in some codes such as Turbospectrum. #tako210917
@@ -224,8 +224,8 @@ def gamma_KA3(T, PH, PHH, PHe, ielem, iion, \
     """
     ccgs = 2.99792458e10 #[cm/s]
     kcgs = 1.38064852e-16 #[erg/K]
-    gamRad = jnp.where(gamRad==0., -99, gamRad)
-    gamSta = jnp.where(gamSta==0., -99, gamSta)
+    gamRad = np.where(gamRad==0., -99, gamRad)
+    gamSta = np.where(gamSta==0., -99, gamSta)
     hcgs = 6.62607015e-27 #Planck constant [erg*s]
     Rcgs = 1.0973731568e5 #Rydberg constant [cm-1]
     ucgs = 1.660539067e-24 #unified atomic mass unit [g]
@@ -244,13 +244,13 @@ def gamma_KA3(T, PH, PHH, PHe, ielem, iion, \
     gap_msr = msr_upper - msr_lower
     gap_msr_rev = gap_msr * np.where(gap_msr < 0, -1., 1.) #Reverse upper and lower if necessary (TBC) #test2109\\\\
     gap_msr_rev_cm = a0**2 * gap_msr_rev #[Bohr radius -> cm]
-    gam6H = 17 * (8*kcgs*T*(1./atomicmass+1./1.)/(jnp.pi*ucgs))**0.3 \
+    gam6H = 17 * (8*kcgs*T*(1./atomicmass+1./1.)/(np.pi*ucgs))**0.3 \
         * (6.63e-25*ecgs**2/hcgs*(gap_msr_rev_cm))**0.4 \
         * PH*1e6 /(kcgs*T)
-    gam6He = 17 * (8*kcgs*T*(1./atomicmass+1./4.)/(jnp.pi*ucgs))**0.3 \
+    gam6He = 17 * (8*kcgs*T*(1./atomicmass+1./4.)/(np.pi*ucgs))**0.3 \
         * (2.07e-25*ecgs**2/hcgs*(gap_msr_rev_cm))**0.4 \
         * PHe*1e6 /(kcgs*T)
-    gam6HH = 17 * (8*kcgs*T*(1./atomicmass+1./2.)/(jnp.pi*ucgs))**0.3 \
+    gam6HH = 17 * (8*kcgs*T*(1./atomicmass+1./2.)/(np.pi*ucgs))**0.3 \
         * (8.04e-25*ecgs**2/hcgs*(gap_msr_rev_cm))**0.4 \
         * PHH*1e6 /(kcgs*T)
     gamma6 = gam6H + gam6He + gam6HH
@@ -266,10 +266,10 @@ def gamma_KA4(T, PH, PHH, PHe, ielem, iion, \
     """HWHM of Lorentzian (cm-1) caluculated with the 4rd equation in p.4 of Kurucz&Avrett1981
     
     Args(inputs):
-      T: temperature (K) (array)
-      PH: hydrogen pressure (bar) (array)  #1 bar = 1e6 dyn/cm2 (array)
-      PHH: H2 molecule pressure (bar) (array)
-      PHe: helium pressure (bar) (array)
+      T: temperature (K)
+      PH: hydrogen pressure (bar)  #1 bar = 1e6 dyn/cm2
+      PHH: H2 molecule pressure (bar)
+      PHe: helium pressure (bar)
       ielem:  atomic number (e.g., Fe=26)
       iion:  ionized level (e.g., neutral=1, singly ionized=2, etc.)
       nu_lines:  transition waveNUMBER in [cm-1] (NOT frequency in [s-1])
@@ -278,7 +278,7 @@ def gamma_KA4(T, PH, PHH, PHe, ielem, iion, \
       atomicmass: atomic mass [amu]
       ionE: ionization potential [eV]
       gamRad: log of gamma of radiation damping (s-1) #(https://www.astro.uu.se/valdwiki/Vald3Format)
-      gamSta (jnp array): log of gamma of Stark damping (s-1)
+      gamSta: log of gamma of Stark damping (s-1)
       vdWdamp:  log of (van der Waals damping constant / neutral hydrogen number) (s-1)
       enh_damp: empirical "enhancement factor" for classical Unsoeld's damping constant
           #cf.) This coefficient (enh_damp) depends on  each species in some codes such as Turbospectrum. #tako210917
@@ -306,8 +306,8 @@ def gamma_KA4(T, PH, PHH, PHe, ielem, iion, \
     """
     ccgs = 2.99792458e10 #[cm/s]
     kcgs = 1.38064852e-16 #[erg/K]
-    gamRad = jnp.where(gamRad==0., -99, gamRad)
-    gamSta = jnp.where(gamSta==0., -99, gamSta)
+    gamRad = np.where(gamRad==0., -99, gamRad)
+    gamSta = np.where(gamSta==0., -99, gamSta)
     hcgs = 6.62607015e-27 #Planck constant [erg*s]
     Rcgs = 1.0973731568e5 #Rydberg constant [cm-1]
     ucgs = 1.660539067e-24 #unified atomic mass unit [g]
@@ -335,10 +335,10 @@ def gamma_KA3s(T, PH, PHH, PHe, ielem, iion, \
     """(supplemetary:) HWHM of Lorentzian (cm-1) caluculated with the 3rd equation in p.4 of Kurucz&Avrett1981 but without discriminating iron group elements
 
     Args(inputs):
-      T: temperature (K) (array)
-      PH: hydrogen pressure (bar) (array)  #1 bar = 1e6 dyn/cm2 (array)
-      PHH: H2 molecule pressure (bar) (array)
-      PHe: helium pressure (bar) (array)
+      T: temperature (K)
+      PH: hydrogen pressure (bar)  #1 bar = 1e6 dyn/cm2
+      PHH: H2 molecule pressure (bar)
+      PHe: helium pressure (bar)
       ielem:  atomic number (e.g., Fe=26)
       iion:  ionized level (e.g., neutral=1, singly ionized=2, etc.)
       nu_lines:  transition waveNUMBER in [cm-1] (NOT frequency in [s-1])
@@ -347,7 +347,7 @@ def gamma_KA3s(T, PH, PHH, PHe, ielem, iion, \
       atomicmass: atomic mass [amu]
       ionE: ionization potential [eV]
       gamRad: log of gamma of radiation damping (s-1) #(https://www.astro.uu.se/valdwiki/Vald3Format)
-      gamSta (jnp array): log of gamma of Stark damping (s-1)
+      gamSta: log of gamma of Stark damping (s-1)
       vdWdamp:  log of (van der Waals damping constant / neutral hydrogen number) (s-1)
       enh_damp: empirical "enhancement factor" for classical Unsoeld's damping constant
           #cf.) This coefficient (enh_damp) depends on  each species in some codes such as Turbospectrum. #tako210917
@@ -374,8 +374,8 @@ def gamma_KA3s(T, PH, PHH, PHe, ielem, iion, \
     """
     ccgs = 2.99792458e10 #[cm/s]
     kcgs = 1.38064852e-16 #[erg/K]
-    gamRad = jnp.where(gamRad==0., -99, gamRad)
-    gamSta = jnp.where(gamSta==0., -99, gamSta)
+    gamRad = np.where(gamRad==0., -99, gamRad)
+    gamSta = np.where(gamSta==0., -99, gamSta)
     hcgs = 6.62607015e-27 #Planck constant [erg*s]
     Rcgs = 1.0973731568e5 #Rydberg constant [cm-1]
     ucgs = 1.660539067e-24 #unified atomic mass unit [g]
@@ -393,13 +393,13 @@ def gamma_KA3s(T, PH, PHH, PHe, ielem, iion, \
     gap_msr = msr_upper - msr_lower
     gap_msr_rev = gap_msr * np.where(gap_msr < 0, -1., 1.) #Reverse upper and lower if necessary (TBC) #test2109\\\\
     gap_msr_rev_cm = a0**2 * gap_msr_rev #[Bohr radius -> cm]
-    gam6H = 17 * (8*kcgs*T*(1./atomicmass+1./1.)/(jnp.pi*ucgs))**0.3 \
+    gam6H = 17 * (8*kcgs*T*(1./atomicmass+1./1.)/(np.pi*ucgs))**0.3 \
         * (6.63e-25*ecgs**2/hcgs*(gap_msr_rev_cm))**0.4 \
         * PH*1e6 /(kcgs*T)
-    gam6He = 17 * (8*kcgs*T*(1./atomicmass+1./4.)/(jnp.pi*ucgs))**0.3 \
+    gam6He = 17 * (8*kcgs*T*(1./atomicmass+1./4.)/(np.pi*ucgs))**0.3 \
         * (2.07e-25*ecgs**2/hcgs*(gap_msr_rev_cm))**0.4 \
         * PHe*1e6 /(kcgs*T)
-    gam6HH = 17 * (8*kcgs*T*(1./atomicmass+1./2.)/(jnp.pi*ucgs))**0.3 \
+    gam6HH = 17 * (8*kcgs*T*(1./atomicmass+1./2.)/(np.pi*ucgs))**0.3 \
         * (8.04e-25*ecgs**2/hcgs*(gap_msr_rev_cm))**0.4 \
         * PHH*1e6 /(kcgs*T)
     gamma6 = gam6H + gam6He + gam6HH
