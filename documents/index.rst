@@ -13,6 +13,7 @@ ExoJAX
 	      
    userguide/installation.rst
    userguide/ql.rst	     
+   userguide/database.rst	     
 
 .. toctree::
    :maxdepth: 2
