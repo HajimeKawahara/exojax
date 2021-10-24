@@ -7,7 +7,7 @@
 import numpy as np
 import jax.numpy as jnp
 import pathlib
-from exojax.spec import hapi, exomolapi, exomol, vald3api, vald3
+from exojax.spec import hapi, exomolapi, exomol, atomllapi, atomll
 from exojax.spec.hitran import gamma_natural as gn
 import pandas as pd
 
@@ -680,16 +680,16 @@ class AdbVald(object):  #integrated from vald3db.py
 
         #load vald file ("Extract Stellar" request)
         print("Reading VALD file")
-        valdd=vald3api.read_ExAll(self.vald3_file) #pandas.DataFrame
+        valdd=atomllapi.read_ExAll(self.vald3_file) #pandas.DataFrame
         #valdd.to_feather(self.vald3_file.with_suffix(".feather"))
         
         #compute additional transition parameters
-        self._A, self.nu_lines, self._elower, self._eupper, self._gupper, self._jlower, self._jupper, self._ielem, self._iion, self._gamRad, self._gamSta, self._vdWdamp = vald3api.pickup_param(valdd)
+        self._A, self.nu_lines, self._elower, self._eupper, self._gupper, self._jlower, self._jupper, self._ielem, self._iion, self._gamRad, self._gamSta, self._vdWdamp = atomllapi.pickup_param(valdd)
         
         
         
         #load the partition functions (for 284 atomic species)
-        pfTdat, self.pfdat = vald3api.load_pf_Barklem2016() #Barklem & Collet (2016)
+        pfTdat, self.pfdat = atomllapi.load_pf_Barklem2016() #Barklem & Collet (2016)
         self.T_gQT = jnp.array(pfTdat.columns[1:], dtype=float)
         self.gQT_284species = jnp.array(self.pfdat.iloc[:, 1:].to_numpy(dtype=float)) #grid Q vs T vs Species
         self.Tref=296.0 #\\\\
@@ -699,7 +699,7 @@ class AdbVald(object):  #integrated from vald3db.py
 
 
         ##Line strength: input shoud be ndarray not jnp array
-        self.Sij0 = vald3.Sij0(self._A, self._gupper, self.nu_lines, self._elower, self.QTref_284, self._QTmask, Irwin) #211013
+        self.Sij0 = atomll.Sij0(self._A, self._gupper, self.nu_lines, self._elower, self.QTref_284, self._QTmask, Irwin) #211013
 
 
 
@@ -713,7 +713,7 @@ class AdbVald(object):  #integrated from vald3db.py
 
 
         #Compile atomic-specific data for each absorption line of interest
-        self.ipccd = vald3api.load_atomicdata()
+        self.ipccd = atomllapi.load_atomicdata()
         #print(self.ipccd)#test
         ionE = jnp.array(list(map(lambda x: self.ipccd[self.ipccd['ielem']==x].iat[0, 1], self.ielem)))
         ionE2 = jnp.array(list(map(lambda x: self.ipccd[self.ipccd['ielem']==x].iat[0, 6], self.ielem)))
@@ -811,7 +811,7 @@ class AdbVald(object):  #integrated from vald3db.py
         #Use Irwin_1981 for Fe I (mask==76)  #test211013Tako
         if Irwin==True:
             if atomspecies == "Fe 1":
-                QT = vald3api.partfn_Fe(T)
+                QT = atomllapi.partfn_Fe(T)
             else:
                 QT = jnp.interp(T, self.T_gQT, gQT)
         return QT
@@ -866,7 +866,7 @@ class AdbVald(object):  #integrated from vald3db.py
             
         """
         def species_to_QTmask(ielem, iion):
-            sp_Roman = vald3api.PeriodicTable[ielem] + '_' + 'I'*iion
+            sp_Roman = atomllapi.PeriodicTable[ielem] + '_' + 'I'*iion
             QTmask = np.where(self.pfdat['T[K]']==sp_Roman)[0][0]
             return QTmask
         QTmask_sp = np.array(list(map(species_to_QTmask, ielem, iion))).astype('int')
@@ -928,12 +928,12 @@ class AdbKurucz(object):
 
         #load vald file ("Extract Stellar" request)
         print("Reading Kurucz file")
-        self._A, self.nu_lines, self._elower, self._eupper, self._gupper, self._jlower, self._jupper, self._ielem, self._iion, self._gamRad, self._gamSta, self._vdWdamp = vald3api.read_kurucz(self.kurucz_file)
+        self._A, self.nu_lines, self._elower, self._eupper, self._gupper, self._jlower, self._jupper, self._ielem, self._iion, self._gamRad, self._gamSta, self._vdWdamp = atomllapi.read_kurucz(self.kurucz_file)
         
         
         
         #load the partition functions (for 284 atomic species)
-        pfTdat, self.pfdat = vald3api.load_pf_Barklem2016() #Barklem & Collet (2016)
+        pfTdat, self.pfdat = atomllapi.load_pf_Barklem2016() #Barklem & Collet (2016)
         self.T_gQT = jnp.array(pfTdat.columns[1:], dtype=float)
         self.gQT_284species = jnp.array(self.pfdat.iloc[:, 1:].to_numpy(dtype=float)) #grid Q vs T vs Species
         self.Tref=296.0
@@ -943,7 +943,7 @@ class AdbKurucz(object):
 
 
         ##Line strength: input shoud be ndarray not jnp array
-        self.Sij0 = vald3.Sij0(self._A, self._gupper, self.nu_lines, self._elower, self.QTref_284, self._QTmask, Irwin) #211013
+        self.Sij0 = atomll.Sij0(self._A, self._gupper, self.nu_lines, self._elower, self.QTref_284, self._QTmask, Irwin) #211013
 
 
 
@@ -957,7 +957,7 @@ class AdbKurucz(object):
 
 
         #Compile atomic-specific data for each absorption line of interest
-        self.ipccd = vald3api.load_atomicdata()
+        self.ipccd = atomllapi.load_atomicdata()
         #print(self.ipccd)#test
         ionE = jnp.array(list(map(lambda x: self.ipccd[self.ipccd['ielem']==x].iat[0, 1], self.ielem)))
         ionE2 = jnp.array(list(map(lambda x: self.ipccd[self.ipccd['ielem']==x].iat[0, 6], self.ielem)))
@@ -1055,7 +1055,7 @@ class AdbKurucz(object):
         #Use Irwin_1981 for Fe I (mask==76)  #test211013Tako
         if Irwin==True:
             if atomspecies == "Fe 1":
-                QT = vald3api.partfn_Fe(T)
+                QT = atomllapi.partfn_Fe(T)
             else:
                 QT = jnp.interp(T, self.T_gQT, gQT)
         return QT
@@ -1110,7 +1110,7 @@ class AdbKurucz(object):
             
         """
         def species_to_QTmask(ielem, iion):
-            sp_Roman = vald3api.PeriodicTable[ielem] + '_' + 'I'*iion
+            sp_Roman = atomllapi.PeriodicTable[ielem] + '_' + 'I'*iion
             QTmask = np.where(self.pfdat['T[K]']==sp_Roman)[0][0]
             return QTmask
         QTmask_sp = np.array(list(map(species_to_QTmask, ielem, iion))).astype('int')
