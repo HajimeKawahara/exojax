@@ -133,7 +133,7 @@ def ap(fobs,nusd,ws,we,Nx):
 
     return fobsx,nusdx,wavdx,errx,nus,wav,res,mdbCO,mdbH2O,numatrix_CO,numatrix_H2O,cdbH2H2,cdbH2He
     
-N=4500
+N=1500
 fobs1,nusd1,wavd1,err1,nus1,wav1,res1,mdbCO1,mdbH2O1,numatrix_CO1,numatrix_H2O1,cdbH2H21,cdbH2He1=ap(fobs,nusd,22876.0,23010.0,N)
 
 #######################################################
@@ -242,7 +242,7 @@ def model_c(nu1,y1,e1):
 #Running a HMC-NUTS
 rng_key = random.PRNGKey(0)
 rng_key, rng_key_ = random.split(rng_key)
-num_warmup, num_samples = 500, 1000
+num_warmup, num_samples = 250, 500
 kernel = NUTS(model_c,forward_mode_differentiation=True)
 mcmc = MCMC(kernel, num_warmup=num_warmup, num_samples=num_samples)
 mcmc.run(rng_key_, nu1=nusd1, y1=fobs1, e1=err1)
