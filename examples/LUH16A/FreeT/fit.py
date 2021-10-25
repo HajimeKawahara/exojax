@@ -247,7 +247,7 @@ rng_key = random.PRNGKey(0)
 rng_key, rng_key_ = random.split(rng_key)
 num_warmup, num_samples = 500, 1000
 kernel = NUTS(model_c,forward_mode_differentiation=True)
-mcmc = MCMC(kernel, num_warmup=num_warmup, num_samples=num_samples)
+mcmc = MCMC(kernel, num_warmup=num_warmup, num_samples=num_samples, max_tree_depth=12)
 mcmc.run(rng_key_, nu1=nusd1, y1=fobs1, e1=err1)
 print("end HMC")
 
