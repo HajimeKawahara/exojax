@@ -166,27 +166,12 @@ def model_c(nu1,y1):
 
 rng_key = random.PRNGKey(0)
 rng_key, rng_key_ = random.split(rng_key)
-num_warmup, num_samples = 300, 600
+num_warmup, num_samples = 500, 1000
 kernel = NUTS(model_c,forward_mode_differentiation=True, max_tree_depth=16)
 mcmc = MCMC(kernel, num_warmup=num_warmup, num_samples=num_samples)
 mcmc.run(rng_key_, nu1=nusd, y1=nflux)
 
 #Post-processing
-<<<<<<< HEAD
-posterior_sample = mcmc.get_samples()
-np.savez("npz/savepos.npz",[posterior_sample])
-
-pred = Predictive(model_c,posterior_sample,return_sites=["y1"])
-nu_1 = nusd
-err=sigmain*jnp.ones_like(nu_1)
-predictions = pred(rng_key_,nu1=nu_1,y1=None,e1=err)
-median_mu1 = jnp.median(predictions["y1"],axis=0)
-hpdi_mu1 = hpdi(predictions["y1"], 0.9)
-np.savez("npz/saveplotpred.npz",[wavd,nflux,err,mmedian_mu1,hpdi_mu1])
-
-###
-=======
->>>>>>> ec1fac810724041599e98509f943dc4a67ead584
 posterior_sample = mcmc.get_samples()
 np.savez("npz/savepos.npz",[posterior_sample])
 #posterior_sample=np.load("npz/savepos.npz",allow_pickle=True)["arr_0"][0]
