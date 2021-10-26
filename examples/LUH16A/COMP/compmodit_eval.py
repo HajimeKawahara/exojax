@@ -22,7 +22,12 @@ from exojax.spec.evalline import mask_weakline
 
 from exojax.spec import dit, modit
 
-FP64=True
+#RESOLUTION
+N=4500
+#N=9000
+
+
+FP64=False
 if FP64==True:
     #FP64
     from jax.config import config                                                  
@@ -72,7 +77,7 @@ maxMMR_H2O=0.005
 ###########################################################
 #Loading Molecular datanase and  Reducing Molecular Lines
 ###########################################################
-Nx=9000
+Nx=3000
 ws=22876.0
 we=23010.0
 nus,wav,res=nugrid(ws-5.0,we+5.0,Nx,unit="AA",xsmode="modit")
@@ -152,7 +157,6 @@ def ap(fobs,nusd,ws,we,Nx):
 
     return fobsx,nusdx,wavdx,errx,nus,wav,res,mdbCO,mdbH2O,cdbH2H2,cdbH2He
     
-N=1500
 fobsx,nusdx,wavdx,errx,nusx,wavx,resx,mdbCO,mdbH2O,cdbH2H2,cdbH2He=ap(fobs,nusd,22876.0,23010.0,N)
 
 ### MODIT settings
@@ -197,6 +201,8 @@ def predmod(nu1,y1,e1):
     T0 = 1295
     alpha = 0.097
     vsini = 16.0
+    #vsini = 1.0
+
     q1 = 0.5
     q2 = 0.5
     sqrtq1=jnp.sqrt(q1)
@@ -237,7 +243,10 @@ def predmod(nu1,y1,e1):
         
         Frot=response.rigidrot(nus,F0,vsini,u1,u2)
         mu=response.ipgauss_sampling(nusdx,nus,Frot,beta,RV)
-        np.savez("dtau_modit.npz",[nus,dtaumCO,dtaumH2O])
+        if FP64==True:
+            np.savez("dtau_modit"+str(N)+"_64.npz",[nus,dtaumCO,dtaumH2O])
+        else:
+            np.savez("dtau_modit"+str(N)+".npz",[nus,dtaumCO,dtaumH2O])
         return mu
 
     mu=obyo(y1,"y1",nusdx,nus,mdbCO,mdbH2O,cdbH2H2,cdbH2He)
@@ -247,6 +256,6 @@ def predmod(nu1,y1,e1):
 mu=predmod(nusdx,fobsx,errx)
 print(mu)
 if FP64==True:
-    np.savez("cmodit64.npz",[nusdx,mu])
+    np.savez("cmodit"+str(N)+"_64.npz",[nusdx,mu])
 else:
-    np.savez("cmodit.npz",[nusdx,mu])
+    np.savez("cmodit"+str(N)+".npz",[nusdx,mu])
