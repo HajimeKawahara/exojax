@@ -1,16 +1,6 @@
-import numpy as np
-import pandas as pd
-import matplotlib.pyplot as plt
-import seaborn as sns
-import tqdm
-
-import jax.numpy as jnp
-from jax import random
-from jax import vmap, jit
-
 from exojax.spec import rtransfer as rt
-from exojax.spec import planck, moldb, contdb, response, molinfo, make_numatrix0
-from exojax.spec.lpf import xsvector
+from exojax.spec import planck, moldb, contdb, response, molinfo
+from exojax.spec import make_numatrix0
 from exojax.spec.lpf import xsmatrix
 from exojax.spec.exomol import gamma_exomol
 from exojax.spec.hitran import SijT, doppler_sigma, gamma_natural, gamma_hitran
@@ -18,10 +8,19 @@ from exojax.spec.hitrancia import read_cia, logacia
 from exojax.spec.rtransfer import rtrun, dtauM, dtauCIA, nugrid
 from exojax.plot.atmplot import plottau, plotcf, plot_maxpoint
 from exojax.utils.afunc import getjov_logg
+import numpy as np
+import tqdm
+import seaborn as sns
+import matplotlib.pyplot as plt
+import jax.numpy as jnp
+from jax import random
+from jax import vmap, jit
+import pandas as pd
 from exojax.utils.constants import RJ, pc, Rs, c
+import sys
 from exojax.spec.evalline import mask_weakline
 
-#reference pressure for a T-P model
+#ref pressure
 Pref=1.0 #bar
 
 #FLUX reference
@@ -30,7 +29,7 @@ fac0=RJ**2/((10.0*pc)**2)  #nomralize by RJ
 Fref=(2.29**2)*Fabs_REF2/fac0/1.e4 #erg/cm2/s/cm-1 @ 2.3um
 
 #loading spectrum
-dat=pd.read_csv("../data/luhman16a_spectra_detector1.csv",delimiter=",")
+dat=pd.read_csv("../data/luhman16a_spectra.csv",delimiter=",")
 wavd=(dat["wavelength_micron"].values)*1.e4 #AA
 nusd=1.e8/wavd[::-1]
 fobs=(dat["normalized_flux"].values)[::-1]
@@ -55,21 +54,18 @@ vmrH2=(mmrH2*mmw/molmassH2)
 vmrHe=(mmrHe*mmw/molmassHe)
 
 #LINES
-g=10**(5.0)
+g=10**(4.5)
 T0c=1700.0
 Tarr = T0c*np.ones_like(Parr)    
 maxMMR_CO=0.01
 maxMMR_H2O=0.005
 
-
-###########################################################
-#Loading Molecular datanase and  Reducing Molecular Lines
-###########################################################
-
+#masking
 def ap(fobs,nusd,ws,we,Nx):
     mask=(ws<wavd[::-1])*(wavd[::-1]<we)
-    #additional mask to remove a strong telluric
-    mask=mask*((22898.5>wavd[::-1])+(wavd[::-1]>22899.5))  
+    #additional mask
+    mask=mask*((22898.5>wavd[::-1])+(wavd[::-1]>22899.5))
+
     fobsx=fobs[mask]
     nusdx=nusd[mask]
     wavdx=1.e8/nusdx[::-1]
@@ -77,12 +73,18 @@ def ap(fobs,nusd,ws,we,Nx):
     nus,wav,res=nugrid(ws-5.0,we+5.0,Nx,unit="AA")
     #loading molecular database 
     mdbCO=moldb.MdbExomol('.database/CO/12C-16O/Li2015',nus) 
-    mdbH2O=moldb.MdbExomol('.database/H2O/1H2-16O/POKAZATEL',nus,crit=1.e-46) 
+    mdbH2O=moldb.MdbExomol('.database/H2O/1H2-16O/POKAZATEL',nus,crit=1.e-45) 
+#    mdbH2O=moldb.MdbExomol('.database/H2O/1H2-16O/POKAZATEL',nus) 
+
+    print("resolution=",res)
+
     #LOADING CIA
     cdbH2H2=contdb.CdbCIA('.database/H2-H2_2011.cia',nus)
     cdbH2He=contdb.CdbCIA('.database/H2-He_2011.cia',nus)
 
-    #REDUCING UNNECESSARY LINES
+    ### REDUCING UNNECESSARY LINES
+    #######################################################
+    
     #1. CO
     Tarr = T0c*np.ones_like(Parr)    
     qt=vmap(mdbCO.qr_interp)(Tarr)
@@ -93,17 +95,19 @@ def ap(fobs,nusd,ws,we,Nx):
     SijM=jit(vmap(SijT,(0,None,None,None,0)))\
         (Tarr,mdbCO.logsij0,mdbCO.nu_lines,mdbCO.elower,qt)
     sigmaDM=jit(vmap(doppler_sigma,(None,0,None)))\
-        (mdbCO.nu_lines,Tarr,molmassCO)        
+        (mdbCO.nu_lines,Tarr,molmassCO)    
+    
     mask_CO,maxcf,maxcia=mask_weakline(mdbCO,Parr,dParr,Tarr,SijM,gammaLM,sigmaDM,maxMMR_CO*ONEARR,molmassCO,mmw,g,vmrH2,cdbH2H2)
     mdbCO.masking(mask_CO)
 
     plot_maxpoint(mask_CO,Parr,maxcf,maxcia,mol="CO")
-    plt.savefig("maxpoint_CO.pdf", bbox_inches="tight", pad_inches=0.0)
+    plt.savefig("npz/maxpoint_CO.pdf", bbox_inches="tight", pad_inches=0.0)
         
     #2. H2O
     T0xarr=list(range(500,1800,100))
     for k,T0x in enumerate(T0xarr):
         Tarr = T0x*np.ones_like(Parr)    
+
         qt=vmap(mdbH2O.qr_interp)(Tarr)
         gammaLMP = jit(vmap(gamma_exomol,(0,0,None,None)))\
             (Parr,Tarr,mdbH2O.n_Texp,mdbH2O.alpha_ref)
@@ -113,60 +117,71 @@ def ap(fobs,nusd,ws,we,Nx):
             (Tarr,mdbH2O.logsij0,mdbH2O.nu_lines,mdbH2O.elower,qt)
         sigmaDM=jit(vmap(doppler_sigma,(None,0,None)))\
             (mdbH2O.nu_lines,Tarr,molmassH2O)    
+    
         mask_H2O_tmp,maxcf,maxcia=mask_weakline(mdbH2O,Parr,dParr,Tarr,SijM,gammaLM,sigmaDM,maxMMR_H2O*ONEARR,molmassH2O,mmw,g,vmrH2,cdbH2H2)
         if k==0:
             mask_H2O=np.copy(mask_H2O_tmp)
         else:
             mask_H2O=mask_H2O+mask_H2O_tmp
 
-        if k==len(T0xarr)-1:
-            print("H2O ")
+        if T0x==1700.0:
             plot_maxpoint(mask_H2O_tmp,Parr,maxcf,maxcia,mol="H2O")
             plt.savefig("maxpoint_H2O.pdf", bbox_inches="tight", pad_inches=0.0)
-            print("H2O saved")
+
             
     mdbH2O.masking(mask_H2O)
     print("Final:",len(mask_H2O),"->",np.sum(mask_H2O))
+
+
     #nu matrix
     numatrix_CO=make_numatrix0(nus,mdbCO.nu_lines)    
     numatrix_H2O=make_numatrix0(nus,mdbH2O.nu_lines)
+    cdbH2H2=contdb.CdbCIA('.database/H2-H2_2011.cia',nus)
+    cdbH2He=contdb.CdbCIA('.database/H2-He_2011.cia',nus)
 
     return fobsx,nusdx,wavdx,errx,nus,wav,res,mdbCO,mdbH2O,numatrix_CO,numatrix_H2O,cdbH2H2,cdbH2He
     
+
 N=4500
 fobs1,nusd1,wavd1,err1,nus1,wav1,res1,mdbCO1,mdbH2O1,numatrix_CO1,numatrix_H2O1,cdbH2H21,cdbH2He1=ap(fobs,nusd,22876.0,23010.0,N)
+
 
 #######################################################
 #HMC-NUTS FITTING PART
 #######################################################
+
+import arviz
 import numpyro.distributions as dist
 import numpyro
 from numpyro.infer import MCMC, NUTS
 from numpyro.infer import Predictive
 from numpyro.diagnostics import hpdi
 
+baseline=1.07 #(baseline for CIA photosphere)
 #GP model covariance
 def modelcov(t,tau,a,err):
     Dt = t - jnp.array([t]).T
     K=a*jnp.exp(-(Dt)**2/2/(tau**2))+jnp.diag(err**2)
     return K
 
-
-baseline=1.07 #(baseline for a CIA photosphere in the observed (normaized) spectrum)
-# Model
+#Model
 def model_c(nu1,y1,e1):
     Rp = numpyro.sample('Rp', dist.Uniform(0.5,1.5))
-    Mp = numpyro.sample('Mp', dist.Normal(33.5,0.3))
+    #Mp = numpyro.sample('Mp', dist.Normal(33.5,0.3))
+    Mp = numpyro.sample('Mp', dist.Uniform(1.0,50.0))
+    fA=1.0
+    #fA = numpyro.sample('fA', dist.Uniform(0.0,1.0))
     #sigma = numpyro.sample('sigma', dist.Exponential(10.0))
     RV = numpyro.sample('RV', dist.Uniform(26.0,30.0))
     MMR_CO = numpyro.sample('MMR_CO', dist.Uniform(0.0,maxMMR_CO))
     MMR_H2O = numpyro.sample('MMR_H2O', dist.Uniform(0.0,maxMMR_H2O))
     T0 = numpyro.sample('T0', dist.Uniform(1000.0,1700.0))
     alpha = numpyro.sample('alpha', dist.Uniform(0.05,0.15))
-    vsini = numpyro.sample('vsini', dist.Uniform(10.0,20.0))    
-    #Limb Darkening from 2013A&A...552A..16C (1500K, logg=5, K)
-    # u1=0.5969 	
-    # u2=0.1125
+    vsini = numpyro.sample('vsini', dist.Uniform(10.0,20.0))
+
+    g=2478.57730044555*Mp/Rp**2 #gravity
+    #u1=0.0
+    #u2=0.0
     #Kipping Limb Darkening Prior arxiv:1308.0009
     q1 = numpyro.sample('q1', dist.Uniform(0.0,1.0))
     q2 = numpyro.sample('q2', dist.Uniform(0.0,1.0))
@@ -178,9 +193,7 @@ def model_c(nu1,y1,e1):
     tau=10**(logtau)
     loga = numpyro.sample('loga', dist.Uniform(-4.0,-2.0))
     a=10**(loga)
-    
-    g=2478.57730044555*Mp/Rp**2 #gravity
-        
+
     #T-P model//
     Tarr = T0*(Parr/Pref)**alpha 
     
@@ -220,21 +233,22 @@ def model_c(nu1,y1,e1):
         dtau=dtaumCO+dtaumH2O+dtaucH2H2+dtaucH2He    
         sourcef = planck.piBarr(Tarr,nus)
 
-        Ftoa=Fref/Rp**2
+        Ftoa=Fref/(fA*Rp**2)
         F0=rtrun(dtau,sourcef)/baseline/Ftoa
         
         Frot=response.rigidrot(nus,F0,vsini,u1,u2)
         mu=response.ipgauss_sampling(nusd,nus,Frot,beta,RV)
-
+        
         #errall=jnp.sqrt(e1**2+sigma**2)
         errall=e1
         cov = modelcov(nusd,tau,a,errall)
         #cov = modelcov(nusd,tau,a,e1)
         #numpyro.sample(tag, dist.Normal(mu, e1), obs=y)
         numpyro.sample(tag, dist.MultivariateNormal(loc=mu, covariance_matrix=cov), obs=y)
-        
-    obyo(y1,"y1",nusd1,nus1,numatrix_CO1,numatrix_H2O1,mdbCO1,mdbH2O1,cdbH2H21,cdbH2He1)
 
+    obyo(y1,"y1",nusd1,nus1,numatrix_CO1,numatrix_H2O1,mdbCO1,mdbH2O1,cdbH2H21,cdbH2He1)
+#--------------------------------------------------------
+#Running a HMC-NUTS
 #Running a HMC-NUTS
 rng_key = random.PRNGKey(0)
 rng_key, rng_key_ = random.split(rng_key)
