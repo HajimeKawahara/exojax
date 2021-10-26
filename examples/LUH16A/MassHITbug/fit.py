@@ -29,7 +29,7 @@ fac0=RJ**2/((10.0*pc)**2)  #nomralize by RJ
 Fref=(2.29**2)*Fabs_REF2/fac0/1.e4 #erg/cm2/s/cm-1 @ 2.3um
 
 #loading spectrum
-dat=pd.read_csv("../data/luhman16a_spectra.csv",delimiter=",")
+dat=pd.read_csv("../data/luhman16a_spectra_detector1.csv",delimiter=",")
 wavd=(dat["wavelength_micron"].values)*1.e4 #AA
 nusd=1.e8/wavd[::-1]
 fobs=(dat["normalized_flux"].values)[::-1]
@@ -73,18 +73,18 @@ def ap(fobs,nusd,ws,we,Nx):
     nus,wav,res=nugrid(ws-5.0,we+5.0,Nx,unit="AA")
     #loading molecular database 
     #mdbCO=moldb.MdbExomol('.database/CO/12C-16O/Li2015',nus) 
-    mdbCO=moldb.MdbHit('.database/05_HITEMP2019.par.bz2',nus)
+    mdbCO=moldb.MdbHit('05_HITEMP2019.par.bz2',nus)
     mdbCO.ExomolQT('.database/CO/12C-16O/Li2015') 
 
     ##use HITEMP later
-    mdbH2O=moldb.MdbExomol('.database/H2O/1H2-16O/POKAZATEL',nus,crit=1.e-45) 
+    mdbH2O=moldb.MdbExomol('H2O/1H2-16O/POKAZATEL',nus,crit=1.e-45) 
 #    mdbH2O=moldb.MdbExomol('.database/H2O/1H2-16O/POKAZATEL',nus) 
 
     print("resolution=",res)
 
     #LOADING CIA
-    cdbH2H2=contdb.CdbCIA('.database/H2-H2_2011.cia',nus)
-    cdbH2He=contdb.CdbCIA('.database/H2-He_2011.cia',nus)
+    cdbH2H2=contdb.CdbCIA('H2-H2_2011.cia',nus)
+    cdbH2He=contdb.CdbCIA('H2-He_2011.cia',nus)
 
     ### REDUCING UNNECESSARY LINES
     #######################################################
@@ -150,7 +150,7 @@ def ap(fobs,nusd,ws,we,Nx):
     return fobsx,nusdx,wavdx,errx,nus,wav,res,mdbCO,mdbH2O,numatrix_CO,numatrix_H2O,cdbH2H2,cdbH2He
     
 
-N=4500
+N=1500
 fobs1,nusd1,wavd1,err1,nus1,wav1,res1,mdbCO1,mdbH2O1,numatrix_CO1,numatrix_H2O1,cdbH2H21,cdbH2He1=ap(fobs,nusd,22876.0,23010.0,N)
 
 
@@ -174,18 +174,16 @@ def modelcov(t,tau,a,err):
 
 #Model
 def model_c(nu1,y1,e1):
-    Rp = numpyro.sample('Rp', dist.Uniform(0.6,2.0))
+    Rp = numpyro.sample('Rp', dist.Uniform(0.5,1.5))
     #Mp = numpyro.sample('Mp', dist.Normal(33.5,0.3))
     Mp = numpyro.sample('Mp', dist.Uniform(1.0,100.0))
-    fA=1.0
-    #fA = numpyro.sample('fA', dist.Uniform(0.0,1.0))
     #sigma = numpyro.sample('sigma', dist.Exponential(10.0))
-    RV = numpyro.sample('RV', dist.Uniform(27.0,29.0))
+    RV = numpyro.sample('RV', dist.Uniform(26.0,30.0))
     MMR_CO = numpyro.sample('MMR_CO', dist.Uniform(0.0,maxMMR_CO))
     MMR_H2O = numpyro.sample('MMR_H2O', dist.Uniform(0.0,maxMMR_H2O))
     T0 = numpyro.sample('T0', dist.Uniform(1000.0,1700.0))
     alpha = numpyro.sample('alpha', dist.Uniform(0.05,0.15))
-    vsini = numpyro.sample('vsini', dist.Uniform(10.0,15.0))
+    vsini = numpyro.sample('vsini', dist.Uniform(10.0,20.0))
 
     g=2478.57730044555*Mp/Rp**2 #gravity
     #u1=0.0
@@ -197,7 +195,7 @@ def model_c(nu1,y1,e1):
     u1=2.0*sqrtq1*q2
     u2=sqrtq1*(1.0-2.0*q2)
     #GP
-    logtau = numpyro.sample('logtau', dist.Uniform(-1.0,1.0)) #tau=1 <=> 5A
+    logtau = numpyro.sample('logtau', dist.Uniform(-1.5,0.5)) #tau=1 <=> 5A
     tau=10**(logtau)
     loga = numpyro.sample('loga', dist.Uniform(-4.0,-2.0))
     a=10**(loga)
@@ -243,7 +241,7 @@ def model_c(nu1,y1,e1):
         dtau=dtaumCO+dtaumH2O+dtaucH2H2+dtaucH2He    
         sourcef = planck.piBarr(Tarr,nus)
 
-        Ftoa=Fref/(fA*Rp**2)
+        Ftoa=Fref/(Rp**2)
         F0=rtrun(dtau,sourcef)/baseline/Ftoa
         
         Frot=response.rigidrot(nus,F0,vsini,u1,u2)
