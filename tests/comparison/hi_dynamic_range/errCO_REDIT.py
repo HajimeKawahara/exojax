@@ -11,7 +11,7 @@ from exojax.spec.redit import xsvector as redit_xsvector
 from exojax.spec import initspec
 from exojax.spec import xsection as lpf_xsection
 from exojax.spec.hitran import SijT, doppler_sigma, gamma_hitran, gamma_natural
-from exojax.spec import rtcheck, moldb
+from exojax.spec import moldb
 from exojax.spec.dit import set_ditgrid
 from exojax.spec.hitran import normalized_doppler_sigma
 
