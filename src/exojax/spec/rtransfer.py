@@ -11,6 +11,7 @@ from exojax.spec.hitrancia import logacia
 from exojax.spec.hminus import log_hminus_continuum
 from exojax.utils.constants import kB
 from exojax.atm.idealgas import number_density
+from exojax.spec.unitconvert import nu2wav, wav2nu
 
 def nugrid(x0,x1,N,unit="cm-1",xsmode="lpf"):
     """generating the recommended wavenumber grid based on the cross section computation mode
@@ -33,12 +34,9 @@ def nugrid(x0,x1,N,unit="cm-1",xsmode="lpf"):
         if unit=="cm-1":
             nus=np.logspace(np.log10(x0),np.log10(x1),N,dtype=np.float64)
             wav=nu2wav(nus)
-        elif unit=="nm":
+        elif unit=="nm" or unit=="AA":
             wav=np.logspace(np.log10(x0),np.log10(x1),N,dtype=np.float64)
-            nus=1.e7/wav[::-1]
-        elif unit=="AA":
-            wav=np.logspace(np.log10(x0),np.log10(x1),N,dtype=np.float64)
-            nus=1.e8/wav[::-1]
+            nus=wav2nu(wav,unit)
         
         resolution=(len(nus)-1)/np.log(nus[-1]/nus[0])
 
@@ -49,17 +47,11 @@ def nugrid(x0,x1,N,unit="cm-1",xsmode="lpf"):
         print("nugrid is linear: mode=",xsmode)
         if unit=="cm-1":
             nus=np.linspace((x0),(x1),N,dtype=np.float64)
-            wav=1.e8/nus[::-1]
-        elif unit=="nm":
-            cx1=1.e7/x0
-            cx0=1.e7/x1
+            wav=nu2wav(nus)
+        elif unit=="nm" or unit=="AA":
+            cx1,cx0=wav2nu(np.array([x0,x1]),unit)
             nus=np.linspace((cx0),(cx1),N,dtype=np.float64)
-            wav=1.e7/nus[::-1]
-        elif unit=="AA":
-            cx1=1.e8/x0
-            cx0=1.e8/x1
-            nus=np.linspace((cx0),(cx1),N,dtype=np.float64)
-            wav=1.e8/nus[::-1]
+            wav=nu2wav(nus,unit)
             
         dlognu=np.median(np.log(nus[1:])-np.log(nus[:-1]))/N
         resolution=1.0/dlognu
