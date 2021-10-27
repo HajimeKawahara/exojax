@@ -2,15 +2,13 @@
 
    * Line profile computation of `Discrete Integral Transform <https://www.sciencedirect.com/science/article/abs/pii/S0022407320310049>`_ for rapid spectral synthesis, originally proposed by D.C.M van den Bekerom and E.Pannier.
    * This module consists of selected functions in `addit package <https://github.com/HajimeKawahara/addit>`_.
-   * The concept of "folding" can be understood by reading `the discussion <https://github.com/radis/radis/issues/186#issuecomment-764465580>`_ by D.C.M van den Bekeroma.
+   * The concept of "folding" can be understood by reading `the discussion <https://github.com/radis/radis/issues/186#issuecomment-764465580>`_ by D.C.M van den Bekerom.
 
 """
-import jax.numpy as jnp
 import numpy as np
-from jax import jit
-from jax import vmap
+import jax.numpy as jnp
+from jax import jit, vmap
 from jax.lax import scan
-import tqdm
 from exojax.spec.ditkernel import fold_voigt_kernel
 from jax.ops import index_add
 from jax.ops import index as joi

@@ -6,12 +6,10 @@
    * See also `DIT for non evenly-spaced linear grid <https://github.com/dcmvdbekerom/discrete-integral-transform/blob/master/demo/discrete_integral_transform_log.py>`_ by  D.C.M van den Bekeroma, as a reference of this code.
 
 """
-import jax.numpy as jnp
 import numpy as np
-from jax import jit
-from jax import vmap
+import jax.numpy as jnp
+from jax import jit, vmap
 from jax.lax import scan
-import tqdm
 from exojax.spec.ditkernel import fold_voigt_kernel_logst
 from exojax.spec.ditkernel import voigt_kernel_logst
 
@@ -293,6 +291,3 @@ def setdgm_exomol(mdb,fT,Parr,R,molmass,res,*kargs):
     dgm_ngammaL=precompute_dgmatrix(set_dgm_minmax,res=res)
     return jnp.array(dgm_ngammaL)
 
-
-if __name__ == "__main__":
-    print("test")
