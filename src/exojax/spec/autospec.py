@@ -442,6 +442,7 @@ if __name__ == "__main__":
     import matplotlib.pyplot as plt
     from exojax.spec.rtransfer import nugrid
 
+    #XS
     #nus=np.linspace(6101.0,6115.0,3000,dtype=np.float64)
     #nus=np.linspace(6101.0,6115.0,3000,dtype=np.float64)
     #XS
