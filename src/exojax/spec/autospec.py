@@ -2,29 +2,19 @@
    
 """
 import time
-from exojax.spec import defmol
-from exojax.spec import defcia
-from exojax.spec import moldb
-from exojax.spec import contdb 
 from exojax.spec.opacity import xsection
 from exojax.spec.hitran import SijT, doppler_sigma,  gamma_natural, gamma_hitran, normalized_doppler_sigma
-from exojax.spec import planck
 from exojax.spec.exomol import gamma_exomol
-from exojax.spec import molinfo
 from exojax.spec.rtransfer import rtrun, dtauM, dtauCIA, check_nugrid
 from exojax.spec.make_numatrix import make_numatrix0
-from exojax.spec import lpf
-from exojax.spec import dit
-from exojax.spec import modit
-from exojax.spec import initspec
-from exojax.spec import response
+from exojax.spec import defmol,defcia,moldb,contdb,molinfo,lpf,dit,modit,initspec,response,planck
+from exojax.utils.constants import c
 import numpy as np
 from jax import jit, vmap
 import jax.numpy as jnp
 import pathlib
 import tqdm
 __all__ = ['AutoXS','AutoRT']
-
 
 class AutoXS(object):
     """exojax auto cross section generator
@@ -206,7 +196,6 @@ class AutoXS(object):
             gammaLMP = jit(vmap(gamma_exomol,(0,0,None,None)))\
                               (Parr,Tarr,mdb.n_Texp,mdb.alpha_ref)
             gammaLMN=gamma_natural(mdb.A)
-            #gammaLM=gammaLMP[:,None]+gammaLMN[None,:]
             gammaLM=gammaLMP+gammaLMN[None,:]
             self.molmass=mdb.molmass
             SijM=jit(vmap(SijT,(0,None,None,None,0)))\
@@ -222,15 +211,13 @@ class AutoXS(object):
                   (Tarr,mdb.logsij0,mdb.nu_lines,mdb.elower,qt)
             
         nu0=mdb.nu_lines
-
         print("# of lines",len(nu0))
         memory_size=15.0
         d=int(memory_size/(len(nu0)*4/1024./1024.))+1
-        Ni=int(len(self.nus)/d)        
         d2=100
+        Ni=int(len(self.nus)/d)        
         Nlayer=np.shape(SijM)[0]
         Nline=np.shape(SijM)[1]
-
         if self.xsmode == "auto":
             xsmode = self.select_xsmode(Nline)
         else:
@@ -276,7 +263,6 @@ class AutoXS(object):
                      (mdb.nu_lines,Tarr,self.molmass)
             dgm_sigmaD=dit.dgmatrix(sigmaDM,0.1)
             dgm_gammaL=dit.dgmatrix(gammaLM,0.2)
-            #sigma=dit.sigma_voigt(dgm_sigmaD,dgm_gammaL)
             xsm=dit.xsmatrix(cnu,indexnu,pmarray,sigmaDM,\
                                   gammaLM,SijM,nus,\
                                   dgm_sigmaD,dgm_gammaL)
@@ -414,7 +400,6 @@ class AutoRT(object):
         self.betamic=betamic
         self.RV=RV
         
-        c=299792.458
         self.betaIP=c/(2.0*np.sqrt(2.0*np.log(2.0))*self.R)
         beta=np.sqrt((self.betaIP)**2+(self.betamic)**2)
         ts=time.time()
@@ -432,7 +417,6 @@ class AutoRT(object):
             print("IP",te-ts,"s")
         else:
             ts=time.time()
-            c=299792.458
             dv=c*(np.log(self.nus[1])-np.log(self.nus[0]))
             Nv=int(self.vsini/dv)+1
             vlim=Nv*dv
