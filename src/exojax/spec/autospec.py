@@ -350,9 +350,7 @@ class AutoRT(object):
         """
         mmr=mmr*np.ones_like(self.Tarr)
         axs=AutoXS(self.nus,database,molecules,crit=crit,xsmode=self.xsmode, autogridconv=self.autogridconv)
-        
         xsm=axs.xsmatrix(self.Tarr,self.Parr) 
-
         dtauMx=dtauM(self.dParr,xsm,mmr,axs.molmass,self.gravity)
         self.dtau=self.dtau+dtauMx
 

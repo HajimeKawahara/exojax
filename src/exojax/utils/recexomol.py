@@ -1,4 +1,4 @@
-"""
+"""Get Recommendation from ExoMol
 
 
 
@@ -53,4 +53,5 @@ def get_exomol_database_list(molecule, isotope_full_name):
     return databases, databases_recommended[0]
 
 if __name__ == "__main__":
-    print(get_exomol_database_list("CO", "12C-16O"))
+    db, db0=get_exomol_database_list("CO", "12C-16O")
+    assert db0=="Li2015"
