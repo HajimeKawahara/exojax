@@ -9,6 +9,8 @@ import numpy as np
 from exojax.special.expn import E1
 from exojax.spec.hitrancia import logacia
 from exojax.spec.hminus import log_hminus_continuum
+from exojax.utils.constants import kB
+from exojax.atm.idealgas import number_density
 
 def nugrid(x0,x1,N,unit="cm-1",xsmode="lpf"):
     """generating the recommended wavenumber grid based on the cross section computation mode
@@ -30,7 +32,7 @@ def nugrid(x0,x1,N,unit="cm-1",xsmode="lpf"):
         print("nugrid is log: mode=",xsmode)
         if unit=="cm-1":
             nus=np.logspace(np.log10(x0),np.log10(x1),N,dtype=np.float64)
-            wav=1.e8/nus[::-1]
+            wav=nu2wav(nus)
         elif unit=="nm":
             wav=np.logspace(np.log10(x0),np.log10(x1),N,dtype=np.float64)
             nus=1.e7/wav[::-1]
@@ -63,8 +65,7 @@ def nugrid(x0,x1,N,unit="cm-1",xsmode="lpf"):
         resolution=1.0/dlognu
         if resolution<300000.0:
             print("WARNING: median resolution may be too small. R=",resolution)
-        
-            
+                    
     return nus, wav, resolution
 
 def check_nugrid(nus,crit1=1.e-5,crit2=1.e-14,gridmode="ESLOG"):
@@ -75,6 +76,7 @@ def check_nugrid(nus,crit1=1.e-5,crit2=1.e-14,gridmode="ESLOG"):
        crit1: criterion for the maximum deviation of log10(nu)/median(log10(nu)) from ESLOG 
        crit2: criterion for the maximum deviation of log10(nu) from ESLOG 
        gridmode: ESLOG or ESLIN
+
     Returns:
        True (nugrid is ESLOG) or False (not)
 
@@ -92,10 +94,8 @@ def check_nugrid(nus,crit1=1.e-5,crit2=1.e-14,gridmode="ESLOG"):
         val1=np.abs(np.max(np.abs(w))/np.median(p))
         val2=-np.inf #do not check
     if val1<crit1 and val2 < crit2:
-#        print(val1,val2)
         return True
     else:
-#        print(val1,val2)
         return False
     
 
@@ -150,13 +150,10 @@ def dtauCIA(nus,Tarr,Parr,dParr,vmr1,vmr2,mmw,g,nucia,tcia,logac):
        logm_ucgs=np.log10(m_u*1.e3) where m_u = scipy.constants.m_u.
 
     """
-    kB=1.380649e-16
     logm_ucgs=-23.779750909492115
-
-    narr=(Parr*1.e6)/(kB*Tarr)
+    narr=number_density(Parr,Tarr)
     lognarr1=jnp.log10(vmr1*narr) #log number density
     lognarr2=jnp.log10(vmr2*narr) #log number density
-    
     logkb=np.log10(kB)    
     logg=jnp.log10(g)
     ddParr=dParr/Parr
@@ -188,8 +185,6 @@ def dtauM(dParr,xsm,MR,mass,g):
     fac=6.022140858549162e+29
     return fac*xsm*dParr[:,None]*MR[:,None]/(mass*g)
 
-
-#def dtauHminus(nus,Tarr,Parr,dParr,number_density_e,number_density_h,mmw,g):
 def dtauHminus(nus,Tarr,Parr,dParr,vmre,vmrh,mmw,g):
     """dtau of the H- continuum
 
@@ -211,10 +206,8 @@ def dtauHminus(nus,Tarr,Parr,dParr,vmre,vmrh,mmw,g):
        logm_ucgs=np.log10(m_u*1.e3) where m_u = scipy.constants.m_u.
 
     """
-    kB=1.380649e-16
     logm_ucgs=-23.779750909492115
-
-    narr=(Parr*1.e6)/(kB*Tarr)
+    narr=number_density(Parr,Tarr)
     #       number_density_e: number density for e- [N_layer]
     #       number_density_h: number density for H atoms [N_layer]
     number_density_e=vmre*narr
@@ -311,7 +304,6 @@ def rtrun_surface(dtau,S,Sb):
 
 
 if __name__ == "__main__":
-
 
 
     wav=np.linspace(22920.23000,1000)
