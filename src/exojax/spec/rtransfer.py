@@ -1,6 +1,4 @@
-#!/usr/bin/env python
-# -*- coding: utf-8 -*-
-"""radiative transfer module used in exospectral analysis.
+"""Radiative transfer module used in exospectral analysis.
 
 """
 from jax import jit
@@ -296,10 +294,8 @@ def rtrun_surface(dtau,S,Sb):
 
 
 if __name__ == "__main__":
-
-
     wav=np.linspace(22920.23000,1000)
-    nus=1.e8/wav[::-1]
+    nus=wav2nu(wav,inputunit="AA")
     print(check_nugrid(nus, gridmode="ESLIN"))
     print("----------------------")
     
