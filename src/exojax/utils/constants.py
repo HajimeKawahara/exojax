@@ -2,6 +2,10 @@
 
    * constants in cgs or km/s
 
+    Note:
+       logm_ucgs=np.log10(m_u*1.e3) where m_u = scipy.constants.m_u.
+
+
 """
 
 #cgs
@@ -16,6 +20,7 @@ m_u=1.66053904e-24 #amu
 kB=1.38064852e-16
 hcperk=1.4387773538277202 #hc/kB (cm K)
 ccgs=29979245800.0 #c in cgs
+logm_ucgs=-23.779750909492115 #log(m_u) in cgs unit
 
 #km/s
 c=299792.458

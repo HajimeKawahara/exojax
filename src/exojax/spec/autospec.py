@@ -5,9 +5,10 @@ import time
 from exojax.spec.opacity import xsection
 from exojax.spec.hitran import SijT, doppler_sigma,  gamma_natural, gamma_hitran, normalized_doppler_sigma
 from exojax.spec.exomol import gamma_exomol
-from exojax.spec.rtransfer import rtrun, dtauM, dtauCIA, check_nugrid
+from exojax.spec.rtransfer import rtrun, dtauM, dtauCIA, check_scale_nugrid
 from exojax.spec.make_numatrix import make_numatrix0
 from exojax.spec import defmol,defcia,moldb,contdb,molinfo,lpf,dit,modit,initspec,response,planck
+from exojax.spec.check_nugrid import check_scale_nugrid
 from exojax.utils.constants import c
 import numpy as np
 from jax import jit, vmap
@@ -120,7 +121,7 @@ class AutoXS(object):
             sigmaD=doppler_sigma(mdb.nu_lines,T,molmass)
             xsv=xsection(self.nus,nu0,sigmaD,gammaL,Sij,memory_size=self.memory_size)
         elif xsmode=="modit" or xsmode=="MODIT":
-            checknus=check_nugrid(self.nus,gridmode="ESLOG")
+            checknus=check_scale_nugrid(self.nus,gridmode="ESLOG")
 
             if ~checknus:
                 print("WARNING: the wavenumber grid does not look ESLOG.")
@@ -143,7 +144,7 @@ class AutoXS(object):
        
         elif xsmode=="dit" or xsmode=="DIT":
             sigmaD=doppler_sigma(mdb.nu_lines,T,molmass)
-            checknus=check_nugrid(self.nus,gridmode="ESLIN")
+            checknus=check_scale_nugrid(self.nus,gridmode="ESLIN")
             if ~checknus:
                 print("WARNING: the wavenumber grid does not look ESLIN.")
                 if self.autogridconv:
@@ -170,7 +171,7 @@ class AutoXS(object):
 
                 
     def select_xsmode(self,Nline):
-        checknus=check_nugrid(self.nus,gridmode="ESLIN")
+        checknus=check_scale_nugrid(self.nus,gridmode="ESLIN")
         print("# of lines=",Nline)
         if Nline > 1000:
             print("DIT selected")
@@ -307,9 +308,9 @@ class AutoRT(object):
         print(self.xsmode)
         self.autogridconv=autogridconv
 
-        if check_nugrid(nus,gridmode="ESLOG"):
+        if check_scale_nugrid(nus,gridmode="ESLOG"):
             print("nu grid is evenly spaced in log space (ESLOG).")
-        elif check_nugrid(nus,gridmode="ESLIN"):
+        elif check_scale_nugrid(nus,gridmode="ESLIN"):
             print("nu grid is evenly spaced in linear space (ESLIN).")    
         else:
             print("nu grid is NOT evenly spaced in log nor linear space.")
