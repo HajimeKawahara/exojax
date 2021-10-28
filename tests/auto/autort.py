@@ -22,7 +22,7 @@ print("MODIT and LPF DIF=",np.sum((F0-F1)**2)/len(F0)/np.median(F0))
 
 
 plt.plot(nus,F0,label="MODIT")
-plt.plot(nus,F1,".",label="LPF")
+#plt.plot(nus,F1,".",label="LPF")
 plt.legend()
 plt.show()
 

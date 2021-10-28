@@ -23,7 +23,7 @@ voigt(nu,1.0,2.0) #sigma_D=1.0, gamma_L=2.0
  
 ```python
 from exojax.spec import AutoXS
-nus=numpy.linspace(1900.0,2300.0,40000,dtype=numpy.float64) #wavenumber (cm-1)
+nus=numpy.linspace(1900.0,2300.0,200000,dtype=numpy.float64) #wavenumber (cm-1)
 autoxs=AutoXS(nus,"ExoMol","CO") #using ExoMol CO (12C-16O). HITRAN and HITEMP are also supported.  
 xsv=autoxs.xsection(1000.0,1.0) #cross section for 1000K, 1bar (cm2)
 ```
@@ -48,7 +48,7 @@ autoxs.mdb is the [moldb.MdbExomol class](http://secondearths.sakura.ne.jp/exoja
 ```python
 from exojax.spec.rtransfer import nugrid
 from exojax.spec import AutoRT
-nus,wav,res=nugrid(1900.0,2300.0,40000,"cm-1")
+nus,wav,res=nugrid(1900.0,2300.0,200000,"cm-1")
 Parr=numpy.logspace(-8,2,100) #100 layers from 10^-8 bar to 10^2 bar
 Tarr = 500.*(Parr/Parr[-1])**0.02    
 autort=AutoRT(nus,1.e5,2.33,Tarr,Parr) #g=1.e5 cm/s2, mmw=2.33
