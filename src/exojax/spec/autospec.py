@@ -169,16 +169,19 @@ class AutoXS(object):
             
         return xsv
 
-                
+
     def select_xsmode(self,Nline):
-        checknus=check_scale_nugrid(self.nus,gridmode="ESLIN")
         print("# of lines=",Nline)
-        if Nline > 1000:
+        if Nline > 1000 and check_scale_nugrid(self.nus,gridmode="ESLOG"):
+            print("MODIT selected")
+            return "MODIT"
+        elif Nline > 1000 and check_scale_nugrid(self.nus,gridmode="ESLIN"):
             print("DIT selected")
             return "DIT"
         else:
             print("LPF selected")
             return "LPF"
+
         
     def xsmatrix(self,Tarr,Parr):
         """cross section matrix
