@@ -197,14 +197,28 @@ def rtrun(dtau,S):
         flux in the unit of [erg/cm2/s/cm-1] if using piBarr as a source function.
 
     """
+    Nnus=jnp.shape(dtau)[1]    
+    TransM=jnp.where(dtau==0, 1.0, trans2E3(dtau))   
+    Qv=jnp.vstack([(1-TransM)*S,jnp.zeros(Nnus)])
+    return jnp.sum(Qv*jnp.cumprod(jnp.vstack([jnp.ones(Nnus),TransM]),axis=0),axis=0)
+
+@jit
+def rtrun_surface(dtau,S,Sb):
+    """Radiative Transfer using two-stream approximaion + 2E3 (Helios-R1 type) with a planetary surface
+
+    Args:
+        dtau: opacity matrix 
+        S: source matrix [N_layer, N_nus]
+        Sb: source from the surface [N_nus]
+ 
+    Returns:
+        flux in the unit of [erg/cm2/s/cm-1] if using piBarr as a source function.
+    """
     Nnus=jnp.shape(dtau)[1]
     TransM=jnp.where(dtau==0, 1.0, trans2E3(dtau))   
-    QN=jnp.zeros(Nnus)
-    Qv=(1-TransM)*S
-    Qv=jnp.vstack([Qv,QN])
-    onev=jnp.ones(Nnus)
-    TransM=jnp.vstack([onev,TransM])
-    return jnp.sum(Qv*jnp.cumprod(TransM,axis=0),axis=0)
+    Qv=jnp.vstack([(1-TransM)*S,Sb])
+    return jnp.sum(Qv*jnp.cumprod(jnp.vstack([jnp.ones(Nnus),TransM]),axis=0),axis=0)
+
 
 @jit
 def rtrun_direct(dtau,S):
@@ -224,25 +238,6 @@ def rtrun_direct(dtau,S):
     return jnp.sum(S*jnp.exp(-taupmu)*dtau,axis=0)
 
 
-@jit
-def rtrun_surface(dtau,S,Sb):
-    """Radiative Transfer using two-stream approximaion + 2E3 (Helios-R1 type) with a planetary surface
-
-    Args:
-        dtau: opacity matrix 
-        S: source matrix [N_layer, N_nus]
-        Sb: source from the surface [N_nus]
- 
-    Returns:
-        flux in the unit of [erg/cm2/s/cm-1] if using piBarr as a source function.
-    """
-    Nnus=jnp.shape(dtau)[1]
-    TransM=jnp.where(dtau==0, 1.0, trans2E3(dtau))   
-    Qv=(1-TransM)*S
-    Qv=jnp.vstack([Qv,Sb])
-    onev=jnp.ones(Nnus)
-    TransM=jnp.vstack([onev,TransM])
-    return jnp.sum(Qv*jnp.cumprod(TransM,axis=0),axis=0)
 
 
 

@@ -133,11 +133,11 @@ class AutoXS(object):
             else:
                 nus=self.nus
 
-            cnu,indexnu,R,pmarray=initspec.init_modit(mdb.nu_lines,nus)
-            nsigmaD=normalized_doppler_sigma(T,molmass,R)
-            ngammaL=gammaL/(mdb.nu_lines/R)
+            cnu,indexnu,R_mol,pmarray=initspec.init_modit(mdb.nu_lines,nus)
+            nsigmaD=normalized_doppler_sigma(T,molmass,R_mol)
+            ngammaL=gammaL/(mdb.nu_lines/R_mol)
             ngammaL_grid=modit.ditgrid(ngammaL,res=0.1)
-            xsv=modit.xsvector(cnu,indexnu,R,pmarray,nsigmaD,ngammaL,Sij,nus,ngammaL_grid)
+            xsv=modit.xsvector(cnu,indexnu,R_mol,pmarray,nsigmaD,ngammaL,Sij,nus,ngammaL_grid)
 
             if ~checknus and self.autogridconv:
                 xsv=jnp.interp(self.nus,nus,xsv)
@@ -246,11 +246,11 @@ class AutoXS(object):
             xsm=xsm.T
         elif xsmode=="modit" or xsmode=="MODIT":
             nus=self.nus
-            cnu,indexnu,R,pmarray=initspec.init_modit(mdb.nu_lines,nus)
-            nsigmaDl=normalized_doppler_sigma(Tarr,self.molmass,R)[:,np.newaxis]            
-            ngammaLM=gammaLM/(mdb.nu_lines/R)
+            cnu,indexnu,R_mol,pmarray=initspec.init_modit(mdb.nu_lines,nus)
+            nsigmaDl=normalized_doppler_sigma(Tarr,self.molmass,R_mol)[:,np.newaxis]            
+            ngammaLM=gammaLM/(mdb.nu_lines/R_mol)
             dgm_ngammaL=modit.dgmatrix(ngammaLM,0.1)
-            xsm=modit.xsmatrix(cnu,indexnu,R,pmarray,nsigmaDl,ngammaLM,SijM,nus,dgm_ngammaL)
+            xsm=modit.xsmatrix(cnu,indexnu,R_mol,pmarray,nsigmaDl,ngammaLM,SijM,nus,dgm_ngammaL)
             
             Nneg=len(xsm[xsm<0.0])
             if Nneg>0:
@@ -263,7 +263,7 @@ class AutoXS(object):
             sigmaDM=jit(vmap(doppler_sigma,(None,0,None)))\
                      (mdb.nu_lines,Tarr,self.molmass)
             dgm_sigmaD=dit.dgmatrix(sigmaDM,0.1)
-            dgm_gammaL=dit.dgmatrix(gammaLM,0.2)
+            dgm_gammaL=dit.dgmatrix(gammaLM,0.1)
             xsm=dit.xsmatrix(cnu,indexnu,pmarray,sigmaDM,\
                                   gammaLM,SijM,nus,\
                                   dgm_sigmaD,dgm_gammaL)
@@ -373,12 +373,12 @@ class AutoRT(object):
         self.F0=rtrun(self.dtau,self.sourcef)
         return self.F0
 
-    def spectrum(self,nuobs,R,vsini,RV,u1=0.0,u2=0.0,zeta=0.,betamic=0.,direct=True):
+    def spectrum(self,nuobs,Rinst,vsini,RV,u1=0.0,u2=0.0,zeta=0.,betamic=0.,direct=True):
         """generating spectrum
         
         Args:
            nuobs: observation wavenumber array
-           R: resolving power
+           Rinst: instrumental resolving power
            vsini: vsini for a stellar/planet rotation
            RV: radial velocity (km/s)
            u1: Limb-darkening coefficient 1
@@ -393,7 +393,7 @@ class AutoRT(object):
         """
 
         self.nuobs=nuobs
-        self.R=R
+        self.Rinst=Rinst
         self.vsini=vsini
         self.u1=u1
         self.u2=u2
@@ -401,7 +401,7 @@ class AutoRT(object):
         self.betamic=betamic
         self.RV=RV
         
-        self.betaIP=c/(2.0*np.sqrt(2.0*np.log(2.0))*self.R)
+        self.betaIP=c/(2.0*np.sqrt(2.0*np.log(2.0))*self.Rinst)
         beta=np.sqrt((self.betaIP)**2+(self.betamic)**2)
         ts=time.time()
         F0=self.rtrun()
