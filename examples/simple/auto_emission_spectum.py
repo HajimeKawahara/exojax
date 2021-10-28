@@ -2,7 +2,6 @@ import numpy
 from exojax.spec.rtransfer import nugrid
 from exojax.spec import AutoRT
 nus,wav,res=nugrid(1900.0,2300.0,200000,"cm-1")
-print()
 Parr=numpy.logspace(-8,2,100) #100 layers from 10^-8 bar to 10^2 bar
 Tarr = 500.*(Parr/Parr[-1])**0.02    
 autort=AutoRT(nus,1.e5,2.33,Tarr,Parr) #g=1.e5 cm/s2, mmw=2.33
