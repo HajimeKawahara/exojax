@@ -26,7 +26,6 @@ def test_rtdit():
     F1=autort.rtrun()
 
     dif=np.sum((F0-F1)**2)/len(F0)/np.median(F0)
-    print(dif)
     assert dif<0.05
 
 def test_rtmodit():
@@ -49,9 +48,8 @@ def test_rtmodit():
     F1=autort.rtrun()
 
     dif=np.sum((F0-F1)**2)/len(F0)/np.median(F0)
-    print(dif)
     assert dif<0.001
 
 if __name__ == "__main__":
-    test_rtdit()
     test_rtmodit()
+    test_rtdit()

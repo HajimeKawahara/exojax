@@ -1,7 +1,6 @@
 """Automatic Opacity and Spectrum Generator
    
 """
-import time
 from exojax.spec.opacity import xsection
 from exojax.spec.hitran import SijT, doppler_sigma,  gamma_natural, gamma_hitran, normalized_doppler_sigma
 from exojax.spec.exomol import gamma_exomol
@@ -10,6 +9,8 @@ from exojax.spec.make_numatrix import make_numatrix0
 from exojax.spec import defmol,defcia,moldb,contdb,molinfo,lpf,dit,modit,initspec,response,planck
 from exojax.spec.check_nugrid import check_scale_nugrid
 from exojax.utils.constants import c
+from exojax.utils.instfunc import R2STD
+
 import numpy as np
 from jax import jit, vmap
 import jax.numpy as jnp
@@ -402,34 +403,23 @@ class AutoRT(object):
         self.u2=u2
         self.zeta=zeta
         self.betamic=betamic
-        self.RV=RV
-        
-        self.betaIP=c/(2.0*np.sqrt(2.0*np.log(2.0))*self.Rinst)
+        self.RV=RV        
+        self.betaIP=R2STD(self.Rinst)
         beta=np.sqrt((self.betaIP)**2+(self.betamic)**2)
-        ts=time.time()
         F0=self.rtrun()
-        te=time.time()
-        print("radiative transfer",te-ts,"s")
+        
         if len(self.nus)<50000 and direct==True:
-            ts=time.time()
+            print("rotation (1)")
             Frot=response.rigidrot(self.nus,F0,self.vsini,u1=self.u1,u2=self.u2)
-            te=time.time()
-            print("rotation",te-ts,"s")
-            ts=time.time()
             self.F=response.ipgauss_sampling(self.nuobs,self.nus,Frot,beta,self.RV)
-            te=time.time()
-            print("IP",te-ts,"s")
         else:
-            ts=time.time()
+            print("rotation (2)")
             dv=c*(np.log(self.nus[1])-np.log(self.nus[0]))
             Nv=int(self.vsini/dv)+1
             vlim=Nv*dv
             Nkernel=2*Nv+1
             varr_kernel=jnp.linspace(-vlim,vlim,Nkernel)
             Frot=response.rigidrot2(self.nus,F0,varr_kernel,self.vsini,u1=self.u1,u2=self.u2)
-            te=time.time()
-            print("rotation(2)",te-ts,"s")
-            ts=time.time()
             maxp=5.0 #5sigma
             Nv=int(maxp*beta/dv)+1
             vlim=Nv*dv
@@ -437,8 +427,6 @@ class AutoRT(object):
             varr_kernel=jnp.linspace(-vlim,vlim,Nkernel)
             Fgrot=response.ipgauss2(self.nus,Frot,varr_kernel,beta)                      
             self.F=response.sampling(self.nuobs,self.nus,Fgrot,self.RV)
-            te=time.time()
-            print("IP(2)",te-ts,"s")
             
         return self.F
         

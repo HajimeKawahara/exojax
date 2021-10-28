@@ -7,10 +7,11 @@ import numpy as np
 from exojax.special.expn import E1
 from exojax.spec.hitrancia import logacia
 from exojax.spec.hminus import log_hminus_continuum
-from exojax.utils.constants import kB, logm_ucgs
 from exojax.atm.idealgas import number_density
 from exojax.spec.unitconvert import nu2wav, wav2nu
-from exojax.spec.check_nugrid import check_scale_xsmode, check_scale_nugrid, warn_resolution, resolution_eslog
+from exojax.spec.check_nugrid import check_scale_xsmode, check_scale_nugrid, warn_resolution
+from exojax.utils.constants import kB, logm_ucgs
+from exojax.utils.instfunc import resolution_eslog
 
 def nugrid(x0,x1,N,unit="cm-1",xsmode="lpf"):
     """generating the recommended wavenumber grid based on the cross section computation mode

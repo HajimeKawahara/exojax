@@ -3,18 +3,7 @@
 """
 
 import numpy as np
-
-def resolution_eslog(nu):
-    """spectral resolution for ESLOG
-
-    Args:
-       nu: wavenumber bin
-
-    Returns:
-       resolution
-
-    """
-    return (len(nu)-1)/np.log(nu[-1]/nu[0])
+from exojax.utils.constants import c
 
 def warn_resolution(resolution,crit=700000.0):
     """warning poor resolution
