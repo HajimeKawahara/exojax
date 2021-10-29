@@ -48,31 +48,27 @@ class AutoXS(object):
         self.pdit=pdit
         self.autogridconv=autogridconv
         
-        print(self.identifier)
         if self.identifier is None:
             print("ERROR: "+molecules+" is an undefined molecule. Add your molecule in defmol.py and do pull-request!")
         else:
             self.init_database()
         
     def init_database(self):
+        molpath=pathlib.Path(self.databasedir)/pathlib.Path(self.identifier)
         if self.database=="HITRAN" or self.database=="HITEMP":
-            molpath=pathlib.Path(self.databasedir)/pathlib.Path(self.identifier)
             self.mdb=moldb.MdbHit(molpath,nurange=[self.nus[0],self.nus[-1]],crit=self.crit)
         elif self.database=="ExoMol":
-            molpath=pathlib.Path(self.databasedir)/pathlib.Path(self.identifier)
-            molpath=str(molpath)
             print("broadf=",self.broadf)
             self.mdb=moldb.MdbExomol(molpath,nurange=[self.nus[0],self.nus[-1]],broadf=self.broadf,crit=self.crit)
         else:
             print("Select database from HITRAN, HITEMP, ExoMol.")
 
             
-    def linest(self,T,P):
+    def linest(self,T):
         """line strength 
 
         Args: 
            T: temperature (K)
-           P: pressure (bar)
 
         Returns:
            line strength (cm)
@@ -84,8 +80,7 @@ class AutoXS(object):
         elif self.database == "HITRAN" or self.database == "HITEMP":
             qt=mdb.Qr_line_HAPI(T)
             
-        Sij=SijT(T,mdb.logsij0,mdb.nu_lines,mdb.elower,qt)
-        return Sij
+        return SijT(T,mdb.logsij0,mdb.nu_lines,mdb.elower,qt)
         
     def xsection(self,T,P):
         """cross section
@@ -110,17 +105,16 @@ class AutoXS(object):
                       + gamma_natural(mdb.A)
             molmass=molinfo.molmass(self.molecules)
         
-        Sij=self.linest(T,P)
-        nu0=mdb.nu_lines
+        Sij=self.linest(T)
 
         if self.xsmode == "auto":
-            xsmode = self.select_xsmode(len(nu0))
+            xsmode = self.select_xsmode(len(mdb.nu_lines))
         else:
             xsmode = self.xsmode
             
         if xsmode=="lpf" or xsmode=="LPF":
             sigmaD=doppler_sigma(mdb.nu_lines,T,molmass)
-            xsv=xsection(self.nus,nu0,sigmaD,gammaL,Sij,memory_size=self.memory_size)
+            xsv=xsection(self.nus,mdb.nu_lines,sigmaD,gammaL,Sij,memory_size=self.memory_size)
         elif xsmode=="modit" or xsmode=="MODIT":
             checknus=check_scale_nugrid(self.nus,gridmode="ESLOG")
 
@@ -215,14 +209,12 @@ class AutoXS(object):
             SijM=jit(vmap(SijT,(0,None,None,None,0)))\
                   (Tarr,mdb.logsij0,mdb.nu_lines,mdb.elower,qt)
             
-        nu0=mdb.nu_lines
-        print("# of lines",len(nu0))
+        print("# of lines",len(mdb.nu_lines))
         memory_size=15.0
-        d=int(memory_size/(len(nu0)*4/1024./1024.))+1
+        d=int(memory_size/(len(mdb.nu_lines)*4/1024./1024.))+1
         d2=100
         Ni=int(len(self.nus)/d)        
-        Nlayer=np.shape(SijM)[0]
-        Nline=np.shape(SijM)[1]
+        Nlayer,Nline=np.shape(SijM)
         if self.xsmode == "auto":
             xsmode = self.select_xsmode(Nline)
         else:
@@ -237,10 +229,9 @@ class AutoXS(object):
             for i in tqdm.tqdm(range(0,Ni+1)):
                 s=int(i*d);e=int((i+1)*d);e=min(e,len(self.nus))
                 xsmtmp=np.zeros((Nlayer,e-s))
-                #line 
                 for j in range(0,Nj+1):
                     s2=int(j*d2);e2=int((j+1)*d2);e2=min(e2,Nline)
-                    numatrix=make_numatrix0(self.nus[s:e],nu0[s2:e2])
+                    numatrix=make_numatrix0(self.nus[s:e],mdb.nu_lines[s2:e2])
                     xsmtmp=xsmtmp+\
                             lpf.xsmatrix(numatrix,sigmaDM[:,s2:e2],gammaLM[:,s2:e2],SijM[:,s2:e2])
                 if i==0:
@@ -249,39 +240,45 @@ class AutoXS(object):
                     xsm = np.concatenate([xsm,xsmtmp.T])
             xsm=xsm.T
         elif xsmode=="modit" or xsmode=="MODIT":
-            nus=self.nus
-            cnu,indexnu,R_mol,pmarray=initspec.init_modit(mdb.nu_lines,nus)
+            cnu,indexnu,R_mol,pmarray=initspec.init_modit(mdb.nu_lines,self.nus)
             nsigmaDl=normalized_doppler_sigma(Tarr,self.molmass,R_mol)[:,np.newaxis]            
             ngammaLM=gammaLM/(mdb.nu_lines/R_mol)
             dgm_ngammaL=modit.dgmatrix(ngammaLM,0.1)
-            xsm=modit.xsmatrix(cnu,indexnu,R_mol,pmarray,nsigmaDl,ngammaLM,SijM,nus,dgm_ngammaL)
-            
-            Nneg=len(xsm[xsm<0.0])
-            if Nneg>0:
-                print("Warning: negative cross section detected #=",Nneg," fraction=",Nneg/float(jnp.shape(xsm)[0]*jnp.shape(xsm)[1]))
-                xsm=jnp.abs(xsm)
-                
+            xsm=modit.xsmatrix(cnu,indexnu,R_mol,pmarray,nsigmaDl,ngammaLM,SijM,self.nus,dgm_ngammaL)
+            xsm=self.deal_negative(xsm)                
         elif xsmode=="dit" or xsmode=="DIT":
-            nus=self.nus
-            cnu,indexnu,pmarray=initspec.init_dit(mdb.nu_lines,nus)            
+            cnu,indexnu,pmarray=initspec.init_dit(mdb.nu_lines,self.nus)            
             sigmaDM=jit(vmap(doppler_sigma,(None,0,None)))\
                      (mdb.nu_lines,Tarr,self.molmass)
             dgm_sigmaD=dit.dgmatrix(sigmaDM,0.1)
             dgm_gammaL=dit.dgmatrix(gammaLM,0.1)
-            xsm=dit.xsmatrix(cnu,indexnu,pmarray,sigmaDM,\
-                                  gammaLM,SijM,nus,\
-                                  dgm_sigmaD,dgm_gammaL)
-            Nneg=len(xsm[xsm<0.0])
-            if Nneg>0:
-                print("Warning: negative cross section detected #=",Nneg," fraction=",Nneg/float(jnp.shape(xsm)[0]*jnp.shape(xsm)[1]))
-                xsm=jnp.abs(xsm)
-                
+            xsm=dit.xsmatrix(cnu,indexnu,pmarray,sigmaDM,gammaLM,SijM,self.nus,dgm_sigmaD,dgm_gammaL)
+            xsm=self.deal_negative(xsm)
         else:
             print("No such xsmode=",xsmode)
             xsm=None
             
         return xsm
-        
+
+    def deal_negative(self,xsm):
+        """check negative value of xsm
+
+        Args:
+
+           xsm: xs matrix
+
+        Returns:
+
+           xsm negative eliminated
+
+        """
+        Nneg=len(xsm[xsm<0.0])
+        if Nneg>0:
+            print("Warning: negative cross section detected #=",Nneg," fraction=",Nneg/float(jnp.shape(xsm)[0]*jnp.shape(xsm)[1]))
+            xsm=jnp.abs(xsm)
+        return xsm
+
+    
 class AutoRT(object):
     
     """exojax auto radiative transfer
@@ -309,7 +306,6 @@ class AutoRT(object):
         self.Tarr=Tarr
         self.Parr=Parr
         self.xsmode=xsmode
-        print(self.xsmode)
         self.autogridconv=autogridconv
 
         if check_scale_nugrid(nus,gridmode="ESLOG"):
@@ -325,10 +321,10 @@ class AutoRT(object):
             self.dParr=wParr[1:]-wParr[0:-1]
         else:
             self.dParr=dParr
-        self.databasedir=databasedir
-        
+        self.databasedir=databasedir        
         self.sourcef=planck.piBarr(self.Tarr,self.nus)
         self.dtau=np.zeros((self.nlayer,len(nus)))
+        print("xsmode=",self.xsmode)
 
     def addmol(self,database,molecules,mmr,crit=-np.inf):
         """
