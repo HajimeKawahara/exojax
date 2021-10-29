@@ -30,7 +30,7 @@ fac0=RJ**2/((10.0*pc)**2)  #nomralize by RJ
 Fref=(2.29**2)*Fabs_REF2/fac0/1.e4 #erg/cm2/s/cm-1 @ 2.3um
 
 #loading spectrum
-dat=pd.read_csv("../../data/luhman16a_spectra_detector1.csv",delimiter=",")
+dat=pd.read_csv("../data/luhman16a_spectra_detector1.csv",delimiter=",")
 wavd=(dat["wavelength_micron"].values)*1.e4 #AA
 nusd=1.e8/wavd[::-1]
 fobs=(dat["normalized_flux"].values)[::-1]
