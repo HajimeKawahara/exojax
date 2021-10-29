@@ -3,6 +3,7 @@
 HMC-NUTS fitting of exojax to a real spectrum of a brown dwarf [Luhman 16 A](https://en.wikipedia.org/wiki/Luhman_16).
 
 ## Luhman 16 A spectrum
+
 - data/luhman16a_spectra_detector1.csv
 
 The high-dispersion spectrum of Luhman 16 A as observed by VLT/CRIRES (detector1), originally for [Crossfield et al. (2014)](https://www.nature.com/articles/nature12955?proof=t).
@@ -12,7 +13,7 @@ Contact for this spectrum: [Ian J. M. Crossfield](https://crossfield.ku.edu/)
 
 ## Models
 
-### fiducial models used in Section 5
+### Fiducial models used in Section 5 (Paper I)
 
 ExoMol Mp prior from astrometry, .broad applied. A=A100,V=V100
 
@@ -23,7 +24,7 @@ ExoMol Mp prior from astrometry, .broad applied. A=A100,V=V100
 | FidEMbug         |     LPF (direct)   |:heavy_check_mark:|:heavy_check_mark:| 29.5 h (A)|
 | FidEMb_modit     |     MODIT          |                  |                  |           |
 | FidEMbu_modit    |     MODIT          |:heavy_check_mark:|                  |           |
-| FidEMbug_modit   |     MODIT          |:heavy_check_mark:|:heavy_check_mark:| 24.6 h (V)|
+| FidEMbug_modit   |     MODIT          |:heavy_check_mark:|:heavy_check_mark:| 16.5 h (A)|
 
 Note: N=4500
 
@@ -34,7 +35,7 @@ Note: N=4500
 | FreeT            | layer-by-layer T  |    LPF (direct)   |:heavy_check_mark:|:heavy_check_mark:| 28.3 h (A) |
 | MassEMbug        | mass est (ExoMol) |    LPF (direct)   |:heavy_check_mark:|:heavy_check_mark:| 34.2 h (A) |
 | MassHitbug       | mass est (Hitemp) |    LPF (direct)   |:heavy_check_mark:|:heavy_check_mark:| 50.6 h (V) |
-| HDC              | additional noise  |    LPF (direct)   |:heavy_check_mark:|                  |            |
+| HDC              | additional noise  |    LPF (direct)   |:heavy_check_mark:|                  | 31.0 h (V) |
 
 Note: N=4500
 Note: 1/3 of the wavelength range was used for FreeT.
