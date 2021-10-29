@@ -6,6 +6,7 @@ import jax.numpy as jnp
 import numpy as np
 from exojax.spec.dit import npgetix
 from exojax.spec.make_numatrix import make_numatrix0
+from exojax.utils.instfunc import resolution_eslog
 
 def init_lpf(nu_lines,nu_grid):
     """Initialization for LPF
@@ -73,9 +74,8 @@ def init_modit(nu_lines,nu_grid, warning=False):
     if(nu_grid.dtype!=np.float64 and warning):
         print("Warning!: nu_grid is not np.float64 but ",nu.dtype)
 
-    R=(len(nu_grid)-1)/np.log(nu_grid[-1]/nu_grid[0]) #resolution
+    R=resolution_eslog(nu_grid)
     cont,index=npgetix(nu_lines,nu_grid)
-    #dq=R*(np.log(nu_grid[1])-np.log(nu_grid[0]))
     pmarray=np.ones(len(nu_grid)+1)
     pmarray[1::2]=pmarray[1::2]*-1
     
@@ -103,8 +103,7 @@ def init_redit(nu_lines,nu_grid):
     if(nu_grid.dtype!=np.float64 and warning):
         print("Warning!: nu_grid is not np.float64 but ",nu.dtype)
 
-    
-    R=(len(nu_grid)-1)/np.log(nu_grid[-1]/nu_grid[0]) #resolution
+    R=resolution_eslog(nu_grid)
     cont,index=npgetix(nu_lines,nu_grid)
     dq=R*(np.log(nu_grid[1])-np.log(nu_grid[0]))
     
