@@ -32,7 +32,7 @@ def Sij0(A, gupper, nu_lines, elower, QTref_284, QTmask, Irwin=False):
         
     #Use Irwin_1981 for Fe I (mask==76)  #test211013Tako
     if Irwin==True:
-        QTref[np.where(QTmask == 76)[0]] = atomllapi.partfn_Fe(Tref)
+        QTref[np.where(QTmask == 76)[0][0]] = atomllapi.partfn_Fe(Tref)
 
     S0 = -A*gupper*np.exp(-hcperk*elower/Tref)*np.expm1(-hcperk*nu_lines/Tref)\
         /(8.0*np.pi*ccgs*nu_lines**2*QTref)
