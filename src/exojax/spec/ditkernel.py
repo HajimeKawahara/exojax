@@ -94,7 +94,7 @@ def voigt_kernel_logst(k,log_nstbeta,log_ngammaL):
     return val
 
 def fold_voigt_kernel_logst(k,log_nstbeta,log_ngammaL,vmax, pmarray):
-    """Folded Fourier Kernel of the Voigt Profile for a common normalized beta.
+    """Folded Fourier Kernel of the Voigt Profile for a common normalized beta. See https://github.com/dcmvdbekerom/discrete-integral-transform/blob/master/demo/discrete_integral_transform_log.py for the alias correction.
     
     Args:
         k: conjugate wavenumber

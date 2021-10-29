@@ -65,7 +65,6 @@ class MdbExomol(object):
         self.margin = margin
         self.nurange=[np.min(nurange),np.max(nurange)]
         self.broadf=broadf
-        #Where exomol files are
         self.states_file = self.path/pathlib.Path(molec+".states.bz2")
         self.pf_file = self.path/pathlib.Path(molec+".pf")
         self.def_file = self.path/pathlib.Path(molec+".def")

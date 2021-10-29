@@ -1,14 +1,16 @@
 """Automatic Opacity and Spectrum Generator
    
 """
-import time
 from exojax.spec.opacity import xsection
 from exojax.spec.hitran import SijT, doppler_sigma,  gamma_natural, gamma_hitran, normalized_doppler_sigma
 from exojax.spec.exomol import gamma_exomol
-from exojax.spec.rtransfer import rtrun, dtauM, dtauCIA, check_nugrid
+from exojax.spec.rtransfer import rtrun, dtauM, dtauCIA, check_scale_nugrid
 from exojax.spec.make_numatrix import make_numatrix0
 from exojax.spec import defmol,defcia,moldb,contdb,molinfo,lpf,dit,modit,initspec,response,planck
+from exojax.spec.check_nugrid import check_scale_nugrid
 from exojax.utils.constants import c
+from exojax.utils.instfunc import R2STD
+
 import numpy as np
 from jax import jit, vmap
 import jax.numpy as jnp
@@ -62,12 +64,11 @@ class AutoXS(object):
             print("Select database from HITRAN, HITEMP, ExoMol.")
 
             
-    def linest(self,T,P):
+    def linest(self,T):
         """line strength 
 
         Args: 
            T: temperature (K)
-           P: pressure (bar)
 
         Returns:
            line strength (cm)
@@ -104,7 +105,7 @@ class AutoXS(object):
                       + gamma_natural(mdb.A)
             molmass=molinfo.molmass(self.molecules)
         
-        Sij=self.linest(T,P)
+        Sij=self.linest(T)
 
         if self.xsmode == "auto":
             xsmode = self.select_xsmode(len(mdb.nu_lines))
@@ -115,7 +116,7 @@ class AutoXS(object):
             sigmaD=doppler_sigma(mdb.nu_lines,T,molmass)
             xsv=xsection(self.nus,mdb.nu_lines,sigmaD,gammaL,Sij,memory_size=self.memory_size)
         elif xsmode=="modit" or xsmode=="MODIT":
-            checknus=check_nugrid(self.nus,gridmode="ESLOG")
+            checknus=check_scale_nugrid(self.nus,gridmode="ESLOG")
 
             if ~checknus:
                 print("WARNING: the wavenumber grid does not look ESLOG.")
@@ -127,18 +128,18 @@ class AutoXS(object):
             else:
                 nus=self.nus
 
-            cnu,indexnu,R,pmarray=initspec.init_modit(mdb.nu_lines,nus)
-            nsigmaD=normalized_doppler_sigma(T,molmass,R)
-            ngammaL=gammaL/(mdb.nu_lines/R)
+            cnu,indexnu,R_mol,pmarray=initspec.init_modit(mdb.nu_lines,nus)
+            nsigmaD=normalized_doppler_sigma(T,molmass,R_mol)
+            ngammaL=gammaL/(mdb.nu_lines/R_mol)
             ngammaL_grid=modit.ditgrid(ngammaL,res=0.1)
-            xsv=modit.xsvector(cnu,indexnu,R,pmarray,nsigmaD,ngammaL,Sij,nus,ngammaL_grid)
+            xsv=modit.xsvector(cnu,indexnu,R_mol,pmarray,nsigmaD,ngammaL,Sij,nus,ngammaL_grid)
 
             if ~checknus and self.autogridconv:
                 xsv=jnp.interp(self.nus,nus,xsv)
        
         elif xsmode=="dit" or xsmode=="DIT":
             sigmaD=doppler_sigma(mdb.nu_lines,T,molmass)
-            checknus=check_nugrid(self.nus,gridmode="ESLIN")
+            checknus=check_scale_nugrid(self.nus,gridmode="ESLIN")
             if ~checknus:
                 print("WARNING: the wavenumber grid does not look ESLIN.")
                 if self.autogridconv:
@@ -163,16 +164,19 @@ class AutoXS(object):
             
         return xsv
 
-                
+
     def select_xsmode(self,Nline):
-        checknus=check_nugrid(self.nus,gridmode="ESLIN")
         print("# of lines=",Nline)
-        if Nline > 1000:
+        if Nline > 1000 and check_scale_nugrid(self.nus,gridmode="ESLOG"):
+            print("MODIT selected")
+            return "MODIT"
+        elif Nline > 1000 and check_scale_nugrid(self.nus,gridmode="ESLIN"):
             print("DIT selected")
             return "DIT"
         else:
             print("LPF selected")
             return "LPF"
+
         
     def xsmatrix(self,Tarr,Parr):
         """cross section matrix
@@ -236,11 +240,11 @@ class AutoXS(object):
                     xsm = np.concatenate([xsm,xsmtmp.T])
             xsm=xsm.T
         elif xsmode=="modit" or xsmode=="MODIT":
-            cnu,indexnu,R,pmarray=initspec.init_modit(mdb.nu_lines,self.nus)
-            nsigmaDl=normalized_doppler_sigma(Tarr,self.molmass,R)[:,np.newaxis]            
-            ngammaLM=gammaLM/(mdb.nu_lines/R)
+            cnu,indexnu,R_mol,pmarray=initspec.init_modit(mdb.nu_lines,self.nus)
+            nsigmaDl=normalized_doppler_sigma(Tarr,self.molmass,R_mol)[:,np.newaxis]            
+            ngammaLM=gammaLM/(mdb.nu_lines/R_mol)
             dgm_ngammaL=modit.dgmatrix(ngammaLM,0.1)
-            xsm=modit.xsmatrix(cnu,indexnu,R,pmarray,nsigmaDl,ngammaLM,SijM,self.nus,dgm_ngammaL)
+            xsm=modit.xsmatrix(cnu,indexnu,R_mol,pmarray,nsigmaDl,ngammaLM,SijM,self.nus,dgm_ngammaL)
             xsm=self.deal_negative(xsm)                
         elif xsmode=="dit" or xsmode=="DIT":
             cnu,indexnu,pmarray=initspec.init_dit(mdb.nu_lines,self.nus)            
@@ -248,9 +252,7 @@ class AutoXS(object):
                      (mdb.nu_lines,Tarr,self.molmass)
             dgm_sigmaD=dit.dgmatrix(sigmaDM,0.1)
             dgm_gammaL=dit.dgmatrix(gammaLM,0.1)
-            xsm=dit.xsmatrix(cnu,indexnu,pmarray,sigmaDM,\
-                                  gammaLM,SijM,self.nus,\
-                                  dgm_sigmaD,dgm_gammaL)
+            xsm=dit.xsmatrix(cnu,indexnu,pmarray,sigmaDM,gammaLM,SijM,self.nus,dgm_sigmaD,dgm_gammaL)
             xsm=self.deal_negative(xsm)
         else:
             print("No such xsmode=",xsmode)
@@ -304,12 +306,11 @@ class AutoRT(object):
         self.Tarr=Tarr
         self.Parr=Parr
         self.xsmode=xsmode
-        print(self.xsmode)
         self.autogridconv=autogridconv
 
-        if check_nugrid(nus,gridmode="ESLOG"):
+        if check_scale_nugrid(nus,gridmode="ESLOG"):
             print("nu grid is evenly spaced in log space (ESLOG).")
-        elif check_nugrid(nus,gridmode="ESLIN"):
+        elif check_scale_nugrid(nus,gridmode="ESLIN"):
             print("nu grid is evenly spaced in linear space (ESLIN).")    
         else:
             print("nu grid is NOT evenly spaced in log nor linear space.")
@@ -323,6 +324,7 @@ class AutoRT(object):
         self.databasedir=databasedir        
         self.sourcef=planck.piBarr(self.Tarr,self.nus)
         self.dtau=np.zeros((self.nlayer,len(nus)))
+        print("xsmode=",self.xsmode)
 
     def addmol(self,database,molecules,mmr,crit=-np.inf):
         """
@@ -371,12 +373,12 @@ class AutoRT(object):
         self.F0=rtrun(self.dtau,self.sourcef)
         return self.F0
 
-    def spectrum(self,nuobs,R,vsini,RV,u1=0.0,u2=0.0,zeta=0.,betamic=0.,direct=True):
+    def spectrum(self,nuobs,Rinst,vsini,RV,u1=0.0,u2=0.0,zeta=0.,betamic=0.,direct=True):
         """generating spectrum
         
         Args:
            nuobs: observation wavenumber array
-           R: resolving power
+           Rinst: instrumental resolving power
            vsini: vsini for a stellar/planet rotation
            RV: radial velocity (km/s)
            u1: Limb-darkening coefficient 1
@@ -391,40 +393,29 @@ class AutoRT(object):
         """
 
         self.nuobs=nuobs
-        self.R=R
+        self.Rinst=Rinst
         self.vsini=vsini
         self.u1=u1
         self.u2=u2
         self.zeta=zeta
         self.betamic=betamic
-        self.RV=RV
-        
-        self.betaIP=c/(2.0*np.sqrt(2.0*np.log(2.0))*self.R)
+        self.RV=RV        
+        self.betaIP=R2STD(self.Rinst)
         beta=np.sqrt((self.betaIP)**2+(self.betamic)**2)
-        ts=time.time()
         F0=self.rtrun()
-        te=time.time()
-        print("radiative transfer",te-ts,"s")
+        
         if len(self.nus)<50000 and direct==True:
-            ts=time.time()
+            print("rotation (1)")
             Frot=response.rigidrot(self.nus,F0,self.vsini,u1=self.u1,u2=self.u2)
-            te=time.time()
-            print("rotation",te-ts,"s")
-            ts=time.time()
             self.F=response.ipgauss_sampling(self.nuobs,self.nus,Frot,beta,self.RV)
-            te=time.time()
-            print("IP",te-ts,"s")
         else:
-            ts=time.time()
+            print("rotation (2)")
             dv=c*(np.log(self.nus[1])-np.log(self.nus[0]))
             Nv=int(self.vsini/dv)+1
             vlim=Nv*dv
             Nkernel=2*Nv+1
             varr_kernel=jnp.linspace(-vlim,vlim,Nkernel)
             Frot=response.rigidrot2(self.nus,F0,varr_kernel,self.vsini,u1=self.u1,u2=self.u2)
-            te=time.time()
-            print("rotation(2)",te-ts,"s")
-            ts=time.time()
             maxp=5.0 #5sigma
             Nv=int(maxp*beta/dv)+1
             vlim=Nv*dv
@@ -432,8 +423,6 @@ class AutoRT(object):
             varr_kernel=jnp.linspace(-vlim,vlim,Nkernel)
             Fgrot=response.ipgauss2(self.nus,Frot,varr_kernel,beta)                      
             self.F=response.sampling(self.nuobs,self.nus,Fgrot,self.RV)
-            te=time.time()
-            print("IP(2)",te-ts,"s")
             
         return self.F
         
