@@ -101,7 +101,7 @@ def test_opacity_Fe(T, P):
     ax1 = plt.subplot(gs[0:3])
     ax2 = plt.subplot(gs[3:], sharex=ax1)
 
-    idparam = "_"+("{:.0f}".format(T))+".K_"+("{:.6f}".format(P))+"bar
+    idparam = "_"+("{:.0f}".format(T))+".K_"+("{:.6f}".format(P))+"bar"
 
     ax1.plot(x1t, y1t, '-', lw=1, label='exojax' + idparam)
     ax1.plot(x1t, y2t_interp, ':', lw=1, label='petitRADTRANS') #, alpha=.7) #, color='mediumseagreen'
