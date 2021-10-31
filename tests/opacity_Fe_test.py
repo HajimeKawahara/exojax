@@ -15,35 +15,33 @@ path_VALD3 = '/home/tako/work/VALD3/'
 path_fig = '/home/tako/Dropbox/tmpfig/tmp_211031/'
 outdir = path_pRT + 'input_data/opacities/lines/line_by_line/Fe_exojax/'
 
-#@pytest.mark.parametrize("T", [81, 110, 148, 200, 270, 365, 493, 666, 900, 1215, 1641, 2000, 2217, 2500, 2750, 2995, 3250, 3500, 3750, 4000])
-#@pytest.mark.parametrize("P", [0.000001, 0.000010, 0.000100, 0.001000, 0.010000, 0.100000, 1.000000, 10.000000, 100.000000, 1000.000000])
-@pytest.mark.parametrize(('T', 'P'), [
-    (81, 0.1),
-    (3250, 0.000001),
-    (4000, 100.000000),
-    (3250, 1000.000000),
-])
+#-------
+out_suffix = '_pytest'
+H_He_HH_VMR = [0.0, 0.16, 0.84] #H, He, H2 #pure[1.0, 0.0, 0.0] #test[0.05, 0.005, 0.1] #Solar[0.0, 0.16, 0.84]
+
+nus = 1e8/np.arange(13000, 12000, -0.01, dtype=np.float64) #wavenumber range for opacity calculation (Covering whole wavelength ranges of both IRD and CARMENES)
+nus4LL = 1e8/np.arange(1e5, 1500.0, -0.01, dtype=np.float64) #wavenumber range for LineList being taken into account (Taking all (except for 1e5–1e6) lines in the line lists (VALD3, Kurucz) into consideration)
+pf_Irwin = False #if True, the partition functions of Irwin1981 is used, otherwise those of Barklem&Collet2016
+
+
+#Read line list
+adbFe = moldb.AdbVald(path_VALD3+'HiroyukiIshikawa.4204960.gz', nus4LL, Irwin=pf_Irwin)
+
+ucgs = 1.660539067e-24 #unified atomic mass unit [g]
+Amol=np.float64( adbFe.atomicmass[0] ) #atomic mass [u]
+ionE=np.float64( adbFe.ionE[0] ) #ionization energy [eV]
+nu0=adbFe.nu_lines
+
+#Make files of wavelength [cm]
+np.array(1.0/nus[::-1], dtype=np.float64).tofile(outdir+"wlen"+out_suffix+".dat") #wavelength
+#-------
+
+@pytest.mark.parametrize("T", [666, 900, 1215, 1641, 2000, 2217, 2500, 2750, 2995, 3250, 3500, 3750, 4000]) #81, 110, 148, 200, 270, 365, 493,
+@pytest.mark.parametrize("P", [0.000001, 0.000010, 0.000100, 0.001000, 0.010000, 0.100000, 1.000000, 10.000000, 100.000000]) #, 1000.000000
 
 def test_opacity_Fe(T, P):
-    out_suffix = '_pytest'
-    H_He_HH_VMR = [0.0, 0.16, 0.84] #H, He, H2 #pure[1.0, 0.0, 0.0] #test[0.05, 0.005, 0.1] #Solar[0.0, 0.16, 0.84]
     
-    nus = 1e8/np.arange(18000, 5000, -0.01, dtype=np.float64) #wavenumber range for opacity calculation (Covering whole wavelength ranges of both IRD and CARMENES)
-    nus4LL = 1e8/np.arange(1e5, 1500.0, -0.01, dtype=np.float64) #wavenumber range for LineList being taken into account (Taking all (except for 1e5–1e6) lines in the line lists (VALD3, Kurucz) into consideration)
-    pf_Irwin = False #if True, the partition functions of Irwin1981 is used, otherwise those of Barklem&Collet2016
-    
-    
-    #Read line list
-    adbFe = moldb.AdbVald(path_VALD3+'HiroyukiIshikawa.4204960.gz', nus4LL, Irwin=pf_Irwin)
-    
-    ucgs = 1.660539067e-24 #unified atomic mass unit [g]
-    Amol=np.float64( adbFe.atomicmass[0] ) #atomic mass [u]
-    ionE=np.float64( adbFe.ionE[0] ) #ionization energy [eV]
-    nu0=adbFe.nu_lines
-        
-    #---------------------------------------------------------------------------------
-    #Make files of wavelength [cm] and opacity [cm^2]
-    np.array(1.0/nus[::-1], dtype=np.float64).tofile(outdir+"wlen"+out_suffix+".dat") #wavelength
+    #Make files of opacity [cm^2]
     qt = np.ones_like(adbFe.A) * np.float32(adbFe.qr_interp("Fe 1", T, Irwin=pf_Irwin))
     #↑Unlike the case of HITRAN (using Qr_HAPI), we ignored the isotopes.
     sigmaD = doppler_sigma(adbFe.nu_lines, T, Amol)
