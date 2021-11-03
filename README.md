@@ -23,7 +23,7 @@ voigt(nu,1.0,2.0) #sigma_D=1.0, gamma_L=2.0
  
 ```python
 from exojax.spec import AutoXS
-nus=numpy.linspace(1900.0,2300.0,40000,dtype=numpy.float64) #wavenumber (cm-1)
+nus=numpy.linspace(1900.0,2300.0,200000,dtype=numpy.float64) #wavenumber (cm-1)
 autoxs=AutoXS(nus,"ExoMol","CO") #using ExoMol CO (12C-16O). HITRAN and HITEMP are also supported.  
 xsv=autoxs.xsection(1000.0,1.0) #cross section for 1000K, 1bar (cm2)
 ```
@@ -48,7 +48,7 @@ autoxs.mdb is the [moldb.MdbExomol class](http://secondearths.sakura.ne.jp/exoja
 ```python
 from exojax.spec.rtransfer import nugrid
 from exojax.spec import AutoRT
-nus,wav,res=nugrid(1900.0,2300.0,40000,"cm-1")
+nus,wav,res=nugrid(1900.0,2300.0,200000,"cm-1")
 Parr=numpy.logspace(-8,2,100) #100 layers from 10^-8 bar to 10^2 bar
 Tarr = 500.*(Parr/Parr[-1])**0.02    
 autort=AutoRT(nus,1.e5,2.33,Tarr,Parr) #g=1.e5 cm/s2, mmw=2.33
@@ -86,11 +86,9 @@ To fit a spectrum model to real data, you need to know a little more about exoja
  
 </details>
 
+<details><summary>Clouds :white_check_mark: </summary> Only for brave users. </details>
+
 <details><summary>HMC-NUTS of Transmission Spectra :x: </summary>Not supported yet. </details>
-
-<details><summary>Cloud modeling :x: </summary> Not supported yet. </details>
-
-
 
 ## Installation
 
@@ -123,12 +121,10 @@ nvcc -V
 Install such as
 
 ```
-pip install --upgrade jax jaxlib==0.1.62+cuda112  -f https://storage.googleapis.com/jax-releases/jax_releases.html
+pip install --upgrade "jax[cuda111]"  -f https://storage.googleapis.com/jax-releases/jax_releases.html
 ```
 
-In this case, jaxlib version is 0.1.62 and cuda version is 11.2. You can check which cuda version is avaiable at [here](https://storage.googleapis.com/jax-releases/jax_releases.html)
-
-Visit [here](https://github.com/google/jax) for the details.
+This is the case for cuda11.1 to 11.4. Visit [here](https://github.com/google/jax) for the details.
 
 - cuDNN
 
@@ -144,8 +140,8 @@ cuDNN is used for to compute the astronomical/instrumental response for the larg
 
 ## References
 
-- Kawahara, Kawashima, Masuda, and Crossfield (2021) under review: [arXiv:2105.14782](http://arxiv.org/abs/2105.14782)
+- Kawahara, Kawashima, Masuda, Crossfield, van den Bekerom, Parker (2021) under review: [arXiv:2105.14782](http://arxiv.org/abs/2105.14782)
 
 ## License
 
-🐈 Copyright 2020-2021 [Hajime Kawahara](http://secondearths.sakura.ne.jp/en/index.html). exojax is publicly available under the MIT license. Under development since Dec. 2020.
+🐈 Copyright 2020-2021 [Hajime Kawahara](http://secondearths.sakura.ne.jp/en/index.html) and contributors. exojax is publicly available under the MIT license. Under development since Dec. 2020.

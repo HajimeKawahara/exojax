@@ -66,6 +66,6 @@ def xsection(nu,nu_lines,sigmaD,gammaL,Sij,memory_size=15.):
             xsv = np.concatenate([xsv,xsvtmp])
         
     if(nu.dtype!=np.float64):
-        print("Warning!: nu is not np.float64 but ",nu.dtype)
+        print("Warning: nu is not np.float64 but ",nu.dtype)
 
     return xsv

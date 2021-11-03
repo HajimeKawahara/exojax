@@ -1,3 +1,7 @@
+"""Check tool for radiative transfer
+
+"""
+
 __all__ = ['CheckRT']
 from jax import jit
 import jax.numpy as jnp

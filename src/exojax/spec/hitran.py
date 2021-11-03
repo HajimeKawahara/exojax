@@ -1,5 +1,6 @@
-from jax import jit, vmap
+from jax import jit
 import jax.numpy as jnp
+from exojax.utils.constants import hcperk
 
 @jit
 def SijT(T,logsij0,nu_lines,elower,qT):
@@ -16,14 +17,11 @@ def SijT(T,logsij0,nu_lines,elower,qT):
        Sij(T): Line strength (cm)
 
     """
-    Tref=296.0 #reference tempearture (K)
-    c_2 = 1.4387773 #hc/k_B (cm K)
-    
-    #    ToDo: confirming behavier 2/26(2021)
-    expow=logsij0-c_2*(elower/T-elower/Tref)
-    fac=(1.0-jnp.exp(-c_2*nu_lines/T) )/(1.0-jnp.exp(-c_2*nu_lines/Tref))
-    #expow=logsij0-c_2*elower*(1.0/T-1.0/Tref)
-    #fac=jnp.expm1(-c_2*nu_lines/T)/jnp.expm1(-c_2*nu_lines/Tref)
+    Tref=296.0 #reference tempearture (K)    
+    expow=logsij0-hcperk*(elower/T-elower/Tref)
+    fac=(1.0-jnp.exp(-hcperk*nu_lines/T) )/(1.0-jnp.exp(-hcperk*nu_lines/Tref))
+    #expow=logsij0-hcperk*elower*(1.0/T-1.0/Tref)
+    #fac=jnp.expm1(-hcperk*nu_lines/T)/jnp.expm1(-hcperk*nu_lines/Tref)
     return jnp.exp(expow)/qT*fac
 
 @jit
@@ -65,7 +63,7 @@ def gamma_natural(A):
 
 @jit
 def doppler_sigma(nu_lines,T,M):
-    """Dopper width (sigma)
+    """Dopper width (sigmaD)
     
     Note:
        c3 is sqrt(kB/m_u)/c
@@ -81,3 +79,22 @@ def doppler_sigma(nu_lines,T,M):
     """
     c3=3.0415595e-07
     return c3*jnp.sqrt(T/M)*nu_lines
+
+@jit
+def normalized_doppler_sigma(T,M,R):
+    """Normalized Dopper width (nsigmaD) by wavenumber difference at line centers
+    
+    Note:
+       This quantity is used in MODIT. c3 is sqrt(kB/m_u)/c
+
+    Args:
+       T: temperature (K)
+       M: atom/molecular mass
+       R: spectral resolution
+
+    Returns:
+       nsigma: normalized Doppler width (standard deviation)
+
+    """
+    c3=3.0415595e-07
+    return c3*jnp.sqrt(T/M)*R

@@ -9,9 +9,9 @@
 
 from jax import jit, vmap
 import jax.numpy as jnp
-from jax import custom_jvp
 from exojax.special.erfcx import erfcx
 from exojax.spec.rtransfer import dtauM, dtauCIA
+from exojax.utils.constants import hcperk
 import numpy as np
 import tqdm
 
@@ -74,7 +74,7 @@ def mask_weakline(mdb_mol,Parr,dParr,Tarr,SijM,gammaLM,sigmaDM,MMR_mol,molmass_m
             maxcia=np.concatenate([maxcia,maxcia_tmp])
 
     mask1=(maxcf>0)*(maxcf<maxcia+margin)
-    if mask==None:
+    if mask is None:
         mask=mask1
     else:
         mask=mask1+mask
@@ -100,7 +100,6 @@ def contfunc(dtau,nu,Parr,dParr,Tarr):
     """
     
     tau=np.cumsum(dtau,axis=0)
-    hcperk=1.4387773538277202
     cf=np.exp(-tau)*dtau \
     *(Parr[:,None]/dParr[:,None]) \
     *nu[None,:]**3/(np.exp(hcperk*nu[None,:]/Tarr[:,None])-1.0)

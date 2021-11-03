@@ -2,7 +2,8 @@
 
 """
 
-from exojax.utils.molname import e2s
+from exojax.utils.molname import e2s, s2e_stable
+from exojax.utils.recexomol import get_exomol_database_list
 
 HITRAN_DEFMOL= \
 {\
@@ -36,26 +37,8 @@ EXOMOL_DEFMOL= \
  "12C-16O2":"UCL-4000",
  "52Cr-1H":"MoLLIST",
  "1H2-16O":"POKAZATEL",
- "51V-16O": "VOMYT"
-}
-
-EXOMOL_SIMPLE2EXACT= \
-{\
- "CO":"12C-16O",\
- "OH":"16O-1H",\
- "NH3":"14N-1H3",\
- "NO":"14N-16O",
- "FeH":"56Fe-1H",
- "H2S":"1H2-32S",
- "SiO":"28Si-16O2",
- "CH4":"12C-1H4",
- "HCN":"1H-12C-14N",
- "C2H2":"12C2-1H2",
- "TiO":"48Ti-16O",
- "CO2":"12C-16O2",
- "CrH":"52Cr-1H",
- "H2O":"1H2-16O",
- "VO":"51V-16O"
+ "51V-16O":"VOMYT",
+ "12C-14N":"Trihybrid"
 }
 
 
@@ -71,14 +54,35 @@ def search_molfile(database,molecules):
     """
     if database=="ExoMol":
         try:
+            #online
             try:
-                return e2s(molecules)+"/"+molecules+"/"+EXOMOL_DEFMOL[molecules]
+                rec=get_exomol_database_list(e2s(molecules),molecules)
+                exomol_defmol=rec[1] #default (recommended) database by ExoMol
+                print("Recommendated database by ExoMol: ",exomol_defmol)
+                return e2s(molecules)+"/"+molecules+"/"+exomol_defmol
             except:
-                molname_exact=EXOMOL_SIMPLE2EXACT[molecules]
+                molname_exact=s2e_stable(molecules)
                 print("Warning:",molecules,"is interpreted as",molname_exact)
-                return molecules+"/"+molname_exact+"/"+EXOMOL_DEFMOL[molname_exact]
+                rec=get_exomol_database_list(molecules, molname_exact)
+                exomol_defmol=rec[1] #default (recommended) database by ExoMol
+                print("Recommendated database by ExoMol: ",exomol_defmol)
+                return molecules+"/"+molname_exact+"/"+exomol_defmol            
+
         except:
-            return None
+            #offline
+            try:
+                print("Warning: try off-line mode in defmol.py.")
+                try:
+                    print("Recommendated database by defmol.py: ",EXOMOL_DEFMOL[molname_exact])                    
+                    return e2s(molecules)+"/"+molecules+"/"+EXOMOL_DEFMOL[molecules]                
+                except:
+                    molname_exact=s2e_stable(molecules)
+                    print("Warning:",molecules,"is interpreted as",molname_exact)
+                    print("Recommendated database by defmol.py: ",EXOMOL_DEFMOL[molname_exact])
+                    return molecules+"/"+molname_exact+"/"+EXOMOL_DEFMOL[molname_exact]
+            except:
+                print("No recommendation found.")
+                return None
 
     elif database=="HITRAN":
         try:
@@ -95,5 +99,6 @@ def search_molfile(database,molecules):
 if __name__ == "__main__":
     print(search_molfile("ExoMol","12C-16O"))
     print(search_molfile("ExoMol","CO"))
+    print(search_molfile("ExoMol","CN"))
     print(search_molfile("HITRAN","CO"))
     print(search_molfile("HITEMP","CO"))

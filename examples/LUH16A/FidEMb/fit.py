@@ -9,7 +9,8 @@ from jax import random
 from jax import vmap, jit
 
 from exojax.spec import rtransfer as rt
-from exojax.spec import planck, moldb, contdb, response, molinfo, make_numatrix0,xsvector
+from exojax.spec import planck, moldb, contdb, response, molinfo, make_numatrix0
+from exojax.spec.lpf import xsvector
 from exojax.spec.lpf import xsmatrix
 from exojax.spec.exomol import gamma_exomol
 from exojax.spec.hitran import SijT, doppler_sigma, gamma_natural, gamma_hitran
@@ -132,7 +133,7 @@ def ap(fobs,nusd,ws,we,Nx):
 
     return fobsx,nusdx,wavdx,errx,nus,wav,res,mdbCO,mdbH2O,numatrix_CO,numatrix_H2O,cdbH2H2,cdbH2He
     
-N=1500
+N=4500
 fobs1,nusd1,wavd1,err1,nus1,wav1,res1,mdbCO1,mdbH2O1,numatrix_CO1,numatrix_H2O1,cdbH2H21,cdbH2He1=ap(fobs,nusd,22876.0,23010.0,N)
 
 #######################################################
@@ -149,7 +150,7 @@ baseline=1.07 #(baseline for a CIA photosphere in the observed (normaized) spect
 def model_c(nu1,y1,e1):
     Rp = numpyro.sample('Rp', dist.Uniform(0.5,1.5))
     Mp = numpyro.sample('Mp', dist.Normal(33.5,0.3))
-    sigma = numpyro.sample('sigma', dist.Exponential(0.1))
+    sigma = numpyro.sample('sigma', dist.Exponential(10.0))
     RV = numpyro.sample('RV', dist.Uniform(26.0,30.0))
     MMR_CO = numpyro.sample('MMR_CO', dist.Uniform(0.0,maxMMR_CO))
     MMR_H2O = numpyro.sample('MMR_H2O', dist.Uniform(0.0,maxMMR_H2O))

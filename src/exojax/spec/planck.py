@@ -7,8 +7,8 @@
 
 """
 
-from jax import jit
 import jax.numpy as jnp
+from exojax.utils.constants import hcperk
 
 def piBarr(T,nus):
     """pi B_nu (Planck Function)
@@ -24,7 +24,6 @@ def piBarr(T,nus):
        hcperk = hc/k in cgs, fac = 2*h*c*c*pi in cgs
   
     """
-    hcperk=1.4387773538277202
     fac=3.741771790075259e-05
     return (fac*nus**3)/(jnp.exp(hcperk*nus/T[:,None])-1.0)
 

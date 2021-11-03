@@ -9,7 +9,7 @@ import jax.numpy as jnp
 import pathlib
 from exojax.spec import hapi, exomolapi, exomol, atomllapi, atomll
 from exojax.spec.hitran import gamma_natural as gn
-import pandas as pd
+import vaex
 
 __all__ = ['MdbExomol','MdbHit','AdbVald','AdbKurucz']
 
@@ -30,9 +30,9 @@ class MdbExomol(object):
         gpp (jnp array): statistical weight
         jlower (jnp array): J_lower
         jupper (jnp array): J_upper
-        n_Tref (jnp array): temperature exponent
+        n_Texp (jnp array): temperature exponent
         alpha_ref (jnp array): alpha_ref (gamma0)
-        n_Tref_def: default temperature exponent in .def file, used for jlower not given in .broad
+        n_Texp_def: default temperature exponent in .def file, used for jlower not given in .broad
         alpha_ref_def: default alpha_ref (gamma0) in .def file, used for jlower not given in .broad
 
     """
@@ -48,10 +48,11 @@ class MdbExomol(object):
            broadf: if False, the default broadening parameters in .def file is used
 
         Note:
-           The trans/states files can be very large. For the first time to read it, we convert it to the feather-format. After the second-time, we use the feather format instead.
+           The trans/states files can be very large. For the first time to read it, we convert it to HDF/vaex. After the second-time, we use the HDF5 format with vaex instead.
 
         """
-        explanation="Note: Couldn't find the feather format. We convert data to the feather format. After the second time, it will become much faster."
+        explanation_states="Note: Couldn't find the hdf5 format. We convert data to the hdf5 format. After the second time, it will become much faster."
+        explanation_trans="Note: Couldn't find the hdf5 format. We convert data to the hdf5 format. After the second time, it will become much faster."
         
         self.path = pathlib.Path(path)
         t0=self.path.parents[0].stem        
@@ -64,7 +65,6 @@ class MdbExomol(object):
         self.margin = margin
         self.nurange=[np.min(nurange),np.max(nurange)]
         self.broadf=broadf
-        #Where exomol files are
         self.states_file = self.path/pathlib.Path(molec+".states.bz2")
         self.pf_file = self.path/pathlib.Path(molec+".pf")
         self.def_file = self.path/pathlib.Path(molec+".def")
@@ -81,6 +81,7 @@ class MdbExomol(object):
         
         #load def 
         self.n_Texp_def, self.alpha_ref_def, self.molmass, numinf, numtag=exomolapi.read_def(self.def_file)
+
         #  default n_Texp value if not given
         if self.n_Texp_def is None:
             self.n_Texp_def=0.5
@@ -89,17 +90,22 @@ class MdbExomol(object):
             self.alpha_ref_def=0.07
 
         #load states
-        if self.states_file.with_suffix(".feather").exists():
-            states=pd.read_feather(self.states_file.with_suffix(".feather"))
+        if self.states_file.with_suffix(".bz2.hdf5").exists():
+            states=vaex.open(self.states_file.with_suffix(".bz2.hdf5"))
+            ndstates=vaex.array_types.to_numpy(states)
         else:
-            print(explanation)
+            print(explanation_states)
             states=exomolapi.read_states(self.states_file)
-            states.to_feather(self.states_file.with_suffix(".feather"))
+            ndstates=vaex.array_types.to_numpy(states)
+
         #load pf
         pf=exomolapi.read_pf(self.pf_file)
         self.gQT=jnp.array(pf["QT"].to_numpy()) #grid QT
         self.T_gQT=jnp.array(pf["T"].to_numpy()) #T forgrid QT
                 
+        self.Tref=296.0
+        self.QTref=np.array(self.QT_interp(self.Tref))
+
         #trans file(s)
         print("Reading transition file")
         if numinf is None:
@@ -107,18 +113,42 @@ class MdbExomol(object):
             if not self.trans_file.exists():
                 self.download(molec,[".trans.bz2"])
 
-            if self.trans_file.with_suffix(".feather").exists():
-                trans=pd.read_feather(self.trans_file.with_suffix(".feather"))
-                ndtrans=trans.to_numpy()
-                del trans
+            if self.trans_file.with_suffix(".hdf5").exists():
+                trans=vaex.open(self.trans_file.with_suffix(".hdf5"))
+                cdt=(trans.nu_lines>self.nurange[0]-self.margin) \
+                    * (trans.nu_lines<self.nurange[1]+self.margin)
+                if not np.isneginf(self.crit):
+                    cdt=cdt * (trans.Sij0>self.crit)
+                trans=trans[cdt]
+                ndtrans=vaex.array_types.to_numpy(trans)
+
+                #mask has been alraedy applied
+                mask_needed=False
             else:
-                print(explanation)
+                print(explanation_trans)
                 trans=exomolapi.read_trans(self.trans_file)
-                trans.to_feather(self.trans_file.with_suffix(".feather"))
-                ndtrans=trans.to_numpy()
-                del trans
+                ndtrans=vaex.array_types.to_numpy(trans)
+
+                #mask needs to be applied
+                mask_needed=True
+
             #compute gup and elower
-            self._A, self.nu_lines, self._elower, self._gpp, self._jlower, self._jupper=exomolapi.pickup_gE(states,ndtrans)
+            self._A, self.nu_lines, self._elower, self._gpp, self._jlower, self._jupper, mask_zeronu=exomolapi.pickup_gE(ndstates,ndtrans,self.trans_file)
+
+            if self.trans_file.with_suffix(".hdf5").exists():
+                self.Sij0=ndtrans[:,4]
+            else:
+                ##Line strength: input should be ndarray not jnp array
+                self.Sij0=exomol.Sij0(self._A,self._gpp,self.nu_lines,self._elower,self.QTref)
+
+                #exclude the lines whose nu_lines evaluated inside exomolapi.pickup_gE (thus sometimes different from the "nu_lines" column in trans) is not positive
+                trans["nu_positive"]=mask_zeronu
+                trans=trans[trans.nu_positive].extract()
+                trans.drop('nu_positive',inplace=True)
+
+                trans["nu_lines"]=self.nu_lines
+                trans["Sij0"]=self.Sij0
+                trans.export(self.trans_file.with_suffix(".hdf5"))
         else:
             imin=np.searchsorted(numinf,self.nurange[0],side="right")-1 #left side
             imax=np.searchsorted(numinf,self.nurange[1],side="right")-1 #left side
@@ -127,61 +157,98 @@ class MdbExomol(object):
                 trans_file = self.path/pathlib.Path(molec+"__"+numtag[i]+".trans.bz2")
                 if not trans_file.exists():
                     self.download(molec,extension=[".trans.bz2"],numtag=numtag[i])
-                if trans_file.with_suffix(".feather").exists():
-                    trans=pd.read_feather(trans_file.with_suffix(".feather"))
-                    ndtrans=trans.to_numpy()
-                    del trans
+
+                if trans_file.with_suffix(".hdf5").exists():
+                    trans=vaex.open(trans_file.with_suffix(".hdf5"))
+                    cdt=(trans.nu_lines>self.nurange[0]-self.margin) \
+                        * (trans.nu_lines<self.nurange[1]+self.margin)
+                    if not np.isneginf(self.crit):
+                        cdt=cdt * (trans.Sij0>self.crit)
+                    trans=trans[cdt]
+                    ndtrans=vaex.array_types.to_numpy(trans)
+                    self.trans_file.append(trans_file)
+
+                    #mask has been alraedy applied
+                    mask_needed=False
                 else:
-                    print(explanation)
+                    print(explanation_trans)
                     trans=exomolapi.read_trans(trans_file)
-                    trans.to_feather(trans_file.with_suffix(".feather"))
-                    ndtrans=trans.to_numpy()
-                    del trans
-                self.trans_file.append(trans_file)
-                #compute gup and elower                
+                    ndtrans=vaex.array_types.to_numpy(trans)
+                    self.trans_file.append(trans_file)
+                    
+                    #mask needs to be applied
+                    mask_needed=True
+
+                #compute gup and elower
                 if k==0:
-                    self._A, self.nu_lines, self._elower, self._gpp, self._jlower, self._jupper=exomolapi.pickup_gE(states,ndtrans)
+                    self._A, self.nu_lines, self._elower, self._gpp, self._jlower, self._jupper, mask_zeronu=exomolapi.pickup_gE(ndstates,ndtrans,trans_file)
+                    if trans_file.with_suffix(".hdf5").exists():
+                        self.Sij0=ndtrans[:,4]
+                    else:
+                        ##Line strength: input should be ndarray not jnp array
+                        self.Sij0=exomol.Sij0(self._A,self._gpp,self.nu_lines,self._elower,self.QTref)
+
+                        #exclude the lines whose nu_lines evaluated inside exomolapi.pickup_gE (thus sometimes different from the "nu_lines" column in trans) is not positive
+                        trans["nu_positive"]=mask_zeronu
+                        trans=trans[trans.nu_positive].extract()
+                        trans.drop('nu_positive',inplace=True)
+
+                        trans["nu_lines"]=self.nu_lines
+                        trans["Sij0"]=self.Sij0
                 else:
-                    Ax, nulx, elowerx, gppx, jlowerx, jupperx=exomolapi.pickup_gE(states,ndtrans)
+                    Ax, nulx, elowerx, gppx, jlowerx, jupperx, mask_zeronu=exomolapi.pickup_gE(ndstates,ndtrans,trans_file)
+                    if trans_file.with_suffix(".hdf5").exists():
+                        Sij0x=ndtrans[:,4]
+                    else:
+                        ##Line strength: input should be ndarray not jnp array
+                        Sij0x=exomol.Sij0(Ax,gppx,nulx,elowerx,self.QTref)
+
+                        #exclude the lines whose nu_lines evaluated inside exomolapi.pickup_gE (thus sometimes different from the "nu_lines" column in trans) is not positive
+                        trans["nu_positive"]=mask_zeronu
+                        trans=trans[trans.nu_positive].extract()
+                        trans.drop('nu_positive',inplace=True)
+
+                        trans["nu_lines"]=nulx
+                        trans["Sij0"]=Sij0x
+
                     self._A=np.hstack([self._A,Ax])
                     self.nu_lines=np.hstack([self.nu_lines,nulx])
                     self._elower=np.hstack([self._elower,elowerx])
                     self._gpp=np.hstack([self._gpp,gppx])
                     self._jlower=np.hstack([self._jlower,jlowerx])
                     self._jupper=np.hstack([self._jupper,jupperx])
-                    
+                    self.Sij0=np.hstack([self.Sij0,Sij0x])
 
-        self.Tref=296.0        
-        self.QTref=np.array(self.QT_interp(self.Tref))
-        
-        ##Line strength: input should be ndarray not jnp array
-        self.Sij0=exomol.Sij0(self._A,self._gpp,self.nu_lines,self._elower,self.QTref)
+                if not trans_file.with_suffix(".hdf5").exists():
+                    trans.export(trans_file.with_suffix(".hdf5"))
         
         ### MASKING ###
         mask=(self.nu_lines>self.nurange[0]-self.margin)\
         *(self.nu_lines<self.nurange[1]+self.margin)\
         *(self.Sij0>self.crit)
+
+        self.masking(mask,mask_needed)
         
-        self.masking(mask)
-        
-    def masking(self,mask):
+    def masking(self,mask,mask_needed=True):
         """applying mask and (re)generate jnp.arrays
         
         Args:
            mask: mask to be applied. self.mask is updated.
+           mask_needed: whether mask needs to be applied or not
 
         Note:
            We have nd arrays and jnp arrays. We apply the mask to nd arrays and generate jnp array from the corresponding nd array. For instance, self._A is nd array and self.A is jnp array.
 
         """
-        #numpy float 64 Do not convert them jnp array
-        self.nu_lines = self.nu_lines[mask]
-        self.Sij0 = self.Sij0[mask]
-        self._A=self._A[mask]
-        self._elower=self._elower[mask]
-        self._gpp=self._gpp[mask]
-        self._jlower=self._jlower[mask]
-        self._jupper=self._jupper[mask]
+        if mask_needed:
+            #numpy float 64 Do not convert them jnp array
+            self.nu_lines = self.nu_lines[mask]
+            self.Sij0 = self.Sij0[mask]
+            self._A=self._A[mask]
+            self._elower=self._elower[mask]
+            self._gpp=self._gpp[mask]
+            self._jlower=self._jlower[mask]
+            self._jupper=self._jupper[mask]
         
         #jnp arrays
         self.dev_nu_lines=jnp.array(self.nu_lines)
@@ -201,6 +268,7 @@ class MdbExomol(object):
         Args:
            alpha_ref: set default alpha_ref and apply it. None=use self.alpha_ref_def
            n_Texp_def: set default n_Texp and apply it. None=use self.n_Texp_def
+
         """
         if alpha_ref_def:
             self.alpha_ref_def = alpha_ref_def
@@ -239,10 +307,7 @@ class MdbExomol(object):
             print("The default broadening parameters are used.")
             self.alpha_ref=jnp.array(self.alpha_ref_def*np.ones_like(self._jlower))
             self.n_Texp=jnp.array(self.n_Texp_def*np.ones_like(self._jlower))
-
-
-            
-        
+                  
     def QT_interp(self,T):
         """interpolated partition function
 

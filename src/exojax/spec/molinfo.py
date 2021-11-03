@@ -22,7 +22,7 @@ def molmass(molecule):
     >>> 28.97
 
     """
-    if molecule=="air":
+    if molecule=="air" or molecule=="Air":
         return 28.97
     
     em=0.0

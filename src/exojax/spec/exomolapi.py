@@ -3,6 +3,7 @@
 """
 import numpy as np
 import pandas as pd
+import vaex
 
 def read_def(deff):
     """Exomol IO for a definition file
@@ -24,9 +25,9 @@ def read_def(deff):
 
     dat = pd.read_csv(deff,sep="#",names=("VAL","COMMENT"))
     alpha_ref=None
-    texp=None
     molmasssw=False
     n_Texp=None
+    exception=False
     ntransf=1
     maxnu=0.0
     for i, com in enumerate(dat["COMMENT"]):
@@ -43,7 +44,8 @@ def read_def(deff):
             #maxnu=20000.0
         elif molmasssw:
             c=np.unique(dat["VAL"][i].strip(" ").split(" "))
-            c=np.array(c,dtype=np.float)
+            c= [a for a in c if a != '']
+            c=np.array(c,dtype=np.float64)
             molmass=(np.max(c))
             molmasssw=False
 
@@ -52,20 +54,45 @@ def read_def(deff):
             ntransf=20
         if deff.stem=="14N-1H3__CoYuTe":
             maxnu=20000.0
+        if deff.stem=="1H2-16O__BT2":
+            ntransf=16
+            maxnu=30000.0
+            exception=True
+            numinf=np.array([0.0,250.0,500.,750.0,1000.,1500.0,2000,2250.,2750.,3500.,4500.,5500.,7000.,9000.,14000.,20000.])
+            numtag=make_numtag(numinf,maxnu)
             
-    if ntransf>1:
+    if ntransf>1 and exception==False:
         dnufile=maxnu/ntransf
         numinf=dnufile*np.array(range(ntransf+1))
-        numtag=[]
-        for i in range(len(numinf)-1):
-            imin='{:05}'.format(int(numinf[i]))
-            imax='{:05}'.format(int(numinf[i+1]))
-            numtag.append(imin+"-"+imax)
-    else:
+        numtag=make_numtag(numinf,maxnu)
+    elif exception==False:
         numinf=None
         numtag=""
         
     return n_Texp, alpha_ref, molmass, numinf, numtag
+
+def make_numtag(numinf,maxnu):
+    """making numtag from numinf
+    
+    Args: 
+        numinf: nu minimum for trans
+        maxnu:  maximum nu
+
+    Returns:
+        numtag: tag for wavelength range
+
+    """
+    numtag=[]
+    for i in range(len(numinf)-1):
+        imin='{:05}'.format(int(numinf[i]))
+        imax='{:05}'.format(int(numinf[i+1]))
+        numtag.append(imin+"-"+imax)
+
+    imin=imax
+    imax='{:05}'.format(int(maxnu))
+    numtag.append(imin+"-"+imax)
+
+    return numtag
 
 def read_pf(pff):
     """Exomol IO for partition file
@@ -81,6 +108,7 @@ def read_pf(pff):
 
     """
     dat = pd.read_csv(pff,sep="\s+",names=("T","QT"))
+
     return dat
 
 def read_trans(transf):
@@ -95,13 +123,13 @@ def read_trans(transf):
     Args: 
         transf: transition file
     Returns:
-        transition data in pandas DataFrame
+        transition data in vaex DataFrame
 
     """
     try:
-        dat = pd.read_csv(transf,compression="bz2",sep="\s+",names=("i_upper","i_lower","A","nu_lines"))
+        dat = vaex.from_csv(transf,compression="bz2",sep="\s+",names=("i_upper","i_lower","A","nu_lines"),convert=True)
     except:
-        dat = pd.read_csv(transf,sep="\s+",names=("i_upper","i_lower","A","nu_lines"))
+        dat = vaex.read_csv(transf,sep="\s+",names=("i_upper","i_lower","A","nu_lines"),convert=True)
 
     return dat 
 
@@ -121,19 +149,20 @@ def read_states(statesf):
 
     """
     try:        
-        dat = pd.read_csv(statesf,compression="bz2",sep="\s+",usecols=range(4),names=("i","E","g","J"))
+        dat = vaex.from_csv(statesf,compression="bz2",sep="\s+",usecols=range(4),names=("i","E","g","J"),convert=True)
     except:
-        dat = pd.read_csv(statesf,sep="\s+",usecols=range(4),names=("i","E","g","J"))
+        dat = vaex.read_csv(statesf,sep="\s+",usecols=range(4),names=("i","E","g","J"),convert=True)
         
     return dat
 
 
-def pickup_gE(states,ndtrans,trans_lines=False):
+def pickup_gE(ndstates,ndtrans,trans_file,trans_lines=False):
     """extract g_upper (gup), E_lower (elower), and J_lower and J_upper from states DataFrame and insert them to transition DataFrame.
 
     Args:
-       states: states pandas DataFrame
+       ndstates: states numpy array
        ndtrans: transition numpy array
+       trans_file: name of the transition file
        trans_lines: By default (False) we use nu_lines computed using the state file, i.e. E_upper - E_lower. If trans_nuline=True, we use the nu_lines in the transition file. Note that some trans files do not this info.
 
 
@@ -145,11 +174,11 @@ def pickup_gE(states,ndtrans,trans_lines=False):
 
 
     """
-    ndstates=states.to_numpy()
-
+    #ndstates=states.to_numpy()
+    
     iorig=np.array(ndstates[:,0],dtype=int)
     maxii=int(np.max(iorig)+1) 
-    newstates=np.zeros((maxii,np.shape(states)[1]-1),dtype=float)
+    newstates=np.zeros((maxii,np.shape(ndstates)[1]-1),dtype=float)
     newstates[iorig,:]=ndstates[:,1:] 
 
     i_upper=np.array(ndtrans[:,0],dtype=int)
@@ -160,7 +189,9 @@ def pickup_gE(states,ndtrans,trans_lines=False):
     eupper=newstates[i_upper,0]
     gup=newstates[i_upper,1]
     jlower=np.array(newstates[i_lower,2],dtype=int)
+    del i_lower
     jupper=np.array(newstates[i_upper,2],dtype=int)
+    del i_upper
         
     A=ndtrans[:,2]
     
@@ -168,7 +199,25 @@ def pickup_gE(states,ndtrans,trans_lines=False):
         nu_lines=ndtrans[:,3]
     else:
         nu_lines=eupper-elower
-    
+    del eupper
+
+    ### MASKING ###
+    mask=(nu_lines>0.0)
+    if False in mask:
+        len_org = len(nu_lines)
+
+        A=A[mask]
+        nu_lines=nu_lines[mask]
+        elower=elower[mask]
+        gup=gup[mask]
+        jlower=jlower[mask]
+        jupper=jupper[mask]
+        print("WARNING: {0:,} transitions with the wavenumber=zero in {1} have been ignored.".format(len_org - len(nu_lines), trans_file))
+        if trans_lines:
+            print("This is because the value for the wavenumber column in the transition file is zero for those transitions.")
+        else:
+            print("This is because the upper and lower state IDs in the transition file indicate the same energy level when referring to the states file for those transitions.")
+
     #See Issue #16
     #import matplotlib.pyplot as plt
     #nu_lines_t=ndtrans[:,3]
@@ -178,7 +227,7 @@ def pickup_gE(states,ndtrans,trans_lines=False):
     #plt.savefig("nudiff.png", bbox_inches="tight", pad_inches=0.0)
     #plt.show()
 
-    return A, nu_lines, elower, gup, jlower, jupper
+    return A, nu_lines, elower, gup, jlower, jupper, mask
 
 
 def pickup_gEslow(states,trans):
@@ -236,6 +285,8 @@ def read_broad(broadf):
                "kalower","kclower","kaupper","kcupper",\
                "v1lower","v2lower","v3lower",\
                "v1upper","v2upper","v3upper"))
+
+
     return bdat
 
 def check_bdat(bdat):
@@ -283,7 +334,7 @@ def make_j2b(bdat,alpha_ref_default=0.07,n_Texp_default=0.5,jlower_max=None):
     alpha_ref_arr=np.array(bdat["alpha_ref"][cmask])
     n_Texp_arr=np.array(bdat["n_Texp"][cmask])
 
-    if jlower_max==None:
+    if jlower_max is None:
         Nblower=np.max(jlower_arr)+1
     else:
         Nblower=np.max([jlower_max,np.max(jlower_arr)])+1        
@@ -324,9 +375,7 @@ def make_jj2b(bdat,j2alpha_ref_def,j2n_Texp_def,jupper_max=None):
     alpha_ref_arr=np.array(bdat["alpha_ref"][cmask])
     n_Texp_arr=np.array(bdat["n_Texp"][cmask])
 
-    Nblower=len(j2alpha_ref_def)
-    
-    if jupper_max==None:
+    if jupper_max is None:
         Nbupper=np.max(jupper_arr)+1
     else:
         Nbupper=np.max([jupper_max,np.max(jupper_arr)])+1        

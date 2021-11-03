@@ -1,6 +1,8 @@
 HITRAN/HITEMP
 --------------
 
+*May (2021) Hajime Kawahara*
+
 See ":doc:`../tutorials/opacity`" for tutorial to compute a cross section profile using HITRAN/HITEMP.
 
 
