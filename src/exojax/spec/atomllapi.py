@@ -5,6 +5,7 @@
 import numpy as np
 import pandas as pd
 import io
+import vaex
 
 # Correspondence between Atomic Number and Element Symbol
 PeriodicTable = np.zeros([119], dtype=object) #PeriodicTable = np.empty([100], dtype=object)
@@ -24,10 +25,9 @@ def read_ExStellar(stellarf):
         
     Returns:
         line data in pandas DataFrame
-        
+
     """
-    dat = pd.read_csv(stellarf, sep=",",skiprows=3,\
-    names=("species","wav_lines","elowereV","vmic","loggf","rad_damping","stark_damping","waals_damping","lande","depth","reference"))
+    dat = pd.read_csv(stellarf, sep=",",skiprows=3, names=("species","wav_lines","elowereV","vmic","loggf","rad_damping","stark_damping","waals_damping","lande","depth","reference"))
     return dat
     
     
@@ -55,23 +55,27 @@ def read_ExAll(allf):
         Damping Waals
 
     Returns:
-        line data in pandas DataFrame
+        line data in vaex DataFrame
         
     """
-    dat = pd.read_csv(allf, sep=",", skiprows=1, \
-    names=("species","wav_lines","loggf","elowereV","jlower","euppereV", "jupper", "landelower", "landeupper", "landemean", "rad_damping","stark_damping","waals_damping")\
-                     )
+    dat = pd.read_csv(allf, sep=",", skiprows=1, names=("species","wav_lines","loggf","elowereV","jlower","euppereV", "jupper", "landelower", "landeupper", "landemean", "rad_damping","stark_damping","waals_damping")) #convert=False)
 
     dat = dat[dat.species.str.startswith("'")] #Remove rows not starting with "'"
     dat = dat[dat.species.str.startswith("' ").map({False: True, True: False})] #Remove rows of Reference
     dat = dat[dat.species.str.startswith("'_").map({False: True, True: False})] #Remove rows of Reference
     
     dat = dat[ dat.species.str.len()<7 ] #Remove long name (molecules e.g., TiO)
-    dat = dat[dat.species.str[1:3].str.isupper().map({False: True, True: False})] #Remove names starting with successive uppercase letters (molecules e.g., CO, OH, CN)
-    #dat = dat[dat.species.str.startswith("'CO").map({False: True, True: False})]
+    dat = dat[dat.species.str.slice(start=1, stop=3).str.isupper().map({False: True, True: False})] #Remove names starting with successive uppercase letters (molecules e.g., CO, OH, CN)
+    for i, sp in enumerate(dat.species):
+        symbol = sp.strip("'").split(' ')[0]
+        ielem = np.where(PeriodicTable==symbol)[0][0] if (symbol in PeriodicTable) else 0
+        iion = int(sp.strip("'").split(' ')[-1])
+        dat.species.values[i] = ielem*100+iion-1
     dat = dat.reset_index(drop=True)
-    
-    dat = dat.astype({'wav_lines': 'float64', 'loggf': 'float64', 'elowereV': 'float64', 'jlower': 'float64', 'euppereV': 'float64'})
+    dat = dat.astype('float64')
+    #dat = dat.astype({'wav_lines': 'float64', 'loggf': 'float64', 'elowereV': 'float64', 'jlower': 'float64', 'euppereV': 'float64'})
+    dat = vaex.from_pandas(dat)
+    dat.export_hdf5(allf.with_suffix('.hdf5'))
 
     return dat
     
@@ -165,7 +169,7 @@ def pickup_param(ExAll):
     """ extract transition parameters from VALD3 line list and insert the same DataFrame.
     
     Args:
-        ExAll: VALD3 line list (DataFrame): Output of read_ExAll
+        ExAll: VALD3 line list as pandas DataFrame (Output of read_ExAll)
     
     Returns:
         A:  Einstein coefficient in [s-1]
@@ -189,6 +193,7 @@ def pickup_param(ExAll):
     mecgs  = 9.10938356e-28 #[g] !electron mass
     
     # insert new columns in VALD line list
+    ExAll = ExAll.astype({'wav_lines': 'float64', 'loggf': 'float64', 'elowereV': 'float64', 'jlower': 'float64', 'euppereV': 'float64'})
     ExAll["nu_lines"] = 1.e8 / ExAll["wav_lines"] #[cm-1]<-[AA]
     ExAll = ExAll.iloc[::-1].reset_index(drop=True) #Sort by wavenumber
     ExAll["elower"] = ExAll["elowereV"] * 8065.541
@@ -213,9 +218,8 @@ def pickup_param(ExAll):
     ielem = np.zeros(len(ExAll), dtype='int') #atomic number (e.g., Fe=26)
     iion = np.zeros(len(ExAll), dtype='int') #e.g., neutral=1, singly ionized=2, ...
     for i, sp in enumerate(ExAll['species']):
-        symbol = sp.strip("'").split(' ')[0]
-        ielem[i] = np.where(PeriodicTable==symbol)[0][0] if (symbol in PeriodicTable) else 0
-        iion[i] = int(sp.strip("'").split(' ')[-1])
+        ielem[i] = int(str(int(sp))[:2])
+        iion[i] = int(str(int(sp))[2:])+1
 
     return A, nu_lines, elower, eupper, gupper, jlower, jupper, ielem, iion, gamRad, gamSta, vdWdamp
 

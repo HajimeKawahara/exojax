@@ -715,7 +715,10 @@ class AdbVald(object):  #integrated from vald3db.py
         gamRad (jnp array): log of gamma of radiation damping (s-1) #(https://www.astro.uu.se/valdwiki/Vald3Format)
         gamSta (jnp array): log of gamma of Stark damping (s-1)
         vdWdamp (jnp array):  log of (van der Waals damping constant / neutral hydrogen number) (s-1)
-            
+        
+        Note:
+           For the first time to read the VALD line list, it is converted to HDF/vaex. After the second-time, we use the HDF5 format with vaex instead.
+
     """
     def __init__(self, path, nurange=[-np.inf,np.inf], margin=1.0, crit=-np.inf, Irwin=False): #tako210721
     
@@ -731,7 +734,7 @@ class AdbVald(object):  #integrated from vald3db.py
         Note:
           (written with reference to moldb.py, but without using feather format)
         """
-        
+
         #load args
         self.vald3_file = pathlib.Path(path) #VALD3 output
         #self.path = pathlib.Path(path) #molec=t0+"__"+str(self.path.stem) #t0=self.path.parents[0].stem
@@ -745,11 +748,15 @@ class AdbVald(object):  #integrated from vald3db.py
 
         #load vald file ("Extract Stellar" request)
         print("Reading VALD file")
-        valdd=atomllapi.read_ExAll(self.vald3_file) #pandas.DataFrame
-        #valdd.to_feather(self.vald3_file.with_suffix(".feather"))
+        if self.vald3_file.with_suffix(".hdf5").exists():
+            valdd = vaex.open(self.vald3_file.with_suffix(".hdf5"))
+        else:
+            print("Note: Couldn't find the hdf5 format. We convert data to the hdf5 format.")
+            valdd = atomllapi.read_ExAll(self.vald3_file) #vaex.DataFrame
+        pvaldd = valdd.to_pandas_df() #pandas.DataFrame
         
         #compute additional transition parameters
-        self._A, self.nu_lines, self._elower, self._eupper, self._gupper, self._jlower, self._jupper, self._ielem, self._iion, self._gamRad, self._gamSta, self._vdWdamp = atomllapi.pickup_param(valdd)
+        self._A, self.nu_lines, self._elower, self._eupper, self._gupper, self._jlower, self._jupper, self._ielem, self._iion, self._gamRad, self._gamSta, self._vdWdamp = atomllapi.pickup_param(pvaldd)
         
         
         
