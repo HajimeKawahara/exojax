@@ -1,6 +1,17 @@
 """test for opacity of metal lines
 
-   - This test compares Fe opacity with petitRADTRANS
+  - This test compares Fe opacity with petitRADTRANS
+   
+  Note: The input line list needs to be obtained from VALD3 (http://vald.astro.uu.se/). VALD data access is free but requires registration through the Contact form (http://vald.astro.uu.se/~vald/php/vald.php?docpage=contact.html). After the registration, you can login and choose the "Extract Element" mode.
+        For this test, the request form should be filled as:
+            Starting wavelength :    1500
+            Ending wavelength :    100000
+            Element [ + ionization ] :    Fe 1
+            Extraction format :    Long format
+            Retrieve data via :    FTP
+            Linelist configuration :    Default
+            Unit selection:    Energy unit: eV - Medium: vacuum - Wavelength unit: angstrom - VdW syntax: default
+        Please rename the file sent by VALD ([user_name_at_VALD].[request_number_at_VALD].gz) to "vald2600.gz" if you would like to use the code below without editing it.
    
 """
 
@@ -25,7 +36,8 @@ pf_Irwin = False #if True, the partition functions of Irwin1981 is used, otherwi
 
 
 #Read line list
-adbFe = moldb.AdbVald(path_VALD3+'HiroyukiIshikawa.4204960.gz', nus4LL, Irwin=pf_Irwin)
+#$ cp [user_name_at_VALD].[request_number_at_VALD].gz vald2600.gz
+adbFe = moldb.AdbVald(path_VALD3+'vald2600.gz', nus4LL, Irwin=pf_Irwin)
 
 ucgs = 1.660539067e-24 #unified atomic mass unit [g]
 Amol=np.float64( adbFe.atomicmass[0] ) #atomic mass [u]
