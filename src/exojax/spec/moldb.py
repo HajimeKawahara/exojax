@@ -2,7 +2,7 @@
 
    * MdbExomol is the MDB for ExoMol
    * MdbHit is the MDB for HITRAN or HITEMP  
-   t
+   
 """
 import numpy as np
 import jax.numpy as jnp
