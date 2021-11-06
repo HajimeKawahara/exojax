@@ -720,7 +720,7 @@ class AdbVald(object):  #integrated from vald3db.py
            For the first time to read the VALD line list, it is converted to HDF/vaex. After the second-time, we use the HDF5 format with vaex instead.
 
     """
-    def __init__(self, path, nurange=[-np.inf,np.inf], margin=1.0, crit=-np.inf, Irwin=False): #tako210721
+    def __init__(self, path, nurange=[-np.inf,np.inf], margin=1.0, crit=-np.inf, Irwin=False):
     
         """Atomic database for VALD3 "Long format"
 
@@ -866,13 +866,13 @@ class AdbVald(object):  #integrated from vald3db.py
     
     
     
-    def QT_interp(self, atomspecies, T, Irwin=False):
+    def QT_interp(self, atomspecies, T):
         """interpolated partition function
+            The partition functions of Barklem & Collet (2016) are adopted.
 
         Args:
           atomspecies: species e.g., "Fe 1"
           T: temperature
-          Irwin: if True(1), the partition functions of Irwin1981 is used, otherwise those of Barklem&Collet2016
 
         Returns:
           Q(T): interpolated in jnp.array for the Atomic Species
@@ -880,29 +880,57 @@ class AdbVald(object):  #integrated from vald3db.py
         """
         gQT = self.Atomic_gQT(atomspecies)
         QT = jnp.interp(T, self.T_gQT, gQT)
-        #Use Irwin_1981 for Fe I (mask==76)  #test211013Tako
-        if Irwin==True:
-            if atomspecies == "Fe 1":
-                QT = atomllapi.partfn_Fe(T)
-            else:
-                QT = jnp.interp(T, self.T_gQT, gQT)
         return QT
 
 
 
-    def qr_interp(self, atomspecies, T, Irwin=False):
+    def QT_interp_Irwin_Fe(self, T, atomspecies="Fe 1"):
+        """interpolated partition function
+            This function is for the exceptional case where you want to adopt partition functions of Irwin (1981) for Fe I (Other species are not yet implemented).
+
+        Args:
+          atomspecies: species e.g., "Fe 1"
+          T: temperature
+
+        Returns:
+          Q(T): interpolated in jnp.array for the Atomic Species
+
+        """
+        gQT = self.Atomic_gQT(atomspecies)
+        QT = atomllapi.partfn_Fe(T)
+        return QT
+
+
+
+    def qr_interp(self, atomspecies, T):
         """interpolated partition function ratio
+            The partition functions of Barklem & Collet (2016) are adopted.
 
         Args:
            T: temperature
            atomspecies: species e.g., "Fe 1"
-           Irwin: if True(1), the partition functions of Irwin1981 is used, otherwise those of Barklem&Collet2016
 
         Returns:
            qr(T)=Q(T)/Q(Tref): interpolated in jnp.array
 
         """
-        return self.QT_interp(atomspecies,T,Irwin)/self.QT_interp(atomspecies,self.Tref,Irwin)
+        return self.QT_interp(atomspecies,T)/self.QT_interp(atomspecies,self.Tref)
+
+
+
+    def qr_interp_Irwin_Fe(self, T, atomspecies="Fe 1"):
+        """interpolated partition function ratio
+            This function is for the exceptional case where you want to adopt partition functions of Irwin (1981) for Fe I (Other species are not yet implemented).
+
+        Args:
+           T: temperature
+           atomspecies: species e.g., "Fe 1"
+
+        Returns:
+           qr(T)=Q(T)/Q(Tref): interpolated in jnp.array
+
+        """
+        return self.QT_interp_Irwin_Fe(T,atomspecies)/self.QT_interp_Irwin_Fe(self.Tref,atomspecies)
 
 
 
@@ -1110,13 +1138,13 @@ class AdbKurucz(object):
     
     
     
-    def QT_interp(self, atomspecies, T, Irwin=False):
+    def QT_interp(self, atomspecies, T):
         """interpolated partition function
+            The partition functions of Barklem & Collet (2016) are adopted.
 
         Args:
           atomspecies: species e.g., "Fe 1"
           T: temperature
-          Irwin: if True(1), the partition functions of Irwin1981 is used, otherwise those of Barklem&Collet2016
 
         Returns:
           Q(T): interpolated in jnp.array for the Atomic Species
@@ -1124,29 +1152,57 @@ class AdbKurucz(object):
         """
         gQT = self.Atomic_gQT(atomspecies)
         QT = jnp.interp(T, self.T_gQT, gQT)
-        #Use Irwin_1981 for Fe I (mask==76)  #test211013Tako
-        if Irwin==True:
-            if atomspecies == "Fe 1":
-                QT = atomllapi.partfn_Fe(T)
-            else:
-                QT = jnp.interp(T, self.T_gQT, gQT)
         return QT
 
 
 
-    def qr_interp(self, atomspecies, T, Irwin=False):
+    def QT_interp_Irwin_Fe(self, T, atomspecies="Fe 1"):
+        """interpolated partition function
+            This function is for the exceptional case where you want to adopt partition functions of Irwin (1981) for Fe I (Other species are not yet implemented).
+
+        Args:
+          atomspecies: species e.g., "Fe 1"
+          T: temperature
+
+        Returns:
+          Q(T): interpolated in jnp.array for the Atomic Species
+
+        """
+        gQT = self.Atomic_gQT(atomspecies)
+        QT = atomllapi.partfn_Fe(T)
+        return QT
+
+
+
+    def qr_interp(self, atomspecies, T):
         """interpolated partition function ratio
+            The partition functions of Barklem & Collet (2016) are adopted.
 
         Args:
            T: temperature
            atomspecies: species e.g., "Fe 1"
-           Irwin: if True(1), the partition functions of Irwin1981 is used, otherwise those of Barklem&Collet2016
 
         Returns:
            qr(T)=Q(T)/Q(Tref): interpolated in jnp.array
 
         """
-        return self.QT_interp(atomspecies,T,Irwin)/self.QT_interp(atomspecies,self.Tref,Irwin)
+        return self.QT_interp(atomspecies,T)/self.QT_interp(atomspecies,self.Tref)
+
+
+
+    def qr_interp_Irwin_Fe(self, T, atomspecies="Fe 1"):
+        """interpolated partition function ratio
+            This function is for the exceptional case where you want to adopt partition functions of Irwin (1981) for Fe I (Other species are not yet implemented).
+
+        Args:
+           T: temperature
+           atomspecies: species e.g., "Fe 1"
+
+        Returns:
+           qr(T)=Q(T)/Q(Tref): interpolated in jnp.array
+
+        """
+        return self.QT_interp_Irwin_Fe(T,atomspecies)/self.QT_interp_Irwin_Fe(self.Tref,atomspecies)
 
 
 
