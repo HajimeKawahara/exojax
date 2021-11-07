@@ -22,6 +22,7 @@ from exojax.spec.evalline import mask_weakline
 
 from exojax.spec import dit, modit
 from exojax.spec.limb_darkening import ld_kipping
+from exojax.utils.gpkernel import gpkernel_RBF
 
 #reference pressure for a T-P model
 Pref=1.0 #bar
@@ -117,10 +118,10 @@ from numpyro.diagnostics import hpdi
 from exojax.spec.modit import exomol,xsmatrix
 
 #GP model covariance
-def modelcov(t,tau,a,err):
-    Dt = t - jnp.array([t]).T
-    K=a*jnp.exp(-(Dt)**2/2/(tau**2))+jnp.diag(err**2)
-    return K
+#def modelcov(t,tau,a,err):
+#    Dt = t - jnp.array([t]).T
+#    K=a*jnp.exp(-(Dt)**2/2/(tau**2))+jnp.diag(err**2)
+#    return K
 
 baseline=1.07 #(baseline for a CIA photosphere in the observed (normaized) spectrum)
 # Model
@@ -185,8 +186,8 @@ def model_c(nu1,y1,e1):
         mu=response.ipgauss_sampling(nusdx,nus,Frot,beta,RV)
 
         #errall=jnp.sqrt(e1**2+sigma**2)
-        errall=e1
-        cov = modelcov(nusdx,tau,a,errall)
+        cov = gpkernel_RBF(nusdx,tau,a,e1)
+        #cov = modelcov(nusdx,tau,a,errall)
         #cov = modelcov(nusd,tau,a,e1)
         #numpyro.sample(tag, dist.Normal(mu, e1), obs=y)
         numpyro.sample(tag, dist.MultivariateNormal(loc=mu, covariance_matrix=cov), obs=y)
