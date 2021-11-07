@@ -16,11 +16,12 @@ from exojax.spec.hitran import SijT, doppler_sigma, gamma_natural, gamma_hitran
 from exojax.spec.hitrancia import read_cia, logacia 
 from exojax.spec.rtransfer import rtrun, dtauM, dtauCIA, nugrid
 from exojax.plot.atmplot import plottau, plotcf, plot_maxpoint
-from exojax.utils.afunc import getjov_logg
+from exojax.utils.afunc import getjov_gravity
 from exojax.utils.constants import RJ, pc, Rs, c
 from exojax.spec.evalline import mask_weakline
 
 from exojax.spec import dit, modit
+from exojax.spec.limb_darkening import ld_kipping
 
 #reference pressure for a T-P model
 Pref=1.0 #bar
@@ -137,16 +138,18 @@ def model_c(nu1,y1,e1):
     #Kipping Limb Darkening Prior arxiv:1308.0009                                                                      
     q1 = numpyro.sample('q1', dist.Uniform(0.0,1.0))
     q2 = numpyro.sample('q2', dist.Uniform(0.0,1.0))
-    sqrtq1=jnp.sqrt(q1)
-    u1=2.0*sqrtq1*q2
-    u2=sqrtq1*(1.0-2.0*q2)
+    u1,u2=ld_kipping(q1,q2)
+    #sqrtq1=jnp.sqrt(q1)
+    #u1=2.0*sqrtq1*q2
+    #u2=sqrtq1*(1.0-2.0*q2)
     #GP
     logtau = numpyro.sample('logtau', dist.Uniform(-1.5,0.5)) #tau=1 <=> 5A
     tau=10**(logtau)
     loga = numpyro.sample('loga', dist.Uniform(-4.0,-2.0))
     a=10**(loga)
 
-    g=2478.57730044555*Mp/Rp**2 #gravity
+    g=getjov_gravity(Rp,Mp)
+    #g=2478.57730044555*Mp/Rp**2 #gravity
     
     #T-P model//
     Tarr = T0*(Parr/Pref)**alpha 
