@@ -8,8 +8,36 @@ from jax import jit, vmap
 import jax.numpy as jnp
 from exojax.special.faddeeva import rewofz,imwofz
 from exojax.special.faddeeva import rewofzs2,imwofzs2
-
 from jax import custom_jvp
+
+#exomol
+from exojax.spec.exomol import gamma_exomol
+from exojax.spec.hitran import SijT, doppler_sigma, gamma_natural
+
+def exomol(mdb,Tarr,Parr,molmass):
+    """compute molecular line information required for MODIT using Exomol mdb.
+
+    Args:
+       mdb: mdb instance
+       Tarr: Temperature array
+       Parr: Pressure array
+       molmass: molecular mass
+
+    Returns:
+       line intensity matrix,
+       gammaL matrix,
+       sigmaD matrix
+
+    """
+
+    qt=vmap(mdb.qr_interp)(Tarr)
+    SijM=jit(vmap(SijT,(0,None,None,None,0)))(Tarr,mdb.logsij0,mdb.dev_nu_lines,mdb.elower,qt)
+    gammaLMP = jit(vmap(gamma_exomol,(0,0,None,None)))(Parr,Tarr,mdb.n_Texp,mdb.alpha_ref)
+    gammaLMN=gamma_natural(mdb.A)
+    gammaLM=gammaLMP+gammaLMN[None,:]
+    sigmaDM=jit(vmap(doppler_sigma,(None,0,None)))(mdb.nu_lines,Tarr,molmass)        
+    return SijM,gammaLM,sigmaDM
+
 
 @jit
 def ljert(x,a):

@@ -10,44 +10,45 @@ from jax import vmap, jit
 
 from exojax.spec import rtransfer as rt
 from exojax.spec import planck, moldb, contdb, response, molinfo, make_numatrix0
-from exojax.spec.lpf import xsvector
-from exojax.spec.lpf import xsmatrix
+from exojax.spec.lpf import xsvector, xsmatrix, exomol
 from exojax.spec.exomol import gamma_exomol
 from exojax.spec.hitran import SijT, doppler_sigma, gamma_natural, gamma_hitran
 from exojax.spec.hitrancia import read_cia, logacia 
 from exojax.spec.rtransfer import rtrun, dtauM, dtauCIA, nugrid
 from exojax.plot.atmplot import plottau, plotcf, plot_maxpoint
-from exojax.utils.afunc import getjov_logg
-from exojax.utils.constants import RJ, pc, Rs, c
-from exojax.spec.evalline import mask_weakline
+from exojax.spec.evalline import reduceline_exomol
+
+from exojax.utils.afunc import getjov_gravity
+from exojax.utils.instfunc import R2STD
+from exojax.utils.constants import RJ, pc
 from exojax.utils.gpkernel import gpkernel_RBF
 
-#reference pressure for a T-P model
-Pref=1.0 #bar
 
 #FLUX reference
 Fabs_REF2=2.7e-12 #absolute flux (i.e. flux@10pc) erg/s/cm2/um Burgasser+ 1303.7283 @2.29um
 fac0=RJ**2/((10.0*pc)**2)  #nomralize by RJ
 Fref=(2.29**2)*Fabs_REF2/fac0/1.e4 #erg/cm2/s/cm-1 @ 2.3um
 
-#loading spectrum
+# Loading spectrum
 dat=pd.read_csv("../data/luhman16a_spectra_detector1.csv",delimiter=",")
 wavd=(dat["wavelength_micron"].values)*1.e4 #AA
 nusd=1.e8/wavd[::-1]
 fobs=(dat["normalized_flux"].values)[::-1]
 err=(dat["err_normalized_flux"].values)[::-1]
 
-#ATMOSPHERE
+# ATMOSPHERIC LAYER
+Pref=1.0 # Reference pressure for a T-P model (bar)
 NP=100
 Parr, dParr, k=rt.pressure_layer(NP=NP)
 mmw=2.33 #mean molecular weight
-R=100000.
-beta=c/(2.0*np.sqrt(2.0*np.log(2.0))*R) #IP sigma need check
 ONEARR=np.ones_like(Parr) #ones_array for MMR
 molmassCO=molinfo.molmass("CO") #molecular mass (CO)
 molmassH2O=molinfo.molmass("H2O") #molecular mass (H2O)
 
-#LOADING CIA
+# Instrument
+beta=R2STD(100000.) #std of gaussian from R=100000.
+
+# LOADING CIA
 mmrH2=0.74
 mmrHe=0.25
 molmassH2=molinfo.molmass("H2")
@@ -55,88 +56,61 @@ molmassHe=molinfo.molmass("He")
 vmrH2=(mmrH2*mmw/molmassH2)
 vmrHe=(mmrHe*mmw/molmassHe)
 
-#LINES
-g=10**(5.0)
-T0c=1700.0
-Tarr = T0c*np.ones_like(Parr)    
-maxMMR_CO=0.01
-maxMMR_H2O=0.005
 
+# Loading Molecular datanase and  Reducing Molecular Lines
+Nx=4500    # number of wavenumber bins (nugrid) for fit
+ws=22876.0 # AA
+we=23010.0 # AA
+nus,wav,res=nugrid(ws-5.0,we+5.0,Nx,unit="AA")
+
+# Masking data
+mask=(ws<wavd[::-1])*(wavd[::-1]<we) # data fitting range
+mask=mask*((22898.5>wavd[::-1])+(wavd[::-1]>22899.5))  # Additional mask to remove a strong telluric
+fobsx=fobs[mask]
+nusdx=nusd[mask]
+wavdx=1.e8/nusdx[::-1]
+errx=err[mask]
+
+# Loading molecular database 
+mdbCO=moldb.MdbExomol('.database/CO/12C-16O/Li2015',nus) 
+mdbH2O=moldb.MdbExomol('.database/H2O/1H2-16O/POKAZATEL',nus,crit=1.e-46) 
+
+# LOADING CIA
+cdbH2H2=contdb.CdbCIA('.database/H2-H2_2011.cia',nus)
+cdbH2He=contdb.CdbCIA('.database/H2-He_2011.cia',nus)
 
 ###########################################################
 #Loading Molecular datanase and  Reducing Molecular Lines
 ###########################################################
 
-def ap(fobs,nusd,ws,we,Nx):
-    mask=(ws<wavd[::-1])*(wavd[::-1]<we)
-    #additional mask to remove a strong telluric
-    mask=mask*((22898.5>wavd[::-1])+(wavd[::-1]>22899.5))  
-    fobsx=fobs[mask]
-    nusdx=nusd[mask]
-    wavdx=1.e8/nusdx[::-1]
-    errx=err[mask]
-    nus,wav,res=nugrid(ws-5.0,we+5.0,Nx,unit="AA")
-    #loading molecular database 
-    mdbCO=moldb.MdbExomol('.database/CO/12C-16O/Li2015',nus) 
-    mdbH2O=moldb.MdbExomol('.database/H2O/1H2-16O/POKAZATEL',nus,crit=1.e-46) 
-    #LOADING CIA
-    cdbH2H2=contdb.CdbCIA('.database/H2-H2_2011.cia',nus)
-    cdbH2He=contdb.CdbCIA('.database/H2-He_2011.cia',nus)
+#LINES
 
-    #REDUCING UNNECESSARY LINES
-    #1. CO
-    Tarr = T0c*np.ones_like(Parr)    
-    qt=vmap(mdbCO.qr_interp)(Tarr)
-    gammaLMP = jit(vmap(gamma_exomol,(0,0,None,None)))\
-        (Parr,Tarr,mdbCO.n_Texp,mdbCO.alpha_ref)
-    gammaLMN=gamma_natural(mdbCO.A)
-    gammaLM=gammaLMP+gammaLMN[None,:]
-    SijM=jit(vmap(SijT,(0,None,None,None,0)))\
-        (Tarr,mdbCO.logsij0,mdbCO.nu_lines,mdbCO.elower,qt)
-    sigmaDM=jit(vmap(doppler_sigma,(None,0,None)))\
-        (mdbCO.nu_lines,Tarr,molmassCO)        
-    mask_CO,maxcf,maxcia=mask_weakline(mdbCO,Parr,dParr,Tarr,SijM,gammaLM,sigmaDM,maxMMR_CO*ONEARR,molmassCO,mmw,g,vmrH2,cdbH2H2)
-    mdbCO.masking(mask_CO)
 
-    plot_maxpoint(mask_CO,Parr,maxcf,maxcia,mol="CO")
-    plt.savefig("maxpoint_CO.pdf", bbox_inches="tight", pad_inches=0.0)
-        
-    #2. H2O
-    T0xarr=list(range(500,1800,100))
-    for k,T0x in enumerate(T0xarr):
-        Tarr = T0x*np.ones_like(Parr)    
-        qt=vmap(mdbH2O.qr_interp)(Tarr)
-        gammaLMP = jit(vmap(gamma_exomol,(0,0,None,None)))\
-            (Parr,Tarr,mdbH2O.n_Texp,mdbH2O.alpha_ref)
-        gammaLMN=gamma_natural(mdbH2O.A)
-        gammaLM=gammaLMP+gammaLMN[None,:]
-        SijM=jit(vmap(SijT,(0,None,None,None,0)))\
-            (Tarr,mdbH2O.logsij0,mdbH2O.nu_lines,mdbH2O.elower,qt)
-        sigmaDM=jit(vmap(doppler_sigma,(None,0,None)))\
-            (mdbH2O.nu_lines,Tarr,molmassH2O)    
-        mask_H2O_tmp,maxcf,maxcia=mask_weakline(mdbH2O,Parr,dParr,Tarr,SijM,gammaLM,sigmaDM,maxMMR_H2O*ONEARR,molmassH2O,mmw,g,vmrH2,cdbH2H2)
-        if k==0:
-            mask_H2O=np.copy(mask_H2O_tmp)
-        else:
-            mask_H2O=mask_H2O+mask_H2O_tmp
+g=10**(5.0)
+maxMMR_CO=0.01
+maxMMR_H2O=0.005
 
-        if k==len(T0xarr)-1:
-            print("H2O ")
-            plot_maxpoint(mask_H2O_tmp,Parr,maxcf,maxcia,mol="H2O")
-            plt.savefig("maxpoint_H2O.pdf", bbox_inches="tight", pad_inches=0.0)
-            print("H2O saved")
-            
-    mdbH2O.masking(mask_H2O)
-    print("Final:",len(mask_H2O),"->",np.sum(mask_H2O))
-    #nu matrix
-    numatrix_CO=make_numatrix0(nus,mdbCO.nu_lines)    
-    numatrix_H2O=make_numatrix0(nus,mdbH2O.nu_lines)
+def Tmodel(Parr,T0):
+    """ Constant T model
+    """
+    return T0*np.ones_like(Parr)
 
-    return fobsx,nusdx,wavdx,errx,nus,wav,res,mdbCO,mdbH2O,numatrix_CO,numatrix_H2O,cdbH2H2,cdbH2He
-    
-N=4500
-fobs1,nusd1,wavd1,err1,nus1,wav1,res1,mdbCO1,mdbH2O1,numatrix_CO1,numatrix_H2O1,cdbH2H21,cdbH2He1=ap(fobs,nusd,22876.0,23010.0,N)
+#1. CO evalline
+mask_CO,maxcf,maxcia=reduceline_exomol(mdbCO,Parr,dParr,mmw,g,vmrH2,cdbH2H2,maxMMR_CO,molmassCO,Tmodel,[1700.0]) #only 1700K
+plot_maxpoint(mask_CO,Parr,maxcf,maxcia,mol="CO")
+plt.savefig("maxpoint_CO.pdf", bbox_inches="tight", pad_inches=0.0)
 
+#1. H2O evalline
+T0xarr=list(range(500,1800,100))
+mask_H2O,maxcf,maxcia=reduceline_exomol(mdbH2O,Parr,dParr,mmw,g,vmrH2,cdbH2H2,maxMMR_H2O,molmassH2O,Tmodel,T0xarr) #only 1700K
+plot_maxpoint(mask_H2O,Parr,maxcf,maxcia,mol="H2O")
+plt.savefig("maxpoint_H2O.pdf", bbox_inches="tight", pad_inches=0.0)
+
+numatrix_CO=make_numatrix0(nus,mdbCO.nu_lines)    
+numatrix_H2O=make_numatrix0(nus,mdbH2O.nu_lines)
+
+import sys
+sys.exit()
 #######################################################
 #HMC-NUTS FITTING PART
 #######################################################
