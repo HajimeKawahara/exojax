@@ -161,10 +161,10 @@ def model_c(nu1,y1,e1):
         
         Frot=response.rigidrot(nus,F0,vsini,u1,u2)
         mu=response.ipgauss_sampling(nusdx,nus,Frot,beta,RV)
-        cov = gpkernel_RBF(nusdx,tau,a,e1)
+        cov = gpkernel_RBF(nu1,tau,a,e1)
         sample(tag, dist.MultivariateNormal(loc=mu, covariance_matrix=cov), obs=y)
 
-    obyo(y1,"y1",nusdx,nus,mdbCO,mdbH2O,cdbH2H2,cdbH2He)
+    obyo(y1,"y1",nu1,nus,mdbCO,mdbH2O,cdbH2H2,cdbH2He)
 
     
 # Run a HMC-NUTS

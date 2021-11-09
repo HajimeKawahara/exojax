@@ -18,7 +18,7 @@ from exojax.spec.hitrancia import read_cia, logacia
 from exojax.spec.rtransfer import rtrun, dtauM, dtauCIA, nugrid
 from exojax.plot.atmplot import plottau, plotcf, plot_maxpoint
 from exojax.spec.evalline import reduceline_exomol
-
+from exojax.spec.limb_darkening import ld_kipping
 from exojax.utils.afunc import getjov_gravity
 from exojax.utils.instfunc import R2STD
 from exojax.utils.constants import RJ, pc
@@ -109,147 +109,112 @@ numatrix_H2O=initspec.init_lpf(mdbH2O.nu_lines,nus)
 #######################################################
 #HMC-NUTS FITTING PART
 #######################################################
+from numpyro import sample
 import numpyro.distributions as dist
-import numpyro
 from numpyro.infer import MCMC, NUTS
 from numpyro.infer import Predictive
 from numpyro.diagnostics import hpdi
 
-#GP model covariance
-#def modelcov(t,tau,a,err):
-#    Dt = t - jnp.array([t]).T
-#    K=a*jnp.exp(-(Dt)**2/2/(tau**2))+jnp.diag(err**2)
-#    return K
-
-
+# Some constants for fitting
 baseline=1.07 #(baseline for a CIA photosphere in the observed (normaized) spectrum)
+maxMMR_CO=0.01
+maxMMR_H2O=0.005
+
 # Model
 def model_c(nu1,y1,e1):
-    Rp = numpyro.sample('Rp', dist.Uniform(0.5,1.5))
-    Mp = numpyro.sample('Mp', dist.Normal(33.5,0.3))
-    #sigma = numpyro.sample('sigma', dist.Exponential(10.0))
-    RV = numpyro.sample('RV', dist.Uniform(26.0,30.0))
-    MMR_CO = numpyro.sample('MMR_CO', dist.Uniform(0.0,maxMMR_CO))
-    MMR_H2O = numpyro.sample('MMR_H2O', dist.Uniform(0.0,maxMMR_H2O))
-    T0 = numpyro.sample('T0', dist.Uniform(1000.0,1700.0))
-    alpha = numpyro.sample('alpha', dist.Uniform(0.05,0.15))
-    vsini = numpyro.sample('vsini', dist.Uniform(10.0,20.0))    
-    #Limb Darkening from 2013A&A...552A..16C (1500K, logg=5, K)
-    # u1=0.5969 	
-    # u2=0.1125
-    #Kipping Limb Darkening Prior arxiv:1308.0009
-    q1 = numpyro.sample('q1', dist.Uniform(0.0,1.0))
-    q2 = numpyro.sample('q2', dist.Uniform(0.0,1.0))
-    sqrtq1=jnp.sqrt(q1)
-    u1=2.0*sqrtq1*q2
-    u2=sqrtq1*(1.0-2.0*q2)
-    #GP
-    logtau = numpyro.sample('logtau', dist.Uniform(-1.5,0.5)) #tau=1 <=> 5A
-    tau=10**(logtau)
-    loga = numpyro.sample('loga', dist.Uniform(-4.0,-2.0))
-    a=10**(loga)
+    Rp = sample('Rp', dist.Uniform(0.5,1.5))
+    Mp = sample('Mp', dist.Normal(33.5,0.3))
+    RV = sample('RV', dist.Uniform(26.0,30.0))
+    MMR_CO = sample('MMR_CO', dist.Uniform(0.0,maxMMR_CO))
+    MMR_H2O = sample('MMR_H2O', dist.Uniform(0.0,maxMMR_H2O))
+    T0 = sample('T0', dist.Uniform(1000.0,1700.0))
+    alpha = sample('alpha', dist.Uniform(0.05,0.15))
+    vsini = sample('vsini', dist.Uniform(10.0,20.0))    
+
+    # Kipping Limb Darkening Prior
+    q1 = sample('q1', dist.Uniform(0.0,1.0))
+    q2 = sample('q2', dist.Uniform(0.0,1.0))
+    u1,u2=ld_kipping(q1,q2)
     
-    g=2478.57730044555*Mp/Rp**2 #gravity
+    #GP
+    logtau = sample('logtau', dist.Uniform(-1.5,0.5)) #tau=1 <=> 5A
+    tau=10**(logtau)
+    loga = sample('loga', dist.Uniform(-4.0,-2.0))
+    a=10**(loga)
+
+    #gravity
+    g=getjov_gravity(Rp,Mp)
         
     #T-P model//
     Tarr = T0*(Parr/Pref)**alpha 
-    
-    #line computation CO
-    qt_CO=vmap(mdbCO1.qr_interp)(Tarr)
-    qt_H2O=vmap(mdbH2O1.qr_interp)(Tarr)
-    
-    def obyo(y,tag,nusd,nus,numatrix_CO,numatrix_H2O,mdbCO,mdbH2O,cdbH2H2,cdbH2He):
-        #CO
-        SijM_CO=jit(vmap(SijT,(0,None,None,None,0)))\
-            (Tarr,mdbCO.logsij0,mdbCO.dev_nu_lines,mdbCO.elower,qt_CO)
-        gammaLMP_CO = jit(vmap(gamma_exomol,(0,0,None,None)))\
-            (Parr,Tarr,mdbCO.n_Texp,mdbCO.alpha_ref)
-        gammaLMN_CO=gamma_natural(mdbCO.A)
-        gammaLM_CO=gammaLMP_CO+gammaLMN_CO[None,:]
-        sigmaDM_CO=jit(vmap(doppler_sigma,(None,0,None)))\
-            (mdbCO.dev_nu_lines,Tarr,molmassCO)    
-        xsm_CO=xsmatrix(numatrix_CO,sigmaDM_CO,gammaLM_CO,SijM_CO) 
-        dtaumCO=dtauM(dParr,xsm_CO,MMR_CO*ONEARR,molmassCO,g)
-        #H2O
-        SijM_H2O=jit(vmap(SijT,(0,None,None,None,0)))\
-            (Tarr,mdbH2O.logsij0,mdbH2O.dev_nu_lines,mdbH2O.elower,qt_H2O)
-        gammaLMP_H2O = jit(vmap(gamma_exomol,(0,0,None,None)))\
-            (Parr,Tarr,mdbH2O.n_Texp,mdbH2O.alpha_ref)
-        gammaLMN_H2O=gamma_natural(mdbH2O.A)
-        gammaLM_H2O=gammaLMP_H2O+gammaLMN_H2O[None,:]
-        sigmaDM_H2O=jit(vmap(doppler_sigma,(None,0,None)))\
-            (mdbH2O.dev_nu_lines,Tarr,molmassH2O)
-        xsm_H2O=xsmatrix(numatrix_H2O,sigmaDM_H2O,gammaLM_H2O,SijM_H2O) 
-        dtaumH2O=dtauM(dParr,xsm_H2O,MMR_H2O*ONEARR,molmassH2O,g)
-        #CIA
-        dtaucH2H2=dtauCIA(nus,Tarr,Parr,dParr,vmrH2,vmrH2,\
-                          mmw,g,cdbH2H2.nucia,cdbH2H2.tcia,cdbH2H2.logac)
-        dtaucH2He=dtauCIA(nus,Tarr,Parr,dParr,vmrH2,vmrHe,\
-                          mmw,g,cdbH2He.nucia,cdbH2He.tcia,cdbH2He.logac)
-    
-        dtau=dtaumCO+dtaumH2O+dtaucH2H2+dtaucH2He    
-        sourcef = planck.piBarr(Tarr,nus)
-
-        Ftoa=Fref/Rp**2
-        F0=rtrun(dtau,sourcef)/baseline/Ftoa
         
-        Frot=response.rigidrot(nus,F0,vsini,u1,u2)
-        mu=response.ipgauss_sampling(nusd,nus,Frot,beta,RV)
-
-        #errall=jnp.sqrt(e1**2+sigma**2)
-        cov=gpkernel_RBF(t,tau,a,e1)
-        #cov = modelcov(nusd,tau,a,errall)
-        #cov = modelcov(nusd,tau,a,e1)
-        #numpyro.sample(tag, dist.Normal(mu, e1), obs=y)
-        numpyro.sample(tag, dist.MultivariateNormal(loc=mu, covariance_matrix=cov), obs=y)
+    #CO
+    SijM_CO,gammaLM_CO,sigmaDM_CO=exomol(mdbCO,Tarr,Parr,molmassCO)
+    xsm_CO=xsmatrix(numatrix_CO,sigmaDM_CO,gammaLM_CO,SijM_CO) 
+    dtaumCO=dtauM(dParr,xsm_CO,MMR_CO*ONEARR,molmassCO,g)
+    
+    #H2O
+    SijM_H2O,gammaLM_H2O,sigmaDM_H2O=exomol(mdbH2O,Tarr,Parr,molmassH2O)
+    xsm_H2O=xsmatrix(numatrix_H2O,sigmaDM_H2O,gammaLM_H2O,SijM_H2O) 
+    dtaumH2O=dtauM(dParr,xsm_H2O,MMR_H2O*ONEARR,molmassH2O,g)
+    
+    #CIA
+    dtaucH2H2=dtauCIA(nus,Tarr,Parr,dParr,vmrH2,vmrH2,\
+                      mmw,g,cdbH2H2.nucia,cdbH2H2.tcia,cdbH2H2.logac)
+    dtaucH2He=dtauCIA(nus,Tarr,Parr,dParr,vmrH2,vmrHe,\
+                      mmw,g,cdbH2He.nucia,cdbH2He.tcia,cdbH2He.logac)
+    
+    dtau=dtaumCO+dtaumH2O+dtaucH2H2+dtaucH2He    
+    sourcef = planck.piBarr(Tarr,nus)
+    Ftoa=Fref/Rp**2
+    F0=rtrun(dtau,sourcef)/baseline/Ftoa
+    
+    Frot=response.rigidrot(nus,F0,vsini,u1,u2)
+    mu=response.ipgauss_sampling(nu1,nus,Frot,beta,RV)
+    cov=gpkernel_RBF(nu1,tau,a,e1)
+    sample("y1", dist.MultivariateNormal(loc=mu, covariance_matrix=cov), obs=y1)
         
-    obyo(y1,"y1",nusd1,nus1,numatrix_CO1,numatrix_H2O1,mdbCO1,mdbH2O1,cdbH2H21,cdbH2He1)
-
 #Running a HMC-NUTS
 rng_key = random.PRNGKey(0)
 rng_key, rng_key_ = random.split(rng_key)
 num_warmup, num_samples = 500, 1000
-#num_warmup, num_samples = 100, 300
 kernel = NUTS(model_c,forward_mode_differentiation=True)
 mcmc = MCMC(kernel, num_warmup=num_warmup, num_samples=num_samples)
-mcmc.run(rng_key_, nu1=nusd1, y1=fobs1, e1=err1)
+mcmc.run(rng_key_, nu1=nusdx, y1=fobsx, e1=errx)
 print("end HMC")
 
-#Post-processing
+# Post-processing
 posterior_sample = mcmc.get_samples()
 np.savez("npz/savepos.npz",[posterior_sample])
 
 pred = Predictive(model_c,posterior_sample,return_sites=["y1"])
-nu_1 = nus1
-predictions = pred(rng_key_,nu1=nu_1,y1=None,e1=err1)
-median_mu1 = jnp.median(predictions["y1"],axis=0)
-hpdi_mu1 = hpdi(predictions["y1"], 0.9)
-np.savez("npz/saveplotpred.npz",[wavd1,fobs1,err1,median_mu1,hpdi_mu1])
+nu = nus
+predictions = pred(rng_key_,nu1=nu,y1=None,e1=errx)
+median_mu = jnp.median(predictions["y1"],axis=0)
+hpdi_mu = hpdi(predictions["y1"], 0.9)
+np.savez("npz/saveplotpred.npz",[wavdx,fobsx,errx,median_mu,hpdi_mu])
 
-red=(1.0+28.07/300000.0) #for annotation
 fig, ax = plt.subplots(nrows=1, ncols=1, figsize=(20,6.0))
-ax.plot(wavd1[::-1],median_mu1,color="C0")
-ax.plot(wavd1[::-1],fobs1,"+",color="C1",label="data")
+ax.plot(wavdx[::-1],median_mu,color="C0")
+ax.plot(wavdx[::-1],fobsx,"+",color="C1",label="data")
 
-#annotation for some lines
+# Annotation for some lines
+red=(1.0+28.07/300000.0) #for annotation
 ax.plot([22913.3*red,22913.3*red],[0.6,0.75],color="C0",lw=1)
 ax.plot([22918.07*red,22918.07*red],[0.6,0.77],color="C1",lw=1)
 ax.plot([22955.67*red,22955.67*red],[0.6,0.68],color="C2",lw=1)
 plt.text(22913.3*red,0.55,"A",color="C0",fontsize=12,horizontalalignment="center")
 plt.text(22918.07*red,0.55,"B",color="C1",fontsize=12,horizontalalignment="center")
 plt.text(22955.67*red,0.55,"C",color="C2",fontsize=12,horizontalalignment="center")
-#
-
-ax.fill_between(wavd1[::-1], hpdi_mu1[0], hpdi_mu1[1], alpha=0.3, interpolate=True,color="C0",
+ax.fill_between(wavdx[::-1], hpdi_mu[0], hpdi_mu[1], alpha=0.3, interpolate=True,color="C0",
                 label="90% area")
 plt.xlabel("wavelength ($\AA$)",fontsize=16)
 plt.legend(fontsize=16)
 plt.tick_params(labelsize=16)
-
 plt.savefig("npz/results.pdf", bbox_inches="tight", pad_inches=0.0)
 plt.savefig("npz/results.png", bbox_inches="tight", pad_inches=0.0)
 
-#ARVIZ part
+# ARVIZ part
 import arviz
 rc = {
     "plot.max_subplots": 1024,
