@@ -9,7 +9,8 @@ from jax import random
 from jax import vmap, jit
 
 from exojax.spec import rtransfer as rt
-from exojax.spec import planck, moldb, contdb, response, molinfo, make_numatrix0
+from exojax.spec import initspec
+from exojax.spec import planck, moldb, contdb, response, molinfo
 from exojax.spec.lpf import xsvector, xsmatrix, exomol
 from exojax.spec.exomol import gamma_exomol
 from exojax.spec.hitran import SijT, doppler_sigma, gamma_natural, gamma_hitran
@@ -79,38 +80,32 @@ mdbH2O=moldb.MdbExomol('.database/H2O/1H2-16O/POKAZATEL',nus,crit=1.e-46)
 cdbH2H2=contdb.CdbCIA('.database/H2-H2_2011.cia',nus)
 cdbH2He=contdb.CdbCIA('.database/H2-He_2011.cia',nus)
 
-###########################################################
-#Loading Molecular datanase and  Reducing Molecular Lines
-###########################################################
-
-#LINES
-
-
-g=10**(5.0)
-maxMMR_CO=0.01
-maxMMR_H2O=0.005
+# Reducing Molecular Lines
 
 def Tmodel(Parr,T0):
     """ Constant T model
     """
     return T0*np.ones_like(Parr)
 
-#1. CO evalline
+# Reference physical quantities
+g=10**(5.0)
+maxMMR_CO=0.01
+maxMMR_H2O=0.005
+
+# CO 
 mask_CO,maxcf,maxcia=reduceline_exomol(mdbCO,Parr,dParr,mmw,g,vmrH2,cdbH2H2,maxMMR_CO,molmassCO,Tmodel,[1700.0]) #only 1700K
 plot_maxpoint(mask_CO,Parr,maxcf,maxcia,mol="CO")
 plt.savefig("maxpoint_CO.pdf", bbox_inches="tight", pad_inches=0.0)
 
-#1. H2O evalline
+# H2O
 T0xarr=list(range(500,1800,100))
 mask_H2O,maxcf,maxcia=reduceline_exomol(mdbH2O,Parr,dParr,mmw,g,vmrH2,cdbH2H2,maxMMR_H2O,molmassH2O,Tmodel,T0xarr) #only 1700K
 plot_maxpoint(mask_H2O,Parr,maxcf,maxcia,mol="H2O")
 plt.savefig("maxpoint_H2O.pdf", bbox_inches="tight", pad_inches=0.0)
 
-numatrix_CO=make_numatrix0(nus,mdbCO.nu_lines)    
-numatrix_H2O=make_numatrix0(nus,mdbH2O.nu_lines)
+numatrix_CO=initspec.init_lpf(mdbCO.nu_lines,nus)    
+numatrix_H2O=initspec.init_lpf(mdbH2O.nu_lines,nus)
 
-import sys
-sys.exit()
 #######################################################
 #HMC-NUTS FITTING PART
 #######################################################
