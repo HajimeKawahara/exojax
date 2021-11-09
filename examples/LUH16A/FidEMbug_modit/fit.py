@@ -1,15 +1,17 @@
 """Fitting an emission spectral model w/  Gaussian Process to Luhman-16A data using MODIT
 
 """
-
+# basic modules 
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 
+# JAX
 import jax.numpy as jnp
 from jax import random
 from jax import vmap, jit
 
+# ExoJAX
 from exojax.spec import planck, moldb, contdb, response, molinfo, dit, modit, initspec
 from exojax.spec.exomol import gamma_exomol
 from exojax.spec.hitran import SijT, doppler_sigma, gamma_natural, gamma_hitran
@@ -23,7 +25,6 @@ from exojax.utils.afunc import getjov_gravity
 from exojax.utils.instfunc import R2STD
 from exojax.utils.constants import RJ, pc
 from exojax.utils.gpkernel import gpkernel_RBF
-
 
 # FLUX reference
 Fabs_REF2=2.7e-12 #absolute flux (i.e. flux@10pc) erg/s/cm2/um Burgasser+ 1303.7283 @2.29um
@@ -48,7 +49,6 @@ molmassH2O=molinfo.molmass("H2O") # molecular mass (H2O)
 
 # Instrument
 beta=R2STD(100000.) #std of gaussian from R=100000.
-#beta=c/(2.0*np.sqrt(2.0*np.log(2.0))*R) #IP sigma need check
 
 # LOADING CIA
 mmrH2=0.74 # mean molecualr weight of H2 for CIA
@@ -92,20 +92,14 @@ alpha_test=np.array([0.15,0.15,0.05,0.05])
 dgm_ngammaL_CO=setdgm_exomol(mdbCO,fT,Parr,R_CO,molmassCO,res,T0_test,alpha_test)
 dgm_ngammaL_H2O=setdgm_exomol(mdbH2O,fT,Parr,R_H2O,molmassH2O,res,T0_test,alpha_test)
 
-#HMC-NUTS FITTING PART
+# HMC-NUTS FITTING PART
 from numpyro import sample
 import numpyro.distributions as dist
 from numpyro.infer import MCMC, NUTS
 from numpyro.infer import Predictive
 from numpyro.diagnostics import hpdi
 
-#GP model covariance
-#def modelcov(t,tau,a,err):
-#    Dt = t - jnp.array([t]).T
-#    K=a*jnp.exp(-(Dt)**2/2/(tau**2))+jnp.diag(err**2)
-#    return K
-
-#some constants for fitting
+# Some constants for fitting
 baseline=1.07 #(baseline for a CIA photosphere in the observed (normaized) spectrum)
 maxMMR_CO=0.01
 maxMMR_H2O=0.005
@@ -126,18 +120,14 @@ def model_c(nu1,y1,e1):
     q2 = sample('q2', dist.Uniform(0.0,1.0))
     u1,u2=ld_kipping(q1,q2)
     
-    #sqrtq1=jnp.sqrt(q1)
-    #u1=2.0*sqrtq1*q2
-    #u2=sqrtq1*(1.0-2.0*q2)
-    
     # GP
     logtau = sample('logtau', dist.Uniform(-1.5,0.5)) #tau=1 <=> 5A
     tau=10**(logtau)
     loga = sample('loga', dist.Uniform(-4.0,-2.0))
     a=10**(loga)
 
+    #gravity
     g=getjov_gravity(Rp,Mp)
-    #g=2478.57730044555*Mp/Rp**2 #gravity
     
     # T-P model
     Tarr = T0*(Parr/Pref)**alpha 
@@ -171,12 +161,7 @@ def model_c(nu1,y1,e1):
         
         Frot=response.rigidrot(nus,F0,vsini,u1,u2)
         mu=response.ipgauss_sampling(nusdx,nus,Frot,beta,RV)
-
-        #errall=jnp.sqrt(e1**2+sigma**2)
         cov = gpkernel_RBF(nusdx,tau,a,e1)
-        #cov = modelcov(nusdx,tau,a,errall)
-        #cov = modelcov(nusd,tau,a,e1)
-        #sample(tag, dist.Normal(mu, e1), obs=y)
         sample(tag, dist.MultivariateNormal(loc=mu, covariance_matrix=cov), obs=y)
 
     obyo(y1,"y1",nusdx,nus,mdbCO,mdbH2O,cdbH2H2,cdbH2He)
@@ -189,7 +174,7 @@ num_warmup, num_samples = 500, 1000
 kernel = NUTS(model_c,forward_mode_differentiation=True)
 mcmc = MCMC(kernel, num_warmup=num_warmup, num_samples=num_samples)
 mcmc.run(rng_key_, nu1=nusdx, y1=fobsx, e1=errx)
-print("end HMC")
+print("End HMC")
 
 # Post-processing
 posterior_sample = mcmc.get_samples()
