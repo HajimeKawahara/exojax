@@ -1,22 +1,19 @@
+# Basic modules
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
-import seaborn as sns
-import tqdm
 
+# JAX
 import jax.numpy as jnp
 from jax import random
-from jax import vmap, jit
 
-from exojax.spec import rtransfer as rt
-from exojax.spec import initspec
-from exojax.spec import planck, moldb, contdb, response, molinfo
+# ExoJAX
+from exojax.spec import initspec, planck, moldb, contdb, response, molinfo
 from exojax.spec.lpf import xsvector, xsmatrix, exomol
 from exojax.spec.exomol import gamma_exomol
-from exojax.spec.hitran import SijT, doppler_sigma, gamma_natural, gamma_hitran
 from exojax.spec.hitrancia import read_cia, logacia 
-from exojax.spec.rtransfer import rtrun, dtauM, dtauCIA, nugrid
-from exojax.plot.atmplot import plottau, plotcf, plot_maxpoint
+from exojax.spec.rtransfer import rtrun, dtauM, dtauCIA, nugrid, pressure_layer
+from exojax.plot.atmplot import  plot_maxpoint
 from exojax.spec.evalline import reduceline_exomol
 from exojax.spec.limb_darkening import ld_kipping
 from exojax.utils.afunc import getjov_gravity
@@ -24,8 +21,7 @@ from exojax.utils.instfunc import R2STD
 from exojax.utils.constants import RJ, pc
 from exojax.utils.gpkernel import gpkernel_RBF
 
-
-#FLUX reference
+# FLUX reference
 Fabs_REF2=2.7e-12 #absolute flux (i.e. flux@10pc) erg/s/cm2/um Burgasser+ 1303.7283 @2.29um
 fac0=RJ**2/((10.0*pc)**2)  #nomralize by RJ
 Fref=(2.29**2)*Fabs_REF2/fac0/1.e4 #erg/cm2/s/cm-1 @ 2.3um
@@ -40,7 +36,7 @@ err=(dat["err_normalized_flux"].values)[::-1]
 # ATMOSPHERIC LAYER
 Pref=1.0 # Reference pressure for a T-P model (bar)
 NP=100
-Parr, dParr, k=rt.pressure_layer(NP=NP)
+Parr, dParr, k=pressure_layer(NP=NP)
 mmw=2.33 #mean molecular weight
 ONEARR=np.ones_like(Parr) #ones_array for MMR
 molmassCO=molinfo.molmass("CO") #molecular mass (CO)
@@ -48,15 +44,6 @@ molmassH2O=molinfo.molmass("H2O") #molecular mass (H2O)
 
 # Instrument
 beta=R2STD(100000.) #std of gaussian from R=100000.
-
-# LOADING CIA
-mmrH2=0.74
-mmrHe=0.25
-molmassH2=molinfo.molmass("H2")
-molmassHe=molinfo.molmass("He")
-vmrH2=(mmrH2*mmw/molmassH2)
-vmrHe=(mmrHe*mmw/molmassHe)
-
 
 # Loading Molecular datanase and  Reducing Molecular Lines
 Nx=4500    # number of wavenumber bins (nugrid) for fit
@@ -77,11 +64,16 @@ mdbCO=moldb.MdbExomol('.database/CO/12C-16O/Li2015',nus)
 mdbH2O=moldb.MdbExomol('.database/H2O/1H2-16O/POKAZATEL',nus,crit=1.e-46) 
 
 # LOADING CIA
+mmrH2=0.74
+mmrHe=0.25
+molmassH2=molinfo.molmass("H2")
+molmassHe=molinfo.molmass("He")
+vmrH2=(mmrH2*mmw/molmassH2)
+vmrHe=(mmrHe*mmw/molmassHe)
 cdbH2H2=contdb.CdbCIA('.database/H2-H2_2011.cia',nus)
 cdbH2He=contdb.CdbCIA('.database/H2-He_2011.cia',nus)
 
 # Reducing Molecular Lines
-
 def Tmodel(Parr,T0):
     """ Constant T model
     """
@@ -103,12 +95,11 @@ mask_H2O,maxcf,maxcia=reduceline_exomol(mdbH2O,Parr,dParr,mmw,g,vmrH2,cdbH2H2,ma
 plot_maxpoint(mask_H2O,Parr,maxcf,maxcia,mol="H2O")
 plt.savefig("maxpoint_H2O.pdf", bbox_inches="tight", pad_inches=0.0)
 
+# Initialization of direct LPF
 numatrix_CO=initspec.init_lpf(mdbCO.nu_lines,nus)    
 numatrix_H2O=initspec.init_lpf(mdbH2O.nu_lines,nus)
 
-#######################################################
-#HMC-NUTS FITTING PART
-#######################################################
+# HMC-NUTS FITTING PART
 from numpyro import sample
 import numpyro.distributions as dist
 from numpyro.infer import MCMC, NUTS

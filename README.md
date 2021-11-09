@@ -140,7 +140,7 @@ cuDNN is used for to compute the astronomical/instrumental response for the larg
 
 ## References
 
-- Kawahara, Kawashima, Masuda, Crossfield, van den Bekerom, Parker (2021) under review: [arXiv:2105.14782](http://arxiv.org/abs/2105.14782)
+- Kawahara, Kawashima, Masuda, Crossfield, Parker, van den Bekerom (2021) under review: [arXiv:2105.14782](http://arxiv.org/abs/2105.14782)
 
 ## License
 
