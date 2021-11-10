@@ -4,6 +4,7 @@
 
 import numpy as np
 import pandas as pd
+from exojax.utils.constants import ccgs, ecgs, mecgs, eV2wn
 import io
 import vaex
 
@@ -102,10 +103,6 @@ def read_kurucz(kuruczf):
         vdWdamp:  log of (van der Waals damping constant / neutral hydrogen number) (s-1)
     
     """
-    ccgs = 2.99792458e10 #[cm/s]
-    ecgs = 4.80320450e-10 #[esu]=[dyn^0.5*cm] !elementary charge
-    mecgs  = 9.10938356e-28 #[g] !electron mass
-
     with open(kuruczf) as f:
         lines = f.readlines()
     wlnmair, loggf, species, elower, jlower, labellower, eupper, jupper, labelupper, \
@@ -188,16 +185,12 @@ def pickup_param(ExAll):
     Note:
     
     """
-    ccgs = 2.99792458e10 #[cm/s]
-    ecgs = 4.80320450e-10 #[esu]=[dyn^0.5*cm] !elementary charge
-    mecgs  = 9.10938356e-28 #[g] !electron mass
-    
     # insert new columns in VALD line list
     ExAll = ExAll.astype({'wav_lines': 'float64', 'loggf': 'float64', 'elowereV': 'float64', 'jlower': 'float64', 'euppereV': 'float64'})
     ExAll["nu_lines"] = 1.e8 / ExAll["wav_lines"] #[cm-1]<-[AA]
     ExAll = ExAll.iloc[::-1].reset_index(drop=True) #Sort by wavenumber
-    ExAll["elower"] = ExAll["elowereV"] * 8065.541
-    ExAll["eupper"] = ExAll["euppereV"] * 8065.541
+    ExAll["elower"] = ExAll["elowereV"] * eV2wn
+    ExAll["eupper"] = ExAll["euppereV"] * eV2wn
     ExAll["gupper"] = ExAll["jupper"]*2+1
     ExAll["glower"] = ExAll["jlower"]*2+1
     #notes4Tako#どうせ比をとるので電子の縮退度等の係数は落ちる.(MyLog2017.rtf)
