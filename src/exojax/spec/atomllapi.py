@@ -23,7 +23,8 @@ def read_ExStellar(stellarf):
         See https://www.astro.uu.se/valdwiki/select_output
 
     Args:
-        
+        stellarf: file path
+
     Returns:
         line data in pandas DataFrame
 
@@ -37,10 +38,22 @@ def read_ExAll(allf):
     """IO for linelists downloaded from VALD3 with a query of "Long format" in the format of "Extract All" or "Extract Element"
     
     Note:
-        See https://www.astro.uu.se/valdwiki/presformat_output
-        for the detail of the format
+        About input linelists obtained from VALD3 (http://vald.astro.uu.se/):
+            VALD data access is free but requires registration through the Contact form (http://vald.astro.uu.se/~vald/php/vald.php?docpage=contact.html).
+        After the registration, you can login and choose the "Extract Element" mode.
+        For example, if you want the Fe I linelist, the request form should be filled as:
+            Starting wavelength :    1500
+            Ending wavelength :    100000
+            Element [ + ionization ] :    Fe 1
+            Extraction format :    Long format
+            Retrieve data via :    FTP
+            Linelist configuration :    Default
+            Unit selection:    Energy unit: eV - Medium: vacuum - Wavelength unit: angstrom - VdW syntax: default
+        Please assign the fullpath of the output file sent by VALD ([user_name_at_VALD].[request_number_at_VALD].gz) to the variable "allf".
+        See https://www.astro.uu.se/valdwiki/presformat_output for the detail of the format.
 
     Args:
+        allf: fullpath to the input VALD linelist (See Notes above for more details.)
         Elm Ion
         WL_vac(AA)
         log gf*
