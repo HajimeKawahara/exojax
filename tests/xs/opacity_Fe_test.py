@@ -20,6 +20,7 @@ import numpy as np
 from exojax.spec import xsection, moldb, atomll
 from exojax.spec.hitran import SijT, doppler_sigma
 import matplotlib.pyplot as plt
+from exojax.utils.constants import m_u
 
 path_pRT = '/home/tako/work/pRT/'
 path_VALD3 = '/home/tako/work/VALD3/'
@@ -39,7 +40,6 @@ pf_Irwin = False #if True, the partition functions of Irwin1981 is used, otherwi
 #$ cp [user_name_at_VALD].[request_number_at_VALD].gz vald2600.gz
 adbFe = moldb.AdbVald(path_VALD3+'vald2600.gz', nus4LL, Irwin=pf_Irwin)
 
-ucgs = 1.660539067e-24 #unified atomic mass unit [g]
 Amol=np.float64( adbFe.atomicmass[0] ) #atomic mass [u]
 ionE=np.float64( adbFe.ionE[0] ) #ionization energy [eV]
 nu0=adbFe.nu_lines
@@ -52,22 +52,22 @@ np.array(1.0/nus[::-1], dtype=np.float64).tofile(outdir+"wlen"+out_suffix+".dat"
 @pytest.mark.parametrize("P", [0.000001, 0.000010, 0.000100, 0.001000, 0.010000, 0.100000, 1.000000, 10.000000, 100.000000]) #, 1000.000000
 
 def test_opacity_Fe(T, P):
-    
-    #Make files of opacity [cm^2]
-    qt = np.ones_like(adbFe.A) * np.float32(adbFe.qr_interp("Fe 1", T, Irwin=pf_Irwin))
-    #↑Unlike the case of HITRAN (using Qr_HAPI), we ignored the isotopes.
-    sigmaD = doppler_sigma(adbFe.nu_lines, T, Amol)
     PH = P* H_He_HH_VMR[0]
     PHe = P* H_He_HH_VMR[1]
     PHH = P* H_He_HH_VMR[2]
 
+
+    #Make files of opacity [cm^2]
+    qt = np.ones_like(adbFe.A) * np.float32(adbFe.qr_interp("Fe 1", T, Irwin=pf_Irwin))
+    #↑Unlike the case of HITRAN (using Qr_HAPI), we ignored the isotopes.
     Sij = SijT(T, adbFe.logsij0, adbFe.nu_lines, adbFe.elower, qt)
+    sigmaD = doppler_sigma(adbFe.nu_lines, T, Amol)
     gammaL = atomll.gamma_vald3(T, PH, PHH, PHe, adbFe.ielem, adbFe.iion, \
             adbFe.dev_nu_lines, adbFe.elower, adbFe.eupper, adbFe.atomicmass, adbFe.ionE, \
             adbFe.gamRad, adbFe.gamSta, adbFe.vdWdamp, enh_damp=1.0)
     xsv = xsection(nus, nu0, sigmaD, gammaL, Sij, memory_size=30) #←Bottleneck
     out = "sigma_99_"+("{:.0f}".format(T))+".K_"+("{:.6f}".format(P))+"bar"+out_suffix+".dat"
-    op = np.array(xsv[::-1],dtype=np.float64)/(Amol*ucgs)
+    op = np.array(xsv[::-1],dtype=np.float64)/(Amol*m_u)
     op.tofile(outdir+out)
 
 
@@ -80,7 +80,7 @@ def test_opacity_Fe(T, P):
 
     fn_exo = "sigma_99_"+("{:.0f}".format(T))+".K_"+("{:.6f}".format(P))+"bar"+out_suffix+".dat"
     with open(petit_exojaxdir+fn_exo, 'rb') as f:
-        xs_exo = np.array(  np.fromfile(f, dtype=np.float64)  )*species_mass*ucgs
+        xs_exo = np.array(  np.fromfile(f, dtype=np.float64)  )*species_mass*m_u
         
 
     #Read spectra of petitRADTRANS
@@ -92,7 +92,7 @@ def test_opacity_Fe(T, P):
         
     fn_prt = "sigma_99_"+("{:.0f}".format(T))+".K_"+("{:.6f}".format(P))+"bar.dat"
     with open(petitdir+fn_prt, 'rb') as f:
-        xs_prt = np.array(  np.fromfile(f, dtype=np.float64)  )*species_mass*ucgs
+        xs_prt = np.array(  np.fromfile(f, dtype=np.float64)  )*species_mass*m_u
         
 
     #Trim and Interpolate spectra (as preparation for taking residuals)
