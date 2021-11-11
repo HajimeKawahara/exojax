@@ -1,7 +1,8 @@
 """test for opacity calculation of metal lines
 
   - This test calculates Fe opacity from VALD3 line list. (Comparison with petitRADTRANS opacity is shown in examples/comparisons/opacity_Fe_VALD3.ipynb)
-   
+    The calculation of gamma is based on the van der Waals gamma in the line list (VALD or Kurucz), otherwise estimated according to the Unsoeld (1955)
+    
   Note: The input line list needs to be obtained from VALD3 (http://vald.astro.uu.se/). VALD data access is free but requires registration through the Contact form (http://vald.astro.uu.se/~vald/php/vald.php?docpage=contact.html). After the registration, you can login and choose the "Extract Element" mode.
         For this test, the request form should be filled as:
             Starting wavelength :    1500
@@ -22,12 +23,11 @@ from exojax.spec.hitran import SijT, doppler_sigma
 import matplotlib.pyplot as plt
 from exojax.utils.constants import m_u
 
-path_pRT = '/home/tako/work/pRT/'
-path_VALD3 = '/home/tako/work/VALD3/'
+filepath_VALD3 = '/home/tako/work/VALD3/vald2600.gz'
 path_fig = '/home/tako/Dropbox/tmpfig/tmp_211111/'
-outdir = path_pRT + 'input_data/opacities/lines/line_by_line/Fe_exojax/'
 
 #-------
+
 out_suffix = '_pytest'
 H_He_HH_VMR = [0.0, 0.16, 0.84] #H, He, H2 #pure[1.0, 0.0, 0.0] #test[0.05, 0.005, 0.1] #Solar[0.0, 0.16, 0.84]
 
@@ -38,7 +38,7 @@ pf_Irwin = False #if True, the partition functions of Irwin1981 is used, otherwi
 
 #Read line list
 #$ cp [user_name_at_VALD].[request_number_at_VALD].gz vald2600.gz
-adbFe = moldb.AdbVald(path_VALD3+'vald2600.gz', nus4LL, Irwin=pf_Irwin)
+adbFe = moldb.AdbVald(filepath_VALD3, nus4LL, Irwin=pf_Irwin)
 
 Amol=np.float64( adbFe.atomicmass[0] ) #atomic mass [u]
 ionE=np.float64( adbFe.ionE[0] ) #ionization energy [eV]
@@ -46,8 +46,8 @@ nu0=adbFe.nu_lines
 
 #-------
 
-@pytest.mark.parametrize("T", [81, 3250, 4000]) #81, 110, 148, 200, 270, 365, 493,
-@pytest.mark.parametrize("P", [0.000001, 0.100000, 100.000000, 1000.000000]) #, 1000.000000
+@pytest.mark.parametrize("T", [81, 200, 493, 1215, 2217, 2995, 3250, 4000]) #[81, 110, 148, 200, 270, 365, 493, 666, 900, 1215, 1641, 2000, 2217, 2500, 2750, 2995, 3250, 3500, 3750, 4000]
+@pytest.mark.parametrize("P", [0.000001, 0.000100, 0.010000, 1.000000, 100.000000]) #[0.000001, 0.000010, 0.000100, 0.001000, 0.010000, 0.100000, 1.000000, 10.000000, 100.000000, 1000.000000]
 
 def test_opacity_Fe(T, P):
     PH = P* H_He_HH_VMR[0]
@@ -71,6 +71,8 @@ def test_opacity_Fe(T, P):
     plt.xscale("log")
     plt.title(str_param)
     plt.savefig(path_fig+"opacity_Fe_test_"+str_param+".pdf")
+    plt.clf()
+    plt.close()
 
     assert((True in np.isnan(op)) == False)
 
