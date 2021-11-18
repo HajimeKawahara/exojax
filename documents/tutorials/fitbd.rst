@@ -1,135 +1,268 @@
 |:cat:|  Bayes Inference of a Real Spectrum of Luhman 16A  
 --------------------------------------------------------------------
-*Update: May 27/2021, Hajime Kawahara*
+*Update: Nov 10/2021, Hajime Kawahara*
 
-The full code for the HMC-NUTS fitting using NumPyro to the high-dispersion spectrum of Luhman 16A (`Crossfield+2014 <https://www.nature.com/articles/nature12955?proof=t>`_) is given in examples/LUH16A/FidEMb/fit.py. I confirmed the code worked using `NVIDIA A100 <https://www.nvidia.com/en-us/data-center/a100/>`_ or `V100 <https://www.nvidia.com/en-us/data-center/v100/>`_, at least. When using A100, it took 8.5 hr. Here, I explain some parts of the code. As the goal of  this tutorial, we want to fit the exojax model to the high-dispersion data as
+The full code for the HMC-NUTS fitting using NumPyro to the high-dispersion spectrum of Luhman 16A (`Crossfield+2014 <https://www.nature.com/articles/nature12955?proof=t>`_) is given in examples/LUH16A/FidEMbug/fit.py. I confirmed the code worked using `NVIDIA A100 <https://www.nvidia.com/en-us/data-center/a100/>`_ or `V100 <https://www.nvidia.com/en-us/data-center/v100/>`_. Here, I explain full parts of the code. As the goal of this tutorial, we want to fit the exojax model to the high-dispersion data as
 
 .. image:: results.png
 
 and get a posterior sampling.
 
-We use a 100 atmospheric layer model for radiative transfer.
+
+First, we import basic modules and some modules from jax,
 
 .. code:: python3
 	  
+	  # Basic modules
+	  import numpy as np
+	  import pandas as pd
+	  import matplotlib.pyplot as plt
+	  
+	  # JAX
+	  import jax.numpy as jnp
+	  from jax import random
+
+and, many modules and functions from ExoJAX.
+	  
+.. code:: python3
+	  
+	  # ExoJAX
+	  from exojax.spec import initspec, planck, moldb, contdb, response, molinfo
+	  from exojax.spec.lpf import xsvector, xsmatrix, exomol
+	  from exojax.spec.exomol import gamma_exomol
+	  from exojax.spec.hitrancia import read_cia, logacia 
+	  from exojax.spec.rtransfer import rtrun, dtauM, dtauCIA, nugrid, pressure_layer
+	  from exojax.plot.atmplot import  plot_maxpoint
+	  from exojax.spec.evalline import reduceline_exomol
+	  from exojax.spec.limb_darkening import ld_kipping
+	  from exojax.utils.afunc import getjov_gravity
+	  from exojax.utils.instfunc import R2STD
+	  from exojax.utils.constants import RJ, pc
+	  from exojax.utils.gpkernel import gpkernel_RBF
+
+To fit the model to real high-resolution spectra, we usually need some information on absolute flux. Here, we just use the value from the mid-resolution spectrum.
+
+.. code:: python3
+	  	  
+	  # FLUX reference
+	  Fabs_REF2=2.7e-12 #absolute flux (i.e. flux@10pc) erg/s/cm2/um Burgasser+ 1303.7283 @2.29um
+	  fac0=RJ**2/((10.0*pc)**2)  #nomralize by RJ
+	  Fref=(2.29**2)*Fabs_REF2/fac0/1.e4 #erg/cm2/s/cm-1 @ 2.3um
+
+Loading the real data of Luhman-16A by Crossfield+2014.
+	  
+.. code:: python3
+	  	  
+	  # Loading spectrum
+	  dat=pd.read_csv("../data/luhman16a_spectra_detector1.csv",delimiter=",")
+	  wavd=(dat["wavelength_micron"].values)*1.e4 #AA
+	  nusd=1.e8/wavd[::-1]
+	  fobs=(dat["normalized_flux"].values)[::-1]
+	  err=(dat["err_normalized_flux"].values)[::-1]
+
+Here we define the atmospheric layer (100 layers) and some qunatities for the atmospheric model.
+
+.. code:: python3
+	  	  	  
+	  # ATMOSPHERIC LAYER
+	  Pref=1.0 # Reference pressure for a T-P model (bar)
 	  NP=100
-	  Parr, dParr, k=rt.pressure_layer(NP=NP)
+	  Parr, dParr, k=pressure_layer(NP=NP)
+	  mmw=2.33 #mean molecular weight
+	  ONEARR=np.ones_like(Parr) #ones_array for MMR
+	  molmassCO=molinfo.molmass("CO") #molecular mass (CO)
+	  molmassH2O=molinfo.molmass("H2O") #molecular mass (H2O)
 
-In the following function, we mask the data, load the molecular databases, exclude unnecessary lines. The reason why we define this part as a independent function is one can easily extend the code to a multiple orders fitting although here we fit the model to a single order of the spectrum.   
+Assuming the instrumental resolution... Yes, beta is the standard deviation of the Gaussian.
 	  
 .. code:: python3
+	  	  	  
+	  # Instrument
+	  beta=R2STD(100000.) #std of gaussian from R=100000.
 	  
-	  def ap(fobs,nusd,ws,we,Nx):
-	      mask=(ws<wavd[::-1])*(wavd[::-1]<we)
-	      
-In the *ap* function, we define the wavenumber grid using `nugrid <../exojax/exojax.spec.html#exojax.spec.rtransfer.nugrid>`_ and call `moldb.MdbExomol <../exojax/exojax.spec.html#exojax.spec.moldb.MdbExomol>`_ for both CO and H2O. So, we use Li2015 for CO and POKAZATEL for H2O from ExoMol. We also load the CIA database using `contdb.CdbCIA <../exojax/exojax.spec.html#exojax.spec.contdb.CdbCIA>`_ .
-
-.. code:: python3
 	  
+	  # Loading Molecular datanase and  Reducing Molecular Lines
+	  Nx=4500    # number of wavenumber bins (nugrid) for fit
+	  ws=22876.0 # AA
+	  we=23010.0 # AA
 	  nus,wav,res=nugrid(ws-5.0,we+5.0,Nx,unit="AA")
-	  #loading molecular database 
+	  
+	  # Masking data
+	  mask=(ws<wavd[::-1])*(wavd[::-1]<we) # data fitting range
+	  mask=mask*((22898.5>wavd[::-1])+(wavd[::-1]>22899.5))  # Additional mask to remove a strong telluric
+	  fobsx=fobs[mask]
+	  nusdx=nusd[mask]
+	  wavdx=1.e8/nusdx[::-1]
+	  errx=err[mask]
+	  
+	  # Loading molecular database 
 	  mdbCO=moldb.MdbExomol('.database/CO/12C-16O/Li2015',nus) 
-	  mdbH2O=moldb.MdbExomol('.database/H2O/1H2-16O/POKAZATEL',nus,crit=1.e-45) 
-	  #LOADING CIA
+	  mdbH2O=moldb.MdbExomol('.database/H2O/1H2-16O/POKAZATEL',nus,crit=1.e-46) 
+	  
+	  # LOADING CIA
+	  mmrH2=0.74
+	  mmrHe=0.25
+	  molmassH2=molinfo.molmass("H2")
+	  molmassHe=molinfo.molmass("He")
+	  vmrH2=(mmrH2*mmw/molmassH2)
+	  vmrHe=(mmrHe*mmw/molmassHe)
 	  cdbH2H2=contdb.CdbCIA('.database/H2-H2_2011.cia',nus)
 	  cdbH2He=contdb.CdbCIA('.database/H2-He_2011.cia',nus)
-
-The following part excludes unnecessary lines comparing a CIA photosphere and line strengths assuming a T0c=1700K isothermal atmosphere for CO. For H2O, we change the temperature range because the line strenght of H2O is sensitive to the temperature. 
-
-.. code:: python3
-
-	  Tarr = T0c*np.ones_like(Parr)    
-	  qt=vmap(mdbCO.qr_interp)(Tarr)
-	  gammaLMP = jit(vmap(gamma_exomol,(0,0,None,None)))\
-          (Parr,Tarr,mdbCO.n_Texp,mdbCO.alpha_ref)
-	  gammaLMN=gamma_natural(mdbCO.A)
-	  gammaLM=gammaLMP+gammaLMN[None,:]
-	  SijM=jit(vmap(SijT,(0,None,None,None,0)))\
-          (Tarr,mdbCO.logsij0,mdbCO.nu_lines,mdbCO.elower,qt)
-	  sigmaDM=jit(vmap(doppler_sigma,(None,0,None)))\
-          (mdbCO.nu_lines,Tarr,molmassCO)        
-	  mask_CO,maxcf,maxcia=mask_weakline(mdbCO,Parr,dParr,Tarr,SijM,gammaLM,sigmaDM,maxMMR_CO*ONEARR,molmassCO,mmw,g,vmrH2,cdbH2H2)
-	  mdbCO.masking(mask_CO)
-
-We need to precompute nu-matrices. These matrices will be used in a HMC-NUTS fitting.
-
-
-.. code:: python3
-
-	  #nu matrix
-	  numatrix_CO=make_numatrix0(nus,mdbCO.nu_lines)    
-	  numatrix_H2O=make_numatrix0(nus,mdbH2O.nu_lines)
-
-The following is the NumPyro part.
-
-.. code:: python3
-
+	  
+	  # Reducing Molecular Lines
+	  def Tmodel(Parr,T0):
+	  """ Constant T model
+	  """
+	  return T0*np.ones_like(Parr)
+	  
+	  # Reference physical quantities
+	  g=10**(5.0)
+	  maxMMR_CO=0.01
+	  maxMMR_H2O=0.005
+	  
+	  # CO 
+	  mask_CO,maxcf,maxcia=reduceline_exomol(mdbCO,Parr,dParr,mmw,g,vmrH2,cdbH2H2,maxMMR_CO,molmassCO,Tmodel,[1700.0]) #only 1700K
+	  plot_maxpoint(mask_CO,Parr,maxcf,maxcia,mol="CO")
+	  plt.savefig("maxpoint_CO.pdf", bbox_inches="tight", pad_inches=0.0)
+	  
+	  # H2O
+	  T0xarr=list(range(500,1800,100))
+	  mask_H2O,maxcf,maxcia=reduceline_exomol(mdbH2O,Parr,dParr,mmw,g,vmrH2,cdbH2H2,maxMMR_H2O,molmassH2O,Tmodel,T0xarr) #only 1700K
+	  plot_maxpoint(mask_H2O,Parr,maxcf,maxcia,mol="H2O")
+	  plt.savefig("maxpoint_H2O.pdf", bbox_inches="tight", pad_inches=0.0)
+	  
+	  # Initialization of direct LPF
+	  numatrix_CO=initspec.init_lpf(mdbCO.nu_lines,nus)    
+	  numatrix_H2O=initspec.init_lpf(mdbH2O.nu_lines,nus)
+	  
+	  # HMC-NUTS FITTING PART
+	  from numpyro import sample
+	  import numpyro.distributions as dist
+	  from numpyro.infer import MCMC, NUTS
+	  from numpyro.infer import Predictive
+	  from numpyro.diagnostics import hpdi
+	  
+	  # Some constants for fitting
+	  baseline=1.07 #(baseline for a CIA photosphere in the observed (normaized) spectrum)
+	  maxMMR_CO=0.01
+	  maxMMR_H2O=0.005
+	  
+	  # Model
 	  def model_c(nu1,y1,e1):
-	      Rp = numpyro.sample('Rp', dist.Uniform(0.5,1.5))
-	      Mp = numpyro.sample('Mp', dist.Normal(33.5,0.3))
-	      sigma = numpyro.sample('sigma', dist.Exponential(0.1))
-
-Again, for the extension to the multi order fitting, we define the *obyo* function, which defines the spectrum model (y0) for each order, though we here use a single order.   
-
-.. code:: python3
-
-	  def obyo(y,tag,nusd,nus,numatrix_CO,numatrix_H2O,mdbCO,mdbH2O,cdbH2H2,cdbH2He):
-
-The following part defines the opacity model. The line strength, pressure and natural boradening, thermal broadening, and compute cross section by `rtransfer.xsmatrix <../exojax/exojax.spec.html#exojax.spec.autospec.AutoXS.xsmatrix>`_ .
-
-
-.. code:: python3
+	  Rp = sample('Rp', dist.Uniform(0.5,1.5))
+	  Mp = sample('Mp', dist.Normal(33.5,0.3))
+	  RV = sample('RV', dist.Uniform(26.0,30.0))
+	  MMR_CO = sample('MMR_CO', dist.Uniform(0.0,maxMMR_CO))
+	  MMR_H2O = sample('MMR_H2O', dist.Uniform(0.0,maxMMR_H2O))
+	  T0 = sample('T0', dist.Uniform(1000.0,1700.0))
+	  alpha = sample('alpha', dist.Uniform(0.05,0.15))
+	  vsini = sample('vsini', dist.Uniform(10.0,20.0))    
 	  
+	  # Kipping Limb Darkening Prior
+	  q1 = sample('q1', dist.Uniform(0.0,1.0))
+	  q2 = sample('q2', dist.Uniform(0.0,1.0))
+	  u1,u2=ld_kipping(q1,q2)
+	  
+	  #GP
+	  logtau = sample('logtau', dist.Uniform(-1.5,0.5)) #tau=1 <=> 5A
+	  tau=10**(logtau)
+	  loga = sample('loga', dist.Uniform(-4.0,-2.0))
+	  a=10**(loga)
+	  
+	  #gravity
+	  g=getjov_gravity(Rp,Mp)
+          
+	  #T-P model//
+	  Tarr = T0*(Parr/Pref)**alpha 
+          
 	  #CO
-          SijM_CO=jit(vmap(SijT,(0,None,None,None,0)))\
-              (Tarr,mdbCO.logsij0,mdbCO.dev_nu_lines,mdbCO.elower,qt_CO)
-          gammaLMP_CO = jit(vmap(gamma_exomol,(0,0,None,None)))\
-              (Parr,Tarr,mdbCO.n_Texp,mdbCO.alpha_ref)
-	  gammaLMN_CO=gamma_natural(mdbCO.A)
-          gammaLM_CO=gammaLMP_CO+gammaLMN_CO[None,:]
-          sigmaDM_CO=jit(vmap(doppler_sigma,(None,0,None)))\
-              (mdbCO.dev_nu_lines,Tarr,molmassCO)    
-          xsm_CO=xsmatrix(numatrix_CO,sigmaDM_CO,gammaLM_CO,SijM_CO) 
-          dtaumCO=dtauM(dParr,xsm_CO,MMR_CO*ONEARR,molmassCO,g)
+	  SijM_CO,gammaLM_CO,sigmaDM_CO=exomol(mdbCO,Tarr,Parr,molmassCO)
+	  xsm_CO=xsmatrix(numatrix_CO,sigmaDM_CO,gammaLM_CO,SijM_CO) 
+	  dtaumCO=dtauM(dParr,xsm_CO,MMR_CO*ONEARR,molmassCO,g)
 	  
-The source function is a Planck function multiplied by pi. A raw spectrum is computed using  `rtransfer.rtrun <../exojax/exojax.spec.html#exojax.spec.rtransfer.rtrun>`_. Then, the rotational broadening and the instrumental profile are applied. The last sentence defines the likelihood.
-
-
-.. code:: python3
+	  #H2O
+	  SijM_H2O,gammaLM_H2O,sigmaDM_H2O=exomol(mdbH2O,Tarr,Parr,molmassH2O)
+	  xsm_H2O=xsmatrix(numatrix_H2O,sigmaDM_H2O,gammaLM_H2O,SijM_H2O) 
+	  dtaumH2O=dtauM(dParr,xsm_H2O,MMR_H2O*ONEARR,molmassH2O,g)
 	  
-        sourcef = planck.piBarr(Tarr,nus)
-        Ftoa=Fref/Rp**2
-        F0=rtrun(dtau,sourcef)/baseline/Ftoa        
-        Frot=response.rigidrot(nus,F0,vsini,u1,u2)
-        mu=response.ipgauss_sampling(nusd,nus,Frot,beta,RV)        
-        errall=jnp.sqrt(e1**2+sigma**2)
-        numpyro.sample(tag, dist.Normal(mu, errall), obs=y)
-
-Finally, we run a HMC-NUTS!
-
-.. code:: python3
-
+	  #CIA
+	  dtaucH2H2=dtauCIA(nus,Tarr,Parr,dParr,vmrH2,vmrH2,\
+          mmw,g,cdbH2H2.nucia,cdbH2H2.tcia,cdbH2H2.logac)
+	  dtaucH2He=dtauCIA(nus,Tarr,Parr,dParr,vmrH2,vmrHe,\
+          mmw,g,cdbH2He.nucia,cdbH2He.tcia,cdbH2He.logac)
+	  
+	  dtau=dtaumCO+dtaumH2O+dtaucH2H2+dtaucH2He    
+	  sourcef = planck.piBarr(Tarr,nus)
+	  Ftoa=Fref/Rp**2
+	  F0=rtrun(dtau,sourcef)/baseline/Ftoa
+	  
+	  Frot=response.rigidrot(nus,F0,vsini,u1,u2)
+	  mu=response.ipgauss_sampling(nu1,nus,Frot,beta,RV)
+	  cov=gpkernel_RBF(nu1,tau,a,e1)
+	  sample("y1", dist.MultivariateNormal(loc=mu, covariance_matrix=cov), obs=y1)
+          
 	  #Running a HMC-NUTS
 	  rng_key = random.PRNGKey(0)
 	  rng_key, rng_key_ = random.split(rng_key)
 	  num_warmup, num_samples = 500, 1000
 	  kernel = NUTS(model_c,forward_mode_differentiation=True)
-	  mcmc = MCMC(kernel, num_warmup, num_samples)
-	  mcmc.run(rng_key_, nu1=nusd1, y1=fobs1, e1=err1)
-
-The posterior can be visualized using arviz, for instance. 
-
-.. code:: python3
+	  mcmc = MCMC(kernel, num_warmup=num_warmup, num_samples=num_samples)
+	  mcmc.run(rng_key_, nu1=nusdx, y1=fobsx, e1=errx)
+	  print("end HMC")
 	  
+	  # Post-processing
 	  posterior_sample = mcmc.get_samples()
-	  arviz.plot_pair(arviz.from_numpyro(mcmc),kind='kde',divergences=False,marginals=True) 
+	  np.savez("npz/savepos.npz",[posterior_sample])
+	  
+	  pred = Predictive(model_c,posterior_sample,return_sites=["y1"])
+	  nu = nus
+	  predictions = pred(rng_key_,nu1=nu,y1=None,e1=errx)
+	  median_mu = jnp.median(predictions["y1"],axis=0)
+	  hpdi_mu = hpdi(predictions["y1"], 0.9)
+	  np.savez("npz/saveplotpred.npz",[wavdx,fobsx,errx,median_mu,hpdi_mu])
+	  
+	  fig, ax = plt.subplots(nrows=1, ncols=1, figsize=(20,6.0))
+	  ax.plot(wavdx[::-1],median_mu,color="C0")
+	  ax.plot(wavdx[::-1],fobsx,"+",color="C1",label="data")
+	  
+	  # Annotation for some lines
+	  red=(1.0+28.07/300000.0) #for annotation
+	  ax.plot([22913.3*red,22913.3*red],[0.6,0.75],color="C0",lw=1)
+	  ax.plot([22918.07*red,22918.07*red],[0.6,0.77],color="C1",lw=1)
+	  ax.plot([22955.67*red,22955.67*red],[0.6,0.68],color="C2",lw=1)
+	  plt.text(22913.3*red,0.55,"A",color="C0",fontsize=12,horizontalalignment="center")
+	  plt.text(22918.07*red,0.55,"B",color="C1",fontsize=12,horizontalalignment="center")
+	  plt.text(22955.67*red,0.55,"C",color="C2",fontsize=12,horizontalalignment="center")
+	  ax.fill_between(wavdx[::-1], hpdi_mu[0], hpdi_mu[1], alpha=0.3, interpolate=True,color="C0",
+          label="90% area")
+	  plt.xlabel("wavelength ($\AA$)",fontsize=16)
+	  plt.legend(fontsize=16)
+	  plt.tick_params(labelsize=16)
+	  plt.savefig("npz/results.pdf", bbox_inches="tight", pad_inches=0.0)
+	  plt.savefig("npz/results.png", bbox_inches="tight", pad_inches=0.0)
+	  
+	  # ARVIZ part
+	  import arviz
+	  rc = {
+	  "plot.max_subplots": 1024,
+	  }
+	  
+	  try:
+	      arviz.rcParams.update(rc)
+	      arviz.plot_pair(arviz.from_numpyro(mcmc),kind='kde',divergences=False,marginals=True) 
+	      plt.savefig("npz/cornerall.png")
+	      except:
+	      print("failed corner")
+	  
+	  try:
+	      pararr=["Mp","Rp","T0","alpha","MMR_CO","MMR_H2O","vsini","RV","q1","q2","logtau","loga"]
+	      arviz.plot_trace(mcmc, var_names=pararr)
+	      plt.savefig("npz/trace.png")
+	  except:
+	      print("failed trace")
 
-Here is the results.
-   
-.. image:: cornerall.png
+	  
 
-Here is the 5-95 \% interval.
 
-.. image:: results.png
 
-That's it. Using the posterior sampling, we can compute other quantities such as C/O ratio.
+
