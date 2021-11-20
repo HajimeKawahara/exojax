@@ -23,15 +23,15 @@ from exojax.spec.hitran import SijT, doppler_sigma
 import matplotlib.pyplot as plt
 from exojax.utils.constants import m_u
 
-filepath_VALD3 = '/home/tako/work/VALD3/vald2600.gz'
-path_fig = '/home/tako/Dropbox/tmpfig/tmp_211111/'
+filepath_VALD3 = '.database/vald2600.gz'
+path_fig = './'
 
 #-------
 
 out_suffix = '_pytest'
 H_He_HH_VMR = [0.0, 0.16, 0.84] #H, He, H2 #pure[1.0, 0.0, 0.0] #test[0.05, 0.005, 0.1] #Solar[0.0, 0.16, 0.84]
 
-nus = 1e8/np.arange(12200, 11800, -0.01, dtype=np.float64) #wavenumber range for opacity calculation (Covering whole wavelength ranges of both IRD and CARMENES)
+nus = 1e8/np.arange(12500, 11500, -0.01, dtype=np.float64) #wavenumber range for opacity calculation (Covering whole wavelength ranges of both IRD and CARMENES)
 nus4LL = 1e8/np.arange(1e5, 1500.0, -0.01, dtype=np.float64) #wavenumber range for LineList being taken into account (Taking all (except for 1e5–1e6) lines in the line lists (VALD3, Kurucz) into consideration)
 pf_Irwin = False #if True, the partition functions of Irwin1981 is used, otherwise those of Barklem&Collet2016
 
@@ -46,8 +46,8 @@ nu0=adbFe.nu_lines
 
 #-------
 
-@pytest.mark.parametrize("T", [81, 200, 493, 1215, 2217, 2995, 3250, 4000]) #[81, 110, 148, 200, 270, 365, 493, 666, 900, 1215, 1641, 2000, 2217, 2500, 2750, 2995, 3250, 3500, 3750, 4000]
-@pytest.mark.parametrize("P", [0.000001, 0.000100, 0.010000, 1.000000, 100.000000]) #[0.000001, 0.000010, 0.000100, 0.001000, 0.010000, 0.100000, 1.000000, 10.000000, 100.000000, 1000.000000]
+@pytest.mark.parametrize("T", [2995,]) #[81, 110, 148, 200, 270, 365, 493, 666, 900, 1215, 1641, 2000, 2217, 2500, 2750, 2995, 3250, 3500, 3750, 4000]
+@pytest.mark.parametrize("P", [0.100000,]) #[0.000001, 0.000010, 0.000100, 0.001000, 0.010000, 0.100000, 1.000000, 10.000000, 100.000000, 1000.000000]
 
 def test_opacity_Fe(T, P):
     PH = P* H_He_HH_VMR[0]
@@ -58,13 +58,20 @@ def test_opacity_Fe(T, P):
     #↑Unlike the case of HITRAN (using Qr_HAPI), we ignored the isotopes.
     Sij = SijT(T, adbFe.logsij0, adbFe.nu_lines, adbFe.elower, qt)
     sigmaD = doppler_sigma(adbFe.nu_lines, T, Amol)
+    
     gammaL = atomll.gamma_vald3(T, PH, PHH, PHe, adbFe.ielem, adbFe.iion, \
             adbFe.dev_nu_lines, adbFe.elower, adbFe.eupper, adbFe.atomicmass, adbFe.ionE, \
             adbFe.gamRad, adbFe.gamSta, adbFe.vdWdamp, enh_damp=1.0)
     xsv = xsection(nus, nu0, sigmaD, gammaL, Sij, memory_size=30) #←Bottleneck
     op = np.array(xsv[::-1],dtype=np.float64)/(Amol*m_u)
-    str_param = ("{:.0f}".format(T))+".K_"+("{:.6f}".format(P))+"bar"
 
+    gammaL_uns = atomll.gamma_uns(T, PH, PHH, PHe, adbFe.ielem, adbFe.iion, \
+            adbFe.dev_nu_lines, adbFe.elower, adbFe.eupper, adbFe.atomicmass, adbFe.ionE, \
+            adbFe.gamRad, adbFe.gamSta, adbFe.vdWdamp, enh_damp=1.0)
+    xsv_uns = xsection(nus, nu0, sigmaD, gammaL_uns, Sij, memory_size=30) #←Bottleneck
+    op_uns = np.array(xsv_uns[::-1],dtype=np.float64)/(Amol*m_u)
+
+    str_param = ("{:.0f}".format(T))+".K_"+("{:.6f}".format(P))+"bar"
     plt.figure()
     plt.plot(1.e8/nus[::-1],  op)
     plt.yscale("log")
@@ -75,6 +82,7 @@ def test_opacity_Fe(T, P):
     plt.close()
 
     assert((True in np.isnan(op)) == False)
+    assert((True in np.isnan(op_uns)) == False)
 
 if __name__ == "__main__":
     test_opacity_Fe()
