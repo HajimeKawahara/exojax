@@ -23,6 +23,7 @@ from exojax.spec.hitran import SijT, doppler_sigma
 import matplotlib.pyplot as plt
 from exojax.utils.constants import m_u
 
+
 filepath_VALD3 = '.database/vald2600.gz'
 path_fig = './'
 
@@ -44,66 +45,110 @@ Amol=np.float64( adbFe.atomicmass[0] ) #atomic mass [u]
 ionE=np.float64( adbFe.ionE[0] ) #ionization energy [eV]
 nu0=adbFe.nu_lines
 
+#REFERENCE VALUES for T=2995,P=0.1
+REFS=np.array([[1.5435074e-12, 2693.3442, 1742.1697],\
+               [1.5435074e-12, 2693.3442, 7161.487],\
+               [1.5435074e-12, 2693.3442, 1281.3076],\
+               [1.5435074e-12, 2693.3442, 534.4774],\
+               [1.5435074e-12, 2693.3445, 2869.1807]])
+
 #-------
 
 @pytest.mark.parametrize("T", [2995,]) #[81, 110, 148, 200, 270, 365, 493, 666, 900, 1215, 1641, 2000, 2217, 2500, 2750, 2995, 3250, 3500, 3750, 4000]
-@pytest.mark.parametrize("P", [0.100000,]) #[0.000001, 0.000010, 0.000100, 0.001000, 0.010000, 0.100000, 1.000000, 10.000000, 100.000000, 1000.000000]
-
-def test_opacity_Fe(T, P):
+@pytest.mark.parametrize("P", [0.1,]) #[0.000001, 0.000010, 0.000100, 0.001000, 0.010000, 0.100000, 1.000000, 10.000000, 100.000000, 1000.000000]
+def test_opacity_Fe_vald3(T, P):
     PH = P* H_He_HH_VMR[0]
     PHe = P* H_He_HH_VMR[1]
     PHH = P* H_He_HH_VMR[2]
-
     qt = np.ones_like(adbFe.A) * np.float32(adbFe.qr_interp("Fe 1", T))
     #↑Unlike the case of HITRAN (using Qr_HAPI), we ignored the isotopes.
     Sij = SijT(T, adbFe.logsij0, adbFe.nu_lines, adbFe.elower, qt)
     sigmaD = doppler_sigma(adbFe.nu_lines, T, Amol)
+    gammaL = atomll.gamma_vald3(T, PH, PHH, PHe, adbFe.ielem, adbFe.iion, \
+                                adbFe.dev_nu_lines, adbFe.elower, adbFe.eupper, adbFe.atomicmass, adbFe.ionE, \
+                                adbFe.gamRad, adbFe.gamSta, adbFe.vdWdamp, enh_damp=1.0)
+    val=np.array([np.sum(Sij),np.sum(sigmaD),np.sum(gammaL)])
+    diff=np.abs(REFS[0,:]-val)
+    print(diff)
+    assert(diff[0]<1.e-11 and diff[1]<1.e-3 and diff[2]<1.e-3 )
     
-    gammaL_vald3 = atomll.gamma_vald3(T, PH, PHH, PHe, adbFe.ielem, adbFe.iion, \
-            adbFe.dev_nu_lines, adbFe.elower, adbFe.eupper, adbFe.atomicmass, adbFe.ionE, \
-            adbFe.gamRad, adbFe.gamSta, adbFe.vdWdamp, enh_damp=1.0)
-    xsv_vald3 = xsection(nus, nu0, sigmaD, gammaL_vald3, Sij, memory_size=30) #←Bottleneck
-    op_vald3 = np.array(xsv_vald3[::-1],dtype=np.float64)/(Amol*m_u)
+@pytest.mark.parametrize("T", [2995,]) #[81, 110, 148, 200, 270, 365, 493, 666, 900, 1215, 1641, 2000, 2217, 2500, 2750, 2995, 3250, 3500, 3750, 4000]
+@pytest.mark.parametrize("P", [0.1,]) #[0.000001, 0.000010, 0.000100, 0.001000, 0.010000, 0.100000, 1.000000, 10.000000, 100.000000, 1000.000000]    
+def test_opacity_Fe_uns(T, P):
+    PH = P* H_He_HH_VMR[0]
+    PHe = P* H_He_HH_VMR[1]
+    PHH = P* H_He_HH_VMR[2]
+    qt = np.ones_like(adbFe.A) * np.float32(adbFe.qr_interp("Fe 1", T))
+    #↑Unlike the case of HITRAN (using Qr_HAPI), we ignored the isotopes.
+    Sij = SijT(T, adbFe.logsij0, adbFe.nu_lines, adbFe.elower, qt)
+    sigmaD = doppler_sigma(adbFe.nu_lines, T, Amol)
+    gammaL = atomll.gamma_uns(T, PH, PHH, PHe, adbFe.ielem, adbFe.iion, \
+                              adbFe.dev_nu_lines, adbFe.elower, adbFe.eupper, adbFe.atomicmass, adbFe.ionE, \
+                              adbFe.gamRad, adbFe.gamSta, adbFe.vdWdamp, enh_damp=1.0)
+    val=np.array([np.sum(Sij),np.sum(sigmaD),np.sum(gammaL)])
+    diff=np.abs(REFS[1,:]-val)
+    print(diff)
+    assert(diff[0]<1.e-11 and diff[1]<1.e-3 and diff[2]<1.e-3 )
 
-    gammaL_uns = atomll.gamma_uns(T, PH, PHH, PHe, adbFe.ielem, adbFe.iion, \
-            adbFe.dev_nu_lines, adbFe.elower, adbFe.eupper, adbFe.atomicmass, adbFe.ionE, \
-            adbFe.gamRad, adbFe.gamSta, adbFe.vdWdamp, enh_damp=1.0)
-    xsv_uns = xsection(nus, nu0, sigmaD, gammaL_uns, Sij, memory_size=30) #←Bottleneck
-    op_uns = np.array(xsv_uns[::-1],dtype=np.float64)/(Amol*m_u)
+@pytest.mark.parametrize("T", [2995,]) #[81, 110, 148, 200, 270, 365, 493, 666, 900, 1215, 1641, 2000, 2217, 2500, 2750, 2995, 3250, 3500, 3750, 4000]
+@pytest.mark.parametrize("P", [0.1,]) #[0.000001, 0.000010, 0.000100, 0.001000, 0.010000, 0.100000, 1.000000, 10.000000, 100.000000, 1000.000000]
+def test_opacity_Fe_KA3(T, P):
+    PH = P* H_He_HH_VMR[0]
+    PHe = P* H_He_HH_VMR[1]
+    PHH = P* H_He_HH_VMR[2]
+    qt = np.ones_like(adbFe.A) * np.float32(adbFe.qr_interp("Fe 1", T))
+    #↑Unlike the case of HITRAN (using Qr_HAPI), we ignored the isotopes.
+    Sij = SijT(T, adbFe.logsij0, adbFe.nu_lines, adbFe.elower, qt)
+    sigmaD = doppler_sigma(adbFe.nu_lines, T, Amol)
+    gammaL = atomll.gamma_KA3(T, PH, PHH, PHe, adbFe.ielem, adbFe.iion, \
+                              adbFe.dev_nu_lines, adbFe.elower, adbFe.eupper, adbFe.atomicmass, adbFe.ionE, \
+                              adbFe.gamRad, adbFe.gamSta, adbFe.vdWdamp, enh_damp=1.0)
+    val=np.array([np.sum(Sij),np.sum(sigmaD),np.sum(gammaL)])
+    diff=np.abs(REFS[2,:]-val)
+    print(diff)
+    assert(diff[0]<1.e-11 and diff[1]<1.e-3 and diff[2]<1.e-3 )
 
-    gammaL_KA3 = atomll.gamma_KA3(T, PH, PHH, PHe, adbFe.ielem, adbFe.iion, \
-            adbFe.dev_nu_lines, adbFe.elower, adbFe.eupper, adbFe.atomicmass, adbFe.ionE, \
-            adbFe.gamRad, adbFe.gamSta, adbFe.vdWdamp, enh_damp=1.0)
-    xsv_KA3 = xsection(nus, nu0, sigmaD, gammaL_KA3, Sij, memory_size=30)
-    op_KA3 = np.array(xsv_KA3[::-1],dtype=np.float64)/(Amol*m_u)
+@pytest.mark.parametrize("T", [2995,]) #[81, 110, 148, 200, 270, 365, 493, 666, 900, 1215, 1641, 2000, 2217, 2500, 2750, 2995, 3250, 3500, 3750, 4000]
+@pytest.mark.parametrize("P", [0.1,]) #[0.000001, 0.000010, 0.000100, 0.001000, 0.010000, 0.100000, 1.000000, 10.000000, 100.000000, 1000.000000]
+def test_opacity_Fe_KA4(T, P):
+    PH = P* H_He_HH_VMR[0]
+    PHe = P* H_He_HH_VMR[1]
+    PHH = P* H_He_HH_VMR[2]
+    qt = np.ones_like(adbFe.A) * np.float32(adbFe.qr_interp("Fe 1", T))
+    #↑Unlike the case of HITRAN (using Qr_HAPI), we ignored the isotopes.
+    Sij = SijT(T, adbFe.logsij0, adbFe.nu_lines, adbFe.elower, qt)
+    sigmaD = doppler_sigma(adbFe.nu_lines, T, Amol)
+    gammaL = atomll.gamma_KA4(T, PH, PHH, PHe, adbFe.ielem, adbFe.iion, \
+                              adbFe.dev_nu_lines, adbFe.elower, adbFe.eupper, adbFe.atomicmass, adbFe.ionE, \
+                              adbFe.gamRad, adbFe.gamSta, adbFe.vdWdamp, enh_damp=1.0)
+    val=np.array([np.sum(Sij),np.sum(sigmaD),np.sum(gammaL)])
+    diff=np.abs(REFS[3,:]-val)
+    print(diff)
+    assert(diff[0]<1.e-11 and diff[1]<1.e-3 and diff[2]<1.e-3 )
 
-    gammaL_KA4 = atomll.gamma_KA4(T, PH, PHH, PHe, adbFe.ielem, adbFe.iion, \
-            adbFe.dev_nu_lines, adbFe.elower, adbFe.eupper, adbFe.atomicmass, adbFe.ionE, \
-            adbFe.gamRad, adbFe.gamSta, adbFe.vdWdamp, enh_damp=1.0)
-    xsv_KA4 = xsection(nus, nu0, sigmaD, gammaL_KA4, Sij, memory_size=30)
-    op_KA4 = np.array(xsv_KA4[::-1],dtype=np.float64)/(Amol*m_u)
+@pytest.mark.parametrize("T", [2995,]) #[81, 110, 148, 200, 270, 365, 493, 666, 900, 1215, 1641, 2000, 2217, 2500, 2750, 2995, 3250, 3500, 3750, 4000]
+@pytest.mark.parametrize("P", [0.1,]) #[0.000001, 0.000010, 0.000100, 0.001000, 0.010000, 0.100000, 1.000000, 10.000000, 100.000000, 1000.000000]
+def test_opacity_Fe_KA3s(T, P):
+    PH = P* H_He_HH_VMR[0]
+    PHe = P* H_He_HH_VMR[1]
+    PHH = P* H_He_HH_VMR[2]
+    qt = np.ones_like(adbFe.A) * np.float32(adbFe.qr_interp("Fe 1", T))
+    #↑Unlike the case of HITRAN (using Qr_HAPI), we ignored the isotopes.
+    Sij = SijT(T, adbFe.logsij0, adbFe.nu_lines, adbFe.elower, qt)
+    sigmaD = doppler_sigma(adbFe.nu_lines, T, Amol)
+    gammaL = atomll.gamma_KA3s(T, PH, PHH, PHe, adbFe.ielem, adbFe.iion, \
+                               adbFe.dev_nu_lines, adbFe.elower, adbFe.eupper, adbFe.atomicmass, adbFe.ionE, \
+                               adbFe.gamRad, adbFe.gamSta, adbFe.vdWdamp, enh_damp=1.0)
 
-    gammaL_KA3s = atomll.gamma_KA3s(T, PH, PHH, PHe, adbFe.ielem, adbFe.iion, \
-            adbFe.dev_nu_lines, adbFe.elower, adbFe.eupper, adbFe.atomicmass, adbFe.ionE, \
-            adbFe.gamRad, adbFe.gamSta, adbFe.vdWdamp, enh_damp=1.0)
-    xsv_KA3s = xsection(nus, nu0, sigmaD, gammaL_KA3s, Sij, memory_size=30)
-    op_KA3s = np.array(xsv_KA3s[::-1],dtype=np.float64)/(Amol*m_u)
+    val=np.array([np.sum(Sij),np.sum(sigmaD),np.sum(gammaL)])
+    diff=np.abs(REFS[4,:]-val)
+    print(diff)
+    assert(diff[0]<1.e-11 and diff[1]<1.e-3 and diff[2]<1.e-3 )
 
-    str_param = ("{:.0f}".format(T))+".K_"+("{:.6f}".format(P))+"bar"
-    plt.figure()
-    plt.plot(1.e8/nus[::-1],  op)
-    plt.yscale("log")
-    plt.xscale("log")
-    plt.title(str_param)
-    plt.savefig(path_fig+"opacity_Fe_test_"+str_param+".pdf")
-    plt.clf()
-    plt.close()
-
-    assert((True in np.isnan(op_vald3)) == False)
-    assert((True in np.isnan(op_uns)) == False)
-    assert((True in np.isnan(op_KA3)) == False)
-    assert((True in np.isnan(op_KA4)) == False)
-    assert((True in np.isnan(op_KA3s)) == False)
-
+    
 if __name__ == "__main__":
-    test_opacity_Fe()
+    test_opacity_Fe_vald3(2995.,0.1)
+    test_opacity_Fe_uns(2995.,0.1)
+    test_opacity_Fe_KA3(2995.,0.1)
+    test_opacity_Fe_KA4(2995.,0.1)
+    test_opacity_Fe_KA3s(2995.,0.1)
