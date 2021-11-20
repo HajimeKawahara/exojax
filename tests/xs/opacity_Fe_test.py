@@ -27,8 +27,6 @@ from exojax.utils.constants import m_u
 filepath_VALD3 = '.database/vald2600.gz'
 path_fig = './'
 
-#-------
-
 out_suffix = '_pytest'
 H_He_HH_VMR = [0.0, 0.16, 0.84] #H, He, H2 #pure[1.0, 0.0, 0.0] #test[0.05, 0.005, 0.1] #Solar[0.0, 0.16, 0.84]
 
