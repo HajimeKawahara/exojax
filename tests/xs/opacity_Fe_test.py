@@ -31,7 +31,7 @@ path_fig = './'
 out_suffix = '_pytest'
 H_He_HH_VMR = [0.0, 0.16, 0.84] #H, He, H2 #pure[1.0, 0.0, 0.0] #test[0.05, 0.005, 0.1] #Solar[0.0, 0.16, 0.84]
 
-nus = 1e8/np.arange(12500, 11500, -0.01, dtype=np.float64) #wavenumber range for opacity calculation (Covering whole wavelength ranges of both IRD and CARMENES)
+nus = 1e8/np.arange(12200, 11800, -0.01, dtype=np.float64) #wavenumber range for opacity calculation (Covering whole wavelength ranges of both IRD and CARMENES)
 nus4LL = 1e8/np.arange(1e5, 1500.0, -0.01, dtype=np.float64) #wavenumber range for LineList being taken into account (Taking all (except for 1e5–1e6) lines in the line lists (VALD3, Kurucz) into consideration)
 pf_Irwin = False #if True, the partition functions of Irwin1981 is used, otherwise those of Barklem&Collet2016
 
@@ -59,17 +59,35 @@ def test_opacity_Fe(T, P):
     Sij = SijT(T, adbFe.logsij0, adbFe.nu_lines, adbFe.elower, qt)
     sigmaD = doppler_sigma(adbFe.nu_lines, T, Amol)
     
-    gammaL = atomll.gamma_vald3(T, PH, PHH, PHe, adbFe.ielem, adbFe.iion, \
+    gammaL_vald3 = atomll.gamma_vald3(T, PH, PHH, PHe, adbFe.ielem, adbFe.iion, \
             adbFe.dev_nu_lines, adbFe.elower, adbFe.eupper, adbFe.atomicmass, adbFe.ionE, \
             adbFe.gamRad, adbFe.gamSta, adbFe.vdWdamp, enh_damp=1.0)
-    xsv = xsection(nus, nu0, sigmaD, gammaL, Sij, memory_size=30) #←Bottleneck
-    op = np.array(xsv[::-1],dtype=np.float64)/(Amol*m_u)
+    xsv_vald3 = xsection(nus, nu0, sigmaD, gammaL_vald3, Sij, memory_size=30) #←Bottleneck
+    op_vald3 = np.array(xsv_vald3[::-1],dtype=np.float64)/(Amol*m_u)
 
     gammaL_uns = atomll.gamma_uns(T, PH, PHH, PHe, adbFe.ielem, adbFe.iion, \
             adbFe.dev_nu_lines, adbFe.elower, adbFe.eupper, adbFe.atomicmass, adbFe.ionE, \
             adbFe.gamRad, adbFe.gamSta, adbFe.vdWdamp, enh_damp=1.0)
     xsv_uns = xsection(nus, nu0, sigmaD, gammaL_uns, Sij, memory_size=30) #←Bottleneck
     op_uns = np.array(xsv_uns[::-1],dtype=np.float64)/(Amol*m_u)
+
+    gammaL_KA3 = atomll.gamma_KA3(T, PH, PHH, PHe, adbFe.ielem, adbFe.iion, \
+            adbFe.dev_nu_lines, adbFe.elower, adbFe.eupper, adbFe.atomicmass, adbFe.ionE, \
+            adbFe.gamRad, adbFe.gamSta, adbFe.vdWdamp, enh_damp=1.0)
+    xsv_KA3 = xsection(nus, nu0, sigmaD, gammaL_KA3, Sij, memory_size=30)
+    op_KA3 = np.array(xsv_KA3[::-1],dtype=np.float64)/(Amol*m_u)
+
+    gammaL_KA4 = atomll.gamma_KA4(T, PH, PHH, PHe, adbFe.ielem, adbFe.iion, \
+            adbFe.dev_nu_lines, adbFe.elower, adbFe.eupper, adbFe.atomicmass, adbFe.ionE, \
+            adbFe.gamRad, adbFe.gamSta, adbFe.vdWdamp, enh_damp=1.0)
+    xsv_KA4 = xsection(nus, nu0, sigmaD, gammaL_KA4, Sij, memory_size=30)
+    op_KA4 = np.array(xsv_KA4[::-1],dtype=np.float64)/(Amol*m_u)
+
+    gammaL_KA3s = atomll.gamma_KA3s(T, PH, PHH, PHe, adbFe.ielem, adbFe.iion, \
+            adbFe.dev_nu_lines, adbFe.elower, adbFe.eupper, adbFe.atomicmass, adbFe.ionE, \
+            adbFe.gamRad, adbFe.gamSta, adbFe.vdWdamp, enh_damp=1.0)
+    xsv_KA3s = xsection(nus, nu0, sigmaD, gammaL_KA3s, Sij, memory_size=30)
+    op_KA3s = np.array(xsv_KA3s[::-1],dtype=np.float64)/(Amol*m_u)
 
     str_param = ("{:.0f}".format(T))+".K_"+("{:.6f}".format(P))+"bar"
     plt.figure()
@@ -81,8 +99,11 @@ def test_opacity_Fe(T, P):
     plt.clf()
     plt.close()
 
-    assert((True in np.isnan(op)) == False)
+    assert((True in np.isnan(op_vald3)) == False)
     assert((True in np.isnan(op_uns)) == False)
+    assert((True in np.isnan(op_KA3)) == False)
+    assert((True in np.isnan(op_KA4)) == False)
+    assert((True in np.isnan(op_KA3s)) == False)
 
 if __name__ == "__main__":
     test_opacity_Fe()
