@@ -39,7 +39,7 @@ ExoJAX
 Reference
 ---------------------
 
-Kawahara et al. under review.
+- Kawahara, Kawashima, Masuda, Crossfield, Parker, van den Bekerom (2021) accepted by ApJS: [arXiv:2105.14782](http://arxiv.org/abs/2105.14782)
    
 License & Attribution
 ---------------------

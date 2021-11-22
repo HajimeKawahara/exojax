@@ -79,14 +79,21 @@ Assuming the instrumental resolution... Yes, beta is the standard deviation of t
 	  	  	  
 	  # Instrument
 	  beta=R2STD(100000.) #std of gaussian from R=100000.
-	  
-	  
+
+Here, we set the wavenumber grid, with the target range between ws and we AA, but having a margin +- 5 AA. 
+
+.. code:: python3
+	  	  	  	  
 	  # Loading Molecular datanase and  Reducing Molecular Lines
 	  Nx=4500    # number of wavenumber bins (nugrid) for fit
 	  ws=22876.0 # AA
 	  we=23010.0 # AA
 	  nus,wav,res=nugrid(ws-5.0,we+5.0,Nx,unit="AA")
+
+Some masking.
 	  
+.. code:: python3
+	  	  	  	  	  
 	  # Masking data
 	  mask=(ws<wavd[::-1])*(wavd[::-1]<we) # data fitting range
 	  mask=mask*((22898.5>wavd[::-1])+(wavd[::-1]>22899.5))  # Additional mask to remove a strong telluric
@@ -94,10 +101,18 @@ Assuming the instrumental resolution... Yes, beta is the standard deviation of t
 	  nusdx=nusd[mask]
 	  wavdx=1.e8/nusdx[::-1]
 	  errx=err[mask]
+
+Loading exomol databases for CO and H2O...
 	  
+.. code:: python3
+	  	  	  	  	  
 	  # Loading molecular database 
 	  mdbCO=moldb.MdbExomol('.database/CO/12C-16O/Li2015',nus) 
 	  mdbH2O=moldb.MdbExomol('.database/H2O/1H2-16O/POKAZATEL',nus,crit=1.e-46) 
+
+and CIA from HITRAN.
+	  
+.. code:: python3	  	  	  	  	 
 	  
 	  # LOADING CIA
 	  mmrH2=0.74
@@ -108,7 +123,11 @@ Assuming the instrumental resolution... Yes, beta is the standard deviation of t
 	  vmrHe=(mmrHe*mmw/molmassHe)
 	  cdbH2H2=contdb.CdbCIA('.database/H2-H2_2011.cia',nus)
 	  cdbH2He=contdb.CdbCIA('.database/H2-He_2011.cia',nus)
+
+This example uses the direct LPF. So, one might reduce weak lines to save the computational time. But how? we have a simple function for that purpose. Assuming a constant T model, we can exclude the lines below the CIA photosphere.
 	  
+.. code:: python3	  	  	  	  	 
+	  	  
 	  # Reducing Molecular Lines
 	  def Tmodel(Parr,T0):
 	  """ Constant T model
@@ -130,11 +149,19 @@ Assuming the instrumental resolution... Yes, beta is the standard deviation of t
 	  mask_H2O,maxcf,maxcia=reduceline_exomol(mdbH2O,Parr,dParr,mmw,g,vmrH2,cdbH2H2,maxMMR_H2O,molmassH2O,Tmodel,T0xarr) #only 1700K
 	  plot_maxpoint(mask_H2O,Parr,maxcf,maxcia,mol="H2O")
 	  plt.savefig("maxpoint_H2O.pdf", bbox_inches="tight", pad_inches=0.0)
+
+The initialization of the direct LPF (or just precompute nu matrix).
 	  
+.. code:: python3	  	  	  	  	 
+	  	  	  
 	  # Initialization of direct LPF
 	  numatrix_CO=initspec.init_lpf(mdbCO.nu_lines,nus)    
 	  numatrix_H2O=initspec.init_lpf(mdbH2O.nu_lines,nus)
+
+We are now ready for an HMC-NUTS fitting!
 	  
+.. code:: python3	  	  	  	  	 
+	  	  	  	  
 	  # HMC-NUTS FITTING PART
 	  from numpyro import sample
 	  import numpyro.distributions as dist
@@ -146,61 +173,83 @@ Assuming the instrumental resolution... Yes, beta is the standard deviation of t
 	  baseline=1.07 #(baseline for a CIA photosphere in the observed (normaized) spectrum)
 	  maxMMR_CO=0.01
 	  maxMMR_H2O=0.005
+
+Define the model.
 	  
+.. code:: python3	  	  	  	  	 
+	  	  	  	  
 	  # Model
 	  def model_c(nu1,y1,e1):
-	  Rp = sample('Rp', dist.Uniform(0.5,1.5))
-	  Mp = sample('Mp', dist.Normal(33.5,0.3))
-	  RV = sample('RV', dist.Uniform(26.0,30.0))
-	  MMR_CO = sample('MMR_CO', dist.Uniform(0.0,maxMMR_CO))
-	  MMR_H2O = sample('MMR_H2O', dist.Uniform(0.0,maxMMR_H2O))
-	  T0 = sample('T0', dist.Uniform(1000.0,1700.0))
-	  alpha = sample('alpha', dist.Uniform(0.05,0.15))
-	  vsini = sample('vsini', dist.Uniform(10.0,20.0))    
+	      Rp = sample('Rp', dist.Uniform(0.5,1.5))
+	      Mp = sample('Mp', dist.Normal(33.5,0.3))
+	      RV = sample('RV', dist.Uniform(26.0,30.0))
+	      MMR_CO = sample('MMR_CO', dist.Uniform(0.0,maxMMR_CO))
+	      MMR_H2O = sample('MMR_H2O', dist.Uniform(0.0,maxMMR_H2O))
+	      T0 = sample('T0', dist.Uniform(1000.0,1700.0))
+	      alpha = sample('alpha', dist.Uniform(0.05,0.15))
+	      vsini = sample('vsini', dist.Uniform(10.0,20.0))    
+	      
+	      # Kipping Limb Darkening Prior
+	      q1 = sample('q1', dist.Uniform(0.0,1.0))
+	      q2 = sample('q2', dist.Uniform(0.0,1.0))
+	      u1,u2=ld_kipping(q1,q2)
+	      
+	      #GP
+	      logtau = sample('logtau', dist.Uniform(-1.5,0.5)) #tau=1 <=> 5A
+	      tau=10**(logtau)
+	      loga = sample('loga', dist.Uniform(-4.0,-2.0))
+	      a=10**(loga)
+	      
+	      #gravity
+	      g=getjov_gravity(Rp,Mp)
+              
+	      #T-P model//
+	      Tarr = T0*(Parr/Pref)**alpha 
+
+`spec.lpf.exomol <../exojax/exojax.spec.html#exojax.spec.lpf.exomol>`_ is a convenient way to obtain the quantities for line profile.
+   
+.. code:: python3
 	  
-	  # Kipping Limb Darkening Prior
-	  q1 = sample('q1', dist.Uniform(0.0,1.0))
-	  q2 = sample('q2', dist.Uniform(0.0,1.0))
-	  u1,u2=ld_kipping(q1,q2)
-	  
-	  #GP
-	  logtau = sample('logtau', dist.Uniform(-1.5,0.5)) #tau=1 <=> 5A
-	  tau=10**(logtau)
-	  loga = sample('loga', dist.Uniform(-4.0,-2.0))
-	  a=10**(loga)
-	  
-	  #gravity
-	  g=getjov_gravity(Rp,Mp)
+	  #def model_c(nu1,y1,e1): (continued)
           
-	  #T-P model//
-	  Tarr = T0*(Parr/Pref)**alpha 
-          
-	  #CO
-	  SijM_CO,gammaLM_CO,sigmaDM_CO=exomol(mdbCO,Tarr,Parr,molmassCO)
-	  xsm_CO=xsmatrix(numatrix_CO,sigmaDM_CO,gammaLM_CO,SijM_CO) 
-	  dtaumCO=dtauM(dParr,xsm_CO,MMR_CO*ONEARR,molmassCO,g)
+	      #CO
+	      SijM_CO,gammaLM_CO,sigmaDM_CO=exomol(mdbCO,Tarr,Parr,molmassCO)
+	      xsm_CO=xsmatrix(numatrix_CO,sigmaDM_CO,gammaLM_CO,SijM_CO) 
+	      dtaumCO=dtauM(dParr,xsm_CO,MMR_CO*ONEARR,molmassCO,g)
+	      
+	      #H2O
+	      SijM_H2O,gammaLM_H2O,sigmaDM_H2O=exomol(mdbH2O,Tarr,Parr,molmassH2O)
+	      xsm_H2O=xsmatrix(numatrix_H2O,sigmaDM_H2O,gammaLM_H2O,SijM_H2O) 
+	      dtaumH2O=dtauM(dParr,xsm_H2O,MMR_H2O*ONEARR,molmassH2O,g)
+	      
+	      #CIA
+	      dtaucH2H2=dtauCIA(nus,Tarr,Parr,dParr,vmrH2,vmrH2,\
+              mmw,g,cdbH2H2.nucia,cdbH2H2.tcia,cdbH2H2.logac)
+	      dtaucH2He=dtauCIA(nus,Tarr,Parr,dParr,vmrH2,vmrHe,\
+              mmw,g,cdbH2He.nucia,cdbH2He.tcia,cdbH2He.logac)
+	      
+	      dtau=dtaumCO+dtaumH2O+dtaucH2H2+dtaucH2He    
+	      sourcef = planck.piBarr(Tarr,nus)
+	      Ftoa=Fref/Rp**2
+	      F0=rtrun(dtau,sourcef)/baseline/Ftoa
+
+	      Frot=response.rigidrot(nus,F0,vsini,u1,u2)
+	      mu=response.ipgauss_sampling(nu1,nus,Frot,beta,RV)
+
+Here, we assume a GP modeling of the noise. It's so simple.
 	  
-	  #H2O
-	  SijM_H2O,gammaLM_H2O,sigmaDM_H2O=exomol(mdbH2O,Tarr,Parr,molmassH2O)
-	  xsm_H2O=xsmatrix(numatrix_H2O,sigmaDM_H2O,gammaLM_H2O,SijM_H2O) 
-	  dtaumH2O=dtauM(dParr,xsm_H2O,MMR_H2O*ONEARR,molmassH2O,g)
+.. code:: python3
 	  
-	  #CIA
-	  dtaucH2H2=dtauCIA(nus,Tarr,Parr,dParr,vmrH2,vmrH2,\
-          mmw,g,cdbH2H2.nucia,cdbH2H2.tcia,cdbH2H2.logac)
-	  dtaucH2He=dtauCIA(nus,Tarr,Parr,dParr,vmrH2,vmrHe,\
-          mmw,g,cdbH2He.nucia,cdbH2He.tcia,cdbH2He.logac)
-	  
-	  dtau=dtaumCO+dtaumH2O+dtaucH2H2+dtaucH2He    
-	  sourcef = planck.piBarr(Tarr,nus)
-	  Ftoa=Fref/Rp**2
-	  F0=rtrun(dtau,sourcef)/baseline/Ftoa
-	  
-	  Frot=response.rigidrot(nus,F0,vsini,u1,u2)
-	  mu=response.ipgauss_sampling(nu1,nus,Frot,beta,RV)
-	  cov=gpkernel_RBF(nu1,tau,a,e1)
-	  sample("y1", dist.MultivariateNormal(loc=mu, covariance_matrix=cov), obs=y1)
-          
+	  #def model_c(nu1,y1,e1): (continued)
+	  	  	  	  	      
+	      cov=gpkernel_RBF(nu1,tau,a,e1)
+	      sample("y1", dist.MultivariateNormal(loc=mu, covariance_matrix=cov), obs=y1)
+
+
+Run the HMC-NUTS.
+	     
+.. code:: python3	  	  	  	  	 
+	  	  	  	  
 	  #Running a HMC-NUTS
 	  rng_key = random.PRNGKey(0)
 	  rng_key, rng_key_ = random.split(rng_key)
@@ -209,7 +258,11 @@ Assuming the instrumental resolution... Yes, beta is the standard deviation of t
 	  mcmc = MCMC(kernel, num_warmup=num_warmup, num_samples=num_samples)
 	  mcmc.run(rng_key_, nu1=nusdx, y1=fobsx, e1=errx)
 	  print("end HMC")
-	  
+
+That's all! The rest part is just for saving and plotting.
+	     
+.. code:: python3	  	  	  	  	 
+	  	  	  	  	  
 	  # Post-processing
 	  posterior_sample = mcmc.get_samples()
 	  np.savez("npz/savepos.npz",[posterior_sample])
@@ -220,27 +273,11 @@ Assuming the instrumental resolution... Yes, beta is the standard deviation of t
 	  median_mu = jnp.median(predictions["y1"],axis=0)
 	  hpdi_mu = hpdi(predictions["y1"], 0.9)
 	  np.savez("npz/saveplotpred.npz",[wavdx,fobsx,errx,median_mu,hpdi_mu])
+
+Arviz is very useful for plotting, such as the corner plot, the trace plot and so on. 
 	  
-	  fig, ax = plt.subplots(nrows=1, ncols=1, figsize=(20,6.0))
-	  ax.plot(wavdx[::-1],median_mu,color="C0")
-	  ax.plot(wavdx[::-1],fobsx,"+",color="C1",label="data")
-	  
-	  # Annotation for some lines
-	  red=(1.0+28.07/300000.0) #for annotation
-	  ax.plot([22913.3*red,22913.3*red],[0.6,0.75],color="C0",lw=1)
-	  ax.plot([22918.07*red,22918.07*red],[0.6,0.77],color="C1",lw=1)
-	  ax.plot([22955.67*red,22955.67*red],[0.6,0.68],color="C2",lw=1)
-	  plt.text(22913.3*red,0.55,"A",color="C0",fontsize=12,horizontalalignment="center")
-	  plt.text(22918.07*red,0.55,"B",color="C1",fontsize=12,horizontalalignment="center")
-	  plt.text(22955.67*red,0.55,"C",color="C2",fontsize=12,horizontalalignment="center")
-	  ax.fill_between(wavdx[::-1], hpdi_mu[0], hpdi_mu[1], alpha=0.3, interpolate=True,color="C0",
-          label="90% area")
-	  plt.xlabel("wavelength ($\AA$)",fontsize=16)
-	  plt.legend(fontsize=16)
-	  plt.tick_params(labelsize=16)
-	  plt.savefig("npz/results.pdf", bbox_inches="tight", pad_inches=0.0)
-	  plt.savefig("npz/results.png", bbox_inches="tight", pad_inches=0.0)
-	  
+.. code:: python3	  	  	  	  	 
+	  	  	  	  	  	  
 	  # ARVIZ part
 	  import arviz
 	  rc = {
