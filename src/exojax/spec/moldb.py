@@ -744,8 +744,6 @@ class AdbVald(object):  #integrated from vald3db.py
         #self.bkgdatm=bkgdatm
         #self.broadf=broadf
         
-        
-
         #load vald file ("Extract Stellar" request)
         print("Reading VALD file")
         if self.vald3_file.with_suffix(".hdf5").exists():
@@ -757,9 +755,7 @@ class AdbVald(object):  #integrated from vald3db.py
         
         #compute additional transition parameters
         self._A, self.nu_lines, self._elower, self._eupper, self._gupper, self._jlower, self._jupper, self._ielem, self._iion, self._gamRad, self._gamSta, self._vdWdamp = atomllapi.pickup_param(pvaldd)
-        
-        
-        
+                
         #load the partition functions (for 284 atomic species)
         pfTdat, self.pfdat = atomllapi.load_pf_Barklem2016() #Barklem & Collet (2016)
         self.T_gQT = jnp.array(pfTdat.columns[1:], dtype=float)
@@ -768,12 +764,8 @@ class AdbVald(object):  #integrated from vald3db.py
         self.QTref_284 = np.array(self.QT_interp_284(self.Tref))
         self._QTmask = self.make_QTmask(self._ielem, self._iion) #identify index of QT grid (gQT) for each line
 
-
-
         ##Line strength: input shoud be ndarray not jnp array
         self.Sij0 = atomll.Sij0(self._A, self._gupper, self.nu_lines, self._elower, self.QTref_284, self._QTmask, Irwin) #211013
-
-
 
         ### MASKING ###
         mask=(self.nu_lines>self.nurange[0]-self.margin)\
@@ -781,19 +773,16 @@ class AdbVald(object):  #integrated from vald3db.py
         *(self.Sij0>self.crit)
         
         self.masking(mask)
-        
-
 
         #Compile atomic-specific data for each absorption line of interest
         self.ipccd = atomllapi.load_atomicdata()
         #print(self.ipccd)#test
+        # should be refined
         ionE = jnp.array(list(map(lambda x: self.ipccd[self.ipccd['ielem']==x].iat[0, 1], self.ielem)))
         ionE2 = jnp.array(list(map(lambda x: self.ipccd[self.ipccd['ielem']==x].iat[0, 6], self.ielem)))
         self.ionE = ionE * np.where(self.iion==1, 1, 0) + ionE2 * np.where(self.iion==2, 1, 0)
         self.solarA = jnp.array(list(map(lambda x: self.ipccd[self.ipccd['ielem']==x].iat[0, 4], self.ielem)))
         self.atomicmass = jnp.array(list(map(lambda x: self.ipccd[self.ipccd['ielem']==x].iat[0, 5], self.ielem)))
-        
-            
             
     #End of the CONSTRUCTOR definition ↑
 

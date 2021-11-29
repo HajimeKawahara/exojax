@@ -145,19 +145,20 @@ from numpyro.infer import MCMC, NUTS
 from numpyro.infer import Predictive
 from numpyro.diagnostics import hpdi
 
+
+
 baseline=1.07 #(baseline for a CIA photosphere in the observed (normaized) spectrum)
 # Model
 def model_c(nu1,y1,e1):
     Rp = numpyro.sample('Rp', dist.Uniform(0.5,1.5))
     Mp = numpyro.sample('Mp', dist.Normal(33.5,0.3))
-    sigma = numpyro.sample('sigma', dist.Exponential(10.0))
+    sigma = numpyro.sample('sigma', dist.Exponential(10.0)) #-
     RV = numpyro.sample('RV', dist.Uniform(26.0,30.0))
     MMR_CO = numpyro.sample('MMR_CO', dist.Uniform(0.0,maxMMR_CO))
     MMR_H2O = numpyro.sample('MMR_H2O', dist.Uniform(0.0,maxMMR_H2O))
     T0 = numpyro.sample('T0', dist.Uniform(1000.0,1700.0))
     alpha = numpyro.sample('alpha', dist.Uniform(0.05,0.15))
     vsini = numpyro.sample('vsini', dist.Uniform(10.0,20.0))
-
     #Limb Darkening from 2013A&A...552A..16C (1500K, logg=5, K)
     # u1=0.5969 	
     # u2=0.1125
@@ -214,16 +215,17 @@ def model_c(nu1,y1,e1):
         
         Frot=response.rigidrot(nus,F0,vsini,u1,u2)
         mu=response.ipgauss_sampling(nusd,nus,Frot,beta,RV)
-        
-        errall=jnp.sqrt(e1**2+sigma**2)
-        numpyro.sample(tag, dist.Normal(mu, errall), obs=y)
 
+        errall=jnp.sqrt(e1**2+sigma**2) #-
+        numpyro.sample(tag, dist.Normal(mu, errall), obs=y) #-
+        
     obyo(y1,"y1",nusd1,nus1,numatrix_CO1,numatrix_H2O1,mdbCO1,mdbH2O1,cdbH2H21,cdbH2He1)
 
 #Running a HMC-NUTS
 rng_key = random.PRNGKey(0)
 rng_key, rng_key_ = random.split(rng_key)
 num_warmup, num_samples = 500, 1000
+#num_warmup, num_samples = 100, 300
 kernel = NUTS(model_c,forward_mode_differentiation=True)
 mcmc = MCMC(kernel, num_warmup=num_warmup, num_samples=num_samples)
 mcmc.run(rng_key_, nu1=nusd1, y1=fobs1, e1=err1)
@@ -269,10 +271,18 @@ rc = {
     "plot.max_subplots": 1024,
 }
 
-arviz.rcParams.update(rc)
-pararr=["Mp","Rp","T0","alpha","MMR_CO","MMR_H2O","vsini","RV","sigma","q1","q2"]
-arviz.plot_trace(mcmc, var_names=pararr)
-plt.savefig("npz/trace.png")
-pararr=["Mp","Rp","T0","alpha","MMR_CO","MMR_H2O","vsini","RV","sigma","q1","q2"]
-arviz.plot_pair(arviz.from_numpyro(mcmc),kind='kde',divergences=False,marginals=True) 
-plt.savefig("npz/cornerall.png")
+try:
+    arviz.rcParams.update(rc)
+    arviz.plot_pair(arviz.from_numpyro(mcmc),kind='kde',divergences=False,marginals=True) 
+    plt.savefig("npz/cornerall.png")
+except:
+    print("failed corner")
+
+try:
+    pararr=["Mp","Rp","T0","alpha","MMR_CO","MMR_H2O","vsini","RV","q1","q2","logtau","loga"]
+    arviz.plot_trace(mcmc, var_names=pararr)
+    plt.savefig("npz/trace.png")
+except:
+    print("failed trace")
+
+    
