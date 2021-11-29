@@ -7,6 +7,8 @@ import pandas as pd
 from exojax.utils.constants import ccgs, ecgs, mecgs, eV2wn
 import io
 import vaex
+import pkgutil
+from io import BytesIO
 
 # Correspondence between Atomic Number and Element Symbol
 PeriodicTable = np.zeros([119], dtype=object) #PeriodicTable = np.empty([100], dtype=object)
@@ -354,8 +356,9 @@ def load_atomicdata():
         U       92     6.194    1    1 -12.5400 238.029000    10.600
         '''
     ipccc = ('ielem', 'ionizationE1', 'dam1', 'dam2', 'solarA', 'mass', 'ionizationE2')
-#    ipccd = pd.read_csv(io.StringIO(ipcc_str), sep="\s+", skiprows=1, usecols=[1,2,3,4,5,6,7], names=ipccc)
-    ipccd = pd.read_csv("data/atom/atomic.txt", sep="\s+", skiprows=1, usecols=[1,2,3,4,5,6,7], names=ipccc)
+    #    ipccd = pd.read_csv(io.StringIO(ipcc_str), sep="\s+", skiprows=1, usecols=[1,2,3,4,5,6,7], names=ipccc)
+    adata = pkgutil.get_data('exojax',"data/atom/atomic.txt")
+    ipccd = pd.read_csv(BytesIO(adata), sep="\s+", skiprows=1, usecols=[1,2,3,4,5,6,7], names=ipccc)
     return ipccd
     
 

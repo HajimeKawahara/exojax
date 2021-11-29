@@ -1,3 +1,5 @@
+include src/exojax/data/atom/atomic.txt
+
 graft data
 graft tests
 graft examples
