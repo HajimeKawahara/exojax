@@ -11,9 +11,7 @@ The high-dispersion spectrum of Luhman 16 A as observed by VLT/CRIRES (detector1
 Contact for this spectrum: [Ian J. M. Crossfield](https://crossfield.ku.edu/)
 
 
-## Models
-
-### Fiducial models used in Section 5 (Paper I)
+## Fiducial Models used in Section 5 (Paper I)
 
 ExoMol Mp prior from astrometry, .broad applied. A=A100,V=V100
 
@@ -25,7 +23,7 @@ ExoMol Mp prior from astrometry, .broad applied. A=A100,V=V100
 
 Note: N=4500
 
-### other models
+## Other Models in ``advanced'' directory
 
 |  directroy       | description       |opacity calculator |  Limb Darkening  | Gaussian Process |            |
 | ---------------- | ----------------- | ----------------- | ---------------- | ---------------- | ---------- |
@@ -46,7 +44,6 @@ Do the lines below the CIA photosphere affect the results? -> No. See the poster
 | FidEMbu          |     LPF (direct)   |:heavy_check_mark:|   334            | 11.2 h |
 | FidEMbu (*)      |     LPF (direct)   |:heavy_check_mark:|   802            | 18.3 h |
 
-Note: 
-(*): used margin=5 in mask_weakline, N=1500
+Note: (*) used margin=5 in mask_weakline, N=1500
 
 <img src="https://user-images.githubusercontent.com/15956904/135429319-ee298bac-6448-47a7-a0f0-3d2dbfbd18e2.png" Titie="comparison" Width=850px>
