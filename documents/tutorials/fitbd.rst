@@ -2,12 +2,11 @@
 --------------------------------------------------------------------
 *Update: Nov 10/2021, Hajime Kawahara*
 
-The full code for the HMC-NUTS fitting using NumPyro to the high-dispersion spectrum of Luhman 16A (`Crossfield+2014 <https://www.nature.com/articles/nature12955?proof=t>`_) is given in examples/LUH16A/FidEMbug/fit.py. I confirmed the code worked using `NVIDIA A100 <https://www.nvidia.com/en-us/data-center/a100/>`_ or `V100 <https://www.nvidia.com/en-us/data-center/v100/>`_. Here, I explain full parts of the code. As the goal of this tutorial, we want to fit the exojax model to the high-dispersion data as
+The full code for the HMC-NUTS fitting using NumPyro to the high-dispersion spectrum of Luhman 16A (`Crossfield+2014 <https://www.nature.com/articles/nature12955?proof=t>`_) is given in examples/LUH16A/FidEMbug/fit.py. I confirmed the code worked using `NVIDIA A100 <https://www.nvidia.com/en-us/data-center/a100/>`_ or `V100 <https://www.nvidia.com/en-us/data-center/v100/>`_. As the goal of this tutorial, we want to fit the exojax model to the high-dispersion data as
 
 .. image:: results.png
 
-and get a posterior sampling.
-
+and get a posterior sampling. See the directories of examples/LUH16A/FidEMbu (Case I, w/o a GP) or examples/LUH16A/FidEMbug (Case II, w/ a GP) for the full python codes.
 
 First, we import basic modules and some modules from jax,
 
@@ -38,6 +37,12 @@ and, many modules and functions from ExoJAX.
 	  from exojax.utils.afunc import getjov_gravity
 	  from exojax.utils.instfunc import R2STD
 	  from exojax.utils.constants import RJ, pc
+
+If you want to model a correlated noise by a gaussian process (GP), also call this one.
+
+.. code:: python3
+	  
+	  # CASE II	  	  	  	      	  	  	  	  	      
 	  from exojax.utils.gpkernel import gpkernel_RBF
 
 To fit the model to real high-resolution spectra, we usually need some information on absolute flux. Here, we just use the value from the mid-resolution spectrum.
@@ -193,16 +198,43 @@ Define the model.
 	      q1 = sample('q1', dist.Uniform(0.0,1.0))
 	      q2 = sample('q2', dist.Uniform(0.0,1.0))
 	      u1,u2=ld_kipping(q1,q2)
-	      
+
+If you want to model a correlated noise by a GP, set the GP hyperparameters
+
+.. code:: python3
+	  
+	  #def model_c(nu1,y1,e1): (continued)
+	  # CASE II	  	  	  	      	  	  	  	  	         
 	      #GP
 	      logtau = sample('logtau', dist.Uniform(-1.5,0.5)) #tau=1 <=> 5A
 	      tau=10**(logtau)
 	      loga = sample('loga', dist.Uniform(-4.0,-2.0))
 	      a=10**(loga)
+
+Otherwise, define sigma in an independent gaussian:
+
+.. code:: python3	
+
+   	  #def model_c(nu1,y1,e1): (continued)
+	  # CASE I	  	  	  	      	  	  	  	  	     
+              sigma = numpyro.sample('sigma', dist.Exponential(10.0))
+
+
+Set gravity using radius and mass in the Jovian unit.
+
+.. code:: python3	
+
+   	  #def model_c(nu1,y1,e1): (continued)
 	      
 	      #gravity
 	      g=getjov_gravity(Rp,Mp)
-              
+
+And here we assume a power-law type temperature model. This can be relaxed.	      
+
+.. code:: python3	
+
+   	  #def model_c(nu1,y1,e1): (continued)
+	    
 	      #T-P model//
 	      Tarr = T0*(Parr/Pref)**alpha 
 
@@ -236,17 +268,26 @@ Define the model.
 	      Frot=response.rigidrot(nus,F0,vsini,u1,u2)
 	      mu=response.ipgauss_sampling(nu1,nus,Frot,beta,RV)
 
-Here, we assume a GP modeling of the noise. It's so simple.
+Here, in the case of a GP modeling of the noise, just define the GP kernel and use dist.MultivariateNormal. So simple!
 	  
 .. code:: python3
 	  
 	  #def model_c(nu1,y1,e1): (continued)
-	  	  	  	  	      
+	  # CASE II	  	  	  	      	  	  	  	  	      
 	      cov=gpkernel_RBF(nu1,tau,a,e1)
 	      sample("y1", dist.MultivariateNormal(loc=mu, covariance_matrix=cov), obs=y1)
 
+Or you prefer an independent Gaussan?
 
-Run the HMC-NUTS.
+.. code:: python3
+	  
+	  #def model_c(nu1,y1,e1): (continued)
+	  # CASE I	  	  	  	      
+	      cov=gpkernel_RBF(nu1,tau,a,e1)
+              errall=jnp.sqrt(e1**2+sigma**2)
+              sample(tag, dist.Normal(mu, errall), obs=y)
+
+Then, run the HMC-NUTS.
 	     
 .. code:: python3	  	  	  	  	 
 	  	  	  	  
@@ -301,5 +342,113 @@ Arviz is very useful for plotting, such as the corner plot, the trace plot and s
 	  
 
 
+Credible interval for the GP case (CASE II)
+========================================================
+
+Here, we show an example to compute the credible interval of the prdiction including a GP. See Appendix F in Paper I (Kawahara+2021) for more details.
+
+The probability of the prediction
+:math:`{\bf d}^\ast`
+for an arbitrary wavenumber vector
+:math:`{\bf \nu}^\ast` conditioned on the given data
+:math:`{\bf d}` is expressed as 
+
+:math:`p({\bf d}^\ast|{\bf d}) =  {\mathcal N} ({F}({\bf \nu}^\ast) + K_{\times}^\top K_\sigma^{-1} ({\bf d} - {F}({\bf \nu}))  K_{\ast,\sigma} - K_\times^\top K_\sigma^{-1} K_\times)`
+
+where
+
+:math:`(K_{\times})_{ij} = a \,  {k}(|\nu_i-\nu^\ast_j|;\tau)`
+
+:math:`(K_{\sigma})_{ij} = a \,  {k}(|\nu_i-\nu_j|;\tau)  + \sigma_{e,i}^2 \delta_{ij}`
+
+:math:`(K_{\ast,\sigma})_{ij} = a \,  {k}(|\nu^\ast_i-\nu^\ast_j|;\tau) + (\sigma_{e,i}^\ast)^2 \delta_{ij}`
+
+where
+:math:`\delta_{ij}`
+is the Kronecker delta. Then the code should be like the below.
+
+.. code:: python3
+	  
+   mu = #the spectral model (skipeed here)
+   cov = gpkernel_RBF(t,t,tau,a) + jnp.diag(err**2)
+   covx= gpkernel_RBF(t,td,tau,a)
+   covxx = gpkernel_RBF(td,td,tau,a) + jnp.diag(err**2)
+   A=scipy.linalg.solve(cov,fobsx-mu,assume_a="pos")
+   IKw = scipy.linalg.inv(cov)
+   
+   gp=covx@A
+   newcov=covxx - covx@IKw@covx.T
+
+For instance, the same wavenumber grid for t and td can be used.
+   
+.. code:: python3
+	  
+   t=nusdx 
+   td=nusdx
 
 
+An HMC simulation provides a sampling of the other parameters
+:math:`{\bf \theta}^\dagger`
+than the GP parameters. Then, the prediction can be sampled by
+
+:math:`{\bf d}^\ast_k \sim  {\mathcal N} ({F}({\bf \nu}^\ast; {\bf \theta}^\dagger_k) + K_{\times}^\top K_\sigma^{-1} ({\bf d} - {F}({\bf \nu}; {\bf \theta}^\dagger_k)) K_{\ast,\sigma} - K_\times^\top K_\sigma^{-1} K_\times)`
+
+where
+
+:math:`{\bf \theta}^\dagger_k`
+is the k-th sampling of
+:math:`{\bf \theta}^\dagger`
+. The credible interval can be computed using the sampling given by the anove Equation. This prediction includes independent Gaussian noise
+:math:`\sigma_{e,i}^\ast`
+. When we adopt
+:math:`\sigma_{e,i}^\ast = 0`
+, This equation simply provides the prediction of the spectral model + trend.
+
+Then, one can get a sampling using multivariate_normal in scipy.stat as 
+   
+.. code:: python3
+	  
+   from scipy.stats import multivariate_normal as smn
+   mkgp = smn(mean=gp ,cov=newcov , allow_singular =True).rvs(1).T
+
+Computing the HPDI, we get the orange area in the following figure:
+
+.. image:: resultsgp.png
+
+
+Layer-by-Layer Modelling
+==============================
+
+We can also model the temperature profile (and a VMR) by a layer-by-layer model instead of the power-law model. In this case, add a small identity matrix to the RBF kernel to prevent overflow such as 
+
+.. code:: python3
+   
+   def modelcov(t,tau,a):
+	  fac=1.e-5 #small value
+	  Dt = t - jnp.array([t]).T
+	  K=a*jnp.exp(-(Dt)**2/2/(tau**2))+a*fac*jnp.identity(NP)
+   return K
+
+Then, use dist.MultivariateNormal to model the prior of the temperature layers:
+
+.. code:: python3
+	  
+	  # Model
+	  def model_c(nu1,y1,e1):
+	      Rp = sample('Rp', dist.Uniform(0.5,1.5))
+	      Mp = sample('Mp', dist.Normal(33.5,0.3))
+	      RV = sample('RV', dist.Uniform(26.0,30.0))
+	      MMR_CO = sample('MMR_CO', dist.Uniform(0.0,maxMMR_CO))
+	      MMR_H2O = sample('MMR_H2O', dist.Uniform(0.0,maxMMR_H2O))
+
+	      #Layer-by-layer T-P model
+	      lnsT=6.0
+	      sT=10**lnsT
+	      lntaup=0.5
+	      taup=10**lntaup
+	      
+	      cov=modelcov(lnParr,taup,sT)
+	      T0 =  numpyro.sample('T0', dist.Uniform(1000,1600))
+	      Tarr=numpyro.sample("Tarr", dist.MultivariateNormal(loc=ONEARR, covariance_matrix=cov))+T0
+	      
+	      #(continued)

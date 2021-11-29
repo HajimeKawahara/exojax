@@ -20,3 +20,4 @@ def gpkernel_RBF(t,tau,a,err):
     Dt = t - jnp.array([t]).T
     K=a*jnp.exp(-(Dt)**2/2/(tau**2))+jnp.diag(err**2)
     return K
+
