@@ -1,6 +1,6 @@
 include src/exojax/data/atom/atomic.txt
+include src/exojax/data/atom/barklem_collet_2016_pff.txt
 
-graft data
 graft tests
 graft examples
 graft docs

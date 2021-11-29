@@ -1,18 +1,17 @@
-""" test for hjert
+""" test for loading atomic data
     
-   - This test compares hjert with scipy wofz, see Appendix in Paper I.
 
 
 """
 
 import pytest
 from exojax.spec.atomllapi import load_atomicdata
-import numpy as np
 
-def test_load():
+def test_loadatom():
     data=load_atomicdata()
-    print(data)
-#    assert np.max(diffarr)<1.e-6
+    assert data["ionizationE1"][0]==13.595
 
+def test_
+    
 if __name__ == "__main__":
-    test_load()
+    test_loadatom()
