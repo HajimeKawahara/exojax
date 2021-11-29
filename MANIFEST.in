@@ -1,5 +1,7 @@
 include src/exojax/data/atom/atomic.txt
 include src/exojax/data/atom/barklem_collet_2016_pff.txt
+include src/exojax/data/clouds/drag_force.txt
+include src/exojax/data/abundance/AAG2021.dat
 
 graft tests
 graft examples
