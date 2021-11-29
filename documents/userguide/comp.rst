@@ -1,13 +1,6 @@
 Compatibility to External Packages
 =====================================
 
-Numpyro
------------------
-
-Celerite2 
--------------------
-Celerite2 is a fast Gaussian process package, which is compatible to JAX/numpyro.
-
 
 PetitRadtrans
 -------------------
