@@ -54,7 +54,7 @@ for j,i in enumerate([259,236,56]):
     #plt.plot(Tarr,SijM[:,i],alpha=1.0,label=w)
     #plt.text(Tmax[i],SijM[imax[i],i],w)
 
-plt.axvspan(1280.0,1310.0,alpha=0.3)
+plt.axvspan(1260.0,1340.0,alpha=0.3)
 plt.tick_params(labelsize=18)
 plt.xlabel("Temperature (K)",fontsize=18)
 plt.ylabel("Line strength ($10^{-22}$ cm)",fontsize=18)

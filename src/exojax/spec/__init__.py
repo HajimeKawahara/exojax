@@ -36,7 +36,3 @@ from exojax.spec.lpf import (
 from exojax.spec.make_numatrix import (
     make_numatrix0,
 )
-from exojax.spec.partf import (
-    qfunc_hitran,
-    get_qopt,
-)

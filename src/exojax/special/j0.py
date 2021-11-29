@@ -13,6 +13,7 @@ SQ2OPI = 0.79788456080286535588
 
 def j0(x):
     """Bessel function of the 1st kind, order=0
+
     Args:
        x: x
 

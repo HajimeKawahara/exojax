@@ -21,3 +21,10 @@ or you can test one by one
    pytest autoxs_test.py
 
 We recommend to write the unit test code in 'tests' directory before submitting pull-request.
+
+
+You might need some files. 
+
+- VALD data 
+
+Check `here <http://secondearths.sakura.ne.jp/exojax/data/>`_.

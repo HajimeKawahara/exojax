@@ -1,5 +1,6 @@
 from jax import jit
 import jax.numpy as jnp
+from exojax.utils.constants import hcperk
 
 @jit
 def SijT(T,logsij0,nu_lines,elower,qT):
@@ -10,20 +11,17 @@ def SijT(T,logsij0,nu_lines,elower,qT):
        logsij0: log(Sij(Tref)) (Tref=296K)
        nu_lines: line center wavenumber (cm-1)
        elower: elower 
-       qT: Q(Tref)/Q(T)
+       qT: Q(T)/Q(Tref)
 
     Returns:
        Sij(T): Line strength (cm)
 
     """
-    Tref=296.0 #reference tempearture (K)
-    c_2 = 1.4387773 #hc/k_B (cm K)
-    
-    #    ToDo: confirming behavier 2/26(2021)
-    expow=logsij0-c_2*(elower/T-elower/Tref)
-    fac=(1.0-jnp.exp(-c_2*nu_lines/T) )/(1.0-jnp.exp(-c_2*nu_lines/Tref))
-    #expow=logsij0-c_2*elower*(1.0/T-1.0/Tref)
-    #fac=jnp.expm1(-c_2*nu_lines/T)/jnp.expm1(-c_2*nu_lines/Tref)
+    Tref=296.0 #reference tempearture (K)    
+    expow=logsij0-hcperk*(elower/T-elower/Tref)
+    fac=(1.0-jnp.exp(-hcperk*nu_lines/T) )/(1.0-jnp.exp(-hcperk*nu_lines/Tref))
+    #expow=logsij0-hcperk*elower*(1.0/T-1.0/Tref)
+    #fac=jnp.expm1(-hcperk*nu_lines/T)/jnp.expm1(-hcperk*nu_lines/Tref)
     return jnp.exp(expow)/qT*fac
 
 @jit

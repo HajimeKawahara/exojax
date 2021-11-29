@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-'''hapi
+'''hapi (HITRAN API)
 
 Note:
    THIS MODULE WAS IMPORTED FROM THE OFFICIAL HITRAN API (HAPI version 1.1.2.0) UNDER THE FOLLOWING MIT LICENSE.

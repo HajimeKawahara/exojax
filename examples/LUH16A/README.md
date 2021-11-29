@@ -3,6 +3,7 @@
 HMC-NUTS fitting of exojax to a real spectrum of a brown dwarf [Luhman 16 A](https://en.wikipedia.org/wiki/Luhman_16).
 
 ## Luhman 16 A spectrum
+
 - data/luhman16a_spectra_detector1.csv
 
 The high-dispersion spectrum of Luhman 16 A as observed by VLT/CRIRES (detector1), originally for [Crossfield et al. (2014)](https://www.nature.com/articles/nature12955?proof=t).
@@ -10,18 +11,29 @@ The high-dispersion spectrum of Luhman 16 A as observed by VLT/CRIRES (detector1
 Contact for this spectrum: [Ian J. M. Crossfield](https://crossfield.ku.edu/)
 
 
-## Models
+## Fiducial Models used in Section 5 (Paper I)
 
-ExoMol Mp prior from astrometry, fA=1, .broad applied
+ExoMol Mp prior from astrometry, .broad applied. A=A100,V=V100
 
-|  directroy       | opacity calculator |  Limb Darkening  | Gaussian Process |        |
-| ---------------- |  ----------------- | ---------------- | ---------------- | ------ |
-| FidEMb           |     LPF (direct)   |                  |                  |  9.2 h |
-| FidEMbu          |     LPF (direct)   |:heavy_check_mark:|                  | 11.2 h |
-| FidEMbug         |     LPF (direct)   |:heavy_check_mark:|:heavy_check_mark:|        |
-| FidEMb_modit     |     MODIT          |                  |                  |        |
-| FidEMbu_modit    |     MODIT          |:heavy_check_mark:|                  |        |
+|  directroy       | opacity calculator |  Limb Darkening  | Gaussian Process |           |
+| ---------------- |  ----------------- | ---------------- | ---------------- | --------- |
+| FidEMbu          |     LPF (direct)   |:heavy_check_mark:|                  | 25.0 h (A)|
+| FidEMbug         |     LPF (direct)   |:heavy_check_mark:|:heavy_check_mark:| 29.5 h (A)|
+| FidEMbug_modit   |     MODIT          |:heavy_check_mark:|:heavy_check_mark:| 16.5 h (A)|
 
+Note: N=4500
+
+## Other Models in ``advanced'' directory
+
+|  directroy       | description       |opacity calculator |  Limb Darkening  | Gaussian Process |            |
+| ---------------- | ----------------- | ----------------- | ---------------- | ---------------- | ---------- |
+| FreeT            | layer-by-layer T  |    LPF (direct)   |:heavy_check_mark:|:heavy_check_mark:| 28.3 h (A) |
+| MassEMbug        | mass est (ExoMol) |    LPF (direct)   |:heavy_check_mark:|:heavy_check_mark:| 34.2 h (A) |
+| MassHitbug       | mass est (Hitemp) |    LPF (direct)   |:heavy_check_mark:|:heavy_check_mark:| 50.6 h (V) |
+| HDC              | additional noise  |    LPF (direct)   |:heavy_check_mark:|                  | 31.0 h (V) |
+
+Note: N=4500
+Note: 1/3 of the wavelength range was used for FreeT.
 
 ### Comparisons
 
@@ -30,7 +42,8 @@ Do the lines below the CIA photosphere affect the results? -> No. See the poster
 |  directroy       | opacity calculator |  Limb Darkening  | # of water lines |        |
 | ---------------- |  ----------------- | ---------------- | ---------------- | ------ |
 | FidEMbu          |     LPF (direct)   |:heavy_check_mark:|   334            | 11.2 h |
-| FidEMbux         |     LPF (direct)   |:heavy_check_mark:|   802            | 18.3 h |
+| FidEMbu (*)      |     LPF (direct)   |:heavy_check_mark:|   802            | 18.3 h |
 
+Note: (*) used margin=5 in mask_weakline, N=1500
 
 <img src="https://user-images.githubusercontent.com/15956904/135429319-ee298bac-6448-47a7-a0f0-3d2dbfbd18e2.png" Titie="comparison" Width=850px>

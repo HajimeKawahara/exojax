@@ -1,1 +1,0 @@
-MODIT x Kipping LD
