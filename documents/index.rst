@@ -39,7 +39,7 @@ ExoJAX
 Reference
 ---------------------
 
-- Kawahara, Kawashima, Masuda, Crossfield, Parker, van den Bekerom (2021) accepted by ApJS: [arXiv:2105.14782](http://arxiv.org/abs/2105.14782)
+- Kawahara, Kawashima, Masuda, Crossfield, Parker, van den Bekerom (2021) accepted by ApJS: `arXiv:2105.14782 <http://arxiv.org/abs/2105.14782>`_
    
 License & Attribution
 ---------------------
@@ -55,7 +55,7 @@ Copyright 2021, Contributors
 - Brett Morris (@bmorris3)
 - Erwan Pannier (@erwanp) and `RADIS <https://github.com/radis/radis>`_ community
 - Stevanus Nugroho
-- Tako Ishikawa
+- Tako Ishikawa (@chonma0ctopus)
 
 ExoJAX is free software made available under the MIT License. For details
 see the ``LICENSE``.
