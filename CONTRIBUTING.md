@@ -9,10 +9,32 @@ We adopt a simple git-flow model, consisting of master, develop, contributor-def
 - develop: default branch for developers. PR by contributors will be merged to this branch, after the review process.
 
 
-## Issues
+## Issues and Discussion
 
-You can ask anything about exojax in Issue tracker. 
+You can ask anything about exojax in Issue tracker and Discussion. 
 
 ## Tests
 
-As proposed by @gully #86, we plan to introduce unit tests by pytest.
+As proposed by @gully #86, we now have unit tests using pytest. 
+Please include unit tests if your update gives new functionality to exojax.
+Some external files are needed to complete all the tests. Check [here](http://secondearths.sakura.ne.jp/exojax/data/).
+
+## TIPS
+
+### How to include data into exojax
+
+- Edit MANIFEST.in
+- Put data files in data/somewhere/
+- Use pkgutil to load them.
+
+For instance,
+
+```python
+import pandas as pd
+import pkgutil
+from io import BytesIO
+
+adata = pkgutil.get_data('exojax',"data/somewhere/hoge.txt")
+dat = pd.read_csv(BytesIO(adata), sep="\s+")
+```
+
