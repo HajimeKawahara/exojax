@@ -1,4 +1,4 @@
-ExoMol
+VALD3
 --------------
 
 *Dec 1 (2021) Hiroyuki T. Ishikawa*
