@@ -6,7 +6,7 @@
 ExoJAX
 ==================================
 
-`ExoJAX <https://github.com/HajimeKawahara/exojax>`_ provides an auto-differentiable high-resolution spectrum model for exoplanets/brown dwarfs using `JAX <https://github.com/google/jax>`_.
+`ExoJAX <https://github.com/HajimeKawahara/exojax>`_ provides an auto-differentiable high-resolution spectrum model for exoplanets/brown dwarfs using `JAX <https://github.com/google/jax>`_. ExoJAX enables a fully Bayesian inference of the high-dispersion data to fit the line-by-line spectral computation to the observed spectrum, from end-to-end (i.e. from molecular/atomic databases to real spectra), by combining it with the Hamiltonian Monte Carlo in recent probabilistic programming languages such as `NumPyro <https://github.com/pyro-ppl/numpyro>`_.
 
 .. toctree::
    :maxdepth: 1

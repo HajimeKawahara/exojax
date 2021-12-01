@@ -8,6 +8,7 @@ User Guide
    userguide/moldb.rst
    userguide/exomol.rst
    userguide/hitran.rst
+   userguide/atomll.rst
    userguide/rtransfer.rst
    userguide/modit.rst
    userguide/benchmark.rst
