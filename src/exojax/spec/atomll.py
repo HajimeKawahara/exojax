@@ -31,7 +31,7 @@ def Sij0(A, gupper, nu_lines, elower, QTref_284, QTmask, Irwin=False):
         
     #Use Irwin_1981 for Fe I (mask==76)  #test211013Tako
     if Irwin==True:
-        QTref[np.where(QTmask == 76)[0]] = atomllapi.partfn_Fe(Tref)
+        QTref[jnp.where(QTmask == 76)[0]] = atomllapi.partfn_Fe(Tref)
 
     S0 = -A*gupper*np.exp(-hcperk*elower/Tref)*np.expm1(-hcperk*nu_lines/Tref)\
         /(8.0*np.pi*ccgs*nu_lines**2*QTref)
@@ -156,8 +156,8 @@ def gamma_uns(T, PH, PHH, PHe, ielem, iion, \
       Barklem+2000: https://ui.adsabs.harvard.edu/abs/2000A&AS..142..467B
       Gray+2005: https://ui.adsabs.harvard.edu/abs/2005oasp.book.....G
     """
-    gamRad = np.where(gamRad==0., -99, gamRad)
-    gamSta = np.where(gamSta==0., -99, gamSta)
+    gamRad = jnp.where(gamRad==0., -99, gamRad)
+    gamSta = jnp.where(gamSta==0., -99, gamSta)
     chi_lam = nu_lines/eV2wn #[cm-1] -> [eV]
     chi = elower/eV2wn #[cm-1] -> [eV]
     
@@ -168,7 +168,7 @@ def gamma_uns(T, PH, PHH, PHe, ielem, iion, \
     gamma6 = enh_damp * (gam6H + gam6He + gam6HH)
     gamma_case1 = (gamma6 + 10**gamRad + 10**gamSta) /(4*np.pi*ccgs)
     #Avoid nan (appeared by np.log10(negative C6))
-    gamma = np.where(np.isnan(gamma_case1), 0., gamma_case1)
+    gamma = jnp.where(jnp.isnan(gamma_case1), 0., gamma_case1)
 
     return(gamma)
 
@@ -217,20 +217,20 @@ def gamma_KA3(T, PH, PHH, PHe, ielem, iion, \
       Barklem+2000: https://ui.adsabs.harvard.edu/abs/2000A&AS..142..467B
       Gray+2005: https://ui.adsabs.harvard.edu/abs/2005oasp.book.....G
     """
-    gamRad = np.where(gamRad==0., -99, gamRad)
-    gamSta = np.where(gamSta==0., -99, gamSta)
+    gamRad = jnp.where(gamRad==0., -99, gamRad)
+    gamSta = jnp.where(gamSta==0., -99, gamSta)
     Zeff = iion #effective charge (=1 for Fe I, 2 for Fe II, etc.)
     
     n_eff2_upper = Rcgs * Zeff**2 / (ionE*eV2wn - eupper) #Square of effective quantum number of the upper state
     n_eff2_lower = Rcgs * Zeff**2 / (ionE*eV2wn - elower)
     #Mean of square of radius (in units of a0, the radius of the first Bohr orbit; p.320 in Aller (1963); https://ui.adsabs.harvard.edu/abs/1963aass.book.....A)
     msr_upper_iron = (45-ielem)/Zeff #for iron group elements (5th equation in Kurucz&Avrett1981)
-    msr_upper_noiron = np.where(n_eff2_upper>0., (2.5 * (n_eff2_upper/Zeff)**2), 25) #for other elements (6th equation in Kurucz&Avrett1981)
-    msr_upper = np.where((ielem >= 26)  & (ielem <= 28), msr_upper_iron, msr_upper_noiron)
+    msr_upper_noiron = jnp.where(n_eff2_upper>0., (2.5 * (n_eff2_upper/Zeff)**2), 25) #for other elements (6th equation in Kurucz&Avrett1981)
+    msr_upper = jnp.where((ielem >= 26)  & (ielem <= 28), msr_upper_iron, msr_upper_noiron)
     msr_lower = 2.5 * (n_eff2_lower/Zeff)**2
     
     gap_msr = msr_upper - msr_lower
-    gap_msr_rev = gap_msr * np.where(gap_msr < 0, -1., 1.) #Reverse upper and lower if necessary (TBC) #test2109\\\\
+    gap_msr_rev = gap_msr * jnp.where(gap_msr < 0, -1., 1.) #Reverse upper and lower if necessary (TBC) #test2109\\\\
     gap_msr_rev_cm = a0**2 * gap_msr_rev #[Bohr radius -> cm]
     gam6H = 17 * (8*kB*T*(1./atomicmass+1./1.)/(np.pi*m_u))**0.3 \
         * (6.63e-25*ecgs**2/hcgs*(gap_msr_rev_cm))**0.4 \
@@ -292,15 +292,15 @@ def gamma_KA4(T, PH, PHH, PHe, ielem, iion, \
       Barklem+2000: https://ui.adsabs.harvard.edu/abs/2000A&AS..142..467B
       Gray+2005: https://ui.adsabs.harvard.edu/abs/2005oasp.book.....G
     """
-    gamRad = np.where(gamRad==0., -99, gamRad)
-    gamSta = np.where(gamSta==0., -99, gamSta)
+    gamRad = jnp.where(gamRad==0., -99, gamRad)
+    gamSta = jnp.where(gamSta==0., -99, gamSta)
     Zeff = iion #effective charge (=1 for Fe I, 2 for Fe II, etc.)
     
     n_eff2_upper = Rcgs * Zeff**2 / (ionE*eV2wn - eupper) #Square of effective quantum number of the upper state
     #Mean of square of radius (in units of a0, the radius of the first Bohr orbit; p.320 in Aller (1963); https://ui.adsabs.harvard.edu/abs/1963aass.book.....A)
     msr_upper_iron = (45-ielem)/Zeff #for iron group elements (5th equation in Kurucz&Avrett1981)
-    msr_upper_noiron = np.where(n_eff2_upper>0., (2.5 * (n_eff2_upper/Zeff)**2), 25) #for other elements (6th equation in Kurucz&Avrett1981)
-    msr_upper = np.where((ielem >= 26)  & (ielem <= 28), msr_upper_iron, msr_upper_noiron)
+    msr_upper_noiron = jnp.where(n_eff2_upper>0., (2.5 * (n_eff2_upper/Zeff)**2), 25) #for other elements (6th equation in Kurucz&Avrett1981)
+    msr_upper = jnp.where((ielem >= 26)  & (ielem <= 28), msr_upper_iron, msr_upper_noiron)
                     
     gamma6 = 4.5e-9 * msr_upper**0.4 \
         * ((PH + 0.42*PHe + 0.85*PHH)*1e6/(kB*T)) * (T/10000.)**0.3
@@ -353,19 +353,19 @@ def gamma_KA3s(T, PH, PHH, PHe, ielem, iion, \
       Barklem+2000: https://ui.adsabs.harvard.edu/abs/2000A&AS..142..467B
       Gray+2005: https://ui.adsabs.harvard.edu/abs/2005oasp.book.....G
     """
-    gamRad = np.where(gamRad==0., -99, gamRad)
-    gamSta = np.where(gamSta==0., -99, gamSta)
+    gamRad = jnp.where(gamRad==0., -99, gamRad)
+    gamSta = jnp.where(gamSta==0., -99, gamSta)
     Zeff = iion #effective charge (=1 for Fe I, 2 for Fe II, etc.)
     
     n_eff2_upper = Rcgs * Zeff**2 / (ionE*eV2wn - eupper) #Square of effective quantum number of the upper state
     n_eff2_lower = Rcgs * Zeff**2 / (ionE*eV2wn - elower)
     #Mean of square of radius (in units of a0, the radius of the first Bohr orbit; p.320 in Aller (1963); https://ui.adsabs.harvard.edu/abs/1963aass.book.....A)
-    msr_upper_noiron = np.where(n_eff2_upper>0., (2.5 * (n_eff2_upper/Zeff)**2), 25) #for other elements (6th equation in Kurucz&Avrett1981)
+    msr_upper_noiron = jnp.where(n_eff2_upper>0., (2.5 * (n_eff2_upper/Zeff)**2), 25) #for other elements (6th equation in Kurucz&Avrett1981)
     msr_upper = msr_upper_noiron
     msr_lower = 2.5 * (n_eff2_lower/Zeff)**2
 
     gap_msr = msr_upper - msr_lower
-    gap_msr_rev = gap_msr * np.where(gap_msr < 0, -1., 1.) #Reverse upper and lower if necessary (TBC) #test2109\\\\
+    gap_msr_rev = gap_msr * jnp.where(gap_msr < 0, -1., 1.) #Reverse upper and lower if necessary (TBC) #test2109\\\\
     gap_msr_rev_cm = a0**2 * gap_msr_rev #[Bohr radius -> cm]
     gam6H = 17 * (8*kB*T*(1./atomicmass+1./1.)/(np.pi*m_u))**0.3 \
         * (6.63e-25*ecgs**2/hcgs*(gap_msr_rev_cm))**0.4 \
