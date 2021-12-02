@@ -6,20 +6,20 @@ def extract_hitemp(parbz2,nurange,margin,tag):
     """extract .par between nurange[0] and nurange[-1]
 
     Args:
-       parbz2: .par.bz2 HITRAN/HITEMP file
+       parbz2: .par.bz2 HITRAN/HITEMP file (str)
        nurange: wavenumber range list (cm-1) [min,max] or wavenumber grid 
        margin: margin for nurange (cm-1)
        tag: tag for directory and output file
 
     Return:
-       path of output file
+       path of output file (pathlib)
 
     """
     import sys, os, bz2, tqdm, pathlib
     infilepath=pathlib.Path(parbz2)
     outdir=infilepath.parent/pathlib.Path(tag)
     os.makedirs(str(outdir), exist_ok=True)
-    outpath=outdir/pathlib.Path(tag+".par")
+    outpath=outdir/pathlib.Path(infilepath.stem)
     
     numin=nurange[0]-margin
     numax=nurange[-1]+margin    
@@ -35,7 +35,7 @@ def extract_hitemp(parbz2,nurange,margin,tag):
                     f.write(line.decode("utf-8") )        
     alllines.close()
     f.close()
-    return str(outpath)
+    return outpath
 
 if __name__  == "__main__":
     nurange=[4200.0,4300.0]
