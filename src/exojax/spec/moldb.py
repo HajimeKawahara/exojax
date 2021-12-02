@@ -397,7 +397,7 @@ class MdbHit(object):
 
     """
 
-    def __init__(self,path,nurange=[-np.inf,np.inf],margin=250.0,crit=-np.inf):
+    def __init__(self,path,nurange=[-np.inf,np.inf],margin=1.0,crit=-np.inf,extract=False):
         """Molecular database for HITRAN/HITEMP form
 
         Args: 
@@ -405,6 +405,7 @@ class MdbHit(object):
            nurange: wavenumber range list (cm-1) [min,max] or wavenumber grid 
            margin: margin for nurange (cm-1)
            crit: line strength lower limit for extraction
+           extract: if True, extract the opacity having the wavenumber between nurange +- margin  
 
         """        
         #downloading
@@ -413,6 +414,13 @@ class MdbHit(object):
         if not self.path.exists():
             self.download()
 
+        #extract?
+        if extract:
+            if self.path.suffix==".bz2":
+
+            else:
+                print('Warning "extract" option is available only for .bz2 format. No "extract" applied')
+            
         #bunzip2 if suffix is .bz2
         if self.path.suffix==".bz2":
             import bz2,shutil
@@ -426,8 +434,8 @@ class MdbHit(object):
             self.path=self.path.with_suffix('')
             
         molec=str(self.path.stem)
-            
         hapi.db_begin(str(self.path.parent))            
+
         self.Tref=296.0        
         self.molecid = search_molecid(molec)
         self.crit = crit
