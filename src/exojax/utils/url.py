@@ -33,3 +33,9 @@ def url_Exomol_iso(molecule,isotope_full_name):
     """    
     url=u"https://exomol.com/data/molecules/"+str(molecule)+"/"+str(isotope_full_name)
     return url
+
+def url_developer_data():
+    """return URL for data in exojax
+    """
+    url=u"http://secondearths.sakura.ne.jp/exojax/data/"
+    return url

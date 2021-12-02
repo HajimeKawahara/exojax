@@ -22,9 +22,18 @@ from exojax.spec import xsection, moldb, atomll
 from exojax.spec.hitran import SijT, doppler_sigma
 import matplotlib.pyplot as plt
 from exojax.utils.constants import m_u
-
+import os
 
 filepath_VALD3 = '.database/vald2600.gz'
+if not os.path.isfile(filepath_VALD3):
+    import urllib.request
+    from exojax.utils.url import url_developer_data
+    try:
+        url = url_developer_data()+"vald2600.gz"
+        urllib.request.urlretrieve(url,filepath_VALD3)
+    except:
+        print("could not connect ",url_developer_data())
+
 path_fig = './'
 
 out_suffix = '_pytest'
