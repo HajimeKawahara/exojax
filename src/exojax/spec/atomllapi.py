@@ -82,6 +82,7 @@ def read_ExAll(allf):
     
     dat = dat[ dat.species.str.len()<7 ] #Remove long name (molecules e.g., TiO)
     dat = dat[dat.species.str.slice(start=1, stop=3).str.isupper().map({False: True, True: False})] #Remove names starting with successive uppercase letters (molecules e.g., CO, OH, CN)
+    dat = dat.drop(dat.index[  np.where( np.array(list(map(lambda x: int(x[1].strip("'")), dat.species.str.split(' ')))) >3)[0]  ]) #Remove highly ionized ions (iion > 3, for which the partition function is not reported in Barklem+2016)
     for i, sp in enumerate(dat.species):
         symbol = sp.strip("'").split(' ')[0]
         ielem = np.where(PeriodicTable==symbol)[0][0] if (symbol in PeriodicTable) else 0
