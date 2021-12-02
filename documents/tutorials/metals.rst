@@ -35,8 +35,7 @@ emission spectrum.
     from jax import vmap, jit
     import numpy as np
 
-T-P profile
------------
+A T-P profile
 
 .. code:: ipython3
 
@@ -66,8 +65,7 @@ T-P profile
 .. image:: metals/output_6_0.png
 
 
-Wavenumber
-----------
+Set a wavenumber grid...
 
 .. code:: ipython3
 
@@ -80,8 +78,7 @@ Wavenumber
     xsmode assumes ESLOG: mode= lpf
 
 
-Load a database of atomic lines from VALD3
-------------------------------------------
+Load a database of atomic lines from VALD3.
 
 .. code:: ipython3
 
@@ -91,7 +88,7 @@ Load a database of atomic lines from VALD3
 
 
 Some notes on VALD3 data
-^^^^^^^^^^^^^^^^^^^^^^^^^^
+------------------------------
     - ``valdlines`` should be   fullpath to the input line list obtained from `VALD3 <http://vald.astro.uu.se/>`_:
       
 VALD data access is free but requires registration through `the Contact form <http://vald.astro.uu.se/~vald/php/vald.php?docpage=contact.html>`_. After the registration, you can login and choose the ``Extract Element`` mode. For a example in this notebook, the request form of ``Extract All`` mode was filled as:
@@ -114,8 +111,7 @@ Just for this tutorial, ``HiroyukiIshikawa.4214450.gz`` can be found `here <http
 
 
 
-Relative partition function
----------------------------
+Relative partition function is given by
 
 .. code:: ipython3
 
@@ -130,8 +126,7 @@ Relative partition function
 
 
 
-Pressure and Natural broadenings (Lorentzian width)
----------------------------------------------------
+Here are the pressure and natural broadenings (Lorentzian width).
 
 .. code:: ipython3
 
@@ -140,34 +135,28 @@ Pressure and Natural broadenings (Lorentzian width)
                     adbFe.dev_nu_lines, adbFe.elower, adbFe.eupper, adbFe.atomicmass, adbFe.ionE, \
                     adbFe.gamRad, adbFe.gamSta, adbFe.vdWdamp, 1.0)  
 
-Doppler broadening
-------------------
+and Doppler broadening,
 
 .. code:: ipython3
 
     sigmaDM=jit(vmap(doppler_sigma,(None,0,None)))\
         (adbFe.nu_lines, Tarr, adbFe.atomicmass)
 
-Line strength
--------------
+and Line strength.
 
 .. code:: ipython3
 
     SijM=jit(vmap(SijT,(0,None,None,None,0)))\
         (Tarr, adbFe.logsij0, adbFe.nu_lines, adbFe.elower, qt.T)
 
-nu matrix
----------
+This is the initialization of LPF.
 
 .. code:: ipython3
 
     from exojax.spec.initspec import init_lpf
     numatrix=init_lpf(adbFe.nu_lines,nus)
 
-Compute dtau for each atomic species (or ion) in a SEPARATE array
------------------------------------------------------------------
-
-Separate species
+Computing dtau for each atomic species (or ion) in a SEPARATE array.
 
 .. code:: ipython3
 
@@ -193,7 +182,7 @@ Set the stellar/planetary parameters
     logg: 4.849799190511717
 
 
-Calculate delta tau
+Calculating delta tau...
 
 .. code:: ipython3
 
@@ -247,15 +236,13 @@ Compute delta tau for CIA
     H2-H2
 
 
-Total delta tau
----------------
+The total delta tau is like that.
 
 .. code:: ipython3
 
     dtau = np.sum(dtaual, axis=0) + dtaucH2H2
 
-Plot contribution function
---------------------------
+Plotting a contribution function
 
 .. code:: ipython3
 
@@ -268,8 +255,7 @@ Plot contribution function
 .. image:: metals/output_33_0.png
 
 
-Radiative transfer
-------------------
+Perfomring a radiative transfer
 
 .. code:: ipython3
 
@@ -300,8 +286,7 @@ Radiative transfer
     [10 12 13 14 17 18 20 21 22 24 25 26 27 28 29 32 38 59 64 65 66 70 90]
 
 
-Rotational & instrumental broadening
-------------------------------------
+Finally, we apply the rotational & instrumental broadenings.
 
 .. code:: ipython3
 
