@@ -31,6 +31,10 @@ Define molecular weight of CO (:math:`\sim 12+16=28`), temperature (K),
 and pressure (bar). Also, we here assume the 100 % CO atmosphere,
 i.e. the partial pressure = pressure.
 
+
+Note: we can reduce the use of DRAM by using the option of ``extract=True`` in ``moldb.MdbHit``. It extracts the opacity data we consider now. See ":doc:`../userguide/hitran`" for the details.
+
+
 .. code:: ipython3
 
     Mmol=28.010446441149536 # molecular weight

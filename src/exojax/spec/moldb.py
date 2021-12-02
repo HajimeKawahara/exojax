@@ -7,7 +7,7 @@
 import numpy as np
 import jax.numpy as jnp
 import pathlib
-from exojax.spec import hapi, exomolapi, exomol, atomllapi, atomll
+from exojax.spec import hapi, exomolapi, exomol, atomllapi, atomll, hitranapi
 from exojax.spec.hitran import gamma_natural as gn
 import vaex
 
@@ -397,7 +397,7 @@ class MdbHit(object):
 
     """
 
-    def __init__(self,path,nurange=[-np.inf,np.inf],margin=250.0,crit=-np.inf):
+    def __init__(self,path,nurange=[-np.inf,np.inf],margin=1.0,crit=-np.inf,extract=False):
         """Molecular database for HITRAN/HITEMP form
 
         Args: 
@@ -405,14 +405,23 @@ class MdbHit(object):
            nurange: wavenumber range list (cm-1) [min,max] or wavenumber grid 
            margin: margin for nurange (cm-1)
            crit: line strength lower limit for extraction
+           extract: If True, it extracts the opacity having the wavenumber between nurange +- margin. Use when you want to reduce the memory use.  
 
         """        
         #downloading
         self.path = pathlib.Path(path)
-        molec=str(self.path.stem)
         if not self.path.exists():
             self.download()
 
+        #extract?
+        if extract:
+            if self.path.suffix==".bz2":
+                tag=str(nurange[0])+"_"+str(nurange[-1])+"_"+str(margin)
+                self.path = hitranapi.extract_hitemp(str(self.path),nurange,margin,tag)
+                print("self.path changed:",self.path)
+            else:
+                print('Warning: "extract" option is available only for .bz2 format. No "extract" applied')
+            
         #bunzip2 if suffix is .bz2
         if self.path.suffix==".bz2":
             import bz2,shutil
@@ -425,9 +434,8 @@ class MdbHit(object):
                     shutil.copyfileobj(fr,fw)
             self.path=self.path.with_suffix('')
             
-        molec=str(self.path.stem)
-            
         hapi.db_begin(str(self.path.parent))            
+        molec=str(self.path.stem)
         self.Tref=296.0        
         self.molecid = search_molecid(molec)
         self.crit = crit

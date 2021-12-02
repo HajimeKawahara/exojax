@@ -4,7 +4,7 @@ VALD3
 *Dec 1 (2021) Hiroyuki T. Ishikawa*
 
 
-.. See ":doc:`../tutorials/opacity_exomol`" as the tutorial to compute a cross section profile using ExoMol.
+See ":doc:`../tutorials/opacity_exomol`" as the tutorial to compute a cross section profile using ExoMol.
 
 
 Atomic Database
@@ -33,12 +33,12 @@ An example to use the VALD3 database from exojax is like that:
 
 .. code:: python
 
-	  >>> from exojax.spec import moldb
-		>>> from exojax.spec.rtransfer import nugrid
-		>>> nus4LL = 1e8/np.array([1e5, 1500.])
-		>>> filepath_VALD3 = '.database/vald2600.gz'
-		>>> adbFe = moldb.AdbVald(filepath_VALD3, nus4LL)
-		Reading VALD file
+	>>> from exojax.spec import moldb
+	>>> from exojax.spec.rtransfer import nugrid
+	>>> nus4LL = 1e8/np.array([1e5, 1500.])
+	>>> filepath_VALD3 = '.database/vald2600.gz'
+	>>> adbFe = moldb.AdbVald(filepath_VALD3, nus4LL)
+	Reading VALD file
 
 
 Broadening Parameters
@@ -79,5 +79,5 @@ The example is as:
 		>>> Amol=np.float64( adbFe.atomicmass[0] ) #atomic mass [u]
 		>>> ionE=np.float64( adbFe.ionE[0] ) #ionization energy [eV]
 		>>> gammaL = atomll.gamma_vald3(T, PH, PHH, PHe, adbFe.ielem, adbFe.iion, \
-						adbFe.dev_nu_lines, adbFe.elower, adbFe.eupper, adbFe.atomicmass, adbFe.ionE, \
-						adbFe.gamRad, adbFe.gamSta, adbFe.vdWdamp, enh_damp=1.0)
+		adbFe.dev_nu_lines, adbFe.elower, adbFe.eupper, adbFe.atomicmass, adbFe.ionE, \
+		adbFe.gamRad, adbFe.gamSta, adbFe.vdWdamp, enh_damp=1.0)
