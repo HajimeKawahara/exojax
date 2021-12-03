@@ -75,6 +75,7 @@ def read_ExAll(allf):
         
     """
     dat = pd.read_csv(allf, sep=",", skiprows=1, names=("species","wav_lines","loggf","elowereV","jlower","euppereV", "jupper", "landelower", "landeupper", "landemean", "rad_damping","stark_damping","waals_damping")) #convert=False)
+    colWL = dat.iat[0,0][13:22]
 
     dat = dat[dat.species.str.startswith("'")] #Remove rows not starting with "'"
     dat = dat[dat.species.str.startswith("' ").map({False: True, True: False})] #Remove rows of Reference
@@ -91,6 +92,8 @@ def read_ExAll(allf):
     dat = dat.reset_index(drop=True)
     dat = dat.astype('float64')
     #dat = dat.astype({'wav_lines': 'float64', 'loggf': 'float64', 'elowereV': 'float64', 'jlower': 'float64', 'euppereV': 'float64'})
+    if colWL == 'WL_air(A)':
+        dat.iloc[:, 1] = np.where(dat.iloc[:, 1]>2000, air_to_vac(dat.iloc[:, 1]), dat.iloc[:, 1]) #If wavelength is in air, it will be corrected (Note that wavelengths of transitions short of 2000 Angstroems are actually in vacuum and not in air.)
     dat = vaex.from_pandas(dat)
     dat.export_hdf5(allf.with_suffix('.hdf5'))
 
