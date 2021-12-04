@@ -33,7 +33,7 @@ xsv=autoxs.xsection(1000.0,1.0) #cross section for 1000K, 1bar (cm2)
 <details><summary> Do you just want to plot the line strength? </summary>
 
 ```python
-ls=autoxs.linest(1000.0,1.0) #line strength for 1000K, 1bar (cm)
+ls=autoxs.linest(1000.0) #line strength for T=1000K
 plt.plot(autoxs.mdb.nu_lines,ls,".")
 ```
 
