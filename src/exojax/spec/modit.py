@@ -1,6 +1,6 @@
 """Line profile computation using Discrete Integral Transform
 
-   * Line profile computation of `Discrete Integral Transform <https://www.sciencedirect.com/science/article/abs/pii/S0022407320310049>`_ for rapid spectral synthesis, originally proposed by D.C.M van den Bekerom and E.Pannier.
+   * MODIT is Modified version of the `Discrete Integral Transform <https://www.sciencedirect.com/science/article/abs/pii/S0022407320310049>`_ for rapid spectral synthesis, originally proposed by D.C.M van den Bekerom and E.Pannier. See Section 2.1.2 in `Paper I <https://arxiv.org/abs/2105.14782>`_.
    * This module consists of selected functions in `addit package <https://github.com/HajimeKawahara/addit>`_.
    * The concept of "folding" can be understood by reading `the discussion <https://github.com/radis/radis/issues/186#issuecomment-764465580>`_ by D.C.M van den Bekeroma.
    * See also `DIT for non evenly-spaced linear grid <https://github.com/dcmvdbekerom/discrete-integral-transform/blob/master/demo/discrete_integral_transform_log.py>`_ by  D.C.M van den Bekeroma, as a reference of this code.
@@ -60,7 +60,7 @@ def inc2D_givenx(a,w,cx,ix,y,yv):
 def xsvector(cnu,indexnu,R,pmarray,nsigmaD,ngammaL,S,nu_grid,ngammaL_grid):
     """Cross section vector (MODIT)
     
-    The original code is rundit_fold_logredst in [addit package](https://github.com/HajimeKawahara/addit). MODIT folded voigt for ESLOG for reduced wavenumebr inputs (against the truncation error) for a constant normalized beta
+    The original code is rundit_fold_logredst in `addit package <https://github.com/HajimeKawahara/addit>`_ ). MODIT folded voigt for ESLOG for reduced wavenumebr inputs (against the truncation error) for a constant normalized beta
 
     Args:
        cnu: contribution by npgetix for wavenumber

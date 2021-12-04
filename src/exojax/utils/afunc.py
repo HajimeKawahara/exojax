@@ -10,13 +10,13 @@ import numpy as np
 import jax.numpy as jnp
 
 def getjov_logg(Rp,Mp):
-    """logg
+    """logg from radius and mass in the Jovian unit
     
     Args:
        Rp: radius in the unit of Jovian radius
        Mp: radius in the unit of Jovian mass
 
-    Returns 
+    Returns: 
        logg
 
     Note:
@@ -27,13 +27,13 @@ def getjov_logg(Rp,Mp):
     return jnp.log10(2478.57730044555*Mp/Rp**2)
     
 def getjov_gravity(Rp,Mp):
-    """logg
+    """gravity in cgs from radius and mass in the Jovian unit
     
     Args:
        Rp: radius in the unit of Jovian radius
        Mp: radius in the unit of Jovian mass
 
-    Returns 
+    Returns:
        gravity (cm/s2)
 
     Note:
