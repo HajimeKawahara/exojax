@@ -5,7 +5,7 @@
  
 Auto-differentiable line-by-line spectral modeling of exoplanets/brown dwarfs using JAX. Read [the docs](http://secondearths.sakura.ne.jp/exojax) 🐕. 
 
-<img src="https://user-images.githubusercontent.com/15956904/119144463-a5cba180-ba83-11eb-8a26-687075d43883.png" Titie="exojax" Width=850px>
+<img src="https://user-images.githubusercontent.com/15956904/144704428-c5e82af3-a870-458c-bb65-9e1f54d6c98b.png" Titie="exojax" Width=850px>
  
 ## Functions
 
