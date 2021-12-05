@@ -24,7 +24,7 @@ from exojax is like that.
 	  bunziping
 
 extract option
-----------------
+^^^^^^^^^^^^^^^^^
 	  
 ``extract=True`` in ``moldb.MdbHit`` extracts the opacity data in the wavenumber range of ``nus`` with ``margin``. Theforefore it can reduce the use of DRAM. It may be useful for large databases such as CH4.
 
