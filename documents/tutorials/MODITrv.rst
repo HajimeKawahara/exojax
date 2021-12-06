@@ -1,4 +1,4 @@
-Reverse Modeling of an Emission Spectrum with Many Lines
+Reverse Modeling of an Emission Spectrum with Many Lines (MODIT)
 ======================================================================
 
 *Septempber 4th (2021) Hajime Kawahara*

@@ -4,6 +4,7 @@
  [![arxiv](https://img.shields.io/badge/arxiv-2105.14782-blue)](http://arxiv.org/abs/2105.14782)
  
 Auto-differentiable line-by-line spectral modeling of exoplanets/brown dwarfs using JAX. Read [the docs](http://secondearths.sakura.ne.jp/exojax) 🐕. 
+In a nutshell, ExoJAX enables you to do a HMC-NUTS fitting using the latest database.
 
 <img src="https://user-images.githubusercontent.com/15956904/144704428-c5e82af3-a870-458c-bb65-9e1f54d6c98b.png" Titie="exojax" Width=850px>
  
