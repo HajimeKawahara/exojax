@@ -18,6 +18,8 @@ Basics
    tutorials/MODITch4.rst
    tutorials/MODITrv.rst
 
+|:green_circle:| MODIT is a rapid opacity calculator, having an advantage for the number of lines is about greater than 1000. 
+	        
 Real Examples
 =================
 

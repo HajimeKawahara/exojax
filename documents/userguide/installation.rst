@@ -1,7 +1,7 @@
 Installation and References
 ----------------------------------
 
-*Sep 5th (2021) Hajime Kawahara*
+*Dec 7th (2021) Hajime Kawahara*
 
 At a minimum, you can start to use exojax by
 
@@ -47,7 +47,7 @@ In addition, you may need cuDNN for `response.ipgauss2 <../exojax/exojax.spec.ht
 References
 =================
 
-**ExoJAX Paper I**:  Kawahara, Kawashima, Masuda, Crossfield, Parker, van den Bekerom (2021) accepted by ApJS: `arXiv:2105.14782 <http://arxiv.org/abs/2105.14782>`_
+|:green_circle:| **ExoJAX Paper I**:  Kawahara, Kawashima, Masuda, Crossfield, Parker, van den Bekerom (2021) accepted by ApJS: `arXiv:2105.14782 <http://arxiv.org/abs/2105.14782>`_
 
 
 Many methods/databases are used in ExoJAX.
@@ -58,6 +58,7 @@ Many methods/databases are used in ExoJAX.
 - DIT: `van den Bekerom and Pannier (2021) <https://www.sciencedirect.com/science/article/abs/pii/S0022407320310049>`_ 
 - ExoMol: `Tennyson et al. (2016) <https://www.sciencedirect.com/science/article/abs/pii/S0022285216300807?via%3Dihub>`_
 - HITRAN/HiTEMP
+- VALD3
 - Other many packages/algorithms. See `arXiv:2105.14782 <http://arxiv.org/abs/2105.14782>`_ for the details.
 
 
