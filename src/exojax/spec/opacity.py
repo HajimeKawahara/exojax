@@ -6,7 +6,7 @@ import tqdm
 def xsection(nu,nu_lines,sigmaD,gammaL,Sij,memory_size=15.):
     """compute cross section
 
-    Note:
+    Warning:
        This is NOT auto-differentiable function.
 
     Args:

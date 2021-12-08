@@ -245,7 +245,7 @@ def pickup_gEslow(states,trans):
     Returns:
        A, nu_lines, elower, gup
 
-    Note:
+    Warning:
        This code is the (thousands times) slower version of pickup_gE. However, we did not remove this one just because this version is much easier to understand. 
 
     """

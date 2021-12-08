@@ -172,6 +172,9 @@ def xsmatrix(cnu,indexnu,pmarray,sigmaDM,gammaLM,SijM,nu_grid,dgm_sigmaD,dgm_gam
     Return:
        cross section matrix in R^(Nlayer x Nwav)
 
+    Warning:
+       This function have not been well tested.
+
     """
     NDITgrid=jnp.shape(dgm_sigmaD)[1]
     Nline=len(cnu)
