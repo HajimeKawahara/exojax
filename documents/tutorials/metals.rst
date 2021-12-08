@@ -107,7 +107,9 @@ VALD data access is free but requires registration through `the Contact form <ht
 		
 Please assign the fullpath of the output file sent by VALD ([user_name_at_VALD].[request_number_at_VALD].gz;  ``HiroyukiIshikawa.4214450.gz`` in the above code) to the variable ``valdlines``. Note that the number of spectral lines that can be extracted in a single request is limited to 1000 in  `VALD <https://www.astro.uu.se/valdwiki/Restrictions%20on%20extraction%20size>`_.
 
-Just for this tutorial, ``HiroyukiIshikawa.4214450.gz`` can be found `here <http://secondearths.sakura.ne.jp/exojax/data/>`_.
+.. warning::
+   
+   Just for this tutorial, ``HiroyukiIshikawa.4214450.gz`` can be found `here <http://secondearths.sakura.ne.jp/exojax/data/>`_. Note that if you use Windows or Mac, .gz might be unziped when downloading despite no renaming. I mean, the same name with .gz, but unziped!  In this case, download ``extradata.tar`` and untar it.
 
 
 
