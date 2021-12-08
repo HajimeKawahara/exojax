@@ -47,7 +47,7 @@ In addition, you may need cuDNN for `response.ipgauss2 <../exojax/exojax.spec.ht
 References
 =================
 
-|:green_circle:| **ExoJAX Paper I**:  Kawahara, Kawashima, Masuda, Crossfield, Parker, van den Bekerom (2021) accepted by ApJS: `arXiv:2105.14782 <http://arxiv.org/abs/2105.14782>`_
+|:green_circle:| **ExoJAX Paper I**:  Kawahara, Kawashima, Masuda, Crossfield, Pannier, van den Bekerom (2021) accepted by ApJS: `arXiv:2105.14782 <http://arxiv.org/abs/2105.14782>`_
 
 
 Many methods/databases are used in ExoJAX.
