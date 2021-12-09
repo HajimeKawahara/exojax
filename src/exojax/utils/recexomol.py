@@ -1,7 +1,5 @@
 """Get Recommendation from ExoMol
 
-
-
 """
 from urllib.request import HTTPError, urlopen
 from bs4 import BeautifulSoup
@@ -9,15 +7,15 @@ from bs4 import BeautifulSoup
 def get_exomol_database_list(molecule, isotope_full_name):
     """Parse ExoMol website and return list of available databases, and recommended database
 
-    
-
     Args:
        molecule: str
        isotope_full_name: str, isotope full name (ex. ``12C-1H4`` for CH4,1). Get it from
 
     Returns:
+       database list
+       database recomendation
 
-    Examples:
+    Example:
         databases, recommended = get_exomol_database_list("CH4", "12C-1H4")
         >>> ['xsec-YT10to10', 'YT10to10', 'YT34to10'], 'YT34to10'
 

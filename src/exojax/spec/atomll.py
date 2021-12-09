@@ -9,7 +9,7 @@ def Sij0(A, gupper, nu_lines, elower, QTref_284, QTmask, Irwin=False):
     Note:
        Tref=296K
 
-    Args:.
+    Args:
        A: Einstein coefficient (s-1)
        gupper: the upper state statistical weight
        nu_lines: line center wavenumber (cm-1)
@@ -45,7 +45,7 @@ def gamma_vald3(T, PH, PHH, PHe, ielem, iion, \
     gamRad, gamSta, vdWdamp, enh_damp=1.0): #, vdW_meth="V"):
     """HWHM of Lorentzian (cm-1) caluculated as gamma/(4*pi*c) [cm-1] for lines with the van der Waals gamma in the line list (VALD or Kurucz), otherwise estimated according to the Unsoeld (1955)
 
-    Args(inputs):
+    Args:
       T: temperature (K)
       PH: hydrogen pressure (bar) #1 bar = 1e6 dyn/cm2
       PHH: H2 molecule pressure (bar)
@@ -57,32 +57,30 @@ def gamma_vald3(T, PH, PHH, PHe, ielem, iion, \
       eupper: excitation potential (upper level) [cm-1]
       atomicmass: atomic mass [amu]
       ionE: ionization potential [eV]
-      gamRad: log of gamma of radiation damping (s-1) #(https://www.astro.uu.se/valdwiki/Vald3Format)
+      gamRad: log of gamma of radiation damping (s-1) (https://www.astro.uu.se/valdwiki/Vald3Format)
       gamSta: log of gamma of Stark damping (s-1)
       vdWdamp:  log of (van der Waals damping constant / neutral hydrogen number) (s-1)
-      enh_damp: empirical "enhancement factor" for classical Unsoeld's damping constant
-          #cf.) This coefficient (enh_damp) depends on  each species in some codes such as Turbospectrum. #tako210917
-
-    Args(calculated):
-      chi_lam (=h*nu=1.2398e4/wvl[AA]): energy of a photon in the line
-      C6: interaction constant (Eq.11.17 in Gray2005)
-      logg6: log(gamma6) (Eq.11.29 in Gray2005)
-      gam6H: 17*v**(0.6)*C6**(0.4)*N
-           #(v:relative velocity, N:number density of neutral perturber)
-      Texp: temperature dependency (gamma6 \sim T**((1-α)/2) ranging 0.3–0.4)
+      enh_damp: empirical "enhancement factor" for classical Unsoeld's damping constant cf.) This coefficient (enh_damp) depends on  each species in some codes such as Turbospectrum. #tako210917
+      chi_lam (=h*nu=1.2398e4/wvl[AA]): energy of a photon in the line (computed)
+      C6: interaction constant (Eq.11.17 in Gray2005) (computed)
+      logg6: log(gamma6) (Eq.11.29 in Gray2005) (computed)
+      gam6H: 17*v**(0.6)*C6**(0.4)*N (computed) (v:relative velocity, N:number density of neutral perturber)
+      Texp: temperature dependency (gamma6 \sim T**((1-α)/2) ranging 0.3–0.4)  (computed)
 
     Returns:
       gamma: pressure gamma factor (cm-1)
 
-    Notes:
-    "/(4*np.pi*ccgs)" means:  damping constant -> HWHM of Lorentzian in [cm^-1]
-    
-    Reference of van der Waals damping constant (pressure/collision gamma):
-      Unsöld1955: https://ui.adsabs.harvard.edu/abs/1955psmb.book.....U
-      Kurucz+1981: https://ui.adsabs.harvard.edu/abs/1981SAOSR.391.....K
-      Barklem+1998: https://ui.adsabs.harvard.edu/abs/1998MNRAS.300..863B
-      Barklem+2000: https://ui.adsabs.harvard.edu/abs/2000A&AS..142..467B
-      Gray+2005: https://ui.adsabs.harvard.edu/abs/2005oasp.book.....G
+    Note:
+       "/(4*np.pi*ccgs)" means:  damping constant -> HWHM of Lorentzian in [cm^-1]    
+
+
+    * Reference of van der Waals damping constant (pressure/collision gamma):
+    *   Unsöld1955: https://ui.adsabs.harvard.edu/abs/1955psmb.book.....U
+    *   Kurucz+1981: https://ui.adsabs.harvard.edu/abs/1981SAOSR.391.....K
+    *   Barklem+1998: https://ui.adsabs.harvard.edu/abs/1998MNRAS.300..863B
+    *   Barklem+2000: https://ui.adsabs.harvard.edu/abs/2000A&AS..142..467B
+    *   Gray+2005: https://ui.adsabs.harvard.edu/abs/2005oasp.book.....G
+
     """
     gamRad = jnp.where(gamRad==0., -99, gamRad)
     gamSta = jnp.where(gamSta==0., -99, gamSta)
@@ -117,7 +115,7 @@ def gamma_uns(T, PH, PHH, PHe, ielem, iion, \
     gamRad, gamSta, vdWdamp, enh_damp=1.0): #, vdW_meth="U"):
     """HWHM of Lorentzian (cm-1) estimated with the classical approximation by Unsoeld (1955)
 
-    Args(inputs):
+    Args:
       T: temperature (K)
       PH: hydrogen pressure (bar)  #1 bar = 1e6 dyn/cm2
       PHH: H2 molecule pressure (bar)
@@ -132,29 +130,26 @@ def gamma_uns(T, PH, PHH, PHe, ielem, iion, \
       gamRad: log of gamma of radiation damping (s-1) #(https://www.astro.uu.se/valdwiki/Vald3Format)
       gamSta: log of gamma of Stark damping (s-1)
       vdWdamp:  log of (van der Waals damping constant / neutral hydrogen number) (s-1)
-      enh_damp: empirical "enhancement factor" for classical Unsoeld's damping constant
-          #cf.) This coefficient (enh_damp) depends on  each species in some codes such as Turbospectrum. #tako210917
-
-    Args(calculated):
-      chi_lam (=h*nu=1.2398e4/wvl[AA]): energy of a photon in the line
-      C6: interaction constant (Eq.11.17 in Gray2005)
-      logg6: log(gamma6) (Eq.11.29 in Gray2005)
-      gam6H: 17*v**(0.6)*C6**(0.4)*N
-           #(v:relative velocity, N:number density of neutral perturber)
-      Texp: temperature dependency (gamma6 \sim T**((1-α)/2) ranging 0.3–0.4)
+      enh_damp: empirical "enhancement factor" for classical Unsoeld's damping constant cf.) This coefficient (enh_damp) depends on  each species in some codes such as Turbospectrum. #tako210917
+      chi_lam (=h*nu=1.2398e4/wvl[AA]): energy of a photon in the line (computed)
+      C6: interaction constant (Eq.11.17 in Gray2005) (computed)
+      logg6: log(gamma6) (Eq.11.29 in Gray2005) (computed)
+      gam6H: 17*v**(0.6)*C6**(0.4)*N (v:relative velocity, N:number density of neutral perturber) (computed)
+      Texp: temperature dependency (gamma6 \sim T**((1-α)/2) ranging 0.3–0.4)(computed)
 
     Returns:
       gamma: pressure gamma factor (cm-1)
 
-    Notes:
-    "/(4*np.pi*ccgs)" means:  damping constant -> HWHM of Lorentzian in [cm^-1]
+    Note:
+       "/(4*np.pi*ccgs)" means:  damping constant -> HWHM of Lorentzian in [cm^-1]
     
-    Reference of van der Waals damping constant (pressure/collision gamma):
-      Unsöld1955: https://ui.adsabs.harvard.edu/abs/1955psmb.book.....U
-      Kurucz+1981: https://ui.adsabs.harvard.edu/abs/1981SAOSR.391.....K
-      Barklem+1998: https://ui.adsabs.harvard.edu/abs/1998MNRAS.300..863B
-      Barklem+2000: https://ui.adsabs.harvard.edu/abs/2000A&AS..142..467B
-      Gray+2005: https://ui.adsabs.harvard.edu/abs/2005oasp.book.....G
+    * Reference of van der Waals damping constant (pressure/collision gamma):
+    *  Unsöld1955: https://ui.adsabs.harvard.edu/abs/1955psmb.book.....U
+    *  Kurucz+1981: https://ui.adsabs.harvard.edu/abs/1981SAOSR.391.....K
+    *  Barklem+1998: https://ui.adsabs.harvard.edu/abs/1998MNRAS.300..863B
+    *  Barklem+2000: https://ui.adsabs.harvard.edu/abs/2000A&AS..142..467B
+    *  Gray+2005: https://ui.adsabs.harvard.edu/abs/2005oasp.book.....G
+
     """
     gamRad = jnp.where(gamRad==0., -99, gamRad)
     gamSta = jnp.where(gamSta==0., -99, gamSta)
@@ -179,7 +174,7 @@ def gamma_KA3(T, PH, PHH, PHe, ielem, iion, \
     gamRad, gamSta, vdWdamp, enh_damp=1.0): #, vdW_meth="KA3"):
     """HWHM of Lorentzian (cm-1) caluculated with the 3rd equation in p.4 of Kurucz&Avrett1981
 
-    Args(inputs):
+    Args:
       T: temperature (K)
       PH: hydrogen pressure (bar)  #1 bar = 1e6 dyn/cm2
       PHH: H2 molecule pressure (bar)
@@ -194,28 +189,25 @@ def gamma_KA3(T, PH, PHH, PHe, ielem, iion, \
       gamRad: log of gamma of radiation damping (s-1) #(https://www.astro.uu.se/valdwiki/Vald3Format)
       gamSta: log of gamma of Stark damping (s-1)
       vdWdamp:  log of (van der Waals damping constant / neutral hydrogen number) (s-1)
-      enh_damp: empirical "enhancement factor" for classical Unsoeld's damping constant
-          #cf.) This coefficient (enh_damp) depends on  each species in some codes such as Turbospectrum. #tako210917
-
-    Args(calculated):
-      chi_lam (=h*nu=1.2398e4/wvl[AA]): energy of a photon in the line
-      C6: interaction constant (Eq.11.17 in Gray2005)
-      logg6: log(gamma6) (Eq.11.29 in Gray2005)
-      gam6H: 17*v**(0.6)*C6**(0.4)*N
-           #(v:relative velocity, N:number density of neutral perturber)
-      Texp: temperature dependency (gamma6 \sim T**((1-α)/2) ranging 0.3–0.4)
+      enh_damp: empirical "enhancement factor" for classical Unsoeld's damping constant cf.) This coefficient (enh_damp) depends on  each species in some codes such as Turbospectrum. #tako210917
+      chi_lam (=h*nu=1.2398e4/wvl[AA]): energy of a photon in the line (computed)
+      C6: interaction constant (Eq.11.17 in Gray2005) (computed)
+      logg6: log(gamma6) (Eq.11.29 in Gray2005) (computed)
+      gam6H: 17*v**(0.6)*C6**(0.4)*N (v:relative velocity, N:number density of neutral perturber) (computed)
+      Texp: temperature dependency (gamma6 \sim T**((1-α)/2) ranging 0.3–0.4) (computed)
 
     Returns:
       gamma: pressure gamma factor (cm-1)
 
-    Notes:
-    "/(4*np.pi*ccgs)" means:  damping constant -> HWHM of Lorentzian in [cm^-1]
+    Note:
+      "/(4*np.pi*ccgs)" means:  damping constant -> HWHM of Lorentzian in [cm^-1]
     
-    Reference of van der Waals damping constant (pressure/collision gamma):
-      Kurucz+1981: https://ui.adsabs.harvard.edu/abs/1981SAOSR.391.....K
-      Barklem+1998: https://ui.adsabs.harvard.edu/abs/1998MNRAS.300..863B
-      Barklem+2000: https://ui.adsabs.harvard.edu/abs/2000A&AS..142..467B
-      Gray+2005: https://ui.adsabs.harvard.edu/abs/2005oasp.book.....G
+    * Reference of van der Waals damping constant (pressure/collision gamma):
+    *  Kurucz+1981: https://ui.adsabs.harvard.edu/abs/1981SAOSR.391.....K
+    *  Barklem+1998: https://ui.adsabs.harvard.edu/abs/1998MNRAS.300..863B
+    *  Barklem+2000: https://ui.adsabs.harvard.edu/abs/2000A&AS..142..467B
+    *  Gray+2005: https://ui.adsabs.harvard.edu/abs/2005oasp.book.....G
+
     """
     gamRad = jnp.where(gamRad==0., -99, gamRad)
     gamSta = jnp.where(gamSta==0., -99, gamSta)
@@ -253,7 +245,7 @@ def gamma_KA4(T, PH, PHH, PHe, ielem, iion, \
     gamRad, gamSta, vdWdamp, enh_damp=1.0): #, vdW_meth="KA4"):
     """HWHM of Lorentzian (cm-1) caluculated with the 4rd equation in p.4 of Kurucz&Avrett1981
     
-    Args(inputs):
+    Args:
       T: temperature (K)
       PH: hydrogen pressure (bar)  #1 bar = 1e6 dyn/cm2
       PHH: H2 molecule pressure (bar)
@@ -270,27 +262,25 @@ def gamma_KA4(T, PH, PHH, PHe, ielem, iion, \
       vdWdamp:  log of (van der Waals damping constant / neutral hydrogen number) (s-1)
       enh_damp: empirical "enhancement factor" for classical Unsoeld's damping constant
           #cf.) This coefficient (enh_damp) depends on  each species in some codes such as Turbospectrum. #tako210917
-
-    Args(calculated):
-      chi_lam (=h*nu=1.2398e4/wvl[AA]): energy of a photon in the line
-      C6: interaction constant (Eq.11.17 in Gray2005)
-      logg6: log(gamma6) (Eq.11.29 in Gray2005)
-      gam6H: 17*v**(0.6)*C6**(0.4)*N
-           #(v:relative velocity, N:number density of neutral perturber)
-      Texp: temperature dependency (gamma6 \sim T**((1-α)/2) ranging 0.3–0.4)
+      chi_lam (=h*nu=1.2398e4/wvl[AA]): energy of a photon in the line (computed)
+      C6: interaction constant (Eq.11.17 in Gray2005) (computed)
+      logg6: log(gamma6) (Eq.11.29 in Gray2005) (computed)
+      gam6H: 17*v**(0.6)*C6**(0.4)*N (v:relative velocity, N:number density of neutral perturber) (computed)
+      Texp: temperature dependency (gamma6 \sim T**((1-α)/2) ranging 0.3–0.4) (computed)
 
     Returns:
       gamma: pressure gamma factor (cm-1)
 
-    Notes:
-    Approximation of case4 assume "that the atomic weight A is much greater than 4, and that the mean-square-radius of the lower level <r^2>_lo is small compared to <r^2>_up".
+    Note:
+       Approximation of case4 assume "that the atomic weight A is much greater than 4, and that the mean-square-radius of the lower level <r^2>_lo is small compared to <r^2>_up".
     "/(4*np.pi*ccgs)" means:  damping constant -> HWHM of Lorentzian in [cm^-1]
 
-    Reference of van der Waals damping constant (pressure/collision gamma):
-      Kurucz+1981: https://ui.adsabs.harvard.edu/abs/1981SAOSR.391.....K
-      Barklem+1998: https://ui.adsabs.harvard.edu/abs/1998MNRAS.300..863B
-      Barklem+2000: https://ui.adsabs.harvard.edu/abs/2000A&AS..142..467B
-      Gray+2005: https://ui.adsabs.harvard.edu/abs/2005oasp.book.....G
+    * Reference of van der Waals damping constant (pressure/collision gamma):
+    * Kurucz+1981: https://ui.adsabs.harvard.edu/abs/1981SAOSR.391.....K
+    * Barklem+1998: https://ui.adsabs.harvard.edu/abs/1998MNRAS.300..863B
+    * Barklem+2000: https://ui.adsabs.harvard.edu/abs/2000A&AS..142..467B
+    * Gray+2005: https://ui.adsabs.harvard.edu/abs/2005oasp.book.....G
+
     """
     gamRad = jnp.where(gamRad==0., -99, gamRad)
     gamSta = jnp.where(gamSta==0., -99, gamSta)
@@ -315,7 +305,7 @@ def gamma_KA3s(T, PH, PHH, PHe, ielem, iion, \
     gamRad, gamSta, vdWdamp, enh_damp=1.0): #, vdW_meth="KA3s"): (supplemetary)
     """(supplemetary:) HWHM of Lorentzian (cm-1) caluculated with the 3rd equation in p.4 of Kurucz&Avrett1981 but without discriminating iron group elements
 
-    Args(inputs):
+    Args:
       T: temperature (K)
       PH: hydrogen pressure (bar)  #1 bar = 1e6 dyn/cm2
       PHH: H2 molecule pressure (bar)
@@ -330,28 +320,25 @@ def gamma_KA3s(T, PH, PHH, PHe, ielem, iion, \
       gamRad: log of gamma of radiation damping (s-1) #(https://www.astro.uu.se/valdwiki/Vald3Format)
       gamSta: log of gamma of Stark damping (s-1)
       vdWdamp:  log of (van der Waals damping constant / neutral hydrogen number) (s-1)
-      enh_damp: empirical "enhancement factor" for classical Unsoeld's damping constant
-          #cf.) This coefficient (enh_damp) depends on  each species in some codes such as Turbospectrum. #tako210917
-
-    Args(calculated):
-      chi_lam (=h*nu=1.2398e4/wvl[AA]): energy of a photon in the line
-      C6: interaction constant (Eq.11.17 in Gray2005)
-      logg6: log(gamma6) (Eq.11.29 in Gray2005)
-      gam6H: 17*v**(0.6)*C6**(0.4)*N
-           #(v:relative velocity, N:number density of neutral perturber)
-      Texp: temperature dependency (gamma6 \sim T**((1-α)/2) ranging 0.3–0.4)
+      enh_damp: empirical "enhancement factor" for classical Unsoeld's damping constant cf.) This coefficient (enh_damp) depends on  each species in some codes such as Turbospectrum. #tako210917
+      chi_lam (=h*nu=1.2398e4/wvl[AA]): energy of a photon in the line (computed)
+      C6: interaction constant (Eq.11.17 in Gray2005) (computed)
+      logg6: log(gamma6) (Eq.11.29 in Gray2005) (computed)
+      gam6H: 17*v**(0.6)*C6**(0.4)*N (v:relative velocity, N:number density of neutral perturber) (computed)
+      Texp: temperature dependency (gamma6 \sim T**((1-α)/2) ranging 0.3–0.4)(computed)
 
     Returns:
       gamma: pressure gamma factor (cm-1)
 
-    Notes:
-    "/(4*np.pi*ccgs)" means:  damping constant -> HWHM of Lorentzian in [cm^-1]
+    Note:
+      "/(4*np.pi*ccgs)" means:  damping constant -> HWHM of Lorentzian in [cm^-1]
     
-    Reference of van der Waals damping constant (pressure/collision gamma):
-      Kurucz+1981: https://ui.adsabs.harvard.edu/abs/1981SAOSR.391.....K
-      Barklem+1998: https://ui.adsabs.harvard.edu/abs/1998MNRAS.300..863B
-      Barklem+2000: https://ui.adsabs.harvard.edu/abs/2000A&AS..142..467B
-      Gray+2005: https://ui.adsabs.harvard.edu/abs/2005oasp.book.....G
+    * Reference of van der Waals damping constant (pressure/collision gamma):
+    *  Kurucz+1981: https://ui.adsabs.harvard.edu/abs/1981SAOSR.391.....K
+    *  Barklem+1998: https://ui.adsabs.harvard.edu/abs/1998MNRAS.300..863B
+    *  Barklem+2000: https://ui.adsabs.harvard.edu/abs/2000A&AS..142..467B
+    *  Gray+2005: https://ui.adsabs.harvard.edu/abs/2005oasp.book.....G
+
     """
     gamRad = jnp.where(gamRad==0., -99, gamRad)
     gamSta = jnp.where(gamSta==0., -99, gamSta)

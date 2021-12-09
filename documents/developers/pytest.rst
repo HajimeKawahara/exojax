@@ -27,4 +27,8 @@ You might need some files.
 
 - VALD data 
 
-Check `here <http://secondearths.sakura.ne.jp/exojax/data/>`_.
+You can download them from `here <http://secondearths.sakura.ne.jp/exojax/data/>`_, but see the following warning.
+
+.. warning::
+   
+   Note that if you use Windows or Mac, .gz might be unziped when downloading despite no renaming. I mean, the same name with .gz, but unziped!  In this case, download ``extradata.tar`` and untar it.

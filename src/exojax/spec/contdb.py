@@ -42,7 +42,7 @@ class CdbCIA(object):
         import os
         from exojax.utils.url import url_HITRANCIA
         try:
-            os.makedirs(str(self.path.stem), exist_ok=True)
+            os.makedirs(str(self.path.parent), exist_ok=True)
             url = url_HITRANCIA()+self.path.name
             urllib.request.urlretrieve(url,str(self.path))
         except:

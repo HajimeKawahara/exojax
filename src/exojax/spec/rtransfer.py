@@ -11,7 +11,7 @@ from exojax.atm.idealgas import number_density
 from exojax.spec.unitconvert import nu2wav, wav2nu
 from exojax.spec.check_nugrid import check_scale_xsmode, check_scale_nugrid, warn_resolution
 from exojax.utils.constants import kB, logm_ucgs
-from exojax.utils.instfunc import resolution_eslog
+from exojax.utils.instfunc import resolution_eslog, resolution_eslin
 
 def nugrid(x0,x1,N,unit="cm-1",xsmode="lpf"):
     """generating the recommended wavenumber grid based on the cross section computation mode
@@ -49,9 +49,8 @@ def nugrid(x0,x1,N,unit="cm-1",xsmode="lpf"):
             nus=np.linspace((cx0),(cx1),N,dtype=np.float64)
             wav=nu2wav(nus,unit)
             
-        dlognu=np.median(np.log(nus[1:])-np.log(nus[:-1]))/N
-        resolution=1.0/dlognu
-        warn_resolution(resolution)
+        minr,resolution,maxr=resolution_eslin(nus)
+        warn_resolution(minr)
                     
     return nus, wav, resolution
     

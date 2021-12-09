@@ -1,10 +1,7 @@
 """constants
 
    * constants in cgs or km/s
-
-    Note:
-       logm_ucgs=np.log10(m_u*1.e3) where m_u = scipy.constants.m_u.
-
+   * logm_ucgs=np.log10(m_u*1.e3) where m_u = scipy.constants.m_u.
 
 """
 

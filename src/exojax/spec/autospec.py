@@ -394,7 +394,7 @@ class AutoRT(object):
             Frot=response.rigidrot(self.nus,F0,self.vsini,u1=self.u1,u2=self.u2)
             self.F=response.ipgauss_sampling(self.nuobs,self.nus,Frot,beta,self.RV)
         else:
-            print("rotation (2)")
+            print("rotation (2): Require CuDNN")
             dv=c*(np.log(self.nus[1])-np.log(self.nus[0]))
             Nv=int(self.vsini/dv)+1
             vlim=Nv*dv

@@ -97,14 +97,15 @@ def make_numtag(numinf,maxnu):
 def read_pf(pff):
     """Exomol IO for partition file
 
+    Args: 
+        pff: partition file
+
+    Returns:
+        partition data in pandas DataFrame
+
     Note:
         T=temperature
         QT=partition function
-
-    Args: 
-        pff: partition file
-    Returns:
-        partition data in pandas DataFrame
 
     """
     dat = pd.read_csv(pff,sep="\s+",names=("T","QT"))
@@ -113,17 +114,19 @@ def read_pf(pff):
 
 def read_trans(transf):
     """Exomol IO for a transition file
+
+    Args: 
+        transf: transition file
+
+    Returns:
+        transition data in vaex DataFrame
+
     Note:
         i_upper=Upper state counting number
         i_lower=Lower state counting number
         A=Einstein coefficient in s-1
         nu_lines=transition wavenumber in cm-1
         See Table 12 in https://arxiv.org/pdf/1603.05890.pdf
-
-    Args: 
-        transf: transition file
-    Returns:
-        transition data in vaex DataFrame
 
     """
     try:
@@ -135,17 +138,19 @@ def read_trans(transf):
 
 def read_states(statesf):        
     """Exomol IO for a state file
+
+    Args: 
+        statesf: state file
+
+    Returns:
+        states data in pandas DataFrame
+
     Note:
         i=state counting number
         E=state energy
         g=state degeneracy
         J=total angular momentum
         See Table 11 in https://arxiv.org/pdf/1603.05890.pdf            
-
-    Args: 
-        statesf: state file
-    Returns:
-        states data in pandas DataFrame
 
     """
     try:        
@@ -233,15 +238,15 @@ def pickup_gE(ndstates,ndtrans,trans_file,trans_lines=False):
 def pickup_gEslow(states,trans):
     """Slow version to extract g_upper (gup) and E_lower (elower) from states DataFrame and insert them to transition DataFrame.
 
-    Note:
-       This code is the (thousands times) slower version of pickup_gE. However, we did not remove this one just because this version is much easier to understand. 
-
     Args:
        states: states pandas DataFrame
        trans: transition pandas DataFrame
 
     Returns:
        A, nu_lines, elower, gup
+
+    Warning:
+       This code is the (thousands times) slower version of pickup_gE. However, we did not remove this one just because this version is much easier to understand. 
 
     """
     import tqdm
