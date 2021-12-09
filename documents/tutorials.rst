@@ -12,6 +12,7 @@ Basics
    tutorials/CIA_opacity.rst
    tutorials/rigid_rotation.rst
    tutorials/forward_modeling.rst	     
+   tutorials/metals.rst	     
    tutorials/reverse_modeling.rst	     
    tutorials/fitbd.rst	     
 
