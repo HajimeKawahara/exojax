@@ -205,7 +205,7 @@ def ditgrid(x,res=0.1,adopt=True):
         grid for DIT
         
     """
-    lxmin=np.log10(np.min(x))
+    lxmin=np.log10(np.min(x[x>0.0]))
     lxmax=np.log10(np.max(x))
     dlog=lxmax-lxmin
     Ng=int(dlog/res)+2
