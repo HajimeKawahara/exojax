@@ -1,7 +1,6 @@
-"""plotting tool for DIT 
+"""Plotting tool for DIT/MODIT
 
-   
-
+ 
 """
 import numpy as np
 import matplotlib.pyplot as plt

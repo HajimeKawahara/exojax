@@ -172,6 +172,8 @@ def predmod(nu1,y1,e1):
     T0 = 1295
     alpha = 0.097
     vsini = 16.0
+    #vsini = 1.0
+
     q1 = 0.5
     q2 = 0.5
     sqrtq1=jnp.sqrt(q1)

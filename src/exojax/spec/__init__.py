@@ -1,6 +1,6 @@
 __all__ = []
 
-__version__ = "0.1"
+__version__ = "1.0.0"
 __uri__ = ""
 __author__ = "Hajime Kawahara"
 __email__ = "divrot@gmail.com"
@@ -35,8 +35,4 @@ from exojax.spec.lpf import (
 
 from exojax.spec.make_numatrix import (
     make_numatrix0,
-)
-from exojax.spec.partf import (
-    qfunc_hitran,
-    get_qopt,
 )

@@ -4,8 +4,9 @@
  [![arxiv](https://img.shields.io/badge/arxiv-2105.14782-blue)](http://arxiv.org/abs/2105.14782)
  
 Auto-differentiable line-by-line spectral modeling of exoplanets/brown dwarfs using JAX. Read [the docs](http://secondearths.sakura.ne.jp/exojax) 🐕. 
+In a nutshell, ExoJAX enables you to do a HMC-NUTS fitting using the latest database.
 
-<img src="https://user-images.githubusercontent.com/15956904/119144463-a5cba180-ba83-11eb-8a26-687075d43883.png" Titie="exojax" Width=850px>
+<img src="https://user-images.githubusercontent.com/15956904/144704428-c5e82af3-a870-458c-bb65-9e1f54d6c98b.png" Titie="exojax" Width=850px>
  
 ## Functions
 
@@ -23,7 +24,7 @@ voigt(nu,1.0,2.0) #sigma_D=1.0, gamma_L=2.0
  
 ```python
 from exojax.spec import AutoXS
-nus=numpy.linspace(1900.0,2300.0,40000,dtype=numpy.float64) #wavenumber (cm-1)
+nus=numpy.linspace(1900.0,2300.0,200000,dtype=numpy.float64) #wavenumber (cm-1)
 autoxs=AutoXS(nus,"ExoMol","CO") #using ExoMol CO (12C-16O). HITRAN and HITEMP are also supported.  
 xsv=autoxs.xsection(1000.0,1.0) #cross section for 1000K, 1bar (cm2)
 ```
@@ -33,7 +34,7 @@ xsv=autoxs.xsection(1000.0,1.0) #cross section for 1000K, 1bar (cm2)
 <details><summary> Do you just want to plot the line strength? </summary>
 
 ```python
-ls=autoxs.linest(1000.0,1.0) #line strength for 1000K, 1bar (cm)
+ls=autoxs.linest(1000.0) #line strength for T=1000K
 plt.plot(autoxs.mdb.nu_lines,ls,".")
 ```
 
@@ -140,7 +141,7 @@ cuDNN is used for to compute the astronomical/instrumental response for the larg
 
 ## References
 
-- Kawahara, Kawashima, Masuda, Crossfield, Parker, van den Bekerom (2021) accepted by ApJS: [arXiv:2105.14782](http://arxiv.org/abs/2105.14782)
+- Kawahara, Kawashima, Masuda, Crossfield, Pannier, van den Bekerom (2021) accepted by ApJS: [arXiv:2105.14782](http://arxiv.org/abs/2105.14782)
 
 ## License
 

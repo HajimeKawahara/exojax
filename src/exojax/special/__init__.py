@@ -1,8 +1,8 @@
 __all__ = []
 
-__version__ = "0.0.1"
+__version__ = "1.0.0"
 __uri__ = ""
-__author__ = "Hajime Kawahara"
+__author__ = "Hajime Kawahara and collaborators"
 __email__ = "divrot@gmail.com"
 __license__ = ""
 __description__ = ""

@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
-'''hapi
+'''hapi (HITRAN API)
 
-Note:
+Important:
    THIS MODULE WAS IMPORTED FROM THE OFFICIAL HITRAN API (HAPI version 1.1.2.0) UNDER THE FOLLOWING MIT LICENSE.
 
 Note:
@@ -1577,9 +1577,11 @@ def storage2cache(TableName,cast=True,ext=None,nlines=None,pos=None):
     
 def getTableNamesFromStorage(StorageName):
     file_names = listdir(StorageName)
+    print("HAPI initializes all the par files in ",StorageName)
     table_names = []
     for file_name in file_names:
         matchObject = re.search('(.+)\.header$',file_name)
+        print("HAPI detected:",file_name)
         if matchObject:
            table_names.append(matchObject.group(1))
     return table_names

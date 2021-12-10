@@ -1,9 +1,9 @@
+
 Basics
 ==============
 
 .. toctree::
    :maxdepth: 1
-   :caption: Basics of ExoJAX
 	     
    tutorials/voigt_function.rst
    tutorials/opacity.rst	     
@@ -12,21 +12,24 @@ Basics
    tutorials/CIA_opacity.rst
    tutorials/rigid_rotation.rst
    tutorials/forward_modeling.rst	     
+   tutorials/metals.rst	     
    tutorials/reverse_modeling.rst	     
-   tutorials/fitbd.rst	     
-
-MODIT
-==============
-
-.. toctree::
-   :maxdepth: 1
-   :caption: Rapid Spectral Synthesis for Many Molecular Lines
-	      
    tutorials/MODITxs.rst      
    tutorials/MODITch4.rst
    tutorials/MODITrv.rst
 
+|:green_circle:| MODIT is a rapid opacity calculator, having an advantage for the number of lines is about greater than 1000. 
+	        
+Real Examples
+=================
 
+.. toctree::
+   :maxdepth: 1
+   
+   tutorials/fitbd.rst	     
+   tutorials/fitbd_modit.rst	     
+
+   
 Clouds
 ==============
 

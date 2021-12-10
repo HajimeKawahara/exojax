@@ -21,14 +21,12 @@ class CdbCIA(object):
            margin: margin for nurange (cm-1)
 
         """        
-        #downloading
         self.nurange=[np.min(nurange),np.max(nurange)]
         self.margin = margin
         self.path = pathlib.Path(path)
         if not self.path.exists():
             self.download()
         self.nucia,self.tcia,ac=read_cia(path,self.nurange[0]-self.margin,self.nurange[1]+self.margin)
-        #--------------------------------
         self.logac=jnp.array(np.log10(ac))
         self.tcia=jnp.array(self.tcia)
         self.nucia=jnp.array(self.nucia)
@@ -43,9 +41,8 @@ class CdbCIA(object):
         import urllib.request
         import os
         from exojax.utils.url import url_HITRANCIA
-
         try:
-            os.makedirs(str(self.path.stem), exist_ok=True)
+            os.makedirs(str(self.path.parent), exist_ok=True)
             url = url_HITRANCIA()+self.path.name
             urllib.request.urlretrieve(url,str(self.path))
         except:
