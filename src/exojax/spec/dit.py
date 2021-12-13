@@ -205,6 +205,9 @@ def ditgrid(x,res=0.1,adopt=True):
         grid for DIT
         
     """
+    if np.min(x)<=0.0:
+        print("Warning: there exists negative or zero gamma. MODIT/DIT does not support this case.")
+        
     lxmin=np.log10(np.min(x))
     lxmax=np.log10(np.max(x))
     dlog=lxmax-lxmin

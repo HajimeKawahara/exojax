@@ -105,6 +105,7 @@ def gamma_vald3(T, PH, PHH, PHe, ielem, iion, \
     #Adopt case2 for lines with vdW in VALD, otherwise Case1
     
     gamma = (gamma_case1 * jnp.where(vdWdamp>=0., 1, 0) + gamma_case2 * jnp.where(vdWdamp<0., 1, 0))
+
     
     return(gamma)
 
