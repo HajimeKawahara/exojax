@@ -61,7 +61,7 @@ def logacia(Tarr,nus,nucia,tcia,logac):
     Returns:
        logac(Tarr, nus)
 
-    Examples:
+    Example:
        >>> nucia,tcia,ac=read_cia("../../data/CIA/H2-H2_2011.cia",nus[0]-1.0,nus[-1]+1.0)
        >>> logac=jnp.array(np.log10(ac))
        >>> logacia(Tarr,nus,nucia,tcia,logac)

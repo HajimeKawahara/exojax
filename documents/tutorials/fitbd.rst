@@ -1,8 +1,9 @@
-|:cat:|  Bayes Inference of a Real Spectrum of Luhman 16A  
---------------------------------------------------------------------
+|:cat:|  Bayes Inference of a Real Spectrum of Luhman 16A (Direct LPF) 
+---------------------------------------------------------------------------
 *Update: Nov 10/2021, Hajime Kawahara*
 
-The full code for the HMC-NUTS fitting using NumPyro to the high-dispersion spectrum of Luhman 16A (`Crossfield+2014 <https://www.nature.com/articles/nature12955?proof=t>`_) is given in examples/LUH16A/FidEMbug/fit.py. I confirmed the code worked using `NVIDIA A100 <https://www.nvidia.com/en-us/data-center/a100/>`_ or `V100 <https://www.nvidia.com/en-us/data-center/v100/>`_. As the goal of this tutorial, we want to fit the exojax model to the high-dispersion data as
+In this tutorial, we provide a tutorial for the HMC-NUTS fitting using NumPyro to the high-dispersion spectrum of Luhman 16A (`Crossfield+2014 <https://www.nature.com/articles/nature12955?proof=t>`_) using the LPF direct. See also :doc:`fidtbd_modit` for the use of a rapid opacity calculator, MODIT.
+As the goal of this tutorial, we want to fit the exojax model to the high-dispersion data as
 
 .. image:: results.png
 

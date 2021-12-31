@@ -9,17 +9,16 @@ def molmass(molecule):
     Returns: 
        molecular mass
 
-    Examples:
-
-    >>> from exojax.spec.moinfo import molmass
-    >>> print(molmass("H2"))
-    >>> 2.01588
-    >>> print(molmass("CO2"))
-    >>> 44.0095
-    >>> print(molmass("He"))
-    >>> 4.002602
-    >>> print(molmass("air"))
-    >>> 28.97
+    Example:
+       >>> from exojax.spec.moinfo import molmass
+       >>> print(molmass("H2"))
+       >>> 2.01588
+       >>> print(molmass("CO2"))
+       >>> 44.0095
+       >>> print(molmass("He"))
+       >>> 4.002602
+       >>> print(molmass("air"))
+       >>> 28.97
 
     """
     if molecule=="air" or molecule=="Air":
