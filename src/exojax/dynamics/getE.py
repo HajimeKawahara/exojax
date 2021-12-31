@@ -86,26 +86,16 @@ def _d5(E, f, d4):
 
 @jit
 def getE(M, e):
-    """
-    Summary
-    ----------
-    JAX autograd compatible version of the Solver of Kepler's Equation for the "eccentric anomaly", E.
+    """JAX autograd compatible version of the Solver of Kepler's Equation for the "eccentric anomaly", E.
 
-    Parameters
-    ----------
-    M : float
-        Mean anomaly.
-    e : float
-        Eccentricity
+    Args:
+       M : Mean anomaly
+       e : Eccentricity
 
-    Returns
-    -------
-    Eccentric anomaly: float
-        The solution of Kepler's Equation
+    Returns:
+       Eccentric anomaly
+        
     """
-    # For the mean anomaly, use values between
-    # -pi and pi.
-    flip = False
     pi=jnp.pi
     Mt = M - (jnp.floor(M / (2. * pi)) * 2. * pi)
     Mt=jnp.where(M > pi,2.*pi - Mt,Mt)
