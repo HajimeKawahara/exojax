@@ -1,5 +1,5 @@
-import pyfastchem
-
+#Several functions to simplify the integration of FastChem2 to Exojax, adopted from https://github.com/exoclime/FastChem/blob/master/python/
+# Dictionary of the name of chemical species available in the FastChem2
 # fc_dict=np.array(["P(bar)", "T(k)", "n_<tot>(cm-3)","n_g(cm-3)", "m(u)", "e-", "Al", "Ar", "C", "Ca", "Cl",
 #                    "Co", "Cr", "Cu", "F", "Fe", "Ge", "H", "He", "K", "Mg", "Mn", "N", "Na", "Ne", "Ni", "O",
 #                    "P", "S", "Si", "Ti", "V", "Zn", "Li", "Be", "B", "Sc", "Ga", "As", "Se", "Rb", "Sr", "Y",
@@ -76,6 +76,9 @@ import pyfastchem
 #                    "Au1-", "Au1++", "Hg1+", "Hg1++", "Tl1+", "Tl1-", "Tl1++", "Pb1+", "Pb1-", "Pb1++",
 #                    "Bi1+", "Bi1-", "Bi1++", "Th1+", "Th1++", "U1+", "U1++"])
 
+import pyfastchem
+from exojax.atm.idealgas import number_density
+
 #Getting the volume mixing ratio (VMR) of specific chemical element
 def vmr_species_fc2(name):
     n_el=fastchem.getSpeciesIndex(name)
@@ -108,8 +111,6 @@ def set_C_to_O(c_to_o):
     
 #Inputting Temperature-Pressure profile to FastChem, from top to bottom layer    
 def TP_profile_input(pressure,temperature):
-    
-    
     input_data = pyfastchem.FastChemInput()
     output_data = pyfastchem.FastChemOutput()
 
@@ -119,12 +120,14 @@ def TP_profile_input(pressure,temperature):
   
 #Run fastchem  
 def run_fastchem():
-    #Ideal gas law, plist is an array of pressure in bar, tlist is an array of temperature in Kelvin
-    Total_gas_number_density = plist*1e6 / (const.k_B.cgs.value * tlist)
+    #Calculating the total gas number density using ideal gas law (1/cm3)
+    #plist is an array of pressure in bar, tlist is an array of temperature in Kelvin
+    Total_gas_number_density=  number_density(plist,tlist)
 
     #Calculating number density of all gases
     fastchem_flag = fastchem.calcDensities(input_data, output_data)
-
+    print("FastChem reports:", pyfastchem.FASTCHEM_MSG[fastchem_flag])
+    
     #VMR of all gases
-    mixing_ratios = np.array(output_data.number_densities)/Total_gas_number_density [:,np.newaxis]
+    mixing_ratios = jnp.array(output_data.number_densities)/Total_gas_number_density [:,None]
     return mixing_ratios
