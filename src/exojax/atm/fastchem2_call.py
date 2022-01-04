@@ -78,6 +78,7 @@
 
 import pyfastchem
 import numpy as np
+import jax.numpy as jnp
 from exojax.atm.idealgas import number_density
 
 #Getting the volume mixing ratio (VMR) of specific chemical element
