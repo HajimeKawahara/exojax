@@ -1,6 +1,8 @@
+#Example of RV curve fitting
 import pandas as pd
 import numpy as np
 import jax.numpy as jnp
+import tqdm
 from jax import random
 from jax import vmap, jit
 import matplotlib.pyplot as plt
@@ -18,6 +20,7 @@ Ksini=10.0
 Vsys=5.0
 model=rvf(t,T0,P,e,omegaA,Ksini,Vsys)
 sigma=3.0
+np.random.seed(1)
 noise=np.random.normal(0.0,sigma,N)
 rv=model+noise
 err=sigma*np.ones(N)/2.0
@@ -48,7 +51,7 @@ def model_c(t1,y1,e1):
 #Running a HMC-NUTS
 rng_key = random.PRNGKey(0)
 rng_key, rng_key_ = random.split(rng_key)
-num_warmup, num_samples = 1000, 2000
+num_warmup, num_samples = 2000, 4000
 kernel = NUTS(model_c)
 mcmc = MCMC(kernel, num_warmup=num_warmup, num_samples=num_samples)
 mcmc.run(rng_key_, t1=t, y1=rv, e1=err)
@@ -59,3 +62,26 @@ print("end HMC")
 posterior_sample = mcmc.get_samples()
 np.savez("savepos.npz",[posterior_sample])
 
+fig=plt.figure(figsize=(10,7))
+ax=fig.add_subplot(111)
+ax.errorbar(t,rv,yerr=err,ls="none")
+ax.plot(t,rv,"o")
+
+sesinw=posterior_sample["sesinw"]
+secosw=posterior_sample["secosw"]
+eps=sesinw**2+secosw**2
+omegaAps=jnp.arctan2(sesinw,secosw) #
+
+tpre=jnp.linspace(np.min(t),np.max(t),3600)
+for i in tqdm.tqdm(range(0,len(posterior_sample["P"][::10]))):
+    e=eps[i]
+    T0=posterior_sample["T0"][i]
+    P=posterior_sample["P"][i]
+    omegaA=omegaAps[i]
+    Ksini=posterior_sample["Ksini"][i]
+    Vsys=posterior_sample["Vsys"][i]
+    model=rvf(tpre,T0,P,e,omegaA,Ksini,Vsys)
+    ax.plot(tpre,model,alpha=0.05,color="gray")
+
+plt.savefig("npz/results.png", bbox_inches="tight", pad_inches=0.0)
+plt.show()
