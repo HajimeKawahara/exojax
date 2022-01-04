@@ -81,35 +81,55 @@ import numpy as np
 import jax.numpy as jnp
 from exojax.atm.idealgas import number_density
 
-#Getting the volume mixing ratio (VMR) of specific chemical element
-def vmr_species_fc2(name):
-    n_el=fastchem.getSpeciesIndex(name)
-    return mixing_ratios[:,n_el]
-
-#Getting the VMR of spectral continuum-related chemical element
-def continuum_vmr_fc2():
-    vmr_el= vmr_species_fc2('e-').flatten()
-    vmr_H_= vmr_species_fc2('H1-').flatten()
-    vmr_H = vmr_species_fc2('H').flatten()
-    vmr_H2= vmr_species_fc2('H2').flatten()
-    vmr_He= vmr_species_fc2('He').flatten()
-    return vmr_el, vmr_H_, vmr_H, vmr_H2, vmr_He
-
-#Setting up C/O value
-def set_C_to_O(fastchem,c_to_o):
-    #we need to know the indices for O and C from FastChem
+#Setting up C/O ratio 
+def set_C_to_O(fastchem, c_to_o):
+    #extracting the indices for O and C from FastChem
     index_C = fastchem.getSpeciesIndex('C')
     index_O = fastchem.getSpeciesIndex('O')
 
-    #make a copy of the solar abundances from FastChem
-    solar_abundances = np.array(fastchem.getElementAbundances())
-    element_abundances = np.copy(solar_abundances)
+    #making a copy of the current abundances
+    current_abundances = np.array(fastchem.getElementAbundances())
+    element_abundances = np.copy(current_abundances)
 
-    #set the O abundance as a function of the C/O (Molliére et al. 2015)
+    #setting the O abundance as a function of the C/O (Molliére et al. 2015)
     element_abundances[index_O] = element_abundances[index_C]/c_to_o
-
+    
+    #setting the FastChem with the new element abundances
     fastchem.setElementAbundances(element_abundances)
     print ("C/O is set to "+str(c_to_o))
+    
+    
+#Setting up metallicity M/H
+def set_M_to_H(fastchem, M_to_H):
+    metallicity=10**M_to_H
+    #making a copy of the current abundances
+    current_abundances = np.array(fastchem.getElementAbundances())
+    element_abundances = np.copy(current_abundances)
+    
+    #scaling the element abundances, except those of H and He
+    for j in range(0, fastchem.getElementNumber()):
+        if fastchem.getSpeciesSymbol(j) != 'H' and fastchem.getSpeciesSymbol(j) != 'He':
+            element_abundances[j] *= metallicity
+            
+    #setting the FastChem with the new element abundances
+    fastchem.setElementAbundances(element_abundances)
+    print ("[M/H] is set to "+str(M_to_H))
+    
+#Setting up metallicity Fe/H
+def set_Fe_to_H(fastchem, Fe_to_H):
+    metallicity=10**Fe_to_H
+    #making a copy of the current abundances
+    current_abundances = np.array(fastchem.getElementAbundances())
+    element_abundances = np.copy(current_abundances)
+    
+    #scaling the element abundances, except those of H and He
+    for j in range(0, fastchem.getElementNumber()):
+        if fastchem.getSpeciesSymbol(j) == 'Fe':
+            element_abundances[j] *= metallicity
+            
+    #setting the FastChem with the new element abundances
+    fastchem.setElementAbundances(element_abundances)
+    print ("[Fe/H] is set to "+str(Fe_to_H))    
     
 #Inputting Temperature-Pressure profile to FastChem, from top to bottom layer    
 def TP_profile_input(pressure,temperature):
@@ -121,7 +141,7 @@ def TP_profile_input(pressure,temperature):
     return input_data,output_data
   
 #Run fastchem  
-def run_fastchem():
+def run_fastchem(fastchem, input_data,output_data):
     #Calculating the total gas number density using ideal gas law (1/cm3)
     #plist is an array of pressure in bar, tlist is an array of temperature in Kelvin
     Total_gas_number_density=  number_density(jnp.array(input_data.pressure),jnp.array(input_data.temperature))
@@ -133,3 +153,17 @@ def run_fastchem():
     #VMR of all gases
     mixing_ratios = jnp.array(output_data.number_densities)/Total_gas_number_density [:,None]
     return mixing_ratios
+
+#Getting the volume mixing ratio (VMR) of specific chemical element
+def vmr_species_fc2(fastchem,mixing_ratios,name):
+    n_el=fastchem.getSpeciesIndex(name)
+    return mixing_ratios[:,n_el]
+
+#Getting the VMR of spectral continuum-related chemical element
+def continuum_vmr_fc2(fastchem,mixing_ratios):
+    vmr_el= vmr_species_fc2(fastchem,mixing_ratios,'e-').flatten()
+    vmr_H_= vmr_species_fc2(fastchem,mixing_ratios,'H1-').flatten()
+    vmr_H = vmr_species_fc2(fastchem,mixing_ratios,'H').flatten()
+    vmr_H2= vmr_species_fc2(fastchem,mixing_ratios,'H2').flatten()
+    vmr_He= vmr_species_fc2(fastchem,mixing_ratios,'He').flatten()
+    return vmr_el, vmr_H_, vmr_H, vmr_H2, vmr_He
