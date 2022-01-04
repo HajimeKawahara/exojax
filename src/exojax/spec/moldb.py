@@ -36,7 +36,7 @@ class MdbExomol(object):
         alpha_ref_def: default alpha_ref (gamma0) in .def file, used for jlower not given in .broad
 
     """
-    def __init__(self,path,nurange=[-np.inf,np.inf],margin=1.0,crit=-np.inf, bkgdatm="H2", broadf=True):
+    def __init__(self,path,nurange=[-np.inf,np.inf],margin=0.0,crit=-np.inf, bkgdatm="H2", broadf=True):
         """Molecular database for Exomol form
 
         Args: 
@@ -397,7 +397,7 @@ class MdbHit(object):
 
     """
 
-    def __init__(self,path,nurange=[-np.inf,np.inf],margin=1.0,crit=-np.inf,extract=False):
+    def __init__(self,path,nurange=[-np.inf,np.inf],margin=0.0,crit=-np.inf,extract=False):
         """Molecular database for HITRAN/HITEMP form
 
         Args: 
@@ -728,7 +728,7 @@ class AdbVald(object):  #integrated from vald3db.py
            For the first time to read the VALD line list, it is converted to HDF/vaex. After the second-time, we use the HDF5 format with vaex instead.
 
     """
-    def __init__(self, path, nurange=[-np.inf,np.inf], margin=1.0, crit=-np.inf, Irwin=False):
+    def __init__(self, path, nurange=[-np.inf,np.inf], margin=0.0, crit=-np.inf, Irwin=False):
     
         """Atomic database for VALD3 "Long format"
 
@@ -997,7 +997,7 @@ class AdbKurucz(object):
         vdWdamp (jnp array):  log of (van der Waals damping constant / neutral hydrogen number) (s-1)
     
     """
-    def __init__(self, path, nurange=[-np.inf,np.inf], margin=1.0, crit=-np.inf, Irwin=False):
+    def __init__(self, path, nurange=[-np.inf,np.inf], margin=0.0, crit=-np.inf, Irwin=False):
     
         """Atomic database for Kurucz line list "gf????.all"
 

@@ -1,6 +1,10 @@
 """Functions for radial velocity curves, JAX autograd/jit compatible.
 
-   * This code is for the PRV analysis of transmission/dayside close-in planets. Under developement. 
+* This code is for the PRV analysis of transmission/dayside close-in planets. Under developement. 
+
+Warning:
+   This moudle has not been well tested.
+
 
 """
 from jax.lax import map

@@ -172,6 +172,9 @@ def xsmatrix(cnu,indexnu,pmarray,sigmaDM,gammaLM,SijM,nu_grid,dgm_sigmaD,dgm_gam
     Return:
        cross section matrix in R^(Nlayer x Nwav)
 
+    Warning:
+       This function have not been well tested.
+
     """
     NDITgrid=jnp.shape(dgm_sigmaD)[1]
     Nline=len(cnu)
@@ -202,6 +205,9 @@ def ditgrid(x,res=0.1,adopt=True):
         grid for DIT
         
     """
+    if np.min(x)<=0.0:
+        print("Warning: there exists negative or zero gamma. MODIT/DIT does not support this case.")
+        
     lxmin=np.log10(np.min(x))
     lxmax=np.log10(np.max(x))
     dlog=lxmax-lxmin

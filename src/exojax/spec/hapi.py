@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 '''hapi (HITRAN API)
 
-Note:
+Important:
    THIS MODULE WAS IMPORTED FROM THE OFFICIAL HITRAN API (HAPI version 1.1.2.0) UNDER THE FOLLOWING MIT LICENSE.
 
 Note:

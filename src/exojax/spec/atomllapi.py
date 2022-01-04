@@ -18,10 +18,9 @@ PeriodicTable[:] = [' 0', 'H', 'He', 'Li', 'Be', 'B', 'C', 'N', 'O', 'F', 'Ne', 
 
 def read_ExStellar(stellarf):
     """VALD IO for "Extract stellar" file (long format)
-    Warning:
-        Deprecated to use! It's incomplete and untested. #210817
 
     Note:
+        Deprecated to use! It's incomplete and untested. #210817
         See https://www.astro.uu.se/valdwiki/select_output
 
     Args:
@@ -75,6 +74,7 @@ def read_ExAll(allf):
         
     """
     dat = pd.read_csv(allf, sep=",", skiprows=1, names=("species","wav_lines","loggf","elowereV","jlower","euppereV", "jupper", "landelower", "landeupper", "landemean", "rad_damping","stark_damping","waals_damping")) #convert=False)
+    colWL = dat.iat[0,0][13:22]
 
     dat = dat[dat.species.str.startswith("'")] #Remove rows not starting with "'"
     dat = dat[dat.species.str.startswith("' ").map({False: True, True: False})] #Remove rows of Reference
@@ -91,6 +91,8 @@ def read_ExAll(allf):
     dat = dat.reset_index(drop=True)
     dat = dat.astype('float64')
     #dat = dat.astype({'wav_lines': 'float64', 'loggf': 'float64', 'elowereV': 'float64', 'jlower': 'float64', 'euppereV': 'float64'})
+    if colWL == 'WL_air(A)':
+        dat.iloc[:, 1] = np.where(dat.iloc[:, 1]>2000, air_to_vac(dat.iloc[:, 1]), dat.iloc[:, 1]) #If wavelength is in air, it will be corrected (Note that wavelengths of transitions short of 2000 Angstroems are actually in vacuum and not in air.)
     dat = vaex.from_pandas(dat)
     dat.export_hdf5(allf.with_suffix('.hdf5'))
 
@@ -197,8 +199,6 @@ def pickup_param(ExAll):
         gamRad: log of gamma of radiation damping (s-1) #(https://www.astro.uu.se/valdwiki/Vald3Format)
         gamSta: log of gamma of Stark damping (s-1)
         vdWdamp:  log of (van der Waals damping constant / neutral hydrogen number) (s-1)
-
-    Note:
     
     """
     # insert new columns in VALD line list
@@ -236,7 +236,8 @@ def pickup_param(ExAll):
 
 def vac_to_air(wlvac):
     """Convert wavelengths [AA] in vacuum into those in air
-        http://www.astro.uu.se/valdwiki/Air-to-vacuum%20conversion
+
+    * See http://www.astro.uu.se/valdwiki/Air-to-vacuum%20conversion
         
     Args:
         wlvac:  wavelength in vacuum [Angstrom]
@@ -244,6 +245,7 @@ def vac_to_air(wlvac):
 
     Returns:
         wlair:  wavelengthe in air [Angstrom]
+
     """
     s = 1e4 / wlvac
     n = 1. + 0.0000834254 + 0.02406147 / (130 - s*s) + 0.00015998 / (38.9 - s*s)
@@ -254,7 +256,8 @@ def vac_to_air(wlvac):
 
 def air_to_vac(wlair):
     """Convert wavelengths [AA] in air into those in vacuum
-        http://www.astro.uu.se/valdwiki/Air-to-vacuum%20conversion
+
+    * See http://www.astro.uu.se/valdwiki/Air-to-vacuum%20conversion
         
     Args:
         wlair:  wavelengthe in air [Angstrom]
@@ -262,6 +265,7 @@ def air_to_vac(wlair):
         
     Returns:
         wlvac:  wavelength in vacuum [Angstrom]
+
     """
     s = 1e4 / wlair
     n = 1. + 0.00008336624212083 + 0.02408926869968 / (130.1065924522 - s*s) + \
@@ -273,9 +277,8 @@ def air_to_vac(wlair):
 
 def load_atomicdata():
     """ load atomic data and solar composition
-        (Asplund et al. 2009, Gevesse et al. 1996)  #tako210822
-    
-    Args:
+
+    * See  Asplund et al. 2009, Gerevesse et al. 1996
     
     Returns:
         ipccd (pd.DataFrame): table of atomic data
@@ -293,15 +296,12 @@ def load_atomicdata():
 
 def load_pf_Barklem2016():
     """ load a table of the partition functions for 284 atomic species
-        (Table 8 of Barklem & Collet (2016); https://doi.org/10.1051/0004-6361/201526961)  #tako210822
-    
-    Args:
+
+    * See Table 8 of Barklem & Collet (2016); https://doi.org/10.1051/0004-6361/201526961 
     
     Returns:
         pfTdat (pd.DataFrame): steps of temperature (K)
         pfdat (pd.DataFrame): partition functions for 284 atomic species
-
-    Note:
     
     """
     pfT_str = "T[K]   1.00000e-05   1.00000e-04   1.00000e-03   1.00000e-02   1.00000e-01   1.50000e-01   2.00000e-01   3.00000e-01   5.00000e-01   7.00000e-01   1.00000e+00   1.30000e+00   1.70000e+00   2.00000e+00   3.00000e+00   5.00000e+00   7.00000e+00   1.00000e+01   1.50000e+01   2.00000e+01   3.00000e+01   5.00000e+01   7.00000e+01   1.00000e+02   1.30000e+02   1.70000e+02   2.00000e+02   2.50000e+02   3.00000e+02   5.00000e+02   7.00000e+02   1.00000e+03   1.50000e+03   2.00000e+03   3.00000e+03   4.00000e+03   5.00000e+03   6.00000e+03   7.00000e+03   8.00000e+03   9.00000e+03   1.00000e+04"
@@ -313,8 +313,16 @@ def load_pf_Barklem2016():
 
 
 
-#Partition function of Fe I from Irwin_1981  #tako211013
 def partfn_Fe(T):
+    """Partition function of Fe I from Irwin_1981 
+
+    Args:
+       T: temperature
+    
+    Returns:
+       partition function Q
+
+    """
     #Irwin_1981
     a=np.zeros(6)
     a[0]=-1.15609527e3

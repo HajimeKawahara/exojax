@@ -94,14 +94,18 @@ AAG21= { \
 
 
 def nsol(database="AAG21"):
-    """
+    """provide solar abundance dictionary
     
     Args: 
        database: name of database. 
 
     Returns:
-       nsun: number ratio of solar abundance
+       number ratio of solar abundance
 
+    Example:
+       >>>  nsun=nsol()
+       >>>  print(nsun["Fe"])
+       >>>  2.6602622265852853e-05
 
     """
     #compute total number

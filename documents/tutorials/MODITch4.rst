@@ -1,4 +1,4 @@
-Forward Modeling of an Emission Spectrum with Many Lines
+Forward Modeling of an Emission Spectrum with Many Lines (MODIT)
 ======================================================================
 
 *Septempber 3rd (2021) Hajime Kawahara*
