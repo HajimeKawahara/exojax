@@ -94,7 +94,7 @@ def continuum_vmr_fc2():
     return vmr_el, vmr_H_, vmr_H, vmr_H2, vmr_He
 
 #Setting up C/O value
-def set_C_to_O(c_to_o):
+def set_C_to_O(fastchem,c_to_o):
     #we need to know the indices for O and C from FastChem
     index_C = fastchem.getSpeciesIndex('C')
     index_O = fastchem.getSpeciesIndex('O')
