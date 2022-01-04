@@ -48,7 +48,8 @@ Miscellaneous
 
 .. toctree::
    :maxdepth: 1
-
+	      
+   tutorials/rvfit.rst	     
    tutorials/MODITrt.rst	     
    tutorials/DITxs.rst   
    tutorials/DITrt.rst   
