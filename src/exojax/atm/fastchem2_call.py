@@ -77,6 +77,7 @@
 #                    "Bi1+", "Bi1-", "Bi1++", "Th1+", "Th1++", "U1+", "U1++"])
 
 import pyfastchem
+import numpy as np
 from exojax.atm.idealgas import number_density
 
 #Getting the volume mixing ratio (VMR) of specific chemical element
