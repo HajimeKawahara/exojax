@@ -122,7 +122,7 @@ def TP_profile_input(pressure,temperature):
 def run_fastchem():
     #Calculating the total gas number density using ideal gas law (1/cm3)
     #plist is an array of pressure in bar, tlist is an array of temperature in Kelvin
-    Total_gas_number_density=  number_density(plist,tlist)
+    Total_gas_number_density=  number_density(jnp.array(input_data.pressure),jnp.array(input_data.temperature))
 
     #Calculating number density of all gases
     fastchem_flag = fastchem.calcDensities(input_data, output_data)
