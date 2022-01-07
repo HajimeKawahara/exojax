@@ -37,7 +37,7 @@ def atmprof_gray(Parr,g,kappa,Tint):
     Tarr = (0.75*Tint**4*(2.0/3.0+tau))**0.25
     return Tarr
 
-def atmprof_Guillot(Parr,g,kappa,Tint,Tirr,f=0.25):
+def atmprof_Guillot(Parr,g,kappa,gamma,Tint,Tirr,f=0.25):
     """
 
     Notes:
@@ -47,9 +47,11 @@ def atmprof_Guillot(Parr,g,kappa,Tint,Tirr,f=0.25):
         Parr: pressure array (bar)
         g: gravity (cm/s2)
         kappa: thermal/IR opacity (kappa_th in Guillot 2010)
+        gamma: ratio of optical and IR opacity (kappa_v/kappa_th), gamma > 1 means thermal inversion
         Tint: temperature equivalence of the intrinsic energy flow
         Tirr: temperature equivalence of the irradiation
-        f: 
+        f = 1 at the substellar point, f = 1/2 for a day-side average 
+            and f = 1/4 for an averaging over the whole planetary surface
 
     Returns:
         Tarr
@@ -57,7 +59,7 @@ def atmprof_Guillot(Parr,g,kappa,Tint,Tirr,f=0.25):
     """
     tau = Parr*1.e6*kappa/g #Equation (51)
     invsq3=1.0/jnp.sqrt(3.0)
-    fac=2.0/3.0 + invsq3*(1.0/gamma + (gamma - 1.0/gamma)*jnp.exp(-gamma*tau*sqrt3))
+    fac=2.0/3.0 + invsq3*(1.0/gamma + (gamma - 1.0/gamma)*jnp.exp(-gamma*tau/invsq3))
     Tarr = (0.75*Tint**4*(2.0/3.0+tau) + 0.75*Tirr**4*f*fac)**0.25
 
     return Tarr
