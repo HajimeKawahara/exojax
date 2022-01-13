@@ -122,8 +122,9 @@ def run_fastchem(fastchem, input_data,output_data):
     """Calculating the number density of all gases using FastChem 2.0
     
     Args:
-        pressure: pressure array in bar
-        temperature: temperature array in Kelvin
+        fastchem: fastchem object created via pyfastchem.FastChem(str(dir_fastchem)+"input/element_abundances_solar_ext.dat",str(dir_fastchem)+"input/logK_ext.dat", 1)
+        input_data: FastChem input structures
+        output_data: FastChem output structures
         
     Returns:
         volume mixing ratios of all available gases
