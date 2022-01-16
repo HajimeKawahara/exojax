@@ -8,7 +8,6 @@
 import jax.numpy as jnp
 from jax import jit
 from jax.lax import scan
-from jax.ops import index_add
 
 def voigt_kernel(k, beta,gammaL):
     """Fourier Kernel of the Voigt Profile
@@ -61,7 +60,7 @@ def fold_voigt_kernel(k, beta,gammaL, vmax, pmarray):
     A_corr = q*(0.09432246 * jnp.exp(-0.06592025*q**2)) #Ngamma
     B_corr = q*(0.11202818 * jnp.exp(-0.09048447*q**2)) #Ngamma
     zeroindex=jnp.zeros(Nk,dtype=int) #Nk
-    zeroindex=index_add(zeroindex, 0, 1.0)
+    zeroindex=zeroindex.at[0].add(1.0)
     C_corr = zeroindex[:,None]*2.0*B_corr[None,:] #Nk x Ngamma    
     I_corr = A_corr/(1.0+4.0*jnp.pi**2*w_corr[None,None,:]**2*k[:,None,None]**2) + C_corr[:,None,:]
     I_corr = I_corr*pmarray[:,None,None]
@@ -125,7 +124,7 @@ def fold_voigt_kernel_logst(k,log_nstbeta,log_ngammaL,vmax, pmarray):
     A_corr = q*(0.09432246 * jnp.exp(-0.06592025*q**2)) #Ngamma
     B_corr = q*(0.11202818 * jnp.exp(-0.09048447*q**2)) #Ngamma
     zeroindex=jnp.zeros(Nk,dtype=int) #Nk
-    zeroindex=index_add(zeroindex, 0, 1.0)
+    zeroindex=zeroindex.at[0].add(1.0)
     C_corr = zeroindex[:,None]*2.0*B_corr[None,:] #Nk x Ngamma    
     I_corr = A_corr/(1.0+4.0*jnp.pi**2*w_corr[None,:]**2*k[:,None]**2) + C_corr[:,:]
     I_corr = I_corr*pmarray[:,None]

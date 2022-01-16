@@ -15,7 +15,6 @@ from jax import vmap
 from jax.lax import scan
 import tqdm
 from exojax.spec.ditkernel import folded_voigt_kernel
-from jax.ops import index_add
 from jax.ops import index as joi
 from exojax.spec.dit import getix
 
@@ -66,14 +65,14 @@ def inc3D(w,x,y,z,xv,yv,zv):
     cz,iz=getix(z,zv)
 
     a=jnp.zeros((len(xv),len(yv),len(zv)))
-    a=index_add(a,joi[ix,iy,iz],w*(1-cx)*(1-cy)*(1-cz))
-    a=index_add(a,joi[ix,iy+1,iz],w*(1-cx)*cy*(1-cz))
-    a=index_add(a,joi[ix+1,iy,iz],w*cx*(1-cy)*(1-cz))
-    a=index_add(a,joi[ix+1,iy+1,iz],w*cx*cy*(1-cz))
-    a=index_add(a,joi[ix,iy,iz+1],w*(1-cx)*(1-cy)*cz)
-    a=index_add(a,joi[ix,iy+1,iz+1],w*(1-cx)*cy*cz)
-    a=index_add(a,joi[ix+1,iy,iz+1],w*cx*(1-cy)*cz)
-    a=index_add(a,joi[ix+1,iy+1,iz+1],w*cx*cy*cz)
+    a=a.at[joi[ix,iy,iz]].add(w*(1-cx)*(1-cy)*(1-cz))
+    a=a.at[joi[ix,iy+1,iz]].add(w*(1-cx)*cy*(1-cz))
+    a=a.at[joi[ix+1,iy,iz]].add(w*cx*(1-cy)*(1-cz))
+    a=a.at[joi[ix+1,iy+1,iz]].add(w*cx*cy*(1-cz))
+    a=a.at[joi[ix,iy,iz+1]].add(w*(1-cx)*(1-cy)*cz)
+    a=a.at[joi[ix,iy+1,iz+1]].add(w*(1-cx)*cy*cz)
+    a=a.at[joi[ix+1,iy,iz+1]].add(w*cx*(1-cy)*cz)
+    a=a.at[joi[ix+1,iy+1,iz+1]].add(w*cx*cy*cz)
 
     return a
 
