@@ -209,16 +209,16 @@ def ditgrid(x,res=0.1,adopt=True):
     if np.min(x)<=0.0:
         print("Warning: there exists negative or zero gamma. MODIT/DIT does not support this case.")
         
-    lxmin=np.log10(np.min(x))
-    lxmax=np.log10(np.max(x))
+    lxmin=np.log(np.min(x))
+    lxmax=np.log(np.max(x))
     lxmax=np.nextafter(lxmax, np.inf, dtype=lxmax.dtype)
     
     dlog=lxmax-lxmin
     Ng=int(dlog/res)+2
     if adopt==False:
-        grid=np.logspace(lxmin,lxmin+(Ng-1)*res,Ng)
+        grid=np.exp(np.linspace(lxmin,lxmin+(Ng-1)*res,Ng))
     else:
-        grid=np.logspace(lxmin,lxmax,Ng)
+        grid=np.exp(np.linspace(lxmin,lxmax,Ng))
     return grid
 
 def set_ditgrid(x,res=0.1,adopt=True):
@@ -249,9 +249,9 @@ def dgmatrix(x,res=0.1,adopt=True):
         grid for DIT (Nlayer x NDITgrid)
 
     """
-    mmin=np.min(np.log10(x),axis=1)
-    mmax=np.max(np.log10(x),axis=1)
-    mmax=np.nextafter(mmmax, np.inf, dtype=mmax.dtype)
+    mmin=np.log(np.min(x,axis=1))
+    mmax=np.log(np.max(x,axis=1))
+    mmax=np.nextafter(mmax, np.inf, dtype=mmax.dtype)
     
     Nlayer=np.shape(mmax)[0]
     gm=[]
@@ -261,9 +261,9 @@ def dgmatrix(x,res=0.1,adopt=True):
         lxmin=mmin[i]
         lxmax=mmax[i]
         if adopt==False:
-            grid=np.logspace(lxmin,lxmin+(Ng-1)*res,Ng)
+            grid=np.exp(np.linspace(lxmin,lxmin+(Ng-1)*res,Ng))
         else:
-            grid=np.logspace(lxmin,lxmax,Ng)
+            grid=np.exp(np.linspace(lxmin,lxmax,Ng))
         gm.append(grid)
     gm=np.array(gm)
     return gm
