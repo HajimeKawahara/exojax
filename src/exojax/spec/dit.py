@@ -63,7 +63,7 @@ def npgetix(x,xv):
     indarr=np.arange(len(xv))
     pos = np.interp(x,xv,indarr)
     index = (pos).astype(int)
-    assert jnp.max(index) + 1 < len(xv)
+    assert np.max(index) + 1 < len(xv)
     cont = (pos-index)
     return cont,index
 
