@@ -40,6 +40,7 @@ def getix(x,xv):
     indarr=jnp.arange(len(xv))
     pos = jnp.interp(x,xv,indarr)
     index = (pos).astype(int)
+    assert jnp.max(index) + 1 < len(xv)
     cont = (pos-index)
     return cont,index
 
@@ -63,6 +64,7 @@ def npgetix(x,xv):
     indarr=np.arange(len(xv))
     pos = np.interp(x,xv,indarr)
     index = (pos).astype(int)
+    assert jnp.max(index) + 1 < len(xv)
     cont = (pos-index)
     return cont,index
 
@@ -209,6 +211,8 @@ def ditgrid(x,res=0.1,adopt=True):
         
     lxmin=np.log10(np.min(x))
     lxmax=np.log10(np.max(x))
+    lxmax=np.nextafter(lxmax, np.inf, dtype=lxmax.dtype)
+    
     dlog=lxmax-lxmin
     Ng=int(dlog/res)+2
     if adopt==False:
@@ -245,8 +249,10 @@ def dgmatrix(x,res=0.1,adopt=True):
         grid for DIT (Nlayer x NDITgrid)
 
     """
-    mmax=np.max(np.log10(x),axis=1)
     mmin=np.min(np.log10(x),axis=1)
+    mmax=np.max(np.log10(x),axis=1)
+    mmax=np.nextafter(mmmax, np.inf, dtype=mmax.dtype)
+    
     Nlayer=np.shape(mmax)[0]
     gm=[]
     dlog=np.max(mmax-mmin)
