@@ -40,7 +40,6 @@ def getix(x,xv):
     indarr=jnp.arange(len(xv))
     pos = jnp.interp(x,xv,indarr)
     index = (pos).astype(int)
-    assert jnp.max(index) + 1 < len(xv)
     cont = (pos-index)
     return cont,index
 
