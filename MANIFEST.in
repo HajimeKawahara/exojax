@@ -12,3 +12,4 @@ global-exclude *.py[co]
 prune documents/_build
 prune documents/_static
 prune documents/_templates
+prune documents/_build/doctrees/index.doctree
