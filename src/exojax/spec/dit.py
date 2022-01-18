@@ -10,7 +10,6 @@ import jax.numpy as jnp
 from jax import jit, vmap
 from jax.lax import scan
 from exojax.spec.ditkernel import fold_voigt_kernel
-from jax.ops import index_add
 from jax.ops import index as joi
 
 def getix(x,xv):
@@ -41,6 +40,7 @@ def getix(x,xv):
     indarr=jnp.arange(len(xv))
     pos = jnp.interp(x,xv,indarr)
     index = (pos).astype(int)
+    assert jnp.max(index) + 1 < len(xv)
     cont = (pos-index)
     return cont,index
 
@@ -64,6 +64,7 @@ def npgetix(x,xv):
     indarr=np.arange(len(xv))
     pos = np.interp(x,xv,indarr)
     index = (pos).astype(int)
+    assert jnp.max(index) + 1 < len(xv)
     cont = (pos-index)
     return cont,index
 
@@ -96,14 +97,14 @@ def inc3D_givenx(a,w,cx,ix,y,z,xv,yv,zv):
     cy,iy=getix(y,yv)
     cz,iz=getix(z,zv)
 
-    a=index_add(a,joi[ix,iy,iz],w*(1-cx)*(1-cy)*(1-cz))
-    a=index_add(a,joi[ix,iy+1,iz],w*(1-cx)*cy*(1-cz))
-    a=index_add(a,joi[ix+1,iy,iz],w*cx*(1-cy)*(1-cz))
-    a=index_add(a,joi[ix+1,iy+1,iz],w*cx*cy*(1-cz))
-    a=index_add(a,joi[ix,iy,iz+1],w*(1-cx)*(1-cy)*cz)
-    a=index_add(a,joi[ix,iy+1,iz+1],w*(1-cx)*cy*cz)
-    a=index_add(a,joi[ix+1,iy,iz+1],w*cx*(1-cy)*cz)
-    a=index_add(a,joi[ix+1,iy+1,iz+1],w*cx*cy*cz)
+    a=a.at[joi[ix,iy,iz]].add(w*(1-cx)*(1-cy)*(1-cz))
+    a=a.at[joi[ix,iy+1,iz]].add(w*(1-cx)*cy*(1-cz))
+    a=a.at[joi[ix+1,iy,iz]].add(w*cx*(1-cy)*(1-cz))
+    a=a.at[joi[ix+1,iy+1,iz]].add(w*cx*cy*(1-cz))
+    a=a.at[joi[ix,iy,iz+1]].add(w*(1-cx)*(1-cy)*cz)
+    a=a.at[joi[ix,iy+1,iz+1]].add(w*(1-cx)*cy*cz)
+    a=a.at[joi[ix+1,iy,iz+1]].add(w*cx*(1-cy)*cz)
+    a=a.at[joi[ix+1,iy+1,iz+1]].add(w*cx*cy*cz)
 
     return a
 
@@ -208,14 +209,16 @@ def ditgrid(x,res=0.1,adopt=True):
     if np.min(x)<=0.0:
         print("Warning: there exists negative or zero gamma. MODIT/DIT does not support this case.")
         
-    lxmin=np.log10(np.min(x))
-    lxmax=np.log10(np.max(x))
+    lxmin=np.log(np.min(x))
+    lxmax=np.log(np.max(x))
+    lxmax=np.nextafter(lxmax, np.inf, dtype=lxmax.dtype)
+    
     dlog=lxmax-lxmin
     Ng=int(dlog/res)+2
     if adopt==False:
-        grid=np.logspace(lxmin,lxmin+(Ng-1)*res,Ng)
+        grid=np.exp(np.linspace(lxmin,lxmin+(Ng-1)*res,Ng))
     else:
-        grid=np.logspace(lxmin,lxmax,Ng)
+        grid=np.exp(np.linspace(lxmin,lxmax,Ng))
     return grid
 
 def set_ditgrid(x,res=0.1,adopt=True):
@@ -246,8 +249,10 @@ def dgmatrix(x,res=0.1,adopt=True):
         grid for DIT (Nlayer x NDITgrid)
 
     """
-    mmax=np.max(np.log10(x),axis=1)
-    mmin=np.min(np.log10(x),axis=1)
+    mmin=np.log(np.min(x,axis=1))
+    mmax=np.log(np.max(x,axis=1))
+    mmax=np.nextafter(mmax, np.inf, dtype=mmax.dtype)
+    
     Nlayer=np.shape(mmax)[0]
     gm=[]
     dlog=np.max(mmax-mmin)
@@ -256,9 +261,9 @@ def dgmatrix(x,res=0.1,adopt=True):
         lxmin=mmin[i]
         lxmax=mmax[i]
         if adopt==False:
-            grid=np.logspace(lxmin,lxmin+(Ng-1)*res,Ng)
+            grid=np.exp(np.linspace(lxmin,lxmin+(Ng-1)*res,Ng))
         else:
-            grid=np.logspace(lxmin,lxmax,Ng)
+            grid=np.exp(np.linspace(lxmin,lxmax,Ng))
         gm.append(grid)
     gm=np.array(gm)
     return gm

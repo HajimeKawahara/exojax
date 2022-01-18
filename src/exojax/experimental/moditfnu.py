@@ -17,7 +17,6 @@ from jax import vmap
 from jax.lax import scan
 import tqdm
 from exojax.spec.ditkernel import folded_voigt_kernel_logst
-from jax.ops import index_add
 from jax.ops import index as joi
 from exojax.spec.dit import getix
 
@@ -62,10 +61,10 @@ def inc2D(w,x,y,xv,yv):
     cx,ix=getix(x,xv)
     cy,iy=getix(y,yv)
     ncfarray=jnp.zeros((len(xv),len(yv)))
-    ncfarray=index_add(ncfarray,joi[ix,iy],w*(1.-cx)*(1.-cy))
-    ncfarray=index_add(ncfarray,joi[ix,iy+1],w*(1.-cx)*cy)
-    ncfarray=index_add(ncfarray,joi[ix+1,iy],w*cx*(1.-cy))
-    ncfarray=index_add(ncfarray,joi[ix+1,iy+1],w*cx*cy)
+    ncfarray=ncfarray.at[joi[ix,iy]].add(w*(1.-cx)*(1.-cy))
+    ncfarray=ncfarray.at[joi[ix,iy+1]].add(w*(1.-cx)*cy)
+    ncfarray=ncfarray.at[joi[ix+1,iy]].add(w*cx*(1.-cy))
+    ncfarray=ncfarray.at[joi[ix+1,iy+1]].add(w*cx*cy)
     return ncfarray
 
 
