@@ -13,7 +13,6 @@ from jax.lax import scan
 from exojax.spec.ditkernel import fold_voigt_kernel_logst
 from exojax.spec.ditkernel import voigt_kernel_logst
 
-from jax.ops import index_add
 from jax.ops import index as joi
 from exojax.spec.dit import getix
 
@@ -48,10 +47,10 @@ def inc2D_givenx(a,w,cx,ix,y,yv):
 
     cy,iy=getix(y,yv)
 
-    a=index_add(a,joi[ix,iy],w*(1-cx)*(1-cy))
-    a=index_add(a,joi[ix,iy+1],w*(1-cx)*cy)
-    a=index_add(a,joi[ix+1,iy],w*cx*(1-cy))
-    a=index_add(a,joi[ix+1,iy+1],w*cx*cy)
+    a=a.at[joi[ix,iy]].add(w*(1-cx)*(1-cy))
+    a=a.at[joi[ix,iy+1]].add(w*(1-cx)*cy)
+    a=a.at[joi[ix+1,iy]].add(w*cx*(1-cy))
+    a=a.at[joi[ix+1,iy+1]].add(w*cx*cy)
 
     return a
 

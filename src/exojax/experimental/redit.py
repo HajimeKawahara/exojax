@@ -8,7 +8,6 @@ from jax import vmap
 from jax.lax import scan
 import tqdm
 from exojax.spec.ditkernel import folded_voigt_kernel_logst
-from jax.ops import index_add
 from jax.ops import index as joi
 from exojax.spec.dit import getix
 from exojax.spec.modit import inc2D_givenx
