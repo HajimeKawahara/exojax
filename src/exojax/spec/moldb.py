@@ -783,14 +783,13 @@ class AdbVald(object):  #integrated from vald3db.py
         self.masking(mask)
 
         #Compile atomic-specific data for each absorption line of interest
-        self.ipccd = atomllapi.load_atomicdata()
-        #print(self.ipccd)#test
-        # should be refined
-        ionE = jnp.array(list(map(lambda x: self.ipccd[self.ipccd['ielem']==x].iat[0, 1], self.ielem)))
-        ionE2 = jnp.array(list(map(lambda x: self.ipccd[self.ipccd['ielem']==x].iat[0, 6], self.ielem)))
-        self.ionE = ionE * np.where(self.iion==1, 1, 0) + ionE2 * np.where(self.iion==2, 1, 0)
-        self.solarA = jnp.array(list(map(lambda x: self.ipccd[self.ipccd['ielem']==x].iat[0, 4], self.ielem)))
-        self.atomicmass = jnp.array(list(map(lambda x: self.ipccd[self.ipccd['ielem']==x].iat[0, 5], self.ielem)))
+        ipccd = atomllapi.load_atomicdata()
+        self.solarA = jnp.array(list(map(lambda x: ipccd[ipccd['ielem']==x].iat[0, 4], self.ielem)))
+        self.atomicmass = jnp.array(list(map(lambda x: ipccd[ipccd['ielem']==x].iat[0, 5], self.ielem)))
+        df_ionE = atomllapi.load_ionization_energies()
+        self.ionE = jnp.array(list(map(atomllapi.pick_ionE, self.ielem, self.iion, [df_ionE,]*len(self.ielem))))
+            
+            
             
     #End of the CONSTRUCTOR definition ↑
 
@@ -1054,15 +1053,13 @@ class AdbKurucz(object):
 
 
         #Compile atomic-specific data for each absorption line of interest
-        self.ipccd = atomllapi.load_atomicdata()
-        #print(self.ipccd)#test
-        ionE = jnp.array(list(map(lambda x: self.ipccd[self.ipccd['ielem']==x].iat[0, 1], self.ielem)))
-        ionE2 = jnp.array(list(map(lambda x: self.ipccd[self.ipccd['ielem']==x].iat[0, 6], self.ielem)))
-        self.ionE = ionE * np.where(self.iion==1, 1, 0) + ionE2 * np.where(self.iion==2, 1, 0)
-        self.solarA = jnp.array(list(map(lambda x: self.ipccd[self.ipccd['ielem']==x].iat[0, 4], self.ielem)))
-        self.atomicmass = jnp.array(list(map(lambda x: self.ipccd[self.ipccd['ielem']==x].iat[0, 5], self.ielem)))
-        
-            
+        ipccd = atomllapi.load_atomicdata()
+        self.solarA = jnp.array(list(map(lambda x: ipccd[ipccd['ielem']==x].iat[0, 4], self.ielem)))
+        self.atomicmass = jnp.array(list(map(lambda x: ipccd[ipccd['ielem']==x].iat[0, 5], self.ielem)))
+        df_ionE = atomllapi.load_ionization_energies()
+        self.ionE = jnp.array(list(map(atomllapi.pick_ionE, self.ielem, self.iion, [df_ionE,]*len(self.ielem))))
+
+
             
     #End of the CONSTRUCTOR definition ↑
 
