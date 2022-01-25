@@ -194,9 +194,11 @@ Calculating delta tau...
     from exojax.spec.lpf import xsmatrix
     from exojax.spec.rtransfer import dtauM
     
-    ieleml = jnp.array(adbFe.ipccd['ielem'])
-    Narr = jnp.array(10**(12+adbFe.ipccd['solarA'])) #number density
-    massarr = jnp.array(adbFe.ipccd['mass']) #mass of each neutral atom
+    from exojax.spec.atomllapi import load_atomicdata
+    ipccd = load_atomicdata()
+    ieleml = jnp.array(ipccd['ielem'])
+    Narr = jnp.array(10**(12+ipccd['solarA'])) #number density
+    massarr = jnp.array(ipccd['mass']) #mass of each neutral atom
     Nmassarr = Narr * massarr #mass of each neutral species
     
     dtaual = np.zeros([len(uspecies), len(Tarr), len(nus)])
