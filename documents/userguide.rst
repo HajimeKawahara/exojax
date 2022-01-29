@@ -15,10 +15,13 @@ User Guide
    userguide/fp.rst
    userguide/vterm.rst
    userguide/comp.rst
-	     
+
+
+For Developers
+===================
+
 .. toctree::
    :maxdepth: 1
-   :caption: Information For Developers
 	     
    developers/pytest.rst   
    developers/doc.rst   

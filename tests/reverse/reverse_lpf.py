@@ -124,17 +124,8 @@ plt.xlabel("wavelength ($\AA$)",fontsize=16)
 plt.legend(fontsize=16)
 plt.tick_params(labelsize=16)
 
-
-# For the above reasons, I haven't been checking my results properly.
-# Arviz is useful to visualize the corner plot. Ah, the range of prior looks too narrow for some parameters. But I have no time to rerun it. Try to change the priors and run a HMC-NUTS again! The rest is up to you.
-
-# In[16]:
-
-
 import arviz
 pararr=["Rp","T0","alpha","MMR_CO","vsini","RV"]
 arviz.plot_pair(arviz.from_numpyro(mcmc),kind='kde',divergences=False,marginals=True)
 plt.show()
 
-
-# For fitting to the real spectrum, we may need a more well-considered model and a better GPU, such as V100 or A100. Read the next section in detail.

@@ -52,17 +52,17 @@ References
 License & Attribution
 ---------------------
 
-Copyright 2021, Contributors
+Copyright 2021-2022, Contributors
 
 - `Hajime Kawahara <http://secondearths.sakura.ne.jp/en/index.html>`_ (@HajimeKawahara, maintainer)
 - Yui Kawashima (@ykawashima)
-- Kento Masuda
+- Kento Masuda (@kemasuda)
 - Ian Crossfield
 - Dirk van den Bekerom (@dcmvdbekerom)
 - Daniel Kitzmann (@daniel-kitzmann)
 - Brett Morris (@bmorris3)
 - Erwan Pannier (@erwanp) and `RADIS <https://github.com/radis/radis>`_ community
-- Stevanus Nugroho
+- Stevanus Nugroho (@astrostevanus)
 - Tako Ishikawa (@chonma0ctopus)
 
 ExoJAX is free software made available under the MIT License. See the ``LICENSE``.
