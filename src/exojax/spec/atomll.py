@@ -95,8 +95,9 @@ def gamma_vald3(T, PH, PHH, PHe, ielem, iion, \
     gamma6 = enh_damp * (gam6H + gam6He + gam6HH)
     gamma_case1 = (gamma6 + 10**gamRad + 10**gamSta) /(4*np.pi*ccgs)
     #Avoid nan (appeared by np.log10(negative C6))
-    if len(jnp.where(jnp.isnan(gamma_case1))[0])>0:
-        warnings.warn('nan were generated in gamma_case1 (), so they were replaced by 0.0 \n\t'+'The number of the lines with the nan: '+str(int(len(jnp.where(jnp.isnan(gamma_case1))[0]))))
+    #(Note: if statements is NOT compatible with JAX)
+    #if len(jnp.where(jnp.isnan(gamma_case1))[0])>0:
+        #warnings.warn('nan were generated in gamma_case1 (), so they were replaced by 0.0 \n\t'+'The number of the lines with the nan: '+str(int(len(jnp.where(jnp.isnan(gamma_case1))[0]))))
     gamma_case1 = jnp.where(jnp.isnan(gamma_case1), 0., gamma_case1)
 
     Texp = 0.38 #Barklem+2000
