@@ -1,20 +1,20 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-""" Custom JVP version of the line profile functions used in exospectral analysis.
-
-"""
+"""Custom JVP version of the line profile functions used in exospectral
+analysis."""
 
 from jax import jit, vmap
 import jax.numpy as jnp
-from exojax.special.faddeeva import rewofz,imwofz
-from exojax.special.faddeeva import rewofzs2,imwofzs2
+from exojax.special.faddeeva import rewofz, imwofz
+from exojax.special.faddeeva import rewofzs2, imwofzs2
 from jax import custom_jvp
 
-#exomol
+# exomol
 from exojax.spec.exomol import gamma_exomol
 from exojax.spec.hitran import SijT, doppler_sigma, gamma_natural
 
-def exomol(mdb,Tarr,Parr,molmass):
+
+def exomol(mdb, Tarr, Parr, molmass):
     """compute molecular line information required for MODIT using Exomol mdb.
 
     Args:
@@ -27,52 +27,54 @@ def exomol(mdb,Tarr,Parr,molmass):
        line intensity matrix,
        gammaL matrix,
        sigmaD matrix
-
     """
 
-    qt=vmap(mdb.qr_interp)(Tarr)
-    SijM=jit(vmap(SijT,(0,None,None,None,0)))(Tarr,mdb.logsij0,mdb.dev_nu_lines,mdb.elower,qt)
-    gammaLMP = jit(vmap(gamma_exomol,(0,0,None,None)))(Parr,Tarr,mdb.n_Texp,mdb.alpha_ref)
-    gammaLMN=gamma_natural(mdb.A)
-    gammaLM=gammaLMP+gammaLMN[None,:]
-    sigmaDM=jit(vmap(doppler_sigma,(None,0,None)))(mdb.nu_lines,Tarr,molmass)        
-    return SijM,gammaLM,sigmaDM
+    qt = vmap(mdb.qr_interp)(Tarr)
+    SijM = jit(vmap(SijT, (0, None, None, None, 0)))(
+        Tarr, mdb.logsij0, mdb.dev_nu_lines, mdb.elower, qt)
+    gammaLMP = jit(vmap(gamma_exomol, (0, 0, None, None)))(
+        Parr, Tarr, mdb.n_Texp, mdb.alpha_ref)
+    gammaLMN = gamma_natural(mdb.A)
+    gammaLM = gammaLMP+gammaLMN[None, :]
+    sigmaDM = jit(vmap(doppler_sigma, (None, 0, None)))(
+        mdb.nu_lines, Tarr, molmass)
+    return SijM, gammaLM, sigmaDM
 
 
 @jit
-def ljert(x,a):
+def ljert(x, a):
     """ljert function, consisting of a combination of imwofz and imwofzs2.
-    
+
     Args:
-        x: 
+        x:
         a:
-        
+
     Returns:
         L(x,a) or Imag(wofz(x+ia))
 
-    Note:       
+    Note:
         ljert provides a L(x,a) function. This function accepts a scalar value as an input. Use jax.vmap to use a vector as an input.
-
     """
-    r2=x*x+a*a
-    return jnp.where(r2<111., imwofz(x,a), imwofzs2(x,a))
+    r2 = x*x+a*a
+    return jnp.where(r2 < 111., imwofz(x, a), imwofzs2(x, a))
 
 
 @custom_jvp
-def hjert(x,a):
-    """custom JVP version of the Voigt-Hjerting function, consisting of a combination of rewofz and real(wofzs2).
-    
+def hjert(x, a):
+    """custom JVP version of the Voigt-Hjerting function, consisting of a
+    combination of rewofz and real(wofzs2).
+
     Args:
         x: 
         a:
-        
+
     Returns:
         H(x,a) or Real(wofz(x+ia))
 
     Examples:
-       
+
        hjert provides a Voigt-Hjerting function w/ custom JVP. 
-       
+
        >>> hjert(1.0,1.0)
           DeviceArray(0.30474418, dtype=float32)
 
@@ -85,64 +87,63 @@ def hjert(x,a):
        >>> a=jnp.linspace(0.0,1.0,10)
        >>> vmap(hjert,(0,0),0)(x,a)
           DeviceArray([1.        , 0.8764037 , 0.7615196 , 0.6596299 , 0.5718791 ,0.49766064, 0.43553388, 0.3837772 , 0.34069115, 0.3047442 ],dtype=float32)
-
     """
-    r2=x*x+a*a
-    return jnp.where(r2<111., rewofz(x,a), rewofzs2(x,a))
+    r2 = x*x+a*a
+    return jnp.where(r2 < 111., rewofz(x, a), rewofzs2(x, a))
+
 
 @hjert.defjvp
 def hjert_jvp(primals, tangents):
     x, a = primals
     ux, ua = tangents
-    dHdx=2.0*a*ljert(x,a)-2.0*x*hjert(x,a)
-    dHda=2.0*x*ljert(x,a)+2.0*a*hjert(x,a)-2.0/jnp.sqrt(jnp.pi)
-    primal_out = hjert(x,a)
-    tangent_out = dHdx * ux  + dHda * ua
+    dHdx = 2.0*a*ljert(x, a)-2.0*x*hjert(x, a)
+    dHda = 2.0*x*ljert(x, a)+2.0*a*hjert(x, a)-2.0/jnp.sqrt(jnp.pi)
+    primal_out = hjert(x, a)
+    tangent_out = dHdx * ux + dHda * ua
     return primal_out, tangent_out
 
 
-
 @jit
-def voigtone(nu,sigmaD,gammaL):
-    """Custom JVP version of (non-vmapped) Voigt function using Voigt-Hjerting function 
+def voigtone(nu, sigmaD, gammaL):
+    """Custom JVP version of (non-vmapped) Voigt function using Voigt-Hjerting
+    function.
 
     Args:
-       nu: wavenumber 
-       sigmaD: sigma parameter in Doppler profile 
-       gammaL: broadening coefficient in Lorentz profile 
- 
+       nu: wavenumber
+       sigmaD: sigma parameter in Doppler profile
+       gammaL: broadening coefficient in Lorentz profile
+
     Returns:
        v: Voigt funtion
-
     """
-    
-    sfac=1.0/(jnp.sqrt(2)*sigmaD)
-    v=sfac*hjert(sfac*nu,sfac*gammaL)/jnp.sqrt(jnp.pi)
+
+    sfac = 1.0/(jnp.sqrt(2)*sigmaD)
+    v = sfac*hjert(sfac*nu, sfac*gammaL)/jnp.sqrt(jnp.pi)
     return v
 
 
 @jit
-def voigt(nuvector,sigmaD,gammaL):
-    """Custom JVP version of Voigt profile using Voigt-Hjerting function 
+def voigt(nuvector, sigmaD, gammaL):
+    """Custom JVP version of Voigt profile using Voigt-Hjerting function.
 
     Args:
        nu: wavenumber array
-       sigmaD: sigma parameter in Doppler profile 
-       gammaL: broadening coefficient in Lorentz profile 
- 
+       sigmaD: sigma parameter in Doppler profile
+       gammaL: broadening coefficient in Lorentz profile
+
     Returns:
        v: Voigt profile
-
     """
-    
-    sfac=1.0/(jnp.sqrt(2)*sigmaD)
-    vhjert=vmap(hjert,(0,None),0)
-    v=sfac*vhjert(sfac*nuvector,sfac*gammaL)/jnp.sqrt(jnp.pi)
+
+    sfac = 1.0/(jnp.sqrt(2)*sigmaD)
+    vhjert = vmap(hjert, (0, None), 0)
+    v = sfac*vhjert(sfac*nuvector, sfac*gammaL)/jnp.sqrt(jnp.pi)
     return v
 
+
 @jit
-def vvoigt(numatrix,sigmaD,gammas):
-    """Custom JVP version of vmaped voigt profile
+def vvoigt(numatrix, sigmaD, gammas):
+    """Custom JVP version of vmaped voigt profile.
 
     Args:
        numatrix: wavenumber matrix in R^(Nline x Nwav)
@@ -151,14 +152,14 @@ def vvoigt(numatrix,sigmaD,gammas):
 
     Return:
        Voigt profile vector in R^Nwav
-
     """
-    vmap_voigt=vmap(voigt,(0,0,0),0)
-    return vmap_voigt(numatrix,sigmaD,gammas)
+    vmap_voigt = vmap(voigt, (0, 0, 0), 0)
+    return vmap_voigt(numatrix, sigmaD, gammas)
+
 
 @jit
-def xsvector(numatrix,sigmaD,gammaL,Sij):
-    """Custom JVP version of cross section vector 
+def xsvector(numatrix, sigmaD, gammaL, Sij):
+    """Custom JVP version of cross section vector.
 
     Args:
        numatrix: wavenumber matrix in R^(Nline x Nwav)
@@ -168,13 +169,13 @@ def xsvector(numatrix,sigmaD,gammaL,Sij):
 
     Return:
        cross section vector in R^Nwav
-
     """
-    return jnp.dot((vvoigt(numatrix,sigmaD,gammaL)).T,Sij)
+    return jnp.dot((vvoigt(numatrix, sigmaD, gammaL)).T, Sij)
+
 
 @jit
-def xsmatrix(numatrix,sigmaDM,gammaLM,SijM):
-    """Custom JVP version of cross section matrix
+def xsmatrix(numatrix, sigmaDM, gammaLM, SijM):
+    """Custom JVP version of cross section matrix.
 
     Args:
        numatrix: wavenumber matrix in R^(Nline x Nwav)
@@ -184,7 +185,5 @@ def xsmatrix(numatrix,sigmaDM,gammaLM,SijM):
 
     Return:
        cross section matrix in R^(Nlayer x Nwav)
-
     """
-    return vmap(xsvector,(None,0,0,0))(numatrix,sigmaDM,gammaLM,SijM)
-
+    return vmap(xsvector, (None, 0, 0, 0))(numatrix, sigmaDM, gammaLM, SijM)
