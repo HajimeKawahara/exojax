@@ -2,6 +2,7 @@ import numpy as np
 from exojax.spec import atomllapi
 from exojax.utils.constants import ccgs, m_u, kB, hcperk, ecgs, hcgs, Rcgs, a0, eV2wn
 import jax.numpy as jnp
+from jax.lax import scan
 import warnings
 
 def Sij0(A, gupper, nu_lines, elower, QTref_284, QTmask, Irwin=False):
@@ -372,3 +373,164 @@ def gamma_KA3s(T, PH, PHH, PHe, ielem, iion, \
     gamma = (gamma6 + 10**gamRad + 10**gamSta) /(4*np.pi*ccgs)
 
     return(gamma)
+
+
+
+def get_unique_species(adb):
+    """Extract a unique list of line contributing species from VALD atomic database (adb)
+    
+    Args:
+       adb: adb instance made by the adbald class in moldb.py
+
+    Returns:
+       uspecies: unique elements of the combination of ielem and iion (jnp.array with a shape of N_line x 2(ielem and iion))
+    
+    """
+    seen=[]
+    get_unique_list = lambda seq: [x for x in seq if x not in seen and not seen.append(x)]
+    uspecies = jnp.array(  get_unique_list(jnp.vstack([adb.ielem, adb.iion]).T.tolist())  )
+    return(uspecies)
+
+
+
+def uspecies_info(uspecies, mods_ID=jnp.array([[0,0],]), mods=jnp.array([0,]), mods_id_trans=jnp.array([0,])):
+    """Provide arrays of information of the species that contribute the opacity ("uspecies" made with "get_unique_species")
+    
+    Args:
+       uspecies: jnp.array of unique list of the species contributing the opacity
+       mods_ID: jnp.array listing the species whose abundances are different from the solar
+       mods: jnp.array of each abundance deviation from the Sun [dex] for each modified species in mods_ID
+       mods_id_trans: jnp.array for converting index in "mods_ID" of each species into index in uspecies
+
+    Returns:
+       MMR_uspecies_list: jnp.array of mass mixing ratio in the Sun of each species in "uspecies"
+       atomicmass_uspecies_list: jnp.array of atomic mass [amu] of each species in "uspecies"
+       mods_uspecies_list: jnp.array of abundance deviation from the Sun [dex] for each species in "uspecies"
+
+    """
+    ipccd = atomllapi.load_atomicdata()
+    ielemarr = jnp.array(ipccd['ielem'])
+    Narr = jnp.array(10**(ipccd['solarA'])) #number density
+    massarr = jnp.array(ipccd['mass']) #mass of each neutral atom per particle [amu]
+    Nmassarr = Narr * massarr #mass density of each neutral species
+    
+    MMR_uspecies_list = np.zeros(len(uspecies))
+    atomicmass_uspecies_list = np.zeros(len(uspecies)) #[amu]
+    mods_id_trans = np.zeros(len(mods_ID), dtype=int)
+    for i, sp in enumerate(uspecies):
+        MMR_uspecies_list[i] = Nmassarr[ jnp.where(ielemarr==sp[0])[0][0] ] / jnp.sum(Nmassarr)
+        atomicmass_uspecies_list[i] = massarr[ jnp.where(ielemarr==sp[0])[0][0] ]
+        mods_id_trans[np.where((mods_ID[:,0]==sp[0]) & (mods_ID[:,1]==sp[1]))] = i
+    MMR_uspecies_list = jnp.array(MMR_uspecies_list)
+    atomicmass_uspecies_list = jnp.array(atomicmass_uspecies_list)
+    mods_id_trans = jnp.array(mods_id_trans) #jnp.array for converting index in "mods_ID" of each species into index in uspecies
+    
+    #for i, mit in enumerate(mods_id_trans):
+    #mods_uspecies_list[mit] = mods[i]
+    def f_Mmul(msi, null):
+        ms, i =msi
+        mit=mods_id_trans[i]
+        #mods_uspecies_list[mit] = mods[i]
+        ms = (ms.at[mit].set(mods[i]))
+        i = i+1
+        msi = [ms, i]
+        return msi, null
+    length = len(mods)
+    
+    def g_Mmul(msi0):
+        msi, null=scan(f_Mmul, msi0, None, length)
+        return(msi[0])
+    
+    mods_uspecies_list = jnp.zeros(len(uspecies))
+    mods_uspecies_list = g_Mmul([mods_uspecies_list, 0])
+
+    return(MMR_uspecies_list, atomicmass_uspecies_list, mods_uspecies_list)
+    
+    
+    
+def beta_uspecies_info(uspecies, mods_ID=jnp.array([[0,0],])):
+    """Provide arrays of information of the species that contribute the opacity ("uspecies" made with "get_unique_species")
+    
+    Args:
+       uspecies: jnp.array of unique list of the species contributing the opacity
+       mods_ID: jnp.array listing the species whose abundances are different from the solar
+       
+    Returns:
+       MMR_uspecies_list: jnp.array of mass mixing ratio in the Sun of each species in "uspecies"
+       atomicmass_uspecies_list: jnp.array of atomic mass [amu] of each species in "uspecies"
+       mods_id_trans: jnp.array for converting index in "mods_ID" of each species into index in uspecies
+    
+    """
+    ipccd = atomllapi.load_atomicdata()
+    ielemarr = jnp.array(ipccd['ielem'])
+    Narr = jnp.array(10**(ipccd['solarA'])) #number density
+    massarr = jnp.array(ipccd['mass']) #mass of each neutral atom per particle [amu]
+    Nmassarr = Narr * massarr #mass density of each neutral species
+    
+    MMR_uspecies_list = np.zeros(len(uspecies))
+    atomicmass_uspecies_list = np.zeros(len(uspecies)) #[amu]
+    mods_id_trans = np.zeros(len(mods_ID), dtype=int)
+    for i, sp in enumerate(uspecies):
+        MMR_uspecies_list[i] = Nmassarr[ jnp.where(ielemarr==sp[0])[0][0] ] / jnp.sum(Nmassarr)
+        atomicmass_uspecies_list[i] = massarr[ jnp.where(ielemarr==sp[0])[0][0] ]
+        mods_id_trans[np.where((mods_ID[:,0]==sp[0]) & (mods_ID[:,1]==sp[1]))] = i
+    MMR_uspecies_list = jnp.array(MMR_uspecies_list)
+    atomicmass_uspecies_list = jnp.array(atomicmass_uspecies_list)
+    mods_id_trans = jnp.array(mods_id_trans)
+
+    return(MMR_uspecies_list, atomicmass_uspecies_list, mods_id_trans)
+    
+    
+    
+def beta_Make_mods_uspecies_list(uspecies, mods=jnp.array([0,]), mods_id_trans=jnp.array([0,])):
+    """Make array of abundance modification of individual species
+    
+    Args:
+       uspecies: jnp.array of unique list of the species that contribute the opacity
+       mods: jnp.array of each abundance deviation from the Sun [dex] for each modified species in mods_ID
+       mods_id_trans: jnp.array for converting index in "mods_ID" of each species into index in uspecies
+    
+    Returns:
+       mods_uspecies_list: jnp.array of abundance deviation from the Sun [dex] for each species in "uspecies"
+    
+    """
+    #for i, mit in enumerate(mods_id_trans):
+    #mods_uspecies_list[mit] = mods[i]
+    def f_Mmul(msi, null):
+        ms, i =msi
+        mit=mods_id_trans[i]
+        #mods_uspecies_list[mit] = mods[i]
+        ms = (ms.at[mit].set(mods[i]))
+        i = i+1
+        msi = [ms, i]
+        return msi, null
+    length = len(mods)
+    
+    def g_Mmul(msi0):
+        msi, null=scan(f_Mmul, msi0, None, length)
+        return(msi[0])
+    
+    mods_uspecies_list = jnp.zeros(len(uspecies))
+    mods_uspecies_list = g_Mmul([mods_uspecies_list, 0])
+    return(mods_uspecies_list)
+    
+
+
+def padding_2Darray_for_each_atom(orig_arr, adb, sp):
+    """
+    
+    Args:
+       orig_arr:
+       adb: adb instance made by the adbald class in moldb.py
+       sp:
+       
+    Returns:
+       padded_valid_arr
+    
+    """
+    valid_indices = jnp.where((adb.ielem==sp[0])*(adb.iion==sp[1]), jnp.arange(adb.ielem.shape[0]), adb.ielem.shape[0])
+    padding_zero = jnp.zeros([1, orig_arr.shape[1]])
+    padded_arr = jnp.concatenate([orig_arr, padding_zero])
+    padded_valid_arr = padded_arr[jnp.sort(valid_indices)]
+    return(padded_valid_arr)
+
