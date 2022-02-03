@@ -3,8 +3,9 @@ from exojax.spec.make_numatrix import make_numatrix0
 import numpy as np
 import tqdm
 
-def xsection(nu,nu_lines,sigmaD,gammaL,Sij,memory_size=15.):
-    """compute cross section
+
+def xsection(nu, nu_lines, sigmaD, gammaL, Sij, memory_size=15.):
+    """compute cross section.
 
     Warning:
        This is NOT auto-differentiable function.
@@ -38,33 +39,42 @@ def xsection(nu,nu_lines,sigmaD,gammaL,Sij,memory_size=15.):
        >>> nu_lines=mdbCO.nu_lines
        >>> xsv=xsection(nus,nu_lines,sigmaD,gammaL,Sij,memory_size=30)
         100%|████████████████████████████████████████████████████| 456/456 [00:03<00:00, 80.59it/s]
-
     """
-    NL=len(nu_lines)
-    d=int(memory_size/(NL*4/1024./1024.))
-    if d>0:
-        Ni=int(len(nu)/d)    
-        xsv=[]
-        for i in tqdm.tqdm(range(0,Ni+1)):
-            s=int(i*d);e=int((i+1)*d);e=min(e,len(nu))
-            numatrix=make_numatrix0(nu[s:e],nu_lines,warning=False)
-            xsv = np.concatenate([xsv,xsvector(numatrix,sigmaD,gammaL,Sij)])
+    NL = len(nu_lines)
+    d = int(memory_size/(NL*4/1024./1024.))
+    if d > 0:
+        Ni = int(len(nu)/d)
+        xsv = []
+        for i in tqdm.tqdm(range(0, Ni+1)):
+            s = int(i*d)
+            e = int((i+1)*d)
+            e = min(e, len(nu))
+            numatrix = make_numatrix0(nu[s:e], nu_lines, warning=False)
+            xsv = np.concatenate(
+                [xsv, xsvector(numatrix, sigmaD, gammaL, Sij)])
     else:
-        NP=int((NL*4/1024./1024.)/memory_size)+1
-        d=int(memory_size/(int(NL/NP)*4/1024./1024.))
-        Ni=int(len(nu)/d)
-        dd=int(NL/NP)
-        xsv=[]
-        for i in tqdm.tqdm(range(0,Ni+1)):
-            s=int(i*d);e=int((i+1)*d);e=min(e,len(nu))
-            xsvtmp=np.zeros_like(nu[s:e])
-            for j in range(0,NP+1):
-                ss=int(j*dd);ee=int((j+1)*dd);ee=min(ee,NL)                
-                numatrix=make_numatrix0(nu[s:e],nu_lines[ss:ee],warning=False)
-                xsvtmp=xsvtmp+xsvector(numatrix,sigmaD[ss:ee],gammaL[ss:ee],Sij[ss:ee])  
-            xsv = np.concatenate([xsv,xsvtmp])
-        
-    if(nu.dtype!=np.float64):
-        print("Warning: nu is not np.float64 but ",nu.dtype)
+        NP = int((NL*4/1024./1024.)/memory_size)+1
+        d = int(memory_size/(int(NL/NP)*4/1024./1024.))
+        Ni = int(len(nu)/d)
+        dd = int(NL/NP)
+        xsv = []
+        for i in tqdm.tqdm(range(0, Ni+1)):
+            s = int(i*d)
+            e = int((i+1)*d)
+            e = min(e, len(nu))
+            xsvtmp = np.zeros_like(nu[s:e])
+            for j in range(0, NP+1):
+                ss = int(j*dd)
+                ee = int((j+1)*dd)
+                ee = min(ee, NL)
+                numatrix = make_numatrix0(
+                    nu[s:e], nu_lines[ss:ee], warning=False)
+                xsvtmp = xsvtmp + \
+                    xsvector(numatrix, sigmaD[ss:ee],
+                             gammaL[ss:ee], Sij[ss:ee])
+            xsv = np.concatenate([xsv, xsvtmp])
+
+    if(nu.dtype != np.float64):
+        print('Warning: nu is not np.float64 but ', nu.dtype)
 
     return xsv

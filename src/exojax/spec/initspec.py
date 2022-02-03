@@ -1,6 +1,7 @@
-""" Initialization for opacity computation. The functions in this module are a wrapper for initialization processes for opacity computation.
+"""Initialization for opacity computation.
 
-
+The functions in this module are a wrapper for initialization processes
+for opacity computation.
 """
 import jax.numpy as jnp
 import numpy as np
@@ -8,8 +9,9 @@ from exojax.spec.dit import npgetix
 from exojax.spec.make_numatrix import make_numatrix0
 from exojax.utils.instfunc import resolution_eslog
 
-def init_lpf(nu_lines,nu_grid):
-    """Initialization for LPF
+
+def init_lpf(nu_lines, nu_grid):
+    """Initialization for LPF.
 
     Args:
         nu_lines: wavenumber list of lines [Nline] (should be numpy F64)
@@ -17,13 +19,14 @@ def init_lpf(nu_lines,nu_grid):
 
     Returns:
        numatrix [Nline,Nnu]
-
     """
-    numatrix=make_numatrix0(nu_grid,nu_lines,warning=True)
+    numatrix = make_numatrix0(nu_grid, nu_lines, warning=True)
     return numatrix
 
-def init_dit(nu_lines,nu_grid, warning=False):
-    """Initialization for DIT. i.e. Generate nu contribution and index for the line shape density (actually, this is a numpy version of getix)
+
+def init_dit(nu_lines, nu_grid, warning=False):
+    """Initialization for DIT. i.e. Generate nu contribution and index for the
+    line shape density (actually, this is a numpy version of getix)
 
     Args:
         nu_lines: wavenumber list of lines [Nline] (should be numpy F64)
@@ -36,21 +39,22 @@ def init_dit(nu_lines,nu_grid, warning=False):
 
     Note:
        cont is the contribution for i=index. 1 - cont is the contribution for i=index+1. For other i, the contribution should be zero.
-
     """
-    warn_dtype64(nu_lines,warning,tag="nu_lines")
-    warn_dtype64(nu_grid,warning,tag="nu_grid")
-    warn_outside_wavenumber_grid(nu_lines,nu_grid)
-    
-    cont,index=npgetix(nu_lines,nu_grid)
-    dnu=nu_grid[1]-nu_grid[0]
-    pmarray=np.ones(len(nu_grid)+1)
-    pmarray[1::2]=pmarray[1::2]*-1
+    warn_dtype64(nu_lines, warning, tag='nu_lines')
+    warn_dtype64(nu_grid, warning, tag='nu_grid')
+    warn_outside_wavenumber_grid(nu_lines, nu_grid)
+
+    cont, index = npgetix(nu_lines, nu_grid)
+    dnu = nu_grid[1]-nu_grid[0]
+    pmarray = np.ones(len(nu_grid)+1)
+    pmarray[1::2] = pmarray[1::2]*-1
 
     return jnp.array(cont), jnp.array(index), pmarray
 
-def init_modit(nu_lines,nu_grid, warning=False):
-    """Initialization for MODIT. i.e. Generate nu contribution and index for the line shape density (actually, this is a numpy version of getix)
+
+def init_modit(nu_lines, nu_grid, warning=False):
+    """Initialization for MODIT. i.e. Generate nu contribution and index for
+    the line shape density (actually, this is a numpy version of getix)
 
     Args:
         nu_lines: wavenumber list of lines [Nline] (should be numpy F64)
@@ -65,21 +69,22 @@ def init_modit(nu_lines,nu_grid, warning=False):
 
     Note:
        cont is the contribution for i=index. 1 - cont is the contribution for i=index+1. For other i, the contribution should be zero. dq is computed using numpy not jnp.numpy. If you use jnp, you might observe a significant residual because of the float32 truncation error.
-
     """
-    warn_dtype64(nu_lines,warning,tag="nu_lines")
-    warn_dtype64(nu_grid,warning,tag="nu_grid")
-    warn_outside_wavenumber_grid(nu_lines,nu_grid)
-    
-    R=resolution_eslog(nu_grid)
-    cont,index=npgetix(nu_lines,nu_grid)
-    pmarray=np.ones(len(nu_grid)+1)
-    pmarray[1::2]=pmarray[1::2]*-1
-    
+    warn_dtype64(nu_lines, warning, tag='nu_lines')
+    warn_dtype64(nu_grid, warning, tag='nu_grid')
+    warn_outside_wavenumber_grid(nu_lines, nu_grid)
+
+    R = resolution_eslog(nu_grid)
+    cont, index = npgetix(nu_lines, nu_grid)
+    pmarray = np.ones(len(nu_grid)+1)
+    pmarray[1::2] = pmarray[1::2]*-1
+
     return jnp.array(cont), jnp.array(index), R, jnp.array(pmarray)
 
-def init_redit(nu_lines,nu_grid):
-    """Initialization for REDIT. i.e. Generate nu contribution and index for the line shape density (actually, this is a numpy version of getix)
+
+def init_redit(nu_lines, nu_grid):
+    """Initialization for REDIT. i.e. Generate nu contribution and index for
+    the line shape density (actually, this is a numpy version of getix)
 
     Args:
         nu_lines: wavenumber list of lines [Nline] (should be numpy F64)
@@ -93,33 +98,32 @@ def init_redit(nu_lines,nu_grid):
 
     Note:
        cont is the contribution for i=index. 1 - cont is the contribution for i=index+1. For other i, the contribution should be zero. dq is computed using numpy not jnp.numpy. If you use jnp, you might observe a significant residual because of the float32 truncation error.
-
     """
-    warn_dtype64(nu_lines,warning,tag="nu_lines")
-    warn_dtype64(nu_grid,warning,tag="nu_grid")
-    warn_outside_wavenumber_grid(nu_lines,nu_grid)
+    warn_dtype64(nu_lines, warning, tag='nu_lines')
+    warn_dtype64(nu_grid, warning, tag='nu_grid')
+    warn_outside_wavenumber_grid(nu_lines, nu_grid)
 
-    R=resolution_eslog(nu_grid)
-    cont,index=npgetix(nu_lines,nu_grid)
-    dq=R*(np.log(nu_grid[1])-np.log(nu_grid[0]))
-    
+    R = resolution_eslog(nu_grid)
+    cont, index = npgetix(nu_lines, nu_grid)
+    dq = R*(np.log(nu_grid[1])-np.log(nu_grid[0]))
+
     return jnp.array(cont), jnp.array(index), R, dq
 
 
-def warn_dtype64(arr,warning,tag=""):
-    """check arr's dtype
+def warn_dtype64(arr, warning, tag=''):
+    """check arr's dtype.
 
     Args:
        arr: input array
        warning: True/False
-       tag: 
-
+       tag:
     """
-    if(arr.dtype!=np.float64 and warning):
-        print("Warning!: "+tag+" is not np.float64 but ",arr.dtype)
+    if(arr.dtype != np.float64 and warning):
+        print('Warning!: '+tag+' is not np.float64 but ', arr.dtype)
 
-def warn_outside_wavenumber_grid(nu_lines,nu_grid):
-    """Check if all the line centers are in the wavenumber grid
+
+def warn_outside_wavenumber_grid(nu_lines, nu_grid):
+    """Check if all the line centers are in the wavenumber grid.
 
     Args:
        nu_lines: line center
@@ -127,8 +131,8 @@ def warn_outside_wavenumber_grid(nu_lines,nu_grid):
 
     Note:
        For MODIT/DIT, if the lines whose center are outside of the wavenumber grid, they contribute the edges of the wavenumber grid. This function is to check it. This warning often occurs when you set non-negative value to ``margin`` in MdbExomol, MdbHit, AdbVALD, and AdbKurucz in moldb. See `#190 <https://github.com/HajimeKawahara/exojax/issues/190>`_   for the details.
-
     """
-    if np.min(nu_lines)<np.min(nu_grid) or np.max(nu_lines)>np.max(nu_grid):
-        print("Warning: some of the line centers are outside of the wavenumber grid.")
-        print("Note: All of the line center should be within wavenumber grid for MODIT/DIT.")
+    if np.min(nu_lines) < np.min(nu_grid) or np.max(nu_lines) > np.max(nu_grid):
+        print('Warning: some of the line centers are outside of the wavenumber grid.')
+        print(
+            'Note: All of the line center should be within wavenumber grid for MODIT/DIT.')
