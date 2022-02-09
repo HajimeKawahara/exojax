@@ -399,7 +399,7 @@ def get_unique_species(adb):
        adb: adb instance made by the adbald class in moldb.py
 
     Returns:
-       uspecies: unique elements of the combination of ielem and iion (jnp.array with a shape of N_line x 2(ielem and iion))
+       uspecies: unique elements of the combination of ielem and iion (jnp.array with a shape of N_UniqueSpecies x 2(ielem and iion))
     
     """
     seen=[]
@@ -409,7 +409,7 @@ def get_unique_species(adb):
 
 
 
-def uspecies_info(uspecies, mods_ID = jnp.array([[0,0],]), mods = jnp.array([0,]), mods_id_trans = jnp.array([0,])):
+def uspecies_info(uspecies, mods_ID = jnp.array([[0,0],]), mods = jnp.array([0,])):
     """Provide arrays of information of the species that contribute the opacity ("uspecies" made with "get_unique_species")
     
     Args:

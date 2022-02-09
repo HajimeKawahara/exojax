@@ -10,6 +10,8 @@ from jax import jit, vmap
 from jax.lax import scan
 from exojax.spec.ditkernel import fold_voigt_kernel
 from jax.ops import index as joi
+from exojax.spec.atomll import padding_2Darray_for_each_atom
+from exojax.spec.rtransfer import dtauM
 
 
 def getix(x, xv):
@@ -285,3 +287,136 @@ def sigma_voigt(dgm_sigmaD, dgm_gammaL):
                  jnp.sqrt(0.2166*fdgm_gammaL**2+fdgm_sigmaD**2))
     sigma = fv/fac
     return sigma
+
+
+def vald(adb, Tarr, PH, PHe, PHH):
+    """(alias of lpf.vald)
+    
+    Args:
+       adb: adb instance made by the AdbVald class in moldb.py
+       Tarr: Temperature array
+       PH: Partial pressure array of neutral hydrogen (H)
+       PHe: Partial pressure array of neutral helium (He)
+       PHH: Partial pressure array of molecular hydrogen (H2)
+
+    Returns:
+       SijM: line intensity matrix
+       gammaLM: gammaL matrix
+       sigmaDM: sigmaD matrix
+    
+    """
+    from exojax.spec.lpf import vald as vald_
+    return(vald_(adb, Tarr, PH, PHe, PHH))
+
+
+def dtauM_vald_old(dParr, xsm, g, uspecies, mods_uspecies_list, MMR_uspecies_list, atomicmass_uspecies_list):
+    """Compute dtau caused by VALD lines from cross section xs (DIT)
+    
+    Args:
+       dParr: delta pressure profile (bar) [N_layer]
+       xsm: cross section matrix (cm^2) [N_layer, N_nus]
+       g: gravity (cm/s^2)
+       uspecies: unique elements of the combination of ielem and iion [N_UniqueSpecies x 2(ielem and iion)]
+       mods_uspecies_list: jnp.array of abundance deviation from the Sun [dex] for each species in "uspecies" [N_UniqueSpecies]
+       MMR_uspecies_list: jnp.array of mass mixing ratio in the Sun of each species in "uspecies" [N_UniqueSpecies]
+       atomicmass_uspecies_list: jnp.array of atomic mass [amu] of each species in "uspecies" [N_UniqueSpecies]
+    
+    Returns:
+       dtauatom: optical depth matrix [N_layer, N_nus]
+    
+    """
+    zero_to_ones = lambda arr: jnp.where(arr!=0, arr, 1.)
+    def floop(xi, null):
+        i, dtauatom = xi
+        # process---->
+        sp = uspecies[i]
+        MMRmetalMod = mods_uspecies_list[i] #add_to_deal_with_individual_elemental_abundance
+        MMR_X_I = MMR_uspecies_list[i] *10**MMRmetalMod #modify this into individual elemental abundances shortly... (tako)
+        mass_X_I = atomicmass_uspecies_list[i]
+        
+        dtau_each = dtauM(dParr, xsm, MMR_X_I*jnp.ones_like(dParr), mass_X_I, g)
+        # Note that the same mixing ratio is assumed for all atmospheric layers here...
+        dtauatom = dtauatom + dtau_each
+        # <----process
+        i = i+1
+        xi = [i, dtauatom]
+        return xi, null
+
+    def f_dtaual(xi0):
+        xi, null = scan(floop, xi0, None, length)
+        return xi
+
+    length = len(uspecies)
+    dtauatom_init = jnp.zeros_like(xsm)
+    xi_init = [0, dtauatom_init]
+
+    dtauatom = f_dtaual(xi_init)[1]
+    return(dtauatom)
+
+
+def dtauM_vald(dParr, g, adb, nus, cnu, indexnu, pmarray, SijM, gammaLM, sigmaDM, \
+        uspecies, mods_uspecies_list, MMR_uspecies_list, atomicmass_uspecies_list, dgm_sigmaD, dgm_gammaL):
+    """Compute dtau caused by VALD lines from cross section xs (DIT)
+    
+    Args:
+       dParr: delta pressure profile (bar) [N_layer]
+       g: gravity (cm/s^2)
+       adb: adb instance made by the adbald class in moldb.py
+       nus: wavenumber matrix (cm-1) [N_nus]
+       cnu: cont (contribution) jnp.array [N_line]
+       indexnu: index (index) jnp.array [N_line]
+       pmarray: (+1,-1) array [len(nu_grid)+1,]
+       SijM: line intensity matrix [N_layer x N_line]
+       gammaLM: gammaL matrix [N_layer x N_line]
+       sigmaDM: sigmaD matrix [N_layer x N_line]
+       uspecies: unique elements of the combination of ielem and iion [N_UniqueSpecies x 2(ielem and iion)]
+       mods_uspecies_list: jnp.array of abundance deviation from the Sun [dex] for each species in "uspecies" [N_UniqueSpecies]
+       MMR_uspecies_list: jnp.array of mass mixing ratio in the Sun of each species in "uspecies" [N_UniqueSpecies]
+       atomicmass_uspecies_list: jnp.array of atomic mass [amu] of each species in "uspecies" [N_UniqueSpecies]
+    
+    Returns:
+       dtauatom: optical depth matrix [N_layer, N_nus]
+    
+    """
+    zero_to_ones = lambda arr: jnp.where(arr!=0, arr, 1.)
+    def floop(xi, null):
+        i, dtauatom = xi
+        # process---->
+        #test220208 dgm_sigmaD = dgml_sigmaD[i]
+        sp = uspecies[i]
+        cnu_p = padding_2Darray_for_each_atom(cnu[:,None], adb, sp).reshape(cnu.shape)
+        indexnu_p = jnp.array(\
+                padding_2Darray_for_each_atom(indexnu[:,None], adb, sp).reshape(indexnu.shape)\
+                , dtype='int32')
+        sigmaDM_p = zero_to_ones(padding_2Darray_for_each_atom(sigmaDM.T, adb, sp)).T
+        gammaLM_p = zero_to_ones(padding_2Darray_for_each_atom(gammaLM.T, adb, sp)).T
+        SijM_p = padding_2Darray_for_each_atom(SijM.T, adb, sp).T
+        #test220207 dgm_sigmaD_p = dgmatrix(sigmaDM_p)
+        #test220207 dgm_gammaL_p = dgmatrix(gammaLM_p)
+        xsm_p = xsmatrix(cnu_p, indexnu_p, pmarray, sigmaDM_p, gammaLM_p, SijM_p, nus, dgm_sigmaD, dgm_gammaL)
+        #test220208  xsm_p = xsmatrix(cnu_p, indexnu_p, pmarray, sigmaDM_p.T, gammaLM_p.T, SijM_p.T, nus, dgml_sigmaD[i], dgm_gammaL)
+        xsm_p = jnp.abs(xsm_p)
+
+        MMRmetalMod = mods_uspecies_list[i] #add_to_deal_with_individual_elemental_abundance
+        MMR_X_I = MMR_uspecies_list[i] *10**MMRmetalMod #modify this into individual elemental abundances shortly... (tako)
+        mass_X_I = atomicmass_uspecies_list[i]
+        
+        dtau_each = dtauM(dParr, xsm_p, MMR_X_I*jnp.ones_like(dParr), mass_X_I, g)
+        # Note that the same mixing ratio is assumed for all atmospheric layers here...
+        dtauatom = dtauatom + dtau_each
+        # <----process
+        i = i+1
+        xi = [i, dtauatom]
+        return xi, null
+
+    def f_dtaual(xi0):
+        xi, null = scan(floop, xi0, None, length)
+        return xi
+
+    length = len(uspecies)
+    dtauatom_init = jnp.zeros([len(dParr), len(nus)])
+    xi_init = [0, dtauatom_init]
+
+    dtauatom = f_dtaual(xi_init)[1]
+    return(dtauatom)
+
