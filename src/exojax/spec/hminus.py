@@ -21,7 +21,7 @@ def log_hminus_continuum(nus, temperature, number_density_e, number_density_h):
        log10(absorption coefficient) [Nlayer,Nnu]
     """
     # wavelength in units of microns
-    wavelength_um = 1e4/nus[::-1]
+    wavelength_um = 1e4/nus
     # first, compute the cross sections (in cm4/dyne)
     vkappa_bf = vmap(bound_free_absorption, (None, 0), 0)
     vkappa_ff = vmap(free_free_absorption, (None, 0), 0)
