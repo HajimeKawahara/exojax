@@ -394,7 +394,6 @@ def dtauM_vald(dParr, g, adb, nus, cnu, indexnu, pmarray, SijM, gammaLM, sigmaDM
         #test220207 dgm_sigmaD_p = dgmatrix(sigmaDM_p)
         #test220207 dgm_gammaL_p = dgmatrix(gammaLM_p)
         xsm_p = xsmatrix(cnu_p, indexnu_p, pmarray, sigmaDM_p, gammaLM_p, SijM_p, nus, dgm_sigmaD, dgm_gammaL)
-        #test220208  xsm_p = xsmatrix(cnu_p, indexnu_p, pmarray, sigmaDM_p.T, gammaLM_p.T, SijM_p.T, nus, dgml_sigmaD[i], dgm_gammaL)
         xsm_p = jnp.abs(xsm_p)
 
         MMRmetalMod = mods_uspecies_list[i] #add_to_deal_with_individual_elemental_abundance
