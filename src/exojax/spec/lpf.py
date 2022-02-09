@@ -81,11 +81,10 @@ def vald(adb, Tarr, PH, PHe, PHH):
     return(SijM, gammaLM, sigmaDM)
     
     
-def dtauM_vald(Tarr, dParr, g, numatrix, adb, SijM, gammaLM, sigmaDM, uspecies, mods_uspecies_list, MMR_uspecies_list, atomicmass_uspecies_list):
+def dtauM_vald(dParr, g, numatrix, adb, SijM, gammaLM, sigmaDM, uspecies, mods_uspecies_list, MMR_uspecies_list, atomicmass_uspecies_list):
     """Compute dtau caused by VALD lines from line strength Sij (LPF)
     
     Args:
-       Tarr: temperature array (K) [N_layer]
        dParr: delta pressure profile (bar) [N_layer]
        g: gravity (cm/s^2)
        numatrix: wavenumber matrix (cm-1) [N_line x N_nus]
@@ -104,22 +103,24 @@ def dtauM_vald(Tarr, dParr, g, numatrix, adb, SijM, gammaLM, sigmaDM, uspecies, 
     """
     zero_to_ones = lambda arr: jnp.where(arr!=0, arr, 1.)
     def floop(xi, null):
-        i, uspecies, dtauatom = xi
+        i, dtauatom = xi
         # process---->
         sp = uspecies[i]
         numatrix_p = padding_2Darray_for_each_atom(numatrix, adb, sp)
-        sigmaDM_p = zero_to_ones(padding_2Darray_for_each_atom(sigmaDM.T, adb, sp))
-        gammaLM_p = padding_2Darray_for_each_atom(gammaLM.T, adb, sp)
-        SijM_p = padding_2Darray_for_each_atom(SijM.T, adb, sp)
-        xsm_p=xsmatrix(numatrix_p, sigmaDM_p.T, gammaLM_p.T, SijM_p.T)
+        sigmaDM_p = zero_to_ones(padding_2Darray_for_each_atom(sigmaDM.T, adb, sp)).T
+        gammaLM_p = padding_2Darray_for_each_atom(gammaLM.T, adb, sp).T
+        SijM_p = padding_2Darray_for_each_atom(SijM.T, adb, sp).T
+        xsm_p = xsmatrix(numatrix_p, sigmaDM_p, gammaLM_p, SijM_p)
+        
         MMRmetalMod = mods_uspecies_list[i] #add_to_deal_with_individual_elemental_abundance
         MMR_X_I = jnp.array(MMR_uspecies_list[i] *10**MMRmetalMod) #modify this into individual elemental abundances shortly... (tako)
         mass_X_I = jnp.array(atomicmass_uspecies_list[i])
-        dtau_each = dtauM(dParr, xsm_p, MMR_X_I*jnp.ones_like(Tarr), mass_X_I, g)
+        
+        dtau_each = dtauM(dParr, xsm_p, MMR_X_I*jnp.ones_like(dParr), mass_X_I, g)
         dtauatom = dtauatom + dtau_each
         # <----process
         i = i+1
-        xi = [i, uspecies, dtauatom]
+        xi = [i, dtauatom]
         return xi, null
 
     def f_dtaual(xi0):
@@ -127,10 +128,10 @@ def dtauM_vald(Tarr, dParr, g, numatrix, adb, SijM, gammaLM, sigmaDM, uspecies, 
         return xi
 
     length = len(uspecies)
-    dtauatom_init = jnp.zeros([len(Tarr), numatrix.shape[1]])
-    xi_init = [0, uspecies, dtauatom_init]
+    dtauatom_init = jnp.zeros([len(dParr), numatrix.shape[1]])
+    xi_init = [0, dtauatom_init]
 
-    dtauatom = f_dtaual(xi_init)[2]
+    dtauatom = f_dtaual(xi_init)[1]
     return(dtauatom)
 
 
