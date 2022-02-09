@@ -91,6 +91,7 @@ def gamma_vald3(T, PH, PHH, PHe, ielem, iion,
 
     # possibly with "ION**2" factor?
     C6 = 0.3e-30 * ((1/(ionE-chi-chi_lam)**2) - (1/(ionE-chi)**2))
+    C6 = jnp.abs(C6)  #test2202
     gam6H = 1e20 * C6**0.4 * PH*1e6 / T**0.7
     gam6He = 1e20 * C6**0.4 * PHe*1e6*0.41336 / T**0.7
     gam6HH = 1e20 * C6**0.4 * PHH*1e6*0.85 / T**0.7
