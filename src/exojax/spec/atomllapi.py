@@ -15,6 +15,19 @@ PeriodicTable[:] = [' 0', 'H', 'He', 'Li', 'Be', 'B', 'C', 'N', 'O', 'F', 'Ne', 
                     'Pr', 'Nd', 'Pm', 'Sm', 'Eu', 'Gd', 'Tb', 'Dy', 'Ho', 'Er', 'Tm', 'Yb', 'Lu', 'Hf', 'Ta', 'W', 'Re', 'Os', 'Ir', 'Pt', 'Au', 'Hg', 'Tl', 'Pb', 'Bi', 'Po', 'At', 'Rn', 'Fr', 'Ra', 'Ac', 'Th', 'Pa', 'U', 'Np', 'Pu', 'Am', 'Cm', 'Bk', 'Cf', 'Es', 'Fm', 'Md', 'No', 'Lr', 'Rf', 'Db', 'Sg', 'Bh', 'Hs', 'Mt', 'Ds', 'Rg', 'Cn', 'Nh', 'Fl', 'Mc', 'Lv', 'Ts', 'Og']
 
 
+def ielemion_to_FastChemSymbol(ielem, iion):
+    """Translate atomic number and ionization level into SpeciesSymbol in FastChem
+    
+    Args:
+        ielem:  atomic number (int) (e.g., Fe=26)
+        iion:  ionized level (int) (e.g., neutral=1, singly)
+        
+    Returns:
+        SpeciesSymbol in FastChem (str) (cf. https://github.com/exoclime/FastChem/blob/master/input/logK_ext.dat)
+    """
+    return(( PeriodicTable[ielem] + '1' + '+'*(iion-1) ).rstrip('1'))
+    
+    
 def read_ExStellar(stellarf):
     """VALD IO for "Extract stellar" file (long format)
 
