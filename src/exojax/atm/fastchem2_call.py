@@ -227,7 +227,7 @@ def mmr_species_fc2(SpeciesIndex, mixing_ratios, SpeciesMolecularWeight):
 
 
 def get_H_He_HH_VMR(fastchem, mixing_ratios):
-    """Extracting the VMR list of neutral hydrogen, neutral helium, and H2 molecule.
+    """Extract the VMR list of neutral hydrogen, neutral helium, and H2 molecule.
 
     Args:
         Parr: total pressure array [N_layer]
@@ -245,7 +245,7 @@ def get_H_He_HH_VMR(fastchem, mixing_ratios):
     
 
 def get_H_He_HH_pressure(Parr, fastchem, mixing_ratios):
-    """Extracting the VMR list of neutral hydrogen, neutral helium, and H2 molecule.
+    """Extract the partial pressure arrays for three species that dominate the pressure broadening (neutral hydrogen, neutral helium, and H2 molecule).
 
     Args:
         Parr: total pressure array [N_layer]
