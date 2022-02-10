@@ -15,7 +15,7 @@ from exojax.spec.hitran import SijT, doppler_sigma, gamma_natural
 
 #vald
 from exojax.spec.atomll import gamma_vald3, padding_2Darray_for_each_atom
-from exojax.spec.rtransfer import dtauM
+from exojax.spec.rtransfer import dtauM, dtauM_mmwl
 from jax.lax import scan
 
 
@@ -81,60 +81,6 @@ def vald(adb, Tarr, PH, PHe, PHH):
     return(SijM, gammaLM, sigmaDM)
     
     
-def dtauM_vald(dParr, g, numatrix, adb, SijM, gammaLM, sigmaDM, uspecies, mods_uspecies_list, MMR_uspecies_list, atomicmass_uspecies_list):
-    """Compute dtau caused by VALD lines from line strength Sij (LPF)
-    
-    Args:
-       dParr: delta pressure profile (bar) [N_layer]
-       g: gravity (cm/s^2)
-       numatrix: wavenumber matrix (cm-1) [N_line x N_nus]
-       adb: adb instance made by the adbald class in moldb.py
-       SijM: line intensity matrix [N_layer x N_line]
-       gammaLM: gammaL matrix [N_layer x N_line]
-       sigmaDM: sigmaD matrix [N_layer x N_line]
-       uspecies: unique elements of the combination of ielem and iion [N_UniqueSpecies x 2(ielem and iion)]
-       mods_uspecies_list: jnp.array of abundance deviation from the Sun [dex] for each species in "uspecies" [N_UniqueSpecies]
-       MMR_uspecies_list: jnp.array of mass mixing ratio in the Sun of each species in "uspecies" [N_UniqueSpecies]
-       atomicmass_uspecies_list: jnp.array of atomic mass [amu] of each species in "uspecies" [N_UniqueSpecies]
-    
-    Returns:
-       dtauatom: optical depth matrix [N_layer, N_nus]
-    
-    """
-    zero_to_ones = lambda arr: jnp.where(arr!=0, arr, 1.)
-    def floop(xi, null):
-        i, dtauatom = xi
-        # process---->
-        sp = uspecies[i]
-        numatrix_p = padding_2Darray_for_each_atom(numatrix, adb, sp)
-        sigmaDM_p = zero_to_ones(padding_2Darray_for_each_atom(sigmaDM.T, adb, sp)).T
-        gammaLM_p = padding_2Darray_for_each_atom(gammaLM.T, adb, sp).T
-        SijM_p = padding_2Darray_for_each_atom(SijM.T, adb, sp).T
-        xsm_p = xsmatrix(numatrix_p, sigmaDM_p, gammaLM_p, SijM_p)
-        
-        MMRmetalMod = mods_uspecies_list[i] #add_to_deal_with_individual_elemental_abundance
-        MMR_X_I = jnp.array(MMR_uspecies_list[i] *10**MMRmetalMod) #modify this into individual elemental abundances shortly... (tako)
-        mass_X_I = jnp.array(atomicmass_uspecies_list[i])
-        
-        dtau_each = dtauM(dParr, xsm_p, MMR_X_I*jnp.ones_like(dParr), mass_X_I, g)
-        dtauatom = dtauatom + dtau_each
-        # <----process
-        i = i+1
-        xi = [i, dtauatom]
-        return xi, null
-
-    def f_dtaual(xi0):
-        xi, null = scan(floop, xi0, None, length)
-        return xi
-
-    length = len(uspecies)
-    dtauatom_init = jnp.zeros([len(dParr), numatrix.shape[1]])
-    xi_init = [0, dtauatom_init]
-
-    dtauatom = f_dtaual(xi_init)[1]
-    return(dtauatom)
-
-
 @jit
 def ljert(x, a):
     """ljert function, consisting of a combination of imwofz and imwofzs2.
@@ -281,3 +227,104 @@ def xsmatrix(numatrix, sigmaDM, gammaLM, SijM):
        cross section matrix in R^(Nlayer x Nwav)
     """
     return vmap(xsvector, (None, 0, 0, 0))(numatrix, sigmaDM, gammaLM, SijM)
+
+
+def dtauM_vald(dParr, g, numatrix, adb, SijM, gammaLM, sigmaDM, uspecies, mods_uspecies_list, MMR_uspecies_list, atomicmass_uspecies_list):
+    """Compute dtau caused by VALD lines from line strength Sij (LPF)
+    
+    Args:
+       dParr: delta pressure profile (bar) [N_layer]
+       g: gravity (cm/s^2)
+       numatrix: wavenumber matrix (cm-1) [N_line x N_nus]
+       adb: adb instance made by the adbald class in moldb.py
+       SijM: line intensity matrix [N_layer x N_line]
+       gammaLM: gammaL matrix [N_layer x N_line]
+       sigmaDM: sigmaD matrix [N_layer x N_line]
+       uspecies: unique elements of the combination of ielem and iion [N_species x 2(ielem and iion)]
+       mods_uspecies_list: jnp.array of abundance deviation from the Sun [dex] for each species in "uspecies" [N_species]
+       MMR_uspecies_list: jnp.array of mass mixing ratio in the Sun of each species in "uspecies" [N_species]
+       atomicmass_uspecies_list: jnp.array of atomic mass [amu] of each species in "uspecies" [N_species]
+    
+    Returns:
+       dtauatom: optical depth matrix [N_layer, N_nus]
+    """
+    zero_to_ones = lambda arr: jnp.where(arr!=0, arr, 1.)
+    def floop(xi, null):
+        i, dtauatom = xi
+        # process---->
+        sp = uspecies[i]
+        numatrix_p = padding_2Darray_for_each_atom(numatrix, adb, sp)
+        sigmaDM_p = zero_to_ones(padding_2Darray_for_each_atom(sigmaDM.T, adb, sp)).T
+        gammaLM_p = padding_2Darray_for_each_atom(gammaLM.T, adb, sp).T
+        SijM_p = padding_2Darray_for_each_atom(SijM.T, adb, sp).T
+        xsm_p = xsmatrix(numatrix_p, sigmaDM_p, gammaLM_p, SijM_p)
+        
+        MMRmetalMod = mods_uspecies_list[i] #add_to_deal_with_individual_elemental_abundance
+        MMR_X_I = jnp.array(MMR_uspecies_list[i] *10**MMRmetalMod) #modify this into individual elemental abundances shortly... (tako)
+        mass_X_I = jnp.array(atomicmass_uspecies_list[i])
+        
+        dtau_each = dtauM(dParr, xsm_p, MMR_X_I*jnp.ones_like(dParr), mass_X_I, g)
+        dtauatom = dtauatom + dtau_each
+        # <----process
+        i = i+1
+        xi = [i, dtauatom]
+        return xi, null
+
+    def f_dtaual(xi0):
+        xi, null = scan(floop, xi0, None, length)
+        return xi
+
+    length = len(uspecies)
+    dtauatom_init = jnp.zeros([len(dParr), numatrix.shape[1]])
+    xi_init = [0, dtauatom_init]
+
+    dtauatom = f_dtaual(xi_init)[1]
+    return(dtauatom)
+
+
+def dtauM_vald_mmwl(dParr, g, numatrix, adb, SijM, gammaLM, sigmaDM, uspecies, VMR_uspecies, mmw):
+    """Compute dtau caused by VALD lines from line strength Sij (LPF)
+    
+    Args:
+       dParr: delta pressure profile (bar) [N_layer]
+       g: gravity (cm/s^2)
+       numatrix: wavenumber matrix (cm-1) [N_line x N_nus]
+       adb: adb instance made by the adbald class in moldb.py
+       SijM: line intensity matrix [N_layer x N_line]
+       gammaLM: gammaL matrix [N_layer x N_line]
+       sigmaDM: sigmaD matrix [N_layer x N_line]
+       uspecies: unique elements of the combination of ielem and iion [N_species x 2(ielem and iion)]
+       VMR_uspecies: volume mixing ratio of each species in each atmospheric layer [N_species x N_layer]
+       mmw: mean molecular weight of atmosphere [N_layer]
+
+    Returns:
+       dtauatom: optical depth matrix [N_layer, N_nus]
+    """
+    zero_to_ones = lambda arr: jnp.where(arr!=0, arr, 1.)
+    def floop(xi, null):
+        i, dtauatom = xi
+        # process---->
+        sp = uspecies[i]
+        numatrix_p = padding_2Darray_for_each_atom(numatrix, adb, sp)
+        sigmaDM_p = zero_to_ones(padding_2Darray_for_each_atom(sigmaDM.T, adb, sp)).T
+        gammaLM_p = padding_2Darray_for_each_atom(gammaLM.T, adb, sp).T
+        SijM_p = padding_2Darray_for_each_atom(SijM.T, adb, sp).T
+        xsm_p = xsmatrix(numatrix_p, sigmaDM_p, gammaLM_p, SijM_p)
+                
+        dtau_each = dtauM_mmwl(dParr, xsm_p, VMR_uspecies[i], mmw, g)
+        dtauatom = dtauatom + dtau_each
+        # <----process
+        i = i+1
+        xi = [i, dtauatom]
+        return xi, null
+
+    def f_dtaual(xi0):
+        xi, null = scan(floop, xi0, None, length)
+        return xi
+
+    length = len(uspecies)
+    dtauatom_init = jnp.zeros([len(dParr), numatrix.shape[1]])
+    xi_init = [0, dtauatom_init]
+
+    dtauatom = f_dtaual(xi_init)[1]
+    return(dtauatom)
