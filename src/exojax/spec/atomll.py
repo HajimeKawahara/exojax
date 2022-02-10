@@ -392,7 +392,6 @@ def gamma_KA3s(T, PH, PHH, PHe, ielem, iion,
     return(gamma)
 
 
-
 def get_unique_species(adb):
     """Extract a unique list of line contributing species from VALD atomic database (adb)
     
@@ -409,7 +408,38 @@ def get_unique_species(adb):
     return(uspecies)
 
 
+def ielemion_to_FastChemSymbol(ielem, iion):
+    """Translate atomic number and ionization level into SpeciesSymbol in FastChem
+    
+    Args:
+        ielem:  atomic number (int) (e.g., Fe=26)
+        iion:  ionized level (int) (e.g., neutral=1, singly)
+        
+    Returns:
+        SpeciesSymbol in FastChem (str) (cf. https://github.com/exoclime/FastChem/blob/master/input/logK_ext.dat)
+    """
+    return(( atomllapi.PeriodicTable[ielem] + '1' + '+'*(iion-1) ).rstrip('1'))
+    
+    
+def get_VMR_uspecies(FCSpIndex_uspecies, mixing_ratios):
+    """Extract volume mixing ratio (VMR) of the species that contribute the opacity ("uspecies" made with "get_unique_species")
+    
+    Args:
+        FCSpIndex_uspecies: SpeciesIndex in FastChem for each species of interest [N_species]
+        mixing_ratios: volume mixing ratios of all available gases calculated using fastchem2_call.run_fastchem [N_layer x N_species]
+    
+    Returns:
+        VMR_uspecies: VMR of each species in each atmospheric layer [N_species x N_layer]
+    """
+    def floop(i_sp, VMR_sp):
+        VMR_sp = mixing_ratios[:, FCSpIndex_uspecies[i_sp]]
+        i_sp = i_sp + 1
+        return(i_sp, VMR_sp)
 
+    i, VMR_uspecies = scan(floop, 0, jnp.zeros(len(FCSpIndex_uspecies)))
+    return(VMR_uspecies)
+    
+    
 def uspecies_info(uspecies, mods_ID = jnp.array([[0,0],]), mods = jnp.array([0,])):
     """Provide arrays of information of the species that contribute the opacity ("uspecies" made with "get_unique_species")
     
@@ -464,7 +494,6 @@ def uspecies_info(uspecies, mods_ID = jnp.array([[0,0],]), mods = jnp.array([0,]
     return(MMR_uspecies_list, atomicmass_uspecies_list, mods_uspecies_list)
     
     
-    
 def beta_uspecies_info(uspecies, mods_ID=jnp.array([[0,0],])):
     """Provide arrays of information of the species that contribute the opacity ("uspecies" made with "get_unique_species")
     
@@ -498,7 +527,6 @@ def beta_uspecies_info(uspecies, mods_ID=jnp.array([[0,0],])):
     return(MMR_uspecies_list, atomicmass_uspecies_list, mods_id_trans)
     
     
-    
 def beta_Make_mods_uspecies_list(uspecies, mods=jnp.array([0,]), mods_id_trans=jnp.array([0,])):
     """Make array of abundance modification of individual species
     
@@ -530,7 +558,6 @@ def beta_Make_mods_uspecies_list(uspecies, mods=jnp.array([0,]), mods_id_trans=j
     mods_uspecies_list = jnp.zeros(len(uspecies))
     mods_uspecies_list = g_Mmul([mods_uspecies_list, 0])
     return(mods_uspecies_list)
-    
 
 
 def padding_2Darray_for_each_atom(orig_arr, adb, sp):
