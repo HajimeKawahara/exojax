@@ -253,10 +253,10 @@ def dtauM_vald(dParr, g, numatrix, adb, SijM, gammaLM, sigmaDM, uspecies, mods_u
         i, dtauatom = xi
         # process---->
         sp = uspecies[i]
-        numatrix_p = padding_2Darray_for_each_atom(numatrix, adb, sp)
-        sigmaDM_p = zero_to_ones(padding_2Darray_for_each_atom(sigmaDM.T, adb, sp)).T
-        gammaLM_p = padding_2Darray_for_each_atom(gammaLM.T, adb, sp).T
-        SijM_p = padding_2Darray_for_each_atom(SijM.T, adb, sp).T
+        numatrix_p = padding_2Darray_for_each_atom(numatrix.T, adb, sp).T
+        sigmaDM_p = zero_to_ones(padding_2Darray_for_each_atom(sigmaDM, adb, sp))
+        gammaLM_p = padding_2Darray_for_each_atom(gammaLM, adb, sp)
+        SijM_p = padding_2Darray_for_each_atom(SijM, adb, sp)
         xsm_p = xsmatrix(numatrix_p, sigmaDM_p, gammaLM_p, SijM_p)
         
         MMRmetalMod = mods_uspecies_list[i] #add_to_deal_with_individual_elemental_abundance
@@ -305,10 +305,10 @@ def dtauM_vald_mmwl(dParr, g, numatrix, adb, SijM, gammaLM, sigmaDM, uspecies, V
         i, dtauatom = xi
         # process---->
         sp = uspecies[i]
-        numatrix_p = padding_2Darray_for_each_atom(numatrix, adb, sp)
-        sigmaDM_p = zero_to_ones(padding_2Darray_for_each_atom(sigmaDM.T, adb, sp)).T
-        gammaLM_p = padding_2Darray_for_each_atom(gammaLM.T, adb, sp).T
-        SijM_p = padding_2Darray_for_each_atom(SijM.T, adb, sp).T
+        numatrix_p = padding_2Darray_for_each_atom(numatrix.T, adb, sp).T
+        sigmaDM_p = zero_to_ones(padding_2Darray_for_each_atom(sigmaDM, adb, sp))
+        gammaLM_p = padding_2Darray_for_each_atom(gammaLM, adb, sp)
+        SijM_p = padding_2Darray_for_each_atom(SijM, adb, sp)
         xsm_p = xsmatrix(numatrix_p, sigmaDM_p, gammaLM_p, SijM_p)
                 
         dtau_each = dtauM_mmwl(dParr, xsm_p, VMR_uspecies[i], mmw, g)

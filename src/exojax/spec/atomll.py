@@ -440,11 +440,12 @@ def get_VMR_uspecies(FCSpIndex_uspecies, mixing_ratios):
     return(VMR_uspecies)
     
     
-def uspecies_info(uspecies, mods_ID = jnp.array([[0,0],]), mods = jnp.array([0,])):
+def uspecies_info(uspecies, ielem_to_index_of_ipccd, mods_ID = jnp.array([[0,0],]), mods = jnp.array([0,]), mods_id_trans = jnp.array([])):
     """Provide arrays of information of the species that contribute the opacity ("uspecies" made with "get_unique_species")
     
     Args:
        uspecies: jnp.array of unique list of the species contributing the opacity
+       ielem_to_index_of_ipccd: jnp.array for conversin from ielem to the index of ipccd
        mods_ID: jnp.array listing the species whose abundances are different from the solar
        mods: jnp.array of each abundance deviation from the Sun [dex] for each modified species in mods_ID
        mods_id_trans: jnp.array for converting index in "mods_ID" of each species into index in uspecies
@@ -461,17 +462,18 @@ def uspecies_info(uspecies, mods_ID = jnp.array([[0,0],]), mods = jnp.array([0,]
     massarr = jnp.array(ipccd['mass']) # mass of each neutral atom per particle [amu]
     Nmassarr = Narr * massarr # mass density of each neutral species
     
-    MMR_uspecies_list = np.zeros(len(uspecies))
-    atomicmass_uspecies_list = np.zeros(len(uspecies)) #[amu]
-    mods_id_trans = np.zeros(len(mods_ID), dtype=int)
-    for i, sp in enumerate(uspecies):
-        MMR_uspecies_list[i] = Nmassarr[ jnp.where(ielemarr == sp[0])[0][0] ] / jnp.sum(Nmassarr)
-        atomicmass_uspecies_list[i] = massarr[ jnp.where(ielemarr == sp[0])[0][0] ]
-        mods_id_trans[np.where((mods_ID[:,0] == sp[0]) & (mods_ID[:,1] == sp[1]))] = i
-    MMR_uspecies_list = jnp.array(MMR_uspecies_list)
-    atomicmass_uspecies_list = jnp.array(atomicmass_uspecies_list)
-    mods_id_trans = jnp.array(mods_id_trans) # jnp.array for converting index in "mods_ID" of each species into index in uspecies
-    
+    def floopMMR(i, arr):
+        arr = Nmassarr[ ielem_to_index_of_ipccd[uspecies[i][0]] ] / jnp.sum(Nmassarr)
+        i = i + 1
+        return(i, arr)
+    MMR_uspecies_list = scan(floopMMR, 0, np.zeros(len(uspecies)))[1]
+
+    def floopAM(i, arr):
+        arr = massarr[ ielem_to_index_of_ipccd[uspecies[i][0]] ]
+        i = i + 1
+        return(i, arr)
+    atomicmass_uspecies_list = scan(floopAM, 0, np.zeros(len(uspecies)))[1] # [amu]
+
     # for i, mit in enumerate(mods_id_trans):
     # mods_uspecies_list[mit] = mods[i]
     def f_Mmul(msi, null):
@@ -572,9 +574,11 @@ def padding_2Darray_for_each_atom(orig_arr, adb, sp):
        padded_valid_arr
     
     """
+    orig_arr = orig_arr.T
     valid_indices = jnp.where(
         (adb.ielem == sp[0]) * (adb.iion == sp[1]), jnp.arange(adb.ielem.shape[0]), adb.ielem.shape[0])
     padding_zero = jnp.zeros([1, orig_arr.shape[1]])
     padded_arr = jnp.concatenate([orig_arr, padding_zero])
     padded_valid_arr = padded_arr[jnp.sort(valid_indices)]
+    padded_valid_arr = padded_valid_arr.T
     return(padded_valid_arr)

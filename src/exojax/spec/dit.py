@@ -384,13 +384,13 @@ def dtauM_vald(dParr, g, adb, nus, cnu, indexnu, pmarray, SijM, gammaLM, sigmaDM
         # process---->
         #test220208 dgm_sigmaD = dgml_sigmaD[i]
         sp = uspecies[i]
-        cnu_p = padding_2Darray_for_each_atom(cnu[:,None], adb, sp).reshape(cnu.shape)
+        cnu_p = padding_2Darray_for_each_atom(cnu[None,:], adb, sp).reshape(cnu.shape)
         indexnu_p = jnp.array(\
-                padding_2Darray_for_each_atom(indexnu[:,None], adb, sp).reshape(indexnu.shape)\
+                padding_2Darray_for_each_atom(indexnu[None,:], adb, sp).reshape(indexnu.shape)\
                 , dtype='int32')
-        sigmaDM_p = zero_to_ones(padding_2Darray_for_each_atom(sigmaDM.T, adb, sp)).T
-        gammaLM_p = zero_to_ones(padding_2Darray_for_each_atom(gammaLM.T, adb, sp)).T
-        SijM_p = padding_2Darray_for_each_atom(SijM.T, adb, sp).T
+        sigmaDM_p = zero_to_ones(padding_2Darray_for_each_atom(sigmaDM, adb, sp))
+        gammaLM_p = zero_to_ones(padding_2Darray_for_each_atom(gammaLM, adb, sp))
+        SijM_p = padding_2Darray_for_each_atom(SijM, adb, sp)
         #test220207 dgm_sigmaD_p = dgmatrix(sigmaDM_p)
         #test220207 dgm_gammaL_p = dgmatrix(gammaLM_p)
         xsm_p = xsmatrix(cnu_p, indexnu_p, pmarray, sigmaDM_p, gammaLM_p, SijM_p, nus, dgm_sigmaD, dgm_gammaL)
