@@ -562,13 +562,40 @@ def beta_Make_mods_uspecies_list(uspecies, mods=jnp.array([0,]), mods_id_trans=j
     return(mods_uspecies_list)
 
 
-def padding_2Darray_for_each_atom(orig_arr, adb, sp):
+def sep_arr_of_sp(arr, adb, trans_jnp=True, inttype=False):
+    """Split by species the jnp.array stored as instance variable in adb, and pad with zeros to adjust the length
     """
+    uspecies = get_unique_species(adb)
+    N_usp = len(uspecies)
+    len_of_eachsp = np.zeros(N_usp, dtype='int')
+    for i, sp in enumerate(uspecies):
+        len_of_eachsp[i] = len(np.where((adb.ielem == sp[0]) * (adb.iion == sp[1]))[0])
+    L_max = np.max(len_of_eachsp)
+    
+    arr_stacksp = np.zeros([N_usp, L_max])
+    pad0 = lambda arr, L: np.pad(arr, ((0, L-len(arr))))
+    for i, sp in enumerate(uspecies):
+        index_sp = np.where((adb.ielem == sp[0]) * (adb.iion == sp[1]))[0]
+        arr_t = jnp.take(arr, index_sp)
+        arr_tp = pad0(arr_t, L_max)
+        arr_stacksp[i] = arr_tp
+    if trans_jnp:
+        if inttype:
+            arr_stacksp = jnp.array(arr_stacksp, dtype='int32')
+        else:
+            arr_stacksp = jnp.array(arr_stacksp)
+    
+    return(arr_stacksp)
+    
+
+def padding_2Darray_for_each_atom(orig_arr, adb, sp):
+    """Extract only data of the species of interest from 2D-array and pad with zeros to adjust the length
     
     Args:
-       orig_arr:
-       adb: adb instance made by the adbald class in moldb.py
-       sp:
+        orig_arr: array [N_any (e.g., N_nu or N_layer), N_line]
+            Note that if your ARRAY is 1D, it must be broadcasted with ARRAY[None,:], and the output must be also reshaped with OUTPUTARRAY.reshape(ARRAY.shape)
+        adb: adb instance made by the adbald class in moldb.py
+        sp: array of [ielem, iion]
        
     Returns:
        padded_valid_arr

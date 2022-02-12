@@ -81,6 +81,44 @@ def vald(adb, Tarr, PH, PHe, PHH):
     return(SijM, gammaLM, sigmaDM)
     
     
+def vald_sep(Tarr, PH, PHe, PHH, \
+            qt_284_T, QTmask, \
+             logsij0, nu_lines, ielem, iion, dev_nu_lines, elower, eupper, atomicmass, ionE, gamRad, gamSta, vdWdamp, ):
+    """Compute VALD line infromation required for LPF for separated each species
+    
+    Args:    (TBC)
+       adb: adb instance made by the AdbVald class in moldb.py
+       Tarr: Temperature array
+       PH: Partial pressure array of neutral hydrogen (H)
+       PHe: Partial pressure array of neutral helium (He)
+       PHH: Partial pressure array of molecular hydrogen (H2)
+
+    Returns:
+       SijM: line intensity matrix
+       gammaLM: gammaL matrix
+       sigmaDM: sigmaD matrix
+    
+    """
+    #Compute normalized partition function for each species
+    qt = qt_284_T[:,QTmask]
+
+    #Compute line strength matrix
+    SijM = jit(vmap(SijT,(0,None,None,None,0)))\
+        (Tarr, logsij0, nu_lines, elower, qt)
+    SijM = jnp.nan_to_num(SijM, nan = 0.0)
+
+    #Compute gamma parameters for the pressure and natural broadenings
+    gammaLM = jit(vmap(gamma_vald3,(0,0,0,0,None,None,None,None,None,None,None,None,None,None,None)))\
+            (Tarr, PH, PHH, PHe, ielem, iion, dev_nu_lines, elower, eupper, atomicmass, ionE, gamRad, gamSta, vdWdamp, 1.0)
+
+    #Compute doppler broadening
+    sigmaDMn=jit(vmap(doppler_sigma,(None,0,None)))\
+        (nu_lines, Tarr, atomicmass)
+    sigmaDM = jnp.where(sigmaDMn != 0, sigmaDMn, 1.)
+    
+    return(SijM, gammaLM, sigmaDM)
+
+
 @jit
 def ljert(x, a):
     """ljert function, consisting of a combination of imwofz and imwofzs2.
@@ -327,4 +365,25 @@ def dtauM_vald_mmwl(dParr, g, numatrix, adb, SijM, gammaLM, sigmaDM, uspecies, V
     xi_init = [0, dtauatom_init]
 
     dtauatom = f_dtaual(xi_init)[1]
+    return(dtauatom)
+
+
+def dtauM_vald_mmwl_sep(dParr, g, numatrix, SijM, gammaLM, sigmaDM, VMR, mmw):
+    """Compute dtau caused by VALD lines from line strength Sij (LPF)
+    
+    Args:
+       dParr: delta pressure profile (bar) [N_layer]
+       g: gravity (cm/s^2)
+       numatrix: wavenumber matrix (cm-1) [N_line x N_nus]
+       SijM: line intensity matrix [N_layer x N_line]
+       gammaLM: gammaL matrix [N_layer x N_line]
+       sigmaDM: sigmaD matrix [N_layer x N_line]
+       VMR: volume mixing ratio of the species in each atmospheric layer [N_layer]
+       mmw: mean molecular weight of atmosphere [N_layer]
+
+    Returns:
+       dtauatom: optical depth matrix [N_layer, N_nus]
+    """
+    xsm = xsmatrix(numatrix, sigmaDM, gammaLM, SijM)
+    dtauatom = dtauM_mmwl(dParr, xsm, VMR, mmw, g)
     return(dtauatom)
