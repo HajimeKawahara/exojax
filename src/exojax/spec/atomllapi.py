@@ -301,6 +301,24 @@ def load_atomicdata():
     return ipccd
     
     
+def make_ielem_to_index_of_ipccd():
+    """index conversion for atomll.uspecies_info (Preparation for LPF)
+    
+    Returns:
+        ielem_to_index_of_ipccd: jnp.array to convert ielem into index of ipccd
+    """
+    import jax.numpy as jnp
+    ielemarr = jnp.array(load_atomicdata()['ielem'])
+
+    #jnp.array for conversin from ielem to the index of ipccd
+    ielem_to_index_of_ipccd = np.zeros(np.max(ielemarr)+1, dtype='int')
+    for i in range(np.max(ielemarr)+1):
+        if (i in ielemarr):
+            ielem_to_index_of_ipccd[i] = np.where(ielemarr==i)[0][0]
+    ielem_to_index_of_ipccd = jnp.array(ielem_to_index_of_ipccd)
+    return(ielem_to_index_of_ipccd)
+
+    
 def load_ionization_energies():
     """Load atomic ionization energies.
     
