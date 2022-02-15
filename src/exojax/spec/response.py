@@ -37,7 +37,7 @@ def rotkernel_jvp(primals, tangents):
     ux, uu1, uu2 = tangents
     x2 = x*x
     fac=jnp.sqrt(1.0 - x2)
-    dHdx = jnp.where(x2 <= 1.0, x*(2.0+u2*(2.0 - 4.0*x2)+u1*(-2.0 + jnp.pi*fac)/fac, 0.0)
+    dHdx = jnp.where(x2 <= 1.0, x*(2.0+u2*(2.0 - 4.0*x2)+u1*(-2.0 + jnp.pi*fac)/fac, 0.0))
     dHdu1 = jnp.where(x2 <= 1.0, -2.0*fac + jnp.pi*(1.0-x2)/2.0, 0.0)
     dHdu2 = jnp.where(x2 <= 1.0, -2.0*fac*(1.0+2.0*x2)/3.0, 0.0)
     primal_out = rotkernel(x, u1, u2)
