@@ -318,6 +318,9 @@ def make_ielem_to_index_of_ipccd():
     ielem_to_index_of_ipccd = jnp.array(ielem_to_index_of_ipccd)
     return(ielem_to_index_of_ipccd)
 
+
+ielem_to_index_of_ipccd = make_ielem_to_index_of_ipccd()
+
     
 def load_ionization_energies():
     """Load atomic ionization energies.
