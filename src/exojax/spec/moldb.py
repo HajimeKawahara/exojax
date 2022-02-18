@@ -423,7 +423,7 @@ class MdbHit(object):
             if not self.path.exists():
                 self.download()
         else:
-            molec = str(self.path.name)[0:2]
+            molnm = str(self.path.name)[0:2]
             self.nurange = [np.min(nurange), np.max(nurange)]
 
             imin = np.searchsorted(
@@ -432,7 +432,7 @@ class MdbHit(object):
                 numinf, self.nurange[1], side='right')-1  # left side
             for k, i in enumerate(range(imin, imax+1)):
                 sub_file = self.path.stem / \
-                    pathlib.Path(molec+'_'+numtag[i]+'_HITEMP2010.par')
+                    pathlib.Path(molnm+'_'+numtag[i]+'_HITEMP2010.par')
                 if not sub_file.exists():
                     self.download(numtag=numtag[i])
 
@@ -551,14 +551,14 @@ class MdbHit(object):
             print('HITEMP download failed')
 
         if numtag is not None:
-            molec = str(self.path.name)[0:2]
-            if molec == '01':
+            molnm = str(self.path.name)[0:2]
+            if molnm == '01':
                 os.makedirs(str(self.path), exist_ok=True)
                 dldir = 'H2O_line_list/'
-            if molec == '02':
+            if molnm == '02':
                 os.makedirs(str(self.path), exist_ok=True)
                 dldir = 'CO2_line_list/'
-            flname = molec+'_'+numtag+'_HITEMP2010.zip'
+            flname = molnm+'_'+numtag+'_HITEMP2010.zip'
             try:
                 url = url_HITEMP10()+dldir+flname
                 urllib.request.urlretrieve(url, str(self.path/flname))
