@@ -14,6 +14,7 @@ Basics
    tutorials/forward_modeling.rst	     
    tutorials/metals.rst	     
    tutorials/reverse_modeling.rst	     
+   tutorials/optimize_spectrum_JAXopt.rst	     
    tutorials/MODITxs.rst      
    tutorials/MODITch4.rst
    tutorials/MODITrv.rst
