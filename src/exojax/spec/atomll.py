@@ -420,9 +420,46 @@ def ielemion_to_FastChemSymbol(ielem, iion):
     """
     return(( atomllapi.PeriodicTable[ielem] + '1' + '+'*(iion-1) ).rstrip('1'))
     
+
+def get_VMR_uspecies(uspecies, mods_ID, mods):
+    """Extract VMR arrays of the species that contribute the opacity ("uspecies" made with "get_unique_species")
     
-def get_VMR_uspecies(FCSpIndex_uspecies, mixing_ratios):
-    """Extract volume mixing ratio (VMR) of the species that contribute the opacity ("uspecies" made with "get_unique_species")
+    Args:
+        uspecies: jnp.array of unique list of the species contributing the opacity [N_species x 2(ielem and iion)]
+        mods_ID: jnp.array listing the species whose abundances are different from the solar [N_modified_species x 2(ielem and iion)]
+        mods: jnp.array of each abundance deviation from the Sun [dex] for each modified species listed in mods_ID [N_modified_species]
+
+    Returns:
+        VMR_uspecies: jnp.array of volume mixing ratio [N_species]
+    """
+    mods_ID_uspecies = jnp.zeros(len(mods_ID), dtype=int)
+    
+    def f_miu(i_and_arr, sp):
+        i, arr = i_and_arr
+        i_and_arr = i + 1, jnp.where(((mods_ID[:,0] == sp[0]) & (mods_ID[:,1] == sp[1])), i, arr)
+        return(i_and_arr, sp)
+    mods_ID_uspecies = scan(f_miu, (0, mods_ID_uspecies), uspecies)[0][1]
+
+    ipccd = atomllapi.load_atomicdata()
+    ItIoI = atomllapi.ielem_to_index_of_ipccd
+    Narr = jnp.array(10**(ipccd['solarA'])) # number density in the Sun
+    
+    f_vmr = lambda i, sp: (i, jnp.where(sp[1] == 1, \
+                                        Narr[ ItIoI[sp[0]] ] / jnp.sum(Narr), \
+                                        Narr[ ItIoI[sp[0]] ] / jnp.sum(Narr) *1e-10))
+    VMR_uspecies = scan(f_vmr, 0, uspecies)[1]
+        
+    def f_mod(i_and_VMR, i_MIU):
+        i, VMR_uspecies = i_and_VMR
+        i_and_VMR = i+1, VMR_uspecies.at[i_MIU].set(VMR_uspecies[i_MIU]*10**mods[i])
+        return(i_and_VMR, i_MIU)
+    VMR_uspecies = scan(f_mod, (0, VMR_uspecies), mods_ID_uspecies)[0][1]
+        
+    return(VMR_uspecies)
+
+
+def get_VMR_uspecies_FC(FCSpIndex_uspecies, mixing_ratios):
+    """By using FastChem, extract volume mixing ratio (VMR) of the species that contribute the opacity ("uspecies" made with "get_unique_species")
     
     Args:
         FCSpIndex_uspecies: SpeciesIndex in FastChem for each species of interest [N_species]
@@ -445,7 +482,7 @@ def uspecies_info(uspecies, ielem_to_index_of_ipccd, mods_ID = jnp.array([[0,0],
     
     Args:
        uspecies: jnp.array of unique list of the species contributing the opacity
-       ielem_to_index_of_ipccd: jnp.array for conversin from ielem to the index of ipccd
+       ielem_to_index_of_ipccd: jnp.array for conversion from ielem to the index of ipccd
        mods_ID: jnp.array listing the species whose abundances are different from the solar
        mods: jnp.array of each abundance deviation from the Sun [dex] for each modified species in mods_ID
        mods_id_trans: jnp.array for converting index in "mods_ID" of each species into index in uspecies
@@ -454,10 +491,8 @@ def uspecies_info(uspecies, ielem_to_index_of_ipccd, mods_ID = jnp.array([[0,0],
        MMR_uspecies_list: jnp.array of mass mixing ratio in the Sun of each species in "uspecies"
        atomicmass_uspecies_list: jnp.array of atomic mass [amu] of each species in "uspecies"
        mods_uspecies_list: jnp.array of abundance deviation from the Sun [dex] for each species in "uspecies"
-
     """
     ipccd = atomllapi.load_atomicdata()
-    ielemarr = jnp.array(ipccd['ielem'])
     Narr = jnp.array(10**(ipccd['solarA'])) # number density
     massarr = jnp.array(ipccd['mass']) # mass of each neutral atom per particle [amu]
     Nmassarr = Narr * massarr # mass density of each neutral species
