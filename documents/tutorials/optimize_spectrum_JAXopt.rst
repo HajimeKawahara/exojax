@@ -168,9 +168,7 @@ Now we write the model, which is used in HMC-NUTS.
         model=obyo(nu1,nus,numatrix_CO,mdbCO,cdbH2H2)
         return model
 
-Here, we use `JAXopt <https://github.com/google/jaxopt>`_ as an optimizer. JAXopt is not automatically
-installed. If you need install it by pip (pip install jaxopt).
-
+Here, we use `JAXopt <https://github.com/google/jaxopt>`_ as an optimizer. 
 
 .. code:: ipython3
 
