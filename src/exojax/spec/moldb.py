@@ -482,13 +482,14 @@ class MdbHit(object):
             imax = np.searchsorted(
                 numinf, self.nurange[1], side='right')-1  # left side
             for k, i in enumerate(range(imin, imax+1)):
-                sub_file = self.path.stem / \
-                    pathlib.Path(molnm+'_'+numtag[i]+'_HITEMP2010.par')
+                flname = pathlib.Path(molnm+'_'+numtag[i]+'_HITEMP2010.par')
+                sub_file = self.path / flname
                 if not sub_file.exists():
                     self.download(numtag=numtag[i])
 
-                hapi.db_begin(str(self.path.parent))
-                molec = str(self.path.stem)
+                print(self.path, flname.stem)
+                hapi.db_begin(str(self.path))
+                molec = str(flname.stem)
                 self.Tref = 296.0
                 self.molecid = search_molecid(molec)
                 self.crit = crit
@@ -592,6 +593,7 @@ class MdbHit(object):
         from exojax.utils.url import url_HITEMP
         from exojax.utils.url import url_HITEMP10
         import os
+        import shutil
 
         try:
             url = url_HITRAN12()+self.path.name
@@ -623,6 +625,15 @@ class MdbHit(object):
                 print('HITEMP2010 download failed')
             else:
                 print('HITEMP2010 download succeeded')
+                shutil.unpack_archive(self.path/flname, self.path)
+
+                imin = int(numtag[0:5])
+                imax = int(numtag[6:11])
+                numtag_d = str(imin)+'-'+str(imax)
+                flname_uncorrect = molnm+'_'+numtag_d+'_HITEMP2010.par'
+                flname_correct = molnm+'_'+numtag+'_HITEMP2010.par'
+                if (self.path/flname_uncorrect).exists():
+                    os.rename(self.path/flname_uncorrect, self.path/flname_correct)
 
     ####################################
 
