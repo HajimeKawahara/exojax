@@ -417,6 +417,7 @@ class MdbHit(object):
         """
         # downloading
         self.path = pathlib.Path(path)
+        numinf, numtag = hitranapi.read_path(self.path)
         if not self.path.exists():
             self.download()
 

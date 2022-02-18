@@ -1,4 +1,59 @@
 """API for HITRAN and HITEMP outside HAPI."""
+import numpy as np
+
+def read_path(deff):
+    """HITRAN IO for a definition file.
+    Args:
+        deff: definition file
+    Returns:
+        numinf: nu minimum for trans
+        numtag: tag for wavelength range
+    Note:
+       For H2O and CO2, HITEMP provides multiple files. numinf and numtag are the ranges and identifiers for the multiple files.
+    """
+
+    exception = False
+    if "01_HITEMP" in deff.stem:
+        exception = True
+        numinf = np.array([    0.,    50.,   150.,   250.,   350.,   500.,   600.,   700.,   800.,   900.,
+                            1000.,  1150.,  1300.,  1500.,  1750.,  2000.,  2250.,  2500.,  2750.,  3000.,
+                            3250.,  3500.,  4150.,  4500.,  5000.,  5500.,  6000.,  6500.,  7000.,  7500.,
+                            8000.,  8500.,  9000., 11000.])
+        maxnu = 30000.
+        numtag = make_numtag(numinf, maxnu)
+    if "02_HITEMP" in deff.stem:
+        exception = True
+        numinf = np.array([    0.,   500.,   625.,   750.,  1000.,  1500.,  2000.,  2125.,  2250., 2500.,
+                            3000.,  3250.,  3500.,  3750.,  4000.,  4500.,  5000.,  5500.,  6000., 6500.])
+        maxnu = 12785.
+        numtag = make_numtag(numinf, maxnu)
+
+    if exception == False:
+        numinf = None
+        numtag = ''
+
+    return numinf, numtag
+
+
+def make_numtag(numinf, maxnu):
+    """making numtag from numinf.
+    Args:
+        numinf: nu minimum for trans
+        maxnu:  maximum nu
+    Returns:
+        numtag: tag for wavelength range
+    """
+    numtag = []
+    for i in range(len(numinf)-1):
+        imin = '{:05}'.format(int(numinf[i]))
+        imax = '{:05}'.format(int(numinf[i+1]))
+        numtag.append(imin+'-'+imax)
+
+    imin = imax
+    imax = '{:05}'.format(int(maxnu))
+    numtag.append(imin+'-'+imax)
+
+    return numtag
 
 
 def extract_hitemp(parbz2, nurange, margin, tag):
