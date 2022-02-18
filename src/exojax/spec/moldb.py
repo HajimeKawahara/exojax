@@ -415,13 +415,60 @@ class MdbHit(object):
            crit: line strength lower limit for extraction
            extract: If True, it extracts the opacity having the wavenumber between nurange +- margin. Use when you want to reduce the memory use.
         """
-        # downloading
         self.path = pathlib.Path(path)
         numinf, numtag = hitranapi.read_path(self.path)
 
         if numinf is None:
+            # downloading
             if not self.path.exists():
                 self.download()
+
+            # extract?
+            if extract:
+                if self.path.suffix == '.bz2':
+                    tag = str(nurange[0])+'_'+str(nurange[-1])+'_'+str(margin)
+                    self.path = hitranapi.extract_hitemp(
+                        str(self.path), nurange, margin, tag)
+                    print('self.path changed:', self.path)
+                else:
+                    print(
+                        'Warning: "extract" option is available only for .bz2 format. No "extract" applied')
+
+            # bunzip2 if suffix is .bz2
+            if self.path.suffix == '.bz2':
+                import bz2
+                import shutil
+                if self.path.with_suffix('').exists():
+                    import os
+                    os.remove(self.path.with_suffix(''))
+                print('bunziping')
+                with bz2.BZ2File(str(self.path)) as fr:
+                    with open(str(self.path.with_suffix('')), 'wb') as fw:
+                        shutil.copyfileobj(fr, fw)
+                self.path = self.path.with_suffix('')
+
+            hapi.db_begin(str(self.path.parent))
+            molec = str(self.path.stem)
+            self.Tref = 296.0
+            self.molecid = search_molecid(molec)
+            self.crit = crit
+            self.margin = margin
+            self.nurange = [np.min(nurange), np.max(nurange)]
+
+            # nd arrays using DRAM (not jnp, not in GPU)
+            self.nu_lines = hapi.getColumn(molec, 'nu')
+            self.Sij0 = hapi.getColumn(molec, 'sw')
+            self.delta_air = hapi.getColumn(molec, 'delta_air')
+            self.isoid = hapi.getColumn(molec, 'local_iso_id')
+            self.uniqiso = np.unique(self.isoid)
+
+            self._A = hapi.getColumn(molec, 'a')
+            self._n_air = hapi.getColumn(molec, 'n_air')
+            self._gamma_air = hapi.getColumn(molec, 'gamma_air')
+            self._gamma_self = hapi.getColumn(molec, 'gamma_self')
+            self._elower = hapi.getColumn(molec, 'elower')
+            self._gpp = hapi.getColumn(molec, 'gpp')
+
         else:
             # remove '.par' for HITEMP H2O and CO2 (multiple file cases)
             if '.par' in str(self.path):
@@ -440,51 +487,56 @@ class MdbHit(object):
                 if not sub_file.exists():
                     self.download(numtag=numtag[i])
 
-        # extract?
-        if extract:
-            if self.path.suffix == '.bz2':
-                tag = str(nurange[0])+'_'+str(nurange[-1])+'_'+str(margin)
-                self.path = hitranapi.extract_hitemp(
-                    str(self.path), nurange, margin, tag)
-                print('self.path changed:', self.path)
-            else:
-                print(
-                    'Warning: "extract" option is available only for .bz2 format. No "extract" applied')
+                hapi.db_begin(str(self.path.parent))
+                molec = str(self.path.stem)
+                self.Tref = 296.0
+                self.molecid = search_molecid(molec)
+                self.crit = crit
+                self.margin = margin
+                self.nurange = [np.min(nurange), np.max(nurange)]
+                if k == 0:
+                    # nd arrays using DRAM (not jnp, not in GPU)
+                    self.nu_lines = hapi.getColumn(molec, 'nu')
+                    self.Sij0 = hapi.getColumn(molec, 'sw')
+                    self.delta_air = hapi.getColumn(molec, 'delta_air')
+                    self.isoid = hapi.getColumn(molec, 'local_iso_id')
+                    self.uniqiso = np.unique(self.isoid)
 
-        # bunzip2 if suffix is .bz2
-        if self.path.suffix == '.bz2':
-            import bz2
-            import shutil
-            if self.path.with_suffix('').exists():
-                import os
-                os.remove(self.path.with_suffix(''))
-            print('bunziping')
-            with bz2.BZ2File(str(self.path)) as fr:
-                with open(str(self.path.with_suffix('')), 'wb') as fw:
-                    shutil.copyfileobj(fr, fw)
-            self.path = self.path.with_suffix('')
+                    self._A = hapi.getColumn(molec, 'a')
+                    self._n_air = hapi.getColumn(molec, 'n_air')
+                    self._gamma_air = hapi.getColumn(molec, 'gamma_air')
+                    self._gamma_self = hapi.getColumn(molec, 'gamma_self')
+                    self._elower = hapi.getColumn(molec, 'elower')
+                    self._gpp = hapi.getColumn(molec, 'gpp')
+                else:
+                    # nd arrays using DRAM (not jnp, not in GPU)
+                    nulx = hapi.getColumn(molec, 'nu')
+                    Sij0x = hapi.getColumn(molec, 'sw')
+                    delta_airx = hapi.getColumn(molec, 'delta_air')
+                    isoidx = hapi.getColumn(molec, 'local_iso_id')
+                    uniqisox = np.unique(self.isoid)
 
-        hapi.db_begin(str(self.path.parent))
-        molec = str(self.path.stem)
-        self.Tref = 296.0
-        self.molecid = search_molecid(molec)
-        self.crit = crit
-        self.margin = margin
-        self.nurange = [np.min(nurange), np.max(nurange)]
+                    Ax = hapi.getColumn(molec, 'a')
+                    n_airx = hapi.getColumn(molec, 'n_air')
+                    gamma_airx = hapi.getColumn(molec, 'gamma_air')
+                    gamma_selfx = hapi.getColumn(molec, 'gamma_self')
+                    elowerx = hapi.getColumn(molec, 'elower')
+                    gppx = hapi.getColumn(molec, 'gpp')
 
-        # nd arrays using DRAM (not jnp, not in GPU)
-        self.nu_lines = hapi.getColumn(molec, 'nu')
-        self.Sij0 = hapi.getColumn(molec, 'sw')
-        self.delta_air = hapi.getColumn(molec, 'delta_air')
-        self.isoid = hapi.getColumn(molec, 'local_iso_id')
-        self.uniqiso = np.unique(self.isoid)
+                    self.nu_lines = np.hstack([self.nu_lines, nulx])
+                    self.Sij0 = np.hstack([self.Sij0, Sij0x])
+                    self.delta_air = np.hstack([self.delta_air, delta_airx])
+                    self.isoid = np.hstack([self.isoid, isoidx])
+                    self.uniqiso = np.hstack([self.uniqiso, uniqisox])
 
-        self._A = hapi.getColumn(molec, 'a')
-        self._n_air = hapi.getColumn(molec, 'n_air')
-        self._gamma_air = hapi.getColumn(molec, 'gamma_air')
-        self._gamma_self = hapi.getColumn(molec, 'gamma_self')
-        self._elower = hapi.getColumn(molec, 'elower')
-        self._gpp = hapi.getColumn(molec, 'gpp')
+                    self._A = np.hstack([self._A, Ax])
+                    self._n_air = np.hstack([self._n_air, n_airx])
+                    self._gamma_air = np.hstack([self._gamma_air, gamma_airx])
+                    self._gamma_self = np.hstack([self._gamma_self, gamma_selfx])
+                    self._elower = np.hstack([self._elower, elowerx])
+                    self._gpp = np.hstack([self._gpp, gppx])
+
+
 
         ### MASKING ###
         mask = (self.nu_lines > self.nurange[0]-self.margin)\
