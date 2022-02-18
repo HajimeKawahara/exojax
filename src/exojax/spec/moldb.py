@@ -418,8 +418,23 @@ class MdbHit(object):
         # downloading
         self.path = pathlib.Path(path)
         numinf, numtag = hitranapi.read_path(self.path)
-        if not self.path.exists():
-            self.download()
+
+        if numinf is None:
+            if not self.path.exists():
+                self.download()
+        else:
+            molec = str(self.path.name)[0:2]
+            self.nurange = [np.min(nurange), np.max(nurange)]
+
+            imin = np.searchsorted(
+                numinf, self.nurange[0], side='right')-1  # left side
+            imax = np.searchsorted(
+                numinf, self.nurange[1], side='right')-1  # left side
+            for k, i in enumerate(range(imin, imax+1)):
+                sub_file = self.path.stem / \
+                    pathlib.Path(molec+'_'+numtag[i]+'_HITEMP2010.par')
+                if not sub_file.exists():
+                    self.download(numtag=numtag[i])
 
         # extract?
         if extract:
@@ -510,7 +525,7 @@ class MdbHit(object):
         self.gpp = jnp.array(self._gpp)
         self.gamma_natural = gn(self.A)
 
-    def download(self):
+    def download(self, numtag=None):
         """Downloading HITRAN/HITEMP par file.
 
         Note:
@@ -519,6 +534,8 @@ class MdbHit(object):
         import urllib.request
         from exojax.utils.url import url_HITRAN12
         from exojax.utils.url import url_HITEMP
+        from exojax.utils.url import url_HITEMP10
+        import os
 
         try:
             url = url_HITRAN12()+self.path.name
@@ -528,10 +545,28 @@ class MdbHit(object):
             print('HITRAN download failed')
         try:
             url = url_HITEMP()+self.path.name
-            print(url)
             urllib.request.urlretrieve(url, str(self.path))
         except:
+            print(url)
             print('HITEMP download failed')
+
+        if numtag is not None:
+            molec = str(self.path.name)[0:2]
+            if molec == '01':
+                os.makedirs(str(self.path), exist_ok=True)
+                dldir = 'H2O_line_list/'
+            if molec == '02':
+                os.makedirs(str(self.path), exist_ok=True)
+                dldir = 'CO2_line_list/'
+            flname = molec+'_'+numtag+'_HITEMP2010.zip'
+            try:
+                url = url_HITEMP10()+dldir+flname
+                urllib.request.urlretrieve(url, str(self.path/flname))
+            except:
+                print(url)
+                print('HITEMP2010 download failed')
+            else:
+                print('HITEMP2010 download succeeded')
 
     ####################################
 
