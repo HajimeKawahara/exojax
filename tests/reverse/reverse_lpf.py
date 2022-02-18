@@ -111,7 +111,8 @@ def model_c(nu1, y1):
 rng_key = random.PRNGKey(0)
 rng_key, rng_key_ = random.split(rng_key)
 num_warmup, num_samples = 300, 600
-kernel = NUTS(model_c, forward_mode_differentiation=True)
+#kernel = NUTS(model_c, forward_mode_differentiation=True)
+kernel = NUTS(model_c, forward_mode_differentiation=False)
 mcmc = MCMC(kernel, num_warmup=num_warmup, num_samples=num_samples)
 mcmc.run(rng_key_, nu1=nusd, y1=nflux)
 
