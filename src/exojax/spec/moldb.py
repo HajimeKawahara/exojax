@@ -423,6 +423,10 @@ class MdbHit(object):
             if not self.path.exists():
                 self.download()
         else:
+            # remove '.par' for HITEMP H2O and CO2 (multiple file cases)
+            if '.par' in str(self.path):
+                self.path = pathlib.Path(str(self.path).replace('.par', ''))
+
             molnm = str(self.path.name)[0:2]
             self.nurange = [np.min(nurange), np.max(nurange)]
 
