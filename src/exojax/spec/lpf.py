@@ -47,7 +47,7 @@ def exomol(mdb, Tarr, Parr, molmass):
 
 
 def vald(adb, Tarr, PH, PHe, PHH):
-    """Compute VALD line infromation required for LPF using VALD atomic database (adb)
+    """Compute VALD line information required for LPF using VALD atomic database (adb)
     
     Args:
        adb: adb instance made by the AdbVald class in moldb.py
@@ -84,7 +84,7 @@ def vald(adb, Tarr, PH, PHe, PHH):
 def vald_sep(Tarr, PH, PHe, PHH, \
             qt_284_T, QTmask, \
              logsij0, nu_lines, ielem, iion, dev_nu_lines, elower, eupper, atomicmass, ionE, gamRad, gamSta, vdWdamp, ):
-    """Compute VALD line infromation required for LPF for separated each species
+    """Compute VALD line information required for LPF for separated each species
     
     Args:    (TBC)
        adb: adb instance made by the AdbVald class in moldb.py
