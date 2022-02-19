@@ -13,7 +13,7 @@ from jax import custom_jvp
 from exojax.spec.exomol import gamma_exomol
 from exojax.spec.hitran import SijT, doppler_sigma, gamma_natural
 
-#vald
+# vald
 from exojax.spec.atomll import gamma_vald3, padding_2Darray_for_each_atom
 from exojax.spec.rtransfer import dtauM, dtauM_mmwl
 from jax.lax import scan
@@ -62,56 +62,69 @@ def vald(adb, Tarr, PH, PHe, PHH):
        sigmaDM: sigmaD matrix
     
     """
-    #Compute normalized partition function for each species
-    qt_284=vmap(adb.QT_interp_284)(Tarr)
+    # Compute normalized partition function for each species
+    qt_284 = vmap(adb.QT_interp_284)(Tarr)
     qt = qt_284[:,adb.QTmask]
 
-    #Compute line strength matrix
-    SijM=jit(vmap(SijT,(0,None,None,None,0)))\
+    # Compute line strength matrix
+    SijM = jit(vmap(SijT,(0,None,None,None,0)))\
         (Tarr, adb.logsij0, adb.nu_lines, adb.elower, qt)
 
-    #Compute gamma parameters for the pressure and natural broadenings
+    # Compute gamma parameters for the pressure and natural broadenings
     gammaLM = jit(vmap(gamma_vald3,(0,0,0,0,None,None,None,None,None,None,None,None,None,None,None)))\
             (Tarr, PH, PHH, PHe, adb.ielem, adb.iion, adb.dev_nu_lines, adb.elower, adb.eupper, adb.atomicmass, adb.ionE, adb.gamRad, adb.gamSta, adb.vdWdamp, 1.0)
 
-    #Compute doppler broadening
-    sigmaDM=jit(vmap(doppler_sigma,(None,0,None)))\
+    # Compute doppler broadening
+    sigmaDM = jit(vmap(doppler_sigma,(None,0,None)))\
         (adb.nu_lines, Tarr, adb.atomicmass)
     
     return(SijM, gammaLM, sigmaDM)
     
     
-def vald_sep(Tarr, PH, PHe, PHH, \
+def vald_each(Tarr, PH, PHe, PHH, \
             qt_284_T, QTmask, \
              logsij0, nu_lines, ielem, iion, dev_nu_lines, elower, eupper, atomicmass, ionE, gamRad, gamSta, vdWdamp, ):
     """Compute VALD line information required for LPF for separated each species
     
-    Args:    (TBC)
-       adb: adb instance made by the AdbVald class in moldb.py
-       Tarr: Temperature array
-       PH: Partial pressure array of neutral hydrogen (H)
-       PHe: Partial pressure array of neutral helium (He)
-       PHH: Partial pressure array of molecular hydrogen (H2)
+    Args:
+        Tarr:  temperature array [N_layer]
+        PH:  partial pressure array of neutral hydrogen (H) [N_layer]
+        PHe:  partial pressure array of neutral helium (He) [N_layer]
+        PHH:  partial pressure array of molecular hydrogen (H2) [N_layer]
+        qt_284_T:  partition function at the temperature T Q(T), for 284 species
+        QTmask:  array of index of Q(Tref) grid (gQT) for each line
+        logsij0:  log line strength at T=Tref
+        nu_lines:  line center (cm-1) in np.array (float64)
+        ielem:  atomic number (e.g., Fe=26)
+        iion:  ionized level (e.g., neutral=1, singly ionized=2, etc.)
+        dev_nu_lines:  line center (cm-1) in device (float32)
+        elower:  the lower state energy (cm-1)
+        eupper:  the upper state energy (cm-1)
+        atomicmass:  atomic mass (amu)
+        ionE:  ionization potential (eV)
+        gamRad:  log of gamma of radiation damping (s-1)
+        gamSta:  log of gamma of Stark damping (s-1)
+        vdWdamp:  log of (van der Waals damping constant / neutral hydrogen number) (s-1)
 
     Returns:
-       SijM: line intensity matrix
-       gammaLM: gammaL matrix
-       sigmaDM: sigmaD matrix
+       SijM: line intensity matrix [N_layer x N_line]
+       gammaLM: gammaL matrix [N_layer x N_line]
+       sigmaDM: sigmaD matrix [N_layer x N_line]
     
     """
-    #Compute normalized partition function for each species
+    # Compute normalized partition function for each species
     qt = qt_284_T[:,QTmask]
 
-    #Compute line strength matrix
+    # Compute line strength matrix
     SijM = jit(vmap(SijT,(0,None,None,None,0)))\
         (Tarr, logsij0, nu_lines, elower, qt)
     SijM = jnp.nan_to_num(SijM, nan = 0.0)
 
-    #Compute gamma parameters for the pressure and natural broadenings
+    # Compute gamma parameters for the pressure and natural broadenings
     gammaLM = jit(vmap(gamma_vald3,(0,0,0,0,None,None,None,None,None,None,None,None,None,None,None)))\
             (Tarr, PH, PHH, PHe, ielem, iion, dev_nu_lines, elower, eupper, atomicmass, ionE, gamRad, gamSta, vdWdamp, 1.0)
 
-    #Compute doppler broadening
+    # Compute doppler broadening
     sigmaDMn=jit(vmap(doppler_sigma,(None,0,None)))\
         (nu_lines, Tarr, atomicmass)
     sigmaDM = jnp.where(sigmaDMn != 0, sigmaDMn, 1.)
@@ -297,8 +310,8 @@ def dtauM_vald(dParr, g, numatrix, adb, SijM, gammaLM, sigmaDM, uspecies, mods_u
         SijM_p = padding_2Darray_for_each_atom(SijM, adb, sp)
         xsm_p = xsmatrix(numatrix_p, sigmaDM_p, gammaLM_p, SijM_p)
         
-        MMRmetalMod = mods_uspecies_list[i] #add_to_deal_with_individual_elemental_abundance
-        MMR_X_I = jnp.array(MMR_uspecies_list[i] *10**MMRmetalMod) #modify this into individual elemental abundances shortly... (tako)
+        MMRmetalMod = mods_uspecies_list[i] # add_to_deal_with_individual_elemental_abundance
+        MMR_X_I = jnp.array(MMR_uspecies_list[i] *10**MMRmetalMod) # modify this into individual elemental abundances shortly... (tako)
         mass_X_I = jnp.array(atomicmass_uspecies_list[i])
         
         dtau_each = dtauM(dParr, xsm_p, MMR_X_I*jnp.ones_like(dParr), mass_X_I, g)
