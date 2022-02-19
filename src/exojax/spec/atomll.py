@@ -647,7 +647,7 @@ def interp_QT284(T, T_gQT, gQT_284species):
 
     Args:
         T: temperature
-        T_gQT: temperature in the grid obtained from the adb instance[N_grid(42)]
+        T_gQT: temperature in the grid obtained from the adb instance [N_grid(42)]
         gQT_284species: partition function in the grid from the adb instance [N_species(284) x N_grid(42)]
 
     Returns:

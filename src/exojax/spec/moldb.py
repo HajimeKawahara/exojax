@@ -718,6 +718,9 @@ class AdbVald(object):  # integrated from vald3db.py
         QTmask (jnp array): identifier of species for Q(T)
         ielem (jnp array):  atomic number (e.g., Fe=26)
         iion (jnp array):  ionized level (e.g., neutral=1, singly ionized=2, etc.)
+        solarA (jnp array): solar abundance (log10 of number density in the Sun)
+        atomicmass (jnp array): atomic mass (amu)
+        ionE (jnp array): ionization potential (eV)
         gamRad (jnp array): log of gamma of radiation damping (s-1) #(https://www.astro.uu.se/valdwiki/Vald3Format)
         gamSta (jnp array): log of gamma of Stark damping (s-1)
         vdWdamp (jnp array):  log of (van der Waals damping constant / neutral hydrogen number) (s-1)
@@ -940,7 +943,7 @@ class AdbVald(object):  # integrated from vald3db.py
 
         Args:
             ielem:  atomic number (e.g., Fe=26)
-            iion:  ionized level (e.g., neutral=1, singly)
+            iion:  ionized level (e.g., neutral=1, singly ionized=2, etc.)
 
         Returns:
             QTmask_sp:  array of index of Q(Tref) grid (gQT) for each line
