@@ -21,6 +21,9 @@ from exojax.spec import gamma_natural
 from exojax.spec.hitran import SijT
 from exojax.spec import normalized_doppler_sigma
 
+#vald
+from exojax.spec.atomll import gamma_vald3, interp_QT284
+
 
 @jit
 def inc2D_givenx(a, w, cx, ix, y, yv):

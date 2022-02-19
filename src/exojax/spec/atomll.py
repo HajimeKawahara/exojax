@@ -400,7 +400,6 @@ def get_unique_species(adb):
 
     Returns:
        uspecies: unique elements of the combination of ielem and iion (jnp.array with a shape of N_UniqueSpecies x 2(ielem and iion))
-    
     """
     seen=[]
     get_unique_list = lambda seq: [x for x in seq if x not in seen and not seen.append(x)]
@@ -542,7 +541,6 @@ def beta_uspecies_info(uspecies, mods_ID=jnp.array([[0,0],])):
        MMR_uspecies_list: jnp.array of mass mixing ratio in the Sun of each species in "uspecies"
        atomicmass_uspecies_list: jnp.array of atomic mass [amu] of each species in "uspecies"
        mods_id_trans: jnp.array for converting index in "mods_ID" of each species into index in uspecies
-    
     """
     ipccd = atomllapi.load_atomicdata()
     ielemarr = jnp.array(ipccd['ielem'])
@@ -574,7 +572,6 @@ def beta_Make_mods_uspecies_list(uspecies, mods=jnp.array([0,]), mods_id_trans=j
     
     Returns:
        mods_uspecies_list: jnp.array of abundance deviation from the Sun [dex] for each species in "uspecies"
-    
     """
     #for i, mit in enumerate(mods_id_trans):
     #mods_uspecies_list[mit] = mods[i]
@@ -634,7 +631,6 @@ def padding_2Darray_for_each_atom(orig_arr, adb, sp):
        
     Returns:
        padded_valid_arr
-    
     """
     orig_arr = orig_arr.T
     valid_indices = jnp.where(
@@ -644,3 +640,21 @@ def padding_2Darray_for_each_atom(orig_arr, adb, sp):
     padded_valid_arr = padded_arr[jnp.sort(valid_indices)]
     padded_valid_arr = padded_valid_arr.T
     return(padded_valid_arr)
+
+
+def interp_QT284(T, T_gQT, gQT_284species):
+    """interpolated partition function of all 284 species.
+
+    Args:
+        T: temperature
+        T_gQT: temperature in the grid obtained from the adb instance[N_grid(42)]
+        gQT_284species: partition function in the grid from the adb instance [N_species(284) x N_grid(42)]
+
+    Returns:
+        QT_284: interpolated partition function at T Q(T) for all 284 Atomic Species [284]
+    """
+    list_gQT_eachspecies = gQT_284species.tolist()
+    listofDA_gQT_eachspecies = list(map(lambda x: jnp.array(x), list_gQT_eachspecies))
+    listofQT = list(map(lambda x: jnp.interp(T, T_gQT, x), listofDA_gQT_eachspecies))
+    QT_284 = jnp.array(listofQT)
+    return QT_284

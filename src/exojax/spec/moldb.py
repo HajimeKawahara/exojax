@@ -954,6 +954,33 @@ class AdbVald(object):  # integrated from vald3db.py
         return(QTmask_sp)
 
 
+class AdbSepVald(object):
+    from exojax.spec import atomll
+    def __init__(self, adb):
+        self.nu_lines = atomll.sep_arr_of_sp(adb.nu_lines, adb, trans_jnp=False)
+        self.QTmask = atomll.sep_arr_of_sp(adb.QTmask, adb, inttype=True).T[0]
+        
+        self.ielem = atomll.sep_arr_of_sp(adb.ielem, adb, inttype=True).T[0]
+        self.iion = atomll.sep_arr_of_sp(adb.iion, adb, inttype=True).T[0]
+        self.atomicmass = atomll.sep_arr_of_sp(adb.atomicmass, adb).T[0]
+        self.ionE = atomll.sep_arr_of_sp(adb.ionE, adb).T[0]
+
+        self.logsij0 = atomll.sep_arr_of_sp(adb.logsij0, adb)
+        self.dev_nu_lines = atomll.sep_arr_of_sp(adb.dev_nu_lines, adb)
+        self.elower = atomll.sep_arr_of_sp(adb.elower, adb)
+        self.eupper = atomll.sep_arr_of_sp(adb.eupper, adb)
+        self.gamRad = atomll.sep_arr_of_sp(adb.gamRad, adb)
+        self.gamSta = atomll.sep_arr_of_sp(adb.gamSta, adb)
+        self.vdWdamp = atomll.sep_arr_of_sp(adb.vdWdamp, adb)
+        
+        self.uspecies = atomll.get_unique_species(adb)
+        self.N_usp = len(self.uspecies)
+        self.L_max = self.nu_lines.shape[1]
+        
+        self.gQT_284species = adb.gQT_284species
+        self.T_gQT = adb.T_gQT
+
+
 class AdbKurucz(object):
     """atomic database from Kurucz (http://kurucz.harvard.edu/linelists/)
 
