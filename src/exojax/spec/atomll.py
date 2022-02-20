@@ -36,7 +36,7 @@ def Sij0(A, gupper, nu_lines, elower, QTref_284, QTmask, Irwin=False):
     S0 = -A*gupper*np.exp(-hcperk*elower/Tref)*np.expm1(-hcperk*nu_lines/Tref)\
         / (8.0*np.pi*ccgs*nu_lines**2*QTref)
 
-    return(S0)
+    return S0
 
 
 def gamma_vald3(T, PH, PHH, PHe, ielem, iion,
@@ -108,7 +108,7 @@ def gamma_vald3(T, PH, PHH, PHe, ielem, iion,
     gamma = (gamma_case1 * jnp.where(vdWdamp >= 0., 1, 0) +
              gamma_case2 * jnp.where(vdWdamp < 0., 1, 0))
 
-    return(gamma)
+    return gamma
 
 
 def gamma_uns(T, PH, PHH, PHe, ielem, iion,
@@ -167,7 +167,7 @@ def gamma_uns(T, PH, PHH, PHe, ielem, iion,
     # Avoid nan (appeared by np.log10(negative C6))
     gamma = jnp.where(jnp.isnan(gamma_case1), 0., gamma_case1)
 
-    return(gamma)
+    return gamma
 
 
 def gamma_KA3(T, PH, PHH, PHe, ielem, iion,
@@ -244,7 +244,7 @@ def gamma_KA3(T, PH, PHH, PHe, ielem, iion,
     gamma6 = gam6H + gam6He + gam6HH
     gamma = (gamma6 + 10**gamRad + 10**gamSta) / (4*np.pi*ccgs)
 
-    return(gamma)
+    return gamma
 
 
 def gamma_KA4(T, PH, PHH, PHe, ielem, iion,
@@ -308,7 +308,7 @@ def gamma_KA4(T, PH, PHH, PHe, ielem, iion,
         * ((PH + 0.42*PHe + 0.85*PHH)*1e6/(kB*T)) * (T/10000.)**0.3
     gamma = (gamma6 + 10**gamRad + 10**gamSta) / (4*np.pi*ccgs)
 
-    return(gamma)
+    return gamma
 
 
 def gamma_KA3s(T, PH, PHH, PHe, ielem, iion,
@@ -383,4 +383,4 @@ def gamma_KA3s(T, PH, PHH, PHe, ielem, iion,
     gamma6 = gam6H + gam6He + gam6HH
     gamma = (gamma6 + 10**gamRad + 10**gamSta) / (4*np.pi*ccgs)
 
-    return(gamma)
+    return gamma
