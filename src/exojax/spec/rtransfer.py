@@ -1,5 +1,5 @@
 """Radiative transfer module used in exospectral analysis."""
-from jax import jit
+from jax import jit, vmap
 import jax.numpy as jnp
 import numpy as np
 from exojax.special.expn import E1
@@ -115,7 +115,7 @@ def dtauCIA(nus, Tarr, Parr, dParr, vmr1, vmr2, mmw, g, nucia, tcia, logac):
 
 def dtauCIA_mmwl(nus, Tarr, Parr, dParr, vmr1, vmr2, mmw, g, nucia, tcia, logac):
     """dtau of the CIA continuum.
-       (for the case where mmw is fiven for each atmospheric layer)
+       (for the case where mmw is given for each atmospheric layer)
 
     Args:
        nus: wavenumber matrix (cm-1)
@@ -169,7 +169,7 @@ def dtauM(dParr, xsm, MR, mass, g):
 
 def dtauM_mmwl(dParr, xsm, MR, mass, g):
     """dtau of the molecular cross section.
-       (for the case where mmw is fiven for each atmospheric layer)
+       (for the case where mmw is given for each atmospheric layer)
 
     Note:
        fac=bar_cgs/(m_u (g)). m_u: atomic mass unit. It can be obtained by fac=1.e3/m_u, where m_u = scipy.constants.m_u.
@@ -189,6 +189,26 @@ def dtauM_mmwl(dParr, xsm, MR, mass, g):
     return fac*xsm*dParr[:, None]*MR[:, None]/(mass[:, None]*g)
 
 
+@jit
+def dtauVALD(dParr, xsm, VMR, mmw, g):
+    """dtau of the atomic (+ionic) cross section from VALD.
+
+    Args:
+       dParr: delta pressure profile (bar) [N_layer]
+       xsm: cross section matrix (cm2) [N_species x N_layer x N_wav]
+       VMR: volume mixing ratio [N_species x N_layer]
+       mmw: mean molecular weight [N_layer]
+       g: gravity (cm/s2)
+
+    Returns:
+        dtau: optical depth matrix [N_layer x N_nus]
+    """
+    dtauS = jit(vmap(dtauM_mmwl, (None, 0, 0, None, None)))( \
+                            dParr, xsm, VMR, mmw, g)
+    dtau = jnp.abs(jnp.sum(dtauS, axis=0))
+    return(dtau)
+    
+    
 def dtauHminus(nus, Tarr, Parr, dParr, vmre, vmrh, mmw, g):
     """dtau of the H- continuum.
 
@@ -222,7 +242,7 @@ def dtauHminus(nus, Tarr, Parr, dParr, vmre, vmrh, mmw, g):
 
 def dtauHminus_mmwl(nus, Tarr, Parr, dParr, vmre, vmrh, mmw, g):
     """dtau of the H- continuum.
-       (for the case where mmw is fiven for each atmospheric layer)
+       (for the case where mmw is given for each atmospheric layer)
 
     Args:
        nus: wavenumber matrix (cm-1)

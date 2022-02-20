@@ -136,3 +136,30 @@ def warn_outside_wavenumber_grid(nu_lines, nu_grid):
         print('Warning: some of the line centers are outside of the wavenumber grid.')
         print(
             'Note: All of the line center should be within wavenumber grid for MODIT/DIT.')
+
+
+def init_modit_vald(nu_linesM, nus, N_usp):
+    """Initialization for MODIT for asdb from VALD
+
+    Args:
+        nu_linesM: wavenumbers of lines for each species [N_species x N_line] (should be numpy F64)
+        nu_grid: wavenumenr grid [Nnugrid] (should be numpy F64)
+        N_usp: number of species
+
+    Returns:
+        contS: (contribution) jnp.array [N_species x N_line]
+        indexS: (index) jnp.array [N_species x N_line]
+        R: spectral resolution
+        pmarray: (+1,-1) array whose length of len(nu_grid)+1
+    """
+    contS = np.zeros_like(nu_linesM)
+    indexS = np.zeros_like(contS)
+    for i in range(N_usp):
+        nu_lines = nu_linesM[i]
+        nu_lines_nan = np.where(nu_lines==0, np.nan, nu_lines)
+        contS[i], indexnu_dammy, R, pmarray = init_modit(nu_lines_nan, nus) # np.array(a), np.array(b), c, np.array(d)
+        indexS[i] = np.hstack([ indexnu_dammy[np.where(~np.isnan(nu_lines_nan))], \
+               (len(nus)+1) * np.ones(len(np.where(np.isnan(nu_lines_nan))[0]), dtype='int32') ])
+    contS = jnp.array(contS)
+    indexS = jnp.array(indexS, dtype='int32')
+    return(contS, indexS, R, pmarray)
