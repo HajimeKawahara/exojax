@@ -46,6 +46,7 @@ def search_molfile(database, molecules):
     Args:
        database: molecular database (HITRAN,HITEMP,ExoMol)
        molecules: molecular name such as (CO, 12C-16O)
+
     Returns:
        identifier
     """

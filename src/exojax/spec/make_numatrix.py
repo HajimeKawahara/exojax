@@ -15,7 +15,7 @@ def make_numatrix0(nu, hatnu, warning=True):
        warning: True=warning on for nu.dtype=float32
 
     Returns:
-       f: numatrix (Nline,Nnu)
+       numatrix (Nline,Nnu)
     """
     if(nu.dtype != np.float64 and warning):
         print('Warning!: nu is not np.float64 but ', nu.dtype)
@@ -27,16 +27,14 @@ def make_numatrix0(nu, hatnu, warning=True):
 
 
 def divwavnum(nu, Nz=1):
-    """separate an integer part and a residual.
+    """separate an integer part from a residual.
 
     Args:
        nu: wavenumber array
        Nz: boost factor (default=1)
 
     Returns:
-       fn:  integer part of wavenumber
-       dfn: residual wavenumber
-       Nz: boost factor used
+       integer part of wavenumber, residual wavenumber, boost factor
     """
 
     fn = np.floor(nu*Nz)
@@ -46,7 +44,7 @@ def divwavnum(nu, Nz=1):
 
 @jit
 def subtract_nu(dnu, dhatnu):
-    """compute nu - hatnu using subtract an integer part w/JIT
+    """compute nu - hatnu by subtracting an integer part w/JIT
 
     Args:
        dnu: residual wavenumber array
@@ -64,7 +62,18 @@ def subtract_nu(dnu, dhatnu):
 
 @jit
 def add_nu(dd, fnu, fhatnu, Nz):
-    """re-adding an interger part w/JIT."""
+    """re-adding an interger part w/JIT.
+
+    Args:
+        dd: difference matrix
+        fnu: integer part of wavenumber
+        fhatnu: residual wavenumber
+        Nz: boost factor
+    
+    Returns:
+       an integer part readded value
+
+    """
     jfnu = jnp.array(fnu)
     jfhatnu = jnp.array(fhatnu)
 #    intarray=fnu[None,:]-fhatnu[:,None]
