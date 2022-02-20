@@ -4,9 +4,7 @@ import numpy as np
 import jax.numpy as jnp
 from jax import jit, vmap
 from jax.lax import scan
-#from exojax.utils.constants import kB, ccgs, hcgs
-
-kB, ccgs, hcgs = 1.380649e-16, 29979245800.0, 6.62607015e-27  # cgs
+from exojax.utils.constants import kB, ccgs, hcgs
 
 
 def log_hminus_continuum(nus, temperature, number_density_e, number_density_h):
