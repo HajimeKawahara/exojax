@@ -2,8 +2,6 @@
 
   * JAX autograd/jit compatible version of Markley (Markley 1995, CeMDA, 63, 101) E solver getE(). The original code is taken from PyAstronomy (MIT license).https://github.com/sczesla/PyAstronomy.
 
-Warning:
-   This moudle has not been well tested.
 """
 
 import jax.numpy as jnp

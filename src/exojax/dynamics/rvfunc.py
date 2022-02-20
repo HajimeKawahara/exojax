@@ -2,15 +2,13 @@
 
 * This code is for the PRV analysis of transmission/dayside close-in planets. Under developement.
 
-Warning:
-   This moudle has not been well tested.
 """
 from jax.lax import map
 import jax.numpy as jnp
 from jax import jit
 import numpy as np
 from exojax.dynamics import getE
-
+from exojax.utils.constants import Gcr
 
 @jit
 def rvf(t, T0, P, e, omegaA, Ksini, Vsys):
@@ -43,29 +41,6 @@ def rvf(t, T0, P, e, omegaA, Ksini, Vsys):
     model = Ksini*face*(cosfpo+e*jnp.cos(omegaA)) + Vsys
 
     return model
-
-
-def get_G_cuberoot():
-    """This function computes cuberoot of Gravitaional constant (in the unit of
-    [km/s]) normalized by day and Msun.
-
-    Returns:
-       cuberoot of Gravitaional constant (km/s) normalized by day and Msun
-    """
-    from astropy.constants import G
-    from astropy.constants import M_sun
-    from astropy import units as u
-    day = 24*3600*u.s
-    Gu = (G*M_sun/day).value
-    Gcr_val = Gu**(1.0/3.0)*1.e-3
-    return Gcr_val
-
-
-Gcr = get_G_cuberoot()
-fac = (2.0*jnp.pi)**(1.0/3.0)
-m23 = -2.0/3.0
-m13 = -1.0/3.0
-
 
 @jit
 def rvcoref(t, T0, P, e, omegaA, K, i):
@@ -104,14 +79,16 @@ def rvcoref(t, T0, P, e, omegaA, K, i):
 @jit
 def rvf2(t, T0, P, e, omegaA, M1, M2, i, Vsys):
     # RV of M1
-    K = fac*Gcr*M2*((M1+M2)**m23)*(P**m13)/jnp.sqrt(1.0 - e*e)
+    fac = (2.0*jnp.pi)**(1.0/3.0)
+    K = fac*Gcr*M2*((M1+M2)**(-2.0/3.0))*(P**(-1.0/3.0))/jnp.sqrt(1.0 - e*e)
     return rvcoref(t, T0, P, e, omegaA, K, i) + Vsys
 
 
 @jit
 def rvf2c(t, T0, P, e, omegaA, M1, M2, i, Vsys):
     # RV of M2 (companion)
-    K = fac*Gcr*M1*((M1+M2)**m23)*(P**m13)/jnp.sqrt(1.0 - e*e)
+    fac = (2.0*jnp.pi)**(1.0/3.0)
+    K = fac*Gcr*M1*((M1+M2)**(-2.0/3.0))*(P**(-1.0/3.0))/jnp.sqrt(1.0 - e*e)
     return -rvcoref(t, T0, P, e, omegaA, K, i) + Vsys
 
 
