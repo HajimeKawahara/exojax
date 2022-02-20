@@ -243,6 +243,8 @@ Let’s define the model for a HMC.
         mu=frun(Tarr,MMR_CH4,Mp,Rp,u1,u2,RV,vsini)
         numpyro.sample("y1", dist.Normal(mu, sigma), obs=y1)
 
+Run an HMC-NUTS! Note that we here use forward mode (forward differentiation) by 'forward_mode_differentiation=True' in NUTS. Since ExoJAX v1.1, we can also use the reverse mode 'forward_mode_differentiation=False' in NUTS.
+	
 .. code:: ipython3
 
     rng_key = random.PRNGKey(0)

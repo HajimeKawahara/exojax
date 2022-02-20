@@ -1,7 +1,6 @@
 """Atmospheric profile function."""
 
-from exojax.utils.constants import kB
-from exojax.utils.constants import m_u
+from exojax.utils.constants import kB, m_u
 import jax.numpy as jnp
 
 

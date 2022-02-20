@@ -288,7 +288,7 @@ Or you prefer an independent Gaussan?
               errall=jnp.sqrt(e1**2+sigma**2)
               sample(tag, dist.Normal(mu, errall), obs=y)
 
-Then, run the HMC-NUTS.
+Then, run the HMC-NUTS. Note that we here use forward mode (forward differentiation) by 'forward_mode_differentiation=True' in NUTS. Since ExoJAX v1.1, we can also use the reverse mode 'forward_mode_differentiation=False' in NUTS.
 	     
 .. code:: python3	  	  	  	  	 
 	  	  	  	  

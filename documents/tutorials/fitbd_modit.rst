@@ -240,7 +240,7 @@ Here, in the case of a GP modeling of the noise, just define the GP kernel and u
 	
 	    obyo(y1,"y1",nu1,nus,mdbCO,mdbH2O,cdbH2H2,cdbH2He)
 	
-Then, run the HMC-NUTS.
+Then, run the HMC-NUTS. Note that we here use forward mode (forward differentiation) by 'forward_mode_differentiation=True' in NUTS. Since ExoJAX v1.1, we can also use the reverse mode 'forward_mode_differentiation=False' in NUTS.
 	     
 .. code:: python3	  	  	  	  	 
 	  	  	  	  	    
