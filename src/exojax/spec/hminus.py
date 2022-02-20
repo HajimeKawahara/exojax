@@ -56,7 +56,6 @@ def bound_free_absorption(wavelength_um, temperature):
 
     Returns:
         absorption coefficient [cm4/dyne]
-
     """
     # here, we express alpha using physical constants
     alpha = ccgs*hcgs/kB*10000.0
@@ -102,7 +101,6 @@ def free_free_absorption(wavelength_um, temperature):
 
     Returns:
         absorption coefficient [cm4/dyne]
-
     """
     A_n1 = [0.0, 0.0, 2483.3460, -3449.8890, 2200.0400, -696.2710, 88.2830]
     B_n1 = [0.0, 0.0, 285.8270, -1158.3820, 2427.7190, -1841.4000, 444.5170]
@@ -146,13 +144,13 @@ def free_free_absorption(wavelength_um, temperature):
 
 if __name__ == '__main__':
     import matplotlib.pyplot as plt
-    Tin=3000.0
-    wav=np.linspace(0.8,2.4,100)
-    plt.plot(wav,free_free_absorption(wav, Tin))
-    plt.plot(wav,bound_free_absorption(wav, Tin))
-    plt.yscale("log")
+    Tin = 3000.0
+    wav = np.linspace(0.8, 2.4, 100)
+    plt.plot(wav, free_free_absorption(wav, Tin))
+    plt.plot(wav, bound_free_absorption(wav, Tin))
+    plt.yscale('log')
     plt.show()
-    
+
     Nlayer = 100
     Parr = np.logspace(-8, 2, Nlayer)
     Tarr = np.linspace(2000, 3000, Nlayer)
@@ -166,5 +164,3 @@ if __name__ == '__main__':
     number_density_h = vmrh*narr
     print(jnp.shape(log_hminus_continuum(
         nus, Tarr, number_density_e, number_density_h)))
-
-
