@@ -2,12 +2,12 @@
 Optimization of a Voigt profile
 ===============================
 
-*Update: June 12/2021, Hajime Kawahara*
+*Update: Feb 20/2022, Hajime Kawahara*
 
 
 .. code:: ipython3
 
-    from exojax.spec.rlpf import rvoigt
+    from exojax.spec.lpf import voigt
     import jax.numpy as jnp
     import matplotlib.pyplot as plt
 
@@ -16,15 +16,10 @@ exojax! :math:`V(\nu, \beta, \gamma_L)` is a convolution of a Gaussian
 with a STD of :math:`\beta` and a Lorentian with a gamma parameter of
 :math:`\gamma_L`.
 
-Note that we use `spec.rlpf.rvoigt <../exojax/exojax.spec.html#exojax.spec.rlpf.rvoigt>`_ instead of spec.voigt. This function
-is a voigt profile with VJP while voigt is JVP defined one. For some
-reason, we do not use rvoigt as a default function of the voigt profile.
-But in future, we plan to replace the VJP version as a default one.
-
 .. code:: ipython3
 
     nu=jnp.linspace(-10,10,100)
-    plt.plot(nu, rvoigt(nu,1.0,2.0)) #beta=1.0, gamma_L=2.0
+    plt.plot(nu, voigt(nu,1.0,2.0)) #beta=1.0, gamma_L=2.0
 
 
 .. image:: optimize_voigt/output_3_1.png
@@ -41,7 +36,7 @@ absorption model is
 .. code:: ipython3
 
     def absmodel(nu,a,beta,gamma_L):
-        return jnp.exp(-a*rvoigt(nu,beta,gamma_L))
+        return jnp.exp(-a*voigt(nu,beta,gamma_L))
 
 Adding a noise…
 

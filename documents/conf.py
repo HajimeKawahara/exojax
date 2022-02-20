@@ -19,11 +19,11 @@ sys.path.insert(0, os.path.abspath('/home/kawahara/exojax'))
 # -- Project information -----------------------------------------------------
 
 project = 'exojax'
-copyright = '2021, exojax contributors (see top page)'
+copyright = '2021-2022, exojax contributors (see top page)'
 author = 'exojax contributors (see top page)'
 
 # The full version, including alpha/beta/rc tags
-release = '1.0.0'
+release = '1.1.0'
 
 
 # -- General configuration ---------------------------------------------------

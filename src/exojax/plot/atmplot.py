@@ -4,9 +4,7 @@ import matplotlib.pyplot as plt
 
 
 def plottau(nus, dtauM, Tarr=None, Parr=None, unit=None, mode=None, vmin=-3, vmax=3):
-    """plot tau.
-
-       This function gives the color map of log10(tau) (or log10(dtau)), optionally w/ a T-P profile.
+    """Plot optical depth (tau). This function gives the color map of log10(tau) (or log10(dtau)), optionally w/ a T-P profile.
 
     Args:
        nus: wavenumber
@@ -56,9 +54,7 @@ def plottau(nus, dtauM, Tarr=None, Parr=None, unit=None, mode=None, vmin=-3, vma
 
 
 def plotcf(nus, dtauM, Tarr, Parr, dParr, unit=None, mode=None, log=False, normalize=True, cmap='bone_r'):
-    """plot contribution function.
-
-       This function gives a plot of contribution function, optionally w/ a T-P profile.
+    """plot the contribution function. This function gives a plot of contribution function, optionally w/ a T-P profile.
 
     Args:
        nus: wavenumber
@@ -141,7 +137,7 @@ def plotcf(nus, dtauM, Tarr, Parr, dParr, unit=None, mode=None, log=False, norma
 
 
 def plot_maxpoint(mask, Parr, maxcf, maxcia, mol='CO'):
-    """plotting max contribution function  points.
+    """Plotting max contribution function  points.
 
     Args:
        mask: weak line mask
