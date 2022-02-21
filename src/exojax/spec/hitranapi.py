@@ -1,19 +1,20 @@
 """API for HITRAN and HITEMP outside HAPI."""
 import numpy as np
 
-def read_path(deff):
-    """HITRAN IO for a definition file.
+
+def read_path(path):
+    """HITRAN IO for a HITRAN/HITEMP par file.
     Args:
-        deff: definition file
+        path: HITRAN/HITEMP par file
     Returns:
-        numinf: nu minimum for trans
+        numinf: nu minimum for multiple file cases of HITEMP (H2O and CO2)
         numtag: tag for wavelength range
     Note:
-       For H2O and CO2, HITEMP provides multiple files. numinf and numtag are the ranges and identifiers for the multiple files.
+       For H2O and CO2, HITEMP provides multiple par files. numinf and numtag are the ranges and identifiers for the multiple par files.
     """
 
     exception = False
-    if "01_HITEMP" in deff.stem:
+    if "01_HITEMP" in path.stem:
         exception = True
         numinf = np.array([    0.,    50.,   150.,   250.,   350.,   500.,   600.,   700.,   800.,   900.,
                             1000.,  1150.,  1300.,  1500.,  1750.,  2000.,  2250.,  2500.,  2750.,  3000.,
@@ -21,7 +22,7 @@ def read_path(deff):
                             8000.,  8500.,  9000., 11000.])
         maxnu = 30000.
         numtag = make_numtag(numinf, maxnu)
-    if "02_HITEMP" in deff.stem:
+    if "02_HITEMP" in path.stem:
         exception = True
         numinf = np.array([    0.,   500.,   625.,   750.,  1000.,  1500.,  2000.,  2125.,  2250., 2500.,
                             3000.,  3250.,  3500.,  3750.,  4000.,  4500.,  5000.,  5500.,  6000., 6500.])
@@ -38,7 +39,7 @@ def read_path(deff):
 def make_numtag(numinf, maxnu):
     """making numtag from numinf.
     Args:
-        numinf: nu minimum for trans
+        numinf: nu minimum for multiple file cases of HITEMP (H2O and CO2)
         maxnu:  maximum nu
     Returns:
         numtag: tag for wavelength range

@@ -487,7 +487,6 @@ class MdbHit(object):
                 if not sub_file.exists():
                     self.download(numtag=numtag[i])
 
-                print(self.path, flname.stem)
                 hapi.db_begin(str(self.path))
                 molec = str(flname.stem)
                 self.Tref = 296.0
@@ -536,8 +535,6 @@ class MdbHit(object):
                     self._gamma_self = np.hstack([self._gamma_self, gamma_selfx])
                     self._elower = np.hstack([self._elower, elowerx])
                     self._gpp = np.hstack([self._gpp, gppx])
-
-
 
         ### MASKING ###
         mask = (self.nu_lines > self.nurange[0]-self.margin)\
@@ -630,6 +627,7 @@ class MdbHit(object):
                 imin = int(numtag[0:5])
                 imax = int(numtag[6:11])
                 numtag_d = str(imin)+'-'+str(imax)
+                # unzipping results in "02_6500-12785_HITEMP2010.par", not "02_'0'6500-12785_HITEMP2010.par"
                 flname_uncorrect = molnm+'_'+numtag_d+'_HITEMP2010.par'
                 flname_correct = molnm+'_'+numtag+'_HITEMP2010.par'
                 if (self.path/flname_uncorrect).exists():
