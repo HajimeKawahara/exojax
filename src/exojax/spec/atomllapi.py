@@ -127,7 +127,7 @@ def read_kurucz(kuruczf):
         iion:  ionized level (e.g., neutral=1, singly)
         gamRad: log of gamma of radiation damping (s-1) #(https://www.astro.uu.se/valdwiki/Vald3Format)
         gamSta: log of gamma of Stark damping (s-1)
-        vdWdamp:  log of (van der Waals damping constant / neutral hydrogen number) (s-1)
+        gamvdW:  log of (van der Waals damping constant / neutral hydrogen number) (s-1)
     """
     with open(kuruczf) as f:
         lines = f.readlines()
@@ -186,7 +186,7 @@ def read_kurucz(kuruczf):
     gamSta = gamSta[::-1]
     gamvdW = gamvdW[::-1]
 
-    return (A, nu_lines, elower, eupper, gupper, jlower, jupper, ielem, iion, gamRad, gamSta, gamvdW)
+    return A, nu_lines, elower, eupper, gupper, jlower, jupper, ielem, iion, gamRad, gamSta, gamvdW
 
 
 def pickup_param(ExAll):
@@ -316,7 +316,7 @@ def make_ielem_to_index_of_ipccd():
         if (i in ielemarr):
             ielem_to_index_of_ipccd[i] = np.where(ielemarr==i)[0][0]
     ielem_to_index_of_ipccd = jnp.array(ielem_to_index_of_ipccd)
-    return(ielem_to_index_of_ipccd)
+    return ielem_to_index_of_ipccd
 
 
 ielem_to_index_of_ipccd = make_ielem_to_index_of_ipccd()
@@ -354,7 +354,7 @@ def pick_ionE(ielem, iion, df_ionE):
     """
     f_droppare = lambda x: x.str.replace('(', '', regex = True).str.replace(')', '', regex = True).str.replace('[', '', regex = True).str.replace(']', '', regex = True).str.replace('                                      ', '0', regex = True)
     ionE = float(f_droppare(df_ionE[(df_ionE['At. num '] == ielem) & (df_ionE[' Ion Charge '] == iion-1)]['      Ionization Energy (a) (eV)      ']))
-    return(ionE)
+    return ionE
     
 
 def load_pf_Barklem2016():

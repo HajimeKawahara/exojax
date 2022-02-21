@@ -404,7 +404,7 @@ def get_unique_species(adb):
     seen=[]
     get_unique_list = lambda seq: [x for x in seq if x not in seen and not seen.append(x)]
     uspecies = jnp.array(  get_unique_list(jnp.vstack([adb.ielem, adb.iion]).T.tolist())  )
-    return (uspecies)
+    return uspecies
 
 
 def ielemion_to_FastChemSymbol(ielem, iion):
@@ -417,7 +417,7 @@ def ielemion_to_FastChemSymbol(ielem, iion):
     Returns:
         SpeciesSymbol in FastChem (str) (cf. https://github.com/exoclime/FastChem/blob/master/input/logK_ext.dat)
     """
-    return (( atomllapi.PeriodicTable[ielem] + '1' + '+'*(iion-1) ).rstrip('1'))
+    return ((atomllapi.PeriodicTable[ielem] + '1' + '+'*(iion-1) ).rstrip('1'))
     
 
 def get_VMR_uspecies(uspecies, mods_ID, mods):
@@ -454,7 +454,7 @@ def get_VMR_uspecies(uspecies, mods_ID, mods):
         return (i_and_VMR, i_MIU)
     VMR_uspecies = scan(f_mod, (0, VMR_uspecies), mods_ID_uspecies)[0][1]
         
-    return (VMR_uspecies)
+    return VMR_uspecies
 
 
 def get_VMR_uspecies_FC(FCSpIndex_uspecies, mixing_ratios):
@@ -473,7 +473,7 @@ def get_VMR_uspecies_FC(FCSpIndex_uspecies, mixing_ratios):
         return (i_sp, VMR_sp)
 
     i, VMR_uspecies = scan(floop, 0, jnp.zeros(len(FCSpIndex_uspecies)))
-    return (VMR_uspecies)
+    return VMR_uspecies
     
     
 def uspecies_info(uspecies, ielem_to_index_of_ipccd, mods_ID = jnp.array([[0,0],]), mods = jnp.array([0,]), mods_id_trans = jnp.array([])):
@@ -513,7 +513,6 @@ def uspecies_info(uspecies, ielem_to_index_of_ipccd, mods_ID = jnp.array([[0,0],
     def f_Mmul(msi, null):
         ms, i = msi
         mit = mods_id_trans[i]
-        # mods_uspecies_list[mit] = mods[i]
         ms = (ms.at[mit].set(mods[i]))
         i = i + 1
         msi = [ms, i]
@@ -522,7 +521,7 @@ def uspecies_info(uspecies, ielem_to_index_of_ipccd, mods_ID = jnp.array([[0,0],
     
     def g_Mmul(msi0):
         msi, null = scan(f_Mmul, msi0, None, length)
-        return (msi[0])
+        return msi[0]
     
     mods_uspecies_list = jnp.zeros(len(uspecies))
     mods_uspecies_list = g_Mmul([mods_uspecies_list, 0])
@@ -587,11 +586,11 @@ def beta_Make_mods_uspecies_list(uspecies, mods=jnp.array([0,]), mods_id_trans=j
     
     def g_Mmul(msi0):
         msi, null=scan(f_Mmul, msi0, None, length)
-        return (msi[0])
+        return msi[0]
     
     mods_uspecies_list = jnp.zeros(len(uspecies))
     mods_uspecies_list = g_Mmul([mods_uspecies_list, 0])
-    return (mods_uspecies_list)
+    return mods_uspecies_list
 
 
 def sep_arr_of_sp(arr, adb, trans_jnp=True, inttype=False):
@@ -617,7 +616,7 @@ def sep_arr_of_sp(arr, adb, trans_jnp=True, inttype=False):
         else:
             arr_stacksp = jnp.array(arr_stacksp)
     
-    return (arr_stacksp)
+    return arr_stacksp
     
 
 def padding_2Darray_for_each_atom(orig_arr, adb, sp):
@@ -639,7 +638,7 @@ def padding_2Darray_for_each_atom(orig_arr, adb, sp):
     padded_arr = jnp.concatenate([orig_arr, padding_zero])
     padded_valid_arr = padded_arr[jnp.sort(valid_indices)]
     padded_valid_arr = padded_valid_arr.T
-    return (padded_valid_arr)
+    return padded_valid_arr
 
 
 def interp_QT284(T, T_gQT, gQT_284species):
@@ -657,4 +656,4 @@ def interp_QT284(T, T_gQT, gQT_284species):
     listofDA_gQT_eachspecies = list(map(lambda x: jnp.array(x), list_gQT_eachspecies))
     listofQT = list(map(lambda x: jnp.interp(T, T_gQT, x), listofDA_gQT_eachspecies))
     QT_284 = jnp.array(listofQT)
-    return (QT_284)
+    return QT_284
