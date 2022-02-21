@@ -14,7 +14,7 @@ Note: The input line list needs to be obtained from VALD3 (http://vald.astro.uu.
       Please rename the file sent by VALD ([user_name_at_VALD].[request_number_at_VALD].gz) to "vald4214450.gz" if you would like to use the code below without editing it.
 """
 
-path_ValdLineList = 'vald4214450.gz'
+path_ValdLineList = '.database/vald4214450.gz'
 
 import pytest
 import numpy as np

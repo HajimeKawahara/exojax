@@ -34,6 +34,16 @@ def url_HITEMP():
     return url
 
 
+def url_HITEMP10():
+    """return URL for HITEMP2010.
+
+    Returns:
+       URL for HITEMP2010 db
+    """
+    url = u'https://hitran.org/hitemp/data/HITEMP-2010/'
+    return url
+
+
 def url_ExoMol():
     """return URL for ExoMol.
 
