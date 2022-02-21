@@ -260,7 +260,7 @@ def vac_to_air(wlvac):
     n = 1. + 0.0000834254 + 0.02406147 / \
         (130 - s*s) + 0.00015998 / (38.9 - s*s)
     wlair = wlvac / n
-    return(wlair)
+    return wlair
 
 
 def air_to_vac(wlair):
@@ -279,7 +279,7 @@ def air_to_vac(wlair):
     n = 1. + 0.00008336624212083 + 0.02408926869968 / (130.1065924522 - s*s) + \
         0.0001599740894897 / (38.92568793293 - s*s)
     wlvac = wlair * n
-    return(wlvac)
+    return wlvac
 
 
 def load_atomicdata():
@@ -399,4 +399,4 @@ def partfn_Fe(T):
     for i, a in enumerate(a):
         Qln = Qln + a*np.log(T)**i
     Q = np.exp(Qln)
-    return(Q)
+    return Q

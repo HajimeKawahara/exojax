@@ -1,4 +1,4 @@
-"""Faddeeva (wofz) functions (real and imag parts), an asymptotic form of wofz.
+"""Faddeeva (wofz= w of z) functions (real and imag parts), an asymptotic form of wofz.
 
 Note:
    We adopt ncut=27 as the summation of n in Algorithm 916. For Sigma1, we use ncut=8 because higher order than 9 does not affect the results.

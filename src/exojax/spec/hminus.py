@@ -4,8 +4,7 @@ import numpy as np
 import jax.numpy as jnp
 from jax import jit, vmap
 from jax.lax import scan
-
-CONST_K, CONST_C, CONST_H = 1.380649e-16, 29979245800.0, 6.62607015e-27  # cgs
+from exojax.utils.constants import kB, ccgs, hcgs
 
 
 def log_hminus_continuum(nus, temperature, number_density_e, number_density_h):
@@ -32,7 +31,7 @@ def log_hminus_continuum(nus, temperature, number_density_e, number_density_h):
 #    kappa_bf = bound_free_absorption(wavelength_um, temperature)
 #    kappa_ff = free_free_absorption(wavelength_um, temperature)
 
-    electron_pressure = number_density_e * CONST_K * \
+    electron_pressure = number_density_e * kB * \
         temperature  # //electron pressure in dyne/cm2
     hydrogen_density = number_density_h
 
@@ -48,9 +47,16 @@ def bound_free_absorption(wavelength_um, temperature):
 
     Note:
        alpha has a value of 1.439e4 micron-1 K-1, the value stated in John (1988) is wrong
+
+    Args:
+        wavelength_um: wavelength in the unit of micron
+        temperature: temperature in the unit of Kelvin
+
+    Returns:
+        absorption coefficient [cm4/dyne]
     """
     # here, we express alpha using physical constants
-    alpha = CONST_C*CONST_H/CONST_K*10000.0
+    alpha = ccgs*hcgs/kB*10000.0
     lambda_0 = 1.6419  # photo-detachment threshold
 
     #   //tabulated constant from John (1988)
@@ -86,6 +92,13 @@ def free_free_absorption(wavelength_um, temperature):
 
     Note:
        to follow his notation (which starts at an index of 1), the 0-index components are 0 for wavelengths larger than 0.3645 micron
+
+    Args:
+        wavelength_um: wavelength in the unit of micron
+        temperature: temperature in the unit of Kelvin
+
+    Returns:
+        absorption coefficient [cm4/dyne]
     """
     A_n1 = [0.0, 0.0, 2483.3460, -3449.8890, 2200.0400, -696.2710, 88.2830]
     B_n1 = [0.0, 0.0, 285.8270, -1158.3820, 2427.7190, -1841.4000, 444.5170]
@@ -128,6 +141,14 @@ def free_free_absorption(wavelength_um, temperature):
 
 
 if __name__ == '__main__':
+    import matplotlib.pyplot as plt
+    Tin = 3000.0
+    wav = np.linspace(0.8, 2.4, 100)
+    plt.plot(wav, free_free_absorption(wav, Tin))
+    plt.plot(wav, bound_free_absorption(wav, Tin))
+    plt.yscale('log')
+    plt.show()
+
     Nlayer = 100
     Parr = np.logspace(-8, 2, Nlayer)
     Tarr = np.linspace(2000, 3000, Nlayer)
