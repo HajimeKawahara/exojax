@@ -483,12 +483,11 @@ class MdbHit(object):
                 numinf, self.nurange[1], side='right')-1  # left side
             for k, i in enumerate(range(imin, imax+1)):
                 flname = pathlib.Path(molnm+'_'+numtag[i]+'_HITEMP2010.par')
-                sub_file = self.path / flname
+                sub_file = self.path / numtag[i] / flname
                 if not sub_file.exists():
                     self.download(numtag=numtag[i])
 
-            hapi.db_begin(str(self.path))
-            for k, i in enumerate(range(imin, imax+1)):
+                hapi.db_begin(str(self.path/numtag[i]))
                 flname = pathlib.Path(molnm+'_'+numtag[i]+'_HITEMP2010.par')
                 molec = str(flname.stem)
                 self.Tref = 296.0
@@ -610,33 +609,34 @@ class MdbHit(object):
         if numtag is not None:
             molnm = str(self.path.name)[0:2]
             if molnm == '01':
-                os.makedirs(str(self.path), exist_ok=True)
+                os.makedirs(str(self.path/numtag), exist_ok=True)
                 dldir = 'H2O_line_list/'
             if molnm == '02':
-                os.makedirs(str(self.path), exist_ok=True)
+                os.makedirs(str(self.path/numtag), exist_ok=True)
                 dldir = 'CO2_line_list/'
             flname = molnm+'_'+numtag+'_HITEMP2010.zip'
             try:
                 url = url_HITEMP10()+dldir+flname
-                urllib.request.urlretrieve(url, str(self.path/flname))
+                urllib.request.urlretrieve(url, str(self.path/numtag/flname))
             except:
                 print(url)
                 print('HITEMP2010 download failed')
             else:
                 print('HITEMP2010 download succeeded')
-                shutil.unpack_archive(self.path/flname, self.path)
+                shutil.unpack_archive(self.path/numtag/flname, self.path/numtag)
 
                 imin = int(numtag[0:5])
                 imax = int(numtag[6:11])
                 numtag_nonzero = str(imin)+'-'+str(imax)
                 # unzipping results in non-zero-fill filename
                 # ex."02_6500-12785_HITEMP2010.par", not "02_'0'6500-12785_HITEMP2010.par"
+                # so need to rename the file
                 flname_nonzero = molnm+'_'+numtag_nonzero+'_HITEMP2010.par'
                 flname_zero = molnm+'_'+numtag+'_HITEMP2010.par'
-                if (self.path/flname_nonzero).exists():
+                if (self.path/numtag/flname_nonzero).exists():
                     if flname_zero != flname_nonzero:
-                        print("rename:", flname_nonzero, "=>", flname_zero)
-                        os.rename(self.path/flname_nonzero, self.path/flname_zero)
+                        os.rename(self.path/numtag/flname_nonzero, self.path/numtag/flname_zero)
+                        print("renamed par file in", self.path/pathlib.Path(numtag), ":", flname_nonzero, "=>", flname_zero)
 
     ####################################
 
