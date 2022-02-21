@@ -415,56 +415,121 @@ class MdbHit(object):
            crit: line strength lower limit for extraction
            extract: If True, it extracts the opacity having the wavenumber between nurange +- margin. Use when you want to reduce the memory use.
         """
-        # downloading
         self.path = pathlib.Path(path)
-        if not self.path.exists():
-            self.download()
+        numinf, numtag = hitranapi.read_path(self.path)
 
-        # extract?
-        if extract:
-            if self.path.suffix == '.bz2':
-                tag = str(nurange[0])+'_'+str(nurange[-1])+'_'+str(margin)
-                self.path = hitranapi.extract_hitemp(
-                    str(self.path), nurange, margin, tag)
-                print('self.path changed:', self.path)
-            else:
-                print(
-                    'Warning: "extract" option is available only for .bz2 format. No "extract" applied')
-
-        # bunzip2 if suffix is .bz2
-        if self.path.suffix == '.bz2':
-            import bz2
-            import shutil
-            if self.path.with_suffix('').exists():
-                import os
-                os.remove(self.path.with_suffix(''))
-            print('bunziping')
-            with bz2.BZ2File(str(self.path)) as fr:
-                with open(str(self.path.with_suffix('')), 'wb') as fw:
-                    shutil.copyfileobj(fr, fw)
-            self.path = self.path.with_suffix('')
-
-        hapi.db_begin(str(self.path.parent))
-        molec = str(self.path.stem)
         self.Tref = 296.0
-        self.molecid = search_molecid(molec)
         self.crit = crit
         self.margin = margin
         self.nurange = [np.min(nurange), np.max(nurange)]
 
-        # nd arrays using DRAM (not jnp, not in GPU)
-        self.nu_lines = hapi.getColumn(molec, 'nu')
-        self.Sij0 = hapi.getColumn(molec, 'sw')
-        self.delta_air = hapi.getColumn(molec, 'delta_air')
-        self.isoid = hapi.getColumn(molec, 'local_iso_id')
-        self.uniqiso = np.unique(self.isoid)
+        if numinf is None:
+            # downloading
+            if not self.path.exists():
+                self.download()
 
-        self._A = hapi.getColumn(molec, 'a')
-        self._n_air = hapi.getColumn(molec, 'n_air')
-        self._gamma_air = hapi.getColumn(molec, 'gamma_air')
-        self._gamma_self = hapi.getColumn(molec, 'gamma_self')
-        self._elower = hapi.getColumn(molec, 'elower')
-        self._gpp = hapi.getColumn(molec, 'gpp')
+            # extract?
+            if extract:
+                if self.path.suffix == '.bz2':
+                    tag = str(nurange[0])+'_'+str(nurange[-1])+'_'+str(margin)
+                    self.path = hitranapi.extract_hitemp(
+                        str(self.path), nurange, margin, tag)
+                    print('self.path changed:', self.path)
+                else:
+                    print(
+                        'Warning: "extract" option is available only for .bz2 format. No "extract" applied')
+
+            # bunzip2 if suffix is .bz2
+            if self.path.suffix == '.bz2':
+                import bz2
+                import shutil
+                if self.path.with_suffix('').exists():
+                    import os
+                    os.remove(self.path.with_suffix(''))
+                print('bunziping')
+                with bz2.BZ2File(str(self.path)) as fr:
+                    with open(str(self.path.with_suffix('')), 'wb') as fw:
+                        shutil.copyfileobj(fr, fw)
+                self.path = self.path.with_suffix('')
+
+            hapi.db_begin(str(self.path.parent))
+            molec = str(self.path.stem)
+            self.molecid = search_molecid(molec)
+
+            # nd arrays using DRAM (not jnp, not in GPU)
+            self.nu_lines = hapi.getColumn(molec, 'nu')
+            self.Sij0 = hapi.getColumn(molec, 'sw')
+            self.delta_air = hapi.getColumn(molec, 'delta_air')
+            self.isoid = hapi.getColumn(molec, 'local_iso_id')
+            self.uniqiso = np.unique(self.isoid)
+
+            self._A = hapi.getColumn(molec, 'a')
+            self._n_air = hapi.getColumn(molec, 'n_air')
+            self._gamma_air = hapi.getColumn(molec, 'gamma_air')
+            self._gamma_self = hapi.getColumn(molec, 'gamma_self')
+            self._elower = hapi.getColumn(molec, 'elower')
+            self._gpp = hapi.getColumn(molec, 'gpp')
+        else:
+            # remove '.par' for HITEMP H2O and CO2 (multiple file cases)
+            if '.par' in str(self.path):
+                self.path = pathlib.Path(str(self.path).replace('.par', ''))
+
+            molnm = str(self.path.name)[0:2]
+
+            imin = np.searchsorted(
+                numinf, self.nurange[0], side='right')-1  # left side
+            imax = np.searchsorted(
+                numinf, self.nurange[1], side='right')-1  # left side
+            for k, i in enumerate(range(imin, imax+1)):
+                flname = pathlib.Path(molnm+'_'+numtag[i]+'_HITEMP2010.par')
+                sub_file = self.path / numtag[i] / flname
+                if not sub_file.exists():
+                    self.download(numtag=numtag[i])
+
+                hapi.db_begin(str(self.path/numtag[i]))
+                molec = str(flname.stem)
+                self.molecid = search_molecid(molec)
+                if k == 0:
+                    # nd arrays using DRAM (not jnp, not in GPU)
+                    self.nu_lines = hapi.getColumn(molec, 'nu')
+                    self.Sij0 = hapi.getColumn(molec, 'sw')
+                    self.delta_air = hapi.getColumn(molec, 'delta_air')
+                    self.isoid = hapi.getColumn(molec, 'local_iso_id')
+                    self.uniqiso = np.unique(self.isoid)
+
+                    self._A = hapi.getColumn(molec, 'a')
+                    self._n_air = hapi.getColumn(molec, 'n_air')
+                    self._gamma_air = hapi.getColumn(molec, 'gamma_air')
+                    self._gamma_self = hapi.getColumn(molec, 'gamma_self')
+                    self._elower = hapi.getColumn(molec, 'elower')
+                    self._gpp = hapi.getColumn(molec, 'gpp')
+                else:
+                    # nd arrays using DRAM (not jnp, not in GPU)
+                    nulx = hapi.getColumn(molec, 'nu')
+                    Sij0x = hapi.getColumn(molec, 'sw')
+                    delta_airx = hapi.getColumn(molec, 'delta_air')
+                    isoidx = hapi.getColumn(molec, 'local_iso_id')
+                    uniqisox = np.unique(self.isoid)
+
+                    Ax = hapi.getColumn(molec, 'a')
+                    n_airx = hapi.getColumn(molec, 'n_air')
+                    gamma_airx = hapi.getColumn(molec, 'gamma_air')
+                    gamma_selfx = hapi.getColumn(molec, 'gamma_self')
+                    elowerx = hapi.getColumn(molec, 'elower')
+                    gppx = hapi.getColumn(molec, 'gpp')
+
+                    self.nu_lines = np.hstack([self.nu_lines, nulx])
+                    self.Sij0 = np.hstack([self.Sij0, Sij0x])
+                    self.delta_air = np.hstack([self.delta_air, delta_airx])
+                    self.isoid = np.hstack([self.isoid, isoidx])
+                    self.uniqiso = np.hstack([self.uniqiso, uniqisox])
+
+                    self._A = np.hstack([self._A, Ax])
+                    self._n_air = np.hstack([self._n_air, n_airx])
+                    self._gamma_air = np.hstack([self._gamma_air, gamma_airx])
+                    self._gamma_self = np.hstack([self._gamma_self, gamma_selfx])
+                    self._elower = np.hstack([self._elower, elowerx])
+                    self._gpp = np.hstack([self._gpp, gppx])
 
         ### MASKING ###
         mask = (self.nu_lines > self.nurange[0]-self.margin)\
@@ -509,7 +574,7 @@ class MdbHit(object):
         self.gpp = jnp.array(self._gpp)
         self.gamma_natural = gn(self.A)
 
-    def download(self):
+    def download(self, numtag=None):
         """Downloading HITRAN/HITEMP par file.
 
         Note:
@@ -518,6 +583,9 @@ class MdbHit(object):
         import urllib.request
         from exojax.utils.url import url_HITRAN12
         from exojax.utils.url import url_HITEMP
+        from exojax.utils.url import url_HITEMP10
+        import os
+        import shutil
 
         try:
             url = url_HITRAN12()+self.path.name
@@ -527,10 +595,42 @@ class MdbHit(object):
             print('HITRAN download failed')
         try:
             url = url_HITEMP()+self.path.name
-            print(url)
             urllib.request.urlretrieve(url, str(self.path))
         except:
+            print(url)
             print('HITEMP download failed')
+
+        if numtag is not None:
+            molnm = str(self.path.name)[0:2]
+            if molnm == '01':
+                os.makedirs(str(self.path/numtag), exist_ok=True)
+                dldir = 'H2O_line_list/'
+            if molnm == '02':
+                os.makedirs(str(self.path/numtag), exist_ok=True)
+                dldir = 'CO2_line_list/'
+            flname = molnm+'_'+numtag+'_HITEMP2010.zip'
+            try:
+                url = url_HITEMP10()+dldir+flname
+                urllib.request.urlretrieve(url, str(self.path/numtag/flname))
+            except:
+                print(url)
+                print('HITEMP2010 download failed')
+            else:
+                print('HITEMP2010 download succeeded')
+                shutil.unpack_archive(self.path/numtag/flname, self.path/numtag)
+
+                imin = int(numtag[0:5])
+                imax = int(numtag[6:11])
+                numtag_nonzero = str(imin)+'-'+str(imax)
+                # unzipping results in non-zero-fill filename
+                # ex."02_6500-12785_HITEMP2010.par", not "02_'0'6500-12785_HITEMP2010.par"
+                # so need to rename the file
+                flname_nonzero = molnm+'_'+numtag_nonzero+'_HITEMP2010.par'
+                flname_zero = molnm+'_'+numtag+'_HITEMP2010.par'
+                if (self.path/numtag/flname_nonzero).exists():
+                    if flname_zero != flname_nonzero:
+                        os.rename(self.path/numtag/flname_nonzero, self.path/numtag/flname_zero)
+                        print("renamed par file in", self.path/pathlib.Path(numtag), ":", flname_nonzero, "=>", flname_zero)
 
     ####################################
 
