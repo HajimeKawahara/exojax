@@ -487,7 +487,8 @@ class MdbHit(object):
                 if not sub_file.exists():
                     self.download(numtag=numtag[i])
 
-                hapi.db_begin(str(self.path))
+            hapi.db_begin(str(self.path))
+            for k, i in enumerate(range(imin, imax+1)):
                 molec = str(flname.stem)
                 self.Tref = 296.0
                 self.molecid = search_molecid(molec)
@@ -632,8 +633,9 @@ class MdbHit(object):
                 flname_nonzero = molnm+'_'+numtag_nonzero+'_HITEMP2010.par'
                 flname_zero = molnm+'_'+numtag+'_HITEMP2010.par'
                 if (self.path/flname_nonzero).exists():
-                    print(flname_nonzero, "exists")
-                    os.rename(self.path/flname_nonzero, self.path/flname_zero)
+                    if flname_zero != flname_nonzero:
+                        print("rename:", flname_nonzero, "=>", flname_zero)
+                        os.rename(self.path/flname_nonzero, self.path/flname_zero)
 
     ####################################
 
