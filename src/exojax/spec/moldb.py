@@ -489,6 +489,7 @@ class MdbHit(object):
 
             hapi.db_begin(str(self.path))
             for k, i in enumerate(range(imin, imax+1)):
+                flname = pathlib.Path(molnm+'_'+numtag[i]+'_HITEMP2010.par')
                 molec = str(flname.stem)
                 self.Tref = 296.0
                 self.molecid = search_molecid(molec)

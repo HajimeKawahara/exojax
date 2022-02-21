@@ -1,0 +1,3 @@
+# this file exists so that we know when not to do the
+# .database/CO/12C-16O/Li2015/12C-16O__Li2015.trans.bz2 → .database/CO/12C-16O/Li2015/12C-16O__Li2015.trans.bz2.hdf5 conversion
+fingerprint: d7997c748ddde4834eb6c53d3cab4bd7
