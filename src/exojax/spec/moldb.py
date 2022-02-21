@@ -418,6 +418,11 @@ class MdbHit(object):
         self.path = pathlib.Path(path)
         numinf, numtag = hitranapi.read_path(self.path)
 
+        self.Tref = 296.0
+        self.crit = crit
+        self.margin = margin
+        self.nurange = [np.min(nurange), np.max(nurange)]
+
         if numinf is None:
             # downloading
             if not self.path.exists():
@@ -449,11 +454,7 @@ class MdbHit(object):
 
             hapi.db_begin(str(self.path.parent))
             molec = str(self.path.stem)
-            self.Tref = 296.0
             self.molecid = search_molecid(molec)
-            self.crit = crit
-            self.margin = margin
-            self.nurange = [np.min(nurange), np.max(nurange)]
 
             # nd arrays using DRAM (not jnp, not in GPU)
             self.nu_lines = hapi.getColumn(molec, 'nu')
@@ -468,14 +469,12 @@ class MdbHit(object):
             self._gamma_self = hapi.getColumn(molec, 'gamma_self')
             self._elower = hapi.getColumn(molec, 'elower')
             self._gpp = hapi.getColumn(molec, 'gpp')
-
         else:
             # remove '.par' for HITEMP H2O and CO2 (multiple file cases)
             if '.par' in str(self.path):
                 self.path = pathlib.Path(str(self.path).replace('.par', ''))
 
             molnm = str(self.path.name)[0:2]
-            self.nurange = [np.min(nurange), np.max(nurange)]
 
             imin = np.searchsorted(
                 numinf, self.nurange[0], side='right')-1  # left side
@@ -489,11 +488,7 @@ class MdbHit(object):
 
                 hapi.db_begin(str(self.path/numtag[i]))
                 molec = str(flname.stem)
-                self.Tref = 296.0
                 self.molecid = search_molecid(molec)
-                self.crit = crit
-                self.margin = margin
-                self.nurange = [np.min(nurange), np.max(nurange)]
                 if k == 0:
                     # nd arrays using DRAM (not jnp, not in GPU)
                     self.nu_lines = hapi.getColumn(molec, 'nu')
