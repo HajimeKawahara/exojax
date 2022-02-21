@@ -4,11 +4,13 @@ import numpy as np
 
 def read_path(path):
     """HITRAN IO for a HITRAN/HITEMP par file.
+
     Args:
         path: HITRAN/HITEMP par file
     Returns:
         numinf: nu minimum for multiple file cases of HITEMP (H2O and CO2)
         numtag: tag for wavelength range
+
     Note:
        For H2O and CO2, HITEMP provides multiple par files. numinf and numtag are the ranges and identifiers for the multiple par files.
     """
@@ -24,8 +26,8 @@ def read_path(path):
         numtag = make_numtag(numinf, maxnu)
     if "02_HITEMP" in path.stem:
         exception = True
-        numinf = np.array([    0.,   500.,   625.,   750.,  1000.,  1500.,  2000.,  2125.,  2250., 2500.,
-                            3000.,  3250.,  3500.,  3750.,  4000.,  4500.,  5000.,  5500.,  6000., 6500.])
+        numinf = np.array([    0.,   500.,   625.,   750.,  1000.,  1500.,  2000.,  2125.,  2250.,  2500.,
+                            3000.,  3250.,  3500.,  3750.,  4000.,  4500.,  5000.,  5500.,  6000.,  6500.])
         maxnu = 12785.
         numtag = make_numtag(numinf, maxnu)
 
@@ -38,9 +40,11 @@ def read_path(path):
 
 def make_numtag(numinf, maxnu):
     """making numtag from numinf.
+
     Args:
         numinf: nu minimum for multiple file cases of HITEMP (H2O and CO2)
         maxnu:  maximum nu
+
     Returns:
         numtag: tag for wavelength range
     """
