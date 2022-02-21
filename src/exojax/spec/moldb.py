@@ -626,12 +626,14 @@ class MdbHit(object):
 
                 imin = int(numtag[0:5])
                 imax = int(numtag[6:11])
-                numtag_d = str(imin)+'-'+str(imax)
-                # unzipping results in "02_6500-12785_HITEMP2010.par", not "02_'0'6500-12785_HITEMP2010.par"
-                flname_uncorrect = molnm+'_'+numtag_d+'_HITEMP2010.par'
-                flname_correct = molnm+'_'+numtag+'_HITEMP2010.par'
-                if (self.path/flname_uncorrect).exists():
-                    os.rename(self.path/flname_uncorrect, self.path/flname_correct)
+                numtag_nonzero = str(imin)+'-'+str(imax)
+                # unzipping results in non-zero-fill filename
+                # ex."02_6500-12785_HITEMP2010.par", not "02_'0'6500-12785_HITEMP2010.par"
+                flname_nonzero = molnm+'_'+numtag_nonzero+'_HITEMP2010.par'
+                flname_zero = molnm+'_'+numtag+'_HITEMP2010.par'
+                if (self.path/flname_nonzero).exists():
+                    print(flname_nonzero, "exists")
+                    os.rename(self.path/flname_nonzero, self.path/flname_zero)
 
     ####################################
 
