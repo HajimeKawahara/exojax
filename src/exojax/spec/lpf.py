@@ -78,7 +78,7 @@ def vald(adb, Tarr, PH, PHe, PHH):
     sigmaDM = jit(vmap(doppler_sigma,(None,0,None)))\
         (adb.nu_lines, Tarr, adb.atomicmass)
     
-    return(SijM, gammaLM, sigmaDM)
+    return SijM, gammaLM, sigmaDM
     
     
 def vald_each(Tarr, PH, PHe, PHH, \
@@ -129,7 +129,7 @@ def vald_each(Tarr, PH, PHe, PHH, \
         (nu_lines, Tarr, atomicmass)
     sigmaDM = jnp.where(sigmaDMn != 0, sigmaDMn, 1.)
     
-    return(SijM, gammaLM, sigmaDM)
+    return SijM, gammaLM, sigmaDM
 
 
 @jit
@@ -310,8 +310,8 @@ def dtauM_vald(dParr, g, numatrix, adb, SijM, gammaLM, sigmaDM, uspecies, mods_u
         SijM_p = padding_2Darray_for_each_atom(SijM, adb, sp)
         xsm_p = xsmatrix(numatrix_p, sigmaDM_p, gammaLM_p, SijM_p)
         
-        MMRmetalMod = mods_uspecies_list[i] # add_to_deal_with_individual_elemental_abundance
-        MMR_X_I = jnp.array(MMR_uspecies_list[i] *10**MMRmetalMod) # modify this into individual elemental abundances shortly... (tako)
+        MMRmetalMod = mods_uspecies_list[i]
+        MMR_X_I = jnp.array(MMR_uspecies_list[i] *10**MMRmetalMod) # Note that this cannot modify individual elemental abundances yet (Use dtauM_vald_mmwl and VMR)
         mass_X_I = jnp.array(atomicmass_uspecies_list[i])
         
         dtau_each = dtauM(dParr, xsm_p, MMR_X_I*jnp.ones_like(dParr), mass_X_I, g)
@@ -330,7 +330,7 @@ def dtauM_vald(dParr, g, numatrix, adb, SijM, gammaLM, sigmaDM, uspecies, mods_u
     xi_init = [0, dtauatom_init]
 
     dtauatom = f_dtaual(xi_init)[1]
-    return(dtauatom)
+    return dtauatom
 
 
 def dtauM_vald_mmwl(dParr, g, numatrix, adb, SijM, gammaLM, sigmaDM, uspecies, VMR_uspecies, mmw):
@@ -378,7 +378,7 @@ def dtauM_vald_mmwl(dParr, g, numatrix, adb, SijM, gammaLM, sigmaDM, uspecies, V
     xi_init = [0, dtauatom_init]
 
     dtauatom = f_dtaual(xi_init)[1]
-    return(dtauatom)
+    return dtauatom
 
 
 def dtauM_vald_mmwl_sep(dParr, g, numatrix, SijM, gammaLM, sigmaDM, VMR, mmw):
@@ -399,4 +399,4 @@ def dtauM_vald_mmwl_sep(dParr, g, numatrix, SijM, gammaLM, sigmaDM, VMR, mmw):
     """
     xsm = xsmatrix(numatrix, sigmaDM, gammaLM, SijM)
     dtauatom = dtauM_mmwl(dParr, xsm, VMR, mmw, g)
-    return(dtauatom)
+    return dtauatom

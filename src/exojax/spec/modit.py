@@ -339,7 +339,7 @@ def vald_each(Tarr, PH, PHe, PHH, R, qt_284_T, QTmask, \
     
     # Compute doppler broadening
     nsigmaDl = normalized_doppler_sigma(Tarr, atomicmass, R)[:, jnp.newaxis]
-    return(SijM, ngammaLM, nsigmaDl)
+    return SijM, ngammaLM, nsigmaDl
 
 
 def vald_all(asdb, Tarr, PH, PHe, PHH, R):
@@ -367,7 +367,7 @@ def vald_all(asdb, Tarr, PH, PHe, PHH, R):
                  asdb.QTmask, asdb.ielem, asdb.iion, asdb.atomicmass, asdb.ionE, \
                        asdb.dev_nu_lines, asdb.logsij0, asdb.elower, asdb.eupper, asdb.gamRad, asdb.gamSta, asdb.vdWdamp)
     
-    return(SijMS, ngammaLMS, nsigmaDlS)
+    return SijMS, ngammaLMS, nsigmaDlS
 
 
 def setdgm_vald_each(ielem, iion, atomicmass, ionE, dev_nu_lines, logsij0, elower, eupper, gamRad, gamSta, vdWdamp, \
@@ -411,7 +411,7 @@ def setdgm_vald_each(ielem, iion, atomicmass, ionE, dev_nu_lines, logsij0, elowe
         ngammaLM = scan(floop, 0, ngammaLM)[1]
         set_dgm_minmax.append(minmax_dgmatrix(ngammaLM, res))
     dgm_ngammaL = precompute_dgmatrix(set_dgm_minmax, res=res)
-    return(jnp.array(dgm_ngammaL))
+    return jnp.array(dgm_ngammaL)
 
 
 def setdgm_vald_all(asdb, PH, PHe, PHH, R, fT, res, *kargs):
@@ -455,7 +455,7 @@ def setdgm_vald_all(asdb, PH, PHe, PHH, R, fT, res, *kargs):
     dgm_ngammaLS = np.zeros([asdb.N_usp, len(PH), Lmax_dgm])
     for i_sp, dgmi in enumerate(dgm_ngammaLS_BeforePadding):
         dgm_ngammaLS[i_sp] = pad2Dm(dgmi, Lmax_dgm)
-    return(jnp.array(dgm_ngammaLS))
+    return jnp.array(dgm_ngammaLS)
 
 
 @jit
@@ -479,4 +479,4 @@ def xsmatrix_vald(cnuS, indexnuS, R, pmarray, nsigmaDlS, ngammaLMS, SijMS, nu_gr
     xsmS = jit(vmap(xsmatrix, (0, 0, None, None, 0, 0, 0, None, 0)))(\
                     cnuS, indexnuS, R, pmarray, nsigmaDlS, ngammaLMS, SijMS, nu_grid, dgm_ngammaLS)
     xsmS = jnp.abs(xsmS)
-    return(xsmS)
+    return xsmS
