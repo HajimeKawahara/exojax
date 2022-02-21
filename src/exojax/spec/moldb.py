@@ -958,7 +958,31 @@ class AdbVald(object):  # integrated from vald3db.py
 
 
 class AdbSepVald(object):
-    from exojax.spec import atomll
+    """atomic database from VALD3 with an additional axis for separating each species (atom or ion)
+
+    AdbSepVald is a class for VALD3.
+
+    Attributes:
+        nu_lines (nd array):      line center (cm-1) (#NOT frequency in (s-1))
+        dev_nu_lines (jnp array): line center (cm-1) in device
+        logsij0 (jnp array): log line strength at T=Tref
+        elower (jnp array): the lower state energy (cm-1)
+        eupper (jnp array): the upper state energy (cm-1)
+        QTmask (jnp array): identifier of species for Q(T)
+        ielem (jnp array):  atomic number (e.g., Fe=26)
+        iion (jnp array):  ionized level (e.g., neutral=1, singly ionized=2, etc.)
+        atomicmass (jnp array): atomic mass (amu)
+        ionE (jnp array): ionization potential (eV)
+        gamRad (jnp array): log of gamma of radiation damping (s-1) #(https://www.astro.uu.se/valdwiki/Vald3Format)
+        gamSta (jnp array): log of gamma of Stark damping (s-1)
+        vdWdamp (jnp array):  log of (van der Waals damping constant / neutral hydrogen number) (s-1)
+        uspecies (jnp array): unique combinations of ielem and iion [N_species x 2(ielem and iion)]
+        N_usp (int): number of species (atoms and ions)
+        L_max (int): maximum number of spectral lines for a single species
+        gQT_284species (jnp array): partition function grid of 284 species
+        T_gQT (jnp array): temperatures in the partition function grid
+    """
+
     def __init__(self, adb):
         self.nu_lines = atomll.sep_arr_of_sp(adb.nu_lines, adb, trans_jnp=False)
         self.QTmask = atomll.sep_arr_of_sp(adb.QTmask, adb, inttype=True).T[0]

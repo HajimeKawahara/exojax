@@ -26,3 +26,14 @@ a0 = 5.2917720859e-9  # Bohr radius [cm]
 
 # km/s
 c = 299792.458
+Gcr = 115.38055682147402 #cuberoot of Gravitaional constant in the unit of [km/s] normalized by day and Msun
+
+if __name__ == "__main__":
+    #derivation of Gcr
+    from astropy.constants import G
+    from astropy.constants import M_sun
+    from astropy import units as u
+    day = 24*3600*u.s
+    Gu = (G*M_sun/day).value
+    Gcr_val = Gu**(1.0/3.0)*1.e-3
+    print(Gcr_val)

@@ -21,7 +21,7 @@ from exojax.spec import gamma_natural
 from exojax.spec.hitran import SijT
 from exojax.spec import normalized_doppler_sigma
 
-#vald
+# vald
 from exojax.spec.atomll import gamma_vald3, interp_QT284
 
 
@@ -294,6 +294,7 @@ def setdgm_exomol(mdb, fT, Parr, R, molmass, res, *kargs):
     return jnp.array(dgm_ngammaL)
 
 
+@jit
 def vald_each(Tarr, PH, PHe, PHH, R, qt_284_T, QTmask, \
                ielem, iion, atomicmass, ionE, dev_nu_lines, logsij0, elower, eupper, gamRad, gamSta, vdWdamp):
     """Compute atomic line information required for MODIT for separated EACH species, using parameters attributed in VALD separated atomic database (asdb).
@@ -334,7 +335,7 @@ def vald_each(Tarr, PH, PHe, PHH, R, qt_284_T, QTmask, \
     gammaLM = jit(vmap(gamma_vald3,(0,0,0,0,None,None,None,None,None,None,None,None,None,None,None)))\
             (Tarr, PH, PHH, PHe, ielem, iion, dev_nu_lines, elower, eupper, atomicmass, ionE, gamRad, gamSta, vdWdamp, 1.0)
     ngammaLM = gammaLM/(dev_nu_lines/R)
-    #　Do NOT remove NaN because "setdgm_vald_each" makes good use of them. #ngammaLM = jnp.nan_to_num(ngammaLM, nan = 0.0)
+    # Do NOT remove NaN because "setdgm_vald_each" makes good use of them. # ngammaLM = jnp.nan_to_num(ngammaLM, nan = 0.0)
     
     # Compute doppler broadening
     nsigmaDl = normalized_doppler_sigma(Tarr, atomicmass, R)[:, jnp.newaxis]
@@ -370,7 +371,7 @@ def vald_all(asdb, Tarr, PH, PHe, PHH, R):
 
 
 def setdgm_vald_each(ielem, iion, atomicmass, ionE, dev_nu_lines, logsij0, elower, eupper, gamRad, gamSta, vdWdamp, \
-                QTmask, T_gQT, gQT_284species, PH, PHe, PHH, R, fT, res, *kargs):  #(SijM, ngammaLM, nsigmaDl, fT, res, *kargs):
+                QTmask, T_gQT, gQT_284species, PH, PHe, PHH, R, fT, res, *kargs):  # (SijM, ngammaLM, nsigmaDl, fT, res, *kargs):
     """Easy Setting of DIT Grid Matrix (dgm) using VALD.
 
     Args:
@@ -397,7 +398,7 @@ def setdgm_vald_each(ielem, iion, atomicmass, ionE, dev_nu_lines, logsij0, elowe
         *kargs:  arguments for fT
 
     Returns:
-        dgm_ngammaL:  DIT Grid Matrix (dgm) of normalized gammaL [N_layer x N_grid]
+        dgm_ngammaL:  DIT Grid Matrix (dgm) of normalized gammaL [N_layer x N_DITgrid]
     """
     set_dgm_minmax = []
     Tarr_list = fT(*kargs)
@@ -427,7 +428,7 @@ def setdgm_vald_all(asdb, PH, PHe, PHH, R, fT, res, *kargs):
         *kargs:  arguments for fT
 
     Returns:
-        dgm_ngammaLS:  DIT Grid Matrix (dgm) of normalized gammaL [N_species x N_layer x N_grid]
+        dgm_ngammaLS:  DIT Grid Matrix (dgm) of normalized gammaL [N_species x N_layer x N_DITgrid]
 
     Example:
        >>> fT = lambda T0,alpha:  T0[:,None]*(Parr[None,:]/Pref)**alpha[:,None]
@@ -449,15 +450,33 @@ def setdgm_vald_all(asdb, PH, PHe, PHH, R, fT, res, *kargs):
         lendgm.append(dgm_ngammaL_sp.shape[1])
     Lmax_dgm = np.max(np.array(lendgm))
 
-    #Padding to unity the length of all the DIT Grid Matrix (dgm) and convert them into jnp.array
+    # Padding to unity the length of all the DIT Grid Matrix (dgm) and convert them into jnp.array
     pad2Dm = lambda arr, L:  jnp.pad(arr, ((0, 0), (0, L - arr.shape[1])), mode='maximum')
-    pad2D0 = lambda arr, L:  jnp.pad(arr, ((0, 0), (0, L - arr.shape[1])), mode='constant')
     dgm_ngammaLS = np.zeros([asdb.N_usp, len(PH), Lmax_dgm])
     for i_sp, dgmi in enumerate(dgm_ngammaLS_BeforePadding):
-        dammy = pad2D0(dgmi, Lmax_dgm)
-        for i_lay, arr in enumerate(dammy):
-            dgm_ngammaLS[i_sp][i_lay] = jnp.where(arr == 0, jnp.max(arr)*1.01, arr)
-
+        dgm_ngammaLS[i_sp] = pad2Dm(dgmi, Lmax_dgm)
     return(jnp.array(dgm_ngammaLS))
 
 
+@jit
+def xsmatrix_vald(cnuS, indexnuS, R, pmarray, nsigmaDlS, ngammaLMS, SijMS, nu_grid, dgm_ngammaLS):
+    """Cross section matrix for xsvector (MODIT) for VALD lines (asdb)
+
+    Args:
+        cnuS: contribution by npgetix for wavenumber [N_species x N_line]
+        indexnuS: index by npgetix for wavenumber [N_species x N_line]
+        R: spectral resolution
+        pmarray: (+1,-1) array whose length of len(nu_grid)+1
+        nsigmaDlS: normalized sigmaD matrix [N_species x N_layer x 1]
+        ngammaLMS: normalized gammaL matrix [N_species x N_layer x N_line]
+        SijMS: line intensity matrix [N_species x N_layer x N_line]
+        nu_grid: linear wavenumber grid
+        dgm_ngammaLS: DIT Grid Matrix (dgm) of normalized gammaL [N_species x N_layer x N_DITgrid]
+
+    Return:
+        xsmS: cross section matrix [N_species x N_layer x N_wav]
+    """
+    xsmS = jit(vmap(xsmatrix, (0, 0, None, None, 0, 0, 0, None, 0)))(\
+                    cnuS, indexnuS, R, pmarray, nsigmaDlS, ngammaLMS, SijMS, nu_grid, dgm_ngammaLS)
+    xsmS = jnp.abs(xsmS)
+    return(xsmS)

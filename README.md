@@ -7,7 +7,7 @@
 Auto-differentiable line-by-line spectral modeling of exoplanets/brown dwarfs using JAX. Read [the docs](http://secondearths.sakura.ne.jp/exojax) 🐕. 
 In a nutshell, ExoJAX enables you to do a HMC-NUTS fitting using the latest database.
 
-ExoJAX is compatible at least to
+ExoJAX is compatible at least with
 - [NumPyro](https://github.com/pyro-ppl/numpyro) (PPL)
 - [JAXopt](https://github.com/google/jaxopt) (differentiable optimizer)
 
@@ -114,7 +114,7 @@ python setup.py install
 
 - NumPyro
 
-exojax supports NumPyro >0.5.0, which enables [the forward differentiation of HMC-NUTS](http://num.pyro.ai/en/latest/mcmc.html#numpyro.infer.hmc.NUTS). Please check the required JAX version by NumPyro. In May 2021, it seems the recent version of [NumPyro](https://github.com/pyro-ppl/numpyro) requires jaxlib>=0.1.62 (see [setup.py](https://github.com/pyro-ppl/numpyro/blob/master/setup.py) of NumPyro for instance). 
+exojax supports NumPyro >0.7.0. Please check the required JAX version by NumPyro. In May 2021, it seems the recent version of [NumPyro](https://github.com/pyro-ppl/numpyro) requires jaxlib>=0.1.62 (see [setup.py](https://github.com/pyro-ppl/numpyro/blob/master/setup.py) of NumPyro for instance). 
 
 - JAX
 
