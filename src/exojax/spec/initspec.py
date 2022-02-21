@@ -162,4 +162,4 @@ def init_modit_vald(nu_linesM, nus, N_usp):
                (len(nus)+1) * np.ones(len(np.where(np.isnan(nu_lines_nan))[0]), dtype='int32') ])
     contS = jnp.array(contS)
     indexS = jnp.array(indexS, dtype='int32')
-    return(contS, indexS, R, pmarray)
+    return contS, indexS, R, pmarray

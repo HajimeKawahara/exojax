@@ -206,7 +206,7 @@ def dtauVALD(dParr, xsm, VMR, mmw, g):
     dtauS = jit(vmap(dtauM_mmwl, (None, 0, 0, None, None)))( \
                             dParr, xsm, VMR, mmw, g)
     dtau = jnp.abs(jnp.sum(dtauS, axis=0))
-    return(dtau)
+    return dtau
     
     
 def dtauHminus(nus, Tarr, Parr, dParr, vmre, vmrh, mmw, g):

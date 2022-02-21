@@ -1054,7 +1054,7 @@ class AdbVald(object):  # integrated from vald3db.py
             return QTmask
         QTmask_sp = np.array(
             list(map(species_to_QTmask, ielem, iion))).astype('int')
-        return(QTmask_sp)
+        return QTmask_sp
 
 
 class AdbSepVald(object):
@@ -1349,4 +1349,4 @@ class AdbKurucz(object):
             return QTmask
         QTmask_sp = np.array(
             list(map(species_to_QTmask, ielem, iion))).astype('int')
-        return(QTmask_sp)
+        return QTmask_sp

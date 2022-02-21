@@ -221,9 +221,9 @@ def mmr_species_fc2(SpeciesIndex, mixing_ratios, SpeciesMolecularWeight):
         MMRarr = mixing_ratios[i_layer] * SpeciesMolecularWeight
         SpeciesMMRarr_layer = MMRarr[SpeciesIndex] / np.sum(MMRarr)
         i_layer = i_layer + 1
-        return(i_layer, SpeciesMMRarr_layer)
+        return i_layer, SpeciesMMRarr_layer
     i, SpeciesMMRarr = scan(floop, 0, np.zeros(len(mixing_ratios)))
-    return(SpeciesMMRarr)
+    return SpeciesMMRarr
 
 
 def get_H_He_HH_VMR(fastchem, mixing_ratios):
@@ -241,7 +241,7 @@ def get_H_He_HH_VMR(fastchem, mixing_ratios):
           mixing_ratios[:, fastchem.getSpeciesIndex('H')], \
           mixing_ratios[:, fastchem.getSpeciesIndex('He')], \
           mixing_ratios[:, fastchem.getSpeciesIndex('H2')]]).T
-    return(H_He_HH_VMR)
+    return H_He_HH_VMR
     
 
 def get_H_He_HH_pressure(Parr, fastchem, mixing_ratios):
@@ -260,5 +260,5 @@ def get_H_He_HH_pressure(Parr, fastchem, mixing_ratios):
     PH = Parr * mixing_ratios[:, fastchem.getSpeciesIndex('H')]
     PHe = Parr * mixing_ratios[:, fastchem.getSpeciesIndex('He')]
     PHH = Parr * mixing_ratios[:, fastchem.getSpeciesIndex('H2')]
-    return(PH, PHe, PHH)
+    return PH, PHe, PHH
 
