@@ -470,11 +470,17 @@ class MdbHit(object):
             self._elower = hapi.getColumn(molec, 'elower')
             self._gpp = hapi.getColumn(molec, 'gpp')
         else:
-            # remove '.par' for HITEMP H2O and CO2 (multiple file cases)
-            if '.par' in str(self.path):
-                self.path = pathlib.Path(str(self.path).replace('.par', ''))
-
             molnm = str(self.path.name)[0:2]
+            if molnm == '01':
+                if self.path.name != '01_HITEMP2010':
+                    path_old = self.path
+                    self.path = self.path.parent/'01_HITEMP2010'
+                    print('Warning: Changed the line list path from', path_old, 'to', self.path)
+            if molnm == '02':
+                if self.path.name != '02_HITEMP2010':
+                    path_old = self.path
+                    self.path = self.path.parent/'02_HITEMP2010'
+                    print('Warning: Changed the line list path from', path_old, 'to', self.path)
 
             imin = np.searchsorted(
                 numinf, self.nurange[0], side='right')-1  # left side
@@ -482,7 +488,7 @@ class MdbHit(object):
                 numinf, self.nurange[1], side='right')-1  # left side
             for k, i in enumerate(range(imin, imax+1)):
                 flname = pathlib.Path(molnm+'_'+numtag[i]+'_HITEMP2010.par')
-                sub_file = self.path / numtag[i] / flname
+                sub_file = self.path/numtag[i]/flname
                 if not sub_file.exists():
                     self.download(numtag=numtag[i])
 
