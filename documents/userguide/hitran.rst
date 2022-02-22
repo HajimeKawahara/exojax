@@ -26,7 +26,7 @@ from exojax is like that.
 HITEMP H2O and CO2
 ^^^^^^^^^^^^^^^^^
 
-For H2O and CO2, HITEMP provides multiple par files. To use those files, provide the directory path for ``moldb.MdbHit`` as follows. Note that the code interpret '01_HITEMP2020', '01_HITEMP2010.par', '01_HITEMP2019.par', and '01_HITEMP2020.par' as '01_HITEMP2010', too.
+For H2O and CO2, HITEMP provides multiple par files. To use those files, provide the directory path for ``moldb.MdbHit`` as follows.
 
 .. code:: ipython
 	  
