@@ -12,7 +12,7 @@ CLASSIFIERS = [
     'Programming Language :: Python',
 ]
 INSTALL_REQUIRES = ['numpy', 'pandas', 'tqdm', 'scipy',
-                    'jax', 'numpyro', 'pyarrow', 'bs4', 'vaex',"jaxopt"]
+                    'jax>=0.2.22', 'numpyro', 'pyarrow', 'bs4', 'vaex',"jaxopt"]
 
 # END PROJECT SPECIFIC
 HERE = os.path.dirname(os.path.realpath(__file__))
