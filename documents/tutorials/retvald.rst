@@ -50,7 +50,7 @@ Load observed data.
 
 
 
-.. image:: output_5_0.png
+.. image:: retvald/output_5_0.png
 
 
 Set atmospheric layers, wavenumber points, and instrumantal resolution,
@@ -348,7 +348,7 @@ Visualize results
 
 
 
-.. image:: output_29_1.png
+.. image:: retvald/output_29_1.png
 
 
 .. code:: ipython3
@@ -381,7 +381,7 @@ Visualize results
 
 
 
-.. image:: output_30_0.png
+.. image:: retvald/output_30_0.png
 
 
 .. code:: ipython3
