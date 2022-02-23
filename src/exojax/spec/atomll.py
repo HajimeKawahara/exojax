@@ -544,7 +544,18 @@ def uspecies_info(uspecies, ielem_to_index_of_ipccd, mods_ID=jnp.array([[0, 0], 
 
 def sep_arr_of_sp(arr, adb, trans_jnp=True, inttype=False):
     """Split by species the jnp.array stored as instance variable in adb, and
-    pad with zeros to adjust the length."""
+    pad with zeros to adjust the length.
+
+    Args:
+       arr: array to be splitted
+       adb: adb instance
+       trans_jnp:
+       inttype:
+
+    Returns:
+       splitted array
+
+    """
     uspecies = get_unique_species(adb)
     N_usp = len(uspecies)
     len_of_eachsp = np.zeros(N_usp, dtype='int')
