@@ -361,7 +361,7 @@ def dtauM_vald(dParr, g, adb, nus, cnu, indexnu, pmarray, SijM, gammaLM, sigmaDM
     Args:
        dParr: delta pressure profile (bar) [N_layer]
        g: gravity (cm/s^2)
-       adb: adb instance made by the adbald class in moldb.py
+       adb: adb instance made by the AdbVald class in moldb.py
        nus: wavenumber matrix (cm-1) [N_nus]
        cnu: cont (contribution) jnp.array [N_line]
        indexnu: index (index) jnp.array [N_line]

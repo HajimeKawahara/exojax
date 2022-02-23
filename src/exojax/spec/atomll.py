@@ -396,7 +396,7 @@ def get_unique_species(adb):
     """Extract a unique list of line contributing species from VALD atomic database (adb)
     
     Args:
-       adb: adb instance made by the adbald class in moldb.py
+       adb: adb instance made by the AdbVald class in moldb.py
 
     Returns:
        uspecies: unique elements of the combination of ielem and iion (jnp.array with a shape of N_UniqueSpecies x 2(ielem and iion))
@@ -530,7 +530,16 @@ def uspecies_info(uspecies, ielem_to_index_of_ipccd, mods_ID = jnp.array([[0,0],
     
     
 def sep_arr_of_sp(arr, adb, trans_jnp=True, inttype=False):
-    """Split by species the jnp.array stored as instance variable in adb, and pad with zeros to adjust the length
+    """Split by species (atoms or ions) the jnp.array stored as an instance variable in adb, and pad with zeros to adjust the length
+
+    Args:
+        arr: array of a parameter (one of the attributes of adb below) [N_line]
+        adb: adb instance made by the AdbVald class in moldb.py
+        trans_jnp: if True, the output is converted to jnp.array (dtype='float32')
+        inttype: if True (along with trans_jnp = True), the output is converted to jnp.array of dtype='int32'
+
+    Returns:
+        arr_stacksp: species-separated array [N_species x N_line_max]
     """
     uspecies = get_unique_species(adb)
     N_usp = len(uspecies)
@@ -561,7 +570,7 @@ def padding_2Darray_for_each_atom(orig_arr, adb, sp):
     Args:
         orig_arr: array [N_any (e.g., N_nu or N_layer), N_line]
             Note that if your ARRAY is 1D, it must be broadcasted with ARRAY[None,:], and the output must be also reshaped with OUTPUTARRAY.reshape(ARRAY.shape)
-        adb: adb instance made by the adbald class in moldb.py
+        adb: adb instance made by the AdbVald class in moldb.py
         sp: array of [ielem, iion]
        
     Returns:
