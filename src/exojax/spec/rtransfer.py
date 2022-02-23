@@ -1,5 +1,5 @@
 """Radiative transfer module used in exospectral analysis."""
-from jax import jit
+from jax import jit, vmap
 import jax.numpy as jnp
 import numpy as np
 from exojax.special.expn import E1
@@ -113,6 +113,39 @@ def dtauCIA(nus, Tarr, Parr, dParr, vmr1, vmr2, mmw, g, nucia, tcia, logac):
     return dtauc
 
 
+def dtauCIA_mmwl(nus, Tarr, Parr, dParr, vmr1, vmr2, mmw, g, nucia, tcia, logac):
+    """dtau of the CIA continuum.
+       (for the case where mmw is given for each atmospheric layer)
+
+    Args:
+       nus: wavenumber matrix (cm-1)
+       Tarr: temperature array (K)
+       Parr: temperature array (bar)
+       dParr: delta temperature array (bar)
+       vmr1: volume mixing ratio (VMR) for molecules 1 [N_layer]
+       vmr2: volume mixing ratio (VMR) for molecules 2 [N_layer]
+       mmw: mean molecular weight of atmosphere [N_layer]
+       g: gravity (cm2/s)
+       nucia: wavenumber array for CIA
+       tcia: temperature array for CIA
+       logac: log10(absorption coefficient of CIA)
+
+    Returns:
+       optical depth matrix  [N_layer, N_nus]
+    """
+    narr = number_density(Parr, Tarr)
+    lognarr1 = jnp.log10(vmr1*narr)  # log number density
+    lognarr2 = jnp.log10(vmr2*narr)  # log number density
+    logkb = np.log10(kB)
+    logg = jnp.log10(g)
+    ddParr = dParr/Parr
+    dtauc = (10**(logacia(Tarr, nus, nucia, tcia, logac)
+                  + lognarr1[:, None]+lognarr2[:, None]+logkb-logg-logm_ucgs)
+             * Tarr[:, None]/mmw[:, None]*ddParr[:, None])
+
+    return dtauc
+
+
 def dtauM(dParr, xsm, MR, mass, g):
     """dtau of the molecular cross section.
 
@@ -134,6 +167,48 @@ def dtauM(dParr, xsm, MR, mass, g):
     return fac*xsm*dParr[:, None]*MR[:, None]/(mass*g)
 
 
+def dtauM_mmwl(dParr, xsm, MR, mass, g):
+    """dtau of the molecular cross section.
+       (for the case where mmw is given for each atmospheric layer)
+
+    Note:
+       fac=bar_cgs/(m_u (g)). m_u: atomic mass unit. It can be obtained by fac=1.e3/m_u, where m_u = scipy.constants.m_u.
+
+    Args:
+       dParr: delta pressure profile (bar) [N_layer]
+       xsm: cross section matrix (cm2) [N_layer, N_nus]
+       MR: volume mixing ratio (VMR) or mass mixing ratio (MMR) [N_layer]
+       mass: mean molecular weight for VMR or molecular mass for MMR [N_layer]
+       g: gravity (cm/s2)
+
+    Returns:
+       optical depth matrix [N_layer, N_nus]
+    """
+
+    fac = 6.022140858549162e+29
+    return fac*xsm*dParr[:, None]*MR[:, None]/(mass[:, None]*g)
+
+
+@jit
+def dtauVALD(dParr, xsm, VMR, mmw, g):
+    """dtau of the atomic (+ionic) cross section from VALD.
+
+    Args:
+       dParr: delta pressure profile (bar) [N_layer]
+       xsm: cross section matrix (cm2) [N_species x N_layer x N_wav]
+       VMR: volume mixing ratio [N_species x N_layer]
+       mmw: mean molecular weight [N_layer]
+       g: gravity (cm/s2)
+
+    Returns:
+        dtau: optical depth matrix [N_layer x N_nus]
+    """
+    dtauS = jit(vmap(dtauM_mmwl, (None, 0, 0, None, None)))( \
+                            dParr, xsm, VMR, mmw, g)
+    dtau = jnp.abs(jnp.sum(dtauS, axis=0))
+    return dtau
+    
+    
 def dtauHminus(nus, Tarr, Parr, dParr, vmre, vmrh, mmw, g):
     """dtau of the H- continuum.
 
@@ -146,7 +221,6 @@ def dtauHminus(nus, Tarr, Parr, dParr, vmre, vmrh, mmw, g):
        vmrH: volume mixing ratio (VMR) for H atoms [N_layer]
        mmw: mean molecular weight of atmosphere
        g: gravity (cm2/s)
-
 
     Returns:
        optical depth matrix  [N_layer, N_nus]
@@ -162,6 +236,38 @@ def dtauHminus(nus, Tarr, Parr, dParr, vmre, vmrh, mmw, g):
     logabc = (log_hminus_continuum(
         nus, Tarr, number_density_e, number_density_h))
     dtauh = 10**(logabc+logkb-logg-logm_ucgs)*Tarr[:, None]/mmw*ddParr[:, None]
+
+    return dtauh
+
+
+def dtauHminus_mmwl(nus, Tarr, Parr, dParr, vmre, vmrh, mmw, g):
+    """dtau of the H- continuum.
+       (for the case where mmw is given for each atmospheric layer)
+
+    Args:
+       nus: wavenumber matrix (cm-1)
+       Tarr: temperature array (K)
+       Parr: temperature array (bar)
+       dParr: delta temperature array (bar)
+       vmre: volume mixing ratio (VMR) for e- [N_layer]
+       vmrH: volume mixing ratio (VMR) for H atoms [N_layer]
+       mmw: mean molecular weight of atmosphere [N_layer]
+       g: gravity (cm2/s)
+
+    Returns:
+       optical depth matrix  [N_layer, N_nus]
+    """
+    narr = number_density(Parr, Tarr)
+    #       number_density_e: number density for e- [N_layer]
+    #       number_density_h: number density for H atoms [N_layer]
+    number_density_e = vmre*narr
+    number_density_h = vmrh*narr
+    logkb = np.log10(kB)
+    logg = jnp.log10(g)
+    ddParr = dParr/Parr
+    logabc = (log_hminus_continuum(
+        nus, Tarr, number_density_e, number_density_h))
+    dtauh = 10**(logabc+logkb-logg-logm_ucgs)*Tarr[:, None]/mmw[:, None]*ddParr[:, None]
 
     return dtauh
 

@@ -21,6 +21,9 @@ from exojax.spec import gamma_natural
 from exojax.spec.hitran import SijT
 from exojax.spec import normalized_doppler_sigma
 
+# vald
+from exojax.spec.atomll import gamma_vald3, interp_QT284
+
 
 @jit
 def inc2D_givenx(a, w, cx, ix, y, yv):
@@ -289,3 +292,191 @@ def setdgm_exomol(mdb, fT, Parr, R, molmass, res, *kargs):
         set_dgm_minmax.append(minmax_dgmatrix(ngammaLM, res))
     dgm_ngammaL = precompute_dgmatrix(set_dgm_minmax, res=res)
     return jnp.array(dgm_ngammaL)
+
+
+@jit
+def vald_each(Tarr, PH, PHe, PHH, R, qt_284_T, QTmask, \
+               ielem, iion, atomicmass, ionE, dev_nu_lines, logsij0, elower, eupper, gamRad, gamSta, vdWdamp):
+    """Compute atomic line information required for MODIT for separated EACH species, using parameters attributed in VALD separated atomic database (asdb).
+
+    Args:
+        Tarr:  temperature array [N_layer]
+        PH:  partial pressure array of neutral hydrogen (H) [N_layer]
+        PHe:  partial pressure array of neutral helium (He) [N_layer]
+        PHH:  partial pressure array of molecular hydrogen (H2) [N_layer]
+        R:  spectral resolution [scalar]
+        qt_284_T:  partition function at the temperature T Q(T), for 284 species
+        QTmask:  array of index of Q(Tref) grid (gQT) for each line
+        ielem:  atomic number (e.g., Fe=26)
+        iion:  ionized level (e.g., neutral=1, singly ionized=2, etc.)
+        atomicmass:  atomic mass (amu)
+        ionE:  ionization potential (eV)
+        dev_nu_lines:  line center (cm-1) in device
+        logsij0:  log line strength at T=Tref
+        elower:  the lower state energy (cm-1)
+        eupper:  the upper state energy (cm-1)
+        gamRad:  log of gamma of radiation damping (s-1)
+        gamSta:  log of gamma of Stark damping (s-1)
+        vdWdamp:  log of (van der Waals damping constant / neutral hydrogen number) (s-1)
+
+    Returns:
+        SijM:  line intensity matrix [N_layer x N_line]
+        ngammaLM:  normalized gammaL matrix [N_layer x N_line]
+        nsigmaDl:  normalized sigmaD matrix [N_layer x 1]
+    """
+    # Compute normalized partition function for each species
+    qt = qt_284_T[:,QTmask]
+
+    # Compute line strength matrix
+    SijM = jit(vmap(SijT,(0,None,None,None,0)))\
+        (Tarr, logsij0, dev_nu_lines, elower, qt)
+
+    # Compute gamma parameters for the pressure and natural broadenings
+    gammaLM = jit(vmap(gamma_vald3,(0,0,0,0,None,None,None,None,None,None,None,None,None,None,None)))\
+            (Tarr, PH, PHH, PHe, ielem, iion, dev_nu_lines, elower, eupper, atomicmass, ionE, gamRad, gamSta, vdWdamp, 1.0)
+    ngammaLM = gammaLM/(dev_nu_lines/R)
+    # Do NOT remove NaN because "setdgm_vald_each" makes good use of them. # ngammaLM = jnp.nan_to_num(ngammaLM, nan = 0.0)
+    
+    # Compute doppler broadening
+    nsigmaDl = normalized_doppler_sigma(Tarr, atomicmass, R)[:, jnp.newaxis]
+    return SijM, ngammaLM, nsigmaDl
+
+
+def vald_all(asdb, Tarr, PH, PHe, PHH, R):
+    """Compute atomic line information required for MODIT for separated ALL species, using VALD separated atomic database (asdb).
+
+    Args:
+        asdb:  asdb instance made by the AdbSepVald class in moldb.py
+        Tarr:  temperature array [N_layer]
+        PH:  partial pressure array of neutral hydrogen (H) [N_layer]
+        PHe:  partial pressure array of neutral helium (He) [N_layer]
+        PHH:  partial pressure array of molecular hydrogen (H2) [N_layer]
+        R:  spectral resolution [scalar]
+
+    Returns:
+        SijMS:  line intensity matrix [N_species x N_layer x N_line]
+        ngammaLMS:  normalized gammaL matrix [N_species x N_layer x N_line]
+        nsigmaDlS:  normalized sigmaD matrix [N_species x N_layer x 1]
+    """
+    gQT_284species = asdb.gQT_284species
+    T_gQT = asdb.T_gQT
+    qt_284_T = vmap(interp_QT284, (0, None, None))(Tarr, T_gQT, gQT_284species)
+
+    SijMS, ngammaLMS, nsigmaDlS = jit(vmap(vald_each, (None, None, None, None, None, None, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, )))\
+        (Tarr, PH, PHe, PHH, R, qt_284_T, \
+                 asdb.QTmask, asdb.ielem, asdb.iion, asdb.atomicmass, asdb.ionE, \
+                       asdb.dev_nu_lines, asdb.logsij0, asdb.elower, asdb.eupper, asdb.gamRad, asdb.gamSta, asdb.vdWdamp)
+    
+    return SijMS, ngammaLMS, nsigmaDlS
+
+
+def setdgm_vald_each(ielem, iion, atomicmass, ionE, dev_nu_lines, logsij0, elower, eupper, gamRad, gamSta, vdWdamp, \
+                QTmask, T_gQT, gQT_284species, PH, PHe, PHH, R, fT, res, *kargs):  # (SijM, ngammaLM, nsigmaDl, fT, res, *kargs):
+    """Easy Setting of DIT Grid Matrix (dgm) using VALD.
+
+    Args:
+        ielem:  atomic number (e.g., Fe=26)
+        iion:  ionized level (e.g., neutral=1, singly ionized=2, etc.)
+        atomicmass:  atomic mass (amu)
+        ionE:  ionization potential (eV)
+        dev_nu_lines:  line center (cm-1) in device
+        logsij0:  log line strength at T=Tref
+        elower:  the lower state energy (cm-1)
+        eupper:  the upper state energy (cm-1)
+        gamRad:  log of gamma of radiation damping (s-1)
+        gamSta:  log of gamma of Stark damping (s-1)
+        vdWdamp:  log of (van der Waals damping constant / neutral hydrogen number) (s-1)
+        T_gQT:  temperature in the grid obtained from the adb instance
+        gQT_284species:  partition function in the grid from the adb instance
+        QTmask:  array of index of Q(Tref) grid (gQT) for each line
+        PH:  partial pressure array of neutral hydrogen (H) [N_layer]
+        PHe:  partial pressure array of neutral helium (He) [N_layer]
+        PHH:  partial pressure array of molecular hydrogen (H2) [N_layer]
+        R:  spectral resolution
+        fT:  function of temperature array
+        res:  resolution of dgm
+        *kargs:  arguments for fT
+
+    Returns:
+        dgm_ngammaL:  DIT Grid Matrix (dgm) of normalized gammaL [N_layer x N_DITgrid]
+    """
+    set_dgm_minmax = []
+    Tarr_list = fT(*kargs)
+    for Tarr in Tarr_list:
+        qt_284_T = vmap(interp_QT284, (0, None, None))(Tarr, T_gQT, gQT_284species)
+        SijM, ngammaLM, nsigmaDl = vald_each(Tarr, PH, PHe, PHH, R, qt_284_T, \
+             QTmask, ielem, iion, atomicmass, ionE, \
+                   dev_nu_lines, logsij0, elower, eupper, gamRad, gamSta, vdWdamp)
+        floop = lambda c, arr:  (c, jnp.nan_to_num(arr, nan=jnp.nanmin(arr)))
+        ngammaLM = scan(floop, 0, ngammaLM)[1]
+        set_dgm_minmax.append(minmax_dgmatrix(ngammaLM, res))
+    dgm_ngammaL = precompute_dgmatrix(set_dgm_minmax, res=res)
+    return jnp.array(dgm_ngammaL)
+
+
+def setdgm_vald_all(asdb, PH, PHe, PHH, R, fT, res, *kargs):
+    """Easy Setting of DIT Grid Matrix (dgm) using VALD.
+    
+    Args:
+        asdb:  asdb instance made by the AdbSepVald class in moldb.py
+        PH:  partial pressure array of neutral hydrogen (H) [N_layer]
+        PHe:  partial pressure array of neutral helium (He) [N_layer]
+        PHH:  partial pressure array of molecular hydrogen (H2) [N_layer]
+        R:  spectral resolution
+        fT:  function of temperature array
+        res:  resolution of dgm
+        *kargs:  arguments for fT
+
+    Returns:
+        dgm_ngammaLS:  DIT Grid Matrix (dgm) of normalized gammaL [N_species x N_layer x N_DITgrid]
+
+    Example:
+       >>> fT = lambda T0,alpha:  T0[:,None]*(Parr[None,:]/Pref)**alpha[:,None]
+       >>> T0_test=np.array([3000.0,4000.0,3000.0,4000.0])
+       >>> alpha_test=np.array([0.2,0.2,0.05,0.05])
+       >>> res=0.2
+       >>> dgm_ngammaLS = setdgm_vald_all(asdb, PH, PHe, PHH, R, fT, res, T0_test, alpha_test)
+    """
+    T_gQT = asdb.T_gQT
+    gQT_284species = asdb.gQT_284species
+    
+    dgm_ngammaLS_BeforePadding = []
+    lendgm=[]
+    for i in range(asdb.N_usp):
+        dgm_ngammaL_sp = setdgm_vald_each(asdb.ielem[i], asdb.iion[i], asdb.atomicmass[i], asdb.ionE[i], \
+            asdb.dev_nu_lines[i], asdb.logsij0[i], asdb.elower[i], asdb.eupper[i], asdb.gamRad[i], asdb.gamSta[i], asdb.vdWdamp[i], \
+            asdb.QTmask[i], T_gQT, gQT_284species, PH, PHe, PHH, R, fT, res, *kargs)
+        dgm_ngammaLS_BeforePadding.append(dgm_ngammaL_sp)
+        lendgm.append(dgm_ngammaL_sp.shape[1])
+    Lmax_dgm = np.max(np.array(lendgm))
+
+    # Padding to unity the length of all the DIT Grid Matrix (dgm) and convert them into jnp.array
+    pad2Dm = lambda arr, L:  jnp.pad(arr, ((0, 0), (0, L - arr.shape[1])), mode='maximum')
+    dgm_ngammaLS = np.zeros([asdb.N_usp, len(PH), Lmax_dgm])
+    for i_sp, dgmi in enumerate(dgm_ngammaLS_BeforePadding):
+        dgm_ngammaLS[i_sp] = pad2Dm(dgmi, Lmax_dgm)
+    return jnp.array(dgm_ngammaLS)
+
+
+@jit
+def xsmatrix_vald(cnuS, indexnuS, R, pmarray, nsigmaDlS, ngammaLMS, SijMS, nu_grid, dgm_ngammaLS):
+    """Cross section matrix for xsvector (MODIT) for VALD lines (asdb)
+
+    Args:
+        cnuS: contribution by npgetix for wavenumber [N_species x N_line]
+        indexnuS: index by npgetix for wavenumber [N_species x N_line]
+        R: spectral resolution
+        pmarray: (+1,-1) array whose length of len(nu_grid)+1
+        nsigmaDlS: normalized sigmaD matrix [N_species x N_layer x 1]
+        ngammaLMS: normalized gammaL matrix [N_species x N_layer x N_line]
+        SijMS: line intensity matrix [N_species x N_layer x N_line]
+        nu_grid: linear wavenumber grid
+        dgm_ngammaLS: DIT Grid Matrix (dgm) of normalized gammaL [N_species x N_layer x N_DITgrid]
+
+    Return:
+        xsmS: cross section matrix [N_species x N_layer x N_wav]
+    """
+    xsmS = jit(vmap(xsmatrix, (0, 0, None, None, 0, 0, 0, None, 0)))(\
+                    cnuS, indexnuS, R, pmarray, nsigmaDlS, ngammaLMS, SijMS, nu_grid, dgm_ngammaLS)
+    xsmS = jnp.abs(xsmS)
+    return xsmS

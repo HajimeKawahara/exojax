@@ -824,6 +824,9 @@ class AdbVald(object):  # integrated from vald3db.py
         QTmask (jnp array): identifier of species for Q(T)
         ielem (jnp array):  atomic number (e.g., Fe=26)
         iion (jnp array):  ionized level (e.g., neutral=1, singly ionized=2, etc.)
+        solarA (jnp array): solar abundance (log10 of number density in the Sun)
+        atomicmass (jnp array): atomic mass (amu)
+        ionE (jnp array): ionization potential (eV)
         gamRad (jnp array): log of gamma of radiation damping (s-1) #(https://www.astro.uu.se/valdwiki/Vald3Format)
         gamSta (jnp array): log of gamma of Stark damping (s-1)
         vdWdamp (jnp array):  log of (van der Waals damping constant / neutral hydrogen number) (s-1)
@@ -891,20 +894,15 @@ class AdbVald(object):  # integrated from vald3db.py
         self.masking(mask)
 
         # Compile atomic-specific data for each absorption line of interest
-        self.ipccd = atomllapi.load_atomicdata()
-        # print(self.ipccd)#test
-        # should be refined
-        ionE = jnp.array(
-            list(map(lambda x: self.ipccd[self.ipccd['ielem'] == x].iat[0, 1], self.ielem)))
-        ionE2 = jnp.array(
-            list(map(lambda x: self.ipccd[self.ipccd['ielem'] == x].iat[0, 6], self.ielem)))
-        self.ionE = ionE * np.where(self.iion == 1, 1, 0) + \
-            ionE2 * np.where(self.iion == 2, 1, 0)
+        ipccd = atomllapi.load_atomicdata()
         self.solarA = jnp.array(
-            list(map(lambda x: self.ipccd[self.ipccd['ielem'] == x].iat[0, 4], self.ielem)))
+            list(map(lambda x: ipccd[ipccd['ielem'] == x].iat[0, 4], self.ielem)))
         self.atomicmass = jnp.array(
-            list(map(lambda x: self.ipccd[self.ipccd['ielem'] == x].iat[0, 5], self.ielem)))
-
+            list(map(lambda x: ipccd[ipccd['ielem'] == x].iat[0, 5], self.ielem)))
+        df_ionE = atomllapi.load_ionization_energies()
+        self.ionE = jnp.array(
+            list(map(atomllapi.pick_ionE, self.ielem, self.iion, [df_ionE,] * len(self.ielem))))
+            
     # End of the CONSTRUCTOR definition ↑
 
     # Defining METHODS ↓
@@ -1051,7 +1049,7 @@ class AdbVald(object):  # integrated from vald3db.py
 
         Args:
             ielem:  atomic number (e.g., Fe=26)
-            iion:  ionized level (e.g., neutral=1, singly)
+            iion:  ionized level (e.g., neutral=1, singly ionized=2, etc.)
 
         Returns:
             QTmask_sp:  array of index of Q(Tref) grid (gQT) for each line
@@ -1062,7 +1060,58 @@ class AdbVald(object):  # integrated from vald3db.py
             return QTmask
         QTmask_sp = np.array(
             list(map(species_to_QTmask, ielem, iion))).astype('int')
-        return(QTmask_sp)
+        return QTmask_sp
+
+
+class AdbSepVald(object):
+    """atomic database from VALD3 with an additional axis for separating each species (atom or ion)
+
+    AdbSepVald is a class for VALD3.
+
+    Attributes:
+        nu_lines (nd array):      line center (cm-1) (#NOT frequency in (s-1))
+        dev_nu_lines (jnp array): line center (cm-1) in device
+        logsij0 (jnp array): log line strength at T=Tref
+        elower (jnp array): the lower state energy (cm-1)
+        eupper (jnp array): the upper state energy (cm-1)
+        QTmask (jnp array): identifier of species for Q(T)
+        ielem (jnp array):  atomic number (e.g., Fe=26)
+        iion (jnp array):  ionized level (e.g., neutral=1, singly ionized=2, etc.)
+        atomicmass (jnp array): atomic mass (amu)
+        ionE (jnp array): ionization potential (eV)
+        gamRad (jnp array): log of gamma of radiation damping (s-1) #(https://www.astro.uu.se/valdwiki/Vald3Format)
+        gamSta (jnp array): log of gamma of Stark damping (s-1)
+        vdWdamp (jnp array):  log of (van der Waals damping constant / neutral hydrogen number) (s-1)
+        uspecies (jnp array): unique combinations of ielem and iion [N_species x 2(ielem and iion)]
+        N_usp (int): number of species (atoms and ions)
+        L_max (int): maximum number of spectral lines for a single species
+        gQT_284species (jnp array): partition function grid of 284 species
+        T_gQT (jnp array): temperatures in the partition function grid
+    """
+
+    def __init__(self, adb):
+        self.nu_lines = atomll.sep_arr_of_sp(adb.nu_lines, adb, trans_jnp=False)
+        self.QTmask = atomll.sep_arr_of_sp(adb.QTmask, adb, inttype=True).T[0]
+        
+        self.ielem = atomll.sep_arr_of_sp(adb.ielem, adb, inttype=True).T[0]
+        self.iion = atomll.sep_arr_of_sp(adb.iion, adb, inttype=True).T[0]
+        self.atomicmass = atomll.sep_arr_of_sp(adb.atomicmass, adb).T[0]
+        self.ionE = atomll.sep_arr_of_sp(adb.ionE, adb).T[0]
+
+        self.logsij0 = atomll.sep_arr_of_sp(adb.logsij0, adb)
+        self.dev_nu_lines = atomll.sep_arr_of_sp(adb.dev_nu_lines, adb)
+        self.elower = atomll.sep_arr_of_sp(adb.elower, adb)
+        self.eupper = atomll.sep_arr_of_sp(adb.eupper, adb)
+        self.gamRad = atomll.sep_arr_of_sp(adb.gamRad, adb)
+        self.gamSta = atomll.sep_arr_of_sp(adb.gamSta, adb)
+        self.vdWdamp = atomll.sep_arr_of_sp(adb.vdWdamp, adb)
+        
+        self.uspecies = atomll.get_unique_species(adb)
+        self.N_usp = len(self.uspecies)
+        self.L_max = self.nu_lines.shape[1]
+        
+        self.gQT_284species = adb.gQT_284species
+        self.T_gQT = adb.T_gQT
 
 
 class AdbKurucz(object):
@@ -1140,23 +1189,19 @@ class AdbKurucz(object):
         self.masking(mask)
 
         # Compile atomic-specific data for each absorption line of interest
-        self.ipccd = atomllapi.load_atomicdata()
-        # print(self.ipccd)#test
-        ionE = jnp.array(
-            list(map(lambda x: self.ipccd[self.ipccd['ielem'] == x].iat[0, 1], self.ielem)))
-        ionE2 = jnp.array(
-            list(map(lambda x: self.ipccd[self.ipccd['ielem'] == x].iat[0, 6], self.ielem)))
-        self.ionE = ionE * np.where(self.iion == 1, 1, 0) + \
-            ionE2 * np.where(self.iion == 2, 1, 0)
+        ipccd = atomllapi.load_atomicdata()
         self.solarA = jnp.array(
-            list(map(lambda x: self.ipccd[self.ipccd['ielem'] == x].iat[0, 4], self.ielem)))
+            list(map(lambda x: ipccd[ipccd['ielem'] == x].iat[0, 4], self.ielem)))
         self.atomicmass = jnp.array(
-            list(map(lambda x: self.ipccd[self.ipccd['ielem'] == x].iat[0, 5], self.ielem)))
+            list(map(lambda x: ipccd[ipccd['ielem'] == x].iat[0, 5], self.ielem)))
+        df_ionE = atomllapi.load_ionization_energies()
+        self.ionE = jnp.array(
+            list(map(atomllapi.pick_ionE, self.ielem, self.iion, [df_ionE,] * len(self.ielem))))
 
     # End of the CONSTRUCTOR definition ↑
 
     # Defining METHODS ↓
-
+    
     def masking(self, mask):
         """applying mask and (re)generate jnp.arrays.
 
@@ -1310,4 +1355,4 @@ class AdbKurucz(object):
             return QTmask
         QTmask_sp = np.array(
             list(map(species_to_QTmask, ielem, iion))).astype('int')
-        return(QTmask_sp)
+        return QTmask_sp
