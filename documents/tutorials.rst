@@ -13,7 +13,8 @@ Basics
    tutorials/rigid_rotation.rst
    tutorials/forward_modeling.rst	     
    tutorials/metals.rst	     
-   tutorials/reverse_modeling.rst	     
+   tutorials/reverse_modeling.rst
+   tutorials/retvald.rst
    tutorials/optimize_spectrum_JAXopt.rst	     
    tutorials/MODITxs.rst      
    tutorials/MODITch4.rst

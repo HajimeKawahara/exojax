@@ -298,63 +298,64 @@ def load_atomicdata():
     ipccd = pd.read_csv(BytesIO(adata), sep='\s+', skiprows=1,
                         usecols=[1, 2, 3, 4, 5, 6, 7], names=ipccc)
     return ipccd
-    
-    
+
+
 def make_ielem_to_index_of_ipccd():
     """index conversion for atomll.uspecies_info (Preparation for LPF)
-    
+
     Returns:
         ielem_to_index_of_ipccd: jnp.array to convert ielem into index of ipccd
     """
     import jax.numpy as jnp
     ielemarr = jnp.array(load_atomicdata()['ielem'])
 
-    #jnp.array for conversin from ielem to the index of ipccd
+    # jnp.array for conversin from ielem to the index of ipccd
     ielem_to_index_of_ipccd = np.zeros(np.max(ielemarr)+1, dtype='int')
     for i in range(np.max(ielemarr)+1):
         if (i in ielemarr):
-            ielem_to_index_of_ipccd[i] = np.where(ielemarr==i)[0][0]
+            ielem_to_index_of_ipccd[i] = np.where(ielemarr == i)[0][0]
     ielem_to_index_of_ipccd = jnp.array(ielem_to_index_of_ipccd)
     return ielem_to_index_of_ipccd
 
 
 ielem_to_index_of_ipccd = make_ielem_to_index_of_ipccd()
 
-    
+
 def load_ionization_energies():
     """Load atomic ionization energies.
-    
+
     Returns:
         df_ionE (pd.DataFrame): table of ionization energies
 
     Note:
         NIST_Atomic_Ionization_Energies.txt is in data/atom
-    
     """
-    fn_IonE = pkgutil.get_data('exojax', 'data/atom/NIST_Atomic_Ionization_Energies.txt')
-    df_ionE = pd.read_csv(BytesIO(fn_IonE), sep="|", skiprows=6, header=0)
+    fn_IonE = pkgutil.get_data(
+        'exojax', 'data/atom/NIST_Atomic_Ionization_Energies.txt')
+    df_ionE = pd.read_csv(BytesIO(fn_IonE), sep='|', skiprows=6, header=0)
     return df_ionE
-    
+
 
 def pick_ionE(ielem, iion, df_ionE):
     """Pick up ionization energy of a specific atomic species.
-    
+
     Args:
         ielem (int): atomic number (e.g., Fe=26)
         iion (int): ionized level (e.g., neutral=1, singly ionized=2, etc.)
         df_ionE (pd.DataFrame): table of ionization energies
-    
+
     Returns:
         ionE (float): ionization energy
 
     Note:
         NIST_Atomic_Ionization_Energies.txt is in data/atom
-    
     """
-    f_droppare = lambda x: x.str.replace('(', '', regex = True).str.replace(')', '', regex = True).str.replace('[', '', regex = True).str.replace(']', '', regex = True).str.replace('                                      ', '0', regex = True)
-    ionE = float(f_droppare(df_ionE[(df_ionE['At. num '] == ielem) & (df_ionE[' Ion Charge '] == iion-1)]['      Ionization Energy (a) (eV)      ']))
+    def f_droppare(x): return x.str.replace('(', '', regex=True).str.replace(')', '', regex=True).str.replace(
+        '[', '', regex=True).str.replace(']', '', regex=True).str.replace('                                      ', '0', regex=True)
+    ionE = float(f_droppare(df_ionE[(df_ionE['At. num '] == ielem) & (
+        df_ionE[' Ion Charge '] == iion-1)]['      Ionization Energy (a) (eV)      ']))
     return ionE
-    
+
 
 def load_pf_Barklem2016():
     """load a table of the partition functions for 284 atomic species.
