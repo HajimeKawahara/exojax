@@ -8,7 +8,7 @@ import tqdm
 
 
 def plg_elower_addcon(indexa,Na,cnu,indexnu,nu_grid,logsij0,elower,elower_grid=None,Nelower=10,Ncrit=0,reshape=False):
-    """PLG for elower w/ an additional condition
+    """Pseudo Line Grid for elower w/ an additional condition
     
     Args:
        indexa: the indexing of the additional condition
@@ -111,7 +111,7 @@ def get_qlogsij0_addcon(indexa,Na,cnu,indexnu,Nnugrid,logsij0,expme,expme_grid,N
     return qlogsij0,qcnu,num_unique,frozen_mask
 
 def plg_elower(cnu,indexnu,Nnugrid,logsij0,elower,elower_grid=None,Nelower=10,Ncrit=0,reshape=True):
-    """PLG for elower
+    """Pseudo Line Grid for elower
     
     Args:
        cnu: contribution of wavenumber for LSD
@@ -124,6 +124,10 @@ def plg_elower(cnu,indexnu,Nnugrid,logsij0,elower,elower_grid=None,Nelower=10,Nc
        Ncrit: frrozen line number per bin
 
     Returns:
+       qlogsij0
+       qcnu
+       num_unique
+       elower_grid
 
     """
     
