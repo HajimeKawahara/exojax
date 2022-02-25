@@ -8,16 +8,20 @@ User Guide
    userguide/moldb.rst
    userguide/exomol.rst
    userguide/hitran.rst
+   userguide/atomll.rst
    userguide/rtransfer.rst
    userguide/modit.rst
    userguide/benchmark.rst
    userguide/fp.rst
    userguide/vterm.rst
    userguide/comp.rst
-	     
+
+
+For Developers
+===================
+
 .. toctree::
    :maxdepth: 1
-   :caption: Information For Developers
 	     
    developers/pytest.rst   
    developers/doc.rst   

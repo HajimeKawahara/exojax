@@ -2,10 +2,16 @@
  [![License](https://img.shields.io/github/license/HajimeKawahara/exojax)](https://github.com/HajimeKawahara/exojax/blob/develop/LICENSE)
  [![Docs](https://img.shields.io/badge/docs-exojax-brightgreen)](http://secondearths.sakura.ne.jp/exojax/)
  [![arxiv](https://img.shields.io/badge/arxiv-2105.14782-blue)](http://arxiv.org/abs/2105.14782)
+ [![paper](https://img.shields.io/badge/paper-ApJS_258_31_(2022)-orange)](https://iopscience.iop.org/article/10.3847/1538-4365/ac3b4d) 
  
 Auto-differentiable line-by-line spectral modeling of exoplanets/brown dwarfs using JAX. Read [the docs](http://secondearths.sakura.ne.jp/exojax) 🐕. 
+In a nutshell, ExoJAX enables you to do a HMC-NUTS fitting using the latest database.
 
-<img src="https://user-images.githubusercontent.com/15956904/119144463-a5cba180-ba83-11eb-8a26-687075d43883.png" Titie="exojax" Width=850px>
+ExoJAX is compatible at least with
+- [NumPyro](https://github.com/pyro-ppl/numpyro) (PPL)
+- [JAXopt](https://github.com/google/jaxopt) (differentiable optimizer)
+
+<img src="https://user-images.githubusercontent.com/15956904/144704428-c5e82af3-a870-458c-bb65-9e1f54d6c98b.png" Titie="exojax" Width=850px>
  
 ## Functions
 
@@ -23,7 +29,7 @@ voigt(nu,1.0,2.0) #sigma_D=1.0, gamma_L=2.0
  
 ```python
 from exojax.spec import AutoXS
-nus=numpy.linspace(1900.0,2300.0,40000,dtype=numpy.float64) #wavenumber (cm-1)
+nus=numpy.linspace(1900.0,2300.0,200000,dtype=numpy.float64) #wavenumber (cm-1)
 autoxs=AutoXS(nus,"ExoMol","CO") #using ExoMol CO (12C-16O). HITRAN and HITEMP are also supported.  
 xsv=autoxs.xsection(1000.0,1.0) #cross section for 1000K, 1bar (cm2)
 ```
@@ -33,7 +39,7 @@ xsv=autoxs.xsection(1000.0,1.0) #cross section for 1000K, 1bar (cm2)
 <details><summary> Do you just want to plot the line strength? </summary>
 
 ```python
-ls=autoxs.linest(1000.0,1.0) #line strength for 1000K, 1bar (cm)
+ls=autoxs.linest(1000.0) #line strength for T=1000K
 plt.plot(autoxs.mdb.nu_lines,ls,".")
 ```
 
@@ -48,7 +54,7 @@ autoxs.mdb is the [moldb.MdbExomol class](http://secondearths.sakura.ne.jp/exoja
 ```python
 from exojax.spec.rtransfer import nugrid
 from exojax.spec import AutoRT
-nus,wav,res=nugrid(1900.0,2300.0,40000,"cm-1")
+nus,wav,res=nugrid(1900.0,2300.0,200000,"cm-1")
 Parr=numpy.logspace(-8,2,100) #100 layers from 10^-8 bar to 10^2 bar
 Tarr = 500.*(Parr/Parr[-1])**0.02    
 autort=AutoRT(nus,1.e5,2.33,Tarr,Parr) #g=1.e5 cm/s2, mmw=2.33
@@ -108,7 +114,7 @@ python setup.py install
 
 - NumPyro
 
-exojax supports NumPyro >0.5.0, which enables [the forward differentiation of HMC-NUTS](http://num.pyro.ai/en/latest/mcmc.html#numpyro.infer.hmc.NUTS). Please check the required JAX version by NumPyro. In May 2021, it seems the recent version of [NumPyro](https://github.com/pyro-ppl/numpyro) requires jaxlib>=0.1.62 (see [setup.py](https://github.com/pyro-ppl/numpyro/blob/master/setup.py) of NumPyro for instance). 
+exojax supports NumPyro >0.7.0. Please check the required JAX version by NumPyro. In May 2021, it seems the recent version of [NumPyro](https://github.com/pyro-ppl/numpyro) requires jaxlib>=0.1.62 (see [setup.py](https://github.com/pyro-ppl/numpyro/blob/master/setup.py) of NumPyro for instance). 
 
 - JAX
 
@@ -139,8 +145,9 @@ cuDNN is used for to compute the astronomical/instrumental response for the larg
 </details>
 
 ## References
+[![paper](https://img.shields.io/badge/paper_I-ApJS_258_31_(2022)-orange)](https://iopscience.iop.org/article/10.3847/1538-4365/ac3b4d) 
 
-- Kawahara, Kawashima, Masuda, Crossfield, van den Bekerom, Parker (2021) under review: [arXiv:2105.14782](http://arxiv.org/abs/2105.14782)
+- Kawahara, Kawashima, Masuda, Crossfield, Pannier, van den Bekerom, [ApJS 258, 31 (2022)](https://iopscience.iop.org/article/10.3847/1538-4365/ac3b4d)
 
 ## License
 

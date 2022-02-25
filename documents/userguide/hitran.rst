@@ -22,8 +22,35 @@ from exojax is like that.
 	  >>> nus,wav,res=nugrid(22880.,23000.,1000,unit="AA")
 	  >>> mdbCO=moldb.MdbHit('.database/05_HITEMP2019.par.bz2',nus)
 	  bunziping
-	  
 
+HITEMP H2O and CO2
+^^^^^^^^^^^^^^^^^
+
+For H2O and CO2, HITEMP provides multiple par files. To use those files, provide the directory path for ``moldb.MdbHit`` as follows.
+
+.. code:: ipython
+	  
+	  >>> mdbH2O=moldb.MdbHit('.database/01_HITEMP2010',nus)
+	  >>> mdbCO2=moldb.MdbHit('.database/02_HITEMP2010',nus)
+
+extract option
+^^^^^^^^^^^^^^^^^
+	  
+``extract=True`` in ``moldb.MdbHit`` extracts the opacity data in the wavenumber range of ``nus`` with ``margin``. Theforefore it can reduce the use of DRAM. It may be useful for large databases such as CH4.
+
+.. code:: ipython
+	  
+	  >>> mdbCH4=moldb.MdbHit('.database/06_HITEMP2020.par.bz2',nus,extract=True)
+
+This creates a new directory (such as ``6101.281269066504_6108.7354917532075_1.0`` ) and the extracted data and header files (``06_HITEMP2020.header`` and  ``06_HITEMP2020.par`` ) in it:
+
+.. code:: sh
+	  
+	  ls .database
+	  
+	  06_HITEMP2020.par
+	  6101.281269066504_6108.7354917532075_1.0:
+	  06_HITEMP2020.header  06_HITEMP2020.par
 
 	  
 Basic Quantities
