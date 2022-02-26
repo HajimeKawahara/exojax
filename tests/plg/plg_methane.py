@@ -119,13 +119,15 @@ if __name__ == "__main__":
         mu=Frot
         return mu
 
-    #test
+    #save
+    
     if True:
         Tarr = 1200.0*(Parr/Pref)**0.1
         mu=frun(Tarr,MMR_=0.0059,Mp=33.2,Rp=0.88,u1=0.0,u2=0.0,RV=10.0,vsini=20.0)
+        np.savez("ch4plg.npz",[wav[::-1],mu])
         plt.plot(wav[::-1],mu)
         #plt.plot(wavmic,flux,alpha=0.5,color="C2",label="petit?")
-        plt.show()
+        plt.savefig("ch4plg.png")
         
     
     
