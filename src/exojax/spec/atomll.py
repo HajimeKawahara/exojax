@@ -543,10 +543,10 @@ def uspecies_info(uspecies, ielem_to_index_of_ipccd, mods_ID=jnp.array([[0, 0], 
 
 
 def sep_arr_of_sp(arr, adb, trans_jnp=True, inttype=False):
-    """Split by species (atoms or ions) the jnp.array stored as an instance variable in adb, and pad with zeros to adjust the length
+    """Separate by species (atoms or ions) the jnp.array stored as an instance variable in adb, and pad with zeros to adjust the length
 
     Args:
-        arr: array of a parameter (one of the attributes of adb below) [N_line]
+        arr: array of a parameter (one of the attributes of adb below) to be separated [N_line]
         adb: adb instance made by the AdbVald class in moldb.py
         trans_jnp: if True, the output is converted to jnp.array (dtype='float32')
         inttype: if True (along with trans_jnp = True), the output is converted to jnp.array of dtype='int32'
