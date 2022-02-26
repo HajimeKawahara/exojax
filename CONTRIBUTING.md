@@ -21,6 +21,16 @@ Some external files are needed to complete all the tests. Check [here](http://se
 
 ## TIPS
 
+### pyformat
+
+Pyformat formats the code to follow a consistent style that used in ExoJAX.
+
+At minimum, you can use it as
+
+```sh
+pyformat -i your_code.py
+```
+
 ### How to include data into exojax
 
 - Edit MANIFEST.in
