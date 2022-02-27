@@ -1090,6 +1090,11 @@ class AdbSepVald(object):
     """
 
     def __init__(self, adb):
+        """Species-separated atomic database for VALD3.
+
+        Args:
+            adb: adb instance made by the AdbVald class, which stores the lines of all species together
+        """
         self.nu_lines = atomll.sep_arr_of_sp(adb.nu_lines, adb, trans_jnp=False)
         self.QTmask = atomll.sep_arr_of_sp(adb.QTmask, adb, inttype=True).T[0]
         
