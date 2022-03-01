@@ -9,6 +9,7 @@ import pathlib
 from exojax.spec import hapi, exomolapi, exomol, atomllapi, atomll, hitranapi
 from exojax.spec.hitran import gamma_natural as gn
 import vaex
+from exojax.utils.constants import hcperk
 
 __all__ = ['MdbExomol', 'MdbHit', 'AdbVald', 'AdbKurucz']
 
@@ -36,7 +37,7 @@ class MdbExomol(object):
         alpha_ref_def: default alpha_ref (gamma0) in .def file, used for jlower not given in .broad
     """
 
-    def __init__(self, path, nurange=[-np.inf, np.inf], margin=0.0, crit=-np.inf, bkgdatm='H2', broadf=True):
+    def __init__(self, path, nurange=[-np.inf, np.inf], margin=0.0, crit=-np.inf, Ttyp=1000., bkgdatm='H2', broadf=True):
         """Molecular database for Exomol form.
 
         Args:
@@ -44,6 +45,7 @@ class MdbExomol(object):
            nurange: wavenumber range list (cm-1) [min,max] or wavenumber grid
            margin: margin for nurange (cm-1)
            crit: line strength lower limit for extraction
+           Ttyp: typical temperature used to calculate the line strength for the above extraction
            bkgdatm: background atmosphere for broadening. e.g. H2, He,
            broadf: if False, the default broadening parameters in .def file is used
 
@@ -61,6 +63,7 @@ class MdbExomol(object):
         molecbroad = t0+'__'+self.bkgdatm
 
         self.crit = crit
+        self.Ttyp = Ttyp
         self.margin = margin
         self.nurange = [np.min(nurange), np.max(nurange)]
         self.broadf = broadf
@@ -106,6 +109,8 @@ class MdbExomol(object):
         self.Tref = 296.0
         self.QTref = np.array(self.QT_interp(self.Tref))
 
+        self.QTtyp = np.array(self.QT_interp(self.Ttyp))
+
         # trans file(s)
         print('Reading transition file')
         if numinf is None:
@@ -118,7 +123,10 @@ class MdbExomol(object):
                 cdt = (trans.nu_lines > self.nurange[0]-self.margin) \
                     * (trans.nu_lines < self.nurange[1]+self.margin)
                 if not np.isneginf(self.crit):
-                    cdt = cdt * (trans.Sij0 > self.crit)
+                    cdt = cdt * (trans.Sij0 * self.QTref / self.QTtyp \
+                                 * np.exp(-hcperk*trans._elower * (1./self.Ttyp - 1./self.Tref))
+                                 * np.expm1(-hcperk*trans.nu_lines/self.Ttyp) / np.expm1(-hcperk*trans.nu_lines/self.Tref)
+                                 > self.crit)
                 trans = trans[cdt]
                 ndtrans = vaex.array_types.to_numpy(trans)
 
@@ -142,6 +150,9 @@ class MdbExomol(object):
                 # Line strength: input should be ndarray not jnp array
                 self.Sij0 = exomol.Sij0(
                     self._A, self._gpp, self.nu_lines, self._elower, self.QTref)
+                self.Sij_typ = self.Sij0 * self.QTref / self.QTtyp \
+                    * np.exp(-hcperk*self._elower * (1./self.Ttyp - 1./self.Tref)) \
+                    * np.expm1(-hcperk*self.nu_lines/self.Ttyp) / np.expm1(-hcperk*self.nu_lines/self.Tref)
 
                 # exclude the lines whose nu_lines evaluated inside exomolapi.pickup_gE (thus sometimes different from the "nu_lines" column in trans) is not positive
                 trans['nu_positive'] = mask_zeronu
@@ -150,6 +161,7 @@ class MdbExomol(object):
 
                 trans['nu_lines'] = self.nu_lines
                 trans['Sij0'] = self.Sij0
+                trans['_elower'] = self._elower
                 trans.export(self.trans_file.with_suffix('.hdf5'))
         else:
             imin = np.searchsorted(
@@ -232,10 +244,14 @@ class MdbExomol(object):
                 if not trans_file.with_suffix('.hdf5').exists():
                     trans.export(trans_file.with_suffix('.hdf5'))
 
-        ### MASKING ###
-        mask = (self.nu_lines > self.nurange[0]-self.margin)\
-            * (self.nu_lines < self.nurange[1]+self.margin)\
-            * (self.Sij0 > self.crit)
+        if mask_needed:
+            ### MASKING ###
+            mask = (self.nu_lines > self.nurange[0]-self.margin)\
+                * (self.nu_lines < self.nurange[1]+self.margin)\
+                * (self.Sij_typ > self.crit)
+        else:
+            # define all true list just in case
+            mask = np.ones_like(self.nu_lines, dtype=bool)
 
         self.masking(mask, mask_needed)
 
