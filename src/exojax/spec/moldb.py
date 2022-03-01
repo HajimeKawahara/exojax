@@ -181,7 +181,10 @@ class MdbExomol(object):
                     cdt = (trans.nu_lines > self.nurange[0]-self.margin) \
                         * (trans.nu_lines < self.nurange[1]+self.margin)
                     if not np.isneginf(self.crit):
-                        cdt = cdt * (trans.Sij0 > self.crit)
+                        cdt = cdt * (trans.Sij0 * self.QTref / self.QTtyp \
+                                     * np.exp(-hcperk*trans._elower * (1./self.Ttyp - 1./self.Tref))
+                                     * np.expm1(-hcperk*trans.nu_lines/self.Ttyp) / np.expm1(-hcperk*trans.nu_lines/self.Tref)
+                                     > self.crit)
                     trans = trans[cdt]
                     ndtrans = vaex.array_types.to_numpy(trans)
                     self.trans_file.append(trans_file)
@@ -207,6 +210,9 @@ class MdbExomol(object):
                         # Line strength: input should be ndarray not jnp array
                         self.Sij0 = exomol.Sij0(
                             self._A, self._gpp, self.nu_lines, self._elower, self.QTref)
+                        self.Sij_typ = self.Sij0 * self.QTref / self.QTtyp \
+                            * np.exp(-hcperk*self._elower * (1./self.Ttyp - 1./self.Tref)) \
+                            * np.expm1(-hcperk*self.nu_lines/self.Ttyp) / np.expm1(-hcperk*self.nu_lines/self.Tref)
 
                         # exclude the lines whose nu_lines evaluated inside exomolapi.pickup_gE (thus sometimes different from the "nu_lines" column in trans) is not positive
                         trans['nu_positive'] = mask_zeronu
@@ -215,6 +221,7 @@ class MdbExomol(object):
 
                         trans['nu_lines'] = self.nu_lines
                         trans['Sij0'] = self.Sij0
+                        trans['_elower'] = self._elower
                 else:
                     Ax, nulx, elowerx, gppx, jlowerx, jupperx, mask_zeronu = exomolapi.pickup_gE(
                         ndstates, ndtrans, trans_file)
@@ -224,6 +231,9 @@ class MdbExomol(object):
                         # Line strength: input should be ndarray not jnp array
                         Sij0x = exomol.Sij0(
                             Ax, gppx, nulx, elowerx, self.QTref)
+                        Sij_typx = Sij0x * self.QTref / self.QTtyp \
+                            * np.exp(-hcperk*elowerx * (1./self.Ttyp - 1./self.Tref)) \
+                            * np.expm1(-hcperk*nulx/self.Ttyp) / np.expm1(-hcperk*nulx/self.Tref)
 
                         # exclude the lines whose nu_lines evaluated inside exomolapi.pickup_gE (thus sometimes different from the "nu_lines" column in trans) is not positive
                         trans['nu_positive'] = mask_zeronu
@@ -232,6 +242,7 @@ class MdbExomol(object):
 
                         trans['nu_lines'] = nulx
                         trans['Sij0'] = Sij0x
+                        trans['_elower'] = elowerx
 
                     self._A = np.hstack([self._A, Ax])
                     self.nu_lines = np.hstack([self.nu_lines, nulx])
@@ -240,6 +251,7 @@ class MdbExomol(object):
                     self._jlower = np.hstack([self._jlower, jlowerx])
                     self._jupper = np.hstack([self._jupper, jupperx])
                     self.Sij0 = np.hstack([self.Sij0, Sij0x])
+                    self.Sij_typ = np.hstack([self.Sij_typ, Sij_typx])
 
                 if not trans_file.with_suffix('.hdf5').exists():
                     trans.export(trans_file.with_suffix('.hdf5'))
