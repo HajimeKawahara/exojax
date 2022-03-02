@@ -45,7 +45,7 @@ class MdbExomol(object):
            nurange: wavenumber range list (cm-1) [min,max] or wavenumber grid
            margin: margin for nurange (cm-1)
            crit: line strength lower limit for extraction
-           Ttyp: typical temperature used to calculate the line strength for the above extraction
+           Ttyp: typical temperature to calculate Sij(T) used in crit
            bkgdatm: background atmosphere for broadening. e.g. H2, He,
            broadf: if False, the default broadening parameters in .def file is used
 
@@ -124,7 +124,7 @@ class MdbExomol(object):
                     * (trans.nu_lines < self.nurange[1]+self.margin)
                 if not np.isneginf(self.crit):
                     if not '_elower' in trans:
-                        print('The hdf5 file for the transition file was created using the old version of exojax. Remove', self.trans_file.with_suffix('.hdf5'), 'and try again.')
+                        print('It seems that the hdf5 file for the transition file was created using the old version of exojax<1.1. Remove', self.trans_file.with_suffix('.hdf5'), 'and try again.')
                         exit()
                     cdt = cdt * (trans.Sij0 * self.QTref / self.QTtyp \
                                  * np.exp(-hcperk*trans._elower * (1./self.Ttyp - 1./self.Tref))
@@ -185,7 +185,7 @@ class MdbExomol(object):
                         * (trans.nu_lines < self.nurange[1]+self.margin)
                     if not np.isneginf(self.crit):
                         if not '_elower' in trans:
-                            print('The hdf5 file for the transition file was created using the old version of exojax. Remove', trans_file.with_suffix('.hdf5'), 'and try again.')
+                            print('It seems that the hdf5 file for the transition file was created using the old version of exojax<1.1. Remove', trans_file.with_suffix('.hdf5'), 'and try again.')
                             exit()
                         cdt = cdt * (trans.Sij0 * self.QTref / self.QTtyp \
                                      * np.exp(-hcperk*trans._elower * (1./self.Ttyp - 1./self.Tref))
