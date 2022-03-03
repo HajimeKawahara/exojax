@@ -212,6 +212,9 @@ class MdbExomol(object):
                         ndstates, ndtrans, trans_file)
                     if trans_file.with_suffix('.hdf5').exists():
                         self.Sij0 = ndtrans[:, 4]
+                        self.Sij_typ = self.Sij0 * self.QTref / self.QTtyp \
+                            * np.exp(-hcperk*self._elower * (1./self.Ttyp - 1./self.Tref)) \
+                            * np.expm1(-hcperk*self.nu_lines/self.Ttyp) / np.expm1(-hcperk*self.nu_lines/self.Tref)
                     else:
                         # Line strength: input should be ndarray not jnp array
                         self.Sij0 = exomol.Sij0(
@@ -233,6 +236,9 @@ class MdbExomol(object):
                         ndstates, ndtrans, trans_file)
                     if trans_file.with_suffix('.hdf5').exists():
                         Sij0x = ndtrans[:, 4]
+                        Sij_typx = Sij0x * self.QTref / self.QTtyp \
+                            * np.exp(-hcperk*elowerx * (1./self.Ttyp - 1./self.Tref)) \
+                            * np.expm1(-hcperk*nulx/self.Ttyp) / np.expm1(-hcperk*nulx/self.Tref)
                     else:
                         # Line strength: input should be ndarray not jnp array
                         Sij0x = exomol.Sij0(
