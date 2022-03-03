@@ -108,6 +108,7 @@ class MdbExomol(object):
 
         # trans file(s)
         print('Reading transition file')
+        mask_needed = False
         if numinf is None:
             self.trans_file = self.path/pathlib.Path(molec+'.trans.bz2')
             if not self.trans_file.exists():
@@ -121,9 +122,6 @@ class MdbExomol(object):
                     cdt = cdt * (trans.Sij0 > self.crit)
                 trans = trans[cdt]
                 ndtrans = vaex.array_types.to_numpy(trans)
-
-                # mask has been alraedy applied
-                mask_needed = False
             else:
                 print(explanation_trans)
                 trans = exomolapi.read_trans(self.trans_file)
@@ -173,9 +171,6 @@ class MdbExomol(object):
                     trans = trans[cdt]
                     ndtrans = vaex.array_types.to_numpy(trans)
                     self.trans_file.append(trans_file)
-
-                    # mask has been alraedy applied
-                    mask_needed = False
                 else:
                     print(explanation_trans)
                     trans = exomolapi.read_trans(trans_file)
