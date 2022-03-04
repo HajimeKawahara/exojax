@@ -36,7 +36,7 @@ class MdbExomol(object):
         alpha_ref_def: default alpha_ref (gamma0) in .def file, used for jlower not given in .broad
     """
 
-    def __init__(self, path, nurange=[-np.inf, np.inf], margin=0.0, crit=-np.inf, bkgdatm='H2', broadf=True):
+    def __init__(self, path, nurange=[-np.inf, np.inf], margin=0.0, crit=0., bkgdatm='H2', broadf=True):
         """Molecular database for Exomol form.
 
         Args:
@@ -116,9 +116,8 @@ class MdbExomol(object):
             if self.trans_file.with_suffix('.hdf5').exists():
                 trans = vaex.open(self.trans_file.with_suffix('.hdf5'))
                 cdt = (trans.nu_lines > self.nurange[0]-self.margin) \
-                    * (trans.nu_lines < self.nurange[1]+self.margin)
-                if not np.isneginf(self.crit):
-                    cdt = cdt * (trans.Sij0 > self.crit)
+                    * (trans.nu_lines < self.nurange[1]+self.margin) \
+                    * (trans.Sij0 > self.crit)
                 trans = trans[cdt]
                 ndtrans = vaex.array_types.to_numpy(trans)
 
@@ -167,9 +166,8 @@ class MdbExomol(object):
                 if trans_file.with_suffix('.hdf5').exists():
                     trans = vaex.open(trans_file.with_suffix('.hdf5'))
                     cdt = (trans.nu_lines > self.nurange[0]-self.margin) \
-                        * (trans.nu_lines < self.nurange[1]+self.margin)
-                    if not np.isneginf(self.crit):
-                        cdt = cdt * (trans.Sij0 > self.crit)
+                        * (trans.nu_lines < self.nurange[1]+self.margin) \
+                        * (trans.Sij0 > self.crit)
                     trans = trans[cdt]
                     ndtrans = vaex.array_types.to_numpy(trans)
                     self.trans_file.append(trans_file)
@@ -405,7 +403,7 @@ class MdbHit(object):
         n_air (jnp array): air temperature exponent
     """
 
-    def __init__(self, path, nurange=[-np.inf, np.inf], margin=0.0, crit=-np.inf, extract=False):
+    def __init__(self, path, nurange=[-np.inf, np.inf], margin=0.0, crit=0., extract=False):
         """Molecular database for HITRAN/HITEMP form.
 
         Args:
@@ -835,7 +833,7 @@ class AdbVald(object):  # integrated from vald3db.py
            For the first time to read the VALD line list, it is converted to HDF/vaex. After the second-time, we use the HDF5 format with vaex instead.
     """
 
-    def __init__(self, path, nurange=[-np.inf, np.inf], margin=0.0, crit=-np.inf, Irwin=False):
+    def __init__(self, path, nurange=[-np.inf, np.inf], margin=0.0, crit=0., Irwin=False):
         """Atomic database for VALD3 "Long format".
 
         Args:
@@ -1139,7 +1137,7 @@ class AdbKurucz(object):
         vdWdamp (jnp array):  log of (van der Waals damping constant / neutral hydrogen number) (s-1)
     """
 
-    def __init__(self, path, nurange=[-np.inf, np.inf], margin=0.0, crit=-np.inf, Irwin=False):
+    def __init__(self, path, nurange=[-np.inf, np.inf], margin=0.0, crit=0., Irwin=False):
         """Atomic database for Kurucz line list "gf????.all".
 
         Args:
