@@ -43,7 +43,7 @@ is given in `ditkernel module <../exojax/exojax.spec.html#module-exojax.spec.dit
 
 
 How is the LSD computed in Exojax/MODIT?
----------------------------
+------------------------------------------
 
 MODIT/DIT needs to compute the lineshape density (LSD) matrix. `inc2D_givenx <../exojax/exojax.spec.html#exojax.spec.modit.inc2D_givenx>`_ is a core function to compute the 2D LSD. Let's compute the LSD with the wavenumber grid [0,1,2,3,4] and the grid of gammaL [0,1,2,3] as follows
 
