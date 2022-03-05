@@ -36,7 +36,7 @@ class MdbExomol(object):
         alpha_ref_def: default alpha_ref (gamma0) in .def file, used for jlower not given in .broad
     """
 
-    def __init__(self, path, nurange=[-np.inf, np.inf], margin=0.0, crit=0., bkgdatm='H2', broadf=True):
+    def __init__(self, path, nurange=[-np.inf, np.inf], margin=0.0, crit=0., bkgdatm='H2', broadf=True, remove_original_hdf=True):
         """Molecular database for Exomol form.
 
         Args:
@@ -46,12 +46,14 @@ class MdbExomol(object):
            crit: line strength lower limit for extraction
            bkgdatm: background atmosphere for broadening. e.g. H2, He,
            broadf: if False, the default broadening parameters in .def file is used
+           remove_original_hdf: if True, the hdf5 and yaml files created while reading the original transition file(s) will be removed since those files will not be used after that.
 
         Note:
            The trans/states files can be very large. For the first time to read it, we convert it to HDF/vaex. After the second-time, we use the HDF5 format with vaex instead.
         """
         explanation_states = "Note: Couldn't find the hdf5 format. We convert data to the hdf5 format. After the second time, it will become much faster."
         explanation_trans = "Note: Couldn't find the hdf5 format. We convert data to the hdf5 format. After the second time, it will become much faster."
+        import os
 
         self.path = pathlib.Path(path)
         t0 = self.path.parents[0].stem
@@ -150,6 +152,13 @@ class MdbExomol(object):
                 trans['nu_lines'] = self.nu_lines
                 trans['Sij0'] = self.Sij0
                 trans.export(self.trans_file.with_suffix('.hdf5'))
+
+                if remove_original_hdf:
+                    # remove the hdf5 and yaml files created while reading the original transition file.
+                    if(self.trans_file.with_suffix('.bz2.hdf5').exists()):
+                        os.remove(self.trans_file.with_suffix('.bz2.hdf5'))
+                    if(self.trans_file.with_suffix('.bz2.yaml').exists()):
+                        os.remove(self.trans_file.with_suffix('.bz2.yaml'))
         else:
             imin = np.searchsorted(
                 numinf, self.nurange[0], side='right')-1  # left side
@@ -229,6 +238,13 @@ class MdbExomol(object):
 
                 if not trans_file.with_suffix('.hdf5').exists():
                     trans.export(trans_file.with_suffix('.hdf5'))
+
+                if remove_original_hdf:
+                    # remove the hdf5 and yaml files created while reading the original transition file.
+                    if(trans_file.with_suffix('.bz2.hdf5').exists()):
+                        os.remove(trans_file.with_suffix('.bz2.hdf5'))
+                    if(trans_file.with_suffix('.bz2.yaml').exists()):
+                        os.remove(trans_file.with_suffix('.bz2.yaml'))
 
         ### MASKING ###
         mask = (self.nu_lines > self.nurange[0]-self.margin)\
