@@ -113,7 +113,8 @@ class MdbExomol(object):
         if numinf is None:
             self.trans_file = self.path/pathlib.Path(molec+'.trans.bz2')
             if not self.trans_file.with_suffix('.hdf5').exists():
-                self.download(molec, ['.trans.bz2'])
+                if not self.trans_file.exists():
+                    self.download(molec, ['.trans.bz2'])
 
             if self.trans_file.with_suffix('.hdf5').exists():
                 trans = vaex.open(self.trans_file.with_suffix('.hdf5'))
@@ -169,8 +170,9 @@ class MdbExomol(object):
                 trans_file = self.path / \
                     pathlib.Path(molec+'__'+numtag[i]+'.trans.bz2')
                 if not trans_file.with_suffix('.hdf5').exists():
-                    self.download(molec, extension=[
-                                  '.trans.bz2'], numtag=numtag[i])
+                    if not self.trans_file.exists():
+                        self.download(molec, extension=[
+                                      '.trans.bz2'], numtag=numtag[i])
 
                 if trans_file.with_suffix('.hdf5').exists():
                     trans = vaex.open(trans_file.with_suffix('.hdf5'))
