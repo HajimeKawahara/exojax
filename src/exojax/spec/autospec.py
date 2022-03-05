@@ -319,7 +319,7 @@ class AutoRT(object):
         self.dtau = np.zeros((self.nlayer, len(nus)))
         print('xsmode=', self.xsmode)
 
-    def addmol(self, database, molecules, mmr, crit=-np.inf):
+    def addmol(self, database, molecules, mmr, crit=0.):
         """
         Args:
            database: database= HITRAN, HITEMP, ExoMol
