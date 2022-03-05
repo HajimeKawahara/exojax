@@ -42,6 +42,7 @@ Here is an example of installation for jaxlib for cuda 11.1 to 11.4.
 In addition, you may need cuDNN for `response.ipgauss2 <../exojax/exojax.spec.html#exojax.spec.response.ipgauss2>`_ and `response.rigidrot2 <../exojax/exojax.spec.html#exojax.spec.response.rigidrot2>`_. For ubuntu, download .deb from NVIDIA and install it:
 	   
 .. code:: sh
+	  
 	  sudo dpkg -i libcudnn8_8.2.0.53-1+cuda11.3_amd64.deb
 
 References

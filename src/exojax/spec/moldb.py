@@ -456,7 +456,7 @@ class MdbHit(object):
         n_air (jnp array): air temperature exponent
     """
 
-    def __init__(self, path, nurange=[-np.inf, np.inf], margin=0.0, crit=0., extract=False):
+    def __init__(self, path, nurange=[-np.inf, np.inf], margin=0.0, crit=0., Ttyp=1000., extract=False):
         """Molecular database for HITRAN/HITEMP form.
 
         Args:
@@ -464,13 +464,17 @@ class MdbHit(object):
            nurange: wavenumber range list (cm-1) [min,max] or wavenumber grid
            margin: margin for nurange (cm-1)
            crit: line strength lower limit for extraction
+           Ttyp: typical temperature to calculate Sij(T) used in crit
            extract: If True, it extracts the opacity having the wavenumber between nurange +- margin. Use when you want to reduce the memory use.
         """
+        from exojax.spec.hitran import SijT
+
         self.path = pathlib.Path(path)
         numinf, numtag = hitranapi.read_path(self.path)
 
         self.Tref = 296.0
         self.crit = crit
+        self.Ttyp = Ttyp
         self.margin = margin
         self.nurange = [np.min(nurange), np.max(nurange)]
 
@@ -588,10 +592,15 @@ class MdbHit(object):
                     self._elower = np.hstack([self._elower, elowerx])
                     self._gpp = np.hstack([self._gpp, gppx])
 
+        self.logsij0 = jnp.array(np.log(self.Sij0))
+        self.elower = jnp.array(self._elower)
+        self.QTtyp = self.Qr_layer_HAPI([self.Ttyp])[0]
+        self.Sij_typ = SijT(self.Ttyp, self.logsij0, self.nu_lines, self.elower, self.QTtyp)
+
         ### MASKING ###
         mask = (self.nu_lines > self.nurange[0]-self.margin)\
             * (self.nu_lines < self.nurange[1]+self.margin)\
-            * (self.Sij0 > self.crit)
+            * (self.Sij_typ > self.crit)
 
         self.masking(mask)
 
