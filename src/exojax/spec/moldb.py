@@ -128,7 +128,7 @@ class MdbExomol(object):
                     * (trans.nu_lines < self.nurange[1]+self.margin)
                 if not '_elower' in trans:
                     print('It seems that the hdf5 file for the transition file was created using the old version of exojax<1.1. Remove', self.trans_file.with_suffix('.hdf5'), 'and try again.')
-                    exit()
+                    return
                 cdt = cdt * (trans.Sij0 * self.QTref / self.QTtyp \
                              * np.exp(-hcperk*trans._elower * (1./self.Ttyp - 1./self.Tref))
                              * np.expm1(-hcperk*trans.nu_lines/self.Ttyp) / np.expm1(-hcperk*trans.nu_lines/self.Tref)
@@ -193,7 +193,7 @@ class MdbExomol(object):
                         * (trans.nu_lines < self.nurange[1]+self.margin)
                     if not '_elower' in trans:
                         print('It seems that the hdf5 file for the transition file was created using the old version of exojax<1.1. Remove', trans_file.with_suffix('.hdf5'), 'and try again.')
-                        exit()
+                        return
                     cdt = cdt * (trans.Sij0 * self.QTref / self.QTtyp \
                                  * np.exp(-hcperk*trans._elower * (1./self.Ttyp - 1./self.Tref))
                                  * np.expm1(-hcperk*trans.nu_lines/self.Ttyp) / np.expm1(-hcperk*trans.nu_lines/self.Tref)
