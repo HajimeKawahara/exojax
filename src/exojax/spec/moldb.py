@@ -3,6 +3,7 @@
 * MdbExomol is the MDB for ExoMol
 * MdbHit is the MDB for HITRAN or HITEMP
 """
+import os
 import numpy as np
 import jax.numpy as jnp
 import pathlib
@@ -357,7 +358,6 @@ class MdbExomol(object):
         """
         import urllib.request
         from exojax.utils.molname import e2s
-        import os
         from exojax.utils.url import url_ExoMol
 
         tag = molec.split('__')
@@ -444,7 +444,6 @@ class MdbHit(object):
                 import bz2
                 import shutil
                 if self.path.with_suffix('').exists():
-                    import os
                     os.remove(self.path.with_suffix(''))
                 print('bunziping')
                 with bz2.BZ2File(str(self.path)) as fr:
@@ -452,6 +451,7 @@ class MdbHit(object):
                         shutil.copyfileobj(fr, fw)
                 self.path = self.path.with_suffix('')
 
+            os.makedirs(str(self.path.parent), exist_ok=True)
             hapi.db_begin(str(self.path.parent))
             molec = str(self.path.stem)
             self.molecid = search_molecid(molec)
@@ -492,6 +492,7 @@ class MdbHit(object):
                 if not sub_file.exists():
                     self.download(numtag=numtag[i])
 
+                os.makedirs(str(self.path.parent), exist_ok=True)
                 hapi.db_begin(str(self.path/numtag[i]))
                 molec = str(flname.stem)
                 self.molecid = search_molecid(molec)
@@ -590,7 +591,6 @@ class MdbHit(object):
         from exojax.utils.url import url_HITRAN12
         from exojax.utils.url import url_HITEMP
         from exojax.utils.url import url_HITEMP10
-        import os
         import shutil
 
         try:
@@ -670,7 +670,6 @@ class MdbHit(object):
         """
         import urllib.request
         from exojax.utils.molname import e2s
-        import os
         from exojax.utils.url import url_ExoMol
 
         tag = molec.split('__')
