@@ -24,7 +24,7 @@ from exojax is like that.
 	  bunziping
 
 HITEMP H2O and CO2
-^^^^^^^^^^^^^^^^^
+======================
 
 For H2O and CO2, HITEMP provides multiple par files. To use those files, provide the directory path for ``moldb.MdbHit`` as follows.
 
@@ -34,7 +34,7 @@ For H2O and CO2, HITEMP provides multiple par files. To use those files, provide
 	  >>> mdbCO2=moldb.MdbHit('.database/02_HITEMP2010',nus)
 
 extract option
-^^^^^^^^^^^^^^^^^
+======================
 	  
 ``extract=True`` in ``moldb.MdbHit`` extracts the opacity data in the wavenumber range of ``nus`` with ``margin``. Theforefore it can reduce the use of DRAM. It may be useful for large databases such as CH4.
 

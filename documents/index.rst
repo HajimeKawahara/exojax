@@ -49,7 +49,9 @@ Contents
 References 
 ---------------------
 
-- Kawahara, Kawashima, Masuda, Crossfield, Pannier, van den Bekerom, [ApJS 258, 31 (2022)](https://iopscience.iop.org/article/10.3847/1538-4365/ac3b4d) (Paper I)
+- Kawahara, Kawashima, Masuda, Crossfield, Pannier, van den Bekerom,
+  `ApJS 258, 31 (2022) <https://iopscience.iop.org/article/10.3847/1538-4365/ac3b4d>`_
+  (Paper I)
 
 
   

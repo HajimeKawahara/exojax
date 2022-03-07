@@ -3,12 +3,14 @@
 * MdbExomol is the MDB for ExoMol
 * MdbHit is the MDB for HITRAN or HITEMP
 """
+import os
 import numpy as np
 import jax.numpy as jnp
 import pathlib
 from exojax.spec import hapi, exomolapi, exomol, atomllapi, atomll, hitranapi
 from exojax.spec.hitran import gamma_natural as gn
 import vaex
+from exojax.utils.constants import hcperk
 
 __all__ = ['MdbExomol', 'MdbHit', 'AdbVald', 'AdbKurucz']
 
@@ -36,7 +38,7 @@ class MdbExomol(object):
         alpha_ref_def: default alpha_ref (gamma0) in .def file, used for jlower not given in .broad
     """
 
-    def __init__(self, path, nurange=[-np.inf, np.inf], margin=0.0, crit=-np.inf, bkgdatm='H2', broadf=True):
+    def __init__(self, path, nurange=[-np.inf, np.inf], margin=0.0, crit=0., Ttyp=1000., bkgdatm='H2', broadf=True, remove_original_hdf=True):
         """Molecular database for Exomol form.
 
         Args:
@@ -44,14 +46,17 @@ class MdbExomol(object):
            nurange: wavenumber range list (cm-1) [min,max] or wavenumber grid
            margin: margin for nurange (cm-1)
            crit: line strength lower limit for extraction
+           Ttyp: typical temperature to calculate Sij(T) used in crit
            bkgdatm: background atmosphere for broadening. e.g. H2, He,
            broadf: if False, the default broadening parameters in .def file is used
+           remove_original_hdf: if True, the hdf5 and yaml files created while reading the original transition file(s) will be removed since those files will not be used after that.
 
         Note:
            The trans/states files can be very large. For the first time to read it, we convert it to HDF/vaex. After the second-time, we use the HDF5 format with vaex instead.
         """
         explanation_states = "Note: Couldn't find the hdf5 format. We convert data to the hdf5 format. After the second time, it will become much faster."
         explanation_trans = "Note: Couldn't find the hdf5 format. We convert data to the hdf5 format. After the second time, it will become much faster."
+        import os
 
         self.path = pathlib.Path(path)
         t0 = self.path.parents[0].stem
@@ -61,6 +66,7 @@ class MdbExomol(object):
         molecbroad = t0+'__'+self.bkgdatm
 
         self.crit = crit
+        self.Ttyp = Ttyp
         self.margin = margin
         self.nurange = [np.min(nurange), np.max(nurange)]
         self.broadf = broadf
@@ -106,24 +112,30 @@ class MdbExomol(object):
         self.Tref = 296.0
         self.QTref = np.array(self.QT_interp(self.Tref))
 
+        self.QTtyp = np.array(self.QT_interp(self.Ttyp))
+
         # trans file(s)
         print('Reading transition file')
+        mask_needed = False
         if numinf is None:
             self.trans_file = self.path/pathlib.Path(molec+'.trans.bz2')
-            if not self.trans_file.exists():
-                self.download(molec, ['.trans.bz2'])
+            if not self.trans_file.with_suffix('.hdf5').exists():
+                if not self.trans_file.exists():
+                    self.download(molec, ['.trans.bz2'])
 
             if self.trans_file.with_suffix('.hdf5').exists():
                 trans = vaex.open(self.trans_file.with_suffix('.hdf5'))
                 cdt = (trans.nu_lines > self.nurange[0]-self.margin) \
                     * (trans.nu_lines < self.nurange[1]+self.margin)
-                if not np.isneginf(self.crit):
-                    cdt = cdt * (trans.Sij0 > self.crit)
+                if not '_elower' in trans:
+                    print('It seems that the hdf5 file for the transition file was created using the old version of exojax<1.1. Remove', self.trans_file.with_suffix('.hdf5'), 'and try again.')
+                    return
+                cdt = cdt * (trans.Sij0 * self.QTref / self.QTtyp \
+                             * np.exp(-hcperk*trans._elower * (1./self.Ttyp - 1./self.Tref))
+                             * np.expm1(-hcperk*trans.nu_lines/self.Ttyp) / np.expm1(-hcperk*trans.nu_lines/self.Tref)
+                             > self.crit)
                 trans = trans[cdt]
                 ndtrans = vaex.array_types.to_numpy(trans)
-
-                # mask has been alraedy applied
-                mask_needed = False
             else:
                 print(explanation_trans)
                 trans = exomolapi.read_trans(self.trans_file)
@@ -142,6 +154,9 @@ class MdbExomol(object):
                 # Line strength: input should be ndarray not jnp array
                 self.Sij0 = exomol.Sij0(
                     self._A, self._gpp, self.nu_lines, self._elower, self.QTref)
+                self.Sij_typ = self.Sij0 * self.QTref / self.QTtyp \
+                    * np.exp(-hcperk*self._elower * (1./self.Ttyp - 1./self.Tref)) \
+                    * np.expm1(-hcperk*self.nu_lines/self.Ttyp) / np.expm1(-hcperk*self.nu_lines/self.Tref)
 
                 # exclude the lines whose nu_lines evaluated inside exomolapi.pickup_gE (thus sometimes different from the "nu_lines" column in trans) is not positive
                 trans['nu_positive'] = mask_zeronu
@@ -150,7 +165,15 @@ class MdbExomol(object):
 
                 trans['nu_lines'] = self.nu_lines
                 trans['Sij0'] = self.Sij0
+                trans['_elower'] = self._elower
                 trans.export(self.trans_file.with_suffix('.hdf5'))
+
+                if remove_original_hdf:
+                    # remove the hdf5 and yaml files created while reading the original transition file.
+                    if(self.trans_file.with_suffix('.bz2.hdf5').exists()):
+                        os.remove(self.trans_file.with_suffix('.bz2.hdf5'))
+                    if(self.trans_file.with_suffix('.bz2.yaml').exists()):
+                        os.remove(self.trans_file.with_suffix('.bz2.yaml'))
         else:
             imin = np.searchsorted(
                 numinf, self.nurange[0], side='right')-1  # left side
@@ -160,22 +183,25 @@ class MdbExomol(object):
             for k, i in enumerate(range(imin, imax+1)):
                 trans_file = self.path / \
                     pathlib.Path(molec+'__'+numtag[i]+'.trans.bz2')
-                if not trans_file.exists():
-                    self.download(molec, extension=[
-                                  '.trans.bz2'], numtag=numtag[i])
+                if not trans_file.with_suffix('.hdf5').exists():
+                    if not trans_file.exists():
+                        self.download(molec, extension=[
+                                      '.trans.bz2'], numtag=numtag[i])
 
                 if trans_file.with_suffix('.hdf5').exists():
                     trans = vaex.open(trans_file.with_suffix('.hdf5'))
                     cdt = (trans.nu_lines > self.nurange[0]-self.margin) \
                         * (trans.nu_lines < self.nurange[1]+self.margin)
-                    if not np.isneginf(self.crit):
-                        cdt = cdt * (trans.Sij0 > self.crit)
+                    if not '_elower' in trans:
+                        print('It seems that the hdf5 file for the transition file was created using the old version of exojax<1.1. Remove', trans_file.with_suffix('.hdf5'), 'and try again.')
+                        return
+                    cdt = cdt * (trans.Sij0 * self.QTref / self.QTtyp \
+                                 * np.exp(-hcperk*trans._elower * (1./self.Ttyp - 1./self.Tref))
+                                 * np.expm1(-hcperk*trans.nu_lines/self.Ttyp) / np.expm1(-hcperk*trans.nu_lines/self.Tref)
+                                 > self.crit)
                     trans = trans[cdt]
                     ndtrans = vaex.array_types.to_numpy(trans)
                     self.trans_file.append(trans_file)
-
-                    # mask has been alraedy applied
-                    mask_needed = False
                 else:
                     print(explanation_trans)
                     trans = exomolapi.read_trans(trans_file)
@@ -191,10 +217,16 @@ class MdbExomol(object):
                         ndstates, ndtrans, trans_file)
                     if trans_file.with_suffix('.hdf5').exists():
                         self.Sij0 = ndtrans[:, 4]
+                        self.Sij_typ = self.Sij0 * self.QTref / self.QTtyp \
+                            * np.exp(-hcperk*self._elower * (1./self.Ttyp - 1./self.Tref)) \
+                            * np.expm1(-hcperk*self.nu_lines/self.Ttyp) / np.expm1(-hcperk*self.nu_lines/self.Tref)
                     else:
                         # Line strength: input should be ndarray not jnp array
                         self.Sij0 = exomol.Sij0(
                             self._A, self._gpp, self.nu_lines, self._elower, self.QTref)
+                        self.Sij_typ = self.Sij0 * self.QTref / self.QTtyp \
+                            * np.exp(-hcperk*self._elower * (1./self.Ttyp - 1./self.Tref)) \
+                            * np.expm1(-hcperk*self.nu_lines/self.Ttyp) / np.expm1(-hcperk*self.nu_lines/self.Tref)
 
                         # exclude the lines whose nu_lines evaluated inside exomolapi.pickup_gE (thus sometimes different from the "nu_lines" column in trans) is not positive
                         trans['nu_positive'] = mask_zeronu
@@ -203,15 +235,22 @@ class MdbExomol(object):
 
                         trans['nu_lines'] = self.nu_lines
                         trans['Sij0'] = self.Sij0
+                        trans['_elower'] = self._elower
                 else:
                     Ax, nulx, elowerx, gppx, jlowerx, jupperx, mask_zeronu = exomolapi.pickup_gE(
                         ndstates, ndtrans, trans_file)
                     if trans_file.with_suffix('.hdf5').exists():
                         Sij0x = ndtrans[:, 4]
+                        Sij_typx = Sij0x * self.QTref / self.QTtyp \
+                            * np.exp(-hcperk*elowerx * (1./self.Ttyp - 1./self.Tref)) \
+                            * np.expm1(-hcperk*nulx/self.Ttyp) / np.expm1(-hcperk*nulx/self.Tref)
                     else:
                         # Line strength: input should be ndarray not jnp array
                         Sij0x = exomol.Sij0(
                             Ax, gppx, nulx, elowerx, self.QTref)
+                        Sij_typx = Sij0x * self.QTref / self.QTtyp \
+                            * np.exp(-hcperk*elowerx * (1./self.Ttyp - 1./self.Tref)) \
+                            * np.expm1(-hcperk*nulx/self.Ttyp) / np.expm1(-hcperk*nulx/self.Tref)
 
                         # exclude the lines whose nu_lines evaluated inside exomolapi.pickup_gE (thus sometimes different from the "nu_lines" column in trans) is not positive
                         trans['nu_positive'] = mask_zeronu
@@ -220,6 +259,7 @@ class MdbExomol(object):
 
                         trans['nu_lines'] = nulx
                         trans['Sij0'] = Sij0x
+                        trans['_elower'] = elowerx
 
                     self._A = np.hstack([self._A, Ax])
                     self.nu_lines = np.hstack([self.nu_lines, nulx])
@@ -228,14 +268,26 @@ class MdbExomol(object):
                     self._jlower = np.hstack([self._jlower, jlowerx])
                     self._jupper = np.hstack([self._jupper, jupperx])
                     self.Sij0 = np.hstack([self.Sij0, Sij0x])
+                    self.Sij_typ = np.hstack([self.Sij_typ, Sij_typx])
 
                 if not trans_file.with_suffix('.hdf5').exists():
                     trans.export(trans_file.with_suffix('.hdf5'))
 
-        ### MASKING ###
-        mask = (self.nu_lines > self.nurange[0]-self.margin)\
-            * (self.nu_lines < self.nurange[1]+self.margin)\
-            * (self.Sij0 > self.crit)
+                if remove_original_hdf:
+                    # remove the hdf5 and yaml files created while reading the original transition file.
+                    if(trans_file.with_suffix('.bz2.hdf5').exists()):
+                        os.remove(trans_file.with_suffix('.bz2.hdf5'))
+                    if(trans_file.with_suffix('.bz2.yaml').exists()):
+                        os.remove(trans_file.with_suffix('.bz2.yaml'))
+
+        if mask_needed:
+            ### MASKING ###
+            mask = (self.nu_lines > self.nurange[0]-self.margin)\
+                * (self.nu_lines < self.nurange[1]+self.margin)\
+                * (self.Sij_typ > self.crit)
+        else:
+            # define all true list just in case
+            mask = np.ones_like(self.nu_lines, dtype=bool)
 
         self.masking(mask, mask_needed)
 
@@ -357,7 +409,6 @@ class MdbExomol(object):
         """
         import urllib.request
         from exojax.utils.molname import e2s
-        import os
         from exojax.utils.url import url_ExoMol
 
         tag = molec.split('__')
@@ -405,7 +456,7 @@ class MdbHit(object):
         n_air (jnp array): air temperature exponent
     """
 
-    def __init__(self, path, nurange=[-np.inf, np.inf], margin=0.0, crit=-np.inf, extract=False):
+    def __init__(self, path, nurange=[-np.inf, np.inf], margin=0.0, crit=0., Ttyp=1000., extract=False):
         """Molecular database for HITRAN/HITEMP form.
 
         Args:
@@ -413,13 +464,17 @@ class MdbHit(object):
            nurange: wavenumber range list (cm-1) [min,max] or wavenumber grid
            margin: margin for nurange (cm-1)
            crit: line strength lower limit for extraction
+           Ttyp: typical temperature to calculate Sij(T) used in crit
            extract: If True, it extracts the opacity having the wavenumber between nurange +- margin. Use when you want to reduce the memory use.
         """
+        from exojax.spec.hitran import SijT
+
         self.path = pathlib.Path(path)
         numinf, numtag = hitranapi.read_path(self.path)
 
         self.Tref = 296.0
         self.crit = crit
+        self.Ttyp = Ttyp
         self.margin = margin
         self.nurange = [np.min(nurange), np.max(nurange)]
 
@@ -444,7 +499,6 @@ class MdbHit(object):
                 import bz2
                 import shutil
                 if self.path.with_suffix('').exists():
-                    import os
                     os.remove(self.path.with_suffix(''))
                 print('bunziping')
                 with bz2.BZ2File(str(self.path)) as fr:
@@ -452,6 +506,7 @@ class MdbHit(object):
                         shutil.copyfileobj(fr, fw)
                 self.path = self.path.with_suffix('')
 
+            os.makedirs(str(self.path.parent), exist_ok=True)
             hapi.db_begin(str(self.path.parent))
             molec = str(self.path.stem)
             self.molecid = search_molecid(molec)
@@ -492,6 +547,7 @@ class MdbHit(object):
                 if not sub_file.exists():
                     self.download(numtag=numtag[i])
 
+                os.makedirs(str(self.path.parent), exist_ok=True)
                 hapi.db_begin(str(self.path/numtag[i]))
                 molec = str(flname.stem)
                 self.molecid = search_molecid(molec)
@@ -537,10 +593,15 @@ class MdbHit(object):
                     self._elower = np.hstack([self._elower, elowerx])
                     self._gpp = np.hstack([self._gpp, gppx])
 
+        self.logsij0 = jnp.array(np.log(self.Sij0))
+        self.elower = jnp.array(self._elower)
+        self.QTtyp = self.Qr_layer_HAPI([self.Ttyp])[0]
+        self.Sij_typ = SijT(self.Ttyp, self.logsij0, self.nu_lines, self.elower, self.QTtyp)
+
         ### MASKING ###
         mask = (self.nu_lines > self.nurange[0]-self.margin)\
             * (self.nu_lines < self.nurange[1]+self.margin)\
-            * (self.Sij0 > self.crit)
+            * (self.Sij_typ > self.crit)
 
         self.masking(mask)
 
@@ -590,7 +651,6 @@ class MdbHit(object):
         from exojax.utils.url import url_HITRAN12
         from exojax.utils.url import url_HITEMP
         from exojax.utils.url import url_HITEMP10
-        import os
         import shutil
 
         try:
@@ -670,7 +730,6 @@ class MdbHit(object):
         """
         import urllib.request
         from exojax.utils.molname import e2s
-        import os
         from exojax.utils.url import url_ExoMol
 
         tag = molec.split('__')
@@ -835,7 +894,7 @@ class AdbVald(object):  # integrated from vald3db.py
            For the first time to read the VALD line list, it is converted to HDF/vaex. After the second-time, we use the HDF5 format with vaex instead.
     """
 
-    def __init__(self, path, nurange=[-np.inf, np.inf], margin=0.0, crit=-np.inf, Irwin=False):
+    def __init__(self, path, nurange=[-np.inf, np.inf], margin=0.0, crit=0., Irwin=False):
         """Atomic database for VALD3 "Long format".
 
         Args:
@@ -1090,6 +1149,11 @@ class AdbSepVald(object):
     """
 
     def __init__(self, adb):
+        """Species-separated atomic database for VALD3.
+
+        Args:
+            adb: adb instance made by the AdbVald class, which stores the lines of all species together
+        """
         self.nu_lines = atomll.sep_arr_of_sp(adb.nu_lines, adb, trans_jnp=False)
         self.QTmask = atomll.sep_arr_of_sp(adb.QTmask, adb, inttype=True).T[0]
         
@@ -1139,7 +1203,7 @@ class AdbKurucz(object):
         vdWdamp (jnp array):  log of (van der Waals damping constant / neutral hydrogen number) (s-1)
     """
 
-    def __init__(self, path, nurange=[-np.inf, np.inf], margin=0.0, crit=-np.inf, Irwin=False):
+    def __init__(self, path, nurange=[-np.inf, np.inf], margin=0.0, crit=0., Irwin=False):
         """Atomic database for Kurucz line list "gf????.all".
 
         Args:

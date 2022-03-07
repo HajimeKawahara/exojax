@@ -58,7 +58,10 @@ def read_def(deff):
             numinf = np.array([0.0, 250.0, 500., 750.0, 1000., 1500.0, 2000,
                               2250., 2750., 3500., 4500., 5500., 7000., 9000., 14000., 20000.])
             numtag = make_numtag(numinf, maxnu)
-
+        if deff.stem == '16O-1H__MoLLIST':
+            alpha_ref = 0.07
+            n_Texp = 0.5
+            
     if ntransf > 1 and exception == False:
         dnufile = maxnu/ntransf
         numinf = dnufile*np.array(range(ntransf+1))
