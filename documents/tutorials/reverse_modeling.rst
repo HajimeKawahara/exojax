@@ -1,5 +1,5 @@
 Reverse Modelling of an Emission Spectrum
-========================================
+===========================================
 *Update: June 1/2021, Hajime Kawahara*
 
 .. code:: ipython3
@@ -164,7 +164,7 @@ Now we write the model, which is used in HMC-NUTS.
         obyo(y1,"y1",nu1,nus,numatrix_CO,mdbCO,cdbH2H2)
     
 
-Run a HMC-NUTS. It took ~37min using my gaming laptop (razer blade 15, GTX 1080 Max-Q). Here, the number of warmup sampling is only 300, and that of real sampling is only 600, because the time when the draft on arxiv will be released is very soon and I am writing this eating breakfast (in June 1st 2021 morning in JST!).
+Run a HMC-NUTS. It took ~37min using my gaming laptop (razer blade 15, GTX 1080 Max-Q). Here, the number of warmup sampling is only 300, and that of real sampling is only 600, because the time when the draft on arxiv will be released is very soon and I am writing this eating breakfast (in June 1st 2021 morning in JST!). Note that we here use forward mode (forward differentiation) by 'forward_mode_differentiation=True' in NUTS. Since ExoJAX v1.1, we can also use the reverse mode 'forward_mode_differentiation=False' in NUTS.
 
 .. code:: ipython3
 

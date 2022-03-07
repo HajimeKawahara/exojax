@@ -1,10 +1,15 @@
-# exojax
+# ExoJAX
  [![License](https://img.shields.io/github/license/HajimeKawahara/exojax)](https://github.com/HajimeKawahara/exojax/blob/develop/LICENSE)
  [![Docs](https://img.shields.io/badge/docs-exojax-brightgreen)](http://secondearths.sakura.ne.jp/exojax/)
  [![arxiv](https://img.shields.io/badge/arxiv-2105.14782-blue)](http://arxiv.org/abs/2105.14782)
+ [![paper](https://img.shields.io/badge/paper-ApJS_258_31_(2022)-orange)](https://iopscience.iop.org/article/10.3847/1538-4365/ac3b4d) 
  
-Auto-differentiable line-by-line spectral modeling of exoplanets/brown dwarfs using JAX. Read [the docs](http://secondearths.sakura.ne.jp/exojax) 🐕. 
+Auto-differentiable line-by-line spectral modeling of exoplanets/brown dwarfs/M dwarfs using JAX. Read [the docs](http://secondearths.sakura.ne.jp/exojax) 🐕. 
 In a nutshell, ExoJAX enables you to do a HMC-NUTS fitting using the latest database.
+
+ExoJAX is compatible at least with
+- [NumPyro](https://github.com/pyro-ppl/numpyro) (PPL)
+- [JAXopt](https://github.com/google/jaxopt) (differentiable optimizer)
 
 <img src="https://user-images.githubusercontent.com/15956904/144704428-c5e82af3-a870-458c-bb65-9e1f54d6c98b.png" Titie="exojax" Width=850px>
  
@@ -109,7 +114,7 @@ python setup.py install
 
 - NumPyro
 
-exojax supports NumPyro >0.5.0, which enables [the forward differentiation of HMC-NUTS](http://num.pyro.ai/en/latest/mcmc.html#numpyro.infer.hmc.NUTS). Please check the required JAX version by NumPyro. In May 2021, it seems the recent version of [NumPyro](https://github.com/pyro-ppl/numpyro) requires jaxlib>=0.1.62 (see [setup.py](https://github.com/pyro-ppl/numpyro/blob/master/setup.py) of NumPyro for instance). 
+ExoJAX supports NumPyro >=0.7.0. Please check the required JAX version by NumPyro. In May 2021, it seems the recent version of [NumPyro](https://github.com/pyro-ppl/numpyro) requires jaxlib>=0.1.62 (see [setup.py](https://github.com/pyro-ppl/numpyro/blob/master/setup.py) of NumPyro for instance). 
 
 - JAX
 
@@ -122,27 +127,22 @@ nvcc -V
 Install such as
 
 ```
-pip install --upgrade "jax[cuda111]"  -f https://storage.googleapis.com/jax-releases/jax_releases.html
+sudo dpkg -i cudnn-local-repo-ubuntu2004-8.3.1.22_1.0-1_amd64.deb
+pip uninstall jax
+pip install "jax[cuda11_cudnn82]" -f https://storage.googleapis.com/jax-releases/jax_releases.html
 ```
 
-This is the case for cuda11.1 to 11.4. Visit [here](https://github.com/google/jax) for the details.
+Please visit [here](https://github.com/google/jax) for details.
 
-- cuDNN
-
-For instance, get .deb from NVIDIA and install such as
-
-```
-sudo dpkg -i libcudnn8_8.2.0.53-1+cuda11.3_amd64.deb
-```
-
-cuDNN is used for to compute the astronomical/instrumental response for the large number of wave number grid (exojax.spec.response). Otherwise, we do not use it. 
+Note that cuDNN is used for to compute the astronomical/instrumental response for the large number of wave number grid (exojax.spec.response). Otherwise, we won't use it. 
 
 </details>
 
 ## References
+[![paper](https://img.shields.io/badge/paper_I-ApJS_258_31_(2022)-orange)](https://iopscience.iop.org/article/10.3847/1538-4365/ac3b4d) 
 
-- Kawahara, Kawashima, Masuda, Crossfield, Pannier, van den Bekerom (2021) accepted by ApJS: [arXiv:2105.14782](http://arxiv.org/abs/2105.14782)
+- Paper I: Kawahara, Kawashima, Masuda, Crossfield, Pannier, van den Bekerom, [ApJS 258, 31 (2022)](https://iopscience.iop.org/article/10.3847/1538-4365/ac3b4d)
 
 ## License
 
-🐈 Copyright 2020-2021 [Hajime Kawahara](http://secondearths.sakura.ne.jp/en/index.html) and contributors. exojax is publicly available under the MIT license. Under development since Dec. 2020.
+🐈 Copyright 2020-2022 ExoJAX contributors. exojax is publicly available under the MIT license.

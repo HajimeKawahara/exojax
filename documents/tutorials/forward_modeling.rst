@@ -1,5 +1,5 @@
 Forward Modelling of an Emission Spectrum
-========================================
+===========================================
 *Update: June 1/2021, Hajime Kawahara*
 
 First, we set a planet atmosphere model as

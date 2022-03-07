@@ -1,0 +1,4 @@
+# sphinx >=3 required by sphinx-autodoc-typehints v1.11.1 (Oct 2020)
+sphinx >=3
+sphinx_rtd_theme
+sphinxemoji

@@ -3,6 +3,8 @@
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
+`[PDF version] <http://secondearths.sakura.ne.jp/exojax/exojax.pdf>`_
+   
 ExoJAX
 ==================================
 
@@ -47,22 +49,26 @@ Contents
 References 
 ---------------------
 
-- Kawahara, Kawashima, Masuda, Crossfield, Pannier, van den Bekerom (2021) accepted by ApJS: `arXiv:2105.14782 <http://arxiv.org/abs/2105.14782>`_ (Paper I)
-   
+- Kawahara, Kawashima, Masuda, Crossfield, Pannier, van den Bekerom,
+  `ApJS 258, 31 (2022) <https://iopscience.iop.org/article/10.3847/1538-4365/ac3b4d>`_
+  (Paper I)
+
+
+  
 License & Attribution
 ---------------------
 
-Copyright 2021, Contributors
+Copyright 2021-2022, Contributors
 
 - `Hajime Kawahara <http://secondearths.sakura.ne.jp/en/index.html>`_ (@HajimeKawahara, maintainer)
 - Yui Kawashima (@ykawashima)
-- Kento Masuda
+- Kento Masuda (@kemasuda)
 - Ian Crossfield
 - Dirk van den Bekerom (@dcmvdbekerom)
 - Daniel Kitzmann (@daniel-kitzmann)
 - Brett Morris (@bmorris3)
 - Erwan Pannier (@erwanp) and `RADIS <https://github.com/radis/radis>`_ community
-- Stevanus Nugroho
+- Stevanus Nugroho (@astrostevanus)
 - Tako Ishikawa (@chonma0ctopus)
 
 ExoJAX is free software made available under the MIT License. See the ``LICENSE``.

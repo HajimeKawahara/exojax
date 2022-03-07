@@ -13,7 +13,9 @@ Basics
    tutorials/rigid_rotation.rst
    tutorials/forward_modeling.rst	     
    tutorials/metals.rst	     
-   tutorials/reverse_modeling.rst	     
+   tutorials/reverse_modeling.rst
+   tutorials/retvald.rst
+   tutorials/optimize_spectrum_JAXopt.rst	     
    tutorials/MODITxs.rst      
    tutorials/MODITch4.rst
    tutorials/MODITrv.rst
@@ -48,8 +50,8 @@ Miscellaneous
 
 .. toctree::
    :maxdepth: 1
-
+	      
+   tutorials/rvfit.rst	     
    tutorials/MODITrt.rst	     
    tutorials/DITxs.rst   
    tutorials/DITrt.rst   
-   tutorials/optimize_voigt.rst   
