@@ -145,4 +145,4 @@ Note that cuDNN is used for to compute the astronomical/instrumental response fo
 
 ## License
 
-🐈 Copyright 2020-2022 ExoJAX contributors. exojax is publicly available under the MIT license. Under development since Dec. 2020.
+🐈 Copyright 2020-2022 ExoJAX contributors. exojax is publicly available under the MIT license.

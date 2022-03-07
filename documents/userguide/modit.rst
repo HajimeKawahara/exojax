@@ -3,12 +3,12 @@ Modified Discrete Integral Transform (MODIT)
 
 *Sep 5 (2021) Hajime Kawahara*
 
-With an increase in the number of lines of :math:`N_l`, the direct LPF tends to be intractable even when using GPUs, in particular for :math:`N_l \gtrsim 10^3`. MODIT is a modified version of `Discrete Integral Transform <https://www.sciencedirect.com/science/article/abs/pii/S0022407320310049>`_ for rapid spectral synthesis, originally proposed by D.C.M van den Bekerom and E.Pannier.The modifications are as follows:
+With an increase in the number of lines of :math:`N_l`, the direct LPF tends to be intractable even when using GPUs, in particular for :math:`N_l \gtrsim 10^3`. MODIT is a modified version of `Discrete Integral Transform <https://www.sciencedirect.com/science/article/abs/pii/S0022407320310049>`_ for rapid spectral synthesis, originally proposed by D.C.M van den Bekerom and E. Pannier. The modifications are as follows:
 
 - MODIT uses the wavenumber grid an evenly-spaced in logarithm (ESLOG).
 - MODIT uses a 2D lineshape density (`LSD <https://en.wikipedia.org/wiki/Lucy_in_the_Sky_with_Diamonds#LSD_rumours>`_) matrix (gammaL x wavenumber) while the original DIT uses a 3D LSD (gammaL x Doppler wodth x wavenumber).
 
-These formulations are based on the fact that the normalized Doppler width is common for a common temperature and isotope mass. In addition, ESLOG is straightforward to include radial velocity shift. Exojax computes the opacity in layer by layer therefore MODIT is suitable to the formulation of Exojax. In MODIT, we define a new variable :math:`q= R_0 \log{\nu}`, where  :math:`R_0` is the spectral resolution of the wavenumber grid (For the dimensional consistency, `\nu` should be divided by a reference wavenumber,  :math:`\nu_0=1 \mathrm{cm}^{-1}`.). The discretization of  :math:`q` provides ESLOG. Then, the Gaussian profile is expressed as:
+These formulations are based on the fact that the normalized Doppler width is common for a common temperature and isotope mass. In addition, ESLOG is straightforward to include radial velocity shift. ExoJAX computes the opacity in layer by layer therefore MODIT is suitable to the formulation of ExoJAX. In MODIT, we define a new variable :math:`q= R_0 \log{\nu}`, where  :math:`R_0` is the spectral resolution of the wavenumber grid (For the dimensional consistency, `\nu` should be divided by a reference wavenumber,  :math:`\nu_0=1 \mathrm{cm}^{-1}`.). The discretization of  :math:`q` provides ESLOG. Then, the Gaussian profile is expressed as:
 
 :math:`f_G(\nu; \nu_l; \beta_T)d \nu = \frac{1}{\sqrt{2 \pi} \beta_T} e^{-(\nu - \nu_l)^2/2 \beta_T^2} d \nu = \frac{e^{\frac{q - q_l}{R}}}{\sqrt{2 \pi} a_D} \exp\left[{- \frac{R_0^2}{2 a_D^2} \left(e^{\frac{q - q_l}{R_0}} -1\right)^2 }\right] d q`
 :math:`\approx  f_G(q; q_l; a_D) d q`
@@ -23,7 +23,7 @@ Then, the procedure in `modit.xsvector <../exojax/exojax.spec.html#exojax.spec.m
 - Compute the Voigt kernel in Fourier space
 - multiply them and apply an inverse FFT to it.
   
-The computation of the LSD is a bit tricky in MODIT/Exojax. Let me explain it in the next section. But, the other two processes can be understood as follows:
+The computation of the LSD is a bit tricky in MODIT/ExoJAX. Let me explain it in the next section. But, the other two processes can be understood as follows:
 
 For a given temperature and molecule, the synthesis of the cross--section can be expressed using the LSD matrix :math:`\mathfrak{S}_{jk} = \mathfrak{S} ({\nu_l}_j,\tilde{\gamma}_k)`
 as follows:
@@ -42,7 +42,7 @@ is given in `ditkernel module <../exojax/exojax.spec.html#module-exojax.spec.dit
 
 
 
-How is the LSD computed in Exojax/MODIT?
+How is the LSD computed in ExoJAX/MODIT?
 ------------------------------------------
 
 MODIT/DIT needs to compute the lineshape density (LSD) matrix. `inc2D_givenx <../exojax/exojax.spec.html#exojax.spec.modit.inc2D_givenx>`_ is a core function to compute the 2D LSD. Let's compute the LSD with the wavenumber grid [0,1,2,3,4] and the grid of gammaL [0,1,2,3] as follows

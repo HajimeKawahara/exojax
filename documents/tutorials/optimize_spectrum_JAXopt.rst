@@ -1,6 +1,11 @@
 Fitting a spectrum model using Gradient Descent in JAXopt
 =========================================================
 
+The gradient-based optimization is available using autograd in ExoJAX. In this tutorial, we demonstrate the gradient-based optimization of a simple emission spectrum using `JAXopt <https://github.com/google/jaxopt>`_.
+
+See `this movie <https://www.youtube.com/watch?v=ZytYJONvP24>`_ to see how the gradient descent find the model fitted to the spectrum.
+
+
 .. code:: ipython3
 
     import pandas as pd
