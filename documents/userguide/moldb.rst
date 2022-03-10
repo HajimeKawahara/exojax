@@ -82,4 +82,4 @@ In this example, lines are ignored if their strengths at 2,000 K are below 1.e-4
 
 The following figure shows the calculated CO cross sections using the ExoMol line list in the same way as this `tutorial <http://secondearths.sakura.ne.jp/exojax/tutorials/opacity_exomol.html>`_, but for a higher temperature of 2,000 K. Different values for ``crit`` and ``Ttyp`` are adopted for the four cases (Ttyp=296 K case is calculated with exojax v1.0.0 while the other three cases are calculated with exojax v1.0.0). You can realize that adopting a proper Ttyp is quite essential.
 
-.. image:: crit.pdf
+.. image:: crit.png
