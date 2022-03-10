@@ -1,7 +1,7 @@
 Molecular Database and Conversion
 =====================================
 
-*Update: May 27/2021, Hajime Kawahara*
+*Update: May 10/2022, Hajime Kawahara, Yui Kawashima*
 
 exojax uses a specific mdb (molecular database) class for each molecular/atom database, `moldb.MdbExomol <../exojax/exojax.spec.html#exojax.spec.moldb.MdbExomol>`_ is for ExoMol, `moldb.MdbExoHit <../exojax/exojax.spec.html#exojax.spec.moldb.MdbHit>`_ is for HITRAN/HITEMP. Here, we use MdbExomol for explanation because most instances are common in mdb classes. 
 
@@ -80,6 +80,6 @@ exojax has the capability to mask the weak lines to reduce the computational cos
 	  
 In this example, lines are ignored if their strengths at 2,000 K are below 1.e-40 [cm]. When calculating the emission spectrum, we recommend setting ``Ttyp`` as the highest temperature of the atmospheric region of interest. This is because the number of the lines whose strengths are above a certain criterion usually increases as the temperature increases. Note that the default value of ``Ttyp`` is set to be 1,000 K, while for exojax<1.1.0, masking is only possible based on the line strengths at the reference temperature 296 K (i.e., ``Ttyp`` is not available).
 
-The following figure shows the calculated CO cross sections using the ExoMol line list in the same way as this `tutorial <http://secondearths.sakura.ne.jp/exojax/tutorials/opacity_exomol.html>`_, but for a higher temperature of 2,000 K. Different values for ``crit`` and ``Ttyp`` are adopted for the four cases (Ttyp=296 K case is calculated with exojax v1.0.0 while the other three cases are calculated with exojax v1.1.0). You can realize that adopting a proper Ttyp is essential for a high-temperature case.
+The following figure shows the calculated CO cross sections using the ExoMol line list in the same way as this `tutorial <http://secondearths.sakura.ne.jp/exojax/tutorials/opacity_exomol.html>`_, but for a higher temperature of 2,000 K. Different values for ``crit`` and ``Ttyp`` are adopted for the four cases (Ttyp=296 K case is calculated with exojax v1.0.0, while the other three cases are calculated with exojax v1.1.0). You can realize that adopting a proper Ttyp is essential for a high-temperature case.
 
 .. image:: crit.png
