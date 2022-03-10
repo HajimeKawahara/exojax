@@ -72,10 +72,14 @@ where :math:`c_2 = h c/k_B`. In exojax, S(T) is computed using the normalized pa
 
 Masking Weak Lines
 ------------------
-exojax has the capability to mask the weak lines to reduce the computational cost by providing two parameters, ``crit`` and ``Ttyp``, to `moldb.MdbExomol <../exojax/exojax.spec.html#exojax.spec.moldb.MdbExomol>`_ and `moldb.MdbExoHit <../exojax/exojax.spec.html#exojax.spec.moldb.MdbHit>`_ such as
+exojax has the capability to mask the weak lines to reduce the computational cost. You can do this by providing two parameters, line strength criterion ``crit`` and typical temperature of the system ``Ttyp``, to `moldb.MdbExomol <../exojax/exojax.spec.html#exojax.spec.moldb.MdbExomol>`_ and `moldb.MdbExoHit <../exojax/exojax.spec.html#exojax.spec.moldb.MdbHit>`_ such as
 
 .. code:: ipython
 	  
 	  >>> mdbCO=moldb.MdbExomol('.database/CO/12C-16O/Li2015',nus,crit=1.e-40,Ttyp=2000.)
 	  
-In this example, lines are ignored if their strengths at 2,000 K are below 1.e-40 [cm]. When calculating the emission spectrum, we recommend setting ``Ttyp`` as the highest temperature of the atmospheric region of interest since usually, number of the lines whose strengths are above a certain criterion increases as the temperature increases. Note that the default value of ``Ttyp`` is set to be 1,000 K while for exojax<1.1, masking is only possible based on the line strengths at 296 K (i.e., ``Ttyp`` is not available).
+In this example, lines are ignored if their strengths at 2,000 K are below 1.e-40 [cm]. When calculating the emission spectrum, we recommend setting ``Ttyp`` as the highest temperature of the atmospheric region of interest. This is because the number of the lines whose strengths are above a certain criterion usually increases as the temperature increases. Note that the default value of ``Ttyp`` is set to be 1,000 K, while for exojax<1.1, masking is only possible based on the line strengths at 296 K (i.e., ``Ttyp`` is not available).
+
+The following figure shows the calculated CO cross sections using the ExoMol line list in the same way as this `tutorial <http://secondearths.sakura.ne.jp/exojax/tutorials/opacity_exomol.html>`_, but for a higher temperature of 2,000 K. Different values for ``crit`` and ``Ttyp`` are adopted for the four cases (Ttyp=296 K case is calculated with exojax v1.0.0 while the other three cases are calculated with exojax v1.0.0). You can realize that adopting a proper Ttyp is quite essential.
+
+.. image:: crit.pdf
