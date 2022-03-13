@@ -16,7 +16,8 @@ __all__ = ['MdbExomol', 'MdbHit', 'AdbVald', 'AdbKurucz']
 
 explanation_states = "Note: Couldn't find the hdf5 format. We convert data to the hdf5 format. After the second time, it will become much faster."
 explanation_trans = "Note: Couldn't find the hdf5 format. We convert data to the hdf5 format. After the second time, it will become much faster."
-warning_old_exojax = "It seems that the hdf5 file for the transition file was created using the old version of exojax<1.1. Try again after removing "
+warning_old_exojax = 'It seems that the hdf5 file for the transition file was created using the old version of exojax<1.1. Try again after removing '
+
 
 class MdbExomol(object):
     """molecular database of ExoMol.
@@ -117,14 +118,15 @@ class MdbExomol(object):
         if numinf is None:
             self.trans_file = self.path/pathlib.Path(molec+'.trans.bz2')
             if not self.trans_file.with_suffix('.hdf5').exists() and not self.trans_file.exists():
-                    self.download(molec, ['.trans.bz2'])
+                self.download(molec, ['.trans.bz2'])
 
             if self.trans_file.with_suffix('.hdf5').exists():
                 trans = vaex.open(self.trans_file.with_suffix('.hdf5'))
                 cdt = (trans.nu_lines > self.nurange[0]-self.margin) \
                     * (trans.nu_lines < self.nurange[1]+self.margin)
                 if not '_elower' in trans:
-                    print(warning_old_exojax,self.trans_file.with_suffix('.hdf5'))
+                    print(warning_old_exojax,
+                          self.trans_file.with_suffix('.hdf5'))
                     return
                 cdt = cdt * (trans.Sij0 * self.QTref / self.QTtyp
                              * np.exp(-hcperk*trans._elower * (1./self.Ttyp - 1./self.Tref))
@@ -179,17 +181,20 @@ class MdbExomol(object):
                 trans_file = self.path / \
                     pathlib.Path(molec+'__'+numtag[i]+'.trans.bz2')
                 if not trans_file.with_suffix('.hdf5').exists() and not trans_file.exists():
-                    self.download(molec, extension=['.trans.bz2'], numtag=numtag[i])
+                    self.download(molec, extension=[
+                                  '.trans.bz2'], numtag=numtag[i])
 
                 if trans_file.with_suffix('.hdf5').exists():
                     trans = vaex.open(trans_file.with_suffix('.hdf5'))
                     cdt = (trans.nu_lines > self.nurange[0]-self.margin) \
                         * (trans.nu_lines < self.nurange[1]+self.margin)
                     if not '_elower' in trans:
-                        print(warning_old_exojax,trans_file.with_suffix('.hdf5'))
+                        print(warning_old_exojax,
+                              trans_file.with_suffix('.hdf5'))
                         return
 
-                    cdt = cdt * ( self.get_Sij_typ(trans.Sij0,trans._elower,trans.nu_lines) > self.crit)
+                    cdt = cdt * (self.get_Sij_typ(trans.Sij0,
+                                 trans._elower, trans.nu_lines) > self.crit)
                     trans = trans[cdt]
                     ndtrans = vaex.array_types.to_numpy(trans)
                     self.trans_file.append(trans_file)
@@ -209,8 +214,10 @@ class MdbExomol(object):
                     if trans_file.with_suffix('.hdf5').exists():
                         self.Sij0 = ndtrans[:, 4]
                     else:
-                        self.Sij0 = exomol.Sij0(self._A, self._gpp, self.nu_lines, self._elower, self.QTref)
-                    self.Sij_typ = self.get_Sij_typ(self.Sij0,self._elower,self.nu_lines)
+                        self.Sij0 = exomol.Sij0(
+                            self._A, self._gpp, self.nu_lines, self._elower, self.QTref)
+                    self.Sij_typ = self.get_Sij_typ(
+                        self.Sij0, self._elower, self.nu_lines)
 
                     # exclude the lines whose nu_lines evaluated inside exomolapi.pickup_gE (thus sometimes different from the "nu_lines" column in trans) is not positive
                     trans['nu_positive'] = mask_zeronu
@@ -225,8 +232,9 @@ class MdbExomol(object):
                     if trans_file.with_suffix('.hdf5').exists():
                         Sij0x = ndtrans[:, 4]
                     else:
-                        Sij0x = exomol.Sij0(Ax, gppx, nulx, elowerx, self.QTref)
-                    Sij_typx = self.get_Sij_typ(Sij0x,elowerx,nulx)
+                        Sij0x = exomol.Sij0(
+                            Ax, gppx, nulx, elowerx, self.QTref)
+                    Sij_typx = self.get_Sij_typ(Sij0x, elowerx, nulx)
 
                     # exclude the lines whose nu_lines evaluated inside exomolapi.pickup_gE (thus sometimes different from the "nu_lines" column in trans) is not positive
                     trans['nu_positive'] = mask_zeronu
@@ -266,17 +274,16 @@ class MdbExomol(object):
 
         self.masking(mask, mask_needed)
 
-    def get_Sij_typ(self,Sij0_in,elower_in,nu_in):
-        """compute Sij at typical temperature self.Ttyp
+    def get_Sij_typ(self, Sij0_in, elower_in, nu_in):
+        """compute Sij at typical temperature self.Ttyp.
 
         Args:
            Sij0_in : line strength at Tref
            elower_in: elower
            nu_in: wavenumber bin
-        
+
         Returns:
            Sij at Ttyp
-
         """
         return Sij0_in * self.QTref / self.QTtyp \
             * np.exp(-hcperk*elower_in * (1./self.Ttyp - 1./self.Tref)) \
@@ -311,7 +318,7 @@ class MdbExomol(object):
         self.gpp = jnp.array(self._gpp)
         self.jlower = jnp.array(self._jlower, dtype=int)
         self.jupper = jnp.array(self._jupper, dtype=int)
-        self.set_broadening() # Broadening parameters
+        self.set_broadening()  # Broadening parameters
 
     def set_broadening(self, alpha_ref_def=None, n_Texp_def=None):
         """setting broadening parameters.
@@ -525,7 +532,7 @@ class MdbHit(object):
                     self.get_value_hapi(molec)
                 else:
                     self.update_value_hapi(molec)
-                    
+
         self.logsij0 = jnp.array(np.log(self.Sij0))
         self.elower = jnp.array(self._elower)
         self.QTtyp = self.Qr_layer_HAPI([self.Ttyp])[0]
@@ -539,12 +546,11 @@ class MdbHit(object):
 
         self.masking(mask)
 
-    def get_value_hapi(self,molec):
-        """get values using HAPI
+    def get_value_hapi(self, molec):
+        """get values using HAPI.
 
         Args:
            molec: molecular name
-
         """
         self.nu_lines = hapi.getColumn(molec, 'nu')
         self.Sij0 = hapi.getColumn(molec, 'sw')
@@ -558,26 +564,29 @@ class MdbHit(object):
         self._elower = hapi.getColumn(molec, 'elower')
         self._gpp = hapi.getColumn(molec, 'gpp')
 
-    def update_value_hapi(self,molec):
-        """update values using HAPI
+    def update_value_hapi(self, molec):
+        """update values using HAPI.
 
         Args:
            molec: molecular name
-
         """
         self.nu_lines = np.hstack([self.nu_lines, hapi.getColumn(molec, 'nu')])
         self.Sij0 = np.hstack([self.Sij0, hapi.getColumn(molec, 'sw')])
-        self.delta_air = np.hstack([self.delta_air, hapi.getColumn(molec, 'delta_air')])
-        self.isoid = np.hstack([self.isoid, hapi.getColumn(molec, 'local_iso_id')])
+        self.delta_air = np.hstack(
+            [self.delta_air, hapi.getColumn(molec, 'delta_air')])
+        self.isoid = np.hstack(
+            [self.isoid, hapi.getColumn(molec, 'local_iso_id')])
         self.uniqisox = np.unique(self.isoid)
         self._A = np.hstack([self._A, hapi.getColumn(molec, 'a')])
         self._n_air = np.hstack([self._n_air, hapi.getColumn(molec, 'n_air')])
-        self._gamma_air = np.hstack([self._gamma_air, hapi.getColumn(molec, 'gamma_air')])
-        self._gamma_self = np.hstack([self._gamma_self, hapi.getColumn(molec, 'gamma_self')])
-        self._elower = np.hstack([self._elower, hapi.getColumn(molec, 'elower')])
+        self._gamma_air = np.hstack(
+            [self._gamma_air, hapi.getColumn(molec, 'gamma_air')])
+        self._gamma_self = np.hstack(
+            [self._gamma_self, hapi.getColumn(molec, 'gamma_self')])
+        self._elower = np.hstack(
+            [self._elower, hapi.getColumn(molec, 'elower')])
         self._gpp = np.hstack([self._gpp, hapi.getColumn(molec, 'gpp')])
 
-        
     def masking(self, mask):
         """applying mask and (re)generate jnp.arrays.
 
@@ -673,8 +682,6 @@ class MdbHit(object):
                                   self.path/numtag/flname_zero)
                         print('renamed par file in', self.path/pathlib.Path(numtag),
                               ':', flname_nonzero, '=>', flname_zero)
-
-    ####################################
 
     def ExomolQT(self, path):
         """use a partition function from ExoMol.
@@ -824,7 +831,7 @@ def search_molecid(molec):
         return None
 
 
-class AdbVald(object):  # integrated from vald3db.py
+class AdbVald(object):
     """atomic database from VALD3 (http://vald.astro.uu.se/)
 
     AdbVald is a class for VALD3.
@@ -871,12 +878,9 @@ class AdbVald(object):  # integrated from vald3db.py
 
         # load args
         self.vald3_file = pathlib.Path(path)  # VALD3 output
-        # self.path = pathlib.Path(path) #molec=t0+"__"+str(self.path.stem) #t0=self.path.parents[0].stem
         self.nurange = [np.min(nurange), np.max(nurange)]
         self.margin = margin
         self.crit = crit
-        # self.bkgdatm=bkgdatm
-        # self.broadf=broadf
 
         # load vald file ("Extract Stellar" request)
         print('Reading VALD file')
@@ -897,7 +901,7 @@ class AdbVald(object):  # integrated from vald3db.py
         self.T_gQT = jnp.array(pfTdat.columns[1:], dtype=float)
         self.gQT_284species = jnp.array(self.pfdat.iloc[:, 1:].to_numpy(
             dtype=float))  # grid Q vs T vs Species
-        self.Tref = 296.0  # \\\\
+        self.Tref = 296.0
         self.QTref_284 = np.array(self.QT_interp_284(self.Tref))
         # identify index of QT grid (gQT) for each line
         self._QTmask = self.make_QTmask(self._ielem, self._iion)
@@ -922,10 +926,6 @@ class AdbVald(object):  # integrated from vald3db.py
         df_ionE = atomllapi.load_ionization_energies()
         self.ionE = jnp.array(
             list(map(atomllapi.pick_ionE, self.ielem, self.iion, [df_ionE, ] * len(self.ielem))))
-
-    # End of the CONSTRUCTOR definition ↑
-
-    # Defining METHODS ↓
 
     def masking(self, mask):
         """applying mask and (re)generate jnp.arrays.
@@ -979,7 +979,6 @@ class AdbVald(object):  # integrated from vald3db.py
         Returns:
             gQT: grid Q(T) for the species
         """
-        # if len(atomspecies.split(' '))==2:
         atomspecies_Roman = atomspecies.split(
             ' ')[0] + '_' + 'I'*int(atomspecies.split(' ')[-1])
         gQT = self.gQT_284species[np.where(
@@ -1053,8 +1052,6 @@ class AdbVald(object):  # integrated from vald3db.py
         Returns:
            Q(T)*284: interpolated in jnp.array for all 284 Atomic Species
         """
-        # self.T_gQT.shape -> (42,)
-        # self.gQT_284species.shape -> (284, 42)
         list_gQT_eachspecies = self.gQT_284species.tolist()
         listofDA_gQT_eachspecies = list(
             map(lambda x: jnp.array(x), list_gQT_eachspecies))
@@ -1140,6 +1137,7 @@ class AdbSepVald(object):
         self.gQT_284species = adb.gQT_284species
         self.T_gQT = adb.T_gQT
 
+
 class AdbKurucz(object):
     """atomic database from Kurucz (http://kurucz.harvard.edu/linelists/)
 
@@ -1221,10 +1219,6 @@ class AdbKurucz(object):
         self.ionE = jnp.array(
             list(map(atomllapi.pick_ionE, self.ielem, self.iion, [df_ionE, ] * len(self.ielem))))
 
-    # End of the CONSTRUCTOR definition ↑
-
-    # Defining METHODS ↓
-
     def masking(self, mask):
         """applying mask and (re)generate jnp.arrays.
 
@@ -1277,7 +1271,6 @@ class AdbKurucz(object):
         Returns:
             gQT: grid Q(T) for the species
         """
-        # if len(atomspecies.split(' '))==2:
         atomspecies_Roman = atomspecies.split(
             ' ')[0] + '_' + 'I'*int(atomspecies.split(' ')[-1])
         gQT = self.gQT_284species[np.where(
