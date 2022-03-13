@@ -128,10 +128,8 @@ class MdbExomol(object):
                     print(warning_old_exojax,
                           self.trans_file.with_suffix('.hdf5'))
                     return
-                cdt = cdt * (trans.Sij0 * self.QTref / self.QTtyp
-                             * np.exp(-hcperk*trans._elower * (1./self.Ttyp - 1./self.Tref))
-                             * np.expm1(-hcperk*trans.nu_lines/self.Ttyp) / np.expm1(-hcperk*trans.nu_lines/self.Tref)
-                             > self.crit)
+
+                cdt = cdt * (self.get_Sij_typ(trans.Sij0,trans._elower, trans.nu_lines) > self.crit)
                 trans = trans[cdt]
                 ndtrans = vaex.array_types.to_numpy(trans)
             else:
