@@ -1,8 +1,8 @@
 import pandas as pd
+import pkgutil
+from io import BytesIO
 import numpy as np
 import matplotlib.pyplot as plt
-import jax.numpy as jnp
-
 from exojax.spec.lpf import xsmatrix
 from exojax.spec.exomol import gamma_exomol
 from exojax.spec.hitran import SijT, doppler_sigma, gamma_natural, gamma_hitran
@@ -19,9 +19,10 @@ from exojax.spec import initspec
 import jax.numpy as jnp
 from jax import vmap, jit
 
-def jaxopt_spectrum_test():
-
-    dat=pd.read_csv("spectrum.txt",delimiter=",",names=("wav","flux"))
+def test_jaxopt_spectrum():
+    np.random.seed(1)
+    specdata = pkgutil.get_data('exojax', 'data/testdata/spectrum.txt')
+    dat=pd.read_csv(BytesIO(specdata),delimiter=",",names=("wav","flux"))
     wavd=dat["wav"].values
     flux=dat["flux"].values
     nusd=jnp.array(1.e8/wavd[::-1])
@@ -98,8 +99,10 @@ def jaxopt_spectrum_test():
     gd = jaxopt.GradientDescent(fun=objective, maxiter=1000,stepsize=1.e-4)
     res = gd.run(init_params=initpar)
     params, state = res
-
-    print(np.sum(params*boost))
-
+    model=model_c(params,boost,nusd) 
+    resid=np.sqrt(np.sum((nflux-model)**2)/len(nflux))
+    
+    assert resid < 0.05
+    
 if __name__=="__main__":
-    jaxopt_spectrum_test()
+    test_jaxopt_spectrum()
