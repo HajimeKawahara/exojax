@@ -101,8 +101,9 @@ def ipgauss_sampling(nusd, nus, F0, beta, RV):
     Return:
         response-applied spectrum (F)
     """
-    if(np.min(nusd) < np.min(nus) or np.max(nusd) > np.max(nus)):
-        print('WARNING: The wavenumber range of the observational grid [', np.min(nusd), '-', np.max(nusd), ' cm^(-1)] is not fully covered by that of the model grid [', np.min(nus), '-', np.max(nus), ' cm^(-1)]. This can result in the incorrect response-applied spectrum. Check the wavenumber grids for the model and observation.', sep='')
+#    The following check should be placed as another function. 
+#    if(np.min(nusd) < np.min(nus) or np.max(nusd) > np.max(nus)):
+#        print('WARNING: The wavenumber range of the observational grid [', np.min(nusd), '-', np.max(nusd), ' cm^(-1)] is not fully covered by that of the model grid [', np.min(nus), '-', np.max(nus), ' cm^(-1)]. This can result in the incorrect response-applied spectrum. Check the wavenumber grids for the model and observation.', sep='')
 
     @jit
     def ipgauss_sampling_jax(nusd, nus, F0, beta, RV):
