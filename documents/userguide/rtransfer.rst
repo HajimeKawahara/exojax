@@ -50,8 +50,14 @@ where :math:`\Delta \tau_n` is delta opacity in the n-th layer, :math:`E_j(x)` i
 	  >>> grad(trans2E3)(1.0)
 	  DeviceArray(-0.29698896, dtype=float32)
 
+Here is
+:math:`\Delta \tau`
+dependence of :math:`2 E_3(x)`:
 
-`trans2E3 <../exojax/exojax.spec.html#exojax.spec.rtransfer.trans2E3>`_ is used in `rtrun <../exojax/exojax.spec.html#exojax.spec.rtransfer.rtrun>`_, which gives an emission spectral model. Then, `rtrun <../exojax/exojax.spec.html#exojax.spec.rtransfer.rtrun>`_ has two inputs, one is the arrays of :math:`\Delta \tau_n` and source funtion.
+.. image:: transrt.png
+
+	  
+`trans2E3 <../exojax/exojax.spec.html#exojax.spec.rtransfer.trans2E3>`_ is used in `rtrun <../exojax/exojax.spec.html#exojax.spec.rtransfer.rtrun>`_, which gives an emission spectral model with pure absorption. Then, `rtrun <../exojax/exojax.spec.html#exojax.spec.rtransfer.rtrun>`_ has two inputs, one is the arrays of :math:`\Delta \tau_n` and source funtion.
 
 .. code:: python
 	  
