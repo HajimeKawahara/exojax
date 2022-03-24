@@ -55,4 +55,3 @@ Miscellaneous
    tutorials/MODITrt.rst	     
    tutorials/DITxs.rst   
    tutorials/DITrt.rst   
-   tutorials/optimize_voigt.rst   

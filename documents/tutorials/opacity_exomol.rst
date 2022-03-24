@@ -31,9 +31,7 @@ We call moldb instance with the path of exomole files.
 
     # Setting wavenumber bins and loading HITRAN database
     nus=np.linspace(1000.0,10000.0,900000,dtype=np.float64) #cm-1
-    emf='/home/kawahara/exojax/data/exomol/CO/12C-16O/Li2015/12C-16O__Li2015'
-    mdbCO=moldb.MdbExomol(emf,nus)
-
+    mdbCO=moldb.MdbExomol('.database/CO/12C-16O/Li2015',nus)
 
 .. parsed-literal::
 

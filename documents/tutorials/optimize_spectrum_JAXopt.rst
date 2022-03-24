@@ -1,5 +1,9 @@
-Fitting a spectrum model using Gradient Descent in JAXopt
-=========================================================
+Fitting a spectrum model using Gradient Descent based optimizations in JAXopt
+=============================================================================
+
+The gradient-based optimization is available using autograd in ExoJAX. In this tutorial, we demonstrate the gradient-based optimization of a simple emission spectrum using `JAXopt <https://github.com/google/jaxopt>`_.
+
+See `this movie <https://youtu.be/XQIFPRdVzyc>`_ to see how the gradient descent and ADAM find the model fitted to the spectrum.
 
 .. code:: ipython3
 
@@ -97,6 +101,15 @@ We have only 39 CO lines.
     plt.plot(mdbCO.nu_lines,mdbCO.Sij0,".")
 
 
+
+
+.. parsed-literal::
+
+    [<matplotlib.lines.Line2D at 0x7f370819df40>]
+
+
+
+
 .. image:: optimize_spectrum_JAXopt/output_12_1.png
 
 
@@ -130,7 +143,7 @@ Now we write the model, which is used in HMC-NUTS.
 .. code:: ipython3
 
     def model_c(params,boost,nu1):
-        Rp,RV,MMR_CO,T0,alpha,vsini=params*boost
+        Rp,RV,MMR_CO,T0,alpha,vsini,RV=params*boost
         g=2478.57730044555*Mp/Rp**2 #gravity                                        
         u1=0.0
         u2=0.0
@@ -168,7 +181,10 @@ Now we write the model, which is used in HMC-NUTS.
         model=obyo(nu1,nus,numatrix_CO,mdbCO,cdbH2H2)
         return model
 
-Here, we use `JAXopt <https://github.com/google/jaxopt>`_ as an optimizer. 
+Here, we use JAXopt as an optimizer. JAXopt is not automatically
+installed. If you need install it by pip:
+
+pip install jaxopt
 
 .. code:: ipython3
 
@@ -179,9 +195,9 @@ parameters.
 
 .. code:: ipython3
 
-    #Rp,RV,MMR_CO,T0,alpha,vsini
-    boost=np.array([1.0,10.0,0.1,1000.0,1.e-3,10.0])
-    initpar=np.array([0.8,9.0,0.1,1200.0,0.1,17.0])/boost
+    #Rp,RV,MMR_CO,T0,alpha,vsini, RV
+    boost=np.array([1.0,10.0,0.1,1000.0,1.e-3,10.0,10.0])
+    initpar=np.array([0.8,9.0,0.1,1200.0,0.1,17.0,0.0])/boost
 
 Define the objective function by a L2 norm.
 
@@ -207,10 +223,12 @@ The best-fit parameters
     params*boost
 
 
+
+
 .. parsed-literal::
 
-    DeviceArray([1.0081457e+00, 9.9860401e+00, 5.5853054e-03, 1.3126758e+03,
-                 9.9855222e-02, 2.0483101e+01], dtype=float32)
+    DeviceArray([1.2338543e+00, 9.0000000e+00, 4.9583600e-03, 1.3364286e+03,
+                 9.9846944e-02, 1.9616049e+01, 1.0154862e+01], dtype=float32)
 
 
 
@@ -233,3 +251,101 @@ Plot the results. It works well!
 
 .. image:: optimize_spectrum_JAXopt/output_31_0.png
 
+
+One by one update
+
+.. code:: ipython3
+
+    import tqdm
+    gd = jaxopt.GradientDescent(fun=objective, stepsize=1.e-4)
+    state = gd.init_state(initpar)
+    params=np.copy(initpar)
+    
+    params_gd=[]
+    Nit=300
+    for _ in  tqdm.tqdm(range(Nit)):
+        params,state=gd.update(params,state)
+        params_gd.append(params)
+
+
+.. parsed-literal::
+
+    100%|█████████████████████████████████████████████████████████████████████████████████| 300/300 [04:25<00:00,  1.13it/s]
+
+
+Using ADAM optimizer
+--------------------
+
+.. code:: ipython3
+
+    from jaxopt import OptaxSolver
+    import optax
+
+.. code:: ipython3
+
+    adam = OptaxSolver(opt=optax.adam(2.e-2), fun=objective)
+    state = adam.init_state(initpar)
+    params=np.copy(initpar)
+    
+    params_adam=[]
+    #Nit=300
+    for _ in  tqdm.tqdm(range(Nit)):
+        params,state=adam.update(params,state)
+        params_adam.append(params)
+
+
+.. parsed-literal::
+
+    100%|█████████████████████████████████████████████████████████████████████████████████| 300/300 [02:16<00:00,  2.20it/s]
+
+     if you wanna optimize at once, run the following: 
+
+.. code:: ipython3
+
+    res = solver.run(init_params=initpar)
+    params, state = res
+
+.. code:: ipython3
+
+    params*boost
+
+
+.. parsed-literal::
+
+    DeviceArray([7.5132293e-01, 9.0000000e+00, 6.3453913e-03, 1.2756888e+03,
+                 9.9074565e-02, 1.9556759e+01, 1.0081638e+01], dtype=float32)
+
+
+
+make a movie
+------------
+
+.. code:: ipython3
+
+    inmodel=model_c(initpar,boost,nusd)
+    for i in tqdm.tqdm(range(Nit)):
+        spec_gd=model_c(params_gd[i],boost,nusd)
+        spec_adam=model_c(params_adam[i],boost,nusd)
+        fig, ax = plt.subplots(nrows=1, ncols=1, figsize=(20,6.0))
+        ax.plot(wavd[::-1],spec_gd,color="C0",label="GD")
+        ax.plot(wavd[::-1],spec_adam,color="C1",label="ADAM")
+        ax.plot(wavd[::-1],inmodel,color="gray",label="initial parameter")
+        ax.plot(wavd[::-1],nflux,"+",color="black",label="data")
+        plt.xlabel("wavelength ($\AA$)",fontsize=16)
+        plt.tick_params(labelsize=16)
+        plt.ylim(0.0,1.2)
+        plt.legend(loc="lower left")
+        plt.savefig("movie/gradient_descent_jaxopt"+str(i).zfill(4)+".png")
+        plt.close()
+
+
+.. parsed-literal::
+
+    100%|█████████████████████████████████████████████████████████████████████████████████| 300/300 [02:43<00:00,  1.84it/s]
+
+
+For instance, you can make a movie using ffmpeg:
+
+.. code:: sh
+
+	  ffmpeg -r 30 -i gradient_descent_jaxopt%04d.png -vcodec libx264 -pix_fmt yuv420p -r 60 out.mp4

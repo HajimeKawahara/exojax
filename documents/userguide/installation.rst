@@ -42,6 +42,7 @@ Here is an example of installation for jaxlib for cuda 11.1 to 11.4.
 In addition, you may need cuDNN for `response.ipgauss2 <../exojax/exojax.spec.html#exojax.spec.response.ipgauss2>`_ and `response.rigidrot2 <../exojax/exojax.spec.html#exojax.spec.response.rigidrot2>`_. For ubuntu, download .deb from NVIDIA and install it:
 	   
 .. code:: sh
+	  
 	  sudo dpkg -i libcudnn8_8.2.0.53-1+cuda11.3_amd64.deb
 
 References
@@ -50,14 +51,16 @@ References
 |:green_circle:| **ExoJAX Paper I**:  Kawahara, Kawashima, Masuda, Crossfield, Pannier, van den Bekerom (2021) accepted by ApJS: `arXiv:2105.14782 <http://arxiv.org/abs/2105.14782>`_
 
 
-Many methods/databases are used in ExoJAX.
+Many techniques/databases are used in ExoJAX.
 
 - JAX: Bradbury, J., Frostig, R., Hawkins, P., et al. 2018, JAX: composable transformations of Python+NumPy programs, `JAX <http://github.com/google/jax>`_
-- numpyro: Phan, D., Pradhan, N., & Jankowiak, M. 2019, `arXiv:1912.11554 <http://arxiv.org/abs/1912.11554>`_
+- NumPyro: Phan, D., Pradhan, N., & Jankowiak, M. 2019, `arXiv:1912.11554 <http://arxiv.org/abs/1912.11554>`_
+- JAXopt: Blondel, M., Berthet, Q., Cuturi, M. et al. 2021 `arXiv:2105.15183 <http://arxiv.org/abs/2105.15183>`_
+- Vaex: Breddels and Veljanoski (2018) `arXiv:https://arxiv.org/abs/1801.02638 <https://arxiv.org/abs/1801.02638>`_
 - Algorithm 916: Zaghloul and Ali (2012) `arXiv:1106.0151 <https://arxiv.org/abs/1106.0151>`_
 - DIT: `van den Bekerom and Pannier (2021) <https://www.sciencedirect.com/science/article/abs/pii/S0022407320310049>`_ 
 - ExoMol: `Tennyson et al. (2016) <https://www.sciencedirect.com/science/article/abs/pii/S0022285216300807?via%3Dihub>`_
-- HITRAN/HiTEMP
+- HITRAN/HITEMP
 - VALD3
 - Other many packages/algorithms. See `arXiv:2105.14782 <http://arxiv.org/abs/2105.14782>`_ for the details.
 

@@ -4,6 +4,7 @@ include src/exojax/data/atom/iso_mn.txt
 include src/exojax/data/clouds/drag_force.txt
 include src/exojax/data/abundance/AAG2021.dat
 include src/exojax/data/atom/NIST_Atomic_Ionization_Energies.txt
+include src/exojax/data/testdata/spectrum.txt
 
 graft tests
 graft examples

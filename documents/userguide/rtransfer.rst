@@ -50,11 +50,19 @@ where :math:`\Delta \tau_n` is delta opacity in the n-th layer, :math:`E_j(x)` i
 	  >>> grad(trans2E3)(1.0)
 	  DeviceArray(-0.29698896, dtype=float32)
 
+Here is
+:math:`\Delta \tau`
+dependence of :math:`2 E_3(x)`:
 
-`trans2E3 <../exojax/exojax.spec.html#exojax.spec.rtransfer.trans2E3>`_ is used in `rtrun <../exojax/exojax.spec.html#exojax.spec.rtransfer.rtrun>`_, which gives an emission spectral model. Then, `rtrun <../exojax/exojax.spec.html#exojax.spec.rtransfer.rtrun>`_ has two inputs, one is the arrays of :math:`\Delta \tau_n` and source funtion.
+.. image:: transrt.png
+
+	  
+`trans2E3 <../exojax/exojax.spec.html#exojax.spec.rtransfer.trans2E3>`_ is used in `rtrun <../exojax/exojax.spec.html#exojax.spec.rtransfer.rtrun>`_, which gives an emission spectral model with pure absorption. Then, `rtrun <../exojax/exojax.spec.html#exojax.spec.rtransfer.rtrun>`_ has two inputs, one is the arrays of :math:`\Delta \tau_n` and source funtion.
 
 .. code:: python
 	  
 	 F0=rtrun(dtau,sourcef) 
 
-See ":doc:`../tutorials/forward_modeling`" to know how to use `rtrun <../exojax/exojax.spec.html#exojax.spec.rtransfer.rtrun>`_ in a forward modeling. Note that exojax uses a linear algebraic formulation to solve the RT. The detail description is provided in Kawahara et al.
+See ":doc:`../tutorials/forward_modeling`" to know how to use `rtrun <../exojax/exojax.spec.html#exojax.spec.rtransfer.rtrun>`_ in a forward modeling. Note that exojax uses a linear algebraic formulation to solve the RT. The detail description is provided in
+`Paper I <https://iopscience.iop.org/article/10.3847/1538-4365/ac3b4d>`_
+.

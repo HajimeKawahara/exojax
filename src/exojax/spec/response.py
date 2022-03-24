@@ -88,7 +88,6 @@ def ipgauss(nus, F0, beta):
     return F
 
 
-@jit
 def ipgauss_sampling(nusd, nus, F0, beta, RV):
     """Apply the Gaussian IP response + sampling to a spectrum F.
 
@@ -102,10 +101,19 @@ def ipgauss_sampling(nusd, nus, F0, beta, RV):
     Return:
         response-applied spectrum (F)
     """
-    dvmat = jnp.array(c*jnp.log(nusd[None, :]/nus[:, None]))
-    kernel = jnp.exp(-(dvmat+RV)**2/(2.0*beta**2))
-    kernel = kernel/jnp.sum(kernel, axis=0)  # axis=N
-    F = kernel.T@F0
+#    The following check should be placed as another function. 
+#    if(np.min(nusd) < np.min(nus) or np.max(nusd) > np.max(nus)):
+#        print('WARNING: The wavenumber range of the observational grid [', np.min(nusd), '-', np.max(nusd), ' cm^(-1)] is not fully covered by that of the model grid [', np.min(nus), '-', np.max(nus), ' cm^(-1)]. This can result in the incorrect response-applied spectrum. Check the wavenumber grids for the model and observation.', sep='')
+
+    @jit
+    def ipgauss_sampling_jax(nusd, nus, F0, beta, RV):
+        dvmat = jnp.array(c*jnp.log(nusd[None, :]/nus[:, None]))
+        kernel = jnp.exp(-(dvmat+RV)**2/(2.0*beta**2))
+        kernel = kernel/jnp.sum(kernel, axis=0)  # axis=N
+        F = kernel.T@F0
+        return F
+
+    F = ipgauss_sampling_jax(nusd, nus, F0, beta, RV)
     return F
 
 

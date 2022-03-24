@@ -287,7 +287,7 @@ def dtauM_vald(dParr, g, numatrix, adb, SijM, gammaLM, sigmaDM, uspecies, mods_u
        dParr: delta pressure profile (bar) [N_layer]
        g: gravity (cm/s^2)
        numatrix: wavenumber matrix (cm-1) [N_line x N_nus]
-       adb: adb instance made by the adbald class in moldb.py
+       adb: adb instance made by the AdbVald class in moldb.py
        SijM: line intensity matrix [N_layer x N_line]
        gammaLM: gammaL matrix [N_layer x N_line]
        sigmaDM: sigmaD matrix [N_layer x N_line]
@@ -340,7 +340,7 @@ def dtauM_vald_mmwl(dParr, g, numatrix, adb, SijM, gammaLM, sigmaDM, uspecies, V
        dParr: delta pressure profile (bar) [N_layer]
        g: gravity (cm/s^2)
        numatrix: wavenumber matrix (cm-1) [N_line x N_nus]
-       adb: adb instance made by the adbald class in moldb.py
+       adb: adb instance made by the AdbVald class in moldb.py
        SijM: line intensity matrix [N_layer x N_line]
        gammaLM: gammaL matrix [N_layer x N_line]
        sigmaDM: sigmaD matrix [N_layer x N_line]
