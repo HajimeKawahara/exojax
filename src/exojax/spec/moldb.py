@@ -214,16 +214,16 @@ class MdbExomol(object):
                     else:
                         self.Sij0 = exomol.Sij0(
                             self._A, self._gpp, self.nu_lines, self._elower, self.QTref)
+                        # exclude the lines whose nu_lines evaluated inside exomolapi.pickup_gE (thus sometimes different from the "nu_lines" column in trans) is not positive
+                        trans['nu_positive'] = mask_zeronu
+                        trans = trans[trans.nu_positive].extract()
+                        trans.drop('nu_positive', inplace=True)
+                        trans['nu_lines'] = self.nu_lines
+                        trans['Sij0'] = self.Sij0
+                        trans['_elower'] = self._elower
+
                     self.Sij_typ = self.get_Sij_typ(
                         self.Sij0, self._elower, self.nu_lines)
-
-                    # exclude the lines whose nu_lines evaluated inside exomolapi.pickup_gE (thus sometimes different from the "nu_lines" column in trans) is not positive
-                    trans['nu_positive'] = mask_zeronu
-                    trans = trans[trans.nu_positive].extract()
-                    trans.drop('nu_positive', inplace=True)
-                    trans['nu_lines'] = self.nu_lines
-                    trans['Sij0'] = self.Sij0
-                    trans['_elower'] = self._elower
                 else:
                     Ax, nulx, elowerx, gppx, jlowerx, jupperx, mask_zeronu = exomolapi.pickup_gE(
                         ndstates, ndtrans, trans_file)
@@ -232,15 +232,15 @@ class MdbExomol(object):
                     else:
                         Sij0x = exomol.Sij0(
                             Ax, gppx, nulx, elowerx, self.QTref)
-                    Sij_typx = self.get_Sij_typ(Sij0x, elowerx, nulx)
+                        # exclude the lines whose nu_lines evaluated inside exomolapi.pickup_gE (thus sometimes different from the "nu_lines" column in trans) is not positive
+                        trans['nu_positive'] = mask_zeronu
+                        trans = trans[trans.nu_positive].extract()
+                        trans.drop('nu_positive', inplace=True)
+                        trans['nu_lines'] = nulx
+                        trans['Sij0'] = Sij0x
+                        trans['_elower'] = elowerx
 
-                    # exclude the lines whose nu_lines evaluated inside exomolapi.pickup_gE (thus sometimes different from the "nu_lines" column in trans) is not positive
-                    trans['nu_positive'] = mask_zeronu
-                    trans = trans[trans.nu_positive].extract()
-                    trans.drop('nu_positive', inplace=True)
-                    trans['nu_lines'] = nulx
-                    trans['Sij0'] = Sij0x
-                    trans['_elower'] = elowerx
+                    Sij_typx = self.get_Sij_typ(Sij0x, elowerx, nulx)
 
                     self._A = np.hstack([self._A, Ax])
                     self.nu_lines = np.hstack([self.nu_lines, nulx])
