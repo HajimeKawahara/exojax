@@ -136,8 +136,6 @@ class MdbExomol(object):
                 print(explanation_trans)
                 trans = exomolapi.read_trans(self.trans_file)
                 ndtrans = vaex.array_types.to_numpy(trans)
-
-                # mask needs to be applied
                 mask_needed = True
 
             # compute gup and elower
@@ -201,8 +199,6 @@ class MdbExomol(object):
                     trans = exomolapi.read_trans(trans_file)
                     ndtrans = vaex.array_types.to_numpy(trans)
                     self.trans_file.append(trans_file)
-
-                    # mask needs to be applied
                     mask_needed = True
 
                 # compute gup and elower
@@ -262,7 +258,6 @@ class MdbExomol(object):
                         os.remove(trans_file.with_suffix('.bz2.yaml'))
 
         if mask_needed:
-            ### MASKING ###
             mask = (self.nu_lines > self.nurange[0]-self.margin)\
                 * (self.nu_lines < self.nurange[1]+self.margin)\
                 * (self.Sij_typ > self.crit)
@@ -471,11 +466,9 @@ class MdbHit(object):
         self.nurange = [np.min(nurange), np.max(nurange)]
 
         if numinf is None:
-            # downloading
             if not self.path.exists():
                 self.download()
 
-            # extract?
             if extract:
                 if self.path.suffix == '.bz2':
                     tag = str(nurange[0])+'_'+str(nurange[-1])+'_'+str(margin)
@@ -486,7 +479,6 @@ class MdbHit(object):
                     print(
                         'Warning: "extract" option is available only for .bz2 format. No "extract" applied')
 
-            # bunzip2 if suffix is .bz2
             if self.path.suffix == '.bz2':
                 import bz2
                 import shutil
@@ -537,11 +529,9 @@ class MdbHit(object):
         self.Sij_typ = SijT(self.Ttyp, self.logsij0,
                             self.nu_lines, self.elower, self.QTtyp)
 
-        ### MASKING ###
         mask = (self.nu_lines > self.nurange[0]-self.margin)\
             * (self.nu_lines < self.nurange[1]+self.margin)\
             * (self.Sij_typ > self.crit)
-
         self.masking(mask)
 
     def get_value_hapi(self, molec):
