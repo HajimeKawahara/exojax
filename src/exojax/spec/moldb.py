@@ -500,7 +500,7 @@ class MdbHit(object):
             if molnm == '01' or molnm == '02':
                 if self.path.name != molnm+'_HITEMP2010':
                     path_old = self.path
-                    self.path = self.path.parent/molnm+'_HITEMP2010'
+                    self.path = self.path.parent/str(molnm+'_HITEMP2010')
                     print('Warning: Changed the line list path from',
                           path_old, 'to', self.path)
 
