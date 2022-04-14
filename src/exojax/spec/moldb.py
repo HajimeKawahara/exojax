@@ -456,6 +456,9 @@ class MdbHit(object):
            extract: If True, it extracts the opacity having the wavenumber between nurange +- margin. Use when you want to reduce the memory use.
         """
         from exojax.spec.hitran import SijT
+        if ("hit" in path and path[-4:] == ".bz2"):
+            path = path[:-4]
+            print('Warning: path changed (.bz2 removed):', path)
         if ("HITEMP" in path and path[-4:] == ".par"):
             path = path + '.bz2'
             print('Warning: path changed (.bz2 added):', path)
