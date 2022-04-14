@@ -459,7 +459,7 @@ class MdbHit(object):
         if ("HITEMP" in path and path[-4:] == ".par"):
             path = path + '.bz2'
             print('Warning: path changed (.bz2 added):', path)
-        
+
         self.path = pathlib.Path(path)
         numinf, numtag = hitranapi.read_path(self.path)
         self.Tref = 296.0
