@@ -753,7 +753,13 @@ class MdbHit(object):
         allT = list(np.concatenate([[self.Tref], Tarr]))
         Qrx = []
         for iso in self.uniqiso:
-            Qrx.append(hapi.partitionSum(self.molecid, iso, allT))
+            Tmin, Tmax = hapi.get_TMIN_TMAX_FOR_BD_TIPS_2017_PYTHON(self.molecid, iso)
+            if(max(allT) > Tmax):
+                print('Warning: partition function ratio for isotope %d of molecule %d at temperatures > %.1fK is assumed to be the value at %.1fK since HAPI does not support those temperatures.' % (iso, self.molecid, Tmax, Tmax))
+            if(min(allT) < Tmin):
+                print('Warning: partition function ratio for isotope %d of molecule %d at temperatures < %.1fK is assumed to be the value at %.1fK since HAPI does not support those temperatures.' % (iso, self.molecid, Tmin, Tmin))
+            allT_iso = list(np.clip(allT, Tmin, Tmax))
+            Qrx.append(hapi.partitionSum(self.molecid, iso, allT_iso))
         Qrx = np.array(Qrx)
         qr = Qrx[:, 1:].T/Qrx[:, 0]  # Q(T)/Q(Tref)
         return qr
