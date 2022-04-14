@@ -458,7 +458,7 @@ class MdbHit(object):
         from exojax.spec.hitran import SijT
         if ("HITEMP" in path and path[-4:] == ".par"):
             path = path + '.bz2'
-            print('self.path changed (.bz2 added):', self.path)
+            print('path changed (.bz2 added):', path)
         
         self.path = pathlib.Path(path)
         numinf, numtag = hitranapi.read_path(self.path)
