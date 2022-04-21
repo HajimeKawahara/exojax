@@ -63,12 +63,12 @@ Then compute the LSD for a single line at wavenumber of 2.3 and gammaL of 1.2 wi
        >>> ngammaL=jnp.array([1.2])
        >>> w=jnp.array([1.0])
 
-We need to compute contributions to the LSD for 'wav' and 'gammaL'. MODIT/DIT uses the linear interpolation to the grid values. This can be done by `getix <../exojax/exojax.spec.html#exojax.spec.dit.getix>`_. The following code is an example how to use 'getix'. Here we have a grid of 'yv=[0,1,2,3,4,5]' and want to compute the contribution and indices of 'y=1.1' and 'y=1.4'. The outputs are the contribution at i=index+1 and index, i.e. the contribution of 'y=1.1' to the LSD is 0.1 at index=2 (yv=2) and 1-0.1 = 0.9 at index=1 (yv=1) and 'y=4.3' to the LSD is 0.3 at index=5 (yv=5) and 1-0.3 = 0.7 at index=4 (yv=4). 
+We need to compute contributions to the LSD for 'wav' and 'gammaL'. MODIT/DIT uses the linear interpolation to the grid values. This can be done by `getix <../exojax/exojax.spec.html#exojax.spec.lsd.getix>`_. The following code is an example how to use 'getix'. Here we have a grid of 'yv=[0,1,2,3,4,5]' and want to compute the contribution and indices of 'y=1.1' and 'y=1.4'. The outputs are the contribution at i=index+1 and index, i.e. the contribution of 'y=1.1' to the LSD is 0.1 at index=2 (yv=2) and 1-0.1 = 0.9 at index=1 (yv=1) and 'y=4.3' to the LSD is 0.3 at index=5 (yv=5) and 1-0.3 = 0.7 at index=4 (yv=4). 
 
 .. code:: ipython
 
        >>> #An example how to use getix
-       >>> from exojax.spec.dit import getix
+       >>> from exojax.spec.lsd import getix
        >>> import jax.numpy as jnp
        >>> y=jnp.array([1.1,4.3])
        >>> yv=jnp.arange(6)
@@ -76,12 +76,12 @@ We need to compute contributions to the LSD for 'wav' and 'gammaL'. MODIT/DIT us
        (DeviceArray([0.10000002, 0.3000002 ], dtype=float32), DeviceArray([1, 4], dtype=int32))    
 
        
-For wavenumber, the F64 precision is required. So, `npgetix <../exojax/exojax.spec.html#exojax.spec.dit.npgetix>`_ is used for precomputation, which is numpy version of getix. Then, back to the original problem, we need to pre-compute the contribution and index for wavgrid as follows:
+For wavenumber, the F64 precision is required. So, `npgetix <../exojax/exojax.spec.html#exojax.spec.lsd.npgetix>`_ is used for precomputation, which is numpy version of getix. Then, back to the original problem, we need to pre-compute the contribution and index for wavgrid as follows:
 
        
 .. code:: ipython
               
-       >>> from exojax.spec.dit import npgetix
+       >>> from exojax.spec.lsd import npgetix
        >>> cx, ix=npgetix(wav,wavgrid)
        >>> cx, ix
        (array([0.29999995]), array([2]))
