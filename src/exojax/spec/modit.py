@@ -11,9 +11,7 @@ from jax import jit, vmap
 from jax.lax import scan
 from exojax.spec.ditkernel import fold_voigt_kernel_logst
 from exojax.spec.ditkernel import voigt_kernel_logst
-
-from jax.numpy import index_exp as joi
-from exojax.spec.dit import getix
+from exojax.spec.lsd import inc2D_givenx
 
 # exomol
 from exojax.spec.exomol import gamma_exomol
@@ -23,40 +21,6 @@ from exojax.spec import normalized_doppler_sigma
 
 # vald
 from exojax.spec.atomll import gamma_vald3, interp_QT284
-
-
-@jit
-def inc2D_givenx(a, w, cx, ix, y, yv):
-    """The lineshape distribution matrix = integrated neighbouring contribution for 2D (memory reduced sum) but using given contribution and index for x .
-
-    Args:
-        a: lineshape density array (jnp.array)
-        w: weight (N)
-        cx: given contribution for x 
-        ix: given index for x 
-        y: y values (N)
-        yv: y grid
-
-    Returns:
-        lineshape distribution matrix (integrated neighbouring contribution for 2D)
-
-    Note:
-        This function computes \sum_n w_n fx_n \otimes fy_n, 
-        where w_n is the weight, fx_n, fy_n,  are the n-th NCFs for 1D. 
-        A direct sum uses huge RAM. 
-        In this function, we use jax.lax.scan to compute the sum
-
-    """
-
-    cy, iy = getix(y, yv)
-
-    a = a.at[joi[ix, iy]].add(w*(1-cx)*(1-cy))
-    a = a.at[joi[ix, iy+1]].add(w*(1-cx)*cy)
-    a = a.at[joi[ix+1, iy]].add(w*cx*(1-cy))
-    a = a.at[joi[ix+1, iy+1]].add(w*cx*cy)
-
-    return a
-
 
 @jit
 def xsvector(cnu, indexnu, R, pmarray, nsigmaD, ngammaL, S, nu_grid, ngammaL_grid):
@@ -87,8 +51,8 @@ def xsvector(cnu, indexnu, R, pmarray, nsigmaD, ngammaL, S, nu_grid, ngammaL_gri
     log_ngammaL_grid = jnp.log(ngammaL_grid)
 
     k = jnp.fft.rfftfreq(2*Ng_nu, 1)
-    lsda = jnp.zeros((len(nu_grid), len(ngammaL_grid)))  # LSD array
-    Slsd = inc2D_givenx(lsda, S, cnu, indexnu, log_ngammaL,
+    lsd_array = jnp.zeros((len(nu_grid), len(ngammaL_grid)))
+    Slsd = inc2D_givenx(lsd_array, S, cnu, indexnu, log_ngammaL,
                         log_ngammaL_grid)  # Lineshape Density
     Sbuf = jnp.vstack([Slsd, jnp.zeros_like(Slsd)])
 
