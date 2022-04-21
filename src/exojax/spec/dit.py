@@ -11,7 +11,7 @@ from jax.lax import scan
 from exojax.spec.ditkernel import fold_voigt_kernel
 from exojax.spec.atomll import padding_2Darray_for_each_atom
 from exojax.spec.rtransfer import dtauM
-from exojax.spec.lsd import inc2D_givenx
+from exojax.spec.lsd import inc3D_givenx
 
 
 @jit
