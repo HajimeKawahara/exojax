@@ -82,7 +82,7 @@ def init_modit(nu_lines, nu_grid, warning=False):
     return jnp.array(cont), jnp.array(index), R, jnp.array(pmarray)
 
 
-def init_premodit(nu_lines, nu_grid, warning=False):
+def init_premodit(nu_lines, nu_grid, elower, elower_grid, warning=False):
     """Initialization for PreMODIT. i.e. Generate nu contribution and index for
     the line shape density (actually, this is a numpy version of getix)
 
@@ -102,6 +102,9 @@ def init_premodit(nu_lines, nu_grid, warning=False):
     """
     warn_dtype64(nu_lines, warning, tag='nu_lines')
     warn_dtype64(nu_grid, warning, tag='nu_grid')
+    warn_dtype64(elower, warning, tag='nu_lines')
+    warn_dtype64(elower_grid, warning, tag='nu_grid')
+
     warn_outside_wavenumber_grid(nu_lines, nu_grid)
 
     R = resolution_eslog(nu_grid)
