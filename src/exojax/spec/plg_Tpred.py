@@ -5,11 +5,12 @@ import numpy as np
 from exojax.spec.dit import npgetix
 import tqdm
 import jax.numpy as jnp
+import warnings
 from exojax.utils.constants import hcperk
 
 
 
-def plg_elower_addcon(indexa,Na,cnu,indexnu,nu_grid,logsij0,elower,elower_grid=None,Nelower=10,Ncrit=0,reshape=False, weedout=False, Tpred=296.):
+def plg_elower_addcon(indexa,Na,cnu,indexnu,nu_grid,logsij0,elower,elower_grid=None,Nelower=10,Ncrit=0,reshape=False, weedout=False, Tpred=296., preov=40.):
     """Pseudo Line Grid for elower w/ an additional condition
     
     Args:
@@ -24,6 +25,9 @@ def plg_elower_addcon(indexa,Na,cnu,indexnu,nu_grid,logsij0,elower,elower_grid=N
        Nelower: # of division of elower between min to max values when elower_grid is not given
        Ncrit: frrozen line number per bin
        reshape: reshaping output arrays
+       weedout: Is it ok to remove weakest lines or not?
+       Tpred: typical temperature in the atmosphere
+       preov: ad hoc parameter to prevent overflow
 
     Returns:
        qlogsij0: pseudo logsij0
@@ -35,25 +39,33 @@ def plg_elower_addcon(indexa,Na,cnu,indexnu,nu_grid,logsij0,elower,elower_grid=N
 
     """
     Nnugrid=len(nu_grid)
-    kT0=10000.0
-    expme=np.exp(-elower/kT0)
+    Tref = 296.0
+    Tpred = Tpred * 1.1
+    #kT0=10000.0
+    warnings.simplefilter('error')
+    try:
+        expme = np.exp(- hcperk*(elower/Tpred - elower/Tref) - preov)
+    except RuntimeWarning as e:
+        raise Exception(str(e)+' :\t Please adjust "preov"...')
     if elower_grid is None:
-        margin=1.0
-        min_expme=np.min(expme)*np.exp(-margin/kT0)
-        max_expme=np.max(expme)*np.exp(margin/kT0)
-        expme_grid=np.linspace(min_expme,max_expme,Nelower)
-        elower_grid=-np.log(expme_grid)*kT0
+        margin = 1.0
+        min_expme = np.exp(- hcperk*((min(elower)-margin)/Tpred - (min(elower)-margin)/Tref) - preov)
+        max_expme = np.exp(- hcperk*((max(elower)+margin)/Tpred - (max(elower)+margin)/Tref) - preov)
+        expme_grid = np.linspace(min_expme, max_expme, Nelower)
+        elower_grid = (np.log(expme_grid) + preov) / (-hcperk) / (1/Tpred - 1/Tref)
     else:
         expme_grid=np.exp(-elower_grid/kT0)
         Nelower=len(expme_grid)
-        
+    warnings.simplefilter('default')
+
     qlogsij0,qcnu,num_unique,frozen_mask=get_qlogsij0_addcon(indexa,Na,cnu,indexnu,Nnugrid,logsij0,expme,expme_grid, elower=elower, elower_grid=elower_grid, Nelower=10,Ncrit=Ncrit, Tpred=Tpred)
     
-    if weedout:
+    nonzeropl_mask=qlogsij0>-np.inf
+    '''if weedout:
         qlogsij0_tr = np.log(np.exp(qlogsij0))
         nonzeropl_mask=(qlogsij0_tr>-np.inf) & (qlogsij0_tr<0)
     else:
-        nonzeropl_mask = qlogsij0<0
+        nonzeropl_mask = qlogsij0<0'''
     
     Nline=len(logsij0)
     Nunf=np.sum(~frozen_mask)
@@ -103,30 +115,29 @@ def get_qlogsij0_addcon(indexa,Na,cnu,indexnu,Nnugrid,logsij0,expme,expme_grid, 
     frozen_mask=np.isin(eindex,frozen_eindex)
         
     Sij=np.exp(logsij0)
-    '''#qlogsij0
+    #qlogsij0
     qlogsij0=np.bincount(eindex,weights=Sij*(1.0-cont)*frozen_mask,minlength=Ng)
     qlogsij0=qlogsij0+np.bincount(eindex+1,weights=Sij*cont*frozen_mask,minlength=Ng)
-    qlogsij0=np.log(qlogsij0)'''
+    qlogsij0=np.log(qlogsij0)
 
-    #qlogsij0
+    '''#qlogsij0
     Tref = 296.0
-    Tpred = Tpred*2
     qlogsij0 = np.bincount(eindex, weights = \
                       (jnp.log(jnp.exp(logsij0 - hcperk*(elower/Tpred - elower/Tref)) * (1. - cont)) + \
                        hcperk*(elower_grid[index]/Tpred - elower_grid[index]/Tref) )*frozen_mask, minlength=Ng)
     qlogsij0 = qlogsij0 + np.bincount(eindex+1, weights = \
                       (jnp.log(jnp.exp(logsij0 - hcperk*(elower/Tpred - elower/Tref)) * (cont)) + \
-                                  hcperk*(elower_grid[index+1]/Tpred - elower_grid[index+1]/Tref) )*frozen_mask, minlength=Ng)
+                                  hcperk*(elower_grid[index+1]/Tpred - elower_grid[index+1]/Tref) )*frozen_mask, minlength=Ng)'''
 
     #qcnu
-    qcnu_den=np.bincount(eindex,weights=logsij0*frozen_mask,minlength=Ng)
-    qcnu_den=qcnu_den+np.bincount(eindex+1,weights=logsij0*frozen_mask,minlength=Ng)
+    qcnu_den=np.bincount(eindex,weights=Sij*frozen_mask,minlength=Ng)
+    qcnu_den=qcnu_den+np.bincount(eindex+1,weights=Sij*frozen_mask,minlength=Ng)
     qcnu_den[qcnu_den==0.0]=1.0
     
-    qcnu_num=np.bincount(eindex,weights=logsij0*cnu*frozen_mask,minlength=Ng)
-    qcnu_num=qcnu_num+np.bincount(eindex+1,weights=logsij0*cnu*frozen_mask,minlength=Ng)
+    qcnu_num=np.bincount(eindex,weights=Sij*cnu*frozen_mask,minlength=Ng)
+    qcnu_num=qcnu_num+np.bincount(eindex+1,weights=Sij*cnu*frozen_mask,minlength=Ng)
     qcnu=qcnu_num/qcnu_den
-    
+
     return qlogsij0,qcnu,num_unique,frozen_mask
 
 def plg_elower(cnu,indexnu,Nnugrid,logsij0,elower,elower_grid=None,Nelower=10,Ncrit=0,reshape=True):
