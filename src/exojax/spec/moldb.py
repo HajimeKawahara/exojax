@@ -136,8 +136,6 @@ class MdbExomol(object):
                 print(explanation_trans)
                 trans = exomolapi.read_trans(self.trans_file)
                 ndtrans = vaex.array_types.to_numpy(trans)
-
-                # mask needs to be applied
                 mask_needed = True
 
             # compute gup and elower
@@ -201,8 +199,6 @@ class MdbExomol(object):
                     trans = exomolapi.read_trans(trans_file)
                     ndtrans = vaex.array_types.to_numpy(trans)
                     self.trans_file.append(trans_file)
-
-                    # mask needs to be applied
                     mask_needed = True
 
                 # compute gup and elower
@@ -262,7 +258,6 @@ class MdbExomol(object):
                         os.remove(trans_file.with_suffix('.bz2.yaml'))
 
         if mask_needed:
-            ### MASKING ###
             mask = (self.nu_lines > self.nurange[0]-self.margin)\
                 * (self.nu_lines < self.nurange[1]+self.margin)\
                 * (self.Sij_typ > self.crit)
@@ -461,6 +456,12 @@ class MdbHit(object):
            extract: If True, it extracts the opacity having the wavenumber between nurange +- margin. Use when you want to reduce the memory use.
         """
         from exojax.spec.hitran import SijT
+        if ("hit" in path and path[-4:] == ".bz2"):
+            path = path[:-4]
+            print('Warning: path changed (.bz2 removed):', path)
+        if ("HITEMP" in path and path[-4:] == ".par"):
+            path = path + '.bz2'
+            print('Warning: path changed (.bz2 added):', path)
 
         self.path = pathlib.Path(path)
         numinf, numtag = hitranapi.read_path(self.path)
@@ -471,11 +472,9 @@ class MdbHit(object):
         self.nurange = [np.min(nurange), np.max(nurange)]
 
         if numinf is None:
-            # downloading
             if not self.path.exists():
                 self.download()
 
-            # extract?
             if extract:
                 if self.path.suffix == '.bz2':
                     tag = str(nurange[0])+'_'+str(nurange[-1])+'_'+str(margin)
@@ -486,7 +485,6 @@ class MdbHit(object):
                     print(
                         'Warning: "extract" option is available only for .bz2 format. No "extract" applied')
 
-            # bunzip2 if suffix is .bz2
             if self.path.suffix == '.bz2':
                 import bz2
                 import shutil
@@ -508,7 +506,7 @@ class MdbHit(object):
             if molnm == '01' or molnm == '02':
                 if self.path.name != molnm+'_HITEMP2010':
                     path_old = self.path
-                    self.path = self.path.parent/molnm+'_HITEMP2010'
+                    self.path = self.path.parent/str(molnm+'_HITEMP2010')
                     print('Warning: Changed the line list path from',
                           path_old, 'to', self.path)
 
@@ -537,11 +535,9 @@ class MdbHit(object):
         self.Sij_typ = SijT(self.Ttyp, self.logsij0,
                             self.nu_lines, self.elower, self.QTtyp)
 
-        ### MASKING ###
         mask = (self.nu_lines > self.nurange[0]-self.margin)\
             * (self.nu_lines < self.nurange[1]+self.margin)\
             * (self.Sij_typ > self.crit)
-
         self.masking(mask)
 
     def get_value_hapi(self, molec):
