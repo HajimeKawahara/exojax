@@ -127,3 +127,6 @@ def inc2D_givenx(a, w, cx, ix, y, yv):
 
     return a
 
+def precompute_inc3D(a):
+    
+    

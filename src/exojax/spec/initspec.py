@@ -82,6 +82,38 @@ def init_modit(nu_lines, nu_grid, warning=False):
     return jnp.array(cont), jnp.array(index), R, jnp.array(pmarray)
 
 
+def init_premodit(nu_lines, nu_grid, warning=False):
+    """Initialization for PreMODIT. i.e. Generate nu contribution and index for
+    the line shape density (actually, this is a numpy version of getix)
+
+    Args:
+        nu_lines: wavenumber list of lines [Nline] (should be numpy F64)
+        nu_grid: wavenumenr grid [Nnugrid] (should be numpy F64)
+
+    Returns:
+        cont: (contribution) jnp.array
+        index: (index) jnp.array
+        R: spectral resolution
+        pmarray: (+1,-1) array whose length of len(nu_grid)+1
+
+
+    Note:
+       cont is the contribution for i=index. 1 - cont is the contribution for i=index+1. For other i, the contribution should be zero. dq is computed using numpy not jnp.numpy. If you use jnp, you might observe a significant residual because of the float32 truncation error.
+    """
+    warn_dtype64(nu_lines, warning, tag='nu_lines')
+    warn_dtype64(nu_grid, warning, tag='nu_grid')
+    warn_outside_wavenumber_grid(nu_lines, nu_grid)
+
+    R = resolution_eslog(nu_grid)
+    cont_nu, index_nu = npgetix(nu_lines, nu_grid)
+    cont_elower, index_elower = npgetix(elower, elower_grid)
+
+    pmarray = np.ones(len(nu_grid)+1)
+    pmarray[1::2] = pmarray[1::2]*-1
+
+    return jnp.array(cont_nu), jnp.array(index_nu),  jnp.array(cont_elower), jnp.array(index_elower), R, jnp.array(pmarray)
+
+
 def init_redit(nu_lines, nu_grid):
     """Initialization for REDIT. i.e. Generate nu contribution and index for
     the line shape density (actually, this is a numpy version of getix)

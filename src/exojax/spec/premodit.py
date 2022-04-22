@@ -1,4 +1,4 @@
-"""Line profile computation using Precomputation of LSD version of MODIT
+"""Line profile computation using PremoDIT = Precomputation of LSD version of MODIT
 
 """
 
