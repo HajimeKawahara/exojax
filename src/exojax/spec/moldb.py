@@ -1172,13 +1172,16 @@ class AdbKurucz(object):
         """
 
         # load args
-        self.kurucz_file = pathlib.Path(path)  # VALD3 output
+        self.kurucz_file = pathlib.Path(path)
         self.nurange = [np.min(nurange), np.max(nurange)]
         self.margin = margin
         self.crit = crit
 
-        # load vald file ("Extract Stellar" request)
+        # load kurucz file
         print('Reading Kurucz file')
+        if self.kurucz_file.with_suffix('.hdf5').exists():
+            
+            
         self._A, self.nu_lines, self._elower, self._eupper, self._gupper, self._jlower, self._jupper, self._ielem, self._iion, self._gamRad, self._gamSta, self._vdWdamp = atomllapi.read_kurucz(
             self.kurucz_file)
 
