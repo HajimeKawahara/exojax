@@ -61,8 +61,8 @@ def init_modit(nu_lines, nu_grid, warning=False):
         nu_grid: wavenumenr grid [Nnugrid] (should be numpy F64)
 
     Returns:
-        cont: (contribution) jnp.array
-        index: (index) jnp.array
+        cont: (contribution for q) jnp.array
+        index: (index for q) jnp.array
         R: spectral resolution
         pmarray: (+1,-1) array whose length of len(nu_grid)+1
 
@@ -109,7 +109,7 @@ def init_premodit(nu_lines, nu_grid, elower, elower_grid, warning=False):
 
     R = resolution_eslog(nu_grid)
     cont_nu, index_nu = npgetix(nu_lines, nu_grid)
-    cont_elower, index_elower = npgetix(elower, elower_grid)
+#    cont_elower, index_elower = npgetix(elower, elower_grid)
 
     pmarray = np.ones(len(nu_grid)+1)
     pmarray[1::2] = pmarray[1::2]*-1
