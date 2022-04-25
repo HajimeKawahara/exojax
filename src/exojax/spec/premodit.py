@@ -5,21 +5,29 @@ import numpy as np
 from exojax.spec.lsd import npgetix
 from exojax.utils.constants import hcperk
 
-def make_initial_LSD(Tmax, nu_lines, elower):
-    """
+def make_initial_LSD(nu_grid, nu_lines, Tmax, elower, interval_contrast_lsd=1.0):
+    """make initial LSD to compute the power spectrum of the LSD
 
     Args:
-       Tmax: max temperature you will use.
-       blur_scale: log wavenumber scale to be blurred
+        nu_lines: wavenumber list of lines [Nline] (should be numpy F64)
+        nu_grid: wavenumenr grid [Nnugrid] (should be numpy F64)
+        Tmax: max temperature you will use.
+        elower: E lower
+        interval_contrast_lsd: interval contrast of line strength between upper and lower E lower grid
+
+    Returns:
+        contribution nu
+        index nu
+        contribution E lower
+        index E lower
+
 
     """
+    elower_grid=make_elower_grid(Tmax, elower, interval_contrast=interval_contrast_lsd)
+    cont_inilsd_elower, index_inilsd_elower = npgetix(elower, elower_grid)
+    cont_inilsd_nu, index_inilsd_nu = npgetix(nu_lines, nu_grid)
+    return cont_inilsd_nu, index_inilsd_nu, cont_inilsd_elower, index_inilsd_elower
 
-    
-    c_elower, i_elower = npgetix(elower, elower_grid)
-
-    q_lines=np.log(nu_lines)
-    initial_q_grid = determine_initial_qgrid(q_lines, blur_scale)
-    c_q_lines, i_q_lines = npgetix(q_lines, intial_q_grid)
 
 
 def compute_dElower(T,interval_contrast=0.1):
@@ -53,16 +61,6 @@ def make_elower_grid(Tmax, elower, interval_contrast):
     Ng_elower = int((max_elower - min_elower)/dE)+2
     return min_elower + np.arange(Ng_elower)*dE
     
-def determine_initial_qgrid(q_lines, blur_scale):
-    """ detemine the interval of the inital q grid
-
-    Args:
-        q_lines: the line center in the form of q = ln(nu [cm-1]), 
-        blur_scale: 
-
-    """
-    print()
-
 
 
     
@@ -72,4 +70,4 @@ def test_determine_initial_nugrid():
     
 if __name__ == "__main__":
     print("premodit")
-    test_make_elower_grid()
+    print(compute_dElower(1000.0,interval_contrast=1.0))
