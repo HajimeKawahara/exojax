@@ -1,5 +1,5 @@
 import pytest
-from exojax.spec.premodit import compute_dElower, test_make_elower_grid()
+from exojax.spec.premodit import compute_dElower, make_elower_grid
 
 def test_compute_dElower():
     assert compute_dElower(1000.0,interval_contrast=0.1)==pytest.approx(160.03762408883165)
