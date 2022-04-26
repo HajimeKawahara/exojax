@@ -50,8 +50,7 @@ def test_Kurucz_linelist():
     nugrid_res = 0.01
     nus, wav, reso = nugrid(wls, wll, int((wll-wls)/nugrid_res), unit="AA", xsmode="lpf")
         
-    kuruczlines = '/home/tako/work/VALD3/gf2600.all'
-    adbK = moldb.AdbKurucz(kuruczlines, nus)
+    adbK = moldb.AdbKurucz(filepath_Kurucz, nus)
     
     qt_284=vmap(adbK.QT_interp_284)(Tarr)
 
