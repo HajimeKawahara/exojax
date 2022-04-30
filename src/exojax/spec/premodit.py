@@ -60,14 +60,11 @@ def make_elower_grid(Tmax, elower, interval_contrast):
     max_elower=np.max(elower)
     Ng_elower = int((max_elower - min_elower)/dE)+2
     return min_elower + np.arange(Ng_elower)*dE
-    
-
-
-    
-    
+        
 def test_determine_initial_nugrid():
     print("test")
     
 if __name__ == "__main__":
     print("premodit")
     print(compute_dElower(1000.0,interval_contrast=1.0))
+    mdbCH4 = moldb.MdbExomol('.database/CH4/12C-1H4/YT10to10/', nus, crit=1.e-30)
