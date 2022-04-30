@@ -9,10 +9,10 @@ Forward modeling of the emission spectrum using VALD3
 
 .. raw:: html
 
-   <!-- 
-   written with reference to :  
-   "exojax/examples/tutorial/Forward\ modeling.ipynb"  
-   "ghR/exojax_0/examples/testlines/line_strength_CO.py"  
+   <!--
+   written with reference to :
+   "exojax/examples/tutorial/Forward\ modeling.ipynb"
+   "ghR/exojax_0/examples/testlines/line_strength_CO.py"
 
    cd ~/work
 
@@ -24,7 +24,7 @@ emission spectrum.
 .. code:: ipython3
 
     from exojax.spec.rtransfer import nugrid
-    from exojax.spec.rtransfer import pressure_layer 
+    from exojax.spec.rtransfer import pressure_layer
     from exojax.spec import moldb, molinfo, contdb
     from exojax.spec import atomll
     from exojax.spec.exomol import gamma_exomol
@@ -39,17 +39,17 @@ A T-P profile
 
 .. code:: ipython3
 
-    #Assume ATMOSPHERE                                                                     
+    #Assume ATMOSPHERE
     NP=100
     T0=3000. #10000. #3000. #1295.0 #K
     Parr, dParr, k=pressure_layer(NP=NP)
     H_He_HH_VMR = [0.0, 0.16, 0.84] #typical quasi-"solar-fraction"
     Tarr = T0*(Parr)**0.1
-    
+
     PH = Parr* H_He_HH_VMR[0]
     PHe = Parr* H_He_HH_VMR[1]
     PHH = Parr* H_He_HH_VMR[2]
-    
+
     fig=plt.figure(figsize=(6,4))
     plt.plot(Tarr,Parr)
     plt.plot(Tarr, PH, '--'); plt.plot(Tarr, PHH, '--'); plt.plot(Tarr, PHe, '--')
@@ -70,7 +70,7 @@ Set a wavenumber grid...
 .. code:: ipython3
 
     #We set a wavenumber grid using nugrid.
-    nus,wav,res = nugrid(10380, 10430, 4500, unit="AA") 
+    nus,wav,res = nugrid(10380, 10430, 4500, unit="AA")
 
 
 .. parsed-literal::
@@ -82,7 +82,7 @@ Load a database of atomic lines from VALD3.
 
 .. code:: ipython3
 
-    #Loading a database of a few atomic lines from VALD3  #BU: CO and CIA (H2-H2)...     
+    #Loading a database of a few atomic lines from VALD3  #BU: CO and CIA (H2-H2)...
     valdlines = 'HiroyukiIshikawa.4214450.gz'
     adbFe = moldb.AdbVald(valdlines, nus)
 
@@ -90,10 +90,11 @@ Load a database of atomic lines from VALD3.
 Some notes on VALD3 data
 ------------------------------
     - ``valdlines`` should be   fullpath to the input line list obtained from `VALD3 <http://vald.astro.uu.se/>`_:
-      
-VALD data access is free but requires registration through `the Contact form <http://vald.astro.uu.se/~vald/php/vald.php?docpage=contact.html>`_. After the registration, you can login and choose the ``Extract Element`` mode. For a example in this notebook, the request form of ``Extract All`` mode was filled as:
 
-.. code:: 
+VALD data access is free but requires registration through `the Contact form <http://vald.astro.uu.se/~vald/php/vald.php?docpage=contact.html>`_. After the registration, you can login and select one of the following modes depending on your purpose: ``Extract All``, ``Extract Stellar``, or ``Extract Element``.
+For a example in this notebook, the request form of ``Extract All`` mode was filled as:
+
+.. code::
 
               Extract All
                 Starting wavelength :    10380
@@ -104,11 +105,11 @@ VALD data access is free but requires registration through `the Contact form <ht
                 (Require lines to have a known value of :    N/A)
                 Linelist configuration :    Default
                 Unit selection:    Energy unit: eV - Medium: vacuum - Wavelength unit: angstrom - VdW syntax: default
-		
+
 Please assign the fullpath of the output file sent by VALD ([user_name_at_VALD].[request_number_at_VALD].gz;  ``HiroyukiIshikawa.4214450.gz`` in the above code) to the variable ``valdlines``. Note that the number of spectral lines that can be extracted in a single request is limited to 1000 in  `VALD <https://www.astro.uu.se/valdwiki/Restrictions%20on%20extraction%20size>`_.
 
 .. warning::
-   
+
    Just for this tutorial, ``HiroyukiIshikawa.4214450.gz`` can be found `here <http://secondearths.sakura.ne.jp/exojax/data/>`_. Note that if you use Windows or Mac, .gz might be unziped when downloading despite no renaming. I mean, the same name with .gz, but unziped!  In this case, download ``extradata.tar`` and untar it.
 
 
@@ -118,7 +119,7 @@ Relative partition function is given by
 .. code:: ipython3
 
     #Computing the relative partition function,
-    
+
     qt_284=vmap(adbFe.QT_interp_284)(Tarr)
     qt = np.zeros([len(adbFe.QTmask), len(Tarr)])
     #qt = np.empty_like(adbFe.QTmask, dtype='object')
@@ -135,7 +136,7 @@ Here are the pressure and natural broadenings (Lorentzian width).
     gammaLMP = jit(vmap(atomll.gamma_vald3,(0,0,0,0,None,None,None,None,None,None,None,None,None,None,None)))\
             (Tarr, PH, PHH, PHe, adbFe.ielem, adbFe.iion, \
                     adbFe.dev_nu_lines, adbFe.elower, adbFe.eupper, adbFe.atomicmass, adbFe.ionE, \
-                    adbFe.gamRad, adbFe.gamSta, adbFe.vdWdamp, 1.0)  
+                    adbFe.gamRad, adbFe.gamSta, adbFe.vdWdamp, 1.0)
 
 and Doppler broadening,
 
@@ -165,7 +166,7 @@ Computing dtau for each atomic species (or ion) in a SEPARATE array.
     def get_unique_list(seq):
         seen = []
         return [x for x in seq if x not in seen and not seen.append(x)]
-    
+
     uspecies = get_unique_list(jnp.vstack([adbFe.ielem, adbFe.iion]).T.tolist())
 
 Set the stellar/planetary parameters
@@ -188,44 +189,44 @@ Calculating delta tau...
 
 .. code:: ipython3
 
-    #For now, ASSUME all atoms exist as neutral atoms. 
+    #For now, ASSUME all atoms exist as neutral atoms.
     #In fact, we can't ignore the effect of molecular formation e.g. TiO (」゜□゜)」
-    
+
     from exojax.spec.lpf import xsmatrix
     from exojax.spec.rtransfer import dtauM
-    
+
     from exojax.spec.atomllapi import load_atomicdata
     ipccd = load_atomicdata()
     ieleml = jnp.array(ipccd['ielem'])
     Narr = jnp.array(10**(12+ipccd['solarA'])) #number density
     massarr = jnp.array(ipccd['mass']) #mass of each neutral atom
     Nmassarr = Narr * massarr #mass of each neutral species
-    
+
     dtaual = np.zeros([len(uspecies), len(Tarr), len(nus)])
     maskl = np.zeros(len(uspecies)).tolist()
-    
+
     for i, sp in enumerate(uspecies):
         maskl[i] = (adbFe.ielem==sp[0])\
                         *(adbFe.iion==sp[1])
-        
+
         #Currently not dealing with ionized species yet... (#tako %\\\\20210814)
         if sp[1] > 1:
             continue
-         
-        #Providing numatrix, thermal broadening, gamma, and line strength, we can compute cross section.  
+
+        #Providing numatrix, thermal broadening, gamma, and line strength, we can compute cross section.
         xsm=xsmatrix(numatrix[maskl[i]], sigmaDM.T[maskl[i]].T, gammaLMP.T[maskl[i]].T, SijM.T[maskl[i]].T)
         #Computing delta tau for atomic absorption
         MMR_X_I = Nmassarr[ jnp.where(ieleml==sp[0])[0][0] ] / jnp.sum(Nmassarr)
         mass_X_I = massarr[ jnp.where(ieleml==sp[0])[0][0] ] #MMR and mass of neutral atom X (if all elemental species are neutral)
         dtaual[i] = dtauM(dParr, xsm, MMR_X_I*np.ones_like(Tarr), mass_X_I, g)
-        
-    
+
+
 Compute delta tau for CIA
 
 .. code:: ipython3
 
     cdbH2H2=contdb.CdbCIA('.database/H2-H2_2011.cia', nus)
-    
+
     from exojax.spec.rtransfer import dtauCIA
     mmw=2.33 #mean molecular weight
     mmrH2=0.74
@@ -297,18 +298,18 @@ Finally, we apply the rotational & instrumental broadenings.
     from exojax.spec import response
     from exojax.utils.constants import c #[km/s]
     import jax.numpy as jnp
-    
+
     wavd=jnp.linspace(10380, 10450,500) #observational wavelength grid
     nusd = 1.e8/wavd[::-1]
-    
+
     RV=10.0 #RV km/s
     vsini=20.0 #Vsini km/s
     u1=0.0 #limb darkening u1
     u2=0.0 #limb darkening u2
-    
+
     R=100000.
-    beta=c/(2.0*np.sqrt(2.0*np.log(2.0))*R) #IP sigma need check 
-    
+    beta=c/(2.0*np.sqrt(2.0*np.log(2.0))*R) #IP sigma need check
+
     Frot=response.rigidrot(nus,F0,vsini,u1,u2)
     F=response.ipgauss_sampling(nusd,nus,Frot,beta,RV)
 
@@ -322,5 +323,3 @@ Finally, we apply the rotational & instrumental broadenings.
 
 
 .. image:: metals/output_40_0.png
-
-
