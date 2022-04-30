@@ -102,19 +102,17 @@ def init_premodit(nu_lines, nu_grid, elower, elower_grid, warning=False):
     """
     warn_dtype64(nu_lines, warning, tag='nu_lines')
     warn_dtype64(nu_grid, warning, tag='nu_grid')
-    warn_dtype64(elower, warning, tag='nu_lines')
-    warn_dtype64(elower_grid, warning, tag='nu_grid')
-
+    warn_dtype64(elower, warning, tag='elower')
+    warn_dtype64(elower_grid, warning, tag='elower_grid')
     warn_outside_wavenumber_grid(nu_lines, nu_grid)
 
     R = resolution_eslog(nu_grid)
-    cont_nu, index_nu = npgetix(nu_lines, nu_grid)
+#    cont_nu, index_nu = npgetix(nu_lines, nu_grid)
 #    cont_elower, index_elower = npgetix(elower, elower_grid)
+#    pmarray = np.ones(len(nu_grid)+1)
+#    pmarray[1::2] = pmarray[1::2]*-1
 
-    pmarray = np.ones(len(nu_grid)+1)
-    pmarray[1::2] = pmarray[1::2]*-1
-
-    return jnp.array(cont_nu), jnp.array(index_nu),  jnp.array(cont_elower), jnp.array(index_elower), R, jnp.array(pmarray)
+#    return jnp.array(cont_nu), jnp.array(index_nu),  jnp.array(cont_elower), jnp.array(index_elower), R, jnp.array(pmarray)
 
 
 def init_redit(nu_lines, nu_grid):
