@@ -64,7 +64,6 @@ def make_elower_grid(Tmax, elower, interval_contrast):
     return min_elower + np.arange(Ng_elower)*dE
 
 
-
 from jax.numpy import index_exp as joi
 
 def inc2D_initlsd(a, w, cx, ix, cy, iy):
