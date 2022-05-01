@@ -1,3 +1,6 @@
+""" comparison with LPF, MODIT F32, and F64 using HITRAN CO
+
+"""
 from jax.config import config
 from exojax.spec.hitran import normalized_doppler_sigma
 from exojax.spec.dit import set_ditgrid
