@@ -4,6 +4,9 @@
 * logm_ucgs=np.log10(m_u*1.e3) where m_u = scipy.constants.m_u.
 """
 
+# reference temperature used in exojax.spec
+Tref = 296.0
+
 # cgs
 Rs = 6.957*1.e10
 RJ = 7.1492*1.e9

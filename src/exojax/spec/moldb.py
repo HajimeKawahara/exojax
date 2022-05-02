@@ -10,7 +10,7 @@ import pathlib
 import vaex
 from exojax.spec import hapi, exomolapi, exomol, atomllapi, atomll, hitranapi
 from exojax.spec.hitran import gamma_natural as gn
-from exojax.utils.constants import hcperk
+from exojax.utils.constants import hcperk, Tref
 
 __all__ = ['MdbExomol', 'MdbHit', 'AdbVald', 'AdbKurucz']
 
@@ -108,8 +108,7 @@ class MdbExomol(object):
         pf = exomolapi.read_pf(self.pf_file)
         self.gQT = jnp.array(pf['QT'].to_numpy())  # grid QT
         self.T_gQT = jnp.array(pf['T'].to_numpy())  # T forgrid QT
-        self.Tref = 296.0
-        self.QTref = np.array(self.QT_interp(self.Tref))
+        self.QTref = np.array(self.QT_interp(Tref))
         self.QTtyp = np.array(self.QT_interp(self.Ttyp))
 
         # trans file(s)
@@ -149,8 +148,8 @@ class MdbExomol(object):
                 self.Sij0 = exomol.Sij0(
                     self._A, self._gpp, self.nu_lines, self._elower, self.QTref)
                 self.Sij_typ = self.Sij0 * self.QTref / self.QTtyp \
-                    * np.exp(-hcperk*self._elower * (1./self.Ttyp - 1./self.Tref)) \
-                    * np.expm1(-hcperk*self.nu_lines/self.Ttyp) / np.expm1(-hcperk*self.nu_lines/self.Tref)
+                    * np.exp(-hcperk*self._elower * (1./self.Ttyp - 1./Tref)) \
+                    * np.expm1(-hcperk*self.nu_lines/self.Ttyp) / np.expm1(-hcperk*self.nu_lines/Tref)
 
                 # exclude the lines whose nu_lines evaluated inside exomolapi.pickup_gE (thus sometimes different from the "nu_lines" column in trans) is not positive
                 trans['nu_positive'] = mask_zeronu
@@ -279,8 +278,8 @@ class MdbExomol(object):
            Sij at Ttyp
         """
         return Sij0_in * self.QTref / self.QTtyp \
-            * np.exp(-hcperk*elower_in * (1./self.Ttyp - 1./self.Tref)) \
-            * np.expm1(-hcperk*nu_in/self.Ttyp) / np.expm1(-hcperk*nu_in/self.Tref)
+            * np.exp(-hcperk*elower_in * (1./self.Ttyp - 1./Tref)) \
+            * np.expm1(-hcperk*nu_in/self.Ttyp) / np.expm1(-hcperk*nu_in/Tref)
 
     def masking(self, mask, mask_needed=True):
         """applying mask and (re)generate jnp.arrays.
@@ -384,7 +383,7 @@ class MdbExomol(object):
         Returns:
            qr(T)=Q(T)/Q(Tref) interpolated in jnp.array
         """
-        return self.QT_interp(T)/self.QT_interp(self.Tref)
+        return self.QT_interp(T)/self.QT_interp(Tref)
 
     def download(self, molec, extension, numtag=None):
         """Downloading Exomol files.
@@ -465,7 +464,6 @@ class MdbHit(object):
 
         self.path = pathlib.Path(path)
         numinf, numtag = hitranapi.read_path(self.path)
-        self.Tref = 296.0
         self.crit = crit
         self.Ttyp = Ttyp
         self.margin = margin
@@ -742,7 +740,7 @@ class MdbHit(object):
         Returns:
            qr(T)=Q(T)/Q(Tref) interpolated in jnp.array
         """
-        return self.QT_interp(T)/self.QT_interp(self.Tref)
+        return self.QT_interp(T)/self.QT_interp(Tref)
 
     def Qr_HAPI(self, Tarr):
         """Partition Function ratio using HAPI partition sum.
@@ -756,7 +754,7 @@ class MdbHit(object):
         Note:
            N_Tarr = len(Tarr), N_iso = len(self.uniqiso)
         """
-        allT = list(np.concatenate([[self.Tref], Tarr]))
+        allT = list(np.concatenate([[Tref], Tarr]))
         Qrx = []
         for iso in self.uniqiso:
             Qrx.append(hapi.partitionSum(self.molecid, iso, allT))
@@ -895,8 +893,7 @@ class AdbVald(object):
         self.T_gQT = jnp.array(pfTdat.columns[1:], dtype=float)
         self.gQT_284species = jnp.array(self.pfdat.iloc[:, 1:].to_numpy(
             dtype=float))  # grid Q vs T vs Species
-        self.Tref = 296.0
-        self.QTref_284 = np.array(self.QT_interp_284(self.Tref))
+        self.QTref_284 = np.array(self.QT_interp_284(Tref))
         # identify index of QT grid (gQT) for each line
         self._QTmask = self.make_QTmask(self._ielem, self._iion)
 
@@ -1021,7 +1018,7 @@ class AdbVald(object):
         Returns:
            qr(T)=Q(T)/Q(Tref): interpolated in jnp.array
         """
-        return self.QT_interp(atomspecies, T)/self.QT_interp(atomspecies, self.Tref)
+        return self.QT_interp(atomspecies, T)/self.QT_interp(atomspecies, Tref)
 
     def qr_interp_Irwin_Fe(self, T, atomspecies='Fe 1'):
         """interpolated partition function ratio This function is for the
@@ -1035,7 +1032,7 @@ class AdbVald(object):
         Returns:
            qr(T)=Q(T)/Q(Tref): interpolated in jnp.array
         """
-        return self.QT_interp_Irwin_Fe(T, atomspecies)/self.QT_interp_Irwin_Fe(self.Tref, atomspecies)
+        return self.QT_interp_Irwin_Fe(T, atomspecies)/self.QT_interp_Irwin_Fe(Tref, atomspecies)
 
     def QT_interp_284(self, T):
         """interpolated partition function of all 284 species.
@@ -1187,8 +1184,7 @@ class AdbKurucz(object):
         self.T_gQT = jnp.array(pfTdat.columns[1:], dtype=float)
         self.gQT_284species = jnp.array(self.pfdat.iloc[:, 1:].to_numpy(
             dtype=float))  # grid Q vs T vs Species
-        self.Tref = 296.0
-        self.QTref_284 = np.array(self.QT_interp_284(self.Tref))
+        self.QTref_284 = np.array(self.QT_interp_284(Tref))
         # identify index of QT grid (gQT) for each line
         self._QTmask = self.make_QTmask(self._ielem, self._iion)
 
@@ -1313,7 +1309,7 @@ class AdbKurucz(object):
         Returns:
            qr(T)=Q(T)/Q(Tref): interpolated in jnp.array
         """
-        return self.QT_interp(atomspecies, T)/self.QT_interp(atomspecies, self.Tref)
+        return self.QT_interp(atomspecies, T)/self.QT_interp(atomspecies, Tref)
 
     def qr_interp_Irwin_Fe(self, T, atomspecies='Fe 1'):
         """interpolated partition function ratio This function is for the
@@ -1327,7 +1323,7 @@ class AdbKurucz(object):
         Returns:
            qr(T)=Q(T)/Q(Tref): interpolated in jnp.array
         """
-        return self.QT_interp_Irwin_Fe(T, atomspecies)/self.QT_interp_Irwin_Fe(self.Tref, atomspecies)
+        return self.QT_interp_Irwin_Fe(T, atomspecies)/self.QT_interp_Irwin_Fe(Tref, atomspecies)
 
     def QT_interp_284(self, T):
         """interpolated partition function of all 284 species.

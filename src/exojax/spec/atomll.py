@@ -1,6 +1,6 @@
 import numpy as np
 from exojax.spec import atomllapi
-from exojax.utils.constants import ccgs, m_u, kB, hcperk, ecgs, hcgs, Rcgs, a0, eV2wn
+from exojax.utils.constants import ccgs, m_u, kB, hcperk, ecgs, hcgs, Rcgs, a0, eV2wn, Tref
 import jax.numpy as jnp
 from jax.lax import scan
 import warnings
@@ -8,9 +8,6 @@ import warnings
 
 def Sij0(A, gupper, nu_lines, elower, QTref_284, QTmask, Irwin=False):
     """Reference Line Strength in Tref=296K, S0.
-
-    Note:
-       Tref=296K
 
     Args:
        A: Einstein coefficient (s-1)
@@ -24,7 +21,6 @@ def Sij0(A, gupper, nu_lines, elower, QTref_284, QTmask, Irwin=False):
     Returns:
        Sij(T): Line strength (cm)
     """
-    Tref = 296.0
 
     # Assign Q(Tref) for each line
     QTref = np.zeros_like(QTmask, dtype=float)
