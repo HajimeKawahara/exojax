@@ -59,10 +59,10 @@ def npgetix(x, xv):
 
 @jit
 def inc3D_givenx(a, w, cx, ix, y, z, xv, yv, zv):
-    """The lineshape distribution matrix = integrated neighbouring contribution for 3D (memory reduced sum) but using given contribution and index for x .
+    """Compute integrated neighbouring contribution for the 3D lineshape distribution (LSD) matrix (memory reduced sum) but using given contribution and index for x .
 
     Args:
-        a: lineshape density array (jnp.array)
+        a: lineshape density (LSD) array (jnp.array)
         w: weight (N)
         cx: given contribution for x 
         ix: given index for x 
@@ -98,10 +98,10 @@ def inc3D_givenx(a, w, cx, ix, y, z, xv, yv, zv):
 
 @jit
 def inc2D_givenx(a, w, cx, ix, y, yv):
-    """The lineshape distribution matrix = integrated neighbouring contribution for 2D (memory reduced sum) but using given contribution and index for x .
+    """Compute integrated neighbouring contribution for 2D LSD (memory reduced sum) but using given contribution and index for x .
 
     Args:
-        a: lineshape density array (jnp.array)
+        a: lineshape density (LSD) array (jnp.array)
         w: weight (N)
         cx: given contribution for x 
         ix: given index for x 

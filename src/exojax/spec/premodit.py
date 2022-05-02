@@ -5,8 +5,8 @@ import numpy as np
 from exojax.spec.lsd import npgetix
 from exojax.utils.constants import hcperk
 
-def make_initial_LSD(nu_grid, nu_lines, Tmax, elower, interval_contrast_lsd=1.0):
-    """make initial LSD to compute the power spectrum of the LSD
+def make_initial_biased_LSD(nu_grid, nu_lines, Tmax, elower, interval_contrast_lsd=1.0):
+    """make initial biased LSD array to compute the power spectrum of the LSD
 
     Args:
         nu_grid: wavenumenr grid [Nnugrid] (should be numpy F64)
@@ -67,6 +67,9 @@ def make_elower_grid(Tmax, elower, interval_contrast):
 from jax.numpy import index_exp as joi
 
 def inc2D_initlsd(a, w, cx, ix, cy, iy):
+    """
+
+    """
     a = a.at[joi[ix, iy]].add(w*(1-cx)*(1-cy))
     a = a.at[joi[ix+1, iy]].add(w*cx*(1-cy))
     a = a.at[joi[ix+1, iy+1]].add(w*cx*cy)
@@ -74,56 +77,69 @@ def inc2D_initlsd(a, w, cx, ix, cy, iy):
     return a
 
 
-def test_determine_initial_nugrid():
-    print("test")
-
 def lowpass(fftval,compress_rate):
+    """lowpass filter for the biased LSD
+
+    """
     Nnu,Nbatch=np.shape(fftval)
     Ncut=int(float(Nnu)/float(compress_rate))
     lowpassed_fftval=fftval[:Ncut,:]
     high_freq_norm_squared=np.sum(np.abs(fftval[Ncut:,:])**2,axis=0)
     lowpassed_fftval[0,:]=np.sqrt(np.abs(lowpassed_fftval[0,:])**2+high_freq_norm_squared)
     return lowpassed_fftval
-    
+
+def f_bias(elower_in,T):
+    """f bias function
+    """
+    return jnp.exp(-hcperk*elower_in * (1./T - 1./Tref))
+
+def g_bias(nu_in,T):
+    """g bias function
+    """
+    return jnp.expm1(-hcperk*nu_in/T) / jnp.expm1(-hcperk*nu_in/Tref)
+
+
+def lsd_unbiased(FT_Slsd_biased,T,nu_grid,elower_grid):
+    g_bias(nu_grid,T,Tref)
+
+
+
 if __name__ == "__main__":
     import jax.numpy as jnp
     from exojax.spec import moldb
+    import matplotlib.pyplot as plt
     print("premodit")
-    print(compute_dElower(1000.0,interval_contrast=1.0))
 
     nus=np.logspace(np.log10(6020.0), np.log10(6080.0), 40000, dtype=np.float64)
     mdbCH4 = moldb.MdbExomol('.database/CH4/12C-1H4/YT10to10/', nus)
     Tmax=1500.0
-    cont_inilsd_nu, index_inilsd_nu, cont_inilsd_elower, index_inilsd_elower, elower_grid=make_initial_LSD(nus, mdbCH4.nu_lines, Tmax, mdbCH4.elower, interval_contrast_lsd=0.05)
-    print(elower_grid)
-    
+    cont_inilsd_nu, index_inilsd_nu, cont_inilsd_elower, index_inilsd_elower, elower_grid=make_initial_biased_LSD(nus, mdbCH4.nu_lines, Tmax, mdbCH4.elower, interval_contrast_lsd=0.05)
     Ng_nu = len(nus)
     Ng_elower = len(elower_grid)
     k = jnp.fft.rfftfreq(2*Ng_nu, 1)
     lsd_array = jnp.zeros((Ng_nu,Ng_elower))
     Slsd=inc2D_initlsd(lsd_array, mdbCH4.Sij0, cont_inilsd_nu, index_inilsd_nu, cont_inilsd_elower, index_inilsd_elower)
-    import matplotlib.pyplot as plt
 
-    
-    
+        
     fftval = np.fft.rfft(Slsd, axis=0)
     fftval_lowpassed=lowpass(fftval,compress_rate=40)
 
+    ### just checking
     fftval=np.zeros_like(fftval,dtype=np.complex128)
     Ncut=np.shape(fftval_lowpassed)[0]
     fftval[:Ncut,:]=fftval_lowpassed
-    
-    Slsdx = np.fft.irfft(fftval, axis=0)
-    
+    Slsdx = np.fft.irfft(fftval, axis=0)    
     fig=plt.figure()
     ax=fig.add_subplot(111)
-    #    for i in range(0,Ng_elower):
     plt.plot((Slsd[:,60]),alpha=0.3)
     plt.plot((Slsdx[:,60]),alpha=0.3)
     plt.yscale("log")
     plt.show()
+    ###
+
+
+
     
-    vmax = Ng_nu
     #    vk = fold_voigt_kernel_logst(
     #        k, log_nstbeta, log_ngammaL_grid, vmax, pmarray)
     #    fftvalsum = jnp.sum(fftval*vk, axis=(1,))
