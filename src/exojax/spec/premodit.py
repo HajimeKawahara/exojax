@@ -5,6 +5,8 @@ import numpy as np
 from exojax.spec.lsd import npgetix
 from exojax.utils.constants import hcperk, Tref
 
+
+
 def make_initial_biased_LSD(nu_grid, nu_lines, Tmax, elower, interval_contrast_lsd=1.0):
     """make initial biased LSD array to compute the power spectrum of the LSD
 
@@ -99,8 +101,8 @@ def g_bias(nu_in,T):
     return jnp.expm1(-hcperk*nu_in/T) / jnp.expm1(-hcperk*nu_in/Tref)
 
 
-def unbiased_lsd(FT_Slsd_biased,T,nu_grid,elower_grid):
-    """ unbias the biased LSD
+def unbiased_lsd_lowpass(FT_Slsd_biased,T,nu_grid,elower_grid, qr):
+    """ unbias the biased LSD lowpass filtered
 
     Args:
 
@@ -113,8 +115,22 @@ def unbiased_lsd(FT_Slsd_biased,T,nu_grid,elower_grid):
     Nft=len(eunbias_FTSlsd)
     eunbias_FTSbuf = jnp.hstack([eunbias_FTSlsd, jnp.zeros(Nnu-Nft+1)])
     eunbias_Slsd = jnp.fft.irfft(eunbias_FTSbuf)
-    return g_bias(nu_grid,T)*eunbias_Slsd
-    
+    return g_bias(nu_grid,T)*eunbias_Slsd/qr(T)
+
+def unbiased_lsd(FT_Slsd_biased,T,nu_grid,elower_grid,qr):
+    """ unbias the biased LSD
+
+    Args:
+
+    Returns:
+        LSD (unbiased)
+
+    """
+    Nnu=int(len(nu_grid)/2)
+    eunbias_FTSlsd = jnp.sum(f_bias(elower_grid,T)*FT_Slsd_biased,axis=1)
+    eunbias_Slsd = jnp.fft.irfft(eunbias_FTSlsd)
+    return g_bias(nu_grid,T)*eunbias_Slsd/qr(T)
+
 
 if __name__ == "__main__":
     import jax.numpy as jnp
@@ -132,19 +148,32 @@ if __name__ == "__main__":
     lsd_array = jnp.zeros((Ng_nu,Ng_elower))
     initial_biased_lsd=inc2D_initlsd(lsd_array, mdbCH4.Sij0, cont_inilsd_nu, index_inilsd_nu, cont_inilsd_elower, index_inilsd_elower)
 
-        
-    fftval = np.fft.rfft(initial_biased_lsd, axis=0)
-    fftval_lowpassed=lowpass(fftval,compress_rate=40)
     Ttest=1000.0
-    print(np.shape(fftval_lowpassed))
-    
-    Slsd=unbiased_lsd(fftval_lowpassed,Ttest,nus,elower_grid)
 
+    #fftval=lowpass(fftval,compress_rate=40)
+    #Slsd=unbiased_lsd_lowpass(fftval,Ttest,nus,elower_grid,mdbCH4.qr_interp)
+    fftval = np.fft.rfft(initial_biased_lsd, axis=0)
+    Slsd=unbiased_lsd(fftval,Ttest,nus,elower_grid,mdbCH4.qr_interp)
+
+    from exojax.spec.hitran import SijT    
+    def inc1D(a, w, cx, ix):
+        a = a.at[joi[ix]].add(w*(1-cx))
+        a = a.at[joi[ix+1]].add(w*cx)
+        return a
+    cont_inilsd_nu, index_inilsd_nu = npgetix(mdbCH4.nu_lines, nus)
+    qT= mdbCH4.qr_interp(Ttest)
+    S=SijT(Ttest, mdbCH4.logsij0, mdbCH4.nu_lines, mdbCH4.elower, qT)
+    Slsd_direct = jnp.zeros_like(nus)
+    Slsd_direct = inc1D(Slsd_direct, S, cont_inilsd_nu, index_inilsd_nu)
+    
     ### just checking
     fig=plt.figure()
-    ax=fig.add_subplot(111)
+    ax=fig.add_subplot(211)
     plt.plot((Slsd),alpha=0.3)
+    plt.plot((Slsd_direct),alpha=0.3)
     plt.yscale("log")
+    ax=fig.add_subplot(212)
+    plt.plot((Slsd/Slsd_direct-1.0),alpha=0.3)
     plt.show()
     ###
 
