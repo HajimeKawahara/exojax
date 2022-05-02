@@ -3,7 +3,7 @@
 """
 import numpy as np
 from exojax.spec.lsd import npgetix
-from exojax.utils.constants import hcperk
+from exojax.utils.constants import hcperk, Tref
 
 def make_initial_biased_LSD(nu_grid, nu_lines, Tmax, elower, interval_contrast_lsd=1.0):
     """make initial biased LSD array to compute the power spectrum of the LSD
@@ -99,10 +99,22 @@ def g_bias(nu_in,T):
     return jnp.expm1(-hcperk*nu_in/T) / jnp.expm1(-hcperk*nu_in/Tref)
 
 
-def lsd_unbiased(FT_Slsd_biased,T,nu_grid,elower_grid):
-    g_bias(nu_grid,T,Tref)
+def unbiased_lsd(FT_Slsd_biased,T,nu_grid,elower_grid):
+    """ unbias the biased LSD
 
+    Args:
 
+    Returns:
+        LSD (unbiased)
+
+    """
+    Nnu=int(len(nu_grid)/2)
+    eunbias_FTSlsd = jnp.sum(f_bias(elower_grid,T)*FT_Slsd_biased,axis=1)
+    Nft=len(eunbias_FTSlsd)
+    eunbias_FTSbuf = jnp.hstack([eunbias_FTSlsd, jnp.zeros(Nnu-Nft+1)])
+    eunbias_Slsd = jnp.fft.irfft(eunbias_FTSbuf)
+    return g_bias(nu_grid,T)*eunbias_Slsd
+    
 
 if __name__ == "__main__":
     import jax.numpy as jnp
@@ -118,21 +130,20 @@ if __name__ == "__main__":
     Ng_elower = len(elower_grid)
     k = jnp.fft.rfftfreq(2*Ng_nu, 1)
     lsd_array = jnp.zeros((Ng_nu,Ng_elower))
-    Slsd=inc2D_initlsd(lsd_array, mdbCH4.Sij0, cont_inilsd_nu, index_inilsd_nu, cont_inilsd_elower, index_inilsd_elower)
+    initial_biased_lsd=inc2D_initlsd(lsd_array, mdbCH4.Sij0, cont_inilsd_nu, index_inilsd_nu, cont_inilsd_elower, index_inilsd_elower)
 
         
-    fftval = np.fft.rfft(Slsd, axis=0)
+    fftval = np.fft.rfft(initial_biased_lsd, axis=0)
     fftval_lowpassed=lowpass(fftval,compress_rate=40)
+    Ttest=1000.0
+    print(np.shape(fftval_lowpassed))
+    
+    Slsd=unbiased_lsd(fftval_lowpassed,Ttest,nus,elower_grid)
 
     ### just checking
-    fftval=np.zeros_like(fftval,dtype=np.complex128)
-    Ncut=np.shape(fftval_lowpassed)[0]
-    fftval[:Ncut,:]=fftval_lowpassed
-    Slsdx = np.fft.irfft(fftval, axis=0)    
     fig=plt.figure()
     ax=fig.add_subplot(111)
-    plt.plot((Slsd[:,60]),alpha=0.3)
-    plt.plot((Slsdx[:,60]),alpha=0.3)
+    plt.plot((Slsd),alpha=0.3)
     plt.yscale("log")
     plt.show()
     ###
