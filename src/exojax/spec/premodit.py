@@ -20,17 +20,18 @@ def npgetix_exp(x, xv):
     Note:
        cont is the contribution for i=index+1. 1 - cont is the contribution for i=index. For other i, the contribution should be zero.
     """
-#    Ttyp=1000.0
-#    if Ttyp > 300.0:
-#        x=np.exp(-hcperk*x*(1.0/Ttyp-1.0/Tref))
-#        xv=np.exp(-hcperk*xv*(1.0/Ttyp-1.0/Tref))
+
+    Ttyp=1500.0
+    if Ttyp is not None:
+        x=np.exp(-hcperk*x*(1.0/Ttyp-1.0/Tref))
+        xv=np.exp(-hcperk*xv*(1.0/Ttyp-1.0/Tref))
     
     indarr = np.arange(len(xv))
     pos = np.interp(x, xv, indarr)
     index = (pos).astype(int)
     cont = (pos-index)
-#    return cont, index    
-    return 1.0, index #debug
+    return cont, index    
+#    return 1.0, index #debug
 
 
 def make_initial_biased_LSD(nu_grid, nu_lines, Tmax, elower, interval_contrast_lsd=1.0):
@@ -103,7 +104,7 @@ def inc2D_initlsd(a, w, cx, ix, cy, iy):
     a = a.at[joi[ix+1, iy+1]].add(w*cx*cy)
     a = a.at[joi[ix, iy+1]].add(w*(1-cx)*cy)
     return a
-
+ 
 
 def lowpass(fftval,compress_rate):
     """lowpass filter for the biased LSD
@@ -144,7 +145,7 @@ def unbiased_lsd_lowpass(FT_Slsd_biased,T,nu_grid,elower_grid, qr):
     eunbias_Slsd = jnp.fft.irfft(eunbias_FTSbuf)
     return g_bias(nu_grid,T)*eunbias_Slsd/qr(T)
 
-def unbiased_lsd(FT_Slsd_biased,T,nu_grid,elower_grid,qr):
+def unbiased_lsd(Slsd_biased,T,nu_grid,elower_grid,qr):
     """ unbias the biased LSD
 
     Args:
@@ -154,8 +155,9 @@ def unbiased_lsd(FT_Slsd_biased,T,nu_grid,elower_grid,qr):
 
     """
     Nnu=int(len(nu_grid)/2)
-    eunbias_FTSlsd = jnp.sum(f_bias(elower_grid,T)*FT_Slsd_biased,axis=1)
-    eunbias_Slsd = jnp.fft.irfft(eunbias_FTSlsd)
+    eunbias_Slsd = np.sum(f_bias(elower_grid,T)*Slsd_biased,axis=1)
+#    eunbias_Slsd = np.fft.irfft(eunbias_FTSlsd)
+#    return g_bias(nu_grid,T)*eunbias_Slsd/qr(T)
     return g_bias(nu_grid,T)*eunbias_Slsd/qr(T)
 
 
@@ -168,29 +170,42 @@ if __name__ == "__main__":
     nus=np.logspace(np.log10(6020.0), np.log10(6080.0), 40000, dtype=np.float64)
     mdbCH4 = moldb.MdbExomol('.database/CH4/12C-1H4/YT10to10/', nus)
     Tmax=1500.0
-    cont_inilsd_nu, index_inilsd_nu, cont_inilsd_elower, index_inilsd_elower, elower_grid=make_initial_biased_LSD(nus, mdbCH4.nu_lines, Tmax, mdbCH4.elower, interval_contrast_lsd=0.01)
+    i=0
+    #    j=10000
+    #    n=j*100
+    n=len(mdbCH4.nu_lines)
+    j=1
+    cont_inilsd_nu, index_inilsd_nu, cont_inilsd_elower, index_inilsd_elower, elower_grid=make_initial_biased_LSD(nus, mdbCH4.nu_lines[i:n:j], Tmax, mdbCH4.elower[i:n:j], interval_contrast_lsd=0.1)
+    print(mdbCH4.nu_lines[i:n:j])
+    print(mdbCH4.elower[i:n:j])
+    
     Ng_nu = len(nus)
     Ng_elower = len(elower_grid)
 
-    k = jnp.fft.rfftfreq(2*Ng_nu, 1)
+    k = np.fft.rfftfreq(2*Ng_nu, 1)
     lsd_array = jnp.zeros((Ng_nu,Ng_elower))
-    initial_biased_lsd=inc2D_initlsd(lsd_array, mdbCH4.Sij0, cont_inilsd_nu, index_inilsd_nu, cont_inilsd_elower, index_inilsd_elower)
+    fac=1.0/np.max(mdbCH4.Sij0[i:n:j])
+    initial_biased_lsd=inc2D_initlsd(lsd_array, mdbCH4.Sij0[i:n:j]*fac, cont_inilsd_nu, index_inilsd_nu, cont_inilsd_elower, index_inilsd_elower)
 
     Ttest=1500.0
     #fftval=lowpass(fftval,compress_rate=40)
     #Slsd=unbiased_lsd_lowpass(fftval,Ttest,nus,elower_grid,mdbCH4.qr_interp)
-    fftval = np.fft.rfft(initial_biased_lsd, axis=0)
-    Slsd=unbiased_lsd(fftval,Ttest,nus,elower_grid,mdbCH4.qr_interp)
+    #val = np.fft.rfft(initial_biased_lsd, axis=0)
+    #Slsd=unbiased_lsd_fft(val,Ttest,nus,elower_grid,mdbCH4.qr_interp)*1.e-26
 
+    val=initial_biased_lsd
+    Slsd=unbiased_lsd(val,Ttest,nus,elower_grid,mdbCH4.qr_interp)/fac
+    
     #DIRECT COMPUTATION of LSD
     from exojax.spec.hitran import SijT    
     def inc1D(a, w, cx, ix):
         a = a.at[joi[ix]].add(w*(1-cx))
         a = a.at[joi[ix+1]].add(w*cx)
         return a
-    cont_inilsd_nu, index_inilsd_nu = npgetix(mdbCH4.nu_lines, nus)
+
+    cont_inilsd_nu, index_inilsd_nu = npgetix(mdbCH4.nu_lines[i:n:j], nus)
     qT = mdbCH4.qr_interp(Ttest)
-    S=SijT(Ttest, mdbCH4.logsij0, mdbCH4.nu_lines, mdbCH4.elower, qT)
+    S=SijT(Ttest, mdbCH4.logsij0[i:n:j], mdbCH4.nu_lines[i:n:j], mdbCH4.elower[i:n:j], qT)
     Slsd_direct = jnp.zeros_like(nus)
     Slsd_direct = inc1D(Slsd_direct, S, cont_inilsd_nu, index_inilsd_nu)
     print(np.mean(Slsd/Slsd_direct-1.0))
