@@ -11,7 +11,7 @@ def getix(x, xv):
 
     Args:
         x: x array
-        xv: x grid 
+        xv: x grid, should be ascending order 
 
     Returns:
         cont (contribution)
@@ -41,7 +41,7 @@ def npgetix(x, xv):
 
     Args:
         x: x array
-        xv: x grid
+        xv: x grid, should be ascending order
 
     Returns:
         cont (contribution)

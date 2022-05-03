@@ -6,6 +6,32 @@ from exojax.spec.lsd import npgetix
 from exojax.utils.constants import hcperk, Tref
 
 
+def npgetix_exp(x, xv):
+    """numpy version of getix.
+
+    Args:
+        x: x array
+        xv: x grid
+
+    Returns:
+        cont (contribution)
+        index (index)
+
+    Note:
+       cont is the contribution for i=index+1. 1 - cont is the contribution for i=index. For other i, the contribution should be zero.
+    """
+#    Ttyp=1000.0
+#    if Ttyp > 300.0:
+#        x=np.exp(-hcperk*x*(1.0/Ttyp-1.0/Tref))
+#        xv=np.exp(-hcperk*xv*(1.0/Ttyp-1.0/Tref))
+    
+    indarr = np.arange(len(xv))
+    pos = np.interp(x, xv, indarr)
+    index = (pos).astype(int)
+    cont = (pos-index)
+#    return cont, index    
+    return 1.0, index #debug
+
 
 def make_initial_biased_LSD(nu_grid, nu_lines, Tmax, elower, interval_contrast_lsd=1.0):
     """make initial biased LSD array to compute the power spectrum of the LSD
@@ -28,7 +54,7 @@ def make_initial_biased_LSD(nu_grid, nu_lines, Tmax, elower, interval_contrast_l
 
     """
     elower_grid=make_elower_grid(Tmax, elower, interval_contrast=interval_contrast_lsd)
-    cont_inilsd_elower, index_inilsd_elower = npgetix(elower, elower_grid)
+    cont_inilsd_elower, index_inilsd_elower = npgetix_exp(elower, elower_grid)
     cont_inilsd_nu, index_inilsd_nu = npgetix(nu_lines, nu_grid)
     return cont_inilsd_nu, index_inilsd_nu, cont_inilsd_elower, index_inilsd_elower, elower_grid
 
@@ -99,6 +125,7 @@ def g_bias(nu_in,T):
     """g bias function
     """
     return jnp.expm1(-hcperk*nu_in/T) / jnp.expm1(-hcperk*nu_in/Tref)
+    #return  (1.0-jnp.exp(-hcperk*nu_in/T)) / (1.0-jnp.exp(-hcperk*nu_in/Tref))
 
 
 def unbiased_lsd_lowpass(FT_Slsd_biased,T,nu_grid,elower_grid, qr):
@@ -141,31 +168,34 @@ if __name__ == "__main__":
     nus=np.logspace(np.log10(6020.0), np.log10(6080.0), 40000, dtype=np.float64)
     mdbCH4 = moldb.MdbExomol('.database/CH4/12C-1H4/YT10to10/', nus)
     Tmax=1500.0
-    cont_inilsd_nu, index_inilsd_nu, cont_inilsd_elower, index_inilsd_elower, elower_grid=make_initial_biased_LSD(nus, mdbCH4.nu_lines, Tmax, mdbCH4.elower, interval_contrast_lsd=0.05)
+    cont_inilsd_nu, index_inilsd_nu, cont_inilsd_elower, index_inilsd_elower, elower_grid=make_initial_biased_LSD(nus, mdbCH4.nu_lines, Tmax, mdbCH4.elower, interval_contrast_lsd=0.01)
     Ng_nu = len(nus)
     Ng_elower = len(elower_grid)
+
     k = jnp.fft.rfftfreq(2*Ng_nu, 1)
     lsd_array = jnp.zeros((Ng_nu,Ng_elower))
     initial_biased_lsd=inc2D_initlsd(lsd_array, mdbCH4.Sij0, cont_inilsd_nu, index_inilsd_nu, cont_inilsd_elower, index_inilsd_elower)
 
-    Ttest=1000.0
-
+    Ttest=1500.0
     #fftval=lowpass(fftval,compress_rate=40)
     #Slsd=unbiased_lsd_lowpass(fftval,Ttest,nus,elower_grid,mdbCH4.qr_interp)
     fftval = np.fft.rfft(initial_biased_lsd, axis=0)
     Slsd=unbiased_lsd(fftval,Ttest,nus,elower_grid,mdbCH4.qr_interp)
 
+    #DIRECT COMPUTATION of LSD
     from exojax.spec.hitran import SijT    
     def inc1D(a, w, cx, ix):
         a = a.at[joi[ix]].add(w*(1-cx))
         a = a.at[joi[ix+1]].add(w*cx)
         return a
     cont_inilsd_nu, index_inilsd_nu = npgetix(mdbCH4.nu_lines, nus)
-    qT= mdbCH4.qr_interp(Ttest)
+    qT = mdbCH4.qr_interp(Ttest)
     S=SijT(Ttest, mdbCH4.logsij0, mdbCH4.nu_lines, mdbCH4.elower, qT)
     Slsd_direct = jnp.zeros_like(nus)
     Slsd_direct = inc1D(Slsd_direct, S, cont_inilsd_nu, index_inilsd_nu)
-    
+    print(np.mean(Slsd/Slsd_direct-1.0))
+
+
     ### just checking
     fig=plt.figure()
     ax=fig.add_subplot(211)
@@ -173,7 +203,9 @@ if __name__ == "__main__":
     plt.plot((Slsd_direct),alpha=0.3)
     plt.yscale("log")
     ax=fig.add_subplot(212)
-    plt.plot((Slsd/Slsd_direct-1.0),alpha=0.3)
+    plt.plot((Slsd/Slsd_direct-1.0),Slsd,".",alpha=0.3)
+    plt.xlabel("error (premodit - direct)/direct")
+    plt.yscale("log")
     plt.show()
     ###
 
