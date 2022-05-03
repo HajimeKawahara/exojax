@@ -7,10 +7,10 @@ import tqdm
 import jax.numpy as jnp
 import warnings
 from exojax.utils.constants import hcperk
+from exojax.spec.hitran import SijT
 
 
-
-def plg_elower_addcon(indexa,Na,cnu,indexnu,nu_grid,logsij0,elower,elower_grid=None,Nelower=10,Ncrit=0,reshape=False, weedout=False, Tpred=296., preov=40.):
+def plg_elower_addcon(indexa,Na,cnu,indexnu,nu_grid,mdb,elower_grid=None,Nelower=10,Ncrit=0,reshape=False, weedout=False, Tpred=296., preov=0.):
     """Pseudo Line Grid for elower w/ an additional condition
     
     Args:
@@ -19,10 +19,9 @@ def plg_elower_addcon(indexa,Na,cnu,indexnu,nu_grid,logsij0,elower,elower_grid=N
        cnu: contribution of wavenumber for LSD
        indexnu: nu index
        nugrid: nu grid
-       logsij0: log line strength
-       elower: elower
+       mdb: molecular database (instance made by the MdbExomol/MdbHit class in moldb.py)
        elower_grid: elower_grid (optional)
-       Nelower: # of division of elower between min to max values when elower_grid is not given
+       Nelower: # of division of elower between min to max values (when elower_grid is not given)
        Ncrit: frrozen line number per bin
        reshape: reshaping output arrays
        weedout: Is it ok to remove weakest lines or not?
@@ -38,9 +37,11 @@ def plg_elower_addcon(indexa,Na,cnu,indexnu,nu_grid,logsij0,elower,elower_grid=N
        nonzeropl_mask: mask for pseudo-lines w/ non-zero
 
     """
+    elower = mdb.elower
     Nnugrid=len(nu_grid)
     Tref = 296.0
-    Tpred = Tpred * 1.1
+    Tpred = Tpred * 1.0
+    preov = max(- hcperk*(elower/Tpred - elower/Tref)) - 80. if preov==0. else preov
     #kT0=10000.0
     warnings.simplefilter('error')
     try:
@@ -58,7 +59,7 @@ def plg_elower_addcon(indexa,Na,cnu,indexnu,nu_grid,logsij0,elower,elower_grid=N
         Nelower=len(expme_grid)
     warnings.simplefilter('default')
 
-    qlogsij0,qcnu,num_unique,frozen_mask=get_qlogsij0_addcon(indexa,Na,cnu,indexnu,Nnugrid,logsij0,expme,expme_grid, elower=elower, elower_grid=elower_grid, Nelower=10,Ncrit=Ncrit, Tpred=Tpred)
+    qlogsij0,qcnu,num_unique,frozen_mask=get_qlogsij0_addcon(indexa,Na,cnu,indexnu,Nnugrid,mdb,expme,expme_grid,Ncrit=Ncrit, Tpred=Tpred) #, elower_grid=elower_grid, Nelower=10
     
     nonzeropl_mask=qlogsij0>-np.inf
     '''if weedout:
@@ -67,7 +68,7 @@ def plg_elower_addcon(indexa,Na,cnu,indexnu,nu_grid,logsij0,elower,elower_grid=N
     else:
         nonzeropl_mask = qlogsij0<0'''
     
-    Nline=len(logsij0)
+    Nline=len(elower)
     Nunf=np.sum(~frozen_mask)
     Npl=len(qlogsij0[nonzeropl_mask])
     print("# of original lines:",Nline)        
@@ -84,7 +85,7 @@ def plg_elower_addcon(indexa,Na,cnu,indexnu,nu_grid,logsij0,elower,elower_grid=N
         
     return qlogsij0,qcnu,num_unique,elower_grid,frozen_mask,nonzeropl_mask
 
-def get_qlogsij0_addcon(indexa,Na,cnu,indexnu,Nnugrid,logsij0,expme,expme_grid, elower, elower_grid, Nelower=10,Ncrit=0, Tpred=296.):
+def get_qlogsij0_addcon(indexa,Na,cnu,indexnu,Nnugrid,mdb,expme,expme_grid, Ncrit=0, Tpred=296.):
     """gether (freeze) lines w/ additional indexing
 
     Args:
@@ -93,10 +94,11 @@ def get_qlogsij0_addcon(indexa,Na,cnu,indexnu,Nnugrid,logsij0,expme,expme_grid, 
        cnu: contribution of wavenumber for LSD
        indexnu: index of wavenumber
        Nnugrid: number of nu grid
-       logsij0: log line strength
+       mdb: molecular database (instance made by the MdbExomol/MdbHit class in moldb.py)
        expme: exp(-elower/kT0)
        expme_grid: exp(-elower/kT0)_grid
-       Nelower: # of division of elower between min to max values
+       Ncrit:
+       Tpred:
 
     """
     m=len(expme_grid)
@@ -113,8 +115,15 @@ def get_qlogsij0_addcon(indexa,Na,cnu,indexnu,Nnugrid,logsij0,expme,expme_grid, 
     erange=range(0,Ng)
     frozen_eindex=np.array(erange)[lmask]
     frozen_mask=np.isin(eindex,frozen_eindex)
+    
+    SijTpred_frozen = SijT(Tpred, \
+                    mdb.logsij0[frozen_mask], mdb.nu_lines[frozen_mask], mdb.elower[frozen_mask], \
+                    qT=mdb.qr_interp(Tpred))
+    persist_freezing = SijTpred_frozen < max(SijTpred_frozen)/1000
+    index_persist_freezing = np.where(frozen_mask)[0][persist_freezing]
+    frozen_mask = np.isin(np.arange(len(frozen_mask)), index_persist_freezing)
         
-    Sij=np.exp(logsij0)
+    Sij=np.exp(mdb.logsij0)
     #qlogsij0
     qlogsij0=np.bincount(eindex,weights=Sij*(1.0-cont)*frozen_mask,minlength=Ng)
     qlogsij0=qlogsij0+np.bincount(eindex+1,weights=Sij*cont*frozen_mask,minlength=Ng)
