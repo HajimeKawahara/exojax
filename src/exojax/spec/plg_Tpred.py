@@ -10,7 +10,7 @@ from exojax.utils.constants import hcperk
 from exojax.spec.hitran import SijT
 
 
-def plg_elower_addcon(indexa,Na,cnu,indexnu,nu_grid,mdb,elower_grid=None,Nelower=10,Ncrit=0,reshape=False, weedout=False, Tpred=296., preov=0.):
+def plg_elower_addcon(indexa,Na,cnu,indexnu,nu_grid,mdb,elower_grid=None,Nelower=10,Ncrit=0,reshape=False, weedout=False, Tpred=296., preov=0., coefTpred=1.):
     """Pseudo Line Grid for elower w/ an additional condition
     
     Args:
@@ -25,7 +25,7 @@ def plg_elower_addcon(indexa,Na,cnu,indexnu,nu_grid,mdb,elower_grid=None,Nelower
        Ncrit: frrozen line number per bin
        reshape: reshaping output arrays
        weedout: Is it ok to remove weakest lines or not?
-       Tpred: typical temperature in the atmosphere
+       Tpred: guess of typical temperature in the atmosphere
        preov: ad hoc parameter to prevent overflow
 
     Returns:
@@ -40,20 +40,20 @@ def plg_elower_addcon(indexa,Na,cnu,indexnu,nu_grid,mdb,elower_grid=None,Nelower
     elower = mdb.elower
     Nnugrid=len(nu_grid)
     Tref = 296.0
-    Tpred = Tpred * 1.0
-    preov = max(- hcperk*(elower/Tpred - elower/Tref)) - 80. if preov==0. else preov
+    Tpredrev = Tpred * coefTpred
+    preov = max(- hcperk*(elower/Tpredrev - elower/Tref)) - 80. if preov==0. else preov
     #kT0=10000.0
     warnings.simplefilter('error')
     try:
-        expme = np.exp(- hcperk*(elower/Tpred - elower/Tref) - preov)
+        expme = np.exp(- hcperk*(elower/Tpredrev - elower/Tref) - preov)
     except RuntimeWarning as e:
         raise Exception(str(e)+' :\t Please adjust "preov"...')
     if elower_grid is None:
         margin = 1.0
-        min_expme = np.exp(- hcperk*((min(elower)-margin)/Tpred - (min(elower)-margin)/Tref) - preov)
-        max_expme = np.exp(- hcperk*((max(elower)+margin)/Tpred - (max(elower)+margin)/Tref) - preov)
+        min_expme = np.exp(- hcperk*((min(elower)-margin)/Tpredrev - (min(elower)-margin)/Tref) - preov)
+        max_expme = np.exp(- hcperk*((max(elower)+margin)/Tpredrev - (max(elower)+margin)/Tref) - preov)
         expme_grid = np.linspace(min_expme, max_expme, Nelower)
-        elower_grid = (np.log(expme_grid) + preov) / (-hcperk) / (1/Tpred - 1/Tref)
+        elower_grid = (np.log(expme_grid) + preov) / (-hcperk) / (1/Tpredrev - 1/Tref)
     else:
         expme_grid=np.exp(-elower_grid/kT0)
         Nelower=len(expme_grid)
@@ -97,8 +97,8 @@ def get_qlogsij0_addcon(indexa,Na,cnu,indexnu,Nnugrid,mdb,expme,expme_grid, Ncri
        mdb: molecular database (instance made by the MdbExomol/MdbHit class in moldb.py)
        expme: exp(-elower/kT0)
        expme_grid: exp(-elower/kT0)_grid
-       Ncrit:
-       Tpred:
+       Ncrit: frrozen line number per bin
+       Tpred: guess of typical temperature in the atmosphere
 
     """
     m=len(expme_grid)
