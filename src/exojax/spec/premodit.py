@@ -2,7 +2,7 @@
 
 """
 import numpy as np
-from exojax.spec.lsd import npgetix, npadd2D, npadd1D
+from exojax.spec.lsd import npgetix, npadd2D
 from exojax.utils.constants import hcperk, Tref
 
 def compute_dElower(T,interval_contrast=0.1):
@@ -115,8 +115,6 @@ def unbiased_lsd(lbd_biased,T,nu_grid,elower_grid,qr):
     """
     Nnu=int(len(nu_grid)/2)
     eunbias_lbd = jnp.sum(jnp.exp(logf_bias(elower_grid,T)+lbd_biased),axis=1)
-#    eunbias_Slsd = np.fft.irfft(eunbias_FTSlsd)
-#    return g_bias(nu_grid,T)*eunbias_Slsd/qr(T)
     return g_bias(nu_grid,T)*eunbias_lbd/qr(T)
 
 
@@ -130,9 +128,6 @@ def lowpass(fftval,compress_rate):
     high_freq_norm_squared=np.sum(np.abs(fftval[Ncut:,:])**2,axis=0)
     lowpassed_fftval[0,:]=np.sqrt(np.abs(lowpassed_fftval[0,:])**2+high_freq_norm_squared)
     return lowpassed_fftval
-
-
-
 
 def unbiased_lsd_lowpass(FT_Slsd_biased,T,nu_grid,elower_grid, qr):
     """ unbias the biased LSD lowpass filtered
@@ -150,7 +145,23 @@ def unbiased_lsd_lowpass(FT_Slsd_biased,T,nu_grid,elower_grid, qr):
     eunbias_Slsd = jnp.fft.irfft(eunbias_FTSbuf)
     return g_bias(nu_grid,T)*eunbias_Slsd/qr(T)
 
+def compare_with_direct(mdb,Ttest=1000.0,interval_contrast=0.1,Ttyp=2000.0):
+    """ compare the premodit LSD with the direct computation of LSD
 
+    """
+    from exojax.spec.lsd import npadd1D
+    from exojax.spec.hitran import SijT        
+    elower_grid=make_elower_grid(Ttyp, mdb.elower, interval_contrast=interval_contrast)
+    lbd=make_LBD(mdb.Sij0, mdb.nu_lines, nus, mdb.elower, elower_grid, Ttyp)    
+    Slsd=unbiased_lsd(lbd,Ttest,nus,elower_grid,mdb.qr_interp)
+    cont_inilsd_nu, index_inilsd_nu = npgetix(mdb.nu_lines, nus)
+    qT = mdb.qr_interp(Ttest)
+    S=SijT(Ttest, mdb.logsij0, mdb.nu_lines, mdb.elower, qT)
+    Slsd_direct = np.zeros_like(nus,dtype=np.float64)
+    Slsd_direct = npadd1D(Slsd_direct, S, cont_inilsd_nu, index_inilsd_nu)
+    print("Number of the E_lower grid=",len(elower_grid))
+    print("max deviation=",np.max(np.abs(Slsd/Slsd_direct-1.0)))
+    return Slsd, Slsd_direct
 
 if __name__ == "__main__":
     import jax.numpy as jnp
@@ -160,48 +171,13 @@ if __name__ == "__main__":
 
     nus=np.logspace(np.log10(6020.0), np.log10(6080.0), 40000, dtype=np.float64)
     mdbCH4 = moldb.MdbExomol('.database/CH4/12C-1H4/YT10to10/', nus)
-    Tmax=1500.0
-    i=0
-#    j=1000000
-#    n=j*100
-#    j=1000
-#    n=j*1000
 
-    n=len(mdbCH4.nu_lines)
-    j=1
-
-    Ttest=1500.0
     #fftval=lowpass(fftval,compress_rate=40)
     #Slsd=unbiased_lsd_lowpass(fftval,Ttest,nus,elower_grid,mdbCH4.qr_interp)
     #val = np.fft.rfft(initial_biased_lsd, axis=0)
-
     #Slsd=unbiased_lsd_fft(val,Ttest,nus,elower_grid,mdbCH4.qr_interp)*1.e-26
-    elower_grid=make_elower_grid(Ttest, mdbCH4.elower[i:n:j], interval_contrast=0.01)
-    lbd=make_LBD(mdbCH4.Sij0[i:n:j], mdbCH4.nu_lines[i:n:j], nus, mdbCH4.elower[i:n:j], elower_grid, Ttest)
-    Slsd=unbiased_lsd(lbd,Ttest,nus,elower_grid,mdbCH4.qr_interp)
-    
-    #DIRECT COMPUTATION of LSD
-    from exojax.spec.hitran import SijT
-    cont_inilsd_nu, index_inilsd_nu = npgetix(mdbCH4.nu_lines[i:n:j], nus)
-    qT = mdbCH4.qr_interp(Ttest)
-    S=SijT(Ttest, mdbCH4.logsij0[i:n:j], mdbCH4.nu_lines[i:n:j], mdbCH4.elower[i:n:j], qT)
-    Slsd_direct = np.zeros_like(nus,dtype=np.float64)
-    Slsd_direct = npadd1D(Slsd_direct, S, cont_inilsd_nu, index_inilsd_nu)
-    print(np.mean(Slsd/Slsd_direct-1.0))
 
 
-    ### just checking
-    fig=plt.figure()
-    ax=fig.add_subplot(211)
-    plt.plot((Slsd),alpha=0.3)
-    plt.plot((Slsd_direct),alpha=0.3)
-    plt.yscale("log")
-    ax=fig.add_subplot(212)
-    plt.plot((Slsd/Slsd_direct-1.0),Slsd,".",alpha=0.3)
-    plt.xlabel("error (premodit - direct)/direct")
-    plt.yscale("log")
-    plt.show()
-    ###
 
 
 
@@ -212,3 +188,14 @@ if __name__ == "__main__":
     #    fftvalsum = jnp.sum(fftval*vk, axis=(1,))
     #    xs = jnp.fft.irfft(fftvalsum)[:Ng_nu]*R/nus
     
+    Slsd,Slsd_direct=compare_with_direct(mdbCH4,Ttest=1000.0,interval_contrast=0.1,Ttyp=2000.0)    
+    fig=plt.figure()
+    ax=fig.add_subplot(211)
+    plt.plot((Slsd),alpha=0.3)
+    plt.plot((Slsd_direct),alpha=0.3)
+    plt.yscale("log")
+    ax=fig.add_subplot(212)
+    plt.plot((Slsd/Slsd_direct-1.0),Slsd,".",alpha=0.3)
+    plt.xlabel("error (premodit - direct)/direct")
+    plt.yscale("log")
+    plt.show()
