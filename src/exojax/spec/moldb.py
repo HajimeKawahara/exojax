@@ -781,6 +781,29 @@ class MdbHit(object):
             qr_line[mask] = qrx[0, idx]
         return qr_line
 
+    def Qr_line_HAPI_jax(self, T):
+        """Partition Function ratio using HAPI partition sum.
+
+        Args:
+           T: temperature (K)
+
+        Returns:
+           Qr_line, partition function ratio array for lines [Nlines]
+
+        Note:
+           Nlines=len(self.nu_lines)
+        """
+        # qr_line = np.ones_like(self.isoid, dtype=np.float64)
+        # qrx = self.Qr_HAPI([T])
+        # for idx, iso in enumerate(self.uniqiso):
+        #     mask = self.isoid == iso
+        #     qr_line[mask] = qrx[0, idx]
+
+        qr_line = []
+        for isoid in self.isoid:
+            qr_line.append(self.qr_iso_interp(isoid, T))
+        return qr_line
+
     def Qr_layer_HAPI(self, Tarr):
         """Partition Function ratio using HAPI partition sum.
 

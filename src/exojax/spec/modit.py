@@ -21,6 +21,9 @@ from exojax.spec import gamma_natural
 from exojax.spec.hitran import SijT
 from exojax.spec import normalized_doppler_sigma
 
+# hitran/hitemp
+from exojax.spec.hitran import gamma_hitran
+
 # vald
 from exojax.spec.atomll import gamma_vald3, interp_QT284
 
@@ -289,6 +292,62 @@ def setdgm_exomol(mdb, fT, Parr, R, molmass, res, *kargs):
     Tarr_list = fT(*kargs)
     for Tarr in Tarr_list:
         SijM, ngammaLM, nsigmaDl = exomol(mdb, Tarr, Parr, R, molmass)
+        set_dgm_minmax.append(minmax_dgmatrix(ngammaLM, res))
+    dgm_ngammaL = precompute_dgmatrix(set_dgm_minmax, res=res)
+    return jnp.array(dgm_ngammaL)
+
+
+def hitran(mdb, Tarr, Parr, Pself, R, molmass):
+    """compute molecular line information required for MODIT using HITRAN/HITEMP mdb.
+    Args:
+       mdb: mdb instance
+       Tarr: Temperature array
+       Parr: Pressure array
+       Pself: Partial pressure array
+       R: spectral resolution
+       molmass: molecular mass
+    Returns:
+       line intensity matrix,
+       normalized gammaL matrix,
+       normalized sigmaD matrix
+    """
+    qt = vmap(mdb.Qr_line_HAPI_jax)(Tarr)
+    qt = jnp.array(qt).T
+    SijM = jit(vmap(SijT, (0, None, None, None, 0)))(
+        Tarr, mdb.logsij0, mdb.dev_nu_lines, mdb.elower, qt)
+    gammaLMP = jit(vmap(gamma_hitran, (0, 0, 0, None, None, None)))(
+        Parr, Tarr, Pself, mdb.n_air, mdb.gamma_air, mdb.gamma_self)
+    gammaLMN = gamma_natural(mdb.A)
+    gammaLM = gammaLMP+gammaLMN[None, :]
+    ngammaLM = gammaLM/(mdb.dev_nu_lines/R)
+    nsigmaDl = normalized_doppler_sigma(Tarr, molmass, R)[:, jnp.newaxis]
+    return SijM, ngammaLM, nsigmaDl
+
+
+def setdgm_hitran(mdb, fT, Parr, Pself_ref, R, molmass, res, *kargs):
+    """Easy Setting of DIT Grid Matrix (dgm) using HITRAN/HITEMP.
+    Args:
+       mdb: mdb instance
+       fT: function of temperature array
+       Parr: pressure array
+       Pself_ref: reference partial pressure array
+       R: spectral resolution
+       molmass: molecular mass
+       res: resolution of dgm
+       *kargs: arguments for fT
+    Returns:
+       DIT Grid Matrix (dgm) of normalized gammaL
+    Example:
+       >>> fT = lambda T0,alpha: T0[:,None]*(Parr[None,:]/Pref)**alpha[:,None]
+       >>> T0_test=np.array([1100.0,1500.0,1100.0,1500.0])
+       >>> alpha_test=np.array([0.2,0.2,0.05,0.05])
+       >>> res=0.2
+       >>> dgm_ngammaL=setdgm_hitran(mdbCH4,fT,Parr,Pself,R,molmassCH4,res,T0_test,alpha_test)
+    """
+    set_dgm_minmax = []
+    Tarr_list = fT(*kargs)
+    for Tarr in Tarr_list:
+        SijM, ngammaLM, nsigmaDl = hitran(mdb, Tarr, Parr, Pself_ref, R, molmass)
         set_dgm_minmax.append(minmax_dgmatrix(ngammaLM, res))
     dgm_ngammaL = precompute_dgmatrix(set_dgm_minmax, res=res)
     return jnp.array(dgm_ngammaL)
