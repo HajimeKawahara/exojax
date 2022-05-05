@@ -1,4 +1,8 @@
-"""functions to compute line shape matrices
+"""functions for computation of line shape density (LSD) 
+
+   * there are both numpy and jnp versions. (np)*** is numpy version.
+   * (np)getix provides the contribution and index.
+   * (np)add(x)D constructs the (x)Dimensional LSD array given the contribution and index.
 
 """
 from jax.numpy import index_exp as joi
@@ -57,6 +61,93 @@ def npgetix(x, xv):
     return cont, index
 
 
+def add2D(a, w, cx, ix, cy, iy):
+    """Add into an array when contirbutions and indices are given (2D).
+
+    Args:
+        a: lineshape density (LSD) array (np.array)
+        w: weight (N)
+        cx: given contribution for x 
+        ix: given index for x 
+        cy: given contribution for y 
+        iy: given index for y
+
+    Returns:
+        a
+
+    """
+    a = a.at[joi[ix, iy]].add(w*(1-cx)*(1-cy))
+    a = a.at[joi[ix, iy+1]].add(w*(1-cx)*cy)
+    a = a.at[joi[ix+1, iy]].add(w*cx*(1-cy))
+    a = a.at[joi[ix+1, iy+1]].add(w*cx*cy)
+    return a
+
+def add3D(a, w, cx, ix, cy, iy, cz, iz):
+    """Add into an array when contirbutions and indices are given (3D).
+
+    Args:
+        a: lineshape density (LSD) array (np.array)
+        w: weight (N)
+        cx: given contribution for x 
+        ix: given index for x 
+        cy: given contribution for y 
+        iy: given index for y
+        cz: given contribution for z 
+        iz: given index for z
+
+    Returns:
+        a
+
+    """
+    a = a.at[joi[ix, iy, iz]].add(w*(1-cx)*(1-cy)*(1-cz))
+    a = a.at[joi[ix, iy+1, iz]].add(w*(1-cx)*cy*(1-cz))
+    a = a.at[joi[ix+1, iy, iz]].add(w*cx*(1-cy)*(1-cz))
+    a = a.at[joi[ix+1, iy+1, iz]].add(w*cx*cy*(1-cz))
+    a = a.at[joi[ix, iy, iz+1]].add(w*(1-cx)*(1-cy)*cz)
+    a = a.at[joi[ix, iy+1, iz+1]].add(w*(1-cx)*cy*cz)
+    a = a.at[joi[ix+1, iy, iz+1]].add(w*cx*(1-cy)*cz)
+    a = a.at[joi[ix+1, iy+1, iz+1]].add(w*cx*cy*cz)
+    return a
+
+def npadd1D(a, w, cx, ix):
+    """numpy version: Add into an array when contirbutions and indices are given (1D).
+
+    Args:
+        a: lineshape density (LSD) array (np.array)
+        w: weight (N)
+        cx: given contribution for x 
+        ix: given index for x 
+
+    Returns:
+        a
+
+    """
+    np.add.at(a, ix, w*(1-cx))
+    np.add.at(a, ix+1, w*cx)
+    return a
+
+def npadd2D(a, w, cx, ix, cy, iy):
+    """numpy version: Add into an array when contirbutions and indices are given (2D).
+
+    Args:
+        a: lineshape density (LSD) array (np.array)
+        w: weight (N)
+        cx: given contribution for x 
+        ix: given index for x 
+        cy: given contribution for y 
+        iy: given index for y
+
+    Returns:
+        a
+
+    """
+    np.add.at(a, (ix, iy), w*(1-cx)*(1-cy))
+    np.add.at(a, (ix+1, iy), w*cx*(1-cy))
+    np.add.at(a, (ix+1, iy+1), w*cx*cy)
+    np.add.at(a, (ix, iy+1), w*(1-cx)*cy)
+    return a
+
+
 @jit
 def inc3D_givenx(a, w, cx, ix, y, z, xv, yv, zv):
     """Compute integrated neighbouring contribution for the 3D lineshape distribution (LSD) matrix (memory reduced sum) but using given contribution and index for x .
@@ -81,19 +172,9 @@ def inc3D_givenx(a, w, cx, ix, y, z, xv, yv, zv):
         A direct sum uses huge RAM. 
 
     """
-
     cy, iy = getix(y, yv)
     cz, iz = getix(z, zv)
-
-    a = a.at[joi[ix, iy, iz]].add(w*(1-cx)*(1-cy)*(1-cz))
-    a = a.at[joi[ix, iy+1, iz]].add(w*(1-cx)*cy*(1-cz))
-    a = a.at[joi[ix+1, iy, iz]].add(w*cx*(1-cy)*(1-cz))
-    a = a.at[joi[ix+1, iy+1, iz]].add(w*cx*cy*(1-cz))
-    a = a.at[joi[ix, iy, iz+1]].add(w*(1-cx)*(1-cy)*cz)
-    a = a.at[joi[ix, iy+1, iz+1]].add(w*(1-cx)*cy*cz)
-    a = a.at[joi[ix+1, iy, iz+1]].add(w*cx*(1-cy)*cz)
-    a = a.at[joi[ix+1, iy+1, iz+1]].add(w*cx*cy*cz)
-
+    a = add3D(a, w, cx, ix, cy, iy, cz, iz)
     return a
 
 @jit
@@ -117,14 +198,7 @@ def inc2D_givenx(a, w, cx, ix, y, yv):
         A direct sum uses huge RAM. 
 
     """
-
     cy, iy = getix(y, yv)
-
-    a = a.at[joi[ix, iy]].add(w*(1-cx)*(1-cy))
-    a = a.at[joi[ix, iy+1]].add(w*(1-cx)*cy)
-    a = a.at[joi[ix+1, iy]].add(w*cx*(1-cy))
-    a = a.at[joi[ix+1, iy+1]].add(w*cx*cy)
-
+    a = add2D(a, w, cx, ix, cy, iy)
     return a
 
-    

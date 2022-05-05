@@ -2,64 +2,8 @@
 
 """
 import numpy as np
-from exojax.spec.lsd import npgetix
+from exojax.spec.lsd import npgetix, npadd2D, npadd1D
 from exojax.utils.constants import hcperk, Tref
-
-
-def npgetix_exp(x, xv):
-    """numpy version of getix.
-
-    Args:
-        x: x array
-        xv: x grid
-
-    Returns:
-        cont (contribution)
-        index (index)
-
-    Note:
-       cont is the contribution for i=index+1. 1 - cont is the contribution for i=index. For other i, the contribution should be zero.
-    """
-
-    Ttyp=1500.0
-    if Ttyp is not None:
-        x=np.exp(-hcperk*x*(1.0/Ttyp-1.0/Tref))
-        xv=np.exp(-hcperk*xv*(1.0/Ttyp-1.0/Tref))
-    
-    indarr = np.arange(len(xv))
-    pos = np.interp(x, xv, indarr)
-    index = (pos).astype(int)
-    cont = (pos-index)
-    return cont, index    
-#    return 1.0, index #debug
-
-
-def make_initial_biased_LSD(nu_grid, nu_lines, Tmax, elower, interval_contrast_lsd=1.0):
-    """make initial biased LSD array to compute the power spectrum of the LSD
-
-    Args:
-        nu_grid: wavenumenr grid [Nnugrid] (should be numpy F64)
-        nu_lines: wavenumber list of lines [Nline] (should be numpy F64)
-        Tmax: max temperature you will use.
-        elower: E lower
-        interval_contrast_lsd: interval contrast of line strength between upper and lower E lower grid
-
-    Returns:
-        contribution nu
-        index nu
-        contribution E lower
-        index E lower
-
-    Notes: 
-        initial LSD is used to compute the power spectrum of LSD. So, nu_grind should have enough resolution.
-
-    """
-    elower_grid=make_elower_grid(Tmax, elower, interval_contrast=interval_contrast_lsd)
-    cont_inilsd_elower, index_inilsd_elower = npgetix_exp(elower, elower_grid)
-    cont_inilsd_nu, index_inilsd_nu = npgetix(nu_lines, nu_grid)
-    return cont_inilsd_nu, index_inilsd_nu, cont_inilsd_elower, index_inilsd_elower, elower_grid
-
-
 
 def compute_dElower(T,interval_contrast=0.1):
     """ compute a grid interval of Elower given the grid interval of line strength
@@ -93,18 +37,88 @@ def make_elower_grid(Tmax, elower, interval_contrast):
     return min_elower + np.arange(Ng_elower)*dE
 
 
-from jax.numpy import index_exp as joi
+def npgetix_exp(x, xv, Ttyp):
+    """numpy version of getix.
 
-def inc2D_initlsd(a, w, cx, ix, cy, iy):
+    Args:
+        x: x array
+        xv: x grid
+        Ttyp: typical temperature for the temperature correction
+
+    Returns:
+        cont (contribution)
+        index (index)
+
+    Note:
+       cont is the contribution for i=index+1. 1 - cont is the contribution for i=index. For other i, the contribution should be zero.
     """
 
+    if Ttyp is not None:
+        x=np.exp(-hcperk*x*(1.0/Ttyp-1.0/Tref))
+        xv=np.exp(-hcperk*xv*(1.0/Ttyp-1.0/Tref))
+    
+    indarr = np.arange(len(xv))
+    pos = np.interp(x, xv, indarr)
+    index = (pos).astype(int)
+    cont = (pos-index)
+    return cont, index    
+
+
+def make_LBD(Sij0, nu_lines, nu_grid, elower, elower_grid, Ttyp):
+    """make logarithm biased LSD (LBD) array
+
+    Args:
+        Sij0: line strength at the refrence temepreature Tref (should be F64)
+        nu_lines: wavenumber list of lines [Nline] (should be numpy F64)
+        nu_grid: wavenumenr grid [Nnugrid] (should be numpy F64)
+        elower: E lower
+        elower_grid: E lower grid
+        Ttyp: typical temperature you will use.
+
+    Returns:
+        lbd
+
+    Notes: 
+        LBD (jnp array)
+
     """
-    a = a.at[joi[ix, iy]].add(w*(1-cx)*(1-cy))
-    a = a.at[joi[ix+1, iy]].add(w*cx*(1-cy))
-    a = a.at[joi[ix+1, iy+1]].add(w*cx*cy)
-    a = a.at[joi[ix, iy+1]].add(w*(1-cx)*cy)
-    return a
- 
+    logmin=-np.inf
+    lsd = np.zeros((len(nu_grid), len(elower_grid)),dtype=np.float64)
+
+    cx, ix = npgetix(nu_lines, nu_grid)
+    cy, iy = npgetix_exp(elower, elower_grid, Ttyp)
+    lsd=npadd2D(lsd, Sij0, cx, ix, cy, iy)
+    
+    lsd[lsd>0.0]=np.log(lsd[lsd>0.0])
+    lsd[lsd==0.0]=logmin       
+    return jnp.array(lsd)
+
+def logf_bias(elower_in,T):
+    """logarithm f bias function
+    """
+    return -hcperk*elower_in * (1./T - 1./Tref)
+
+def g_bias(nu_in,T):
+    """g bias function
+    """
+    #return jnp.expm1(-hcperk*nu_in/T) / jnp.expm1(-hcperk*nu_in/Tref)
+    return  (1.0-jnp.exp(-hcperk*nu_in/T)) / (1.0-jnp.exp(-hcperk*nu_in/Tref))
+
+def unbiased_lsd(lbd_biased,T,nu_grid,elower_grid,qr):
+    """ unbias the biased LSD
+
+    Args:
+
+    Returns:
+        LSD (unbiased)
+
+    """
+    Nnu=int(len(nu_grid)/2)
+    eunbias_lbd = jnp.sum(jnp.exp(logf_bias(elower_grid,T)+lbd_biased),axis=1)
+#    eunbias_Slsd = np.fft.irfft(eunbias_FTSlsd)
+#    return g_bias(nu_grid,T)*eunbias_Slsd/qr(T)
+    return g_bias(nu_grid,T)*eunbias_lbd/qr(T)
+
 
 def lowpass(fftval,compress_rate):
     """lowpass filter for the biased LSD
@@ -117,16 +131,7 @@ def lowpass(fftval,compress_rate):
     lowpassed_fftval[0,:]=np.sqrt(np.abs(lowpassed_fftval[0,:])**2+high_freq_norm_squared)
     return lowpassed_fftval
 
-def f_bias(elower_in,T):
-    """f bias function
-    """
-    return jnp.exp(-hcperk*elower_in * (1./T - 1./Tref))
 
-def g_bias(nu_in,T):
-    """g bias function
-    """
-    return jnp.expm1(-hcperk*nu_in/T) / jnp.expm1(-hcperk*nu_in/Tref)
-    #return  (1.0-jnp.exp(-hcperk*nu_in/T)) / (1.0-jnp.exp(-hcperk*nu_in/Tref))
 
 
 def unbiased_lsd_lowpass(FT_Slsd_biased,T,nu_grid,elower_grid, qr):
@@ -145,20 +150,6 @@ def unbiased_lsd_lowpass(FT_Slsd_biased,T,nu_grid,elower_grid, qr):
     eunbias_Slsd = jnp.fft.irfft(eunbias_FTSbuf)
     return g_bias(nu_grid,T)*eunbias_Slsd/qr(T)
 
-def unbiased_lsd(Slsd_biased,T,nu_grid,elower_grid,qr):
-    """ unbias the biased LSD
-
-    Args:
-
-    Returns:
-        LSD (unbiased)
-
-    """
-    Nnu=int(len(nu_grid)/2)
-    eunbias_Slsd = np.sum(f_bias(elower_grid,T)*Slsd_biased,axis=1)
-#    eunbias_Slsd = np.fft.irfft(eunbias_FTSlsd)
-#    return g_bias(nu_grid,T)*eunbias_Slsd/qr(T)
-    return g_bias(nu_grid,T)*eunbias_Slsd/qr(T)
 
 
 if __name__ == "__main__":
@@ -171,43 +162,31 @@ if __name__ == "__main__":
     mdbCH4 = moldb.MdbExomol('.database/CH4/12C-1H4/YT10to10/', nus)
     Tmax=1500.0
     i=0
-    #    j=10000
-    #    n=j*100
+#    j=1000000
+#    n=j*100
+#    j=1000
+#    n=j*1000
+
     n=len(mdbCH4.nu_lines)
     j=1
-    cont_inilsd_nu, index_inilsd_nu, cont_inilsd_elower, index_inilsd_elower, elower_grid=make_initial_biased_LSD(nus, mdbCH4.nu_lines[i:n:j], Tmax, mdbCH4.elower[i:n:j], interval_contrast_lsd=0.1)
-    print(mdbCH4.nu_lines[i:n:j])
-    print(mdbCH4.elower[i:n:j])
-    
-    Ng_nu = len(nus)
-    Ng_elower = len(elower_grid)
-
-    k = np.fft.rfftfreq(2*Ng_nu, 1)
-    lsd_array = jnp.zeros((Ng_nu,Ng_elower))
-    fac=1.0/np.max(mdbCH4.Sij0[i:n:j])
-    initial_biased_lsd=inc2D_initlsd(lsd_array, mdbCH4.Sij0[i:n:j]*fac, cont_inilsd_nu, index_inilsd_nu, cont_inilsd_elower, index_inilsd_elower)
 
     Ttest=1500.0
     #fftval=lowpass(fftval,compress_rate=40)
     #Slsd=unbiased_lsd_lowpass(fftval,Ttest,nus,elower_grid,mdbCH4.qr_interp)
     #val = np.fft.rfft(initial_biased_lsd, axis=0)
-    #Slsd=unbiased_lsd_fft(val,Ttest,nus,elower_grid,mdbCH4.qr_interp)*1.e-26
 
-    val=initial_biased_lsd
-    Slsd=unbiased_lsd(val,Ttest,nus,elower_grid,mdbCH4.qr_interp)/fac
+    #Slsd=unbiased_lsd_fft(val,Ttest,nus,elower_grid,mdbCH4.qr_interp)*1.e-26
+    elower_grid=make_elower_grid(Ttest, mdbCH4.elower[i:n:j], interval_contrast=0.01)
+    lbd=make_LBD(mdbCH4.Sij0[i:n:j], mdbCH4.nu_lines[i:n:j], nus, mdbCH4.elower[i:n:j], elower_grid, Ttest)
+    Slsd=unbiased_lsd(lbd,Ttest,nus,elower_grid,mdbCH4.qr_interp)
     
     #DIRECT COMPUTATION of LSD
-    from exojax.spec.hitran import SijT    
-    def inc1D(a, w, cx, ix):
-        a = a.at[joi[ix]].add(w*(1-cx))
-        a = a.at[joi[ix+1]].add(w*cx)
-        return a
-
+    from exojax.spec.hitran import SijT
     cont_inilsd_nu, index_inilsd_nu = npgetix(mdbCH4.nu_lines[i:n:j], nus)
     qT = mdbCH4.qr_interp(Ttest)
     S=SijT(Ttest, mdbCH4.logsij0[i:n:j], mdbCH4.nu_lines[i:n:j], mdbCH4.elower[i:n:j], qT)
-    Slsd_direct = jnp.zeros_like(nus)
-    Slsd_direct = inc1D(Slsd_direct, S, cont_inilsd_nu, index_inilsd_nu)
+    Slsd_direct = np.zeros_like(nus,dtype=np.float64)
+    Slsd_direct = npadd1D(Slsd_direct, S, cont_inilsd_nu, index_inilsd_nu)
     print(np.mean(Slsd/Slsd_direct-1.0))
 
 
@@ -226,6 +205,7 @@ if __name__ == "__main__":
 
 
 
+    #k = np.fft.rfftfreq(2*Ng_nu, 1)
     
     #    vk = fold_voigt_kernel_logst(
     #        k, log_nstbeta, log_ngammaL_grid, vmax, pmarray)

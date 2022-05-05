@@ -20,7 +20,7 @@ from exojax.spec import moldb, contdb
 from exojax.spec.exomol import gamma_exomol
 from exojax.spec import gamma_natural
 from exojax.spec.hitran import SijT
-from exojax.spec.dit import npgetix
+from exojax.spec.lsd import npgetix
 from exojax.spec import rtransfer as rt
 from exojax.spec.rtransfer import nugrid
 from exojax.spec.rtransfer import rtrun, dtauM, dtauCIA, nugrid
