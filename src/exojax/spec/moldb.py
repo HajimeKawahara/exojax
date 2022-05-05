@@ -736,6 +736,7 @@ class MdbHit(object):
         """interpolated partition function ratio.
 
         Args:
+           idx: index for HITRAN isotopologue number
            T: temperature
 
         Returns:
@@ -744,7 +745,7 @@ class MdbHit(object):
         return self.QT_iso_interp(idx, T)/self.QT_iso_interp(idx, self.Tref)
 
     def Qr_HAPI(self, Tarr):
-        """Partition Function ratio using HAPI partition sum.
+        """Partition Function ratio using HAPI partition data.
 
         Args:
            Tarr: temperature array (K)
@@ -763,6 +764,7 @@ class MdbHit(object):
                 raise ValueError('%.1f K is outside the supported temperature range of the HITRAN partition function data for isotope #%d of molecule #%d (%.1f -- %.1f K)' % (max(allT), iso, self.molecid, Tmin, Tmax))
             if(min(allT) < Tmin):
                 raise ValueError('%.1f K is outside the supported temperature range of the HITRAN partition function data for isotope #%d of molecule #%d (%.1f -- %.1f K)' % (min(allT), iso, self.molecid, Tmin, Tmax))
+
             Qrx_iso = jit(vmap(self.QT_iso_interp, (None, 0)))(idx, jnp.array(allT))
             Qrx.append(Qrx_iso)
         Qrx = np.array(Qrx)
@@ -770,7 +772,7 @@ class MdbHit(object):
         return qr
 
     def Qr_line_HAPI(self, T):
-        """Partition Function ratio using HAPI partition sum.
+        """Partition Function ratio using HAPI partition data.
 
         Args:
            T: temperature (K)
@@ -789,7 +791,8 @@ class MdbHit(object):
         return qr_line
 
     def Qr_line_HAPI_jax(self, T):
-        """Partition Function ratio using HAPI partition sum.
+        """Partition Function ratio using HAPI partition data.
+        (This function works for JAX environment.)
 
         Args:
            T: temperature (K)
@@ -800,15 +803,9 @@ class MdbHit(object):
         Note:
            Nlines=len(self.nu_lines)
         """
-        # qr_line = np.ones_like(self.isoid, dtype=np.float64)
-        # qrx = self.Qr_HAPI([T])
-        # for idx, iso in enumerate(self.uniqiso):
-        #     mask = self.isoid == iso
-        #     qr_line[mask] = qrx[0, idx]
-
         qr_line = []
         for isoid in self.isoid:
-            idx = int(isoid - 1)
+            idx = np.where(self.uniqiso == isoid)[0][0]
             qr_line.append(self.qr_iso_interp(idx, T))
         return qr_line
 

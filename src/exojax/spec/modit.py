@@ -299,6 +299,7 @@ def setdgm_exomol(mdb, fT, Parr, R, molmass, res, *kargs):
 
 def hitran(mdb, Tarr, Parr, Pself, R, molmass):
     """compute molecular line information required for MODIT using HITRAN/HITEMP mdb.
+
     Args:
        mdb: mdb instance
        Tarr: Temperature array
@@ -306,6 +307,7 @@ def hitran(mdb, Tarr, Parr, Pself, R, molmass):
        Pself: Partial pressure array
        R: spectral resolution
        molmass: molecular mass
+
     Returns:
        line intensity matrix,
        normalized gammaL matrix,
@@ -326,6 +328,7 @@ def hitran(mdb, Tarr, Parr, Pself, R, molmass):
 
 def setdgm_hitran(mdb, fT, Parr, Pself_ref, R, molmass, res, *kargs):
     """Easy Setting of DIT Grid Matrix (dgm) using HITRAN/HITEMP.
+
     Args:
        mdb: mdb instance
        fT: function of temperature array
@@ -335,9 +338,12 @@ def setdgm_hitran(mdb, fT, Parr, Pself_ref, R, molmass, res, *kargs):
        molmass: molecular mass
        res: resolution of dgm
        *kargs: arguments for fT
+
     Returns:
        DIT Grid Matrix (dgm) of normalized gammaL
+
     Example:
+
        >>> fT = lambda T0,alpha: T0[:,None]*(Parr[None,:]/Pref)**alpha[:,None]
        >>> T0_test=np.array([1100.0,1500.0,1100.0,1500.0])
        >>> alpha_test=np.array([0.2,0.2,0.05,0.05])
