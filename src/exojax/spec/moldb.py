@@ -6,6 +6,7 @@
 import os
 import numpy as np
 import jax.numpy as jnp
+from jax import jit, vmap
 import pathlib
 import vaex
 from exojax.spec import hapi, exomolapi, exomol, atomllapi, atomll, hitranapi
@@ -756,8 +757,9 @@ class MdbHit(object):
         """
         allT = list(np.concatenate([[self.Tref], Tarr]))
         Qrx = []
-        for iso in self.uniqiso:
-            Qrx.append(hapi.partitionSum(self.molecid, iso, allT))
+        for idx, iso in enumerate(self.uniqiso):
+            Qrx_iso = jit(vmap(self.QT_iso_interp, (None, 0)))(idx, jnp.array(allT))
+            Qrx.append(Qrx_iso)
         Qrx = np.array(Qrx)
         qr = Qrx[:, 1:].T/Qrx[:, 0]  # Q(T)/Q(Tref)
         return qr
