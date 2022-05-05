@@ -719,18 +719,19 @@ class MdbHit(object):
         except:
             print("Error: Couldn't download "+ext+' file and save.')
 
-    def QT_interp(self, T):
+    def QT_iso_interp(self, idx, T):
         """interpolated partition function.
 
         Args:
+           idx: index for HITRAN isotopologue number
            T: temperature
 
         Returns:
-           Q(T) interpolated in jnp.array
+           Q(idx, T) interpolated in jnp.array
         """
-        return jnp.interp(T, self.T_gQT, self.gQT)
+        return jnp.interp(T, self.T_gQT[idx], self.gQT[idx])
 
-    def qr_interp(self, T):
+    def qr_iso_interp(self, idx, T):
         """interpolated partition function ratio.
 
         Args:
@@ -739,7 +740,7 @@ class MdbHit(object):
         Returns:
            qr(T)=Q(T)/Q(Tref) interpolated in jnp.array
         """
-        return self.QT_interp(T)/self.QT_interp(self.Tref)
+        return self.QT_iso_interp(idx, T)/self.QT_iso_interp(idx, self.Tref)
 
     def Qr_HAPI(self, Tarr):
         """Partition Function ratio using HAPI partition sum.
