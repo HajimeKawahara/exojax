@@ -151,12 +151,14 @@ def compare_with_direct(mdb,Ttest=1000.0,interval_contrast=0.1,Ttyp=2000.0):
     """
     from exojax.spec.lsd import npadd1D
     from exojax.spec.hitran import SijT        
-    elower_grid=make_elower_grid(Ttyp, mdb.elower, interval_contrast=interval_contrast)
-    lbd=make_LBD(mdb.Sij0, mdb.nu_lines, nus, mdb.elower, elower_grid, Ttyp)    
+    elower_grid=make_elower_grid(Ttyp, mdb._elower, interval_contrast=interval_contrast)
+    lbd=make_LBD(mdb.Sij0, mdb.nu_lines, nus, mdb._elower, elower_grid, Ttyp)    
     Slsd=unbiased_lsd(lbd,Ttest,nus,elower_grid,mdb.qr_interp)
+    
     cont_inilsd_nu, index_inilsd_nu = npgetix(mdb.nu_lines, nus)
     qT = mdb.qr_interp(Ttest)
-    S=SijT(Ttest, mdb.logsij0, mdb.nu_lines, mdb.elower, qT)
+    logsij0 = jnp.array(np.log(mdb.Sij0))
+    S=SijT(Ttest, logsij0, mdb.nu_lines, mdb._elower, qT)
     Slsd_direct = np.zeros_like(nus,dtype=np.float64)
     Slsd_direct = npadd1D(Slsd_direct, S, cont_inilsd_nu, index_inilsd_nu)
     print("Number of the E_lower grid=",len(elower_grid))
@@ -170,7 +172,7 @@ if __name__ == "__main__":
     print("premodit")
 
     nus=np.logspace(np.log10(6020.0), np.log10(6080.0), 40000, dtype=np.float64)
-    mdbCH4 = moldb.MdbExomol('.database/CH4/12C-1H4/YT10to10/', nus)
+    mdbCH4 = moldb.MdbExomol('.database/CH4/12C-1H4/YT10to10/', nus, gpu_transfer=False)
 
     #fftval=lowpass(fftval,compress_rate=40)
     #Slsd=unbiased_lsd_lowpass(fftval,Ttest,nus,elower_grid,mdbCH4.qr_interp)
