@@ -801,7 +801,8 @@ class MdbHit(object):
 
         qr_line = []
         for isoid in self.isoid:
-            qr_line.append(self.qr_iso_interp(isoid, T))
+            idx = int(isoid - 1)
+            qr_line.append(self.qr_iso_interp(idx, T))
         return qr_line
 
     def Qr_layer_HAPI(self, Tarr):
