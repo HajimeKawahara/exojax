@@ -525,6 +525,9 @@ class MdbHit(object):
 
         self.logsij0 = jnp.array(np.log(self.Sij0))
         self.elower = jnp.array(self._elower)
+
+        # get pf
+        self.gQT, self.T_gQT = hitranapi.get_pf(self.molecid, self.uniqiso)
         self.QTtyp = self.Qr_layer_HAPI([self.Ttyp])[0]
         self.Sij_typ = SijT(self.Ttyp, self.logsij0,
                             self.nu_lines, self.elower, self.QTtyp)
