@@ -758,6 +758,11 @@ class MdbHit(object):
         allT = list(np.concatenate([[self.Tref], Tarr]))
         Qrx = []
         for idx, iso in enumerate(self.uniqiso):
+            Tmin, Tmax = hapi.get_TMIN_TMAX_FOR_BD_TIPS_2017_PYTHON(self.molecid, iso)
+            if(max(allT) > Tmax):
+                raise ValueError('%.1f K is outside the supported temperature range of the HITRAN partition function data for isotope #%d of molecule #%d (%.1f -- %.1f K)' % (max(allT), iso, self.molecid, Tmin, Tmax))
+            if(min(allT) < Tmin):
+                raise ValueError('%.1f K is outside the supported temperature range of the HITRAN partition function data for isotope #%d of molecule #%d (%.1f -- %.1f K)' % (min(allT), iso, self.molecid, Tmin, Tmax))
             Qrx_iso = jit(vmap(self.QT_iso_interp, (None, 0)))(idx, jnp.array(allT))
             Qrx.append(Qrx_iso)
         Qrx = np.array(Qrx)
