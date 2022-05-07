@@ -803,10 +803,13 @@ class MdbHit(object):
         Note:
            Nlines=len(self.nu_lines)
         """
+        qrx = []
+        for idx, iso in enumerate(self.uniqiso):
+            qrx.append(self.qr_iso_interp(idx, T))
         qr_line = []
         for isoid in self.isoid:
             idx = np.where(self.uniqiso == isoid)[0][0]
-            qr_line.append(self.qr_iso_interp(idx, T))
+            qr_line.append(qrx[idx])
         return qr_line
 
     def Qr_layer_HAPI(self, Tarr):
