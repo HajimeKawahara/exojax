@@ -98,7 +98,7 @@ if False:
 
 def frun(Tarr, MMR_CO, Mp, Rp, u1, u2, RV, vsini):
     g = 2478.57730044555*Mp/Rp**2
-    VMR_CO = MMR_CO*mmw/MMR_CO
+    VMR_CO = MMR_CO*mmw/molmassCO
     SijM_CO, ngammaLM_CO, nsigmaDl_CO = modit.hitran(
         mdbCO, Tarr, Parr, Parr*VMR_CO, R, molmassCO)
     xsm_CO = modit.xsmatrix(
