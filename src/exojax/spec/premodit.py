@@ -84,11 +84,9 @@ def make_LBD(Sij0, nu_lines, nu_grid, elower, elower_grid, Ttyp):
     """
     logmin=-np.inf
     lsd = np.zeros((len(nu_grid), len(elower_grid)),dtype=np.float64)
-
     cx, ix = npgetix(nu_lines, nu_grid)
     cy, iy = npgetix_exp(elower, elower_grid, Ttyp)
     lsd=npadd2D(lsd, Sij0, cx, ix, cy, iy)
-    
     lsd[lsd>0.0]=np.log(lsd[lsd>0.0])
     lsd[lsd==0.0]=logmin       
     return jnp.array(lsd)
@@ -173,24 +171,16 @@ if __name__ == "__main__":
 
     nus=np.logspace(np.log10(6020.0), np.log10(6080.0), 40000, dtype=np.float64)
     mdbCH4 = moldb.MdbExomol('.database/CH4/12C-1H4/YT10to10/', nus, gpu_transfer=False)
+    print(np.unique(np.array([mdbCH4._n_Texp,mdbCH4._alpha_ref]).T,axis=0))
+    print(len(mdbCH4.nu_lines)*10)
+    print(len(nus)*26*19)
 
-    #fftval=lowpass(fftval,compress_rate=40)
-    #Slsd=unbiased_lsd_lowpass(fftval,Ttest,nus,elower_grid,mdbCH4.qr_interp)
-    #val = np.fft.rfft(initial_biased_lsd, axis=0)
-    #Slsd=unbiased_lsd_fft(val,Ttest,nus,elower_grid,mdbCH4.qr_interp)*1.e-26
+    import sys
+    sys.exit()
 
-
-
-
-
-    #k = np.fft.rfftfreq(2*Ng_nu, 1)
-    
-    #    vk = fold_voigt_kernel_logst(
-    #        k, log_nstbeta, log_ngammaL_grid, vmax, pmarray)
-    #    fftvalsum = jnp.sum(fftval*vk, axis=(1,))
-    #    xs = jnp.fft.irfft(fftvalsum)[:Ng_nu]*R/nus
     
     Slsd,Slsd_direct=compare_with_direct(mdbCH4,Ttest=1000.0,interval_contrast=0.1,Ttyp=2000.0)    
+
     fig=plt.figure()
     ax=fig.add_subplot(211)
     plt.plot((Slsd),alpha=0.3)
@@ -201,3 +191,16 @@ if __name__ == "__main__":
     plt.xlabel("error (premodit - direct)/direct")
     plt.yscale("log")
     plt.show()
+
+
+    
+    #fftval=lowpass(fftval,compress_rate=40)
+    #Slsd=unbiased_lsd_lowpass(fftval,Ttest,nus,elower_grid,mdbCH4.qr_interp)
+    #val = np.fft.rfft(initial_biased_lsd, axis=0)
+    #Slsd=unbiased_lsd_fft(val,Ttest,nus,elower_grid,mdbCH4.qr_interp)*1.e-26
+
+    #k = np.fft.rfftfreq(2*Ng_nu, 1)    
+    #    vk = fold_voigt_kernel_logst(
+    #        k, log_nstbeta, log_ngammaL_grid, vmax, pmarray)
+    #    fftvalsum = jnp.sum(fftval*vk, axis=(1,))
+    #    xs = jnp.fft.irfft(fftvalsum)[:Ng_nu]*R/nus
