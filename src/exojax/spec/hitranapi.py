@@ -105,4 +105,4 @@ if __name__ == '__main__':
     margin = 1.0
     tag = 'ext'
     extract_hitemp(
-        '/home/kawahara/exojax/data/CH4/06_HITEMP2020.par.bz2', nurange, margin, tag)
+        '~/exojax/data/CH4/06_HITEMP2020.par.bz2', nurange, margin, tag)

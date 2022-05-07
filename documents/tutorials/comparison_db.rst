@@ -25,7 +25,7 @@ not exist, moldb will try to download it from HITRAN website.
     # Setting wavenumber bins and loading HITEMP database
     wav=np.linspace(22930.0,23000.0,4000,dtype=np.float64) #AA
     nus=1.e8/wav[::-1] #cm-1
-    mdbCO_HITEMP=moldb.MdbHit('/home/kawahara/exojax/data/CO/05_HITEMP2019.par.bz2',nus)
+    mdbCO_HITEMP=moldb.MdbHit('~/exojax/data/CO/05_HITEMP2019.par.bz2',nus)
 
 
 .. parsed-literal::
@@ -35,7 +35,7 @@ not exist, moldb will try to download it from HITRAN website.
 
 .. code:: ipython3
 
-    emf='/home/kawahara/exojax/data/CO/12C-16O/Li2015'
+    emf='~/exojax/data/CO/12C-16O/Li2015'
     mdbCO_Li2015=moldb.MdbExomol(emf,nus)
 
 
