@@ -58,8 +58,8 @@ vmrH2 = (mmrH2*mmw/molmassH2)  # VMR
 
 #
 Mp = 33.2
-mdbCO=moldb.MdbHit('/home/kawashima/database/CO/05_HITEMP2019/05_HITEMP2019.par.bz2',nus,crit=1.e-30)
-cdbH2H2 = contdb.CdbCIA('/home/kawashima/database/H2-H2_2011.cia', nus)
+mdbCO=moldb.MdbHit('.database/CO/05_HITEMP2019/05_HITEMP2019.par.bz2',nus,crit=1.e-30)
+cdbH2H2 = contdb.CdbCIA('.database/H2-H2_2011.cia', nus)
 print('N=', len(mdbCO.nu_lines))
 
 # Reference pressure for a T-P model
