@@ -122,7 +122,7 @@ The path to the def file should be given using pathlib.Path.
 	  
     from exojax.spec.exomolapi import read_def
     import pathlib
-    deff=pathlib.Path("/home/kawahara/exojax/examples/luhman16/.database/CO2/12C-16O2/UCL-4000/12C-16O2__UCL-4000.def")
+    deff=pathlib.Path("~/exojax/examples/luhman16/.database/CO2/12C-16O2/UCL-4000/12C-16O2__UCL-4000.def")
     n_Texp, alpha_ref, molmass, numinf, numtag = read_def(deff)
 
 Note that we have not check all the molecules in ExoMol database yet. In some case, there is inconsistency in the definition file and due to this inconsistency, one cannot load the ExoMol files. Let `me <http://secondearths.sakura.ne.jp/en/index.html>`_ know if you find that case. 
@@ -136,11 +136,11 @@ For these files, the path can be just string.
 .. code:: python
 	  
     from exojax.spec.exomolapi import read_pf, read_states, read_transf
-    pff="/home/kawahara/exojax/data/exomol/CO/12C-16O/Li2015/12C-16O__Li2015.pf"
+    pff="~/exojax/data/exomol/CO/12C-16O/Li2015/12C-16O__Li2015.pf"
     dat=read_pf(pff)
-    statesf="/home/kawahara/exojax/data/exomol/CO/12C-16O/Li2015/12C-16O__Li2015.states.bz2"
+    statesf="~/exojax/data/exomol/CO/12C-16O/Li2015/12C-16O__Li2015.states.bz2"
     states=read_states(statesf)    
-    transf="/home/kawahara/exojax/data/exomol/CO/12C-16O/Li2015/12C-16O__Li2015.trans.bz2"
+    transf="~/exojax/data/exomol/CO/12C-16O/Li2015/12C-16O__Li2015.trans.bz2"
     trans=read_trans(transf)
 
 
@@ -166,7 +166,7 @@ Read .broad file
     from exojax.spec.exomolapi import read_broad, check_bdat
     from exojax.spec.exomolapi import make_j2b, make_jj2b
 
-    broadf="/home/kawahara/exojax/data/broad/1H2-16O__H2.broad"
+    broadf="~/exojax/data/broad/1H2-16O__H2.broad"
     bdat=read_broad(broadf)
     codelv=check_bdat(bdat)
     print(codelv)

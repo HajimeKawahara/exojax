@@ -58,7 +58,7 @@ class MdbExomol(object):
         Note:
            The trans/states files can be very large. For the first time to read it, we convert it to HDF/vaex. After the second-time, we use the HDF5 format with vaex instead.
         """
-        self.path = pathlib.Path(path)
+        self.path = pathlib.Path(path).expanduser()
         t0 = self.path.parents[0].stem
         molec = t0+'__'+str(self.path.stem)
         self.bkgdatm = bkgdatm
@@ -425,9 +425,7 @@ class MdbExomol(object):
 
 
 class MdbHit(object):
-    """molecular database of ExoMol.
-
-    MdbExomol is a class for ExoMol.
+    """molecular database of HITRAN 2012 / HITEMP 2020.
 
     Attributes:
         nurange: nu range [min,max] (cm-1)
@@ -463,7 +461,7 @@ class MdbHit(object):
             path = path + '.bz2'
             print('Warning: path changed (.bz2 added):', path)
 
-        self.path = pathlib.Path(path)
+        self.path = pathlib.Path(path).expanduser()
         numinf, numtag = hitranapi.read_path(self.path)
         self.Tref = 296.0
         self.crit = crit
@@ -618,7 +616,7 @@ class MdbHit(object):
         self.gamma_natural = gn(self.A)
 
     def download(self, numtag=None):
-        """Downloading HITRAN/HITEMP par file.
+        """Downloading HITRAN 2012/HITEMP 2020 par file.
 
         Note:
            The download URL is written in exojax.utils.url.
@@ -684,7 +682,7 @@ class MdbHit(object):
            path: path for Exomol data directory/tag. For instance, "/home/CO/12C-16O/Li2015"
         """
         # load pf
-        self.empath = pathlib.Path(path)
+        self.empath = pathlib.Path(path).expanduser()
         t0 = self.empath.parents[0].stem
         molec = t0+'__'+str(self.empath.stem)
         self.pf_file = self.empath/pathlib.Path(molec+'.pf')
@@ -871,7 +869,7 @@ class AdbVald(object):
         """
 
         # load args
-        self.vald3_file = pathlib.Path(path)  # VALD3 output
+        self.vald3_file = pathlib.Path(path).expanduser()  # VALD3 output
         self.nurange = [np.min(nurange), np.max(nurange)]
         self.margin = margin
         self.crit = crit
@@ -1172,7 +1170,7 @@ class AdbKurucz(object):
         """
 
         # load args
-        self.kurucz_file = pathlib.Path(path)
+        self.kurucz_file = pathlib.Path(path).expanduser()
         self.nurange = [np.min(nurange), np.max(nurange)]
         self.margin = margin
         self.crit = crit

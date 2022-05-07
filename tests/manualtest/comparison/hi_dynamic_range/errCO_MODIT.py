@@ -24,7 +24,7 @@ def comperr(Nnu,plotfig=False):
     nus=np.logspace(np.log10(1.e7/2700),np.log10(1.e7/2100.),Nnu,dtype=np.float64)
 
 #    nus=np.logspace(np.log10(3000),np.log10(6000.0),Nnu,dtype=np.float64)
-    mdbCO=moldb.MdbHit('/home/kawahara/exojax/data/CO/05_hit12.par',nus)
+    mdbCO=moldb.MdbHit('~/exojax/data/CO/05_hit12.par',nus)
     
     Mmol=28.010446441149536
     Tref=296.0

@@ -27,7 +27,7 @@ def xsection(nu, nu_lines, sigmaD, gammaL, Sij, memory_size=15.):
        >>> from exojax.spec import moldb
        >>> import numpy as np
        >>> nus=np.linspace(1000.0,10000.0,900000,dtype=np.float64) #cm-1
-       >>> mdbCO=moldb.MdbHit('/home/kawahara/exojax/data/CO','05_hit12',nus)
+       >>> mdbCO=moldb.MdbHit('~/exojax/data/CO','05_hit12',nus)
        >>> Mmol=28.010446441149536 # molecular weight
        >>> Tfix=1000.0 # we assume T=1000K
        >>> Pfix=1.e-3 # we compute P=1.e-3 bar
