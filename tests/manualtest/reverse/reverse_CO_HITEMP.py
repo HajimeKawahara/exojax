@@ -33,7 +33,7 @@ from exojax.spec import normalized_doppler_sigma
 import numpy as np
 from exojax.spec import initspec
 
-dat = pd.read_csv('spectrum_ch4.txt', delimiter=',', names=('wav', 'flux'))
+dat = pd.read_csv('spectrum_co.txt', delimiter=',', names=('wav', 'flux'))
 wavd = dat['wav'].values
 flux = dat['flux'].values
 nusd = jnp.array(1.e8/wavd[::-1])
@@ -50,7 +50,7 @@ Rinst = 100000.
 beta_inst = R2STD(Rinst)
 
 
-molmassCH4 = molinfo.molmass('CH4')
+molmassCO = molinfo.molmass('CO')
 mmw = 2.33  # mean molecular weight
 mmrH2 = 0.74
 molmassH2 = molinfo.molmass('H2')
@@ -58,8 +58,7 @@ vmrH2 = (mmrH2*mmw/molmassH2)  # VMR
 
 #
 Mp = 33.2
-# mdbCH4 = moldb.MdbHit('.database/CH4/06_HITEMP2020/06_HITEMP2020.par.bz2', nus, crit=1.e-30)
-mdbCH4 = moldb.MdbHit('/home/kawashima/database/CH4/06_hit12.par', nus, crit=1.e-22)
+mdbCO=moldb.MdbHit('/home/kawashima/database/CO/05_HITEMP2019/05_HITEMP2019.par.bz2',nus,crit=1.e-30)
 cdbH2H2 = contdb.CdbCIA('/home/kawashima/database/H2-H2_2011.cia', nus)
 print('N=', len(mdbCH4.nu_lines))
 
@@ -78,18 +77,19 @@ cnu, indexnu, R, pmarray = initspec.init_modit(mdbCH4.nu_lines, nus)
 def fT(T0, alpha): return T0[:, None]*(Parr[None, :]/Pref)**alpha[:, None]
 
 
-T0_test = np.array([1100.0, 1350.0, 1100.0, 1350.0])
+T0_test = np.array([1100.0, 1500.0, 1100.0, 1500.0])
 alpha_test = np.array([0.2, 0.2, 0.05, 0.05])
 res = 0.2
+vmrCH4_ref = 4.9e-4
 dgm_ngammaL = setdgm_hitran(
-    mdbCH4, fT, Parr, Parr*1.e-4, R, molmassCH4, res, T0_test, alpha_test)
+    mdbCH4, fT, Parr, Parr*vmrCH4_ref, R, molmassCH4, res, T0_test, alpha_test)
 
 # check dgm
 if False:
     from exojax.plot.ditplot import plot_dgmn
     Tarr = 1300.*(Parr/Pref)**0.1
     SijM_CH4, ngammaLM_CH4, nsigmaDl_CH4 = modit.hitran(
-        mdbCH4, Tarr, Parr, Parr*1.e-4, R, molmassCH4)
+        mdbCH4, Tarr, Parr, Parr*vmrCH4_ref, R, molmassCH4)
     plot_dgmn(Parr, dgm_ngammaL, ngammaLM_CH4, 0, 6)
     plt.show()
 
@@ -131,7 +131,7 @@ def model_c(nu1, y1):
     Rp = numpyro.sample('Rp', dist.Uniform(0.4, 1.2))
     RV = numpyro.sample('RV', dist.Uniform(5.0, 15.0))
     MMR_CH4 = numpyro.sample('MMR_CH4', dist.Uniform(0.0, 0.015))
-    T0 = numpyro.sample('T0', dist.Uniform(1000.0, 1350.0))
+    T0 = numpyro.sample('T0', dist.Uniform(1000.0, 1500.0))
     alpha = numpyro.sample('alpha', dist.Uniform(0.05, 0.2))
     vsini = numpyro.sample('vsini', dist.Uniform(15.0, 25.0))
     g = 2478.57730044555*Mp/Rp**2  # gravity
