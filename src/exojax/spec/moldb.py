@@ -819,11 +819,8 @@ def search_molecid(molec):
         hitf = molec.split('_')
         molecid = int(hitf[0])
         return molecid
-
     except:
-        print('Warning: Define molecid by yourself.')
-        return None
-
+        raise ValueError('Define molecid by yourself.')
 
 class AdbVald(object):
     """atomic database from VALD3 (http://vald.astro.uu.se/)
