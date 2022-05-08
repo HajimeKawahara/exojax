@@ -13,9 +13,9 @@ err=(dat["err_normalized_flux"].values)[::-1]
 #p=x[1]["y1"]
 #print(p)
 
-d=np.load("/home/kawahara/fig/npz/saveplotpred.npz",allow_pickle=True)["arr_0"]
+d=np.load("~/fig/npz/saveplotpred.npz",allow_pickle=True)["arr_0"]
 wavd1,fobs1,err1,median_mu1,hpdi_mu1=d
-p=np.load("/home/kawahara/fig/npz/savepos.npz",allow_pickle=True)["arr_0"][0]
+p=np.load("~/fig/npz/savepos.npz",allow_pickle=True)["arr_0"][0]
 
 fac=0.7
 fig=plt.figure(figsize=(25*fac,7*fac))

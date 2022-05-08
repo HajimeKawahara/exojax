@@ -25,7 +25,7 @@ not exist, moldb will try to download it from HITRAN website.
 
     # Setting wavenumber bins and loading HITRAN database
     nus=np.linspace(1000.0,10000.0,900000,dtype=np.float64) #cm-1
-    mdbCO=moldb.MdbHit('/home/kawahara/exojax/data/CO/05_hit12.par',nus)
+    mdbCO=moldb.MdbHit('~/exojax/data/CO/05_hit12.par',nus)
 
 Define molecular weight of CO (:math:`\sim 12+16=28`), temperature (K),
 and pressure (bar). Also, we here assume the 100 % CO atmosphere,

@@ -12,7 +12,7 @@ from jax.lax import scan
 from exojax.spec.ditkernel import fold_voigt_kernel_logst
 from exojax.spec.ditkernel import voigt_kernel_logst
 
-from jax.ops import index as joi
+from jax.numpy import index_exp as joi
 from exojax.spec.dit import getix
 
 # exomol

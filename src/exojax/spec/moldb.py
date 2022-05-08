@@ -59,7 +59,7 @@ class MdbExomol(object):
         Note:
            The trans/states files can be very large. For the first time to read it, we convert it to HDF/vaex. After the second-time, we use the HDF5 format with vaex instead.
         """
-        self.path = pathlib.Path(path)
+        self.path = pathlib.Path(path).expanduser()
         t0 = self.path.parents[0].stem
         molec = t0+'__'+str(self.path.stem)
         self.bkgdatm = bkgdatm
@@ -426,9 +426,7 @@ class MdbExomol(object):
 
 
 class MdbHit(object):
-    """molecular database of ExoMol.
-
-    MdbExomol is a class for ExoMol.
+    """molecular database of HITRAN 2012 / HITEMP 2020.
 
     Attributes:
         nurange: nu range [min,max] (cm-1)
@@ -457,8 +455,14 @@ class MdbHit(object):
            extract: If True, it extracts the opacity having the wavenumber between nurange +- margin. Use when you want to reduce the memory use.
         """
         from exojax.spec.hitran import SijT
+        if ("hit" in path and path[-4:] == ".bz2"):
+            path = path[:-4]
+            print('Warning: path changed (.bz2 removed):', path)
+        if ("HITEMP" in path and path[-4:] == ".par"):
+            path = path + '.bz2'
+            print('Warning: path changed (.bz2 added):', path)
 
-        self.path = pathlib.Path(path)
+        self.path = pathlib.Path(path).expanduser()
         numinf, numtag = hitranapi.read_path(self.path)
         self.Tref = 296.0
         self.crit = crit
@@ -616,7 +620,7 @@ class MdbHit(object):
         self.gamma_natural = gn(self.A)
 
     def download(self, numtag=None):
-        """Downloading HITRAN/HITEMP par file.
+        """Downloading HITRAN 2012/HITEMP 2020 par file.
 
         Note:
            The download URL is written in exojax.utils.url.
@@ -682,7 +686,7 @@ class MdbHit(object):
            path: path for Exomol data directory/tag. For instance, "/home/CO/12C-16O/Li2015"
         """
         # load pf
-        self.empath = pathlib.Path(path)
+        self.empath = pathlib.Path(path).expanduser()
         t0 = self.empath.parents[0].stem
         molec = t0+'__'+str(self.empath.stem)
         self.pf_file = self.empath/pathlib.Path(molec+'.pf')
@@ -889,7 +893,7 @@ class AdbVald(object):
         """Atomic database for VALD3 "Long format".
 
         Args:
-          path: path for linelists downloaded from VALD3 with a query of "Long format" in the format of "Extract All" and "Extract Element" (NOT "Extract Stellar")
+          path: path for linelists downloaded from VALD3 with a query of "Long format" in the format of "Extract All", "Extract Stellar", or "Extract Element"
           nurange: wavenumber range list (cm-1) or wavenumber array
           margin: margin for nurange (cm-1)
           crit: line strength lower limit for extraction
@@ -900,12 +904,12 @@ class AdbVald(object):
         """
 
         # load args
-        self.vald3_file = pathlib.Path(path)  # VALD3 output
+        self.vald3_file = pathlib.Path(path).expanduser()  # VALD3 output
         self.nurange = [np.min(nurange), np.max(nurange)]
         self.margin = margin
         self.crit = crit
 
-        # load vald file ("Extract Stellar" request)
+        # load vald file
         print('Reading VALD file')
         if self.vald3_file.with_suffix('.hdf5').exists():
             valdd = vaex.open(self.vald3_file.with_suffix('.hdf5'))
@@ -1201,12 +1205,12 @@ class AdbKurucz(object):
         """
 
         # load args
-        self.kurucz_file = pathlib.Path(path)  # VALD3 output
+        self.kurucz_file = pathlib.Path(path).expanduser()
         self.nurange = [np.min(nurange), np.max(nurange)]
         self.margin = margin
         self.crit = crit
 
-        # load vald file ("Extract Stellar" request)
+        # load kurucz file
         print('Reading Kurucz file')
         self._A, self.nu_lines, self._elower, self._eupper, self._gupper, self._jlower, self._jupper, self._ielem, self._iion, self._gamRad, self._gamSta, self._vdWdamp = atomllapi.read_kurucz(
             self.kurucz_file)

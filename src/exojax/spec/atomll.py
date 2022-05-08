@@ -424,7 +424,7 @@ def ielemion_to_FastChemSymbol(ielem, iion):
     return ((atomllapi.PeriodicTable[ielem] + '1' + '+'*(iion-1)).rstrip('1'))
 
 
-def get_VMR_uspecies(uspecies, mods_ID, mods):
+def get_VMR_uspecies(uspecies, mods_ID = jnp.array([[0, 0], ]), mods = jnp.array([0, ])):
     """Extract VMR arrays of the species that contribute the opacity
     ("uspecies" made with "get_unique_species")
 

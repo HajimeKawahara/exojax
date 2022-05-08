@@ -15,7 +15,7 @@ from jax import vmap
 from jax.lax import scan
 import tqdm
 from exojax.spec.ditkernel import folded_voigt_kernel
-from jax.ops import index as joi
+from jax.numpy import index_exp as joi
 from exojax.spec.dit import getix
 
 
