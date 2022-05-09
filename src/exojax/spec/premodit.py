@@ -172,11 +172,12 @@ if __name__ == "__main__":
 
     nus=np.logspace(np.log10(6020.0), np.log10(6080.0), 40000, dtype=np.float64)
     mdbCH4 = moldb.MdbExomol('.database/CH4/12C-1H4/YT10to10/', nus, gpu_transfer=False)
-    print(np.unique(np.array([mdbCH4._n_Texp,mdbCH4._alpha_ref]).T,axis=0))
 
-    
-    print(len(mdbCH4.nu_lines)*10)
-    print(len(nus)*26*19)
+    from exojax.spec.lsd import uniqidx_2D
+    a=np.array([mdbCH4._n_Texp,mdbCH4._alpha_ref]).T
+    uidx=uniqidx_2D(a)
+    print(len(uidx))
+    print(len(mdbCH4.nu_lines))
 
     import sys
     sys.exit()

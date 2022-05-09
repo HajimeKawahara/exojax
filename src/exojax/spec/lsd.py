@@ -10,6 +10,7 @@ from jax.numpy import index_exp as joi
 import numpy as np
 import jax.numpy as jnp
 from jax import jit, vmap
+import tqdm
 
 def getix(x, xv):
     """jnp version of getix.
@@ -245,7 +246,7 @@ def uniqidx_2D(a):
     uidx=np.zeros(N,dtype=int)
     uidx_p=np.where(a==uniqvals[0], True, False)
     uidx[np.array(np.prod(uidx_p,axis=1),dtype=bool)]=0
-    for i,uv in enumerate(uniqvals[1:]):
+    for i,uv in enumerate(tqdm.tqdm(uniqvals[1:],desc="uniqidx")):
         uidx_p=np.where(a==uv, True, False)
         uidx[np.array(np.prod(uidx_p,axis=1),dtype=bool)]=i+1
     return uidx
