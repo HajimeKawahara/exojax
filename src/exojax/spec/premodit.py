@@ -163,6 +163,7 @@ def compare_with_direct(mdb,Ttest=1000.0,interval_contrast=0.1,Ttyp=2000.0):
     print("max deviation=",np.max(np.abs(Slsd/Slsd_direct-1.0)))
     return Slsd, Slsd_direct
 
+
 if __name__ == "__main__":
     import jax.numpy as jnp
     from exojax.spec import moldb
@@ -172,6 +173,8 @@ if __name__ == "__main__":
     nus=np.logspace(np.log10(6020.0), np.log10(6080.0), 40000, dtype=np.float64)
     mdbCH4 = moldb.MdbExomol('.database/CH4/12C-1H4/YT10to10/', nus, gpu_transfer=False)
     print(np.unique(np.array([mdbCH4._n_Texp,mdbCH4._alpha_ref]).T,axis=0))
+
+    
     print(len(mdbCH4.nu_lines)*10)
     print(len(nus)*26*19)
 

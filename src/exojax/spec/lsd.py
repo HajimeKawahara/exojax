@@ -3,6 +3,7 @@
    * there are both numpy and jnp versions. (np)*** is numpy version.
    * (np)getix provides the contribution and index.
    * (np)add(x)D constructs the (x)Dimensional LSD array given the contribution and index.
+   * uniqidx(_2D) provides the indices based on the unique values (vectors) of the input array. These are the numpy version.
 
 """
 from jax.numpy import index_exp as joi
@@ -202,3 +203,49 @@ def inc2D_givenx(a, w, cx, ix, y, yv):
     a = add2D(a, w, cx, ix, cy, iy)
     return a
 
+def uniqidx(a):
+    """ compute indices based on uniq values of the input array.
+
+    Args:
+        a: input array
+
+    Returns:
+        unique index
+    
+    Examples:
+        
+        >>> a=np.array([4,7,7,7,8,4])
+        >>> uidx=uniqidx(a) #-> [0,1,1,1,2,0]
+
+    
+    """
+    uniqvals=np.unique(a)
+    uidx=np.where(a==uniqvals[0], 0, None)
+    for i,uv in enumerate(uniqvals[1:]):
+        uidx=np.where(a==uv, i+1, uidx)
+    return uidx
+
+def uniqidx_2D(a):
+    """ compute indices based on uniq values of the input array (2D).
+
+    Args:
+        a: input array (N,M), will use unique M-dim vectors
+
+    Returns:
+        unique index
+
+    Examples:
+        
+        >>> a=np.array([[4,1],[7,1],[7,2],[7,1],[8,0],[4,1]])
+        >>> uidx=uniqidx_2D(a) #->[0,1,2,1,3,0]
+
+    """
+    N,_=np.shape(a)
+    uniqvals=np.unique(a,axis=0)
+    uidx=np.zeros(N,dtype=int)
+    uidx_p=np.where(a==uniqvals[0], True, False)
+    uidx[np.array(np.prod(uidx_p,axis=1),dtype=bool)]=0
+    for i,uv in enumerate(uniqvals[1:]):
+        uidx_p=np.where(a==uv, True, False)
+        uidx[np.array(np.prod(uidx_p,axis=1),dtype=bool)]=i+1
+    return uidx
