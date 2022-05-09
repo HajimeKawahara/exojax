@@ -631,6 +631,7 @@ class MdbHit(object):
         from exojax.utils.url import url_HITEMP10
         import shutil
 
+        os.makedirs(str(self.path.parent), exist_ok=True)
         try:
             url = url_HITRAN12()+self.path.name
             urllib.request.urlretrieve(url, str(self.path))
