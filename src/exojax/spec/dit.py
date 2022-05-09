@@ -9,7 +9,7 @@ import jax.numpy as jnp
 from jax import jit, vmap
 from jax.lax import scan
 from exojax.spec.ditkernel import fold_voigt_kernel
-from jax.ops import index as joi
+from jax.numpy import index_exp as joi
 from exojax.spec.atomll import padding_2Darray_for_each_atom
 from exojax.spec.rtransfer import dtauM
 
@@ -361,7 +361,7 @@ def dtauM_vald(dParr, g, adb, nus, cnu, indexnu, pmarray, SijM, gammaLM, sigmaDM
     Args:
        dParr: delta pressure profile (bar) [N_layer]
        g: gravity (cm/s^2)
-       adb: adb instance made by the adbald class in moldb.py
+       adb: adb instance made by the AdbVald class in moldb.py
        nus: wavenumber matrix (cm-1) [N_nus]
        cnu: cont (contribution) jnp.array [N_line]
        indexnu: index (index) jnp.array [N_line]

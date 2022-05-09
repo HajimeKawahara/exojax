@@ -8,47 +8,26 @@ import vaex
 import pkgutil
 from io import BytesIO
 
-# Correspondence between Atomic Number and Element Symbol
-# PeriodicTable = np.empty([100], dtype=object)
 PeriodicTable = np.zeros([119], dtype=object)
-PeriodicTable[:] = [' 0', 'H', 'He', 'Li', 'Be', 'B', 'C', 'N', 'O', 'F', 'Ne', 'Na', 'Mg', 'Al', 'Si', 'P', 'S', 'Cl', 'Ar', 'K', 'Ca', 'Sc', 'Ti', 'V', 'Cr', 'Mn', 'Fe', 'Co', 'Ni', 'Cu', 'Zn', 'Ga', 'Ge', 'As', 'Se', 'Br', 'Kr', 'Rb', 'Sr', 'Y', 'Zr', 'Nb', 'Mo', 'Tc', 'Ru', 'Rh', 'Pd', 'Ag', 'Cd', 'In', 'Sn', 'Sb', 'Te', 'I', 'Xe', 'Cs', 'Ba', 'La', 'Ce',
-                    'Pr', 'Nd', 'Pm', 'Sm', 'Eu', 'Gd', 'Tb', 'Dy', 'Ho', 'Er', 'Tm', 'Yb', 'Lu', 'Hf', 'Ta', 'W', 'Re', 'Os', 'Ir', 'Pt', 'Au', 'Hg', 'Tl', 'Pb', 'Bi', 'Po', 'At', 'Rn', 'Fr', 'Ra', 'Ac', 'Th', 'Pa', 'U', 'Np', 'Pu', 'Am', 'Cm', 'Bk', 'Cf', 'Es', 'Fm', 'Md', 'No', 'Lr', 'Rf', 'Db', 'Sg', 'Bh', 'Hs', 'Mt', 'Ds', 'Rg', 'Cn', 'Nh', 'Fl', 'Mc', 'Lv', 'Ts', 'Og']
-
-
-def read_ExStellar(stellarf):
-    """VALD IO for "Extract stellar" file (long format)
-
-    Note:
-        Deprecated to use! It's incomplete and untested. #210817
-        See https://www.astro.uu.se/valdwiki/select_output
-
-    Args:
-        stellarf: file path
-
-    Returns:
-        line data in pandas DataFrame
-    """
-    dat = pd.read_csv(stellarf, sep=',', skiprows=3, names=('species', 'wav_lines', 'elowereV', 'vmic',
-                      'loggf', 'rad_damping', 'stark_damping', 'waals_damping', 'lande', 'depth', 'reference'))
-    return dat
+PeriodicTable[:] = [' 0', 'H', 'He', 'Li', 'Be', 'B', 'C', 'N', 'O', 'F', 'Ne', 'Na', 'Mg', 'Al', 'Si', 'P', 'S', 'Cl', 'Ar', 'K', 'Ca', 'Sc', 'Ti', 'V', 'Cr', 'Mn', 'Fe', 'Co', 'Ni', 'Cu', 'Zn', 'Ga', 'Ge', 'As', 'Se', 'Br', 'Kr', 'Rb', 'Sr', 'Y', 'Zr', 'Nb', 'Mo', 'Tc', 'Ru', 'Rh', 'Pd', 'Ag', 'Cd', 'In', 'Sn', 'Sb', 'Te', 'I', 'Xe', 'Cs', 'Ba', 'La', 'Ce', 'Pr', 'Nd', 'Pm', 'Sm', 'Eu', 'Gd', 'Tb', 'Dy', 'Ho', 'Er', 'Tm', 'Yb', 'Lu', 'Hf', 'Ta', 'W', 'Re', 'Os', 'Ir', 'Pt', 'Au', 'Hg', 'Tl', 'Pb', 'Bi', 'Po', 'At', 'Rn', 'Fr', 'Ra', 'Ac', 'Th', 'Pa', 'U', 'Np', 'Pu', 'Am', 'Cm', 'Bk', 'Cf', 'Es', 'Fm', 'Md', 'No', 'Lr', 'Rf', 'Db', 'Sg', 'Bh', 'Hs', 'Mt', 'Ds', 'Rg', 'Cn', 'Nh', 'Fl', 'Mc', 'Lv', 'Ts', 'Og']
 
 
 def read_ExAll(allf):
-    """IO for linelists downloaded from VALD3 with a query of "Long format" in
-    the format of "Extract All" or "Extract Element".
+    """IO for linelists downloaded from VALD3 with a query of "Long format" in the format of "Extract All" or "Extract Element".
 
     Note:
-        About input linelists obtained from VALD3 (http://vald.astro.uu.se/):
-            VALD data access is free but requires registration through the Contact form (http://vald.astro.uu.se/~vald/php/vald.php?docpage=contact.html).
+        About input linelists obtained from VALD3 (http://vald.astro.uu.se/). VALD data access is free but requires registration through the Contact form (http://vald.astro.uu.se/~vald/php/vald.php?docpage=contact.html).
         After the registration, you can login and choose the "Extract Element" mode.
-        For example, if you want the Fe I linelist, the request form should be filled as:
-            Starting wavelength :    1500
-            Ending wavelength :    100000
-            Element [ + ionization ] :    Fe 1
-            Extraction format :    Long format
-            Retrieve data via :    FTP
-            Linelist configuration :    Default
-            Unit selection:    Energy unit: eV - Medium: vacuum - Wavelength unit: angstrom - VdW syntax: default
+        For example, if you want the Fe I linelist, the request form should be filled as
+        
+        >>> Starting wavelength :    1500
+        >>> Ending wavelength :    100000
+        >>> Element [ + ionization ] :    Fe 1
+        >>> Extraction format :    Long format
+        >>> Retrieve data via :    FTP
+        >>> Linelist configuration :    Default
+        >>> Unit selection:    Energy unit: eV - Medium: vacuum - Wavelength unit: angstrom - VdW syntax: default
+
         Please assign the fullpath of the output file sent by VALD ([user_name_at_VALD].[request_number_at_VALD].gz) to the variable "allf".
         See https://www.astro.uu.se/valdwiki/presformat_output for the detail of the format.
 
@@ -72,7 +51,7 @@ def read_ExAll(allf):
         line data in vaex DataFrame
     """
     dat = pd.read_csv(allf, sep=',', skiprows=1, names=('species', 'wav_lines', 'loggf', 'elowereV', 'jlower', 'euppereV',
-                      'jupper', 'landelower', 'landeupper', 'landemean', 'rad_damping', 'stark_damping', 'waals_damping'))  # convert=False)
+                      'jupper', 'landelower', 'landeupper', 'landemean', 'rad_damping', 'stark_damping', 'waals_damping'))  #, 'depth_Cen')) #convert=False)
     colWL = dat.iat[0, 0][13:22]
 
     # Remove rows not starting with "'"

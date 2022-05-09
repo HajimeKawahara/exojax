@@ -51,5 +51,5 @@ class CdbCIA(object):
 
 if __name__ == '__main__':
     ciaH2H2 = CdbCIA(
-        '/home/kawahara/exojax/data/CIA/H2-H2_2011.cia', nurange=[4050.0, 4150.0])
+        '~/exojax/data/CIA/H2-H2_2011.cia', nurange=[4050.0, 4150.0])
     print(ciaH2H2.tcia)

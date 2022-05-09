@@ -1,5 +1,5 @@
 Reverse Modelling of an Emission Spectrum
-========================================
+===========================================
 *Update: June 1/2021, Hajime Kawahara*
 
 .. code:: ipython3

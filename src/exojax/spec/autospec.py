@@ -22,7 +22,7 @@ __all__ = ['AutoXS', 'AutoRT']
 class AutoXS(object):
     """exojax auto cross section generator."""
 
-    def __init__(self, nus, database, molecules, databasedir='.database', memory_size=30, broadf=True, crit=-np.inf, xsmode='auto', autogridconv=True, pdit=1.5):
+    def __init__(self, nus, database, molecules, databasedir='.database', memory_size=30, broadf=True, crit=0.0, xsmode='auto', autogridconv=True, pdit=1.5):
         """
         Args:
            nus: wavenumber bin (cm-1)
@@ -319,7 +319,7 @@ class AutoRT(object):
         self.dtau = np.zeros((self.nlayer, len(nus)))
         print('xsmode=', self.xsmode)
 
-    def addmol(self, database, molecules, mmr, crit=-np.inf):
+    def addmol(self, database, molecules, mmr, crit=0.):
         """
         Args:
            database: database= HITRAN, HITEMP, ExoMol

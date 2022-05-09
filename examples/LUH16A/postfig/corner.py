@@ -3,7 +3,7 @@ import matplotlib.pyplot as plt
 import arviz
 
 
-p=np.load("/home/kawahara/fig/npz/savepos.npz",allow_pickle=True)["arr_0"][0]
+p=np.load("~/fig/npz/savepos.npz",allow_pickle=True)["arr_0"][0]
 #centered = az.load_arviz_data("centered_eight")
 
 rc = {

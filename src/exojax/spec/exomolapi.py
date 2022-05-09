@@ -58,7 +58,10 @@ def read_def(deff):
             numinf = np.array([0.0, 250.0, 500., 750.0, 1000., 1500.0, 2000,
                               2250., 2750., 3500., 4500., 5500., 7000., 9000., 14000., 20000.])
             numtag = make_numtag(numinf, maxnu)
-
+        if deff.stem == '16O-1H__MoLLIST':
+            alpha_ref = 0.07
+            n_Texp = 0.5
+            
     if ntransf > 1 and exception == False:
         dnufile = maxnu/ntransf
         numinf = dnufile*np.array(range(ntransf+1))
@@ -400,13 +403,13 @@ if __name__ == '__main__':
     import sys
     import pathlib
     deff = pathlib.Path(
-        '/home/kawahara/exojax/examples/luhman16/.database/CO2/12C-16O2/UCL-4000/12C-16O2__UCL-4000.def')
+        '~/exojax/examples/luhman16/.database/CO2/12C-16O2/UCL-4000/12C-16O2__UCL-4000.def')
     n_Texp, alpha_ref, molmass, numinf, numtag = read_def(deff)
     print(numtag)
     sys.exit()
     # various broad file
-#    broadf="/home/kawahara/exojax/data/broad/12C-16O__H2.broad"
-    broadf = '/home/kawahara/exojax/data/broad/1H2-16O__H2.broad'
+#    broadf="~/exojax/data/broad/12C-16O__H2.broad"
+    broadf = '~/exojax/data/broad/1H2-16O__H2.broad'
     bdat = read_broad(broadf)
     codelv = check_bdat(bdat)
     print(codelv)
@@ -421,20 +424,20 @@ if __name__ == '__main__':
 
     sys.exit()
     # broad file
-    broadf = '/home/kawahara/exojax/data/CO/12C-16O/12C-16O__H2.broad'
+    broadf = '~/exojax/data/CO/12C-16O/12C-16O__H2.broad'
     bdat = read_broad(broadf)
     j2alpha_ref, j2n_Texp = make_j2b(bdat, jlower_max=100)
 
     # partition file
-    pff = '/home/kawahara/exojax/data/exomol/CO/12C-16O/Li2015/12C-16O__Li2015.pf'
+    pff = '~/exojax/data/exomol/CO/12C-16O/Li2015/12C-16O__Li2015.pf'
     dat = read_pf(pff)
 
     check = False
     if check:
         print('Checking compution of Elower and gupper.')
-    statesf = '/home/kawahara/exojax/data/exomol/CO/12C-16O/Li2015/12C-16O__Li2015.states.bz2'
+    statesf = '~/exojax/data/exomol/CO/12C-16O/Li2015/12C-16O__Li2015.states.bz2'
     states = read_states(statesf)
-    transf = '/home/kawahara/exojax/data/exomol/CO/12C-16O/Li2015/12C-16O__Li2015.trans.bz2'
+    transf = '~/exojax/data/exomol/CO/12C-16O/Li2015/12C-16O__Li2015.trans.bz2'
     trans = read_trans(transf)
 
     ts = time.time()

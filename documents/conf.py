@@ -13,17 +13,17 @@
 import sphinx_rtd_theme
 import os
 import sys
-sys.path.insert(0, os.path.abspath('/home/kawahara/exojax'))
+sys.path.insert(0, os.path.abspath('~/exojax'))
 
 
 # -- Project information -----------------------------------------------------
 
-project = 'exojax'
-copyright = '2021-2022, exojax contributors (see top page)'
-author = 'exojax contributors (see top page)'
+project = 'ExoJAX'
+copyright = '2020-2022, ExoJAX contributors'
+author = 'ExoJAX contributors'
 
 # The full version, including alpha/beta/rc tags
-release = '1.1.0'
+release = '1.1.2'
 
 
 # -- General configuration ---------------------------------------------------
@@ -31,7 +31,7 @@ release = '1.1.0'
 # Add any Sphinx extension module names here, as strings. They can be
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
-extensions = ['sphinx.ext.autodoc', 'sphinxcontrib.napoleon', 'sphinxemoji.sphinxemoji',
+extensions = ['sphinx.ext.autodoc', 'sphinx.ext.napoleon', 'sphinxemoji.sphinxemoji',
               ]
 
 # Add any paths that contain templates here, relative to this directory.
