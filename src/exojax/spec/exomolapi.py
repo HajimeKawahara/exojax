@@ -403,13 +403,13 @@ if __name__ == '__main__':
     import sys
     import pathlib
     deff = pathlib.Path(
-        '/home/kawahara/exojax/examples/luhman16/.database/CO2/12C-16O2/UCL-4000/12C-16O2__UCL-4000.def')
+        '~/exojax/examples/luhman16/.database/CO2/12C-16O2/UCL-4000/12C-16O2__UCL-4000.def')
     n_Texp, alpha_ref, molmass, numinf, numtag = read_def(deff)
     print(numtag)
     sys.exit()
     # various broad file
-#    broadf="/home/kawahara/exojax/data/broad/12C-16O__H2.broad"
-    broadf = '/home/kawahara/exojax/data/broad/1H2-16O__H2.broad'
+#    broadf="~/exojax/data/broad/12C-16O__H2.broad"
+    broadf = '~/exojax/data/broad/1H2-16O__H2.broad'
     bdat = read_broad(broadf)
     codelv = check_bdat(bdat)
     print(codelv)
@@ -424,20 +424,20 @@ if __name__ == '__main__':
 
     sys.exit()
     # broad file
-    broadf = '/home/kawahara/exojax/data/CO/12C-16O/12C-16O__H2.broad'
+    broadf = '~/exojax/data/CO/12C-16O/12C-16O__H2.broad'
     bdat = read_broad(broadf)
     j2alpha_ref, j2n_Texp = make_j2b(bdat, jlower_max=100)
 
     # partition file
-    pff = '/home/kawahara/exojax/data/exomol/CO/12C-16O/Li2015/12C-16O__Li2015.pf'
+    pff = '~/exojax/data/exomol/CO/12C-16O/Li2015/12C-16O__Li2015.pf'
     dat = read_pf(pff)
 
     check = False
     if check:
         print('Checking compution of Elower and gupper.')
-    statesf = '/home/kawahara/exojax/data/exomol/CO/12C-16O/Li2015/12C-16O__Li2015.states.bz2'
+    statesf = '~/exojax/data/exomol/CO/12C-16O/Li2015/12C-16O__Li2015.states.bz2'
     states = read_states(statesf)
-    transf = '/home/kawahara/exojax/data/exomol/CO/12C-16O/Li2015/12C-16O__Li2015.trans.bz2'
+    transf = '~/exojax/data/exomol/CO/12C-16O/Li2015/12C-16O__Li2015.trans.bz2'
     trans = read_trans(transf)
 
     ts = time.time()

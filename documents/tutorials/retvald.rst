@@ -9,8 +9,8 @@ Star (GJ699).
 .. code:: ipython3
 
     #You need to download the data of an observed spectrum and a line list of VALD: ...
-    path_ObsData = '/home/kawahara/exojax/tests/.database/gj699_coadded_cr2.dat'
-    path_ValdLineList = '/home/kawahara/exojax/tests/.database/vald4214450.gz'
+    path_ObsData = '~/exojax/tests/.database/gj699_coadded_cr2.dat'
+    path_ValdLineList = '~/exojax/tests/.database/vald4214450.gz'
 
 Note that these data can be downloaded `here <http://secondearths.sakura.ne.jp/exojax/data/>`_.
     

@@ -6,6 +6,7 @@
 import os
 import numpy as np
 import jax.numpy as jnp
+from jax import jit, vmap
 import pathlib
 import vaex
 from exojax.spec import hapi, exomolapi, exomol, atomllapi, atomll, hitranapi
@@ -59,7 +60,7 @@ class MdbExomol(object):
         Note:
            The trans/states files can be very large. For the first time to read it, we convert it to HDF/vaex. After the second-time, we use the HDF5 format with vaex instead.
         """
-        self.path = pathlib.Path(path)
+        self.path = pathlib.Path(path).expanduser()
         t0 = self.path.parents[0].stem
         molec = t0+'__'+str(self.path.stem)
         self.bkgdatm = bkgdatm
@@ -431,9 +432,7 @@ class MdbExomol(object):
 
 
 class MdbHit(object):
-    """molecular database of ExoMol.
-
-    MdbExomol is a class for ExoMol.
+    """molecular database of HITRAN 2012 / HITEMP 2020.
 
     Attributes:
         nurange: nu range [min,max] (cm-1)
@@ -470,7 +469,7 @@ class MdbHit(object):
             path = path + '.bz2'
             print('Warning: path changed (.bz2 added):', path)
 
-        self.path = pathlib.Path(path)
+        self.path = pathlib.Path(path).expanduser()
         numinf, numtag = hitranapi.read_path(self.path)
         self.crit = crit
         self.Ttyp = Ttyp
@@ -537,6 +536,9 @@ class MdbHit(object):
 
         self.logsij0 = jnp.array(np.log(self.Sij0))
         self.elower = jnp.array(self._elower)
+
+        # get pf
+        self.gQT, self.T_gQT = hitranapi.get_pf(self.molecid, self.uniqiso)
         self.QTtyp = self.Qr_layer_HAPI([self.Ttyp])[0]
         self.Sij_typ = SijT(self.Ttyp, self.logsij0,
                             self.nu_lines, self.elower, self.QTtyp)
@@ -633,7 +635,7 @@ class MdbHit(object):
         self.gamma_natural = gn(self.A)
 
     def download(self, numtag=None):
-        """Downloading HITRAN/HITEMP par file.
+        """Downloading HITRAN 2012/HITEMP 2020 par file.
 
         Note:
            The download URL is written in exojax.utils.url.
@@ -644,6 +646,7 @@ class MdbHit(object):
         from exojax.utils.url import url_HITEMP10
         import shutil
 
+        os.makedirs(str(self.path.parent), exist_ok=True)
         try:
             url = url_HITRAN12()+self.path.name
             urllib.request.urlretrieve(url, str(self.path))
@@ -699,7 +702,7 @@ class MdbHit(object):
            path: path for Exomol data directory/tag. For instance, "/home/CO/12C-16O/Li2015"
         """
         # load pf
-        self.empath = pathlib.Path(path)
+        self.empath = pathlib.Path(path).expanduser()
         t0 = self.empath.parents[0].stem
         molec = t0+'__'+str(self.empath.stem)
         self.pf_file = self.empath/pathlib.Path(molec+'.pf')
@@ -737,30 +740,32 @@ class MdbHit(object):
         except:
             print("Error: Couldn't download "+ext+' file and save.')
 
-    def QT_interp(self, T):
+    def QT_iso_interp(self, idx, T):
         """interpolated partition function.
 
         Args:
+           idx: index for HITRAN isotopologue number
            T: temperature
 
         Returns:
-           Q(T) interpolated in jnp.array
+           Q(idx, T) interpolated in jnp.array
         """
-        return jnp.interp(T, self.T_gQT, self.gQT)
+        return jnp.interp(T, self.T_gQT[idx], self.gQT[idx])
 
-    def qr_interp(self, T):
+    def qr_iso_interp(self, idx, T):
         """interpolated partition function ratio.
 
         Args:
+           idx: index for HITRAN isotopologue number
            T: temperature
 
         Returns:
            qr(T)=Q(T)/Q(Tref) interpolated in jnp.array
         """
-        return self.QT_interp(T)/self.QT_interp(Tref)
+        return self.QT_iso_interp(idx, T)/self.QT_iso_interp(idx, self.Tref)
 
     def Qr_HAPI(self, Tarr):
-        """Partition Function ratio using HAPI partition sum.
+        """Partition Function ratio using HAPI partition data.
 
         Args:
            Tarr: temperature array (K)
@@ -773,14 +778,21 @@ class MdbHit(object):
         """
         allT = list(np.concatenate([[Tref], Tarr]))
         Qrx = []
-        for iso in self.uniqiso:
-            Qrx.append(hapi.partitionSum(self.molecid, iso, allT))
+        for idx, iso in enumerate(self.uniqiso):
+            Tmin, Tmax = hapi.get_TMIN_TMAX_FOR_BD_TIPS_2017_PYTHON(self.molecid, iso)
+            if(max(allT) > Tmax):
+                raise ValueError('%.1f K is outside the supported temperature range of the HITRAN partition function data for isotope #%d of molecule #%d (%.1f -- %.1f K)' % (max(allT), iso, self.molecid, Tmin, Tmax))
+            if(min(allT) < Tmin):
+                raise ValueError('%.1f K is outside the supported temperature range of the HITRAN partition function data for isotope #%d of molecule #%d (%.1f -- %.1f K)' % (min(allT), iso, self.molecid, Tmin, Tmax))
+
+            Qrx_iso = jit(vmap(self.QT_iso_interp, (None, 0)))(idx, jnp.array(allT))
+            Qrx.append(Qrx_iso)
         Qrx = np.array(Qrx)
         qr = Qrx[:, 1:].T/Qrx[:, 0]  # Q(T)/Q(Tref)
         return qr
 
     def Qr_line_HAPI(self, T):
-        """Partition Function ratio using HAPI partition sum.
+        """Partition Function ratio using HAPI partition data.
 
         Args:
            T: temperature (K)
@@ -796,6 +808,29 @@ class MdbHit(object):
         for idx, iso in enumerate(self.uniqiso):
             mask = self.isoid == iso
             qr_line[mask] = qrx[0, idx]
+        return qr_line
+
+    def Qr_line_HAPI_jax(self, T):
+        """Partition Function ratio using HAPI partition data.
+        (This function works for JAX environment.)
+
+        Args:
+           T: temperature (K)
+
+        Returns:
+           Qr_line, partition function ratio array for lines [Nlines]
+
+        Note:
+           Nlines=len(self.nu_lines)
+        """
+        qrx = []
+        for idx, iso in enumerate(self.uniqiso):
+            qrx.append(self.qr_iso_interp(idx, T))
+
+        qr_line = jnp.zeros(len(self.isoid))
+        for idx, iso in enumerate(self.uniqiso):
+            mask_idx = np.where(self.isoid == iso)
+            qr_line = qr_line.at[jnp.index_exp[mask_idx]].set(qrx[idx])
         return qr_line
 
     def Qr_layer_HAPI(self, Tarr):
@@ -887,7 +922,7 @@ class AdbVald(object):
         """
 
         # load args
-        self.vald3_file = pathlib.Path(path)  # VALD3 output
+        self.vald3_file = pathlib.Path(path).expanduser()  # VALD3 output
         self.nurange = [np.min(nurange), np.max(nurange)]
         self.margin = margin
         self.crit = crit
@@ -1197,7 +1232,7 @@ class AdbKurucz(object):
         """
 
         # load args
-        self.kurucz_file = pathlib.Path(path)
+        self.kurucz_file = pathlib.Path(path).expanduser()
         self.nurange = [np.min(nurange), np.max(nurange)]
         self.margin = margin
         self.crit = crit

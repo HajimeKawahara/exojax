@@ -56,7 +56,7 @@ p381 in Pruppacher and Klett
 
 .. code:: ipython3
 
-    data = pd.read_csv("/home/kawahara/exojax/data/clouds/drag_force.txt",comment="#",delimiter=",")
+    data = pd.read_csv("~/exojax/data/clouds/drag_force.txt",comment="#",delimiter=",")
 
 Let’s fit logarithms of Davies number :math:`N_D = C_d N_{re}^2` and
 Reynolds number :math:`N_{re}` by a polynomial equation.

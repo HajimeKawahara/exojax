@@ -9,7 +9,7 @@ One can read the high-R opacity data provided by petitRadtrans as
 
 .. code:: ipython
        
-       >>> petitdir="/home/kawahara/petitRADTRANS/petitRADTRANS/input_data/opacities/lines/line_by_line/CO_all_iso/"
+       >>> petitdir="~/petitRADTRANS/petitRADTRANS/input_data/opacities/lines/line_by_line/CO_all_iso/"
        >>> with open(petitdir+"wlen.dat", 'rb') as w:
        >>>     contentw = np.fromfile(w, dtype=np.float64)
        >>> 
@@ -20,7 +20,7 @@ Also, one can export the opacity computed by ExoJAX to petitRadtrans high-R form
 
 .. code:: ipython
        
-       >>> outdir="/home/kawahara/petitRADTRANS/petitRADTRANS/input_data/opacities/lines/line_by_line/CO_exojax/"
+       >>> outdir="~/petitRADTRANS/petitRADTRANS/input_data/opacities/lines/line_by_line/CO_exojax/"
        >>> np.array(1.0/nus[::-1],dtype=np.float64).tofile(outdir+"wlen.dat")
        >>> Mmol=28.010446441149536 # molecular weight
        >>> 
