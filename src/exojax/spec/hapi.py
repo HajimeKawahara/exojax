@@ -16809,6 +16809,15 @@ def BD_TIPS_2017_PYTHON_SLICE(M, I, T, n=20):  # testing
     return None, Qt
 
 
+def get_TMIN_TMAX_FOR_BD_TIPS_2017_PYTHON(M, I):
+    # get temperature grid
+    TT = TIPS_2017_ISOT_HASH[(M, I)]
+    Tmin = min(TT)
+    Tmax = max(TT)
+
+    return Tmin, Tmax
+
+
 # ALIASES FOR TIPS
 def PYTIPS2011(M, I, T): return BD_TIPS_2011_PYTHON(M, I, T)[1]
 def PYTIPS2017(M, I, T): return BD_TIPS_2017_PYTHON(M, I, T)[1]
