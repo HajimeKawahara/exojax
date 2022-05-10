@@ -9,7 +9,7 @@ from exojax.utils.constants import hcperk
 from exojax.spec.hitran import SijT
 
 
-def plg_elower_addcon(indexa,Na,cnu,indexnu,nu_grid,mdb,elower_grid=None,Nelower=10,Ncrit=0,reshape=False, weedout=False, Tgue=296., preov=0., coefTgue=1., verbose=True):
+def plg_elower_addcon(indexa,Na,cnu,indexnu,nu_grid,mdb,Tgue, errTgue=500., elower_grid=None,Nelower=10,Ncrit=0,reshape=False, weedout=False, preov=0., coefTgue=1., verbose=True):
     """Pseudo Line Grid for elower w/ an additional condition
     
     Args:
@@ -19,12 +19,13 @@ def plg_elower_addcon(indexa,Na,cnu,indexnu,nu_grid,mdb,elower_grid=None,Nelower
        indexnu: nu index
        nugrid: nu grid
        mdb: molecular database (instance made by the MdbExomol/MdbHit class in moldb.py)
+       Tgue: initial guess on the typical atmospheric temperature
+       errTgue: expected one-sided error of Tgue
        elower_grid: elower_grid (optional)
        Nelower: # of division of elower between min to max values (when elower_grid is not given)
        Ncrit: frozen line number per bin
        reshape: reshaping output arrays
        weedout: Is it ok to remove weakest lines or not?
-       Tgue: initial guess on the typical atmospheric temperature
        preov: ad hoc parameter to prevent overflow
        coefTgue: coefficient for Tgue to optimize elower_grid
        verbose: vervose printing or not
@@ -41,25 +42,26 @@ def plg_elower_addcon(indexa,Na,cnu,indexnu,nu_grid,mdb,elower_grid=None,Nelower
     elower = mdb.elower
     Nnugrid=len(nu_grid)
     Tref = 296.0
-    Tguerev = Tgue * coefTgue
-    preov = max(- hcperk*(elower/Tguerev - elower/Tref)) - 80. if preov==0. else preov
+    Tuplim = Tgue + errTgue
+    Tuplimc = Tuplim * coefTgue
+    preov = max(- hcperk*(elower/Tuplimc - elower/Tref)) - 80. if preov==0. else preov
     with warnings.catch_warnings():
         warnings.simplefilter('error')
         try:
-            expme = np.exp(- hcperk*(elower/Tguerev - elower/Tref) - preov)
+            expme = np.exp(- hcperk*(elower/Tuplimc - elower/Tref) - preov)
         except RuntimeWarning as e:
             raise Exception(str(e)+' :\t Please adjust "preov"...')
         if elower_grid is None:
             margin = 1.0
-            min_expme = np.exp(- hcperk*((min(elower)-margin)/Tguerev - (min(elower)-margin)/Tref) - preov)
-            max_expme = np.exp(- hcperk*((max(elower)+margin)/Tguerev - (max(elower)+margin)/Tref) - preov)
+            min_expme = np.exp(- hcperk*((min(elower)-margin)/Tuplimc - (min(elower)-margin)/Tref) - preov)
+            max_expme = np.exp(- hcperk*((max(elower)+margin)/Tuplimc - (max(elower)+margin)/Tref) - preov)
             expme_grid = np.linspace(min_expme, max_expme, Nelower)
-            elower_grid = (np.log(expme_grid) + preov) / (-hcperk) / (1/Tguerev - 1/Tref)
+            elower_grid = (np.log(expme_grid) + preov) / (-hcperk) / (1/Tuplimc - 1/Tref)
         else:
-            expme_grid = np.exp(elower_grid*(1/Tguerev - 1/Tref)*(-hcperk) - preov)
+            expme_grid = np.exp(elower_grid*(1/Tuplimc - 1/Tref)*(-hcperk) - preov)
             Nelower=len(expme_grid)
 
-    qlogsij0,qcnu,num_unique,frozen_mask=get_qlogsij0_addcon(indexa,Na,cnu,indexnu,Nnugrid,mdb,expme,expme_grid,Ncrit=Ncrit, Tgue=Tgue) #, elower_grid=elower_grid, Nelower=10
+    qlogsij0,qcnu,num_unique,frozen_mask=get_qlogsij0_addcon(indexa,Na,cnu,indexnu,Nnugrid,mdb,expme,expme_grid,Ncrit=Ncrit, Tuplim=Tuplim) #, elower_grid=elower_grid, Nelower=10
     
     nonzeropl_mask=qlogsij0>-np.inf
     '''if weedout:
@@ -86,7 +88,7 @@ def plg_elower_addcon(indexa,Na,cnu,indexnu,nu_grid,mdb,elower_grid=None,Nelower
         
     return qlogsij0,qcnu,num_unique,elower_grid,frozen_mask,nonzeropl_mask
 
-def get_qlogsij0_addcon(indexa,Na,cnu,indexnu,Nnugrid,mdb,expme,expme_grid, Ncrit=0, Tgue=296., threshold_persist_freezing=10000):
+def get_qlogsij0_addcon(indexa,Na,cnu,indexnu,Nnugrid,mdb,expme,expme_grid, Ncrit=0, Tuplim=1000., threshold_persist_freezing=10000):
     """gather (freeze) lines w/ additional indexing
 
     Args:
@@ -96,10 +98,10 @@ def get_qlogsij0_addcon(indexa,Na,cnu,indexnu,Nnugrid,mdb,expme,expme_grid, Ncri
        indexnu: index of wavenumber
        Nnugrid: number of nu grid
        mdb: molecular database (instance made by the MdbExomol/MdbHit class in moldb.py)
-       expme: exp(- hcperk*(elower/Tguerev - elower/Tref) - preov)
+       expme: exp(- hcperk*(elower/Tuplimc - elower/Tref) - preov)
        expme_grid: grid of expme
        Ncrit: frozen line number per bin
-       Tgue: initial guess on the typical atmospheric temperature
+       Tuplim: initial guess on the typical atmospheric temperature
        threshold_persist_freezing: How weak lines compared to the deepest one will you gather?
 
     """
@@ -118,9 +120,9 @@ def get_qlogsij0_addcon(indexa,Na,cnu,indexnu,Nnugrid,mdb,expme,expme_grid, Ncri
     frozen_eindex=np.array(erange)[lmask]
     frozen_mask=np.isin(eindex,frozen_eindex)
     
-    SijTgue_frozen = SijT((Tgue+1000.), \
+    SijTgue_frozen = SijT(Tuplim+500., \
                     mdb.logsij0[frozen_mask], mdb.nu_lines[frozen_mask], mdb.elower[frozen_mask], \
-                    qT=mdb.qr_interp(Tgue+1000.))
+                    qT=mdb.qr_interp(Tuplim+500.))
     persist_freezing = SijTgue_frozen < max(SijTgue_frozen) / threshold_persist_freezing
     index_persist_freezing = np.where(frozen_mask)[0][persist_freezing]
     frozen_mask = np.isin(np.arange(len(frozen_mask)), index_persist_freezing)
@@ -241,7 +243,7 @@ def get_qlogsij0(cnu,indexnu,Nnugrid,logsij0,expme,expme_grid,Nelower=10,Ncrit=0
     return qlogsij0,qcnu,num_unique,frozen_mask
 
 
-def optimize_coefTgue(Tgue, nus, mdb, molmass, Mgue=41., Rgue=1., MMRgue=0.001):
+def optimize_coefTgue(Tgue, nus, mdb, molmass, errTgue=500., Mgue=41., Rgue=1., MMRgue=0.001):
     """Optimize coefTgue for adjusting elower_grid
     
     Args:
@@ -249,6 +251,7 @@ def optimize_coefTgue(Tgue, nus, mdb, molmass, Mgue=41., Rgue=1., MMRgue=0.001):
         nus: wavenumber grid for model
         mdb: molecular database (instance made by the MdbExomol/MdbHit class in moldb.py)
         molmass: mass of the molecule (amu)
+        errTgue: expected one-sided error of Tgue
         Mgue: initial guess on the mass
         Rgue: initial guess on the radius
         MMRgue: initial guess on the MMR of the molecule
@@ -259,16 +262,17 @@ def optimize_coefTgue(Tgue, nus, mdb, molmass, Mgue=41., Rgue=1., MMRgue=0.001):
     """
     import scipy.optimize as opt
     coefTgue_opt = opt.least_squares(\
-    fun=diff_frozen_vs_pseudo, x0=[1.0,], bounds=(0.5, 2.0), args=[Tgue, Mgue, Rgue, MMRgue, nus, mdb, molmass])
+    fun=diff_frozen_vs_pseudo, x0=[1.0,], bounds=(0.5, 2.0), args=[Tgue, errTgue, Mgue, Rgue, MMRgue, nus, mdb, molmass])
     return coefTgue_opt.x[0]
 
     
-def diff_frozen_vs_pseudo(coefTgue_init, Tgue, Mgue, Rgue, MMRgue, nus, mdb_orig, molmass, verbose=False):
+def diff_frozen_vs_pseudo(coefTgue_init, Tgue, errTgue, Mgue, Rgue, MMRgue, nus, mdb_orig, molmass, verbose=False):
     """Evaluate difference between pseudo lines and the original lines
     
     Args:
         coefTgue_init: initial value of coefTgue (list/array with length=1)
         Tgue: initial guess on the typical atmospheric temperature
+        errTgue: expected one-sided error of Tgue
         Mgue: initial guess on the mass
         Rgue: initial guess on the radius
         MMRgue: initial guess on the MMR of the molecule
@@ -302,7 +306,7 @@ def diff_frozen_vs_pseudo(coefTgue_init, Tgue, Mgue, Rgue, MMRgue, nus, mdb_orig
     for j,a in enumerate(gammaL_set_unique):
         index_gamma=np.where(gammaL_set==a,j,index_gamma)
 
-    qlogsij0,qcnu,num_unique,elower_grid,frozen_mask,nonzeropl_mask = plg_elower_addcon(index_gamma,Ngamma,cnu,indexnu,nus, mdb,Ncrit=Ncrit,Nelower=Nelower,reshape=False,Tgue=Tgue,coefTgue=coefTgue,verbose=verbose)
+    qlogsij0,qcnu,num_unique,elower_grid,frozen_mask,nonzeropl_mask = plg_elower_addcon(index_gamma,Ngamma,cnu,indexnu,nus, mdb,Tgue, errTgue=errTgue,Ncrit=Ncrit,Nelower=Nelower,reshape=False, coefTgue=coefTgue,verbose=verbose)
     Nnugrid=len(nus)
     
     mdb, cnu, indexnu = gather_lines(mdb,Ngamma,Nnugrid,Nelower,nus,cnu,indexnu,qlogsij0,qcnu,elower_grid,alpha_ref_grid,n_Texp_grid,frozen_mask,nonzeropl_mask)
@@ -319,7 +323,7 @@ def diff_frozen_vs_pseudo(coefTgue_init, Tgue, Mgue, Rgue, MMRgue, nus, mdb_orig
     
     from exojax.spec.modit import setdgm_exomol
     fT = lambda T0,alpha: T0[:,None]*(Parr[None,:]/Pref)**alpha[:,None]
-    T0_test=np.array([Tgue-300.,Tgue+300.,Tgue-300.,Tgue+300.])
+    T0_test=np.array([Tgue+errTgue-300.,Tgue+errTgue+300.,Tgue+errTgue-300.,Tgue+errTgue+300.])
     alpha_test=np.array([0.2,0.2,0.05,0.05])
     res=0.2
     dgm_ngammaL = setdgm_exomol(mdb, fT, Parr, R, molmass, res, T0_test, alpha_test)
@@ -350,8 +354,8 @@ def diff_frozen_vs_pseudo(coefTgue_init, Tgue, Mgue, Rgue, MMRgue, nus, mdb_orig
         mu = Frot
         return mu
         
-    mu_pseu = frun_pseu(Tarr=(Tgue+1000.)*(Parr/Pref)**0.1, MMR_=MMRgue,Mp=Mgue,Rp=Rgue,u1=0.0,u2=0.0,RV=0.0,vsini=0.1)
-    mu_orig = frun_orig(Tarr=(Tgue+1000.)*(Parr/Pref)**0.1, MMR_=MMRgue,Mp=Mgue,Rp=Rgue,u1=0.0,u2=0.0,RV=0.0,vsini=0.1)
+    mu_pseu = frun_pseu(Tarr=(Tgue+errTgue)*(Parr/Pref)**0.1, MMR_=MMRgue,Mp=Mgue,Rp=Rgue,u1=0.0,u2=0.0,RV=0.0,vsini=0.1)
+    mu_orig = frun_orig(Tarr=(Tgue+errTgue)*(Parr/Pref)**0.1, MMR_=MMRgue,Mp=Mgue,Rp=Rgue,u1=0.0,u2=0.0,RV=0.0,vsini=0.1)
     return abs(np.mean(mu_pseu - mu_orig))
         
         
