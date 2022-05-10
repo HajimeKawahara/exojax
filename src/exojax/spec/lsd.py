@@ -3,6 +3,7 @@
    * there are both numpy and jnp versions. (np)*** is numpy version.
    * (np)getix provides the contribution and index.
    * (np)add(x)D constructs the (x)Dimensional LSD array given the contribution and index.
+   * uniqidx does not have the contribution.
    * uniqidx(_2D) provides the indices based on the unique values (vectors) of the input array. These are the numpy version.
 
 """
@@ -147,6 +148,28 @@ def npadd2D(a, w, cx, ix, cy, iy):
     np.add.at(a, (ix+1, iy), w*cx*(1-cy))
     np.add.at(a, (ix+1, iy+1), w*cx*cy)
     np.add.at(a, (ix, iy+1), w*(1-cx)*cy)
+    return a
+
+def npadd3D_uniqidx(a, w, cx, ix, cy, iy, uiz):
+    """numpy version: Add into an array when contirbutions and indices are given (3D=2D+uniqidx).
+
+    Args:
+        a: lineshape density (LSD) array (np.array)
+        w: weight (N)
+        cx: given contribution for x 
+        ix: given index for x 
+        cy: given contribution for y 
+        iy: given index for y
+        uiz: given unique index for z
+
+    Returns:
+        a
+
+    """
+    np.add.at(a, (ix, iy, uiz), w*(1-cx)*(1-cy))
+    np.add.at(a, (ix+1, iy, uiz), w*cx*(1-cy))
+    np.add.at(a, (ix+1, iy+1, uiz), w*cx*cy)
+    np.add.at(a, (ix, iy+1, uiz), w*(1-cx)*cy)
     return a
 
 

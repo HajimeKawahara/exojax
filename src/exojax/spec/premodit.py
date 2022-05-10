@@ -2,7 +2,7 @@
 
 """
 import numpy as np
-from exojax.spec.lsd import npgetix, npadd2D
+from exojax.spec.lsd import npgetix, npadd2D, npadd3D_uniqidx
 from exojax.utils.constants import hcperk, Tref
 
 def compute_dElower(T,interval_contrast=0.1):
@@ -64,8 +64,8 @@ def npgetix_exp(x, xv, Ttyp):
     return cont, index    
 
 
-def make_LBD(Sij0, nu_lines, nu_grid, elower, elower_grid, Ttyp):
-    """make logarithm biased LSD (LBD) array
+def make_LBD2D(Sij0, nu_lines, nu_grid, elower, elower_grid, Ttyp):
+    """make logarithm biased LSD (LBD) array (2D)
 
     Args:
         Sij0: line strength at the refrence temepreature Tref (should be F64)
@@ -91,6 +91,35 @@ def make_LBD(Sij0, nu_lines, nu_grid, elower, elower_grid, Ttyp):
     lsd[lsd==0.0]=logmin       
     return jnp.array(lsd)
 
+def make_LBD3D_uniqidx(Sij0, nu_lines, nu_grid, elower, elower_grid, uidx_broadpar, Ttyp):
+    """make logarithm biased LSD (LBD) array (2D)
+
+    Args:
+        Sij0: line strength at the refrence temepreature Tref (should be F64)
+        nu_lines: wavenumber list of lines [Nline] (should be numpy F64)
+        nu_grid: wavenumenr grid [Nnugrid] (should be numpy F64)
+        elower: E lower
+        elower_grid: E lower grid
+        uidx_broadpar: broadening parameter index
+        Ttyp: typical temperature you will use.
+
+    Returns:
+        lbd
+
+    Notes: 
+        LBD (jnp array)
+
+    """
+    logmin=-np.inf
+    lsd = np.zeros((len(nu_grid), len(elower_grid), np.max(uidx_broadpar)+1),dtype=np.float64)
+    cx, ix = npgetix(nu_lines, nu_grid)
+    cy, iy = npgetix_exp(elower, elower_grid, Ttyp)
+    lsd=npadd3D_uniqidx(lsd, Sij0, cx, ix, cy, iy, uidx_broadpar)
+    lsd[lsd>0.0]=np.log(lsd[lsd>0.0])
+    lsd[lsd==0.0]=logmin       
+    return jnp.array(lsd)
+
+
 def logf_bias(elower_in,T):
     """logarithm f bias function
     """
@@ -106,6 +135,11 @@ def unbiased_lsd(lbd_biased,T,nu_grid,elower_grid,qr):
     """ unbias the biased LSD
 
     Args:
+        lbd_biased: log biased LSD
+        T: temperature for unbiasing
+        nu_grid: wavenumber grid
+        elower_grid: Elower grid
+        qr: partition function ratio Q(T)/Q(Tref)
 
     Returns:
         LSD (unbiased)
@@ -150,7 +184,7 @@ def compare_with_direct(mdb,Ttest=1000.0,interval_contrast=0.1,Ttyp=2000.0):
     from exojax.spec.lsd import npadd1D
     from exojax.spec.hitran import SijT        
     elower_grid=make_elower_grid(Ttyp, mdb._elower, interval_contrast=interval_contrast)
-    lbd=make_LBD(mdb.Sij0, mdb.nu_lines, nus, mdb._elower, elower_grid, Ttyp)    
+    lbd=make_LBD2D(mdb.Sij0, mdb.nu_lines, nus, mdb._elower, elower_grid, Ttyp)    
     Slsd=unbiased_lsd(lbd,Ttest,nus,elower_grid,mdb.qr_interp)
     
     cont_inilsd_nu, index_inilsd_nu = npgetix(mdb.nu_lines, nus)
@@ -171,19 +205,25 @@ if __name__ == "__main__":
     print("premodit")
 
     nus=np.logspace(np.log10(6020.0), np.log10(6080.0), 40000, dtype=np.float64)
-    mdbCH4 = moldb.MdbExomol('.database/CH4/12C-1H4/YT10to10/', nus, gpu_transfer=False)
+    mdb = moldb.MdbExomol('.database/CH4/12C-1H4/YT10to10/', nus, gpu_transfer=False)
 
     from exojax.spec.lsd import uniqidx_2D
-    a=np.array([mdbCH4._n_Texp,mdbCH4._alpha_ref]).T
-    uidx=uniqidx_2D(a)
-    print(len(uidx))
-    print(len(mdbCH4.nu_lines))
+    broadpar=np.array([mdb._n_Texp,mdb._alpha_ref]).T
+    uidx_broadpar=uniqidx_2D(broadpar)
 
+    Ttyp=2000.0
+    interval_contrast=0.1
+    elower_grid=make_elower_grid(Ttyp, mdb._elower, interval_contrast=interval_contrast)
+    lbd=make_LBD3D_uniqidx(mdb.Sij0, mdb.nu_lines, nus, mdb._elower, elower_grid, uidx_broadpar, Ttyp)
+    Ttest=1000.0
+    Slsd=unbiased_lsd(lbd,Ttest,nus,elower_grid,mdb.qr_interp)
+    # ((40000, 26, 19), (1, 1, 26))
+    print(np.shape(Slsd))
     import sys
     sys.exit()
 
     
-    Slsd,Slsd_direct=compare_with_direct(mdbCH4,Ttest=1000.0,interval_contrast=0.1,Ttyp=2000.0)    
+    Slsd,Slsd_direct=compare_with_direct2D(mdb,Ttest=1000.0,interval_contrast=0.1,Ttyp=2000.0)    
 
     fig=plt.figure()
     ax=fig.add_subplot(211)
