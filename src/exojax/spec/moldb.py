@@ -811,10 +811,11 @@ class MdbHit(object):
         qrx = []
         for idx, iso in enumerate(self.uniqiso):
             qrx.append(self.qr_iso_interp(idx, T))
-        qr_line = []
-        for isoid in self.isoid:
-            idx = np.where(self.uniqiso == isoid)[0][0]
-            qr_line.append(qrx[idx])
+
+        qr_line = jnp.zeros(len(self.isoid))
+        for idx, iso in enumerate(self.uniqiso):
+            mask_idx = np.where(self.isoid == iso)
+            qr_line = qr_line.at[jnp.index_exp[mask_idx]].set(qrx[idx])
         return qr_line
 
     def Qr_layer_HAPI(self, Tarr):
