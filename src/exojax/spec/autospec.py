@@ -138,8 +138,7 @@ class AutoXS(object):
             if ~checknus and self.autogridconv:
                 xsv = jnp.interp(self.nus, nus, xsv)
         else:
-            print('Error:', xsmode, ' is unavailable (auto/LPF/DIT).')
-            xsv = None
+            raise ValueError('unavailable xsmode. Use LPF|lpf|MODIT|modit|DIT|dit.')
         return xsv
 
     def autonus(self, checknus, tag='ESLOG'):
