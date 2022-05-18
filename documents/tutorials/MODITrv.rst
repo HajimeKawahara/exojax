@@ -135,7 +135,7 @@ instrumental spectral resolution.
 
 We need to set DIT grid matrix (DGM), but, a temperature profile varies
 during sampling. So we check max/min of profiles. `setdgm_exomol <../exojax/exojax.spec.html#exojax.spec.modit.setdgm_exomol>`_ can
-automatically set DGM based on the T-P model and given ranges.
+automatically set DGM based on the T-P model and given ranges. For HITRAN/HITEMP database, use `setdgm_hitran <../exojax/exojax.spec.html#exojax.spec.modit.setdgm_hitran>`_. Note that reference partial pressure array is required for setdgm_hitran.
 
 .. code:: ipython3
 
