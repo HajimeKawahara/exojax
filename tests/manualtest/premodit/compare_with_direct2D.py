@@ -2,8 +2,9 @@
 
 """
 import numpy as np
+import jax.numpy as jnp
 
-def compare_with_direct2D(mdb,Ttest=1000.0,interval_contrast=0.1,Ttyp=2000.0):
+def compare_with_direct2D(mdb,nus,Ttest=1000.0,interval_contrast=0.1,Ttyp=2000.0):
     """ compare the premodit LSD with the direct computation of LSD
 
     """
@@ -27,15 +28,19 @@ def compare_with_direct2D(mdb,Ttest=1000.0,interval_contrast=0.1,Ttyp=2000.0):
     assert np.abs(maxdev) < 0.05
     return Slsd, Slsd_direct
 
-if __name__ == "__main__":
-    import jax.numpy as jnp
+def test_2d():
     from exojax.spec import moldb
-    import matplotlib.pyplot as plt
-
     nus=np.logspace(np.log10(6020.0), np.log10(6080.0), 40000, dtype=np.float64)
     mdbCH4 = moldb.MdbExomol('.database/CH4/12C-1H4/YT10to10/', nus, gpu_transfer=False)
-    Slsd,Slsd_direct=compare_with_direct2D(mdbCH4,Ttest=1000.0,interval_contrast=0.1,Ttyp=2000.0)    
+    Slsd,Slsd_direct=compare_with_direct2D(mdbCH4,nus,Ttest=1000.0,interval_contrast=0.1,Ttyp=2000.0)    
+    return Slsd, Slsd_direct
 
+
+
+if __name__ == "__main__":
+    import matplotlib.pyplot as plt
+
+    Slsd, Slsd_direct=test_2d()
     fig=plt.figure()
     ax=fig.add_subplot(211)
     plt.plot((Slsd),alpha=0.3)
