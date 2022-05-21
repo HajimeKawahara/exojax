@@ -25,7 +25,9 @@ def compare_with_direct3D(mdb,Ttest=1000.0,interval_contrast=0.1,Ttyp=2000.0):
     Slsd_direct = np.zeros_like(nus,dtype=np.float64)
     Slsd_direct = npadd1D(Slsd_direct, S, cont_inilsd_nu, index_inilsd_nu)
     print("Number of the E_lower grid=",len(elower_grid))
-    print("max deviation=",np.max(np.abs(Slsd/Slsd_direct-1.0)))
+    maxdev=np.max(np.abs(Slsd/Slsd_direct-1.0))
+    print("max deviation=",maxdev)
+    assert np.abs(maxdev) < 0.05
     return Slsd, Slsd_direct
 
 if __name__ == "__main__":
@@ -43,8 +45,7 @@ if __name__ == "__main__":
     plt.plot((Slsd_direct),alpha=0.3)
     plt.yscale("log")
     ax=fig.add_subplot(212)
-    plt.plot((Slsd/Slsd_direct-1.0),Slsd,".",alpha=0.3)
+    plt.plot((Slsd/Slsd_direct-1.0),".",alpha=0.3)
     plt.xlabel("wavenumber bin")
     plt.ylabel("error (premodit - direct)/direct")
-    plt.yscale("log")
     plt.show()
