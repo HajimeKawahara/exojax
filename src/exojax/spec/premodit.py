@@ -3,7 +3,7 @@
 """
 import numpy as np
 import jax.numpy as jnp
-from exojax.spec.lsd import npgetix, npadd2D, npadd3D_uniqidx
+from exojax.spec.lsd import npgetix, npgetix_exp, npadd2D, npadd3D_uniqidx
 from exojax.utils.constants import hcperk, Tref
 
 def compute_dElower(T,interval_contrast=0.1):
@@ -37,31 +37,6 @@ def make_elower_grid(Tmax, elower, interval_contrast):
     Ng_elower = int((max_elower - min_elower)/dE)+2
     return min_elower + np.arange(Ng_elower)*dE
 
-def npgetix_exp(x, xv, Ttyp):
-    """numpy version of getix weigthed by exp(-hc/kT).
-
-    Args:
-        x: x array
-        xv: x grid
-        Ttyp: typical temperature for the temperature correction
-
-    Returns:
-        cont (contribution)
-        index (index)
-
-    Note:
-       cont is the contribution for i=index+1. 1 - cont is the contribution for i=index. For other i, the contribution should be zero.
-    """
-
-    if Ttyp is not None:
-        x=np.exp(-hcperk*x*(1.0/Ttyp-1.0/Tref))
-        xv=np.exp(-hcperk*xv*(1.0/Ttyp-1.0/Tref))
-    
-    indarr = np.arange(len(xv))
-    pos = np.interp(x, xv, indarr)
-    index = (pos).astype(int)
-    cont = (pos-index)
-    return cont, index    
 
 
 def make_lbd2D(Sij0, nu_lines, nu_grid, elower, elower_grid, Ttyp):
@@ -122,11 +97,27 @@ def make_lbd3D_uniqidx(Sij0, nu_lines, nu_grid, elower, elower_grid, uidx_broadp
 
 def logf_bias(elower_in,T):
     """logarithm f bias function
+    
+    Args:
+        elower_in: Elower in cm-1
+        T: temperature for unbiasing in Kelvin
+
+    Returns:
+        logarithm of bias f function
+
     """
     return -hcperk*elower_in * (1./T - 1./Tref)
 
 def g_bias(nu_in,T):
     """g bias function
+
+    Args:
+        nu_in: wavenumber in cm-1
+        T: temperature for unbiasing in Kelvin
+
+    Returns:
+        bias g function
+
     """
     #return jnp.expm1(-hcperk*nu_in/T) / jnp.expm1(-hcperk*nu_in/Tref)
     return  (1.0-jnp.exp(-hcperk*nu_in/T)) / (1.0-jnp.exp(-hcperk*nu_in/Tref))
@@ -136,17 +127,17 @@ def unbiased_lsd(lbd_biased,T,nu_grid,elower_grid,qr):
 
     Args:
         lbd_biased: log biased LSD
-        T: temperature for unbiasing
-        nu_grid: wavenumber grid
-        elower_grid: Elower grid
+        T: temperature for unbiasing in Kelvin
+        nu_grid: wavenumber grid in cm-1
+        elower_grid: Elower grid in cm-1
         qr: partition function ratio Q(T)/Q(Tref)
 
     Returns:
-        LSD (unbiased)
+        Unbiased 2D LSD, shape = (number_of_wavenumber_bin, number_of_broadening_parameters)
 
     """
     Nnu=int(len(nu_grid)/2)
-    eunbias_lbd = jnp.sum(jnp.exp(logf_bias(elower_grid,T)+lbd_biased),axis=1)
+    eunbias_lbd = jnp.sum(jnp.exp(logf_bias(elower_grid,T)+lbd_biased),axis=-1)
     return (eunbias_lbd.T*g_bias(nu_grid,T)/qr(T)).T
 
 

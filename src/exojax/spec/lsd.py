@@ -7,10 +7,11 @@
    * uniqidx(_2D) provides the indices based on the unique values (vectors) of the input array. These are the numpy version.
 
 """
-from jax.numpy import index_exp as joi
 import numpy as np
+from jax.numpy import index_exp as joi
 import jax.numpy as jnp
 from jax import jit, vmap
+from exojax.utils.constants import hcperk, Tref
 import tqdm
 
 def getix(x, xv):
@@ -63,6 +64,31 @@ def npgetix(x, xv):
     cont = (pos-index)
     return cont, index
 
+def npgetix_exp(x, xv, Ttyp):
+    """numpy version of getix weigthed by exp(-hc/kT).
+
+    Args:
+        x: x array
+        xv: x grid
+        Ttyp: typical temperature for the temperature correction
+
+    Returns:
+        cont (contribution)
+        index (index)
+
+    Note:
+       cont is the contribution for i=index+1. 1 - cont is the contribution for i=index. For other i, the contribution should be zero.
+    """
+
+    if Ttyp is not None:
+        x=np.exp(-hcperk*x*(1.0/Ttyp-1.0/Tref))
+        xv=np.exp(-hcperk*xv*(1.0/Ttyp-1.0/Tref))
+    
+    indarr = np.arange(len(xv))
+    pos = np.interp(x, xv, indarr)
+    index = (pos).astype(int)
+    cont = (pos-index)
+    return cont, index    
 
 def add2D(a, w, cx, ix, cy, iy):
     """Add into an array when contirbutions and indices are given (2D).
@@ -166,10 +192,6 @@ def npadd3D_uniqidx(a, w, cx, ix, cy, iy, uiz):
         a(N, ny, nx )
 
     """
-#    np.add.at(a, (ix, iy, uiz), w*(1-cx)*(1-cy))
-#    np.add.at(a, (ix+1, iy, uiz), w*cx*(1-cy))
-#    np.add.at(a, (ix+1, iy+1, uiz), w*cx*cy)
-#    np.add.at(a, (ix, iy+1, uiz), w*(1-cx)*cy)
     np.add.at(a, (ix, uiz, iy), w*(1-cx)*(1-cy))
     np.add.at(a, (ix+1, uiz, iy), w*cx*(1-cy))
     np.add.at(a, (ix+1, uiz, iy+1), w*cx*cy)
