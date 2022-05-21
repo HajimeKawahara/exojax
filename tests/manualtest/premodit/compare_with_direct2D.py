@@ -7,12 +7,12 @@ def compare_with_direct2D(mdb,Ttest=1000.0,interval_contrast=0.1,Ttyp=2000.0):
     """ compare the premodit LSD with the direct computation of LSD
 
     """
-    from exojax.spec.lsd import npadd1D
+    from exojax.spec.lsd import npadd1D, npgetix
     from exojax.spec.hitran import SijT        
-    from exojax.spec.premodit import make_elower_grid, make_LBD2D, unbiased_lsd
+    from exojax.spec.premodit import make_elower_grid, make_lbd2D, unbiased_lsd
 
     elower_grid=make_elower_grid(Ttyp, mdb._elower, interval_contrast=interval_contrast)
-    lbd=make_LBD2D(mdb.Sij0, mdb.nu_lines, nus, mdb._elower, elower_grid, Ttyp)    
+    lbd=make_lbd2D(mdb.Sij0, mdb.nu_lines, nus, mdb._elower, elower_grid, Ttyp)    
     Slsd=unbiased_lsd(lbd,Ttest,nus,elower_grid,mdb.qr_interp)
     
     cont_inilsd_nu, index_inilsd_nu = npgetix(mdb.nu_lines, nus)

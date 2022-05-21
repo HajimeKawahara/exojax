@@ -2,6 +2,7 @@
 
 """
 import numpy as np
+import jax.numpy as jnp
 from exojax.spec.lsd import npgetix, npadd2D, npadd3D_uniqidx
 from exojax.utils.constants import hcperk, Tref
 
@@ -36,9 +37,8 @@ def make_elower_grid(Tmax, elower, interval_contrast):
     Ng_elower = int((max_elower - min_elower)/dE)+2
     return min_elower + np.arange(Ng_elower)*dE
 
-
 def npgetix_exp(x, xv, Ttyp):
-    """numpy version of getix.
+    """numpy version of getix weigthed by exp(-hc/kT).
 
     Args:
         x: x array
@@ -64,7 +64,7 @@ def npgetix_exp(x, xv, Ttyp):
     return cont, index    
 
 
-def make_LBD2D(Sij0, nu_lines, nu_grid, elower, elower_grid, Ttyp):
+def make_lbd2D(Sij0, nu_lines, nu_grid, elower, elower_grid, Ttyp):
     """make logarithm biased LSD (LBD) array (2D)
 
     Args:
@@ -91,7 +91,7 @@ def make_LBD2D(Sij0, nu_lines, nu_grid, elower, elower_grid, Ttyp):
     lsd[lsd==0.0]=logmin       
     return jnp.array(lsd)
 
-def make_LBD3D_uniqidx(Sij0, nu_lines, nu_grid, elower, elower_grid, uidx_broadpar, Ttyp):
+def make_lbd3D_uniqidx(Sij0, nu_lines, nu_grid, elower, elower_grid, uidx_broadpar, Ttyp):
     """make logarithm biased LSD (LBD) array (2D)
 
     Args:
@@ -111,7 +111,7 @@ def make_LBD3D_uniqidx(Sij0, nu_lines, nu_grid, elower, elower_grid, uidx_broadp
 
     """
     logmin=-np.inf
-    lsd = np.zeros((len(nu_grid), len(elower_grid), np.max(uidx_broadpar)+1),dtype=np.float64)
+    lsd = np.zeros((len(nu_grid), np.max(uidx_broadpar)+1, len(elower_grid)),dtype=np.float64)
     cx, ix = npgetix(nu_lines, nu_grid)
     cy, iy = npgetix_exp(elower, elower_grid, Ttyp)
     lsd=npadd3D_uniqidx(lsd, Sij0, cx, ix, cy, iy, uidx_broadpar)
@@ -147,7 +147,7 @@ def unbiased_lsd(lbd_biased,T,nu_grid,elower_grid,qr):
     """
     Nnu=int(len(nu_grid)/2)
     eunbias_lbd = jnp.sum(jnp.exp(logf_bias(elower_grid,T)+lbd_biased),axis=1)
-    return g_bias(nu_grid,T)*eunbias_lbd/qr(T)
+    return (eunbias_lbd.T*g_bias(nu_grid,T)/qr(T)).T
 
 
 def lowpass(fftval,compress_rate):
@@ -177,15 +177,19 @@ def unbiased_lsd_lowpass(FT_Slsd_biased,T,nu_grid,elower_grid, qr):
     eunbias_Slsd = jnp.fft.irfft(eunbias_FTSbuf)
     return g_bias(nu_grid,T)*eunbias_Slsd/qr(T)
 
-def compare_with_direct(mdb,Ttest=1000.0,interval_contrast=0.1,Ttyp=2000.0):
+def compare_with_direct3d(mdb,Ttest=1000.0,interval_contrast=0.1,Ttyp=2000.0):
     """ compare the premodit LSD with the direct computation of LSD
 
     """
-    from exojax.spec.lsd import npadd1D
-    from exojax.spec.hitran import SijT        
+    from exojax.spec.lsd import npadd1D, npgetix, uniqidx_2D
+    from exojax.spec.hitran import SijT
+
+    broadpar=np.array([mdb._n_Texp,mdb._alpha_ref]).T
+    uidx_broadpar=uniqidx_2D(broadpar)
     elower_grid=make_elower_grid(Ttyp, mdb._elower, interval_contrast=interval_contrast)
-    lbd=make_LBD2D(mdb.Sij0, mdb.nu_lines, nus, mdb._elower, elower_grid, Ttyp)    
+    lbd=make_lbd3D_uniqidx(mdb.Sij0, mdb.nu_lines, nus, mdb._elower, elower_grid, uidx_broadpar, Ttyp)
     Slsd=unbiased_lsd(lbd,Ttest,nus,elower_grid,mdb.qr_interp)
+
     
     cont_inilsd_nu, index_inilsd_nu = npgetix(mdb.nu_lines, nus)
     qT = mdb.qr_interp(Ttest)
@@ -214,10 +218,11 @@ if __name__ == "__main__":
     Ttyp=2000.0
     interval_contrast=0.1
     elower_grid=make_elower_grid(Ttyp, mdb._elower, interval_contrast=interval_contrast)
-    lbd=make_LBD3D_uniqidx(mdb.Sij0, mdb.nu_lines, nus, mdb._elower, elower_grid, uidx_broadpar, Ttyp)
+    lbd=make_lbd3D_uniqidx(mdb.Sij0, mdb.nu_lines, nus, mdb._elower, elower_grid, uidx_broadpar, Ttyp)
     Ttest=1000.0
+
+    print(np.shape(lbd))
     Slsd=unbiased_lsd(lbd,Ttest,nus,elower_grid,mdb.qr_interp)
-    # ((40000, 26, 19), (1, 1, 26))
     print(np.shape(Slsd))
     import sys
     sys.exit()

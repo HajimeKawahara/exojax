@@ -163,13 +163,19 @@ def npadd3D_uniqidx(a, w, cx, ix, cy, iy, uiz):
         uiz: given unique index for z
 
     Returns:
-        a
+        a(N, ny, nx )
 
     """
-    np.add.at(a, (ix, iy, uiz), w*(1-cx)*(1-cy))
-    np.add.at(a, (ix+1, iy, uiz), w*cx*(1-cy))
-    np.add.at(a, (ix+1, iy+1, uiz), w*cx*cy)
-    np.add.at(a, (ix, iy+1, uiz), w*(1-cx)*cy)
+#    np.add.at(a, (ix, iy, uiz), w*(1-cx)*(1-cy))
+#    np.add.at(a, (ix+1, iy, uiz), w*cx*(1-cy))
+#    np.add.at(a, (ix+1, iy+1, uiz), w*cx*cy)
+#    np.add.at(a, (ix, iy+1, uiz), w*(1-cx)*cy)
+    np.add.at(a, (ix, uiz, iy), w*(1-cx)*(1-cy))
+    np.add.at(a, (ix+1, uiz, iy), w*cx*(1-cy))
+    np.add.at(a, (ix+1, uiz, iy+1), w*cx*cy)
+    np.add.at(a, (ix, uiz, iy+1), w*(1-cx)*cy)
+
+    
     return a
 
 
