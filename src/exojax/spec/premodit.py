@@ -169,8 +169,8 @@ def unbiased_lsd_lowpass(FT_Slsd_biased,T,nu_grid,elower_grid, qr):
     return g_bias(nu_grid,T)*eunbias_Slsd/qr(T)
 
 
-def compare_with_direct3d_(mdb,Ttest=1000.0,interval_contrast=0.1,Ttyp=2000.0):
-    """ compare the premodit LSD with the direct computation of LSD
+def compare_cross_section(mdb,Ttest=1000.0,interval_contrast=0.1,Ttyp=2000.0):
+    """ compare the premodit cross section with the direct computation of LSD
 
     """
     from exojax.spec.lsd import npadd1D, npgetix, uniqidx_2D
