@@ -69,13 +69,14 @@ def make_lbd2D(Sij0, nu_lines, nu_grid, elower, elower_grid, Ttyp):
     lsd[lsd==0.0]=logmin       
     return jnp.array(lsd)
 
-def make_lbd3D_uniqidx(Sij0, nu_lines, nu_grid, elower, elower_grid, uidx_broadpar, Ttyp):
+def make_lbd3D_uniqidx(Sij0, cont_nu, index_nu, Ng_nu, elower, elower_grid, uidx_broadpar, Ttyp):
     """make logarithm biased LSD (LBD) array (2D)
 
     Args:
         Sij0: line strength at the refrence temepreature Tref (should be F64)
-        nu_lines: wavenumber list of lines [Nline] (should be numpy F64)
-        nu_grid: wavenumenr grid [Nnugrid] (should be numpy F64)
+        cont_nu: (wavenumber contribution) jnp.array
+        index_nu: (wavenumber index) jnp.array
+        Ng_nu: number of wavenumber bins (len(nu_grid))
         elower: E lower
         elower_grid: E lower grid
         uidx_broadpar: broadening parameter index
@@ -85,14 +86,13 @@ def make_lbd3D_uniqidx(Sij0, nu_lines, nu_grid, elower, elower_grid, uidx_broadp
         lbd
 
     Notes: 
-        LBD (jnp array)
+        LBD (jnp array), contribution fow wavenumber, index for wavenumber
 
     """
     logmin=-np.inf
-    lsd = np.zeros((len(nu_grid), np.max(uidx_broadpar)+1, len(elower_grid)),dtype=np.float64)
-    cx, ix = npgetix(nu_lines, nu_grid)
+    lsd = np.zeros((Ng_nu, np.max(uidx_broadpar)+1, len(elower_grid)),dtype=np.float64)
     cy, iy = npgetix_exp(elower, elower_grid, Ttyp)
-    lsd=npadd3D_uniqidx(lsd, Sij0, cx, ix, cy, iy, uidx_broadpar)
+    lsd=npadd3D_uniqidx(lsd, Sij0, cont_nu, index_nu, cy, iy, uidx_broadpar)
     lsd[lsd>0.0]=np.log(lsd[lsd>0.0])
     lsd[lsd==0.0]=logmin       
     return jnp.array(lsd)
@@ -180,9 +180,10 @@ def compare_cross_section(mdb,Ttest=1000.0,interval_contrast=0.1,Ttyp=2000.0):
     from exojax.spec.hitran import SijT
 
     broadpar=np.array([mdb._n_Texp,mdb._alpha_ref]).T
-    uidx_broadpar=uniqidx_2D(broadpar)
+    uidx_broadpar, uniq_broadpar=uniqidx_2D(broadpar)
     elower_grid=make_elower_grid(Ttyp, mdb._elower, interval_contrast=interval_contrast)
-    lbd=make_lbd3D_uniqidx(mdb.Sij0, mdb.nu_lines, nus, mdb._elower, elower_grid, uidx_broadpar, Ttyp)
+    cont_nu, index_nu = npgetix(nus, nu_grid)
+    lbd=make_lbd3D_uniqidx(mdb.Sij0, cont_nu, index_nu, len(nus), mdb._elower, elower_grid, uidx_broadpar, Ttyp)
     Slsd=unbiased_lsd(lbd,Ttest,nus,elower_grid,mdb.qr_interp)
     Slsd=np.sum(Slsd,axis=1)
     
@@ -225,7 +226,7 @@ def exomol(mdb, Tarr, Parr, R, molmass):
 
     
     elower_grid=make_elower_grid(Ttyp, mdb._elower, interval_contrast=interval_contrast)
-    lbd=make_lbd3D_uniqidx(mdb.Sij0, mdb.nu_lines, nus, mdb._elower, elower_grid, uidx_broadpar, Ttyp)
+    #lbd=make_lbd3D_uniqidx(mdb.Sij0, mdb.nu_lines, nus, mdb._elower, elower_grid, uidx_broadpar, Ttyp)
     Slsd=unbiased_lsd(lbd,Ttest,nus,elower_grid,mdb.qr_interp)
 
     
@@ -267,6 +268,6 @@ if __name__ == "__main__":
     broadpar=np.array([mdb._n_Texp,mdb._alpha_ref]).T
     uidx_broadpar=uniqidx_2D(broadpar)
     elower_grid=make_elower_grid(Ttyp, mdb._elower, interval_contrast=interval_contrast)
-    lbd=make_lbd3D_uniqidx(mdb.Sij0, mdb.nu_lines, nus, mdb._elower, elower_grid, uidx_broadpar, Ttyp)
+#    lbd=make_lbd3D_uniqidx(mdb.Sij0, mdb.nu_lines, nus, mdb._elower, elower_grid, uidx_broadpar, Ttyp)
     Slsd=unbiased_lsd(lbd,Ttest,nus,elower_grid,mdb.qr_interp)
     
