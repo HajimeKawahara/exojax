@@ -275,7 +275,7 @@ def uniqidx(a):
     uidx=np.where(a==uniqvals[0], 0, None)
     for i,uv in enumerate(uniqvals[1:]):
         uidx=np.where(a==uv, i+1, uidx)
-    return uidx
+    return uidx, uniqvals
 
 def uniqidx_2D(a):
     """ compute indices based on uniq values of the input array (2D).
@@ -300,4 +300,4 @@ def uniqidx_2D(a):
     for i,uv in enumerate(tqdm.tqdm(uniqvals[1:],desc="uniqidx")):
         uidx_p=np.where(a==uv, True, False)
         uidx[np.array(np.prod(uidx_p,axis=1),dtype=bool)]=i+1
-    return uidx
+    return uidx, uniqvals
