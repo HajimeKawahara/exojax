@@ -262,12 +262,12 @@ def uniqidx(a):
         a: input array
 
     Returns:
-        unique index
+        unique index, unique value
     
     Examples:
         
         >>> a=np.array([4,7,7,7,8,4])
-        >>> uidx=uniqidx(a) #-> [0,1,1,1,2,0]
+        >>> uidx, uval=uniqidx(a) #-> [0,1,1,1,2,0], [4,7,8]
 
     
     """
@@ -284,12 +284,12 @@ def uniqidx_2D(a):
         a: input array (N,M), will use unique M-dim vectors
 
     Returns:
-        unique index
+        unique index, unique value
 
     Examples:
         
         >>> a=np.array([[4,1],[7,1],[7,2],[7,1],[8,0],[4,1]])
-        >>> uidx=uniqidx_2D(a) #->[0,1,2,1,3,0]
+        >>> uidx, uval=uniqidx_2D(a) #->[0,1,2,1,3,0], [[4,1],[7,1],[7,2],[8,0]]
 
     """
     N,_=np.shape(a)
