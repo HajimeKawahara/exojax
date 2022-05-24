@@ -8,6 +8,7 @@ from exojax.spec.lsd import npgetix, npgetix_exp, npadd2D, npadd3D_uniqidx
 from exojax.utils.constants import hcperk, Tref
 from exojax.spec.ditkernel import fold_voigt_kernel_logst
 from exojax.spec.modit import calc_xsection_from_lsd
+from exojax.spec.exomol import gamma_exomol
 
 def compute_dElower(T,interval_contrast=0.1):
     """ compute a grid interval of Elower given the grid interval of line strength
@@ -197,39 +198,35 @@ def compare_cross_section(mdb,Ttest=1000.0,interval_contrast=0.1,Ttyp=2000.0):
     print("max deviation=",np.max(np.abs(Slsd/Slsd_direct-1.0)))
     return Slsd, Slsd_direct
 
-def exomol(mdb, Tarr, Parr, R, molmass):
+def exomol(mdb, lbd, uniq_broadpar, Tarr, Parr, R, molmass):
     """compute molecular line information required for PreMODIT using Exomol mdb.
 
     Args:
+       mdb: mdb instance
+       lbd: log biased LSD
        Tarr: Temperature array
        Parr: Pressure array
        R: spectral resolution
        molmass: molecular mass
 
     Returns:
-       line intensity matrix,
-       normalized gammaL matrix,
-       normalized sigmaD matrix
+       Slsd: line shape density
+       ngammaLM: normalized gammaL matrix,
+       nsigmaDl: normalized sigmaD matrix
     """
     qt = vmap(mdb.qr_interp)(Tarr)
-
-    #broadpar=np.array([mdb._n_Texp,mdb._alpha_ref]).T
-    #uidx_broadpar=uniqidx_2D(broadpar)
+    gammaLM = jit(vmap(gamma_exomol, (0, 0, None, None)))(
+        Parr, Tarr, uniq_braodpar[0], uniq_braodpar[1])
     
-    gammaLMP = jit(vmap(gamma_exomol, (0, 0, None, None)))(
-        Parr, Tarr, mdb.n_Texp, mdb.alpha_ref)
-    
-    gammaLMN = gamma_natural(mdb._A)
-    gammaLM = gammaLMP+gammaLMN[None, :]
+    #Not include natural width yet    
+    #gammaLMN = gamma_natural(mdb._A)
+    #gammaLM = gammaLMP+gammaLMN[None, :]
     ngammaLM = gammaLM/(mdb.nu_lines/R)
+
     nsigmaDl = normalized_doppler_sigma(Tarr, molmass, R)[:, jnp.newaxis]
-
-    
     elower_grid=make_elower_grid(Ttyp, mdb._elower, interval_contrast=interval_contrast)
-    #lbd=make_lbd3D_uniqidx(mdb.Sij0, mdb.nu_lines, nus, mdb._elower, elower_grid, uidx_broadpar, Ttyp)
-    Slsd=unbiased_lsd(lbd,Ttest,nus,elower_grid,mdb.qr_interp)
+    Slsd=unbiased_lsd(lbd,Ttest,nus,elower_grid,qt)
 
-    
     return Slsd, ngammaLM, nsigmaDl
 
 @jit
@@ -260,14 +257,30 @@ if __name__ == "__main__":
     import matplotlib.pyplot as plt
     from exojax.spec.lsd import npadd1D, npgetix, uniqidx_2D
     from exojax.spec.hitran import SijT
-
-
+    from exojax.spec.initspec import init_premodit
+    from exojax.spec.hitran import normalized_doppler_sigma
+    from exojax.spec import molinfo
+    
     nus=np.logspace(np.log10(6020.0), np.log10(6080.0), 40000, dtype=np.float64)
     mdb = moldb.MdbExomol('.database/CH4/12C-1H4/YT10to10/', nus, gpu_transfer=False)
 
+    Ttyp=1500.0
     broadpar=np.array([mdb._n_Texp,mdb._alpha_ref]).T
-    uidx_broadpar=uniqidx_2D(broadpar)
-    elower_grid=make_elower_grid(Ttyp, mdb._elower, interval_contrast=interval_contrast)
-#    lbd=make_lbd3D_uniqidx(mdb.Sij0, mdb.nu_lines, nus, mdb._elower, elower_grid, uidx_broadpar, Ttyp)
-    Slsd=unbiased_lsd(lbd,Ttest,nus,elower_grid,mdb.qr_interp)
-    
+    cont_nu, index_nu, elower_grid, uidx_broadpar, uniq_broadpar, R, pmarray=init_premodit(mdb.nu_lines, nus, mdb._elower, Ttyp=Ttyp, broadpar=broadpar)
+
+    lbd=make_lbd3D_uniqidx(mdb.Sij0, cont_nu, index_nu, len(nus), mdb._elower, elower_grid, uidx_broadpar, Ttyp)
+
+    Tfix = 1000.0
+    Pfix = 1.e-3
+    molmassCH4=molinfo.molmass("CH4")
+
+
+    nsigmaD = normalized_doppler_sigma(Tfix, molmassCH4, R)
+    qt = mdb.qr_interp(Tfix)
+    print( uniq_broadpar[:,0], uniq_broadpar[:,1], "ui")
+    gammaL = gamma_exomol(Pfix, Tfix, uniq_broadpar[:,0], uniq_broadpar[:,1])
+    print(gammaL,"gma")
+#    log_ngammaL_grid = jnp.log(gammaL/(/R))
+#    elower_grid=make_elower_grid(Ttyp, mdb._elower, interval_contrast=interval_contrast)
+#    Slsd=unbiased_lsd(lbd,Tfix,nus,elower_grid,qt)
+#    xs = calc_xsection_from_lsd(Slsd, R, pmarray, nsigmaD, nus, log_ngammaL_grid)

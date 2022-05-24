@@ -8,7 +8,8 @@ import numpy as np
 from exojax.spec.lsd import npgetix
 from exojax.spec.make_numatrix import make_numatrix0
 from exojax.utils.instfunc import resolution_eslog
-
+from exojax.spec.lsd import uniqidx_2D
+from exojax.spec.premodit import make_elower_grid
 
 def init_lpf(nu_lines, nu_grid):
     """Initialization for LPF.
@@ -82,17 +83,25 @@ def init_modit(nu_lines, nu_grid, warning=False):
     return jnp.array(cont), jnp.array(index), R, jnp.array(pmarray)
 
 
-def init_premodit(nu_lines, nu_grid, elower, elower_grid, warning=False):
+def init_premodit(nu_lines, nu_grid, elower, Ttyp, broadpar, interval_contrast=0.1, warning=False):
     """Initialization for PreMODIT. i.e. Generate nu contribution and index for
     the line shape density (actually, this is a numpy version of getix)
 
     Args:
         nu_lines: wavenumber list of lines [Nline] (should be numpy F64)
         nu_grid: wavenumenr grid [Nnugrid] (should be numpy F64)
+        elower: elower of lines
+        Ttyp: typical temperature in Kelvin
+        broadpar: boradening parameters, e.g. np.array([mdb._n_Texp,mdb._alpha_ref]).T
+        interval_contrast: putting c = grid_interval_line_strength, then, the contrast of line strength between the upper and lower of the grid becomes c-order of magnitude.
+        
 
     Returns:
         cont: (contribution) jnp.array
         index: (index) jnp.array
+        elower_grid: elower grid 
+        uidx_broadpar: unique index for broadening parmaeters
+        uniq_broadpar: unique broadening parmaeters
         R: spectral resolution
         pmarray: (+1,-1) array whose length of len(nu_grid)+1
 
@@ -103,16 +112,17 @@ def init_premodit(nu_lines, nu_grid, elower, elower_grid, warning=False):
     warn_dtype64(nu_lines, warning, tag='nu_lines')
     warn_dtype64(nu_grid, warning, tag='nu_grid')
     warn_dtype64(elower, warning, tag='elower')
-    warn_dtype64(elower_grid, warning, tag='elower_grid')
     warn_outside_wavenumber_grid(nu_lines, nu_grid)
 
     R = resolution_eslog(nu_grid)
-#    cont_nu, index_nu = npgetix(nu_lines, nu_grid)
-#    cont_elower, index_elower = npgetix(elower, elower_grid)
-#    pmarray = np.ones(len(nu_grid)+1)
-#    pmarray[1::2] = pmarray[1::2]*-1
+    cont_nu, index_nu = npgetix(nu_lines, nu_grid)
+    uidx_broadpar, uniq_broadpar=uniqidx_2D(broadpar)
+    
+    elower_grid=make_elower_grid(Ttyp, elower, interval_contrast=interval_contrast)    
+    pmarray = np.ones(len(nu_grid)+1)
+    pmarray[1::2] = pmarray[1::2]*-1
 
-#    return jnp.array(cont_nu), jnp.array(index_nu),  jnp.array(cont_elower), jnp.array(index_elower), R, jnp.array(pmarray)
+    return jnp.array(cont_nu), jnp.array(index_nu), elower_grid, uidx_broadpar, uniq_broadpar, R, jnp.array(pmarray)
 
 
 def init_redit(nu_lines, nu_grid):
