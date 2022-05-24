@@ -11,14 +11,14 @@ For ExoMol/HITRAN/HITEMP, ExoJAX automatically downloads the database from their
 
 .. code:: sh
 
-   > ls /home/kawahara/database/.database  #master .database
+   > ls ~/database/.database  #master .database
    
-   /home/kawahara/database/.database 
+   ~/database/.database 
    
-   /home/kawahara/database/.database/CO:
+   ~/database/.database/CO:
    12C-16O
    
    > cd /your-other-workspace/
-   > ln -s /home/kawahara/database/.database ./
+   > ln -s ~/database/.database ./
 
 For VALD3, you need to request the database one by one from the VALD3 website.

@@ -9,7 +9,7 @@ import jax.numpy as jnp
 from jax import jit, vmap
 from jax.lax import scan
 from exojax.spec.ditkernel import fold_voigt_kernel
-from jax.ops import index as joi
+from jax.numpy import index_exp as joi
 from exojax.spec.atomll import padding_2Darray_for_each_atom
 from exojax.spec.rtransfer import dtauM
 

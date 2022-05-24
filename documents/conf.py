@@ -13,17 +13,17 @@
 import sphinx_rtd_theme
 import os
 import sys
-sys.path.insert(0, os.path.abspath('/home/kawahara/exojax'))
+sys.path.insert(0, os.path.abspath('~/exojax'))
 
 
 # -- Project information -----------------------------------------------------
 
 project = 'ExoJAX'
-copyright = '2021-2022, ExoJAX contributors'
+copyright = '2020-2022, ExoJAX contributors'
 author = 'ExoJAX contributors'
 
 # The full version, including alpha/beta/rc tags
-release = '1.1.0'
+release = '1.1.2'
 
 
 # -- General configuration ---------------------------------------------------

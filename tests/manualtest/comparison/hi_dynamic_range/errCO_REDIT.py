@@ -7,7 +7,7 @@ import matplotlib.pyplot as plt
 plt.style.use('bmh')
 from exojax.spec import make_numatrix0
 from exojax.spec.lpf import xsvector as lpf_xsvector
-from exojax.spec.modit import xsvector as modit_xsvector
+from exojax.spec.redit import xsvector as redit_xsvector
 from exojax.spec import initspec
 from exojax.spec import xsection as lpf_xsection
 from exojax.spec.hitran import SijT, doppler_sigma, gamma_hitran, gamma_natural
@@ -15,16 +15,10 @@ from exojax.spec import moldb
 from exojax.spec.dit import set_ditgrid
 from exojax.spec.hitran import normalized_doppler_sigma
 
-#F64/F32
-from jax.config import config
-config.update("jax_enable_x64", True)
 
 def comperr(Nnu,plotfig=False):
-
     nus=np.logspace(np.log10(1.e7/2700),np.log10(1.e7/2100.),Nnu,dtype=np.float64)
-
-#    nus=np.logspace(np.log10(3000),np.log10(6000.0),Nnu,dtype=np.float64)
-    mdbCO=moldb.MdbHit('/home/kawahara/exojax/data/CO/05_hit12.par',nus)
+    mdbCO=moldb.MdbHit('~/exojax/data/CO/05_hit12.par',nus)
     
     Mmol=28.010446441149536
     Tref=296.0
@@ -46,42 +40,41 @@ def comperr(Nnu,plotfig=False):
     Sij=SijT(Tfix,mdbCO.logsij0,mdbCO.nu_lines,mdbCO.elower,qt)
     gammaL = gamma_hitran(Pfix,Tfix,Pfix, mdbCO.n_air, mdbCO.gamma_air, mdbCO.gamma_self)
     #+ gamma_natural(A) #uncomment if you inclide a natural width
-    sigmaD=doppler_sigma(mdbCO.nu_lines,Tfix,Mmol)
-    
-    cnu,indexnu,R,dq=initspec.init_modit(mdbCO.nu_lines,nus)
+
+    cnu,indexnu,R, dq=initspec.init_redit(mdbCO.nu_lines,nus)
     nsigmaD=normalized_doppler_sigma(Tfix,Mmol,R)
     ngammaL=gammaL/(mdbCO.nu_lines/R)
     ngammaL_grid=set_ditgrid(ngammaL)
-    
-    xs_modit_lp=modit_xsvector(cnu,indexnu,R,dq,nsigmaD,ngammaL,Sij,nus,ngammaL_grid)
-    wls_modit = 100000000/nus
+    Nq=int(len(nus)/2.0)-1
+    qvector=jnp.arange(-Nq,Nq+1,1)*dq
+    print(Nq)
+    xs_redit_lp=redit_xsvector(cnu,indexnu,R,nsigmaD,ngammaL,Sij,nus,ngammaL_grid,qvector)
+    wls_redit = 100000000/nus
     
     #ref (direct)
     d=10000
     ll=mdbCO.nu_lines
+    sigmaD=doppler_sigma(mdbCO.nu_lines,Tfix,Mmol)
     xsv_lpf_lp=lpf_xsection(nus,ll,sigmaD,gammaL,Sij,memory_size=30)
 
 
-    dif=xs_modit_lp/xsv_lpf_lp-1.
+    dif=xs_redit_lp/xsv_lpf_lp-1.
     med=np.median(dif)
     iju=22940.
     ijd=26400.
-    limu,limd=np.searchsorted(wls_modit[::-1],[iju,ijd])
+    limu,limd=np.searchsorted(wls_redit[::-1],[iju,ijd])
     std=np.std(dif[::-1][limu:limd])
     
-    return med,std,R,ijd,iju,wls_modit,xs_modit_lp,xsv_lpf_lp,dif
+    return med,std,R,ijd,iju,wls_redit,xs_redit_lp,xsv_lpf_lp,dif
 
 
 if __name__=="__main__":
     import matplotlib
-    m,std,R,ijd,iju,wls_modit,xs_modit_lp,xsv_lpf_lp,dif=comperr(200000)
-    m1,std1,R1,ijd1,iju1,wls_modit1,xs_modit_lp1,xsv_lpf_lp1,dif1=comperr(400000)
+    m,std,R,ijd,iju,wls_redit,xs_redit_lp,xsv_lpf_lp,dif=comperr(200000)
+#
+    #    m1,std1,R1,ijd1,iju1,wls_redit1,xs_redit_lp1,xsv_lpf_lp1,dif1=comperr(3000000)
 
     print(m,std,R)
-    print(m1,std1,R1)
-
-
-
     
     #PLOT
     plotfig=True
@@ -92,10 +85,10 @@ if __name__=="__main__":
         tip=2.0
         fig=plt.figure(figsize=(12,3))
         ax=plt.subplot2grid((12, 1), (0, 0),rowspan=8)
-        plt.plot(wls_modit1,xsv_lpf_lp1,label="Direct",color="C0",alpha=0.3,markersize=3)
-        plt.plot(wls_modit,xs_modit_lp,color="C1",lw=1,alpha=0.3,label="R="+str(R))
-        plt.plot(wls_modit1,xs_modit_lp1,color="C2",lw=1,alpha=0.5,label="R="+str(R1),ls="dashed")
+        plt.plot(wls_redit,xsv_lpf_lp,label="Direct",color="C0",alpha=0.3,markersize=3)
+        plt.plot(wls_redit,xs_redit_lp,color="C1",lw=1,alpha=0.3,label="R="+str(R))
 
+        
         plt.xlim(ijd,iju)    
 #        plt.xlim(llow*10-tip,lhigh*10+tip)    
 
@@ -110,9 +103,7 @@ if __name__=="__main__":
         plt.xlabel('wavelength [$\AA$]')
         
         ax=plt.subplot2grid((12, 1), (8, 0),rowspan=4)
-        plt.plot(wls_modit,np.abs((dif)*100),alpha=0.2,color="C1",label="R="+str(R))
-        plt.plot(wls_modit1,np.abs((dif1)*100),alpha=0.5,color="C2",label="R="+str(R1))
-        
+        plt.plot(wls_redit,np.abs((dif)*100),alpha=0.2,color="C1",label="R="+str(R))
         plt.ylabel("difference (%)",fontsize=10)
         plt.xlim(ijd,iju)
 #        plt.xlim(llow*10-tip,lhigh*10+tip)    
@@ -123,6 +114,6 @@ if __name__=="__main__":
         plt.xlabel('wavelength [$\AA$]')
         plt.legend(loc="upper left")
         
-        plt.savefig("fig/comparison_modit.png", bbox_inches="tight", pad_inches=0.0)
-        plt.savefig("fig/comparison_modit.pdf", bbox_inches="tight", pad_inches=0.0)
+        plt.savefig("fig/comparison_redit.png", bbox_inches="tight", pad_inches=0.0)
+        plt.savefig("fig/comparison_redit.pdf", bbox_inches="tight", pad_inches=0.0)
         plt.show()
