@@ -190,7 +190,7 @@ def dgmatrix(x, dit_grid_resolution=0.1, adopt=True):
     Returns:
         grid for DIT (Nlayer x NDITgrid)
     """
-    warn_msg = "`modit.dgmatrix` is deprecated and will be removed. Use `setdit.dgmatrix` instead"
+    warn_msg = "`modit.dgmatrix` is duplicated and will be removed. Use `setdit.dgmatrix` instead"
     warnings.warn(warn_msg, UserWarning)
     from exojax.spec.setdit import dgmatrix as dgmatrix_
     return dgmatrix_(x, dit_grid_resolution, adopt)
@@ -208,7 +208,7 @@ def ditgrid(x, dit_grid_resolution=0.1, adopt=True):
         grid for DIT
     """
 
-    warn_msg = "`modit.ditgrid` is deprecated and will be removed. Use `setdit.ditgrid` instead"
+    warn_msg = "`modit.ditgrid` is duplicated and will be removed. Use `setdit.ditgrid` instead"
     warnings.warn(warn_msg, UserWarning)
     from exojax.spec.setdit import ditgrid as ditgrid_
     return ditgrid_(x, dit_grid_resolution, adopt)
