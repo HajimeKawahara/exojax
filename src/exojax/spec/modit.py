@@ -13,6 +13,7 @@ from jax.lax import scan
 from exojax.spec.ditkernel import fold_voigt_kernel_logst
 from exojax.spec.ditkernel import voigt_kernel_logst
 from exojax.spec.lsd import inc2D_givenx
+from exojax.spec.setdit import minmax_ditgrid_matrix
 
 # exomol
 from exojax.spec.exomol import gamma_exomol
@@ -25,6 +26,22 @@ from exojax.spec.hitran import gamma_hitran
 
 # vald
 from exojax.spec.atomll import gamma_vald3, interp_QT284
+
+
+def minmax_dgmatrix(x, dit_grid_resolution=0.1, adopt=True):
+    """compute MIN and MAX DIT GRID MATRIX.
+
+    Args:
+        x: gammaL matrix (Nlayer x Nline)
+        dit_grid_resolution: grid resolution. dit_grid_resolution=0.1 (defaut) means a grid point per digit
+        adopt: if True, min, max grid points are used at min and max values of x. In this case, the grid width does not need to be dit_grid_resolution exactly.
+
+    Returns:
+        minimum and maximum for DIT (dgm_minmax)
+    """
+    warn_msg = "`modit.minmax_dgmatrix` is duplicated and will be removed. Use `setdit.minmax_ditgrid_matrix` instead"
+    warnings.warn(warn_msg, UserWarning)
+    return minmax_ditgrid_matrix(x, dit_grid_resolution, adopt)
 
 def dgmatrix(x, dit_grid_resolution=0.1, adopt=True):
     """DIT GRID MATRIX (alias)
@@ -159,30 +176,6 @@ def xsmatrix(cnu, indexnu, R, pmarray, nsigmaDl, ngammaLM, SijM, nu_grid, dgm_ng
     return xsm
 
 
-def minmax_dgmatrix(x, dit_grid_resolution=0.1, adopt=True):
-    """compute MIN and MAX DIT GRID MATRIX.
-
-    Args:
-        x: gammaL matrix (Nlayer x Nline)
-        dit_grid_resolution: grid resolution. dit_grid_resolution=0.1 (defaut) means a grid point per digit
-        adopt: if True, min, max grid points are used at min and max values of x. In this case, the grid width does not need to be dit_grid_resolution exactly.
-
-    Returns:
-        minimum and maximum for DIT (dgm_minmax)
-    """
-    mmax = np.max(np.log10(x), axis=1)
-    mmin = np.min(np.log10(x), axis=1)
-    Nlayer = np.shape(mmax)[0]
-    gm_minmax = []
-    dlog = np.max(mmax-mmin)
-    Ng = (dlog/dit_grid_resolution).astype(int)+2
-    for i in range(0, Nlayer):
-        lxmin = mmin[i]
-        lxmax = mmax[i]
-        grid = [lxmin, lxmax]
-        gm_minmax.append(grid)
-    gm_minmax = np.array(gm_minmax)
-    return gm_minmax
 
 
 def precompute_dgmatrix(set_gm_minmax, dit_grid_resolution=0.1, adopt=True):
@@ -270,7 +263,7 @@ def setdgm_exomol(mdb, fT, Parr, R, molmass, dit_grid_resolution, *kargs):
     Tarr_list = fT(*kargs)
     for Tarr in Tarr_list:
         SijM, ngammaLM, nsigmaDl = exomol(mdb, Tarr, Parr, R, molmass)
-        set_dgm_minmax.append(minmax_dgmatrix(ngammaLM, dit_grid_resolution))
+        set_dgm_minmax.append(minmax_ditgrid_matrix(ngammaLM, dit_grid_resolution))
     dgm_ngammaL = precompute_dgmatrix(set_dgm_minmax, dit_grid_resolution=dit_grid_resolution)
     return jnp.array(dgm_ngammaL)
 
@@ -331,7 +324,7 @@ def setdgm_hitran(mdb, fT, Parr, Pself_ref, R, molmass, dit_grid_resolution, *ka
     Tarr_list = fT(*kargs)
     for Tarr in Tarr_list:
         SijM, ngammaLM, nsigmaDl = hitran(mdb, Tarr, Parr, Pself_ref, R, molmass)
-        set_dgm_minmax.append(minmax_dgmatrix(ngammaLM, dit_grid_resolution))
+        set_dgm_minmax.append(minmax_ditgrid_matrix(ngammaLM, dit_grid_resolution))
     dgm_ngammaL = precompute_dgmatrix(set_dgm_minmax, dit_grid_resolution=dit_grid_resolution)
     return jnp.array(dgm_ngammaL)
 
@@ -451,7 +444,7 @@ def setdgm_vald_each(ielem, iion, atomicmass, ionE, dev_nu_lines, logsij0, elowe
                    dev_nu_lines, logsij0, elower, eupper, gamRad, gamSta, vdWdamp)
         floop = lambda c, arr:  (c, jnp.nan_to_num(arr, nan=jnp.nanmin(arr)))
         ngammaLM = scan(floop, 0, ngammaLM)[1]
-        set_dgm_minmax.append(minmax_dgmatrix(ngammaLM, dit_grid_resolution))
+        set_dgm_minmax.append(minmax_ditgrid_matrix(ngammaLM, dit_grid_resolution))
     dgm_ngammaL = precompute_dgmatrix(set_dgm_minmax, dit_grid_resolution=dit_grid_resolution)
     return jnp.array(dgm_ngammaL)
 

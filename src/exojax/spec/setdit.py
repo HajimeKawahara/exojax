@@ -64,3 +64,28 @@ def ditgrid_matrix(x, res=0.1, adopt=True):
     gm = np.array(gm)
     return gm
 
+
+def minmax_ditgrid_matrix(x, dit_grid_resolution=0.1, adopt=True):
+    """compute MIN and MAX DIT GRID MATRIX.
+
+    Args:
+        x: gammaL matrix (Nlayer x Nline)
+        dit_grid_resolution: grid resolution. dit_grid_resolution=0.1 (defaut) means a grid point per digit
+        adopt: if True, min, max grid points are used at min and max values of x. In this case, the grid width does not need to be dit_grid_resolution exactly.
+
+    Returns:
+        minimum and maximum for DIT (dgm_minmax)
+    """
+    mmax = np.max(np.log10(x), axis=1)
+    mmin = np.min(np.log10(x), axis=1)
+    Nlayer = np.shape(mmax)[0]
+    dgm_minmax = []
+    dlog = np.max(mmax-mmin)
+    Ng = (dlog/dit_grid_resolution).astype(int)+2
+    for i in range(0, Nlayer):
+        lxmin = mmin[i]
+        lxmax = mmax[i]
+        grid = [lxmin, lxmax]
+        dgm_minmax.append(grid)
+    dgm_minmax = np.array(dgm_minmax)
+    return dgm_minmax
