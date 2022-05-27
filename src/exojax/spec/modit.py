@@ -28,76 +28,6 @@ from exojax.spec.hitran import gamma_hitran
 # vald
 from exojax.spec.atomll import gamma_vald3, interp_QT284
 
-###############################################
-# DUPLICATED FUNCTIONS REPLACED IN set_ditgrid.py 
-###############################################
-
-def precompute_dgmatrix(set_gm_minmax, dit_grid_resolution=0.1, adopt=True):
-    """Precomputing MODIT GRID MATRIX for normalized GammaL.
-
-    Args:
-        set_gm_minmax: set of gm_minmax for different parameters [Nsample, Nlayers, 2], 2=min,max
-        dit_grid_resolution: grid resolution. dit_grid_resolution=0.1 (defaut) means a grid point per digit
-        adopt: if True, min, max grid points are used at min and max values of x. In this case, the grid width does not need to be dit_grid_resolution exactly.
-
-    Returns:
-        grid for DIT (Nlayer x NDITgrid)
-    """
-    warn_msg = "`modit.precompute_dgmatrix` is duplicated and will be removed. Use `set_ditgrid.precompute_modit_ditgrid_matrix` instead"
-    warnings.warn(warn_msg, UserWarning)
-    return precompute_modit_ditgrid_matrix(set_gm_minmax, dit_grid_resolution, adopt)
-
-def minmax_dgmatrix(x, dit_grid_resolution=0.1, adopt=True):
-    """compute MIN and MAX DIT GRID MATRIX.
-
-    Args:
-        x: gammaL matrix (Nlayer x Nline)
-        dit_grid_resolution: grid resolution. dit_grid_resolution=0.1 (defaut) means a grid point per digit
-        adopt: if True, min, max grid points are used at min and max values of x. In this case, the grid width does not need to be dit_grid_resolution exactly.
-
-    Returns:
-        minimum and maximum for DIT (dgm_minmax)
-    """
-    warn_msg = "`modit.minmax_dgmatrix` is duplicated and will be removed. Use `set_ditgrid.minmax_ditgrid_matrix` instead"
-    warnings.warn(warn_msg, UserWarning)
-    return minmax_ditgrid_matrix(x, dit_grid_resolution, adopt)
-
-def dgmatrix(x, dit_grid_resolution=0.1, adopt=True):
-    """DIT GRID MATRIX (alias)
-
-    Args:
-        x: simgaD or gammaL matrix (Nlayer x Nline)
-        dit_grid_resolution: grid resolution. dit_grid_resolution=0.1 (defaut) means a grid point per digit
-        adopt: if True, min, max grid points are used at min and max values of x.
-               In this case, the grid width does not need to be dit_grid_resolution exactly.
-
-    Returns:
-        grid for DIT (Nlayer x NDITgrid)
-    """
-    warn_msg = "`modit.dgmatrix` is duplicated and will be removed. Use `set_ditgrid.ditgrid_matrix` instead"
-    warnings.warn(warn_msg, UserWarning)
-    from exojax.spec.set_ditgrid import ditgrid_matrix 
-    return ditgrid_matrix(x, dit_grid_resolution, adopt)
-
-def ditgrid(x, dit_grid_resolution=0.1, adopt=True):
-    """DIT GRID (duplicated).
-
-    Args:
-        x: simgaD or gammaL array (Nline)
-        dit_grid_resolution: grid resolution. res=0.1 (defaut) means a grid point per digit
-        adopt: if True, min, max grid points are used at min and max values of x.
-               In this case, the grid width does not need to be res exactly.
-
-    Returns:
-        grid for DIT
-    """
-
-    warn_msg = "`modit.ditgrid` is duplicated and will be removed. Use `set_ditgrid.ditgrid` instead"
-    warnings.warn(warn_msg, UserWarning)
-    from exojax.spec.set_ditgrid import ditgrid as ditgrid_
-    return ditgrid_(x, dit_grid_resolution, adopt)
-
-####################################################################
 
 
 def calc_xsection_from_lsd(Slsd, R, pmarray, nsigmaD, nu_grid, log_ngammaL_grid):
@@ -197,10 +127,6 @@ def xsmatrix(cnu, indexnu, R, pmarray, nsigmaDl, ngammaLM, SijM, nu_grid, dgm_ng
     return xsm
 
 
-
-
-
-
 def exomol(mdb, Tarr, Parr, R, molmass):
     """compute molecular line information required for MODIT using Exomol mdb.
 
@@ -229,6 +155,11 @@ def exomol(mdb, Tarr, Parr, R, molmass):
 
 
 def setdgm_exomol(mdb, fT, Parr, R, molmass, dit_grid_resolution, *kargs):
+    warn_msg = "`modit.setdgm_exomol` is duplicated and will be removed. Use `modit.set_ditgrid_matrix_exomol` instead"
+    warnings.warn(warn_msg, UserWarning)
+    return set_ditgrid_matrix_exomol(mdb, fT, Parr, R, molmass, dit_grid_resolution, kargs)
+    
+def set_ditgrid_matrix_exomol(mdb, fT, Parr, R, molmass, dit_grid_resolution, *kargs):    
     """Easy Setting of DIT Grid Matrix (dgm) using Exomol.
 
     Args:
@@ -289,6 +220,12 @@ def hitran(mdb, Tarr, Parr, Pself, R, molmass):
 
 
 def setdgm_hitran(mdb, fT, Parr, Pself_ref, R, molmass, dit_grid_resolution, *kargs):
+    warn_msg = "`modit.setdgm_hitran` is duplicated and will be removed. Use `modit.set_ditgrid_matrix_hitran` instead"
+    warnings.warn(warn_msg, UserWarning)
+    return set_ditgrid_matrix_hitran(mdb, fT, Parr, Pself_ref, R, molmass, dit_grid_resolution, kargs)
+
+def set_ditgrid_matrix_hitran(mdb, fT, Parr, Pself_ref, R, molmass, dit_grid_resolution, *kargs):
+
     """Easy Setting of DIT Grid Matrix (dgm) using HITRAN/HITEMP.
 
     Args:
@@ -399,6 +336,11 @@ def vald_all(asdb, Tarr, PH, PHe, PHH, R):
 
 def setdgm_vald_each(ielem, iion, atomicmass, ionE, dev_nu_lines, logsij0, elower, eupper, gamRad, gamSta, vdWdamp, \
                 QTmask, T_gQT, gQT_284species, PH, PHe, PHH, R, fT, dit_grid_resolution, *kargs):
+    warn_msg = "`modit.setdgm_vald_each` is duplicated and will be removed. Use `modit.set_ditgrid_matrix_vald_each` instead"
+    warnings.warn(warn_msg, UserWarning)
+    return set_ditgrid_matrix_vald_each(ielem, iion, atomicmass, ionE, dev_nu_lines, logsij0, elower, eupper, gamRad, gamSta, vdWdamp, QTmask, T_gQT, gQT_284species, PH, PHe, PHH, R, fT, dit_grid_resolution, kargs)
+    
+def set_ditgrid_matrix_vald_each(ielem, iion, atomicmass, ionE, dev_nu_lines, logsij0, elower, eupper, gamRad, gamSta, vdWdamp, QTmask, T_gQT, gQT_284species, PH, PHe, PHH, R, fT, dit_grid_resolution, *kargs):
     """Easy Setting of DIT Grid Matrix (dgm) using VALD.
 
     Args:
@@ -442,6 +384,11 @@ def setdgm_vald_each(ielem, iion, atomicmass, ionE, dev_nu_lines, logsij0, elowe
 
 
 def setdgm_vald_all(asdb, PH, PHe, PHH, R, fT, dit_grid_resolution, *kargs):
+        warn_msg = "`modit.setdgm_vald_all` is duplicated and will be removed. Use `modit.set_ditgrid_matrix_vald_all` instead"
+    warnings.warn(warn_msg, UserWarning)
+    return set_ditgrid_matrix_vald_all(asdb, PH, PHe, PHH, R, fT, dit_grid_resolution, kargs)
+
+def set_ditgrid_matrix_vald_all(asdb, PH, PHe, PHH, R, fT, dit_grid_resolution, *kargs):
     """Easy Setting of DIT Grid Matrix (dgm) using VALD.
     
     Args:
@@ -507,3 +454,76 @@ def xsmatrix_vald(cnuS, indexnuS, R, pmarray, nsigmaDlS, ngammaLMS, SijMS, nu_gr
                     cnuS, indexnuS, R, pmarray, nsigmaDlS, ngammaLMS, SijMS, nu_grid, dgm_ngammaLS)
     xsmS = jnp.abs(xsmS)
     return xsmS
+
+###############################################
+# DUPLICATED FUNCTIONS REPLACED IN set_ditgrid.py 
+###############################################
+
+def precompute_dgmatrix(set_gm_minmax, dit_grid_resolution=0.1, adopt=True):
+    """Precomputing MODIT GRID MATRIX for normalized GammaL.
+
+    Args:
+        set_gm_minmax: set of gm_minmax for different parameters [Nsample, Nlayers, 2], 2=min,max
+        dit_grid_resolution: grid resolution. dit_grid_resolution=0.1 (defaut) means a grid point per digit
+        adopt: if True, min, max grid points are used at min and max values of x. In this case, the grid width does not need to be dit_grid_resolution exactly.
+
+    Returns:
+        grid for DIT (Nlayer x NDITgrid)
+    """
+    warn_msg = "`modit.precompute_dgmatrix` is duplicated and will be removed. Use `set_ditgrid.precompute_modit_ditgrid_matrix` instead"
+    warnings.warn(warn_msg, UserWarning)
+    return precompute_modit_ditgrid_matrix(set_gm_minmax, dit_grid_resolution, adopt)
+
+def minmax_dgmatrix(x, dit_grid_resolution=0.1, adopt=True):
+    """compute MIN and MAX DIT GRID MATRIX.
+
+    Args:
+        x: gammaL matrix (Nlayer x Nline)
+        dit_grid_resolution: grid resolution. dit_grid_resolution=0.1 (defaut) means a grid point per digit
+        adopt: if True, min, max grid points are used at min and max values of x. In this case, the grid width does not need to be dit_grid_resolution exactly.
+
+    Returns:
+        minimum and maximum for DIT (dgm_minmax)
+    """
+    warn_msg = "`modit.minmax_dgmatrix` is duplicated and will be removed. Use `set_ditgrid.minmax_ditgrid_matrix` instead"
+    warnings.warn(warn_msg, UserWarning)
+    return minmax_ditgrid_matrix(x, dit_grid_resolution, adopt)
+
+def dgmatrix(x, dit_grid_resolution=0.1, adopt=True):
+    """DIT GRID MATRIX (alias)
+
+    Args:
+        x: simgaD or gammaL matrix (Nlayer x Nline)
+        dit_grid_resolution: grid resolution. dit_grid_resolution=0.1 (defaut) means a grid point per digit
+        adopt: if True, min, max grid points are used at min and max values of x.
+               In this case, the grid width does not need to be dit_grid_resolution exactly.
+
+    Returns:
+        grid for DIT (Nlayer x NDITgrid)
+    """
+    warn_msg = "`modit.dgmatrix` is duplicated and will be removed. Use `set_ditgrid.ditgrid_matrix` instead"
+    warnings.warn(warn_msg, UserWarning)
+    from exojax.spec.set_ditgrid import ditgrid_matrix 
+    return ditgrid_matrix(x, dit_grid_resolution, adopt)
+
+def ditgrid(x, dit_grid_resolution=0.1, adopt=True):
+    """DIT GRID (duplicated).
+
+    Args:
+        x: simgaD or gammaL array (Nline)
+        dit_grid_resolution: grid resolution. res=0.1 (defaut) means a grid point per digit
+        adopt: if True, min, max grid points are used at min and max values of x.
+               In this case, the grid width does not need to be res exactly.
+
+    Returns:
+        grid for DIT
+    """
+
+    warn_msg = "`modit.ditgrid` is duplicated and will be removed. Use `set_ditgrid.ditgrid` instead"
+    warnings.warn(warn_msg, UserWarning)
+    from exojax.spec.set_ditgrid import ditgrid as ditgrid_
+    return ditgrid_(x, dit_grid_resolution, adopt)
+
+####################################################################
+
+
