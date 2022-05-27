@@ -5,7 +5,7 @@ for opacity computation.
 """
 import jax.numpy as jnp
 import numpy as np
-from exojax.spec.line_shape_density import npgetix
+from exojax.spec.lsd import npgetix
 from exojax.spec.make_numatrix import make_numatrix0
 from exojax.utils.instfunc import resolution_eslog
 from exojax.spec.premodit import make_elower_grid
