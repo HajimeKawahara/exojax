@@ -15,6 +15,41 @@ from exojax.spec.rtransfer import dtauM
 from exojax.spec.lsd import inc3D_givenx
 
 
+def ditgrid(x, dit_grid_resolution=0.1, adopt=True):
+    """DIT GRID (deplicated).
+
+    Args:
+        x: simgaD or gammaL array (Nline)
+        dit_grid_resolution: grid resolution. res=0.1 (defaut) means a grid point per digit
+        adopt: if True, min, max grid points are used at min and max values of x.
+               In this case, the grid width does not need to be res exactly.
+
+    Returns:
+        grid for DIT
+    """
+
+    warn_msg = "`dit.ditgrid` is duplicated and will be removed. Use `setdit.ditgrid` instead"
+    warnings.warn(warn_msg, UserWarning)
+    from exojax.spec.setdit import ditgrid as ditgrid_
+    return ditgrid_(x, dit_grid_resolution, adopt)
+
+def dgmatrix(x, dit_grid_resolution=0.1, adopt=True):
+    """DIT GRID MATRIX (alias)
+
+    Args:
+        x: simgaD or gammaL matrix (Nlayer x Nline)
+        dit_grid_resolution: grid resolution. dit_grid_resolution=0.1 (defaut) means a grid point per digit
+        adopt: if True, min, max grid points are used at min and max values of x.
+               In this case, the grid width does not need to be dit_grid_resolution exactly.
+
+    Returns:
+        grid for DIT (Nlayer x NDITgrid)
+    """
+    warn_msg = "`dit.dgmatrix` is duplicated and will be removed. Use `setdit.ditgrid_matrix` instead"
+    warnings.warn(warn_msg, UserWarning)
+    from exojax.spec.setdit import ditgrid_matrix 
+    return ditgrid_matrix(x, dit_grid_resolution, adopt)
+
 @jit
 def xsvector(cnu, indexnu, pmarray, sigmaD, gammaL, S, nu_grid, sigmaD_grid, gammaL_grid):
     """Cross section vector (DIT/2D+ version; default)
@@ -103,40 +138,6 @@ def xsmatrix(cnu, indexnu, pmarray, sigmaDM, gammaLM, SijM, nu_grid, dgm_sigmaD,
     val, xsm = scan(fxs, 0.0, Mat)
     return xsm
 
-def ditgrid(x, dit_grid_resolution=0.1, adopt=True):
-    """DIT GRID (deplicated).
-
-    Args:
-        x: simgaD or gammaL array (Nline)
-        dit_grid_resolution: grid resolution. res=0.1 (defaut) means a grid point per digit
-        adopt: if True, min, max grid points are used at min and max values of x.
-               In this case, the grid width does not need to be res exactly.
-
-    Returns:
-        grid for DIT
-    """
-
-    warn_msg = "`dit.ditgrid` is duplicated and will be removed. Use `setdit.ditgrid` instead"
-    warnings.warn(warn_msg, UserWarning)
-    from exojax.spec.setdit import ditgrid as ditgrid_
-    return ditgrid_(x, dit_grid_resolution, adopt)
-
-def dgmatrix(x, dit_grid_resolution=0.1, adopt=True):
-    """DIT GRID MATRIX (alias)
-
-    Args:
-        x: simgaD or gammaL matrix (Nlayer x Nline)
-        dit_grid_resolution: grid resolution. dit_grid_resolution=0.1 (defaut) means a grid point per digit
-        adopt: if True, min, max grid points are used at min and max values of x.
-               In this case, the grid width does not need to be dit_grid_resolution exactly.
-
-    Returns:
-        grid for DIT (Nlayer x NDITgrid)
-    """
-    warn_msg = "`dit.dgmatrix` is duplicated and will be removed. Use `setdit.dgmatrix` instead"
-    warnings.warn(warn_msg, UserWarning)
-    from exojax.spec.setdit import dgmatrix as dgmatrix_
-    return dgmatrix_(x, dit_grid_resolution, adopt)
 
 
 

@@ -33,7 +33,7 @@ def ditgrid(x, dit_grid_resolution=0.1, adopt=True):
         grid = np.exp(np.linspace(lxmin, lxmax, Ng))
     return grid
 
-def dgmatrix(x, res=0.1, adopt=True):
+def ditgrid_matrix(x, res=0.1, adopt=True):
     """DIT GRID MATRIX.
 
     Args:
