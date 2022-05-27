@@ -10,14 +10,17 @@ def compare_with_direct3D(mdb,nus,Ttest=1000.0,interval_contrast=0.1,Ttyp=2000.0
     """
     from exojax.spec.lsd import npadd1D, npgetix, uniqidx_2D
     from exojax.spec.hitran import SijT
-    from exojax.spec.premodit import make_elower_grid, make_lbd3D_uniqidx, unbiased_lsd
+    from exojax.spec.premodit import make_elower_grid, unbiased_lsd
 
     broadpar=np.array([mdb._n_Texp,mdb._alpha_ref]).T
     uidx_broadpar, uniq_broadpar=uniqidx_2D(broadpar)
+    print(uniq_broadpar)
+    import sys
+    sys.exit()
     elower_grid=make_elower_grid(Ttyp, mdb._elower, interval_contrast=interval_contrast)
     
     cont_nu, index_nu = npgetix(mdb.nu_lines, nus)
-    lbd=make_lbd3D_uniqidx(mdb.Sij0, cont_nu, index_nu, len(nus), mdb._elower, elower_grid, uidx_broadpar, Ttyp)
+    #lbd=make_lbd3D_uniqidx(mdb.Sij0, cont_nu, index_nu, len(nus), mdb._elower, elower_grid, uidx_broadpar, Ttyp)
     Slsd=unbiased_lsd(lbd,Ttest,nus,elower_grid,mdb.qr_interp)
     Slsd=np.sum(Slsd,axis=1)
     

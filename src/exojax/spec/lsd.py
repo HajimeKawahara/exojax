@@ -155,28 +155,7 @@ def npadd1D(a, w, cx, ix):
     np.add.at(a, ix+1, w*cx)
     return a
 
-def npadd2D(a, w, cx, ix, cy, iy):
-    """numpy version: Add into an array when contirbutions and indices are given (2D).
-
-    Args:
-        a: lineshape density (LSD) array (np.array)
-        w: weight (N)
-        cx: given contribution for x 
-        ix: given index for x 
-        cy: given contribution for y 
-        iy: given index for y
-
-    Returns:
-        a
-
-    """
-    np.add.at(a, (ix, iy), w*(1-cx)*(1-cy))
-    np.add.at(a, (ix+1, iy), w*cx*(1-cy))
-    np.add.at(a, (ix+1, iy+1), w*cx*cy)
-    np.add.at(a, (ix, iy+1), w*(1-cx)*cy)
-    return a
-
-def npadd3D_uniqidx(a, w, cx, ix, cy, iy, uiz):
+def npadd3D(a, w, cx, ix, cy, iy, cz, iz):
     """numpy version: Add into an array when contirbutions and indices are given (3D=2D+uniqidx).
 
     Args:
@@ -186,18 +165,21 @@ def npadd3D_uniqidx(a, w, cx, ix, cy, iy, uiz):
         ix: given index for x 
         cy: given contribution for y 
         iy: given index for y
-        uiz: given unique index for z
+        cz: given contribution for z
+        iz: given index for z
 
     Returns:
-        a(N, ny, nx )
+        lineshape density a(nx,ny,nz)
 
     """
-    np.add.at(a, (ix, uiz, iy), w*(1-cx)*(1-cy))
-    np.add.at(a, (ix+1, uiz, iy), w*cx*(1-cy))
-    np.add.at(a, (ix+1, uiz, iy+1), w*cx*cy)
-    np.add.at(a, (ix, uiz, iy+1), w*(1-cx)*cy)
-
-    
+    np.add.at(a, (ix, iy, iz), w*(1-cx)*(1-cy)*(1-cz))
+    np.add.at(a, (ix, iy+1, iz), w*(1-cx)*cy*(1-cz))
+    np.add.at(a, (ix+1, iy, iz), w*cx*(1-cy)*(1-cz))
+    np.add.at(a, (ix+1, iy+1, iz), w*cx*cy*(1-cz))
+    np.add.at(a, (ix, iy, iz+1), w*(1-cx)*(1-cy)*cz)
+    np.add.at(a, (ix, iy+1, iz+1), w*(1-cx)*cy*cz)
+    np.add.at(a, (ix+1, iy, iz+1), w*cx*(1-cy)*cz)
+    np.add.at(a, (ix+1, iy+1, iz+1), w*cx*cy*cz)
     return a
 
 

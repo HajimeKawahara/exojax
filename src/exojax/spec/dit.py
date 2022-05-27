@@ -4,6 +4,7 @@
 * This module consists of selected functions in `addit package <https://github.com/HajimeKawahara/addit>`_.
 * The concept of "folding" can be understood by reading `the discussion <https://github.com/radis/radis/issues/186#issuecomment-764465580>`_ by D.C.M van den Bekerom.
 """
+import warnings
 import numpy as np
 import jax.numpy as jnp
 from jax import jit, vmap
@@ -76,7 +77,7 @@ def xsmatrix(cnu, indexnu, pmarray, sigmaDM, gammaLM, SijM, nu_grid, dgm_sigmaD,
        SijM: line strength matrix in R^(Nlayer x Nline)
        nu_grid: linear wavenumber grid
        dgm_sigmaD: DIT Grid Matrix for sigmaD R^(Nlayer, NDITgrid)
-       dgm_gammaL: DIT Grid Matrix for gammaL R^(Nlayer, NDITgrid)
+       dgm_gammaL: DIT Grid Matrix for gammaL R^(Nlayer, NDITgrid
 
     Return:
        cross section matrix in R^(Nlayer x Nwav)
@@ -102,33 +103,23 @@ def xsmatrix(cnu, indexnu, pmarray, sigmaDM, gammaLM, SijM, nu_grid, dgm_sigmaD,
     val, xsm = scan(fxs, 0.0, Mat)
     return xsm
 
-
-def ditgrid(x, res=0.1, adopt=True):
-    """DIT GRID.
+def ditgrid(x, dit_grid_resolution=0.1, adopt=True):
+    """DIT GRID (deplicated).
 
     Args:
         x: simgaD or gammaL array (Nline)
-        res: grid resolution. res=0.1 (defaut) means a grid point per digit
+        dit_grid_resolution: grid resolution. res=0.1 (defaut) means a grid point per digit
         adopt: if True, min, max grid points are used at min and max values of x.
                In this case, the grid width does not need to be res exactly.
 
     Returns:
         grid for DIT
     """
-    if np.min(x) <= 0.0:
-        print('Warning: there exists negative or zero gamma. MODIT/DIT does not support this case.')
 
-    lxmin = np.log(np.min(x))
-    lxmax = np.log(np.max(x))
-    lxmax = np.nextafter(lxmax, np.inf, dtype=lxmax.dtype)
-
-    dlog = lxmax-lxmin
-    Ng = int(dlog/res)+2
-    if adopt == False:
-        grid = np.exp(np.linspace(lxmin, lxmin+(Ng-1)*res, Ng))
-    else:
-        grid = np.exp(np.linspace(lxmin, lxmax, Ng))
-    return grid
+    warn_msg = "`dit.ditgrid` is deprecated and will be removed. Use `setdit.ditgrid` instead"
+    warnings.warn(warn_msg, UserWarning)
+    from exojax.spec.setdit import ditgrid as ditgrid_
+    return ditgrid_(x, dit_grid_resolution, adopt)
 
 
 def set_ditgrid(x, res=0.1, adopt=True):

@@ -1,6 +1,6 @@
 """Automatic Opacity and Spectrum Generator."""
 import time
-from exojax.spec import defmol, defcia, moldb, contdb, planck, molinfo, lpf, dit, modit, initspec, response
+from exojax.spec import defmol, defcia, moldb, contdb, planck, molinfo, lpf, dit, modit, setdit, initspec, response
 from exojax.spec.opacity import xsection
 from exojax.spec.hitran import SijT, doppler_sigma,  gamma_natural, gamma_hitran, normalized_doppler_sigma
 from exojax.spec.exomol import gamma_exomol
@@ -121,7 +121,7 @@ class AutoXS(object):
                 mdb.nu_lines, nus)
             nsigmaD = normalized_doppler_sigma(T, molmass, R_mol)
             ngammaL = gammaL/(mdb.nu_lines/R_mol)
-            ngammaL_grid = modit.ditgrid(ngammaL, res=0.1)
+            ngammaL_grid = setdit.ditgrid(ngammaL, res=0.1)
             xsv = modit.xsvector(cnu, indexnu, R_mol, pmarray,
                                  nsigmaD, ngammaL, Sij, nus, ngammaL_grid)
             if ~checknus and self.autogridconv:
@@ -130,8 +130,8 @@ class AutoXS(object):
             sigmaD = doppler_sigma(mdb.nu_lines, T, molmass)
             checknus = check_scale_nugrid(self.nus, gridmode='ESLIN')
             nus = self.autonus(checknus, 'ESLIN')
-            sigmaD_grid = dit.ditgrid(sigmaD, res=0.1)
-            gammaL_grid = dit.ditgrid(gammaL, res=0.1)
+            sigmaD_grid = setdit.ditgrid(sigmaD, res=0.1)
+            gammaL_grid = setdit.ditgrid(gammaL, res=0.1)
             cnu, indexnu, pmarray = initspec.init_dit(mdb.nu_lines, nus)
             xsv = dit.xsvector(cnu, indexnu, pmarray, sigmaD,
                                gammaL, Sij, nus, sigmaD_grid, gammaL_grid)

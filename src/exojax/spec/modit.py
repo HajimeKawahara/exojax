@@ -122,13 +122,13 @@ def xsmatrix(cnu, indexnu, R, pmarray, nsigmaDl, ngammaLM, SijM, nu_grid, dgm_ng
     return xsm
 
 
-def minmax_dgmatrix(x, res=0.1, adopt=True):
+def minmax_dgmatrix(x, dit_grid_resolution=0.1, adopt=True):
     """compute MIN and MAX DIT GRID MATRIX.
 
     Args:
         x: gammaL matrix (Nlayer x Nline)
-        res: grid resolution. res=0.1 (defaut) means a grid point per digit
-        adopt: if True, min, max grid points are used at min and max values of x. In this case, the grid width does not need to be res exactly.
+        dit_grid_resolution: grid resolution. dit_grid_resolution=0.1 (defaut) means a grid point per digit
+        adopt: if True, min, max grid points are used at min and max values of x. In this case, the grid width does not need to be dit_grid_resolution exactly.
 
     Returns:
         minimum and maximum for DIT (dgm_minmax)
@@ -138,7 +138,7 @@ def minmax_dgmatrix(x, res=0.1, adopt=True):
     Nlayer = np.shape(mmax)[0]
     gm_minmax = []
     dlog = np.max(mmax-mmin)
-    Ng = (dlog/res).astype(int)+2
+    Ng = (dlog/dit_grid_resolution).astype(int)+2
     for i in range(0, Nlayer):
         lxmin = mmin[i]
         lxmax = mmax[i]
@@ -148,13 +148,13 @@ def minmax_dgmatrix(x, res=0.1, adopt=True):
     return gm_minmax
 
 
-def precompute_dgmatrix(set_gm_minmax, res=0.1, adopt=True):
+def precompute_dgmatrix(set_gm_minmax, dit_grid_resolution=0.1, adopt=True):
     """Precomputing MODIT GRID MATRIX for normalized GammaL.
 
     Args:
         set_gm_minmax: set of gm_minmax for different parameters [Nsample, Nlayers, 2], 2=min,max
-        res: grid resolution. res=0.1 (defaut) means a grid point per digit
-        adopt: if True, min, max grid points are used at min and max values of x. In this case, the grid width does not need to be res exactly.
+        dit_grid_resolution: grid resolution. dit_grid_resolution=0.1 (defaut) means a grid point per digit
+        adopt: if True, min, max grid points are used at min and max values of x. In this case, the grid width does not need to be dit_grid_resolution exactly.
 
     Returns:
         grid for DIT (Nlayer x NDITgrid)
@@ -164,13 +164,13 @@ def precompute_dgmatrix(set_gm_minmax, res=0.1, adopt=True):
     lmaxarray = np.max(set_gm_minmax[:, :, 1], axis=0)  # max
     dlog = np.max(lmaxarray-lminarray)
     gm = []
-    Ng = (dlog/res).astype(int)+2
+    Ng = (dlog/dit_grid_resolution).astype(int)+2
     Nlayer = len(lminarray)
     for i in range(0, Nlayer):
         lxmin = lminarray[i]
         lxmax = lmaxarray[i]
         if adopt == False:
-            grid = np.logspace(lxmin, lxmin+(Ng-1)*res, Ng)
+            grid = np.logspace(lxmin, lxmin+(Ng-1)*dit_grid_resolution, Ng)
         else:
             grid = np.logspace(lxmin, lxmax, Ng)
         gm.append(grid)
@@ -178,36 +178,38 @@ def precompute_dgmatrix(set_gm_minmax, res=0.1, adopt=True):
     return gm
 
 
-def dgmatrix(x, res=0.1, adopt=True):
+def dgmatrix(x, dit_grid_resolution=0.1, adopt=True):
     """DIT GRID MATRIX (alias)
 
     Args:
         x: simgaD or gammaL matrix (Nlayer x Nline)
-        res: grid resolution. res=0.1 (defaut) means a grid point per digit
+        dit_grid_resolution: grid resolution. dit_grid_resolution=0.1 (defaut) means a grid point per digit
         adopt: if True, min, max grid points are used at min and max values of x.
-               In this case, the grid width does not need to be res exactly.
+               In this case, the grid width does not need to be dit_grid_resolution exactly.
 
     Returns:
         grid for DIT (Nlayer x NDITgrid)
     """
     from exojax.spec.dit import dgmatrix as dgmatrix_
-    return dgmatrix_(x, res, adopt)
+    return dgmatrix_(x, dit_grid_resolution, adopt)
 
-
-def ditgrid(x, res=0.1, adopt=True):
-    """DIT GRID  (alias)
+def ditgrid(x, dit_grid_resolution=0.1, adopt=True):
+    """DIT GRID (duplicated).
 
     Args:
         x: simgaD or gammaL array (Nline)
-        res: grid resolution. res=0.1 (defaut) means a grid point per digit
+        dit_grid_resolution: grid resolution. res=0.1 (defaut) means a grid point per digit
         adopt: if True, min, max grid points are used at min and max values of x.
                In this case, the grid width does not need to be res exactly.
 
     Returns:
         grid for DIT
     """
-    from exojax.spec.dit import ditgrid as ditgrid_
-    return ditgrid_(x, res, adopt)
+
+    warn_msg = "`modit.ditgrid` is deprecated and will be removed. Use `setdit.ditgrid` instead"
+    warnings.warn(warn_msg, UserWarning)
+    from exojax.spec.setdit import ditgrid as ditgrid_
+    return ditgrid_(x, dit_grid_resolution, adopt)
 
 
 def exomol(mdb, Tarr, Parr, R, molmass):
@@ -237,7 +239,7 @@ def exomol(mdb, Tarr, Parr, R, molmass):
     return SijM, ngammaLM, nsigmaDl
 
 
-def setdgm_exomol(mdb, fT, Parr, R, molmass, res, *kargs):
+def setdgm_exomol(mdb, fT, Parr, R, molmass, dit_grid_resolution, *kargs):
     """Easy Setting of DIT Grid Matrix (dgm) using Exomol.
 
     Args:
@@ -246,7 +248,7 @@ def setdgm_exomol(mdb, fT, Parr, R, molmass, res, *kargs):
        Parr: pressure array
        R: spectral resolution
        molmass: molecular mass
-       res: resolution of dgm
+       dit_grid_resolution: resolution of dgm
        *kargs: arguments for fT
 
     Returns:
@@ -257,15 +259,15 @@ def setdgm_exomol(mdb, fT, Parr, R, molmass, res, *kargs):
        >>> fT = lambda T0,alpha: T0[:,None]*(Parr[None,:]/Pref)**alpha[:,None]
        >>> T0_test=np.array([1100.0,1500.0,1100.0,1500.0])
        >>> alpha_test=np.array([0.2,0.2,0.05,0.05])
-       >>> res=0.2
-       >>> dgm_ngammaL=setdgm_exomol(mdbCH4,fT,Parr,R,molmassCH4,res,T0_test,alpha_test)
+       >>> dit_grid_resolution=0.2
+       >>> dgm_ngammaL=setdgm_exomol(mdbCH4,fT,Parr,R,molmassCH4,dit_grid_resolution,T0_test,alpha_test)
     """
     set_dgm_minmax = []
     Tarr_list = fT(*kargs)
     for Tarr in Tarr_list:
         SijM, ngammaLM, nsigmaDl = exomol(mdb, Tarr, Parr, R, molmass)
-        set_dgm_minmax.append(minmax_dgmatrix(ngammaLM, res))
-    dgm_ngammaL = precompute_dgmatrix(set_dgm_minmax, res=res)
+        set_dgm_minmax.append(minmax_dgmatrix(ngammaLM, dit_grid_resolution))
+    dgm_ngammaL = precompute_dgmatrix(set_dgm_minmax, dit_grid_resolution=dit_grid_resolution)
     return jnp.array(dgm_ngammaL)
 
 
@@ -297,7 +299,7 @@ def hitran(mdb, Tarr, Parr, Pself, R, molmass):
     return SijM, ngammaLM, nsigmaDl
 
 
-def setdgm_hitran(mdb, fT, Parr, Pself_ref, R, molmass, res, *kargs):
+def setdgm_hitran(mdb, fT, Parr, Pself_ref, R, molmass, dit_grid_resolution, *kargs):
     """Easy Setting of DIT Grid Matrix (dgm) using HITRAN/HITEMP.
 
     Args:
@@ -307,7 +309,7 @@ def setdgm_hitran(mdb, fT, Parr, Pself_ref, R, molmass, res, *kargs):
        Pself_ref: reference partial pressure array
        R: spectral resolution
        molmass: molecular mass
-       res: resolution of dgm
+       dit_grid_resolution: resolution of dgm
        *kargs: arguments for fT
 
     Returns:
@@ -318,15 +320,15 @@ def setdgm_hitran(mdb, fT, Parr, Pself_ref, R, molmass, res, *kargs):
        >>> fT = lambda T0,alpha: T0[:,None]*(Parr[None,:]/Pref)**alpha[:,None]
        >>> T0_test=np.array([1100.0,1500.0,1100.0,1500.0])
        >>> alpha_test=np.array([0.2,0.2,0.05,0.05])
-       >>> res=0.2
-       >>> dgm_ngammaL=setdgm_hitran(mdbCH4,fT,Parr,Pself,R,molmassCH4,res,T0_test,alpha_test)
+       >>> dit_grid_resolution=0.2
+       >>> dgm_ngammaL=setdgm_hitran(mdbCH4,fT,Parr,Pself,R,molmassCH4,dit_grid_resolution,T0_test,alpha_test)
     """
     set_dgm_minmax = []
     Tarr_list = fT(*kargs)
     for Tarr in Tarr_list:
         SijM, ngammaLM, nsigmaDl = hitran(mdb, Tarr, Parr, Pself_ref, R, molmass)
-        set_dgm_minmax.append(minmax_dgmatrix(ngammaLM, res))
-    dgm_ngammaL = precompute_dgmatrix(set_dgm_minmax, res=res)
+        set_dgm_minmax.append(minmax_dgmatrix(ngammaLM, dit_grid_resolution))
+    dgm_ngammaL = precompute_dgmatrix(set_dgm_minmax, dit_grid_resolution=dit_grid_resolution)
     return jnp.array(dgm_ngammaL)
 
 
@@ -407,7 +409,7 @@ def vald_all(asdb, Tarr, PH, PHe, PHH, R):
 
 
 def setdgm_vald_each(ielem, iion, atomicmass, ionE, dev_nu_lines, logsij0, elower, eupper, gamRad, gamSta, vdWdamp, \
-                QTmask, T_gQT, gQT_284species, PH, PHe, PHH, R, fT, res, *kargs):  # (SijM, ngammaLM, nsigmaDl, fT, res, *kargs):
+                QTmask, T_gQT, gQT_284species, PH, PHe, PHH, R, fT, dit_grid_resolution, *kargs):
     """Easy Setting of DIT Grid Matrix (dgm) using VALD.
 
     Args:
@@ -430,7 +432,7 @@ def setdgm_vald_each(ielem, iion, atomicmass, ionE, dev_nu_lines, logsij0, elowe
         PHH:  partial pressure array of molecular hydrogen (H2) [N_layer]
         R:  spectral resolution
         fT:  function of temperature array
-        res:  resolution of dgm
+        dit_grid_resolution:  resolution of dgm
         *kargs:  arguments for fT
 
     Returns:
@@ -445,12 +447,12 @@ def setdgm_vald_each(ielem, iion, atomicmass, ionE, dev_nu_lines, logsij0, elowe
                    dev_nu_lines, logsij0, elower, eupper, gamRad, gamSta, vdWdamp)
         floop = lambda c, arr:  (c, jnp.nan_to_num(arr, nan=jnp.nanmin(arr)))
         ngammaLM = scan(floop, 0, ngammaLM)[1]
-        set_dgm_minmax.append(minmax_dgmatrix(ngammaLM, res))
-    dgm_ngammaL = precompute_dgmatrix(set_dgm_minmax, res=res)
+        set_dgm_minmax.append(minmax_dgmatrix(ngammaLM, dit_grid_resolution))
+    dgm_ngammaL = precompute_dgmatrix(set_dgm_minmax, dit_grid_resolution=dit_grid_resolution)
     return jnp.array(dgm_ngammaL)
 
 
-def setdgm_vald_all(asdb, PH, PHe, PHH, R, fT, res, *kargs):
+def setdgm_vald_all(asdb, PH, PHe, PHH, R, fT, dit_grid_resolution, *kargs):
     """Easy Setting of DIT Grid Matrix (dgm) using VALD.
     
     Args:
@@ -460,7 +462,7 @@ def setdgm_vald_all(asdb, PH, PHe, PHH, R, fT, res, *kargs):
         PHH:  partial pressure array of molecular hydrogen (H2) [N_layer]
         R:  spectral resolution
         fT:  function of temperature array
-        res:  resolution of dgm
+        dit_grid_resolution:  resolution of dgm
         *kargs:  arguments for fT
 
     Returns:
@@ -470,8 +472,8 @@ def setdgm_vald_all(asdb, PH, PHe, PHH, R, fT, res, *kargs):
        >>> fT = lambda T0,alpha:  T0[:,None]*(Parr[None,:]/Pref)**alpha[:,None]
        >>> T0_test=np.array([3000.0,4000.0,3000.0,4000.0])
        >>> alpha_test=np.array([0.2,0.2,0.05,0.05])
-       >>> res=0.2
-       >>> dgm_ngammaLS = setdgm_vald_all(asdb, PH, PHe, PHH, R, fT, res, T0_test, alpha_test)
+       >>> dit_grid_resolution=0.2
+       >>> dgm_ngammaLS = setdgm_vald_all(asdb, PH, PHe, PHH, R, fT, dit_grid_resolution, T0_test, alpha_test)
     """
     T_gQT = asdb.T_gQT
     gQT_284species = asdb.gQT_284species
@@ -481,7 +483,7 @@ def setdgm_vald_all(asdb, PH, PHe, PHH, R, fT, res, *kargs):
     for i in range(asdb.N_usp):
         dgm_ngammaL_sp = setdgm_vald_each(asdb.ielem[i], asdb.iion[i], asdb.atomicmass[i], asdb.ionE[i], \
             asdb.dev_nu_lines[i], asdb.logsij0[i], asdb.elower[i], asdb.eupper[i], asdb.gamRad[i], asdb.gamSta[i], asdb.vdWdamp[i], \
-            asdb.QTmask[i], T_gQT, gQT_284species, PH, PHe, PHH, R, fT, res, *kargs)
+            asdb.QTmask[i], T_gQT, gQT_284species, PH, PHe, PHH, R, fT, dit_grid_resolution, *kargs)
         dgm_ngammaLS_BeforePadding.append(dgm_ngammaL_sp)
         lendgm.append(dgm_ngammaL_sp.shape[1])
     Lmax_dgm = np.max(np.array(lendgm))
