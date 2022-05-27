@@ -10,6 +10,7 @@ from exojax.spec.ditkernel import fold_voigt_kernel_logst
 from exojax.spec.modit import calc_xsection_from_lsd
 from exojax.spec.exomol import gamma_exomol
 
+
 def compute_dElower(T,interval_contrast=0.1):
     """ compute a grid interval of Elower given the grid interval of line strength
 

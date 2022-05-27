@@ -5,9 +5,10 @@
 """
 
 import numpy as np
+import warnings
 
-def ditgrid(x, dit_grid_resolution=0.1, adopt=True):
-    """DIT GRID.
+def ditgrid_log_interval(x, dit_grid_resolution=0.1, adopt=True):
+    """generate DIT GRID with constant interval in logarithm scale
 
     Args:
         x: simgaD or gammaL array (Nline)
@@ -18,13 +19,11 @@ def ditgrid(x, dit_grid_resolution=0.1, adopt=True):
     Returns:
         grid for DIT
     """
-    if np.min(x) <= 0.0:
-        print('Warning: there exists negative or zero gamma. MODIT/DIT does not support this case.')
-
+    assert np.min(x) > 0.0, "There exists negative or zero gamma. MODIT/DIT does not support this case."
+    
     lxmin = np.log(np.min(x))
     lxmax = np.log(np.max(x))
     lxmax = np.nextafter(lxmax, np.inf, dtype=lxmax.dtype)
-
     dlog = lxmax-lxmin
     Ng = int(dlog/dit_grid_resolution)+2
     if adopt == False:
@@ -32,6 +31,35 @@ def ditgrid(x, dit_grid_resolution=0.1, adopt=True):
     else:
         grid = np.exp(np.linspace(lxmin, lxmax, Ng))
     return grid
+
+def ditgrid_linear_interval(x, w=None, dit_grid_resolution=0.1, adopt=True):
+    """generate DIT GRID with constant interval in linear scale
+
+    Args:
+        x: input array, e.g. n_Texp (temperature exponent) array (Nline)
+        w: weight, e.g. np.abs(ln(T)-ln(Tref))
+        dit_grid_resolution: grid resolution. dit_grid_resolution=0.1 (defaut) means a grid point per digit
+        adopt: if True, min, max grid points are used at min and max values of x.
+               In this case, the grid width does not need to be dit_grid_resolution exactly.
+
+    Returns:
+        grid for DIT
+    """
+    if w is None:
+        w=1.0
+
+    assert np.min(w*x) > 0.0, "There exists negative or zero value. Consider to use np.abs."        
+    wxmin = np.min(w*x)
+    wxmax = np.max(w*x)
+    wxmax = np.nextafter(wxmax, np.inf, dtype=wxmax.dtype)
+    dwx = wxmax-wxmin
+    Ng = int(dwx/dit_grid_resolution)+2
+    if adopt == False:
+        grid = np.linspace(wxmin, wxmin+(Ng-1)*dit_grid_resolution, Ng)
+    else:
+        grid = np.linspace(wxmin, wxmax, Ng)
+    return grid/w
+
 
 def ditgrid_matrix(x, res=0.1, adopt=True):
     """DIT GRID MATRIX.

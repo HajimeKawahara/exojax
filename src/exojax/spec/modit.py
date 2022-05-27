@@ -384,7 +384,7 @@ def set_ditgrid_matrix_vald_each(ielem, iion, atomicmass, ionE, dev_nu_lines, lo
 
 
 def setdgm_vald_all(asdb, PH, PHe, PHH, R, fT, dit_grid_resolution, *kargs):
-        warn_msg = "`modit.setdgm_vald_all` is duplicated and will be removed. Use `modit.set_ditgrid_matrix_vald_all` instead"
+    warn_msg = "`modit.setdgm_vald_all` is duplicated and will be removed. Use `modit.set_ditgrid_matrix_vald_all` instead"
     warnings.warn(warn_msg, UserWarning)
     return set_ditgrid_matrix_vald_all(asdb, PH, PHe, PHH, R, fT, dit_grid_resolution, kargs)
 
@@ -455,10 +455,7 @@ def xsmatrix_vald(cnuS, indexnuS, R, pmarray, nsigmaDlS, ngammaLMS, SijMS, nu_gr
     xsmS = jnp.abs(xsmS)
     return xsmS
 
-###############################################
-# DUPLICATED FUNCTIONS REPLACED IN set_ditgrid.py 
-###############################################
-
+#
 def precompute_dgmatrix(set_gm_minmax, dit_grid_resolution=0.1, adopt=True):
     """Precomputing MODIT GRID MATRIX for normalized GammaL.
 
@@ -519,10 +516,10 @@ def ditgrid(x, dit_grid_resolution=0.1, adopt=True):
         grid for DIT
     """
 
-    warn_msg = "`modit.ditgrid` is duplicated and will be removed. Use `set_ditgrid.ditgrid` instead"
+    warn_msg = "`modit.ditgrid` is duplicated and will be removed. Use `set_ditgrid.ditgrid_log_interval` instead"
     warnings.warn(warn_msg, UserWarning)
-    from exojax.spec.set_ditgrid import ditgrid as ditgrid_
-    return ditgrid_(x, dit_grid_resolution, adopt)
+    from exojax.spec.set_ditgrid import ditgrid_log_interval
+    return ditgrid_log_interval(x, dit_grid_resolution, adopt)
 
 ####################################################################
 
