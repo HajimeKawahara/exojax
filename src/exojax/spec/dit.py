@@ -28,9 +28,9 @@ def ditgrid(x, dit_grid_resolution=0.1, adopt=True):
         grid for DIT
     """
 
-    warn_msg = "`dit.ditgrid` is duplicated and will be removed. Use `setdit.ditgrid` instead"
+    warn_msg = "`dit.ditgrid` is duplicated and will be removed. Use `set_ditgrid.ditgrid` instead"
     warnings.warn(warn_msg, UserWarning)
-    from exojax.spec.setdit import ditgrid as ditgrid_
+    from exojax.spec.set_ditgrid import ditgrid as ditgrid_
     return ditgrid_(x, dit_grid_resolution, adopt)
 
 def dgmatrix(x, dit_grid_resolution=0.1, adopt=True):
@@ -45,9 +45,9 @@ def dgmatrix(x, dit_grid_resolution=0.1, adopt=True):
     Returns:
         grid for DIT (Nlayer x NDITgrid)
     """
-    warn_msg = "`dit.dgmatrix` is duplicated and will be removed. Use `setdit.ditgrid_matrix` instead"
+    warn_msg = "`dit.dgmatrix` is duplicated and will be removed. Use `set_ditgrid.ditgrid_matrix` instead"
     warnings.warn(warn_msg, UserWarning)
-    from exojax.spec.setdit import ditgrid_matrix 
+    from exojax.spec.set_ditgrid import ditgrid_matrix 
     return ditgrid_matrix(x, dit_grid_resolution, adopt)
 
 @jit

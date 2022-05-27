@@ -13,7 +13,8 @@ from jax.lax import scan
 from exojax.spec.ditkernel import fold_voigt_kernel_logst
 from exojax.spec.ditkernel import voigt_kernel_logst
 from exojax.spec.lsd import inc2D_givenx
-from exojax.spec.setdit import minmax_ditgrid_matrix
+from exojax.spec.set_ditgrid import minmax_ditgrid_matrix
+from exojax.spec.set_ditgrid import precompute_modit_ditgrid_matrix
 
 # exomol
 from exojax.spec.exomol import gamma_exomol
@@ -27,6 +28,9 @@ from exojax.spec.hitran import gamma_hitran
 # vald
 from exojax.spec.atomll import gamma_vald3, interp_QT284
 
+###############################################
+# DUPLICATED FUNCTIONS REPLACED IN set_ditgrid.py 
+###############################################
 
 def precompute_dgmatrix(set_gm_minmax, dit_grid_resolution=0.1, adopt=True):
     """Precomputing MODIT GRID MATRIX for normalized GammaL.
@@ -39,8 +43,7 @@ def precompute_dgmatrix(set_gm_minmax, dit_grid_resolution=0.1, adopt=True):
     Returns:
         grid for DIT (Nlayer x NDITgrid)
     """
-    from exojax.spec.setdit import precompute_modit_ditgrid_matrix
-    warn_msg = "`modit.precompute_dgmatrix` is duplicated and will be removed. Use `setdit.precompute_modit_ditgrid_matrix` instead"
+    warn_msg = "`modit.precompute_dgmatrix` is duplicated and will be removed. Use `set_ditgrid.precompute_modit_ditgrid_matrix` instead"
     warnings.warn(warn_msg, UserWarning)
     return precompute_modit_ditgrid_matrix(set_gm_minmax, dit_grid_resolution, adopt)
 
@@ -55,7 +58,7 @@ def minmax_dgmatrix(x, dit_grid_resolution=0.1, adopt=True):
     Returns:
         minimum and maximum for DIT (dgm_minmax)
     """
-    warn_msg = "`modit.minmax_dgmatrix` is duplicated and will be removed. Use `setdit.minmax_ditgrid_matrix` instead"
+    warn_msg = "`modit.minmax_dgmatrix` is duplicated and will be removed. Use `set_ditgrid.minmax_ditgrid_matrix` instead"
     warnings.warn(warn_msg, UserWarning)
     return minmax_ditgrid_matrix(x, dit_grid_resolution, adopt)
 
@@ -71,9 +74,9 @@ def dgmatrix(x, dit_grid_resolution=0.1, adopt=True):
     Returns:
         grid for DIT (Nlayer x NDITgrid)
     """
-    warn_msg = "`modit.dgmatrix` is duplicated and will be removed. Use `setdit.ditgrid_matrix` instead"
+    warn_msg = "`modit.dgmatrix` is duplicated and will be removed. Use `set_ditgrid.ditgrid_matrix` instead"
     warnings.warn(warn_msg, UserWarning)
-    from exojax.spec.setdit import ditgrid_matrix 
+    from exojax.spec.set_ditgrid import ditgrid_matrix 
     return ditgrid_matrix(x, dit_grid_resolution, adopt)
 
 def ditgrid(x, dit_grid_resolution=0.1, adopt=True):
@@ -89,10 +92,12 @@ def ditgrid(x, dit_grid_resolution=0.1, adopt=True):
         grid for DIT
     """
 
-    warn_msg = "`modit.ditgrid` is duplicated and will be removed. Use `setdit.ditgrid` instead"
+    warn_msg = "`modit.ditgrid` is duplicated and will be removed. Use `set_ditgrid.ditgrid` instead"
     warnings.warn(warn_msg, UserWarning)
-    from exojax.spec.setdit import ditgrid as ditgrid_
+    from exojax.spec.set_ditgrid import ditgrid as ditgrid_
     return ditgrid_(x, dit_grid_resolution, adopt)
+
+####################################################################
 
 
 def calc_xsection_from_lsd(Slsd, R, pmarray, nsigmaD, nu_grid, log_ngammaL_grid):
@@ -251,7 +256,7 @@ def setdgm_exomol(mdb, fT, Parr, R, molmass, dit_grid_resolution, *kargs):
     for Tarr in Tarr_list:
         SijM, ngammaLM, nsigmaDl = exomol(mdb, Tarr, Parr, R, molmass)
         set_dgm_minmax.append(minmax_ditgrid_matrix(ngammaLM, dit_grid_resolution))
-    dgm_ngammaL = precompute_dgmatrix(set_dgm_minmax, dit_grid_resolution=dit_grid_resolution)
+    dgm_ngammaL = precompute_ditgrid_matrix(set_dgm_minmax, dit_grid_resolution=dit_grid_resolution)
     return jnp.array(dgm_ngammaL)
 
 
@@ -312,7 +317,7 @@ def setdgm_hitran(mdb, fT, Parr, Pself_ref, R, molmass, dit_grid_resolution, *ka
     for Tarr in Tarr_list:
         SijM, ngammaLM, nsigmaDl = hitran(mdb, Tarr, Parr, Pself_ref, R, molmass)
         set_dgm_minmax.append(minmax_ditgrid_matrix(ngammaLM, dit_grid_resolution))
-    dgm_ngammaL = precompute_dgmatrix(set_dgm_minmax, dit_grid_resolution=dit_grid_resolution)
+    dgm_ngammaL = precompute_ditgrid_matrix(set_dgm_minmax, dit_grid_resolution=dit_grid_resolution)
     return jnp.array(dgm_ngammaL)
 
 
@@ -432,7 +437,7 @@ def setdgm_vald_each(ielem, iion, atomicmass, ionE, dev_nu_lines, logsij0, elowe
         floop = lambda c, arr:  (c, jnp.nan_to_num(arr, nan=jnp.nanmin(arr)))
         ngammaLM = scan(floop, 0, ngammaLM)[1]
         set_dgm_minmax.append(minmax_ditgrid_matrix(ngammaLM, dit_grid_resolution))
-    dgm_ngammaL = precompute_dgmatrix(set_dgm_minmax, dit_grid_resolution=dit_grid_resolution)
+    dgm_ngammaL = precompute_ditgrid_matrix(set_dgm_minmax, dit_grid_resolution=dit_grid_resolution)
     return jnp.array(dgm_ngammaL)
 
 
