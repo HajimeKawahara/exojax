@@ -3,8 +3,6 @@
    * there are both numpy and jnp versions. (np)*** is numpy version.
    * (np)getix provides the contribution and index.
    * (np)add(x)D constructs the (x)Dimensional LSD array given the contribution and index.
-   * uniqidx does not have the contribution.
-   * uniqidx(_2D) provides the indices based on the unique values (vectors) of the input array. These are the numpy version.
 
 """
 import numpy as np

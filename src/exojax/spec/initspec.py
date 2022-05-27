@@ -5,10 +5,9 @@ for opacity computation.
 """
 import jax.numpy as jnp
 import numpy as np
-from exojax.spec.lsd import npgetix
+from exojax.spec.line_shape_density import npgetix
 from exojax.spec.make_numatrix import make_numatrix0
 from exojax.utils.instfunc import resolution_eslog
-from exojax.spec.lsd import uniqidx_2D
 from exojax.spec.premodit import make_elower_grid
 
 def init_lpf(nu_lines, nu_grid):
@@ -97,11 +96,11 @@ def init_premodit(nu_lines, nu_grid, elower, Ttyp, broadpar, interval_contrast=0
         
 
     Returns:
-        cont: (contribution) jnp.array
-        index: (index) jnp.array
+        cont_nu: contribution for wavenumber jnp.array
+        index_nu: index for wavenumber jnp.array
         elower_grid: elower grid 
-        uidx_broadpar: unique index for broadening parmaeters
-        uniq_broadpar: unique broadening parmaeters
+        cont_broadpar: contribution for broadening parmaeters
+        index_broadpar: index for broadening parmaeters
         R: spectral resolution
         pmarray: (+1,-1) array whose length of len(nu_grid)+1
 
@@ -116,13 +115,13 @@ def init_premodit(nu_lines, nu_grid, elower, Ttyp, broadpar, interval_contrast=0
 
     R = resolution_eslog(nu_grid)
     cont_nu, index_nu = npgetix(nu_lines, nu_grid)
-    uidx_broadpar, uniq_broadpar=uniqidx_2D(broadpar)
+    elower_grid=make_elower_grid(Ttyp, elower, interval_contrast=interval_contrast)
+    assert False, "implement index_broadpar and cont_broadpar"
     
-    elower_grid=make_elower_grid(Ttyp, elower, interval_contrast=interval_contrast)    
     pmarray = np.ones(len(nu_grid)+1)
     pmarray[1::2] = pmarray[1::2]*-1
 
-    return jnp.array(cont_nu), jnp.array(index_nu), elower_grid, uidx_broadpar, uniq_broadpar, R, jnp.array(pmarray)
+    return jnp.array(cont_nu), jnp.array(index_nu), elower_grid, jnp.array(cont_broadpar), jnp.array(index_broadpar), R, jnp.array(pmarray)
 
 
 def init_redit(nu_lines, nu_grid):
