@@ -121,52 +121,23 @@ def ditgrid(x, dit_grid_resolution=0.1, adopt=True):
     from exojax.spec.setdit import ditgrid as ditgrid_
     return ditgrid_(x, dit_grid_resolution, adopt)
 
-
-def set_ditgrid(x, res=0.1, adopt=True):
-    """alias of ditgrid.
-
-    Args:
-        x: simgaD or gammaL array (Nline)
-        res: grid resolution. res=0.1 (defaut) means a grid point per digit
-        adopt: if True, min, max grid points are used at min and max values of x.
-               In this case, the grid width does not need to be res exactly.
-
-    Returns:
-        grid for DIT
-    """
-    return ditgrid(x, res, adopt)
-
-
-def dgmatrix(x, res=0.1, adopt=True):
-    """DIT GRID MATRIX.
+def dgmatrix(x, dit_grid_resolution=0.1, adopt=True):
+    """DIT GRID MATRIX (alias)
 
     Args:
         x: simgaD or gammaL matrix (Nlayer x Nline)
-        res: grid resolution. res=0.1 (defaut) means a grid point per digit
+        dit_grid_resolution: grid resolution. dit_grid_resolution=0.1 (defaut) means a grid point per digit
         adopt: if True, min, max grid points are used at min and max values of x.
-               In this case, the grid width does not need to be res exactly.
+               In this case, the grid width does not need to be dit_grid_resolution exactly.
 
     Returns:
         grid for DIT (Nlayer x NDITgrid)
     """
-    mmin = np.log(np.min(x, axis=1))
-    mmax = np.log(np.max(x, axis=1))
-    mmax = np.nextafter(mmax, np.inf, dtype=mmax.dtype)
+    warn_msg = "`dit.dgmatrix` is deprecated and will be removed. Use `setdit.dgmatrix` instead"
+    warnings.warn(warn_msg, UserWarning)
+    from exojax.spec.setdit import dgmatrix as dgmatrix_
+    return dgmatrix_(x, dit_grid_resolution, adopt)
 
-    Nlayer = np.shape(mmax)[0]
-    gm = []
-    dlog = np.max(mmax-mmin)
-    Ng = (dlog/res).astype(int)+2
-    for i in range(0, Nlayer):
-        lxmin = mmin[i]
-        lxmax = mmax[i]
-        if adopt == False:
-            grid = np.exp(np.linspace(lxmin, lxmin+(Ng-1)*res, Ng))
-        else:
-            grid = np.exp(np.linspace(lxmin, lxmax, Ng))
-        gm.append(grid)
-    gm = np.array(gm)
-    return gm
 
 
 def sigma_voigt(dgm_sigmaD, dgm_gammaL):

@@ -5,6 +5,7 @@
 * The concept of "folding" can be understood by reading `the discussion <https://github.com/radis/radis/issues/186#issuecomment-764465580>`_ by D.C.M van den Bekerom.
 * See also `DIT for non evenly-spaced linear grid <https://github.com/dcmvdbekerom/discrete-integral-transform/blob/master/demo/discrete_integral_transform_log.py>`_ by  D.C.M van den Bekerom, as a reference of this code.
 """
+import warnings
 import numpy as np
 import jax.numpy as jnp
 from jax import jit, vmap
@@ -177,7 +178,6 @@ def precompute_dgmatrix(set_gm_minmax, dit_grid_resolution=0.1, adopt=True):
     gm = np.array(gm)
     return gm
 
-
 def dgmatrix(x, dit_grid_resolution=0.1, adopt=True):
     """DIT GRID MATRIX (alias)
 
@@ -190,7 +190,9 @@ def dgmatrix(x, dit_grid_resolution=0.1, adopt=True):
     Returns:
         grid for DIT (Nlayer x NDITgrid)
     """
-    from exojax.spec.dit import dgmatrix as dgmatrix_
+    warn_msg = "`modit.dgmatrix` is deprecated and will be removed. Use `setdit.dgmatrix` instead"
+    warnings.warn(warn_msg, UserWarning)
+    from exojax.spec.setdit import dgmatrix as dgmatrix_
     return dgmatrix_(x, dit_grid_resolution, adopt)
 
 def ditgrid(x, dit_grid_resolution=0.1, adopt=True):

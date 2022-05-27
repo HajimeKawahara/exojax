@@ -1,3 +1,9 @@
+"""set DIT 
+
+* This module provides functions to generate the grid used in DIT/MODIT/PreMODIT.
+
+"""
+
 import numpy as np
 
 def ditgrid(x, dit_grid_resolution=0.1, adopt=True):
@@ -26,3 +32,35 @@ def ditgrid(x, dit_grid_resolution=0.1, adopt=True):
     else:
         grid = np.exp(np.linspace(lxmin, lxmax, Ng))
     return grid
+
+def dgmatrix(x, res=0.1, adopt=True):
+    """DIT GRID MATRIX.
+
+    Args:
+        x: simgaD or gammaL matrix (Nlayer x Nline)
+        res: grid resolution. res=0.1 (defaut) means a grid point per digit
+        adopt: if True, min, max grid points are used at min and max values of x.
+               In this case, the grid width does not need to be res exactly.
+
+    Returns:
+        grid for DIT (Nlayer x NDITgrid)
+    """
+    mmin = np.log(np.min(x, axis=1))
+    mmax = np.log(np.max(x, axis=1))
+    mmax = np.nextafter(mmax, np.inf, dtype=mmax.dtype)
+
+    Nlayer = np.shape(mmax)[0]
+    gm = []
+    dlog = np.max(mmax-mmin)
+    Ng = (dlog/res).astype(int)+2
+    for i in range(0, Nlayer):
+        lxmin = mmin[i]
+        lxmax = mmax[i]
+        if adopt == False:
+            grid = np.exp(np.linspace(lxmin, lxmin+(Ng-1)*res, Ng))
+        else:
+            grid = np.exp(np.linspace(lxmin, lxmax, Ng))
+        gm.append(grid)
+    gm = np.array(gm)
+    return gm
+
