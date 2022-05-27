@@ -89,3 +89,33 @@ def minmax_ditgrid_matrix(x, dit_grid_resolution=0.1, adopt=True):
         dgm_minmax.append(grid)
     dgm_minmax = np.array(dgm_minmax)
     return dgm_minmax
+
+def precompute_modit_ditgrid_matrix(set_gm_minmax, dit_grid_resolution=0.1, adopt=True):
+    """Precomputing MODIT GRID MATRIX for normalized GammaL.
+
+    Args:
+        set_gm_minmax: set of minmax of ditgrid matrix for different parameters [Nsample, Nlayers, 2], 2=min,max
+        dit_grid_resolution: grid resolution. dit_grid_resolution=0.1 (defaut) means a grid point per digit
+        adopt: if True, min, max grid points are used at min and max values of x. In this case, the grid width does not need to be dit_grid_resolution exactly.
+
+    Returns:
+        grid for DIT (Nlayer x NDITgrid)
+    """
+    set_gm_minmax = np.array(set_gm_minmax)
+    lminarray = np.min(set_gm_minmax[:, :, 0], axis=0)  # min
+    lmaxarray = np.max(set_gm_minmax[:, :, 1], axis=0)  # max
+    dlog = np.max(lmaxarray-lminarray)
+    gm = []
+    Ng = (dlog/dit_grid_resolution).astype(int)+2
+    Nlayer = len(lminarray)
+    for i in range(0, Nlayer):
+        lxmin = lminarray[i]
+        lxmax = lmaxarray[i]
+        if adopt == False:
+            grid = np.logspace(lxmin, lxmin+(Ng-1)*dit_grid_resolution, Ng)
+        else:
+            grid = np.logspace(lxmin, lxmax, Ng)
+        gm.append(grid)
+    gm = np.array(gm)
+    return gm
+
