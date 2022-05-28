@@ -32,13 +32,13 @@ def ditgrid_log_interval(x, dit_grid_resolution=0.1, adopt=True):
         grid = np.exp(np.linspace(lxmin, lxmax, Ng))
     return grid
 
-def ditgrid_linear_interval(x, w=None, dit_grid_resolution=0.1, adopt=True):
+def ditgrid_linear_interval(x, dit_grid_resolution=0.1, w=None, adopt=True):
     """generate DIT GRID with constant interval in linear scale
 
     Args:
         x: input array, e.g. n_Texp (temperature exponent) array (Nline)
-        w: weight, e.g. np.abs(ln(T)-ln(Tref))
         dit_grid_resolution: grid resolution. dit_grid_resolution=0.1 (defaut) means a grid point per digit
+        w: weight, e.g. np.abs(ln(T)-ln(Tref))
         adopt: if True, min, max grid points are used at min and max values of x.
                In this case, the grid width does not need to be dit_grid_resolution exactly.
 

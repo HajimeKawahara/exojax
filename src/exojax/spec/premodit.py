@@ -9,8 +9,31 @@ from exojax.utils.constants import hcperk, Tref
 from exojax.spec.ditkernel import fold_voigt_kernel_logst
 from exojax.spec.modit import calc_xsection_from_lsd
 from exojax.spec.exomol import gamma_exomol
+from exojax.spec.set_ditgrid import ditgrid_log_interval, ditgrid_linear_interval
+from exojax.utils.constants import Tref
+#def ditgrid_log_interval(x, dit_grid_resolution=0.1, adopt=True):
 
+def make_broadpar_grid(ngamma_ref, n_Texp, Ttyp, dit_grid_resolution, adopt=True):
+    """compute a grid for broadening parameters
 
+    Args:
+       ngamma_ref: normalized Lorentian half width at reference, e.g. alpha_ref/nus                 
+       n_Texp: temperature exponent
+       Ttyp: typical or maximum temperature
+       dit_grid_resolution: resolution of normalized lorentian halfwidth at reference (gamma_ref, alpha_ref, etc)
+       adopt: if True, min, max grid points are used at min and max values of x.
+               In this case, the grid width does not need to be dit_grid_resolution exactly.
+
+    """
+    ngamma_grid = ditgrid_log_interval(ngamma_ref, dit_grid_resolution, adopt)
+    w = np.log(Ttyp) - np.log(Tref)
+    n_Texp_grid = ditgrid_linear_interval(n_Texp, dit_grid_resolution, w, adopt)
+    X,Y=np.meshgrid(ngamma_grid,n_Texp_grid)
+    Ng=np.shape(X)[0]*np.shape(X)[1]
+    broadpar_grid=(np.array([X,Y]).T).reshape(Ng,2)
+    return broadpar_grid
+    
+    
 def compute_dElower(T,interval_contrast=0.1):
     """ compute a grid interval of Elower given the grid interval of line strength
 

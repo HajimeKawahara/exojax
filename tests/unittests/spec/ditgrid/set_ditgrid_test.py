@@ -15,7 +15,7 @@ def test_ditgrid_linear_interval():
     Tfix=3000.0
     Tref=296.0
     w=np.log(Tfix)-np.log(Tref)
-    val=ditgrid_linear_interval(x, w=w,dit_grid_resolution=0.1, adopt=True)
+    val=ditgrid_linear_interval(x, dit_grid_resolution=0.1, w=w, adopt=True)
     diff=w*val[1:]-w*val[:-1]
     ref=np.ones(len(diff))*0.09264032
     assert np.all(diff==pytest.approx(ref))

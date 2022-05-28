@@ -38,7 +38,7 @@ class MdbExomol(object):
         jlower (jnp array): J_lower
         jupper (jnp array): J_upper
         n_Texp (jnp array): temperature exponent
-        alpha_ref (jnp array): alpha_ref (gamma0)
+        alpha_ref (jnp array): alpha_ref (gamma0), Lorentzian half-width at reference temperature and pressure in cm-1/bar
         n_Texp_def: default temperature exponent in .def file, used for jlower not given in .broad
         alpha_ref_def: default alpha_ref (gamma0) in .def file, used for jlower not given in .broad
     """
