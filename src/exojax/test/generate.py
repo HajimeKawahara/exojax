@@ -8,7 +8,10 @@ from exojax.spec.setrt import gen_wavenumber_grid
 import pickle
 
 def gendata_exomol():
-    from exojax.test.data import TESTDATA_moldb_CO as filename
+    """generate test data for CO exomol
+
+    """
+    from exojax.test.data import TESTDATA_moldb_CO_EXOMOL as filename
     Nx=1500
     nus, wav, res = gen_wavenumber_grid(22920.0,24000.0, Nx, unit='AA')
     mdb = moldb.MdbExomol('.database/CO/12C-16O/Li2015', nus, crit=1e-35, Ttyp=296.0)

@@ -4,4 +4,4 @@
 
 """
 
-TESTDATA_moldb_CO="moldb_co.pickle"
+TESTDATA_moldb_CO_EXOMOL="moldb_co_exomol.pickle"
