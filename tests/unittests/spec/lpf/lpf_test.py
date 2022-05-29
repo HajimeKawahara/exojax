@@ -1,5 +1,7 @@
 import pytest
 from exojax.spec.lpf import xsvector
+
+import pkg_resources
 import pandas as pd
 import numpy as np
 import pickle
@@ -11,7 +13,6 @@ from exojax.spec.exomol import gamma_exomol
 from exojax.spec.setrt import gen_wavenumber_grid
 from exojax.spec.initspec import init_lpf
 
-import pkg_resources
 
 def test_exomol():
     filename = pkg_resources.resource_filename('exojax', 'data/testdata/'+TESTDATA_moldb_CO_EXOMOL)
@@ -36,6 +37,5 @@ def test_exomol():
     dat=pd.read_csv(filename,delimiter=",",names=("nus","xsv"))
     assert np.all(xsv == pytest.approx(dat["xsv"].values))
     
-#    exomol()
 if __name__ == "__main__":
     test_exomol()
