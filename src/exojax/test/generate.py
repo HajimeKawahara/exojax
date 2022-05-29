@@ -2,14 +2,11 @@
 
 """
 from exojax.spec import moldb
-from exojax.spec.rtransfer import rtrun, dtauM, dtauCIA
 from exojax.spec.setrt import gen_wavenumber_grid
-
 import pickle
 
-def gendata_exomol():
+def gendata_moldb_exomol():
     """generate test data for CO exomol
-
     """
     from exojax.test.data import TESTDATA_moldb_CO_EXOMOL as filename
     Nx=1500
@@ -19,4 +16,4 @@ def gendata_exomol():
         pickle.dump(mdb, f)
         
 if __name__ == "__main__":
-    gendata_exomol()
+    gendata_moldb_exomol()
