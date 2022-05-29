@@ -273,7 +273,7 @@ def ditgrid(x, dit_grid_resolution=0.1, adopt=True):
     warn_msg = "`dit.ditgrid` is duplicated and will be removed. Use `set_ditgrid.ditgrid_log_interval` instead"
     warnings.warn(warn_msg, UserWarning)
     from exojax.spec.set_ditgrid import ditgrid_log_interval
-    return setdit.ditgrid(x, dit_grid_resolution, adopt)
+    return set_ditgrid.ditgrid_log_interval(x, dit_grid_resolution, adopt)
 
 def dgmatrix(x, dit_grid_resolution=0.1, adopt=True):
     """DIT GRID MATRIX (alias)
