@@ -34,7 +34,7 @@ def make_broadpar_grid(ngamma_ref, n_Texp, Ttyp, dit_grid_resolution, adopt=True
     return broadpar_grid
     
     
-def compute_dElower(T,interval_contrast=0.1):
+def compute_dElower(T,interval_contrast = 0.1):
     """ compute a grid interval of Elower given the grid interval of line strength
 
     Args: 
@@ -42,7 +42,7 @@ def compute_dElower(T,interval_contrast=0.1):
         interval_contrast: putting c = grid_interval_line_strength, then, the contrast of line strength between the upper and lower of the grid becomes c-order of magnitude.
 
     Returns:
-        Required dElower
+        Required dEloweredt mru 
     """
     return interval_contrast*np.log(10.0)*T/hcperk
 
@@ -110,8 +110,7 @@ def logf_bias(elower_in,T):
     return -hcperk*elower_in * (1./T - 1./Tref)
 
 def g_bias(nu_in,T):
-    """g bias function
-
+    """
     Args:
         nu_in: wavenumber in cm-1
         T: temperature for unbiasing in Kelvin
@@ -177,7 +176,7 @@ if __name__ == "__main__":
     import jax.numpy as jnp
     from exojax.spec import moldb
     import matplotlib.pyplot as plt
-    from exojax.spec.lsd import npadd1D, npgetix, uniqidx_2D
+    from exojax.spec.lsd import npadd1D, npgetix
     from exojax.spec.hitran import SijT
     from exojax.spec.initspec import init_premodit
     from exojax.spec.hitran import normalized_doppler_sigma
