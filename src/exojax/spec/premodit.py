@@ -185,8 +185,8 @@ if __name__ == "__main__":
     nus=np.logspace(np.log10(6020.0), np.log10(6080.0), 40000, dtype=np.float64)
     mdb = moldb.MdbExomol('.database/CH4/12C-1H4/YT10to10/', nus, gpu_transfer=False)
 
-    Ttyp=1500.0
-    broadpar=np.array([mdb._n_Texp,mdb._alpha_ref]).T
+    Ttyp=1500.0 
+    broadpar = np.array([mdb._n_Texp,mdb._alpha_ref]).T
     cont_nu, index_nu, elower_grid, uidx_broadpar, uniq_broadpar, R, pmarray=init_premodit(mdb.nu_lines, nus, mdb._elower, Ttyp=Ttyp, broadpar=broadpar)
 
     lbd=make_lbd3D_uniqidx(mdb.Sij0, cont_nu, index_nu, len(nus), mdb._elower, elower_grid, uidx_broadpar, Ttyp)
