@@ -37,18 +37,10 @@ def test_exomol():
     
     ngammaL_grid = ditgrid_log_interval(ngammaL, dit_grid_resolution = 0.1)
     xsv = xsvector(cont_nu, index_nu, R, pmarray, nsigmaD, ngammaL, Sij, nus, ngammaL_grid)
+    filename = pkg_resources.resource_filename('exojax', 'data/testdata/'+TESTDATA_CO_EXOMOL_MODIT_SPECTRUM_REF)
+    dat = pd.read_csv(filename,delimiter=",",names=("nus","xsv"))
 
-    np.savetxt(TESTDATA_CO_EXOMOL_MODIT_SPECTRUM_REF,np.array([nus,xsv]).T,delimiter=",")
-    #filename = pkg_resources.resource_filename('exojax', 'data/testdata/'+TESTDATA_CO_EXOMOL_LPF_SPECTRUM_REF)
-    #dat = pd.read_csv(filename,delimiter=",",names=("nus","xsv"))
-    #import matplotlib.pyplot as plt
-    #plt.plot(nus,xsv)
-    #plt.plot(dat["nus"],dat["xsv"])
-    #plt.yscale("log")
-    #plt.show()
-
-
-    #assert np.all(xsv == pytest.approx(dat["xsv"].values))
+    assert np.all(xsv == pytest.approx(dat["xsv"].values))
     
 
 if __name__ == "__main__":
