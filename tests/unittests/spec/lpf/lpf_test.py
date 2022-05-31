@@ -5,8 +5,7 @@ from exojax.spec.lpf import xsvector
 import pkg_resources
 import pandas as pd
 import numpy as np
-import pickle
-from exojax.test.data import TESTDATA_moldb_CO_EXOMOL, TESTDATA_CO_EXOMOL_LPF_SPECTRUM_REF
+from exojax.test.data import TESTDATA_CO_EXOMOL_LPF_SPECTRUM_REF
 from exojax.spec.lpf import exomol
 from exojax.spec.molinfo import molmass
 from exojax.spec import doppler_sigma,  gamma_natural
@@ -14,13 +13,10 @@ from exojax.spec.hitran import line_strength
 from exojax.spec.exomol import gamma_exomol
 from exojax.spec.setrt import gen_wavenumber_grid
 from exojax.spec.initspec import init_lpf
-
+from exojax.test.emulate_mdb import mock_mdbExoMol
 
 def test_exomol():
-    filename = pkg_resources.resource_filename('exojax', 'data/testdata/'+TESTDATA_moldb_CO_EXOMOL)
-    with open(filename, 'rb') as f:
-        mdbCO = pickle.load(f)
-        
+    mdbCO = mock_mdbExoMol()    
     Tfix=1200.0
     Pfix=1.0
     Mmol = molmass("CO")
