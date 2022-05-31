@@ -6,7 +6,7 @@ import jax.numpy as jnp
 
 def compare_with_direct3D(mdb,nus,Ttest=1000.0,interval_contrast=0.1,Ttyp=2000.0):
     """ compare the premodit LSD with the direct computation of LSD 3D version
-
+    
     """
     from exojax.spec.lsd import npadd1D, npgetix, uniqidx_2D
     from exojax.spec.hitran import SijT
