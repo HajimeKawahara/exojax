@@ -13,26 +13,25 @@ from exojax.spec.set_ditgrid import ditgrid_log_interval, ditgrid_linear_interva
 from exojax.utils.constants import Tref
 #def ditgrid_log_interval(x, dit_grid_resolution=0.1, adopt=True):
 
-def make_broadpar_grid(ngamma_ref, n_Texp, Ttyp, dit_grid_resolution, adopt=True):
-    """compute a grid for broadening parameters
-
-    Args:
-       ngamma_ref: normalized Lorentian half width at reference, e.g. alpha_ref/nus                 
-       n_Texp: temperature exponent
-       Ttyp: typical or maximum temperature
-       dit_grid_resolution: resolution of normalized lorentian halfwidth at reference (gamma_ref, alpha_ref, etc)
-       adopt: if True, min, max grid points are used at min and max values of x.
-               In this case, the grid width does not need to be dit_grid_resolution exactly.
-
-    """
-    ngamma_grid = ditgrid_log_interval(ngamma_ref, dit_grid_resolution, adopt)
-    w = np.log(Ttyp) - np.log(Tref)
-    n_Texp_grid = ditgrid_linear_interval(n_Texp, dit_grid_resolution, w, adopt)
-    X,Y=np.meshgrid(ngamma_grid,n_Texp_grid)
-    Ng=np.shape(X)[0]*np.shape(X)[1]
-    broadpar_grid=(np.array([X,Y]).T).reshape(Ng,2)
-    return broadpar_grid
     
+def merge_grids(grid1, grid2):
+    """merge two different grids into one grid
+    
+    Args:
+        grid1: grid 1
+        grid2: grid 2
+        
+    Returns:
+        merged grid (len(grid1)*len(grid2),2)
+        
+    Examples:
+        >>>  broadpaar_grid = merge_grids(ngamma_ref_grid,n_Texp_grid)
+            
+    """
+    X,Y = np.meshgrid(grid1,grid2)
+    Ng=np.shape(X)[0]*np.shape(X)[1]
+    merged_grid=(np.array([X,Y]).T).reshape(Ng,2)
+    return merged_grid
     
 def compute_dElower(T,interval_contrast = 0.1):
     """ compute a grid interval of Elower given the grid interval of line strength
@@ -56,7 +55,7 @@ def make_elower_grid(Tmax, elower, interval_contrast):
         interval_contrast: putting c = grid_interval_line_strength, then, the contrast of line strength between the upper and lower of the grid becomes c-order of magnitude.
 
     Returns:
-       grid of E_lower given interval_contrast
+        grid of E_lower given interval_contrast
 
     """
     dE = compute_dElower(Tmax,interval_contrast)
@@ -66,11 +65,11 @@ def make_elower_grid(Tmax, elower, interval_contrast):
     return min_elower + np.arange(Ng_elower)*dE
 
 
-def make_lbd3D(Sij0, cont_nu, index_nu, Ng_nu, elower, elower_grid, uidx_broadpar, Ttyp):
-    """make logarithm biased LSD (LBD) array (3D)
+def make_lbd(line_strength_ref, cont_nu, index_nu, Ng_nu, elower, elower_grid, Ttyp):
+    """make logarithm biased LSD (LBD) array 
 
     Args:
-        Sij0: line strength at the refrence temepreature Tref (should be F64)
+        line_strength_ref: line strength at the refrence temepreature Tref (should be F64)
         cont_nu: (wavenumber contribution) jnp.array
         index_nu: (wavenumber index) jnp.array
         Ng_nu: number of wavenumber bins (len(nu_grid))
