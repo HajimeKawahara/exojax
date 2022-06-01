@@ -29,8 +29,8 @@ from exojax.spec.hitran import gamma_hitran
 from exojax.spec.atomll import gamma_vald3, interp_QT284
 
 
-
-def calc_xsection_from_lsd(Slsd, R, pmarray, nsigmaD, nu_grid, log_ngammaL_grid):
+def calc_xsection_from_lsd(Slsd, R, pmarray, nsigmaD, nu_grid,
+                           log_ngammaL_grid):
     """Compute cross section from LSD in MODIT algorithm
 
     The original code is rundit_fold_logredst in `addit package <https://github.com/HajimeKawahara/addit>`_ ). MODIT folded voigt for ESLOG for reduced wavenumebr inputs (against the truncation error) for a constant normalized beta
@@ -47,7 +47,6 @@ def calc_xsection_from_lsd(Slsd, R, pmarray, nsigmaD, nu_grid, log_ngammaL_grid)
        Cross section in the log nu grid
     """
 
-
     Sbuf = jnp.vstack([Slsd, jnp.zeros_like(Slsd)])
     fftval = jnp.fft.rfft(Sbuf, axis=0)
     Ng_nu = len(nu_grid)
@@ -58,13 +57,16 @@ def calc_xsection_from_lsd(Slsd, R, pmarray, nsigmaD, nu_grid, log_ngammaL_grid)
     # fftvalsum = jnp.sum(til_Slsd*til_Voigt,axis=(1,))
     # return jnp.fft.irfft(fftvalsum)[:Ng_nu]*R/nu_grid
     # -----------------------------------------------
-    vk = fold_voigt_kernel_logst(
-        jnp.fft.rfftfreq(2*Ng_nu, 1), jnp.log(nsigmaD), log_ngammaL_grid, Ng_nu, pmarray)
-    fftvalsum = jnp.sum(fftval*vk, axis=(1,))
-    return jnp.fft.irfft(fftvalsum)[:Ng_nu]*R/nu_grid
+    vk = fold_voigt_kernel_logst(jnp.fft.rfftfreq(2 * Ng_nu, 1),
+                                 jnp.log(nsigmaD), log_ngammaL_grid, Ng_nu,
+                                 pmarray)
+    fftvalsum = jnp.sum(fftval * vk, axis=(1, ))
+    return jnp.fft.irfft(fftvalsum)[:Ng_nu] * R / nu_grid
+
 
 @jit
-def xsvector(cnu, indexnu, R, pmarray, nsigmaD, ngammaL, S, nu_grid, ngammaL_grid):
+def xsvector(cnu, indexnu, R, pmarray, nsigmaD, ngammaL, S, nu_grid,
+             ngammaL_grid):
     """Cross section vector (MODIT)
 
     Args:
@@ -85,13 +87,15 @@ def xsvector(cnu, indexnu, R, pmarray, nsigmaD, ngammaL, S, nu_grid, ngammaL_gri
     log_ngammaL_grid = jnp.log(ngammaL_grid)
     lsd_array = jnp.zeros((len(nu_grid), len(ngammaL_grid)))
     Slsd = inc2D_givenx(lsd_array, S, cnu, indexnu, jnp.log(ngammaL),
-                        log_ngammaL_grid) 
-    xs = calc_xsection_from_lsd(Slsd, R, pmarray, nsigmaD, nu_grid, log_ngammaL_grid)
+                        log_ngammaL_grid)
+    xs = calc_xsection_from_lsd(Slsd, R, pmarray, nsigmaD, nu_grid,
+                                log_ngammaL_grid)
     return xs
 
 
 @jit
-def xsmatrix(cnu, indexnu, R, pmarray, nsigmaDl, ngammaLM, SijM, nu_grid, dgm_ngammaL):
+def xsmatrix(cnu, indexnu, R, pmarray, nsigmaDl, ngammaLM, SijM, nu_grid,
+             dgm_ngammaL):
     """Cross section matrix for xsvector (MODIT)
 
     Args:
@@ -116,11 +120,11 @@ def xsmatrix(cnu, indexnu, R, pmarray, nsigmaDl, ngammaLM, SijM, nu_grid, dgm_ng
     def fxs(x, arr):
         carry = 0.0
         nsigmaD = arr[0:1]
-        ngammaL = arr[1:Nline+1]
-        Sij = arr[Nline+1:2*Nline+1]
-        ngammaL_grid = arr[2*Nline+1:2*Nline+NDITgrid+1]
-        arr = xsvector(cnu, indexnu, R, pmarray, nsigmaD,
-                       ngammaL, Sij, nu_grid, ngammaL_grid)
+        ngammaL = arr[1:Nline + 1]
+        Sij = arr[Nline + 1:2 * Nline + 1]
+        ngammaL_grid = arr[2 * Nline + 1:2 * Nline + NDITgrid + 1]
+        arr = xsvector(cnu, indexnu, R, pmarray, nsigmaD, ngammaL, Sij,
+                       nu_grid, ngammaL_grid)
         return carry, arr
 
     val, xsm = scan(fxs, 0.0, Mat)
@@ -143,13 +147,15 @@ def exomol(mdb, Tarr, Parr, R, molmass):
        normalized sigmaD matrix
     """
     qt = vmap(mdb.qr_interp)(Tarr)
-    SijM = jit(vmap(SijT, (0, None, None, None, 0)))(
-        Tarr, mdb.logsij0, mdb.dev_nu_lines, mdb.elower, qt)
-    gammaLMP = jit(vmap(gamma_exomol, (0, 0, None, None)))(
-        Parr, Tarr, mdb.n_Texp, mdb.alpha_ref)
+    SijM = jit(vmap(SijT, (0, None, None, None, 0)))(Tarr, mdb.logsij0,
+                                                     mdb.dev_nu_lines,
+                                                     mdb.elower, qt)
+    gammaLMP = jit(vmap(gamma_exomol,
+                        (0, 0, None, None)))(Parr, Tarr, mdb.n_Texp,
+                                             mdb.alpha_ref)
     gammaLMN = gamma_natural(mdb.A)
-    gammaLM = gammaLMP+gammaLMN[None, :]
-    ngammaLM = gammaLM/(mdb.dev_nu_lines/R)
+    gammaLM = gammaLMP + gammaLMN[None, :]
+    ngammaLM = gammaLM / (mdb.dev_nu_lines / R)
     nsigmaDl = normalized_doppler_sigma(Tarr, molmass, R)[:, jnp.newaxis]
     return SijM, ngammaLM, nsigmaDl
 
@@ -157,9 +163,12 @@ def exomol(mdb, Tarr, Parr, R, molmass):
 def setdgm_exomol(mdb, fT, Parr, R, molmass, dit_grid_resolution, *kargs):
     warn_msg = "`modit.setdgm_exomol` is duplicated and will be removed. Use `modit.set_ditgrid_matrix_exomol` instead"
     warnings.warn(warn_msg, UserWarning)
-    return set_ditgrid_matrix_exomol(mdb, fT, Parr, R, molmass, dit_grid_resolution, kargs)
-    
-def set_ditgrid_matrix_exomol(mdb, fT, Parr, R, molmass, dit_grid_resolution, *kargs):    
+    return set_ditgrid_matrix_exomol(mdb, fT, Parr, R, molmass,
+                                     dit_grid_resolution, kargs)
+
+
+def set_ditgrid_matrix_exomol(mdb, fT, Parr, R, molmass, dit_grid_resolution,
+                              *kargs):
     """Easy Setting of DIT Grid Matrix (dgm) using Exomol.
 
     Args:
@@ -186,8 +195,10 @@ def set_ditgrid_matrix_exomol(mdb, fT, Parr, R, molmass, dit_grid_resolution, *k
     Tarr_list = fT(*kargs)
     for Tarr in Tarr_list:
         SijM, ngammaLM, nsigmaDl = exomol(mdb, Tarr, Parr, R, molmass)
-        set_dgm_minmax.append(minmax_ditgrid_matrix(ngammaLM, dit_grid_resolution))
-    dgm_ngammaL = precompute_ditgrid_matrix(set_dgm_minmax, dit_grid_resolution=dit_grid_resolution)
+        set_dgm_minmax.append(
+            minmax_ditgrid_matrix(ngammaLM, dit_grid_resolution))
+    dgm_ngammaL = precompute_ditgrid_matrix(
+        set_dgm_minmax, dit_grid_resolution=dit_grid_resolution)
     return jnp.array(dgm_ngammaL)
 
 
@@ -208,24 +219,30 @@ def hitran(mdb, Tarr, Parr, Pself, R, molmass):
        normalized sigmaD matrix
     """
     qt = vmap(mdb.Qr_line_HAPI_jax)(Tarr)
-    SijM = jit(vmap(SijT, (0, None, None, None, 0)))(
-        Tarr, mdb.logsij0, mdb.dev_nu_lines, mdb.elower, qt)
-    gammaLMP = jit(vmap(gamma_hitran, (0, 0, 0, None, None, None)))(
-        Parr, Tarr, Pself, mdb.n_air, mdb.gamma_air, mdb.gamma_self)
+    SijM = jit(vmap(SijT, (0, None, None, None, 0)))(Tarr, mdb.logsij0,
+                                                     mdb.dev_nu_lines,
+                                                     mdb.elower, qt)
+    gammaLMP = jit(vmap(gamma_hitran,
+                        (0, 0, 0, None, None, None)))(Parr, Tarr, Pself,
+                                                      mdb.n_air, mdb.gamma_air,
+                                                      mdb.gamma_self)
     gammaLMN = gamma_natural(mdb.A)
-    gammaLM = gammaLMP+gammaLMN[None, :]
-    ngammaLM = gammaLM/(mdb.dev_nu_lines/R)
+    gammaLM = gammaLMP + gammaLMN[None, :]
+    ngammaLM = gammaLM / (mdb.dev_nu_lines / R)
     nsigmaDl = normalized_doppler_sigma(Tarr, molmass, R)[:, jnp.newaxis]
     return SijM, ngammaLM, nsigmaDl
 
 
-def setdgm_hitran(mdb, fT, Parr, Pself_ref, R, molmass, dit_grid_resolution, *kargs):
+def setdgm_hitran(mdb, fT, Parr, Pself_ref, R, molmass, dit_grid_resolution,
+                  *kargs):
     warn_msg = "`modit.setdgm_hitran` is duplicated and will be removed. Use `modit.set_ditgrid_matrix_hitran` instead"
     warnings.warn(warn_msg, UserWarning)
-    return set_ditgrid_matrix_hitran(mdb, fT, Parr, Pself_ref, R, molmass, dit_grid_resolution, kargs)
+    return set_ditgrid_matrix_hitran(mdb, fT, Parr, Pself_ref, R, molmass,
+                                     dit_grid_resolution, kargs)
 
-def set_ditgrid_matrix_hitran(mdb, fT, Parr, Pself_ref, R, molmass, dit_grid_resolution, *kargs):
 
+def set_ditgrid_matrix_hitran(mdb, fT, Parr, Pself_ref, R, molmass,
+                              dit_grid_resolution, *kargs):
     """Easy Setting of DIT Grid Matrix (dgm) using HITRAN/HITEMP.
 
     Args:
@@ -252,9 +269,12 @@ def set_ditgrid_matrix_hitran(mdb, fT, Parr, Pself_ref, R, molmass, dit_grid_res
     set_dgm_minmax = []
     Tarr_list = fT(*kargs)
     for Tarr in Tarr_list:
-        SijM, ngammaLM, nsigmaDl = hitran(mdb, Tarr, Parr, Pself_ref, R, molmass)
-        set_dgm_minmax.append(minmax_ditgrid_matrix(ngammaLM, dit_grid_resolution))
-    dgm_ngammaL = precompute_ditgrid_matrix(set_dgm_minmax, dit_grid_resolution=dit_grid_resolution)
+        SijM, ngammaLM, nsigmaDl = hitran(mdb, Tarr, Parr, Pself_ref, R,
+                                          molmass)
+        set_dgm_minmax.append(
+            minmax_ditgrid_matrix(ngammaLM, dit_grid_resolution))
+    dgm_ngammaL = precompute_ditgrid_matrix(
+        set_dgm_minmax, dit_grid_resolution=dit_grid_resolution)
     return jnp.array(dgm_ngammaL)
 
 
@@ -289,7 +309,7 @@ def vald_each(Tarr, PH, PHe, PHH, R, qt_284_T, QTmask, \
         nsigmaDl:  normalized sigmaD matrix [N_layer x 1]
     """
     # Compute normalized partition function for each species
-    qt = qt_284_T[:,QTmask]
+    qt = qt_284_T[:, QTmask]
 
     # Compute line strength matrix
     SijM = jit(vmap(SijT,(0,None,None,None,0)))\
@@ -298,9 +318,9 @@ def vald_each(Tarr, PH, PHe, PHH, R, qt_284_T, QTmask, \
     # Compute gamma parameters for the pressure and natural broadenings
     gammaLM = jit(vmap(gamma_vald3,(0,0,0,0,None,None,None,None,None,None,None,None,None,None,None)))\
             (Tarr, PH, PHH, PHe, ielem, iion, dev_nu_lines, elower, eupper, atomicmass, ionE, gamRad, gamSta, vdWdamp, 1.0)
-    ngammaLM = gammaLM/(dev_nu_lines/R)
+    ngammaLM = gammaLM / (dev_nu_lines / R)
     # Do NOT remove NaN because "setdgm_vald_each" makes good use of them. # ngammaLM = jnp.nan_to_num(ngammaLM, nan = 0.0)
-    
+
     # Compute doppler broadening
     nsigmaDl = normalized_doppler_sigma(Tarr, atomicmass, R)[:, jnp.newaxis]
     return SijM, ngammaLM, nsigmaDl
@@ -330,7 +350,7 @@ def vald_all(asdb, Tarr, PH, PHe, PHH, R):
         (Tarr, PH, PHe, PHH, R, qt_284_T, \
                  asdb.QTmask, asdb.ielem, asdb.iion, asdb.atomicmass, asdb.ionE, \
                        asdb.dev_nu_lines, asdb.logsij0, asdb.elower, asdb.eupper, asdb.gamRad, asdb.gamSta, asdb.vdWdamp)
-    
+
     return SijMS, ngammaLMS, nsigmaDlS
 
 
@@ -338,9 +358,17 @@ def setdgm_vald_each(ielem, iion, atomicmass, ionE, dev_nu_lines, logsij0, elowe
                 QTmask, T_gQT, gQT_284species, PH, PHe, PHH, R, fT, dit_grid_resolution, *kargs):
     warn_msg = "`modit.setdgm_vald_each` is duplicated and will be removed. Use `modit.set_ditgrid_matrix_vald_each` instead"
     warnings.warn(warn_msg, UserWarning)
-    return set_ditgrid_matrix_vald_each(ielem, iion, atomicmass, ionE, dev_nu_lines, logsij0, elower, eupper, gamRad, gamSta, vdWdamp, QTmask, T_gQT, gQT_284species, PH, PHe, PHH, R, fT, dit_grid_resolution, kargs)
-    
-def set_ditgrid_matrix_vald_each(ielem, iion, atomicmass, ionE, dev_nu_lines, logsij0, elower, eupper, gamRad, gamSta, vdWdamp, QTmask, T_gQT, gQT_284species, PH, PHe, PHH, R, fT, dit_grid_resolution, *kargs):
+    return set_ditgrid_matrix_vald_each(ielem, iion, atomicmass, ionE,
+                                        dev_nu_lines, logsij0, elower, eupper,
+                                        gamRad, gamSta, vdWdamp, QTmask, T_gQT,
+                                        gQT_284species, PH, PHe, PHH, R, fT,
+                                        dit_grid_resolution, kargs)
+
+
+def set_ditgrid_matrix_vald_each(ielem, iion, atomicmass, ionE, dev_nu_lines,
+                                 logsij0, elower, eupper, gamRad, gamSta,
+                                 vdWdamp, QTmask, T_gQT, gQT_284species, PH,
+                                 PHe, PHH, R, fT, dit_grid_resolution, *kargs):
     """Easy Setting of DIT Grid Matrix (dgm) using VALD.
 
     Args:
@@ -372,23 +400,29 @@ def set_ditgrid_matrix_vald_each(ielem, iion, atomicmass, ionE, dev_nu_lines, lo
     set_dgm_minmax = []
     Tarr_list = fT(*kargs)
     for Tarr in Tarr_list:
-        qt_284_T = vmap(interp_QT284, (0, None, None))(Tarr, T_gQT, gQT_284species)
+        qt_284_T = vmap(interp_QT284, (0, None, None))(Tarr, T_gQT,
+                                                       gQT_284species)
         SijM, ngammaLM, nsigmaDl = vald_each(Tarr, PH, PHe, PHH, R, qt_284_T, \
              QTmask, ielem, iion, atomicmass, ionE, \
                    dev_nu_lines, logsij0, elower, eupper, gamRad, gamSta, vdWdamp)
-        floop = lambda c, arr:  (c, jnp.nan_to_num(arr, nan=jnp.nanmin(arr)))
+        floop = lambda c, arr: (c, jnp.nan_to_num(arr, nan=jnp.nanmin(arr)))
         ngammaLM = scan(floop, 0, ngammaLM)[1]
-        set_dgm_minmax.append(minmax_ditgrid_matrix(ngammaLM, dit_grid_resolution))
-    dgm_ngammaL = precompute_ditgrid_matrix(set_dgm_minmax, dit_grid_resolution=dit_grid_resolution)
+        set_dgm_minmax.append(
+            minmax_ditgrid_matrix(ngammaLM, dit_grid_resolution))
+    dgm_ngammaL = precompute_ditgrid_matrix(
+        set_dgm_minmax, dit_grid_resolution=dit_grid_resolution)
     return jnp.array(dgm_ngammaL)
 
 
 def setdgm_vald_all(asdb, PH, PHe, PHH, R, fT, dit_grid_resolution, *kargs):
     warn_msg = "`modit.setdgm_vald_all` is duplicated and will be removed. Use `modit.set_ditgrid_matrix_vald_all` instead"
     warnings.warn(warn_msg, UserWarning)
-    return set_ditgrid_matrix_vald_all(asdb, PH, PHe, PHH, R, fT, dit_grid_resolution, kargs)
+    return set_ditgrid_matrix_vald_all(asdb, PH, PHe, PHH, R, fT,
+                                       dit_grid_resolution, kargs)
 
-def set_ditgrid_matrix_vald_all(asdb, PH, PHe, PHH, R, fT, dit_grid_resolution, *kargs):
+
+def set_ditgrid_matrix_vald_all(asdb, PH, PHe, PHH, R, fT, dit_grid_resolution,
+                                *kargs):
     """Easy Setting of DIT Grid Matrix (dgm) using VALD.
     
     Args:
@@ -413,9 +447,9 @@ def set_ditgrid_matrix_vald_all(asdb, PH, PHe, PHH, R, fT, dit_grid_resolution, 
     """
     T_gQT = asdb.T_gQT
     gQT_284species = asdb.gQT_284species
-    
+
     dgm_ngammaLS_BeforePadding = []
-    lendgm=[]
+    lendgm = []
     for i in range(asdb.N_usp):
         dgm_ngammaL_sp = setdgm_vald_each(asdb.ielem[i], asdb.iion[i], asdb.atomicmass[i], asdb.ionE[i], \
             asdb.dev_nu_lines[i], asdb.logsij0[i], asdb.elower[i], asdb.eupper[i], asdb.gamRad[i], asdb.gamSta[i], asdb.vdWdamp[i], \
@@ -425,7 +459,8 @@ def set_ditgrid_matrix_vald_all(asdb, PH, PHe, PHH, R, fT, dit_grid_resolution, 
     Lmax_dgm = np.max(np.array(lendgm))
 
     # Padding to unity the length of all the DIT Grid Matrix (dgm) and convert them into jnp.array
-    pad2Dm = lambda arr, L:  jnp.pad(arr, ((0, 0), (0, L - arr.shape[1])), mode='maximum')
+    pad2Dm = lambda arr, L: jnp.pad(arr, ((0, 0), (0, L - arr.shape[1])),
+                                    mode='maximum')
     dgm_ngammaLS = np.zeros([asdb.N_usp, len(PH), Lmax_dgm])
     for i_sp, dgmi in enumerate(dgm_ngammaLS_BeforePadding):
         dgm_ngammaLS[i_sp] = pad2Dm(dgmi, Lmax_dgm)
@@ -433,7 +468,8 @@ def set_ditgrid_matrix_vald_all(asdb, PH, PHe, PHH, R, fT, dit_grid_resolution, 
 
 
 @jit
-def xsmatrix_vald(cnuS, indexnuS, R, pmarray, nsigmaDlS, ngammaLMS, SijMS, nu_grid, dgm_ngammaLS):
+def xsmatrix_vald(cnuS, indexnuS, R, pmarray, nsigmaDlS, ngammaLMS, SijMS,
+                  nu_grid, dgm_ngammaLS):
     """Cross section matrix for xsvector (MODIT) for VALD lines (asdb)
 
     Args:
@@ -455,6 +491,7 @@ def xsmatrix_vald(cnuS, indexnuS, R, pmarray, nsigmaDlS, ngammaLMS, SijMS, nu_gr
     xsmS = jnp.abs(xsmS)
     return xsmS
 
+
 #
 def precompute_dgmatrix(set_gm_minmax, dit_grid_resolution=0.1, adopt=True):
     """Precomputing MODIT GRID MATRIX for normalized GammaL.
@@ -469,7 +506,9 @@ def precompute_dgmatrix(set_gm_minmax, dit_grid_resolution=0.1, adopt=True):
     """
     warn_msg = "`modit.precompute_dgmatrix` is duplicated and will be removed. Use `set_ditgrid.precompute_modit_ditgrid_matrix` instead"
     warnings.warn(warn_msg, UserWarning)
-    return precompute_modit_ditgrid_matrix(set_gm_minmax, dit_grid_resolution, adopt)
+    return precompute_modit_ditgrid_matrix(set_gm_minmax, dit_grid_resolution,
+                                           adopt)
+
 
 def minmax_dgmatrix(x, dit_grid_resolution=0.1, adopt=True):
     """compute MIN and MAX DIT GRID MATRIX.
@@ -486,6 +525,7 @@ def minmax_dgmatrix(x, dit_grid_resolution=0.1, adopt=True):
     warnings.warn(warn_msg, UserWarning)
     return minmax_ditgrid_matrix(x, dit_grid_resolution, adopt)
 
+
 def dgmatrix(x, dit_grid_resolution=0.1, adopt=True):
     """DIT GRID MATRIX (alias)
 
@@ -500,8 +540,9 @@ def dgmatrix(x, dit_grid_resolution=0.1, adopt=True):
     """
     warn_msg = "`modit.dgmatrix` is duplicated and will be removed. Use `set_ditgrid.ditgrid_matrix` instead"
     warnings.warn(warn_msg, UserWarning)
-    from exojax.spec.set_ditgrid import ditgrid_matrix 
+    from exojax.spec.set_ditgrid import ditgrid_matrix
     return ditgrid_matrix(x, dit_grid_resolution, adopt)
+
 
 def ditgrid(x, dit_grid_resolution=0.1, adopt=True):
     """DIT GRID (duplicated).
@@ -521,6 +562,5 @@ def ditgrid(x, dit_grid_resolution=0.1, adopt=True):
     from exojax.spec.set_ditgrid import ditgrid_log_interval
     return ditgrid_log_interval(x, dit_grid_resolution, adopt)
 
+
 ####################################################################
-
-

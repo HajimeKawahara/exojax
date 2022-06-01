@@ -13,6 +13,7 @@ from exojax.spec.make_numatrix import make_numatrix0
 from exojax.utils.instfunc import resolution_eslog
 from exojax.spec.premodit import make_elower_grid
 
+
 def init_lpf(nu_lines, nu_grid):
     """Initialization for LPF.
 
@@ -48,9 +49,9 @@ def init_dit(nu_lines, nu_grid, warning=False):
     warn_outside_wavenumber_grid(nu_lines, nu_grid)
 
     cont, index = npgetix(nu_lines, nu_grid)
-    dnu = nu_grid[1]-nu_grid[0]
-    pmarray = np.ones(len(nu_grid)+1)
-    pmarray[1::2] = pmarray[1::2]*-1
+    dnu = nu_grid[1] - nu_grid[0]
+    pmarray = np.ones(len(nu_grid) + 1)
+    pmarray[1::2] = pmarray[1::2] * -1
 
     return jnp.array(cont), jnp.array(index), pmarray
 
@@ -79,12 +80,21 @@ def init_modit(nu_lines, nu_grid, warning=False):
 
     R = resolution_eslog(nu_grid)
     cont, index = npgetix(nu_lines, nu_grid)
-    pmarray = np.ones(len(nu_grid)+1)
-    pmarray[1::2] = pmarray[1::2]*-1
+    pmarray = np.ones(len(nu_grid) + 1)
+    pmarray[1::2] = pmarray[1::2] * -1
 
     return jnp.array(cont), jnp.array(index), R, jnp.array(pmarray)
 
-def init_premodit(nu_lines, nu_grid, elower, gamma_ref, n_Texp, Ttyp, interval_contrast=0.1, dit_grid_resolution=0.2, warning=False):
+
+def init_premodit(nu_lines,
+                  nu_grid,
+                  elower,
+                  gamma_ref,
+                  n_Texp,
+                  Ttyp,
+                  interval_contrast=0.1,
+                  dit_grid_resolution=0.2,
+                  warning=False):
     """Initialization for PreMODIT. i.e. Generate nu contribution and index for
     the line shape density (actually, this is a numpy version of getix)
 
@@ -118,21 +128,15 @@ def init_premodit(nu_lines, nu_grid, elower, gamma_ref, n_Texp, Ttyp, interval_c
 
     R = resolution_eslog(nu_grid)
     cont_nu, index_nu = npgetix(nu_lines, nu_grid)
-    ngamma_ref = gamma_ref/nu_lines*R
-    broadpar_grid = make_broadpar_grid(ngamma_ref, n_Texp, Ttyp, dit_grid_resolution=dit_grid_resolution, adopt=True)
-    elower_grid = make_elower_grid(Ttyp, elower, interval_contrast=interval_contrast)
-    ngamma_ref = gamma_ref/nu_lines*R
-    
-    ngamma_ref_grid = ditgrid_log_interval(ngamma_ref, dit_grid_resolution, adopt)
-    w = np.log(Ttyp) - np.log(Tref)
-    n_Texp_grid = ditgrid_linear_interval(n_Texp, dit_grid_resolution, w, adopt)
-    cont_ngamma_ref, index_ngamma_ref = npgetix(ngamma_ref, ngamma_ref_grid)
-    cont_n_Texp, index_n_Texp = npgetix(n_Texp, n_Texp_grid)
-    
-    pmarray = np.ones(len(nu_grid)+1)
-    pmarray[1::2] = pmarray[1::2]*-1
-    
+    ngamma_ref = gamma_ref / nu_lines * R
+    #broadpar_grid = make_broadpar_grid(ngamma_ref, n_Texp, Ttyp, dit_grid_resolution=dit_grid_resolution, adopt=True)
+    elower_grid = make_elower_grid(Ttyp,
+                                   elower,
+                                   interval_contrast=interval_contrast)
+    ngamma_ref = gamma_ref / nu_lines * R
 
+    pmarray = np.ones(len(nu_grid) + 1)
+    pmarray[1::2] = pmarray[1::2] * -1
 
 
 def init_modit_vald(nu_linesM, nus, N_usp):
@@ -153,8 +157,9 @@ def init_modit_vald(nu_linesM, nus, N_usp):
     indexS = np.zeros_like(contS)
     for i in range(N_usp):
         nu_lines = nu_linesM[i]
-        nu_lines_nan = np.where(nu_lines==0, np.nan, nu_lines)
-        contS[i], indexnu_dammy, R, pmarray = init_modit(nu_lines_nan, nus) # np.array(a), np.array(b), c, np.array(d)
+        nu_lines_nan = np.where(nu_lines == 0, np.nan, nu_lines)
+        contS[i], indexnu_dammy, R, pmarray = init_modit(
+            nu_lines_nan, nus)  # np.array(a), np.array(b), c, np.array(d)
         indexS[i] = np.hstack([ indexnu_dammy[np.where(~np.isnan(nu_lines_nan))], \
                (len(nus)+1) * np.ones(len(np.where(np.isnan(nu_lines_nan))[0]), dtype='int32') ])
     contS = jnp.array(contS)
@@ -170,8 +175,8 @@ def warn_dtype64(arr, warning, tag=''):
         warning: True/False
         tag:
     """
-    if(arr.dtype != np.float64 and warning):
-        warnings.warn(tag+' is not np.float64 but '+str(arr.dtype))
+    if (arr.dtype != np.float64 and warning):
+        warnings.warn(tag + ' is not np.float64 but ' + str(arr.dtype))
 
 
 def warn_outside_wavenumber_grid(nu_lines, nu_grid):
@@ -184,7 +189,10 @@ def warn_outside_wavenumber_grid(nu_lines, nu_grid):
     Note:
         For MODIT/DIT, if the lines whose center are outside of the wavenumber grid, they contribute the edges of the wavenumber grid. This function is to check it. This warning often occurs when you set non-negative value to ``margin`` in MdbExomol, MdbHit, AdbVALD, and AdbKurucz in moldb. See `#190 <https://github.com/HajimeKawahara/exojax/issues/190>`_   for the details.
     """
-    if np.min(nu_lines) < np.min(nu_grid) or np.max(nu_lines) > np.max(nu_grid):
-        warnings.warn('Some of the line centers are outside of the wavenumber grid.')
-        warnings.warn('All of the line center should be within wavenumber grid for PreMODIT/MODIT/DIT.')
-
+    if np.min(nu_lines) < np.min(nu_grid) or np.max(nu_lines) > np.max(
+            nu_grid):
+        warnings.warn(
+            'Some of the line centers are outside of the wavenumber grid.')
+        warnings.warn(
+            'All of the line center should be within wavenumber grid for PreMODIT/MODIT/DIT.'
+        )
