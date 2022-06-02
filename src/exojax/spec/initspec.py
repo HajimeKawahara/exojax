@@ -134,7 +134,9 @@ def init_premodit(nu_lines,
                                    elower,
                                    interval_contrast=interval_contrast)
     ngamma_ref = gamma_ref / nu_lines * R
-
+    
+    #np.add.at(a, (ix+1, iy, iz), w*cx*(1-cy)*(1-cz))
+    
     pmarray = np.ones(len(nu_grid) + 1)
     pmarray[1::2] = pmarray[1::2] * -1
 

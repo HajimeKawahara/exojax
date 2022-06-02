@@ -64,11 +64,15 @@ def broadpar_getix(ngamma_ref,
         dit_grid_resolution=dit_grid_resolution,
         weight=weight,
         adopt=adopt)
-    broadpar_grid = merge_grids(ngamma_ref_grid, n_Texp_grid)
-    cont_ngamma_ref, index_ngamma_ref = npgetix(ngamma_ref, ngamma_ref_grid)
-    cont_n_Texp, index_n_Texp = npgetix(n_Texp, n_Texp_grid)
-    merged_index = merge_grids(index_ngamma_ref, index_n_Texp)
+    broadpar_grid = merge_grids(ngamma_ref_grid, n_Texp_grid)  #(Ng, 2)
+    cont_ngamma_ref, index_ngamma_ref = npgetix(ngamma_ref, ngamma_ref_grid) # Nline
+    cont_n_Texp, index_n_Texp = npgetix(n_Texp, n_Texp_grid) # Nline
+    
+    merged_index = merge_grids(index_ngamma_ref, index_n_Texp) #(Nline, 2) but index
+    
+    uidx, neighbor_indices, merged_index = uniqidx_neibouring(merged_index)
     merged_cont = merge_grids(cont_ngamma_ref, cont_n_Texp)
+    
     return broadpar_grid, merged_cont, merged_index
 
 
