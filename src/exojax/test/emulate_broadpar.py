@@ -9,6 +9,6 @@ def mock_broadpar_exomol():
         normalized broadening half-width at reference
         temperature exponent  
     """
-    ngamma_ref=np.array([0.1,0.11,0.15])
-    n_Texp=np.array([0.5,0.4,0.47])
+    ngamma_ref=np.array([0.1,0.11,0.15,0.1,0.15,0.13])
+    n_Texp=np.array([0.5,0.4,0.47,0.5,0.47,0.4])
     return ngamma_ref, n_Texp

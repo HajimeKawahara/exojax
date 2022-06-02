@@ -11,12 +11,10 @@ from exojax.spec.modit import calc_xsection_from_lsd
 from exojax.spec.exomol import gamma_exomol
 from exojax.spec.set_ditgrid import ditgrid_log_interval, ditgrid_linear_interval
 from exojax.utils.constants import Tref
+from exojax.utils.indexing import uniqidx_neibouring
 
-#def ditgrid_log_interval(x, dit_grid_resolution=0.1, adopt=True):
-
-
-def merge_grids(grid1, grid2):
-    """merge two different grids into one grid
+def diad_merge_grids(grid1, grid2):
+    """merge two different grids into one grid using diad
     
     Args:
         grid1: grid 1
@@ -32,6 +30,24 @@ def merge_grids(grid1, grid2):
     X, Y = np.meshgrid(grid1, grid2)
     Ng = np.shape(X)[0] * np.shape(X)[1]
     merged_grid = (np.array([X, Y]).T).reshape(Ng, 2)
+    return merged_grid
+
+
+def parallel_merge_grids(grid1, grid2):
+    """merge two different grids into one grid in parallel
+    
+    Args:
+        grid1: grid 1
+        grid2: grid 2
+        
+    Returns:
+        merged grid (len(grid1),2)
+            
+    """
+    if len(grid1) != len(grid2):
+        assert ValueError("lengths for grid1 and grid2 are different.")
+
+    merged_grid = np.vstack([grid1, grid2]).T
     return merged_grid
 
 
@@ -51,8 +67,7 @@ def broadpar_getix(ngamma_ref,
         In this case, the grid width does not need to be dit_grid_resolution exactly.
         
     Returns:
-        Broadening parameter grid, 
-    
+        
     
     """
 
@@ -64,16 +79,18 @@ def broadpar_getix(ngamma_ref,
         dit_grid_resolution=dit_grid_resolution,
         weight=weight,
         adopt=adopt)
-    broadpar_grid = merge_grids(ngamma_ref_grid, n_Texp_grid)  #(Ng, 2)
-    cont_ngamma_ref, index_ngamma_ref = npgetix(ngamma_ref, ngamma_ref_grid) # Nline
-    cont_n_Texp, index_n_Texp = npgetix(n_Texp, n_Texp_grid) # Nline
-    
-    merged_index = merge_grids(index_ngamma_ref, index_n_Texp) #(Nline, 2) but index
-    
-    uidx, neighbor_indices, merged_index = uniqidx_neibouring(merged_index)
-    merged_cont = merge_grids(cont_ngamma_ref, cont_n_Texp)
-    
-    return broadpar_grid, merged_cont, merged_index
+
+    cont_ngamma_ref, index_ngamma_ref = npgetix(ngamma_ref,
+                                                ngamma_ref_grid)  # Nline
+    cont_n_Texp, index_n_Texp = npgetix(n_Texp, n_Texp_grid)  # Nline
+
+    multi_index_lines = parallel_merge_grids(
+        index_ngamma_ref, index_n_Texp)  #(Nline, 2) but index
+    multi_cont_lines = parallel_merge_grids(cont_ngamma_ref, cont_n_Texp)
+    uidx_lines, neighbor_indices, multi_index_uniqgrid = uniqidx_neibouring(
+        multi_index_lines)
+
+    return multi_index_lines, multi_cont_lines, uidx_lines, neighbor_indices, multi_index_uniqgrid
 
 
 def compute_dElower(T, interval_contrast=0.1):

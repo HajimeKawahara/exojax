@@ -42,7 +42,7 @@ def uniqidx_neibouring(index_array):
     """
     uidx, multi_index = uniqidx(index_array)
     multi_index_update=np.copy(multi_index)
-    Nuidx = np.max(uidx)
+    Nuidx = np.max(uidx)+1
     neighbor_indices=np.zeros((Nuidx,3),dtype=int)
     for i in range(0, Nuidx):
         neighbor_indices[i,0], multi_index_update = find_or_add_index(multi_index[i,:]+np.array([1,0]), multi_index_update)
@@ -72,6 +72,5 @@ def find_or_add_index(new_index, index_array):
         return ni[0], index_array
 
 if __name__ == "__main__":
-    a = np.array([[4, 1], [7, 1], [7, 2], [7, 1], [8, 0], [5, 1]])
-    uniqidx_plus_one(a)
-
+    a = np.array([[4, 1], [7, 1], [7, 2], [8, 0], [4, 1]])
+    udix, neighbor_indices, multi_index_update = uniqidx_neibouring(a)

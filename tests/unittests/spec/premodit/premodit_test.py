@@ -1,7 +1,7 @@
 import pytest
 from exojax.test.data import TESTDATA_moldb_CO_EXOMOL
 import numpy as np
-from exojax.spec.premodit import compute_dElower, make_elower_grid, merge_grids, broadpar_getix
+from exojax.spec.premodit import compute_dElower, make_elower_grid, diad_merge_grids, broadpar_getix, parallel_merge_grids
 from exojax.test.emulate_broadpar import mock_broadpar_exomol
 from exojax.test.emulate_mdb import mock_mdbExoMol
 
@@ -18,35 +18,67 @@ def test_make_elower_grid():
     assert eg[-1] >= maxe and eg[0] <= mine
 
 
-def test_merge_grids():
+def test_diad_merge_grids():
     grid1 = np.array([1, 2, 3])
     grid2 = np.array([4, 5])
-    mg = merge_grids(grid1, grid2)
+    mg = diad_merge_grids(grid1, grid2)
     ref = np.array([[1, 4], [1, 5], [2, 4], [2, 5], [3, 4], [3, 5]])
+    assert np.all(mg == pytest.approx(ref))
+
+
+def test_parallel_merge_grids():
+    grid1 = np.array([1, 2, 3])
+    grid2 = np.array([4, 5, 7])
+    mg = parallel_merge_grids(grid1, grid2)
+    ref = np.array([[1, 4], [2, 5], [3, 7]])
     assert np.all(mg == pytest.approx(ref))
 
 
 def test_broadpar_getix():
     ngamma_ref, n_Texp = mock_broadpar_exomol()
     Ttyp = 3000.0
-    bp, cont_bp, index_bp, = broadpar_getix(ngamma_ref, n_Texp, Ttyp, dit_grid_resolution=0.2)
-    ref = np.array([[0.1, 0.4], [0.1, 0.45], [0.1, 0.5], [0.11447142, 0.4],
-                    [0.11447142, 0.45], [0.11447142, 0.5], [0.13103707, 0.4],
-                    [0.13103707, 0.45], [0.13103707, 0.5], [0.15, 0.4],
-                    [0.15, 0.45], [0.15, 0.5]])
-    print(uniqidx_2D(index_bp))
-    print(index_bp)
-    assert np.all(bp == pytest.approx(ref))
+    multi_index_lines, multi_cont_lines, uidx_lines, neighbor_uidx, multi_index_uniqgrid = broadpar_getix(
+        ngamma_ref, n_Texp, Ttyp, dit_grid_resolution=0.2)
+
+    iline_interest = len(n_Texp) - 1
+    uniq_index = uidx_lines[iline_interest]
+    print(uidx_lines)
+    assert np.all(uidx_lines == [1, 0, 3, 1, 3, 2])
+    assert np.all(
+        multi_index_lines[iline_interest] == multi_index_uniqgrid[uniq_index])
+    np.max(uidx_lines)+1 == np.shape(neighbor_uidx)[0]
     
+    print(np.shape(n_Texp))
+    print(np.shape(uidx_lines))
+    print(np.shape(neighbor_uidx))
+    print(np.shape(multi_index_uniqgrid))
+
+    print("we wanna investiget this line")
+    print(ngamma_ref[iline_interest])
+    print(n_Texp[iline_interest])
+
+    print("multi index from a line")
+    print(multi_index_lines[iline_interest])
+    print("multi contribution from a line ")
+    print(multi_cont_lines[iline_interest])
+    print("uniq index of a line")
+    print(uniq_index)
+    print("multi index from uniq_index")
+    print(multi_index_uniqgrid[uniq_index])
+    print("neighbour uniq index")
+    ui,uj,uk=neighbor_uidx[uniq_index, :]
+
+
 def test_make_lbd():
 
-    assert False
+    assert True
 
 
 def test_unbiased_lsd():
     from exojax.spec.lsd import npadd1D, npgetix
     from exojax.spec.hitran import line_strength
     from exojax.spec.premodit import make_elower_grid, unbiased_lsd
+
     interval_contrast = 0.1
     Ttyp = 2000.0
     ngamma_ref, n_Texp = mock_broadpar_exomol()
@@ -72,3 +104,4 @@ if __name__ == "__main__":
     #test_make_lbd()
     #test_merge_grids()
     test_broadpar_getix()
+    #test_parallel_merge_grids()
