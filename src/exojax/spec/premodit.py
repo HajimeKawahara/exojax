@@ -4,7 +4,7 @@
 import numpy as np
 import jax.numpy as jnp
 from jax import jit, vmap
-from exojax.spec.lsd import npgetix, npgetix_exp
+from exojax.spec.lsd import npgetix, npgetix_exp, npadd3D_multi_index
 from exojax.utils.constants import hcperk, Tref
 from exojax.spec.ditkernel import fold_voigt_kernel_logst
 from exojax.spec.modit import calc_xsection_from_lsd
@@ -12,25 +12,6 @@ from exojax.spec.exomol import gamma_exomol
 from exojax.spec.set_ditgrid import ditgrid_log_interval, ditgrid_linear_interval
 from exojax.utils.constants import Tref
 from exojax.utils.indexing import uniqidx_neibouring
-
-def diad_merge_grids(grid1, grid2):
-    """merge two different grids into one grid using diad
-    
-    Args:
-        grid1: grid 1
-        grid2: grid 2
-        
-    Returns:
-        merged grid (len(grid1)*len(grid2),2)
-        
-    Examples:
-        >>>  broadpar_grid = merge_grids(ngamma_ref_grid,n_Texp_grid)
-            
-    """
-    X, Y = np.meshgrid(grid1, grid2)
-    Ng = np.shape(X)[0] * np.shape(X)[1]
-    merged_grid = (np.array([X, Y]).T).reshape(Ng, 2)
-    return merged_grid
 
 
 def parallel_merge_grids(grid1, grid2):
@@ -51,26 +32,25 @@ def parallel_merge_grids(grid1, grid2):
     return merged_grid
 
 
-def broadpar_getix(ngamma_ref,
-                   n_Texp,
-                   Ttyp,
-                   dit_grid_resolution=0.2,
-                   adopt=True):
-    """get indices and contribution of broadpar
-    
+def make_broadpar_grid(ngamma_ref,
+                       n_Texp,
+                       Ttyp,
+                       dit_grid_resolution=0.2,
+                       adopt=True):
+    """ make grids of normalized half-width at reference and temperature exoponent
+
     Args:
-        ngamma_ref: normalized half-width at reference 
-        n_Texp: temperature exponent (n_Texp, n_air, etc)
+        ngamma_ref (nd array): n_Texp: temperature exponent (n_Texp, n_air, etc)
+        n_Texp (nd array): temperature exponent (n_Texp, n_air, etc)
         Ttyp: typical or maximum temperature
-        dit_grid_resolution: DIT grid resolution
-        adopt: if True, min, max grid points are used at min and max values of x.
-        In this case, the grid width does not need to be dit_grid_resolution exactly.
+        dit_grid_resolution (float, optional): DIT grid resolution. Defaults to 0.2.
+        adopt (bool, optional): if True, min, max grid points are used at min and max values of x. In this case, the grid width does not need to be dit_grid_resolution exactly.  Defaults to True.
         
     Returns:
+        nd array: ngamma_ref_grid, grid of normalized half-width at reference 
+        nd array: n_Texp_grid, grid of temperature exponent (n_Texp, n_air, etc)
         
-    
     """
-
     ngamma_ref_grid = ditgrid_log_interval(
         ngamma_ref, dit_grid_resolution=dit_grid_resolution, adopt=adopt)
     weight = np.log(Ttyp) - np.log(Tref)
@@ -79,18 +59,45 @@ def broadpar_getix(ngamma_ref,
         dit_grid_resolution=dit_grid_resolution,
         weight=weight,
         adopt=adopt)
+    return ngamma_ref_grid, n_Texp_grid
 
-    cont_ngamma_ref, index_ngamma_ref = npgetix(ngamma_ref,
-                                                ngamma_ref_grid)  # Nline
-    cont_n_Texp, index_n_Texp = npgetix(n_Texp, n_Texp_grid)  # Nline
 
-    multi_index_lines = parallel_merge_grids(
-        index_ngamma_ref, index_n_Texp)  #(Nline, 2) but index
+def broadpar_getix(ngamma_ref, ngamma_ref_grid, n_Texp, n_Texp_grid):
+    """get indices and contribution of broadpar
+    
+    Args:
+        ngamma_ref: normalized half-width at reference 
+        ngamma_ref_grid: grid of normalized half-width at reference 
+        n_Texp: temperature exponent (n_Texp, n_air, etc)
+        n_Texp_grid: grid of temperature exponent (n_Texp, n_air, etc)
+        
+    Returns:
+        multi_index_lines
+        multi_cont_lines
+        uidx_lines
+        neighbor_uidx
+        multi_index_uniqgrid 
+        number of broadpar gird
+        
+    Examples:
+        
+        >>> multi_index_lines, multi_cont_lines, uidx_lines, neighbor_uidx, multi_index_uniqgrid, Ng = broadpar_getix(
+        >>> ngamma_ref, ngamma_ref_grid, n_Texp, n_Texp_grid)
+        >>> iline_interest = 1 # we wanna investiget this line
+        >>> print(multi_index_lines[iline_interest]) # multi index from a line
+        >>> print(multi_cont_lines[iline_interest]) # multi contribution from a line 
+        >>> print(uidx_lines[iline_interest]) # uniq index of a line
+        >>> print(multi_index_uniqgrid[uniq_index]) # multi index from uniq_index
+        >>> ui,uj,uk=neighbor_uidx[uniq_index, :] # neighbour uniq index
+    """
+    cont_ngamma_ref, index_ngamma_ref = npgetix(ngamma_ref, ngamma_ref_grid)
+    cont_n_Texp, index_n_Texp = npgetix(n_Texp, n_Texp_grid)
+    multi_index_lines = parallel_merge_grids(index_ngamma_ref, index_n_Texp)
     multi_cont_lines = parallel_merge_grids(cont_ngamma_ref, cont_n_Texp)
     uidx_lines, neighbor_indices, multi_index_uniqgrid = uniqidx_neibouring(
         multi_index_lines)
-
-    return multi_index_lines, multi_cont_lines, uidx_lines, neighbor_indices, multi_index_uniqgrid
+    Ng_broadpar = len(multi_index_uniqgrid)
+    return multi_index_lines, multi_cont_lines, uidx_lines, neighbor_indices, multi_index_uniqgrid, Ng_broadpar
 
 
 def compute_dElower(T, interval_contrast=0.1):
@@ -101,7 +108,7 @@ def compute_dElower(T, interval_contrast=0.1):
         interval_contrast: putting c = grid_interval_line_strength, then, the contrast of line strength between the upper and lower of the grid becomes c-order of magnitude.
 
     Returns:
-        Required dEloweredt mru 
+        Required dElower
     """
     return interval_contrast * np.log(10.0) * T / hcperk
 
@@ -124,38 +131,40 @@ def make_elower_grid(Tmax, elower, interval_contrast):
     Ng_elower = int((max_elower - min_elower) / dE) + 2
     return min_elower + np.arange(Ng_elower) * dE
 
-
-def make_lbd(line_strength_ref, cont_nu, index_nu, Ng_nu, elower, elower_grid,
-             Ttyp):
-    """make logarithm biased LSD (LBD) array 
+def generate_lbd(line_strength_ref, nu_lines, nu_grid, ngamma_ref, ngamma_ref_grid,
+             n_Texp, n_Texp_grid, elower, elower_grid, Ttyp):
+    """generate log-biased line shape density (LBD)
 
     Args:
-        line_strength_ref: line strength at the refrence temepreature Tref (should be F64)
-        cont_nu: (wavenumber contribution) jnp.array
-        index_nu: (wavenumber index) jnp.array
-        Ng_nu: number of wavenumber bins (len(nu_grid))
-        elower: E lower
-        elower_grid: E lower grid
-        
-        uidx_broadpar: broadening parameter index
-        Ttyp: typical temperature you will use.
+        line_strength_ref (_type_): _description_
+        nu_lines (_type_): _description_
+        nu_grid (_type_): _description_
+        ngamma_ref (_type_): _description_
+        ngamma_ref_grid (_type_): _description_
+        n_Texp (_type_): _description_
+        n_Texp_grid (_type_): _description_
+        elower (_type_): _description_
+        elower_grid (_type_): _description_
+        Ttyp (_type_): _description_
 
     Returns:
-        lbd
-
-    Notes: 
-        LBD (jnp array), contribution fow wavenumber, index for wavenumber
-
+        jnp array: log-biased line shape density (LBD)
     """
     logmin = -np.inf
-    lsd = np.zeros((Ng_nu, np.max(uidx_broadpar) + 1, len(elower_grid)),
-                   dtype=np.float64)
+    cont_nu, index_nu = npgetix(nu_lines, nu_grid)
     cont_elower, index_elower = npgetix_exp(elower, elower_grid, Ttyp)
-    lsd = npadd3D(lsd, Sij0, cont_nu, index_nu, cont_broadpar, index_broadpar,
-                  cont_elower, index_elower)
-    lsd[lsd > 0.0] = np.log(lsd[lsd > 0.0])
-    lsd[lsd == 0.0] = logmin
-    return jnp.array(lsd)
+    multi_index_lines, multi_cont_lines, uidx_bp, neighbor_uidx, multi_index_uniqgrid, Ng_broadpar = broadpar_getix(
+        ngamma_ref, ngamma_ref_grid, n_Texp, n_Texp_grid)
+
+    Ng_nu = len(nu_grid)
+    Ng_elower = len(elower_grid)
+    lbd = np.zeros((Ng_nu, Ng_broadpar, Ng_elower), dtype=np.float64)
+    lbd = npadd3D_multi_index(lbd, line_strength_ref, cont_nu, index_nu,
+                              cont_elower, index_elower, uidx_bp,
+                              multi_cont_lines, neighbor_uidx)
+    lbd[lbd > 0.0] = np.log(lbd[lbd > 0.0])
+    lbd[lbd == 0.0] = logmin
+    return jnp.array(lbd)
 
 
 def logf_bias(elower_in, T):
@@ -243,7 +252,7 @@ if __name__ == "__main__":
     import jax.numpy as jnp
     from exojax.spec import moldb
     import matplotlib.pyplot as plt
-    from exojax.spec.lsd import npadd1D, npgetix
+    from exojax.spec.lsd import npgetix
     from exojax.spec.hitran import SijT
     from exojax.spec.initspec import init_premodit
     from exojax.spec.hitran import normalized_doppler_sigma

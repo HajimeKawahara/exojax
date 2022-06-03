@@ -7,11 +7,12 @@ import jax.numpy as jnp
 import numpy as np
 import warnings
 
-from optax import warmup_cosine_decay_schedule
 from exojax.spec.lsd import npgetix
 from exojax.spec.make_numatrix import make_numatrix0
 from exojax.utils.instfunc import resolution_eslog
 from exojax.spec.premodit import make_elower_grid
+from exojax.spec.premodit import make_broadpar_grid
+from exojax.spec.premodit import generate_lbd
 
 
 def init_lpf(nu_lines, nu_grid):
@@ -91,6 +92,7 @@ def init_premodit(nu_lines,
                   elower,
                   gamma_ref,
                   n_Texp,
+                  line_strength_ref,
                   Ttyp,
                   interval_contrast=0.1,
                   dit_grid_resolution=0.2,
@@ -104,6 +106,7 @@ def init_premodit(nu_lines,
         elower: elower of lines
         gamma_ref: half-width at reference (alpha_ref for ExoMol, gamma_air for HITRAN/HITEMP etc)
         n_Texp: temperature exponent (n_Texp for ExoMol, n_air for HITRAN/HITEMP)
+        line_strength_ref: line strength at reference
         Ttyp: typical temperature in Kelvin
         interval_contrast: putting c = grid_interval_line_strength, then, the contrast of line strength between the upper and lower of the grid becomes c-order of magnitude.
         dit_grid_resolution: DIT grid resolution 
@@ -127,18 +130,19 @@ def init_premodit(nu_lines,
     warn_outside_wavenumber_grid(nu_lines, nu_grid)
 
     R = resolution_eslog(nu_grid)
-    cont_nu, index_nu = npgetix(nu_lines, nu_grid)
     ngamma_ref = gamma_ref / nu_lines * R
-    #broadpar_grid = make_broadpar_grid(ngamma_ref, n_Texp, Ttyp, dit_grid_resolution=dit_grid_resolution, adopt=True)
     elower_grid = make_elower_grid(Ttyp,
                                    elower,
                                    interval_contrast=interval_contrast)
-    ngamma_ref = gamma_ref / nu_lines * R
-    
-    #np.add.at(a, (ix+1, iy, iz), w*cx*(1-cy)*(1-cz))
-    
+    ngamma_ref_grid, n_Texp_grid = make_broadpar_grid(ngamma_ref,
+                                                      n_Texp,
+                                                      Ttyp,
+                                                      dit_grid_resolution=dit_grid_resolution)
+    lbd = generate_lbd(line_strength_ref, nu_lines, nu_grid, ngamma_ref, ngamma_ref_grid,
+             n_Texp, n_Texp_grid, elower, elower_grid, Ttyp)
     pmarray = np.ones(len(nu_grid) + 1)
     pmarray[1::2] = pmarray[1::2] * -1
+    return lbd, R, pmarray
 
 
 def init_modit_vald(nu_linesM, nus, N_usp):
@@ -153,6 +157,7 @@ def init_modit_vald(nu_linesM, nus, N_usp):
         contS: (contribution) jnp.array [N_species x N_line]
         indexS: (index) jnp.array [N_species x N_line]
         R: spectral resolution
+    
         pmarray: (+1,-1) array whose length of len(nu_grid)+1
     """
     contS = np.zeros_like(nu_linesM)

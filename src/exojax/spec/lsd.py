@@ -136,33 +136,17 @@ def add3D(a, w, cx, ix, cy, iy, cz, iz):
     a = a.at[joi[ix+1, iy+1, iz+1]].add(w*cx*cy*cz)
     return a
 
-def npadd1D(a, w, cx, ix):
-    """numpy version: Add into an array when contirbutions and indices are given (1D).
+
+def npadd3D_direct1D(a, w, cx, ix, direct_cy, direct_iy, cz, iz):
+    """numpy version: Add into an array when contirbutions and indices are given (2D+direct).
 
     Args:
         a: lineshape density (LSD) array (np.array)
         w: weight (N)
         cx: given contribution for x 
         ix: given index for x 
-
-    Returns:
-        a
-
-    """
-    np.add.at(a, ix, w*(1-cx))
-    np.add.at(a, ix+1, w*cx)
-    return a
-
-def npadd3D(a, w, cx, ix, cy, iy, cz, iz):
-    """numpy version: Add into an array when contirbutions and indices are given (3D=2D+uniqidx).
-
-    Args:
-        a: lineshape density (LSD) array (np.array)
-        w: weight (N)
-        cx: given contribution for x 
-        ix: given index for x 
-        cy: given contribution for y 
-        iy: given index for y
+        direct_cy: direct contribution for y 
+        direct_iy: direct index for y
         cz: given contribution for z
         iz: given index for z
 
@@ -170,16 +154,48 @@ def npadd3D(a, w, cx, ix, cy, iy, cz, iz):
         lineshape density a(nx,ny,nz)
 
     """
-    np.add.at(a, (ix, iy, iz), w*(1-cx)*(1-cy)*(1-cz))
-    np.add.at(a, (ix, iy+1, iz), w*(1-cx)*cy*(1-cz))
-    np.add.at(a, (ix+1, iy, iz), w*cx*(1-cy)*(1-cz))
-    np.add.at(a, (ix+1, iy+1, iz), w*cx*cy*(1-cz))
-    np.add.at(a, (ix, iy, iz+1), w*(1-cx)*(1-cy)*cz)
-    np.add.at(a, (ix, iy+1, iz+1), w*(1-cx)*cy*cz)
-    np.add.at(a, (ix+1, iy, iz+1), w*cx*(1-cy)*cz)
-    np.add.at(a, (ix+1, iy+1, iz+1), w*cx*cy*cz)
+    np.add.at(a, (ix, direct_iy, iz), w*(1-cx)*direct_cy*(1-cz))
+    np.add.at(a, (ix+1, direct_iy, iz), w*cx*direct_cy*(1-cz))
+    np.add.at(a, (ix, direct_iy, iz+1), w*(1-cx)*direct_cy*cz)
+    np.add.at(a, (ix+1, direct_iy, iz+1), w*cx*direct_cy*cz)
     return a
 
+def npadd3D_multi_index(a, w, cx, ix, cz, iz, uidx, multi_cont_lines, neighbor_uidx):
+    """ numpy version: Add into an array using multi_index system in y
+    Args:
+        a: lineshape density (LSD) array (np.array)
+        w: weight (N)
+        cx: given contribution for x 
+        ix: given index for x 
+        cz: given contribution for z
+        iz: given index for z
+
+    Returns:
+        lineshape density a(nx,ny,nz)
+    
+    """
+    conjugate_multi_cont_lines = 1.0 - multi_cont_lines
+    
+    # index position
+    direct_iy = uidx
+    direct_cy = np.prod(conjugate_multi_cont_lines,axis=1) 
+    a = npadd3D_direct1D(a, w, cx, ix, direct_cy, direct_iy, cz, iz)
+    
+    # index position + (1, 0)
+    direct_iy = neighbor_uidx[uidx, 0]
+    direct_cy = multi_cont_lines[:,0]*conjugate_multi_cont_lines[:,1]
+    a = npadd3D_direct1D(a, w, cx, ix, direct_cy, direct_iy, cz, iz)
+    
+    # index position + (0, 1)
+    direct_iy = neighbor_uidx[uidx, 1]
+    direct_cy = conjugate_multi_cont_lines[:,0]*multi_cont_lines[:,1]
+    a = npadd3D_direct1D(a, w, cx, ix, direct_cy, direct_iy, cz, iz)
+    
+    # index position + (1, 1)
+    direct_iy = neighbor_uidx[uidx, 2]
+    direct_cy = np.prod(multi_cont_lines,axis=1) 
+    a = npadd3D_direct1D(a, w, cx, ix, direct_cy, direct_iy, cz, iz)  
+    return a
 
 @jit
 def inc3D_givenx(a, w, cx, ix, y, z, xv, yv, zv):
