@@ -1,10 +1,12 @@
 import pytest
 from exojax.test.data import TESTDATA_moldb_CO_EXOMOL
 import numpy as np
-from exojax.spec.premodit import compute_dElower, make_elower_grid, make_broadpar_grid, broadpar_getix, parallel_merge_grids
+from exojax.spec.premodit import compute_dElower, make_elower_grid, make_broadpar_grid
+from exojax.spec.premodit import broadpar_getix, parallel_merge_grids, generate_lbd
 from exojax.test.emulate_broadpar import mock_broadpar_exomol
 from exojax.test.emulate_mdb import mock_mdbExoMol
-
+from exojax.spec.setrt import gen_wavenumber_grid
+from exojax.utils.instfunc import resolution_eslog
 
 def test_compute_dElower():
     assert compute_dElower(
@@ -33,8 +35,9 @@ def test_make_broadpar_grid():
                                                       n_Texp,
                                                       Ttyp,
                                                       dit_grid_resolution=0.2)
-    assert np.all(ngamma_ref_grid == pytest.approx([0.1,0.11447142, 0.13103707, 0.15      ]))
-    assert np.all(n_Texp_grid == pytest.approx([0.4,  0.45, 0.5 ]))
+    assert np.all(
+        ngamma_ref_grid == pytest.approx([0.1, 0.11447142, 0.13103707, 0.15]))
+    assert np.all(n_Texp_grid == pytest.approx([0.4, 0.45, 0.5]))
 
 
 def test_broadpar_getix():
@@ -62,40 +65,33 @@ def test_broadpar_getix():
     assert Ng_broadpar == len(multi_index_uniqgrid)
 
 
-def test_make_lbd():
-
-    assert True
-
-
-def test_unbiased_lsd():
-    from exojax.spec.lsd import npgetix
-    from exojax.spec.hitran import line_strength
-    from exojax.spec.premodit import make_elower_grid, unbiased_lsd
-
+def test_generate_lsd():
     interval_contrast = 0.1
+    dit_grid_resolution = 0.1
     Ttyp = 2000.0
-    ngamma_ref, n_Texp = mock_broadpar_exomol()
-
-    mdb = mock_mdbExoMol()
-    elower_grid = make_elower_grid(Ttyp,
-                                   mdb._elower,
-                                   interval_contrast=interval_contrast)
+    mdb = mock_mdbExoMol()    
+    Nx = 5000
+    nu_grid, wav, res = gen_wavenumber_grid(22800.0, 23100.0, Nx, unit='AA', xsmode = "premodit")
+    R = resolution_eslog(nu_grid)
     ngamma_ref = mdb.alpha_ref / mdb.nu_lines * R
-    broadpar_grid = make_broadpar_grid(ngamma_ref,
-                                       n_Texp,
-                                       Ttyp,
-                                       dit_grid_resolution=0.2,
-                                       adopt=True)
-
-
-#    cont_nu, index_nu = npgetix(mdb.nu_lines, nus)
-#    #lbd=make_lbd3D_uniqidx(mdb.Sij0, cont_nu, index_nu, len(nus), mdb._elower, elower_grid, uidx_broadpar, Ttyp)
-#    Slsd=unbiased_lsd(lbd,Ttest,nus,elower_grid,mdb.qr_interp)
-
+    ngamma_ref_grid, n_Texp_grid = make_broadpar_grid(ngamma_ref,
+                                                      mdb.n_Texp,
+                                                      Ttyp,
+                                                      dit_grid_resolution=dit_grid_resolution)
+    multi_index_lines, multi_cont_lines, uidx_lines, neighbor_uidx, multi_index_uniqgrid, Ng_broadpar = broadpar_getix(
+        ngamma_ref, ngamma_ref_grid, mdb.n_Texp, n_Texp_grid)
+    elower_grid = make_elower_grid(Ttyp,
+                                   mdb.elower,
+                                   interval_contrast=interval_contrast)
+    lbd = generate_lbd(mdb.Sij0, mdb.nu_lines, nu_grid, ngamma_ref, ngamma_ref_grid,
+             mdb.n_Texp, n_Texp_grid, mdb.elower, elower_grid, Ttyp)
+    assert np.sum(np.exp(lbd)) == pytest.approx(7.6101915e-20)
+    
 if __name__ == "__main__":
     #test_unbiased_lsd()
     #test_make_lbd()
     #test_merge_grids()
     # test_make_broadpar_grid()
-    test_broadpar_getix()
+    #test_broadpar_getix()
+    test_generate_lsd()
     #test_parallel_merge_grids()
