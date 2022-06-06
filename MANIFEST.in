@@ -9,6 +9,7 @@ include src/exojax/data/testdata/spectrum.txt
 include src/exojax/data/testdata/moldb_co_exomol.pickle
 include src/exojax/data/testdata/lpf_test_ref.txt
 include src/exojax/data/testdata/modit_test_ref.txt
+include src/exojax/data/testdata/premodit_test_ref.txt
 
 graft tests
 graft examples

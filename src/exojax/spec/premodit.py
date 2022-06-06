@@ -14,7 +14,7 @@ from exojax.utils.constants import Tref
 from exojax.utils.indexing import uniqidx_neibouring
 
 
-#@jit
+@jit
 def xsvector(T, P, nsigmaD, lbd, R, pmarray, nu_grid, elower_grid, multi_index_uniqgrid,
              ngamma_ref_grid, n_Texp_grid, qt):
     """_summary_
@@ -238,7 +238,7 @@ def g_bias(nu_in, T):
         1.0 - jnp.exp(-hcperk * nu_in / Tref))
 
 
-def unbiased_lsd(lbd, T, nu_grid, elower_grid, qr):
+def unbiased_lsd(lbd, T, nu_grid, elower_grid, qt):
     """ unbias the biased LSD
 
     Args:
@@ -246,7 +246,7 @@ def unbiased_lsd(lbd, T, nu_grid, elower_grid, qr):
         T: temperature for unbiasing in Kelvin
         nu_grid: wavenumber grid in cm-1
         elower_grid: Elower grid in cm-1
-        qr: partition function ratio Q(T)/Q(Tref)
+        qt: partition function ratio Q(T)/Q(Tref)
 
     Returns:
         LSD, shape = (number_of_wavenumber_bin, number_of_broadening_parameters)
@@ -254,7 +254,7 @@ def unbiased_lsd(lbd, T, nu_grid, elower_grid, qr):
     """
     Nnu = int(len(nu_grid) / 2)
     Slsd = jnp.sum(jnp.exp(logf_bias(elower_grid, T) + lbd), axis=-1)
-    return (Slsd.T * g_bias(nu_grid, T) / qr(T)).T
+    return (Slsd.T * g_bias(nu_grid, T) / qt).T
 
 
 def unbiased_ngamma_grid(T, P, ngamma_ref_grid, n_Texp_grid,
@@ -304,42 +304,3 @@ def unbiased_ngamma_grid(T, P, ngamma_ref_grid, n_Texp_grid,
 #     eunbias_Slsd = jnp.fft.irfft(eunbias_FTSbuf)
 #     return g_bias(nu_grid, T) * eunbias_Slsd / qr(T)
 
-if __name__ == "__main__":
-    import jax.numpy as jnp
-    from exojax.spec import moldb
-    import matplotlib.pyplot as plt
-    from exojax.spec.lsd import npgetix
-    from exojax.spec.hitran import SijT
-    from exojax.spec.initspec import init_premodit
-    from exojax.spec.hitran import normalized_doppler_sigma
-    from exojax.spec import molinfo
-
-    nus = np.logspace(np.log10(6020.0),
-                      np.log10(6080.0),
-                      40000,
-                      dtype=np.float64)
-    mdb = moldb.MdbExomol('.database/CH4/12C-1H4/YT10to10/',
-                          nus,
-                          gpu_transfer=False)
-
-    Ttyp = 1500.0
-    broadpar = np.array([mdb._n_Texp, mdb._alpha_ref]).T
-    cont_nu, index_nu, elower_grid, uidx_broadpar, uniq_broadpar, R, pmarray = init_premodit(
-        mdb.nu_lines, nus, mdb._elower, Ttyp=Ttyp, broadpar=broadpar)
-
-    lbd = make_lbd3D_uniqidx(mdb.Sij0, cont_nu, index_nu, len(nus),
-                             mdb._elower, elower_grid, uidx_broadpar, Ttyp)
-
-    Tfix = 1000.0
-    Pfix = 1.e-3
-    molmassCH4 = molinfo.molmass("CH4")
-
-    nsigmaD = normalized_doppler_sigma(Tfix, molmassCH4, R)
-    qt = mdb.qr_interp(Tfix)
-    print(uniq_broadpar[:, 0], uniq_broadpar[:, 1], "ui")
-    gammaL = gamma_exomol(Pfix, Tfix, uniq_broadpar[:, 0], uniq_broadpar[:, 1])
-    print(gammaL, "gma")
-#    log_ngammaL_grid = jnp.log(gammaL/(/R))
-#    elower_grid=make_elower_grid(Ttyp, mdb._elower, interval_contrast=interval_contrast)
-#    Slsd=unbiased_lsd(lbd,Tfix,nus,elower_grid,qt)
-#    xs = calc_xsection_from_lsd(Slsd, R, pmarray, nsigmaD, nus, log_ngammaL_grid)
