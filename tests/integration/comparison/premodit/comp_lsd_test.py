@@ -29,7 +29,7 @@ def npadd1D(a, w, cx, ix):
     np.add.at(a, (ix+1), w*cx)
     return a
 
-def compare_with_direct3D(mdb,nu_grid,Ttest=1000.0,interval_contrast=0.1,Ttyp=2000.0):
+def compare_line_shape_density(mdb,nu_grid,Ttest=1000.0,interval_contrast=0.1,Ttyp=2000.0):
     """ compare the premodit LSD with the direct computation of LSD 3D version
     
     """
@@ -56,20 +56,23 @@ def compare_with_direct3D(mdb,nu_grid,Ttest=1000.0,interval_contrast=0.1,Ttyp=20
     S=SijT(Ttest, logsij0, mdb.nu_lines, mdb._elower, qT)
     Slsd_direct = np.zeros_like(nu_grid,dtype=np.float64)
     Slsd_direct = npadd1D(Slsd_direct, S, cont_inilsd_nu, index_inilsd_nu)
-    print("Number of the E_lower grid=",len(elower_grid))
+    return Slsd, Slsd_direct
+
+def test_comp_lsd():
+    from exojax.spec import moldb
+    nu_grid=np.logspace(np.log10(6030.0), np.log10(6060.0), 20000, dtype=np.float64)
+    mdbCH4 = moldb.MdbExomol('.database/CH4/12C-1H4/YT10to10/', nu_grid, gpu_transfer=False)
+    Slsd,Slsd_direct=compare_line_shape_density(mdbCH4,nu_grid,Ttest=1000.0,interval_contrast=0.1,Ttyp=2000.0)    
     maxdev=np.max(np.abs(Slsd/Slsd_direct-1.0))
     print("max deviation=",maxdev)
     assert np.abs(maxdev) < 0.05
     return Slsd, Slsd_direct
 
-def test_3d():
-    from exojax.spec import moldb
-    nu_grid=np.logspace(np.log10(6030.0), np.log10(6060.0), 20000, dtype=np.float64)
-    mdbCH4 = moldb.MdbExomol('.database/CH4/12C-1H4/YT10to10/', nu_grid, gpu_transfer=False)
-    Slsd,Slsd_direct=compare_with_direct3D(mdbCH4,nu_grid,Ttest=1000.0,interval_contrast=0.1,Ttyp=2000.0)    
-    return Slsd, Slsd_direct
-
 
 if __name__ == "__main__":
-    Slsd, Slsd_direct=test_3d()
-
+    Slsd, Slsd_direct=test_comp_lsd()
+    import matplotlib.pyplot as plt
+    plt.plot(Slsd,alpha=0.3)
+    plt.plot(Slsd_direct,alpha=0.3)
+    plt.yscale("log")
+    plt.show()  

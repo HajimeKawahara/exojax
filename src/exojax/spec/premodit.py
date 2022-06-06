@@ -14,6 +14,36 @@ from exojax.utils.constants import Tref
 from exojax.utils.indexing import uniqidx_neibouring
 
 
+@jit
+def xsvector(cnu, indexnu, R, pmarray, nsigmaD, ngammaL, S, nu_grid,
+             ngammaL_grid):
+    """Cross section vector (PreMODIT)
+
+    Args:
+       cnu: contribution by npgetix for wavenumber
+       indexnu: index by npgetix for wavenumber
+       R: spectral resolution
+       pmarray: (+1,-1) array whose length of len(nu_grid)+1
+       nsigmaD: normaized Gaussian STD 
+       gammaL: Lorentzian half width (Nlines)
+       S: line strength (Nlines)
+       nu_grid: linear wavenumber grid
+       gammaL_grid: gammaL grid
+
+    Returns:
+       Cross section in the log nu grid
+    """
+
+    log_ngammaL_grid = jnp.log(ngammaL_grid)
+    lsd_array = jnp.zeros((len(nu_grid), len(ngammaL_grid)))
+    Slsd = inc2D_givenx(lsd_array, S, cnu, indexnu, jnp.log(ngammaL),
+                        log_ngammaL_grid)
+    xs = calc_xsection_from_lsd(Slsd, R, pmarray, nsigmaD, nu_grid,
+                                log_ngammaL_grid)
+    return xs
+
+
+
 def parallel_merge_grids(grid1, grid2):
     """merge two different grids into one grid in parallel
     
@@ -131,8 +161,10 @@ def make_elower_grid(Tmax, elower, interval_contrast):
     Ng_elower = int((max_elower - min_elower) / dE) + 2
     return min_elower + np.arange(Ng_elower) * dE
 
-def generate_lbd(line_strength_ref, nu_lines, nu_grid, ngamma_ref, ngamma_ref_grid,
-             n_Texp, n_Texp_grid, elower, elower_grid, Ttyp):
+
+def generate_lbd(line_strength_ref, nu_lines, nu_grid, ngamma_ref,
+                 ngamma_ref_grid, n_Texp, n_Texp_grid, elower, elower_grid,
+                 Ttyp):
     """generate log-biased line shape density (LBD)
 
     Args:
@@ -211,8 +243,7 @@ def unbiased_lsd(lbd, T, nu_grid, elower_grid, qr):
 
     """
     Nnu = int(len(nu_grid) / 2)
-    unbiased_lsd = jnp.sum(jnp.exp(logf_bias(elower_grid, T) + lbd),
-                          axis=-1)
+    unbiased_lsd = jnp.sum(jnp.exp(logf_bias(elower_grid, T) + lbd), axis=-1)
     return (unbiased_lsd.T * g_bias(nu_grid, T) / qr(T)).T
 
 
@@ -245,8 +276,6 @@ def unbiased_lsd_lowpass(FT_Slsd_biased, T, nu_grid, elower_grid, qr):
     eunbias_Slsd = jnp.fft.irfft(eunbias_FTSbuf)
     return g_bias(nu_grid, T) * eunbias_Slsd / qr(T)
 
-
-######################################
 
 if __name__ == "__main__":
     import jax.numpy as jnp
