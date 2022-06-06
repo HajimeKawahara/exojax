@@ -109,6 +109,7 @@ def add2D(a, w, cx, ix, cy, iy):
     a = a.at[joi[ix+1, iy+1]].add(w*cx*cy)
     return a
 
+
 def add3D(a, w, cx, ix, cy, iy, cz, iz):
     """Add into an array when contirbutions and indices are given (3D).
 

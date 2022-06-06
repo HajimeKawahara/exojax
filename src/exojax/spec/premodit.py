@@ -196,7 +196,7 @@ def g_bias(nu_in, T):
         1.0 - jnp.exp(-hcperk * nu_in / Tref))
 
 
-def unbiased_lsd(lbd_biased, T, nu_grid, elower_grid, qr):
+def unbiased_lsd(lbd, T, nu_grid, elower_grid, qr):
     """ unbias the biased LSD
 
     Args:
@@ -211,9 +211,9 @@ def unbiased_lsd(lbd_biased, T, nu_grid, elower_grid, qr):
 
     """
     Nnu = int(len(nu_grid) / 2)
-    eunbias_lbd = jnp.sum(jnp.exp(logf_bias(elower_grid, T) + lbd_biased),
+    unbiased_lsd = jnp.sum(jnp.exp(logf_bias(elower_grid, T) + lbd),
                           axis=-1)
-    return (eunbias_lbd.T * g_bias(nu_grid, T) / qr(T)).T
+    return (unbiased_lsd.T * g_bias(nu_grid, T) / qr(T)).T
 
 
 def lowpass(fftval, compress_rate):
