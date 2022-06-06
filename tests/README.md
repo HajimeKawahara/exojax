@@ -12,7 +12,7 @@ Integration test. Longer computation time and/or use real molecular database are
 Internal comparison of opacity/radiative transfer codes 
 We recommend to test the code in this category before the Pull Request.
 
-# endtoend
+## endtoend
 Endtoend test. It takes much longer time than integration tests/unit tests.
 
 To test opacity calculators, use auto/*.py

@@ -5,7 +5,6 @@ import numpy as np
 from exojax.spec.modit import xsvector
 from exojax.spec.hitran import line_strength
 from exojax.test.data import TESTDATA_CO_EXOMOL_MODIT_SPECTRUM_REF
-from exojax.spec.lpf import exomol
 from exojax.spec.molinfo import molmass
 from exojax.spec import normalized_doppler_sigma,  gamma_natural
 from exojax.spec.hitran import line_strength

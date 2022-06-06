@@ -14,34 +14,34 @@ from exojax.utils.constants import Tref
 from exojax.utils.indexing import uniqidx_neibouring
 
 
-@jit
-def xsvector(cnu, indexnu, R, pmarray, nsigmaD, ngammaL, S, nu_grid,
-             ngammaL_grid):
-    """Cross section vector (PreMODIT)
+#@jit
+def xsvector(T, P, nsigmaD, lbd, R, pmarray, nu_grid, elower_grid, multi_index_uniqgrid,
+             ngamma_ref_grid, n_Texp_grid, qt):
+    """_summary_
 
     Args:
-       cnu: contribution by npgetix for wavenumber
-       indexnu: index by npgetix for wavenumber
-       R: spectral resolution
-       pmarray: (+1,-1) array whose length of len(nu_grid)+1
-       nsigmaD: normaized Gaussian STD 
-       gammaL: Lorentzian half width (Nlines)
-       S: line strength (Nlines)
-       nu_grid: linear wavenumber grid
-       gammaL_grid: gammaL grid
+        T (_type_): _description_
+        P (_type_): _description_
+        nsigmaD: normalized doplar STD
+        lbd (_type_): _description_
+        R (_type_): _description_
+        nu_grid (_type_): _description_
+        elower_grid (_type_): _description_
+        multi_index_uniqgrid (_type_): _description_
+        ngamma_ref_grid (_type_): _description_
+        n_Texp_grid (_type_): _description_
+        qt (_type_): _description_
 
     Returns:
-       Cross section in the log nu grid
+        _type_: _description_
     """
-
-    log_ngammaL_grid = jnp.log(ngammaL_grid)
-    lsd_array = jnp.zeros((len(nu_grid), len(ngammaL_grid)))
-    Slsd = inc2D_givenx(lsd_array, S, cnu, indexnu, jnp.log(ngammaL),
-                        log_ngammaL_grid)
+    Slsd = unbiased_lsd(lbd, T, nu_grid, elower_grid, qt)
+    ngamma_grid = unbiased_ngamma_grid(T, P, ngamma_ref_grid, n_Texp_grid,
+                                       multi_index_uniqgrid)
+    log_ngammaL_grid = jnp.log(ngamma_grid)
     xs = calc_xsection_from_lsd(Slsd, R, pmarray, nsigmaD, nu_grid,
                                 log_ngammaL_grid)
     return xs
-
 
 
 def parallel_merge_grids(grid1, grid2):
@@ -181,6 +181,16 @@ def generate_lbd(line_strength_ref, nu_lines, nu_grid, ngamma_ref,
 
     Returns:
         jnp array: log-biased line shape density (LBD)
+        jnp.array: multi_index_uniqgrid (number of unique broadpar, 2)
+        
+    Examples:
+
+        >>> lbd, multi_index_uniqgrid = generate_lbd(mdb.Sij0, mdb.nu_lines, nu_grid, ngamma_ref,
+        >>>               ngamma_ref_grid, mdb.n_Texp, n_Texp_grid, mdb.elower,
+        >>>               elower_grid, Ttyp)
+        >>> ngamma_ref = ngamma_ref_grid[multi_index_uniqgrid[:,0]] # ngamma ref for the unique broad par
+        >>> n_Texp = n_Texp_grid[multi_index_uniqgrid[:,0]] # temperature exponent for the unique broad par
+        
     """
     logmin = -np.inf
     cont_nu, index_nu = npgetix(nu_lines, nu_grid)
@@ -196,7 +206,7 @@ def generate_lbd(line_strength_ref, nu_lines, nu_grid, ngamma_ref,
                               multi_cont_lines, neighbor_uidx)
     lbd[lbd > 0.0] = np.log(lbd[lbd > 0.0])
     lbd[lbd == 0.0] = logmin
-    return jnp.array(lbd)
+    return jnp.array(lbd), multi_index_uniqgrid
 
 
 def logf_bias(elower_in, T):
@@ -239,43 +249,60 @@ def unbiased_lsd(lbd, T, nu_grid, elower_grid, qr):
         qr: partition function ratio Q(T)/Q(Tref)
 
     Returns:
-        Unbiased 2D LSD, shape = (number_of_wavenumber_bin, number_of_broadening_parameters)
-
+        LSD, shape = (number_of_wavenumber_bin, number_of_broadening_parameters)
+        
     """
     Nnu = int(len(nu_grid) / 2)
-    unbiased_lsd = jnp.sum(jnp.exp(logf_bias(elower_grid, T) + lbd), axis=-1)
-    return (unbiased_lsd.T * g_bias(nu_grid, T) / qr(T)).T
+    Slsd = jnp.sum(jnp.exp(logf_bias(elower_grid, T) + lbd), axis=-1)
+    return (Slsd.T * g_bias(nu_grid, T) / qr(T)).T
 
 
-def lowpass(fftval, compress_rate):
-    """lowpass filter for the biased LSD
-
-    """
-    Nnu, Nbatch = np.shape(fftval)
-    Ncut = int(float(Nnu) / float(compress_rate))
-    lowpassed_fftval = fftval[:Ncut, :]
-    high_freq_norm_squared = np.sum(np.abs(fftval[Ncut:, :])**2, axis=0)
-    lowpassed_fftval[0, :] = np.sqrt(
-        np.abs(lowpassed_fftval[0, :])**2 + high_freq_norm_squared)
-    return lowpassed_fftval
-
-
-def unbiased_lsd_lowpass(FT_Slsd_biased, T, nu_grid, elower_grid, qr):
-    """ unbias the biased LSD lowpass filtered
+def unbiased_ngamma_grid(T, P, ngamma_ref_grid, n_Texp_grid,
+                         multi_index_uniqgrid):
+    """compute unbiased ngamma grid
 
     Args:
+        T: temperature in Kelvin
+        P: pressure in bar
+        ngamma_ref_grid : pressure broadening half width at reference 
+        n_Texp_grid : temperature exponent at reference
+        multi_index_uniqgrid: multi index of unique broadening parameter
 
     Returns:
-        LSD (unbiased)
-
+        pressure broadening half width at temperature T and pressure P 
     """
-    Nnu = int(len(nu_grid) / 2)
-    eunbias_FTSlsd = jnp.sum(f_bias(elower_grid, T) * FT_Slsd_biased, axis=1)
-    Nft = len(eunbias_FTSlsd)
-    eunbias_FTSbuf = jnp.hstack([eunbias_FTSlsd, jnp.zeros(Nnu - Nft + 1)])
-    eunbias_Slsd = jnp.fft.irfft(eunbias_FTSbuf)
-    return g_bias(nu_grid, T) * eunbias_Slsd / qr(T)
+    ngamma_ref_g = ngamma_ref_grid[multi_index_uniqgrid[:, 0]]
+    n_Texp_g = n_Texp_grid[multi_index_uniqgrid[:, 1]]
+    return ngamma_ref_g * (T / Tref)**(-n_Texp_g) * P
 
+
+# def lowpass(fftval, compress_rate):
+#     """lowpass filter for the biased LSD
+
+#     """
+#     Nnu, Nbatch = np.shape(fftval)
+#     Ncut = int(float(Nnu) / float(compress_rate))
+#     lowpassed_fftval = fftval[:Ncut, :]
+#     high_freq_norm_squared = np.sum(np.abs(fftval[Ncut:, :])**2, axis=0)
+#     lowpassed_fftval[0, :] = np.sqrt(
+#         np.abs(lowpassed_fftval[0, :])**2 + high_freq_norm_squared)
+#     return lowpassed_fftval
+
+# def unbiased_lsd_lowpass(FT_Slsd_biased, T, nu_grid, elower_grid, qr):
+#     """ unbias the biased LSD lowpass filtered
+
+#     Args:
+
+#     Returns:
+#         LSD (unbiased)
+
+#     """
+#     Nnu = int(len(nu_grid) / 2)
+#     eunbias_FTSlsd = jnp.sum(f_bias(elower_grid, T) * FT_Slsd_biased, axis=1)
+#     Nft = len(eunbias_FTSlsd)
+#     eunbias_FTSbuf = jnp.hstack([eunbias_FTSlsd, jnp.zeros(Nnu - Nft + 1)])
+#     eunbias_Slsd = jnp.fft.irfft(eunbias_FTSbuf)
+#     return g_bias(nu_grid, T) * eunbias_Slsd / qr(T)
 
 if __name__ == "__main__":
     import jax.numpy as jnp

@@ -7,6 +7,7 @@ from exojax.spec.premodit import broadpar_getix
 from exojax.spec.premodit import parallel_merge_grids
 from exojax.spec.premodit import generate_lbd
 from exojax.spec.premodit import unbiased_lsd
+from exojax.spec.premodit import unbiased_ngamma_grid
 from exojax.test.emulate_broadpar import mock_broadpar_exomol
 from exojax.test.emulate_mdb import mock_mdbExoMol
 from exojax.spec.setrt import gen_wavenumber_grid
@@ -69,8 +70,29 @@ def test_broadpar_getix():
     assert np.all(multi_index_uniqgrid == ref)
     assert Ng_broadpar == len(multi_index_uniqgrid)
 
-def test_generate_lsd():
-    """integrate to make (unbiased) LSD
+
+def test_unbias_ngamma_grid():
+    ngamma_ref, n_Texp = mock_broadpar_exomol()
+    Ttyp = 3000.0
+    Ttest = 2000.0
+    Ptest = 10.0
+    ngamma_ref_grid, n_Texp_grid = make_broadpar_grid(ngamma_ref,
+                                                      n_Texp,
+                                                      Ttyp,
+                                                      dit_grid_resolution=0.2)
+    multi_index_lines, multi_cont_lines, uidx_lines, neighbor_uidx, multi_index_uniqgrid, Ng_broadpar = broadpar_getix(
+        ngamma_ref, ngamma_ref_grid, n_Texp, n_Texp_grid)
+    ngamma_grid = unbiased_ngamma_grid(Ttest, Ptest, ngamma_ref_grid,
+                                     n_Texp_grid, multi_index_uniqgrid)
+    ref = [
+        0.46569834, 0.42327028, 0.53309152, 0.55464097, 0.48452351, 0.38470768,
+        0.44038036, 0.61023745, 0.63490541, 0.50410967, 0.57706152
+    ]
+    assert np.all(ngamma_grid == pytest.approx(ref))
+
+
+def test_xsvector():
+    """integrate to make (unbiased) cross section
     """
     interval_contrast = 0.1
     dit_grid_resolution = 0.1
@@ -89,18 +111,28 @@ def test_generate_lsd():
     elower_grid = make_elower_grid(Ttyp,
                                    mdb.elower,
                                    interval_contrast=interval_contrast)
-    lbd = generate_lbd(mdb.Sij0, mdb.nu_lines, nu_grid, ngamma_ref,
+    lbd, multi_index_uniqgrid = generate_lbd(mdb.Sij0, mdb.nu_lines, nu_grid, ngamma_ref,
                        ngamma_ref_grid, mdb.n_Texp, n_Texp_grid, mdb.elower,
                        elower_grid, Ttyp)
     assert np.sum(np.exp(lbd)) == pytest.approx(7.6101915e-20)
 
-    Ttest=1500.0
-    unlsd = unbiased_lsd(lbd, Ttest, nu_grid, elower_grid, mdb.qr_interp)
-    assert np.sum(unlsd) == pytest.approx(7.472002e-20)
+    
+    Ttest = 1500.0
+    Slsd = unbiased_lsd(lbd, Ttest, nu_grid, elower_grid, mdb.qr_interp)
+    assert np.sum(Slsd) == pytest.approx(7.472002e-20)
+    
+    Ptest = 10.0 
+    ngamma_grid = unbiased_ngamma_grid(Ttest, Ptest, ngamma_ref_grid,
+                                     n_Texp_grid, multi_index_uniqgrid)
+    
+    #xs = calc_xsection_from_lsd(Slsd, R, pmarray, nsigmaD, nu_grid, ngamma_grid)
 
-#if __name__ == "__main__":
-#test_unbiased_lsd()
-#test_make_lbd()
-#test_merge_grids()
-# test_make_broadpar_grid()
-#test_broadpar_getix()
+
+if __name__ == "__main__":
+    # test_unbiased_lsd()
+    # test_make_lbd()
+    # test_merge_grids()
+    # test_make_broadpar_grid()
+    # test_broadpar_getix()
+    test_unbias_ngamma_grid()
+    # test_xsvector()

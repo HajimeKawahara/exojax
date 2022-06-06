@@ -36,15 +36,15 @@ def calc_xsection_from_lsd(Slsd, R, pmarray, nsigmaD, nu_grid,
     The original code is rundit_fold_logredst in `addit package <https://github.com/HajimeKawahara/addit>`_ ). MODIT folded voigt for ESLOG for reduced wavenumebr inputs (against the truncation error) for a constant normalized beta
 
     Args:
-       Slsd: line shape density
-       R: spectral resolution
-       pmarray: (+1,-1) array whose length of len(nu_grid)+1
-       nsigmaD: normaized Gaussian STD
-       nu_grid: linear wavenumber grid
-       log_gammaL_grid: logarithm of gammaL grid
+        Slsd: line shape density
+        R: spectral resolution
+        pmarray: (+1,-1) array whose length of len(nu_grid)+1
+        nsigmaD: normaized Gaussian STD
+        nu_grid: linear wavenumber grid
+        log_gammaL_grid: logarithm of gammaL grid
 
     Returns:
-       Cross section in the log nu grid
+        Cross section in the log nu grid
     """
 
     Sbuf = jnp.vstack([Slsd, jnp.zeros_like(Slsd)])
