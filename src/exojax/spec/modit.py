@@ -164,7 +164,7 @@ def setdgm_exomol(mdb, fT, Parr, R, molmass, dit_grid_resolution, *kargs):
     warn_msg = "`modit.setdgm_exomol` is duplicated and will be removed. Use `modit.set_ditgrid_matrix_exomol` instead"
     warnings.warn(warn_msg, UserWarning)
     return set_ditgrid_matrix_exomol(mdb, fT, Parr, R, molmass,
-                                     dit_grid_resolution, kargs)
+                                     dit_grid_resolution, *kargs)
 
 
 def set_ditgrid_matrix_exomol(mdb, fT, Parr, R, molmass, dit_grid_resolution,

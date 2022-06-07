@@ -55,6 +55,7 @@ def test_rt_exomol():
     from exojax.spec.planck import piBarr
     import jax.numpy as jnp
     from exojax.spec.modit import set_ditgrid_matrix_exomol
+    from exojax.spec.modit import setdgm_exomol
 
     mdb = mock_mdbExoMol()
 
@@ -73,8 +74,10 @@ def test_rt_exomol():
     cont_nu, index_nu, R, pmarray = init_modit(mdb.nu_lines, nus)
 
     def fT(T0, alpha): return T0[:, None]*(Parr[None, :])**alpha[:, None]
-    dgm_ngammaL = set_ditgrid_matrix_exomol(
-        mdb, fT, Parr, R, molmass, 0.2, np.array([T0_in]), np.array([alpha_in]))
+    #dgm_ngammaL = set_ditgrid_matrix_exomol(
+    #    mdb, fT, Parr, R, molmass, 0.2, np.array([T0_in]), np.array([alpha_in]))
+    dgm_ngammaL = setdgm_exomol(
+            mdb, fT, Parr, R, molmass, 0.2, np.array([T0_in]), np.array([alpha_in]))
 
     g = 2478.57
     SijM, ngammaLM, nsigmaDl = exomol(mdb, Tarr, Parr, R, molmass)
