@@ -1,4 +1,4 @@
-""" unittest for initspec"""
+""" short integration tests for PreMODIT """
 import pytest
 import pkg_resources
 import pandas as pd
@@ -56,12 +56,11 @@ def test_xsection_premodit():
 
 if __name__ == "__main__":
     from exojax.test.data import TESTDATA_CO_EXOMOL_MODIT_SPECTRUM_REF
+    import matplotlib.pyplot as plt
     nus,xs = test_xsection_premodit()
     filename = pkg_resources.resource_filename(
         'exojax', 'data/testdata/'+TESTDATA_CO_EXOMOL_MODIT_SPECTRUM_REF)
     dat = pd.read_csv(filename, delimiter=",", names=("nus", "xsv"))
-    import matplotlib.pyplot as plt
-
     fig = plt.figure()
     ax = fig.add_subplot(211)
     plt.title("premodit_xsection_test.py")

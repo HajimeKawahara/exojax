@@ -6,34 +6,33 @@ import jax.numpy as jnp
 from jax import jit, vmap
 from exojax.spec.lsd import npgetix, npgetix_exp, npadd3D_multi_index
 from exojax.utils.constants import hcperk, Tref
-from exojax.spec.ditkernel import fold_voigt_kernel_logst
 from exojax.spec.modit import calc_xsection_from_lsd
-from exojax.spec.exomol import gamma_exomol
 from exojax.spec.set_ditgrid import ditgrid_log_interval, ditgrid_linear_interval
 from exojax.utils.constants import Tref
 from exojax.utils.indexing import uniqidx_neibouring
+from jax.lax import scan
 
 
 @jit
 def xsvector(T, P, nsigmaD, lbd, R, pmarray, nu_grid, elower_grid, multi_index_uniqgrid,
              ngamma_ref_grid, n_Texp_grid, qt):
-    """_summary_
+    """compute cross section vector
 
     Args:
-        T (_type_): _description_
-        P (_type_): _description_
+        T (_type_): temperature in Kelvon
+        P (_type_): pressure in bar
         nsigmaD: normalized doplar STD
-        lbd (_type_): _description_
-        R (_type_): _description_
-        nu_grid (_type_): _description_
-        elower_grid (_type_): _description_
-        multi_index_uniqgrid (_type_): _description_
-        ngamma_ref_grid (_type_): _description_
-        n_Texp_grid (_type_): _description_
-        qt (_type_): _description_
+        lbd (_type_): log biased line shape density (LBD)
+        R (_type_): spectral resolution
+        nu_grid (_type_): wavenumber grid
+        elower_grid (_type_): E lower grid
+        multi_index_uniqgrid (_type_): multi index of unique broadening parameter grid
+        ngamma_ref_grid (_type_): normalized pressure broadening half-width
+        n_Texp_grid (_type_): temperature exponent grid
+        qt (_type_): partirion function ratio
 
     Returns:
-        _type_: _description_
+        jnp.array: cross section in cgs vector
     """
     Slsd = unbiased_lsd(lbd, T, nu_grid, elower_grid, qt)
     ngamma_grid = unbiased_ngamma_grid(T, P, ngamma_ref_grid, n_Texp_grid,
@@ -43,6 +42,42 @@ def xsvector(T, P, nsigmaD, lbd, R, pmarray, nu_grid, elower_grid, multi_index_u
                                 log_ngammaL_grid)
     return xs
 
+@jit
+def xsmatrix(cnu, indexnu, R, pmarray, nsigmaDl, ngammaLM, SijM, nu_grid,
+             dgm_ngammaL):
+    """Cross section matrix for xsvector (PreMODIT)
+
+    Args:
+       cnu: contribution by npgetix for wavenumber
+       indexnu: index by npgetix for wavenumber
+       R: spectral resolution
+       pmarray: (+1,-1) array whose length of len(nu_grid)+1
+       nu_lines: line center (Nlines)
+       nsigmaDl: normalized doppler sigma in layers in R^(Nlayer x 1)
+       ngammaLM: gamma factor matrix in R^(Nlayer x Nline)
+       SijM: line strength matrix in R^(Nlayer x Nline)
+       nu_grid: linear wavenumber grid
+       dgm_ngammaL: DIT Grid Matrix for normalized gammaL R^(Nlayer, NDITgrid)
+
+    Return:
+       cross section matrix in R^(Nlayer x Nwav)
+    """
+    NDITgrid = jnp.shape(dgm_ngammaL)[1]
+    Nline = len(cnu)
+    Mat = jnp.hstack([nsigmaDl, ngammaLM, SijM, dgm_ngammaL])
+
+    def fxs(x, arr):
+        carry = 0.0
+        nsigmaD = arr[0:1]
+        ngammaL = arr[1:Nline + 1]
+        Sij = arr[Nline + 1:2 * Nline + 1]
+        ngammaL_grid = arr[2 * Nline + 1:2 * Nline + NDITgrid + 1]
+        arr = xsvector(cnu, indexnu, R, pmarray, nsigmaD, ngammaL, Sij,
+                       nu_grid, ngammaL_grid)
+        return carry, arr
+
+    val, xsm = scan(fxs, 0.0, Mat)
+    return xsm
 
 def parallel_merge_grids(grid1, grid2):
     """merge two different grids into one grid in parallel
