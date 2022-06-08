@@ -11,4 +11,4 @@ TESTDATA_CO_EXOMOL_MODIT_XS_REF = "modit_test_ref.txt"
 TESTDATA_CO_EXOMOL_PREMODIT_XS_REF = "premodit_test_ref.txt"
 
 # emission spectra references
-TESTDATA_CO_EXOMOL_MODIT_EMISSION_REF = "modit_emission_test_ref.txt"
+TESTDATA_CO_EXOMOL_MODIT_EMISSION_REF = "modit_rt_test_ref.txt"
