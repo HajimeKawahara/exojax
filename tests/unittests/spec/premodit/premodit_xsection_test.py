@@ -10,7 +10,7 @@ from exojax.test.emulate_broadpar import mock_broadpar_exomol
 from exojax.test.emulate_mdb import mock_mdbExoMol
 from exojax.spec.molinfo import molmass
 from exojax.spec import normalized_doppler_sigma
-from exojax.test.data import TESTDATA_CO_EXOMOL_PREMODIT_SPECTRUM_REF
+from exojax.test.data import TESTDATA_CO_EXOMOL_PREMODIT_XS_REF
 
 
 def test_xsection_premodit():
@@ -49,17 +49,17 @@ def test_xsection_premodit():
     xsv = xsvector(Ttest, Ptest, nsigmaD, lbd, R, pmarray, nu_grid, elower_grid,
                   multi_index_uniqgrid, ngamma_ref_grid, n_Texp_grid, qt)
     filename = pkg_resources.resource_filename(
-        'exojax', 'data/testdata/'+TESTDATA_CO_EXOMOL_PREMODIT_SPECTRUM_REF)
+        'exojax', 'data/testdata/'+TESTDATA_CO_EXOMOL_PREMODIT_XS_REF)
     dat = pd.read_csv(filename, delimiter=",", names=("nus", "xsv"))
     assert np.all(xsv == pytest.approx(dat["xsv"].values))    
     return nu_grid,xsv
 
 if __name__ == "__main__":
-    from exojax.test.data import TESTDATA_CO_EXOMOL_MODIT_SPECTRUM_REF
+    from exojax.test.data import TESTDATA_CO_EXOMOL_MODIT_XS_REF
     import matplotlib.pyplot as plt
     nus,xs = test_xsection_premodit()
     filename = pkg_resources.resource_filename(
-        'exojax', 'data/testdata/'+TESTDATA_CO_EXOMOL_MODIT_SPECTRUM_REF)
+        'exojax', 'data/testdata/'+TESTDATA_CO_EXOMOL_MODIT_XS_REF)
     dat = pd.read_csv(filename, delimiter=",", names=("nus", "xsv"))
     fig = plt.figure()
     ax = fig.add_subplot(211)

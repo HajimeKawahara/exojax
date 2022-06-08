@@ -5,7 +5,7 @@ from exojax.spec.lpf import xsvector
 import pkg_resources
 import pandas as pd
 import numpy as np
-from exojax.test.data import TESTDATA_CO_EXOMOL_LPF_SPECTRUM_REF
+from exojax.test.data import TESTDATA_CO_EXOMOL_LPF_XS_REF
 from exojax.spec.lpf import exomol
 from exojax.spec.molinfo import molmass
 from exojax.spec import doppler_sigma,  gamma_natural
@@ -31,7 +31,7 @@ def test_exomol():
     numatrix=init_lpf(mdbCO.nu_lines, nus)
     xsv=xsvector(numatrix, sigmaD, gammaL, Sij)
 
-    filename = pkg_resources.resource_filename('exojax', 'data/testdata/'+TESTDATA_CO_EXOMOL_LPF_SPECTRUM_REF)
+    filename = pkg_resources.resource_filename('exojax', 'data/testdata/'+TESTDATA_CO_EXOMOL_LPF_XS_REF)
     dat=pd.read_csv(filename,delimiter=",",names=("nus","xsv"))
     assert np.all(xsv == pytest.approx(dat["xsv"].values))
     
