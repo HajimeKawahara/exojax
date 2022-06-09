@@ -13,3 +13,7 @@ TESTDATA_CO_EXOMOL_PREMODIT_XS_REF = "premodit_test_ref.txt"
 # emission spectra references
 TESTDATA_CO_EXOMOL_MODIT_EMISSION_REF = "modit_rt_test_ref.txt"
 TESTDATA_CO_EXOMOL_PREMODIT_EMISSION_REF = "premodit_rt_test_ref.txt"
+
+#sample spectra
+SAMPLE_SPECTRA_CO = "spectrum_co.txt"
+SAMPLE_SPECTRA_CH4 = "spectrum_ch4.txt"
