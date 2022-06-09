@@ -11,6 +11,7 @@ include src/exojax/data/testdata/lpf_test_ref.txt
 include src/exojax/data/testdata/modit_test_ref.txt
 include src/exojax/data/testdata/premodit_test_ref.txt
 include src/exojax/data/testdata/modit_rt_test_ref.txt
+include src/exojax/data/testdata/premodit_rt_test_ref.txt
 
 graft tests
 graft examples
