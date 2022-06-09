@@ -10,7 +10,6 @@ from exojax.spec.modit import calc_xsection_from_lsd
 from exojax.spec.set_ditgrid import ditgrid_log_interval, ditgrid_linear_interval
 from exojax.utils.constants import Tref
 from exojax.utils.indexing import uniqidx_neibouring
-from jax.lax import scan
 from exojax.spec import normalized_doppler_sigma
 
 
@@ -45,8 +44,27 @@ def xsvector(T, P, nsigmaD, lbd, R, pmarray, nu_grid, elower_grid,
 
 
 @jit
-def xsmatrix(Tarr, Parr, R, pmarray, lbd, nu_grid, ngamma_ref_grid, n_Texp_grid,
-             multi_index_uniqgrid, elower_grid, Mmol, qtarr):
+def xsmatrix(Tarr, Parr, R, pmarray, lbd, nu_grid, ngamma_ref_grid,
+             n_Texp_grid, multi_index_uniqgrid, elower_grid, Mmol, qtarr):
+    """compute cross section matrix given atmospheric layers
+
+    Args:
+        Tarr (_type_): temperature layers
+        Parr (_type_): pressure layers
+        R (float): spectral resolution
+        pmarray (_type_): pmarray
+        lbd (_type_): log biased line shape density
+        nu_grid (_type_): wavenumber grid
+        ngamma_ref_grid (_type_): normalized half-width grid
+        n_Texp_grid (_type_): temperature exponent grid
+        multi_index_uniqgrid (_type_): multi index for uniq broadpar grid
+        elower_grid (_type_): Elower grid
+        Mmol (_type_): molecular mass
+        qtarr (_type_): partition function ratio layers
+
+    Returns:
+        jnp.array : cross section matrix (Nlayer, N_wavenumber) 
+    """
     nsigmaD = vmap(normalized_doppler_sigma, (0, None, None), 0)(Tarr, Mmol, R)
     Slsd = vmap(unbiased_lsd, (None, 0, None, None, 0), 0)(lbd, Tarr, nu_grid,
                                                            elower_grid, qtarr)
