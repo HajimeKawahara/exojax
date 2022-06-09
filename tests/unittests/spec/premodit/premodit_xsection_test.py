@@ -1,4 +1,4 @@
-""" short integration tests for PreMODIT """
+""" short integration tests for PreMODIT cross section"""
 import pytest
 import pkg_resources
 import pandas as pd
