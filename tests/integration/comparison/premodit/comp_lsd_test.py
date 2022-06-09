@@ -48,10 +48,10 @@ def compare_line_shape_density(mdb,nu_grid,Ttest=1000.0,interval_contrast=0.1,Tt
     lbd = generate_lbd(mdb.Sij0, mdb.nu_lines, nu_grid, ngamma_ref,
                        ngamma_ref_grid, mdb._n_Texp, n_Texp_grid, mdb._elower,
                        elower_grid, Ttyp)
-    Slsd=unbiased_lsd(lbd,Ttest,nu_grid,elower_grid,mdb.qr_interp)
+    qT = mdb.qr_interp(Ttest)
+    Slsd=unbiased_lsd(lbd,Ttest,nu_grid,elower_grid,qT)
     Slsd=np.sum(Slsd,axis=1)
     cont_inilsd_nu, index_inilsd_nu = npgetix(mdb.nu_lines, nu_grid)
-    qT = mdb.qr_interp(Ttest)
     logsij0 = jnp.array(np.log(mdb.Sij0))
     S=SijT(Ttest, logsij0, mdb.nu_lines, mdb._elower, qT)
     Slsd_direct = np.zeros_like(nu_grid,dtype=np.float64)

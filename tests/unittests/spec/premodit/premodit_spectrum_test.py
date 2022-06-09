@@ -1,14 +1,11 @@
 """ short integration tests for PreMODIT spectrum"""
-import pytest
 import pkg_resources
+from jax import vmap
 import pandas as pd
 import numpy as np
 from exojax.spec.initspec import init_premodit
 from exojax.spec.setrt import gen_wavenumber_grid
-from exojax.test.emulate_broadpar import mock_broadpar_exomol
 from exojax.test.emulate_mdb import mock_mdbExoMol
-from exojax.spec.molinfo import molmass
-from exojax.spec import normalized_doppler_sigma
 import jax.numpy as jnp
 from exojax.spec import rtransfer as rt
 from exojax.spec import molinfo
@@ -19,10 +16,8 @@ from exojax.spec.planck import piBarr
 from exojax.test.data import TESTDATA_CO_EXOMOL_PREMODIT_EMISSION_REF
 
 
-def test_rt_exomol():
-    
+def test_rt_exomol():    
     mdb = mock_mdbExoMol()
-
     Parr, dParr, k = rt.pressure_layer(NP=100)
     T0_in = 1300.0
     alpha_in = 0.1
@@ -52,8 +47,9 @@ def test_rt_exomol():
         warning=False)
 
     Mmol = molinfo.molmass("CO")
+    qtarr = vmap(mdb.qr_interp)(Tarr)
     xsm = xsmatrix(Tarr, Parr, R, pmarray, lbd, nu_grid, ngamma_ref_grid, n_Texp_grid,
-             multi_index_uniqgrid, elower_grid, Mmol, mdb)
+                   multi_index_uniqgrid, elower_grid, Mmol, qtarr)
     dtau = dtauM(dParr, jnp.abs(xsm), MMR * np.ones_like(Parr), Mmol, g)
     sourcef = piBarr(Tarr, nu_grid)
     F0 = rtrun(dtau, sourcef)

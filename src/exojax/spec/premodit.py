@@ -44,10 +44,9 @@ def xsvector(T, P, nsigmaD, lbd, R, pmarray, nu_grid, elower_grid,
     return xs
 
 
-#@jit
+@jit
 def xsmatrix(Tarr, Parr, R, pmarray, lbd, nu_grid, ngamma_ref_grid, n_Texp_grid,
-             multi_index_uniqgrid, elower_grid, Mmol, mdb):
-    qtarr = vmap(mdb.qr_interp)(Tarr)
+             multi_index_uniqgrid, elower_grid, Mmol, qtarr):
     nsigmaD = vmap(normalized_doppler_sigma, (0, None, None), 0)(Tarr, Mmol, R)
     Slsd = vmap(unbiased_lsd, (None, 0, None, None, 0), 0)(lbd, Tarr, nu_grid,
                                                            elower_grid, qtarr)
