@@ -2,7 +2,7 @@
 
 """
 import numpy as np
-from exojax.spec.dit import npgetix
+from exojax.spec.lsd import npgetix
 import jax.numpy as jnp
 import warnings
 from exojax.utils.constants import hcperk
