@@ -9,6 +9,7 @@ __description__ = 'auto-differentiable spectral modules in exojax'
 
 from exojax.spec.hitran import (
     SijT,
+    line_strength,
     doppler_sigma,
     gamma_natural,
     normalized_doppler_sigma

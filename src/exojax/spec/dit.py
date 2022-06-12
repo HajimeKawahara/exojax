@@ -4,106 +4,16 @@
 * This module consists of selected functions in `addit package <https://github.com/HajimeKawahara/addit>`_.
 * The concept of "folding" can be understood by reading `the discussion <https://github.com/radis/radis/issues/186#issuecomment-764465580>`_ by D.C.M van den Bekerom.
 """
+import warnings
 import numpy as np
 import jax.numpy as jnp
 from jax import jit, vmap
 from jax.lax import scan
 from exojax.spec.ditkernel import fold_voigt_kernel
-from jax.numpy import index_exp as joi
 from exojax.spec.atomll import padding_2Darray_for_each_atom
 from exojax.spec.rtransfer import dtauM
+from exojax.spec.lsd import inc3D_givenx
 
-
-def getix(x, xv):
-    """jnp version of getix.
-
-    Args:
-        x: x array
-        xv: x grid 
-
-    Returns:
-        cont (contribution)
-        index (index)
-
-    Note:
-       cont is the contribution for i=index+1. 1 - cont is the contribution for i=index. For other i, the contribution should be zero.
-
-    Example:
-
-       >>> from exojax.spec.dit import getix
-       >>> import jax.numpy as jnp
-       >>> y=jnp.array([1.1,4.3])
-       >>> yv=jnp.arange(6)
-       >>> getix(y,yv)
-       (DeviceArray([0.10000002, 0.3000002 ], dtype=float32), DeviceArray([1, 4], dtype=int32))
-    """
-    indarr = jnp.arange(len(xv))
-    pos = jnp.interp(x, xv, indarr)
-    index = (pos).astype(int)
-    cont = (pos-index)
-    return cont, index
-
-
-def npgetix(x, xv):
-    """numpy version of getix.
-
-    Args:
-        x: x array
-        xv: x grid
-
-    Returns:
-        cont (contribution)
-        index (index)
-
-    Note:
-       cont is the contribution for i=index+1. 1 - cont is the contribution for i=index. For other i, the contribution should be zero.
-    """
-    indarr = np.arange(len(xv))
-    pos = np.interp(x, xv, indarr)
-    index = (pos).astype(int)
-    cont = (pos-index)
-    return cont, index
-
-
-@jit
-def inc3D_givenx(a, w, cx, ix, y, z, xv, yv, zv):
-    """The lineshape distribution matrix = integrated neighbouring contribution for 3D (memory reduced sum) but using given contribution and index for x .
-
-    Args:
-        a: lineshape density array (jnp.array)
-        w: weight (N)
-        cx: given contribution for x 
-        ix: given index for x 
-        y: y values (N)
-        z: z values (N)
-        xv: x grid
-        yv: y grid
-        zv: z grid            
-
-    Returns:
-        lineshape distribution matrix (integrated neighbouring contribution for 3D)
-
-    Note:
-        This function computes \sum_n w_n fx_n \otimes fy_n \otimes fz_n, 
-        where w_n is the weight, fx_n, fy_n, and fz_n are the n-th NCFs for 1D. 
-        A direct sum uses huge RAM. 
-        In this function, we use jax.lax.scan to compute the sum
-
-    """
-
-    cy, iy = getix(y, yv)
-    cz, iz = getix(z, zv)
-
-    a = a.at[joi[ix, iy, iz]].add(w*(1-cx)*(1-cy)*(1-cz))
-    a = a.at[joi[ix, iy+1, iz]].add(w*(1-cx)*cy*(1-cz))
-    a = a.at[joi[ix+1, iy, iz]].add(w*cx*(1-cy)*(1-cz))
-    a = a.at[joi[ix+1, iy+1, iz]].add(w*cx*cy*(1-cz))
-    a = a.at[joi[ix, iy, iz+1]].add(w*(1-cx)*(1-cy)*cz)
-    a = a.at[joi[ix, iy+1, iz+1]].add(w*(1-cx)*cy*cz)
-    a = a.at[joi[ix+1, iy, iz+1]].add(w*cx*(1-cy)*cz)
-    a = a.at[joi[ix+1, iy+1, iz+1]].add(w*cx*cy*cz)
-
-    return a
 
 
 @jit
@@ -168,7 +78,7 @@ def xsmatrix(cnu, indexnu, pmarray, sigmaDM, gammaLM, SijM, nu_grid, dgm_sigmaD,
        SijM: line strength matrix in R^(Nlayer x Nline)
        nu_grid: linear wavenumber grid
        dgm_sigmaD: DIT Grid Matrix for sigmaD R^(Nlayer, NDITgrid)
-       dgm_gammaL: DIT Grid Matrix for gammaL R^(Nlayer, NDITgrid)
+       dgm_gammaL: DIT Grid Matrix for gammaL R^(Nlayer, NDITgrid
 
     Return:
        cross section matrix in R^(Nlayer x Nwav)
@@ -195,79 +105,6 @@ def xsmatrix(cnu, indexnu, pmarray, sigmaDM, gammaLM, SijM, nu_grid, dgm_sigmaD,
     return xsm
 
 
-def ditgrid(x, res=0.1, adopt=True):
-    """DIT GRID.
-
-    Args:
-        x: simgaD or gammaL array (Nline)
-        res: grid resolution. res=0.1 (defaut) means a grid point per digit
-        adopt: if True, min, max grid points are used at min and max values of x.
-               In this case, the grid width does not need to be res exactly.
-
-    Returns:
-        grid for DIT
-    """
-    if np.min(x) <= 0.0:
-        print('Warning: there exists negative or zero gamma. MODIT/DIT does not support this case.')
-
-    lxmin = np.log(np.min(x))
-    lxmax = np.log(np.max(x))
-    lxmax = np.nextafter(lxmax, np.inf, dtype=lxmax.dtype)
-
-    dlog = lxmax-lxmin
-    Ng = int(dlog/res)+2
-    if adopt == False:
-        grid = np.exp(np.linspace(lxmin, lxmin+(Ng-1)*res, Ng))
-    else:
-        grid = np.exp(np.linspace(lxmin, lxmax, Ng))
-    return grid
-
-
-def set_ditgrid(x, res=0.1, adopt=True):
-    """alias of ditgrid.
-
-    Args:
-        x: simgaD or gammaL array (Nline)
-        res: grid resolution. res=0.1 (defaut) means a grid point per digit
-        adopt: if True, min, max grid points are used at min and max values of x.
-               In this case, the grid width does not need to be res exactly.
-
-    Returns:
-        grid for DIT
-    """
-    return ditgrid(x, res, adopt)
-
-
-def dgmatrix(x, res=0.1, adopt=True):
-    """DIT GRID MATRIX.
-
-    Args:
-        x: simgaD or gammaL matrix (Nlayer x Nline)
-        res: grid resolution. res=0.1 (defaut) means a grid point per digit
-        adopt: if True, min, max grid points are used at min and max values of x.
-               In this case, the grid width does not need to be res exactly.
-
-    Returns:
-        grid for DIT (Nlayer x NDITgrid)
-    """
-    mmin = np.log(np.min(x, axis=1))
-    mmax = np.log(np.max(x, axis=1))
-    mmax = np.nextafter(mmax, np.inf, dtype=mmax.dtype)
-
-    Nlayer = np.shape(mmax)[0]
-    gm = []
-    dlog = np.max(mmax-mmin)
-    Ng = (dlog/res).astype(int)+2
-    for i in range(0, Nlayer):
-        lxmin = mmin[i]
-        lxmax = mmax[i]
-        if adopt == False:
-            grid = np.exp(np.linspace(lxmin, lxmin+(Ng-1)*res, Ng))
-        else:
-            grid = np.exp(np.linspace(lxmin, lxmax, Ng))
-        gm.append(grid)
-    gm = np.array(gm)
-    return gm
 
 
 def sigma_voigt(dgm_sigmaD, dgm_gammaL):
@@ -419,3 +256,38 @@ def dtauM_vald(dParr, g, adb, nus, cnu, indexnu, pmarray, SijM, gammaLM, sigmaDM
     dtauatom = f_dtaual(xi_init)[1]
     return(dtauatom)
 
+#### DUPLICATED
+def ditgrid(x, dit_grid_resolution=0.1, adopt=True):
+    """DIT GRID (deplicated).
+
+    Args:
+        x: simgaD or gammaL array (Nline)
+        dit_grid_resolution: grid resolution. res=0.1 (defaut) means a grid point per digit
+        adopt: if True, min, max grid points are used at min and max values of x.
+               In this case, the grid width does not need to be res exactly.
+
+    Returns:
+        grid for DIT
+    """
+
+    warn_msg = "`dit.ditgrid` is duplicated and will be removed. Use `set_ditgrid.ditgrid_log_interval` instead"
+    warnings.warn(warn_msg, UserWarning)
+    from exojax.spec.set_ditgrid import ditgrid_log_interval
+    return set_ditgrid.ditgrid_log_interval(x, dit_grid_resolution, adopt)
+
+def dgmatrix(x, dit_grid_resolution=0.1, adopt=True):
+    """DIT GRID MATRIX (alias)
+
+    Args:
+        x: simgaD or gammaL matrix (Nlayer x Nline)
+        dit_grid_resolution: grid resolution. dit_grid_resolution=0.1 (defaut) means a grid point per digit
+        adopt: if True, min, max grid points are used at min and max values of x.
+               In this case, the grid width does not need to be dit_grid_resolution exactly.
+
+    Returns:
+        grid for DIT (Nlayer x NDITgrid)
+    """
+    warn_msg = "`dit.dgmatrix` is duplicated and will be removed. Use `set_ditgrid.ditgrid_matrix` instead"
+    warnings.warn(warn_msg, UserWarning)
+    from exojax.spec.set_ditgrid import ditgrid_matrix 
+    return ditgrid_matrix(x, dit_grid_resolution, adopt)

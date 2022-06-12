@@ -11,7 +11,7 @@ import pathlib
 import vaex
 from exojax.spec import hapi, exomolapi, exomol, atomllapi, atomll, hitranapi
 from exojax.spec.hitran import gamma_natural as gn
-from exojax.utils.constants import hcperk
+from exojax.utils.constants import hcperk, Tref
 
 __all__ = ['MdbExomol', 'MdbHit', 'AdbVald', 'AdbKurucz']
 
@@ -38,12 +38,12 @@ class MdbExomol(object):
         jlower (jnp array): J_lower
         jupper (jnp array): J_upper
         n_Texp (jnp array): temperature exponent
-        alpha_ref (jnp array): alpha_ref (gamma0)
+        alpha_ref (jnp array): alpha_ref (gamma0), Lorentzian half-width at reference temperature and pressure in cm-1/bar
         n_Texp_def: default temperature exponent in .def file, used for jlower not given in .broad
         alpha_ref_def: default alpha_ref (gamma0) in .def file, used for jlower not given in .broad
     """
 
-    def __init__(self, path, nurange=[-np.inf, np.inf], margin=0.0, crit=0., Ttyp=1000., bkgdatm='H2', broadf=True, remove_original_hdf=True):
+    def __init__(self, path, nurange=[-np.inf, np.inf], margin=0.0, crit=0., Ttyp=1000., bkgdatm='H2', broadf=True, remove_original_hdf=True, gpu_transfer=True):
         """Molecular database for Exomol form.
 
         Args:
@@ -55,6 +55,7 @@ class MdbExomol(object):
            bkgdatm: background atmosphere for broadening. e.g. H2, He,
            broadf: if False, the default broadening parameters in .def file is used
            remove_original_hdf: if True, the hdf5 and yaml files created while reading the original transition file(s) will be removed since those files will not be used after that.
+           gpu_transfer: tranfer data to jnp.array? 
 
         Note:
            The trans/states files can be very large. For the first time to read it, we convert it to HDF/vaex. After the second-time, we use the HDF5 format with vaex instead.
@@ -109,8 +110,7 @@ class MdbExomol(object):
         pf = exomolapi.read_pf(self.pf_file)
         self.gQT = jnp.array(pf['QT'].to_numpy())  # grid QT
         self.T_gQT = jnp.array(pf['T'].to_numpy())  # T forgrid QT
-        self.Tref = 296.0
-        self.QTref = np.array(self.QT_interp(self.Tref))
+        self.QTref = np.array(self.QT_interp(Tref))
         self.QTtyp = np.array(self.QT_interp(self.Ttyp))
 
         # trans file(s)
@@ -150,8 +150,8 @@ class MdbExomol(object):
                 self.Sij0 = exomol.Sij0(
                     self._A, self._gpp, self.nu_lines, self._elower, self.QTref)
                 self.Sij_typ = self.Sij0 * self.QTref / self.QTtyp \
-                    * np.exp(-hcperk*self._elower * (1./self.Ttyp - 1./self.Tref)) \
-                    * np.expm1(-hcperk*self.nu_lines/self.Ttyp) / np.expm1(-hcperk*self.nu_lines/self.Tref)
+                    * np.exp(-hcperk*self._elower * (1./self.Ttyp - 1./Tref)) \
+                    * np.expm1(-hcperk*self.nu_lines/self.Ttyp) / np.expm1(-hcperk*self.nu_lines/Tref)
 
                 # exclude the lines whose nu_lines evaluated inside exomolapi.pickup_gE (thus sometimes different from the "nu_lines" column in trans) is not positive
                 trans['nu_positive'] = mask_zeronu
@@ -265,9 +265,11 @@ class MdbExomol(object):
         else:
             # define all true list just in case
             mask = np.ones_like(self.nu_lines, dtype=bool)
-
-        self.masking(mask, mask_needed)
-
+        self.masking(mask)
+        self.set_broadening()  # Broadening parameters
+        if gpu_transfer:
+            self.generate_jnp_arrays()
+        
     def get_Sij_typ(self, Sij0_in, elower_in, nu_in):
         """compute Sij at typical temperature self.Ttyp.
 
@@ -280,39 +282,23 @@ class MdbExomol(object):
            Sij at Ttyp
         """
         return Sij0_in * self.QTref / self.QTtyp \
-            * np.exp(-hcperk*elower_in * (1./self.Ttyp - 1./self.Tref)) \
-            * np.expm1(-hcperk*nu_in/self.Ttyp) / np.expm1(-hcperk*nu_in/self.Tref)
+            * np.exp(-hcperk*elower_in * (1./self.Ttyp - 1./Tref)) \
+            * np.expm1(-hcperk*nu_in/self.Ttyp) / np.expm1(-hcperk*nu_in/Tref)
 
-    def masking(self, mask, mask_needed=True):
-        """applying mask and (re)generate jnp.arrays.
-
+    def masking(self, mask):
+        """applying mask.
         Args:
            mask: mask to be applied. self.mask is updated.
-           mask_needed: whether mask needs to be applied or not
-
-        Note:
-           We have nd arrays and jnp arrays. We apply the mask to nd arrays and generate jnp array from the corresponding nd array. For instance, self._A is nd array and self.A is jnp array.
         """
-        if mask_needed:
-            # numpy float 64 Do not convert them jnp array
-            self.nu_lines = self.nu_lines[mask]
-            self.Sij0 = self.Sij0[mask]
-            self._A = self._A[mask]
-            self._elower = self._elower[mask]
-            self._gpp = self._gpp[mask]
-            self._jlower = self._jlower[mask]
-            self._jupper = self._jupper[mask]
+        # numpy float 64 Do not convert them jnp array
+        self.nu_lines = self.nu_lines[mask]
+        self.Sij0 = self.Sij0[mask]
+        self._A = self._A[mask]
+        self._elower = self._elower[mask]
+        self._gpp = self._gpp[mask]
+        self._jlower = self._jlower[mask]
+        self._jupper = self._jupper[mask]
 
-        # jnp arrays
-        self.dev_nu_lines = jnp.array(self.nu_lines)
-        self.logsij0 = jnp.array(np.log(self.Sij0))
-        self.A = jnp.array(self._A)
-        self.gamma_natural = gn(self.A)
-        self.elower = jnp.array(self._elower)
-        self.gpp = jnp.array(self._gpp)
-        self.jlower = jnp.array(self._jlower, dtype=int)
-        self.jupper = jnp.array(self._jupper, dtype=int)
-        self.set_broadening()  # Broadening parameters
 
     def set_broadening(self, alpha_ref_def=None, n_Texp_def=None):
         """setting broadening parameters.
@@ -337,8 +323,8 @@ class MdbExomol(object):
                                                                alpha_ref_default=self.alpha_ref_def,
                                                                n_Texp_default=self.n_Texp_def,
                                                                jlower_max=np.max(self._jlower))
-                    self.alpha_ref = jnp.array(j2alpha_ref[self._jlower])
-                    self.n_Texp = jnp.array(j2n_Texp[self._jlower])
+                    self._alpha_ref = np.array(j2alpha_ref[self._jlower])
+                    self._n_Texp = np.array(j2n_Texp[self._jlower])
                 elif codelv == 'a1':
                     j2alpha_ref, j2n_Texp = exomolapi.make_j2b(bdat,
                                                                alpha_ref_default=self.alpha_ref_def,
@@ -347,24 +333,44 @@ class MdbExomol(object):
                     jj2alpha_ref, jj2n_Texp = exomolapi.make_jj2b(bdat,
                                                                   j2alpha_ref_def=j2alpha_ref, j2n_Texp_def=j2n_Texp,
                                                                   jupper_max=np.max(self._jupper))
-                    self.alpha_ref = jnp.array(
+                    self._alpha_ref = np.array(
                         jj2alpha_ref[self._jlower, self._jupper])
-                    self.n_Texp = jnp.array(
+                    self._n_Texp = np.array(
                         jj2n_Texp[self._jlower, self._jupper])
             except:
                 print(
                     'Warning: Cannot load .broad. The default broadening parameters are used.')
-                self.alpha_ref = jnp.array(
+                self._alpha_ref = np.array(
                     self.alpha_ref_def*np.ones_like(self._jlower))
-                self.n_Texp = jnp.array(
+                self._n_Texp = np.array(
                     self.n_Texp_def*np.ones_like(self._jlower))
 
         else:
             print('The default broadening parameters are used.')
-            self.alpha_ref = jnp.array(
+            self._alpha_ref = np.array(
                 self.alpha_ref_def*np.ones_like(self._jlower))
-            self.n_Texp = jnp.array(self.n_Texp_def*np.ones_like(self._jlower))
+            self._n_Texp = np.array(self.n_Texp_def*np.ones_like(self._jlower))
 
+    def generate_jnp_arrays(self):
+        """(re)generate jnp.arrays.
+
+        Note:
+           We have nd arrays and jnp arrays. We usually apply the mask to nd arrays and then generate jnp array from the corresponding nd array. For instance, self._A is nd array and self.A is jnp array.
+
+        """
+
+        # jnp arrays
+        self.dev_nu_lines = jnp.array(self.nu_lines)
+        self.logsij0 = jnp.array(np.log(self.Sij0))
+        self.A = jnp.array(self._A)
+        self.gamma_natural = gn(self.A)
+        self.elower = jnp.array(self._elower)
+        self.gpp = jnp.array(self._gpp)
+        self.jlower = jnp.array(self._jlower, dtype=int)
+        self.jupper = jnp.array(self._jupper, dtype=int)
+        self.alpha_ref = jnp.array(self._alpha_ref)
+        self.n_Texp = jnp.array(self._n_Texp)
+            
     def QT_interp(self, T):
         """interpolated partition function.
 
@@ -385,7 +391,7 @@ class MdbExomol(object):
         Returns:
            qr(T)=Q(T)/Q(Tref) interpolated in jnp.array
         """
-        return self.QT_interp(T)/self.QT_interp(self.Tref)
+        return self.QT_interp(T)/self.QT_interp(Tref)
 
     def download(self, molec, extension, numtag=None):
         """Downloading Exomol files.
@@ -443,7 +449,7 @@ class MdbHit(object):
         n_air (jnp array): air temperature exponent
     """
 
-    def __init__(self, path, nurange=[-np.inf, np.inf], margin=0.0, crit=0., Ttyp=1000., extract=False):
+    def __init__(self, path, nurange=[-np.inf, np.inf], margin=0.0, crit=0., Ttyp=1000., extract=False, gpu_transfer=True):
         """Molecular database for HITRAN/HITEMP form.
 
         Args:
@@ -453,6 +459,7 @@ class MdbHit(object):
            crit: line strength lower limit for extraction
            Ttyp: typical temperature to calculate Sij(T) used in crit
            extract: If True, it extracts the opacity having the wavenumber between nurange +- margin. Use when you want to reduce the memory use.
+           gpu_transfer: tranfer data to jnp.array? 
         """
         from exojax.spec.hitran import SijT
         if ("hit" in path and path[-4:] == ".bz2"):
@@ -464,7 +471,6 @@ class MdbHit(object):
 
         self.path = pathlib.Path(path).expanduser()
         numinf, numtag = hitranapi.read_path(self.path)
-        self.Tref = 296.0
         self.crit = crit
         self.Ttyp = Ttyp
         self.margin = margin
@@ -541,7 +547,9 @@ class MdbHit(object):
             * (self.nu_lines < self.nurange[1]+self.margin)\
             * (self.Sij_typ > self.crit)
         self.masking(mask)
-
+        if gpu_transfer:
+            self.generate_jnp_arrays()
+        
     def get_value_hapi(self, molec):
         """get values using HAPI.
 
@@ -608,6 +616,13 @@ class MdbHit(object):
         self._elower = self._elower[mask]
         self._gpp = self._gpp[mask]
 
+    def generate_jnp_arrays(self):
+        """(re)generate jnp.arrays.
+        
+        Note:
+           We have nd arrays and jnp arrays. We usually apply the mask to nd arrays and then generate jnp array from the corresponding nd array. For instance, self._A is nd array and self.A is jnp array.
+        
+        """
         # jnp.array copy from the copy sources
         self.dev_nu_lines = jnp.array(self.nu_lines)
         self.logsij0 = jnp.array(np.log(self.Sij0))
@@ -761,7 +776,7 @@ class MdbHit(object):
         Note:
            N_Tarr = len(Tarr), N_iso = len(self.uniqiso)
         """
-        allT = list(np.concatenate([[self.Tref], Tarr]))
+        allT = list(np.concatenate([[Tref], Tarr]))
         Qrx = []
         for idx, iso in enumerate(self.uniqiso):
             Tmin, Tmax = hapi.get_TMIN_TMAX_FOR_BD_TIPS_2017_PYTHON(self.molecid, iso)
@@ -854,11 +869,8 @@ def search_molecid(molec):
         hitf = molec.split('_')
         molecid = int(hitf[0])
         return molecid
-
     except:
-        print('Warning: Define molecid by yourself.')
-        return None
-
+        raise ValueError('Define molecid by yourself.')
 
 class AdbVald(object):
     """atomic database from VALD3 (http://vald.astro.uu.se/)
@@ -891,7 +903,7 @@ class AdbVald(object):
            For the first time to read the VALD line list, it is converted to HDF/vaex. After the second-time, we use the HDF5 format with vaex instead.
     """
 
-    def __init__(self, path, nurange=[-np.inf, np.inf], margin=0.0, crit=0., Irwin=False):
+    def __init__(self, path, nurange=[-np.inf, np.inf], margin=0.0, crit=0., Irwin=False, gpu_transfer=True):
         """Atomic database for VALD3 "Long format".
 
         Args:
@@ -900,6 +912,7 @@ class AdbVald(object):
           margin: margin for nurange (cm-1)
           crit: line strength lower limit for extraction
           Irwin: if True(1), the partition functions of Irwin1981 is used, otherwise those of Barklem&Collet2016
+          gpu_transfer: tranfer data to jnp.array? 
 
         Note:
           (written with reference to moldb.py, but without using feather format)
@@ -930,8 +943,7 @@ class AdbVald(object):
         self.T_gQT = jnp.array(pfTdat.columns[1:], dtype=float)
         self.gQT_284species = jnp.array(self.pfdat.iloc[:, 1:].to_numpy(
             dtype=float))  # grid Q vs T vs Species
-        self.Tref = 296.0
-        self.QTref_284 = np.array(self.QT_interp_284(self.Tref))
+        self.QTref_284 = np.array(self.QT_interp_284(Tref))
         # identify index of QT grid (gQT) for each line
         self._QTmask = self.make_QTmask(self._ielem, self._iion)
 
@@ -945,7 +957,9 @@ class AdbVald(object):
             * (self.Sij0 > self.crit)
 
         self.masking(mask)
-
+        if gpu_transfer:
+            self.generate_jnp_arrays()
+        
         # Compile atomic-specific data for each absorption line of interest
         ipccd = atomllapi.load_atomicdata()
         self.solarA = jnp.array(
@@ -957,13 +971,11 @@ class AdbVald(object):
             list(map(atomllapi.pick_ionE, self.ielem, self.iion, [df_ionE, ] * len(self.ielem))))
 
     def masking(self, mask):
-        """applying mask and (re)generate jnp.arrays.
+        """applying mask.
 
         Args:
            mask: mask to be applied. self.mask is updated.
 
-        Note:
-           We have nd arrays and jnp arrays. We apply the mask to nd arrays and generate jnp array from the corresponding nd array. For instance, self._A is nd array and self.A is jnp array.
         """
         # numpy float 64 Do not convert them jnp array
         self.nu_lines = self.nu_lines[mask]
@@ -981,6 +993,14 @@ class AdbVald(object):
         self._gamSta = self._gamSta[mask]
         self._vdWdamp = self._vdWdamp[mask]
 
+
+    def generate_jnp_arrays(self):
+        """(re)generate jnp.arrays.
+
+        Note:
+           We have nd arrays and jnp arrays. We usually apply the mask to nd arrays and then generate jnp array from the corresponding nd array. For instance, self._A is nd array and self.A is jnp array.
+
+        """
         # jnp arrays
         self.dev_nu_lines = jnp.array(self.nu_lines)
         self.logsij0 = jnp.array(np.log(self.Sij0))
@@ -1056,7 +1076,7 @@ class AdbVald(object):
         Returns:
            qr(T)=Q(T)/Q(Tref): interpolated in jnp.array
         """
-        return self.QT_interp(atomspecies, T)/self.QT_interp(atomspecies, self.Tref)
+        return self.QT_interp(atomspecies, T)/self.QT_interp(atomspecies, Tref)
 
     def qr_interp_Irwin_Fe(self, T, atomspecies='Fe 1'):
         """interpolated partition function ratio This function is for the
@@ -1070,7 +1090,7 @@ class AdbVald(object):
         Returns:
            qr(T)=Q(T)/Q(Tref): interpolated in jnp.array
         """
-        return self.QT_interp_Irwin_Fe(T, atomspecies)/self.QT_interp_Irwin_Fe(self.Tref, atomspecies)
+        return self.QT_interp_Irwin_Fe(T, atomspecies)/self.QT_interp_Irwin_Fe(Tref, atomspecies)
 
     def QT_interp_284(self, T):
         """interpolated partition function of all 284 species.
@@ -1141,6 +1161,7 @@ class AdbSepVald(object):
 
         Args:
             adb: adb instance made by the AdbVald class, which stores the lines of all species together
+
         """
         self.nu_lines = atomll.sep_arr_of_sp(
             adb.nu_lines, adb, trans_jnp=False)
@@ -1192,7 +1213,7 @@ class AdbKurucz(object):
         vdWdamp (jnp array):  log of (van der Waals damping constant / neutral hydrogen number) (s-1)
     """
 
-    def __init__(self, path, nurange=[-np.inf, np.inf], margin=0.0, crit=0., Irwin=False):
+    def __init__(self, path, nurange=[-np.inf, np.inf], margin=0.0, crit=0., Irwin=False, gpu_transfer=True):
         """Atomic database for Kurucz line list "gf????.all".
 
         Args:
@@ -1201,6 +1222,7 @@ class AdbKurucz(object):
           margin: margin for nurange (cm-1)
           crit: line strength lower limit for extraction
           Irwin: if True(1), the partition functions of Irwin1981 is used, otherwise those of Barklem&Collet2016
+          gpu_transfer: tranfer data to jnp.array? 
 
         Note:
           (written with reference to moldb.py, but without using feather format)
@@ -1222,8 +1244,7 @@ class AdbKurucz(object):
         self.T_gQT = jnp.array(pfTdat.columns[1:], dtype=float)
         self.gQT_284species = jnp.array(self.pfdat.iloc[:, 1:].to_numpy(
             dtype=float))  # grid Q vs T vs Species
-        self.Tref = 296.0
-        self.QTref_284 = np.array(self.QT_interp_284(self.Tref))
+        self.QTref_284 = np.array(self.QT_interp_284(Tref))
         # identify index of QT grid (gQT) for each line
         self._QTmask = self.make_QTmask(self._ielem, self._iion)
 
@@ -1237,7 +1258,9 @@ class AdbKurucz(object):
             * (self.Sij0 > self.crit)
 
         self.masking(mask)
-
+        if gpu_transfer:
+            self.generate_jnp_arrays()
+        
         # Compile atomic-specific data for each absorption line of interest
         ipccd = atomllapi.load_atomicdata()
         self.solarA = jnp.array(
@@ -1249,13 +1272,11 @@ class AdbKurucz(object):
             list(map(atomllapi.pick_ionE, self.ielem, self.iion, [df_ionE, ] * len(self.ielem))))
 
     def masking(self, mask):
-        """applying mask and (re)generate jnp.arrays.
+        """applying mask
 
         Args:
            mask: mask to be applied. self.mask is updated.
 
-        Note:
-           We have nd arrays and jnp arrays. We apply the mask to nd arrays and generate jnp array from the corresponding nd array. For instance, self._A is nd array and self.A is jnp array.
         """
         # numpy float 64 Do not convert them jnp array
         self.nu_lines = self.nu_lines[mask]
@@ -1273,6 +1294,13 @@ class AdbKurucz(object):
         self._gamSta = self._gamSta[mask]
         self._vdWdamp = self._vdWdamp[mask]
 
+    def generate_jnp_arrays(self):
+        """(re)generate jnp.arrays.
+
+        Note:
+           We have nd arrays and jnp arrays. We usually apply the mask to nd arrays and then generate jnp array from the corresponding nd array. For instance, self._A is nd array and self.A is jnp array.
+
+        """
         # jnp arrays
         self.dev_nu_lines = jnp.array(self.nu_lines)
         self.logsij0 = jnp.array(np.log(self.Sij0))
@@ -1348,7 +1376,7 @@ class AdbKurucz(object):
         Returns:
            qr(T)=Q(T)/Q(Tref): interpolated in jnp.array
         """
-        return self.QT_interp(atomspecies, T)/self.QT_interp(atomspecies, self.Tref)
+        return self.QT_interp(atomspecies, T)/self.QT_interp(atomspecies, Tref)
 
     def qr_interp_Irwin_Fe(self, T, atomspecies='Fe 1'):
         """interpolated partition function ratio This function is for the
@@ -1362,7 +1390,7 @@ class AdbKurucz(object):
         Returns:
            qr(T)=Q(T)/Q(Tref): interpolated in jnp.array
         """
-        return self.QT_interp_Irwin_Fe(T, atomspecies)/self.QT_interp_Irwin_Fe(self.Tref, atomspecies)
+        return self.QT_interp_Irwin_Fe(T, atomspecies)/self.QT_interp_Irwin_Fe(Tref, atomspecies)
 
     def QT_interp_284(self, T):
         """interpolated partition function of all 284 species.

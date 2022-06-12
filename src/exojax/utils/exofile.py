@@ -14,6 +14,15 @@ def save_exomol_mif(output,nu_grid,cnu,indexnu,logsij0,A,alpha_ref,n_Texp,elower
     """Save inputs as MODIT Input File Format for ExoMol (emif)
 
     Args:
+        output:
+        nu_grid:
+        cnu:
+        indexnu:
+        logsij0:
+        A:
+        alpha_ref:
+        n_Texp:
+        elower:
 
     """
     outpath=pathlib.Path(output)

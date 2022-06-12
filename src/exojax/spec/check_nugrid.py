@@ -25,7 +25,7 @@ def check_scale_xsmode(xsmode):
        ESLOG/ESLIN/UNKNOWN
     """
 
-    if xsmode == 'lpf' or xsmode == 'LPF' or xsmode == 'modit' or xsmode == 'MODIT' or xsmode == 'redit' or xsmode == 'REDIT':
+    if xsmode == 'lpf' or xsmode == 'LPF' or xsmode == 'modit' or xsmode == 'MODIT' or xsmode == 'premodit' or xsmode == 'PREMODIT':
         print('xsmode assumes ESLOG: mode=', xsmode)
         return 'ESLOG'
     elif xsmode == 'dit' or xsmode == 'DIT':
@@ -52,13 +52,13 @@ def check_scale_nugrid(nus, crit1=1.e-5, crit2=1.e-14, gridmode='ESLOG'):
         q = np.log10(nus)
     elif gridmode == 'ESLIN':
         q = nus
-    p = q[1:]-q[:-1]
-    w = (p-np.mean(p))
+    p = q[1:] - q[:-1]
+    w = (p - np.mean(p))
     if gridmode == 'ESLOG':
-        val1 = np.max(np.abs(w))/np.median(p)
+        val1 = np.max(np.abs(w)) / np.median(p)
         val2 = np.max(np.abs(w))
     elif gridmode == 'ESLIN':
-        val1 = np.abs(np.max(np.abs(w))/np.median(p))
+        val1 = np.abs(np.max(np.abs(w)) / np.median(p))
         val2 = -np.inf  # do not check
     if val1 < crit1 and val2 < crit2:
         return True
@@ -82,9 +82,9 @@ if __name__ == '__main__':
     nus, wav, res = nugrid(22999, 23000, 100000, 'AA')
     print(check_scale_nugrid(nus))
 
-    nus = np.linspace(1.e8/23000., 1.e8/22999., 1000)
+    nus = np.linspace(1.e8 / 23000., 1.e8 / 22999., 1000)
     print(check_scale_nugrid(nus))
-    nus = np.linspace(1.e8/23000., 1.e8/22999., 10000)
+    nus = np.linspace(1.e8 / 23000., 1.e8 / 22999., 10000)
     print(check_scale_nugrid(nus))
-    nus = np.linspace(1.e8/23000., 1.e8/22999., 100000)
+    nus = np.linspace(1.e8 / 23000., 1.e8 / 22999., 100000)
     print(check_scale_nugrid(nus))

@@ -1,6 +1,7 @@
 """Automatic Opacity and Spectrum Generator."""
 import time
 from exojax.spec import defmol, defcia, moldb, contdb, planck, molinfo, lpf, dit, modit, initspec, response
+from exojax.spec.set_ditgrid import ditgrid_log_interval
 from exojax.spec.opacity import xsection
 from exojax.spec.hitran import SijT, doppler_sigma,  gamma_natural, gamma_hitran, normalized_doppler_sigma
 from exojax.spec.exomol import gamma_exomol
@@ -121,7 +122,7 @@ class AutoXS(object):
                 mdb.nu_lines, nus)
             nsigmaD = normalized_doppler_sigma(T, molmass, R_mol)
             ngammaL = gammaL/(mdb.nu_lines/R_mol)
-            ngammaL_grid = modit.ditgrid(ngammaL, res=0.1)
+            ngammaL_grid = ditgrid_log_interval(ngammaL, dit_grid_resolution = 0.1)
             xsv = modit.xsvector(cnu, indexnu, R_mol, pmarray,
                                  nsigmaD, ngammaL, Sij, nus, ngammaL_grid)
             if ~checknus and self.autogridconv:
@@ -130,16 +131,15 @@ class AutoXS(object):
             sigmaD = doppler_sigma(mdb.nu_lines, T, molmass)
             checknus = check_scale_nugrid(self.nus, gridmode='ESLIN')
             nus = self.autonus(checknus, 'ESLIN')
-            sigmaD_grid = dit.ditgrid(sigmaD, res=0.1)
-            gammaL_grid = dit.ditgrid(gammaL, res=0.1)
+            sigmaD_grid = ditgrid_log_interval(sigmaD, dit_grid_resolution = 0.1)
+            gammaL_grid = ditgrid_log_interval(gammaL, dit_grid_resolution = 0.1)
             cnu, indexnu, pmarray = initspec.init_dit(mdb.nu_lines, nus)
             xsv = dit.xsvector(cnu, indexnu, pmarray, sigmaD,
                                gammaL, Sij, nus, sigmaD_grid, gammaL_grid)
             if ~checknus and self.autogridconv:
                 xsv = jnp.interp(self.nus, nus, xsv)
         else:
-            print('Error:', xsmode, ' is unavailable (auto/LPF/DIT).')
-            xsv = None
+            raise ValueError('unavailable xsmode. Use LPF|lpf|MODIT|modit|DIT|dit.')
         return xsv
 
     def autonus(self, checknus, tag='ESLOG'):

@@ -1,1 +1,0 @@
-This directory contains comparisons for high dynamic range opacity

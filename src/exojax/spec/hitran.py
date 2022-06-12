@@ -2,10 +2,14 @@ from jax import jit
 import jax.numpy as jnp
 from exojax.utils.constants import hcperk
 
-
-@jit
 def SijT(T, logsij0, nu_lines, elower, qT):
-    """Line strength as a function of temperature.
+   """duplicated by hitran.line_strength, will be removed. 
+   """
+   return line_strength(T, logsij0, nu_lines, elower, qT)
+   
+@jit
+def line_strength(T, logsij0, nu_lines, elower, qT):
+    """Line strength as a function of temperature.w
 
     Args:
        T: temperature (K)
