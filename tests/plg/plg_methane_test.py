@@ -34,7 +34,7 @@ def test_plg_methane():
     mdbc = moldb.MdbExomol('.database/CH4/12C-1H4/YT10to10/', nusc)
 
     ts = time.time()
-    coefTgue = plg.optimize_coefTgue(Tgue, nusc, mdbc, molmassCH4, errTgue)
+    coefTgue = plg.optimize_coefTgue(Tgue, nusc, mdbc, molmassCH4, Nelower, errTgue)
     te = time.time()
     print(te-ts, "sec for", len(mdbc.A), "lines,  coefTgue =", coefTgue)
 

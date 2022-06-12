@@ -34,8 +34,8 @@ def test_plg_h2o():
     mdbc = moldb.MdbExomol('.database/H2O/1H2-16O/POKAZATEL/', nusc)
 
     ts = time.time()
-    coefTgue = plg.optimize_coefTgue(Tgue, nusc, mdbc, molmassH2O, errTgue)
-    #coefTgue = plg.optimize_coefTgue(Tgue, nus, mdb_orig, molmassH2O) #373.4 sec for 1418720 lines.
+    coefTgue = plg.optimize_coefTgue(Tgue, nusc, mdbc, molmassH2O, Nelower, errTgue)
+    #coefTgue = plg.optimize_coefTgue(Tgue, nus, mdb_orig, molmassH2O, Nelower) #373.4 sec for 1418720 lines.
     te = time.time()
     print(te-ts, "sec for", len(mdbc.A), "lines,  coefTgue =", coefTgue)
 

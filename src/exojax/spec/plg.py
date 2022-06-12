@@ -9,7 +9,7 @@ from exojax.utils.constants import hcperk
 from exojax.spec.hitran import SijT
 
 
-def plg_elower_addcon(indexa,Na,cnu,indexnu,nu_grid,mdb,Tgue, errTgue=500., elower_grid=None,Nelower=10,Ncrit=0,reshape=False, weedout=False, preov=0., coefTgue=1., verbose=True):
+def plg_elower_addcon(indexa,Na,cnu,indexnu,nu_grid,mdb,Tgue, errTgue=500., elower_grid=None,Nelower=10,Ncrit=0,reshape=False, weedout=False, Tmargin=0., coefTgue=1., verbose=True):
     """Pseudo Line Grid for elower w/ an additional condition
     
     Args:
@@ -26,7 +26,7 @@ def plg_elower_addcon(indexa,Na,cnu,indexnu,nu_grid,mdb,Tgue, errTgue=500., elow
        Ncrit: frozen line number per bin
        reshape: reshaping output arrays
        weedout: Is it ok to remove weakest lines or not?
-       preov: ad hoc parameter to prevent overflow
+       Tmargin: margin even above Tuplim to prevent freeze of lines that  become strong enough as temperature rises slightly. (more needed for cooler objects)
        coefTgue: coefficient for Tgue to optimize elower_grid
        verbose: vervose printing or not
 
@@ -44,13 +44,14 @@ def plg_elower_addcon(indexa,Na,cnu,indexnu,nu_grid,mdb,Tgue, errTgue=500., elow
     Tref = 296.0
     Tuplim = Tgue + errTgue
     Tuplimc = Tuplim * coefTgue
-    preov = max(- hcperk*(elower/Tuplimc - elower/Tref)) - 80. if preov==0. else preov
+    float32_almost_max = 2.**(2**7-1)
+    preov = max(- hcperk*(elower/Tuplimc - elower/Tref)) - np.log(float32_almost_max) #ad hoc parameter to prevent overflow
     with warnings.catch_warnings():
         warnings.simplefilter('error')
         try:
             expme = np.exp(- hcperk*(elower/Tuplimc - elower/Tref) - preov)
         except RuntimeWarning as e:
-            raise Exception(str(e)+' :\t Please adjust "preov"...')
+            raise Exception(str(e)+' :\t expme does not fall within the representable range of single-precision floating-point number (float32) ...')
         if elower_grid is None:
             margin = 1.0
             min_expme = np.exp(- hcperk*((min(elower)-margin)/Tuplimc - (min(elower)-margin)/Tref) - preov)
@@ -61,7 +62,7 @@ def plg_elower_addcon(indexa,Na,cnu,indexnu,nu_grid,mdb,Tgue, errTgue=500., elow
             expme_grid = np.exp(elower_grid*(1/Tuplimc - 1/Tref)*(-hcperk) - preov)
             Nelower=len(expme_grid)
 
-    qlogsij0,qcnu,num_unique,frozen_mask=get_qlogsij0_addcon(indexa,Na,cnu,indexnu,Nnugrid,mdb,expme,expme_grid,Ncrit=Ncrit, Tuplim=Tuplim)
+    qlogsij0, qcnu, num_unique, frozen_mask = get_qlogsij0_addcon(indexa, Na, cnu, indexnu, Nnugrid, mdb, expme, expme_grid, Ncrit=Ncrit, Tuplim=Tuplim, Tmargin=Tmargin)
     
     nonzeropl_mask=qlogsij0>-np.inf
     Nline=len(elower)
@@ -83,7 +84,7 @@ def plg_elower_addcon(indexa,Na,cnu,indexnu,nu_grid,mdb,Tgue, errTgue=500., elow
     return qlogsij0,qcnu,num_unique,elower_grid,frozen_mask,nonzeropl_mask
 
 
-def get_qlogsij0_addcon(indexa,Na,cnu,indexnu,Nnugrid,mdb,expme,expme_grid, Ncrit=0, Tuplim=1000., threshold_persist_freezing=10000):
+def get_qlogsij0_addcon(indexa,Na,cnu,indexnu,Nnugrid,mdb,expme,expme_grid, Ncrit=0, Tuplim=1000., Tmargin=0., threshold_persist_freezing=10000.):
     """gather (freeze) lines w/ additional indexing
 
     Args:
@@ -93,10 +94,11 @@ def get_qlogsij0_addcon(indexa,Na,cnu,indexnu,Nnugrid,mdb,expme,expme_grid, Ncri
        indexnu: index of wavenumber
        Nnugrid: number of nu grid
        mdb: molecular database (instance made by the MdbExomol/MdbHit class in moldb.py)
-       expme: exp(- hcperk*(elower/Tuplimc - elower/Tref) - preov)
+       expme: array of exponentials of functions of elower: exp(- hcperk*(elower/Tuplimc - elower/Tref) - preov)
        expme_grid: grid of expme
        Ncrit: frozen line number per bin
        Tuplim: rough guess on the typical atmospheric temperature
+       Tmargin: margin even above Tuplim to prevent freeze of lines that  become strong enough as temperature rises slightly. (more needed for cooler objects)
        threshold_persist_freezing: How weak lines compared to the deepest one will you persist freezing (not retaken)?
 
     Returns:
@@ -122,9 +124,9 @@ def get_qlogsij0_addcon(indexa,Na,cnu,indexnu,Nnugrid,mdb,expme,expme_grid, Ncri
     frozen_mask=np.isin(eindex,frozen_eindex)
     
     #Retake relatively strong lines.
-    SijTgue_frozen = SijT(Tuplim+500., \
+    SijTgue_frozen = SijT(Tuplim+Tmargin, \
                     mdb.logsij0[frozen_mask], mdb.nu_lines[frozen_mask], mdb.elower[frozen_mask], \
-                    qT=mdb.qr_interp(Tuplim+500.))
+                    qT=mdb.qr_interp(Tuplim+Tmargin))
     persist_freezing = SijTgue_frozen < max(SijTgue_frozen) / threshold_persist_freezing
     index_persist_freezing = np.where(frozen_mask)[0][persist_freezing]
     frozen_mask = np.isin(np.arange(len(frozen_mask)), index_persist_freezing)
@@ -238,7 +240,7 @@ def get_qlogsij0(cnu,indexnu,Nnugrid,logsij0,expme,expme_grid,Nelower=10,Ncrit=0
     return qlogsij0,qcnu,num_unique,frozen_mask
 
 
-def optimize_coefTgue(Tgue, nus, mdb, molmass, errTgue=500., Mgue=41., Rgue=1., MMRgue=0.001):
+def optimize_coefTgue(Tgue, nus, mdb, molmass, Nelower, errTgue=500., Mgue=41., Rgue=1., MMRgue=0.001):
     """Optimize coefTgue for adjusting elower_grid
     
     Args:
@@ -246,6 +248,7 @@ def optimize_coefTgue(Tgue, nus, mdb, molmass, errTgue=500., Mgue=41., Rgue=1., 
         nus: wavenumber grid for model
         mdb: molecular database (instance made by the MdbExomol/MdbHit class in moldb.py)
         molmass: mass of the molecule (amu)
+        Nelower: # of elower grid
         errTgue: expected one-sided error of Tgue
         Mgue: rough guess on the mass
         Rgue: rough guess on the radius
@@ -257,11 +260,11 @@ def optimize_coefTgue(Tgue, nus, mdb, molmass, errTgue=500., Mgue=41., Rgue=1., 
     """
     import scipy.optimize as opt
     coefTgue_opt = opt.least_squares(\
-    fun=diff_frozen_vs_pseudo, x0=[1.0,], bounds=(0.5, 2.0), args=[Tgue, errTgue, Mgue, Rgue, MMRgue, nus, mdb, molmass])
+    fun=diff_frozen_vs_pseudo, x0=[1.0,], bounds=(0.5, 2.0), args=[Tgue, errTgue, Mgue, Rgue, MMRgue, nus, mdb, molmass, Nelower])
     return coefTgue_opt.x[0]
 
     
-def diff_frozen_vs_pseudo(coefTgue_init, Tgue, errTgue, Mgue, Rgue, MMRgue, nus, mdb_orig, molmass, verbose=False):
+def diff_frozen_vs_pseudo(coefTgue_init, Tgue, errTgue, Mgue, Rgue, MMRgue, nus, mdb_orig, molmass, Nelower, verbose=False):
     """Evaluate difference between pseudo lines and the original lines
     
     Args:
@@ -274,6 +277,7 @@ def diff_frozen_vs_pseudo(coefTgue_init, Tgue, errTgue, Mgue, Rgue, MMRgue, nus,
         nus: wavenumber grid for model
         mdb_orig: original molecular database before compression (instance made by the MdbExomol/MdbHit class in moldb.py)
         molmass: mass of the molecule (amu)
+        Nelower: # of elower grid
         verbose: vervose printing or not
     
     Returns:
@@ -282,7 +286,6 @@ def diff_frozen_vs_pseudo(coefTgue_init, Tgue, errTgue, Mgue, Rgue, MMRgue, nus,
     """
     coefTgue = coefTgue_init[0]
     Ncrit = 0 #10
-    Nelower = 7
     from exojax.spec import initspec
     import matplotlib.pyplot as plt
     import copy
@@ -352,7 +355,29 @@ def diff_frozen_vs_pseudo(coefTgue_init, Tgue, errTgue, Mgue, Rgue, MMRgue, nus,
     mu_pseu = frun_pseu(Tarr=(Tgue+errTgue)*(Parr/Pref)**0.1, MMR_=MMRgue,Mp=Mgue,Rp=Rgue,u1=0.0,u2=0.0,RV=0.0,vsini=0.1)
     mu_orig = frun_orig(Tarr=(Tgue+errTgue)*(Parr/Pref)**0.1, MMR_=MMRgue,Mp=Mgue,Rp=Rgue,u1=0.0,u2=0.0,RV=0.0,vsini=0.1)
     return abs(np.mean(mu_pseu - mu_orig))
-        
+
+
+def make_gamma_grid_exomol(mdb):
+    """Make grids of parameters for Lorentzian width and an associated index.
+
+    Args:
+        mdb: molecular database (instance made by the MdbExomol/MdbHit class in moldb.py)
+
+    Returns:
+        alpha_ref_grid: grid of alpha_ref (gamma0)
+        n_Texp_grid: grid of temperature exponent of gamma
+        index_gamma: grid-index of the parameters above for each original line
+
+    """
+    gammaL_set = mdb.alpha_ref+mdb.n_Texp*(1j) #complex value
+    gammaL_set_unique = np.unique(gammaL_set)
+    alpha_ref_grid = gammaL_set_unique.real
+    n_Texp_grid = gammaL_set_unique.imag
+    index_gamma = np.zeros_like(mdb.alpha_ref,dtype = int)
+    for j,a in enumerate(gammaL_set_unique):
+        index_gamma = np.where(gammaL_set == a, j, index_gamma)
+    return alpha_ref_grid, n_Texp_grid, index_gamma
+    
         
 def gather_lines(mdb,Na,Nnugrid,Nelower,nu_grid,cnu,indexnu,qlogsij0,qcnu,elower_grid,alpha_ref_grid,n_Texp_grid,frozen_mask,nonzeropl_mask):
     """gather pseudo lines and unfrozen lines into lines for exomol
