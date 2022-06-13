@@ -311,7 +311,7 @@ def diff_frozen_vs_pseudo(coefTgue_init, Tgue, errTgue, Mgue, Rgue, MMRgue, nus,
 
     from exojax.spec import rtransfer as rt
     from exojax.spec import dit, modit
-    from exojax.spec.rtransfer import rtrun, dtauM, nugrid
+    from exojax.spec.rtransfer import rtrun, dtauM
     from exojax.spec import planck, response
 
     NP=100
@@ -319,13 +319,13 @@ def diff_frozen_vs_pseudo(coefTgue_init, Tgue, errTgue, Mgue, Rgue, MMRgue, nus,
     Pref=1.0 #bar
     ONEARR=np.ones_like(Parr)
     
-    from exojax.spec.modit import setdgm_exomol
+    from exojax.spec.modit import set_ditgrid_matrix_exomol
     fT = lambda T0,alpha: T0[:,None]*(Parr[None,:]/Pref)**alpha[:,None]
     T0_test=np.array([Tgue+errTgue-300.,Tgue+errTgue+300.,Tgue+errTgue-300.,Tgue+errTgue+300.])
     alpha_test=np.array([0.2,0.2,0.05,0.05])
     res=0.2
-    dgm_ngammaL = setdgm_exomol(mdb, fT, Parr, R, molmass, res, T0_test, alpha_test)
-    dgm_ngammaL_orig = setdgm_exomol(mdb_orig, fT, Parr, R, molmass, res, T0_test, alpha_test)
+    dgm_ngammaL = set_ditgrid_matrix_exomol(mdb, fT, Parr, R, molmass, res, T0_test, alpha_test)
+    dgm_ngammaL_orig = set_ditgrid_matrix_exomol(mdb_orig, fT, Parr, R, molmass, res, T0_test, alpha_test)
 
     def frun_pseu(Tarr,MMR_,Mp,Rp,u1,u2,RV,vsini):
         g=2478.57730044555*Mp/Rp**2
