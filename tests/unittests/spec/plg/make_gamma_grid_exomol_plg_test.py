@@ -11,10 +11,10 @@ def test_make_gamma_grid_exomol_plg():
         mdb = pickle.load(f)
     alpha_ref_grid, n_Texp_grid, index_gamma = plg.make_gamma_grid_exomol(mdb)
 
-    assert len(alpha_ref_grid) == 100
-    assert np.isclose(np.sum(alpha_ref_grid), 3.7375998)
-    assert np.isclose(np.sum(n_Texp_grid), 24.8)
-    assert np.sum(index_gamma) == 123958
+    assert len(alpha_ref_grid) == 35
+    assert np.isclose(np.sum(alpha_ref_grid), 1.2168)
+    assert np.isclose(np.sum(n_Texp_grid), 8.293)
+    assert np.sum(index_gamma) == 829
     
 if __name__ == "__main__":
     test_make_gamma_grid_exomol_plg()

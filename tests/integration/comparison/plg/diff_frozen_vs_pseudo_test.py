@@ -25,7 +25,7 @@ def test_diff_frozen_vs_pseudo():
     molmass = molinfo.molmass("H2O")
 
     diff = plg.diff_frozen_vs_pseudo([0.8,], Tgue, errTgue, Mgue, Rgue, MMRgue, nus, mdb, molmass, Nelower)
-    assert np.isclose(diff, 1872.8, rtol=1e-4)
+    assert np.isclose(diff, 38.7343, rtol=1e-4)
     
 if __name__ == "__main__":
     test_diff_frozen_vs_pseudo()
