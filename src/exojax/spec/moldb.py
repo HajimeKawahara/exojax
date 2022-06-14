@@ -762,7 +762,7 @@ class MdbHit(object):
         Returns:
            qr(T)=Q(T)/Q(Tref) interpolated in jnp.array
         """
-        return self.QT_iso_interp(idx, T)/self.QT_iso_interp(idx, self.Tref)
+        return self.QT_iso_interp(idx, T)/self.QT_iso_interp(idx, Tref)
 
     def Qr_HAPI(self, Tarr):
         """Partition Function ratio using HAPI partition data.
