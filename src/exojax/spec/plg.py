@@ -9,7 +9,7 @@ from exojax.utils.constants import hcperk
 from exojax.spec.hitran import SijT
 
 
-def plg_elower_addcon(indexa,Na,cnu,indexnu,nu_grid,mdb,Tgue, errTgue=500., elower_grid=None,Nelower=10,Ncrit=0,reshape=False, weedout=False, Tmargin=0., coefTgue=1., verbose=True):
+def plg_elower_addcon(indexa,Na,cnu,indexnu,nu_grid,mdb,Tgue, errTgue=500., elower_grid=None,Nelower=10,Ncrit=0,reshape=False, weedout=False, Tmargin=0., coefTgue=1., verbose=True, threshold_persist_freezing=10000.):
     """Pseudo Line Grid for elower w/ an additional condition
     
     Args:
@@ -29,6 +29,7 @@ def plg_elower_addcon(indexa,Na,cnu,indexnu,nu_grid,mdb,Tgue, errTgue=500., elow
        Tmargin: margin even above Tuplim to prevent freeze of lines that  become strong enough as temperature rises slightly. (more needed for cooler objects)
        coefTgue: coefficient for Tgue to optimize elower_grid
        verbose: vervose printing or not
+       threshold_persist_freezing: How weak lines compared to the deepest one will you persist freezing (not retaken)?
 
     Returns:
        qlogsij0: pseudo logsij0
@@ -62,7 +63,7 @@ def plg_elower_addcon(indexa,Na,cnu,indexnu,nu_grid,mdb,Tgue, errTgue=500., elow
             expme_grid = np.exp(elower_grid*(1/Tuplimc - 1/Tref)*(-hcperk) - preov)
             Nelower=len(expme_grid)
 
-    qlogsij0, qcnu, num_unique, frozen_mask = get_qlogsij0_addcon(indexa, Na, cnu, indexnu, Nnugrid, mdb, expme, expme_grid, Ncrit=Ncrit, Tuplim=Tuplim, Tmargin=Tmargin)
+    qlogsij0, qcnu, num_unique, frozen_mask = get_qlogsij0_addcon(indexa, Na, cnu, indexnu, Nnugrid, mdb, expme, expme_grid, Ncrit=Ncrit, Tuplim=Tuplim, Tmargin=Tmargin, threshold_persist_freezing=threshold_persist_freezing)
     
     nonzeropl_mask=qlogsij0>-np.inf
     Nline=len(elower)
@@ -449,4 +450,45 @@ def gather_lines(mdb,Na,Nnugrid,Nelower,nu_grid,cnu,indexnu,qlogsij0,qcnu,elower
     
     return mdb, cnu, indexnu
 
+    
+def MdbExomol_plg(path_database, nus, Tgue, errTgue=500., Nelower=7, assess_width=1., threshold_persist_freezing=10000.):
+    """Obtain molecular database (mdb) from the Exomol while reducing the number of weak lines by plg. (This function summarizes the plg procedure.)
+    
+    Args:
+        path_database: path for Exomol data directory/tag. For instance, "/home/CO/12C-16O/Li2015"
+        nus: wavenumber grid for model
+        Tgue: rough guess on the typical atmospheric temperature
+        errTgue: expected one-sided error of Tgue
+        Nelower: The number of elower grid
+        assess_width: To save computation time, let us use only this wavelength width in the middle of the whole range to optimize coefTgue. (Note that too narrow might cause a ValueError.)
+        threshold_persist_freezing: How weak lines compared to the deepest one will you persist freezing (not retaken)?
+
+    Returns:
+        mdb: molecular database instance
+        cnu: contribution of wavenumber for LSD
+        indexnu: nu index
+        
+    """
+    from exojax.spec import plg, moldb, initspec
+    from exojax.spec.setrt import gen_wavenumber_grid
+    mdb = moldb.MdbExomol(path_database, nus, crit=0.)
+    molmass = mdb.molmass
+    
+    wls, wll = min(1.e8/nus), max(1.e8/nus)
+    nusc, wavc, resoc = gen_wavenumber_grid( (wll+wls-assess_width)/2, (wll+wls+assess_width)/2, int(assess_width/0.05), unit="AA", xsmode="modit")
+    mdbc = moldb.MdbExomol(path_database, nusc)
+    coefTgue = optimize_coefTgue(Tgue, nusc, mdbc, molmass, Nelower, errTgue)
+    print("coefTgue =", coefTgue, " (by assessing", len(mdbc.A), "lines in", assess_width, "angstrom width.)"  )
+    
+    cnu,indexnu,R,pmarray = initspec.init_modit(mdb.nu_lines, nus)
+    alpha_ref_grid, n_Texp_grid, index_gamma = make_gamma_grid_exomol(mdb)
+    Ngamma = len(alpha_ref_grid)
+
+    #Generate plg and Update mdb
+    qlogsij0, qcnu, num_unique, elower_grid, frozen_mask, nonzeropl_mask = plg_elower_addcon(\
+        index_gamma, Ngamma, cnu, indexnu, nus, mdb, Tgue, errTgue, \
+        Nelower=Nelower, Tmargin=0., coefTgue=coefTgue, threshold_persist_freezing=threshold_persist_freezing)
+    mdb, cnu, indexnu = gather_lines(mdb, Ngamma, len(nus), Nelower, nus, cnu, indexnu, qlogsij0, qcnu, elower_grid, alpha_ref_grid, n_Texp_grid, frozen_mask, nonzeropl_mask)
+    
+    return mdb, cnu, indexnu
     
