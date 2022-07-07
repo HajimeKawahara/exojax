@@ -1,3 +1,6 @@
+""" Reverse modeling of Methane emission spectrum using MODIT
+"""
+
 #!/usr/bin/env python
 # coding: utf-8
 import arviz
