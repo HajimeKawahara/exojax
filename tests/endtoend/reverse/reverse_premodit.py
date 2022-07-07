@@ -2,7 +2,7 @@
 # coding: utf-8
 import arviz
 from jax import jit, vmap
-from exojax.spec.modit import setdgm_hitran
+from exojax.spec.modit import setdgm_exomol
 from numpyro.diagnostics import hpdi
 from numpyro.infer import Predictive
 from numpyro.infer import MCMC, NUTS
@@ -17,10 +17,10 @@ import jax.numpy as jnp
 from exojax.spec import rtransfer as rt
 from exojax.spec import dit, modit
 from exojax.spec import moldb, contdb
-from exojax.spec.hitran import gamma_hitran
+from exojax.spec.exomol import gamma_exomol
 from exojax.spec import gamma_natural
 from exojax.spec.hitran import SijT
-from exojax.spec.dit import npgetix
+from exojax.spec.lsd import npgetix
 from exojax.spec import rtransfer as rt
 from exojax.spec.rtransfer import nugrid
 from exojax.spec.rtransfer import rtrun, dtauM, dtauCIA, nugrid
@@ -33,7 +33,7 @@ from exojax.spec import normalized_doppler_sigma
 import numpy as np
 from exojax.spec import initspec
 
-dat = pd.read_csv('spectrum_co.txt', delimiter=',', names=('wav', 'flux'))
+dat = pd.read_csv('spectrum_ch4.txt', delimiter=',', names=('wav', 'flux'))
 wavd = dat['wav'].values
 flux = dat['flux'].values
 nusd = jnp.array(1.e8/wavd[::-1])
@@ -50,7 +50,7 @@ Rinst = 100000.
 beta_inst = R2STD(Rinst)
 
 
-molmassCO = molinfo.molmass('CO')
+molmassCH4 = molinfo.molmass('CH4')
 mmw = 2.33  # mean molecular weight
 mmrH2 = 0.74
 molmassH2 = molinfo.molmass('H2')
@@ -58,9 +58,9 @@ vmrH2 = (mmrH2*mmw/molmassH2)  # VMR
 
 #
 Mp = 33.2
-mdbCO=moldb.MdbHit('.database/CO/05_HITEMP2019/05_HITEMP2019.par.bz2',nus,crit=1.e-30)
+mdbCH4 = moldb.MdbExomol('.database/CH4/12C-1H4/YT10to10/', nus, crit=1.e-30)
 cdbH2H2 = contdb.CdbCIA('.database/H2-H2_2011.cia', nus)
-print('N=', len(mdbCO.nu_lines))
+print('N=', len(mdbCH4.nu_lines))
 
 # Reference pressure for a T-P model
 Pref = 1.0  # bar
@@ -69,7 +69,7 @@ ONEWAV = jnp.ones_like(nflux)
 
 #
 
-cnu, indexnu, R, pmarray = initspec.init_modit(mdbCO.nu_lines, nus)
+cnu, indexnu, R, pmarray = initspec.init_modit(mdbCH4.nu_lines, nus)
 
 # Precomputing gdm_ngammaL
 
@@ -80,35 +80,33 @@ def fT(T0, alpha): return T0[:, None]*(Parr[None, :]/Pref)**alpha[:, None]
 T0_test = np.array([1100.0, 1500.0, 1100.0, 1500.0])
 alpha_test = np.array([0.2, 0.2, 0.05, 0.05])
 res = 0.2
-vmrCO_ref = 4.9e-4
-dgm_ngammaL = setdgm_hitran(
-    mdbCO, fT, Parr, Parr*vmrCO_ref, R, molmassCO, res, T0_test, alpha_test)
+dgm_ngammaL = setdgm_exomol(
+    mdbCH4, fT, Parr, R, molmassCH4, res, T0_test, alpha_test)
 
 # check dgm
 if False:
     from exojax.plot.ditplot import plot_dgmn
     Tarr = 1300.*(Parr/Pref)**0.1
-    SijM_CO, ngammaLM_CO, nsigmaDl_CO = modit.hitran(
-        mdbCO, Tarr, Parr, Parr*vmrCO_ref, R, molmassCO)
-    plot_dgmn(Parr, dgm_ngammaL, ngammaLM_CO, 0, 6)
+    SijM_CH4, ngammaLM_CH4, nsigmaDl_CH4 = modit.exomol(
+        mdbCH4, Tarr, Parr, R, molmassCH4)
+    plot_dgmn(Parr, dgm_ngammaL, ngammaLM_CH4, 0, 6)
     plt.show()
 
 # a core driver
 
 
-def frun(Tarr, MMR_CO, Mp, Rp, u1, u2, RV, vsini):
+def frun(Tarr, MMR_CH4, Mp, Rp, u1, u2, RV, vsini):
     g = 2478.57730044555*Mp/Rp**2
-    VMR_CO = MMR_CO*mmw/molmassCO
-    SijM_CO, ngammaLM_CO, nsigmaDl_CO = modit.hitran(
-        mdbCO, Tarr, Parr, Parr*VMR_CO, R, molmassCO)
-    xsm_CO = modit.xsmatrix(
-        cnu, indexnu, R, pmarray, nsigmaDl_CO, ngammaLM_CO, SijM_CO, nus, dgm_ngammaL)
+    SijM_CH4, ngammaLM_CH4, nsigmaDl_CH4 = modit.exomol(
+        mdbCH4, Tarr, Parr, R, molmassCH4)
+    xsm_CH4 = modit.xsmatrix(
+        cnu, indexnu, R, pmarray, nsigmaDl_CH4, ngammaLM_CH4, SijM_CH4, nus, dgm_ngammaL)
     # abs is used to remove negative values in xsv
-    dtaumCO = dtauM(dParr, jnp.abs(xsm_CO), MMR_CO*ONEARR, molmassCO, g)
+    dtaumCH4 = dtauM(dParr, jnp.abs(xsm_CH4), MMR_CH4*ONEARR, molmassCH4, g)
     # CIA
     dtaucH2H2 = dtauCIA(nus, Tarr, Parr, dParr, vmrH2, vmrH2,
                         mmw, g, cdbH2H2.nucia, cdbH2H2.tcia, cdbH2H2.logac)
-    dtau = dtaumCO+dtaucH2H2
+    dtau = dtaumCH4+dtaucH2H2
     sourcef = planck.piBarr(Tarr, nus)
     F0 = rtrun(dtau, sourcef)/norm
     Frot = response.rigidrot(nus, F0, vsini, u1, u2)
@@ -119,7 +117,7 @@ def frun(Tarr, MMR_CO, Mp, Rp, u1, u2, RV, vsini):
 # test
 if False:
     Tarr = 1200.0*(Parr/Pref)**0.1
-    mu = frun(Tarr, MMR_CO=0.0059, Mp=33.2, Rp=0.88,
+    mu = frun(Tarr, MMR_CH4=0.0059, Mp=33.2, Rp=0.88,
               u1=0.0, u2=0.0, RV=10.0, vsini=20.0)
     plt.plot(wavd, mu)
     plt.show()
@@ -130,7 +128,7 @@ Mp = 33.2
 def model_c(nu1, y1):
     Rp = numpyro.sample('Rp', dist.Uniform(0.4, 1.2))
     RV = numpyro.sample('RV', dist.Uniform(5.0, 15.0))
-    MMR_CO = numpyro.sample('MMR_CO', dist.Uniform(0.0, 0.015))
+    MMR_CH4 = numpyro.sample('MMR_CH4', dist.Uniform(0.0, 0.015))
     T0 = numpyro.sample('T0', dist.Uniform(1000.0, 1500.0))
     alpha = numpyro.sample('alpha', dist.Uniform(0.05, 0.2))
     vsini = numpyro.sample('vsini', dist.Uniform(15.0, 25.0))
@@ -139,8 +137,8 @@ def model_c(nu1, y1):
     u2 = 0.0
     # T-P model//
     Tarr = T0*(Parr/Pref)**alpha
-    # line computation CO
-    mu = frun(Tarr, MMR_CO, Mp, Rp, u1, u2, RV, vsini)
+    # line computation CH4
+    mu = frun(Tarr, MMR_CH4, Mp, Rp, u1, u2, RV, vsini)
     numpyro.sample('y1', dist.Normal(mu, sigmain), obs=y1)
 
 
@@ -170,7 +168,7 @@ plt.xlabel('wavelength ($\AA$)', fontsize=16)
 plt.legend(fontsize=16)
 plt.tick_params(labelsize=16)
 
-pararr = ['Rp', 'T0', 'alpha', 'MMR_CO', 'vsini', 'RV']
+pararr = ['Rp', 'T0', 'alpha', 'MMR_CH4', 'vsini', 'RV']
 arviz.plot_pair(arviz.from_numpyro(mcmc), kind='kde',
                 divergences=False, marginals=True)
 plt.show()
