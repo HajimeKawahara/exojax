@@ -84,7 +84,7 @@ dgm_ngammaL = setdgm_exomol(
     mdbCH4, fT, Parr, R, molmassCH4, res, T0_test, alpha_test)
 
 # check dgm
-if False:
+if True:
     from exojax.plot.ditplot import plot_dgmn
     Tarr = 1300.*(Parr/Pref)**0.1
     SijM_CH4, ngammaLM_CH4, nsigmaDl_CH4 = modit.exomol(
@@ -122,6 +122,10 @@ if False:
     plt.plot(wavd, mu)
     plt.show()
 
+import sys
+sys.exit()
+
+    
 Mp = 33.2
 
 

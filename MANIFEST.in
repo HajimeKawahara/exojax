@@ -7,6 +7,7 @@ include src/exojax/data/atom/NIST_Atomic_Ionization_Energies.txt
 
 include src/exojax/data/testdata/spectrum.txt
 include src/exojax/data/testdata/spectrum_ch4.txt
+include src/exojax/data/testdata/spectrum_ch4_new.txt
 include src/exojax/data/testdata/spectrum_co.txt
 include src/exojax/data/testdata/moldb_co_exomol.pickle
 include src/exojax/data/testdata/lpf_test_ref.txt
