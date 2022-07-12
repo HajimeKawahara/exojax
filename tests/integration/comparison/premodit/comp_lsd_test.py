@@ -45,7 +45,7 @@ def compare_line_shape_density(mdb,nu_grid,Ttest=1000.0,interval_contrast=0.1,Tt
     elower_grid = make_elower_grid(Ttyp,
                                    mdb._elower,
                                    interval_contrast=interval_contrast)
-    lbd = generate_lbd(mdb.Sij0, mdb.nu_lines, nu_grid, ngamma_ref,
+    lbd, multi_index_uniqgrid = generate_lbd(mdb.Sij0, mdb.nu_lines, nu_grid, ngamma_ref,
                        ngamma_ref_grid, mdb._n_Texp, n_Texp_grid, mdb._elower,
                        elower_grid, Ttyp)
     qT = mdb.qr_interp(Ttest)

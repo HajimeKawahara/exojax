@@ -260,7 +260,7 @@ def g_bias(nu_in, T):
     """
     Args:
         nu_in: wavenumber in cm-1
-        T: temperature for unbiasing in Kelvin
+        T: txbemperature for unbiasing in Kelvin
 
     Returns:
         bias g function
