@@ -394,7 +394,7 @@ class MdbExomol(object):
         return self.QT_interp(T)/self.QT_interp(Tref)
 
     def download(self, molec, extension, numtag=None):
-        """Downloading Exomol files via a common API (CAPI).
+        """Downloading Exomol files.
 
         Args:
            molec: like "12C-16O__Li2015"
