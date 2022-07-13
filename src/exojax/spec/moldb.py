@@ -77,15 +77,15 @@ class MdbExomol(object):
         self.def_file = self.path/pathlib.Path(molec+'.def')
         self.broad_file = self.path/pathlib.Path(molecbroad+'.broad')
 
-       if not self.def_file.exists():
+        if not self.def_file.exists():
             self.download(molec, extension=['.def'])
-"""        if not self.pf_file.exists():
+        if not self.pf_file.exists():
             self.download(molec, extension=['.pf'])
         if not self.states_file.exists():
             self.download(molec, extension=['.states.bz2'])
         if not self.broad_file.exists():
             self.download(molec, extension=['.broad'])
-"""            
+            
         # load def
         self.n_Texp_def, self.alpha_ref_def, self.molmass, numinf, numtag = exomolapi.read_def(
             self.def_file)
@@ -350,7 +350,7 @@ class MdbExomol(object):
             self._alpha_ref = np.array(
                 self.alpha_ref_def*np.ones_like(self._jlower))
             self._n_Texp = np.array(self.n_Texp_def*np.ones_like(self._jlower))
-    #remain
+            
     def generate_jnp_arrays(self):
         """(re)generate jnp.arrays.
 
@@ -371,7 +371,6 @@ class MdbExomol(object):
         self.alpha_ref = jnp.array(self._alpha_ref)
         self.n_Texp = jnp.array(self._n_Texp)
     
-    #remain 
     def QT_interp(self, T):
         """interpolated partition function.
 
@@ -383,7 +382,6 @@ class MdbExomol(object):
         """
         return jnp.interp(T, self.T_gQT, self.gQT)
 
-    #remain
     def qr_interp(self, T):
         """interpolated partition function ratio.
 
@@ -395,7 +393,6 @@ class MdbExomol(object):
         """
         return self.QT_interp(T)/self.QT_interp(Tref)
 
-    #use radis API 
     def download(self, molec, extension, numtag=None):
         """Downloading Exomol files via a common API (CAPI).
 
@@ -765,7 +762,7 @@ class MdbHit(object):
         Returns:
            qr(T)=Q(T)/Q(Tref) interpolated in jnp.array
         """
-        return self.QT_iso_interp(idx, T)/self.QT_iso_interp(idx, self.Tref)
+        return self.QT_iso_interp(idx, T)/self.QT_iso_interp(idx, Tref)
 
     def Qr_HAPI(self, Tarr):
         """Partition Function ratio using HAPI partition data.
