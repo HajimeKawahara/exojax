@@ -19,7 +19,7 @@ def xsvector(T, P, nsigmaD, lbd, R, pmarray, nu_grid, elower_grid,
     """compute cross section vector
 
     Args:
-        T (_type_): temperature in Kelvon
+        T (_type_): temperature in Kelvin
         P (_type_): pressure in bar
         nsigmaD: normalized doplar STD
         lbd (_type_): log biased line shape density (LBD)
