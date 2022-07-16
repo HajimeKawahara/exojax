@@ -273,7 +273,7 @@ def set_ditgrid_matrix_hitran(mdb, fT, Parr, Pself_ref, R, molmass,
                                           molmass)
         set_dgm_minmax.append(
             minmax_ditgrid_matrix(ngammaLM, dit_grid_resolution))
-    dgm_ngammaL = precompute_ditgrid_matrix(
+    dgm_ngammaL = precompute_modit_ditgrid_matrix(
         set_dgm_minmax, dit_grid_resolution=dit_grid_resolution)
     return jnp.array(dgm_ngammaL)
 
@@ -409,7 +409,7 @@ def set_ditgrid_matrix_vald_each(ielem, iion, atomicmass, ionE, dev_nu_lines,
         ngammaLM = scan(floop, 0, ngammaLM)[1]
         set_dgm_minmax.append(
             minmax_ditgrid_matrix(ngammaLM, dit_grid_resolution))
-    dgm_ngammaL = precompute_ditgrid_matrix(
+    dgm_ngammaL = precompute_modit_ditgrid_matrix(
         set_dgm_minmax, dit_grid_resolution=dit_grid_resolution)
     return jnp.array(dgm_ngammaL)
 
