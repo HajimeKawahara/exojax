@@ -1,9 +1,9 @@
 import pytest
-from exojax.spec.moldf import MdbExomol
+from exojax.spec.api import MdbExomol
 
 
 def test_moldb_exomol():
-    mdb = MdbExomol("CO/12C-16O/Li2015")
+    mdb = MdbExomol(".database/CO/12C-16O/Li2015")
 
 
 if __name__ == "__main__":

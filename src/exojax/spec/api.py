@@ -14,7 +14,10 @@ from exojax.spec.hitran import gamma_natural as gn
 from exojax.utils.constants import hcperk, Tref
 from exojax.utils.molname import e2s
 
-from radis.io import fetch_exomol
+# currently use radis add/common-api branch
+from radis.api.exomolapi import MdbExomol as CapiMdbExomol  #MdbExomol in the common API
+
+#from radis.io import fetch_exomol
 
 __all__ = ['MdbExomol', 'MdbHit', 'AdbVald', 'AdbKurucz']
 
@@ -23,9 +26,9 @@ explanation_trans = "Note: Couldn't find the hdf5 format. We convert data to the
 warning_old_exojax = 'It seems that the hdf5 file for the transition file was created using the old version of exojax<1.1. Try again after removing '
 
 
-class MdbExomol(object):
+class MdbExomol(CapiMdbExomol):
     """molecular database of ExoMol.
-
+    
     MdbExomol is a class for ExoMol.
 
     Attributes:
@@ -88,7 +91,23 @@ class MdbExomol(object):
         #self.def_file = self.path / pathlib.Path(molec + '.def')
         #self.broad_file = self.path / pathlib.Path(molecbroad + '.broad')
         self.simple_molecule_name = e2s(self.exact_molecule_name)
-        
+
+        path=str(self.path)
+        print(path)
+        mdb = super().__init__(path,
+                               local_databases=path,
+                               molecule=self.simple_molecule_name,
+                               name="EXOMOL-{molecule}",
+                               nurange=self.nurange,
+                               engine="vaex",
+                               margin=self.margin,
+                               crit=self.crit,
+                               bkgdatm=self.bkgdatm,
+                               cache=True,
+                               skip_optional_data=True)
+        import sys
+        sys.exit()
+        T_gQT, gQT = mdb.T_gQT, mdb.gQT
         dataframe = fetch_exomol(self.simple_molecule_name,
                                  database=self.database,
                                  local_databases=self.path)
@@ -103,12 +122,12 @@ class MdbExomol(object):
         try:
             self.alpha_ref_def = ensure_unique_parameter(dataframe["airbrd"])
         except:
-            self.alpha_ref_def = 0.07 
+            self.alpha_ref_def = 0.07
         try:
             self.n_Texp_def = ensure_unique_parameter(dataframe["Tdpair"])
         except:
             self.n_Texp_def = 0.5
-            
+
         # do we really need molmass from def?
         #self.n_Texp_def, self.alpha_ref_def, self.molmass, numinf, numtag = exomolapi.read_def(
         #    self.def_file)
