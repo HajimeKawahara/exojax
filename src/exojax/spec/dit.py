@@ -78,7 +78,7 @@ def xsmatrix(cnu, indexnu, pmarray, sigmaDM, gammaLM, SijM, nu_grid, dgm_sigmaD,
        SijM: line strength matrix in R^(Nlayer x Nline)
        nu_grid: linear wavenumber grid
        dgm_sigmaD: DIT Grid Matrix for sigmaD R^(Nlayer, NDITgrid)
-       dgm_gammaL: DIT Grid Matrix for gammaL R^(Nlayer, NDITgrid
+       dgm_gammaL: DIT Grid Matrix for gammaL R^(Nlayer, NDITgrid)
 
     Return:
        cross section matrix in R^(Nlayer x Nwav)

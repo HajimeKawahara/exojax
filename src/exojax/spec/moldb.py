@@ -85,7 +85,7 @@ class MdbExomol(object):
             self.download(molec, extension=['.states.bz2'])
         if not self.broad_file.exists():
             self.download(molec, extension=['.broad'])
-
+            
         # load def
         self.n_Texp_def, self.alpha_ref_def, self.molmass, numinf, numtag = exomolapi.read_def(
             self.def_file)
@@ -350,7 +350,7 @@ class MdbExomol(object):
             self._alpha_ref = np.array(
                 self.alpha_ref_def*np.ones_like(self._jlower))
             self._n_Texp = np.array(self.n_Texp_def*np.ones_like(self._jlower))
-
+            
     def generate_jnp_arrays(self):
         """(re)generate jnp.arrays.
 
@@ -370,7 +370,7 @@ class MdbExomol(object):
         self.jupper = jnp.array(self._jupper, dtype=int)
         self.alpha_ref = jnp.array(self._alpha_ref)
         self.n_Texp = jnp.array(self._n_Texp)
-            
+    
     def QT_interp(self, T):
         """interpolated partition function.
 
@@ -762,7 +762,7 @@ class MdbHit(object):
         Returns:
            qr(T)=Q(T)/Q(Tref) interpolated in jnp.array
         """
-        return self.QT_iso_interp(idx, T)/self.QT_iso_interp(idx, self.Tref)
+        return self.QT_iso_interp(idx, T)/self.QT_iso_interp(idx, Tref)
 
     def Qr_HAPI(self, Tarr):
         """Partition Function ratio using HAPI partition data.
