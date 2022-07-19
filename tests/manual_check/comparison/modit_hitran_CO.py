@@ -1,6 +1,9 @@
+""" MODIT  HITRAN CO 
+
+"""
 from jax.config import config
 from exojax.spec.hitran import normalized_doppler_sigma
-from exojax.spec.dit import set_ditgrid
+from exojax.spec.set_ditgrid import ditgrid_log_interval
 from exojax.spec import moldb
 from exojax.spec.hitran import SijT, doppler_sigma, gamma_hitran, gamma_natural
 from exojax.spec import xsection as lpf_xsection
@@ -45,7 +48,7 @@ sigmaD = doppler_sigma(mdbCO.nu_lines, Tfix, Mmol)
 cnu, indexnu, R, pmarray = initspec.init_modit(mdbCO.nu_lines, nus)
 nsigmaD = normalized_doppler_sigma(Tfix, Mmol, R)
 ngammaL = gammaL/(mdbCO.nu_lines/R)
-ngammaL_grid = set_ditgrid(ngammaL)
+ngammaL_grid = ditgrid_log_interval(ngammaL)
 
 xs_modit_lp = modit_xsvector(
     cnu, indexnu, R, pmarray, nsigmaD, ngammaL, Sij, nus, ngammaL_grid)

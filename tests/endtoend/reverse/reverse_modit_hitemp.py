@@ -1,7 +1,9 @@
+""" Reverse modeling of CO/HITEMP using MODIT
+"""
+
 #!/usr/bin/env python
 # coding: utf-8
 import arviz
-from jax import jit, vmap
 from exojax.spec.modit import setdgm_hitran
 from numpyro.diagnostics import hpdi
 from numpyro.infer import Predictive
@@ -11,25 +13,17 @@ import numpyro.distributions as dist
 from jax import random
 import pandas as pd
 import numpy as np
-from jax import jit
 import matplotlib.pyplot as plt
 import jax.numpy as jnp
 from exojax.spec import rtransfer as rt
-from exojax.spec import dit, modit
+from exojax.spec import modit
 from exojax.spec import moldb, contdb
-from exojax.spec.hitran import gamma_hitran
-from exojax.spec import gamma_natural
-from exojax.spec.hitran import SijT
-from exojax.spec.dit import npgetix
-from exojax.spec import rtransfer as rt
 from exojax.spec.rtransfer import nugrid
 from exojax.spec.rtransfer import rtrun, dtauM, dtauCIA, nugrid
 from exojax.spec import planck, response
-from exojax.spec.lpf import xsvector
 from exojax.spec import molinfo
-from exojax.utils.constants import RJ, pc, Rs, c
+from exojax.utils.constants import RJ
 from exojax.utils.instfunc import R2STD
-from exojax.spec import normalized_doppler_sigma
 import numpy as np
 from exojax.spec import initspec
 

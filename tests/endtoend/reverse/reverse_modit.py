@@ -1,7 +1,9 @@
+""" Reverse modeling of Methane emission spectrum using MODIT
+"""
+
 #!/usr/bin/env python
 # coding: utf-8
 import arviz
-from jax import jit, vmap
 from exojax.spec.modit import setdgm_exomol
 from numpyro.diagnostics import hpdi
 from numpyro.infer import Predictive
@@ -15,25 +17,23 @@ from jax import jit
 import matplotlib.pyplot as plt
 import jax.numpy as jnp
 from exojax.spec import rtransfer as rt
-from exojax.spec import dit, modit
+from exojax.spec import modit
 from exojax.spec import moldb, contdb
-from exojax.spec.exomol import gamma_exomol
-from exojax.spec import gamma_natural
-from exojax.spec.hitran import SijT
-from exojax.spec.dit import npgetix
 from exojax.spec import rtransfer as rt
 from exojax.spec.rtransfer import nugrid
 from exojax.spec.rtransfer import rtrun, dtauM, dtauCIA, nugrid
 from exojax.spec import planck, response
-from exojax.spec.lpf import xsvector
 from exojax.spec import molinfo
 from exojax.utils.constants import RJ, pc, Rs, c
 from exojax.utils.instfunc import R2STD
-from exojax.spec import normalized_doppler_sigma
 import numpy as np
 from exojax.spec import initspec
+import pkg_resources
+from exojax.test.data import SAMPLE_SPECTRA_CH4
 
-dat = pd.read_csv('spectrum_ch4.txt', delimiter=',', names=('wav', 'flux'))
+filename = pkg_resources.resource_filename(
+        'exojax', 'data/testdata/'+SAMPLE_SPECTRA_CH4)
+dat = pd.read_csv(filename, delimiter=",", names=("wav", "flux"))
 wavd = dat['wav'].values
 flux = dat['flux'].values
 nusd = jnp.array(1.e8/wavd[::-1])
@@ -84,7 +84,7 @@ dgm_ngammaL = setdgm_exomol(
     mdbCH4, fT, Parr, R, molmassCH4, res, T0_test, alpha_test)
 
 # check dgm
-if False:
+if True:
     from exojax.plot.ditplot import plot_dgmn
     Tarr = 1300.*(Parr/Pref)**0.1
     SijM_CH4, ngammaLM_CH4, nsigmaDl_CH4 = modit.exomol(
@@ -122,6 +122,10 @@ if False:
     plt.plot(wavd, mu)
     plt.show()
 
+import sys
+sys.exit()
+
+    
 Mp = 33.2
 
 

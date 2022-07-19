@@ -127,9 +127,8 @@ nvcc -V
 Install such as
 
 ```
-sudo dpkg -i cudnn-local-repo-ubuntu2004-8.3.1.22_1.0-1_amd64.deb
-pip uninstall jax
-pip install "jax[cuda11_cudnn82]" -f https://storage.googleapis.com/jax-releases/jax_releases.html
+pip install --upgrade pip
+pip install --upgrade "jax[cuda]" -f https://storage.googleapis.com/jax-releases/jax_releases.html
 ```
 
 Please visit [here](https://github.com/google/jax) for details.

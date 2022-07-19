@@ -39,7 +39,7 @@ if False:
 nusobs = numpy.linspace(1900.0, 2300.0, 10000, dtype=numpy.float64)
 
 xsmode = 'MODIT'
-nus, wav, res = nugrid(1900.0, 2300.0, 160000, 'cm-1', xsmode=xsmode)
+nus, wav, res = nugrid(1900.0, 2300.0, 320000, 'cm-1', xsmode=xsmode)
 Parr = numpy.logspace(-8, 2, 100)  # 100 layers from 10^-8 bar to 10^2 bar
 Tarr = 500.*(Parr/Parr[-1])**0.02
 autort = AutoRT(nus, 1.e5, 2.33, Tarr, Parr, xsmode=xsmode,
@@ -50,7 +50,7 @@ F1 = autort.rtrun()
 # F1o=autort.spectrum(nusobs,100000.0,20.0,0.0)
 
 xsmode = 'DIT'
-nus_, wav, res = nugrid(1900.0, 2300.0, 160000, 'cm-1', xsmode=xsmode)
+nus_, wav, res = nugrid(1900.0, 2300.0, 320000, 'cm-1', xsmode=xsmode)
 Parr = numpy.logspace(-8, 2, 100)  # 100 layers from 10^-8 bar to 10^2 bar
 Tarr = 500.*(Parr/Parr[-1])**0.02
 autort = AutoRT(nus_, 1.e5, 2.33, Tarr, Parr,
@@ -61,7 +61,7 @@ F2 = autort.rtrun()
 # F2o=autort.spectrum(nusobs,100000.0,20.0,0.0)
 
 xsmode = 'LPF'
-nus, wav, res = nugrid(1900.0, 2300.0, 160000, 'cm-1', xsmode=xsmode)
+nus, wav, res = nugrid(1900.0, 2300.0, 320000, 'cm-1', xsmode=xsmode)
 Parr = numpy.logspace(-8, 2, 100)  # 100 layers from 10^-8 bar to 10^2 bar
 Tarr = 500.*(Parr/Parr[-1])**0.02
 autort = AutoRT(nus, 1.e5, 2.33, Tarr, Parr,
