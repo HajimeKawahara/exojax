@@ -79,36 +79,35 @@ class MdbExomol(CapiMdbExomol):
         self.database = str(self.path.stem)
         self.bkgdatm = bkgdatm
         print('Background atmosphere: ', self.bkgdatm)
+
         molecbroad = self.exact_molecule_name + '__' + self.bkgdatm
 
-        self.crit = crit
         self.Ttyp = Ttyp
-        self.margin = margin
-        #self.nurange = [np.min(nurange), np.max(nurange)]
         self.broadf = broadf
         self.simple_molecule_name = e2s(self.exact_molecule_name)
 
-        path=str(self.path)
-        
+        path = str(self.path)
         super().__init__(path,
-                               local_databases=path,
-                               molecule=self.simple_molecule_name,
-                               name="EXOMOL-{molecule}",
-                               nurange=[np.min(nurange), np.max(nurange)],
-                               engine="vaex",
-                               margin=self.margin,
-                               crit=self.crit,
-                               bkgdatm=self.bkgdatm,
-                               cache=True,
-                               skip_optional_data=True)
+                         local_databases=path,
+                         molecule=self.simple_molecule_name,
+                         name="EXOMOL-{molecule}",
+                         nurange=[np.min(nurange),
+                                  np.max(nurange)],
+                         engine="vaex",
+                         margin=margin,
+                         crit=crit,
+                         bkgdatm=self.bkgdatm,
+                         cache=True,
+                         skip_optional_data=True)
         print(self.nurange)
+        print(self.margin)
+        print(self.crit)
+        print(self.bkgdatm)
         # partition function at T=Ttyp
         self.QTtyp = np.array(self.QT_interp(self.Ttyp))
-        
-        
+
         import sys
         sys.exit()
-
 
         # trans file(s)
         print('Reading transition file')
