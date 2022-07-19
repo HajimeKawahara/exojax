@@ -93,11 +93,11 @@ def test_rt_exomol():
     # >>> np.savetxt("modit_rt_test_ref.txt",np.array([nus,F0]).T,delimiter=",")
     #
     # Because of errors from GPU, using pytest.approx does not pass the condition of the assertion error.
-    # Instead, we use an absolute relative difference < 2 % as a condition.
+    # Instead, we use an absolute relative difference < 3 % as a condition.
     # We also note that we found the error at the edge of data exceed 2 %. Therefore, we removed the edge here.
     residual = np.abs(F0[:12000]/dat["flux"].values[:12000] - 1.0)
     print(np.max(residual))
-    assert np.all(residual < 0.02)
+    assert np.all(residual < 0.03)
 
     return F0
 
