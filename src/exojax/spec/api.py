@@ -78,16 +78,13 @@ class MdbExomol(CapiMdbExomol):
         self.exact_molecule_name = self.path.parents[0].stem
         self.database = str(self.path.stem)
         self.bkgdatm = bkgdatm
-        print('Background atmosphere: ', self.bkgdatm)
-
         molecbroad = self.exact_molecule_name + '__' + self.bkgdatm
 
         self.Ttyp = Ttyp
         self.broadf = broadf
         self.simple_molecule_name = e2s(self.exact_molecule_name)
 
-        path = str(self.path)
-        super().__init__(path,
+        super().__init__(str(self.path),
                          local_databases=path,
                          molecule=self.simple_molecule_name,
                          name="EXOMOL-{molecule}",
@@ -99,177 +96,66 @@ class MdbExomol(CapiMdbExomol):
                          bkgdatm=self.bkgdatm,
                          cache=True,
                          skip_optional_data=True)
-        print(self.nurange)
-        print(self.margin)
-        print(self.crit)
-        print(self.bkgdatm)
-        # partition function at T=Ttyp
+        
         self.QTtyp = np.array(self.QT_interp(self.Ttyp))
-
-        import sys
-        sys.exit()
-
-        # trans file(s)
-        print('Reading transition file')
-        mask_needed = False
-        if numinf is None:
-            self.trans_file = self.path / pathlib.Path(molec + '.trans.bz2')
-            if not self.trans_file.with_suffix(
-                    '.hdf5').exists() and not self.trans_file.exists():
-                self.download(molec, ['.trans.bz2'])
-
-            if self.trans_file.with_suffix('.hdf5').exists():
-                trans = vaex.open(self.trans_file.with_suffix('.hdf5'))
-                cdt = (trans.nu_lines > self.nurange[0]-self.margin) \
-                    * (trans.nu_lines < self.nurange[1]+self.margin)
-                if not '_elower' in trans:
-                    print(warning_old_exojax,
-                          self.trans_file.with_suffix('.hdf5'))
-                    return
-
-                cdt = cdt * (self.get_Sij_typ(trans.Sij0, trans._elower,
-                                              trans.nu_lines) > self.crit)
-                trans = trans[cdt]
-                ndtrans = vaex.array_types.to_numpy(trans)
-            else:
-                print(explanation_trans)
-                trans = exomolapi.read_trans(self.trans_file)
-                ndtrans = vaex.array_types.to_numpy(trans)
-                mask_needed = True
-
-            # compute gup and elower
-            self._A, self.nu_lines, self._elower, self._gpp, self._jlower, self._jupper, mask_zeronu = exomolapi.pickup_gE(
-                ndstates, ndtrans, self.trans_file)
-
-            if self.trans_file.with_suffix('.hdf5').exists():
-                self.Sij0 = ndtrans[:, 4]
-            else:
-                # Line strength: input should be ndarray not jnp array
-                self.Sij0 = exomol.Sij0(self._A, self._gpp, self.nu_lines,
-                                        self._elower, self.QTref)
-                self.Sij_typ = self.Sij0 * self.QTref / self.QTtyp \
-                    * np.exp(-hcperk*self._elower * (1./self.Ttyp - 1./Tref)) \
-                    * np.expm1(-hcperk*self.nu_lines/self.Ttyp) / np.expm1(-hcperk*self.nu_lines/Tref)
-
-                # exclude the lines whose nu_lines evaluated inside exomolapi.pickup_gE (thus sometimes different from the "nu_lines" column in trans) is not positive
-                trans['nu_positive'] = mask_zeronu
-                trans = trans[trans.nu_positive].extract()
-                trans.drop('nu_positive', inplace=True)
-                trans['nu_lines'] = self.nu_lines
-                trans['Sij0'] = self.Sij0
-                trans['_elower'] = self._elower
-                trans.export(self.trans_file.with_suffix('.hdf5'))
-
-                if remove_original_hdf:
-                    # remove the hdf5 and yaml files created while reading the original transition file.
-                    if (self.trans_file.with_suffix('.bz2.hdf5').exists()):
-                        os.remove(self.trans_file.with_suffix('.bz2.hdf5'))
-                    if (self.trans_file.with_suffix('.bz2.yaml').exists()):
-                        os.remove(self.trans_file.with_suffix('.bz2.yaml'))
-        else:
-            imin = np.searchsorted(numinf, self.nurange[0],
-                                   side='right') - 1  # left side
-            imax = np.searchsorted(numinf, self.nurange[1],
-                                   side='right') - 1  # left side
-            self.trans_file = []
-            for k, i in enumerate(range(imin, imax + 1)):
-                trans_file = self.path / \
-                    pathlib.Path(molec+'__'+numtag[i]+'.trans.bz2')
-                if not trans_file.with_suffix(
-                        '.hdf5').exists() and not trans_file.exists():
-                    self.download(molec,
-                                  extension=['.trans.bz2'],
-                                  numtag=numtag[i])
-
-                if trans_file.with_suffix('.hdf5').exists():
-                    trans = vaex.open(trans_file.with_suffix('.hdf5'))
-                    cdt = (trans.nu_lines > self.nurange[0]-self.margin) \
-                        * (trans.nu_lines < self.nurange[1]+self.margin)
-                    if not '_elower' in trans:
-                        print(warning_old_exojax,
-                              trans_file.with_suffix('.hdf5'))
-                        return
-
-                    cdt = cdt * (self.get_Sij_typ(trans.Sij0, trans._elower,
-                                                  trans.nu_lines) > self.crit)
-                    trans = trans[cdt]
-                    ndtrans = vaex.array_types.to_numpy(trans)
-                    self.trans_file.append(trans_file)
-                else:
-                    print(explanation_trans)
-                    trans = exomolapi.read_trans(trans_file)
-                    ndtrans = vaex.array_types.to_numpy(trans)
-                    self.trans_file.append(trans_file)
-                    mask_needed = True
-
-                # compute gup and elower
-                if k == 0:
-                    self._A, self.nu_lines, self._elower, self._gpp, self._jlower, self._jupper, mask_zeronu = exomolapi.pickup_gE(
-                        ndstates, ndtrans, trans_file)
-                    if trans_file.with_suffix('.hdf5').exists():
-                        self.Sij0 = ndtrans[:, 4]
-                    else:
-                        self.Sij0 = exomol.Sij0(self._A, self._gpp,
-                                                self.nu_lines, self._elower,
-                                                self.QTref)
-                        # exclude the lines whose nu_lines evaluated inside exomolapi.pickup_gE (thus sometimes different from the "nu_lines" column in trans) is not positive
-                        trans['nu_positive'] = mask_zeronu
-                        trans = trans[trans.nu_positive].extract()
-                        trans.drop('nu_positive', inplace=True)
-                        trans['nu_lines'] = self.nu_lines
-                        trans['Sij0'] = self.Sij0
-                        trans['_elower'] = self._elower
-
-                    self.Sij_typ = self.get_Sij_typ(self.Sij0, self._elower,
-                                                    self.nu_lines)
-                else:
-                    Ax, nulx, elowerx, gppx, jlowerx, jupperx, mask_zeronu = exomolapi.pickup_gE(
-                        ndstates, ndtrans, trans_file)
-                    if trans_file.with_suffix('.hdf5').exists():
-                        Sij0x = ndtrans[:, 4]
-                    else:
-                        Sij0x = exomol.Sij0(Ax, gppx, nulx, elowerx,
-                                            self.QTref)
-                        # exclude the lines whose nu_lines evaluated inside exomolapi.pickup_gE (thus sometimes different from the "nu_lines" column in trans) is not positive
-                        trans['nu_positive'] = mask_zeronu
-                        trans = trans[trans.nu_positive].extract()
-                        trans.drop('nu_positive', inplace=True)
-                        trans['nu_lines'] = nulx
-                        trans['Sij0'] = Sij0x
-                        trans['_elower'] = elowerx
-
-                    Sij_typx = self.get_Sij_typ(Sij0x, elowerx, nulx)
-
-                    self._A = np.hstack([self._A, Ax])
-                    self.nu_lines = np.hstack([self.nu_lines, nulx])
-                    self._elower = np.hstack([self._elower, elowerx])
-                    self._gpp = np.hstack([self._gpp, gppx])
-                    self._jlower = np.hstack([self._jlower, jlowerx])
-                    self._jupper = np.hstack([self._jupper, jupperx])
-                    self.Sij0 = np.hstack([self.Sij0, Sij0x])
-                    self.Sij_typ = np.hstack([self.Sij_typ, Sij_typx])
-
-                if not trans_file.with_suffix('.hdf5').exists():
-                    trans.export(trans_file.with_suffix('.hdf5'))
-
-                if remove_original_hdf:
-                    # remove the hdf5 and yaml files created while reading the original transition file.
-                    if (trans_file.with_suffix('.bz2.hdf5').exists()):
-                        os.remove(trans_file.with_suffix('.bz2.hdf5'))
-                    if (trans_file.with_suffix('.bz2.yaml').exists()):
-                        os.remove(trans_file.with_suffix('.bz2.yaml'))
-
-        if mask_needed:
-            mask = (self.nu_lines > self.nurange[0]-self.margin)\
-                * (self.nu_lines < self.nurange[1]+self.margin)\
-                * (self.Sij_typ > self.crit)
-        else:
-            # define all true list just in case
-            mask = np.ones_like(self.nu_lines, dtype=bool)
-        self.masking(mask)
-        self.set_broadening()  # Broadening parameters
+        
+        print(self.__dict__)
+        
+        self.set_broadening_()  # Broadening parameters
+        
         if gpu_transfer:
             self.generate_jnp_arrays()
+            
+    def set_broadening_(self, alpha_ref_def=None, n_Texp_def=None):
+        """setting broadening parameters.
+
+        Args:
+           alpha_ref: set default alpha_ref and apply it. None=use self.alpha_ref_def
+           n_Texp_def: set default n_Texp and apply it. None=use self.n_Texp_def
+        """
+        if alpha_ref_def:
+            self.alpha_ref_def = alpha_ref_def
+        if n_Texp_def:
+            self.n_Texp_def = n_Texp_def
+
+        if self.broadf:
+            try:
+                print('.broad is used.')
+                bdat = exomolapi.read_broad(self.broad_file)
+                codelv = exomolapi.check_bdat(bdat)
+                print('Broadening code level=', codelv)
+                if codelv == 'a0':
+                    j2alpha_ref, j2n_Texp = exomolapi.make_j2b(bdat,
+                                                               alpha_ref_default=self.alpha_ref_def,
+                                                               n_Texp_default=self.n_Texp_def,
+                                                               jlower_max=np.max(self._jlower))
+                    self._alpha_ref = np.array(j2alpha_ref[self._jlower])
+                    self._n_Texp = np.array(j2n_Texp[self._jlower])
+                elif codelv == 'a1':
+                    j2alpha_ref, j2n_Texp = exomolapi.make_j2b(bdat,
+                                                               alpha_ref_default=self.alpha_ref_def,
+                                                               n_Texp_default=self.n_Texp_def,
+                                                               jlower_max=np.max(self._jlower))
+                    jj2alpha_ref, jj2n_Texp = exomolapi.make_jj2b(bdat,
+                                                                  j2alpha_ref_def=j2alpha_ref, j2n_Texp_def=j2n_Texp,
+                                                                  jupper_max=np.max(self._jupper))
+                    self._alpha_ref = np.array(
+                        jj2alpha_ref[self._jlower, self._jupper])
+                    self._n_Texp = np.array(
+                        jj2n_Texp[self._jlower, self._jupper])
+            except:
+                print(
+                    'Warning: Cannot load .broad. The default broadening parameters are used.')
+                self._alpha_ref = np.array(
+                    self.alpha_ref_def*np.ones_like(self._jlower))
+                self._n_Texp = np.array(
+                    self.n_Texp_def*np.ones_like(self._jlower))
+
+        else:
+            print('The default broadening parameters are used.')
+            self._alpha_ref = np.array(
+                self.alpha_ref_def*np.ones_like(self._jlower))
+            self._n_Texp = np.array(self.n_Texp_def*np.ones_like(self._jlower))
 
     def get_Sij_typ(self, Sij0_in, elower_in, nu_in):
         """compute Sij at typical temperature self.Ttyp.
@@ -299,63 +185,6 @@ class MdbExomol(CapiMdbExomol):
         self._gpp = self._gpp[mask]
         self._jlower = self._jlower[mask]
         self._jupper = self._jupper[mask]
-
-    def set_broadening(self, alpha_ref_def=None, n_Texp_def=None):
-        """setting broadening parameters.
-
-        Args:
-           alpha_ref: set default alpha_ref and apply it. None=use self.alpha_ref_def
-           n_Texp_def: set default n_Texp and apply it. None=use self.n_Texp_def
-        """
-        if alpha_ref_def:
-            self.alpha_ref_def = alpha_ref_def
-        if n_Texp_def:
-            self.n_Texp_def = n_Texp_def
-
-        if self.broadf:
-            try:
-                print('.broad is used.')
-                bdat = exomolapi.read_broad(self.broad_file)
-                codelv = exomolapi.check_bdat(bdat)
-                print('Broadening code level=', codelv)
-                if codelv == 'a0':
-                    j2alpha_ref, j2n_Texp = exomolapi.make_j2b(
-                        bdat,
-                        alpha_ref_default=self.alpha_ref_def,
-                        n_Texp_default=self.n_Texp_def,
-                        jlower_max=np.max(self._jlower))
-                    self._alpha_ref = np.array(j2alpha_ref[self._jlower])
-                    self._n_Texp = np.array(j2n_Texp[self._jlower])
-                elif codelv == 'a1':
-                    j2alpha_ref, j2n_Texp = exomolapi.make_j2b(
-                        bdat,
-                        alpha_ref_default=self.alpha_ref_def,
-                        n_Texp_default=self.n_Texp_def,
-                        jlower_max=np.max(self._jlower))
-                    jj2alpha_ref, jj2n_Texp = exomolapi.make_jj2b(
-                        bdat,
-                        j2alpha_ref_def=j2alpha_ref,
-                        j2n_Texp_def=j2n_Texp,
-                        jupper_max=np.max(self._jupper))
-                    self._alpha_ref = np.array(jj2alpha_ref[self._jlower,
-                                                            self._jupper])
-                    self._n_Texp = np.array(jj2n_Texp[self._jlower,
-                                                      self._jupper])
-            except:
-                print(
-                    'Warning: Cannot load .broad. The default broadening parameters are used.'
-                )
-                self._alpha_ref = np.array(self.alpha_ref_def *
-                                           np.ones_like(self._jlower))
-                self._n_Texp = np.array(self.n_Texp_def *
-                                        np.ones_like(self._jlower))
-
-        else:
-            print('The default broadening parameters are used.')
-            self._alpha_ref = np.array(self.alpha_ref_def *
-                                       np.ones_like(self._jlower))
-            self._n_Texp = np.array(self.n_Texp_def *
-                                    np.ones_like(self._jlower))
 
     def generate_jnp_arrays(self):
         """(re)generate jnp.arrays.
