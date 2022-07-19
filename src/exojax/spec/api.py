@@ -94,7 +94,7 @@ class MdbExomol(CapiMdbExomol):
 
         path=str(self.path)
         print(path)
-        mdb = super().__init__(path,
+        super().__init__(path,
                                local_databases=path,
                                molecule=self.simple_molecule_name,
                                name="EXOMOL-{molecule}",
@@ -105,43 +105,14 @@ class MdbExomol(CapiMdbExomol):
                                bkgdatm=self.bkgdatm,
                                cache=True,
                                skip_optional_data=True)
-        import sys
-        sys.exit()
-        T_gQT, gQT = mdb.T_gQT, mdb.gQT
-        dataframe = fetch_exomol(self.simple_molecule_name,
-                                 database=self.database,
-                                 local_databases=self.path)
-
-        def ensure_unique_parameter(list_check):
-            uniquelist = np.unique(list_check)
-            if len(uniquelist) == 1:
-                return uniquelist[0]
-            else:
-                raise ValueError("Multiple parameter detected.")
-
-        try:
-            self.alpha_ref_def = ensure_unique_parameter(dataframe["airbrd"])
-        except:
-            self.alpha_ref_def = 0.07
-        try:
-            self.n_Texp_def = ensure_unique_parameter(dataframe["Tdpair"])
-        except:
-            self.n_Texp_def = 0.5
-
-        # do we really need molmass from def?
-        #self.n_Texp_def, self.alpha_ref_def, self.molmass, numinf, numtag = exomolapi.read_def(
-        #    self.def_file)
-
-        print(dataframe)
-        import sys
-        sys.exit()
-
-        # load pf
-        pf = exomolapi.read_pf(self.pf_file)
-        self.gQT = jnp.array(pf['QT'].to_numpy())  # grid QT
-        self.T_gQT = jnp.array(pf['T'].to_numpy())  # T forgrid QT
-        self.QTref = np.array(self.QT_interp(Tref))
+        
+        # partition function at T=Ttyp
         self.QTtyp = np.array(self.QT_interp(self.Ttyp))
+        
+        
+        import sys
+        sys.exit()
+
 
         # trans file(s)
         print('Reading transition file')
