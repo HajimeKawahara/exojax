@@ -84,28 +84,24 @@ class MdbExomol(CapiMdbExomol):
         self.crit = crit
         self.Ttyp = Ttyp
         self.margin = margin
-        self.nurange = [np.min(nurange), np.max(nurange)]
+        #self.nurange = [np.min(nurange), np.max(nurange)]
         self.broadf = broadf
-        #self.states_file = self.path / pathlib.Path(molec + '.states.bz2')
-        #self.pf_file = self.path / pathlib.Path(molec + '.pf')
-        #self.def_file = self.path / pathlib.Path(molec + '.def')
-        #self.broad_file = self.path / pathlib.Path(molecbroad + '.broad')
         self.simple_molecule_name = e2s(self.exact_molecule_name)
 
         path=str(self.path)
-        print(path)
+        
         super().__init__(path,
                                local_databases=path,
                                molecule=self.simple_molecule_name,
                                name="EXOMOL-{molecule}",
-                               nurange=self.nurange,
+                               nurange=[np.min(nurange), np.max(nurange)],
                                engine="vaex",
                                margin=self.margin,
                                crit=self.crit,
                                bkgdatm=self.bkgdatm,
                                cache=True,
                                skip_optional_data=True)
-        
+        print(self.nurange)
         # partition function at T=Ttyp
         self.QTtyp = np.array(self.QT_interp(self.Ttyp))
         
