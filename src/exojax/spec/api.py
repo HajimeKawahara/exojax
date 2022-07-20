@@ -48,6 +48,18 @@ class MdbExomol(CapiMdbExomol):
         n_Texp_def: default temperature exponent in .def file, used for jlower not given in .broad
         alpha_ref_def: default alpha_ref (gamma0) in .def file, used for jlower not given in .broad
     """
+    __slots__ = [
+            "Sij0",
+            "logsij0",
+            "nu_lines",
+            "A",
+            "elower",
+            "eupper",
+            "gupper",
+            "jlower",
+            "jupper",
+        ]
+    
     def __init__(self,
                  path,
                  nurange=[-np.inf, np.inf],
@@ -84,28 +96,45 @@ class MdbExomol(CapiMdbExomol):
         self.broadf = broadf
         self.simple_molecule_name = e2s(self.exact_molecule_name)
 
+        wavenum_min, wavenum_max = np.min(nurange), np.max(nurange)
+        if wavenum_min == -np.inf:
+            wavenum_min = None
+        if wavenum_max == np.inf:
+            wavenum_max = None
+
         super().__init__(str(self.path),
                          local_databases=path,
                          molecule=self.simple_molecule_name,
                          name="EXOMOL-{molecule}",
-                         nurange=[np.min(nurange),
-                                  np.max(nurange)],
+                         nurange=[wavenum_min, wavenum_max],
                          engine="vaex",
                          margin=margin,
                          crit=crit,
                          bkgdatm=self.bkgdatm,
                          cache=True,
                          skip_optional_data=True)
-        
+
         self.QTtyp = np.array(self.QT_interp(self.Ttyp))
-        
-        print(self.__dict__)
-        
-        self.set_broadening_()  # Broadening parameters
-        
+
+        # Get cache files to load :
+        mgr = self.get_datafile_manager()
+        local_files = [mgr.cache_file(f) for f in self.trans_file]
+
+        # Load them:
+        jdict = self.load(
+            local_files,
+            columns=[k for k in self.__slots__ if k not in ["logsij0"]],
+            lower_bound=([("nu_lines", wavenum_min)] if wavenum_min else []) +
+            ([("Sij0", self.crit)] if not np.isneginf(self.crit) else []),
+            upper_bound=([("nu_lines", wavenum_max)] if wavenum_max else []),
+            output="vaex",
+        )
+        print(jdict)
+        #self.set_broadening_()  # Broadening parameters
+
         if gpu_transfer:
             self.generate_jnp_arrays()
-            
+
     def set_broadening_(self, alpha_ref_def=None, n_Texp_def=None):
         """setting broadening parameters.
 
@@ -125,37 +154,43 @@ class MdbExomol(CapiMdbExomol):
                 codelv = exomolapi.check_bdat(bdat)
                 print('Broadening code level=', codelv)
                 if codelv == 'a0':
-                    j2alpha_ref, j2n_Texp = exomolapi.make_j2b(bdat,
-                                                               alpha_ref_default=self.alpha_ref_def,
-                                                               n_Texp_default=self.n_Texp_def,
-                                                               jlower_max=np.max(self._jlower))
+                    j2alpha_ref, j2n_Texp = exomolapi.make_j2b(
+                        bdat,
+                        alpha_ref_default=self.alpha_ref_def,
+                        n_Texp_default=self.n_Texp_def,
+                        jlower_max=np.max(self._jlower))
                     self._alpha_ref = np.array(j2alpha_ref[self._jlower])
                     self._n_Texp = np.array(j2n_Texp[self._jlower])
                 elif codelv == 'a1':
-                    j2alpha_ref, j2n_Texp = exomolapi.make_j2b(bdat,
-                                                               alpha_ref_default=self.alpha_ref_def,
-                                                               n_Texp_default=self.n_Texp_def,
-                                                               jlower_max=np.max(self._jlower))
-                    jj2alpha_ref, jj2n_Texp = exomolapi.make_jj2b(bdat,
-                                                                  j2alpha_ref_def=j2alpha_ref, j2n_Texp_def=j2n_Texp,
-                                                                  jupper_max=np.max(self._jupper))
-                    self._alpha_ref = np.array(
-                        jj2alpha_ref[self._jlower, self._jupper])
-                    self._n_Texp = np.array(
-                        jj2n_Texp[self._jlower, self._jupper])
+                    j2alpha_ref, j2n_Texp = exomolapi.make_j2b(
+                        bdat,
+                        alpha_ref_default=self.alpha_ref_def,
+                        n_Texp_default=self.n_Texp_def,
+                        jlower_max=np.max(self._jlower))
+                    jj2alpha_ref, jj2n_Texp = exomolapi.make_jj2b(
+                        bdat,
+                        j2alpha_ref_def=j2alpha_ref,
+                        j2n_Texp_def=j2n_Texp,
+                        jupper_max=np.max(self._jupper))
+                    self._alpha_ref = np.array(jj2alpha_ref[self._jlower,
+                                                            self._jupper])
+                    self._n_Texp = np.array(jj2n_Texp[self._jlower,
+                                                      self._jupper])
             except:
                 print(
-                    'Warning: Cannot load .broad. The default broadening parameters are used.')
-                self._alpha_ref = np.array(
-                    self.alpha_ref_def*np.ones_like(self._jlower))
-                self._n_Texp = np.array(
-                    self.n_Texp_def*np.ones_like(self._jlower))
+                    'Warning: Cannot load .broad. The default broadening parameters are used.'
+                )
+                self._alpha_ref = np.array(self.alpha_ref_def *
+                                           np.ones_like(self._jlower))
+                self._n_Texp = np.array(self.n_Texp_def *
+                                        np.ones_like(self._jlower))
 
         else:
             print('The default broadening parameters are used.')
-            self._alpha_ref = np.array(
-                self.alpha_ref_def*np.ones_like(self._jlower))
-            self._n_Texp = np.array(self.n_Texp_def*np.ones_like(self._jlower))
+            self._alpha_ref = np.array(self.alpha_ref_def *
+                                       np.ones_like(self._jlower))
+            self._n_Texp = np.array(self.n_Texp_def *
+                                    np.ones_like(self._jlower))
 
     def get_Sij_typ(self, Sij0_in, elower_in, nu_in):
         """compute Sij at typical temperature self.Ttyp.
