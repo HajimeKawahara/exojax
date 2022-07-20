@@ -238,7 +238,7 @@ def setdgm_hitran(mdb, fT, Parr, Pself_ref, R, molmass, dit_grid_resolution,
     warn_msg = "`modit.setdgm_hitran` is duplicated and will be removed. Use `modit.set_ditgrid_matrix_hitran` instead"
     warnings.warn(warn_msg, UserWarning)
     return set_ditgrid_matrix_hitran(mdb, fT, Parr, Pself_ref, R, molmass,
-                                     dit_grid_resolution, kargs)
+                                     dit_grid_resolution, *kargs)
 
 
 def set_ditgrid_matrix_hitran(mdb, fT, Parr, Pself_ref, R, molmass,
@@ -362,7 +362,7 @@ def setdgm_vald_each(ielem, iion, atomicmass, ionE, dev_nu_lines, logsij0, elowe
                                         dev_nu_lines, logsij0, elower, eupper,
                                         gamRad, gamSta, vdWdamp, QTmask, T_gQT,
                                         gQT_284species, PH, PHe, PHH, R, fT,
-                                        dit_grid_resolution, kargs)
+                                        dit_grid_resolution, *kargs)
 
 
 def set_ditgrid_matrix_vald_each(ielem, iion, atomicmass, ionE, dev_nu_lines,
@@ -418,7 +418,7 @@ def setdgm_vald_all(asdb, PH, PHe, PHH, R, fT, dit_grid_resolution, *kargs):
     warn_msg = "`modit.setdgm_vald_all` is duplicated and will be removed. Use `modit.set_ditgrid_matrix_vald_all` instead"
     warnings.warn(warn_msg, UserWarning)
     return set_ditgrid_matrix_vald_all(asdb, PH, PHe, PHH, R, fT,
-                                       dit_grid_resolution, kargs)
+                                       dit_grid_resolution, *kargs)
 
 
 def set_ditgrid_matrix_vald_all(asdb, PH, PHe, PHH, R, fT, dit_grid_resolution,

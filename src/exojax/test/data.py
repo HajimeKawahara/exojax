@@ -17,4 +17,5 @@ TESTDATA_CO_EXOMOL_PREMODIT_EMISSION_REF = "premodit_rt_test_ref.txt"
 
 #sample spectra
 SAMPLE_SPECTRA_CO = "spectrum_co.txt"
-SAMPLE_SPECTRA_CH4 = "spectrum_ch4.txt"
+SAMPLE_SPECTRA_CH4 = "spectrum_ch4.txt" #exojax version 1.0
+SAMPLE_SPECTRA_CH4_NEW = "spectrum_ch4_new.txt"
