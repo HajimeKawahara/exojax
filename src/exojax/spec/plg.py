@@ -451,7 +451,7 @@ def gather_lines(mdb,Na,Nnugrid,Nelower,nu_grid,cnu,indexnu,qlogsij0,qcnu,elower
     return mdb, cnu, indexnu
 
     
-def MdbExomol_plg(path_database, nus, Tgue, errTgue=500., Nelower=7, assess_width=1., threshold_persist_freezing=10000., crit=0.):
+def MdbExomol_plg(path_database, nus, Tgue, errTgue=500., Nelower=7, assess_width=1., threshold_persist_freezing=10000., crit=0., coefTgue=0.):
     """Obtain molecular database (mdb) from the Exomol while reducing the number of weak lines by plg. (This function summarizes the plg procedure.)
     
     Args:
@@ -463,6 +463,7 @@ def MdbExomol_plg(path_database, nus, Tgue, errTgue=500., Nelower=7, assess_widt
         assess_width: To save computation time, let us use only this wavelength width in the middle of the whole range to optimize coefTgue. (Note that too narrow might cause a ValueError.)
         threshold_persist_freezing: How weak lines compared to the deepest one will you persist freezing (not retaken)?
         crit: line strength lower limit for extraction in exojax.spec.moldb.MdbExomol
+        coefTgue: coefficient for Tgue to optimize elower_grid
 
     Returns:
         mdb: molecular database instance
@@ -475,11 +476,12 @@ def MdbExomol_plg(path_database, nus, Tgue, errTgue=500., Nelower=7, assess_widt
     mdb = moldb.MdbExomol(path_database, nus, crit=crit)
     molmass = mdb.molmass
     
-    wls, wll = min(1.e8/nus), max(1.e8/nus)
-    nusc, wavc, resoc = gen_wavenumber_grid( (wll+wls-assess_width)/2, (wll+wls+assess_width)/2, int(assess_width/0.05), unit="AA", xsmode="modit")
-    mdbc = moldb.MdbExomol(path_database, nusc)
-    coefTgue = optimize_coefTgue(Tgue, nusc, mdbc, molmass, Nelower, errTgue)
-    print("coefTgue =", coefTgue, " (by assessing", len(mdbc.A), "lines in", assess_width, "angstrom width.)"  )
+    if coefTgue == 0.:
+        wls, wll = min(1.e8/nus), max(1.e8/nus)
+        nusc, wavc, resoc = gen_wavenumber_grid( (wll+wls-assess_width)/2, (wll+wls+assess_width)/2, int(assess_width/0.05), unit="AA", xsmode="modit")
+        mdbc = moldb.MdbExomol(path_database, nusc)
+        coefTgue = optimize_coefTgue(Tgue, nusc, mdbc, molmass, Nelower, errTgue)
+        print("coefTgue =", coefTgue, " (by assessing", len(mdbc.A), "lines in", assess_width, "angstrom width.)"  )
     
     cnu,indexnu,R,pmarray = initspec.init_modit(mdb.nu_lines, nus)
     alpha_ref_grid, n_Texp_grid, index_gamma = make_gamma_grid_exomol(mdb)
