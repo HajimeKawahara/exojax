@@ -13,7 +13,7 @@ from exojax.spec import hapi, exomolapi, exomol, atomllapi, atomll, hitranapi
 from exojax.spec.hitran import gamma_natural as gn
 from exojax.utils.constants import hcperk, Tref
 from exojax.utils.molname import e2s
-
+import pandas as pd
 # currently use radis add/common-api branch
 from radis.api.exomolapi import MdbExomol as CapiMdbExomol  #MdbExomol in the common API
 
@@ -49,17 +49,17 @@ class MdbExomol(CapiMdbExomol):
         alpha_ref_def: default alpha_ref (gamma0) in .def file, used for jlower not given in .broad
     """
     __slots__ = [
-            "Sij0",
-            "logsij0",
-            "nu_lines",
-            "A",
-            "elower",
-            "eupper",
-            "gupper",
-            "jlower",
-            "jupper",
-        ]
-    
+        "Sij0",
+        "logsij0",
+        "nu_lines",
+        "A",
+        "elower",
+        "eupper",
+        "gupper",
+        "jlower",
+        "jupper",
+    ]
+
     def __init__(self,
                  path,
                  nurange=[-np.inf, np.inf],
@@ -69,7 +69,7 @@ class MdbExomol(CapiMdbExomol):
                  bkgdatm='H2',
                  broadf=True,
                  remove_original_hdf=True,
-                 gpu_transfer=True):
+                 dataformat="pandas"):
         """Molecular database for Exomol form.
 
         Args:
@@ -81,7 +81,7 @@ class MdbExomol(CapiMdbExomol):
            bkgdatm: background atmosphere for broadening. e.g. H2, He,
            broadf: if False, the default broadening parameters in .def file is used
            remove_original_hdf: if True, the hdf5 and yaml files created while reading the original transition file(s) will be removed since those files will not be used after that.
-           gpu_transfer: tranfer data to jnp.array? 
+           dataformat: datafromat of Data Frame or dictionary: "jax", "vaex", "pandas"
 
         Note:
            The trans/states files can be very large. For the first time to read it, we convert it to HDF/vaex. After the second-time, we use the HDF5 format with vaex instead.
@@ -90,7 +90,7 @@ class MdbExomol(CapiMdbExomol):
         self.exact_molecule_name = self.path.parents[0].stem
         self.database = str(self.path.stem)
         self.bkgdatm = bkgdatm
-        molecbroad = self.exact_molecule_name + '__' + self.bkgdatm
+        #molecbroad = self.exact_molecule_name + '__' + self.bkgdatm
 
         self.Ttyp = Ttyp
         self.broadf = broadf
@@ -121,77 +121,36 @@ class MdbExomol(CapiMdbExomol):
         local_files = [mgr.cache_file(f) for f in self.trans_file]
 
         # Load them:
-        jdict = self.load(
+        df = self.load(
             local_files,
             columns=[k for k in self.__slots__ if k not in ["logsij0"]],
             lower_bound=([("nu_lines", wavenum_min)] if wavenum_min else []) +
             ([("Sij0", self.crit)] if not np.isneginf(self.crit) else []),
             upper_bound=([("nu_lines", wavenum_max)] if wavenum_max else []),
-            output="vaex",
-        )
-        print(jdict)
-        #self.set_broadening_()  # Broadening parameters
+            output=dataformat)
 
-        if gpu_transfer:
-            self.generate_jnp_arrays()
-
-    def set_broadening_(self, alpha_ref_def=None, n_Texp_def=None):
-        """setting broadening parameters.
-
-        Args:
-           alpha_ref: set default alpha_ref and apply it. None=use self.alpha_ref_def
-           n_Texp_def: set default n_Texp and apply it. None=use self.n_Texp_def
-        """
-        if alpha_ref_def:
-            self.alpha_ref_def = alpha_ref_def
-        if n_Texp_def:
-            self.n_Texp_def = n_Texp_def
-
-        if self.broadf:
-            try:
-                print('.broad is used.')
-                bdat = exomolapi.read_broad(self.broad_file)
-                codelv = exomolapi.check_bdat(bdat)
-                print('Broadening code level=', codelv)
-                if codelv == 'a0':
-                    j2alpha_ref, j2n_Texp = exomolapi.make_j2b(
-                        bdat,
-                        alpha_ref_default=self.alpha_ref_def,
-                        n_Texp_default=self.n_Texp_def,
-                        jlower_max=np.max(self._jlower))
-                    self._alpha_ref = np.array(j2alpha_ref[self._jlower])
-                    self._n_Texp = np.array(j2n_Texp[self._jlower])
-                elif codelv == 'a1':
-                    j2alpha_ref, j2n_Texp = exomolapi.make_j2b(
-                        bdat,
-                        alpha_ref_default=self.alpha_ref_def,
-                        n_Texp_default=self.n_Texp_def,
-                        jlower_max=np.max(self._jlower))
-                    jj2alpha_ref, jj2n_Texp = exomolapi.make_jj2b(
-                        bdat,
-                        j2alpha_ref_def=j2alpha_ref,
-                        j2n_Texp_def=j2n_Texp,
-                        jupper_max=np.max(self._jupper))
-                    self._alpha_ref = np.array(jj2alpha_ref[self._jlower,
-                                                            self._jupper])
-                    self._n_Texp = np.array(jj2n_Texp[self._jlower,
-                                                      self._jupper])
-            except:
-                print(
-                    'Warning: Cannot load .broad. The default broadening parameters are used.'
-                )
-                self._alpha_ref = np.array(self.alpha_ref_def *
-                                           np.ones_like(self._jlower))
-                self._n_Texp = np.array(self.n_Texp_def *
-                                        np.ones_like(self._jlower))
-
-        else:
-            print('The default broadening parameters are used.')
-            self._alpha_ref = np.array(self.alpha_ref_def *
-                                       np.ones_like(self._jlower))
-            self._n_Texp = np.array(self.n_Texp_def *
-                                    np.ones_like(self._jlower))
-
+        self.set_broadening(df)
+        self.df_to_instance(df)
+        #print(self.gpp) #where is gpp?
+        #if gpu_transfer:
+        #    self.generate_jnp_arrays()
+        
+    def df_to_instance(self,df):
+        if isinstance(df,vaex.dataframe.DataFrameLocal):
+            self.A = df.A.values
+            self.nu_lines = df.nu_lines.values
+            self.elower = df.elower.values
+            self.jlower = df.jlower.values
+            self.jupper = df.jupper.values
+            self.Sij0 = df.Sij0.values
+        elif isinstance(df,pd.core.frame.DataFrame):
+            self.A = df["A"]
+            self.nu_lines = df["nu_lines"]
+            self.elower = df["elower"]
+            self.jlower = df["jlower"]
+            self.jupper = df["jupper"]
+            self.Sij0 = df["Sij0"]    
+            
     def get_Sij_typ(self, Sij0_in, elower_in, nu_in):
         """compute Sij at typical temperature self.Ttyp.
 
