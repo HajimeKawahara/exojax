@@ -35,15 +35,16 @@ class MdbExomol(CapiMdbExomol):
         nurange: nu range [min,max] (cm-1)
         nu_lines (nd array): line center (cm-1)
         Sij0 (nd array): line strength at T=Tref (cm)
-        dev_nu_lines (jnp array): line center in device (cm-1)
+        
         logsij0 (jnp array): log line strength at T=Tref
         A (jnp array): Einstein A coeeficient
-        gamma_natural (jnp array): gamma factor of the natural broadening
-        elower (jnp array): the lower state energy (cm-1)
-        gpp (jnp array): statistical weight
-        jlower (jnp array): J_lower
-        jupper (jnp array): J_upper
-        n_Texp (jnp array): temperature exponent
+        gamma_natural (DataFrame or jnp array): gamma factor of the natural broadening
+        elower (DataFrame or jnp array): the lower state energy (cm-1)
+        gpp (DataFrame or jnp array): statistical weight
+        jlower (DataFrame or jnp array): J_lower
+        jupper (DataFrame or jnp array): J_upper
+        n_Texp (DataFrame or jnp array): temperature exponent
+        dev_nu_lines (jnp array): line center in device (cm-1)
         alpha_ref (jnp array): alpha_ref (gamma0), Lorentzian half-width at reference temperature and pressure in cm-1/bar
         n_Texp_def: default temperature exponent in .def file, used for jlower not given in .broad
         alpha_ref_def: default alpha_ref (gamma0) in .def file, used for jlower not given in .broad
@@ -69,7 +70,8 @@ class MdbExomol(CapiMdbExomol):
                  bkgdatm='H2',
                  broadf=True,
                  remove_original_hdf=True,
-                 dataformat="pandas"):
+                 dataformat="vaex",
+                 gpu_transfer=True):
         """Molecular database for Exomol form.
 
         Args:
@@ -81,7 +83,7 @@ class MdbExomol(CapiMdbExomol):
            bkgdatm: background atmosphere for broadening. e.g. H2, He,
            broadf: if False, the default broadening parameters in .def file is used
            remove_original_hdf: if True, the hdf5 and yaml files created while reading the original transition file(s) will be removed since those files will not be used after that.
-           dataformat: datafromat of Data Frame or dictionary: "jax", "vaex", "pandas"
+           dataformat: datafromat of Data Frame or dictionary: "vaex", "pandas"
 
         Note:
            The trans/states files can be very large. For the first time to read it, we convert it to HDF/vaex. After the second-time, we use the HDF5 format with vaex instead.
@@ -128,12 +130,12 @@ class MdbExomol(CapiMdbExomol):
             ([("Sij0", self.crit)] if not np.isneginf(self.crit) else []),
             upper_bound=([("nu_lines", wavenum_max)] if wavenum_max else []),
             output=dataformat)
-
         self.set_broadening(df)
         self.df_to_instance(df)
-        #print(self.gpp) #where is gpp?
-        #if gpu_transfer:
-        #    self.generate_jnp_arrays()
+        self.gamma_natural = gn(self.A)
+        
+        if gpu_transfer:
+            self.generate_jnp_arrays()
         
     def df_to_instance(self,df):
         if isinstance(df,vaex.dataframe.DataFrameLocal):
@@ -143,13 +145,15 @@ class MdbExomol(CapiMdbExomol):
             self.jlower = df.jlower.values
             self.jupper = df.jupper.values
             self.Sij0 = df.Sij0.values
+            self.gpp = df.gup.values
         elif isinstance(df,pd.core.frame.DataFrame):
             self.A = df["A"]
             self.nu_lines = df["nu_lines"]
             self.elower = df["elower"]
             self.jlower = df["jlower"]
             self.jupper = df["jupper"]
-            self.Sij0 = df["Sij0"]    
+            self.Sij0 = df["Sij0"]  
+            self.gpp = df["gup"]
             
     def get_Sij_typ(self, Sij0_in, elower_in, nu_in):
         """compute Sij at typical temperature self.Ttyp.
@@ -166,102 +170,24 @@ class MdbExomol(CapiMdbExomol):
             * np.exp(-hcperk*elower_in * (1./self.Ttyp - 1./Tref)) \
             * np.expm1(-hcperk*nu_in/self.Ttyp) / np.expm1(-hcperk*nu_in/Tref)
 
-    def masking(self, mask):
-        """applying mask.
-        Args:
-           mask: mask to be applied. self.mask is updated.
-        """
-        # numpy float 64 Do not convert them jnp array
-        self.nu_lines = self.nu_lines[mask]
-        self.Sij0 = self.Sij0[mask]
-        self._A = self._A[mask]
-        self._elower = self._elower[mask]
-        self._gpp = self._gpp[mask]
-        self._jlower = self._jlower[mask]
-        self._jupper = self._jupper[mask]
-
     def generate_jnp_arrays(self):
         """(re)generate jnp.arrays.
 
         Note:
-           We have nd arrays and jnp arrays. We usually apply the mask to nd arrays and then generate jnp array from the corresponding nd array. For instance, self._A is nd array and self.A is jnp array.
+            We have nd arrays and jnp arrays. We usually apply the mask to nd arrays and then generate jnp array from the corresponding nd array. For instance, self._A is nd array and self.A is jnp array.
 
         """
-
         # jnp arrays
         self.dev_nu_lines = jnp.array(self.nu_lines)
         self.logsij0 = jnp.array(np.log(self.Sij0))
-        self.A = jnp.array(self._A)
-        self.gamma_natural = gn(self.A)
-        self.elower = jnp.array(self._elower)
-        self.gpp = jnp.array(self._gpp)
-        self.jlower = jnp.array(self._jlower, dtype=int)
-        self.jupper = jnp.array(self._jupper, dtype=int)
-        self.alpha_ref = jnp.array(self._alpha_ref)
-        self.n_Texp = jnp.array(self._n_Texp)
-
-    def QT_interp(self, T):
-        """interpolated partition function.
-
-        Args:
-           T: temperature
-
-        Returns:
-           Q(T) interpolated in jnp.array
-        """
-        return jnp.interp(T, self.T_gQT, self.gQT)
-
-    def qr_interp(self, T):
-        """interpolated partition function ratio.
-
-        Args:
-           T: temperature
-
-        Returns:
-           qr(T)=Q(T)/Q(Tref) interpolated in jnp.array
-        """
-        return self.QT_interp(T) / self.QT_interp(Tref)
-
-    def download(self, molec, extension, numtag=None):
-        """Downloading Exomol files.
-
-        Args:
-           molec: like "12C-16O__Li2015"
-           extension: extension list e.g. [".pf",".def",".trans.bz2",".states.bz2",".broad"]
-           numtag: number tag of transition file if exists. e.g. "11100-11200"
-
-        Note:
-           The download URL is written in exojax.utils.url.
-        """
-        import urllib.request
-        from exojax.utils.molname import e2s
-        from exojax.utils.url import url_ExoMol
-
-        tag = molec.split('__')
-        molname_simple = e2s(tag[0])
-
-        for ext in extension:
-            if ext == '.trans.bz2' and numtag is not None:
-                ext = '__' + numtag + ext
-            if ext == '.broad':
-                pfname_arr = [
-                    tag[0] + '__H2' + ext, tag[0] + '__He' + ext,
-                    tag[0] + '__air' + ext
-                ]
-                url = url_ExoMol() + molname_simple + '/' + tag[0] + '/'
-            else:
-                pfname_arr = [molec + ext]
-                url = url_ExoMol(
-                ) + molname_simple + '/' + tag[0] + '/' + tag[1] + '/'
-            for pfname in pfname_arr:
-                pfpath = url + pfname
-                os.makedirs(str(self.path), exist_ok=True)
-                print('Downloading ' + pfpath)
-                try:
-                    urllib.request.urlretrieve(pfpath, str(self.path / pfname))
-                except:
-                    print("Error: Couldn't download " + ext +
-                          ' file and save.')
+        self.gamma_natural = jnp.array(self.gamma_natural)
+        self.A = jnp.array(self.A)
+        self.elower = jnp.array(self.elower)
+        self.gpp = jnp.array(self.gpp)
+        self.jlower = jnp.array(self.jlower, dtype=int)
+        self.jupper = jnp.array(self.jupper, dtype=int)
+        self.alpha_ref = jnp.array(self.alpha_ref)
+        self.n_Texp = jnp.array(self.n_Texp)
 
 
 class MdbHit(object):
