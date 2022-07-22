@@ -70,7 +70,6 @@ class MdbExomol(CapiMdbExomol):
                  bkgdatm='H2',
                  broadf=True,
                  remove_original_hdf=True,
-                 dataformat="vaex",
                  gpu_transfer=True):
         """Molecular database for Exomol form.
 
@@ -83,8 +82,7 @@ class MdbExomol(CapiMdbExomol):
            bkgdatm: background atmosphere for broadening. e.g. H2, He,
            broadf: if False, the default broadening parameters in .def file is used
            remove_original_hdf: if True, the hdf5 and yaml files created while reading the original transition file(s) will be removed since those files will not be used after that.
-           dataformat: datafromat of Data Frame or dictionary: "vaex", "pandas"
-
+           
         Note:
            The trans/states files can be very large. For the first time to read it, we convert it to HDF/vaex. After the second-time, we use the HDF5 format with vaex instead.
         """
@@ -130,15 +128,15 @@ class MdbExomol(CapiMdbExomol):
             lower_bound=([("nu_lines", wavenum_min)] if wavenum_min else []) +
             ([("Sij0", 0.0)]),
             upper_bound=([("nu_lines", wavenum_max)] if wavenum_max else []),
-            output=dataformat)
+            output="vaex")
         self.set_broadening(df)
-        self.df_to_instance(df)
+        self.masking_dataframe(df)
         self.gamma_natural = gn(self.A)
 
         if gpu_transfer:
             self.generate_jnp_arrays()
 
-    def df_to_instance(self, df):
+    def masking_dataframe(self, df):
         load_mask = (df.nu_lines > self.nurange[0]-self.margin) \
                     * (df.nu_lines < self.nurange[1]+self.margin)
         load_mask = load_mask * (self.get_Sij_typ(df.Sij0, df.elower,
@@ -153,15 +151,6 @@ class MdbExomol(CapiMdbExomol):
             self.Sij0 = df.Sij0.values
             self.gpp = df.gup.values
             
-        elif isinstance(df, pd.core.frame.DataFrame):
-            self.A = df["A"]
-            self.nu_lines = df["nu_lines"]
-            self.elower = df["elower"]
-            self.jlower = df["jlower"]
-            self.jupper = df["jupper"]
-            self.Sij0 = df["Sij0"]
-            self.gpp = df["gup"]
-
     def get_Sij_typ(self, Sij0_in, elower_in, nu_in):
         """compute Sij at typical temperature self.Ttyp.
 
