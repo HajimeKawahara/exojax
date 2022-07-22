@@ -116,6 +116,7 @@ class MdbExomol(CapiMdbExomol):
                          cache=True,
                          skip_optional_data=True)
 
+        self.crit = crit
         self.QTtyp = np.array(self.QT_interp(self.Ttyp))
 
         # Get cache files to load :
@@ -127,18 +128,23 @@ class MdbExomol(CapiMdbExomol):
             local_files,
             columns=[k for k in self.__slots__ if k not in ["logsij0"]],
             lower_bound=([("nu_lines", wavenum_min)] if wavenum_min else []) +
-            ([("Sij0", self.crit)] if not np.isneginf(self.crit) else []),
+            ([("Sij0", 0.0)]),
             upper_bound=([("nu_lines", wavenum_max)] if wavenum_max else []),
             output=dataformat)
         self.set_broadening(df)
         self.df_to_instance(df)
         self.gamma_natural = gn(self.A)
-        
+
         if gpu_transfer:
             self.generate_jnp_arrays()
-        
-    def df_to_instance(self,df):
-        if isinstance(df,vaex.dataframe.DataFrameLocal):
+
+    def df_to_instance(self, df):
+        load_mask = (df.nu_lines > self.nurange[0]-self.margin) \
+                    * (df.nu_lines < self.nurange[1]+self.margin)
+        load_mask = load_mask * (self.get_Sij_typ(df.Sij0, df.elower,
+                                                  df.nu_lines) > self.crit)
+        df = df[load_mask]
+        if isinstance(df, vaex.dataframe.DataFrameLocal):
             self.A = df.A.values
             self.nu_lines = df.nu_lines.values
             self.elower = df.elower.values
@@ -146,15 +152,16 @@ class MdbExomol(CapiMdbExomol):
             self.jupper = df.jupper.values
             self.Sij0 = df.Sij0.values
             self.gpp = df.gup.values
-        elif isinstance(df,pd.core.frame.DataFrame):
+            
+        elif isinstance(df, pd.core.frame.DataFrame):
             self.A = df["A"]
             self.nu_lines = df["nu_lines"]
             self.elower = df["elower"]
             self.jlower = df["jlower"]
             self.jupper = df["jupper"]
-            self.Sij0 = df["Sij0"]  
+            self.Sij0 = df["Sij0"]
             self.gpp = df["gup"]
-            
+
     def get_Sij_typ(self, Sij0_in, elower_in, nu_in):
         """compute Sij at typical temperature self.Ttyp.
 
