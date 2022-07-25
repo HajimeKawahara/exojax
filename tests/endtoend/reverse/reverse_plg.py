@@ -172,7 +172,7 @@ if SaveOrNot:
     plt.savefig(path_fig + f"trace_{str(int(Nth_run))}.pdf")
 
     fig, ax = plt.subplots(figsize=(20, 3), tight_layout=True)
-    ax.plot(np.arange(len(posterior_samples['T0'])),
+    ax.plot(np.arange(len(posterior_sample['T0'])),
             mcmc.get_extra_fields()['diverging'],
             ls='', marker='|', markersize=10.)
     ax.set_ylim(-1, 2)
