@@ -41,16 +41,16 @@ from jax import vmap
 filename = pkg_resources.resource_filename(
     'exojax', 'data/testdata/' + SAMPLE_SPECTRA_CH4_NEW)
 dat = pd.read_csv(filename, delimiter=",", names=("wav", "flux"))
-wavd = dat['wav'].values[:200] #trim
-flux = dat['flux'].values[-200:] #trim
+wavd = dat['wav'].values[130:180] #trim
+flux = dat['flux'].values[-180:-130] #trim
 nusd = jnp.array(1.e8 / wavd[::-1])
-sigmain = 0.05
+sigmain = 0.03
 norm = 20000
 nflux = flux / norm + np.random.normal(0, sigmain, len(wavd))
 
 NP = 100
 Parr, dParr, k = rtransfer.pressure_layer(NP=NP)
-Nx = 1000 #trim
+Nx = 250 #trim
 nu_grid, wav, res = gen_wavenumber_grid(
                            np.min(wavd) - 2.0, #trim
                            np.max(wavd) + 2.0, #trim
