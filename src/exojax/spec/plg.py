@@ -65,27 +65,27 @@ def plg_elower_addcon(indexa,Na,cnu,indexnu,nu_grid,mdb,Tgue, errTgue=500., elow
 
     qlogsij0, qcnu, num_unique, frozen_mask = get_qlogsij0_addcon(indexa, Na, cnu, indexnu, Nnugrid, mdb, expme, expme_grid, Ncrit=Ncrit, Tuplim=Tuplim, Tmargin=Tmargin, threshold_persist_freezing=threshold_persist_freezing)
     
-    nonzeropl_mask=qlogsij0>-np.inf
-    Nline=len(elower)
-    Nunf=np.sum(~frozen_mask)
-    Npl=len(qlogsij0[nonzeropl_mask])
+    nonzeropl_mask = qlogsij0 > -np.inf
+    Nline = len(elower)
+    Nunf = np.sum(~frozen_mask)
+    Npl = len(qlogsij0[nonzeropl_mask])
     if verbose:
-        print("# of original lines:",Nline)
-        print("# of unfrozen lines:",Nunf)
-        print("# of frozen lines:",np.sum(frozen_mask))
-        print("# of pseudo lines:",Npl)
-        print("# of total lines:",(Npl+Nunf))
-        print("# compression:",(Npl+Nunf)/Nline)
+        print("# of original lines:", Nline)
+        print("# of unfrozen lines:", Nunf)
+        print("# of frozen lines:", np.sum(frozen_mask))
+        print("# of pseudo lines:", Npl)
+        print("# of total lines:", (Npl+Nunf))
+        print("# compression:", (Npl+Nunf)/Nline)
 
     if reshape==True:
         qlogsij0=qlogsij0.reshape(Na,Nnugrid,Nelower)
         qcnu=qcnu.reshape(Na,Nnugrid,Nelower)
         num_unique=num_unique.reshape(Na,Nnugrid,Nelower)
         
-    return qlogsij0,qcnu,num_unique,elower_grid,frozen_mask,nonzeropl_mask
+    return qlogsij0, qcnu, num_unique, elower_grid, frozen_mask, nonzeropl_mask
 
 
-def get_qlogsij0_addcon(indexa,Na,cnu,indexnu,Nnugrid,mdb,expme,expme_grid, Ncrit=0, Tuplim=1000., Tmargin=0., threshold_persist_freezing=10000.):
+def get_qlogsij0_addcon(indexa, Na, cnu, indexnu, Nnugrid, mdb, expme, expme_grid, Ncrit=0, Tuplim=1000., Tmargin=0., threshold_persist_freezing=10000.):
     """gather (freeze) lines w/ additional indexing
 
     Args:
@@ -109,20 +109,20 @@ def get_qlogsij0_addcon(indexa,Na,cnu,indexnu,Nnugrid,mdb,expme,expme_grid, Ncri
         frozen_mask: mask for frozen lines into pseudo lines
 
     """
-    m=len(expme_grid)
-    n=m*Nnugrid
-    Ng=n*Na
+    m = len(expme_grid)
+    n = m * Nnugrid
+    Ng = n * Na
     
-    cont,index=npgetix(expme,expme_grid) #elower contribution and elower index of lines
-    eindex=index+m*indexnu+n*indexa #extended index elower,nu,a
+    cont, index = npgetix(expme, expme_grid) #elower contribution and elower index of lines
+    eindex = index + m * indexnu + n * indexa #extended index elower,nu,a
     
     #frozen criterion
-    num_unique=np.bincount(eindex,minlength=Ng) # number of the lines in a bin
+    num_unique = np.bincount(eindex, minlength=Ng) # number of the lines in a bin
     
-    lmask=(num_unique>=Ncrit)
-    erange=range(0,Ng)
-    frozen_eindex=np.array(erange)[lmask]
-    frozen_mask=np.isin(eindex,frozen_eindex)
+    lmask = (num_unique >= Ncrit)
+    erange = range(0, Ng)
+    frozen_eindex = np.array(erange)[lmask]
+    frozen_mask = np.isin(eindex, frozen_eindex)
     
     #Retake relatively strong lines.
     SijTgue_frozen = SijT(Tuplim+Tmargin, \
@@ -133,23 +133,23 @@ def get_qlogsij0_addcon(indexa,Na,cnu,indexnu,Nnugrid,mdb,expme,expme_grid, Ncri
     frozen_mask = np.isin(np.arange(len(frozen_mask)), index_persist_freezing)
         
     #qlogsij0
-    Sij=np.exp(mdb.logsij0)
-    qlogsij0=np.bincount(eindex,weights=Sij*(1.0-cont)*frozen_mask,minlength=Ng)
-    qlogsij0=qlogsij0+np.bincount(eindex+1,weights=Sij*cont*frozen_mask,minlength=Ng)
+    Sij0 = np.exp(mdb.logsij0)
+    qSij0 = np.bincount(eindex, weights=Sij0*(1.0-cont)*frozen_mask, minlength=Ng)
+    qSij0 = qSij0 + np.bincount(eindex+1, weights=Sij0*cont*frozen_mask, minlength=Ng)
     with warnings.catch_warnings():
         warnings.simplefilter('ignore')
-        qlogsij0=np.log(qlogsij0)
+        qlogsij0 = np.log(qSij0)
 
     #qcnu
-    qcnu_den=np.bincount(eindex,weights=Sij*frozen_mask,minlength=Ng)
-    qcnu_den=qcnu_den+np.bincount(eindex+1,weights=Sij*frozen_mask,minlength=Ng)
-    qcnu_den[qcnu_den==0.0]=1.0
+    qcnu_den = np.bincount(eindex, weights=Sij0*frozen_mask, minlength=Ng)
+    qcnu_den = qcnu_den + np.bincount(eindex+1, weights=Sij0*frozen_mask, minlength=Ng)
+    qcnu_den[qcnu_den==0.0] = 1.0
     
-    qcnu_num=np.bincount(eindex,weights=Sij*cnu*frozen_mask,minlength=Ng)
-    qcnu_num=qcnu_num+np.bincount(eindex+1,weights=Sij*cnu*frozen_mask,minlength=Ng)
-    qcnu=qcnu_num/qcnu_den
+    qcnu_num = np.bincount(eindex, weights=Sij0*cnu*frozen_mask, minlength=Ng)
+    qcnu_num = qcnu_num + np.bincount(eindex+1, weights=Sij0*cnu*frozen_mask, minlength=Ng)
+    qcnu = qcnu_num/qcnu_den
 
-    return qlogsij0,qcnu,num_unique,frozen_mask
+    return qlogsij0, qcnu, num_unique, frozen_mask
 
 
 def plg_elower(cnu,indexnu,Nnugrid,logsij0,elower,elower_grid=None,Nelower=10,Ncrit=0,reshape=True):
@@ -380,7 +380,7 @@ def make_gamma_grid_exomol(mdb):
     return alpha_ref_grid, n_Texp_grid, index_gamma
     
         
-def gather_lines(mdb,Na,Nnugrid,Nelower,nu_grid,cnu,indexnu,qlogsij0,qcnu,elower_grid,alpha_ref_grid,n_Texp_grid,frozen_mask,nonzeropl_mask):
+def gather_lines(mdb, Na, Nnugrid, Nelower, nu_grid, cnu, indexnu, qlogsij0, qcnu, elower_grid, alpha_ref_grid, n_Texp_grid, frozen_mask, nonzeropl_mask):
     """gather pseudo lines and unfrozen lines into lines for exomol
 
     Args:
@@ -414,36 +414,36 @@ def gather_lines(mdb,Na,Nnugrid,Nelower,nu_grid,cnu,indexnu,qlogsij0,qcnu,elower
     import jax.numpy as jnp
 
     ## MODIT
-    arrone=np.ones((Na,Nelower))    
-    qnu_grid=(arrone[:,np.newaxis,:]*nu_grid[np.newaxis,:,np.newaxis]).flatten()
-    indexnu_grid=np.array(range(0,len(nu_grid)),dtype=int)
-    qindexnu=(arrone[:,np.newaxis,:]*indexnu_grid[np.newaxis,:,np.newaxis]).flatten()
-    cnu=np.hstack([qcnu[nonzeropl_mask],cnu[~frozen_mask]])
-    indexnu=np.array(np.hstack([qindexnu[nonzeropl_mask],indexnu[~frozen_mask]]),dtype=int)
+    arrone = np.ones((Na,Nelower))
+    qnu_grid = (arrone[:, np.newaxis, :] * nu_grid[np.newaxis, :, np.newaxis]).flatten()
+    indexnu_grid = np.array(range(0, len(nu_grid)), dtype=int)
+    qindexnu = (arrone[:, np.newaxis, :] * indexnu_grid[np.newaxis, :, np.newaxis]).flatten()
+    cnu = np.hstack([qcnu[nonzeropl_mask], cnu[~frozen_mask]])
+    indexnu = np.array(np.hstack([qindexnu[nonzeropl_mask], indexnu[~frozen_mask]]), dtype=int)
     
     #mdb
-    mdb.logsij0=np.hstack([qlogsij0[nonzeropl_mask],mdb.logsij0[~frozen_mask]])
-    mdb.nu_lines=np.hstack([qnu_grid[nonzeropl_mask],mdb.nu_lines[~frozen_mask]])
-    mdb.dev_nu_lines=jnp.array(mdb.nu_lines)
+    mdb.logsij0 = np.hstack([qlogsij0[nonzeropl_mask], mdb.logsij0[~frozen_mask]])
+    mdb.nu_lines = np.hstack([qnu_grid[nonzeropl_mask], mdb.nu_lines[~frozen_mask]])
+    mdb.dev_nu_lines = jnp.array(mdb.nu_lines)
 
-    onearr=np.ones((Na,Nnugrid))
-    qelower=(onearr[:,:,np.newaxis]*elower_grid[np.newaxis,np.newaxis,:]).flatten()
-    mdb.elower=np.hstack([qelower[nonzeropl_mask],mdb.elower[~frozen_mask]])
+    onearr = np.ones((Na,Nnugrid))
+    qelower = (onearr[:, :, np.newaxis] * elower_grid[np.newaxis, np.newaxis,:]).flatten()
+    mdb.elower = np.hstack([qelower[nonzeropl_mask], mdb.elower[~frozen_mask]])
     
     #gamma     #Na,Nnugrid,Nelower
-    onearr_=np.ones((Nnugrid,Nelower))
-    alpha_ref_grid=alpha_ref_grid[:,np.newaxis,np.newaxis]*onearr_
-    alpha_ref_grid=alpha_ref_grid.flatten()
-    n_Texp_grid=n_Texp_grid[:,np.newaxis,np.newaxis]*onearr_
-    n_Texp_grid=n_Texp_grid.flatten()    
-    mdb.alpha_ref=np.hstack([alpha_ref_grid[nonzeropl_mask],mdb.alpha_ref[~frozen_mask]])
-    mdb.n_Texp=np.hstack([n_Texp_grid[nonzeropl_mask],mdb.n_Texp[~frozen_mask]])
-    mdb.A=jnp.zeros_like(mdb.logsij0) #no natural width
+    onearr_ = np.ones((Nnugrid, Nelower))
+    alpha_ref_grid = alpha_ref_grid[:, np.newaxis, np.newaxis] * onearr_
+    alpha_ref_grid = alpha_ref_grid.flatten()
+    n_Texp_grid = n_Texp_grid[:, np.newaxis, np.newaxis] * onearr_
+    n_Texp_grid = n_Texp_grid.flatten()
+    mdb.alpha_ref = np.hstack([alpha_ref_grid[nonzeropl_mask], mdb.alpha_ref[~frozen_mask]])
+    mdb.n_Texp = np.hstack([n_Texp_grid[nonzeropl_mask], mdb.n_Texp[~frozen_mask]])
+    mdb.A = jnp.zeros_like(mdb.logsij0) #no natural width
 
-    lenarr=[len(mdb.logsij0),len(mdb.elower),len(cnu),len(indexnu),len(mdb.nu_lines),len(mdb.dev_nu_lines),len(mdb.alpha_ref),len(mdb.n_Texp),len(mdb.A)]
+    lenarr = [len(mdb.logsij0), len(mdb.elower), len(cnu), len(indexnu), len(mdb.nu_lines), len(mdb.dev_nu_lines), len(mdb.alpha_ref), len(mdb.n_Texp), len(mdb.A)]
     
-    Ngat=np.unique(lenarr)
-    if len(Ngat)>1:
+    Ngat = np.unique(lenarr)
+    if len(Ngat) > 1:
         print("Error: Length mismatch")
     #else:
     #    print("Nline gathered=",Ngat[0])
