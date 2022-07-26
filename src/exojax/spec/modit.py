@@ -319,7 +319,7 @@ def vald_each(Tarr, PH, PHe, PHH, R, qt_284_T, QTmask, \
     gammaLM = jit(vmap(gamma_vald3,(0,0,0,0,None,None,None,None,None,None,None,None,None,None,None)))\
             (Tarr, PH, PHH, PHe, ielem, iion, dev_nu_lines, elower, eupper, atomicmass, ionE, gamRad, gamSta, vdWdamp, 1.0)
     ngammaLM = gammaLM / (dev_nu_lines / R)
-    # Do NOT remove NaN because "setdgm_vald_each" makes good use of them. # ngammaLM = jnp.nan_to_num(ngammaLM, nan = 0.0)
+    # Do NOT remove NaN because "set_ditgrid_matrix_vald_each" makes good use of them. # ngammaLM = jnp.nan_to_num(ngammaLM, nan = 0.0)
 
     # Compute doppler broadening
     nsigmaDl = normalized_doppler_sigma(Tarr, atomicmass, R)[:, jnp.newaxis]
@@ -451,7 +451,7 @@ def set_ditgrid_matrix_vald_all(asdb, PH, PHe, PHH, R, fT, dit_grid_resolution,
     dgm_ngammaLS_BeforePadding = []
     lendgm = []
     for i in range(asdb.N_usp):
-        dgm_ngammaL_sp = setdgm_vald_each(asdb.ielem[i], asdb.iion[i], asdb.atomicmass[i], asdb.ionE[i], \
+        dgm_ngammaL_sp = set_ditgrid_matrix_vald_each(asdb.ielem[i], asdb.iion[i], asdb.atomicmass[i], asdb.ionE[i], \
             asdb.dev_nu_lines[i], asdb.logsij0[i], asdb.elower[i], asdb.eupper[i], asdb.gamRad[i], asdb.gamSta[i], asdb.vdWdamp[i], \
             asdb.QTmask[i], T_gQT, gQT_284species, PH, PHe, PHH, R, fT, dit_grid_resolution, *kargs)
         dgm_ngammaLS_BeforePadding.append(dgm_ngammaL_sp)
