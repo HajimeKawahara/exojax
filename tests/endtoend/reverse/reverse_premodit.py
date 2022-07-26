@@ -16,7 +16,9 @@ import numpy as np
 import matplotlib.pyplot as plt
 import jax.numpy as jnp
 from exojax.spec import rtransfer as rt
-from exojax.spec import moldb, contdb
+from exojax.spec import contdb
+#from exojax.spec.moldb import MdbExomol 
+from exojax.spec.api import MdbExomol 
 from exojax.spec import rtransfer
 from exojax.spec.rtransfer import nugrid
 from exojax.spec.rtransfer import rtrun, dtauM, dtauCIA, nugrid
@@ -61,7 +63,7 @@ vmrH2 = (mmrH2 * mmw / molmassH2)  # VMR
 
 #
 Mp = 33.2
-mdb = moldb.MdbExomol('.database/CH4/12C-1H4/YT10to10/', nu_grid, crit=1.e-30)
+mdb = MdbExomol('.database/CH4/12C-1H4/YT10to10/', nu_grid, crit=1.e-30, gpu_transfer=False)
 cdbH2H2 = contdb.CdbCIA('.database/H2-H2_2011.cia', nu_grid)
 print('N=', len(mdb.nu_lines))
 
