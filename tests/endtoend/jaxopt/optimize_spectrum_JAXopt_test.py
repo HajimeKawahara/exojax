@@ -2,18 +2,17 @@ import pandas as pd
 import pkgutil
 from io import BytesIO
 import numpy as np
-import matplotlib.pyplot as plt
 from exojax.spec.lpf import xsmatrix
 from exojax.spec.exomol import gamma_exomol
-from exojax.spec.hitran import SijT, doppler_sigma, gamma_natural, gamma_hitran
-from exojax.spec.hitrancia import read_cia, logacia
+from exojax.spec.hitran import SijT, doppler_sigma, gamma_natural
 from exojax.spec.rtransfer import rtrun, dtauM, dtauCIA, nugrid
 from exojax.spec import planck, response
-from exojax.spec.lpf import xsvector
 from exojax.spec import molinfo
 from exojax.utils.constants import RJ, pc, Rs, c
 from exojax.spec import rtransfer as rt
-from exojax.spec import moldb, contdb
+from exojax.spec import contdb
+#from exojax.spec.moldb import MdbExomol
+from exojax.spec.api import MdbExomol
 from exojax.spec import make_numatrix0
 from exojax.spec import initspec
 import jax.numpy as jnp
@@ -45,7 +44,7 @@ def test_jaxopt_spectrum():
     vmrH2=(mmrH2*mmw/molmassH2) #VMR
     
     Mp = 33.2 #fixing mass...
-    mdbCO=moldb.MdbExomol('.database/CO/12C-16O/Li2015',nus,crit=1.e-46)
+    mdbCO=MdbExomol('.database/CO/12C-16O/Li2015',nus,crit=1.e-46)
     cdbH2H2=contdb.CdbCIA('.database/H2-H2_2011.cia',nus)
     numatrix_CO=make_numatrix0(nus,mdbCO.nu_lines)
     numatrix_CO=initspec.init_lpf(mdbCO.nu_lines,nus)
@@ -69,6 +68,10 @@ def test_jaxopt_spectrum():
             SijM_CO=jit(vmap(SijT,(0,None,None,None,0)))            (Tarr,mdbCO.logsij0,mdbCO.dev_nu_lines,mdbCO.elower,qt_CO)
             gammaLMP_CO = jit(vmap(gamma_exomol,(0,0,None,None)))            (Parr,Tarr,mdbCO.n_Texp,mdbCO.alpha_ref)
             gammaLMN_CO=gamma_natural(mdbCO.A)
+            print(np.shape(gammaLMP_CO))
+            print(np.shape(gammaLMN_CO))
+            import sys
+            sys.exit()
             gammaLM_CO=gammaLMP_CO+gammaLMN_CO[None,:]
             
             sigmaDM_CO=jit(vmap(doppler_sigma,(None,0,None)))            (mdbCO.dev_nu_lines,Tarr,molmassCO)

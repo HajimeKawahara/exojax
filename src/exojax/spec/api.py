@@ -184,6 +184,28 @@ class MdbExomol(CapiMdbExomol):
         self.jupper = jnp.array(self.jupper, dtype=int)
         self.alpha_ref = jnp.array(self.alpha_ref)
         self.n_Texp = jnp.array(self.n_Texp)
+        
+    def QT_interp(self, T):
+        """interpolated partition function.
+
+        Args:
+           T: temperature
+
+        Returns:
+           Q(T) interpolated in jnp.array
+        """
+        return jnp.interp(T, self.T_gQT, self.gQT)
+
+    def qr_interp(self, T):
+        """interpolated partition function ratio.
+
+        Args:
+           T: temperature
+
+        Returns:
+           qr(T)=Q(T)/Q(Tref) interpolated in jnp.array
+        """
+        return self.QT_interp(T)/self.QT_interp(Tref)
 
 
 class MdbHit(object):
