@@ -4,6 +4,7 @@
 * MdbHit is the MDB for HITRAN or HITEMP
 """
 import os
+import warnings
 import numpy as np
 import jax.numpy as jnp
 from jax import jit, vmap
@@ -69,8 +70,8 @@ class MdbExomol(CapiMdbExomol):
                  Ttyp=1000.,
                  bkgdatm='H2',
                  broadf=True,
-                 remove_original_hdf=True,
-                 gpu_transfer=True):
+                 gpu_transfer=True,
+                 local_databases="./"):
         """Molecular database for Exomol form.
 
         Args:
@@ -81,7 +82,6 @@ class MdbExomol(CapiMdbExomol):
            Ttyp: typical temperature to calculate Sij(T) used in crit
            bkgdatm: background atmosphere for broadening. e.g. H2, He,
            broadf: if False, the default broadening parameters in .def file is used
-           remove_original_hdf: if True, the hdf5 and yaml files created while reading the original transition file(s) will be removed since those files will not be used after that.
            
         Note:
            The trans/states files can be very large. For the first time to read it, we convert it to HDF/vaex. After the second-time, we use the HDF5 format with vaex instead.
@@ -103,7 +103,7 @@ class MdbExomol(CapiMdbExomol):
             wavenum_max = None
 
         super().__init__(str(self.path),
-                         local_databases=path,
+                         local_databases=local_databases,
                          molecule=self.simple_molecule_name,
                          name="EXOMOL-{molecule}",
                          nurange=[wavenum_min, wavenum_max],
@@ -125,10 +125,11 @@ class MdbExomol(CapiMdbExomol):
         df = self.load(
             local_files,
             columns=[k for k in self.__slots__ if k not in ["logsij0"]],
-            lower_bound=([("nu_lines", wavenum_min)] if wavenum_min else []) +
-            ([("Sij0", 0.0)]),
-            upper_bound=([("nu_lines", wavenum_max)] if wavenum_max else []),
+            #lower_bound=([("nu_lines", wavenum_min)] if wavenum_min else []) +
+            lower_bound=([("Sij0", 0.0)]),
+            #upper_bound=([("nu_lines", wavenum_max)] if wavenum_max else []),
             output="vaex")
+        
 
         load_mask = self.compute_load_mask(df)
         self.masking_dataframe(df[load_mask])
@@ -147,10 +148,6 @@ class MdbExomol(CapiMdbExomol):
         return load_mask
 
     def masking_dataframe(self, df):
-        load_mask = load_mask = (df.nu_lines > self.nurange[0]-self.margin) \
-                    * (df.nu_lines < self.nurange[1]+self.margin)
-        load_mask = load_mask * (self.get_Sij_typ(df.Sij0, df.elower,
-                                                  df.nu_lines) > self.crit)
 
         if isinstance(df, vaex.dataframe.DataFrameLocal):
             self.A = df.A.values
@@ -160,6 +157,8 @@ class MdbExomol(CapiMdbExomol):
             self.jupper = df.jupper.values
             self.Sij0 = df.Sij0.values
             self.gpp = df.gup.values
+        else:
+            raise ValueError("Use vaex dataframe as input.")
 
     def get_Sij_typ(self, Sij0_in, elower_in, nu_in):
         """compute Sij at typical temperature self.Ttyp.
@@ -252,7 +251,7 @@ class MdbHit(object):
            crit: line strength lower limit for extraction
            Ttyp: typical temperature to calculate Sij(T) used in crit
            extract: If True, it extracts the opacity having the wavenumber between nurange +- margin. Use when you want to reduce the memory use.
-           gpu_transfer: tranfer data to jnp.array? 
+           gpu_transfer: tranfer data to jnp.array?
         """
         from exojax.spec.hitran import SijT
         if ("hit" in path and path[-4:] == ".bz2"):
