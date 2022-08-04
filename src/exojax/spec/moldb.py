@@ -9,6 +9,7 @@ import jax.numpy as jnp
 from jax import jit, vmap
 import pathlib
 import vaex
+import warnings
 from exojax.spec import hapi, exomolapi, exomol, atomllapi, atomll, hitranapi
 from exojax.spec.hitran import gamma_natural as gn
 from exojax.utils.constants import hcperk, Tref
@@ -300,7 +301,8 @@ class MdbExomol(object):
         self._jupper = self._jupper[mask]
 
         if(len(self.nu_lines) < 1):
-            print("Warning: no lines are selected. Check the inputs to moldb.MdbExomol.")
+            warn_msg = "Warning: no lines are selected. Check the inputs to moldb.MdbExomol."
+            warnings.warn(warn_msg, UserWarning)
 
 
     def set_broadening(self, alpha_ref_def=None, n_Texp_def=None):
@@ -620,7 +622,8 @@ class MdbHit(object):
         self._gpp = self._gpp[mask]
 
         if(len(self.nu_lines) < 1):
-            print("Warning: no lines are selected. Check the inputs to moldb.MdbHit.")
+            warn_msg = "Warning: no lines are selected. Check the inputs to moldb.MdbHit."
+            warnings.warn(warn_msg, UserWarning)
 
     def generate_jnp_arrays(self):
         """(re)generate jnp.arrays.
@@ -1000,7 +1003,8 @@ class AdbVald(object):
         self._vdWdamp = self._vdWdamp[mask]
 
         if(len(self.nu_lines) < 1):
-            print("Warning: no lines are selected. Check the inputs to moldb.AdbVald.")
+            warn_msg = "Warning: no lines are selected. Check the inputs to moldb.AdbVald."
+            warnings.warn(warn_msg, UserWarning)
 
 
     def generate_jnp_arrays(self):
@@ -1304,7 +1308,8 @@ class AdbKurucz(object):
         self._vdWdamp = self._vdWdamp[mask]
 
         if(len(self.nu_lines) < 1):
-            print("Warning: no lines are selected. Check the inputs to moldb.AdbKurucz.")
+            warn_msg = "Warning: no lines are selected. Check the inputs to moldb.AdbKurucz."
+            warnings.warn(warn_msg, UserWarning)
 
     def generate_jnp_arrays(self):
         """(re)generate jnp.arrays.
