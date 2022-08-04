@@ -130,7 +130,6 @@ class MdbExomol(CapiMdbExomol):
             lower_bound=([("Sij0", 0.0)]),
             #upper_bound=([("nu_lines", wavenum_max)] if wavenum_max else []),
             output="vaex")
-        
 
         load_mask = self.compute_load_mask(df)
         self.masking_dataframe(df[load_mask])
@@ -218,8 +217,8 @@ class MdbExomol(CapiMdbExomol):
         return self.QT_interp(T) / self.QT_interp(Tref)
 
 
-class MdbHit(object):
-    """molecular database of HITRAN 2012 / HITEMP 2020.
+class MdbHit(HITEMPDatabaseManager):
+    """molecular database of HITEMP.
 
     Attributes:
         nurange: nu range [min,max] (cm-1)
@@ -254,6 +253,7 @@ class MdbHit(object):
            extract: If True, it extracts the opacity having the wavenumber between nurange +- margin. Use when you want to reduce the memory use.
            gpu_transfer: tranfer data to jnp.array?
         """
+
         from exojax.spec.hitran import SijT
         if ("hit" in path and path[-4:] == ".bz2"):
             path = path[:-4]
@@ -268,8 +268,18 @@ class MdbHit(object):
         self.Ttyp = Ttyp
         self.margin = margin
         self.nurange = [np.min(nurange), np.max(nurange)]
-        
-        
+        print(path)
+
+        super().__init__(
+            molecule="CO",
+            name="HITEMP-{molecule}",
+            local_databases="",
+            engine="default",
+            verbose=True,
+            chunksize=100000,
+            parallel=True,
+        )
+
     def QT_iso_interp(self, idx, T):
         """interpolated partition function.
 
@@ -294,7 +304,6 @@ class MdbHit(object):
         """
         return self.QT_iso_interp(idx, T) / self.QT_iso_interp(idx, self.Tref)
 
-    
 
 class AdbVald(object):
     """atomic database from VALD3 (http://vald.astro.uu.se/)
