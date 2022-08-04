@@ -299,6 +299,9 @@ class MdbExomol(object):
         self._jlower = self._jlower[mask]
         self._jupper = self._jupper[mask]
 
+        if(len(self.nu_lines) < 1):
+            print("Warning: no lines are selected. Check the inputs to moldb.MdbExomol.")
+
 
     def set_broadening(self, alpha_ref_def=None, n_Texp_def=None):
         """setting broadening parameters.
@@ -615,6 +618,9 @@ class MdbHit(object):
         self._gamma_self = self._gamma_self[mask]
         self._elower = self._elower[mask]
         self._gpp = self._gpp[mask]
+
+        if(len(self.nu_lines) < 1):
+            print("Warning: no lines are selected. Check the inputs to moldb.MdbHit.")
 
     def generate_jnp_arrays(self):
         """(re)generate jnp.arrays.
@@ -993,6 +999,9 @@ class AdbVald(object):
         self._gamSta = self._gamSta[mask]
         self._vdWdamp = self._vdWdamp[mask]
 
+        if(len(self.nu_lines) < 1):
+            print("Warning: no lines are selected. Check the inputs to moldb.AdbVald.")
+
 
     def generate_jnp_arrays(self):
         """(re)generate jnp.arrays.
@@ -1293,6 +1302,9 @@ class AdbKurucz(object):
         self._gamRad = self._gamRad[mask]
         self._gamSta = self._gamSta[mask]
         self._vdWdamp = self._vdWdamp[mask]
+
+        if(len(self.nu_lines) < 1):
+            print("Warning: no lines are selected. Check the inputs to moldb.AdbKurucz.")
 
     def generate_jnp_arrays(self):
         """(re)generate jnp.arrays.
