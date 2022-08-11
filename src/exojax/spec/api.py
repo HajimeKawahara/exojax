@@ -133,7 +133,7 @@ class MdbExomol(CapiMdbExomol):
             output="vaex")
 
         load_mask = self.compute_load_mask(df)
-        self.masking_dataframe(df[load_mask])
+        self.get_values_from_dataframes(df[load_mask])
         self.compute_broadening(self.jlower, self.jupper)
 
         self.gamma_natural = gn(self.A)
@@ -148,7 +148,7 @@ class MdbExomol(CapiMdbExomol):
                                                   df.nu_lines) > self.crit)
         return load_mask
 
-    def masking_dataframe(self, df):
+    def get_values_from_dataframes(self, df):
 
         if isinstance(df, vaex.dataframe.DataFrameLocal):
             self.A = df.A.values
@@ -255,7 +255,6 @@ class MdbHit(HITEMPDatabaseManager):
            gpu_transfer: tranfer data to jnp.array?
         """
 
-        from exojax.spec.hitran import SijT
         if ("hit" in path and path[-4:] == ".bz2"):
             path = path[:-4]
             print('Warning: path changed (.bz2 removed):', path)
@@ -269,7 +268,9 @@ class MdbHit(HITEMPDatabaseManager):
         self.Ttyp = Ttyp
         self.margin = margin
         self.nurange = [np.min(nurange), np.max(nurange)]
-
+        load_wavenum_min = self.nurange[0] - self.margin
+        load_wavenum_max = self.nurange[1] + self.margin
+        
         super().__init__(
             molecule="CO",
             name="HITEMP-{molecule}",
@@ -290,8 +291,8 @@ class MdbHit(HITEMPDatabaseManager):
         # Get missing files
         download_files = self.get_missing_files(local_files)
         download_files = self.keep_only_relevant(download_files,
-                                                 self.nurange[0],
-                                                 self.nurange[1])
+                                                 load_wavenum_min,
+                                                 load_wavenum_max)
         # do not re-download files if they exist in another format :
 
         converted = []
@@ -323,12 +324,12 @@ class MdbHit(HITEMPDatabaseManager):
             self.clean_download_files()
 
         # Load and return
-        files_loaded = self.keep_only_relevant(local_files, self.nurange[0],
-                                               self.nurange[1])
+        files_loaded = self.keep_only_relevant(local_files, load_wavenum_min,
+                                               load_wavenum_max)
         isotope = None
-        columns=None,
-        output="vaex"
-        
+        columns = None,
+        output = "vaex"
+
         if isotope and type(isotope) == int:
             isotope = str(isotope)
 
@@ -337,14 +338,44 @@ class MdbHit(HITEMPDatabaseManager):
             columns=columns,
             within=[("iso", isotope)] if isotope is not None else [],
             # for relevant files, get only the right range :
-            lower_bound=[("wav", self.nurange[0])]
+            lower_bound=[("wav", load_wavenum_min)]
             if self.nurange[0] is not None else [],
-            upper_bound=[("wav", self.nurange[1])]
+            upper_bound=[("wav", load_wavenum_max)]
             if self.nurange[1] is not None else [],
             output=output,
         )
-        print(df)
+        self.get_values_from_dataframes(df)
 
+    def get_values_from_dataframes(self, df):
+
+        if isinstance(df, vaex.dataframe.DataFrameLocal):
+            #self.nu_lines = hapi.getColumn(molec, 'nu')
+            #self.Sij0 = hapi.getColumn(molec, 'sw')
+            #self.delta_air = hapi.getColumn(molec, 'delta_air')
+            #self.isoid = hapi.getColumn(molec, 'local_iso_id')
+            #self.uniqiso = np.unique(self.isoid)
+            #self._A = hapi.getColumn(molec, 'a')
+            #self._n_air = hapi.getColumn(molec, 'n_air')
+            #self._gamma_air = hapi.getColumn(molec, 'gamma_air')
+            #self._gamma_self = hapi.getColumn(molec, 'gamma_self')
+            #self._elower = hapi.getColumn(molec, 'elower')
+            #self._gpp = hapi.getColumn(molec, 'gpp')
+                        
+            self.nu_lines = df.wav.values
+            self.Sij0 = df.int.values
+            self.delta_air = df.Pshft.values
+            self.isoid = df.iso.values
+            self.uniqiso = np.unique(self.isoid)
+            self.A = df.A.values
+            self.n_air = df.Tdpair.values
+            self.gamma_air = df.airbrd.values
+            self.gamma_self = df.selbrd.values
+            self.elower = df.El.values
+            self.gpp = df.gp.values            
+        else:
+            raise ValueError("Use vaex dataframe as input.")
+
+    
     def QT_iso_interp(self, idx, T):
         """interpolated partition function.
 
