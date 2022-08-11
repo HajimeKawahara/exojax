@@ -5,6 +5,7 @@
 """
 import os
 import warnings
+from os.path import abspath, exists
 import numpy as np
 import jax.numpy as jnp
 from jax import jit, vmap
@@ -18,8 +19,8 @@ import pandas as pd
 # currently use radis add/common-api branch
 from radis.api.exomolapi import MdbExomol as CapiMdbExomol  #MdbExomol in the common API
 from radis.api.hitempapi import HITEMPDatabaseManager
-
-#from radis.io import fetch_exomol
+from radis import config
+from radis.api.hdf5 import update_pytables_to_vaex
 
 __all__ = ['MdbExomol', 'MdbHit', 'AdbVald', 'AdbKurucz']
 
@@ -268,7 +269,6 @@ class MdbHit(HITEMPDatabaseManager):
         self.Ttyp = Ttyp
         self.margin = margin
         self.nurange = [np.min(nurange), np.max(nurange)]
-        print(path)
 
         super().__init__(
             molecule="CO",
@@ -279,6 +279,71 @@ class MdbHit(HITEMPDatabaseManager):
             chunksize=100000,
             parallel=True,
         )
+
+        # Get list of all expected local files for this database:
+        local_files, urlnames = self.get_filenames()
+
+        # Delete files if needed:
+        relevant_files = self.keep_only_relevant(local_files, self.nurange[0],
+                                                 self.nurange[1])
+
+        # Get missing files
+        download_files = self.get_missing_files(local_files)
+        download_files = self.keep_only_relevant(download_files,
+                                                 self.nurange[0],
+                                                 self.nurange[1])
+        # do not re-download files if they exist in another format :
+
+        converted = []
+        for f in download_files:
+            if exists(f.replace(".hdf5", ".h5")):
+                update_pytables_to_vaex(f.replace(".hdf5", ".h5"))
+                converted.append(f)
+            download_files = [f for f in download_files if f not in converted]
+        # do not re-download remaining files that exist. Let user decide what to do.
+        # (download & re-parsing is a long solution!)
+        download_files = [
+            f for f in download_files if not exists(f.replace(".hdf5", ".h5"))
+        ]
+
+        # Download files
+        if len(download_files) > 0:
+            if urlnames is None:
+                urlnames = self.fetch_urlnames()
+            filesmap = dict(zip(local_files, urlnames))
+            download_urls = [filesmap[k] for k in download_files]
+            self.download_and_parse(download_urls, download_files)
+
+        # Register
+        if not self.is_registered():
+            self.register()
+
+        clean_cache_files = True
+        if len(download_files) > 0 and clean_cache_files:
+            self.clean_download_files()
+
+        # Load and return
+        files_loaded = self.keep_only_relevant(local_files, self.nurange[0],
+                                               self.nurange[1])
+        isotope = None
+        columns=None,
+        output="vaex"
+        
+        if isotope and type(isotope) == int:
+            isotope = str(isotope)
+
+        df = self.load(
+            files_loaded,  # filter other files,
+            columns=columns,
+            within=[("iso", isotope)] if isotope is not None else [],
+            # for relevant files, get only the right range :
+            lower_bound=[("wav", self.nurange[0])]
+            if self.nurange[0] is not None else [],
+            upper_bound=[("wav", self.nurange[1])]
+            if self.nurange[1] is not None else [],
+            output=output,
+        )
+        print(df)
 
     def QT_iso_interp(self, idx, T):
         """interpolated partition function.
