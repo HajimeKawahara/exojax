@@ -367,13 +367,17 @@ class MdbHit(HITEMPDatabaseManager):
         
         #M = get_molecule_identifier(molec)
         iso = 1
-        Q = PartFuncHAPI(self.molecid, iso)
-        self.QTref = Q.at(T=Tref)
-        self.QTtyp = Q.at(T=Ttyp)
-
+        warnings.warn("currently only iso=1, will be fixed",UserWarning)
         self.isoid = df.iso
         self.uniqiso = np.unique(df.iso.values)
 
+        Q = PartFuncHAPI(self.molecid, self.uniqiso)
+        self.QTref = Q.at(T=Tref)
+        self.QTtyp = Q.at(T=Ttyp)
+        print(self.QTtyp)
+        import sys
+        sys.exit()
+        
         load_mask = self.compute_load_mask(df)
         self.get_values_from_dataframes(df[load_mask])
 
