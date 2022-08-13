@@ -366,22 +366,17 @@ class MdbHit(HITEMPDatabaseManager):
         )
         
         #M = get_molecule_identifier(molec)
-        iso = 1
-        warnings.warn("currently only iso=1, will be fixed",UserWarning)
         self.isoid = df.iso
         self.uniqiso = np.unique(df.iso.values)
+        for iso in self.uniqiso:
+            Q = PartFuncHAPI(self.molecid, self.uniqiso)
+            QTref = Q.at(T=Tref)
+            QTtyp = Q.at(T=Ttyp)
+            
+            load_mask = self.compute_load_mask(df)
+            self.get_values_from_dataframes(df[load_mask])
 
-        Q = PartFuncHAPI(self.molecid, self.uniqiso)
-        self.QTref = Q.at(T=Tref)
-        self.QTtyp = Q.at(T=Ttyp)
-        print(self.QTtyp)
-        import sys
-        sys.exit()
-        
-        load_mask = self.compute_load_mask(df)
-        self.get_values_from_dataframes(df[load_mask])
-
-    def get_Sij_typ(self, Sij0_in, elower_in, nu_in):
+    def get_Sij_typ(self, Sij0_in, elower_in, nu_in, QTref, QTtyp):
         """compute Sij at typical temperature self.Ttyp.
 
         Args:
@@ -392,7 +387,7 @@ class MdbHit(HITEMPDatabaseManager):
         Returns:
            Sij at Ttyp
         """
-        return Sij0_in * self.QTref / self.QTtyp \
+        return Sij0_in * QTref / QTtyp \
             * np.exp(-hcperk*elower_in * (1./self.Ttyp - 1./Tref)) \
             * np.expm1(-hcperk*nu_in/self.Ttyp) / np.expm1(-hcperk*nu_in/Tref)
 
@@ -408,18 +403,6 @@ class MdbHit(HITEMPDatabaseManager):
     def get_values_from_dataframes(self, df):
 
         if isinstance(df, vaex.dataframe.DataFrameLocal):
-            #self.nu_lines = hapi.getColumn(molec, 'nu')
-            #self.Sij0 = hapi.getColumn(molec, 'sw')
-            #self.delta_air = hapi.getColumn(molec, 'delta_air')
-            #self.isoid = hapi.getColumn(molec, 'local_iso_id')
-            #self.uniqiso = np.unique(self.isoid)
-            #self._A = hapi.getColumn(molec, 'a')
-            #self._n_air = hapi.getColumn(molec, 'n_air')
-            #self._gamma_air = hapi.getColumn(molec, 'gamma_air')
-            #self._gamma_self = hapi.getColumn(molec, 'gamma_self')
-            #self._elower = hapi.getColumn(molec, 'elower')
-            #self._gpp = hapi.getColumn(molec, 'gpp')
-                        
             self.nu_lines = df.wav.values
             self.Sij0 = df.int.values
             self.delta_air = df.Pshft.values
