@@ -6,9 +6,7 @@ def test_moldb_hitemp():
     mdb = MdbHit(".database/CO/05_HITEMP2019/05_HITEMP2019.par.bz2",
                     nurange=[4200.0, 4300.0],
                     crit=1.e-30)
-    print(mdb.fetch_url_Nlines_wmin_wmax())
-    print(mdb.fetch_urlnames())
-    print(mdb)
+    
 #def test_moldb_hitemp_interp():
 #    mdb = MdbHit(".database/CO/12C-16O/Li2015",
 #                    nurange=[4200.0, 4300.0],

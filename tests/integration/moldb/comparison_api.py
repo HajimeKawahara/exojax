@@ -2,6 +2,8 @@ import pytest
 import numpy as np
 from exojax.spec.api import MdbExomol as MdbExomol_api
 from exojax.spec.moldb import MdbExomol as MdbExomol_orig
+from exojax.spec.api import MdbHit as MdbHit_api
+from exojax.spec.moldb import MdbHit as MdbHit_orig
 
 def comparison_moldb_exomol():
     crit=1.e-30
@@ -14,6 +16,20 @@ def comparison_moldb_exomol():
     qr_api = mapi.qr_interp(T)
     qr_orig = morig.qr_interp(T)
     assert qr_api - qr_orig == pytest.approx(0.0)
+
+def comparison_moldb_hitemp():
+    crit=1.e-30
+    morig = MdbHit_orig(".database/CO/05_HITEMP2019/05_HITEMP2019.par.bz2",
+                    nurange=[4200.0, 4300.0],
+                    crit=crit)
+    mapi = MdbHit_api(".database/CO/05_HITEMP2019/05_HITEMP2019.par.bz2",
+                    nurange=[4200.0, 4300.0],
+                    crit=crit)
+    
+    assert np.all(mapi.A - morig.A) == 0.0
+    
     
 if __name__ == "__main__":
-    comparison_moldb_exomol()
+    comparison_moldb_hitemp()
+    #comparison_moldb_exomol()
+    

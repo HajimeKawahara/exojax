@@ -15,12 +15,13 @@ from exojax.spec import hapi, exomolapi, exomol, atomllapi, atomll, hitranapi
 from exojax.spec.hitran import gamma_natural as gn
 from exojax.utils.constants import hcperk, Tref
 from exojax.utils.molname import e2s
-import pandas as pd
+
 # currently use radis add/common-api branch
 from radis.api.exomolapi import MdbExomol as CapiMdbExomol  #MdbExomol in the common API
 from radis.api.hitempapi import HITEMPDatabaseManager
-from radis import config
 from radis.api.hdf5 import update_pytables_to_vaex
+from radis.db.classes import get_molecule
+from radis.levels.partfunc import PartFuncHAPI
 
 __all__ = ['MdbExomol', 'MdbHit', 'AdbVald', 'AdbKurucz']
 
@@ -35,6 +36,7 @@ class MdbExomol(CapiMdbExomol):
     MdbExomol is a class for ExoMol.
 
     Attributes:
+        simple_molecule_name: simple molecule name
         nurange: nu range [min,max] (cm-1)
         nu_lines (nd array): line center (cm-1)
         Sij0 (nd array): line strength at T=Tref (cm)
@@ -218,10 +220,29 @@ class MdbExomol(CapiMdbExomol):
         return self.QT_interp(T) / self.QT_interp(Tref)
 
 
+#copied from moldb, should move it.
+def search_molecid(molec):
+    """molec id from molec (source table name) of HITRAN/HITEMP.
+
+    Args:
+       molec: source table name
+
+    Return:
+       int: molecid (HITRAN molecular id)
+    """
+    try:
+        hitf = molec.split('_')
+        molecid = int(hitf[0])
+        return molecid
+    except:
+        raise ValueError('Define molecid by yourself.')
+
+
 class MdbHit(HITEMPDatabaseManager):
     """molecular database of HITEMP.
 
     Attributes:
+        simple_molecule_name: simple molecule name
         nurange: nu range [min,max] (cm-1)
         nu_lines (nd array): line center (cm-1)
         Sij0 (nd array): line strength at T=Tref (cm)
@@ -241,7 +262,7 @@ class MdbHit(HITEMPDatabaseManager):
                  margin=0.0,
                  crit=0.,
                  Ttyp=1000.,
-                 extract=False,
+                 isotope=None,
                  gpu_transfer=True):
         """Molecular database for HITRAN/HITEMP form.
 
@@ -251,7 +272,7 @@ class MdbHit(HITEMPDatabaseManager):
            margin: margin for nurange (cm-1)
            crit: line strength lower limit for extraction
            Ttyp: typical temperature to calculate Sij(T) used in crit
-           extract: If True, it extracts the opacity having the wavenumber between nurange +- margin. Use when you want to reduce the memory use.
+           isotope: None= use all isotopes. 
            gpu_transfer: tranfer data to jnp.array?
         """
 
@@ -263,6 +284,9 @@ class MdbHit(HITEMPDatabaseManager):
             print('Warning: path changed (.bz2 added):', path)
 
         self.path = pathlib.Path(path).expanduser()
+        self.molecid = search_molecid(str(self.path.stem))
+        self.simple_molecule_name = get_molecule(self.molecid)
+        
         #numinf, numtag = hitranapi.read_path(self.path)
         self.crit = crit
         self.Ttyp = Ttyp
@@ -283,10 +307,6 @@ class MdbHit(HITEMPDatabaseManager):
 
         # Get list of all expected local files for this database:
         local_files, urlnames = self.get_filenames()
-
-        # Delete files if needed:
-        relevant_files = self.keep_only_relevant(local_files, self.nurange[0],
-                                                 self.nurange[1])
 
         # Get missing files
         download_files = self.get_missing_files(local_files)
@@ -344,7 +364,42 @@ class MdbHit(HITEMPDatabaseManager):
             if self.nurange[1] is not None else [],
             output=output,
         )
-        self.get_values_from_dataframes(df)
+        
+        #M = get_molecule_identifier(molec)
+        iso = 1
+        Q = PartFuncHAPI(self.molecid, iso)
+        self.QTref = Q.at(T=Tref)
+        self.QTtyp = Q.at(T=Ttyp)
+
+        self.isoid = df.iso
+        self.uniqiso = np.unique(df.iso.values)
+
+        load_mask = self.compute_load_mask(df)
+        self.get_values_from_dataframes(df[load_mask])
+
+    def get_Sij_typ(self, Sij0_in, elower_in, nu_in):
+        """compute Sij at typical temperature self.Ttyp.
+
+        Args:
+           Sij0_in : line strength at Tref
+           elower_in: elower
+           nu_in: wavenumber bin
+
+        Returns:
+           Sij at Ttyp
+        """
+        return Sij0_in * self.QTref / self.QTtyp \
+            * np.exp(-hcperk*elower_in * (1./self.Ttyp - 1./Tref)) \
+            * np.expm1(-hcperk*nu_in/self.Ttyp) / np.expm1(-hcperk*nu_in/Tref)
+
+
+    def compute_load_mask(self, df):
+        load_mask = (df.wav > self.nurange[0]-self.margin) \
+                    * (df.wav < self.nurange[1]+self.margin)
+        load_mask = load_mask * (self.get_Sij_typ(df.int, df.El,
+                                                  df.wav) > self.crit)
+        return load_mask
+
 
     def get_values_from_dataframes(self, df):
 
@@ -374,7 +429,25 @@ class MdbHit(HITEMPDatabaseManager):
             self.gpp = df.gp.values            
         else:
             raise ValueError("Use vaex dataframe as input.")
+        
+    def generate_jnp_arrays(self):
+        """(re)generate jnp.arrays.
 
+        Note:
+            We have nd arrays and jnp arrays. We usually apply the mask to nd arrays and then generate jnp array from the corresponding nd array. For instance, self._A is nd array and self.A is jnp array.
+
+        """
+        self.nu_lines = jnp.array(self.nu_lines)
+        self.Sij0 = jnp.array(self.Sij0)
+        self.delta_air = jnp.array(self.delta_air) 
+        self.isoid = jnp.array(self.isoid) 
+        self.uniqiso = jnp.array(self.uniqiso) 
+        self.A = jnp.array(self.A) 
+        self.n_air = jnp.array(self.n_air) 
+        self.gamma_air = jnp.array(self.gamma_air) 
+        self.gamma_self = jnp.array(self.gamma_self) 
+        self.elower = jnp.array(self.elower) 
+        self.gpp = jnp.array(self.gpp) 
     
     def QT_iso_interp(self, idx, T):
         """interpolated partition function.
