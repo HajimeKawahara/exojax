@@ -23,22 +23,21 @@ def molmass(molecule):
        >>> print(molmass("air"))
        >>> 28.97
     """
-    col_names=["# Iso","Abundance","Q(296K)","gj","Molar Mass(g)"]
-    df = pd.read_csv("../data/atom/HITRAN_molparam.txt", sep="\s{2,}", engine="python", skiprows=1, names=col_names)
-    df_mol = pd.DataFrame(columns=["Molecule","Molar Mass(g)"])
+    df = pd.read_csv("../data/atom/HITRAN_molparam.txt", sep="\s{2,}", engine="python", skiprows=1, \
+                     names=["# Iso","Abundance","Q(296K)","gj","Molar Mass(g)"])
+    molmass = {}
     for i in range(len(df)):
         if("(" in df["# Iso"][i]):
-            molname = df["# Iso"][i]
-            tot=0.0
+            molname = df["# Iso"][i].split()[0]
+            tot = 0.0
+            tot_abd = 0.0
         else:
             tot = tot + df["Abundance"][i] * df["Molar Mass(g)"][i]
+            tot_abd = tot_abd + df["Abundance"][i]
 
         if(i == len(df)-1 or "(" in df["# Iso"][i+1]):
-            df_ap = pd.DataFrame(data=[[molname, tot]],columns=["Molecule","Molar Mass(g)"])
-            df_mol = pd.concat([df_mol, df_ap], ignore_index=True)
+            molmass[molname] = tot/tot_abd
 
-    print(df_mol)
-    exit()
     if molecule == 'air' or molecule == 'Air':
         return 28.97
 
