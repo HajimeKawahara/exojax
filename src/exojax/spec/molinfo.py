@@ -9,7 +9,7 @@ def molmass(molecule, db_HIT=False):
 
     Args:
        molecule: molecular name e.g. CO2, He
-       db_HIT: if True, use the molecular mass considering the abundance and mass of each isotopologue provided by HITRAN (https://hitran.org/docs/iso-meta/)
+       db_HIT: if True, use the molecular mass considering the natural terrestrial abundance and mass of each isotopologue provided by HITRAN (https://hitran.org/docs/iso-meta/)
 
     Returns: 
        molecular mass
