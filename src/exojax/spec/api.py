@@ -369,11 +369,10 @@ class MdbHit(HITEMPDatabaseManager):
         self.isoid = df.iso
         self.uniqiso = np.unique(df.iso.values)
         for iso in self.uniqiso:
-            Q = PartFuncHAPI(self.molecid, self.uniqiso)
+            Q = PartFuncHAPI(self.molecid, iso)
             QTref = Q.at(T=Tref)
             QTtyp = Q.at(T=Ttyp)
-            
-            load_mask = self.compute_load_mask(df)
+            load_mask = self.compute_load_mask(df, QTref, QTtyp)
             self.get_values_from_dataframes(df[load_mask])
 
     def get_Sij_typ(self, Sij0_in, elower_in, nu_in, QTref, QTtyp):
@@ -392,11 +391,11 @@ class MdbHit(HITEMPDatabaseManager):
             * np.expm1(-hcperk*nu_in/self.Ttyp) / np.expm1(-hcperk*nu_in/Tref)
 
 
-    def compute_load_mask(self, df):
+    def compute_load_mask(self, df,  QTref, QTtyp):
         load_mask = (df.wav > self.nurange[0]-self.margin) \
                     * (df.wav < self.nurange[1]+self.margin)
         load_mask = load_mask * (self.get_Sij_typ(df.int, df.El,
-                                                  df.wav) > self.crit)
+                                                  df.wav, QTref, QTtyp) > self.crit)
         return load_mask
 
 
