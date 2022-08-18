@@ -9,7 +9,7 @@ def molmass(molecule, db_HIT=False):
 
     Args:
        molecule: molecular name e.g. CO2, He
-       db_HIT: if True, use the molecular mass considering the abundance and mass of each isotopologues provided by HITRAN (https://hitran.org/docs/iso-meta/)
+       db_HIT: if True, use the molecular mass considering the abundance and mass of each isotopologue provided by HITRAN (https://hitran.org/docs/iso-meta/)
 
     Returns: 
        molecular mass
@@ -48,7 +48,7 @@ def molmass(molecule, db_HIT=False):
         molmass = molmass_hi[molecule]
     else:
         if(db_HIT):
-            warn_msg = "db_HIT is set as True, but the molecular name '%s' does not exist in the HITRAN database. So set db_HIT as False. For reference, all the available molecules in the HITRAN databse are as follows:" % molecule
+            warn_msg = "db_HIT is set as True, but the molecular name '%s' does not exist in the HITRAN database. So set db_HIT as False. For reference, all the available molecules in the HITRAN database are as follows:" % molecule
             warnings.warn(warn_msg, UserWarning)
             print(list(molmass_hi.keys()))
 
