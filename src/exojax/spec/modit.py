@@ -218,7 +218,7 @@ def hitran(mdb, Tarr, Parr, Pself, R, molmass):
        normalized gammaL matrix,
        normalized sigmaD matrix
     """
-    qt = vmap(mdb.Qr_line_HAPI_jax)(Tarr)
+    qt = vmap(mdb.qr_interp_lines)(Tarr)
     SijM = jit(vmap(SijT, (0, None, None, None, 0)))(Tarr, mdb.logsij0,
                                                      mdb.dev_nu_lines,
                                                      mdb.elower, qt)

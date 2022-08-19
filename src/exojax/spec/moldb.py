@@ -544,7 +544,7 @@ class MdbHit(object):
 
         # get pf
         self.gQT, self.T_gQT = hitranapi.get_pf(self.molecid, self.uniqiso)
-        self.QTtyp = self.Qr_layer_HAPI([self.Ttyp])[0]
+        self.QTtyp = self.qr_interp_lines(self.Ttyp)
         self.Sij_typ = SijT(self.Ttyp, self.logsij0,
                             self.nu_lines, self.elower, self.QTtyp)
 
@@ -704,24 +704,6 @@ class MdbHit(object):
                         print('renamed par file in', self.path/pathlib.Path(numtag),
                               ':', flname_nonzero, '=>', flname_zero)
 
-    def ExomolQT(self, path):
-        """use a partition function from ExoMol.
-
-        Args:
-           path: path for Exomol data directory/tag. For instance, "/home/CO/12C-16O/Li2015"
-        """
-        # load pf
-        self.empath = pathlib.Path(path).expanduser()
-        t0 = self.empath.parents[0].stem
-        molec = t0+'__'+str(self.empath.stem)
-        self.pf_file = self.empath/pathlib.Path(molec+'.pf')
-        if not self.pf_file.exists():
-            self.exomol_pf_download(molec)
-
-        pf = exomolapi.read_pf(self.pf_file)
-        self.gQT = jnp.array(pf['QT'].to_numpy())  # grid QT
-        self.T_gQT = jnp.array(pf['T'].to_numpy())  # T forgrid QT
-
     def exomol_pf_download(self, molec):
         """Downloading Exomol pf files.
 
@@ -749,77 +731,31 @@ class MdbHit(object):
         except:
             print("Error: Couldn't download "+ext+' file and save.')
 
-    def QT_iso_interp(self, idx, T):
+    def QT_interp(self, isotope_index, T):
         """interpolated partition function.
 
         Args:
-           idx: index for HITRAN isotopologue number
+           isotope_index: index for HITRAN isotopologue number
            T: temperature
 
         Returns:
            Q(idx, T) interpolated in jnp.array
         """
-        return jnp.interp(T, self.T_gQT[idx], self.gQT[idx])
+        return jnp.interp(T, self.T_gQT[isotope_index], self.gQT[isotope_index])
 
-    def qr_iso_interp(self, idx, T):
+    def qr_interp(self, isotope_index, T):
         """interpolated partition function ratio.
 
         Args:
-           idx: index for HITRAN isotopologue number
+           isotope_index: index for HITRAN isotopologue number
            T: temperature
 
         Returns:
            qr(T)=Q(T)/Q(Tref) interpolated in jnp.array
         """
-        return self.QT_iso_interp(idx, T)/self.QT_iso_interp(idx, Tref)
-
-    def Qr_HAPI(self, Tarr):
-        """Partition Function ratio using HAPI partition data.
-
-        Args:
-           Tarr: temperature array (K)
-
-        Returns:
-           Qr = partition function ratio array [N_Tarr x N_iso]
-
-        Note:
-           N_Tarr = len(Tarr), N_iso = len(self.uniqiso)
-        """
-        allT = list(np.concatenate([[Tref], Tarr]))
-        Qrx = []
-        for idx, iso in enumerate(self.uniqiso):
-            Tmin, Tmax = hapi.get_TMIN_TMAX_FOR_BD_TIPS_2017_PYTHON(self.molecid, iso)
-            if(max(allT) > Tmax):
-                raise ValueError('%.1f K is outside the supported temperature range of the HITRAN partition function data for isotope #%d of molecule #%d (%.1f -- %.1f K)' % (max(allT), iso, self.molecid, Tmin, Tmax))
-            if(min(allT) < Tmin):
-                raise ValueError('%.1f K is outside the supported temperature range of the HITRAN partition function data for isotope #%d of molecule #%d (%.1f -- %.1f K)' % (min(allT), iso, self.molecid, Tmin, Tmax))
-
-            Qrx_iso = jit(vmap(self.QT_iso_interp, (None, 0)))(idx, jnp.array(allT))
-            Qrx.append(Qrx_iso)
-        Qrx = np.array(Qrx)
-        qr = Qrx[:, 1:].T/Qrx[:, 0]  # Q(T)/Q(Tref)
-        return qr
-
-    def Qr_line_HAPI(self, T):
-        """Partition Function ratio using HAPI partition data.
-
-        Args:
-           T: temperature (K)
-
-        Returns:
-           Qr_line, partition function ratio array for lines [Nlines]
-
-        Note:
-           Nlines=len(self.nu_lines)
-        """
-        qr_line = np.ones_like(self.isoid, dtype=np.float64)
-        qrx = self.Qr_HAPI([T])
-        for idx, iso in enumerate(self.uniqiso):
-            mask = self.isoid == iso
-            qr_line[mask] = qrx[0, idx]
-        return qr_line
-
-    def Qr_line_HAPI_jax(self, T):
+        return self.QT_interp(isotope_index, T)/self.QT_interp(isotope_index, Tref)
+ 
+    def qr_interp_lines(self, T):
         """Partition Function ratio using HAPI partition data.
         (This function works for JAX environment.)
 
@@ -834,37 +770,14 @@ class MdbHit(object):
         """
         qrx = []
         for idx, iso in enumerate(self.uniqiso):
-            qrx.append(self.qr_iso_interp(idx, T))
+            qrx.append(self.qr_interp(idx, T))
 
         qr_line = jnp.zeros(len(self.isoid))
         for idx, iso in enumerate(self.uniqiso):
             mask_idx = np.where(self.isoid == iso)
             qr_line = qr_line.at[jnp.index_exp[mask_idx]].set(qrx[idx])
         return qr_line
-
-    def Qr_layer_HAPI(self, Tarr):
-        """Partition Function ratio using HAPI partition sum.
-
-        Args:
-           Tarr: temperature array (K)
-
-        Returns:
-           Qr_layer, partition function ratio array for lines [N_Tarr x Nlines]
-
-        Note:
-           Nlines=len(self.nu_lines)
-           N_Tarr=len(Tarr)
-        """
-        NP = len(Tarr)
-        qt = np.zeros((NP, len(self.isoid)))
-        qr = self.Qr_HAPI(Tarr)
-        for idx, iso in enumerate(self.uniqiso):
-            mask = self.isoid == iso
-            for ilayer in range(NP):
-                qt[ilayer, mask] = qr[ilayer, idx]
-        return qt
-
-
+    
 def search_molecid(molec):
     """molec id from molec (source table name) of HITRAN/HITEMP.
 

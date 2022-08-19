@@ -19,6 +19,9 @@ import pandas as pd
 from exojax.utils.constants import RJ, pc, Rs, c
 import sys
 from exojax.spec.evalline import mask_weakline
+import warnings
+
+warnings.warn("Not working using the current version. You need to modify ExomolQT.",UserWarning)
 
 #ref pressure
 Pref=1.0 #bar
