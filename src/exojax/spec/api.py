@@ -286,7 +286,7 @@ class MdbHit(HITEMPDatabaseManager):
         self.path = pathlib.Path(path).expanduser()
         self.molecid = search_molecid(str(self.path.stem))
         self.simple_molecule_name = get_molecule(self.molecid)
-        
+
         #numinf, numtag = hitranapi.read_path(self.path)
         self.crit = crit
         self.Ttyp = Ttyp
@@ -294,7 +294,7 @@ class MdbHit(HITEMPDatabaseManager):
         self.nurange = [np.min(nurange), np.max(nurange)]
         load_wavenum_min = self.nurange[0] - self.margin
         load_wavenum_max = self.nurange[1] + self.margin
-        
+
         super().__init__(
             molecule="CO",
             name="HITEMP-{molecule}",
@@ -364,16 +364,18 @@ class MdbHit(HITEMPDatabaseManager):
             if self.nurange[1] is not None else [],
             output=output,
         )
-        
+
         #M = get_molecule_identifier(molec)
         self.isoid = df.iso
         self.uniqiso = np.unique(df.iso.values)
+
+        load_mask = None
         for iso in self.uniqiso:
             Q = PartFuncHAPI(self.molecid, iso)
             QTref = Q.at(T=Tref)
             QTtyp = Q.at(T=Ttyp)
-            load_mask = self.compute_load_mask(df, QTref, QTtyp)
-            self.get_values_from_dataframes(df[load_mask])
+            load_mask = self.compute_load_mask(df, QTref, QTtyp, load_mask)
+        self.get_values_from_dataframes(df[load_mask])
 
     def get_Sij_typ(self, Sij0_in, elower_in, nu_in, QTref, QTtyp):
         """compute Sij at typical temperature self.Ttyp.
@@ -390,17 +392,17 @@ class MdbHit(HITEMPDatabaseManager):
             * np.exp(-hcperk*elower_in * (1./self.Ttyp - 1./Tref)) \
             * np.expm1(-hcperk*nu_in/self.Ttyp) / np.expm1(-hcperk*nu_in/Tref)
 
-
-    def compute_load_mask(self, df,  QTref, QTtyp):
-        load_mask = (df.wav > self.nurange[0]-self.margin) \
+    def compute_load_mask(self, df, QTref, QTtyp, load_mask):
+        wav_mask = (df.wav > self.nurange[0]-self.margin) \
                     * (df.wav < self.nurange[1]+self.margin)
-        load_mask = load_mask * (self.get_Sij_typ(df.int, df.El,
-                                                  df.wav, QTref, QTtyp) > self.crit)
-        return load_mask
-
+        intensity_mask = (self.get_Sij_typ(df.int, df.El, df.wav, QTref, QTtyp)
+                          > self.crit)
+        if load_mask is None:
+            return wav_mask * intensity_mask
+        else:
+            return load_mask * wav_mask * intensity_mask
 
     def get_values_from_dataframes(self, df):
-
         if isinstance(df, vaex.dataframe.DataFrameLocal):
             self.nu_lines = df.wav.values
             self.Sij0 = df.int.values
@@ -412,10 +414,10 @@ class MdbHit(HITEMPDatabaseManager):
             self.gamma_air = df.airbrd.values
             self.gamma_self = df.selbrd.values
             self.elower = df.El.values
-            self.gpp = df.gp.values            
+            self.gpp = df.gp.values
         else:
             raise ValueError("Use vaex dataframe as input.")
-        
+
     def generate_jnp_arrays(self):
         """(re)generate jnp.arrays.
 
@@ -425,16 +427,16 @@ class MdbHit(HITEMPDatabaseManager):
         """
         self.nu_lines = jnp.array(self.nu_lines)
         self.Sij0 = jnp.array(self.Sij0)
-        self.delta_air = jnp.array(self.delta_air) 
-        self.isoid = jnp.array(self.isoid) 
-        self.uniqiso = jnp.array(self.uniqiso) 
-        self.A = jnp.array(self.A) 
-        self.n_air = jnp.array(self.n_air) 
-        self.gamma_air = jnp.array(self.gamma_air) 
-        self.gamma_self = jnp.array(self.gamma_self) 
-        self.elower = jnp.array(self.elower) 
-        self.gpp = jnp.array(self.gpp) 
-    
+        self.delta_air = jnp.array(self.delta_air)
+        self.isoid = jnp.array(self.isoid)
+        self.uniqiso = jnp.array(self.uniqiso)
+        self.A = jnp.array(self.A)
+        self.n_air = jnp.array(self.n_air)
+        self.gamma_air = jnp.array(self.gamma_air)
+        self.gamma_self = jnp.array(self.gamma_self)
+        self.elower = jnp.array(self.elower)
+        self.gpp = jnp.array(self.gpp)
+
     def QT_iso_interp(self, idx, T):
         """interpolated partition function.
 
