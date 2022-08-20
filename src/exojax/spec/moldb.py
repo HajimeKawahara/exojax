@@ -544,9 +544,9 @@ class MdbHit(object):
 
         # get pf
         self.gQT, self.T_gQT = hitranapi.get_pf(self.molecid, self.uniqiso)
-        self.QTtyp = self.qr_interp_lines(self.Ttyp)
+        self.qrtyp = self.qr_interp_lines(self.Ttyp)
         self.Sij_typ = SijT(self.Ttyp, self.logsij0,
-                            self.nu_lines, self.elower, self.QTtyp)
+                            self.nu_lines, self.elower, self.qrtyp)
 
         mask = (self.nu_lines > self.nurange[0]-self.margin)\
             * (self.nu_lines < self.nurange[1]+self.margin)\
@@ -763,7 +763,7 @@ class MdbHit(object):
            T: temperature (K)
 
         Returns:
-           Qr_line, partition function ratio array for lines [Nlines]
+           qr_line, partition function ratio array for lines [Nlines]
 
         Note:
            Nlines=len(self.nu_lines)

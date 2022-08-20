@@ -41,7 +41,10 @@ def comparison_moldb_hitemp():
     qr_orig = morig.qr_interp(1, T)
     assert qr_api - qr_orig == pytest.approx(0.0)
 
-
+    qr_lines_api = mapi.qr_interp_lines(T)
+    qr_lines_orig = morig.qr_interp_lines(T)
+    assert np.all(qr_api - qr_orig) == pytest.approx(0.0)
+        
 if __name__ == "__main__":
     comparison_moldb_hitemp()
-    #comparison_moldb_exomol()
+    comparison_moldb_exomol()

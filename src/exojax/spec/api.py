@@ -12,17 +12,15 @@ from jax import jit, vmap
 import pathlib
 import vaex
 from exojax.spec import hapi, exomolapi, exomol, atomllapi, atomll, hitranapi
+from exojax.spec.hitran import line_strength_numpy
 from exojax.spec.hitran import gamma_natural as gn
 from exojax.utils.constants import hcperk, Tref
 from exojax.utils.molname import e2s
-from exojax.spec.partfuncgrid import generate_partition_function_grid
-
 # currently use radis add/common-api branch
 from radis.api.exomolapi import MdbExomol as CapiMdbExomol  #MdbExomol in the common API
 from radis.api.hitempapi import HITEMPDatabaseManager
 from radis.api.hdf5 import update_pytables_to_vaex
 from radis.db.classes import get_molecule
-#from radis.levels.partfunc import PartFuncHAPI
 from radis.levels.partfunc import PartFuncTIPS
 
 __all__ = ['MdbExomol', 'MdbHit', 'AdbVald', 'AdbKurucz']
@@ -367,42 +365,22 @@ class MdbHit(HITEMPDatabaseManager):
             output=output,
         )
 
-        #M = get_molecule_identifier(molec)
         self.isoid = df.iso
         self.uniqiso = np.unique(df.iso.values)
-
         load_mask = None
         for iso in self.uniqiso:
             Q = PartFuncTIPS(self.molecid, iso)
             QTref = Q.at(T=Tref)
             QTtyp = Q.at(T=Ttyp)
-            load_mask = self.compute_load_mask(df, QTref, QTtyp, load_mask)
+            load_mask = self.compute_load_mask(df, QTtyp / QTref, load_mask)
         self.get_values_from_dataframes(df[load_mask])
+        self.gQT, self.T_gQT = hitranapi.get_pf(self.molecid, self.uniqiso)
 
-        self.gQT, self.T_gQT = generate_partition_function_grid(
-            self.molecid, iso, partition_function_algorithm="TIPS")
-
-    
-    def get_Sij_typ(self, Sij0_in, elower_in, nu_in, QTref, QTtyp):
-        """compute Sij at typical temperature self.Ttyp.
-
-        Args:
-           Sij0_in : line strength at Tref
-           elower_in: elower
-           nu_in: wavenumber bin
-
-        Returns:
-           Sij at Ttyp
-        """
-        return Sij0_in * QTref / QTtyp \
-            * np.exp(-hcperk*elower_in * (1./self.Ttyp - 1./Tref)) \
-            * np.expm1(-hcperk*nu_in/self.Ttyp) / np.expm1(-hcperk*nu_in/Tref)
-
-    def compute_load_mask(self, df, QTref, QTtyp, load_mask):
+    def compute_load_mask(self, df, qrtyp, load_mask):
         wav_mask = (df.wav > self.nurange[0]-self.margin) \
                     * (df.wav < self.nurange[1]+self.margin)
-        intensity_mask = (self.get_Sij_typ(df.int, df.El, df.wav, QTref, QTtyp)
-                          > self.crit)
+        intensity_mask = (line_strength_numpy(self.Ttyp, df.int, df.wav, df.El,
+                                              qrtyp) > self.crit)
         if load_mask is None:
             return wav_mask * intensity_mask
         else:
