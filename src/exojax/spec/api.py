@@ -377,6 +377,10 @@ class MdbHit(HITEMPDatabaseManager):
             load_mask = self.compute_load_mask(df, QTref, QTtyp, load_mask)
         self.get_values_from_dataframes(df[load_mask])
 
+        self.gQT, self.T_gQT = generate_partition_function_grid(
+            self.molecid, iso, partition_function_algorithm="TIPS")
+
+    
     def get_Sij_typ(self, Sij0_in, elower_in, nu_in, QTref, QTtyp):
         """compute Sij at typical temperature self.Ttyp.
 
@@ -437,29 +441,54 @@ class MdbHit(HITEMPDatabaseManager):
         self.elower = jnp.array(self.elower)
         self.gpp = jnp.array(self.gpp)
 
-    def QT_iso_interp(self, idx, T):
+    def QT_interp(self, isotope_index, T):
         """interpolated partition function.
 
         Args:
-           idx: index for HITRAN isotopologue number
+           isotope_index: index for HITRAN isotopologue number
            T: temperature
 
         Returns:
            Q(idx, T) interpolated in jnp.array
         """
-        return jnp.interp(T, self.T_gQT[idx], self.gQT[idx])
+        return jnp.interp(T, self.T_gQT[isotope_index],
+                          self.gQT[isotope_index])
 
-    def qr_iso_interp(self, idx, T):
+    def qr_interp(self, isotope_index, T):
         """interpolated partition function ratio.
 
         Args:
-           idx: index for HITRAN isotopologue number
+           isotope_index: index for HITRAN isotopologue number
            T: temperature
 
         Returns:
            qr(T)=Q(T)/Q(Tref) interpolated in jnp.array
         """
-        return self.QT_iso_interp(idx, T) / self.QT_iso_interp(idx, self.Tref)
+        return self.QT_interp(isotope_index, T) / self.QT_interp(
+            isotope_index, Tref)
+
+    def qr_interp_lines(self, T):
+        """Partition Function ratio using HAPI partition data.
+        (This function works for JAX environment.)
+
+        Args:
+           T: temperature (K)
+
+        Returns:
+           Qr_line, partition function ratio array for lines [Nlines]
+
+        Note:
+           Nlines=len(self.nu_lines)
+        """
+        qrx = []
+        for idx, iso in enumerate(self.uniqiso):
+            qrx.append(self.qr_interp(idx, T))
+
+        qr_line = jnp.zeros(len(self.isoid))
+        for idx, iso in enumerate(self.uniqiso):
+            mask_idx = np.where(self.isoid == iso)
+            qr_line = qr_line.at[jnp.index_exp[mask_idx]].set(qrx[idx])
+        return qr_line
 
 
 class AdbVald(object):
