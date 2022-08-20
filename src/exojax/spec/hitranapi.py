@@ -1,8 +1,38 @@
 """API for HITRAN and HITEMP outside HAPI."""
 import numpy as np
 import jax.numpy as jnp
-from exojax.spec import hapi
+#from exojax.spec import hapi 
+import hapi #hapi is installed via radis installation
 
+def get_pf(M, I_list):
+    """HITRAN/HITEMP IO for partition function
+
+    Args:
+        M: HITRAN molecule number
+        I_list: HITRAN isotopologue number list
+
+    Returns:
+        gQT: jnp array of partition function grid
+        T_gQT: jnp array of temperature grid for gQT
+    """
+    gQT = []
+    T_gQT = []
+    len_idx = []
+    for I in I_list:
+        gQT.append(hapi.TIPS_2017_ISOQ_HASH[(M, I)])
+        T_gQT.append(hapi.TIPS_2017_ISOT_HASH[(M, I)])
+        len_idx.append(len(hapi.TIPS_2017_ISOQ_HASH[(M, I)]))
+
+    # pad gQT and T_gQT with the last element
+    len_max = np.max(len_idx)
+    for idx, iso in enumerate(I_list):
+        l_add = [gQT[idx][-1]] * (len_max - len(gQT[idx]))
+        gQT[idx] = np.append(gQT[idx], l_add)
+
+        l_add = [T_gQT[idx][-1]] * (len_max - len(T_gQT[idx]))
+        T_gQT[idx] = np.append(T_gQT[idx], l_add)
+
+    return jnp.array(gQT), jnp.array(T_gQT)
 
 def read_path(path):
     """HITRAN IO for a HITRAN/HITEMP par file.
@@ -75,7 +105,6 @@ def extract_hitemp(parbz2, nurange, margin, tag):
     Return:
        path of output file (pathlib)
     """
-    import sys
     import os
     import bz2
     import tqdm
@@ -101,36 +130,6 @@ def extract_hitemp(parbz2, nurange, margin, tag):
     f.close()
     return outpath
 
-
-def get_pf(M, I_list):
-    """HITRAN/HITEMP IO for partition function
-
-    Args:
-        M: HITRAN molecule number
-        I_list: HITRAN isotopologue number list
-
-    Returns:
-        gQT: jnp array of partition function grid
-        T_gQT: jnp array of temperature grid for gQT
-    """
-    gQT = []
-    T_gQT = []
-    len_idx = []
-    for I in I_list:
-        gQT.append(hapi.TIPS_2017_ISOQ_HASH[(M, I)])
-        T_gQT.append(hapi.TIPS_2017_ISOT_HASH[(M, I)])
-        len_idx.append(len(hapi.TIPS_2017_ISOQ_HASH[(M, I)]))
-
-    # pad gQT and T_gQT with the last element
-    len_max = np.max(len_idx)
-    for idx, iso in enumerate(I_list):
-        l_add = [gQT[idx][-1]] * (len_max - len(gQT[idx]))
-        gQT[idx] = np.append(gQT[idx], l_add)
-
-        l_add = [T_gQT[idx][-1]] * (len_max - len(T_gQT[idx]))
-        T_gQT[idx] = np.append(T_gQT[idx], l_add)
-
-    return jnp.array(gQT), jnp.array(T_gQT)
 
 
 if __name__ == '__main__':
