@@ -15,13 +15,15 @@ from exojax.spec import hapi, exomolapi, exomol, atomllapi, atomll, hitranapi
 from exojax.spec.hitran import gamma_natural as gn
 from exojax.utils.constants import hcperk, Tref
 from exojax.utils.molname import e2s
+from exojax.spec.partfuncgrid import generate_partition_function_grid
 
 # currently use radis add/common-api branch
 from radis.api.exomolapi import MdbExomol as CapiMdbExomol  #MdbExomol in the common API
 from radis.api.hitempapi import HITEMPDatabaseManager
 from radis.api.hdf5 import update_pytables_to_vaex
 from radis.db.classes import get_molecule
-from radis.levels.partfunc import PartFuncHAPI
+#from radis.levels.partfunc import PartFuncHAPI
+from radis.levels.partfunc import PartFuncTIPS
 
 __all__ = ['MdbExomol', 'MdbHit', 'AdbVald', 'AdbKurucz']
 
@@ -371,7 +373,7 @@ class MdbHit(HITEMPDatabaseManager):
 
         load_mask = None
         for iso in self.uniqiso:
-            Q = PartFuncHAPI(self.molecid, iso)
+            Q = PartFuncTIPS(self.molecid, iso)
             QTref = Q.at(T=Tref)
             QTtyp = Q.at(T=Ttyp)
             load_mask = self.compute_load_mask(df, QTref, QTtyp, load_mask)
