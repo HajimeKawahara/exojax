@@ -1,8 +1,7 @@
 """API for HITRAN and HITEMP outside HAPI."""
 import numpy as np
 import jax.numpy as jnp
-#from exojax.spec import hapi 
-import hapi #hapi is installed via radis installation
+import hapi
 
 def get_pf(M, I_list):
     """HITRAN/HITEMP IO for partition function
