@@ -3,8 +3,6 @@
 * MdbExomol is the MDB for ExoMol
 * MdbHit is the MDB for HITRAN or HITEMP
 """
-import os
-import warnings
 from os.path import abspath, exists
 import numpy as np
 import jax.numpy as jnp
