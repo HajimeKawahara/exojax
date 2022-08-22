@@ -142,14 +142,13 @@ class MdbExomol(CapiMdbExomol):
             self.generate_jnp_arrays()
 
     def compute_load_mask(self, df):
-        load_mask = (df.nu_lines > self.nurange[0]-self.margin) \
+        wavelength_mask = (df.nu_lines > self.nurange[0]-self.margin) \
                     * (df.nu_lines < self.nurange[1]+self.margin)
-        load_mask = load_mask * (self.get_Sij_typ(df.Sij0, df.elower,
-                                                  df.nu_lines) > self.crit)
-        return load_mask
-
+        intensity_mask = (line_strength_numpy(self.Ttyp, df.Sij0, df.nu_lines, df.elower,
+                                              self.QTtyp/self.QTref) > self.crit)        
+        return wavelength_mask * intensity_mask
+    
     def get_values_from_dataframes(self, df):
-
         if isinstance(df, vaex.dataframe.DataFrameLocal):
             self.A = df.A.values
             self.nu_lines = df.nu_lines.values
@@ -160,21 +159,6 @@ class MdbExomol(CapiMdbExomol):
             self.gpp = df.gup.values
         else:
             raise ValueError("Use vaex dataframe as input.")
-
-    def get_Sij_typ(self, Sij0_in, elower_in, nu_in):
-        """compute Sij at typical temperature self.Ttyp.
-
-        Args:
-           Sij0_in : line strength at Tref
-           elower_in: elower
-           nu_in: wavenumber bin
-
-        Returns:
-           Sij at Ttyp
-        """
-        return Sij0_in * self.QTref / self.QTtyp \
-            * np.exp(-hcperk*elower_in * (1./self.Ttyp - 1./Tref)) \
-            * np.expm1(-hcperk*nu_in/self.Ttyp) / np.expm1(-hcperk*nu_in/Tref)
 
     def generate_jnp_arrays(self):
         """(re)generate jnp.arrays.
