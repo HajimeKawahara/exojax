@@ -135,7 +135,6 @@ class MdbExomol(CapiMdbExomol):
         load_mask = self.compute_load_mask(df)
         self.get_values_from_dataframes(df[load_mask])
         self.compute_broadening(self.jlower, self.jupper)
-
         self.gamma_natural = gn(self.A)
 
         if gpu_transfer:
