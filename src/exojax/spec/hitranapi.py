@@ -1,7 +1,32 @@
 """API for HITRAN and HITEMP outside HAPI."""
 import numpy as np
+from radis.db.classes import get_molecule
+from radis.db.classes import get_molecule_identifier
 import jax.numpy as jnp
 import hapi
+
+def search_molecid(molec):
+    """molec id from Hitran/Hitemp filename or molecule name or moleid itself.
+
+    Args:
+       molec: Hitran/Hitemp filename or molecule name or molec id itself.
+
+    Return:
+       int: molecid (HITRAN molecular id)
+    """
+    try:
+        hitf = molec.split('_')
+        molecid = int(hitf[0])
+        return molecid
+    except:
+        try:     
+            return get_molecule_identifier(molec)
+        except:        
+            try:         
+                return get_molecule_identifier(get_molecule(molec))
+            except:
+                raise ValueError('Not valid HITRAN/Hitemp file or molecular id or molecular name.')
+  
 
 def get_pf(M, I_list):
     """HITRAN/HITEMP IO for partition function

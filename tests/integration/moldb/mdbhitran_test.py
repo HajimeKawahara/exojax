@@ -9,6 +9,19 @@ def test_moldb_hitran():
                  crit=1.e-30)    
     assert len(mdb.nu_lines) == 222
 
+def test_moldb_hitran_direct_name():
+    mdb = MdbHitran("CO",
+                 nurange=[4200.0, 4300.0],
+                 crit=1.e-30)    
+    assert len(mdb.nu_lines) == 222
+
+def test_moldb_hitran_direct_molecid():
+    mdb = MdbHitran("05",
+                 nurange=[4200.0, 4300.0],
+                 crit=1.e-30)    
+    assert len(mdb.nu_lines) == 222
+
+
 def test_moldb_hitran_interp():
     mdb = MdbHitran(".database/CO/05_hit12.par",
                  nurange=[4200.0, 4300.0],
@@ -27,4 +40,6 @@ def test_moldb_hitran_interp():
 
 if __name__ == "__main__":
     test_moldb_hitran()
+    test_moldb_hitran_direct_name()
+    test_moldb_hitran_direct_molecid()
 #    test_moldb_hitran_interp()

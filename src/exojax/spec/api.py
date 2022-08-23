@@ -14,6 +14,8 @@ from exojax.spec.hitran import line_strength_numpy
 from exojax.spec.hitran import gamma_natural as gn
 from exojax.utils.constants import hcperk, Tref
 from exojax.utils.molname import e2s
+from exojax.spec.hitranapi import search_molecid
+
 # currently use radis add/common-api branch
 from radis.api.exomolapi import MdbExomol as CapiMdbExomol  #MdbExomol in the common API
 from radis.api.hitempapi import HITEMPDatabaseManager
@@ -204,23 +206,6 @@ class MdbExomol(CapiMdbExomol):
         return self.QT_interp(T) / self.QT_interp(Tref)
 
 
-#copied from moldb, should move it.
-def search_molecid(molec):
-    """molec id from molec (source table name) of HITRAN/HITEMP.
-
-    Args:
-       molec: source table name
-
-    Return:
-       int: molecid (HITRAN molecular id)
-    """
-    try:
-        hitf = molec.split('_')
-        molecid = int(hitf[0])
-        return molecid
-    except:
-        raise ValueError('Define molecid by yourself.')
-
 
 class MdbHitemp(HITEMPDatabaseManager):
     """molecular database of HITEMP.
@@ -251,7 +236,7 @@ class MdbHitemp(HITEMPDatabaseManager):
         """Molecular database for HITRAN/HITEMP form.
 
         Args:
-           path: path for HITRAN/HITEMP par file
+           path: path for HITEMP par file
            nurange: wavenumber range list (cm-1) [min,max] or wavenumber grid
            margin: margin for nurange (cm-1)
            crit: line strength lower limit for extraction
@@ -259,13 +244,6 @@ class MdbHitemp(HITEMPDatabaseManager):
            isotope: None= use all isotopes. 
            gpu_transfer: tranfer data to jnp.array?
         """
-
-        if ("hit" in path and path[-4:] == ".bz2"):
-            path = path[:-4]
-            print('Warning: path changed (.bz2 removed):', path)
-        if ("HITEMP" in path and path[-4:] == ".par"):
-            path = path + '.bz2'
-            print('Warning: path changed (.bz2 added):', path)
 
         self.path = pathlib.Path(path).expanduser()
         self.molecid = search_molecid(str(self.path.stem))
@@ -496,13 +474,6 @@ class MdbHitran(HITRANDatabaseManager):
            gpu_transfer: tranfer data to jnp.array?
         """
 
-        if ("hit" in path and path[-4:] == ".bz2"):
-            path = path[:-4]
-            print('Warning: path changed (.bz2 removed):', path)
-        if ("HITEMP" in path and path[-4:] == ".par"):
-            path = path + '.bz2'
-            print('Warning: path changed (.bz2 added):', path)
-
         self.path = pathlib.Path(path).expanduser()
         self.molecid = search_molecid(str(self.path.stem))
         self.simple_molecule_name = get_molecule(self.molecid)
@@ -555,8 +526,7 @@ class MdbHitran(HITRANDatabaseManager):
             if load_wavenum_max is not None else [],
             output=output,
         )
-        print(df)
-
+        
         if isotope and type(isotope) == int:
             isotope = str(isotope)
 
