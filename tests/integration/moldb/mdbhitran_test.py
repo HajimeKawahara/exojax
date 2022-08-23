@@ -1,16 +1,16 @@
 import pytest
 import numpy as np
-from exojax.spec.api import MdbHitemp
+from exojax.spec.api import MdbHitran
 
 
-def test_moldb_hitemp():
-    mdb = MdbHitemp(".database/CO/05_HITEMP2019/05_HITEMP2019.par.bz2",
+def test_moldb_hitran():
+    mdb = MdbHitran(".database/CO/05_hit12.par",
                  nurange=[4200.0, 4300.0],
-                 crit=1.e-30)
-    assert len(mdb.nu_lines) == 521
+                 crit=1.e-30)    
+    assert len(mdb.nu_lines) == 222
 
-def test_moldb_hitemp_interp():
-    mdb = MdbHitemp(".database/CO/05_HITEMP2019/05_HITEMP2019.par.bz2",
+def test_moldb_hitran_interp():
+    mdb = MdbHitran(".database/CO/05_hit12.par",
                  nurange=[4200.0, 4300.0],
                  crit=1.e-30)
     T = 1000.0
@@ -26,5 +26,5 @@ def test_moldb_hitemp_interp():
 
 
 if __name__ == "__main__":
-    test_moldb_hitemp()
-    test_moldb_hitemp_interp()
+    test_moldb_hitran()
+#    test_moldb_hitran_interp()

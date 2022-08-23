@@ -17,6 +17,8 @@ from exojax.utils.molname import e2s
 # currently use radis add/common-api branch
 from radis.api.exomolapi import MdbExomol as CapiMdbExomol  #MdbExomol in the common API
 from radis.api.hitempapi import HITEMPDatabaseManager
+from radis.api.hitranapi import HITRANDatabaseManager
+
 from radis.api.hdf5 import update_pytables_to_vaex
 from radis.db.classes import get_molecule
 from radis.levels.partfunc import PartFuncTIPS
@@ -143,10 +145,11 @@ class MdbExomol(CapiMdbExomol):
     def compute_load_mask(self, df):
         wavelength_mask = (df.nu_lines > self.nurange[0]-self.margin) \
                     * (df.nu_lines < self.nurange[1]+self.margin)
-        intensity_mask = (line_strength_numpy(self.Ttyp, df.Sij0, df.nu_lines, df.elower,
-                                              self.QTtyp/self.QTref) > self.crit)        
+        intensity_mask = (line_strength_numpy(
+            self.Ttyp, df.Sij0, df.nu_lines, df.elower,
+            self.QTtyp / self.QTref) > self.crit)
         return wavelength_mask * intensity_mask
-    
+
     def get_values_from_dataframes(self, df):
         if isinstance(df, vaex.dataframe.DataFrameLocal):
             self.A = df.A.values
@@ -219,7 +222,7 @@ def search_molecid(molec):
         raise ValueError('Define molecid by yourself.')
 
 
-class MdbHit(HITEMPDatabaseManager):
+class MdbHitemp(HITEMPDatabaseManager):
     """molecular database of HITEMP.
 
     Attributes:
@@ -277,7 +280,7 @@ class MdbHit(HITEMPDatabaseManager):
         load_wavenum_max = self.nurange[1] + self.margin
 
         super().__init__(
-            molecule="CO",
+            molecule=self.simple_molecule_name,
             name="HITEMP-{molecule}",
             local_databases="",
             engine="default",
@@ -450,6 +453,147 @@ class MdbHit(HITEMPDatabaseManager):
             mask_idx = np.where(self.isoid == iso)
             qr_line = qr_line.at[jnp.index_exp[mask_idx]].set(qrx[idx])
         return qr_line
+
+
+MdbHit = MdbHitemp  #compatibility
+
+
+class MdbHitran(HITRANDatabaseManager):
+    """molecular database of HITRAN
+
+    Attributes:
+        simple_molecule_name: simple molecule name
+        nurange: nu range [min,max] (cm-1)
+        nu_lines (nd array): line center (cm-1)
+        Sij0 (nd array): line strength at T=Tref (cm)
+        dev_nu_lines (jnp array): line center in device (cm-1)
+        logsij0 (jnp array): log line strength at T=Tref
+        A (jnp array): Einstein A coeeficient
+        gamma_natural (jnp array): gamma factor of the natural broadening
+        gamma_air (jnp array): gamma factor of air pressure broadening
+        gamma_self (jnp array): gamma factor of self pressure broadening
+        elower (jnp array): the lower state energy (cm-1)
+        gpp (jnp array): statistical weight
+        n_air (jnp array): air temperature exponent
+    """
+    def __init__(self,
+                 path,
+                 nurange=[-np.inf, np.inf],
+                 margin=0.0,
+                 crit=0.,
+                 Ttyp=1000.,
+                 isotope=None,
+                 gpu_transfer=True):
+        """Molecular database for HITRAN/HITEMP form.
+
+        Args:
+           path: path for HITRAN/HITEMP par file
+           nurange: wavenumber range list (cm-1) [min,max] or wavenumber grid
+           margin: margin for nurange (cm-1)
+           crit: line strength lower limit for extraction
+           Ttyp: typical temperature to calculate Sij(T) used in crit
+           isotope: None= use all isotopes. 
+           gpu_transfer: tranfer data to jnp.array?
+        """
+
+        if ("hit" in path and path[-4:] == ".bz2"):
+            path = path[:-4]
+            print('Warning: path changed (.bz2 removed):', path)
+        if ("HITEMP" in path and path[-4:] == ".par"):
+            path = path + '.bz2'
+            print('Warning: path changed (.bz2 added):', path)
+
+        self.path = pathlib.Path(path).expanduser()
+        self.molecid = search_molecid(str(self.path.stem))
+        self.simple_molecule_name = get_molecule(self.molecid)
+
+        #numinf, numtag = hitranapi.read_path(self.path)
+        self.crit = crit
+        self.Ttyp = Ttyp
+        self.margin = margin
+        self.nurange = [np.min(nurange), np.max(nurange)]
+        load_wavenum_min = self.nurange[0] - self.margin
+        load_wavenum_max = self.nurange[1] + self.margin
+        
+        super().__init__(
+            molecule=self.simple_molecule_name,
+            name = "HITRAN-{molecule}",
+            local_databases="",
+            engine="default",
+            verbose=True,
+            parallel=True,
+        )
+
+        isotope = None
+        columns = None
+        output = "vaex"
+        
+        # Get list of all expected local files for this database:
+        local_file = self.get_filenames()
+        
+        # Download files
+        download_files = self.get_missing_files(local_file)
+        if download_files:
+            self.download_and_parse(download_files, cache=True, parse_quanta=True)
+
+        # Register
+        if not self.is_registered():
+            self.register()
+
+        if len(download_files) > 0:
+            self.clean_download_files()
+
+        # Load and return
+        df = self.load(
+            local_file,
+            columns=columns,
+            within=[("iso", isotope)] if isotope is not None else [],
+            # for relevant files, get only the right range :
+            lower_bound=[("wav", load_wavenum_min)]
+            if load_wavenum_min is not None else [],
+            upper_bound=[("wav", load_wavenum_max)]
+            if load_wavenum_max is not None else [],
+            output=output,
+        )
+        print(df)
+
+        if isotope and type(isotope) == int:
+            isotope = str(isotope)
+
+        self.isoid = df.iso
+        self.uniqiso = np.unique(df.iso.values)
+        load_mask = None
+        for iso in self.uniqiso:
+            Q = PartFuncTIPS(self.molecid, iso)
+            QTref = Q.at(T=Tref)
+            QTtyp = Q.at(T=Ttyp)
+            load_mask = self.compute_load_mask(df, QTtyp / QTref, load_mask)
+        self.get_values_from_dataframes(df[load_mask])
+        self.gQT, self.T_gQT = hitranapi.get_pf(self.molecid, self.uniqiso)
+
+    def compute_load_mask(self, df, qrtyp, load_mask):
+        wav_mask = (df.wav > self.nurange[0]-self.margin) \
+                    * (df.wav < self.nurange[1]+self.margin)
+        intensity_mask = (line_strength_numpy(self.Ttyp, df.int, df.wav, df.El,
+                                              qrtyp) > self.crit)
+        if load_mask is None:
+            return wav_mask * intensity_mask
+        else:
+            return load_mask * wav_mask * intensity_mask
+
+    def get_values_from_dataframes(self, df):
+        if isinstance(df, vaex.dataframe.DataFrameLocal):
+            self.nu_lines = df.wav.values
+            self.Sij0 = df.int.values
+            self.delta_air = df.Pshft.values
+            self.isoid = df.iso.values
+            self.uniqiso = np.unique(self.isoid)
+            self.A = df.A.values
+            self.n_air = df.Tdpair.values
+            self.gamma_air = df.airbrd.values
+            self.gamma_self = df.selbrd.values
+            self.elower = df.El.values
+            self.gpp = df.gp.values
 
 
 class AdbVald(object):
