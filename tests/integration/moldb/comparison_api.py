@@ -4,7 +4,7 @@ import pytest
 import numpy as np
 from exojax.spec.api import MdbExomol as MdbExomol_api
 from exojax.spec.moldb import MdbExomol as MdbExomol_orig
-from exojax.spec.api import MdbHit as MdbHit_api
+from exojax.spec.api import MdbHitemp as MdbHit_api
 from exojax.spec.moldb import MdbHit as MdbHit_orig
 
 
@@ -28,10 +28,10 @@ def comparison_moldb_exomol():
 
 def comparison_moldb_hitemp():
     crit = 1.e-30
-    morig = MdbHit_orig(".database/CO/05_HITEMP2019/05_HITEMP2019.par.bz2",
+    morig = MdbHit_orig(".database_/CO/05_HITEMP2019/05_HITEMP2019.par.bz2",
                         nurange=[4200.0, 4300.0],
                         crit=crit)
-    mapi = MdbHit_api(".database/CO/05_HITEMP2019/05_HITEMP2019.par.bz2",
+    mapi = MdbHit_api(".database/CO/",
                       nurange=[4200.0, 4300.0],
                       crit=crit)
     assert np.all(mapi.A - morig.A) == 0.0
