@@ -10,13 +10,13 @@ def test_moldb_hitran():
     assert len(mdb.nu_lines) == 222
 
 def test_moldb_hitran_direct_name():
-    mdb = MdbHitran("CO",
+    mdb = MdbHitran(".database/CO/",
                  nurange=[4200.0, 4300.0],
                  crit=1.e-30)    
     assert len(mdb.nu_lines) == 222
 
 def test_moldb_hitran_direct_molecid():
-    mdb = MdbHitran("05",
+    mdb = MdbHitran(".database/05/",
                  nurange=[4200.0, 4300.0],
                  crit=1.e-30)    
     assert len(mdb.nu_lines) == 222

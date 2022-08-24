@@ -3,16 +3,15 @@
 * MdbExomol is the MDB for ExoMol
 * MdbHit is the MDB for HITRAN or HITEMP
 """
-from os.path import abspath, exists
+from os.path import exists
 import numpy as np
 import jax.numpy as jnp
-from jax import jit, vmap
 import pathlib
 import vaex
-from exojax.spec import hapi, exomolapi, exomol, atomllapi, atomll, hitranapi
+from exojax.spec import hitranapi
 from exojax.spec.hitran import line_strength_numpy
 from exojax.spec.hitran import gamma_natural as gn
-from exojax.utils.constants import hcperk, Tref
+from exojax.utils.constants import Tref
 from exojax.utils.molname import e2s
 from exojax.spec.hitranapi import search_molecid
 
@@ -20,16 +19,11 @@ from exojax.spec.hitranapi import search_molecid
 from radis.api.exomolapi import MdbExomol as CapiMdbExomol  #MdbExomol in the common API
 from radis.api.hitempapi import HITEMPDatabaseManager
 from radis.api.hitranapi import HITRANDatabaseManager
-
 from radis.api.hdf5 import update_pytables_to_vaex
 from radis.db.classes import get_molecule
 from radis.levels.partfunc import PartFuncTIPS
 
-__all__ = ['MdbExomol', 'MdbHit', 'AdbVald', 'AdbKurucz']
-
-explanation_states = "Note: Couldn't find the hdf5 format. We convert data to the hdf5 format. After the second time, it will become much faster."
-explanation_trans = "Note: Couldn't find the hdf5 format. We convert data to the hdf5 format. After the second time, it will become much faster."
-warning_old_exojax = 'It seems that the hdf5 file for the transition file was created using the old version of exojax<1.1. Try again after removing '
+__all__ = ['MdbExomol', 'MdbHitemp', 'MdbHitran']
 
 
 class MdbExomol(CapiMdbExomol):
@@ -206,7 +200,6 @@ class MdbExomol(CapiMdbExomol):
         return self.QT_interp(T) / self.QT_interp(Tref)
 
 
-
 class MdbHitemp(HITEMPDatabaseManager):
     """molecular database of HITEMP.
 
@@ -248,8 +241,6 @@ class MdbHitemp(HITEMPDatabaseManager):
         self.path = pathlib.Path(path).expanduser()
         self.molecid = search_molecid(str(self.path.stem))
         self.simple_molecule_name = get_molecule(self.molecid)
-
-        #numinf, numtag = hitranapi.read_path(self.path)
         self.crit = crit
         self.Ttyp = Ttyp
         self.margin = margin
@@ -260,7 +251,7 @@ class MdbHitemp(HITEMPDatabaseManager):
         super().__init__(
             molecule=self.simple_molecule_name,
             name="HITEMP-{molecule}",
-            local_databases="",
+            local_databases=self.path.parent,
             engine="default",
             verbose=True,
             chunksize=100000,
@@ -485,11 +476,11 @@ class MdbHitran(HITRANDatabaseManager):
         self.nurange = [np.min(nurange), np.max(nurange)]
         load_wavenum_min = self.nurange[0] - self.margin
         load_wavenum_max = self.nurange[1] + self.margin
-        
+
         super().__init__(
             molecule=self.simple_molecule_name,
-            name = "HITRAN-{molecule}",
-            local_databases="",
+            name="HITRAN-{molecule}",
+            local_databases=self.path.parent,
             engine="default",
             verbose=True,
             parallel=True,
@@ -498,14 +489,16 @@ class MdbHitran(HITRANDatabaseManager):
         isotope = None
         columns = None
         output = "vaex"
-        
+
         # Get list of all expected local files for this database:
         local_file = self.get_filenames()
-        
+
         # Download files
         download_files = self.get_missing_files(local_file)
         if download_files:
-            self.download_and_parse(download_files, cache=True, parse_quanta=True)
+            self.download_and_parse(download_files,
+                                    cache=True,
+                                    parse_quanta=True)
 
         # Register
         if not self.is_registered():

@@ -9,21 +9,28 @@ def test_moldb_hitemp():
                  crit=1.e-30)
     assert len(mdb.nu_lines) == 521
 
+def test_moldb_hitemp2():
+    mdb = MdbHitemp(".database/CO/05_HITEMP2019/",
+                 nurange=[4200.0, 4300.0],
+                 crit=1.e-30)
+    assert len(mdb.nu_lines) == 521
+
+
 def test_moldb_hitemp_direct_name():
-    mdb = MdbHitemp("CO",
+    mdb = MdbHitemp(".database/CO/",
                  nurange=[4200.0, 4300.0],
                  crit=1.e-30)
     assert len(mdb.nu_lines) == 521
 
 def test_moldb_hitemp_direct_molecid():
-    mdb = MdbHitemp("05",
+    mdb = MdbHitemp(".database/05/",
                  nurange=[4200.0, 4300.0],
                  crit=1.e-30)
     assert len(mdb.nu_lines) == 521
 
 
 def test_moldb_hitemp_interp():
-    mdb = MdbHitemp(".database/CO/05_HITEMP2019/05_HITEMP2019.par.bz2",
+    mdb = MdbHitemp(".database/CO/",
                  nurange=[4200.0, 4300.0],
                  crit=1.e-30)
     T = 1000.0
@@ -40,6 +47,7 @@ def test_moldb_hitemp_interp():
 
 if __name__ == "__main__":
     test_moldb_hitemp()
+    test_moldb_hitemp2()
     test_moldb_hitemp_direct_name()
     test_moldb_hitemp_direct_molecid()
     test_moldb_hitemp_interp()
