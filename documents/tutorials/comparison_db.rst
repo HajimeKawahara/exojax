@@ -2,6 +2,8 @@
 Comparing HITEMP and ExoMol
 ---------------------------
 
+
+
 .. code:: ipython3
 
     from exojax.spec import xsection
@@ -67,8 +69,7 @@ Here, we use the partition function from HAPI
 
 .. code:: ipython3
 
-    mdbCO_HITEMP.ExomolQT(emf) #use Q(T) from Exomol/Li2015
-    qt_HITEMP=mdbCO_HITEMP.qr_interp(Tfix)
+    qt_HITEMP=mdbCO_HITEMP.qr_interp_lines(Tfix)
     qt_Li2015=mdbCO_Li2015.qr_interp(Tfix)
 
 Let us compute the line strength S(T) at temperature of Tfix.
