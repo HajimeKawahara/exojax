@@ -70,7 +70,7 @@ class MdbExomol(CapiMdbExomol):
                  Ttyp=1000.,
                  bkgdatm='H2',
                  broadf=True,
-                 gpu_transfer=True,
+                 gpu_transfer=False,
                  local_databases="./"):
         """Molecular database for Exomol form.
 
@@ -225,7 +225,7 @@ class MdbHitemp(HITEMPDatabaseManager):
                  crit=0.,
                  Ttyp=1000.,
                  isotope=None,
-                 gpu_transfer=True):
+                 gpu_transfer=False):
         """Molecular database for HITRAN/HITEMP form.
 
         Args:
@@ -328,6 +328,9 @@ class MdbHitemp(HITEMPDatabaseManager):
             load_mask = self.compute_load_mask(df, QTtyp / QTref, load_mask)
         self.get_values_from_dataframes(df[load_mask])
         self.gQT, self.T_gQT = hitranapi.get_pf(self.molecid, self.uniqiso)
+
+        if gpu_transfer:
+            self.generate_jnp_arrays()
 
     def compute_load_mask(self, df, qrtyp, load_mask):
         wav_mask = (df.wav > self.nurange[0]-self.margin) \
@@ -452,7 +455,7 @@ class MdbHitran(HITRANDatabaseManager):
                  crit=0.,
                  Ttyp=1000.,
                  isotope=None,
-                 gpu_transfer=True):
+                 gpu_transfer=False):
         """Molecular database for HITRAN/HITEMP form.
 
         Args:
@@ -530,6 +533,9 @@ class MdbHitran(HITRANDatabaseManager):
             load_mask = self.compute_load_mask(df, QTtyp / QTref, load_mask)
         self.get_values_from_dataframes(df[load_mask])
         self.gQT, self.T_gQT = hitranapi.get_pf(self.molecid, self.uniqiso)
+
+        if gpu_transfer:
+            self.generate_jnp_arrays()
 
     def compute_load_mask(self, df, qrtyp, load_mask):
         wav_mask = (df.wav > self.nurange[0]-self.margin) \
