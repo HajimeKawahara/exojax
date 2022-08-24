@@ -176,7 +176,7 @@ class MdbExomol(CapiMdbExomol):
         self.jupper = jnp.array(self.jupper, dtype=int)
         self.alpha_ref = jnp.array(self.alpha_ref)
         self.n_Texp = jnp.array(self.n_Texp)
-
+        
     def QT_interp(self, T):
         """interpolated partition function.
 
@@ -360,12 +360,14 @@ class MdbHitemp(HITEMPDatabaseManager):
 
     def generate_jnp_arrays(self):
         """(re)generate jnp.arrays.
-
+        
         Note:
-            We have nd arrays and jnp arrays. We usually apply the mask to nd arrays and then generate jnp array from the corresponding nd array. For instance, self._A is nd array and self.A is jnp array.
-
+           We have nd arrays and jnp arrays. We usually apply the mask to nd arrays and then generate jnp array from the corresponding nd array. For instance, self._A is nd array and self.A is jnp array.
+        
         """
+        # jnp.array copy from the copy sources
         self.nu_lines = jnp.array(self.nu_lines)
+        self.logsij0 = jnp.array(np.log(self.Sij0))
         self.Sij0 = jnp.array(self.Sij0)
         self.delta_air = jnp.array(self.delta_air)
         self.isoid = jnp.array(self.isoid)
@@ -565,12 +567,14 @@ class MdbHitran(HITRANDatabaseManager):
 
     def generate_jnp_arrays(self):
         """(re)generate jnp.arrays.
-
+        
         Note:
-            We have nd arrays and jnp arrays. We usually apply the mask to nd arrays and then generate jnp array from the corresponding nd array. For instance, self._A is nd array and self.A is jnp array.
-
+           We have nd arrays and jnp arrays. We usually apply the mask to nd arrays and then generate jnp array from the corresponding nd array. For instance, self._A is nd array and self.A is jnp array.
+        
         """
+        # jnp.array copy from the copy sources
         self.nu_lines = jnp.array(self.nu_lines)
+        self.logsij0 = jnp.array(np.log(self.Sij0))
         self.Sij0 = jnp.array(self.Sij0)
         self.delta_air = jnp.array(self.delta_air)
         self.isoid = jnp.array(self.isoid)
