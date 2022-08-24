@@ -189,8 +189,7 @@ exomol
 
 .. code:: ipython3
 
-    mdbCO_Li2015.set_broadening(broadf=False) #use default broadning
-    gammaL_Li2015_def = gamma_exomol(Pfix,Tfix,mdbCO_Li2015.n_Texp,mdbCO_Li2015.alpha_ref)\
+    gammaL_Li2015_def = gamma_exomol(Pfix,Tfix,mdbCO_Li2015.n_Texp_def,mdbCO_Li2015.alpha_ref_def)\
     + gamma_natural(mdbCO_Li2015.A) 
     xsv_Li2015_def=xsection(nus,nu0_Li2015,sigmaD_Li2015,gammaL_Li2015_def\
                          ,Sij_Li2015,memory_size=30) #use 30MB GPU MEMORY for numax
