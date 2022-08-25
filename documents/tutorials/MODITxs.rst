@@ -33,7 +33,7 @@ direct computation (LPF).
     Tfix=1000.0 # we assume T=1000K
     Pfix=1.e-3 # we compute P=1.e-3 bar
     Ppart=Pfix #partial pressure of CO. here we assume a 100% CO atmosphere.
-    qt=mdbCO.Qr_layer_HAPI([Tfix])[0]
+    qt=mdbCO.qr_interp_lines(Tfix)
     
     # compute Sij, gamma_L, sigmaD
     Sij=SijT(Tfix,mdbCO.logsij0,mdbCO.nu_lines,mdbCO.elower,qt)
@@ -63,15 +63,15 @@ with the dimensions of the normalized gammaL and ESLOG grid
     nsigmaD=normalized_doppler_sigma(Tfix,Mmol,R)
     ngammaL=gammaL/dv_lines
 
-MODIT uses a grid of ngammaL, and wavenumber. `ditgrid <../exojax/exojax.spec.html#exojax.spec.modit.ditgrid>`_ makes a 1D grid for ngamma.
+MODIT uses a grid of ngammaL, and wavenumber. `ditgrid_log_interval <../exojax/exojax.spec.html#exojax.spec.modit.ditgrid>`_ makes a 1D grid for ngamma.
 
 .. code:: ipython3
 
-    from exojax.spec.modit import ditgrid
-    ngammaL_grid=ditgrid(ngammaL)
+    from exojax.spec.set_ditgrid import ditgrid_log_interval
+    ngammaL_grid=ditgrid_log_interval(ngammaL)
     
     # we can change the resolution using res option
-    #ngammaL_grid=ditgrid(ngammaL,res=0.1)
+    #ngammaL_grid=ditgrid_log_interval(ngammaL,dit_grid_resolution=0.1)
 
 .. code:: ipython3
 

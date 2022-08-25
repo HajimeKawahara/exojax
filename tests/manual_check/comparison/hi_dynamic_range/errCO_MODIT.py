@@ -12,7 +12,7 @@ from exojax.spec import initspec
 from exojax.spec import xsection as lpf_xsection
 from exojax.spec.hitran import SijT, doppler_sigma, gamma_hitran, gamma_natural
 from exojax.spec import moldb
-from exojax.spec.dit import set_ditgrid
+from exojax.spec.set_ditgrid import ditgrid_log_interval
 from exojax.spec.hitran import normalized_doppler_sigma
 
 #F64/F32
@@ -51,7 +51,7 @@ def comperr(Nnu,plotfig=False):
     cnu,indexnu,R,dq=initspec.init_modit(mdbCO.nu_lines,nus)
     nsigmaD=normalized_doppler_sigma(Tfix,Mmol,R)
     ngammaL=gammaL/(mdbCO.nu_lines/R)
-    ngammaL_grid=set_ditgrid(ngammaL)
+    ngammaL_grid = ditgrid_log_interval(ngammaL)
     
     xs_modit_lp=modit_xsvector(cnu,indexnu,R,dq,nsigmaD,ngammaL,Sij,nus,ngammaL_grid)
     wls_modit = 100000000/nus

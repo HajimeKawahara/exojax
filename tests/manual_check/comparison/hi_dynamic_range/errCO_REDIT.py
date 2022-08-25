@@ -7,12 +7,12 @@ import matplotlib.pyplot as plt
 plt.style.use('bmh')
 from exojax.spec import make_numatrix0
 from exojax.spec.lpf import xsvector as lpf_xsvector
-from exojax.spec.redit import xsvector as redit_xsvector
+from exojax.experimental.redit import xsvector as redit_xsvector
 from exojax.spec import initspec
 from exojax.spec import xsection as lpf_xsection
 from exojax.spec.hitran import SijT, doppler_sigma, gamma_hitran, gamma_natural
 from exojax.spec import moldb
-from exojax.spec.dit import set_ditgrid
+from exojax.spec.set_ditgrid import ditgrid_log_interval
 from exojax.spec.hitran import normalized_doppler_sigma
 
 
@@ -44,7 +44,7 @@ def comperr(Nnu,plotfig=False):
     cnu,indexnu,R, dq=initspec.init_redit(mdbCO.nu_lines,nus)
     nsigmaD=normalized_doppler_sigma(Tfix,Mmol,R)
     ngammaL=gammaL/(mdbCO.nu_lines/R)
-    ngammaL_grid=set_ditgrid(ngammaL)
+    ngammaL_grid = ditgrid_log_interval(ngammaL)
     Nq=int(len(nus)/2.0)-1
     qvector=jnp.arange(-Nq,Nq+1,1)*dq
     print(Nq)

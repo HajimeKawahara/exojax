@@ -1,6 +1,6 @@
 from jax.config import config
 from exojax.spec.hitran import normalized_doppler_sigma
-from exojax.spec.dit import set_ditgrid
+from exojax.spec.set_ditgrid import ditgrid_log_interval
 from exojax.spec import moldb
 from exojax.spec.hitran import SijT, doppler_sigma, gamma_hitran, gamma_natural
 from exojax.spec import xsection as lpf_xsection
@@ -43,8 +43,8 @@ gammaL = gamma_hitran(Pfix, Tfix, Pfix, mdbCO.n_air,
 sigmaD = doppler_sigma(mdbCO.nu_lines, Tfix, Mmol)
 
 cnu, indexnu, pmarray = initspec.init_dit(mdbCO.nu_lines, nus)
-sigmaD_grid = set_ditgrid(sigmaD, res=0.1)
-gammaL_grid = set_ditgrid(gammaL, res=0.1)
+sigmaD_grid = ditgrid_log_interval(sigmaD, dit_grid_resolution=0.1)
+gammaL_grid = ditgrid_log_interval(gammaL, dit_grid_resolution=0.1)
 
 xs_dit_lp = dit_xsvector(cnu, indexnu, pmarray, sigmaD,
                          gammaL, Sij, nus, sigmaD_grid, gammaL_grid)
