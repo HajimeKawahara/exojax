@@ -2,6 +2,8 @@
 Comparing HITEMP and ExoMol
 ---------------------------
 
+
+
 .. code:: ipython3
 
     from exojax.spec import xsection
@@ -67,8 +69,7 @@ Here, we use the partition function from HAPI
 
 .. code:: ipython3
 
-    mdbCO_HITEMP.ExomolQT(emf) #use Q(T) from Exomol/Li2015
-    qt_HITEMP=mdbCO_HITEMP.qr_interp(Tfix)
+    qt_HITEMP=mdbCO_HITEMP.qr_interp_lines(Tfix)
     qt_Li2015=mdbCO_Li2015.qr_interp(Tfix)
 
 Let us compute the line strength S(T) at temperature of Tfix.
@@ -188,8 +189,7 @@ exomol
 
 .. code:: ipython3
 
-    mdbCO_Li2015.set_broadening(broadf=False) #use default broadning
-    gammaL_Li2015_def = gamma_exomol(Pfix,Tfix,mdbCO_Li2015.n_Texp,mdbCO_Li2015.alpha_ref)\
+    gammaL_Li2015_def = gamma_exomol(Pfix,Tfix,mdbCO_Li2015.n_Texp_def,mdbCO_Li2015.alpha_ref_def)\
     + gamma_natural(mdbCO_Li2015.A) 
     xsv_Li2015_def=xsection(nus,nu0_Li2015,sigmaD_Li2015,gammaL_Li2015_def\
                          ,Sij_Li2015,memory_size=30) #use 30MB GPU MEMORY for numax
