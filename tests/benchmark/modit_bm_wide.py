@@ -1,7 +1,7 @@
 import pytest
 import time
 from exojax.spec.modit import xsvector
-from exojax.spec.dit import set_ditgrid
+from exojax.spec.set_ditgrid import ditgrid_log_interval
 import numpy as np
 import jax.numpy as jnp
 from exojax.spec import initspec
@@ -17,7 +17,7 @@ def xs(Nc, Nline=10000):
 
     cnu, indexnu, R, pmarray = initspec.init_modit(nu_lines, nus)
     ngammaL = gammaL/(nu_lines/R)
-    ngammaL_grid = set_ditgrid(ngammaL, res=0.1)
+    ngammaL_grid = ditgrid_log_interval(ngammaL, dit_grid_resolution=0.1)
     S = jnp.array(np.random.normal(size=Nline))
 
     ts = time.time()

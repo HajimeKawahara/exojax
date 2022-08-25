@@ -50,7 +50,7 @@ Here, we use the partition function from HAPI
 
 .. code:: ipython3
 
-    qt=mdbCO.Qr_layer_HAPI([Tfix])[0]
+    qt=mdbCO.qr_interp_lines(Tfix)
 
 Let us compute the line strength S(T) at temperature of Tfix.
 

@@ -12,7 +12,7 @@ from exojax.spec import initspec
 from exojax.spec import xsection as lpf_xsection
 from exojax.spec.hitran import SijT, doppler_sigma, gamma_hitran, gamma_natural
 from exojax.spec import moldb
-from exojax.spec.dit import set_ditgrid
+from exojax.spec.set_ditgrid import ditgrid_log_interval
 from exojax.spec.hitran import normalized_doppler_sigma
 
 
@@ -43,8 +43,8 @@ def comperr(Nnu,plotfig=False):
     gammaL = gamma_hitran(Pfix,Tfix,Pfix, mdbCO.n_air, mdbCO.gamma_air, mdbCO.gamma_self)
     #+ gamma_natural(A) #uncomment if you inclide a natural width
     sigmaD=doppler_sigma(mdbCO.nu_lines,Tfix,Mmol)
-    sigmaD_grid=set_ditgrid(sigmaD)
-    gammaL_grid=set_ditgrid(gammaL)
+    sigmaD_grid=ditgrid_log_interval(sigmaD)
+    gammaL_grid=ditgrid_log_interval(gammaL)
 
     
     cnu,indexnu,dLarray=initspec.init_dit(mdbCO.nu_lines,nus)

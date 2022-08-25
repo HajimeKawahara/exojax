@@ -31,7 +31,7 @@ the case that the number of the molecular line is large (typically >
     Tfix=1000.0 # we assume T=1000K
     Pfix=1.e-3 # we compute P=1.e-3 bar
     Ppart=Pfix #partial pressure of CO. here we assume a 100% CO atmosphere.
-    qt=mdbCO.Qr_layer_HAPI([Tfix])[0]
+    qt=mdbCO.qr_interp_lines(Tfix)
     
     # compute Sij, gamma_L, sigmaD 
     Sij=SijT(Tfix,mdbCO.logsij0,mdbCO.nu_lines,mdbCO.elower,qt)
@@ -40,18 +40,17 @@ the case that the number of the molecular line is large (typically >
     + gamma_natural(mdbCO.A)
     sigmaD=doppler_sigma(mdbCO.nu_lines,Tfix,Mmol)
 
-DIT uses a grid of sigmaD, gammaL, and wavenumber. set_ditgrid makes a
-1D grid for sigmaD and gamma.
+DIT uses a grid of sigmaD, gammaL, and wavenumber. ditgrid_log_interval makes a 1D grid for sigmaD and gamma.
 
 .. code:: ipython3
 
-    from exojax.spec.dit import set_ditgrid
-    sigmaD_grid=set_ditgrid(sigmaD)
-    gammaL_grid=set_ditgrid(gammaL)
+    from exojax.spec.set_ditgrid import ditgrid_log_interval
+    sigmaD_grid=ditgrid_log_interval(sigmaD)
+    gammaL_grid=ditgrid_log_interval(gammaL)
     
     # we can change the resolution using res option
-    #sigmaD_grid=set_ditgrid(sigmaD,res=0.1)
-    #gammaL_grid=set_ditgrid(gammaL,res=0.1)
+    #sigmaD_grid=ditgrid_log_interval(sigmaD,dit_grid_resolution=0.1)
+    #gammaL_grid=ditgrid_log_interval(gammaL,dit_grid_resolution=0.1)
 
 .. code:: ipython3
 
