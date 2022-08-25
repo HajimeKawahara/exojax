@@ -61,7 +61,7 @@ class MdbExomol(object):
         Note:
            The trans/states files can be very large. For the first time to read it, we convert it to HDF/vaex. After the second-time, we use the HDF5 format with vaex instead.
         """
-        warnings.warn("moldb.MdbExomol is duplicated. Use api.MdbExomol.", UserWarning)
+        warnings.warn(" Use api.MdbExomol.", DeprecationWarning)
         self.path = pathlib.Path(path).expanduser()
         t0 = self.path.parents[0].stem
         molec = t0+'__'+str(self.path.stem)
@@ -468,7 +468,7 @@ class MdbHit(object):
            gpu_transfer: tranfer data to jnp.array? 
         """
         from exojax.spec.hitran import SijT
-        warnings.warn("moldb.MdbHit is duplicated. Use api.MdbHitemp or api.MdbHitran.", UserWarning)
+        warnings.warn(" Use api.MdbHitemp or api.MdbHitran.", DeprecationWarning)
         
         if ("hit" in path and path[-4:] == ".bz2"):
             path = path[:-4]

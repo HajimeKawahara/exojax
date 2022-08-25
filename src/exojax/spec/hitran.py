@@ -5,7 +5,7 @@ from exojax.utils.constants import hcperk, Tref
 
 
 def SijT(T, logsij0, nu_lines, elower, qT):
-    """duplicated by hitran.line_strength, will be removed. 
+    """(alias, deprecated) use hitran.line_strength, will be removed. 
    """
     return line_strength(T, logsij0, nu_lines, elower, qT)
 

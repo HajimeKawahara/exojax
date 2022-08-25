@@ -10,8 +10,8 @@ from exojax.utils.constants import kB, logm_ucgs
 import warnings
 
 def nugrid(x0, x1, N, unit='cm-1', xsmode='lpf'):
-    warn_msg = "rtransfer.nugrid is duplicated and will be removed. Use `setrt.gen_wavenumber_grid` instead"
-    warnings.warn(warn_msg, UserWarning)
+    warn_msg = "Use `setrt.gen_wavenumber_grid` instead"
+    warnings.warn(warn_msg, DeprecationWarning)
     from exojax.spec.setrt import gen_wavenumber_grid
     return gen_wavenumber_grid(x0, x1, N, unit=unit, xsmode=xsmode)
 
