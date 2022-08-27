@@ -473,7 +473,7 @@ def MdbExomol_plg(path_database, nus, Tgue, errTgue=500., Nelower=7, assess_widt
     """
     from exojax.spec import plg, moldb, initspec
     from exojax.spec.setrt import gen_wavenumber_grid
-    mdb = moldb.MdbExomol(path_database, nus, crit=crit)
+    mdb = moldb.MdbExomol(path_database, nus, crit=crit, Ttyp=Tgue)
     molmass = mdb.molmass
     
     if coefTgue == 0.:
