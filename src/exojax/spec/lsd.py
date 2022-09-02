@@ -8,9 +8,8 @@
 import numpy as np
 from jax.numpy import index_exp as joi
 import jax.numpy as jnp
-from jax import jit, vmap
+from jax import jit
 from exojax.utils.constants import hcperk, Tref
-import tqdm
 
 def getix(x, xv):
     """jnp version of getix.

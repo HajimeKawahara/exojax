@@ -232,13 +232,20 @@ def generate_lbd(line_strength_ref, nu_lines, nu_grid, ngamma_ref,
         ngamma_ref, ngamma_ref_grid, n_Texp, n_Texp_grid)
 
     Ng_nu = len(nu_grid)
-    Ng_elower = len(elower_grid)
-    lbd = np.zeros((Ng_nu, Ng_broadpar, Ng_elower), dtype=np.float64)
+
+    # We extend the LBD grid to +1 along elower direction. See #273
+    Ng_elower_plus_one = len(elower_grid) + 1
+
+    lbd = np.zeros((Ng_nu, Ng_broadpar, Ng_elower_plus_one), dtype=np.float64)
     lbd = npadd3D_multi_index(lbd, line_strength_ref, cont_nu, index_nu,
                               cont_elower, index_elower, uidx_bp,
                               multi_cont_lines, neighbor_uidx)
     lbd[lbd > 0.0] = np.log(lbd[lbd > 0.0])
     lbd[lbd == 0.0] = logmin
+
+    # Removing the extended grid of elower. See #273
+    lbd = lbd[:, :, 0:-1]
+
     return jnp.array(lbd), multi_index_uniqgrid
 
 
@@ -285,7 +292,6 @@ def unbiased_lsd(lbd, T, nu_grid, elower_grid, qt):
         LSD, shape = (number_of_wavenumber_bin, number_of_broadening_parameters)
         
     """
-    Nnu = int(len(nu_grid) / 2)
     Slsd = jnp.sum(jnp.exp(logf_bias(elower_grid, T) + lbd), axis=-1)
     return (Slsd.T * g_bias(nu_grid, T) / qt).T
 
