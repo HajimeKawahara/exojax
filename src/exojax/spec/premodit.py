@@ -232,7 +232,7 @@ def generate_lbd(line_strength_ref, nu_lines, nu_grid, ngamma_ref,
         ngamma_ref, ngamma_ref_grid, n_Texp, n_Texp_grid)
 
     Ng_nu = len(nu_grid)
-    Ng_elower = len(elower_grid)
+    Ng_elower = len(elower_grid) + 1 #See Issue #275
     lbd = np.zeros((Ng_nu, Ng_broadpar, Ng_elower), dtype=np.float64)
     lbd = npadd3D_multi_index(lbd, line_strength_ref, cont_nu, index_nu,
                               cont_elower, index_elower, uidx_bp,
