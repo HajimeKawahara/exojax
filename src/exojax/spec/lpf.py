@@ -6,7 +6,7 @@ analysis."""
 from jax import jit, vmap
 import jax.numpy as jnp
 from exojax.special.faddeeva import rewofz, imwofz
-from exojax.special.faddeeva import rewofzs2, imwofzs2
+from exojax.special.faddeeva import asymptotic_wofz
 from jax import custom_jvp
 
 # exomol
@@ -134,7 +134,7 @@ def vald_each(Tarr, PH, PHe, PHH, \
 
 @jit
 def ljert(x, a):
-    """ljert function, consisting of a combination of imwofz and imwofzs2.
+    """ljert function, consisting of a combination of imwofz and imag(asymptiotic wofz).
 
     Args:
         x:
@@ -147,13 +147,13 @@ def ljert(x, a):
         ljert provides a L(x,a) function. This function accepts a scalar value as an input. Use jax.vmap to use a vector as an input.
     """
     r2 = x*x+a*a
-    return jnp.where(r2 < 111., imwofz(x, a), imwofzs2(x, a))
+    return jnp.where(r2 < 111., imwofz(x, a), jnp.imag(asymptotic_wofz(x, a)))
 
 
 @custom_jvp
 def hjert(x, a):
     """custom JVP version of the Voigt-Hjerting function, consisting of a
-    combination of rewofz and real(wofzs2).
+    combination of rewofz and real(asymptotic wofz).
 
     Args:
         x: 
@@ -180,7 +180,7 @@ def hjert(x, a):
           DeviceArray([1.        , 0.8764037 , 0.7615196 , 0.6596299 , 0.5718791 ,0.49766064, 0.43553388, 0.3837772 , 0.34069115, 0.3047442 ],dtype=float32)
     """
     r2 = x*x+a*a
-    return jnp.where(r2 < 111., rewofz(x, a), rewofzs2(x, a))
+    return jnp.where(r2 < 111., rewofz(x, a), jnp.real(asymptotic_wofz(x, a)))
 
 
 @hjert.defjvp
