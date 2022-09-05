@@ -1,6 +1,7 @@
 """plotting tool for atmospheric structure."""
 import numpy as np
 import matplotlib.pyplot as plt
+from exojax.utils.constants import hcperk
 
 
 def plottau(nus,
@@ -72,6 +73,7 @@ def factor_labelx_for_unit():
     labelx["um"] = 'wavelength ($\mu \mathrm{m}$)'
     labelx["nm"] = 'wavelength (nm)'
     labelx["AA"] = 'wavelength ($\AA$)'
+    labelx["cm-1"] = 'wavenumber ($\mathrm{cm}^{-1}$)'
     return factor, labelx
 
 
@@ -80,7 +82,7 @@ def plotcf(nus,
            Tarr,
            Parr,
            dParr,
-           unit=None,
+           unit="cm-1",
            mode=None,
            log=False,
            normalize=True,
@@ -93,7 +95,7 @@ def plotcf(nus,
        Tarr: temperature profile
        Parr: perssure profile
        dParr: perssure difference profile
-       unit: x-axis unit=um (wavelength microns), nm  = (wavelength nm), AA  = (wavelength Angstrom),
+       unit: x-axis unit=cm-1, um (wavelength microns), nm  = (wavelength nm), AA  = (wavelength Angstrom),
        mode: None=contour, "cmap"=color map
        log: True=use log10(cf)
        normalize: normalize cf for each wavenumber?
@@ -102,17 +104,14 @@ def plotcf(nus,
     Returns:
        contribution function
     """
-    from exojax.spec.planck import piBarr
-    from exojax.utils.constants import hcperk
     tau = np.cumsum(dtauM, axis=0)
-
     cf = np.exp(-tau)*dtauM\
         * (Parr[:, None]/dParr[:, None])\
         * nus**3/(np.exp(hcperk*nus/Tarr[:, None])-1.0)
 
-    if normalize == True:
+    if normalize:
         cf = (cf / np.sum(cf, axis=0))
-    if log == True:
+    if log:
         cf = np.log10(cf)
 
     plt.figure(figsize=(20, 3))
@@ -129,7 +128,6 @@ def plotcf(nus,
                               np.log10(Parr[-1]),
                               np.log10(Parr[0])
                           ])
-            plt.xlabel(labelx[unit])
         else:
             c = ax.imshow(cf,
                           cmap=cmap,
@@ -139,18 +137,15 @@ def plotcf(nus,
                               np.log10(Parr[-1]),
                               np.log10(Parr[0])
                           ])
-            plt.xlabel('wavenumber ($\mathrm{cm}^{-1}$)')
     else:
         if unit == "um" or unit == "nm" or unit == "AA":
             X, Y = np.meshgrid(factor[unit] / nus, np.log10(Parr))
-            plt.xlabel(labelx[unit])
         else:
             X, Y = np.meshgrid(nus, np.log10(Parr))
-            plt.xlabel('wavenumber ($\mathrm{cm}^{-1}$)')
-
         c = ax.contourf(X, Y, cf, 30, cmap=cmap)
         plt.gca().invert_yaxis()
 
+    plt.xlabel(labelx[unit])
     plt.ylabel('log10 (P (bar))')
     plt.colorbar(c, shrink=0.8)
     ax.set_aspect(0.2 / ax.get_data_ratio())
