@@ -32,7 +32,7 @@ def plottau(nus,
     ax = plt.subplot2grid((1, 20), (0, 3), colspan=18)
 
     if unit == "um" or unit == "nm" or unit == "AA":
-        factor, labelx = provide_factor_labelx()
+        factor, labelx = factor_labelx_for_unit()
         c = ax.imshow(ltau[:, ::-1],
                       vmin=vmin,
                       vmax=vmax,
@@ -60,15 +60,10 @@ def plottau(nus,
     plt.ylabel('log10 (P (bar))')
     ax.set_aspect(0.2 / ax.get_data_ratio())
     if Tarr is not None and Parr is not None:
-        ax = plt.subplot2grid((1, 20), (0, 0), colspan=2)
-        plt.plot(Tarr, np.log10(Parr), color='gray')
-        plt.xlabel('temperature (K)')
-        plt.ylabel('log10 (P (bar))')
-        plt.gca().invert_yaxis()
-        plt.ylim(np.log10(Parr[-1]), np.log10(Parr[0]))
-        ax.set_aspect(1.45 / ax.get_data_ratio())
+        plot_TPprofile(Tarr, Parr)
 
-def provide_factor_labelx():
+
+def factor_labelx_for_unit():
     factor = {}
     factor["um"] = 1.e4
     factor["nm"] = 1.e7
@@ -77,7 +72,7 @@ def provide_factor_labelx():
     labelx["um"] = 'wavelength ($\mu \mathrm{m}$)'
     labelx["nm"] = 'wavelength (nm)'
     labelx["AA"] = 'wavelength ($\AA$)'
-    return factor,labelx
+    return factor, labelx
 
 
 def plotcf(nus,
@@ -122,7 +117,7 @@ def plotcf(nus,
 
     plt.figure(figsize=(20, 3))
     ax = plt.subplot2grid((1, 20), (0, 3), colspan=18)
-    factor, labelx = provide_factor_labelx()
+    factor, labelx = factor_labelx_for_unit()
 
     if mode == 'cmap':
         if unit == "um" or unit == "nm" or unit == "AA":
@@ -161,15 +156,19 @@ def plotcf(nus,
     ax.set_aspect(0.2 / ax.get_data_ratio())
 
     if Tarr is not None and Parr is not None:
-        ax = plt.subplot2grid((1, 20), (0, 0), colspan=2)
-        plt.plot(Tarr, np.log10(Parr), color='gray')
-        plt.xlabel('temperature (K)')
-        plt.ylabel('log10 (P (bar))')
-        plt.gca().invert_yaxis()
-        plt.ylim(np.log10(Parr[-1]), np.log10(Parr[0]))
-        ax.set_aspect(1.45 / ax.get_data_ratio())
+        plot_TPprofile(Tarr, Parr)
 
     return cf
+
+
+def plot_TPprofile(Tarr, Parr):
+    ax = plt.subplot2grid((1, 20), (0, 0), colspan=2)
+    plt.plot(Tarr, np.log10(Parr), color='gray')
+    plt.xlabel('temperature (K)')
+    plt.ylabel('log10 (P (bar))')
+    plt.gca().invert_yaxis()
+    plt.ylim(np.log10(Parr[-1]), np.log10(Parr[0]))
+    ax.set_aspect(1.45 / ax.get_data_ratio())
 
 
 def plot_maxpoint(mask, Parr, maxcf, maxcia, mol='CO'):
