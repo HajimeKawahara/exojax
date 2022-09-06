@@ -7,7 +7,6 @@ Note:
 from jax import jit
 from jax import custom_vjp
 import jax.numpy as jnp
-from jax.lax import scan
 from exojax.special.erfcx import erfcx
 
 an = jnp.array([
@@ -74,70 +73,17 @@ def imwofz(x, y):
 
 
 @jit
-def wofzs2(x, y):
-    """Asymptotic representation of wofz (Faddeeva) function 1 for |z|**2 > 112 (for e = 10e-6)
-
-    See Zaghloul (2018) arxiv:1806.01656
-
-    Args:
-        x: 
-        y:
-
-    Returns:
-         jnp.array, jnp.array: H=real(wofz(x+iy)),L=imag(wofz(x+iy))
-
-    """
-
-    q = asymptotic_wofz(x, y)
-    return jnp.real(q), jnp.imag(q)
-
-
-@jit
-def rewofzs2(x, y):
-    """Real part of Asymptotic representation of wofz (Faddeeva) function 1 for |z|**2 > 112 (for e = 10e-6)
-
-    See Zaghloul (2018) arxiv:1806.01656
-
-    Args:
-        x: 
-        y:
-
-    Returns:
-         jnp.array: real(wofz(x+iy))
-
-    """
-
-    return jnp.real(asymptotic_wofz(x, y))
-
-
-@jit
-def imwofzs2(x, y):
-    """Imag part of Asymptotic representation of wofz (Faddeeva) function 1 for |z|**2 > 112 (for e = 10e-6)
-
-    See Zaghloul (2018) arxiv:1806.01656
-
-    Args:
-        x: 
-        y:
-
-    Returns:
-         jnp.array: imag(wofz(x+iy))
-
-    """
-    return jnp.imag(asymptotic_wofz(x, y))
-
-
 def asymptotic_wofz(x, y):
     """Asymptotic representation of wofz (Faddeeva) function 1 for |z|**2 > 112 (for e = 10e-6)
 
     See Zaghloul (2018) arxiv:1806.01656
 
     Args:
-        x: 
-        y:
+        x: real x
+        y: real y
 
     Returns:
-         jnp.array: wofz(x+iy)
+         jnp.array (complex): wofz(x+iy)
 
     """
 
