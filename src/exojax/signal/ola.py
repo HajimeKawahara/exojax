@@ -7,67 +7,79 @@ from jax import jit
 
 
 @jit
-def olaconv(reshaped_input_matrix, fir_filter):
+def olaconv(input_matrix, fir_filter):
     """Overlap and Add convolve (jax.numpy version)
 
     Args:
-        reshaped_input_matrix (jax.ndarray): reshaped matrix of a long real input vector (ndiv, div_length)
+        input_matrix (jax.ndarray): reshaped matrix to (ndiv, div_length) of the input 
         fir_filter (jax.ndarray): real FIR filter. The length should be odd.
         
     Note:
-        ndiv is the number of the divided input vectors.
-        div_length is the length of the divided input vectors. 
+        ndiv is the number of the divided input sectors.
+        div_length is the length of the divided input sectors. 
         
     Returns:
-        convolved vector w/ the length of (len(input) + len(f) - 1)
+        convolved vector w/ output length of (len(input vector) + len(fir_filter) - 1)
     """
-    ndiv, div_length = jnp.shape(reshaped_input_matrix)
+    ndiv, div_length = jnp.shape(input_matrix)
     filter_length = len(fir_filter)
     fft_length = div_length + filter_length - 1
     input_length = ndiv * div_length
+    output_length = input_length + filter_length - 1
+        
     xzeropad = jnp.zeros((ndiv, fft_length))
     xzeropad = xzeropad.at[index_exp[:,
-                                     0:div_length]].add(reshaped_input_matrix)
+                                     0:div_length]].add(input_matrix)
     fzeropad = jnp.zeros(fft_length)
     fzeropad = fzeropad.at[index_exp[0:filter_length]].add(fir_filter)
     ftilde = jnp.fft.rfft(fzeropad)
     xtilde = jnp.fft.rfft(xzeropad, axis=1)
     ytilde = xtilde * ftilde[jnp.newaxis, :]
     ftarr = jnp.fft.irfft(ytilde, axis=1)
-    fftval = overlap_and_add(ftarr, input_length, filter_length, div_length)
+    fftval = overlap_and_add(ftarr, output_length, div_length)
     return fftval
 
 
-def overlap_and_add(ftarr, input_length, filter_length, div_length):
+def overlap_and_add(ftarr, output_length, div_length):
+    """Compute overlap and add
+
+    Args:
+        ftarr (jax.ndarray): filtered input matrix
+        output_length (int): length of the output of olaconv
+        div_length (int): the length of the devided input sectors 
+        
+    Returns:
+        overlapped and added vector
+    """
     def fir_filter(y_and_idiv, ft):
         y, idiv = y_and_idiv
         idiv = idiv + 1
-        yzero = jnp.zeros(input_length + filter_length - 1)
+        yzero = jnp.zeros(output_length)
         y = y + dynamic_update_slice(yzero, ft, ((idiv - 1) * div_length, ))
         return (y, idiv), None
 
-    y = jnp.zeros(input_length + filter_length - 1)
+    y = jnp.zeros(output_length)
     fftval_and_nscan, _ = scan(fir_filter, (y, 0), ftarr)
     fftval, nscan = fftval_and_nscan
     return fftval
 
 
-def np_olaconv(reshaped_input_matrix, fir_filter):
+def np_olaconv(input_matrix, fir_filter):
     """Overlap and Add convolve (numpy version)
 
     Args:
-        reshaped_input_matrix (ndarray): reshaped matrix of a long real vector (ndiv, L)
-        fir_filter (ndarray): real FIR filter, length should be odd
+        input_matrix (jax.ndarray): reshaped matrix to (ndiv, div_length) of the input 
+        fir_filter (jax.ndarray): real FIR filter. The length should be odd.
         
     Returns:
         convolved vector w/ length of (len(input) + len(fir_filter) - 1)
     """
-    ndiv, div_length = np.shape(reshaped_input_matrix)
+    ndiv, div_length = np.shape(input_matrix)
     filter_length = len(fir_filter)
     fft_length = div_length + filter_length - 1
     input_length = ndiv * div_length
     xzeropad = np.zeros((ndiv, fft_length))
-    xzeropad[:, 0:div_length] = reshaped_input_matrix
+    xzeropad[:, 0:div_length] = input_matrix
     fzeropad = np.zeros(fft_length)
     fzeropad[0:filter_length] = fir_filter
     ftilde = np.fft.rfft(fzeropad)
