@@ -37,15 +37,15 @@ def olaconv(reshaped_input_matrix, fir_filter):
     fftval = overlap_and_add(ftarr, input_length, filter_length, div_length)
     return fftval
 
+
 def overlap_and_add(ftarr, input_length, filter_length, div_length):
     def fir_filter(y_and_idiv, ft):
         y, idiv = y_and_idiv
         idiv = idiv + 1
         yzero = jnp.zeros(input_length + filter_length - 1)
-        y = y + dynamic_update_slice(yzero, ft,
-                                         ((idiv - 1) * div_length,))
+        y = y + dynamic_update_slice(yzero, ft, ((idiv - 1) * div_length, ))
         return (y, idiv), None
-    
+
     y = jnp.zeros(input_length + filter_length - 1)
     fftval_and_nscan, _ = scan(fir_filter, (y, 0), ftarr)
     fftval, nscan = fftval_and_nscan
