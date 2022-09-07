@@ -66,4 +66,4 @@ def test_np_olaconv():
 
 if __name__ == "__main__":
     test_olaconv()
-    #test_np_olaconv()
+    test_np_olaconv()
