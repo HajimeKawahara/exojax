@@ -1,22 +1,21 @@
 import numpy as np
 
-def np_olaconv(x, f, ndiv):
+def olaconv(xarr, f, ndiv):
+    return
+def np_olaconv(xarr, f):
     """Overlap and Add convolve (numpy version)
 
     Args:
-        x (ndarray): long real vector
+        xarr (ndarray): reshaped matrix of a long real vector (ndiv, L)
         f (ndarray): real FIR filter, length should be odd
-        ndiv (int): number of division of x
-
+        
     Returns:
         convolved vector w/ length of (len(x) + len(f) - 1)
     """
-    Nx = len(x)
-    L = int(Nx / ndiv)
+    ndiv, L = np.shape(xarr)
     M = len(f)
     N = L + M - 1
-
-    xarr = x.reshape((ndiv, L))
+    Nx = ndiv*L
     xzeropad = np.zeros((ndiv, N))
     xzeropad[:, 0:L] = xarr
     fzeropad = np.zeros(N)

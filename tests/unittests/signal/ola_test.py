@@ -17,7 +17,9 @@ def test_np_olaconv():
     f = np.exp(-g * g / 2.0) / np.sqrt(2 * np.pi)  #FIR filter
 
     oac = oaconvolve(x, f)  # length = Nx + M -1
-    ola = np_olaconv(x, f, 100)
+    ndiv=100
+    xarr = x.reshape(ndiv,int(Nx/ndiv))
+    ola = np_olaconv(xarr, f)
     maxresidual = np.max(np.sqrt((oac - ola)**2))
     assert maxresidual < 1.e-15
     if fig:
