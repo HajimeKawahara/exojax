@@ -34,15 +34,22 @@ def olaconv(reshaped_input_matrix, fir_filter):
     xtilde = jnp.fft.rfft(xzeropad, axis=1)
     ytilde = xtilde * ftilde[jnp.newaxis, :]
     ftarr = jnp.fft.irfft(ytilde, axis=1)
+    fftval = overlap_and_add(ftarr, input_length, filter_length, div_length)
+    return fftval
 
-    def fir_filter(idiv, ft):
+def overlap_and_add(ftarr, input_length, filter_length, div_length):
+    def fir_filter(y_and_idiv, ft):
+        y, idiv = y_and_idiv
         idiv = idiv + 1
-        return idiv, dynamic_update_slice(
-            jnp.zeros(input_length + filter_length - 1), ft,
-            ((idiv - 1) * div_length, ))
-
-    nscan, fftvalarr = scan(fir_filter, 0, ftarr)
-    return jnp.sum(fftvalarr, axis=0)
+        yzero = jnp.zeros(input_length + filter_length - 1)
+        y = y + dynamic_update_slice(yzero, ft,
+                                         ((idiv - 1) * div_length,))
+        return (y, idiv), None
+    
+    y = jnp.zeros(input_length + filter_length - 1)
+    fftval_and_nscan, _ = scan(fir_filter, (y, 0), ftarr)
+    fftval, nscan = fftval_and_nscan
+    return fftval
 
 
 def np_olaconv(reshaped_input_matrix, fir_filter):

@@ -11,7 +11,7 @@ from jax.config import config
 config.update('jax_enable_x64', True)
 
 def test_olaconv():
-    fig = False
+    fig = True
     np.random.seed(1)
     Nx = 100000
     x = np.zeros(Nx)
