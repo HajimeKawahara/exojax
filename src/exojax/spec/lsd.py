@@ -6,7 +6,7 @@
 
 """
 import numpy as np
-from jax.numpy import index_exp as joi
+from jax.numpy import index_exp 
 import jax.numpy as jnp
 from jax import jit
 from exojax.utils.constants import hcperk, Tref
@@ -102,10 +102,10 @@ def add2D(a, w, cx, ix, cy, iy):
         a
 
     """
-    a = a.at[joi[ix, iy]].add(w*(1-cx)*(1-cy))
-    a = a.at[joi[ix, iy+1]].add(w*(1-cx)*cy)
-    a = a.at[joi[ix+1, iy]].add(w*cx*(1-cy))
-    a = a.at[joi[ix+1, iy+1]].add(w*cx*cy)
+    a = a.at[index_exp[ix, iy]].add(w*(1-cx)*(1-cy))
+    a = a.at[index_exp[ix, iy+1]].add(w*(1-cx)*cy)
+    a = a.at[index_exp[ix+1, iy]].add(w*cx*(1-cy))
+    a = a.at[index_exp[ix+1, iy+1]].add(w*cx*cy)
     return a
 
 
@@ -126,14 +126,14 @@ def add3D(a, w, cx, ix, cy, iy, cz, iz):
         a
 
     """
-    a = a.at[joi[ix, iy, iz]].add(w*(1-cx)*(1-cy)*(1-cz))
-    a = a.at[joi[ix, iy+1, iz]].add(w*(1-cx)*cy*(1-cz))
-    a = a.at[joi[ix+1, iy, iz]].add(w*cx*(1-cy)*(1-cz))
-    a = a.at[joi[ix+1, iy+1, iz]].add(w*cx*cy*(1-cz))
-    a = a.at[joi[ix, iy, iz+1]].add(w*(1-cx)*(1-cy)*cz)
-    a = a.at[joi[ix, iy+1, iz+1]].add(w*(1-cx)*cy*cz)
-    a = a.at[joi[ix+1, iy, iz+1]].add(w*cx*(1-cy)*cz)
-    a = a.at[joi[ix+1, iy+1, iz+1]].add(w*cx*cy*cz)
+    a = a.at[index_exp[ix, iy, iz]].add(w*(1-cx)*(1-cy)*(1-cz))
+    a = a.at[index_exp[ix, iy+1, iz]].add(w*(1-cx)*cy*(1-cz))
+    a = a.at[index_exp[ix+1, iy, iz]].add(w*cx*(1-cy)*(1-cz))
+    a = a.at[index_exp[ix+1, iy+1, iz]].add(w*cx*cy*(1-cz))
+    a = a.at[index_exp[ix, iy, iz+1]].add(w*(1-cx)*(1-cy)*cz)
+    a = a.at[index_exp[ix, iy+1, iz+1]].add(w*(1-cx)*cy*cz)
+    a = a.at[index_exp[ix+1, iy, iz+1]].add(w*cx*(1-cy)*cz)
+    a = a.at[index_exp[ix+1, iy+1, iz+1]].add(w*cx*cy*cz)
     return a
 
 
