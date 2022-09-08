@@ -7,7 +7,7 @@
 import warnings
 import numpy as np
 import jax.numpy as jnp
-from jax import jit, vmap
+from jax import jit
 from jax.lax import scan
 from exojax.spec.ditkernel import fold_voigt_kernel
 from exojax.spec.atomll import padding_2Darray_for_each_atom

@@ -53,9 +53,9 @@ def overlap_and_add(ftarr, output_length, div_length):
     """
     def fir_filter(y_and_idiv, ft):
         y, idiv = y_and_idiv
-        idiv = idiv + 1
         yzero = jnp.zeros(output_length)
-        y = y + dynamic_update_slice(yzero, ft, ((idiv - 1) * div_length, ))
+        y = y + dynamic_update_slice(yzero, ft, (idiv * div_length, ))
+        idiv += 1
         return (y, idiv), None
 
     y = jnp.zeros(output_length)
