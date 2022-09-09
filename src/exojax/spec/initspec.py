@@ -68,7 +68,7 @@ def init_modit(nu_lines, nu_grid, warning=False):
     Returns:
         cont: (contribution for q) jnp.array
         index: (index for q) jnp.array
-        R: spectral resolution
+        spectral_resolution: spectral resolution (R)
         pmarray: (+1,-1) array whose length of len(nu_grid)+1
 
     Note:
@@ -78,12 +78,12 @@ def init_modit(nu_lines, nu_grid, warning=False):
     warn_dtype64(nu_grid, warning, tag='nu_grid')
     warn_outside_wavenumber_grid(nu_lines, nu_grid)
 
-    R = resolution_eslog(nu_grid)
+    spectral_resolution = resolution_eslog(nu_grid)
     cont, index = npgetix(nu_lines, nu_grid)
     pmarray = np.ones(len(nu_grid) + 1)
     pmarray[1::2] = pmarray[1::2] * -1
 
-    return jnp.array(cont), jnp.array(index), R, jnp.array(pmarray)
+    return jnp.array(cont), jnp.array(index), spectral_resolution, jnp.array(pmarray)
 
 
 def init_premodit(nu_lines,
