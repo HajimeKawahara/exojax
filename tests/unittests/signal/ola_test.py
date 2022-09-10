@@ -8,10 +8,11 @@ from exojax.signal.ola import olaconv
 import jax.numpy as jnp
 
 from jax.config import config
+
 config.update('jax_enable_x64', True)
 
-def test_olaconv():
-    fig = False
+
+def test_olaconv(fig=False):
     np.random.seed(1)
     Nx = 100000
     x = np.zeros(Nx)
@@ -22,13 +23,13 @@ def test_olaconv():
     f = np.exp(-g * g / 2.0) / np.sqrt(2 * np.pi)  #FIR filter
 
     oac = oaconvolve(x, f)  # length = Nx + M -1
-    ndiv=100
-    xarr = x.reshape(ndiv,int(Nx/ndiv))
+    ndiv = 100
+    xarr = x.reshape(ndiv, int(Nx / ndiv))
     ola = olaconv(jnp.array(xarr), jnp.array(f))
     maxresidual = np.max(np.sqrt((oac - ola)**2))
-    assert maxresidual < 1.e-9 #fp64 
-    #assert maxresidual < 1.e-6 #fp32 
-    
+    assert maxresidual < 1.e-9  #fp64
+    #assert maxresidual < 1.e-6 #fp32
+
     if fig:
         edge = int((Nf - 1) / 2)
         plt.plot(x, label="input")
@@ -38,8 +39,7 @@ def test_olaconv():
         plt.show()
 
 
-def test_np_olaconv():
-    fig = False
+def test_np_olaconv(fig=False):
     np.random.seed(1)
     Nx = 100000
     x = np.zeros(Nx)
@@ -50,8 +50,8 @@ def test_np_olaconv():
     f = np.exp(-g * g / 2.0) / np.sqrt(2 * np.pi)  #FIR filter
 
     oac = oaconvolve(x, f)  # length = Nx + M -1
-    ndiv=100
-    xarr = x.reshape(ndiv,int(Nx/ndiv))
+    ndiv = 100
+    xarr = x.reshape(ndiv, int(Nx / ndiv))
     ola = np_olaconv(xarr, f)
     maxresidual = np.max(np.sqrt((oac - ola)**2))
     assert maxresidual < 1.e-15
@@ -65,5 +65,5 @@ def test_np_olaconv():
 
 
 if __name__ == "__main__":
-    test_olaconv()
-    test_np_olaconv()
+    test_olaconv(fig=True)
+    test_np_olaconv(fig=True)

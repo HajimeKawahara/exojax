@@ -11,7 +11,6 @@ import jax.numpy as jnp
 from jax import jit, vmap
 from jax.lax import scan
 from exojax.spec.ditkernel import fold_voigt_kernel_logst
-from exojax.spec.ditkernel import voigt_kernel_logst
 from exojax.spec.lsd import inc2D_givenx
 from exojax.spec.set_ditgrid import minmax_ditgrid_matrix
 from exojax.spec.set_ditgrid import precompute_modit_ditgrid_matrix
