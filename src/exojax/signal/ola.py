@@ -46,7 +46,7 @@ def overlap_and_add(ftarr, output_length, div_length):
     Args:
         ftarr (jax.ndarray): filtered input matrix
         output_length (int): length of the output of olaconv
-        div_length (int): the length of the devided input sectors 
+        div_length (int): the length of the divided input sectors 
         
     Returns:
         overlapped and added vector
