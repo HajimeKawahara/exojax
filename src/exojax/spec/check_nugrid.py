@@ -2,6 +2,7 @@
 
 import numpy as np
 from exojax.utils.constants import c
+import warnings
 
 
 def warn_resolution(resolution, crit=700000.0):
@@ -12,7 +13,7 @@ def warn_resolution(resolution, crit=700000.0):
         crit: critical resolution
     """
     if resolution < crit:
-        print('WARNING: resolution may be too small. R=', resolution)
+        warnings.warn('Resolution may be too small. R=', resolution)
 
 
 def check_scale_xsmode(xsmode):
@@ -24,12 +25,16 @@ def check_scale_xsmode(xsmode):
     Return:
        ESLOG/ESLIN/UNKNOWN
     """
+    def _add_upper_case(strlist):
+        return strlist + [x.upper() for x in strlist]
 
-    if xsmode == 'lpf' or xsmode == 'LPF' or xsmode == 'modit' or xsmode == 'MODIT' or xsmode == 'premodit' or xsmode == 'PREMODIT':
-        print('xsmode assumes ESLOG: mode=', xsmode)
+    eslog_list = _add_upper_case(['lpf', 'modit', 'premodit', 'presolar'])
+    eslin_list = _add_upper_case(['dit'])
+    if xsmode in eslog_list:
+        warnings.warn('xsmode assumes ESLOG: mode=', xsmode)
         return 'ESLOG'
-    elif xsmode == 'dit' or xsmode == 'DIT':
-        print('xsmode assumes ESLIN: mode=', xsmode)
+    elif xsmode in eslin_list:
+        warnings.warn('xsmode assumes ESLIN: mode=', xsmode)
         return 'ESLIN'
     else:
         return 'UNKNOWN'

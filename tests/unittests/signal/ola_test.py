@@ -5,45 +5,23 @@ import numpy as np
 import matplotlib.pyplot as plt
 from exojax.signal.ola import np_olaconv
 from exojax.signal.ola import olaconv
+from exojax.signal.ola import optimal_div_length
 import jax.numpy as jnp
 
 from jax.config import config
 
 config.update('jax_enable_x64', True)
 
-from scipy import fft
-from scipy.special import lambertw
-import math
 
-
-def optimal_div_length(filter_length):
-    """optimal divided sector length of OLA
-    
-    Notes:
-        This code was taken and modified from scipy.signal._signaltools._oa_calc_oalens
-        under BSD 3-Clause "New" or "Revised" License
-        
-    Args:
-        filter_length (_type_): _description_
-
-    Returns:
-        _type_: _description_
-    """
-    overlap = filter_length - 1
-    opt_size = -overlap * lambertw(-1 / (2 * math.e * overlap), k=-1).real
-    div_length = fft.next_fast_len(math.ceil(opt_size))
-
-    return div_length
-
-
-def test_calc_oa_lens(fig=True):
+def test_optimal_div_length(fig=False):
     filter_length_arr = np.logspace(1, 6, 60)
     optimal_div_length_arr = []
     for fl in filter_length_arr:
         div_length = optimal_div_length(int(fl))
         optimal_div_length_arr.append(div_length)
     optimal_div_length_arr = np.array(optimal_div_length_arr)
-
+    assert optimal_div_length_arr[0] == 54
+    assert optimal_div_length_arr[-1] == 18432000
     if fig:
         import matplotlib.pyplot as plt
         plt.plot(filter_length_arr, optimal_div_length_arr, label="optimal")
@@ -119,6 +97,6 @@ def test_np_olaconv(fig=False):
 
 
 if __name__ == "__main__":
-    test_calc_oa_lens()
+    test_optimal_div_length()
     #test_olaconv(fig=True)
     #test_np_olaconv(fig=True)

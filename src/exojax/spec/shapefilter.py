@@ -4,7 +4,6 @@
 from exojax.spec.lpf import voigt
 import jax.numpy as jnp
 
-
 def generate_voigt_shape_filter(nsigmaD, ngammaL, filter_length):
     """generate a Voigt filter with a tail cut (naturally!)
 
@@ -42,3 +41,13 @@ def compute_filter_length(wavenumber_halfwidth, representative_wavenumber,
     if filter_length < 3:
         raise ValueError("filter_length less than 3")
     return filter_length
+
+
+def check_filter_condition(shape_filter):
+    """_summary_
+
+    Args:
+        shape_filter (_type_): _description_
+    """
+    if np.mod(len(shape_filter), 2) == 0:
+        raise ValueError("shape filter length must be odd.")

@@ -5,6 +5,30 @@ from jax.numpy import index_exp
 from jax.lax import dynamic_update_slice
 from jax import jit
 
+from scipy import fft
+from scipy.special import lambertw
+import math
+
+
+def optimal_div_length(filter_length):
+    """optimal divided sector length of OLA
+    
+    Notes:
+        This code was taken and modified from scipy.signal._signaltools._oa_calc_oalens
+        under BSD 3-Clause "New" or "Revised" License
+        
+    Args:
+        filter_length (_type_): _description_
+
+    Returns:
+        _type_: _description_
+    """
+    overlap = filter_length - 1
+    opt_size = -overlap * lambertw(-1 / (2 * math.e * overlap), k=-1).real
+    div_length = fft.next_fast_len(math.ceil(opt_size))
+
+    return div_length
+
 
 @jit
 def olaconv(input_matrix, fir_filter):
@@ -26,10 +50,9 @@ def olaconv(input_matrix, fir_filter):
     fft_length = div_length + filter_length - 1
     input_length = ndiv * div_length
     output_length = input_length + filter_length - 1
-        
+
     xzeropad = jnp.zeros((ndiv, fft_length))
-    xzeropad = xzeropad.at[index_exp[:,
-                                     0:div_length]].add(input_matrix)
+    xzeropad = xzeropad.at[index_exp[:, 0:div_length]].add(input_matrix)
     fzeropad = jnp.zeros(fft_length)
     fzeropad = fzeropad.at[index_exp[0:filter_length]].add(fir_filter)
     ftilde = jnp.fft.rfft(fzeropad)
@@ -46,7 +69,7 @@ def overlap_and_add(ftarr, output_length, div_length):
     Args:
         ftarr (jax.ndarray): filtered input matrix
         output_length (int): length of the output of olaconv
-        div_length (int): the length of the divided input sectors 
+        div_length (int): the length of the divided input sectors, equivalent to block_size in scipy 
         
     Returns:
         overlapped and added vector
