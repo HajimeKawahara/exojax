@@ -13,7 +13,8 @@ def warn_resolution(resolution, crit=700000.0):
         crit: critical resolution
     """
     if resolution < crit:
-        warnings.warn('Resolution may be too small. R=', resolution)
+        warnings.warn('Resolution may be too small. R=' + str(resolution),
+                      UserWarning)
 
 
 def check_scale_xsmode(xsmode):
@@ -31,10 +32,10 @@ def check_scale_xsmode(xsmode):
     eslog_list = _add_upper_case(['lpf', 'modit', 'premodit', 'presolar'])
     eslin_list = _add_upper_case(['dit'])
     if xsmode in eslog_list:
-        warnings.warn('xsmode assumes ESLOG: mode=', xsmode)
+        print('xsmode assumes ESLOG: mode=' + str(xsmode))
         return 'ESLOG'
     elif xsmode in eslin_list:
-        warnings.warn('xsmode assumes ESLIN: mode=', xsmode)
+        print('xsmode assumes ESLIN: mode=' + str(xsmode))
         return 'ESLIN'
     else:
         return 'UNKNOWN'

@@ -13,9 +13,10 @@ def reshape_line_density(nu_grid, filter_length):
 def test_reshape_line_density():
     
     filter_length = 25001
-    nu_grid = gen_wavenumber_grid(22000.0,23000.0, unit="AA", xsmode="premodit")
+    N = 1000000
+    nu_grid = gen_wavenumber_grid(22000.0,23000.0, N, unit="AA", xsmode="premodit")
     reshape_line_density(nu_grid, filter_length)
     
     
 if __name__ == "__main__":
-
+    test_reshape_line_density()    
