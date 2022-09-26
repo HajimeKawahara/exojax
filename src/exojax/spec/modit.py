@@ -43,6 +43,12 @@ def calc_xsection_from_lsd(Slsd, R, pmarray, nsigmaD, nu_grid,
         nu_grid: linear wavenumber grid
         log_gammaL_grid: logarithm of gammaL grid
 
+    Note: 
+    When you have the error such as: 
+    "failed to initialize batched cufft plan with customized allocator: 
+    Allocating 8000000160 bytes exceeds the memory limit of 4294967296 bytes."
+    consider to use moditscanfft.calc_xsection_from_lsd, instead.
+    
     Returns:
         Cross section in the log nu grid
     """
@@ -62,6 +68,7 @@ def calc_xsection_from_lsd(Slsd, R, pmarray, nsigmaD, nu_grid,
                                  pmarray)
     fftvalsum = jnp.sum(fftval * vk, axis=(1, ))
     return jnp.fft.irfft(fftvalsum)[:Ng_nu] * R / nu_grid
+
 
 
 @jit
