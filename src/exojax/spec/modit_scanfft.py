@@ -6,7 +6,7 @@ you should consider to modit_scanfft
 
 """
 import jax.numpy as jnp
-from jax import jit
+from jax import jit, vmap
 from jax.lax import scan
 from exojax.spec.ditkernel import fold_voigt_kernel_logst
 from exojax.spec.lsd import inc2D_givenx
@@ -111,3 +111,27 @@ def xsmatrix_scanfft(cnu, indexnu, R, pmarray, nsigmaDl, ngammaLM, SijM, nu_grid
     val, xsm = scan(fxs, 0.0, Mat)
     return xsm
 
+
+@jit
+def xsmatrix_vald_scanfft(cnuS, indexnuS, R, pmarray, nsigmaDlS, ngammaLMS, SijMS,
+                  nu_grid, dgm_ngammaLS):
+    """Cross section matrix for xsvector (MODIT) with scan+fft, for VALD lines (asdb)
+
+    Args:
+        cnuS: contribution by npgetix for wavenumber [N_species x N_line]
+        indexnuS: index by npgetix for wavenumber [N_species x N_line]
+        R: spectral resolution
+        pmarray: (+1,-1) array whose length of len(nu_grid)+1
+        nsigmaDlS: normalized sigmaD matrix [N_species x N_layer x 1]
+        ngammaLMS: normalized gammaL matrix [N_species x N_layer x N_line]
+        SijMS: line intensity matrix [N_species x N_layer x N_line]
+        nu_grid: linear wavenumber grid
+        dgm_ngammaLS: DIT Grid Matrix (dgm) of normalized gammaL [N_species x N_layer x N_DITgrid]
+
+    Return:
+        xsmS: cross section matrix [N_species x N_layer x N_wav]
+    """
+    xsmS = jit(vmap(xsmatrix_scanfft, (0, 0, None, None, 0, 0, 0, None, 0)))(\
+                    cnuS, indexnuS, R, pmarray, nsigmaDlS, ngammaLMS, SijMS, nu_grid, dgm_ngammaLS)
+    xsmS = jnp.abs(xsmS)
+    return xsmS
