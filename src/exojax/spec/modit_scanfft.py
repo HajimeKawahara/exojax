@@ -1,4 +1,4 @@
-"""Line profile computation using Discrete Integral Transform using scan+fft.
+"""Line profile computation using Discrete Integral Transform using scan+fft (#277).
 
 * MODIT using scan+fft allows > 4GB fft memory. but approximately 2 times slower than modit.
 * When you use modit and get the error such as "failed to initialize batched cufft plan with customized allocator: Allocating 8000000160 bytes exceeds the memory limit of 4294967296 bytes.", 
@@ -14,8 +14,6 @@ from exojax.spec.lsd import inc2D_givenx
 def calc_xsection_from_lsd_scanfft(Slsd, R, pmarray, nsigmaD, nu_grid,
                                    log_ngammaL_grid):
     """Compute cross section from LSD in MODIT algorithm using scan+fft to avoid 4GB memory limit in fft (see #277)
-
-    The original code is rundit_fold_logredst in `addit package <https://github.com/HajimeKawahara/addit>`_ ). MODIT folded voigt for ESLOG for reduced wavenumebr inputs (against the truncation error) for a constant normalized beta
 
     Args:
         Slsd: line shape density
