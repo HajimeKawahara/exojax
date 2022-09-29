@@ -3,7 +3,8 @@
 from scipy.signal import oaconvolve
 import numpy as np
 import matplotlib.pyplot as plt
-from exojax.signal.ola import olaconv, ola_lengths, apply_zeropad
+from exojax.signal.ola import olaconv, ola_lengths, generate_zeropad
+from exojax.signal.ola import generate_padding_matrix
 from exojax.signal.ola import np_olaconv
 from exojax.signal.ola import optimal_div_length
 import jax.numpy as jnp
@@ -11,6 +12,7 @@ import jax.numpy as jnp
 from jax.config import config
 
 config.update('jax_enable_x64', True)
+
 
 def test_optimal_div_length(fig=False):
     filter_length_arr = np.logspace(1, 6, 60)
@@ -42,6 +44,7 @@ def test_optimal_div_length(fig=False):
         plt.show()
     return
 
+
 def _gendata():
     np.random.seed(1)
     Nx = 100000
@@ -56,18 +59,26 @@ def _gendata():
     xarr = jnp.array(x.reshape(ndiv, int(Nx / ndiv)))
     return x, f, xarr
 
-def test_apply_zeropad():
+def test_generate_padding_matrix():
     x, f, xarr = _gendata()
     ndiv, div_length, filter_length = ola_lengths(xarr, f)
-    xarr_hat, f_hat = apply_zeropad(xarr, f, ndiv, div_length, filter_length)
-    assert np.sum(xarr_hat[:,1000:]) == 0.0
+    xarr_hat = generate_padding_matrix(-np.inf, xarr, filter_length)
+    assert np.sum(1.0 / xarr_hat[:, 1000:]) == 0.0
+
+
+def test_generate_zeropad():
+    x, f, xarr = _gendata()
+    ndiv, div_length, filter_length = ola_lengths(xarr, f)
+    xarr_hat, f_hat = generate_zeropad(xarr, f)
+    assert np.sum(xarr_hat[:, 1000:]) == 0.0
     assert np.sum(f_hat[1000:]) == 0.0
-    
+
+
 def test_olaconv(fig=False):
     x, f, xarr = _gendata()
     oac = oaconvolve(x, f)  # length = Nx + M -1
     ndiv, div_length, filter_length = ola_lengths(xarr, f)
-    xarr_hat, f_hat = apply_zeropad(xarr, f, ndiv, div_length, filter_length)
+    xarr_hat, f_hat = generate_zeropad(xarr, f)
     ola = olaconv(xarr_hat, f_hat, ndiv, div_length, filter_length)
     maxresidual = np.max(np.sqrt((oac - ola)**2))
     assert maxresidual < 1.e-9  #fp64
@@ -109,7 +120,8 @@ def test_np_olaconv(fig=False):
 
 
 if __name__ == "__main__":
-    test_apply_zeropad()
+    test_generate_padding_matrix()
+    #test_generate_zeropad()
     #test_optimal_div_length()
     #test_olaconv(fig=True)
     #test_np_olaconv(fig=True)

@@ -85,19 +85,33 @@ def _fft_block_size(div_length, filter_length):
     return div_length + filter_length - 1
 
 
-def apply_zeropad(input_matrix, fir_filter, ndiv, div_length, filter_length):
-    """Apply zero padding to input matrix and FIR filter
+def generate_padding_matrix(padding_value, input_matrix, filter_length):
+    """generate a matrix with (padding_value)-padding (numpy)
 
     Args:
         input_matrix (2D array): input matrix
         fir_filter (array): FIR filter
-        ndiv (int): number of mini batches
-        div_length (int): divided mini batch length of the input
-        filter_length (int): FIR filter length
+        
+    Returns:
+        2D array, 1D array: input matrix w/ x-pad
+    """
+    ndiv, div_length = np.shape(input_matrix)
+    fft_length = _fft_block_size(div_length, filter_length)
+    padding_matrix = np.full((ndiv, fft_length - div_length), padding_value)
+    return np.hstack((input_matrix, padding_matrix))
+
+
+def generate_zeropad(input_matrix, fir_filter):
+    """Generate zero padding input matrix and FIR filter
+
+    Args:
+        input_matrix (2D array): input matrix
+        fir_filter (array): FIR filter
         
     Returns:
         2D array, 1D array: input matrix w/ zeropad, FIR filter w/ zeropad
     """
+    ndiv, div_length, filter_length = ola_lengths(input_matrix, fir_filter)
     fft_length = _fft_block_size(div_length, filter_length)
     input_matrix_zeropad = jnp.zeros((ndiv, fft_length))
     input_matrix_zeropad = input_matrix_zeropad.at[
