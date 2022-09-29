@@ -5,42 +5,45 @@ from jax.numpy import index_exp
 from jax.lax import dynamic_update_slice
 from jax import jit
 from functools import partial
-from scipy import fft
+from pytools import div_ceil
+from scipy.fft import next_fast_len
 from scipy.special import lambertw
 import math
 
 
-def optimal_div_length(filter_length):
-    """optimal divided sector length of OLA
+def optimal_fft_length(filter_length):
+    """optimal fft length of OLA
     
     Notes:
         This code was taken and modified from scipy.signal._signaltools._oa_calc_oalens
         under BSD 3-Clause "New" or "Revised" License
         
     Args:
-        filter_length (_type_): _description_
+        filter_length (int): filter length
 
     Returns:
-        _type_: _description_
+        int: optimal fft length
     """
     overlap = filter_length - 1
     opt_size = -overlap * lambertw(-1 / (2 * math.e * overlap), k=-1).real
-    div_length = fft.next_fast_len(math.ceil(opt_size))
+    optimal_fft_length = next_fast_len(math.ceil(opt_size))
 
-    return div_length
+    return optimal_fft_length
 
 
 def ola_lengths(input_matrix, fir_filter):
     """derive OLA basic length
 
     Args:
-        input_matrix (2D array): input matrix
+        input_matrix (2D or nD array): input matrix (n >=2)
         fir_filter (array): FIR filter
 
     Returns:
         int, int, int: number of mini batches, divided mini batch length of the input, FIR filter length
     """
-    ndiv, div_length = jnp.shape(input_matrix)
+    input_shape = jnp.shape(input_matrix)
+    ndiv = input_shape[0]
+    div_length = input_shape[1]
     filter_length = len(fir_filter)
     return ndiv, div_length, filter_length
 
@@ -72,8 +75,8 @@ def _output_length(ndiv, div_length, filter_length):
     return _input_length(ndiv, div_length) + filter_length - 1
 
 
-def _fft_block_size(div_length, filter_length):
-    """fft block size used in OLA fft
+def _fft_length(div_length, filter_length):
+    """fft length aka block size used in OLA fft
 
     Args:
         div_length (int): divided mini batch length of the input
@@ -89,15 +92,37 @@ def generate_padding_matrix(padding_value, input_matrix, filter_length):
     """generate a matrix with (padding_value)-padding (numpy)
 
     Args:
-        input_matrix (2D array): input matrix
+        input_matrix (n dimensional array): input matrix, n >= 2
         fir_filter (array): FIR filter
         
     Returns:
-        2D array, 1D array: input matrix w/ x-pad
+        n dimensional array: input matrix w/ x-pad
     """
-    ndiv, div_length = np.shape(input_matrix)
-    fft_length = _fft_block_size(div_length, filter_length)
-    padding_matrix = np.full((ndiv, fft_length - div_length), padding_value)
+    input_shape = np.shape(input_matrix)
+    div_length = input_shape[1]
+    fft_length = _fft_length(div_length, filter_length)
+    padding_shape = list(input_shape)
+    padding_shape[1] = fft_length - div_length
+    padding_matrix = np.full(padding_shape, padding_value)
+    return np.hstack((input_matrix, padding_matrix))
+
+
+def generate_padding_matrix(padding_value, input_matrix, filter_length):
+    """generate a matrix with (padding_value)-padding (numpy)
+
+    Args:
+        input_matrix (n dimensional array): input matrix, n >= 2
+        fir_filter (array): FIR filter
+        
+    Returns:
+        n dimensional array: input matrix w/ x-pad
+    """
+    input_shape = np.shape(input_matrix)
+    div_length = input_shape[1]
+    fft_length = _fft_length(div_length, filter_length)
+    padding_shape = list(input_shape)
+    padding_shape[1] = fft_length - div_length
+    padding_matrix = np.full(padding_shape, padding_value)
     return np.hstack((input_matrix, padding_matrix))
 
 
@@ -112,7 +137,7 @@ def generate_zeropad(input_matrix, fir_filter):
         2D array, 1D array: input matrix w/ zeropad, FIR filter w/ zeropad
     """
     ndiv, div_length, filter_length = ola_lengths(input_matrix, fir_filter)
-    fft_length = _fft_block_size(div_length, filter_length)
+    fft_length = _fft_length(div_length, filter_length)
     input_matrix_zeropad = jnp.zeros((ndiv, fft_length))
     input_matrix_zeropad = input_matrix_zeropad.at[
         index_exp[:, 0:div_length]].add(input_matrix)

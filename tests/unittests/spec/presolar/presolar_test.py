@@ -1,20 +1,19 @@
 import numpy as np
 
-from exojax.signal.ola import optimal_div_length
-from exojax.utils.instfunc import resolution_eslog
+from exojax.signal.ola import optimal_fft_length
 from exojax.spec.setrt import gen_wavenumber_grid
 
 
-def mini_batches_number(nu_grid, filter_length):
+def optimal_mini_batch_number(nu_grid, filter_length):
     input_length = len(nu_grid)
-    opt_div_length = optimal_div_length(filter_length)
-    n_block = int(input_length / opt_div_length) + 1
-    return n_block
+    opt_div_length = optimal_fft_length(filter_length) - filter_length + 1
+    ndiv = int(input_length / opt_div_length) + 1
+    return ndiv, opt_div_length
 
-def reshape_line_density(biased_lsd, nu_grid, filter_length):
+def generate_hat_lbd(lbd, nu_grid, filter_length):
     #spectral_resolution = resolution_eslog(nu_grid)
-    n_mini_batches = mini_batches_number(nu_grid, filter_length)
-    biased_lsd.reshape(, int(Nx / ndiv))
+    ndiv, div_length = optimal_mini_batch_number(nu_grid, filter_length)
+    #lbd.reshape(, int(Nx / ndiv))
     return
 
 def example_filter():
@@ -29,9 +28,10 @@ def example_filter():
 
 def test_mini_batches_number():
     filter_length, nu_grid = example_filter()
-    n_mini_batches = mini_batches_number(nu_grid, filter_length)
-    assert n_mini_batches == 3
-
+    ndiv, opt_div_length = optimal_mini_batch_number(nu_grid, filter_length)
+    assert ndiv == 3
+    assert opt_div_length == 712048
+    assert len(nu_grid) < ndiv*opt_div_length
 
 def test_reshape_line_density():
     filter_length, nu_grid = example_filter()
@@ -43,4 +43,4 @@ def test_reshape_line_density():
     
 if __name__ == "__main__":
     test_mini_batches_number()
-    test_reshape_line_density()
+    #test_reshape_line_density()

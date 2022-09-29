@@ -6,9 +6,8 @@ import matplotlib.pyplot as plt
 from exojax.signal.ola import olaconv, ola_lengths, generate_zeropad
 from exojax.signal.ola import generate_padding_matrix
 from exojax.signal.ola import np_olaconv
-from exojax.signal.ola import optimal_div_length
+from exojax.signal.ola import optimal_fft_length
 import jax.numpy as jnp
-
 from jax.config import config
 
 config.update('jax_enable_x64', True)
@@ -18,7 +17,7 @@ def test_optimal_div_length(fig=False):
     filter_length_arr = np.logspace(1, 6, 60)
     optimal_div_length_arr = []
     for fl in filter_length_arr:
-        div_length = optimal_div_length(int(fl))
+        div_length = optimal_fft_length(int(fl))
         optimal_div_length_arr.append(div_length)
     optimal_div_length_arr = np.array(optimal_div_length_arr)
     assert optimal_div_length_arr[0] == 54
@@ -59,11 +58,35 @@ def _gendata():
     xarr = jnp.array(x.reshape(ndiv, int(Nx / ndiv)))
     return x, f, xarr
 
+
+def _gendata_lbdlike():
+    np.random.seed(1)
+    Nx = 100000
+    nk = 3
+    nh = 2
+    x = np.zeros(Nx * nk * nh)
+    Npulse = 50
+    x[np.random.choice(list(range(Nx)), Npulse)] = 1.0
+    Nf = 301  #odd
+    g = np.linspace(-3, 3, Nf)
+    f = jnp.array(np.exp(-g * g / 2.0) / np.sqrt(2 * np.pi))  #FIR filter
+    ndiv = 100
+    xarr = jnp.array(x.reshape(ndiv, int(Nx / ndiv), nh, nk))
+    return x, f, xarr
+
+
 def test_generate_padding_matrix():
     x, f, xarr = _gendata()
     ndiv, div_length, filter_length = ola_lengths(xarr, f)
     xarr_hat = generate_padding_matrix(-np.inf, xarr, filter_length)
     assert np.sum(1.0 / xarr_hat[:, 1000:]) == 0.0
+
+
+def test_generate_padding_matrix_lbdlike():
+    x, f, xarr = _gendata_lbdlike()
+    ndiv, div_length, filter_length = ola_lengths(xarr, f)
+    xarr_hat = generate_padding_matrix(-np.inf, xarr, filter_length)
+    assert np.sum(1.0 / xarr_hat[:, 1000:, :, :]) == 0.0
 
 
 def test_generate_zeropad():
@@ -120,7 +143,8 @@ def test_np_olaconv(fig=False):
 
 
 if __name__ == "__main__":
-    test_generate_padding_matrix()
+    #test_generate_padding_matrix()
+    test_generate_padding_matrix_lbdlike()
     #test_generate_zeropad()
     #test_optimal_div_length()
     #test_olaconv(fig=True)
