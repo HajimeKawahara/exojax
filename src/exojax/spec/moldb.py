@@ -14,7 +14,7 @@ from exojax.spec import hapi, exomolapi, exomol, atomllapi, atomll, hitranapi
 from exojax.spec.hitran import gamma_natural as gn
 from exojax.utils.constants import hcperk, Tref
 
-__all__ = ['MdbExomol', 'MdbHit', 'AdbVald', 'AdbKurucz']
+__all__ = ['MdbExomol', 'MdbHit', 'AdbVald', 'AdbSepVald', 'AdbKurucz']
 
 explanation_states = "Note: Couldn't find the hdf5 format. We convert data to the hdf5 format. After the second time, it will become much faster."
 explanation_trans = "Note: Couldn't find the hdf5 format. We convert data to the hdf5 format. After the second time, it will become much faster."
