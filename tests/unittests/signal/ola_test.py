@@ -3,15 +3,14 @@
 from scipy.signal import oaconvolve
 import numpy as np
 import matplotlib.pyplot as plt
+from exojax.signal.ola import olaconv, ola_lengths, apply_zeropad
 from exojax.signal.ola import np_olaconv
-from exojax.signal.ola import olaconv
 from exojax.signal.ola import optimal_div_length
 import jax.numpy as jnp
 
 from jax.config import config
 
 config.update('jax_enable_x64', True)
-
 
 def test_optimal_div_length(fig=False):
     filter_length_arr = np.logspace(1, 6, 60)
@@ -52,12 +51,14 @@ def test_olaconv(fig=False):
     x[np.random.choice(list(range(Nx)), Npulse)] = 1.0
     Nf = 301  #odd
     g = np.linspace(-3, 3, Nf)
-    f = np.exp(-g * g / 2.0) / np.sqrt(2 * np.pi)  #FIR filter
+    f = jnp.array(np.exp(-g * g / 2.0) / np.sqrt(2 * np.pi))  #FIR filter
 
     oac = oaconvolve(x, f)  # length = Nx + M -1
     ndiv = 100
-    xarr = x.reshape(ndiv, int(Nx / ndiv))
-    ola = olaconv(jnp.array(xarr), jnp.array(f))
+    xarr = jnp.array(x.reshape(ndiv, int(Nx / ndiv)))
+    ndiv, div_length, filter_length = ola_lengths(xarr, f)
+    xarr_hat, f_hat = apply_zeropad(xarr, f, ndiv, div_length, filter_length)
+    ola = olaconv(xarr_hat, f_hat, ndiv, div_length, filter_length)
     maxresidual = np.max(np.sqrt((oac - ola)**2))
     assert maxresidual < 1.e-9  #fp64
     #assert maxresidual < 1.e-6 #fp32
@@ -75,6 +76,7 @@ def test_np_olaconv(fig=False):
     np.random.seed(1)
     Nx = 100000
     x = np.zeros(Nx)
+
     Npulse = 50
     x[np.random.choice(list(range(Nx)), Npulse)] = 1.0
     Nf = 301  #odd
@@ -98,5 +100,5 @@ def test_np_olaconv(fig=False):
 
 if __name__ == "__main__":
     test_optimal_div_length()
-    #test_olaconv(fig=True)
+    test_olaconv(fig=True)
     #test_np_olaconv(fig=True)

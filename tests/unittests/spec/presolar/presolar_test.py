@@ -11,10 +11,10 @@ def mini_batches_number(nu_grid, filter_length):
     n_block = int(input_length / opt_div_length) + 1
     return n_block
 
-def reshape_line_density(lbd, nu_grid, filter_length):
+def reshape_line_density(biased_lsd, nu_grid, filter_length):
     #spectral_resolution = resolution_eslog(nu_grid)
     n_mini_batches = mini_batches_number(nu_grid, filter_length)
-
+    biased_lsd.reshape(, int(Nx / ndiv))
     return
 
 def example_filter():
