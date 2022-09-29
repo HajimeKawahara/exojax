@@ -42,8 +42,7 @@ def test_optimal_div_length(fig=False):
         plt.show()
     return
 
-
-def test_olaconv(fig=False):
+def _gendata():
     np.random.seed(1)
     Nx = 100000
     x = np.zeros(Nx)
@@ -53,9 +52,20 @@ def test_olaconv(fig=False):
     g = np.linspace(-3, 3, Nf)
     f = jnp.array(np.exp(-g * g / 2.0) / np.sqrt(2 * np.pi))  #FIR filter
 
-    oac = oaconvolve(x, f)  # length = Nx + M -1
     ndiv = 100
     xarr = jnp.array(x.reshape(ndiv, int(Nx / ndiv)))
+    return x, f, xarr
+
+def test_apply_zeropad():
+    x, f, xarr = _gendata()
+    ndiv, div_length, filter_length = ola_lengths(xarr, f)
+    xarr_hat, f_hat = apply_zeropad(xarr, f, ndiv, div_length, filter_length)
+    assert np.sum(xarr_hat[:,1000:]) == 0.0
+    assert np.sum(f_hat[1000:]) == 0.0
+    
+def test_olaconv(fig=False):
+    x, f, xarr = _gendata()
+    oac = oaconvolve(x, f)  # length = Nx + M -1
     ndiv, div_length, filter_length = ola_lengths(xarr, f)
     xarr_hat, f_hat = apply_zeropad(xarr, f, ndiv, div_length, filter_length)
     ola = olaconv(xarr_hat, f_hat, ndiv, div_length, filter_length)
@@ -99,6 +109,7 @@ def test_np_olaconv(fig=False):
 
 
 if __name__ == "__main__":
-    test_optimal_div_length()
-    test_olaconv(fig=True)
+    test_apply_zeropad()
+    #test_optimal_div_length()
+    #test_olaconv(fig=True)
     #test_np_olaconv(fig=True)
