@@ -43,6 +43,20 @@ from exojax.signal.ola import generate_padding_matrix
 
 
 def reshape_lbd(lbd, ndiv, div_length, padding_value=-np.inf):
+    """reshaping lbd to (ndiv, div_length, :, :) array w/ padding_value
+    Args:
+        lbd (3D array): line basis density
+        ndiv (int): number of mini batches
+        div_length (int): mini batch length 
+        padding_value (optional): padding value. Defaults to -np.inf.
+
+    Raises:
+        ValueError: ndiv*div_length should be larger than input length = shape(lbd)[0]
+
+    Returns:
+        4D array: _description_
+    """
+    
     input_length, n_broadening_k, n_E_h = np.shape(lbd)
     if ndiv * div_length < input_length:
         raise ValueError(
