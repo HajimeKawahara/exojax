@@ -84,10 +84,17 @@ def test_reshape_lbd():
     rlbd = reshape_lbd(lbd, ndiv, div_length)
     assert np.shape(rlbd) == (3, 712048, 19, 10)
 
+def shapefilter_olaform(shapefilter):
+    return
+    
+
+def test_shapefilter_olaform():
+    assert == False
 
 if __name__ == "__main__":
+    test_shapefilter_olaform()
     #test_lbd_olaform_simple()
-    test_lbd_olaform()
+    #test_lbd_olaform()
     #test_optimal_mini_batch()
     #test_reshape_lbd_simple()
     #test_reshape_lbd()

@@ -1,5 +1,8 @@
 """PreSOLAR Precomputing Shape density and OverLap Add convolution Rxxxx
 
+    * LBD -> hat(LBD)
+    * shapefilter -> hat(shapefilter)
+
 """
 import numpy as np
 import jax.numpy as jnp
