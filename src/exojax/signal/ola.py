@@ -92,26 +92,7 @@ def generate_padding_matrix(padding_value, input_matrix, filter_length):
     """generate a matrix with (padding_value)-padding (numpy)
 
     Args:
-        input_matrix (n dimensional array): input matrix, n >= 2
-        fir_filter (array): FIR filter
-        
-    Returns:
-        n dimensional array: input matrix w/ x-pad
-    """
-    input_shape = np.shape(input_matrix)
-    div_length = input_shape[1]
-    fft_length = _fft_length(div_length, filter_length)
-    padding_shape = list(input_shape)
-    padding_shape[1] = fft_length - div_length
-    padding_matrix = np.full(padding_shape, padding_value)
-    return np.hstack((input_matrix, padding_matrix))
-
-
-def generate_padding_matrix(padding_value, input_matrix, filter_length):
-    """generate a matrix with (padding_value)-padding (numpy)
-
-    Args:
-        input_matrix (n dimensional array): input matrix, n >= 2
+        input_matrix (n dimensional array): input matrix, n >= 2, (ndiv, div_length,...)
         fir_filter (array): FIR filter
         
     Returns:
