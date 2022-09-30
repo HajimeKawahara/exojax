@@ -6,7 +6,7 @@ import jax.numpy as jnp
 from jax import jit, vmap
 from exojax.spec.lsd import npgetix, npgetix_exp, npadd3D_multi_index
 from exojax.utils.constants import hcperk, Tref
-from exojax.spec.modit import calc_xsection_from_lsd
+from exojax.spec.modit_scanfft import calc_xsection_from_lsd_scanfft
 from exojax.spec.set_ditgrid import ditgrid_log_interval, ditgrid_linear_interval
 from exojax.utils.constants import Tref
 from exojax.utils.indexing import uniqidx_neibouring
@@ -16,7 +16,7 @@ from exojax.spec import normalized_doppler_sigma
 @jit
 def xsvector(T, P, nsigmaD, lbd, R, pmarray, nu_grid, elower_grid,
              multi_index_uniqgrid, ngamma_ref_grid, n_Texp_grid, qt):
-    """compute cross section vector
+    """compute cross section vector, with scan+fft
 
     Args:
         T (_type_): temperature in Kelvin
@@ -38,7 +38,7 @@ def xsvector(T, P, nsigmaD, lbd, R, pmarray, nu_grid, elower_grid,
     ngamma_grid = unbiased_ngamma_grid(T, P, ngamma_ref_grid, n_Texp_grid,
                                        multi_index_uniqgrid)
     log_ngammaL_grid = jnp.log(ngamma_grid)
-    xs = calc_xsection_from_lsd(Slsd, R, pmarray, nsigmaD, nu_grid,
+    xs = calc_xsection_from_lsd_scanfft(Slsd, R, pmarray, nsigmaD, nu_grid,
                                 log_ngammaL_grid)
     return xs
 
@@ -46,7 +46,7 @@ def xsvector(T, P, nsigmaD, lbd, R, pmarray, nu_grid, elower_grid,
 @jit
 def xsmatrix(Tarr, Parr, R, pmarray, lbd, nu_grid, ngamma_ref_grid,
              n_Texp_grid, multi_index_uniqgrid, elower_grid, Mmol, qtarr):
-    """compute cross section matrix given atmospheric layers
+    """compute cross section matrix given atmospheric layers, with scan+fft
 
     Args:
         Tarr (_type_): temperature layers
@@ -63,7 +63,7 @@ def xsmatrix(Tarr, Parr, R, pmarray, lbd, nu_grid, ngamma_ref_grid,
         qtarr (_type_): partition function ratio layers
 
     Returns:
-        jnp.array : cross section matrix (Nlayer, N_wavenumber) 
+        jnp.array : cross section matrix (Nlayer, N_wavenumber)
     """
     nsigmaD = vmap(normalized_doppler_sigma, (0, None, None), 0)(Tarr, Mmol, R)
     Slsd = vmap(unbiased_lsd, (None, 0, None, None, 0), 0)(lbd, Tarr, nu_grid,
@@ -72,7 +72,7 @@ def xsmatrix(Tarr, Parr, R, pmarray, lbd, nu_grid, ngamma_ref_grid,
                        0)(Tarr, Parr, ngamma_ref_grid, n_Texp_grid,
                           multi_index_uniqgrid)
     log_ngammaL_grid = jnp.log(ngamma_grid)
-    xsm = vmap(calc_xsection_from_lsd, (0, None, None, 0, None, 0),
+    xsm = vmap(calc_xsection_from_lsd_scanfft, (0, None, None, 0, None, 0),
                0)(Slsd, R, pmarray, nsigmaD, nu_grid, log_ngammaL_grid)
     return xsm
 
