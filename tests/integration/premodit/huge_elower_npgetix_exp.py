@@ -1,6 +1,9 @@
+""" This test accounts for Issue #288, bug fix large elower value using f32, 
+    The bug was due to the overflow in the function when computing,
+"""
+
 from jax.config import config
 #config.update("jax_enable_x64", True)
-#↑When FP64, the ValueError does not occur.
 
 import numpy as np
 import jax.numpy as jnp
@@ -17,7 +20,6 @@ from exojax.spec.plg import MdbExomol_plg
 from exojax.utils.afunc import getjov_gravity
 from exojax.utils.instfunc import R2STD
 from exojax.utils.constants import RJ, pc
-from exojax.utils.gpkernel import gpkernel_RBF
 
 wls, wll, Ndata = 15035, 15040, 100
 wavd = np.linspace(wls, wll, Ndata)
@@ -62,14 +64,11 @@ from jax import random
 import numpyro.distributions as dist
 import numpyro
 from numpyro.infer import MCMC, NUTS
-from numpyro.infer import Predictive
-from numpyro.diagnostics import hpdi
 
-from exojax.spec.modit import vald_all, xsmatrix_vald, exomol, xsmatrix
-from exojax.spec.rtransfer import  dtauVALD, dtauM_mmwl, dtauHminus_mmwl, dtauCIA_mmwl, rtrun
+from exojax.spec.rtransfer import dtauM_mmwl, rtrun
 from exojax.spec import planck, response
 from exojax.spec import lpf
-from jax import jit, vmap
+from jax import vmap
 
 #core driver frun
 def frun_lbl(VMR_H2O):
@@ -119,7 +118,7 @@ def model_c(y1):
 
 rng_key = random.PRNGKey(0)
 rng_key, rng_key_ = random.split(rng_key)
-num_warmup, num_samples = 1000, 2000
+num_warmup, num_samples = 10, 20
 kernel = NUTS(model_c, forward_mode_differentiation=True, max_tree_depth=7)
 mcmc = MCMC(kernel, num_warmup=num_warmup, num_samples=num_samples)
 
