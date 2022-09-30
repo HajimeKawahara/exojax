@@ -73,7 +73,7 @@ ONEWAV = jnp.ones_like(nflux)
 interval_contrast = 0.1
 dit_grid_resolution = 0.1
 Ttyp = 2000.0
-
+#print(mdb)
 lbd, multi_index_uniqgrid, elower_grid, ngamma_ref_grid, n_Texp_grid, R, pmarray = initspec.init_premodit(
     mdb.nu_lines,
     nu_grid,
