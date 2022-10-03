@@ -1,10 +1,10 @@
 import numpy as np
-from exojax.signal.ola import _input_length
 from exojax.spec.setrt import gen_wavenumber_grid
 from exojax.spec.presolar import optimal_mini_batch
 from exojax.spec.presolar import lbd_olaform
 from exojax.spec.presolar import _reshape_lbd
 from exojax.spec.presolar import shapefilter_olaform
+
 
 def _example_filter(N, filter_length):
     nu_grid, wav, resolution = gen_wavenumber_grid(3000.0,
@@ -84,14 +84,16 @@ def test_reshape_lbd():
     rlbd = _reshape_lbd(lbd, ndiv, div_length)
     assert np.shape(rlbd) == (3, 712048, 19, 10)
 
+
 def test_shapefilter_olaform():
-    N=10
-    shapefilter=np.ones((N,3,4))
-    div_length=20
+    N = 10
+    shapefilter = np.ones((N, 3))
+    div_length = 20
     hat_shapefilter = shapefilter_olaform(shapefilter, div_length)
-    res = np.sum(hat_shapefilter[N:,:,:])
-    assert res==0.0
-    
+    res = np.sum(hat_shapefilter[N:, :])
+    assert res == 0.0
+
+
 if __name__ == "__main__":
     test_shapefilter_olaform()
     test_lbd_olaform_simple()

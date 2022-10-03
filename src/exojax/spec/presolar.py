@@ -9,6 +9,7 @@ import jax.numpy as jnp
 from exojax.signal.ola import optimal_fft_length
 from exojax.signal.ola import generate_padding_matrix
 
+
 def shapefilter_olaform(shapefilter, div_length, padding_value=0.0):
     """generate zero-padding shape filter
 
@@ -21,7 +22,8 @@ def shapefilter_olaform(shapefilter, div_length, padding_value=0.0):
         zero-padding shape filter, hat(V)
         """
     residual = div_length - 1
-    return _padding_zeros_axis(shapefilter,padding_value,residual)
+    return _padding_zeros_axis(shapefilter, padding_value, residual)
+
 
 def lbd_olaform(lbd, ndiv, div_length, filter_length):
     """convert LBD to match the form of OLA, i.e. generate hat LBD 
@@ -54,6 +56,7 @@ def optimal_mini_batch(input_length, filter_length):
     ndiv = int(input_length / opt_div_length) + 1
     return ndiv, opt_div_length
 
+
 def _padding_zeros_axis(input_array, padding_value, residual):
     """ generate an array with padding along zero-th axis 
 
@@ -65,11 +68,12 @@ def _padding_zeros_axis(input_array, padding_value, residual):
     Returns:
         _type_: _description_
     """
-    _, n_broadening_k, n_E_h = np.shape(input_array)
-    padding_shape = (residual, n_broadening_k, n_E_h)
+    input_shape = np.shape(input_array)
+    padding_shape = (residual, ) + input_shape[1:]
     padding_matrix = np.full(padding_shape, padding_value)
     array_padding = np.vstack((input_array, padding_matrix))
     return array_padding
+
 
 def _reshape_lbd(lbd, ndiv, div_length, padding_value=-np.inf):
     """reshaping LBD (input length,:,:) to (ndiv, div_length, :, :) w/ padding_value
@@ -94,4 +98,3 @@ def _reshape_lbd(lbd, ndiv, div_length, padding_value=-np.inf):
     residual = ndiv * div_length - input_length
     rlbd = _padding_zeros_axis(lbd, padding_value, residual)
     return rlbd.reshape((ndiv, div_length, n_broadening_k, n_E_h))
-
