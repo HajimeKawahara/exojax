@@ -23,7 +23,7 @@ def buildwall(x, edge='half'):
         xw[0] = 1.5*x[0]-0.5*x[1]
         xw[nx] = 1.5*x[nx-1]-0.5*x[nx-2]
     else:
-        assert ValueError(str(edge)+' does not exist in the edge mode')
+        raise ValueError(str(edge)+' does not exist in the edge mode')
 
     return xw
 

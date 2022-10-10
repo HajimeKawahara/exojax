@@ -1,8 +1,6 @@
 import numpy as np
 from exojax.spec.rtransfer import nugrid
 from exojax.spec import AutoRT
-import pytest
-
 
 def test_rtdit():
     """DIT vs LPF."""
