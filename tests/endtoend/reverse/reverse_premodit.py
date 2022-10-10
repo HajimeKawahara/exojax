@@ -16,7 +16,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 import jax.numpy as jnp
 from exojax.spec import rtransfer as rt
-from exojax.spec import moldb, contdb
+from exojax.spec import contdb
+
 from exojax.spec import rtransfer
 from exojax.spec.rtransfer import nugrid
 from exojax.spec.rtransfer import rtrun, dtauM, dtauCIA, nugrid
@@ -61,9 +62,22 @@ vmrH2 = (mmrH2 * mmw / molmassH2)  # VMR
 
 #
 Mp = 33.2
-mdb = moldb.MdbExomol('.database/CH4/12C-1H4/YT10to10/', nu_grid, crit=1.e-30)
+switch_api = True
+if switch_api:
+    from exojax.spec.api import MdbExomol
+    mdb = MdbExomol('.database/CH4/12C-1H4/YT10to10/',
+                    nurange = nu_grid,
+                    crit=1.e-30,
+                    gpu_transfer=False)
+else:
+    from exojax.spec.moldb import MdbExomol
+    mdb = MdbExomol('.database_/CH4/12C-1H4/YT10to10/',
+                    nu_grid,
+                    crit=1.e-30,
+                    gpu_transfer=False)
 cdbH2H2 = contdb.CdbCIA('.database/H2-H2_2011.cia', nu_grid)
 print('N=', len(mdb.nu_lines))
+print(np.max(mdb.nu_lines), np.min(mdb.nu_lines))
 
 # Reference pressure for a T-P model
 Pref = 1.0  # bar
@@ -74,12 +88,19 @@ interval_contrast = 0.1
 dit_grid_resolution = 0.1
 Ttyp = 2000.0
 
+try:
+    mdb.elower = mdb._elower
+    mdb.alpha_ref = mdb._alpha_ref
+    mdb.n_Texp = mdb._n_Texp
+except:
+    print("API used")
+
 lbd, multi_index_uniqgrid, elower_grid, ngamma_ref_grid, n_Texp_grid, R, pmarray = initspec.init_premodit(
     mdb.nu_lines,
     nu_grid,
-    mdb.elower,
-    mdb.alpha_ref,
-    mdb.n_Texp,
+    mdb.elower,  
+    mdb.alpha_ref,  
+    mdb.n_Texp,  
     mdb.Sij0,
     Ttyp,
     interval_contrast=interval_contrast,
@@ -91,9 +112,10 @@ def frun(Tarr, MMR_CH4, Mp, Rp, u1, u2, RV, vsini):
     g = 2478.57730044555 * Mp / Rp**2
     qtarr = vmap(mdb.qr_interp)(Tarr)
     xsm = xsmatrix(Tarr, Parr, R, pmarray, lbd, nu_grid, ngamma_ref_grid,
-                   n_Texp_grid, multi_index_uniqgrid, elower_grid, molmassCH4, qtarr)
-    dtaumCH4 = dtauM(dParr, jnp.abs(xsm), MMR_CH4 * np.ones_like(Parr), molmassCH4,
-                     g)
+                   n_Texp_grid, multi_index_uniqgrid, elower_grid, molmassCH4,
+                   qtarr)
+    dtaumCH4 = dtauM(dParr, jnp.abs(xsm), MMR_CH4 * np.ones_like(Parr),
+                     molmassCH4, g)
     # CIA
     dtaucH2H2 = dtauCIA(nu_grid, Tarr, Parr, dParr, vmrH2, vmrH2, mmw, g,
                         cdbH2H2.nucia, cdbH2H2.tcia, cdbH2H2.logac)
@@ -106,8 +128,8 @@ def frun(Tarr, MMR_CH4, Mp, Rp, u1, u2, RV, vsini):
     return mu
 
 
-# test
-if False:
+#test
+if True:
     Tarr = 1295.0 * (Parr / Pref)**0.1
     mu = frun(Tarr,
               MMR_CH4=0.0059,
@@ -118,10 +140,16 @@ if False:
               RV=10.0,
               vsini=20.0)
     plt.plot(wavd, mu)
+    plt.plot(wavd, flux / norm)
     plt.show()
-    np.savetxt("spectrum_ch4_new.txt",np.array([wavd,mu*norm]).T,delimiter=",")
+    np.savetxt("spectrum_ch4_new.txt",
+               np.array([wavd, mu * norm]).T,
+               delimiter=",")
 
-    
+import sys
+
+sys.exit()
+
 Mp = 33.2
 
 

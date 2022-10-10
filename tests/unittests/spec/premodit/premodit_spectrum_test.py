@@ -15,6 +15,8 @@ from exojax.spec.rtransfer import rtrun
 from exojax.spec.planck import piBarr
 from exojax.test.data import TESTDATA_CO_EXOMOL_PREMODIT_EMISSION_REF
 
+#from jax.config import config
+#config.update("jax_enable_x64", True)
 
 def test_rt_exomol():
     mdb = mock_mdbExoMol()

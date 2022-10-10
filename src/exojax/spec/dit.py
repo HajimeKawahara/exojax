@@ -256,7 +256,6 @@ def dtauM_vald(dParr, g, adb, nus, cnu, indexnu, pmarray, SijM, gammaLM, sigmaDM
     dtauatom = f_dtaual(xi_init)[1]
     return(dtauatom)
 
-#### DUPLICATED
 def ditgrid(x, dit_grid_resolution=0.1, adopt=True):
     """DIT GRID (deplicated).
 
@@ -270,8 +269,8 @@ def ditgrid(x, dit_grid_resolution=0.1, adopt=True):
         grid for DIT
     """
 
-    warn_msg = "`dit.ditgrid` is duplicated and will be removed. Use `set_ditgrid.ditgrid_log_interval` instead"
-    warnings.warn(warn_msg, UserWarning)
+    warn_msg = " Use `set_ditgrid.ditgrid_log_interval` instead"
+    warnings.warn(warn_msg, DeprecationWarning)
     from exojax.spec.set_ditgrid import ditgrid_log_interval
     return ditgrid_log_interval(x, dit_grid_resolution, adopt)
 
@@ -287,7 +286,7 @@ def dgmatrix(x, dit_grid_resolution=0.1, adopt=True):
     Returns:
         grid for DIT (Nlayer x NDITgrid)
     """
-    warn_msg = "`dit.dgmatrix` is duplicated and will be removed. Use `set_ditgrid.ditgrid_matrix` instead"
-    warnings.warn(warn_msg, UserWarning)
+    warn_msg = " Use `set_ditgrid.ditgrid_matrix` instead"
+    warnings.warn(warn_msg, DeprecationWarning)    
     from exojax.spec.set_ditgrid import ditgrid_matrix 
     return ditgrid_matrix(x, dit_grid_resolution, adopt)

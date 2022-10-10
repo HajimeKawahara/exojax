@@ -14,7 +14,7 @@ from exojax.spec import hapi, exomolapi, exomol, atomllapi, atomll, hitranapi
 from exojax.spec.hitran import gamma_natural as gn
 from exojax.utils.constants import hcperk, Tref
 
-__all__ = ['MdbExomol', 'MdbHit', 'AdbVald', 'AdbKurucz']
+__all__ = ['MdbExomol', 'MdbHit', 'AdbVald', 'AdbSepVald', 'AdbKurucz']
 
 explanation_states = "Note: Couldn't find the hdf5 format. We convert data to the hdf5 format. After the second time, it will become much faster."
 explanation_trans = "Note: Couldn't find the hdf5 format. We convert data to the hdf5 format. After the second time, it will become much faster."
@@ -61,6 +61,7 @@ class MdbExomol(object):
         Note:
            The trans/states files can be very large. For the first time to read it, we convert it to HDF/vaex. After the second-time, we use the HDF5 format with vaex instead.
         """
+        warnings.warn(" Use api.MdbExomol.", DeprecationWarning)
         self.path = pathlib.Path(path).expanduser()
         t0 = self.path.parents[0].stem
         molec = t0+'__'+str(self.path.stem)
@@ -467,6 +468,8 @@ class MdbHit(object):
            gpu_transfer: tranfer data to jnp.array? 
         """
         from exojax.spec.hitran import SijT
+        warnings.warn(" Use api.MdbHitemp or api.MdbHitran.", DeprecationWarning)
+        
         if ("hit" in path and path[-4:] == ".bz2"):
             path = path[:-4]
             print('Warning: path changed (.bz2 removed):', path)
@@ -544,9 +547,9 @@ class MdbHit(object):
 
         # get pf
         self.gQT, self.T_gQT = hitranapi.get_pf(self.molecid, self.uniqiso)
-        self.QTtyp = self.qr_interp_lines(self.Ttyp)
+        self.qrtyp = self.qr_interp_lines(self.Ttyp)
         self.Sij_typ = SijT(self.Ttyp, self.logsij0,
-                            self.nu_lines, self.elower, self.QTtyp)
+                            self.nu_lines, self.elower, self.qrtyp)
 
         mask = (self.nu_lines > self.nurange[0]-self.margin)\
             * (self.nu_lines < self.nurange[1]+self.margin)\
@@ -763,7 +766,7 @@ class MdbHit(object):
            T: temperature (K)
 
         Returns:
-           Qr_line, partition function ratio array for lines [Nlines]
+           qr_line, partition function ratio array for lines [Nlines]
 
         Note:
            Nlines=len(self.nu_lines)

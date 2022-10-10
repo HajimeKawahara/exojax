@@ -4,7 +4,8 @@ User Guide
 .. toctree::
    :maxdepth: 1
 
-   userguide/hjerting.rst   
+   userguide/hjerting.rst
+   userguide/api.rst
    userguide/moldb.rst
    userguide/exomol.rst
    userguide/hitran.rst

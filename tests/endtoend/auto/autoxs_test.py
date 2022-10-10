@@ -31,3 +31,6 @@ def test_modit():
     xsv1 = autoxs.xsection(1000.0, 1.0)
     dif = (numpy.sum((xsv0-xsv1)**2))
     assert dif < 1.e-36
+
+if __name__=="__main__":
+    test_modit()

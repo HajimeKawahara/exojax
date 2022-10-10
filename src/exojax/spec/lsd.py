@@ -6,9 +6,10 @@
 
 """
 import numpy as np
-from jax.numpy import index_exp 
+from jax.numpy import index_exp
 import jax.numpy as jnp
 from jax import jit
+import warnings
 from exojax.utils.constants import hcperk, Tref
 
 def getix(x, xv):
@@ -37,7 +38,7 @@ def getix(x, xv):
     indarr = jnp.arange(len(xv))
     pos = jnp.interp(x, xv, indarr)
     index = (pos).astype(int)
-    cont = (pos-index)
+    cont = (pos - index)
     return cont, index
 
 
@@ -58,17 +59,19 @@ def npgetix(x, xv):
     indarr = np.arange(len(xv))
     pos = np.interp(x, xv, indarr)
     index = (pos).astype(int)
-    cont = (pos-index)
+    cont = (pos - index)
     return cont, index
 
-def npgetix_exp(x, xv, Ttyp):
+
+def npgetix_exp(x, xv, Ttyp, conversion_dtype=np.float64):
     """numpy version of getix weigthed by exp(-hc/kT).
 
     Args:
         x: x array
         xv: x grid
         Ttyp: typical temperature for the temperature correction
-
+        converted_dtype: data type for conversion. Needs enough large because this code uses exp.
+        
     Returns:
         cont (contribution)
         index (index)
@@ -76,16 +79,26 @@ def npgetix_exp(x, xv, Ttyp):
     Note:
        cont is the contribution for i=index+1. 1 - cont is the contribution for i=index. For other i, the contribution should be zero.
     """
+    if Ttyp < Tref:
+        warnings.warn("We have not tested for Ttyp < Tref yet.", UserWarning)
 
-    if Ttyp is not None:
-        x=np.exp(-hcperk*x*(1.0/Ttyp-1.0/Tref))
-        xv=np.exp(-hcperk*xv*(1.0/Ttyp-1.0/Tref))
-    
-    indarr = np.arange(len(xv))
-    pos = np.interp(x, xv, indarr)
+    x_ = np.array(x, dtype=conversion_dtype)
+    xv_ = np.array(xv, dtype=conversion_dtype)
+    x_ = np.exp(-hcperk * x_ * (1.0 / Ttyp - 1.0 / Tref))
+    xv_ = np.exp(-hcperk * xv_ * (1.0 / Ttyp - 1.0 / Tref))
+
+    # check overflow
+    if np.isinf(np.max(x_)) or np.isinf(np.max(xv_)):
+        print("\n conversion_dtype = ", conversion_dtype, "\n")
+        raise ValueError("Use larger conversion_dtype.")
+
+    indarr = np.arange(len(xv_))
+    pos = np.interp(x_, xv_, indarr)
     index = (pos).astype(int)
-    cont = (pos-index)
-    return cont, index    
+    cont = (pos - index)
+
+    return cont, index
+
 
 def add2D(a, w, cx, ix, cy, iy):
     """Add into an array when contirbutions and indices are given (2D).
@@ -102,10 +115,10 @@ def add2D(a, w, cx, ix, cy, iy):
         a
 
     """
-    a = a.at[index_exp[ix, iy]].add(w*(1-cx)*(1-cy))
-    a = a.at[index_exp[ix, iy+1]].add(w*(1-cx)*cy)
-    a = a.at[index_exp[ix+1, iy]].add(w*cx*(1-cy))
-    a = a.at[index_exp[ix+1, iy+1]].add(w*cx*cy)
+    a = a.at[index_exp[ix, iy]].add(w * (1 - cx) * (1 - cy))
+    a = a.at[index_exp[ix, iy + 1]].add(w * (1 - cx) * cy)
+    a = a.at[index_exp[ix + 1, iy]].add(w * cx * (1 - cy))
+    a = a.at[index_exp[ix + 1, iy + 1]].add(w * cx * cy)
     return a
 
 
@@ -126,14 +139,14 @@ def add3D(a, w, cx, ix, cy, iy, cz, iz):
         a
 
     """
-    a = a.at[index_exp[ix, iy, iz]].add(w*(1-cx)*(1-cy)*(1-cz))
-    a = a.at[index_exp[ix, iy+1, iz]].add(w*(1-cx)*cy*(1-cz))
-    a = a.at[index_exp[ix+1, iy, iz]].add(w*cx*(1-cy)*(1-cz))
-    a = a.at[index_exp[ix+1, iy+1, iz]].add(w*cx*cy*(1-cz))
-    a = a.at[index_exp[ix, iy, iz+1]].add(w*(1-cx)*(1-cy)*cz)
-    a = a.at[index_exp[ix, iy+1, iz+1]].add(w*(1-cx)*cy*cz)
-    a = a.at[index_exp[ix+1, iy, iz+1]].add(w*cx*(1-cy)*cz)
-    a = a.at[index_exp[ix+1, iy+1, iz+1]].add(w*cx*cy*cz)
+    a = a.at[index_exp[ix, iy, iz]].add(w * (1 - cx) * (1 - cy) * (1 - cz))
+    a = a.at[index_exp[ix, iy + 1, iz]].add(w * (1 - cx) * cy * (1 - cz))
+    a = a.at[index_exp[ix + 1, iy, iz]].add(w * cx * (1 - cy) * (1 - cz))
+    a = a.at[index_exp[ix + 1, iy + 1, iz]].add(w * cx * cy * (1 - cz))
+    a = a.at[index_exp[ix, iy, iz + 1]].add(w * (1 - cx) * (1 - cy) * cz)
+    a = a.at[index_exp[ix, iy + 1, iz + 1]].add(w * (1 - cx) * cy * cz)
+    a = a.at[index_exp[ix + 1, iy, iz + 1]].add(w * cx * (1 - cy) * cz)
+    a = a.at[index_exp[ix + 1, iy + 1, iz + 1]].add(w * cx * cy * cz)
     return a
 
 
@@ -154,13 +167,15 @@ def npadd3D_direct1D(a, w, cx, ix, direct_cy, direct_iy, cz, iz):
         lineshape density a(nx,ny,nz)
 
     """
-    np.add.at(a, (ix, direct_iy, iz), w*(1-cx)*direct_cy*(1-cz))
-    np.add.at(a, (ix+1, direct_iy, iz), w*cx*direct_cy*(1-cz))
-    np.add.at(a, (ix, direct_iy, iz+1), w*(1-cx)*direct_cy*cz)
-    np.add.at(a, (ix+1, direct_iy, iz+1), w*cx*direct_cy*cz)
+    np.add.at(a, (ix, direct_iy, iz), w * (1 - cx) * direct_cy * (1 - cz))
+    np.add.at(a, (ix + 1, direct_iy, iz), w * cx * direct_cy * (1 - cz))
+    np.add.at(a, (ix, direct_iy, iz + 1), w * (1 - cx) * direct_cy * cz)
+    np.add.at(a, (ix + 1, direct_iy, iz + 1), w * cx * direct_cy * cz)
     return a
 
-def npadd3D_multi_index(a, w, cx, ix, cz, iz, uidx, multi_cont_lines, neighbor_uidx):
+
+def npadd3D_multi_index(a, w, cx, ix, cz, iz, uidx, multi_cont_lines,
+                        neighbor_uidx):
     """ numpy version: Add into an array using multi_index system in y
     Args:
         a: lineshape density (LSD) array (np.array)
@@ -175,27 +190,28 @@ def npadd3D_multi_index(a, w, cx, ix, cz, iz, uidx, multi_cont_lines, neighbor_u
     
     """
     conjugate_multi_cont_lines = 1.0 - multi_cont_lines
-    
+
     # index position
     direct_iy = uidx
-    direct_cy = np.prod(conjugate_multi_cont_lines,axis=1) 
+    direct_cy = np.prod(conjugate_multi_cont_lines, axis=1)
     a = npadd3D_direct1D(a, w, cx, ix, direct_cy, direct_iy, cz, iz)
-    
+
     # index position + (1, 0)
     direct_iy = neighbor_uidx[uidx, 0]
-    direct_cy = multi_cont_lines[:,0]*conjugate_multi_cont_lines[:,1]
+    direct_cy = multi_cont_lines[:, 0] * conjugate_multi_cont_lines[:, 1]
     a = npadd3D_direct1D(a, w, cx, ix, direct_cy, direct_iy, cz, iz)
-    
+
     # index position + (0, 1)
     direct_iy = neighbor_uidx[uidx, 1]
-    direct_cy = conjugate_multi_cont_lines[:,0]*multi_cont_lines[:,1]
+    direct_cy = conjugate_multi_cont_lines[:, 0] * multi_cont_lines[:, 1]
     a = npadd3D_direct1D(a, w, cx, ix, direct_cy, direct_iy, cz, iz)
-    
+
     # index position + (1, 1)
     direct_iy = neighbor_uidx[uidx, 2]
-    direct_cy = np.prod(multi_cont_lines,axis=1) 
-    a = npadd3D_direct1D(a, w, cx, ix, direct_cy, direct_iy, cz, iz)  
+    direct_cy = np.prod(multi_cont_lines, axis=1)
+    a = npadd3D_direct1D(a, w, cx, ix, direct_cy, direct_iy, cz, iz)
     return a
+
 
 @jit
 def inc3D_givenx(a, w, cx, ix, y, z, xv, yv, zv):
@@ -226,6 +242,7 @@ def inc3D_givenx(a, w, cx, ix, y, z, xv, yv, zv):
     a = add3D(a, w, cx, ix, cy, iy, cz, iz)
     return a
 
+
 @jit
 def inc2D_givenx(a, w, cx, ix, y, yv):
     """Compute integrated neighbouring contribution for 2D LSD (memory reduced sum) but using given contribution and index for x .
@@ -250,4 +267,3 @@ def inc2D_givenx(a, w, cx, ix, y, yv):
     cy, iy = getix(y, yv)
     a = add2D(a, w, cx, ix, cy, iy)
     return a
-

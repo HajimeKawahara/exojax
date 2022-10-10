@@ -1,33 +1,54 @@
 from jax import jit
 import jax.numpy as jnp
-from exojax.utils.constants import hcperk
+import numpy as np
+from exojax.utils.constants import hcperk, Tref
+
 
 def SijT(T, logsij0, nu_lines, elower, qT):
-   """duplicated by hitran.line_strength, will be removed. 
+    """(alias, deprecated) use hitran.line_strength, will be removed. 
    """
-   return line_strength(T, logsij0, nu_lines, elower, qT)
-   
+    return line_strength(T, logsij0, nu_lines, elower, qT)
+
+
 @jit
-def line_strength(T, logsij0, nu_lines, elower, qT):
-    """Line strength as a function of temperature.w
+def line_strength(T, logsij0, nu_lines, elower, qr):
+    """Line strength as a function of temperature, JAX/XLA compatible
 
     Args:
        T: temperature (K)
        logsij0: log(Sij(Tref)) (Tref=296K)
        nu_lines: line center wavenumber (cm-1)
        elower: elower
-       qT: Q(T)/Q(Tref)
+       qr: partition function ratio qr(T) = Q(T)/Q(Tref)
 
     Returns:
        Sij(T): Line strength (cm)
     """
     Tref = 296.0  # reference tempearture (K)
-    expow = logsij0-hcperk*(elower/T-elower/Tref)
+    expow = logsij0 - hcperk * (elower / T - elower / Tref)
     fac = (1.0-jnp.exp(-hcperk*nu_lines/T)) / \
         (1.0-jnp.exp(-hcperk*nu_lines/Tref))
     # expow=logsij0-hcperk*elower*(1.0/T-1.0/Tref)
     # fac=jnp.expm1(-hcperk*nu_lines/T)/jnp.expm1(-hcperk*nu_lines/Tref)
-    return jnp.exp(expow)/qT*fac
+    return jnp.exp(expow) / qr * fac
+
+
+def line_strength_numpy(T, Sij0, nu_lines, elower, qr):
+    """Line strength as a function of temperature, numpy version
+
+        Args:
+            T: temperature (K)
+            Sij0: line strength at Tref=296K
+            elower: elower
+            nu_lines: line center wavenumber 
+            qr : partition function ratio qr(T) = Q(T)/Q(Tref)
+
+        Returns:
+            line strength at Ttyp
+        """
+    return Sij0 / qr \
+        * np.exp(-hcperk*elower * (1./T - 1./Tref)) \
+        * np.expm1(-hcperk*nu_lines/T) / np.expm1(-hcperk*nu_lines/Tref)
 
 
 @jit
@@ -47,8 +68,9 @@ def gamma_hitran(P, T, Pself, n_air, gamma_air_ref, gamma_self_ref):
     """
     Patm = 1.01325  # atm (bar)
     Tref = 296.0  # reference tempearture (K)
-    gamma = (Tref/T)**n_air * (gamma_air_ref *
-                               ((P-Pself)/Patm) + gamma_self_ref*(Pself/Patm))
+    gamma = (Tref / T)**n_air * (gamma_air_ref *
+                                 ((P - Pself) / Patm) + gamma_self_ref *
+                                 (Pself / Patm))
     return gamma
 
 
@@ -64,7 +86,7 @@ def gamma_natural(A):
     Returns:
        gamma_natural: natural width (cm-1)
     """
-    return 2.6544188e-12*A
+    return 2.6544188e-12 * A
 
 
 @jit
@@ -83,7 +105,7 @@ def doppler_sigma(nu_lines, T, M):
        sigma: doppler width (standard deviation) (cm-1)
     """
     c3 = 3.0415595e-07
-    return c3*jnp.sqrt(T/M)*nu_lines
+    return c3 * jnp.sqrt(T / M) * nu_lines
 
 
 @jit
@@ -103,4 +125,4 @@ def normalized_doppler_sigma(T, M, R):
        nsigma: normalized Doppler width (standard deviation)
     """
     c3 = 3.0415595e-07
-    return c3*jnp.sqrt(T/M)*R
+    return c3 * jnp.sqrt(T / M) * R
