@@ -12,31 +12,35 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      # リポジトリをチェックアウト
+      # Checkout repository
       - name: Checkout
         uses: actions/checkout@v2
 
-      # Pythonの環境をセットアップ
+      # Setup Python
       - name: Set up Python 3.8
         uses: actions/setup-python@v2
         with:
           python-version: 3.8
 
-      # pytestをインストール
+      # install package	  
       - name: Install dependencies
         run: |
-	  export PYTHONPATH=./src:$PYTHONPATH
+          python -m pip install --upgrade pip
+          python setup.py install
+
+      # install pytest
+      - name: Install dependencies
+        run: |
           python -m pip install --upgrade pip
           pip install pytest
 
-
-      # pytest -> JUnit xml形式で結果を出力
+      # pytest -> JUnit xml
       - name: PyTest
         run: |
           python -m pytest tests/unittests --junit-xml results/pytest.xml
         continue-on-error: true
 
-      # テスト結果の表示
+      # show the results
       - name: Upload Unit Test Results
         if: ${{ always() }}
         uses: actions/upload-artifact@v2
