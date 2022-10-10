@@ -29,11 +29,6 @@ jobs:
           python -m pip install --upgrade pip
           pip install pytest
 
-      # install exojax
-      - name: Install dependencies
-        run: |
-          pip install exojax
-      
 
       # pytest -> JUnit xml形式で結果を出力
       - name: PyTest
