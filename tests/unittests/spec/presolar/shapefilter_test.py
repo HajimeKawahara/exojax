@@ -3,7 +3,9 @@ from exojax.spec.shapefilter import compute_filter_length
 from exojax.spec.shapefilter import generate_voigt_shape_filter
 from exojax.spec import normalized_doppler_sigma
 from exojax.spec.molinfo import molmass
+from jax import vmap
 import pytest
+
 
 def test_compute_filter_length():
     # example 50cm-1 tail cut at 4000cm-1
@@ -11,54 +13,40 @@ def test_compute_filter_length():
     filter_length = compute_filter_length(50.0, 4000.0, spectral_resolution)
     assert filter_length == 25001
 
-from exojax.spec.lpf import voigt
-import jax.numpy as jnp
-def _generate_voigt_shape_filter(nsigmaD, ngammaL, filter_length):
-    """generate a Voigt filter with a tail cut (naturally!)
 
-    Args:
-        nsigmaD (float): normalized Dopper width
-        ngammaL (float): normalized Lorenz half width
-        filter_length (int): filter length
+def test_generate_voigt_shape_filter(fig=False):
+    spectral_resolution = 10**6
+    T = 1500.0
+    filter_length = compute_filter_length(50.0, 4000.0, spectral_resolution)
+    nsigmaD = normalized_doppler_sigma(T, molmass("CO"), spectral_resolution)
+    ngammaL = nsigmaD
+    voigtp = generate_voigt_shape_filter(nsigmaD, ngammaL, filter_length)
+    assert np.sum(voigtp) == pytest.approx(0.9999432)
 
-    Returns:
-        _type_: _description_
+
+def test_generate_voigt_shape_filter_vmapped(fig=False):
+    """test generate_voigt_shape_filter (vmapped)
     """
-    qogrid = jnp.array(range(-filter_length, filter_length))
-    return voigt(qogrid, nsigmaD, ngammaL)
-
-def test_generate_voigt_shape_filter(fig=False):
     spectral_resolution = 10**6
     T = 1500.0
     filter_length = compute_filter_length(50.0, 4000.0, spectral_resolution)
     nsigmaD = normalized_doppler_sigma(T, molmass("CO"), spectral_resolution)
-    ngammaL = nsigmaD*np.array([0.1,0.3,1.0,3.0])
-    voigtp = generate_voigt_shape_filter(nsigmaD, ngammaL, filter_length)
-    assert np.sum(voigtp[;,0]) == pytest.approx(0.9999432)
+    ngammaL = nsigmaD * np.array([0.1, 0.3, 1.0, 3.0])
+    vmap_generate_voigt_shape_filter = vmap(generate_voigt_shape_filter,
+                                            (None, 0, None), 0)
+    voigtp = vmap_generate_voigt_shape_filter(nsigmaD, ngammaL, filter_length)
+    ref = np.array([0.9999944, 0.999983, 0.9999432, 0.9998298])
+    assert np.all(np.sum(voigtp, axis=1) == pytest.approx(ref))
     if fig:
         import matplotlib.pyplot as plt
-        plt.plot(voigtp)
+        for i, ngammaL_each in enumerate(ngammaL):
+            plt.plot(voigtp[i, :],
+                     label="$\\acute{\\gamma}_L=$" + str(ngammaL_each))
+        plt.legend()
         plt.show()
-
-
-"""
-def test_generate_voigt_shape_filter(fig=False):
-    spectral_resolution = 10**6
-    T = 1500.0
-    filter_length = compute_filter_length(50.0, 4000.0, spectral_resolution)
-    nsigmaD = normalized_doppler_sigma(T, molmass("CO"), spectral_resolution)
-    ngammaL = nsigmaD*np.array([0.1,0.3,1.0,3.0])
-    voigtp = generate_voigt_shape_filter(nsigmaD, ngammaL, filter_length)
-    #assert np.sum(voigtp[;,0]) == pytest.approx(0.9999432)
-    if fig:
-        import matplotlib.pyplot as plt
-        for i in range(len(ngammaL)):
-            plt.plot(voigtp[:,i])
-        plt.show()
-"""
 
 
 if __name__ == "__main__":
     #test_compute_filter_length()
     #test_generate_voigt_shape_filter(fig=True)
-    test_generate_voigt_shape_filter_multi(fig=True)
+    test_generate_voigt_shape_filter_vmapped(fig=True)

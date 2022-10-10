@@ -58,7 +58,10 @@ def test_xsection_premodit():
 if __name__ == "__main__":
     from exojax.test.data import TESTDATA_CO_EXOMOL_MODIT_XS_REF
     import matplotlib.pyplot as plt
+    import jax.profiler
     nus,xs = test_xsection_premodit()
+    xs.block_until_ready()
+    jax.profiler.save_device_memory_profile("memory.prof")
     filename = pkg_resources.resource_filename(
         'exojax', 'data/testdata/'+TESTDATA_CO_EXOMOL_MODIT_XS_REF)
     dat = pd.read_csv(filename, delimiter=",", names=("nus", "xsv"))
