@@ -34,27 +34,16 @@ def plottau(nus,
 
     if unit == "um" or unit == "nm" or unit == "AA":
         factor, labelx = factor_labelx_for_unit()
-        c = ax.imshow(ltau[:, ::-1],
-                      vmin=vmin,
-                      vmax=vmax,
-                      cmap='RdYlBu_r',
-                      alpha=0.9,
-                      extent=[
-                          factor[unit] / nus[-1], factor[unit] / nus[0],
-                          np.log10(Parr[-1]),
-                          np.log10(Parr[0])
-                      ])
+        extent = [
+            factor[unit] / nus[-1], factor[unit] / nus[0],
+            np.log10(Parr[-1]),
+            np.log10(Parr[0])
+        ]
+        c = imshow_custom(vmin, vmax, ltau[:, ::-1], extent, ax)
         plt.xlabel(labelx[unit])
     else:
-        c = ax.imshow(
-            ltau,
-            vmin=vmin,
-            vmax=vmax,
-            cmap='RdYlBu_r',
-            alpha=0.9,
-            extent=[nus[0], nus[-1],
-                    np.log10(Parr[-1]),
-                    np.log10(Parr[0])])
+        extent = [nus[0], nus[-1], np.log10(Parr[-1]), np.log10(Parr[0])]
+        c = imshow_custom(vmin, vmax, ltau, extent, ax)
         plt.xlabel('wavenumber ($\mathrm{cm}^{-1}$)')
 
     plt.colorbar(c, shrink=0.8)
@@ -118,30 +107,23 @@ def plotcf(nus,
     ax = plt.subplot2grid((1, 20), (0, 3), colspan=18)
     factor, labelx = factor_labelx_for_unit()
 
+    if unit == "um" or unit == "nm" or unit == "AA":
+        extent = [
+            factor[unit] / nus[-1], factor[unit] / nus[0],
+            np.log10(Parr[-1]),
+            np.log10(Parr[0])
+        ]
+        xcf=cf[:, ::-1]
+        xnus=factor[unit] / nus
+    elif:
+        extent = [nus[0], nus[-1], np.log10(Parr[-1]), np.log10(Parr[0])]
+        xcf = cf
+        xnus = nus        
+        
     if mode == 'cmap':
-        if unit == "um" or unit == "nm" or unit == "AA":
-            c = ax.imshow(cf[:, ::-1],
-                          cmap=cmap,
-                          alpha=0.9,
-                          extent=[
-                              factor[unit] / nus[-1], factor[unit] / nus[0],
-                              np.log10(Parr[-1]),
-                              np.log10(Parr[0])
-                          ])
-        else:
-            c = ax.imshow(cf,
-                          cmap=cmap,
-                          alpha=0.9,
-                          extent=[
-                              nus[0], nus[-1],
-                              np.log10(Parr[-1]),
-                              np.log10(Parr[0])
-                          ])
+        c = ax.imshow(xcf, cmap=cmap, alpha=0.9, extent=extent)
     else:
-        if unit == "um" or unit == "nm" or unit == "AA":
-            X, Y = np.meshgrid(factor[unit] / nus, np.log10(Parr))
-        else:
-            X, Y = np.meshgrid(nus, np.log10(Parr))
+        X, Y = np.meshgrid(xnus, np.log10(Parr))
         c = ax.contourf(X, Y, cf, 30, cmap=cmap)
         plt.gca().invert_yaxis()
 
@@ -154,6 +136,16 @@ def plotcf(nus,
         plot_TPprofile(Tarr, Parr)
 
     return cf
+
+
+def imshow_custom(vmin, vmax, ltau, extent, ax):
+    c = ax.imshow(ltau,
+                  vmin=vmin,
+                  vmax=vmax,
+                  cmap='RdYlBu_r',
+                  alpha=0.9,
+                  extent=extent)
+    return c
 
 
 def plot_TPprofile(Tarr, Parr):
