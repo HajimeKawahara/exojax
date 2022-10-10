@@ -6,7 +6,7 @@ analysis."""
 from jax import jit, vmap
 import jax.numpy as jnp
 from exojax.special.faddeeva import rewofz, imwofz
-from exojax.special.faddeeva import rewofzs2, imwofzs2
+from exojax.special.faddeeva import asymptotic_wofz
 from jax import custom_jvp
 
 # exomol
@@ -35,14 +35,16 @@ def exomol(mdb, Tarr, Parr, molmass):
     """
 
     qt = vmap(mdb.qr_interp)(Tarr)
-    SijM = jit(vmap(SijT, (0, None, None, None, 0)))(
-        Tarr, mdb.logsij0, mdb.dev_nu_lines, mdb.elower, qt)
-    gammaLMP = jit(vmap(gamma_exomol, (0, 0, None, None)))(
-        Parr, Tarr, mdb.n_Texp, mdb.alpha_ref)
+    SijM = jit(vmap(SijT, (0, None, None, None, 0)))(Tarr, mdb.logsij0,
+                                                     mdb.dev_nu_lines,
+                                                     mdb.elower, qt)
+    gammaLMP = jit(vmap(gamma_exomol,
+                        (0, 0, None, None)))(Parr, Tarr, mdb.n_Texp,
+                                             mdb.alpha_ref)
     gammaLMN = gamma_natural(mdb.A)
-    gammaLM = gammaLMP+gammaLMN[None, :]
-    sigmaDM = jit(vmap(doppler_sigma, (None, 0, None)))(
-        mdb.nu_lines, Tarr, molmass)
+    gammaLM = gammaLMP + gammaLMN[None, :]
+    sigmaDM = jit(vmap(doppler_sigma, (None, 0, None)))(mdb.nu_lines, Tarr,
+                                                        molmass)
     return SijM, gammaLM, sigmaDM
 
 
@@ -64,7 +66,7 @@ def vald(adb, Tarr, PH, PHe, PHH):
     """
     # Compute normalized partition function for each species
     qt_284 = vmap(adb.QT_interp_284)(Tarr)
-    qt = qt_284[:,adb.QTmask]
+    qt = qt_284[:, adb.QTmask]
 
     # Compute line strength matrix
     SijM = jit(vmap(SijT,(0,None,None,None,0)))\
@@ -77,10 +79,10 @@ def vald(adb, Tarr, PH, PHe, PHH):
     # Compute doppler broadening
     sigmaDM = jit(vmap(doppler_sigma,(None,0,None)))\
         (adb.nu_lines, Tarr, adb.atomicmass)
-    
+
     return SijM, gammaLM, sigmaDM
-    
-    
+
+
 def vald_each(Tarr, PH, PHe, PHH, \
             qt_284_T, QTmask, \
              logsij0, nu_lines, ielem, iion, dev_nu_lines, elower, eupper, atomicmass, ionE, gamRad, gamSta, vdWdamp, ):
@@ -113,12 +115,12 @@ def vald_each(Tarr, PH, PHe, PHH, \
     
     """
     # Compute normalized partition function for each species
-    qt = qt_284_T[:,QTmask]
+    qt = qt_284_T[:, QTmask]
 
     # Compute line strength matrix
     SijM = jit(vmap(SijT,(0,None,None,None,0)))\
         (Tarr, logsij0, nu_lines, elower, qt)
-    SijM = jnp.nan_to_num(SijM, nan = 0.0)
+    SijM = jnp.nan_to_num(SijM, nan=0.0)
 
     # Compute gamma parameters for the pressure and natural broadenings
     gammaLM = jit(vmap(gamma_vald3,(0,0,0,0,None,None,None,None,None,None,None,None,None,None,None)))\
@@ -128,13 +130,13 @@ def vald_each(Tarr, PH, PHe, PHH, \
     sigmaDMn=jit(vmap(doppler_sigma,(None,0,None)))\
         (nu_lines, Tarr, atomicmass)
     sigmaDM = jnp.where(sigmaDMn != 0, sigmaDMn, 1.)
-    
+
     return SijM, gammaLM, sigmaDM
 
 
 @jit
 def ljert(x, a):
-    """ljert function, consisting of a combination of imwofz and imwofzs2.
+    """ljert function, consisting of a combination of imwofz and imag(asymptiotic wofz).
 
     Args:
         x:
@@ -146,14 +148,14 @@ def ljert(x, a):
     Note:
         ljert provides a L(x,a) function. This function accepts a scalar value as an input. Use jax.vmap to use a vector as an input.
     """
-    r2 = x*x+a*a
-    return jnp.where(r2 < 111., imwofz(x, a), imwofzs2(x, a))
+    r2 = x * x + a * a
+    return jnp.where(r2 < 111., imwofz(x, a), jnp.imag(asymptotic_wofz(x, a)))
 
 
 @custom_jvp
 def hjert(x, a):
     """custom JVP version of the Voigt-Hjerting function, consisting of a
-    combination of rewofz and real(wofzs2).
+    combination of rewofz and real(asymptotic wofz).
 
     Args:
         x: 
@@ -179,16 +181,17 @@ def hjert(x, a):
        >>> vmap(hjert,(0,0),0)(x,a)
           DeviceArray([1.        , 0.8764037 , 0.7615196 , 0.6596299 , 0.5718791 ,0.49766064, 0.43553388, 0.3837772 , 0.34069115, 0.3047442 ],dtype=float32)
     """
-    r2 = x*x+a*a
-    return jnp.where(r2 < 111., rewofz(x, a), rewofzs2(x, a))
+    r2 = x * x + a * a
+    return jnp.where(r2 < 111., rewofz(x, a), jnp.real(asymptotic_wofz(x, a)))
 
 
 @hjert.defjvp
 def hjert_jvp(primals, tangents):
     x, a = primals
     ux, ua = tangents
-    dHdx = 2.0*a*ljert(x, a)-2.0*x*hjert(x, a)
-    dHda = 2.0*x*ljert(x, a)+2.0*a*hjert(x, a)-2.0/jnp.sqrt(jnp.pi)
+    dHdx = 2.0 * a * ljert(x, a) - 2.0 * x * hjert(x, a)
+    dHda = 2.0 * x * ljert(x, a) + 2.0 * a * hjert(x, a) - 2.0 / jnp.sqrt(
+        jnp.pi)
     primal_out = hjert(x, a)
     tangent_out = dHdx * ux + dHda * ua
     return primal_out, tangent_out
@@ -208,8 +211,8 @@ def voigtone(nu, sigmaD, gammaL):
        v: Voigt funtion
     """
 
-    sfac = 1.0/(jnp.sqrt(2)*sigmaD)
-    v = sfac*hjert(sfac*nu, sfac*gammaL)/jnp.sqrt(jnp.pi)
+    sfac = 1.0 / (jnp.sqrt(2) * sigmaD)
+    v = sfac * hjert(sfac * nu, sfac * gammaL) / jnp.sqrt(jnp.pi)
     return v
 
 
@@ -226,9 +229,9 @@ def voigt(nuvector, sigmaD, gammaL):
        v: Voigt profile
     """
 
-    sfac = 1.0/(jnp.sqrt(2)*sigmaD)
+    sfac = 1.0 / (jnp.sqrt(2.0) * sigmaD)
     vhjert = vmap(hjert, (0, None), 0)
-    v = sfac*vhjert(sfac*nuvector, sfac*gammaL)/jnp.sqrt(jnp.pi)
+    v = sfac * vhjert(sfac * nuvector, sfac * gammaL) / jnp.sqrt(jnp.pi)
     return v
 
 
@@ -278,125 +281,3 @@ def xsmatrix(numatrix, sigmaDM, gammaLM, SijM):
        cross section matrix in R^(Nlayer x Nwav)
     """
     return vmap(xsvector, (None, 0, 0, 0))(numatrix, sigmaDM, gammaLM, SijM)
-
-
-def dtauM_vald(dParr, g, numatrix, adb, SijM, gammaLM, sigmaDM, uspecies, mods_uspecies_list, MMR_uspecies_list, atomicmass_uspecies_list):
-    """Compute dtau caused by VALD lines from line strength Sij (LPF)
-    
-    Args:
-       dParr: delta pressure profile (bar) [N_layer]
-       g: gravity (cm/s^2)
-       numatrix: wavenumber matrix (cm-1) [N_line x N_nus]
-       adb: adb instance made by the AdbVald class in moldb.py
-       SijM: line intensity matrix [N_layer x N_line]
-       gammaLM: gammaL matrix [N_layer x N_line]
-       sigmaDM: sigmaD matrix [N_layer x N_line]
-       uspecies: unique elements of the combination of ielem and iion [N_species x 2(ielem and iion)]
-       mods_uspecies_list: jnp.array of abundance deviation from the Sun [dex] for each species in "uspecies" [N_species]
-       MMR_uspecies_list: jnp.array of mass mixing ratio in the Sun of each species in "uspecies" [N_species]
-       atomicmass_uspecies_list: jnp.array of atomic mass [amu] of each species in "uspecies" [N_species]
-    
-    Returns:
-       dtauatom: optical depth matrix [N_layer, N_nus]
-    """
-    zero_to_ones = lambda arr: jnp.where(arr!=0, arr, 1.)
-    def floop(xi, null):
-        i, dtauatom = xi
-        # process---->
-        sp = uspecies[i]
-        numatrix_p = padding_2Darray_for_each_atom(numatrix.T, adb, sp).T
-        sigmaDM_p = zero_to_ones(padding_2Darray_for_each_atom(sigmaDM, adb, sp))
-        gammaLM_p = padding_2Darray_for_each_atom(gammaLM, adb, sp)
-        SijM_p = padding_2Darray_for_each_atom(SijM, adb, sp)
-        xsm_p = xsmatrix(numatrix_p, sigmaDM_p, gammaLM_p, SijM_p)
-        
-        MMRmetalMod = mods_uspecies_list[i]
-        MMR_X_I = jnp.array(MMR_uspecies_list[i] *10**MMRmetalMod) # Note that this cannot modify individual elemental abundances yet (Use dtauM_vald_mmwl and VMR)
-        mass_X_I = jnp.array(atomicmass_uspecies_list[i])
-        
-        dtau_each = dtauM(dParr, xsm_p, MMR_X_I*jnp.ones_like(dParr), mass_X_I, g)
-        dtauatom = dtauatom + dtau_each
-        # <----process
-        i = i+1
-        xi = [i, dtauatom]
-        return xi, null
-
-    def f_dtaual(xi0):
-        xi, null = scan(floop, xi0, None, length)
-        return xi
-
-    length = len(uspecies)
-    dtauatom_init = jnp.zeros([len(dParr), numatrix.shape[1]])
-    xi_init = [0, dtauatom_init]
-
-    dtauatom = f_dtaual(xi_init)[1]
-    return dtauatom
-
-
-def dtauM_vald_mmwl(dParr, g, numatrix, adb, SijM, gammaLM, sigmaDM, uspecies, VMR_uspecies, mmw):
-    """Compute dtau caused by VALD lines from line strength Sij (LPF)
-    
-    Args:
-       dParr: delta pressure profile (bar) [N_layer]
-       g: gravity (cm/s^2)
-       numatrix: wavenumber matrix (cm-1) [N_line x N_nus]
-       adb: adb instance made by the AdbVald class in moldb.py
-       SijM: line intensity matrix [N_layer x N_line]
-       gammaLM: gammaL matrix [N_layer x N_line]
-       sigmaDM: sigmaD matrix [N_layer x N_line]
-       uspecies: unique elements of the combination of ielem and iion [N_species x 2(ielem and iion)]
-       VMR_uspecies: volume mixing ratio of each species in each atmospheric layer [N_species x N_layer]
-       mmw: mean molecular weight of atmosphere [N_layer]
-
-    Returns:
-       dtauatom: optical depth matrix [N_layer, N_nus]
-    """
-    zero_to_ones = lambda arr: jnp.where(arr!=0, arr, 1.)
-    def floop(xi, null):
-        i, dtauatom = xi
-        # process---->
-        sp = uspecies[i]
-        numatrix_p = padding_2Darray_for_each_atom(numatrix.T, adb, sp).T
-        sigmaDM_p = zero_to_ones(padding_2Darray_for_each_atom(sigmaDM, adb, sp))
-        gammaLM_p = padding_2Darray_for_each_atom(gammaLM, adb, sp)
-        SijM_p = padding_2Darray_for_each_atom(SijM, adb, sp)
-        xsm_p = xsmatrix(numatrix_p, sigmaDM_p, gammaLM_p, SijM_p)
-                
-        dtau_each = dtauM_mmwl(dParr, xsm_p, VMR_uspecies[i], mmw, g)
-        dtauatom = dtauatom + dtau_each
-        # <----process
-        i = i+1
-        xi = [i, dtauatom]
-        return xi, null
-
-    def f_dtaual(xi0):
-        xi, null = scan(floop, xi0, None, length)
-        return xi
-
-    length = len(uspecies)
-    dtauatom_init = jnp.zeros([len(dParr), numatrix.shape[1]])
-    xi_init = [0, dtauatom_init]
-
-    dtauatom = f_dtaual(xi_init)[1]
-    return dtauatom
-
-
-def dtauM_vald_mmwl_sep(dParr, g, numatrix, SijM, gammaLM, sigmaDM, VMR, mmw):
-    """Compute dtau caused by VALD lines from line strength Sij (LPF)
-    
-    Args:
-       dParr: delta pressure profile (bar) [N_layer]
-       g: gravity (cm/s^2)
-       numatrix: wavenumber matrix (cm-1) [N_line x N_nus]
-       SijM: line intensity matrix [N_layer x N_line]
-       gammaLM: gammaL matrix [N_layer x N_line]
-       sigmaDM: sigmaD matrix [N_layer x N_line]
-       VMR: volume mixing ratio of the species in each atmospheric layer [N_layer]
-       mmw: mean molecular weight of atmosphere [N_layer]
-
-    Returns:
-       dtauatom: optical depth matrix [N_layer, N_nus]
-    """
-    xsm = xsmatrix(numatrix, sigmaDM, gammaLM, SijM)
-    dtauatom = dtauM_mmwl(dParr, xsm, VMR, mmw, g)
-    return dtauatom

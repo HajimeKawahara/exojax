@@ -12,11 +12,13 @@ include src/exojax/data/testdata/spectrum_ch4_new.txt
 include src/exojax/data/testdata/spectrum_co.txt
 include src/exojax/data/testdata/moldb_co_exomol.pickle
 include src/exojax/data/testdata/moldb_h2o_exomol.pickle
+include src/exojax/data/testdata/moldb_vald.pickle
 include src/exojax/data/testdata/lpf_test_ref.txt
 include src/exojax/data/testdata/modit_test_ref.txt
 include src/exojax/data/testdata/premodit_test_ref.txt
 include src/exojax/data/testdata/modit_rt_test_ref.txt
 include src/exojax/data/testdata/premodit_rt_test_ref.txt
+include src/exojax/data/testdata/modit_rt_test_vald_ref.txt
 
 graft tests
 graft examples

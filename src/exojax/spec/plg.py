@@ -134,6 +134,7 @@ def get_qlogsij0_addcon(indexa, Na, cnu, indexnu, Nnugrid, mdb, expme, expme_gri
         
     #qlogsij0
     Sij0 = np.exp(mdb.logsij0)
+    Sij0 = np.where(Sij0 >= 1e-45, Sij0, np.zeros_like(Sij0)) #For the case where "jax_enable_x64" is True.
     qSij0 = np.bincount(eindex, weights=Sij0*(1.0-cont)*frozen_mask, minlength=Ng)
     qSij0 = qSij0 + np.bincount(eindex+1, weights=Sij0*cont*frozen_mask, minlength=Ng)
     with warnings.catch_warnings():
@@ -473,7 +474,7 @@ def MdbExomol_plg(path_database, nus, Tgue, errTgue=500., Nelower=7, assess_widt
     """
     from exojax.spec import plg, moldb, initspec
     from exojax.spec.setrt import gen_wavenumber_grid
-    mdb = moldb.MdbExomol(path_database, nus, crit=crit)
+    mdb = moldb.MdbExomol(path_database, nus, crit=crit, Ttyp=Tgue)
     molmass = mdb.molmass
     
     if coefTgue == 0.:

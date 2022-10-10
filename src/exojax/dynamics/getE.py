@@ -102,7 +102,8 @@ def _d5(E, f, d4):
 
     24
     """
-    return -f[0] / (f[1] + 0.5 * d4 * f[2] + d4**2 * f[3] / 6. + d4**3 * f[4] / 24.)
+    return -f[0] / (f[1] + 0.5 * d4 * f[2] + d4**2 * f[3] / 6. +
+                    d4**3 * f[4] / 24.)
 
 
 @jit
@@ -119,7 +120,7 @@ def getE(M, e):
     """
     pi = jnp.pi
     Mt = M - (jnp.floor(M / (2. * pi)) * 2. * pi)
-    Mt = jnp.where(M > pi, 2.*pi - Mt, Mt)
+    Mt = jnp.where(M > pi, 2. * pi - Mt, Mt)
     Mt = jnp.where(Mt == 0.0, 0.0, Mt)
 
     alpha = _alpha(e, Mt)

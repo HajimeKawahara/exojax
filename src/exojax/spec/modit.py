@@ -43,6 +43,12 @@ def calc_xsection_from_lsd(Slsd, R, pmarray, nsigmaD, nu_grid,
         nu_grid: linear wavenumber grid
         log_gammaL_grid: logarithm of gammaL grid
 
+    Note: 
+    When you have the error such as: 
+    "failed to initialize batched cufft plan with customized allocator: 
+    Allocating 8000000160 bytes exceeds the memory limit of 4294967296 bytes."
+    consider to use moditscanfft.calc_xsection_from_lsd, instead.
+    
     Returns:
         Cross section in the log nu grid
     """
@@ -62,6 +68,7 @@ def calc_xsection_from_lsd(Slsd, R, pmarray, nsigmaD, nu_grid,
                                  pmarray)
     fftvalsum = jnp.sum(fftval * vk, axis=(1, ))
     return jnp.fft.irfft(fftvalsum)[:Ng_nu] * R / nu_grid
+
 
 
 @jit
@@ -405,7 +412,7 @@ def set_ditgrid_matrix_vald_each(ielem, iion, atomicmass, ionE, dev_nu_lines,
         SijM, ngammaLM, nsigmaDl = vald_each(Tarr, PH, PHe, PHH, R, qt_284_T, \
              QTmask, ielem, iion, atomicmass, ionE, \
                    dev_nu_lines, logsij0, elower, eupper, gamRad, gamSta, vdWdamp)
-        floop = lambda c, arr: (c, jnp.nan_to_num(arr, nan=jnp.nanmin(arr)))
+        floop = lambda c, arr: (c, jnp.nan_to_num(arr, nan=jnp.nanmin(arr), posinf=jnp.nanmin(arr), neginf=jnp.nanmin(arr)))
         ngammaLM = scan(floop, 0, ngammaLM)[1]
         set_dgm_minmax.append(
             minmax_ditgrid_matrix(ngammaLM, dit_grid_resolution))
