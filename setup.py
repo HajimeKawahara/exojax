@@ -13,7 +13,7 @@ CLASSIFIERS = [
 ]
 INSTALL_REQUIRES = [
     'numpy<=1.22.3', 'pandas', 'tqdm', 'scipy', 'jax>=0.2.22', 'numpyro', 'pyarrow',
-    'hitran-api', 'bs4', 'vaex', 'radis @ git+https://git@github.com/radis/radis.git@develop', 'jaxopt'
+    'hitran-api', 'bs4', 'vaex', 'radis @ git+https://github.com/radis/radis.git@develop#egg=radis', 'jaxopt'
     ]
 
 # END PROJECT SPECIFIC
