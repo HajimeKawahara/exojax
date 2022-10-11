@@ -12,9 +12,9 @@ CLASSIFIERS = [
     'Programming Language :: Python',
 ]
 INSTALL_REQUIRES = [
-    'numpy', 'pandas', 'tqdm', 'scipy', 'jax>=0.2.22', 'numpyro', 'pyarrow',
-    'hitran-api', 'bs4', 'vaex', 'radis', 'jaxopt'
-]
+    'numpy<=1.22.3', 'pandas', 'tqdm', 'scipy', 'jax>=0.2.22', 'numpyro', 'pyarrow',
+    'hitran-api', 'bs4', 'vaex', 'radis @ git+https://github.com/radis/radis.git@develop#egg=radis', 'jaxopt'
+    ]
 
 # END PROJECT SPECIFIC
 HERE = os.path.dirname(os.path.realpath(__file__))

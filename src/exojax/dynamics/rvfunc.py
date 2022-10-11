@@ -27,21 +27,7 @@ def rvf(t, T0, P, e, omegaA, Ksini, Vsys):
     Returns:
        radial velocity curve in your velocity unit
     """
-
-    n = 2 * jnp.pi / P
-    M = n * (t - T0)
-
-    Ea = map(lambda x: getE.getE(x, e), M)
-    cosE = jnp.cos(Ea)
-    cosf = (-cosE + e) / (-1 + cosE * e)
-    sinf = jnp.sqrt((-1 + cosE * cosE) * (-1 + e * e)) / (-1 + cosE * e)
-    sinf = jnp.where(Ea < jnp.pi, -sinf, sinf)
-
-    cosfpo = cosf * jnp.cos(omegaA) - sinf * jnp.sin(omegaA)
-    face = 1.0 / jnp.sqrt(1.0 - e * e)
-    model = Ksini * face * (cosfpo + e * jnp.cos(omegaA)) + Vsys
-
-    return model
+    return rvcoref(t, T0, P, e, omegaA, Ksini, np.pi/2.0) + Vsys
 
 
 @jit
