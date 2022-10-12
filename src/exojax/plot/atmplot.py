@@ -115,7 +115,7 @@ def plotcf(nus,
         ]
         xcf=cf[:, ::-1]
         xnus=factor[unit] / nus
-    elif:
+    else:
         extent = [nus[0], nus[-1], np.log10(Parr[-1]), np.log10(Parr[0])]
         xcf = cf
         xnus = nus        
