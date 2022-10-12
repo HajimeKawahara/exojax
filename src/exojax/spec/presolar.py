@@ -9,7 +9,6 @@ import jax.numpy as jnp
 from exojax.signal.ola import optimal_fft_length
 from exojax.signal.ola import generate_padding_matrix
 
-
 def shapefilter_olaform(shapefilter, div_length, padding_value=0.0):
     """generate zero-padding shape filter
 
@@ -98,3 +97,4 @@ def _reshape_lbd(lbd, ndiv, div_length, padding_value=-np.inf):
     residual = ndiv * div_length - input_length
     rlbd = _padding_zeros_axis(lbd, padding_value, residual)
     return rlbd.reshape((ndiv, div_length, n_broadening_k, n_E_h))
+

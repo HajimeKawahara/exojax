@@ -1,3 +1,10 @@
+"""unit tests for premodit basic functions
+
+    * See premodit_xsection_test.py for the cross section test
+    * See premodit_spectrum_test.py for the spectrum test
+
+"""
+
 import pytest
 import numpy as np
 from exojax.spec.premodit import compute_dElower
@@ -84,3 +91,5 @@ def test_unbias_ngamma_grid():
         0.44038036, 0.61023745, 0.63490541, 0.50410967, 0.57706152
     ]
     assert np.all(ngamma_grid == pytest.approx(ref))
+
+

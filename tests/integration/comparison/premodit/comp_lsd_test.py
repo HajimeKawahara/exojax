@@ -1,13 +1,11 @@
 """Comparision test between Premodit and LPF
 
+   * test for unbiased_lsd
+
 """
-import pytest
 import numpy as np
-from exojax.spec.premodit import compute_dElower, make_elower_grid, make_broadpar_grid
-from exojax.spec.premodit import broadpar_getix, parallel_merge_grids, generate_lbd
-from exojax.test.emulate_broadpar import mock_broadpar_exomol
-from exojax.test.emulate_mdb import mock_mdbExoMol
-from exojax.spec.setrt import gen_wavenumber_grid
+from exojax.spec.premodit import make_broadpar_grid
+from exojax.spec.premodit import generate_lbd
 from exojax.utils.instfunc import resolution_eslog
 import numpy as np
 import jax.numpy as jnp
@@ -35,7 +33,8 @@ def compare_line_shape_density(mdb,nu_grid,Ttest=1000.0,interval_contrast=0.1,Tt
     """
     from exojax.spec.lsd import npgetix
     from exojax.spec.hitran import SijT
-    from exojax.spec.premodit import make_elower_grid, unbiased_lsd
+    from exojax.spec.premodit import make_elower_grid, 
+    from exojax.spec.premodit import unbiased_lsd
     
     dit_grid_resolution = 0.1    
     R = resolution_eslog(nu_grid)
