@@ -1,3 +1,10 @@
+"""unit tests for premodit basic functions
+
+    * See premodit_xsection_test.py for the cross section test
+    * See premodit_spectrum_test.py for the spectrum test
+
+"""
+
 import pytest
 import numpy as np
 from exojax.spec.premodit import compute_dElower
@@ -5,13 +12,8 @@ from exojax.spec.premodit import make_elower_grid
 from exojax.spec.premodit import make_broadpar_grid
 from exojax.spec.premodit import broadpar_getix
 from exojax.spec.premodit import parallel_merge_grids
-from exojax.spec.premodit import generate_lbd
-from exojax.spec.premodit import unbiased_lsd
 from exojax.spec.premodit import unbiased_ngamma_grid
 from exojax.test.emulate_broadpar import mock_broadpar_exomol
-from exojax.test.emulate_mdb import mock_mdbExoMol
-from exojax.spec.setrt import gen_wavenumber_grid
-from exojax.utils.instfunc import resolution_eslog
 
 
 def test_compute_dElower():
@@ -83,10 +85,11 @@ def test_unbias_ngamma_grid():
     multi_index_lines, multi_cont_lines, uidx_lines, neighbor_uidx, multi_index_uniqgrid, Ng_broadpar = broadpar_getix(
         ngamma_ref, ngamma_ref_grid, n_Texp, n_Texp_grid)
     ngamma_grid = unbiased_ngamma_grid(Ttest, Ptest, ngamma_ref_grid,
-                                     n_Texp_grid, multi_index_uniqgrid)
+                                       n_Texp_grid, multi_index_uniqgrid)
     ref = [
         0.46569834, 0.42327028, 0.53309152, 0.55464097, 0.48452351, 0.38470768,
         0.44038036, 0.61023745, 0.63490541, 0.50410967, 0.57706152
     ]
     assert np.all(ngamma_grid == pytest.approx(ref))
+
 

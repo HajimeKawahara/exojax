@@ -14,9 +14,7 @@ from exojax.spec.exomol import gamma_exomol
 from exojax.spec.hitran import SijT, doppler_sigma, gamma_natural
 
 # vald
-from exojax.spec.atomll import gamma_vald3, padding_2Darray_for_each_atom
-from exojax.spec.rtransfer import dtauM, dtauM_mmwl
-from jax.lax import scan
+from exojax.spec.atomll import gamma_vald3
 
 
 def exomol(mdb, Tarr, Parr, molmass):

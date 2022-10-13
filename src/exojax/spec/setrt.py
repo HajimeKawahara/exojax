@@ -1,6 +1,6 @@
 import numpy as np
 from exojax.spec.unitconvert import nu2wav, wav2nu
-from exojax.spec.check_nugrid import check_scale_xsmode, check_scale_nugrid, warn_resolution
+from exojax.spec.check_nugrid import check_scale_xsmode, warn_resolution
 from exojax.utils.instfunc import resolution_eslog, resolution_eslin
 
 
