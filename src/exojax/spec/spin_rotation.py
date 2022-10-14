@@ -1,6 +1,7 @@
 from jax import custom_jvp
 import jax.numpy as jnp
 
+
 @custom_jvp
 def rotkernel(x, u1, u2):
     """rotation kernel w/ the quadratic Limb dwarkening law, numerator of (54) in Kawahara+2022
