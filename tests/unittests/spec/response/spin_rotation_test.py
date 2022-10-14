@@ -7,38 +7,38 @@ from exojax.spec.setrt import gen_wavenumber_grid
 
 
 def _naive_rigidrot(nus, F0, vsini, u1=0.0, u2=0.0):
-    """Apply the Rotation response to a spectrum F using jax.lax.scan.
+    """Apply the Rotation response to a spectrum F (numpy)
 
     Args:
         nus: wavenumber, evenly log-spaced
         F0: original spectrum (F0)
         vsini: V sini for rotation
-        beta: STD of a Gaussian broadening (IP+microturbulence)
-        RV: radial velocity
         u1: Limb-darkening coefficient 1
         u2: Limb-darkening coefficient 2
 
     Return:
         response-applied spectrum (F)
     """
-    dvmat = jnp.array(c * (jnp.log(nus[None, :]) - jnp.log(nus[:, None])))
+    dvmat = np.array(c * (np.log(nus[None, :]) - np.log(nus[:, None])))
     x = dvmat / vsini
     kernel = rotkernel(x, u1, u2)
-    kernel = kernel / jnp.sum(kernel, axis=0)
+    kernel = kernel / np.sum(kernel, axis=0)
     F = kernel.T @ F0
     return F
 
 
+from exojax.signal.ola import olaconv, ola_lengths, generate_zeropad
+from exojax.utils.delta_velocity import dvgrid_rigid_rotation
+from jax.numpy import index_exp
 
 
-def convolve_rigid_rotation(nus, F0, vsini, u1=0.0, u2=0.0):
+def convolve_rigid_rotation(resolution, F0, vsini, u1=0.0, u2=0.0):
     """Apply the Rotation response to a spectrum F.
 
     Args:
-        nus: wavenumber, evenly log-spaced
+        resolution: spectral resolution of wavenumber bin (ESLOG)
         F0: original spectrum (F0)
-        vsini: V sini for rotation
-        beta: STD of a Gaussian broadening (IP+microturbulence)
+        vsini: V sini for rotation (km/s)
         RV: radial velocity
         u1: Limb-darkening coefficient 1
         u2: Limb-darkening coefficient 2
@@ -46,14 +46,30 @@ def convolve_rigid_rotation(nus, F0, vsini, u1=0.0, u2=0.0):
     Return:
         response-applied spectrum (F)
     """
-    dvmat = jnp.array(c * (jnp.log(nus[None, :]) - jnp.log(nus[:, None])))
-    x = c * jnp.log(nus) / vsini
+    x = dvgrid_rigid_rotation(resolution, vsini)
     kernel = rotkernel(x, u1, u2)
     kernel = kernel / jnp.sum(kernel, axis=0)
-    F = kernel.T @ F0
-    return F
+    #F = jnp.convolve(F0,kernel,mode="same")
 
+    #No OLA
+    input_length = len(F0)
+    filter_length = len(kernel)
+    fft_length = input_length# + filter_length - 1
+    F0_zeropad = jnp.zeros(fft_length)
+    F0_zeropad = F0_zeropad.at[index_exp[0:input_length]].add(F0)
+    filter_zeropad = jnp.zeros(fft_length)
+    filter_zeropad = filter_zeropad.at[index_exp[0:filter_length]].add(kernel)
+    convolved_signal = jnp.fft.irfft(
+        jnp.fft.rfft(F0_zeropad) * jnp.fft.rfft(filter_zeropad))
+    n = int((filter_length - 1) / 2)
+    #convolved_signal = convolved_signal[n:-n]
 
+    #F_zeropad = jnp.zeros((ndiv*fft_length,))
+    #F_zeropad = F_zeropad.at[index_exp[0:input_length]].add(F0)
+    #F_zeropad.reshape((ndiv,fft_length))
+    #ola = olaconv(F0_hat, kernel_hat, ndiv, div_length, filter_length)
+
+    return convolved_signal
 
 
 def test_convolve_rigid_rotation(fig=False):
@@ -64,26 +80,16 @@ def test_convolve_rigid_rotation(fig=False):
                                                4010.0,
                                                1000,
                                                xsmode="premodit")
-    print(c * np.log(nus[1] / nus[0]))
-    print(c * jnp.log(nus[1] / nus[0]))
-    print(c * (np.log(nus[1]) - np.log(nus[0])))
-    print(c * (jnp.log(nus[1]) - jnp.log(nus[0])))
-    print(c * jnp.log(1.0 / resolution + 1.0))
-    #print(c/resolution)
-    import sys
-    sys.exit()
 
     F0 = np.ones_like(nus)
     F0[250 - 5:250 + 5] = 0.5
     vsini = 40.0
-    Frot = _naive_rigidrot(nus, F0, vsini, u1=0.1, u2=0.1)
-    print(c / resolution)
-
+    Frot_ = _naive_rigidrot(nus, F0, vsini, u1=0.1, u2=0.1)
+    Frot = convolve_rigid_rotation(resolution, F0, vsini, u1=0.1, u2=0.1)
     if fig:
         import matplotlib.pyplot as plt
-        plt.plot(nus, Frot)
-        plt.plot(nus, F0)
-
+        plt.plot(Frot_)
+        plt.plot(Frot)
         plt.show()
 
     #convolve_rigid_rotation(nus, F0, vsini, u1=0.1, u2=0.1)

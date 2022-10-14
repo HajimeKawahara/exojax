@@ -5,7 +5,6 @@ from jax.numpy import index_exp
 from jax.lax import dynamic_update_slice
 from jax import jit
 from functools import partial
-from pytools import div_ceil
 from scipy.fft import next_fast_len
 from scipy.special import lambertw
 import math
