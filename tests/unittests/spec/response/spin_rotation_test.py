@@ -1,9 +1,9 @@
 import pytest
-from sqlalchemy import nullsfirst
 from exojax.spec.spin_rotation import rotkernel
 import jax.numpy as jnp
 import numpy as np
 from exojax.utils.constants import c
+from exojax.spec.setrt import gen_wavenumber_grid
 
 
 def _naive_rigidrot(nus, F0, vsini, u1=0.0, u2=0.0):
@@ -29,7 +29,6 @@ def _naive_rigidrot(nus, F0, vsini, u1=0.0, u2=0.0):
     return F
 
 
-from exojax.utils.constants import c
 
 
 def convolve_rigid_rotation(nus, F0, vsini, u1=0.0, u2=0.0):
@@ -55,7 +54,6 @@ def convolve_rigid_rotation(nus, F0, vsini, u1=0.0, u2=0.0):
     return F
 
 
-from exojax.spec.setrt import gen_wavenumber_grid
 
 
 def test_convolve_rigid_rotation(fig=False):
@@ -109,24 +107,7 @@ def test_rotkernel(fig=False):
         plt.plot(x_2, kernel_2)
         plt.show()
 
-def dv_comparison():
-    from jax.config import config
-    #config.update("jax_enable_x64", True)
-    import matplotlib.pyplot as plt
-        
-    N = 60
-    Rarray = np.logspace(2,7,N)
-    dv_np = np.log(1.0/Rarray + 1.0)
-    dv_jnp = jnp.log(1.0/Rarray + 1.0)
-    dv_jnp_naive = jnp.log1p(1.0/Rarray)
-    plt.plot(Rarray,np.abs(dv_jnp/dv_np-1.0))
-    plt.plot(Rarray,np.abs(dv_jnp_naive/dv_np-1.0))
-    plt.yscale("log")
-    plt.xscale("log")
-#    print(dv_np)
-    plt.show()
 
 if __name__ == "__main__":
-    dv_comparison()
     #test_rotkernel(fig=True)
-    #test_convolve_rigid_rotation(fig=True)
+    test_convolve_rigid_rotation(fig=True)
