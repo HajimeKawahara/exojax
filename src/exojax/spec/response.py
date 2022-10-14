@@ -9,6 +9,10 @@
 import jax.numpy as jnp
 from jax import jit
 from exojax.utils.constants import c
+from exojax.spec.spin_rotation import convolve_rigid_rotation
+
+#compatibility, will be removed in future
+rigidrot = convolve_rigid_rotation
 
 
 @jit
