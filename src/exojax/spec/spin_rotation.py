@@ -1,14 +1,16 @@
 from jax import custom_jvp
 import jax.numpy as jnp
+from jax import jit
 from exojax.utils.delta_velocity import dvgrid_rigid_rotation
 
 
-def convolve_rigid_rotation(resolution, F0, vsini, u1=0.0, u2=0.0):
+@jit
+def convolve_rigid_rotation(F0, vr_array, vsini, u1=0.0, u2=0.0):
     """Apply the Rotation response to a spectrum F (No OLA and No cuDNN).
 
     Args:
-        resolution: spectral resolution of wavenumber bin (ESLOG)
         F0: original spectrum (F0)
+        vr_array: fix-sized vr array for kernel, see utils.dvgrid_rigid_rotation
         vsini: V sini for rotation (km/s)
         RV: radial velocity
         u1: Limb-darkening coefficient 1
@@ -17,10 +19,8 @@ def convolve_rigid_rotation(resolution, F0, vsini, u1=0.0, u2=0.0):
     Return:
         response-applied spectrum (F)
     """
-    x = dvgrid_rigid_rotation(resolution, vsini)
-    kernel = rotkernel(x, u1, u2)
+    kernel = rotkernel(vr_array/vsini, u1, u2)
     kernel = kernel / jnp.sum(kernel, axis=0)
-
     #==== still require cuDNN in Oct.15 2022================
     #convolved_signal = jnp.convolve(F0,kernel,mode="same")
     #=======================================================

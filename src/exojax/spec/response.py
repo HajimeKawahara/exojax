@@ -2,18 +2,11 @@
 
 * input nus/wav should be spaced evenly on a log scale (ESLOG).
 * response is a response operation for the wavenumber grid spaced evenly on a log scale.
-* rigidrot2 and ipgauss2 are faster than default when N >~ 10000, where N is the dimension of the wavenumber grid.
-* response uses jax.numpy.convolve, therefore, convolve in cuDNN.
+* ipgauss2 are faster than default when N >~ 10000, where N is the dimension of the wavenumber grid.
 """
-
 import jax.numpy as jnp
 from jax import jit
 from exojax.utils.constants import c
-from exojax.spec.spin_rotation import convolve_rigid_rotation
-
-#compatibility, will be removed in future
-rigidrot = convolve_rigid_rotation
-
 
 @jit
 def ipgauss(nus, F0, beta):
@@ -60,32 +53,6 @@ def ipgauss_sampling(nusd, nus, F0, beta, RV):
         return F
 
     F = ipgauss_sampling_jax(nusd, nus, F0, beta, RV)
-    return F
-
-
-@jit
-def rigidrot2(nus, F0, varr_kernel, vsini, u1=0.0, u2=0.0):
-    """Apply the Rotation response to a spectrum F using jax.lax.scan.
-
-    Args:
-        nus: wavenumber, evenly log-spaced
-        F0: original spectrum (F0)
-        varr_kernel: velocity array for the rotational kernel
-        vsini: V sini for rotation
-        beta: STD of a Gaussian broadening (IP+microturbulence)
-        RV: radial velocity
-        u1: Limb-darkening coefficient 1
-        u2: Limb-darkening coefficient 2
-
-    Return:
-        response-applied spectrum (F)
-    """
-    x = varr_kernel / vsini
-    x2 = x * x
-    kernel = rotkernel(x, u1, u2)
-    kernel = kernel / jnp.sum(kernel, axis=0)
-    F = jnp.convolve(F0, kernel, mode='same')
-
     return F
 
 
