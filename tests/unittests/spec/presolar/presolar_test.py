@@ -6,7 +6,7 @@
 """
 
 import numpy as np
-from exojax.spec.setrt import gen_wavenumber_grid
+from exojax.utils.grids import wavenumber_grid
 from exojax.spec.presolar import optimal_mini_batch
 from exojax.spec.presolar import lbd_olaform
 from exojax.spec.presolar import _reshape_lbd
@@ -14,7 +14,7 @@ from exojax.spec.presolar import shapefilter_olaform
 
 
 def _example_filter(N, filter_length):
-    nu_grid, wav, resolution = gen_wavenumber_grid(3000.0,
+    nu_grid, wav, resolution = wavenumber_grid(3000.0,
                                                    5000.0,
                                                    N,
                                                    unit="cm-1",

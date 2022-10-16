@@ -5,7 +5,7 @@ import jax.numpy as jnp
 import pandas as pd
 import numpy as np
 from exojax.spec.initspec import init_premodit
-from exojax.spec.setrt import gen_wavenumber_grid
+from exojax.utils.grids import wavenumber_grid
 from exojax.test.emulate_mdb import mock_mdbExoMol
 from exojax.spec import rtransfer as rt
 from exojax.spec import molinfo
@@ -26,7 +26,7 @@ def test_rt_exomol():
     Tarr = T0_in * (Parr)**alpha_in
 
     MMR = 0.1
-    nu_grid, wav, res = gen_wavenumber_grid(22900.0,
+    nu_grid, wav, res = wavenumber_grid(22900.0,
                                             23100.0,
                                             15000,
                                             unit='AA',

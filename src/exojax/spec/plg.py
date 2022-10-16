@@ -472,14 +472,14 @@ def MdbExomol_plg(path_database, nus, Tgue, errTgue=500., Nelower=7, assess_widt
         indexnu: nu index
         
     """
-    from exojax.spec import plg, moldb, initspec
-    from exojax.spec.setrt import gen_wavenumber_grid
+    from exojax.spec import moldb, initspec
+    from exojax.utils.grids import wavenumber_grid
     mdb = moldb.MdbExomol(path_database, nus, crit=crit, Ttyp=Tgue)
     molmass = mdb.molmass
     
     if coefTgue == 0.:
         wls, wll = min(1.e8/nus), max(1.e8/nus)
-        nusc, wavc, resoc = gen_wavenumber_grid( (wll+wls-assess_width)/2, (wll+wls+assess_width)/2, int(assess_width/0.05), unit="AA", xsmode="modit")
+        nusc, wavc, resoc = wavenumber_grid( (wll+wls-assess_width)/2, (wll+wls+assess_width)/2, int(assess_width/0.05), unit="AA", xsmode="modit")
         mdbc = moldb.MdbExomol(path_database, nusc)
         coefTgue = optimize_coefTgue(Tgue, nusc, mdbc, molmass, Nelower, errTgue)
         print("coefTgue =", coefTgue, " (by assessing", len(mdbc.A), "lines in", assess_width, "angstrom width.)"  )

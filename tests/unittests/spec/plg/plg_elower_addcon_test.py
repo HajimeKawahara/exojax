@@ -1,7 +1,7 @@
 """ unittest for psudo line generator (plg)"""
 import numpy as np
 from exojax.spec import plg
-from exojax.spec.setrt import gen_wavenumber_grid
+from exojax.utils.grids import wavenumber_grid
 from exojax.spec import initspec
 import pickle
 import pkg_resources
@@ -13,7 +13,7 @@ def test_plg_elower_addcon():
         mdb = pickle.load(f)
 
     wls, wll, nugrid_res = 15540, 15550, 0.05
-    nus, wav, reso = gen_wavenumber_grid(wls, wll, int((wll-wls)/nugrid_res), unit="AA", xsmode="modit")
+    nus, wav, reso = wavenumber_grid(wls, wll, int((wll-wls)/nugrid_res), unit="AA", xsmode="modit")
     cnu,indexnu,R,pmarray = initspec.init_modit(mdb.nu_lines,nus)
 
     Nelower = 7 

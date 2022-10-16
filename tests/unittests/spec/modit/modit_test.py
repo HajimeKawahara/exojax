@@ -9,7 +9,7 @@ from exojax.spec.molinfo import molmass
 from exojax.spec import normalized_doppler_sigma, gamma_natural
 from exojax.spec.hitran import line_strength
 from exojax.spec.exomol import gamma_exomol
-from exojax.spec.setrt import gen_wavenumber_grid
+from exojax.utils.grids import wavenumber_grid
 from exojax.spec.initspec import init_modit
 from exojax.spec.set_ditgrid import ditgrid_log_interval
 
@@ -22,7 +22,7 @@ def test_xs_exomol():
     Pfix = 1.0
     Mmol = molmass("CO")
     Nx = 5000
-    nus, wav, res = gen_wavenumber_grid(22800.0,
+    nus, wav, res = wavenumber_grid(22800.0,
                                         23100.0,
                                         Nx,
                                         unit='AA',
@@ -66,7 +66,7 @@ def test_rt_exomol():
 
     molmass = molinfo.molmass('CO')
     MMR = 0.1
-    nus, wav, res = gen_wavenumber_grid(22900.0,
+    nus, wav, res = wavenumber_grid(22900.0,
                                         23100.0,
                                         15000,
                                         unit='AA',

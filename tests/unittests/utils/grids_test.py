@@ -1,8 +1,17 @@
-import jax.numpy as jnp
+import pytest
 import numpy as np
-from exojax.utils.delta_velocity import delta_velocity_from_resolution
-from exojax.utils.delta_velocity import dvgrid_rigid_rotation
+from exojax.utils.grids import wavenumber_grid
+from exojax.utils.grids import velocity_grid
+from exojax.utils.grids import delta_velocity_from_resolution
 
+
+def test_wavenumber_grid():
+    Nx=4000
+    nus, wav, res = wavenumber_grid(29200.0,29300., Nx, unit='AA')
+    dif=np.log(nus[1:])-np.log(nus[:-1])
+    refval=8.54915417e-07
+    assert np.all(dif==pytest.approx(refval*np.ones_like(dif)))
+    
 
 def test_delta_velocity_from_resolution():
     from exojax.utils.constants import c
@@ -17,11 +26,13 @@ def test_delta_velocity_from_resolution():
 def test_minimum_dv_grid():
     resolution = 10**5
     vsini = 150.0  #km/s
-    x = dvgrid_rigid_rotation(resolution, vsini)
+    x = velocity_grid(resolution, vsini)
+    x = x/vsini
     assert x[0] <= -1.0 and x[-1] >= 1.0
     assert x[1] >= -1.0 and x[-2] <= 1.0
 
 
 if __name__ == "__main__":
+    test_wavenumber_grid()
     test_delta_velocity_from_resolution()
     test_minimum_dv_grid()

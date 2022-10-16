@@ -3,8 +3,7 @@
 """
 
 from jax.config import config
-from exojax.spec.rtransfer import pressure_layer
-from exojax.spec.setrt import gen_wavenumber_grid
+from exojax.utils.grids import wavenumber_grid
 from exojax.spec import moldb
 from exojax.spec import initspec
 
@@ -15,7 +14,7 @@ crit=1.e-25  #If you increase the crit (such as 1.e-24), no error.
 Tgue = 3000.
 wls, wll = 15020, 15050
 Nx = 2000
-nus, wav, reso = gen_wavenumber_grid(wls, wll, Nx, unit="AA", xsmode="premodit")
+nus, wav, reso = wavenumber_grid(wls, wll, Nx, unit="AA", xsmode="premodit")
 
 mdbH2O_orig = moldb.MdbExomol('.database/H2O/1H2-16O/POKAZATEL', nus, crit=crit, Ttyp=Tgue)
 print('N=', len(mdbH2O_orig.nu_lines))

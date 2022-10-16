@@ -6,12 +6,12 @@ import pkg_resources
 import pandas as pd
 import numpy as np
 from exojax.test.data import TESTDATA_CO_EXOMOL_LPF_XS_REF
-from exojax.spec.lpf import exomol
+#from exojax.spec.lpf import exomol
 from exojax.spec.molinfo import molmass
 from exojax.spec import doppler_sigma,  gamma_natural
 from exojax.spec.hitran import line_strength
 from exojax.spec.exomol import gamma_exomol
-from exojax.spec.setrt import gen_wavenumber_grid
+from exojax.utils.grids import wavenumber_grid
 from exojax.spec.initspec import init_lpf
 from exojax.test.emulate_mdb import mock_mdbExoMol
 
@@ -27,7 +27,7 @@ def test_exomol():
     Sij = line_strength(Tfix,mdbCO.logsij0,mdbCO.nu_lines,mdbCO.elower,qt)
     
     Nx=1000
-    nus, wav, res = gen_wavenumber_grid(22940.0,22960.0, Nx, unit='AA')
+    nus, wav, res = wavenumber_grid(22940.0,22960.0, Nx, unit='AA')
     numatrix=init_lpf(mdbCO.nu_lines, nus)
     xsv=xsvector(numatrix, sigmaD, gammaL, Sij)
 

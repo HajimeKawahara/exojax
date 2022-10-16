@@ -10,10 +10,10 @@ from exojax.utils.constants import kB, logm_ucgs
 import warnings
 
 def nugrid(x0, x1, N, unit='cm-1', xsmode='lpf'):
-    warn_msg = "Use `setrt.gen_wavenumber_grid` instead"
+    warn_msg = "Use `grids.wavenumber_grid` instead"
     warnings.warn(warn_msg, DeprecationWarning)
-    from exojax.spec.setrt import gen_wavenumber_grid
-    return gen_wavenumber_grid(x0, x1, N, unit=unit, xsmode=xsmode)
+    from exojax.utils.grids import wavenumber_grid
+    return wavenumber_grid(x0, x1, N, unit=unit, xsmode=xsmode)
 
 def pressure_layer(logPtop=-8., logPbtm=2., NP=20, mode='ascending'):
     """generating the pressure layer.

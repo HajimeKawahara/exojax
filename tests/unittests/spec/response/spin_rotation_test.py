@@ -2,8 +2,8 @@ import pytest
 from exojax.spec.spin_rotation import rotkernel
 import jax.numpy as jnp
 import numpy as np
-from exojax.spec.setrt import gen_wavenumber_grid
-from exojax.utils.delta_velocity import dvgrid_rigid_rotation
+from exojax.utils.grids import wavenumber_grid
+from exojax.utils.grids import velocity_grid
 from exojax.spec.spin_rotation import convolve_rigid_rotation
 
 def _convolve_rigid_rotation_np(resolution, F0, vsini, u1=0.0, u2=0.0):
@@ -20,7 +20,7 @@ def _convolve_rigid_rotation_np(resolution, F0, vsini, u1=0.0, u2=0.0):
     Return:
         response-applied spectrum (F)
     """
-    x = dvgrid_rigid_rotation(resolution, vsini)
+    x = velocity_grid(resolution, vsini)
     kernel = rotkernel(x/vsini, u1, u2)
     kernel = kernel / jnp.sum(kernel, axis=0)
     #F = jnp.convolve(F0,kernel,mode="same")
@@ -37,7 +37,7 @@ def test_convolve_rigid_rotation(fig=False):
     from jax.config import config
     #config.update("jax_enable_x64", True)
     from exojax.utils.constants import c
-    nus, wav, resolution = gen_wavenumber_grid(4000.0,
+    nus, wav, resolution = wavenumber_grid(4000.0,
                                                4010.0,
                                                1000,
                                                xsmode="premodit")
@@ -45,7 +45,7 @@ def test_convolve_rigid_rotation(fig=False):
     F0 = np.ones_like(nus)
     F0[250 - 5:250 + 5] = 0.5
     vsini = 40.0
-    vr_array = dvgrid_rigid_rotation(resolution, vsini)
+    vr_array = velocity_grid(resolution, vsini)
     
     Frot = convolve_rigid_rotation(F0, vr_array, vsini, u1=0.1, u2=0.1)
     Frot_ = _convolve_rigid_rotation_np(resolution, F0, vsini, u1=0.1, u2=0.1)

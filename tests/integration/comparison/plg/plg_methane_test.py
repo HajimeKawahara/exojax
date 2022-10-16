@@ -6,7 +6,7 @@ import numpy as np
 import jax.numpy as jnp
 from exojax.spec import plg
 from exojax.spec import moldb, contdb, molinfo
-from exojax.spec.setrt import gen_wavenumber_grid
+from exojax.utils.grids import wavenumber_grid
 from exojax.spec import initspec
 import time
 import copy
@@ -19,7 +19,7 @@ def test_plg_methane():
     errTgue = 500.
 
     wls, wll, nugrid_res = 16448.0, 16452.0, 0.05
-    nus, wav, reso = gen_wavenumber_grid(wls, wll, int((wll-wls)/nugrid_res), unit="AA", xsmode="modit")
+    nus, wav, reso = wavenumber_grid(wls, wll, int((wll-wls)/nugrid_res), unit="AA", xsmode="modit")
     mdb_orig = moldb.MdbExomol('.database/CH4/12C-1H4/YT10to10/', nus, \
                                crit=0, Ttyp=Tgue)
     mdb = copy.deepcopy(mdb_orig)
@@ -29,7 +29,7 @@ def test_plg_methane():
 
     #To save computation time, let us use only the middle 1 Å width to optimize coefTgue
     assess_width = 1. #Note that too narrow (e.g., 1. Å) might cause a ValueError. (#Cause unspecified...)
-    nusc, wavc, resoc = gen_wavenumber_grid( (wll+wls-assess_width)/2, (wll+wls+assess_width)/2, 20, unit="AA", xsmode="modit")
+    nusc, wavc, resoc = wavenumber_grid( (wll+wls-assess_width)/2, (wll+wls+assess_width)/2, 20, unit="AA", xsmode="modit")
     mdbc = moldb.MdbExomol('.database/CH4/12C-1H4/YT10to10/', nusc)
 
     ts = time.time()

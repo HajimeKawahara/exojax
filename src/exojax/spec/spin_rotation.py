@@ -1,7 +1,6 @@
 from jax import custom_jvp
 import jax.numpy as jnp
 from jax import jit
-from exojax.utils.delta_velocity import dvgrid_rigid_rotation
 
 
 @jit

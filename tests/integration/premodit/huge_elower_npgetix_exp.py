@@ -9,13 +9,12 @@ import numpy as np
 import jax.numpy as jnp
 
 from exojax.spec.rtransfer import pressure_layer
-from exojax.spec.setrt import gen_wavenumber_grid
+from exojax.utils.grids import wavenumber_grid
 from exojax.utils.instfunc import R2STD
 
-from exojax.spec import moldb, atomll, contdb
-from exojax.spec import modit, initspec, molinfo, premodit
+from exojax.spec import moldb
+from exojax.spec import initspec, molinfo, premodit
 from exojax.spec import molinfo
-from exojax.spec.plg import MdbExomol_plg
 
 from exojax.utils.afunc import getjov_gravity
 from exojax.utils.instfunc import R2STD
@@ -30,7 +29,7 @@ NP = 100
 Parr, dParr, k = pressure_layer(NP = NP)
 
 Nx = 2000
-nus, wav, reso = gen_wavenumber_grid(np.min(wavd) - 5.0, np.max(wavd) + 5.0, Nx, unit="AA", xsmode="modit")
+nus, wav, reso = wavenumber_grid(np.min(wavd) - 5.0, np.max(wavd) + 5.0, Nx, unit="AA", xsmode="modit")
 
 Rinst=100000.
 beta_inst=R2STD(Rinst)
