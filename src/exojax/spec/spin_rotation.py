@@ -36,7 +36,7 @@ def convolve_rigid_rotation(F0, vr_array, vsini, u1=0.0, u2=0.0):
 
 @custom_jvp
 def rotkernel(x, u1, u2):
-    """rotation kernel w/ the quadratic Limb dwarkening law, numerator of (54) in Kawahara+2022
+    """rotation kernel w/ the quadratic limb darkening law, the numerator of (54) in Kawahara+2022
 
     Args:
         x: x variable
