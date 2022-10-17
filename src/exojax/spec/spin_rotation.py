@@ -28,7 +28,7 @@ def convolve_rigid_rotation(F0, vr_array, vsini, u1=0.0, u2=0.0):
     fft_length = input_length + filter_length - 1
     convolved_signal = jnp.fft.irfft(
         jnp.fft.rfft(F0, n=fft_length) * jnp.fft.rfft(kernel, n=fft_length))
-    n = int((filter_length - 1) / 2)
+    n = int((filter_length - 1) / 2) 
     convolved_signal = convolved_signal[n:-n]
 
     return convolved_signal

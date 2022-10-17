@@ -7,7 +7,7 @@ import jax.numpy as jnp
 import numpy as np
 from exojax.utils.constants import c
 import numpy as np
-
+import warnings
 
 def wavenumber_grid(x0, x1, N, unit='cm-1', xsmode='lpf'):
     """generating the recommended wavenumber grid based on the cross section
@@ -16,7 +16,7 @@ def wavenumber_grid(x0, x1, N, unit='cm-1', xsmode='lpf'):
     Args:
         x0: start wavenumber (cm-1) or wavelength (nm) or (AA)
         x1: end wavenumber (cm-1) or wavelength (nm) or (AA)
-        N: the number of the wavenumber grid
+        N: the number of the wavenumber grid (even number)
         unit: unit of the input grid
         xsmode: cross section computation mode (lpf, dit, modit, premodit)
 
@@ -25,6 +25,12 @@ def wavenumber_grid(x0, x1, N, unit='cm-1', xsmode='lpf'):
         corresponding wavelength grid
         resolution
     """
+    
+    if np.mod(N,2)==1:
+        msg = "Currently, only even number is allowed as N. "
+        msg += "response.convolve_rigid_rotation requires this condition."       
+        raise ValueError(msg)
+        
     if check_scale_xsmode(xsmode) == 'ESLOG':
         if unit == 'cm-1':
             nus = np.logspace(np.log10(x0), np.log10(x1), N, dtype=np.float64)

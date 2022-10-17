@@ -33,13 +33,13 @@ def _convolve_rigid_rotation_np(resolution, F0, vsini, u1=0.0, u2=0.0):
     return convolved_signal
 
 
-def test_convolve_rigid_rotation(fig=False):
+def test_convolve_rigid_rotation(N, fig=False):
     from jax.config import config
     #config.update("jax_enable_x64", True)
     from exojax.utils.constants import c
     nus, wav, resolution = wavenumber_grid(4000.0,
                                                4010.0,
-                                               1000,
+                                               N,
                                                xsmode="premodit")
 
     F0 = np.ones_like(nus)
@@ -85,4 +85,4 @@ def test_rotkernel(fig=False):
 
 if __name__ == "__main__":
     #test_rotkernel(fig=True)
-    test_convolve_rigid_rotation(fig=True)
+    test_convolve_rigid_rotation(1000,fig=True)
