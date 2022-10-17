@@ -23,11 +23,11 @@ def test_delta_velocity_from_resolution():
     assert resmax < 3. * 1.e-7
 
 
-def test_minimum_dv_grid():
+def test_velocity_grid():
     resolution = 10**5
-    vsini = 150.0  #km/s
-    x = velocity_grid(resolution, vsini)
-    x = x/vsini
+    vmax = 150.0  #km/s
+    x = velocity_grid(resolution, vmax)
+    x = x/vmax
     assert x[0] <= -1.0 and x[-1] >= 1.0
     assert x[1] >= -1.0 and x[-2] <= 1.0
 
@@ -35,4 +35,4 @@ def test_minimum_dv_grid():
 if __name__ == "__main__":
     test_wavenumber_grid()
     test_delta_velocity_from_resolution()
-    test_minimum_dv_grid()
+    test_velocity_grid()

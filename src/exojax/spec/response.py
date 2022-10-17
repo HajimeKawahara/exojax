@@ -7,26 +7,10 @@
 import jax.numpy as jnp
 from jax import jit
 from exojax.utils.constants import c
+from jax.lax import scan
+from jax import jit
 
 @jit
-def ipgauss(nus, F0, beta):
-    """Apply the Gaussian IP response to a spectrum F using jax.lax.scan.
-
-    Args:
-        nus: input wavenumber, evenly log-spaced
-        F0: original spectrum (F0)
-        beta: STD of a Gaussian broadening (IP+microturbulence)
-
-    Return:
-        response-applied spectrum (F)
-    """
-    dvmat = jnp.array(c * jnp.log(nus[None, :] / nus[:, None]))
-    kernel = jnp.exp(-(dvmat)**2 / (2.0 * beta**2))
-    kernel = kernel / jnp.sum(kernel, axis=0)  # axis=N
-    F = kernel.T @ F0
-    return F
-
-
 def ipgauss_sampling(nusd, nus, F0, beta, RV):
     """Apply the Gaussian IP response + sampling to a spectrum F.
 
@@ -40,20 +24,15 @@ def ipgauss_sampling(nusd, nus, F0, beta, RV):
     Return:
         response-applied spectrum (F)
     """
-    #    The following check should be placed as another function.
-    #    if(np.min(nusd) < np.min(nus) or np.max(nusd) > np.max(nus)):
-    #        print('WARNING: The wavenumber range of the observational grid [', np.min(nusd), '-', np.max(nusd), ' cm^(-1)] is not fully covered by that of the model grid [', np.min(nus), '-', np.max(nus), ' cm^(-1)]. This can result in the incorrect response-applied spectrum. Check the wavenumber grids for the model and observation.', sep='')
+    def convolve_ipgauss_scan(carry, nusd_each):
+        dvgrid = c * (jnp.log1p(1.0 - nus / nusd_each))
+        kernel = jnp.exp(-(dvgrid + RV)**2 / (2.0 * beta**2))
+        kernel = kernel / jnp.sum(kernel)
+        return carry, kernel@F0
 
-    @jit
-    def ipgauss_sampling_jax(nusd, nus, F0, beta, RV):
-        dvmat = jnp.array(c * jnp.log(nusd[None, :] / nus[:, None]))
-        kernel = jnp.exp(-(dvmat + RV)**2 / (2.0 * beta**2))
-        kernel = kernel / jnp.sum(kernel, axis=0)  # axis=N
-        F = kernel.T @ F0
-        return F
+    _, F_convolved = scan(convolve_ipgauss_scan, 0, nusd)
+    return F_convolved
 
-    F = ipgauss_sampling_jax(nusd, nus, F0, beta, RV)
-    return F
 
 
 @jit
