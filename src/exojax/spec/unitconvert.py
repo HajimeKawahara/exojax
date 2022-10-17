@@ -1,40 +1,39 @@
 """unit conversion for spectrum."""
 
 
-def nu2wav(nus, outputunit='AA'):
+def nu2wav(nus, unit='AA'):
     """wavenumber to wavelength (AA)
 
     Args:
        nus: wavenumber (cm-1)
-       outputunit: unit of wavelength
+       unit: unit of wavelength
 
     Returns:
        wavelength (AA)
     """
-    if outputunit == 'nm':
+    if unit == 'nm':
         return 1.e7/nus[::-1]
-    elif outputunit == 'AA':
+    elif unit == 'AA':
         return 1.e8/nus[::-1]
     else:
-        print('Warning: assumes AA as the unit of output.')
-        return 1.e8/nus[::-1]
+        raise ValueError("unavailable unit")
+        
 
-
-def wav2nu(wav, inputunit):
+def wav2nu(wav, unit):
     """wavelength to wavenumber.
 
     Args:
        wav: wavelength
-       inputunit: unit of wavelength
+       unit: unit of wavelength
 
     Returns:
        wavenumber (cm-1)
     """
 
-    if inputunit == 'nm':
+    if unit == 'nm':
         return 1.e7/wav[::-1]
-    elif inputunit == 'AA':
+    elif unit == 'AA':
         return 1.e8/wav[::-1]
     else:
-        print('Warning: assumes AA as the unit of input.')
-        return 1.e8/wav[::-1]
+        raise ValueError("unavailable unit")
+        

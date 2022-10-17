@@ -77,7 +77,7 @@ if __name__ == '__main__':
     from exojax.spec.rtransfer import nugrid
 
     wav = np.linspace(22920.23000, 1000)
-    nus = wav2nu(wav, inputunit='AA')
+    nus = wav2nu(wav, unit='AA')
     print(check_scale_nugrid(nus, gridmode='ESLIN'))
     print('----------------------')
 

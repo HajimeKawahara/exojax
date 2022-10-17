@@ -3,10 +3,10 @@
 from exojax.spec.unitconvert import nu2wav, wav2nu
 from exojax.spec.check_nugrid import check_scale_xsmode, warn_resolution
 from exojax.utils.instfunc import resolution_eslog, resolution_eslin
+from exojax.utils.constants import c
 import jax.numpy as jnp
 import numpy as np
-from exojax.utils.constants import c
-import numpy as np
+import warnings
 
 def wavenumber_grid(x0, x1, N, unit='cm-1', xsmode='lpf'):
     """generating the recommended wavenumber grid based on the cross section
@@ -21,7 +21,7 @@ def wavenumber_grid(x0, x1, N, unit='cm-1', xsmode='lpf'):
 
     Returns:
         wavenumber grid evenly spaced in log space
-        corresponding wavelength grid
+        corresponding wavelength grid (AA)
         resolution
     """
     
@@ -30,21 +30,20 @@ def wavenumber_grid(x0, x1, N, unit='cm-1', xsmode='lpf'):
         msg += "response.convolve_rigid_rotation requires this condition."       
         raise ValueError(msg)
         
-    if check_scale_xsmode(xsmode) == 'ESLOG' and unit == 'cm-1':
-        nus = np.logspace(np.log10(x0), np.log10(x1), N, dtype=np.float64)
-        wav = nu2wav(nus)
-    elif check_scale_xsmode(xsmode) == 'ESLOG' and (unit == 'nm' or unit == 'AA'):
-        wav = np.logspace(np.log10(x0), np.log10(x1), N, dtype=np.float64)
-        nus = wav2nu(wav, unit)
+    if check_scale_xsmode(xsmode) == 'ESLOG':
+        grid = np.logspace(np.log10(x0), np.log10(x1), N, dtype=np.float64)
     elif check_scale_xsmode(xsmode) == 'ESLIN' and unit == 'cm-1':
-        nus = np.linspace((x0), (x1), N, dtype=np.float64)
-        wav = nu2wav(nus)
-    elif check_scale_xsmode(xsmode) == 'ESLIN' and (unit == 'nm' or unit == 'AA'):
-        cx1, cx0 = wav2nu(np.array([x0, x1]), unit)
-        nus = np.linspace((cx0), (cx1), N, dtype=np.float64)
-        wav = nu2wav(nus, unit)
+        warnings.warn("ESLIN is not recommended. Consider to use ESLOG instead.", UserWarning)
+        grid = np.linspace((x0), (x1), N, dtype=np.float64)
     else:
         raise ValueError("unavailable xsmode/unit.")
+        
+    if unit == 'cm-1':
+        nus = grid
+    elif unit == 'nm' or unit == 'AA':
+        nus = wav2nu(grid, unit)
+        
+    wav = nu2wav(nus, unit="AA")
         
     if check_scale_xsmode(xsmode) == 'ESLOG':
         resolution = resolution_eslog(nus)
