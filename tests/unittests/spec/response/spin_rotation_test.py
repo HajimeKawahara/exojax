@@ -33,7 +33,7 @@ def _convolve_rigid_rotation_np(resolution, F0, vsini, u1=0.0, u2=0.0):
     return convolved_signal
 
 
-def test_convolve_rigid_rotation(N, fig=False):
+def test_convolve_rigid_rotation(N=1000, fig=False):
     from jax.config import config
     #config.update("jax_enable_x64", True)
     from exojax.utils.constants import c
@@ -50,7 +50,7 @@ def test_convolve_rigid_rotation(N, fig=False):
     Frot = convolve_rigid_rotation(F0, vr_array, vsini, u1=0.1, u2=0.1)
     Frot_ = _convolve_rigid_rotation_np(resolution, F0, vsini, u1=0.1, u2=0.1)
     res = np.sqrt(np.sum(np.abs(1.0 - Frot / Frot_)**2))
-    #assert res < 1.e-5
+    assert res < 1.e-5
     if fig:
         import matplotlib.pyplot as plt
         figx = plt.figure()

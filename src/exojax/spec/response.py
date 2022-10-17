@@ -10,6 +10,19 @@ from exojax.utils.constants import c
 from jax.lax import scan
 from jax import jit
 
+from exojax.spec.spin_rotation import convolve_rigid_rotation
+from exojax.utils.grids import velocity_grid 
+from exojax.utils.instfunc import resolution_eslog
+
+def rigidrot(nus, F0, vsini, u1, u2, vsinimax=100.0):
+    """(deprecated) rigid rotation. This will be removed.
+    """
+    resolution = resolution_eslog(nus)
+    vr_array = velocity_grid(resolution, vsinimax)
+    return convolve_rigid_rotation(F0, vr_array, vsini, u1, u2)
+    
+
+
 @jit
 def ipgauss_sampling(nusd, nus, F0, beta, RV):
     """Apply the Gaussian IP response + sampling to a spectrum F.

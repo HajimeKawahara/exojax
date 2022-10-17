@@ -33,5 +33,5 @@ nusobs=numpy.linspace(1900.0,2300.0,10000,dtype=numpy.float64) #observation wave
 Fx=autort.spectrum(nusobs,100000.0,20.0,0.0) #R=100000, vsini=10km/s, RV=0km/s
 
 plt.plot(nus,F)
-plt.plot(nus,Fx)
+plt.plot(nusobs,Fx)
 plt.show()
