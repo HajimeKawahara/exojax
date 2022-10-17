@@ -15,11 +15,6 @@ from exojax.spec.hitran import (
     normalized_doppler_sigma
 )
 
-from exojax.spec.autospec import (
-    AutoXS,
-    AutoRT,
-)
-
 
 from exojax.spec.opacity import (
     xsection,

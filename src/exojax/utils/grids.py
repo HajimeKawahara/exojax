@@ -7,7 +7,6 @@ import jax.numpy as jnp
 import numpy as np
 from exojax.utils.constants import c
 import numpy as np
-import warnings
 
 def wavenumber_grid(x0, x1, N, unit='cm-1', xsmode='lpf'):
     """generating the recommended wavenumber grid based on the cross section
