@@ -30,28 +30,29 @@ def wavenumber_grid(x0, x1, N, unit='cm-1', xsmode='lpf'):
         msg += "response.convolve_rigid_rotation requires this condition."       
         raise ValueError(msg)
         
+    if check_scale_xsmode(xsmode) == 'ESLOG' and unit == 'cm-1':
+        nus = np.logspace(np.log10(x0), np.log10(x1), N, dtype=np.float64)
+        wav = nu2wav(nus)
+    elif check_scale_xsmode(xsmode) == 'ESLOG' and (unit == 'nm' or unit == 'AA'):
+        wav = np.logspace(np.log10(x0), np.log10(x1), N, dtype=np.float64)
+        nus = wav2nu(wav, unit)
+    elif check_scale_xsmode(xsmode) == 'ESLIN' and unit == 'cm-1':
+        nus = np.linspace((x0), (x1), N, dtype=np.float64)
+        wav = nu2wav(nus)
+    elif check_scale_xsmode(xsmode) == 'ESLIN' and (unit == 'nm' or unit == 'AA'):
+        cx1, cx0 = wav2nu(np.array([x0, x1]), unit)
+        nus = np.linspace((cx0), (cx1), N, dtype=np.float64)
+        wav = nu2wav(nus, unit)
+    else:
+        raise ValueError("unavailable xsmode/unit.")
+        
     if check_scale_xsmode(xsmode) == 'ESLOG':
-        if unit == 'cm-1':
-            nus = np.logspace(np.log10(x0), np.log10(x1), N, dtype=np.float64)
-            wav = nu2wav(nus)
-        elif unit == 'nm' or unit == 'AA':
-            wav = np.logspace(np.log10(x0), np.log10(x1), N, dtype=np.float64)
-            nus = wav2nu(wav, unit)
-
         resolution = resolution_eslog(nus)
-        warn_resolution(resolution)
-
+        minr = resolution
     elif check_scale_xsmode(xsmode) == 'ESLIN':
-        if unit == 'cm-1':
-            nus = np.linspace((x0), (x1), N, dtype=np.float64)
-            wav = nu2wav(nus)
-        elif unit == 'nm' or unit == 'AA':
-            cx1, cx0 = wav2nu(np.array([x0, x1]), unit)
-            nus = np.linspace((cx0), (cx1), N, dtype=np.float64)
-            wav = nu2wav(nus, unit)
-
         minr, resolution, maxr = resolution_eslin(nus)
-        warn_resolution(minr)
+        
+    warn_resolution(minr)
 
     return nus, wav, resolution
 
