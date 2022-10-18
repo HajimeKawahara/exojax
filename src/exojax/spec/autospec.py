@@ -1,6 +1,6 @@
 """Automatic Opacity and Spectrum Generator."""
 from exojax.spec import defmol, defcia, contdb, planck, molinfo, lpf, dit, modit, initspec, response
-from exojax.spec.api import MdbExomol, MdbHit
+from exojax.spec.api import MdbExomol, MdbHitran, MdbHitemp
 from exojax.spec.set_ditgrid import ditgrid_log_interval
 from exojax.spec.opacity import xsection
 from exojax.spec.hitran import SijT, doppler_sigma, gamma_natural, gamma_hitran, normalized_doppler_sigma
@@ -10,12 +10,17 @@ from exojax.spec.check_nugrid import check_scale_nugrid
 from exojax.spec.make_numatrix import make_numatrix0
 from exojax.utils.constants import c
 from exojax.utils.instfunc import R2STD
+from exojax.spec.response import convolve_rigid_rotation
+from exojax.spec.response import ipgauss_sampling
+from exojax.utils.grids import velocity_grid
+from exojax.utils.instfunc import resolution_eslog
 
 import numpy as np
 from jax import jit, vmap
 import jax.numpy as jnp
 import pathlib
 import tqdm
+import warnings
 
 __all__ = ['AutoXS', 'AutoRT']
 
@@ -70,10 +75,14 @@ class AutoXS(object):
     def init_database(self):
         molpath = pathlib.Path(self.databasedir) / pathlib.Path(
             self.identifier)
-        if self.database == 'HITRAN' or self.database == 'HITEMP':
-            self.mdb = MdbHit(molpath,
-                              nurange=[self.nus[0], self.nus[-1]],
-                              crit=self.crit)
+        if self.database == 'HITRAN':
+            self.mdb = MdbHitran(molpath,
+                                 nurange=[self.nus[0], self.nus[-1]],
+                                 crit=self.crit)
+        elif self.database == 'HITEMP':
+            self.mdb = MdbHitemp(molpath,
+                                 nurange=[self.nus[0], self.nus[-1]],
+                                 crit=self.crit)
         elif self.database == 'ExoMol':
             print('broadf=', self.broadf)
             self.mdb = MdbExomol(molpath,
@@ -82,6 +91,7 @@ class AutoXS(object):
                                  crit=self.crit)
         else:
             print('Select database from HITRAN, HITEMP, ExoMol.')
+        self.mdb.generate_jnp_arrays()
 
     def linest(self, T):
         """line strength.
@@ -166,7 +176,8 @@ class AutoXS(object):
 
     def autonus(self, checknus, tag='ESLOG'):
         if ~checknus:
-            print('WARNING: the wavenumber grid does not look ' + tag)
+            msg = 'The wavenumber grid does not look ' + tag
+            warnings.warn(msg, UserWarning)
             if self.autogridconv:
                 print('the wavenumber grid is interpolated.')
                 if tag == 'ESLOG':
@@ -296,11 +307,12 @@ class AutoXS(object):
         """
         Nneg = len(xsm[xsm < 0.0])
         if Nneg > 0:
-            print('Warning: negative cross section detected #=', Nneg,
-                  ' fraction=',
-                  Nneg / float(jnp.shape(xsm)[0] * jnp.shape(xsm)[1]))
+            msg = 'negative cross section detected #=' + str(
+                Nneg) + ' fraction=' + str(
+                    Nneg / float(jnp.shape(xsm)[0] * jnp.shape(xsm)[1]))
+            warnings.warn(msg, UserWarning)
             return jnp.abs(xsm)
-        else:
+        else:   
             return xsm
 
 
@@ -339,11 +351,11 @@ class AutoRT(object):
         self.autogridconv = autogridconv
 
         if check_scale_nugrid(nus, gridmode='ESLOG'):
-            print('nu grid is evenly spaced in log space (ESLOG).')
+            print('The wavenumber grid is evenly spaced in log space (ESLOG).')
         elif check_scale_nugrid(nus, gridmode='ESLIN'):
-            print('nu grid is evenly spaced in linear space (ESLIN).')
+            print('The wavenumber grid is evenly spaced in linear space (ESLIN).')
         else:
-            print('nu grid is NOT evenly spaced in log nor linear space.')
+            print('The wavenumber grid is NOT evenly spaced in log nor linear space.')
 
         if dParr is None:
             from exojax.utils.chopstacks import buildwall
@@ -416,8 +428,7 @@ class AutoRT(object):
                  u1=0.0,
                  u2=0.0,
                  zeta=0.,
-                 betamic=0.,
-                 direct=True):
+                 betamic=0.):
         """generating spectrum.
 
         Args:
@@ -429,8 +440,7 @@ class AutoRT(object):
            u2: Limb-darkening coefficient 2
            zeta: macroturbulence distrubunce (km/s) in the radial-tangential model (Gray2005)
            betamic: microturbulence beta (STD, km/s)
-           direct: True=use rigidrot/ipgauss_sampling, False=use rigidrot2, ipgauss2, sampling
-
+        
         Returns:
            spectrum (F)
         """
@@ -447,32 +457,10 @@ class AutoRT(object):
         beta = np.sqrt((self.betaIP)**2 + (self.betamic)**2)
         F0 = self.rtrun()
 
-        if len(self.nus) < 50000 and direct == True:
-            print('rotation (1)')
-            Frot = response.rigidrot(self.nus,
-                                     F0,
-                                     self.vsini,
-                                     u1=self.u1,
-                                     u2=self.u2)
-            self.F = response.ipgauss_sampling(self.nuobs, self.nus, Frot,
-                                               beta, self.RV)
-        else:
-            print('rotation (2): Require CuDNN')
-            dv = c * (np.log(self.nus[1]) - np.log(self.nus[0]))
-            Nv = int(self.vsini / dv) + 1
-            vlim = Nv * dv
-            varr_kernel = jnp.linspace(-vlim, vlim, 2 * Nv + 1)
-            Frot = response.rigidrot2(self.nus,
-                                      F0,
-                                      varr_kernel,
-                                      self.vsini,
-                                      u1=self.u1,
-                                      u2=self.u2)
-            maxp = 5.0  # 5sigma
-            Nv = int(maxp * beta / dv) + 1
-            vlim = Nv * dv
-            varr_kernel = jnp.linspace(-vlim, vlim, 2 * Nv + 1)
-            Fgrot = response.ipgauss2(self.nus, Frot, varr_kernel, beta)
-            self.F = response.sampling(self.nuobs, self.nus, Fgrot, self.RV)
-
+        resolution = resolution_eslog(self.nus)
+        vsini_max = self.vsini
+        vr_array = velocity_grid(resolution, vsini_max)
+        Frot = convolve_rigid_rotation(F0, vr_array, self.vsini, self.u1,
+                                       self.u2)
+        self.F = ipgauss_sampling(self.nuobs, self.nus, Frot, beta, self.RV)
         return self.F

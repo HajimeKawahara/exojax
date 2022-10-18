@@ -4,7 +4,7 @@ import pkg_resources
 import pandas as pd
 import numpy as np
 from exojax.spec.initspec import init_premodit
-from exojax.spec.setrt import gen_wavenumber_grid
+from exojax.utils.grids import wavenumber_grid
 from exojax.spec.premodit import xsvector
 from exojax.test.emulate_broadpar import mock_broadpar_exomol
 from exojax.test.emulate_mdb import mock_mdbExoMol
@@ -25,7 +25,7 @@ def test_xsection_premodit():
     #Mmol = molmass("CO")
     Nx = 5000
     
-    nu_grid, wav, res = gen_wavenumber_grid(22800.0,
+    nu_grid, wav, res = wavenumber_grid(22800.0,
                                             23100.0,
                                             Nx,
                                             unit='AA',

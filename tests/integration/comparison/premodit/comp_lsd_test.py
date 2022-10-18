@@ -33,7 +33,7 @@ def compare_line_shape_density(mdb,nu_grid,Ttest=1000.0,interval_contrast=0.1,Tt
     """
     from exojax.spec.lsd import npgetix
     from exojax.spec.hitran import SijT
-    from exojax.spec.premodit import make_elower_grid, 
+    from exojax.spec.premodit import make_elower_grid
     from exojax.spec.premodit import unbiased_lsd
     
     dit_grid_resolution = 0.1    

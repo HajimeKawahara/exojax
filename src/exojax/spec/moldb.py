@@ -10,9 +10,10 @@ from jax import jit, vmap
 import pathlib
 import vaex
 import warnings
-from exojax.spec import hapi, exomolapi, exomol, atomllapi, atomll, hitranapi
+from exojax.spec import exomolapi, exomol, atomllapi, atomll, hitranapi
 from exojax.spec.hitran import gamma_natural as gn
 from exojax.utils.constants import hcperk, Tref
+import hapi
 
 __all__ = ['MdbExomol', 'MdbHit', 'AdbVald', 'AdbSepVald', 'AdbKurucz']
 

@@ -24,7 +24,7 @@ import jax.numpy as jnp
 from exojax.spec import rtransfer as rt
 from exojax.spec import moldb, contdb
 from exojax.spec import rtransfer
-from exojax.spec.setrt import gen_wavenumber_grid
+from exojax.utils.grids import wavenumber_grid
 from exojax.spec.rtransfer import rtrun, dtauM, dtauCIA
 from exojax.spec import planck, response
 from exojax.spec import molinfo
@@ -51,7 +51,7 @@ nflux = flux / norm + np.random.normal(0, sigmain, len(wavd))
 NP = 100
 Parr, dParr, k = rtransfer.pressure_layer(NP=NP)
 Nx = 250 #trim
-nu_grid, wav, res = gen_wavenumber_grid(
+nu_grid, wav, res = wavenumber_grid(
                            np.min(wavd) - 2.0, #trim
                            np.max(wavd) + 2.0, #trim
                            Nx,

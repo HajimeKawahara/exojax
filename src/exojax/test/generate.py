@@ -2,7 +2,7 @@
 
 """
 from exojax.spec import moldb
-from exojax.spec.setrt import gen_wavenumber_grid
+from exojax.utils.grids import wavenumber_grid
 import pickle
 import numpy as np
 
@@ -11,7 +11,7 @@ def gendata_moldb_exomol():
     """
     from exojax.test.data import TESTDATA_moldb_CO_EXOMOL as filename
     Nx=10000
-    nus, wav, res = gen_wavenumber_grid(22920.0,24000.0, Nx, unit='AA')
+    nus, wav, res = wavenumber_grid(22920.0,24000.0, Nx, unit='AA')
     mdbCO = moldb.MdbExomol('.database/CO/12C-16O/Li2015', nus, crit=1e-35, Ttyp=296.0)
     with open(filename, 'wb') as f:
         pickle.dump(mdbCO, f)
