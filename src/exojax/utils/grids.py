@@ -19,6 +19,9 @@ def wavenumber_grid(x0, x1, N, unit='cm-1', xsmode='lpf'):
         unit: unit of the input grid
         xsmode: cross section computation mode (lpf, dit, modit, premodit)
 
+    Note:
+        ESLIN sets evenly-spaced linear grid in wavenumber space while ESLOG sets evenly-spaced log grid both in wavenumber and wavelength spaces. 
+
     Returns:
         wavenumber grid evenly spaced in log space
         corresponding wavelength grid (AA)
@@ -61,7 +64,7 @@ def _set_resolution(grid_mode, nus):
         resolution = resolution_eslog(nus)
         minr = resolution
     elif grid_mode == 'ESLIN':
-        minr, resolution, maxr = resolution_eslin(nus)
+        minr, resolution, _ = resolution_eslin(nus)
     warn_resolution(minr)
     return resolution
 

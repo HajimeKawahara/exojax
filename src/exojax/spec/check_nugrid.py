@@ -32,12 +32,13 @@ def check_scale_xsmode(xsmode):
     eslog_list = _add_upper_case(['lpf', 'modit', 'premodit', 'presolar'])
     eslin_list = _add_upper_case(['dit'])
     if xsmode in eslog_list:
-        print('xsmode assumes ESLOG: mode=' + str(xsmode))
+        print('xsmode assumes ESLOG in wavenumber space: mode=' + str(xsmode))
         return 'ESLOG'
     elif xsmode in eslin_list:
-        print('xsmode assumes ESLIN: mode=' + str(xsmode))
+        print('xsmode assumes ESLIN in wavenumber space: mode=' + str(xsmode))
         return 'ESLIN'
     else:
+        warnings.warn("unknown xsmode.", UserWarning)
         return 'UNKNOWN'
 
 
