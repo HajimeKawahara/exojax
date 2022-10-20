@@ -1,10 +1,6 @@
 Fitting a spectrum model using Gradient Descent based optimizations in JAXopt
 =============================================================================
 
-The gradient-based optimization is available using autograd in ExoJAX. In this tutorial, we demonstrate the gradient-based optimization of a simple emission spectrum using `JAXopt <https://github.com/google/jaxopt>`_.
-
-See `this movie <https://youtu.be/XQIFPRdVzyc>`_ to see how the gradient descent and ADAM find the model fitted to the spectrum.
-
 .. code:: ipython3
 
     import pandas as pd
@@ -32,7 +28,17 @@ We add Gaussian noise to data. nusd is the observing wavenumber grid.
     plt.plot(wavd[::-1],nflux)
 
 
-.. image:: optimize_spectrum_JAXopt/output_5_1.png
+
+
+
+.. parsed-literal::
+
+    [<matplotlib.lines.Line2D at 0x7f38e43e98e0>]
+
+
+
+
+.. image:: optimize_spectrum_JAXopt_files/optimize_spectrum_JAXopt_5_1.png
 
 
 .. code:: ipython3
@@ -110,7 +116,7 @@ We have only 39 CO lines.
 
 
 
-.. image:: optimize_spectrum_JAXopt/output_12_1.png
+.. image:: optimize_spectrum_JAXopt_files/optimize_spectrum_JAXopt_12_1.png
 
 
 Again, numatrix should be precomputed prior to HMC-NUTS.
@@ -249,7 +255,7 @@ Plot the results. It works well!
 
 
 
-.. image:: optimize_spectrum_JAXopt/output_31_0.png
+.. image:: optimize_spectrum_JAXopt_files/optimize_spectrum_JAXopt_31_0.png
 
 
 One by one update
@@ -298,16 +304,18 @@ Using ADAM optimizer
 
     100%|█████████████████████████████████████████████████████████████████████████████████| 300/300 [02:16<00:00,  2.20it/s]
 
-     if you wanna optimize at once, run the following: 
 
 .. code:: ipython3
 
-    res = solver.run(init_params=initpar)
-    params, state = res
+    # if you wanna optimize at once, run the following: 
+    # res = solver.run(init_params=initpar)
+    # params, state = res
 
 .. code:: ipython3
 
     params*boost
+
+
 
 
 .. parsed-literal::
@@ -344,8 +352,7 @@ make a movie
     100%|█████████████████████████████████████████████████████████████████████████████████| 300/300 [02:43<00:00,  1.84it/s]
 
 
-For instance, you can make a movie using ffmpeg:
+.. code:: ipython3
 
-.. code:: sh
-
-	  ffmpeg -r 30 -i gradient_descent_jaxopt%04d.png -vcodec libx264 -pix_fmt yuv420p -r 60 out.mp4
+    #for instance, make a movie by
+    # > ffmpeg -r 30 -i gradient_descent_jaxopt%04d.png -vcodec libx264 -pix_fmt yuv420p -r 60 outx.mp4

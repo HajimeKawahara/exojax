@@ -1,4 +1,4 @@
-CO Cross Section using HITRAN
+Computing CO cross section using HITRAN
 ---------------------------------------
 
 This tutorial demonstrates how to compute the opacity of CO using HITRAN
@@ -31,10 +31,6 @@ Define molecular weight of CO (:math:`\sim 12+16=28`), temperature (K),
 and pressure (bar). Also, we here assume the 100 % CO atmosphere,
 i.e. the partial pressure = pressure.
 
-
-Note: we can reduce the use of DRAM by using the option of ``extract=True`` in ``moldb.MdbHit``. It extracts the opacity data we consider now. See ":doc:`../userguide/hitran`" for the details.
-
-
 .. code:: ipython3
 
     Mmol=28.010446441149536 # molecular weight
@@ -50,7 +46,21 @@ Here, we use the partition function from HAPI
 
 .. code:: ipython3
 
-    qt=mdbCO.qr_interp_lines(Tfix)
+    import jax.numpy as jnp
+    qt=mdbCO.Qr_layer_HAPI(jnp.array([Tfix]))[0]
+
+.. code:: ipython3
+
+    np.shape(qt)
+
+
+
+
+.. parsed-literal::
+
+    (3977,)
+
+
 
 Let us compute the line strength S(T) at temperature of Tfix.
 
@@ -78,7 +88,7 @@ where the pressure broadning
 
 :math:`\gamma^p_L = (T/296K)^{-n_{air}} [ \alpha_{air} ( P - P_{part})/P_{atm} + \alpha_{self} P_{part}/P_{atm}]`
 
-:math:`P_{atm}`: 1 atm in the unit of bar (i.e. = 1.01325)
+:math:`P_{atm}`: 1 atm in the unit of bar (i.e. = 1.01325)
 
 and the natural broadening
 
@@ -125,7 +135,7 @@ numatrix).
 
 .. parsed-literal::
 
-    100%|██████████| 456/456 [00:03<00:00, 126.50it/s]
+    100%|██████████| 456/456 [00:12<00:00, 36.43it/s]
 
 
 Plot it!
@@ -144,7 +154,7 @@ Plot it!
 
 
 
-.. image:: opacity/output_20_0.png
+.. image:: opacity_files/opacity_21_0.png
 
 
 .. code:: ipython3
@@ -162,7 +172,7 @@ Plot it!
 
 
 
-.. image:: opacity/output_21_0.png
+.. image:: opacity_files/opacity_22_0.png
 
 
 Important Note
@@ -180,7 +190,7 @@ Below, we see the difference of opacity between float64 case and float
 
 .. parsed-literal::
 
-    100%|██████████| 456/456 [00:02<00:00, 159.63it/s]
+    100%|██████████| 456/456 [00:06<00:00, 68.35it/s]
 
 .. parsed-literal::
 
@@ -211,7 +221,7 @@ Below, we see the difference of opacity between float64 case and float
 
 
 
-.. image:: opacity/output_25_0.png
+.. image:: opacity_files/opacity_26_0.png
 
 
 We found ~ 10 % error when using float32 as an wavenumber and line
