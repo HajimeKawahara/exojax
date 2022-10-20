@@ -36,7 +36,8 @@ EXOMOL_DEFMOL = \
         '52Cr-1H': 'MoLLIST',
         '1H2-16O': 'POKAZATEL',
         '51V-16O': 'VOMYT',
-        '12C-14N': 'Trihybrid'
+        '12C-14N': 'Trihybrid',
+        '1H3-16O_p':'eXeL'
     }
 
 
