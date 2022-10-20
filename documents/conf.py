@@ -23,7 +23,7 @@ copyright = '2020-2022, ExoJAX contributors'
 author = 'ExoJAX contributors'
 
 # The full version, including alpha/beta/rc tags
-release = '1.1.2'
+release = '1.2'
 
 
 # -- General configuration ---------------------------------------------------
