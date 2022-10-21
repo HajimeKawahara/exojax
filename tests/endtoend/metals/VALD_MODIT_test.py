@@ -21,7 +21,7 @@ import numpy as np
 import jax.numpy as jnp
 from exojax.spec import moldb, atomll, contdb, molinfo, initspec, planck, response
 from exojax.spec.rtransfer import pressure_layer,nugrid, dtauVALD, dtauM_mmwl, dtauHminus_mmwl, dtauCIA_mmwl, rtrun
-from exojax.utils.instfunc import R2STD
+from exojax.utils.instfunc import resolution_to_gaussian_std
 from exojax.spec.modit import vald_all, xsmatrix_vald, exomol, xsmatrix, setdgm_vald_all, setdgm_exomol
 
 def test_VALD_MODIT():
@@ -36,10 +36,10 @@ def test_VALD_MODIT():
     ONEARR=np.ones_like(Parr)
 
     Nx = 2000
-    nus, wav, res = nugrid(wls - 5.0, wll + 5.0, Nx, unit="AA", xsmode="modit")
+    nus, wav, res = wavenumber_grid(wls - 5.0, wll + 5.0, Nx, unit="AA", xsmode="modit")
 
     Rinst=100000. #instrumental spectral resolution
-    beta_inst=R2STD(Rinst)  #equivalent to beta=c/(2.0*np.sqrt(2.0*np.log(2.0))*R)
+    beta_inst=resolution_to_gaussian_std(Rinst)  #equivalent to beta=c/(2.0*np.sqrt(2.0*np.log(2.0))*R)
 
     #atoms and ions from VALD
     adbV = moldb.AdbVald(path_ValdLineList, nus, crit = 1e-100) #The crit is defined just in case some weak lines may cause an error that results in a gamma of 0... (220219)

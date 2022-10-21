@@ -14,7 +14,7 @@ Click below for the details for mdb class for each database.
 .. code:: ipython
 	  
 	  >>> from exojax.spec import moldb
-	  >>> from exojax.spec.rtransfer import nugrid
+	  >>> from exojax.utils.grids import wavenumber_grid
 	  >>> nus,wav,res=nugrid(22880.,23000.,1000,unit="AA")
 	  >>> mdbCO=moldb.MdbExomol('.database/CO/12C-16O/Li2015',nus)
 	  default broadening parameters are used for  71  J lower states in  152  states

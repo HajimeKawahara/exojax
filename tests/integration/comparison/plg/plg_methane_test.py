@@ -18,7 +18,7 @@ def test_plg_methane():
     Tgue = 1300.
     errTgue = 500.
 
-    wls, wll, nugrid_res = 16448.0, 16452.0, 0.05
+    wls, wll, wavenumber_grid_res = 16448.0, 16452.0, 0.05
     nus, wav, reso = wavenumber_grid(wls, wll, int((wll-wls)/nugrid_res), unit="AA", xsmode="modit")
     mdb_orig = moldb.MdbExomol('.database/CH4/12C-1H4/YT10to10/', nus, \
                                crit=0, Ttyp=Tgue)

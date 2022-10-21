@@ -5,7 +5,7 @@ import numpy as np
 from exojax.spec.lpf import xsmatrix
 from exojax.spec.exomol import gamma_exomol
 from exojax.spec.hitran import SijT, doppler_sigma, gamma_natural
-from exojax.spec.rtransfer import rtrun, dtauM, dtauCIA, nugrid
+from exojax.spec.rtransfer import rtrun, dtauM, dtauCIA, wavenumber_grid
 from exojax.spec import planck, response
 from exojax.spec import molinfo
 from exojax.utils.constants import RJ, pc, Rs, c
@@ -33,7 +33,7 @@ def test_jaxopt_spectrum():
     NP = 100
     Parr, dParr, k = rt.pressure_layer(NP=NP)
     Nx = 1500
-    nus, wav, res = nugrid(np.min(wavd) - 5.0,
+    nus, wav, res = wavenumber_grid(np.min(wavd) - 5.0,
                            np.max(wavd) + 5.0,
                            Nx,
                            unit="AA")

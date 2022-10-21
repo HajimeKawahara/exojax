@@ -16,13 +16,13 @@ from exojax.spec import planck, moldb, contdb, response, molinfo, dit, modit, in
 from exojax.spec.exomol import gamma_exomol
 from exojax.spec.hitran import SijT, doppler_sigma, gamma_natural, gamma_hitran
 from exojax.spec.hitrancia import read_cia, logacia 
-from exojax.spec.rtransfer import rtrun, dtauM, dtauCIA, nugrid, pressure_layer
+from exojax.spec.rtransfer import rtrun, dtauM, dtauCIA, wavenumber_grid, pressure_layer
 from exojax.spec.evalline import mask_weakline
 from exojax.spec.limb_darkening import ld_kipping
 from exojax.spec.modit import exomol,xsmatrix,setdgm_exomol, minmax_dgmatrix
 
 from exojax.utils.afunc import getjov_gravity
-from exojax.utils.instfunc import R2STD
+from exojax.utils.instfunc import resolution_to_gaussian_std
 from exojax.utils.constants import RJ, pc
 from exojax.utils.gpkernel import gpkernel_RBF
 
@@ -48,7 +48,7 @@ molmassCO=molinfo.molmass("CO") # molecular mass (CO)
 molmassH2O=molinfo.molmass("H2O") # molecular mass (H2O)
 
 # Instrument
-beta=R2STD(100000.) #std of gaussian from R=100000.
+beta=resolution_to_gaussian_std(100000.) #std of gaussian from R=100000.
 
 # LOADING CIA
 mmrH2=0.74 # mean molecualr weight of H2 for CIA
@@ -62,7 +62,7 @@ vmrHe=(mmrHe*mmw/molmassHe)
 Nx=4500    # number of wavenumber bins (nugrid) for fit
 ws=22876.0 # AA
 we=23010.0 # AA
-nus,wav,res=nugrid(ws-5.0,we+5.0,Nx,unit="AA",xsmode="modit") # set nugrid 
+nus,wav,res=nugrid(ws-5.0,we+5.0,Nx,unit="AA",xsmode="modit") # set wavenumber_grid 
 
 # Masking data
 mask=(ws<wavd[::-1])*(wavd[::-1]<we) # data fitting range

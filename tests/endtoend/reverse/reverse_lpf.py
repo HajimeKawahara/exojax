@@ -17,7 +17,7 @@ from exojax.spec import rtransfer as rt
 from exojax.utils.constants import RJ, pc, Rs, c
 from exojax.spec import molinfo
 from exojax.spec import planck, response
-from exojax.spec.rtransfer import rtrun, dtauM, dtauCIA, nugrid
+from exojax.spec.rtransfer import rtrun, dtauM, dtauCIA, wavenumber_grid
 from exojax.spec.hitran import SijT, doppler_sigma, gamma_natural
 from exojax.spec.exomol import gamma_exomol
 from exojax.spec.lpf import xsmatrix
@@ -37,7 +37,7 @@ nflux = flux/norm+np.random.normal(0, sigmain, len(wavd))
 NP = 100
 Parr, dParr, k = rt.pressure_layer(NP=NP)
 Nx = 1500
-nus, wav, res = nugrid(np.min(wavd)-5.0, np.max(wavd)+5.0, Nx, unit='AA')
+nus, wav, res = wavenumber_grid(np.min(wavd)-5.0, np.max(wavd)+5.0, Nx, unit='AA')
 
 R = 100000.
 beta = c/(2.0*np.sqrt(2.0*np.log(2.0))*R)

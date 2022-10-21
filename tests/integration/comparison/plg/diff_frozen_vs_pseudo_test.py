@@ -12,7 +12,7 @@ with open(filename, 'rb') as f:
     mdb = pickle.load(f)
 
 def test_diff_frozen_vs_pseudo():
-    wls, wll, nugrid_res = 15545, 15546, 0.05
+    wls, wll, wavenumber_grid_res = 15545, 15546, 0.05
     nus, wav, reso = wavenumber_grid(wls, wll, int((wll-wls)/nugrid_res), unit="AA", xsmode="modit")
     cnu,indexnu,R,pmarray = initspec.init_modit(mdb.nu_lines,nus)
 

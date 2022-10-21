@@ -11,7 +11,7 @@ from exojax.spec import initspec
 from exojax.spec import moldb, contdb
 from exojax.spec import molinfo
 from exojax.spec import SijT
-from exojax.spec.rtransfer import nugrid
+from exojax.utils.grids import wavenumber_grid
 from exojax.spec.exomol import gamma_exomol
 from exojax.spec import gamma_natural
 from exojax.spec import normalized_doppler_sigma
@@ -53,7 +53,7 @@ MMR = dat['C1H4'].values
 
 #Parr, dParr, k=rt.pressure_layer(NP=NP)
 #Tarr = T0*(Parr)**0.1
-nus, wav, R = nugrid(15900, 16300, 30000, unit='AA', xsmode='modit')
+nus, wav, R = wavenumber_grid(15900, 16300, 30000, unit='AA', xsmode='modit')
 print('R=', R)
 mdbCH4 = moldb.MdbExomol('.database/CH4/12C-1H4/YT10to10/', nus, crit=1.e-36)
 cdbH2H2 = contdb.CdbCIA('.database/H2-H2_2011.cia', nus)

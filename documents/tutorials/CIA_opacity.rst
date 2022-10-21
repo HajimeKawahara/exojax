@@ -3,7 +3,7 @@ CIA coefficient
 
 .. code:: ipython3
 
-    from exojax.spec.rtransfer import nugrid
+    from exojax.utils.grids import wavenumber_grid
     nus,wav,res=nugrid(5000,50000,1000,unit="AA")
     from exojax.spec import contdb
     cdbH2H2=contdb.CdbCIA('.database/H2-H2_2011.cia',nus)

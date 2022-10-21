@@ -18,7 +18,7 @@ def test_plg_h2o():
     Tgue = 3000.
     errTgue = 500.
 
-    wls, wll, nugrid_res = 15541, 15551, 0.05
+    wls, wll, wavenumber_grid_res = 15541, 15551, 0.05
     nus, wav, reso = wavenumber_grid(wls, wll, int((wll-wls)/nugrid_res), unit="AA", xsmode="modit")
     mdb_orig = moldb.MdbExomol('.database/H2O/1H2-16O/POKAZATEL/', nus, \
                                crit=0, Ttyp=Tgue)

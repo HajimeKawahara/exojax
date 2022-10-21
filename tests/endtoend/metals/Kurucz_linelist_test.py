@@ -19,7 +19,7 @@ if not os.path.isfile(filepath_Kurucz):
         print('could not connect ', url_developer_data())
 
 def test_Kurucz_linelist():
-    from exojax.spec.rtransfer import nugrid
+    from exojax.utils.grids import wavenumber_grid
     from exojax.spec.rtransfer import pressure_layer
     from exojax.spec import moldb, molinfo
     from exojax.spec import atomll
@@ -47,8 +47,8 @@ def test_Kurucz_linelist():
     PHH = Parr* H_He_HH_VMR[2]
         
     wls,wll = 10350, 10450
-    nugrid_res = 0.01
-    nus, wav, reso = nugrid(wls, wll, int((wll-wls)/nugrid_res), unit="AA", xsmode="lpf")
+    wavenumber_grid_res = 0.01
+    nus, wav, reso = wavenumber_grid(wls, wll, int((wll-wls)/nugrid_res), unit="AA", xsmode="lpf")
         
     adbK = moldb.AdbKurucz(filepath_Kurucz, nus)
     

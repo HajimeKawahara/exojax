@@ -1,4 +1,4 @@
-from exojax.spec.rtransfer import nugrid
+from exojax.utils.grids import wavenumber_grid
 from exojax.spec import moldb, molinfo
 from exojax.spec.exomol import gamma_exomol
 from exojax.spec import SijT, doppler_sigma, gamma_natural
@@ -10,7 +10,7 @@ import matplotlib.pyplot as plt
 
 N = 1500
 # nus,wav,res=nugrid(23365,23385,N,unit="AA")
-nus, wav, res = nugrid(23200, 23300, N, unit='AA')
+nus, wav, res = wavenumber_grid(23200, 23300, N, unit='AA')
 mdbM = moldb.MdbExomol('.database/CH4/12C-1H4/YT34to10', nus)
 
 q = mdbM.qr_interp(1300.0)

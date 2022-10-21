@@ -1,6 +1,6 @@
 import matplotlib.pyplot as plt
 import numpy
-from exojax.spec.rtransfer import nugrid
+from exojax.utils.grids import wavenumber_grid
 from exojax.spec import AutoXS
 # nus,wav,res=nugrid(1900.0,2300.0,200000,"cm-1")
 nus = numpy.linspace(1900.0, 2300.0, 200000,

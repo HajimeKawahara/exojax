@@ -17,7 +17,7 @@ def plg_elower_addcon(indexa,Na,cnu,indexnu,nu_grid,mdb,Tgue, errTgue=500., elow
        Na: the number of the additional condition grid
        cnu: contribution of wavenumber for LSD
        indexnu: nu index
-       nugrid: nu grid
+       wavenumber_grid: nu grid
        mdb: molecular database (instance made by the MdbExomol/MdbHit class in moldb.py)
        Tgue: rough guess on the typical atmospheric temperature
        errTgue: expected one-sided error of Tgue

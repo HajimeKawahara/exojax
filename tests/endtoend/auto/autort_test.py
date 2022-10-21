@@ -1,12 +1,12 @@
 import numpy as np
-from exojax.spec.rtransfer import nugrid
+from exojax.utils.grids import wavenumber_grid
 from exojax.spec import AutoRT
 
 def test_rtdit():
     """DIT vs LPF."""
 
     xsmode = 'DIT'
-    nus, wav, res = nugrid(1900.0, 2300.0, 80000, 'cm-1', xsmode=xsmode)
+    nus, wav, res = wavenumber_grid(1900.0, 2300.0, 80000, 'cm-1', xsmode=xsmode)
     Parr = np.logspace(-8, 2, 100)  # 100 layers from 10^-8 bar to 10^2 bar
     Tarr = 500.*(Parr/Parr[-1])**0.02
 
@@ -31,7 +31,7 @@ def test_rtdit():
 def test_rtmodit():
     """MODIT vs LPF."""
     xsmode = 'MODIT'
-    nus, wav, res = nugrid(2000.0, 2100.0, 40000, 'cm-1', xsmode=xsmode)
+    nus, wav, res = wavenumber_grid(2000.0, 2100.0, 40000, 'cm-1', xsmode=xsmode)
     Parr = np.logspace(-8, 2, 100)  # 100 layers from 10^-8 bar to 10^2 bar
     Tarr = 500.*(Parr/Parr[-1])**0.02
 

@@ -10,14 +10,14 @@ import jax.numpy as jnp
 
 from exojax.spec.rtransfer import pressure_layer
 from exojax.utils.grids import wavenumber_grid
-from exojax.utils.instfunc import R2STD
+from exojax.utils.instfunc import resolution_to_gaussian_std
 
 from exojax.spec import moldb
 from exojax.spec import initspec, molinfo, premodit
 from exojax.spec import molinfo
 
 from exojax.utils.afunc import getjov_gravity
-from exojax.utils.instfunc import R2STD
+from exojax.utils.instfunc import resolution_to_gaussian_std
 from exojax.utils.constants import RJ, pc
 
 wls, wll, Ndata = 15035, 15040, 100
@@ -32,7 +32,7 @@ Nx = 2000
 nus, wav, reso = wavenumber_grid(np.min(wavd) - 5.0, np.max(wavd) + 5.0, Nx, unit="AA", xsmode="modit")
 
 Rinst=100000.
-beta_inst=R2STD(Rinst)
+beta_inst=resolution_to_gaussian_std(Rinst)
 
 #Reference pressure for a T-P model
 Pref=1.0 #bar

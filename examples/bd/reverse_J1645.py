@@ -22,13 +22,13 @@ from exojax.spec import gamma_natural
 from exojax.spec.hitran import SijT
 from exojax.spec.dit import npgetix
 from exojax.spec import rtransfer as rt
-from exojax.spec.rtransfer import nugrid
-from exojax.spec.rtransfer import rtrun, dtauM, dtauCIA, nugrid
+from exojax.utils.grids import wavenumber_grid
+from exojax.spec.rtransfer import rtrun, dtauM, dtauCIA, wavenumber_grid
 from exojax.spec import planck, response
 from exojax.spec.lpf import xsvector
 from exojax.spec import molinfo
 from exojax.utils.constants import RJ, pc, Rs, c
-from exojax.utils.instfunc import R2STD
+from exojax.utils.instfunc import resolution_to_gaussian_std
 from exojax.spec import normalized_doppler_sigma
 import numpy as np
 from exojax.spec import initspec
@@ -77,10 +77,10 @@ nusd = jnp.array(1.e8/wavd[::-1])
 NP = 100
 Parr, dParr, k = rt.pressure_layer(NP=NP)
 Nx = 5000
-nus, wav, res = nugrid(np.min(wavd)-10.0, np.max(wavd) +
+nus, wav, res = wavenumber_grid(np.min(wavd)-10.0, np.max(wavd) +
                        10.0, Nx, unit='AA', xsmode='modit')
 Rinst = 100000.
-beta_inst = R2STD(Rinst)
+beta_inst = resolution_to_gaussian_std(Rinst)
 
 
 molmassH2O = molinfo.molmass('H2O')

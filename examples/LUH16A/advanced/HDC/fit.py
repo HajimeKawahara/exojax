@@ -6,7 +6,7 @@ from exojax.spec.lpf import xsmatrix
 from exojax.spec.exomol import gamma_exomol
 from exojax.spec.hitran import SijT, doppler_sigma, gamma_natural, gamma_hitran
 from exojax.spec.hitrancia import read_cia, logacia 
-from exojax.spec.rtransfer import rtrun, dtauM, dtauCIA, nugrid
+from exojax.spec.rtransfer import rtrun, dtauM, dtauCIA, wavenumber_grid
 from exojax.plot.atmplot import plottau, plotcf, plot_maxpoint
 from exojax.utils.afunc import getjov_logg
 import numpy as np
