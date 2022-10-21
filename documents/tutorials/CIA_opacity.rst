@@ -1,7 +1,5 @@
-CIA Absorption Coefficient
-===============================
-
-Use `contdb.CdbCIA <../exojax/exojax.spec.html#exojax.spec.contdb.CdbCIA>`_ for loading the CIA database.
+CIA coefficient
+===============
 
 .. code:: ipython3
 
@@ -13,10 +11,17 @@ Use `contdb.CdbCIA <../exojax/exojax.spec.html#exojax.spec.contdb.CdbCIA>`_ for 
 
 .. parsed-literal::
 
-    WARNING: resolution may be too small. R= 1000.0
+    xsmode assumes ESLOG in wavenumber space: mode=lpf
     H2-H2
 
-`hitrancia.logacia <../exojax/exojax.spec.html#exojax.spec.hitrancia.logacia>`_ can provide a log10 of absorption coeffcient as a function of
+
+.. parsed-literal::
+
+    /home/kawahara/anaconda3/lib/python3.8/site-packages/exojax-1.1.3-py3.8.egg/exojax/spec/check_nugrid.py:16: UserWarning: Resolution may be too small. R=433.86018742134854
+      warnings.warn('Resolution may be too small. R=' + str(resolution),
+
+
+logacia can provide an absorption coeffcient as a function of
 temperature
 
 .. code:: ipython3
@@ -26,7 +31,7 @@ temperature
     Tfix=jnp.array([1000.0,1300.0,1600.0])
     lc=logacia(Tfix,nus,cdbH2H2.nucia,cdbH2H2.tcia,cdbH2H2.logac)
 
-Plotting...
+plotting…
 
 .. code:: ipython3
 
@@ -41,7 +46,9 @@ Plotting...
     plt.legend()
     plt.savefig("cia.png")
 
-.. image:: CIA_opacity/output_5_0.png
+
+
+.. image:: CIA_opacity_files/CIA_opacity_5_0.png
 
 
 .. code:: ipython3

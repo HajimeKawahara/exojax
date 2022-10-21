@@ -88,6 +88,9 @@ def s2e_stable(molname_simple):
     Return:
        exact molname
     """
+    if molname_simple == "H3O_p":
+        return "1H3-16O_p"
+
     from exojax.utils import isotopes, isodata
     isolist = isodata.read_mnlist()
 
@@ -106,6 +109,7 @@ if __name__ == '__main__':
     print(s2e_stable('Fe2O3'))
     print(s2e_stable('CH4'))
     print(s2e_stable('NaOH'))
+    print(s2e_stable('H3O_p'))
 
     print(e2s('12C-1H4'))
     print(e2s('23Na-16O-1H'))

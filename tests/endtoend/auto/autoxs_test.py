@@ -1,7 +1,7 @@
 """tests for autoxs using different methods LPFDIT/MODIT."""
 
 import numpy
-from exojax.spec import AutoXS
+from exojax.spec.autospec import AutoXS
 import pytest
 
 
