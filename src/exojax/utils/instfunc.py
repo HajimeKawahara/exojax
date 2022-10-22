@@ -11,6 +11,7 @@ def R2STD(resolution):
     warnings.warn(warn_msg, DeprecationWarning)
     return resolution_to_gaussian_std(resolution)
 
+
 def resolution_to_gaussian_std(resolution):
     """compute Standard deveiation of Gaussian velocity distribution from
     spectral resolution.
@@ -45,10 +46,5 @@ def resolution_eslin(nu):
     Returns:
        min, approximate, max of the resolution
     """
-    minimun_resolution = nu[0] / (nu[1] - nu[0])
-    resolution = ((nu[-1] + nu[0]) / 2.0) / (
-        (nu[-1] - nu[0]) / len(nu))
-    maximum_resolution = nu[-1] / (nu[-1] - nu[-2])
-    return minimun_resolution, resolution, maximum_resolution
-
-
+    resolution = ((nu[-1] + nu[0]) / 2.0) / ((nu[-1] - nu[0]) / len(nu))
+    return nu[0] / (nu[1] - nu[0]), resolution, nu[-1] / (nu[-1] - nu[-2])
