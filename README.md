@@ -53,7 +53,7 @@ autoxs.mdb is the [moldb.MdbExomol class](http://secondearths.sakura.ne.jp/exoja
 <details><summary>Emission Spectrum :heavy_check_mark: </summary>
 
 ```python
-from exojax.spec.rtransfer import nugrid
+from exojax.utils.grids import wavenumber_grid
 from exojax.spec import AutoRT
 nus,wav,res=nugrid(1900.0,2300.0,200000,"cm-1")
 Parr=numpy.logspace(-8,2,100) #100 layers from 10^-8 bar to 10^2 bar

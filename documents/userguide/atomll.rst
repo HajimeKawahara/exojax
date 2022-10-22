@@ -39,7 +39,7 @@ An example to use the VALD3 database for a given species ("Extract Element") fro
 .. code:: python
 
 	>>> from exojax.spec import moldb
-	>>> from exojax.spec.rtransfer import nugrid
+	>>> from exojax.utils.grids import wavenumber_grid
 	>>> nus = 1e8/np.array([1e5, 1500.])
 	>>> filepath_VALD3 = '.database/vald2600.gz'
 	>>> adbFe = moldb.AdbVald(filepath_VALD3, nus)
@@ -50,8 +50,8 @@ Another example to use the VALD3 database for multiple species ("Extract All") w
 .. code:: python
 
 	>>> from exojax.spec import moldb
-	>>> from exojax.spec.rtransfer import nugrid
-	>>> nus, wav, res = nugrid(10398, 10406, 2000, unit="AA", xsmode="modit")
+	>>> from exojax.utils.grids import wavenumber_grid
+	>>> nus, wav, res = wavenumber_grid(10398, 10406, 2000, unit="AA", xsmode="modit")
 	>>> filepath = '.database/vald4214450.gz'
 	>>> adb = moldb.AdbVald(filepath, nus, crit = 1e-100)
 	>>> asdb = moldb.AdbSepVald(adb)

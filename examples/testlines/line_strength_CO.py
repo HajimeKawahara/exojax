@@ -1,5 +1,5 @@
 import matplotlib.pyplot as plt
-from exojax.spec.rtransfer import nugrid
+from exojax.utils.grids import wavenumber_grid
 from exojax.spec import moldb, molinfo
 from exojax.spec.exomol import gamma_exomol
 from exojax.spec import SijT, doppler_sigma, gamma_natural
@@ -9,7 +9,7 @@ from jax import vmap, jit
 
 N = 1500
 # nus,wav,res=nugrid(23365,23385,N,unit="AA")
-nus, wav, res = nugrid(23425, 23450, N, unit='AA')
+nus, wav, res = wavenumber_grid(23425, 23450, N, unit='AA')
 mdbM = moldb.MdbExomol('.database/CO/12C-16O/Li2015', nus)
 # loading molecular database
 # molmass=molinfo.molmass("CO") #molecular mass (CO)

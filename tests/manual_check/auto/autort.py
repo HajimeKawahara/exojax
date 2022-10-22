@@ -1,10 +1,10 @@
 import numpy as np
-from exojax.spec.rtransfer import nugrid
+from exojax.utils.grids import wavenumber_grid
 from exojax.spec import AutoRT
 import matplotlib.pyplot as plt
 
 xsmode = 'MODIT'
-nus, wav, res = nugrid(1900.0, 2300.0, 160000, 'cm-1', xsmode=xsmode)
+nus, wav, res = wavenumber_grid(1900.0, 2300.0, 160000, 'cm-1', xsmode=xsmode)
 Parr = np.logspace(-8, 2, 100)  # 100 layers from 10^-8 bar to 10^2 bar
 Tarr = 500.*(Parr/Parr[-1])**0.02
 
@@ -30,7 +30,7 @@ plt.show()
 
 
 xsmode = 'DIT'
-nus, wav, res = nugrid(1900.0, 2300.0, 160000, 'cm-1', xsmode=xsmode)
+nus, wav, res = wavenumber_grid(1900.0, 2300.0, 160000, 'cm-1', xsmode=xsmode)
 Parr = np.logspace(-8, 2, 100)  # 100 layers from 10^-8 bar to 10^2 bar
 Tarr = 500.*(Parr/Parr[-1])**0.02
 

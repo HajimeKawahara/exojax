@@ -20,12 +20,12 @@ from exojax.spec import rtransfer as rt
 from exojax.spec import modit
 from exojax.spec import moldb, contdb
 from exojax.spec import rtransfer as rt
-from exojax.spec.rtransfer import nugrid
-from exojax.spec.rtransfer import rtrun, dtauM, dtauCIA, nugrid
+from exojax.utils.grids import wavenumber_grid
+from exojax.spec.rtransfer import rtrun, dtauM, dtauCIA, wavenumber_grid
 from exojax.spec import planck, response
 from exojax.spec import molinfo
 from exojax.utils.constants import RJ, pc, Rs, c
-from exojax.utils.instfunc import R2STD
+from exojax.utils.instfunc import resolution_to_gaussian_std
 import numpy as np
 from exojax.spec import initspec
 import pkg_resources
@@ -44,10 +44,10 @@ nflux = flux/norm+np.random.normal(0, sigmain, len(wavd))
 NP = 100
 Parr, dParr, k = rt.pressure_layer(NP=NP)
 Nx = 5000
-nus, wav, res = nugrid(np.min(wavd)-5.0, np.max(wavd) +
+nus, wav, res = wavenumber_grid(np.min(wavd)-5.0, np.max(wavd) +
                        5.0, Nx, unit='AA', xsmode='modit')
 Rinst = 100000.
-beta_inst = R2STD(Rinst)
+beta_inst = resolution_to_gaussian_std(Rinst)
 
 
 molmassCH4 = molinfo.molmass('CH4')

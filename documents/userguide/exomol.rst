@@ -26,7 +26,7 @@ An example to use the ExoMol database from exojax is like that.
 .. code:: python
 
 	  >>> from exojax.spec import moldb
-	  >>> from exojax.spec.rtransfer import nugrid
+	  >>> from exojax.utils.grids import wavenumber_grid
 	  >>> nus,wav,res=nugrid(22880.,23000.,1000,unit="AA")
 	  >>> mdbCO=moldb.MdbExomol('.database/CO/12C-16O/Li2015',nus)
 	  Background atmosphere:  H2

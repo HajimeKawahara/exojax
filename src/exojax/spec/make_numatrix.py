@@ -106,11 +106,11 @@ def make_numatrix0_subtract(nu, hatnu, Nz=1, warning=True):
 
 if __name__ == '__main__':
     import matplotlib.pyplot as plt
-    from exojax.spec.rtransfer import nugrid
+    from exojax.utils.grids import wavenumber_grid
     from exojax.spec import moldb
     import time
     import numpy as np
-    nus, wav, res = nugrid(22920, 23000, 1000, unit='AA')
+    nus, wav, res = wavenumber_grid(22920, 23000, 1000, unit='AA')
     mdbCO = moldb.MdbExomol('.database/CO/12C-16O/Li2015', nus, crit=1.e-46)
     ts = time.time()
     numatrix = make_numatrix0(nus, mdbCO.nu_lines)

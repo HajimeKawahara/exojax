@@ -1,20 +1,28 @@
-"""Utility Functions about Instruments."""
+"""Utility Functions about Instruments.
+"""
 
 import numpy as np
 from exojax.utils.constants import c
+import warnings
 
 
-def R2STD(R):
+def R2STD(resolution):
+    warn_msg = "Use `resolution_to_gaussian_std` instead"
+    warnings.warn(warn_msg, DeprecationWarning)
+    return resolution_to_gaussian_std(resolution)
+
+
+def resolution_to_gaussian_std(resolution):
     """compute Standard deveiation of Gaussian velocity distribution from
     spectral resolution.
 
     Args:
-       R: spectral resolution R
+      resolution: spectral resolution R
 
     Returns:
-       beta (km/s) standard deviation of Gaussian velocity distribution
+      standard deviation of Gaussian velocity distribution (km/s)
     """
-    return c/(2.0*np.sqrt(2.0*np.log(2.0))*R)
+    return c / (2.0 * np.sqrt(2.0 * np.log(2.0)) * resolution)
 
 
 def resolution_eslog(nu):
@@ -26,7 +34,7 @@ def resolution_eslog(nu):
     Returns:
        resolution
     """
-    return (len(nu)-1)/np.log(nu[-1]/nu[0])
+    return (len(nu) - 1) / np.log(nu[-1] / nu[0])
 
 
 def resolution_eslin(nu):
@@ -38,9 +46,5 @@ def resolution_eslin(nu):
     Returns:
        min, approximate, max of the resolution
     """
-    return nu[0]/(nu[1]-nu[0]), ((nu[-1]+nu[0])/2.0)/((nu[-1]-nu[0])/len(nu)), nu[-1]/(nu[-1]-nu[-2])
-
-
-if __name__ == '__main__':
-    nus = np.linspace(1000, 2000, 1000)
-    print(resolution_eslin(nus))
+    resolution = ((nu[-1] + nu[0]) / 2.0) / ((nu[-1] - nu[0]) / len(nu))
+    return nu[0] / (nu[1] - nu[0]), resolution, nu[-1] / (nu[-1] - nu[-2])

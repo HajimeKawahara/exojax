@@ -30,7 +30,7 @@ from exojax.spec import planck, response
 from exojax.spec import molinfo
 from exojax.spec.plg import MdbExomol_plg
 from exojax.utils.constants import RJ
-from exojax.utils.instfunc import R2STD
+from exojax.utils.instfunc import resolution_to_gaussian_std
 import numpy as np
 from exojax.spec import initspec, modit
 import pkg_resources
@@ -58,7 +58,7 @@ nu_grid, wav, res = wavenumber_grid(
                            unit='AA',
                            xsmode='modit')
 Rinst = 100000.
-beta_inst = R2STD(Rinst)
+beta_inst = resolution_to_gaussian_std(Rinst)
 
 molmassCH4 = molinfo.molmass('CH4')
 mmw = 2.33  # mean molecular weight

@@ -12,8 +12,8 @@ def test_plg_elower_addcon():
     with open(filename, 'rb') as f:
         mdb = pickle.load(f)
 
-    wls, wll, nugrid_res = 15540, 15550, 0.05
-    nus, wav, reso = wavenumber_grid(wls, wll, int((wll-wls)/nugrid_res), unit="AA", xsmode="modit")
+    wls, wll, wavenumber_grid_res = 15540, 15550, 0.05
+    nus, wav, reso = wavenumber_grid(wls, wll, int((wll-wls)/wavenumber_grid_res), unit="AA", xsmode="modit")
     cnu,indexnu,R,pmarray = initspec.init_modit(mdb.nu_lines,nus)
 
     Nelower = 7 

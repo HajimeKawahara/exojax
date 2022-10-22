@@ -9,7 +9,7 @@ from exojax.atm.idealgas import number_density
 from exojax.utils.constants import kB, logm_ucgs
 import warnings
 
-def nugrid(x0, x1, N, unit='cm-1', xsmode='lpf'):
+def wavenumber_grid(x0, x1, N, unit='cm-1', xsmode='lpf'):
     warn_msg = "Use `grids.wavenumber_grid` instead"
     warnings.warn(warn_msg, DeprecationWarning)
     from exojax.utils.grids import wavenumber_grid

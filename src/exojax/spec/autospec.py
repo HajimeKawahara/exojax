@@ -9,7 +9,7 @@ from exojax.spec.rtransfer import rtrun, dtauM, dtauCIA
 from exojax.spec.check_nugrid import check_scale_nugrid
 from exojax.spec.make_numatrix import make_numatrix0
 from exojax.utils.constants import c
-from exojax.utils.instfunc import R2STD
+from exojax.utils.instfunc import resolution_to_gaussian_std
 from exojax.spec.response import convolve_rigid_rotation
 from exojax.spec.response import ipgauss_sampling
 from exojax.utils.grids import velocity_grid
@@ -453,7 +453,7 @@ class AutoRT(object):
         self.zeta = zeta
         self.betamic = betamic
         self.RV = RV
-        self.betaIP = R2STD(self.Rinst)
+        self.betaIP = resolution_to_gaussian_std(self.Rinst)
         beta = np.sqrt((self.betaIP)**2 + (self.betamic)**2)
         F0 = self.rtrun()
 

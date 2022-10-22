@@ -43,7 +43,7 @@ def check_scale_xsmode(xsmode):
 
 
 def check_scale_nugrid(nus, crit1=1.e-5, crit2=1.e-14, gridmode='ESLOG'):
-    """checking if nugrid is evenly spaced in a logarithm scale (ESLOG) or a
+    """checking if wavenumber_grid is evenly spaced in a logarithm scale (ESLOG) or a
     liner scale (ESLIN)
 
     Args:
@@ -75,18 +75,18 @@ def check_scale_nugrid(nus, crit1=1.e-5, crit2=1.e-14, gridmode='ESLOG'):
 
 if __name__ == '__main__':
     from exojax.spec.unitconvert import wav2nu
-    from exojax.spec.rtransfer import nugrid
+    from exojax.utils.grids import wavenumber_grid
 
     wav = np.linspace(22920.23000, 1000)
     nus = wav2nu(wav, unit='AA')
     print(check_scale_nugrid(nus, gridmode='ESLIN'))
     print('----------------------')
 
-    nus, wav, res = nugrid(22999, 23000, 1000, 'AA')
+    nus, wav, res = wavenumber_grid(22999, 23000, 1000, 'AA')
     print(check_scale_nugrid(nus))
-    nus, wav, res = nugrid(22999, 23000, 10000, 'AA')
+    nus, wav, res = wavenumber_grid(22999, 23000, 10000, 'AA')
     print(check_scale_nugrid(nus))
-    nus, wav, res = nugrid(22999, 23000, 100000, 'AA')
+    nus, wav, res = wavenumber_grid(22999, 23000, 100000, 'AA')
     print(check_scale_nugrid(nus))
 
     nus = np.linspace(1.e8 / 23000., 1.e8 / 22999., 1000)

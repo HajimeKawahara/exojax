@@ -14,6 +14,7 @@ from exojax.spec.hitran import gamma_natural as gn
 from exojax.utils.constants import Tref
 from exojax.utils.molname import e2s
 from exojax.spec.hitranapi import search_molecid
+from jax import vmap
 
 # currently use radis add/common-api branch
 from radis.api.exomolapi import MdbExomol as CapiMdbExomol  #MdbExomol in the common API
@@ -176,7 +177,7 @@ class MdbExomol(CapiMdbExomol):
         self.jupper = jnp.array(self.jupper, dtype=int)
         self.alpha_ref = jnp.array(self.alpha_ref)
         self.n_Texp = jnp.array(self.n_Texp)
-        
+
     def QT_interp(self, T):
         """interpolated partition function.
 
@@ -366,7 +367,7 @@ class MdbHitemp(HITEMPDatabaseManager):
         
         """
         # jnp.array copy from the copy sources
-        self.nu_lines = jnp.array(self.nu_lines)
+        self.dev_nu_lines = jnp.array(self.nu_lines)
         self.logsij0 = jnp.array(np.log(self.Sij0))
         self.Sij0 = jnp.array(self.Sij0)
         self.delta_air = jnp.array(self.delta_air)
@@ -418,13 +419,16 @@ class MdbHitemp(HITEMPDatabaseManager):
         Note:
            Nlines=len(self.nu_lines)
         """
+
+        #vqr_interp = vmap(self.qr_interp,(0,None),0)
+        #qrx = vqr_interp(self.uniqiso,T)
         qrx = []
         for idx, iso in enumerate(self.uniqiso):
             qrx.append(self.qr_interp(idx, T))
 
         qr_line = jnp.zeros(len(self.isoid))
         for idx, iso in enumerate(self.uniqiso):
-            mask_idx = np.where(self.isoid == iso)
+            mask_idx = jnp.where(self.isoid == iso)
             qr_line = qr_line.at[jnp.index_exp[mask_idx]].set(qrx[idx])
         return qr_line
 
