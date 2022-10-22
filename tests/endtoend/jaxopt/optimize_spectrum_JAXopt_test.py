@@ -11,7 +11,6 @@ from exojax.spec import molinfo
 from exojax.utils.constants import RJ, pc, Rs, c
 from exojax.spec import rtransfer as rt
 from exojax.spec import contdb
-#from exojax.spec.moldb import MdbExomol
 from exojax.spec.api import MdbExomol
 from exojax.spec import make_numatrix0
 from exojax.spec import initspec
@@ -49,11 +48,19 @@ def test_jaxopt_spectrum():
 
     Mp = 33.2  #fixing mass...
     mdbCO = MdbExomol('.database/CO/12C-16O/Li2015', nus, crit=1.e-46)
+    mdbCO.generate_jnp_arrays()
     cdbH2H2 = contdb.CdbCIA('.database/H2-H2_2011.cia', nus)
     numatrix_CO = make_numatrix0(nus, mdbCO.nu_lines)
     numatrix_CO = initspec.init_lpf(mdbCO.nu_lines, nus)
     Pref = 1.0  #bar
     ONEARR = np.ones_like(Parr)
+
+    from exojax.utils.grids import velocity_grid
+    from exojax.spec.spin_rotation import convolve_rigid_rotation
+
+    #response settings
+    vsini_max = 100.0
+    vr_array = velocity_grid(res, vsini_max)
 
     def model_c(params, boost, nu1):
         Rp, RV, MMR_CO, T0, alpha, vsini = params * boost
@@ -90,9 +97,7 @@ def test_jaxopt_spectrum():
             dtau = dtaumCO + dtaucH2H2
             sourcef = planck.piBarr(Tarr, nus)
             F0 = rtrun(dtau, sourcef) / norm
-
-            Frot = response.rigidrot(nus, F0, vsini, u1, u2)
-            #Frot=rigidrotx(nus,F0,vsini,u1,u2)
+            Frot = convolve_rigid_rotation(F0, vr_array, vsini, u1, u2)
             mu = response.ipgauss_sampling(nusd, nus, Frot, beta, RV)
             return mu
 
