@@ -61,9 +61,9 @@ jobs:
 
       - name: Test report
         if: matrix.python == 3.8 && success()
-	  env:
-    	  CC_TEST_REPORTER_ID: 7d1536340af8c889cc4c43e77005ec3bcf1aab03e53d68b02ddf97bf6f41e57f
-	run: |
-    	  curl -L https://codeclimate.com/downloads/test-reporter/test-reporter-latest-linux-amd64 > ./cc-test-reporter
-    	  chmod +x ./cc-test-reporter
-	  ./cc-test-reporter after-build
+        env:
+          CC_TEST_REPORTER_ID: 7d1536340af8c889cc4c43e77005ec3bcf1aab03e53d68b02ddf97bf6f41e57f
+        run: |
+          curl -L https://codeclimate.com/downloads/test-reporter/test-reporter-latest-linux-amd64 > ./cc-test-reporter
+          chmod +x ./cc-test-reporter
+          ./cc-test-reporter after-build
