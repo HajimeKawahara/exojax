@@ -16,7 +16,7 @@ from exojax.spec.rtransfer import rtrun, dtauM, dtauCIA, wavenumber_grid, pressu
 from exojax.plot.atmplot import  plot_maxpoint
 from exojax.spec.evalline import reduceline_exomol
 from exojax.spec.limb_darkening import ld_kipping
-from exojax.utils.afunc import getjov_gravity
+from exojax.utils.astrofunc import getjov_gravity
 from exojax.utils.instfunc import resolution_to_gaussian_std
 from exojax.utils.constants import RJ, pc
 from exojax.utils.gpkernel import gpkernel_RBF

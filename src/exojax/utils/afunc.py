@@ -23,7 +23,7 @@ def getjov_logg(Rp, Mp):
        Mpcgs=Mp*const.MJ, Rpcgs=Rp*const.RJ,
        then logg is given by log10(const.G*Mpcgs/Rpcgs**2)
     """
-    return jnp.log10(2478.57730044555*Mp/Rp**2)
+    return jnp.log10(2478.57730044555 * Mp / Rp**2)
 
 
 def getjov_gravity(Rp, Mp):
@@ -40,4 +40,4 @@ def getjov_gravity(Rp, Mp):
        Mpcgs=Mp*const.MJ, Rpcgs=Rp*const.RJ
        then gravity is given by (const.G*Mpcgs/Rpcgs**2)
     """
-    return 2478.57730044555*Mp/Rp**2
+    return 2478.57730044555 * Mp / Rp**2
