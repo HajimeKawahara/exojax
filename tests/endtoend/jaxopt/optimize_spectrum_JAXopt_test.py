@@ -33,9 +33,9 @@ def test_jaxopt_spectrum():
     Parr, dParr, k = rt.pressure_layer(NP=NP)
     Nx = 1500
     nus, wav, res = wavenumber_grid(np.min(wavd) - 5.0,
-                           np.max(wavd) + 5.0,
-                           Nx,
-                           unit="AA")
+                                    np.max(wavd) + 5.0,
+                                    Nx,
+                                    unit="AA")
 
     R = 100000.
     beta = c / (2.0 * np.sqrt(2.0 * np.log(2.0)) * R)
