@@ -1,6 +1,6 @@
 import numpy as np
 from exojax.utils.grids import wavenumber_grid
-from exojax.spec import AutoRT
+from exojax.spec.autospec import AutoRT
 
 def test_rtdit():
     """DIT vs LPF."""
