@@ -12,6 +12,7 @@ from jax import jit
 import warnings
 from exojax.utils.constants import hcperk, Tref
 
+
 def getix(x, xv):
     """jnp version of getix.
 
@@ -37,9 +38,8 @@ def getix(x, xv):
     """
     indarr = jnp.arange(len(xv))
     pos = jnp.interp(x, xv, indarr)
-    index = (pos).astype(int)
-    cont = (pos - index)
-    return cont, index
+    cont, index = jnp.modf(pos)
+    return cont, index.astype(int)
 
 
 def npgetix(x, xv):
@@ -58,10 +58,9 @@ def npgetix(x, xv):
     """
     indarr = np.arange(len(xv))
     pos = np.interp(x, xv, indarr)
-    index = (pos).astype(int)
-    cont = (pos - index)
-    return cont, index
-
+    cont, index = np.modf(pos)
+    return cont, index.astype(int)
+    
 
 def npgetix_exp(x, xv, Ttyp, conversion_dtype=np.float64):
     """numpy version of getix weigthed by exp(-hc/kT).
@@ -94,11 +93,9 @@ def npgetix_exp(x, xv, Ttyp, conversion_dtype=np.float64):
 
     indarr = np.arange(len(xv_))
     pos = np.interp(x_, xv_, indarr)
-    index = (pos).astype(int)
-    cont = (pos - index)
-
-    return cont, index
-
+    cont, index = np.modf(pos)
+    return cont, index.astype(int)
+    
 
 def add2D(a, w, cx, ix, cy, iy):
     """Add into an array when contirbutions and indices are given (2D).

@@ -40,7 +40,7 @@ def init_dit(nu_lines, nu_grid, warning=False):
     Returns:
         cont (contribution) jnp.array
         index (index) jnp.array
-        pmarray: (+1,-1) array whose length of len(nu_grid)+1
+        pmarray: (+1.,-1.) array whose length of len(nu_grid)+1
 
     Note:
         cont is the contribution for i=index+1. 1 - cont is the contribution for i=index. For other i, the contribution should be zero.
@@ -50,9 +50,8 @@ def init_dit(nu_lines, nu_grid, warning=False):
     warn_outside_wavenumber_grid(nu_lines, nu_grid)
 
     cont, index = npgetix(nu_lines, nu_grid)
-    dnu = nu_grid[1] - nu_grid[0]
     pmarray = np.ones(len(nu_grid) + 1)
-    pmarray[1::2] = pmarray[1::2] * -1
+    pmarray[1::2] = pmarray[1::2] * -1.0
 
     return jnp.array(cont), jnp.array(index), pmarray
 
@@ -69,7 +68,7 @@ def init_modit(nu_lines, nu_grid, warning=False):
         cont: (contribution for q) jnp.array
         index: (index for q) jnp.array
         spectral_resolution: spectral resolution (R)
-        pmarray: (+1,-1) array whose length of len(nu_grid)+1
+        pmarray: (+1.,-1.) array whose length of len(nu_grid)+1
 
     Note:
         cont is the contribution for i=index+1. 1 - cont is the contribution for i=index. For other i, the contribution should be zero. dq is computed using numpy not jnp.numpy. If you use jnp, you might observe a significant residual because of the float32 truncation error.
@@ -81,7 +80,7 @@ def init_modit(nu_lines, nu_grid, warning=False):
     spectral_resolution = resolution_eslog(nu_grid)
     cont, index = npgetix(nu_lines, nu_grid)
     pmarray = np.ones(len(nu_grid) + 1)
-    pmarray[1::2] = pmarray[1::2] * -1
+    pmarray[1::2] = pmarray[1::2] * -1.0
 
     return jnp.array(cont), jnp.array(index), spectral_resolution, jnp.array(pmarray)
 
@@ -140,7 +139,7 @@ def init_premodit(nu_lines,
     lbd, multi_index_uniqgrid = generate_lbd(line_strength_ref, nu_lines, nu_grid, ngamma_ref, ngamma_ref_grid,
              n_Texp, n_Texp_grid, elower, elower_grid, Ttyp)
     pmarray = np.ones(len(nu_grid) + 1)
-    pmarray[1::2] = pmarray[1::2] * -1
+    pmarray[1::2] = pmarray[1::2] * -1.0
     return lbd, multi_index_uniqgrid, elower_grid, ngamma_ref_grid, n_Texp_grid, R, jnp.array(pmarray)
 
 
