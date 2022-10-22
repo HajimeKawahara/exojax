@@ -16,4 +16,4 @@ def ld_kipping(q1, q2):
        u2: quadratic LD coefficient u2
     """
     sqrtq1 = jnp.sqrt(q1)
-    return 2.0*sqrtq1*q2, sqrtq1*(1.0-2.0*q2)
+    return 2.0 * sqrtq1 * q2, sqrtq1 * (1.0 - 2.0 * q2)
