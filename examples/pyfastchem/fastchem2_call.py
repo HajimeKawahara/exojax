@@ -226,7 +226,7 @@ def mmr_species_fc2(SpeciesIndex, mixing_ratios, SpeciesMolecularWeight):
     return SpeciesMMRarr
 
 
-def get_H_He_HH_VMR(fastchem, mixing_ratios):
+def extract_H_He_HH_VMR(fastchem, mixing_ratios):
     """Extract the VMR list of neutral hydrogen, neutral helium, and H2 molecule.
 
     Args:
