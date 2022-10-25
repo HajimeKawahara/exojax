@@ -1,5 +1,5 @@
-"""test for get_P_at_tauone"""
-from exojax.spec.tau1height import get_P_at_tauone
+"""test for pressure_at_given_opacity"""
+from exojax.spec.tau1height import pressure_at_given_opacity
 import numpy as np
 import jax.numpy as jnp
 
@@ -36,9 +36,9 @@ dtau_test = jnp.array([[2.3860786e-04, 7.0198922e-04, 9.2007332e-03], \
         [8.2812244e-01, 9.3093783e-01, 1.7360477e+00], \
         [1.1068734e+00, 1.1940346e+00, 2.0217423e+00]])
         
-def test_get_P_at_tauone():
-    P_tauone = get_P_at_tauone(dtau_test, Parr_test)
+def test_pressure_at_given_opacity():
+    P_tauone = pressure_at_given_opacity(dtau_test, Parr_test)
     assert np.all(np.isclose(P_tauone/P_tauone_test, np.ones(3)))
 
 if __name__ == '__main__':
-    test_get_P_at_tauone()
+    test_pressure_at_given_opacity()

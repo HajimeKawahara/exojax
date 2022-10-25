@@ -2,7 +2,7 @@
 import numpy as np
 from scipy import interpolate
 
-def get_P_at_tauone(dtau, Parr, tauextracted=1.0):
+def pressure_at_given_opacity(dtau, Parr, tauextracted=1.0):
     """Extract pressure of tau=1(or a given value) at different wavelengths
     
     Args:
