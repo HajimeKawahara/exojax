@@ -28,6 +28,8 @@ def test_s2estable():
     check = True
     for i in EXOMOL_SIMPLE2EXACT:
         assert s2e_stable(i) == EXOMOL_SIMPLE2EXACT[i]
+    assert s2e_stable("H3O_p") ==  "1H3-16O_p"
+
 
 def test_e2s():
     assert e2s('12C-1H4') == "CH4"

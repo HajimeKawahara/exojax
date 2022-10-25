@@ -1,5 +1,4 @@
 import numpy as np
-import pandas as pd
 from exojax.utils import isodata
 from exojax.utils import molname
 
