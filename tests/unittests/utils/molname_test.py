@@ -1,7 +1,8 @@
 import pytest
 from exojax.utils.molname import s2e_stable
-
-
+from exojax.utils.molname import e2s
+from exojax.utils.molname import split_simple
+import numpy as np
 def test_s2estable():
     EXOMOL_SIMPLE2EXACT = \
         {
@@ -27,7 +28,17 @@ def test_s2estable():
     check = True
     for i in EXOMOL_SIMPLE2EXACT:
         assert s2e_stable(i) == EXOMOL_SIMPLE2EXACT[i]
+    assert s2e_stable("H3O_p") ==  "1H3-16O_p"
 
+
+def test_e2s():
+    assert e2s('12C-1H4') == "CH4"
+    assert e2s('23Na-16O-1H') == "NaOH"
+    assert e2s('HeH_p') == "HeH_p"
+    assert e2s("trans-31P2-1H-2H") == "trans-31P2-1H-2H"
+
+def test_split_simple():
+    assert np.all(split_simple("Fe2O3") == (['Fe', 'O'], ['2', '3']))
 
 if __name__ == '__main__':
     test_s2estable()

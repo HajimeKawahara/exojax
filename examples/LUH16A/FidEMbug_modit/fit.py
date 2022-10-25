@@ -21,7 +21,7 @@ from exojax.spec.evalline import mask_weakline
 from exojax.spec.limb_darkening import ld_kipping
 from exojax.spec.modit import exomol,xsmatrix,setdgm_exomol, minmax_dgmatrix
 
-from exojax.utils.afunc import getjov_gravity
+from exojax.utils.astrofunc import getjov_gravity
 from exojax.utils.instfunc import resolution_to_gaussian_std
 from exojax.utils.constants import RJ, pc
 from exojax.utils.gpkernel import gpkernel_RBF

@@ -6,7 +6,7 @@ from exojax.spec.opacity import xsection
 from exojax.spec.hitran import SijT, doppler_sigma, gamma_natural, gamma_hitran, normalized_doppler_sigma
 from exojax.spec.exomol import gamma_exomol
 from exojax.spec.rtransfer import rtrun, dtauM, dtauCIA
-from exojax.spec.check_nugrid import check_scale_nugrid
+from exojax.utils.grids import check_eslog_wavenumber_grid
 from exojax.spec.make_numatrix import make_numatrix0
 from exojax.utils.constants import c
 from exojax.utils.instfunc import resolution_to_gaussian_std
@@ -146,7 +146,7 @@ class AutoXS(object):
                            Sij,
                            memory_size=self.memory_size)
         elif xsmode == 'modit' or xsmode == 'MODIT':
-            checknus = check_scale_nugrid(self.nus, gridmode='ESLOG')
+            checknus = check_eslog_wavenumber_grid(self.nus, gridmode='ESLOG')
             nus = self.autonus(checknus, 'ESLOG')
             cnu, indexnu, R_mol, pmarray = initspec.init_modit(
                 mdb.nu_lines, nus)
@@ -160,7 +160,7 @@ class AutoXS(object):
                 xsv = jnp.interp(self.nus, nus, xsv)
         elif xsmode == 'dit' or xsmode == 'DIT':
             sigmaD = doppler_sigma(mdb.nu_lines, T, molmass)
-            checknus = check_scale_nugrid(self.nus, gridmode='ESLIN')
+            checknus = check_eslog_wavenumber_grid(self.nus, gridmode='ESLIN')
             nus = self.autonus(checknus, 'ESLIN')
             sigmaD_grid = ditgrid_log_interval(sigmaD, dit_grid_resolution=0.1)
             gammaL_grid = ditgrid_log_interval(gammaL, dit_grid_resolution=0.1)
@@ -190,10 +190,10 @@ class AutoXS(object):
 
     def select_xsmode(self, Nline):
         print('# of lines=', Nline)
-        if Nline > 1000 and check_scale_nugrid(self.nus, gridmode='ESLOG'):
+        if Nline > 1000 and check_eslog_wavenumber_grid(self.nus, gridmode='ESLOG'):
             print('MODIT selected')
             return 'MODIT'
-        elif Nline > 1000 and check_scale_nugrid(self.nus, gridmode='ESLIN'):
+        elif Nline > 1000 and check_eslog_wavenumber_grid(self.nus, gridmode='ESLIN'):
             print('DIT selected')
             return 'DIT'
         else:
@@ -350,9 +350,9 @@ class AutoRT(object):
         self.xsmode = xsmode
         self.autogridconv = autogridconv
 
-        if check_scale_nugrid(nus, gridmode='ESLOG'):
+        if check_eslog_wavenumber_grid(nus, gridmode='ESLOG'):
             print('The wavenumber grid is evenly spaced in log space (ESLOG).')
-        elif check_scale_nugrid(nus, gridmode='ESLIN'):
+        elif check_eslog_wavenumber_grid(nus, gridmode='ESLIN'):
             print('The wavenumber grid is evenly spaced in linear space (ESLIN).')
         else:
             print('The wavenumber grid is NOT evenly spaced in log nor linear space.')

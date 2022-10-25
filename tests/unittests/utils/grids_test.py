@@ -3,7 +3,8 @@ import numpy as np
 from exojax.utils.grids import wavenumber_grid
 from exojax.utils.grids import velocity_grid
 from exojax.utils.grids import delta_velocity_from_resolution
-
+from exojax.utils.grids import check_eslog_wavenumber_grid
+from exojax.utils.grids import check_scale_xsmode
 
 def test_wavenumber_grid():
     Nx=4000
@@ -31,6 +32,32 @@ def test_velocity_grid():
     assert x[0] <= -1.0 and x[-1] >= 1.0
     assert x[1] >= -1.0 and x[-2] <= 1.0
 
+def test_check_eslog_wavenumber_grid():
+    nus, wav, res = wavenumber_grid(22999, 23000, 1000, 'AA')
+    assert check_eslog_wavenumber_grid(nus)
+    nus, wav, res = wavenumber_grid(22999, 23000, 10000, 'AA')
+    assert check_eslog_wavenumber_grid(nus)
+    nus, wav, res = wavenumber_grid(22999, 23000, 100000, 'AA')
+    assert check_eslog_wavenumber_grid(nus)
+    nus = np.linspace(1.e8 / 23000., 1.e8 / 22999., 1000)
+    assert not check_eslog_wavenumber_grid(nus)
+    nus = np.linspace(1.e8 / 23000., 1.e8 / 22999., 10000)
+    assert not check_eslog_wavenumber_grid(nus)
+    nus = np.linspace(1.e8 / 23000., 1.e8 / 22999., 100000)
+    assert not check_eslog_wavenumber_grid(nus)
+
+def test_check_scale_xsmode():
+    assert check_scale_xsmode("lpf") == "ESLOG"
+    assert check_scale_xsmode("modit") == "ESLOG"
+    assert check_scale_xsmode("premodit") == "ESLOG"
+    assert check_scale_xsmode("presolar") == "ESLOG"
+    assert check_scale_xsmode("dit") == "ESLIN"
+    assert check_scale_xsmode("LPF") == "ESLOG"
+    assert check_scale_xsmode("MODIT") == "ESLOG"
+    assert check_scale_xsmode("PREMODIT") == "ESLOG"
+    assert check_scale_xsmode("PRESOLAR") == "ESLOG"
+    assert check_scale_xsmode("DIT") == "ESLIN"
+    
 
 if __name__ == "__main__":
     test_wavenumber_grid()

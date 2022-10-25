@@ -14,7 +14,7 @@ from exojax.utils.instfunc import resolution_to_gaussian_std
 from exojax.spec import moldb
 from exojax.spec import initspec, molinfo, premodit
 from exojax.spec import molinfo
-from exojax.utils.afunc import getjov_gravity
+from exojax.utils.astrofunc import getjov_gravity
 from exojax.utils.constants import RJ, pc
 
 wls, wll, Ndata = 15035, 15040, 100
