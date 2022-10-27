@@ -18,11 +18,10 @@ import matplotlib.pyplot as plt
 import jax.numpy as jnp
 from exojax.spec import rtransfer as rt
 from exojax.spec import modit
-from exojax.spec import moldb, contdb
-from exojax.spec import rtransfer as rt
+from exojax.spec import api, contdb
 from exojax.utils.grids import wavenumber_grid
 from exojax.spec.rtransfer import rtrun, dtauM, dtauCIA, wavenumber_grid
-from exojax.spec import planck, response
+from exojax.spec import planck
 from exojax.spec import molinfo
 from exojax.utils.constants import RJ, pc, Rs, c
 from exojax.utils.instfunc import resolution_to_gaussian_std
@@ -58,7 +57,7 @@ vmrH2 = (mmrH2*mmw/molmassH2)  # VMR
 
 #
 Mp = 33.2
-mdbCH4 = moldb.MdbExomol('.database/CH4/12C-1H4/YT10to10/', nus, crit=1.e-30)
+mdbCH4 = api.MdbExomol('.database/CH4/12C-1H4/YT10to10/', nus, crit=1.e-30, gpu_transfer=True)
 cdbH2H2 = contdb.CdbCIA('.database/H2-H2_2011.cia', nus)
 print('N=', len(mdbCH4.nu_lines))
 
@@ -121,9 +120,6 @@ if False:
               u1=0.0, u2=0.0, RV=10.0, vsini=20.0)
     plt.plot(wavd, mu)
     plt.show()
-
-import sys
-sys.exit()
 
     
 Mp = 33.2
