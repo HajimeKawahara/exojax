@@ -13,7 +13,10 @@ import warnings
 from exojax.spec import exomolapi, exomol, atomllapi, atomll, hitranapi
 from exojax.spec.hitran import gamma_natural as gn
 from exojax.utils.constants import hcperk, Tref
-import hapi
+from contextlib import redirect_stdout
+import os
+with redirect_stdout(open(os.devnull, 'w')):
+    import hapi
 
 __all__ = ['MdbExomol', 'MdbHit', 'AdbVald', 'AdbSepVald', 'AdbKurucz']
 

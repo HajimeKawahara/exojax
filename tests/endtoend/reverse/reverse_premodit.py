@@ -4,7 +4,6 @@
 #!/usr/bin/env python
 # coding: utf-8
 import arviz
-from exojax.spec.modit import setdgm_exomol
 from numpyro.diagnostics import hpdi
 from numpyro.infer import Predictive
 from numpyro.infer import MCMC, NUTS
@@ -15,9 +14,8 @@ import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 import jax.numpy as jnp
-from exojax.spec import rtransfer as rt
 from exojax.spec import contdb
-
+from exojax.spec.api import MdbExomol
 from exojax.spec import rtransfer
 from exojax.utils.grids import wavenumber_grid
 from exojax.spec.rtransfer import rtrun, dtauM, dtauCIA, wavenumber_grid
@@ -26,7 +24,6 @@ from exojax.spec.spin_rotation import convolve_rigid_rotation
 from exojax.utils.grids import velocity_grid
 
 from exojax.spec import molinfo
-from exojax.utils.constants import RJ
 from exojax.utils.instfunc import resolution_to_gaussian_std
 import numpy as np
 from exojax.spec import initspec
@@ -50,10 +47,10 @@ NP = 100
 Parr, dParr, k = rtransfer.pressure_layer(NP=NP)
 Nx = 7500
 nu_grid, wav, res = wavenumber_grid(np.min(wavd) - 10.0,
-                           np.max(wavd) + 10.0,
-                           Nx,
-                           unit='AA',
-                           xsmode='premodit')
+                                    np.max(wavd) + 10.0,
+                                    Nx,
+                                    unit='AA',
+                                    xsmode='premodit')
 Rinst = 100000.
 beta_inst = resolution_to_gaussian_std(Rinst)
 
@@ -65,22 +62,13 @@ vmrH2 = (mmrH2 * mmw / molmassH2)  # VMR
 
 #
 Mp = 33.2
-switch_api = True
-if switch_api:
-    from exojax.spec.api import MdbExomol
-    mdb = MdbExomol('.database/CH4/12C-1H4/YT10to10/',
-                    nurange = nu_grid,
-                    crit=1.e-30,
-                    gpu_transfer=False)
-else:
-    from exojax.spec.moldb import MdbExomol
-    mdb = MdbExomol('.database_/CH4/12C-1H4/YT10to10/',
-                    nu_grid,
-                    crit=1.e-30,
-                    gpu_transfer=False)
+
+mdb = MdbExomol('.database/CH4/12C-1H4/YT10to10/',
+                nurange=nu_grid,
+                crit=1.e-30,
+                gpu_transfer=False)
 cdbH2H2 = contdb.CdbCIA('.database/H2-H2_2011.cia', nu_grid)
 print('N=', len(mdb.nu_lines))
-print(np.max(mdb.nu_lines), np.min(mdb.nu_lines))
 
 # Reference pressure for a T-P model
 Pref = 1.0  # bar
@@ -91,26 +79,19 @@ interval_contrast = 0.1
 dit_grid_resolution = 0.1
 Ttyp = 2000.0
 
-try:
-    mdb.elower = mdb._elower
-    mdb.alpha_ref = mdb._alpha_ref
-    mdb.n_Texp = mdb._n_Texp
-except:
-    print("API used")
-
 lbd, multi_index_uniqgrid, elower_grid, ngamma_ref_grid, n_Texp_grid, R, pmarray = initspec.init_premodit(
     mdb.nu_lines,
     nu_grid,
-    mdb.elower,  
-    mdb.alpha_ref,  
-    mdb.n_Texp,  
+    mdb.elower,
+    mdb.alpha_ref,
+    mdb.n_Texp,
     mdb.Sij0,
     Ttyp,
     interval_contrast=interval_contrast,
     dit_grid_resolution=dit_grid_resolution,
     warning=False)
 
-#settings before HMC                                                                   
+#settings before HMC
 vsini_max = 100.0
 vr_array = velocity_grid(res, vsini_max)
 

@@ -8,14 +8,14 @@ import numpy as np
 import jax.numpy as jnp
 import pathlib
 import vaex
-from exojax.spec import hitranapi
 from exojax.spec.hitran import line_strength_numpy
 from exojax.spec.hitran import gamma_natural as gn
 from exojax.utils.constants import Tref
 from exojax.utils.molname import e2s
-from exojax.spec.hitranapi import search_molecid
 
 # currently use radis add/common-api branch
+from exojax.spec import hitranapi
+from exojax.spec.hitranapi import search_molecid    
 from radis.api.exomolapi import MdbExomol as CapiMdbExomol  #MdbExomol in the common API
 from radis.api.hitempapi import HITEMPDatabaseManager
 from radis.api.hitranapi import HITRANDatabaseManager
