@@ -21,7 +21,10 @@ from exojax.spec import contdb
 from exojax.spec import rtransfer
 from exojax.utils.grids import wavenumber_grid
 from exojax.spec.rtransfer import rtrun, dtauM, dtauCIA, wavenumber_grid
-from exojax.spec import planck, response
+from exojax.spec.response import ipgauss_sampling
+from exojax.spec.spin_rotation import convolve_rigid_rotation
+from exojax.utils.grids import velocity_grid
+
 from exojax.spec import molinfo
 from exojax.utils.constants import RJ
 from exojax.utils.instfunc import resolution_to_gaussian_std
@@ -107,6 +110,9 @@ lbd, multi_index_uniqgrid, elower_grid, ngamma_ref_grid, n_Texp_grid, R, pmarray
     dit_grid_resolution=dit_grid_resolution,
     warning=False)
 
+#settings before HMC                                                                   
+vsini_max = 100.0
+vr_array = velocity_grid(res, vsini_max)
 
 def frun(Tarr, MMR_CH4, Mp, Rp, u1, u2, RV, vsini):
     g = 2478.57730044555 * Mp / Rp**2
@@ -123,13 +129,13 @@ def frun(Tarr, MMR_CH4, Mp, Rp, u1, u2, RV, vsini):
     sourcef = piBarr(Tarr, nu_grid)
 
     F0 = rtrun(dtau, sourcef) / norm
-    Frot = response.rigidrot(nu_grid, F0, vsini, u1, u2)
-    mu = response.ipgauss_sampling(nusd, nu_grid, Frot, beta_inst, RV)
+    Frot = convolve_rigid_rotation(F0, vr_array, vsini, u1, u2)
+    mu = ipgauss_sampling(nusd, nu_grid, Frot, beta_inst, RV)
     return mu
 
 
 #test
-if True:
+if False:
     Tarr = 1295.0 * (Parr / Pref)**0.1
     mu = frun(Tarr,
               MMR_CH4=0.0059,
@@ -146,10 +152,6 @@ if True:
                np.array([wavd, mu * norm]).T,
                delimiter=",")
 
-import sys
-
-sys.exit()
-
 Mp = 33.2
 
 
@@ -160,7 +162,6 @@ def model_c(nu1, y1):
     T0 = numpyro.sample('T0', dist.Uniform(1000.0, 1500.0))
     alpha = numpyro.sample('alpha', dist.Uniform(0.05, 0.2))
     vsini = numpyro.sample('vsini', dist.Uniform(15.0, 25.0))
-    g = 2478.57730044555 * Mp / Rp**2  # gravity
     u1 = 0.0
     u2 = 0.0
     # T-P model//
