@@ -14,7 +14,6 @@ from exojax.spec.hitran import gamma_natural as gn
 from exojax.utils.constants import Tref
 from exojax.utils.molname import e2s
 from exojax.spec.hitranapi import search_molecid
-from jax import vmap
 
 # currently use radis add/common-api branch
 from radis.api.exomolapi import MdbExomol as CapiMdbExomol  #MdbExomol in the common API
@@ -348,14 +347,15 @@ class MdbHitemp(HITEMPDatabaseManager):
             self.nu_lines = df.wav.values
             self.Sij0 = df.int.values
             self.delta_air = df.Pshft.values
-            self.isoid = df.iso.values
-            self.uniqiso = np.unique(self.isoid)
             self.A = df.A.values
             self.n_air = df.Tdpair.values
             self.gamma_air = df.airbrd.values
             self.gamma_self = df.selbrd.values
             self.elower = df.El.values
             self.gpp = df.gp.values
+            #isotope
+            self.isoid = df.iso.values
+            self.uniqiso = np.unique(self.isoid)
         else:
             raise ValueError("Use vaex dataframe as input.")
 
@@ -371,8 +371,6 @@ class MdbHitemp(HITEMPDatabaseManager):
         self.logsij0 = jnp.array(np.log(self.Sij0))
         self.Sij0 = jnp.array(self.Sij0)
         self.delta_air = jnp.array(self.delta_air)
-        self.isoid = jnp.array(self.isoid)
-        self.uniqiso = jnp.array(self.uniqiso)
         self.A = jnp.array(self.A)
         self.n_air = jnp.array(self.n_air)
         self.gamma_air = jnp.array(self.gamma_air)
@@ -420,15 +418,13 @@ class MdbHitemp(HITEMPDatabaseManager):
            Nlines=len(self.nu_lines)
         """
 
-        #vqr_interp = vmap(self.qr_interp,(0,None),0)
-        #qrx = vqr_interp(self.uniqiso,T)
         qrx = []
         for idx, iso in enumerate(self.uniqiso):
             qrx.append(self.qr_interp(idx, T))
 
         qr_line = jnp.zeros(len(self.isoid))
         for idx, iso in enumerate(self.uniqiso):
-            mask_idx = jnp.where(self.isoid == iso)
+            mask_idx = np.where(self.isoid == iso)
             qr_line = qr_line.at[jnp.index_exp[mask_idx]].set(qrx[idx])
         return qr_line
 
@@ -581,8 +577,6 @@ class MdbHitran(HITRANDatabaseManager):
         self.logsij0 = jnp.array(np.log(self.Sij0))
         self.Sij0 = jnp.array(self.Sij0)
         self.delta_air = jnp.array(self.delta_air)
-        self.isoid = jnp.array(self.isoid)
-        self.uniqiso = jnp.array(self.uniqiso)
         self.A = jnp.array(self.A)
         self.n_air = jnp.array(self.n_air)
         self.gamma_air = jnp.array(self.gamma_air)
