@@ -60,12 +60,9 @@ mmrH2 = 0.74
 molmassH2 = molinfo.molmass('H2')
 vmrH2 = (mmrH2 * mmw / molmassH2)  # VMR
 
-#
 Mp = 33.2
-
 mdb = MdbExomol('.database/CH4/12C-1H4/YT10to10/',
                 nurange=nu_grid,
-                crit=1.e-30,
                 gpu_transfer=False)
 cdbH2H2 = contdb.CdbCIA('.database/H2-H2_2011.cia', nu_grid)
 print('N=', len(mdb.nu_lines))
