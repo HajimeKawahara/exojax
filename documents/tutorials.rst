@@ -1,16 +1,38 @@
-
-
 Basics
 ==============
+
+
+
+
+Cross Section using Various Opacity Calculators
+--------------------------------------------------------
+
+
 
 .. toctree::
    :maxdepth: 1
 
-   tutorials/Ackerman_and_Marley_cloud_model.rst
-   tutorials/CIA_opacity.rst
-   tutorials/Comparing_HITEMP_and_ExoMol.rst
    tutorials/Cross_Section_using_Discrete_Integral_Transform.rst
    tutorials/Cross_Section_using_Modified_Discrete_Integral_Transform.rst
+   tutorials/Cross_Section_using_Precomputation_Modified_Discrete_Integral_Transform.rst
+   tutorials/Comparing_HITEMP_and_ExoMol.rst
+   
+Other Physical/Chemical Processes
+--------------------------------------
+
+.. toctree::
+   :maxdepth: 1
+
+   tutorials/CIA_opacity.rst
+   tutorials/Ackerman_and_Marley_cloud_model.rst
+   
+
+Others
+------------------
+
+.. toctree::
+   :maxdepth: 1
+
    tutorials/Forward_modeling.rst
    tutorials/Forward_modeling_for_Fe_I_lines_of_Kurucz.rst
    tutorials/Forward_modeling_for_metal_line.rst
