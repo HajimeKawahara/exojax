@@ -6,14 +6,12 @@ import numpy as np
 from exojax.spec.initspec import init_premodit
 from exojax.utils.grids import wavenumber_grid
 from exojax.spec.premodit import xsvector
-from exojax.test.emulate_broadpar import mock_broadpar_exomol
-from exojax.test.emulate_broadpar import mock_broadpar_hitemp
-
 from exojax.test.emulate_mdb import mock_mdbExomol
 from exojax.test.emulate_mdb import mock_mdbHitemp
 from exojax.spec.molinfo import molmass
 from exojax.spec import normalized_doppler_sigma
 from exojax.test.data import TESTDATA_CO_EXOMOL_PREMODIT_XS_REF
+from exojax.test.data import TESTDATA_CO_HITEMP_PREMODIT_XS_REF
 
 
 def test_xsection_premodit_exomol():
@@ -22,8 +20,6 @@ def test_xsection_premodit_exomol():
     Ttyp = 2000.0
     Ttest = 1200.0
     Ptest = 1.0
-    
-    ngamma_ref, n_Texp = mock_broadpar_exomol()
     mdb = mock_mdbExomol()
     #Mmol = molmass("CO")
     Nx = 5000
@@ -64,8 +60,6 @@ def test_xsection_premodit_hitemp():
     Ttyp = 2000.0
     Ttest = 1200.0
     Ptest = 1.0
-    
-    ngamma_ref, n_Texp = mock_broadpar_hitemp()
     mdb = mock_mdbHitemp()
     #Mmol = molmass("CO")
     Nx = 5000
@@ -80,8 +74,8 @@ def test_xsection_premodit_hitemp():
         mdb.nu_lines,
         nu_grid,
         mdb.elower,
-        mdb.alpha_ref,
-        mdb.n_Texp,
+        mdb.gamma_air,
+        mdb.n_air,
         mdb.Sij0,
         Ttyp,
         interval_contrast=interval_contrast,
@@ -90,12 +84,12 @@ def test_xsection_premodit_hitemp():
 
     Mmol = molmass("CO")
     nsigmaD = normalized_doppler_sigma(Ttest, Mmol, R)
-    qt = mdb.qr_interp(Ttest)
+    qt = mdb.qr_interp_lines(Ttest)
     xsv = xsvector(Ttest, Ptest, nsigmaD, lbd, R, pmarray, nu_grid, elower_grid,
                   multi_index_uniqgrid, ngamma_ref_grid, n_Texp_grid, qt)
     
     filename = pkg_resources.resource_filename(
-        'exojax', 'data/testdata/'+TESTDATA_CO_EXOMOL_PREMODIT_XS_REF)
+        'exojax', 'data/testdata/'+TESTDATA_CO_HITEMP_PREMODIT_XS_REF)
     dat = pd.read_csv(filename, delimiter=",", names=("nus", "xsv"))
     assert np.all(xsv == pytest.approx(dat["xsv"].values))    
     return nu_grid,xsv
