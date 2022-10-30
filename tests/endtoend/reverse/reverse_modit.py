@@ -10,23 +10,23 @@ from numpyro.infer import Predictive
 from numpyro.infer import MCMC, NUTS
 import numpyro
 import numpyro.distributions as dist
+import jax.numpy as jnp
 from jax import random
 import pandas as pd
 import numpy as np
-from jax import jit
 import matplotlib.pyplot as plt
-import jax.numpy as jnp
 from exojax.spec import rtransfer as rt
 from exojax.spec import modit
-from exojax.spec import moldb, contdb
-from exojax.spec import rtransfer as rt
+from exojax.spec import api, contdb
 from exojax.utils.grids import wavenumber_grid
 from exojax.spec.rtransfer import rtrun, dtauM, dtauCIA, wavenumber_grid
-from exojax.spec import planck, response
+from exojax.spec import planck
 from exojax.spec import molinfo
-from exojax.utils.constants import RJ, pc, Rs, c
+from exojax.spec.response import ipgauss_sampling
+from exojax.spec.spin_rotation import convolve_rigid_rotation
+from exojax.utils.grids import velocity_grid
+from exojax.utils.constants import RJ
 from exojax.utils.instfunc import resolution_to_gaussian_std
-import numpy as np
 from exojax.spec import initspec
 import pkg_resources
 from exojax.test.data import SAMPLE_SPECTRA_CH4
@@ -55,10 +55,9 @@ mmw = 2.33  # mean molecular weight
 mmrH2 = 0.74
 molmassH2 = molinfo.molmass('H2')
 vmrH2 = (mmrH2*mmw/molmassH2)  # VMR
-
-#
 Mp = 33.2
-mdbCH4 = moldb.MdbExomol('.database/CH4/12C-1H4/YT10to10/', nus, crit=1.e-30)
+
+mdbCH4 = api.MdbExomol('.database/CH4/12C-1H4/YT10to10/', nus, crit=1.e-30, Ttyp=273.0, gpu_transfer=True)
 cdbH2H2 = contdb.CdbCIA('.database/H2-H2_2011.cia', nus)
 print('N=', len(mdbCH4.nu_lines))
 
@@ -67,13 +66,9 @@ Pref = 1.0  # bar
 ONEARR = np.ones_like(Parr)
 ONEWAV = jnp.ones_like(nflux)
 
-#
-
 cnu, indexnu, R, pmarray = initspec.init_modit(mdbCH4.nu_lines, nus)
 
 # Precomputing gdm_ngammaL
-
-
 def fT(T0, alpha): return T0[:, None]*(Parr[None, :]/Pref)**alpha[:, None]
 
 
@@ -84,7 +79,7 @@ dgm_ngammaL = setdgm_exomol(
     mdbCH4, fT, Parr, R, molmassCH4, res, T0_test, alpha_test)
 
 # check dgm
-if True:
+if False:
     from exojax.plot.ditplot import plot_dgmn
     Tarr = 1300.*(Parr/Pref)**0.1
     SijM_CH4, ngammaLM_CH4, nsigmaDl_CH4 = modit.exomol(
@@ -92,9 +87,11 @@ if True:
     plot_dgmn(Parr, dgm_ngammaL, ngammaLM_CH4, 0, 6)
     plt.show()
 
+#settings before HMC
+vsini_max = 100.0
+vr_array = velocity_grid(res, vsini_max)
+
 # a core driver
-
-
 def frun(Tarr, MMR_CH4, Mp, Rp, u1, u2, RV, vsini):
     g = 2478.57730044555*Mp/Rp**2
     SijM_CH4, ngammaLM_CH4, nsigmaDl_CH4 = modit.exomol(
@@ -109,8 +106,8 @@ def frun(Tarr, MMR_CH4, Mp, Rp, u1, u2, RV, vsini):
     dtau = dtaumCH4+dtaucH2H2
     sourcef = planck.piBarr(Tarr, nus)
     F0 = rtrun(dtau, sourcef)/norm
-    Frot = response.rigidrot(nus, F0, vsini, u1, u2)
-    mu = response.ipgauss_sampling(nusd, nus, Frot, beta_inst, RV)
+    Frot = convolve_rigid_rotation(F0, vr_array, vsini, u1, u2)
+    mu = ipgauss_sampling(nusd, nus, Frot, beta_inst, RV)
     return mu
 
 
@@ -122,11 +119,7 @@ if False:
     plt.plot(wavd, mu)
     plt.show()
 
-import sys
-sys.exit()
-
     
-Mp = 33.2
 
 
 def model_c(nu1, y1):

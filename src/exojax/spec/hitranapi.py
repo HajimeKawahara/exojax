@@ -3,7 +3,10 @@ import numpy as np
 from radis.db.classes import get_molecule
 from radis.db.classes import get_molecule_identifier
 import jax.numpy as jnp
-import hapi
+from contextlib import redirect_stdout
+import os
+with redirect_stdout(open(os.devnull, 'w')):
+    import hapi
 
 def search_molecid(molec):
     """molec id from Hitran/Hitemp filename or molecule name or moleid itself.
