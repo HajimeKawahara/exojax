@@ -13,11 +13,11 @@ from exojax.utils.grids import wavenumber_grid
 from exojax.spec.initspec import init_modit, init_modit_vald
 from exojax.spec.set_ditgrid import ditgrid_log_interval
 
-from exojax.test.emulate_mdb import mock_mdbExoMol, mock_mdbVALD
+from exojax.test.emulate_mdb import mock_mdbExomol, mock_mdbVALD
 
 
 def test_xs_exomol():
-    mdbCO = mock_mdbExoMol()
+    mdbCO = mock_mdbExomol()
     Tfix = 1200.0
     Pfix = 1.0
     Mmol = molmass("CO")
@@ -60,7 +60,7 @@ def test_rt_exomol():
     from exojax.spec.modit import set_ditgrid_matrix_exomol
     from exojax.test.data import TESTDATA_CO_EXOMOL_MODIT_EMISSION_REF
     
-    mdb = mock_mdbExoMol()
+    mdb = mock_mdbExomol()
 
     Parr, dParr, k = rt.pressure_layer(NP=100)
     T0_in = 1300.0

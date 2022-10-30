@@ -6,7 +6,7 @@ import pandas as pd
 import numpy as np
 from exojax.spec.initspec import init_premodit
 from exojax.utils.grids import wavenumber_grid
-from exojax.test.emulate_mdb import mock_mdbExoMol
+from exojax.test.emulate_mdb import mock_mdbExomol
 from exojax.spec import rtransfer as rt
 from exojax.spec import molinfo
 from exojax.spec.premodit import xsmatrix
@@ -19,7 +19,7 @@ from jax.config import config
 config.update("jax_enable_x64", True)
 
 def test_rt_exomol(fig=False):
-    mdb = mock_mdbExoMol()
+    mdb = mock_mdbExomol()
     Parr, dParr, k = rt.pressure_layer(NP=100)
     T0_in = 1300.0
     alpha_in = 0.1

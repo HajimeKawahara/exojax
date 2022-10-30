@@ -4,7 +4,8 @@
 # exomol moldb template used in unit tests
 # exojax.src.test.generate should make this file
 TESTDATA_moldb_CO_EXOMOL = "moldb_co_exomol.pickle"
-TESTDATA_moldb_H2O_EXOMOL = "moldb_h2o_exomol.pickle"
+TESTDATA_moldb_CO_HITEMP = "moldb_co_hitemp.pickle"
+TESTDATA_moldb_H2O_EXOMOL = "moldb_h2o_exomol.pickle" #used in plg test
 TESTDATA_moldb_VALD = "moldb_vald.pickle"
 
 # cross section references

@@ -7,7 +7,7 @@ from exojax.spec.initspec import init_premodit
 from exojax.utils.grids import wavenumber_grid
 from exojax.spec.premodit import xsvector
 from exojax.test.emulate_broadpar import mock_broadpar_exomol
-from exojax.test.emulate_mdb import mock_mdbExoMol
+from exojax.test.emulate_mdb import mock_mdbExomol
 from exojax.spec.molinfo import molmass
 from exojax.spec import normalized_doppler_sigma
 from exojax.test.data import TESTDATA_CO_EXOMOL_PREMODIT_XS_REF
@@ -21,7 +21,7 @@ def test_xsection_premodit():
     Ptest = 1.0
     
     ngamma_ref, n_Texp = mock_broadpar_exomol()
-    mdb = mock_mdbExoMol()
+    mdb = mock_mdbExomol()
     #Mmol = molmass("CO")
     Nx = 5000
     
