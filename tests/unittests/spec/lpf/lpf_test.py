@@ -13,10 +13,10 @@ from exojax.spec.hitran import line_strength
 from exojax.spec.exomol import gamma_exomol
 from exojax.utils.grids import wavenumber_grid
 from exojax.spec.initspec import init_lpf
-from exojax.test.emulate_mdb import mock_mdbExoMol
+from exojax.test.emulate_mdb import mock_mdbExomol
 
 def test_exomol():
-    mdbCO = mock_mdbExoMol()    
+    mdbCO = mock_mdbExomol()    
     Tfix=1200.0
     Pfix=1.0
     Mmol = molmass("CO")

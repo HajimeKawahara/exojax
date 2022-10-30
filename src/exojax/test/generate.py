@@ -1,21 +1,38 @@
 """generate test data
 
 """
-from exojax.spec import moldb
+from exojax.spec import api
 from exojax.utils.grids import wavenumber_grid
 import pickle
-import numpy as np
 
-def gendata_moldb_exomol():
+
+def gendata_moldb(database):
     """generate test data for CO exomol
     """
-    from exojax.test.data import TESTDATA_moldb_CO_EXOMOL as filename
-    Nx=10000
-    nus, wav, res = wavenumber_grid(22920.0,24000.0, Nx, unit='AA')
-    mdbCO = moldb.MdbExomol('.database/CO/12C-16O/Li2015', nus, crit=1e-35, Ttyp=296.0)
+    Nx = 10000
+    nus, wav, res = wavenumber_grid(22920.0, 24000.0, Nx, unit='AA')
+    if database == "exomol":
+        from exojax.test.data import TESTDATA_moldb_CO_EXOMOL as filename
+        mdbCO = api.MdbExomol('.database/CO/12C-16O/Li2015',
+                              nus,
+                              crit=1e-35,
+                              Ttyp=296.0,
+                              gpu_transfer=True)
+    elif database == "hitemp":
+        from exojax.test.data import TESTDATA_moldb_CO_HITEMP as filename
+        mdbCO = api.MdbHitemp('CO',
+                              nus,
+                              crit=1e-35,
+                              Ttyp=296.0,
+                              gpu_transfer=True)
+
     with open(filename, 'wb') as f:
         pickle.dump(mdbCO, f)
 
-        
+
 if __name__ == "__main__":
-    gendata_moldb_exomol()
+    gendata_moldb("exomol")
+    gendata_moldb("hitemp")
+    print(
+        "to include the generated files in the package, move pickles to exojax/src/data/testdata/"
+    )
