@@ -93,33 +93,23 @@ def test_xsection_premodit_hitemp():
     xsv = xsvector(Ttest, Ptest, nsigmaD, lbd, R, pmarray, nu_grid,
                    elower_grid, multi_index_uniqgrid, ngamma_ref_grid,
                    n_Texp_grid, qt)
-    import matplotlib.pyplot as plt
-    plt.plot(nu_grid, xsv)
-    plt.yscale("log")
-    plt.show()
-    #filename = pkg_resources.resource_filename(
-    #    'exojax', 'data/testdata/'+TESTDATA_CO_HITEMP_PREMODIT_XS_REF)
-    #dat = pd.read_csv(filename, delimiter=",", names=("nus", "xsv"))
-    #assert np.all(xsv == pytest.approx(dat["xsv"].values))
+    #np.savetxt(TESTDATA_CO_HITEMP_PREMODIT_XS_REF,np.array([nu_grid,xsv]).T,delimiter=",")
+    filename = pkg_resources.resource_filename(
+        'exojax', 'data/testdata/' + TESTDATA_CO_HITEMP_PREMODIT_XS_REF)
+    dat = pd.read_csv(filename, delimiter=",", names=("nus", "xsv"))
+    assert np.all(xsv == pytest.approx(dat["xsv"].values))
     return nu_grid, xsv
 
 
 if __name__ == "__main__":
+    #comparison with MODIT
     from exojax.test.data import TESTDATA_CO_EXOMOL_MODIT_XS_REF
-    from exojax.test.data import TESTDATA_CO_HITEMP_MODIT_XS_REF
     import matplotlib.pyplot as plt
     #import jax.profiler
 
-    database = "hitemp"
-    #database = "exomol"
-    if database == "exomol":
-        nus, xs = test_xsection_premodit_exomol()
-        filename = pkg_resources.resource_filename(
-            'exojax', 'data/testdata/' + TESTDATA_CO_EXOMOL_MODIT_XS_REF)
-    elif database == "hitemp":
-        nus, xs = test_xsection_premodit_hitemp()
-        filename = pkg_resources.resource_filename(
-            'exojax', 'data/testdata/' + TESTDATA_CO_HITEMP_MODIT_XS_REF)
+    nus, xs = test_xsection_premodit_exomol()
+    filename = pkg_resources.resource_filename(
+        'exojax', 'data/testdata/' + TESTDATA_CO_EXOMOL_MODIT_XS_REF)
 
     #xs.block_until_ready()
     #jax.profiler.save_device_memory_profile("memory.prof")
