@@ -63,7 +63,7 @@ def test_xsection_premodit_hitemp():
     Ttyp = 2000.0
     Ttest = 1200.0
     Ptest = 1.0
-    mdb = mock_mdbHitemp()
+    mdb = mock_mdbHitemp(multi_isotope=False)
     #Mmol = molmass("CO")
     Nx = 5000
 
@@ -87,7 +87,7 @@ def test_xsection_premodit_hitemp():
 
     Mmol = molmass("CO")
     nsigmaD = normalized_doppler_sigma(Ttest, Mmol, R)
-    qt = mdb.qr_interp(0, Ttest)
+    qt = mdb.qr_interp(1, Ttest)
     message = "Here, we use a single partition function qt for isotope=0 despite of several isotopes."
     warnings.warn(message, UserWarning)
     xsv = xsvector(Ttest, Ptest, nsigmaD, lbd, R, pmarray, nu_grid,

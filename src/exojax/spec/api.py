@@ -375,31 +375,33 @@ class MdbHitemp(HITEMPDatabaseManager):
         self.elower = jnp.array(self.elower)
         self.gpp = jnp.array(self.gpp)
 
-    def QT_interp(self, isotope_index, T):
+    def QT_interp(self, isotope, T):
         """interpolated partition function.
 
         Args:
-           isotope_index: index for HITRAN isotopologue number
+           isotope: HITRAN isotope number starting from 1
            T: temperature
 
         Returns:
            Q(idx, T) interpolated in jnp.array
         """
-        return jnp.interp(T, self.T_gQT[isotope_index],
-                          self.gQT[isotope_index])
+        isotope_index = _isotope_index_from_isotope_number(
+            isotope, self.uniqiso)
+        return _QT_interp(isotope_index, T, self.T_gQT, self.gQT)
 
-    def qr_interp(self, isotope_index, T):
+    def qr_interp(self, isotope, T):
         """interpolated partition function ratio.
 
         Args:
-           isotope_index: index for HITRAN isotopologue number
-           T: temperature
+            isotope: HITRAN isotope number starting from 1
+            T: temperature
 
         Returns:
-           qr(T)=Q(T)/Q(Tref) interpolated in jnp.array
+            qr(T)=Q(T)/Q(Tref) interpolated in jnp.array
         """
-        return self.QT_interp(isotope_index, T) / self.QT_interp(
-            isotope_index, Tref)
+        isotope_index = _isotope_index_from_isotope_number(
+            isotope, self.uniqiso)
+        return _qr_interp(isotope_index, T, self.T_gQT, self.gQT)
 
     def qr_interp_lines(self, T):
         """Partition Function ratio using HAPI partition data.
@@ -414,16 +416,8 @@ class MdbHitemp(HITEMPDatabaseManager):
         Note:
            Nlines=len(self.nu_lines)
         """
-
-        qrx = []
-        for idx, iso in enumerate(self.uniqiso):
-            qrx.append(self.qr_interp(idx, T))
-
-        qr_line = jnp.zeros(len(self.isoid))
-        for idx, iso in enumerate(self.uniqiso):
-            mask_idx = np.where(self.isoid == iso)
-            qr_line = qr_line.at[jnp.index_exp[mask_idx]].set(qrx[idx])
-        return qr_line
+        return _qr_interp_lines(T, self.isoid, self.uniqiso, self.T_gQT,
+                                self.gQT)
 
 
 MdbHit = MdbHitemp  #compatibility
@@ -507,7 +501,7 @@ class MdbHitran(HITRANDatabaseManager):
 
         if len(download_files) > 0:
             self.clean_download_files()
-            
+
         self.isotope = _convert_proper_isotope(isotope)
         # Load and return
         df = self.load(
@@ -580,32 +574,34 @@ class MdbHitran(HITRANDatabaseManager):
         self.gamma_self = jnp.array(self.gamma_self)
         self.elower = jnp.array(self.elower)
         self.gpp = jnp.array(self.gpp)
-
-    def QT_interp(self, isotope_index, T):
+    
+    def QT_interp(self, isotope, T):
         """interpolated partition function.
 
         Args:
-           isotope_index: index for HITRAN isotopologue number
+           isotope: HITRAN isotope number starting from 1
            T: temperature
 
         Returns:
            Q(idx, T) interpolated in jnp.array
         """
-        return jnp.interp(T, self.T_gQT[isotope_index],
-                          self.gQT[isotope_index])
+        isotope_index = _isotope_index_from_isotope_number(
+            isotope, self.uniqiso)
+        return _QT_interp(isotope_index, T, self.T_gQT, self.gQT)
 
-    def qr_interp(self, isotope_index, T):
+    def qr_interp(self, isotope, T):
         """interpolated partition function ratio.
 
         Args:
-           isotope_index: index for HITRAN isotopologue number
-           T: temperature
+            isotope: HITRAN isotope number starting from 1
+            T: temperature
 
         Returns:
-           qr(T)=Q(T)/Q(Tref) interpolated in jnp.array
+            qr(T)=Q(T)/Q(Tref) interpolated in jnp.array
         """
-        return self.QT_interp(isotope_index, T) / self.QT_interp(
-            isotope_index, Tref)
+        isotope_index = _isotope_index_from_isotope_number(
+            isotope, self.uniqiso)
+        return _qr_interp(isotope_index, T, self.T_gQT, self.gQT)
 
     def qr_interp_lines(self, T):
         """Partition Function ratio using HAPI partition data.
@@ -620,15 +616,8 @@ class MdbHitran(HITRANDatabaseManager):
         Note:
            Nlines=len(self.nu_lines)
         """
-        qrx = []
-        for idx, iso in enumerate(self.uniqiso):
-            qrx.append(self.qr_interp(idx, T))
-
-        qr_line = jnp.zeros(len(self.isoid))
-        for idx, iso in enumerate(self.uniqiso):
-            mask_idx = np.where(self.isoid == iso)
-            qr_line = qr_line.at[jnp.index_exp[mask_idx]].set(qrx[idx])
-        return qr_line
+        return _qr_interp_lines(T, self.isoid, self.uniqiso, self.T_gQT,
+                                self.gQT)
 
 
 def _convert_proper_isotope(isotope):
@@ -648,3 +637,79 @@ def _convert_proper_isotope(isotope):
         return isotope
     else:
         raise ValueError("Invalid isotope type")
+
+
+def _isotope_index_from_isotope_number(isotope, uniqiso):
+    """isotope index given HITRAN/HITEMP isotope number
+
+        Args:
+            isotope (int): isotope number
+            uniqiso (nd int array): unique isotope array 
+
+        Returns:
+            int: isotope_index for T_gQT and gQT  
+        """
+    isotope_index = np.where(uniqiso == isotope)[0][0]
+    return isotope_index
+
+
+def _QT_interp(isotope_index, T, T_gQT, gQT):
+    """interpolated partition function.
+
+        Note:
+           isotope_index is NOT isotope (number for HITRAN). 
+           isotope_index is index for gQT and T_gQT.
+           _isotope_index_from_isotope_number can be used 
+           to get isotope index from isotope.
+           
+        Args:
+           isotope index: isotope index, index from 0 to len(uniqiso) - 1
+           T: temperature
+
+        Returns:
+           Q(idx, T) interpolated in jnp.array
+        """
+
+    return jnp.interp(T, T_gQT[isotope_index], gQT[isotope_index])
+
+
+def _qr_interp(isotope_index, T, T_gQT, gQT):
+    """interpolated partition function ratio.
+
+        Note:
+           isotope_index is NOT isotope (number for HITRAN). 
+           isotope_index is index for gQT and T_gQT.
+           _isotope_index_from_isotope_number can be used 
+           to get isotope index from isotope.
+    
+        Args:
+            isotope index: isotope index, index from 0 to len(uniqiso) - 1
+            T: temperature
+
+        Returns:
+            qr(T)=Q(T)/Q(Tref) interpolated in jnp.array
+        """
+    return _QT_interp(isotope_index, T, T_gQT, gQT) / _QT_interp(
+        isotope_index, Tref, T_gQT, gQT)
+
+
+def _qr_interp_lines(T, isoid, uniqiso, T_gQT, gQT):
+    """Partition Function ratio using HAPI partition data.
+        (This function works for JAX environment.)
+
+        Args:
+           T: temperature (K)
+
+        Returns:
+           Qr_line, partition function ratio array for lines [Nlines]
+
+        Note:
+           Nlines=len(self.nu_lines)
+        """
+    qr_line = jnp.zeros(len(isoid))
+    for isotope in uniqiso:
+        mask_idx = np.where(isoid == isotope)
+        isotope_index = _isotope_index_from_isotope_number(isotope, uniqiso)
+        qr_each_isotope = _qr_interp(isotope_index, T, T_gQT, gQT)
+        qr_line = qr_line.at[jnp.index_exp[mask_idx]].set(qr_each_isotope)
+    return qr_line
