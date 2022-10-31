@@ -5,7 +5,7 @@ from exojax.spec.api import _qr_interp
 from exojax.spec.api import _qr_interp_lines
 from exojax.test.emulate_mdb import mock_mdbHitemp
 import numpy as np
-
+import pytest
 
 def test__convert_proper_isotope():
     assert _convert_proper_isotope(0) is None
@@ -24,7 +24,7 @@ def test__QT_interp():
     T = 1000.0
     isotope_index = _isotope_index_from_isotope_number(1, mdb.uniqiso)
     QT = _QT_interp(isotope_index, T, mdb.T_gQT, mdb.gQT)
-    assert QT == 380.297
+    assert QT == pytest.approx(380.297)
 
 
 def test__qr_interp():
@@ -32,7 +32,7 @@ def test__qr_interp():
     T = 1000.0
     isotope_index = _isotope_index_from_isotope_number(1, mdb.uniqiso)
     qr = _qr_interp(isotope_index, T, mdb.T_gQT, mdb.gQT)
-    assert qr == 3.5402815
+    assert qr == pytest.approx(3.5402815)
 
 
 def test__qr_interp_lines():
@@ -40,7 +40,7 @@ def test__qr_interp_lines():
     T = 1000.0
     val = np.sum(
         _qr_interp_lines(T, mdb.isoid, mdb.uniqiso, mdb.T_gQT, mdb.gQT))
-    assert val == 1862.4988
+    assert val == pytest.approx(1862.4988)
 
 
 if __name__ == "__main__":
