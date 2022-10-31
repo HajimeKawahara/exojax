@@ -4,17 +4,10 @@ from exojax.spec.api import MdbHitemp
 
 
 def test_moldb_hitemp():
-    mdb = MdbHitemp(".database/CO/05_HITEMP2019/05_HITEMP2019.par.bz2",
-                 nurange=[4200.0, 4300.0],
-                 crit=1.e-30)
-    assert len(mdb.nu_lines) == 521
-
-def test_moldb_hitemp2():
     mdb = MdbHitemp(".database/CO/05_HITEMP2019/",
                  nurange=[4200.0, 4300.0],
                  crit=1.e-30)
     assert len(mdb.nu_lines) == 521
-
 
 def test_moldb_hitemp_direct_name():
     mdb = MdbHitemp(".database/CO/",
@@ -44,11 +37,21 @@ def test_moldb_hitemp_interp():
     assert uniq[3] == pytest.approx(ref[3])
     assert uniq[4] == pytest.approx(ref[4])
 
+def test_moldb_hitemp_isotope():
+    num=[]
+    for iso in [None,1,2,3,4,5,6]:
+        mdb = MdbHitemp(".database/CO/",
+                 nurange=[4200.0, 4300.0],
+                 isotope=iso)
+        num.append(len(mdb.nu_lines))
+    num = np.array(num)
+    assert num[0] == 4259
+    assert num[0] == np.sum(num[1:])
 
 if __name__ == "__main__":
-    test_moldb_hitemp()
-    test_moldb_hitemp2()
-    test_moldb_hitemp_direct_name()
-    test_moldb_hitemp_direct_molecid()
-    test_moldb_hitemp_interp()
+    test_moldb_hitemp_isotope()
+    #test_moldb_hitemp()
+    #test_moldb_hitemp_direct_name()
+    #test_moldb_hitemp_direct_molecid()
+    #test_moldb_hitemp_interp()
     

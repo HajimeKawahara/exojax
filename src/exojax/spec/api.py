@@ -15,7 +15,7 @@ from exojax.utils.molname import e2s
 
 # currently use radis add/common-api branch
 from exojax.spec import hitranapi
-from exojax.spec.hitranapi import search_molecid    
+from exojax.spec.hitranapi import search_molecid
 from radis.api.exomolapi import MdbExomol as CapiMdbExomol  #MdbExomol in the common API
 from radis.api.hitempapi import HITEMPDatabaseManager
 from radis.api.hitranapi import HITRANDatabaseManager
@@ -224,7 +224,7 @@ class MdbHitemp(HITEMPDatabaseManager):
                  margin=0.0,
                  crit=0.,
                  Ttyp=1000.,
-                 isotope=None,
+                 isotope=0,
                  gpu_transfer=False):
         """Molecular database for HITRAN/HITEMP form.
 
@@ -234,7 +234,7 @@ class MdbHitemp(HITEMPDatabaseManager):
            margin: margin for nurange (cm-1)
            crit: line strength lower limit for extraction
            Ttyp: typical temperature to calculate Sij(T) used in crit
-           isotope: None= use all isotopes. 
+           isotope: isotope number, 0 or None = use all isotopes. 
            gpu_transfer: tranfer data to jnp.array?
         """
 
@@ -299,17 +299,14 @@ class MdbHitemp(HITEMPDatabaseManager):
         # Load and return
         files_loaded = self.keep_only_relevant(local_files, load_wavenum_min,
                                                load_wavenum_max)
-        isotope = None
         columns = None,
         output = "vaex"
 
-        if isotope and type(isotope) == int:
-            isotope = str(isotope)
-
+        self.isotope = _convert_proper_isotope(isotope)
         df = self.load(
             files_loaded,  # filter other files,
             columns=columns,
-            within=[("iso", isotope)] if isotope is not None else [],
+            within=[("iso", self.isotope)] if self.isotope is not None else [],
             # for relevant files, get only the right range :
             lower_bound=[("wav", load_wavenum_min)]
             if self.nurange[0] is not None else [],
@@ -456,7 +453,7 @@ class MdbHitran(HITRANDatabaseManager):
                  margin=0.0,
                  crit=0.,
                  Ttyp=1000.,
-                 isotope=None,
+                 isotope=0,
                  gpu_transfer=False):
         """Molecular database for HITRAN/HITEMP form.
 
@@ -466,7 +463,7 @@ class MdbHitran(HITRANDatabaseManager):
            margin: margin for nurange (cm-1)
            crit: line strength lower limit for extraction
            Ttyp: typical temperature to calculate Sij(T) used in crit
-           isotope: None= use all isotopes. 
+           isotope: isotope number. 0 or None= use all isotopes. 
            gpu_transfer: tranfer data to jnp.array?
         """
 
@@ -491,7 +488,6 @@ class MdbHitran(HITRANDatabaseManager):
             parallel=True,
         )
 
-        isotope = None
         columns = None
         output = "vaex"
 
@@ -511,12 +507,13 @@ class MdbHitran(HITRANDatabaseManager):
 
         if len(download_files) > 0:
             self.clean_download_files()
-
+            
+        self.isotope = _convert_proper_isotope(isotope)
         # Load and return
         df = self.load(
             local_file,
             columns=columns,
-            within=[("iso", isotope)] if isotope is not None else [],
+            within=[("iso", self.isotope)] if self.isotope is not None else [],
             # for relevant files, get only the right range :
             lower_bound=[("wav", load_wavenum_min)]
             if load_wavenum_min is not None else [],
@@ -632,3 +629,22 @@ class MdbHitran(HITRANDatabaseManager):
             mask_idx = np.where(self.isoid == iso)
             qr_line = qr_line.at[jnp.index_exp[mask_idx]].set(qrx[idx])
         return qr_line
+
+
+def _convert_proper_isotope(isotope):
+    """covert isotope (int) to proper type for df 
+
+    Args:
+        isotope (int or other type): isotope
+
+    Returns:
+        str: propoer isotope type
+    """
+    if isotope == 0:
+        return None
+    elif isotope is not None and type(isotope) == int:
+        return str(isotope)
+    elif isotope is None:
+        return isotope
+    else:
+        raise ValueError("Invalid isotope type")
