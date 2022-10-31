@@ -419,6 +419,19 @@ class MdbHitemp(HITEMPDatabaseManager):
         return _qr_interp_lines(T, self.isoid, self.uniqiso, self.T_gQT,
                                 self.gQT)
 
+    def exact_isotope_name(self, isotope):
+        """exact isotope name
+
+        Args:
+            isotope (int): isotope number starting from 1
+
+        Returns:
+            str: exact isotope name such as (12C)(16O)
+        """
+        from exojax.utils.isotopes import exact_isotope_name_from_isotope
+        return exact_isotope_name_from_isotope(self.simple_molecule_name,
+                                               isotope)
+
 
 MdbHit = MdbHitemp  #compatibility
 
@@ -574,7 +587,7 @@ class MdbHitran(HITRANDatabaseManager):
         self.gamma_self = jnp.array(self.gamma_self)
         self.elower = jnp.array(self.elower)
         self.gpp = jnp.array(self.gpp)
-    
+
     def QT_interp(self, isotope, T):
         """interpolated partition function.
 
@@ -618,6 +631,19 @@ class MdbHitran(HITRANDatabaseManager):
         """
         return _qr_interp_lines(T, self.isoid, self.uniqiso, self.T_gQT,
                                 self.gQT)
+
+    def exact_isotope_name(self, isotope):
+        """exact isotope name
+
+        Args:
+            isotope (int): isotope number starting from 1
+
+        Returns:
+            str: exact isotope name such as (12C)(16O)
+        """
+        from exojax.utils.isotopes import exact_isotope_name_from_isotope
+        return exact_isotope_name_from_isotope(self.simple_molecule_name,
+                                               isotope)
 
 
 def _convert_proper_isotope(isotope):

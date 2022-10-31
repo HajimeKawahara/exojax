@@ -42,7 +42,10 @@ def test__qr_interp_lines():
         _qr_interp_lines(T, mdb.isoid, mdb.uniqiso, mdb.T_gQT, mdb.gQT))
     assert val == pytest.approx(1862.4988)
 
-
+def test__exact_isotope_name():
+    mdb = mock_mdbHitemp(multi_isotope=True)
+    assert mdb.exact_isotope_name(1) == "(12C)(16O)"
+    
 if __name__ == "__main__":
     test__convert_proper_isotope()
     test__isotope_index_from_isotope_number()
