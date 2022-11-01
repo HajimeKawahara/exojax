@@ -32,5 +32,5 @@ If you just want to generate rst without executing notebooks, try this:
 
 .. code:: sh
 
-    python jupyter2rst.py exe
+    python jupyter2rst.py none
 
