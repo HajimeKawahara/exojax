@@ -22,6 +22,7 @@ TESTDATA_CO_HITEMP_PREMODIT_XS_REF = "premodit_test_hitemp_ref.txt"
 # emission spectra references
 TESTDATA_CO_EXOMOL_MODIT_EMISSION_REF = "modit_rt_test_ref.txt"
 TESTDATA_CO_EXOMOL_PREMODIT_EMISSION_REF = "premodit_rt_test_ref.txt"
+TESTDATA_CO_HITEMP_PREMODIT_EMISSION_REF = "premodit_rt_test_hitemp_ref.txt"
 TESTDATA_VALD_MODIT_EMISSION_REF = "modit_rt_test_vald_ref.txt"
 
 #sample spectra
