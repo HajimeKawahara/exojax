@@ -121,8 +121,8 @@ class MdbExomol(CapiMdbExomol):
         mgr = self.get_datafile_manager()
         local_files = [mgr.cache_file(f) for f in self.trans_file]
 
-        # Load them:
-        df = self.load(
+        # data frame instance:
+        self.df = self.load(
             local_files,
             columns=[k for k in self.__slots__ if k not in ["logsij0"]],
             #lower_bound=([("nu_lines", wavenum_min)] if wavenum_min else []) +
@@ -130,31 +130,39 @@ class MdbExomol(CapiMdbExomol):
             #upper_bound=([("nu_lines", wavenum_max)] if wavenum_max else []),
             output="vaex")
 
-        load_mask = self.compute_load_mask(df)
-        self.get_values_from_dataframes(df[load_mask])
+        load_mask = self.compute_load_mask()
+        self.instances_from_dataframes(self.df[load_mask])
         self.compute_broadening(self.jlower, self.jupper)
         self.gamma_natural = gn(self.A)
 
         if gpu_transfer:
             self.generate_jnp_arrays()
 
-    def compute_load_mask(self, df):
-        wavelength_mask = (df.nu_lines > self.nurange[0]-self.margin) \
-                    * (df.nu_lines < self.nurange[1]+self.margin)
+    def compute_load_mask(self):
+        wavelength_mask = (self.df.nu_lines > self.nurange[0]-self.margin) \
+                    * (self.df.nu_lines < self.nurange[1]+self.margin)
         intensity_mask = (line_strength_numpy(
-            self.Ttyp, df.Sij0, df.nu_lines, df.elower,
+            self.Ttyp, self.df.Sij0, self.df.nu_lines, self.df.elower,
             self.QTtyp / self.QTref) > self.crit)
         return wavelength_mask * intensity_mask
 
-    def get_values_from_dataframes(self, df):
-        if isinstance(df, vaex.dataframe.DataFrameLocal):
-            self.A = df.A.values
-            self.nu_lines = df.nu_lines.values
-            self.elower = df.elower.values
-            self.jlower = df.jlower.values
-            self.jupper = df.jupper.values
-            self.Sij0 = df.Sij0.values
-            self.gpp = df.gup.values
+    def instances_from_dataframes(self, df_load_mask):
+        """generate instances from (usually masked) data farame
+
+        Args:
+            df_load_mask (DataFrame): (masked) data frame
+
+        Raises:
+            ValueError: _description_
+        """
+        if isinstance(df_load_mask, vaex.dataframe.DataFrameLocal):
+            self.A = df_load_mask.A.values
+            self.nu_lines = df_load_mask.nu_lines.values
+            self.elower = df_load_mask.elower.values
+            self.jlower = df_load_mask.jlower.values
+            self.jupper = df_load_mask.jupper.values
+            self.Sij0 = df_load_mask.Sij0.values
+            self.gpp = df_load_mask.gup.values
         else:
             raise ValueError("Use vaex dataframe as input.")
 
@@ -303,7 +311,7 @@ class MdbHitemp(HITEMPDatabaseManager):
         output = "vaex"
 
         self.isotope = _convert_proper_isotope(isotope)
-        df = self.load(
+        self.df = self.load(
             files_loaded,  # filter other files,
             columns=columns,
             within=[("iso", self.isotope)] if self.isotope is not None else [],
@@ -315,43 +323,47 @@ class MdbHitemp(HITEMPDatabaseManager):
             output=output,
         )
 
-        self.isoid = df.iso
-        self.uniqiso = np.unique(df.iso.values)
-        load_mask = None
+        self.isoid = self.df.iso
+        self.uniqiso = np.unique(self.df.iso.values)
         for iso in self.uniqiso:
             Q = PartFuncTIPS(self.molecid, iso)
             QTref = Q.at(T=Tref)
             QTtyp = Q.at(T=Ttyp)
-            load_mask = self.compute_load_mask(df, QTtyp / QTref, load_mask)
-        self.get_values_from_dataframes(df[load_mask])
+            load_mask = self.compute_load_mask(QTtyp / QTref)
+        self.instances_from_dataframes(self.df[load_mask])
         self.gQT, self.T_gQT = hitranapi.get_pf(self.molecid, self.uniqiso)
 
         if gpu_transfer:
             self.generate_jnp_arrays()
 
-    def compute_load_mask(self, df, qrtyp, load_mask):
-        wav_mask = (df.wav > self.nurange[0]-self.margin) \
-                    * (df.wav < self.nurange[1]+self.margin)
-        intensity_mask = (line_strength_numpy(self.Ttyp, df.int, df.wav, df.El,
+    def compute_load_mask(self, qrtyp):
+        wav_mask = (self.df.wav > self.nurange[0]-self.margin) \
+                    * (self.df.wav < self.nurange[1]+self.margin)
+        intensity_mask = (line_strength_numpy(self.Ttyp, self.df.int, self.df.wav, self.df.El,
                                               qrtyp) > self.crit)
-        if load_mask is None:
-            return wav_mask * intensity_mask
-        else:
-            return load_mask * wav_mask * intensity_mask
+        return wav_mask * intensity_mask
+        
+    def instances_from_dataframes(self, df_load_mask):
+        """generate instances from (usually masked) data farame
 
-    def get_values_from_dataframes(self, df):
-        if isinstance(df, vaex.dataframe.DataFrameLocal):
-            self.nu_lines = df.wav.values
-            self.Sij0 = df.int.values
-            self.delta_air = df.Pshft.values
-            self.A = df.A.values
-            self.n_air = df.Tdpair.values
-            self.gamma_air = df.airbrd.values
-            self.gamma_self = df.selbrd.values
-            self.elower = df.El.values
-            self.gpp = df.gp.values
+        Args:
+            df_load_mask (DataFrame): (masked) data frame
+
+        Raises:
+            ValueError: _description_
+        """
+        if isinstance(df_load_mask, vaex.dataframe.DataFrameLocal):
+            self.nu_lines = df_load_mask.wav.values
+            self.Sij0 = df_load_mask.int.values
+            self.delta_air = df_load_mask.Pshft.values
+            self.A = df_load_mask.A.values
+            self.n_air = df_load_mask.Tdpair.values
+            self.gamma_air = df_load_mask.airbrd.values
+            self.gamma_self = df_load_mask.selbrd.values
+            self.elower = df_load_mask.El.values
+            self.gpp = df_load_mask.gp.values
             #isotope
-            self.isoid = df.iso.values
+            self.isoid = df_load_mask.iso.values
             self.uniqiso = np.unique(self.isoid)
         else:
             raise ValueError("Use vaex dataframe as input.")
@@ -517,7 +529,7 @@ class MdbHitran(HITRANDatabaseManager):
 
         self.isotope = _convert_proper_isotope(isotope)
         # Load and return
-        df = self.load(
+        self.df = self.load(
             local_file,
             columns=columns,
             within=[("iso", self.isotope)] if self.isotope is not None else [],
@@ -529,43 +541,47 @@ class MdbHitran(HITRANDatabaseManager):
             output=output,
         )
 
-        self.isoid = df.iso
-        self.uniqiso = np.unique(df.iso.values)
-        load_mask = None
+        self.isoid = self.df.iso
+        self.uniqiso = np.unique(self.df.iso.values)
         for iso in self.uniqiso:
             Q = PartFuncTIPS(self.molecid, iso)
             QTref = Q.at(T=Tref)
             QTtyp = Q.at(T=Ttyp)
-            load_mask = self.compute_load_mask(df, QTtyp / QTref, load_mask)
-        self.get_values_from_dataframes(df[load_mask])
+            load_mask = self.compute_load_mask(QTtyp / QTref)
+        self.instances_from_dataframes(self.df[load_mask])
         self.gQT, self.T_gQT = hitranapi.get_pf(self.molecid, self.uniqiso)
 
         if gpu_transfer:
             self.generate_jnp_arrays()
 
-    def compute_load_mask(self, df, qrtyp, load_mask):
-        wav_mask = (df.wav > self.nurange[0]-self.margin) \
-                    * (df.wav < self.nurange[1]+self.margin)
-        intensity_mask = (line_strength_numpy(self.Ttyp, df.int, df.wav, df.El,
+    def compute_load_mask(self, qrtyp):
+        wav_mask = (self.df.wav > self.nurange[0]-self.margin) \
+                    * (self.df.wav < self.nurange[1]+self.margin)
+        intensity_mask = (line_strength_numpy(self.Ttyp, self.df.int, self.df.wav, self.df.El,
                                               qrtyp) > self.crit)
-        if load_mask is None:
-            return wav_mask * intensity_mask
-        else:
-            return load_mask * wav_mask * intensity_mask
+        return wav_mask * intensity_mask
+        
+    def instances_from_dataframes(self, df_load_mask):
+        """generate instances from (usually masked) data farame
 
-    def get_values_from_dataframes(self, df):
-        if isinstance(df, vaex.dataframe.DataFrameLocal):
-            self.nu_lines = df.wav.values
-            self.Sij0 = df.int.values
-            self.delta_air = df.Pshft.values
-            self.isoid = df.iso.values
+        Args:
+            df_load_mask (DataFrame): (masked) data frame
+
+        Raises:
+            ValueError: _description_
+        """
+        if isinstance(df_load_mask, vaex.dataframe.DataFrameLocal):
+            self.nu_lines = df_load_mask.wav.values
+            self.Sij0 = df_load_mask.int.values
+            self.delta_air = df_load_mask.Pshft.values
+            self.isoid = df_load_mask.iso.values
             self.uniqiso = np.unique(self.isoid)
-            self.A = df.A.values
-            self.n_air = df.Tdpair.values
-            self.gamma_air = df.airbrd.values
-            self.gamma_self = df.selbrd.values
-            self.elower = df.El.values
-            self.gpp = df.gp.values
+            self.A = df_load_mask.A.values
+            self.n_air = df_load_mask.Tdpair.values
+            self.gamma_air = df_load_mask.airbrd.values
+            self.gamma_self = df_load_mask.selbrd.values
+            self.elower = df_load_mask.El.values
+            self.gpp = df_load_mask.gp.values
         else:
             raise ValueError("Use vaex dataframe as input.")
 
