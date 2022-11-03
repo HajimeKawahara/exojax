@@ -62,6 +62,7 @@ Micro Chemical/Physical Processes
    :maxdepth: 1
 
    tutorials/CIA_opacity.rst
+   tutorials/branch.rst
    tutorials/Ackerman_and_Marley_cloud_model.rst
    tutorials/Terminal_Velocity_of_Cloud_Particles.rst   
    
