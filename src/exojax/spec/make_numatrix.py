@@ -1,6 +1,7 @@
 from jax import jit
 import jax.numpy as jnp
 import numpy as np
+import warnings
 
 
 def make_numatrix0(nu, hatnu, warning=True):
@@ -17,12 +18,13 @@ def make_numatrix0(nu, hatnu, warning=True):
     Returns:
        numatrix (Nline,Nnu)
     """
-    if(nu.dtype != np.float64 and warning):
-        print('Warning!: nu is not np.float64 but ', nu.dtype)
-    if(hatnu.dtype != np.float64 and warning):
-        print('Warning!: hatnu is not np.float64 but ', nu.dtype)
-
-    numatrix = nu[None, :]-hatnu[:, None]
+    if (nu.dtype != np.float64 and warning):
+        warnings.warn('wavenumber grid is not np.float64 but ' + str(nu.dtype),
+                      UserWarning)
+    if (hatnu.dtype != np.float64 and warning):
+        warnings.warn('line center is not np.float64 but ' + str(nu.dtype),
+                      UserWarning)
+    numatrix = nu[None, :] - hatnu[:, None]
     return jnp.array(numatrix)
 
 
@@ -37,8 +39,8 @@ def divwavnum(nu, Nz=1):
        integer part of wavenumber, residual wavenumber, boost factor
     """
 
-    fn = np.floor(nu*Nz)
-    dfn = nu*Nz-fn
+    fn = np.floor(nu * Nz)
+    dfn = nu * Nz - fn
     return fn, dfn, Nz
 
 
@@ -56,7 +58,7 @@ def subtract_nu(dnu, dhatnu):
     """
     jdnu = jnp.array(dnu)
     jdhatnu = jnp.array(dhatnu)
-    dd = (jdnu[None, :]-jdhatnu[:, None])
+    dd = (jdnu[None, :] - jdhatnu[:, None])
     return dd
 
 
@@ -76,9 +78,9 @@ def add_nu(dd, fnu, fhatnu, Nz):
     """
     jfnu = jnp.array(fnu)
     jfhatnu = jnp.array(fhatnu)
-#    intarray=fnu[None,:]-fhatnu[:,None]
-    intarray = jfnu[None, :]-jfhatnu[:, None]
-    return (dd+intarray)/Nz
+    #    intarray=fnu[None,:]-fhatnu[:,None]
+    intarray = jfnu[None, :] - jfhatnu[:, None]
+    return (dd + intarray) / Nz
 
 
 def make_numatrix0_subtract(nu, hatnu, Nz=1, warning=True):
@@ -116,12 +118,12 @@ if __name__ == '__main__':
     numatrix = make_numatrix0(nus, mdbCO.nu_lines)
     print(np.median(numatrix))
     te = time.time()
-    print(te-ts, 'sec')
+    print(te - ts, 'sec')
 
     ts = time.time()
     numatrixc = make_numatrix0_device(nus, mdbCO.nu_lines)
     print(np.median(numatrix))
     te = time.time()
-    print(te-ts, 'sec')
+    print(te - ts, 'sec')
 
-    print(np.sum((numatrixc-numatrix)**2))
+    print(np.sum((numatrixc - numatrix)**2))

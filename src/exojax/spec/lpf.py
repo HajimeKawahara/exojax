@@ -16,6 +16,9 @@ from exojax.spec.hitran import SijT, doppler_sigma, gamma_natural
 # vald
 from exojax.spec.atomll import gamma_vald3
 
+import warnings
+
+
 
 def exomol(mdb, Tarr, Parr, molmass):
     """compute molecular line information required for MODIT using Exomol mdb.
@@ -357,7 +360,10 @@ def auto_xsection(nu, nu_lines, sigmaD, gammaL, Sij, memory_size=15.):
             xsv = np.concatenate([xsv, xsvtmp])
 
     if(nu.dtype != np.float64):
-        print('Warning: nu is not np.float64 but ', nu.dtype)
+        warnings.warn('The wavenumber grid is not np.float64 but '+str(nu.dtype),UserWarning)
+    if(nu_lines.dtype != np.float64):
+        warnings.warn('The line centers (nu_lines) are not np.float64 but '+str(nu.dtype),UserWarning)
+
 
     return xsv
 
