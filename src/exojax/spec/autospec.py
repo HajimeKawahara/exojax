@@ -2,7 +2,7 @@
 from exojax.spec import defmol, defcia, contdb, planck, molinfo, lpf, dit, modit, initspec
 from exojax.spec.api import MdbExomol, MdbHitran, MdbHitemp
 from exojax.spec.set_ditgrid import ditgrid_log_interval
-from exojax.spec.opacity import xsection
+from exojax.spec.lpf import auto_xsection
 from exojax.spec.hitran import SijT, doppler_sigma, gamma_natural, gamma_hitran, normalized_doppler_sigma
 from exojax.spec.exomol import gamma_exomol
 from exojax.spec.rtransfer import rtrun, dtauM, dtauCIA
@@ -139,7 +139,7 @@ class AutoXS(object):
 
         if xsmode == 'lpf' or xsmode == 'LPF':
             sigmaD = doppler_sigma(mdb.nu_lines, T, molmass)
-            xsv = xsection(self.nus,
+            xsv = auto_xsection(self.nus,
                            mdb.nu_lines,
                            sigmaD,
                            gammaL,
