@@ -1,7 +1,7 @@
 ExoMol, HITEMP, HITRAN common API
 --------------------------------------
 
-*August 24th (2022) Hajime Kawahara*
+*November 4th (2022) Hajime Kawahara*
 
 In ExoJAX 2, the standard molecular database IO for ExoMol, HITEMP, and HITRAN was shared with the radis team.
 

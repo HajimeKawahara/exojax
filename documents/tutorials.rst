@@ -15,10 +15,12 @@ Cross Section using Various Opacity Calculators
 .. toctree::
    :maxdepth: 1
 
-   tutorials/Cross_Section_using_Discrete_Integral_Transform.rst
-   tutorials/Cross_Section_using_Modified_Discrete_Integral_Transform.rst
+   tutorials/opacity.rst
+   tutorials/opacity_exomol.rst   
    tutorials/Cross_Section_using_Precomputation_Modified_Discrete_Integral_Transform.rst
    tutorials/Comparing_HITEMP_and_ExoMol.rst
+   tutorials/Cross_Section_using_Modified_Discrete_Integral_Transform.rst
+   tutorials/Cross_Section_using_Discrete_Integral_Transform.rst
 
 Forward Modeling using Various Opacity Calculators
 --------------------------------------------------------
@@ -84,7 +86,5 @@ Others
    tutorials/Reducing_memory_for_HITEMP.rst
    tutorials/Using_FastChem2_to_calculate_the_chemical_abundances.rst
    tutorials/hjerting.rst
-   tutorials/opacity.rst
-   tutorials/opacity_exomol.rst
    tutorials/pure_absorption_rt.rst
    tutorials/voigt_function.rst

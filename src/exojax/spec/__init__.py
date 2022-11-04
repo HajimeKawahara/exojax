@@ -16,10 +16,6 @@ from exojax.spec.hitran import (
 )
 
 
-from exojax.spec.opacity import (
-    xsection,
-)
-
 from exojax.spec.lpf import (
     hjert,
     voigt,

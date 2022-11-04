@@ -6,7 +6,7 @@ step by step.
 
 .. code:: ipython3
 
-    from exojax.spec import xsection
+    from exojax.spec.lpf import auto_xsection
     from exojax.spec.hitran import SijT, doppler_sigma, gamma_hitran, gamma_natural
     from exojax.spec import moldb
     import numpy as np
@@ -130,7 +130,7 @@ numatrix).
 
 .. code:: ipython3
 
-    xsv=xsection(nus,nu0,sigmaD,gammaL,Sij,memory_size=30) #use 30MB GPU MEMORY for numax
+    xsv=auto_xsection(nus,nu0,sigmaD,gammaL,Sij,memory_size=30) #use 30MB GPU MEMORY for numax
 
 
 .. parsed-literal::
@@ -185,7 +185,7 @@ Below, we see the difference of opacity between float64 case and float
 
 .. code:: ipython3
 
-    xsv_32=xsection(np.float32(nus),np.float32(nu0),sigmaD,gammaL,Sij,memory_size=30) 
+    xsv_32=auto_xsection(np.float32(nus),np.float32(nu0),sigmaD,gammaL,Sij,memory_size=30) 
 
 
 .. parsed-literal::

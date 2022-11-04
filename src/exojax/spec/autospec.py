@@ -1,5 +1,5 @@
 """Automatic Opacity and Spectrum Generator."""
-from exojax.spec import defmol, defcia, contdb, planck, molinfo, lpf, dit, modit, initspec, response
+from exojax.spec import defmol, defcia, contdb, planck, molinfo, lpf, dit, modit, initspec
 from exojax.spec.api import MdbExomol, MdbHitran, MdbHitemp
 from exojax.spec.set_ditgrid import ditgrid_log_interval
 from exojax.spec.opacity import xsection
