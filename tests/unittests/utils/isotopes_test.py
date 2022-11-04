@@ -1,7 +1,17 @@
 from exojax.utils.isotopes import get_isotope
 from exojax.utils.isotopes import get_stable_isotope
 from exojax.utils.isotopes import isodata
+from exojax.utils.isotopes import exact_isotope_name_from_isotope
 import numpy as np
+
+
+
+
+def test_exact_isotope_name_from_isotope():
+    simple_molecule_name = "CO"
+    isotope = 1
+    assert exact_isotope_name_from_isotope(simple_molecule_name,
+                                           isotope) == "(12C)(16O)"
 
 
 def test_get_isotope():
@@ -11,6 +21,7 @@ def test_get_isotope():
     assert np.all(get_isotope('H', isolist)[0:2] == ref[0:2])
     assert (get_isotope('H', isolist)[2][2] != get_isotope('H', isolist)[2][2])
     assert np.all(np.array(get_isotope('H', isolist)[2][0:2]) == ref[2][0:2])
+
 
 def test_get_stable_isotope():
     isolist = isodata.read_mnlist()

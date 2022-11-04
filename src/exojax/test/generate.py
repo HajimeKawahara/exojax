@@ -25,7 +25,14 @@ def gendata_moldb(database):
                               crit=1e-35,
                               Ttyp=296.0,
                               gpu_transfer=True)
-
+    elif database == "hitemp_isotope":
+        from exojax.test.data import TESTDATA_moldb_CO_HITEMP_SINGLE_ISOTOPE as filename
+        mdbCO = api.MdbHitemp('CO',
+                              nus,
+                              crit=1e-35,
+                              Ttyp=296.0,
+                              isotope=1,
+                              gpu_transfer=True)
     with open(filename, 'wb') as f:
         pickle.dump(mdbCO, f)
 
@@ -33,6 +40,8 @@ def gendata_moldb(database):
 if __name__ == "__main__":
     gendata_moldb("exomol")
     gendata_moldb("hitemp")
+    gendata_moldb("hitemp_isotope")
+
     print(
         "to include the generated files in the package, move pickles to exojax/src/data/testdata/"
     )

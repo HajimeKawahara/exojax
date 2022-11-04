@@ -15,7 +15,7 @@ from exojax.utils.molname import e2s
 
 # currently use radis add/common-api branch
 from exojax.spec import hitranapi
-from exojax.spec.hitranapi import search_molecid    
+from exojax.spec.hitranapi import search_molecid
 from radis.api.exomolapi import MdbExomol as CapiMdbExomol  #MdbExomol in the common API
 from radis.api.hitempapi import HITEMPDatabaseManager
 from radis.api.hitranapi import HITRANDatabaseManager
@@ -121,8 +121,8 @@ class MdbExomol(CapiMdbExomol):
         mgr = self.get_datafile_manager()
         local_files = [mgr.cache_file(f) for f in self.trans_file]
 
-        # Load them:
-        df = self.load(
+        # data frame instance:
+        self.df = self.load(
             local_files,
             columns=[k for k in self.__slots__ if k not in ["logsij0"]],
             #lower_bound=([("nu_lines", wavenum_min)] if wavenum_min else []) +
@@ -130,31 +130,39 @@ class MdbExomol(CapiMdbExomol):
             #upper_bound=([("nu_lines", wavenum_max)] if wavenum_max else []),
             output="vaex")
 
-        load_mask = self.compute_load_mask(df)
-        self.get_values_from_dataframes(df[load_mask])
+        load_mask = self.compute_load_mask()
+        self.instances_from_dataframes(self.df[load_mask])
         self.compute_broadening(self.jlower, self.jupper)
         self.gamma_natural = gn(self.A)
 
         if gpu_transfer:
             self.generate_jnp_arrays()
 
-    def compute_load_mask(self, df):
-        wavelength_mask = (df.nu_lines > self.nurange[0]-self.margin) \
-                    * (df.nu_lines < self.nurange[1]+self.margin)
+    def compute_load_mask(self):
+        wavelength_mask = (self.df.nu_lines > self.nurange[0]-self.margin) \
+                    * (self.df.nu_lines < self.nurange[1]+self.margin)
         intensity_mask = (line_strength_numpy(
-            self.Ttyp, df.Sij0, df.nu_lines, df.elower,
+            self.Ttyp, self.df.Sij0, self.df.nu_lines, self.df.elower,
             self.QTtyp / self.QTref) > self.crit)
         return wavelength_mask * intensity_mask
 
-    def get_values_from_dataframes(self, df):
-        if isinstance(df, vaex.dataframe.DataFrameLocal):
-            self.A = df.A.values
-            self.nu_lines = df.nu_lines.values
-            self.elower = df.elower.values
-            self.jlower = df.jlower.values
-            self.jupper = df.jupper.values
-            self.Sij0 = df.Sij0.values
-            self.gpp = df.gup.values
+    def instances_from_dataframes(self, df_load_mask):
+        """generate instances from (usually masked) data farame
+
+        Args:
+            df_load_mask (DataFrame): (masked) data frame
+
+        Raises:
+            ValueError: _description_
+        """
+        if isinstance(df_load_mask, vaex.dataframe.DataFrameLocal):
+            self.A = df_load_mask.A.values
+            self.nu_lines = df_load_mask.nu_lines.values
+            self.elower = df_load_mask.elower.values
+            self.jlower = df_load_mask.jlower.values
+            self.jupper = df_load_mask.jupper.values
+            self.Sij0 = df_load_mask.Sij0.values
+            self.gpp = df_load_mask.gup.values
         else:
             raise ValueError("Use vaex dataframe as input.")
 
@@ -224,7 +232,7 @@ class MdbHitemp(HITEMPDatabaseManager):
                  margin=0.0,
                  crit=0.,
                  Ttyp=1000.,
-                 isotope=None,
+                 isotope=0,
                  gpu_transfer=False):
         """Molecular database for HITRAN/HITEMP form.
 
@@ -234,7 +242,7 @@ class MdbHitemp(HITEMPDatabaseManager):
            margin: margin for nurange (cm-1)
            crit: line strength lower limit for extraction
            Ttyp: typical temperature to calculate Sij(T) used in crit
-           isotope: None= use all isotopes. 
+           isotope: isotope number, 0 or None = use all isotopes. 
            gpu_transfer: tranfer data to jnp.array?
         """
 
@@ -299,17 +307,14 @@ class MdbHitemp(HITEMPDatabaseManager):
         # Load and return
         files_loaded = self.keep_only_relevant(local_files, load_wavenum_min,
                                                load_wavenum_max)
-        isotope = None
         columns = None,
         output = "vaex"
 
-        if isotope and type(isotope) == int:
-            isotope = str(isotope)
-
-        df = self.load(
+        self.isotope = _convert_proper_isotope(isotope)
+        self.df = self.load(
             files_loaded,  # filter other files,
             columns=columns,
-            within=[("iso", isotope)] if isotope is not None else [],
+            within=[("iso", self.isotope)] if self.isotope is not None else [],
             # for relevant files, get only the right range :
             lower_bound=[("wav", load_wavenum_min)]
             if self.nurange[0] is not None else [],
@@ -318,43 +323,47 @@ class MdbHitemp(HITEMPDatabaseManager):
             output=output,
         )
 
-        self.isoid = df.iso
-        self.uniqiso = np.unique(df.iso.values)
-        load_mask = None
+        self.isoid = self.df.iso
+        self.uniqiso = np.unique(self.df.iso.values)
         for iso in self.uniqiso:
             Q = PartFuncTIPS(self.molecid, iso)
             QTref = Q.at(T=Tref)
             QTtyp = Q.at(T=Ttyp)
-            load_mask = self.compute_load_mask(df, QTtyp / QTref, load_mask)
-        self.get_values_from_dataframes(df[load_mask])
+            load_mask = self.compute_load_mask(QTtyp / QTref)
+        self.instances_from_dataframes(self.df[load_mask])
         self.gQT, self.T_gQT = hitranapi.get_pf(self.molecid, self.uniqiso)
 
         if gpu_transfer:
             self.generate_jnp_arrays()
 
-    def compute_load_mask(self, df, qrtyp, load_mask):
-        wav_mask = (df.wav > self.nurange[0]-self.margin) \
-                    * (df.wav < self.nurange[1]+self.margin)
-        intensity_mask = (line_strength_numpy(self.Ttyp, df.int, df.wav, df.El,
+    def compute_load_mask(self, qrtyp):
+        wav_mask = (self.df.wav > self.nurange[0]-self.margin) \
+                    * (self.df.wav < self.nurange[1]+self.margin)
+        intensity_mask = (line_strength_numpy(self.Ttyp, self.df.int, self.df.wav, self.df.El,
                                               qrtyp) > self.crit)
-        if load_mask is None:
-            return wav_mask * intensity_mask
-        else:
-            return load_mask * wav_mask * intensity_mask
+        return wav_mask * intensity_mask
+        
+    def instances_from_dataframes(self, df_load_mask):
+        """generate instances from (usually masked) data farame
 
-    def get_values_from_dataframes(self, df):
-        if isinstance(df, vaex.dataframe.DataFrameLocal):
-            self.nu_lines = df.wav.values
-            self.Sij0 = df.int.values
-            self.delta_air = df.Pshft.values
-            self.A = df.A.values
-            self.n_air = df.Tdpair.values
-            self.gamma_air = df.airbrd.values
-            self.gamma_self = df.selbrd.values
-            self.elower = df.El.values
-            self.gpp = df.gp.values
+        Args:
+            df_load_mask (DataFrame): (masked) data frame
+
+        Raises:
+            ValueError: _description_
+        """
+        if isinstance(df_load_mask, vaex.dataframe.DataFrameLocal):
+            self.nu_lines = df_load_mask.wav.values
+            self.Sij0 = df_load_mask.int.values
+            self.delta_air = df_load_mask.Pshft.values
+            self.A = df_load_mask.A.values
+            self.n_air = df_load_mask.Tdpair.values
+            self.gamma_air = df_load_mask.airbrd.values
+            self.gamma_self = df_load_mask.selbrd.values
+            self.elower = df_load_mask.El.values
+            self.gpp = df_load_mask.gp.values
             #isotope
-            self.isoid = df.iso.values
+            self.isoid = df_load_mask.iso.values
             self.uniqiso = np.unique(self.isoid)
         else:
             raise ValueError("Use vaex dataframe as input.")
@@ -378,31 +387,33 @@ class MdbHitemp(HITEMPDatabaseManager):
         self.elower = jnp.array(self.elower)
         self.gpp = jnp.array(self.gpp)
 
-    def QT_interp(self, isotope_index, T):
+    def QT_interp(self, isotope, T):
         """interpolated partition function.
 
         Args:
-           isotope_index: index for HITRAN isotopologue number
+           isotope: HITRAN isotope number starting from 1
            T: temperature
 
         Returns:
            Q(idx, T) interpolated in jnp.array
         """
-        return jnp.interp(T, self.T_gQT[isotope_index],
-                          self.gQT[isotope_index])
+        isotope_index = _isotope_index_from_isotope_number(
+            isotope, self.uniqiso)
+        return _QT_interp(isotope_index, T, self.T_gQT, self.gQT)
 
-    def qr_interp(self, isotope_index, T):
+    def qr_interp(self, isotope, T):
         """interpolated partition function ratio.
 
         Args:
-           isotope_index: index for HITRAN isotopologue number
-           T: temperature
+            isotope: HITRAN isotope number starting from 1
+            T: temperature
 
         Returns:
-           qr(T)=Q(T)/Q(Tref) interpolated in jnp.array
+            qr(T)=Q(T)/Q(Tref) interpolated in jnp.array
         """
-        return self.QT_interp(isotope_index, T) / self.QT_interp(
-            isotope_index, Tref)
+        isotope_index = _isotope_index_from_isotope_number(
+            isotope, self.uniqiso)
+        return _qr_interp(isotope_index, T, self.T_gQT, self.gQT)
 
     def qr_interp_lines(self, T):
         """Partition Function ratio using HAPI partition data.
@@ -417,16 +428,21 @@ class MdbHitemp(HITEMPDatabaseManager):
         Note:
            Nlines=len(self.nu_lines)
         """
+        return _qr_interp_lines(T, self.isoid, self.uniqiso, self.T_gQT,
+                                self.gQT)
 
-        qrx = []
-        for idx, iso in enumerate(self.uniqiso):
-            qrx.append(self.qr_interp(idx, T))
+    def exact_isotope_name(self, isotope):
+        """exact isotope name
 
-        qr_line = jnp.zeros(len(self.isoid))
-        for idx, iso in enumerate(self.uniqiso):
-            mask_idx = np.where(self.isoid == iso)
-            qr_line = qr_line.at[jnp.index_exp[mask_idx]].set(qrx[idx])
-        return qr_line
+        Args:
+            isotope (int): isotope number starting from 1
+
+        Returns:
+            str: exact isotope name such as (12C)(16O)
+        """
+        from exojax.utils.isotopes import exact_isotope_name_from_isotope
+        return exact_isotope_name_from_isotope(self.simple_molecule_name,
+                                               isotope)
 
 
 MdbHit = MdbHitemp  #compatibility
@@ -456,7 +472,7 @@ class MdbHitran(HITRANDatabaseManager):
                  margin=0.0,
                  crit=0.,
                  Ttyp=1000.,
-                 isotope=None,
+                 isotope=0,
                  gpu_transfer=False):
         """Molecular database for HITRAN/HITEMP form.
 
@@ -466,7 +482,7 @@ class MdbHitran(HITRANDatabaseManager):
            margin: margin for nurange (cm-1)
            crit: line strength lower limit for extraction
            Ttyp: typical temperature to calculate Sij(T) used in crit
-           isotope: None= use all isotopes. 
+           isotope: isotope number. 0 or None= use all isotopes. 
            gpu_transfer: tranfer data to jnp.array?
         """
 
@@ -491,7 +507,6 @@ class MdbHitran(HITRANDatabaseManager):
             parallel=True,
         )
 
-        isotope = None
         columns = None
         output = "vaex"
 
@@ -512,11 +527,12 @@ class MdbHitran(HITRANDatabaseManager):
         if len(download_files) > 0:
             self.clean_download_files()
 
+        self.isotope = _convert_proper_isotope(isotope)
         # Load and return
-        df = self.load(
+        self.df = self.load(
             local_file,
             columns=columns,
-            within=[("iso", isotope)] if isotope is not None else [],
+            within=[("iso", self.isotope)] if self.isotope is not None else [],
             # for relevant files, get only the right range :
             lower_bound=[("wav", load_wavenum_min)]
             if load_wavenum_min is not None else [],
@@ -525,43 +541,47 @@ class MdbHitran(HITRANDatabaseManager):
             output=output,
         )
 
-        self.isoid = df.iso
-        self.uniqiso = np.unique(df.iso.values)
-        load_mask = None
+        self.isoid = self.df.iso
+        self.uniqiso = np.unique(self.df.iso.values)
         for iso in self.uniqiso:
             Q = PartFuncTIPS(self.molecid, iso)
             QTref = Q.at(T=Tref)
             QTtyp = Q.at(T=Ttyp)
-            load_mask = self.compute_load_mask(df, QTtyp / QTref, load_mask)
-        self.get_values_from_dataframes(df[load_mask])
+            load_mask = self.compute_load_mask(QTtyp / QTref)
+        self.instances_from_dataframes(self.df[load_mask])
         self.gQT, self.T_gQT = hitranapi.get_pf(self.molecid, self.uniqiso)
 
         if gpu_transfer:
             self.generate_jnp_arrays()
 
-    def compute_load_mask(self, df, qrtyp, load_mask):
-        wav_mask = (df.wav > self.nurange[0]-self.margin) \
-                    * (df.wav < self.nurange[1]+self.margin)
-        intensity_mask = (line_strength_numpy(self.Ttyp, df.int, df.wav, df.El,
+    def compute_load_mask(self, qrtyp):
+        wav_mask = (self.df.wav > self.nurange[0]-self.margin) \
+                    * (self.df.wav < self.nurange[1]+self.margin)
+        intensity_mask = (line_strength_numpy(self.Ttyp, self.df.int, self.df.wav, self.df.El,
                                               qrtyp) > self.crit)
-        if load_mask is None:
-            return wav_mask * intensity_mask
-        else:
-            return load_mask * wav_mask * intensity_mask
+        return wav_mask * intensity_mask
+        
+    def instances_from_dataframes(self, df_load_mask):
+        """generate instances from (usually masked) data farame
 
-    def get_values_from_dataframes(self, df):
-        if isinstance(df, vaex.dataframe.DataFrameLocal):
-            self.nu_lines = df.wav.values
-            self.Sij0 = df.int.values
-            self.delta_air = df.Pshft.values
-            self.isoid = df.iso.values
+        Args:
+            df_load_mask (DataFrame): (masked) data frame
+
+        Raises:
+            ValueError: _description_
+        """
+        if isinstance(df_load_mask, vaex.dataframe.DataFrameLocal):
+            self.nu_lines = df_load_mask.wav.values
+            self.Sij0 = df_load_mask.int.values
+            self.delta_air = df_load_mask.Pshft.values
+            self.isoid = df_load_mask.iso.values
             self.uniqiso = np.unique(self.isoid)
-            self.A = df.A.values
-            self.n_air = df.Tdpair.values
-            self.gamma_air = df.airbrd.values
-            self.gamma_self = df.selbrd.values
-            self.elower = df.El.values
-            self.gpp = df.gp.values
+            self.A = df_load_mask.A.values
+            self.n_air = df_load_mask.Tdpair.values
+            self.gamma_air = df_load_mask.airbrd.values
+            self.gamma_self = df_load_mask.selbrd.values
+            self.elower = df_load_mask.El.values
+            self.gpp = df_load_mask.gp.values
         else:
             raise ValueError("Use vaex dataframe as input.")
 
@@ -584,31 +604,33 @@ class MdbHitran(HITRANDatabaseManager):
         self.elower = jnp.array(self.elower)
         self.gpp = jnp.array(self.gpp)
 
-    def QT_interp(self, isotope_index, T):
+    def QT_interp(self, isotope, T):
         """interpolated partition function.
 
         Args:
-           isotope_index: index for HITRAN isotopologue number
+           isotope: HITRAN isotope number starting from 1
            T: temperature
 
         Returns:
            Q(idx, T) interpolated in jnp.array
         """
-        return jnp.interp(T, self.T_gQT[isotope_index],
-                          self.gQT[isotope_index])
+        isotope_index = _isotope_index_from_isotope_number(
+            isotope, self.uniqiso)
+        return _QT_interp(isotope_index, T, self.T_gQT, self.gQT)
 
-    def qr_interp(self, isotope_index, T):
+    def qr_interp(self, isotope, T):
         """interpolated partition function ratio.
 
         Args:
-           isotope_index: index for HITRAN isotopologue number
-           T: temperature
+            isotope: HITRAN isotope number starting from 1
+            T: temperature
 
         Returns:
-           qr(T)=Q(T)/Q(Tref) interpolated in jnp.array
+            qr(T)=Q(T)/Q(Tref) interpolated in jnp.array
         """
-        return self.QT_interp(isotope_index, T) / self.QT_interp(
-            isotope_index, Tref)
+        isotope_index = _isotope_index_from_isotope_number(
+            isotope, self.uniqiso)
+        return _qr_interp(isotope_index, T, self.T_gQT, self.gQT)
 
     def qr_interp_lines(self, T):
         """Partition Function ratio using HAPI partition data.
@@ -623,12 +645,113 @@ class MdbHitran(HITRANDatabaseManager):
         Note:
            Nlines=len(self.nu_lines)
         """
-        qrx = []
-        for idx, iso in enumerate(self.uniqiso):
-            qrx.append(self.qr_interp(idx, T))
+        return _qr_interp_lines(T, self.isoid, self.uniqiso, self.T_gQT,
+                                self.gQT)
 
-        qr_line = jnp.zeros(len(self.isoid))
-        for idx, iso in enumerate(self.uniqiso):
-            mask_idx = np.where(self.isoid == iso)
-            qr_line = qr_line.at[jnp.index_exp[mask_idx]].set(qrx[idx])
-        return qr_line
+    def exact_isotope_name(self, isotope):
+        """exact isotope name
+
+        Args:
+            isotope (int): isotope number starting from 1
+
+        Returns:
+            str: exact isotope name such as (12C)(16O)
+        """
+        from exojax.utils.isotopes import exact_isotope_name_from_isotope
+        return exact_isotope_name_from_isotope(self.simple_molecule_name,
+                                               isotope)
+
+
+def _convert_proper_isotope(isotope):
+    """covert isotope (int) to proper type for df 
+
+    Args:
+        isotope (int or other type): isotope
+
+    Returns:
+        str: propoer isotope type
+    """
+    if isotope == 0:
+        return None
+    elif isotope is not None and type(isotope) == int:
+        return str(isotope)
+    elif isotope is None:
+        return isotope
+    else:
+        raise ValueError("Invalid isotope type")
+
+
+def _isotope_index_from_isotope_number(isotope, uniqiso):
+    """isotope index given HITRAN/HITEMP isotope number
+
+        Args:
+            isotope (int): isotope number
+            uniqiso (nd int array): unique isotope array 
+
+        Returns:
+            int: isotope_index for T_gQT and gQT  
+        """
+    isotope_index = np.where(uniqiso == isotope)[0][0]
+    return isotope_index
+
+
+def _QT_interp(isotope_index, T, T_gQT, gQT):
+    """interpolated partition function.
+
+        Note:
+           isotope_index is NOT isotope (number for HITRAN). 
+           isotope_index is index for gQT and T_gQT.
+           _isotope_index_from_isotope_number can be used 
+           to get isotope index from isotope.
+           
+        Args:
+           isotope index: isotope index, index from 0 to len(uniqiso) - 1
+           T: temperature
+
+        Returns:
+           Q(idx, T) interpolated in jnp.array
+        """
+
+    return jnp.interp(T, T_gQT[isotope_index], gQT[isotope_index])
+
+
+def _qr_interp(isotope_index, T, T_gQT, gQT):
+    """interpolated partition function ratio.
+
+        Note:
+           isotope_index is NOT isotope (number for HITRAN). 
+           isotope_index is index for gQT and T_gQT.
+           _isotope_index_from_isotope_number can be used 
+           to get isotope index from isotope.
+    
+        Args:
+            isotope index: isotope index, index from 0 to len(uniqiso) - 1
+            T: temperature
+
+        Returns:
+            qr(T)=Q(T)/Q(Tref) interpolated in jnp.array
+        """
+    return _QT_interp(isotope_index, T, T_gQT, gQT) / _QT_interp(
+        isotope_index, Tref, T_gQT, gQT)
+
+
+def _qr_interp_lines(T, isoid, uniqiso, T_gQT, gQT):
+    """Partition Function ratio using HAPI partition data.
+        (This function works for JAX environment.)
+
+        Args:
+           T: temperature (K)
+
+        Returns:
+           Qr_line, partition function ratio array for lines [Nlines]
+
+        Note:
+           Nlines=len(self.nu_lines)
+        """
+    qr_line = jnp.zeros(len(isoid))
+    for isotope in uniqiso:
+        mask_idx = np.where(isoid == isotope)
+        isotope_index = _isotope_index_from_isotope_number(isotope, uniqiso)
+        qr_each_isotope = _qr_interp(isotope_index, T, T_gQT, gQT)
+        qr_line = qr_line.at[jnp.index_exp[mask_idx]].set(qr_each_isotope)
+    return qr_line
