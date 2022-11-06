@@ -1,5 +1,5 @@
-Computing CO cross section using ExoMol
----------------------------------------
+Computing CO cross section using ExoMol (opacity calculator = LPF)
+------------------------------------------------------------------
 
 This tutorial demonstrates how to compute the opacity of CO using ExoMol
 step by step.
@@ -9,35 +9,10 @@ step by step.
     from exojax.spec.lpf import auto_xsection
     from exojax.spec import SijT, doppler_sigma,  gamma_natural
     from exojax.spec.exomol import gamma_exomol
-    from exojax.spec import moldb
+    from exojax.spec import api
     import numpy as np
-    import seaborn as sns
     import matplotlib.pyplot as plt
     plt.style.use('bmh')
-
-
-.. parsed-literal::
-
-    HAPI version: 1.2.2.0
-    To get the most up-to-date version please check http://hitran.org/hapi
-    ATTENTION: Python versions of partition sums from TIPS-2021 are now available in HAPI code
-    
-               MIT license: Copyright 2021 HITRAN team, see more at http://hitran.org. 
-    
-               If you use HAPI in your research or software development,
-               please cite it using the following reference:
-               R.V. Kochanov, I.E. Gordon, L.S. Rothman, P. Wcislo, C. Hill, J.S. Wilzewski,
-               HITRAN Application Programming Interface (HAPI): A comprehensive approach
-               to working with spectroscopic data, J. Quant. Spectrosc. Radiat. Transfer 177, 15-30 (2016)
-               DOI: 10.1016/j.jqsrt.2016.03.005
-    
-               ATTENTION: This is the core version of the HITRAN Application Programming Interface.
-                          For more efficient implementation of the absorption coefficient routine, 
-                          as well as for new profiles, parameters and other functional,
-                          please consider using HAPI2 extension library.
-                          HAPI2 package is available at http://github.com/hitranonline/hapi2
-    
-
 
 First of all, set a wavenumber bin in the unit of wavenumber (cm-1).
 Here we set the wavenumber range as :math:`1000 \le \nu \le 10000`
@@ -49,14 +24,14 @@ We call moldb instance with the path of exomole files.
 
     # Setting wavenumber bins and loading HITRAN database
     nus=np.linspace(1000.0,10000.0,900000,dtype=np.float64) #cm-1
-    emf='~/exojax/data/CO/12C-16O/Li2015'
-    mdbCO=moldb.MdbExomol(emf,nus)
+    emf='CO/12C-16O/Li2015'
+    mdbCO=api.MdbExomol(emf,nus,gpu_transfer=True)
 
 
 .. parsed-literal::
 
     Background atmosphere:  H2
-    Reading transition file
+    Reading CO/12C-16O/Li2015/12C-16O__Li2015.trans.bz2
     .broad is used.
     Broadening code level= a0
     default broadening parameters are used for  71  J lower states in  152  states
@@ -146,7 +121,7 @@ and the natural broadening
 
 .. parsed-literal::
 
-    [<matplotlib.lines.Line2D at 0x7f41da7d1fd0>]
+    [<matplotlib.lines.Line2D at 0x7efbb8248ca0>]
 
 
 
@@ -182,7 +157,7 @@ numatrix).
 
 .. parsed-literal::
 
-    100%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 8257/8257 [02:48<00:00, 49.04it/s]
+    100%|██████████| 8257/8257 [05:14<00:00, 26.22it/s]
 
 
 Plot it!
@@ -237,16 +212,11 @@ Below, we see the difference of opacity between float64 case and float
 
 .. parsed-literal::
 
-    100%|███████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 8257/8257 [01:22<00:00, 100.29it/s]
-
-.. parsed-literal::
-
-    Warning: nu is not np.float64 but  float32
-
-
-.. parsed-literal::
-
-    
+    100%|██████████| 8257/8257 [02:51<00:00, 48.08it/s]
+    /home/kawahara/exojax/src/exojax/spec/lpf.py:363: UserWarning: The wavenumber grid is not np.float64 but float32
+      warnings.warn('The wavenumber grid is not np.float64 but '+str(nu.dtype),UserWarning)
+    /home/kawahara/exojax/src/exojax/spec/lpf.py:365: UserWarning: The line centers (nu_lines) are not np.float64 but float32
+      warnings.warn('The line centers (nu_lines) are not np.float64 but '+str(nu.dtype),UserWarning)
 
 
 .. code:: ipython3
