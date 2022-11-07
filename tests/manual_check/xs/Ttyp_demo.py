@@ -1,4 +1,4 @@
-from exojax.spec import xsection
+from exojax.spec.lpf import auto_xsection
 from exojax.spec import SijT, doppler_sigma,  gamma_natural
 from exojax.spec.exomol import gamma_exomol
 from exojax.spec import moldb
@@ -29,7 +29,7 @@ def demo(Tfix,Ttyp,crit=1.e-40):
     sigmaD=doppler_sigma(mdbCO.nu_lines,Tfix,Mmol)
     #line center
     nu0=mdbCO.nu_lines
-    xsv=xsection(nus,nu0,sigmaD,gammaL,Sij,memory_size=30)
+    xsv=auto_xsection(nus,nu0,sigmaD,gammaL,Sij,memory_size=30)
     return nus, xsv
 
 if __name__=="__main__":

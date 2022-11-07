@@ -17,7 +17,7 @@ Note: The input line list needs to be obtained from VALD3 (http://vald.astro.uu.
 
 import pytest
 import numpy as np
-from exojax.spec import xsection, moldb, atomll
+from exojax.spec.lpf import auto_xsection, moldb, atomll
 from exojax.spec.hitran import SijT, doppler_sigma
 import matplotlib.pyplot as plt
 from exojax.utils.constants import m_u

@@ -3,7 +3,7 @@ from exojax.spec.hitran import normalized_doppler_sigma
 from exojax.spec.set_ditgrid import ditgrid_log_interval
 from exojax.spec import moldb
 from exojax.spec.hitran import SijT, doppler_sigma, gamma_hitran, gamma_natural
-from exojax.spec import xsection as lpf_xsection
+from exojax.spec.lpf import auto_xsection as lpf_xsection
 from exojax.spec import initspec
 from exojax.spec.dit import xsvector as dit_xsvector
 from exojax.spec.lpf import xsvector as lpf_xsvector

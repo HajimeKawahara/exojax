@@ -1,16 +1,15 @@
-Computing CO cross section using HITRAN
----------------------------------------
+Computing CO cross section using HITRAN (opacity calculator = LPF)
+------------------------------------------------------------------
 
 This tutorial demonstrates how to compute the opacity of CO using HITRAN
 step by step.
 
 .. code:: ipython3
 
-    from exojax.spec import xsection
+    from exojax.spec.lpf import auto_xsection
     from exojax.spec.hitran import SijT, doppler_sigma, gamma_hitran, gamma_natural
-    from exojax.spec import moldb
+    from exojax.spec import api
     import numpy as np
-    import seaborn as sns
     import matplotlib.pyplot as plt
     plt.style.use('bmh')
 
@@ -24,8 +23,10 @@ not exist, moldb will try to download it from HITRAN website.
 .. code:: ipython3
 
     # Setting wavenumber bins and loading HITRAN database
-    nus=np.linspace(1000.0,10000.0,900000,dtype=np.float64) #cm-1
-    mdbCO=moldb.MdbHit('~/exojax/data/CO/05_hit12.par',nus)
+    nus = np.linspace(1000.0, 10000.0, 900000, dtype=np.float64)  #cm-1
+    isotope = 1
+    mdbCO = api.MdbHitran('CO', nus, isotope=isotope, gpu_transfer=True)
+
 
 Define molecular weight of CO (:math:`\sim 12+16=28`), temperature (K),
 and pressure (bar). Also, we here assume the 100 % CO atmosphere,
@@ -33,7 +34,7 @@ i.e. the partial pressure = pressure.
 
 .. code:: ipython3
 
-    Mmol=28.010446441149536 # molecular weight
+    Mmol=28.0 # molecular weight
     Tfix=1000.0 # we assume T=1000K
     Pfix=1.e-3 # we compute P=1.e-3 bar
     Ppart=Pfix #partial pressure of CO. here we assume a 100% CO atmosphere. 
@@ -46,21 +47,7 @@ Here, we use the partition function from HAPI
 
 .. code:: ipython3
 
-    import jax.numpy as jnp
-    qt=mdbCO.Qr_layer_HAPI(jnp.array([Tfix]))[0]
-
-.. code:: ipython3
-
-    np.shape(qt)
-
-
-
-
-.. parsed-literal::
-
-    (3977,)
-
-
+    qt=mdbCO.qr_interp(isotope,Tfix)
 
 Let us compute the line strength S(T) at temperature of Tfix.
 
@@ -98,7 +85,8 @@ and the natural broadening
 
     gammaL = gamma_hitran(Pfix,Tfix, Ppart, mdbCO.n_air, \
                           mdbCO.gamma_air, mdbCO.gamma_self) \
-    + gamma_natural(mdbCO.A) 
+    + gamma_natural(mdbCO.A)
+
 
 Thermal broadening
 
@@ -130,12 +118,12 @@ numatrix).
 
 .. code:: ipython3
 
-    xsv=xsection(nus,nu0,sigmaD,gammaL,Sij,memory_size=30) #use 30MB GPU MEMORY for numax
+    xsv=auto_xsection(nus,nu0,sigmaD,gammaL,Sij,memory_size=30) #use 30MB GPU MEMORY for numax
 
 
 .. parsed-literal::
 
-    100%|██████████| 456/456 [00:12<00:00, 36.43it/s]
+    100%|██████████| 98/98 [00:00<00:00, 179.80it/s]
 
 
 Plot it!
@@ -154,7 +142,7 @@ Plot it!
 
 
 
-.. image:: opacity_files/opacity_21_0.png
+.. image:: opacity_files/opacity_20_0.png
 
 
 .. code:: ipython3
@@ -172,58 +160,5 @@ Plot it!
 
 
 
-.. image:: opacity_files/opacity_22_0.png
-
-
-Important Note
-~~~~~~~~~~~~~~
-
-Use float64 for wavenumber bin and line center.
-
-Below, we see the difference of opacity between float64 case and float
-32.
-
-.. code:: ipython3
-
-    xsv_32=xsection(np.float32(nus),np.float32(nu0),sigmaD,gammaL,Sij,memory_size=30) 
-
-
-.. parsed-literal::
-
-    100%|██████████| 456/456 [00:06<00:00, 68.35it/s]
-
-.. parsed-literal::
-
-    Warning!: nu is not np.float64 but  float32
-
-
-.. parsed-literal::
-
-    
-
-
-.. code:: ipython3
-
-    fig=plt.figure(figsize=(10,6))
-    ax=fig.add_subplot(211)
-    plt.plot(1.e8/nus,xsv,".",lw=1,label="64",markersize=1)
-    plt.plot(1.e8/nus,xsv_32,".",lw=1,label="32",markersize=1)
-    plt.xlim(22985.,23025)
-    plt.yscale("log")
-    plt.ylabel("xsv $cm^{2}$")
-    ax=fig.add_subplot(212)
-    plt.plot(1.e8/nus,(xsv_32-xsv)/xsv,lw=1,label="difference")
-    plt.xlabel("wavelength ($\AA$)")
-    plt.ylabel("Difference")
-    plt.xlim(22985.,23025)
-    plt.legend(loc="upper left")
-    plt.show()
-
-
-
-.. image:: opacity_files/opacity_26_0.png
-
-
-We found ~ 10 % error when using float32 as an wavenumber and line
-center
+.. image:: opacity_files/opacity_21_0.png
 
