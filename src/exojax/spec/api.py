@@ -71,6 +71,7 @@ class MdbExomol(CapiMdbExomol):
                  bkgdatm='H2',
                  broadf=True,
                  gpu_transfer=False,
+                 inherit_dataframe=True,
                  local_databases="./"):
         """Molecular database for Exomol form.
 
@@ -82,7 +83,9 @@ class MdbExomol(CapiMdbExomol):
            Ttyp: typical temperature to calculate Sij(T) used in crit
            bkgdatm: background atmosphere for broadening. e.g. H2, He,
            broadf: if False, the default broadening parameters in .def file is used
-           
+           gpu_transfer: if True, some instances will be transfered to jnp.array
+           inherit_dataframe: if False, it will delete self.df instance, which saves the DRAM when pickling.
+            
         Note:
            The trans/states files can be very large. For the first time to read it, we convert it to HDF/vaex. After the second-time, we use the HDF5 format with vaex instead.
         """
@@ -137,6 +140,9 @@ class MdbExomol(CapiMdbExomol):
 
         if gpu_transfer:
             self.generate_jnp_arrays()
+
+        if not inherit_dataframe:
+            del self.df
 
     def compute_load_mask(self):
         wavelength_mask = (self.df.nu_lines > self.nurange[0]-self.margin) \
@@ -233,7 +239,9 @@ class MdbHitemp(HITEMPDatabaseManager):
                  crit=0.,
                  Ttyp=1000.,
                  isotope=0,
-                 gpu_transfer=False):
+                 gpu_transfer=False,
+                 inherit_dataframe=True
+                 ):
         """Molecular database for HITRAN/HITEMP form.
 
         Args:
@@ -244,6 +252,7 @@ class MdbHitemp(HITEMPDatabaseManager):
            Ttyp: typical temperature to calculate Sij(T) used in crit
            isotope: isotope number, 0 or None = use all isotopes. 
            gpu_transfer: tranfer data to jnp.array?
+           inherit_dataframe: if False, it will delete self.df instance, which saves the DRAM when pickling.
         """
 
         self.path = pathlib.Path(path).expanduser()
@@ -335,6 +344,10 @@ class MdbHitemp(HITEMPDatabaseManager):
 
         if gpu_transfer:
             self.generate_jnp_arrays()
+
+        if not inherit_dataframe:
+            del self.df
+
 
     def compute_load_mask(self, qrtyp):
         wav_mask = (self.df.wav > self.nurange[0]-self.margin) \
@@ -473,7 +486,10 @@ class MdbHitran(HITRANDatabaseManager):
                  crit=0.,
                  Ttyp=1000.,
                  isotope=0,
-                 gpu_transfer=False):
+                 gpu_transfer=False,
+                 inherit_dataframe=True
+                 ):
+        
         """Molecular database for HITRAN/HITEMP form.
 
         Args:
@@ -484,6 +500,7 @@ class MdbHitran(HITRANDatabaseManager):
            Ttyp: typical temperature to calculate Sij(T) used in crit
            isotope: isotope number. 0 or None= use all isotopes. 
            gpu_transfer: tranfer data to jnp.array?
+           inherit_dataframe: if False, it will delete self.df instance, which saves the DRAM when pickling.
         """
 
         self.path = pathlib.Path(path).expanduser()
@@ -553,6 +570,10 @@ class MdbHitran(HITRANDatabaseManager):
 
         if gpu_transfer:
             self.generate_jnp_arrays()
+
+        if not inherit_dataframe:
+            del self.df
+
 
     def compute_load_mask(self, qrtyp):
         wav_mask = (self.df.wav > self.nurange[0]-self.margin) \
