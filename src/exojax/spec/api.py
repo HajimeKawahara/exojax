@@ -575,7 +575,7 @@ class MdbHitran(HITRANDatabaseManager):
     def compute_load_mask(self, df, qrtyp):
         wav_mask = (df.wav > self.nurange[0]-self.margin) \
                     * (df.wav < self.nurange[1]+self.margin)
-        intensity_mask = (line_strength_numpy(self.Ttyp, self.df.int,
+        intensity_mask = (line_strength_numpy(self.Ttyp, df.int,
                                               df.wav, df.El, qrtyp) >
                           self.crit)
         return wav_mask * intensity_mask
