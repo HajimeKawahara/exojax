@@ -15,25 +15,18 @@ We adopt a simple git-flow model, consisting of master, develop, contributor-def
 
 ## Issues and Discussion
 
-You can ask anything about exojax in Issue tracker and Discussion. 
+You can ask anything about ExoJAX in Issue tracker and Discussion. 
 
 ## Tests
 
 As proposed by @gully #86, we now have unit tests using pytest. 
-Please consider to include unit tests if your update gives new functionality to ExoJAX.
-Some external files are needed to complete all the tests. Check [here](http://secondearths.sakura.ne.jp/exojax/data/).
+
+- tests/unittests: Unit tests, fast and independent from other databases as possible
+- tests/integration: mildly fast, it can include external databases
+- tests/endtoend: kind of samples including examples with PPLs 
+
 
 ## TIPS
-
-### pyformat
-
-Pyformat formats the code to follow a consistent style that used in ExoJAX.
-
-At minimum, you can use it as
-
-```sh
-pyformat -i your_code.py
-```
 
 ### How to include data into exojax
 
