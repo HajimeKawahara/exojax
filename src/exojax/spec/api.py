@@ -71,6 +71,7 @@ class MdbExomol(CapiMdbExomol):
                  bkgdatm='H2',
                  broadf=True,
                  gpu_transfer=False,
+                 inherit_dataframe=False,
                  local_databases="./"):
         """Molecular database for Exomol form.
 
@@ -82,7 +83,9 @@ class MdbExomol(CapiMdbExomol):
            Ttyp: typical temperature to calculate Sij(T) used in crit
            bkgdatm: background atmosphere for broadening. e.g. H2, He,
            broadf: if False, the default broadening parameters in .def file is used
-           
+           gpu_transfer: if True, some instances will be transfered to jnp.array
+           inherit_dataframe: if True, it makes self.df instance available, which needs more DRAM when pickling.
+            
         Note:
            The trans/states files can be very large. For the first time to read it, we convert it to HDF/vaex. After the second-time, we use the HDF5 format with vaex instead.
         """
@@ -122,7 +125,7 @@ class MdbExomol(CapiMdbExomol):
         local_files = [mgr.cache_file(f) for f in self.trans_file]
 
         # data frame instance:
-        self.df = self.load(
+        df = self.load(
             local_files,
             columns=[k for k in self.__slots__ if k not in ["logsij0"]],
             #lower_bound=([("nu_lines", wavenum_min)] if wavenum_min else []) +
@@ -130,20 +133,24 @@ class MdbExomol(CapiMdbExomol):
             #upper_bound=([("nu_lines", wavenum_max)] if wavenum_max else []),
             output="vaex")
 
-        load_mask = self.compute_load_mask()
-        self.instances_from_dataframes(self.df[load_mask])
+        load_mask = self.compute_load_mask(df)
+        self.instances_from_dataframes(df[load_mask])
         self.compute_broadening(self.jlower, self.jupper)
         self.gamma_natural = gn(self.A)
 
         if gpu_transfer:
             self.generate_jnp_arrays()
 
-    def compute_load_mask(self):
-        wavelength_mask = (self.df.nu_lines > self.nurange[0]-self.margin) \
-                    * (self.df.nu_lines < self.nurange[1]+self.margin)
+        if inherit_dataframe:
+            self.df = df
+
+    def compute_load_mask(self, df):
+        wavelength_mask = (df.nu_lines > self.nurange[0]-self.margin) \
+                    * (df.nu_lines < self.nurange[1]+self.margin)
         intensity_mask = (line_strength_numpy(
-            self.Ttyp, self.df.Sij0, self.df.nu_lines, self.df.elower,
+            self.Ttyp, df.Sij0, df.nu_lines, df.elower,
             self.QTtyp / self.QTref) > self.crit)
+
         return wavelength_mask * intensity_mask
 
     def instances_from_dataframes(self, df_load_mask):
@@ -233,7 +240,8 @@ class MdbHitemp(HITEMPDatabaseManager):
                  crit=0.,
                  Ttyp=1000.,
                  isotope=0,
-                 gpu_transfer=False):
+                 gpu_transfer=False,
+                 inherit_dataframe=False):
         """Molecular database for HITRAN/HITEMP form.
 
         Args:
@@ -244,6 +252,7 @@ class MdbHitemp(HITEMPDatabaseManager):
            Ttyp: typical temperature to calculate Sij(T) used in crit
            isotope: isotope number, 0 or None = use all isotopes. 
            gpu_transfer: tranfer data to jnp.array?
+           inherit_dataframe: if True, it makes self.df instance available, which needs more DRAM when pickling.
         """
 
         self.path = pathlib.Path(path).expanduser()
@@ -311,7 +320,7 @@ class MdbHitemp(HITEMPDatabaseManager):
         output = "vaex"
 
         self.isotope = _convert_proper_isotope(isotope)
-        self.df = self.load(
+        df = self.load(
             files_loaded,  # filter other files,
             columns=columns,
             within=[("iso", self.isotope)] if self.isotope is not None else [],
@@ -323,26 +332,30 @@ class MdbHitemp(HITEMPDatabaseManager):
             output=output,
         )
 
-        self.isoid = self.df.iso
-        self.uniqiso = np.unique(self.df.iso.values)
+        self.isoid = df.iso
+        self.uniqiso = np.unique(df.iso.values)
         for iso in self.uniqiso:
             Q = PartFuncTIPS(self.molecid, iso)
             QTref = Q.at(T=Tref)
             QTtyp = Q.at(T=Ttyp)
-            load_mask = self.compute_load_mask(QTtyp / QTref)
-        self.instances_from_dataframes(self.df[load_mask])
+            load_mask = self.compute_load_mask(df, QTtyp / QTref)
+        self.instances_from_dataframes(df[load_mask])
         self.gQT, self.T_gQT = hitranapi.get_pf(self.molecid, self.uniqiso)
 
         if gpu_transfer:
             self.generate_jnp_arrays()
 
-    def compute_load_mask(self, qrtyp):
-        wav_mask = (self.df.wav > self.nurange[0]-self.margin) \
-                    * (self.df.wav < self.nurange[1]+self.margin)
-        intensity_mask = (line_strength_numpy(self.Ttyp, self.df.int, self.df.wav, self.df.El,
-                                              qrtyp) > self.crit)
+        if inherit_dataframe:
+            self.df = df
+
+    def compute_load_mask(self, df, qrtyp):
+        wav_mask = (df.wav > self.nurange[0]-self.margin) \
+                    * (df.wav < self.nurange[1]+self.margin)
+        intensity_mask = (line_strength_numpy(self.Ttyp, df.int,
+                                              df.wav, df.El, qrtyp) >
+                          self.crit)
         return wav_mask * intensity_mask
-        
+
     def instances_from_dataframes(self, df_load_mask):
         """generate instances from (usually masked) data farame
 
@@ -473,7 +486,8 @@ class MdbHitran(HITRANDatabaseManager):
                  crit=0.,
                  Ttyp=1000.,
                  isotope=0,
-                 gpu_transfer=False):
+                 gpu_transfer=False,
+                 inherit_dataframe=False):
         """Molecular database for HITRAN/HITEMP form.
 
         Args:
@@ -484,6 +498,7 @@ class MdbHitran(HITRANDatabaseManager):
            Ttyp: typical temperature to calculate Sij(T) used in crit
            isotope: isotope number. 0 or None= use all isotopes. 
            gpu_transfer: tranfer data to jnp.array?
+           inherit_dataframe: if True, it makes self.df instance available, which needs more DRAM when pickling.
         """
 
         self.path = pathlib.Path(path).expanduser()
@@ -529,7 +544,7 @@ class MdbHitran(HITRANDatabaseManager):
 
         self.isotope = _convert_proper_isotope(isotope)
         # Load and return
-        self.df = self.load(
+        df = self.load(
             local_file,
             columns=columns,
             within=[("iso", self.isotope)] if self.isotope is not None else [],
@@ -541,26 +556,30 @@ class MdbHitran(HITRANDatabaseManager):
             output=output,
         )
 
-        self.isoid = self.df.iso
-        self.uniqiso = np.unique(self.df.iso.values)
+        self.isoid = df.iso
+        self.uniqiso = np.unique(df.iso.values)
         for iso in self.uniqiso:
             Q = PartFuncTIPS(self.molecid, iso)
             QTref = Q.at(T=Tref)
             QTtyp = Q.at(T=Ttyp)
-            load_mask = self.compute_load_mask(QTtyp / QTref)
-        self.instances_from_dataframes(self.df[load_mask])
+            load_mask = self.compute_load_mask(df, QTtyp / QTref)
+        self.instances_from_dataframes(df[load_mask])
         self.gQT, self.T_gQT = hitranapi.get_pf(self.molecid, self.uniqiso)
 
         if gpu_transfer:
             self.generate_jnp_arrays()
 
-    def compute_load_mask(self, qrtyp):
-        wav_mask = (self.df.wav > self.nurange[0]-self.margin) \
-                    * (self.df.wav < self.nurange[1]+self.margin)
-        intensity_mask = (line_strength_numpy(self.Ttyp, self.df.int, self.df.wav, self.df.El,
-                                              qrtyp) > self.crit)
+        if inherit_dataframe:
+            self.df = df
+
+    def compute_load_mask(self, df, qrtyp):
+        wav_mask = (df.wav > self.nurange[0]-self.margin) \
+                    * (df.wav < self.nurange[1]+self.margin)
+        intensity_mask = (line_strength_numpy(self.Ttyp, df.int,
+                                              df.wav, df.El, qrtyp) >
+                          self.crit)
         return wav_mask * intensity_mask
-        
+
     def instances_from_dataframes(self, df_load_mask):
         """generate instances from (usually masked) data farame
 

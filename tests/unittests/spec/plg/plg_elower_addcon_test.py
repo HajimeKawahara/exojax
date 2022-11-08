@@ -5,6 +5,7 @@ from exojax.utils.grids import wavenumber_grid
 from exojax.spec import initspec
 import pickle
 import pkg_resources
+import pytest
 from exojax.test.data import TESTDATA_moldb_H2O_EXOMOL
 filename = pkg_resources.resource_filename('exojax', 'data/testdata/'+TESTDATA_moldb_H2O_EXOMOL)
 
@@ -27,10 +28,10 @@ def test_plg_elower_addcon():
     mdb, cnu, indexnu = plg.gather_lines(mdb, Ngamma, len(nus), Nelower, nus, cnu, indexnu, qlogsij0, \
         qcnu, elower_grid, alpha_ref_grid, n_Texp_grid, frozen_mask, nonzeropl_mask)
 
-    assert mdb.A.shape[0] == 29
-    assert np.sum(mdb.logsij0) == -3646.8888693415774
-    assert np.sum(mdb.nu_lines) == 186549.27248329544
-    assert np.sum(mdb.elower) == 469611.6255259078
+    assert mdb.A.shape[0] == 2017
+    assert np.sum(mdb.logsij0) == pytest.approx(-196309.0819726989)
+    assert np.sum(mdb.nu_lines) == pytest.approx(12975191.175086917)
+    assert np.sum(mdb.elower) == pytest.approx(18947928.0)
     
 if __name__ == "__main__":
     test_plg_elower_addcon()

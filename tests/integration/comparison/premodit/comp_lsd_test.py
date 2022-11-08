@@ -38,21 +38,21 @@ def compare_line_shape_density(mdb,nu_grid,Ttest=1000.0,interval_contrast=0.1,Tt
     
     dit_grid_resolution = 0.1    
     R = resolution_eslog(nu_grid)
-    ngamma_ref = mdb._alpha_ref / mdb.nu_lines * R
+    ngamma_ref = mdb.alpha_ref / mdb.nu_lines * R
     ngamma_ref_grid, n_Texp_grid = make_broadpar_grid(
-        ngamma_ref, mdb._n_Texp, Ttyp, dit_grid_resolution=dit_grid_resolution)
+        ngamma_ref, mdb.n_Texp, Ttyp, dit_grid_resolution=dit_grid_resolution)
     elower_grid = make_elower_grid(Ttyp,
-                                   mdb._elower,
+                                   mdb.elower,
                                    interval_contrast=interval_contrast)
     lbd, multi_index_uniqgrid = generate_lbd(mdb.Sij0, mdb.nu_lines, nu_grid, ngamma_ref,
-                       ngamma_ref_grid, mdb._n_Texp, n_Texp_grid, mdb._elower,
+                       ngamma_ref_grid, mdb.n_Texp, n_Texp_grid, mdb.elower,
                        elower_grid, Ttyp)
     qT = mdb.qr_interp(Ttest)
     Slsd=unbiased_lsd(lbd,Ttest,nu_grid,elower_grid,qT)
     Slsd=np.sum(Slsd,axis=1)
     cont_inilsd_nu, index_inilsd_nu = npgetix(mdb.nu_lines, nu_grid)
     logsij0 = jnp.array(np.log(mdb.Sij0))
-    S=SijT(Ttest, logsij0, mdb.nu_lines, mdb._elower, qT)
+    S=SijT(Ttest, logsij0, mdb.nu_lines, mdb.elower, qT)
     Slsd_direct = np.zeros_like(nu_grid,dtype=np.float64)
     Slsd_direct = npadd1D(Slsd_direct, S, cont_inilsd_nu, index_inilsd_nu)
     return Slsd, Slsd_direct
