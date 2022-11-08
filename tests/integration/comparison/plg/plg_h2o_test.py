@@ -38,11 +38,9 @@ def test_plg_h2o():
                                         20,
                                         unit="AA",
                                         xsmode="modit")
-    print("1.")
     mdbc = api.MdbExomol('.database/H2O/1H2-16O/POKAZATEL/',
                          nusc,
                          gpu_transfer=True,inherit_dataframe=False)
-    print("2.")    
     ts = time.time()
     coefTgue = plg.optimize_coefTgue(Tgue, nusc, mdbc, molmassH2O, Nelower,
                                      errTgue)
