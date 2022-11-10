@@ -91,7 +91,7 @@ def parallel_merge_grids(grid1, grid2):
     if len(grid1) != len(grid2):
         raise ValueError("lengths for grid1 and grid2 are different.")
 
-    merged_grid = np.vstack([grid1, grid2]).T
+    merged_grid = np.ascontiguousarray(np.vstack([grid1, grid2]).T)
     return merged_grid
 
 

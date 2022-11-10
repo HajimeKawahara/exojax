@@ -1,19 +1,22 @@
 import numpy as np
 import tqdm
-
+import warnings
 
 def unique_rows(x):
     """memory saved version of np.unique(,axis=0)
 
     Notes:
-        Snippets from Answer #4 (https://discuss.dizzycoding.com/find-unique-rows-in-numpy-array/?amp=1)
+        Originally from a snippet/Answer #4 (https://discuss.dizzycoding.com/find-unique-rows-in-numpy-array/?amp=1)
 
     Args:
-        x (2D array): 2D array (N x M)
+        x (2D array): 2D array (N x M), need to be C-contiguous    
+
 
     Returns:
         2D array: unique 2D array (N' x M), where N' <= N, removed duplicated M vector.
     """
+    if not x.data.contiguous:
+        warnings.warn("input should be contiguous.",UserWarning)
     uniq = np.unique(x.view(x.dtype.descr * x.shape[1]))
     return uniq.view(x.dtype).reshape(-1, x.shape[1])
 

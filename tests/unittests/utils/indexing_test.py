@@ -1,4 +1,4 @@
-from exojax.utils.indexing import uniqidx, find_or_add_index, uniqidx_neibouring
+from exojax.utils.indexing import uniqidx, find_or_add_index, uniqidx_neibouring, unique_rows
 import numpy as np
 
 
@@ -34,19 +34,30 @@ def test_find_or_add_index():
     ref = np.array([[4, 1], [7, 1], [7, 2], [8, 0], [4, 4]])
     assert np.all(c - ref == 0)
 
+
 def test_uniqidx_neibouring():
     a = np.array([[4, 1], [7, 1], [7, 2], [8, 0], [4, 1]])
     udix, neighbor_indices, multi_index_update = uniqidx_neibouring(a)
-    assert np.all(udix == [0,1,2,3,0])
-    index_of_uidx = 3 # can be 0,1 ... , np.max(udix) 
-    assert np.all(multi_index_update[index_of_uidx] == [8,0])
-    i,j,k=neighbor_indices[index_of_uidx,:]
-    assert np.all(multi_index_update[i] == multi_index_update[index_of_uidx] + np.array([1,0])) 
-    assert np.all(multi_index_update[j] == multi_index_update[index_of_uidx] + np.array([0,1])) 
-    assert np.all(multi_index_update[k] == multi_index_update[index_of_uidx] + np.array([1,1])) 
-    
+    assert np.all(udix == [0, 1, 2, 3, 0])
+    index_of_uidx = 3  # can be 0,1 ... , np.max(udix)
+    assert np.all(multi_index_update[index_of_uidx] == [8, 0])
+    i, j, k = neighbor_indices[index_of_uidx, :]
+    assert np.all(multi_index_update[i] == multi_index_update[index_of_uidx] +
+                  np.array([1, 0]))
+    assert np.all(multi_index_update[j] == multi_index_update[index_of_uidx] +
+                  np.array([0, 1]))
+    assert np.all(multi_index_update[k] == multi_index_update[index_of_uidx] +
+                  np.array([1, 1]))
+
+
+def test_unique_rows():
+    a = np.array([[4, 1], [7, 1], [7, 2], [8, 0], [4, 1]])
+    u = unique_rows(a)
+    assert np.all(np.unique(a, axis=0) == u)
+
+
 if __name__ == "__main__":
     #test_uniqidx_2D()
     #test_uniqidx_3D()
     #test_find_or_add_index()
-    test_uniqidx_neibouring() 
+    test_uniqidx_neibouring()
