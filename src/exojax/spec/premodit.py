@@ -78,7 +78,7 @@ def xsmatrix(Tarr, Parr, R, pmarray, lbd, nu_grid, ngamma_ref_grid,
 
 
 def parallel_merge_grids(grid1, grid2):
-    """merge two different grids into one grid in parallel
+    """Merge two different grids into one grid in parallel, in a C-contiguous RAM mapping.
     
     Args:
         grid1: grid 1
@@ -201,7 +201,7 @@ def generate_lbd(line_strength_ref, nu_lines, nu_grid, ngamma_ref,
     """generate log-biased line shape density (LBD)
 
     Args:
-        line_strength_ref (_type_): _description_
+        line_strength_ref: line strength at reference temperature 296K, Sij0
         nu_lines (_type_): _description_
         nu_grid (_type_): _description_
         ngamma_ref (_type_): _description_
