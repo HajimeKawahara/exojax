@@ -39,7 +39,7 @@ print('N_H2O=', len(mdb.nu_lines))
 
 #Pre MODIT LSD
 Tgue = 1000.
-interval_contrast = 0.2
+interval_contrast = 0.3
 dit_grid_resolution = 0.1
 lbd, multi_index_uniqgrid_H2O, elower_grid, \
 ngamma_ref_grid_H2O, n_Texp_grid_H2O, R_H2O, pmarray_H2O = initspec.init_premodit(
@@ -55,8 +55,12 @@ ngamma_ref_grid_H2O, n_Texp_grid_H2O, R_H2O, pmarray_H2O = initspec.init_premodi
     warning=False)
 
 print("Elower = ",np.max(mdb.elower),"-",np.min(mdb.elower),"cm-1")
+dE=elower_grid[1]-elower_grid[0]
+NE=len(elower_grid)
+print("dE = ",dE,"cm-1")
+print("NEgrid = ",NE)
 
-T = 1000.0
+T = 700.0
 P = 1.0
 qt = mdb.qr_interp(T)
 Slsd_premodit = unbiased_lsd(lbd, T, nus, elower_grid, qt)
@@ -87,6 +91,7 @@ plt.plot(nus,Spremodit/Smodit-1.0)
 #plt.yscale("log")
 plt.xlabel("wavenumber cm-1")
 plt.ylabel("relative error from MODIT LSD")
-plt.title("H2O/POKAZATEL/ Interval constant = "+str(interval_contrast))
-#plt.savefig("ic"+str(interval_contrast)+".png")
+plt.title("H2O/POK ic="+str(interval_contrast)+" dE="+str(int(dE))+"cm-1 Tguess="+
+          str(int(Tgue))+"K T="+str(int(T))+"K NE="+str(NE))
+plt.savefig("ic"+str(interval_contrast)+"_"+str(int(T))+"K.png")
 plt.show()
