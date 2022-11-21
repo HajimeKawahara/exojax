@@ -12,6 +12,10 @@ Simple Usage
 Cross Section using Various Opacity Calculators
 --------------------------------------------------------
 
+We will update and reorganise the opacity calculators by Release 2.0. 
+But meanwhile, use LPF when the number of lines is less than ~ a few hundred.
+For larger numbers, consider to use MODIT or a more experimetal calculator PreMODIT. 
+
 .. toctree::
    :maxdepth: 1
 
@@ -31,6 +35,7 @@ Forward Modeling using Various Opacity Calculators
    tutorials/Forward_modeling.rst
    tutorials/Forward_modeling_using_DIT.rst
    tutorials/Forward_modeling_using_MODIT.rst
+   tutorials/Forward_modeling_using_PreMODIT.rst
    tutorials/Forward_modeling_using_the_MODIT_Cross_Section_for_methane.rst
    tutorials/Forward_modeling_for_Fe_I_lines_of_Kurucz.rst
    tutorials/Forward_modeling_for_metal_line.rst
