@@ -11,7 +11,7 @@ import jax.numpy as jnp
 from exojax.spec.rtransfer import pressure_layer
 from exojax.utils.grids import wavenumber_grid
 from exojax.utils.instfunc import resolution_to_gaussian_std
-from exojax.spec import moldb
+from exojax.spec import api
 from exojax.spec import initspec, molinfo, premodit
 from exojax.spec import molinfo
 from exojax.utils.astrofunc import getjov_gravity
@@ -41,7 +41,7 @@ ONEARR = np.ones_like(Parr)
 
 #Load H2O data with premodit
 molmassH2O = molinfo.molmass("H2O")
-mdbH2O_orig = moldb.MdbExomol('.database/H2O/1H2-16O/POKAZATEL', nus)
+mdbH2O_orig = api.MdbExomol('.database/H2O/1H2-16O/POKAZATEL', nus)
 print('N_H2O=', len(mdbH2O_orig.nu_lines))
 #
 Tgue = 3000.
@@ -64,7 +64,6 @@ from jax import random
 import numpyro.distributions as dist
 import numpyro
 from numpyro.infer import MCMC, NUTS
-
 from exojax.spec.rtransfer import dtauM_mmwl, rtrun
 from exojax.spec import planck, response
 from exojax.utils.grids import velocity_grid
