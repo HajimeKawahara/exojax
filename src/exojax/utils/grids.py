@@ -30,7 +30,7 @@ def wavenumber_grid(x0, x1, N, unit='cm-1', xsmode='lpf'):
 
     _check_even_number(N)
     grid_mode = check_scale_xsmode(xsmode)
-    grid = _set_grid(x0, x1, N, unit, grid_mode)
+    grid, unit = _set_grid(x0, x1, N, unit, grid_mode)
     nus = _set_nus(unit, grid)
     wav = nu2wav(nus, unit="AA")
     resolution = _set_resolution(grid_mode, nus)
@@ -42,10 +42,10 @@ def _set_grid(x0, x1, N, unit, grid_mode):
     if grid_mode == 'ESLOG':
         grid = np.logspace(np.log10(x0), np.log10(x1), N, dtype=np.float64)
     elif grid_mode == 'ESLIN':
-        grid = _set_grid_eslin(unit, x0, x1, N)
+        grid, unit = _set_grid_eslin(unit, x0, x1, N)
     else:
         raise ValueError("unavailable xsmode/unit.")
-    return grid
+    return grid, unit
 
 
 def _check_even_number(N):
@@ -75,10 +75,11 @@ def _set_resolution(grid_mode, nus):
 
 def _set_grid_eslin(unit, x0, x1, N):
     if unit == "cm-1":
-        return np.linspace((x0), (x1), N, dtype=np.float64)
+        return np.linspace((x0), (x1), N, dtype=np.float64), unit
     else:
         cx1, cx0 = wav2nu(np.array([x0, x1]), unit)
-        return np.linspace((cx0), (cx1), N, dtype=np.float64)
+        unit = 'cm-1'
+        return np.linspace((cx0), (cx1), N, dtype=np.float64), unit
 
 
 def velocity_grid(resolution, vmax):
