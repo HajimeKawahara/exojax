@@ -46,7 +46,7 @@ Reverse Modeling (a.k.a Retrieval) using Various Opacity Calculators
 
 .. toctree::
    :maxdepth: 1
-
+   
    tutorials/Reverse_modeling.rst
    tutorials/Reverse_modeling_for_methane_using_MODIT.rst
    tutorials/Reverse_modeling_with_VALD_using_MODIT.rst

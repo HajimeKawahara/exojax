@@ -22,7 +22,7 @@ with a STD of :math:`\beta` and a Lorentian with a gamma parameter of
 
 .. parsed-literal::
 
-    [<matplotlib.lines.Line2D at 0x7f363c5088b0>]
+    [<matplotlib.lines.Line2D at 0x7f5dc8143100>]
 
 
 
@@ -57,7 +57,7 @@ Adding a noise…
 
 .. parsed-literal::
 
-    [<matplotlib.lines.Line2D at 0x7f363c3c7ac0>]
+    [<matplotlib.lines.Line2D at 0x7f5dc1f7ba30>]
 
 
 
@@ -93,7 +93,7 @@ We define the objective function as :math:`obj = |d - f|^2`
 
 .. parsed-literal::
 
-    -0.0003214369 0.0021396251 0.0027429007
+    0.0041426932 -0.00014259202 -0.0007440491
 
 
 .. code:: ipython3
@@ -128,7 +128,8 @@ Here, we use the ADAM optimizer
 .. code:: ipython3
 
     #adam
-    from jax.experimental import optimizers
+    #from jax.experimental import optimizers #for older versions of JAX
+    from jax.example_libraries import optimizers
     opt_init, opt_update, get_params = optimizers.adam(1.e-1)
     r0 = jnp.array([1.5,1.5,1.5])
     trajadam, padam=doopt(r0,opt_init,get_params,1000)
@@ -144,7 +145,7 @@ Optimized values are given in padam
 
 .. parsed-literal::
 
-    DeviceArray([1.992592  , 0.97358024, 1.9869502 ], dtype=float32)
+    DeviceArray([1.9842807, 1.0219767, 1.9737407], dtype=float32)
 
 
 
@@ -180,7 +181,9 @@ convergence
 .. code:: ipython3
 
     #sgd
-    from jax.experimental import optimizers
+    #from jax.experimental import optimizers #for older versions of JAX
+    from jax.example_libraries import optimizers
+    
     opt_init, opt_update, get_params = optimizers.sgd(1.e-1)
     r0 = jnp.array([1.5,1.5,1.5])
     trajsgd, psgd=doopt(r0,opt_init,get_params,10000)
