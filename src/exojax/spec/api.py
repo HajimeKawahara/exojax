@@ -70,7 +70,7 @@ class MdbExomol(CapiMdbExomol):
                  Ttyp=1000.,
                  bkgdatm='H2',
                  broadf=True,
-                 gpu_transfer=False,
+                 gpu_transfer=True,
                  inherit_dataframe=False,
                  local_databases="./"):
         """Molecular database for Exomol form.
@@ -83,7 +83,7 @@ class MdbExomol(CapiMdbExomol):
            Ttyp: typical temperature to calculate Sij(T) used in crit
            bkgdatm: background atmosphere for broadening. e.g. H2, He,
            broadf: if False, the default broadening parameters in .def file is used
-           gpu_transfer: if True, some instances will be transfered to jnp.array
+           gpu_transfer: if True, some instances will be transfered to jnp.array. False is recommended for PreMODIT.
            inherit_dataframe: if True, it makes self.df instance available, which needs more DRAM when pickling.
             
         Note:
