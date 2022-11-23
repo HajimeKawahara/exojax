@@ -37,7 +37,6 @@ Forward Modeling
    :maxdepth: 1
 
    tutorials/Forward_modeling.rst
-   tutorials/Forward_modeling_using_PreMODIT.rst
    tutorials/Forward_modeling_using_PreMODIT_Cross_Section_for_methane.rst
    various_forward.rst
 

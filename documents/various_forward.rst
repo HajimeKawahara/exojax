@@ -4,6 +4,7 @@ Other Forward Modeling Examples
 .. toctree::
    :maxdepth: 1
 
+   tutorials/Forward_modeling_using_PreMODIT.rst
    tutorials/Forward_modeling_using_DIT.rst
    tutorials/Forward_modeling_using_MODIT.rst
    tutorials/Forward_modeling_using_the_MODIT_Cross_Section_for_methane.rst
