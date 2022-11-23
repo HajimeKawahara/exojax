@@ -1,6 +1,14 @@
 Basics
 ==============
 
+.. note::
+
+   We will update and reorganise the opacity calculators by Release 2.0. 
+   Meanwhile, use LPF when the number of lines is less than ~ a few hundred.
+   For larger numbers, consider to use MODIT or a more experimetal calculator PreMODIT.
+   MODIT is limited by a device memory limits while while PreMODIT has no such limitation.
+   Therefore, if you want to for instance, million to billion lines, use PreMODIT.
+
 Simple Usage
 ----------------
 
@@ -11,10 +19,6 @@ Simple Usage
 
 Cross Section using Various Opacity Calculators
 --------------------------------------------------------
-
-We will update and reorganise the opacity calculators by Release 2.0. 
-But meanwhile, use LPF when the number of lines is less than ~ a few hundred.
-For larger numbers, consider to use MODIT or a more experimetal calculator PreMODIT. 
 
 .. toctree::
    :maxdepth: 1
