@@ -30,11 +30,8 @@ Cross Section using Various Opacity Calculators
    tutorials/Cross_Section_using_Modified_Discrete_Integral_Transform.rst
    tutorials/Cross_Section_using_Discrete_Integral_Transform.rst
 
-Forward Modeling using Various Opacity Calculators
+Forward Modeling
 --------------------------------------------------------
-
-Current Standard Calculators
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 .. toctree::
    :maxdepth: 1
@@ -42,19 +39,7 @@ Current Standard Calculators
    tutorials/Forward_modeling.rst
    tutorials/Forward_modeling_using_PreMODIT.rst
    tutorials/Forward_modeling_using_PreMODIT_Cross_Section_for_methane.rst
-
-Various Options
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-.. toctree::
-   :maxdepth: 1
-
-   tutorials/Forward_modeling_using_DIT.rst
-   tutorials/Forward_modeling_using_MODIT.rst
-   tutorials/Forward_modeling_using_the_MODIT_Cross_Section_for_methane.rst
-   tutorials/Forward_modeling_for_Fe_I_lines_of_Kurucz.rst
-   tutorials/Forward_modeling_for_metal_line.rst
-   tutorials/Forward_modeling_using_the_DIT_Cross_Section_for_methane.rst
+   various_forward.rst
 
 Reverse Modeling (a.k.a Retrieval) using Various Opacity Calculators
 ------------------------------------------------------------------------
@@ -103,7 +88,6 @@ Others
 .. toctree::
    :maxdepth: 1
 
-   tutorials/Reducing_memory_for_HITEMP.rst
    tutorials/Using_FastChem2_to_calculate_the_chemical_abundances.rst
    tutorials/hjerting.rst
    tutorials/pure_absorption_rt.rst
