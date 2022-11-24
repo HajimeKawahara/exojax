@@ -20,12 +20,15 @@ def wavenumber_grid(x0, x1, N, unit='cm-1', xsmode='lpf'):
         xsmode: cross section computation mode (lpf, dit, modit, premodit)
 
     Note:
-        ESLIN sets evenly-spaced linear grid in wavenumber space while ESLOG sets evenly-spaced log grid both in wavenumber and wavelength spaces. 
+        The wavenumber (nus) and wavelength (wav) grids are in ascending orders. 
+        Therefore, wav[-1] corresponds to the wavelength of nus[0].
+        ESLIN sets evenly-spaced linear grid in wavenumber space while ESLOG sets 
+        evenly-spaced log grid both in wavenumber and wavelength spaces. 
 
     Returns:
-        wavenumber grid evenly spaced in log space
-        corresponding wavelength grid (AA)
-        resolution
+        wavenumber grid evenly spaced in log space in ascending order (nus)
+        corresponding wavelength grid (AA) in ascending order (wav). wav[-1] corresponds to nus[0]
+        spectral resolution
     """
 
     _check_even_number(N)
@@ -34,7 +37,6 @@ def wavenumber_grid(x0, x1, N, unit='cm-1', xsmode='lpf'):
     nus = _set_nus(unit, grid)
     wav = nu2wav(nus, unit="AA")
     resolution = _set_resolution(grid_mode, nus)
-
     return nus, wav, resolution
 
 
