@@ -77,7 +77,7 @@ def _set_grid_eslin(unit, x0, x1, N):
     if unit == "cm-1":
         return np.linspace((x0), (x1), N, dtype=np.float64), unit
     else:
-        cx1, cx0 = wav2nu(np.array([x0, x1]), unit)
+        cx0, cx1 = wav2nu(np.array([x0, x1]), unit)
         unit = 'cm-1'
         return np.linspace((cx0), (cx1), N, dtype=np.float64), unit
 
