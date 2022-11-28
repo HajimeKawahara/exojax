@@ -314,31 +314,3 @@ def unbiased_ngamma_grid(T, P, ngamma_ref_grid, n_Texp_grid,
     n_Texp_g = n_Texp_grid[multi_index_uniqgrid[:, 1]]
     return ngamma_ref_g * (T / Tref)**(-n_Texp_g) * P
 
-
-# def lowpass(fftval, compress_rate):
-#     """lowpass filter for the biased LSD
-
-#     """
-#     Nnu, Nbatch = np.shape(fftval)
-#     Ncut = int(float(Nnu) / float(compress_rate))
-#     lowpassed_fftval = fftval[:Ncut, :]
-#     high_freq_norm_squared = np.sum(np.abs(fftval[Ncut:, :])**2, axis=0)
-#     lowpassed_fftval[0, :] = np.sqrt(
-#         np.abs(lowpassed_fftval[0, :])**2 + high_freq_norm_squared)
-#     return lowpassed_fftval
-
-# def unbiased_lsd_lowpass(FT_Slsd_biased, T, nu_grid, elower_grid, qr):
-#     """ unbias the biased LSD lowpass filtered
-
-#     Args:
-
-#     Returns:
-#         LSD (unbiased)
-
-#     """
-#     Nnu = int(len(nu_grid) / 2)
-#     eunbias_FTSlsd = jnp.sum(f_bias(elower_grid, T) * FT_Slsd_biased, axis=1)
-#     Nft = len(eunbias_FTSlsd)
-#     eunbias_FTSbuf = jnp.hstack([eunbias_FTSlsd, jnp.zeros(Nnu - Nft + 1)])
-#     eunbias_Slsd = jnp.fft.irfft(eunbias_FTSbuf)
-#     return g_bias(nu_grid, T) * eunbias_Slsd / qr(T)
