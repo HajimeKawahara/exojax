@@ -1,4 +1,3 @@
-import numpy as np
 from exojax.utils.constants import hcperk
 import jax.numpy as jnp
 from jax import grad
@@ -58,17 +57,17 @@ def single_tilde_line_strength(t, w1, w2, tref, dE, p=0.5):
     return v1 + v2 - 1.0
 
 
-def single_tilde_line_strength_zeroth(t, ttyp, tref, dE, p=0.5):
-    w1 = weight_point1_dE(ttyp, tref, dE, p)
-    w2 = weight_point2_dE(ttyp, tref, dE, p)
+def single_tilde_line_strength_zeroth(t, twp, tref, dE, p=0.5):
+    w1 = weight_point1_dE(twp, tref, dE, p)
+    w2 = weight_point2_dE(twp, tref, dE, p)
     return single_tilde_line_strength(t, w1, w2, tref, dE, p)
 
 
-def single_tilde_line_strength_first(t, ttyp, tref, dE, p=0.5):
+def single_tilde_line_strength_first(t, twp, tref, dE, p=0.5):
     dfw1 = grad(weight_point1_dE, argnums=0)
     dfw2 = grad(weight_point2_dE, argnums=0)
-    w1 = weight_point1_dE(ttyp, tref, dE,
-                          p) + dfw1(ttyp, tref, dE, p) * (t - ttyp)
-    w2 = weight_point2_dE(ttyp, tref, dE,
-                          p) + dfw2(ttyp, tref, dE, p) * (t - ttyp)
+    w1 = weight_point1_dE(twp, tref, dE,
+                          p) + dfw1(twp, tref, dE, p) * (t - twp)
+    w2 = weight_point2_dE(twp, tref, dE,
+                          p) + dfw2(twp, tref, dE, p) * (t - twp)
     return single_tilde_line_strength(t, w1, w2, tref, dE, p)

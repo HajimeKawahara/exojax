@@ -295,7 +295,6 @@ def unbiased_lsd(lbd, T, nu_grid, elower_grid, qt):
     Slsd = jnp.sum(jnp.exp(logf_bias(elower_grid, T) + lbd), axis=-1)
     return (Slsd.T * g_bias(nu_grid, T) / qt).T
 
-
 def unbiased_ngamma_grid(T, P, ngamma_ref_grid, n_Texp_grid,
                          multi_index_uniqgrid):
     """compute unbiased ngamma grid

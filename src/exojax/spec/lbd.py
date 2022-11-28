@@ -3,7 +3,6 @@ from exojax.utils.constants import hcperk
 import jax.numpy as jnp
 from jax import grad
 
-
 def _f(t, tref, E):
     return jnp.exp(- hcperk * (t - tref) * E)
 
@@ -40,3 +39,8 @@ def weight_point2(t, tref, El, E1, E2):
         weight at point 2
     """
     return 1.0 - weight_point1(t, tref, El, E1, E2)
+
+
+
+
+
