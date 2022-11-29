@@ -6,6 +6,9 @@ from jax import grad
 def _f(t, tref, E):
     return jnp.exp(- hcperk * (t - tref) * E)
 
+
+
+### Really need?
 def weight_point1(t, tref, El, E1, E2):
     """weight at point 1 for PreMODIT
 
