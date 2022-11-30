@@ -11,7 +11,7 @@ from exojax.spec.set_ditgrid import ditgrid_log_interval, ditgrid_linear_interva
 from exojax.utils.constants import Tref
 from exojax.utils.indexing import uniqidx_neibouring
 from exojax.spec import normalized_doppler_sigma
-
+from exojax.spec.lbd import lbd_coefficients
 
 @jit
 def xsvector(T, P, nsigmaD, lbd, R, pmarray, nu_grid, elower_grid,
@@ -39,7 +39,7 @@ def xsvector(T, P, nsigmaD, lbd, R, pmarray, nu_grid, elower_grid,
                                        multi_index_uniqgrid)
     log_ngammaL_grid = jnp.log(ngamma_grid)
     xs = calc_xsection_from_lsd_scanfft(Slsd, R, pmarray, nsigmaD, nu_grid,
-                                log_ngammaL_grid)
+                                        log_ngammaL_grid)
     return xs
 
 
@@ -195,9 +195,17 @@ def make_elower_grid(Tmax, elower, interval_contrast):
     return min_elower + np.arange(Ng_elower) * dE
 
 
-def generate_lbd(line_strength_ref, nu_lines, nu_grid, ngamma_ref,
-                 ngamma_ref_grid, n_Texp, n_Texp_grid, elower, elower_grid,
-                 Ttyp):
+def generate_lbd(line_strength_ref,
+                 nu_lines,
+                 nu_grid,
+                 ngamma_ref,
+                 ngamma_ref_grid,
+                 n_Texp,
+                 n_Texp_grid,
+                 elower,
+                 elower_grid,
+                 Ttyp,
+                 diffmode=1):
     """generate log-biased line shape density (LBD)
 
     Args:
@@ -210,7 +218,8 @@ def generate_lbd(line_strength_ref, nu_lines, nu_grid, ngamma_ref,
         n_Texp_grid (_type_): _description_
         elower (_type_): _description_
         elower_grid (_type_): _description_
-        Ttyp (_type_): _description_
+        Twt: temperature used for the weight coefficient computation 
+        diffmode (int): i-th Taylor expansion is used for the weight, default is 1.
 
     Returns:
         jnp array: log-biased line shape density (LBD)
@@ -220,16 +229,22 @@ def generate_lbd(line_strength_ref, nu_lines, nu_grid, ngamma_ref,
 
         >>> lbd, multi_index_uniqgrid = generate_lbd(mdb.Sij0, mdb.nu_lines, nu_grid, ngamma_ref,
         >>>               ngamma_ref_grid, mdb.n_Texp, n_Texp_grid, mdb.elower,
-        >>>               elower_grid, Ttyp)
+        >>>               elower_grid, Twp)
         >>> ngamma_ref = ngamma_ref_grid[multi_index_uniqgrid[:,0]] # ngamma ref for the unique broad par
         >>> n_Texp = n_Texp_grid[multi_index_uniqgrid[:,0]] # temperature exponent for the unique broad par
         
     """
     logmin = -np.inf
     cont_nu, index_nu = npgetix(nu_lines, nu_grid)
-    cont_elower, index_elower = npgetix_exp(elower, elower_grid, Ttyp)
-    multi_index_lines, multi_cont_lines, uidx_bp, neighbor_uidx, multi_index_uniqgrid, Ng_broadpar = broadpar_getix(
-        ngamma_ref, ngamma_ref_grid, n_Texp, n_Texp_grid)
+    if diffmode == 0:
+        cont_elower, index_elower = npgetix_exp(elower, elower_grid, Ttyp)
+        multi_index_lines, multi_cont_lines, uidx_bp, neighbor_uidx, multi_index_uniqgrid, Ng_broadpar = broadpar_getix(
+            ngamma_ref, ngamma_ref_grid, n_Texp, n_Texp_grid)
+    elif diffmode == 1:
+        lbd_coefficients(elower, elower_grid, Tref, Twt)
+    else:
+        raise ValueError("Currently, diff mode = 0 or 1 is compatible",
+                         UserWarning)
 
     Ng_nu = len(nu_grid)
 
@@ -295,6 +310,7 @@ def unbiased_lsd(lbd, T, nu_grid, elower_grid, qt):
     Slsd = jnp.sum(jnp.exp(logf_bias(elower_grid, T) + lbd), axis=-1)
     return (Slsd.T * g_bias(nu_grid, T) / qt).T
 
+
 def unbiased_ngamma_grid(T, P, ngamma_ref_grid, n_Texp_grid,
                          multi_index_uniqgrid):
     """compute unbiased ngamma grid
@@ -312,4 +328,3 @@ def unbiased_ngamma_grid(T, P, ngamma_ref_grid, n_Texp_grid,
     ngamma_ref_g = ngamma_ref_grid[multi_index_uniqgrid[:, 0]]
     n_Texp_g = n_Texp_grid[multi_index_uniqgrid[:, 1]]
     return ngamma_ref_g * (T / Tref)**(-n_Texp_g) * P
-

@@ -60,7 +60,7 @@ def npgetix(x, xv):
     pos = np.interp(x, xv, indarr)
     cont, index = np.modf(pos)
     return cont, index.astype(int)
-    
+
 
 def npgetix_exp(x, xv, Ttyp, conversion_dtype=np.float64):
     """numpy version of getix weigthed by exp(-hc/kT).

@@ -1,49 +1,82 @@
 import numpy as np
 from exojax.utils.constants import hcperk
-import jax.numpy as jnp
-from jax import grad
+from exojax.spec.lsd import npgetix
 
-def _f(t, tref, E):
-    return jnp.exp(- hcperk * (t - tref) * E)
+def lbd_coefficients(elower_lines,
+                     elower_grid,
+                     Tref,
+                     Twt,
+                     conversion_dtype=np.float64):
+    """compute the LBD zeroth and first coefficients
+    
+    Args:
+        elower_lines: Line's Elower 
+        elower_grid: Elower grid for LBD
+        Tref: reference tempreature to be used for the line strength S0
+        Twt: temperature used for the weight coefficient computation 
+        converted_dtype: data type for conversion. Needs enough large because this code uses exp.
+        
+    Returns:
+        the zeroth coefficient at Point 2, equivalent to cont in spec.lsd.npgetix_exp
+        the first coefficient at Point 2
+        index
+
+    Note:
+        This function is practically an extension of spec.lsd.npgetix_exp. 
+        Twp (Temperature at the weight point) corresponds to Ttyp, but not typical temparture at all.  
+        zeroth and first coefficients are at Point 2, i.e. for i=index+1. 
+        1 - zeroth_coefficient gives the zeroth coefficient at Point 1, i.e. for i=index.
+        - first_coefficient gives the first coefficient at Point 1.   
+    """
+
+    xl = np.array(elower_lines, dtype=conversion_dtype)
+    xi = np.array(elower_grid, dtype=conversion_dtype)
+    xl = np.exp(-hcperk * xl * (1.0 / Twt - 1.0 / Tref))
+    xi = np.exp(-hcperk * xi * (1.0 / Twt - 1.0 / Tref))
+
+    _check_overflow(conversion_dtype, xl, xi)
+
+    zeroth_coeff, index = npgetix(xl, xi)
+    index = index.astype(int)
+    x1 = xi[index]
+    x2 = xi[index + 1]
+    E1 = elower_grid[index]
+    E2 = elower_grid[index + 1]
+    dx = x2 - x1
+
+    #derivative of x/(-c2)
+    xp1 = E1 * x1
+    xp2 = E2 * x2
+    xpl = elower_lines * xl
+
+    first_coeff = -hcperk * ((xpl - xp1) * dx - (xl - x1) *
+                             (xp2 - xp1)) / dx**2
+
+    return zeroth_coeff, first_coeff, index
+
+def _check_overflow(conversion_dtype, x_, xv_):
+    if np.isinf(np.max(x_)) or np.isinf(np.max(xv_)):
+        print("\n conversion_dtype = ", conversion_dtype, "\n")
+        raise ValueError("Use larger conversion_dtype.")
 
 
-
-### Really need?
-def weight_point1(t, tref, El, E1, E2):
-    """weight at point 1 for PreMODIT
+def weight(T, Twt, zeroth_coeff, first_coeff):
+    """construct lbd from zeroth and first terms in the first Taylor approximation
 
     Args:
-        t (float): inverse temperature
-        tref (float): reference inverse temperature
-        El (float): line envergy (cm-1)
-        E1 (float): energy at rid point 1
-        E2 (float): energy at rid point 2
+        Tref: reference tempreature to be used for the line strength S0
+        Twt: temperature used for the weight coefficient computation 
+        
+        T (float): _description_
+        Twt (float): _description_
+        zeroth_coeff (ndarray): zeroth coefficient of the Taylor expansion of the weight at Twt
+        first_coeff (ndarray): first coefficient of the Taylor expansion of the weight at Twt
 
     Returns:
-        weight at point 1
+        ndarray: weight at the points 1 and 2
     """
-    xl = _f(t, tref, El)
-    x1 = _f(t, tref, E1)
-    x2 = _f(t, tref, E2)
-    return (x2 - xl) / (x2 - x1)
+    weight1 = (1.0 - zeroth_coeff) - first_coeff * (1.0 / T - 1.0 / Twt)
+    weight2 = zeroth_coeff + first_coeff * (1.0 / T - 1.0 / Twt)
 
-
-def weight_point2(t, tref, El, E1, E2):
-    """weight at point 2 for PreMODIT
-
-    Args:
-        t (float): inverse temperature
-        tref (float): reference inverse temperature
-        El (float): line envergy (cm-1)
-        E1 (float): energy at rid point 1
-        E2 (float): energy at rid point 2
-
-    Returns:
-        weight at point 2
-    """
-    return 1.0 - weight_point1(t, tref, El, E1, E2)
-
-
-
-
+    return weight1, weight2
 
