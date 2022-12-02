@@ -13,7 +13,7 @@ from exojax.spec import api
 from exojax.spec import initspec, molinfo, premodit
 from exojax.spec import molinfo
 from exojax.utils.constants import RJ, pc
-from exojax.spec.premodit import unbiased_lsd
+from exojax.spec.premodit import unbiased_lsd_first
 from exojax.spec.lsd import inc2D_givenx
 from exojax.spec import modit
 from exojax.spec.hitran import line_strength
@@ -63,7 +63,7 @@ print("NEgrid = ",NE)
 T = 700.0
 P = 1.0
 qt = mdb.qr_interp(T)
-Slsd_premodit = unbiased_lsd(lbd, T, nus, elower_grid, qt)
+Slsd_premodit = unbiased_lsd_first(lbd, T, nus, elower_grid, qt)
 Spremodit = (np.sum(Slsd_premodit,axis=1))
 
 #MODIT LSD

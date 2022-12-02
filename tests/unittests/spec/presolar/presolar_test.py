@@ -98,7 +98,7 @@ import jax.numpy as jnp
 from exojax.spec.premodit import logf_bias, g_bias
 
 
-from exojax.spec.premodit import unbiased_lsd
+from exojax.spec.premodit import unbiased_lsd_zeroth
 from jax import vmap 
 def vmap_unbiased_lsd(hat_lbd, T, nu_grid, elower_grid, qt):
     """ unbias the biased LSD
@@ -114,7 +114,7 @@ def vmap_unbiased_lsd(hat_lbd, T, nu_grid, elower_grid, qt):
         LSD, shape = (number_of_wavenumber_bin, number_of_broadening_parameters)
         
     """
-    vmapped_unbiased_lsd = vmap(unbiased_lsd,(0,None,None,None,None),0)
+    vmapped_unbiased_lsd = vmap(unbiased_lsd_zeroth,(0,None,None,None,None),0)
     return vmapped_unbiased_lsd(hat_lbd, T, nu_grid, elower_grid, qt)
     
 
@@ -128,7 +128,7 @@ def test_unbiased_lsd_simple():
     T = 1000.0  
     elower_grid = np.ones(n_elower_grid)
     qt = 1.0
-    lsd = unbiased_lsd(lbd, T, nu_grid, elower_grid, qt)
+    lsd = unbiased_lsd_zeroth(lbd, T, nu_grid, elower_grid, qt)
     assert np.all(np.shape(lsd) == (13,3))
 
 def test_shapefilter_olaform():

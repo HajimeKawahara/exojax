@@ -5,12 +5,13 @@ import pytest
 import numpy as np
 from jax import grad
 from exojax.utils.constants import hcperk
-from exojax.spec.lbd import weight_point1, weight_point2
 from exojax.spec.lbderror import weight_point1_dE, weight_point2_dE
 from exojax.spec.lbderror import single_tilde_line_strength_zeroth
 from exojax.spec.lbderror import single_tilde_line_strength_first
 from jax.config import config
+
 config.update("jax_enable_x64", True)
+
 
 def beta(T, Tref):
     return (hcperk * (1. / T - 1. / Tref))
@@ -37,7 +38,7 @@ def error_zeroth_analytic(T, Ttyp, Tref, dE):
     Returns:
         float: the zeroth term of ds 
     """
-    
+
     alpha = beta(Ttyp, Tref)
     denom = np.exp(alpha * dE / 2.0) - np.exp(-alpha * dE / 2.0)
     num = (1.0 - np.exp(-alpha * dE / 2.0)) * np.exp(
@@ -70,6 +71,7 @@ def ds_first(Tarr, Ttyp1, Tref, dE):
     return error_zeroth_analytic(Tarr, Ttyp1, Tref, dE) + error_first_analytic(
         Tarr, Ttyp1, Tref, dE) - 1
 
+
 def test_single_tilde_line_strength():
     El = 200.0
     dE = 300.0
@@ -87,25 +89,8 @@ def test_single_tilde_line_strength():
         assert ds1 == pytest.approx(ds0_ana + ds1_ana - 1.0)
 
 
-def test_weight_points():
-    
-    t = 1.0 / 700.0
-    tref = 1.0 / 300.0
-    El = 200.0
-    dE = 300.0
-    E1 = El - dE / 3.
-    E2 = El + 2.0 * dE / 3.
-    w1 = weight_point1(t, tref, El, E1, E2)
-    d1 = grad(weight_point1, argnums=0)(t, tref, El, E1, E2)
-    w2 = weight_point2(t, tref, El, E1, E2)
-    d2 = grad(weight_point2, argnums=0)(t, tref, El, E1, E2)
-    assert w1 == pytest.approx(0.75279695)
-    assert d1 == pytest.approx(-41.985138)
-    assert d1 == -d2
-
-
 def test_weight_points_dE():
-    
+
     t = 1.0 / 700.0
     tref = 1.0 / 300.0
     El = 200.0
@@ -113,14 +98,14 @@ def test_weight_points_dE():
     p = 1.0 / 3.0
     E1 = El - p * dE
     E2 = El + (1.0 - p) * dE
-    w1 = weight_point1(t, tref, El, E1, E2)
-    d1 = grad(weight_point1, argnums=0)(t, tref, El, E1, E2)
-    w2 = weight_point2(t, tref, El, E1, E2)
-    d2 = grad(weight_point2, argnums=0)(t, tref, El, E1, E2)
     w1e = weight_point1_dE(t, tref, dE, p)
     d1e = grad(weight_point1_dE, argnums=0)(t, tref, dE, p)
     w2e = weight_point2_dE(t, tref, dE, p)
     d2e = grad(weight_point2_dE, argnums=0)(t, tref, dE, p)
+    w1, w2, d1, d2 = [
+        0.752796919848997, 0.247203080151003, -41.9851418044382,
+        41.9851418044382
+    ]
     assert w1e == pytest.approx(w1)
     assert w2e == pytest.approx(w2)
     assert d1e == pytest.approx(d1)
@@ -128,7 +113,6 @@ def test_weight_points_dE():
 
 
 if __name__ == "__main__":
-    test_weight_points()
     test_weight_points_dE()
     test_single_tilde_line_strength()
     #test_single_tilde_line_strength_first()

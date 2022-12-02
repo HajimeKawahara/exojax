@@ -136,11 +136,11 @@ def init_premodit(nu_lines,
                                                       n_Texp,
                                                       Ttyp,
                                                       dit_grid_resolution=dit_grid_resolution)
-    lbd, multi_index_uniqgrid = generate_lbd(line_strength_ref, nu_lines, nu_grid, ngamma_ref, ngamma_ref_grid,
+    lbd_zeroth, lbd_first, multi_index_uniqgrid = generate_lbd(line_strength_ref, nu_lines, nu_grid, ngamma_ref, ngamma_ref_grid,
              n_Texp, n_Texp_grid, elower, elower_grid, Ttyp)
     pmarray = np.ones(len(nu_grid) + 1)
     pmarray[1::2] = pmarray[1::2] * -1.0
-    return lbd, multi_index_uniqgrid, elower_grid, ngamma_ref_grid, n_Texp_grid, R, jnp.array(pmarray)
+    return lbd_zeroth, multi_index_uniqgrid, elower_grid, ngamma_ref_grid, n_Texp_grid, R, jnp.array(pmarray)
 
 
 def init_modit_vald(nu_linesM, nus, N_usp):
