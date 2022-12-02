@@ -95,7 +95,7 @@ def npgetix_exp(x, xv, Ttyp, conversion_dtype=np.float64):
     pos = np.interp(x_, xv_, indarr)
     cont, index = np.modf(pos)
     return cont, index.astype(int)
-    
+
 
 def add2D(a, w, cx, ix, cy, iy):
     """Add into an array when contirbutions and indices are given (2D).
@@ -147,7 +147,16 @@ def add3D(a, w, cx, ix, cy, iy, cz, iz):
     return a
 
 
-def npadd3D_direct1D(a, w, cx, ix, direct_cy, direct_iy, cz, iz):
+def npadd3D_direct1D(a,
+                     w,
+                     cx,
+                     ix,
+                     direct_cy,
+                     direct_iy,
+                     cz,
+                     iz,
+                     sumx=1.0,
+                     sumz=1.0):
     """numpy version: Add into an array when contirbutions and indices are given (2D+direct).
 
     Args:
@@ -159,20 +168,41 @@ def npadd3D_direct1D(a, w, cx, ix, direct_cy, direct_iy, cz, iz):
         direct_iy: direct index for y
         cz: given contribution for z
         iz: given index for z
+        sumx: a sum of contribution for x at point 1 and point 2, default=1.0
+        sumz: a sum of contribution for z at point 1 and point 2, default=1.0
 
     Returns:
         lineshape density a(nx,ny,nz)
 
+    Note:
+        sumx or sumz gives a sum of contribution at point 1 and point 2. 
+        For the zeroth coeeficient, it should be 1.0
+        while it should be 0.0 for the first coefficient.
+
     """
-    np.add.at(a, (ix, direct_iy, iz), w * (1 - cx) * direct_cy * (1 - cz))
-    np.add.at(a, (ix + 1, direct_iy, iz), w * cx * direct_cy * (1 - cz))
-    np.add.at(a, (ix, direct_iy, iz + 1), w * (1 - cx) * direct_cy * cz)
+
+    conjugate_cx = sumx - cx
+    conjugate_cz = sumz - cz
+    
+    np.add.at(a, (ix, direct_iy, iz),
+              w * conjugate_cx * direct_cy * conjugate_cz)
+    np.add.at(a, (ix + 1, direct_iy, iz), w * cx * direct_cy * conjugate_cz)
+    np.add.at(a, (ix, direct_iy, iz + 1), w * conjugate_cx * direct_cy * cz)
     np.add.at(a, (ix + 1, direct_iy, iz + 1), w * cx * direct_cy * cz)
     return a
 
 
-def npadd3D_multi_index(a, w, cx, ix, cz, iz, uidx, multi_cont_lines,
-                        neighbor_uidx):
+def npadd3D_multi_index(a,
+                        w,
+                        cx,
+                        ix,
+                        cz,
+                        iz,
+                        uidx,
+                        multi_cont_lines,
+                        neighbor_uidx,
+                        sumx=1.0,
+                        sumz=1.0):
     """ numpy version: Add into an array using multi_index system in y
     Args:
         a: lineshape density (LSD) array (np.array)
@@ -181,10 +211,18 @@ def npadd3D_multi_index(a, w, cx, ix, cz, iz, uidx, multi_cont_lines,
         ix: given index for x 
         cz: given contribution for z
         iz: given index for z
+        sumx: a sum of contribution for x at point 1 and point 2, default=1.0
+        sumz: a sum of contribution for z at point 1 and point 2, default=1.0
 
     Returns:
         lineshape density a(nx,ny,nz)
-    
+
+    Note:
+        sumx or sumz gives a sum of contribution at point 1 and point 2. 
+        For the zeroth coeeficient, it should be 1.0
+        while it should be 0.0 for the first coefficient.
+
+
     """
     conjugate_multi_cont_lines = 1.0 - multi_cont_lines
 

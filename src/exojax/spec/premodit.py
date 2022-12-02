@@ -13,6 +13,7 @@ from exojax.utils.indexing import uniqidx_neibouring
 from exojax.spec import normalized_doppler_sigma
 from exojax.spec.lbd import lbd_coefficients
 
+
 @jit
 def xsvector(T, P, nsigmaD, lbd, R, pmarray, nu_grid, elower_grid,
              multi_index_uniqgrid, ngamma_ref_grid, n_Texp_grid, qt):
@@ -204,7 +205,7 @@ def generate_lbd(line_strength_ref,
                  n_Texp_grid,
                  elower,
                  elower_grid,
-                 Ttyp,
+                 Twt,
                  diffmode=1):
     """generate log-biased line shape density (LBD)
 
@@ -236,29 +237,30 @@ def generate_lbd(line_strength_ref,
     """
     logmin = -np.inf
     cont_nu, index_nu = npgetix(nu_lines, nu_grid)
-    if diffmode == 0:
-        cont_elower, index_elower = npgetix_exp(elower, elower_grid, Ttyp)
-        multi_index_lines, multi_cont_lines, uidx_bp, neighbor_uidx, multi_index_uniqgrid, Ng_broadpar = broadpar_getix(
-            ngamma_ref, ngamma_ref_grid, n_Texp, n_Texp_grid)
-    elif diffmode == 1:
-        lbd_coefficients(elower, elower_grid, Tref, Twt)
-    else:
-        raise ValueError("Currently, diff mode = 0 or 1 is compatible",
-                         UserWarning)
-
+    multi_index_lines, multi_cont_lines, uidx_bp, neighbor_uidx, multi_index_uniqgrid, Ng_broadpar = broadpar_getix(
+        ngamma_ref, ngamma_ref_grid, n_Texp, n_Texp_grid)
     Ng_nu = len(nu_grid)
 
-    # We extend the LBD grid to +1 along elower direction. See #273
+    # We extend the LBD grid to +1 along elower direction. See Issue #273
     Ng_elower_plus_one = len(elower_grid) + 1
-
     lbd = np.zeros((Ng_nu, Ng_broadpar, Ng_elower_plus_one), dtype=np.float64)
-    lbd = npadd3D_multi_index(lbd, line_strength_ref, cont_nu, index_nu,
-                              cont_elower, index_elower, uidx_bp,
-                              multi_cont_lines, neighbor_uidx)
+
+    if diffmode == 0:
+        zeroth_coeff_elower, index_elower = npgetix_exp(
+            elower, elower_grid, Twt)
+        lbd = npadd3D_multi_index(lbd, line_strength_ref, cont_nu, index_nu,
+                                  zeroth_coeff_elower, index_elower, uidx_bp,
+                                  multi_cont_lines, neighbor_uidx)
+    elif diffmode == 1:
+        zeroth_coeff_elower, first_coeff_elower, index_elower = lbd_coefficients(
+            elower, elower_grid, Tref, Twt)
+    else:
+        raise ValueError("diffmode = 0 or 1 is allowed.", UserWarning)
+
     lbd[lbd > 0.0] = np.log(lbd[lbd > 0.0])
     lbd[lbd == 0.0] = logmin
 
-    # Removing the extended grid of elower. See #273
+    # Removing the extended grid of elower. See Issue #273
     lbd = lbd[:, :, 0:-1]
 
     return jnp.array(lbd), multi_index_uniqgrid
