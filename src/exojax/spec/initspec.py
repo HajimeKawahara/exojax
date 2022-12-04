@@ -82,7 +82,8 @@ def init_modit(nu_lines, nu_grid, warning=False):
     pmarray = np.ones(len(nu_grid) + 1)
     pmarray[1::2] = pmarray[1::2] * -1.0
 
-    return jnp.array(cont), jnp.array(index), spectral_resolution, jnp.array(pmarray)
+    return jnp.array(cont), jnp.array(index), spectral_resolution, jnp.array(
+        pmarray)
 
 
 def init_premodit(nu_lines,
@@ -94,6 +95,7 @@ def init_premodit(nu_lines,
                   Ttyp,
                   interval_contrast=0.1,
                   dit_grid_resolution=0.2,
+                  diffmode=0,
                   warning=False):
     """Initialization for PreMODIT. i.e. Generate nu contribution and index for
     the line shape density (actually, this is a numpy version of getix)
@@ -108,6 +110,7 @@ def init_premodit(nu_lines,
         Ttyp: typical temperature in Kelvin
         interval_contrast: putting c = grid_interval_line_strength, then, the contrast of line strength between the upper and lower of the grid becomes c-order of magnitude.
         dit_grid_resolution: DIT grid resolution 
+        diffmode (int): i-th Taylor expansion is used for the weight, default is 1.
 
     Returns:
         cont_nu: contribution for wavenumber jnp.array
@@ -132,15 +135,15 @@ def init_premodit(nu_lines,
     elower_grid = make_elower_grid(Ttyp,
                                    elower,
                                    interval_contrast=interval_contrast)
-    ngamma_ref_grid, n_Texp_grid = make_broadpar_grid(ngamma_ref,
-                                                      n_Texp,
-                                                      Ttyp,
-                                                      dit_grid_resolution=dit_grid_resolution)
-    lbd_zeroth, lbd_first, multi_index_uniqgrid = generate_lbd(line_strength_ref, nu_lines, nu_grid, ngamma_ref, ngamma_ref_grid,
-             n_Texp, n_Texp_grid, elower, elower_grid, Ttyp)
+    ngamma_ref_grid, n_Texp_grid = make_broadpar_grid(
+        ngamma_ref, n_Texp, Ttyp, dit_grid_resolution=dit_grid_resolution)
+    lbd_zeroth, lbd_first, multi_index_uniqgrid = generate_lbd(
+        line_strength_ref, nu_lines, nu_grid, ngamma_ref, ngamma_ref_grid,
+        n_Texp, n_Texp_grid, elower, elower_grid, Ttyp, diffmode)
     pmarray = np.ones(len(nu_grid) + 1)
-    pmarray[1::2] = pmarray[1::2] * -1.0
-    return lbd_zeroth, multi_index_uniqgrid, elower_grid, ngamma_ref_grid, n_Texp_grid, R, jnp.array(pmarray)
+    pmarray[1::2] = (pmarray[1::2] * -1.0)
+    pmarray = jnp.array(pmarray)
+    return lbd_zeroth, lbd_first, multi_index_uniqgrid, elower_grid, ngamma_ref_grid, n_Texp_grid, R, pmarray
 
 
 def init_modit_vald(nu_linesM, nus, N_usp):
