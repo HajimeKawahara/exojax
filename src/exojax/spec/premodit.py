@@ -244,8 +244,7 @@ def generate_lbd(line_strength_ref,
     # We extend the LBD grid to +1 along elower direction. See Issue #273
     Ng_elower_plus_one = len(elower_grid) + 1
     lbd_zeroth = np.zeros((Ng_nu, Ng_broadpar, Ng_elower_plus_one), dtype=np.float64)
-    lbd_first = np.zeros((Ng_nu, Ng_broadpar, Ng_elower_plus_one), dtype=np.float64)
-
+    
     if diffmode == 0:
         zeroth_coeff_elower, index_elower = npgetix_exp(
             elower, elower_grid, Twt)
@@ -260,6 +259,7 @@ def generate_lbd(line_strength_ref,
                                          index_nu, zeroth_coeff_elower,
                                          index_elower, uidx_bp,
                                          multi_cont_lines, neighbor_uidx)
+        lbd_first = np.zeros((Ng_nu, Ng_broadpar, Ng_elower_plus_one), dtype=np.float64)
         lbd_first = npadd3D_multi_index(lbd_zeroth,
                                          line_strength_ref,
                                          cont_nu,

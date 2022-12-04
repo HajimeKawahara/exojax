@@ -14,6 +14,8 @@ from exojax.spec.premodit import broadpar_getix
 from exojax.spec.premodit import parallel_merge_grids
 from exojax.spec.premodit import unbiased_ngamma_grid
 from exojax.test.emulate_broadpar import mock_broadpar_exomol
+from exojax.spec.premodit import unbiased_lsd_zeroth
+from exojax.spec.premodit import unbiased_lsd_first
 
 
 def test_compute_dElower():
@@ -93,3 +95,39 @@ def test_unbias_ngamma_grid():
     assert np.all(ngamma_grid == pytest.approx(ref))
 
 
+def _example_lbd():
+    from exojax.utils.grids import wavenumber_grid
+    N_nu_grid = 20000
+    nu_grid, wav, resolution = wavenumber_grid(4000.0,
+                                               4100.0,
+                                               N_nu_grid,
+                                               unit="cm-1",
+                                               xsmode="premodit")
+    n_E_h = 10
+    n_broadening_k = 19
+    lbd_zeroth = -300.0*np.ones((N_nu_grid, n_broadening_k, n_E_h))
+    lbd_first = -300.0*np.ones((N_nu_grid, n_broadening_k, n_E_h))
+    elower_grid = np.logspace(2.0, 5.0, n_E_h)
+    qt = 1.0
+    return lbd_zeroth, lbd_first, nu_grid, elower_grid, qt
+
+from exojax.spec.premodit import logf_bias, g_bias
+def test_unbiased_lsd_zeroth():
+    from jax.config import config
+    config.update("jax_enable_x64", True)
+
+    lbd_zeroth, lbd_first, nu_grid, elower_grid, qt = _example_lbd()
+    T = 1000.0
+    print(logf_bias(elower_grid, T))
+    print(g_bias(nu_grid, T))
+    lsd = unbiased_lsd_zeroth(lbd_zeroth, T, nu_grid, elower_grid, qt)
+    print(np.nansum(lsd))
+    return
+
+
+def test_unbiased_lsd_first():
+    return
+
+
+if __name__ == "__main__":
+    test_unbiased_lsd_zeroth()

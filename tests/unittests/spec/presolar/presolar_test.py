@@ -22,7 +22,7 @@ def _example_filter(N, filter_length):
     return filter_length, nu_grid
 
 
-def _example_lbd():
+def _example_lbd_and_filter():
     filter_length, nu_grid = _example_filter(2000000, 50001)
     n_E_h = 10
     n_broadening_k = 19
@@ -53,7 +53,7 @@ def test_reshape_lbd_simple():
 
 
 def test_reshape_lbd():
-    lbd, filter_length = _example_lbd()
+    lbd, filter_length = _example_lbd_and_filter()
     input_length = np.shape(lbd)[0]
     ndiv, div_length = optimal_mini_batch(input_length, filter_length)
     rlbd = _reshape_lbd(lbd, ndiv, div_length)
@@ -86,7 +86,7 @@ def test_lbd_olaform_simple():
 
 
 def test_lbd_olaform():
-    lbd, filter_length = _example_lbd()
+    lbd, filter_length = _example_lbd_and_filter()
     input_length = np.shape(lbd)[0]
     ndiv, div_length = optimal_mini_batch(input_length, filter_length)
     hat_lbd = lbd_olaform(lbd, ndiv, div_length, filter_length)
