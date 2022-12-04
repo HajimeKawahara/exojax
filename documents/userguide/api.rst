@@ -104,12 +104,12 @@ The style used in ExoJAX 1 is also acceptable (not recommended):
 Using DataFrames
 ===========================================
 
-ExoJAX mdb class inherits DataFrame of the common API, in "df" instance as. 
+ExoJAX mdb class inherits DataFrame of the common API when calling "inherit_dataframe=True", in "df" instance as. 
 This DataFrame is not masked by "nurange" and/or "crit" options and has the format of Vaex lazy I/O.
 
 .. code:: python
 
-	>>> mdb = MdbExomol(".database/CO/12C-16O/Li2015", nurange=[4200.0, 4300.0])
+	>>> mdb = MdbExomol(".database/CO/12C-16O/Li2015", nurange=[4200.0, 4300.0], inherit_dataframe=True)
 	>>> mdb.df
 	#        i_upper    i_lower    A          nu_lines      gup    jlower    jupper    elower      Sij0
 	0        84         42         1.155e-06  2.405586      3      0         1         66960.7124  3.811968898414225e-164
