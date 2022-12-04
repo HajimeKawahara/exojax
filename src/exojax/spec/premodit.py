@@ -15,15 +15,17 @@ from exojax.spec.lbd import lbd_coefficients
 
 
 @jit
-def xsvector(T, P, nsigmaD, lbd, R, pmarray, nu_grid, elower_grid,
+def xsvector(T, P, nsigmaD, lbd_zeroth, lbd_first, Twt, R, pmarray, nu_grid, elower_grid,
              multi_index_uniqgrid, ngamma_ref_grid, n_Texp_grid, qt):
-    """compute cross section vector, with scan+fft
+    """compute cross section vector, with scan+fft, using the first Taylor expansion
 
     Args:
         T (_type_): temperature in Kelvin
         P (_type_): pressure in bar
         nsigmaD: normalized doplar STD
-        lbd (_type_): log biased line shape density (LBD)
+        lbd_zeroth (_type_): log biased line shape density (LBD), zeroth coefficient
+        lbd_first (_type_): log biased line shape density (LBD), first coefficient
+        Twt: temperature used in the weight point
         R (_type_): spectral resolution
         nu_grid (_type_): wavenumber grid
         elower_grid (_type_): E lower grid
@@ -35,7 +37,36 @@ def xsvector(T, P, nsigmaD, lbd, R, pmarray, nu_grid, elower_grid,
     Returns:
         jnp.array: cross section in cgs vector
     """
-    Slsd = unbiased_lsd_zeroth(lbd, T, nu_grid, elower_grid, qt)
+    Slsd = unbiased_lsd_first(lbd_zeroth, lbd_first, T, Twt, nu_grid, elower_grid, qt)
+    ngamma_grid = unbiased_ngamma_grid(T, P, ngamma_ref_grid, n_Texp_grid,
+                                       multi_index_uniqgrid)
+    log_ngammaL_grid = jnp.log(ngamma_grid)
+    xs = calc_xsection_from_lsd_scanfft(Slsd, R, pmarray, nsigmaD, nu_grid,
+                                        log_ngammaL_grid)
+    return xs
+
+@jit
+def xsvector_zeroth(T, P, nsigmaD, lbd_zeroth, R, pmarray, nu_grid, elower_grid,
+             multi_index_uniqgrid, ngamma_ref_grid, n_Texp_grid, qt):
+    """compute cross section vector, with scan+fft, using the zero-th Taylor expansion 
+
+    Args:
+        T (_type_): temperature in Kelvin
+        P (_type_): pressure in bar
+        nsigmaD: normalized doplar STD
+        lbd_zeroth (_type_): log biased line shape density (LBD)
+        R (_type_): spectral resolution
+        nu_grid (_type_): wavenumber grid
+        elower_grid (_type_): E lower grid
+        multi_index_uniqgrid (_type_): multi index of unique broadening parameter grid
+        ngamma_ref_grid (_type_): normalized pressure broadening half-width
+        n_Texp_grid (_type_): temperature exponent grid
+        qt (_type_): partirion function ratio
+
+    Returns:
+        jnp.array: cross section in cgs vector
+    """
+    Slsd = unbiased_lsd_zeroth(lbd_zeroth, T, nu_grid, elower_grid, qt)
     ngamma_grid = unbiased_ngamma_grid(T, P, ngamma_ref_grid, n_Texp_grid,
                                        multi_index_uniqgrid)
     log_ngammaL_grid = jnp.log(ngamma_grid)
@@ -345,10 +376,11 @@ def unbiased_lsd_zeroth(lbd_zeroth, T, nu_grid, elower_grid, qt):
     return (Slsd.T * g_bias(nu_grid, T) / qt).T
 
 
-def unbiased_lsd_first(lbd_first, T, Twt, nu_grid, elower_grid, qt):
+def unbiased_lsd_first(lbd_zeroth, lbd_first, T, Twt, nu_grid, elower_grid, qt):
     """ unbias the biased LSD
 
     Args:
+        lbd_zeroth: the zeroth coeff of log-biased line shape density (LBD)
         lbd_first: the first coeff of log-biased line shape density (LBD)
         T: temperature for unbiasing in Kelvin
         Twt: Temperature at the weight point
@@ -360,9 +392,12 @@ def unbiased_lsd_first(lbd_first, T, Twt, nu_grid, elower_grid, qt):
         LSD, shape = (number_of_wavenumber_bin, number_of_broadening_parameters)
         
     """
-    unbiased_coeff = jnp.exp(logf_bias(elower_grid, T) + lbd_first)  # f*w1
-    Slsd = jnp.sum(unbiased_coeff * (1.0 / T - 1.0 / Twt),
+    lfb = logf_bias(elower_grid, T)
+    Slsd_zeroth = jnp.sum(jnp.exp(lfb + lbd_zeroth), axis=-1)
+    unbiased_coeff = jnp.exp(lfb + lbd_first)  # f*w1
+    Slsd_first = jnp.sum(unbiased_coeff * (1.0 / T - 1.0 / Twt),
                    axis=-1)  # sum_l[ f*w1(t-twt) ]
+    Slsd = Slsd_zeroth + Slsd_first
     return (Slsd.T * g_bias(nu_grid, T) / qt).T
 
 

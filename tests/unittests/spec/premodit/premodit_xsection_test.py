@@ -5,7 +5,7 @@ import pandas as pd
 import numpy as np
 from exojax.spec.initspec import init_premodit
 from exojax.utils.grids import wavenumber_grid
-from exojax.spec.premodit import xsvector
+from exojax.spec.premodit import xsvector, xsvector_zeroth
 from exojax.test.emulate_mdb import mock_mdbExomol
 from exojax.test.emulate_mdb import mock_mdbHitemp
 from exojax.spec.molinfo import molmass
@@ -15,11 +15,11 @@ from exojax.test.data import TESTDATA_CO_HITEMP_PREMODIT_XS_REF
 import warnings
 
 
-@pytest.mark.parametrize("diffmode", [0])
+@pytest.mark.parametrize("diffmode", [0, 1])
 def test_xsection_premodit_exomol(diffmode):
     interval_contrast = 0.1
     dit_grid_resolution = 0.1
-    Ttyp = 2000.0
+    Twt = 2000.0
     Ttest = 1200.0
     Ptest = 1.0
     mdb = mock_mdbExomol()
@@ -39,7 +39,7 @@ def test_xsection_premodit_exomol(diffmode):
         mdb.alpha_ref,
         mdb.n_Texp,
         mdb.Sij0,
-        Ttyp,
+        Twt,
         interval_contrast=interval_contrast,
         dit_grid_resolution=dit_grid_resolution,
         diffmode=diffmode,
@@ -48,9 +48,14 @@ def test_xsection_premodit_exomol(diffmode):
     Mmol = molmass("CO")
     nsigmaD = normalized_doppler_sigma(Ttest, Mmol, R)
     qt = mdb.qr_interp(Ttest)
-    xsv = xsvector(Ttest, Ptest, nsigmaD, lbd_zeroth, R, pmarray, nu_grid,
-                   elower_grid, multi_index_uniqgrid, ngamma_ref_grid,
-                   n_Texp_grid, qt)
+    if diffmode == 0:
+        xsv = xsvector_zeroth(Ttest, Ptest, nsigmaD, lbd_zeroth, R, pmarray,
+                              nu_grid, elower_grid, multi_index_uniqgrid,
+                              ngamma_ref_grid, n_Texp_grid, qt)
+    elif diffmode == 1:
+        xsv = xsvector(Ttest, Ptest, nsigmaD, lbd_zeroth, lbd_first, Twt, R,
+                       pmarray, nu_grid, elower_grid, multi_index_uniqgrid,
+                       ngamma_ref_grid, n_Texp_grid, qt)
 
     filename = pkg_resources.resource_filename(
         'exojax', 'data/testdata/' + TESTDATA_CO_EXOMOL_PREMODIT_XS_REF)
@@ -58,7 +63,8 @@ def test_xsection_premodit_exomol(diffmode):
     #assert np.all(xsv == pytest.approx(dat["xsv"].values))
     return nu_grid, xsv
 
-@pytest.mark.parametrize("diffmode", [0])
+
+@pytest.mark.parametrize("diffmode", [0, 1])
 def test_xsection_premodit_hitemp(diffmode):
     interval_contrast = 0.1
     dit_grid_resolution = 0.1
@@ -93,9 +99,15 @@ def test_xsection_premodit_hitemp(diffmode):
     qt = mdb.qr_interp(1, Ttest)
     message = "Here, we use a single partition function qt for isotope=1 despite of several isotopes."
     warnings.warn(message, UserWarning)
-    xsv = xsvector(Ttest, Ptest, nsigmaD, lbd_zeroth, R, pmarray, nu_grid,
-                   elower_grid, multi_index_uniqgrid, ngamma_ref_grid,
-                   n_Texp_grid, qt)
+    if diffmode == 0:
+        xsv = xsvector_zeroth(Ttest, Ptest, nsigmaD, lbd_zeroth, R, pmarray,
+                              nu_grid, elower_grid, multi_index_uniqgrid,
+                              ngamma_ref_grid, n_Texp_grid, qt)
+    elif diffmode == 1:
+        xsv = xsvector(Ttest, Ptest, nsigmaD, lbd_zeroth, lbd_first, R,
+                       pmarray, nu_grid, elower_grid, multi_index_uniqgrid,
+                       ngamma_ref_grid, n_Texp_grid, qt)
+
     #np.savetxt(TESTDATA_CO_HITEMP_PREMODIT_XS_REF,np.array([nu_grid,xsv]).T,delimiter=",")
     filename = pkg_resources.resource_filename(
         'exojax', 'data/testdata/' + TESTDATA_CO_HITEMP_PREMODIT_XS_REF)
@@ -120,7 +132,7 @@ if __name__ == "__main__":
     dat = pd.read_csv(filename, delimiter=",", names=("nus", "xsv"))
     fig = plt.figure()
     ax = fig.add_subplot(211)
-    plt.title("premodit_xsection_test.py diffmode="+str(diffmode))
+    plt.title("premodit_xsection_test.py diffmode=" + str(diffmode))
     ax.plot(nus, xs, label="PreMODIT")
     ax.plot(nus, dat["xsv"], label="MODIT")
     plt.legend()
