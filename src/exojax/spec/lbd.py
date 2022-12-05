@@ -51,7 +51,6 @@ def lbd_coefficients(elower_lines,
 
     first_coeff = -hcperk * ((xpl - xp1) * dx - (xl - x1) *
                              (xp2 - xp1)) / dx**2
-
     return zeroth_coeff, first_coeff, index
 
 def _check_overflow(conversion_dtype, x_, xv_):

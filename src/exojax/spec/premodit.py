@@ -13,7 +13,6 @@ from exojax.utils.indexing import uniqidx_neibouring
 from exojax.spec import normalized_doppler_sigma
 from exojax.spec.lbd import lbd_coefficients
 
-
 @jit
 def xsvector(T, P, nsigmaD, lbd_zeroth, lbd_first, Twt, R, pmarray, nu_grid, elower_grid,
              multi_index_uniqgrid, ngamma_ref_grid, n_Texp_grid, qt):
@@ -295,7 +294,8 @@ def generate_lbd(line_strength_ref,
                                         multi_cont_lines,
                                         neighbor_uidx,
                                         sumz=0.0)
-        lbd_first = convert_to_jnplog(lbd_first)
+        #lbd_first = convert_to_jnplog(lbd_first)
+        lbd_first = jnp.array(lbd_first[:, :, 0:-1])
     else:
         raise ValueError("diffmode = 0 or 1 is allowed.", UserWarning)
 
@@ -305,7 +305,6 @@ def generate_lbd(line_strength_ref,
                                      neighbor_uidx, sumz=1.0)
 
     lbd_zeroth = convert_to_jnplog(lbd_zeroth)
-    
     return lbd_zeroth, lbd_first, multi_index_uniqgrid
 
 
@@ -394,9 +393,8 @@ def unbiased_lsd_first(lbd_zeroth, lbd_first, T, Twt, nu_grid, elower_grid, qt):
     """
     lfb = logf_bias(elower_grid, T)
     Slsd_zeroth = jnp.sum(jnp.exp(lfb + lbd_zeroth), axis=-1)
-    unbiased_coeff = jnp.exp(lfb + lbd_first)  # f*w1
-    Slsd_first = jnp.sum(unbiased_coeff * (1.0 / T - 1.0 / Twt),
-                   axis=-1)  # sum_l[ f*w1(t-twt) ]
+    unbiased_coeff = jnp.exp(lfb)*lbd_first*(1.0 / T - 1.0 / Twt)  # f*w1
+    Slsd_first = jnp.sum(unbiased_coeff,axis=-1)  # sum_l[ f*w1(t-twt) ]
     Slsd = Slsd_zeroth + Slsd_first
     return (Slsd.T * g_bias(nu_grid, T) / qt).T
 
