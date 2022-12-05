@@ -306,8 +306,8 @@ class MdbHitemp(HITEMPDatabaseManager):
             self.download_and_parse(download_urls, download_files)
 
         # Register
-        if not self.is_registered():
-            self.register()
+        # if not self.is_registered():
+        #    self.register()
 
         clean_cache_files = True
         if len(download_files) > 0 and clean_cache_files:
@@ -536,8 +536,8 @@ class MdbHitran(HITRANDatabaseManager):
                                     parse_quanta=True)
 
         # Register
-        if not self.is_registered():
-            self.register()
+        #if not self.is_registered():
+        #    self.register()
 
         if len(download_files) > 0:
             self.clean_download_files()
