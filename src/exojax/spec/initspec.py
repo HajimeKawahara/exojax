@@ -13,6 +13,8 @@ from exojax.utils.instfunc import resolution_eslog
 from exojax.spec.premodit import make_elower_grid
 from exojax.spec.premodit import make_broadpar_grid
 from exojax.spec.premodit import generate_lbd
+from exojax.spec.hitran import line_strength_numpy
+from exojax.utils.constants import Tref_original
 
 
 def init_lpf(nu_lines, nu_grid):
@@ -92,7 +94,7 @@ def init_premodit(nu_lines,
                   gamma_ref,
                   n_Texp,
                   line_strength_ref,
-                  Ttyp,
+                  Twt,
                   interval_contrast=0.1,
                   dit_grid_resolution=0.2,
                   diffmode=0,
@@ -106,8 +108,8 @@ def init_premodit(nu_lines,
         elower: elower of lines
         gamma_ref: half-width at reference (alpha_ref for ExoMol, gamma_air for HITRAN/HITEMP etc)
         n_Texp: temperature exponent (n_Texp for ExoMol, n_air for HITRAN/HITEMP)
-        line_strength_ref: line strength at reference
-        Ttyp: typical temperature in Kelvin
+        line_strength_ref: line strength at reference Tref
+        Twt: temperature for weight in Kelvin
         interval_contrast: putting c = grid_interval_line_strength, then, the contrast of line strength between the upper and lower of the grid becomes c-order of magnitude.
         dit_grid_resolution: DIT grid resolution 
         diffmode (int): i-th Taylor expansion is used for the weight, default is 1.
@@ -132,14 +134,16 @@ def init_premodit(nu_lines,
 
     R = resolution_eslog(nu_grid)
     ngamma_ref = gamma_ref / nu_lines * R
-    elower_grid = make_elower_grid(Ttyp,
+    elower_grid = make_elower_grid(Twt,
                                    elower,
                                    interval_contrast=interval_contrast)
     ngamma_ref_grid, n_Texp_grid = make_broadpar_grid(
-        ngamma_ref, n_Texp, Ttyp, dit_grid_resolution=dit_grid_resolution)
+        ngamma_ref, n_Texp, Twt, dit_grid_resolution=dit_grid_resolution)
+
+        
     lbd_zeroth, lbd_first, multi_index_uniqgrid = generate_lbd(
         line_strength_ref, nu_lines, nu_grid, ngamma_ref, ngamma_ref_grid,
-        n_Texp, n_Texp_grid, elower, elower_grid, Ttyp, diffmode)
+        n_Texp, n_Texp_grid, elower, elower_grid, Twt, diffmode)
     pmarray = np.ones(len(nu_grid) + 1)
     pmarray[1::2] = (pmarray[1::2] * -1.0)
     pmarray = jnp.array(pmarray)

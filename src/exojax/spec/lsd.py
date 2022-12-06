@@ -10,7 +10,7 @@ from jax.numpy import index_exp
 import jax.numpy as jnp
 from jax import jit
 import warnings
-from exojax.utils.constants import hcperk, Tref
+from exojax.utils.constants import hcperk, Tref_original
 
 
 def getix(x, xv):
@@ -78,13 +78,13 @@ def npgetix_exp(x, xv, Ttyp, conversion_dtype=np.float64):
     Note:
        cont is the contribution for i=index+1. 1 - cont is the contribution for i=index. For other i, the contribution should be zero.
     """
-    if Ttyp < Tref:
+    if Ttyp < Tref_original:
         warnings.warn("We have not tested for Ttyp < Tref yet.", UserWarning)
 
     x_ = np.array(x, dtype=conversion_dtype)
     xv_ = np.array(xv, dtype=conversion_dtype)
-    x_ = np.exp(-hcperk * x_ * (1.0 / Ttyp - 1.0 / Tref))
-    xv_ = np.exp(-hcperk * xv_ * (1.0 / Ttyp - 1.0 / Tref))
+    x_ = np.exp(-hcperk * x_ * (1.0 / Ttyp - 1.0 / Tref_original))
+    xv_ = np.exp(-hcperk * xv_ * (1.0 / Ttyp - 1.0 / Tref_original))
 
     # check overflow
     if np.isinf(np.max(x_)) or np.isinf(np.max(xv_)):

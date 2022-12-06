@@ -30,7 +30,7 @@ ngamma_ref_grid_H2O, n_Texp_grid_H2O, R_H2O, pmarray_H2O = initspec.init_premodi
     mdbH2O_orig.alpha_ref,
     mdbH2O_orig.n_Texp,
     mdbH2O_orig.Sij0,
-    Ttyp=Tgue,
+    Twt=Tgue,
     interval_contrast=interval_contrast,
     dit_grid_resolution=dit_grid_resolution,
     warning=False)

@@ -1,7 +1,7 @@
 from jax import jit
 import jax.numpy as jnp
 import numpy as np
-from exojax.utils.constants import hcperk, Tref
+from exojax.utils.constants import hcperk, Tref_original
 
 
 def SijT(T, logsij0, nu_lines, elower, qT):
@@ -47,8 +47,8 @@ def line_strength_numpy(T, Sij0, nu_lines, elower, qr):
             line strength at Ttyp
         """
     return Sij0 / qr \
-        * np.exp(-hcperk*elower * (1./T - 1./Tref)) \
-        * np.expm1(-hcperk*nu_lines/T) / np.expm1(-hcperk*nu_lines/Tref)
+        * np.exp(-hcperk*elower * (1./T - 1./Tref_original)) \
+        * np.expm1(-hcperk*nu_lines/T) / np.expm1(-hcperk*nu_lines/Tref_original)
 
 
 @jit

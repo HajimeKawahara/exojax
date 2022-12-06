@@ -6,8 +6,8 @@
 
 """
 
-# reference temperature used in exojax.spec
-Tref = 296.0
+# original reference temperature used in HITRAN/HITEMP in K 
+Tref_original = 296.0
 
 # cgs
 Rs = 6.957*1.e10

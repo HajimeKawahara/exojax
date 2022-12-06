@@ -10,7 +10,7 @@ import pathlib
 import vaex
 from exojax.spec.hitran import line_strength_numpy
 from exojax.spec.hitran import gamma_natural as gn
-from exojax.utils.constants import Tref
+from exojax.utils.constants import Tref_original
 from exojax.utils.molname import e2s
 
 # currently use radis add/common-api branch
@@ -118,7 +118,6 @@ class MdbExomol(CapiMdbExomol):
                          skip_optional_data=True)
 
         self.crit = crit
-        self.QTtyp = np.array(self.QT_interp(self.Ttyp))
 
         # Get cache files to load :
         mgr = self.get_datafile_manager()
@@ -147,9 +146,10 @@ class MdbExomol(CapiMdbExomol):
     def compute_load_mask(self, df):
         wavelength_mask = (df.nu_lines > self.nurange[0]-self.margin) \
                     * (df.nu_lines < self.nurange[1]+self.margin)
+        QTtyp = np.array(self.QT_interp(self.Ttyp))
         intensity_mask = (line_strength_numpy(
             self.Ttyp, df.Sij0, df.nu_lines, df.elower,
-            self.QTtyp / self.QTref) > self.crit)
+            QTtyp / self.QTref) > self.crit)
 
         return wavelength_mask * intensity_mask
 
@@ -212,8 +212,10 @@ class MdbExomol(CapiMdbExomol):
         Returns:
            qr(T)=Q(T)/Q(Tref) interpolated in jnp.array
         """
-        return self.QT_interp(T) / self.QT_interp(Tref)
+        return self.QT_interp(T) / self.QT_interp(Tref_original)
 
+    def change_reference_temperature(Tref_new):
+        return
 
 class MdbHitemp(HITEMPDatabaseManager):
     """molecular database of HITEMP.
@@ -336,7 +338,7 @@ class MdbHitemp(HITEMPDatabaseManager):
         self.uniqiso = np.unique(df.iso.values)
         for iso in self.uniqiso:
             Q = PartFuncTIPS(self.molecid, iso)
-            QTref = Q.at(T=Tref)
+            QTref = Q.at(T=Tref_original)
             QTtyp = Q.at(T=Ttyp)
             load_mask = self.compute_load_mask(df, QTtyp / QTref)
         self.instances_from_dataframes(df[load_mask])
@@ -560,7 +562,7 @@ class MdbHitran(HITRANDatabaseManager):
         self.uniqiso = np.unique(df.iso.values)
         for iso in self.uniqiso:
             Q = PartFuncTIPS(self.molecid, iso)
-            QTref = Q.at(T=Tref)
+            QTref = Q.at(T=Tref_original)
             QTtyp = Q.at(T=Ttyp)
             load_mask = self.compute_load_mask(df, QTtyp / QTref)
         self.instances_from_dataframes(df[load_mask])
@@ -751,7 +753,7 @@ def _qr_interp(isotope_index, T, T_gQT, gQT):
             qr(T)=Q(T)/Q(Tref) interpolated in jnp.array
         """
     return _QT_interp(isotope_index, T, T_gQT, gQT) / _QT_interp(
-        isotope_index, Tref, T_gQT, gQT)
+        isotope_index, Tref_original, T_gQT, gQT)
 
 
 def _qr_interp_lines(T, isoid, uniqiso, T_gQT, gQT):

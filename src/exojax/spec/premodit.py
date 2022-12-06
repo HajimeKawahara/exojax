@@ -5,10 +5,10 @@ import numpy as np
 import jax.numpy as jnp
 from jax import jit, vmap
 from exojax.spec.lsd import npgetix, npgetix_exp, npadd3D_multi_index
-from exojax.utils.constants import hcperk, Tref
+from exojax.utils.constants import hcperk, Tref_original
 from exojax.spec.modit_scanfft import calc_xsection_from_lsd_scanfft
 from exojax.spec.set_ditgrid import ditgrid_log_interval, ditgrid_linear_interval
-from exojax.utils.constants import Tref
+from exojax.utils.constants import Tref_original
 from exojax.utils.indexing import uniqidx_neibouring
 from exojax.spec import normalized_doppler_sigma
 from exojax.spec.lbd import lbd_coefficients
@@ -147,7 +147,7 @@ def make_broadpar_grid(ngamma_ref,
     """
     ngamma_ref_grid = ditgrid_log_interval(
         ngamma_ref, dit_grid_resolution=dit_grid_resolution, adopt=adopt)
-    weight = np.log(Ttyp) - np.log(Tref)
+    weight = np.log(Ttyp) - np.log(Tref_original)
     n_Texp_grid = ditgrid_linear_interval(
         n_Texp,
         dit_grid_resolution=dit_grid_resolution,
@@ -281,7 +281,7 @@ def generate_lbd(line_strength_ref,
         lbd_first = None
     elif diffmode == 1:
         zeroth_coeff_elower, first_coeff_elower, index_elower = lbd_coefficients(
-            elower, elower_grid, Tref, Twt)
+            elower, elower_grid, Tref_original, Twt)
         lbd_first = np.zeros((Ng_nu, Ng_broadpar, Ng_elower_plus_one),
                              dtype=np.float64)
         lbd_first = npadd3D_multi_index(lbd_first,
@@ -339,7 +339,7 @@ def logf_bias(elower_in, T):
         logarithm of bias f function
 
     """
-    return -hcperk * elower_in * (1. / T - 1. / Tref)
+    return -hcperk * elower_in * (1. / T - 1. / Tref_original)
 
 
 def g_bias(nu_in, T):
@@ -354,7 +354,7 @@ def g_bias(nu_in, T):
     """
     #return jnp.expm1(-hcperk*nu_in/T) / jnp.expm1(-hcperk*nu_in/Tref)
     return (1.0 - jnp.exp(-hcperk * nu_in / T)) / (
-        1.0 - jnp.exp(-hcperk * nu_in / Tref))
+        1.0 - jnp.exp(-hcperk * nu_in / Tref_original))
 
 
 def unbiased_lsd_zeroth(lbd_zeroth, T, nu_grid, elower_grid, qt):
@@ -415,4 +415,4 @@ def unbiased_ngamma_grid(T, P, ngamma_ref_grid, n_Texp_grid,
     """
     ngamma_ref_g = ngamma_ref_grid[multi_index_uniqgrid[:, 0]]
     n_Texp_g = n_Texp_grid[multi_index_uniqgrid[:, 1]]
-    return ngamma_ref_g * (T / Tref)**(-n_Texp_g) * P
+    return ngamma_ref_g * (T / Tref_original)**(-n_Texp_g) * P
