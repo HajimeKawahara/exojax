@@ -17,9 +17,9 @@ import warnings
 
 @pytest.mark.parametrize("diffmode", [0, 1])
 def test_xsection_premodit_exomol(diffmode):
-    interval_contrast = 0.1
+    interval_contrast = 0.2
     dit_grid_resolution = 0.1
-    Twt = 2000.0
+    Twt = 1000.0
     Ttest = 1200.0
     Ptest = 1.0
     mdb = mock_mdbExomol()
@@ -44,6 +44,8 @@ def test_xsection_premodit_exomol(diffmode):
         dit_grid_resolution=dit_grid_resolution,
         diffmode=diffmode,
         warning=False)
+
+    print("dE=",elower_grid[1]-elower_grid[0])
 
     Mmol = molmass("CO")
     nsigmaD = normalized_doppler_sigma(Ttest, Mmol, R)
@@ -121,7 +123,7 @@ if __name__ == "__main__":
     from exojax.test.data import TESTDATA_CO_EXOMOL_MODIT_XS_REF
     import matplotlib.pyplot as plt
     #import jax.profiler
-    diffmode = 1
+    diffmode = 0
     nus, xs = test_xsection_premodit_exomol(diffmode)
     filename = pkg_resources.resource_filename(
         'exojax', 'data/testdata/' + TESTDATA_CO_EXOMOL_MODIT_XS_REF)
@@ -142,6 +144,9 @@ if __name__ == "__main__":
     ax.plot(nus, 1.0 - xs / dat["xsv"], label="dif = (MODIT - PreMODIT)/MODIT")
     plt.ylabel("dif")
     plt.xlabel("wavenumber cm-1")
+    plt.axhline(0.01,color="gray",lw=0.5)
+    plt.axhline(-0.01,color="gray",lw=0.5)
+    
     plt.legend()
-    plt.savefig("premodit.png")
+    plt.savefig("premodit"+str(diffmode)+".png")
     plt.show()

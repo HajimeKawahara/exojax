@@ -48,7 +48,7 @@ ngamma_ref_grid_H2O, n_Texp_grid_H2O, R_H2O, pmarray_H2O = initspec.init_premodi
     mdb.elower,
     mdb.alpha_ref,
     mdb.n_Texp,
-    mdb.Sij0,
+    mdb.line_strength_ref,
     Twt=Tgue,
     interval_contrast=interval_contrast,
     dit_grid_resolution=dit_grid_resolution,

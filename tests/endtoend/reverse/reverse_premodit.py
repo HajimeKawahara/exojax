@@ -82,7 +82,7 @@ lbd, multi_index_uniqgrid, elower_grid, ngamma_ref_grid, n_Texp_grid, R, pmarray
     mdb.elower,
     mdb.alpha_ref,
     mdb.n_Texp,
-    mdb.Sij0,
+    mdb.line_strength_ref,
     Ttyp,
     interval_contrast=interval_contrast,
     dit_grid_resolution=dit_grid_resolution,

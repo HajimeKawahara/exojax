@@ -33,7 +33,7 @@ def line_strength(T, logsij0, nu_lines, elower, qr):
     return jnp.exp(expow) / qr * fac
 
 
-def line_strength_numpy(T, Sij0, nu_lines, elower, qr):
+def line_strength_numpy(T, Sij0, nu_lines, elower, qr, Tref=Tref_original):
     """Line strength as a function of temperature, numpy version
 
         Args:
@@ -42,12 +42,13 @@ def line_strength_numpy(T, Sij0, nu_lines, elower, qr):
             elower: elower
             nu_lines: line center wavenumber 
             qr : partition function ratio qr(T) = Q(T)/Q(Tref)
+            Tref: reference temeparture
 
         Returns:
             line strength at Ttyp
         """
     return Sij0 / qr \
-        * np.exp(-hcperk*elower * (1./T - 1./Tref_original)) \
+        * np.exp(-hcperk*elower * (1./T - 1./Tref)) \
         * np.expm1(-hcperk*nu_lines/T) / np.expm1(-hcperk*nu_lines/Tref_original)
 
 

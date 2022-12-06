@@ -22,6 +22,7 @@ from radis.api.hitranapi import HITRANDatabaseManager
 from radis.api.hdf5 import update_pytables_to_vaex
 from radis.db.classes import get_molecule
 from radis.levels.partfunc import PartFuncTIPS
+import warnings
 
 __all__ = ['MdbExomol', 'MdbHitemp', 'MdbHitran']
 
@@ -51,7 +52,7 @@ class MdbExomol(CapiMdbExomol):
         alpha_ref_def: default alpha_ref (gamma0) in .def file, used for jlower not given in .broad
     """
     __slots__ = [
-        "Sij0",
+        "line_strength_ref",
         "logsij0",
         "nu_lines",
         "A",
@@ -94,7 +95,7 @@ class MdbExomol(CapiMdbExomol):
         self.database = str(self.path.stem)
         self.bkgdatm = bkgdatm
         #molecbroad = self.exact_molecule_name + '__' + self.bkgdatm
-
+        self.Tref = Tref_original
         self.Ttyp = Ttyp
         self.broadf = broadf
         self.simple_molecule_name = e2s(self.exact_molecule_name)
@@ -147,9 +148,10 @@ class MdbExomol(CapiMdbExomol):
         wavelength_mask = (df.nu_lines > self.nurange[0]-self.margin) \
                     * (df.nu_lines < self.nurange[1]+self.margin)
         QTtyp = np.array(self.QT_interp(self.Ttyp))
+        QTref_original = np.array(self.QT_interp(Tref_original))
         intensity_mask = (line_strength_numpy(
-            self.Ttyp, df.Sij0, df.nu_lines, df.elower,
-            QTtyp / self.QTref) > self.crit)
+            self.Ttyp, df.Sij0, df.nu_lines, df.elower, QTtyp / QTref_original)
+                          > self.crit)
 
         return wavelength_mask * intensity_mask
 
@@ -168,10 +170,20 @@ class MdbExomol(CapiMdbExomol):
             self.elower = df_load_mask.elower.values
             self.jlower = df_load_mask.jlower.values
             self.jupper = df_load_mask.jupper.values
-            self.Sij0 = df_load_mask.Sij0.values
+            self.line_strength_ref = df_load_mask.Sij0.values
             self.gpp = df_load_mask.gup.values
         else:
             raise ValueError("Use vaex dataframe as input.")
+
+    def Sij0(self):
+        """Deprecated line_strength_ref. 
+
+        Returns:
+            ndarray: line_strength_ref
+        """
+        msg = "Sij0 instance was replaced to line_strength_ref and will be removed."
+        warnings.warn(msg, DeprecationWarning)
+        return self.line_strength_ref
 
     def generate_jnp_arrays(self):
         """(re)generate jnp.arrays.
@@ -182,7 +194,7 @@ class MdbExomol(CapiMdbExomol):
         """
         # jnp arrays
         self.dev_nu_lines = jnp.array(self.nu_lines)
-        self.logsij0 = jnp.array(np.log(self.Sij0))
+        self.logsij0 = jnp.array(np.log(self.line_strength_ref))
         self.gamma_natural = jnp.array(self.gamma_natural)
         self.A = jnp.array(self.A)
         self.elower = jnp.array(self.elower)
@@ -212,10 +224,24 @@ class MdbExomol(CapiMdbExomol):
         Returns:
            qr(T)=Q(T)/Q(Tref) interpolated in jnp.array
         """
-        return self.QT_interp(T) / self.QT_interp(Tref_original)
+        return self.QT_interp(T) / self.QT_interp(self.Tref)
 
-    def change_reference_temperature(Tref_new):
-        return
+    def change_reference_temperature(self, Tref_new):
+        """change the reference temperature Tref and recompute Sij0
+
+        Args:
+            Tref_new (float): new Tref in Kelvin
+        """
+        print("Change the reference temperature from " + str(self.Tref) +
+              "K to " + str(Tref_new) + " K.")
+        qr = self.qr_interp(Tref_new)
+        self.line_strength_ref = line_strength_numpy(Tref_new,
+                                                     self.line_strength_ref,
+                                                     self.nu_lines,
+                                                     self.elower, qr,
+                                                     self.Tref)
+        self.Tref = Tref_new
+
 
 class MdbHitemp(HITEMPDatabaseManager):
     """molecular database of HITEMP.
@@ -261,6 +287,7 @@ class MdbHitemp(HITEMPDatabaseManager):
         self.molecid = search_molecid(str(self.path.stem))
         self.simple_molecule_name = get_molecule(self.molecid)
         self.crit = crit
+        self.Tref = Tref_original
         self.Ttyp = Ttyp
         self.margin = margin
         self.nurange = [np.min(nurange), np.max(nurange)]
@@ -338,8 +365,8 @@ class MdbHitemp(HITEMPDatabaseManager):
         self.uniqiso = np.unique(df.iso.values)
         for iso in self.uniqiso:
             Q = PartFuncTIPS(self.molecid, iso)
-            QTref = Q.at(T=Tref_original)
-            QTtyp = Q.at(T=Ttyp)
+            QTref = Q.at(T=self.Tref)
+            QTtyp = Q.at(T=self.Ttyp)
             load_mask = self.compute_load_mask(df, QTtyp / QTref)
         self.instances_from_dataframes(df[load_mask])
         self.gQT, self.T_gQT = hitranapi.get_pf(self.molecid, self.uniqiso)
@@ -353,9 +380,8 @@ class MdbHitemp(HITEMPDatabaseManager):
     def compute_load_mask(self, df, qrtyp):
         wav_mask = (df.wav > self.nurange[0]-self.margin) \
                     * (df.wav < self.nurange[1]+self.margin)
-        intensity_mask = (line_strength_numpy(self.Ttyp, df.int,
-                                              df.wav, df.El, qrtyp) >
-                          self.crit)
+        intensity_mask = (line_strength_numpy(self.Ttyp, df.int, df.wav, df.El,
+                                              qrtyp) > self.crit)
         return wav_mask * intensity_mask
 
     def instances_from_dataframes(self, df_load_mask):
@@ -369,7 +395,7 @@ class MdbHitemp(HITEMPDatabaseManager):
         """
         if isinstance(df_load_mask, vaex.dataframe.DataFrameLocal):
             self.nu_lines = df_load_mask.wav.values
-            self.Sij0 = df_load_mask.int.values
+            self.line_strength_ref = df_load_mask.int.values
             self.delta_air = df_load_mask.Pshft.values
             self.A = df_load_mask.A.values
             self.n_air = df_load_mask.Tdpair.values
@@ -383,6 +409,16 @@ class MdbHitemp(HITEMPDatabaseManager):
         else:
             raise ValueError("Use vaex dataframe as input.")
 
+    def Sij0(self):
+        """Deprecated line_strength_ref. 
+
+        Returns:
+            ndarray: line_strength_ref
+        """
+        msg = "Sij0 instance was replaced to line_strength_ref and will be removed."
+        warnings.warn(msg, DeprecationWarning)
+        return self.line_strength_ref
+
     def generate_jnp_arrays(self):
         """(re)generate jnp.arrays.
         
@@ -392,8 +428,8 @@ class MdbHitemp(HITEMPDatabaseManager):
         """
         # jnp.array copy from the copy sources
         self.dev_nu_lines = jnp.array(self.nu_lines)
-        self.logsij0 = jnp.array(np.log(self.Sij0))
-        self.Sij0 = jnp.array(self.Sij0)
+        self.logsij0 = jnp.array(np.log(self.line_strength_ref))
+        self.line_strength_ref = jnp.array(self.line_strength_ref)
         self.delta_air = jnp.array(self.delta_air)
         self.A = jnp.array(self.A)
         self.n_air = jnp.array(self.n_air)
@@ -459,6 +495,22 @@ class MdbHitemp(HITEMPDatabaseManager):
         return exact_isotope_name_from_isotope(self.simple_molecule_name,
                                                isotope)
 
+    def change_reference_temperature(self, Tref_new):
+        """change the reference temperature Tref and recompute Sij0
+
+        Args:
+            Tref_new (float): new Tref in Kelvin
+        """
+        print("Change the reference temperature from " + str(self.Tref) +
+              "K to " + str(Tref_new) + " K.")
+        qr = self.qr_interp(Tref_new)
+        self.line_strength_ref = line_strength_numpy(Tref_new,
+                                                     self.line_strength_ref,
+                                                     self.nu_lines,
+                                                     self.elower, qr,
+                                                     self.Tref)
+        self.Tref = Tref_new
+
 
 MdbHit = MdbHitemp  #compatibility
 
@@ -509,6 +561,7 @@ class MdbHitran(HITRANDatabaseManager):
 
         #numinf, numtag = hitranapi.read_path(self.path)
         self.crit = crit
+        self.Tref = Tref_original
         self.Ttyp = Ttyp
         self.margin = margin
         self.nurange = [np.min(nurange), np.max(nurange)]
@@ -562,8 +615,8 @@ class MdbHitran(HITRANDatabaseManager):
         self.uniqiso = np.unique(df.iso.values)
         for iso in self.uniqiso:
             Q = PartFuncTIPS(self.molecid, iso)
-            QTref = Q.at(T=Tref_original)
-            QTtyp = Q.at(T=Ttyp)
+            QTref = Q.at(T=self.Tref)
+            QTtyp = Q.at(T=self.Ttyp)
             load_mask = self.compute_load_mask(df, QTtyp / QTref)
         self.instances_from_dataframes(df[load_mask])
         self.gQT, self.T_gQT = hitranapi.get_pf(self.molecid, self.uniqiso)
@@ -577,9 +630,8 @@ class MdbHitran(HITRANDatabaseManager):
     def compute_load_mask(self, df, qrtyp):
         wav_mask = (df.wav > self.nurange[0]-self.margin) \
                     * (df.wav < self.nurange[1]+self.margin)
-        intensity_mask = (line_strength_numpy(self.Ttyp, df.int,
-                                              df.wav, df.El, qrtyp) >
-                          self.crit)
+        intensity_mask = (line_strength_numpy(self.Ttyp, df.int, df.wav, df.El,
+                                              qrtyp) > self.crit)
         return wav_mask * intensity_mask
 
     def instances_from_dataframes(self, df_load_mask):
@@ -593,7 +645,7 @@ class MdbHitran(HITRANDatabaseManager):
         """
         if isinstance(df_load_mask, vaex.dataframe.DataFrameLocal):
             self.nu_lines = df_load_mask.wav.values
-            self.Sij0 = df_load_mask.int.values
+            self.line_strength_ref = df_load_mask.int.values
             self.delta_air = df_load_mask.Pshft.values
             self.isoid = df_load_mask.iso.values
             self.uniqiso = np.unique(self.isoid)
@@ -606,6 +658,16 @@ class MdbHitran(HITRANDatabaseManager):
         else:
             raise ValueError("Use vaex dataframe as input.")
 
+    def Sij0(self):
+        """Deprecated line_strength_ref. 
+
+        Returns:
+            ndarray: line_strength_ref
+        """
+        msg = "Sij0 instance was replaced to line_strength_ref and will be removed."
+        warnings.warn(msg, DeprecationWarning)
+        return self.line_strength_ref
+
     def generate_jnp_arrays(self):
         """(re)generate jnp.arrays.
         
@@ -615,8 +677,8 @@ class MdbHitran(HITRANDatabaseManager):
         """
         # jnp.array copy from the copy sources
         self.nu_lines = jnp.array(self.nu_lines)
-        self.logsij0 = jnp.array(np.log(self.Sij0))
-        self.Sij0 = jnp.array(self.Sij0)
+        self.logsij0 = jnp.array(np.log(self.line_strength_ref))
+        self.line_strength_ref = jnp.array(self.line_strength_ref)
         self.delta_air = jnp.array(self.delta_air)
         self.A = jnp.array(self.A)
         self.n_air = jnp.array(self.n_air)
@@ -681,6 +743,22 @@ class MdbHitran(HITRANDatabaseManager):
         from exojax.utils.isotopes import exact_isotope_name_from_isotope
         return exact_isotope_name_from_isotope(self.simple_molecule_name,
                                                isotope)
+                                               
+    def change_reference_temperature(self, Tref_new):
+        """change the reference temperature Tref and recompute Sij0
+
+        Args:
+            Tref_new (float): new Tref in Kelvin
+        """
+        print("Change the reference temperature from " + str(self.Tref) +
+              "K to " + str(Tref_new) + " K.")
+        qr = self.qr_interp(Tref_new)
+        self.line_strength_ref = line_strength_numpy(Tref_new,
+                                                     self.line_strength_ref,
+                                                     self.nu_lines,
+                                                     self.elower, qr,
+                                                     self.Tref)
+        self.Tref = Tref_new
 
 
 def _convert_proper_isotope(isotope):
