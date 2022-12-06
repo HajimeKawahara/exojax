@@ -17,12 +17,14 @@ import warnings
 
 @pytest.mark.parametrize("diffmode", [0, 1])
 def test_xsection_premodit_exomol(diffmode):
-    interval_contrast = 0.2
+    interval_contrast = 1.3
     dit_grid_resolution = 0.1
-    Twt = 1000.0
+    Twt = 1400.0
+    Tref = 800.0
     Ttest = 1200.0
     Ptest = 1.0
     mdb = mock_mdbExomol()
+    mdb.change_reference_temperature(Tref)
     #Mmol = molmass("CO")
     Nx = 5000
 
@@ -38,8 +40,9 @@ def test_xsection_premodit_exomol(diffmode):
         mdb.elower,
         mdb.alpha_ref,
         mdb.n_Texp,
-        mdb.Sij0,
+        mdb.line_strength_ref,
         Twt,
+        Tref=Tref,
         interval_contrast=interval_contrast,
         dit_grid_resolution=dit_grid_resolution,
         diffmode=diffmode,
@@ -51,11 +54,11 @@ def test_xsection_premodit_exomol(diffmode):
     nsigmaD = normalized_doppler_sigma(Ttest, Mmol, R)
     qt = mdb.qr_interp(Ttest)
     if diffmode == 0:
-        xsv = xsvector_zeroth(Ttest, Ptest, nsigmaD, lbd_zeroth, R, pmarray,
+        xsv = xsvector_zeroth(Ttest, Ptest, nsigmaD, lbd_zeroth, Tref, R, pmarray,
                               nu_grid, elower_grid, multi_index_uniqgrid,
                               ngamma_ref_grid, n_Texp_grid, qt)
     elif diffmode == 1:
-        xsv = xsvector(Ttest, Ptest, nsigmaD, lbd_zeroth, lbd_first, Twt, R,
+        xsv = xsvector(Ttest, Ptest, nsigmaD, lbd_zeroth, lbd_first, Tref, Twt, R,
                        pmarray, nu_grid, elower_grid, multi_index_uniqgrid,
                        ngamma_ref_grid, n_Texp_grid, qt)
 
@@ -123,7 +126,7 @@ if __name__ == "__main__":
     from exojax.test.data import TESTDATA_CO_EXOMOL_MODIT_XS_REF
     import matplotlib.pyplot as plt
     #import jax.profiler
-    diffmode = 0
+    diffmode = 1
     nus, xs = test_xsection_premodit_exomol(diffmode)
     filename = pkg_resources.resource_filename(
         'exojax', 'data/testdata/' + TESTDATA_CO_EXOMOL_MODIT_XS_REF)

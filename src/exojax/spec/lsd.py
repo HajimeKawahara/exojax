@@ -62,13 +62,14 @@ def npgetix(x, xv):
     return cont, index.astype(int)
 
 
-def npgetix_exp(x, xv, Ttyp, conversion_dtype=np.float64):
+def npgetix_exp(x, xv, Ttyp, Tref=Tref_original, conversion_dtype=np.float64):
     """numpy version of getix weigthed by exp(-hc/kT).
 
     Args:
         x: x array
         xv: x grid
-        Ttyp: typical temperature for the temperature correction
+        Ttyp: typical temperature for the temperature correction in Kelvin
+        Tref: reference temperature in Kelvin, default is 296.0 K
         converted_dtype: data type for conversion. Needs enough large because this code uses exp.
         
     Returns:
@@ -78,13 +79,12 @@ def npgetix_exp(x, xv, Ttyp, conversion_dtype=np.float64):
     Note:
        cont is the contribution for i=index+1. 1 - cont is the contribution for i=index. For other i, the contribution should be zero.
     """
-    if Ttyp < Tref_original:
-        warnings.warn("We have not tested for Ttyp < Tref yet.", UserWarning)
-
+    
     x_ = np.array(x, dtype=conversion_dtype)
     xv_ = np.array(xv, dtype=conversion_dtype)
-    x_ = np.exp(-hcperk * x_ * (1.0 / Ttyp - 1.0 / Tref_original))
-    xv_ = np.exp(-hcperk * xv_ * (1.0 / Ttyp - 1.0 / Tref_original))
+    tfac = 1.0 / Ttyp - 1.0 / Tref
+    x_ = np.exp(-hcperk * x_ * tfac)
+    xv_ = np.exp(-hcperk * xv_ * tfac)
 
     # check overflow
     if np.isinf(np.max(x_)) or np.isinf(np.max(xv_)):
