@@ -17,7 +17,7 @@ import warnings
 
 @pytest.mark.parametrize("diffmode", [0, 1])
 def test_xsection_premodit_exomol(diffmode):
-    interval_contrast = 1.3
+    interval_contrast = 0.3
     dit_grid_resolution = 0.1
     Twt = 1400.0
     Tref = 800.0
@@ -48,7 +48,8 @@ def test_xsection_premodit_exomol(diffmode):
         diffmode=diffmode,
         warning=False)
 
-    print("dE=",elower_grid[1]-elower_grid[0])
+    dE = elower_grid[1]-elower_grid[0]
+    print("dE=",dE)
 
     Mmol = molmass("CO")
     nsigmaD = normalized_doppler_sigma(Ttest, Mmol, R)
@@ -66,7 +67,7 @@ def test_xsection_premodit_exomol(diffmode):
         'exojax', 'data/testdata/' + TESTDATA_CO_EXOMOL_PREMODIT_XS_REF)
     dat = pd.read_csv(filename, delimiter=",", names=("nus", "xsv"))
     #assert np.all(xsv == pytest.approx(dat["xsv"].values))
-    return nu_grid, xsv
+    return nu_grid, xsv, dE, Twt, Tref, Ttest
 
 
 @pytest.mark.parametrize("diffmode", [0, 1])
@@ -126,8 +127,8 @@ if __name__ == "__main__":
     from exojax.test.data import TESTDATA_CO_EXOMOL_MODIT_XS_REF
     import matplotlib.pyplot as plt
     #import jax.profiler
-    diffmode = 1
-    nus, xs = test_xsection_premodit_exomol(diffmode)
+    diffmode = 0
+    nus, xs, dE, Twt, Tref, Tin = test_xsection_premodit_exomol(diffmode)
     filename = pkg_resources.resource_filename(
         'exojax', 'data/testdata/' + TESTDATA_CO_EXOMOL_MODIT_XS_REF)
 
@@ -137,7 +138,8 @@ if __name__ == "__main__":
     dat = pd.read_csv(filename, delimiter=",", names=("nus", "xsv"))
     fig = plt.figure()
     ax = fig.add_subplot(211)
-    plt.title("premodit_xsection_test.py diffmode=" + str(diffmode))
+    #plt.title("premodit_xsection_test.py diffmode=" + str(diffmode))
+    plt.title("diffmode=" + str(diffmode)+" T="+str(Tin)+" Tref="+str(Tref)+" Twt="+str(Twt)+" dE="+str(dE))
     ax.plot(nus, xs, label="PreMODIT")
     ax.plot(nus, dat["xsv"], label="MODIT")
     plt.legend()
