@@ -1,7 +1,15 @@
-"""API for Exomol molecular database."""
+"""API for Exomol molecular database (Deprecated).
+
+- This module is deprecated to spec.api, and will be removed from the package.
+
+"""
 import numpy as np
 import pandas as pd
 import vaex
+import warnings
+
+warnings.warn("We recommend to use spec.api for ExoMol I/O",
+              DeprecationWarning)
 
 
 def read_def(deff):
@@ -57,16 +65,18 @@ def read_def(deff):
             ntransf = 16
             maxnu = 30000.0
             exception = True
-            numinf = np.array([0.0, 250.0, 500., 750.0, 1000., 1500.0, 2000,
-                              2250., 2750., 3500., 4500., 5500., 7000., 9000., 14000., 20000.])
+            numinf = np.array([
+                0.0, 250.0, 500., 750.0, 1000., 1500.0, 2000, 2250., 2750.,
+                3500., 4500., 5500., 7000., 9000., 14000., 20000.
+            ])
             numtag = make_numtag(numinf, maxnu)
         if deff.stem == '16O-1H__MoLLIST':
             alpha_ref = 0.07
             n_Texp = 0.5
-            
+
     if ntransf > 1 and exception == False:
-        dnufile = maxnu/ntransf
-        numinf = dnufile*np.array(range(ntransf+1))
+        dnufile = maxnu / ntransf
+        numinf = dnufile * np.array(range(ntransf + 1))
         numtag = make_numtag(numinf, maxnu)
     elif exception == False:
         numinf = None
@@ -86,14 +96,14 @@ def make_numtag(numinf, maxnu):
         numtag: tag for wavelength range
     """
     numtag = []
-    for i in range(len(numinf)-1):
+    for i in range(len(numinf) - 1):
         imin = '{:05}'.format(int(numinf[i]))
-        imax = '{:05}'.format(int(numinf[i+1]))
-        numtag.append(imin+'-'+imax)
+        imax = '{:05}'.format(int(numinf[i + 1]))
+        numtag.append(imin + '-' + imax)
 
     imin = imax
     imax = '{:05}'.format(int(maxnu))
-    numtag.append(imin+'-'+imax)
+    numtag.append(imin + '-' + imax)
 
     return numtag
 
@@ -133,11 +143,16 @@ def read_trans(transf):
         See Table 12 in https://arxiv.org/pdf/1603.05890.pdf
     """
     try:
-        dat = vaex.from_csv(transf, compression='bz2', sep='\s+',
-                            names=('i_upper', 'i_lower', 'A', 'nu_lines'), convert=True)
+        dat = vaex.from_csv(transf,
+                            compression='bz2',
+                            sep='\s+',
+                            names=('i_upper', 'i_lower', 'A', 'nu_lines'),
+                            convert=True)
     except:
-        dat = vaex.read_csv(
-            transf, sep='\s+', names=('i_upper', 'i_lower', 'A', 'nu_lines'), convert=True)
+        dat = vaex.read_csv(transf,
+                            sep='\s+',
+                            names=('i_upper', 'i_lower', 'A', 'nu_lines'),
+                            convert=True)
 
     return dat
 
@@ -159,11 +174,18 @@ def read_states(statesf):
         See Table 11 in https://arxiv.org/pdf/1603.05890.pdf
     """
     try:
-        dat = vaex.from_csv(statesf, compression='bz2', sep='\s+',
-                            usecols=range(4), names=('i', 'E', 'g', 'J'), convert=True)
+        dat = vaex.from_csv(statesf,
+                            compression='bz2',
+                            sep='\s+',
+                            usecols=range(4),
+                            names=('i', 'E', 'g', 'J'),
+                            convert=True)
     except:
-        dat = vaex.read_csv(statesf, sep='\s+', usecols=range(4),
-                            names=('i', 'E', 'g', 'J'), convert=True)
+        dat = vaex.read_csv(statesf,
+                            sep='\s+',
+                            usecols=range(4),
+                            names=('i', 'E', 'g', 'J'),
+                            convert=True)
 
     return dat
 
@@ -188,8 +210,8 @@ def pickup_gE(ndstates, ndtrans, trans_file, trans_lines=False):
     # ndstates=states.to_numpy()
 
     iorig = np.array(ndstates[:, 0], dtype=int)
-    maxii = int(np.max(iorig)+1)
-    newstates = np.zeros((maxii, np.shape(ndstates)[1]-1), dtype=float)
+    maxii = int(np.max(iorig) + 1)
+    newstates = np.zeros((maxii, np.shape(ndstates)[1] - 1), dtype=float)
     newstates[iorig, :] = ndstates[:, 1:]
 
     i_upper = np.array(ndtrans[:, 0], dtype=int)
@@ -209,7 +231,7 @@ def pickup_gE(ndstates, ndtrans, trans_file, trans_lines=False):
     if trans_lines:
         nu_lines = ndtrans[:, 3]
     else:
-        nu_lines = eupper-elower
+        nu_lines = eupper - elower
     del eupper
 
     ### MASKING ###
@@ -223,12 +245,17 @@ def pickup_gE(ndstates, ndtrans, trans_file, trans_lines=False):
         gup = gup[mask]
         jlower = jlower[mask]
         jupper = jupper[mask]
-        print('WARNING: {0:,} transitions with the wavenumber=zero in {1} have been ignored.'.format(
-            len_org - len(nu_lines), trans_file))
+        print(
+            'WARNING: {0:,} transitions with the wavenumber=zero in {1} have been ignored.'
+            .format(len_org - len(nu_lines), trans_file))
         if trans_lines:
-            print('This is because the value for the wavenumber column in the transition file is zero for those transitions.')
+            print(
+                'This is because the value for the wavenumber column in the transition file is zero for those transitions.'
+            )
         else:
-            print('This is because the upper and lower state IDs in the transition file indicate the same energy level when referring to the states file for those transitions.')
+            print(
+                'This is because the upper and lower state IDs in the transition file indicate the same energy level when referring to the states file for those transitions.'
+            )
 
     # See Issue #16
     #import matplotlib.pyplot as plt
@@ -291,10 +318,11 @@ def read_broad(broadf):
     Note:
        See Table 16 in https://arxiv.org/pdf/1603.05890.pdf
     """
-    bdat = pd.read_csv(broadf, sep='\s+',
-                       names=('code', 'alpha_ref', 'n_Texp', 'jlower', 'jupper',
-                              'kalower', 'kclower', 'kaupper', 'kcupper',
-                              'v1lower', 'v2lower', 'v3lower',
+    bdat = pd.read_csv(broadf,
+                       sep='\s+',
+                       names=('code', 'alpha_ref', 'n_Texp', 'jlower',
+                              'jupper', 'kalower', 'kclower', 'kaupper',
+                              'kcupper', 'v1lower', 'v2lower', 'v3lower',
                               'v1upper', 'v2upper', 'v3upper'))
 
     return bdat
@@ -309,7 +337,6 @@ def check_bdat(bdat):
     Returns:
        code level: None, a0, a1, other codes unavailable currently,
     """
-
     def checkcode(code):
         cmask = bdat['code'] == code
         if len(bdat['code'][cmask]) > 0:
@@ -325,7 +352,10 @@ def check_bdat(bdat):
     return codelv
 
 
-def make_j2b(bdat, alpha_ref_default=0.07, n_Texp_default=0.5, jlower_max=None):
+def make_j2b(bdat,
+             alpha_ref_default=0.07,
+             n_Texp_default=0.5,
+             jlower_max=None):
     """compute j2b (code a0, map from jlower to alpha_ref)
 
     Args:
@@ -345,19 +375,19 @@ def make_j2b(bdat, alpha_ref_default=0.07, n_Texp_default=0.5, jlower_max=None):
     n_Texp_arr = np.array(bdat['n_Texp'][cmask])
 
     if jlower_max is None:
-        Nblower = np.max(jlower_arr)+1
+        Nblower = np.max(jlower_arr) + 1
     else:
-        Nblower = np.max([jlower_max, np.max(jlower_arr)])+1
-    j2alpha_ref = np.ones(Nblower)*alpha_ref_default
-    j2n_Texp = np.ones(Nblower)*n_Texp_default
+        Nblower = np.max([jlower_max, np.max(jlower_arr)]) + 1
+    j2alpha_ref = np.ones(Nblower) * alpha_ref_default
+    j2n_Texp = np.ones(Nblower) * n_Texp_default
 
     j2alpha_ref[jlower_arr] = alpha_ref_arr
     j2n_Texp[jlower_arr] = n_Texp_arr
 
-    Ndef = Nblower-(np.max(jlower_arr)+1)
+    Ndef = Nblower - (np.max(jlower_arr) + 1)
     if Ndef > 0:
-        print('default broadening parameters are used for ',
-              Ndef, ' J lower states in ', Nblower, ' states')
+        print('default broadening parameters are used for ', Ndef,
+              ' J lower states in ', Nblower, ' states')
 
     return j2alpha_ref, j2n_Texp
 
@@ -387,12 +417,12 @@ def make_jj2b(bdat, j2alpha_ref_def, j2n_Texp_def, jupper_max=None):
     n_Texp_arr = np.array(bdat['n_Texp'][cmask])
 
     if jupper_max is None:
-        Nbupper = np.max(jupper_arr)+1
+        Nbupper = np.max(jupper_arr) + 1
     else:
-        Nbupper = np.max([jupper_max, np.max(jupper_arr)])+1
+        Nbupper = np.max([jupper_max, np.max(jupper_arr)]) + 1
 
-    jj2alpha_ref = j2alpha_ref_def[:, np.newaxis]*np.ones(Nbupper)
-    jj2n_Texp = j2n_Texp_def[:, np.newaxis]*np.ones(Nbupper)
+    jj2alpha_ref = j2alpha_ref_def[:, np.newaxis] * np.ones(Nbupper)
+    jj2n_Texp = j2n_Texp_def[:, np.newaxis] * np.ones(Nbupper)
 
     jj2alpha_ref[jlower_arr, jupper_arr] = alpha_ref_arr
     jj2n_Texp[jlower_arr, jupper_arr] = n_Texp_arr
@@ -405,12 +435,13 @@ if __name__ == '__main__':
     import sys
     import pathlib
     deff = pathlib.Path(
-        '~/exojax/examples/luhman16/.database/CO2/12C-16O2/UCL-4000/12C-16O2__UCL-4000.def')
+        '~/exojax/examples/luhman16/.database/CO2/12C-16O2/UCL-4000/12C-16O2__UCL-4000.def'
+    )
     n_Texp, alpha_ref, molmass, numinf, numtag = read_def(deff)
     print(numtag)
     sys.exit()
     # various broad file
-#    broadf="~/exojax/data/broad/12C-16O__H2.broad"
+    #    broadf="~/exojax/data/broad/12C-16O__H2.broad"
     broadf = '~/exojax/data/broad/1H2-16O__H2.broad'
     bdat = read_broad(broadf)
     codelv = check_bdat(bdat)
@@ -419,8 +450,10 @@ if __name__ == '__main__':
         j2alpha_ref, j2n_Texp = make_j2b(bdat, jlower_max=100)
     elif codelv == 'a1':
         j2alpha_ref, j2n_Texp = make_j2b(bdat, jlower_max=100)
-        jj2alpha_ref, jj2n_Texp = make_jj2b(
-            bdat, j2alpha_ref, j2n_Texp, jupper_max=100)
+        jj2alpha_ref, jj2n_Texp = make_jj2b(bdat,
+                                            j2alpha_ref,
+                                            j2n_Texp,
+                                            jupper_max=100)
         print(jj2alpha_ref[1, 2])
         print(jj2alpha_ref[1, 15])
 
@@ -444,21 +477,21 @@ if __name__ == '__main__':
 
     ts = time.time()
     A, nu_lines, elower, gup, jlower, jupper = pickup_gE(states, trans)
-#    for i in range(0,len(A)):
-#        print(jlower[i],"-",jupper[i])
+    #    for i in range(0,len(A)):
+    #        print(jlower[i],"-",jupper[i])
     te = time.time()
 
     tsx = time.time()
     if check:
         A_s, nu_lines_s, elower_s, gup_s = pickup_gEslow(states, trans)
     tex = time.time()
-    print(te-ts, 'sec')
+    print(te - ts, 'sec')
     if check:
-        print(tex-tsx, 'sec for the slow version')
+        print(tex - tsx, 'sec for the slow version')
         print('CHECKING DIFFERENCES...')
-        print(np.sum((A_s-A)**2))
-        print(np.sum((nu_lines_s-nu_lines)**2))
-        print(np.sum((elower_s-elower)**2))
-        print(np.sum((gup_s-gup)**2))
+        print(np.sum((A_s - A)**2))
+        print(np.sum((nu_lines_s - nu_lines)**2))
+        print(np.sum((elower_s - elower)**2))
+        print(np.sum((gup_s - gup)**2))
 
     # computing alpha_ref, n_Texp
