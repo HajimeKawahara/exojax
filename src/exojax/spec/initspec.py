@@ -104,7 +104,7 @@ def init_premodit(nu_lines,
         elower: elower of lines
         gamma_ref: half-width at reference (alpha_ref for ExoMol, gamma_air for HITRAN/HITEMP etc)
         n_Texp: temperature exponent (n_Texp for ExoMol, n_air for HITRAN/HITEMP)
-        line_strength_ref: line strength at reference
+        line_strength_ref: line strength at reference temperature 296K, Sij0
         Ttyp: typical temperature in Kelvin
         interval_contrast: putting c = grid_interval_line_strength, then, the contrast of line strength between the upper and lower of the grid becomes c-order of magnitude.
         dit_grid_resolution: DIT grid resolution 

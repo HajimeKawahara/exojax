@@ -1,6 +1,14 @@
 Basics
 ==============
 
+.. note::
+
+   We will update and reorganise the opacity calculators by Release 2.0. 
+   Meanwhile, use LPF when the number of lines is less than ~ a few hundred.
+   For larger numbers, consider to use MODIT or a more experimetal calculator PreMODIT.
+   MODIT is limited by a device memory limits while while PreMODIT has no such limitation.
+   Therefore, if you want to for instance, million to billion lines, use PreMODIT.
+
 Simple Usage
 ----------------
 
@@ -22,26 +30,22 @@ Cross Section using Various Opacity Calculators
    tutorials/Cross_Section_using_Modified_Discrete_Integral_Transform.rst
    tutorials/Cross_Section_using_Discrete_Integral_Transform.rst
 
-Forward Modeling using Various Opacity Calculators
+Forward Modeling
 --------------------------------------------------------
 
 .. toctree::
    :maxdepth: 1
 
    tutorials/Forward_modeling.rst
-   tutorials/Forward_modeling_using_DIT.rst
-   tutorials/Forward_modeling_using_MODIT.rst
-   tutorials/Forward_modeling_using_the_MODIT_Cross_Section_for_methane.rst
-   tutorials/Forward_modeling_for_Fe_I_lines_of_Kurucz.rst
-   tutorials/Forward_modeling_for_metal_line.rst
-   tutorials/Forward_modeling_using_the_DIT_Cross_Section_for_methane.rst
+   tutorials/Forward_modeling_using_PreMODIT_Cross_Section_for_methane.rst
+   various_forward.rst
 
 Reverse Modeling (a.k.a Retrieval) using Various Opacity Calculators
 ------------------------------------------------------------------------
 
 .. toctree::
    :maxdepth: 1
-
+   
    tutorials/Reverse_modeling.rst
    tutorials/Reverse_modeling_for_methane_using_MODIT.rst
    tutorials/Reverse_modeling_with_VALD_using_MODIT.rst
@@ -83,7 +87,6 @@ Others
 .. toctree::
    :maxdepth: 1
 
-   tutorials/Reducing_memory_for_HITEMP.rst
    tutorials/Using_FastChem2_to_calculate_the_chemical_abundances.rst
    tutorials/hjerting.rst
    tutorials/pure_absorption_rt.rst

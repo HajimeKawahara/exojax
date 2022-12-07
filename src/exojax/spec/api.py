@@ -70,7 +70,7 @@ class MdbExomol(CapiMdbExomol):
                  Ttyp=1000.,
                  bkgdatm='H2',
                  broadf=True,
-                 gpu_transfer=False,
+                 gpu_transfer=True,
                  inherit_dataframe=False,
                  local_databases="./"):
         """Molecular database for Exomol form.
@@ -83,7 +83,7 @@ class MdbExomol(CapiMdbExomol):
            Ttyp: typical temperature to calculate Sij(T) used in crit
            bkgdatm: background atmosphere for broadening. e.g. H2, He,
            broadf: if False, the default broadening parameters in .def file is used
-           gpu_transfer: if True, some instances will be transfered to jnp.array
+           gpu_transfer: if True, some instances will be transfered to jnp.array. False is recommended for PreMODIT.
            inherit_dataframe: if True, it makes self.df instance available, which needs more DRAM when pickling.
             
         Note:
@@ -306,8 +306,8 @@ class MdbHitemp(HITEMPDatabaseManager):
             self.download_and_parse(download_urls, download_files)
 
         # Register
-        if not self.is_registered():
-            self.register()
+        # if not self.is_registered():
+        #    self.register()
 
         clean_cache_files = True
         if len(download_files) > 0 and clean_cache_files:
@@ -536,8 +536,8 @@ class MdbHitran(HITRANDatabaseManager):
                                     parse_quanta=True)
 
         # Register
-        if not self.is_registered():
-            self.register()
+        #if not self.is_registered():
+        #    self.register()
 
         if len(download_files) > 0:
             self.clean_download_files()

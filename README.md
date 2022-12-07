@@ -134,8 +134,6 @@ pip install --upgrade "jax[cuda]" -f https://storage.googleapis.com/jax-releases
 
 Please visit [here](https://github.com/google/jax) for details.
 
-Note that cuDNN is used for to compute the astronomical/instrumental response for the large number of wave number grid (exojax.spec.response). Otherwise, we won't use it. 
-
 </details>
 
 ## References
