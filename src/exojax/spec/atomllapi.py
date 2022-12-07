@@ -51,7 +51,7 @@ def read_ExAll(allf):
         line data in vaex DataFrame
     """
     dat = pd.read_csv(allf, sep=',', skiprows=1, names=('species', 'wav_lines', 'loggf', 'elowereV', 'jlower', 'euppereV',
-                      'jupper', 'landelower', 'landeupper', 'landemean', 'rad_damping', 'stark_damping', 'waals_damping'))  #, 'depth_Cen')) #convert=False)
+                      'jupper', 'landelower', 'landeupper', 'landemean', 'rad_damping', 'stark_damping', 'waals_damping', 'depth_Cen', 'dummy'), low_memory=False) #convert=False)
     colWL = dat.iat[0, 0][13:22]
 
     # Remove rows not starting with "'"
@@ -64,8 +64,12 @@ def read_ExAll(allf):
     # Remove long name (molecules e.g., TiO)
     dat = dat[dat.species.str.len() < 7]
     # Remove names starting with successive uppercase letters (molecules e.g., CO, OH, CN)
-    dat = dat[dat.species.str.slice(start=1, stop=3).str.isupper().map({
+    dat = dat[dat.species.str.slice(start=2, stop=3).str.isupper().map({
         False: True, True: False})]
+    # Remove homonuclear polyatomic molecules (e.g., C2)
+    dat = dat[dat.species.str.slice(start=2, stop=3).str.isdigit().map({
+        False: True, True: False})]
+
     # Remove highly ionized ions (iion > 3, for which the partition function is not reported in Barklem+2016)
     dat = dat.drop(dat.index[np.where(np.array(
         list(map(lambda x: int(x[1].strip("'")), dat.species.str.split(' ')))) > 3)[0]])

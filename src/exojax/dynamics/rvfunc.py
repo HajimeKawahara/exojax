@@ -10,6 +10,7 @@ import numpy as np
 from exojax.dynamics import getE
 from exojax.utils.constants import Gcr
 
+
 @jit
 def rvf(t, T0, P, e, omegaA, Ksini, Vsys):
     """Unit-free radial velocity curve for SB1.
@@ -26,21 +27,8 @@ def rvf(t, T0, P, e, omegaA, Ksini, Vsys):
     Returns:
        radial velocity curve in your velocity unit
     """
+    return rvcoref(t, T0, P, e, omegaA, Ksini, np.pi/2.0) + Vsys
 
-    n = 2*jnp.pi/P
-    M = n*(t-T0)
-
-    Ea = map(lambda x: getE.getE(x, e), M)
-    cosE = jnp.cos(Ea)
-    cosf = (-cosE + e)/(-1 + cosE*e)
-    sinf = jnp.sqrt((-1 + cosE*cosE)*(-1 + e*e))/(-1 + cosE*e)
-    sinf = jnp.where(Ea < jnp.pi, -sinf, sinf)
-
-    cosfpo = cosf*jnp.cos(omegaA)-sinf*jnp.sin(omegaA)
-    face = 1.0/jnp.sqrt(1.0-e*e)
-    model = Ksini*face*(cosfpo+e*jnp.cos(omegaA)) + Vsys
-
-    return model
 
 @jit
 def rvcoref(t, T0, P, e, omegaA, K, i):
@@ -59,19 +47,19 @@ def rvcoref(t, T0, P, e, omegaA, K, i):
     Returns:
        radial velocity curve in your velocity unit
     """
-    n = 2*jnp.pi/P
-    M = n*(t-T0)
+    n = 2 * jnp.pi / P
+    M = n * (t - T0)
 
     Ea = map(lambda x: getE.getE(x, e), M)
     cosE = jnp.cos(Ea)
-    cosf = (-cosE + e)/(-1 + cosE*e)
-    sinf = jnp.sqrt((-1 + cosE*cosE)*(-1 + e*e))/(-1 + cosE*e)
+    cosf = (-cosE + e) / (-1 + cosE * e)
+    sinf = jnp.sqrt((-1 + cosE * cosE) * (-1 + e * e)) / (-1 + cosE * e)
     sinf = jnp.where(Ea < jnp.pi, -sinf, sinf)
 
-    cosfpo = cosf*jnp.cos(omegaA)-sinf*jnp.sin(omegaA)
-    face = 1.0/jnp.sqrt(1.0-e*e)
-    Ksini = K*jnp.sin(i)
-    model = Ksini*face*(cosfpo+e*jnp.cos(omegaA))
+    cosfpo = cosf * jnp.cos(omegaA) - sinf * jnp.sin(omegaA)
+    face = 1.0 / jnp.sqrt(1.0 - e * e)
+    Ksini = K * jnp.sin(i)
+    model = Ksini * face * (cosfpo + e * jnp.cos(omegaA))
 
     return model
 
@@ -79,17 +67,22 @@ def rvcoref(t, T0, P, e, omegaA, K, i):
 @jit
 def rvf2(t, T0, P, e, omegaA, M1, M2, i, Vsys):
     # RV of M1
-    fac = (2.0*jnp.pi)**(1.0/3.0)
-    K = fac*Gcr*M2*((M1+M2)**(-2.0/3.0))*(P**(-1.0/3.0))/jnp.sqrt(1.0 - e*e)
+    K = rv_semi_amplitude(P, e, M1, M2)
     return rvcoref(t, T0, P, e, omegaA, K, i) + Vsys
 
 
 @jit
 def rvf2c(t, T0, P, e, omegaA, M1, M2, i, Vsys):
     # RV of M2 (companion)
-    fac = (2.0*jnp.pi)**(1.0/3.0)
-    K = fac*Gcr*M1*((M1+M2)**(-2.0/3.0))*(P**(-1.0/3.0))/jnp.sqrt(1.0 - e*e)
+    K = rv_semi_amplitude(P, e, M1, M2)
     return -rvcoref(t, T0, P, e, omegaA, K, i) + Vsys
+
+
+def rv_semi_amplitude(P, e, M1, M2):
+    fac = (2.0 * jnp.pi)**(1.0 / 3.0)
+    K = fac * Gcr * M2 * (
+        (M1 + M2)**(-2.0 / 3.0)) * (P**(-1.0 / 3.0)) / jnp.sqrt(1.0 - e * e)
+    return K
 
 
 @jit
@@ -105,7 +98,7 @@ if __name__ == '__main__':
     e = 0.85
     omegaA = np.pi
     K = 3.0
-    i = np.pi/2.0
+    i = np.pi / 2.0
     Vsys = 1.0
     rv = rvf1(t, T0, P, e, omegaA, K, i, Vsys)
     plt.plot(t, rv, '.')

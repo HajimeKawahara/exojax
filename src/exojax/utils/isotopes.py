@@ -1,7 +1,21 @@
 import numpy as np
-import pandas as pd
 from exojax.utils import isodata
 from exojax.utils import molname
+
+
+def exact_isotope_name_from_isotope(simple_molecule_name, isotope):
+    """exact isotope name from isotope (number)
+
+    Args:
+        simple_molecular_name (str): simple molecular name such as CO
+        isotope (int): isotope number starting from 1
+
+    Returns:
+        str: exact isotope name such as (12C)(16O)
+    """
+    from radis.db.molparam import MolParams
+    mp = MolParams()
+    return mp.get(simple_molecule_name, isotope, "isotope_name")
 
 
 def get_isotope(atom, isolist):

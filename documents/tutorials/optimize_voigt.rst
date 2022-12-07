@@ -1,9 +1,5 @@
-
 Optimization of a Voigt profile
 ===============================
-
-*Update: Feb 20/2022, Hajime Kawahara*
-
 
 .. code:: ipython3
 
@@ -22,7 +18,16 @@ with a STD of :math:`\beta` and a Lorentian with a gamma parameter of
     plt.plot(nu, voigt(nu,1.0,2.0)) #beta=1.0, gamma_L=2.0
 
 
-.. image:: optimize_voigt/output_3_1.png
+
+
+.. parsed-literal::
+
+    [<matplotlib.lines.Line2D at 0x7f5dc8143100>]
+
+
+
+
+.. image:: optimize_voigt_files/optimize_voigt_3_1.png
 
 
 optimization of a simple absorption model
@@ -31,7 +36,8 @@ optimization of a simple absorption model
 Next, we try to fit a simple absorption model to mock data. The
 absorption model is
 
-:math:`f= e^{-a V(\nu,\beta,\gamma_L)}`
+$ f= e^{-a
+V(:raw-latex:`\nu`,:raw-latex:`\beta`,:raw-latex:`\gamma`\_L)}$
 
 .. code:: ipython3
 
@@ -47,7 +53,16 @@ Adding a noise…
     plt.plot(nu,data,".")
 
 
-.. image:: optimize_voigt/output_8_1.png
+
+
+.. parsed-literal::
+
+    [<matplotlib.lines.Line2D at 0x7f5dc1f7ba30>]
+
+
+
+
+.. image:: optimize_voigt_files/optimize_voigt_8_1.png
 
 
 Let’s optimize the multiple parameters
@@ -78,7 +93,7 @@ We define the objective function as :math:`obj = |d - f|^2`
 
 .. parsed-literal::
 
-    -0.0052589616 -0.0037011264 -0.0044463067
+    0.0041426932 -0.00014259202 -0.0007440491
 
 
 .. code:: ipython3
@@ -108,12 +123,13 @@ We define the objective function as :math:`obj = |d - f|^2`
             traj.append(p)
         return traj, p
 
-Here, we use the ADAM optimizer.
+Here, we use the ADAM optimizer
 
 .. code:: ipython3
 
     #adam
-    from jax.experimental import optimizers
+    #from jax.experimental import optimizers #for older versions of JAX
+    from jax.example_libraries import optimizers
     opt_init, opt_update, get_params = optimizers.adam(1.e-1)
     r0 = jnp.array([1.5,1.5,1.5])
     trajadam, padam=doopt(r0,opt_init,get_params,1000)
@@ -129,7 +145,7 @@ Optimized values are given in padam
 
 .. parsed-literal::
 
-    Buffer([2.0401988, 0.9381701, 2.1008859], dtype=float32)
+    DeviceArray([1.9842807, 1.0219767, 1.9737407], dtype=float32)
 
 
 
@@ -145,7 +161,7 @@ Optimized values are given in padam
 
 
 
-.. image:: optimize_voigt/output_19_0.png
+.. image:: optimize_voigt_files/optimize_voigt_19_0.png
 
 
 .. code:: ipython3
@@ -156,7 +172,7 @@ Optimized values are given in padam
 
 
 
-.. image:: optimize_voigt/output_20_0.png
+.. image:: optimize_voigt_files/optimize_voigt_20_0.png
 
 
 Using SGD instead…, you need to increase the number of iteration for
@@ -165,7 +181,9 @@ convergence
 .. code:: ipython3
 
     #sgd
-    from jax.experimental import optimizers
+    #from jax.experimental import optimizers #for older versions of JAX
+    from jax.example_libraries import optimizers
+    
     opt_init, opt_update, get_params = optimizers.sgd(1.e-1)
     r0 = jnp.array([1.5,1.5,1.5])
     trajsgd, psgd=doopt(r0,opt_init,get_params,10000)
@@ -182,6 +200,7 @@ convergence
 
 
 
-.. image:: optimize_voigt/output_23_0.png
+.. image:: optimize_voigt_files/optimize_voigt_23_0.png
+
 
 

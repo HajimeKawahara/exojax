@@ -39,7 +39,7 @@ Also, one can export the opacity computed by ExoJAX to petitRadtrans high-R form
        >>>         gammaL = gamma_hitran(Pfix,Tfix, Ppart, mdbCO.n_air, \
        >>>                       mdbCO.gamma_air, mdbCO.gamma_self) + gamma_natural(mdbCO.A) 
        >>>         # thermal doppler sigma
-       >>>         xsv=xsection(nus,nu0,sigmaD,gammaL,Sij,memory_size=30)
+       >>>         xsv=auto_xsection(nus,nu0,sigmaD,gammaL,Sij,memory_size=30)
        >>>         Pval="{:.6f}".format(Pfix)
        >>>         P=str(Pval)+"bar"
        >>>         out="sigma_05_"+str(Tfix)+".K_"+P+".dat"

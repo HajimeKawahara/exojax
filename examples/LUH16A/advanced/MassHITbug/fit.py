@@ -5,9 +5,9 @@ from exojax.spec.lpf import xsmatrix
 from exojax.spec.exomol import gamma_exomol
 from exojax.spec.hitran import SijT, doppler_sigma, gamma_natural, gamma_hitran
 from exojax.spec.hitrancia import read_cia, logacia 
-from exojax.spec.rtransfer import rtrun, dtauM, dtauCIA, nugrid
+from exojax.spec.rtransfer import rtrun, dtauM, dtauCIA, wavenumber_grid
 from exojax.plot.atmplot import plottau, plotcf, plot_maxpoint
-from exojax.utils.afunc import getjov_logg
+from exojax.utils.astrofunc import getjov_logg
 import numpy as np
 import tqdm
 import seaborn as sns
@@ -19,6 +19,9 @@ import pandas as pd
 from exojax.utils.constants import RJ, pc, Rs, c
 import sys
 from exojax.spec.evalline import mask_weakline
+import warnings
+
+warnings.warn("Not working using the current version. You need to modify ExomolQT.",UserWarning)
 
 #ref pressure
 Pref=1.0 #bar

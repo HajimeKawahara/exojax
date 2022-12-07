@@ -1,32 +1,38 @@
-Voigt Profile
-===========================================
-*Update: June 12/2021, Hajime Kawahara*
-
-Let’s compute
-`the Voigt profile <https://en.wikipedia.org/wiki/Voigt_profile>`_
-:math:`V(\nu, \beta, \gamma_L)`
-using exojax!
-:math:`V(\nu, \beta, \gamma_L)` is a convolution of a Gaussian
-with a STD of :math:`\beta` and a Lorentian with a gamma parameter of
-:math:`\gamma_L`.
+Voigt profile
+=============
 
 .. code:: ipython3
 
     from exojax.spec import voigt
     import jax.numpy as jnp
     import matplotlib.pyplot as plt
-      
+
+Let’s compute the Voigt function :math:`V(\nu, \beta, \gamma_L)` using
+exojax! :math:`V(\nu, \beta, \gamma_L)` is a convolution of a Gaussian
+with a STD of :math:`\beta` and a Lorentian with a gamma parameter of
+:math:`\gamma_L`.
+
 .. code:: ipython3
 
     nu=jnp.linspace(-10,10,100)
     plt.plot(nu, voigt(nu,1.0,2.0)) #beta=1.0, gamma_L=2.0
 
-.. image:: voigt_function/output_3_1.png
 
 
-The function `voigt <../exojax/exojax.spec.html#exojax.spec.lpf.voigt>`_ is `vmapped <https://jax.readthedocs.io/en/latest/jax.html#jax.vmap>`_ for nu (input=0), therefore a bit hard
+
+.. parsed-literal::
+
+    [<matplotlib.lines.Line2D at 0x7faaf9d64358>]
+
+
+
+
+.. image:: voigt_function_files/voigt_function_3_1.png
+
+
+The function “voigt” is vmapped for nu (input=0), therefore a bit hard
 to handle when you want to differentiate. Instead, you can use
-`voigtone <../exojax/exojax.spec.html#exojax.spec.lpf.voigtone>`_, which is not vmapped for all of the input arguments.
+“voigtone”, which is not vmapped for all of the input arguments.
 
 .. code:: ipython3
 
@@ -43,7 +49,18 @@ to handle when you want to differentiate. Instead, you can use
     plt.plot(nu, dvoigt_beta(nu,1.0,2.0),label="$\\partial_\\beta V(\\nu,\\beta=1,\\gamma_L=2)$")
     plt.legend()
 
-.. image:: voigt_function/output_6_1.png
+
+
+
+.. parsed-literal::
+
+    <matplotlib.legend.Legend at 0x7faaf9b45c50>
+
+
+
+
+.. image:: voigt_function_files/voigt_function_6_1.png
+
 
 HMC-NUTS of a simple absorption model
 -------------------------------------
@@ -51,14 +68,14 @@ HMC-NUTS of a simple absorption model
 Next, we try to fit a simple absorption model to mock data. The
 absorption model is
 
-:math:`e^{-a V(\nu,\beta,\gamma_L)}`
+$ e^{-a V(:raw-latex:`\nu`,:raw-latex:`\beta`,:raw-latex:`\gamma`\_L)}$
 
 .. code:: ipython3
 
     def absmodel(nu,a,beta,gamma_L):
         return jnp.exp(-a*voigt(nu,beta,gamma_L))
 
-Making a mock data and adding a noise…
+Adding a noise…
 
 .. code:: ipython3
 
@@ -67,10 +84,20 @@ Making a mock data and adding a noise…
     plt.plot(nu,data,".")
 
 
-.. image:: voigt_function/output_11_1.png
 
-Then, let's perform a HMC-NUTS.
-	   
+
+.. parsed-literal::
+
+    [<matplotlib.lines.Line2D at 0x7faaf97f9710>]
+
+
+
+
+.. image:: voigt_function_files/voigt_function_11_1.png
+
+
+Then, let’s perfomr a HMC-NUTS.
+
 .. code:: ipython3
 
     import arviz
@@ -80,8 +107,6 @@ Then, let's perform a HMC-NUTS.
     from numpyro.infer import Predictive
     from numpyro.diagnostics import hpdi
 
-This model is not sophisticated in terms of priors..., but
-   
 .. code:: ipython3
 
     def model_c(nu,y):
@@ -108,10 +133,9 @@ This model is not sophisticated in terms of priors..., but
 
 .. parsed-literal::
 
-    sample: 100%|██████████| 3000/3000 [00:33<00:00, 90.50it/s, 15 steps of size 1.69e-01. acc. prob=0.95] 
+    sample: 100%|██████████| 3000/3000 [00:48<00:00, 65.47it/s, 15 steps of size 1.93e-01. acc. prob=0.95]
 
-Anyway, it works.
-    
+
 .. code:: ipython3
 
     
@@ -133,7 +157,17 @@ Anyway, it works.
     plt.legend()
 
 
-.. image:: voigt_function/output_18_1.png
+
+
+
+.. parsed-literal::
+
+    <matplotlib.legend.Legend at 0x7faa2408aa20>
+
+
+
+
+.. image:: voigt_function_files/voigt_function_18_1.png
 
 
 We got a posterior sampling.
@@ -148,15 +182,16 @@ We got a posterior sampling.
 
 
 
-.. image:: voigt_function/output_20_0.png
+.. image:: voigt_function_files/voigt_function_20_0.png
 
 
-To optimize this model, for instance using `ADAM <https://arxiv.org/abs/1412.6980>`_, see ":doc:`optimize_voigt`".
-
-Curve of Growth
+curve of growth
 ---------------
 
-As an application, we consider `the curve of growth <https://en.wikipedia.org/wiki/Curve_of_growth>`_. The curve of growth is the equivalent width evolution as a function of the absorption strength. Here, it corresponds to :math:`a`. Let’s see, the growth of absorption feature as
+As an application, we consider the curve of growth. The curve of growth
+is the equivalent width evolution as a function of the absorption
+sterngth. Here, it corresponds to :math:`a`. Let’s see, the growth of
+absorption feature as
 
 .. code:: ipython3
 
@@ -166,7 +201,8 @@ As an application, we consider `the curve of growth <https://en.wikipedia.org/wi
         plt.plot(nu,absmodel(nu,a,0.1,0.1))
 
 
-.. image:: voigt_function/output_23_0.png
+
+.. image:: voigt_function_files/voigt_function_23_0.png
 
 
 Let us define the equivalent width by a simple summation of the
@@ -179,8 +215,8 @@ absorption.
     vEW=vmap(EW,0,0)
 
 This is the curve of growth. As you see, when the absorption is weak,
-the power law index of the curve (hereby "power") is proportional to unity (linear region). But, as
-increasing the absorption sterength, the power converges to 1/2 (damped region).
+the power of the curve is proportional to unity (linear region). But, as
+increasing the absorption sterength, the power converges to 1/2.
 
 .. code:: ipython3
 
@@ -194,12 +230,14 @@ increasing the absorption sterength, the power converges to 1/2 (damped region).
 
 
 
-.. image:: voigt_function/output_27_0.png
+.. image:: voigt_function_files/voigt_function_27_0.png
 
 
-Now we have auto-diff for the Voigt. So, we can directly compute the power as a function of :math:`a`.
+Now we have auto-diff for the Voigt. So, we can directly compute the
+power as a function of :math:`a`.
 
-:math:`power = \frac{\partial}{\partial \log_{10} a } \log_{10} ( EW )`
+$power = :raw-latex:`\frac{\partial}{\partial \log_{10} a }`
+:raw-latex:`\log`\_{10} ( EW ) $
 
 .. code:: ipython3
 
@@ -223,6 +261,8 @@ Now we have auto-diff for the Voigt. So, we can directly compute the power as a 
     plt.legend()
     plt.show()
 
-.. image:: voigt_function/output_31_0.png
+
+
+.. image:: voigt_function_files/voigt_function_31_0.png
 
 

@@ -17,7 +17,7 @@ from exojax is like that.
 
 .. code:: ipython
 	  
-	  >>> from exojax.spec.rtransfer import nugrid
+	  >>> from exojax.utils.grids import wavenumber_grid
 	  >>> from exojax.spec import moldb
 	  >>> nus,wav,res=nugrid(22880.,23000.,1000,unit="AA")
 	  >>> mdbCO=moldb.MdbHit('.database/05_HITEMP2019.par.bz2',nus)

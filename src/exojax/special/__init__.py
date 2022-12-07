@@ -18,5 +18,5 @@ from exojax.special.j0 import (
 from exojax.special.faddeeva import (
     rewofz,
     imwofz,
-    wofzs2,
+    asymptotic_wofz,
 )

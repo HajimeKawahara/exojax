@@ -4,10 +4,8 @@ User Guide
 .. toctree::
    :maxdepth: 1
 
-   userguide/hjerting.rst   
-   userguide/moldb.rst
-   userguide/exomol.rst
-   userguide/hitran.rst
+   userguide/hjerting.rst
+   userguide/api.rst
    userguide/atomll.rst
    userguide/rtransfer.rst
    userguide/modit.rst
@@ -16,6 +14,10 @@ User Guide
    userguide/vterm.rst
    userguide/comp.rst
 
+..   userguide/moldb.rst
+   userguide/exomol.rst 
+   userguide/hitran.rst
+   
 
 For Developers
 ===================

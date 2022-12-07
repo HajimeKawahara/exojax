@@ -1,7 +1,7 @@
 Installation and References
 ----------------------------------
 
-*Dec 7th (2021) Hajime Kawahara*
+*last update: Nov 21st (2022) Hajime Kawahara*
 
 At a minimum, you can start to use exojax by
 
@@ -30,20 +30,14 @@ You should check cuda version of your environment as
 
 Also, check required jaxlib versions by numpyro at
 `NumPyro <https://github.com/pyro-ppl/numpyro>`_.
-Here is an example of installation for jaxlib for cuda 11.1 to 11.4.
+Here is an example of installation for jaxlib in linux system. See `JAX installation page <https://github.com/google/jax#pip-installation-gpu-cuda>`_ for the details.
 
 .. code:: sh
 
-           pip install --upgrade "jax[cuda111]"  -f https://storage.googleapis.com/jax-releases/jax_releases.html
-	   cd ../exojax/
-	   python setup.py install
-
-
-In addition, you may need cuDNN for `response.ipgauss2 <../exojax/exojax.spec.html#exojax.spec.response.ipgauss2>`_ and `response.rigidrot2 <../exojax/exojax.spec.html#exojax.spec.response.rigidrot2>`_. For ubuntu, download .deb from NVIDIA and install it:
-	   
-.. code:: sh
-	  
-	  sudo dpkg -i libcudnn8_8.2.0.53-1+cuda11.3_amd64.deb
+		pip install --upgrade pip
+		pip install --upgrade "jax[cuda]" -f https://storage.googleapis.com/jax-releases/jax_cuda_releases.html
+		cd exojax
+		python setup.py install
 
 References
 =================
@@ -62,6 +56,7 @@ Many techniques/databases are used in ExoJAX.
 - ExoMol: `Tennyson et al. (2016) <https://www.sciencedirect.com/science/article/abs/pii/S0022285216300807?via%3Dihub>`_
 - HITRAN/HITEMP
 - VALD3
+- RADIS, see below.
 - Other many packages/algorithms. See `arXiv:2105.14782 <http://arxiv.org/abs/2105.14782>`_ for the details.
 
 
@@ -70,8 +65,9 @@ Related Projects
   
 - `RADIS <https://github.com/radis/radis>`_
 
- | ExoJAX gets a lot of inspiration from a fast line-by-line code for high resolution infrared molecular spectra `RADIS <https://github.com/radis/radis>`_, including DIT, the use of Vaex, and so on.
+ | ExoJAX gets a lot of inspiration from a fast line-by-line code for high resolution infrared molecular spectra `RADIS <https://github.com/radis/radis>`_, including DIT, the use of Vaex, and so on. 
+ | Since version 1.2, we have used a common api of molecular database I/O in radis.
 
 - `REACH <http://secondearths.sakura.ne.jp/reach/>`_
   
- | Exojax was originally developed to interpret the data obtained a new capability of high-dispersion coronagraphy at Subaru telescope, the `REACH <http://secondearths.sakura.ne.jp/reach/>`_ project (SCExAO+IRD). REACH is supported by `RESCEU <http://www.resceu.s.u-tokyo.ac.jp/top.php>`_, ABC, and `JSPS KAKENHI JP20H00170 <https://kaken.nii.ac.jp/en/grant/KAKENHI-PROJECT-20H00170/>`_ (Kawahara). See also `Lozi et al. (2018) <https://ui.adsabs.harvard.edu/abs/2018SPIE10703E..59L/abstract>`_ for SCExAO, `Kotani et al. (2018) <https://ui.adsabs.harvard.edu/abs/2018SPIE10702E..11K/abstract>`_  for IRD, `Jovanovic et al. (2017) <https://ui.adsabs.harvard.edu/abs/2017arXiv171207762J/abstract>`_ for Post-Coronagraphic Injection and `Kawahara et al. (2014) <https://ui.adsabs.harvard.edu/abs/2014ApJS..212...27K/abstract>`_ for High Dispersion Coronagraphy.
+ | ExoJAX was originally developed to interpret the data obtained a new capability of high-dispersion coronagraphy at Subaru telescope, the `REACH <http://secondearths.sakura.ne.jp/reach/>`_ project (SCExAO+IRD). REACH is supported by `RESCEU <http://www.resceu.s.u-tokyo.ac.jp/top.php>`_, ABC, and `JSPS KAKENHI JP20H00170 <https://kaken.nii.ac.jp/en/grant/KAKENHI-PROJECT-20H00170/>`_ (Kawahara). See also `Lozi et al. (2018) <https://ui.adsabs.harvard.edu/abs/2018SPIE10703E..59L/abstract>`_ for SCExAO, `Kotani et al. (2018) <https://ui.adsabs.harvard.edu/abs/2018SPIE10702E..11K/abstract>`_  for IRD, `Jovanovic et al. (2017) <https://ui.adsabs.harvard.edu/abs/2017arXiv171207762J/abstract>`_ for Post-Coronagraphic Injection and `Kawahara et al. (2014) <https://ui.adsabs.harvard.edu/abs/2014ApJS..212...27K/abstract>`_ for High Dispersion Coronagraphy.

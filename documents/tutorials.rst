@@ -1,57 +1,93 @@
-
 Basics
 ==============
 
+.. note::
+
+   We will update and reorganise the opacity calculators by Release 2.0. 
+   Meanwhile, use LPF when the number of lines is less than ~ a few hundred.
+   For larger numbers, consider to use MODIT or a more experimetal calculator PreMODIT.
+   MODIT is limited by a device memory limits while while PreMODIT has no such limitation.
+   Therefore, if you want to for instance, million to billion lines, use PreMODIT.
+
+Simple Usage
+----------------
+
 .. toctree::
    :maxdepth: 1
-	     
-   tutorials/voigt_function.rst
-   tutorials/opacity.rst	     
-   tutorials/opacity_exomol.rst	     
-   tutorials/comparison_db.rst
+
+   tutorials/simple_usage.rst
+
+Cross Section using Various Opacity Calculators
+--------------------------------------------------------
+
+.. toctree::
+   :maxdepth: 1
+
+   tutorials/opacity.rst
+   tutorials/opacity_exomol.rst   
+   tutorials/Cross_Section_using_Precomputation_Modified_Discrete_Integral_Transform.rst
+   tutorials/Comparing_HITEMP_and_ExoMol.rst
+   tutorials/Cross_Section_using_Modified_Discrete_Integral_Transform.rst
+   tutorials/Cross_Section_using_Discrete_Integral_Transform.rst
+
+Forward Modeling
+--------------------------------------------------------
+
+.. toctree::
+   :maxdepth: 1
+
+   tutorials/Forward_modeling.rst
+   tutorials/Forward_modeling_using_PreMODIT_Cross_Section_for_methane.rst
+   various_forward.rst
+
+Reverse Modeling (a.k.a Retrieval) using Various Opacity Calculators
+------------------------------------------------------------------------
+
+.. toctree::
+   :maxdepth: 1
+   
+   tutorials/Reverse_modeling.rst
+   tutorials/Reverse_modeling_for_methane_using_MODIT.rst
+   tutorials/Reverse_modeling_with_VALD_using_MODIT.rst
+
+Gradient-based Optimization of Spectra
+--------------------------------------
+
+.. toctree::
+   :maxdepth: 1
+
+   tutorials/optimize_spectrum_JAXopt.rst
+   tutorials/optimize_voigt.rst
+   tutorials/optimize_voigt_JAXopt.rst
+
+
+Micro Chemical/Physical Processes
+--------------------------------------
+
+.. toctree::
+   :maxdepth: 1
+
    tutorials/CIA_opacity.rst
-   tutorials/rigid_rotation.rst
-   tutorials/forward_modeling.rst	     
-   tutorials/metals.rst	     
-   tutorials/reverse_modeling.rst
-   tutorials/retvald.rst
-   tutorials/optimize_spectrum_JAXopt.rst	     
-   tutorials/MODITxs.rst      
-   tutorials/MODITch4.rst
-   tutorials/MODITrv.rst
-
-|:green_circle:| MODIT is a rapid opacity calculator, having an advantage for the number of lines is about greater than 1000. 
-	        
-Real Examples
-=================
+   tutorials/branch.rst
+   tutorials/Ackerman_and_Marley_cloud_model.rst
+   tutorials/Terminal_Velocity_of_Cloud_Particles.rst   
+   
+Macro Physical Processes
+--------------------------------------
 
 .. toctree::
    :maxdepth: 1
-   
-   tutorials/fitbd.rst	     
-   tutorials/fitbd_modit.rst	     
 
-   
-Clouds
-==============
+   tutorials/Rigid_Rotation.rst
 
-.. toctree::
-   :maxdepth: 1
-	      
-   tutorials/amclouds.rst
 
-.. warning::
-   
-   Cloud modeling in ExoJAX is under development
-
-   
-Miscellaneous
-=============
+Others
+------------------
 
 .. toctree::
    :maxdepth: 1
-	      
-   tutorials/rvfit.rst	     
-   tutorials/MODITrt.rst	     
-   tutorials/DITxs.rst   
-   tutorials/DITrt.rst   
+
+   tutorials/Using_FastChem2_to_calculate_the_chemical_abundances.rst
+   tutorials/hjerting.rst
+   tutorials/pure_absorption_rt.rst
+   tutorials/voigt_function.rst

@@ -8,7 +8,7 @@ The difficulty with high-dispersion spectral analysis is that it takes a lot of 
    import numpy as np
    import matplotlib.pyplot as plt
    from exojax.spec import AutoRT
-   from exojax.spec.rtransfer import nugrid
+   from exojax.utils.grids import wavenumber_grid
    
    nus,wav,res=nugrid(23200,23300,1000,"AA") #compute a spectrum in 23200-23300 AA
    Parr=np.logspace(-8,2,100)
@@ -34,7 +34,7 @@ The difficulty with high-dispersion spectral analysis is that it takes a lot of 
 	  import numpy as np
 	  import matplotlib.pyplot as plt
 	  from exojax.spec import AutoXS, AutoRT
-	  from exojax.spec.rtransfer import nugrid
+	  from exojax.utils.grids import wavenumber_grid
 	  
 	  nus,wav,res=nugrid(23200,23300,1000,"AA")
 	  autoxs=AutoXS(nus,"ExoMol","CO",memory_size=30)
