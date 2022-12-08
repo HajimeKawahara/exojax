@@ -34,13 +34,15 @@ def lbd_coefficients(elower_lines,
 
     if Twt == Tref:
         print("Premodit E Grid: Twt = Tref")
-    else:
+    elif Twt > Tref:
         print("Premodit temeprature for weight Twt=", Twt, "K")
         xl = np.exp(-hcperk * xl * (1.0 / Twt - 1.0 / Tref))
         xi = np.exp(-hcperk * xi * (1.0 / Twt - 1.0 / Tref))
-    
-    #if Twt < Tref:
-    #    xl = xl[::-1]
+    elif Twt < Tref:
+        xl = np.exp( hcperk * xl * (1.0 / Twt - 1.0 / Tref))
+        xi = np.exp( hcperk * xi * (1.0 / Twt - 1.0 / Tref))
+    else:
+        raise ValueError("Invalid Twt=",Twt,"Tref=",Tref)
 
     _check_overflow(conversion_dtype, xl, xi)
 

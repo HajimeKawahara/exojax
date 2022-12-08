@@ -216,19 +216,21 @@ def compute_dElower(T, interval_contrast=0.1):
     return interval_contrast * np.log(10.0) * T / hcperk
 
 
-def make_elower_grid(Tmax, elower, interval_contrast):
-    """compute E_lower grid given interval_contrast of line strength
+def make_elower_grid(elower, dE, Tmax=None, interval_contrast=None):
+    """compute E_lower grid given dE or interval_contrast of line strength
 
     Args: 
-        Tmax: max temperature in Kelvin
         elower: E_lower
+        dE: elower interval in cm-1 
+        Tmax: max temperature in Kelvin
         interval_contrast: putting c = grid_interval_line_strength, then, the contrast of line strength between the upper and lower of the grid becomes c-order of magnitude.
 
     Returns:
         grid of E_lower given interval_contrast
 
     """
-    dE = compute_dElower(Tmax, interval_contrast)
+    if interval_contrast is not None and Tmax is not None:
+        dE = compute_dElower(Tmax, interval_contrast)
     min_elower = np.min(elower)
     max_elower = np.max(elower)
     Ng_elower = int((max_elower - min_elower) / dE) + 2

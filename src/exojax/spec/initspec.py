@@ -94,7 +94,7 @@ def init_premodit(nu_lines,
                   line_strength_ref,
                   Twt,
                   Tref=Tref_original,
-                  interval_contrast=0.1,
+                  dE=160.0,
                   dit_grid_resolution=0.2,
                   diffmode=0,
                   warning=False):
@@ -109,7 +109,7 @@ def init_premodit(nu_lines,
         n_Texp: temperature exponent (n_Texp for ExoMol, n_air for HITRAN/HITEMP)
         line_strength_ref: line strength at reference Tref
         Twt: temperature for weight in Kelvin
-        interval_contrast: putting c = grid_interval_line_strength, then, the contrast of line strength between the upper and lower of the grid becomes c-order of magnitude.
+        dE: Elower grid interval
         dit_grid_resolution: DIT grid resolution 
         diffmode (int): i-th Taylor expansion is used for the weight, default is 1.
 
@@ -133,9 +133,7 @@ def init_premodit(nu_lines,
 
     R = resolution_eslog(nu_grid)
     ngamma_ref = gamma_ref / nu_lines * R
-    elower_grid = make_elower_grid(Twt,
-                                   elower,
-                                   interval_contrast=interval_contrast)
+    elower_grid = make_elower_grid(elower,dE)                 
     ngamma_ref_grid, n_Texp_grid = make_broadpar_grid(
         ngamma_ref, n_Texp, Twt, dit_grid_resolution=dit_grid_resolution)
 

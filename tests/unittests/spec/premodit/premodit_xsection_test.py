@@ -17,10 +17,11 @@ import warnings
 
 @pytest.mark.parametrize("diffmode", [0, 1])
 def test_xsection_premodit_exomol(diffmode):
-    interval_contrast = 0.3
+    #interval_contrast = 0.3
+    dE = 300.0
     dit_grid_resolution = 0.1
-    Twt = 700.0
-    Tref = 1400.0
+    Twt = 800.0
+    Tref = 610.0
     Ttest = 1200.0
     Ptest = 1.0
     mdb = mock_mdbExomol()
@@ -43,7 +44,7 @@ def test_xsection_premodit_exomol(diffmode):
         mdb.line_strength_ref,
         Twt,
         Tref=Tref,
-        interval_contrast=interval_contrast,
+        dE=dE,
         dit_grid_resolution=dit_grid_resolution,
         diffmode=diffmode,
         warning=False)
@@ -151,7 +152,7 @@ if __name__ == "__main__":
     plt.xlabel("wavenumber cm-1")
     plt.axhline(0.01,color="gray",lw=0.5)
     plt.axhline(-0.01,color="gray",lw=0.5)
-    
+    plt.ylim(-0.03,0.03)
     plt.legend()
     plt.savefig("premodit"+str(diffmode)+".png")
     plt.show()
