@@ -38,6 +38,9 @@ def lbd_coefficients(elower_lines,
         print("Premodit temeprature for weight Twt=", Twt, "K")
         xl = np.exp(-hcperk * xl * (1.0 / Twt - 1.0 / Tref))
         xi = np.exp(-hcperk * xi * (1.0 / Twt - 1.0 / Tref))
+    
+    #if Twt < Tref:
+    #    xl = xl[::-1]
 
     _check_overflow(conversion_dtype, xl, xi)
 
