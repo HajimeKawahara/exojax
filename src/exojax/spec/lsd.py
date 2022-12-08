@@ -62,41 +62,6 @@ def npgetix(x, xv):
     return cont, index.astype(int)
 
 
-def npgetix_exp(x, xv, Ttyp, Tref=Tref_original, conversion_dtype=np.float64):
-    """numpy version of getix weigthed by exp(-hc/kT).
-
-    Args:
-        x: x array
-        xv: x grid
-        Ttyp: typical temperature for the temperature correction in Kelvin
-        Tref: reference temperature in Kelvin, default is 296.0 K
-        converted_dtype: data type for conversion. Needs enough large because this code uses exp.
-        
-    Returns:
-        cont (contribution)
-        index (index)
-
-    Note:
-       cont is the contribution for i=index+1. 1 - cont is the contribution for i=index. For other i, the contribution should be zero.
-    """
-    
-    x_ = np.array(x, dtype=conversion_dtype)
-    xv_ = np.array(xv, dtype=conversion_dtype)
-    tfac = 1.0 / Ttyp - 1.0 / Tref
-    x_ = np.exp(-hcperk * x_ * tfac)
-    xv_ = np.exp(-hcperk * xv_ * tfac)
-
-    # check overflow
-    if np.isinf(np.max(x_)) or np.isinf(np.max(xv_)):
-        print("\n conversion_dtype = ", conversion_dtype, "\n")
-        raise ValueError("Use larger conversion_dtype.")
-
-    indarr = np.arange(len(xv_))
-    pos = np.interp(x_, xv_, indarr)
-    cont, index = np.modf(pos)
-    return cont, index.astype(int)
-
-
 def add2D(a, w, cx, ix, cy, iy):
     """Add into an array when contirbutions and indices are given (2D).
 
@@ -183,7 +148,7 @@ def npadd3D_direct1D(a,
 
     conjugate_cx = sumx - cx
     conjugate_cz = sumz - cz
-    
+
     np.add.at(a, (ix, direct_iy, iz),
               w * conjugate_cx * direct_cy * conjugate_cz)
     np.add.at(a, (ix + 1, direct_iy, iz), w * cx * direct_cy * conjugate_cz)

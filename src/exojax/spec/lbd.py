@@ -2,6 +2,7 @@ import numpy as np
 from exojax.utils.constants import hcperk
 from exojax.spec.lsd import npgetix
 
+
 def lbd_coefficients(elower_lines,
                      elower_grid,
                      Tref,
@@ -22,7 +23,6 @@ def lbd_coefficients(elower_lines,
         index
 
     Note:
-        This function is practically an extension of spec.lsd.npgetix_exp. 
         Twp (Temperature at the weight point) corresponds to Ttyp, but not typical temparture at all.  
         zeroth and first coefficients are at Point 2, i.e. for i=index+1. 
         1 - zeroth_coefficient gives the zeroth coefficient at Point 1, i.e. for i=index.
@@ -31,8 +31,13 @@ def lbd_coefficients(elower_lines,
 
     xl = np.array(elower_lines, dtype=conversion_dtype)
     xi = np.array(elower_grid, dtype=conversion_dtype)
-    xl = np.exp(-hcperk * xl * (1.0 / Twt - 1.0 / Tref))
-    xi = np.exp(-hcperk * xi * (1.0 / Twt - 1.0 / Tref))
+
+    if Twt == Tref:
+        print("Premodit E Grid: Twt = Tref")
+    else:
+        print("Premodit temeprature for weight Twt=", Twt, "K")
+        xl = np.exp(-hcperk * xl * (1.0 / Twt - 1.0 / Tref))
+        xi = np.exp(-hcperk * xi * (1.0 / Twt - 1.0 / Tref))
 
     _check_overflow(conversion_dtype, xl, xi)
 
@@ -52,6 +57,7 @@ def lbd_coefficients(elower_lines,
     first_coeff = -hcperk * ((xpl - xp1) * dx - (xl - x1) *
                              (xp2 - xp1)) / dx**2
     return zeroth_coeff, first_coeff, index
+
 
 def _check_overflow(conversion_dtype, x_, xv_):
     if np.isinf(np.max(x_)) or np.isinf(np.max(xv_)):
@@ -78,4 +84,3 @@ def weight(T, Twt, zeroth_coeff, first_coeff):
     weight2 = zeroth_coeff + first_coeff * (1.0 / T - 1.0 / Twt)
 
     return weight1, weight2
-

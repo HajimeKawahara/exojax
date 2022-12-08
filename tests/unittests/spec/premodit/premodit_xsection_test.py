@@ -19,8 +19,8 @@ import warnings
 def test_xsection_premodit_exomol(diffmode):
     interval_contrast = 0.3
     dit_grid_resolution = 0.1
-    Twt = 1400.0
-    Tref = 800.0
+    Twt = 700.0
+    Tref = 1400.0
     Ttest = 1200.0
     Ptest = 1.0
     mdb = mock_mdbExomol()
@@ -127,7 +127,7 @@ if __name__ == "__main__":
     from exojax.test.data import TESTDATA_CO_EXOMOL_MODIT_XS_REF
     import matplotlib.pyplot as plt
     #import jax.profiler
-    diffmode = 0
+    diffmode = 1
     nus, xs, dE, Twt, Tref, Tin = test_xsection_premodit_exomol(diffmode)
     filename = pkg_resources.resource_filename(
         'exojax', 'data/testdata/' + TESTDATA_CO_EXOMOL_MODIT_XS_REF)
