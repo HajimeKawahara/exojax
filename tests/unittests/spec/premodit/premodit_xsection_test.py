@@ -18,10 +18,13 @@ import warnings
 @pytest.mark.parametrize("diffmode", [0, 1])
 def test_xsection_premodit_exomol(diffmode):
     #interval_contrast = 0.3
-    dE = 300.0
+    dE = 1200.0
     dit_grid_resolution = 0.1
-    Twt = 800.0
-    Tref = 610.0
+    Tref = 800.0
+    Twt = 610.0
+    #Twt = 800.0
+    #Tref = 610.0
+
     Ttest = 1200.0
     Ptest = 1.0
     mdb = mock_mdbExomol()

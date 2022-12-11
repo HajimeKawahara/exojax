@@ -29,7 +29,7 @@ def example_lbd_2():
     config.update("jax_enable_x64", True)
     Twt = 300.0
     Tref = 700.0
-    elower_lines = np.array([170.0, 230.0])
+    elower_lines = np.array([70.0, 230.0])
     elower_grid = np.array([0.0, 100.0, 200.0, 300.0])
     p1 = 0.7
     p2 = 0.3
