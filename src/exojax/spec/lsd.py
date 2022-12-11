@@ -9,8 +9,6 @@ import numpy as np
 from jax.numpy import index_exp
 import jax.numpy as jnp
 from jax import jit
-import warnings
-from exojax.utils.constants import hcperk, Tref_original
 
 
 def getix(x, xv):
@@ -60,6 +58,7 @@ def npgetix(x, xv):
     pos = np.interp(x, xv, indarr)
     cont, index = np.modf(pos)
     return cont, index.astype(int)
+
 
 def add2D(a, w, cx, ix, cy, iy):
     """Add into an array when contirbutions and indices are given (2D).
@@ -147,7 +146,7 @@ def npadd3D_direct1D(a,
 
     conjugate_cx = sumx - cx
     conjugate_cz = sumz - cz
-    
+
     np.add.at(a, (ix, direct_iy, iz),
               w * conjugate_cx * direct_cy * conjugate_cz)
     np.add.at(a, (ix + 1, direct_iy, iz), w * cx * direct_cy * conjugate_cz)
