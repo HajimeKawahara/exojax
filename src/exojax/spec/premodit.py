@@ -4,7 +4,7 @@
 import numpy as np
 import jax.numpy as jnp
 from jax import jit, vmap
-from exojax.spec.lsd import npgetix, npgetix_exp, npadd3D_multi_index
+from exojax.spec.lsd import npgetix, npadd3D_multi_index
 from exojax.utils.constants import hcperk
 from exojax.utils.constants import Tref_original
 from exojax.spec.modit_scanfft import calc_xsection_from_lsd_scanfft
@@ -15,9 +15,9 @@ from exojax.spec.lbd import lbd_coefficients
 
 
 @jit
-def xsvector(T, P, nsigmaD, lbd_zeroth, lbd_first, Tref, Twt, R, pmarray, nu_grid,
-             elower_grid, multi_index_uniqgrid, ngamma_ref_grid, n_Texp_grid,
-             qt):
+def xsvector(T, P, nsigmaD, lbd_zeroth, lbd_first, Tref, Twt, R, pmarray,
+             nu_grid, elower_grid, multi_index_uniqgrid, ngamma_ref_grid,
+             n_Texp_grid, qt):
     """compute cross section vector, with scan+fft, using the first Taylor expansion
 
     Args:
@@ -286,15 +286,28 @@ def generate_lbd(line_strength_ref,
 
     # We extend the LBD grid to +1 along elower direction. See Issue #273
     Ng_elower_plus_one = len(elower_grid) + 1
+    
+    # LBD zeroth 
     lbd_zeroth = np.zeros((Ng_nu, Ng_broadpar, Ng_elower_plus_one),
                           dtype=np.float64)
+    zeroth_coeff_elower, first_coeff_elower, index_elower = lbd_coefficients(
+        elower, elower_grid, Tref, Twt, diffmode)
+    lbd_zeroth = npadd3D_multi_index(lbd_zeroth,
+                                     line_strength_ref,
+                                     cont_nu,
+                                     index_nu,
+                                     zeroth_coeff_elower,
+                                     index_elower,
+                                     uidx_bp,
+                                     multi_cont_lines,
+                                     neighbor_uidx,
+                                     sumz=1.0)
+    lbd_zeroth = convert_to_jnplog(lbd_zeroth)
+
+    # LBD first
     if diffmode == 0:
-        zeroth_coeff_elower, index_elower = npgetix_exp(
-            elower, elower_grid, Twt, Tref)
         lbd_first = None
     elif diffmode == 1:
-        zeroth_coeff_elower, first_coeff_elower, index_elower = lbd_coefficients(
-            elower, elower_grid, Tref, Twt)
         lbd_first = np.zeros((Ng_nu, Ng_broadpar, Ng_elower_plus_one),
                              dtype=np.float64)
         lbd_first = npadd3D_multi_index(lbd_first,
@@ -307,23 +320,10 @@ def generate_lbd(line_strength_ref,
                                         multi_cont_lines,
                                         neighbor_uidx,
                                         sumz=0.0)
-        #lbd_first = convert_to_jnplog(lbd_first)
         lbd_first = jnp.array(lbd_first[:, :, 0:-1])
     else:
         raise ValueError("diffmode = 0 or 1 is allowed.", UserWarning)
 
-    lbd_zeroth = npadd3D_multi_index(lbd_zeroth,
-                                     line_strength_ref,
-                                     cont_nu,
-                                     index_nu,
-                                     zeroth_coeff_elower,
-                                     index_elower,
-                                     uidx_bp,
-                                     multi_cont_lines,
-                                     neighbor_uidx,
-                                     sumz=1.0)
-
-    lbd_zeroth = convert_to_jnplog(lbd_zeroth)
     return lbd_zeroth, lbd_first, multi_index_uniqgrid
 
 
@@ -393,12 +393,13 @@ def unbiased_lsd_zeroth(lbd_zeroth, T, Tref, nu_grid, elower_grid, qt):
         LSD (0th), shape = (number_of_wavenumber_bin, number_of_broadening_parameters)
         
     """
-    Slsd = jnp.sum(jnp.exp(logf_bias(elower_grid, T, Tref) + lbd_zeroth), axis=-1)
+    Slsd = jnp.sum(jnp.exp(logf_bias(elower_grid, T, Tref) + lbd_zeroth),
+                   axis=-1)
     return (Slsd.T * g_bias(nu_grid, T, Tref) / qt).T
 
 
-def unbiased_lsd_first(lbd_zeroth, lbd_first, T, Tref, Twt, nu_grid, elower_grid,
-                       qt):
+def unbiased_lsd_first(lbd_zeroth, lbd_first, T, Tref, Twt, nu_grid,
+                       elower_grid, qt):
     """ unbias the biased LSD
 
     Args:
