@@ -209,10 +209,10 @@ class MdbExomol(CapiMdbExomol):
         """interpolated partition function.
 
         Args:
-           T: temperature
+            T: temperature
 
         Returns:
-           Q(T) interpolated in jnp.array
+            Q(T) interpolated in jnp.array
         """
         return jnp.interp(T, self.T_gQT, self.gQT)
 
@@ -220,10 +220,10 @@ class MdbExomol(CapiMdbExomol):
         """interpolated partition function ratio.
 
         Args:
-           T: temperature
+            T: temperature
 
         Returns:
-           qr(T)=Q(T)/Q(Tref) interpolated in jnp.array
+            qr(T)=Q(T)/Q(Tref) interpolated in jnp.array
         """
         return self.QT_interp(T) / self.QT_interp(self.Tref)
 
@@ -233,8 +233,7 @@ class MdbExomol(CapiMdbExomol):
         Args:
             Tref_new (float): new Tref in Kelvin
         """
-        print("Change the reference temperature from " + str(self.Tref) +
-              "K to " + str(Tref_new) + " K.")
+        print("Tref changed: " + str(self.Tref) + "K->" + str(Tref_new) + "K")
         qr = self.qr_interp(Tref_new)
         self.line_strength_ref = line_strength_numpy(Tref_new,
                                                      self.line_strength_ref,
@@ -370,7 +369,8 @@ class MdbHitemp(HITEMPDatabaseManager):
             QTtyp = Q.at(T=self.Ttyp)
             load_mask = self.compute_load_mask(df, QTtyp / QTref)
         self.instances_from_dataframes(df[load_mask])
-        self.gQT, self.T_gQT = hitranapi.make_partition_function_grid_hitran(self.molecid, self.uniqiso)
+        self.gQT, self.T_gQT = hitranapi.make_partition_function_grid_hitran(
+            self.molecid, self.uniqiso)
 
         if gpu_transfer:
             self.generate_jnp_arrays()
@@ -620,7 +620,8 @@ class MdbHitran(HITRANDatabaseManager):
             QTtyp = Q.at(T=self.Ttyp)
             load_mask = self.compute_load_mask(df, QTtyp / QTref)
         self.instances_from_dataframes(df[load_mask])
-        self.gQT, self.T_gQT = hitranapi.make_partition_function_grid_hitran(self.molecid, self.uniqiso)
+        self.gQT, self.T_gQT = hitranapi.make_partition_function_grid_hitran(
+            self.molecid, self.uniqiso)
 
         if gpu_transfer:
             self.generate_jnp_arrays()
@@ -744,7 +745,7 @@ class MdbHitran(HITRANDatabaseManager):
         from exojax.utils.isotopes import exact_isotope_name_from_isotope
         return exact_isotope_name_from_isotope(self.simple_molecule_name,
                                                isotope)
-                                               
+
     def change_reference_temperature(self, Tref_new):
         """change the reference temperature Tref and recompute Sij0
 

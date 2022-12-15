@@ -24,14 +24,15 @@ class OpaPremodit(OpaCalc):
         super().__init__()
 
         #default setting
-        self.dit_grid_resolution = 0.2
+        self.dit_grid_resolution = 0.1
         self.diffmode = 1
         self.warning = True
         #need to refine
         #self.set_dET(Tlow, Thigh, precision)
-        self.Twt = 610.0
+        #self.Twt = 610.0
+        self.Twt = 1000.0
         self.Tref = 800.0
-        self.dE = 1200.0
+        self.dE = 2000.0
 
         # initialize mdb and nu_grid
         if mdb is not None and nu_grid is not None:

@@ -38,7 +38,7 @@ mdb = api.MdbExomol('.database/H2O/1H2-16O/POKAZATEL', nus, gpu_transfer=True)
 #mdb.change_reference_temperature(Tref)
 print('N_H2O=', len(mdb.nu_lines))
 
-T = 700.0
+T = 2000.0
 P = 1.0
 
 #Pre MODIT LSD
