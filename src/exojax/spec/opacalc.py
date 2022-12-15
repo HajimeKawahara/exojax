@@ -19,23 +19,24 @@ class OpaCalc():
 
 
 class OpaPremodit(OpaCalc):
-    def __init__(self, nu0, nu1, resolution=700000, Nx=None, mdb=None):
+    def __init__(self, nu0, nu1, unit, resolution=700000, Nx=None, mdb=None):
         super().__init__()
 
         if Nx is None:
             Nx = nx_from_resolution_eslog(nu0, nu1, resolution)
         if np.mod(Nx, 2) == 1:
             Nx = Nx + 1
-
+        print(Nx)
         self.nu_grid, self.wav, self.resolution = wavenumber_grid(
-            nu0, nu1, Nx, unit='AA', xsmode="premodit")
+            nu0, nu1, Nx, unit=unit, xsmode="premodit")
 
         #default setting
         self.dit_grid_resolution = 0.2
         self.diffmode = 1
         self.warning = True
         #need to refine
-        self.Twt = 650.0
+        self.set_dET(Tlow, Thigh, precision)
+        self.Twt = 610.0
         self.Tref = 800.0
         self.dE = 1200.0
 

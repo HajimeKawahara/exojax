@@ -4,7 +4,7 @@ import pkg_resources
 import pandas as pd
 import numpy as np
 from exojax.spec.initspec import init_premodit
-from exojax.spec.initspec import init_premodit_from_db
+from exojax.spec.opacalc import OpaPremodit
 from exojax.utils.grids import wavenumber_grid
 from exojax.spec.premodit import xsvector, xsvector_zeroth
 from exojax.test.emulate_mdb import mock_mdbExomol
@@ -32,21 +32,22 @@ def test_xsection_premodit_exomol(diffmode):
     mdb.change_reference_temperature(Tref)
     #Mmol = molmass("CO")
     Nx = 5000
+    opa = OpaPremodit(22800.0, 23100.0, unit="AA", Nx=Nx, mdb=mdb)
+    #    nu_grid, wav, res = wavenumber_grid(22800.0,
+    #                                        23100.0,
+    #                                        Nx,
+    #                                        unit='AA',
+    #                                        xsmode="premodit")
+    lbd_zeroth, lbd_first, multi_index_uniqgrid, elower_grid, ngamma_ref_grid, n_Texp_grid, R, pmarray = opa.opainfo
 
-    nu_grid, wav, res = wavenumber_grid(22800.0,
-                                        23100.0,
-                                        Nx,
-                                        unit='AA',
-                                        xsmode="premodit")
-
-    lbd_zeroth, lbd_first, multi_index_uniqgrid, elower_grid, ngamma_ref_grid, n_Texp_grid, R, pmarray = init_premodit_from_db(
-        mdb,
-        nu_grid,
-        Twt,
-        dE=dE,
-        dit_grid_resolution=dit_grid_resolution,
-        diffmode=diffmode,
-        warning=False)
+    #    lbd_zeroth, lbd_first, multi_index_uniqgrid, elower_grid, ngamma_ref_grid, n_Texp_grid, R, pmarray = init_premodit_from_db(
+    #        mdb,
+    #        nu_grid,
+    ##        Twt,
+    #       dE=dE,
+    #        dit_grid_resolution=dit_grid_resolution,
+    #        diffmode=diffmode,
+    #        warning=False)
 
     dE = elower_grid[1] - elower_grid[0]
     print("dE=", dE)
@@ -56,19 +57,19 @@ def test_xsection_premodit_exomol(diffmode):
     qt = mdb.qr_interp(Ttest)
     if diffmode == 0:
         xsv = xsvector_zeroth(Ttest, Ptest, nsigmaD, lbd_zeroth, Tref, R,
-                              pmarray, nu_grid, elower_grid,
+                              pmarray, opa.nu_grid, elower_grid,
                               multi_index_uniqgrid, ngamma_ref_grid,
                               n_Texp_grid, qt)
     elif diffmode == 1:
         xsv = xsvector(Ttest, Ptest, nsigmaD, lbd_zeroth, lbd_first, Tref, Twt,
-                       R, pmarray, nu_grid, elower_grid, multi_index_uniqgrid,
+                       R, pmarray, opa.nu_grid, elower_grid, multi_index_uniqgrid,
                        ngamma_ref_grid, n_Texp_grid, qt)
 
     filename = pkg_resources.resource_filename(
         'exojax', 'data/testdata/' + TESTDATA_CO_EXOMOL_PREMODIT_XS_REF)
     dat = pd.read_csv(filename, delimiter=",", names=("nus", "xsv"))
     #assert np.all(xsv == pytest.approx(dat["xsv"].values))
-    return nu_grid, xsv, dE, Twt, Tref, Ttest
+    return opa.nu_grid, xsv, dE, Twt, Tref, Ttest
 
 
 @pytest.mark.parametrize("diffmode", [0, 1])
