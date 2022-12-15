@@ -90,6 +90,7 @@ class MdbExomol(CapiMdbExomol):
         Note:
            The trans/states files can be very large. For the first time to read it, we convert it to HDF/vaex. After the second-time, we use the HDF5 format with vaex instead.
         """
+        self.dbtype = "exomol"
         self.path = pathlib.Path(path).expanduser()
         self.exact_molecule_name = self.path.parents[0].stem
         self.database = str(self.path.stem)
@@ -282,7 +283,7 @@ class MdbHitemp(HITEMPDatabaseManager):
            gpu_transfer: tranfer data to jnp.array?
            inherit_dataframe: if True, it makes self.df instance available, which needs more DRAM when pickling.
         """
-
+        self.dbtype = "hitran"
         self.path = pathlib.Path(path).expanduser()
         self.molecid = search_molecid(str(self.path.stem))
         self.simple_molecule_name = get_molecule(self.molecid)
@@ -554,7 +555,7 @@ class MdbHitran(HITRANDatabaseManager):
            gpu_transfer: tranfer data to jnp.array?
            inherit_dataframe: if True, it makes self.df instance available, which needs more DRAM when pickling.
         """
-
+        self.dbtype = "hitran"
         self.path = pathlib.Path(path).expanduser()
         self.molecid = search_molecid(str(self.path.stem))
         self.simple_molecule_name = get_molecule(self.molecid)

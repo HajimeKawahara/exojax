@@ -4,6 +4,7 @@ import pkg_resources
 import pandas as pd
 import numpy as np
 from exojax.spec.initspec import init_premodit
+from exojax.spec.initspec import init_premodit_from_db
 from exojax.utils.grids import wavenumber_grid
 from exojax.spec.premodit import xsvector, xsvector_zeroth
 from exojax.test.emulate_mdb import mock_mdbExomol
@@ -38,33 +39,29 @@ def test_xsection_premodit_exomol(diffmode):
                                         unit='AA',
                                         xsmode="premodit")
 
-    lbd_zeroth, lbd_first, multi_index_uniqgrid, elower_grid, ngamma_ref_grid, n_Texp_grid, R, pmarray = init_premodit(
-        mdb.nu_lines,
+    lbd_zeroth, lbd_first, multi_index_uniqgrid, elower_grid, ngamma_ref_grid, n_Texp_grid, R, pmarray = init_premodit_from_db(
+        mdb,
         nu_grid,
-        mdb.elower,
-        mdb.alpha_ref,
-        mdb.n_Texp,
-        mdb.line_strength_ref,
         Twt,
-        Tref=Tref,
         dE=dE,
         dit_grid_resolution=dit_grid_resolution,
         diffmode=diffmode,
         warning=False)
 
-    dE = elower_grid[1]-elower_grid[0]
-    print("dE=",dE)
+    dE = elower_grid[1] - elower_grid[0]
+    print("dE=", dE)
 
     Mmol = molmass("CO")
     nsigmaD = normalized_doppler_sigma(Ttest, Mmol, R)
     qt = mdb.qr_interp(Ttest)
     if diffmode == 0:
-        xsv = xsvector_zeroth(Ttest, Ptest, nsigmaD, lbd_zeroth, Tref, R, pmarray,
-                              nu_grid, elower_grid, multi_index_uniqgrid,
-                              ngamma_ref_grid, n_Texp_grid, qt)
+        xsv = xsvector_zeroth(Ttest, Ptest, nsigmaD, lbd_zeroth, Tref, R,
+                              pmarray, nu_grid, elower_grid,
+                              multi_index_uniqgrid, ngamma_ref_grid,
+                              n_Texp_grid, qt)
     elif diffmode == 1:
-        xsv = xsvector(Ttest, Ptest, nsigmaD, lbd_zeroth, lbd_first, Tref, Twt, R,
-                       pmarray, nu_grid, elower_grid, multi_index_uniqgrid,
+        xsv = xsvector(Ttest, Ptest, nsigmaD, lbd_zeroth, lbd_first, Tref, Twt,
+                       R, pmarray, nu_grid, elower_grid, multi_index_uniqgrid,
                        ngamma_ref_grid, n_Texp_grid, qt)
 
     filename = pkg_resources.resource_filename(
@@ -143,7 +140,8 @@ if __name__ == "__main__":
     fig = plt.figure()
     ax = fig.add_subplot(211)
     #plt.title("premodit_xsection_test.py diffmode=" + str(diffmode))
-    plt.title("diffmode=" + str(diffmode)+" T="+str(Tin)+" Tref="+str(Tref)+" Twt="+str(Twt)+" dE="+str(dE))
+    plt.title("diffmode=" + str(diffmode) + " T=" + str(Tin) + " Tref=" +
+              str(Tref) + " Twt=" + str(Twt) + " dE=" + str(dE))
     ax.plot(nus, xs, label="PreMODIT")
     ax.plot(nus, dat["xsv"], label="MODIT")
     plt.legend()
@@ -153,9 +151,9 @@ if __name__ == "__main__":
     ax.plot(nus, 1.0 - xs / dat["xsv"], label="dif = (MODIT - PreMODIT)/MODIT")
     plt.ylabel("dif")
     plt.xlabel("wavenumber cm-1")
-    plt.axhline(0.01,color="gray",lw=0.5)
-    plt.axhline(-0.01,color="gray",lw=0.5)
-    plt.ylim(-0.03,0.03)
+    plt.axhline(0.01, color="gray", lw=0.5)
+    plt.axhline(-0.01, color="gray", lw=0.5)
+    plt.ylim(-0.03, 0.03)
     plt.legend()
-    plt.savefig("premodit"+str(diffmode)+".png")
+    plt.savefig("premodit" + str(diffmode) + ".png")
     plt.show()

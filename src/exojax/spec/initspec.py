@@ -15,6 +15,7 @@ from exojax.spec.premodit import make_broadpar_grid
 from exojax.spec.premodit import generate_lbd
 from exojax.utils.constants import Tref_original
 
+
 def init_lpf(nu_lines, nu_grid):
     """Initialization for LPF.
 
@@ -86,6 +87,59 @@ def init_modit(nu_lines, nu_grid, warning=False):
         pmarray)
 
 
+def init_premodit_from_db(db,
+                          nu_grid,
+                          Twt,
+                          dE=160.0,
+                          dit_grid_resolution=0.2,
+                          diffmode=0,
+                          warning=False):
+    """Initialization for PreMODIT using db. 
+
+    Args:
+        db: api/moldb db instance
+        nu_grid: wavenumenr grid [Nnugrid] (should be numpy F64)
+        Twt: temperature for weight in Kelvin
+        dE: Elower grid interval
+        dit_grid_resolution: DIT grid resolution 
+        diffmode (int): i-th Taylor expansion is used for the weight, default is 1.
+
+    Returns:
+        cont_nu: contribution for wavenumber jnp.array
+        index_nu: index for wavenumber jnp.array
+        elower_grid: elower grid 
+        cont_broadpar: contribution for broadening parmaeters
+        index_broadpar: index for broadening parmaeters
+        R: spectral resolution
+        pmarray: (+1,-1) array whose length of len(nu_grid)+1
+
+
+    Note:
+        cont is the contribution for i=index+1. 1 - cont is the contribution for i=index. For other i, the contribution should be zero. dq is computed using numpy not jnp.numpy. If you use jnp, you might observe a significant residual because of the float32 truncation error.
+    """
+    print("db = ",db.dbtype)
+    if db.dbtype == "hitran":
+        print("gamma_air and temperature exponent are used.")
+        gamma_ref = db.gamma_air
+        n_Texp = db.n_air
+    elif db.dbtype == "exomol":
+        gamma_ref = db.alpha_ref
+        n_Texp = db.n_Texp
+
+    return init_premodit(db.nu_lines,
+                         nu_grid,
+                         db.elower,
+                         gamma_ref,
+                         n_Texp,
+                         db.line_strength_ref,
+                         Twt,
+                         Tref=db.Tref,
+                         dE=dE,
+                         dit_grid_resolution=dit_grid_resolution,
+                         diffmode=diffmode,
+                         warning=warning)
+
+
 def init_premodit(nu_lines,
                   nu_grid,
                   elower,
@@ -93,13 +147,12 @@ def init_premodit(nu_lines,
                   n_Texp,
                   line_strength_ref,
                   Twt,
-                  Tref=Tref_original,
+                  Tref,
                   dE=160.0,
                   dit_grid_resolution=0.2,
                   diffmode=0,
                   warning=False):
-    """Initialization for PreMODIT. i.e. Generate nu contribution and index for
-    the line shape density (actually, this is a numpy version of getix)
+    """Initialization for PreMODIT. 
 
     Args:
         nu_lines: wavenumber list of lines [Nline] (should be numpy F64)
@@ -109,6 +162,7 @@ def init_premodit(nu_lines,
         n_Texp: temperature exponent (n_Texp for ExoMol, n_air for HITRAN/HITEMP)
         line_strength_ref: line strength at reference Tref
         Twt: temperature for weight in Kelvin
+        Tref: reference temperature
         dE: Elower grid interval
         dit_grid_resolution: DIT grid resolution 
         diffmode (int): i-th Taylor expansion is used for the weight, default is 1.
@@ -133,14 +187,23 @@ def init_premodit(nu_lines,
 
     R = resolution_eslog(nu_grid)
     ngamma_ref = gamma_ref / nu_lines * R
-    elower_grid = make_elower_grid(elower,dE)                 
+    elower_grid = make_elower_grid(elower, dE)
     ngamma_ref_grid, n_Texp_grid = make_broadpar_grid(
         ngamma_ref, n_Texp, Twt, dit_grid_resolution=dit_grid_resolution)
 
-        
     lbd_zeroth, lbd_first, multi_index_uniqgrid = generate_lbd(
-        line_strength_ref, nu_lines, nu_grid, ngamma_ref, ngamma_ref_grid,
-        n_Texp, n_Texp_grid, elower, elower_grid, Twt, Tref=Tref, diffmode=diffmode)
+        line_strength_ref,
+        nu_lines,
+        nu_grid,
+        ngamma_ref,
+        ngamma_ref_grid,
+        n_Texp,
+        n_Texp_grid,
+        elower,
+        elower_grid,
+        Twt,
+        Tref=Tref,
+        diffmode=diffmode)
     pmarray = np.ones(len(nu_grid) + 1)
     pmarray[1::2] = (pmarray[1::2] * -1.0)
     pmarray = jnp.array(pmarray)
