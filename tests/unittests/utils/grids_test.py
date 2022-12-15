@@ -6,6 +6,8 @@ from exojax.utils.grids import delta_velocity_from_resolution
 from exojax.utils.grids import check_eslog_wavenumber_grid
 from exojax.utils.grids import check_scale_xsmode
 
+
+
 def test_wavenumber_grid():
     Nx=4000
     nus, wav, res = wavenumber_grid(29200.0,29300., Nx, unit='AA')
