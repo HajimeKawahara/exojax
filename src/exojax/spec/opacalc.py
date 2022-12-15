@@ -4,8 +4,9 @@
 from exojax.spec import initspec
 from exojax.utils.grids import wavenumber_grid
 from exojax.utils.instfunc import nx_from_resolution_eslog
+from exojax.utils.grids import nu2wav
+from exojax.utils.instfunc import resolution_eslog, resolution_eslin
 import numpy as np
-
 
 class OpaCalc():
     """Common Opacity Calculator Class
@@ -19,29 +20,34 @@ class OpaCalc():
 
 
 class OpaPremodit(OpaCalc):
-    def __init__(self, nu0, nu1, unit, resolution=700000, Nx=None, mdb=None):
+    def __init__(self, mdb=None, nu_grid=None):
         super().__init__()
-
-        if Nx is None:
-            Nx = nx_from_resolution_eslog(nu0, nu1, resolution)
-        if np.mod(Nx, 2) == 1:
-            Nx = Nx + 1
-        print(Nx)
-        self.nu_grid, self.wav, self.resolution = wavenumber_grid(
-            nu0, nu1, Nx, unit=unit, xsmode="premodit")
 
         #default setting
         self.dit_grid_resolution = 0.2
         self.diffmode = 1
         self.warning = True
         #need to refine
-        self.set_dET(Tlow, Thigh, precision)
+        #self.set_dET(Tlow, Thigh, precision)
         self.Twt = 610.0
         self.Tref = 800.0
         self.dE = 1200.0
 
-        if mdb is not None:
+        # initialize mdb and nu_grid
+        if mdb is not None and nu_grid is not None:
+            self.nu_grid = nu_grid
+            self.wav = nu2wav(self.nu_grid, unit="AA")
+            self.resolution = resolution_eslog(nu_grid)
             self.setmdb(mdb)
+
+    def set_nu_grid(self, x0, x1, unit, resolution=700000, Nx=None):
+        if Nx is None:
+            Nx = nx_from_resolution_eslog(x0, x1, resolution)
+        if np.mod(Nx, 2) == 1:
+            Nx = Nx + 1
+        self.nu_grid, self.wav, self.resolution = wavenumber_grid(
+            x0, x1, Nx, unit=unit, xsmode="premodit")
+
 
     def set_gamma_and_n_Texp(self, mdb):
         if mdb.dbtype == "hitran":
@@ -54,6 +60,7 @@ class OpaPremodit(OpaCalc):
 
     def setmdb(self, mdb):
         print("Set mdb. opainfo is now available.")
+        mdb.change_reference_temperature(self.Tref)
         self.dbtype = mdb.dbtype
         self.set_gamma_and_n_Texp(mdb)
         self.opainfo = initspec.init_premodit(

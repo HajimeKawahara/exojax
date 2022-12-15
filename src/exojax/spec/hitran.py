@@ -14,20 +14,23 @@ def SijT(T, logsij0, nu_lines, elower, qT):
 def line_strength(T, logsij0, nu_lines, elower, qr):
     """Line strength as a function of temperature, JAX/XLA compatible
 
-    Args:
-       T: temperature (K)
-       logsij0: log(Sij(Tref)) (Tref=296K)
-       nu_lines: line center wavenumber (cm-1)
-       elower: elower
-       qr: partition function ratio qr(T) = Q(T)/Q(Tref)
+   Notes:
+      Use Tref=296.0 (default) in moldb
 
-    Returns:
-       Sij(T): Line strength (cm)
-    """
-    Tref = 296.0  # reference tempearture (K)
+   Args:
+      T: temperature (K)
+      logsij0: log(Sij(Tref)) (Tref=296K)
+      nu_lines: line center wavenumber (cm-1)
+      elower: elower
+      qr: partition function ratio qr(T) = Q(T)/Q(Tref)
+
+   Returns:
+      Sij(T): Line strength (cm)
+   """
+    Tref = Tref_original  # reference tempearture (K)
     expow = logsij0 - hcperk * (elower / T - elower / Tref)
-    fac = (1.0-jnp.exp(-hcperk*nu_lines/T)) / \
-        (1.0-jnp.exp(-hcperk*nu_lines/Tref))
+    fac = (1.0 - jnp.exp(-hcperk * nu_lines / T)) / (
+        1.0 - jnp.exp(-hcperk * nu_lines / Tref))
     # expow=logsij0-hcperk*elower*(1.0/T-1.0/Tref)
     # fac=jnp.expm1(-hcperk*nu_lines/T)/jnp.expm1(-hcperk*nu_lines/Tref)
     return jnp.exp(expow) / qr * fac
@@ -68,7 +71,7 @@ def gamma_hitran(P, T, Pself, n_air, gamma_air_ref, gamma_self_ref):
        gamma: pressure gamma factor (cm-1)
     """
     Patm = 1.01325  # atm (bar)
-    Tref = 296.0  # reference tempearture (K)
+    Tref = Tref_original  # reference tempearture (K)
     gamma = (Tref / T)**n_air * (gamma_air_ref *
                                  ((P - Pself) / Patm) + gamma_self_ref *
                                  (Pself / Patm))

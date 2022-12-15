@@ -15,7 +15,7 @@ from exojax.utils.molname import e2s
 
 # currently use radis add/common-api branch
 from exojax.spec import hitranapi
-from exojax.spec.hitranapi import search_molecid
+from exojax.spec.hitranapi import molecid_hitran
 from radis.api.exomolapi import MdbExomol as CapiMdbExomol  #MdbExomol in the common API
 from radis.api.hitempapi import HITEMPDatabaseManager
 from radis.api.hitranapi import HITRANDatabaseManager
@@ -71,7 +71,7 @@ class MdbExomol(CapiMdbExomol):
                  Ttyp=1000.,
                  bkgdatm='H2',
                  broadf=True,
-                 gpu_transfer=False,
+                 gpu_transfer=True,
                  inherit_dataframe=False,
                  local_databases="./"):
         """Molecular database for Exomol form.
@@ -84,7 +84,7 @@ class MdbExomol(CapiMdbExomol):
            Ttyp: typical temperature to calculate Sij(T) used in crit
            bkgdatm: background atmosphere for broadening. e.g. H2, He,
            broadf: if False, the default broadening parameters in .def file is used
-           gpu_transfer: if True, some instances will be transfered to jnp.array
+           gpu_transfer: if True, some instances will be transfered to jnp.array. False is recommended for PreMODIT.
            inherit_dataframe: if True, it makes self.df instance available, which needs more DRAM when pickling.
             
         Note:
@@ -285,7 +285,7 @@ class MdbHitemp(HITEMPDatabaseManager):
         """
         self.dbtype = "hitran"
         self.path = pathlib.Path(path).expanduser()
-        self.molecid = search_molecid(str(self.path.stem))
+        self.molecid = molecid_hitran(str(self.path.stem))
         self.simple_molecule_name = get_molecule(self.molecid)
         self.crit = crit
         self.Tref = Tref_original
@@ -336,8 +336,8 @@ class MdbHitemp(HITEMPDatabaseManager):
             self.download_and_parse(download_urls, download_files)
 
         # Register
-        if not self.is_registered():
-            self.register()
+        # if not self.is_registered():
+        #    self.register()
 
         clean_cache_files = True
         if len(download_files) > 0 and clean_cache_files:
@@ -370,7 +370,7 @@ class MdbHitemp(HITEMPDatabaseManager):
             QTtyp = Q.at(T=self.Ttyp)
             load_mask = self.compute_load_mask(df, QTtyp / QTref)
         self.instances_from_dataframes(df[load_mask])
-        self.gQT, self.T_gQT = hitranapi.get_pf(self.molecid, self.uniqiso)
+        self.gQT, self.T_gQT = hitranapi.make_partition_function_grid_hitran(self.molecid, self.uniqiso)
 
         if gpu_transfer:
             self.generate_jnp_arrays()
@@ -557,7 +557,7 @@ class MdbHitran(HITRANDatabaseManager):
         """
         self.dbtype = "hitran"
         self.path = pathlib.Path(path).expanduser()
-        self.molecid = search_molecid(str(self.path.stem))
+        self.molecid = molecid_hitran(str(self.path.stem))
         self.simple_molecule_name = get_molecule(self.molecid)
 
         #numinf, numtag = hitranapi.read_path(self.path)
@@ -592,8 +592,8 @@ class MdbHitran(HITRANDatabaseManager):
                                     parse_quanta=True)
 
         # Register
-        if not self.is_registered():
-            self.register()
+        #if not self.is_registered():
+        #    self.register()
 
         if len(download_files) > 0:
             self.clean_download_files()
@@ -620,7 +620,7 @@ class MdbHitran(HITRANDatabaseManager):
             QTtyp = Q.at(T=self.Ttyp)
             load_mask = self.compute_load_mask(df, QTtyp / QTref)
         self.instances_from_dataframes(df[load_mask])
-        self.gQT, self.T_gQT = hitranapi.get_pf(self.molecid, self.uniqiso)
+        self.gQT, self.T_gQT = hitranapi.make_partition_function_grid_hitran(self.molecid, self.uniqiso)
 
         if gpu_transfer:
             self.generate_jnp_arrays()

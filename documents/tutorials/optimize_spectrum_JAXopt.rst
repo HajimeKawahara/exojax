@@ -19,13 +19,14 @@ We add Gaussian noise to data. nusd is the observing wavenumber grid.
 
 .. code:: ipython3
 
-    wavd=dat["wav"].values
-    flux=dat["flux"].values
+    wavd=dat["wav"].values[12:-12]
+    flux=dat["flux"].values[12:-12]
     nusd=jnp.array(1.e8/wavd[::-1])
     sigmain=0.05
     norm=40000
     nflux=flux/norm+np.random.normal(0,sigmain,len(wavd))
     plt.plot(wavd[::-1],nflux)
+    
 
 
 
@@ -33,7 +34,7 @@ We add Gaussian noise to data. nusd is the observing wavenumber grid.
 
 .. parsed-literal::
 
-    [<matplotlib.lines.Line2D at 0x7f38e43e98e0>]
+    [<matplotlib.lines.Line2D at 0x7fc0342736a0>]
 
 
 
@@ -45,11 +46,9 @@ We add Gaussian noise to data. nusd is the observing wavenumber grid.
 
     from exojax.spec.lpf import xsmatrix
     from exojax.spec.exomol import gamma_exomol
-    from exojax.spec.hitran import SijT, doppler_sigma, gamma_natural, gamma_hitran
-    from exojax.spec.hitrancia import read_cia, logacia
+    from exojax.spec.hitran import SijT, doppler_sigma, gamma_natural
     from exojax.spec.rtransfer import rtrun, dtauM, dtauCIA, wavenumber_grid
     from exojax.spec import planck, response
-    from exojax.spec.lpf import xsvector
     from exojax.spec import molinfo
     from exojax.utils.constants import RJ, pc, Rs, c
 
@@ -59,27 +58,37 @@ Rp, RV, MMR_CO, T0, alpha, and Vsini.
 .. code:: ipython3
 
     from exojax.spec import rtransfer as rt
-    NP=100
-    Parr, dParr, k=rt.pressure_layer(NP=NP)
-    Nx=1500
-    nus,wav,res=nugrid(np.min(wavd)-5.0,np.max(wavd)+5.0,Nx,unit="AA")
     
-    R=100000.
-    beta=c/(2.0*np.sqrt(2.0*np.log(2.0))*R)
+    NP = 100
+    Parr, dParr, k = rt.pressure_layer(NP=NP)
+    Nx = 1500
+    nus, wav, res = wavenumber_grid(np.min(wavd) - 5.0,
+                                    np.max(wavd) + 5.0,
+                                    Nx,
+                                    unit="AA")
     
-    molmassCO=molinfo.molmass("CO")
-    mmw=2.33 #mean molecular weight
-    mmrH2=0.74
-    molmassH2=molinfo.molmass("H2")
-    vmrH2=(mmrH2*mmw/molmassH2) #VMR
+    R = 100000.
+    beta = c / (2.0 * np.sqrt(2.0 * np.log(2.0)) * R)
     
-    Mp = 33.2 #fixing mass...
+    molmassCO = molinfo.molmass("CO")
+    mmw = 2.33  #mean molecular weight
+    mmrH2 = 0.74
+    molmassH2 = molinfo.molmass("H2")
+    vmrH2 = (mmrH2 * mmw / molmassH2)  #VMR
+    
+    Mp = 33.2  #fixing mass...
+
 
 
 .. parsed-literal::
 
-    xsmode assumes ESLOG: mode= lpf
-    WARNING: resolution may be too small. R= 382411.0658991112
+    xsmode assumes ESLOG in wavenumber space: mode=lpf
+
+
+.. parsed-literal::
+
+    /home/kawahara/exojax/src/exojax/utils/grids.py:124: UserWarning: Resolution may be too small. R=399489.9978380062
+      warnings.warn('Resolution may be too small. R=' + str(resolution),
 
 
 Loading the molecular database of CO and the CIA
@@ -94,7 +103,7 @@ Loading the molecular database of CO and the CIA
 .. parsed-literal::
 
     Background atmosphere:  H2
-    Reading transition file
+    Reading .database/CO/12C-16O/Li2015/12C-16O__Li2015.trans.bz2
     .broad is used.
     Broadening code level= a0
     H2-H2
@@ -111,7 +120,7 @@ We have only 39 CO lines.
 
 .. parsed-literal::
 
-    [<matplotlib.lines.Line2D at 0x7f370819df40>]
+    [<matplotlib.lines.Line2D at 0x7fbca188bcd0>]
 
 
 
@@ -148,6 +157,15 @@ Now we write the model, which is used in HMC-NUTS.
 
 .. code:: ipython3
 
+    
+    #response and rotation settings 
+    from exojax.spec.response import ipgauss_sampling
+    from exojax.spec.spin_rotation import convolve_rigid_rotation
+    from exojax.utils.grids import velocity_grid
+    vsini_max = 100.0
+    vr_array = velocity_grid(res, vsini_max)
+    
+    
     def model_c(params,boost,nu1):
         Rp,RV,MMR_CO,T0,alpha,vsini,RV=params*boost
         g=2478.57730044555*Mp/Rp**2 #gravity                                        
@@ -179,9 +197,8 @@ Now we write the model, which is used in HMC-NUTS.
             sourcef = planck.piBarr(Tarr,nus)
             F0=rtrun(dtau,sourcef)/norm
             
-            Frot=response.rigidrot(nus,F0,vsini,u1,u2)
-            #Frot=rigidrotx(nus,F0,vsini,u1,u2)
-            mu=response.ipgauss_sampling(nusd,nus,Frot,beta,RV)
+            Frot = convolve_rigid_rotation(F0, vr_array, vsini, u1, u2)
+            mu = ipgauss_sampling(nusd, nus, Frot, beta, RV)
             return mu
         
         model=obyo(nu1,nus,numatrix_CO,mdbCO,cdbH2H2)
@@ -218,7 +235,7 @@ Then, run the gradient descent.
 
 .. code:: ipython3
 
-    gd = jaxopt.GradientDescent(fun=objective, maxiter=1000,stepsize=1.e-4)
+    gd = jaxopt.GradientDescent(fun=objective, maxiter=1000, stepsize=1.e-4)
     res = gd.run(init_params=initpar)
     params, state = res
 
@@ -233,8 +250,8 @@ The best-fit parameters
 
 .. parsed-literal::
 
-    DeviceArray([1.2338543e+00, 9.0000000e+00, 4.9583600e-03, 1.3364286e+03,
-                 9.9846944e-02, 1.9616049e+01, 1.0154862e+01], dtype=float32)
+    DeviceArray([9.9508977e-01, 9.0000000e+00, 5.0294059e-03, 1.3074337e+03,
+                 9.9846527e-02, 1.9954092e+01, 9.6740799e+00], dtype=float32)
 
 
 
@@ -276,7 +293,7 @@ One by one update
 
 .. parsed-literal::
 
-    100%|█████████████████████████████████████████████████████████████████████████████████| 300/300 [04:25<00:00,  1.13it/s]
+    100%|██████████| 30/30 [00:21<00:00,  1.41it/s]
 
 
 Using ADAM optimizer
@@ -287,14 +304,16 @@ Using ADAM optimizer
     from jaxopt import OptaxSolver
     import optax
 
+
 .. code:: ipython3
 
+    import tqdm
     adam = OptaxSolver(opt=optax.adam(2.e-2), fun=objective)
     state = adam.init_state(initpar)
     params=np.copy(initpar)
     
     params_adam=[]
-    #Nit=300
+    Nit=300
     for _ in  tqdm.tqdm(range(Nit)):
         params,state=adam.update(params,state)
         params_adam.append(params)
@@ -302,7 +321,7 @@ Using ADAM optimizer
 
 .. parsed-literal::
 
-    100%|█████████████████████████████████████████████████████████████████████████████████| 300/300 [02:16<00:00,  2.20it/s]
+    100%|██████████| 30/30 [00:13<00:00,  2.29it/s]
 
 
 .. code:: ipython3
@@ -320,13 +339,15 @@ Using ADAM optimizer
 
 .. parsed-literal::
 
-    DeviceArray([7.5132293e-01, 9.0000000e+00, 6.3453913e-03, 1.2756888e+03,
-                 9.9074565e-02, 1.9556759e+01, 1.0081638e+01], dtype=float32)
+    DeviceArray([6.8444943e-01, 9.0000000e+00, 7.4127272e-02, 1.3369791e+03,
+                 9.9759318e-02, 2.2218807e+01, 5.4696321e+00], dtype=float32)
 
 
 
 make a movie
 ------------
+
+make the movie directory (mkdir movie)
 
 .. code:: ipython3
 
@@ -349,7 +370,7 @@ make a movie
 
 .. parsed-literal::
 
-    100%|█████████████████████████████████████████████████████████████████████████████████| 300/300 [02:43<00:00,  1.84it/s]
+    100%|██████████| 30/30 [00:14<00:00,  2.00it/s]
 
 
 .. code:: ipython3

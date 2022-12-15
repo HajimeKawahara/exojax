@@ -41,7 +41,7 @@ ONEARR = np.ones_like(Parr)
 
 #Load H2O data with premodit
 molmassH2O = molinfo.molmass("H2O")
-mdbH2O_orig = api.MdbExomol('.database/H2O/1H2-16O/POKAZATEL', nus)
+mdbH2O_orig = api.MdbExomol('.database/H2O/1H2-16O/POKAZATEL', nus, gpu_transfer=False)
 print('N_H2O=', len(mdbH2O_orig.nu_lines))
 #
 Tgue = 3000.

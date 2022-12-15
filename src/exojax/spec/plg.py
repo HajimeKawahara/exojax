@@ -46,7 +46,7 @@ def plg_elower_addcon(indexa,Na,cnu,indexnu,nu_grid,mdb,Tgue, errTgue=500., elow
     Tuplim = Tgue + errTgue
     Tuplimc = Tuplim * coefTgue
     float32_almost_max = 2.**(2**7-1)
-    preov = max(- hcperk*(elower/Tuplimc - elower/Tref)) - np.log(float32_almost_max) #ad hoc parameter to prevent overflow
+    preov = np.max(- hcperk*(elower/Tuplimc - elower/Tref)) - np.log(float32_almost_max) #ad hoc parameter to prevent overflow
     with warnings.catch_warnings():
         warnings.simplefilter('error')
         try:
@@ -55,8 +55,8 @@ def plg_elower_addcon(indexa,Na,cnu,indexnu,nu_grid,mdb,Tgue, errTgue=500., elow
             raise Exception(str(e)+' :\t expme does not fall within the representable range of single-precision floating-point number (float32) ...')
         if elower_grid is None:
             margin = 1.0
-            min_expme = np.exp(- hcperk*((min(elower)-margin)/Tuplimc - (min(elower)-margin)/Tref) - preov)
-            max_expme = np.exp(- hcperk*((max(elower)+margin)/Tuplimc - (max(elower)+margin)/Tref) - preov)
+            min_expme = np.exp(- hcperk*((np.min(elower)-margin)/Tuplimc - (np.min(elower)-margin)/Tref) - preov)
+            max_expme = np.exp(- hcperk*((np.max(elower)+margin)/Tuplimc - (np.max(elower)+margin)/Tref) - preov)
             expme_grid = np.linspace(min_expme, max_expme, Nelower)
             elower_grid = (np.log(expme_grid) + preov) / (-hcperk) / (1/Tuplimc - 1/Tref)
         else:
@@ -128,7 +128,7 @@ def get_qlogsij0_addcon(indexa, Na, cnu, indexnu, Nnugrid, mdb, expme, expme_gri
     SijTgue_frozen = SijT(Tuplim+Tmargin, \
                     mdb.logsij0[frozen_mask], mdb.nu_lines[frozen_mask], mdb.elower[frozen_mask], \
                     qT=mdb.qr_interp(Tuplim+Tmargin))
-    persist_freezing = SijTgue_frozen < max(SijTgue_frozen) / threshold_persist_freezing
+    persist_freezing = SijTgue_frozen < np.max(SijTgue_frozen) / threshold_persist_freezing
     index_persist_freezing = np.where(frozen_mask)[0][persist_freezing]
     frozen_mask = np.isin(np.arange(len(frozen_mask)), index_persist_freezing)
         
