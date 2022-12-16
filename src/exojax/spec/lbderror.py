@@ -64,6 +64,20 @@ def single_tilde_line_strength_zeroth(t, twp, tref, dE, p=0.5):
 
 
 def single_tilde_line_strength_first(t, twp, tref, dE, p=0.5):
+    """Single Line Line strength prediction for Premodit/diffmode=1
+
+    Args:
+        t (_type_): inverse temperature
+        twp (_type_): inverse weight temperature
+        tref (_type_): inverse reference temperature
+        dE (_type_): Elower interval
+        p (float, optional): fraction of the line point. Defaults to 0.5.
+
+    Returns:
+        _type_: _description_
+    """
+
+
     dfw1 = grad(weight_point1_dE, argnums=0)
     dfw2 = grad(weight_point2_dE, argnums=0)
     w1 = weight_point1_dE(twp, tref, dE,
