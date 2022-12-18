@@ -1,9 +1,12 @@
 from exojax.utils.constants import hcperk
 import jax.numpy as jnp
+from jax import vmap
 from jax import grad
+
 
 def _beta(t, tref):
     return hcperk * (t - tref)
+
 
 def weight_point2_dE(t, tref, dE, p=0.5):
     """dE version of the weight at point 2 for PreMODIT
@@ -22,6 +25,7 @@ def weight_point2_dE(t, tref, dE, p=0.5):
     fac2 = jnp.exp(-_beta(t, tref) *
                    (1.0 - p) * dE) - jnp.exp(_beta(t, tref) * p * dE)
     return fac1 / fac2
+
 
 def weight_point1_dE(t, tref, dE, p=0.5):
     """dE version of the weight at point 1 for PreMODIT
@@ -77,7 +81,6 @@ def single_tilde_line_strength_first(t, twp, tref, dE, p=0.5):
         _type_: _description_
     """
 
-
     dfw1 = grad(weight_point1_dE, argnums=0)
     dfw2 = grad(weight_point2_dE, argnums=0)
     w1 = weight_point1_dE(twp, tref, dE,
@@ -85,3 +88,72 @@ def single_tilde_line_strength_first(t, twp, tref, dE, p=0.5):
     w2 = weight_point2_dE(twp, tref, dE,
                           p) + dfw2(twp, tref, dE, p) * (t - twp)
     return single_tilde_line_strength(t, w1, w2, tref, dE, p)
+
+
+def single_tilde_line_strength_second(t, twp, tref, dE, p=0.5):
+    """Single Line Line strength prediction for Premodit/diffmode=1
+
+    Args:
+        t (_type_): inverse temperature
+        twp (_type_): inverse weight temperature
+        tref (_type_): inverse reference temperature
+        dE (_type_): Elower interval
+        p (float, optional): fraction of the line point. Defaults to 0.5.
+
+    Returns:
+        _type_: _description_
+    """
+
+    dfw1 = grad(weight_point1_dE, argnums=0)
+    dfw2 = grad(weight_point2_dE, argnums=0)
+    ddfw1 = grad(dfw1, argnums=0)
+    ddfw2 = grad(dfw2, argnums=0)
+
+    w1 = weight_point1_dE(twp, tref, dE,
+                          p) + dfw1(twp, tref, dE, p) * (t - twp) + ddfw1(twp, tref, dE, p) * (t - twp)**2/2.0
+    w2 = weight_point2_dE(twp, tref, dE,
+                          p) + dfw2(twp, tref, dE, p) * (t - twp) + ddfw2(twp, tref, dE, p) * (t - twp)**2/2.0
+    return single_tilde_line_strength(t, w1, w2, tref, dE, p)
+
+
+def worst_tilde_line_strength_first(T, Ttyp, Tref, dE):
+    """worst deviation of single tilde line search first in terms of p
+
+    Args:
+        T (float, ndarray): temperature (array) K
+        Twp (float): weight temperature K
+        Tref (float): reference tempearture K
+        dE (float): Elower interval cm-1
+
+    Return:
+        worst value of single_tilde_line_strength_first in terms of p
+
+    """
+    def f(p):
+        return single_tilde_line_strength_first(1 / T, 1 / Ttyp, 1 / Tref, dE,
+                                                p)
+
+    ff = vmap(f)
+    parr = jnp.array([0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9])
+    return jnp.max(jnp.abs(ff(parr)), axis=0)
+
+def worst_tilde_line_strength_second(T, Ttyp, Tref, dE):
+    """worst deviation of single tilde line search first in terms of p
+
+    Args:
+        T (float, ndarray): temperature (array) K
+        Twp (float): weight temperature K
+        Tref (float): reference tempearture K
+        dE (float): Elower interval cm-1
+
+    Return:
+        worst value of single_tilde_line_strength_first in terms of p
+
+    """
+    def f(p):
+        return single_tilde_line_strength_second(1 / T, 1 / Ttyp, 1 / Tref, dE,
+                                                p)
+
+    ff = vmap(f)
+    parr = jnp.array([0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9])
+    return jnp.max(jnp.abs(ff(parr)), axis=0)

@@ -8,6 +8,8 @@ from exojax.utils.constants import hcperk
 from exojax.spec.lbderror import weight_point1_dE, weight_point2_dE
 from exojax.spec.lbderror import single_tilde_line_strength_zeroth
 from exojax.spec.lbderror import single_tilde_line_strength_first
+from exojax.spec.lbderror import worst_tilde_line_strength_first
+
 from jax.config import config
 
 config.update("jax_enable_x64", True)
@@ -111,8 +113,19 @@ def test_weight_points_dE():
     assert d1e == pytest.approx(d1)
     assert d2e == pytest.approx(d2)
 
+def test_worst_tilde_line_strength_first():
+    Tref = 500.
+    Twp = 1000.
+    dE = 1000.
+    N=10
+    Tarr = np.logspace(np.log10(450.), np.log10(1500.), N)
+    x = worst_tilde_line_strength_first(Tarr, Twp, Tref, dE)
+    assert np.max(x) < 1.e-2
+
+
 
 if __name__ == "__main__":
-    test_weight_points_dE()
-    test_single_tilde_line_strength()
+    #test_weight_points_dE()
+    #test_single_tilde_line_strength()
     #test_single_tilde_line_strength_first()
+    test_worst_tilde_line_strength_first()
