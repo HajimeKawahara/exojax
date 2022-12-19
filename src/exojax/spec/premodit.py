@@ -266,13 +266,12 @@ def generate_lbd(line_strength_ref,
         diffmode (int): i-th Taylor expansion is used for the weight, default is 1.
 
     Returns:
-        jnp array: the zeroth coeff of log-biased line shape density (LBD)
-        jnp array: the first coeff of log-biased line shape density (LBD), None for diffmode=0
+        [jnp array]: the list of the n-th coeffs of line shape density (LBD)
         jnp.array: multi_index_uniqgrid (number of unique broadpar, 2)
         
     Examples:
 
-        >>> lbd_zeroth, lbd_first, multi_index_uniqgrid = generate_lbd(mdb.Sij0, mdb.nu_lines, nu_grid, ngamma_ref,
+        >>> lbd_coeff, multi_index_uniqgrid = generate_lbd(mdb.Sij0, mdb.nu_lines, nu_grid, ngamma_ref,
         >>>               ngamma_ref_grid, mdb.n_Texp, n_Texp_grid, mdb.elower,
         >>>               elower_grid, Twp)
         >>> ngamma_ref = ngamma_ref_grid[multi_index_uniqgrid[:,0]] # ngamma ref for the unique broad par
@@ -287,44 +286,30 @@ def generate_lbd(line_strength_ref,
     # We extend the LBD grid to +1 along elower direction. See Issue #273
     Ng_elower_plus_one = len(elower_grid) + 1
     
-    # LBD zeroth 
-    lbd_zeroth = np.zeros((Ng_nu, Ng_broadpar, Ng_elower_plus_one),
-                          dtype=np.float64)
-    zeroth_coeff_elower, first_coeff_elower, index_elower = lbd_coefficients(
+    coeff_elower, index_elower = lbd_coefficients(
         elower, elower_grid, Tref, Twt, diffmode)
-    lbd_zeroth = npadd3D_multi_index(lbd_zeroth,
+
+    lbd_coeff = []
+    for idiff in range(diffmode+1):
+        lbd_diff = np.zeros((Ng_nu, Ng_broadpar, Ng_elower_plus_one),
+                          dtype=np.float64)
+        lbd_diff = npadd3D_multi_index(lbd_diff,
                                      line_strength_ref,
                                      cont_nu,
                                      index_nu,
-                                     zeroth_coeff_elower,
+                                     coeff_elower[idiff],
                                      index_elower,
                                      uidx_bp,
                                      multi_cont_lines,
                                      neighbor_uidx,
                                      sumz=1.0)
-    lbd_zeroth = convert_to_jnplog(lbd_zeroth)
+        if idiff == 0:
+            lbd_diff = convert_to_jnplog(lbd_diff)
+        else:
+            lbd_diff = jnp.array(lbd_diff[:, :, 0:-1])
+        lbd_coeff.append(lbd_diff)
 
-    # LBD first
-    if diffmode == 0:
-        lbd_first = None
-    elif diffmode == 1:
-        lbd_first = np.zeros((Ng_nu, Ng_broadpar, Ng_elower_plus_one),
-                             dtype=np.float64)
-        lbd_first = npadd3D_multi_index(lbd_first,
-                                        line_strength_ref,
-                                        cont_nu,
-                                        index_nu,
-                                        first_coeff_elower,
-                                        index_elower,
-                                        uidx_bp,
-                                        multi_cont_lines,
-                                        neighbor_uidx,
-                                        sumz=0.0)
-        lbd_first = jnp.array(lbd_first[:, :, 0:-1])
-    else:
-        raise ValueError("diffmode = 0 or 1 is allowed.", UserWarning)
-
-    return lbd_zeroth, lbd_first, multi_index_uniqgrid
+    return lbd_coeff, multi_index_uniqgrid
 
 
 def convert_to_jnplog(lbd_nth):

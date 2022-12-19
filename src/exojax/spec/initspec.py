@@ -13,7 +13,6 @@ from exojax.utils.instfunc import resolution_eslog
 from exojax.spec.premodit import make_elower_grid
 from exojax.spec.premodit import make_broadpar_grid
 from exojax.spec.premodit import generate_lbd
-from exojax.utils.constants import Tref_original
 
 
 def init_lpf(nu_lines, nu_grid):
@@ -140,7 +139,7 @@ def init_premodit(nu_lines,
     ngamma_ref_grid, n_Texp_grid = make_broadpar_grid(
         ngamma_ref, n_Texp, Twt, dit_grid_resolution=dit_grid_resolution)
 
-    lbd_zeroth, lbd_first, multi_index_uniqgrid = generate_lbd(
+    lbd_coeff, multi_index_uniqgrid = generate_lbd(
         line_strength_ref,
         nu_lines,
         nu_grid,
@@ -156,7 +155,7 @@ def init_premodit(nu_lines,
     pmarray = np.ones(len(nu_grid) + 1)
     pmarray[1::2] = (pmarray[1::2] * -1.0)
     pmarray = jnp.array(pmarray)
-    return lbd_zeroth, lbd_first, multi_index_uniqgrid, elower_grid, ngamma_ref_grid, n_Texp_grid, R, pmarray
+    return lbd_coeff, multi_index_uniqgrid, elower_grid, ngamma_ref_grid, n_Texp_grid, R, pmarray
 
 
 def init_modit_vald(nu_linesM, nus, N_usp):

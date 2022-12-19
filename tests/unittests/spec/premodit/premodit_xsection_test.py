@@ -19,14 +19,14 @@ import warnings
 @pytest.mark.parametrize("diffmode", [0, 1])
 def test_xsection_premodit_exomol(diffmode):
     #interval_contrast = 0.3
-    dE = 1200.0
+    dE = 1000.0
     dit_grid_resolution = 0.1
-    Tref = 800.0
-    Twt = 610.0
+    Tref = 500.0
+    Twt = 1000.0
     #Twt = 800.0
     #Tref = 610.0
 
-    Ttest = 1200.0
+    Ttest = 1200.0 #fix
     Ptest = 1.0
     mdb = mock_mdbExomol()
     mdb.change_reference_temperature(Tref)
@@ -39,21 +39,10 @@ def test_xsection_premodit_exomol(diffmode):
                                         xsmode="premodit")
 
     opa = OpaPremodit(mdb=mdb, nu_grid=nu_grid)
-    lbd_zeroth, lbd_first, multi_index_uniqgrid, elower_grid, \
+    lbd_coeff, multi_index_uniqgrid, elower_grid, \
         ngamma_ref_grid, n_Texp_grid, R, pmarray = opa.opainfo
-
-    #    lbd_zeroth, lbd_first, multi_index_uniqgrid, elower_grid, ngamma_ref_grid, n_Texp_grid, R, pmarray = init_premodit_from_db(
-    #        mdb,
-    #        nu_grid,
-    #        Twt,
-    #       dE=dE,
-    #        dit_grid_resolution=dit_grid_resolution,
-    #        diffmode=diffmode,
-    #        warning=False)
-
-    dE = elower_grid[1] - elower_grid[0]
-    print("dE=", dE)
-
+    lbd_zeroth, lbd_first = lbd_coeff
+    
     Mmol = molmass("CO")
     nsigmaD = normalized_doppler_sigma(Ttest, Mmol, R)
     qt = mdb.qr_interp(Ttest)
@@ -71,7 +60,7 @@ def test_xsection_premodit_exomol(diffmode):
         'exojax', 'data/testdata/' + TESTDATA_CO_EXOMOL_PREMODIT_XS_REF)
     dat = pd.read_csv(filename, delimiter=",", names=("nus", "xsv"))
     #assert np.all(xsv == pytest.approx(dat["xsv"].values))
-    return opa.nu_grid, xsv, dE, Twt, Tref, Ttest
+    return opa.nu_grid, xsv, opa.dE, Twt, Tref, Ttest
 
 
 @pytest.mark.parametrize("diffmode", [0, 1])

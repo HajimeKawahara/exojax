@@ -1,12 +1,16 @@
 """opacity calculator class
+
 """
+
+__all__ = ['OpaPremodit']
 
 from exojax.spec import initspec
 from exojax.utils.grids import wavenumber_grid
 from exojax.utils.instfunc import nx_from_resolution_eslog
 from exojax.utils.grids import nu2wav
-from exojax.utils.instfunc import resolution_eslog, resolution_eslin
+from exojax.utils.instfunc import resolution_eslog
 import numpy as np
+
 
 class OpaCalc():
     """Common Opacity Calculator Class
@@ -20,6 +24,12 @@ class OpaCalc():
 
 
 class OpaPremodit(OpaCalc):
+    """Opacity Calculator Class for PreMODIT
+
+    Attributes:
+        opainfo: information set used in PreMODIT
+
+    """
     def __init__(self, mdb=None, nu_grid=None):
         super().__init__()
 
@@ -31,8 +41,8 @@ class OpaPremodit(OpaCalc):
         #self.set_dET(Tlow, Thigh, precision)
         #self.Twt = 610.0
         self.Twt = 1000.0
-        self.Tref = 800.0
-        self.dE = 2000.0
+        self.Tref = 500.0
+        self.dE = 1000.0
 
         # initialize mdb and nu_grid
         if mdb is not None and nu_grid is not None:
@@ -48,7 +58,6 @@ class OpaPremodit(OpaCalc):
             Nx = Nx + 1
         self.nu_grid, self.wav, self.resolution = wavenumber_grid(
             x0, x1, Nx, unit=unit, xsmode="premodit")
-
 
     def set_gamma_and_n_Texp(self, mdb):
         if mdb.dbtype == "hitran":
