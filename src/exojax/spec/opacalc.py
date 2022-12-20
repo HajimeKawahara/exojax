@@ -30,19 +30,19 @@ class OpaPremodit(OpaCalc):
         opainfo: information set used in PreMODIT
 
     """
-    def __init__(self, mdb=None, nu_grid=None):
+    def __init__(self, mdb=None, nu_grid=None, diffmode=2):
         super().__init__()
 
         #default setting
         self.dit_grid_resolution = 0.1
-        self.diffmode = 1
+        self.diffmode = diffmode
         self.warning = True
         #need to refine
         #self.set_dET(Tlow, Thigh, precision)
         #self.Twt = 610.0
         self.Twt = 1000.0
         self.Tref = 500.0
-        self.dE = 1000.0
+        self.dE = 1500.0
 
         # initialize mdb and nu_grid
         if mdb is not None and nu_grid is not None:

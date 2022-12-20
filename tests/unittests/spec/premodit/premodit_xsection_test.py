@@ -6,7 +6,7 @@ import numpy as np
 from exojax.spec.initspec import init_premodit
 from exojax.spec.opacalc import OpaPremodit
 from exojax.utils.grids import wavenumber_grid
-from exojax.spec.premodit import xsvector, xsvector_zeroth
+from exojax.spec.premodit import xsvector_second, xsvector_first, xsvector_zeroth
 from exojax.test.emulate_mdb import mock_mdbExomol
 from exojax.test.emulate_mdb import mock_mdbHitemp
 from exojax.spec.molinfo import molmass
@@ -16,17 +16,12 @@ from exojax.test.data import TESTDATA_CO_HITEMP_PREMODIT_XS_REF
 import warnings
 
 
-@pytest.mark.parametrize("diffmode", [0, 1])
+@pytest.mark.parametrize("diffmode", [0, 1, 2])
 def test_xsection_premodit_exomol(diffmode):
     #interval_contrast = 0.3
-    dE = 1000.0
-    dit_grid_resolution = 0.1
     Tref = 500.0
     Twt = 1000.0
-    #Twt = 800.0
-    #Tref = 610.0
-
-    Ttest = 1200.0 #fix
+    Ttest = 1200.0 #fix to compare w/ precomputed xs by MODIT.
     Ptest = 1.0
     mdb = mock_mdbExomol()
     mdb.change_reference_temperature(Tref)
@@ -38,21 +33,24 @@ def test_xsection_premodit_exomol(diffmode):
                                         unit='AA',
                                         xsmode="premodit")
 
-    opa = OpaPremodit(mdb=mdb, nu_grid=nu_grid)
+    opa = OpaPremodit(mdb=mdb, nu_grid=nu_grid, diffmode=diffmode)
     lbd_coeff, multi_index_uniqgrid, elower_grid, \
         ngamma_ref_grid, n_Texp_grid, R, pmarray = opa.opainfo
-    lbd_zeroth, lbd_first = lbd_coeff
     
     Mmol = molmass("CO")
     nsigmaD = normalized_doppler_sigma(Ttest, Mmol, R)
     qt = mdb.qr_interp(Ttest)
     if diffmode == 0:
-        xsv = xsvector_zeroth(Ttest, Ptest, nsigmaD, lbd_zeroth, Tref, R,
+        xsv = xsvector_zeroth(Ttest, Ptest, nsigmaD, lbd_coeff, Tref, R,
                               pmarray, opa.nu_grid, elower_grid,
                               multi_index_uniqgrid, ngamma_ref_grid,
                               n_Texp_grid, qt)
     elif diffmode == 1:
-        xsv = xsvector(Ttest, Ptest, nsigmaD, lbd_zeroth, lbd_first, Tref, Twt,
+        xsv = xsvector_first(Ttest, Ptest, nsigmaD, lbd_coeff, Tref, Twt,
+                       R, pmarray, opa.nu_grid, elower_grid,
+                       multi_index_uniqgrid, ngamma_ref_grid, n_Texp_grid, qt)
+    elif diffmode == 2:
+        xsv = xsvector_second(Ttest, Ptest, nsigmaD, lbd_coeff, Tref, Twt,
                        R, pmarray, opa.nu_grid, elower_grid,
                        multi_index_uniqgrid, ngamma_ref_grid, n_Texp_grid, qt)
 
@@ -120,7 +118,7 @@ if __name__ == "__main__":
     from exojax.test.data import TESTDATA_CO_EXOMOL_MODIT_XS_REF
     import matplotlib.pyplot as plt
     #import jax.profiler
-    diffmode = 1
+    diffmode = 2
     nus, xs, dE, Twt, Tref, Tin = test_xsection_premodit_exomol(diffmode)
     filename = pkg_resources.resource_filename(
         'exojax', 'data/testdata/' + TESTDATA_CO_EXOMOL_MODIT_XS_REF)
