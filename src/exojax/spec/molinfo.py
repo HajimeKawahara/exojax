@@ -1,7 +1,5 @@
-import pkgutil
-from io import BytesIO
-import pandas as pd
 import warnings
+from exojax.utils.isotopes import molarmass_hitran
 
 
 def molmass_major_isotope(simple_molecule_name, db_HIT=True):
@@ -25,9 +23,9 @@ def molmass_major_isotope(simple_molecule_name, db_HIT=True):
        >>> print(molmass("air"))
        >>> 28.97
     """
-    dt = pkgutil.get_data('exojax', 'data/atom/HITRAN_molparam.txt')
-    molmass_hi = read_molmass_hitran(dt)
-
+    molmass_hi, molmass_isotope, abundance_isotope = molarmass_hitran()
+    
+    
     if simple_molecule_name == 'air' or simple_molecule_name == 'Air':
         return 28.97
 
@@ -44,10 +42,18 @@ def molmass_major_isotope(simple_molecule_name, db_HIT=True):
     return molmass
 
 
-def molmass_major_isotope_manual(molecule):
+def molmass_major_isotope_manual(simple_molecule_name):
+    """molecular mass for major isotope given manually
+
+    Args:
+        simple_molecule_name (_type_): _description_
+
+    Returns:
+        _type_: _description_
+    """
     em = 0.0
     tot = 0.0
-    listmol = list(molecule)
+    listmol = list(simple_molecule_name)
     ignore = False
     for k, i in enumerate(listmol):
         if ignore:
@@ -65,26 +71,10 @@ def molmass_major_isotope_manual(molecule):
                 em = EachMass[i]
 
             tot = tot + em
-    molmass = tot
-    return molmass
+    mean_molmass = tot
+    return mean_molmass
 
 
-def read_molmass_hitran(dt):
-    df = pd.read_csv(BytesIO(dt), sep="\s{2,}", engine="python", skiprows=1, \
-                     names=["# Iso","Abundance","Q(296K)","gj","Molar Mass(g)"])
-    molmass_hi = {}
-    for i in range(len(df)):
-        if ("(" in df["# Iso"][i]):
-            molname = df["# Iso"][i].split()[0]
-            tot = 0.0
-            tot_abd = 0.0
-        else:
-            tot = tot + df["Abundance"][i] * df["Molar Mass(g)"][i]
-            tot_abd = tot_abd + df["Abundance"][i]
-
-        if (i == len(df) - 1 or "(" in df["# Iso"][i + 1]):
-            molmass_hi[molname] = tot / tot_abd
-    return molmass_hi
 
 
 EachMass = {

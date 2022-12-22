@@ -2,9 +2,16 @@ from exojax.utils.isotopes import get_isotope
 from exojax.utils.isotopes import get_stable_isotope
 from exojax.utils.isotopes import isodata
 from exojax.utils.isotopes import exact_isotope_name_from_isotope
+from exojax.utils.isotopes import molarmass_hitran
 import numpy as np
+import pytest
 
 
+def test_molarmass_hitran():
+    mean_molmass, molmass_isotope, abundance_isotope = molarmass_hitran()
+    assert molmass_isotope["CO"][0] == 27.994915
+    assert mean_molmass["CO"] == pytest.approx(28.01044518292034)
+    assert abundance_isotope["CO"][0] == pytest.approx(9.86544E-01)
 
 
 def test_exact_isotope_name_from_isotope():
@@ -12,6 +19,10 @@ def test_exact_isotope_name_from_isotope():
     isotope = 1
     assert exact_isotope_name_from_isotope(simple_molecule_name,
                                            isotope) == "(12C)(16O)"
+
+    simple_molecule_name = "H2O"
+    isotope = 5
+    assert exact_isotope_name_from_isotope(simple_molecule_name, isotope) == "HD(18O)"
 
 
 def test_get_isotope():
@@ -32,3 +43,5 @@ def test_get_stable_isotope():
 if __name__ == "__main__":
     test_get_isotope()
     test_get_stable_isotope()
+    test_exact_isotope_name_from_isotope()
+    test_molarmass_hitran()
