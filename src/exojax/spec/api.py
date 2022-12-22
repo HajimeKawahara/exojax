@@ -22,6 +22,7 @@ from radis.api.hitranapi import HITRANDatabaseManager
 from radis.api.hdf5 import update_pytables_to_vaex
 from radis.db.classes import get_molecule
 from radis.levels.partfunc import PartFuncTIPS
+from exojax.spec.molinfo import molmass
 import warnings
 
 __all__ = ['MdbExomol', 'MdbHitemp', 'MdbHitran']
@@ -100,7 +101,7 @@ class MdbExomol(CapiMdbExomol):
         self.Ttyp = Ttyp
         self.broadf = broadf
         self.simple_molecule_name = e2s(self.exact_molecule_name)
-
+        #self.molecular_mass = molmass(self.simple_molecule_name)
         wavenum_min, wavenum_max = np.min(nurange), np.max(nurange)
         if wavenum_min == -np.inf:
             wavenum_min = None
@@ -133,7 +134,7 @@ class MdbExomol(CapiMdbExomol):
             lower_bound=([("Sij0", 0.0)]),
             #upper_bound=([("nu_lines", wavenum_max)] if wavenum_max else []),
             output="vaex")
-
+        
         load_mask = self.compute_load_mask(df)
         self.instances_from_dataframes(df[load_mask])
         self.compute_broadening(self.jlower, self.jupper)

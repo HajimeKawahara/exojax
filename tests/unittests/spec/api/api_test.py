@@ -45,10 +45,17 @@ def test__qr_interp_lines():
 def test__exact_isotope_name():
     mdb = mock_mdbHitemp(multi_isotope=True)
     assert mdb.exact_isotope_name(1) == "(12C)(16O)"
-    
+
+def test_molmass():
+    mdb = mock_mdbHitemp(multi_isotope=True)
+    print(mdb.molar_mass)
+    #assert mdb.exact_isotope_name(1) == "(12C)(16O)"
+
+
 if __name__ == "__main__":
-    test__convert_proper_isotope()
-    test__isotope_index_from_isotope_number()
-    test__QT_interp()
-    test__qr_interp()
-    test__qr_interp_lines()
+#    test__convert_proper_isotope()
+#    test__isotope_index_from_isotope_number()
+#    test__QT_interp()
+#    test__qr_interp()
+#    test__qr_interp_lines()
+    test_molmass()

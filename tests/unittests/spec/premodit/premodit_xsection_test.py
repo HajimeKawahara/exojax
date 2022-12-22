@@ -33,11 +33,12 @@ def test_xsection_premodit_exomol(diffmode):
                                         unit='AA',
                                         xsmode="premodit")
 
-    opa = OpaPremodit(mdb=mdb, nu_grid=nu_grid, diffmode=diffmode)
+    opa = OpaPremodit(mdb=mdb, nu_grid=nu_grid, diffmode=diffmode, Twt=Twt)
     lbd_coeff, multi_index_uniqgrid, elower_grid, \
         ngamma_ref_grid, n_Texp_grid, R, pmarray = opa.opainfo
     
-    Mmol = molmass("CO")
+    #Mmol = molmass("CO")
+    Mmol = mdb.molecular_mass
     nsigmaD = normalized_doppler_sigma(Ttest, Mmol, R)
     qt = mdb.qr_interp(Ttest)
     if diffmode == 0:
