@@ -15,7 +15,7 @@ from exojax.utils.molname import e2s
 
 # currently use radis add/common-api branch
 from exojax.spec import hitranapi
-from exojax.spec.hitranapi import search_molecid
+from exojax.spec.hitranapi import molecid_hitran
 from radis.api.exomolapi import MdbExomol as CapiMdbExomol  #MdbExomol in the common API
 from radis.api.hitempapi import HITEMPDatabaseManager
 from radis.api.hitranapi import HITRANDatabaseManager
@@ -256,7 +256,7 @@ class MdbHitemp(HITEMPDatabaseManager):
         """
 
         self.path = pathlib.Path(path).expanduser()
-        self.molecid = search_molecid(str(self.path.stem))
+        self.molecid = molecid_hitran(str(self.path.stem))
         self.simple_molecule_name = get_molecule(self.molecid)
         self.crit = crit
         self.Ttyp = Ttyp
@@ -340,7 +340,7 @@ class MdbHitemp(HITEMPDatabaseManager):
             QTtyp = Q.at(T=Ttyp)
             load_mask = self.compute_load_mask(df, QTtyp / QTref)
         self.instances_from_dataframes(df[load_mask])
-        self.gQT, self.T_gQT = hitranapi.get_pf(self.molecid, self.uniqiso)
+        self.gQT, self.T_gQT = hitranapi.make_partition_function_grid_hitran(self.molecid, self.uniqiso)
 
         if gpu_transfer:
             self.generate_jnp_arrays()
@@ -502,7 +502,7 @@ class MdbHitran(HITRANDatabaseManager):
         """
 
         self.path = pathlib.Path(path).expanduser()
-        self.molecid = search_molecid(str(self.path.stem))
+        self.molecid = molecid_hitran(str(self.path.stem))
         self.simple_molecule_name = get_molecule(self.molecid)
 
         #numinf, numtag = hitranapi.read_path(self.path)
@@ -564,7 +564,7 @@ class MdbHitran(HITRANDatabaseManager):
             QTtyp = Q.at(T=Ttyp)
             load_mask = self.compute_load_mask(df, QTtyp / QTref)
         self.instances_from_dataframes(df[load_mask])
-        self.gQT, self.T_gQT = hitranapi.get_pf(self.molecid, self.uniqiso)
+        self.gQT, self.T_gQT = hitranapi.make_partition_function_grid_hitran(self.molecid, self.uniqiso)
 
         if gpu_transfer:
             self.generate_jnp_arrays()
