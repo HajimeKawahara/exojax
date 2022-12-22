@@ -46,10 +46,10 @@ nus, wav, res = wavenumber_grid(np.min(wavd)-5.0, np.max(wavd)+5.0, Nx, unit='AA
 R = 100000.
 beta = c/(2.0*np.sqrt(2.0*np.log(2.0))*R)
 
-molmassCO = molinfo.molmass('CO')
+molmassCO = molinfo.molmass_major_isotope('CO')
 mmw = 2.33  # mean molecular weight
 mmrH2 = 0.74
-molmassH2 = molinfo.molmass('H2')
+molmassH2 = molinfo.molmass_major_isotope('H2')
 vmrH2 = (mmrH2*mmw/molmassH2)  # VMR
 
 Mp = 33.2  # fixing mass...

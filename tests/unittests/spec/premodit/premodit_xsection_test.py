@@ -8,7 +8,7 @@ from exojax.utils.grids import wavenumber_grid
 from exojax.spec.premodit import xsvector
 from exojax.test.emulate_mdb import mock_mdbExomol
 from exojax.test.emulate_mdb import mock_mdbHitemp
-from exojax.spec.molinfo import molmass
+from exojax.spec.molinfo import molmass_major_isotope
 from exojax.spec import normalized_doppler_sigma
 from exojax.test.data import TESTDATA_CO_EXOMOL_PREMODIT_XS_REF
 from exojax.test.data import TESTDATA_CO_HITEMP_PREMODIT_XS_REF
@@ -43,7 +43,7 @@ def test_xsection_premodit_exomol():
         dit_grid_resolution=dit_grid_resolution,
         warning=False)
 
-    Mmol = molmass("CO")
+    Mmol = molmass_major_isotope("CO")
     nsigmaD = normalized_doppler_sigma(Ttest, Mmol, R)
     qt = mdb.qr_interp(Ttest)
     xsv = xsvector(Ttest, Ptest, nsigmaD, lbd, R, pmarray, nu_grid,
@@ -85,7 +85,7 @@ def test_xsection_premodit_hitemp():
         dit_grid_resolution=dit_grid_resolution,
         warning=False)
 
-    Mmol = molmass("CO")
+    Mmol = molmass_major_isotope("CO")
     nsigmaD = normalized_doppler_sigma(Ttest, Mmol, R)
     qt = mdb.qr_interp(1, Ttest)
     message = "Here, we use a single partition function qt for isotope=1 despite of several isotopes."

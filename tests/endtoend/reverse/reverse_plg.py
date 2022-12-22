@@ -60,10 +60,10 @@ nu_grid, wav, res = wavenumber_grid(
 Rinst = 100000.
 beta_inst = resolution_to_gaussian_std(Rinst)
 
-molmassCH4 = molinfo.molmass('CH4')
+molmassCH4 = molinfo.molmass_major_isotope('CH4')
 mmw = 2.33  # mean molecular weight
 mmrH2 = 0.74
-molmassH2 = molinfo.molmass('H2')
+molmassH2 = molinfo.molmass_major_isotope('H2')
 vmrH2 = (mmrH2 * mmw / molmassH2)  # VMR
 
 # Reference pressure for a T-P model
