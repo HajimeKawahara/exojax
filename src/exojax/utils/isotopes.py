@@ -21,6 +21,51 @@ from io import BytesIO
 import pandas as pd
 
 
+def exact_molecule_name_to_isotope_number(exact_molecule_name):
+    """Convert exact molecule name to isotope number
+
+    Args:
+        exact_molecule_name (str): exact exomol, hitran, molecule name such as 12C-16O,  (12C)(16O)
+
+    Returns:
+        int: isotope number 
+    """
+    from radis.db.molparam import isotope_name_dict
+
+    #check exomol exact name
+    keys = [
+        k for k, v in isotope_name_dict.items() if v == exact_molecule_name
+    ]
+    if len(keys) == 0:
+        #check hitran exact name
+        exact_hitran_molecule_name = exact_molname_exomol_to_hitran(
+            exact_molecule_name)
+        keys = [
+            k for k, v in isotope_name_dict.items()
+            if v == exact_hitran_molecule_name
+        ]
+    if len(keys) == 1:
+        isotope_number = keys[0][1]
+    else:
+        print("No isotope number identified")
+        print("Report at https://github.com/HajimeKawahara/exojax/issues.")
+        return None
+
+    return isotope_number
+
+
+def exact_molname_exomol_to_hitran(exact_exomol_molecule_name):
+    """Convert exact_molname used in ExoMol to those in HITRAN
+
+    Args:
+        exact_exomol_molecule_name (str): exact exomol molecule name such as 12C-16O
+
+    Returns:
+        str: exact exomol molecule name such as (12C)(16O)
+    """
+    return "(" + exact_exomol_molecule_name.replace("-", ")(") + ")"
+
+
 def molmass_hitran():
     """molar mass info from HITRAN_molparam.txt
 
@@ -55,8 +100,9 @@ def molmass_hitran():
             molmass_isotope[molname].append(df["Molar Mass(g)"][i])
             abundance_isotope[molname].append(df["Abundance"][i])
         if (i == len(df) - 1 or "(" in df["# Iso"][i + 1]):
-            molmass_isotope[molname].insert(0,tot / tot_abd)
+            molmass_isotope[molname].insert(0, tot / tot_abd)
     return molmass_isotope, abundance_isotope
+
 
 def exact_hitran_isotope_name_from_isotope(simple_molecule_name, isotope):
     """exact isotope name from isotope (number)

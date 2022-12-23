@@ -58,7 +58,7 @@ print('R=', R)
 mdbCH4 = moldb.MdbExomol('.database/CH4/12C-1H4/YT10to10/', nus, crit=1.e-36)
 cdbH2H2 = contdb.CdbCIA('.database/H2-H2_2011.cia', nus)
 print('N=', len(mdbCH4.A))
-molmassCH4 = molinfo.mean_molmass('CH4')
+molmassCH4 = molinfo.molmass_isotope('CH4')
 qt = vmap(mdbCH4.qr_interp)(Tarr)
 gammaLMP = jit(vmap(gamma_exomol, (0, 0, None, None)))(
     Parr, Tarr, mdbCH4.n_Texp, mdbCH4.alpha_ref)
@@ -95,7 +95,7 @@ dtaum = dtauM(dParr, xsmditc, MMR*np.ones_like(Tarr), molmassCH4, g)
 
 mmw = 2.33  # mean molecular weight
 mmrH2 = 0.74
-molmassH2 = molinfo.mean_molmass('H2')
+molmassH2 = molinfo.molmass_isotope('H2')
 vmrH2 = (mmrH2*mmw/molmassH2)  # VMR
 dtaucH2H2 = dtauCIA(nus, Tarr, Parr, dParr, vmrH2, vmrH2,
                     mmw, g, cdbH2H2.nucia, cdbH2H2.tcia, cdbH2H2.logac)

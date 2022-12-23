@@ -29,7 +29,7 @@ def test_plg_methane():
                                crit=0, Ttyp=Tgue, gpu_transfer=True)
     mdb = copy.deepcopy(mdb_orig)
     cdbH2H2 = contdb.CdbCIA('.database/H2-H2_2011.cia', nus)
-    molmassCH4 = molinfo.mean_molmass("CH4")
+    molmassCH4 = molinfo.molmass_isotope("CH4")
     print("Nline=", len(mdb_orig.A))
 
     #To save computation time, let us use only the middle 1 Å width to optimize coefTgue
@@ -89,7 +89,7 @@ def test_plg_methane():
     Parr, dParr, k = rt.pressure_layer(NP=NP)
     mmw = 2.33  #mean molecular weight
     mmrH2 = 0.74
-    molmassH2 = molinfo.mean_molmass("H2")
+    molmassH2 = molinfo.molmass_isotope("H2")
     vmrH2 = (mmrH2 * mmw / molmassH2)  #VMR
 
     Pref = 1.0  #bar

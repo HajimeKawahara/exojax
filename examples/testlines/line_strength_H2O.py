@@ -14,7 +14,7 @@ nus, wav, res = wavenumber_grid(22900, 22960, N, unit='AA')
 # molmass=molinfo.molmass("CO") #molecular mass (CO)
 mdbM = moldb.MdbExomol('.database/H2O/1H2-16O/POKAZATEL',
                        nus, crit=1.e-45)  # loading molecular dat
-molmassM = molinfo.mean_molmass('H2O')  # molecular mass (H2O)
+molmassM = molinfo.molmass_isotope('H2O')  # molecular mass (H2O)
 
 
 q = mdbM.qr_interp(1500.0)

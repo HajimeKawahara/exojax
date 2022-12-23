@@ -16,6 +16,9 @@ from exojax.utils.molname import e2s
 # currently use radis add/common-api branch
 from exojax.spec import hitranapi
 from exojax.spec.hitranapi import molecid_hitran
+#from exojax.spec.molinfo import molmass_isotope
+from exojax.spec.molinfo import isotope_molmass
+
 from radis.api.exomolapi import MdbExomol as CapiMdbExomol  #MdbExomol in the common API
 from radis.api.hitempapi import HITEMPDatabaseManager
 from radis.api.hitranapi import HITRANDatabaseManager
@@ -98,7 +101,7 @@ class MdbExomol(CapiMdbExomol):
         self.Ttyp = Ttyp
         self.broadf = broadf
         self.simple_molecule_name = e2s(self.exact_molecule_name)
-        #self.molmass = mean_molmass
+        self.molmass = isotope_molmass(self.exact_molecule_name)
 
         wavenum_min, wavenum_max = np.min(nurange), np.max(nurange)
         if wavenum_min == -np.inf:

@@ -28,7 +28,7 @@ def test_diff_frozen_vs_pseudo():
     Mgue = 41.
     Rgue = 1.
     MMRgue = 0.001
-    molmass = molinfo.mean_molmass("H2O")
+    molmass = molinfo.molmass_isotope("H2O")
 
     diff = plg.diff_frozen_vs_pseudo([
         0.8,

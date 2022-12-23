@@ -88,10 +88,10 @@ def calc_vfactor(atm='H2', LJPparam=None):
 
 
     """
-    from exojax.spec.molinfo import mean_molmass
+    from exojax.spec.molinfo import molmass_isotope
     from exojax.utils.constants import kB, m_u
 
-    mu = mean_molmass(atm)
+    mu = molmass_isotope(atm)
 
     if LJPparam is None:
         LJPparam_d, LJPparam_epsilon_per_kB = get_LJPparam()

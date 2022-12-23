@@ -56,12 +56,12 @@ def test_VALD_MODIT():
     cdbH2H2 = contdb.CdbCIA('.database/H2-H2_2011.cia', nus)
 
     #molecular mass
-    molmassH2O = molinfo.mean_molmass("H2O")
-    molmassTiO = molinfo.mean_molmass("TiO")
-    molmassOH = molinfo.mean_molmass("OH")
-    molmassFeH = molinfo.mean_molmass("FeH")
-    molmassH = molinfo.mean_molmass("H")
-    molmassH2 = molinfo.mean_molmass("H2")
+    molmassH2O = molinfo.molmass_isotope("H2O")
+    molmassTiO = molinfo.molmass_isotope("TiO")
+    molmassOH = molinfo.molmass_isotope("OH")
+    molmassFeH = molinfo.molmass_isotope("FeH")
+    molmassH = molinfo.molmass_isotope("H")
+    molmassH2 = molinfo.molmass_isotope("H2")
 
     #Initialization of MODIT (for separate VALD species, and exomol molecules(e.g., FeH))
     cnuS, indexnuS, R, pmarray = initspec.init_modit_vald(asdb.nu_lines, nus, asdb.N_usp)
