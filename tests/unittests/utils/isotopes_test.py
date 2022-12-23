@@ -26,11 +26,13 @@ def exact_molname_exomol_to_hitran(exact_exomol_molecule_name):
     return "("+exact_exomol_molecule_name.replace("-",")(")+")"
 
 def test_exact_exomol_molecule_name_to_isotope_number():
-    #eemn="16O-13C-17O"
     eemn="12C-16O"
     isonum=exact_molecule_name_to_isotope_number(eemn)
-    print(isonum)
-
+    assert isonum==0
+    eemn="16O-13C-17O"
+    isonum=exact_molecule_name_to_isotope_number(eemn)
+    assert isonum==6
+    
 def test_exact_molname_exomol_to_hitran():
     eemn="16O-13C-17O"
     ehmn=exact_molname_exomol_to_hitran(eemn)
