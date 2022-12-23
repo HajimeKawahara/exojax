@@ -1,56 +1,64 @@
+"""Isotope
+
+These are the same isotope of CO.
+
+- 16O-13C-17O (ExoMol)
+- (16O)(13C)(17O) (HITRAN)
+- 637 (HITRAN)
+- 6 (isotope number, defined in HITRAN_molparam.txt, starting from 1)
+
+Notes:
+    ExoJAX follows the definition of isotope number used in HITRAN, which starts from 1, 
+    but isotope_number = 0 implies the mean value of all of the isotopes. 
+
+"""
+
 import numpy as np
 from exojax.utils import isodata
 from exojax.utils import molname
-
 import pkgutil
 from io import BytesIO
 import pandas as pd
 
 
-def molarmass_hitran():
+def molmass_hitran():
     """molar mass info from HITRAN_molparam.txt
 
     
     Returns:
-        dict:  mean_molmass, molmass_isotope, abundance_isotope
+        dict:  molmass_isotope, abundance_isotope
 
     Examples:
 
         >>> path = pkgutil.get_data('exojax', 'data/atom/HITRAN_molparam.txt')
         >>> mean_molmass, molmass_isotope, abundance_isotope = read_HITRAN_molparam(path)
-        >>> molmass_isotope["CO"][0] # molar mass for CO HITRAN isotope number = 1
-        >>> abundance_isotope["CO"][0] # relative abundance for CO HITRAN isotope number = 1
-        >>> mean_molmass["CO"] #mean molar mass of CO
+        >>> molmass_isotope["CO"][1] # molar mass for CO isotope number = 1
+        >>> abundance_isotope["CO"][1] # relative abundance for CO isotope number = 1
+        >>> molmass_isotope["CO"][0] # mean molar mass for CO isotope number = 1
         
     """
     path = pkgutil.get_data('exojax', 'data/atom/HITRAN_molparam.txt')
     df = pd.read_csv(BytesIO(path), sep="\s{2,}", engine="python", skiprows=1, \
                      names=["# Iso","Abundance","Q(296K)","gj","Molar Mass(g)"])
-    mean_molmass = {}
     molmass_isotope = {}
     abundance_isotope = {}
-    #exact_isotope_number = {}
-    e = 0
     for i in range(len(df)):
         if ("(" in df["# Iso"][i]):
             molname = df["# Iso"][i].split()[0]
             tot = 0.0
             tot_abd = 0.0
             molmass_isotope[molname] = []
-            abundance_isotope[molname] = []
-            #exact_isotope_number[molname] = []
+            abundance_isotope[molname] = [1.0]
         else:
             tot = tot + df["Abundance"][i] * df["Molar Mass(g)"][i]
             tot_abd = tot_abd + df["Abundance"][i]
             molmass_isotope[molname].append(df["Molar Mass(g)"][i])
             abundance_isotope[molname].append(df["Abundance"][i])
-            #isotope_lazy_tag = df["# Iso"][i]
-            #exact_isotope_number[molname].append(isotope_lazy_tag)
         if (i == len(df) - 1 or "(" in df["# Iso"][i + 1]):
-            mean_molmass[molname] = tot / tot_abd
-    return mean_molmass, molmass_isotope, abundance_isotope
+            molmass_isotope[molname].insert(0,tot / tot_abd)
+    return molmass_isotope, abundance_isotope
 
-def exact_isotope_name_from_isotope(simple_molecule_name, isotope):
+def exact_hitran_isotope_name_from_isotope(simple_molecule_name, isotope):
     """exact isotope name from isotope (number)
 
     Args:
@@ -58,7 +66,7 @@ def exact_isotope_name_from_isotope(simple_molecule_name, isotope):
         isotope (int): isotope number starting from 1
 
     Returns:
-        str: exact isotope name such as (12C)(16O)
+        str: HITRAN exact isotope name such as (12C)(16O)
     """
     from radis.db.molparam import MolParams
     mp = MolParams()

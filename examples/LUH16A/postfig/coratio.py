@@ -20,8 +20,8 @@ def est(val,N=3):
 
 
 p=np.load("npz/savepos.npz",allow_pickle=True)["arr_0"][0]
-mCO=molinfo.molmass_major_isotope("CO") #molecular mass (CO)
-mH2O=molinfo.molmass_major_isotope("H2O") #molecular mass (CO)
+mCO=molinfo.mean_molmass("CO") #molecular mass (CO)
+mH2O=molinfo.mean_molmass("H2O") #molecular mass (CO)
 T0=p["T0"]
 mmrCO=p["MMR_CO"]
 mmrH2O=p["MMR_H2O"]

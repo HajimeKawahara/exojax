@@ -40,7 +40,7 @@ Pref = 1.0  #bar
 ONEARR = np.ones_like(Parr)
 
 #Load H2O data with premodit
-molmassH2O = molinfo.molmass_major_isotope("H2O")
+molmassH2O = molinfo.mean_molmass("H2O")
 mdbH2O_orig = api.MdbExomol('.database/H2O/1H2-16O/POKAZATEL', nus, gpu_transfer=False)
 print('N_H2O=', len(mdbH2O_orig.nu_lines))
 #

@@ -1,8 +1,10 @@
 import warnings
-from exojax.utils.isotopes import molarmass_hitran
+from exojax.utils.isotopes import molmass_hitran
+
+    
 
 
-def molmass_major_isotope(simple_molecule_name, db_HIT=True):
+def mean_molmass(simple_molecule_name, db_HIT=True):
     """provide molecular mass for the major isotope from the simple molecular name.
 
     Args:
@@ -13,7 +15,7 @@ def molmass_major_isotope(simple_molecule_name, db_HIT=True):
        molecular mass
 
     Example:
-       >>> from exojax.spec.moinfo import molmass
+       >>> from exojax.spec.moinfo import mean_molmass
        >>> print(molmass("H2"))
        >>> 2.01588
        >>> print(molmass("CO2"))
@@ -23,26 +25,26 @@ def molmass_major_isotope(simple_molecule_name, db_HIT=True):
        >>> print(molmass("air"))
        >>> 28.97
     """
-    molmass_hi, molmass_isotope, abundance_isotope = molarmass_hitran()
+    mean_molmass, molmass_isotope, abundance_isotope = molmass_hitran()
     
     
     if simple_molecule_name == 'air' or simple_molecule_name == 'Air':
         return 28.97
 
-    if simple_molecule_name in molmass_hi and db_HIT:
-        molmass = molmass_hi[simple_molecule_name]
+    if simple_molecule_name in mean_molmass and db_HIT:
+        molmass = mean_molmass[simple_molecule_name]
     else:
         if (db_HIT):
             warn_msg = "db_HIT is set as True, but the molecular name '%s' does not exist in the HITRAN database. So set db_HIT as False. For reference, all the available molecules in the HITRAN database are as follows:" % simple_molecule_name
             warnings.warn(warn_msg, UserWarning)
-            print(list(molmass_hi.keys()))
+            print(list(mean_molmass.keys()))
 
-        molmass = molmass_major_isotope_manual(simple_molecule_name)
+        molmass = mean_molmass_manual(simple_molecule_name)
 
     return molmass
 
 
-def molmass_major_isotope_manual(simple_molecule_name):
+def mean_molmass_manual(simple_molecule_name):
     """molecular mass for major isotope given manually
 
     Args:
@@ -199,9 +201,9 @@ EachMass = {
 }
 
 if __name__ == '__main__':
-    print(molmass_major_isotope('H2'))
-    print(molmass_major_isotope('CO2'))
-    print(molmass_major_isotope('He'))
-    print(molmass_major_isotope('air'))
-    print(molmass_major_isotope('CO2', db_HIT=True))
-    print(molmass_major_isotope('He', db_HIT=True))
+    print(mean_molmass('H2'))
+    print(mean_molmass('CO2'))
+    print(mean_molmass('He'))
+    print(mean_molmass('air'))
+    print(mean_molmass('CO2', db_HIT=True))
+    print(mean_molmass('He', db_HIT=True))

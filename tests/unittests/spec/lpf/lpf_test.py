@@ -7,7 +7,7 @@ import pandas as pd
 import numpy as np
 from exojax.test.data import TESTDATA_CO_EXOMOL_LPF_XS_REF
 #from exojax.spec.lpf import exomol
-from exojax.spec.molinfo import molmass_major_isotope
+from exojax.spec.molinfo import mean_molmass
 from exojax.spec import doppler_sigma,  gamma_natural
 from exojax.spec.hitran import line_strength
 from exojax.spec.exomol import gamma_exomol
@@ -19,7 +19,7 @@ def test_exomol():
     mdbCO = mock_mdbExomol()    
     Tfix=1200.0
     Pfix=1.0
-    Mmol = molmass_major_isotope("CO")
+    Mmol = mean_molmass("CO")
     
     qt = mdbCO.qr_interp(Tfix)
     gammaL = gamma_exomol(Pfix, Tfix, mdbCO.n_Texp, mdbCO.alpha_ref) + gamma_natural(mdbCO.A)

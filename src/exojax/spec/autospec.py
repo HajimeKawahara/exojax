@@ -129,7 +129,7 @@ class AutoXS(object):
         elif self.database == 'HITRAN' or self.database == 'HITEMP':
             gammaL = gamma_hitran(P, T, P, mdb.n_air, mdb.gamma_air,
                                   mdb.gamma_self) + gamma_natural(mdb.A)
-            molmass = molinfo.molmass_major_isotope(self.molecules, db_HIT=True)
+            molmass = molinfo.mean_molmass(self.molecules, db_HIT=True)
 
         Sij = self.linest(T)
         if self.xsmode == 'auto':
@@ -227,7 +227,7 @@ class AutoXS(object):
             qt = mdb.Qr_layer(Tarr)
             gammaLM = jit(vmap(gamma_hitran, (0, 0, 0, None, None, None)))(Parr, Tarr, Parr, mdb.n_air, mdb.gamma_air, mdb.gamma_self)\
                 + gamma_natural(mdb.A)
-            self.molmass = molinfo.molmass_major_isotope(self.molecules)
+            self.molmass = molinfo.mean_molmass(self.molecules)
             SijM = jit(vmap(SijT, (0, None, None, None, 0)))(Tarr, mdb.logsij0,
                                                              mdb.nu_lines,
                                                              mdb.elower, qt)
@@ -397,8 +397,8 @@ class AutoRT(object):
 
         """
         mol1, mol2 = defcia.interaction2mols(interaction)
-        molmass1 = molinfo.molmass_major_isotope(mol1)
-        molmass2 = molinfo.molmass_major_isotope(mol2)
+        molmass1 = molinfo.mean_molmass(mol1)
+        molmass2 = molinfo.mean_molmass(mol2)
         vmr1 = (mmr1 * self.mmw / molmass1)
         vmr2 = (mmr2 * self.mmw / molmass2)
         ciapath = pathlib.Path(self.databasedir) / \

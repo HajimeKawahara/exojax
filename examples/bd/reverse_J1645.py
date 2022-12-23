@@ -83,12 +83,12 @@ Rinst = 100000.
 beta_inst = resolution_to_gaussian_std(Rinst)
 
 
-molmassH2O = molinfo.molmass_major_isotope('H2O')
-molmassCO = molinfo.molmass_major_isotope('CO')
+molmassH2O = molinfo.mean_molmass('H2O')
+molmassCO = molinfo.mean_molmass('CO')
 
 mmw = 2.33  # mean molecular weight
 mmrH2 = 0.74
-molmassH2 = molinfo.molmass_major_isotope('H2')
+molmassH2 = molinfo.mean_molmass('H2')
 vmrH2 = (mmrH2*mmw/molmassH2)  # VMR
 
 #

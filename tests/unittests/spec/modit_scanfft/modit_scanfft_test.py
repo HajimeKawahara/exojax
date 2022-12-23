@@ -5,7 +5,7 @@ import numpy as np
 from exojax.spec.modit_scanfft import xsvector_scanfft
 from exojax.spec.hitran import line_strength
 from exojax.test.data import TESTDATA_CO_EXOMOL_MODIT_XS_REF
-from exojax.spec.molinfo import molmass_major_isotope
+from exojax.spec.molinfo import mean_molmass
 from exojax.spec import normalized_doppler_sigma, gamma_natural
 from exojax.spec.hitran import line_strength
 from exojax.spec.exomol import gamma_exomol
@@ -20,7 +20,7 @@ def test_xs_exomol():
     mdbCO = mock_mdbExomol()
     Tfix = 1200.0
     Pfix = 1.0
-    Mmol = molmass_major_isotope("CO")
+    Mmol = mean_molmass("CO")
     Nx = 5000
     nus, wav, res = wavenumber_grid(22800.0,
                                         23100.0,
@@ -67,7 +67,7 @@ def test_rt_exomol():
     alpha_in = 0.1
     Tarr = T0_in * (Parr)**alpha_in
 
-    molmass = molinfo.molmass_major_isotope('CO')
+    molmass = molinfo.mean_molmass('CO')
     MMR = 0.1
     nus, wav, res = wavenumber_grid(22900.0,
                                         23100.0,

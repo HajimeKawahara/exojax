@@ -2,7 +2,7 @@ import numpy as np
 from exojax.spec.shapefilter import compute_filter_length
 from exojax.spec.shapefilter import generate_voigt_shape_filter
 from exojax.spec import normalized_doppler_sigma
-from exojax.spec.molinfo import molmass_major_isotope
+from exojax.spec.molinfo import mean_molmass
 from jax import vmap
 import pytest
 
@@ -18,7 +18,7 @@ def test_generate_voigt_shape_filter(fig=False):
     spectral_resolution = 10**6
     T = 1500.0
     filter_length = compute_filter_length(50.0, 4000.0, spectral_resolution)
-    nsigmaD = normalized_doppler_sigma(T, molmass_major_isotope("CO"), spectral_resolution)
+    nsigmaD = normalized_doppler_sigma(T, mean_molmass("CO"), spectral_resolution)
     ngammaL = nsigmaD
     voigtp = generate_voigt_shape_filter(nsigmaD, ngammaL, filter_length)
     assert np.sum(voigtp) == pytest.approx(0.9999432)
@@ -30,7 +30,7 @@ def test_generate_voigt_shape_filter_vmapped(fig=False):
     spectral_resolution = 10**6
     T = 1500.0
     filter_length = compute_filter_length(50.0, 4000.0, spectral_resolution)
-    nsigmaD = normalized_doppler_sigma(T, molmass_major_isotope("CO"), spectral_resolution)
+    nsigmaD = normalized_doppler_sigma(T, mean_molmass("CO"), spectral_resolution)
     ngammaL = nsigmaD * np.array([0.1, 0.3, 1.0, 3.0])
     vmap_generate_voigt_shape_filter = vmap(generate_voigt_shape_filter,
                                             (None, 0, None), 0)
