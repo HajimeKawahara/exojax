@@ -33,7 +33,7 @@ wavmin = np.min(wavd) - 5.0
 wavmax = np.max(wavd) + 5.0
 nus, wav, reso = wavenumber_grid(wavmin, wavmax, Nx, unit="AA", xsmode="modit")
 #Load H2O data with premodit
-molmassH2O = molinfo.molmass("H2O")
+molmassH2O = molinfo.molmass_isotope("H2O")
 mdb = api.MdbExomol('.database/H2O/1H2-16O/POKAZATEL', nus, gpu_transfer=True)
 #mdb.change_reference_temperature(Tref)
 print('N_H2O=', len(mdb.nu_lines))

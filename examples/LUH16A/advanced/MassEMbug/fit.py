@@ -42,14 +42,14 @@ mmw=2.33 #mean molecular weight
 R=100000.
 beta=c/(2.0*np.sqrt(2.0*np.log(2.0))*R) #IP sigma need check
 ONEARR=np.ones_like(Parr) #ones_array for MMR
-molmassCO=molinfo.molmass("CO") #molecular mass (CO)
-molmassH2O=molinfo.molmass("H2O") #molecular mass (H2O)
+molmassCO=molinfo.molmass_isotope("CO") #molecular mass (CO)
+molmassH2O=molinfo.molmass_isotope("H2O") #molecular mass (H2O)
 
 #LOADING CIA
 mmrH2=0.74
 mmrHe=0.25
-molmassH2=molinfo.molmass("H2")
-molmassHe=molinfo.molmass("He")
+molmassH2=molinfo.molmass_isotope("H2")
+molmassHe=molinfo.molmass_isotope("He")
 vmrH2=(mmrH2*mmw/molmassH2)
 vmrHe=(mmrHe*mmw/molmassHe)
 

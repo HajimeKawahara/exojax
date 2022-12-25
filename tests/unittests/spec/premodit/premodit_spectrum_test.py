@@ -49,7 +49,7 @@ def test_rt_exomol(fig=False):
         dit_grid_resolution=dit_grid_resolution,
         warning=False)
 
-    Mmol = molinfo.molmass("CO")
+    Mmol = molinfo.molmass_isotope("CO")
     qtarr = vmap(mdb.qr_interp)(Tarr)
     xsm = xsmatrix(Tarr, Parr, R, pmarray, lbd, nu_grid, ngamma_ref_grid,
                    n_Texp_grid, multi_index_uniqgrid, elower_grid, Mmol, qtarr)
@@ -105,7 +105,7 @@ def test_rt_hitemp(fig=False):
         dit_grid_resolution=dit_grid_resolution,
         warning=False)
 
-    Mmol = molinfo.molmass("CO")
+    Mmol = molinfo.molmass_isotope("CO")
     qtarr = vmap(mdb.qr_interp, (None,0),0)(isotope, Tarr)
     xsm = xsmatrix(Tarr, Parr, R, pmarray, lbd, nu_grid, ngamma_ref_grid,
                    n_Texp_grid, multi_index_uniqgrid, elower_grid, Mmol, qtarr)

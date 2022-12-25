@@ -40,10 +40,10 @@ def test_jaxopt_spectrum():
     R = 100000.
     beta = c / (2.0 * np.sqrt(2.0 * np.log(2.0)) * R)
 
-    molmassCO = molinfo.molmass("CO")
+    molmassCO = molinfo.molmass_isotope("CO")
     mmw = 2.33  #mean molecular weight
     mmrH2 = 0.74
-    molmassH2 = molinfo.molmass("H2")
+    molmassH2 = molinfo.molmass_isotope("H2")
     vmrH2 = (mmrH2 * mmw / molmassH2)  #VMR
 
     Mp = 33.2  #fixing mass...
