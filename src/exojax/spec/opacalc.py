@@ -30,7 +30,7 @@ class OpaPremodit(OpaCalc):
         opainfo: information set used in PreMODIT
 
     """
-    def __init__(self, mdb=None, nu_grid=None, Twt=None, Tref=296., diffmode=2):
+    def __init__(self, mdb=None, nu_grid=None, Twt=None, Tref=296., dE=1500.0, diffmode=2):
         super().__init__()
 
         #default setting
@@ -42,7 +42,7 @@ class OpaPremodit(OpaCalc):
         #self.Twt = 610.0
         self.Twt = Twt
         self.Tref = Tref
-        self.dE = 1500.0
+        self.dE = dE
 
         # initialize mdb and nu_grid
         if mdb is not None and nu_grid is not None:
