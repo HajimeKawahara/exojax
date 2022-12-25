@@ -1,4 +1,4 @@
-ExoMol, HITEMP, HITRAN common API
+ExoMol, HITEMP, HITRAN
 --------------------------------------
 
 *November 4th (2022) Hajime Kawahara*
