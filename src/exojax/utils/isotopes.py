@@ -79,7 +79,7 @@ def molmass_hitran():
         >>> mean_molmass, molmass_isotope, abundance_isotope = read_HITRAN_molparam(path)
         >>> molmass_isotope["CO"][1] # molar mass for CO isotope number = 1
         >>> abundance_isotope["CO"][1] # relative abundance for CO isotope number = 1
-        >>> molmass_isotope["CO"][0] # mean molar mass for CO isotope number = 1
+        >>> molmass_isotope["CO"][0] # mean molar mass for CO
         
     """
     path = pkgutil.get_data('exojax', 'data/atom/HITRAN_molparam.txt')
