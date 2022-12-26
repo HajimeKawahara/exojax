@@ -48,7 +48,7 @@ def molmass_isotope(simple_molecule_name, db_HIT=True):
         return 28.97
 
     if simple_molecule_name in molmass_isotope and db_HIT:
-        molmass = molmass_isotope[simple_molecule_name][0]
+        molmass = molmass_isotope[simple_molecule_name][1]
     else:
         if (db_HIT):
             warn_msg = "db_HIT is set as True, but the molecular name '%s' does not exist in the HITRAN database. So set db_HIT as False. For reference, all the available molecules in the HITRAN database are as follows:" % simple_molecule_name
