@@ -44,8 +44,8 @@ NP=100
 Parr, dParr, k=pressure_layer(NP=NP)
 mmw=2.33 # Mean molecular weight
 ONEARR=np.ones_like(Parr) # ones_array for MMR
-molmassCO=molinfo.molmass("CO") # molecular mass (CO)
-molmassH2O=molinfo.molmass("H2O") # molecular mass (H2O)
+molmassCO=molinfo.molmass_isotope("CO") # molecular mass (CO)
+molmassH2O=molinfo.molmass_isotope("H2O") # molecular mass (H2O)
 
 # Instrument
 beta=resolution_to_gaussian_std(100000.) #std of gaussian from R=100000.
@@ -53,8 +53,8 @@ beta=resolution_to_gaussian_std(100000.) #std of gaussian from R=100000.
 # LOADING CIA
 mmrH2=0.74 # mean molecualr weight of H2 for CIA
 mmrHe=0.25 # mean molecualr weight of He for CIA
-molmassH2=molinfo.molmass("H2")
-molmassHe=molinfo.molmass("He")
+molmassH2=molinfo.molmass_isotope("H2")
+molmassHe=molinfo.molmass_isotope("He")
 vmrH2=(mmrH2*mmw/molmassH2)
 vmrHe=(mmrHe*mmw/molmassHe)
 

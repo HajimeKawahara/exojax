@@ -16,6 +16,9 @@ from exojax.utils.molname import e2s
 # currently use radis add/common-api branch
 from exojax.spec import hitranapi
 from exojax.spec.hitranapi import molecid_hitran
+#from exojax.spec.molinfo import molmass_isotope
+from exojax.spec.molinfo import isotope_molmass
+
 from radis.api.exomolapi import MdbExomol as CapiMdbExomol  #MdbExomol in the common API
 from radis.api.hitempapi import HITEMPDatabaseManager
 from radis.api.hitranapi import HITRANDatabaseManager
@@ -98,6 +101,7 @@ class MdbExomol(CapiMdbExomol):
         self.Ttyp = Ttyp
         self.broadf = broadf
         self.simple_molecule_name = e2s(self.exact_molecule_name)
+        self.molmass = isotope_molmass(self.exact_molecule_name)
 
         wavenum_min, wavenum_max = np.min(nurange), np.max(nurange)
         if wavenum_min == -np.inf:
@@ -119,7 +123,7 @@ class MdbExomol(CapiMdbExomol):
 
         self.crit = crit
         self.QTtyp = np.array(self.QT_interp(self.Ttyp))
-
+        
         # Get cache files to load :
         mgr = self.get_datafile_manager()
         local_files = [mgr.cache_file(f) for f in self.trans_file]
@@ -453,8 +457,8 @@ class MdbHitemp(HITEMPDatabaseManager):
         Returns:
             str: exact isotope name such as (12C)(16O)
         """
-        from exojax.utils.isotopes import exact_isotope_name_from_isotope
-        return exact_isotope_name_from_isotope(self.simple_molecule_name,
+        from exojax.utils.molname import exact_hitran_isotope_name_from_isotope
+        return exact_hitran_isotope_name_from_isotope(self.simple_molecule_name,
                                                isotope)
 
 
@@ -676,8 +680,8 @@ class MdbHitran(HITRANDatabaseManager):
         Returns:
             str: exact isotope name such as (12C)(16O)
         """
-        from exojax.utils.isotopes import exact_isotope_name_from_isotope
-        return exact_isotope_name_from_isotope(self.simple_molecule_name,
+        from exojax.utils.isotopes import exact_hitran_isotope_name_from_isotope
+        return exact_hitran_isotope_name_from_isotope(self.simple_molecule_name,
                                                isotope)
 
 
