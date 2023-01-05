@@ -30,18 +30,17 @@ class OpaPremodit(OpaCalc):
         opainfo: information set used in PreMODIT
 
     """
-    def __init__(self, mdb=None, nu_grid=None, Twt=None, Tref=296., dE=1500.0, diffmode=2):
+    def __init__(self, mdb=None, nu_grid=None, Twt=None, dE=1500.0, diffmode=2):
         super().__init__()
 
         #default setting
-        self.dit_grid_resolution = 0.1
+        #self.dit_grid_resolution = 0.1
         self.diffmode = diffmode
         self.warning = True
         #need to refine
         #self.set_dET(Tlow, Thigh, precision)
         #self.Twt = 610.0
         self.Twt = Twt
-        self.Tref = Tref
         self.dE = dE
 
         # initialize mdb and nu_grid
@@ -70,6 +69,7 @@ class OpaPremodit(OpaCalc):
 
     def setmdb(self, mdb):
         print("Set mdb. opainfo is now available.")
+        self.Tref = mdb.Tref
         mdb.change_reference_temperature(self.Tref)
         self.dbtype = mdb.dbtype
         self.set_gamma_and_n_Texp(mdb)
@@ -83,6 +83,6 @@ class OpaPremodit(OpaCalc):
             self.Twt,
             Tref=self.Tref,
             dE=self.dE,
-            dit_grid_resolution=self.dit_grid_resolution,
+            #dit_grid_resolution=self.dit_grid_resolution,
             diffmode=self.diffmode,
             warning=self.warning)

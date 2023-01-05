@@ -16,7 +16,7 @@ def optelower(mdb, nu_grid, Tmax, Pmin):
     qt = mdb.qr_interp(Tmax)
     
     #for single temperature, 0-th order is sufficient
-    q=-20
+    q=-2
     xsv_master = xsvector_zeroth(Tmax, Pmin, nsigmaD, lbd_coeff, Tref_original, R, pmarray,
                           opa.nu_grid, elower_grid, multi_index_uniqgrid,
                           ngamma_ref_grid, n_Texp_grid, qt)
