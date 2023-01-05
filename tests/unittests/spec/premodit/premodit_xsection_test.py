@@ -73,15 +73,13 @@ def test_xsection_premodit_exomol(diffmode):
     #interval_contrast = 0.3
     #Tref = 500.0
     from exojax.utils.constants import Tref_original
-    Tref = Tref_original
     Tref = 500.0
     Twt = 1200.0
     Ttest = 1200.0  #fix to compare w/ precomputed xs by MODIT.
     Ptest = 1.0
     dE = 150.0
     mdb = mock_mdbExomol()
-    mdb.change_reference_temperature(Tref)
-    
+
     #Mmol = molmass("CO")
     Nx = 5000
     nu_grid, wav, res = wavenumber_grid(22800.0,
@@ -90,15 +88,13 @@ def test_xsection_premodit_exomol(diffmode):
                                         unit='AA',
                                         xsmode="premodit")
 
-    opa = OpaPremodit(mdb=mdb,
-                      nu_grid=nu_grid,
-                      diffmode=diffmode,
-                      Twt=Twt,
-                      dE=dE)
+    opa = OpaPremodit(mdb=mdb, nu_grid=nu_grid, diffmode=diffmode)
+    opa.manual_setting(Twt=Twt, Tref=Tref, dE=dE)
+
     lbd_coeff, multi_index_uniqgrid, elower_grid, \
         ngamma_ref_grid, n_Texp_grid, R, pmarray = opa.opainfo
 
-    print("Tref=",opa.Tref,"K")    
+    print("Tref=", opa.Tref, "K")
     Mmol = mdb.molmass
     print(Mmol)
     nsigmaD = normalized_doppler_sigma(Ttest, Mmol, R)
