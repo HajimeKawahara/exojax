@@ -15,55 +15,10 @@ Notes:
 
 import numpy as np
 from exojax.utils import isodata
-from exojax.utils import molname
 import pkgutil
 from io import BytesIO
 import pandas as pd
-
-
-def exact_molecule_name_to_isotope_number(exact_molecule_name):
-    """Convert exact molecule name to isotope number
-
-    Args:
-        exact_molecule_name (str): exact exomol, hitran, molecule name such as 12C-16O,  (12C)(16O)
-
-    Returns:
-        int: isotope number 
-    """
-    from radis.db.molparam import isotope_name_dict
-
-    #check exomol exact name
-    keys = [
-        k for k, v in isotope_name_dict.items() if v == exact_molecule_name
-    ]
-    if len(keys) == 0:
-        #check hitran exact name
-        exact_hitran_molecule_name = exact_molname_exomol_to_hitran(
-            exact_molecule_name)
-        keys = [
-            k for k, v in isotope_name_dict.items()
-            if v == exact_hitran_molecule_name
-        ]
-    if len(keys) == 1:
-        isotope_number = keys[0][1]
-    else:
-        print("No isotope number identified")
-        print("Report at https://github.com/HajimeKawahara/exojax/issues.")
-        return None
-
-    return isotope_number
-
-
-def exact_molname_exomol_to_hitran(exact_exomol_molecule_name):
-    """Convert exact_molname used in ExoMol to those in HITRAN
-
-    Args:
-        exact_exomol_molecule_name (str): exact exomol molecule name such as 12C-16O
-
-    Returns:
-        str: exact exomol molecule name such as (12C)(16O)
-    """
-    return "(" + exact_exomol_molecule_name.replace("-", ")(") + ")"
+from exojax.utils.molname import exact_molname_exomol_to_simple_molname
 
 
 def molmass_hitran():
@@ -79,7 +34,7 @@ def molmass_hitran():
         >>> mean_molmass, molmass_isotope, abundance_isotope = read_HITRAN_molparam(path)
         >>> molmass_isotope["CO"][1] # molar mass for CO isotope number = 1
         >>> abundance_isotope["CO"][1] # relative abundance for CO isotope number = 1
-        >>> molmass_isotope["CO"][0] # mean molar mass for CO isotope number = 1
+        >>> molmass_isotope["CO"][0] # mean molar mass for CO
         
     """
     path = pkgutil.get_data('exojax', 'data/atom/HITRAN_molparam.txt')
@@ -104,20 +59,6 @@ def molmass_hitran():
     return molmass_isotope, abundance_isotope
 
 
-def exact_hitran_isotope_name_from_isotope(simple_molecule_name, isotope):
-    """exact isotope name from isotope (number)
-
-    Args:
-        simple_molecular_name (str): simple molecular name such as CO
-        isotope (int): isotope number starting from 1
-
-    Returns:
-        str: HITRAN exact isotope name such as (12C)(16O)
-    """
-    from radis.db.molparam import MolParams
-    mp = MolParams()
-    return mp.get(simple_molecule_name, isotope, "isotope_name")
-
 
 def get_isotope(atom, isolist):
     """get isotope info.
@@ -135,7 +76,7 @@ def get_isotope(atom, isolist):
     mass_number = []
     abundance = []
     for j, isol in enumerate(isolist['isotope']):
-        if molname.e2s(isol) == atom:
+        if exact_molname_exomol_to_simple_molname(isol) == atom:
             iso.append(isolist['isotope'][j])
             mass_number.append(isolist['mass_number'][j])
             abundance.append(float(isolist['abundance'][j]))

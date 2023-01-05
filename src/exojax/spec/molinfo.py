@@ -1,7 +1,8 @@
 import warnings
 from exojax.utils.isotopes import molmass_hitran
-from exojax.utils.molname import e2s
-from exojax.utils.isotopes import exact_molecule_name_to_isotope_number
+from exojax.utils.molname import exact_molname_exomol_to_simple_molname
+from exojax.utils.molname import exact_molecule_name_to_isotope_number
+from exojax.utils.molname import exact_molname_hitran_to_simple_molname
 
 def isotope_molmass(exact_molecule_name):
     """isotope molecular mass 
@@ -13,11 +14,18 @@ def isotope_molmass(exact_molecule_name):
         float or None: molecular mass g/mol
     """
     molmass_isotope, abundance_isotope = molmass_hitran()
-    isotope_number = exact_molecule_name_to_isotope_number(exact_molecule_name)
-    if isotope_number is not None:
-        simple_molecule_name = e2s(exact_molecule_name)
+    molnumber, isotope_number = exact_molecule_name_to_isotope_number(exact_molecule_name)
+    try:
+        simple_molecule_name = exact_molname_exomol_to_simple_molname(exact_molecule_name)
         return molmass_isotope[simple_molecule_name][isotope_number]
-    else:
+    except:
+        pass
+    
+    try:
+        simple_molecule_name = exact_molname_hitran_to_simple_molname(exact_molecule_name)
+        return molmass_isotope[simple_molecule_name][isotope_number]
+    except:
+        warnings.warn("exact molecule name is not Exomol nor HITRAN form.")
         warnings.warn("No molmass available", UserWarning)
         return None
 
@@ -48,7 +56,7 @@ def molmass_isotope(simple_molecule_name, db_HIT=True):
         return 28.97
 
     if simple_molecule_name in molmass_isotope and db_HIT:
-        molmass = molmass_isotope[simple_molecule_name][0]
+        molmass = molmass_isotope[simple_molecule_name][1]
     else:
         if (db_HIT):
             warn_msg = "db_HIT is set as True, but the molecular name '%s' does not exist in the HITRAN database. So set db_HIT as False. For reference, all the available molecules in the HITRAN database are as follows:" % simple_molecule_name

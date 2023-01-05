@@ -1,29 +1,80 @@
+from radis.db.classes import get_molecule
 import re
+import warnings
 
 
-def e2s(molname_exact):
+def exact_hitran_isotope_name_from_isotope(simple_molecule_name, isotope):
+    """exact isotope name from isotope (number)
+
+    Args:
+        simple_molecular_name (str): simple molecular name such as CO
+        isotope (int): isotope number starting from 1
+
+    Returns:
+        str: HITRAN exact isotope name such as (12C)(16O)
+    """
+    from radis.db.molparam import MolParams
+    mp = MolParams()
+    return mp.get(simple_molecule_name, isotope, "isotope_name")
+
+
+def exact_molecule_name_to_isotope_number(exact_molecule_name):
+    """Convert exact molecule name to isotope number
+
+    Args:
+        exact_molecule_name (str): exact exomol, hitran, molecule name such as 12C-16O,  (12C)(16O)
+
+    Returns:
+        int: molecular number, isotope number 
+    """
+    from radis.db.molparam import isotope_name_dict
+
+    #check exomol exact name
+    keys = [
+        k for k, v in isotope_name_dict.items() if v == exact_molecule_name
+    ]
+    if len(keys) == 0:
+        #check hitran exact name
+        exact_hitran_molecule_name = exact_molname_exomol_to_hitran(
+            exact_molecule_name)
+        keys = [
+            k for k, v in isotope_name_dict.items()
+            if v == exact_hitran_molecule_name
+        ]
+    if len(keys) == 1:
+        molnumber = keys[0][0]
+        isotope_number = keys[0][1]
+    else:
+        print("No isotope number identified")
+        print("Report at https://github.com/HajimeKawahara/exojax/issues.")
+        return None
+
+    return molnumber, isotope_number
+
+
+def exact_molname_exomol_to_simple_molname(exact_exomol_molecule_name):
     """convert the exact molname (used in ExoMol) to the simple molname.
 
     Args:
-       molname_exact: the exact molname
+       exact_exomol_molecule_name: the exact exomol molecule name
 
     Returns:
        simple molname
 
     Examples:
-       >>> print(e2s("12C-1H4"))
+       >>> print(exact_molname_exomol_to_simple_molname("12C-1H4"))
        >>> CH4
-       >>> print(e2s("23Na-16O-1H"))
+       >>> print(exact_molname_exomol_to_simple_molname("23Na-16O-1H"))
        >>> NaOH
-       >>> print(e2s("HeH_p"))
+       >>> print(exact_molname_exomol_to_simple_molname("HeH_p"))
        >>> HeH_p
-       >>> print(e2s("trans-31P2-1H-2H")) #not working 
+       >>> print(exact_molname_exomol_to_simple_molname("trans-31P2-1H-2H")) #not working 
        >>> Warning: Exact molname  trans-31P2-1H-2H cannot be converted to simple molname
        >>> trans-31P2-1H-2H
     """
 
     try:
-        t = molname_exact.split('-')
+        t = exact_exomol_molecule_name.split('-')
         molname_simple = ''
         for ele in t:
             alp = ''.join(re.findall(r'\D', ele))
@@ -32,12 +83,46 @@ def e2s(molname_exact):
                 num = num0
             else:
                 num = ''
-            molname_simple = molname_simple+alp+num
+            molname_simple = molname_simple + alp + num
         return molname_simple
     except:
-        print('Warning: Exact molname ', molname_exact,
+        print('Warning: Exact molname ', exact_exomol_molecule_name,
               'cannot be converted to simple molname')
-        return molname_exact
+        return exact_exomol_molecule_name
+
+
+def exact_molname_hitran_to_simple_molname(exact_hitran_molecule_name):
+    """convert exact hitran molname (16C)(13C)(17O) to simple molname, CO2.
+
+    Args:
+        exact_hitran_molecule_name (str): exact_hitran_molecule_name, such as (16C)(13C)(17O) 
+
+    Returns:
+        str: simple molecue name, such as CO2
+    """
+    molnum, isonum = exact_molecule_name_to_isotope_number(
+        exact_hitran_molecule_name)
+    return get_molecule(molnum)
+
+
+def exact_molname_exomol_to_hitran(exact_exomol_molecule_name):
+    """Convert exact_molname used in ExoMol to those in HITRAN
+
+    Args:
+        exact_exomol_molecule_name (str): exact exomol molecule name such as 12C-16O
+
+    Returns:
+        str: exact exomol molecule name such as (12C)(16O)
+    """
+    return "(" + exact_exomol_molecule_name.replace("-", ")(") + ")"
+
+
+def e2s(exact_exomol_molecule_name):
+
+    warnings.warn(
+        "e2s will be replaced to exact_molname_exomol_to_simple_molname.",
+        DeprecationWarning)
+    return exact_molname_exomol_to_simple_molname(exact_exomol_molecule_name)
 
 
 def split_simple(molname_simple):
@@ -68,7 +153,7 @@ def split_simple(molname_simple):
                 num = ''
             tmp = ch
         elif ch.islower():
-            tmp = tmp+ch
+            tmp = tmp + ch
         elif ch.isdigit():
             num = ch
 
@@ -98,9 +183,9 @@ def s2e_stable(molname_simple):
     molname_exact = ''
     for j, atm in enumerate(atom_list):
         iso = isotopes.get_stable_isotope(atm, isolist)
-        molname_exact = molname_exact+iso[0]+num_list[j]
-        if j < len(atom_list)-1:
-            molname_exact = molname_exact+'-'
+        molname_exact = molname_exact + iso[0] + num_list[j]
+        if j < len(atom_list) - 1:
+            molname_exact = molname_exact + '-'
     return molname_exact
 
 
