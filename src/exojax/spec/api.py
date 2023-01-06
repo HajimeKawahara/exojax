@@ -71,6 +71,7 @@ class MdbExomol(CapiMdbExomol):
                  nurange=[-np.inf, np.inf],
                  margin=0.0,
                  crit=0.,
+                 elower_max=np.inf,
                  Ttyp=1000.,
                  bkgdatm='H2',
                  broadf=True,
@@ -84,6 +85,7 @@ class MdbExomol(CapiMdbExomol):
            nurange: wavenumber range list (cm-1) [min,max] or wavenumber grid
            margin: margin for nurange (cm-1)
            crit: line strength lower limit for extraction
+           elower_max: maximum lower state energy, Elower (cm-1)
            Ttyp: typical temperature to calculate Sij(T) used in crit
            bkgdatm: background atmosphere for broadening. e.g. H2, He,
            broadf: if False, the default broadening parameters in .def file is used
@@ -124,6 +126,8 @@ class MdbExomol(CapiMdbExomol):
                          skip_optional_data=True)
 
         self.crit = crit
+        self.elower_max = elower_max
+
         # Get cache files to load :
         mgr = self.get_datafile_manager()
         local_files = [mgr.cache_file(f) for f in self.trans_file]
@@ -136,7 +140,7 @@ class MdbExomol(CapiMdbExomol):
             lower_bound=([("Sij0", 0.0)]),
             #upper_bound=([("nu_lines", wavenum_max)] if wavenum_max else []),
             output="vaex")
-        
+
         load_mask = self.compute_load_mask(df)
         self.instances_from_dataframes(df[load_mask])
         self.compute_broadening(self.jlower, self.jupper)
@@ -156,8 +160,9 @@ class MdbExomol(CapiMdbExomol):
         intensity_mask = (line_strength_numpy(
             self.Ttyp, df.Sij0, df.nu_lines, df.elower, QTtyp / QTref_original)
                           > self.crit)
+        elower_mask = (df.elower < self.elower_max)
 
-        return wavelength_mask * intensity_mask
+        return wavelength_mask * intensity_mask * elower_mask
 
     def instances_from_dataframes(self, df_load_mask):
         """generate instances from (usually masked) data farame
@@ -269,6 +274,7 @@ class MdbHitemp(HITEMPDatabaseManager):
                  nurange=[-np.inf, np.inf],
                  margin=0.0,
                  crit=0.,
+                 elower_max=np.inf,                 
                  Ttyp=1000.,
                  isotope=0,
                  gpu_transfer=False,
@@ -280,6 +286,7 @@ class MdbHitemp(HITEMPDatabaseManager):
            nurange: wavenumber range list (cm-1) [min,max] or wavenumber grid
            margin: margin for nurange (cm-1)
            crit: line strength lower limit for extraction
+           elower_max: maximum lower state energy, Elower (cm-1)
            Ttyp: typical temperature to calculate Sij(T) used in crit
            isotope: isotope number, 0 or None = use all isotopes. 
            gpu_transfer: tranfer data to jnp.array?
@@ -290,6 +297,7 @@ class MdbHitemp(HITEMPDatabaseManager):
         self.molecid = molecid_hitran(str(self.path.stem))
         self.simple_molecule_name = get_molecule(self.molecid)
         self.crit = crit
+        self.elower_max = elower_max
         self.Tref = Tref_original
         self.Ttyp = Ttyp
         self.margin = margin
@@ -386,7 +394,8 @@ class MdbHitemp(HITEMPDatabaseManager):
                     * (df.wav < self.nurange[1]+self.margin)
         intensity_mask = (line_strength_numpy(self.Ttyp, df.int, df.wav, df.El,
                                               qrtyp) > self.crit)
-        return wav_mask * intensity_mask
+        elower_mask = (df.elower < self.elower_max)
+        return wav_mask * intensity_mask * elower_mask
 
     def instances_from_dataframes(self, df_load_mask):
         """generate instances from (usually masked) data farame
@@ -496,8 +505,8 @@ class MdbHitemp(HITEMPDatabaseManager):
             str: exact isotope name such as (12C)(16O)
         """
         from exojax.utils.molname import exact_hitran_isotope_name_from_isotope
-        return exact_hitran_isotope_name_from_isotope(self.simple_molecule_name,
-                                               isotope)
+        return exact_hitran_isotope_name_from_isotope(
+            self.simple_molecule_name, isotope)
 
     def change_reference_temperature(self, Tref_new):
         """change the reference temperature Tref and recompute Sij0
@@ -542,6 +551,7 @@ class MdbHitran(HITRANDatabaseManager):
                  nurange=[-np.inf, np.inf],
                  margin=0.0,
                  crit=0.,
+                 elower_max=np.inf,                 
                  Ttyp=1000.,
                  isotope=0,
                  gpu_transfer=False,
@@ -553,6 +563,7 @@ class MdbHitran(HITRANDatabaseManager):
            nurange: wavenumber range list (cm-1) [min,max] or wavenumber grid
            margin: margin for nurange (cm-1)
            crit: line strength lower limit for extraction
+           elower_max: maximum lower state energy, Elower (cm-1)
            Ttyp: typical temperature to calculate Sij(T) used in crit
            isotope: isotope number. 0 or None= use all isotopes. 
            gpu_transfer: tranfer data to jnp.array?
@@ -565,6 +576,7 @@ class MdbHitran(HITRANDatabaseManager):
 
         #numinf, numtag = hitranapi.read_path(self.path)
         self.crit = crit
+        self.elower_max = elower_max
         self.Tref = Tref_original
         self.Ttyp = Ttyp
         self.margin = margin
@@ -637,7 +649,8 @@ class MdbHitran(HITRANDatabaseManager):
                     * (df.wav < self.nurange[1]+self.margin)
         intensity_mask = (line_strength_numpy(self.Ttyp, df.int, df.wav, df.El,
                                               qrtyp) > self.crit)
-        return wav_mask * intensity_mask
+        elower_mask = (df.elower < self.elower_max)
+        return wav_mask * intensity_mask * elower_mask
 
     def instances_from_dataframes(self, df_load_mask):
         """generate instances from (usually masked) data farame
@@ -746,8 +759,8 @@ class MdbHitran(HITRANDatabaseManager):
             str: exact isotope name such as (12C)(16O)
         """
         from exojax.utils.isotopes import exact_hitran_isotope_name_from_isotope
-        return exact_hitran_isotope_name_from_isotope(self.simple_molecule_name,
-                                               isotope)
+        return exact_hitran_isotope_name_from_isotope(
+            self.simple_molecule_name, isotope)
 
     def change_reference_temperature(self, Tref_new):
         """change the reference temperature Tref and recompute Sij0
