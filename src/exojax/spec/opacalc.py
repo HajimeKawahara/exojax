@@ -10,7 +10,6 @@ from exojax.utils.instfunc import nx_from_resolution_eslog
 from exojax.utils.grids import nu2wav
 from exojax.utils.instfunc import resolution_eslog
 import numpy as np
-import warnings
 
 
 class OpaCalc():
@@ -22,6 +21,9 @@ class OpaCalc():
 
     def __init__(self):
         self.opainfo = None
+        self.opaclass = None # which opacity lass is used
+        self.ready = False # ready for opacity computation
+    
 
 
 class OpaPremodit(OpaCalc):
@@ -53,6 +55,7 @@ class OpaPremodit(OpaCalc):
         super().__init__()
 
         #default setting
+        self.opaclass = "premodit"
         self.diffmode = diffmode
         self.warning = True
         self.nu_grid = nu_grid
@@ -81,6 +84,7 @@ class OpaPremodit(OpaCalc):
         self.Tref = Tref
         self.dE = dE
         self.apply_params()
+        self.ready = True
 
     def auto_setting(self, Tmin, Tmax, precision):
         print("OpaPremodit: params automatically set.")

@@ -16,7 +16,7 @@ from exojax.test.data import TESTDATA_CO_HITEMP_PREMODIT_XS_REF
 import warnings
 
 
-@pytest.mark.parametrize("diffmode", [0, 1])
+@pytest.mark.parametrize("diffmode", [0, 1, 2])
 def test_xsection_premodit_hitemp(diffmode):
     interval_contrast = 0.1
     dit_grid_resolution = 0.1
@@ -56,9 +56,7 @@ def test_xsection_premodit_hitemp(diffmode):
                               nu_grid, elower_grid, multi_index_uniqgrid,
                               ngamma_ref_grid, n_Texp_grid, qt)
     elif diffmode == 1:
-        xsv = xsvector(Ttest, Ptest, nsigmaD, lbd_zeroth, lbd_first, R,
-                       pmarray, nu_grid, elower_grid, multi_index_uniqgrid,
-                       ngamma_ref_grid, n_Texp_grid, qt)
+        assert False
 
     #np.savetxt(TESTDATA_CO_HITEMP_PREMODIT_XS_REF,np.array([nu_grid,xsv]).T,delimiter=",")
     filename = pkg_resources.resource_filename(
@@ -74,13 +72,12 @@ def test_xsection_premodit_exomol(diffmode):
     #Tref = 500.0
     from exojax.utils.constants import Tref_original
     Tref = 500.0
-    Twt = 1200.0
+    Twt = 1000.0
     Ttest = 1200.0  #fix to compare w/ precomputed xs by MODIT.
     Ptest = 1.0
-    dE = 150.0
+    dE = 1500.0
     mdb = mock_mdbExomol()
 
-    #Mmol = molmass("CO")
     Nx = 5000
     nu_grid, wav, res = wavenumber_grid(22800.0,
                                         23100.0,
@@ -94,9 +91,7 @@ def test_xsection_premodit_exomol(diffmode):
     lbd_coeff, multi_index_uniqgrid, elower_grid, \
         ngamma_ref_grid, n_Texp_grid, R, pmarray = opa.opainfo
 
-    print("Tref=", opa.Tref, "K")
     Mmol = mdb.molmass
-    print(Mmol)
     nsigmaD = normalized_doppler_sigma(Ttest, Mmol, R)
     qt = mdb.qr_interp(Ttest)
     if diffmode == 0:
@@ -127,7 +122,7 @@ if __name__ == "__main__":
     from exojax.test.data import TESTDATA_CO_EXOMOL_MODIT_XS_REF
     import matplotlib.pyplot as plt
     #import jax.profiler
-    diffmode = 0
+    diffmode = 2
     nus, xs, dE, Twt, Tref, Tin = test_xsection_premodit_exomol(diffmode)
     filename = pkg_resources.resource_filename(
         'exojax', 'data/testdata/' + TESTDATA_CO_EXOMOL_MODIT_XS_REF)
