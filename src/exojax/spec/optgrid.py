@@ -4,6 +4,7 @@ from exojax.spec.opacalc import OpaPremodit
 from exojax.utils.constants import Tref_original
 from exojax.spec import normalized_doppler_sigma
 from exojax.utils.constants import Tref_original
+from tqdm import tqdm
 
 def optelower(mdb,
               nu_grid,
@@ -48,6 +49,7 @@ def optelower(mdb,
                                  n_Texp_grid, qt)
     allow = True
     q = -1
+    pbar = tqdm(total=len(elower_grid), desc="opt Emax")
     while allow:
         xsv = xsvector_zeroth(Tmax, Pmin, nsigmaD, lbd_coeff[:, :, :, :q],
                               Tref_original, R, pmarray, opa.nu_grid,
@@ -59,6 +61,8 @@ def optelower(mdb,
             q = q + 1
         else:
             q = q - 1
+        pbar.update(1)
+    pbar.close()
 
     if display:
         xsv = xsvector_zeroth(Tmax, Pmin, nsigmaD, lbd_coeff[:, :, :, :q],
