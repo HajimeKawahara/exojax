@@ -14,7 +14,12 @@ def test_exact_molecule_name_to_isotope_number():
     eemn = "16O-13C-17O"
     molnum, isonum = exact_molecule_name_to_isotope_number(eemn)
     assert isonum == 6
-
+    eemn = "1H2-16O"
+    molnum, isonum = exact_molecule_name_to_isotope_number(eemn)
+    assert isonum == 1
+    eemn = "12C-16O2"
+    molnum, isonum = exact_molecule_name_to_isotope_number(eemn)
+    
 def test_exact_isotope_name_from_isotope():
     simple_molecule_name = "CO"
     isotope = 1
@@ -79,4 +84,5 @@ def test_split_simple():
 
 
 if __name__ == '__main__':
-    test_s2estable()
+    #test_s2estable()
+    test_exact_molecule_name_to_isotope_number()
