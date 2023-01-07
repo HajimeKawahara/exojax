@@ -25,6 +25,7 @@ def gendata_moldb(database):
                               nus,
                               crit=1e-35,
                               Ttyp=296.0,
+                              isotope=None,
                               inherit_dataframe=False,
                               gpu_transfer=True)
     elif database == "hitemp_isotope":

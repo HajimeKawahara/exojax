@@ -71,7 +71,7 @@ class MdbExomol(CapiMdbExomol):
                  nurange=[-np.inf, np.inf],
                  margin=0.0,
                  crit=0.,
-                 elower_max=np.inf,
+                 elower_max=None,
                  Ttyp=1000.,
                  bkgdatm='H2',
                  broadf=True,
@@ -153,16 +153,18 @@ class MdbExomol(CapiMdbExomol):
             self.df = df
 
     def compute_load_mask(self, df):
-        wavelength_mask = (df.nu_lines > self.nurange[0]-self.margin) \
+        
+        #wavelength
+        mask = (df.nu_lines > self.nurange[0]-self.margin) \
                     * (df.nu_lines < self.nurange[1]+self.margin)
         QTtyp = np.array(self.QT_interp(self.Ttyp))
         QTref_original = np.array(self.QT_interp(Tref_original))
-        intensity_mask = (line_strength_numpy(
+        mask *= (line_strength_numpy(
             self.Ttyp, df.Sij0, df.nu_lines, df.elower, QTtyp / QTref_original)
                           > self.crit)
-        elower_mask = (df.elower < self.elower_max)
-
-        return wavelength_mask * intensity_mask * elower_mask
+        if self.elower_max is not None:
+            mask *= (df.elower < self.elower_max)
+        return mask
 
     def instances_from_dataframes(self, df_load_mask):
         """generate instances from (usually masked) data farame
@@ -274,9 +276,9 @@ class MdbHitemp(HITEMPDatabaseManager):
                  nurange=[-np.inf, np.inf],
                  margin=0.0,
                  crit=0.,
-                 elower_max=np.inf,                 
+                 elower_max=None,
                  Ttyp=1000.,
-                 isotope=0,
+                 isotope=1,
                  gpu_transfer=False,
                  inherit_dataframe=False):
         """Molecular database for HITRAN/HITEMP form.
@@ -292,6 +294,7 @@ class MdbHitemp(HITEMPDatabaseManager):
            gpu_transfer: tranfer data to jnp.array?
            inherit_dataframe: if True, it makes self.df instance available, which needs more DRAM when pickling.
         """
+        
         self.dbtype = "hitran"
         self.path = pathlib.Path(path).expanduser()
         self.molecid = molecid_hitran(str(self.path.stem))
@@ -304,7 +307,8 @@ class MdbHitemp(HITEMPDatabaseManager):
         self.nurange = [np.min(nurange), np.max(nurange)]
         load_wavenum_min = self.nurange[0] - self.margin
         load_wavenum_max = self.nurange[1] + self.margin
-
+        self.isotope = isotope
+        
         super().__init__(
             molecule=self.simple_molecule_name,
             name="HITEMP-{molecule}",
@@ -359,11 +363,11 @@ class MdbHitemp(HITEMPDatabaseManager):
         columns = None,
         output = "vaex"
 
-        self.isotope = _convert_proper_isotope(isotope)
+        isotope_dfform = _convert_proper_isotope(self.isotope)
         df = self.load(
             files_loaded,  # filter other files,
             columns=columns,
-            within=[("iso", self.isotope)] if self.isotope is not None else [],
+            within=[("iso", isotope_dfform)] if isotope_dfform is not None else [],
             # for relevant files, get only the right range :
             lower_bound=[("wav", load_wavenum_min)]
             if self.nurange[0] is not None else [],
@@ -390,12 +394,14 @@ class MdbHitemp(HITEMPDatabaseManager):
             self.df = df
 
     def compute_load_mask(self, df, qrtyp):
-        wav_mask = (df.wav > self.nurange[0]-self.margin) \
+        #wavelength
+        mask = (df.wav > self.nurange[0]-self.margin) \
                     * (df.wav < self.nurange[1]+self.margin)
-        intensity_mask = (line_strength_numpy(self.Ttyp, df.int, df.wav, df.El,
+        mask *= (line_strength_numpy(self.Ttyp, df.int, df.wav, df.El,
                                               qrtyp) > self.crit)
-        elower_mask = (df.elower < self.elower_max)
-        return wav_mask * intensity_mask * elower_mask
+        if self.elower_max is not None:
+            mask *= (df.elower < self.elower_max)
+        return mask
 
     def instances_from_dataframes(self, df_load_mask):
         """generate instances from (usually masked) data farame
@@ -516,7 +522,14 @@ class MdbHitemp(HITEMPDatabaseManager):
         """
         print("Change the reference temperature from " + str(self.Tref) +
               "K to " + str(Tref_new) + " K.")
-        qr = self.qr_interp(Tref_new)
+        if self.isotope is None or self.isotope == 0:
+            msg1 = "Currently all isotope mode is not fully compatible to change_reference_temperature."
+            msg2 = "QT used in change_reference_temperature is assumed isotope=1 instead."
+            warnings.warn(msg1 + msg2, UserWarning)
+            qr = self.qr_interp(1, Tref_new)
+        else:
+            qr = self.qr_interp(self.isotope, Tref_new)
+        
         self.line_strength_ref = line_strength_numpy(Tref_new,
                                                      self.line_strength_ref,
                                                      self.nu_lines,
@@ -551,7 +564,7 @@ class MdbHitran(HITRANDatabaseManager):
                  nurange=[-np.inf, np.inf],
                  margin=0.0,
                  crit=0.,
-                 elower_max=np.inf,                 
+                 elower_max=None,
                  Ttyp=1000.,
                  isotope=0,
                  gpu_transfer=False,
@@ -645,12 +658,14 @@ class MdbHitran(HITRANDatabaseManager):
             self.df = df
 
     def compute_load_mask(self, df, qrtyp):
-        wav_mask = (df.wav > self.nurange[0]-self.margin) \
+        #wavelength
+        mask = (df.wav > self.nurange[0]-self.margin) \
                     * (df.wav < self.nurange[1]+self.margin)
-        intensity_mask = (line_strength_numpy(self.Ttyp, df.int, df.wav, df.El,
+        mask *= (line_strength_numpy(self.Ttyp, df.int, df.wav, df.El,
                                               qrtyp) > self.crit)
-        elower_mask = (df.elower < self.elower_max)
-        return wav_mask * intensity_mask * elower_mask
+        if self.elower_max is not None:
+            mask *= (df.elower < self.elower_max)
+        return mask
 
     def instances_from_dataframes(self, df_load_mask):
         """generate instances from (usually masked) data farame
@@ -786,7 +801,7 @@ def _convert_proper_isotope(isotope):
         isotope (int or other type): isotope
 
     Returns:
-        str: propoer isotope type
+        str: proper isotope type
     """
     if isotope == 0:
         return None
