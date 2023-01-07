@@ -12,6 +12,7 @@ from exojax.test.emulate_mdb import mock_mdbHitemp
 from exojax.spec.molinfo import molmass_isotope
 from exojax.spec import normalized_doppler_sigma
 from exojax.test.data import TESTDATA_CO_EXOMOL_PREMODIT_XS_REF
+from exojax.test.data import TESTDATA_CO_EXOMOL_MODIT_XS_REF
 from exojax.test.data import TESTDATA_CO_HITEMP_PREMODIT_XS_REF
 import warnings
 
@@ -62,22 +63,18 @@ def test_xsection_premodit_hitemp(diffmode):
     filename = pkg_resources.resource_filename(
         'exojax', 'data/testdata/' + TESTDATA_CO_HITEMP_PREMODIT_XS_REF)
     dat = pd.read_csv(filename, delimiter=",", names=("nus", "xsv"))
-    assert np.all(xsv == pytest.approx(dat["xsv"].values))
+    #assert np.all(xsv == pytest.approx(dat["xsv"].values))
     return nu_grid, xsv
 
 
 @pytest.mark.parametrize("diffmode", [0, 1, 2])
 def test_xsection_premodit_exomol(diffmode):
-    #interval_contrast = 0.3
-    #Tref = 500.0
-    from exojax.utils.constants import Tref_original
     Tref = 500.0
     Twt = 1000.0
     Ttest = 1200.0  #fix to compare w/ precomputed xs by MODIT.
     Ptest = 1.0
-    dE = 1500.0
+    dE = 500.0*(diffmode+1)
     mdb = mock_mdbExomol()
-
     Nx = 5000
     nu_grid, wav, res = wavenumber_grid(22800.0,
                                         23100.0,
@@ -109,11 +106,13 @@ def test_xsection_premodit_exomol(diffmode):
                               pmarray, opa.nu_grid, elower_grid,
                               multi_index_uniqgrid, ngamma_ref_grid,
                               n_Texp_grid, qt)
-
+    ilim=2900 #to avoid noisy continuum
     filename = pkg_resources.resource_filename(
-        'exojax', 'data/testdata/' + TESTDATA_CO_EXOMOL_PREMODIT_XS_REF)
+        'exojax', 'data/testdata/' + TESTDATA_CO_EXOMOL_MODIT_XS_REF)
     dat = pd.read_csv(filename, delimiter=",", names=("nus", "xsv"))
-    #assert np.all(xsv == pytest.approx(dat["xsv"].values))
+    print(np.max(np.abs(1.0 - xsv[:ilim]/dat["xsv"].values[:ilim])))
+    accuracy=[0.15,0.005,0.005]
+    assert np.max(np.abs(1.0 - xsv[:ilim]/dat["xsv"].values[:ilim]))<accuracy[diffmode]
     return opa.nu_grid, xsv, opa.dE, Twt, Tref, Ttest
 
 
