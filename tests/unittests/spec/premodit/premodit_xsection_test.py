@@ -25,7 +25,7 @@ def test_xsection_premodit_hitemp(diffmode):
     Ptest = 1.0
     dE = 500.0 * (diffmode + 1)
     Nx = 5000
-    mdb = mock_mdbHitemp(multi_isotope=False)
+    mdb = mock_mdbHitemp(multi_isotope=True)
     nu_grid, wav, res = wavenumber_grid(22800.0,
                                         23100.0,
                                         Nx,
@@ -46,8 +46,16 @@ def test_xsection_premodit_hitemp(diffmode):
                               multi_index_uniqgrid, ngamma_ref_grid,
                               n_Texp_grid, qt)
     elif diffmode == 1:
-        assert False
-
+        xsv = xsvector_first(Ttest, Ptest, nsigmaD, lbd_coeff, Tref, Twt, R,
+                             pmarray, opa.nu_grid, elower_grid,
+                             multi_index_uniqgrid, ngamma_ref_grid,
+                             n_Texp_grid, qt)
+    elif diffmode == 2:
+        xsv = xsvector_second(Ttest, Ptest, nsigmaD, lbd_coeff, Tref, Twt, R,
+                              pmarray, opa.nu_grid, elower_grid,
+                              multi_index_uniqgrid, ngamma_ref_grid,
+                              n_Texp_grid, qt)
+    
     #np.savetxt(TESTDATA_CO_HITEMP_PREMODIT_XS_REF,np.array([nu_grid,xsv]).T,delimiter=",")
     filename = pkg_resources.resource_filename(
         'exojax', 'data/testdata/' + TESTDATA_CO_HITEMP_MODIT_XS_REF)
@@ -114,7 +122,7 @@ if __name__ == "__main__":
     db = "hitemp"
     #db = "exomol"
 
-    diffmode = 0
+    diffmode = 2
     if db == "exomol":
         nus, xs, dE, Twt, Tref, Tin = test_xsection_premodit_exomol(diffmode)
         filename = pkg_resources.resource_filename(

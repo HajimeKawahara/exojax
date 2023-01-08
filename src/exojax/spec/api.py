@@ -12,12 +12,10 @@ from exojax.spec.hitran import line_strength_numpy
 from exojax.spec.hitran import gamma_natural as gn
 from exojax.utils.constants import Tref_original
 from exojax.utils.molname import e2s
-
-# currently use radis add/common-api branch
 from exojax.spec import hitranapi
 from exojax.spec.hitranapi import molecid_hitran
-#from exojax.spec.molinfo import molmass_isotope
 from exojax.spec.molinfo import isotope_molmass
+from exojax.utils.isotopes import molmass_hitran
 
 from radis.api.exomolapi import MdbExomol as CapiMdbExomol  #MdbExomol in the common API
 from radis.api.hitempapi import HITEMPDatabaseManager
@@ -308,6 +306,7 @@ class MdbHitemp(HITEMPDatabaseManager):
         load_wavenum_min = self.nurange[0] - self.margin
         load_wavenum_max = self.nurange[1] + self.margin
         self.isotope = isotope
+        self.set_molmass()
         
         super().__init__(
             molecule=self.simple_molecule_name,
@@ -392,6 +391,13 @@ class MdbHitemp(HITEMPDatabaseManager):
 
         if inherit_dataframe:
             self.df = df
+
+    def set_molmass(self):
+        molmass_isotope, abundance_isotope = molmass_hitran()
+        if self.isotope is None:
+            self.molmass = molmass_isotope[self.simple_molecule_name][0]
+        else:
+            self.molmass = molmass_isotope[self.simple_molecule_name][self.isotope]
 
     def compute_load_mask(self, df, qrtyp):
         #wavelength
@@ -596,7 +602,9 @@ class MdbHitran(HITRANDatabaseManager):
         self.nurange = [np.min(nurange), np.max(nurange)]
         load_wavenum_min = self.nurange[0] - self.margin
         load_wavenum_max = self.nurange[1] + self.margin
-
+        self.isotope = isotope
+        self.set_molmass()
+        
         super().__init__(
             molecule=self.simple_molecule_name,
             name="HITRAN-{molecule}",
@@ -606,8 +614,6 @@ class MdbHitran(HITRANDatabaseManager):
             parallel=True,
         )
 
-        columns = None
-        output = "vaex"
 
         # Get list of all expected local files for this database:
         local_file = self.get_filenames()
@@ -626,12 +632,15 @@ class MdbHitran(HITRANDatabaseManager):
         if len(download_files) > 0:
             self.clean_download_files()
 
-        self.isotope = _convert_proper_isotope(isotope)
         # Load and return
+        columns = None
+        output = "vaex"
+
+        isotope_dfform = _convert_proper_isotope(self.isotope)
         df = self.load(
             local_file,
             columns=columns,
-            within=[("iso", self.isotope)] if self.isotope is not None else [],
+            within=[("iso", isotope_dfform)] if isotope_dfform is not None else [],
             # for relevant files, get only the right range :
             lower_bound=[("wav", load_wavenum_min)]
             if load_wavenum_min is not None else [],
@@ -656,6 +665,14 @@ class MdbHitran(HITRANDatabaseManager):
 
         if inherit_dataframe:
             self.df = df
+
+
+    def set_molmass(self):
+        molmass_isotope, abundance_isotope = molmass_hitran()
+        if self.isotope is None:
+            self.molmass = molmass_isotope[self.simple_molecule_name][0]
+        else:
+            self.molmass = molmass_isotope[self.simple_molecule_name][self.isotope]
 
     def compute_load_mask(self, df, qrtyp):
         #wavelength
