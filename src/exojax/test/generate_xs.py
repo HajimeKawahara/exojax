@@ -16,6 +16,9 @@ from exojax.test.emulate_mdb import mock_mdbHitemp
 
 
 def gendata_xs_modit_exomol():
+    from jax.config import config
+    config.update("jax_enable_x64", True)
+
     mdbCO = mock_mdbExomol()
     Tfix = 1200.0
     Pfix = 1.0
@@ -44,6 +47,9 @@ def gendata_xs_modit_exomol():
 
 
 def gendata_xs_modit_hitemp():
+    from jax.config import config
+    config.update("jax_enable_x64", True)
+
     mdbCO = mock_mdbHitemp(multi_isotope=False)
     Tfix = 1200.0
     Pfix = 1.0
