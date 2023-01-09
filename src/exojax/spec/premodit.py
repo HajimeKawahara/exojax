@@ -13,18 +13,18 @@ from exojax.utils.indexing import uniqidx_neibouring
 from exojax.spec import normalized_doppler_sigma
 from exojax.spec.lbd import lbd_coefficients
 
+
 @jit
-def xsvector_second(T, P, nsigmaD, lbd_coeff, Tref, Twt, R, pmarray,
-             nu_grid, elower_grid, multi_index_uniqgrid, ngamma_ref_grid,
-             n_Texp_grid, qt):
+def xsvector_second(T, P, nsigmaD, lbd_coeff, Tref, Twt, R, pmarray, nu_grid,
+                    elower_grid, multi_index_uniqgrid, ngamma_ref_grid,
+                    n_Texp_grid, qt):
     """compute cross section vector, with scan+fft, using the second Taylor expansion
 
     Args:
         T (_type_): temperature in Kelvin
         P (_type_): pressure in bar
         nsigmaD: normalized doplar STD
-        lbd_zeroth (_type_): log biased line shape density (LBD), zeroth coefficient
-        lbd_first (_type_): log biased line shape density (LBD), first coefficient
+        lbd_coeff (_type_): log biased line shape density (LBD), coefficient
         Tref: reference temperature used to compute lbd_zeroth and lbd_first in Kelvin
         Twt: temperature used in the weight point
         R (_type_): spectral resolution
@@ -38,8 +38,8 @@ def xsvector_second(T, P, nsigmaD, lbd_coeff, Tref, Twt, R, pmarray,
     Returns:
         jnp.array: cross section in cgs vector
     """
-    Slsd = unbiased_lsd_second(lbd_coeff, T, Tref, Twt, nu_grid,
-                              elower_grid, qt)
+    Slsd = unbiased_lsd_second(lbd_coeff, T, Tref, Twt, nu_grid, elower_grid,
+                               qt)
     ngamma_grid = unbiased_ngamma_grid(T, P, ngamma_ref_grid, n_Texp_grid,
                                        multi_index_uniqgrid)
     log_ngammaL_grid = jnp.log(ngamma_grid)
@@ -49,9 +49,9 @@ def xsvector_second(T, P, nsigmaD, lbd_coeff, Tref, Twt, R, pmarray,
 
 
 @jit
-def xsvector_first(T, P, nsigmaD, lbd_coeff, Tref, Twt, R, pmarray,
-             nu_grid, elower_grid, multi_index_uniqgrid, ngamma_ref_grid,
-             n_Texp_grid, qt):
+def xsvector_first(T, P, nsigmaD, lbd_coeff, Tref, Twt, R, pmarray, nu_grid,
+                   elower_grid, multi_index_uniqgrid, ngamma_ref_grid,
+                   n_Texp_grid, qt):
     """compute cross section vector, with scan+fft, using the first Taylor expansion
 
     Args:
@@ -73,8 +73,8 @@ def xsvector_first(T, P, nsigmaD, lbd_coeff, Tref, Twt, R, pmarray,
     Returns:
         jnp.array: cross section in cgs vector
     """
-    Slsd = unbiased_lsd_first(lbd_coeff, T, Tref, Twt, nu_grid,
-                              elower_grid, qt)
+    Slsd = unbiased_lsd_first(lbd_coeff, T, Tref, Twt, nu_grid, elower_grid,
+                              qt)
     ngamma_grid = unbiased_ngamma_grid(T, P, ngamma_ref_grid, n_Texp_grid,
                                        multi_index_uniqgrid)
     log_ngammaL_grid = jnp.log(ngamma_grid)
@@ -116,13 +116,14 @@ def xsvector_zeroth(T, P, nsigmaD, lbd_coeff, Tref, R, pmarray, nu_grid,
 
 
 @jit
-def xsmatrix(Tarr, Parr, R, pmarray, lbd, nu_grid, ngamma_ref_grid,
+def xsmatrix(Tarr, Parr, Tref, R, pmarray, lbd, nu_grid, ngamma_ref_grid,
              n_Texp_grid, multi_index_uniqgrid, elower_grid, Mmol, qtarr):
     """compute cross section matrix given atmospheric layers, with scan+fft
 
     Args:
         Tarr (_type_): temperature layers
         Parr (_type_): pressure layers
+        Tref: reference temperature in K
         R (float): spectral resolution
         pmarray (_type_): pmarray
         lbd (_type_): log biased line shape density
@@ -138,8 +139,8 @@ def xsmatrix(Tarr, Parr, R, pmarray, lbd, nu_grid, ngamma_ref_grid,
         jnp.array : cross section matrix (Nlayer, N_wavenumber)
     """
     nsigmaD = vmap(normalized_doppler_sigma, (0, None, None), 0)(Tarr, Mmol, R)
-    Slsd = vmap(unbiased_lsd_zeroth, (None, 0, None, None, 0),
-                0)(lbd, Tarr, nu_grid, elower_grid, qtarr)
+    Slsd = vmap(unbiased_lsd_zeroth, (None, 0, None, None, None, 0),
+                0)(lbd, Tarr, Tref, nu_grid, elower_grid, qtarr)
     ngamma_grid = vmap(unbiased_ngamma_grid, (0, 0, None, None, None),
                        0)(Tarr, Parr, ngamma_ref_grid, n_Texp_grid,
                           multi_index_uniqgrid)
@@ -319,30 +320,30 @@ def generate_lbd(line_strength_ref,
 
     # We extend the LBD grid to +1 along elower direction. See Issue #273
     Ng_elower_plus_one = len(elower_grid) + 1
-    
-    coeff_elower, index_elower = lbd_coefficients(
-        elower, elower_grid, Tref, Twt, diffmode)
+
+    coeff_elower, index_elower = lbd_coefficients(elower, elower_grid, Tref,
+                                                  Twt, diffmode)
 
     lbd_coeff = []
-    for idiff in range(diffmode+1):
+    for idiff in range(diffmode + 1):
         lbd_diff = np.zeros((Ng_nu, Ng_broadpar, Ng_elower_plus_one),
-                          dtype=np.float64)
+                            dtype=np.float64)
         lbd_diff = npadd3D_multi_index(lbd_diff,
-                                     line_strength_ref,
-                                     cont_nu,
-                                     index_nu,
-                                     coeff_elower[idiff],
-                                     index_elower,
-                                     uidx_bp,
-                                     multi_cont_lines,
-                                     neighbor_uidx,
-                                     sumz=1.0)
+                                       line_strength_ref,
+                                       cont_nu,
+                                       index_nu,
+                                       coeff_elower[idiff],
+                                       index_elower,
+                                       uidx_bp,
+                                       multi_cont_lines,
+                                       neighbor_uidx,
+                                       sumz=1.0)
         if idiff == 0:
             lbd_diff = convert_to_jnplog(lbd_diff)
         else:
             lbd_diff = np.array(lbd_diff[:, :, 0:-1])
         lbd_coeff.append(lbd_diff)
-        
+
     lbd_coeff = jnp.array(lbd_coeff)
 
     return lbd_coeff, multi_index_uniqgrid
@@ -419,8 +420,7 @@ def unbiased_lsd_zeroth(lbd_zeroth, T, Tref, nu_grid, elower_grid, qt):
     return (Slsd.T * g_bias(nu_grid, T, Tref) / qt).T
 
 
-def unbiased_lsd_first(lbd_coeff, T, Tref, Twt, nu_grid,
-                       elower_grid, qt):
+def unbiased_lsd_first(lbd_coeff, T, Tref, Twt, nu_grid, elower_grid, qt):
     """ unbias the biased LSD, first order
 
     Args:
@@ -437,12 +437,14 @@ def unbiased_lsd_first(lbd_coeff, T, Tref, Twt, nu_grid,
         
     """
     lfb = logf_bias(elower_grid, T, Tref)
-    unbiased_coeff = jnp.exp(lfb) * lbd_coeff[1] * (1.0 / T - 1.0 / Twt)  # f*w1
-    Slsd = jnp.sum(jnp.exp(lfb + lbd_coeff[0]) + unbiased_coeff, axis=-1) # 0th term + sum_l[ f*w1(t-twt) ]
+    unbiased_coeff = jnp.exp(lfb) * lbd_coeff[1] * (1.0 / T - 1.0 / Twt
+                                                    )  # f*w1
+    Slsd = jnp.sum(jnp.exp(lfb + lbd_coeff[0]) + unbiased_coeff,
+                   axis=-1)  # 0th term + sum_l[ f*w1(t-twt) ]
     return (Slsd.T * g_bias(nu_grid, T, Tref) / qt).T
 
-def unbiased_lsd_second(lbd_coeff, T, Tref, Twt, nu_grid,
-                       elower_grid, qt):
+
+def unbiased_lsd_second(lbd_coeff, T, Tref, Twt, nu_grid, elower_grid, qt):
     """ unbias the biased LSD, second order
 
     Args:
@@ -460,7 +462,8 @@ def unbiased_lsd_second(lbd_coeff, T, Tref, Twt, nu_grid,
     """
     lfb = logf_bias(elower_grid, T, Tref)
     dt = (1.0 / T - 1.0 / Twt)
-    unbiased_coeff  = jnp.exp(lfb) * ( lbd_coeff[1] * dt  + 0.5 * lbd_coeff[2] * dt**2 )
+    unbiased_coeff = jnp.exp(lfb) * (lbd_coeff[1] * dt +
+                                     0.5 * lbd_coeff[2] * dt**2)
     Slsd = jnp.sum(jnp.exp(lfb + lbd_coeff[0]) + unbiased_coeff, axis=-1)
     return (Slsd.T * g_bias(nu_grid, T, Tref) / qt).T
 

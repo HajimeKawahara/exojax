@@ -13,20 +13,7 @@ from exojax.spec import normalized_doppler_sigma
 from exojax.test.data import TESTDATA_CO_EXOMOL_MODIT_XS_REF
 #from exojax.test.data import TESTDATA_CO_HITEMP_PREMODIT_XS_REF
 from exojax.test.data import TESTDATA_CO_HITEMP_MODIT_XS_REF
-
 import warnings
-
-from exojax.spec.modit import xsvector
-from exojax.spec.hitran import line_strength
-from exojax.spec.molinfo import molmass_isotope
-from exojax.spec import normalized_doppler_sigma, gamma_natural
-from exojax.spec.hitran import line_strength, gamma_hitran
-from exojax.spec.exomol import gamma_exomol
-from exojax.utils.grids import wavenumber_grid
-from exojax.spec.initspec import init_modit
-from exojax.spec.set_ditgrid import ditgrid_log_interval
-from exojax.test.emulate_mdb import mock_mdbExomol
-from exojax.test.emulate_mdb import mock_mdbHitemp
 
 
 @pytest.mark.parametrize("diffmode", [0, 1, 2])
@@ -38,7 +25,7 @@ def test_xsection_premodit_hitemp(diffmode):
     Twt = 1000.0
     Ttest = 1200.0  #fix to compare w/ precomputed xs by MODIT.
     Ptest = 1.0
-    dE = 100.0 * (diffmode + 1)
+    dE = 500.0 * (diffmode + 1)
     Nx = 5000
     mdb = mock_mdbHitemp(multi_isotope=False)
     nu_grid, wav, res = wavenumber_grid(22800.0,
@@ -72,10 +59,17 @@ def test_xsection_premodit_hitemp(diffmode):
                               n_Texp_grid, qt)
 
     
-    #np.savetxt(TESTDATA_CO_HITEMP_PREMODIT_XS_REF,np.array([nu_grid,xsv]).T,delimiter=",")
-    #filename = pkg_resources.resource_filename(
-    #    'exojax', 'data/testdata/' + TESTDATA_CO_HITEMP_MODIT_XS_REF)
-    #dat = pd.read_csv(filename, delimiter=",", names=("nus", "xsv"))
+    filename = pkg_resources.resource_filename(
+        'exojax', 'data/testdata/' + TESTDATA_CO_HITEMP_MODIT_XS_REF)
+    dat = pd.read_csv(filename, delimiter=",", names=("nus", "xsv"))
+
+    ilim = 2900  #to avoid noisy continuum
+    print(np.max(np.abs(1.0 - xsv[:ilim] / dat["xsv"].values[:ilim])))
+    accuracy = [0.015, 0.005, 0.005]
+    assert np.max(
+        np.abs(1.0 -
+               xsv[:ilim] / dat["xsv"].values[:ilim])) < accuracy[diffmode]
+    
     #assert np.all(xsv == pytest.approx(dat["xsv"].values))
     return opa.nu_grid, xsv, opa.dE, Twt, Tref, Ttest
 
@@ -125,7 +119,7 @@ def test_xsection_premodit_exomol(diffmode):
         'exojax', 'data/testdata/' + TESTDATA_CO_EXOMOL_MODIT_XS_REF)
     dat = pd.read_csv(filename, delimiter=",", names=("nus", "xsv"))
     print(np.max(np.abs(1.0 - xsv[:ilim] / dat["xsv"].values[:ilim])))
-    accuracy = [0.15, 0.005, 0.005]
+    accuracy = [0.015, 0.005, 0.005]
     assert np.max(
         np.abs(1.0 -
                xsv[:ilim] / dat["xsv"].values[:ilim])) < accuracy[diffmode]
@@ -138,8 +132,8 @@ if __name__ == "__main__":
     import matplotlib.pyplot as plt
     #import jax.profiler
 
-    #db = "hitemp"
-    db = "exomol"
+    db = "hitemp"
+    #db = "exomol"
 
     diffmode = 2
     if db == "exomol":
