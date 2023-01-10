@@ -24,7 +24,7 @@ config.update("jax_enable_x64", True)
 
 @pytest.mark.parametrize("diffmode", [0, 1, 2])
 def test_rt_exomol(diffmode, fig=False):
-    dE = 500.0 * (diffmode + 1)
+    dE = 400.0 * (diffmode + 1)
 
     mdb = mock_mdbExomol()
     Parr, dParr, k = rt.pressure_layer(NP=100)
@@ -37,9 +37,9 @@ def test_rt_exomol(diffmode, fig=False):
                                         23100.0,
                                         15000,
                                         unit='AA',
-                                        xsmode="modit")
-    Tref = 500.0
-    Twt = 1000.0
+                                        xsmode="premodit")
+    Tref = 600.0
+    Twt = 1200.0
 
     g = 2478.57
     opa = OpaPremodit(mdb=mdb, nu_grid=nu_grid, diffmode=diffmode)
@@ -128,13 +128,14 @@ def test_rt_hitemp(fig=False):
 
 if __name__ == "__main__":
     import matplotlib.pyplot as plt
-    nus, F0, Fref = test_rt_exomol(diffmode=1)
+    diffmode = 0
+    nus, F0, Fref = test_rt_exomol(diffmode)
     #test_rt_hitemp()
 
     fig = plt.figure()
     ax = fig.add_subplot(211)
-    ax.plot(nus, F0, label="PreMODIT", ls="dashed")
     ax.plot(nus, Fref, label="MODIT")
+    ax.plot(nus, F0, label="PreMODIT", ls="dashed")
     plt.legend()
     plt.yscale("log")
     plt.ylabel("cross section (cm2)")
@@ -142,9 +143,9 @@ if __name__ == "__main__":
     ax.plot(nus, 1.0 - F0 / Fref, label="dif = (MODIT - PreMODIT)/MODIT")
     plt.ylabel("dif")
     plt.xlabel("wavenumber cm-1")
-    plt.axhline(0.01, color="gray", lw=0.5)
-    plt.axhline(-0.01, color="gray", lw=0.5)
-    plt.ylim(-0.03, 0.03)
+    plt.axhline(0.05, color="gray", lw=0.5)
+    plt.axhline(-0.05, color="gray", lw=0.5)
+    plt.ylim(-0.07, 0.07)
     plt.legend()
     plt.show()
  
