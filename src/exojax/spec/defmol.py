@@ -62,6 +62,10 @@ def search_molfile(database, molecules):
                 return e2s(molecules)+'/'+molecules+'/'+exomol_defmol
             except:
                 molname_exact = s2e_stable(molecules)
+                # ions
+                if "+" in molecules:
+                    molecules = molecules.replace("+","_p")
+                    molname_exact = molname_exact + "_p"
                 print('Warning:', molecules, 'is interpreted as', molname_exact)
                 rec = get_exomol_database_list(molecules, molname_exact)
                 # default (recommended) database by ExoMol
