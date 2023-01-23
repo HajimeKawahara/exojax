@@ -37,6 +37,7 @@ def exact_molecule_name_to_isotope_number(exact_molecule_name):
         #check hitran exact name
         exact_hitran_molecule_name = exact_molname_exomol_to_hitran(
             exact_molecule_name)
+        print("HITRAN exact name=",exact_hitran_molecule_name)
         keys = [
             k for k, v in isotope_name_dict.items()
             if v == exact_hitran_molecule_name
@@ -113,8 +114,19 @@ def exact_molname_exomol_to_hitran(exact_exomol_molecule_name):
     Returns:
         str: exact exomol molecule name such as (12C)(16O)
     """
-    return "(" + exact_exomol_molecule_name.replace("-", ")(") + ")"
-
+    component = exact_exomol_molecule_name.split("-")
+    hitran_exact_name=""
+    hydrolist = ["1H", "1H2", "2H", "2H2"]
+    replacelist = ["H", "H2", "D", "D2"]
+    for c in component:
+        if c in hydrolist:
+            ind = hydrolist.index(c)
+            hitran_exact_name=hitran_exact_name+replacelist[ind]
+        elif c[-1].isdigit():
+            hitran_exact_name=hitran_exact_name+"("+c[:-1]+")"+c[-1]
+        else:
+            hitran_exact_name=hitran_exact_name+"("+c+")"
+    return hitran_exact_name
 
 def e2s(exact_exomol_molecule_name):
 
