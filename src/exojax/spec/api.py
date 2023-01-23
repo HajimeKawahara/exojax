@@ -75,6 +75,7 @@ class MdbExomol(CapiMdbExomol):
                  broadf=True,
                  gpu_transfer=True,
                  inherit_dataframe=False,
+                 skip_optional_data=True,
                  local_databases="./"):
         """Molecular database for Exomol form.
 
@@ -97,7 +98,6 @@ class MdbExomol(CapiMdbExomol):
         self.database = str(self.path.stem)
         self.bkgdatm = bkgdatm
         #molecbroad = self.exact_molecule_name + '__' + self.bkgdatm
-
         self.Ttyp = Ttyp
         self.broadf = broadf
         self.simple_molecule_name = e2s(self.exact_molecule_name)
@@ -119,7 +119,7 @@ class MdbExomol(CapiMdbExomol):
                          crit=crit,
                          bkgdatm=self.bkgdatm,
                          cache=True,
-                         skip_optional_data=True)
+                         skip_optional_data=skip_optional_data)
 
         self.crit = crit
         self.QTtyp = np.array(self.QT_interp(self.Ttyp))
