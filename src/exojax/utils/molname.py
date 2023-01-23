@@ -25,7 +25,7 @@ def exact_molecule_name_to_isotope_number(exact_molecule_name):
         exact_molecule_name (str): exact exomol, hitran, molecule name such as 12C-16O,  (12C)(16O)
 
     Returns:
-        int: molecular number, isotope number 
+        int: molecular number, isotope number (or None, None) 
     """
     from radis.db.molparam import isotope_name_dict
 
@@ -45,9 +45,8 @@ def exact_molecule_name_to_isotope_number(exact_molecule_name):
         molnumber = keys[0][0]
         isotope_number = keys[0][1]
     else:
-        print("No isotope number identified")
-        print("Report at https://github.com/HajimeKawahara/exojax/issues.")
-        return None
+        warnings.warn("No isotope number identified.",UserWarning)
+        return None, None
 
     return molnumber, isotope_number
 
