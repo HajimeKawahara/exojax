@@ -2,7 +2,7 @@
 from exojax.spec import api
 from exojax.utils.grids import wavenumber_grid
 
-nus, wav, r = wavenumber_grid(12000.0,15000.0, 1000, unit="AA")
+nus, wav, r = wavenumber_grid(12000.0, 15000.0, 1000, unit="AA")
 #emf='CO/12C-16O/Li2015'   #lifetime=0, Lande=0
 #emf="NaH/23Na-1H/Rivlin/" #lifetime=1, Lande=0
 #emf="MgH/24Mg-1H/XAB/" #lifetime=1, Lande=1
@@ -19,11 +19,7 @@ emf = "OH/16O-1H/MoLLIST/"
 #emf="NO/14N-16O/XABC/"
 
 # when
-mdb = api.MdbExomol(emf,
-                    nus,
-                    inherit_dataframe=True,
-                    optional_quantum_states=True,
-                    activation=False)
+mdb = api.MdbExomol(emf, nus, optional_quantum_states=True, activation=False)
 
 # %%
 print(mdb.df)
@@ -41,7 +37,11 @@ for dv in range(0, 6):
 
 load_mask = (mdb.df["v_u"] - mdb.df["v_l"] == 2) * mdb.df_load_mask
 mdb.activate(mdb.df, load_mask)
-plt.plot(1.e4 / mdb.nu_lines, mdb.Sij0,"+", color="black", label="activated lines")
+plt.plot(1.e4 / mdb.nu_lines,
+         mdb.Sij0,
+         "+",
+         color="black",
+         label="activated lines")
 plt.legend()
 plt.title(emf)
 plt.xlim(0.95, 1.75)

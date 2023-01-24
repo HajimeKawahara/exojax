@@ -93,6 +93,14 @@ class MdbExomol(CapiMdbExomol):
             optional_quantum_states: if True, all of the fields available in self.df will be loaded. if False, the mandatory fields (i,E,g,J) will be loaded.
             activation: if True, the activation of mdb will be done when initialization, if False, the activation won't be done and it makes self.df instance available. 
 
+        Examples:
+            
+            >>> # we would extract the line with delta nu = 2 here
+            >>> mdb = api.MdbExomol(emf, nus, optional_quantum_states=True, activation=False)
+            >>> load_mask = (mdb.df["v_u"] - mdb.df["v_l"] == 2) * mdb.df_load_mask
+            >>> mdb.activate(mdb.df, load_mask)
+
+
         Note:
             The trans/states files can be very large. For the first time to read it, we convert it to HDF/vaex. After the second-time, we use the HDF5 format with vaex instead.
         """
