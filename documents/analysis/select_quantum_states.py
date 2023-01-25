@@ -35,7 +35,7 @@ for dv in range(0, 6):
              alpha=0.2)
 #plt.show()
 
-load_mask = (mdb.df["v_u"] - mdb.df["v_l"] == 3) * mdb.df_load_mask
+load_mask = (mdb.df["v_u"] - mdb.df["v_l"] == 3)
 mdb.activate(mdb.df, load_mask)
 plt.plot(1.e4 / mdb.nu_lines,
          mdb.Sij0,

@@ -114,8 +114,8 @@ class MdbExomol(CapiMdbExomol):
         self.broadf = broadf
         self.simple_molecule_name = e2s(self.exact_molecule_name)
         self.molmass = isotope_molmass(self.exact_molecule_name)
-        self.skip_optional_data = not optional_quantum_states 
-        
+        self.skip_optional_data = not optional_quantum_states
+
         wavenum_min, wavenum_max = np.min(nurange), np.max(nurange)
         if wavenum_min == -np.inf:
             wavenum_min = None
@@ -151,13 +151,13 @@ class MdbExomol(CapiMdbExomol):
             output="vaex")
 
         self.df_load_mask = self.compute_load_mask(df)
-        
+
         if activation:
-            self.activate(df, self.df_load_mask)
+            self.activate(df)
         if inherit_dataframe or not activation:
             self.df = df
-        
-    def activate(self, df, mask):
+
+    def activate(self, df, mask=None):
         """activation of moldb, 
         
         Notes:
@@ -166,8 +166,17 @@ class MdbExomol(CapiMdbExomol):
 
         Args:
             df: DataFrame
-            mask: mask of DataFrame to be used for the activation
+            mask: mask of DataFrame to be used for the activation, if None, no additional mask is applied.
+
+        Note:
+            self.df_load_mask is always applied when the activation.
+
         """
+        if mask is not None:
+            mask = mask * self.df_load_mask
+        else:
+            mask = self.df_load_mask
+
         self.instances_from_dataframes(df[mask])
         self.compute_broadening(self.jlower, self.jupper)
         self.gamma_natural = gn(self.A)
