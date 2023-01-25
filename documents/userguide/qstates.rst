@@ -9,7 +9,7 @@ When we would like to filter the lines based on quantum states, such as vibratio
     >>> from exojax.spec import api
 	
     >>> nus, wav, res = wavenumber_grid(24000.0, 26000.0, 1000, unit="AA")
-	>>> mdb = api.MdbExomol(""CO/12C-16O/Li2015/"", nus, optional_quantum_states=True, activation=False)
+    >>> mdb = api.MdbExomol(""CO/12C-16O/Li2015/"", nus, optional_quantum_states=True, activation=False)
 
 Then, let's check DataFrame. 
 
