@@ -50,3 +50,5 @@ plt.xlabel("micron")
 plt.yscale("log")
 #plt.xscale("log")
 plt.show()
+
+# %%
