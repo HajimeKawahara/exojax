@@ -8,6 +8,7 @@ import numpy as np
 import jax.numpy as jnp
 import pathlib
 import vaex
+import warnings
 from exojax.spec.hitran import line_strength_numpy
 from exojax.spec.hitran import gamma_natural as gn
 from exojax.utils.constants import Tref
@@ -82,7 +83,7 @@ class MdbExomol(CapiMdbExomol):
 
         Args:
             path: path for Exomol data directory/tag. For instance, "/home/CO/12C-16O/Li2015"
-            nurange: wavenumber range list (cm-1) [min,max] or wavenumber grid
+            nurange: wavenumber range list (cm-1) [min,max] or wavenumber grid, if None, it starts as the nonactive mode
             margin: margin for nurange (cm-1)
             crit: line strength lower limit for extraction
             Ttyp: typical temperature to calculate Sij(T) used in crit
@@ -115,12 +116,7 @@ class MdbExomol(CapiMdbExomol):
         self.simple_molecule_name = e2s(self.exact_molecule_name)
         self.molmass = isotope_molmass(self.exact_molecule_name)
         self.skip_optional_data = not optional_quantum_states
-
-        wavenum_min, wavenum_max = np.min(nurange), np.max(nurange)
-        if wavenum_min == -np.inf:
-            wavenum_min = None
-        if wavenum_max == np.inf:
-            wavenum_max = None
+        activation, wavenum_min, wavenum_max = self.set_wavenum(nurange)
 
         super().__init__(str(self.path),
                          local_databases=local_databases,
@@ -156,6 +152,21 @@ class MdbExomol(CapiMdbExomol):
             self.activate(df)
         if inherit_dataframe or not activation:
             self.df = df
+
+    def set_wavenum(self, nurange):
+        if nurange is None:
+            wavenum_min = 0.0
+            wavenum_max = 0.0
+            activation = False
+            warnings.warn("nurange was not given. Nonactive mode.",
+                          UserWarning)
+        else:
+            wavenum_min, wavenum_max = np.min(nurange), np.max(nurange)
+        if wavenum_min == -np.inf:
+            wavenum_min = None
+        if wavenum_max == np.inf:
+            wavenum_max = None
+        return activation,wavenum_min,wavenum_max
 
     def activate(self, df, mask=None):
         """activation of moldb, 
