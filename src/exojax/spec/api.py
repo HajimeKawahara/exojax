@@ -94,13 +94,6 @@ class MdbExomol(CapiMdbExomol):
             optional_quantum_states: if True, all of the fields available in self.df will be loaded. if False, the mandatory fields (i,E,g,J) will be loaded.
             activation: if True, the activation of mdb will be done when initialization, if False, the activation won't be done and it makes self.df instance available. 
 
-        Examples:
-            
-            >>> # we would extract the line with delta nu = 2 here
-            >>> mdb = api.MdbExomol(emf, nus, optional_quantum_states=True, activation=False)
-            >>> load_mask = (mdb.df["v_u"] - mdb.df["v_l"] == 2) * mdb.df_load_mask
-            >>> mdb.activate(mdb.df, load_mask)
-
 
         Note:
             The trans/states files can be very large. For the first time to read it, we convert it to HDF/vaex. After the second-time, we use the HDF5 format with vaex instead.
@@ -116,7 +109,8 @@ class MdbExomol(CapiMdbExomol):
         self.simple_molecule_name = e2s(self.exact_molecule_name)
         self.molmass = isotope_molmass(self.exact_molecule_name)
         self.skip_optional_data = not optional_quantum_states
-        activation, wavenum_min, wavenum_max = self.set_wavenum(nurange)
+        self.activation = activation
+        wavenum_min, wavenum_max = self.set_wavenum(nurange)
 
         super().__init__(str(self.path),
                          local_databases=local_databases,
@@ -141,32 +135,30 @@ class MdbExomol(CapiMdbExomol):
         df = self.load(
             local_files,
             columns=[k for k in self.__slots__ if k not in ["logsij0"]],
-            #lower_bound=([("nu_lines", wavenum_min)] if wavenum_min else []) +
             lower_bound=([("Sij0", 0.0)]),
-            #upper_bound=([("nu_lines", wavenum_max)] if wavenum_max else []),
             output="vaex")
 
         self.df_load_mask = self.compute_load_mask(df)
 
-        if activation:
+        if self.activation:
             self.activate(df)
-        if inherit_dataframe or not activation:
+        if inherit_dataframe or not self.activation:
+            print("DataFrame (self.df) available.")
             self.df = df
 
     def set_wavenum(self, nurange):
         if nurange is None:
             wavenum_min = 0.0
             wavenum_max = 0.0
-            activation = False
-            warnings.warn("nurange was not given. Nonactive mode.",
-                          UserWarning)
+            self.activation = False
+            warnings.warn("nurange=None. Nonactive mode.", UserWarning)
         else:
             wavenum_min, wavenum_max = np.min(nurange), np.max(nurange)
         if wavenum_min == -np.inf:
             wavenum_min = None
         if wavenum_max == np.inf:
             wavenum_max = None
-        return activation,wavenum_min,wavenum_max
+        return wavenum_min, wavenum_max
 
     def activate(self, df, mask=None):
         """activation of moldb, 
@@ -181,6 +173,14 @@ class MdbExomol(CapiMdbExomol):
 
         Note:
             self.df_load_mask is always applied when the activation.
+
+        Examples:
+            
+            >>> # we would extract the line with delta nu = 2 here
+            >>> mdb = api.MdbExomol(emf, nus, optional_quantum_states=True, activation=False)
+            >>> load_mask = (mdb.df["v_u"] - mdb.df["v_l"] == 2)
+            >>> mdb.activate(mdb.df, load_mask)
+
 
         """
         if mask is not None:
@@ -203,23 +203,23 @@ class MdbExomol(CapiMdbExomol):
 
         return wavelength_mask * intensity_mask
 
-    def instances_from_dataframes(self, df_load_mask):
-        """generate instances from (usually masked) data farame
+    def instances_from_dataframes(self, df_masked):
+        """generate instances from (usually masked) data frame
 
         Args:
-            df_load_mask (DataFrame): (masked) data frame
+            df_masked (DataFrame): (masked) data frame
 
         Raises:
             ValueError: _description_
         """
-        if isinstance(df_load_mask, vaex.dataframe.DataFrameLocal):
-            self.A = df_load_mask.A.values
-            self.nu_lines = df_load_mask.nu_lines.values
-            self.elower = df_load_mask.elower.values
-            self.jlower = df_load_mask.jlower.values
-            self.jupper = df_load_mask.jupper.values
-            self.Sij0 = df_load_mask.Sij0.values
-            self.gpp = df_load_mask.gup.values
+        if isinstance(df_masked, vaex.dataframe.DataFrameLocal):
+            self.A = df_masked.A.values
+            self.nu_lines = df_masked.nu_lines.values
+            self.elower = df_masked.elower.values
+            self.jlower = df_masked.jlower.values
+            self.jupper = df_masked.jupper.values
+            self.Sij0 = df_masked.Sij0.values
+            self.gpp = df_masked.gup.values
         else:
             raise ValueError("Use vaex dataframe as input.")
 
