@@ -8,6 +8,7 @@ import numpy as np
 import jax.numpy as jnp
 import pathlib
 import vaex
+import warnings
 from exojax.spec.hitran import line_strength_numpy
 from exojax.spec.hitran import gamma_natural as gn
 from exojax.utils.constants import Tref
@@ -75,39 +76,41 @@ class MdbExomol(CapiMdbExomol):
                  broadf=True,
                  gpu_transfer=True,
                  inherit_dataframe=False,
+                 optional_quantum_states=False,
+                 activation=True,
                  local_databases="./"):
         """Molecular database for Exomol form.
 
         Args:
-           path: path for Exomol data directory/tag. For instance, "/home/CO/12C-16O/Li2015"
-           nurange: wavenumber range list (cm-1) [min,max] or wavenumber grid
-           margin: margin for nurange (cm-1)
-           crit: line strength lower limit for extraction
-           Ttyp: typical temperature to calculate Sij(T) used in crit
-           bkgdatm: background atmosphere for broadening. e.g. H2, He,
-           broadf: if False, the default broadening parameters in .def file is used
-           gpu_transfer: if True, some instances will be transfered to jnp.array. False is recommended for PreMODIT.
-           inherit_dataframe: if True, it makes self.df instance available, which needs more DRAM when pickling.
-            
+            path: path for Exomol data directory/tag. For instance, "/home/CO/12C-16O/Li2015"
+            nurange: wavenumber range list (cm-1) [min,max] or wavenumber grid, if None, it starts as the nonactive mode
+            margin: margin for nurange (cm-1)
+            crit: line strength lower limit for extraction
+            Ttyp: typical temperature to calculate Sij(T) used in crit
+            bkgdatm: background atmosphere for broadening. e.g. H2, He,
+            broadf: if False, the default broadening parameters in .def file is used
+            gpu_transfer: if True, some instances will be transfered to jnp.array. False is recommended for PreMODIT.
+            inherit_dataframe: if True, it makes self.df instance available, which needs more DRAM when pickling.
+            optional_quantum_states: if True, all of the fields available in self.df will be loaded. if False, the mandatory fields (i,E,g,J) will be loaded.
+            activation: if True, the activation of mdb will be done when initialization, if False, the activation won't be done and it makes self.df instance available. 
+
+
         Note:
-           The trans/states files can be very large. For the first time to read it, we convert it to HDF/vaex. After the second-time, we use the HDF5 format with vaex instead.
+            The trans/states files can be very large. For the first time to read it, we convert it to HDF/vaex. After the second-time, we use the HDF5 format with vaex instead.
         """
         self.path = pathlib.Path(path).expanduser()
         self.exact_molecule_name = self.path.parents[0].stem
         self.database = str(self.path.stem)
         self.bkgdatm = bkgdatm
         #molecbroad = self.exact_molecule_name + '__' + self.bkgdatm
-
+        self.gpu_transfer = gpu_transfer
         self.Ttyp = Ttyp
         self.broadf = broadf
         self.simple_molecule_name = e2s(self.exact_molecule_name)
         self.molmass = isotope_molmass(self.exact_molecule_name)
-
-        wavenum_min, wavenum_max = np.min(nurange), np.max(nurange)
-        if wavenum_min == -np.inf:
-            wavenum_min = None
-        if wavenum_max == np.inf:
-            wavenum_max = None
+        self.skip_optional_data = not optional_quantum_states
+        self.activation = activation
+        wavenum_min, wavenum_max = self.set_wavenum(nurange)
 
         super().__init__(str(self.path),
                          local_databases=local_databases,
@@ -119,11 +122,11 @@ class MdbExomol(CapiMdbExomol):
                          crit=crit,
                          bkgdatm=self.bkgdatm,
                          cache=True,
-                         skip_optional_data=True)
+                         skip_optional_data=self.skip_optional_data)
 
         self.crit = crit
         self.QTtyp = np.array(self.QT_interp(self.Ttyp))
-        
+
         # Get cache files to load :
         mgr = self.get_datafile_manager()
         local_files = [mgr.cache_file(f) for f in self.trans_file]
@@ -132,21 +135,64 @@ class MdbExomol(CapiMdbExomol):
         df = self.load(
             local_files,
             columns=[k for k in self.__slots__ if k not in ["logsij0"]],
-            #lower_bound=([("nu_lines", wavenum_min)] if wavenum_min else []) +
             lower_bound=([("Sij0", 0.0)]),
-            #upper_bound=([("nu_lines", wavenum_max)] if wavenum_max else []),
             output="vaex")
 
-        load_mask = self.compute_load_mask(df)
-        self.instances_from_dataframes(df[load_mask])
+        self.df_load_mask = self.compute_load_mask(df)
+
+        if self.activation:
+            self.activate(df)
+        if inherit_dataframe or not self.activation:
+            print("DataFrame (self.df) available.")
+            self.df = df
+
+    def set_wavenum(self, nurange):
+        if nurange is None:
+            wavenum_min = 0.0
+            wavenum_max = 0.0
+            self.activation = False
+            warnings.warn("nurange=None. Nonactive mode.", UserWarning)
+        else:
+            wavenum_min, wavenum_max = np.min(nurange), np.max(nurange)
+        if wavenum_min == -np.inf:
+            wavenum_min = None
+        if wavenum_max == np.inf:
+            wavenum_max = None
+        return wavenum_min, wavenum_max
+
+    def activate(self, df, mask=None):
+        """activation of moldb, 
+        
+        Notes:
+            activation includes, making instances, computing broadening parameters, natural width, 
+            and transfering instances to gpu arrays when self.gpu_transfer = True
+
+        Args:
+            df: DataFrame
+            mask: mask of DataFrame to be used for the activation, if None, no additional mask is applied.
+
+        Note:
+            self.df_load_mask is always applied when the activation.
+
+        Examples:
+            
+            >>> # we would extract the line with delta nu = 2 here
+            >>> mdb = api.MdbExomol(emf, nus, optional_quantum_states=True, activation=False)
+            >>> load_mask = (mdb.df["v_u"] - mdb.df["v_l"] == 2)
+            >>> mdb.activate(mdb.df, load_mask)
+
+
+        """
+        if mask is not None:
+            mask = mask * self.df_load_mask
+        else:
+            mask = self.df_load_mask
+
+        self.instances_from_dataframes(df[mask])
         self.compute_broadening(self.jlower, self.jupper)
         self.gamma_natural = gn(self.A)
-
-        if gpu_transfer:
+        if self.gpu_transfer:
             self.generate_jnp_arrays()
-
-        if inherit_dataframe:
-            self.df = df
 
     def compute_load_mask(self, df):
         wavelength_mask = (df.nu_lines > self.nurange[0]-self.margin) \
@@ -157,23 +203,23 @@ class MdbExomol(CapiMdbExomol):
 
         return wavelength_mask * intensity_mask
 
-    def instances_from_dataframes(self, df_load_mask):
-        """generate instances from (usually masked) data farame
+    def instances_from_dataframes(self, df_masked):
+        """generate instances from (usually masked) data frame
 
         Args:
-            df_load_mask (DataFrame): (masked) data frame
+            df_masked (DataFrame): (masked) data frame
 
         Raises:
             ValueError: _description_
         """
-        if isinstance(df_load_mask, vaex.dataframe.DataFrameLocal):
-            self.A = df_load_mask.A.values
-            self.nu_lines = df_load_mask.nu_lines.values
-            self.elower = df_load_mask.elower.values
-            self.jlower = df_load_mask.jlower.values
-            self.jupper = df_load_mask.jupper.values
-            self.Sij0 = df_load_mask.Sij0.values
-            self.gpp = df_load_mask.gup.values
+        if isinstance(df_masked, vaex.dataframe.DataFrameLocal):
+            self.A = df_masked.A.values
+            self.nu_lines = df_masked.nu_lines.values
+            self.elower = df_masked.elower.values
+            self.jlower = df_masked.jlower.values
+            self.jupper = df_masked.jupper.values
+            self.Sij0 = df_masked.Sij0.values
+            self.gpp = df_masked.gup.values
         else:
             raise ValueError("Use vaex dataframe as input.")
 
@@ -344,7 +390,8 @@ class MdbHitemp(HITEMPDatabaseManager):
             QTtyp = Q.at(T=Ttyp)
             load_mask = self.compute_load_mask(df, QTtyp / QTref)
         self.instances_from_dataframes(df[load_mask])
-        self.gQT, self.T_gQT = hitranapi.make_partition_function_grid_hitran(self.molecid, self.uniqiso)
+        self.gQT, self.T_gQT = hitranapi.make_partition_function_grid_hitran(
+            self.molecid, self.uniqiso)
 
         if gpu_transfer:
             self.generate_jnp_arrays()
@@ -355,9 +402,8 @@ class MdbHitemp(HITEMPDatabaseManager):
     def compute_load_mask(self, df, qrtyp):
         wav_mask = (df.wav > self.nurange[0]-self.margin) \
                     * (df.wav < self.nurange[1]+self.margin)
-        intensity_mask = (line_strength_numpy(self.Ttyp, df.int,
-                                              df.wav, df.El, qrtyp) >
-                          self.crit)
+        intensity_mask = (line_strength_numpy(self.Ttyp, df.int, df.wav, df.El,
+                                              qrtyp) > self.crit)
         return wav_mask * intensity_mask
 
     def instances_from_dataframes(self, df_load_mask):
@@ -458,8 +504,8 @@ class MdbHitemp(HITEMPDatabaseManager):
             str: exact isotope name such as (12C)(16O)
         """
         from exojax.utils.molname import exact_hitran_isotope_name_from_isotope
-        return exact_hitran_isotope_name_from_isotope(self.simple_molecule_name,
-                                               isotope)
+        return exact_hitran_isotope_name_from_isotope(
+            self.simple_molecule_name, isotope)
 
 
 MdbHit = MdbHitemp  #compatibility
@@ -568,7 +614,8 @@ class MdbHitran(HITRANDatabaseManager):
             QTtyp = Q.at(T=Ttyp)
             load_mask = self.compute_load_mask(df, QTtyp / QTref)
         self.instances_from_dataframes(df[load_mask])
-        self.gQT, self.T_gQT = hitranapi.make_partition_function_grid_hitran(self.molecid, self.uniqiso)
+        self.gQT, self.T_gQT = hitranapi.make_partition_function_grid_hitran(
+            self.molecid, self.uniqiso)
 
         if gpu_transfer:
             self.generate_jnp_arrays()
@@ -579,9 +626,8 @@ class MdbHitran(HITRANDatabaseManager):
     def compute_load_mask(self, df, qrtyp):
         wav_mask = (df.wav > self.nurange[0]-self.margin) \
                     * (df.wav < self.nurange[1]+self.margin)
-        intensity_mask = (line_strength_numpy(self.Ttyp, df.int,
-                                              df.wav, df.El, qrtyp) >
-                          self.crit)
+        intensity_mask = (line_strength_numpy(self.Ttyp, df.int, df.wav, df.El,
+                                              qrtyp) > self.crit)
         return wav_mask * intensity_mask
 
     def instances_from_dataframes(self, df_load_mask):
@@ -681,8 +727,8 @@ class MdbHitran(HITRANDatabaseManager):
             str: exact isotope name such as (12C)(16O)
         """
         from exojax.utils.isotopes import exact_hitran_isotope_name_from_isotope
-        return exact_hitran_isotope_name_from_isotope(self.simple_molecule_name,
-                                               isotope)
+        return exact_hitran_isotope_name_from_isotope(
+            self.simple_molecule_name, isotope)
 
 
 def _convert_proper_isotope(isotope):
