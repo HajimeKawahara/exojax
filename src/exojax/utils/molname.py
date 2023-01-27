@@ -46,12 +46,7 @@ def exact_molecule_name_to_isotope_number(exact_molecule_name):
         molnumber = keys[0][0]
         isotope_number = keys[0][1]
     else:
-<<<<<<< HEAD
-        print("No isotope number identified")
-        print("Report at https://github.com/HajimeKawahara/exojax/issues.")
-=======
         warnings.warn("No isotope number identified.",UserWarning)
->>>>>>> 10866ed52c4d4438ccd94874daca337acbabb8c9
         return None, None
 
     return molnumber, isotope_number
