@@ -6,6 +6,7 @@ User Guide
 
    userguide/hjerting.rst
    userguide/api.rst
+   userguide/qstates.rst
    userguide/atomll.rst
    userguide/rtransfer.rst
    userguide/modit.rst
@@ -14,9 +15,6 @@ User Guide
    userguide/vterm.rst
    userguide/comp.rst
 
-..   userguide/moldb.rst
-   userguide/exomol.rst 
-   userguide/hitran.rst
    
 
 For Developers

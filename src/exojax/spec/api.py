@@ -8,6 +8,7 @@ import numpy as np
 import jax.numpy as jnp
 import pathlib
 import vaex
+import warnings
 from exojax.spec.hitran import line_strength_numpy
 from exojax.spec.hitran import gamma_natural as gn
 from exojax.utils.constants import Tref_original
@@ -75,23 +76,27 @@ class MdbExomol(CapiMdbExomol):
                  broadf=True,
                  gpu_transfer=True,
                  inherit_dataframe=False,
+                 optional_quantum_states=False,
+                 activation=True,
                  local_databases="./"):
         """Molecular database for Exomol form.
 
         Args:
-           path: path for Exomol data directory/tag. For instance, "/home/CO/12C-16O/Li2015"
-           nurange: wavenumber range list (cm-1) [min,max] or wavenumber grid
-           margin: margin for nurange (cm-1)
-           crit: line strength lower limit for extraction
-           elower_max: maximum lower state energy, Elower (cm-1)
-           Ttyp: typical temperature to calculate Sij(T) used in crit
-           bkgdatm: background atmosphere for broadening. e.g. H2, He,
-           broadf: if False, the default broadening parameters in .def file is used
-           gpu_transfer: if True, some instances will be transfered to jnp.array. False is recommended for PreMODIT.
-           inherit_dataframe: if True, it makes self.df instance available, which needs more DRAM when pickling.
-            
+            path: path for Exomol data directory/tag. For instance, "/home/CO/12C-16O/Li2015"
+            nurange: wavenumber range list (cm-1) [min,max] or wavenumber grid, if None, it starts as the nonactive mode
+            margin: margin for nurange (cm-1)
+            crit: line strength lower limit for extraction
+            Ttyp: typical temperature to calculate Sij(T) used in crit
+            bkgdatm: background atmosphere for broadening. e.g. H2, He,
+            broadf: if False, the default broadening parameters in .def file is used
+            gpu_transfer: if True, some instances will be transfered to jnp.array. False is recommended for PreMODIT.
+            inherit_dataframe: if True, it makes self.df instance available, which needs more DRAM when pickling.
+            optional_quantum_states: if True, all of the fields available in self.df will be loaded. if False, the mandatory fields (i,E,g,J) will be loaded.
+            activation: if True, the activation of mdb will be done when initialization, if False, the activation won't be done and it makes self.df instance available. 
+
+
         Note:
-           The trans/states files can be very large. For the first time to read it, we convert it to HDF/vaex. After the second-time, we use the HDF5 format with vaex instead.
+            The trans/states files can be very large. For the first time to read it, we convert it to HDF/vaex. After the second-time, we use the HDF5 format with vaex instead.
         """
         self.dbtype = "exomol"
         self.path = pathlib.Path(path).expanduser()
@@ -100,16 +105,14 @@ class MdbExomol(CapiMdbExomol):
         self.bkgdatm = bkgdatm
         #molecbroad = self.exact_molecule_name + '__' + self.bkgdatm
         self.Tref = Tref_original
+        self.gpu_transfer = gpu_transfer
         self.Ttyp = Ttyp
         self.broadf = broadf
         self.simple_molecule_name = e2s(self.exact_molecule_name)
         self.molmass = isotope_molmass(self.exact_molecule_name)
-
-        wavenum_min, wavenum_max = np.min(nurange), np.max(nurange)
-        if wavenum_min == -np.inf:
-            wavenum_min = None
-        if wavenum_max == np.inf:
-            wavenum_max = None
+        self.skip_optional_data = not optional_quantum_states
+        self.activation = activation
+        wavenum_min, wavenum_max = self.set_wavenum(nurange)
 
         super().__init__(str(self.path),
                          local_databases=local_databases,
@@ -121,10 +124,11 @@ class MdbExomol(CapiMdbExomol):
                          crit=crit,
                          bkgdatm=self.bkgdatm,
                          cache=True,
-                         skip_optional_data=True)
+                         skip_optional_data=self.skip_optional_data)
 
         self.crit = crit
         self.elower_max = elower_max
+        self.QTtyp = np.array(self.QT_interp(self.Ttyp))
 
         # Get cache files to load :
         mgr = self.get_datafile_manager()
@@ -134,21 +138,64 @@ class MdbExomol(CapiMdbExomol):
         df = self.load(
             local_files,
             columns=[k for k in self.__slots__ if k not in ["logsij0"]],
-            #lower_bound=([("nu_lines", wavenum_min)] if wavenum_min else []) +
             lower_bound=([("Sij0", 0.0)]),
-            #upper_bound=([("nu_lines", wavenum_max)] if wavenum_max else []),
             output="vaex")
 
-        load_mask = self.compute_load_mask(df)
-        self.instances_from_dataframes(df[load_mask])
+        self.df_load_mask = self.compute_load_mask(df)
+
+        if self.activation:
+            self.activate(df)
+        if inherit_dataframe or not self.activation:
+            print("DataFrame (self.df) available.")
+            self.df = df
+
+    def set_wavenum(self, nurange):
+        if nurange is None:
+            wavenum_min = 0.0
+            wavenum_max = 0.0
+            self.activation = False
+            warnings.warn("nurange=None. Nonactive mode.", UserWarning)
+        else:
+            wavenum_min, wavenum_max = np.min(nurange), np.max(nurange)
+        if wavenum_min == -np.inf:
+            wavenum_min = None
+        if wavenum_max == np.inf:
+            wavenum_max = None
+        return wavenum_min, wavenum_max
+
+    def activate(self, df, mask=None):
+        """activation of moldb, 
+        
+        Notes:
+            activation includes, making instances, computing broadening parameters, natural width, 
+            and transfering instances to gpu arrays when self.gpu_transfer = True
+
+        Args:
+            df: DataFrame
+            mask: mask of DataFrame to be used for the activation, if None, no additional mask is applied.
+
+        Note:
+            self.df_load_mask is always applied when the activation.
+
+        Examples:
+            
+            >>> # we would extract the line with delta nu = 2 here
+            >>> mdb = api.MdbExomol(emf, nus, optional_quantum_states=True, activation=False)
+            >>> load_mask = (mdb.df["v_u"] - mdb.df["v_l"] == 2)
+            >>> mdb.activate(mdb.df, load_mask)
+
+
+        """
+        if mask is not None:
+            mask = mask * self.df_load_mask
+        else:
+            mask = self.df_load_mask
+
+        self.instances_from_dataframes(df[mask])
         self.compute_broadening(self.jlower, self.jupper)
         self.gamma_natural = gn(self.A)
-
-        if gpu_transfer:
+        if self.gpu_transfer:
             self.generate_jnp_arrays()
-
-        if inherit_dataframe:
-            self.df = df
 
     def compute_load_mask(self, df):
 
@@ -164,11 +211,11 @@ class MdbExomol(CapiMdbExomol):
             mask *= (df.elower < self.elower_max)
         return mask
 
-    def instances_from_dataframes(self, df_load_mask):
-        """generate instances from (usually masked) data farame
+    def instances_from_dataframes(self, df_masked):
+        """generate instances from (usually masked) data frame
 
         Args:
-            df_load_mask (DataFrame): (masked) data frame
+            df_masked (DataFrame): (masked) data frame
 
         Raises:
             ValueError: _description_
