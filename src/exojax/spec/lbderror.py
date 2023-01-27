@@ -2,7 +2,7 @@ from exojax.utils.constants import hcperk
 import jax.numpy as jnp
 from jax import vmap
 from jax import grad
-
+import numpy as np
 
 def _beta(t, tref):
     return hcperk * (t - tref)
@@ -157,3 +157,31 @@ def worst_tilde_line_strength_second(T, Ttyp, Tref, dE):
     ff = vmap(f)
     parr = jnp.array([0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9])
     return jnp.max(jnp.abs(ff(parr)), axis=0)
+
+def evaluate_trange(Tarr, tlide_line_strength, crit, Twt):
+    """evaluate robust temperature range
+
+    Args:
+        Tarr (ndarray): temperature array, shape = (N,)
+        tlide_line_strength (ndarray): line strength error, shape = (N,)
+        crit (float): criterion of line strength error (0.01=1%)
+        Twt (float): weight temperature
+        
+    Returns:
+        float, float: Tl, Tu. The line strength error is below crit within [Tl, Tu] 
+    """
+    dT = Twt - Tarr
+    mask_lower = (tlide_line_strength > crit) * (dT > 0)
+    dT_masked_lower = dT[mask_lower]
+    if len(dT_masked_lower) > 0:
+        Tl = Twt - np.min(dT_masked_lower)
+    else:
+        Tl = Tarr[0]
+
+    mask_upper = (tlide_line_strength > crit) * (dT < 0)
+    dT_masked_upper = dT[mask_upper]
+    if len(dT_masked_upper) > 0:
+        Tu = Twt + np.min(-dT_masked_upper)
+    else:
+        Tu = Tarr[-1]
+    return Tl, Tu
