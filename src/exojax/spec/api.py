@@ -655,7 +655,6 @@ class MdbHitran(HITRANDatabaseManager):
 
         self.isoid = df.iso
         self.uniqiso = np.unique(df.iso.values)
-        print(self.uniqiso,"+_+")
         QTref, QTtyp = self.QT_for_select_line(Ttyp)
         self.df_load_mask = self.compute_load_mask(df, QTtyp / QTref)
             
@@ -703,9 +702,7 @@ class MdbHitran(HITRANDatabaseManager):
         else:
             mask = self.df_load_mask
 
-        print(self.molecid, self.uniqiso, "*_*,1")        
         self.instances_from_dataframes(df[mask])
-        print(self.molecid, self.uniqiso, "*_*")
         self.gQT, self.T_gQT = hitranapi.make_partition_function_grid_hitran(
             self.molecid, self.uniqiso)
 
