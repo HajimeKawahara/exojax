@@ -383,10 +383,10 @@ class MdbHitemp(HITEMPDatabaseManager):
             columns=columns,
             within=[("iso", self.isotope)] if self.isotope is not None else [],
             # for relevant files, get only the right range :
-            lower_bound=[("wav", load_wavenum_min)]
-            if self.nurange[0] is not None else [],
-            upper_bound=[("wav", load_wavenum_max)]
-            if self.nurange[1] is not None else [],
+            #lower_bound=[("wav", load_wavenum_min)]
+            #if self.nurange[0] is not None else [],
+            #upper_bound=[("wav", load_wavenum_max)]
+            #if self.nurange[1] is not None else [],
             output=output,
         )
 
