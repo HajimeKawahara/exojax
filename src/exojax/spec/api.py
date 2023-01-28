@@ -291,18 +291,24 @@ class MdbHitemp(HITEMPDatabaseManager):
                  Ttyp=1000.,
                  isotope=0,
                  gpu_transfer=False,
-                 inherit_dataframe=False):
+                 inherit_dataframe=False,
+                 optional_quantum_states=False,
+                 activation=True
+                 ):
         """Molecular database for HITRAN/HITEMP form.
 
         Args:
-           path: path for HITEMP par file
-           nurange: wavenumber range list (cm-1) [min,max] or wavenumber grid
-           margin: margin for nurange (cm-1)
-           crit: line strength lower limit for extraction
-           Ttyp: typical temperature to calculate Sij(T) used in crit
-           isotope: isotope number, 0 or None = use all isotopes. 
-           gpu_transfer: tranfer data to jnp.array?
-           inherit_dataframe: if True, it makes self.df instance available, which needs more DRAM when pickling.
+            path: path for HITEMP par file
+            nurange: wavenumber range list (cm-1) [min,max] or wavenumber grid
+            margin: margin for nurange (cm-1)
+            crit: line strength lower limit for extraction
+            Ttyp: typical temperature to calculate Sij(T) used in crit
+            isotope: isotope number, 0 or None = use all isotopes. 
+            gpu_transfer: tranfer data to jnp.array?
+            inherit_dataframe: if True, it makes self.df instance available, which needs more DRAM when pickling.
+            optional_quantum_states: if True, all of the fields available in self.df will be loaded. if False, the mandatory fields (i,E,g,J) will be loaded.
+            activation: if True, the activation of mdb will be done when initialization, if False, the activation won't be done and it makes self.df instance available. 
+
         """
 
         self.path = pathlib.Path(path).expanduser()
@@ -314,7 +320,9 @@ class MdbHitemp(HITEMPDatabaseManager):
         self.nurange = [np.min(nurange), np.max(nurange)]
         load_wavenum_min = self.nurange[0] - self.margin
         load_wavenum_max = self.nurange[1] + self.margin
-
+        self.gpu_transfer = gpu_transfer
+        self.activation = activation
+        
         super().__init__(
             molecule=self.simple_molecule_name,
             name="HITEMP-{molecule}",
@@ -384,20 +392,60 @@ class MdbHitemp(HITEMPDatabaseManager):
 
         self.isoid = df.iso
         self.uniqiso = np.unique(df.iso.values)
-        for iso in self.uniqiso:
-            Q = PartFuncTIPS(self.molecid, iso)
-            QTref = Q.at(T=Tref)
-            QTtyp = Q.at(T=Ttyp)
-            load_mask = self.compute_load_mask(df, QTtyp / QTref)
-        self.instances_from_dataframes(df[load_mask])
+        QTref, QTtyp = self.QT_for_select_line(Ttyp)
+        self.df_load_mask = self.compute_load_mask(df, QTtyp / QTref)
+            
+        if self.activation:
+            self.activate(df)
+        if inherit_dataframe or not self.activation:
+            print("DataFrame (self.df) available.")
+            self.df = df
+
+    def QT_for_select_line(self, Ttyp):
+        if self.isotope is None or self.isotope == 0:
+            isotope_for_Qt = 1 # we use isotope=1 for QT
+        else:
+            isotope_for_Qt = int(self.isotope)
+        Q = PartFuncTIPS(self.molecid, isotope_for_Qt)
+        QTref = Q.at(T=Tref)
+        QTtyp = Q.at(T=Ttyp)
+        return QTref,QTtyp
+
+    def activate(self, df, mask=None):
+        """activation of moldb, 
+        
+        Notes:
+            activation includes, making instances, computing broadening parameters, natural width, 
+            and transfering instances to gpu arrays when self.gpu_transfer = True
+
+        Args:
+            df: DataFrame
+            mask: mask of DataFrame to be used for the activation, if None, no additional mask is applied.
+
+        Note:
+            self.df_load_mask is always applied when the activation.
+
+        Examples:
+            
+            >>> # we would extract the line with delta nu = 2 here
+            >>> mdb = api.MdbExomol(emf, nus, optional_quantum_states=True, activation=False)
+            >>> load_mask = (mdb.df["v_u"] - mdb.df["v_l"] == 2)
+            >>> mdb.activate(mdb.df, load_mask)
+
+
+        """
+        if mask is not None:
+            mask = mask * self.df_load_mask
+        else:
+            mask = self.df_load_mask
+
+        self.instances_from_dataframes(df[mask])
         self.gQT, self.T_gQT = hitranapi.make_partition_function_grid_hitran(
             self.molecid, self.uniqiso)
 
-        if gpu_transfer:
+        if self.gpu_transfer:
             self.generate_jnp_arrays()
 
-        if inherit_dataframe:
-            self.df = df
 
     def compute_load_mask(self, df, qrtyp):
         wav_mask = (df.wav > self.nurange[0]-self.margin) \
