@@ -61,7 +61,7 @@ def pltadd(c):
 
 Tl_in = 500.0  #K
 Tu_in = 1000.0  #K
-diffmode = 2
+diffmode = 0
 optimal_params(Tl_in, Tu_in, diffmode)
 
 # %%
