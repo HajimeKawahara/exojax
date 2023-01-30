@@ -4,6 +4,7 @@ from jax import vmap
 from jax import grad
 import numpy as np
 
+
 def _beta(t, tref):
     return hcperk * (t - tref)
 
@@ -109,10 +110,10 @@ def single_tilde_line_strength_second(t, twp, tref, dE, p=0.5):
     ddfw1 = grad(dfw1, argnums=0)
     ddfw2 = grad(dfw2, argnums=0)
 
-    w1 = weight_point1_dE(twp, tref, dE,
-                          p) + dfw1(twp, tref, dE, p) * (t - twp) + ddfw1(twp, tref, dE, p) * (t - twp)**2/2.0
-    w2 = weight_point2_dE(twp, tref, dE,
-                          p) + dfw2(twp, tref, dE, p) * (t - twp) + ddfw2(twp, tref, dE, p) * (t - twp)**2/2.0
+    w1 = weight_point1_dE(twp, tref, dE, p) + dfw1(twp, tref, dE, p) * (
+        t - twp) + ddfw1(twp, tref, dE, p) * (t - twp)**2 / 2.0
+    w2 = weight_point2_dE(twp, tref, dE, p) + dfw2(twp, tref, dE, p) * (
+        t - twp) + ddfw2(twp, tref, dE, p) * (t - twp)**2 / 2.0
     return single_tilde_line_strength(t, w1, w2, tref, dE, p)
 
 
@@ -137,6 +138,7 @@ def worst_tilde_line_strength_first(T, Ttyp, Tref, dE):
     parr = jnp.array([0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9])
     return jnp.max(jnp.abs(ff(parr)), axis=0)
 
+
 def worst_tilde_line_strength_second(T, Ttyp, Tref, dE):
     """worst deviation of single tilde line search first in terms of p
 
@@ -152,11 +154,12 @@ def worst_tilde_line_strength_second(T, Ttyp, Tref, dE):
     """
     def f(p):
         return single_tilde_line_strength_second(1 / T, 1 / Ttyp, 1 / Tref, dE,
-                                                p)
+                                                 p)
 
     ff = vmap(f)
     parr = jnp.array([0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9])
     return jnp.max(jnp.abs(ff(parr)), axis=0)
+
 
 def evaluate_trange(Tarr, tlide_line_strength, crit, Twt):
     """evaluate robust temperature range
@@ -170,6 +173,12 @@ def evaluate_trange(Tarr, tlide_line_strength, crit, Twt):
     Returns:
         float, float: Tl, Tu. The line strength error is below crit within [Tl, Tu] 
     """
+
+    #exclude all nan case
+    validmask = tlide_line_strength == tlide_line_strength
+    if len(tlide_line_strength[validmask]) == 0:
+        return Twt, Twt
+
     dT = Twt - Tarr
     mask_lower = (tlide_line_strength > crit) * (dT > 0)
     dT_masked_lower = dT[mask_lower]
