@@ -176,18 +176,22 @@ def evaluate_trange(Tarr, tlide_line_strength, crit, Twt):
 
     #exclude all nan case
     validmask = tlide_line_strength == tlide_line_strength
+    novalidmask = np.logical_not(validmask)
     if len(tlide_line_strength[validmask]) == 0:
         return Twt, Twt
-
+    elif len(tlide_line_strength[novalidmask])>0:
+        tlide_line_strength[novalidmask]=np.inf
+        
+    abs_tlide_line_strength = np.abs(tlide_line_strength)
     dT = Twt - Tarr
-    mask_lower = (tlide_line_strength > crit) * (dT > 0)
+    mask_lower = (abs_tlide_line_strength > crit) * (dT > 0)
     dT_masked_lower = dT[mask_lower]
     if len(dT_masked_lower) > 0:
         Tl = Twt - np.min(dT_masked_lower)
     else:
         Tl = Tarr[0]
 
-    mask_upper = (tlide_line_strength > crit) * (dT < 0)
+    mask_upper = (abs_tlide_line_strength > crit) * (dT < 0)
     dT_masked_upper = dT[mask_upper]
     if len(dT_masked_upper) > 0:
         Tu = Twt + np.min(-dT_masked_upper)
