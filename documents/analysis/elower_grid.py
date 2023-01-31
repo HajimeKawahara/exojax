@@ -17,7 +17,7 @@ Trefarr = np.logspace(np.log10(100.), np.log10(2000.), K)
 
 M = 120
 Tarr = np.logspace(np.log10(100.), np.log10(5000.), M)
-L = 30
+L = 29
 dEarr = np.linspace(100, 1500, L)
 
 #L = 1

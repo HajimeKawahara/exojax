@@ -9,6 +9,7 @@ from exojax.spec.lbderror import weight_point1_dE, weight_point2_dE
 from exojax.spec.lbderror import single_tilde_line_strength_zeroth
 from exojax.spec.lbderror import single_tilde_line_strength_first
 from exojax.spec.lbderror import worst_tilde_line_strength_first
+from exojax.spec.lbderror import optimal_params
 
 from jax.config import config
 
@@ -122,6 +123,15 @@ def test_worst_tilde_line_strength_first():
     x = worst_tilde_line_strength_first(Tarr, Twp, Tref, dE)
     assert np.max(x) < 1.e-2
 
+def test_optimal_params():
+    Tl_in = 500.0  #K
+    Tu_in = 1200.0  #K
+    diffmode = 2
+    dE, Tl, Tu = optimal_params(Tl_in, Tu_in, diffmode)
+    assert dE == pytest.approx(750.0)
+    assert Tl == pytest.approx(1153.6267095763965)
+    assert Tu == pytest.approx(554.1714566743503)
+  
 
 
 if __name__ == "__main__":
