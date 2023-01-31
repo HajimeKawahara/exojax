@@ -7,7 +7,7 @@ from exojax.spec.lbderror import worst_tilde_line_strength_first
 from exojax.spec.lbderror import worst_tilde_line_strength_second
 from exojax.spec.lbderror import evaluate_trange
 
-N = 30
+N = 50
 Twtarr = np.logspace(np.log10(100.1), np.log10(2000.1), N)
 K = N
 Trefarr = np.logspace(np.log10(100.), np.log10(2000.), K)
@@ -17,7 +17,7 @@ Trefarr = np.logspace(np.log10(100.), np.log10(2000.), K)
 
 M = 120
 Tarr = np.logspace(np.log10(100.), np.log10(5000.), M)
-L = 15
+L = 30
 dEarr = np.linspace(100, 1500, L)
 
 #L = 1
