@@ -128,7 +128,7 @@ def test_optimal_params():
     Tu_in = 1200.0  #K
     diffmode = 2
     dE, Tl, Tu = optimal_params(Tl_in, Tu_in, diffmode)
-    assert dE == pytest.approx(750.0)
+    assert dE == pytest.approx((diffmode+1)*750.0)
     assert Tl == pytest.approx(1153.6267095763965)
     assert Tu == pytest.approx(554.1714566743503)
   

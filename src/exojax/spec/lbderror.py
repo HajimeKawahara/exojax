@@ -274,7 +274,7 @@ def optimal_params(Tl,
             plt.show()
 
         if j == 1:
-            return dEarr[k], Trefallow[0], Twtallow[0]
+            return dEarr[k]*(diffmode+1), Trefallow[0], Twtallow[0]
         elif j > 1:
             #choose the largest interval.        
             Tlx = arr[0, indices[0], indices[1], k, diffmode]
@@ -282,7 +282,7 @@ def optimal_params(Tl,
             dT = (Tux-Tlx)
             ind = np.argsort(dT)[::-1]
             print("Robust range:",Tlx[ind[0]],"-",Tux[ind[0]],"K")
-            return dEarr[k], Trefallow[ind[0]], Twtallow[ind[0]]
+            return dEarr[k]*(diffmode+1), Trefallow[ind[0]], Twtallow[ind[0]]
 
         if i == len(dEarr) - 1:
             warnings.warn("Couldn't find the params.")
