@@ -433,6 +433,10 @@ def unbiased_lsd_first(lbd_coeff, T, Tref, Twt, nu_grid, elower_grid, qt):
     lfb = logf_bias(elower_grid, T, Tref)
     unbiased_coeff = jnp.exp(lfb) * lbd_coeff[1] * (1.0 / T - 1.0 / Twt
                                                     )  # f*w1
+    ##if take log as lbd_coeff
+    #dt = (1.0 / T - 1.0 / Twt)
+    #logdt = jnp.log(dt)
+    #unbiased_coeff = jnp.exp(lfb + lbd_coeff[1] + logdt) 
     Slsd = jnp.sum(jnp.exp(lfb + lbd_coeff[0]) + unbiased_coeff,
                    axis=-1)  # 0th term + sum_l[ f*w1(t-twt) ]
     return (Slsd.T * g_bias(nu_grid, T, Tref) / qt).T
@@ -458,6 +462,10 @@ def unbiased_lsd_second(lbd_coeff, T, Tref, Twt, nu_grid, elower_grid, qt):
     dt = (1.0 / T - 1.0 / Twt)
     unbiased_coeff = jnp.exp(lfb) * (lbd_coeff[1] * dt +
                                      0.5 * lbd_coeff[2] * dt**2)
+    ##if take log as lbd_coeff
+    #logdt = jnp.log(dt)
+    #unbiased_coeff = jnp.exp(lfb + lbd_coeff[1] + logdt) 
+    # + jnp.exp(lfb + lbd_coeff[1] + 2*logdt * jnp.log(0.5))
     Slsd = jnp.sum(jnp.exp(lfb + lbd_coeff[0]) + unbiased_coeff, axis=-1)
     return (Slsd.T * g_bias(nu_grid, T, Tref) / qt).T
 

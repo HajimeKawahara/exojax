@@ -37,7 +37,7 @@ def optelower(mdb,
 
     #for single temperature, 0-th order is sufficient
     opa = OpaPremodit(mdb=mdb, nu_grid=nu_grid, diffmode=0)
-    opa.manual_setting(Tmax, Tref_original, dE)
+    opa.manual_setting(dE, Tref_original, Tmax)
     lbd_coeff, multi_index_uniqgrid, elower_grid, \
         ngamma_ref_grid, n_Texp_grid, R, pmarray = opa.opainfo
     nsigmaD = normalized_doppler_sigma(Tmax, mdb.molmass, R)
