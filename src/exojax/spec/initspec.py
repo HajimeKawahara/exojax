@@ -96,6 +96,7 @@ def init_premodit(nu_lines,
                   line_strength_ref,
                   Twt,
                   Tref,
+                  Tmax=None,
                   dE=160.0,
                   dit_grid_resolution=0.2,
                   diffmode=0,
@@ -111,6 +112,7 @@ def init_premodit(nu_lines,
         line_strength_ref: line strength at reference Tref
         Twt: temperature for weight in Kelvin
         Tref: reference temperature
+        Tmax: max temperature to construct n_Texp grid, if None, max(Twt and Tref) is used 
         dE: Elower grid interval
         dit_grid_resolution: DIT grid resolution 
         diffmode (int): i-th Taylor expansion is used for the weight, default is 1.
@@ -133,11 +135,14 @@ def init_premodit(nu_lines,
     warn_dtype64(elower, warning, tag='elower')
     warn_outside_wavenumber_grid(nu_lines, nu_grid)
 
+    if Tmax is None:
+        Tmax = np.max([Twt, Tref])
+
     R = resolution_eslog(nu_grid)
     ngamma_ref = gamma_ref / nu_lines * R
     elower_grid = make_elower_grid(elower, dE)
     ngamma_ref_grid, n_Texp_grid = make_broadpar_grid(
-        ngamma_ref, n_Texp, Twt, dit_grid_resolution=dit_grid_resolution)
+        ngamma_ref, n_Texp, Tmax, dit_grid_resolution=dit_grid_resolution)
 
     lbd_coeff, multi_index_uniqgrid = generate_lbd(
         line_strength_ref,

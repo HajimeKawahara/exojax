@@ -171,7 +171,6 @@ def parallel_merge_grids(grid1, grid2):
 def make_broadpar_grid(ngamma_ref,
                        n_Texp,
                        Ttyp,
-                       Tref=Tref_original,
                        dit_grid_resolution=0.2,
                        adopt=True):
     """ make grids of normalized half-width at reference and temperature exoponent
@@ -179,8 +178,7 @@ def make_broadpar_grid(ngamma_ref,
     Args:
         ngamma_ref (nd array): n_Texp: temperature exponent (n_Texp, n_air, etc)
         n_Texp (nd array): temperature exponent (n_Texp, n_air, etc)
-        Ttyp: typical or maximum temperature in Kelvin
-        Tref: reference temperature in Kelvin, Default is 296.0 K
+        Ttyp: typical or maximum temperature in Kelvin (**NOT** weight temperature)
         dit_grid_resolution (float, optional): DIT grid resolution. Defaults to 0.2.
         adopt (bool, optional): if True, min, max grid points are used at min and max values of x. In this case, the grid width does not need to be dit_grid_resolution exactly.  Defaults to True.
         
@@ -191,7 +189,7 @@ def make_broadpar_grid(ngamma_ref,
     """
     ngamma_ref_grid = ditgrid_log_interval(
         ngamma_ref, dit_grid_resolution=dit_grid_resolution, adopt=adopt)
-    weight = np.log(Ttyp) - np.log(Tref)
+    weight = np.abs(np.log(Ttyp) - np.log(Tref_original))
     n_Texp_grid = ditgrid_linear_interval(
         n_Texp,
         dit_grid_resolution=dit_grid_resolution,

@@ -1,4 +1,5 @@
 """evaluating robust T range
+
 """
 #%%
 import numpy as np
@@ -11,19 +12,10 @@ N = 50
 Twtarr = np.logspace(np.log10(100.1), np.log10(2000.1), N)
 K = N
 Trefarr = np.logspace(np.log10(100.), np.log10(2000.), K)
-
-#K = 3
-#Trefarr = np.array([400.0,800.0,1200.0])
-
 M = 120
 Tarr = np.logspace(np.log10(100.), np.log10(5000.), M)
 L = 29
 dEarr = np.linspace(100, 1500, L)
-
-#L = 1
-#dEarr = np.array([1500.0])
-
-
 arr = np.zeros((2, N, K, L, 3))
 crit = 0.01
 for idE, dE in enumerate(dEarr):
