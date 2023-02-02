@@ -21,11 +21,8 @@ def test_xsection_premodit_hitemp(diffmode):
     from jax.config import config
     config.update("jax_enable_x64", True)
 
-    Tref = 500.0
-    Twt = 1000.0
     Ttest = 1200.0  #fix to compare w/ precomputed xs by MODIT.
     Ptest = 1.0
-    dE = 500.0 * (diffmode + 1)
     Nx = 5000
     mdb = mock_mdbHitemp(multi_isotope=False)
     nu_grid, wav, res = wavenumber_grid(22800.0,
@@ -33,8 +30,10 @@ def test_xsection_premodit_hitemp(diffmode):
                                         Nx,
                                         unit='AA',
                                         xsmode="premodit")
-    opa = OpaPremodit(mdb=mdb, nu_grid=nu_grid, diffmode=diffmode)
-    opa.manual_setting(Twt=Twt, Tref=Tref, dE=dE)
+    opa = OpaPremodit(mdb=mdb,
+                      nu_grid=nu_grid,
+                      diffmode=diffmode,
+                      auto_trange=[500.0, 1500.0])
     lbd_coeff, multi_index_uniqgrid, elower_grid, \
         ngamma_ref_grid, n_Texp_grid, R, pmarray = opa.opainfo
     Mmol = mdb.molmass
@@ -48,12 +47,12 @@ def test_xsection_premodit_hitemp(diffmode):
                               multi_index_uniqgrid, ngamma_ref_grid,
                               n_Texp_grid, qt)
     elif diffmode == 1:
-        xsv = xsvector_first(Ttest, Ptest, nsigmaD, lbd_coeff, Tref, Twt, R,
+        xsv = xsvector_first(Ttest, Ptest, nsigmaD, lbd_coeff, opa.Tref, opa.Twt, R,
                              pmarray, opa.nu_grid, elower_grid,
                              multi_index_uniqgrid, ngamma_ref_grid,
                              n_Texp_grid, qt)
     elif diffmode == 2:
-        xsv = xsvector_second(Ttest, Ptest, nsigmaD, lbd_coeff, Tref, Twt, R,
+        xsv = xsvector_second(Ttest, Ptest, nsigmaD, lbd_coeff, opa.Tref, opa.Twt, R,
                               pmarray, opa.nu_grid, elower_grid,
                               multi_index_uniqgrid, ngamma_ref_grid,
                               n_Texp_grid, qt)
@@ -78,7 +77,9 @@ def test_xsection_premodit_exomol(diffmode):
     from jax.config import config
     config.update("jax_enable_x64", True)
 
-    Ttest = 1100.0  #fix to compare w/ precomputed xs by MODIT.
+    ### DO NOT CHANGE ###
+    Ttest = 1200  #fix to compare w/ precomputed xs by MODIT.
+    #####################
     Ptest = 1.0
     mdb = mock_mdbExomol()
     Nx = 5000
@@ -87,14 +88,18 @@ def test_xsection_premodit_exomol(diffmode):
                                         Nx,
                                         unit='AA',
                                         xsmode="premodit")
-
+    from exojax.utils.constants import Tref_original
     opa = OpaPremodit(mdb=mdb,
                       nu_grid=nu_grid,
                       diffmode=diffmode,
-                      auto_trange=[500.0, 1500.0])
+                      auto_trange=[500.0, 1200.0])
+    #                      manual_params=[100.0,Tref_original,1000.0])
     lbd_coeff, multi_index_uniqgrid, elower_grid, \
         ngamma_ref_grid, n_Texp_grid, R, pmarray = opa.opainfo
     Mmol = mdb.molmass
+    #opa.Tref
+    #Ttest = opa.Tref
+
     nsigmaD = normalized_doppler_sigma(Ttest, Mmol, R)
     qt = mdb.qr_interp(Ttest)
     if diffmode == 0:
@@ -116,11 +121,8 @@ def test_xsection_premodit_exomol(diffmode):
     filename = pkg_resources.resource_filename(
         'exojax', 'data/testdata/' + TESTDATA_CO_EXOMOL_MODIT_XS_REF)
     dat = pd.read_csv(filename, delimiter=",", names=("nus", "xsv"))
-    print(np.max(np.abs(1.0 - xsv[:ilim] / dat["xsv"].values[:ilim])))
-    accuracy = [0.01, 0.01, 0.01]
-    #assert np.max(a
-    #    np.abs(1.0 -
-    #           xsv[:ilim] / dat["xsv"].values[:ilim])) < accuracy[diffmode]
+    res = np.max(np.abs(1.0 - xsv / dat["xsv"].values))
+    assert res < 0.012
     return opa.nu_grid, xsv, opa.dE, opa.Twt, opa.Tref, Ttest
 
 
@@ -161,7 +163,7 @@ if __name__ == "__main__":
     plt.xlabel("wavenumber cm-1")
     plt.axhline(0.01, color="gray", lw=0.5)
     plt.axhline(-0.01, color="gray", lw=0.5)
-    plt.ylim(-0.03, 0.03)
+    plt.ylim(-0.05, 0.05)
     plt.legend()
     plt.savefig("premodit" + str(diffmode) + ".png")
     plt.show()
