@@ -242,7 +242,9 @@ def optimal_params(Tl,
         filename = default_elower_grid_trange_file()
     dat = np.load(filename)
     arr = dat["arr_0"]
-    #Tarr = dat["arr_1"]
+    Tarr = dat["arr_1"]
+    makefig=True
+    print(Tarr,"*_*/")
     Twtarr = dat["arr_2"]
     Trefarr = dat["arr_3"]
     dEarr = dat["arr_4"]
