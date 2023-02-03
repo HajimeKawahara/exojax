@@ -10,6 +10,7 @@ from exojax.utils.grids import wavenumber_grid
 from exojax.utils.instfunc import nx_from_resolution_eslog
 from exojax.utils.grids import nu2wav
 from exojax.utils.instfunc import resolution_eslog
+from exojax.utils.constants import Patm
 import numpy as np
 
 
@@ -106,8 +107,8 @@ class OpaPremodit(OpaCalc):
 
     def set_gamma_and_n_Texp(self, mdb):
         if mdb.dbtype == "hitran":
-            print("gamma_air and temperature exponent are used.")
-            self.gamma_ref = mdb.gamma_air
+            print("gamma_air and n_air are used. gamma_ref = gamma_air/Patm")
+            self.gamma_ref = mdb.gamma_air/Patm
             self.n_Texp = mdb.n_air
         elif mdb.dbtype == "exomol":
             self.gamma_ref = mdb.alpha_ref

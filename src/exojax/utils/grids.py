@@ -8,7 +8,7 @@ import numpy as np
 import warnings
 
 
-def wavenumber_grid(x0, x1, N, unit='cm-1', xsmode='lpf'):
+def wavenumber_grid(x0, x1, N, xsmode, unit='cm-1'):
     """generating the recommended wavenumber grid based on the cross section
     computation mode.
 
@@ -16,9 +16,9 @@ def wavenumber_grid(x0, x1, N, unit='cm-1', xsmode='lpf'):
         x0: start wavenumber (cm-1) or wavelength (nm) or (AA)
         x1: end wavenumber (cm-1) or wavelength (nm) or (AA)
         N: the number of the wavenumber grid (even number)
-        unit: unit of the input grid
         xsmode: cross section computation mode (lpf, dit, modit, premodit)
-
+        unit: unit of the input grid
+        
     Note:
         The wavenumber (nus) and wavelength (wav) grids are in ascending orders. 
         Therefore, wav[-1] corresponds to the wavelength of nus[0].
@@ -30,7 +30,7 @@ def wavenumber_grid(x0, x1, N, unit='cm-1', xsmode='lpf'):
         corresponding wavelength grid (AA) in ascending order (wav). wav[-1] corresponds to nus[0]
         spectral resolution
     """
-
+    print("xsmode = ",xsmode)
     _check_even_number(N)
     grid_mode = check_scale_xsmode(xsmode)
     grid, unit = _set_grid(x0, x1, N, unit, grid_mode)

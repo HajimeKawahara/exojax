@@ -29,6 +29,10 @@ hcgs = 6.62607015e-27  # Planck constant [erg*s]
 Rcgs = 1.0973731568e5  # Rydberg constant [cm-1]
 a0 = 5.2917720859e-9  # Bohr radius [cm]
 
+# 1 atm in bar
+Patm = 1.01325  # atm (bar)
+            
+
 # km/s
 c = 299792.458
 Gcr = 115.38055682147402 #cuberoot of Gravitaional constant in the unit of [km/s] normalized by day and Msun

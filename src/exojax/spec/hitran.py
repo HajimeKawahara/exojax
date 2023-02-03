@@ -2,6 +2,7 @@ from jax import jit
 import jax.numpy as jnp
 import numpy as np
 from exojax.utils.constants import hcperk, Tref_original
+from exojax.utils.constants import Patm
 
 
 def SijT(T, logsij0, nu_lines, elower, qT):
@@ -70,7 +71,6 @@ def gamma_hitran(P, T, Pself, n_air, gamma_air_ref, gamma_self_ref):
     Returns:
        gamma: pressure gamma factor (cm-1)
     """
-    Patm = 1.01325  # atm (bar)
     Tref = Tref_original  # reference tempearture (K)
     gamma = (Tref / T)**n_air * (gamma_air_ref *
                                  ((P - Pself) / Patm) + gamma_self_ref *

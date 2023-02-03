@@ -90,7 +90,7 @@ def test_xsection_premodit_exomol(diffmode):
     opa = OpaPremodit(mdb=mdb,
                       nu_grid=nu_grid,
                       diffmode=diffmode,
-                      auto_trange=[500.0, 1500.0])
+                      auto_trange=[500.0, 2000.0])
     #                      manual_params=[100.0,Tref_original,1000.0])
     lbd_coeff, multi_index_uniqgrid, elower_grid, \
         ngamma_ref_grid, n_Texp_grid, R, pmarray = opa.opainfo
@@ -119,7 +119,7 @@ def test_xsection_premodit_exomol(diffmode):
         'exojax', 'data/testdata/' + TESTDATA_CO_EXOMOL_MODIT_XS_REF)
     dat = pd.read_csv(filename, delimiter=",", names=("nus", "xsv"))
     res = np.max(np.abs(1.0 - xsv / dat["xsv"].values))
-    assert res < 0.012
+    assert res < 0.01
     return opa.nu_grid, xsv, opa.dE, opa.Twt, opa.Tref, Ttest
 
 
@@ -129,10 +129,10 @@ if __name__ == "__main__":
     import matplotlib.pyplot as plt
     #import jax.profiler
 
-    db = "hitemp"
-    #db = "exomol"
+    #db = "hitemp"
+    db = "exomol"
 
-    diffmode = 0
+    diffmode = 2
     if db == "exomol":
         nus, xs, dE, Twt, Tref, Tin = test_xsection_premodit_exomol(diffmode)
         filename = pkg_resources.resource_filename(
@@ -160,7 +160,7 @@ if __name__ == "__main__":
     plt.xlabel("wavenumber cm-1")
     plt.axhline(0.01, color="gray", lw=0.5)
     plt.axhline(-0.01, color="gray", lw=0.5)
-    plt.ylim(-0.05, 0.05)
+    #plt.ylim(-0.05, 0.05)
     plt.legend()
     plt.savefig("premodit" + str(diffmode) + ".png")
     plt.show()

@@ -6,7 +6,8 @@ from exojax.spec.modit import xsvector
 from exojax.spec.hitran import line_strength
 from exojax.spec.molinfo import molmass_isotope
 from exojax.spec import normalized_doppler_sigma, gamma_natural
-from exojax.spec.hitran import line_strength, gamma_hitran
+from exojax.spec.hitran import line_strength
+from exojax.spec.hitran import gamma_hitran
 from exojax.spec.exomol import gamma_exomol
 from exojax.utils.grids import wavenumber_grid
 from exojax.spec.initspec import init_modit
@@ -75,7 +76,7 @@ def gendata_xs_modit_hitemp():
     np.savetxt(TESTDATA_CO_HITEMP_MODIT_XS_REF,
                np.array([nus, xsv]).T,
                delimiter=",")
-
+    
 
 if __name__ == "__main__":
     gendata_xs_modit_exomol()
