@@ -16,7 +16,8 @@ TESTDATA_CO_EXOMOL_PREMODIT_XS_REF = "premodit_test_ref.txt"
 
 # cross section references
 TESTDATA_CO_HITEMP_LPF_XS_REF = "lpf_test_hitemp_ref.txt"
-TESTDATA_CO_HITEMP_MODIT_XS_REF = "modit_test_hitemp_ref.txt"
+TESTDATA_CO_HITEMP_MODIT_XS_REF = "modit_test_hitemp_ref.txt" #Pself=P
+TESTDATA_CO_HITEMP_MODIT_XS_REF_AIR = "modit_test_hitemp_ref_air.txt" #Pself=0.0
 TESTDATA_CO_HITEMP_PREMODIT_XS_REF = "premodit_test_hitemp_ref.txt"
 
 # emission spectra references

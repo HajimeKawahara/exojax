@@ -21,11 +21,11 @@ from exojax.spec import modit
 from exojax.spec.hitran import line_strength
 from exojax.utils.grids import wavenumber_grid
 from exojax.spec.set_ditgrid import ditgrid_log_interval
-from exojax.spec.exomol import gamma_exomol
+#from exojax.spec.exomol import gamma_exomol
 from exojax.utils.constants import Tref_original
 from exojax.spec.hitran import gamma_hitran
 from exojax.spec.hitran import gamma_natural
-from exojax.test.emulate_mdb import mock_mdbHitemp
+#from exojax.test.emulate_mdb import mock_mdbHitemp
 
 
 Nx = 5000
@@ -36,7 +36,7 @@ nus, wav, reso = wavenumber_grid(22800.0,
                                  xsmode="modit")
 
 mdb = api.MdbHitemp('CO', nus, gpu_transfer=True, isotope=1)
-diffmode = 2
+diffmode = 0
 
 Ttest = 1200.0
 P = 1.0
@@ -130,7 +130,7 @@ plt.yscale("log")
 plt.legend()
 ax = fig.add_subplot(212)
 plt.plot(nus, xs_premodit / xsv_modit - 1.0)
-#plt.plot(nus, xsv_modit / dat["xsv"] - 1.0)
+plt.plot(nus, xs_premodit / dat["xsv"] - 1.0)
 
 ax.set_ylim(-0.03, 0.03)
 ax.axhline(0.01, color="gray", ls="dashed")
