@@ -95,7 +95,7 @@ def test_rt_hitemp(fig=False):
     lbd_coeff, multi_index_uniqgrid, elower_grid, \
         ngamma_ref_grid, n_Texp_grid, R, pmarray = opa.opainfo
     Mmol = mdb.molmass
-     Ttyp = 2000.0
+    Ttyp = 2000.0
     g = 2478.57
 
     

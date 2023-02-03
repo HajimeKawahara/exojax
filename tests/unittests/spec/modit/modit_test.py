@@ -91,7 +91,6 @@ def test_rt_exomol():
         'exojax', 'data/testdata/' + TESTDATA_CO_EXOMOL_MODIT_EMISSION_REF)
     dat = pd.read_csv(filename, delimiter=",", names=("nus", "flux"))
     residual = np.abs(F0[:12000] / dat["flux"].values[:12000] - 1.0)
-    print(np.max(residual))
     assert np.all(residual < 1.e-11)
 
     return F0
