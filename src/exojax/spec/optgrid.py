@@ -6,6 +6,7 @@ from exojax.spec import normalized_doppler_sigma
 from exojax.utils.constants import Tref_original
 from tqdm import tqdm
 
+
 def optelower(mdb,
               nu_grid,
               Tmax,
@@ -34,7 +35,7 @@ def optelower(mdb,
     """
     from jax.config import config
     config.update("jax_enable_x64", True)
-
+    print("Maximum Elower = ",np.max(mdb.elower))
     #for single temperature, 0-th order is sufficient
     opa = OpaPremodit(mdb=mdb, nu_grid=nu_grid, diffmode=0)
     opa.manual_setting(dE, Tref_original, Tmax)
@@ -63,7 +64,8 @@ def optelower(mdb,
             q = q - 1
         pbar.update(1)
     pbar.close()
-
+    if q == 0:
+        return np.max(mdb.elower)
     if display:
         xsv = xsvector_zeroth(Tmax, Pmin, nsigmaD, lbd_coeff[:, :, :, :q],
                               Tref_original, R, pmarray, opa.nu_grid,
@@ -74,7 +76,7 @@ def optelower(mdb,
     return Emax
 
 
-def _plot_comparison(nu_grid, plt, xsv_master, xsv):
+def _plot_comparison(nu_grid, xsv_master, xsv):
     import matplotlib.pyplot as plt
     fig = plt.figure()
     ax = fig.add_subplot(211)

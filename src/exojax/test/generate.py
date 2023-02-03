@@ -6,33 +6,32 @@ from exojax.utils.grids import wavenumber_grid
 import pickle
 
 from jax.config import config
+
 config.update("jax_enable_x64", True)
+
 
 def gendata_moldb(database):
     """generate test data for CO exomol
     """
-    Nx = 10000
-#    nus, wav, res = wavenumber_grid(22920.0, 24000.0, Nx, unit='AA')
+    Nx = 20000
     nus, wav, reso = wavenumber_grid(22800.0,
-                                 23100.0,
-                                 Nx,
-                                 unit='AA',
-                                 xsmode="modit")
+                                     24000.0,
+                                     Nx,
+                                     unit='AA',
+                                     xsmode="modit")
 
     if database == "exomol":
         from exojax.test.data import TESTDATA_moldb_CO_EXOMOL as filename
         mdbCO = api.MdbExomol('CO/12C-16O/Li2015',
                               nus,
                               crit=1e-35,
-                              Ttyp=296.0,
+                              Ttyp=1000.0,
                               inherit_dataframe=False,
                               gpu_transfer=True)
     elif database == "hitemp":
         from exojax.test.data import TESTDATA_moldb_CO_HITEMP as filename
         mdbCO = api.MdbHitemp('CO',
                               nus,
-                              crit=1e-35,
-                              Ttyp=296.0,
                               isotope=None,
                               inherit_dataframe=False,
                               gpu_transfer=True)
@@ -45,7 +44,7 @@ def gendata_moldb(database):
         #                      crit=1e-35,
         #                      Ttyp=296.0,
         #                      isotope=1,
-        #                      inherit_dataframe=False,                              
+        #                      inherit_dataframe=False,
         #                      gpu_transfer=True)
     with open(filename, 'wb') as f:
         pickle.dump(mdbCO, f)

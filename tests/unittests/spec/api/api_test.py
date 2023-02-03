@@ -40,11 +40,10 @@ def test__qr_interp():
 def test__qr_interp_lines():
     mdb = mock_mdbHitemp(multi_isotope=True)
     T = 1000.0
-    val = np.sum(
+    val = np.mean(
         _qr_interp_lines(T, mdb.isoid, mdb.uniqiso, mdb.T_gQT, mdb.gQT,
                          Tref_original))
-
-    assert val == pytest.approx(141.61127)
+    assert val == pytest.approx(3.5530598)
 
 
 def test__exact_isotope_name():
@@ -54,7 +53,7 @@ def test__exact_isotope_name():
 
 def test_molmass():
     mdb = mock_mdbHitemp(multi_isotope=True)
-    print(mdb.molmass)
+    assert mdb.molmass == pytest.approx(28.01044518292034)
     #assert mdb.exact_isotope_name(1) == "(12C)(16O)"
 
 
@@ -63,5 +62,5 @@ if __name__ == "__main__":
     #    test__isotope_index_from_isotope_number()
     #    test__QT_interp()
     #    test__qr_interp()
-    #    test__qr_interp_lines()
-    test_molmass()
+        test__qr_interp_lines()
+    #test_molmass()
