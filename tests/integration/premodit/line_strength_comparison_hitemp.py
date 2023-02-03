@@ -109,12 +109,12 @@ xsv_modit = xsvector(cont_nu, index_nu, R, pmarray, nsigmaD, ngammaL, Sij, nus,
                      ngammaL_grid)
 
 from exojax.test.data import TESTDATA_CO_EXOMOL_MODIT_XS_REF
-from exojax.test.data import TESTDATA_CO_HITEMP_MODIT_XS_REF
+from exojax.test.data import TESTDATA_CO_HITEMP_MODIT_XS_REF_AIR
 import pkg_resources
 import pandas as pd
 
 filename = pkg_resources.resource_filename(
-    'exojax', 'data/testdata/' + TESTDATA_CO_HITEMP_MODIT_XS_REF)
+    'exojax', 'data/testdata/' + TESTDATA_CO_HITEMP_MODIT_XS_REF_AIR)
 dat = pd.read_csv(filename, delimiter=",", names=("nus", "xsv"))
 
 #np.savetxt("xsv_modit.txt", np.array([nus, xsv_modit]).T, delimiter=",")
