@@ -220,14 +220,14 @@ class MdbExomol(CapiMdbExomol):
         Raises:
             ValueError: _description_
         """
-        if isinstance(df_load_mask, vaex.dataframe.DataFrameLocal):
-            self.A = df_load_mask.A.values
-            self.nu_lines = df_load_mask.nu_lines.values
-            self.elower = df_load_mask.elower.values
-            self.jlower = df_load_mask.jlower.values
-            self.jupper = df_load_mask.jupper.values
-            self.line_strength_ref = df_load_mask.Sij0.values
-            self.gpp = df_load_mask.gup.values
+        if isinstance(df_masked, vaex.dataframe.DataFrameLocal):
+            self.A = df_masked.A.values
+            self.nu_lines = df_masked.nu_lines.values
+            self.elower = df_masked.elower.values
+            self.jlower = df_masked.jlower.values
+            self.jupper = df_masked.jupper.values
+            self.line_strength_ref = df_masked.Sij0.values
+            self.gpp = df_masked.gup.values
         else:
             raise ValueError("Use vaex dataframe as input.")
 
@@ -458,7 +458,7 @@ class MdbHitemp(HITEMPDatabaseManager):
             mask *= (df.elower < self.elower_max)
         return mask
 
-    def instances_from_dataframes(self, df_load_mask):
+    def instances_from_dataframes(self, df_masked):
         """generate instances from (usually masked) data farame
 
         Args:
@@ -467,18 +467,18 @@ class MdbHitemp(HITEMPDatabaseManager):
         Raises:
             ValueError: _description_
         """
-        if isinstance(df_load_mask, vaex.dataframe.DataFrameLocal):
-            self.nu_lines = df_load_mask.wav.values
-            self.line_strength_ref = df_load_mask.int.values
-            self.delta_air = df_load_mask.Pshft.values
-            self.A = df_load_mask.A.values
-            self.n_air = df_load_mask.Tdpair.values
-            self.gamma_air = df_load_mask.airbrd.values
-            self.gamma_self = df_load_mask.selbrd.values
-            self.elower = df_load_mask.El.values
-            self.gpp = df_load_mask.gp.values
+        if isinstance(df_masked, vaex.dataframe.DataFrameLocal):
+            self.nu_lines = df_masked.wav.values
+            self.line_strength_ref = df_masked.int.values
+            self.delta_air = df_masked.Pshft.values
+            self.A = df_masked.A.values
+            self.n_air = df_masked.Tdpair.values
+            self.gamma_air = df_masked.airbrd.values
+            self.gamma_self = df_masked.selbrd.values
+            self.elower = df_masked.El.values
+            self.gpp = df_masked.gp.values
             #isotope
-            self.isoid = df_load_mask.iso.values
+            self.isoid = df_masked.iso.values
             self.uniqiso = np.unique(self.isoid)
         else:
             raise ValueError("Use vaex dataframe as input.")

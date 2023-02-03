@@ -53,7 +53,7 @@ def gendata_xs_modit_hitemp():
     mdbCO = mock_mdbHitemp(multi_isotope=False)
     Tfix = 1200.0
     Pfix = 1.0
-    Mmol = molmass_isotope("CO")
+    Mmol = mdbCO.molmass
     Nx = 5000
     nus, wav, res = wavenumber_grid(22800.0,
                                     23100.0,

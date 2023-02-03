@@ -42,8 +42,7 @@ def test_rt_exomol(diffmode, fig=False):
     Twt = 1200.0
 
     g = 2478.57
-    opa = OpaPremodit(mdb=mdb, nu_grid=nu_grid, diffmode=diffmode)
-    opa.manual_setting(Twt=Twt, Tref=Tref, dE=dE)
+    opa = OpaPremodit(mdb=mdb, nu_grid=nu_grid, diffmode=diffmode, auto_trange=[700,1500.0])
     lbd_coeff, multi_index_uniqgrid, elower_grid, \
     ngamma_ref_grid, n_Texp_grid, R, pmarray = opa.opainfo
 
@@ -89,21 +88,17 @@ def test_rt_hitemp(fig=False):
                                         xsmode="modit")
     interval_contrast = 0.1
     dit_grid_resolution = 0.1
-    Ttyp = 2000.0
+    opa = OpaPremodit(mdb=mdb,
+                      nu_grid=nu_grid,
+                      diffmode=diffmode,
+                      auto_trange=[500.0, 1500.0])
+    lbd_coeff, multi_index_uniqgrid, elower_grid, \
+        ngamma_ref_grid, n_Texp_grid, R, pmarray = opa.opainfo
+    Mmol = mdb.molmass
+     Ttyp = 2000.0
     g = 2478.57
 
-    lbd, multi_index_uniqgrid, elower_grid, ngamma_ref_grid, n_Texp_grid, R, pmarray = init_premodit(
-        mdb.nu_lines,
-        nu_grid,
-        mdb.elower,
-        mdb.gamma_air,
-        mdb.n_air,
-        mdb.Sij0,
-        Ttyp,
-        interval_contrast=interval_contrast,
-        dit_grid_resolution=dit_grid_resolution,
-        warning=False)
-
+    
     Mmol = molinfo.molmass_isotope("CO")
     qtarr = vmap(mdb.qr_interp, (None, 0), 0)(isotope, Tarr)
     xsm = xsmatrix(Tarr, Parr, R, pmarray, lbd, nu_grid, ngamma_ref_grid,
