@@ -1,5 +1,4 @@
 """emulate mdb class for unittest
-
 """
 import pickle
 import pkg_resources
