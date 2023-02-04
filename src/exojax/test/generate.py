@@ -4,9 +4,8 @@
 from exojax.spec import api
 from exojax.utils.grids import wavenumber_grid
 import numpy as np
-import pickle
-import pkg_resources
 import pathlib
+import os
 
 def gendata_moldb(database):
     """generate test data for CO exomol
@@ -27,10 +26,15 @@ def gendata_moldb(database):
         mask = (mdbCO.df["nu_lines"] <= nus[-1]) * (mdbCO.df["nu_lines"] >=
                                                     nus[0])
         maskeddf = mdbCO.df[mask]
+        directory_name = "CO/12C-16O/SAMPLE"
+        if not os.path.exists(directory_name):
+            os.makedirs(directory_name)
+        cdir = os.getcwd()
+        os.chdir(directory_name)
         save_trans(trans_filename, maskeddf)
+        os.chdir(cdir)
 
-        print("mv bz2 to exojax/src/exojax/data/testdata/CO/12C-16O/SAMPLE/")
-
+        
     elif database == "hitemp":
         from exojax.test.data import TESTDATA_moldb_CO_HITEMP as filename
         mdbCO = api.MdbHitemp('CO',
@@ -80,6 +84,9 @@ def save_trans(trans_filename, maskeddf):
 
 if __name__ == "__main__":
     gendata_moldb("exomol")
-    make_hdf()
+    print("cp some files from data/testdata/CO/12C-16O/SAMPLE/ to CO/12C-16O/SAMPLE/")
+    #make_hdf()
+    #print("mv CO/12C-16O/SAMPLE/ to exojax/src/exojax/data/testdata/")
+
     #gendata_moldb("hitemp")
     #gendata_moldb("hitemp_isotope")
