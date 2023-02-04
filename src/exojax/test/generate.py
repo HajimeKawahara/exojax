@@ -23,12 +23,12 @@ def gendata_moldb(database):
                               inherit_dataframe=True,
                               gpu_transfer=True)
 
-        trans_filename="temp.trans"
+        trans_filename = "12C-16O__SAMPLE.trans"
         mask = (mdbCO.df["nu_lines"] <= nus[-1]) * (mdbCO.df["nu_lines"] >=
                                                     nus[0])
         maskeddf = mdbCO.df[mask]
         save_trans(trans_filename, maskeddf)
-        
+        print("mv bz2 to exojax/src/exojax/data/testdata/CO/12C-16O/SAMPLE/")
 
     elif database == "hitemp":
         from exojax.test.data import TESTDATA_moldb_CO_HITEMP as filename
@@ -48,14 +48,15 @@ def gendata_moldb(database):
                               inherit_dataframe=False,
                               gpu_transfer=True)
 
+
 def save_trans(trans_filename, maskeddf):
     maskeddf.export_csv(trans_filename,
-                            columns=["i_upper", "i_lower", "A", "nu_lines"],
-                            sep="\t",
-                            header=False)
+                        columns=["i_upper", "i_lower", "A", "nu_lines"],
+                        sep="\t",
+                        header=False)
     import bz2
     with open(trans_filename, 'rb') as f_in:
-        with bz2.open(trans_filename+".bz2", 'wb') as f_out:
+        with bz2.open(trans_filename + ".bz2", 'wb') as f_out:
             f_out.writelines(f_in)
 
 
@@ -63,6 +64,3 @@ if __name__ == "__main__":
     gendata_moldb("exomol")
     #gendata_moldb("hitemp")
     #gendata_moldb("hitemp_isotope")
-    print(
-        "to include the generated files in the package, move hdf to exojax/src/exojax/data/testdata/"
-    )
