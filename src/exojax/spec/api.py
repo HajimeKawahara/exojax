@@ -133,7 +133,6 @@ class MdbExomol(CapiMdbExomol):
         # Get cache files to load :
         mgr = self.get_datafile_manager()
         local_files = [mgr.cache_file(f) for f in self.trans_file]
-
         # data frame instance:
         df = self.load(
             local_files,
@@ -148,7 +147,7 @@ class MdbExomol(CapiMdbExomol):
         if inherit_dataframe or not self.activation:
             print("DataFrame (self.df) available.")
             self.df = df
-
+        
     def set_wavenum(self, nurange):
         if nurange is None:
             wavenum_min = 0.0

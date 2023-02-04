@@ -4,6 +4,7 @@
 from exojax.spec import api
 from exojax.utils.grids import wavenumber_grid
 import pickle
+import dill
 
 from jax.config import config
 
@@ -22,7 +23,7 @@ def gendata_moldb(database):
 
     if database == "exomol":
         from exojax.test.data import TESTDATA_moldb_CO_EXOMOL as filename
-        mdbCO = api.MdbExomol('CO/12C-16O/Li2015',
+        mdbCO = api.MdbExomol('.database/CO/12C-16O/Li2015',
                               nus,
                               crit=1e-35,
                               Ttyp=1000.0,
@@ -39,16 +40,9 @@ def gendata_moldb(database):
         from exojax.test.data import TESTDATA_moldb_CO_HITEMP_SINGLE_ISOTOPE as filename
         mdbCO = api.MdbHitemp('CO', nus, gpu_transfer=True, isotope=1)
 
-        #mdbCO = api.MdbHitemp('CO',
-        #                      nus,
-        #                      crit=1e-35,
-        #                      Ttyp=296.0,
-        #                      isotope=1,
-        #                      inherit_dataframe=False,
-        #                      gpu_transfer=True)
     with open(filename, 'wb') as f:
         pickle.dump(mdbCO, f)
-
+    
 
 def gendata_moldb_H2O():
     from exojax.test.data import TESTDATA_moldb_H2O_EXOMOL
@@ -66,13 +60,12 @@ def gendata_moldb_H2O():
                         gpu_transfer=True)
     with open(filename, 'wb') as f:
         pickle.dump(mdb, f)
-
-
+    
 if __name__ == "__main__":
     gendata_moldb("exomol")
     gendata_moldb("hitemp")
     gendata_moldb("hitemp_isotope")
-    gendata_moldb_H2O()
+    #gendata_moldb_H2O()
     print(
         "to include the generated files in the package, move pickles to exojax/src/exojax/data/testdata/"
     )
