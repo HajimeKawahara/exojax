@@ -137,8 +137,8 @@ if __name__ == "__main__":
     import matplotlib.pyplot as plt
     
     
-    db = "hitemp"
-    #db = "exomol"
+    #db = "hitemp"
+    db = "exomol"
 
     diffmode = 2
     if db == "exomol":
