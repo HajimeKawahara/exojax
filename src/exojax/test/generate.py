@@ -5,7 +5,8 @@ from exojax.spec import api
 from exojax.utils.grids import wavenumber_grid
 import numpy as np
 import pickle
-
+import pkg_resources
+import pathlib
 
 def gendata_moldb(database):
     """generate test data for CO exomol
@@ -15,7 +16,6 @@ def gendata_moldb(database):
     lambda1 = 24000.0
     nus, wav, res = wavenumber_grid(lambda0, lambda1, Nx, unit='AA')
     if database == "exomol":
-        from exojax.test.data import TESTDATA_moldb_CO_EXOMOL as filename
         mdbCO = api.MdbExomol('.database/CO/12C-16O/Li2015',
                               nus,
                               crit=1e-35,
@@ -28,6 +28,7 @@ def gendata_moldb(database):
                                                     nus[0])
         maskeddf = mdbCO.df[mask]
         save_trans(trans_filename, maskeddf)
+
         print("mv bz2 to exojax/src/exojax/data/testdata/CO/12C-16O/SAMPLE/")
 
     elif database == "hitemp":
@@ -48,6 +49,23 @@ def gendata_moldb(database):
                               inherit_dataframe=False,
                               gpu_transfer=True)
 
+def make_hdf():
+    path="CO/12C-16O/SAMPLE"
+    path = pathlib.Path(path).expanduser()
+    print(path)
+    Nx = 10000
+    lambda0 = 22920.0
+    lambda1 = 24000.0
+    nus, wav, res = wavenumber_grid(lambda0, lambda1, Nx, unit='AA')    
+    mdbCO = api.MdbExomol(str(path),
+                              nus,
+                              crit=1e-35,
+                              Ttyp=296.0,
+                              inherit_dataframe=True,
+                              gpu_transfer=True)
+    
+
+
 
 def save_trans(trans_filename, maskeddf):
     maskeddf.export_csv(trans_filename,
@@ -62,5 +80,6 @@ def save_trans(trans_filename, maskeddf):
 
 if __name__ == "__main__":
     gendata_moldb("exomol")
+    make_hdf()
     #gendata_moldb("hitemp")
     #gendata_moldb("hitemp_isotope")
