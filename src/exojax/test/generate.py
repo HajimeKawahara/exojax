@@ -66,7 +66,7 @@ if __name__ == "__main__":
     gendata_moldb("exomol")
     gendata_moldb("hitemp")
     gendata_moldb("hitemp_isotope")
-    #gendata_moldb_H2O()
+    gendata_moldb_H2O()
     print(
         "to include the generated files in the package, move pickles to exojax/src/exojax/data/testdata/"
     )
