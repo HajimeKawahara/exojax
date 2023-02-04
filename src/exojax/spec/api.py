@@ -292,8 +292,7 @@ class MdbHitemp(HITEMPDatabaseManager):
                  isotope=0,
                  gpu_transfer=False,
                  inherit_dataframe=False,
-                 activation=True
-                 ):
+                 activation=True):
         """Molecular database for HITRAN/HITEMP form.
 
         Args:
@@ -320,7 +319,7 @@ class MdbHitemp(HITEMPDatabaseManager):
         load_wavenum_max = self.nurange[1] + self.margin
         self.gpu_transfer = gpu_transfer
         self.activation = activation
-        
+
         super().__init__(
             molecule=self.simple_molecule_name,
             name="HITEMP-{molecule}",
@@ -333,12 +332,15 @@ class MdbHitemp(HITEMPDatabaseManager):
 
         # Get list of all expected local files for this database:
         local_files, urlnames = self.get_filenames()
-
+        local_files = [
+            '/home/kawahara/exojax/tests/integration/moldb/.database/CO/CO-05_HITEMP_SAMPLE.hdf5'
+        ]
         # Get missing files
         download_files = self.get_missing_files(local_files)
         download_files = self.keep_only_relevant(download_files,
                                                  load_wavenum_min,
                                                  load_wavenum_max)
+        
         # do not re-download files if they exist in another format :
 
         converted = []
@@ -392,7 +394,7 @@ class MdbHitemp(HITEMPDatabaseManager):
         self.uniqiso = np.unique(df.iso.values)
         QTref, QTtyp = self.QT_for_select_line(Ttyp)
         self.df_load_mask = self.compute_load_mask(df, QTtyp / QTref)
-            
+
         if self.activation:
             self.activate(df)
         if inherit_dataframe or not self.activation:
@@ -401,13 +403,13 @@ class MdbHitemp(HITEMPDatabaseManager):
 
     def QT_for_select_line(self, Ttyp):
         if self.isotope is None or self.isotope == 0:
-            isotope_for_Qt = 1 # we use isotope=1 for QT
+            isotope_for_Qt = 1  # we use isotope=1 for QT
         else:
             isotope_for_Qt = int(self.isotope)
         Q = PartFuncTIPS(self.molecid, isotope_for_Qt)
         QTref = Q.at(T=Tref)
         QTtyp = Q.at(T=Ttyp)
-        return QTref,QTtyp
+        return QTref, QTtyp
 
     def activate(self, df, mask=None):
         """activation of moldb, 
@@ -443,7 +445,6 @@ class MdbHitemp(HITEMPDatabaseManager):
 
         if self.gpu_transfer:
             self.generate_jnp_arrays()
-
 
     def compute_load_mask(self, df, qrtyp):
         wav_mask = (df.wav > self.nurange[0]-self.margin) \
@@ -657,7 +658,7 @@ class MdbHitran(HITRANDatabaseManager):
         self.uniqiso = np.unique(df.iso.values)
         QTref, QTtyp = self.QT_for_select_line(Ttyp)
         self.df_load_mask = self.compute_load_mask(df, QTtyp / QTref)
-            
+
         if self.activation:
             self.activate(df)
         if inherit_dataframe or not self.activation:
@@ -666,13 +667,13 @@ class MdbHitran(HITRANDatabaseManager):
 
     def QT_for_select_line(self, Ttyp):
         if self.isotope is None or self.isotope == 0:
-            isotope_for_Qt = 1 # we use isotope=1 for QT
+            isotope_for_Qt = 1  # we use isotope=1 for QT
         else:
             isotope_for_Qt = int(self.isotope)
         Q = PartFuncTIPS(self.molecid, isotope_for_Qt)
         QTref = Q.at(T=Tref)
         QTtyp = Q.at(T=Ttyp)
-        return QTref,QTtyp
+        return QTref, QTtyp
 
     def activate(self, df, mask=None):
         """activation of moldb, 
@@ -709,7 +710,6 @@ class MdbHitran(HITRANDatabaseManager):
         if self.gpu_transfer:
             self.generate_jnp_arrays()
 
-
     def compute_load_mask(self, df, qrtyp):
         wav_mask = (df.wav > self.nurange[0]-self.margin) \
                     * (df.wav < self.nurange[1]+self.margin)
@@ -736,8 +736,8 @@ class MdbHitran(HITRANDatabaseManager):
             self.gamma_self = df_load_mask.selbrd.values
             self.elower = df_load_mask.El.values
             self.gpp = df_load_mask.gp.values
-            #isotope            
-            self.isoid = df_load_mask.iso.values            
+            #isotope
+            self.isoid = df_load_mask.iso.values
             self.uniqiso = np.unique(self.isoid)
 
         else:
