@@ -14,6 +14,7 @@ config.update("jax_enable_x64", True)
 def gendata_moldb(database):
     """generate test data for CO exomol
     """
+    
     Nx = 20000
     nus, wav, reso = wavenumber_grid(22800.0,
                                      24000.0,
