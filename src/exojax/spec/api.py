@@ -324,19 +324,22 @@ class MdbHitemp(HITEMPDatabaseManager):
                  Ttyp=1000.,
                  isotope=1,
                  gpu_transfer=False,
-                 inherit_dataframe=False):
+                 inherit_dataframe=False,
+                 activation=True
+                 ):
         """Molecular database for HITRAN/HITEMP form.
 
         Args:
-           path: path for HITEMP par file
-           nurange: wavenumber range list (cm-1) [min,max] or wavenumber grid
-           margin: margin for nurange (cm-1)
-           crit: line strength lower limit for extraction
-           elower_max: maximum lower state energy, Elower (cm-1)
-           Ttyp: typical temperature to calculate Sij(T) used in crit
-           isotope: isotope number, 0 or None = use all isotopes. 
-           gpu_transfer: tranfer data to jnp.array?
-           inherit_dataframe: if True, it makes self.df instance available, which needs more DRAM when pickling.
+            path: path for HITEMP par file
+            nurange: wavenumber range list (cm-1) [min,max] or wavenumber grid
+            margin: margin for nurange (cm-1)
+            crit: line strength lower limit for extraction
+            elower_max: maximum lower state energy, Elower (cm-1)
+            Ttyp: typical temperature to calculate Sij(T) used in crit
+            isotope: isotope number, 0 or None = use all isotopes. 
+            gpu_transfer: tranfer data to jnp.array?
+            inherit_dataframe: if True, it makes self.df instance available, which needs more DRAM when pickling.
+            activation: if True, the activation of mdb will be done when initialization, if False, the activation won't be done and it makes self.df instance available. 
         """
 
         self.dbtype = "hitran"
@@ -354,6 +357,9 @@ class MdbHitemp(HITEMPDatabaseManager):
         self.isotope = isotope
         self.set_molmass()
 
+        self.gpu_transfer = gpu_transfer
+        self.activation = activation
+        
         super().__init__(
             molecule=self.simple_molecule_name,
             name="HITEMP-{molecule}",
@@ -415,29 +421,69 @@ class MdbHitemp(HITEMPDatabaseManager):
             within=[("iso",
                      isotope_dfform)] if isotope_dfform is not None else [],
             # for relevant files, get only the right range :
-            lower_bound=[("wav", load_wavenum_min)]
-            if self.nurange[0] is not None else [],
-            upper_bound=[("wav", load_wavenum_max)]
-            if self.nurange[1] is not None else [],
+            #lower_bound=[("wav", load_wavenum_min)]
+            #if self.nurange[0] is not None else [],
+            #upper_bound=[("wav", load_wavenum_max)]
+            #if self.nurange[1] is not None else [],
             output=output,
         )
 
         self.isoid = df.iso
         self.uniqiso = np.unique(df.iso.values)
-        for iso in self.uniqiso:
-            Q = PartFuncTIPS(self.molecid, iso)
-            QTref = Q.at(T=self.Tref)
-            QTtyp = Q.at(T=self.Ttyp)
-            load_mask = self.compute_load_mask(df, QTtyp / QTref)
-        self.instances_from_dataframes(df[load_mask])
+        QTref, QTtyp = self.QT_for_select_line(Ttyp)
+        self.df_load_mask = self.compute_load_mask(df, QTtyp / QTref)
+            
+        if self.activation:
+            self.activate(df)
+        if inherit_dataframe or not self.activation:
+            print("DataFrame (self.df) available.")
+            self.df = df
+
+    def QT_for_select_line(self, Ttyp):
+        if self.isotope is None or self.isotope == 0:
+            isotope_for_Qt = 1 # we use isotope=1 for QT
+        else:
+            isotope_for_Qt = int(self.isotope)
+        Q = PartFuncTIPS(self.molecid, isotope_for_Qt)
+        QTref = Q.at(T=Tref_original)
+        QTtyp = Q.at(T=Ttyp)
+        return QTref,QTtyp
+
+    def activate(self, df, mask=None):
+        """activation of moldb, 
+        
+        Notes:
+            activation includes, making instances, computing broadening parameters, natural width, 
+            and transfering instances to gpu arrays when self.gpu_transfer = True
+
+        Args:
+            df: DataFrame
+            mask: mask of DataFrame to be used for the activation, if None, no additional mask is applied.
+
+        Note:
+            self.df_load_mask is always applied when the activation.
+
+        Examples:
+            
+            >>> # we would extract the line with delta nu = 2 here
+            >>> mdb = api.MdbExomol(emf, nus, optional_quantum_states=True, activation=False)
+            >>> load_mask = (mdb.df["v_u"] - mdb.df["v_l"] == 2)
+            >>> mdb.activate(mdb.df, load_mask)
+
+
+        """
+        if mask is not None:
+            mask = mask * self.df_load_mask
+        else:
+            mask = self.df_load_mask
+
+        self.instances_from_dataframes(df[mask])
         self.gQT, self.T_gQT = hitranapi.make_partition_function_grid_hitran(
             self.molecid, self.uniqiso)
 
-        if gpu_transfer:
+        if self.gpu_transfer:
             self.generate_jnp_arrays()
 
-        if inherit_dataframe:
-            self.df = df
 
     def set_molmass(self):
         molmass_isotope, abundance_isotope = molmass_hitran()
@@ -622,37 +668,39 @@ class MdbHitran(HITRANDatabaseManager):
                  Ttyp=1000.,
                  isotope=0,
                  gpu_transfer=False,
-                 inherit_dataframe=False):
+                 inherit_dataframe=False,
+                 activation=True):
         """Molecular database for HITRAN/HITEMP form.
 
         Args:
-           path: path for HITRAN/HITEMP par file
-           nurange: wavenumber range list (cm-1) [min,max] or wavenumber grid
-           margin: margin for nurange (cm-1)
-           crit: line strength lower limit for extraction
-           elower_max: maximum lower state energy, Elower (cm-1)
-           Ttyp: typical temperature to calculate Sij(T) used in crit
-           isotope: isotope number. 0 or None= use all isotopes. 
-           gpu_transfer: tranfer data to jnp.array?
-           inherit_dataframe: if True, it makes self.df instance available, which needs more DRAM when pickling.
+            path: path for HITRAN/HITEMP par file
+            nurange: wavenumber range list (cm-1) [min,max] or wavenumber grid
+            margin: margin for nurange (cm-1)
+            crit: line strength lower limit for extraction
+            elower_max: maximum lower state energy, Elower (cm-1)
+            Ttyp: typical temperature to calculate Sij(T) used in crit
+            isotope: isotope number. 0 or None= use all isotopes. 
+            gpu_transfer: tranfer data to jnp.array?
+            inherit_dataframe: if True, it makes self.df instance available, which needs more DRAM when pickling.
+            activation: if True, the activation of mdb will be done when initialization, if False, the activation won't be done and it makes self.df instance available. 
         """
         self.dbtype = "hitran"
         self.path = pathlib.Path(path).expanduser()
         self.molecid = molecid_hitran(str(self.path.stem))
         self.simple_molecule_name = get_molecule(self.molecid)
-
-        #numinf, numtag = hitranapi.read_path(self.path)
         self.crit = crit
         self.elower_max = elower_max
         self.Tref = Tref_original
         self.Ttyp = Ttyp
         self.margin = margin
         self.nurange = [np.min(nurange), np.max(nurange)]
-        load_wavenum_min = self.nurange[0] - self.margin
-        load_wavenum_max = self.nurange[1] + self.margin
         self.isotope = isotope
         self.set_molmass()
 
+        #load_wavenum_min = self.nurange[0] - self.margin
+        #load_wavenum_max = self.nurange[1] + self.margin
+        self.activation = activation
+        self.gpu_transfer = gpu_transfer
         super().__init__(
             molecule=self.simple_molecule_name,
             name="HITRAN-{molecule}",
@@ -690,29 +738,69 @@ class MdbHitran(HITRANDatabaseManager):
             within=[("iso",
                      isotope_dfform)] if isotope_dfform is not None else [],
             # for relevant files, get only the right range :
-            lower_bound=[("wav", load_wavenum_min)]
-            if load_wavenum_min is not None else [],
-            upper_bound=[("wav", load_wavenum_max)]
-            if load_wavenum_max is not None else [],
+            #lower_bound=[("wav", load_wavenum_min)]
+            #if load_wavenum_min is not None else [],
+            #upper_bound=[("wav", load_wavenum_max)]
+            #if load_wavenum_max is not None else [],
             output=output,
         )
 
         self.isoid = df.iso
         self.uniqiso = np.unique(df.iso.values)
-        for iso in self.uniqiso:
-            Q = PartFuncTIPS(self.molecid, iso)
-            QTref = Q.at(T=self.Tref)
-            QTtyp = Q.at(T=self.Ttyp)
-            load_mask = self.compute_load_mask(df, QTtyp / QTref)
-        self.instances_from_dataframes(df[load_mask])
+        QTref, QTtyp = self.QT_for_select_line(Ttyp)
+        self.df_load_mask = self.compute_load_mask(df, QTtyp / QTref)
+            
+        if self.activation:
+            self.activate(df)
+        if inherit_dataframe or not self.activation:
+            print("DataFrame (self.df) available.")
+            self.df = df
+
+    def QT_for_select_line(self, Ttyp):
+        if self.isotope is None or self.isotope == 0:
+            isotope_for_Qt = 1 # we use isotope=1 for QT
+        else:
+            isotope_for_Qt = int(self.isotope)
+        Q = PartFuncTIPS(self.molecid, isotope_for_Qt)
+        QTref = Q.at(T=Tref)
+        QTtyp = Q.at(T=Ttyp)
+        return QTref,QTtyp
+
+    def activate(self, df, mask=None):
+        """activation of moldb, 
+        
+        Notes:
+            activation includes, making instances, computing broadening parameters, natural width, 
+            and transfering instances to gpu arrays when self.gpu_transfer = True
+
+        Args:
+            df: DataFrame
+            mask: mask of DataFrame to be used for the activation, if None, no additional mask is applied.
+
+        Note:
+            self.df_load_mask is always applied when the activation.
+
+        Examples:
+            
+            >>> # we would extract the line with delta nu = 2 here
+            >>> mdb = api.MdbExomol(emf, nus, optional_quantum_states=True, activation=False)
+            >>> load_mask = (mdb.df["v_u"] - mdb.df["v_l"] == 2)
+            >>> mdb.activate(mdb.df, load_mask)
+
+
+        """
+        if mask is not None:
+            mask = mask * self.df_load_mask
+        else:
+            mask = self.df_load_mask
+
+        self.instances_from_dataframes(df[mask])
         self.gQT, self.T_gQT = hitranapi.make_partition_function_grid_hitran(
             self.molecid, self.uniqiso)
 
-        if gpu_transfer:
+        if self.gpu_transfer:
             self.generate_jnp_arrays()
 
-        if inherit_dataframe:
-            self.df = df
 
     def set_molmass(self):
         molmass_isotope, abundance_isotope = molmass_hitran()
@@ -745,14 +833,16 @@ class MdbHitran(HITRANDatabaseManager):
             self.nu_lines = df_load_mask.wav.values
             self.line_strength_ref = df_load_mask.int.values
             self.delta_air = df_load_mask.Pshft.values
-            self.isoid = df_load_mask.iso.values
-            self.uniqiso = np.unique(self.isoid)
             self.A = df_load_mask.A.values
             self.n_air = df_load_mask.Tdpair.values
             self.gamma_air = df_load_mask.airbrd.values
             self.gamma_self = df_load_mask.selbrd.values
             self.elower = df_load_mask.El.values
             self.gpp = df_load_mask.gp.values
+            #isotope            
+            self.isoid = df_load_mask.iso.values            
+            self.uniqiso = np.unique(self.isoid)
+
         else:
             raise ValueError("Use vaex dataframe as input.")
 
