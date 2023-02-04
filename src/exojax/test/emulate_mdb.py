@@ -2,7 +2,6 @@
 """
 import pickle
 import pkg_resources
-from exojax.test.data import TESTDATA_moldb_CO_EXOMOL
 from exojax.test.data import TESTDATA_moldb_CO_HITEMP
 from exojax.test.data import TESTDATA_moldb_CO_HITEMP_SINGLE_ISOTOPE
 from exojax.test.data import TESTDATA_moldb_VALD
