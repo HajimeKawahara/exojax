@@ -60,10 +60,13 @@ def test_rt_exomol():
     from exojax.test.data import TESTDATA_CO_EXOMOL_MODIT_EMISSION_REF
 
     mdb = mock_mdbExomol()
-    Parr, dParr, k = rt.pressure_layer(NP=100)
+    Parr, dParr, k = rt.pressure_layer(NP=100, numpy=True)
     T0_in = 1300.0
     alpha_in = 0.1
     Tarr = T0_in * (Parr)**alpha_in
+    Tarr[Tarr<400.0] = 400.0 #lower limit
+    Tarr[Tarr>1500.0] = 1500.0 #upper limit
+    
     molmass = mdb.molmass
     MMR = 0.1
     nus, wav, res = wavenumber_grid(22900.0,
