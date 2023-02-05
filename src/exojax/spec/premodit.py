@@ -310,7 +310,10 @@ def generate_lbd(line_strength_ref,
     cont_nu, index_nu = npgetix(nu_lines, nu_grid)
     multi_index_lines, multi_cont_lines, uidx_bp, neighbor_uidx, multi_index_uniqgrid, Ng_broadpar = broadpar_getix(
         ngamma_ref, ngamma_ref_grid, n_Texp, n_Texp_grid)
-    Ng_nu = len(nu_grid)
+    
+    # We extend the LBD grid to +1 along nu direction. 
+    #Ng_nu = len(nu_grid) 
+    Ng_nu_plus_one = len(nu_grid) + 1
 
     # We extend the LBD grid to +1 along elower direction. See Issue #273
     Ng_elower_plus_one = len(elower_grid) + 1
@@ -320,7 +323,7 @@ def generate_lbd(line_strength_ref,
 
     lbd_coeff = []
     for idiff in range(diffmode + 1):
-        lbd_diff = np.zeros((Ng_nu, Ng_broadpar, Ng_elower_plus_one),
+        lbd_diff = np.zeros((Ng_nu_plus_one, Ng_broadpar, Ng_elower_plus_one),
                             dtype=np.float64)
         lbd_diff = npadd3D_multi_index(lbd_diff,
                                        line_strength_ref,
@@ -336,7 +339,10 @@ def generate_lbd(line_strength_ref,
             lbd_diff = convert_to_jnplog(lbd_diff)
         else:
             lbd_diff = np.array(lbd_diff[:, :, 0:-1])
-        lbd_coeff.append(lbd_diff)
+
+        lbd_coeff.append(lbd_diff[:-1,:,:]) 
+        # [:-1,:,:] is to remove the mostright bin of nu direction (check Ng_nu_plus_one)
+
 
     lbd_coeff = jnp.array(lbd_coeff)
 

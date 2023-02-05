@@ -130,8 +130,8 @@ def test_rt_hitemp(diffmode, fig=False):
 if __name__ == "__main__":
     import matplotlib.pyplot as plt
     diffmode = 0
-    #nus, F0, Fref = test_rt_exomol(diffmode)
-    nus, F0, Fref = test_rt_hitemp(diffmode)
+    nus, F0, Fref = test_rt_exomol(diffmode)
+    #nus, F0, Fref = test_rt_hitemp(diffmode)
 
     fig = plt.figure()
     ax = fig.add_subplot(211)
