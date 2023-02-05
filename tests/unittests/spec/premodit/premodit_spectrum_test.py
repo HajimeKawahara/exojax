@@ -19,6 +19,7 @@ from exojax.test.data import TESTDATA_CO_EXOMOL_MODIT_EMISSION_REF
 from exojax.spec.opacalc import OpaPremodit
 import pytest
 from jax.config import config
+
 config.update("jax_enable_x64", True)
 
 
@@ -38,18 +39,21 @@ def test_rt_exomol(diffmode, fig=False):
                                         15000,
                                         unit='AA',
                                         xsmode="premodit")
-    Tref = 600.0
-    Twt = 1200.0
 
     g = 2478.57
-    opa = OpaPremodit(mdb=mdb, nu_grid=nu_grid, diffmode=diffmode, auto_trange=[700,1500.0])
+    opa = OpaPremodit(mdb=mdb,
+                      nu_grid=nu_grid,
+                      diffmode=diffmode,
+                      auto_trange=[400, 1500.0],
+                      dit_grid_resolution=0.1)
     lbd_coeff, multi_index_uniqgrid, elower_grid, \
     ngamma_ref_grid, n_Texp_grid, R, pmarray = opa.opainfo
-
+    print("dE=", opa.dE, "cm-1")
     Mmol = mdb.molmass
     qtarr = vmap(mdb.qr_interp)(Tarr)
-    xsm = xsmatrix(Tarr, Parr, Tref, R, pmarray, lbd_coeff[0], nu_grid, ngamma_ref_grid,
-                   n_Texp_grid, multi_index_uniqgrid, elower_grid, Mmol, qtarr)
+    xsm = xsmatrix(Tarr, Parr, opa.Tref, R, pmarray, lbd_coeff[0], nu_grid,
+                   ngamma_ref_grid, n_Texp_grid, multi_index_uniqgrid,
+                   elower_grid, Mmol, qtarr)
     dtau = dtauM(dParr, jnp.abs(xsm), MMR * np.ones_like(Parr), Mmol, g)
     sourcef = piBarr(Tarr, nu_grid)
     F0 = rtrun(dtau, sourcef)
@@ -65,13 +69,13 @@ def test_rt_exomol(diffmode, fig=False):
     # Instead, we use an absolute relative difference < 3 % as a condition.
     # We also note that we found the error at the edge of data exceed 2 %. Therefore, we removed the edge here.
 
-    residual = np.abs(F0[10:12000] / dat["flux"].values[10:12000] - 1.0)
+    residual = np.abs(F0[10:] / dat["flux"].values[10:] - 1.0)
     print(np.max(residual))
-    #assert np.all(residual < 0.035)
+    #assert np.all(residual < 0.01)
     return nu_grid, F0, dat["flux"].values
 
 
-def test_rt_hitemp(fig=False):
+def test_rt_hitemp(diffmode, fig=False):
     mdb = mock_mdbHitemp(multi_isotope=False)
     isotope = 1
 
@@ -91,14 +95,13 @@ def test_rt_hitemp(fig=False):
     opa = OpaPremodit(mdb=mdb,
                       nu_grid=nu_grid,
                       diffmode=diffmode,
-                      auto_trange=[500.0, 1500.0])
+                      auto_trange=[300.0, 1800.0])
     lbd_coeff, multi_index_uniqgrid, elower_grid, \
         ngamma_ref_grid, n_Texp_grid, R, pmarray = opa.opainfo
     Mmol = mdb.molmass
     Ttyp = 2000.0
     g = 2478.57
 
-    
     Mmol = molinfo.molmass_isotope("CO")
     qtarr = vmap(mdb.qr_interp, (None, 0), 0)(isotope, Tarr)
     xsm = xsmatrix(Tarr, Parr, R, pmarray, lbd, nu_grid, ngamma_ref_grid,
@@ -115,7 +118,7 @@ def test_rt_hitemp(fig=False):
     # >>> np.savetxt(TESTDATA_CO_HITEMP_PREMODIT_EMISSION_REF,np.array([nu_grid,F0]).T,delimiter=",")
     #
 
-    residual = np.abs(F0[:12000] / dat["flux"].values[:12000] - 1.0)
+    residual = np.abs(F0[10:] / dat["flux"].values[10:] - 1.0)
     print(np.max(residual))
     assert np.all(residual < 0.035)
     return F0
@@ -132,15 +135,16 @@ if __name__ == "__main__":
     ax.plot(nus, Fref, label="MODIT")
     ax.plot(nus, F0, label="PreMODIT", ls="dashed")
     plt.legend()
-    plt.yscale("log")
+    #plt.yscale("log")
     plt.ylabel("cross section (cm2)")
     ax = fig.add_subplot(212)
-    ax.plot(nus, 1.0 - F0 / Fref, label="dif = (MODIT - PreMODIT)/MODIT")
-    plt.ylabel("dif")
+    ax.plot(nus, 1.0 - F0 / Fref, ".", label="dif = (MODIT - PreMODIT)/MODIT")
+    #plt.ylabel("dif")
     plt.xlabel("wavenumber cm-1")
     plt.axhline(0.05, color="gray", lw=0.5)
     plt.axhline(-0.05, color="gray", lw=0.5)
+    plt.axhline(0.01, color="gray", lw=0.5)
+    plt.axhline(-0.01, color="gray", lw=0.5)
     plt.ylim(-0.07, 0.07)
     plt.legend()
     plt.show()
- 
