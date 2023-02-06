@@ -26,7 +26,7 @@ def gendata_xs_modit_exomol():
     Pfix = 1.0
     Mmol = molmass_isotope("CO")
     Nx = 5000
-    nus, wav, res = wavenumber_grid(22800.0,
+    nus, wav, res = wavenumber_grid(22900.0,
                                     23100.0,
                                     Nx,
                                     unit='AA',
@@ -67,7 +67,7 @@ def gendata_xs_modit_hitemp(airmode=False):
         Pself = Pfix
         filename = TESTDATA_CO_HITEMP_MODIT_XS_REF
     Nx = 5000
-    nus, wav, res = wavenumber_grid(22800.0,
+    nus, wav, res = wavenumber_grid(22900.0,
                                     23100.0,
                                     Nx,
                                     unit='AA',
