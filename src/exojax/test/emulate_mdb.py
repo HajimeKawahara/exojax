@@ -47,14 +47,19 @@ def mock_mdbHitemp(multi_isotope=False):
         mdbHitemp instance  
     """
     if multi_isotope:
-        filename = TESTDATA_moldb_CO_HITEMP
+        isotope = 0
     else:
-        filename = TESTDATA_moldb_CO_HITEMP_SINGLE_ISOTOPE
+        isotope = 1
 
-    filename = pkg_resources.resource_filename('exojax',
-                                               'data/testdata/' + filename)
-    with open(filename, 'rb') as f:
-        mdb = pickle.load(f)
+    from exojax.test.data import TESTDATA_CO_HITEMP_PARFILE
+    parfile = pkg_resources.resource_filename(
+        'exojax', 'data/testdata/CO/' + TESTDATA_CO_HITEMP_PARFILE)
+    mdb = api.MdbHitemp('CO',
+                            None,
+                            isotope=isotope,
+                            parfile=parfile,
+                            inherit_dataframe=True,
+                            gpu_transfer=True)    
     return mdb
 
 
@@ -71,5 +76,6 @@ def mock_mdbVALD():
 
 
 if __name__ == "__main__":
-    mdb = mock_mdbExomol()
+    #mdb = mock_mdbExomol()
+    mdb = mock_mdbHitemp()
     print(mdb.df)

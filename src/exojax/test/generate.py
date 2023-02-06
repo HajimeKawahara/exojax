@@ -35,15 +35,6 @@ def gendata_moldb(database):
         save_trans(trans_filename, maskeddf)
         os.chdir(cdir)
 
-    elif database == "hitemp_isotope":
-        parfile = '/home/kawahara/exojax/tests/integration/moldb/05_HITEMP_SAMPLE.par'
-        mdbCO = api.MdbHitemp('CO',
-                              nus,
-                              isotope=1,
-                              parfile=parfile,
-                              inherit_dataframe=True,
-                              gpu_transfer=True)
-        print(mdbCO.df)
 
 
 def make_hdf():
@@ -74,8 +65,7 @@ def save_trans(trans_filename, maskeddf):
 
 
 if __name__ == "__main__":
-    #gendata_moldb("exomol")
+    gendata_moldb("exomol")
     #print("cp some files from data/testdata/CO/12C-16O/SAMPLE/ to CO/12C-16O/SAMPLE/")
     #make_hdf()
-    #gendata_moldb("hitemp")
-    gendata_moldb("hitemp_isotope")
+ 

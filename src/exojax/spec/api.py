@@ -316,11 +316,12 @@ class MdbHitemp(HITEMPDatabaseManager):
         self.Ttyp = Ttyp
         self.margin = margin
         self.nurange = [np.min(nurange), np.max(nurange)]
-        load_wavenum_min = self.nurange[0] - self.margin
-        load_wavenum_max = self.nurange[1] + self.margin
         self.gpu_transfer = gpu_transfer
         self.activation = activation
-
+        self.load_wavenum_min, self.load_wavenum_max = self.set_wavenum(nurange)
+        #load_wavenum_min = self.nurange[0] - self.margin
+        #load_wavenum_max = self.nurange[1] + self.margin
+        
         super().__init__(
             molecule=self.simple_molecule_name,
             name="HITEMP-{molecule}",
@@ -341,14 +342,16 @@ class MdbHitemp(HITEMPDatabaseManager):
             elif isotope > 0:
                 maskiso = df["iso"] == isotope
                 df = df[maskiso]
+            self.load_wavenum_min = np.min(df["wav"].values)
+            self.load_wavenum_max = np.max(df["wav"].values)
         else:
             # Get list of all expected local files for this database:
             local_files, urlnames = self.get_filenames()
             # Get missing files
             download_files = self.get_missing_files(local_files)
             download_files = self.keep_only_relevant(download_files,
-                                                     load_wavenum_min,
-                                                     load_wavenum_max)
+                                                     self.load_wavenum_min,
+                                                     self.load_wavenum_max)
 
             # do not re-download files if they exist in another format :
 
@@ -420,6 +423,21 @@ class MdbHitemp(HITEMPDatabaseManager):
         QTtyp = Q.at(T=Ttyp)
         return QTref, QTtyp
 
+    def set_wavenum(self, nurange):
+        if nurange is None:
+            wavenum_min = 0.0
+            wavenum_max = 0.0
+            self.activation = False
+            warnings.warn("nurange=None. Nonactive mode.", UserWarning)
+        else:
+            wavenum_min = np.min(nurange) - self.margin
+            wavenum_max = np.max(nurange) + self.margin
+        if wavenum_min == -np.inf:
+            wavenum_min = None
+        if wavenum_max == np.inf:
+            wavenum_max = None
+        return wavenum_min, wavenum_max
+
     def activate(self, df, mask=None):
         """activation of moldb, 
         
@@ -456,8 +474,8 @@ class MdbHitemp(HITEMPDatabaseManager):
             self.generate_jnp_arrays()
 
     def compute_load_mask(self, df, qrtyp):
-        wav_mask = (df.wav > self.nurange[0]-self.margin) \
-                    * (df.wav < self.nurange[1]+self.margin)
+        wav_mask = (df.wav > self.load_wavenum_min) \
+                    * (df.wav < self.load_wavenum_max)
         intensity_mask = (line_strength_numpy(self.Ttyp, df.int, df.wav, df.El,
                                               qrtyp) > self.crit)
         return wav_mask * intensity_mask
