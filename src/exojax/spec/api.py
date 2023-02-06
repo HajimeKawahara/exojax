@@ -524,8 +524,8 @@ class MdbHitemp(HITEMPDatabaseManager):
 
     def compute_load_mask(self, df, qrtyp):
         #wavelength
-        mask = (df.wav > self.nurange[0]-self.margin) \
-                    * (df.wav < self.nurange[1]+self.margin)
+        mask = (df.wav > self.load_wavenum_min) \
+                    * (df.wav < self.load_wavenum_max)
         mask *= (line_strength_numpy(self.Ttyp, df.int, df.wav, df.El, qrtyp) >
                  self.crit)
         if self.elower_max is not None:

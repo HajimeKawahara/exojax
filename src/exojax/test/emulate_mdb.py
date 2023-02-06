@@ -25,7 +25,7 @@ def mock_mdbExomol():
     Nx = 20000
     lambda0 = 22920.0
     lambda1 = 23100.0
-    nus, wav, res = wavenumber_grid(lambda0, lambda1, Nx, unit='AA')
+    nus, wav, res = wavenumber_grid(lambda0, lambda1, Nx, unit='AA', xsmode="modit")
     mdb = api.MdbExomol(str(path),
                         nus,
                         inherit_dataframe=True,
@@ -51,8 +51,16 @@ def mock_mdbHitemp(multi_isotope=False):
     from exojax.test.data import TESTDATA_CO_HITEMP_PARFILE
     parfile = pkg_resources.resource_filename(
         'exojax', 'data/testdata/CO/' + TESTDATA_CO_HITEMP_PARFILE)
+    Nx = 20000
+    lambda0 = 22920.0
+    lambda1 = 23100.0
+    nus, wav, res = wavenumber_grid(lambda0,
+                                    lambda1,
+                                    Nx,
+                                    unit='AA',
+                                    xsmode="modit")
     mdb = api.MdbHitemp('CO',
-                        None,
+                        nus,
                         isotope=isotope,
                         parfile=parfile,
                         inherit_dataframe=True,
@@ -73,6 +81,6 @@ def mock_mdbVALD():
 
 
 if __name__ == "__main__":
-    #mdb = mock_mdbExomol()
-    mdb = mock_mdbHitemp()
+    mdb = mock_mdbExomol()
+    #mdb = mock_mdbHitemp()
     print(mdb.df)

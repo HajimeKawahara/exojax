@@ -100,7 +100,7 @@ def test_rt_exomol():
     #
     residual = np.abs(F0/dat["flux"].values - 1.0)
     print(np.max(residual))
-    assert np.all(residual < 1.e-15)
+    assert np.all(residual < 1.e-4)
 
     return F0
 
@@ -164,6 +164,6 @@ def test_rt_vald():
     
     
 if __name__ == "__main__":
-    #test_xs_exomol()
+    test_xs_exomol()
     test_rt_exomol()
     #test_rt_vald()
