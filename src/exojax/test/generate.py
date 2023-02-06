@@ -7,6 +7,7 @@ import numpy as np
 import pathlib
 import os
 
+
 def gendata_moldb(database):
     """generate test data for CO exomol
     """
@@ -34,41 +35,31 @@ def gendata_moldb(database):
         save_trans(trans_filename, maskeddf)
         os.chdir(cdir)
 
-        
-    elif database == "hitemp":
-        from exojax.test.data import TESTDATA_moldb_CO_HITEMP as filename
-        mdbCO = api.MdbHitemp('CO',
-                              nus,
-                              crit=1e-35,
-                              Ttyp=296.0,
-                              inherit_dataframe=False,
-                              gpu_transfer=True)
     elif database == "hitemp_isotope":
-        from exojax.test.data import TESTDATA_moldb_CO_HITEMP_SINGLE_ISOTOPE as filename
+        parfile = '/home/kawahara/exojax/tests/integration/moldb/05_HITEMP_SAMPLE.par'
         mdbCO = api.MdbHitemp('CO',
                               nus,
-                              crit=1e-35,
-                              Ttyp=296.0,
                               isotope=1,
-                              inherit_dataframe=False,
+                              parfile=parfile,
+                              inherit_dataframe=True,
                               gpu_transfer=True)
+        print(mdbCO.df)
+
 
 def make_hdf():
-    path="CO/12C-16O/SAMPLE"
+    path = "CO/12C-16O/SAMPLE"
     path = pathlib.Path(path).expanduser()
     print(path)
     Nx = 10000
     lambda0 = 22920.0
     lambda1 = 24000.0
-    nus, wav, res = wavenumber_grid(lambda0, lambda1, Nx, unit='AA')    
+    nus, wav, res = wavenumber_grid(lambda0, lambda1, Nx, unit='AA')
     mdbCO = api.MdbExomol(str(path),
-                              nus,
-                              crit=1e-35,
-                              Ttyp=296.0,
-                              inherit_dataframe=True,
-                              gpu_transfer=True)
-    
-
+                          nus,
+                          crit=1e-35,
+                          Ttyp=296.0,
+                          inherit_dataframe=True,
+                          gpu_transfer=True)
 
 
 def save_trans(trans_filename, maskeddf):
@@ -83,10 +74,8 @@ def save_trans(trans_filename, maskeddf):
 
 
 if __name__ == "__main__":
-    gendata_moldb("exomol")
-    print("cp some files from data/testdata/CO/12C-16O/SAMPLE/ to CO/12C-16O/SAMPLE/")
+    #gendata_moldb("exomol")
+    #print("cp some files from data/testdata/CO/12C-16O/SAMPLE/ to CO/12C-16O/SAMPLE/")
     #make_hdf()
-    #print("mv CO/12C-16O/SAMPLE/ to exojax/src/exojax/data/testdata/")
-
     #gendata_moldb("hitemp")
-    #gendata_moldb("hitemp_isotope")
+    gendata_moldb("hitemp_isotope")

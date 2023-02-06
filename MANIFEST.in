@@ -10,9 +10,6 @@ include src/exojax/data/testdata/spectrum.txt
 include src/exojax/data/testdata/spectrum_ch4.txt
 include src/exojax/data/testdata/spectrum_ch4_new.txt
 include src/exojax/data/testdata/spectrum_co.txt
-include src/exojax/data/testdata/moldb_co_exomol.pickle
-include src/exojax/data/testdata/moldb_co_hitemp.pickle
-include src/exojax/data/testdata/moldb_co_hitemp_single_isotope.pickle
 include src/exojax/data/testdata/moldb_h2o_exomol.pickle
 include src/exojax/data/testdata/moldb_vald.pickle
 include src/exojax/data/testdata/lpf_test_ref.txt
@@ -23,6 +20,7 @@ include src/exojax/data/testdata/modit_rt_test_ref.txt
 include src/exojax/data/testdata/premodit_rt_test_ref.txt
 include src/exojax/data/testdata/premodit_rt_test_hitemp_ref.txt
 include src/exojax/data/testdata/modit_rt_test_vald_ref.txt
+include src/exojax/data/testdata/05_HITEMP_SAMPLE.par
 
 graft tests
 graft examples

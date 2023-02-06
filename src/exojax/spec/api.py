@@ -292,11 +292,12 @@ class MdbHitemp(HITEMPDatabaseManager):
                  isotope=0,
                  gpu_transfer=False,
                  inherit_dataframe=False,
-                 activation=True):
+                 activation=True,
+                 parfile=None):
         """Molecular database for HITRAN/HITEMP form.
 
         Args:
-            path: path for HITEMP par file
+            molecule: molecule
             nurange: wavenumber range list (cm-1) [min,max] or wavenumber grid
             margin: margin for nurange (cm-1)
             crit: line strength lower limit for extraction
@@ -305,7 +306,7 @@ class MdbHitemp(HITEMPDatabaseManager):
             gpu_transfer: tranfer data to jnp.array?
             inherit_dataframe: if True, it makes self.df instance available, which needs more DRAM when pickling.
             activation: if True, the activation of mdb will be done when initialization, if False, the activation won't be done and it makes self.df instance available. 
-
+            parfile: if not none, provide path, then directly load parfile
         """
 
         self.path = pathlib.Path(path).expanduser()
@@ -330,65 +331,73 @@ class MdbHitemp(HITEMPDatabaseManager):
             parallel=True,
         )
 
-        # Get list of all expected local files for this database:
-        local_files, urlnames = self.get_filenames()
-        local_files = [
-            '/home/kawahara/exojax/tests/integration/moldb/.database/CO/CO-05_HITEMP_SAMPLE.hdf5'
-        ]
-        # Get missing files
-        download_files = self.get_missing_files(local_files)
-        download_files = self.keep_only_relevant(download_files,
-                                                 load_wavenum_min,
-                                                 load_wavenum_max)
-        
-        # do not re-download files if they exist in another format :
-
-        converted = []
-        for f in download_files:
-            if exists(f.replace(".hdf5", ".h5")):
-                update_pytables_to_vaex(f.replace(".hdf5", ".h5"))
-                converted.append(f)
-            download_files = [f for f in download_files if f not in converted]
-        # do not re-download remaining files that exist. Let user decide what to do.
-        # (download & re-parsing is a long solution!)
-        download_files = [
-            f for f in download_files if not exists(f.replace(".hdf5", ".h5"))
-        ]
-
-        # Download files
-        if len(download_files) > 0:
-            if urlnames is None:
-                urlnames = self.fetch_urlnames()
-            filesmap = dict(zip(local_files, urlnames))
-            download_urls = [filesmap[k] for k in download_files]
-            self.download_and_parse(download_urls, download_files)
-
-        # Register
-        # if not self.is_registered():
-        #    self.register()
-
-        clean_cache_files = True
-        if len(download_files) > 0 and clean_cache_files:
-            self.clean_download_files()
-
-        # Load and return
-        files_loaded = self.keep_only_relevant(local_files, load_wavenum_min,
-                                               load_wavenum_max)
-        columns = None,
-        output = "vaex"
-
         self.isotope = _convert_proper_isotope(isotope)
-        df = self.load(
-            files_loaded,  # filter other files,
-            columns=columns,
-            within=[("iso", self.isotope)] if self.isotope is not None else [],
-            # for relevant files, get only the right range :
-            #lower_bound=[("wav", load_wavenum_min)]
-            #if self.nurange[0] is not None else [],
-            #upper_bound=[("wav", load_wavenum_max)]
-            #if self.nurange[1] is not None else [],
-            output=output,
-        )
+
+        if parfile is not None:
+            from radis.api.hitranapi import hit2df
+            df = hit2df(parfile, engine="vaex", cache="regen")
+            if isotope is None:
+                pass
+            elif isotope > 0:
+                maskiso = df["iso"] == isotope
+                df = df[maskiso]
+        else:
+            # Get list of all expected local files for this database:
+            local_files, urlnames = self.get_filenames()
+            # Get missing files
+            download_files = self.get_missing_files(local_files)
+            download_files = self.keep_only_relevant(download_files,
+                                                     load_wavenum_min,
+                                                     load_wavenum_max)
+
+            # do not re-download files if they exist in another format :
+
+            converted = []
+            for f in download_files:
+                if exists(f.replace(".hdf5", ".h5")):
+                    update_pytables_to_vaex(f.replace(".hdf5", ".h5"))
+                    converted.append(f)
+                download_files = [
+                    f for f in download_files if f not in converted
+                ]
+            # do not re-download remaining files that exist. Let user decide what to do.
+            # (download & re-parsing is a long solution!)
+            download_files = [
+                f for f in download_files
+                if not exists(f.replace(".hdf5", ".h5"))
+            ]
+
+            # Download files
+            if len(download_files) > 0:
+                if urlnames is None:
+                    urlnames = self.fetch_urlnames()
+                filesmap = dict(zip(local_files, urlnames))
+                download_urls = [filesmap[k] for k in download_files]
+                self.download_and_parse(download_urls, download_files)
+
+            clean_cache_files = True
+            if len(download_files) > 0 and clean_cache_files:
+                self.clean_download_files()
+
+            # Load and return
+            files_loaded = self.keep_only_relevant(local_files,
+                                                   load_wavenum_min,
+                                                   load_wavenum_max)
+            columns = None,
+            output = "vaex"
+
+            df = self.load(
+                files_loaded,  # filter other files,
+                columns=columns,
+                within=[("iso",
+                         self.isotope)] if self.isotope is not None else [],
+                # for relevant files, get only the right range :
+                #lower_bound=[("wav", load_wavenum_min)]
+                #if self.nurange[0] is not None else [],
+                #upper_bound=[("wav", load_wavenum_max)]
+                #if self.nurange[1] is not None else [],
+                output=output,
+            )
 
         self.isoid = df.iso
         self.uniqiso = np.unique(df.iso.values)
@@ -459,25 +468,20 @@ class MdbHitemp(HITEMPDatabaseManager):
         Args:
             df_load_mask (DataFrame): (masked) data frame
 
-        Raises:
-            ValueError: _description_
         """
-        if isinstance(df_load_mask, vaex.dataframe.DataFrameLocal):
-            self.nu_lines = df_load_mask.wav.values
-            self.Sij0 = df_load_mask.int.values
-            self.delta_air = df_load_mask.Pshft.values
-            self.A = df_load_mask.A.values
-            self.n_air = df_load_mask.Tdpair.values
-            self.gamma_air = df_load_mask.airbrd.values
-            self.gamma_self = df_load_mask.selbrd.values
-            self.elower = df_load_mask.El.values
-            self.gpp = df_load_mask.gp.values
-            #isotope
-            self.isoid = df_load_mask.iso.values
-            self.uniqiso = np.unique(self.isoid)
-        else:
-            raise ValueError("Use vaex dataframe as input.")
-
+        self.nu_lines = df_load_mask.wav.values
+        self.Sij0 = df_load_mask.int.values
+        self.delta_air = df_load_mask.Pshft.values
+        self.A = df_load_mask.A.values
+        self.n_air = df_load_mask.Tdpair.values
+        self.gamma_air = df_load_mask.airbrd.values
+        self.gamma_self = df_load_mask.selbrd.values
+        self.elower = df_load_mask.El.values
+        self.gpp = df_load_mask.gp.values
+        #isotope
+        self.isoid = df_load_mask.iso.values
+        self.uniqiso = np.unique(self.isoid)
+        
     def generate_jnp_arrays(self):
         """(re)generate jnp.arrays.
         
