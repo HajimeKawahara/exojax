@@ -80,7 +80,7 @@ def gendata_rt_modit_hitemp():
     from exojax.spec.planck import piBarr
     from exojax.spec.modit import set_ditgrid_matrix_hitran
     from exojax.test.data import TESTDATA_CO_HITEMP_MODIT_EMISSION_REF
-    mdb = mock_mdbHitemp()
+    mdb = mock_mdbHitemp(multi_isotope=False)
 
     Parr, dParr, k = rt.pressure_layer(NP=100, numpy=True)
     T0_in = 1300.0

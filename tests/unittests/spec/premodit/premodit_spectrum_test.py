@@ -1,15 +1,12 @@
 """ short integration tests for PreMODIT spectrum"""
 import pkg_resources
-from jax import vmap
 import jax.numpy as jnp
 import pandas as pd
 import numpy as np
-#from exojax.spec.initspec import init_premodit
 from exojax.utils.grids import wavenumber_grid
 from exojax.test.emulate_mdb import mock_mdbExomol
 from exojax.test.emulate_mdb import mock_mdbHitemp
 from exojax.spec import rtransfer as rt
-from exojax.spec import molinfo
 
 from exojax.spec.rtransfer import dtauM
 from exojax.spec.rtransfer import rtrun
@@ -31,10 +28,9 @@ def test_rt_exomol(diffmode, fig=False):
     T0_in = 1300.0
     alpha_in = 0.1
     Tarr = T0_in * (Parr)**alpha_in
-    Tarr[Tarr<400.0] = 400.0 #lower limit
-    Tarr[Tarr>1500.0] = 1500.0 #upper limit
-    
-    
+    Tarr[Tarr < 400.0] = 400.0  #lower limit
+    Tarr[Tarr > 1500.0] = 1500.0  #upper limit
+
     MMR = 0.1
     nu_grid, wav, res = wavenumber_grid(22900.0,
                                         23100.0,
@@ -49,7 +45,7 @@ def test_rt_exomol(diffmode, fig=False):
                       diffmode=diffmode,
                       auto_trange=[400, 1500.0],
                       dit_grid_resolution=0.1)
-    
+
     print("dE=", opa.dE, "cm-1")
     xsm = opa.xsmatrix(Tarr, Parr)
     dtau = dtauM(dParr, jnp.abs(xsm), MMR * np.ones_like(Parr), mdb.molmass, g)
@@ -63,41 +59,37 @@ def test_rt_exomol(diffmode, fig=False):
     assert np.all(residual < 0.01)
     return nu_grid, F0, dat["flux"].values
 
+
 @pytest.mark.parametrize("diffmode", [0, 1, 2])
 def test_rt_hitemp(diffmode, fig=False):
     mdb = mock_mdbHitemp(multi_isotope=False)
-    isotope = 1
-
     Parr, dParr, k = rt.pressure_layer(NP=100, numpy=True)
     T0_in = 1300.0
     alpha_in = 0.1
     Tarr = T0_in * (Parr)**alpha_in
-    Tarr[Tarr<400.0] = 400.0 #lower limit
-    Tarr[Tarr>1500.0] = 1500.0 #upper limit
-    
+    Tarr[Tarr < 400.0] = 400.0  #lower limit
+    Tarr[Tarr > 1500.0] = 1500.0  #upper limit
+
     MMR = 0.1
     nu_grid, wav, res = wavenumber_grid(22900.0,
                                         23100.0,
                                         15000,
                                         unit='AA',
                                         xsmode="premodit")
-    dit_grid_resolution = 0.2
     opa = OpaPremodit(mdb=mdb,
                       nu_grid=nu_grid,
                       diffmode=diffmode,
-                      auto_trange=[400.0, 1500.0],
-                      dit_grid_resolution=dit_grid_resolution)
+                      auto_trange=[400.0, 1500.0])
     g = 2478.57
     xsm = opa.xsmatrix(Tarr, Parr)
     dtau = dtauM(dParr, jnp.abs(xsm), MMR * np.ones_like(Parr), mdb.molmass, g)
     sourcef = piBarr(Tarr, nu_grid)
     F0 = rtrun(dtau, sourcef)
 
-
     filename = pkg_resources.resource_filename(
         'exojax', 'data/testdata/' + TESTDATA_CO_HITEMP_MODIT_EMISSION_REF)
     dat = pd.read_csv(filename, delimiter=",", names=("nus", "flux"))
-    residual = np.abs(F0/ dat["flux"].values - 1.0)
+    residual = np.abs(F0 / dat["flux"].values - 1.0)
     print(np.max(residual))
     assert np.all(residual < 0.01)
     return nu_grid, F0, dat["flux"].values
@@ -120,11 +112,17 @@ if __name__ == "__main__":
     ax.plot(nus_hitemp, F0_hitemp, label="PreMODIT (HITEMP)", ls="dashed")
     plt.legend()
     plt.ylabel("cross section (cm2)")
-    
+
     ax = fig.add_subplot(313)
-    ax.plot(nus, 1.0 - F0 / Fref, alpha=0.7, label="dif = (MO - PreMO)/MO Exomol")
-    ax.plot(nus_hitemp, 1.0 - F0_hitemp / Fref_hitemp, alpha=0.7,label="dif = (MO - PreMO)/MO HITEMP")
-    
+    ax.plot(nus,
+            1.0 - F0 / Fref,
+            alpha=0.7,
+            label="dif = (MO - PreMO)/MO Exomol")
+    ax.plot(nus_hitemp,
+            1.0 - F0_hitemp / Fref_hitemp,
+            alpha=0.7,
+            label="dif = (MO - PreMO)/MO HITEMP")
+
     #plt.ylabel("dif")
     plt.xlabel("wavenumber cm-1")
     plt.axhline(0.05, color="gray", lw=0.5)

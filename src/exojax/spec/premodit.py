@@ -116,7 +116,7 @@ def xsvector_zeroth(T, P, nsigmaD, lbd_coeff, Tref, R, pmarray, nu_grid,
 
 
 @jit
-def xsmatrix_zeroth(Tarr, Parr, Tref, Twt, R, pmarray, lbd_coeff, nu_grid, ngamma_ref_grid,
+def xsmatrix_zeroth(Tarr, Parr, Tref, R, pmarray, lbd_coeff, nu_grid, ngamma_ref_grid,
              n_Texp_grid, multi_index_uniqgrid, elower_grid, Mmol, qtarr):
     """compute cross section matrix given atmospheric layers, for diffmode=0, with scan+fft
 
@@ -124,7 +124,6 @@ def xsmatrix_zeroth(Tarr, Parr, Tref, Twt, R, pmarray, lbd_coeff, nu_grid, ngamm
         Tarr (_type_): temperature layers
         Parr (_type_): pressure layers
         Tref: reference temperature in K
-        Twt: weight temperature in K
         R (float): spectral resolution
         pmarray (_type_): pmarray
         lbd_coeff (_type_): 

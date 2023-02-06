@@ -134,6 +134,37 @@ class OpaPremodit(OpaCalc):
             warning=self.warning)
         self.ready = True
 
+    def xsvector(self,T,P):
+        from exojax.spec.premodit import xsvector_zeroth
+        from exojax.spec.premodit import xsvector_first
+        from exojax.spec.premodit import xsvector_second
+        from exojax.spec import normalized_doppler_sigma
+
+        lbd_coeff, multi_index_uniqgrid, elower_grid, \
+            ngamma_ref_grid, n_Texp_grid, R, pmarray = self.opainfo
+        nsigmaD = normalized_doppler_sigma(T, self.mdb.molmass, R)
+
+        if self.mdb.dbtype == "hitran":
+            qt = self.mdb.qr_interp(self.mdb.isotope, T)
+        elif self.mdb.dbtype == "exomol":
+            qt = self.mdb.qr_interp(T)
+    
+        if self.diffmode == 0:
+            return xsvector_zeroth(T, P, nsigmaD, lbd_coeff, self.Tref, R,
+                                pmarray, self.nu_grid, elower_grid,
+                                multi_index_uniqgrid, ngamma_ref_grid,
+                                n_Texp_grid, qt)
+        elif self.diffmode == 1:
+            return xsvector_first(T, P, nsigmaD, lbd_coeff, self.Tref,
+                                self.Twt, R, pmarray, self.nu_grid, elower_grid,
+                                multi_index_uniqgrid, ngamma_ref_grid,
+                                n_Texp_grid, qt)
+        elif self.diffmode == 2:
+            return xsvector_second(T, P, nsigmaD, lbd_coeff, self.Tref,
+                                self.Twt, R, pmarray, self.nu_grid, elower_grid,
+                                multi_index_uniqgrid, ngamma_ref_grid,
+                                n_Texp_grid, qt)
+        
     def xsmatrix(self, Tarr, Parr):
         """cross section matrix
 
@@ -158,9 +189,9 @@ class OpaPremodit(OpaCalc):
             qtarr = vmap(self.mdb.qr_interp, (None, 0))(self.mdb.isotope, Tarr)
         elif self.mdb.dbtype == "exomol":
             qtarr = vmap(self.mdb.qr_interp)(Tarr)
-            
+
         if self.diffmode == 0:
-            return xsmatrix_zeroth(Tarr, Parr, self.Tref, self.Twt, R, pmarray,
+            return xsmatrix_zeroth(Tarr, Parr, self.Tref, R, pmarray,
                                    lbd_coeff, self.nu_grid, ngamma_ref_grid,
                                    n_Texp_grid, multi_index_uniqgrid,
                                    elower_grid, self.mdb.molmass, qtarr)
