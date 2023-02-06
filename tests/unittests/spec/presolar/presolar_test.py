@@ -11,7 +11,7 @@ from exojax.spec.presolar import optimal_mini_batch
 from exojax.spec.presolar import lbd_olaform
 from exojax.spec.presolar import _reshape_lbd
 from exojax.spec.presolar import shapefilter_olaform
-
+from exojax.utils.constants import Tref_original
 
 def _example_filter(N, filter_length):
     nu_grid, wav, resolution = wavenumber_grid(3000.0,
@@ -114,8 +114,8 @@ def vmap_unbiased_lsd(hat_lbd, T, nu_grid, elower_grid, qt):
         LSD, shape = (number_of_wavenumber_bin, number_of_broadening_parameters)
         
     """
-    vmapped_unbiased_lsd = vmap(unbiased_lsd_zeroth,(0,None,None,None,None),0)
-    return vmapped_unbiased_lsd(hat_lbd, T, nu_grid, elower_grid, qt)
+    vmapped_unbiased_lsd = vmap(unbiased_lsd_zeroth,(0,None,None,None,None,None),0)
+    return vmapped_unbiased_lsd(hat_lbd, T, Tref_original, nu_grid, elower_grid, qt)
     
 
 def test_unbiased_lsd_simple():
@@ -128,7 +128,7 @@ def test_unbiased_lsd_simple():
     T = 1000.0  
     elower_grid = np.ones(n_elower_grid)
     qt = 1.0
-    lsd = unbiased_lsd_zeroth(lbd, T, nu_grid, elower_grid, qt)
+    lsd = unbiased_lsd_zeroth(lbd, T, Tref_original, nu_grid, elower_grid, qt)
     assert np.all(np.shape(lsd) == (13,3))
 
 def test_shapefilter_olaform():
