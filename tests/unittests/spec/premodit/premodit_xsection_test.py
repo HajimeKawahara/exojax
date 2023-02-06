@@ -72,14 +72,14 @@ def test_xsection_premodit_exomol(diffmode):
     opa = OpaPremodit(mdb=mdb,
                       nu_grid=nu_grid,
                       diffmode=diffmode,
-                      auto_trange=[500.0, 2000.0])
+                      auto_trange=[500.0, 1500.0])
     xsv = opa.xsvector(Ttest,Ptest)
     filename = pkg_resources.resource_filename(
         'exojax', 'data/testdata/' + TESTDATA_CO_EXOMOL_MODIT_XS_REF)
     dat = pd.read_csv(filename, delimiter=",", names=("nus", "xsv"))
     res = np.max(np.abs(1.0 - xsv / dat["xsv"].values))
-    #print(res)
-    #assert res < 0.012
+    print(res)
+    assert res < 0.012
     return opa.nu_grid, xsv, opa.dE, opa.Twt, opa.Tref, Ttest
 
 
@@ -93,7 +93,7 @@ if __name__ == "__main__":
     #db = "hitemp"
     db = "exomol"
 
-    diffmode = 2
+    diffmode = 1
     if db == "exomol":
         nus, xs, dE, Twt, Tref, Tin = test_xsection_premodit_exomol(diffmode)
         filename = pkg_resources.resource_filename(

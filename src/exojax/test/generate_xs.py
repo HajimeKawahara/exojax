@@ -43,6 +43,12 @@ def gendata_xs_modit_exomol():
     ngammaL_grid = ditgrid_log_interval(ngammaL, dit_grid_resolution=0.1)
     xsv = xsvector(cont_nu, index_nu, R, pmarray, nsigmaD, ngammaL, Sij, nus,
                    ngammaL_grid)
+
+    import matplotlib.pyplot as plt
+    plt.plot(nus,xsv)
+    plt.yscale("log")
+    plt.show()
+
     np.savetxt(TESTDATA_CO_EXOMOL_MODIT_XS_REF,
                np.array([nus, xsv]).T,
                delimiter=",")

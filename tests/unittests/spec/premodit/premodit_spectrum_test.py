@@ -16,14 +16,13 @@ from exojax.test.data import TESTDATA_CO_HITEMP_MODIT_EMISSION_REF
 from exojax.spec.opacalc import OpaPremodit
 import pytest
 from jax.config import config
+from exojax.spec import api
 
 config.update("jax_enable_x64", True)
 
 
 @pytest.mark.parametrize("diffmode", [0, 1, 2])
 def test_rt_exomol(diffmode, fig=False):
-    dE = 400.0 * (diffmode + 1)
-    mdb = mock_mdbExomol()
     Parr, dParr, k = rt.pressure_layer(NP=100, numpy=True)
     T0_in = 1300.0
     alpha_in = 0.1
@@ -37,7 +36,11 @@ def test_rt_exomol(diffmode, fig=False):
                                         15000,
                                         unit='AA',
                                         xsmode="premodit")
-
+    #mdb = api.MdbExomol('.database/CO/12C-16O/Li2015',
+    #                      nu_grid,
+    #                      inherit_dataframe=False,
+    #                      gpu_transfer=False)
+    mdb = mock_mdbExomol()
     g = 2478.57
     #set OpaCalc
     opa = OpaPremodit(mdb=mdb,
@@ -62,7 +65,8 @@ def test_rt_exomol(diffmode, fig=False):
 
 @pytest.mark.parametrize("diffmode", [0, 1, 2])
 def test_rt_hitemp(diffmode, fig=False):
-    mdb = mock_mdbHitemp(multi_isotope=False)
+    #mdb = mock_mdbHitemp(multi_isotope=False)
+    
     Parr, dParr, k = rt.pressure_layer(NP=100, numpy=True)
     T0_in = 1300.0
     alpha_in = 0.1
@@ -76,6 +80,8 @@ def test_rt_hitemp(diffmode, fig=False):
                                         15000,
                                         unit='AA',
                                         xsmode="premodit")
+    #mdb = api.MdbHitemp('CO', nu_grid, gpu_transfer=False, isotope=1)
+    mdb = mock_mdbHitemp()                                
     opa = OpaPremodit(mdb=mdb,
                       nu_grid=nu_grid,
                       diffmode=diffmode,
@@ -97,18 +103,18 @@ def test_rt_hitemp(diffmode, fig=False):
 
 if __name__ == "__main__":
     import matplotlib.pyplot as plt
-    diffmode = 2
+    diffmode = 0
     nus, F0, Fref = test_rt_exomol(diffmode)
     nus_hitemp, F0_hitemp, Fref_hitemp = test_rt_hitemp(diffmode)
 
     fig = plt.figure()
     ax = fig.add_subplot(311)
-    ax.plot(nus, Fref, label="MODIT (ExoMol)")
+    #ax.plot(nus, Fref, label="MODIT (ExoMol)")
     ax.plot(nus, F0, label="PreMODIT (ExoMol)", ls="dashed")
     plt.legend()
     #plt.yscale("log")
     ax = fig.add_subplot(312)
-    ax.plot(nus_hitemp, Fref_hitemp, label="MODIT (HITEMP)")
+    #ax.plot(nus_hitemp, Fref_hitemp, label="MODIT (HITEMP)")
     ax.plot(nus_hitemp, F0_hitemp, label="PreMODIT (HITEMP)", ls="dashed")
     plt.legend()
     plt.ylabel("cross section (cm2)")

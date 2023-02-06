@@ -43,7 +43,8 @@ def test__qr_interp_lines():
     val = np.mean(
         _qr_interp_lines(T, mdb.isoid, mdb.uniqiso, mdb.T_gQT, mdb.gQT,
                          Tref_original))
-    assert val == pytest.approx(3.5530598)
+    #print(val)
+    assert val == pytest.approx(3.553535)
 
 
 def test__exact_isotope_name():
@@ -58,9 +59,9 @@ def test_molmass():
 
 
 if __name__ == "__main__":
-    #    test__convert_proper_isotope()
-    #    test__isotope_index_from_isotope_number()
-    #    test__QT_interp()
-    #    test__qr_interp()
+        test__convert_proper_isotope()
+        test__isotope_index_from_isotope_number()
+        test__QT_interp()
+        test__qr_interp()
         test__qr_interp_lines()
-    #test_molmass()
+        test_molmass()

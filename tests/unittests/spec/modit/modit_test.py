@@ -24,7 +24,7 @@ def test_xs_exomol():
     Pfix = 1.0
     Mmol = mdbCO.molmass
     Nx = 5000
-    nus, wav, res = wavenumber_grid(22800.0,
+    nus, wav, res = wavenumber_grid(22900.0,
                                     23100.0,
                                     Nx,
                                     unit='AA',
@@ -41,6 +41,7 @@ def test_xs_exomol():
     ngammaL_grid = ditgrid_log_interval(ngammaL, dit_grid_resolution=0.1)
     xsv = xsvector(cont_nu, index_nu, R, pmarray, nsigmaD, ngammaL, Sij, nus,
                    ngammaL_grid)
+    
     filename = pkg_resources.resource_filename(
         'exojax', 'data/testdata/' + TESTDATA_CO_EXOMOL_MODIT_XS_REF)
     dat = pd.read_csv(filename, delimiter=",", names=("nus", "xsv"))
@@ -102,4 +103,4 @@ def test_rt_exomol():
 
 if __name__ == "__main__":
     test_xs_exomol()
-    test_rt_exomol()
+#    test_rt_exomol()

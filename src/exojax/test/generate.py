@@ -4,10 +4,7 @@
 from exojax.spec import api
 from exojax.utils.grids import wavenumber_grid
 import pickle
-import dill
-
 from jax.config import config
-
 config.update("jax_enable_x64", True)
 
 
