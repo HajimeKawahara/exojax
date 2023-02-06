@@ -2,10 +2,13 @@
 """
 import pickle
 import pkg_resources
-from exojax.test.data import TESTDATA_moldb_CO_EXOMOL
 from exojax.test.data import TESTDATA_moldb_CO_HITEMP
 from exojax.test.data import TESTDATA_moldb_CO_HITEMP_SINGLE_ISOTOPE
 from exojax.test.data import TESTDATA_moldb_VALD
+import os
+import shutil
+from exojax.spec import api
+from exojax.utils.grids import wavenumber_grid
 
 
 def mock_mdbExomol():
@@ -13,10 +16,24 @@ def mock_mdbExomol():
     Returns:
         mdbExomol instance  
     """
-    filename = pkg_resources.resource_filename(
-        'exojax', 'data/testdata/' + TESTDATA_moldb_CO_EXOMOL)
-    with open(filename, 'rb') as f:
-        mdb = pickle.load(f)
+    dirname = pkg_resources.resource_filename(
+        'exojax', 'data/testdata/CO')
+    target_dir = os.getcwd()+"/CO"
+    if os.path.exists(target_dir):
+        shutil.rmtree(target_dir)
+    shutil.copytree(dirname,target_dir)
+    path="CO/12C-16O/SAMPLE"
+    Nx = 10000
+    lambda0 = 22920.0
+    lambda1 = 24000.0
+    nus, wav, res = wavenumber_grid(lambda0, lambda1, Nx, unit='AA')    
+    mdb = api.MdbExomol(str(path),
+                              nus,
+                              crit=1e-35,
+                              Ttyp=296.0,
+                              inherit_dataframe=True,
+                              gpu_transfer=True)
+    
     return mdb
 
 
@@ -30,14 +47,19 @@ def mock_mdbHitemp(multi_isotope=False):
         mdbHitemp instance  
     """
     if multi_isotope:
-        filename = TESTDATA_moldb_CO_HITEMP
+        isotope = 0
     else:
-        filename = TESTDATA_moldb_CO_HITEMP_SINGLE_ISOTOPE
+        isotope = 1
 
-    filename = pkg_resources.resource_filename('exojax',
-                                               'data/testdata/' + filename)
-    with open(filename, 'rb') as f:
-        mdb = pickle.load(f)
+    from exojax.test.data import TESTDATA_CO_HITEMP_PARFILE
+    parfile = pkg_resources.resource_filename(
+        'exojax', 'data/testdata/CO/' + TESTDATA_CO_HITEMP_PARFILE)
+    mdb = api.MdbHitemp('CO',
+                            None,
+                            isotope=isotope,
+                            parfile=parfile,
+                            inherit_dataframe=True,
+                            gpu_transfer=True)    
     return mdb
 
 
@@ -51,3 +73,9 @@ def mock_mdbVALD():
     with open(filename, 'rb') as f:
         mdb = pickle.load(f)
     return mdb
+
+
+if __name__ == "__main__":
+    #mdb = mock_mdbExomol()
+    mdb = mock_mdbHitemp()
+    print(mdb.df)

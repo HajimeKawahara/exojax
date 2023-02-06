@@ -3,10 +3,8 @@
 """
 # exomol moldb template used in unit tests
 # exojax.src.test.generate should make this file
-TESTDATA_moldb_CO_EXOMOL = "moldb_co_exomol.pickle"
 TESTDATA_moldb_CO_HITEMP = "moldb_co_hitemp.pickle"
 TESTDATA_moldb_CO_HITEMP_SINGLE_ISOTOPE = "moldb_co_hitemp_single_isotope.pickle"
-TESTDATA_moldb_H2O_EXOMOL = "moldb_h2o_exomol.pickle" #used in plg test
 TESTDATA_moldb_VALD = "moldb_vald.pickle"
 
 # cross section references
@@ -31,3 +29,6 @@ TESTDATA_VALD_MODIT_EMISSION_REF = "modit_rt_test_vald_ref.txt"
 SAMPLE_SPECTRA_CO = "spectrum_co.txt"
 SAMPLE_SPECTRA_CH4 = "spectrum_ch4.txt" #exojax version 1.0
 SAMPLE_SPECTRA_CH4_NEW = "spectrum_ch4_new.txt"
+
+#test data par file
+TESTDATA_CO_HITEMP_PARFILE = "05_HITEMP_SAMPLE.par"

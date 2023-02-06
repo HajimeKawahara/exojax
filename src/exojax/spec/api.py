@@ -325,12 +325,12 @@ class MdbHitemp(HITEMPDatabaseManager):
                  isotope=1,
                  gpu_transfer=False,
                  inherit_dataframe=False,
-                 activation=True
-                 ):
+                 activation=True,
+                 parfile=None):
         """Molecular database for HITRAN/HITEMP form.
 
         Args:
-            path: path for HITEMP par file
+            molecule: molecule
             nurange: wavenumber range list (cm-1) [min,max] or wavenumber grid
             margin: margin for nurange (cm-1)
             crit: line strength lower limit for extraction
@@ -340,6 +340,10 @@ class MdbHitemp(HITEMPDatabaseManager):
             gpu_transfer: tranfer data to jnp.array?
             inherit_dataframe: if True, it makes self.df instance available, which needs more DRAM when pickling.
             activation: if True, the activation of mdb will be done when initialization, if False, the activation won't be done and it makes self.df instance available. 
+<<<<<<< HEAD
+=======
+            parfile: if not none, provide path, then directly load parfile
+>>>>>>> 0ca6550b8cf91a76230b71cf5995c32140a6f17d
         """
 
         self.dbtype = "hitran"
@@ -352,13 +356,19 @@ class MdbHitemp(HITEMPDatabaseManager):
         self.Ttyp = Ttyp
         self.margin = margin
         self.nurange = [np.min(nurange), np.max(nurange)]
+<<<<<<< HEAD
         load_wavenum_min = self.nurange[0] - self.margin
         load_wavenum_max = self.nurange[1] + self.margin
         self.isotope = isotope
         self.set_molmass()
 
+=======
+>>>>>>> 0ca6550b8cf91a76230b71cf5995c32140a6f17d
         self.gpu_transfer = gpu_transfer
         self.activation = activation
+        self.load_wavenum_min, self.load_wavenum_max = self.set_wavenum(nurange)
+        #load_wavenum_min = self.nurange[0] - self.margin
+        #load_wavenum_max = self.nurange[1] + self.margin
         
         super().__init__(
             molecule=self.simple_molecule_name,
@@ -370,6 +380,7 @@ class MdbHitemp(HITEMPDatabaseManager):
             parallel=True,
         )
 
+<<<<<<< HEAD
         # Get list of all expected local files for this database:
         local_files, urlnames = self.get_filenames()
 
@@ -427,12 +438,83 @@ class MdbHitemp(HITEMPDatabaseManager):
             #if self.nurange[1] is not None else [],
             output=output,
         )
+=======
+        self.isotope = _convert_proper_isotope(isotope)
+
+        if parfile is not None:
+            from radis.api.hitranapi import hit2df
+            df = hit2df(parfile, engine="vaex", cache="regen")
+            if isotope is None:
+                pass
+            elif isotope > 0:
+                maskiso = df["iso"] == isotope
+                df = df[maskiso]
+            self.load_wavenum_min = np.min(df["wav"].values)
+            self.load_wavenum_max = np.max(df["wav"].values)
+        else:
+            # Get list of all expected local files for this database:
+            local_files, urlnames = self.get_filenames()
+            # Get missing files
+            download_files = self.get_missing_files(local_files)
+            download_files = self.keep_only_relevant(download_files,
+                                                     self.load_wavenum_min,
+                                                     self.load_wavenum_max)
+
+            # do not re-download files if they exist in another format :
+
+            converted = []
+            for f in download_files:
+                if exists(f.replace(".hdf5", ".h5")):
+                    update_pytables_to_vaex(f.replace(".hdf5", ".h5"))
+                    converted.append(f)
+                download_files = [
+                    f for f in download_files if f not in converted
+                ]
+            # do not re-download remaining files that exist. Let user decide what to do.
+            # (download & re-parsing is a long solution!)
+            download_files = [
+                f for f in download_files
+                if not exists(f.replace(".hdf5", ".h5"))
+            ]
+
+            # Download files
+            if len(download_files) > 0:
+                if urlnames is None:
+                    urlnames = self.fetch_urlnames()
+                filesmap = dict(zip(local_files, urlnames))
+                download_urls = [filesmap[k] for k in download_files]
+                self.download_and_parse(download_urls, download_files)
+
+            clean_cache_files = True
+            if len(download_files) > 0 and clean_cache_files:
+                self.clean_download_files()
+
+            # Load and return
+            files_loaded = self.keep_only_relevant(local_files,
+                                                   load_wavenum_min,
+                                                   load_wavenum_max)
+            columns = None,
+            output = "vaex"
+
+            df = self.load(
+                files_loaded,  # filter other files,
+                columns=columns,
+                within=[("iso",
+                         self.isotope)] if self.isotope is not None else [],
+                # for relevant files, get only the right range :
+                #lower_bound=[("wav", load_wavenum_min)]
+                #if self.nurange[0] is not None else [],
+                #upper_bound=[("wav", load_wavenum_max)]
+                #if self.nurange[1] is not None else [],
+                output=output,
+            )
+>>>>>>> 0ca6550b8cf91a76230b71cf5995c32140a6f17d
 
         self.isoid = df.iso
         self.uniqiso = np.unique(df.iso.values)
         QTref, QTtyp = self.QT_for_select_line(Ttyp)
         self.df_load_mask = self.compute_load_mask(df, QTtyp / QTref)
-            
+
         if self.activation:
             self.activate(df)
         if inherit_dataframe or not self.activation:
@@ -441,13 +523,28 @@ class MdbHitemp(HITEMPDatabaseManager):
 
     def QT_for_select_line(self, Ttyp):
         if self.isotope is None or self.isotope == 0:
-            isotope_for_Qt = 1 # we use isotope=1 for QT
+            isotope_for_Qt = 1  # we use isotope=1 for QT
         else:
             isotope_for_Qt = int(self.isotope)
         Q = PartFuncTIPS(self.molecid, isotope_for_Qt)
         QTref = Q.at(T=Tref_original)
         QTtyp = Q.at(T=Ttyp)
-        return QTref,QTtyp
+        return QTref, QTtyp
+
+    def set_wavenum(self, nurange):
+        if nurange is None:
+            wavenum_min = 0.0
+            wavenum_max = 0.0
+            self.activation = False
+            warnings.warn("nurange=None. Nonactive mode.", UserWarning)
+        else:
+            wavenum_min = np.min(nurange) - self.margin
+            wavenum_max = np.max(nurange) + self.margin
+        if wavenum_min == -np.inf:
+            wavenum_min = None
+        if wavenum_max == np.inf:
+            wavenum_max = None
+        return wavenum_min, wavenum_max
 
     def activate(self, df, mask=None):
         """activation of moldb, 
@@ -484,6 +581,7 @@ class MdbHitemp(HITEMPDatabaseManager):
         if self.gpu_transfer:
             self.generate_jnp_arrays()
 
+<<<<<<< HEAD
 
     def set_molmass(self):
         molmass_isotope, abundance_isotope = molmass_hitran()
@@ -502,6 +600,14 @@ class MdbHitemp(HITEMPDatabaseManager):
         if self.elower_max is not None:
             mask *= (df.elower < self.elower_max)
         return mask
+=======
+    def compute_load_mask(self, df, qrtyp):
+        wav_mask = (df.wav > self.load_wavenum_min) \
+                    * (df.wav < self.load_wavenum_max)
+        intensity_mask = (line_strength_numpy(self.Ttyp, df.int, df.wav, df.El,
+                                              qrtyp) > self.crit)
+        return wav_mask * intensity_mask
+>>>>>>> 0ca6550b8cf91a76230b71cf5995c32140a6f17d
 
     def instances_from_dataframes(self, df_masked):
         """generate instances from (usually masked) data farame
@@ -509,9 +615,8 @@ class MdbHitemp(HITEMPDatabaseManager):
         Args:
             df_load_mask (DataFrame): (masked) data frame
 
-        Raises:
-            ValueError: _description_
         """
+<<<<<<< HEAD
         if isinstance(df_masked, vaex.dataframe.DataFrameLocal):
             self.nu_lines = df_masked.wav.values
             self.line_strength_ref = df_masked.int.values
@@ -538,6 +643,21 @@ class MdbHitemp(HITEMPDatabaseManager):
         warnings.warn(msg, DeprecationWarning)
         return self.line_strength_ref
 
+=======
+        self.nu_lines = df_load_mask.wav.values
+        self.Sij0 = df_load_mask.int.values
+        self.delta_air = df_load_mask.Pshft.values
+        self.A = df_load_mask.A.values
+        self.n_air = df_load_mask.Tdpair.values
+        self.gamma_air = df_load_mask.airbrd.values
+        self.gamma_self = df_load_mask.selbrd.values
+        self.elower = df_load_mask.El.values
+        self.gpp = df_load_mask.gp.values
+        #isotope
+        self.isoid = df_load_mask.iso.values
+        self.uniqiso = np.unique(self.isoid)
+        
+>>>>>>> 0ca6550b8cf91a76230b71cf5995c32140a6f17d
     def generate_jnp_arrays(self):
         """(re)generate jnp.arrays.
         
@@ -749,7 +869,7 @@ class MdbHitran(HITRANDatabaseManager):
         self.uniqiso = np.unique(df.iso.values)
         QTref, QTtyp = self.QT_for_select_line(Ttyp)
         self.df_load_mask = self.compute_load_mask(df, QTtyp / QTref)
-            
+
         if self.activation:
             self.activate(df)
         if inherit_dataframe or not self.activation:
@@ -758,13 +878,13 @@ class MdbHitran(HITRANDatabaseManager):
 
     def QT_for_select_line(self, Ttyp):
         if self.isotope is None or self.isotope == 0:
-            isotope_for_Qt = 1 # we use isotope=1 for QT
+            isotope_for_Qt = 1  # we use isotope=1 for QT
         else:
             isotope_for_Qt = int(self.isotope)
         Q = PartFuncTIPS(self.molecid, isotope_for_Qt)
         QTref = Q.at(T=Tref)
         QTtyp = Q.at(T=Ttyp)
-        return QTref,QTtyp
+        return QTref, QTtyp
 
     def activate(self, df, mask=None):
         """activation of moldb, 
@@ -801,6 +921,7 @@ class MdbHitran(HITRANDatabaseManager):
         if self.gpu_transfer:
             self.generate_jnp_arrays()
 
+<<<<<<< HEAD
 
     def set_molmass(self):
         molmass_isotope, abundance_isotope = molmass_hitran()
@@ -810,6 +931,8 @@ class MdbHitran(HITRANDatabaseManager):
             self.molmass = molmass_isotope[self.simple_molecule_name][
                 self.isotope]
 
+=======
+>>>>>>> 0ca6550b8cf91a76230b71cf5995c32140a6f17d
     def compute_load_mask(self, df, qrtyp):
         #wavelength
         mask = (df.wav > self.nurange[0]-self.margin) \
@@ -839,8 +962,8 @@ class MdbHitran(HITRANDatabaseManager):
             self.gamma_self = df_load_mask.selbrd.values
             self.elower = df_load_mask.El.values
             self.gpp = df_load_mask.gp.values
-            #isotope            
-            self.isoid = df_load_mask.iso.values            
+            #isotope
+            self.isoid = df_load_mask.iso.values
             self.uniqiso = np.unique(self.isoid)
 
         else:
