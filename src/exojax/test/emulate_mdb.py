@@ -16,24 +16,21 @@ def mock_mdbExomol():
     Returns:
         mdbExomol instance  
     """
-    dirname = pkg_resources.resource_filename(
-        'exojax', 'data/testdata/CO')
-    target_dir = os.getcwd()+"/CO"
+    dirname = pkg_resources.resource_filename('exojax', 'data/testdata/CO')
+    target_dir = os.getcwd() + "/CO"
     if os.path.exists(target_dir):
         shutil.rmtree(target_dir)
-    shutil.copytree(dirname,target_dir)
-    path="CO/12C-16O/SAMPLE"
-    Nx = 10000
+    shutil.copytree(dirname, target_dir)
+    path = "CO/12C-16O/SAMPLE"
+    Nx = 20000
     lambda0 = 22920.0
-    lambda1 = 24000.0
-    nus, wav, res = wavenumber_grid(lambda0, lambda1, Nx, unit='AA')    
+    lambda1 = 23100.0
+    nus, wav, res = wavenumber_grid(lambda0, lambda1, Nx, unit='AA')
     mdb = api.MdbExomol(str(path),
-                              nus,
-                              crit=1e-35,
-                              Ttyp=296.0,
-                              inherit_dataframe=True,
-                              gpu_transfer=True)
-    
+                        nus,
+                        inherit_dataframe=True,
+                        gpu_transfer=True)
+
     return mdb
 
 
@@ -55,11 +52,11 @@ def mock_mdbHitemp(multi_isotope=False):
     parfile = pkg_resources.resource_filename(
         'exojax', 'data/testdata/CO/' + TESTDATA_CO_HITEMP_PARFILE)
     mdb = api.MdbHitemp('CO',
-                            None,
-                            isotope=isotope,
-                            parfile=parfile,
-                            inherit_dataframe=True,
-                            gpu_transfer=True)    
+                        None,
+                        isotope=isotope,
+                        parfile=parfile,
+                        inherit_dataframe=True,
+                        gpu_transfer=True)
     return mdb
 
 
