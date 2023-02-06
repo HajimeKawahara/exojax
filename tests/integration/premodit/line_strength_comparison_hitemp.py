@@ -4,6 +4,7 @@
 """
 
 from jax.config import config
+
 config.update("jax_enable_x64", True)
 
 import numpy as np
@@ -11,8 +12,7 @@ import jax.numpy as jnp
 from exojax.utils.grids import wavenumber_grid
 from exojax.spec import api
 from exojax.spec.opacalc import OpaPremodit
-from exojax.spec import initspec, molinfo
-from exojax.spec import molinfo
+from exojax.spec import initspec
 from exojax.spec.premodit import unbiased_lsd_zeroth
 from exojax.spec.premodit import unbiased_lsd_first
 from exojax.spec.premodit import unbiased_lsd_second
@@ -25,29 +25,26 @@ from exojax.spec.set_ditgrid import ditgrid_log_interval
 from exojax.utils.constants import Tref_original
 from exojax.spec.hitran import gamma_hitran
 from exojax.spec.hitran import gamma_natural
-#from exojax.test.emulate_mdb import mock_mdbHitemp
+from exojax.test.emulate_mdb import mock_mdbHitemp
 
-
+diffmode = 0
+Ttest = 1200
+Ptest = 1.0
 Nx = 5000
-nus, wav, reso = wavenumber_grid(22800.0,
-                                 23100.0,
-                                 Nx,
-                                 unit='AA',
-                                 xsmode="modit")
+nus, wav, res = wavenumber_grid(22800.0,
+                                23100.0,
+                                Nx,
+                                unit='AA',
+                                xsmode="modit")
 
 mdb = api.MdbHitemp('CO', nus, gpu_transfer=True, isotope=1)
-diffmode = 0
-
 Ttest = 1200.0
 P = 1.0
-
-#Pre MODIT LSD
 
 opa = OpaPremodit(mdb=mdb,
                   nu_grid=nus,
                   auto_trange=[1000.0, 1500.0],
-                  diffmode=diffmode,
-                  dit_grid_resolution = 0.1)
+                  diffmode=diffmode)
 lbd_coeff, multi_index_uniqgrid, elower_grid, \
         ngamma_ref_grid, n_Texp_grid, R, pmarray = opa.opainfo
 
@@ -110,8 +107,6 @@ xsv_modit = xsvector(cont_nu, index_nu, R, pmarray, nsigmaD, ngammaL, Sij, nus,
 #xsv_modit_sld = xsvector(cont_nu, index_nu, R, pmarray, nsigmaD, ngammaL, Smodit, nus,
 #                     ngammaL_grid)
 
-
-
 from exojax.test.data import TESTDATA_CO_EXOMOL_MODIT_XS_REF
 from exojax.test.data import TESTDATA_CO_HITEMP_MODIT_XS_REF_AIR
 import pkg_resources
@@ -128,14 +123,14 @@ import matplotlib.pyplot as plt
 fig = plt.figure()
 ax = fig.add_subplot(211)
 plt.plot(nus, xs_premodit, label="premodit")
-plt.plot(nus, xsv_modit, label="modit",ls="dotted")
+plt.plot(nus, xsv_modit, label="modit", ls="dotted")
 #plt.plot(nus, xsv_modit_sld, label="modit (LSD)")
-plt.plot(nus, dat["xsv"],ls="dashed", label="comparison")
+#plt.plot(nus, dat["xsv"],ls="dashed", label="comparison")
 plt.yscale("log")
 plt.legend()
 ax = fig.add_subplot(212)
 plt.plot(nus, xs_premodit / xsv_modit - 1.0)
-plt.plot(nus, xs_premodit / dat["xsv"] - 1.0)
+#plt.plot(nus, xs_premodit / dat["xsv"] - 1.0)
 
 ax.set_ylim(-0.03, 0.03)
 ax.axhline(0.01, color="gray", ls="dashed")

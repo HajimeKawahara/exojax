@@ -41,7 +41,7 @@ def test_xsection_premodit_hitemp(diffmode):
     opa = OpaPremodit(mdb=mdb,
                       nu_grid=nu_grid,
                       diffmode=diffmode,
-                      auto_trange=[500.0, 1500.0])
+                      auto_trange=[500.0, 1300.0])
     xsv = opa.xsvector(Ttest,Ptest)
 
     filename = pkg_resources.resource_filename(
@@ -93,7 +93,7 @@ if __name__ == "__main__":
     db = "hitemp"
     #db = "exomol"
 
-    diffmode = 1
+    diffmode = 0
     if db == "exomol":
         nus, xs, dE, Twt, Tref, Tin = test_xsection_premodit_exomol(diffmode)
         filename = pkg_resources.resource_filename(

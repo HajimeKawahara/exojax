@@ -389,8 +389,8 @@ class MdbHitemp(HITEMPDatabaseManager):
             # Get missing files
             download_files = self.get_missing_files(local_files)
             download_files = self.keep_only_relevant(download_files,
-                                                    load_wavenum_min,
-                                                    load_wavenum_max)
+                                                    self.load_wavenum_min,
+                                                    self.load_wavenum_max)
             # do not re-download files if they exist in another format :
 
             converted = []
@@ -422,8 +422,8 @@ class MdbHitemp(HITEMPDatabaseManager):
                 self.clean_download_files()
 
             # Load and return
-            files_loaded = self.keep_only_relevant(local_files, load_wavenum_min,
-                                                load_wavenum_max)
+            files_loaded = self.keep_only_relevant(local_files, self.load_wavenum_min,
+                                                self.load_wavenum_max)
             columns = None,
             output = "vaex"
 
