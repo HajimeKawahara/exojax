@@ -116,17 +116,18 @@ def xsvector_zeroth(T, P, nsigmaD, lbd_coeff, Tref, R, pmarray, nu_grid,
 
 
 @jit
-def xsmatrix(Tarr, Parr, Tref, R, pmarray, lbd, nu_grid, ngamma_ref_grid,
+def xsmatrix_zeroth(Tarr, Parr, Tref, Twt, R, pmarray, lbd_coeff, nu_grid, ngamma_ref_grid,
              n_Texp_grid, multi_index_uniqgrid, elower_grid, Mmol, qtarr):
-    """compute cross section matrix given atmospheric layers, with scan+fft
+    """compute cross section matrix given atmospheric layers, for diffmode=0, with scan+fft
 
     Args:
         Tarr (_type_): temperature layers
         Parr (_type_): pressure layers
         Tref: reference temperature in K
+        Twt: weight temperature in K
         R (float): spectral resolution
         pmarray (_type_): pmarray
-        lbd (_type_): log biased line shape density
+        lbd_coeff (_type_): 
         nu_grid (_type_): wavenumber grid
         ngamma_ref_grid (_type_): normalized half-width grid
         n_Texp_grid (_type_): temperature exponent grid
@@ -140,7 +141,7 @@ def xsmatrix(Tarr, Parr, Tref, R, pmarray, lbd, nu_grid, ngamma_ref_grid,
     """
     nsigmaD = vmap(normalized_doppler_sigma, (0, None, None), 0)(Tarr, Mmol, R)
     Slsd = vmap(unbiased_lsd_zeroth, (None, 0, None, None, None, 0),
-                0)(lbd, Tarr, Tref, nu_grid, elower_grid, qtarr)
+                0)(lbd_coeff[0], Tarr, Tref, nu_grid, elower_grid, qtarr)
     ngamma_grid = vmap(unbiased_ngamma_grid, (0, 0, None, None, None),
                        0)(Tarr, Parr, ngamma_ref_grid, n_Texp_grid,
                           multi_index_uniqgrid)
@@ -148,6 +149,77 @@ def xsmatrix(Tarr, Parr, Tref, R, pmarray, lbd, nu_grid, ngamma_ref_grid,
     xsm = vmap(calc_xsection_from_lsd_scanfft, (0, None, None, 0, None, 0),
                0)(Slsd, R, pmarray, nsigmaD, nu_grid, log_ngammaL_grid)
     return xsm
+
+@jit
+def xsmatrix_first(Tarr, Parr, Tref, Twt, R, pmarray, lbd_coeff, nu_grid, ngamma_ref_grid,
+             n_Texp_grid, multi_index_uniqgrid, elower_grid, Mmol, qtarr):
+    """compute cross section matrix given atmospheric layers, for diffmode=1, with scan+fft
+
+    Args:
+        Tarr (_type_): temperature layers
+        Parr (_type_): pressure layers
+        Tref: reference temperature in K
+        Twt: weight temperature in K
+        R (float): spectral resolution
+        pmarray (_type_): pmarray
+        lbd_coeff (_type_): LBD coefficient
+        nu_grid (_type_): wavenumber grid
+        ngamma_ref_grid (_type_): normalized half-width grid
+        n_Texp_grid (_type_): temperature exponent grid
+        multi_index_uniqgrid (_type_): multi index for uniq broadpar grid
+        elower_grid (_type_): Elower grid
+        Mmol (_type_): molecular mass
+        qtarr (_type_): partition function ratio layers
+
+    Returns:
+        jnp.array : cross section matrix (Nlayer, N_wavenumber)
+    """
+    nsigmaD = vmap(normalized_doppler_sigma, (0, None, None), 0)(Tarr, Mmol, R)
+    Slsd = vmap(unbiased_lsd_first, (None, 0, None, None, None, None, 0),
+                0)(lbd_coeff, Tarr, Tref, Twt, nu_grid, elower_grid, qtarr)
+    ngamma_grid = vmap(unbiased_ngamma_grid, (0, 0, None, None, None),
+                       0)(Tarr, Parr, ngamma_ref_grid, n_Texp_grid,
+                          multi_index_uniqgrid)
+    log_ngammaL_grid = jnp.log(ngamma_grid)
+    xsm = vmap(calc_xsection_from_lsd_scanfft, (0, None, None, 0, None, 0),
+               0)(Slsd, R, pmarray, nsigmaD, nu_grid, log_ngammaL_grid)
+    return xsm
+
+@jit
+def xsmatrix_second(Tarr, Parr, Tref, Twt, R, pmarray, lbd_coeff, nu_grid, ngamma_ref_grid,
+             n_Texp_grid, multi_index_uniqgrid, elower_grid, Mmol, qtarr):
+    """compute cross section matrix given atmospheric layers, for diffmode=1, with scan+fft
+
+    Args:
+        Tarr (_type_): temperature layers
+        Parr (_type_): pressure layers
+        Tref: reference temperature in K
+        Twt: weight temperature in K
+        R (float): spectral resolution
+        pmarray (_type_): pmarray
+        lbd_coeff (_type_): LBD coefficient
+        nu_grid (_type_): wavenumber grid
+        ngamma_ref_grid (_type_): normalized half-width grid
+        n_Texp_grid (_type_): temperature exponent grid
+        multi_index_uniqgrid (_type_): multi index for uniq broadpar grid
+        elower_grid (_type_): Elower grid
+        Mmol (_type_): molecular mass
+        qtarr (_type_): partition function ratio layers
+
+    Returns:
+        jnp.array : cross section matrix (Nlayer, N_wavenumber)
+    """
+    nsigmaD = vmap(normalized_doppler_sigma, (0, None, None), 0)(Tarr, Mmol, R)
+    Slsd = vmap(unbiased_lsd_second, (None, 0, None, None, None, None, 0),
+                0)(lbd_coeff, Tarr, Tref, Twt, nu_grid, elower_grid, qtarr)
+    ngamma_grid = vmap(unbiased_ngamma_grid, (0, 0, None, None, None),
+                       0)(Tarr, Parr, ngamma_ref_grid, n_Texp_grid,
+                          multi_index_uniqgrid)
+    log_ngammaL_grid = jnp.log(ngamma_grid)
+    xsm = vmap(calc_xsection_from_lsd_scanfft, (0, None, None, 0, None, 0),
+               0)(Slsd, R, pmarray, nsigmaD, nu_grid, log_ngammaL_grid)
+    return xsm
+
 
 
 def parallel_merge_grids(grid1, grid2):

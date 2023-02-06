@@ -14,6 +14,9 @@ import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 import jax.numpy as jnp
+
+from exojax.spec.opacalc import OpaPremodit
+
 from exojax.spec import contdb
 from exojax.spec.api import MdbExomol
 from exojax.spec import rtransfer
@@ -67,30 +70,28 @@ mdb = MdbExomol('.database/CH4/12C-1H4/YT10to10/',
 cdbH2H2 = contdb.CdbCIA('.database/H2-H2_2011.cia', nu_grid)
 print('N=', len(mdb.nu_lines))
 
+### PREMODIT
 # Reference pressure for a T-P model
 Pref = 1.0  # bar
 ONEARR = np.ones_like(Parr)
 ONEWAV = jnp.ones_like(nflux)
 
-interval_contrast = 0.1
-dit_grid_resolution = 0.1
 Ttyp = 2000.0
+dit_grid_resolution = 0.2
+diffmode = 1
+opa = OpaPremodit(mdb=mdb,
+                  nu_grid=nu_grid,
+                  diffmode=diffmode,
+                  auto_trange=[400.0, 1500.0],
+                  dit_grid_resolution=dit_grid_resolution)
+lbd_coeff, multi_index_uniqgrid, elower_grid, \
+    ngamma_ref_grid, n_Texp_grid, R, pmarray = opa.opainfo
 
-lbd, multi_index_uniqgrid, elower_grid, ngamma_ref_grid, n_Texp_grid, R, pmarray = initspec.init_premodit(
-    mdb.nu_lines,
-    nu_grid,
-    mdb.elower,
-    mdb.alpha_ref,
-    mdb.n_Texp,
-    mdb.line_strength_ref,
-    Ttyp,
-    interval_contrast=interval_contrast,
-    dit_grid_resolution=dit_grid_resolution,
-    warning=False)
 
 #settings before HMC
 vsini_max = 100.0
 vr_array = velocity_grid(res, vsini_max)
+
 
 def frun(Tarr, MMR_CH4, Mp, Rp, u1, u2, RV, vsini):
     g = 2478.57730044555 * Mp / Rp**2
