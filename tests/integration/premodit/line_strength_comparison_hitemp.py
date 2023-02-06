@@ -107,6 +107,10 @@ cont_nu, index_nu, R, pmarray = init_modit(mdb.nu_lines, nus)
 ngammaL_grid = ditgrid_log_interval(ngammaL, dit_grid_resolution=0.1)
 xsv_modit = xsvector(cont_nu, index_nu, R, pmarray, nsigmaD, ngammaL, Sij, nus,
                      ngammaL_grid)
+#xsv_modit_sld = xsvector(cont_nu, index_nu, R, pmarray, nsigmaD, ngammaL, Smodit, nus,
+#                     ngammaL_grid)
+
+
 
 from exojax.test.data import TESTDATA_CO_EXOMOL_MODIT_XS_REF
 from exojax.test.data import TESTDATA_CO_HITEMP_MODIT_XS_REF_AIR
@@ -123,9 +127,10 @@ import matplotlib.pyplot as plt
 
 fig = plt.figure()
 ax = fig.add_subplot(211)
-plt.plot(nus, xs_premodit)
-plt.plot(nus, xsv_modit)
-plt.plot(nus, dat["xsv"],ls="dashed")
+plt.plot(nus, xs_premodit, label="premodit")
+plt.plot(nus, xsv_modit, label="modit",ls="dotted")
+#plt.plot(nus, xsv_modit_sld, label="modit (LSD)")
+plt.plot(nus, dat["xsv"],ls="dashed", label="comparison")
 plt.yscale("log")
 plt.legend()
 ax = fig.add_subplot(212)

@@ -56,8 +56,8 @@ def gendata_xs_modit_hitemp(airmode=False):
     """
     from jax.config import config
     config.update("jax_enable_x64", True)
+    from exojax.spec import api
 
-    mdbCO = mock_mdbHitemp(multi_isotope=False)
     Tfix = 1200.0
     Pfix = 1.0
     if airmode:
@@ -66,13 +66,21 @@ def gendata_xs_modit_hitemp(airmode=False):
     else:
         Pself = Pfix
         filename = TESTDATA_CO_HITEMP_MODIT_XS_REF
-    Mmol = mdbCO.molmass
     Nx = 5000
     nus, wav, res = wavenumber_grid(22800.0,
                                     23100.0,
                                     Nx,
                                     unit='AA',
                                     xsmode="modit")
+
+
+    #### HERE IS Temporary
+    mdbCO = api.MdbHitemp('CO', nus, gpu_transfer=True, isotope=1)
+    #mdbCO = mock_mdbHitemp(multi_isotope=False)
+
+
+    Mmol = mdbCO.molmass
+    
     cont_nu, index_nu, R, pmarray = init_modit(mdbCO.nu_lines, nus)
     qt = mdbCO.qr_interp(mdbCO.isotope, Tfix)
     gammaL = gamma_hitran(Pfix, Tfix, Pself, mdbCO.n_air, mdbCO.gamma_air,
@@ -81,10 +89,10 @@ def gendata_xs_modit_hitemp(airmode=False):
     ngammaL = gammaL / dv_lines
     nsigmaD = normalized_doppler_sigma(Tfix, Mmol, R)
     Sij = line_strength(Tfix, mdbCO.logsij0, mdbCO.nu_lines, mdbCO.elower, qt)
-
+    cont_nu, index_nu, R, pmarray = init_modit(mdbCO.nu_lines, nus)
     ngammaL_grid = ditgrid_log_interval(ngammaL, dit_grid_resolution=0.1)
-    xsv = xsvector(cont_nu, index_nu, R, pmarray, nsigmaD, ngammaL, Sij, nus,
-                   ngammaL_grid)
+    xsv = xsvector(cont_nu, index_nu, R, pmarray, nsigmaD, ngammaL, Sij,
+                         nus, ngammaL_grid)
 
     np.savetxt(filename, np.array([nus, xsv]).T, delimiter=",")
 
