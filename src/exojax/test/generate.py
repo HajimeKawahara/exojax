@@ -14,10 +14,10 @@ config.update("jax_enable_x64", True)
 def gendata_moldb(database):
     """generate test data for CO exomol
     """
-    
+
     Nx = 20000
-    nus, wav, reso = wavenumber_grid(22800.0,
-                                     24000.0,
+    nus, wav, reso = wavenumber_grid(22900.0,
+                                     23100.0,
                                      Nx,
                                      unit='AA',
                                      xsmode="modit")
@@ -26,8 +26,6 @@ def gendata_moldb(database):
         from exojax.test.data import TESTDATA_moldb_CO_EXOMOL as filename
         mdbCO = api.MdbExomol('.database/CO/12C-16O/Li2015',
                               nus,
-                              crit=1e-35,
-                              Ttyp=1000.0,
                               inherit_dataframe=False,
                               gpu_transfer=True)
     elif database == "hitemp":
@@ -43,7 +41,7 @@ def gendata_moldb(database):
 
     with open(filename, 'wb') as f:
         pickle.dump(mdbCO, f)
-    
+
 
 def gendata_moldb_H2O():
     from exojax.test.data import TESTDATA_moldb_H2O_EXOMOL
@@ -61,7 +59,8 @@ def gendata_moldb_H2O():
                         gpu_transfer=True)
     with open(filename, 'wb') as f:
         pickle.dump(mdb, f)
-    
+
+
 if __name__ == "__main__":
     gendata_moldb("exomol")
     gendata_moldb("hitemp")
