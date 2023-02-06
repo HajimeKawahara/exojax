@@ -70,11 +70,11 @@ class OpaPremodit(OpaCalc):
         if auto_trange is not None:
             self.auto_setting(auto_trange[0], auto_trange[1])
         elif manual_params is not None:
-            self.manual_setting(manual_params[0], manual_params[1], manual_params[2])
+            self.manual_setting(manual_params[0], manual_params[1],
+                                manual_params[2])
         else:
             print("OpaPremodit: init w/o params setting")
             print("Call self.apply_params() to complete the setting.")
-            
 
     def auto_setting(self, Tl, Tu):
         print("OpaPremodit: params automatically set.")
@@ -94,7 +94,7 @@ class OpaPremodit(OpaCalc):
         self.Twt = Twt
         self.Tref = Tref
         self.dE = dE
-        self.Tmax = np.max([Twt,Tref])
+        self.Tmax = np.max([Twt, Tref])
         self.apply_params()
 
     def set_nu_grid(self, x0, x1, unit, resolution=700000, Nx=None):
@@ -108,7 +108,7 @@ class OpaPremodit(OpaCalc):
     def set_gamma_and_n_Texp(self, mdb):
         if mdb.dbtype == "hitran":
             print("gamma_air and n_air are used. gamma_ref = gamma_air/Patm")
-            self.gamma_ref = mdb.gamma_air/Patm
+            self.gamma_ref = mdb.gamma_air / Patm
             self.n_Texp = mdb.n_air
         elif mdb.dbtype == "exomol":
             self.gamma_ref = mdb.alpha_ref
@@ -133,3 +133,49 @@ class OpaPremodit(OpaCalc):
             diffmode=self.diffmode,
             warning=self.warning)
         self.ready = True
+
+    def xsmatrix(self, Tarr, Parr):
+        """cross section matrix
+
+        Args:
+            Tarr (): tempearture array in K 
+            Parr (): pressure array in bar
+
+        Raises:
+            ValueError: _description_
+
+        Returns:
+            jnp array: cross section array
+        """
+        from exojax.spec.premodit import xsmatrix_zeroth
+        from exojax.spec.premodit import xsmatrix_first
+        from exojax.spec.premodit import xsmatrix_second
+        from jax import vmap
+        lbd_coeff, multi_index_uniqgrid, elower_grid, \
+            ngamma_ref_grid, n_Texp_grid, R, pmarray = self.opainfo
+
+        if self.mdb.dbtype == "hitran":
+            qtarr = vmap(self.mdb.qr_interp, (None, 0))(self.mdb.isotope, Tarr)
+        elif self.mdb.dbtype == "exomol":
+            qtarr = vmap(self.mdb.qr_interp)(Tarr)
+            
+        if self.diffmode == 0:
+            return xsmatrix_zeroth(Tarr, Parr, self.Tref, self.Twt, R, pmarray,
+                                   lbd_coeff, self.nu_grid, ngamma_ref_grid,
+                                   n_Texp_grid, multi_index_uniqgrid,
+                                   elower_grid, self.mdb.molmass, qtarr)
+
+        elif self.diffmode == 1:
+            return xsmatrix_first(Tarr, Parr, self.Tref, self.Twt, R, pmarray,
+                                  lbd_coeff, self.nu_grid, ngamma_ref_grid,
+                                  n_Texp_grid, multi_index_uniqgrid,
+                                  elower_grid, self.mdb.molmass, qtarr)
+
+        elif self.diffmode == 2:
+            return xsmatrix_second(Tarr, Parr, self.Tref, self.Twt, R, pmarray,
+                                   lbd_coeff, self.nu_grid, ngamma_ref_grid,
+                                   n_Texp_grid, multi_index_uniqgrid,
+                                   elower_grid, self.mdb.molmass, qtarr)
+
+        else:
+            raise ValueError("diffmode should be 0, 1, 2.")

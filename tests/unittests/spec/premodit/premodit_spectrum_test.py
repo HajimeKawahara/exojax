@@ -22,24 +22,10 @@ from jax.config import config
 
 config.update("jax_enable_x64", True)
 
-def select_xsmatrix(diffmode):
-    from exojax.spec.premodit import xsmatrix_zeroth
-    from exojax.spec.premodit import xsmatrix_first
-    from exojax.spec.premodit import xsmatrix_second
-
-    if diffmode == 0:
-        return xsmatrix_zeroth
-    elif diffmode == 1:
-        return xsmatrix_first
-    elif diffmode == 2:
-        return xsmatrix_second
-    else:
-        raise ValueError("diffmode should be 0, 1, 2.")
 
 @pytest.mark.parametrize("diffmode", [0, 1, 2])
 def test_rt_exomol(diffmode, fig=False):
     dE = 400.0 * (diffmode + 1)
-    xsmatrix = select_xsmatrix(diffmode)
     mdb = mock_mdbExomol()
     Parr, dParr, k = rt.pressure_layer(NP=100, numpy=True)
     T0_in = 1300.0
@@ -57,21 +43,16 @@ def test_rt_exomol(diffmode, fig=False):
                                         xsmode="premodit")
 
     g = 2478.57
+    #set OpaCalc
     opa = OpaPremodit(mdb=mdb,
                       nu_grid=nu_grid,
                       diffmode=diffmode,
                       auto_trange=[400, 1500.0],
                       dit_grid_resolution=0.1)
-    lbd_coeff, multi_index_uniqgrid, elower_grid, \
-    ngamma_ref_grid, n_Texp_grid, R, pmarray = opa.opainfo
+    
     print("dE=", opa.dE, "cm-1")
-    Mmol = mdb.molmass
-    qtarr = vmap(mdb.qr_interp)(Tarr)
-
-    xsm = xsmatrix(Tarr, Parr, opa.Tref, opa.Twt, R, pmarray, lbd_coeff, nu_grid,
-                   ngamma_ref_grid, n_Texp_grid, multi_index_uniqgrid,
-                   elower_grid, Mmol, qtarr)
-    dtau = dtauM(dParr, jnp.abs(xsm), MMR * np.ones_like(Parr), Mmol, g)
+    xsm = opa.xsmatrix(Tarr, Parr)
+    dtau = dtauM(dParr, jnp.abs(xsm), MMR * np.ones_like(Parr), mdb.molmass, g)
     sourcef = piBarr(Tarr, nu_grid)
     F0 = rtrun(dtau, sourcef)
     filename = pkg_resources.resource_filename(
@@ -82,9 +63,8 @@ def test_rt_exomol(diffmode, fig=False):
     assert np.all(residual < 0.01)
     return nu_grid, F0, dat["flux"].values
 
-
+@pytest.mark.parametrize("diffmode", [0, 1, 2])
 def test_rt_hitemp(diffmode, fig=False):
-    xsmatrix = select_xsmatrix(diffmode)
     mdb = mock_mdbHitemp(multi_isotope=False)
     isotope = 1
 
@@ -107,17 +87,9 @@ def test_rt_hitemp(diffmode, fig=False):
                       diffmode=diffmode,
                       auto_trange=[400.0, 1500.0],
                       dit_grid_resolution=dit_grid_resolution)
-    lbd_coeff, multi_index_uniqgrid, elower_grid, \
-        ngamma_ref_grid, n_Texp_grid, R, pmarray = opa.opainfo
-    Mmol = mdb.molmass
     g = 2478.57
-
-    Mmol = molinfo.molmass_isotope("CO")
-    qtarr = vmap(mdb.qr_interp, (None, 0), 0)(isotope, Tarr)
-    xsm = xsmatrix(Tarr, Parr, opa.Tref, opa.Twt, R, pmarray, lbd_coeff, nu_grid,
-                   ngamma_ref_grid, n_Texp_grid, multi_index_uniqgrid,
-                   elower_grid, Mmol, qtarr)
-    dtau = dtauM(dParr, jnp.abs(xsm), MMR * np.ones_like(Parr), Mmol, g)
+    xsm = opa.xsmatrix(Tarr, Parr)
+    dtau = dtauM(dParr, jnp.abs(xsm), MMR * np.ones_like(Parr), mdb.molmass, g)
     sourcef = piBarr(Tarr, nu_grid)
     F0 = rtrun(dtau, sourcef)
 
