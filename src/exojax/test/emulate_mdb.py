@@ -10,14 +10,20 @@ import shutil
 from exojax.spec import api
 from exojax.utils.grids import wavenumber_grid
 
+
 def mock_wavenumber_grid():
     Nx = 20000
     lambda0 = 22920.0
     lambda1 = 23100.0
-    nus, wav, res = wavenumber_grid(lambda0, lambda1, Nx, unit='AA', xsmode="modit")
+    nus, wav, res = wavenumber_grid(lambda0,
+                                    lambda1,
+                                    Nx,
+                                    unit='AA',
+                                    xsmode="modit")
     return nus, wav, res
 
-def mock_mdbExomol():
+
+def mock_mdbExomol(crit=0.):
     """default mock mdb of the ExoMol form for unit test   
     Returns:
         mdbExomol instance  
@@ -31,9 +37,9 @@ def mock_mdbExomol():
     nus, wav, res = mock_wavenumber_grid()
     mdb = api.MdbExomol(str(path),
                         nus,
+                        crit=crit,
                         inherit_dataframe=True,
                         gpu_transfer=True)
-
     return mdb
 
 
