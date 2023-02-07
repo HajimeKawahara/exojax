@@ -29,6 +29,7 @@ def isotope_molmass(exact_molecule_name):
         warnings.warn("No molmass available", UserWarning)
         return None
 
+
 def molmass_isotope(simple_molecule_name, db_HIT=True):
     """provide molecular mass for the major isotope from the simple molecular name.
 
@@ -67,6 +68,8 @@ def molmass_isotope(simple_molecule_name, db_HIT=True):
 
     return molmass
 
+#deprecated
+molmass = molmass_isotope
 
 def mean_molmass_manual(simple_molecule_name):
     """molecular mass for major isotope given manually
