@@ -12,22 +12,20 @@ from exojax.utils.grids import wavenumber_grid
 from exojax.spec.initspec import init_modit
 from exojax.spec.set_ditgrid import ditgrid_log_interval
 from exojax.test.emulate_mdb import mock_mdbExomol
+from exojax.test.emulate_mdb import mock_wavenumber_grid
+
 from jax.config import config
 
 config.update("jax_enable_x64", True)
 
 
 def test_xs_exomol():
-    mdbCO = mock_mdbExomol()
     Tfix = 1200.0
     Pfix = 1.0
+    mdbCO = mock_mdbExomol()
+    nus, wav, res = mock_wavenumber_grid()
     Mmol = mdbCO.molmass
-    Nx = 5000
-    nus, wav, res = wavenumber_grid(22900.0,
-                                    23100.0,
-                                    Nx,
-                                    unit='AA',
-                                    xsmode="modit")
+    
     cont_nu, index_nu, R, pmarray = init_modit(mdbCO.nu_lines, nus)
     qt = mdbCO.qr_interp(Tfix)
     gammaL = gamma_exomol(Pfix, Tfix, mdbCO.n_Texp,
@@ -65,16 +63,11 @@ def test_rt_exomol():
     Tarr = T0_in * (Parr)**alpha_in
     Tarr[Tarr<400.0] = 400.0 #lower limit
     Tarr[Tarr>1500.0] = 1500.0 #upper limit
-    
+    nus, wav, res = mock_wavenumber_grid()
+    mdb = mock_mdbExomol()
     molmass = mdb.molmass
     MMR = 0.1
-    nus, wav, res = wavenumber_grid(22900.0,
-                                    23100.0,
-                                    15000,
-                                    unit='AA',
-                                    xsmode="modit")
-    mdb = mock_mdbExomol()
-    cont_nu, index_nu, R, pmarray, wavmask = init_modit(mdb.nu_lines, nus)
+    cont_nu, index_nu, R, pmarray = init_modit(mdb.nu_lines, nus)
 
     def fT(T0, alpha):
         return T0[:, None] * (Parr[None, :])**alpha[:, None]

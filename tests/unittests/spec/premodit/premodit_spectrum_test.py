@@ -17,6 +17,7 @@ from exojax.spec.opacalc import OpaPremodit
 import pytest
 from jax.config import config
 from exojax.spec import api
+from exojax.test.emulate_mdb import mock_wavenumber_grid
 
 config.update("jax_enable_x64", True)
 
@@ -31,16 +32,12 @@ def test_rt_exomol(diffmode, fig=False):
     Tarr[Tarr > 1500.0] = 1500.0  #upper limit
 
     MMR = 0.1
-    nu_grid, wav, res = wavenumber_grid(22900.0,
-                                        23100.0,
-                                        15000,
-                                        unit='AA',
-                                        xsmode="premodit")
+    nu_grid, wav, res = mock_wavenumber_grid()
+    mdb = mock_mdbExomol()
     #mdb = api.MdbExomol('.database/CO/12C-16O/Li2015',
     #                      nu_grid,
     #                      inherit_dataframe=False,
     #                      gpu_transfer=False)
-    mdb = mock_mdbExomol()
     g = 2478.57
     #set OpaCalc
     opa = OpaPremodit(mdb=mdb,
@@ -75,13 +72,9 @@ def test_rt_hitemp(diffmode, fig=False):
     Tarr[Tarr > 1500.0] = 1500.0  #upper limit
 
     MMR = 0.1
-    nu_grid, wav, res = wavenumber_grid(22900.0,
-                                        23100.0,
-                                        15000,
-                                        unit='AA',
-                                        xsmode="premodit")
+    nu_grid, wav, res = mock_wavenumber_grid()
+    mdb = mock_mdbHitemp()
     #mdb = api.MdbHitemp('CO', nu_grid, gpu_transfer=False, isotope=1)
-    mdb = mock_mdbHitemp()                                
     opa = OpaPremodit(mdb=mdb,
                       nu_grid=nu_grid,
                       diffmode=diffmode,

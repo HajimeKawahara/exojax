@@ -12,21 +12,18 @@ from exojax.spec.exomol import gamma_exomol
 from exojax.utils.grids import wavenumber_grid
 from exojax.spec.initspec import init_modit, init_modit_vald
 from exojax.spec.set_ditgrid import ditgrid_log_interval
-
 from exojax.test.emulate_mdb import mock_mdbExomol, mock_mdbVALD
+from exojax.test.emulate_mdb import mock_wavenumber_grid
 
 
 def test_xs_exomol():
+    nus, wav, res = mock_wavenumber_grid()
     mdbCO = mock_mdbExomol()
     Tfix = 1200.0
     Pfix = 1.0
-    Mmol = molmass_isotope("CO")
-    Nx = 5000
-    nus, wav, res = wavenumber_grid(22800.0,
-                                        23100.0,
-                                        Nx,
-                                        unit='AA',
-                                        xsmode="modit")
+    #Mmol = molmass_isotope("CO")
+    Mmol = mdbCO.molmass
+    
     cont_nu, index_nu, R, pmarray = init_modit(mdbCO.nu_lines, nus)
     qt = mdbCO.qr_interp(Tfix)
     gammaL = gamma_exomol(Pfix, Tfix, mdbCO.n_Texp,
@@ -60,8 +57,8 @@ def test_rt_exomol():
     from exojax.spec.modit import set_ditgrid_matrix_exomol
     from exojax.test.data import TESTDATA_CO_EXOMOL_MODIT_EMISSION_REF
     
+    nus, wav, res = mock_wavenumber_grid()
     mdb = mock_mdbExomol()
-
     Parr, dParr, k = rt.pressure_layer(NP=100, numpy = True)
     T0_in = 1300.0
     alpha_in = 0.1
@@ -71,11 +68,6 @@ def test_rt_exomol():
     
     molmass = mdb.molmass
     MMR = 0.1
-    nus, wav, res = wavenumber_grid(22900.0,
-                                        23100.0,
-                                        15000,
-                                        unit='AA',
-                                        xsmode="modit")
     cont_nu, index_nu, R, pmarray = init_modit(mdb.nu_lines, nus)
 
     def fT(T0, alpha): return T0[:, None]*(Parr[None, :])**alpha[:, None]
@@ -113,7 +105,8 @@ def test_rt_vald():
     from exojax.spec.modit_scanfft import xsmatrix_vald_scanfft
     from exojax.spec.planck import piBarr
     from exojax.test.data import TESTDATA_VALD_MODIT_EMISSION_REF
-
+    mdb = mock_mdbExomol()
+    
     adb = mock_mdbVALD()
     asdb = moldb.AdbSepVald(adb)
 

@@ -41,11 +41,6 @@ def gendata_rt_modit_exomol():
     
     molmass = mdb.molmass
     MMR = 0.1
-    nus, wav, res = wavenumber_grid(22900.0,
-                                    23100.0,
-                                    15000,
-                                    unit='AA',
-                                    xsmode="modit")
     cont_nu, index_nu, R, pmarray = init_modit(mdb.nu_lines, nus)
 
     def fT(T0, alpha):
@@ -100,11 +95,6 @@ def gendata_rt_modit_hitemp():
     
     molmass = mdb.molmass
     MMR = 0.1
-    nus, wav, res = wavenumber_grid(22900.0,
-                                    23100.0,
-                                    15000,
-                                    unit='AA',
-                                    xsmode="modit")
     cont_nu, index_nu, R, pmarray = init_modit(mdb.nu_lines, nus)
 
     def fT(T0, alpha):

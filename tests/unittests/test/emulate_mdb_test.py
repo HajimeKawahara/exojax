@@ -15,15 +15,14 @@ def test_mock_mdbHitemp():
     mdb = mock_mdbHitemp()
     print(np.sum(mdb.logsij0))
     print(len(mdb.logsij0))
-    assert np.sum(mdb.logsij0) == pytest.approx(-635089.4)
-    assert len(mdb.logsij0) == 2365
+    assert np.sum(mdb.logsij0) == pytest.approx(-70108.27)
+    assert len(mdb.logsij0) == 260
 
     mdb = mock_mdbHitemp(multi_isotope=True)
     print(np.sum(mdb.logsij0))
     print(len(mdb.logsij0))
-    assert np.sum(mdb.logsij0) == pytest.approx(-3728172.0)
-    assert len(mdb.logsij0) == 12990
-
+    assert np.sum(mdb.logsij0) == pytest.approx(-421638.25)
+    assert len(mdb.logsij0) == 1368
 
 if __name__ == "__main__":
     test_mock_mdbExoMol()

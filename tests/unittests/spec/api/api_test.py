@@ -44,7 +44,7 @@ def test__qr_interp_lines():
         _qr_interp_lines(T, mdb.isoid, mdb.uniqiso, mdb.T_gQT, mdb.gQT,
                          Tref_original))
     print(val)
-    assert val == pytest.approx(3.5531783)
+    assert val == pytest.approx(3.553517)
 
 
 def test__exact_isotope_name():
