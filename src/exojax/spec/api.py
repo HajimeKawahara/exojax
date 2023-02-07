@@ -68,7 +68,6 @@ class MdbExomol(CapiMdbExomol):
     def __init__(self,
                  path,
                  nurange=[-np.inf, np.inf],
-                 margin=0.0,
                  crit=0.,
                  elower_max=None,
                  Ttyp=1000.,
@@ -84,7 +83,6 @@ class MdbExomol(CapiMdbExomol):
         Args:
             path: path for Exomol data directory/tag. For instance, "/home/CO/12C-16O/Li2015"
             nurange: wavenumber range list (cm-1) [min,max] or wavenumber grid, if None, it starts as the nonactive mode
-            margin: margin for nurange (cm-1)
             crit: line strength lower limit for extraction
             Ttyp: typical temperature to calculate Sij(T) used in crit
             bkgdatm: background atmosphere for broadening. e.g. H2, He,
@@ -120,7 +118,6 @@ class MdbExomol(CapiMdbExomol):
                          name="EXOMOL-{molecule}",
                          nurange=[wavenum_min, wavenum_max],
                          engine="vaex",
-                         margin=margin,
                          crit=crit,
                          bkgdatm=self.bkgdatm,
                          cache=True,
@@ -199,8 +196,8 @@ class MdbExomol(CapiMdbExomol):
     def compute_load_mask(self, df):
 
         #wavelength
-        mask = (df.nu_lines > self.nurange[0]-self.margin) \
-                    * (df.nu_lines < self.nurange[1]+self.margin)
+        mask = (df.nu_lines > self.nurange[0]) \
+                    * (df.nu_lines < self.nurange[1])
         QTtyp = np.array(self.QT_interp(self.Ttyp))
         QTref_original = np.array(self.QT_interp(Tref_original))
         mask *= (line_strength_numpy(self.Ttyp, df.Sij0, df.nu_lines,
@@ -318,7 +315,6 @@ class MdbHitemp(HITEMPDatabaseManager):
     def __init__(self,
                  path,
                  nurange=[-np.inf, np.inf],
-                 margin=0.0,
                  crit=0.,
                  elower_max=None,
                  Ttyp=1000.,
@@ -332,7 +328,6 @@ class MdbHitemp(HITEMPDatabaseManager):
         Args:
             molecule: molecule
             nurange: wavenumber range list (cm-1) [min,max] or wavenumber grid
-            margin: margin for nurange (cm-1)
             crit: line strength lower limit for extraction
             elower_max: maximum lower state energy, Elower (cm-1)
             Ttyp: typical temperature to calculate Sij(T) used in crit
@@ -351,15 +346,12 @@ class MdbHitemp(HITEMPDatabaseManager):
         self.elower_max = elower_max
         self.Tref = Tref_original
         self.Ttyp = Ttyp
-        self.margin = margin
         self.nurange = [np.min(nurange), np.max(nurange)]
         self.isotope = isotope
         self.set_molmass()
         self.gpu_transfer = gpu_transfer
         self.activation = activation
         self.load_wavenum_min, self.load_wavenum_max = self.set_wavenum(nurange)
-        #load_wavenum_min = self.nurange[0] - self.margin
-        #load_wavenum_max = self.nurange[1] + self.margin
         
         super().__init__(
             molecule=self.simple_molecule_name,
@@ -375,14 +367,12 @@ class MdbHitemp(HITEMPDatabaseManager):
             from radis.api.hitranapi import hit2df
             df = hit2df(parfile, engine="vaex", cache="regen")
             if isotope is None:
-                pass
+                mask = None
+            elif isotope == 0:
+                mask = None
             elif isotope > 0:
-                maskiso = df["iso"] == isotope
-                df = df[maskiso]
-            self.load_wavenum_min = np.min(df["wav"].values)
-            self.load_wavenum_max = np.max(df["wav"].values)
+                mask = (df["iso"] == isotope)
         else:
-            
             # Get list of all expected local files for this database:
             local_files, urlnames = self.get_filenames()
 
@@ -433,14 +423,10 @@ class MdbHitemp(HITEMPDatabaseManager):
                 columns=columns,
                 within=[("iso",
                         isotope_dfform)] if isotope_dfform is not None else [],
-                # for relevant files, get only the right range :
-                #lower_bound=[("wav", load_wavenum_min)]
-                #if self.nurange[0] is not None else [],
-                #upper_bound=[("wav", load_wavenum_max)]
-                #if self.nurange[1] is not None else [],
                 output=output,
             )
-        
+            mask=None
+            
         
         self.isoid = df.iso
         self.uniqiso = np.unique(df.iso.values)
@@ -448,7 +434,7 @@ class MdbHitemp(HITEMPDatabaseManager):
         self.df_load_mask = self.compute_load_mask(df, QTtyp / QTref)
 
         if self.activation:
-            self.activate(df)
+            self.activate(df, mask)
         if inherit_dataframe or not self.activation:
             print("DataFrame (self.df) available.")
             self.df = df
@@ -470,8 +456,8 @@ class MdbHitemp(HITEMPDatabaseManager):
             self.activation = False
             warnings.warn("nurange=None. Nonactive mode.", UserWarning)
         else:
-            wavenum_min = np.min(nurange) - self.margin
-            wavenum_max = np.max(nurange) + self.margin
+            wavenum_min = np.min(nurange) 
+            wavenum_max = np.max(nurange) 
         if wavenum_min == -np.inf:
             wavenum_min = None
         if wavenum_max == np.inf:
@@ -686,7 +672,6 @@ class MdbHitran(HITRANDatabaseManager):
     def __init__(self,
                  path,
                  nurange=[-np.inf, np.inf],
-                 margin=0.0,
                  crit=0.,
                  elower_max=None,
                  Ttyp=1000.,
@@ -699,7 +684,6 @@ class MdbHitran(HITRANDatabaseManager):
         Args:
             path: path for HITRAN/HITEMP par file
             nurange: wavenumber range list (cm-1) [min,max] or wavenumber grid
-            margin: margin for nurange (cm-1)
             crit: line strength lower limit for extraction
             elower_max: maximum lower state energy, Elower (cm-1)
             Ttyp: typical temperature to calculate Sij(T) used in crit
@@ -716,13 +700,10 @@ class MdbHitran(HITRANDatabaseManager):
         self.elower_max = elower_max
         self.Tref = Tref_original
         self.Ttyp = Ttyp
-        self.margin = margin
         self.nurange = [np.min(nurange), np.max(nurange)]
         self.isotope = isotope
         self.set_molmass()
 
-        #load_wavenum_min = self.nurange[0] - self.margin
-        #load_wavenum_max = self.nurange[1] + self.margin
         self.activation = activation
         self.gpu_transfer = gpu_transfer
         super().__init__(
@@ -836,8 +817,8 @@ class MdbHitran(HITRANDatabaseManager):
 
     def compute_load_mask(self, df, qrtyp):
         #wavelength
-        mask = (df.wav > self.nurange[0]-self.margin) \
-                    * (df.wav < self.nurange[1]+self.margin)
+        mask = (df.wav > self.nurange[0]) \
+                    * (df.wav < self.nurange[1])
         mask *= (line_strength_numpy(self.Ttyp, df.int, df.wav, df.El, qrtyp) >
                  self.crit)
         if self.elower_max is not None:

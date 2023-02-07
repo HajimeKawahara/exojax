@@ -2,10 +2,9 @@
 
 """
 from exojax.spec import api
-from exojax.utils.grids import wavenumber_grid
+from exojax.test.emulate_mdb import mock_wavenumber_grid
 import pathlib
 import os
-
 from jax.config import config
 
 config.update("jax_enable_x64", True)
@@ -14,15 +13,7 @@ config.update("jax_enable_x64", True)
 def gendata_moldb():
     """generate test data for CO exomol
     """
-
-    Nx = 20000
-    lambda0 = 22920.0
-    lambda1 = 23100.0
-    nus, wav, res = wavenumber_grid(lambda0,
-                                    lambda1,
-                                    Nx,
-                                    unit='AA',
-                                    xsmode="modit")
+    nus, wav, res = mock_wavenumber_grid()
     mdbCO = api.MdbExomol('.database/CO/12C-16O/Li2015',
                           nus,
                           inherit_dataframe=True,
@@ -43,14 +34,7 @@ def gendata_moldb():
 def make_hdf():
     path = "CO/12C-16O/SAMPLE"
     path = pathlib.Path(path).expanduser()
-    Nx = 20000
-    lambda0 = 22920.0
-    lambda1 = 23100.0
-    nus, wav, res = wavenumber_grid(lambda0,
-                                    lambda1,
-                                    Nx,
-                                    unit='AA',
-                                    xsmode="modit")
+    nus, wav, res = mock_wavenumber_grid()
     mdbCO = api.MdbExomol(str(path),
                           nus,
                           inherit_dataframe=True,

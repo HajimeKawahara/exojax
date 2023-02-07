@@ -5,7 +5,6 @@ import numpy as np
 from exojax.spec.modit import xsvector
 from exojax.spec.hitran import line_strength
 from exojax.test.data import TESTDATA_CO_EXOMOL_MODIT_XS_REF
-from exojax.spec.molinfo import molmass_isotope
 from exojax.spec import normalized_doppler_sigma, gamma_natural
 from exojax.spec.hitran import line_strength
 from exojax.spec.exomol import gamma_exomol
@@ -60,7 +59,6 @@ def test_rt_exomol():
     from exojax.spec.modit import set_ditgrid_matrix_exomol
     from exojax.test.data import TESTDATA_CO_EXOMOL_MODIT_EMISSION_REF
 
-    mdb = mock_mdbExomol()
     Parr, dParr, k = rt.pressure_layer(NP=100, numpy=True)
     T0_in = 1300.0
     alpha_in = 0.1
@@ -75,7 +73,8 @@ def test_rt_exomol():
                                     15000,
                                     unit='AA',
                                     xsmode="modit")
-    cont_nu, index_nu, R, pmarray = init_modit(mdb.nu_lines, nus)
+    mdb = mock_mdbExomol()
+    cont_nu, index_nu, R, pmarray, wavmask = init_modit(mdb.nu_lines, nus)
 
     def fT(T0, alpha):
         return T0[:, None] * (Parr[None, :])**alpha[:, None]

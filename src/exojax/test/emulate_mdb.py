@@ -10,6 +10,12 @@ import shutil
 from exojax.spec import api
 from exojax.utils.grids import wavenumber_grid
 
+def mock_wavenumber_grid():
+    Nx = 20000
+    lambda0 = 22920.0
+    lambda1 = 23100.0
+    nus, wav, res = wavenumber_grid(lambda0, lambda1, Nx, unit='AA', xsmode="modit")
+    return nus, wav, res
 
 def mock_mdbExomol():
     """default mock mdb of the ExoMol form for unit test   
@@ -22,10 +28,7 @@ def mock_mdbExomol():
         shutil.rmtree(target_dir)
     shutil.copytree(dirname, target_dir)
     path = "CO/12C-16O/SAMPLE"
-    Nx = 20000
-    lambda0 = 22920.0
-    lambda1 = 23100.0
-    nus, wav, res = wavenumber_grid(lambda0, lambda1, Nx, unit='AA', xsmode="modit")
+    nus, wav, res = mock_wavenumber_grid()
     mdb = api.MdbExomol(str(path),
                         nus,
                         inherit_dataframe=True,
@@ -51,14 +54,7 @@ def mock_mdbHitemp(multi_isotope=False):
     from exojax.test.data import TESTDATA_CO_HITEMP_PARFILE
     parfile = pkg_resources.resource_filename(
         'exojax', 'data/testdata/CO/' + TESTDATA_CO_HITEMP_PARFILE)
-    Nx = 20000
-    lambda0 = 22920.0
-    lambda1 = 23100.0
-    nus, wav, res = wavenumber_grid(lambda0,
-                                    lambda1,
-                                    Nx,
-                                    unit='AA',
-                                    xsmode="modit")
+    nus, wav, res = mock_wavenumber_grid()
     mdb = api.MdbHitemp('CO',
                         nus,
                         isotope=isotope,
@@ -82,5 +78,5 @@ def mock_mdbVALD():
 
 if __name__ == "__main__":
     mdb = mock_mdbExomol()
-    #mdb = mock_mdbHitemp()
+    mdb = mock_mdbHitemp()
     print(mdb.df)

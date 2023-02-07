@@ -41,19 +41,18 @@ def init_dit(nu_lines, nu_grid, warning=False):
         cont (contribution) jnp.array
         index (index) jnp.array
         pmarray: (+1.,-1.) array whose length of len(nu_grid)+1
-        wavmask: mask for wavenumber #Issue 341
+        
     Note:
         cont is the contribution for i=index+1. 1 - cont is the contribution for i=index. For other i, the contribution should be zero.
     """
     warn_dtype64(nu_lines, warning, tag='nu_lines')
     warn_dtype64(nu_grid, warning, tag='nu_grid')
     warn_outside_wavenumber_grid(nu_lines, nu_grid)
-    wavmask = (nu_lines >= nu_grid[0]) * (nu_lines <= nu_grid[-1])
-    cont, index = npgetix(nu_lines[wavmask], nu_grid)
+    cont, index = npgetix(nu_lines, nu_grid)
     pmarray = np.ones(len(nu_grid) + 1)
     pmarray[1::2] = pmarray[1::2] * -1.0
 
-    return jnp.array(cont), jnp.array(index), pmarray, wavmask
+    return jnp.array(cont), jnp.array(index), pmarray
 
 
 def init_modit(nu_lines, nu_grid, warning=False):
@@ -69,7 +68,7 @@ def init_modit(nu_lines, nu_grid, warning=False):
         index: (index for q) jnp.array
         spectral_resolution: spectral resolution (R)
         pmarray: (+1.,-1.) array whose length of len(nu_grid)+1
-        wavmask: mask for wavenumber #Issue 341
+        
     Note:
         cont is the contribution for i=index+1. 1 - cont is the contribution for i=index. For other i, the contribution should be zero. dq is computed using numpy not jnp.numpy. If you use jnp, you might observe a significant residual because of the float32 truncation error.
     """
@@ -78,13 +77,12 @@ def init_modit(nu_lines, nu_grid, warning=False):
     warn_outside_wavenumber_grid(nu_lines, nu_grid)
 
     spectral_resolution = resolution_eslog(nu_grid)
-    wavmask = (nu_lines >= nu_grid[0]) * (nu_lines <= nu_grid[-1])
-    cont, index = npgetix(nu_lines[wavmask], nu_grid)
+    cont, index = npgetix(nu_lines, nu_grid)
     pmarray = np.ones(len(nu_grid) + 1)
     pmarray[1::2] = pmarray[1::2] * -1.0
 
     return jnp.array(cont), jnp.array(index), spectral_resolution, jnp.array(
-        pmarray), wavmask
+        pmarray)
 
 
 
