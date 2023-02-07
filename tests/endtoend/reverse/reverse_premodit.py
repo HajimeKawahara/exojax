@@ -16,7 +16,6 @@ import matplotlib.pyplot as plt
 import jax.numpy as jnp
 
 from exojax.spec.opacalc import OpaPremodit
-
 from exojax.spec import contdb
 from exojax.spec.api import MdbExomol
 from exojax.spec import rtransfer
@@ -29,25 +28,9 @@ from exojax.utils.grids import velocity_grid
 from exojax.spec import molinfo
 from exojax.utils.instfunc import resolution_to_gaussian_std
 import numpy as np
-from exojax.spec import initspec
 import pkg_resources
 from exojax.test.data import SAMPLE_SPECTRA_CH4_NEW
 from exojax.spec.planck import piBarr
-from jax import vmap
-
-def select_xsmatrix(diffmode):
-    from exojax.spec.premodit import xsmatrix_zeroth
-    from exojax.spec.premodit import xsmatrix_first
-    from exojax.spec.premodit import xsmatrix_second
-
-    if diffmode == 0:
-        return xsmatrix_zeroth
-    elif diffmode == 1:
-        return xsmatrix_first
-    elif diffmode == 2:
-        return xsmatrix_second
-    else:
-        raise ValueError("diffmode should be 0, 1, 2.")
 
 
 filename = pkg_resources.resource_filename(
@@ -98,9 +81,6 @@ opa = OpaPremodit(mdb=mdb,
                   diffmode=diffmode,
                   auto_trange=[400.0, 1500.0],
                   dit_grid_resolution=dit_grid_resolution)
-#lbd_coeff, multi_index_uniqgrid, elower_grid, \
-#    ngamma_ref_grid, n_Texp_grid, R, pmarray = opa.opainfo
-#xsmatrix = opa.xsmatrix#()
 
 #settings before HMC
 vsini_max = 100.0
@@ -109,10 +89,7 @@ vr_array = velocity_grid(res, vsini_max)
 
 def frun(Tarr, MMR_CH4, Mp, Rp, u1, u2, RV, vsini):
     g = 2478.57730044555 * Mp / Rp**2
-    #qtarr = vmap(mdb.qr_interp)(Tarr)
-    xsm = opa.xsmatrix(Tarr, Parr)#, opa.Tref, opa.Twt, R, pmarray, lbd_coeff, nu_grid,
-                   #ngamma_ref_grid, n_Texp_grid, multi_index_uniqgrid,
-                   #elower_grid, molmassCH4, qtarr)
+    xsm = opa.xsmatrix(Tarr, Parr)
     dtaumCH4 = dtauM(dParr, jnp.abs(xsm), MMR_CH4 * np.ones_like(Parr),
                      molmassCH4, g)
     # CIA
