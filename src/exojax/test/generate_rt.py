@@ -3,7 +3,9 @@ from exojax.utils.grids import wavenumber_grid
 from exojax.spec.initspec import init_modit
 from exojax.test.emulate_mdb import mock_mdbExomol
 from exojax.test.emulate_mdb import mock_mdbHitemp
-
+from exojax.test.emulate_mdb import mock_wavenumber_grid
+import matplotlib.pyplot as plt
+    
 from jax.config import config
 
 config.update("jax_enable_x64", True)
@@ -24,9 +26,11 @@ def gendata_rt_modit_exomol():
     from exojax.spec.planck import piBarr
     from exojax.spec.modit import set_ditgrid_matrix_exomol
     from exojax.test.data import TESTDATA_CO_EXOMOL_MODIT_EMISSION_REF
-    dit_grid_resolution = 0.2
 
     mdb = mock_mdbExomol()
+    nus, wav, res = mock_wavenumber_grid()
+    dit_grid_resolution = 0.2
+
     Parr, dParr, k = rt.pressure_layer(NP=100, numpy=True)
     T0_in = 1300.0
     alpha_in = 0.1
@@ -62,6 +66,10 @@ def gendata_rt_modit_exomol():
     np.savetxt(TESTDATA_CO_EXOMOL_MODIT_EMISSION_REF,
                np.array([nus, F0]).T,
                delimiter=",")
+    plt.plot(nus,F0)
+    plt.show()
+
+
     return nus, F0
 
 
@@ -81,7 +89,8 @@ def gendata_rt_modit_hitemp():
     from exojax.spec.modit import set_ditgrid_matrix_hitran
     from exojax.test.data import TESTDATA_CO_HITEMP_MODIT_EMISSION_REF
     mdb = mock_mdbHitemp(multi_isotope=False)
-
+    nus, wav, res = mock_wavenumber_grid()
+    
     Parr, dParr, k = rt.pressure_layer(NP=100, numpy=True)
     T0_in = 1300.0
     alpha_in = 0.1
@@ -121,6 +130,10 @@ def gendata_rt_modit_hitemp():
     np.savetxt(TESTDATA_CO_HITEMP_MODIT_EMISSION_REF,
                np.array([nus, F0]).T,
                delimiter=",")
+
+    plt.plot(nus, F0)
+    plt.show()
+
     return nus, F0
 
 

@@ -48,6 +48,8 @@ def init_dit(nu_lines, nu_grid, warning=False):
     warn_dtype64(nu_lines, warning, tag='nu_lines')
     warn_dtype64(nu_grid, warning, tag='nu_grid')
     warn_outside_wavenumber_grid(nu_lines, nu_grid)
+    warn_out_of_nu_grid(nu_lines, nu_grid)
+
     cont, index = npgetix(nu_lines, nu_grid)
     pmarray = np.ones(len(nu_grid) + 1)
     pmarray[1::2] = pmarray[1::2] * -1.0
@@ -75,6 +77,7 @@ def init_modit(nu_lines, nu_grid, warning=False):
     warn_dtype64(nu_lines, warning, tag='nu_lines')
     warn_dtype64(nu_grid, warning, tag='nu_grid')
     warn_outside_wavenumber_grid(nu_lines, nu_grid)
+    warn_out_of_nu_grid(nu_lines, nu_grid)
 
     spectral_resolution = resolution_eslog(nu_grid)
     cont, index = npgetix(nu_lines, nu_grid)
@@ -83,6 +86,25 @@ def init_modit(nu_lines, nu_grid, warning=False):
 
     return jnp.array(cont), jnp.array(index), spectral_resolution, jnp.array(
         pmarray)
+
+def warn_out_of_nu_grid(nu_lines, nu_grid):
+    """warning for out-of-nu grid
+
+    Note:
+        See Issue 341, https://github.com/HajimeKawahara/exojax/issues/341
+        Only for DIT and MODIT. For PreMODIT or newer Opacalc, this issue is automatically fixed. 
+
+    Args:
+        nu_lines (_type_): line center
+        nu_grid (_type_): wavenumber grid
+    """
+    if nu_lines[0] < nu_grid[0] or nu_lines[-1] > nu_grid[-1]:
+        warnings.warn("There are lines whose center is out of nu_grid", UserWarning)
+        print("This may artifact at the edges. See Issue #341.")
+        print("https://github.com/HajimeKawahara/exojax/issues/341")
+        print("line center [cm-1], nu_grid [cm-1]")
+        print("left:",nu_lines[0], nu_grid[0])
+        print("right:",nu_lines[-1],nu_grid[-1])
 
 
 

@@ -137,7 +137,7 @@ def xsmatrix(cnu, indexnu, R, pmarray, nsigmaDl, ngammaLM, SijM, nu_grid,
     return xsm
 
 
-def exomol(mdb, Tarr, Parr, R, molmass, wavmask):
+def exomol(mdb, Tarr, Parr, R, molmass):
     """compute molecular line information required for MODIT using Exomol mdb.
 
     Args:
