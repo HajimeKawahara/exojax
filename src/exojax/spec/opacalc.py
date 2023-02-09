@@ -134,7 +134,7 @@ class OpaPremodit(OpaCalc):
             warning=self.warning)
         self.ready = True
 
-    def xsvector(self,T,P):
+    def xsvector(self, T, P):
         from exojax.spec.premodit import xsvector_zeroth
         from exojax.spec.premodit import xsvector_first
         from exojax.spec.premodit import xsvector_second
@@ -148,23 +148,23 @@ class OpaPremodit(OpaCalc):
             qt = self.mdb.qr_interp(self.mdb.isotope, T)
         elif self.mdb.dbtype == "exomol":
             qt = self.mdb.qr_interp(T)
-    
+
         if self.diffmode == 0:
             return xsvector_zeroth(T, P, nsigmaD, lbd_coeff, self.Tref, R,
-                                pmarray, self.nu_grid, elower_grid,
-                                multi_index_uniqgrid, ngamma_ref_grid,
-                                n_Texp_grid, qt)
+                                   pmarray, self.nu_grid, elower_grid,
+                                   multi_index_uniqgrid, ngamma_ref_grid,
+                                   n_Texp_grid, qt)
         elif self.diffmode == 1:
             return xsvector_first(T, P, nsigmaD, lbd_coeff, self.Tref,
-                                self.Twt, R, pmarray, self.nu_grid, elower_grid,
-                                multi_index_uniqgrid, ngamma_ref_grid,
-                                n_Texp_grid, qt)
+                                  self.Twt, R, pmarray, self.nu_grid,
+                                  elower_grid, multi_index_uniqgrid,
+                                  ngamma_ref_grid, n_Texp_grid, qt)
         elif self.diffmode == 2:
             return xsvector_second(T, P, nsigmaD, lbd_coeff, self.Tref,
-                                self.Twt, R, pmarray, self.nu_grid, elower_grid,
-                                multi_index_uniqgrid, ngamma_ref_grid,
-                                n_Texp_grid, qt)
-        
+                                   self.Twt, R, pmarray, self.nu_grid,
+                                   elower_grid, multi_index_uniqgrid,
+                                   ngamma_ref_grid, n_Texp_grid, qt)
+
     def xsmatrix(self, Tarr, Parr):
         """cross section matrix
 
@@ -210,3 +210,57 @@ class OpaPremodit(OpaCalc):
 
         else:
             raise ValueError("diffmode should be 0, 1, 2.")
+
+
+class OpaModit(OpaCalc):
+    """Opacity Calculator Class for MODIT
+
+    Attributes:
+        opainfo: information set used in MODIT
+
+    """
+    def __init__(self, mdb, nu_grid, dit_grid_resolution=0.2):
+        """initialization of OpaModit
+
+            
+
+        Args:
+            mdb (mdb class): mdbExomol, mdbHitemp, mdbHitran
+            nu_grid (): wavenumber grid (cm-1)
+        """
+        super().__init__()
+
+        #default setting
+        self.opaclass = "modit"
+        self.warning = True
+        self.nu_grid = nu_grid
+        self.wav = nu2wav(self.nu_grid, unit="AA")
+        self.resolution = resolution_eslog(nu_grid)
+        self.mdb = mdb
+        self.dit_grid_resolution = dit_grid_resolution
+
+
+class OpaDirect(OpaCalc):
+    def __init__(self, mdb, nu_grid):
+        """initialization of OpaDirect (LPF)
+
+            
+
+        Args:
+            mdb (mdb class): mdbExomol, mdbHitemp, mdbHitran
+            nu_grid (): wavenumber grid (cm-1)
+        """
+        super().__init__()
+
+        #default setting
+        self.opaclass = "lpf"
+        self.warning = True
+        self.nu_grid = nu_grid
+        self.wav = nu2wav(self.nu_grid, unit="AA")
+        self.mdb = mdb
+
+
+    def apply_params(self):
+        self.dbtype = self.mdb.dbtype
+        self.opainfo = initspec.init_lpf(self.mdb.nu_lines, self.nu_grid)
+        self.ready = True
