@@ -258,7 +258,7 @@ class OpaDirect(OpaCalc):
         self.nu_grid = nu_grid
         self.wav = nu2wav(self.nu_grid, unit="AA")
         self.mdb = mdb
-
+        self.apply_params()
 
     def apply_params(self):
         self.dbtype = self.mdb.dbtype
