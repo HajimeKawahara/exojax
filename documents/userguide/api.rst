@@ -4,7 +4,7 @@ ExoMol, HITEMP, HITRAN
 *November 4th (2022) Hajime Kawahara*
 
 Since version 1.2, the standard molecular database I/O for ExoMol, HITEMP, and HITRAN was shared with the radis team. 
-We moved the I/O for these database to `exojax.spec.api <../exojax/exojax.spec.html#exojax.spec>`_.
+We moved the I/O for these database to `exojax.spec.api <../exojax/exojax.spec.html#module-exojax.spec.api>`_.
 
 
 
@@ -76,13 +76,15 @@ HITEMP
 How to load HITEMP CO database
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Here are examples for loading CO from HITEMP.
+
 .. code:: ipython
 	
 	>>> from exojax.spec.api import MdbHitemp
+	>>> MdbHitemp("CO", nurange=[4200.0, 4300.0])
 	>>> MdbHitemp(".database/CO/", nurange=[4200.0, 4300.0])
 	>>> MdbHitemp(".database/05/", nurange=[4200.0, 4300.0])
-	>>> MdbHitemp(".database/CO/05_HITEMP2019/", nurange=[4200.0, 4300.0])
-
+	
 The style used in ExoJAX 1 is also acceptable (not recommended): 
 
 .. code:: ipython
@@ -189,6 +191,9 @@ See " :doc:`qstates` " for the use of the optional quantum states.
 HITRAN
 ======================
 
+The mdb for HITRAN is currently functioning much almost the same as MdbHITEMP. 
+However, due to the possibility of implementing different functions in the future, separate classes are provided.
+
 How to load HITRAN CO database
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
@@ -206,7 +211,7 @@ The style used in ExoJAX 1 is also acceptable (not recommended):
 	>>> Mdbhitran(".database/CO/05_hit12.par", nurange=[4200.0, 4300.0])
 
 
-Using DataFrames
+DataFrames
 ===========================================
 
 ExoJAX mdb class inherits DataFrame of the common API when calling "inherit_dataframe=True", in "df" instance as. 
@@ -298,4 +303,4 @@ Then, we can use mdb as usual. This is a plot of the activated lines and all of 
 .. image:: qstates/COdv.png
 
 
-
+See also " :doc:`../tutorials/Fortrat` "
