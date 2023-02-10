@@ -1,17 +1,41 @@
-User Guide
-==========
+Molecular Database
+=======================
 
 .. toctree::
    :maxdepth: 1
 
-   userguide/hjerting.rst
+   userguide/mdb.rst
    userguide/api.rst
    userguide/qstates.rst
    userguide/atomll.rst
-   userguide/rtransfer.rst
+
+Opacity Calculation
+=======================
+
+.. toctree::
+   :maxdepth: 1
+
+   userguide/opacalc.rst
+   userguide/hjerting.rst
    userguide/modit.rst
    userguide/benchmark.rst
    userguide/fp.rst
+
+Radiative Transfer
+========================
+
+.. toctree::
+   :maxdepth: 1
+
+   userguide/rtransfer.rst
+
+
+Others
+=======================
+
+.. toctree::
+   :maxdepth: 1
+
    userguide/vterm.rst
    userguide/comp.rst
 
