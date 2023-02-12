@@ -18,6 +18,7 @@ Opacity Calculation
    userguide/opacalc.rst
    userguide/hjerting.rst
    userguide/modit.rst
+   userguide/premodit.rst
    userguide/benchmark.rst
    userguide/fp.rst
 
@@ -52,4 +53,5 @@ For Developers
    developers/experimental.rst   
 
    
-Collaborations using exojax is `welcome <http://secondearths.sakura.ne.jp/en/index.html>`_! Use the issue tracker for starting.
+Collaborations using ExoJAX is `welcome <http://secondearths.sakura.ne.jp/en/index.html>`_! 
+Use `the issue tracker <https://github.com/HajimeKawahara/exojax/issues>`_ for starting.
