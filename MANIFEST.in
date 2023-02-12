@@ -33,9 +33,7 @@ include src/exojax/data/testdata/CO/12C-16O/SAMPLE/12C-16O__SAMPLE.states.hdf5
 include src/exojax/data/testdata/CO/12C-16O/SAMPLE/12C-16O__SAMPLE.trans.bz2
 include src/exojax/data/testdata/CO/12C-16O/SAMPLE/12C-16O__SAMPLE.trans.hdf5
 
-
 include src/exojax/data/premodit/elower_grid_trange.npz
-
 
 graft tests
 graft examples
