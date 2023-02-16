@@ -10,7 +10,7 @@ import pytest
 import pkg_resources
 import pandas as pd
 import numpy as np
-from exojax.spec.opacalc import OpaPremodit
+from exojax.spec.opacalc import OpaModit
 from exojax.test.emulate_mdb import mock_mdbExomol
 from exojax.test.emulate_mdb import mock_mdbHitemp
 from exojax.test.emulate_mdb import mock_wavenumber_grid
@@ -21,7 +21,7 @@ from exojax.test.data import TESTDATA_CO_HITEMP_MODIT_XS_REF_AIR
 
 
 @pytest.mark.parametrize("diffmode", [0, 1, 2])
-def test_xsection_premodit_hitemp(diffmode):
+def test_xsection_modit_hitemp(diffmode):
     from jax.config import config
     config.update("jax_enable_x64", True)
     ### DO NOT CHANGE ###
@@ -32,11 +32,11 @@ def test_xsection_premodit_hitemp(diffmode):
     #temporary
     mdb = mock_mdbHitemp(multi_isotope=False)
 
-    opa = OpaPremodit(mdb=mdb,
-                      nu_grid=nu_grid,
-                      diffmode=diffmode,
-                      auto_trange=[500.0, 1300.0])
-    xsv = opa.xsvector(Ttest,Ptest)
+    opa = OpaModit(
+        mdb=mdb,
+        nu_grid=nu_grid,
+    )
+    xsv = opa.xsvector(Ttest, Ptest)
 
     filename = pkg_resources.resource_filename(
         'exojax', 'data/testdata/' + TESTDATA_CO_HITEMP_MODIT_XS_REF_AIR)
@@ -44,7 +44,7 @@ def test_xsection_premodit_hitemp(diffmode):
     res = np.max(np.abs(1.0 - xsv / dat["xsv"].values))
     print(res)
     #assert res < 0.01
-    return opa.nu_grid, xsv, opa.dE, opa.Twt, opa.Tref, Ttest
+    return opa.nu_grid, xsv
 
 
 @pytest.mark.parametrize("diffmode", [0, 1, 2])
@@ -62,7 +62,7 @@ def test_xsection_premodit_exomol(diffmode):
                       nu_grid=nu_grid,
                       diffmode=diffmode,
                       auto_trange=[500.0, 1500.0])
-    xsv = opa.xsvector(Ttest,Ptest)
+    xsv = opa.xsvector(Ttest, Ptest)
     filename = pkg_resources.resource_filename(
         'exojax', 'data/testdata/' + TESTDATA_CO_EXOMOL_MODIT_XS_REF)
     dat = pd.read_csv(filename, delimiter=",", names=("nus", "xsv"))
@@ -77,8 +77,7 @@ if __name__ == "__main__":
     from exojax.test.data import TESTDATA_CO_EXOMOL_MODIT_XS_REF
     from exojax.test.data import TESTDATA_CO_HITEMP_MODIT_XS_REF_AIR
     import matplotlib.pyplot as plt
-    
-    
+
     db = "hitemp"
     #db = "exomol"
 
