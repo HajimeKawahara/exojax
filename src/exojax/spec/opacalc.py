@@ -219,8 +219,6 @@ class OpaModit(OpaCalc):
         opainfo: information set used in MODIT: cont_nu, index_nu, R, pmarray
 
     """
-
-
     def __init__(self, mdb, nu_grid, dit_grid_resolution=0.2):
         """initialization of OpaModit
 
@@ -242,7 +240,6 @@ class OpaModit(OpaCalc):
         if not self.mdb.gpu_transfer:
             raise ValueError("For MODIT, gpu_transfer should be True in mdb.")
 
-
     def apply_params(self):
         self.dbtype = self.mdb.dbtype
         self.opainfo = initspec.init_modit(self.mdb.nu_lines, self.nu_grid)
@@ -254,7 +251,8 @@ class OpaModit(OpaCalc):
         from exojax.spec.exomol import gamma_exomol
         from exojax.spec.hitran import gamma_hitran
         from exojax.spec.set_ditgrid import ditgrid_log_interval
-        from exojax.spec.modit import xsvector as modit_xsvector
+        #from exojax.spec.modit import xsvector as modit_xsvector
+        from exojax.spec.modit_scanfft import xsvector_scanfft
         from exojax.spec import normalized_doppler_sigma
 
         cont_nu, index_nu, R, pmarray = self.opainfo
@@ -276,9 +274,11 @@ class OpaModit(OpaCalc):
         Sij = line_strength(T, self.mdb.logsij0, self.mdb.nu_lines,
                             self.mdb.elower, qt)
 
-        ngammaL_grid = ditgrid_log_interval(ngammaL, dit_grid_resolution=self.dit_grid_resolution)
-        return modit_xsvector(cont_nu, index_nu, R, pmarray, nsigmaD, ngammaL, Sij,
-                       self.nu_grid, ngammaL_grid)
+        ngammaL_grid = ditgrid_log_interval(
+            ngammaL, dit_grid_resolution=self.dit_grid_resolution)
+        return xsvector_scanfft(cont_nu, index_nu, R, pmarray, nsigmaD,
+                                ngammaL, Sij, self.nu_grid, ngammaL_grid)
+
 
 class OpaDirect(OpaCalc):
     def __init__(self, mdb, nu_grid):
