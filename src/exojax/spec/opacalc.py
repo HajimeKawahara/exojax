@@ -23,7 +23,7 @@ class OpaCalc():
 
     def __init__(self):
         self.opainfo = None
-        self.opaclass = None  # which opacity lass is used
+        self.method = None  # which opacity calc method is used
         self.ready = False  # ready for opacity computation
 
 
@@ -59,7 +59,7 @@ class OpaPremodit(OpaCalc):
         super().__init__()
 
         #default setting
-        self.opaclass = "premodit"
+        self.method = "premodit"
         self.diffmode = diffmode
         self.warning = True
         self.nu_grid = nu_grid
@@ -230,7 +230,7 @@ class OpaModit(OpaCalc):
         super().__init__()
 
         #default setting
-        self.opaclass = "modit"
+        self.method = "modit"
         self.warning = True
         self.nu_grid = nu_grid
         self.wav = nu2wav(self.nu_grid, unit="AA")
@@ -293,7 +293,7 @@ class OpaDirect(OpaCalc):
         super().__init__()
 
         #default setting
-        self.opaclass = "lpf"
+        self.method = "lpf"
         self.warning = True
         self.nu_grid = nu_grid
         self.wav = nu2wav(self.nu_grid, unit="AA")
