@@ -3,6 +3,7 @@ from exojax.test.emulate_mdb import mock_mdbExomol
 from exojax.test.emulate_mdb import mock_wavenumber_grid
 from exojax.test.emulate_mdb import mock_mdbHitemp
 from exojax.spec.opacalc import OpaPremodit
+from exojax.spec.opacalc import OpaModit
 from exojax.spec.opacalc import OpaDirect
 import numpy as np
 
@@ -26,6 +27,13 @@ def _select_db(db):
     else:
         raise ValueError("no exisiting dbname.")
     return mdb
+
+@pytest.mark.parametrize("db", ["exomol", "hitemp"])
+def test_OpaModit(db):
+    mdb = _select_db(db)
+    nu_grid, wav, res = mock_wavenumber_grid()
+    opa = OpaModit(mdb=mdb, nu_grid=nu_grid)
+    assert opa.opaclass == "modit"
 
 
 
@@ -77,8 +85,11 @@ def test_OpaPremodit_auto(db):
     assert opa.dE == pytest.approx(2250.0)
 
 if __name__ == "__main__":
-    db = "exomol"
+    #db = "exomol"
+    db = "hitemp"
+    
+    test_OpaModit(db)
     test_OpaDirect(db)
-    #test_OpaPremodit_manual(db)
-    #test_OpaPremodit_manual_params(db)
-    #test_OpaPremodit_auto(db)
+    test_OpaPremodit_manual(db)
+    test_OpaPremodit_manual_params(db)
+    test_OpaPremodit_auto(db)

@@ -216,13 +216,14 @@ class OpaModit(OpaCalc):
     """Opacity Calculator Class for MODIT
 
     Attributes:
-        opainfo: information set used in MODIT
+        opainfo: information set used in MODIT: cont_nu, index_nu, R, pmarray
 
     """
+
+
     def __init__(self, mdb, nu_grid, dit_grid_resolution=0.2):
         """initialization of OpaModit
 
-            
 
         Args:
             mdb (mdb class): mdbExomol, mdbHitemp, mdbHitran
@@ -238,7 +239,46 @@ class OpaModit(OpaCalc):
         self.resolution = resolution_eslog(nu_grid)
         self.mdb = mdb
         self.dit_grid_resolution = dit_grid_resolution
+        if not self.mdb.gpu_transfer:
+            raise ValueError("For MODIT, gpu_transfer should be True in mdb.")
 
+
+    def apply_params(self):
+        self.dbtype = self.mdb.dbtype
+        self.opainfo = initspec.init_modit(self.mdb.nu_lines, self.nu_grid)
+        self.ready = True
+
+    def xsvector(self, T, P, Pself=0.0):
+        from exojax.spec import normalized_doppler_sigma, gamma_natural
+        from exojax.spec.hitran import line_strength
+        from exojax.spec.exomol import gamma_exomol
+        from exojax.spec.hitran import gamma_hitran
+        from exojax.spec.set_ditgrid import ditgrid_log_interval
+        from exojax.spec.modit import xsvector as modit_xsvector
+        from exojax.spec import normalized_doppler_sigma
+
+        cont_nu, index_nu, R, pmarray = self.opainfo
+
+        if self.mdb.dbtype == "hitran":
+            qt = self.mdb.qr_interp(self.mdb.isotope, T)
+            gammaL = gamma_hitran(
+                P, T, Pself, self.mdb.n_air, self.mdb.gamma_air,
+                self.mdb.gamma_self) + gamma_natural(self.mdb.A)
+        elif self.mdb.dbtype == "exomol":
+            qt = self.mdb.qr_interp(T)
+            gammaL = gamma_exomol(P, T, self.mdb.n_Texp,
+                                  self.mdb.alpha_ref) + gamma_natural(
+                                      self.mdb.A)
+
+        dv_lines = self.mdb.nu_lines / R
+        ngammaL = gammaL / dv_lines
+        nsigmaD = normalized_doppler_sigma(T, self.mdb.molmass, R)
+        Sij = line_strength(T, self.mdb.logsij0, self.mdb.nu_lines,
+                            self.mdb.elower, qt)
+
+        ngammaL_grid = ditgrid_log_interval(ngammaL, dit_grid_resolution=self.dit_grid_resolution)
+        return modit_xsvector(cont_nu, index_nu, R, pmarray, nsigmaD, ngammaL, Sij,
+                       self.nu_grid, ngammaL_grid)
 
 class OpaDirect(OpaCalc):
     def __init__(self, mdb, nu_grid):

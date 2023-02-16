@@ -3,12 +3,10 @@ import pkg_resources
 import pandas as pd
 import numpy as np
 from exojax.spec.modit import xsvector
-from exojax.spec.hitran import line_strength
 from exojax.test.data import TESTDATA_CO_EXOMOL_MODIT_XS_REF
 from exojax.spec import normalized_doppler_sigma, gamma_natural
 from exojax.spec.hitran import line_strength
 from exojax.spec.exomol import gamma_exomol
-from exojax.utils.grids import wavenumber_grid
 from exojax.spec.initspec import init_modit
 from exojax.spec.set_ditgrid import ditgrid_log_interval
 from exojax.test.emulate_mdb import mock_mdbExomol
