@@ -43,7 +43,7 @@ def test_xsection_premodit_hitemp(diffmode):
     dat = pd.read_csv(filename, delimiter=",", names=("nus", "xsv"))
     res = np.max(np.abs(1.0 - xsv / dat["xsv"].values))
     print(res)
-    #assert res < 0.01
+    assert res < 0.01
     return opa.nu_grid, xsv, opa.dE, opa.Twt, opa.Tref, Ttest
 
 

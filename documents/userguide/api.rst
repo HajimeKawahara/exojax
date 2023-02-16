@@ -4,7 +4,9 @@ ExoMol, HITEMP, HITRAN
 *November 4th (2022) Hajime Kawahara*
 
 Since version 1.2, the standard molecular database I/O for ExoMol, HITEMP, and HITRAN was shared with the radis team. 
-We moved the I/O for these database to `exojax.spec.api <../exojax/exojax.spec.html#exojax.spec>`_.
+We moved the I/O for these database to `exojax.spec.api <../exojax/exojax.spec.html#module-exojax.spec.api>`_.
+
+
 
 
 ExoMol
@@ -68,20 +70,21 @@ This table is a short summary of the line information. "on" means gpu_transfer =
 +-----------------------+-------------+----+------+
 
 
-
 HITEMP
 ======================
 
 How to load HITEMP CO database
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Here are examples for loading CO from HITEMP.
+
 .. code:: ipython
 	
 	>>> from exojax.spec.api import MdbHitemp
+	>>> MdbHitemp("CO", nurange=[4200.0, 4300.0])
 	>>> MdbHitemp(".database/CO/", nurange=[4200.0, 4300.0])
 	>>> MdbHitemp(".database/05/", nurange=[4200.0, 4300.0])
-	>>> MdbHitemp(".database/CO/05_HITEMP2019/", nurange=[4200.0, 4300.0])
-
+	
 The style used in ExoJAX 1 is also acceptable (not recommended): 
 
 .. code:: ipython
@@ -153,7 +156,8 @@ To load C12 O16 (isotope = 1), use the isotope option.
 Parition Function (Ratio) for Each Isotope
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-In MdbHitemp, QT_interp and qr_interp has an isotope option. 
+In MdbHitemp, QT_interp and qr_interp have the isotope option. 
+Here is an example of specifying an isotope for the partition function computation.
 
 .. code:: ipython
 	
@@ -162,8 +166,33 @@ In MdbHitemp, QT_interp and qr_interp has an isotope option.
 	>>> QT = mdb.QT_interp(isotope, T) # partition function Q(T) for isotope=1
 	>>> q_ratio = mdb.qr_interp(isotope, T) # partition function ratio Q(T)/Q(Tref)
 
+Direct Load of the HITRAN parameter file (.par)
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+We can directly use the HITRAN parameter file (.par file). 
+The following is an example of reading .par directly:
+
+.. code:: ipython
+	
+	>>> from exojax.spec.api import MdbHitemp
+	>>> from exojax.utils.grids import wavenumber_grid
+	>>> nus, wav, res = wavenumber_grid(22920.0,23100.0,20000,unit="AA",xsmode="modit")
+	xsmode =  modit
+	xsmode assumes ESLOG in wavenumber space: mode=modit
+	>>> mdb = MdbHitemp("CO",nus,parfile="05_HITEMP_SAMPLE.par")
+
+Optional Quantum States
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+As in the case of MdbExomol, we can use vibrational quantum numbers and electronic states for filtering
+See " :doc:`qstates` " for the use of the optional quantum states. 
+
+
 HITRAN
 ======================
+
+The mdb for HITRAN is currently functioning much almost the same as MdbHITEMP. 
+However, due to the possibility of implementing different functions in the future, separate classes are provided.
 
 How to load HITRAN CO database
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -182,7 +211,7 @@ The style used in ExoJAX 1 is also acceptable (not recommended):
 	>>> Mdbhitran(".database/CO/05_hit12.par", nurange=[4200.0, 4300.0])
 
 
-Using DataFrames
+DataFrames
 ===========================================
 
 ExoJAX mdb class inherits DataFrame of the common API when calling "inherit_dataframe=True", in "df" instance as. 
@@ -224,6 +253,54 @@ Notice the above array is not masked. So, the length is different from for insta
 	771
 
 
+Quantum States Filtering (ExoMol/HITEMP) 
+=============================================
+
+The only quantum state needed to calculate the cross section is the rotational quantity index. 
+However, some databases also describe vibrational quantum numbers and electronic states. 
+We can use this information for filtering.
+
+When we would like to filter the lines based on vibration states (v), 
+we can mask the lines using Data Frame. 
+
+To do so, we do not activate mdb when initialization. 
+Also, we need to load the optional quantum states. 
+Here is an example for the initialization. 
+
+.. code:: ipython
+	
+    >>> from exojax.utils.grids import wavenumber_grid
+    >>> from exojax.spec import api
+	
+    >>> nus, wav, res = wavenumber_grid(24000.0, 26000.0, 1000, unit="AA")
+    >>> mdb = api.MdbExomol(""CO/12C-16O/Li2015/"", nus, optional_quantum_states=True, activation=False)
+
+Then, let's check DataFrame. 
+
+.. code:: ipython
+	
+    >>> print(mdb.df)
+
+You find the following fields are available for Li2015:
+
+- i_upper    i_lower    A          nu_lines      gup    jlower    jupper    elower      v_l    v_u    kp_l    kp_u    Sij0
+
+For instance, v_l means the rotational quantum number (nu) for the lower state, v_u the upper state. 
+We would use the lines with the condition delta v = 3. Make the mask using DataFrame.
+
+.. code:: ipython
+	
+    >>> mask = (mdb.df["v_u"] - mdb.df["v_l"] == 3) 
+
+Activate the mdb with the mask we made. The activation includes making the instances (such as mdb.nu_lines ... ), computing broadening parameters etc.  
+
+.. code:: ipython
+	
+    >>> mdb.activate(mdb.df, mask)
+
+Then, we can use mdb as usual. This is a plot of the activated lines and all of the lines in DataFrame.
+    
+.. image:: qstates/COdv.png
 
 
-
+See also " :doc:`../tutorials/Fortrat` "
