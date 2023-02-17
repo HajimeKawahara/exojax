@@ -37,6 +37,10 @@ Patm = 1.01325  # atm (bar)
 c = 299792.458
 Gcr = 115.38055682147402 #cuberoot of Gravitaional constant in the unit of [km/s] normalized by day and Msun
 
+#opacity factor
+#opfac=bar_cgs/(m_u (g)). m_u: atomic mass unit. It can be obtained by fac=1.e3/m_u, where m_u = scipy.constants.m_u.
+opfac = 6.022140858549162e+29
+    
 if __name__ == "__main__":
     #derivation of Gcr
     from astropy.constants import G

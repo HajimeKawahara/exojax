@@ -7,6 +7,7 @@ from exojax.spec.hitrancia import logacia
 from exojax.spec.hminus import log_hminus_continuum
 from exojax.atm.idealgas import number_density
 from exojax.utils.constants import kB, logm_ucgs
+from exojax.utils.constants import opfac
 import warnings
 
 def wavenumber_grid(x0, x1, N, unit='cm-1', xsmode='lpf'):
@@ -116,7 +117,7 @@ def dtauM(dParr, xsm, MR, mass, g):
     """dtau of the molecular cross section.
 
     Note:
-       fac=bar_cgs/(m_u (g)). m_u: atomic mass unit. It can be obtained by fac=1.e3/m_u, where m_u = scipy.constants.m_u.
+       opfac=bar_cgs/(m_u (g)). m_u: atomic mass unit. It can be obtained by fac=1.e3/m_u, where m_u = scipy.constants.m_u.
 
     Args:
        dParr: delta pressure profile (bar) [N_layer]
@@ -129,8 +130,7 @@ def dtauM(dParr, xsm, MR, mass, g):
        optical depth matrix [N_layer, N_nus]
     """
 
-    fac = 6.022140858549162e+29
-    return fac*xsm*dParr[:, None]*MR[:, None]/(mass*g)
+    return opfac*xsm*dParr[:, None]*MR[:, None]/(mass*g)
 
 
 def dtauM_mmwl(dParr, xsm, MR, mass, g):
@@ -138,7 +138,7 @@ def dtauM_mmwl(dParr, xsm, MR, mass, g):
        (for the case where mmw is given for each atmospheric layer)
 
     Note:
-       fac=bar_cgs/(m_u (g)). m_u: atomic mass unit. It can be obtained by fac=1.e3/m_u, where m_u = scipy.constants.m_u.
+       opfac=bar_cgs/(m_u (g)). m_u: atomic mass unit. It can be obtained by fac=1.e3/m_u, where m_u = scipy.constants.m_u.
 
     Args:
        dParr: delta pressure profile (bar) [N_layer]
@@ -151,8 +151,7 @@ def dtauM_mmwl(dParr, xsm, MR, mass, g):
        optical depth matrix [N_layer, N_nus]
     """
 
-    fac = 6.022140858549162e+29
-    return fac*xsm*dParr[:, None]*MR[:, None]/(mass[:, None]*g)
+    return opfac*xsm*dParr[:, None]*MR[:, None]/(mass[:, None]*g)
 
 
 @jit
