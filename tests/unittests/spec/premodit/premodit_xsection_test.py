@@ -19,11 +19,11 @@ from exojax.test.emulate_mdb import mock_wavenumber_grid
 from exojax.test.data import TESTDATA_CO_EXOMOL_MODIT_XS_REF
 from exojax.test.data import TESTDATA_CO_HITEMP_MODIT_XS_REF_AIR
 
-
+from jax.config import config
+config.update("jax_enable_x64", True)
+    
 @pytest.mark.parametrize("diffmode", [0, 1, 2])
 def test_xsection_premodit_hitemp(diffmode):
-    from jax.config import config
-    config.update("jax_enable_x64", True)
     ### DO NOT CHANGE ###
     Ttest = 1200  #fix to compare w/ precomputed xs by MODIT.
     #####################
@@ -49,9 +49,7 @@ def test_xsection_premodit_hitemp(diffmode):
 
 @pytest.mark.parametrize("diffmode", [0, 1, 2])
 def test_xsection_premodit_exomol(diffmode):
-    from jax.config import config
-    config.update("jax_enable_x64", True)
-
+    
     ### DO NOT CHANGE ###
     Ttest = 1200  #fix to compare w/ precomputed xs by MODIT.
     #####################

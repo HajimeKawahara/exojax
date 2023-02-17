@@ -1,45 +1,55 @@
 """ short integration tests for PreMODIT spectrum"""
+import pytest
 import pkg_resources
 import jax.numpy as jnp
+from jax.config import config
 import pandas as pd
 import numpy as np
-from exojax.utils.grids import wavenumber_grid
 from exojax.test.emulate_mdb import mock_mdbExomol
 from exojax.test.emulate_mdb import mock_mdbHitemp
-from exojax.spec import rtransfer as rt
-
-from exojax.spec.rtransfer import dtauM
-from exojax.spec.rtransfer import rtrun
-from exojax.spec.planck import piBarr
 from exojax.test.data import TESTDATA_CO_EXOMOL_MODIT_EMISSION_REF
 from exojax.test.data import TESTDATA_CO_HITEMP_MODIT_EMISSION_REF
 from exojax.spec.opacalc import OpaPremodit
-import pytest
-from jax.config import config
-from exojax.spec import api
 from exojax.test.emulate_mdb import mock_wavenumber_grid
 
-config.update("jax_enable_x64", True)
+#radiative transfer manual
+from exojax.spec import rtransfer as rt
+from exojax.spec.rtransfer import dtauM
+from exojax.spec.rtransfer import rtrun
+from exojax.spec.planck import piBarr
+
+#radiative transfer using art
+from exojax.spec.atmrt import ArtEmisPure
+
 
 
 @pytest.mark.parametrize("diffmode", [0, 1, 2])
 def test_rt_exomol(diffmode, fig=False):
-    Parr, dParr, k = rt.pressure_layer(NP=100, numpy=True)
+    config.update("jax_enable_x64", True)    
+    #set nu_grid
+    nu_grid, wav, res = mock_wavenumber_grid()
+
+    #set art
+    pressure_layer_params = [1.e2, 1.e-8, 100]
+    art = ArtEmisPure(nu_grid, pressure_layer_params)
+
+    #temperature profile
     T0_in = 1300.0
     alpha_in = 0.1
-    Tarr = T0_in * (Parr)**alpha_in
+    Tarr = T0_in * (art.pressure)**alpha_in
     Tarr[Tarr < 400.0] = 400.0  #lower limit
     Tarr[Tarr > 1500.0] = 1500.0  #upper limit
-
+    gravity = 2478.57
     MMR = 0.1
-    nu_grid, wav, res = mock_wavenumber_grid()
+    
+    #set mdb 
     mdb = mock_mdbExomol()
     #mdb = api.MdbExomol('.database/CO/12C-16O/Li2015',
     #                      nu_grid,
     #                      inherit_dataframe=False,
     #                      gpu_transfer=False)
-    g = 2478.57
-    #set OpaCalc
+
+    #set opa
     opa = OpaPremodit(mdb=mdb,
                       nu_grid=nu_grid,
                       diffmode=diffmode,
@@ -47,10 +57,14 @@ def test_rt_exomol(diffmode, fig=False):
                       dit_grid_resolution=0.1)
 
     print("dE=", opa.dE, "cm-1")
-    xsm = opa.xsmatrix(Tarr, Parr)
-    dtau = dtauM(dParr, jnp.abs(xsm), MMR * np.ones_like(Parr), mdb.molmass, g)
-    sourcef = piBarr(Tarr, nu_grid)
-    F0 = rtrun(dtau, sourcef)
+    xsmatrix = opa.xsmatrix(Tarr, art.pressure)
+    mmr_profile = art.constant_mmr_profile(MMR)
+    dtau_molecule = art.dtau_lines(xsmatrix, mmr_profile, opa.mdb.molmass, gravity)
+    print(dtau_molecule)
+    
+    F0 = art.run(dtau_molecule, Tarr)
+    print(F0)
+
     filename = pkg_resources.resource_filename(
         'exojax', 'data/testdata/' + TESTDATA_CO_EXOMOL_MODIT_EMISSION_REF)
     dat = pd.read_csv(filename, delimiter=",", names=("nus", "flux"))
@@ -110,7 +124,7 @@ if __name__ == "__main__":
     #ax.plot(nus_hitemp, Fref_hitemp, label="MODIT (HITEMP)")
     ax.plot(nus_hitemp, F0_hitemp, label="PreMODIT (HITEMP)", ls="dashed")
     plt.legend()
-    plt.ylabel("cross section (cm2)")
+    plt.ylabel("flux (cgs)")
 
     ax = fig.add_subplot(313)
     ax.plot(nus,
