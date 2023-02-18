@@ -29,7 +29,7 @@ def test_rt_exomol(diffmode, fig=False):
     #set nu_grid
     nu_grid, wav, res = mock_wavenumber_grid()
 
-    #set art
+    #set art (atmospheric radiative transfer)
     pressure_layer_params = [1.e2, 1.e-8, 100]
     art = ArtEmisPure(nu_grid, pressure_layer_params)
 
@@ -60,11 +60,9 @@ def test_rt_exomol(diffmode, fig=False):
     xsmatrix = opa.xsmatrix(Tarr, art.pressure)
     mmr_profile = art.constant_mmr_profile(MMR)
     dtau_molecule = art.dtau_lines(xsmatrix, mmr_profile, opa.mdb.molmass, gravity)
-    print(dtau_molecule)
-    
     F0 = art.run(dtau_molecule, Tarr)
-    print(F0)
-
+    
+    
     filename = pkg_resources.resource_filename(
         'exojax', 'data/testdata/' + TESTDATA_CO_EXOMOL_MODIT_EMISSION_REF)
     dat = pd.read_csv(filename, delimiter=",", names=("nus", "flux"))
