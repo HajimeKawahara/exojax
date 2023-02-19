@@ -2,13 +2,32 @@
 """
 import pickle
 import pkg_resources
-from exojax.test.data import TESTDATA_moldb_CO_HITEMP
-from exojax.test.data import TESTDATA_moldb_CO_HITEMP_SINGLE_ISOTOPE
-from exojax.test.data import TESTDATA_moldb_VALD
 import os
 import shutil
 from exojax.spec import api
+from exojax.test.data import TESTDATA_moldb_VALD
 from exojax.utils.grids import wavenumber_grid
+
+
+def mock_mdb(db):
+    """data base selector
+
+    Args:
+        db (_type_): db name = "exomol", "hitemp"
+
+    Raises:
+        ValueError: _description_
+
+    Returns:
+        _type_: mdb object
+    """
+    if db == "exomol":
+        mdb = mock_mdbExomol()
+    elif db == "hitemp":
+        mdb = mock_mdbHitemp()
+    else:
+        raise ValueError("no exisiting dbname.")
+    return mdb
 
 
 def mock_wavenumber_grid():

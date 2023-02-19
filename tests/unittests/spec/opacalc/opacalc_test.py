@@ -1,54 +1,34 @@
 import pytest
-from exojax.test.emulate_mdb import mock_mdbExomol
 from exojax.test.emulate_mdb import mock_wavenumber_grid
-from exojax.test.emulate_mdb import mock_mdbHitemp
+from exojax.test.emulate_mdb import mock_mdb
+
 from exojax.spec.opacalc import OpaPremodit
 from exojax.spec.opacalc import OpaModit
 from exojax.spec.opacalc import OpaDirect
 import numpy as np
 
 
-def _select_db(db):
-    """data base selector
-
-    Args:
-        db (_type_): db name = "exomol", "hitemp"
-
-    Raises:
-        ValueError: _description_
-
-    Returns:
-        _type_: mdb object
-    """
-    if db == "exomol":
-        mdb = mock_mdbExomol()
-    elif db == "hitemp":
-        mdb = mock_mdbHitemp()
-    else:
-        raise ValueError("no exisiting dbname.")
-    return mdb
-
 @pytest.mark.parametrize("db", ["exomol", "hitemp"])
 def test_OpaModit(db):
-    mdb = _select_db(db)
+    mdb = mock_mdb(db)
     nu_grid, wav, res = mock_wavenumber_grid()
     opa = OpaModit(mdb=mdb, nu_grid=nu_grid)
-    assert opa.opaclass == "modit"
-
+    assert opa.method == "modit"
 
 
 @pytest.mark.parametrize("db", ["exomol", "hitemp"])
 def test_OpaDirect(db):
-    mdb = _select_db(db)
+    mdb = mock_mdb(db)
     nu_grid, wav, res = mock_wavenumber_grid()
     opa = OpaDirect(mdb=mdb, nu_grid=nu_grid)
     #check opainfo, should provide nu_matrix
-    nmshape = (len(mdb.nu_lines),len(nu_grid))
+    nmshape = (len(mdb.nu_lines), len(nu_grid))
     assert np.shape(opa.opainfo) == nmshape
+
 
 @pytest.mark.parametrize("db", ["exomol", "hitemp"])
 def test_OpaPremodit_manual(db):
-    mdb = _select_db(db)
+    mdb = mock_mdb(db)
     nu_grid, wav, res = mock_wavenumber_grid()
     opa = OpaPremodit(mdb=mdb, nu_grid=nu_grid)
     Tref = 500.0
@@ -60,9 +40,10 @@ def test_OpaPremodit_manual(db):
     assert opa.Twt == Twt
     assert opa.dE == dE
 
+
 @pytest.mark.parametrize("db", ["exomol", "hitemp"])
 def test_OpaPremodit_manual_params(db):
-    mdb = _select_db(db)
+    mdb = mock_mdb(db)
     nu_grid, wav, res = mock_wavenumber_grid()
     #change Tref
     Tref = 500.0
@@ -73,9 +54,10 @@ def test_OpaPremodit_manual_params(db):
     assert opa.Twt == Twt
     assert opa.dE == dE
 
+
 @pytest.mark.parametrize("db", ["exomol", "hitemp"])
 def test_OpaPremodit_auto(db):
-    mdb = _select_db(db)
+    mdb = mock_mdb(db)
     nu_grid, wav, res = mock_wavenumber_grid()
     Tl = 500.0
     Tu = 1200.0
@@ -84,10 +66,11 @@ def test_OpaPremodit_auto(db):
     assert opa.Twt == pytest.approx(554.1714566743503)
     assert opa.dE == pytest.approx(2250.0)
 
+
 if __name__ == "__main__":
     #db = "exomol"
     db = "hitemp"
-    
+
     test_OpaModit(db)
     test_OpaDirect(db)
     test_OpaPremodit_manual(db)

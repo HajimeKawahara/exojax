@@ -1,5 +1,8 @@
 """opacity calculator class
 
+Notes:
+    Opa does not assume any T-P structure, no fixed T, P, mmr grids.
+
 """
 
 __all__ = ['OpaPremodit']
