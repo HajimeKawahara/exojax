@@ -242,6 +242,7 @@ class OpaModit(OpaCalc):
         self.dit_grid_resolution = dit_grid_resolution
         if not self.mdb.gpu_transfer:
             raise ValueError("For MODIT, gpu_transfer should be True in mdb.")
+        self.apply_params()
 
     def apply_params(self):
         self.dbtype = self.mdb.dbtype

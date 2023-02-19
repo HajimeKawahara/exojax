@@ -11,8 +11,6 @@ import pkg_resources
 import pandas as pd
 import numpy as np
 from exojax.spec.opacalc import OpaPremodit
-from exojax.test.emulate_mdb import mock_mdbExomol
-from exojax.test.emulate_mdb import mock_mdbHitemp
 from exojax.test.emulate_mdb import mock_mdb
 from exojax.test.emulate_mdb import mock_wavenumber_grid
 
