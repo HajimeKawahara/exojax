@@ -84,8 +84,6 @@ if __name__ == "__main__":
             1.0 - F0_hitemp / Fref_hitemp,
             alpha=0.7,
             label="dif = (MO - PreMO)/MO HITEMP")
-
-    #plt.ylabel("dif")
     plt.xlabel("wavenumber cm-1")
     plt.axhline(0.05, color="gray", lw=0.5)
     plt.axhline(-0.05, color="gray", lw=0.5)

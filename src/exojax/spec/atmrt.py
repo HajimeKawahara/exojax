@@ -26,8 +26,6 @@ class ArtCommon():
         self.Tlow = 0.0
         self.Thigh = jnp.inf
 
-        self.fguillot = 0.25
-
         self.nu_grid = nu_grid
         self.pressure_top = pressure_top
         self.pressure_btm = pressure_btm
@@ -36,6 +34,9 @@ class ArtCommon():
         self.log_pressure_btm = np.log10(self.pressure_btm)
         self.log_pressure_top = np.log10(self.pressure_top)
         self.init_pressure_profile()
+
+        self.fguillot = 0.25
+
 
     def check_pressure(self):
         if self.pressure_btm < self.pressure_top:
@@ -152,7 +153,6 @@ class ArtEmisPure(ArtCommon):
         
         """
         super().__init__(nu_grid, pressure_top, pressure_btm, nlayer)
-        #default setting
         self.method = "emission_with_pure_absorption"
 
     def opacity_profile_lines(self, xsmatrix, mmr_profile, molmass, gravity):
@@ -165,7 +165,7 @@ class ArtEmisPure(ArtCommon):
             gravity (_type_): constant gravity
 
         Returns:
-            _type_: _description_
+            dtau: opacity profile, whose element is optical depth in each layer. 
         """
         return dtauM(self.dParr, jnp.abs(xsmatrix), mmr_profile, molmass,
                      gravity)
