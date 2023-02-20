@@ -14,6 +14,7 @@ from exojax.utils.instfunc import nx_from_resolution_eslog
 from exojax.utils.grids import nu2wav
 from exojax.utils.instfunc import resolution_eslog
 from exojax.utils.constants import Patm
+import jax.numpy as jnp
 import numpy as np
 
 
@@ -222,7 +223,7 @@ class OpaModit(OpaCalc):
         opainfo: information set used in MODIT: cont_nu, index_nu, R, pmarray
 
     """
-    def __init__(self, mdb, nu_grid, dit_grid_resolution=0.2):
+    def __init__(self, mdb, nu_grid, Tarr_list, Parr, Pself_ref=None, dit_grid_resolution=0.2):
         """initialization of OpaModit
 
 
@@ -242,6 +243,7 @@ class OpaModit(OpaCalc):
         self.dit_grid_resolution = dit_grid_resolution
         if not self.mdb.gpu_transfer:
             raise ValueError("For MODIT, gpu_transfer should be True in mdb.")
+        self.setdgm(Tarr_list, Parr, Pself_ref=Pself_ref)
         self.apply_params()
 
     def apply_params(self):
@@ -282,6 +284,72 @@ class OpaModit(OpaCalc):
             ngammaL, dit_grid_resolution=self.dit_grid_resolution)
         return xsvector_scanfft(cont_nu, index_nu, R, pmarray, nsigmaD,
                                 ngammaL, Sij, self.nu_grid, ngammaL_grid)
+
+    def setdgm(self, Tarr_list, Parr, Pself_ref=None):
+        """_summary_
+
+        Args:
+            Tarr_list (1d or 2d array): tempearture array to be tested such as [Tarr_1, Tarr_2, ..., Tarr_n]
+            Parr (1d array): pressure array in bar
+            Pself_ref (1d array, optional): self pressure array in bar. Defaults to None. If None Pself = 0.0.
+
+        Returns:
+            _type_: dgm (DIT grid matrix) for gammaL
+        """
+        from exojax.spec.set_ditgrid import minmax_ditgrid_matrix
+        from exojax.spec.set_ditgrid import precompute_modit_ditgrid_matrix
+        from exojax.spec.modit import hitran
+        from exojax.spec.modit import exomol
+
+        cont_nu, index_nu, R, pmarray = self.opainfo
+        if len(np.shape(Tarr_list)) == 1:
+            Tarr_list = np.array([Tarr_list])
+        if Pself_ref is None:
+            Pself_ref is np.zeros_like(Parr)
+
+        set_dgm_minmax = []
+        for Tarr in Tarr_list:
+            if self.mdb.dbtype == "exomol":
+                SijM, ngammaLM, nsigmaDl = exomol(self.mdb, Tarr, Parr, R,
+                                                  self.mdb.molmass)
+            elif self.mdb.dbtype == "hitran":
+                SijM, ngammaLM, nsigmaDl = hitran(self.mdb, Tarr, Parr,
+                                                  Pself_ref, R,
+                                                  self.mdb.molmass)
+            set_dgm_minmax.append(
+                minmax_ditgrid_matrix(ngammaLM, self.dit_grid_resolution))
+        dgm_ngammaL = precompute_modit_ditgrid_matrix(
+            set_dgm_minmax, dit_grid_resolution=self.dit_grid_resolution)
+        self.dgm_ngammaL = jnp.array(dgm_ngammaL)
+
+    def xsmatrix(self, Tarr, Parr):
+        """cross section matrix
+
+        Args:
+            Tarr (): tempearture array in K 
+            Parr (): pressure array in bar
+
+        Raises:
+            ValueError: _description_
+
+        Returns:
+            jnp array: cross section array
+        """
+        from exojax.spec.modit_scanfft import xsmatrix_scanfft
+        from exojax.spec.modit import exomol
+        from jax import vmap
+        cont_nu, index_nu, R, pmarray = self.opainfo
+
+        if self.mdb.dbtype == "hitran":
+            qtarr = vmap(self.mdb.qr_interp, (None, 0))(self.mdb.isotope, Tarr)
+        elif self.mdb.dbtype == "exomol":
+            qtarr = vmap(self.mdb.qr_interp)(Tarr)
+
+        SijM, ngammaLM, nsigmaDl = exomol(self.mdb, Tarr, Parr, R,
+                                          self.mdb.molmass)
+
+        return xsmatrix_scanfft(cont_nu, index_nu, R, pmarray, nsigmaDl,
+                                ngammaLM, SijM, self.nu_grid, self.dgm_ngammaL)
 
 
 class OpaDirect(OpaCalc):
