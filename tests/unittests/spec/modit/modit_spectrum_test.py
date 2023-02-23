@@ -27,7 +27,7 @@ def test_rt(db, fig=False):
                       pressure_top=1.e-8,
                       pressure_btm=1.e2,
                       nlayer=100)
-    #art.change_temperature_range(400.0, 1500.0)
+    art.change_temperature_range(400.0, 1500.0)
     Tarr = art.powerlaw_temperature(1300.0, 0.1)
     mmr_arr = art.constant_mmr_profile(0.1)
     gravity = 2478.57
@@ -40,7 +40,7 @@ def test_rt(db, fig=False):
                    nu_grid=nu_grid,
                    Tarr_list=Tarr,
                    Parr=art.pressure,
-                   dit_grid_resolution=0.1)
+                   dit_grid_resolution=0.2)
     xsmatrix = opa.xsmatrix(Tarr, art.pressure)
     dtau = art.opacity_profile_lines(xsmatrix, mmr_arr, opa.mdb.molmass,
                                      gravity)
@@ -52,7 +52,7 @@ def test_rt(db, fig=False):
     dat = pd.read_csv(filename, delimiter=",", names=("nus", "flux"))
     residual = np.abs(F0 / dat["flux"].values - 1.0)
     print(np.max(residual))
-    #assert np.all(residual < 0.01)
+    assert np.all(residual < 1.e-6)
     return nu_grid, F0, dat["flux"].values
 
 
