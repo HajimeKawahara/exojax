@@ -223,13 +223,25 @@ class OpaModit(OpaCalc):
         opainfo: information set used in MODIT: cont_nu, index_nu, R, pmarray
 
     """
-    def __init__(self, mdb, nu_grid, Tarr_list, Parr, Pself_ref=None, dit_grid_resolution=0.2):
+    def __init__(self,
+                 mdb,
+                 nu_grid,
+                 Tarr_list,
+                 Parr,
+                 Pself_ref=None,
+                 dit_grid_resolution=0.2):
         """initialization of OpaModit
-
 
         Args:
             mdb (mdb class): mdbExomol, mdbHitemp, mdbHitran
             nu_grid (): wavenumber grid (cm-1)
+            Tarr_list (1d or 2d array): tempearture array to be tested such as [Tarr_1, Tarr_2, ..., Tarr_n]
+            Parr (1d array): pressure array in bar
+            Pself_ref (1d array, optional): self pressure array in bar. Defaults to None. If None Pself = 0.0.
+            dit_grid_resolution (float, optional): dit grid resolution. Defaults to 0.2.
+
+        Raises:
+            ValueError: _description_
         """
         super().__init__()
 
@@ -243,8 +255,8 @@ class OpaModit(OpaCalc):
         self.dit_grid_resolution = dit_grid_resolution
         if not self.mdb.gpu_transfer:
             raise ValueError("For MODIT, gpu_transfer should be True in mdb.")
-        self.setdgm(Tarr_list, Parr, Pself_ref=Pself_ref)
         self.apply_params()
+        self.setdgm(Tarr_list, Parr, Pself_ref=Pself_ref)
 
     def apply_params(self):
         self.dbtype = self.mdb.dbtype
@@ -305,7 +317,7 @@ class OpaModit(OpaCalc):
         if len(np.shape(Tarr_list)) == 1:
             Tarr_list = np.array([Tarr_list])
         if Pself_ref is None:
-            Pself_ref is np.zeros_like(Parr)
+            Pself_ref = np.zeros_like(Parr)
 
         set_dgm_minmax = []
         for Tarr in Tarr_list:
@@ -325,6 +337,9 @@ class OpaModit(OpaCalc):
     def xsmatrix(self, Tarr, Parr):
         """cross section matrix
 
+        Notes:
+            Currently Pself is regarded to be zero for HITEMP/HITRAN
+
         Args:
             Tarr (): tempearture array in K 
             Parr (): pressure array in bar
@@ -337,16 +352,17 @@ class OpaModit(OpaCalc):
         """
         from exojax.spec.modit_scanfft import xsmatrix_scanfft
         from exojax.spec.modit import exomol
-        from jax import vmap
+        from exojax.spec.modit import hitran
         cont_nu, index_nu, R, pmarray = self.opainfo
-
+        
         if self.mdb.dbtype == "hitran":
-            qtarr = vmap(self.mdb.qr_interp, (None, 0))(self.mdb.isotope, Tarr)
+            #qtarr = vmap(self.mdb.qr_interp, (None, 0))(self.mdb.isotope, Tarr)
+            SijM, ngammaLM, nsigmaDl = hitran(self.mdb, Tarr, Parr, np.zeros_like(Parr), R,
+                                              self.mdb.molmass)
         elif self.mdb.dbtype == "exomol":
-            qtarr = vmap(self.mdb.qr_interp)(Tarr)
-
-        SijM, ngammaLM, nsigmaDl = exomol(self.mdb, Tarr, Parr, R,
-                                          self.mdb.molmass)
+            #qtarr = vmap(self.mdb.qr_interp)(Tarr)
+            SijM, ngammaLM, nsigmaDl = exomol(self.mdb, Tarr, Parr, R,
+                                              self.mdb.molmass)
 
         return xsmatrix_scanfft(cont_nu, index_nu, R, pmarray, nsigmaDl,
                                 ngammaLM, SijM, self.nu_grid, self.dgm_ngammaL)
