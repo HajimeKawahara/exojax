@@ -16,6 +16,7 @@ from exojax.utils.instfunc import resolution_eslog
 from exojax.utils.constants import Patm
 import jax.numpy as jnp
 import numpy as np
+import warnings
 
 
 class OpaCalc():
@@ -226,17 +227,20 @@ class OpaModit(OpaCalc):
     def __init__(self,
                  mdb,
                  nu_grid,
-                 Tarr_list,
-                 Parr,
+                 Tarr_list=None,
+                 Parr=None,
                  Pself_ref=None,
                  dit_grid_resolution=0.2):
         """initialization of OpaModit
 
+        Note:
+            Tarr_list and Parr are used to compute xsmatrix. No need for xsvector
+
         Args:
             mdb (mdb class): mdbExomol, mdbHitemp, mdbHitran
             nu_grid (): wavenumber grid (cm-1)
-            Tarr_list (1d or 2d array): tempearture array to be tested such as [Tarr_1, Tarr_2, ..., Tarr_n]
-            Parr (1d array): pressure array in bar
+            Tarr_list (1d or 2d array, optional): tempearture array to be tested such as [Tarr_1, Tarr_2, ..., Tarr_n]
+            Parr (1d array, optional): pressure array in bar
             Pself_ref (1d array, optional): self pressure array in bar. Defaults to None. If None Pself = 0.0.
             dit_grid_resolution (float, optional): dit grid resolution. Defaults to 0.2.
 
@@ -256,7 +260,11 @@ class OpaModit(OpaCalc):
         if not self.mdb.gpu_transfer:
             raise ValueError("For MODIT, gpu_transfer should be True in mdb.")
         self.apply_params()
-        self.setdgm(Tarr_list, Parr, Pself_ref=Pself_ref)
+        if Tarr_list is not None and Parr is not None:
+            self.setdgm(Tarr_list, Parr, Pself_ref=Pself_ref)
+        else:
+            warnings.warn("Tarr_list/Parr are needed for xsmatrix.",
+                          UserWarning)
 
     def apply_params(self):
         self.dbtype = self.mdb.dbtype
@@ -354,10 +362,11 @@ class OpaModit(OpaCalc):
         from exojax.spec.modit import exomol
         from exojax.spec.modit import hitran
         cont_nu, index_nu, R, pmarray = self.opainfo
-        
+
         if self.mdb.dbtype == "hitran":
             #qtarr = vmap(self.mdb.qr_interp, (None, 0))(self.mdb.isotope, Tarr)
-            SijM, ngammaLM, nsigmaDl = hitran(self.mdb, Tarr, Parr, np.zeros_like(Parr), R,
+            SijM, ngammaLM, nsigmaDl = hitran(self.mdb, Tarr, Parr,
+                                              np.zeros_like(Parr), R,
                                               self.mdb.molmass)
         elif self.mdb.dbtype == "exomol":
             #qtarr = vmap(self.mdb.qr_interp)(Tarr)
