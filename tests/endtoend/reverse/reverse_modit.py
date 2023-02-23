@@ -19,6 +19,7 @@ from exojax.spec import rtransfer as rt
 from exojax.spec import modit
 from exojax.spec import api, contdb
 from exojax.utils.grids import wavenumber_grid
+from exojax.spec.opacalc import OpaModit
 from exojax.spec.rtransfer import rtrun, dtauM, dtauCIA, wavenumber_grid
 from exojax.spec import planck
 from exojax.spec import molinfo

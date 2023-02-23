@@ -1,6 +1,5 @@
 """ Reverse modeling of Methane emission spectrum using MODIT
 """
-
 #!/usr/bin/env python
 # coding: utf-8
 import arviz
@@ -9,29 +8,30 @@ from numpyro.infer import Predictive
 from numpyro.infer import MCMC, NUTS
 import numpyro
 import numpyro.distributions as dist
+
 from jax import random
-import pandas as pd
-import numpy as np
-import matplotlib.pyplot as plt
 import jax.numpy as jnp
 
-from exojax.spec.opacalc import OpaPremodit
-from exojax.spec import contdb
-from exojax.spec.api import MdbExomol
-from exojax.spec import rtransfer
+import pandas as pd
+import pkg_resources
+
+import numpy as np
+import matplotlib.pyplot as plt
 from exojax.utils.grids import wavenumber_grid
-from exojax.spec.rtransfer import rtrun, dtauM, dtauCIA, wavenumber_grid
+from exojax.spec.opacalc import OpaPremodit
+from exojax.spec.api import MdbExomol
+from exojax.spec.atmrt import ArtEmisPure
+
+from exojax.spec import contdb
+from exojax.spec.rtransfer import dtauCIA
+
 from exojax.spec.response import ipgauss_sampling
 from exojax.spec.spin_rotation import convolve_rigid_rotation
 from exojax.utils.grids import velocity_grid
 
 from exojax.spec import molinfo
 from exojax.utils.instfunc import resolution_to_gaussian_std
-import numpy as np
-import pkg_resources
 from exojax.test.data import SAMPLE_SPECTRA_CH4_NEW
-from exojax.spec.planck import piBarr
-
 
 filename = pkg_resources.resource_filename(
     'exojax', 'data/testdata/' + SAMPLE_SPECTRA_CH4_NEW)
@@ -43,87 +43,58 @@ sigmain = 0.05
 norm = 20000
 nflux = flux / norm + np.random.normal(0, sigmain, len(wavd))
 
-NP = 100
-Parr, dParr, k = rtransfer.pressure_layer(NP=NP)
 Nx = 7500
 nu_grid, wav, res = wavenumber_grid(np.min(wavd) - 10.0,
                                     np.max(wavd) + 10.0,
                                     Nx,
                                     unit='AA',
                                     xsmode='premodit')
+
+Tlow = 400.0
+Thigh = 1500.0
+art = ArtEmisPure(nu_grid, pressure_top=1.e-8, pressure_btm=1.e2, nlayer=100)
+art.change_temperature_range(Tlow, Thigh)
+Mp = 33.2
+
 Rinst = 100000.
 beta_inst = resolution_to_gaussian_std(Rinst)
 
-molmassCH4 = molinfo.molmass_isotope('CH4')
 mmw = 2.33  # mean molecular weight
 mmrH2 = 0.74
 molmassH2 = molinfo.molmass_isotope('H2')
 vmrH2 = (mmrH2 * mmw / molmassH2)  # VMR
 
-Mp = 33.2
 mdb = MdbExomol('.database/CH4/12C-1H4/YT10to10/',
                 nurange=nu_grid,
                 gpu_transfer=False)
 cdbH2H2 = contdb.CdbCIA('.database/H2-H2_2011.cia', nu_grid)
 print('N=', len(mdb.nu_lines))
 
-### PREMODIT
-# Reference pressure for a T-P model
-Pref = 1.0  # bar
-ONEARR = np.ones_like(Parr)
-ONEWAV = jnp.ones_like(nflux)
-
-Ttyp = 2000.0
-dit_grid_resolution = 0.2
+### opa setting (PREMODIT)
 diffmode = 1
 opa = OpaPremodit(mdb=mdb,
                   nu_grid=nu_grid,
                   diffmode=diffmode,
-                  auto_trange=[400.0, 1500.0],
-                  dit_grid_resolution=dit_grid_resolution)
+                  auto_trange=[Tlow, Thigh],
+                  dit_grid_resolution=0.2)
 
 #settings before HMC
 vsini_max = 100.0
 vr_array = velocity_grid(res, vsini_max)
 
-
 def frun(Tarr, MMR_CH4, Mp, Rp, u1, u2, RV, vsini):
     g = 2478.57730044555 * Mp / Rp**2
-    xsm = opa.xsmatrix(Tarr, Parr)
-    dtaumCH4 = dtauM(dParr, jnp.abs(xsm), MMR_CH4 * np.ones_like(Parr),
-                     molmassCH4, g)
-    # CIA
-    dtaucH2H2 = dtauCIA(nu_grid, Tarr, Parr, dParr, vmrH2, vmrH2, mmw, g,
+    xsmatrix = opa.xsmatrix(Tarr, art.pressure)
+    mmr_arr = art.constant_mmr_profile(MMR_CH4)
+    dtaumCH4 = art.opacity_profile_lines(xsmatrix, mmr_arr, opa.mdb.molmass, g)
+    dtaucH2H2 = dtauCIA(nu_grid, Tarr, art.pressure, art.dParr, vmrH2, vmrH2, mmw, g,
                         cdbH2H2.nucia, cdbH2H2.tcia, cdbH2H2.logac)
     dtau = dtaumCH4 + dtaucH2H2
-    sourcef = piBarr(Tarr, nu_grid)
-
-    F0 = rtrun(dtau, sourcef) / norm
+    F0 = art.run(dtau, Tarr) / norm
+    
     Frot = convolve_rigid_rotation(F0, vr_array, vsini, u1, u2)
     mu = ipgauss_sampling(nusd, nu_grid, Frot, beta_inst, RV)
     return mu
-
-
-#test
-if False:
-    Tarr = 1295.0 * (Parr / Pref)**0.1
-    mu = frun(Tarr,
-              MMR_CH4=0.0059,
-              Mp=33.2,
-              Rp=0.88,
-              u1=0.0,
-              u2=0.0,
-              RV=10.0,
-              vsini=20.0)
-    plt.plot(wavd, mu)
-    plt.plot(wavd, flux / norm)
-    plt.show()
-    np.savetxt("spectrum_ch4_new.txt",
-               np.array([wavd, mu * norm]).T,
-               delimiter=",")
-
-Mp = 33.2
-
 
 def model_c(nu1, y1):
     Rp = numpyro.sample('Rp', dist.Uniform(0.4, 1.2))
@@ -134,9 +105,7 @@ def model_c(nu1, y1):
     vsini = numpyro.sample('vsini', dist.Uniform(15.0, 25.0))
     u1 = 0.0
     u2 = 0.0
-    # T-P model//
-    Tarr = T0 * (Parr / Pref)**alpha
-    # line computation CH4
+    Tarr = art.powerlaw_temperature(T0, alpha)
     mu = frun(Tarr, MMR_CH4, Mp, Rp, u1, u2, RV, vsini)
     numpyro.sample('y1', dist.Normal(mu, sigmain), obs=y1)
 
@@ -172,10 +141,13 @@ ax.fill_between(wavd[::-1],
 plt.xlabel('wavelength ($\AA$)', fontsize=16)
 plt.legend(fontsize=16)
 plt.tick_params(labelsize=16)
+plt.savefig("pred_diffmode"+str(diffmode)+".png")
+plt.close()
 
 pararr = ['Rp', 'T0', 'alpha', 'MMR_CH4', 'vsini', 'RV']
 arviz.plot_pair(arviz.from_numpyro(mcmc),
                 kind='kde',
                 divergences=False,
                 marginals=True)
-plt.show()
+plt.savefig("corner_diffmode"+str(diffmode)+".png")
+#plt.show()
