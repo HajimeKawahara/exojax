@@ -2,6 +2,8 @@
 """
 #!/usr/bin/env python
 # coding: utf-8
+import numpy as np
+import matplotlib.pyplot as plt
 import arviz
 from numpyro.diagnostics import hpdi
 from numpyro.infer import Predictive
@@ -15,17 +17,15 @@ import jax.numpy as jnp
 import pandas as pd
 import pkg_resources
 
-import numpy as np
-import matplotlib.pyplot as plt
 from exojax.utils.grids import wavenumber_grid
+
+from exojax.spec.atmrt import ArtEmisPure
+from exojax.spec.api import MdbExomol
 from exojax.spec.opacalc import OpaPremodit
+from exojax.spec.contdb import CdbCIA
 from exojax.spec.opacont import OpaCIA
 
-from exojax.spec.api import MdbExomol
-from exojax.spec.atmrt import ArtEmisPure
-
-from exojax.spec import contdb
-from exojax.spec.rtransfer import dtauCIA
+#from exojax.spec.rtransfer import dtauCIA
 
 from exojax.spec.response import ipgauss_sampling
 from exojax.spec.spin_rotation import convolve_rigid_rotation
@@ -61,28 +61,30 @@ Mp = 33.2
 Rinst = 100000.
 beta_inst = resolution_to_gaussian_std(Rinst)
 
-mmw = 2.33  # mean molecular weight
-mmrH2 = 0.74
-molmassH2 = molinfo.molmass_isotope('H2')
-vmrH2 = (mmrH2 * mmw / molmassH2)  # VMR
-
+### CH4 setting (PREMODIT)
 mdb = MdbExomol('.database/CH4/12C-1H4/YT10to10/',
                 nurange=nu_grid,
                 gpu_transfer=False)
-cdbH2H2 = contdb.CdbCIA('.database/H2-H2_2011.cia', nu_grid)
 print('N=', len(mdb.nu_lines))
-
-### opa setting (PREMODIT)
 diffmode = 1
 opa = OpaPremodit(mdb=mdb,
                   nu_grid=nu_grid,
                   diffmode=diffmode,
                   auto_trange=[Tlow, Thigh],
                   dit_grid_resolution=0.2)
-cia = OpaCIA(cdb=cdbH2H2, nu_grid=nu_grid)
+
+## CIA setting
+cdbH2H2 = CdbCIA('.database/H2-H2_2011.cia', nu_grid)
+opacia = OpaCIA(cdb=cdbH2H2, nu_grid=nu_grid)
+mmw = 2.33  # mean molecular weight
+mmrH2 = 0.74
+molmassH2 = molinfo.molmass_isotope('H2')
+vmrH2 = (mmrH2 * mmw / molmassH2)  # VMR
+
 #settings before HMC
 vsini_max = 100.0
 vr_array = velocity_grid(res, vsini_max)
+
 
 def frun(Tarr, MMR_CH4, Mp, Rp, u1, u2, RV, vsini):
     g = 2478.57730044555 * Mp / Rp**2
@@ -93,14 +95,19 @@ def frun(Tarr, MMR_CH4, Mp, Rp, u1, u2, RV, vsini):
     dtaumCH4 = art.opacity_profile_lines(xsmatrix, mmr_arr, opa.mdb.molmass, g)
 
     #continuum
-    dtaucH2H2 = dtauCIA(nu_grid, Tarr, art.pressure, art.dParr, vmrH2, vmrH2, mmw, g,
-                       cdbH2H2.nucia, cdbH2H2.tcia, cdbH2H2.logac)
+    logacia_matrix = opacia.logacia_matrix(Tarr)
+    dtaucH2H2 = art.opacity_profile_cia(self, logacia_matrix, Tarr, vmrH2,
+                                        vmrH2, mmw, g)
+    #dtaucH2H2 = dtauCIA(nu_grid, Tarr, art.pressure, art.dParr, vmrH2, vmrH2, mmw, g,
+    #                   cdbH2H2.nucia, cdbH2H2.tcia, cdbH2H2.logac)
+
+    #sum
     dtau = dtaumCH4 + dtaucH2H2
     F0 = art.run(dtau, Tarr) / norm
-    
     Frot = convolve_rigid_rotation(F0, vr_array, vsini, u1, u2)
     mu = ipgauss_sampling(nusd, nu_grid, Frot, beta_inst, RV)
     return mu
+
 
 def model_c(nu1, y1):
     Rp = numpyro.sample('Rp', dist.Uniform(0.4, 1.2))
@@ -147,7 +154,7 @@ ax.fill_between(wavd[::-1],
 plt.xlabel('wavelength ($\AA$)', fontsize=16)
 plt.legend(fontsize=16)
 plt.tick_params(labelsize=16)
-plt.savefig("pred_diffmode"+str(diffmode)+".png")
+plt.savefig("pred_diffmode" + str(diffmode) + ".png")
 plt.close()
 
 pararr = ['Rp', 'T0', 'alpha', 'MMR_CH4', 'vsini', 'RV']
@@ -155,5 +162,5 @@ arviz.plot_pair(arviz.from_numpyro(mcmc),
                 kind='kde',
                 divergences=False,
                 marginals=True)
-plt.savefig("corner_diffmode"+str(diffmode)+".png")
+plt.savefig("corner_diffmode" + str(diffmode) + ".png")
 #plt.show()
