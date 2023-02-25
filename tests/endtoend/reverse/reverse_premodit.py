@@ -24,9 +24,6 @@ from exojax.spec.api import MdbExomol
 from exojax.spec.opacalc import OpaPremodit
 from exojax.spec.contdb import CdbCIA
 from exojax.spec.opacont import OpaCIA
-
-#from exojax.spec.rtransfer import dtauCIA
-
 from exojax.spec.response import ipgauss_sampling
 from exojax.spec.spin_rotation import convolve_rigid_rotation
 from exojax.utils.grids import velocity_grid
@@ -98,10 +95,7 @@ def frun(Tarr, MMR_CH4, Mp, Rp, u1, u2, RV, vsini):
     logacia_matrix = opcia.logacia_matrix(Tarr)
     dtaucH2H2 = art.opacity_profile_cia(logacia_matrix, Tarr, vmrH2, vmrH2,
                                         mmw, g)
-    #dtaucH2H2 = dtauCIA(nu_grid, Tarr, art.pressure, art.dParr, vmrH2, vmrH2, mmw, g,
-    #                   cdbH2H2.nucia, cdbH2H2.tcia, cdbH2H2.logac)
-
-    #sum
+    
     dtau = dtaumCH4 + dtaucH2H2
     F0 = art.run(dtau, Tarr) / norm
     Frot = convolve_rigid_rotation(F0, vr_array, vsini, u1, u2)
