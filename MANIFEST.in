@@ -26,6 +26,8 @@ include src/exojax/data/testdata/modit_rt_test_hitemp_ref.txt
 include src/exojax/data/testdata/premodit_rt_test_ref.txt
 include src/exojax/data/testdata/premodit_rt_test_hitemp_ref.txt
 include src/exojax/data/testdata/modit_rt_test_vald_ref.txt
+
+include src/exojax/data/testdata/H2-H2_TEST.cia
 include src/exojax/data/testdata/CO/05_HITEMP_SAMPLE.par
 include src/exojax/data/testdata/CO/12C-16O/SAMPLE/12C-16O__H2.broad
 include src/exojax/data/testdata/CO/12C-16O/SAMPLE/12C-16O__He.broad

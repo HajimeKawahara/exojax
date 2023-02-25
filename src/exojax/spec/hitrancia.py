@@ -74,8 +74,3 @@ def logacia(Tarr, nus, nucia, tcia, logac):
     return mfcia(Tarr, inus)
 
 
-if __name__ == '__main__':
-    nucia, tcia, ac = read_cia(
-        '../../data/CIA/H2-H2_2011.cia', nus[0]-1.0, nus[-1]+1.0)
-    logac = jnp.array(np.log10(ac))
-    logacia(Tarr, nus, nucia, tcia, logac)

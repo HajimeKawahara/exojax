@@ -5,7 +5,7 @@ Notes:
 
 """
 
-__all__ = ['OpaPremodit']
+__all__ = ['OpaPremodit', 'OpaModit']
 
 from exojax.spec import initspec
 from exojax.spec.lbderror import optimal_params

@@ -1,9 +1,15 @@
 """Atmospheric Radiative Transfer (art) class
+
+    Notes:
+        opacity is computed in art because it uses planet physical quantities 
+        such as gravity, mmr.
+
 """
 import numpy as np
 from exojax.spec.planck import piBarr
 from exojax.spec.rtransfer import rtrun as rtrun_emis_pure_absorption
 from exojax.spec.rtransfer import dtauM
+#from exojax.spec.rtransfer import dtauCIA
 from exojax.atm.atmprof import atmprof_gray, atmprof_Guillot, atmprof_powerlow
 import jax.numpy as jnp
 
@@ -37,6 +43,25 @@ class ArtCommon():
 
         self.fguillot = 0.25
 
+    def opacity_profile_lines(self, xsmatrix, mmr_profile, molmass, gravity):
+        """opacity profile (delta tau) for lines
+
+        Args:
+            xsmatrix (2D array): cross section matrix (Nlayer, N_wavenumber)
+            mmr_profile (1D array): mass mixing ratio, Nlayer, (or volume mixing ratio profile)
+            molmass (float): molecular mass (or mean molecular weight)
+            gravity (_type_): constant or 1d profile of gravity in cgs
+
+        Returns:
+            dtau: opacity profile, whose element is optical depth in each layer. 
+        """
+        return dtauM(self.dParr, jnp.abs(xsmatrix), mmr_profile, molmass,
+                     gravity)
+
+    #def opacity_profile_cia(self, temperature, vmr1, vmr2, mmw, gravity, nucia,
+    #                        tcia, logac):
+    #    return dtauCIA(self.nu_grid, temperature, self.pressure, self.dParr,
+    #                   vmr1, vmr2, mmw, gravity, nucia, tcia, logac)
 
     def check_pressure(self):
         if self.pressure_btm < self.pressure_top:
@@ -45,7 +70,7 @@ class ArtCommon():
             )
         if type(self.nlayer) is not int:
             raise ValueError("Number of the layer should be integer")
-        
+
     def init_pressure_profile(self):
         from exojax.spec.rtransfer import pressure_layer
         self.pressure, self.dParr, self.k = pressure_layer(
@@ -60,7 +85,6 @@ class ArtCommon():
 
     def constant_gravity_profile(self, value):
         return value * np.array([np.ones_like(self.pressure)]).T
-
 
     def change_temperature_range(self, Tlow, Thigh):
         """temperature range to be assumed.
@@ -85,8 +109,6 @@ class ArtCommon():
             array: temperature profile clipped in the range of (self.Tlow-self.Thigh)
         """
         return jnp.clip(temperature, self.Tlow, self.Thigh)
-
-    # tempreature profiles
 
     def powerlaw_temperature(self, T0, alpha):
         """powerlaw temperature profile
@@ -137,7 +159,8 @@ class ArtCommon():
 
         """
         return self.clip_temperature(
-            atmprof_Guillot(self.pressure, gravity, kappa, gamma, Tint, Tirr, self.fguillot))
+            atmprof_Guillot(self.pressure, gravity, kappa, gamma, Tint, Tirr,
+                            self.fguillot))
 
 
 class ArtEmisPure(ArtCommon):
@@ -147,28 +170,17 @@ class ArtEmisPure(ArtCommon):
         pressure_layer: pressure profile in bar
         
     """
-    def __init__(self, nu_grid, pressure_top=1.e-8, pressure_btm=1.e2, nlayer=100):
+    def __init__(self,
+                 nu_grid,
+                 pressure_top=1.e-8,
+                 pressure_btm=1.e2,
+                 nlayer=100):
         """initialization of ArtEmisPure
 
         
         """
         super().__init__(nu_grid, pressure_top, pressure_btm, nlayer)
         self.method = "emission_with_pure_absorption"
-
-    def opacity_profile_lines(self, xsmatrix, mmr_profile, molmass, gravity):
-        """opacity profile (delta tau) for lines
-
-        Args:
-            xsmatrix (2D array): cross section matrix (Nlayer, N_wavenumber)
-            mmr_profile (1D array): mass mixing ratio, Nlayer, (or volume mixing ratio profile)
-            molmass (float): molecular mass (or mean molecular weight)
-            gravity (_type_): constant gravity
-
-        Returns:
-            dtau: opacity profile, whose element is optical depth in each layer. 
-        """
-        return dtauM(self.dParr, jnp.abs(xsmatrix), mmr_profile, molmass,
-                     gravity)
 
     def run(self, dtau, temperature):
         sourcef = piBarr(temperature, self.nu_grid)
