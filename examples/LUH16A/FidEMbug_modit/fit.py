@@ -15,7 +15,7 @@ from jax import vmap, jit
 from exojax.spec import planck, moldb, contdb, response, molinfo, dit, modit, initspec
 from exojax.spec.exomol import gamma_exomol
 from exojax.spec.hitran import SijT, doppler_sigma, gamma_natural, gamma_hitran
-from exojax.spec.hitrancia import read_cia, logacia 
+from exojax.spec.hitrancia import read_cia, interp_logacia_matrix 
 from exojax.spec.rtransfer import rtrun, dtauM, dtauCIA, wavenumber_grid, pressure_layer
 from exojax.spec.evalline import mask_weakline
 from exojax.spec.limb_darkening import ld_kipping

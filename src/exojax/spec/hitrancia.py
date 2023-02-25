@@ -17,7 +17,7 @@ def read_cia(filename, nus, nue):
        ac: cia coefficient
     """
     # read first line
-    com = filename.split('/')[-1].replace('_2011.cia', '')
+    com = filename.split('/')[-1].split("_")[0]
     print(com)
     f = open(filename, 'r')
     header = f.readline()
@@ -26,6 +26,7 @@ def read_cia(filename, nus, nue):
     nu = []
     for i in range(0, nnu):
         column = f.readline().strip().split()
+        #print(column)
         nu.append(float(column[0]))
     f.close()
     f = open(filename, 'r')
@@ -43,18 +44,19 @@ def read_cia(filename, nus, nue):
     # read data
     data = np.loadtxt(filename, comments=com)
     nt = data.shape[0]/nnu
+    print(nt,nnu)
     data = data.reshape((int(nt), int(nnu), 2))
     ac = data[:, ijnu[0]:ijnu[1]+1, 1]
     return nucia, tcia, ac
 
 
 @jit
-def logacia(Tarr, nus, nucia, tcia, logac):
+def interp_logacia_matrix(Tarr, nu_grid, nucia, tcia, logac):
     """interpolated function of log10(alpha_CIA)
 
     Args:
-       Tarr: temperature array
-       nus: wavenumber array
+       Tarr (1D array): temperature array (K)
+       nu_grid (1D array): wavenumber array (cm-1)
        nucia: CIA wavenumber (cm-1)
        tcia: CIA temperature (K)
        logac: log10 cia coefficient
@@ -65,12 +67,32 @@ def logacia(Tarr, nus, nucia, tcia, logac):
     Example:
        >>> nucia,tcia,ac=read_cia("../../data/CIA/H2-H2_2011.cia",nus[0]-1.0,nus[-1]+1.0)
        >>> logac=jnp.array(np.log10(ac))
-       >>> logacia(Tarr,nus,nucia,tcia,logac)
+       >>> interp_logacia_matrix(Tarr,nus,nucia,tcia,logac)
     """
     def fcia(x, i): return jnp.interp(x, tcia, logac[:, i])
     vfcia = vmap(fcia, (None, 0), 0)
     mfcia = vmap(vfcia, (0, None), 0)
-    inus = jnp.digitize(nus, nucia)
+    inus = jnp.digitize(nu_grid, nucia)
     return mfcia(Tarr, inus)
+
+@jit
+def interp_logacia_vector(T, nu_grid, nucia, tcia, logac):
+    """interpolated function of log10(alpha_CIA)
+
+    Args:
+       T (float): temperature (K)
+       nu_grid: wavenumber array (cm-1)
+       nucia: CIA wavenumber (cm-1)
+       tcia: CIA temperature (K)
+       logac: log10 cia coefficient
+
+    Returns:
+       vector logac(T, nus)
+
+    """
+    def fcia(x, i): return jnp.interp(x, tcia, logac[:, i])
+    vfcia = vmap(fcia, (None, 0), 0)
+    inus = jnp.digitize(nu_grid, nucia)
+    return vfcia(T, inus)
 
 

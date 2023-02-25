@@ -11,7 +11,7 @@ from jax import random
 from exojax.spec import initspec, planck, moldb, contdb, response, molinfo
 from exojax.spec.lpf import xsvector, xsmatrix, exomol
 from exojax.spec.exomol import gamma_exomol
-from exojax.spec.hitrancia import read_cia, logacia 
+from exojax.spec.hitrancia import read_cia, interp_logacia_matrix 
 from exojax.spec.rtransfer import rtrun, dtauM, dtauCIA, wavenumber_grid, pressure_layer
 from exojax.plot.atmplot import  plot_maxpoint
 from exojax.spec.evalline import reduceline_exomol

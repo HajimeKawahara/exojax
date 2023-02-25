@@ -3,7 +3,7 @@ from jax import jit, vmap
 import jax.numpy as jnp
 import numpy as np
 from exojax.special.expn import E1
-from exojax.spec.hitrancia import logacia
+from exojax.spec.hitrancia import interp_logacia_matrix
 from exojax.spec.hminus import log_hminus_continuum
 from exojax.atm.idealgas import number_density
 from exojax.utils.constants import kB, logm_ucgs
@@ -73,7 +73,7 @@ def dtauCIA(nus, Tarr, Parr, dParr, vmr1, vmr2, mmw, g, nucia, tcia, logac):
     logkb = np.log10(kB)
     logg = jnp.log10(g)
     ddParr = dParr/Parr
-    dtauc = (10**(logacia(Tarr, nus, nucia, tcia, logac)
+    dtauc = (10**(interp_logacia_matrix(Tarr, nus, nucia, tcia, logac)
                   + lognarr1[:, None]+lognarr2[:, None]+logkb-logg-logm_ucgs)
              * Tarr[:, None]/mmw*ddParr[:, None])
 
@@ -106,7 +106,7 @@ def dtauCIA_mmwl(nus, Tarr, Parr, dParr, vmr1, vmr2, mmw, g, nucia, tcia, logac)
     logkb = np.log10(kB)
     logg = jnp.log10(g)
     ddParr = dParr/Parr
-    dtauc = (10**(logacia(Tarr, nus, nucia, tcia, logac)
+    dtauc = (10**(interp_logacia_matrix(Tarr, nus, nucia, tcia, logac)
                   + lognarr1[:, None]+lognarr2[:, None]+logkb-logg-logm_ucgs)
              * Tarr[:, None]/mmw[:, None]*ddParr[:, None])
 

@@ -32,3 +32,6 @@ SAMPLE_SPECTRA_CH4_NEW = "spectrum_ch4_new.txt"
 
 #test data par file
 TESTDATA_CO_HITEMP_PARFILE = "05_HITEMP_SAMPLE.par"
+
+#test data CIA H2-H2 (4300-4400 cm-1)
+TESTDATA_H2_H2_CIA = "H2-H2_TEST.cia" 
