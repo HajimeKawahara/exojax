@@ -19,6 +19,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 from exojax.utils.grids import wavenumber_grid
 from exojax.spec.opacalc import OpaPremodit
+from exojax.spec.opacont import OpaCIA
+
 from exojax.spec.api import MdbExomol
 from exojax.spec.atmrt import ArtEmisPure
 
@@ -77,18 +79,22 @@ opa = OpaPremodit(mdb=mdb,
                   diffmode=diffmode,
                   auto_trange=[Tlow, Thigh],
                   dit_grid_resolution=0.2)
-
+cia = OpaCIA(cdb=cdbH2H2, nu_grid=nu_grid)
 #settings before HMC
 vsini_max = 100.0
 vr_array = velocity_grid(res, vsini_max)
 
 def frun(Tarr, MMR_CH4, Mp, Rp, u1, u2, RV, vsini):
     g = 2478.57730044555 * Mp / Rp**2
+
+    #molecule
     xsmatrix = opa.xsmatrix(Tarr, art.pressure)
     mmr_arr = art.constant_mmr_profile(MMR_CH4)
     dtaumCH4 = art.opacity_profile_lines(xsmatrix, mmr_arr, opa.mdb.molmass, g)
+
+    #continuum
     dtaucH2H2 = dtauCIA(nu_grid, Tarr, art.pressure, art.dParr, vmrH2, vmrH2, mmw, g,
-                        cdbH2H2.nucia, cdbH2H2.tcia, cdbH2H2.logac)
+                       cdbH2H2.nucia, cdbH2H2.tcia, cdbH2H2.logac)
     dtau = dtaumCH4 + dtaucH2H2
     F0 = art.run(dtau, Tarr) / norm
     

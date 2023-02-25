@@ -6,7 +6,7 @@ from exojax.special.expn import E1
 from exojax.spec.hitrancia import interp_logacia_matrix
 from exojax.spec.hminus import log_hminus_continuum
 from exojax.atm.idealgas import number_density
-from exojax.utils.constants import kB, logm_ucgs
+from exojax.utils.constants import logkB, logm_ucgs
 from exojax.utils.constants import opfac
 import warnings
 
@@ -70,11 +70,10 @@ def dtauCIA(nus, Tarr, Parr, dParr, vmr1, vmr2, mmw, g, nucia, tcia, logac):
     narr = number_density(Parr, Tarr)
     lognarr1 = jnp.log10(vmr1*narr)  # log number density
     lognarr2 = jnp.log10(vmr2*narr)  # log number density
-    logkb = np.log10(kB)
     logg = jnp.log10(g)
     ddParr = dParr/Parr
     dtauc = (10**(interp_logacia_matrix(Tarr, nus, nucia, tcia, logac)
-                  + lognarr1[:, None]+lognarr2[:, None]+logkb-logg-logm_ucgs)
+                  + lognarr1[:, None]+lognarr2[:, None]+logkB-logg-logm_ucgs)
              * Tarr[:, None]/mmw*ddParr[:, None])
 
     return dtauc
@@ -103,11 +102,10 @@ def dtauCIA_mmwl(nus, Tarr, Parr, dParr, vmr1, vmr2, mmw, g, nucia, tcia, logac)
     narr = number_density(Parr, Tarr)
     lognarr1 = jnp.log10(vmr1*narr)  # log number density
     lognarr2 = jnp.log10(vmr2*narr)  # log number density
-    logkb = np.log10(kB)
     logg = jnp.log10(g)
     ddParr = dParr/Parr
     dtauc = (10**(interp_logacia_matrix(Tarr, nus, nucia, tcia, logac)
-                  + lognarr1[:, None]+lognarr2[:, None]+logkb-logg-logm_ucgs)
+                  + lognarr1[:, None]+lognarr2[:, None]+logkB-logg-logm_ucgs)
              * Tarr[:, None]/mmw[:, None]*ddParr[:, None])
 
     return dtauc
@@ -195,12 +193,11 @@ def dtauHminus(nus, Tarr, Parr, dParr, vmre, vmrh, mmw, g):
     #       number_density_h: number density for H atoms [N_layer]
     number_density_e = vmre*narr
     number_density_h = vmrh*narr
-    logkb = np.log10(kB)
     logg = jnp.log10(g)
     ddParr = dParr/Parr
     logabc = (log_hminus_continuum(
         nus, Tarr, number_density_e, number_density_h))
-    dtauh = 10**(logabc+logkb-logg-logm_ucgs)*Tarr[:, None]/mmw*ddParr[:, None]
+    dtauh = 10**(logabc+logkB-logg-logm_ucgs)*Tarr[:, None]/mmw*ddParr[:, None]
 
     return dtauh
 
@@ -227,12 +224,11 @@ def dtauHminus_mmwl(nus, Tarr, Parr, dParr, vmre, vmrh, mmw, g):
     #       number_density_h: number density for H atoms [N_layer]
     number_density_e = vmre*narr
     number_density_h = vmrh*narr
-    logkb = np.log10(kB)
     logg = jnp.log10(g)
     ddParr = dParr/Parr
     logabc = (log_hminus_continuum(
         nus, Tarr, number_density_e, number_density_h))
-    dtauh = 10**(logabc+logkb-logg-logm_ucgs)*Tarr[:, None]/mmw[:, None]*ddParr[:, None]
+    dtauh = 10**(logabc+logkB-logg-logm_ucgs)*Tarr[:, None]/mmw[:, None]*ddParr[:, None]
 
     return dtauh
 

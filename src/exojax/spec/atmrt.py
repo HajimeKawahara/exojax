@@ -12,6 +12,9 @@ from exojax.spec.rtransfer import dtauM
 #from exojax.spec.rtransfer import dtauCIA
 from exojax.atm.atmprof import atmprof_gray, atmprof_Guillot, atmprof_powerlow
 import jax.numpy as jnp
+from exojax.atm.idealgas import number_density
+from exojax.utils.constants import kB, logm_ucgs
+
 
 
 class ArtCommon():
@@ -58,8 +61,19 @@ class ArtCommon():
         return dtauM(self.dParr, jnp.abs(xsmatrix), mmr_profile, molmass,
                      gravity)
 
-    #def opacity_profile_cia(self, temperature, vmr1, vmr2, mmw, gravity, nucia,
-    #                        tcia, logac):
+    def opacity_profile_cia(self, temperature, vmr1, vmr2, mmw, gravity, nucia,
+                            tcia, logac):
+
+    narr = number_density(Parr, Tarr)
+    lognarr1 = jnp.log10(vmr1*narr)  # log number density
+    lognarr2 = jnp.log10(vmr2*narr)  # log number density
+    logkb = np.log10(kB)
+    logg = jnp.log10(g)
+    ddParr = dParr/Parr
+    dtauc = (10**(interp_logacia_matrix(Tarr, nus, nucia, tcia, logac)
+                  + lognarr1[:, None]+lognarr2[:, None]+logkb-logg-logm_ucgs)
+             * Tarr[:, None]/mmw*ddParr[:, None])
+
     #    return dtauCIA(self.nu_grid, temperature, self.pressure, self.dParr,
     #                   vmr1, vmr2, mmw, gravity, nucia, tcia, logac)
 

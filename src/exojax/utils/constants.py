@@ -19,6 +19,7 @@ G = 6.67408e-08
 MJ = 1.89813*1.e30
 m_u = 1.66053904e-24  # amu
 kB = 1.38064852e-16
+logkB = -15.859916868309735 # log10(kB)
 hcperk = 1.4387773538277202  # hc/kB (cm K)
 ccgs = 29979245800.0  # c in cgs
 logm_ucgs = -23.779750909492115  # log(m_u) in cgs unit

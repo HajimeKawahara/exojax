@@ -7,7 +7,6 @@ Notes:
 from exojax.utils.grids import nu2wav
 from exojax.spec.hitrancia import interp_logacia_vector
 from exojax.spec.hitrancia import interp_logacia_matrix
-import jax.numpy as jnp
 
 __all__ = ['OpaCIA']
 
@@ -35,10 +34,10 @@ class OpaCIA(OpaCint):
         self.wav = nu2wav(self.nu_grid, unit="AA")
         self.cdb = cdb
 
-    def logcc_vector(self, T):
-        return interp_logacia_vector(T, self.nu_grid, self.cdb.nucia, self.cdb.tcia,
-                       self.cdb.logac)
+    def logacia_vector(self, T):
+        return interp_logacia_vector(T, self.nu_grid, self.cdb.nucia,
+                                     self.cdb.tcia, self.cdb.logac)
 
-    def logcc_matrix(self, temperature):
-        return interp_logacia_matrix(temperature, self.nu_grid, self.cdb.nucia, self.cdb.tcia,
-                       self.cdb.logac)
+    def logacia_matrix(self, temperature):
+        return interp_logacia_matrix(temperature, self.nu_grid, self.cdb.nucia,
+                                     self.cdb.tcia, self.cdb.logac)
