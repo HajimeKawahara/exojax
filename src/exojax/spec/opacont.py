@@ -23,7 +23,7 @@ class OpaCont():
         self.ready = False  # ready for opacity computation
 
 
-class OpaCIA(OpaCint):
+class OpaCIA(OpaCont):
     """Opacity Continuum Calculator Class for CIA
 
     """

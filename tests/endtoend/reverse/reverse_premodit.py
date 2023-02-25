@@ -75,7 +75,7 @@ opa = OpaPremodit(mdb=mdb,
 
 ## CIA setting
 cdbH2H2 = CdbCIA('.database/H2-H2_2011.cia', nu_grid)
-opacia = OpaCIA(cdb=cdbH2H2, nu_grid=nu_grid)
+opcia = OpaCIA(cdb=cdbH2H2, nu_grid=nu_grid)
 mmw = 2.33  # mean molecular weight
 mmrH2 = 0.74
 molmassH2 = molinfo.molmass_isotope('H2')
@@ -85,7 +85,7 @@ vmrH2 = (mmrH2 * mmw / molmassH2)  # VMR
 vsini_max = 100.0
 vr_array = velocity_grid(res, vsini_max)
 
-
+print("ready")
 def frun(Tarr, MMR_CH4, Mp, Rp, u1, u2, RV, vsini):
     g = 2478.57730044555 * Mp / Rp**2
 
@@ -95,9 +95,9 @@ def frun(Tarr, MMR_CH4, Mp, Rp, u1, u2, RV, vsini):
     dtaumCH4 = art.opacity_profile_lines(xsmatrix, mmr_arr, opa.mdb.molmass, g)
 
     #continuum
-    logacia_matrix = opacia.logacia_matrix(Tarr)
-    dtaucH2H2 = art.opacity_profile_cia(self, logacia_matrix, Tarr, vmrH2,
-                                        vmrH2, mmw, g)
+    logacia_matrix = opcia.logacia_matrix(Tarr)
+    dtaucH2H2 = art.opacity_profile_cia(logacia_matrix, Tarr, vmrH2, vmrH2,
+                                        mmw, g)
     #dtaucH2H2 = dtauCIA(nu_grid, Tarr, art.pressure, art.dParr, vmrH2, vmrH2, mmw, g,
     #                   cdbH2H2.nucia, cdbH2H2.tcia, cdbH2H2.logac)
 

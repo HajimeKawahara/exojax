@@ -44,7 +44,6 @@ def read_cia(filename, nus, nue):
     # read data
     data = np.loadtxt(filename, comments=com)
     nt = data.shape[0]/nnu
-    print(nt,nnu)
     data = data.reshape((int(nt), int(nnu), 2))
     ac = data[:, ijnu[0]:ijnu[1]+1, 1]
     return nucia, tcia, ac
