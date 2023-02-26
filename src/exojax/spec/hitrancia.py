@@ -3,6 +3,31 @@ import jax.numpy as jnp
 from jax import jit, vmap
 
 
+HITRAN_DEFCIA = \
+    {
+        'H2-CH4 (equilibrium)': 'H2-CH4_eq_2011.cia',
+        'H2-CH4 (normal)': 'H2-CH4_norm_2011.cia',
+        'H2-H2': 'H2-H2_2011.cia',
+        'H2-H': 'H2-H_2011.cia',
+        'H2-He': 'H2-He_2011.cia',
+        'He-H': 'He-H_2011.cia',
+        'N2-H2': 'N2-H2_2011.cia',
+        'N2-He': 'N2-He_2018.cia',
+        'N2-N2': 'N2-N2_2018.cia',
+        'N2-air': 'N2-air_2018.cia',
+        'N2-H2O': 'N2-H2O_2018.cia',
+        'O2-CO2': 'O2-CO2_2011.cia',
+        'O2-N2': 'O2-N2_2018.cia',
+        'O2-O2': 'O2-O2_2018b.cia',
+        'O2-air': 'O2-Air_2018.cia',
+        'CO2-CO2': 'CO2-CO2_2018.cia',
+        'CO2-H2': 'CO2-H2_2018.cia',
+        'CO2-He': 'CO2-He_2018.cia',
+        'CO2-CH4': 'CO2-CH4_2018.cia',
+        'CH4-He': 'CH4-He_2018.cia'
+    }
+
+
 def read_cia(filename, nus, nue):
     """READ HITRAN CIA data.
 
