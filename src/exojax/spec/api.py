@@ -767,7 +767,7 @@ class MdbHitran(HITRANDatabaseManager):
         else:
             isotope_for_Qt = int(self.isotope)
         Q = PartFuncTIPS(self.molecid, isotope_for_Qt)
-        QTref = Q.at(T=Tref)
+        QTref = Q.at(T=Tref_original)
         QTtyp = Q.at(T=Ttyp)
         return QTref, QTtyp
 
