@@ -401,3 +401,28 @@ class OpaDirect(OpaCalc):
         self.dbtype = self.mdb.dbtype
         self.opainfo = initspec.init_lpf(self.mdb.nu_lines, self.nu_grid)
         self.ready = True
+
+    def xsvector(self, T, P, Pself=0.0):
+        from exojax.spec import gamma_natural
+        from exojax.spec import doppler_sigma
+        from exojax.spec.exomol import gamma_exomol
+        from exojax.spec.hitran import gamma_hitran
+        from exojax.spec.hitran import line_strength
+        from exojax.spec.lpf import xsvector as xsvector_lpf
+
+        numatrix = self.opainfo
+
+        if self.mdb.dbtype == "hitran":
+            qt = self.mdb.qr_interp(self.mdb.isotope, T)
+            gammaL = gamma_hitran(
+                P, T, Pself, self.mdb.n_air, self.mdb.gamma_air,
+                self.mdb.gamma_self) + gamma_natural(self.mdb.A)
+        elif self.mdb.dbtype == "exomol":
+            qt = self.mdb.qr_interp(T)
+            gammaL = gamma_exomol(P, T, self.mdb.n_Texp,
+                                  self.mdb.alpha_ref) + gamma_natural(
+                                      self.mdb.A)
+        sigmaD = doppler_sigma(self.mdb.nu_lines, T, self.mdb.molmass)
+        Sij = line_strength(T, self.mdb.logsij0, self.mdb.nu_lines,
+                            self.mdb.elower, qt)
+        return xsvector_lpf(numatrix, sigmaD, gammaL, Sij)

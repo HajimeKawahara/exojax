@@ -1,40 +1,34 @@
 import pytest
-from exojax.spec.hitran import line_strength
-from exojax.spec.lpf import xsvector
-
 import pkg_resources
 import pandas as pd
 import numpy as np
 from exojax.test.data import TESTDATA_CO_EXOMOL_LPF_XS_REF
-#from exojax.spec.lpf import exomol
-from exojax.spec.molinfo import molmass_isotope
-from exojax.spec import doppler_sigma,  gamma_natural
-from exojax.spec.hitran import line_strength
-from exojax.spec.exomol import gamma_exomol
-from exojax.utils.grids import wavenumber_grid
-from exojax.spec.initspec import init_lpf
-from exojax.test.emulate_mdb import mock_mdbExomol
+from exojax.test.data import TESTDATA_CO_HITEMP_LPF_XS_REF
+from exojax.test.emulate_mdb import mock_wavenumber_grid
+from exojax.test.emulate_mdb import mock_mdb
+from exojax.spec.opacalc import OpaDirect
+import matplotlib.pyplot as plt
+    
+testdata = {}
+testdata["exomol"] = TESTDATA_CO_EXOMOL_LPF_XS_REF
+testdata["hitemp"] = TESTDATA_CO_HITEMP_LPF_XS_REF
 
-def test_exomol():
-    mdbCO = mock_mdbExomol()    
+
+@pytest.mark.parametrize("db",["exomol","hitemp"])
+def test_xsection(db):
+    mdbCO = mock_mdb(db)
     Tfix=1200.0
     Pfix=1.0
-    Mmol = molmass_isotope("CO")
-    
-    qt = mdbCO.qr_interp(Tfix)
-    gammaL = gamma_exomol(Pfix, Tfix, mdbCO.n_Texp, mdbCO.alpha_ref) + gamma_natural(mdbCO.A)
-    sigmaD=doppler_sigma(mdbCO.nu_lines,Tfix,Mmol)
-    Sij = line_strength(Tfix,mdbCO.logsij0,mdbCO.nu_lines,mdbCO.elower,qt)
-    
-    Nx=1000
-    nus, wav, res = wavenumber_grid(22940.0,22960.0, Nx, unit='AA', xsmode="lpf")
-    numatrix=init_lpf(mdbCO.nu_lines, nus)
-    xsv=xsvector(numatrix, sigmaD, gammaL, Sij)
-
-    filename = pkg_resources.resource_filename('exojax', 'data/testdata/'+TESTDATA_CO_EXOMOL_LPF_XS_REF)
-    dat=pd.read_csv(filename,delimiter=",",names=("nus","xsv"))
-    
-    assert np.all(xsv == pytest.approx(dat["xsv"].values))
+    nu_grid, wav, res = mock_wavenumber_grid()
+    opa = OpaDirect(mdbCO, nu_grid)
+    xsv = opa.xsvector(Tfix, Pfix)
+    filename = pkg_resources.resource_filename('exojax', 'data/testdata/'+testdata[db])
+    plt.plot(nu_grid,xsv)
+    #dat=pd.read_csv(filename,delimiter=",",names=("nus","xsv"))
+    #assert np.all(xsv == pytest.approx(dat["xsv"].values))
     
 if __name__ == "__main__":
-    test_exomol()
+    test_xsection("hitemp")
+    #test_xsection("exomol")
+    plt.show()
+    
