@@ -31,26 +31,26 @@ wavd = dat['wav'].values
 flux = dat['flux'].values
 nusd = jnp.array(1.e8 / wavd[::-1])
 sigmain = 0.05
-norm = 40000
+norm = 40000.
 nflux = flux / norm + np.random.normal(0, sigmain, len(wavd))
 
 Nx = 1500
 nu_grid, wav, res = wavenumber_grid(np.min(wavd) - 5.0,
-                                np.max(wavd) + 5.0,
-                                Nx,
-                                unit='AA')
+                                    np.max(wavd) + 5.0,
+                                    Nx,
+                                    unit='AA')
 
-art = ArtEmisPure(nu_grid,
-                    pressure_top=1.e-8,
-                    pressure_btm=1.e2,
-                    nlayer=100)
+art = ArtEmisPure(nu_grid, pressure_top=1.e-8, pressure_btm=1.e2, nlayer=100)
 art.change_temperature_range(400.0, 1500.0)
 
 R = 100000.
 beta_inst = resolution_to_gaussian_std(R)
 Mp = 33.2  # fixing mass...
 
-mdbCO = MdbExomol('.database/CO/12C-16O/Li2015', nu_grid, crit=1.e-46, gpu_transfer=True)
+mdbCO = MdbExomol('.database/CO/12C-16O/Li2015',
+                  nu_grid,
+                  crit=1.e-46,
+                  gpu_transfer=True)
 opa = OpaDirect(mdb=mdbCO, nu_grid=nu_grid)
 cdbH2H2 = contdb.CdbCIA('.database/H2-H2_2011.cia', nu_grid)
 opacia = OpaCIA(cdbH2H2, nu_grid)
@@ -70,7 +70,7 @@ def model_c(nu1, y1):
     T0 = numpyro.sample('T0', dist.Uniform(1000.0, 1500.0))
     alpha = numpyro.sample('alpha', dist.Uniform(0.05, 0.2))
     vsini = numpyro.sample('vsini', dist.Uniform(15.0, 25.0))
-    g = 2478.57730044555 * Mp / Rp**2  # gravity
+    gravity = 2478.57730044555 * Mp / Rp**2  # gravity
     u1 = 0.0
     u2 = 0.0
 
@@ -78,14 +78,15 @@ def model_c(nu1, y1):
     Tarr = art.powerlaw_temperature(T0, alpha)
     mmr_arr = art.constant_mmr_profile(MMR_CO)
 
- 
     def obyo(y, tag, nusd, nus):
         # CO
         xsm_CO = opa.xsmatrix(Tarr, art.pressure)
-        dtaumCO = art.opacity_profile_lines(xsm_CO, mmr_arr, opa.mdb.molmass, g)
+        dtaumCO = art.opacity_profile_lines(xsm_CO, mmr_arr, opa.mdb.molmass,
+                                            gravity)
         # CIA
         logacia = opacia.logacia_matrix(Tarr)
-        dtaucH2H2 = art.opacity_profile_cia(logacia, Tarr, vmrH2, vmrH2, mmw, g)
+        dtaucH2H2 = art.opacity_profile_cia(logacia, Tarr, vmrH2, vmrH2, mmw,
+                                            gravity)
         dtau = dtaumCO + dtaucH2H2
         F0 = art.run(dtau, Tarr) / norm
         Frot = convolve_rigid_rotation(F0, vr_array, vsini, u1, u2)
@@ -121,10 +122,13 @@ ax.fill_between(wavd[::-1],
 plt.xlabel('wavelength ($\AA$)', fontsize=16)
 plt.legend(fontsize=16)
 plt.tick_params(labelsize=16)
+plt.savefig("spectrum.png")
+plt.close()
 
 pararr = ['Rp', 'T0', 'alpha', 'MMR_CO', 'vsini', 'RV']
 arviz.plot_pair(arviz.from_numpyro(mcmc),
                 kind='kde',
                 divergences=False,
                 marginals=True)
-plt.show()
+plt.savefig("corner.png")
+plt.close()
