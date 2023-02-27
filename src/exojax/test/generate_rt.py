@@ -5,131 +5,110 @@ from exojax.test.emulate_mdb import mock_mdbExomol
 from exojax.test.emulate_mdb import mock_mdbHitemp
 from exojax.test.emulate_mdb import mock_wavenumber_grid
 import matplotlib.pyplot as plt
+from exojax.test.data import TESTDATA_CO_EXOMOL_LPF_EMISSION_REF
+from exojax.test.data import TESTDATA_CO_HITEMP_LPF_EMISSION_REF
+from exojax.test.data import TESTDATA_CO_EXOMOL_MODIT_EMISSION_REF
+from exojax.test.data import TESTDATA_CO_HITEMP_MODIT_EMISSION_REF
     
+from exojax.test.emulate_mdb import mock_mdb
+from exojax.spec.opacalc import OpaDirect
+from exojax.spec.opacalc import OpaModit
+from exojax.spec.atmrt import ArtEmisPure
+
 from jax.config import config
 
 config.update("jax_enable_x64", True)
 
+testdata_modit={}
+testdata_modit["exomol"]=TESTDATA_CO_EXOMOL_MODIT_EMISSION_REF
+testdata_modit["hitemp"]=TESTDATA_CO_HITEMP_MODIT_EMISSION_REF
 
-def gendata_rt_modit_exomol():
-    """generate a sample adiative transfered spectrum using MODIT/exomol
+testdata_lpf={}
+testdata_lpf["exomol"]=TESTDATA_CO_EXOMOL_LPF_EMISSION_REF
+testdata_lpf["hitemp"]=TESTDATA_CO_HITEMP_LPF_EMISSION_REF
 
-    Returns:
-        _type_: _description_
-    """
-    import jax.numpy as jnp
-    from exojax.spec import rtransfer as rt
-    from exojax.spec.modit import exomol
-    from exojax.spec.modit import xsmatrix
-    from exojax.spec.rtransfer import dtauM
-    from exojax.spec.rtransfer import rtrun
-    from exojax.spec.planck import piBarr
-    from exojax.spec.modit import set_ditgrid_matrix_exomol
-    from exojax.test.data import TESTDATA_CO_EXOMOL_MODIT_EMISSION_REF
+def gendata_rt_modit(db):
 
-    mdb = mock_mdbExomol()
-    nus, wav, res = mock_wavenumber_grid()
-    dit_grid_resolution = 0.2
+    nu_grid, wav, res = mock_wavenumber_grid()
 
-    Parr, dParr, k = rt.pressure_layer(NP=100, numpy=True)
-    T0_in = 1300.0
-    alpha_in = 0.1
-    Tarr = T0_in * (Parr)**alpha_in
-    Tarr[Tarr<400.0] = 400.0 #lower limit
-    Tarr[Tarr>1500.0] = 1500.0 #upper limit
+    art = ArtEmisPure(nu_grid,
+                      pressure_top=1.e-8,
+                      pressure_btm=1.e2,
+                      nlayer=100)
+    art.change_temperature_range(400.0, 1500.0)
+    Tarr = art.powerlaw_temperature(1300.0, 0.1)
+    mmr_arr = art.constant_mmr_profile(0.1)
+    gravity = 2478.57
+    #gravity = art.constant_gravity_profile(2478.57) #gravity can be profile
+
+    mdb = mock_mdb(db)
+    #mdb = api.MdbExomol('.database/CO/12C-16O/Li2015',nu_grid,inherit_dataframe=False,gpu_transfer=False)
+    #mdb = api.MdbHitemp('CO', art.nu_grid, gpu_transfer=False, isotope=1)
+    opa = OpaModit(mdb=mdb,
+                   nu_grid=nu_grid,
+                   Tarr_list=Tarr,
+                   Parr=art.pressure,
+                   dit_grid_resolution=0.2)
+    xsmatrix = opa.xsmatrix(Tarr, art.pressure)
+    dtau = art.opacity_profile_lines(xsmatrix, mmr_arr, opa.mdb.molmass,
+                                     gravity)
+    F0 = art.run(dtau, Tarr)
+    np.savetxt(testdata_modit[db], np.array([nu_grid, F0]).T, delimiter=",")
     
+    return nu_grid, F0
+
+
+def gendata_rt_lpf(db):
+    nu_grid, wav, res = mock_wavenumber_grid()
+
+    art = ArtEmisPure(nu_grid,
+                      pressure_top=1.e-8,
+                      pressure_btm=1.e2,
+                      nlayer=100)
+    art.change_temperature_range(400.0, 1500.0)
+    Tarr = art.powerlaw_temperature(1300.0, 0.1)
+    mmr_arr = art.constant_mmr_profile(0.1)
+    gravity = 2478.57
+    #gravity = art.constant_gravity_profile(2478.57) #gravity can be profile
+
+    mdb = mock_mdb(db)
+    #mdb = api.MdbExomol('.database/CO/12C-16O/Li2015',nu_grid,inherit_dataframe=False,gpu_transfer=False)
+    #mdb = api.MdbHitemp('CO', art.nu_grid, gpu_transfer=False, isotope=1)
+    opa = OpaDirect(mdb=mdb, nu_grid=nu_grid)
+
+    xsmatrix = opa.xsmatrix(Tarr, art.pressure)
+    dtau = art.opacity_profile_lines(xsmatrix, mmr_arr, opa.mdb.molmass,
+                                     gravity)
+    F0 = art.run(dtau, Tarr)
+    np.savetxt(testdata_lpf[db], np.array([nu_grid, F0]).T, delimiter=",")
     
-    molmass = mdb.molmass
-    MMR = 0.1
-    cont_nu, index_nu, R, pmarray = init_modit(mdb.nu_lines, nus)
-
-    def fT(T0, alpha):
-        return T0[:, None] * (Parr[None, :])**alpha[:, None]
-
-    dgm_ngammaL = set_ditgrid_matrix_exomol(mdb, fT, Parr, R, molmass,
-                                            dit_grid_resolution,
-                                            np.array([T0_in]),
-                                            np.array([alpha_in]))
-
-    g = 2478.57
-    SijM, ngammaLM, nsigmaDl = exomol(mdb, Tarr, Parr, R, molmass)
-    xsm = xsmatrix(cont_nu, index_nu, R, pmarray, nsigmaDl, ngammaLM, SijM,
-                   nus, dgm_ngammaL)
-    dtau = dtauM(dParr, jnp.abs(xsm), MMR * np.ones_like(Parr), molmass, g)
-    sourcef = piBarr(Tarr, nus)
-    F0 = rtrun(dtau, sourcef)
-    np.savetxt(TESTDATA_CO_EXOMOL_MODIT_EMISSION_REF,
-               np.array([nus, F0]).T,
-               delimiter=",")
-    plt.plot(nus,F0)
-    plt.show()
-
-
-    return nus, F0
-
-
-def gendata_rt_modit_hitemp():
-    """generate a sample adiative transfered spectrum using MODIT/hitemp
-
-    Returns:
-        _type_: _description_
-    """
-    import jax.numpy as jnp
-    from exojax.spec import rtransfer as rt
-    from exojax.spec.modit import hitran
-    from exojax.spec.modit import xsmatrix
-    from exojax.spec.rtransfer import dtauM
-    from exojax.spec.rtransfer import rtrun
-    from exojax.spec.planck import piBarr
-    from exojax.spec.modit import set_ditgrid_matrix_hitran
-    from exojax.test.data import TESTDATA_CO_HITEMP_MODIT_EMISSION_REF
-    mdb = mock_mdbHitemp(multi_isotope=False)
-    nus, wav, res = mock_wavenumber_grid()
-    
-    Parr, dParr, k = rt.pressure_layer(NP=100, numpy=True)
-    T0_in = 1300.0
-    alpha_in = 0.1
-    Tarr = T0_in * (Parr)**alpha_in
-    Tarr[Tarr<400.0] = 400.0 #lower limit
-    Tarr[Tarr>1500.0] = 1500.0 #upper limit
-    
-    molmass = mdb.molmass
-    MMR = 0.1
-    cont_nu, index_nu, R, pmarray = init_modit(mdb.nu_lines, nus)
-
-    def fT(T0, alpha):
-        return T0[:, None] * (Parr[None, :])**alpha[:, None]
-
-    Pself_ref = jnp.zeros_like(Parr)
-    Pref = 1.0
-    dit_grid_resolution = 0.2
-    fT = lambda T0, alpha: T0[:, None] * (Parr[None, :] / Pref)**alpha[:, None]
-
-    dgm_ngammaL = set_ditgrid_matrix_hitran(mdb, fT, Parr, Pself_ref, R,
-                                            molmass, dit_grid_resolution,
-                                            np.array([T0_in]),
-                                            np.array([alpha_in]))
-
-    g = 2478.57
-    SijM, ngammaLM, nsigmaDl = hitran(mdb, Tarr, Parr, Pself_ref, R, molmass)
-    xsm = xsmatrix(cont_nu, index_nu, R, pmarray, nsigmaDl, ngammaLM, SijM,
-                   nus, dgm_ngammaL)
-    dtau = dtauM(dParr, jnp.abs(xsm), MMR * np.ones_like(Parr), molmass, g)
-    sourcef = piBarr(Tarr, nus)
-    F0 = rtrun(dtau, sourcef)
-    np.savetxt(TESTDATA_CO_HITEMP_MODIT_EMISSION_REF,
-               np.array([nus, F0]).T,
-               delimiter=",")
-
-    plt.plot(nus, F0)
-    plt.show()
-
-    return nus, F0
+    return nu_grid, F0
 
 
 if __name__ == "__main__":
-    nus, F0 = gendata_rt_modit_exomol()
-    nus, F0 = gendata_rt_modit_hitemp()
+    nus, F0_exomol = gendata_rt_modit("exomol")
+    nus, F0_hitemp = gendata_rt_modit("hitemp")
+    nus, F0_exomol_lpf = gendata_rt_lpf("exomol")
+    nus, F0_hitemp_lpf = gendata_rt_lpf("hitemp")
+
+    fig = plt.figure()
+    fig.add_subplot(211)
+    plt.plot(nus, F0_exomol)
+    plt.plot(nus, F0_hitemp)
+    plt.plot(nus, F0_exomol_lpf, ls="dashed")
+    plt.plot(nus, F0_hitemp_lpf, ls="dashed")
+    
+    fig.add_subplot(212)
+    plt.plot(nus, 1.0 - F0_exomol / F0_exomol_lpf, label="diff exomol")
+    plt.plot(nus, 1.0 - F0_hitemp / F0_hitemp_lpf, label="diff hitemp")
+    plt.legend()
+    plt.show()
+    
+    import matplotlib.pyplot as plt
+    plt.plot(nus, F0_exomol_lpf)
+    plt.plot(nus, F0_exomol, ls="dashed")
+    plt.show()
+
 
     print(
         "to include the generated files in the package, move .txt to exojax/src/exojax/data/testdata/"

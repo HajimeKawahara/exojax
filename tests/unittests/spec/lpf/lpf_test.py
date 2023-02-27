@@ -10,28 +10,70 @@ import pandas as pd
 import numpy as np
 from exojax.test.data import TESTDATA_CO_EXOMOL_LPF_XS_REF
 from exojax.test.data import TESTDATA_CO_HITEMP_LPF_XS_REF
+from exojax.test.data import TESTDATA_CO_EXOMOL_LPF_EMISSION_REF
+from exojax.test.data import TESTDATA_CO_HITEMP_LPF_EMISSION_REF
 from exojax.test.emulate_mdb import mock_wavenumber_grid
 from exojax.test.emulate_mdb import mock_mdb
 from exojax.spec.opacalc import OpaDirect
-    
+from exojax.spec.atmrt import ArtEmisPure
+from jax.config import config
+
+config.update("jax_enable_x64", True)
+
 testdata = {}
 testdata["exomol"] = TESTDATA_CO_EXOMOL_LPF_XS_REF
 testdata["hitemp"] = TESTDATA_CO_HITEMP_LPF_XS_REF
 
+testdata_spectrum = {}
+testdata_spectrum["exomol"] = TESTDATA_CO_EXOMOL_LPF_EMISSION_REF
+testdata_spectrum["hitemp"] = TESTDATA_CO_HITEMP_LPF_EMISSION_REF
 
-@pytest.mark.parametrize("db",["exomol","hitemp"])
+
+@pytest.mark.parametrize("db", ["exomol", "hitemp"])
 def test_xsection(db):
     mdbCO = mock_mdb(db)
-    Tfix=1200.0
-    Pfix=1.0
+    Tfix = 1200.0
+    Pfix = 1.0
     nu_grid, wav, res = mock_wavenumber_grid()
     opa = OpaDirect(mdbCO, nu_grid)
     xsv = opa.xsvector(Tfix, Pfix)
-    filename = pkg_resources.resource_filename('exojax', 'data/testdata/'+testdata[db])
-    dat=pd.read_csv(filename,delimiter=",",names=("nus","xsv"))
+    filename = pkg_resources.resource_filename('exojax',
+                                               'data/testdata/' + testdata[db])
+    dat = pd.read_csv(filename, delimiter=",", names=("nus", "xsv"))
     assert np.all(xsv == pytest.approx(dat["xsv"].values))
-    
+
+
+@pytest.mark.parametrize("db", ["exomol", "hitemp"])
+def test_spectrum(db):
+    nu_grid, wav, res = mock_wavenumber_grid()
+
+    art = ArtEmisPure(nu_grid,
+                      pressure_top=1.e-8,
+                      pressure_btm=1.e2,
+                      nlayer=100)
+    art.change_temperature_range(400.0, 1500.0)
+    Tarr = art.powerlaw_temperature(1300.0, 0.1)
+    mmr_arr = art.constant_mmr_profile(0.1)
+    gravity = 2478.57
+    #gravity = art.constant_gravity_profile(2478.57) #gravity can be profile
+
+    mdb = mock_mdb(db)
+    #mdb = api.MdbExomol('.database/CO/12C-16O/Li2015',nu_grid,inherit_dataframe=False,gpu_transfer=False)
+    #mdb = api.MdbHitemp('CO', art.nu_grid, gpu_transfer=False, isotope=1)
+    opa = OpaDirect(mdb=mdb, nu_grid=nu_grid)
+
+    xsmatrix = opa.xsmatrix(Tarr, art.pressure)
+    dtau = art.opacity_profile_lines(xsmatrix, mmr_arr, opa.mdb.molmass,
+                                     gravity)
+    F0 = art.run(dtau, Tarr)
+    filename = pkg_resources.resource_filename(
+        'exojax', 'data/testdata/' + testdata_spectrum[db])
+    dat = pd.read_csv(filename, delimiter=",", names=("nus", "F0"))
+    assert np.all(F0 == pytest.approx(dat["F0"].values))
+
+
 if __name__ == "__main__":
     test_xsection("hitemp")
     test_xsection("exomol")
-    
+    test_spectrum("hitemp")
+    test_spectrum("exomol")

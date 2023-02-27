@@ -5,7 +5,7 @@ Notes:
 
 """
 
-__all__ = ['OpaPremodit', 'OpaModit']
+__all__ = ['OpaPremodit', 'OpaModit', 'OpaDirect']
 
 from exojax.spec import initspec
 from exojax.spec.lbderror import optimal_params
@@ -15,6 +15,8 @@ from exojax.utils.grids import nu2wav
 from exojax.utils.instfunc import resolution_eslog
 from exojax.utils.constants import Patm
 import jax.numpy as jnp
+from jax import jit
+from jax import vmap
 import numpy as np
 import warnings
 
@@ -426,3 +428,52 @@ class OpaDirect(OpaCalc):
         Sij = line_strength(T, self.mdb.logsij0, self.mdb.nu_lines,
                             self.mdb.elower, qt)
         return xsvector_lpf(numatrix, sigmaD, gammaL, Sij)
+
+    def xsmatrix(self, Tarr, Parr):
+        """cross section matrix
+
+        Notes:
+            Currently Pself is regarded to be zero for HITEMP/HITRAN
+
+        Args:
+            Tarr (): tempearture array in K 
+            Parr (): pressure array in bar
+
+        Raises:
+            ValueError: _description_
+
+        Returns:
+            jnp array: cross section array
+        """
+        from exojax.spec import gamma_natural
+        from exojax.spec import doppler_sigma
+        from exojax.spec.exomol import gamma_exomol
+        from exojax.spec.hitran import gamma_hitran
+        from exojax.spec.hitran import line_strength
+        from exojax.spec.lpf import xsmatrix as xsmatrix_lpf
+
+        numatrix = self.opainfo
+        vmaplinestrengh = jit(vmap(line_strength, (0, None, None, None, 0)))
+        if self.mdb.dbtype == "hitran":
+            vmapqt = vmap(self.mdb.qr_interp, (None, 0))
+            qt = vmapqt(self.mdb.isotope, Tarr)
+            vmaphitran = jit(vmap(gamma_hitran, (0, 0, 0, None, None, None)))
+            gammaLM = vmaphitran(Parr, Tarr, np.zeros_like(Parr),
+                                 self.mdb.n_air, self.mdb.gamma_air,
+                                 self.mdb.gamma_self) + gamma_natural(
+                                     self.mdb.A)
+            SijM = vmaplinestrengh(Tarr, self.mdb.logsij0, self.mdb.nu_lines,
+                                   self.mdb.elower, qt)
+        elif self.mdb.dbtype == "exomol":
+            vmapqt = vmap(self.mdb.qr_interp)
+            qt = vmapqt(Tarr)
+            vmapexomol = jit(vmap(gamma_exomol, (0, 0, None, None)))
+            gammaLMP = vmapexomol(Parr, Tarr, self.mdb.n_Texp,
+                                  self.mdb.alpha_ref)
+            gammaLMN = gamma_natural(self.mdb.A)
+            gammaLM = gammaLMP + gammaLMN[None, :]
+            SijM = vmaplinestrengh(Tarr, self.mdb.logsij0, self.mdb.nu_lines,
+                                   self.mdb.elower, qt)
+        sigmaDM = jit(vmap(doppler_sigma, (None, 0, None)))(self.mdb.nu_lines,
+                                                            Tarr, self.mdb.molmass)
+        return xsmatrix_lpf(numatrix, sigmaDM, gammaLM, SijM)

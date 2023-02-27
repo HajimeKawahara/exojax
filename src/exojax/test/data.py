@@ -19,6 +19,8 @@ TESTDATA_CO_HITEMP_MODIT_XS_REF_AIR = "modit_test_hitemp_ref_air.txt" #Pself=0.0
 TESTDATA_CO_HITEMP_PREMODIT_XS_REF = "premodit_test_hitemp_ref.txt"
 
 # emission spectra references
+TESTDATA_CO_EXOMOL_LPF_EMISSION_REF = "lpf_rt_test_ref.txt"
+TESTDATA_CO_HITEMP_LPF_EMISSION_REF = "lpf_rt_test_hitemp_ref.txt"
 TESTDATA_CO_EXOMOL_MODIT_EMISSION_REF = "modit_rt_test_ref.txt"
 TESTDATA_CO_HITEMP_MODIT_EMISSION_REF = "modit_rt_test_hitemp_ref.txt"
 TESTDATA_CO_EXOMOL_PREMODIT_EMISSION_REF = "premodit_rt_test_ref.txt"
