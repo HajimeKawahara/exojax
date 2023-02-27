@@ -17,7 +17,8 @@ from exojax.utils.instfunc import resolution_to_gaussian_std
 from exojax.spec.opacalc import OpaDirect
 from exojax.spec.opacont import OpaCIA
 from exojax.spec.atmrt import ArtEmisPure
-
+from exojax.spec.unitconvert import wav2nu
+from exojax.utils.astrofunc import gravity_jupiter
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
@@ -29,22 +30,21 @@ config.update("jax_enable_x64", True)
 dat = pd.read_csv('spectrum.txt', delimiter=',', names=('wav', 'flux'))
 wavd = dat['wav'].values
 flux = dat['flux'].values
-nusd = jnp.array(1.e8 / wavd[::-1])
+nusd = wav2nu(wavd)
 sigmain = 0.05
 norm = 40000.
 nflux = flux / norm + np.random.normal(0, sigmain, len(wavd))
 
-Nx = 1500
 nu_grid, wav, res = wavenumber_grid(np.min(wavd) - 5.0,
                                     np.max(wavd) + 5.0,
-                                    Nx,
+                                    1500,
                                     unit='AA')
 
 art = ArtEmisPure(nu_grid, pressure_top=1.e-8, pressure_btm=1.e2, nlayer=100)
 art.change_temperature_range(400.0, 1500.0)
 
-R = 100000.
-beta_inst = resolution_to_gaussian_std(R)
+instrumental_resolution = 100000.
+beta_inst = resolution_to_gaussian_std(instrumental_resolution)
 Mp = 33.2  # fixing mass...
 
 mdbCO = MdbExomol('.database/CO/12C-16O/Li2015',
@@ -63,6 +63,7 @@ vmrH2 = (mmrH2 * mmw / molmassH2)  # VMR
 vsini_max = 100.0
 vr_array = velocity_grid(res, vsini_max)
 
+
 def model_c(nu1, y1):
     Rp = numpyro.sample('Rp', dist.Uniform(0.4, 1.2))
     RV = numpyro.sample('RV', dist.Uniform(5.0, 15.0))
@@ -70,7 +71,7 @@ def model_c(nu1, y1):
     T0 = numpyro.sample('T0', dist.Uniform(1000.0, 1500.0))
     alpha = numpyro.sample('alpha', dist.Uniform(0.05, 0.2))
     vsini = numpyro.sample('vsini', dist.Uniform(15.0, 25.0))
-    gravity = 2478.57730044555 * Mp / Rp**2  # gravity
+    gravity = gravity_jupiter(Mp, Rp)  # gravity in the unit of Jupiter
     u1 = 0.0
     u2 = 0.0
 
