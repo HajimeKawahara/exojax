@@ -274,12 +274,21 @@ class OpaModit(OpaCalc):
         self.ready = True
 
     def xsvector(self, T, P, Pself=0.0):
+        """cross section vector
+
+        Args:
+            T (float): temperature
+            P (float): pressure in bar
+            Pself (float, optional): self pressure for HITEMP/HITRAN. Defaults to 0.0.
+
+        Returns:
+            1D array: cross section in cm2 
+        """
         from exojax.spec import normalized_doppler_sigma, gamma_natural
         from exojax.spec.hitran import line_strength
         from exojax.spec.exomol import gamma_exomol
         from exojax.spec.hitran import gamma_hitran
         from exojax.spec.set_ditgrid import ditgrid_log_interval
-        #from exojax.spec.modit import xsvector as modit_xsvector
         from exojax.spec.modit_scanfft import xsvector_scanfft
         from exojax.spec import normalized_doppler_sigma
 
@@ -405,6 +414,16 @@ class OpaDirect(OpaCalc):
         self.ready = True
 
     def xsvector(self, T, P, Pself=0.0):
+        """cross section vector
+
+        Args:
+            T (float): temperature
+            P (float): pressure in bar
+            Pself (float, optional): self pressure for HITEMP/HITRAN. Defaults to 0.0.
+
+        Returns:
+            1D array: cross section in cm2 
+        """
         from exojax.spec import gamma_natural
         from exojax.spec import doppler_sigma
         from exojax.spec.exomol import gamma_exomol
