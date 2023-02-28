@@ -1,6 +1,6 @@
 import numpy as np
 from exojax.spec import atomllapi
-from exojax.utils.constants import ccgs, m_u, kB, hcperk, ecgs, hcgs, Rcgs, a0, eV2wn, Tref
+from exojax.utils.constants import ccgs, m_u, kB, hcperk, ecgs, hcgs, Rcgs, a0, eV2wn, Tref_original
 import jax.numpy as jnp
 from jax.lax import scan
 import warnings
@@ -29,9 +29,9 @@ def Sij0(A, gupper, nu_lines, elower, QTref_284, QTmask, Irwin=False):
 
     # Use Irwin_1981 for Fe I (mask==76)  #test211013Tako
     if Irwin == True:
-        QTref[jnp.where(QTmask == 76)[0]] = atomllapi.partfn_Fe(Tref)
+        QTref[jnp.where(QTmask == 76)[0]] = atomllapi.partfn_Fe(Tref_original)
 
-    S0 = -A*gupper*np.exp(-hcperk*elower/Tref)*np.expm1(-hcperk*nu_lines/Tref)\
+    S0 = -A*gupper*np.exp(-hcperk*elower/Tref_original)*np.expm1(-hcperk*nu_lines/Tref_original)\
         / (8.0*np.pi*ccgs*nu_lines**2*QTref)
 
     return S0

@@ -41,13 +41,14 @@ def init_dit(nu_lines, nu_grid, warning=False):
         cont (contribution) jnp.array
         index (index) jnp.array
         pmarray: (+1.,-1.) array whose length of len(nu_grid)+1
-
+        
     Note:
         cont is the contribution for i=index+1. 1 - cont is the contribution for i=index. For other i, the contribution should be zero.
     """
     warn_dtype64(nu_lines, warning, tag='nu_lines')
     warn_dtype64(nu_grid, warning, tag='nu_grid')
     warn_outside_wavenumber_grid(nu_lines, nu_grid)
+    warn_out_of_nu_grid(nu_lines, nu_grid)
 
     cont, index = npgetix(nu_lines, nu_grid)
     pmarray = np.ones(len(nu_grid) + 1)
@@ -69,20 +70,42 @@ def init_modit(nu_lines, nu_grid, warning=False):
         index: (index for q) jnp.array
         spectral_resolution: spectral resolution (R)
         pmarray: (+1.,-1.) array whose length of len(nu_grid)+1
-
+        
     Note:
         cont is the contribution for i=index+1. 1 - cont is the contribution for i=index. For other i, the contribution should be zero. dq is computed using numpy not jnp.numpy. If you use jnp, you might observe a significant residual because of the float32 truncation error.
     """
     warn_dtype64(nu_lines, warning, tag='nu_lines')
     warn_dtype64(nu_grid, warning, tag='nu_grid')
     warn_outside_wavenumber_grid(nu_lines, nu_grid)
+    warn_out_of_nu_grid(nu_lines, nu_grid)
 
     spectral_resolution = resolution_eslog(nu_grid)
     cont, index = npgetix(nu_lines, nu_grid)
     pmarray = np.ones(len(nu_grid) + 1)
     pmarray[1::2] = pmarray[1::2] * -1.0
 
-    return jnp.array(cont), jnp.array(index), spectral_resolution, jnp.array(pmarray)
+    return jnp.array(cont), jnp.array(index), spectral_resolution, jnp.array(
+        pmarray)
+
+def warn_out_of_nu_grid(nu_lines, nu_grid):
+    """warning for out-of-nu grid
+
+    Note:
+        See Issue 341, https://github.com/HajimeKawahara/exojax/issues/341
+        Only for DIT and MODIT. For PreMODIT or newer Opacalc, this issue is automatically fixed. 
+
+    Args:
+        nu_lines (_type_): line center
+        nu_grid (_type_): wavenumber grid
+    """
+    if nu_lines[0] < nu_grid[0] or nu_lines[-1] > nu_grid[-1]:
+        warnings.warn("There are lines whose center is out of nu_grid", UserWarning)
+        print("This may artifact at the edges. See Issue #341.")
+        print("https://github.com/HajimeKawahara/exojax/issues/341")
+        print("line center [cm-1], nu_grid [cm-1]")
+        print("left:",nu_lines[0], nu_grid[0])
+        print("right:",nu_lines[-1],nu_grid[-1])
+
 
 
 def init_premodit(nu_lines,
@@ -91,12 +114,14 @@ def init_premodit(nu_lines,
                   gamma_ref,
                   n_Texp,
                   line_strength_ref,
-                  Ttyp,
-                  interval_contrast=0.1,
+                  Twt,
+                  Tref,
+                  Tmax=None,
+                  dE=160.0,
                   dit_grid_resolution=0.2,
+                  diffmode=0,
                   warning=False):
-    """Initialization for PreMODIT. i.e. Generate nu contribution and index for
-    the line shape density (actually, this is a numpy version of getix)
+    """Initialization for PreMODIT. 
 
     Args:
         nu_lines: wavenumber list of lines [Nline] (should be numpy F64)
@@ -104,10 +129,13 @@ def init_premodit(nu_lines,
         elower: elower of lines
         gamma_ref: half-width at reference (alpha_ref for ExoMol, gamma_air for HITRAN/HITEMP etc)
         n_Texp: temperature exponent (n_Texp for ExoMol, n_air for HITRAN/HITEMP)
-        line_strength_ref: line strength at reference temperature 296K, Sij0
-        Ttyp: typical temperature in Kelvin
-        interval_contrast: putting c = grid_interval_line_strength, then, the contrast of line strength between the upper and lower of the grid becomes c-order of magnitude.
+        line_strength_ref: line strength at reference Tref
+        Twt: temperature for weight in Kelvin
+        Tref: reference temperature
+        Tmax: max temperature to construct n_Texp grid, if None, max(Twt and Tref) is used 
+        dE: Elower grid interval
         dit_grid_resolution: DIT grid resolution 
+        diffmode (int): i-th Taylor expansion is used for the weight, default is 1.
 
     Returns:
         cont_nu: contribution for wavenumber jnp.array
@@ -127,20 +155,34 @@ def init_premodit(nu_lines,
     warn_dtype64(elower, warning, tag='elower')
     warn_outside_wavenumber_grid(nu_lines, nu_grid)
 
+    if Tmax is None:
+        Tmax = np.max([Twt, Tref])
+
     R = resolution_eslog(nu_grid)
     ngamma_ref = gamma_ref / nu_lines * R
-    elower_grid = make_elower_grid(Ttyp,
-                                   elower,
-                                   interval_contrast=interval_contrast)
-    ngamma_ref_grid, n_Texp_grid = make_broadpar_grid(ngamma_ref,
-                                                      n_Texp,
-                                                      Ttyp,
-                                                      dit_grid_resolution=dit_grid_resolution)
-    lbd, multi_index_uniqgrid = generate_lbd(line_strength_ref, nu_lines, nu_grid, ngamma_ref, ngamma_ref_grid,
-             n_Texp, n_Texp_grid, elower, elower_grid, Ttyp)
+    elower_grid = make_elower_grid(elower, dE)
+    ngamma_ref_grid, n_Texp_grid = make_broadpar_grid(
+        ngamma_ref, n_Texp, Tmax, dit_grid_resolution=dit_grid_resolution)
+
+    wavmask = (nu_lines >= nu_grid[0]) * (nu_lines <= nu_grid[-1]) #Issue 341
+    
+    lbd_coeff, multi_index_uniqgrid = generate_lbd(
+        line_strength_ref[wavmask],
+        nu_lines[wavmask],
+        nu_grid,
+        ngamma_ref[wavmask],
+        ngamma_ref_grid,
+        n_Texp[wavmask],
+        n_Texp_grid,
+        elower[wavmask],
+        elower_grid,
+        Twt,
+        Tref=Tref,
+        diffmode=diffmode)
     pmarray = np.ones(len(nu_grid) + 1)
-    pmarray[1::2] = pmarray[1::2] * -1.0
-    return lbd, multi_index_uniqgrid, elower_grid, ngamma_ref_grid, n_Texp_grid, R, jnp.array(pmarray)
+    pmarray[1::2] = (pmarray[1::2] * -1.0)
+    pmarray = jnp.array(pmarray)
+    return lbd_coeff, multi_index_uniqgrid, elower_grid, ngamma_ref_grid, n_Texp_grid, R, pmarray
 
 
 def init_modit_vald(nu_linesM, nus, N_usp):

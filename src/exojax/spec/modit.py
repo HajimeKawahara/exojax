@@ -141,16 +141,17 @@ def exomol(mdb, Tarr, Parr, R, molmass):
     """compute molecular line information required for MODIT using Exomol mdb.
 
     Args:
-       mdb: mdb instance
-       Tarr: Temperature array
-       Parr: Pressure array
-       R: spectral resolution
-       molmass: molecular mass
-
+        mdb: mdb instance
+        Tarr: Temperature array
+        Parr: Pressure array
+        R: spectral resolution
+        molmass: molecular mass
+        wavmask: mask for wavenumber #Issue 341
+        
     Returns:
-       line intensity matrix,
-       normalized gammaL matrix,
-       normalized sigmaD matrix
+        line intensity matrix,
+        normalized gammaL matrix,
+        normalized sigmaD matrix
     """
     qt = vmap(mdb.qr_interp)(Tarr)
     SijM = jit(vmap(SijT, (0, None, None, None, 0)))(Tarr, mdb.logsij0,

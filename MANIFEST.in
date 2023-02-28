@@ -10,19 +10,33 @@ include src/exojax/data/testdata/spectrum.txt
 include src/exojax/data/testdata/spectrum_ch4.txt
 include src/exojax/data/testdata/spectrum_ch4_new.txt
 include src/exojax/data/testdata/spectrum_co.txt
-include src/exojax/data/testdata/moldb_co_exomol.pickle
-include src/exojax/data/testdata/moldb_co_hitemp.pickle
-include src/exojax/data/testdata/moldb_co_hitemp_single_isotope.pickle
 include src/exojax/data/testdata/moldb_h2o_exomol.pickle
 include src/exojax/data/testdata/moldb_vald.pickle
 include src/exojax/data/testdata/lpf_test_ref.txt
 include src/exojax/data/testdata/modit_test_ref.txt
-include src/exojax/data/testdata/premodit_test_ref.txt
-include src/exojax/data/testdata/premodit_test_hitemp_ref.txt
+
+include src/exojax/data/testdata/lpf_test_hitemp_ref_air.txt
+include src/exojax/data/testdata/modit_test_hitemp_ref.txt
+include src/exojax/data/testdata/modit_test_hitemp_ref_air.txt
+include src/exojax/data/testdata/premodit_test_hitemp_ref_air.txt
+
 include src/exojax/data/testdata/modit_rt_test_ref.txt
+include src/exojax/data/testdata/modit_rt_test_hitemp_ref.txt
+
 include src/exojax/data/testdata/premodit_rt_test_ref.txt
 include src/exojax/data/testdata/premodit_rt_test_hitemp_ref.txt
 include src/exojax/data/testdata/modit_rt_test_vald_ref.txt
+include src/exojax/data/testdata/CO/05_HITEMP_SAMPLE.par
+include src/exojax/data/testdata/CO/12C-16O/SAMPLE/12C-16O__H2.broad
+include src/exojax/data/testdata/CO/12C-16O/SAMPLE/12C-16O__He.broad
+include src/exojax/data/testdata/CO/12C-16O/SAMPLE/12C-16O__SAMPLE.def
+include src/exojax/data/testdata/CO/12C-16O/SAMPLE/12C-16O__SAMPLE.pf
+include src/exojax/data/testdata/CO/12C-16O/SAMPLE/12C-16O__SAMPLE.states.bz2
+include src/exojax/data/testdata/CO/12C-16O/SAMPLE/12C-16O__SAMPLE.states.hdf5
+include src/exojax/data/testdata/CO/12C-16O/SAMPLE/12C-16O__SAMPLE.trans.bz2
+include src/exojax/data/testdata/CO/12C-16O/SAMPLE/12C-16O__SAMPLE.trans.hdf5
+
+include src/exojax/data/premodit/elower_grid_trange.npz
 
 graft tests
 graft examples

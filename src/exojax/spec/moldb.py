@@ -7,7 +7,7 @@ import pathlib
 import vaex
 import warnings
 from exojax.spec import atomllapi, atomll
-from exojax.utils.constants import Tref
+from exojax.utils.constants import Tref_original
 from exojax.spec import api 
 __all__ = ['MdbExomol', 'MdbHit', 'AdbVald', 'AdbSepVald', 'AdbKurucz']
 
@@ -90,7 +90,7 @@ class AdbVald(object):
         self.T_gQT = jnp.array(pfTdat.columns[1:], dtype=float)
         self.gQT_284species = jnp.array(self.pfdat.iloc[:, 1:].to_numpy(
             dtype=float))  # grid Q vs T vs Species
-        self.QTref_284 = np.array(self.QT_interp_284(Tref))
+        self.QTref_284 = np.array(self.QT_interp_284(Tref_original))
         # identify index of QT grid (gQT) for each line
         self._QTmask = self.make_QTmask(self._ielem, self._iion)
 
@@ -227,7 +227,7 @@ class AdbVald(object):
         Returns:
            qr(T)=Q(T)/Q(Tref): interpolated in jnp.array
         """
-        return self.QT_interp(atomspecies, T)/self.QT_interp(atomspecies, Tref)
+        return self.QT_interp(atomspecies, T)/self.QT_interp(atomspecies, Tref_original)
 
     def qr_interp_Irwin_Fe(self, T, atomspecies='Fe 1'):
         """interpolated partition function ratio This function is for the
@@ -241,7 +241,7 @@ class AdbVald(object):
         Returns:
            qr(T)=Q(T)/Q(Tref): interpolated in jnp.array
         """
-        return self.QT_interp_Irwin_Fe(T, atomspecies)/self.QT_interp_Irwin_Fe(Tref, atomspecies)
+        return self.QT_interp_Irwin_Fe(T, atomspecies)/self.QT_interp_Irwin_Fe(Tref_original, atomspecies)
 
     def QT_interp_284(self, T):
         """interpolated partition function of all 284 species.
@@ -395,7 +395,7 @@ class AdbKurucz(object):
         self.T_gQT = jnp.array(pfTdat.columns[1:], dtype=float)
         self.gQT_284species = jnp.array(self.pfdat.iloc[:, 1:].to_numpy(
             dtype=float))  # grid Q vs T vs Species
-        self.QTref_284 = np.array(self.QT_interp_284(Tref))
+        self.QTref_284 = np.array(self.QT_interp_284(Tref_original))
         # identify index of QT grid (gQT) for each line
         self._QTmask = self.make_QTmask(self._ielem, self._iion)
 
@@ -531,7 +531,7 @@ class AdbKurucz(object):
         Returns:
            qr(T)=Q(T)/Q(Tref): interpolated in jnp.array
         """
-        return self.QT_interp(atomspecies, T)/self.QT_interp(atomspecies, Tref)
+        return self.QT_interp(atomspecies, T)/self.QT_interp(atomspecies, Tref_original)
 
     def qr_interp_Irwin_Fe(self, T, atomspecies='Fe 1'):
         """interpolated partition function ratio This function is for the
@@ -545,7 +545,7 @@ class AdbKurucz(object):
         Returns:
            qr(T)=Q(T)/Q(Tref): interpolated in jnp.array
         """
-        return self.QT_interp_Irwin_Fe(T, atomspecies)/self.QT_interp_Irwin_Fe(Tref, atomspecies)
+        return self.QT_interp_Irwin_Fe(T, atomspecies)/self.QT_interp_Irwin_Fe(Tref_original, atomspecies)
 
     def QT_interp_284(self, T):
         """interpolated partition function of all 284 species.

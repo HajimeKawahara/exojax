@@ -93,6 +93,6 @@ with a STD of :math:`\beta` and a Lorentian with a gamma parameter of
     nu=jnp.linspace(-10,10,100)
     plt.plot(nu, voigt(nu,1.0,2.0)) #beta=1.0, gamma_L=2.0
 
-.. image:: ../tutorials/voigt_function/output_3_1.png
+.. image:: hjerting/output_3_1.png
 
 See " :doc:`../tutorials/voigt_function` " for the tutorial of the Voigt profile.

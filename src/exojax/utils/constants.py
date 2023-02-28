@@ -6,8 +6,8 @@
 
 """
 
-# reference temperature used in exojax.spec
-Tref = 296.0
+# original reference temperature used in HITRAN/HITEMP in K 
+Tref_original = 296.0
 
 # cgs
 Rs = 6.957*1.e10
@@ -28,6 +28,10 @@ eV2wn = 8065.54  # 1[eV]=8065.54[cm^-1]
 hcgs = 6.62607015e-27  # Planck constant [erg*s]
 Rcgs = 1.0973731568e5  # Rydberg constant [cm-1]
 a0 = 5.2917720859e-9  # Bohr radius [cm]
+
+# 1 atm in bar
+Patm = 1.01325  # atm (bar)
+            
 
 # km/s
 c = 299792.458

@@ -27,12 +27,13 @@ def test_exomol():
     Sij = line_strength(Tfix,mdbCO.logsij0,mdbCO.nu_lines,mdbCO.elower,qt)
     
     Nx=1000
-    nus, wav, res = wavenumber_grid(22940.0,22960.0, Nx, unit='AA')
+    nus, wav, res = wavenumber_grid(22940.0,22960.0, Nx, unit='AA', xsmode="lpf")
     numatrix=init_lpf(mdbCO.nu_lines, nus)
     xsv=xsvector(numatrix, sigmaD, gammaL, Sij)
 
     filename = pkg_resources.resource_filename('exojax', 'data/testdata/'+TESTDATA_CO_EXOMOL_LPF_XS_REF)
     dat=pd.read_csv(filename,delimiter=",",names=("nus","xsv"))
+    
     assert np.all(xsv == pytest.approx(dat["xsv"].values))
     
 if __name__ == "__main__":

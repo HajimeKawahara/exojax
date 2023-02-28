@@ -14,6 +14,8 @@ import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 import jax.numpy as jnp
+
+from exojax.spec.opacalc import OpaPremodit
 from exojax.spec import contdb
 from exojax.spec.api import MdbExomol
 from exojax.spec import rtransfer
@@ -26,12 +28,10 @@ from exojax.utils.grids import velocity_grid
 from exojax.spec import molinfo
 from exojax.utils.instfunc import resolution_to_gaussian_std
 import numpy as np
-from exojax.spec import initspec
 import pkg_resources
 from exojax.test.data import SAMPLE_SPECTRA_CH4_NEW
-from exojax.spec.premodit import xsmatrix
 from exojax.spec.planck import piBarr
-from jax import vmap
+
 
 filename = pkg_resources.resource_filename(
     'exojax', 'data/testdata/' + SAMPLE_SPECTRA_CH4_NEW)
@@ -67,37 +67,29 @@ mdb = MdbExomol('.database/CH4/12C-1H4/YT10to10/',
 cdbH2H2 = contdb.CdbCIA('.database/H2-H2_2011.cia', nu_grid)
 print('N=', len(mdb.nu_lines))
 
+### PREMODIT
 # Reference pressure for a T-P model
 Pref = 1.0  # bar
 ONEARR = np.ones_like(Parr)
 ONEWAV = jnp.ones_like(nflux)
 
-interval_contrast = 0.1
-dit_grid_resolution = 0.1
 Ttyp = 2000.0
-
-lbd, multi_index_uniqgrid, elower_grid, ngamma_ref_grid, n_Texp_grid, R, pmarray = initspec.init_premodit(
-    mdb.nu_lines,
-    nu_grid,
-    mdb.elower,
-    mdb.alpha_ref,
-    mdb.n_Texp,
-    mdb.Sij0,
-    Ttyp,
-    interval_contrast=interval_contrast,
-    dit_grid_resolution=dit_grid_resolution,
-    warning=False)
+dit_grid_resolution = 0.2
+diffmode = 1
+opa = OpaPremodit(mdb=mdb,
+                  nu_grid=nu_grid,
+                  diffmode=diffmode,
+                  auto_trange=[400.0, 1500.0],
+                  dit_grid_resolution=dit_grid_resolution)
 
 #settings before HMC
 vsini_max = 100.0
 vr_array = velocity_grid(res, vsini_max)
 
+
 def frun(Tarr, MMR_CH4, Mp, Rp, u1, u2, RV, vsini):
     g = 2478.57730044555 * Mp / Rp**2
-    qtarr = vmap(mdb.qr_interp)(Tarr)
-    xsm = xsmatrix(Tarr, Parr, R, pmarray, lbd, nu_grid, ngamma_ref_grid,
-                   n_Texp_grid, multi_index_uniqgrid, elower_grid, molmassCH4,
-                   qtarr)
+    xsm = opa.xsmatrix(Tarr, Parr)
     dtaumCH4 = dtauM(dParr, jnp.abs(xsm), MMR_CH4 * np.ones_like(Parr),
                      molmassCH4, g)
     # CIA

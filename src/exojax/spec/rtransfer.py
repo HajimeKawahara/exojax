@@ -15,13 +15,15 @@ def wavenumber_grid(x0, x1, N, unit='cm-1', xsmode='lpf'):
     from exojax.utils.grids import wavenumber_grid
     return wavenumber_grid(x0, x1, N, unit=unit, xsmode=xsmode)
 
-def pressure_layer(logPtop=-8., logPbtm=2., NP=20, mode='ascending'):
+def pressure_layer(logPtop=-8., logPbtm=2., NP=20, mode='ascending', numpy=False):
     """generating the pressure layer.
 
     Args:
        logPtop: log10(P[bar]) at the top layer
        logPbtm: log10(P[bar]) at the bottom layer
        NP: the number of the layers
+       mode: ascending or descending
+       numpy: if True use numpy array instead of jnp array
 
     Returns:
          Parr: pressure layer
@@ -33,13 +35,16 @@ def pressure_layer(logPtop=-8., logPbtm=2., NP=20, mode='ascending'):
     """
     dlogP = (logPbtm-logPtop)/(NP-1)
     k = 10**-dlogP
-    Parr = jnp.logspace(logPtop, logPbtm, NP)
+    if numpy:
+        Parr = np.logspace(logPtop, logPbtm, NP)
+    else:
+        Parr = jnp.logspace(logPtop, logPbtm, NP)
     dParr = (1.0-k)*Parr
     if mode == 'descending':
         Parr = Parr[::-1]
         dParr = dParr[::-1]
 
-    return jnp.array(Parr), jnp.array(dParr), k
+    return Parr, dParr, k
 
 
 def dtauCIA(nus, Tarr, Parr, dParr, vmr1, vmr2, mmw, g, nucia, tcia, logac):
