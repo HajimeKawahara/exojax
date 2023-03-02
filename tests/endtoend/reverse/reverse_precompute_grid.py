@@ -25,7 +25,7 @@ from exojax.spec.api import MdbExomol
 from exojax.spec.opacalc import OpaPremodit
 from exojax.spec.contdb import CdbCIA
 from exojax.spec.opacont import OpaCIA
-from exojax.spec.response import ipgauss_sampling
+from exojax.spec.response import ipgauss_sampling, ipgauss2, sampling
 from exojax.spec.spin_rotation import convolve_rigid_rotation
 from exojax.utils.grids import velocity_grid
 from exojax.utils.astrofunc import gravity_jupiter
@@ -139,7 +139,13 @@ def model_c(nu1, y1):
     vsini = numpyro.sample('vsini', dist.Uniform(15.0, 25.0))
     F0 = A * vmapinterp(T0, T0_grid, F0_grid)
     Frot = convolve_rigid_rotation(F0, vr_array, vsini, u1=0.0, u2=0.0)
+
+    #using 
     mu = ipgauss_sampling(nusd, nu_grid, Frot, beta_inst, RV)
+    #using jnp.convolve
+    #Frotgauss = ipgauss2(nu_grid, Frot , vr_array, beta_inst)
+    #mu = sampling(nusd, nu_grid, Frotgauss, RV)
+
     numpyro.sample('y1', dist.Normal(mu, sigmain), obs=y1)
 
 

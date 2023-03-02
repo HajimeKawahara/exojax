@@ -13,6 +13,8 @@ from jax import jit
 from exojax.spec.spin_rotation import convolve_rigid_rotation
 from exojax.utils.grids import velocity_grid
 from exojax.utils.instfunc import resolution_eslog
+from exojax.signal.convolve import convolve_same
+
 import warnings
 
 
@@ -67,7 +69,8 @@ def ipgauss2(nus, F0, varr_kernel, beta):
     x = varr_kernel / beta
     kernel = jnp.exp(-x * x / 2.0)
     kernel = kernel / jnp.sum(kernel, axis=0)
-    F = jnp.convolve(F0, kernel, mode='same')
+    #F = jnp.convolve(F0, kernel, mode='same')
+    F = convolve_same(F0, kernel)
 
     return F
 
