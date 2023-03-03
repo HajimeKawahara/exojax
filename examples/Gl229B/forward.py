@@ -126,7 +126,7 @@ Rinst = 100000.
 beta = c/(2.0*np.sqrt(2.0*np.log(2.0))*Rinst)  # IP sigma need check
 
 Frot = response.rigidrot(nus, F0, vsini, u1, u2)
-F = response.ipgauss_sampling(nusd, nus, Frot, beta, RV)
+F = response.ipgauss_sampling_slow(nusd, nus, Frot, beta, RV)
 
 
 ###

@@ -2,7 +2,7 @@ import numpy as np
 import jax.numpy as jnp
 from jax import jit
 from exojax.utils.grids import wavenumber_grid
-from exojax.spec.response import ipgauss_sampling
+from exojax.spec.response import ipgauss_sampling_slow
 from exojax.utils.constants import c
 
 def _ipgauss_sampling_naive(nusd, nus, F0, beta, RV):
@@ -47,7 +47,7 @@ def test_ipgauss_sampling(fig=False):
                                                4007.0,
                                                250,
                                                xsmode="lpf")
-    F = ipgauss_sampling(nusd, nus, F0, beta, RV)
+    F = ipgauss_sampling_slow(nusd, nus, F0, beta, RV)
     F_naive = _ipgauss_sampling_naive(nusd, nus, F0, beta, RV)
     res = np.max(np.abs(1.0 - F_naive/F))
     assert res < 1.e-4 #0.1% allowed

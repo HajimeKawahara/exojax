@@ -104,7 +104,7 @@ def frun(Tarr, MMR_CH4, Mp, Rp, u1, u2, RV, vsini):
 
     F0 = rtrun(dtau, sourcef) / norm
     Frot = response.rigidrot(nu_grid, F0, vsini, u1, u2)
-    mu = response.ipgauss_sampling(nusd, nu_grid, Frot, beta_inst, RV)
+    mu = response.ipgauss_sampling_slow(nusd, nu_grid, Frot, beta_inst, RV)
     return mu
 
 

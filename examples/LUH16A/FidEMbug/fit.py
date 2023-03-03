@@ -161,7 +161,7 @@ def model_c(nu1,y1,e1):
     F0=rtrun(dtau,sourcef)/baseline/Ftoa
     
     Frot=response.rigidrot(nus,F0,vsini,u1,u2)
-    mu=response.ipgauss_sampling(nu1,nus,Frot,beta,RV)
+    mu=response.ipgauss_sampling_slow(nu1,nus,Frot,beta,RV)
     cov=gpkernel_RBF(nu1,tau,a,e1)
     sample("y1", dist.MultivariateNormal(loc=mu, covariance_matrix=cov), obs=y1)
         

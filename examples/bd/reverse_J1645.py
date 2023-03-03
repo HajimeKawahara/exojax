@@ -158,7 +158,7 @@ def frun(Tarr, MMR_H2O, MMR_CO, Mp, Rp, u1, u2, RV, vsini):
     sourcef = planck.piBarr(Tarr, nus)
     F0 = rtrun(dtau, sourcef)/norm
     Frot = response.rigidrot(nus, F0, vsini, u1, u2)
-    mu = response.ipgauss_sampling(nusd, nus, Frot, beta_inst, RV)
+    mu = response.ipgauss_sampling_slow(nusd, nus, Frot, beta_inst, RV)
     return mu
 
 

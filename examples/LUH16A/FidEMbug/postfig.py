@@ -226,7 +226,7 @@ def predmod(nu1,y1,e1,pos,i):
         F0=rtrun(dtau,sourcef)/baseline/Ftoa
         
         Frot=response.rigidrot(nus,F0,vsini,u1,u2)
-        mu=response.ipgauss_sampling(nusd,nus,Frot,beta,RV)
+        mu=response.ipgauss_sampling_slow(nusd,nus,Frot,beta,RV)
         return mu
 
     mu=obyo(y1,"y1",nusd1,nus1,numatrix_CO1,numatrix_H2O1,mdbCO1,mdbH2O1,cdbH2H21,cdbH2He1)

@@ -9,7 +9,7 @@ from jax import random
 from exojax.spec import contdb
 from exojax.spec.api import MdbExomol
 from exojax.spec import molinfo
-from exojax.spec.response import ipgauss_sampling
+from exojax.spec.response import ipgauss_sampling_slow
 from exojax.spec.spin_rotation import convolve_rigid_rotation
 from exojax.utils.grids import velocity_grid
 from exojax.spec.rtransfer import wavenumber_grid
@@ -91,7 +91,7 @@ def model_c(nu1, y1):
         dtau = dtaumCO + dtaucH2H2
         F0 = art.run(dtau, Tarr) / norm
         Frot = convolve_rigid_rotation(F0, vr_array, vsini, u1, u2)
-        mu = ipgauss_sampling(nusd, nus, Frot, beta_inst, RV)
+        mu = ipgauss_sampling_slow(nusd, nus, Frot, beta_inst, RV)
         numpyro.sample(tag, dist.Normal(mu, sigmain), obs=y)
 
     obyo(y1, 'y1', nu1, nu_grid)

@@ -166,7 +166,7 @@ def test_VALD_MODIT():
     Frot = response.rigidrot(nus, F0, vsini, u1, u2)
     wavd = jnp.linspace(wls, wll, 500)
     nusd = jnp.array(1.e8/wavd[::-1])
-    mu = response.ipgauss_sampling(nusd, nus, Frot, beta_inst, RV)
+    mu = response.ipgauss_sampling_slow(nusd, nus, Frot, beta_inst, RV)
     mu = mu/jnp.nanmax(mu)*adjust_continuum
 
     assert (np.all(~np.isnan(mu)) * \

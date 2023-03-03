@@ -153,7 +153,7 @@ def model_c(nu1, y1):
         F0 = rtrun(dtau, sourcef)/norm
 
         Frot = response.rigidrot(nus, F0, vsini, u1, u2)
-        mu = response.ipgauss_sampling(nusd, nus, Frot, beta, RV)
+        mu = response.ipgauss_sampling_slow(nusd, nus, Frot, beta, RV)
         numpyro.sample(tag, dist.Normal(mu, sigmain), obs=y)
 
     obyo(y1, 'y1', nu1, nus, numatrix_CO, mdbCO, cdbH2H2)

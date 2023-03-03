@@ -235,7 +235,7 @@ def model_c(nu1,y1,e1):
         F0=rtrun(dtau,sourcef)/baseline/Ftoa
         
         Frot=response.rigidrot(nus,F0,vsini,u1,u2)
-        mu=response.ipgauss_sampling(nusd,nus,Frot,beta,RV)
+        mu=response.ipgauss_sampling_slow(nusd,nus,Frot,beta,RV)
         
         errall=jnp.sqrt(e1**2+sigma**2)
         numpyro.sample(tag, dist.Normal(mu, errall), obs=y)

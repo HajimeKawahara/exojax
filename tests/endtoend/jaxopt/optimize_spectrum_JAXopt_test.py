@@ -98,7 +98,7 @@ def test_jaxopt_spectrum():
             sourcef = planck.piBarr(Tarr, nus)
             F0 = rtrun(dtau, sourcef) / norm
             Frot = convolve_rigid_rotation(F0, vr_array, vsini, u1, u2)
-            mu = response.ipgauss_sampling(nusd, nus, Frot, beta, RV)
+            mu = response.ipgauss_sampling_slow(nusd, nus, Frot, beta, RV)
             return mu
 
         model = obyo(nu1, nus, numatrix_CO, mdbCO, cdbH2H2)

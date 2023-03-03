@@ -106,7 +106,7 @@ def frun_lbl(VMR_H2O):
     sourcef = planck.piBarr(Tarr, nus)
     F0 = rtrun(dtau, sourcef)
     Frot = convolve_rigid_rotation(F0, vr_array, vsini, u1, u2)
-    mu = response.ipgauss_sampling(nusd, nus, Frot, beta_inst, RV)
+    mu = response.ipgauss_sampling_slow(nusd, nus, Frot, beta_inst, RV)
     adjust_continuum1 = 1.
     adjust_continuum2 = 1.
     a = (adjust_continuum1 - adjust_continuum2) / (wavd[0] - wavd[-1])
