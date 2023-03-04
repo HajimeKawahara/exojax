@@ -3,6 +3,7 @@ import jax.numpy as jnp
 from jax import jit
 from exojax.utils.grids import wavenumber_grid
 from exojax.spec.response import ipgauss_sampling
+from exojax.spec.response import ipgauss_variable_sampling
 from exojax.utils.grids import velocity_grid
 
 from exojax.utils.constants import c
@@ -40,7 +41,6 @@ def test_ipgauss_sampling(fig=False):
                                                4010.0,
                                                1000,
                                                xsmode="premodit")
-
     F0 = np.ones_like(nus)
     F0[500 - 5:500 + 5] = 0.5
     RV = 10.0
@@ -54,6 +54,7 @@ def test_ipgauss_sampling(fig=False):
     vr_array = velocity_grid(resolution, vsini_max)
 
     F = ipgauss_sampling(nusd, nus, F0, beta, RV, vr_array)
+
     F_naive = _ipgauss_sampling_naive(nusd, nus, F0, beta, RV)
     res = np.max(np.abs(1.0 - F_naive/F))
     print(res)
@@ -64,6 +65,37 @@ def test_ipgauss_sampling(fig=False):
         plt.plot(nusd,F_naive,ls="dashed")
         plt.show()
         
-        
+
+def test_ipgauss_variable_sampling_using_constant_beta_array(fig=False):
+    nus, wav, resolution = wavenumber_grid(4000.0,
+                                               4010.0,
+                                               1000,
+                                               xsmode="premodit")
+    F0 = np.ones_like(nus)
+    F0[500 - 5:500 + 5] = 0.5
+    RV = 10.0
+    beta = 20.0
+    nusd, wav, resolution_inst = wavenumber_grid(4003.0,
+                                               4007.0,
+                                               250,
+                                               xsmode="lpf")
+                                               #settings before HMC
+    beta = 20.0
+    beta_variable = np.ones_like(nusd)*beta
+
+    F = ipgauss_variable_sampling(nusd, nus, F0, beta_variable, RV)
+
+    F_naive = _ipgauss_sampling_naive(nusd, nus, F0, beta, RV)
+    res = np.max(np.abs(1.0 - F_naive/F))
+    print(res)
+    assert res < 1.e-4 #0.1% allowed
+    if fig:
+        import matplotlib.pyplot as plt
+        plt.plot(nusd,F)
+        plt.plot(nusd,F_naive,ls="dashed")
+        plt.show()
+
+
 if __name__ == "__main__":
     test_ipgauss_sampling(fig=True)
+    test_ipgauss_variable_sampling_using_constant_beta_array(fig=True)
