@@ -84,31 +84,3 @@ def sampling(nusd, nus, F, RV):
     return jnp.interp(nusd * (1.0 + RV / c), nus, F)
 
 
-def ipgauss_sampling_slow(nusd, nus, F0, beta, RV):
-    """Old slow version, Apply the Gaussian IP response + sampling to a spectrum F.
-    
-    Notes:
-        This version is slow, will be removed.
-
-    Args:
-        nusd: sampling wavenumber
-        nus: input wavenumber, evenly log-spaced
-        F0: original spectrum (F0)
-        beta: STD of a Gaussian broadening (IP+microturbulence)
-        RV: radial velocity (km/s)
-
-    Return:
-        response-applied spectrum (F)
-    """
-    warnings.warn(
-        "ipgauss_sampling_slow is deprecated and slow. Use ipgauss_sampling instead.",
-        UserWarning)
-
-    def convolve_ipgauss_scan(carry, nusd_each):
-        dvgrid = c * (jnp.log1p(1.0 - nus / nusd_each))
-        kernel = jnp.exp(-(dvgrid + RV)**2 / (2.0 * beta**2))
-        kernel = kernel / jnp.sum(kernel)
-        return carry, kernel @ F0
-
-    _, F_convolved = scan(convolve_ipgauss_scan, 0, nusd)
-    return F_convolved
