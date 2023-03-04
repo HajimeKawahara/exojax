@@ -1,54 +1,17 @@
 Basics
 ==============
 
-.. note::
-
-   We will update and reorganise the opacity calculators by Release 2.0. 
-   Meanwhile, use LPF when the number of lines is less than ~ a few hundred.
-   For larger numbers, consider to use MODIT or a more experimetal calculator PreMODIT.
-   MODIT is limited by a device memory limits while while PreMODIT has no such limitation.
-   Therefore, if you want to for instance, million to billion lines, use PreMODIT.
-
-Get Started
-----------------
-
 .. toctree::
    :maxdepth: 1
 
    tutorials/get_started.rst
-
-Optimization
-=================
-
-Gradient-based Optimization of Spectra
---------------------------------------
-
-.. toctree::
-   :maxdepth: 1
-
    tutorials/optimize_spectrum_JAXopt.rst
-   tutorials/optimize_voigt.rst
-   tutorials/optimize_voigt_JAXopt.rst
-
-
-
-
-Retrievals
-=======================
-
-Reverse Modeling (a.k.a Retrieval) using Various Opacity Calculators
-------------------------------------------------------------------------
-
-.. toctree::
-   :maxdepth: 1
+   tutorials/reverse_premodit.rst
    
-   tutorials/Reverse_modeling.rst
-   tutorials/Reverse_modeling_for_methane_using_MODIT.rst
-   tutorials/Reverse_modeling_with_VALD_using_MODIT.rst
 
 
-Examples for Manual Settings of Opacity
-==============================================
+Examples for Manual Settings of Opacity (not using opa)
+==============================================================
 
 If you like, you do not need "opa" nor "art" to compute opacity and spectra. 
 
@@ -75,6 +38,26 @@ Manual Forward Modeling
    tutorials/Forward_modeling_using_PreMODIT_Cross_Section_for_methane.rst
    various_forward.rst
 
+
+Manual Gradient-based Optimization of Spectra
+--------------------------------------------------
+
+.. toctree::
+   :maxdepth: 1
+
+   tutorials/optimize_voigt.rst
+   tutorials/optimize_voigt_JAXopt.rst
+
+
+Manual Retrievals
+-----------------------------------------------------------------------------
+
+.. toctree::
+   :maxdepth: 1
+   
+   tutorials/Reverse_modeling.rst
+   tutorials/Reverse_modeling_for_methane_using_MODIT.rst
+   tutorials/Reverse_modeling_with_VALD_using_MODIT.rst
 
 
 Others
