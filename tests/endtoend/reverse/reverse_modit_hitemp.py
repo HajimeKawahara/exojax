@@ -21,7 +21,7 @@ from exojax.spec import api, contdb
 from exojax.utils.grids import wavenumber_grid
 from exojax.spec.rtransfer import rtrun, dtauM, dtauCIA, wavenumber_grid
 from exojax.spec import planck
-from exojax.spec.response import ipgauss_sampling_slow
+from exojax.spec.response import ipgauss_sampling
 from exojax.spec.spin_rotation import convolve_rigid_rotation
 from exojax.utils.grids import velocity_grid
 from exojax.spec import molinfo
@@ -112,7 +112,7 @@ def frun(Tarr, MMR_CO, Mp, Rp, u1, u2, RV, vsini):
     sourcef = planck.piBarr(Tarr, nus)
     F0 = rtrun(dtau, sourcef) / norm
     Frot = convolve_rigid_rotation(F0, vr_array, vsini, u1, u2)
-    mu = ipgauss_sampling_slow(nusd, nus, Frot, beta_inst, RV)
+    mu = ipgauss_sampling(nusd, nus, Frot, beta_inst, RV, vr_array)
     return mu
 
 
