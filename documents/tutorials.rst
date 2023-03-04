@@ -17,29 +17,6 @@ Get Started
 
    tutorials/get_started.rst
 
-Cross Section using Various Opacity Calculators
---------------------------------------------------------
-
-.. toctree::
-   :maxdepth: 1
-
-   tutorials/opacity.rst
-   tutorials/opacity_exomol.rst   
-   tutorials/Cross_Section_using_Precomputation_Modified_Discrete_Integral_Transform.rst
-   tutorials/Comparing_HITEMP_and_ExoMol.rst
-   tutorials/Cross_Section_using_Modified_Discrete_Integral_Transform.rst
-   tutorials/Cross_Section_using_Discrete_Integral_Transform.rst
-
-Forward Modeling
---------------------------------------------------------
-
-.. toctree::
-   :maxdepth: 1
-
-   tutorials/Forward_modeling.rst
-   tutorials/Forward_modeling_using_PreMODIT_Cross_Section_for_methane.rst
-   various_forward.rst
-
 Optimization
 =================
 
@@ -68,6 +45,36 @@ Reverse Modeling (a.k.a Retrieval) using Various Opacity Calculators
    tutorials/Reverse_modeling.rst
    tutorials/Reverse_modeling_for_methane_using_MODIT.rst
    tutorials/Reverse_modeling_with_VALD_using_MODIT.rst
+
+
+Examples for Manual Settings of Opacity
+==============================================
+
+If you like, you do not need "opa" nor "art" to compute opacity and spectra. 
+
+Cross Section using Various Opacity Calculators
+--------------------------------------------------------
+
+.. toctree::
+   :maxdepth: 1
+
+   tutorials/opacity.rst
+   tutorials/opacity_exomol.rst   
+   tutorials/Cross_Section_using_Precomputation_Modified_Discrete_Integral_Transform.rst
+   tutorials/Comparing_HITEMP_and_ExoMol.rst
+   tutorials/Cross_Section_using_Modified_Discrete_Integral_Transform.rst
+   tutorials/Cross_Section_using_Discrete_Integral_Transform.rst
+
+Manual Forward Modeling
+--------------------------------------------------------
+
+.. toctree::
+   :maxdepth: 1
+
+   tutorials/Forward_modeling.rst
+   tutorials/Forward_modeling_using_PreMODIT_Cross_Section_for_methane.rst
+   various_forward.rst
+
 
 
 Others

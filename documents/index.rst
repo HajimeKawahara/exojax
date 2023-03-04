@@ -23,8 +23,6 @@ Contents
    :maxdepth: 1
 	      
    userguide/installation.rst
-   userguide/ql.rst	     
-   userguide/database.rst	     
 
 .. toctree::
    :maxdepth: 2

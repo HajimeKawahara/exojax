@@ -4,6 +4,7 @@ Molecular Database
 .. toctree::
    :maxdepth: 1
 
+   userguide/database.rst	
    userguide/mdb.rst
    userguide/api.rst
    userguide/qstates.rst

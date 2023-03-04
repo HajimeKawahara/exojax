@@ -1,13 +1,13 @@
-Molecular and Atomic Databases (mdb)
-======================================
+Molecular and Atomic Databases (mdb/adb)
+============================================
 
 Multiple molecular and atomic databases are available in ExoJAX. 
 These molecular database can be controlled using the molecular/atomic database class 
-(mdb) for each database.
+(mdb/adb) for each database.
 
 
 +-----------------------+---------+---------------------------------------------------------------------------------+------------------------------------+
-|**database**           |**mdb**  |**API**                                                                          | **notes**                          |
+|**database**           |mdb/adb  |**API**                                                                          | **notes**                          |
 +-----------------------+---------+---------------------------------------------------------------------------------+------------------------------------+
 |ExoMol                 |MdbExomol|`spec.api.MdbExomol <../exojax/exojax.spec.html#exojax.spec.api.MdbExomol>`_.    | auto download.                     |
 +-----------------------+---------+---------------------------------------------------------------------------------+------------------------------------+
@@ -21,3 +21,5 @@ These molecular database can be controlled using the molecular/atomic database c
 +-----------------------+---------+---------------------------------------------------------------------------------+------------------------------------+
 
 See :doc:`api` and :doc:`atomll` for the details.
+
+For VALD3, you need to request the database one by one from the VALD3 website.
