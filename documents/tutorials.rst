@@ -9,13 +9,13 @@ Basics
    MODIT is limited by a device memory limits while while PreMODIT has no such limitation.
    Therefore, if you want to for instance, million to billion lines, use PreMODIT.
 
-Simple Usage
+Get Started
 ----------------
 
 .. toctree::
    :maxdepth: 1
 
-   tutorials/simple_usage.rst
+   tutorials/get_started.rst
 
 Cross Section using Various Opacity Calculators
 --------------------------------------------------------
@@ -40,15 +40,8 @@ Forward Modeling
    tutorials/Forward_modeling_using_PreMODIT_Cross_Section_for_methane.rst
    various_forward.rst
 
-Reverse Modeling (a.k.a Retrieval) using Various Opacity Calculators
-------------------------------------------------------------------------
-
-.. toctree::
-   :maxdepth: 1
-   
-   tutorials/Reverse_modeling.rst
-   tutorials/Reverse_modeling_for_methane_using_MODIT.rst
-   tutorials/Reverse_modeling_with_VALD_using_MODIT.rst
+Optimization
+=================
 
 Gradient-based Optimization of Spectra
 --------------------------------------
@@ -60,6 +53,25 @@ Gradient-based Optimization of Spectra
    tutorials/optimize_voigt.rst
    tutorials/optimize_voigt_JAXopt.rst
 
+
+
+
+Retrievals
+=======================
+
+Reverse Modeling (a.k.a Retrieval) using Various Opacity Calculators
+------------------------------------------------------------------------
+
+.. toctree::
+   :maxdepth: 1
+   
+   tutorials/Reverse_modeling.rst
+   tutorials/Reverse_modeling_for_methane_using_MODIT.rst
+   tutorials/Reverse_modeling_with_VALD_using_MODIT.rst
+
+
+Others
+================
 
 Micro Chemical/Physical Processes
 --------------------------------------
@@ -92,3 +104,5 @@ Others
    tutorials/hjerting.rst
    tutorials/pure_absorption_rt.rst
    tutorials/voigt_function.rst
+
+

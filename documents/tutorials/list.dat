@@ -30,5 +30,5 @@ optimize_spectrum_JAXopt.ipynb
 optimize_voigt.ipynb
 optimize_voigt_JAXopt.ipynb
 pure_absorption_rt.ipynb
-simple_usage.ipynb
+get_started.ipynb
 voigt_function.ipynb
