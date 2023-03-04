@@ -1,14 +1,16 @@
 import matplotlib.pyplot as plt
-import numpy
 from exojax.utils.grids import wavenumber_grid
-from exojax.spec import AutoXS
-# nus,wav,res=nugrid(1900.0,2300.0,200000,"cm-1")
-nus = numpy.linspace(1900.0, 2300.0, 200000,
-                     dtype=numpy.float64)  # wavenumber (cm-1)
-# using ExoMol CO (12C-16O). HITRAN and HITEMP are also supported.
-autoxs = AutoXS(nus, 'ExoMol', 'CO')
-xsv = autoxs.xsection(1000.0, 1.0)  # cross section for 1000K, 1bar (cm2)
+from exojax.spec.api import MdbExomol
+from exojax.spec.opacalc import OpaPremodit
 
-plt.plot(nus, xsv)
+from jax.config import config
+config.update("jax_enable_x64", True)
+
+nu_grid,wav,res=wavenumber_grid(1900.0,2300.0,200000,xsmode="premodit",unit="cm-1",)
+mdb = MdbExomol(".database/CO/12C-16O/Li2015",nu_grid)
+opa = OpaPremodit(mdb,nu_grid,auto_trange=[950.0,1050.0])
+xsv = opa.xsvector(1000.0, 1.0)
+
+plt.plot(nu_grid, xsv)
 plt.yscale('log')
 plt.show()

@@ -14,7 +14,7 @@ from exojax.spec import molinfo
 from exojax.spec.lpf import xsvector
 from exojax.spec import planck, response
 from exojax.spec.rtransfer import rtrun, dtauM, dtauCIA, wavenumber_grid
-from exojax.spec.hitrancia import read_cia, logacia
+from exojax.spec.hitrancia import read_cia, interp_logacia_matrix
 from exojax.spec.hitran import SijT, doppler_sigma, gamma_natural, gamma_hitran
 from exojax.spec.exomol import gamma_exomol
 from exojax.spec.lpf import xsmatrix

@@ -29,10 +29,17 @@ voigt(nu,1.0,2.0) #sigma_D=1.0, gamma_L=2.0
 <details><summary>Cross Section using HITRAN/HITEMP/ExoMol :heavy_check_mark: </summary>
  
 ```python
-from exojax.spec import AutoXS
-nus=numpy.linspace(1900.0,2300.0,200000,dtype=numpy.float64) #wavenumber (cm-1)
-autoxs=AutoXS(nus,"ExoMol","CO") #using ExoMol CO (12C-16O). HITRAN and HITEMP are also supported.  
-xsv=autoxs.xsection(1000.0,1.0) #cross section for 1000K, 1bar (cm2)
+from exojax.utils.grids import wavenumber_grid
+from exojax.spec.api import MdbExomol
+from exojax.spec.opacalc import OpaPremodit
+
+from jax.config import config
+config.update("jax_enable_x64", True)
+
+nu_grid,wav,res=wavenumber_grid(1900.0,2300.0,200000,xsmode="premodit",unit="cm-1",)
+mdb = MdbExomol(".database/CO/12C-16O/Li2015",nu_grid)
+opa = OpaPremodit(mdb,nu_grid,auto_trange=[900.0,1100.0])
+xsv = opa.xsvector(1000.0, 1.0) # cross section for 1000K, 1 bar
 ```
 
  <img src="https://user-images.githubusercontent.com/15956904/111430765-2eedf180-873e-11eb-9740-9e1a313d590c.png" Titie="exojax auto cross section" Width=850px> 

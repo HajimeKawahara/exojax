@@ -1,16 +1,10 @@
-""" short integration tests for PreMODIT cross section
-
-    Note:
-        This tests compares the results by PreMODIT with thoses by MODIT.
-        If you are interested more manual comparison, see integrations/premodit/line_strength_comparison_*****.py
-        ***** = exomol or hitemp, which compares cross section and line strength, starting from molecular databases. 
-
+""" short integration tests for MODIT cross section
 """
 import pytest
 import pkg_resources
 import pandas as pd
 import numpy as np
-from exojax.spec.opacalc import OpaPremodit
+from exojax.spec.opacalc import OpaModit
 from exojax.test.emulate_mdb import mock_mdb
 from exojax.test.emulate_mdb import mock_wavenumber_grid
 
@@ -26,10 +20,9 @@ testdata = {}
 testdata["exomol"] = TESTDATA_CO_EXOMOL_MODIT_XS_REF
 testdata["hitemp"] = TESTDATA_CO_HITEMP_MODIT_XS_REF_AIR
 
-@pytest.mark.parametrize("db, diffmode", [("exomol", 0), ("exomol", 1),
-                                          ("exomol", 2), ("hitemp", 0),
-                                          ("hitemp", 1), ("hitemp", 2)])
-def test_xsection_premodit(db, diffmode):
+
+@pytest.mark.parametrize("db",["exomol","hitemp"])
+def test_xsection_modit(db):
 
     ### DO NOT CHANGE ###
     Ttest = 1200  #fix to compare w/ precomputed xs by MODIT.
@@ -37,51 +30,44 @@ def test_xsection_premodit(db, diffmode):
     Ptest = 1.0
     mdb = mock_mdb(db)
     nu_grid, wav, res = mock_wavenumber_grid()
-    opa = OpaPremodit(mdb=mdb,
-                      nu_grid=nu_grid,
-                      diffmode=diffmode,
-                      auto_trange=[500.0, 1500.0])
+    opa = OpaModit(mdb=mdb, nu_grid=nu_grid, dit_grid_resolution=0.1)
     xsv = opa.xsvector(Ttest, Ptest)
     filename = pkg_resources.resource_filename('exojax',
                                                'data/testdata/' + testdata[db])
     dat = pd.read_csv(filename, delimiter=",", names=("nus", "xsv"))
     res = np.max(np.abs(1.0 - xsv / dat["xsv"].values))
     print(res)
-    assert res < 0.012
-    return opa.nu_grid, xsv, opa.dE, opa.Twt, opa.Tref, Ttest
+    assert res < 1.e-4
+    return opa.nu_grid, xsv, Ttest
 
 
 if __name__ == "__main__":
     #comparison with MODIT
     import matplotlib.pyplot as plt
 
-    db = "hitemp"
-    #db = "exomol"
+    #db = "hitemp"
+    db = "exomol"
 
-    diffmode = 0
-    nus, xs, dE, Twt, Tref, Tin = test_xsection_premodit(db, diffmode)
+    nus, xs, Tin = test_xsection_modit(db)
     filename = pkg_resources.resource_filename('exojax',
                                                'data/testdata/' + testdata[db])
 
     dat = pd.read_csv(filename, delimiter=",", names=("nus", "xsv"))
     fig = plt.figure()
     ax = fig.add_subplot(211)
-    #plt.title("premodit_xsection_test.py diffmode=" + str(diffmode))
-    plt.title("diffmode=" + str(diffmode) + " T=" + str(Tin) + " Tref=" +
-              str(np.round(Tref, 1)) + " Twt=" + str(np.round(Twt, 1)) +
-              " dE=" + str(np.round(dE, 1)))
-    ax.plot(nus, xs, label="PreMODIT", ls="dashed")
-    ax.plot(nus, dat["xsv"], label="MODIT")
+    plt.title(" T=" + str(Tin))
+    ax.plot(nus, xs, label="MODIT", ls="dashed")
+    ax.plot(nus, dat["xsv"], label="MODIT ref")
     plt.legend()
     plt.yscale("log")
     plt.ylabel("cross section (cm2)")
     ax = fig.add_subplot(212)
-    ax.plot(nus, 1.0 - xs / dat["xsv"], label="dif = (MODIT - PreMODIT)/MODIT")
+    ax.plot(nus, 1.0 - xs / dat["xsv"], label="dif = (MODIT ref - MODIT)/MODIT ref")
     plt.ylabel("dif")
     plt.xlabel("wavenumber cm-1")
     plt.axhline(0.01, color="gray", lw=0.5)
     plt.axhline(-0.01, color="gray", lw=0.5)
     #plt.ylim(-0.05, 0.05)
     plt.legend()
-    plt.savefig("premodit" + str(diffmode) + ".png")
+    plt.savefig("modit_"+str(db)+".png")
     plt.show()

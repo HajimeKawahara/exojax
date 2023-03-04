@@ -1,4 +1,4 @@
-""" Reverse modeling of Methane emission spectrum using MODIT
+""" Reverse modeling of Methane emission spectrum using PreMODIT, precomputation of F0 grids
 """
 #!/usr/bin/env python
 # coding: utf-8
@@ -13,6 +13,7 @@ import numpyro.distributions as dist
 
 from jax import random
 import jax.numpy as jnp
+from jax import vmap
 
 import pandas as pd
 import pkg_resources
@@ -24,9 +25,10 @@ from exojax.spec.api import MdbExomol
 from exojax.spec.opacalc import OpaPremodit
 from exojax.spec.contdb import CdbCIA
 from exojax.spec.opacont import OpaCIA
-from exojax.spec.response import ipgauss_sampling
+from exojax.spec.response import ipgauss_sampling, ipgauss2, sampling
 from exojax.spec.spin_rotation import convolve_rigid_rotation
 from exojax.utils.grids import velocity_grid
+from exojax.utils.astrofunc import gravity_jupiter
 
 from exojax.spec import molinfo
 from exojax.utils.instfunc import resolution_to_gaussian_std
@@ -82,9 +84,15 @@ vmrH2 = (mmrH2 * mmw / molmassH2)  # VMR
 vsini_max = 100.0
 vr_array = velocity_grid(res, vsini_max)
 
-print("ready")
-def frun(Tarr, MMR_CH4, Mp, Rp, u1, u2, RV, vsini):
-    g = 2478.57730044555 * Mp / Rp**2
+#given gravity, temperature exponent, MMR
+g = gravity_jupiter(0.88,33.2)
+alpha = 0.1 
+MMR_CH4 = 0.0059
+
+# raw spectrum model given T0
+def f0model(T0):
+    #T-P model
+    Tarr = art.powerlaw_temperature(T0, alpha)
 
     #molecule
     xsmatrix = opa.xsmatrix(Tarr, art.pressure)
@@ -98,28 +106,52 @@ def frun(Tarr, MMR_CH4, Mp, Rp, u1, u2, RV, vsini):
     
     dtau = dtaumCH4 + dtaucH2H2
     F0 = art.run(dtau, Tarr) / norm
-    Frot = convolve_rigid_rotation(F0, vr_array, vsini, u1, u2)
-    mu = ipgauss_sampling(nusd, nu_grid, Frot, beta_inst, RV)
-    return mu
+    #Frot = convolve_rigid_rotation(F0, vr_array, vsini, u1, u2)
+    #mu = ipgauss_sampling(nusd, nu_grid, Frot, beta_inst, RV)
+    return F0
 
+# compute F0 grid given T0 grid
+Ngrid = 200 # delta T = 1 K 
+T0_grid = jnp.linspace(1200,1400,Ngrid) 
+import tqdm
+F0_grid = []
+for T0 in tqdm.tqdm(T0_grid, desc="computing grid"):
+    F0 = f0model(T0)
+    F0_grid.append(F0)
+F0_grid = jnp.array(F0_grid).T
+
+vmapinterp = vmap(jnp.interp, (None,None,0))
+
+
+print(np.shape(T0_grid),np.shape(F0_grid))
+import matplotlib.pyplot as plt
+plt.plot(nu_grid, vmapinterp(1295.0, T0_grid, F0_grid))
+plt.plot(nusd[::-1], nflux, '+', color='black', label='data')
+plt.yscale("log")
+plt.show()
+#import sys
+#sys.exit()
 
 def model_c(nu1, y1):
-    Rp = numpyro.sample('Rp', dist.Uniform(0.4, 1.2))
+    A = numpyro.sample('A', dist.Uniform(0.1, 10.0))
     RV = numpyro.sample('RV', dist.Uniform(5.0, 15.0))
-    MMR_CH4 = numpyro.sample('MMR_CH4', dist.Uniform(0.0, 0.015))
-    T0 = numpyro.sample('T0', dist.Uniform(1000.0, 1500.0))
-    alpha = numpyro.sample('alpha', dist.Uniform(0.05, 0.2))
+    T0 = numpyro.sample('T0', dist.Uniform(800.0, 1200.0))
     vsini = numpyro.sample('vsini', dist.Uniform(15.0, 25.0))
-    u1 = 0.0
-    u2 = 0.0
-    Tarr = art.powerlaw_temperature(T0, alpha)
-    mu = frun(Tarr, MMR_CH4, Mp, Rp, u1, u2, RV, vsini)
+    F0 = A * vmapinterp(T0, T0_grid, F0_grid)
+    Frot = convolve_rigid_rotation(F0, vr_array, vsini, u1=0.0, u2=0.0)
+
+    #using 
+    mu = ipgauss_sampling(nusd, nu_grid, Frot, beta_inst, RV)
+    #using jnp.convolve
+    #Frotgauss = ipgauss2(nu_grid, Frot , vr_array, beta_inst)
+    #mu = sampling(nusd, nu_grid, Frotgauss, RV)
+
     numpyro.sample('y1', dist.Normal(mu, sigmain), obs=y1)
 
 
 rng_key = random.PRNGKey(0)
 rng_key, rng_key_ = random.split(rng_key)
-num_warmup, num_samples = 1000, 2000
+num_warmup, num_samples = 300, 600
 #kernel = NUTS(model_c, forward_mode_differentiation=True)
 kernel = NUTS(model_c, forward_mode_differentiation=False)
 
@@ -151,7 +183,7 @@ plt.tick_params(labelsize=16)
 plt.savefig("pred_diffmode" + str(diffmode) + ".png")
 plt.close()
 
-pararr = ['Rp', 'T0', 'alpha', 'MMR_CH4', 'vsini', 'RV']
+pararr = ['A','T0', 'vsini', 'RV']
 arviz.plot_pair(arviz.from_numpyro(mcmc),
                 kind='kde',
                 divergences=False,

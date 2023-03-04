@@ -14,7 +14,7 @@ from exojax.utils.instfunc import resolution_to_gaussian_std
 from exojax.spec import api
 from exojax.spec import initspec, molinfo, premodit
 from exojax.spec import molinfo
-from exojax.utils.astrofunc import getjov_gravity
+from exojax.utils.astrofunc import gravity_jupiter
 from exojax.utils.constants import RJ, pc
 
 wls, wll, Ndata = 15035, 15040, 100
@@ -85,7 +85,7 @@ def frun_lbl(VMR_H2O):
     Rp = 0.186 * 6.96e10 / 6.99e9
     u1 = 0.0
     u2 = 0.0
-    ga = getjov_gravity(Rp, Mp)
+    ga = gravity_jupiter(Rp, Mp)
 
     #atmosphere (T-P profile)
     VMR_H = 0.16

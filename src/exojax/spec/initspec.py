@@ -182,6 +182,7 @@ def init_premodit(nu_lines,
     pmarray = np.ones(len(nu_grid) + 1)
     pmarray[1::2] = (pmarray[1::2] * -1.0)
     pmarray = jnp.array(pmarray)
+
     return lbd_coeff, multi_index_uniqgrid, elower_grid, ngamma_ref_grid, n_Texp_grid, R, pmarray
 
 

@@ -69,11 +69,15 @@ def calc_xsection_from_lsd(Slsd, R, pmarray, nsigmaD, nu_grid,
     return jnp.fft.irfft(fftvalsum)[:Ng_nu] * R / nu_grid
 
 
-
 @jit
 def xsvector(cnu, indexnu, R, pmarray, nsigmaD, ngammaL, S, nu_grid,
              ngammaL_grid):
     """Cross section vector (MODIT)
+
+    Notes:
+        Currently due to #277, we recommend to use 
+        modit_scanfft.xsvector_scanfft instead of xsvector.
+        However, this will be changed when cufft fixes the 4GB limit.
 
     Args:
        cnu: contribution by npgetix for wavenumber
@@ -103,6 +107,12 @@ def xsvector(cnu, indexnu, R, pmarray, nsigmaD, ngammaL, S, nu_grid,
 def xsmatrix(cnu, indexnu, R, pmarray, nsigmaDl, ngammaLM, SijM, nu_grid,
              dgm_ngammaL):
     """Cross section matrix for xsvector (MODIT)
+
+    Notes:
+        Currently due to #277, we recommend to use 
+        modit_scanfft.xsmatrix_scanfft instead of xsmatrix.
+        However, this will be changed when cufft fixes the 4GB limit.
+
 
     Args:
        cnu: contribution by npgetix for wavenumber
@@ -412,7 +422,11 @@ def set_ditgrid_matrix_vald_each(ielem, iion, atomicmass, ionE, dev_nu_lines,
         SijM, ngammaLM, nsigmaDl = vald_each(Tarr, PH, PHe, PHH, R, qt_284_T, \
              QTmask, ielem, iion, atomicmass, ionE, \
                    dev_nu_lines, logsij0, elower, eupper, gamRad, gamSta, vdWdamp)
-        floop = lambda c, arr: (c, jnp.nan_to_num(arr, nan=jnp.nanmin(arr), posinf=jnp.nanmin(arr), neginf=jnp.nanmin(arr)))
+        floop = lambda c, arr: (c,
+                                jnp.nan_to_num(arr,
+                                               nan=jnp.nanmin(arr),
+                                               posinf=jnp.nanmin(arr),
+                                               neginf=jnp.nanmin(arr)))
         ngammaLM = scan(floop, 0, ngammaLM)[1]
         set_dgm_minmax.append(
             minmax_ditgrid_matrix(ngammaLM, dit_grid_resolution))
@@ -546,7 +560,7 @@ def dgmatrix(x, dit_grid_resolution=0.1, adopt=True):
         grid for DIT (Nlayer x NDITgrid)
     """
     warn_msg = "Deprecated Use `set_ditgrid.ditgrid_matrix` instead"
-    warnings.warn(warn_msg, DeprecationWarning)    
+    warnings.warn(warn_msg, DeprecationWarning)
     from exojax.spec.set_ditgrid import ditgrid_matrix
     return ditgrid_matrix(x, dit_grid_resolution, adopt)
 

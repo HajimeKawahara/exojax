@@ -30,7 +30,7 @@ nus, wav, res = wavenumber_grid(22900.0,
                                 unit='AA',
                                 xsmode="premodit")
 
-diffmode = 0
+diffmode = 2
 
 Ttest = 1200.0
 P = 1.0

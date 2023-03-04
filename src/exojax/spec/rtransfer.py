@@ -3,10 +3,11 @@ from jax import jit, vmap
 import jax.numpy as jnp
 import numpy as np
 from exojax.special.expn import E1
-from exojax.spec.hitrancia import logacia
+from exojax.spec.hitrancia import interp_logacia_matrix
 from exojax.spec.hminus import log_hminus_continuum
 from exojax.atm.idealgas import number_density
-from exojax.utils.constants import kB, logm_ucgs
+from exojax.utils.constants import logkB, logm_ucgs
+from exojax.utils.constants import opfac
 import warnings
 
 def wavenumber_grid(x0, x1, N, unit='cm-1', xsmode='lpf'):
@@ -69,11 +70,10 @@ def dtauCIA(nus, Tarr, Parr, dParr, vmr1, vmr2, mmw, g, nucia, tcia, logac):
     narr = number_density(Parr, Tarr)
     lognarr1 = jnp.log10(vmr1*narr)  # log number density
     lognarr2 = jnp.log10(vmr2*narr)  # log number density
-    logkb = np.log10(kB)
     logg = jnp.log10(g)
     ddParr = dParr/Parr
-    dtauc = (10**(logacia(Tarr, nus, nucia, tcia, logac)
-                  + lognarr1[:, None]+lognarr2[:, None]+logkb-logg-logm_ucgs)
+    dtauc = (10**(interp_logacia_matrix(Tarr, nus, nucia, tcia, logac)
+                  + lognarr1[:, None]+lognarr2[:, None]+logkB-logg-logm_ucgs)
              * Tarr[:, None]/mmw*ddParr[:, None])
 
     return dtauc
@@ -102,11 +102,10 @@ def dtauCIA_mmwl(nus, Tarr, Parr, dParr, vmr1, vmr2, mmw, g, nucia, tcia, logac)
     narr = number_density(Parr, Tarr)
     lognarr1 = jnp.log10(vmr1*narr)  # log number density
     lognarr2 = jnp.log10(vmr2*narr)  # log number density
-    logkb = np.log10(kB)
     logg = jnp.log10(g)
     ddParr = dParr/Parr
-    dtauc = (10**(logacia(Tarr, nus, nucia, tcia, logac)
-                  + lognarr1[:, None]+lognarr2[:, None]+logkb-logg-logm_ucgs)
+    dtauc = (10**(interp_logacia_matrix(Tarr, nus, nucia, tcia, logac)
+                  + lognarr1[:, None]+lognarr2[:, None]+logkB-logg-logm_ucgs)
              * Tarr[:, None]/mmw[:, None]*ddParr[:, None])
 
     return dtauc
@@ -116,7 +115,7 @@ def dtauM(dParr, xsm, MR, mass, g):
     """dtau of the molecular cross section.
 
     Note:
-       fac=bar_cgs/(m_u (g)). m_u: atomic mass unit. It can be obtained by fac=1.e3/m_u, where m_u = scipy.constants.m_u.
+       opfac=bar_cgs/(m_u (g)). m_u: atomic mass unit. It can be obtained by fac=1.e3/m_u, where m_u = scipy.constants.m_u.
 
     Args:
        dParr: delta pressure profile (bar) [N_layer]
@@ -129,8 +128,7 @@ def dtauM(dParr, xsm, MR, mass, g):
        optical depth matrix [N_layer, N_nus]
     """
 
-    fac = 6.022140858549162e+29
-    return fac*xsm*dParr[:, None]*MR[:, None]/(mass*g)
+    return opfac*xsm*dParr[:, None]*MR[:, None]/(mass*g)
 
 
 def dtauM_mmwl(dParr, xsm, MR, mass, g):
@@ -138,7 +136,7 @@ def dtauM_mmwl(dParr, xsm, MR, mass, g):
        (for the case where mmw is given for each atmospheric layer)
 
     Note:
-       fac=bar_cgs/(m_u (g)). m_u: atomic mass unit. It can be obtained by fac=1.e3/m_u, where m_u = scipy.constants.m_u.
+       opfac=bar_cgs/(m_u (g)). m_u: atomic mass unit. It can be obtained by fac=1.e3/m_u, where m_u = scipy.constants.m_u.
 
     Args:
        dParr: delta pressure profile (bar) [N_layer]
@@ -151,8 +149,7 @@ def dtauM_mmwl(dParr, xsm, MR, mass, g):
        optical depth matrix [N_layer, N_nus]
     """
 
-    fac = 6.022140858549162e+29
-    return fac*xsm*dParr[:, None]*MR[:, None]/(mass[:, None]*g)
+    return opfac*xsm*dParr[:, None]*MR[:, None]/(mass[:, None]*g)
 
 
 @jit
@@ -196,12 +193,11 @@ def dtauHminus(nus, Tarr, Parr, dParr, vmre, vmrh, mmw, g):
     #       number_density_h: number density for H atoms [N_layer]
     number_density_e = vmre*narr
     number_density_h = vmrh*narr
-    logkb = np.log10(kB)
     logg = jnp.log10(g)
     ddParr = dParr/Parr
     logabc = (log_hminus_continuum(
         nus, Tarr, number_density_e, number_density_h))
-    dtauh = 10**(logabc+logkb-logg-logm_ucgs)*Tarr[:, None]/mmw*ddParr[:, None]
+    dtauh = 10**(logabc+logkB-logg-logm_ucgs)*Tarr[:, None]/mmw*ddParr[:, None]
 
     return dtauh
 
@@ -228,12 +224,11 @@ def dtauHminus_mmwl(nus, Tarr, Parr, dParr, vmre, vmrh, mmw, g):
     #       number_density_h: number density for H atoms [N_layer]
     number_density_e = vmre*narr
     number_density_h = vmrh*narr
-    logkb = np.log10(kB)
     logg = jnp.log10(g)
     ddParr = dParr/Parr
     logabc = (log_hminus_continuum(
         nus, Tarr, number_density_e, number_density_h))
-    dtauh = 10**(logabc+logkb-logg-logm_ucgs)*Tarr[:, None]/mmw[:, None]*ddParr[:, None]
+    dtauh = 10**(logabc+logkB-logg-logm_ucgs)*Tarr[:, None]/mmw[:, None]*ddParr[:, None]
 
     return dtauh
 
