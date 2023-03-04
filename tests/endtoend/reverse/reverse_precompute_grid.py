@@ -90,7 +90,7 @@ vsini_max = 100.0
 vr_array = velocity_grid(res, vsini_max)
 
 #given gravity, temperature exponent, MMR
-g = gravity_jupiter(0.88, 33.2)
+g = gravity_jupiter(Rp=0.88, Mp=33.2)
 alpha = 0.1
 MMR_CH4 = 0.0059
 
