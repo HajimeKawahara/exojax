@@ -18,14 +18,22 @@ path_ValdLineList = '.database/vald4214450.gz'
 
 import numpy as np
 import jax.numpy as jnp
-from exojax.spec import moldb, atomll, contdb, molinfo, initspec, planck, response
+from exojax.spec import moldb, atomll, contdb, molinfo, initspec, planck
 from exojax.spec import api
 from exojax.spec.rtransfer import pressure_layer, dtauVALD, dtauM_mmwl, dtauHminus_mmwl, dtauCIA_mmwl, rtrun
 from exojax.utils.grids import wavenumber_grid
 from exojax.utils.instfunc import resolution_to_gaussian_std
 from exojax.spec.modit import vald_all, xsmatrix_vald, exomol, xsmatrix, setdgm_vald_all, setdgm_exomol
+from exojax.spec.response import ipgauss_sampling
+from exojax.spec.spin_rotation import convolve_rigid_rotation
+from exojax.utils.grids import velocity_grid
 
 def test_VALD_MODIT():
+
+    #settings before HMC
+    vsini_max = 100.0
+    vr_array = velocity_grid(res, vsini_max)
+
 
     #wavelength range
     wls, wll = 10395, 10405
@@ -163,10 +171,10 @@ def test_VALD_MODIT():
 
     sourcef = planck.piBarr(Tarr, nus)
     F0 = rtrun(dtau, sourcef)
-    Frot = response.rigidrot(nus, F0, vsini, u1, u2)
+    Frot = convolve_rigid_rotation(F0, vr_array, vsini, u1, u2)
     wavd = jnp.linspace(wls, wll, 500)
     nusd = jnp.array(1.e8/wavd[::-1])
-    mu = response.ipgauss_sampling_slow(nusd, nus, Frot, beta_inst, RV)
+    mu = ipgauss_sampling(nusd, nus, Frot, beta_inst, RV, vr_array)
     mu = mu/jnp.nanmax(mu)*adjust_continuum
 
     assert (np.all(~np.isnan(mu)) * \
