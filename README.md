@@ -6,13 +6,14 @@
  <a href="https://codeclimate.com/github/HajimeKawahara/exojax/maintainability"><img src="https://api.codeclimate.com/v1/badges/97c5e8835f3ef9c4ad7c/maintainability" /></a>
  
 Auto-differentiable line-by-line spectral modeling of exoplanets/brown dwarfs/M dwarfs using JAX. Read [the docs](http://secondearths.sakura.ne.jp/exojax) 🐕. 
-In a nutshell, ExoJAX enables you to do a HMC-NUTS fitting using the latest database.
+In a nutshell, ExoJAX enables you to do a gradient-based optimization and a HMC-NUTS fitting using the latest database.
 
 ExoJAX is compatible at least with
 - [NumPyro](https://github.com/pyro-ppl/numpyro) (PPL)
+- BlackJAX
 - [JAXopt](https://github.com/google/jaxopt) (differentiable optimizer)
 
-<img src="https://user-images.githubusercontent.com/15956904/144704428-c5e82af3-a870-458c-bb65-9e1f54d6c98b.png" Titie="exojax" Width=850px>
+<img src="https://user-images.githubusercontent.com/15956904/222950543-6de25bb2-48f2-4bc7-a588-77daa105442e.png" Titie="exojax" Width=850px>
  
 ## Functions
 
@@ -44,65 +45,27 @@ xsv = opa.xsvector(1000.0, 1.0) # cross section for 1000K, 1 bar
 
  <img src="https://user-images.githubusercontent.com/15956904/111430765-2eedf180-873e-11eb-9740-9e1a313d590c.png" Titie="exojax auto cross section" Width=850px> 
  
-<details><summary> Do you just want to plot the line strength? </summary>
+<details><summary> Do you just want to plot the line strength at T=1000K? </summary>
 
 ```python
-ls=autoxs.linest(1000.0) #line strength for T=1000K
-plt.plot(autoxs.mdb.nu_lines,ls,".")
+mdb.change_reference_temperature(1000.) # at 1000K
+plt.plot(mdb.nu_lines,mdb.line_strength_ref,".")
 ```
 
-autoxs.mdb is the [moldb.MdbExomol class](http://secondearths.sakura.ne.jp/exojax/exojax/exojax.spec.html#exojax.spec.moldb.MdbExomol) for molecular database. Here is a entrance to a deeper level. exojax is more flexible in the way it calculates the molecular lines. 🐈 Go to [the docs](http://secondearths.sakura.ne.jp/exojax) for the deeper level.  
-
 </details>
- 
- </details>
 
 <details><summary>Emission Spectrum :heavy_check_mark: </summary>
 
 ```python
-from exojax.utils.grids import wavenumber_grid
-from exojax.spec import AutoRT
-nus,wav,res=nugrid(1900.0,2300.0,200000,"cm-1")
-Parr=numpy.logspace(-8,2,100) #100 layers from 10^-8 bar to 10^2 bar
-Tarr = 500.*(Parr/Parr[-1])**0.02    
-autort=AutoRT(nus,1.e5,2.33,Tarr,Parr) #g=1.e5 cm/s2, mmw=2.33
-autort.addcia("H2-H2",0.74,0.74)       #CIA, mmr(H)=0.74
-autort.addcia("H2-He",0.74,0.25)       #CIA, mmr(He)=0.25
-autort.addmol("ExoMol","CO",0.01)      #CO line, mmr(CO)=0.01
-F=autort.rtrun()
+art = ArtEmisPure(nu_grid=nu_grid, pressure_btm=1.e2, pressure_top=1.e-8, nlayer=100)
+F = art.run(dtau, Tarr)
 ```
 
 <img src="https://user-images.githubusercontent.com/15956904/116488770-286ea000-a8ce-11eb-982d-7884b423592c.png" Titie="exojax auto \emission spectrum" Width=850px> 
 
-<details><summary>Are you an observer? </summary>
- 
-```python
-nusobs=numpy.linspace(1900.0,2300.0,10000,dtype=numpy.float64) #observation wavenumber bin (cm-1)
-F=autort.spectrum(nusobs,100000.0,20.0,0.0) #R=100000, vsini=10km/s, RV=0km/s
-```
- 
-  <img src="https://user-images.githubusercontent.com/15956904/116488769-273d7300-a8ce-11eb-8da1-661b23215c26.png" Titie="exojax auto \emission spectrum for observers" Width=850px> 
-
- </details>
-
-If you want to customize the model, see [here](http://secondearths.sakura.ne.jp/exojax/tutorials/forward_modeling.html).
-
 </details>
 
-<details><summary>HMC-NUTS of Emission Spectra :heavy_check_mark: </summary>
-
-To fit a spectrum model to real data, you need to know a little more about exojax. See [here](http://secondearths.sakura.ne.jp/exojax/tutorials/reverse_modeling.html).
-
- 
-  <img src="https://github.com/HajimeKawahara/exojax/blob/master/documents/tutorials/results.png">
-
-🥥 HMC-NUTS modeling of a brown dwarf, [Luhman 16 A](https://en.wikipedia.org/wiki/Luhman_16) using exojax.  See [here](http://secondearths.sakura.ne.jp/exojax/tutorials/fitbd.html) for an example of the Bayes inference using the real spectrum.
- 
-</details>
-
-<details><summary>Clouds :white_check_mark: </summary> Only for brave users. </details>
-
-<details><summary>HMC-NUTS of Transmission Spectra :x: </summary>Not supported yet. </details>
+See http://secondearths.sakura.ne.jp/exojax/develop/get_started.html for the first step!
 
 ## Installation
 
@@ -150,4 +113,4 @@ Please visit [here](https://github.com/google/jax) for details.
 
 ## License
 
-🐈 Copyright 2020-2022 ExoJAX contributors. exojax is publicly available under the MIT license.
+🐈 Copyright 2020-2023 ExoJAX contributors. exojax is publicly available under the MIT license.
