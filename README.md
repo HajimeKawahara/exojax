@@ -44,7 +44,9 @@ xsv = opa.xsvector(1000.0, 1.0) # cross section for 1000K, 1 bar
 ```
 
  <img src="https://user-images.githubusercontent.com/15956904/111430765-2eedf180-873e-11eb-9740-9e1a313d590c.png" Titie="exojax auto cross section" Width=850px> 
- 
+
+</details>
+
 <details><summary> Do you just want to plot the line strength at T=1000K? </summary>
 
 ```python
