@@ -7,8 +7,7 @@ config.update("jax_enable_x64", True)
 def test_optelower():
     from exojax.test.emulate_mdb import mock_mdbExomol
     from exojax.test.emulate_mdb import mock_wavenumber_grid
-    from exojax.spec import api
-
+    
     nu_grid, wav, reso = mock_wavenumber_grid()
     Tmax = 1020.0  #K
     Pmin = 0.1  #bar

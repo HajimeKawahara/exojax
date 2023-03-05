@@ -2,7 +2,7 @@
 from exojax.spec import api
 from exojax.utils.grids import wavenumber_grid
 
-nus, wav, r = wavenumber_grid(24000.0, 26000.0, 1000, unit="AA")
+nus, wav, r = wavenumber_grid(24000.0, 26000.0, 1000, unit="AA", xsmode="premodit")
 
 # when
 mdb = api.MdbHitran("CO", nus, activation=False)

@@ -8,7 +8,19 @@ Basics
    tutorials/optimize_spectrum_JAXopt.rst
    tutorials/reverse_premodit.rst
    
+   
+Molecular/Atomic/Continuum Databases
+=======================================
 
+.. toctree::
+   :maxdepth: 1
+
+   tutorials/elower_setting.rst
+   tutorials/select_quantum_states.rst
+   tutorials/branch.rst
+   tutorials/Fortrat.rst
+   tutorials/CIA_opacity.rst
+   
 
 Examples for Manual Settings of Opacity (not using opa)
 ==============================================================
@@ -69,9 +81,6 @@ Micro Chemical/Physical Processes
 .. toctree::
    :maxdepth: 1
 
-   tutorials/CIA_opacity.rst
-   tutorials/branch.rst
-   tutorials/Fortrat.rst
    tutorials/Ackerman_and_Marley_cloud_model.rst
    tutorials/Terminal_Velocity_of_Cloud_Particles.rst   
    
