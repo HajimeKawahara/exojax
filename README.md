@@ -47,7 +47,7 @@ xsv = opa.xsvector(1000.0, 1.0) # cross section for 1000K, 1 bar
 
 </details>
 
-<details><summary> Do you just want to plot the line strength at T=1000K? </summary>
+<details><summary>Do you just want to plot the line strength at T=1000K? </summary>
 
 ```python
 mdb.change_reference_temperature(1000.) # at 1000K
@@ -67,7 +67,7 @@ F = art.run(dtau, Tarr)
 
 </details>
 
-See http://secondearths.sakura.ne.jp/exojax/develop/get_started.html for the first step!
+See http://secondearths.sakura.ne.jp/exojax/develop/tutorials/get_started.html for the first step!
 
 ## Installation
 
