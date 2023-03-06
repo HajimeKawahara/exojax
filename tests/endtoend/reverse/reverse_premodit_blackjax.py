@@ -142,11 +142,11 @@ def logprob_fn(x):
         nflux,
         g(x["Rp"], x["RV"], x["MMR_CH4"], x["T0"], x["alpha"], x["vsini"]),
         1.0)
-    return jnp.sum(logpdf)
+    return jnp.sum(logpdf) 
 
 
 step_size = 1e-3
-inverse_mass_matrix = jnp.array([1., 1., 1., 1., 1., 1.])
+inverse_mass_matrix = jnp.array([0.1, 1., 0.001, 100., 0.001, 1.])
 nuts = blackjax.nuts(logprob_fn, step_size, inverse_mass_matrix)
 
 # Initialize the state
@@ -162,6 +162,20 @@ state = nuts.init(initial_position)
 
 # Iterate
 rng_key = random.PRNGKey(0)
+
+#warmup = blackjax.window_adaptation(
+#    blackjax.nuts,
+#    logprob_fn,
+#    100,
+#)
+
+#state, kernel, _ = warmup.run(
+#    rng_key,
+#    res.x,
+#)
+#print(state)
+#print(kernel)
+
 for _ in range(100):
     _, rng_key = random.split(rng_key)
     y = nuts.step(rng_key, state)
