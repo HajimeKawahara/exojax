@@ -12,9 +12,7 @@ CLASSIFIERS = [
     'Programming Language :: Python',
 ]
 INSTALL_REQUIRES = [
-    'numpy', 'pandas', 'tqdm', 'scipy', 'jax>=0.2.22', 'numpyro',
-    'pyarrow', 'matplotlib', 'hitran-api', 'bs4', 'vaex', 'radis',
-    'jaxopt'
+    'vaex>=4.16.0', 'radis', 'jaxopt', 'jax>=0.2.22', 'numpyro', 'hitran-api'
 ]
 
 # END PROJECT SPECIFIC

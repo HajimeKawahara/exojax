@@ -26,17 +26,19 @@ from exojax.spec.opacont import OpaCIA
 from exojax.spec import molinfo
 from exojax.spec.response import ipgauss_sampling
 from exojax.spec.spin_rotation import convolve_rigid_rotation
+from exojax.utils.astrofunc import gravity_jupiter
 from exojax.utils.grids import velocity_grid
 from exojax.utils.instfunc import resolution_to_gaussian_std
-from exojax.test.data import SAMPLE_SPECTRA_CH4
+from exojax.spec.unitconvert import nu2wav
+from exojax.test.data import SAMPLE_SPECTRA_CH4_NEW
 
 # loading data
 filename = pkg_resources.resource_filename(
-    'exojax', 'data/testdata/' + SAMPLE_SPECTRA_CH4)
-dat = pd.read_csv(filename, delimiter=",", names=("wav", "flux"))
-wavd = dat['wav'].values
+    'exojax', 'data/testdata/' + SAMPLE_SPECTRA_CH4_NEW)
+dat = pd.read_csv(filename, delimiter=",", names=("wavenumber", "flux"))
+nusd = dat['wavenumber'].values
 flux = dat['flux'].values
-nusd = jnp.array(1.e8 / wavd[::-1])
+wavd = nu2wav(nusd)
 sigmain = 0.05
 norm = 20000
 nflux = flux / norm + np.random.normal(0, sigmain, len(wavd))
@@ -103,8 +105,7 @@ vr_array = velocity_grid(res, vsini_max)
 
 # a core driver
 def frun(Tarr, MMR_CH4, Mp, Rp, u1, u2, RV, vsini):
-    gravity = 2478.57730044555 * Mp / Rp**2
-
+    gravity = gravity_jupiter(Rp=Rp, Mp=Mp)  # gravity in the unit of Jupiter
     # CH4
     xsmatrix = opa.xsmatrix(Tarr, art.pressure)
     mmr_profile = art.constant_mmr_profile(MMR_CH4)
@@ -119,11 +120,11 @@ def frun(Tarr, MMR_CH4, Mp, Rp, u1, u2, RV, vsini):
     dtau = dtaumCH4 + dtaucH2H2
     F0 = art.run(dtau, Tarr) / norm
     Frot = convolve_rigid_rotation(F0, vr_array, vsini, u1, u2)
-    mu = ipgauss_sampling(nusd, nu_grid, Frot, beta_inst, RV)
+    mu = ipgauss_sampling(nusd, nu_grid, Frot, beta_inst, RV, vr_array)
     return mu
 
 
-def model_c(nu1, y1):
+def model_c(y1):
     Rp = numpyro.sample('Rp', dist.Uniform(0.4, 1.2))
     RV = numpyro.sample('RV', dist.Uniform(5.0, 15.0))
     MMR_CH4 = numpyro.sample('MMR_CH4', dist.Uniform(0.0, 0.015))
@@ -134,7 +135,6 @@ def model_c(nu1, y1):
     u2 = 0.0
     # T-P model//
     Tarr = art.powerlaw_temperature(T0, alpha)
-    # line computation CH4
     mu = frun(Tarr, MMR_CH4, Mp, Rp, u1, u2, RV, vsini)
     numpyro.sample('y1', dist.Normal(mu, sigmain), obs=y1)
 
@@ -142,11 +142,11 @@ def model_c(nu1, y1):
 rng_key = random.PRNGKey(0)
 rng_key, rng_key_ = random.split(rng_key)
 num_warmup, num_samples = 300, 600
-#kernel = NUTS(model_c, forward_mode_differentiation=True)
+# kernel = NUTS(model_c, forward_mode_differentiation=True)
 kernel = NUTS(model_c, forward_mode_differentiation=False)
 
 mcmc = MCMC(kernel, num_warmup=num_warmup, num_samples=num_samples)
-mcmc.run(rng_key_, nu1=nusd, y1=nflux)
+mcmc.run(rng_key_, y1=nflux)
 
 # SAMPLING
 posterior_sample = mcmc.get_samples()

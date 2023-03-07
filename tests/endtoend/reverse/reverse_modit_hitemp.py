@@ -112,7 +112,7 @@ def frun(Tarr, MMR_CO, Mp, Rp, u1, u2, RV, vsini):
     sourcef = planck.piBarr(Tarr, nus)
     F0 = rtrun(dtau, sourcef) / norm
     Frot = convolve_rigid_rotation(F0, vr_array, vsini, u1, u2)
-    mu = ipgauss_sampling(nusd, nus, Frot, beta_inst, RV)
+    mu = ipgauss_sampling(nusd, nus, Frot, beta_inst, RV, vr_array)
     return mu
 
 

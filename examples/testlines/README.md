@@ -1,1 +1,0 @@
-# examples of computing line strengths
