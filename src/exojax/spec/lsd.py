@@ -9,7 +9,7 @@ import numpy as np
 from jax.numpy import index_exp
 import jax.numpy as jnp
 from jax import jit
-
+from exojax.utils.progbar import print_progress
 
 def getix(x, xv):
     """jnp version of getix.
@@ -176,7 +176,7 @@ def npadd3D_multi_index(a,
         iz: given index for z
         sumx: a sum of contribution for x at point 1 and point 2, default=1.0
         sumz: a sum of contribution for z at point 1 and point 2, default=1.0
-
+    
     Returns:
         lineshape density a(nx,ny,nz)
 
@@ -189,26 +189,35 @@ def npadd3D_multi_index(a,
     """
     conjugate_multi_cont_lines = 1.0 - multi_cont_lines
 
+    print_progress(0, 4, "Making LSD:")
     # index position
     direct_iy = uidx
     direct_cy = np.prod(conjugate_multi_cont_lines, axis=1)
     a = npadd3D_direct1D(a, w, cx, ix, direct_cy, direct_iy, cz, iz)
 
+    print_progress(1, 4, "Making LSD:")
     # index position + (1, 0)
     direct_iy = neighbor_uidx[uidx, 0]
     direct_cy = multi_cont_lines[:, 0] * conjugate_multi_cont_lines[:, 1]
     a = npadd3D_direct1D(a, w, cx, ix, direct_cy, direct_iy, cz, iz)
 
+    print_progress(2, 4, "Making LSD:")
     # index position + (0, 1)
     direct_iy = neighbor_uidx[uidx, 1]
     direct_cy = conjugate_multi_cont_lines[:, 0] * multi_cont_lines[:, 1]
     a = npadd3D_direct1D(a, w, cx, ix, direct_cy, direct_iy, cz, iz)
 
+    print_progress(3, 4, "Making LSD:")
     # index position + (1, 1)
     direct_iy = neighbor_uidx[uidx, 2]
     direct_cy = np.prod(multi_cont_lines, axis=1)
     a = npadd3D_direct1D(a, w, cx, ix, direct_cy, direct_iy, cz, iz)
+    
+    print_progress(4, 4, "Making LSD:")
+    
     return a
+
+
 
 
 @jit
