@@ -56,7 +56,7 @@ References
 License & Attribution
 ---------------------
 
-Copyright 2021-2022, Contributors
+Copyright 2021-2023, Contributors
 
 - `Hajime Kawahara <http://secondearths.sakura.ne.jp/en/index.html>`_ (@HajimeKawahara, maintainer)
 - Yui Kawashima (@ykawashima)

@@ -12,7 +12,7 @@ CLASSIFIERS = [
     'Programming Language :: Python',
 ]
 INSTALL_REQUIRES = [
-    'vaex>=4.16.0', 'radis', 'jaxopt', 'jax>=0.2.22', 'numpyro', 'hitran-api'
+    'numpy<=1.22.3', 'vaex>=4.16.0', 'radis', 'jaxopt', 'jax>=0.2.22', 'numpyro', 'hitran-api'
 ]
 
 # END PROJECT SPECIFIC
@@ -42,7 +42,7 @@ if __name__ == '__main__':
             'write_to_template':
             '__version__ = "{version}"\n',
         },
-        version='1.2',
+        version='1.3',
         author=find_meta('author'),
         author_email=find_meta('email'),
         maintainer=find_meta('author'),
