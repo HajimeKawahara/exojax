@@ -151,7 +151,7 @@ mcmc.run(rng_key_, y1=nflux)
 # SAMPLING
 posterior_sample = mcmc.get_samples()
 pred = Predictive(model_c, posterior_sample, return_sites=['y1'])
-predictions = pred(rng_key_, nu1=nusd, y1=None)
+predictions = pred(rng_key_, y1=None)
 median_mu1 = jnp.median(predictions['y1'], axis=0)
 hpdi_mu1 = hpdi(predictions['y1'], 0.9)
 
