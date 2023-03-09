@@ -22,6 +22,17 @@ def tauchord(chord_matrix, xsmatrix):
     return jnp.dot(jnp.triu(chord_matrix[:,::-1])[:,::-1], xsmatrix)
 
 
+def inverse_cumsum(arr):
+    return jnp.cumsum(arr[::-1])[::-1]
+
+def test_inverse_cumsum():
+    Tarr = jnp.array([0,1,2,3,4])
+
+    vec = inverse_cumsum(Tarr)
+
+    ans = jnp.array([10,10,9,7,4])
+    assert jnp.all(vec == ans)
+
 def test_check_parallel_Ax_tauchord():
     A = jnp.array([[1, 2, 3], [4, 5, 6], [7, 8, 9]])
     x = jnp.array([[1, 2, 3], [4, 5, 6]]).T
@@ -36,4 +47,5 @@ def test_check_parallel_Ax_tauchord():
     assert np.all(m == n)
 
 if __name__ == "__main__":
-    test_check_parallel_Ax()
+    #test_check_parallel_Ax_tauchord()
+    test_inverse_cumsum()
