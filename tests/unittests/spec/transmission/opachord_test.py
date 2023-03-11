@@ -2,11 +2,11 @@ import pytest
 import jax.numpy as jnp
 import numpy as np
 from exojax.atm.atmprof import normalized_layer_height
-
+from jax import jit
 #normalized_radius = normalized_radius_profile(temperature, pressure, dParr,
 #                                              mmw, radius_btm, gravity_btm)
 
-
+@jit
 def chord_geometric_matrix(height, radius):
     """compute chord geometric matrix
 
@@ -25,7 +25,6 @@ def chord_geometric_matrix(height, radius):
 
     fac_right = jnp.sqrt(radius[None, :]**2 - radius[:, None]**2)
     fac_left = jnp.sqrt(radius_roll[None, :]**2 - radius[:, None]**2)
-
     raw_matrix = (fac_left - fac_right) / height
     return jnp.tril(raw_matrix)
 
@@ -35,7 +34,7 @@ def test_chord_geometric_matrix():
     height = 0.1 * jnp.ones(Nlayer)
     radius = jnp.cumsum(height)[::-1] + 1.0
     cgm = chord_geometric_matrix(height, radius)
-    print(cgm)
+    assert jnp.sum(cgm) == pytest.approx(32.06652)
 
 
 def tauchord(chord_geometric_matrix, xsmatrix):
