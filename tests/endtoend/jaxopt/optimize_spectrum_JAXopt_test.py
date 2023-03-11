@@ -5,7 +5,7 @@ import numpy as np
 from exojax.spec.lpf import xsmatrix
 from exojax.spec.exomol import gamma_exomol
 from exojax.spec.hitran import SijT, doppler_sigma, gamma_natural
-from exojax.spec.rtransfer import rtrun, dtauM, dtauCIA, wavenumber_grid
+from exojax.spec.rtransfer import rtrun_emis_pure_absorption, dtauM, dtauCIA, wavenumber_grid
 from exojax.spec import planck, response
 from exojax.spec import molinfo
 from exojax.utils.constants import RJ, pc, Rs, c
@@ -96,7 +96,7 @@ def test_jaxopt_spectrum(fig=False):
                                 cdbH2H2.nucia, cdbH2H2.tcia, cdbH2H2.logac)
             dtau = dtaumCO + dtaucH2H2
             sourcef = planck.piBarr(Tarr, nus)
-            F0 = rtrun(dtau, sourcef) / norm
+            F0 = rtrun_emis_pure_absorption(dtau, sourcef) / norm
             Frot = convolve_rigid_rotation(F0, vr_array, vsini, u1, u2)
             mu = response.ipgauss_sampling(nusd, nus, Frot, beta, RV, vr_array)
             return mu

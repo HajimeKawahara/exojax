@@ -7,9 +7,9 @@
 """
 import numpy as np
 from exojax.spec.planck import piBarr
-from exojax.spec.rtransfer import rtrun as rtrun_emis_pure_absorption
-from exojax.spec.rtransfer import dtauM
-#from exojax.spec.rtransfer import dtauCIA
+from exojax.spec.rtransfer import rtrun_emis_pure_absorption
+#from exojax.spec.rtransfer import rtrun as rtrun_trans_pure_absorption
+from exojax.spec.layeropacity import layer_optical_depth
 from exojax.atm.atmprof import atmprof_gray, atmprof_Guillot, atmprof_powerlow
 import jax.numpy as jnp
 from exojax.atm.idealgas import number_density
@@ -57,12 +57,11 @@ class ArtCommon():
         Returns:
             dtau: opacity profile, whose element is optical depth in each layer. 
         """
-        return dtauM(self.dParr, jnp.abs(xsmatrix), mmr_profile, molmass,
+        return layer_optical_depth(self.dParr, jnp.abs(xsmatrix), mmr_profile, molmass,
                      gravity)
 
     def opacity_profile_cia(self, logacia_matrix, temperature, vmr1, vmr2, mmw,
                             gravity):
-
         narr = number_density(self.pressure, temperature)
         lognarr1 = jnp.log10(vmr1 * narr)  # log number density
         lognarr2 = jnp.log10(vmr2 * narr)  # log number density
@@ -194,3 +193,22 @@ class ArtEmisPure(ArtCommon):
     def run(self, dtau, temperature):
         sourcef = piBarr(temperature, self.nu_grid)
         return rtrun_emis_pure_absorption(dtau, sourcef)
+
+class ArtTransPure(ArtCommon):
+
+    def __init__(self,
+                 nu_grid,
+                 pressure_top=1.e-8,
+                 pressure_btm=1.e2,
+                 nlayer=100):
+        """initialization of ArtTransPure
+
+        
+        """
+        super().__init__(nu_grid, pressure_top, pressure_btm, nlayer)
+        self.method = "transmission_with_pure_absorption"
+
+    def run(self, dtau, temperature):
+        sourcef = piBarr(temperature, self.nu_grid)
+        return rtrun_emis_pure_absorption(dtau, sourcef)
+    
