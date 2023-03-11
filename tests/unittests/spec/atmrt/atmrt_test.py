@@ -11,10 +11,11 @@ def test_ArtEmisPure():
     nu_grid, wav, res = mock_wavenumber_grid()
     art = ArtEmisPure(nu_grid,pressure_top=1.e-8, pressure_btm=1.e2, nlayer=100)
 
-#def test_ArtTransPure()
-#    nu_grid, wav, res = mock_wavenumber_grid()
-#    art = ArtTransPure(nu_grid,pressure_top=1.e-8, pressure_btm=1.e2, nlayer=100)
+def test_ArtTransPure():
+    nu_grid, wav, res = mock_wavenumber_grid()
+    art = ArtTransPure(nu_grid,pressure_top=1.e-8, pressure_btm=1.e2, nlayer=100)
 
 if __name__ == "__main__":
     test_ArtCommon()
     test_ArtEmisPure()
+    test_ArtTransPure()

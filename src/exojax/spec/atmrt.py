@@ -8,7 +8,7 @@
 import numpy as np
 from exojax.spec.planck import piBarr
 from exojax.spec.rtransfer import rtrun_emis_pure_absorption
-#from exojax.spec.rtransfer import rtrun as rtrun_trans_pure_absorption
+from exojax.spec.rtransfer import rtrun_trans_pure_absorption
 from exojax.spec.layeropacity import layer_optical_depth
 from exojax.atm.atmprof import atmprof_gray, atmprof_Guillot, atmprof_powerlow
 import jax.numpy as jnp
@@ -209,6 +209,5 @@ class ArtTransPure(ArtCommon):
         self.method = "transmission_with_pure_absorption"
 
     def run(self, dtau, temperature):
-        sourcef = piBarr(temperature, self.nu_grid)
-        return rtrun_emis_pure_absorption(dtau, sourcef)
+        return rtrun_trans_pure_absorption(dtau_chord, sourcef)
     
