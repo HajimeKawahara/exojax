@@ -83,8 +83,8 @@ class ArtCommon():
     def init_pressure_profile(self):
         from exojax.spec.rtransfer import pressure_layer
         self.pressure, self.dParr, self.k = pressure_layer(
-            logPtop=self.log_pressure_top,
-            logPbtm=self.log_pressure_btm,
+            log_pressure_top=self.log_pressure_top,
+            log_pressure_btm=self.log_pressure_btm,
             NP=self.nlayer,
             mode='ascending',
             numpy=True)

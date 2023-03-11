@@ -2,6 +2,79 @@
 
 from exojax.utils.constants import kB, m_u
 import jax.numpy as jnp
+import numpy as np
+from jax.lax import scan
+
+def pressure_layer_logspace(log_pressure_top=-8.,
+                   log_pressure_btm=2.,
+                   NP=20,
+                   mode='ascending',
+                   numpy=False):
+    """generating the pressure layer.
+
+    Args:
+       log_pressure_top: log10(P[bar]) at the top layer
+       log_pressure_btm: log10(P[bar]) at the bottom layer
+       NP: the number of the layers
+       mode: ascending or descending
+       numpy: if True use numpy array instead of jnp array
+
+    Returns:
+         pressure: pressure layer
+         dParr: delta pressure layer
+         k: k-factor, P[i-1] = k*P[i]
+
+    Note:
+        dParr[i] = Parr[i] - Parr[i-1], dParr[0] = (1-k) Parr[0] for ascending mode
+    """
+    dlogP = (log_pressure_btm - log_pressure_top) / (NP - 1)
+    k = 10**-dlogP
+    if numpy:
+        pressure = np.logspace(log_pressure_top, log_pressure_btm, NP)
+    else:
+        pressure = jnp.logspace(log_pressure_top, log_pressure_btm, NP)
+    dParr = (1.0 - k) * pressure
+    if mode == 'descending':
+        pressure = pressure[::-1]
+        dParr = dParr[::-1]
+
+    return pressure, dParr, k
+
+
+def normalized_layer_height(temperature, pressure, dParr,
+                                      mean_molecular_weight, radius_btm, gravity_btm):
+    """compute normalized radius at the upper boundary of the atmospheric layer, neglecting atmospheric mass. 
+
+    Args:
+        temperature (1D array): temperature profile (K) of the layer, (Nlayer, from atmospheric top to bottom)
+        pressure (1D array): pressure profile (bar) of the layer, (Nlayer, from atmospheric top to bottom)
+        dParr (1D array): pressure difference profile (bar) of the layer, (Nlayer, from atmospheric top to bottom)
+        mean_molecular_weight (1D array): mean molecular weight profile, (Nlayer, from atmospheric top to bottom) 
+        radius_btm (float): radius (cm) at the lower boundary of the bottom layer, R0 or r_N
+        gravity_btm (float): gravity (cm/s2) at the lower boundary of the bottom layer, g_N
+
+    Returns:
+        1D array (Nlayer) : layer height normalized by radius_btm starting from top atmosphere
+    """
+
+    inverse_Tarr = temperature[::-1]
+    inverse_dlogParr = (dParr / pressure)[::-1]
+    inverse_mmr_arr = mean_molecular_weight[::-1]
+    Mat = jnp.vstack([inverse_Tarr, inverse_dlogParr, inverse_mmr_arr]).T
+
+    def compute_radius(normalized_radius, arr):
+        T_layer = arr[0:1][0]
+        dlogP_layer = arr[1:2][0]
+        mmw_layer = arr[2:3][0]
+
+        gravity_layer = gravity_btm / normalized_radius
+        normalized_height_layer = pressure_scale_height(
+            gravity_layer, T_layer, mmw_layer) * dlogP_layer / radius_btm
+        normalized_radius += normalized_height_layer
+        return normalized_radius, normalized_height_layer
+
+    _, normalized_height = scan(compute_radius, 1.0, Mat)
+    return normalized_height[::-1]
 
 
 def pressure_scale_height(g, T, mu):

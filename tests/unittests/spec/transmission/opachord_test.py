@@ -1,46 +1,14 @@
+import pytest
 import jax.numpy as jnp
 import numpy as np
+from exojax.atm.atmprof import normalized_layer_height
 
-from jax.lax import scan
-from exojax.atm.atmprof import pressure_scale_height
+#normalized_radius = normalized_radius_profile(temperature, pressure, dParr,
+#                                              mmw, radius_btm, gravity_btm)
 
 
-#atmprof
-def compute_normalized_radius_profile(temperature, pressure, dParr, mmw_profile,
-                             radius_btm, gravity_btm):
-    """compute normalized radius at the upper boundary of the atmospheric layer, neglecting atmospheric mass. 
-
-    Args:
-        temperature (1D array): temperature profile (K) of the layer, (Nlayer, from atmospheric top to bottom)
-        pressure (1D array): pressure profile (bar) of the layer, (Nlayer, from atmospheric top to bottom)
-        dParr (1D array): pressure difference profile (bar) of the layer, (Nlayer, from atmospheric top to bottom)
-        mmw_profile (1D array): mean molecular weight profile, (Nlayer, from atmospheric top to bottom) 
-        radius_btm (float): radius (cm) at the lower boundary of the bottom layer, R0 or r_N
-        gravity_btm (float): gravity (cm/s2) at the lower boundary of the bottom layer, g_N
-
-    Returns:
-        1D array (Nlayer) : radius profile normalized by radius_btm
-    """
-
-    inverse_Tarr = temperature[::-1]
-    inverse_dlogParr = (dParr / pressure)[::-1]
-    inverse_mmr_arr = mmw_profile[::-1]
-    Mat = jnp.hstack([inverse_Tarr, inverse_dlogParr, inverse_mmr_arr])
-
-    def compute_radius(normalized_radius, arr):
-        T_layer = arr[0:1]
-        dlogP_layer = arr[1:2]
-        mmw_layer = arr[2:3]
-
-        gravity_layer = gravity_btm / normalized_radius
-        normalized_radius += pressure_scale_height(
-            gravity_layer, T_layer, mmw_layer) * dlogP_layer / radius_btm
-
-        return normalized_radius, normalized_radius
-
-    _, normalized_radius_profile = scan(compute_radius, 1.0, Mat)
-
-    return normalized_radius_profile
+def chord_geometric_matrix(layer_height):
+    return
 
 
 def tauchord(chord_geometric_matrix, xsmatrix):
@@ -91,6 +59,27 @@ def test_check_parallel_Ax_tauchord():
     assert np.all(m == n)
 
 
+def test_first_layer_height_from_compute_normalized_radius_profile():
+    from exojax.spec.rtransfer import pressure_layer
+    pressure, dParr, k = pressure_layer(log_pressure_top=-8.,
+                                        log_pressure_btm=2.,
+                                        NP=20)
+    T0 = 300.0
+    mmw0 = 28.8
+    temperature = T0 * np.ones_like(pressure)
+    mmw = mmw0 * np.ones_like(pressure)
+    radius_btm = 6500.0 * 1.e5
+    gravity_btm = 980.
+
+    normalized_height = normalized_layer_height(temperature, pressure, dParr,
+                                                mmw, radius_btm, gravity_btm)
+
+    d_scale_height = (normalized_height[-1] + 1.0) * radius_btm
+    ref = 650620740.0  #cm
+    assert d_scale_height == pytest.approx(ref)
+
+
 if __name__ == "__main__":
     #test_check_parallel_Ax_tauchord()
-    test_inverse_cumsum()
+    #test_inverse_cumsum()
+    test_first_layer_height_from_compute_normalized_radius_profile()
