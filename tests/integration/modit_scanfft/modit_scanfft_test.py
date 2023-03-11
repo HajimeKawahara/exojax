@@ -5,7 +5,6 @@ import numpy as np
 from exojax.spec.modit_scanfft import xsvector_scanfft
 from exojax.spec.hitran import line_strength
 from exojax.test.data import TESTDATA_CO_EXOMOL_MODIT_XS_REF
-from exojax.spec.molinfo import molmass_isotope
 from exojax.spec import normalized_doppler_sigma, gamma_natural
 from exojax.spec.hitran import line_strength
 from exojax.spec.exomol import gamma_exomol
@@ -51,7 +50,7 @@ def test_rt_exomol():
     from exojax.spec import molinfo
     from exojax.spec.modit import exomol
     from exojax.spec.modit_scanfft import xsmatrix_scanfft
-    from exojax.spec.rtransfer import dtauM
+    from exojax.spec.layeropacity import layer_optical_depth
     from exojax.spec.rtransfer import rtrun_emis_pure_absorption
     from exojax.spec.planck import piBarr
     from exojax.spec.modit import set_ditgrid_matrix_exomol
@@ -78,7 +77,7 @@ def test_rt_exomol():
     SijM, ngammaLM, nsigmaDl = exomol(mdb, Tarr, Parr, R, molmass)
     xsm = xsmatrix_scanfft(cont_nu, index_nu, R, pmarray, nsigmaDl, ngammaLM, SijM,
                    nus, dgm_ngammaL)
-    dtau = dtauM(dParr, jnp.abs(xsm), MMR * np.ones_like(Parr), molmass, g)
+    dtau = layer_optical_depth(dParr, jnp.abs(xsm), MMR * np.ones_like(Parr), molmass, g)
     sourcef = piBarr(Tarr, nus)
     F0 = rtrun_emis_pure_absorption(dtau, sourcef)
     filename = pkg_resources.resource_filename(

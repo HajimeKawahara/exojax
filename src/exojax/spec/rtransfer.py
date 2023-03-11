@@ -118,4 +118,4 @@ def rtrun_emis_pure_absorption_direct(dtau, S):
     taupmu = jnp.cumsum(dtau, axis=0)
     return jnp.sum(S * jnp.exp(-taupmu) * dtau, axis=0)
 
-def rtrun_trans_pure_absorption(dtau_chord, S):
+#def rtrun_trans_pure_absorption(dtau_chord, S):
