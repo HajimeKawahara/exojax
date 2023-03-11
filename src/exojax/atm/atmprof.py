@@ -4,12 +4,14 @@ from exojax.utils.constants import kB, m_u
 import jax.numpy as jnp
 import numpy as np
 from jax.lax import scan
+from jax import jit
+
 
 def pressure_layer_logspace(log_pressure_top=-8.,
-                   log_pressure_btm=2.,
-                   NP=20,
-                   mode='ascending',
-                   numpy=False):
+                            log_pressure_btm=2.,
+                            NP=20,
+                            mode='ascending',
+                            numpy=False):
     """generating the pressure layer.
 
     Args:
@@ -40,10 +42,10 @@ def pressure_layer_logspace(log_pressure_top=-8.,
 
     return pressure, dParr, k
 
-
+@jit
 def normalized_layer_height(temperature, pressure, dParr,
-                                      mean_molecular_weight, radius_btm, gravity_btm):
-    """compute normalized radius at the upper boundary of the atmospheric layer, neglecting atmospheric mass. 
+                            mean_molecular_weight, radius_btm, gravity_btm):
+    """compute normalized height/radius at the upper boundary of the atmospheric layer, neglecting atmospheric mass. 
 
     Args:
         temperature (1D array): temperature profile (K) of the layer, (Nlayer, from atmospheric top to bottom)
@@ -55,6 +57,7 @@ def normalized_layer_height(temperature, pressure, dParr,
 
     Returns:
         1D array (Nlayer) : layer height normalized by radius_btm starting from top atmosphere
+        1D array (Nlayer) : radius normalized by radius_btm starting from top atmosphere
     """
 
     inverse_Tarr = temperature[::-1]
@@ -71,10 +74,12 @@ def normalized_layer_height(temperature, pressure, dParr,
         normalized_height_layer = pressure_scale_height(
             gravity_layer, T_layer, mmw_layer) * dlogP_layer / radius_btm
         normalized_radius += normalized_height_layer
-        return normalized_radius, normalized_height_layer
+        return normalized_radius, [normalized_height_layer, normalized_radius]
 
-    _, normalized_height = scan(compute_radius, 1.0, Mat)
-    return normalized_height[::-1]
+    _, results = scan(compute_radius, 1.0, Mat)
+    normalized_height = results[0][::-1]
+    normalized_radius = results[1][::-1]
+    return normalized_height, normalized_radius
 
 
 def pressure_scale_height(g, T, mu):
@@ -89,7 +94,8 @@ def pressure_scale_height(g, T, mu):
         pressure scale height (cm)
     """
 
-    return kB*T/(m_u*mu*g)
+    return kB * T / (m_u * mu * g)
+
 
 def atmprof_powerlow(Parr, T0, alpha):
     """powerlaw temperature profile
@@ -103,6 +109,7 @@ def atmprof_powerlow(Parr, T0, alpha):
         array: temperature profile
     """
     return T0 * (Parr)**alpha
+
 
 def atmprof_gray(Parr, g, kappa, Tint):
     """
@@ -118,8 +125,8 @@ def atmprof_gray(Parr, g, kappa, Tint):
 
     """
 
-    tau = Parr*1.e6*kappa/g
-    Tarr = (0.75*Tint**4*(2.0/3.0+tau))**0.25
+    tau = Parr * 1.e6 * kappa / g
+    Tarr = (0.75 * Tint**4 * (2.0 / 3.0 + tau))**0.25
     return Tarr
 
 
@@ -143,11 +150,12 @@ def atmprof_Guillot(Parr, g, kappa, gamma, Tint, Tirr, f=0.25):
         array: temperature profile
 
     """
-    tau = Parr*1.e6*kappa/g  # Equation (51)
-    invsq3 = 1.0/jnp.sqrt(3.0)
-    fac = 2.0/3.0 + invsq3*(1.0/gamma + (gamma - 1.0/gamma)
-                            * jnp.exp(-gamma*tau/invsq3))
-    Tarr = (0.75*Tint**4*(2.0/3.0+tau) + 0.75*Tirr**4*f*fac)**0.25
+    tau = Parr * 1.e6 * kappa / g  # Equation (51)
+    invsq3 = 1.0 / jnp.sqrt(3.0)
+    fac = 2.0 / 3.0 + invsq3 * (
+        1.0 / gamma + (gamma - 1.0 / gamma) * jnp.exp(-gamma * tau / invsq3))
+    Tarr = (0.75 * Tint**4 * (2.0 / 3.0 + tau) +
+            0.75 * Tirr**4 * f * fac)**0.25
 
     return Tarr
 
@@ -165,7 +173,7 @@ def Teq2Tirr(Teq, Tint):
     Note:
        Here we assume A=0 (albedo) and beta=1 (fully-energy distributed)
     """
-    return (2.0**0.5)*Teq
+    return (2.0**0.5) * Teq
 
 
 def Teff2Tirr(Teff, Tint):
@@ -181,4 +189,4 @@ def Teff2Tirr(Teff, Tint):
     Note:
        Here we assume A=0 (albedo) and beta=1 (fully-energy distributed)
     """
-    return (4.0*Teff**4 - Tint**4)**0.25
+    return (4.0 * Teff**4 - Tint**4)**0.25
