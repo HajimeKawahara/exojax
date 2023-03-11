@@ -9,11 +9,12 @@ def test_viscosity():
     assert viscosity.eta_Rosner_H2(T) == pytest.approx(0.0001929772857173383)
 
 
-def test_scale_height():
-    g = 980.0
-    T = 300.0
+def test_pressure_scale_height_for_Earth():
+    g = 980.0 #cm^2/s
+    T = 300.0 # K
     mu = 28.8
-    assert atmprof.Hatm(g, T, mu) == pytest.approx(883764.8664527453)
+    
+    assert atmprof.pressure_scale_height(g, T, mu) == pytest.approx(883764.8664527453)
 
 
 def test_vterm():

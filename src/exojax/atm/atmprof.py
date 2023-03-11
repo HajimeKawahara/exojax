@@ -4,7 +4,7 @@ from exojax.utils.constants import kB, m_u
 import jax.numpy as jnp
 
 
-def Hatm(g, T, mu):
+def pressure_scale_height(g, T, mu):
     """pressure scale height assuming an isothermal atmosphere.
 
     Args:
