@@ -179,7 +179,7 @@ def exomol(mdb, Tarr, Parr, R, molmass):
 
 def setdgm_exomol(mdb, fT, Parr, R, molmass, dit_grid_resolution, *kargs):
     warn_msg = " Use `modit.set_ditgrid_matrix_exomol` instead"
-    warnings.warn(warn_msg, DeprecationWarning)
+    warnings.warn(warn_msg, FutureWarning)
     return set_ditgrid_matrix_exomol(mdb, fT, Parr, R, molmass,
                                      dit_grid_resolution, *kargs)
 
@@ -253,7 +253,7 @@ def hitran(mdb, Tarr, Parr, Pself, R, molmass):
 def setdgm_hitran(mdb, fT, Parr, Pself_ref, R, molmass, dit_grid_resolution,
                   *kargs):
     warn_msg = " Use `modit.set_ditgrid_matrix_hitran` instead"
-    warnings.warn(warn_msg, DeprecationWarning)
+    warnings.warn(warn_msg, FutureWarning)
     return set_ditgrid_matrix_hitran(mdb, fT, Parr, Pself_ref, R, molmass,
                                      dit_grid_resolution, *kargs)
 
@@ -374,7 +374,7 @@ def vald_all(asdb, Tarr, PH, PHe, PHH, R):
 def setdgm_vald_each(ielem, iion, atomicmass, ionE, dev_nu_lines, logsij0, elower, eupper, gamRad, gamSta, vdWdamp, \
                 QTmask, T_gQT, gQT_284species, PH, PHe, PHH, R, fT, dit_grid_resolution, *kargs):
     warn_msg = " Use `modit.set_ditgrid_matrix_vald_each` instead"
-    warnings.warn(warn_msg, DeprecationWarning)
+    warnings.warn(warn_msg, FutureWarning)
     return set_ditgrid_matrix_vald_each(ielem, iion, atomicmass, ionE,
                                         dev_nu_lines, logsij0, elower, eupper,
                                         gamRad, gamSta, vdWdamp, QTmask, T_gQT,
@@ -437,7 +437,7 @@ def set_ditgrid_matrix_vald_each(ielem, iion, atomicmass, ionE, dev_nu_lines,
 
 def setdgm_vald_all(asdb, PH, PHe, PHH, R, fT, dit_grid_resolution, *kargs):
     warn_msg = " Use `modit.set_ditgrid_matrix_vald_all` instead"
-    warnings.warn(warn_msg, DeprecationWarning)
+    warnings.warn(warn_msg, FutureWarning)
     return set_ditgrid_matrix_vald_all(asdb, PH, PHe, PHH, R, fT,
                                        dit_grid_resolution, *kargs)
 
@@ -526,7 +526,7 @@ def precompute_dgmatrix(set_gm_minmax, dit_grid_resolution=0.1, adopt=True):
         grid for DIT (Nlayer x NDITgrid)
     """
     warn_msg = " Use `set_ditgrid.precompute_modit_ditgrid_matrix` instead"
-    warnings.warn(warn_msg, DeprecationWarning)
+    warnings.warn(warn_msg, FutureWarning)
     return precompute_modit_ditgrid_matrix(set_gm_minmax, dit_grid_resolution,
                                            adopt)
 
@@ -543,7 +543,7 @@ def minmax_dgmatrix(x, dit_grid_resolution=0.1, adopt=True):
         minimum and maximum for DIT (dgm_minmax)
     """
     warn_msg = "Deprecated Use `set_ditgrid.minmax_ditgrid_matrix` instead"
-    warnings.warn(warn_msg, DeprecationWarning)
+    warnings.warn(warn_msg, FutureWarning)
     return minmax_ditgrid_matrix(x, dit_grid_resolution, adopt)
 
 
@@ -560,7 +560,7 @@ def dgmatrix(x, dit_grid_resolution=0.1, adopt=True):
         grid for DIT (Nlayer x NDITgrid)
     """
     warn_msg = "Deprecated Use `set_ditgrid.ditgrid_matrix` instead"
-    warnings.warn(warn_msg, DeprecationWarning)
+    warnings.warn(warn_msg, FutureWarning)
     from exojax.spec.set_ditgrid import ditgrid_matrix
     return ditgrid_matrix(x, dit_grid_resolution, adopt)
 
@@ -579,7 +579,7 @@ def ditgrid(x, dit_grid_resolution=0.1, adopt=True):
     """
 
     warn_msg = "Deprecated Use `set_ditgrid.ditgrid_log_interval` instead"
-    warnings.warn(warn_msg, DeprecationWarning)
+    warnings.warn(warn_msg, FutureWarning)
     from exojax.spec.set_ditgrid import ditgrid_log_interval
     return ditgrid_log_interval(x, dit_grid_resolution, adopt)
 

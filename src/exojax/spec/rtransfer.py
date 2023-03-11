@@ -12,7 +12,7 @@ import warnings
 
 def wavenumber_grid(x0, x1, N, unit='cm-1', xsmode='lpf'):
     warn_msg = "Use `grids.wavenumber_grid` instead"
-    warnings.warn(warn_msg, DeprecationWarning)
+    warnings.warn(warn_msg, FutureWarning)
     from exojax.utils.grids import wavenumber_grid
     return wavenumber_grid(x0, x1, N, unit=unit, xsmode=xsmode)
 
