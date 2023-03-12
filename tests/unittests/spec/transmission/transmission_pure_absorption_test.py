@@ -3,7 +3,7 @@ import jax.numpy as jnp
 import numpy as np
 from exojax.atm.atmprof import normalized_layer_height
 from exojax.spec.opachord import chord_geometric_matrix
-from exojax.spec.opachord import tauchord
+from exojax.spec.opachord import chord_optical_depth
 from exojax.spec.rtransfer import rtrun_trans_pure_absorption
 
 
@@ -11,17 +11,20 @@ def test_transmission_pure_absorption_equals_to_Rp_sqaured_for_opaque():
     Nlayer = 5
     Nnu = 2
     dtau_chord = jnp.ones((Nlayer, Nnu)) * jnp.inf
-    radius_chord = jnp.array([1.4, 1.3, 1.2, 1.1, 1.0])
-    Rp2 = rtrun_trans_pure_absorption(dtau_chord, radius_chord)
-    assert np.all(Rp2 == radius_chord[0]**2 * np.ones(Nnu))
+    radius = jnp.array([1.4, 1.3, 1.2, 1.1, 1.0])
+    
+    Rp2 = rtrun_trans_pure_absorption(dtau_chord, radius)
+    
+    assert np.all(Rp2 == radius[0]**2 * np.ones(Nnu))
 
 
 def test_chord_geometric_matrix():
     Nlayer = 5
     height = 0.1 * jnp.ones(Nlayer)
-    radius_top = 1.5
     radius = jnp.array([1.4, 1.3, 1.2, 1.1, 1.0])  #radius[-1] = radius_btm
+    
     cgm = chord_geometric_matrix(height, radius)
+    
     assert jnp.sum(cgm) == pytest.approx(86.49373)
 
 
@@ -33,7 +36,7 @@ def test_check_parallel_Ax_tauchord():
         n.append(jnp.dot(A, x[:, k]))
     n = jnp.array(n).T
 
-    m = tauchord(A, x)
+    m = chord_optical_depth(A, x)
 
     assert np.all(m == n)
 

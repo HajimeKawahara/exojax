@@ -82,8 +82,8 @@ def rtrun_emis_pure_absorption(dtau, source_matrix):
     """Radiative Transfer using two-stream approximaion + 2E3 (Helios-R1 type)
 
     Args:
-        dtau: opacity matrix
-        source_matrix: source matrix [N_layer, N_nus]
+        dtau (2D array): optical depth matrix, dtau  (N_layer, N_nus)
+        source_matrix (2D array): source matrix (N_layer, N_nus)
 
     Returns:
         flux in the unit of [erg/cm2/s/cm-1] if using piBarr as a source function.
@@ -102,8 +102,8 @@ def rtrun_emis_pure_absorption_surface(dtau, source_matrix, source_surface):
     with a planetary surface.
 
     Args:
-        dtau: opacity matrix
-        source_matrix: source matrix [N_layer, N_nus]
+        dtau (2D array): optical depth matrix, dtau  (N_layer, N_nus)
+        source_matrix (2D array): source matrix (N_layer, N_nus)
         source_surface: source from the surface [N_nus]
 
     Returns:
@@ -125,8 +125,8 @@ def rtrun_emis_pure_absorption_direct(dtau, source_matrix):
         Use dtau/mu instead of dtau when you want to use non-unity, where mu=cos(theta)
 
     Args:
-        dtau: opacity matrix
-        source_matrix: source matrix [N_layer, N_nus]
+        dtau (2D array): optical depth matrix, dtau  (N_layer, N_nus)
+        source_matrix (2D array): source matrix (N_layer, N_nus)
 
     Returns:
         flux in the unit of [erg/cm2/s/cm-1] if using piBarr as a source function.
@@ -135,12 +135,15 @@ def rtrun_emis_pure_absorption_direct(dtau, source_matrix):
     return jnp.sum(source_matrix * jnp.exp(-taupmu) * dtau, axis=0)
 
 
-def rtrun_trans_pure_absorption(dtau_chord, radius_chord):
+def rtrun_trans_pure_absorption(dtau_chord, radius):
     """Radiative transfer assuming pure absorption 
 
     Args:
         dtau_chord (2D array): chord opacity (Nlayer, N_wavenumber)
-        radius_chord (1D array): (normalized) radius (Nlayer), (radius[1], radius[2], ..., radius_btm)
+        radius (1D array): (normalized) radius (Nlayer). 
+
+    Notes:
+        The n-th radius is defined as the lower boundary of the n-th layer. So, radius[0] corresponds to R0.   
         
     Returns:
         1D array: transit squared radius in the same unit as sqaure of the radius/radius_btm
@@ -152,7 +155,7 @@ def rtrun_trans_pure_absorption(dtau_chord, radius_chord):
 
     """
     deltaRp2 = 2.0 * jnp.trapz(
-        (1.0 - jnp.exp(-dtau_chord)) * radius_chord[::-1, None],
-        x=radius_chord[::-1],
+        (1.0 - jnp.exp(-dtau_chord)) * radius[::-1, None],
+        x=radius[::-1],
         axis=0)
-    return deltaRp2 + radius_chord[-1]**2
+    return deltaRp2 + radius[-1]**2

@@ -30,14 +30,14 @@ def chord_geometric_matrix(height, radius):
     return jnp.tril(raw_matrix)
 
 
-def tauchord(chord_geometric_matrix, xsmatrix):
-    """chord opacity vector from a chord geometric matrix and xsmatrix
+def chord_optical_depth(chord_geometric_matrix, dtau):
+    """chord optical depth vector from a chord geometric matrix and dtau
     
     Args:
         chord_geometric_matrix (jnp array): chord geometric matrix (Nlayer, Nlayer), lower triangle matrix 
-        xsmatrix (jnp array): cross section matrix (Nlayer, N_wavenumber)
+        dtau (jnp array): layer optical depth matrix, dtau (Nlayer, N_wavenumber)
 
-    Returns: tauchord matrix (Nlayer, N_wavenumber)
+    Returns: chord optical depth (tauchord) matrix (Nlayer, N_wavenumber)
 
     """
-    return jnp.dot(chord_geometric_matrix, xsmatrix)
+    return jnp.dot(chord_geometric_matrix, dtau)
