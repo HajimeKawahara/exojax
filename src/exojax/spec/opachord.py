@@ -3,8 +3,8 @@ import numpy as np
 from jax import jit
 
 
-#@jit
-def chord_geometric_matrix(height, radius, radius_top):
+@jit
+def chord_geometric_matrix(height, radius):
     """compute chord geometric matrix
 
     Args:
@@ -12,8 +12,16 @@ def chord_geometric_matrix(height, radius, radius_top):
         radius (1D array): (normalized) radius of the layers from top to bottom (R0), Nlayer
 
     Returns:
-        2D array: chord geometric matrix (Nlayer, Nlayer)
+        2D array: chord geometric matrix (Nlayer, Nlayer), lower triangle matrix
+
+    Notes:
+        Our definitions of the radius and layer are as follows:
+        n=0,1,...,N-1
+        radius[N-1] = R0
+        radius[n-1] = radius[n] + height[n]
+
     """
+    radius_top = radius[0] + height[0]  #radius at TOA
     radius_shifted = jnp.roll(radius, 1)  # r_{k-1}
     radius_shifted = radius_shifted.at[0].set(radius_top)
     fac_right = jnp.sqrt(radius[None, :]**2 - radius[:, None]**2)

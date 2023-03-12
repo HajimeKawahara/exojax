@@ -69,17 +69,15 @@ def normalized_layer_height(temperature, pressure, dParr,
         T_layer = arr[0:1][0]
         dlogP_layer = arr[1:2][0]
         mmw_layer = arr[2:3][0]
-
         gravity_layer = gravity_btm / normalized_radius
         normalized_height_layer = pressure_scale_height(
             gravity_layer, T_layer, mmw_layer) * dlogP_layer / radius_btm
-        normalized_radius += normalized_height_layer
-        return normalized_radius, [normalized_height_layer, normalized_radius]
+        return normalized_radius + normalized_height_layer, [normalized_height_layer, normalized_radius]
 
     _, results = scan(compute_radius, 1.0, Mat)
     normalized_height = results[0][::-1]
     normalized_radius = results[1][::-1]
-    return normalized_height, normalized_radius
+    return normalized_height, normalized_radius 
 
 
 def pressure_scale_height(g, T, mu):

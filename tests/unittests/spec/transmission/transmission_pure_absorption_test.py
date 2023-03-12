@@ -21,7 +21,7 @@ def test_chord_geometric_matrix():
     height = 0.1 * jnp.ones(Nlayer)
     radius_top = 1.5
     radius = jnp.array([1.4, 1.3, 1.2, 1.1, 1.0])  #radius[-1] = radius_btm
-    cgm = chord_geometric_matrix(height, radius, radius_top)
+    cgm = chord_geometric_matrix(height, radius)
     assert jnp.sum(cgm) == pytest.approx(86.49373)
 
 
@@ -53,15 +53,14 @@ def test_first_layer_height_from_compute_normalized_radius_profile():
     normalized_height, normalized_radius = normalized_layer_height(
         temperature, pressure, dParr, mmw, radius_btm, gravity_btm)
 
-    ref = 650620740.0  #cm
-    first_height = (normalized_height[-1] + 1.0) * radius_btm
-    assert first_height == pytest.approx(ref)
-    first_height = normalized_radius[-1] * radius_btm
-    assert first_height == pytest.approx(ref)
-
+    normalized_radius_top = normalized_radius[0] + normalized_height[0]
+    assert normalized_radius_top == pytest.approx(1.0192735)
+    assert jnp.sum(normalized_height[1:])+1.0 == pytest.approx(normalized_radius[0])
+    assert normalized_radius[-1] == 1.0
+    
 
 if __name__ == "__main__":
     #test_check_parallel_Ax_tauchord()
-    #test_first_layer_height_from_compute_normalized_radius_profile()
-    test_chord_geometric_matrix()
+    test_first_layer_height_from_compute_normalized_radius_profile()
+    #test_chord_geometric_matrix()
     #test_transmission_pure_absorption_equals_to_Rp_sqaured_for_opaque()
