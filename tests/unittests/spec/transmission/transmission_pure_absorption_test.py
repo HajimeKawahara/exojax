@@ -7,24 +7,21 @@ from exojax.spec.opachord import tauchord
 from exojax.spec.rtransfer import rtrun_trans_pure_absorption
 
 
-def test_result_of_transmission_pure_absorption_equals_to_Rp_sqaured_for_opaque(
-):
+def test_transmission_pure_absorption_equals_to_Rp_sqaured_for_opaque():
     Nlayer = 5
     Nnu = 2
-    dtau_chord = jnp.ones((Nlayer + 1, Nnu)) * jnp.inf
-    radius_btm = 1.0
-    radius = jnp.array([1.5, 1.4, 1.3, 1.2, 1.1,
-                        radius_btm])  #The last elements is n=N
-    Rp2 = rtrun_trans_pure_absorption(dtau_chord, radius, radius_btm)
-    assert np.all(Rp2 == radius[0]**2 * np.ones(Nnu))
+    dtau_chord = jnp.ones((Nlayer, Nnu)) * jnp.inf
+    radius_chord = jnp.array([1.4, 1.3, 1.2, 1.1, 1.0])
+    Rp2 = rtrun_trans_pure_absorption(dtau_chord, radius_chord)
+    assert np.all(Rp2 == radius_chord[0]**2 * np.ones(Nnu))
 
 
 def test_chord_geometric_matrix():
     Nlayer = 5
     height = 0.1 * jnp.ones(Nlayer)
-    radius_btm = 1.0
-    radius = jnp.cumsum(height)[::-1] + radius_btm
-    cgm = chord_geometric_matrix(height, radius, radius_btm)
+    radius_top = 1.5
+    radius = jnp.array([1.4, 1.3, 1.2, 1.1, 1.0])  #radius[-1] = radius_btm
+    cgm = chord_geometric_matrix(height, radius, radius_top)
     assert jnp.sum(cgm) == pytest.approx(86.49373)
 
 
@@ -66,6 +63,5 @@ def test_first_layer_height_from_compute_normalized_radius_profile():
 if __name__ == "__main__":
     #test_check_parallel_Ax_tauchord()
     #test_first_layer_height_from_compute_normalized_radius_profile()
-    #test_chord_geometric_matrix()
-    test_result_of_transmission_pure_absorption_equals_to_Rp_sqaured_for_opaque(
-    )
+    test_chord_geometric_matrix()
+    #test_transmission_pure_absorption_equals_to_Rp_sqaured_for_opaque()
