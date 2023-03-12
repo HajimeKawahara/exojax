@@ -1,5 +1,5 @@
-"""Radiative transfer module used in exospectral analysis."""
-
+""" radiative transfer
+"""
 from jax import jit
 import jax.numpy as jnp
 from exojax.special.expn import E1
@@ -52,6 +52,11 @@ def pressure_layer(log_pressure_top=-8.,
                                    mode, numpy)
 
 
+def rtrun(dtau, S):
+    warnings.warn("Use rtrun_emis_pure_absorption instead", FutureWarning)
+    return rtrun_emis_pure_absorption(dtau, S)
+
+
 ##########################################################################################
 
 
@@ -70,11 +75,6 @@ def trans2E3(x):
        Transmission function T=2 E3(x)
     """
     return (1.0 - x) * jnp.exp(-x) + x**2 * E1(x)
-
-
-def rtrun(dtau, S):
-    warnings.warn("Use rtrun_emis_pure_absorption instead", FutureWarning)
-    return rtrun_emis_pure_absorption(dtau, S)
 
 
 @jit
@@ -135,6 +135,22 @@ def rtrun_emis_pure_absorption_direct(dtau, source_matrix):
     return jnp.sum(source_matrix * jnp.exp(-taupmu) * dtau, axis=0)
 
 
-def rtrun_trans_pure_absorption(dtau_chord):
+def rtrun_trans_pure_absorption(dtau_chord, radius, radius_btm):
+    """Radiative transfer assuming pure absorption 
 
-    return
+    Args:
+        dtau_chord (2D array): chord opacity (Nlayer, N_wavenumber)
+        radius (1D array): (normalized) radius (Nlayer)
+        radius_btm (float): bottom radius of the atmospheric layer, the unit should be the same as radius
+
+    Returns:
+        1D array: transit squared radius in the same unit as sqaure of the radius/radius_btm
+
+    Notes:
+        This function gives the sqaure of the transit radius.
+        If you would like to obtain the transit radius, take sqaure root of the output.
+        If you would like to compute the transit depth, devide the output by the square of stellar radius
+
+    """
+    transmissivity = (1.0 - jnp.exp(-dtau_chord)) * radius
+    return 2.0*jnp.sum(transmissivity, axis=0) + radius_btm**2
