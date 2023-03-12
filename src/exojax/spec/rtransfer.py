@@ -135,13 +135,12 @@ def rtrun_emis_pure_absorption_direct(dtau, source_matrix):
     return jnp.sum(source_matrix * jnp.exp(-taupmu) * dtau, axis=0)
 
 
-def rtrun_trans_pure_absorption(dtau_chord, radius, height, radius_btm):
+def rtrun_trans_pure_absorption(dtau_chord, radius, radius_btm):
     """Radiative transfer assuming pure absorption 
 
     Args:
         dtau_chord (2D array): chord opacity (Nlayer, N_wavenumber)
         radius (1D array): (normalized) radius (Nlayer)
-        height (1D array): (normalized) layer height (Nlayer)
         radius_btm (float): bottom radius of the atmospheric layer, the unit should be the same as radius
 
     Returns:
@@ -153,5 +152,6 @@ def rtrun_trans_pure_absorption(dtau_chord, radius, height, radius_btm):
         If you would like to compute the transit depth, devide the output by the square of stellar radius
 
     """
-    transmissivity = (1.0 - jnp.exp(-dtau_chord)) * (radius[:,None] * height[:, None] - height[:, None]**2/2)
-    return 2.0*jnp.sum(transmissivity, axis=0) + radius_btm**2
+    #transmissivity = (1.0 - jnp.exp(-dtau_chord)) * (radius[:,None] * height[:, None] - height[:, None]**2/2)
+    #zeroth =  2.0*jnp.sum(transmissivity, axis=0) + radius_btm**2
+    return 2.0*jnp.trapz((1.0 - jnp.exp(-dtau_chord)) * radius[::-1, None], x=radius[::-1], axis=0) + radius_btm**2
