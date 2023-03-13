@@ -63,10 +63,28 @@ class ArtCommon():
             1D array: height normalized by radius_btm (Nlayer)
             1D array: radius normalized by radius_btm (Nlayer)
         """
-        normalized_height, normalized_radius = normalized_layer_height
-        (temperature, self.pressure, self.dParr, mean_molecular_weight,
-         radius_btm, gravity_btm)
+        normalized_height, normalized_radius = normalized_layer_height(
+            temperature, self.pressure, self.dParr, mean_molecular_weight,
+            radius_btm, gravity_btm)
         return normalized_height, normalized_radius
+
+    def gravity_layer(self, temperature, mean_molecular_weight, radius_btm,
+                      gravity_btm):
+        """atmosphere gravity layer
+
+        Args:
+            temperature (1D array): temparature profile (Nlayer)
+            mean_molecular_weight (float/1D array): mean molecular weight profile (float/Nlayer)
+            radius_btm (float): the bottom radius of the atmospheric layer
+            gravity_btm (float): the bottom gravity cm2/s at radius_btm, i.e. G M_p/radius_btm
+
+        Returns:
+            1D array: gravity in cm2/s (Nlayer)
+        """
+        _, normalized_radius = self.atmosphere_height(temperature,
+                                                      mean_molecular_weight,
+                                                      radius_btm, gravity_btm)
+        return jnp.array([gravity_btm / normalized_radius]).T
 
     def opacity_profile_lines(self, xsmatrix, mixing_ratio, molmass, gravity):
         """opacity profile (delta tau) for lines
@@ -240,8 +258,8 @@ class ArtTransPure(ArtCommon):
         super().__init__(nu_grid, pressure_top, pressure_btm, nlayer)
         self.method = "transmission_with_pure_absorption"
 
-    def run(self, dtau, temperature, mean_molecular_weight,
-            radius_btm, gravity_btm):
+    def run(self, dtau, temperature, mean_molecular_weight, radius_btm,
+            gravity_btm):
         """run radiative transfer
 
         Args:
