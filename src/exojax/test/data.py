@@ -32,6 +32,9 @@ SAMPLE_SPECTRA_CO = "spectrum_co.txt"
 SAMPLE_SPECTRA_CH4 = "spectrum_ch4.txt" #exojax version 1.0
 SAMPLE_SPECTRA_CH4_NEW = "spectrum_ch4_new.txt" #generate_methane_spectrum.py
 
+#sample transmission spectra
+SAMPLE_TRANSMISSION_CH4 = "transmission_ch4.txt"
+
 #test data par file
 TESTDATA_CO_HITEMP_PARFILE = "05_HITEMP_SAMPLE.par"
 

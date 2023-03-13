@@ -5,19 +5,19 @@
 import numpy as np
 import matplotlib.pyplot as plt
 from exojax.utils.grids import wavenumber_grid
-from exojax.spec.atmrt import ArtTransPure
+from exojax.spec.atmrt import ArtEmisPure
 from exojax.spec.api import MdbExomol
 from exojax.spec.opacalc import OpaPremodit
 from exojax.spec.contdb import CdbCIA
 from exojax.spec.opacont import OpaCIA
-from exojax.spec.response import ipgauss_sampling
+from exojax.spec.response import ipgauss_sampling_slow, ipgauss, sampling
 from exojax.spec.spin_rotation import convolve_rigid_rotation
 from exojax.utils.grids import velocity_grid
 from exojax.utils.astrofunc import gravity_jupiter
 
 from exojax.spec import molinfo
 from exojax.utils.instfunc import resolution_to_gaussian_std
-from exojax.test.data import SAMPLE_TRANSMISSION_CH4
+from exojax.test.data import SAMPLE_SPECTRA_CH4_NEW
 
 #given gravity, temperature exponent, MMR
 g = gravity_jupiter(0.88, 33.2)
@@ -44,7 +44,7 @@ nu_grid, wav, res = wavenumber_grid(np.min(wavd) - 10.0,
 
 Tlow = 400.0
 Thigh = 1500.0
-art = ArtTransPure(nu_grid, pressure_top=1.e-8, pressure_btm=1.e2, nlayer=100)
+art = ArtEmisPure(nu_grid, pressure_top=1.e-8, pressure_btm=1.e2, nlayer=100)
 art.change_temperature_range(Tlow, Thigh)
 Mp = 33.2
 
@@ -71,10 +71,6 @@ mmrH2 = 0.74
 molmassH2 = molinfo.molmass_isotope('H2')
 vmrH2 = (mmrH2 * mmw / molmassH2)  # VMR
 
-gravity_btm = 2478.57
-radius_btm = RJ
-    
-
 #settings before HMC
 vsini_max = 100.0
 vr_array = velocity_grid(res, vsini_max)
@@ -84,7 +80,6 @@ vr_array = velocity_grid(res, vsini_max)
 def flux_model(T0, vsini, RV):
     #T-P model
     Tarr = art.powerlaw_temperature(T0, alpha)
-    gravity = art.gravity_profile(Tarr, mmw, radius_btm, gravity_btm)
 
     #molecule
     xsmatrix = opa.xsmatrix(Tarr, art.pressure)
@@ -99,7 +94,9 @@ def flux_model(T0, vsini, RV):
     dtau = dtaumCH4 + dtaucH2H2
     F0 = art.run(dtau, Tarr)
     Frot = convolve_rigid_rotation(F0, vr_array, vsini=vsini, u1=0.0, u2=0.0)
-    
+    Frotgauss = ipgauss(nu_grid, Frot, vr_array, beta_inst)
+    mu = sampling(nusd, nu_grid, Frotgauss, RV=RV)
+
     return mu
 
 #test and save

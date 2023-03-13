@@ -68,9 +68,12 @@ class ArtCommon():
             radius_btm, gravity_btm)
         return normalized_height, normalized_radius
 
-    def gravity_layer(self, temperature, mean_molecular_weight, radius_btm,
+    def constant_gravity_profile(self, value):
+        return value * np.array([np.ones_like(self.pressure)]).T
+
+    def gravity_profile(self, temperature, mean_molecular_weight, radius_btm,
                       gravity_btm):
-        """atmosphere gravity layer
+        """gravity layer profile assuming hydrostatic equilibrium
 
         Args:
             temperature (1D array): temparature profile (Nlayer)
@@ -79,12 +82,15 @@ class ArtCommon():
             gravity_btm (float): the bottom gravity cm2/s at radius_btm, i.e. G M_p/radius_btm
 
         Returns:
-            1D array: gravity in cm2/s (Nlayer)
+            2D array: gravity in cm2/s (Nlayer, 1), suitable for the input of opacity_profile_lines
         """
         _, normalized_radius = self.atmosphere_height(temperature,
                                                       mean_molecular_weight,
                                                       radius_btm, gravity_btm)
         return jnp.array([gravity_btm / normalized_radius]).T
+
+    def constant_mmr_profile(self, value):
+        return value * np.ones_like(self.pressure)
 
     def opacity_profile_lines(self, xsmatrix, mixing_ratio, molmass, gravity):
         """opacity profile (delta tau) for lines
@@ -129,12 +135,8 @@ class ArtCommon():
             mode='ascending',
             numpy=True)
 
-    def constant_mmr_profile(self, value):
-        return value * np.ones_like(self.pressure)
-
-    def constant_gravity_profile(self, value):
-        return value * np.array([np.ones_like(self.pressure)]).T
-
+    
+    
     def change_temperature_range(self, Tlow, Thigh):
         """temperature range to be assumed.
 

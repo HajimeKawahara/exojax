@@ -30,7 +30,7 @@ def test_rt(db, diffmode, fig=False):
     mmw = 2.33*np.ones_like(art.pressure)
     gravity_btm = 2478.57
     radius_btm = RJ
-    gravity = art.gravity_layer(Tarr, mmw, radius_btm, gravity_btm)
+    gravity = art.gravity_profile(Tarr, mmw, radius_btm, gravity_btm)
     
     mdb = mock_mdb(db)
     #mdb = api.MdbExomol('.database/CO/12C-16O/Li2015',nu_grid,inherit_dataframe=False,gpu_transfer=False)
