@@ -42,6 +42,7 @@ def pressure_layer_logspace(log_pressure_top=-8.,
 
     return pressure, dParr, k
 
+
 @jit
 def normalized_layer_height(temperature, pressure, dParr,
                             mean_molecular_weight, radius_btm, gravity_btm):
@@ -57,7 +58,7 @@ def normalized_layer_height(temperature, pressure, dParr,
 
     Returns:
         1D array (Nlayer) : layer height normalized by radius_btm starting from top atmosphere
-        1D array (Nlayer) : radius normalized by radius_btm starting from top atmosphere
+        1D array (Nlayer) : radius at lower bondary normalized by radius_btm starting from top atmosphere
     """
 
     inverse_Tarr = temperature[::-1]
@@ -65,34 +66,48 @@ def normalized_layer_height(temperature, pressure, dParr,
     inverse_mmr_arr = mean_molecular_weight[::-1]
     Mat = jnp.vstack([inverse_Tarr, inverse_dlogParr, inverse_mmr_arr]).T
 
-    def compute_radius(normalized_radius, arr):
+    def compute_radius(normalized_radius_lower, arr):
         T_layer = arr[0:1][0]
         dlogP_layer = arr[1:2][0]
         mmw_layer = arr[2:3][0]
-        gravity_layer = gravity_btm / normalized_radius
-        normalized_height_layer = pressure_scale_height(
-            gravity_layer, T_layer, mmw_layer) * dlogP_layer / radius_btm
-        return normalized_radius + normalized_height_layer, [normalized_height_layer, normalized_radius]
+        normalized_gh = gh_product(T_layer, mmw_layer) * dlogP_layer / radius_btm
+        gravity_layer = (gravity_btm - 0.5 * normalized_gh) / normalized_radius_lower
+        normalized_height_layer = normalized_gh / gravity_layer
+        carry = normalized_radius_lower + normalized_height_layer
+        return carry, [normalized_height_layer, normalized_radius_lower]
 
     _, results = scan(compute_radius, 1.0, Mat)
     normalized_height = results[0][::-1]
-    normalized_radius = results[1][::-1]
-    return normalized_height, normalized_radius 
+    normalized_radius_lower = results[1][::-1]
+    return normalized_height, normalized_radius_lower
 
 
-def pressure_scale_height(g, T, mu):
+def gh_product(T, mean_molecular_weight):
+    """prodict of gravity and pressure scale height
+
+    Args:
+        T: isothermal temperature (K)
+        mean_molecular_weight: mean molecular weight
+
+    Returns:
+        gravity x pressure scale height cm2/s2
+    """
+    return kB * T / (m_u * mean_molecular_weight)
+
+
+def pressure_scale_height(g, T, mean_molecular_weight):
     """pressure scale height assuming an isothermal atmosphere.
 
     Args:
         g: gravity acceleration (cm/s2)
         T: isothermal temperature (K)
-        mu: mean molecular weight
+        mean_molecular_weight: mean molecular weight
 
     Returns:
         pressure scale height (cm)
     """
 
-    return kB * T / (m_u * mu * g)
+    return gh_product(T, mean_molecular_weight) / g
 
 
 def atmprof_powerlow(Parr, T0, alpha):

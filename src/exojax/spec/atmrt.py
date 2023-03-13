@@ -61,12 +61,24 @@ class ArtCommon():
 
         Returns:
             1D array: height normalized by radius_btm (Nlayer)
-            1D array: radius normalized by radius_btm (Nlayer)
+            1D array: layer radius r_n normalized by radius_btm (Nlayer)
+            1D array: radius at lower boundary normalized by radius_btm (Nlayer)
+
+        Notes:
+            Our definitions of the radius_lower, radius_layer, and height are as follows:
+            n=0,1,...,N-1
+            radius_lower[N-1] = radius_btm (i.e. R0)
+            radius_lower[n-1] = radius_lower[n] + height[n]
+            radius_layer[n] =  radius_lower[n] + height[n]/2
+            "normalized" means physical length divided by radius_btm
+
+
         """
-        normalized_height, normalized_radius = normalized_layer_height(
+        normalized_height, normalized_radius_lower = normalized_layer_height(
             temperature, self.pressure, self.dParr, mean_molecular_weight,
             radius_btm, gravity_btm)
-        return normalized_height, normalized_radius
+        normalized_radius_layer = normalized_radius_lower + 0.5*normalized_height
+        return normalized_height, normalized_radius_layer, normalized_radius_lower
 
     def constant_gravity_profile(self, value):
         return value * np.array([np.ones_like(self.pressure)]).T
@@ -84,10 +96,10 @@ class ArtCommon():
         Returns:
             2D array: gravity in cm2/s (Nlayer, 1), suitable for the input of opacity_profile_lines
         """
-        _, normalized_radius = self.atmosphere_height(temperature,
+        _, normalized_radius_layer, _ = self.atmosphere_height(temperature,
                                                       mean_molecular_weight,
                                                       radius_btm, gravity_btm)
-        return jnp.array([gravity_btm / normalized_radius]).T
+        return jnp.array([gravity_btm / normalized_radius_layer]).T
 
     def constant_mmr_profile(self, value):
         return value * np.ones_like(self.pressure)
@@ -281,8 +293,8 @@ class ArtTransPure(ArtCommon):
 
         """
 
-        normalized_height, normalized_radius = self.atmosphere_height(
+        normalized_height, _, normalized_radius_lower = self.atmosphere_height(
             temperature, mean_molecular_weight, radius_btm, gravity_btm)
-        cgm = chord_geometric_matrix(normalized_height, normalized_radius)
+        cgm = chord_geometric_matrix(normalized_height, normalized_radius_lower)
         tauchord = chord_optical_depth(cgm, dtau)
-        return rtrun_trans_pure_absorption(tauchord, normalized_radius)
+        return rtrun_trans_pure_absorption(tauchord, normalized_radius_lower)

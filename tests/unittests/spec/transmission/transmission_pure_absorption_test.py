@@ -53,13 +53,13 @@ def test_first_layer_height_from_compute_normalized_radius_profile():
     radius_btm = 6500.0 * 1.e5
     gravity_btm = 980.
 
-    normalized_height, normalized_radius = normalized_layer_height(
+    normalized_height, normalized_radius_lower = normalized_layer_height(
         temperature, pressure, dParr, mmw, radius_btm, gravity_btm)
 
-    normalized_radius_top = normalized_radius[0] + normalized_height[0]
-    assert normalized_radius_top == pytest.approx(1.0192735)
-    assert jnp.sum(normalized_height[1:])+1.0 == pytest.approx(normalized_radius[0])
-    assert normalized_radius[-1] == 1.0
+    normalized_radius_top = normalized_radius_lower[0] + normalized_height[0]
+    assert normalized_radius_top == pytest.approx(1.0192829)
+    assert jnp.sum(normalized_height[1:])+1.0 == pytest.approx(normalized_radius_lower[0])
+    assert normalized_radius_lower[-1] == 1.0
     
 
 if __name__ == "__main__":

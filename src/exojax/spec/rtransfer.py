@@ -135,12 +135,12 @@ def rtrun_emis_pure_absorption_direct(dtau, source_matrix):
     return jnp.sum(source_matrix * jnp.exp(-taupmu) * dtau, axis=0)
 
 
-def rtrun_trans_pure_absorption(dtau_chord, radius):
+def rtrun_trans_pure_absorption(dtau_chord, radius_lower):
     """Radiative transfer assuming pure absorption 
 
     Args:
         dtau_chord (2D array): chord opacity (Nlayer, N_wavenumber)
-        radius (1D array): (normalized) radius (Nlayer). 
+        radius_lower (1D array): (normalized) radius at the lower boundary, underline(r) (Nlayer). 
 
     Notes:
         The n-th radius is defined as the lower boundary of the n-th layer. So, radius[0] corresponds to R0.   
@@ -155,7 +155,7 @@ def rtrun_trans_pure_absorption(dtau_chord, radius):
 
     """
     deltaRp2 = 2.0 * jnp.trapz(
-        (1.0 - jnp.exp(-dtau_chord)) * radius[::-1, None],
-        x=radius[::-1],
+        (1.0 - jnp.exp(-dtau_chord)) * radius_lower[::-1, None],
+        x=radius_lower[::-1],
         axis=0)
-    return deltaRp2 + radius[-1]**2
+    return deltaRp2 + radius_lower[-1]**2
