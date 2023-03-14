@@ -34,7 +34,6 @@ Cross Section using Various Opacity Calculators
    :maxdepth: 1
 
    tutorials/opacity.rst
-   tutorials/opacity_exomol.rst   
    tutorials/Cross_Section_using_Precomputation_Modified_Discrete_Integral_Transform.rst
    tutorials/Comparing_HITEMP_and_ExoMol.rst
    tutorials/Cross_Section_using_Modified_Discrete_Integral_Transform.rst
