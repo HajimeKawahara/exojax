@@ -34,8 +34,8 @@ def pressure_layer(logPtop=-8., logPbtm=2., NP=20, mode='ascending', numpy=False
     Note:
         dParr[i] = Parr[i] - Parr[i-1], dParr[0] = (1-k) Parr[0] for ascending mode
     """
-    dlogP = (logPbtm-logPtop)/(NP-1)
-    k = 10**-dlogP
+    dlog10P = (logPbtm-logPtop)/(NP-1)
+    k = 10**-dlog10P
     if numpy:
         Parr = np.logspace(logPtop, logPbtm, NP)
     else:
