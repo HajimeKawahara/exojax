@@ -10,7 +10,7 @@ from exojax.spec.api import MdbExomol
 from exojax.spec.opacalc import OpaPremodit
 from exojax.spec.contdb import CdbCIA
 from exojax.spec.opacont import OpaCIA
-from exojax.spec.response import ipgauss_sampling_slow, ipgauss, sampling
+from exojax.spec.response import ipgauss_sampling
 from exojax.spec.spin_rotation import convolve_rigid_rotation
 from exojax.utils.grids import velocity_grid
 from exojax.utils.astrofunc import gravity_jupiter
@@ -94,10 +94,10 @@ def flux_model(T0, vsini, RV):
     dtau = dtaumCH4 + dtaucH2H2
     F0 = art.run(dtau, Tarr)
     Frot = convolve_rigid_rotation(F0, vr_array, vsini=vsini, u1=0.0, u2=0.0)
-    Frotgauss = ipgauss(nu_grid, Frot, vr_array, beta_inst)
-    mu = sampling(nusd, nu_grid, Frotgauss, RV=RV)
+    mu = ipgauss_sampling(nusd, nu_grid, Frot, beta_inst, RV, vr_array)
 
     return mu
+
 
 #test and save
 mu = flux_model(T0, vsini, RV)
