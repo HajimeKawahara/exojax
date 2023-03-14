@@ -11,6 +11,7 @@ def pressure_layer_logspace(log_pressure_top=-8.,
                             log_pressure_btm=2.,
                             NP=20,
                             mode='ascending',
+                            reference_point=0.5,
                             numpy=False):
     """ Pressure layer evenly spaced in logspace, i.e. logP interval is constant 
 
@@ -19,6 +20,7 @@ def pressure_layer_logspace(log_pressure_top=-8.,
        log_pressure_btm: log10(P[bar]) at the bottom layer
        NP: the number of the layers
        mode: ascending or descending
+       reference_point (float): reference point in a layer (0-1). Center:0.5, lower boundary:1.0, upper boundary:0
        numpy: if True use numpy array instead of jnp array
 
     Returns:
@@ -36,7 +38,7 @@ def pressure_layer_logspace(log_pressure_top=-8.,
         pressure = np.logspace(log_pressure_top, log_pressure_btm, NP)
     else:
         pressure = jnp.logspace(log_pressure_top, log_pressure_btm, NP)
-    dParr = (1.0 - k) * pressure
+    dParr = (1.0 - k**reference_point) * pressure
     if mode == 'descending':
         pressure = pressure[::-1]
         dParr = dParr[::-1]

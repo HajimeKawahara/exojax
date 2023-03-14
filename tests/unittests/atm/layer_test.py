@@ -8,16 +8,14 @@ def test_log_pressure_is_constant():
                             NP=20,
                             mode='ascending',
                             numpy=False)
-    ref_value = 0.70236486
-    print(np.log(pressure))
-    print(np.log(pressure[1:])-np.log(pressure[:-1]))
-        delta_lnP = 1.2118864    
-    print(np.exp(1.2118864))
-    print(pressure[0], (1-k)*pressure[1])
-
-
-    assert np.all(dParr/pressure == pytest.approx(np.ones_like(pressure)*ref_value))
-    assert 1.0 - k == pytest.approx(ref_value) 
+    
+    #check P[n-1] = k P[n]
+    assert np.all(np.abs(1.0 - pressure[1:]*k/pressure[:-1]) < 1.e-5)
+    #check dParr
+    assert np.all(np.abs(1.0-(pressure[1:] - pressure[:-1])/dParr[1:]) < 1.e-5)
+    
+    #assert np.all(dParr/pressure == pytest.approx(np.ones_like(pressure)*ref_value))
+    #assert 1.0 - k == pytest.approx(ref_value) 
 
 
 if __name__ == "__main__":
