@@ -12,7 +12,7 @@ def pressure_layer_logspace(log_pressure_top=-8.,
                             NP=20,
                             mode='ascending',
                             numpy=False):
-    """generating the pressure layer.
+    """ Pressure layer evenly spaced in logspace, i.e. logP interval is constant 
 
     Args:
        log_pressure_top: log10(P[bar]) at the top layer
@@ -24,10 +24,11 @@ def pressure_layer_logspace(log_pressure_top=-8.,
     Returns:
          pressure: pressure layer
          dParr: delta pressure layer
-         k: k-factor, P[i-1] = k*P[i]
+         k: k-factor, pressure[i-1] = k*pressure[i]
 
     Note:
-        dParr[i] = Parr[i] - Parr[i-1], dParr[0] = (1-k) Parr[0] for ascending mode
+        d logP is constant using this function. 
+        d log_e P = dParr[i]/pressure[i] = constant = 1 - k, dParr[0] = (1-k) Parr[0] for ascending mode
     """
     dlogP = (log_pressure_btm - log_pressure_top) / (NP - 1)
     k = 10**-dlogP
@@ -82,24 +83,24 @@ def normalized_layer_height(temperature, pressure, dParr,
     return normalized_height, normalized_radius_lower
 
 
-def gh_product(T, mean_molecular_weight):
+def gh_product(temperature, mean_molecular_weight):
     """prodict of gravity and pressure scale height
 
     Args:
-        T: isothermal temperature (K)
+        temperature: isothermal temperature (K)
         mean_molecular_weight: mean molecular weight
 
     Returns:
         gravity x pressure scale height cm2/s2
     """
-    return kB * T / (m_u * mean_molecular_weight)
+    return kB * temperature / (m_u * mean_molecular_weight)
 
 
-def pressure_scale_height(g, T, mean_molecular_weight):
+def pressure_scale_height(gravity, T, mean_molecular_weight):
     """pressure scale height assuming an isothermal atmosphere.
 
     Args:
-        g: gravity acceleration (cm/s2)
+        gravity: gravity acceleration (cm/s2)
         T: isothermal temperature (K)
         mean_molecular_weight: mean molecular weight
 
@@ -107,29 +108,29 @@ def pressure_scale_height(g, T, mean_molecular_weight):
         pressure scale height (cm)
     """
 
-    return gh_product(T, mean_molecular_weight) / g
+    return gh_product(T, mean_molecular_weight) / gravity
 
 
-def atmprof_powerlow(Parr, T0, alpha):
+def atmprof_powerlow(pressure, T0, alpha):
     """powerlaw temperature profile
 
     Args:
-        Parr: pressure array (bar)
+        pressure: pressure array (bar)
         T0 (float): T at P=1 bar in K
         alpha (float): powerlaw index
 
     Returns:
         array: temperature profile
     """
-    return T0 * (Parr)**alpha
+    return T0 * pressure**alpha
 
 
-def atmprof_gray(Parr, g, kappa, Tint):
+def atmprof_gray(pressure, gravity, kappa, Tint):
     """
 
     Args:
-        Parr: pressure array (bar)
-        g: gravity (cm/s2)
+        pressure (1D array): pressure array (bar)
+        gravity (float): gravity (cm/s2)
         kappa: infrared opacity 
         Tint: temperature equivalence of the intrinsic energy flow
 
@@ -138,20 +139,20 @@ def atmprof_gray(Parr, g, kappa, Tint):
 
     """
 
-    tau = Parr * 1.e6 * kappa / g
+    tau = pressure * 1.e6 * kappa / gravity
     Tarr = (0.75 * Tint**4 * (2.0 / 3.0 + tau))**0.25
     return Tarr
 
 
-def atmprof_Guillot(Parr, g, kappa, gamma, Tint, Tirr, f=0.25):
+def atmprof_Guillot(pressure, gravity, kappa, gamma, Tint, Tirr, f=0.25):
     """
 
     Notes:
         Guillot (2010) Equation (29)
 
     Args:
-        Parr: pressure array (bar)
-        g: gravity (cm/s2)
+        pressure: pressure array (bar)
+        gravity: gravity (cm/s2)
         kappa: thermal/IR opacity (kappa_th in Guillot 2010)
         gamma: ratio of optical and IR opacity (kappa_v/kappa_th), gamma > 1 means thermal inversion
         Tint: temperature equivalence of the intrinsic energy flow
@@ -163,7 +164,7 @@ def atmprof_Guillot(Parr, g, kappa, gamma, Tint, Tirr, f=0.25):
         array: temperature profile
 
     """
-    tau = Parr * 1.e6 * kappa / g  # Equation (51)
+    tau = pressure * 1.e6 * kappa / gravity  # Equation (51)
     invsq3 = 1.0 / jnp.sqrt(3.0)
     fac = 2.0 / 3.0 + invsq3 * (
         1.0 / gamma + (gamma - 1.0 / gamma) * jnp.exp(-gamma * tau / invsq3))
@@ -173,13 +174,12 @@ def atmprof_Guillot(Parr, g, kappa, gamma, Tint, Tirr, f=0.25):
     return Tarr
 
 
-def Teq2Tirr(Teq, Tint):
+def Teq2Tirr(Teq):
     """Tirr from equilibrium temperature and intrinsic temperature.
 
     Args:
        Teq: equilibrium temperature
-       Tint: intrinsic temperature
-
+       
     Return:
        Tirr: iradiation temperature
 
