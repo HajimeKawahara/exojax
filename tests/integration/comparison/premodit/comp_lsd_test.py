@@ -32,7 +32,7 @@ def compare_line_shape_density(mdb,nu_grid,Ttest=1000.0,interval_contrast=0.1,Tt
     
     """
     from exojax.spec.lsd import npgetix
-    from exojax.spec.hitran import SijT
+    from exojax.spec.hitran import line_strength
     from exojax.spec.premodit import make_elower_grid
     from exojax.spec.premodit import unbiased_lsd_first
     
@@ -52,7 +52,7 @@ def compare_line_shape_density(mdb,nu_grid,Ttest=1000.0,interval_contrast=0.1,Tt
     Slsd=np.sum(Slsd,axis=1)
     cont_inilsd_nu, index_inilsd_nu = npgetix(mdb.nu_lines, nu_grid)
     logsij0 = jnp.array(np.log(mdb.Sij0))
-    S=SijT(Ttest, logsij0, mdb.nu_lines, mdb.elower, qT)
+    S=line_strength(Ttest, logsij0, mdb.nu_lines, mdb.elower, qT)
     Slsd_direct = np.zeros_like(nu_grid,dtype=np.float64)
     Slsd_direct = npadd1D(Slsd_direct, S, cont_inilsd_nu, index_inilsd_nu)
     return Slsd, Slsd_direct

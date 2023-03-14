@@ -18,7 +18,7 @@ from exojax.spec.set_ditgrid import precompute_modit_ditgrid_matrix
 # exomol
 from exojax.spec.exomol import gamma_exomol
 from exojax.spec import gamma_natural
-from exojax.spec.hitran import SijT
+from exojax.spec.hitran import line_strength
 from exojax.spec import normalized_doppler_sigma
 
 # hitran/hitemp
@@ -164,7 +164,7 @@ def exomol(mdb, Tarr, Parr, R, molmass):
         normalized sigmaD matrix
     """
     qt = vmap(mdb.qr_interp)(Tarr)
-    SijM = jit(vmap(SijT, (0, None, None, None, 0)))(Tarr, mdb.logsij0,
+    SijM = jit(vmap(line_strength, (0, None, None, None, 0)))(Tarr, mdb.logsij0,
                                                      mdb.dev_nu_lines,
                                                      mdb.elower, qt)
     gammaLMP = jit(vmap(gamma_exomol,
@@ -236,7 +236,7 @@ def hitran(mdb, Tarr, Parr, Pself, R, molmass):
        normalized sigmaD matrix
     """
     qt = vmap(mdb.qr_interp_lines)(Tarr)
-    SijM = jit(vmap(SijT, (0, None, None, None, 0)))(Tarr, mdb.logsij0,
+    SijM = jit(vmap(line_strength, (0, None, None, None, 0)))(Tarr, mdb.logsij0,
                                                      mdb.dev_nu_lines,
                                                      mdb.elower, qt)
     gammaLMP = jit(vmap(gamma_hitran,
@@ -329,7 +329,7 @@ def vald_each(Tarr, PH, PHe, PHH, R, qt_284_T, QTmask, \
     qt = qt_284_T[:, QTmask]
 
     # Compute line strength matrix
-    SijM = jit(vmap(SijT,(0,None,None,None,0)))\
+    SijM = jit(vmap(line_strength,(0,None,None,None,0)))\
         (Tarr, logsij0, dev_nu_lines, elower, qt)
 
     # Compute gamma parameters for the pressure and natural broadenings
