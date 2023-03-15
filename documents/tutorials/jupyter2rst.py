@@ -8,8 +8,8 @@
 import subprocess
 import pandas as pd
 import sys
-#dat = pd.read_csv("list.dat", names=("ipynb", ))
-dat = pd.read_csv("listexe.dat", names=("ipynb", ))
+dat = pd.read_csv("list.dat", names=("ipynb", ))
+#dat = pd.read_csv("listexe.dat", names=("ipynb", ))
 
 print(sys.argv[1])
 for ipynb_name in dat["ipynb"]:
