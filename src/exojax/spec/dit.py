@@ -270,7 +270,7 @@ def ditgrid(x, dit_grid_resolution=0.1, adopt=True):
     """
 
     warn_msg = " Use `set_ditgrid.ditgrid_log_interval` instead"
-    warnings.warn(warn_msg, DeprecationWarning)
+    warnings.warn(warn_msg, FutureWarning)
     from exojax.spec.set_ditgrid import ditgrid_log_interval
     return ditgrid_log_interval(x, dit_grid_resolution, adopt)
 
@@ -287,6 +287,6 @@ def dgmatrix(x, dit_grid_resolution=0.1, adopt=True):
         grid for DIT (Nlayer x NDITgrid)
     """
     warn_msg = " Use `set_ditgrid.ditgrid_matrix` instead"
-    warnings.warn(warn_msg, DeprecationWarning)    
+    warnings.warn(warn_msg, FutureWarning)    
     from exojax.spec.set_ditgrid import ditgrid_matrix 
     return ditgrid_matrix(x, dit_grid_resolution, adopt)

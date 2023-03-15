@@ -1,21 +1,31 @@
 Basics
 ==============
 
-.. note::
+.. toctree::
+   :maxdepth: 1
 
-   We will update and reorganise the opacity calculators by Release 2.0. 
-   Meanwhile, use LPF when the number of lines is less than ~ a few hundred.
-   For larger numbers, consider to use MODIT or a more experimetal calculator PreMODIT.
-   MODIT is limited by a device memory limits while while PreMODIT has no such limitation.
-   Therefore, if you want to for instance, million to billion lines, use PreMODIT.
-
-Simple Usage
-----------------
+   tutorials/get_started.rst
+   tutorials/optimize_spectrum_JAXopt.rst
+   tutorials/reverse_premodit.rst
+   
+   
+Molecular/Atomic/Continuum Databases
+=======================================
 
 .. toctree::
    :maxdepth: 1
 
-   tutorials/simple_usage.rst
+   tutorials/elower_setting.rst
+   tutorials/select_quantum_states.rst
+   tutorials/branch.rst
+   tutorials/Fortrat.rst
+   tutorials/CIA_opacity.rst
+   
+
+Manual Settings of Opacity (not using opa)
+==============================================================
+
+If you like, you do not need "opa" nor "art" to compute opacity and spectra. 
 
 Cross Section using Various Opacity Calculators
 --------------------------------------------------------
@@ -24,42 +34,12 @@ Cross Section using Various Opacity Calculators
    :maxdepth: 1
 
    tutorials/opacity.rst
-   tutorials/opacity_exomol.rst   
    tutorials/Cross_Section_using_Precomputation_Modified_Discrete_Integral_Transform.rst
    tutorials/Comparing_HITEMP_and_ExoMol.rst
-   tutorials/Cross_Section_using_Modified_Discrete_Integral_Transform.rst
-   tutorials/Cross_Section_using_Discrete_Integral_Transform.rst
-
-Forward Modeling
---------------------------------------------------------
-
-.. toctree::
-   :maxdepth: 1
-
-   tutorials/Forward_modeling.rst
-   tutorials/Forward_modeling_using_PreMODIT_Cross_Section_for_methane.rst
-   various_forward.rst
-
-Reverse Modeling (a.k.a Retrieval) using Various Opacity Calculators
-------------------------------------------------------------------------
-
-.. toctree::
-   :maxdepth: 1
    
-   tutorials/Reverse_modeling.rst
-   tutorials/Reverse_modeling_for_methane_using_MODIT.rst
-   tutorials/Reverse_modeling_with_VALD_using_MODIT.rst
 
-Gradient-based Optimization of Spectra
---------------------------------------
-
-.. toctree::
-   :maxdepth: 1
-
-   tutorials/optimize_spectrum_JAXopt.rst
-   tutorials/optimize_voigt.rst
-   tutorials/optimize_voigt_JAXopt.rst
-
+Others
+================
 
 Micro Chemical/Physical Processes
 --------------------------------------
@@ -67,8 +47,6 @@ Micro Chemical/Physical Processes
 .. toctree::
    :maxdepth: 1
 
-   tutorials/CIA_opacity.rst
-   tutorials/branch.rst
    tutorials/Ackerman_and_Marley_cloud_model.rst
    tutorials/Terminal_Velocity_of_Cloud_Particles.rst   
    
@@ -91,3 +69,5 @@ Others
    tutorials/hjerting.rst
    tutorials/pure_absorption_rt.rst
    tutorials/voigt_function.rst
+
+

@@ -23,7 +23,7 @@ def test_Kurucz_linelist():
     from exojax.spec.rtransfer import pressure_layer
     from exojax.spec import moldb
     from exojax.spec import atomll
-    from exojax.spec import SijT, doppler_sigma
+    from exojax.spec import line_strength, doppler_sigma
     import jax.numpy as jnp
     from jax import vmap, jit
     import numpy as np
@@ -66,7 +66,7 @@ def test_Kurucz_linelist():
     sigmaDM_K = jit(vmap(doppler_sigma,(None,0,None)))\
         (adbK.nu_lines, Tarr, adbK.atomicmass)
 
-    SijM_K = jit(vmap(SijT,(0,None,None,None,0)))\
+    SijM_K = jit(vmap(line_strength,(0,None,None,None,0)))\
         (Tarr, adbK.logsij0, adbK.nu_lines, adbK.elower, qt_K.T)
 
     numatrix_K = init_lpf(adbK.nu_lines, nus)

@@ -1,22 +1,46 @@
-User Guide
-==========
+Molecular Database
+=======================
 
 .. toctree::
    :maxdepth: 1
 
-   userguide/hjerting.rst
+   userguide/database.rst	
+   userguide/mdb.rst
    userguide/api.rst
+   userguide/qstates.rst
    userguide/atomll.rst
-   userguide/rtransfer.rst
+
+Opacity Calculation
+=======================
+
+.. toctree::
+   :maxdepth: 1
+
+   userguide/opacalc.rst
+   userguide/hjerting.rst
    userguide/modit.rst
+   userguide/premodit.rst
    userguide/benchmark.rst
    userguide/fp.rst
+
+Radiative Transfer
+========================
+
+.. toctree::
+   :maxdepth: 1
+
+   userguide/rtransfer.rst
+
+
+Others
+=======================
+
+.. toctree::
+   :maxdepth: 1
+
    userguide/vterm.rst
    userguide/comp.rst
 
-..   userguide/moldb.rst
-   userguide/exomol.rst 
-   userguide/hitran.rst
    
 
 For Developers
@@ -27,7 +51,7 @@ For Developers
 	     
    developers/pytest.rst   
    developers/doc.rst   
-   developers/experimental.rst   
-
    
-Collaborations using exojax is `welcome <http://secondearths.sakura.ne.jp/en/index.html>`_! Use the issue tracker for starting.
+   
+Collaborations using ExoJAX is `welcome <http://secondearths.sakura.ne.jp/en/index.html>`_! 
+Use `the issue tracker <https://github.com/HajimeKawahara/exojax/issues>`_ for starting.

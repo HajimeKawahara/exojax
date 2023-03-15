@@ -13,6 +13,8 @@ from jax import jit
 from exojax.spec.spin_rotation import convolve_rigid_rotation
 from exojax.utils.grids import velocity_grid
 from exojax.utils.instfunc import resolution_eslog
+from exojax.signal.convolve import convolve_same
+
 import warnings
 
 
@@ -28,35 +30,29 @@ def rigidrot(nus, F0, vsini, u1, u2, vsinimax=100.0):
 
 
 @jit
-def ipgauss_sampling(nusd, nus, F0, beta, RV):
+def ipgauss_sampling(nusd, nus, F0, beta, RV, varr_kernel):
     """Apply the Gaussian IP response + sampling to a spectrum F.
-
+    
+    
     Args:
         nusd: sampling wavenumber
         nus: input wavenumber, evenly log-spaced
         F0: original spectrum (F0)
         beta: STD of a Gaussian broadening (IP+microturbulence)
         RV: radial velocity (km/s)
-
+        varr_kernel: velocity array for the rotational kernel
+        
     Return:
         response-applied spectrum (F)
     """
-    def convolve_ipgauss_scan(carry, nusd_each):
-        dvgrid = c * (jnp.log1p(1.0 - nus / nusd_each))
-        kernel = jnp.exp(-(dvgrid + RV)**2 / (2.0 * beta**2))
-        kernel = kernel / jnp.sum(kernel)
-        return carry, kernel @ F0
-
-    _, F_convolved = scan(convolve_ipgauss_scan, 0, nusd)
-    return F_convolved
+    Fgauss = ipgauss(F0, varr_kernel, beta)
+    return sampling(nusd, nus, Fgauss, RV)
 
 
-@jit
-def ipgauss2(nus, F0, varr_kernel, beta):
+def ipgauss(F0, varr_kernel, beta):
     """Apply the Gaussian IP response to a spectrum F.
 
     Args:
-        nus: input wavenumber, evenly log-spaced
         F0: original spectrum (F0)
         varr_kernel: velocity array for the rotational kernel
         beta: STD of a Gaussian broadening (IP+microturbulence)
@@ -67,12 +63,12 @@ def ipgauss2(nus, F0, varr_kernel, beta):
     x = varr_kernel / beta
     kernel = jnp.exp(-x * x / 2.0)
     kernel = kernel / jnp.sum(kernel, axis=0)
-    F = jnp.convolve(F0, kernel, mode='same')
+    #F = jnp.convolve(F0, kernel, mode='same')
+    F = convolve_same(F0, kernel)
 
     return F
 
 
-@jit
 def sampling(nusd, nus, F, RV):
     """Sampling w/ RV.
 
@@ -86,3 +82,32 @@ def sampling(nusd, nus, F, RV):
        sampled spectrum
     """
     return jnp.interp(nusd * (1.0 + RV / c), nus, F)
+
+
+@jit
+def ipgauss_variable_sampling(nusd, nus, F0, beta_variable, RV):
+    """Apply the variable Gaussian IP response + sampling to a spectrum F.
+
+    Notes:
+        STD is a function of nusd
+
+    Args:
+        nusd: sampling wavenumber
+        nus: input wavenumber, evenly log-spaced
+        F0: original spectrum (F0)
+        beta_variable (1D array): STD of a Gaussian broadening, shape=(len(nusd),)
+        RV: radial velocity (km/s)
+    Return:
+        response-applied spectrum (F)
+    """
+    def convolve_ipgauss_scan(carry, arr):
+        nusd_each = arr[0]
+        beta_each = arr[1]
+        dvgrid = c * (jnp.log1p(1.0 - nus / nusd_each))
+        kernel = jnp.exp(-(dvgrid + RV)**2 / (2.0 * beta_each**2))
+        kernel = kernel / jnp.sum(kernel)
+        return carry, kernel @ F0
+    
+    mat = jnp.vstack([nusd, beta_variable]).T
+    _, F_convolved = scan(convolve_ipgauss_scan, 0, mat)
+    return F_convolved

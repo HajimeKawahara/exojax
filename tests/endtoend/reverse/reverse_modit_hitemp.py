@@ -49,10 +49,10 @@ nus, wav, res = wavenumber_grid(np.min(wavd) - 5.0,
 Rinst = 100000.
 beta_inst = resolution_to_gaussian_std(Rinst)
 
-molmassCO = molinfo.molmass('CO')
+molmassCO = molinfo.molmass_isotope('CO')
 mmw = 2.33  # mean molecular weight
 mmrH2 = 0.74
-molmassH2 = molinfo.molmass('H2')
+molmassH2 = molinfo.molmass_isotope('H2')
 vmrH2 = (mmrH2 * mmw / molmassH2)  # VMR
 
 #
@@ -112,7 +112,7 @@ def frun(Tarr, MMR_CO, Mp, Rp, u1, u2, RV, vsini):
     sourcef = planck.piBarr(Tarr, nus)
     F0 = rtrun(dtau, sourcef) / norm
     Frot = convolve_rigid_rotation(F0, vr_array, vsini, u1, u2)
-    mu = ipgauss_sampling(nusd, nus, Frot, beta_inst, RV)
+    mu = ipgauss_sampling(nusd, nus, Frot, beta_inst, RV, vr_array)
     return mu
 
 

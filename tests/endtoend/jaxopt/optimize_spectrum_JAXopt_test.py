@@ -4,7 +4,7 @@ from io import BytesIO
 import numpy as np
 from exojax.spec.lpf import xsmatrix
 from exojax.spec.exomol import gamma_exomol
-from exojax.spec.hitran import SijT, doppler_sigma, gamma_natural
+from exojax.spec.hitran import line_strength, doppler_sigma, gamma_natural
 from exojax.spec.rtransfer import rtrun, dtauM, dtauCIA, wavenumber_grid
 from exojax.spec import planck, response
 from exojax.spec import molinfo
@@ -18,7 +18,7 @@ import jax.numpy as jnp
 from jax import vmap, jit
 
 
-def test_jaxopt_spectrum():
+def test_jaxopt_spectrum(fig=False):
     np.random.seed(1)
     specdata = pkgutil.get_data('exojax', 'data/testdata/spectrum.txt')
     dat = pd.read_csv(BytesIO(specdata), delimiter=",", names=("wav", "flux"))
@@ -40,10 +40,10 @@ def test_jaxopt_spectrum():
     R = 100000.
     beta = c / (2.0 * np.sqrt(2.0 * np.log(2.0)) * R)
 
-    molmassCO = molinfo.molmass("CO")
+    molmassCO = molinfo.molmass_isotope("CO")
     mmw = 2.33  #mean molecular weight
     mmrH2 = 0.74
-    molmassH2 = molinfo.molmass("H2")
+    molmassH2 = molinfo.molmass_isotope("H2")
     vmrH2 = (mmrH2 * mmw / molmassH2)  #VMR
 
     Mp = 33.2  #fixing mass...
@@ -75,7 +75,7 @@ def test_jaxopt_spectrum():
 
         def obyo(nusd, nus, numatrix_CO, mdbCO, cdbH2H2):
             #CO
-            SijM_CO = jit(vmap(SijT,
+            SijM_CO = jit(vmap(line_strength,
                                (0, None, None, None, 0)))(Tarr, mdbCO.logsij0,
                                                           mdbCO.dev_nu_lines,
                                                           mdbCO.elower, qt_CO)
@@ -98,7 +98,7 @@ def test_jaxopt_spectrum():
             sourcef = planck.piBarr(Tarr, nus)
             F0 = rtrun(dtau, sourcef) / norm
             Frot = convolve_rigid_rotation(F0, vr_array, vsini, u1, u2)
-            mu = response.ipgauss_sampling(nusd, nus, Frot, beta, RV)
+            mu = response.ipgauss_sampling(nusd, nus, Frot, beta, RV, vr_array)
             return mu
 
         model = obyo(nu1, nus, numatrix_CO, mdbCO, cdbH2H2)
@@ -119,8 +119,14 @@ def test_jaxopt_spectrum():
     model = model_c(params, boost, nusd)
     resid = np.sqrt(np.sum((nflux - model)**2) / len(nflux))
 
+    if fig:
+        import matplotlib.pyplot as plt
+        plt.plot(nusd, nflux)
+        plt.plot(nusd, model, ls="dashed")
+        plt.show()
+    print(resid)
     assert resid < 0.05
 
 
 if __name__ == "__main__":
-    test_jaxopt_spectrum()
+    test_jaxopt_spectrum(fig=True)

@@ -18,6 +18,18 @@ def Hatm(g, T, mu):
 
     return kB*T/(m_u*mu*g)
 
+def atmprof_powerlow(Parr, T0, alpha):
+    """powerlaw temperature profile
+
+    Args:
+        Parr: pressure array (bar)
+        T0 (float): T at P=1 bar in K
+        alpha (float): powerlaw index
+
+    Returns:
+        array: temperature profile
+    """
+    return T0 * (Parr)**alpha
 
 def atmprof_gray(Parr, g, kappa, Tint):
     """
@@ -27,6 +39,9 @@ def atmprof_gray(Parr, g, kappa, Tint):
         g: gravity (cm/s2)
         kappa: infrared opacity 
         Tint: temperature equivalence of the intrinsic energy flow
+
+    Returns:
+        array: temperature profile
 
     """
 
@@ -52,7 +67,7 @@ def atmprof_Guillot(Parr, g, kappa, gamma, Tint, Tirr, f=0.25):
             and f = 1/4 for an averaging over the whole planetary surface
 
     Returns:
-        Tarr
+        array: temperature profile
 
     """
     tau = Parr*1.e6*kappa/g  # Equation (51)
@@ -77,7 +92,7 @@ def Teq2Tirr(Teq, Tint):
     Note:
        Here we assume A=0 (albedo) and beta=1 (fully-energy distributed)
     """
-    return (2.0**0.5)*Teff
+    return (2.0**0.5)*Teq
 
 
 def Teff2Tirr(Teff, Tint):

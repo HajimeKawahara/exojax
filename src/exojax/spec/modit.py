@@ -18,7 +18,7 @@ from exojax.spec.set_ditgrid import precompute_modit_ditgrid_matrix
 # exomol
 from exojax.spec.exomol import gamma_exomol
 from exojax.spec import gamma_natural
-from exojax.spec.hitran import SijT
+from exojax.spec.hitran import line_strength
 from exojax.spec import normalized_doppler_sigma
 
 # hitran/hitemp
@@ -69,11 +69,15 @@ def calc_xsection_from_lsd(Slsd, R, pmarray, nsigmaD, nu_grid,
     return jnp.fft.irfft(fftvalsum)[:Ng_nu] * R / nu_grid
 
 
-
 @jit
 def xsvector(cnu, indexnu, R, pmarray, nsigmaD, ngammaL, S, nu_grid,
              ngammaL_grid):
     """Cross section vector (MODIT)
+
+    Notes:
+        Currently due to #277, we recommend to use 
+        modit_scanfft.xsvector_scanfft instead of xsvector.
+        However, this will be changed when cufft fixes the 4GB limit.
 
     Args:
        cnu: contribution by npgetix for wavenumber
@@ -103,6 +107,12 @@ def xsvector(cnu, indexnu, R, pmarray, nsigmaD, ngammaL, S, nu_grid,
 def xsmatrix(cnu, indexnu, R, pmarray, nsigmaDl, ngammaLM, SijM, nu_grid,
              dgm_ngammaL):
     """Cross section matrix for xsvector (MODIT)
+
+    Notes:
+        Currently due to #277, we recommend to use 
+        modit_scanfft.xsmatrix_scanfft instead of xsmatrix.
+        However, this will be changed when cufft fixes the 4GB limit.
+
 
     Args:
        cnu: contribution by npgetix for wavenumber
@@ -141,19 +151,20 @@ def exomol(mdb, Tarr, Parr, R, molmass):
     """compute molecular line information required for MODIT using Exomol mdb.
 
     Args:
-       mdb: mdb instance
-       Tarr: Temperature array
-       Parr: Pressure array
-       R: spectral resolution
-       molmass: molecular mass
-
+        mdb: mdb instance
+        Tarr: Temperature array
+        Parr: Pressure array
+        R: spectral resolution
+        molmass: molecular mass
+        wavmask: mask for wavenumber #Issue 341
+        
     Returns:
-       line intensity matrix,
-       normalized gammaL matrix,
-       normalized sigmaD matrix
+        line intensity matrix,
+        normalized gammaL matrix,
+        normalized sigmaD matrix
     """
     qt = vmap(mdb.qr_interp)(Tarr)
-    SijM = jit(vmap(SijT, (0, None, None, None, 0)))(Tarr, mdb.logsij0,
+    SijM = jit(vmap(line_strength, (0, None, None, None, 0)))(Tarr, mdb.logsij0,
                                                      mdb.dev_nu_lines,
                                                      mdb.elower, qt)
     gammaLMP = jit(vmap(gamma_exomol,
@@ -168,7 +179,7 @@ def exomol(mdb, Tarr, Parr, R, molmass):
 
 def setdgm_exomol(mdb, fT, Parr, R, molmass, dit_grid_resolution, *kargs):
     warn_msg = " Use `modit.set_ditgrid_matrix_exomol` instead"
-    warnings.warn(warn_msg, DeprecationWarning)
+    warnings.warn(warn_msg, FutureWarning)
     return set_ditgrid_matrix_exomol(mdb, fT, Parr, R, molmass,
                                      dit_grid_resolution, *kargs)
 
@@ -225,7 +236,7 @@ def hitran(mdb, Tarr, Parr, Pself, R, molmass):
        normalized sigmaD matrix
     """
     qt = vmap(mdb.qr_interp_lines)(Tarr)
-    SijM = jit(vmap(SijT, (0, None, None, None, 0)))(Tarr, mdb.logsij0,
+    SijM = jit(vmap(line_strength, (0, None, None, None, 0)))(Tarr, mdb.logsij0,
                                                      mdb.dev_nu_lines,
                                                      mdb.elower, qt)
     gammaLMP = jit(vmap(gamma_hitran,
@@ -242,7 +253,7 @@ def hitran(mdb, Tarr, Parr, Pself, R, molmass):
 def setdgm_hitran(mdb, fT, Parr, Pself_ref, R, molmass, dit_grid_resolution,
                   *kargs):
     warn_msg = " Use `modit.set_ditgrid_matrix_hitran` instead"
-    warnings.warn(warn_msg, DeprecationWarning)
+    warnings.warn(warn_msg, FutureWarning)
     return set_ditgrid_matrix_hitran(mdb, fT, Parr, Pself_ref, R, molmass,
                                      dit_grid_resolution, *kargs)
 
@@ -318,7 +329,7 @@ def vald_each(Tarr, PH, PHe, PHH, R, qt_284_T, QTmask, \
     qt = qt_284_T[:, QTmask]
 
     # Compute line strength matrix
-    SijM = jit(vmap(SijT,(0,None,None,None,0)))\
+    SijM = jit(vmap(line_strength,(0,None,None,None,0)))\
         (Tarr, logsij0, dev_nu_lines, elower, qt)
 
     # Compute gamma parameters for the pressure and natural broadenings
@@ -363,7 +374,7 @@ def vald_all(asdb, Tarr, PH, PHe, PHH, R):
 def setdgm_vald_each(ielem, iion, atomicmass, ionE, dev_nu_lines, logsij0, elower, eupper, gamRad, gamSta, vdWdamp, \
                 QTmask, T_gQT, gQT_284species, PH, PHe, PHH, R, fT, dit_grid_resolution, *kargs):
     warn_msg = " Use `modit.set_ditgrid_matrix_vald_each` instead"
-    warnings.warn(warn_msg, DeprecationWarning)
+    warnings.warn(warn_msg, FutureWarning)
     return set_ditgrid_matrix_vald_each(ielem, iion, atomicmass, ionE,
                                         dev_nu_lines, logsij0, elower, eupper,
                                         gamRad, gamSta, vdWdamp, QTmask, T_gQT,
@@ -411,7 +422,11 @@ def set_ditgrid_matrix_vald_each(ielem, iion, atomicmass, ionE, dev_nu_lines,
         SijM, ngammaLM, nsigmaDl = vald_each(Tarr, PH, PHe, PHH, R, qt_284_T, \
              QTmask, ielem, iion, atomicmass, ionE, \
                    dev_nu_lines, logsij0, elower, eupper, gamRad, gamSta, vdWdamp)
-        floop = lambda c, arr: (c, jnp.nan_to_num(arr, nan=jnp.nanmin(arr), posinf=jnp.nanmin(arr), neginf=jnp.nanmin(arr)))
+        floop = lambda c, arr: (c,
+                                jnp.nan_to_num(arr,
+                                               nan=jnp.nanmin(arr),
+                                               posinf=jnp.nanmin(arr),
+                                               neginf=jnp.nanmin(arr)))
         ngammaLM = scan(floop, 0, ngammaLM)[1]
         set_dgm_minmax.append(
             minmax_ditgrid_matrix(ngammaLM, dit_grid_resolution))
@@ -422,7 +437,7 @@ def set_ditgrid_matrix_vald_each(ielem, iion, atomicmass, ionE, dev_nu_lines,
 
 def setdgm_vald_all(asdb, PH, PHe, PHH, R, fT, dit_grid_resolution, *kargs):
     warn_msg = " Use `modit.set_ditgrid_matrix_vald_all` instead"
-    warnings.warn(warn_msg, DeprecationWarning)
+    warnings.warn(warn_msg, FutureWarning)
     return set_ditgrid_matrix_vald_all(asdb, PH, PHe, PHH, R, fT,
                                        dit_grid_resolution, *kargs)
 
@@ -511,7 +526,7 @@ def precompute_dgmatrix(set_gm_minmax, dit_grid_resolution=0.1, adopt=True):
         grid for DIT (Nlayer x NDITgrid)
     """
     warn_msg = " Use `set_ditgrid.precompute_modit_ditgrid_matrix` instead"
-    warnings.warn(warn_msg, DeprecationWarning)
+    warnings.warn(warn_msg, FutureWarning)
     return precompute_modit_ditgrid_matrix(set_gm_minmax, dit_grid_resolution,
                                            adopt)
 
@@ -528,7 +543,7 @@ def minmax_dgmatrix(x, dit_grid_resolution=0.1, adopt=True):
         minimum and maximum for DIT (dgm_minmax)
     """
     warn_msg = "Deprecated Use `set_ditgrid.minmax_ditgrid_matrix` instead"
-    warnings.warn(warn_msg, DeprecationWarning)
+    warnings.warn(warn_msg, FutureWarning)
     return minmax_ditgrid_matrix(x, dit_grid_resolution, adopt)
 
 
@@ -545,7 +560,7 @@ def dgmatrix(x, dit_grid_resolution=0.1, adopt=True):
         grid for DIT (Nlayer x NDITgrid)
     """
     warn_msg = "Deprecated Use `set_ditgrid.ditgrid_matrix` instead"
-    warnings.warn(warn_msg, DeprecationWarning)    
+    warnings.warn(warn_msg, FutureWarning)
     from exojax.spec.set_ditgrid import ditgrid_matrix
     return ditgrid_matrix(x, dit_grid_resolution, adopt)
 
@@ -564,7 +579,7 @@ def ditgrid(x, dit_grid_resolution=0.1, adopt=True):
     """
 
     warn_msg = "Deprecated Use `set_ditgrid.ditgrid_log_interval` instead"
-    warnings.warn(warn_msg, DeprecationWarning)
+    warnings.warn(warn_msg, FutureWarning)
     from exojax.spec.set_ditgrid import ditgrid_log_interval
     return ditgrid_log_interval(x, dit_grid_resolution, adopt)
 

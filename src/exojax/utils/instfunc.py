@@ -8,7 +8,7 @@ import warnings
 
 def R2STD(resolution):
     warn_msg = "Use `resolution_to_gaussian_std` instead"
-    warnings.warn(warn_msg, DeprecationWarning)
+    warnings.warn(warn_msg, FutureWarning)
     return resolution_to_gaussian_std(resolution)
 
 
@@ -48,3 +48,17 @@ def resolution_eslin(nu):
     """
     resolution = ((nu[-1] + nu[0]) / 2.0) / ((nu[-1] - nu[0]) / len(nu))
     return nu[0] / (nu[1] - nu[0]), resolution, nu[-1] / (nu[-1] - nu[-2])
+
+def nx_from_resolution_eslog(nu0, nu1, resolution):
+    """Compute the number of wavenumber grid for a given resolution for ESLOG
+
+    Args:
+        nu0 (float): wavenumber min
+        nu1 (float): wavenumber max
+        resolution (float): resolution
+
+    Returns:
+        int: the number of wavenumber grid for a given resolution
+    """
+    return int(resolution * np.log(nu1 / nu0)) + 1
+

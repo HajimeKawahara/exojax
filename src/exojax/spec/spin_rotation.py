@@ -1,7 +1,7 @@
 from jax import custom_jvp
 import jax.numpy as jnp
 from jax import jit
-
+from exojax.signal.convolve import convolve_same
 
 @jit
 def convolve_rigid_rotation(F0, vr_array, vsini, u1=0.0, u2=0.0):
@@ -20,16 +20,12 @@ def convolve_rigid_rotation(F0, vr_array, vsini, u1=0.0, u2=0.0):
     """
     kernel = rotkernel(vr_array/vsini, u1, u2)
     kernel = kernel / jnp.sum(kernel, axis=0)
+
     #==== still require cuDNN in Oct.15 2022================
     #convolved_signal = jnp.convolve(F0,kernel,mode="same")
     #=======================================================
-    input_length = len(F0)
-    filter_length = len(kernel)
-    fft_length = input_length + filter_length - 1
-    convolved_signal = jnp.fft.irfft(
-        jnp.fft.rfft(F0, n=fft_length) * jnp.fft.rfft(kernel, n=fft_length))
-    n = int((filter_length - 1) / 2) 
-    convolved_signal = convolved_signal[n:-n]
+
+    convolved_signal = convolve_same(F0, kernel)
 
     return convolved_signal
 

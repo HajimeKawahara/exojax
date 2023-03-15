@@ -4,12 +4,11 @@
 * That's why we need this module.
 """
 
-import exojax.utils.constants as const
-import numpy as np
+from exojax.utils.constants import gJ
 import jax.numpy as jnp
 
 
-def getjov_logg(Rp, Mp):
+def logg_jupiter(Rp, Mp):
     """logg from radius and mass in the Jovian unit.
 
     Args:
@@ -23,10 +22,10 @@ def getjov_logg(Rp, Mp):
        Mpcgs=Mp*const.MJ, Rpcgs=Rp*const.RJ,
        then logg is given by log10(const.G*Mpcgs/Rpcgs**2)
     """
-    return jnp.log10(getjov_gravity(Rp, Mp))
+    return jnp.log10(gravity_jupiter(Rp, Mp))
 
 
-def getjov_gravity(Rp, Mp):
+def gravity_jupiter(Rp, Mp):
     """gravity in cgs from radius and mass in the Jovian unit.
 
     Args:
@@ -40,4 +39,4 @@ def getjov_gravity(Rp, Mp):
        Mpcgs=Mp*const.MJ, Rpcgs=Rp*const.RJ
        then gravity is given by (const.G*Mpcgs/Rpcgs**2)
     """
-    return 2478.57730044555 * Mp / Rp**2
+    return gJ * Mp / Rp**2

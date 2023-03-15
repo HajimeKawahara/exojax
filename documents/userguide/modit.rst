@@ -1,7 +1,10 @@
-Modified Discrete Integral Transform (MODIT)
+MODIT
 ==============================================
 
 *Sep 5 (2021) Hajime Kawahara*
+
+MODIT = Modified Discrete Integral Transform
+--------------------------------------------------
 
 With an increase in the number of lines of :math:`N_l`, the direct LPF tends to be intractable even when using GPUs, in particular for :math:`N_l \gtrsim 10^3`. MODIT is a modified version of `Discrete Integral Transform <https://www.sciencedirect.com/science/article/abs/pii/S0022407320310049>`_ for rapid spectral synthesis, originally proposed by D.C.M van den Bekerom and E. Pannier. The modifications are as follows:
 

@@ -1,5 +1,5 @@
 from exojax.spec.lpf import auto_xsection
-from exojax.spec import SijT, doppler_sigma,  gamma_natural
+from exojax.spec import line_strength, doppler_sigma,  gamma_natural
 from exojax.spec.exomol import gamma_exomol
 from exojax.spec import moldb
 import numpy as np
@@ -22,7 +22,7 @@ def demo(Tfix,Ttyp,crit=1.e-40):
     Mmol=28.010446441149536 # molecular weight
     Pfix=1.e-3 # we compute P=1.e-3 bar
     qt=mdbCO.qr_interp(Tfix)
-    Sij=SijT(Tfix,mdbCO.logsij0,mdbCO.nu_lines,mdbCO.elower,qt)
+    Sij=line_strength(Tfix,mdbCO.logsij0,mdbCO.nu_lines,mdbCO.elower,qt)
     gammaL = gamma_exomol(Pfix,Tfix,mdbCO.n_Texp,mdbCO.alpha_ref)\
         + gamma_natural(mdbCO.A)
     # thermal doppler sigma
