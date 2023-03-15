@@ -47,8 +47,7 @@ def pressure_layer_logspace(log_pressure_top=-8.,
 
 
 @jit
-def normalized_layer_height(temperature, pressure, dParr, k,
-                            mean_molecular_weight, radius_btm, gravity_btm):
+def normalized_layer_height(temperature, k, mean_molecular_weight, radius_btm, gravity_btm):
     """compute normalized height/radius at the upper boundary of the atmospheric layer, neglecting atmospheric mass. 
 
     Args:
@@ -63,29 +62,17 @@ def normalized_layer_height(temperature, pressure, dParr, k,
         1D array (Nlayer) : layer height normalized by radius_btm starting from top atmosphere
         1D array (Nlayer) : radius at lower bondary normalized by radius_btm starting from top atmosphere
     """
-    sqrtk = jnp.sqrt(k)
     inverse_Tarr = temperature[::-1]
-    inverse_dlogParr = (dParr / pressure)[::-1]
     inverse_mmr_arr = mean_molecular_weight[::-1]
-    inverse_pressure = pressure[::-1]
-    Mat = jnp.vstack([inverse_Tarr, inverse_dlogParr, inverse_mmr_arr, inverse_pressure]).T
+    Mat = jnp.vstack([inverse_Tarr, inverse_mmr_arr]).T
 
     def compute_radius(normalized_radius_lower, arr):
         T_layer = arr[0:1][0]
-        #dlogP_layer = arr[1:2][0]
-        mmw_layer = arr[2:3][0]
-        pressure_layer = arr[3:4][0]
-        pressure_lower = pressure_layer/sqrtk
-        pressure_upper = pressure_layer*sqrtk
-
+        mmw_layer = arr[1:2][0]
         gravity_lower = gravity_btm/normalized_radius_lower
         Hn_lower = pressure_scale_height(gravity_lower, T_layer, mmw_layer)/radius_btm 
-        fac = (pressure_lower/pressure_upper)**(Hn_lower/normalized_radius_lower) 
-        normalized_height_layer = (fac - 1.0 )*normalized_radius_lower
-        
-        #normalized_gh = gh_product(T_layer, mmw_layer) * dlogP_layer / radius_btm
-        #gravity_layer = (gravity_btm - 0.5 * normalized_gh) / normalized_radius_lower
-        #normalized_height_layer = normalized_gh / gravity_layer
+        fac = k**(-Hn_lower/normalized_radius_lower)  - 1.0
+        normalized_height_layer = fac*normalized_radius_lower
         carry = normalized_radius_lower + normalized_height_layer
         return carry, [normalized_height_layer, normalized_radius_lower]
 

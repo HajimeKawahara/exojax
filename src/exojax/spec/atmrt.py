@@ -74,18 +74,18 @@ class ArtCommon():
 
 
         """
-        print("k=",self.k)
+        print("k=", self.k)
         normalized_height, normalized_radius_lower = normalized_layer_height(
-            temperature, self.pressure, self.dParr, self.k, mean_molecular_weight,
-            radius_btm, gravity_btm)
-        normalized_radius_layer = normalized_radius_lower + 0.5*normalized_height
+            temperature, self.k, mean_molecular_weight, radius_btm,
+            gravity_btm)
+        normalized_radius_layer = normalized_radius_lower + 0.5 * normalized_height
         return normalized_height, normalized_radius_layer, normalized_radius_lower
 
     def constant_gravity_profile(self, value):
         return value * np.array([np.ones_like(self.pressure)]).T
 
     def gravity_profile(self, temperature, mean_molecular_weight, radius_btm,
-                      gravity_btm):
+                        gravity_btm):
         """gravity layer profile assuming hydrostatic equilibrium
 
         Args:
@@ -97,9 +97,8 @@ class ArtCommon():
         Returns:
             2D array: gravity in cm2/s (Nlayer, 1), suitable for the input of opacity_profile_lines
         """
-        _, normalized_radius_layer, _ = self.atmosphere_height(temperature,
-                                                      mean_molecular_weight,
-                                                      radius_btm, gravity_btm)
+        _, normalized_radius_layer, _ = self.atmosphere_height(
+            temperature, mean_molecular_weight, radius_btm, gravity_btm)
         return jnp.array([gravity_btm / normalized_radius_layer]).T
 
     def constant_mmr_profile(self, value):
@@ -149,8 +148,6 @@ class ArtCommon():
             reference_point=0.5,
             numpy=True)
 
-    
-    
     def change_temperature_range(self, Tlow, Thigh):
         """temperature range to be assumed.
 
@@ -297,6 +294,7 @@ class ArtTransPure(ArtCommon):
 
         normalized_height, _, normalized_radius_lower = self.atmosphere_height(
             temperature, mean_molecular_weight, radius_btm, gravity_btm)
-        cgm = chord_geometric_matrix(normalized_height, normalized_radius_lower)
+        cgm = chord_geometric_matrix(normalized_height,
+                                     normalized_radius_lower)
         tauchord = chord_optical_depth(cgm, dtau)
         return rtrun_trans_pure_absorption(tauchord, normalized_radius_lower)

@@ -54,11 +54,11 @@ def compare_with_kawashima_code():
     from exojax.atm.atmprof import pressure_scale_height
     H_btm = pressure_scale_height(gravity_btm, T_fid, mu_fid)
     dq = np.log(art.pressure[-1]) - np.log(art.pressure)
-    _, normalized_radius_layer, _ = art.atmosphere_height(
+    _, normalized_radius_layer, normalized_radius_lower = art.atmosphere_height(
         Tarr, mmw, radius_btm, gravity_btm)
     normalized_radius_theory = (np.exp(H_btm * dq / radius_btm))
-    print(normalized_radius_layer)
-    plt.plot(normalized_radius_theory-1.0,(normalized_radius_layer-1.0)/(normalized_radius_theory-1.0))
+    plt.plot(normalized_radius_theory-1.0,1.0-(normalized_radius_lower-1.0)/(normalized_radius_theory-1.0))
+    plt.ylim(-0.1,0.1)
     plt.xscale("log")
     plt.show()
     #import sys
