@@ -5,7 +5,7 @@ from exojax.utils.constants import hcperk, Tref_original
 from exojax.utils.constants import Patm
 
 
-def SijT(T, logsij0, nu_lines, elower, qT):
+def line_strength(T, logsij0, nu_lines, elower, qT):
     """(alias, deprecated) use hitran.line_strength, will be removed. 
    """
     return line_strength(T, logsij0, nu_lines, elower, qT)

@@ -155,6 +155,8 @@ downloading for the first time). Have a coffee and wait.
 
 .. parsed-literal::
 
+    /home/kawahara/exojax/src/exojax/utils/molname.py:133: FutureWarning: e2s will be replaced to exact_molname_exomol_to_simple_molname.
+      warnings.warn(
     /home/kawahara/exojax/src/exojax/utils/molname.py:49: UserWarning: No isotope number identified.
       warnings.warn("No isotope number identified.",UserWarning)
     /home/kawahara/exojax/src/exojax/utils/molname.py:49: UserWarning: No isotope number identified.
@@ -180,12 +182,13 @@ downloading for the first time). Have a coffee and wait.
 
 .. parsed-literal::
 
-    uniqidx: 100%|██████████| 2/2 [00:04<00:00,  2.39s/it]
+    uniqidx: 100%|██████████| 2/2 [00:03<00:00,  1.68s/it]
 
 
 .. parsed-literal::
 
     Premodit: Twt= 461.3329793405918 K Tref= 1153.6267095763965 K
+    Making LSD:|####################| 100%
     H2-H2
 
 
@@ -271,7 +274,7 @@ parameters.
 
 .. parsed-literal::
 
-    [<matplotlib.lines.Line2D at 0x7f9586004430>]
+    [<matplotlib.lines.Line2D at 0x7f02487ad070>]
 
 
 
@@ -307,9 +310,9 @@ The best-fit parameters
 
 .. parsed-literal::
 
-    DeviceArray([3.16212731e+00, 9.00000000e+00, 6.83902209e-02,
-                 1.96979169e+03, 1.00019192e-01, 1.99522829e+01,
-                 9.94556417e+00], dtype=float64)
+    DeviceArray([3.36130210e+00, 9.00000000e+00, 1.35552984e-01,
+                 2.13127711e+03, 1.00055203e-01, 1.87558456e+01,
+                 1.08695956e+01], dtype=float64)
 
 
 
@@ -352,7 +355,7 @@ visualize the optimization process.
 
 .. parsed-literal::
 
-    100%|██████████| 300/300 [01:15<00:00,  3.99it/s]
+    100%|██████████| 300/300 [00:39<00:00,  7.69it/s]
 
 
 Using ADAM optimizer
@@ -381,7 +384,7 @@ You might use ADAM, instead of a simple GD. Yes, you can.
 
 .. parsed-literal::
 
-    100%|██████████| 300/300 [00:39<00:00,  7.65it/s]
+    100%|██████████| 300/300 [00:20<00:00, 14.53it/s]
 
 
 .. code:: ipython3
@@ -417,7 +420,7 @@ files.
 
 .. parsed-literal::
 
-    100%|██████████| 300/300 [01:24<00:00,  3.56it/s]
+    100%|██████████| 300/300 [00:57<00:00,  5.19it/s]
 
 
 .. code:: ipython3

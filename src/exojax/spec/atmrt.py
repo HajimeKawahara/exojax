@@ -87,6 +87,7 @@ class ArtCommon():
             logPbtm=self.log_pressure_btm,
             NP=self.nlayer,
             mode='ascending',
+            reference_point=0.5,
             numpy=True)
 
     def constant_mmr_profile(self, value):

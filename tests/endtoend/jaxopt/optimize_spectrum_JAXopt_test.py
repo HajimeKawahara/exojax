@@ -4,7 +4,7 @@ from io import BytesIO
 import numpy as np
 from exojax.spec.lpf import xsmatrix
 from exojax.spec.exomol import gamma_exomol
-from exojax.spec.hitran import SijT, doppler_sigma, gamma_natural
+from exojax.spec.hitran import line_strength, doppler_sigma, gamma_natural
 from exojax.spec.rtransfer import rtrun, dtauM, dtauCIA, wavenumber_grid
 from exojax.spec import planck, response
 from exojax.spec import molinfo
@@ -75,7 +75,7 @@ def test_jaxopt_spectrum(fig=False):
 
         def obyo(nusd, nus, numatrix_CO, mdbCO, cdbH2H2):
             #CO
-            SijM_CO = jit(vmap(SijT,
+            SijM_CO = jit(vmap(line_strength,
                                (0, None, None, None, 0)))(Tarr, mdbCO.logsij0,
                                                           mdbCO.dev_nu_lines,
                                                           mdbCO.elower, qt_CO)
