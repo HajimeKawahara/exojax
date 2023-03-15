@@ -8,7 +8,7 @@ __license__ = ''
 __description__ = 'auto-differentiable spectral modules in exojax'
 
 from exojax.spec.hitran import (
-    SijT,
+    line_strength,
     line_strength,
     doppler_sigma,
     gamma_natural,

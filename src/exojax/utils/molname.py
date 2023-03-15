@@ -132,7 +132,7 @@ def e2s(exact_exomol_molecule_name):
 
     warnings.warn(
         "e2s will be replaced to exact_molname_exomol_to_simple_molname.",
-        DeprecationWarning)
+        FutureWarning)
     return exact_molname_exomol_to_simple_molname(exact_exomol_molecule_name)
 
 

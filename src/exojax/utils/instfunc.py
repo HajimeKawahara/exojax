@@ -8,7 +8,7 @@ import warnings
 
 def R2STD(resolution):
     warn_msg = "Use `resolution_to_gaussian_std` instead"
-    warnings.warn(warn_msg, DeprecationWarning)
+    warnings.warn(warn_msg, FutureWarning)
     return resolution_to_gaussian_std(resolution)
 
 

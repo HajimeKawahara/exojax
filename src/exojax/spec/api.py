@@ -234,7 +234,7 @@ class MdbExomol(CapiMdbExomol):
             ndarray: line_strength_ref
         """
         msg = "Sij0 instance was replaced to line_strength_ref and will be removed."
-        warnings.warn(msg, DeprecationWarning)
+        warnings.warn(msg, FutureWarning)
         return self.line_strength_ref
 
     def generate_jnp_arrays(self):
@@ -545,7 +545,7 @@ class MdbHitemp(HITEMPDatabaseManager):
             ndarray: line_strength_ref
         """
         msg = "Sij0 instance was replaced to line_strength_ref and will be removed."
-        warnings.warn(msg, DeprecationWarning)
+        warnings.warn(msg, FutureWarning)
         return self.line_strength_ref
 
     def generate_jnp_arrays(self):
@@ -858,7 +858,7 @@ class MdbHitran(HITRANDatabaseManager):
             ndarray: line_strength_ref
         """
         msg = "Sij0 instance was replaced to line_strength_ref and will be removed."
-        warnings.warn(msg, DeprecationWarning)
+        warnings.warn(msg, FutureWarning)
         return self.line_strength_ref
 
     def generate_jnp_arrays(self):

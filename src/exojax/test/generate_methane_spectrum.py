@@ -17,7 +17,7 @@ from exojax.utils.astrofunc import gravity_jupiter
 
 from exojax.spec import molinfo
 from exojax.utils.instfunc import resolution_to_gaussian_std
-from exojax.test.data import SAMPLE_TRANSMISSION_CH4
+from exojax.test.data import SAMPLE_SPECTRA_CH4_NEW
 
 #given gravity, temperature exponent, MMR
 g = gravity_jupiter(0.88, 33.2)
@@ -99,8 +99,10 @@ def flux_model(T0, vsini, RV):
     dtau = dtaumCH4 + dtaucH2H2
     F0 = art.run(dtau, Tarr)
     Frot = convolve_rigid_rotation(F0, vr_array, vsini=vsini, u1=0.0, u2=0.0)
-    
+    mu = ipgauss_sampling(nusd, nu_grid, Frot, beta_inst, RV, vr_array)
+
     return mu
+
 
 #test and save
 mu = flux_model(T0, vsini, RV)

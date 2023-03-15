@@ -2,7 +2,7 @@ from jax.config import config
 from exojax.spec.hitran import normalized_doppler_sigma
 from exojax.spec.set_ditgrid import ditgrid_log_interval
 from exojax.spec import moldb
-from exojax.spec.hitran import SijT, doppler_sigma, gamma_hitran, gamma_natural
+from exojax.spec.hitran import line_strength, doppler_sigma, gamma_hitran, gamma_natural
 from exojax.spec.lpf import auto_xsection as lpf_xsection
 from exojax.spec import initspec
 from exojax.spec.dit import xsvector as dit_xsvector
@@ -36,7 +36,7 @@ for idx, iso in enumerate(mdbCO.uniqiso):
     mask = mdbCO.isoid == iso
     qt[mask] = qr[idx]
 
-Sij = SijT(Tfix, mdbCO.logsij0, mdbCO.nu_lines, mdbCO.elower, qt)
+Sij = line_strength(Tfix, mdbCO.logsij0, mdbCO.nu_lines, mdbCO.elower, qt)
 gammaL = gamma_hitran(Pfix, Tfix, Pfix, mdbCO.n_air,
                       mdbCO.gamma_air, mdbCO.gamma_self)
 # + gamma_natural(A) #uncomment if you inclide a natural width
