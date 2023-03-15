@@ -74,8 +74,9 @@ class ArtCommon():
 
 
         """
+        print("k=",self.k)
         normalized_height, normalized_radius_lower = normalized_layer_height(
-            temperature, self.pressure, self.dParr, mean_molecular_weight,
+            temperature, self.pressure, self.dParr, self.k, mean_molecular_weight,
             radius_btm, gravity_btm)
         normalized_radius_layer = normalized_radius_lower + 0.5*normalized_height
         return normalized_height, normalized_radius_layer, normalized_radius_lower

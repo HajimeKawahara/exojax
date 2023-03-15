@@ -22,6 +22,9 @@ def read_kawashima_data():
 
 
 def compare_with_kawashima_code():
+    mu_fid = 28.00863
+    T_fid = 500.
+
     Nx = 100000
     nu_grid, wav, res = wavenumber_grid(22500.0,
                                         26000.0,
@@ -30,23 +33,36 @@ def compare_with_kawashima_code():
                                         xsmode="premodit")
 
     art = ArtTransPure(nu_grid,
-                       pressure_top=1.e-12,
+                       pressure_top=1.e-10,
                        pressure_btm=1.e1,
                        nlayer=100)
     art.change_temperature_range(490.0, 510.0)
-    Tarr = 500.0 * np.ones_like(art.pressure)
+    Tarr = T_fid * np.ones_like(art.pressure)
     mmr_arr = art.constant_mmr_profile(1.0)
     from exojax.utils.astrofunc import gravity_jupiter
-    gravity_btm = gravity_jupiter(1.0, 1.0)
+    #gravity_btm = gravity_jupiter(1.0, 1.0)
     gravity_btm = 2478.57
     radius_btm = RJ
 
     #mdb = api.MdbExomol('.database/CO/12C-16O/Li2015',nu_grid,inherit_dataframe=False,gpu_transfer=False)
     #mdb = MdbHitran('CO', art.nu_grid, gpu_transfer=False, isotope=1)
     mdb = MdbHitemp('CO', art.nu_grid, gpu_transfer=False, isotope=1)
-    
-    mmw = 28.00863 * np.ones_like(art.pressure)
+
+    mmw = mu_fid * np.ones_like(art.pressure)
     gravity = art.gravity_profile(Tarr, mmw, radius_btm, gravity_btm)
+
+    from exojax.atm.atmprof import pressure_scale_height
+    H_btm = pressure_scale_height(gravity_btm, T_fid, mu_fid)
+    dq = np.log(art.pressure[-1]) - np.log(art.pressure)
+    _, normalized_radius_layer, _ = art.atmosphere_height(
+        Tarr, mmw, radius_btm, gravity_btm)
+    normalized_radius_theory = (np.exp(H_btm * dq / radius_btm))
+    print(normalized_radius_layer)
+    plt.plot(normalized_radius_theory-1.0,(normalized_radius_layer-1.0)/(normalized_radius_theory-1.0))
+    plt.xscale("log")
+    plt.show()
+    #import sys
+    #sys.exit()
 
     opa = OpaPremodit(mdb=mdb,
                       nu_grid=nu_grid,
@@ -56,8 +72,12 @@ def compare_with_kawashima_code():
     xsmatrix = opa.xsmatrix(Tarr, art.pressure)
     dtau = art.opacity_profile_lines(xsmatrix, mmr_arr, opa.mdb.molmass,
                                      gravity)
+    
     Rp2 = art.run(dtau, Tarr, mmw, radius_btm, gravity_btm)
-    print(Rp2)
+
+    from exojax.atm.atmprof import pressure_scale_height
+    print("scale height=",
+          pressure_scale_height(gravity_btm, 500.0, 28.00863) / RJ)
     return nu_grid, np.sqrt(Rp2) * radius_btm / Rs
 
 
@@ -71,18 +91,15 @@ if __name__ == "__main__":
     wav_exojax = nu2wav(nus_hitran, unit="um")
     fig = plt.figure()
     ax = fig.add_subplot(111)
-    ax.plot(wav, rprs, label="Kawashima")
+    ax.plot(wav, rprs * Rs / RJ, label="Kawashima")
     #plt.yscale("log")
-    ax.plot(wav_exojax[::-1],
-            Rp_hitran,
-            label="ExoJAX",
-            ls="dashed")
+    ax.plot(wav_exojax[::-1], Rp_hitran * Rs / RJ, label="ExoJAX", ls="dashed")
     plt.legend()
-    
+
     plt.xlabel("wavenumber cm-1")
     #plt.ylim(-0.07, 0.07)
     plt.legend()
-    plt.ylabel("Rp/Rs")
+    plt.ylabel("Rp (RJ)")
 
     plt.savefig("comparison.png")
     plt.show()

@@ -26,3 +26,16 @@ def test_vterm():
     r = jnp.logspace(-5, 0, 70)
     vfall = vterm.vf(r, g, eta, drho, rho)
     assert jnp.mean(vfall)== pytest.approx(328.12296)
+
+if __name__ == "__main__":
+    from exojax.utils.astrofunc import gravity_jupiter
+    g = gravity_jupiter(1.0,1.0)
+    print(g)
+    T=500.
+    mu=28.00863
+    H = atmprof.pressure_scale_height(g, T, mu)
+    print(H)
+    import numpy as np
+    from exojax.utils.constants import RJ
+    dq = np.log(10**1) - np.log(10**-9)
+    print(np.exp(H*dq/RJ))
