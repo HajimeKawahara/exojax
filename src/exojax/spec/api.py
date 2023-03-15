@@ -945,7 +945,14 @@ class MdbHitran(HITRANDatabaseManager):
         """
         print("Change the reference temperature from " + str(self.Tref) +
               "K to " + str(Tref_new) + " K.")
-        qr = self.qr_interp(Tref_new)
+        if self.isotope is None or self.isotope == 0:
+            msg1 = "Currently all isotope mode is not fully compatible to change_reference_temperature."
+            msg2 = "QT used in change_reference_temperature is assumed isotope=1 instead."
+            warnings.warn(msg1 + msg2, UserWarning)
+            qr = self.qr_interp(1, Tref_new)
+        else:
+            qr = self.qr_interp(self.isotope, Tref_new)
+
         self.line_strength_ref = line_strength_numpy(Tref_new,
                                                      self.line_strength_ref,
                                                      self.nu_lines,
