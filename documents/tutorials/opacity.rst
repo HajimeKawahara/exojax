@@ -2,12 +2,16 @@ Computing CO cross section using HITRAN (opacity calculator = LPF)
 ------------------------------------------------------------------
 
 This tutorial demonstrates how to compute the opacity of CO using HITRAN
-step by step.
+step by step, not using ``opa``.
 
 .. code:: ipython3
 
-    from exojax.spec.lpf import auto_xsection
-    from exojax.spec.hitran import SijT, doppler_sigma, gamma_hitran, gamma_natural
+    from jax.config import config
+    config.update("jax_enable_x64", True)
+
+.. code:: ipython3
+
+    from exojax.spec.hitran import line_strength, doppler_sigma, gamma_hitran, gamma_natural
     from exojax.spec import api
     import numpy as np
     import matplotlib.pyplot as plt
@@ -23,10 +27,9 @@ not exist, moldb will try to download it from HITRAN website.
 .. code:: ipython3
 
     # Setting wavenumber bins and loading HITRAN database
-    nus = np.linspace(1000.0, 10000.0, 900000, dtype=np.float64)  #cm-1
+    nu_grid = np.linspace(2000.0, 2150.0, 150000, dtype=np.float64)  #cm-1
     isotope = 1
-    mdbCO = api.MdbHitran('CO', nus, isotope=isotope, gpu_transfer=True)
-
+    mdbCO = api.MdbHitran('CO', nu_grid, isotope=isotope, gpu_transfer=True)
 
 Define molecular weight of CO (:math:`\sim 12+16=28`), temperature (K),
 and pressure (bar). Also, we here assume the 100 % CO atmosphere,
@@ -34,7 +37,7 @@ i.e. the partial pressure = pressure.
 
 .. code:: ipython3
 
-    Mmol=28.0 # molecular weight
+    mean_molecular_weight=28.0 # molecular weight
     Tfix=1000.0 # we assume T=1000K
     Pfix=1.e-3 # we compute P=1.e-3 bar
     Ppart=Pfix #partial pressure of CO. here we assume a 100% CO atmosphere. 
@@ -43,7 +46,7 @@ partition function ratio :math:`q(T)` is defined by
 
 :math:`q(T) = Q(T)/Q(T_{ref})`; :math:`T_{ref}`\ =296 K
 
-Here, we use the partition function from HAPI
+Here, we use the partition function in mdb
 
 .. code:: ipython3
 
@@ -65,7 +68,7 @@ we need to use float32 for jax.
 
 .. code:: ipython3
 
-    Sij=SijT(Tfix,mdbCO.logsij0,mdbCO.nu_lines,mdbCO.elower,qt)
+    Sij=line_strength(Tfix,mdbCO.logsij0,mdbCO.nu_lines,mdbCO.elower,qt)
 
 Then, compute the Lorentz gamma factor (pressure+natural broadening)
 
@@ -95,7 +98,7 @@ Thermal broadening
 .. code:: ipython3
 
     # thermal doppler sigma
-    sigmaD=doppler_sigma(mdbCO.nu_lines,Tfix,Mmol)
+    sigmaD=doppler_sigma(mdbCO.nu_lines,Tfix,mean_molecular_weight)
 
 Then, the line center…
 
@@ -107,24 +110,23 @@ this shift is quite a bit.
 
     #line center
     nu0=mdbCO.nu_lines
-    
     #Use below if you wanna include a slight pressure line shift
     #nu0=mdbCO.nu_lines+mdbCO.delta_air*Pfix 
 
-Although it depends on your GPU, you might need to devide the
-computation into multiple loops because of the limitation of the GPU
-memory. Here we assume 30MB for GPU memory (not exactly, memory size for
-numatrix).
+ExoJAX contains several opacity calculators. The most primitive one is
+Direct LPF (line profile). You can use OpaDirect for Direct LPF, but
+here we manually call functions used in Direct LPF. Each of these
+opacity calculators requires unique initial information.
+``spec.initspec`` module contains the initialization procedures for the
+calculators.
 
 .. code:: ipython3
 
-    xsv=auto_xsection(nus,nu0,sigmaD,gammaL,Sij,memory_size=30) #use 30MB GPU MEMORY for numax
-
-
-.. parsed-literal::
-
-    100%|██████████| 98/98 [00:00<00:00, 179.80it/s]
-
+    from exojax.spec.initspec import init_lpf
+    from exojax.spec.lpf import xsvector
+    
+    numatrix = init_lpf(mdbCO.nu_lines, nu_grid)
+    xsv = xsvector(numatrix, sigmaD, gammaL, Sij)
 
 Plot it!
 
@@ -132,7 +134,7 @@ Plot it!
 
     fig=plt.figure(figsize=(10,3))
     ax=fig.add_subplot(111)
-    plt.plot(nus,xsv,lw=0.1,label="exojax")
+    plt.plot(nu_grid,xsv,lw=0.5,label="exojax")
     plt.yscale("log")
     plt.xlabel("wavenumber ($cm^{-1}$)")
     plt.ylabel("cross section ($cm^{2}$)")
@@ -142,23 +144,24 @@ Plot it!
 
 
 
-.. image:: opacity_files/opacity_20_0.png
+.. image:: opacity_files/opacity_21_0.png
 
 
 .. code:: ipython3
 
     fig=plt.figure(figsize=(10,3))
     ax=fig.add_subplot(111)
-    plt.plot(1.e8/nus,xsv,lw=1,label="exojax")
+    plt.plot(1.e8/nu_grid,xsv,lw=1,label="exojax")
     plt.yscale("log")
     plt.xlabel("wavelength ($\AA$)")
     plt.ylabel("cross section ($cm^{2}$)")
-    plt.xlim(22985.,23025)
+    plt.xlim(47000.,47500)
     plt.legend(loc="upper left")
     plt.savefig("co_hitran.pdf", bbox_inches="tight", pad_inches=0.0)
     plt.show()
 
 
 
-.. image:: opacity_files/opacity_21_0.png
+.. image:: opacity_files/opacity_22_0.png
+
 

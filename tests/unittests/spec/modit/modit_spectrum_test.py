@@ -51,7 +51,7 @@ def test_rt(db, fig=False):
 
     dat = pd.read_csv(filename, delimiter=",", names=("nus", "flux"))
     residual = np.abs(F0 / dat["flux"].values - 1.0)
-    print(np.max(residual))
+    #print(np.max(residual))
     assert np.all(residual < 1.e-6)
     return nu_grid, F0, dat["flux"].values
 
@@ -64,12 +64,12 @@ if __name__ == "__main__":
     fig = plt.figure()
     ax = fig.add_subplot(311)
     ax.plot(nus, Fref, label="MODIT (ExoMol)")
-    ax.plot(nus, F0, label="MODIT (ExoMol)", ls="dashed")
+    ax.plot(nus, F0, label="MODIT (ExoMol, new)", ls="dashed")
     plt.legend()
     #plt.yscale("log")
     ax = fig.add_subplot(312)
     ax.plot(nus_hitemp, Fref_hitemp, label="MODIT (HITEMP)")
-    ax.plot(nus_hitemp, F0_hitemp, label="MODIT (HITEMP)", ls="dashed")
+    ax.plot(nus_hitemp, F0_hitemp, label="MODIT (HITEMP, new)", ls="dashed")
     plt.legend()
     plt.ylabel("flux (cgs)")
 

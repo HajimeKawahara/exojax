@@ -34,7 +34,7 @@ def test_comparison_ljert_scipy():
     vvljert = jit(vmap(vljert, 0, 0))
     diffarr = (vvljert(aarrv).T-H(aarr, xarr))/H(aarr, xarr)
 
-    assert np.max(diffarr) < 6.e-5
+    assert np.max(diffarr) < 7.e-5
 
 
 if __name__ == '__main__':

@@ -18,7 +18,7 @@ from exojax.spec.set_ditgrid import precompute_modit_ditgrid_matrix
 # exomol
 from exojax.spec.exomol import gamma_exomol
 from exojax.spec import gamma_natural
-from exojax.spec.hitran import SijT
+from exojax.spec.hitran import line_strength
 from exojax.spec import normalized_doppler_sigma
 
 # hitran/hitemp
@@ -164,7 +164,7 @@ def exomol(mdb, Tarr, Parr, R, molmass):
         normalized sigmaD matrix
     """
     qt = vmap(mdb.qr_interp)(Tarr)
-    SijM = jit(vmap(SijT, (0, None, None, None, 0)))(Tarr, mdb.logsij0,
+    SijM = jit(vmap(line_strength, (0, None, None, None, 0)))(Tarr, mdb.logsij0,
                                                      mdb.dev_nu_lines,
                                                      mdb.elower, qt)
     gammaLMP = jit(vmap(gamma_exomol,
@@ -179,7 +179,7 @@ def exomol(mdb, Tarr, Parr, R, molmass):
 
 def setdgm_exomol(mdb, fT, Parr, R, molmass, dit_grid_resolution, *kargs):
     warn_msg = " Use `modit.set_ditgrid_matrix_exomol` instead"
-    warnings.warn(warn_msg, DeprecationWarning)
+    warnings.warn(warn_msg, FutureWarning)
     return set_ditgrid_matrix_exomol(mdb, fT, Parr, R, molmass,
                                      dit_grid_resolution, *kargs)
 
@@ -236,7 +236,7 @@ def hitran(mdb, Tarr, Parr, Pself, R, molmass):
        normalized sigmaD matrix
     """
     qt = vmap(mdb.qr_interp_lines)(Tarr)
-    SijM = jit(vmap(SijT, (0, None, None, None, 0)))(Tarr, mdb.logsij0,
+    SijM = jit(vmap(line_strength, (0, None, None, None, 0)))(Tarr, mdb.logsij0,
                                                      mdb.dev_nu_lines,
                                                      mdb.elower, qt)
     gammaLMP = jit(vmap(gamma_hitran,
@@ -253,7 +253,7 @@ def hitran(mdb, Tarr, Parr, Pself, R, molmass):
 def setdgm_hitran(mdb, fT, Parr, Pself_ref, R, molmass, dit_grid_resolution,
                   *kargs):
     warn_msg = " Use `modit.set_ditgrid_matrix_hitran` instead"
-    warnings.warn(warn_msg, DeprecationWarning)
+    warnings.warn(warn_msg, FutureWarning)
     return set_ditgrid_matrix_hitran(mdb, fT, Parr, Pself_ref, R, molmass,
                                      dit_grid_resolution, *kargs)
 
@@ -329,7 +329,7 @@ def vald_each(Tarr, PH, PHe, PHH, R, qt_284_T, QTmask, \
     qt = qt_284_T[:, QTmask]
 
     # Compute line strength matrix
-    SijM = jit(vmap(SijT,(0,None,None,None,0)))\
+    SijM = jit(vmap(line_strength,(0,None,None,None,0)))\
         (Tarr, logsij0, dev_nu_lines, elower, qt)
 
     # Compute gamma parameters for the pressure and natural broadenings
@@ -374,7 +374,7 @@ def vald_all(asdb, Tarr, PH, PHe, PHH, R):
 def setdgm_vald_each(ielem, iion, atomicmass, ionE, dev_nu_lines, logsij0, elower, eupper, gamRad, gamSta, vdWdamp, \
                 QTmask, T_gQT, gQT_284species, PH, PHe, PHH, R, fT, dit_grid_resolution, *kargs):
     warn_msg = " Use `modit.set_ditgrid_matrix_vald_each` instead"
-    warnings.warn(warn_msg, DeprecationWarning)
+    warnings.warn(warn_msg, FutureWarning)
     return set_ditgrid_matrix_vald_each(ielem, iion, atomicmass, ionE,
                                         dev_nu_lines, logsij0, elower, eupper,
                                         gamRad, gamSta, vdWdamp, QTmask, T_gQT,
@@ -437,7 +437,7 @@ def set_ditgrid_matrix_vald_each(ielem, iion, atomicmass, ionE, dev_nu_lines,
 
 def setdgm_vald_all(asdb, PH, PHe, PHH, R, fT, dit_grid_resolution, *kargs):
     warn_msg = " Use `modit.set_ditgrid_matrix_vald_all` instead"
-    warnings.warn(warn_msg, DeprecationWarning)
+    warnings.warn(warn_msg, FutureWarning)
     return set_ditgrid_matrix_vald_all(asdb, PH, PHe, PHH, R, fT,
                                        dit_grid_resolution, *kargs)
 
@@ -526,7 +526,7 @@ def precompute_dgmatrix(set_gm_minmax, dit_grid_resolution=0.1, adopt=True):
         grid for DIT (Nlayer x NDITgrid)
     """
     warn_msg = " Use `set_ditgrid.precompute_modit_ditgrid_matrix` instead"
-    warnings.warn(warn_msg, DeprecationWarning)
+    warnings.warn(warn_msg, FutureWarning)
     return precompute_modit_ditgrid_matrix(set_gm_minmax, dit_grid_resolution,
                                            adopt)
 
@@ -543,7 +543,7 @@ def minmax_dgmatrix(x, dit_grid_resolution=0.1, adopt=True):
         minimum and maximum for DIT (dgm_minmax)
     """
     warn_msg = "Deprecated Use `set_ditgrid.minmax_ditgrid_matrix` instead"
-    warnings.warn(warn_msg, DeprecationWarning)
+    warnings.warn(warn_msg, FutureWarning)
     return minmax_ditgrid_matrix(x, dit_grid_resolution, adopt)
 
 
@@ -560,7 +560,7 @@ def dgmatrix(x, dit_grid_resolution=0.1, adopt=True):
         grid for DIT (Nlayer x NDITgrid)
     """
     warn_msg = "Deprecated Use `set_ditgrid.ditgrid_matrix` instead"
-    warnings.warn(warn_msg, DeprecationWarning)
+    warnings.warn(warn_msg, FutureWarning)
     from exojax.spec.set_ditgrid import ditgrid_matrix
     return ditgrid_matrix(x, dit_grid_resolution, adopt)
 
@@ -579,7 +579,7 @@ def ditgrid(x, dit_grid_resolution=0.1, adopt=True):
     """
 
     warn_msg = "Deprecated Use `set_ditgrid.ditgrid_log_interval` instead"
-    warnings.warn(warn_msg, DeprecationWarning)
+    warnings.warn(warn_msg, FutureWarning)
     from exojax.spec.set_ditgrid import ditgrid_log_interval
     return ditgrid_log_interval(x, dit_grid_resolution, adopt)
 
