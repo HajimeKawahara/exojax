@@ -933,7 +933,7 @@ class MdbHitran(HITRANDatabaseManager):
         Returns:
             str: exact isotope name such as (12C)(16O)
         """
-        from exojax.utils.isotopes import exact_hitran_isotope_name_from_isotope
+        from exojax.utils.molname import exact_hitran_isotope_name_from_isotope
         return exact_hitran_isotope_name_from_isotope(
             self.simple_molecule_name, isotope)
 
