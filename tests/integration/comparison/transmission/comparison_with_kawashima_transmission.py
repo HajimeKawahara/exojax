@@ -17,7 +17,8 @@ def read_kawashima_data():
     filename = "spectrum/CO100percent_500K.dat"
     dat = pd.read_csv(filename, delimiter="   ")
     wav = dat["Wavelength[um]"]
-    mask = (wav > 2.25) & (wav < 2.6)
+    #mask = (wav > 2.25) & (wav < 2.6)
+    mask = (wav > 0.25) & (wav < 4.6)
     return wav[mask], dat["Rp/Rs"][mask]
 
 
@@ -26,8 +27,8 @@ def compare_with_kawashima_code():
     T_fid = 500.
 
     Nx = 100000
-    nu_grid, wav, res = wavenumber_grid(22500.0,
-                                        26000.0,
+    nu_grid, wav, res = wavenumber_grid(22000.0,
+                                        26500.0,
                                         Nx,
                                         unit="AA",
                                         xsmode="premodit")
@@ -40,8 +41,7 @@ def compare_with_kawashima_code():
     Tarr = T_fid * np.ones_like(art.pressure)
     mmr_arr = art.constant_mmr_profile(1.0)
     from exojax.utils.astrofunc import gravity_jupiter
-    #gravity_btm = gravity_jupiter(1.0, 1.0)
-    gravity_btm = 2478.57
+    gravity_btm = gravity_jupiter(1.0, 1.0)
     radius_btm = RJ
 
     #mdb = api.MdbExomol('.database/CO/12C-16O/Li2015',nu_grid,inherit_dataframe=False,gpu_transfer=False)
@@ -58,7 +58,8 @@ def compare_with_kawashima_code():
         Tarr, mmw, radius_btm, gravity_btm)
     normalized_radius_theory = (np.exp(H_btm * dq / radius_btm))
     plt.plot(normalized_radius_theory-1.0,1.0-(normalized_radius_lower-1.0)/(normalized_radius_theory-1.0))
-    plt.ylim(-0.1,0.1)
+    plt.ylim(-1.e-11,1.e-11)
+    plt.axhline(0.0, color="gray", ls="dashed")
     plt.xscale("log")
     plt.show()
     #import sys
