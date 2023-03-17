@@ -9,7 +9,8 @@ from exojax.spec.atmrt import ArtTransPure
 from exojax.utils.constants import RJ, Rs
 from exojax.spec.api import MdbHitran
 from exojax.spec.api import MdbHitemp
-
+from exojax.utils.astrofunc import gravity_jupiter
+    
 config.update("jax_enable_x64", True)
 
 
@@ -40,7 +41,6 @@ def compare_with_kawashima_code():
     art.change_temperature_range(490.0, 510.0)
     Tarr = T_fid * np.ones_like(art.pressure)
     mmr_arr = art.constant_mmr_profile(1.0)
-    from exojax.utils.astrofunc import gravity_jupiter
     gravity_btm = gravity_jupiter(1.0, 1.0)
     radius_btm = RJ
 
@@ -69,7 +69,7 @@ if __name__ == "__main__":
 
     import matplotlib.pyplot as plt
     wav, rprs = read_kawashima_data()
-    diffmode = 0
+    diffmode = 1
     nus_hitran, Rp_hitran = compare_with_kawashima_code()
     from exojax.spec.unitconvert import nu2wav
     wav_exojax = nu2wav(nus_hitran, unit="um")
