@@ -861,6 +861,7 @@ class MdbHitran(HITRANDatabaseManager):
         warnings.warn(msg, FutureWarning)
         return self.line_strength_ref
 
+
     def generate_jnp_arrays(self):
         """(re)generate jnp.arrays.
         
@@ -869,7 +870,26 @@ class MdbHitran(HITRANDatabaseManager):
         
         """
         # jnp.array copy from the copy sources
-        self.nu_lines = jnp.array(self.nu_lines)
+        self.dev_nu_lines = jnp.array(self.nu_lines)
+        self.logsij0 = jnp.array(np.log(self.line_strength_ref))
+        self.line_strength_ref = jnp.array(self.line_strength_ref)
+        self.delta_air = jnp.array(self.delta_air)
+        self.A = jnp.array(self.A)
+        self.n_air = jnp.array(self.n_air)
+        self.gamma_air = jnp.array(self.gamma_air)
+        self.gamma_self = jnp.array(self.gamma_self)
+        self.elower = jnp.array(self.elower)
+        self.gpp = jnp.array(self.gpp)
+
+    def generate_jnp_arrays(self):
+        """(re)generate jnp.arrays.
+        
+        Note:
+           We have nd arrays and jnp arrays. We usually apply the mask to nd arrays and then generate jnp array from the corresponding nd array. For instance, self._A is nd array and self.A is jnp array.
+        
+        """
+        # jnp.array copy from the copy sources
+        self.dev_nu_lines = jnp.array(self.nu_lines)
         self.logsij0 = jnp.array(np.log(self.line_strength_ref))
         self.line_strength_ref = jnp.array(self.line_strength_ref)
         self.delta_air = jnp.array(self.delta_air)

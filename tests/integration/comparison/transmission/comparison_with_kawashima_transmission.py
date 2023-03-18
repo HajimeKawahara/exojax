@@ -4,7 +4,7 @@ import pandas as pd
 import numpy as np
 import jax.numpy as jnp
 from exojax.utils.grids import wavenumber_grid
-from exojax.spec.opacalc import OpaPremodit
+from exojax.spec.opacalc import OpaModit
 from exojax.spec.atmrt import ArtTransPure
 from exojax.utils.constants import RJ, Rs
 from exojax.spec.api import MdbHitran
@@ -27,7 +27,7 @@ def compare_with_kawashima_code():
     mu_fid = 28.00863
     T_fid = 500.
 
-    Nx = 140000
+    Nx = 300000
     nu_grid, wav, res = wavenumber_grid(22900.0,
                                         26000.0,
                                         Nx,
@@ -45,18 +45,17 @@ def compare_with_kawashima_code():
     radius_btm = RJ
 
     #mdb = api.MdbExomol('.database/CO/12C-16O/Li2015',nu_grid,inherit_dataframe=False,gpu_transfer=False)
-    mdb = MdbHitran('CO', art.nu_grid, gpu_transfer=False, isotope=1)
+    mdb = MdbHitran('CO', art.nu_grid, gpu_transfer=True, isotope=1)
     
     #mdb = MdbHitemp('CO', art.nu_grid, gpu_transfer=False, isotope=1)
 
     mmw = mu_fid * np.ones_like(art.pressure)
     gravity = art.gravity_profile(Tarr, mmw, radius_btm, gravity_btm)
 
-    opa = OpaPremodit(mdb=mdb,
-                      nu_grid=nu_grid,
-                      diffmode=diffmode,
-                      auto_trange=[art.Tlow, art.Thigh])
-
+    #HITRAN CO has not so many lines. So we use MODIT
+    #opa = OpaModit(mdb=mdb, nu_grid=nu_grid, Tarr_list=Tarr, Parr=np.zeros_like(art.pressure), Pself_ref = art.pressure) #unknown error
+    opa = OpaModit(mdb=mdb, nu_grid=nu_grid, Tarr_list=Tarr, Parr = art.pressure)
+              
     xsmatrix = opa.xsmatrix(Tarr, art.pressure)
     dtau = art.opacity_profile_lines(xsmatrix, mmr_arr, opa.mdb.molmass,
                                      gravity)

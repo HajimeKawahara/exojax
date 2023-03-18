@@ -54,8 +54,8 @@ def test_rt_exomol():
     from exojax.spec.planck import piBarr
     from exojax.spec.modit import set_ditgrid_matrix_exomol
     from exojax.test.data import TESTDATA_CO_EXOMOL_MODIT_EMISSION_REF
-
-    Parr, dParr, k = rt.pressure_layer(NP=100, numpy=True)
+    from exojax.atm.atmprof import pressure_layer_logspace
+    Parr, dParr, k = pressure_layer_logspace(NP=100, numpy=True)
     T0_in = 1300.0
     alpha_in = 0.1
     Tarr = T0_in * (Parr)**alpha_in
