@@ -26,34 +26,33 @@ def pressure_layer_logspace(log_pressure_top=-8.,
     Returns:
          pressure: pressure layer
          dParr: delta pressure layer
-         k: k-factor, pressure[i-1] = k*pressure[i]
+         pressure_decrease_rate: pressure decrease rate of the layer (k-factor; k < 1) pressure[i-1] = pressure_decrease_rate*pressure[i]
 
     Note:
         d logP is constant using this function. 
-        d log_e P = dParr[i]/pressure[i] = constant = 1 - k, dParr[0] = (1-k) Parr[0] for ascending mode
+        d log_e P = dParr[i]/pressure[i] = constant = 1 - pressure_decrease_rate, dParr[0] = (1- pressure_decrease_rate) Parr[0] for ascending mode
     """
     dlogP = (log_pressure_btm - log_pressure_top) / (NP - 1)
-    k = 10**-dlogP
+    pressure_decrease_rate = 10**-dlogP
     if numpy:
         pressure = np.logspace(log_pressure_top, log_pressure_btm, NP)
     else:
         pressure = jnp.logspace(log_pressure_top, log_pressure_btm, NP)
-    dParr = (1.0 - k**reference_point) * pressure
+    dParr = (1.0 - pressure_decrease_rate**reference_point) * pressure
     if mode == 'descending':
         pressure = pressure[::-1]
         dParr = dParr[::-1]
 
-    return pressure, dParr, k
+    return pressure, dParr, pressure_decrease_rate
 
 
 @jit
-def normalized_layer_height(temperature, k, mean_molecular_weight, radius_btm, gravity_btm):
+def normalized_layer_height(temperature, pressure_decrease_rate, mean_molecular_weight, radius_btm, gravity_btm):
     """compute normalized height/radius at the upper boundary of the atmospheric layer, neglecting atmospheric mass. 
 
     Args:
         temperature (1D array): temperature profile (K) of the layer, (Nlayer, from atmospheric top to bottom)
-        pressure (1D array): pressure profile (bar) of the layer, (Nlayer, from atmospheric top to bottom)
-        dParr (1D array): pressure difference profile (bar) of the layer, (Nlayer, from atmospheric top to bottom)
+        pressure_decrease_rate:  pressure decrease rate of the layer (k-factor; k < 1) pressure[i-1] = pressure_decrease_rate*pressure[i]
         mean_molecular_weight (1D array): mean molecular weight profile, (Nlayer, from atmospheric top to bottom) 
         radius_btm (float): radius (cm) at the lower boundary of the bottom layer, R0 or r_N
         gravity_btm (float): gravity (cm/s2) at the lower boundary of the bottom layer, g_N
@@ -71,7 +70,7 @@ def normalized_layer_height(temperature, k, mean_molecular_weight, radius_btm, g
         mmw_layer = arr[1:2][0]
         gravity_lower = gravity_btm/normalized_radius_lower
         Hn_lower = pressure_scale_height(gravity_lower, T_layer, mmw_layer)/radius_btm 
-        fac = k**(-Hn_lower/normalized_radius_lower)  - 1.0
+        fac = pressure_decrease_rate**(-Hn_lower/normalized_radius_lower)  - 1.0
         normalized_height_layer = fac*normalized_radius_lower
         carry = normalized_radius_lower + normalized_height_layer
         return carry, [normalized_height_layer, normalized_radius_lower]

@@ -12,9 +12,9 @@ def test_transmission_pure_absorption_equals_to_Rp_sqaured_for_opaque():
     Nnu = 2
     dtau_chord = jnp.ones((Nlayer, Nnu)) * jnp.inf
     radius = jnp.array([1.4, 1.3, 1.2, 1.1, 1.0])
-    
+
     Rp2 = rtrun_trans_pure_absorption(dtau_chord, radius)
-    
+
     assert np.all(Rp2 == radius[0]**2 * np.ones(Nnu))
 
 
@@ -22,9 +22,9 @@ def test_chord_geometric_matrix():
     Nlayer = 5
     height = 0.1 * jnp.ones(Nlayer)
     radius = jnp.array([1.4, 1.3, 1.2, 1.1, 1.0])  #radius[-1] = radius_btm
-    
+
     cgm = chord_geometric_matrix(height, radius)
-    
+
     assert jnp.sum(cgm) == pytest.approx(86.49373)
 
 
@@ -43,9 +43,8 @@ def test_check_parallel_Ax_tauchord():
 
 def test_first_layer_height_from_compute_normalized_radius_profile():
     from exojax.atm.atmprof import pressure_layer_logspace
-    pressure, dParr, k = pressure_layer_logspace(log_pressure_top=-8.,
-                                                 log_pressure_btm=2.,
-                                                 NP=20)
+    pressure, dParr, pressure_decrease_rate = pressure_layer_logspace(
+        log_pressure_top=-8., log_pressure_btm=2., NP=20)
     T0 = 300.0
     mmw0 = 28.8
     temperature = T0 * np.ones_like(pressure)
@@ -54,16 +53,17 @@ def test_first_layer_height_from_compute_normalized_radius_profile():
     gravity_btm = 980.
 
     normalized_height, normalized_radius_lower = normalized_layer_height(
-        temperature, pressure, dParr, mmw, radius_btm, gravity_btm)
+        temperature, pressure_decrease_rate, mmw, radius_btm, gravity_btm)
 
     normalized_radius_top = normalized_radius_lower[0] + normalized_height[0]
-    assert normalized_radius_top == pytest.approx(1.0192829)
-    assert jnp.sum(normalized_height[1:])+1.0 == pytest.approx(normalized_radius_lower[0])
+    assert normalized_radius_top == pytest.approx(1.0335047)
+    assert jnp.sum(normalized_height[1:]) + 1.0 == pytest.approx(
+        normalized_radius_lower[0])
     assert normalized_radius_lower[-1] == 1.0
-    
+
 
 if __name__ == "__main__":
-    #test_check_parallel_Ax_tauchord()
+    test_check_parallel_Ax_tauchord()
     test_first_layer_height_from_compute_normalized_radius_profile()
-    #test_chord_geometric_matrix()
-    #test_transmission_pure_absorption_equals_to_Rp_sqaured_for_opaque()
+    test_chord_geometric_matrix()
+    test_transmission_pure_absorption_equals_to_Rp_sqaured_for_opaque()
