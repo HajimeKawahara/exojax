@@ -45,7 +45,7 @@ def compare_with_kawashima_code():
     radius_btm = RJ
 
     #mdb = api.MdbExomol('.database/CO/12C-16O/Li2015',nu_grid,inherit_dataframe=False,gpu_transfer=False)
-    mdb = MdbHitran('CO', art.nu_grid, gpu_transfer=True, isotope=1)
+    mdb = MdbHitran('CO', art.nu_grid, gpu_transfer=True)
     
     #mdb = MdbHitemp('CO', art.nu_grid, gpu_transfer=False, isotope=1)
 
