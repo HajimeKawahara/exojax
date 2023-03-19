@@ -8,9 +8,22 @@ Basics
    tutorials/optimize_spectrum_JAXopt.rst
    tutorials/reverse_premodit.rst
    
+
+Applications
+====================
+
    
+Retrieval More
+--------------------------
+
+.. toctree::
+   :maxdepth: 1
+
+   tutorials/reverse_precompute_grid.rst
+
+
 Molecular/Atomic/Continuum Databases
-=======================================
+---------------------------------------
 
 .. toctree::
    :maxdepth: 1
@@ -20,7 +33,8 @@ Molecular/Atomic/Continuum Databases
    tutorials/branch.rst
    tutorials/Fortrat.rst
    tutorials/CIA_opacity.rst
-   
+
+
 
 Manual Settings of Opacity (not using opa)
 ==============================================================
