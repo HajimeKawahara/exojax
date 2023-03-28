@@ -20,7 +20,7 @@ import numpy as np
 import jax.numpy as jnp
 from exojax.spec import moldb, atomll, contdb, molinfo, initspec, planck
 from exojax.spec import api
-from exojax.spec.rtransfer import pressure_layer, dtauVALD, dtauM_mmwl, dtauHminus_mmwl, dtauCIA_mmwl, rtrun
+from exojax.spec.rtransfer import pressure_layer, dtauVALD, dtauM_mmwl, dtauHminus_mmwl, dtauCIA_mmwl, rtrun_emis_pure_absorption
 from exojax.utils.grids import wavenumber_grid
 from exojax.utils.instfunc import resolution_to_gaussian_std
 from exojax.spec.modit import vald_all, xsmatrix_vald, exomol, xsmatrix, setdgm_vald_all, setdgm_exomol
@@ -170,7 +170,7 @@ def test_VALD_MODIT():
     dtau = dtauatom + dtaum_FeH + dtaum_H2O + dtaum_OH + dtaum_TiO + dtau_Hm + dtauc_H2H2
 
     sourcef = planck.piBarr(Tarr, nus)
-    F0 = rtrun(dtau, sourcef)
+    F0 = rtrun_emis_pure_absorption(dtau, sourcef)
     Frot = convolve_rigid_rotation(F0, vr_array, vsini, u1, u2)
     wavd = jnp.linspace(wls, wll, 500)
     nusd = jnp.array(1.e8/wavd[::-1])

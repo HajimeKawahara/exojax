@@ -1,3 +1,12 @@
+Device Memory Management
+===========================
+
+.. toctree::
+   :maxdepth: 1
+
+   userguide/memorysetting.rst	
+
+
 Molecular Database
 =======================
 

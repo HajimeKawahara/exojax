@@ -5,7 +5,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 from exojax.utils.grids import wavenumber_grid
-from exojax.spec.atmrt import ArtEmisPure
+from exojax.spec.atmrt import ArtTransPure
 from exojax.spec.api import MdbExomol
 from exojax.spec.opacalc import OpaPremodit
 from exojax.spec.contdb import CdbCIA
@@ -44,7 +44,7 @@ nu_grid, wav, res = wavenumber_grid(np.min(wavd) - 10.0,
 
 Tlow = 400.0
 Thigh = 1500.0
-art = ArtEmisPure(nu_grid, pressure_top=1.e-8, pressure_btm=1.e2, nlayer=100)
+art = ArtTransPure(nu_grid, pressure_top=1.e-8, pressure_btm=1.e2, nlayer=100)
 art.change_temperature_range(Tlow, Thigh)
 Mp = 33.2
 
@@ -71,6 +71,10 @@ mmrH2 = 0.74
 molmassH2 = molinfo.molmass_isotope('H2')
 vmrH2 = (mmrH2 * mmw / molmassH2)  # VMR
 
+gravity_btm = 2478.57
+radius_btm = RJ
+    
+
 #settings before HMC
 vsini_max = 100.0
 vr_array = velocity_grid(res, vsini_max)
@@ -80,6 +84,7 @@ vr_array = velocity_grid(res, vsini_max)
 def flux_model(T0, vsini, RV):
     #T-P model
     Tarr = art.powerlaw_temperature(T0, alpha)
+    gravity = art.gravity_profile(Tarr, mmw, radius_btm, gravity_btm)
 
     #molecule
     xsmatrix = opa.xsmatrix(Tarr, art.pressure)
