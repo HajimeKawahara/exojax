@@ -44,10 +44,14 @@ def test_parallel_merge_grids():
 def test_make_broadpar_grid():
     ngamma_ref, n_Texp = mock_broadpar_exomol()
     Ttyp = 3000.0
-    ngamma_ref_grid, n_Texp_grid = make_broadpar_grid(ngamma_ref,
-                                                      n_Texp,
-                                                      Ttyp,
-                                                      dit_grid_resolution=0.2)
+    ngamma_ref_grid, n_Texp_grid = make_broadpar_grid(
+        ngamma_ref,
+        n_Texp,
+        Tmax=Ttyp,
+        Tmin=Tref_original,
+        Tref_broadening=Tref_original,
+        twod_factor=1.0,
+        dit_grid_resolution=0.2)
     assert np.all(
         ngamma_ref_grid == pytest.approx([0.1, 0.11447142, 0.13103707, 0.15]))
     assert np.all(n_Texp_grid == pytest.approx([0.4, 0.45, 0.5]))
@@ -56,10 +60,14 @@ def test_make_broadpar_grid():
 def test_broadpar_getix():
     ngamma_ref, n_Texp = mock_broadpar_exomol()
     Ttyp = 3000.0
-    ngamma_ref_grid, n_Texp_grid = make_broadpar_grid(ngamma_ref,
-                                                      n_Texp,
-                                                      Ttyp,
-                                                      dit_grid_resolution=0.2)
+    ngamma_ref_grid, n_Texp_grid = make_broadpar_grid(
+        ngamma_ref,
+        n_Texp,
+        Tmax=Ttyp,
+        Tmin=Tref_original,
+        Tref_broadening=Tref_original,
+        twod_factor=1.0,
+        dit_grid_resolution=0.2)
     multi_index_lines, multi_cont_lines, uidx_lines, neighbor_uidx, multi_index_uniqgrid, Ng_broadpar = broadpar_getix(
         ngamma_ref, ngamma_ref_grid, n_Texp, n_Texp_grid)
     iline_interest = len(n_Texp) - 1
@@ -83,10 +91,14 @@ def test_unbias_ngamma_grid():
     Ttyp = 3000.0
     Ttest = 2000.0
     Ptest = 10.0
-    ngamma_ref_grid, n_Texp_grid = make_broadpar_grid(ngamma_ref,
-                                                      n_Texp,
-                                                      Ttyp,
-                                                      dit_grid_resolution=0.2)
+    ngamma_ref_grid, n_Texp_grid = make_broadpar_grid(
+        ngamma_ref,
+        n_Texp,
+        Tmax=Ttyp,
+        Tmin=Tref_original,
+        Tref_broadening=Tref_original,
+        twod_factor=1.0,
+        dit_grid_resolution=0.2)
     multi_index_lines, multi_cont_lines, uidx_lines, neighbor_uidx, multi_index_uniqgrid, Ng_broadpar = broadpar_getix(
         ngamma_ref, ngamma_ref_grid, n_Texp, n_Texp_grid)
     ngamma_grid = unbiased_ngamma_grid(Ttest, Ptest, ngamma_ref_grid,
@@ -153,5 +165,6 @@ def test_unbiased_lsd():
 
 
 if __name__ == "__main__":
-    test_unbiased_lsd()
+    #test_unbiased_lsd()
     #test_make_elower_grid()
+    test_make_broadpar_grid()

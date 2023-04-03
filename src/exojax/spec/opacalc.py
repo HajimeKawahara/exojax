@@ -87,21 +87,25 @@ class OpaPremodit(OpaCalc):
         print("OpaPremodit: params automatically set.")
         self.dE, self.Tref, self.Twt = optimal_params(Tl, Tu, self.diffmode)
         self.Tmax = Tu
+        self.Tmin = Tl
         self.apply_params()
 
-    def manual_setting(self, dE, Tref, Twt):
+    def manual_setting(self, dE, Tref, Twt, Tmax=None, Tmin=None):
         """setting PreMODIT parameters by manual
 
         Args:
             dE (float): E lower grid interval (cm-1)
             Tref (float): reference temperature (K)
             Twt (float): Temperature for weight (K)
+            Tmax (float/None): max temperature (K) for braodening grid
+            Tmin (float/None): min temperature (K) for braodening grid
         """
         print("OpaPremodit: params manually set.")
         self.Twt = Twt
         self.Tref = Tref
         self.dE = dE
-        self.Tmax = np.max([Twt, Tref])
+        self.Tmax = Tmax
+        self.Tmin = Tmin
         self.apply_params()
 
     def set_nu_grid(self, x0, x1, unit, resolution=700000, Nx=None):
@@ -135,6 +139,7 @@ class OpaPremodit(OpaCalc):
             self.Twt,
             Tref=self.Tref,
             Tmax=self.Tmax,
+            Tmin=self.Tmin,
             dE=self.dE,
             dit_grid_resolution=self.dit_grid_resolution,
             diffmode=self.diffmode,
@@ -493,6 +498,7 @@ class OpaDirect(OpaCalc):
             gammaLM = gammaLMP + gammaLMN[None, :]
             SijM = vmaplinestrengh(Tarr, self.mdb.logsij0, self.mdb.nu_lines,
                                    self.mdb.elower, qt)
-        sigmaDM = jit(vmap(doppler_sigma, (None, 0, None)))(self.mdb.nu_lines,
-                                                            Tarr, self.mdb.molmass)
+        sigmaDM = jit(vmap(doppler_sigma,
+                           (None, 0, None)))(self.mdb.nu_lines, Tarr,
+                                             self.mdb.molmass)
         return xsmatrix_lpf(numatrix, sigmaDM, gammaLM, SijM)

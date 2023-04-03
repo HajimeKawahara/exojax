@@ -116,8 +116,9 @@ def xsvector_zeroth(T, P, nsigmaD, lbd_coeff, Tref, R, pmarray, nu_grid,
 
 
 @jit
-def xsmatrix_zeroth(Tarr, Parr, Tref, R, pmarray, lbd_coeff, nu_grid, ngamma_ref_grid,
-             n_Texp_grid, multi_index_uniqgrid, elower_grid, Mmol, qtarr):
+def xsmatrix_zeroth(Tarr, Parr, Tref, R, pmarray, lbd_coeff, nu_grid,
+                    ngamma_ref_grid, n_Texp_grid, multi_index_uniqgrid,
+                    elower_grid, Mmol, qtarr):
     """compute cross section matrix given atmospheric layers, for diffmode=0, with scan+fft
 
     Args:
@@ -149,9 +150,11 @@ def xsmatrix_zeroth(Tarr, Parr, Tref, R, pmarray, lbd_coeff, nu_grid, ngamma_ref
                0)(Slsd, R, pmarray, nsigmaD, nu_grid, log_ngammaL_grid)
     return xsm
 
+
 @jit
-def xsmatrix_first(Tarr, Parr, Tref, Twt, R, pmarray, lbd_coeff, nu_grid, ngamma_ref_grid,
-             n_Texp_grid, multi_index_uniqgrid, elower_grid, Mmol, qtarr):
+def xsmatrix_first(Tarr, Parr, Tref, Twt, R, pmarray, lbd_coeff, nu_grid,
+                   ngamma_ref_grid, n_Texp_grid, multi_index_uniqgrid,
+                   elower_grid, Mmol, qtarr):
     """compute cross section matrix given atmospheric layers, for diffmode=1, with scan+fft
 
     Args:
@@ -184,9 +187,11 @@ def xsmatrix_first(Tarr, Parr, Tref, Twt, R, pmarray, lbd_coeff, nu_grid, ngamma
                0)(Slsd, R, pmarray, nsigmaD, nu_grid, log_ngammaL_grid)
     return xsm
 
+
 @jit
-def xsmatrix_second(Tarr, Parr, Tref, Twt, R, pmarray, lbd_coeff, nu_grid, ngamma_ref_grid,
-             n_Texp_grid, multi_index_uniqgrid, elower_grid, Mmol, qtarr):
+def xsmatrix_second(Tarr, Parr, Tref, Twt, R, pmarray, lbd_coeff, nu_grid,
+                    ngamma_ref_grid, n_Texp_grid, multi_index_uniqgrid,
+                    elower_grid, Mmol, qtarr):
     """compute cross section matrix given atmospheric layers, for diffmode=1, with scan+fft
 
     Args:
@@ -220,7 +225,6 @@ def xsmatrix_second(Tarr, Parr, Tref, Twt, R, pmarray, lbd_coeff, nu_grid, ngamm
     return xsm
 
 
-
 def parallel_merge_grids(grid1, grid2):
     """Merge two different grids into one grid in parallel, in a C-contiguous RAM mapping.
     
@@ -241,16 +245,22 @@ def parallel_merge_grids(grid1, grid2):
 
 def make_broadpar_grid(ngamma_ref,
                        n_Texp,
-                       Ttyp,
+                       Tmax,
+                       Tmin,
+                       Tref_broadening,
                        dit_grid_resolution=0.2,
+                       twod_factor=4.0 / 3.0,
                        adopt=True):
     """ make grids of normalized half-width at reference and temperature exoponent
 
     Args:
         ngamma_ref (nd array): n_Texp: temperature exponent (n_Texp, n_air, etc)
         n_Texp (nd array): temperature exponent (n_Texp, n_air, etc)
-        Ttyp: typical or maximum temperature in Kelvin (**NOT** weight temperature)
+        Tmax: maximum temperature in Kelvin (**NOT** weight temperature)
+        Tmin: minimum temperature in Kelvin (**NOT** weight temperature)
+        Tref_broadening: reference temperature for broadening in Kelvin
         dit_grid_resolution (float, optional): DIT grid resolution. Defaults to 0.2.
+        twod_factor: conversion factor of the grid resolution from 1D to 2D. default 3.0/4.0. See Issue #366.
         adopt (bool, optional): if True, min, max grid points are used at min and max values of x. In this case, the grid width does not need to be dit_grid_resolution exactly.  Defaults to True.
         
     Returns:
@@ -259,11 +269,16 @@ def make_broadpar_grid(ngamma_ref,
         
     """
     ngamma_ref_grid = ditgrid_log_interval(
-        ngamma_ref, dit_grid_resolution=dit_grid_resolution, adopt=adopt)
-    weight = np.abs(np.log(Ttyp) - np.log(Tref_original))
+        ngamma_ref,
+        dit_grid_resolution=dit_grid_resolution / twod_factor,
+        adopt=adopt)
+    weight = np.max([
+        np.abs(np.log(Tmax) - np.log(Tref_broadening)),
+        np.abs(np.log(Tmin) - np.log(Tref_broadening))
+    ])
     n_Texp_grid = ditgrid_linear_interval(
         n_Texp,
-        dit_grid_resolution=dit_grid_resolution,
+        dit_grid_resolution=dit_grid_resolution / twod_factor,
         weight=weight,
         adopt=adopt)
     return ngamma_ref_grid, n_Texp_grid
@@ -381,9 +396,9 @@ def generate_lbd(line_strength_ref,
     cont_nu, index_nu = npgetix(nu_lines, nu_grid)
     multi_index_lines, multi_cont_lines, uidx_bp, neighbor_uidx, multi_index_uniqgrid, Ng_broadpar = broadpar_getix(
         ngamma_ref, ngamma_ref_grid, n_Texp, n_Texp_grid)
-    
-    # We extend the LBD grid to +1 along nu direction. 
-    #Ng_nu = len(nu_grid) 
+
+    # We extend the LBD grid to +1 along nu direction.
+    #Ng_nu = len(nu_grid)
     Ng_nu_plus_one = len(nu_grid) + 1
 
     # We extend the LBD grid to +1 along elower direction. See Issue #273
@@ -411,9 +426,8 @@ def generate_lbd(line_strength_ref,
         else:
             lbd_diff = np.array(lbd_diff[:, :, 0:-1])
 
-        lbd_coeff.append(lbd_diff[:-1,:,:]) 
+        lbd_coeff.append(lbd_diff[:-1, :, :])
         # [:-1,:,:] is to remove the mostright bin of nu direction (check Ng_nu_plus_one)
-
 
     lbd_coeff = jnp.array(lbd_coeff)
 
@@ -513,7 +527,7 @@ def unbiased_lsd_first(lbd_coeff, T, Tref, Twt, nu_grid, elower_grid, qt):
     ##if take log as lbd_coeff
     #dt = (1.0 / T - 1.0 / Twt)
     #logdt = jnp.log(dt)
-    #unbiased_coeff = jnp.exp(lfb + lbd_coeff[1] + logdt) 
+    #unbiased_coeff = jnp.exp(lfb + lbd_coeff[1] + logdt)
     Slsd = jnp.sum(jnp.exp(lfb + lbd_coeff[0]) + unbiased_coeff,
                    axis=-1)  # 0th term + sum_l[ f*w1(t-twt) ]
     return (Slsd.T * g_bias(nu_grid, T, Tref) / qt).T
@@ -541,7 +555,7 @@ def unbiased_lsd_second(lbd_coeff, T, Tref, Twt, nu_grid, elower_grid, qt):
                                      0.5 * lbd_coeff[2] * dt**2)
     ##if take log as lbd_coeff
     #logdt = jnp.log(dt)
-    #unbiased_coeff = jnp.exp(lfb + lbd_coeff[1] + logdt) 
+    #unbiased_coeff = jnp.exp(lfb + lbd_coeff[1] + logdt)
     # + jnp.exp(lfb + lbd_coeff[1] + 2*logdt * jnp.log(0.5))
     Slsd = jnp.sum(jnp.exp(lfb + lbd_coeff[0]) + unbiased_coeff, axis=-1)
     return (Slsd.T * g_bias(nu_grid, T, Tref) / qt).T
