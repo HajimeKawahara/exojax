@@ -537,7 +537,22 @@ class MdbHitemp(HITEMPDatabaseManager):
         #isotope
         self.isoid = df_masked.iso.values
         self.uniqiso = np.unique(self.isoid)
-    
+
+    def apply_mask_mdb(mdb, mask):
+        mdb.nu_lines = mdb.nu_lines[mask]
+        mdb.line_strength_ref = mdb.line_strength_ref[mask]
+        mdb.delta_air = mdb.delta_air[mask]
+        mdb.A = mdb.A[mask]
+        mdb.n_air = mdb.n_air[mask]
+        mdb.gamma_air = mdb.gamma_air[mask]
+        mdb.gamma_self = mdb.gamma_self[mask]
+        mdb.elower = mdb.elower[mask]
+        mdb.gpp = mdb.gpp[mask]
+        #isotope
+        mdb.isoid = mdb.isoid[mask]
+        mdb.uniqiso = np.unique(mdb.isoid)
+        return mdb
+
     def Sij0(self):
         """Deprecated line_strength_ref. 
 
@@ -850,6 +865,21 @@ class MdbHitran(HITRANDatabaseManager):
 
         else:
             raise ValueError("Use vaex dataframe as input.")
+
+    def apply_mask_mdb(mdb, mask):
+        mdb.nu_lines = mdb.nu_lines[mask]
+        mdb.line_strength_ref = mdb.line_strength_ref[mask]
+        mdb.delta_air = mdb.delta_air[mask]
+        mdb.A = mdb.A[mask]
+        mdb.n_air = mdb.n_air[mask]
+        mdb.gamma_air = mdb.gamma_air[mask]
+        mdb.gamma_self = mdb.gamma_self[mask]
+        mdb.elower = mdb.elower[mask]
+        mdb.gpp = mdb.gpp[mask]
+        #isotope
+        mdb.isoid = mdb.isoid[mask]
+        mdb.uniqiso = np.unique(mdb.isoid)
+        return mdb
 
     def Sij0(self):
         """Deprecated line_strength_ref. 
