@@ -91,18 +91,20 @@ def test_unbias_ngamma_grid():
     Ttyp = 3000.0
     Ttest = 2000.0
     Ptest = 10.0
+    Tref_broadening = Tref_original
     ngamma_ref_grid, n_Texp_grid = make_broadpar_grid(
         ngamma_ref,
         n_Texp,
         Tmax=Ttyp,
         Tmin=Tref_original,
-        Tref_broadening=Tref_original,
+        Tref_broadening=Tref_broadening,
         twod_factor=1.0,
         dit_grid_resolution=0.2)
     multi_index_lines, multi_cont_lines, uidx_lines, neighbor_uidx, multi_index_uniqgrid, Ng_broadpar = broadpar_getix(
         ngamma_ref, ngamma_ref_grid, n_Texp, n_Texp_grid)
     ngamma_grid = unbiased_ngamma_grid(Ttest, Ptest, ngamma_ref_grid,
-                                       n_Texp_grid, multi_index_uniqgrid)
+                                       n_Texp_grid, multi_index_uniqgrid,
+                                       Tref_broadening)
     ref = [
         0.46569834, 0.42327028, 0.53309152, 0.55464097, 0.48452351, 0.38470768,
         0.44038036, 0.61023745, 0.63490541, 0.50410967, 0.57706152

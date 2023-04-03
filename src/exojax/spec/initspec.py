@@ -117,9 +117,9 @@ def init_premodit(nu_lines,
                   line_strength_ref,
                   Twt,
                   Tref,
+                  Tref_broadening,
                   Tmax=None,
                   Tmin=None,
-                  Tref_broadening=None,
                   dE=160.0,
                   dit_grid_resolution=0.2,
                   diffmode=0,
@@ -135,7 +135,7 @@ def init_premodit(nu_lines,
         line_strength_ref: line strength at reference Tref
         Twt: temperature for weight in Kelvin
         Tref: reference temperature of premodit grid
-        Tref_broadening: reference temperature for broadening, if None log midpoint is used.
+        Tref_broadening: reference temperature for broadening.
         Tmax: max temperature to construct n_Texp grid, if None, max(Twt and Tref) is used 
         Tmin: min temperature to construct n_Texp grid, if None, max(Twt and Tref) is used 
         dE: Elower grid interval
@@ -164,9 +164,7 @@ def init_premodit(nu_lines,
         Tmax = np.max([Twt, Tref])
     if Tmin is None:
         Tmin = np.min([Twt, Tref])
-    if Tref_broadening is None:
-        Tref_broadening = np.exp((np.log(Tmax) + np.log(Tmin)) / 2.0)
-
+    
     R = resolution_eslog(nu_grid)
     ngamma_ref = gamma_ref / nu_lines * R
     elower_grid = make_elower_grid(elower, dE)

@@ -17,7 +17,7 @@ from exojax.spec.lbd import lbd_coefficients
 @jit
 def xsvector_second(T, P, nsigmaD, lbd_coeff, Tref, Twt, R, pmarray, nu_grid,
                     elower_grid, multi_index_uniqgrid, ngamma_ref_grid,
-                    n_Texp_grid, qt):
+                    n_Texp_grid, qt, Tref_broadening):
     """compute cross section vector, with scan+fft, using the second Taylor expansion
 
     Args:
@@ -34,6 +34,8 @@ def xsvector_second(T, P, nsigmaD, lbd_coeff, Tref, Twt, R, pmarray, nu_grid,
         ngamma_ref_grid (_type_): normalized pressure broadening half-width
         n_Texp_grid (_type_): temperature exponent grid
         qt (_type_): partirion function ratio
+        Tref_broadening: reference temperature for broadening in Kelvin
+        
 
     Returns:
         jnp.array: cross section in cgs vector
@@ -41,7 +43,7 @@ def xsvector_second(T, P, nsigmaD, lbd_coeff, Tref, Twt, R, pmarray, nu_grid,
     Slsd = unbiased_lsd_second(lbd_coeff, T, Tref, Twt, nu_grid, elower_grid,
                                qt)
     ngamma_grid = unbiased_ngamma_grid(T, P, ngamma_ref_grid, n_Texp_grid,
-                                       multi_index_uniqgrid)
+                                       multi_index_uniqgrid, Tref_broadening)
     log_ngammaL_grid = jnp.log(ngamma_grid)
     xs = calc_xsection_from_lsd_scanfft(Slsd, R, pmarray, nsigmaD, nu_grid,
                                         log_ngammaL_grid)
@@ -51,7 +53,7 @@ def xsvector_second(T, P, nsigmaD, lbd_coeff, Tref, Twt, R, pmarray, nu_grid,
 @jit
 def xsvector_first(T, P, nsigmaD, lbd_coeff, Tref, Twt, R, pmarray, nu_grid,
                    elower_grid, multi_index_uniqgrid, ngamma_ref_grid,
-                   n_Texp_grid, qt):
+                   n_Texp_grid, qt, Tref_broadening):
     """compute cross section vector, with scan+fft, using the first Taylor expansion
 
     Args:
@@ -69,6 +71,7 @@ def xsvector_first(T, P, nsigmaD, lbd_coeff, Tref, Twt, R, pmarray, nu_grid,
         ngamma_ref_grid (_type_): normalized pressure broadening half-width
         n_Texp_grid (_type_): temperature exponent grid
         qt (_type_): partirion function ratio
+        Tref_broadening: reference temperature for broadening in Kelvin
 
     Returns:
         jnp.array: cross section in cgs vector
@@ -76,7 +79,7 @@ def xsvector_first(T, P, nsigmaD, lbd_coeff, Tref, Twt, R, pmarray, nu_grid,
     Slsd = unbiased_lsd_first(lbd_coeff, T, Tref, Twt, nu_grid, elower_grid,
                               qt)
     ngamma_grid = unbiased_ngamma_grid(T, P, ngamma_ref_grid, n_Texp_grid,
-                                       multi_index_uniqgrid)
+                                       multi_index_uniqgrid, Tref_broadening)
     log_ngammaL_grid = jnp.log(ngamma_grid)
     xs = calc_xsection_from_lsd_scanfft(Slsd, R, pmarray, nsigmaD, nu_grid,
                                         log_ngammaL_grid)
@@ -86,7 +89,7 @@ def xsvector_first(T, P, nsigmaD, lbd_coeff, Tref, Twt, R, pmarray, nu_grid,
 @jit
 def xsvector_zeroth(T, P, nsigmaD, lbd_coeff, Tref, R, pmarray, nu_grid,
                     elower_grid, multi_index_uniqgrid, ngamma_ref_grid,
-                    n_Texp_grid, qt):
+                    n_Texp_grid, qt, Tref_broadening):
     """compute cross section vector, with scan+fft, using the zero-th Taylor expansion 
 
     Args:
@@ -102,13 +105,14 @@ def xsvector_zeroth(T, P, nsigmaD, lbd_coeff, Tref, R, pmarray, nu_grid,
         ngamma_ref_grid (_type_): normalized pressure broadening half-width
         n_Texp_grid (_type_): temperature exponent grid
         qt (_type_): partirion function ratio
+        Tref_broadening: reference temperature for broadening in Kelvin
 
     Returns:
         jnp.array: cross section in cgs vector
     """
     Slsd = unbiased_lsd_zeroth(lbd_coeff[0], T, Tref, nu_grid, elower_grid, qt)
     ngamma_grid = unbiased_ngamma_grid(T, P, ngamma_ref_grid, n_Texp_grid,
-                                       multi_index_uniqgrid)
+                                       multi_index_uniqgrid, Tref_broadening)
     log_ngammaL_grid = jnp.log(ngamma_grid)
     xs = calc_xsection_from_lsd_scanfft(Slsd, R, pmarray, nsigmaD, nu_grid,
                                         log_ngammaL_grid)
@@ -118,7 +122,7 @@ def xsvector_zeroth(T, P, nsigmaD, lbd_coeff, Tref, R, pmarray, nu_grid,
 @jit
 def xsmatrix_zeroth(Tarr, Parr, Tref, R, pmarray, lbd_coeff, nu_grid,
                     ngamma_ref_grid, n_Texp_grid, multi_index_uniqgrid,
-                    elower_grid, Mmol, qtarr):
+                    elower_grid, Mmol, qtarr, Tref_broadening):
     """compute cross section matrix given atmospheric layers, for diffmode=0, with scan+fft
 
     Args:
@@ -135,6 +139,8 @@ def xsmatrix_zeroth(Tarr, Parr, Tref, R, pmarray, lbd_coeff, nu_grid,
         elower_grid (_type_): Elower grid
         Mmol (_type_): molecular mass
         qtarr (_type_): partition function ratio layers
+        Tref_broadening: reference temperature for broadening in Kelvin
+
 
     Returns:
         jnp.array : cross section matrix (Nlayer, N_wavenumber)
@@ -142,9 +148,9 @@ def xsmatrix_zeroth(Tarr, Parr, Tref, R, pmarray, lbd_coeff, nu_grid,
     nsigmaD = vmap(normalized_doppler_sigma, (0, None, None), 0)(Tarr, Mmol, R)
     Slsd = vmap(unbiased_lsd_zeroth, (None, 0, None, None, None, 0),
                 0)(lbd_coeff[0], Tarr, Tref, nu_grid, elower_grid, qtarr)
-    ngamma_grid = vmap(unbiased_ngamma_grid, (0, 0, None, None, None),
+    ngamma_grid = vmap(unbiased_ngamma_grid, (0, 0, None, None, None, None),
                        0)(Tarr, Parr, ngamma_ref_grid, n_Texp_grid,
-                          multi_index_uniqgrid)
+                          multi_index_uniqgrid, Tref_broadening)
     log_ngammaL_grid = jnp.log(ngamma_grid)
     xsm = vmap(calc_xsection_from_lsd_scanfft, (0, None, None, 0, None, 0),
                0)(Slsd, R, pmarray, nsigmaD, nu_grid, log_ngammaL_grid)
@@ -154,7 +160,7 @@ def xsmatrix_zeroth(Tarr, Parr, Tref, R, pmarray, lbd_coeff, nu_grid,
 @jit
 def xsmatrix_first(Tarr, Parr, Tref, Twt, R, pmarray, lbd_coeff, nu_grid,
                    ngamma_ref_grid, n_Texp_grid, multi_index_uniqgrid,
-                   elower_grid, Mmol, qtarr):
+                   elower_grid, Mmol, qtarr, Tref_broadening):
     """compute cross section matrix given atmospheric layers, for diffmode=1, with scan+fft
 
     Args:
@@ -172,6 +178,8 @@ def xsmatrix_first(Tarr, Parr, Tref, Twt, R, pmarray, lbd_coeff, nu_grid,
         elower_grid (_type_): Elower grid
         Mmol (_type_): molecular mass
         qtarr (_type_): partition function ratio layers
+        Tref_broadening: reference temperature for broadening in Kelvin
+
 
     Returns:
         jnp.array : cross section matrix (Nlayer, N_wavenumber)
@@ -179,9 +187,9 @@ def xsmatrix_first(Tarr, Parr, Tref, Twt, R, pmarray, lbd_coeff, nu_grid,
     nsigmaD = vmap(normalized_doppler_sigma, (0, None, None), 0)(Tarr, Mmol, R)
     Slsd = vmap(unbiased_lsd_first, (None, 0, None, None, None, None, 0),
                 0)(lbd_coeff, Tarr, Tref, Twt, nu_grid, elower_grid, qtarr)
-    ngamma_grid = vmap(unbiased_ngamma_grid, (0, 0, None, None, None),
+    ngamma_grid = vmap(unbiased_ngamma_grid, (0, 0, None, None, None, None),
                        0)(Tarr, Parr, ngamma_ref_grid, n_Texp_grid,
-                          multi_index_uniqgrid)
+                          multi_index_uniqgrid, Tref_broadening)
     log_ngammaL_grid = jnp.log(ngamma_grid)
     xsm = vmap(calc_xsection_from_lsd_scanfft, (0, None, None, 0, None, 0),
                0)(Slsd, R, pmarray, nsigmaD, nu_grid, log_ngammaL_grid)
@@ -191,7 +199,7 @@ def xsmatrix_first(Tarr, Parr, Tref, Twt, R, pmarray, lbd_coeff, nu_grid,
 @jit
 def xsmatrix_second(Tarr, Parr, Tref, Twt, R, pmarray, lbd_coeff, nu_grid,
                     ngamma_ref_grid, n_Texp_grid, multi_index_uniqgrid,
-                    elower_grid, Mmol, qtarr):
+                    elower_grid, Mmol, qtarr, Tref_broadening):
     """compute cross section matrix given atmospheric layers, for diffmode=1, with scan+fft
 
     Args:
@@ -209,6 +217,8 @@ def xsmatrix_second(Tarr, Parr, Tref, Twt, R, pmarray, lbd_coeff, nu_grid,
         elower_grid (_type_): Elower grid
         Mmol (_type_): molecular mass
         qtarr (_type_): partition function ratio layers
+        Tref_broadening: reference temperature for broadening in Kelvin
+
 
     Returns:
         jnp.array : cross section matrix (Nlayer, N_wavenumber)
@@ -216,9 +226,9 @@ def xsmatrix_second(Tarr, Parr, Tref, Twt, R, pmarray, lbd_coeff, nu_grid,
     nsigmaD = vmap(normalized_doppler_sigma, (0, None, None), 0)(Tarr, Mmol, R)
     Slsd = vmap(unbiased_lsd_second, (None, 0, None, None, None, None, 0),
                 0)(lbd_coeff, Tarr, Tref, Twt, nu_grid, elower_grid, qtarr)
-    ngamma_grid = vmap(unbiased_ngamma_grid, (0, 0, None, None, None),
+    ngamma_grid = vmap(unbiased_ngamma_grid, (0, 0, None, None, None, None),
                        0)(Tarr, Parr, ngamma_ref_grid, n_Texp_grid,
-                          multi_index_uniqgrid)
+                          multi_index_uniqgrid, Tref_broadening)
     log_ngammaL_grid = jnp.log(ngamma_grid)
     xsm = vmap(calc_xsection_from_lsd_scanfft, (0, None, None, 0, None, 0),
                0)(Slsd, R, pmarray, nsigmaD, nu_grid, log_ngammaL_grid)
@@ -562,15 +572,16 @@ def unbiased_lsd_second(lbd_coeff, T, Tref, Twt, nu_grid, elower_grid, qt):
 
 
 def unbiased_ngamma_grid(T, P, ngamma_ref_grid, n_Texp_grid,
-                         multi_index_uniqgrid):
+                         multi_index_uniqgrid, Tref_broadening):
     """compute unbiased ngamma grid
 
     Args:
         T: temperature in Kelvin
         P: pressure in bar
-        ngamma_ref_grid : pressure broadening half width at reference 
+        ngamma_ref_grid : pressure broadening half width at Tref_broadening 
         n_Texp_grid : temperature exponent at reference
         multi_index_uniqgrid: multi index of unique broadening parameter
+        Tref_broadening: reference temperature in Kelvin for broadening
 
     Returns:
         pressure broadening half width at temperature T and pressure P 
@@ -581,4 +592,4 @@ def unbiased_ngamma_grid(T, P, ngamma_ref_grid, n_Texp_grid,
     """
     ngamma_ref_g = ngamma_ref_grid[multi_index_uniqgrid[:, 0]]
     n_Texp_g = n_Texp_grid[multi_index_uniqgrid[:, 1]]
-    return ngamma_ref_g * (T / Tref_original)**(-n_Texp_g) * P
+    return ngamma_ref_g * (T / Tref_broadening)**(-n_Texp_g) * P

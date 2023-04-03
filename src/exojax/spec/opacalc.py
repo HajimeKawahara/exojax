@@ -14,6 +14,7 @@ from exojax.utils.instfunc import nx_from_resolution_eslog
 from exojax.utils.grids import nu2wav
 from exojax.utils.instfunc import resolution_eslog
 from exojax.utils.constants import Patm
+from exojax.utils.constants import Tref_original
 import jax.numpy as jnp
 from jax import jit
 from jax import vmap
@@ -104,6 +105,11 @@ class OpaPremodit(OpaCalc):
         self.Twt = Twt
         self.Tref = Tref
         self.dE = dE
+        if Tmax is None:
+            Tmax = np.max([Twt, Tref])
+        if Tmin is None:
+            Tmin = np.min([Twt, Tref])
+
         self.Tmax = Tmax
         self.Tmin = Tmin
         self.apply_params()
@@ -116,18 +122,35 @@ class OpaPremodit(OpaCalc):
         self.nu_grid, self.wav, self.resolution = wavenumber_grid(
             x0, x1, Nx, unit=unit, xsmode="premodit")
 
+    def set_Tref_broadening_to_midpoint(self):
+        self.Tref_broadening = np.exp(
+            (np.log(self.Tmax) + np.log(self.Tmin)) / 2.0)
+
     def set_gamma_and_n_Texp(self, mdb):
+        """convert gamma_ref to the regular formalization
+
+        Notes:
+            gamma (T) = (gamma at Tref_original) * (Tref_original/Tref_broadening)**n 
+            * (T/Tref_broadening)**-n * (P/1bar) 
+
+        Args:
+            mdb (_type_): mdb instance
+
+        """
         if mdb.dbtype == "hitran":
             print("gamma_air and n_air are used. gamma_ref = gamma_air/Patm")
-            self.gamma_ref = mdb.gamma_air / Patm
             self.n_Texp = mdb.n_air
+            reference_factor = (Tref_original/self.Tref_broadening)**(self.n_Texp)
+            self.gamma_ref = mdb.gamma_air * reference_factor / Patm            
         elif mdb.dbtype == "exomol":
-            self.gamma_ref = mdb.alpha_ref
             self.n_Texp = mdb.n_Texp
-
+            reference_factor = (Tref_original/self.Tref_broadening)**(self.n_Texp)
+            self.gamma_ref = mdb.alpha_ref * reference_factor
+            
     def apply_params(self):
         self.mdb.change_reference_temperature(self.Tref)
         self.dbtype = self.mdb.dbtype
+        self.set_Tref_broadening_to_midpoint()
         self.set_gamma_and_n_Texp(self.mdb)
         self.opainfo = initspec.init_premodit(
             self.mdb.nu_lines,
@@ -138,6 +161,7 @@ class OpaPremodit(OpaCalc):
             self.mdb.line_strength_ref,
             self.Twt,
             Tref=self.Tref,
+            Tref_broadening=self.Tref_broadening,
             Tmax=self.Tmax,
             Tmin=self.Tmin,
             dE=self.dE,
@@ -165,17 +189,19 @@ class OpaPremodit(OpaCalc):
             return xsvector_zeroth(T, P, nsigmaD, lbd_coeff, self.Tref, R,
                                    pmarray, self.nu_grid, elower_grid,
                                    multi_index_uniqgrid, ngamma_ref_grid,
-                                   n_Texp_grid, qt)
+                                   n_Texp_grid, qt, self.Tref_broadening)
         elif self.diffmode == 1:
             return xsvector_first(T, P, nsigmaD, lbd_coeff, self.Tref,
                                   self.Twt, R, pmarray, self.nu_grid,
                                   elower_grid, multi_index_uniqgrid,
-                                  ngamma_ref_grid, n_Texp_grid, qt)
+                                  ngamma_ref_grid, n_Texp_grid, qt,
+                                  self.Tref_broadening)
         elif self.diffmode == 2:
             return xsvector_second(T, P, nsigmaD, lbd_coeff, self.Tref,
                                    self.Twt, R, pmarray, self.nu_grid,
                                    elower_grid, multi_index_uniqgrid,
-                                   ngamma_ref_grid, n_Texp_grid, qt)
+                                   ngamma_ref_grid, n_Texp_grid, qt,
+                                   self.Tref_broadening)
 
     def xsmatrix(self, Tarr, Parr):
         """cross section matrix
@@ -206,19 +232,22 @@ class OpaPremodit(OpaCalc):
             return xsmatrix_zeroth(Tarr, Parr, self.Tref, R, pmarray,
                                    lbd_coeff, self.nu_grid, ngamma_ref_grid,
                                    n_Texp_grid, multi_index_uniqgrid,
-                                   elower_grid, self.mdb.molmass, qtarr)
+                                   elower_grid, self.mdb.molmass, qtarr,
+                                   self.Tref_broadening)
 
         elif self.diffmode == 1:
             return xsmatrix_first(Tarr, Parr, self.Tref, self.Twt, R, pmarray,
                                   lbd_coeff, self.nu_grid, ngamma_ref_grid,
                                   n_Texp_grid, multi_index_uniqgrid,
-                                  elower_grid, self.mdb.molmass, qtarr)
+                                  elower_grid, self.mdb.molmass, qtarr,
+                                  self.Tref_broadening)
 
         elif self.diffmode == 2:
             return xsmatrix_second(Tarr, Parr, self.Tref, self.Twt, R, pmarray,
                                    lbd_coeff, self.nu_grid, ngamma_ref_grid,
                                    n_Texp_grid, multi_index_uniqgrid,
-                                   elower_grid, self.mdb.molmass, qtarr)
+                                   elower_grid, self.mdb.molmass, qtarr,
+                                   self.Tref_broadening)
 
         else:
             raise ValueError("diffmode should be 0, 1, 2.")
