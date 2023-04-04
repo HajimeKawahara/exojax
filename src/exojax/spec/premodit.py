@@ -294,6 +294,19 @@ def make_broadpar_grid(ngamma_ref,
     return ngamma_ref_grid, n_Texp_grid
 
 
+def reference_temperature_broadening_at_midpoint(Tmin, Tmax):
+    """compute Tref_broadening at the logarithmic midpoint of Tmin and Tmax
+
+    Args:
+        Tmin (float): minimum temperature
+        Tmax (float): maximum temperature
+
+    Returns:
+        float: Tref_broadening at the logarithmic midpoint of Tmin and Tmax
+    """
+    return np.exp((np.log(Tmax) + np.log(Tmin)) / 2.0)
+
+
 def broadpar_getix(ngamma_ref, ngamma_ref_grid, n_Texp, n_Texp_grid):
     """get indices and contribution of broadpar
     

@@ -123,8 +123,8 @@ class OpaPremodit(OpaCalc):
             x0, x1, Nx, unit=unit, xsmode="premodit")
 
     def set_Tref_broadening_to_midpoint(self):
-        self.Tref_broadening = np.exp(
-            (np.log(self.Tmax) + np.log(self.Tmin)) / 2.0)
+        from exojax.spec.premodit import reference_temperature_broadening_at_midpoint
+        self.Tref_broadening = reference_temperature_broadening_at_midpoint(self.Tmin, self.Tmax)
 
     def set_gamma_and_n_Texp(self, mdb):
         """convert gamma_ref to the regular formalization
