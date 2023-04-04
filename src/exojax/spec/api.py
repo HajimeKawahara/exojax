@@ -227,6 +227,18 @@ class MdbExomol(CapiMdbExomol):
         else:
             raise ValueError("Use vaex dataframe as input.")
 
+    def apply_mask_mdb(self, mask):
+        self.A = self.A[mask]
+        self.nu_lines = self.nu_lines[mask]
+        self.gamma_natural = self.gamma_natural[mask]
+        self.alpha_ref = self.alpha_ref[mask]
+        self.n_Texp = self.n_Texp[mask]
+        self.elower = self.elower[mask]
+        self.jlower = self.jlower[mask]
+        self.jupper = self.jupper[mask]
+        self.line_strength_ref = self.line_strength_ref[mask]
+        self.gpp = self.gpp[mask]
+
     def Sij0(self):
         """Deprecated line_strength_ref. 
 
@@ -538,20 +550,19 @@ class MdbHitemp(HITEMPDatabaseManager):
         self.isoid = df_masked.iso.values
         self.uniqiso = np.unique(self.isoid)
 
-    def apply_mask_mdb(mdb, mask):
-        mdb.nu_lines = mdb.nu_lines[mask]
-        mdb.line_strength_ref = mdb.line_strength_ref[mask]
-        mdb.delta_air = mdb.delta_air[mask]
-        mdb.A = mdb.A[mask]
-        mdb.n_air = mdb.n_air[mask]
-        mdb.gamma_air = mdb.gamma_air[mask]
-        mdb.gamma_self = mdb.gamma_self[mask]
-        mdb.elower = mdb.elower[mask]
-        mdb.gpp = mdb.gpp[mask]
+    def apply_mask_mdb(self, mask):
+        self.nu_lines = self.nu_lines[mask]
+        self.line_strength_ref = self.line_strength_ref[mask]
+        self.delta_air = self.delta_air[mask]
+        self.A = self.A[mask]
+        self.n_air = self.n_air[mask]
+        self.gamma_air = self.gamma_air[mask]
+        self.gamma_self = self.gamma_self[mask]
+        self.elower = self.elower[mask]
+        self.gpp = self.gpp[mask]
         #isotope
-        mdb.isoid = mdb.isoid[mask]
-        mdb.uniqiso = np.unique(mdb.isoid)
-        return mdb
+        self.isoid = self.isoid[mask]
+        self.uniqiso = np.unique(self.isoid)
 
     def Sij0(self):
         """Deprecated line_strength_ref. 
@@ -866,20 +877,19 @@ class MdbHitran(HITRANDatabaseManager):
         else:
             raise ValueError("Use vaex dataframe as input.")
 
-    def apply_mask_mdb(mdb, mask):
-        mdb.nu_lines = mdb.nu_lines[mask]
-        mdb.line_strength_ref = mdb.line_strength_ref[mask]
-        mdb.delta_air = mdb.delta_air[mask]
-        mdb.A = mdb.A[mask]
-        mdb.n_air = mdb.n_air[mask]
-        mdb.gamma_air = mdb.gamma_air[mask]
-        mdb.gamma_self = mdb.gamma_self[mask]
-        mdb.elower = mdb.elower[mask]
-        mdb.gpp = mdb.gpp[mask]
+    def apply_mask_mdb(self, mask):
+        self.nu_lines = self.nu_lines[mask]
+        self.line_strength_ref = self.line_strength_ref[mask]
+        self.delta_air = self.delta_air[mask]
+        self.A = self.A[mask]
+        self.n_air = self.n_air[mask]
+        self.gamma_air = self.gamma_air[mask]
+        self.gamma_self = self.gamma_self[mask]
+        self.elower = self.elower[mask]
+        self.gpp = self.gpp[mask]
         #isotope
-        mdb.isoid = mdb.isoid[mask]
-        mdb.uniqiso = np.unique(mdb.isoid)
-        return mdb
+        self.isoid = self.isoid[mask]
+        self.uniqiso = np.unique(self.isoid)
 
     def Sij0(self):
         """Deprecated line_strength_ref. 
