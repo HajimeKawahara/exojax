@@ -242,6 +242,7 @@ class MdbExomol(CapiMdbExomol):
         self.A = self.A[mask]
         self.logsij0 = self.logsij0[mask]
         self.nu_lines = self.nu_lines[mask]
+        self.dev_nu_lines = self.dev_nu_lines[mask]
         self.gamma_natural = self.gamma_natural[mask]
         self.alpha_ref = self.alpha_ref[mask]
         self.n_Texp = self.n_Texp[mask]
