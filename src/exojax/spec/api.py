@@ -240,6 +240,7 @@ class MdbExomol(CapiMdbExomol):
             >>> mdb.apply_mask_mdb(mask)
         """
         self.A = self.A[mask]
+        self.logsij0 = self.logsij0[mask]
         self.nu_lines = self.nu_lines[mask]
         self.gamma_natural = self.gamma_natural[mask]
         self.alpha_ref = self.alpha_ref[mask]
