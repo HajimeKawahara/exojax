@@ -175,6 +175,8 @@ def init_premodit(nu_lines,
         Tmin,
         Tref_broadening,
         dit_grid_resolution=dit_grid_resolution)
+    print("# of reference width grid : ",len(ngamma_ref_grid))
+    print("# of temperature exponent grid :",len(n_Texp_grid))
 
     wavmask = (nu_lines >= nu_grid[0]) * (nu_lines <= nu_grid[-1])  #Issue 341
 

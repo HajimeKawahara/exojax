@@ -123,8 +123,12 @@ class OpaPremodit(OpaCalc):
             x0, x1, Nx, unit=unit, xsmode="premodit")
 
     def set_Tref_broadening_to_midpoint(self):
+        """Set self.Tref_broadening using log midpoint of Tmax and Tmin
+        """
         from exojax.spec.premodit import reference_temperature_broadening_at_midpoint
-        self.Tref_broadening = reference_temperature_broadening_at_midpoint(self.Tmin, self.Tmax)
+        self.Tref_broadening = reference_temperature_broadening_at_midpoint(
+            self.Tmin, self.Tmax)
+        print("Tref_broadening is set to ",self.Tref_broadening, "K")
 
     def set_gamma_and_n_Texp(self, mdb):
         """convert gamma_ref to the regular formalization
@@ -140,13 +144,15 @@ class OpaPremodit(OpaCalc):
         if mdb.dbtype == "hitran":
             print("gamma_air and n_air are used. gamma_ref = gamma_air/Patm")
             self.n_Texp = mdb.n_air
-            reference_factor = (Tref_original/self.Tref_broadening)**(self.n_Texp)
-            self.gamma_ref = mdb.gamma_air * reference_factor / Patm            
+            reference_factor = (Tref_original /
+                                self.Tref_broadening)**(self.n_Texp)
+            self.gamma_ref = mdb.gamma_air * reference_factor / Patm
         elif mdb.dbtype == "exomol":
             self.n_Texp = mdb.n_Texp
-            reference_factor = (Tref_original/self.Tref_broadening)**(self.n_Texp)
+            reference_factor = (Tref_original /
+                                self.Tref_broadening)**(self.n_Texp)
             self.gamma_ref = mdb.alpha_ref * reference_factor
-            
+
     def apply_params(self):
         self.mdb.change_reference_temperature(self.Tref)
         self.dbtype = self.mdb.dbtype
