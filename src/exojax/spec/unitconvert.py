@@ -15,6 +15,8 @@ def nu2wav(nus, unit='AA'):
         return 1.e7/nus[::-1]
     elif unit == 'AA':
         return 1.e8/nus[::-1]
+    elif unit == 'um':
+        return 1.e4/nus[::-1]
     else:
         raise ValueError("unavailable unit")
         
@@ -34,6 +36,8 @@ def wav2nu(wav, unit):
         return 1.e7/wav[::-1]
     elif unit == 'AA':
         return 1.e8/wav[::-1]
+    elif unit == 'um':
+        return 1.e4/wav[::-1]
     else:
         raise ValueError("unavailable unit")
         

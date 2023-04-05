@@ -183,7 +183,7 @@ class OpaPremodit(OpaCalc):
             ValueError: _description_
 
         Returns:
-            jnp array: cross section array
+            jnp.array : cross section matrix (Nlayer, N_wavenumber)
         """
         from exojax.spec.premodit import xsmatrix_zeroth
         from exojax.spec.premodit import xsmatrix_first
@@ -367,7 +367,7 @@ class OpaModit(OpaCalc):
             ValueError: _description_
 
         Returns:
-            jnp array: cross section array
+            jnp.array : cross section matrix (Nlayer, N_wavenumber)
         """
         from exojax.spec.modit_scanfft import xsmatrix_scanfft
         from exojax.spec.modit import exomol
@@ -462,7 +462,7 @@ class OpaDirect(OpaCalc):
             ValueError: _description_
 
         Returns:
-            jnp array: cross section array
+            jnp.array : cross section matrix (Nlayer, N_wavenumber)
         """
         from exojax.spec import gamma_natural
         from exojax.spec import doppler_sigma
