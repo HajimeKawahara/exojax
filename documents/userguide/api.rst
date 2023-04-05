@@ -20,12 +20,13 @@ How to load ExoMol CO database
 	>>> from exojax.spec.api import MdbExomol
 	>>> mdb = MdbExomol(".database/CO/12C-16O/Li2015", nurange=[4200.0, 4300.0])
 
-We can check which line infomation is included in mdb by 
+We can check the attribute_names in mdb by 
 
 .. code:: ipython
-
-	>>> mdb.__slots__
-	['Sij0', 'logsij0', 'nu_lines', 'A', 'elower', 'eupper', 'gupper', 'jlower', 'jupper']
+    
+    >>> attribute_names = [attr_name for attr_name, attr_value in mdb.__dict__.items() if not callable(attr_value) and not attr_name.startswith("__")]
+    >>> print(attribute_names)
+    ['dbtype', 'path', 'exact_molecule_name', 'database', 'bkgdatm', 'Tref', 'gpu_transfer', 'Ttyp', 'broadf', 'simple_molecule_name', 'molmass', 'skip_optional_data', 'activation', 'name', 'molecule', 'local_databases', 'extra_params', 'downloadable', 'format', 'engine', 'tempdir', 'ds', 'verbose', 'parallel', 'nJobs', 'batch_size', 'minimum_nfiles', 'crit', 'margin', 'nurange', 'wmin', 'wmax', 'states_file', 'pf_file', 'def_file', 'broad_file', 'isotope_fullname', 'n_Texp_def', 'alpha_ref_def', 'gQT', 'T_gQT', 'QTref', 'trans_file', 'num_tag', 'elower_max', 'QTtyp', 'df_load_mask', 'A', 'nu_lines', 'elower', 'jlower', 'jupper', 'line_strength_ref', 'gpp', 'alpha_ref', 'n_Texp', 'gamma_natural', 'dev_nu_lines', 'logsij0']
 
 
 Some opacity calculator (currently only PreMODIT) does not use some arrays on a GPU device. 

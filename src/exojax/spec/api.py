@@ -53,18 +53,6 @@ class MdbExomol(CapiMdbExomol):
         n_Texp_def: default temperature exponent in .def file, used for jlower not given in .broad
         alpha_ref_def: default alpha_ref (gamma0) in .def file, used for jlower not given in .broad
     """
-    __slots__ = [
-        "line_strength_ref",
-        "logsij0",
-        "nu_lines",
-        "A",
-        "elower",
-        "eupper",
-        "gupper",
-        "jlower",
-        "jupper",
-    ]
-
     def __init__(self,
                  path,
                  nurange=[-np.inf, np.inf],
@@ -133,7 +121,7 @@ class MdbExomol(CapiMdbExomol):
         # data frame instance:
         df = self.load(
             local_files,
-            columns=[k for k in self.__slots__ if k not in ["logsij0"]],
+            columns=[k for k in self.__dict__ if k not in ["logsij0"]],
             lower_bound=([("Sij0", 0.0)]),
             output="vaex")
 
@@ -144,7 +132,7 @@ class MdbExomol(CapiMdbExomol):
         if inherit_dataframe or not self.activation:
             print("DataFrame (self.df) available.")
             self.df = df
-        
+
     def set_wavenum(self, nurange):
         if nurange is None:
             wavenum_min = 0.0
@@ -376,8 +364,9 @@ class MdbHitemp(HITEMPDatabaseManager):
         self.set_molmass()
         self.gpu_transfer = gpu_transfer
         self.activation = activation
-        self.load_wavenum_min, self.load_wavenum_max = self.set_wavenum(nurange)
-        
+        self.load_wavenum_min, self.load_wavenum_max = self.set_wavenum(
+            nurange)
+
         super().__init__(
             molecule=self.simple_molecule_name,
             name="HITEMP-{molecule}",
@@ -404,8 +393,8 @@ class MdbHitemp(HITEMPDatabaseManager):
             # Get missing files
             download_files = self.get_missing_files(local_files)
             download_files = self.keep_only_relevant(download_files,
-                                                    self.load_wavenum_min,
-                                                    self.load_wavenum_max)
+                                                     self.load_wavenum_min,
+                                                     self.load_wavenum_max)
             # do not re-download files if they exist in another format :
 
             converted = []
@@ -413,11 +402,14 @@ class MdbHitemp(HITEMPDatabaseManager):
                 if exists(f.replace(".hdf5", ".h5")):
                     update_pytables_to_vaex(f.replace(".hdf5", ".h5"))
                     converted.append(f)
-                download_files = [f for f in download_files if f not in converted]
+                download_files = [
+                    f for f in download_files if f not in converted
+                ]
             # do not re-download remaining files that exist. Let user decide what to do.
             # (download & re-parsing is a long solution!)
             download_files = [
-                f for f in download_files if not exists(f.replace(".hdf5", ".h5"))
+                f for f in download_files
+                if not exists(f.replace(".hdf5", ".h5"))
             ]
 
             # Download files
@@ -437,8 +429,9 @@ class MdbHitemp(HITEMPDatabaseManager):
                 self.clean_download_files()
 
             # Load and return
-            files_loaded = self.keep_only_relevant(local_files, self.load_wavenum_min,
-                                                self.load_wavenum_max)
+            files_loaded = self.keep_only_relevant(local_files,
+                                                   self.load_wavenum_min,
+                                                   self.load_wavenum_max)
             columns = None,
             output = "vaex"
 
@@ -446,13 +439,12 @@ class MdbHitemp(HITEMPDatabaseManager):
             df = self.load(
                 files_loaded,  # filter other files,
                 columns=columns,
-                within=[("iso",
-                        isotope_dfform)] if isotope_dfform is not None else [],
+                within=[("iso", isotope_dfform)]
+                if isotope_dfform is not None else [],
                 output=output,
             )
-            mask=None
-            
-        
+            mask = None
+
         self.isoid = df.iso
         self.uniqiso = np.unique(df.iso.values)
         QTref, QTtyp = self.QT_for_select_line(Ttyp)
@@ -481,8 +473,8 @@ class MdbHitemp(HITEMPDatabaseManager):
             self.activation = False
             warnings.warn("nurange=None. Nonactive mode.", UserWarning)
         else:
-            wavenum_min = np.min(nurange) 
-            wavenum_max = np.max(nurange) 
+            wavenum_min = np.min(nurange)
+            wavenum_max = np.max(nurange)
         if wavenum_min == -np.inf:
             wavenum_min = None
         if wavenum_max == np.inf:
@@ -523,7 +515,6 @@ class MdbHitemp(HITEMPDatabaseManager):
 
         if self.gpu_transfer:
             self.generate_jnp_arrays()
-
 
     def set_molmass(self):
         molmass_isotope, abundance_isotope = molmass_hitran()
@@ -856,7 +847,6 @@ class MdbHitran(HITRANDatabaseManager):
         if self.gpu_transfer:
             self.generate_jnp_arrays()
 
-
     def set_molmass(self):
         molmass_isotope, abundance_isotope = molmass_hitran()
         if self.isotope is None:
@@ -935,7 +925,6 @@ class MdbHitran(HITRANDatabaseManager):
         msg = "Sij0 instance was replaced to line_strength_ref and will be removed."
         warnings.warn(msg, FutureWarning)
         return self.line_strength_ref
-
 
     def generate_jnp_arrays(self):
         """(re)generate jnp.arrays.
