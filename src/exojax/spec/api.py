@@ -227,6 +227,31 @@ class MdbExomol(CapiMdbExomol):
         else:
             raise ValueError("Use vaex dataframe as input.")
 
+    def apply_mask_mdb(self, mask):
+        """apply mask for mdb class
+
+        Args:
+            mask: mask to be applied
+
+        Examples:
+            >>> mdb = api.MdbExomol(emf, nus)
+            >>> # we would extract the lines with elower > 100.
+            >>> mask = mdb.elower > 100.
+            >>> mdb.apply_mask_mdb(mask)
+        """
+        self.A = self.A[mask]
+        self.logsij0 = self.logsij0[mask]
+        self.nu_lines = self.nu_lines[mask]
+        self.dev_nu_lines = self.dev_nu_lines[mask]
+        self.gamma_natural = self.gamma_natural[mask]
+        self.alpha_ref = self.alpha_ref[mask]
+        self.n_Texp = self.n_Texp[mask]
+        self.elower = self.elower[mask]
+        self.jlower = self.jlower[mask]
+        self.jupper = self.jupper[mask]
+        self.line_strength_ref = self.line_strength_ref[mask]
+        self.gpp = self.gpp[mask]
+
     def Sij0(self):
         """Deprecated line_strength_ref. 
 
@@ -537,7 +562,32 @@ class MdbHitemp(HITEMPDatabaseManager):
         #isotope
         self.isoid = df_masked.iso.values
         self.uniqiso = np.unique(self.isoid)
-    
+
+    def apply_mask_mdb(self, mask):
+        """apply mask for mdb class
+
+        Args:
+            mask: mask to be applied
+
+        Examples:
+            >>> mdb = api.MdbHitemp(emf, nus)
+            >>> # we would extract the lines with n_air > 0.01
+            >>> mask = mdb.n_air > 0.01
+            >>> mdb.apply_mask_mdb(mask)
+        """
+        self.nu_lines = self.nu_lines[mask]
+        self.line_strength_ref = self.line_strength_ref[mask]
+        self.delta_air = self.delta_air[mask]
+        self.A = self.A[mask]
+        self.n_air = self.n_air[mask]
+        self.gamma_air = self.gamma_air[mask]
+        self.gamma_self = self.gamma_self[mask]
+        self.elower = self.elower[mask]
+        self.gpp = self.gpp[mask]
+        #isotope
+        self.isoid = self.isoid[mask]
+        self.uniqiso = np.unique(self.isoid)
+
     def Sij0(self):
         """Deprecated line_strength_ref. 
 
@@ -850,6 +900,31 @@ class MdbHitran(HITRANDatabaseManager):
 
         else:
             raise ValueError("Use vaex dataframe as input.")
+
+    def apply_mask_mdb(self, mask):
+        """apply mask for mdb class
+
+        Args:
+            mask: mask to be applied
+
+        Examples:
+            >>> mdb = api.MdbHitran(emf, nus)
+            >>> # we would extract the lines with n_air > 0.01
+            >>> mask = mdb.n_air > 0.01
+            >>> mdb.apply_mask_mdb(mask)
+        """
+        self.nu_lines = self.nu_lines[mask]
+        self.line_strength_ref = self.line_strength_ref[mask]
+        self.delta_air = self.delta_air[mask]
+        self.A = self.A[mask]
+        self.n_air = self.n_air[mask]
+        self.gamma_air = self.gamma_air[mask]
+        self.gamma_self = self.gamma_self[mask]
+        self.elower = self.elower[mask]
+        self.gpp = self.gpp[mask]
+        #isotope
+        self.isoid = self.isoid[mask]
+        self.uniqiso = np.unique(self.isoid)
 
     def Sij0(self):
         """Deprecated line_strength_ref. 
