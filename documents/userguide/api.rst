@@ -305,3 +305,37 @@ Then, we can use mdb as usual. This is a plot of the activated lines and all of 
 
 
 See also " :doc:`../tutorials/Fortrat` "
+
+
+Masking attributes
+========================
+
+We can mask attributes even after activation. In the following example, we load "mdb" with activation (by default).
+
+.. code:: ipython
+	
+    >>> import numpy as np
+    >>> from exojax.utils.grids import wavenumber_grid
+    >>> from exojax.spec import api
+    >>> nus,wav,res=wavenumber_grid(6910,6990,100000,unit='cm-1',xsmode="premodit")
+    xsmode =  premodit
+    xsmode assumes ESLOG in wavenumber space: mode=premodit
+    >>> mdb = api.MdbExomol(".database/H2O/1H2-16O/POKAZATEL",nus)
+    HITRAN exact name= H2(16O)
+    Background atmosphere:  H2
+    Reading .database/H2O/1H2-16O/POKAZATEL/1H2-16O__POKAZATEL__06900-07000.trans.bz2
+    .broad is used.
+    Broadening code level= a1
+    default broadening parameters are used for  12  J lower states in  63  states
+    >>> print(len(mdb.elower), np.min(mdb.elower))
+    26011826 23.794352
+
+Then, we define a mask and apply it to mdb using "apply_mask_mdb" method.
+
+.. code:: ipython
+	
+    >>> mask = mdb.elower > 100.
+    >>> mdb.apply_mask_mdb(mask)
+    >>> print(len(mdb.elower), np.min(mdb.elower))
+    26011817 134.90164
+
