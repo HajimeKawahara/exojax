@@ -1,7 +1,7 @@
 ExoMol, HITEMP, HITRAN
 --------------------------------------
 
-*November 4th (2022) Hajime Kawahara*
+*April 5th (2023) Hajime Kawahara, Yui Kawashima*
 
 Since version 1.2, the standard molecular database I/O for ExoMol, HITEMP, and HITRAN was shared with the radis team. 
 We moved the I/O for these database to `exojax.spec.api <../exojax/exojax.spec.html#module-exojax.spec.api>`_.
@@ -307,7 +307,7 @@ Then, we can use mdb as usual. This is a plot of the activated lines and all of 
 See also " :doc:`../tutorials/Fortrat` "
 
 
-Masking attributes
+Masking Attributes
 ========================
 
 We can mask attributes even after activation. In the following example, we load "mdb" with activation (by default).
