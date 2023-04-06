@@ -728,7 +728,8 @@ class MdbHitran(HITRANDatabaseManager):
                  isotope=0,
                  gpu_transfer=False,
                  inherit_dataframe=False,
-                 activation=True):
+                 activation=True,
+                 extra_params=None):
         """Molecular database for HITRAN/HITEMP form.
 
         Args:
@@ -741,6 +742,7 @@ class MdbHitran(HITRANDatabaseManager):
             gpu_transfer: tranfer data to jnp.array?
             inherit_dataframe: if True, it makes self.df instance available, which needs more DRAM when pickling.
             activation: if True, the activation of mdb will be done when initialization, if False, the activation won't be done and it makes self.df instance available. 
+            extra_params: None or 'all'. If 'all', background atmospheric broadening parameters(n and gamma) other than air will also be downloaded (e.g. h2, he...)
         """
         self.dbtype = "hitran"
         self.path = pathlib.Path(path).expanduser()
@@ -763,6 +765,7 @@ class MdbHitran(HITRANDatabaseManager):
             engine="default",
             verbose=True,
             parallel=True,
+            extra_params=extra_params,
         )
 
         # Get list of all expected local files for this database:
@@ -897,6 +900,22 @@ class MdbHitran(HITRANDatabaseManager):
             #isotope
             self.isoid = df_load_mask.iso.values
             self.uniqiso = np.unique(self.isoid)
+            
+            if str('n_h2') in df_load_mask:
+                self.n_h2 = df_load_mask.n_h2.values  
+                self.gamma_h2 = df_load_mask.gamma_h2.values  
+            
+            if str('n_he') in df_load_mask:
+                self.n_he = df_load_mask.n_he.values  
+                self.gamma_he = df_load_mask.gamma_he.values  
+                
+            if str('n_co2') in df_load_mask:
+                self.n_co2 = df_load_mask.n_co2.values  
+                self.gamma_co2 = df_load_mask.gamma_co2.values  
+                
+            if str('n_h2o') in df_load_mask:
+                self.n_h2o = df_load_mask.n_h2o.values  
+                self.gamma_h2o = df_load_mask.gamma_h2o.values  
 
         else:
             raise ValueError("Use vaex dataframe as input.")
@@ -955,6 +974,22 @@ class MdbHitran(HITRANDatabaseManager):
         self.gamma_self = jnp.array(self.gamma_self)
         self.elower = jnp.array(self.elower)
         self.gpp = jnp.array(self.gpp)
+        
+        if str('n_h2') in df_load_mask:
+            self.n_h2 = jnp.array(self.n_h2) 
+            self.gamma_h2 = jnp.array(self.gamma_h2)
+            
+        if str('n_he') in df_load_mask:
+            self.n_he = jnp.array(self.n_he) 
+            self.gamma_he = jnp.array(self.gamma_he)
+
+        if str('n_co2') in df_load_mask:
+            self.n_co2 = jnp.array(self.n_co2) 
+            self.gamma_co2 = jnp.array(self.gamma_co2)
+
+        if str('n_h2o') in df_load_mask:
+            self.n_h2o = jnp.array(self.n_h2o) 
+            self.gamma_h2o = jnp.array(self.gamma_h2o)
 
     def generate_jnp_arrays(self):
         """(re)generate jnp.arrays.
