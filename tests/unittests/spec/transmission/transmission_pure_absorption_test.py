@@ -5,6 +5,9 @@ from exojax.atm.atmprof import normalized_layer_height
 from exojax.spec.opachord import chord_geometric_matrix
 from exojax.spec.opachord import chord_optical_depth
 from exojax.spec.rtransfer import rtrun_trans_pure_absorption
+from jax.config import config
+
+config.update("jax_enable_x64", True)
 
 
 def test_transmission_pure_absorption_equals_to_Rp_sqaured_for_opaque():
@@ -56,7 +59,7 @@ def test_first_layer_height_from_compute_normalized_radius_profile():
         temperature, pressure_decrease_rate, mmw, radius_btm, gravity_btm)
 
     normalized_radius_top = normalized_radius_lower[0] + normalized_height[0]
-    assert normalized_radius_top == pytest.approx(1.0335047)
+    assert normalized_radius_top == pytest.approx(1.033503571206093)
     assert jnp.sum(normalized_height[1:]) + 1.0 == pytest.approx(
         normalized_radius_lower[0])
     assert normalized_radius_lower[-1] == 1.0

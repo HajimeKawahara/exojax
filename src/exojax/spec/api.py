@@ -216,6 +216,10 @@ class MdbExomol(CapiMdbExomol):
         Raises:
             ValueError: _description_
         """
+        
+        if len(df_masked) == 0:
+            raise ValueError("No line found in ", self.nurange, "cm-1")
+
         if isinstance(df_masked, vaex.dataframe.DataFrameLocal):
             self.A = df_masked.A.values
             self.nu_lines = df_masked.nu_lines.values
@@ -554,6 +558,9 @@ class MdbCommonHitempHitran():
                                                      self.Tref)
         self.Tref = Tref_new
 
+    def check_line_existence_in_nurange(self, df_load_mask):
+        if len(df_load_mask) == 0:
+            raise ValueError("No line found in ", self.nurange, "cm-1")
 
 class MdbHitemp(MdbCommonHitempHitran, HITEMPDatabaseManager):
     """molecular database of HITEMP.
@@ -705,6 +712,7 @@ class MdbHitemp(MdbCommonHitempHitran, HITEMPDatabaseManager):
             df_load_mask (DataFrame): (masked) data frame
 
         """
+        self.check_line_existence_in_nurange(df_masked)        
         self.nu_lines = df_masked.wav.values
         self.line_strength_ref = df_masked.int.values
         self.delta_air = df_masked.Pshft.values
@@ -864,6 +872,7 @@ class MdbHitran(MdbCommonHitempHitran, HITRANDatabaseManager):
         Raises:
             ValueError: _description_
         """
+        self.check_line_existence_in_nurange(df_load_mask)
         if isinstance(df_load_mask, vaex.dataframe.DataFrameLocal):
             self.nu_lines = df_load_mask.wav.values
             self.line_strength_ref = df_load_mask.int.values
@@ -897,6 +906,7 @@ class MdbHitran(MdbCommonHitempHitran, HITRANDatabaseManager):
         else:
             raise ValueError("Use vaex dataframe as input.")
 
+    
     def generate_jnp_arrays(self):
         """(re)generate jnp.arrays.
         
