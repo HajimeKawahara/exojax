@@ -439,26 +439,6 @@ class MdbCommonHitempHitran():
             mask *= (df.elower < self.elower_max)
         return mask
 
-    def instances_from_dataframes(self, df_masked):
-        """generate instances from (usually masked) data farame
-
-        Args:
-            df_load_mask (DataFrame): (masked) data frame
-
-        """
-        self.nu_lines = df_masked.wav.values
-        self.line_strength_ref = df_masked.int.values
-        self.delta_air = df_masked.Pshft.values
-        self.A = df_masked.A.values
-        self.n_air = df_masked.Tdpair.values
-        self.gamma_air = df_masked.airbrd.values
-        self.gamma_self = df_masked.selbrd.values
-        self.elower = df_masked.El.values
-        self.gpp = df_masked.gp.values
-        #isotope
-        self.isoid = df_masked.iso.values
-        self.uniqiso = np.unique(self.isoid)
-
     def apply_mask_mdb(self, mask):
         """apply mask for mdb class
 
@@ -718,6 +698,26 @@ class MdbHitemp(MdbCommonHitempHitran, HITEMPDatabaseManager):
             print("DataFrame (self.df) available.")
             self.df = df
 
+    def instances_from_dataframes(self, df_masked):
+        """generate instances from (usually masked) data farame
+
+        Args:
+            df_load_mask (DataFrame): (masked) data frame
+
+        """
+        self.nu_lines = df_masked.wav.values
+        self.line_strength_ref = df_masked.int.values
+        self.delta_air = df_masked.Pshft.values
+        self.A = df_masked.A.values
+        self.n_air = df_masked.Tdpair.values
+        self.gamma_air = df_masked.airbrd.values
+        self.gamma_self = df_masked.selbrd.values
+        self.elower = df_masked.El.values
+        self.gpp = df_masked.gp.values
+        #isotope
+        self.isoid = df_masked.iso.values
+        self.uniqiso = np.unique(self.isoid)
+
     def generate_jnp_arrays(self):
         """(re)generate jnp.arrays.
         
@@ -738,10 +738,7 @@ class MdbHitemp(MdbCommonHitempHitran, HITEMPDatabaseManager):
         self.gpp = jnp.array(self.gpp)
 
 
-MdbHit = MdbHitemp  #compatibility
-
-
-class MdbHitran(HITRANDatabaseManager):
+class MdbHitran(MdbCommonHitempHitran, HITRANDatabaseManager):
     """molecular database of HITRAN
 
     Attributes:
@@ -769,7 +766,8 @@ class MdbHitran(HITRANDatabaseManager):
                  gpu_transfer=False,
                  inherit_dataframe=False,
                  activation=True,
-                 parfile=None):
+                 parfile=None,
+                 nonair_broadening=False):
         """Molecular database for HITRAN/HITEMP form.
 
         Args:
@@ -782,6 +780,7 @@ class MdbHitran(HITRANDatabaseManager):
             gpu_transfer: tranfer data to jnp.array?
             inherit_dataframe: if True, it makes self.df instance available, which needs more DRAM when pickling.
             activation: if True, the activation of mdb will be done when initialization, if False, the activation won't be done and it makes self.df instance available. 
+            nonair_broadening: If True, background atmospheric broadening parameters(n and gamma) other than air will also be downloaded (e.g. h2, he...)
         """
         self.dbtype = "hitran"
         MdbCommonHitempHitran.__init__(self,
@@ -795,13 +794,23 @@ class MdbHitran(HITRANDatabaseManager):
                                        inherit_dataframe=inherit_dataframe,
                                        activation=activation,
                                        parfile=parfile)
-        super().__init__(
+
+        # HITRAN ONLY FUNCTIONALITY
+        if nonair_broadening:
+            extra_params = "all"
+        else:
+            extra_params = None
+
+
+        HITRANDatabaseManager.__init__(
+            self,
             molecule=self.simple_molecule_name,
             name="HITRAN-{molecule}",
             local_databases=self.path.parent,
             engine="default",
             verbose=True,
             parallel=True,
+            extra_params=extra_params
         )
 
         # Get list of all expected local files for this database:
@@ -814,10 +823,6 @@ class MdbHitran(HITRANDatabaseManager):
                                     cache=True,
                                     parse_quanta=True)
 
-        # Register
-        #if not self.is_registered():
-        #    self.register()
-
         if len(download_files) > 0:
             self.clean_download_files()
 
@@ -825,6 +830,7 @@ class MdbHitran(HITRANDatabaseManager):
         columns = None
         output = "vaex"
 
+        
         isotope_dfform = _convert_proper_isotope(self.isotope)
         df = self.load(
             local_file,
@@ -836,8 +842,7 @@ class MdbHitran(HITRANDatabaseManager):
             #if load_wavenum_min is not None else [],
             #upper_bound=[("wav", load_wavenum_max)]
             #if load_wavenum_max is not None else [],
-            output=output,
-        )
+            output=output)
 
         self.isoid = df.iso
         self.uniqiso = np.unique(df.iso.values)
@@ -850,7 +855,48 @@ class MdbHitran(HITRANDatabaseManager):
             print("DataFrame (self.df) available.")
             self.df = df
 
-    
+    def instances_from_dataframes(self, df_load_mask):
+        """generate instances from (usually masked) data farame
+
+        Args:
+            df_load_mask (DataFrame): (masked) data frame
+
+        Raises:
+            ValueError: _description_
+        """
+        if isinstance(df_load_mask, vaex.dataframe.DataFrameLocal):
+            self.nu_lines = df_load_mask.wav.values
+            self.line_strength_ref = df_load_mask.int.values
+            self.delta_air = df_load_mask.Pshft.values
+            self.A = df_load_mask.A.values
+            self.n_air = df_load_mask.Tdpair.values
+            self.gamma_air = df_load_mask.airbrd.values
+            self.gamma_self = df_load_mask.selbrd.values
+            self.elower = df_load_mask.El.values
+            self.gpp = df_load_mask.gp.values
+            #isotope
+            self.isoid = df_load_mask.iso.values
+            self.uniqiso = np.unique(self.isoid)
+
+            if str('n_h2') in df_load_mask:
+                self.n_h2 = df_load_mask.n_h2.values
+                self.gamma_h2 = df_load_mask.gamma_h2.values
+
+            if str('n_he') in df_load_mask:
+                self.n_he = df_load_mask.n_he.values
+                self.gamma_he = df_load_mask.gamma_he.values
+
+            if str('n_co2') in df_load_mask:
+                self.n_co2 = df_load_mask.n_co2.values
+                self.gamma_co2 = df_load_mask.gamma_co2.values
+
+            if str('n_h2o') in df_load_mask:
+                self.n_h2o = df_load_mask.n_h2o.values
+                self.gamma_h2o = df_load_mask.gamma_h2o.values
+
+        else:
+            raise ValueError("Use vaex dataframe as input.")
+
     def generate_jnp_arrays(self):
         """(re)generate jnp.arrays.
         
@@ -870,6 +916,21 @@ class MdbHitran(HITRANDatabaseManager):
         self.elower = jnp.array(self.elower)
         self.gpp = jnp.array(self.gpp)
 
+        if str('n_h2') in self.df_load_mask:
+            self.n_h2 = jnp.array(self.n_h2)
+            self.gamma_h2 = jnp.array(self.gamma_h2)
+
+        if str('n_he') in self.df_load_mask:
+            self.n_he = jnp.array(self.n_he)
+            self.gamma_he = jnp.array(self.gamma_he)
+
+        if str('n_co2') in self.df_load_mask:
+            self.n_co2 = jnp.array(self.n_co2)
+            self.gamma_co2 = jnp.array(self.gamma_co2)
+
+        if str('n_h2o') in self.df_load_mask:
+            self.n_h2o = jnp.array(self.n_h2o)
+            self.gamma_h2o = jnp.array(self.gamma_h2o)
 
 
 def _convert_proper_isotope(isotope):
