@@ -1,7 +1,7 @@
 ExoMol, HITEMP, HITRAN
 --------------------------------------
 
-*April 9th (2023) Hajime Kawahara*
+*April 9th (2023) Hajime Kawahara, Yui Kawashima*
 
 Since version 1.2, the standard molecular database I/O for ExoMol, HITEMP, and HITRAN was shared with the radis team. 
 We moved the I/O for these database to `exojax.spec.api <../exojax/exojax.spec.html#module-exojax.spec.api>`_.
@@ -20,12 +20,13 @@ How to load ExoMol CO database
 	>>> from exojax.spec.api import MdbExomol
 	>>> mdb = MdbExomol(".database/CO/12C-16O/Li2015", nurange=[4200.0, 4300.0])
 
-We can check which line infomation is included in mdb by 
+We can check the attribute_names in mdb by 
 
 .. code:: ipython
-
-	>>> mdb.__slots__
-	['Sij0', 'logsij0', 'nu_lines', 'A', 'elower', 'eupper', 'gupper', 'jlower', 'jupper']
+    
+    >>> attribute_names = [attr_name for attr_name, attr_value in mdb.__dict__.items() if not callable(attr_value) and not attr_name.startswith("__")]
+    >>> print(attribute_names)
+    ['dbtype', 'path', 'exact_molecule_name', 'database', 'bkgdatm', 'Tref', 'gpu_transfer', 'Ttyp', 'broadf', 'simple_molecule_name', 'molmass', 'skip_optional_data', 'activation', 'name', 'molecule', 'local_databases', 'extra_params', 'downloadable', 'format', 'engine', 'tempdir', 'ds', 'verbose', 'parallel', 'nJobs', 'batch_size', 'minimum_nfiles', 'crit', 'margin', 'nurange', 'wmin', 'wmax', 'states_file', 'pf_file', 'def_file', 'broad_file', 'isotope_fullname', 'n_Texp_def', 'alpha_ref_def', 'gQT', 'T_gQT', 'QTref', 'trans_file', 'num_tag', 'elower_max', 'QTtyp', 'df_load_mask', 'A', 'nu_lines', 'elower', 'jlower', 'jupper', 'line_strength_ref', 'gpp', 'alpha_ref', 'n_Texp', 'gamma_natural', 'dev_nu_lines', 'logsij0']
 
 
 Some opacity calculator (currently only PreMODIT) does not use some arrays on a GPU device. 
@@ -368,3 +369,37 @@ Then, we can use mdb as usual. This is a plot of the activated lines and all of 
 
 
 See also " :doc:`../tutorials/Fortrat` "
+
+
+Masking Attributes
+========================
+
+We can mask attributes even after activation. In the following example, we load "mdb" with activation (by default).
+
+.. code:: ipython
+	
+    >>> import numpy as np
+    >>> from exojax.utils.grids import wavenumber_grid
+    >>> from exojax.spec import api
+    >>> nus,wav,res=wavenumber_grid(6910,6990,100000,unit='cm-1',xsmode="premodit")
+    xsmode =  premodit
+    xsmode assumes ESLOG in wavenumber space: mode=premodit
+    >>> mdb = api.MdbExomol(".database/H2O/1H2-16O/POKAZATEL",nus)
+    HITRAN exact name= H2(16O)
+    Background atmosphere:  H2
+    Reading .database/H2O/1H2-16O/POKAZATEL/1H2-16O__POKAZATEL__06900-07000.trans.bz2
+    .broad is used.
+    Broadening code level= a1
+    default broadening parameters are used for  12  J lower states in  63  states
+    >>> print(len(mdb.elower), np.min(mdb.elower))
+    26011826 23.794352
+
+Then, we define a mask and apply it to mdb using "apply_mask_mdb" method.
+
+.. code:: ipython
+	
+    >>> mask = mdb.elower > 100.
+    >>> mdb.apply_mask_mdb(mask)
+    >>> print(len(mdb.elower), np.min(mdb.elower))
+    26011817 134.90164
+

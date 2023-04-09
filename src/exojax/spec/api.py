@@ -53,18 +53,6 @@ class MdbExomol(CapiMdbExomol):
         n_Texp_def: default temperature exponent in .def file, used for jlower not given in .broad
         alpha_ref_def: default alpha_ref (gamma0) in .def file, used for jlower not given in .broad
     """
-    __slots__ = [
-        "line_strength_ref",
-        "logsij0",
-        "nu_lines",
-        "A",
-        "elower",
-        "eupper",
-        "gupper",
-        "jlower",
-        "jupper",
-    ]
-
     def __init__(self,
                  path,
                  nurange=[-np.inf, np.inf],
@@ -133,7 +121,7 @@ class MdbExomol(CapiMdbExomol):
         # data frame instance:
         df = self.load(
             local_files,
-            columns=[k for k in self.__slots__ if k not in ["logsij0"]],
+            columns=[k for k in self.__dict__ if k not in ["logsij0"]],
             lower_bound=([("Sij0", 0.0)]),
             output="vaex")
 
@@ -216,7 +204,7 @@ class MdbExomol(CapiMdbExomol):
         Raises:
             ValueError: _description_
         """
-        
+
         if len(df_masked) == 0:
             raise ValueError("No line found in ", self.nurange, "cm-1")
 
@@ -364,6 +352,95 @@ class MdbCommonHitempHitran():
         self.activation = activation
         self.load_wavenum_min, self.load_wavenum_max = self.set_wavenum(
             nurange)
+
+        super().__init__(
+            molecule=self.simple_molecule_name,
+            name="HITEMP-{molecule}",
+            local_databases=self.path.parent,
+            engine="default",
+            verbose=True,
+            chunksize=100000,
+            parallel=True,
+        )
+
+        if parfile is not None:
+            from radis.api.hitranapi import hit2df
+            df = hit2df(parfile, engine="vaex", cache="regen")
+            if isotope is None:
+                mask = None
+            elif isotope == 0:
+                mask = None
+            elif isotope > 0:
+                mask = (df["iso"] == isotope)
+        else:
+            # Get list of all expected local files for this database:
+            local_files, urlnames = self.get_filenames()
+
+            # Get missing files
+            download_files = self.get_missing_files(local_files)
+            download_files = self.keep_only_relevant(download_files,
+                                                     self.load_wavenum_min,
+                                                     self.load_wavenum_max)
+            # do not re-download files if they exist in another format :
+
+            converted = []
+            for f in download_files:
+                if exists(f.replace(".hdf5", ".h5")):
+                    update_pytables_to_vaex(f.replace(".hdf5", ".h5"))
+                    converted.append(f)
+                download_files = [
+                    f for f in download_files if f not in converted
+                ]
+            # do not re-download remaining files that exist. Let user decide what to do.
+            # (download & re-parsing is a long solution!)
+            download_files = [
+                f for f in download_files
+                if not exists(f.replace(".hdf5", ".h5"))
+            ]
+
+            # Download files
+            if len(download_files) > 0:
+                if urlnames is None:
+                    urlnames = self.fetch_urlnames()
+                filesmap = dict(zip(local_files, urlnames))
+                download_urls = [filesmap[k] for k in download_files]
+                self.download_and_parse(download_urls, download_files)
+
+            # Register
+            # if not self.is_registered():
+            #    self.register()
+
+            clean_cache_files = True
+            if len(download_files) > 0 and clean_cache_files:
+                self.clean_download_files()
+
+            # Load and return
+            files_loaded = self.keep_only_relevant(local_files,
+                                                   self.load_wavenum_min,
+                                                   self.load_wavenum_max)
+            columns = None,
+            output = "vaex"
+
+            isotope_dfform = _convert_proper_isotope(self.isotope)
+            df = self.load(
+                files_loaded,  # filter other files,
+                columns=columns,
+                within=[("iso", isotope_dfform)]
+                if isotope_dfform is not None else [],
+                output=output,
+            )
+            mask = None
+
+        self.isoid = df.iso
+        self.uniqiso = np.unique(df.iso.values)
+        QTref, QTtyp = self.QT_for_select_line(Ttyp)
+        self.df_load_mask = self.compute_load_mask(df, QTtyp / QTref)
+
+        if self.activation:
+            self.activate(df, mask)
+        if inherit_dataframe or not self.activation:
+            print("DataFrame (self.df) available.")
+            self.df = df
 
     def QT_for_select_line(self, Ttyp):
         if self.isotope is None or self.isotope == 0:
@@ -562,6 +639,7 @@ class MdbCommonHitempHitran():
         if len(df_load_mask) == 0:
             raise ValueError("No line found in ", self.nurange, "cm-1")
 
+
 class MdbHitemp(MdbCommonHitempHitran, HITEMPDatabaseManager):
     """molecular database of HITEMP.
 
@@ -712,7 +790,7 @@ class MdbHitemp(MdbCommonHitempHitran, HITEMPDatabaseManager):
             df_load_mask (DataFrame): (masked) data frame
 
         """
-        self.check_line_existence_in_nurange(df_masked)        
+        self.check_line_existence_in_nurange(df_masked)
         self.nu_lines = df_masked.wav.values
         self.line_strength_ref = df_masked.int.values
         self.delta_air = df_masked.Pshft.values
@@ -809,17 +887,14 @@ class MdbHitran(MdbCommonHitempHitran, HITRANDatabaseManager):
         else:
             extra_params = None
 
-
-        HITRANDatabaseManager.__init__(
-            self,
-            molecule=self.simple_molecule_name,
-            name="HITRAN-{molecule}",
-            local_databases=self.path.parent,
-            engine="default",
-            verbose=True,
-            parallel=True,
-            extra_params=extra_params
-        )
+        HITRANDatabaseManager.__init__(self,
+                                       molecule=self.simple_molecule_name,
+                                       name="HITRAN-{molecule}",
+                                       local_databases=self.path.parent,
+                                       engine="default",
+                                       verbose=True,
+                                       parallel=True,
+                                       extra_params=extra_params)
 
         # Get list of all expected local files for this database:
         local_file = self.get_filenames()
@@ -838,7 +913,6 @@ class MdbHitran(MdbCommonHitempHitran, HITRANDatabaseManager):
         columns = None
         output = "vaex"
 
-        
         isotope_dfform = _convert_proper_isotope(self.isotope)
         df = self.load(
             local_file,
@@ -899,14 +973,6 @@ class MdbHitran(MdbCommonHitempHitran, HITRANDatabaseManager):
                 self.n_co2 = df_load_mask.n_co2.values
                 self.gamma_co2 = df_load_mask.gamma_co2.values
 
-            if str('n_h2o') in df_load_mask:
-                self.n_h2o = df_load_mask.n_h2o.values
-                self.gamma_h2o = df_load_mask.gamma_h2o.values
-
-        else:
-            raise ValueError("Use vaex dataframe as input.")
-
-    
     def generate_jnp_arrays(self):
         """(re)generate jnp.arrays.
         
