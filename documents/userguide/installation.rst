@@ -3,13 +3,12 @@ Installation and References
 
 *last update: Nov 21st (2022) Hajime Kawahara*
 
-At a minimum, you can start to use exojax by
+At the very least, you can start using exojax through `pypi <https://pypi.org/project/exojax/>`_.
 
 .. code:: sh
 	  
 	  pip install exojax
 
-via `pypi <https://pypi.org/project/exojax/>`_.
 
 Alternatively, clone the code from `github page <https://github.com/HajimeKawahara/exojax>`_ and run
 
@@ -20,9 +19,9 @@ Alternatively, clone the code from `github page <https://github.com/HajimeKawaha
 Installation w/ GPU support
 ==============================
 
-However, to leverage the power of JAX, numpyro, you need to prepare a GPU environment. For this purpose, jaxlib and numpyro must be linked.
+However, to take advantage of the power of JAX, numpyro, you need to prepare a GPU environment. For this, jaxlib and numpyro need to be linked.
 
-You should check cuda version of your environment as
+You should check the cuda version of your environment as
 
 .. code:: sh
 
@@ -65,9 +64,9 @@ Related Projects
   
 - `RADIS <https://github.com/radis/radis>`_
 
- | ExoJAX gets a lot of inspiration from a fast line-by-line code for high resolution infrared molecular spectra `RADIS <https://github.com/radis/radis>`_, including DIT, the use of Vaex, and so on. 
- | Since version 1.2, we have used a common api of molecular database I/O in radis.
+ | ExoJAX draws a lot of inspiration from a fast line-by-line code for high-resolution infrared molecular spectra `RADIS <https://github.com/radis/radis>`_, including DIT, the use of Vaex, and so on. 
+ | Since version 1.2 we have been using a common molecular database I/O API in Radis.
 
 - `REACH <http://secondearths.sakura.ne.jp/reach/>`_
   
- | ExoJAX was originally developed to interpret the data obtained a new capability of high-dispersion coronagraphy at Subaru telescope, the `REACH <http://secondearths.sakura.ne.jp/reach/>`_ project (SCExAO+IRD). REACH is supported by `RESCEU <http://www.resceu.s.u-tokyo.ac.jp/top.php>`_, ABC, and `JSPS KAKENHI JP20H00170 <https://kaken.nii.ac.jp/en/grant/KAKENHI-PROJECT-20H00170/>`_ (Kawahara). See also `Lozi et al. (2018) <https://ui.adsabs.harvard.edu/abs/2018SPIE10703E..59L/abstract>`_ for SCExAO, `Kotani et al. (2018) <https://ui.adsabs.harvard.edu/abs/2018SPIE10702E..11K/abstract>`_  for IRD, `Jovanovic et al. (2017) <https://ui.adsabs.harvard.edu/abs/2017arXiv171207762J/abstract>`_ for Post-Coronagraphic Injection and `Kawahara et al. (2014) <https://ui.adsabs.harvard.edu/abs/2014ApJS..212...27K/abstract>`_ for High Dispersion Coronagraphy.
+ | ExoJAX was originally developed to interpret data from a new high-dispersion coronagraphic capability at the Subaru telescope, the `REACH <http://secondearths.sakura.ne.jp/reach/>`_ project (SCExAO+IRD). REACH is supported by `RESCEU <http://www.resceu.s.u-tokyo.ac.jp/top.php>`_, ABC and `JSPS KAKENHI JP20H00170 <https://kaken.nii.ac.jp/en/grant/KAKENHI-PROJECT-20H00170/>`_ (Kawahara). See also `Lozi et al. (2018) <https://ui.adsabs.harvard.edu/abs/2018SPIE10703E..59L/abstract>`_ for SCExAO, `Kotani et al. (2018) <https://ui.adsabs.harvard.edu/abs/2018SPIE10702E..11K/abstract>`_ for IRD, `Jovanovic et al. (2017) <https://ui.adsabs.harvard.edu/abs/2017arXiv171207762J/abstract>`_ for post-coronagraphic injection, and `Kawahara et al. (2014) <https://ui.adsabs.harvard.edu/abs/2014ApJS..212...27K/abstract>`_ for high dispersion coronagraphy.

@@ -135,7 +135,7 @@ if __name__ == "__main__":
     plt.plot(nlh, xlh)
     plt.plot(nme, xme, ls="dashed")
     plt.plot(nmh, xmh, ls="dashed")
-    
+        
     fig.add_subplot(212)
     plt.plot(nme, 1.0 - xme / xle, label="diff exomol")
     plt.plot(nmh, 1.0 - xmh / xlh, label="diff hitemp")

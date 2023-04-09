@@ -13,8 +13,8 @@ def test_optelower():
     Pmin = 0.1  #bar
     mdb = mock_mdbExomol(crit=1.e-37)
     Eopt = optelower(mdb, nu_grid, Tmax, Pmin)
-    print("optimal elower_max=",Eopt)
-    assert Eopt == pytest.approx(11559.3717)
+    print("optimal elower_max=",Eopt,"cm-1")
+    assert Eopt == pytest.approx(11615.5075)
 
 
 if __name__ == "__main__":

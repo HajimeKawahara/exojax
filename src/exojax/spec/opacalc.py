@@ -14,6 +14,7 @@ from exojax.utils.instfunc import nx_from_resolution_eslog
 from exojax.utils.grids import nu2wav
 from exojax.utils.instfunc import resolution_eslog
 from exojax.utils.constants import Patm
+from exojax.utils.constants import Tref_original
 import jax.numpy as jnp
 from jax import jit
 from jax import vmap
@@ -87,21 +88,30 @@ class OpaPremodit(OpaCalc):
         print("OpaPremodit: params automatically set.")
         self.dE, self.Tref, self.Twt = optimal_params(Tl, Tu, self.diffmode)
         self.Tmax = Tu
+        self.Tmin = Tl
         self.apply_params()
 
-    def manual_setting(self, dE, Tref, Twt):
+    def manual_setting(self, dE, Tref, Twt, Tmax=None, Tmin=None):
         """setting PreMODIT parameters by manual
 
         Args:
             dE (float): E lower grid interval (cm-1)
             Tref (float): reference temperature (K)
             Twt (float): Temperature for weight (K)
+            Tmax (float/None): max temperature (K) for braodening grid
+            Tmin (float/None): min temperature (K) for braodening grid
         """
         print("OpaPremodit: params manually set.")
         self.Twt = Twt
         self.Tref = Tref
         self.dE = dE
-        self.Tmax = np.max([Twt, Tref])
+        if Tmax is None:
+            Tmax = np.max([Twt, Tref])
+        if Tmin is None:
+            Tmin = np.min([Twt, Tref])
+
+        self.Tmax = Tmax
+        self.Tmin = Tmin
         self.apply_params()
 
     def set_nu_grid(self, x0, x1, unit, resolution=700000, Nx=None):
@@ -112,18 +122,41 @@ class OpaPremodit(OpaCalc):
         self.nu_grid, self.wav, self.resolution = wavenumber_grid(
             x0, x1, Nx, unit=unit, xsmode="premodit")
 
+    def set_Tref_broadening_to_midpoint(self):
+        """Set self.Tref_broadening using log midpoint of Tmax and Tmin
+        """
+        from exojax.spec.premodit import reference_temperature_broadening_at_midpoint
+        self.Tref_broadening = reference_temperature_broadening_at_midpoint(
+            self.Tmin, self.Tmax)
+        print("Tref_broadening is set to ",self.Tref_broadening, "K")
+
     def set_gamma_and_n_Texp(self, mdb):
+        """convert gamma_ref to the regular formalization
+
+        Notes:
+            gamma (T) = (gamma at Tref_original) * (Tref_original/Tref_broadening)**n 
+            * (T/Tref_broadening)**-n * (P/1bar) 
+
+        Args:
+            mdb (_type_): mdb instance
+
+        """
         if mdb.dbtype == "hitran":
             print("gamma_air and n_air are used. gamma_ref = gamma_air/Patm")
-            self.gamma_ref = mdb.gamma_air / Patm
             self.n_Texp = mdb.n_air
+            reference_factor = (Tref_original /
+                                self.Tref_broadening)**(self.n_Texp)
+            self.gamma_ref = mdb.gamma_air * reference_factor / Patm
         elif mdb.dbtype == "exomol":
-            self.gamma_ref = mdb.alpha_ref
             self.n_Texp = mdb.n_Texp
+            reference_factor = (Tref_original /
+                                self.Tref_broadening)**(self.n_Texp)
+            self.gamma_ref = mdb.alpha_ref * reference_factor
 
     def apply_params(self):
         self.mdb.change_reference_temperature(self.Tref)
         self.dbtype = self.mdb.dbtype
+        self.set_Tref_broadening_to_midpoint()
         self.set_gamma_and_n_Texp(self.mdb)
         self.opainfo = initspec.init_premodit(
             self.mdb.nu_lines,
@@ -134,7 +167,9 @@ class OpaPremodit(OpaCalc):
             self.mdb.line_strength_ref,
             self.Twt,
             Tref=self.Tref,
+            Tref_broadening=self.Tref_broadening,
             Tmax=self.Tmax,
+            Tmin=self.Tmin,
             dE=self.dE,
             dit_grid_resolution=self.dit_grid_resolution,
             diffmode=self.diffmode,
@@ -160,17 +195,19 @@ class OpaPremodit(OpaCalc):
             return xsvector_zeroth(T, P, nsigmaD, lbd_coeff, self.Tref, R,
                                    pmarray, self.nu_grid, elower_grid,
                                    multi_index_uniqgrid, ngamma_ref_grid,
-                                   n_Texp_grid, qt)
+                                   n_Texp_grid, qt, self.Tref_broadening)
         elif self.diffmode == 1:
             return xsvector_first(T, P, nsigmaD, lbd_coeff, self.Tref,
                                   self.Twt, R, pmarray, self.nu_grid,
                                   elower_grid, multi_index_uniqgrid,
-                                  ngamma_ref_grid, n_Texp_grid, qt)
+                                  ngamma_ref_grid, n_Texp_grid, qt,
+                                  self.Tref_broadening)
         elif self.diffmode == 2:
             return xsvector_second(T, P, nsigmaD, lbd_coeff, self.Tref,
                                    self.Twt, R, pmarray, self.nu_grid,
                                    elower_grid, multi_index_uniqgrid,
-                                   ngamma_ref_grid, n_Texp_grid, qt)
+                                   ngamma_ref_grid, n_Texp_grid, qt,
+                                   self.Tref_broadening)
 
     def xsmatrix(self, Tarr, Parr):
         """cross section matrix
@@ -201,19 +238,22 @@ class OpaPremodit(OpaCalc):
             return xsmatrix_zeroth(Tarr, Parr, self.Tref, R, pmarray,
                                    lbd_coeff, self.nu_grid, ngamma_ref_grid,
                                    n_Texp_grid, multi_index_uniqgrid,
-                                   elower_grid, self.mdb.molmass, qtarr)
+                                   elower_grid, self.mdb.molmass, qtarr,
+                                   self.Tref_broadening)
 
         elif self.diffmode == 1:
             return xsmatrix_first(Tarr, Parr, self.Tref, self.Twt, R, pmarray,
                                   lbd_coeff, self.nu_grid, ngamma_ref_grid,
                                   n_Texp_grid, multi_index_uniqgrid,
-                                  elower_grid, self.mdb.molmass, qtarr)
+                                  elower_grid, self.mdb.molmass, qtarr,
+                                  self.Tref_broadening)
 
         elif self.diffmode == 2:
             return xsmatrix_second(Tarr, Parr, self.Tref, self.Twt, R, pmarray,
                                    lbd_coeff, self.nu_grid, ngamma_ref_grid,
                                    n_Texp_grid, multi_index_uniqgrid,
-                                   elower_grid, self.mdb.molmass, qtarr)
+                                   elower_grid, self.mdb.molmass, qtarr,
+                                   self.Tref_broadening)
 
         else:
             raise ValueError("diffmode should be 0, 1, 2.")
@@ -493,6 +533,7 @@ class OpaDirect(OpaCalc):
             gammaLM = gammaLMP + gammaLMN[None, :]
             SijM = vmaplinestrengh(Tarr, self.mdb.logsij0, self.mdb.nu_lines,
                                    self.mdb.elower, qt)
-        sigmaDM = jit(vmap(doppler_sigma, (None, 0, None)))(self.mdb.nu_lines,
-                                                            Tarr, self.mdb.molmass)
+        sigmaDM = jit(vmap(doppler_sigma,
+                           (None, 0, None)))(self.mdb.nu_lines, Tarr,
+                                             self.mdb.molmass)
         return xsmatrix_lpf(numatrix, sigmaDM, gammaLM, SijM)

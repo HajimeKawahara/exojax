@@ -87,6 +87,7 @@ def init_modit(nu_lines, nu_grid, warning=False):
     return jnp.array(cont), jnp.array(index), spectral_resolution, jnp.array(
         pmarray)
 
+
 def warn_out_of_nu_grid(nu_lines, nu_grid):
     """warning for out-of-nu grid
 
@@ -99,13 +100,13 @@ def warn_out_of_nu_grid(nu_lines, nu_grid):
         nu_grid (_type_): wavenumber grid
     """
     if nu_lines[0] < nu_grid[0] or nu_lines[-1] > nu_grid[-1]:
-        warnings.warn("There are lines whose center is out of nu_grid", UserWarning)
+        warnings.warn("There are lines whose center is out of nu_grid",
+                      UserWarning)
         print("This may artifact at the edges. See Issue #341.")
         print("https://github.com/HajimeKawahara/exojax/issues/341")
         print("line center [cm-1], nu_grid [cm-1]")
-        print("left:",nu_lines[0], nu_grid[0])
-        print("right:",nu_lines[-1],nu_grid[-1])
-
+        print("left:", nu_lines[0], nu_grid[0])
+        print("right:", nu_lines[-1], nu_grid[-1])
 
 
 def init_premodit(nu_lines,
@@ -116,7 +117,9 @@ def init_premodit(nu_lines,
                   line_strength_ref,
                   Twt,
                   Tref,
+                  Tref_broadening,
                   Tmax=None,
+                  Tmin=None,
                   dE=160.0,
                   dit_grid_resolution=0.2,
                   diffmode=0,
@@ -131,8 +134,10 @@ def init_premodit(nu_lines,
         n_Texp: temperature exponent (n_Texp for ExoMol, n_air for HITRAN/HITEMP)
         line_strength_ref: line strength at reference Tref
         Twt: temperature for weight in Kelvin
-        Tref: reference temperature
+        Tref: reference temperature of premodit grid
+        Tref_broadening: reference temperature for broadening.
         Tmax: max temperature to construct n_Texp grid, if None, max(Twt and Tref) is used 
+        Tmin: min temperature to construct n_Texp grid, if None, max(Twt and Tref) is used 
         dE: Elower grid interval
         dit_grid_resolution: DIT grid resolution 
         diffmode (int): i-th Taylor expansion is used for the weight, default is 1.
@@ -157,28 +162,36 @@ def init_premodit(nu_lines,
 
     if Tmax is None:
         Tmax = np.max([Twt, Tref])
-
+    if Tmin is None:
+        Tmin = np.min([Twt, Tref])
+    
     R = resolution_eslog(nu_grid)
     ngamma_ref = gamma_ref / nu_lines * R
     elower_grid = make_elower_grid(elower, dE)
     ngamma_ref_grid, n_Texp_grid = make_broadpar_grid(
-        ngamma_ref, n_Texp, Tmax, dit_grid_resolution=dit_grid_resolution)
+        ngamma_ref,
+        n_Texp,
+        Tmax,
+        Tmin,
+        Tref_broadening,
+        dit_grid_resolution=dit_grid_resolution)
+    print("# of reference width grid : ",len(ngamma_ref_grid))
+    print("# of temperature exponent grid :",len(n_Texp_grid))
 
-    wavmask = (nu_lines >= nu_grid[0]) * (nu_lines <= nu_grid[-1]) #Issue 341
-    
-    lbd_coeff, multi_index_uniqgrid = generate_lbd(
-        line_strength_ref[wavmask],
-        nu_lines[wavmask],
-        nu_grid,
-        ngamma_ref[wavmask],
-        ngamma_ref_grid,
-        n_Texp[wavmask],
-        n_Texp_grid,
-        elower[wavmask],
-        elower_grid,
-        Twt,
-        Tref=Tref,
-        diffmode=diffmode)
+    wavmask = (nu_lines >= nu_grid[0]) * (nu_lines <= nu_grid[-1])  #Issue 341
+
+    lbd_coeff, multi_index_uniqgrid = generate_lbd(line_strength_ref[wavmask],
+                                                   nu_lines[wavmask],
+                                                   nu_grid,
+                                                   ngamma_ref[wavmask],
+                                                   ngamma_ref_grid,
+                                                   n_Texp[wavmask],
+                                                   n_Texp_grid,
+                                                   elower[wavmask],
+                                                   elower_grid,
+                                                   Twt,
+                                                   Tref=Tref,
+                                                   diffmode=diffmode)
     pmarray = np.ones(len(nu_grid) + 1)
     pmarray[1::2] = (pmarray[1::2] * -1.0)
     pmarray = jnp.array(pmarray)

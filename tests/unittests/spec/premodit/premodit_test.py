@@ -14,11 +14,13 @@ from exojax.spec.premodit import broadpar_getix
 from exojax.spec.premodit import parallel_merge_grids
 from exojax.spec.premodit import unbiased_ngamma_grid
 from exojax.test.emulate_broadpar import mock_broadpar_exomol
+from exojax.test.emulate_broadpar import mock_broadpar
 from exojax.spec.premodit import logf_bias, g_bias
 from exojax.utils.constants import Tref_original
 from exojax.spec.premodit import unbiased_lsd_zeroth
 from exojax.spec.premodit import unbiased_lsd_first
 from exojax.spec.premodit import unbiased_lsd_second
+from exojax.spec.premodit import reference_temperature_broadening_at_midpoint
 
 
 def test_compute_dElower():
@@ -44,10 +46,14 @@ def test_parallel_merge_grids():
 def test_make_broadpar_grid():
     ngamma_ref, n_Texp = mock_broadpar_exomol()
     Ttyp = 3000.0
-    ngamma_ref_grid, n_Texp_grid = make_broadpar_grid(ngamma_ref,
-                                                      n_Texp,
-                                                      Ttyp,
-                                                      dit_grid_resolution=0.2)
+    ngamma_ref_grid, n_Texp_grid = make_broadpar_grid(
+        ngamma_ref,
+        n_Texp,
+        Tmax=Ttyp,
+        Tmin=Tref_original,
+        Tref_broadening=Tref_original,
+        twod_factor=1.0,
+        dit_grid_resolution=0.2)
     assert np.all(
         ngamma_ref_grid == pytest.approx([0.1, 0.11447142, 0.13103707, 0.15]))
     assert np.all(n_Texp_grid == pytest.approx([0.4, 0.45, 0.5]))
@@ -56,10 +62,14 @@ def test_make_broadpar_grid():
 def test_broadpar_getix():
     ngamma_ref, n_Texp = mock_broadpar_exomol()
     Ttyp = 3000.0
-    ngamma_ref_grid, n_Texp_grid = make_broadpar_grid(ngamma_ref,
-                                                      n_Texp,
-                                                      Ttyp,
-                                                      dit_grid_resolution=0.2)
+    ngamma_ref_grid, n_Texp_grid = make_broadpar_grid(
+        ngamma_ref,
+        n_Texp,
+        Tmax=Ttyp,
+        Tmin=Tref_original,
+        Tref_broadening=Tref_original,
+        twod_factor=1.0,
+        dit_grid_resolution=0.2)
     multi_index_lines, multi_cont_lines, uidx_lines, neighbor_uidx, multi_index_uniqgrid, Ng_broadpar = broadpar_getix(
         ngamma_ref, ngamma_ref_grid, n_Texp, n_Texp_grid)
     iline_interest = len(n_Texp) - 1
@@ -83,14 +93,20 @@ def test_unbias_ngamma_grid():
     Ttyp = 3000.0
     Ttest = 2000.0
     Ptest = 10.0
-    ngamma_ref_grid, n_Texp_grid = make_broadpar_grid(ngamma_ref,
-                                                      n_Texp,
-                                                      Ttyp,
-                                                      dit_grid_resolution=0.2)
+    Tref_broadening = Tref_original
+    ngamma_ref_grid, n_Texp_grid = make_broadpar_grid(
+        ngamma_ref,
+        n_Texp,
+        Tmax=Ttyp,
+        Tmin=Tref_original,
+        Tref_broadening=Tref_broadening,
+        twod_factor=1.0,
+        dit_grid_resolution=0.2)
     multi_index_lines, multi_cont_lines, uidx_lines, neighbor_uidx, multi_index_uniqgrid, Ng_broadpar = broadpar_getix(
         ngamma_ref, ngamma_ref_grid, n_Texp, n_Texp_grid)
     ngamma_grid = unbiased_ngamma_grid(Ttest, Ptest, ngamma_ref_grid,
-                                       n_Texp_grid, multi_index_uniqgrid)
+                                       n_Texp_grid, multi_index_uniqgrid,
+                                       Tref_broadening)
     ref = [
         0.46569834, 0.42327028, 0.53309152, 0.55464097, 0.48452351, 0.38470768,
         0.44038036, 0.61023745, 0.63490541, 0.50410967, 0.57706152
@@ -151,7 +167,42 @@ def test_unbiased_lsd():
     #print(np.sum(lsd))
     assert np.sum(lsd) == pytest.approx(ref[2])
 
+@pytest.mark.parametrize("db", ["exomol","hitemp"])
+def test_broadpar_grid_as_a_function_of_Tref_broadening(db):
+    """ comparison of non-ptimized and optimized broadening parameter grid in PreMODIT #366 
+    """
+    ngamma_ref, n_Texp = mock_broadpar(db)
+    Tmax = 3000.0
+    Tmin = 400.0
+
+    # use original gamma and n
+    ngamma_ref_grid_1, n_Texp_grid_1 = make_broadpar_grid(
+        ngamma_ref,
+        n_Texp,
+        Tmax=Tmax,
+        Tmin=Tmin,
+        Tref_broadening=Tref_original,
+        dit_grid_resolution=0.1)
+
+    # rescale gamma assuming Tref_broadning at midpoint (optimized)
+    ngamma_ref_grid_2, n_Texp_grid_2 = make_broadpar_grid(
+        ngamma_ref,
+        n_Texp,
+        Tmax=Tmax,
+        Tmin=Tref_original,
+        Tref_broadening=reference_temperature_broadening_at_midpoint(
+            Tmax, Tmin),
+        dit_grid_resolution=0.1)
+    print("using midpoint reduces the number of n_Texp_grid from ",
+          len(n_Texp_grid_1), "to", len(n_Texp_grid_2))
+
+    assert len(n_Texp_grid_2) < len(n_Texp_grid_1)
+
 
 if __name__ == "__main__":
-    test_unbiased_lsd()
+    test_broadpar_grid_as_a_function_of_Tref_broadening("exomol")
+    test_broadpar_grid_as_a_function_of_Tref_broadening("hitemp")
+    
+    #test_unbiased_lsd()
     #test_make_elower_grid()
+    #test_make_broadpar_grid()
