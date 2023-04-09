@@ -34,4 +34,4 @@ You can check the device memory usage by inserting the following at any point.
 Reducing Device Memory for PreMODIT 
 ========================================
 
-Devide the wavenumber range into multiple segments.
+Divide the wavenumber range into multiple segments.
