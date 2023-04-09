@@ -1,7 +1,7 @@
 ExoMol, HITEMP, HITRAN
 --------------------------------------
 
-*November 4th (2022) Hajime Kawahara*
+*April 9th (2023) Hajime Kawahara*
 
 Since version 1.2, the standard molecular database I/O for ExoMol, HITEMP, and HITRAN was shared with the radis team. 
 We moved the I/O for these database to `exojax.spec.api <../exojax/exojax.spec.html#module-exojax.spec.api>`_.
@@ -41,33 +41,33 @@ Switch gpu_transfer off in this case. Then, we can save the use of the device me
 
 This table is a short summary of the line information. "on" means gpu_transfer = True, off corresponds to False. 
 
-+-----------------------+-------------+----+------+
-|**quantity**           |**instance** |unit|off/on|
-+-----------------------+-------------+----+------+
-|line center            |nu_lines     |cm-1|np/np |
-+-----------------------+-------------+----+------+
-|lower state energy     |elower       |cm-1|np/jnp|
-+-----------------------+-------------+----+------+
-|Einstein coefficient   |A            |s-1 |np/jnp|
-+-----------------------+-------------+----+------+
-|reference line strength|Sij0         |cm  |np/jnp|
-+-----------------------+-------------+----+------+
-|log_e Sij0             |logsij0      |    |-/jnp |
-+-----------------------+-------------+----+------+
-|statistical weight     |gupper       |    |np/jnp|
-+-----------------------+-------------+----+------+
-|J_lower                |jlower       |    |np/jnp|
-+-----------------------+-------------+----+------+
-|J_upper                |jupper       |    |np/jnp|
-+-----------------------+-------------+----+------+
-|temperature exponent   |n_Tref       |    |np/jnp|
-+-----------------------+-------------+----+------+
-|alpha_ref (gamma0)     |alpha_ref    |    |np/jnp|
-+-----------------------+-------------+----+------+
-|natural broadening     |gamma_natural|cm-1|np/jnp|
-+-----------------------+-------------+----+------+
-|line center            |dev_nu_lines |cm-1|-/jnp |
-+-----------------------+-------------+----+------+
++-----------------------+------------------+----+------+
+|**quantity**           |**instance**      |unit|off/on|
++-----------------------+------------------+----+------+
+|line center            |nu_lines          |cm-1|np/np |
++-----------------------+------------------+----+------+
+|lower state energy     |elower            |cm-1|np/jnp|
++-----------------------+------------------+----+------+
+|Einstein coefficient   |A                 |s-1 |np/jnp|
++-----------------------+------------------+----+------+
+|reference line strength|line_strength_ref |cm  |np/jnp|
++-----------------------+------------------+----+------+
+|log_e Sij0             |logsij0           |    |-/jnp |
++-----------------------+------------------+----+------+
+|statistical weight     |gupper            |    |np/jnp|
++-----------------------+------------------+----+------+
+|J_lower                |jlower            |    |np/jnp|
++-----------------------+------------------+----+------+
+|J_upper                |jupper            |    |np/jnp|
++-----------------------+------------------+----+------+
+|temperature exponent   |n_Tref            |    |np/jnp|
++-----------------------+------------------+----+------+
+|alpha_ref (gamma0)     |alpha_ref         |    |np/jnp|
++-----------------------+------------------+----+------+
+|natural broadening     |gamma_natural     |cm-1|np/jnp|
++-----------------------+------------------+----+------+
+|line center            |dev_nu_lines      |cm-1|-/jnp |
++-----------------------+------------------+----+------+
 
 
 HITEMP
@@ -100,31 +100,31 @@ If you have the error like,
 remove radis.json and retry it.
 
 
-+-----------------------+-------------+----+------+
-|**quantity**           |**instance** |unit|off/on|
-+-----------------------+-------------+----+------+
-|line center            |nu_lines     |cm-1|np/np |
-+-----------------------+-------------+----+------+
-|line center            |dev_nu_lines |cm-1|-/jnp |
-+-----------------------+-------------+----+------+
-|lower state energy     |elower       |cm-1|np/jnp|
-+-----------------------+-------------+----+------+
-|natural broadening     |gamma_natural|cm-1|np/jnp|
-+-----------------------+-------------+----+------+
-|air pressure broadening|gamma_air    |cm-1|np/jnp|
-+-----------------------+-------------+----+------+
-|self broadning         |gamma_self   |cm-1|np/jnp|
-+-----------------------+-------------+----+------+
-|Einstein coefficient   |A            |s-1 |np/jnp|
-+-----------------------+-------------+----+------+
-|reference line strength|Sij0         |cm  |np/jnp|
-+-----------------------+-------------+----+------+
-|log_e Sij0             |logsij0      |    |-/jnp |
-+-----------------------+-------------+----+------+
-|statistical weight     |gpp          |    |np/jnp|
-+-----------------------+-------------+----+------+
-|temperature exponent   |n_air        |    |np/jnp|
-+-----------------------+-------------+----+------+
++-----------------------+------------------+----+------+
+|**quantity**           |**instance**      |unit|off/on|
++-----------------------+------------------+----+------+
+|line center            |nu_lines          |cm-1|np/np |
++-----------------------+------------------+----+------+
+|line center            |dev_nu_lines      |cm-1|-/jnp |
++-----------------------+------------------+----+------+
+|lower state energy     |elower            |cm-1|np/jnp|
++-----------------------+------------------+----+------+
+|natural broadening     |gamma_natural     |cm-1|np/jnp|
++-----------------------+------------------+----+------+
+|air pressure broadening|gamma_air         |cm-1|np/jnp|
++-----------------------+------------------+----+------+
+|self broadning         |gamma_self        |cm-1|np/jnp|
++-----------------------+------------------+----+------+
+|Einstein coefficient   |A                 |s-1 |np/jnp|
++-----------------------+------------------+----+------+
+|reference line strength|line_strength_ref |cm  |np/jnp|
++-----------------------+------------------+----+------+
+|log_e Sij0             |logsij0           |    |-/jnp |
++-----------------------+------------------+----+------+
+|statistical weight     |gpp               |    |np/jnp|
++-----------------------+------------------+----+------+
+|temperature exponent   |n_air             |    |np/jnp|
++-----------------------+------------------+----+------+
 
 Isotope
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -210,6 +210,70 @@ The style used in ExoJAX 1 is also acceptable (not recommended):
 	
 	>>> Mdbhitran(".database/CO/05_hit12.par", nurange=[4200.0, 4300.0])
 
+Non-air broadening
+^^^^^^^^^^^^^^^^^^^^^^^^
+
+We can use non-air broadening coefficients for some molecules using ""nonair_broadening" option in MdbHitran.
+
+.. code:: ipython
+	
+	>>> nus, wav, res = wavenumber_grid(22920.0,
+                                    23100.0,
+                                    100000,
+                                    unit='AA',
+                                    xsmode="modit")
+    >>> mdb = api.MdbHitran("CO",nus, nonair_broadening=True)
+    >>> print(mdb.n_h2)
+
++-----------------------+-------------+
+| background atmosphere | attribute   |
++-----------------------+-------------+
+|hydrogen               |n_h2         |
++-----------------------+-------------+
+|helium                 |n_he         |
++-----------------------+-------------+
+|CO2                    |n_co2        |
++-----------------------+-------------+
+|H2O                    |n_h2o        |
++-----------------------+-------------+
+
+
+Masking Line Information
+================================================
+
+We can mask the line information using "apply_mask_mdb" method. Here is an example:
+
+.. code:: python
+
+    >>> import numpy as np
+    >>> from exojax.utils.grids import wavenumber_grid
+    >>> from exojax.spec import api
+    >>> nus,wav,res=wavenumber_grid(6910,6990,100000,unit='cm-1',xsmode="premodit")
+    >>> 
+    >>> # ExoMol                                                                                                                      
+    >>> mdb = api.MdbExomol("/home/kawashima/database/H2O/1H2-16O/POKAZATEL",nus)
+    >>> print(len(mdb.elower), np.min(mdb.elower))
+    >>> 
+    >>> mask = mdb.elower > 100.
+    >>> mdb.apply_mask_mdb(mask)
+    >>> print(len(mdb.elower), np.min(mdb.elower))
+    >>> 
+    >>> # HITEMP                                                                                                                      
+    >>> mdb = api.MdbHitemp("/home/kawashima/database/H2O/01_HITEMP2010",nus)
+    >>> print(len(mdb.n_air), np.min(mdb.n_air))
+    >>> 
+    >>> mask = mdb.n_air > 0.01
+    >>> mdb.apply_mask_mdb(mask)
+    >>> print(len(mdb.n_air), np.min(mdb.n_air))
+    >>> 
+    >>> # HITRAN                                                                                                                      
+    >>> mdb = api.MdbHitran("/home/kawashima/database/H2O/01_hit12.par",nus)
+    >>> print(len(mdb.n_air), np.min(mdb.n_air))
+    >>> 
+    >>> mask = mdb.n_air > 0.01
+    >>> mdb.apply_mask_mdb(mask)
+    >>> print(len(mdb.n_air), np.min(mdb.n_air))
+
 
 DataFrames
 ===========================================
@@ -256,16 +320,16 @@ Notice the above array is not masked. So, the length is different from for insta
 Quantum States Filtering (ExoMol/HITEMP) 
 =============================================
 
-The only quantum state needed to calculate the cross section is the rotational quantity index. 
+The only quantum state needed to calculate the cross section is the rotational number index. 
 However, some databases also describe vibrational quantum numbers and electronic states. 
-We can use this information for filtering.
+We can use this information to filter/mask.
 
-When we would like to filter the lines based on vibration states (v), 
-we can mask the lines using Data Frame. 
+If we want to filter the lines based on vibrational states (v) 
+we can mask the lines with Data Frame. 
 
-To do so, we do not activate mdb when initialization. 
-Also, we need to load the optional quantum states. 
-Here is an example for the initialization. 
+To do this, we do not enable mdb during initialization. 
+We also need to load the optional quantum states. 
+Here is an example of the initialization.  
 
 .. code:: ipython
 	
