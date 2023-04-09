@@ -6,9 +6,9 @@ First, read the following webpage on JAX gpu memory allocation:
 https://jax.readthedocs.io/en/latest/gpu_memory_allocation.html
 
 
-If you do not want the preallocation of the device memory and 
-you would like to allocate the device memory exactly what is needed on demand, 
-set like this.
+If you do not want to pre-allocate device storage and 
+and want to allocate the device memory exactly as needed, 
+use this setting.
 
 .. code:: ipython3
 
@@ -23,10 +23,15 @@ set like this.
 
     os.environ['TF_FORCE_GPU_ALLOW_GROWTH'] = 'true'
 
-
-You can check the device memory use by inserting the following anywhere you like.
+You can check the device memory usage by inserting the following at any point.
 
 .. code:: ipython3
 
     from cuda import cudart
     cudart.cudaMemGetInfo()
+
+
+Reducing Device Memory for PreMODIT 
+========================================
+
+Devide the wavenumber range into multiple segments.

@@ -41,33 +41,33 @@ Switch gpu_transfer off in this case. Then, we can save the use of the device me
 
 This table is a short summary of the line information. "on" means gpu_transfer = True, off corresponds to False. 
 
-+-----------------------+-------------+----+------+
-|**quantity**           |**instance** |unit|off/on|
-+-----------------------+-------------+----+------+
-|line center            |nu_lines     |cm-1|np/np |
-+-----------------------+-------------+----+------+
-|lower state energy     |elower       |cm-1|np/jnp|
-+-----------------------+-------------+----+------+
-|Einstein coefficient   |A            |s-1 |np/jnp|
-+-----------------------+-------------+----+------+
-|reference line strength|Sij0         |cm  |np/jnp|
-+-----------------------+-------------+----+------+
-|log_e Sij0             |logsij0      |    |-/jnp |
-+-----------------------+-------------+----+------+
-|statistical weight     |gupper       |    |np/jnp|
-+-----------------------+-------------+----+------+
-|J_lower                |jlower       |    |np/jnp|
-+-----------------------+-------------+----+------+
-|J_upper                |jupper       |    |np/jnp|
-+-----------------------+-------------+----+------+
-|temperature exponent   |n_Tref       |    |np/jnp|
-+-----------------------+-------------+----+------+
-|alpha_ref (gamma0)     |alpha_ref    |    |np/jnp|
-+-----------------------+-------------+----+------+
-|natural broadening     |gamma_natural|cm-1|np/jnp|
-+-----------------------+-------------+----+------+
-|line center            |dev_nu_lines |cm-1|-/jnp |
-+-----------------------+-------------+----+------+
++-----------------------+------------------+----+------+
+|**quantity**           |**instance**      |unit|off/on|
++-----------------------+------------------+----+------+
+|line center            |nu_lines          |cm-1|np/np |
++-----------------------+------------------+----+------+
+|lower state energy     |elower            |cm-1|np/jnp|
++-----------------------+------------------+----+------+
+|Einstein coefficient   |A                 |s-1 |np/jnp|
++-----------------------+------------------+----+------+
+|reference line strength|line_strength_ref |cm  |np/jnp|
++-----------------------+------------------+----+------+
+|log_e Sij0             |logsij0           |    |-/jnp |
++-----------------------+------------------+----+------+
+|statistical weight     |gupper            |    |np/jnp|
++-----------------------+------------------+----+------+
+|J_lower                |jlower            |    |np/jnp|
++-----------------------+------------------+----+------+
+|J_upper                |jupper            |    |np/jnp|
++-----------------------+------------------+----+------+
+|temperature exponent   |n_Tref            |    |np/jnp|
++-----------------------+------------------+----+------+
+|alpha_ref (gamma0)     |alpha_ref         |    |np/jnp|
++-----------------------+------------------+----+------+
+|natural broadening     |gamma_natural     |cm-1|np/jnp|
++-----------------------+------------------+----+------+
+|line center            |dev_nu_lines      |cm-1|-/jnp |
++-----------------------+------------------+----+------+
 
 
 HITEMP
@@ -100,31 +100,31 @@ If you have the error like,
 remove radis.json and retry it.
 
 
-+-----------------------+-------------+----+------+
-|**quantity**           |**instance** |unit|off/on|
-+-----------------------+-------------+----+------+
-|line center            |nu_lines     |cm-1|np/np |
-+-----------------------+-------------+----+------+
-|line center            |dev_nu_lines |cm-1|-/jnp |
-+-----------------------+-------------+----+------+
-|lower state energy     |elower       |cm-1|np/jnp|
-+-----------------------+-------------+----+------+
-|natural broadening     |gamma_natural|cm-1|np/jnp|
-+-----------------------+-------------+----+------+
-|air pressure broadening|gamma_air    |cm-1|np/jnp|
-+-----------------------+-------------+----+------+
-|self broadning         |gamma_self   |cm-1|np/jnp|
-+-----------------------+-------------+----+------+
-|Einstein coefficient   |A            |s-1 |np/jnp|
-+-----------------------+-------------+----+------+
-|reference line strength|Sij0         |cm  |np/jnp|
-+-----------------------+-------------+----+------+
-|log_e Sij0             |logsij0      |    |-/jnp |
-+-----------------------+-------------+----+------+
-|statistical weight     |gpp          |    |np/jnp|
-+-----------------------+-------------+----+------+
-|temperature exponent   |n_air        |    |np/jnp|
-+-----------------------+-------------+----+------+
++-----------------------+------------------+----+------+
+|**quantity**           |**instance**      |unit|off/on|
++-----------------------+------------------+----+------+
+|line center            |nu_lines          |cm-1|np/np |
++-----------------------+------------------+----+------+
+|line center            |dev_nu_lines      |cm-1|-/jnp |
++-----------------------+------------------+----+------+
+|lower state energy     |elower            |cm-1|np/jnp|
++-----------------------+------------------+----+------+
+|natural broadening     |gamma_natural     |cm-1|np/jnp|
++-----------------------+------------------+----+------+
+|air pressure broadening|gamma_air         |cm-1|np/jnp|
++-----------------------+------------------+----+------+
+|self broadning         |gamma_self        |cm-1|np/jnp|
++-----------------------+------------------+----+------+
+|Einstein coefficient   |A                 |s-1 |np/jnp|
++-----------------------+------------------+----+------+
+|reference line strength|line_strength_ref |cm  |np/jnp|
++-----------------------+------------------+----+------+
+|log_e Sij0             |logsij0           |    |-/jnp |
++-----------------------+------------------+----+------+
+|statistical weight     |gpp               |    |np/jnp|
++-----------------------+------------------+----+------+
+|temperature exponent   |n_air             |    |np/jnp|
++-----------------------+------------------+----+------+
 
 Isotope
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -209,6 +209,33 @@ The style used in ExoJAX 1 is also acceptable (not recommended):
 .. code:: ipython
 	
 	>>> Mdbhitran(".database/CO/05_hit12.par", nurange=[4200.0, 4300.0])
+
+Non-air broadening
+^^^^^^^^^^^^^^^^^^^^^^^^
+
+We can use non-air broadening coefficients for some molecules using ""nonair_broadening" option in MdbHitran.
+
+.. code:: ipython
+	
+	>>> nus, wav, res = wavenumber_grid(22920.0,
+                                    23100.0,
+                                    100000,
+                                    unit='AA',
+                                    xsmode="modit")
+    >>> mdb = api.MdbHitran("CO",nus, nonair_broadening=True)
+    >>> print(mdb.n_h2)
+
++-----------------------+-------------+
+| background atmosphere | attribute   |
++-----------------------+-------------+
+|hydrogen               |n_h2         |
++-----------------------+-------------+
+|helium                 |n_he         |
++-----------------------+-------------+
+|CO2                    |n_co2        |
++-----------------------+-------------+
+|H2O                    |n_h2o        |
++-----------------------+-------------+
 
 
 DataFrames
