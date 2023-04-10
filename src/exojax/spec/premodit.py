@@ -421,10 +421,10 @@ def generate_lbd(line_strength_ref,
     """
 
     cont_nu, index_nu = npgetix(nu_lines, nu_grid)
-    single_broadening_parameter = _check_single_broadening_parameter(
+    single_broadening = _check_single_broadening(
         ngamma_ref_grid, n_Texp_grid)
 
-    if single_broadening_parameter:
+    if single_broadening:
         multi_index_uniqgrid = jnp.array([[0, 0]])
         Ng_broadpar = 1
     else:
@@ -446,7 +446,7 @@ def generate_lbd(line_strength_ref,
         lbd_diff = np.zeros((Ng_nu_plus_one, Ng_broadpar, Ng_elower_plus_one),
                             dtype=np.float64)
 
-        if single_broadening_parameter:
+        if single_broadening:
             lbd_diff = npadd3D_direct1D(lbd_diff, line_strength_ref, cont_nu,
                                         index_nu, 1.0, 0, coeff_elower[idiff],
                                         index_elower)
@@ -474,7 +474,7 @@ def generate_lbd(line_strength_ref,
     return lbd_coeff, multi_index_uniqgrid
 
 
-def _check_single_broadening_parameter(ngamma_ref_grid, n_Texp_grid):
+def _check_single_broadening(ngamma_ref_grid, n_Texp_grid):
     """check if the single broadening parameter mode is applied
 
     Args:
@@ -487,10 +487,10 @@ def _check_single_broadening_parameter(ngamma_ref_grid, n_Texp_grid):
     if len(ngamma_ref_grid) == 1 and len(n_Texp_grid) == 1:
         print("Single Broadening Parameter Mode: ngamma=", ngamma_ref_grid,
               "n_Texp=", n_Texp_grid)
-        single_broadening_parameter = True
+        single_broadening = True
     else:
-        single_broadening_parameter = False
-    return single_broadening_parameter
+        single_broadening = False
+    return single_broadening
 
 
 def convert_to_jnplog(lbd_nth):

@@ -48,7 +48,9 @@ class OpaPremodit(OpaCalc):
                  diffmode=2,
                  auto_trange=None,
                  manual_params=None,
-                 dit_grid_resolution=0.2):
+                 dit_grid_resolution=0.2,
+                 single_broadening = False,
+                 single_broadening_parameters=None):
         """initialization of OpaPremodit
 
         Note:
@@ -63,6 +65,9 @@ class OpaPremodit(OpaCalc):
             diffmode (int, optional): _description_. Defaults to 2.
             auto_trange (optional): temperature range [Tl, Tu], in which line strength is within 1 % prescision. Defaults to None.
             manual_params (optional): premodit param set [dE, Tref, Twt]. Defaults to None.
+            single_broadening (optional): if True, single_braodening_parameters is used. Defaults to False. 
+            single_broadening_parameters (optional): [gamma_ref, n_Texp] at 296K for single broadening. When None, the median is used.
+
         """
         super().__init__()
 
@@ -75,6 +80,9 @@ class OpaPremodit(OpaCalc):
         self.resolution = resolution_eslog(nu_grid)
         self.mdb = mdb
         self.dit_grid_resolution = dit_grid_resolution
+        self.single_broadening = single_broadening
+        self.single_broadening_parameters = single_broadening_parameters
+
         if auto_trange is not None:
             self.auto_setting(auto_trange[0], auto_trange[1])
         elif manual_params is not None:
@@ -158,6 +166,7 @@ class OpaPremodit(OpaCalc):
         self.dbtype = self.mdb.dbtype
         self.set_Tref_broadening_to_midpoint()
         self.set_gamma_and_n_Texp(self.mdb)
+
         self.opainfo = initspec.init_premodit(
             self.mdb.nu_lines,
             self.nu_grid,
@@ -173,6 +182,8 @@ class OpaPremodit(OpaCalc):
             dE=self.dE,
             dit_grid_resolution=self.dit_grid_resolution,
             diffmode=self.diffmode,
+            single_broadening=self.single_broadening,
+            single_broadening_parameters=self.single_broadening_parameters,
             warning=self.warning)
         self.ready = True
 
