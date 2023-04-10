@@ -175,7 +175,7 @@ def init_premodit(nu_lines,
 
     if single_broadening:
         ngamma_ref_grid, n_Texp_grid = broadening_grid_for_single_broadening_mode(
-            nu_lines, n_Texp, single_broadening_parameters, R)
+            nu_lines, gamma_ref, n_Texp, single_broadening_parameters, R)
     else:
         ngamma_ref_grid, n_Texp_grid = make_broadpar_grid(
             ngamma_ref,
@@ -184,7 +184,7 @@ def init_premodit(nu_lines,
             Tmin,
             Tref_broadening,
             dit_grid_resolution=dit_grid_resolution)
-            
+
     print("# of reference width grid : ", len(ngamma_ref_grid))
     print("# of temperature exponent grid :", len(n_Texp_grid))
 
@@ -209,19 +209,18 @@ def init_premodit(nu_lines,
     return lbd_coeff, multi_index_uniqgrid, elower_grid, ngamma_ref_grid, n_Texp_grid, R, pmarray
 
 
-def broadening_grid_for_single_broadening_mode(nu_lines, n_Texp,
+def broadening_grid_for_single_broadening_mode(nu_lines, gamma_ref, n_Texp,
                                                single_broadening_parameters,
                                                R):
     if single_broadening_parameters[0] is not None:
-        ngamma_ref_grid = single_broadening_parameters[0] / np.median(
-            nu_lines) * R
+        ngamma_ref_grid = jnp.array(
+            [single_broadening_parameters[0] / np.median(nu_lines) * R])
     else:
-        ngamma_ref_grid = np.median(
-            single_broadening_parameters[0] / nu_lines) * R
+        ngamma_ref_grid = jnp.array([np.median(gamma_ref / nu_lines) * R])
     if single_broadening_parameters[1] is not None:
-        n_Texp_grid = single_broadening_parameters[1]
+        n_Texp_grid = jnp.array([single_broadening_parameters[1]])
     else:
-        n_Texp_grid = np.median(n_Texp)
+        n_Texp_grid = jnp.array([np.median(n_Texp)])
     return ngamma_ref_grid, n_Texp_grid
 
 

@@ -485,8 +485,8 @@ def _check_single_broadening(ngamma_ref_grid, n_Texp_grid):
         bool: single_broadening_parameter
     """
     if len(ngamma_ref_grid) == 1 and len(n_Texp_grid) == 1:
-        print("Single Broadening Parameter Mode: ngamma=", ngamma_ref_grid,
-              "n_Texp=", n_Texp_grid)
+        print("Single broadening parameter: ngamma_ref=", ngamma_ref_grid[0],
+              "n_Texp=", n_Texp_grid[1])
         single_broadening = True
     else:
         single_broadening = False

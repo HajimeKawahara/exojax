@@ -50,7 +50,7 @@ class OpaPremodit(OpaCalc):
                  manual_params=None,
                  dit_grid_resolution=0.2,
                  single_broadening = False,
-                 single_broadening_parameters=None):
+                 single_broadening_parameters=[None,None]):
         """initialization of OpaPremodit
 
         Note:
@@ -136,7 +136,7 @@ class OpaPremodit(OpaCalc):
         from exojax.spec.premodit import reference_temperature_broadening_at_midpoint
         self.Tref_broadening = reference_temperature_broadening_at_midpoint(
             self.Tmin, self.Tmax)
-        print("Tref_broadening is set to ",self.Tref_broadening, "K")
+        print("OpaPremodit: Tref_broadening is set to ",self.Tref_broadening, "K")
 
     def set_gamma_and_n_Texp(self, mdb):
         """convert gamma_ref to the regular formalization
@@ -150,7 +150,7 @@ class OpaPremodit(OpaCalc):
 
         """
         if mdb.dbtype == "hitran":
-            print("gamma_air and n_air are used. gamma_ref = gamma_air/Patm")
+            print("OpaPremodit: gamma_air and n_air are used. gamma_ref = gamma_air/Patm")
             self.n_Texp = mdb.n_air
             reference_factor = (Tref_original /
                                 self.Tref_broadening)**(self.n_Texp)
@@ -164,7 +164,14 @@ class OpaPremodit(OpaCalc):
     def apply_params(self):
         self.mdb.change_reference_temperature(self.Tref)
         self.dbtype = self.mdb.dbtype
-        self.set_Tref_broadening_to_midpoint()
+
+        # when single_broadening=True we do not change the Tref_broadening from the original one
+        if self.single_broadening:
+            print("OpaPremodit: a single broadening parameter set is used.")
+            self.Tref_broadening = Tref_original
+        else:
+            self.set_Tref_broadening_to_midpoint()
+        
         self.set_gamma_and_n_Texp(self.mdb)
 
         self.opainfo = initspec.init_premodit(
