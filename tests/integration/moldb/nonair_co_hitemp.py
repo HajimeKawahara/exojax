@@ -5,10 +5,18 @@ from exojax.utils.grids import wavenumber_grid
 nus, wav, r = wavenumber_grid(24000.0, 26000.0, 1000, unit="AA", xsmode="premodit")
 
 # when
-mdb = api.MdbHitemp("CO", nus, activation=False)
+mdb = api.MdbHitran("CO", nus, activation=False)
 
 # %%
-print(mdb.df)
+from exojax.spec.qstate import m_transition_state
+from exojax.spec.nonair import gamma_nonair, temperature_exponent_nonair
+from exojax.spec.nonair import nonair_coeff_CO_in_H2
+m = m_transition_state(mdb.df["jl"],mdb.df["branch"]).values
+n_Texp_H2 = temperature_exponent_nonair(m, nonair_coeff_CO_in_H2)
+gamma_ref_H2v = gamma_nonair(m, nonair_coeff_CO_in_H2)
+print(n_Texp_H2)
+
+
 # %%
 import matplotlib.pyplot as plt
 import numpy as np
