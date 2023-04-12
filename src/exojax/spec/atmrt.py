@@ -143,7 +143,7 @@ class ArtCommon():
         self.pressure, self.dParr, self.k = pressure_layer_logspace(
             log_pressure_top=self.log_pressure_top,
             log_pressure_btm=self.log_pressure_btm,
-            NP=self.nlayer,
+            nlayer=self.nlayer,
             mode='ascending',
             reference_point=0.5,
             numpy=True)

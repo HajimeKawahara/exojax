@@ -45,9 +45,9 @@ class SosInstProfile(SosCommon):
     def __init__(self,
                  nu_grid,
                  resolution,
-                 vsini_max=100.0,
+                 vrmax=100.0,
                  ):
-        super().__init__(nu_grid, resolution, vsini_max)
+        super().__init__(nu_grid, resolution, vrmax)
     
     def ipgauss(self, spectrum, standard_deviation):
         if self.convolution_method == "exojax.signal.convolve":
