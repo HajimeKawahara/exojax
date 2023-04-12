@@ -9,8 +9,6 @@ from jax import random
 from exojax.spec import contdb
 from exojax.spec.api import MdbExomol
 from exojax.spec import molinfo
-from exojax.spec.response import ipgauss_sampling
-from exojax.spec.spin_rotation import convolve_rigid_rotation
 from exojax.utils.grids import velocity_grid
 from exojax.utils.grids import wavenumber_grid
 from exojax.utils.instfunc import resolution_to_gaussian_std
@@ -19,6 +17,7 @@ from exojax.spec.opacont import OpaCIA
 from exojax.spec.atmrt import ArtEmisPure
 from exojax.spec.opspec import SosRotaion
 from exojax.spec.opspec import SosInstProfile
+
 from exojax.spec.unitconvert import wav2nu
 from exojax.utils.astrofunc import gravity_jupiter
 import pandas as pd
@@ -62,12 +61,11 @@ mmrH2 = 0.74
 molmassH2 = molinfo.molmass_isotope('H2')
 vmrH2 = (mmrH2 * mmw / molmassH2)  # VMR
 
-#settings before HMC
+# sos
 vsini_max = 100.0
-vr_array = velocity_grid(res, vsini_max)
-
 sos_rot = SosRotaion(nu_grid, res, vsini_max)
 sos_ip = SosInstProfile(nu_grid, res, vsini_max)
+
 
 def model_c(nu1, y1):
     Rp = numpyro.sample('Rp', dist.Uniform(0.4, 1.2))
@@ -98,9 +96,7 @@ def model_c(nu1, y1):
         Frot = sos_rot.rigid_rotation(F0, vsini, u1, u2)
         Frot_ip = sos_ip.ipgauss(Frot, beta_inst)
         mu = sos_ip.sampling(Frot_ip, RV, nusd)
-            
-        #Frot = convolve_rigid_rotation(F0, vr_array, vsini, u1, u2)
-        #mu = ipgauss_sampling(nusd, nus, Frot, beta_inst, RV, vr_array)
+
         numpyro.sample(tag, dist.Normal(mu, sigmain), obs=y)
 
     obyo(y1, 'y1', nu1, nu_grid)
