@@ -59,3 +59,14 @@ The formula is from Y. Tan et al (2022). Here is an example. We use the datafram
 	>>> n_Texp_H2 = temperature_exponent_nonair(m, nonair_coeff_CO_in_H2).values
 	>>> gamma_ref_H2 = gamma_nonair(m, nonair_coeff_CO_in_H2).values
 
+
+We can also check if the pressure shift can be ignored in terms of velocity as follows.
+
+.. code:: ipython
+	
+	>>> from exojax.utils.constants import ccgs
+	>>> df_mask = mdb.df[mdb.df_load_mask]
+	>>> dnu = df_mask["delta_h2"].values/mdb.nu_lines
+	>>> maxdv = np.max(dnu * ccgs*1.e-5)
+	>>> print("maximum velocity shift by nonair shift = ", maxdv, "km/s")
+	>>> # maximum velocity shift by nonair shift =  -0.26374224782584194 km

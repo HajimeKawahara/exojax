@@ -8,8 +8,14 @@ nus, wav, r = wavenumber_grid(24000.0, 26000.0, 1000, unit="AA", xsmode="premodi
 mdb = api.MdbHitran("CO", nus, inherit_dataframe=True, nonair_broadening=True)
 
 # %%
-print(mdb.n_h2)
 
+# check pressure shift
+import numpy as np
+from exojax.utils.constants import ccgs
+df_mask = mdb.df[mdb.df_load_mask]
+dnu = df_mask["delta_h2"].values/mdb.nu_lines
+maxdv = np.max(dnu * ccgs*1.e-5)
+print("maximum velocity shift by nonair shift = ", maxdv, "km/s")
 
 # %%
 # manual non-air broadening
