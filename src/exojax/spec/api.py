@@ -874,22 +874,21 @@ class MdbHitran(MdbCommonHitempHitran, HITRANDatabaseManager):
             self.isoid = df_load_mask.iso.values
             self.uniqiso = np.unique(self.isoid)
 
-            if str('n_h2') in df_load_mask and self.nonair_broadening:
+            if hasattr(df_load_mask, 'n_h2') and self.nonair_broadening:
                 self.n_h2 = df_load_mask.n_h2.values
                 self.gamma_h2 = df_load_mask.gamma_h2.values
 
-            if str('n_he') in df_load_mask and self.nonair_broadening:
+            if hasattr(df_load_mask, 'n_he') and self.nonair_broadening:
                 self.n_he = df_load_mask.n_he.values
                 self.gamma_he = df_load_mask.gamma_he.values
 
-            if str('n_co2') in df_load_mask and self.nonair_broadening:
+            if hasattr(df_load_mask, 'n_co2') and self.nonair_broadening:
                 self.n_co2 = df_load_mask.n_co2.values
                 self.gamma_co2 = df_load_mask.gamma_co2.values
 
-            if str('n_h2o') in self.df_load_mask  and self.nonair_broadening:
+            if hasattr(df_load_mask, 'n_h2o') and self.nonair_broadening:
                 self.n_h2o = df_load_mask.n_h2o.values
                 self.gamma_h2o = df_load_mask.gamma_h2o.values
-        
 
     def generate_jnp_arrays(self):
         """(re)generate jnp.arrays.
@@ -910,19 +909,19 @@ class MdbHitran(MdbCommonHitempHitran, HITRANDatabaseManager):
         self.elower = jnp.array(self.elower)
         self.gpp = jnp.array(self.gpp)
 
-        if str('n_h2') in self.df_load_mask  and self.nonair_broadening:
+        if hasattr(self.df_load_mask, 'n_h2') and self.nonair_broadening:
             self.n_h2 = jnp.array(self.n_h2)
             self.gamma_h2 = jnp.array(self.gamma_h2)
 
-        if str('n_he') in self.df_load_mask  and self.nonair_broadening:
+        if hasattr(self.df_load_mask, 'n_he') and self.nonair_broadening:
             self.n_he = jnp.array(self.n_he)
             self.gamma_he = jnp.array(self.gamma_he)
 
-        if str('n_co2') in self.df_load_mask  and self.nonair_broadening:
+        if hasattr(self.df_load_mask, 'n_co2') and self.nonair_broadening:
             self.n_co2 = jnp.array(self.n_co2)
             self.gamma_co2 = jnp.array(self.gamma_co2)
 
-        if str('n_h2o') in self.df_load_mask  and self.nonair_broadening:
+        if hasattr(self.df_load_mask, 'n_h2o') and self.nonair_broadening:
             self.n_h2o = jnp.array(self.n_h2o)
             self.gamma_h2o = jnp.array(self.gamma_h2o)
 
