@@ -10,7 +10,7 @@ from exojax.spec.api import MdbExomol
 from exojax.spec.opacalc import OpaDirect
 from exojax.spec.opacont import OpaCIA
 from exojax.spec.atmrt import ArtEmisPure
-from exojax.spec.specop import SopRotaion
+from exojax.spec.specop import SopRotation
 from exojax.spec.specop import SopInstProfile
 from exojax.utils.instfunc import R2STD
 import jax.numpy as jnp
@@ -60,7 +60,7 @@ def test_jaxopt_spectrum(fig=False):
 
     # spectral operators
     vsini_max = 100.0
-    sos_rot = SopRotaion(nus, resolution, vsini_max)
+    sos_rot = SopRotation(nus, resolution, vsini_max)
     sos_ip = SopInstProfile(nus, resolution, vsini_max)
 
     def model_c(params, boost, nu1):
