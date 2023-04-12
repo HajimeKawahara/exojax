@@ -103,7 +103,7 @@ def mock_mdbVALD():
     
 
 
-if __name__ == "__main__":
-    mdb = mock_mdbExomol()
-    mdb = mock_mdbHitemp()
-    print(mdb.df)
+#if __name__ == "__main__":
+#    mdb = mock_mdbExomol()
+#    mdb = mock_mdbHitemp()
+#    print(mdb.df)

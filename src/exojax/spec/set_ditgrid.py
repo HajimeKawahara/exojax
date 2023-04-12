@@ -19,7 +19,9 @@ def ditgrid_log_interval(input_variable, dit_grid_resolution=0.1, adopt=True):
     Returns:
         grid for DIT
     """
-    assert np.min(input_variable) > 0.0, "There exists negative or zero gamma. MODIT/DIT does not support this case."
+    if np.min(input_variable) <= 0.0:
+        msg = "There exists negative or zero value. MODIT/DIT does not support this case."
+        raise ValueError(msg)
     
     lxmin = np.log(np.min(input_variable))
     lxmax = np.log(np.max(input_variable))
@@ -45,10 +47,10 @@ def ditgrid_linear_interval(input_variable, dit_grid_resolution=0.1, weight = No
     Returns:
         grid for DIT
     """
-    if weight is None:
-        weight = 1.0
 
-    assert np.min(weight * input_variable) > 0.0, "There exists negative or zero value. Consider to use np.abs."        
+    if np.min(input_variable) <= 0.0:
+        warnings.warn("There exists negative or zero value.")
+        
     wxmin = np.min(weight * input_variable)
     wxmax = np.max(weight * input_variable)
     wxmax = np.nextafter(wxmax, np.inf, dtype=wxmax.dtype)
