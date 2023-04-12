@@ -11,7 +11,7 @@ jax.config to set FP64:
 
 The following schematic figure explains how ExoJAX works; (1) loading
 databases (*db), (2) calculating opacity (opa), (3) running atmospheric
-radiative transfer (art), (4) then some post processes
+radiative transfer (art), (4) applying operations on the spectrum (sop)
 
 .. code:: ipython3
 
@@ -182,6 +182,9 @@ mdb reference temperature and then plot the line intensity.
 .. image:: get_started_files/get_started_18_1.png
 
 
+3. Atmospheric Radiative Transfer
+---------------------------------
+
 ExoJAX can solve the radiative transfer and derive the emission
 spectrum. To do so, ExoJAX has “art” class. ArtEmisPure means
 Atomospheric Radiative Transfer for Emission with Pure absorption. So,
@@ -286,7 +289,7 @@ Then, run the radiative transfer
 
 
 
-.. image:: get_started_files/get_started_36_0.png
+.. image:: get_started_files/get_started_37_0.png
 
 
 You can check the contribution function too!
@@ -301,8 +304,11 @@ You can check the contribution function too!
 
 
 
-.. image:: get_started_files/get_started_39_0.png
+.. image:: get_started_files/get_started_40_0.png
 
+
+Spectral Operators: rotational broadening, instrumental profile, Doppler velocity shift and so on, any operation on spectra.
+----------------------------------------------------------------------------------------------------------------------------
 
 The above spectrum is called “raw spectrum” in ExoJAX. The effects
 applied to the raw spectrum is handled in ExoJAX by the spectral
@@ -310,8 +316,8 @@ operator (sop). First, we apply the spin rotation of a planet.
 
 .. code:: ipython3
 
-    from exojax.spec.specop import SopRotaion
-    sop_rot = SopRotaion(nu_grid, resolution, vsini_max=100.0)
+    from exojax.spec.specop import SopRotation
+    sop_rot = SopRotation(nu_grid, resolution, vsini_max=100.0)
     
     vsini = 50.0
     u1=0.0
@@ -337,7 +343,7 @@ operator (sop). First, we apply the spin rotation of a planet.
 
 
 
-.. image:: get_started_files/get_started_42_0.png
+.. image:: get_started_files/get_started_44_0.png
 
 
 Then, the instrumental profile with relative radial velocity is applied.
@@ -382,7 +388,7 @@ Then, the instrumental profile with relative radial velocity is applied.
 
 
 
-.. image:: get_started_files/get_started_45_0.png
+.. image:: get_started_files/get_started_47_0.png
 
 
 That’s it.
