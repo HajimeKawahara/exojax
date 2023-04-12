@@ -32,9 +32,9 @@ def _convolve_rigid_rotation_np(resolution, F0, vsini, u1=0.0, u2=0.0):
     convolved_signal = np.convolve(F0, kernel, mode="same")
     return convolved_signal
 
-def test_SosRotation(N=1000):
+def test_SopRotation(N=1000):
     from jax.config import config
-    from exojax.spec.opspec import SosRotaion
+    from exojax.spec.specop import SopRotaion
     config.update("jax_enable_x64", True)
     nus, wav, resolution = wavenumber_grid(4000.0,
                                                4010.0,
@@ -45,7 +45,7 @@ def test_SosRotation(N=1000):
     F0[250 - 5:250 + 5] = 0.5
 
     vsini = 40.0
-    sos = SosRotaion(nus, resolution, vsini)
+    sos = SopRotaion(nus, resolution, vsini)
     
     Frot = sos.rigid_rotation(F0, vsini, u1=0.1, u2=0.1)
     Frot_ = _convolve_rigid_rotation_np(resolution, F0, vsini, u1=0.1, u2=0.1)
@@ -105,4 +105,4 @@ def test_rotkernel(fig=False):
 if __name__ == "__main__":
     #test_rotkernel(fig=True)
     #test_convolve_rigid_rotation(1000,fig=True)
-    test_SosRotation(1000)
+    test_SopRotation(1000)
