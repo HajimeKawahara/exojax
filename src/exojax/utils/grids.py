@@ -36,7 +36,7 @@ def wavenumber_grid(x0, x1, N, xsmode, unit='cm-1'):
     grid, unit = _set_grid(x0, x1, N, unit, grid_mode)
     nus = _set_nus(unit, grid)
     wav = nu2wav(nus, unit="AA")
-    resolution = _set_resolution(grid_mode, nus)
+    resolution = grid_resolution(grid_mode, nus)
     return nus, wav, resolution
 
 
@@ -65,7 +65,7 @@ def _set_nus(unit, grid):
     return nus
 
 
-def _set_resolution(grid_mode, nus):
+def grid_resolution(grid_mode, nus):
     if grid_mode == 'ESLOG':
         resolution = resolution_eslog(nus)
         minr = resolution

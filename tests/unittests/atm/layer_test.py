@@ -7,7 +7,7 @@ from exojax.atm.atmprof import pressure_scale_height
 def test_log_pressure_is_constant():
     pressure, dParr, k = pressure_layer_logspace(log_pressure_top=-8.,
                                                  log_pressure_btm=2.,
-                                                 NP=20,
+                                                 nlayer=20,
                                                  mode='ascending',
                                                  numpy=False)
 

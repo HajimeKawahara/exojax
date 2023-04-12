@@ -104,16 +104,27 @@ range we will use is 500-1500K.
     OpaPremodit: params automatically set.
     Robust range: 484.50562701065246 - 1804.6009417674848 K
     Tref changed: 296.0K->521.067611616332K
+    Tref_broadening is set to  866.0254037844389 K
+    # of reference width grid :  4
+    # of temperature exponent grid : 2
 
 
 .. parsed-literal::
 
-    uniqidx: 100%|██████████| 3/3 [00:00<00:00, 6675.28it/s]
-
+    uniqidx: 100%|██████████| 2/2 [00:00<00:00, 5174.96it/s]
 
 .. parsed-literal::
 
     Premodit: Twt= 1153.8856089961712 K Tref= 521.067611616332 K
+
+
+.. parsed-literal::
+
+    
+
+
+.. parsed-literal::
+
     Making LSD:|####################| 100%
     Making LSD:|####################| 100%
     Making LSD:|####################| 100%
@@ -182,6 +193,13 @@ atmosphere to 100 and 1.e-8 bar.
 
     from exojax.spec.atmrt import ArtEmisPure
     art = ArtEmisPure(nu_grid=nu_grid, pressure_btm=1.e2, pressure_top=1.e-8, nlayer=100)
+
+
+
+.. parsed-literal::
+
+    /home/kawahara/exojax/src/exojax/spec/dtau_mmwl.py:14: FutureWarning: dtau_mmwl might be removed in future.
+      warnings.warn("dtau_mmwl might be removed in future.", FutureWarning)
 
 
 Let’s assume the power law temperature model, within 500 - 1500 K.
@@ -284,6 +302,87 @@ You can check the contribution function too!
 
 
 .. image:: get_started_files/get_started_39_0.png
+
+
+The above spectrum is called “raw spectrum” in ExoJAX. The effects
+applied to the raw spectrum is handled in ExoJAX by the spectral
+operator (sop). First, we apply the spin rotation of a planet.
+
+.. code:: ipython3
+
+    from exojax.spec.specop import SopRotaion
+    sop_rot = SopRotaion(nu_grid, resolution, vsini_max=100.0)
+    
+    vsini = 50.0
+    u1=0.0
+    u2=0.0 
+    Frot = sop_rot.rigid_rotation(F, vsini, u1, u2) 
+
+
+.. parsed-literal::
+
+    /home/kawahara/exojax/src/exojax/utils/grids.py:126: UserWarning: Resolution may be too small. R=523403.606697253
+      warnings.warn('Resolution may be too small. R=' + str(resolution),
+
+
+.. code:: ipython3
+
+    fig=plt.figure(figsize=(15,4))
+    plt.plot(nu_grid,F, label="raw spectrum")
+    plt.plot(nu_grid,Frot, label="rotated")
+    plt.xlabel("wavenumber (cm-1)")
+    plt.ylabel("flux (erg/s/cm2/cm-1)")
+    plt.legend()
+    plt.show()
+
+
+
+.. image:: get_started_files/get_started_42_0.png
+
+
+Then, the instrumental profile with relative radial velocity is applied.
+
+.. code:: ipython3
+
+    from exojax.spec.specop import SopInstProfile
+    from exojax.utils.instfunc import resolution_to_gaussian_std
+    sop_inst = SopInstProfile(nu_grid, resolution, vrmax=1000.0)
+    
+    RV=40.0 #km/s
+    resolution_inst = 3000.0
+    beta_inst = resolution_to_gaussian_std(resolution_inst)
+    Finst = sop_inst.ipgauss(Frot, beta_inst)
+    nu_obs = nu_grid[::50]
+    Fobs = sop_inst.sampling(Finst, RV, nu_obs)
+
+
+.. parsed-literal::
+
+    42.43671169022172
+
+
+.. parsed-literal::
+
+    /home/kawahara/exojax/src/exojax/utils/grids.py:126: UserWarning: Resolution may be too small. R=523403.606697253
+      warnings.warn('Resolution may be too small. R=' + str(resolution),
+
+
+.. code:: ipython3
+
+    fig=plt.figure(figsize=(15,4))
+    plt.plot(nu_grid,Frot, label="rotated")
+    plt.plot(nu_grid,Finst, label="rotated+IP")
+    plt.plot(nu_obs,Fobs, ".", label="rotated+IP (sampling)")
+    
+    
+    plt.xlabel("wavenumber (cm-1)")
+    plt.ylabel("flux (erg/s/cm2/cm-1)")
+    plt.legend()
+    plt.show()
+
+
+
+.. image:: get_started_files/get_started_45_0.png
 
 
 That’s it.

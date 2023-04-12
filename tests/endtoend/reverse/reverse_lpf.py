@@ -9,14 +9,15 @@ from jax import random
 from exojax.spec import contdb
 from exojax.spec.api import MdbExomol
 from exojax.spec import molinfo
-from exojax.spec.response import ipgauss_sampling
-from exojax.spec.spin_rotation import convolve_rigid_rotation
 from exojax.utils.grids import velocity_grid
-from exojax.spec.rtransfer import wavenumber_grid
+from exojax.utils.grids import wavenumber_grid
 from exojax.utils.instfunc import resolution_to_gaussian_std
 from exojax.spec.opacalc import OpaDirect
 from exojax.spec.opacont import OpaCIA
 from exojax.spec.atmrt import ArtEmisPure
+from exojax.spec.specop import SopRotaion
+from exojax.spec.specop import SopInstProfile
+
 from exojax.spec.unitconvert import wav2nu
 from exojax.utils.astrofunc import gravity_jupiter
 import pandas as pd
@@ -38,7 +39,8 @@ nflux = flux / norm + np.random.normal(0, sigmain, len(wavd))
 nu_grid, wav, res = wavenumber_grid(np.min(wavd) - 5.0,
                                     np.max(wavd) + 5.0,
                                     1500,
-                                    unit='AA')
+                                    unit='AA',
+                                    xsmode="premodit")
 
 art = ArtEmisPure(nu_grid, pressure_top=1.e-8, pressure_btm=1.e2, nlayer=100)
 art.change_temperature_range(400.0, 1500.0)
@@ -59,9 +61,10 @@ mmrH2 = 0.74
 molmassH2 = molinfo.molmass_isotope('H2')
 vmrH2 = (mmrH2 * mmw / molmassH2)  # VMR
 
-#settings before HMC
+# sos
 vsini_max = 100.0
-vr_array = velocity_grid(res, vsini_max)
+sos_rot = SopRotaion(nu_grid, res, vsini_max)
+sos_ip = SopInstProfile(nu_grid, res, vsini_max)
 
 
 def model_c(nu1, y1):
@@ -90,8 +93,10 @@ def model_c(nu1, y1):
                                             gravity)
         dtau = dtaumCO + dtaucH2H2
         F0 = art.run(dtau, Tarr) / norm
-        Frot = convolve_rigid_rotation(F0, vr_array, vsini, u1, u2)
-        mu = ipgauss_sampling(nusd, nus, Frot, beta_inst, RV, vr_array)
+        Frot = sos_rot.rigid_rotation(F0, vsini, u1, u2)
+        Frot_ip = sos_ip.ipgauss(Frot, beta_inst)
+        mu = sos_ip.sampling(Frot_ip, RV, nusd)
+
         numpyro.sample(tag, dist.Normal(mu, sigmain), obs=y)
 
     obyo(y1, 'y1', nu1, nu_grid)

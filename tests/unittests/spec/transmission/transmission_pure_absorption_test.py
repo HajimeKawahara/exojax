@@ -47,7 +47,7 @@ def test_check_parallel_Ax_tauchord():
 def test_first_layer_height_from_compute_normalized_radius_profile():
     from exojax.atm.atmprof import pressure_layer_logspace
     pressure, dParr, pressure_decrease_rate = pressure_layer_logspace(
-        log_pressure_top=-8., log_pressure_btm=2., NP=20)
+        log_pressure_top=-8., log_pressure_btm=2., nlayer=20)
     T0 = 300.0
     mmw0 = 28.8
     temperature = T0 * np.ones_like(pressure)

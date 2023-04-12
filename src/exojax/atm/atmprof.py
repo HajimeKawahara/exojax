@@ -9,7 +9,7 @@ from jax import jit
 
 def pressure_layer_logspace(log_pressure_top=-8.,
                             log_pressure_btm=2.,
-                            NP=20,
+                            nlayer=20,
                             mode='ascending',
                             reference_point=0.5,
                             numpy=False):
@@ -18,7 +18,7 @@ def pressure_layer_logspace(log_pressure_top=-8.,
     Args:
        log_pressure_top: log10(P[bar]) at the top layer
        log_pressure_btm: log10(P[bar]) at the bottom layer
-       NP: the number of the layers
+       nlayer: the number of the layers
        mode: ascending or descending
        reference_point (float): reference point in a layer (0-1). Center:0.5, lower boundary:1.0, upper boundary:0
        numpy: if True use numpy array instead of jnp array
@@ -32,12 +32,12 @@ def pressure_layer_logspace(log_pressure_top=-8.,
         d logP is constant using this function. 
         d log_e P = dParr[i]/pressure[i] = constant = 1 - pressure_decrease_rate, dParr[0] = (1- pressure_decrease_rate) Parr[0] for ascending mode
     """
-    dlogP = (log_pressure_btm - log_pressure_top) / (NP - 1)
+    dlogP = (log_pressure_btm - log_pressure_top) / (nlayer - 1)
     pressure_decrease_rate = 10**-dlogP
     if numpy:
-        pressure = np.logspace(log_pressure_top, log_pressure_btm, NP)
+        pressure = np.logspace(log_pressure_top, log_pressure_btm, nlayer)
     else:
-        pressure = jnp.logspace(log_pressure_top, log_pressure_btm, NP)
+        pressure = jnp.logspace(log_pressure_top, log_pressure_btm, nlayer)
     dParr = (1.0 - pressure_decrease_rate**reference_point) * pressure
     if mode == 'descending':
         pressure = pressure[::-1]
