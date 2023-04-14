@@ -40,7 +40,11 @@ Radiative Transfer
 
    userguide/rtransfer.rst
 
+Spectral Operators
+=======================
 
+   N/A
+   
 Others
 =======================
 
