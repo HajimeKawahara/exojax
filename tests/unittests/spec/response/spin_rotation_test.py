@@ -34,7 +34,7 @@ def _convolve_rigid_rotation_np(resolution, F0, vsini, u1=0.0, u2=0.0):
 
 def test_SopRotation(N=1000):
     from jax.config import config
-    from exojax.spec.specop import SopRotaion
+    from exojax.spec.specop import SopRotation
     config.update("jax_enable_x64", True)
     nus, wav, resolution = wavenumber_grid(4000.0,
                                                4010.0,
@@ -45,7 +45,7 @@ def test_SopRotation(N=1000):
     F0[250 - 5:250 + 5] = 0.5
 
     vsini = 40.0
-    sos = SopRotaion(nus, resolution, vsini)
+    sos = SopRotation(nus, resolution, vsini)
     
     Frot = sos.rigid_rotation(F0, vsini, u1=0.1, u2=0.1)
     Frot_ = _convolve_rigid_rotation_np(resolution, F0, vsini, u1=0.1, u2=0.1)

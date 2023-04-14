@@ -26,15 +26,21 @@ tests/endtoend/reverse/reverse_premodit.ipynb
     from exojax.spec.opacalc import OpaPremodit
     from exojax.spec.contdb import CdbCIA
     from exojax.spec.opacont import OpaCIA
-    from exojax.spec.response import ipgauss_sampling
-    from exojax.spec.spin_rotation import convolve_rigid_rotation
+    from exojax.spec.specop import SopRotation
+    from exojax.spec.specop import SopInstProfile
     from exojax.spec import molinfo
     from exojax.spec.unitconvert import nu2wav
     from exojax.utils.grids import wavenumber_grid
-    from exojax.utils.grids import velocity_grid
     from exojax.utils.astrofunc import gravity_jupiter
     from exojax.utils.instfunc import resolution_to_gaussian_std
     from exojax.test.data import SAMPLE_SPECTRA_CH4_NEW
+
+
+.. parsed-literal::
+
+    /home/kawahara/exojax/src/exojax/spec/dtau_mmwl.py:14: FutureWarning: dtau_mmwl might be removed in future.
+      warnings.warn("dtau_mmwl might be removed in future.", FutureWarning)
+
 
 We use numpyro as a probabilistic programming language (PPL). We have
 other options such as BlackJAX, PyMC etc.
@@ -106,7 +112,7 @@ STD of instrumental resolution.
 
 .. parsed-literal::
 
-    /home/kawahara/anaconda3/lib/python3.8/site-packages/ExoJAX-1.3-py3.8.egg/exojax/utils/grids.py:126: UserWarning: Resolution may be too small. R=617160.1067701889
+    /home/kawahara/exojax/src/exojax/utils/grids.py:126: UserWarning: Resolution may be too small. R=617160.1067701889
       warnings.warn('Resolution may be too small. R=' + str(resolution),
 
 
@@ -130,34 +136,25 @@ lines, we use PreMODIT as an opacity calculator.
 
 .. parsed-literal::
 
-    HITRAN exact name= (12C)(1H)4
-    HITRAN exact name= (12C)(1H)4
-    Background atmosphere:  H2
-    Note: Caching states data to the vaex format. After the second time, it will become much faster.
-
-
-.. parsed-literal::
-
-    /home/kawahara/anaconda3/lib/python3.8/site-packages/ExoJAX-1.3-py3.8.egg/exojax/utils/molname.py:133: FutureWarning: e2s will be replaced to exact_molname_exomol_to_simple_molname.
+    /home/kawahara/exojax/src/exojax/utils/molname.py:133: FutureWarning: e2s will be replaced to exact_molname_exomol_to_simple_molname.
       warnings.warn(
-    /home/kawahara/anaconda3/lib/python3.8/site-packages/ExoJAX-1.3-py3.8.egg/exojax/utils/molname.py:49: UserWarning: No isotope number identified.
+    /home/kawahara/exojax/src/exojax/utils/molname.py:49: UserWarning: No isotope number identified.
       warnings.warn("No isotope number identified.",UserWarning)
-    /home/kawahara/anaconda3/lib/python3.8/site-packages/ExoJAX-1.3-py3.8.egg/exojax/utils/molname.py:49: UserWarning: No isotope number identified.
+    /home/kawahara/exojax/src/exojax/utils/molname.py:49: UserWarning: No isotope number identified.
       warnings.warn("No isotope number identified.",UserWarning)
-    /home/kawahara/anaconda3/lib/python3.8/site-packages/ExoJAX-1.3-py3.8.egg/exojax/spec/molinfo.py:28: UserWarning: exact molecule name is not Exomol nor HITRAN form.
+    /home/kawahara/exojax/src/exojax/spec/molinfo.py:28: UserWarning: exact molecule name is not Exomol nor HITRAN form.
       warnings.warn("exact molecule name is not Exomol nor HITRAN form.")
-    /home/kawahara/anaconda3/lib/python3.8/site-packages/ExoJAX-1.3-py3.8.egg/exojax/spec/molinfo.py:29: UserWarning: No molmass available
+    /home/kawahara/exojax/src/exojax/spec/molinfo.py:29: UserWarning: No molmass available
       warnings.warn("No molmass available", UserWarning)
 
 
 .. parsed-literal::
 
+    HITRAN exact name= (12C)(1H)4
+    HITRAN exact name= (12C)(1H)4
+    Background atmosphere:  H2
     Reading .database/CH4/12C-1H4/YT10to10/12C-1H4__YT10to10__06000-06100.trans.bz2
-    Downloading http://www.exomol.com/db/CH4/12C-1H4/YT10to10/12C-1H4__YT10to10__06000-06100.trans.bz2 and saving as .database/CH4/12C-1H4/YT10to10/12C-1H4__YT10to10__06000-06100.trans.bz2
-    Note: Caching line transition data to the vaex format. After the second time, it will become much faster.
     Reading .database/CH4/12C-1H4/YT10to10/12C-1H4__YT10to10__06100-06200.trans.bz2
-    Downloading http://www.exomol.com/db/CH4/12C-1H4/YT10to10/12C-1H4__YT10to10__06100-06200.trans.bz2 and saving as .database/CH4/12C-1H4/YT10to10/12C-1H4__YT10to10__06100-06200.trans.bz2
-    Note: Caching line transition data to the vaex format. After the second time, it will become much faster.
     .broad is used.
     Broadening code level= a1
     default broadening parameters are used for  23  J lower states in  40  states
@@ -165,11 +162,14 @@ lines, we use PreMODIT as an opacity calculator.
     OpaPremodit: params automatically set.
     Robust range: 397.77407283130566 - 1689.7679243628259 K
     Tref changed: 296.0K->1153.6267095763965K
+    Tref_broadening is set to  774.5966692414833 K
+    # of reference width grid :  3
+    # of temperature exponent grid : 2
 
 
 .. parsed-literal::
 
-    uniqidx: 100%|██████████| 1/1 [00:02<00:00,  2.77s/it]
+    uniqidx: 100%|██████████| 1/1 [00:02<00:00,  2.64s/it]
 
 
 .. parsed-literal::
@@ -202,9 +202,9 @@ Then, we make a function that computes the model spectrum.
 .. code:: ipython3
 
     
-    #settings before HMC
-    vsini_max = 100.0
-    vr_array = velocity_grid(res, vsini_max)
+    #settings spectral operators
+    sop_rot = SopRotation(nu_grid,res,vsini_max=100.0)
+    sop_inst = SopInstProfile(nu_grid,res,vrmax=100.0)
     
     def frun(Tarr, MMR_CH4, Mp, Rp, u1, u2, RV, vsini):
         g = gravity_jupiter(Rp=Rp, Mp=Mp)  # gravity in the unit of Jupiter
@@ -219,9 +219,19 @@ Then, we make a function that computes the model spectrum.
         #total tau
         dtau = dtaumCH4 + dtaucH2H2
         F0 = art.run(dtau, Tarr) / norm
-        Frot = convolve_rigid_rotation(F0, vr_array, vsini, u1, u2)
-        mu = ipgauss_sampling(nusd, nu_grid, Frot, beta_inst, RV, vr_array)
+        Frot = sop_rot.rigid_rotation(F0, vsini, u1, u2)
+        Frot_inst = sop_inst.ipgauss(Frot, beta_inst)
+        mu = sop_inst.sampling(Frot_inst, RV, nusd)
         return mu
+
+
+.. parsed-literal::
+
+    /home/kawahara/exojax/src/exojax/utils/grids.py:126: UserWarning: Resolution may be too small. R=617160.1067701889
+      warnings.warn('Resolution may be too small. R=' + str(resolution),
+    /home/kawahara/exojax/src/exojax/utils/grids.py:126: UserWarning: Resolution may be too small. R=617160.1067701889
+      warnings.warn('Resolution may be too small. R=' + str(resolution),
+
 
 The following is the numpyro model, i.e. prior and sample.
 
@@ -240,7 +250,7 @@ The following is the numpyro model, i.e. prior and sample.
         mu = frun(Tarr, MMR_CH4, Mp, Rp, u1, u2, RV, vsini)
         numpyro.sample('y1', dist.Normal(mu, sigmain), obs=y1)
 
-Let’s run the HMC-NUTS. In my environment, it took 1.5 hours using A100.
+Let’s run the HMC-NUTS. In my environment, it took ~2 hours using A100.
 
 .. code:: ipython3
 
@@ -257,19 +267,19 @@ Let’s run the HMC-NUTS. In my environment, it took 1.5 hours using A100.
 
 .. parsed-literal::
 
-    sample: 100%|██████████| 1500/1500 [1:47:57<00:00,  4.32s/it, 735 steps of size 6.08e-03. acc. prob=0.92]  
+    sample: 100%|██████████| 1500/1500 [2:05:21<00:00,  5.01s/it, 511 steps of size 4.43e-03. acc. prob=0.94]  
 
 
 .. parsed-literal::
 
     
                     mean       std    median      5.0%     95.0%     n_eff     r_hat
-       MMR_CH4      0.01      0.00      0.01      0.00      0.01    283.87      1.00
-            RV     10.02      0.40     10.01      9.37     10.62    566.59      1.00
-            Rp      0.80      0.18      0.77      0.54      1.10    263.29      1.00
-            T0   1202.21     16.31   1201.46   1176.66   1227.18    697.66      1.00
-         alpha      0.10      0.00      0.10      0.09      0.11    410.84      1.00
-         vsini     20.79      0.66     20.75     19.73     21.85    547.11      1.00
+       MMR_CH4      0.01      0.00      0.01      0.00      0.01    290.23      1.03
+            RV      9.82      0.37      9.82      9.13     10.37    418.62      1.00
+            Rp      0.79      0.19      0.76      0.52      1.10    275.86      1.03
+            T0   1187.71     15.85   1187.52   1160.36   1211.58    631.57      1.00
+         alpha      0.10      0.00      0.10      0.09      0.11    503.47      1.01
+         vsini     19.42      0.70     19.43     18.40     20.68    620.75      1.00
     
     Number of divergences: 0
 
@@ -304,6 +314,7 @@ O.K!, Plot the prediction!
     plt.legend(fontsize=16)
     plt.tick_params(labelsize=16)
     plt.savefig("pred_diffmode" + str(diffmode) + ".png")
+    #plt.show()
     plt.close()
 
 .. code:: ipython3
@@ -326,7 +337,7 @@ Looks good. How about the contour plot?
     pararr = ['Rp', 'T0', 'alpha', 'MMR_CH4', 'vsini', 'RV']
     arviz.plot_pair(arviz.from_numpyro(mcmc),
                     kind='kde',
-                    divergences=False,
+                    divergences=True,
                     marginals=True)
     plt.savefig("corner_diffmode" + str(diffmode) + ".png")
 

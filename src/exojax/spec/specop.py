@@ -27,7 +27,7 @@ class SopCommon():
         self.vrarray = velocity_grid(self.resolution, self.vrmax)
 
 
-class SopRotaion(SopCommon):
+class SopRotation(SopCommon):
     """Spectral operator on rotation
     """
     def __init__(self,
