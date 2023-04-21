@@ -123,6 +123,8 @@ def init_premodit(nu_lines,
                   dE=160.0,
                   dit_grid_resolution=0.2,
                   diffmode=0,
+                  single_broadening=False,
+                  single_broadening_parameters=None,
                   warning=False):
     """Initialization for PreMODIT. 
 
@@ -141,6 +143,8 @@ def init_premodit(nu_lines,
         dE: Elower grid interval
         dit_grid_resolution: DIT grid resolution 
         diffmode (int): i-th Taylor expansion is used for the weight, default is 1.
+        single_broadening (optional): if True, single_braodening_parameters is used. Defaults to False. 
+        single_broadening_parameters (optional): [gamma_ref, n_Texp] at 296K for single broadening. When None, the median is used.
 
     Returns:
         cont_nu: contribution for wavenumber jnp.array
@@ -164,19 +168,25 @@ def init_premodit(nu_lines,
         Tmax = np.max([Twt, Tref])
     if Tmin is None:
         Tmin = np.min([Twt, Tref])
-    
+
     R = resolution_eslog(nu_grid)
     ngamma_ref = gamma_ref / nu_lines * R
     elower_grid = make_elower_grid(elower, dE)
-    ngamma_ref_grid, n_Texp_grid = make_broadpar_grid(
-        ngamma_ref,
-        n_Texp,
-        Tmax,
-        Tmin,
-        Tref_broadening,
-        dit_grid_resolution=dit_grid_resolution)
-    print("# of reference width grid : ",len(ngamma_ref_grid))
-    print("# of temperature exponent grid :",len(n_Texp_grid))
+
+    if single_broadening:
+        ngamma_ref_grid, n_Texp_grid = broadening_grid_for_single_broadening_mode(
+            nu_lines, gamma_ref, n_Texp, single_broadening_parameters, R)
+    else:
+        ngamma_ref_grid, n_Texp_grid = make_broadpar_grid(
+            ngamma_ref,
+            n_Texp,
+            Tmax,
+            Tmin,
+            Tref_broadening,
+            dit_grid_resolution=dit_grid_resolution)
+
+    print("# of reference width grid : ", len(ngamma_ref_grid))
+    print("# of temperature exponent grid :", len(n_Texp_grid))
 
     wavmask = (nu_lines >= nu_grid[0]) * (nu_lines <= nu_grid[-1])  #Issue 341
 
@@ -197,6 +207,21 @@ def init_premodit(nu_lines,
     pmarray = jnp.array(pmarray)
 
     return lbd_coeff, multi_index_uniqgrid, elower_grid, ngamma_ref_grid, n_Texp_grid, R, pmarray
+
+
+def broadening_grid_for_single_broadening_mode(nu_lines, gamma_ref, n_Texp,
+                                               single_broadening_parameters,
+                                               R):
+    if single_broadening_parameters[0] is not None:
+        ngamma_ref_grid = jnp.array(
+            [single_broadening_parameters[0] / np.median(nu_lines) * R])
+    else:
+        ngamma_ref_grid = jnp.array([np.median(gamma_ref / nu_lines) * R])
+    if single_broadening_parameters[1] is not None:
+        n_Texp_grid = jnp.array([single_broadening_parameters[1]])
+    else:
+        n_Texp_grid = jnp.array([np.median(n_Texp)])
+    return ngamma_ref_grid, n_Texp_grid
 
 
 def init_modit_vald(nu_linesM, nus, N_usp):

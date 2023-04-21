@@ -26,6 +26,7 @@ testdata = {}
 testdata["exomol"] = TESTDATA_CO_EXOMOL_MODIT_XS_REF
 testdata["hitemp"] = TESTDATA_CO_HITEMP_MODIT_XS_REF_AIR
 
+
 @pytest.mark.parametrize("db, diffmode", [("exomol", 0), ("exomol", 1),
                                           ("exomol", 2), ("hitemp", 0),
                                           ("hitemp", 1), ("hitemp", 2)])
@@ -51,15 +52,39 @@ def test_xsection_premodit(db, diffmode):
     return opa.nu_grid, xsv, opa.dE, opa.Twt, opa.Tref, Ttest
 
 
+@pytest.mark.parametrize("db, diffmode", [("exomol", 0), ("hitemp", 2)])
+def test_xsection_premodit_for_single_broadening(db, diffmode):
+
+    ### DO NOT CHANGE ###
+    Ttest = 1200  #fix to compare w/ precomputed xs by MODIT.
+    #####################
+    Ptest = 1.0
+    mdb = mock_mdb(db)
+    nu_grid, wav, res = mock_wavenumber_grid()
+    opa = OpaPremodit(mdb=mdb,
+                      nu_grid=nu_grid,
+                      diffmode=diffmode,
+                      auto_trange=[500.0, 1500.0], single_broadening=True)
+    xsv = opa.xsvector(Ttest, Ptest)
+    filename = pkg_resources.resource_filename('exojax',
+                                               'data/testdata/' + testdata[db])
+    dat = pd.read_csv(filename, delimiter=",", names=("nus", "xsv"))
+    res = np.max(np.abs(1.0 - xsv / dat["xsv"].values))
+    assert res < 0.06 # < 6% (HITEMP) / 4% (ExoMOL) diff from exact broadening parameters using MODIT
+    return opa.nu_grid, xsv, opa.dE, opa.Twt, opa.Tref, Ttest
+
+
 if __name__ == "__main__":
     #comparison with MODIT
     import matplotlib.pyplot as plt
 
-    db = "hitemp"
-    #db = "exomol"
+    #db = "hitemp"
+    db = "exomol"
 
     diffmode = 0
-    nus, xs, dE, Twt, Tref, Tin = test_xsection_premodit(db, diffmode)
+    #nus, xs, dE, Twt, Tref, Tin = test_xsection_premodit(db, diffmode)
+    nus, xs, dE, Twt, Tref, Tin = test_xsection_premodit_for_single_broadening(
+        db, diffmode)
     filename = pkg_resources.resource_filename('exojax',
                                                'data/testdata/' + testdata[db])
 

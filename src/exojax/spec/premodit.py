@@ -4,7 +4,7 @@
 import numpy as np
 import jax.numpy as jnp
 from jax import jit, vmap
-from exojax.spec.lsd import npgetix, npadd3D_multi_index
+from exojax.spec.lsd import npgetix, npadd3D_multi_index, npadd3D_direct1D
 from exojax.utils.constants import hcperk
 from exojax.utils.constants import Tref_original
 from exojax.spec.modit_scanfft import calc_xsection_from_lsd_scanfft
@@ -394,14 +394,17 @@ def generate_lbd(line_strength_ref,
         nu_lines (_type_): _description_
         nu_grid (_type_): _description_
         ngamma_ref (_type_): _description_
-        ngamma_ref_grid (_type_): _description_
-        n_Texp (_type_): _description_
-        n_Texp_grid (_type_): _description_
+        ngamma_ref_grid (_type_): normalized gamma at reference grid
+        n_Texp (_type_): 
+        n_Texp_grid (_type_): normalized temperature exponent grid
         elower (_type_): _description_
         elower_grid (_type_): _description_
         Twt: temperature used for the weight coefficient computation 
         Tref: reference temperature in Kelvin, default is 296.0 K
         diffmode (int): i-th Taylor expansion is used for the weight, default is 1.
+        
+    Notes:
+        When len(ngamma_ref_grid) = 1 and len(n_Texp_grid) = 1, the single broadening parameter mode is applied.
 
     Returns:
         [jnp array]: the list of the n-th coeffs of line shape density (LBD)
@@ -416,9 +419,17 @@ def generate_lbd(line_strength_ref,
         >>> n_Texp = n_Texp_grid[multi_index_uniqgrid[:,0]] # temperature exponent for the unique broad par
         
     """
+
     cont_nu, index_nu = npgetix(nu_lines, nu_grid)
-    multi_index_lines, multi_cont_lines, uidx_bp, neighbor_uidx, multi_index_uniqgrid, Ng_broadpar = broadpar_getix(
-        ngamma_ref, ngamma_ref_grid, n_Texp, n_Texp_grid)
+    single_broadening = _check_single_broadening(
+        ngamma_ref_grid, n_Texp_grid)
+
+    if single_broadening:
+        multi_index_uniqgrid = jnp.array([[0, 0]])
+        Ng_broadpar = 1
+    else:
+        multi_index_lines, multi_cont_lines, uidx_bp, neighbor_uidx, multi_index_uniqgrid, Ng_broadpar = broadpar_getix(
+            ngamma_ref, ngamma_ref_grid, n_Texp, n_Texp_grid)
 
     # We extend the LBD grid to +1 along nu direction.
     #Ng_nu = len(nu_grid)
@@ -434,16 +445,22 @@ def generate_lbd(line_strength_ref,
     for idiff in range(diffmode + 1):
         lbd_diff = np.zeros((Ng_nu_plus_one, Ng_broadpar, Ng_elower_plus_one),
                             dtype=np.float64)
-        lbd_diff = npadd3D_multi_index(lbd_diff,
-                                       line_strength_ref,
-                                       cont_nu,
-                                       index_nu,
-                                       coeff_elower[idiff],
-                                       index_elower,
-                                       uidx_bp,
-                                       multi_cont_lines,
-                                       neighbor_uidx,
-                                       sumz=1.0)
+
+        if single_broadening:
+            lbd_diff = npadd3D_direct1D(lbd_diff, line_strength_ref, cont_nu,
+                                        index_nu, 1.0, 0, coeff_elower[idiff],
+                                        index_elower)
+        else:
+            lbd_diff = npadd3D_multi_index(lbd_diff,
+                                           line_strength_ref,
+                                           cont_nu,
+                                           index_nu,
+                                           coeff_elower[idiff],
+                                           index_elower,
+                                           uidx_bp,
+                                           multi_cont_lines,
+                                           neighbor_uidx,
+                                           sumz=1.0)
         if idiff == 0:
             lbd_diff = convert_to_jnplog(lbd_diff)
         else:
@@ -455,6 +472,25 @@ def generate_lbd(line_strength_ref,
     lbd_coeff = jnp.array(lbd_coeff)
 
     return lbd_coeff, multi_index_uniqgrid
+
+
+def _check_single_broadening(ngamma_ref_grid, n_Texp_grid):
+    """check if the single broadening parameter mode is applied
+
+    Args:
+        ngamma_ref_grid (_type_): normalized gamma at reference grid
+        n_Texp_grid (_type_): normalized temperature exponent grid
+
+    Returns:
+        bool: single_broadening_parameter
+    """
+    if len(ngamma_ref_grid) == 1 and len(n_Texp_grid) == 1:
+        print("Single broadening parameter: ngamma_ref=", ngamma_ref_grid[0],
+              "n_Texp=", n_Texp_grid[1])
+        single_broadening = True
+    else:
+        single_broadening = False
+    return single_broadening
 
 
 def convert_to_jnplog(lbd_nth):

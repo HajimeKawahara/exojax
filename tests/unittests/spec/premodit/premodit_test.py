@@ -70,8 +70,10 @@ def test_broadpar_getix():
         Tref_broadening=Tref_original,
         twod_factor=1.0,
         dit_grid_resolution=0.2)
+
     multi_index_lines, multi_cont_lines, uidx_lines, neighbor_uidx, multi_index_uniqgrid, Ng_broadpar = broadpar_getix(
         ngamma_ref, ngamma_ref_grid, n_Texp, n_Texp_grid)
+
     iline_interest = len(n_Texp) - 1
     uniq_index = uidx_lines[iline_interest]
     assert np.all(uidx_lines == [1, 0, 3, 1, 3, 2])
@@ -87,6 +89,8 @@ def test_broadpar_getix():
     assert np.all(multi_index_uniqgrid == ref)
     assert Ng_broadpar == len(multi_index_uniqgrid)
 
+
+    
 
 def test_unbias_ngamma_grid():
     ngamma_ref, n_Texp = mock_broadpar_exomol()
@@ -104,15 +108,32 @@ def test_unbias_ngamma_grid():
         dit_grid_resolution=0.2)
     multi_index_lines, multi_cont_lines, uidx_lines, neighbor_uidx, multi_index_uniqgrid, Ng_broadpar = broadpar_getix(
         ngamma_ref, ngamma_ref_grid, n_Texp, n_Texp_grid)
+
     ngamma_grid = unbiased_ngamma_grid(Ttest, Ptest, ngamma_ref_grid,
                                        n_Texp_grid, multi_index_uniqgrid,
                                        Tref_broadening)
+
     ref = [
         0.46569834, 0.42327028, 0.53309152, 0.55464097, 0.48452351, 0.38470768,
         0.44038036, 0.61023745, 0.63490541, 0.50410967, 0.57706152
     ]
     assert np.all(ngamma_grid == pytest.approx(ref))
 
+
+def test_unbias_ngamma_grid_works_for_single_broadening_parameter():
+    Nline=10
+    ngamma_ref_grid = np.array([1.0])
+    n_Texp_grid = np.array([0.5])    
+    Ttest = 2000.0
+    Ptest = 10.0
+    Tref_broadening = Tref_original
+    multi_index_uniqgrid = np.array([[0,0]])
+
+    ngamma_grid = unbiased_ngamma_grid(Ttest, Ptest, ngamma_ref_grid,
+                                       n_Texp_grid, multi_index_uniqgrid,
+                                       Tref_broadening)
+
+    assert ngamma_grid[0] == pytest.approx(3.84707681)
 
 def _example_lbd():
     from exojax.utils.grids import wavenumber_grid
@@ -169,7 +190,7 @@ def test_unbiased_lsd():
 
 @pytest.mark.parametrize("db", ["exomol","hitemp"])
 def test_broadpar_grid_as_a_function_of_Tref_broadening(db):
-    """ comparison of non-ptimized and optimized broadening parameter grid in PreMODIT #366 
+    """ comparison of non-optimized and optimized broadening parameter grid in PreMODIT #366 
     """
     ngamma_ref, n_Texp = mock_broadpar(db)
     Tmax = 3000.0
@@ -200,9 +221,9 @@ def test_broadpar_grid_as_a_function_of_Tref_broadening(db):
 
 
 if __name__ == "__main__":
-    test_broadpar_grid_as_a_function_of_Tref_broadening("exomol")
-    test_broadpar_grid_as_a_function_of_Tref_broadening("hitemp")
-    
+    #test_broadpar_grid_as_a_function_of_Tref_broadening("exomol")
+    #test_broadpar_grid_as_a_function_of_Tref_broadening("hitemp")
+    test_unbias_ngamma_grid_works_for_single_broadening_parameter()
     #test_unbiased_lsd()
     #test_make_elower_grid()
     #test_make_broadpar_grid()
