@@ -211,33 +211,6 @@ The style used in ExoJAX 1 is also acceptable (not recommended):
 	
 	>>> Mdbhitran(".database/CO/05_hit12.par", nurange=[4200.0, 4300.0])
 
-Non-air broadening
-^^^^^^^^^^^^^^^^^^^^^^^^
-
-We can use non-air broadening coefficients for some molecules using ""nonair_broadening" option in MdbHitran.
-
-.. code:: ipython
-	
-	>>> nus, wav, res = wavenumber_grid(22920.0,
-                                    23100.0,
-                                    100000,
-                                    unit='AA',
-                                    xsmode="modit")
-    >>> mdb = api.MdbHitran("CO",nus, nonair_broadening=True)
-    >>> print(mdb.n_h2)
-
-+-----------------------+-------------+
-| background atmosphere | attribute   |
-+-----------------------+-------------+
-|hydrogen               |n_h2         |
-+-----------------------+-------------+
-|helium                 |n_he         |
-+-----------------------+-------------+
-|CO2                    |n_co2        |
-+-----------------------+-------------+
-|H2O                    |n_h2o        |
-+-----------------------+-------------+
-
 
 Masking Line Information
 ================================================

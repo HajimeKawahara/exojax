@@ -16,6 +16,7 @@ Molecular Database
    userguide/database.rst	
    userguide/mdb.rst
    userguide/api.rst
+   userguide/nonair.rst
    userguide/qstates.rst
    userguide/atomll.rst
 
