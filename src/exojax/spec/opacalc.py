@@ -61,8 +61,14 @@ class OpaPremodit(OpaCalc):
             or provide self.dE, self.Tref, self.Twt and apply self.apply_params()
             
         Note:
-            {mode: manual/minmax/single, value:(float)/list/None}
-
+            The option of "broadening_parameter_resolution" controls the resolution of broadening parameters.
+            When you wanna use the manual resolution, set broadening_parameter_resolution = {mode: "manual", value: 0.2}.
+            When you wanna use the min and max values of broadening parameters in database, set broadening_parameter_resolution = {mode: "minmax", value: None}.
+            When you wanna give single broadening parameters: set broadening_parameter_resolution = {mode: "single", value: None} the median values of gamma_ref, n_Texp are used
+            or set broadening_parameter_resolution = {mode: "single", value: [gamma_ref, n_Texp]} values are at 296K, for the fixed parameter set.  
+            The use of device memory: "manual" >= "minmax" > "single". In general, small value (such as 0.2) requires large device memory. 
+            We recommend to check the difference of the final specrum between "manual", "minmax", and "single" when you had a device memory problem.
+            
         Args:
             mdb (mdb class): mdbExomol, mdbHitemp, mdbHitran
             nu_grid (): wavenumber grid (cm-1)
