@@ -37,14 +37,46 @@ If you are more familiar with PreMODIT's algorithm, you can specify the paramete
                       diffmode=diffmode,
                       manual_params=[dE, Tref, Twt])
 
+Changing the Resolution of the Broadening Parameters 
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+By setting `broadening_resolution` option to "{"mode": "manual", "value": 1.0}", 
+`OpaPremodit` changes the resolution of the broadening parameters.
+The default value of `{"mode": "manual", "value": 0.2}` might be overkilled for real spectrum analysis`.
+
+.. code:: ipython
+	
+    >>> opa = OpaPremodit(mdb=mdb,
+                      nu_grid=nu_grid,
+                      diffmode=diffmode,
+                      auto_trange=[500.0, 1500.0],
+                      broadening_resolution={"mode": "manual", "value": 1.0})
+    
+You can check the grid overlaied on the data distribution by
+
+.. code:: ipython
+	
+    >>> opa.plot_broadening_parameters()
+
+.. image:: premodit_files/example_manual.png
+
+
+Note that gamma in the above Figure is that at T=`opa.Tref_broadening`. 
+
+
+`broadening_resolution = {"mode": "minmax", "value": None}` using min/max values of the broadening parameters as grids
+
+.. image:: premodit_files/example_minmax.png
+
+
 Single Broadening Parameter Set
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-By default, this algorithm constructs one grid for the broadening parameter. 
+By default, `OpaPremodit` constructs one grid for the broadening parameter. 
 However, reducing the number of broadening grids may be useful for fitting, 
 since the device memory usage becomes 
 broadening grid number x free parameter number x atmospheric layer number x wavenumber grid number x F64/F32 byte number. 
-By setting "single_broadening" option to True, PreMODIT can be used with a single broadening parameter.
+By setting "broadening_resolution" option to "{"mode": "single", "value": None}", PreMODIT can be used with a single broadening parameter.
 
 
 .. code:: ipython
@@ -53,7 +85,9 @@ By setting "single_broadening" option to True, PreMODIT can be used with a singl
                       nu_grid=nu_grid,
                       diffmode=diffmode,
                       auto_trange=[500.0, 1500.0],
-                      single_broadening=True)
+                      broadening_resolution={"mode": "single", "value": None})
     
 
 In the above case, we assumed the median of broadening parameters of mdb. If you want to give the specific values use "single_broadening_parameters" option.
+
+.. image:: premodit_files/example_single.png

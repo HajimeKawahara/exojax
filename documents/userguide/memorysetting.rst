@@ -1,3 +1,16 @@
+
+Reducing Device Memory for PreMODIT 
+========================================
+
+
+For Premodit, we recommend to try the following points
+
+- Divide the wavenumber range into multiple segments
+- Consider to decrease the resolution of the broadening parameters, using `broadening_resolution` option in OpaPremodit. 
+
+
+
+
 Device Memory Control
 ========================
 
@@ -30,8 +43,3 @@ You can check the device memory usage by inserting the following at any point.
     from cuda import cudart
     cudart.cudaMemGetInfo()
 
-
-Reducing Device Memory for PreMODIT 
-========================================
-
-Divide the wavenumber range into multiple segments.

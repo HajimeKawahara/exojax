@@ -46,7 +46,7 @@ class OpaPremodit(OpaCalc):
                  mdb,
                  nu_grid,
                  diffmode=0,
-                 broadening_parameter_resolution={
+                 broadening_resolution={
                      "mode": "manual",
                      "value": 0.2
                  },
@@ -73,7 +73,7 @@ class OpaPremodit(OpaCalc):
             mdb (mdb class): mdbExomol, mdbHitemp, mdbHitran
             nu_grid (): wavenumber grid (cm-1)
             diffmode (int, optional): _description_. Defaults to 0.
-            broadening_parameter_resolution (dict, optional): definition of the broadening parameter resolution. Default to {"mode": "manual", value: 0.2} 
+            broadening_resolution (dict, optional): definition of the broadening parameter resolution. Default to {"mode": "manual", value: 0.2} 
             auto_trange (optional): temperature range [Tl, Tu], in which line strength is within 1 % prescision. Defaults to None.
             manual_params (optional): premodit parameter set [dE, Tref, Twt]. Defaults to None.
             dit_grid_resolution (float, optional): force to set broadening_parameter_resolution={mode:manual, value: dit_grid_resolution}), ignores broadening_parameter_resolution.
@@ -91,7 +91,7 @@ class OpaPremodit(OpaCalc):
 
         #broadening parameter setting
         self.determine_broadening_parameter_resolution(
-            broadening_parameter_resolution, dit_grid_resolution)
+            broadening_resolution, dit_grid_resolution)
         self.broadening_parameters_setting()
 
         if auto_trange is not None:
@@ -186,7 +186,7 @@ class OpaPremodit(OpaCalc):
             )
 
     def compute_gamma_ref_and_n_Texp(self, mdb):
-        """convert gamma_ref to the regular formalization
+        """convert gamma_ref to the regular formalization and noramlize it for Tref_braodening
 
         Notes:
             gamma (T) = (gamma at Tref_original) * (Tref_original/Tref_broadening)**n 
