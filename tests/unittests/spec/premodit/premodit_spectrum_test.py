@@ -57,6 +57,9 @@ def test_rt(db, diffmode, fig=False):
     assert np.all(residual < 0.01)
     return nu_grid, F0, dat["flux"].values
 
+@pytest.mark.parametrize("db, diffmode", [("exomol", 0), ("exomol", 1),
+                                          ("exomol", 2), ("hitemp", 0),
+                                          ("hitemp", 1), ("hitemp", 2)])
 def test_rt_for_single_broadening_parameters(db, diffmode, fig=False):
 
     nu_grid, wav, res = mock_wavenumber_grid()
@@ -78,7 +81,10 @@ def test_rt_for_single_broadening_parameters(db, diffmode, fig=False):
                       nu_grid=nu_grid,
                       diffmode=diffmode,
                       auto_trange=[art.Tlow, art.Thigh], 
-                      single_broadening=True)
+                      broadening_resolution={
+                          "mode": "single",
+                          "value": None
+                      })
 
     xsmatrix = opa.xsmatrix(Tarr, art.pressure)
     dtau = art.opacity_profile_lines(xsmatrix, mmr_arr, opa.mdb.molmass,

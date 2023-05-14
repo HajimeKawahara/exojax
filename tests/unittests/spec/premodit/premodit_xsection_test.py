@@ -65,7 +65,10 @@ def test_xsection_premodit_for_single_broadening(db, diffmode):
                       nu_grid=nu_grid,
                       diffmode=diffmode,
                       auto_trange=[500.0, 1500.0],
-                      single_broadening=True)
+                      broadening_resolution={
+                          "mode": "single",
+                          "value": None
+                      })
     xsv = opa.xsvector(Ttest, Ptest)
     filename = pkg_resources.resource_filename('exojax',
                                                'data/testdata/' + testdata[db])

@@ -328,6 +328,12 @@ class OpaPremodit(OpaCalc):
     def plot_broadening_parameters(self,
                                    figname="broadpar_grid.png",
                                    crit=300000):
+        """plot broadening parameters and grids
+
+        Args:
+            figname (str, optional): output image file. Defaults to "broadpar_grid.png".
+            crit (int, optional): sampling criterion. Defaults to 300000. when the number of lines is huge and if it exceeded ~ crit, we sample the lines to reduce the computation.
+        """
         from exojax.plot.opaplot import plot_broadening_parameters_grids
         _, _, _, ngamma_ref_grid, n_Texp_grid, _, _ = self.opainfo
         gamma_ref_in = self.gamma_ref
