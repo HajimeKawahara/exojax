@@ -89,6 +89,7 @@ class OpaPremodit(OpaCalc):
         self.resolution = resolution_eslog(nu_grid)
         self.mdb = mdb
 
+        #broadening parameter setting
         self.determine_broadening_parameter_resolution(
             broadening_parameter_resolution, dit_grid_resolution)
         self.broadening_parameters_setting()
@@ -172,6 +173,8 @@ class OpaPremodit(OpaCalc):
         elif mode == "single":
             self.dit_grid_resolution = None
             self.single_broadening = True
+            if val is None:
+                val = [None, None]
             self.single_broadening_parameters = val
         elif mode == "minmax":
             self.dit_grid_resolution = np.inf
@@ -321,6 +324,18 @@ class OpaPremodit(OpaCalc):
 
         else:
             raise ValueError("diffmode should be 0, 1, 2.")
+
+    def plot_broadening_parameters(self,
+                                   figname="broadpar_grid.png",
+                                   crit=300000):
+        from exojax.plot.opaplot import plot_broadening_parameters_grids
+        _, _, _, ngamma_ref_grid, n_Texp_grid, _, _ = self.opainfo
+        gamma_ref_in = self.gamma_ref
+        n_Texp_in = self.n_Texp
+        plot_broadening_parameters_grids(ngamma_ref_grid, n_Texp_grid,
+                                         self.nu_grid, self.resolution,
+                                         gamma_ref_in, n_Texp_in, crit,
+                                         figname)
 
 
 class OpaModit(OpaCalc):
