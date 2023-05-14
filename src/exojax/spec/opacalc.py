@@ -45,12 +45,14 @@ class OpaPremodit(OpaCalc):
     def __init__(self,
                  mdb,
                  nu_grid,
-                 diffmode=2,
+                 diffmode=0,
+                 broadening_parameter_resolution={
+                     "mode": "manual",
+                     "value": 0.2
+                 },
                  auto_trange=None,
                  manual_params=None,
-                 dit_grid_resolution=0.2,
-                 single_broadening = False,
-                 single_broadening_parameters=[None,None]):
+                 dit_grid_resolution=None):
         """initialization of OpaPremodit
 
         Note:
@@ -58,16 +60,17 @@ class OpaPremodit(OpaCalc):
             use manual_setting()
             or provide self.dE, self.Tref, self.Twt and apply self.apply_params()
             
+        Note:
+            {mode: manual/minmax/single, value:(float)/list/None}
 
         Args:
             mdb (mdb class): mdbExomol, mdbHitemp, mdbHitran
             nu_grid (): wavenumber grid (cm-1)
-            diffmode (int, optional): _description_. Defaults to 2.
+            diffmode (int, optional): _description_. Defaults to 0.
+            broadening_parameter_resolution (dict, optional): definition of the broadening parameter resolution. Default to {"mode": "manual", value: 0.2} 
             auto_trange (optional): temperature range [Tl, Tu], in which line strength is within 1 % prescision. Defaults to None.
-            manual_params (optional): premodit param set [dE, Tref, Twt]. Defaults to None.
-            single_broadening (optional): if True, single_braodening_parameters is used. Defaults to False. 
-            single_broadening_parameters (optional): [gamma_ref, n_Texp] at 296K for single broadening. When None, the median is used.
-
+            manual_params (optional): premodit parameter set [dE, Tref, Twt]. Defaults to None.
+            dit_grid_resolution (float, optional): force to set broadening_parameter_resolution={mode:manual, value: dit_grid_resolution}), ignores broadening_parameter_resolution.
         """
         super().__init__()
 
@@ -79,9 +82,10 @@ class OpaPremodit(OpaCalc):
         self.wav = nu2wav(self.nu_grid, unit="AA")
         self.resolution = resolution_eslog(nu_grid)
         self.mdb = mdb
-        self.dit_grid_resolution = dit_grid_resolution
-        self.single_broadening = single_broadening
-        self.single_broadening_parameters = single_broadening_parameters
+
+        self.determine_broadening_parameter_resolution(
+            broadening_parameter_resolution, dit_grid_resolution)
+        self.broadening_parameters_setting()
 
         if auto_trange is not None:
             self.auto_setting(auto_trange[0], auto_trange[1])
@@ -136,9 +140,43 @@ class OpaPremodit(OpaCalc):
         from exojax.spec.premodit import reference_temperature_broadening_at_midpoint
         self.Tref_broadening = reference_temperature_broadening_at_midpoint(
             self.Tmin, self.Tmax)
-        print("OpaPremodit: Tref_broadening is set to ",self.Tref_broadening, "K")
+        print("OpaPremodit: Tref_broadening is set to ", self.Tref_broadening,
+              "K")
 
-    def set_gamma_and_n_Texp(self, mdb):
+    def determine_broadening_parameter_resolution(
+            self, broadening_parameter_resolution, dit_grid_resolution):
+        if dit_grid_resolution is not None:
+            warnings.warn(
+                "dit_grid_resolution is not None. Ignoring broadening_parameter_resolution.",
+                UserWarning)
+            self.broadening_parameter_resolution = {
+                "mode": "manual",
+                "value": dit_grid_resolution
+            }
+        else:
+            self.broadening_parameter_resolution = broadening_parameter_resolution
+
+    def broadening_parameters_setting(self):
+        mode = self.broadening_parameter_resolution["mode"]
+        val = self.broadening_parameter_resolution["value"]
+        if mode == "manual":
+            self.dit_grid_resolution = val
+            self.single_broadening = False
+            self.single_broadening_parameters = None
+        elif mode == "single":
+            self.dit_grid_resolution = None
+            self.single_broadening = True
+            self.single_broadening_parameters = val
+        elif mode == "minmax":
+            self.dit_grid_resolution = np.inf
+            self.single_broadening = False
+            self.single_broadening_parameters = None
+        else:
+            raise ValueError(
+                "Unknown mode in broadening_parameter_resolution e.g. manual/single/minmax."
+            )
+
+    def compute_gamma_ref_and_n_Texp(self, mdb):
         """convert gamma_ref to the regular formalization
 
         Notes:
@@ -150,7 +188,9 @@ class OpaPremodit(OpaCalc):
 
         """
         if mdb.dbtype == "hitran":
-            print("OpaPremodit: gamma_air and n_air are used. gamma_ref = gamma_air/Patm")
+            print(
+                "OpaPremodit: gamma_air and n_air are used. gamma_ref = gamma_air/Patm"
+            )
             self.n_Texp = mdb.n_air
             reference_factor = (Tref_original /
                                 self.Tref_broadening)**(self.n_Texp)
@@ -171,8 +211,8 @@ class OpaPremodit(OpaCalc):
             self.Tref_broadening = Tref_original
         else:
             self.set_Tref_broadening_to_midpoint()
-        
-        self.set_gamma_and_n_Texp(self.mdb)
+
+        self.compute_gamma_ref_and_n_Texp(self.mdb)
 
         self.opainfo = initspec.init_premodit(
             self.mdb.nu_lines,
