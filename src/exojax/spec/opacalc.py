@@ -73,7 +73,7 @@ class OpaPremodit(OpaCalc):
             mdb (mdb class): mdbExomol, mdbHitemp, mdbHitran
             nu_grid (): wavenumber grid (cm-1)
             diffmode (int, optional): _description_. Defaults to 0.
-            broadening_resolution (dict, optional): definition of the broadening parameter resolution. Default to {"mode": "manual", value: 0.2} 
+            broadening_resolution (dict, optional): definition of the broadening parameter resolution. Default to {"mode": "manual", value: 0.2}. See Note. 
             auto_trange (optional): temperature range [Tl, Tu], in which line strength is within 1 % prescision. Defaults to None.
             manual_params (optional): premodit parameter set [dE, Tref, Twt]. Defaults to None.
             dit_grid_resolution (float, optional): force to set broadening_parameter_resolution={mode:manual, value: dit_grid_resolution}), ignores broadening_parameter_resolution.
@@ -90,8 +90,8 @@ class OpaPremodit(OpaCalc):
         self.mdb = mdb
 
         #broadening parameter setting
-        self.determine_broadening_parameter_resolution(
-            broadening_resolution, dit_grid_resolution)
+        self.determine_broadening_parameter_resolution(broadening_resolution,
+                                                       dit_grid_resolution)
         self.broadening_parameters_setting()
 
         if auto_trange is not None:
@@ -100,7 +100,7 @@ class OpaPremodit(OpaCalc):
             self.manual_setting(manual_params[0], manual_params[1],
                                 manual_params[2])
         else:
-            print("OpaPremodit: init w/o params setting")
+            print("OpaPremodit: initialization without parameters setting")
             print("Call self.apply_params() to complete the setting.")
 
     def auto_setting(self, Tl, Tu):
@@ -214,7 +214,7 @@ class OpaPremodit(OpaCalc):
         self.mdb.change_reference_temperature(self.Tref)
         self.dbtype = self.mdb.dbtype
 
-        # when single_broadening=True we do not change the Tref_broadening from the original one
+        #broadening
         if self.single_broadening:
             print("OpaPremodit: a single broadening parameter set is used.")
             self.Tref_broadening = Tref_original
@@ -429,9 +429,9 @@ class OpaModit(OpaCalc):
             gammaL = gamma_exomol(P, T, self.mdb.n_Texp,
                                   self.mdb.alpha_ref) + gamma_natural(
                                       self.mdb.A)
-
         dv_lines = self.mdb.nu_lines / R
         ngammaL = gammaL / dv_lines
+
         nsigmaD = normalized_doppler_sigma(T, self.mdb.molmass, R)
         Sij = line_strength(T, self.mdb.logsij0, self.mdb.nu_lines,
                             self.mdb.elower, qt)
