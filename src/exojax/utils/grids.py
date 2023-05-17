@@ -26,18 +26,18 @@ def wavenumber_grid(x0, x1, N, xsmode, unit='cm-1'):
         evenly-spaced log grid both in wavenumber and wavelength spaces. 
 
     Returns:
-        wavenumber grid evenly spaced in log space in ascending order (nus)
-        corresponding wavelength grid (AA) in ascending order (wav). wav[-1] corresponds to nus[0]
-        spectral resolution
+        nu_grid: wavenumber grid evenly spaced in log space in ascending order (nus)
+        wav: corresponding wavelength grid (AA) in ascending order (wav). wav[-1] corresponds to nus[0]
+        resolution: spectral resolution
     """
     print("xsmode = ",xsmode)
     _check_even_number(N)
     grid_mode = check_scale_xsmode(xsmode)
     grid, unit = _set_grid(x0, x1, N, unit, grid_mode)
-    nus = _set_nus(unit, grid)
-    wav = nu2wav(nus, unit="AA")
-    resolution = grid_resolution(grid_mode, nus)
-    return nus, wav, resolution
+    nu_grid = _set_nus(unit, grid)
+    wav = nu2wav(nu_grid, unit="AA")
+    resolution = grid_resolution(grid_mode, nu_grid)
+    return nu_grid, wav, resolution
 
 
 def _set_grid(x0, x1, N, unit, grid_mode):
