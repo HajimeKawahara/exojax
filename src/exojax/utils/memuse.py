@@ -78,8 +78,10 @@ def premodit_devmemory_use(ngrid_nu_grid,
         (str, str): memory computation case, info 
     """
     info = "opacity "
-    memuse_case0 = ngrid_nu_grid * ngrid_broadpar
-    memuse_case1 = ngrid_nu_grid * ngrid_elower * ngrid_broadpar * 2 
+    factor_case0 = 4
+    factor_case1 = 2
+    memuse_case0 = ngrid_nu_grid * ngrid_broadpar * factor_case0
+    memuse_case1 = ngrid_nu_grid * ngrid_elower * ngrid_broadpar * factor_case1 
 
     if nfree is not None:
         memuse_case0 *= nfree

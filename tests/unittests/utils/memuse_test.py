@@ -20,7 +20,7 @@ def test_memuse_premodit():
                                  nlayer=nlayer,
                                  nfree=nfree,
                                  precision="FP64")
-    assert mem == 11200000000
+    assert mem == 44800000000
 
 
 def test_device_memory_use_premodit_art_opa():
@@ -50,7 +50,7 @@ def test_device_memory_use_premodit_art_opa():
     nelower_ref = 283
     # CASE 0
     memuse = device_memory_use(opa, art=art, nfree=nfree)
-    assert memuse == len(nu_grid)*nbroad_ref*nlayer*nfree*nfp64
+    assert memuse == len(nu_grid)*nbroad_ref*nlayer*nfree*nfp64*4
     # CASE 1
     memuse = device_memory_use(opa)
     assert memuse ==  len(nu_grid)*nbroad_ref*nelower_ref*nfp64*2
