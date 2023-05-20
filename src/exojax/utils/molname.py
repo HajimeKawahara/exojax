@@ -37,7 +37,7 @@ def exact_molecule_name_to_isotope_number(exact_molecule_name):
         #check hitran exact name
         exact_hitran_molecule_name = exact_molname_exomol_to_hitran(
             exact_molecule_name)
-        print("HITRAN exact name=",exact_hitran_molecule_name)
+        print("HITRAN exact name=", exact_hitran_molecule_name)
         keys = [
             k for k, v in isotope_name_dict.items()
             if v == exact_hitran_molecule_name
@@ -46,7 +46,7 @@ def exact_molecule_name_to_isotope_number(exact_molecule_name):
         molnumber = keys[0][0]
         isotope_number = keys[0][1]
     else:
-        warnings.warn("No isotope number identified.",UserWarning)
+        warnings.warn("No isotope number identified.", UserWarning)
         return None, None
 
     return molnumber, isotope_number
@@ -115,18 +115,47 @@ def exact_molname_exomol_to_hitran(exact_exomol_molecule_name):
         str: exact exomol molecule name such as (12C)(16O)
     """
     component = exact_exomol_molecule_name.split("-")
-    hitran_exact_name=""
+    hitran_exact_name = ""
     hydrolist = ["1H", "1H2", "2H", "2H2"]
     replacelist = ["H", "H2", "D", "D2"]
     for c in component:
         if c in hydrolist:
             ind = hydrolist.index(c)
-            hitran_exact_name=hitran_exact_name+replacelist[ind]
+            hitran_exact_name = hitran_exact_name + replacelist[ind]
         elif c[-1].isdigit():
-            hitran_exact_name=hitran_exact_name+"("+c[:-1]+")"+c[-1]
+            hitran_exact_name = hitran_exact_name + "(" + c[:-1] + ")" + c[-1]
         else:
-            hitran_exact_name=hitran_exact_name+"("+c+")"
+            hitran_exact_name = hitran_exact_name + "(" + c + ")"
     return hitran_exact_name
+
+
+def exact_molname_hitran_to_exomol(exact_molecule_name_hitran):
+    """Convert exact_molname used in HITRAN to those in ExoMol
+
+    Args:
+        exact_exomol_molecule_name (str): exact exomol molecule name such as (12C)(16O)
+
+    Returns:
+        str: exact exomol molecule name such as 12C-16O
+    """
+
+    from collections import defaultdict
+    import re
+    matches = re.findall(r'\((.*?)\)(\d*)', exact_molecule_name_hitran)
+    result = defaultdict(int)
+
+    for item, freq in matches:
+        if freq == '':
+            freq = 1
+        result[item] += int(freq)
+
+    # Format the string, exclude 1 from the counts
+    result_string = '-'.join([
+        f'{key}{value}' if value > 1 else key for key, value in result.items()
+    ])
+
+    return result_string
+
 
 def e2s(exact_exomol_molecule_name):
 
