@@ -108,6 +108,7 @@ class MdbExomol(CapiMdbExomol):
                          engine="vaex",
                          crit=crit,
                          bkgdatm=self.bkgdatm,
+                         broadf=self.broadf,
                          cache=True,
                          skip_optional_data=self.skip_optional_data)
 
@@ -176,7 +177,7 @@ class MdbExomol(CapiMdbExomol):
             mask = self.df_load_mask
 
         self.instances_from_dataframes(df[mask])
-        self.compute_broadening(self.jlower, self.jupper)
+        self.compute_broadening(self.jlower.astype(int), self.jupper.astype(int))
         self.gamma_natural = gn(self.A)
         if self.gpu_transfer:
             self.generate_jnp_arrays()
