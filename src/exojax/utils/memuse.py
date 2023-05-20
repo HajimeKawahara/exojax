@@ -1,9 +1,19 @@
-import numpy as np
 from jax.config import config
 
 def device_memory_use(opa, art=None, nfree=None):
+    """device memory use given opa and art (optional), n free parameters (optional)
 
+    Args:
+        opa (opa): opa instance
+        art (art, optional): art instance. Defaults to None.
+        nfree (int, optional): the number of free parameters. Defaults to None.
 
+    Raises:
+        ValueError: method not implemented yet 
+
+    Returns:
+        float: estimated device memory use
+    """
     if config.values["jax_enable_x64"]:
         precision = "FP64"
     else:
@@ -22,7 +32,8 @@ def device_memory_use(opa, art=None, nfree=None):
                           nlayer=nlayer,
                           nfree=nfree,
                           precision=precision)
-    #elif opa.method == "lpf":
+    else:
+        raise ValueError("unknown method.")
 
     return devmemuse
 

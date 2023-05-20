@@ -33,7 +33,7 @@ Molecular/Atomic/Continuum Databases
    tutorials/Fortrat.rst
    tutorials/CIA_opacity.rst
 
-Device Memory Management
+Tuning ExoJAX
 ===========================
 
 .. toctree::
