@@ -247,8 +247,8 @@ class OpaPremodit(OpaCalc):
         
         lbd_coeff, multi_index_uniqgrid, elower_grid, \
             ngamma_ref_grid, n_Texp_grid, R, pmarray = self.opainfo
-        self.ngrid_broadpar == len(multi_index_uniqgrid)
-
+        self.ngrid_broadpar = len(multi_index_uniqgrid)
+        
     def xsvector(self, T, P):
         from exojax.spec.premodit import xsvector_zeroth
         from exojax.spec.premodit import xsvector_first

@@ -9,22 +9,22 @@ def device_memory_use(opa, art=None, nfree=None):
     else:
         precision = "FP32"
 
-    if art is None:
+    if art is not None:
         nlayer = art.nlayer
     else:
         nlayer = None
-
     ngrid_nu_grid = len(opa.nu_grid)
+
     if opa.method == "premodit":
-        ngrid_broadpar = len(opa.ngrid_broadpar)
+        ngrid_broadpar = opa.ngrid_broadpar
         devmemuse = premodit_devmemory_use(ngrid_nu_grid,
                           ngrid_broadpar,
-                          nlayer=None,
-                          nfree=None,
-                          precision="FP64")
-    elif opa.method == "lpf":
+                          nlayer=nlayer,
+                          nfree=nfree,
+                          precision=precision)
+    #elif opa.method == "lpf":
 
-
+    return devmemuse
 
 
 def premodit_devmemory_use(ngrid_nu_grid,
