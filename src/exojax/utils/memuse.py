@@ -1,26 +1,42 @@
 import numpy as np
+from jax.config import config
 
 def device_memory_use(opa, art=None, nfree=None):
+
+
+    if config.values["jax_enable_x64"]:
+        precision = "FP64"
+    else:
+        precision = "FP32"
 
     if art is None:
         nlayer = art.nlayer
     else:
         nlayer = None
 
-    n_nu_grid = len(opa.nu_grid)
+    ngrid_nu_grid = len(opa.nu_grid)
     if opa.method == "premodit":
-        n_broadpar = len(opa.
+        ngrid_broadpar = len(opa.ngrid_broadpar)
+        devmemuse = premodit_devmemory_use(ngrid_nu_grid,
+                          ngrid_broadpar,
+                          nlayer=None,
+                          nfree=None,
+                          precision="FP64")
+    elif opa.method == "lpf":
 
-def premodit_devmemory_use(n_nu_grid,
-                          n_broadpar,
+
+
+
+def premodit_devmemory_use(ngrid_nu_grid,
+                          ngrid_broadpar,
                           nlayer=None,
                           nfree=None,
                           precision="FP64"):
     """compute approximate required device memory for PreMODIT algorithm
 
     Args:
-        n_nu_grid (int): the number of the wavenumber grid
-        n_broadpar (int): the number of the broadening parameter grid
+        ngrid_nu_grid (int): the number of the wavenumber grid
+        ngrid_broadpar (int): the number of the broadening parameter grid
         nlayer (int, optional): If not None (when computing spectrum), the number of the atmospheric layers. Defaults to None.
         nfree (_type_, optional): If not None (when computing an HMC or optimization), the number of free parameters. Defaults to None.
         precision (str, optional): precision of JAX mode FP32/FP64. Defaults to "FP64".
@@ -33,8 +49,8 @@ def premodit_devmemory_use(n_nu_grid,
     """
     mode = "opacity"
     n = 1
-    n *= n_nu_grid
-    n *= n_broadpar
+    n *= ngrid_nu_grid
+    n *= ngrid_broadpar
     if nlayer is not None:
         n *= nlayer
         mode = "spectrum"
