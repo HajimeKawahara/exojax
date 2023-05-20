@@ -1,0 +1,63 @@
+import numpy as np
+
+def device_memory_use(opa, art=None, nfree=None):
+
+    if art is None:
+        nlayer = art.nlayer
+    else:
+        nlayer = None
+
+    n_nu_grid = len(opa.nu_grid)
+    if opa.method == "premodit":
+        n_broadpar = len(opa.
+
+def premodit_devmemory_use(n_nu_grid,
+                          n_broadpar,
+                          nlayer=None,
+                          nfree=None,
+                          precision="FP64"):
+    """compute approximate required device memory for PreMODIT algorithm
+
+    Args:
+        n_nu_grid (int): the number of the wavenumber grid
+        n_broadpar (int): the number of the broadening parameter grid
+        nlayer (int, optional): If not None (when computing spectrum), the number of the atmospheric layers. Defaults to None.
+        nfree (_type_, optional): If not None (when computing an HMC or optimization), the number of free parameters. Defaults to None.
+        precision (str, optional): precision of JAX mode FP32/FP64. Defaults to "FP64".
+
+    Raises:
+        ValueError: _description_
+
+    Returns:
+        float: predicted required device memory (byte)
+    """
+    mode = "opacity"
+    n = 1
+    n *= n_nu_grid
+    n *= n_broadpar
+    if nlayer is not None:
+        n *= nlayer
+        mode = "spectrum"
+    if nlayer is not None:
+        n *= nfree
+        mode += "/inference"
+
+    if precision == "FP64":
+        n *= 8
+    elif precision == "FP32":
+        n *= 4
+    else:
+        raise ValueError("choose FP64 or FP32")
+
+    mode += "("+precision+")"
+    print(mode + " : required device memory = ", n / (1024.)**3, "GB")
+
+    return n
+
+
+if __name__ == "__main__":
+    n_nu_grid = 700000.0 * 0.1
+    n_broadpar = 8
+    nlayer = 200
+    nfree = 10
+    premodit_devmemory_use(n_nu_grid, n_broadpar, nlayer=nlayer, nfree=nfree)

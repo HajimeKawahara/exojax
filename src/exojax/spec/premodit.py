@@ -322,7 +322,7 @@ def broadpar_getix(ngamma_ref, ngamma_ref_grid, n_Texp, n_Texp_grid):
         uidx_lines
         neighbor_uidx
         multi_index_uniqgrid 
-        number of broadpar gird
+        number of broadpar grid
         
     Examples:
         
