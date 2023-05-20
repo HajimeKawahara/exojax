@@ -341,8 +341,8 @@ def broadpar_getix(ngamma_ref, ngamma_ref_grid, n_Texp, n_Texp_grid):
     multi_cont_lines = parallel_merge_grids(cont_ngamma_ref, cont_n_Texp)
     uidx_lines, neighbor_indices, multi_index_uniqgrid = uniqidx_neibouring(
         multi_index_lines)
-    Ng_broadpar = len(multi_index_uniqgrid)
-    return multi_index_lines, multi_cont_lines, uidx_lines, neighbor_indices, multi_index_uniqgrid, Ng_broadpar
+    ngrid_broadpar = len(multi_index_uniqgrid)
+    return multi_index_lines, multi_cont_lines, uidx_lines, neighbor_indices, multi_index_uniqgrid, ngrid_broadpar
 
 
 def compute_dElower(T, interval_contrast=0.1):

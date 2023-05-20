@@ -54,9 +54,12 @@ def test_rt(db, diffmode, fig=False):
     dat = pd.read_csv(filename, delimiter=",", names=("nus", "flux"))
     residual = np.abs(F0 / dat["flux"].values - 1.0)
     print(np.max(residual))
-    assert np.all(residual < 0.01)
+    assert np.all(residual < 0.007)
     return nu_grid, F0, dat["flux"].values
 
+@pytest.mark.parametrize("db, diffmode", [("exomol", 0), ("exomol", 1),
+                                          ("exomol", 2), ("hitemp", 0),
+                                          ("hitemp", 1), ("hitemp", 2)])
 def test_rt_for_single_broadening_parameters(db, diffmode, fig=False):
 
     nu_grid, wav, res = mock_wavenumber_grid()
@@ -78,8 +81,10 @@ def test_rt_for_single_broadening_parameters(db, diffmode, fig=False):
                       nu_grid=nu_grid,
                       diffmode=diffmode,
                       auto_trange=[art.Tlow, art.Thigh], 
-                      single_broadening=True)
-
+                      broadening_resolution={
+                          "mode": "single",
+                          "value": None
+                      })
     xsmatrix = opa.xsmatrix(Tarr, art.pressure)
     dtau = art.opacity_profile_lines(xsmatrix, mmr_arr, opa.mdb.molmass,
                                      gravity)
@@ -95,7 +100,7 @@ def test_rt_for_single_broadening_parameters(db, diffmode, fig=False):
     dat = pd.read_csv(filename, delimiter=",", names=("nus", "flux"))
     residual = np.abs(F0 / dat["flux"].values - 1.0)
     print(np.max(residual))
-    #assert np.all(residual < 0.01)
+    assert np.all(residual < 0.05)
     return nu_grid, F0, dat["flux"].values
 
 
@@ -104,9 +109,11 @@ if __name__ == "__main__":
     db ="hitemp"
     diffmode = 0
     #nus_hitemp, F0_hitemp, Fref_hitemp = test_rt("hitemp", diffmode)  
-    nus_hitemp, F0_hitemp, Fref_hitemp = test_rt_for_single_broadening_parameters("hitemp", diffmode)  
     #nus, F0, Fref = test_rt("exomol", diffmode)  #
+    
+    nus_hitemp, F0_hitemp, Fref_hitemp = test_rt_for_single_broadening_parameters("hitemp", diffmode)  
     nus, F0, Fref =test_rt_for_single_broadening_parameters("exomol", diffmode)  
+
     fig = plt.figure()
     ax = fig.add_subplot(311)
     #ax.plot(nus, Fref, label="MODIT (ExoMol)")

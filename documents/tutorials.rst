@@ -28,12 +28,19 @@ Molecular/Atomic/Continuum Databases
 .. toctree::
    :maxdepth: 1
 
-   tutorials/elower_setting.rst
    tutorials/select_quantum_states.rst
    tutorials/branch.rst
    tutorials/Fortrat.rst
    tutorials/CIA_opacity.rst
 
+Device Memory Management
+===========================
+
+.. toctree::
+   :maxdepth: 1
+
+   userguide/memorysetting.rst	
+   tutorials/elower_setting.rst
 
 
 Manual Settings of Opacity (not using opa)

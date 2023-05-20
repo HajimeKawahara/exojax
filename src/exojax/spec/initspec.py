@@ -141,7 +141,7 @@ def init_premodit(nu_lines,
         Tmax: max temperature to construct n_Texp grid, if None, max(Twt and Tref) is used 
         Tmin: min temperature to construct n_Texp grid, if None, max(Twt and Tref) is used 
         dE: Elower grid interval
-        dit_grid_resolution: DIT grid resolution 
+        dit_grid_resolution (float): DIT grid resolution. when np.inf, the minmax simplex is used 
         diffmode (int): i-th Taylor expansion is used for the weight, default is 1.
         single_broadening (optional): if True, single_braodening_parameters is used. Defaults to False. 
         single_broadening_parameters (optional): [gamma_ref, n_Texp] at 296K for single broadening. When None, the median is used.

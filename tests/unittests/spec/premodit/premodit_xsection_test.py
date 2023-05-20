@@ -64,19 +64,26 @@ def test_xsection_premodit_for_single_broadening(db, diffmode):
     opa = OpaPremodit(mdb=mdb,
                       nu_grid=nu_grid,
                       diffmode=diffmode,
-                      auto_trange=[500.0, 1500.0], single_broadening=True)
+                      auto_trange=[500.0, 1500.0],
+                      broadening_resolution={
+                          "mode": "single",
+                          "value": None
+                      })
     xsv = opa.xsvector(Ttest, Ptest)
     filename = pkg_resources.resource_filename('exojax',
                                                'data/testdata/' + testdata[db])
     dat = pd.read_csv(filename, delimiter=",", names=("nus", "xsv"))
     res = np.max(np.abs(1.0 - xsv / dat["xsv"].values))
-    assert res < 0.06 # < 6% (HITEMP) / 4% (ExoMOL) diff from exact broadening parameters using MODIT
+    print(res)
+    assert res < 0.06  # < 6% (HITEMP) / 4% (ExoMOL) diff from exact broadening parameters using MODIT
     return opa.nu_grid, xsv, opa.dE, opa.Twt, opa.Tref, Ttest
 
 
 if __name__ == "__main__":
     #comparison with MODIT
     import matplotlib.pyplot as plt
+
+    #1200K MODIT/PreMODIT single gammaL is same
 
     #db = "hitemp"
     db = "exomol"
