@@ -30,28 +30,35 @@ def device_memory_use(opa, art=None, nfree=None, print_summary=True):
         ngrid_broadpar = opa.ngrid_broadpar
         ngrid_elower = opa.ngrid_elower
         devmemuse, memdict = premodit_devmemory_use(ngrid_nu_grid,
-                                                 ngrid_broadpar,
-                                                 ngrid_elower,
-                                                 nlayer=nlayer,
-                                                 nfree=nfree,
-                                                 precision=precision)
+                                                    ngrid_broadpar,
+                                                    ngrid_elower,
+                                                    nlayer=nlayer,
+                                                    nfree=nfree,
+                                                    precision=precision)
         memcase, info = memdict
+        _print_summary_premodit(opa, nfree, print_summary, nlayer,
+                                ngrid_nu_grid, ngrid_broadpar, ngrid_elower,
+                                devmemuse, memcase, info)
+
     else:
         raise ValueError("unknown method.")
 
-    explanation = ["(less important)",""]
+    return devmemuse
 
+
+def _print_summary_premodit(opa, nfree, print_summary, nlayer, ngrid_nu_grid,
+                            ngrid_broadpar, ngrid_elower, devmemuse, memcase,
+                            info):
+    explanation = ["(less important)", ""]
     if print_summary:
         print("Device memory use prediction:", opa.method)
         print("# of the wavenumber grid:", ngrid_nu_grid)
         print("# of the broadening par grids:", ngrid_broadpar)
-        print("# of the elower grids:", ngrid_elower, explanation[memcase])        
-        print("# of the layers:", nlayer, explanation[1-memcase])
-        print("# of the free parameters:", nfree, explanation[1-memcase])
+        print("# of the elower grids:", ngrid_elower, explanation[memcase])
+        print("# of the layers:", nlayer, explanation[1 - memcase])
+        print("# of the free parameters:", nfree, explanation[1 - memcase])
         print(info + " : required device memory = ", devmemuse / (1024.)**3,
               "GB")
-
-    return devmemuse
 
 
 def premodit_devmemory_use(ngrid_nu_grid,
@@ -61,6 +68,11 @@ def premodit_devmemory_use(ngrid_nu_grid,
                            nfree=None,
                            precision="FP64"):
     """compute approximate required device memory for PreMODIT algorithm
+
+    Notes:
+        This method estimates the major device moemory use for PreMODIT. In Case 0 (memcase=0), the use is limited by FFT/IFFT by modit_scanfft 
+        while in Case1 (memcase) by LBD. 
+        
 
     Args:
         ngrid_nu_grid (int): the number of the wavenumber grid
@@ -75,13 +87,13 @@ def premodit_devmemory_use(ngrid_nu_grid,
 
     Returns:
         float: predicted required device memory (byte)
-        (str, str): memory computation case, info 
+        (str, str): memory computation case (memcase), info 
     """
     info = "opacity "
-    factor_case0 = 4
+    factor_case0 = 4  # FFT and InvFFT w/ the same size of buffer
     factor_case1 = 2
     memuse_case0 = ngrid_nu_grid * ngrid_broadpar * factor_case0
-    memuse_case1 = ngrid_nu_grid * ngrid_elower * ngrid_broadpar * factor_case1 
+    memuse_case1 = ngrid_nu_grid * ngrid_elower * ngrid_broadpar * factor_case1
 
     if nfree is not None:
         memuse_case0 *= nfree
@@ -103,11 +115,11 @@ def premodit_devmemory_use(ngrid_nu_grid,
     if memuse_case0 > memuse_case1:
         info += "broadening "
         memuse = memuse_case0
-        memcase=0
+        memcase = 0
     else:
         info += "elower*broadening "
         memuse = memuse_case1
-        memcase=1
+        memcase = 1
     info += "(" + precision + ")"
 
     return memuse, (memcase, info)
