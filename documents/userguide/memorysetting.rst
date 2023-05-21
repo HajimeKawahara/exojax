@@ -50,7 +50,7 @@ For Premodit,
 We recommend to try the following points
 
 - Consider to decrease the resolution of the broadening parameters, using `broadening_resolution` option in OpaPremodit. See :doc:`premodit` for the details of `broadening_resolution`.
-- Divide the wavenumber range into multiple segments
+- Divide the wavenumber range into multiple segments. Note that the calculation time for the forward spectrum modeling part increases almost linearly with the number of the segments. So we recommend dividing the wavenumber range with the least required number of the segments.
 
 
 
