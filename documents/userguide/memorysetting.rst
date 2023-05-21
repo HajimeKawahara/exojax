@@ -16,6 +16,10 @@ For PreMODIT, `exojax.utils.memuse.device_memory_use` can estimate an approximat
 .. code:: ipython
 
     >>> from exojax.utils.memuse import device_memory_use
+    >>> from exojax.test.emulate_mdb import mock_wavenumber_grid
+    >>> from exojax.spec.atmrt import ArtEmisPure
+    >>> from exojax.spec.opacalc import OpaPremodit
+    >>> from exojax.test.emulate_mdb import mock_mdbExomol
     >>> nu_grid, wav, res = mock_wavenumber_grid()
     >>> art = ArtEmisPure(nu_grid,
                       pressure_top=1.e-8,
@@ -23,9 +27,9 @@ For PreMODIT, `exojax.utils.memuse.device_memory_use` can estimate an approximat
                       nlayer=100)
     >>> art.change_temperature_range(400.0, 1500.0)
 
+    >>> mdb = mock_mdbExomol()
     >>> opa = OpaPremodit(mdb=mdb,
                       nu_grid=nu_grid,
-                      diffmode=diffmode,
                       auto_trange=[art.Tlow, art.Thigh],
                       broadening_resolution={
                           "mode": "manual",
