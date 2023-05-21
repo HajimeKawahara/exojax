@@ -15,6 +15,7 @@ from exojax.utils.grids import nu2wav
 from exojax.utils.instfunc import resolution_eslog
 from exojax.utils.constants import Patm
 from exojax.utils.constants import Tref_original
+from exojax.utils.jaxstatus import check_jax64bit
 import jax.numpy as jnp
 from jax import jit
 from jax import vmap
@@ -25,10 +26,6 @@ import warnings
 class OpaCalc():
     """Common Opacity Calculator Class
     """
-    __slots__ = [
-        "opainfo",
-    ]
-
     def __init__(self):
         self.opainfo = None
         self.method = None  # which opacity calc method is used
@@ -52,7 +49,8 @@ class OpaPremodit(OpaCalc):
                  },
                  auto_trange=None,
                  manual_params=None,
-                 dit_grid_resolution=None):
+                 dit_grid_resolution=None,
+                 allow_32bit=False):
         """initialization of OpaPremodit
 
         Note:
@@ -77,8 +75,11 @@ class OpaPremodit(OpaCalc):
             auto_trange (optional): temperature range [Tl, Tu], in which line strength is within 1 % prescision. Defaults to None.
             manual_params (optional): premodit parameter set [dE, Tref, Twt]. Defaults to None.
             dit_grid_resolution (float, optional): force to set broadening_parameter_resolution={mode:manual, value: dit_grid_resolution}), ignores broadening_parameter_resolution.
+            allow_32bit (bool, optional): If True, allow 32bit mode of JAX. Defaults to False.
+        
         """
         super().__init__()
+        check_jax64bit(allow_32bit) 
 
         #default setting
         self.method = "premodit"
@@ -88,6 +89,7 @@ class OpaPremodit(OpaCalc):
         self.wav = nu2wav(self.nu_grid, unit="AA")
         self.resolution = resolution_eslog(nu_grid)
         self.mdb = mdb
+        self.ngrid_broadpar = None
 
         #broadening parameter setting
         self.determine_broadening_parameter_resolution(broadening_resolution,
@@ -242,7 +244,12 @@ class OpaPremodit(OpaCalc):
             single_broadening_parameters=self.single_broadening_parameters,
             warning=self.warning)
         self.ready = True
-
+        
+        lbd_coeff, multi_index_uniqgrid, elower_grid, \
+            ngamma_ref_grid, n_Texp_grid, R, pmarray = self.opainfo
+        self.ngrid_broadpar = len(multi_index_uniqgrid)
+        self.ngrid_elower = len(elower_grid)
+        
     def xsvector(self, T, P):
         from exojax.spec.premodit import xsvector_zeroth
         from exojax.spec.premodit import xsvector_first
@@ -357,7 +364,8 @@ class OpaModit(OpaCalc):
                  Tarr_list=None,
                  Parr=None,
                  Pself_ref=None,
-                 dit_grid_resolution=0.2):
+                 dit_grid_resolution=0.2,
+                 allow_32bit=False):
         """initialization of OpaModit
 
         Note:
@@ -369,13 +377,14 @@ class OpaModit(OpaCalc):
             Tarr_list (1d or 2d array, optional): tempearture array to be tested such as [Tarr_1, Tarr_2, ..., Tarr_n]
             Parr (1d array, optional): pressure array in bar
             Pself_ref (1d array, optional): self pressure array in bar. Defaults to None. If None Pself = 0.0.
-            dit_grid_resolution (float, optional): dit grid resolution. Defaults to 0.2.
-
+            dit_grid_resolution (float, optional): dit grid resolution. Defaxults to 0.2.
+            allow_32bit (bool, optional): If True, allow 32bit mode of JAX. Defaults to False.
         Raises:
             ValueError: _description_
         """
         super().__init__()
-
+        check_jax64bit(allow_32bit) 
+        
         #default setting
         self.method = "modit"
         self.warning = True

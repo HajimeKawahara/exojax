@@ -71,7 +71,7 @@ def test_broadpar_getix():
         twod_factor=1.0,
         dit_grid_resolution=0.2)
 
-    multi_index_lines, multi_cont_lines, uidx_lines, neighbor_uidx, multi_index_uniqgrid, Ng_broadpar = broadpar_getix(
+    multi_index_lines, multi_cont_lines, uidx_lines, neighbor_uidx, multi_index_uniqgrid, ngrid_broadpar = broadpar_getix(
         ngamma_ref, ngamma_ref_grid, n_Texp, n_Texp_grid)
 
     iline_interest = len(n_Texp) - 1
@@ -87,7 +87,7 @@ def test_broadpar_getix():
     ref = [[0, 0], [0, 1], [1, 0], [2, 1], [1, 1], [0, 2], [1, 2], [2, 0],
            [3, 1], [2, 2], [3, 2]]
     assert np.all(multi_index_uniqgrid == ref)
-    assert Ng_broadpar == len(multi_index_uniqgrid)
+    assert ngrid_broadpar == len(multi_index_uniqgrid)
 
 
     

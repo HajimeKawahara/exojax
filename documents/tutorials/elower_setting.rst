@@ -1,9 +1,10 @@
-Reducing Device Memory Use by Setting the Optimal Elower Maximum
-================================================================
+Optimal Elower Maximum
+^^^^^^^^^^^^^^^^^^^^^^^^^
 
 PreMODIT make a grid of Elower. When the maximum value of Elower in the
-database is large, the use of the device memory becomes too large for
-your GPU CUDA memory. We can use the lines whose Elower are below
+database is large, the use of the device memory might become too large for
+your GPU device memory and require additional computation time . 
+We can use the lines whose Elower are below
 user-defined value, by using elower_max option in mdb. But, before that,
 we need to know the optimal value of the max Elower. This tutorial
 explains how to do that. First use FP64 as usual.

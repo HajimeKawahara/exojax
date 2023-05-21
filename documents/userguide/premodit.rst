@@ -1,7 +1,7 @@
 PreMODIT
 =================
 
-`Last update: May 15th (2023) Hajime Kawahara`
+`Last update: May 20th (2023) Hajime Kawahara`
 
 
 PreMODIT (Precomputation of line density + MODIT) is the successor algorithm to MODIT. 
@@ -20,6 +20,8 @@ Therefore, we need the "auto_trange" option in `OpaPremodit <../exojax/exojax.sp
 .. code:: ipython
 	
     >>> from exojax.spec.opacalc import OpaPremodit
+    >>> from jax import config
+    >>> config.update("jax_enable", True)
     >>> diffmode = 0
     >>> opa = OpaPremodit(mdb=mdbCO,
                       nu_grid=nus,
@@ -27,12 +29,11 @@ Therefore, we need the "auto_trange" option in `OpaPremodit <../exojax/exojax.sp
                       auto_trange=[400.0, 1500.0])
 
 This means that 1% accuracy is guaranteed between 400 - 1500 K. 
+Note that `config.update("jax_enable")` enforces JAX to use 64bit; see the next section.
 If you are more familiar with PreMODIT's algorithm, you can specify the parameters directly using the `manual_params` option.
 
 .. code:: ipython
 	
-    >>> from exojax.spec.opacalc import OpaPremodit
-    >>> diffmode = 0
     >>> dE = 300.0 # cm-1
     >>> Tref = 400.0 # in Kelvin
     >>> Twt = 1000.0 # in Kelvin
@@ -40,6 +41,42 @@ If you are more familiar with PreMODIT's algorithm, you can specify the paramete
                       nu_grid=nus,
                       diffmode=diffmode,
                       manual_params=[dE, Tref, Twt])
+
+
+On 32bit and 64bit mode
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+We strongly recommend to use JAX 64bit mode:
+
+.. code:: ipython
+	
+    >>> from jax import config
+    >>> config.update("jax_enable", True)
+
+But, if you wanna try to use 32bit mode, use `allow_32bit` option.
+
+.. code:: ipython
+
+	>>> from jax import config
+    >>> config.update("jax_enable", False)
+    >>> opa = OpaPremodit(mdb=mdbCO,
+                      nu_grid=nus,
+                      diffmode=diffmode,
+                      auto_trange=[400.0, 1500.0]
+                      allow_32bit=True)    
+
+
+Otherwise, you will see ValueError:
+
+.. code:: ipython
+
+	>>> from jax import config
+    >>> config.update("jax_enable", False)
+    >>> opa = OpaPremodit(mdb=mdbCO,
+                      nu_grid=nus,
+                      diffmode=diffmode,
+                      auto_trange=[400.0, 1500.0])    
+    >>> # -> JAX 32bit mode is not allowed. Use allow_32bit = True or ... 
 
 Changing the Resolution of the Broadening Parameters 
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -96,3 +133,4 @@ So, if you wanna change the values, input,  `gamma_ref` and `n_Texp` at 296K int
 In the above case, we assumed the median of broadening parameters of mdb. If you want to give the specific values use "single_broadening_parameters" option.
 
 .. image:: premodit_files/example_single.png
+
