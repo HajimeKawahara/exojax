@@ -44,13 +44,12 @@ def pressure_layer(log_pressure_top=-8.,
                    log_pressure_btm=2.,
                    NP=20,
                    mode='ascending',
-                   reference_point=0.5,
-                   numpy=False):
+                   reference_point=0.5):
     warn_msg = "Use `atm.atmprof.pressure_layer_logspace` instead"
     warnings.warn(warn_msg, FutureWarning)
     from exojax.atm.atmprof import pressure_layer_logspace
     return pressure_layer_logspace(log_pressure_top, log_pressure_btm, NP,
-                                   mode, reference_point, numpy)
+                                   mode, reference_point)
 
 
 def rtrun(dtau, S):

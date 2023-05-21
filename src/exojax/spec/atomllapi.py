@@ -291,7 +291,7 @@ def make_ielem_to_index_of_ipccd():
         ielem_to_index_of_ipccd: jnp.array to convert ielem into index of ipccd
     """
     import jax.numpy as jnp
-    ielemarr = jnp.array(load_atomicdata()['ielem'])
+    ielemarr = np.array(load_atomicdata()['ielem'])
 
     # jnp.array for conversin from ielem to the index of ipccd
     ielem_to_index_of_ipccd = np.zeros(np.max(ielemarr)+1, dtype='int')
