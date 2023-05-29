@@ -66,6 +66,10 @@ def generate_database_directories(molecule_list, database_list):
 
     return db_dir
 
+
+########################
+# REFACTORING NOTES (HK): CURRENTLY, api.Mdb is repreatedly called. We can replace it to the saved mdbs.
+########################
 def select_multimols_from_wavenumber_grid(path_data, mols, mols_name, color, db, db_dir, nu_grid, crit=0., Ttyp=1000.):
     """select current multimols from wavenumber grid
 
