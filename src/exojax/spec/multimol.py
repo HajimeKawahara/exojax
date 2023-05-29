@@ -70,13 +70,12 @@ def generate_database_directories(molecule_list, database_list):
 ########################
 # REFACTORING NOTES (HK): CURRENTLY, api.Mdb is repreatedly called. We can replace it to the saved mdbs.
 ########################
-def select_multimols_from_wavenumber_grid(path_data, mols, mols_name, color, db, db_dir, nu_grid, crit=0., Ttyp=1000.):
+def select_multimols_from_wavenumber_grid(path_data, mols, color, db, db_dir, nu_grid, crit=0., Ttyp=1000.):
     """select current multimols from wavenumber grid
 
     Args:
         path_data (_type_): _description_
         mols (_type_): _description_
-        mols_name (_type_): _description_
         color (_type_): _description_
         db (_type_): _description_
         db_dir (_type_): _description_
@@ -107,11 +106,10 @@ def select_multimols_from_wavenumber_grid(path_data, mols, mols_name, color, db,
                 mask[i] = False
     
         mols[k] = np.array(mols[k])[mask].tolist()
-        mols_name[k] = np.array(mols_name[k])[mask].tolist()
         color[k] = np.array(color[k])[mask].tolist()
         db[k] = np.array(db[k])[mask].tolist()
         db_dir[k] = np.array(db_dir[k])[mask].tolist()
 
         mdb.append(mdb_k)
 
-    return mols, mols_name, color, db, db_dir, mdb
+    return mols, color, db, db_dir, mdb

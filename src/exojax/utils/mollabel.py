@@ -68,6 +68,35 @@ def format_molecules_lists(molecules_lists):
     """
     return [[format_molecule(molecule) for molecule in molecules] for molecules in molecules_lists]
 
+def replace_molecules_with_color_indices(molecules_lists):
+    """
+    Replace a list of lists of molecule strings with strings of 'C' followed by an index.
+    
+    This function takes in a list of lists of molecule strings and replaces each molecule with a 
+    unique string of 'C' followed by an index.
+
+    Args:
+        molecules_lists (list of list of str): A list of lists of string representations of molecules.
+
+    Returns:
+        list of list of str: A list of lists of strings, where each string is 'C' followed by an index.
+
+    Examples:
+        >>> replace_molecules_with_indices([["H2O", "CH4", "CO"], ["H2S", "H2O", "CO"]])
+        [["C0", "C1", "C2"], ["C3", "C0", "C2"]]
+    """
+    molecule_to_index = {}
+    next_index = 0
+    result = []
+    for molecules in molecules_lists:
+        result.append([])
+        for molecule in molecules:
+            if molecule not in molecule_to_index:
+                molecule_to_index[molecule] = next_index
+                next_index += 1
+            result[-1].append("C" + str(molecule_to_index[molecule]))
+    return result
+
 if __name__ == "__main__":
     molecules = ["H2O", "CH4", "CO"]
 
@@ -77,3 +106,4 @@ if __name__ == "__main__":
     
     molecules_s = [["H2O", "CH4", "CO"], ["H2O", "NH3", "CO"]]
     print(format_molecules_lists(molecules_s))
+    print(replace_molecules_with_color_indices(molecules_s))
