@@ -47,9 +47,33 @@ def format_molecules_list(molecules):
     """
     return [format_molecule(molecule) for molecule in molecules]
 
+def format_molecules_lists(molecules_lists):
+    """
+    Format a list of lists of molecule strings with subscript numbers and convert them to LaTeX syntax.
+    
+    This function takes in a list of lists of molecule strings, where elements are represented by their symbols and
+    the number of atoms is represented by a subscript number following the symbol. The function
+    converts each molecule string to a LaTeX string, with subscript numbers formatted correctly
+    and the string surrounded by LaTeX math mode and "mathrm" syntax.
+
+    Args:
+        molecules_lists (list of list of str): A list of lists of string representations of molecules.
+
+    Returns:
+        list of list of str: A list of lists of LaTeX-formatted string representations of the molecules.
+
+    Examples:
+        >>> format_molecules_lists([["H2O", "CH4", "CO"], ["H2O", "CH4", "CO"]])
+        [["$\\mathrm{H_2O}$", "$\\mathrm{CH_4}$", "$\\mathrm{CO}$"], ["$\\mathrm{H_2O}$", "$\\mathrm{CH4}$", "$\\mathrm{CO}$"]]
+    """
+    return [[format_molecule(molecule) for molecule in molecules] for molecules in molecules_lists]
+
 if __name__ == "__main__":
     molecules = ["H2O", "CH4", "CO"]
 
     for molecule in molecules:
         print(format_molecule(molecule))
     print(format_molecules_list(molecules))
+    
+    molecules_s = [["H2O", "CH4", "CO"], ["H2O", "NH3", "CO"]]
+    print(format_molecules_lists(molecules_s))
