@@ -48,7 +48,7 @@ def ditgrid_linear_interval(input_variable, dit_grid_resolution=0.1, weight = No
     if weight is None:
         weight = 1.0
 
-    assert np.min(weight * input_variable) > 0.0, "There exists negative or zero value. Consider to use np.abs."        
+    #assert np.min(weight * input_variable) > 0.0, "There exists negative or zero value. Consider to use np.abs."        
     wxmin = np.min(weight * input_variable)
     wxmax = np.max(weight * input_variable)
     wxmax = np.nextafter(wxmax, np.inf, dtype=wxmax.dtype)
