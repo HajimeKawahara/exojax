@@ -1,5 +1,44 @@
 import re
 
+
+def molecule_color(simple_molecule_name):
+    """return the individual matplotlib color label (CN) for a given molecule simple name  
+
+    Args:
+        simple_molecule_name (str): simple molecule name, "H2O"
+
+    Examples:
+        >>> format_molecule_color("H2O")
+        "C1"
+    
+
+    Returns:
+        str: CN label, such as C1 for "H2O" based on HITRAN identifier. If the molecule does not exist in the HITRAN identifiers, return gray
+    """
+    from radis.db.classes import get_molecule_identifier
+    try:
+        i = get_molecule_identifier(simple_molecule_name)
+        color = "C"+str(i)
+    except:
+        color = "gray"
+    return color
+
+def molecules_color_list(simple_molecule_name_list):
+    """return the individual matplotlib color label (CN) for a given molecule simple name list
+
+    Args:
+        simple_molecule_name_list (array): simple molecule name list such as ["H2O","CO"]
+
+    Returns:
+        str: CN label, such as C1 for "H2O"
+    """
+    
+    return [molecule_color(molecule) for molecule in simple_molecule_name_list]
+
+def molecules_color_lists(simple_molecule_name_lists):
+    return [[molecule_color(molecule) for molecule in molecules] for molecules in simple_molecule_name_lists]
+
+
 def format_molecule(simple_molecule_name):
     """Format a given molecule string with subscript numbers and convert it to LaTeX syntax.
     
@@ -68,42 +107,16 @@ def format_molecules_lists(molecules_lists):
     """
     return [[format_molecule(molecule) for molecule in molecules] for molecules in molecules_lists]
 
-def replace_molecules_with_color_indices(molecules_lists):
-    """
-    Replace a list of lists of molecule strings with strings of 'C' followed by an index.
-    
-    This function takes in a list of lists of molecule strings and replaces each molecule with a 
-    unique string of 'C' followed by an index.
-
-    Args:
-        molecules_lists (list of list of str): A list of lists of string representations of molecules.
-
-    Returns:
-        list of list of str: A list of lists of strings, where each string is 'C' followed by an index.
-
-    Examples:
-        >>> replace_molecules_with_indices([["H2O", "CH4", "CO"], ["H2S", "H2O", "CO"]])
-        [["C0", "C1", "C2"], ["C3", "C0", "C2"]]
-    """
-    molecule_to_index = {}
-    next_index = 0
-    result = []
-    for molecules in molecules_lists:
-        result.append([])
-        for molecule in molecules:
-            if molecule not in molecule_to_index:
-                molecule_to_index[molecule] = next_index
-                next_index += 1
-            result[-1].append("C" + str(molecule_to_index[molecule]))
-    return result
 
 if __name__ == "__main__":
-    molecules = ["H2O", "CH4", "CO"]
+    simple_molecule_name_list = ["H2O", "CH4", "CO"]
 
-    for molecule in molecules:
+    for molecule in simple_molecule_name_list:
         print(format_molecule(molecule))
-    print(format_molecules_list(molecules))
+    print(format_molecules_list(simple_molecule_name_list))
     
-    molecules_s = [["H2O", "CH4", "CO"], ["H2O", "NH3", "CO"]]
-    print(format_molecules_lists(molecules_s))
-    print(replace_molecules_with_color_indices(molecules_s))
+    print(molecules_color_list(simple_molecule_name_list))
+    
+    simple_molecule_name_lists = [["H2O", "CH4", "CO"], ["H2O", "NH3", "CO"]]
+    print(format_molecules_lists(simple_molecule_name_lists))
+    print(molecules_color_lists(simple_molecule_name_lists))

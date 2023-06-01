@@ -18,19 +18,20 @@ from exojax.spec.opachord import chord_geometric_matrix
 from exojax.spec.opachord import chord_optical_depth
 from exojax.spec.rtransfer import rtrun_trans_pure_absorption
 from exojax.utils.constants import logkB, logm_ucgs
+import warnings
 
 
 class ArtCommon():
     """Common Atmospheric Radiative Transfer
     """
-    def __init__(self, nu_grid, pressure_top, pressure_btm, nlayer):
+    def __init__(self, pressure_top, pressure_btm, nlayer, nu_grid=None):
         """initialization of art
 
         Args:
-            nu_grid (nd.array): wavenumber grid in cm-1
             pressure_top (float):top pressure in bar
             pressure_bottom (float): bottom pressure in bar
             nlayer (int): # of atmospheric layers
+            nu_grid (nd.array, optional): wavenumber grid in cm-1
         """
         self.artinfo = None
         self.method = None  # which art is used
@@ -38,7 +39,11 @@ class ArtCommon():
         self.Tlow = 0.0
         self.Thigh = jnp.inf
 
+        if nu_grid is None:
+            warnings.warn(UserWarning,"nu_grid is not given. specify nu_grid when using 'run' ")
         self.nu_grid = nu_grid
+        
+
         self.pressure_top = pressure_top
         self.pressure_btm = pressure_btm
         self.nlayer = nlayer
@@ -232,35 +237,42 @@ class ArtEmisPure(ArtCommon):
         pressure_layer: pressure profile in bar
         
     """
-    def __init__(self,
-                 nu_grid,
-                 pressure_top=1.e-8,
-                 pressure_btm=1.e2,
-                 nlayer=100):
+    def __init__(
+        self,
+        pressure_top=1.e-8,
+        pressure_btm=1.e2,
+        nlayer=100,
+        nu_grid=None,
+    ):
         """initialization of ArtEmisPure
 
         
         """
-        super().__init__(nu_grid, pressure_top, pressure_btm, nlayer)
+        super().__init__(pressure_top, pressure_btm, nlayer, nu_grid)
         self.method = "emission_with_pure_absorption"
 
-    def run(self, dtau, temperature):
+    def run(self, dtau, temperature, nu_grid=None):
         """run radiative transfer
 
         Args:
             dtau (2D array): optical depth matrix, dtau  (N_layer, N_nus)
             temperature (1D array): temperature profile (Nlayer)
+            nu_grid (1D array): if nu_grid is not initialized, provide it. 
 
         Returns:
             _type_: _description_
         """
-        sourcef = piBarr(temperature, self.nu_grid)
+        if self.nu_grid is not None:
+            sourcef = piBarr(temperature, self.nu_grid)
+        elif nu_grid is not None:
+            sourcef = piBarr(temperature, nu_grid)
+        else:
+            raise ValueError("the wavenumber grid is not given.")
         return rtrun_emis_pure_absorption(dtau, sourcef)
 
 
 class ArtTransPure(ArtCommon):
     def __init__(self,
-                 nu_grid,
                  pressure_top=1.e-8,
                  pressure_btm=1.e2,
                  nlayer=100):
@@ -268,7 +280,7 @@ class ArtTransPure(ArtCommon):
 
         
         """
-        super().__init__(nu_grid, pressure_top, pressure_btm, nlayer)
+        super().__init__(pressure_top, pressure_btm, nlayer, nu_grid=None)
         self.method = "transmission_with_pure_absorption"
 
     def run(self, dtau, temperature, mean_molecular_weight, radius_btm,
