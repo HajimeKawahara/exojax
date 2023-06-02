@@ -87,7 +87,7 @@ def generate_multimdb(path_data, mols, db, db_dir, nu_grid, crit=0., Ttyp=1000.)
         list: masked molecular list
     """
     multimdb = []
-    masked_mols = np.copy(mols)
+    masked_mols = mols[:]
     for k, mol in enumerate(mols):
         mdb_k = []
         mask = np.ones_like(mol, dtype=bool)
