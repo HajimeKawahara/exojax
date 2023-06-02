@@ -70,7 +70,7 @@ def generate_database_directories(molecule_list, database_list):
 ########################
 # REFACTORING NOTES (HK): CURRENTLY, api.Mdb is repreatedly called. We can replace it to the saved mdbs.
 ########################
-def select_multimols_from_wavenumber_grid(path_data, mols, db, db_dir, nu_grid, crit=0., Ttyp=1000.):
+def generate_multimdb(path_data, mols, db, db_dir, nu_grid, crit=0., Ttyp=1000.):
     """select current multimols from wavenumber grid
 
     Args:
@@ -83,9 +83,11 @@ def select_multimols_from_wavenumber_grid(path_data, mols, db, db_dir, nu_grid, 
         Ttyp (_type_, optional): _description_. Defaults to 1000..
 
     Returns:
-        _type_: _description_
+        lists of mdb: multi mdb
+        list: masked molecular list
     """
-    mdb = []
+    multimdb = []
+    masked_mols = np.copy(mols)
     for k, mol in enumerate(mols):
         mdb_k = []
         mask = np.ones_like(mol, dtype=bool)
@@ -97,17 +99,11 @@ def select_multimols_from_wavenumber_grid(path_data, mols, db, db_dir, nu_grid, 
                 elif db[k][i] in ["HITRAN", "hitran"]:
                     mdb_k.append(api.MdbHitran(os.path.join(path_data, db_dir[k][i]), nu_grid[k], crit=crit, Ttyp=Ttyp, gpu_transfer=False, isotope=1))
                 elif db[k][i] in ["HITEMP", "hitemp"]:
-                    mdb_k.append(api.MdbHitemp(os.path.join(path_data,db_dir[k][i]),nu_grid[k],crit=crit,Ttyp=Ttyp,gpu_transfer=False, isotope=1))
-                    #mask_n = mdb_k[i].n_air > 0.01
-                    #mdb_k[i] = apply_mask(mdb_k[i], mask_n)
-
+                    mdb_k.append(api.MdbHitemp(os.path.join(path_data,db_dir[k][i]),nu_grid[k],crit=crit,Ttyp=Ttyp,gpu_transfer=False, isotope=1))                    
             except:
                 mask[i] = False
     
-        mols[k] = np.array(mols[k])[mask].tolist()
-        db[k] = np.array(db[k])[mask].tolist()
-        db_dir[k] = np.array(db_dir[k])[mask].tolist()
+        masked_mols[k] = np.array(mols[k])[mask].tolist()
+        multimdb.append(mdb_k)
 
-        mdb.append(mdb_k)
-
-    return mols, db, db_dir, mdb
+    return multimdb, masked_mols
