@@ -4,32 +4,30 @@ import os
 
 
 class MultiMol():
-    """multimols molecular database of ExoMol.
+    """multiple molecular database of ExoMol.
     """
-    def __init__(self, molmulti, dbmulti):
+    def __init__(self, molmulti, dbmulti, database_root_path=".database"):
+        """initialization
+
+        Args:
+            molmulti (_type_): multiple simple molecule names [n_wavenumber_segments, n_molecules], such as [["H2O","CO"],["H2O"],["CO"]]
+            dbmulti (_type_): multiple database names, such as [["HITEMP","EXOMOL"],["HITEMP","HITRAN12"]]],
+            database_root_path (str, optional): _description_. Defaults to ".database".
+        """
         self.molmulti = molmulti
         self.dbmulti = dbmulti
+        self.database_root_path = database_root_path
         self.generate_database_directories()
 
     def generate_database_directories(self):
         """generate database directory array
-
-        Args:
-            molecule_list (_type_): simple molecular list, e.g. mols = [["H2O","CH4","CO","NH3","H2S"]]
-            database_list (_type_): database list db = [["ExoMol","HITEMP","HITEMP","HITRAN","HITRAN"]]
-
-
-        Raises:
-            ValueError: _description_
-            ValueError: _description_
-
         """
         dbpath_lookup = {
             "ExoMol": database_path_exomol,
-            "HITRAN": database_path_hitran12,
+            "HITRAN12": database_path_hitran12,
             "HITEMP": database_path_hitemp,
             "exomol": database_path_exomol,
-            "hitran": database_path_hitran12,
+            "hitran12": database_path_hitran12,
             "hitemp": database_path_hitemp
         }
         self.db_dirs = []
@@ -48,16 +46,11 @@ class MultiMol():
                 db_dir_k.append(dbpath)
 
             self.db_dirs.append(db_dir_k)
-        #return db_dirs
 
-    ########################
-    # REFACTORING NOTES (HK): CURRENTLY, api.Mdb is repreatedly called. We can replace it to the saved mdbs.
-    ########################
-    def generate_multimdb(self, path_data, nu_grid, crit=0., Ttyp=1000.):
+    def generate_multimdb(self, nu_grid_list, crit=0., Ttyp=1000.):
         """select current multimols from wavenumber grid
 
         Args:
-            path_data (_type_): _description_
             nu_grid (_type_): _description_
             crit (_type_, optional): _description_. Defaults to 0..
             Ttyp (_type_, optional): _description_. Defaults to 1000..
@@ -66,8 +59,8 @@ class MultiMol():
             lists of mdb: multi mdb
             list: masked molecular list
         """
-        multimdb = []
-        masked_mols = self.molmulti[:]
+        self.multimdb = []
+        self.masked_molmulti = self.molmulti[:]
         for k, mol in enumerate(self.molmulti):
             mdb_k = []
             mask = np.ones_like(mol, dtype=bool)
@@ -76,26 +69,26 @@ class MultiMol():
                 try:
                     if self.dbmulti[k][i] in ["ExoMol", "exomol"]:
                         mdb_k.append(
-                            api.MdbExomol(os.path.join(path_data,
+                            api.MdbExomol(os.path.join(self.database_root_path,
                                                        self.db_dirs[k][i]),
-                                          nu_grid[k],
+                                          nu_grid_list[k],
                                           crit=crit,
                                           Ttyp=Ttyp,
                                           gpu_transfer=False))
-                    elif self.dbmulti[k][i] in ["HITRAN", "hitran"]:
+                    elif self.dbmulti[k][i] in ["HITRAN12", "hitran12"]:
                         mdb_k.append(
-                            api.MdbHitran(os.path.join(path_data,
+                            api.MdbHitran(os.path.join(self.database_root_path,
                                                        self.db_dirs[k][i]),
-                                          nu_grid[k],
+                                          nu_grid_list[k],
                                           crit=crit,
                                           Ttyp=Ttyp,
                                           gpu_transfer=False,
                                           isotope=1))
                     elif self.dbmulti[k][i] in ["HITEMP", "hitemp"]:
                         mdb_k.append(
-                            api.MdbHitemp(os.path.join(path_data,
+                            api.MdbHitemp(os.path.join(self.database_root_path,
                                                        self.db_dirs[k][i]),
-                                          nu_grid[k],
+                                          nu_grid_list[k],
                                           crit=crit,
                                           Ttyp=Ttyp,
                                           gpu_transfer=False,
@@ -103,21 +96,22 @@ class MultiMol():
                 except:
                     mask[i] = False
 
-            masked_mols[k] = np.array(self.molmulti[k])[mask].tolist()
-            multimdb.append(mdb_k)
-
-        return multimdb, masked_mols
+            self.masked_molmulti[k] = np.array(self.molmulti[k])[mask].tolist()
+            self.multimdb.append(mdb_k)
 
 
-def database_path_hitran12(simple_molname):
-    _hitran_dbpath = {
-        "H2O": "H2O/01_hit12.par",
-        "CH4": "CH4/06_hit12.par",
-        "CO": "CO/05_hit12.par",
-        "NH3": "NH3/11_hit12.par",
-        "H2S": "H2S/31_hit12.par"
-    }
-    return _hitran_dbpath[simple_molname]
+def database_path_hitran12(simple_molecule_name):
+    """HITRAN12 default data path
+
+    Args:
+        simple_molecule_name (str): simple molecule name "H2O" 
+
+    Returns:
+        str: HITRAN12 default data path
+    """
+    from radis.db.classes import get_molecule_identifier
+    ihitran = get_molecule_identifier(simple_molecule_name)    
+    return simple_molecule_name+"/"+str(ihitran).zfill(2)+"_hit12.par"
 
 
 def database_path_hitemp(simple_molname):
