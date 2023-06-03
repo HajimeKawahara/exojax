@@ -107,7 +107,7 @@ def database_path_hitran12(simple_molecule_name):
         simple_molecule_name (str): simple molecule name "H2O" 
 
     Returns:
-        str: HITRAN12 default data path
+        str: HITRAN12 default data path, such as "H2O/01_hit12.par" for "H2O"
     """
     from radis.db.classes import get_molecule_identifier
     ihitran = get_molecule_identifier(simple_molecule_name)    
@@ -117,8 +117,13 @@ def database_path_hitran12(simple_molecule_name):
 def database_path_hitemp(simple_molname):
     _hitemp_dbpath = {
         "H2O": "H2O/01_HITEMP2010",
+        "CO2": "CO2/02_HITEMP2010",
+        "N2O": "N2O/04_HITEMP2019/04_HITEMP2019.par.bz2",
+        "CO": "CO/05_HITEMP2019/05_HITEMP2019.par.bz2",
         "CH4": "CH4/06_HITEMP2020/06_HITEMP2020.par.bz2",
-        "CO": "CO/05_HITEMP2019/05_HITEMP2019.par.bz2"
+        "NO": "NO/08_HITEMP2019/08_HITEMP2019.par.bz2",
+        "N2O": "NO2/10_HITEMP2019/10_HITEMP2019.par.bz2",
+        "CH4": "OH/13_HITEMP2020/13_HITEMP2020.par.bz2"
     }
     return _hitemp_dbpath[simple_molname]
 
