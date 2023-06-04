@@ -101,10 +101,10 @@ class MultiMol():
                 except:
                     mask[i] = False
 
-                self.masked_molmulti[k] = np.array(self.molmulti[k])[mask].tolist()
-                _multimdb.append(mdb_k)
-                
-            return _multimdb
+            self.masked_molmulti[k] = np.array(self.molmulti[k])[mask].tolist()
+            _multimdb.append(mdb_k)
+
+        return _multimdb
 
     def multiopa_premodit(self,
                           multimdb,
