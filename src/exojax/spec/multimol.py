@@ -66,6 +66,7 @@ class MultiMol():
         _multimdb = []
         self.masked_molmulti = self.molmulti[:]
         for k, mol in enumerate(self.molmulti):
+
             mdb_k = []
             mask = np.ones_like(mol, dtype=bool)
 
@@ -100,8 +101,9 @@ class MultiMol():
                 except:
                     mask[i] = False
 
-            self.masked_molmulti[k] = np.array(self.molmulti[k])[mask].tolist()
-            _multimdb.append(mdb_k)
+                self.masked_molmulti[k] = np.array(self.molmulti[k])[mask].tolist()
+                _multimdb.append(mdb_k)
+                
             return _multimdb
 
     def multiopa_premodit(self,
