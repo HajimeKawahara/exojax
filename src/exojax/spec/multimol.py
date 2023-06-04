@@ -4,7 +4,12 @@ import os
 
 
 class MultiMol():
-    """multiple molecular database of ExoMol.
+    """multiple molecular database handler
+
+        Notes:
+            MultiMol provides an easy way to generate multiple mdb (multimdb) and multiple opa (multiopa) 
+            for multiple molecules/wavenumber segements.
+            
     """
     def __init__(self, molmulti, dbmulti, database_root_path=".database"):
         """initialization
@@ -47,19 +52,18 @@ class MultiMol():
 
             self.db_dirs.append(db_dir_k)
 
-    def generate_multimdb(self, nu_grid_list, crit=0., Ttyp=1000.):
+    def multimdb(self, nu_grid_list, crit=0., Ttyp=1000.):
         """select current multimols from wavenumber grid
 
         Args:
-            nu_grid (_type_): _description_
+            nu_grid_list (_type_): _description_
             crit (_type_, optional): _description_. Defaults to 0..
             Ttyp (_type_, optional): _description_. Defaults to 1000..
 
         Returns:
             lists of mdb: multi mdb
-            list: masked molecular list
         """
-        self.multimdb = []
+        _multimdb = []
         self.masked_molmulti = self.molmulti[:]
         for k, mol in enumerate(self.molmulti):
             mdb_k = []
@@ -97,7 +101,41 @@ class MultiMol():
                     mask[i] = False
 
             self.masked_molmulti[k] = np.array(self.molmulti[k])[mask].tolist()
-            self.multimdb.append(mdb_k)
+            _multimdb.append(mdb_k)
+            return _multimdb
+
+    def multiopa_premodit(self,
+                          multimdb,
+                          nu_grid_list,
+                          auto_trange,
+                          diffmode=2,
+                          dit_grid_resolution=0.2):
+        """multiple opa for PreMODIT
+
+        Args:
+            multimdb (): multimdb
+            nu_grid_list (): wavenumber grid list
+            auto_trange (optional): temperature range [Tl, Tu], in which line strength is within 1 % prescision. Defaults to None.
+            diffmode (int, optional): _description_. Defaults to 2.
+            dit_grid_resolution (float, optional): force to set broadening_parameter_resolution={mode:manual, value: dit_grid_resolution}), ignores broadening_parameter_resolution.
+            
+        Returns:
+            _type_: _description_
+        """
+        from exojax.spec.opacalc import OpaPremodit
+        multiopa = []
+        for k in range(len(multimdb)):
+            opa_k = []
+            for i in range(len(multimdb[k])):
+                opa_i = OpaPremodit(mdb=multimdb[k][i],
+                                    nu_grid=nu_grid_list[k],
+                                    diffmode=diffmode,
+                                    auto_trange=auto_trange,
+                                    dit_grid_resolution=dit_grid_resolution)
+                opa_k.append(opa_i)
+            multiopa.append(opa_k)
+
+        return multiopa
 
 
 def database_path_hitran12(simple_molecule_name):
@@ -110,11 +148,19 @@ def database_path_hitran12(simple_molecule_name):
         str: HITRAN12 default data path, such as "H2O/01_hit12.par" for "H2O"
     """
     from radis.db.classes import get_molecule_identifier
-    ihitran = get_molecule_identifier(simple_molecule_name)    
-    return simple_molecule_name+"/"+str(ihitran).zfill(2)+"_hit12.par"
+    ihitran = get_molecule_identifier(simple_molecule_name)
+    return simple_molecule_name + "/" + str(ihitran).zfill(2) + "_hit12.par"
 
 
 def database_path_hitemp(simple_molname):
+    """default HITEMP path based on https://hitran.org/hitemp/
+
+    Args:
+        simple_molecule_name (str): simple molecule name "H2O" 
+
+    Returns:
+        str: HITEMP default data path, such as "H2O/01_HITEMP2010" for "H2O"
+    """
     _hitemp_dbpath = {
         "H2O": "H2O/01_HITEMP2010",
         "CO2": "CO2/02_HITEMP2010",
@@ -122,8 +168,8 @@ def database_path_hitemp(simple_molname):
         "CO": "CO/05_HITEMP2019/05_HITEMP2019.par.bz2",
         "CH4": "CH4/06_HITEMP2020/06_HITEMP2020.par.bz2",
         "NO": "NO/08_HITEMP2019/08_HITEMP2019.par.bz2",
-        "N2O": "NO2/10_HITEMP2019/10_HITEMP2019.par.bz2",
-        "CH4": "OH/13_HITEMP2020/13_HITEMP2020.par.bz2"
+        "NO2": "NO2/10_HITEMP2019/10_HITEMP2019.par.bz2",
+        "OH": "OH/13_HITEMP2020/13_HITEMP2020.par.bz2"
     }
     return _hitemp_dbpath[simple_molname]
 
