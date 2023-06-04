@@ -137,6 +137,31 @@ class MultiMol():
 
         return multiopa
 
+    def multi_molmass(self):
+        from exojax.spec import molinfo
+        mols_unique = []
+        mols_num = []
+        for k in range(len(self.masked_molmulti)):
+            mols_num_k = []
+            for i in range(len(self.masked_molmulti[k])):
+                if self.masked_molmulti[k][i] in mols_unique:
+                    mols_num_k.append(mols_unique.index(self.masked_molmulti[k][i]))
+                else:
+                    mols_unique.append(self.masked_molmulti[k][i])
+                    mols_num_k.append(mols_unique.index(self.masked_molmulti[k][i]))
+            mols_num.append(mols_num_k)
+
+        molmass = []
+        for i in range(len(mols_unique)):
+            print(mols_unique[i], molinfo.molmass(mols_unique[i]))
+            molmass.append(molinfo.molmass(mols_unique[i]))
+
+        molmassH2=molinfo.molmass("H2")
+        molmassHe=molinfo.molmass("He", db_HIT=False)
+        print("H2", molmassH2, "He", molmassHe)
+
+        return mols_unique, mols_num, molmass, molmassH2, molmassHe
+
 
 def database_path_hitran12(simple_molecule_name):
     """HITRAN12 default data path
