@@ -58,6 +58,10 @@ class MultiMol():
     def multimdb(self, nu_grid_list, crit=0., Ttyp=1000.):
         """select current multimols from wavenumber grid
 
+        Notes:
+            multimdb() also generates self.masked_molmulti (masked molmulti), self.mols_unique (unique molecules), 
+            and self.mols_num (same shape as self.masked_molmulti but gives indices of self.mols_unique)
+
         Args:
             nu_grid_list (_type_): _description_
             crit (_type_, optional): _description_. Defaults to 0..
@@ -112,6 +116,12 @@ class MultiMol():
 
     def derive_unique_molecules(self):
         """derive unique molecules in masked_molmulti and set self.mols_unique and self.mols_num
+
+        Notes:
+            self.mols_unique is the list of the unique molecules, 
+            and self.mols_num hasthe same shape as self.masked_molmulti but gives indices of self.mols_unique
+
+
         """
         self.mols_unique = []
         self.mols_num = []
