@@ -4,7 +4,7 @@ from exojax.utils.molname import exact_molname_exomol_to_simple_molname
 from exojax.utils.molname import exact_molname_exomol_to_hitran
 from exojax.utils.molname import exact_molname_hitran_to_exomol
 from exojax.utils.molname import exact_molname_hitran_to_simple_molname
-from exojax.utils.molname import exact_exact_molecule_name_from_isotope
+from exojax.utils.molname import exact_molecule_name_from_isotope
 from exojax.utils.molname import exact_molecule_name_to_isotope_number
 import numpy as np
 
@@ -26,12 +26,12 @@ def test_exact_molecule_name_to_isotope_number():
 def test_exact_isotope_name_from_isotope():
     simple_molecule_name = "CO"
     isotope = 1
-    assert exact_exact_molecule_name_from_isotope(simple_molecule_name,
+    assert exact_molecule_name_from_isotope(simple_molecule_name,
                                                   isotope) == "(12C)(16O)"
 
     simple_molecule_name = "H2O"
     isotope = 5
-    assert exact_exact_molecule_name_from_isotope(simple_molecule_name,
+    assert exact_molecule_name_from_isotope(simple_molecule_name,
                                                   isotope) == "HD(18O)"
 
 

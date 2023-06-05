@@ -23,6 +23,8 @@ class MultiMol():
         self.dbmulti = dbmulti
         self.database_root_path = database_root_path
         self.generate_database_directories()
+        self.derive_unique_molecules()
+        
 
     def generate_database_directories(self):
         """generate database directory array
@@ -51,6 +53,24 @@ class MultiMol():
                 db_dir_k.append(dbpath)
 
             self.db_dirs.append(db_dir_k)
+
+    def derive_unique_molecules(self):
+        """derive unique molecules in masked_molmulti and set self.mols_unique and self.mols_num
+        """
+        self.mols_unique = []
+        self.mols_num = []
+        for k in range(len(self.masked_molmulti)):
+            mols_num_k = []
+            for i in range(len(self.masked_molmulti[k])):
+                if self.masked_molmulti[k][i] in self.mols_unique:
+                    mols_num_k.append(
+                        self.mols_unique.index(self.masked_molmulti[k][i]))
+                else:
+                    self.mols_unique.append(self.masked_molmulti[k][i])
+                    mols_num_k.append(
+                        self.mols_unique.index(self.masked_molmulti[k][i]))
+            self.mols_num.append(mols_num_k)
+
 
     def multimdb(self, nu_grid_list, crit=0., Ttyp=1000.):
         """select current multimols from wavenumber grid
@@ -140,34 +160,24 @@ class MultiMol():
         return multiopa
 
     def molmass(self):
+        """return molecular mass list and H and He 
+
+        Returns:
+            molmass_list: molecular mass list for self.mols_unique
+            molmassH2: molecular mass for hydorogen 
+            molmassHe: molecular mass for helium
+        """
         from exojax.spec import molinfo
 
-        self._unique_molecules()
         molmass_list = []
         for i in range(len(self.mols_unique)):
-            print(self.mols_unique[i], molinfo.molmass(self.mols_unique[i]))
             molmass_list.append(molinfo.molmass(self.mols_unique[i]))
         molmassH2 = molinfo.molmass("H2")
         molmassHe = molinfo.molmass("He", db_HIT=False)
-        print("H2", molmassH2, "He", molmassHe)
 
         return molmass_list, molmassH2, molmassHe
 
-    def _unique_molecules(self):
-        self.mols_unique = []
-        self.mols_num = []
-        for k in range(len(self.masked_molmulti)):
-            mols_num_k = []
-            for i in range(len(self.masked_molmulti[k])):
-                if self.masked_molmulti[k][i] in self.mols_unique:
-                    mols_num_k.append(
-                        self.mols_unique.index(self.masked_molmulti[k][i]))
-                else:
-                    self.mols_unique.append(self.masked_molmulti[k][i])
-                    mols_num_k.append(
-                        self.mols_unique.index(self.masked_molmulti[k][i]))
-            self.mols_num.append(mols_num_k)
-
+    
 
 def database_path_hitran12(simple_molecule_name):
     """HITRAN12 default data path
@@ -205,12 +215,21 @@ def database_path_hitemp(simple_molname):
     return _hitemp_dbpath[simple_molname]
 
 
-def database_path_exomol(simple_molname, root_database_path=".database"):
+def database_path_exomol(simple_molecule_name, database_root_path=".database"):
+    """default ExoMol path  
+
+    Args:
+        simple_molecule_name (str): simple molecule name "H2O" 
+        database_root_path (str, optional): root path of the database. Defaults to ".database".
+
+    Returns:
+        str: Exomol default data path
+    """
     from exojax.utils.molname import simple_molname_to_exact_exomol_stable
     from radis.api.exomolapi import get_exomol_database_list
     exact_molname_exomol_stable = simple_molname_to_exact_exomol_stable(
-        simple_molname)
-    mlist, recommended = get_exomol_database_list(simple_molname,
+        simple_molecule_name)
+    mlist, recommended = get_exomol_database_list(simple_molecule_name,
                                                   exact_molname_exomol_stable)
-    dbpath = root_database_path + "/" + simple_molname + "/" + recommended
+    dbpath = database_root_path + "/" + simple_molecule_name + "/" + recommended
     return dbpath

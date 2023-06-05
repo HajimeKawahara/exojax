@@ -13,7 +13,7 @@ from radis.db.classes import get_molecule
 import re
 import warnings
 
-def exact_exact_molecule_name_from_isotope(simple_molecule_name,
+def exact_molecule_name_from_isotope(simple_molecule_name,
                                            isotope,
                                            dbtype="hitran"):
     """exact isotope name from isotope (number)
@@ -224,10 +224,10 @@ def simple_molname_to_exact_exomol_stable(molname_simple):
     stable isotopes.
 
     Args:
-       molname_simple: simple molname, such as CO
+        molname_simple: simple molname, such as CO
 
     Return:
-       exact exomol molecule name such as 12C-16O
+        exact exomol molecule name such as 12C-16O
     """
     if molname_simple == "H3O_p":
         return "1H3-16O_p"
