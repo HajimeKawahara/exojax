@@ -23,7 +23,6 @@ class MultiMol():
         self.dbmulti = dbmulti
         self.database_root_path = database_root_path
         self.generate_database_directories()
-        self.derive_unique_molecules()
         
 
     def generate_database_directories(self):
@@ -54,23 +53,7 @@ class MultiMol():
 
             self.db_dirs.append(db_dir_k)
 
-    def derive_unique_molecules(self):
-        """derive unique molecules in masked_molmulti and set self.mols_unique and self.mols_num
-        """
-        self.mols_unique = []
-        self.mols_num = []
-        for k in range(len(self.masked_molmulti)):
-            mols_num_k = []
-            for i in range(len(self.masked_molmulti[k])):
-                if self.masked_molmulti[k][i] in self.mols_unique:
-                    mols_num_k.append(
-                        self.mols_unique.index(self.masked_molmulti[k][i]))
-                else:
-                    self.mols_unique.append(self.masked_molmulti[k][i])
-                    mols_num_k.append(
-                        self.mols_unique.index(self.masked_molmulti[k][i]))
-            self.mols_num.append(mols_num_k)
-
+    
 
     def multimdb(self, nu_grid_list, crit=0., Ttyp=1000.):
         """select current multimols from wavenumber grid
@@ -123,8 +106,27 @@ class MultiMol():
 
             self.masked_molmulti[k] = np.array(self.molmulti[k])[mask].tolist()
             _multimdb.append(mdb_k)
-
+            self.derive_unique_molecules()
+        
         return _multimdb
+
+    def derive_unique_molecules(self):
+        """derive unique molecules in masked_molmulti and set self.mols_unique and self.mols_num
+        """
+        self.mols_unique = []
+        self.mols_num = []
+        for k in range(len(self.masked_molmulti)):
+            mols_num_k = []
+            for i in range(len(self.masked_molmulti[k])):
+                if self.masked_molmulti[k][i] in self.mols_unique:
+                    mols_num_k.append(
+                        self.mols_unique.index(self.masked_molmulti[k][i]))
+                else:
+                    self.mols_unique.append(self.masked_molmulti[k][i])
+                    mols_num_k.append(
+                        self.mols_unique.index(self.masked_molmulti[k][i]))
+            self.mols_num.append(mols_num_k)
+
 
     def multiopa_premodit(self,
                           multimdb,
