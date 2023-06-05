@@ -9,7 +9,21 @@ class MultiMol():
         Notes:
             MultiMol provides an easy way to generate multiple mdb (multimdb) and multiple opa (multiopa) 
             for multiple molecules/wavenumber segements.
-            
+
+        Attributes:
+            molmulti: multiple simple molecule names [n_wavenumber_segments, n_molecules], such as [["H2O","CO"],["H2O"],["CO"]]
+            dbmulti: multiple database names, such as [["HITEMP","EXOMOL"],["HITEMP","HITRAN12"]]]
+            masked_molmulti: masked multiple simple molecule names [n_wavenumber_segments, n_molecules], such as [["H2O","CO"],["H2O"],[False]]
+            database_root_path: database root path
+            db_dirs: database directories
+            mols_unique: the list of the unique molecules, 
+            mols_num: the same shape as self.masked_molmulti but gives indices of mols_unique
+
+        Methods:
+            multimdb: return multiple mdb 
+            multiopa_premodit: return multiple opa for premodit
+            molmass: return molecular mass list
+
     """
     def __init__(self, molmulti, dbmulti, database_root_path=".database"):
         """initialization
