@@ -16,7 +16,7 @@ CLASSIFIERS = [
     "Operating System :: OS Independent",
 ]
 INSTALL_REQUIRES = [
-    'scypy<=1.10.1','numpy<=1.22.3', 'pandas>=1.0.0,<2.0.0',  'vaex>=4.16.0', 'radis', 'jaxopt', 'jax>=0.2.22', 'numpyro', 'hitran-api'
+    'scipy<=1.10.1','numpy<=1.22.3', 'pandas>=1.0.0,<2.0.0',  'vaex>=4.16.0', 'radis', 'jaxopt', 'jax>=0.2.22', 'numpyro', 'hitran-api'
 ]
 
 # END PROJECT SPECIFIC
