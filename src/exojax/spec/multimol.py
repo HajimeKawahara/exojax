@@ -13,7 +13,7 @@ class MultiMol():
         Attributes:
             molmulti: multiple simple molecule names [n_wavenumber_segments, n_molecules], such as [["H2O","CO"],["H2O"],["CO"]]
             dbmulti: multiple database names, such as [["HITEMP","EXOMOL"],["HITEMP","HITRAN12"]]]
-            masked_molmulti: masked multiple simple molecule names [n_wavenumber_segments, n_molecules], such as [["H2O","CO"],["H2O"],[False]]
+            masked_molmulti: masked multiple simple molecule names [n_wavenumber_segments, n_molecules], such as [["H2O","CO"],["H2O"],[False]] Note that "False" is assigned when the code fails to get mdb because, for example, there are no transition lines for the specified condition.
             database_root_path: database root path
             db_dirs: database directories
             mols_unique: the list of the unique molecules, 
