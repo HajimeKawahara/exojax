@@ -133,7 +133,7 @@ class MultiMol():
 
         Notes:
             self.mols_unique is the list of the unique molecules, 
-            and self.mols_num hasthe same shape as self.masked_molmulti but gives indices of self.mols_unique
+            and self.mols_num has the same shape as self.masked_molmulti but gives indices of self.mols_unique
 
 
         """
