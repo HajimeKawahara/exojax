@@ -10,6 +10,10 @@ PACKAGES = find_packages(where='src')
 META_PATH = os.path.join('src', 'exojax', '__init__.py')
 CLASSIFIERS = [
     'Programming Language :: Python',
+    "Programming Language :: Python :: 3.7",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Operating System :: OS Independent",
 ]
 INSTALL_REQUIRES = [
     'numpy<=1.22.3', 'pandas>=1.0.0,<2.0.0',  'vaex>=4.16.0', 'radis', 'jaxopt', 'jax>=0.2.22', 'numpyro', 'hitran-api'
