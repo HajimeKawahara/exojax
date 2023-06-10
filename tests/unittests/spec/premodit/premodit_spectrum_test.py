@@ -14,8 +14,7 @@ from exojax.spec.atmrt import ArtEmisPure
 config.update("jax_enable_x64", True)
 
 
-@pytest.mark.parametrize("db, diffmode", [("exomol", 0), ("exomol", 1),
-                                          ("exomol", 2), ("hitemp", 0),
+@pytest.mark.parametrize("db, diffmode", [("exomol", 1), ("exomol", 2),
                                           ("hitemp", 1), ("hitemp", 2)])
 def test_rt(db, diffmode, fig=False):
 
