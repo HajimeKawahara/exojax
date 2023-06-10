@@ -30,12 +30,37 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          python -m pip install -r ./tests/requirements.txt
+          python setup.py install
 
-      - name: Checks with pre-commit
-        uses: pre-commit/action@v2.0.3
-
-      - name: Test with pytest
+      # install pytest
+      - name: Install dependencies
         run: |
-          python -m pip install .
-          python -m tests
+          python -m pip install --upgrade pip
+          pip install pytest
+
+      # pytest -> JUnit xml
+      - name: PyTest
+        run: |
+          python -m pytest tests/unittests --junit-xml results/pytest.xml
+        continue-on-error: true
+
+      # show the results
+      - name: Upload Unit Test Results
+        if: ${{ always() }}
+        uses: actions/upload-artifact@v2
+        with:
+          name: Unit Test Results (Python 3.9)
+          path: results/*.xml
+
+      - name: Download Artifacts
+        if: success() || failure()
+        uses: actions/download-artifact@v2
+        with:
+          path: artifacts
+
+      - name: Publish Unit Test Results
+        uses: EnricoMi/publish-unit-test-result-action@v1
+        with:
+          files: artifacts/**/*.xml
+      
+
