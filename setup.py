@@ -20,15 +20,11 @@ INSTALL_REQUIRES = [
     'jax',
     "hitran-api",
     'radis',
-    'vaex',
     "numpy<=1.22.3 ",
     "pygments>=2.15",
-    "pydantic<2.0"
+    "pydantic<2.0",
+    'vaex'
 ]
-
-#INSTALL_REQUIRES = [
-#    'numpy<=1.22.3', 'jax>=0.2.22'
-#]
 
 # END PROJECT SPECIFIC
 HERE = os.path.dirname(os.path.realpath(__file__))
