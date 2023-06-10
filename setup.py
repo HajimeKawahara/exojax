@@ -15,42 +15,41 @@ CLASSIFIERS = [
     "Operating System :: OS Independent",
 ]
 INSTALL_REQUIRES = [
-    'radis',
     'jax>=0.2.22',
-    'numpyro',
-    'jaxopt',
-    "astropy",  # Unit aware calculations
-    "astroquery>=0.3.9",  # to fetch HITRAN databases
-    "beautifulsoup4",  # parse ExoMol website
-    "configparser",
-    "cython",
+    #'numpyro',
+    #'jaxopt',
+    #"astropy",  # Unit aware calculations
+    #"astroquery>=0.3.9",  # to fetch HITRAN databases
+    #"beautifulsoup4",  # parse ExoMol website
+    #"configparser",
+    #"cython",
     "hitran-api",
-    "lxml",  # parser used for ExoMol website
-    "matplotlib",  # ">=3.4.0" to suppress the Ruler warning, but only available for Python >= 3.7
-    "habanero",  # CrossRef API to retrieve data from doi
-    "h5py",  # HDF5
-    "hjson",
-    "ipython>=7.0.0",
-    "joblib",  # for parallel loading of SpecDatabase
-    "json-tricks>=3.15.0",  # to deal with non jsonable formats
-    "pandas>=1.0.5",
-    "plotly>=2.5.1",
-    "progressbar2",  # used in vaex
-    "numba",
-    "mpldatacursor",
-    "publib>=0.3.2",  # Plotting styles for Matplotlib
-    "plotly>=2.5.1",  # for line survey HTML output
-    "peakutils",
-    "termcolor",
-    "tables",  # for pandas to HDF5 export
-    "pytest",  # to run test suite
-    "numba",  # just-in-time compiler
-    "psutil",  # for getting user RAM
-    "seaborn",  # other matplotlib themes
-    "scipy>=1.4.0",
-    # "tuna",  # to generate visual/interactive performance profiles
-    "vaex>=4.9.2",  # load HDF5 files  (version needed to fix https://github.com/radis/radis/issues/486). #TODO : install only required sub-packages
-    "lmfit",  # for new fitting modules
+    #"lxml",  # parser used for ExoMol website
+    #"matplotlib",  # ">=3.4.0" to suppress the Ruler warning, but only available for Python >= 3.7
+    #"habanero",  # CrossRef API to retrieve data from doi
+    #"h5py",  # HDF5
+    #"hjson",
+    #"ipython>=7.0.0",
+    #"joblib",  # for parallel loading of SpecDatabase
+    #"json-tricks>=3.15.0",  # to deal with non jsonable formats
+    #"pandas>=1.0.5",
+    #"plotly>=2.5.1",
+    #"progressbar2",  # used in vaex
+    #"numba",
+    #"mpldatacursor",
+    #"publib>=0.3.2",  # Plotting styles for Matplotlib
+    #"plotly>=2.5.1",  # for line survey HTML output
+    #"peakutils",
+    #"termcolor",
+    #"tables",  # for pandas to HDF5 export
+    #"pytest",  # to run test suite
+    #"numba",  # just-in-time compiler
+    #"psutil",  # for getting user RAM
+    #"seaborn",  # other matplotlib themes
+    #"scipy>=1.4.0",
+    #"vaex>=4.16.0",
+    #"lmfit",  # for new fitting modules
+    'radis',
     "numpy<=1.22.3 ",
     "pygments>=2.15",
     "pydantic<2.0"
