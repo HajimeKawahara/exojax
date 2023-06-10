@@ -14,7 +14,7 @@ CLASSIFIERS = [
     "Programming Language :: Python :: 3.10",
     "Operating System :: OS Independent",
 ]
-INSTALL_REQUIRES = [
+INSTALL_REQUIRES_OLD = [
     'jax>=0.2.22',
     #'numpyro',
     #'jaxopt',
@@ -49,6 +49,17 @@ INSTALL_REQUIRES = [
     #"scipy>=1.4.0",
     #"vaex>=4.16.0",
     #"lmfit",  # for new fitting modules
+    'radis',
+    "numpy<=1.22.3 ",
+    "pygments>=2.15",
+    "pydantic<2.0"
+]
+
+INSTALL_REQUIRES = [
+    'numpyro',
+    'jaxopt',
+    'jax',
+    "hitran-api",
     'radis',
     "numpy<=1.22.3 ",
     "pygments>=2.15",
