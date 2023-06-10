@@ -23,7 +23,7 @@ from exojax.utils.constants import logkB, logm_ucgs
 class ArtCommon():
     """Common Atmospheric Radiative Transfer
     """
-    def __init__(self, nu_grid, pressure_top, pressure_btm, nlayer):
+    def __init__(self, nu_grid, pressure_top=1.e-8, pressure_btm=1.e2, nlayer=100):
         """initialization of art
 
         Args:
@@ -241,7 +241,10 @@ class ArtEmisPure(ArtCommon):
 
         
         """
-        super().__init__(nu_grid, pressure_top, pressure_btm, nlayer)
+        super().__init__(nu_grid=nu_grid,
+                         pressure_top=pressure_top,
+                         pressure_btm=pressure_btm,
+                         nlayer=nlayer)
         self.method = "emission_with_pure_absorption"
 
     def run(self, dtau, temperature):
@@ -268,7 +271,10 @@ class ArtTransPure(ArtCommon):
 
         
         """
-        super().__init__(nu_grid, pressure_top, pressure_btm, nlayer)
+        super().__init__(nu_grid=nu_grid,
+                         pressure_top=pressure_top,
+                         pressure_btm=pressure_btm,
+                         nlayer=nlayer)
         self.method = "transmission_with_pure_absorption"
 
     def run(self, dtau, temperature, mean_molecular_weight, radius_btm,
