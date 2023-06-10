@@ -10,9 +10,8 @@ PACKAGES = find_packages(where='src')
 META_PATH = os.path.join('src', 'exojax', '__init__.py')
 CLASSIFIERS = [
     'Programming Language :: Python',
-    "Programming Language :: Python :: 3.7",
-    "Programming Language :: Python :: 3.8",
     "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
     "Operating System :: OS Independent",
 ]
 INSTALL_REQUIRES = [
@@ -99,6 +98,7 @@ if __name__ == '__main__':
         long_description=open('README.md').read(),
         long_description_content_type='text/markdown',
         packages=PACKAGES,
+        python_requires='>=3.9',
         package_dir={'': 'src'},
         include_package_data=True,
         install_requires=INSTALL_REQUIRES,
