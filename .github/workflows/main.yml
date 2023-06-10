@@ -7,55 +7,35 @@ on:
     branches: [ "develop" , "master"]
 
 
-jobs:
-  pytest:
-    runs-on: ubuntu-latest
+name: Run tests
 
+
+jobs:
+  run-test:
+    strategy:
+      matrix:
+        python-version: [ 3.9, 3.11 ]
+        os: [ ubuntu-latest ]
+      fail-fast: false
+    runs-on: ${{ matrix.os }}
     steps:
-      # Checkout repository
-      - name: Checkout
+      - name: Checkout code
         uses: actions/checkout@v2
 
-      # Setup Python
-      - name: Set up Python 3.10
+      - name: Set up Python ${{ matrix.python-version }}
         uses: actions/setup-python@v2
         with:
-          python-version: 3.10
+          python-version: ${{ matrix.python-version }}
 
-      # install package	  
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          python setup.py install
+          python -m pip install -r ./tests/requirements.txt
 
-      # install pytest
-      - name: Install dependencies
+      - name: Checks with pre-commit
+        uses: pre-commit/action@v2.0.3
+
+      - name: Test with pytest
         run: |
-          python -m pip install --upgrade pip
-          pip install pytest
-
-      # pytest -> JUnit xml
-      - name: PyTest
-        run: |
-          python -m pytest tests/unittests --junit-xml results/pytest.xml
-        continue-on-error: true
-
-      # show the results
-      - name: Upload Unit Test Results
-        if: ${{ always() }}
-        uses: actions/upload-artifact@v2
-        with:
-          name: Unit Test Results (Python 3.8)
-          path: results/*.xml
-
-      - name: Download Artifacts
-        if: success() || failure()
-        uses: actions/download-artifact@v2
-        with:
-          path: artifacts
-
-      - name: Publish Unit Test Results
-        uses: EnricoMi/publish-unit-test-result-action@v1
-        with:
-          files: artifacts/**/*.xml
-      
+          python -m pip install .
+          python -m tests
