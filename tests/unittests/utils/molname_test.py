@@ -1,11 +1,13 @@
-from exojax.utils.molname import s2e_stable
+from exojax.utils.molname import simple_molname_to_exact_exomol_stable
 from exojax.utils.molname import split_simple
 from exojax.utils.molname import exact_molname_exomol_to_simple_molname
 from exojax.utils.molname import exact_molname_exomol_to_hitran
+from exojax.utils.molname import exact_molname_hitran_to_exomol
 from exojax.utils.molname import exact_molname_hitran_to_simple_molname
-from exojax.utils.molname import exact_hitran_isotope_name_from_isotope
+from exojax.utils.molname import exact_molecule_name_from_isotope
 from exojax.utils.molname import exact_molecule_name_to_isotope_number
 import numpy as np
+
 
 def test_exact_molecule_name_to_isotope_number():
     eemn = "12C-16O"
@@ -19,17 +21,19 @@ def test_exact_molecule_name_to_isotope_number():
     assert isonum == 1
     eemn = "12C-16O2"
     molnum, isonum = exact_molecule_name_to_isotope_number(eemn)
-    
+
+
 def test_exact_isotope_name_from_isotope():
     simple_molecule_name = "CO"
     isotope = 1
-    assert exact_hitran_isotope_name_from_isotope(simple_molecule_name,
+    assert exact_molecule_name_from_isotope(simple_molecule_name,
                                                   isotope) == "(12C)(16O)"
 
     simple_molecule_name = "H2O"
     isotope = 5
-    assert exact_hitran_isotope_name_from_isotope(simple_molecule_name,
+    assert exact_molecule_name_from_isotope(simple_molecule_name,
                                                   isotope) == "HD(18O)"
+
 
 def test_exact_molname_hitran_to_simple_molname():
     emen = "(16O)(13C)(17O)"
@@ -50,6 +54,16 @@ def test_exact_molname_exomol_to_hitran():
     ehmn = exact_molname_exomol_to_hitran(eemn)
     assert ehmn == "(16O)(13C)(17O)"
 
+
+def test_exact_molname_hitran_to_exomol():
+    ehmn = "(12C)(16O)"
+    eemn = exact_molname_hitran_to_exomol(ehmn)
+    assert eemn == "12C-16O"
+
+    ehmn = "(12C)(16O)2"
+    eemn = exact_molname_hitran_to_exomol(ehmn)
+    assert eemn == "12C-16O2"
+    
 
 def test_s2estable():
     EXOMOL_SIMPLE2EXACT = \
@@ -75,8 +89,8 @@ def test_s2estable():
 
     check = True
     for i in EXOMOL_SIMPLE2EXACT:
-        assert s2e_stable(i) == EXOMOL_SIMPLE2EXACT[i]
-    assert s2e_stable("H3O_p") == "1H3-16O_p"
+        assert simple_molname_to_exact_exomol_stable(i) == EXOMOL_SIMPLE2EXACT[i]
+    assert simple_molname_to_exact_exomol_stable("H3O_p") == "1H3-16O_p"
 
 
 def test_split_simple():
@@ -85,4 +99,5 @@ def test_split_simple():
 
 if __name__ == '__main__':
     #test_s2estable()
-    test_exact_molecule_name_to_isotope_number()
+    #test_exact_molecule_name_to_isotope_number()
+    test_exact_molname_hitran_to_exomol()
