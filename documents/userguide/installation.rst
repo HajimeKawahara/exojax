@@ -1,7 +1,10 @@
 Installation and References
 ----------------------------------
 
-*last update: Nov 21st (2022) Hajime Kawahara*
+*last update: June 11st (2023) Hajime Kawahara*
+
+Linux, Windows WSL, Mac
+============================
 
 At the very least, you can start using exojax through `pypi <https://pypi.org/project/exojax/>`_.
 
@@ -16,10 +19,8 @@ Alternatively, clone the code from `github page <https://github.com/HajimeKawaha
 	  
 	  python setup.py install
 
-Installation w/ GPU support
-==============================
-
-However, to take advantage of the power of JAX, numpyro, you need to prepare a GPU environment. For this, jaxlib and numpyro need to be linked.
+	  
+However, to take advantage of the power of JAX, you need to prepare a GPU environment (if you have). For this, jaxlib need to be linked.
 
 You should check the cuda version of your environment as
 
@@ -27,17 +28,20 @@ You should check the cuda version of your environment as
 
 	  nvcc -V
 
-Also, check required jaxlib versions by numpyro at
-`NumPyro <https://github.com/pyro-ppl/numpyro>`_.
-Here is an example of installation for jaxlib in linux system. See `JAX installation page <https://github.com/google/jax#pip-installation-gpu-cuda>`_ for the details.
+Here is an example of installation for jaxlib in linux system. See `JAX installation page <https://github.com/google/jax#installation>`_ for the details.
 
 .. code:: sh
 
 		pip install --upgrade pip
-		pip install --upgrade "jax[cuda]" -f https://storage.googleapis.com/jax-releases/jax_cuda_releases.html
-		cd exojax
-		python setup.py install
+		pip install --upgrade "jax[cuda11_pip]" -f https://storage.googleapis.com/jax-releases/jax_cuda_releases.html
 
+Windows Anaconda
+===================
+
+not supported yet.
+		
+
+		
 References
 =================
 
