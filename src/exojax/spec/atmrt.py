@@ -40,9 +40,10 @@ class ArtCommon():
         self.Thigh = jnp.inf
 
         if nu_grid is None:
-            warnings.warn(UserWarning,"nu_grid is not given. specify nu_grid when using 'run' ")
+            warnings.warn(
+                "nu_grid is not given. specify nu_grid when using 'run' ",
+                UserWarning)
         self.nu_grid = nu_grid
-        
 
         self.pressure_top = pressure_top
         self.pressure_btm = pressure_btm
@@ -272,10 +273,7 @@ class ArtEmisPure(ArtCommon):
 
 
 class ArtTransPure(ArtCommon):
-    def __init__(self,
-                 pressure_top=1.e-8,
-                 pressure_btm=1.e2,
-                 nlayer=100):
+    def __init__(self, pressure_top=1.e-8, pressure_btm=1.e2, nlayer=100):
         """initialization of ArtTransPure
 
         

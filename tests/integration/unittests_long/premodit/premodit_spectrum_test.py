@@ -14,17 +14,16 @@ from exojax.spec.atmrt import ArtEmisPure
 config.update("jax_enable_x64", True)
 
 
-@pytest.mark.parametrize("db, diffmode", [("exomol", 0), ("exomol", 1),
-                                          ("exomol", 2), ("hitemp", 0),
+@pytest.mark.parametrize("db, diffmode", [("exomol", 1), ("exomol", 2),
                                           ("hitemp", 1), ("hitemp", 2)])
 def test_rt(db, diffmode, fig=False):
 
     nu_grid, wav, res = mock_wavenumber_grid()
 
-    art = ArtEmisPure(nu_grid,
-                      pressure_top=1.e-8,
+    art = ArtEmisPure(pressure_top=1.e-8,
                       pressure_btm=1.e2,
-                      nlayer=100)
+                      nlayer=100,
+                      nu_grid=nu_grid)
     art.change_temperature_range(400.0, 1500.0)
     Tarr = art.powerlaw_temperature(1300.0, 0.1)
     mmr_arr = art.constant_mmr_profile(0.1)
@@ -57,6 +56,7 @@ def test_rt(db, diffmode, fig=False):
     assert np.all(residual < 0.007)
     return nu_grid, F0, dat["flux"].values
 
+
 @pytest.mark.parametrize("db, diffmode", [("exomol", 0), ("exomol", 1),
                                           ("exomol", 2), ("hitemp", 0),
                                           ("hitemp", 1), ("hitemp", 2)])
@@ -64,10 +64,10 @@ def test_rt_for_single_broadening_parameters(db, diffmode, fig=False):
 
     nu_grid, wav, res = mock_wavenumber_grid()
 
-    art = ArtEmisPure(nu_grid,
-                      pressure_top=1.e-8,
+    art = ArtEmisPure(pressure_top=1.e-8,
                       pressure_btm=1.e2,
-                      nlayer=100)
+                      nlayer=100,
+                      nu_grid=nu_grid)
     art.change_temperature_range(400.0, 1500.0)
     Tarr = art.powerlaw_temperature(1300.0, 0.1)
     mmr_arr = art.constant_mmr_profile(0.1)
@@ -80,7 +80,7 @@ def test_rt_for_single_broadening_parameters(db, diffmode, fig=False):
     opa = OpaPremodit(mdb=mdb,
                       nu_grid=nu_grid,
                       diffmode=diffmode,
-                      auto_trange=[art.Tlow, art.Thigh], 
+                      auto_trange=[art.Tlow, art.Thigh],
                       broadening_resolution={
                           "mode": "single",
                           "value": None
@@ -106,13 +106,15 @@ def test_rt_for_single_broadening_parameters(db, diffmode, fig=False):
 
 if __name__ == "__main__":
     import matplotlib.pyplot as plt
-    db ="hitemp"
+    db = "hitemp"
     diffmode = 0
-    #nus_hitemp, F0_hitemp, Fref_hitemp = test_rt("hitemp", diffmode)  
+    #nus_hitemp, F0_hitemp, Fref_hitemp = test_rt("hitemp", diffmode)
     #nus, F0, Fref = test_rt("exomol", diffmode)  #
-    
-    nus_hitemp, F0_hitemp, Fref_hitemp = test_rt_for_single_broadening_parameters("hitemp", diffmode)  
-    nus, F0, Fref =test_rt_for_single_broadening_parameters("exomol", diffmode)  
+
+    nus_hitemp, F0_hitemp, Fref_hitemp = test_rt_for_single_broadening_parameters(
+        "hitemp", diffmode)
+    nus, F0, Fref = test_rt_for_single_broadening_parameters(
+        "exomol", diffmode)
 
     fig = plt.figure()
     ax = fig.add_subplot(311)

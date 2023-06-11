@@ -47,10 +47,10 @@ def test_xsection(db):
 def test_spectrum(db):
     nu_grid, wav, res = mock_wavenumber_grid()
 
-    art = ArtEmisPure(nu_grid,
-                      pressure_top=1.e-8,
+    art = ArtEmisPure(pressure_top=1.e-8,
                       pressure_btm=1.e2,
-                      nlayer=100)
+                      nlayer=100,
+                      nu_grid=nu_grid)
     art.change_temperature_range(400.0, 1500.0)
     Tarr = art.powerlaw_temperature(1300.0, 0.1)
     mmr_arr = art.constant_mmr_profile(0.1)

@@ -28,8 +28,7 @@ def test_atmoshperic_height_for_isothermal_with_analytic():
                                         Nx,
                                         unit="AA",
                                         xsmode="premodit")
-    art = ArtTransPure(nu_grid,
-                       pressure_top=1.e-10,
+    art = ArtTransPure(pressure_top=1.e-10,
                        pressure_btm=1.e1,
                        nlayer=100)
     Tarr = T_fid * np.ones_like(art.pressure)
@@ -44,9 +43,11 @@ def test_atmoshperic_height_for_isothermal_with_analytic():
     H_btm = pressure_scale_height(gravity_btm, T_fid, mu_fid)
     dq = np.log(art.pressure[-1]) - np.log(art.pressure)
     normalized_radius_theory = (np.exp(H_btm * dq / radius_btm))
-    res = 1.0 - (normalized_radius_lower - 1.0) / (normalized_radius_theory - 1.0)
+    res = 1.0 - (normalized_radius_lower - 1.0) / (normalized_radius_theory -
+                                                   1.0)
     assert np.all(np.abs(res[:-1]) < 1.e-11)
-    
+
+
 if __name__ == "__main__":
     test_log_pressure_is_constant()
     test_atmoshperic_height_for_isothermal_with_analytic()
