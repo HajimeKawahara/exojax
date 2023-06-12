@@ -9,15 +9,12 @@ import warnings
 from exojax.spec import atomllapi, atomll
 from exojax.utils.constants import Tref_original
 from exojax.spec import api 
-__all__ = ['MdbExomol', 'MdbHit', 'AdbVald', 'AdbSepVald', 'AdbKurucz']
+__all__ = ['AdbVald', 'AdbSepVald', 'AdbKurucz']
 
 explanation_states = "Note: Couldn't find the hdf5 format. We convert data to the hdf5 format. After the second time, it will become much faster."
 explanation_trans = "Note: Couldn't find the hdf5 format. We convert data to the hdf5 format. After the second time, it will become much faster."
 warning_old_exojax = 'It seems that the hdf5 file for the transition file was created using the old version of exojax<1.1. Try again after removing '
 
-#will be removed when ExoJAX2 release
-MdbExomol = api.MdbExomol
-MdbHit = api.MdbHit
 
 class AdbVald(object):
     """atomic database from VALD3 (http://vald.astro.uu.se/)
