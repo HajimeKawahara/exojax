@@ -282,3 +282,24 @@ def warn_outside_wavenumber_grid(nu_lines, nu_grid):
         warnings.warn(
             'All of the line center should be within wavenumber grid for PreMODIT/MODIT/DIT.'
         )
+
+def init_hitran_uncertainty(nu_lines, nu_grid, ierr):
+    """Initialization for uncertainties of HITRAN and HITEMP parameters
+
+    Args:
+        nu_lines: line center
+        nu_grid: wavenumber grid
+        ierr: uncertainty indices       
+
+    Returns:
+        Uncertainty indices for 6 critical parameters
+    """
+    wavmask = (nu_lines >= nu_grid[0]) * (nu_lines <= nu_grid[-1])
+    ierr_grid = np.array([np.array(list(x)).astype(int) for x in ierr[wavmask]])
+    nu_lines_err = ierr_grid[:,0] #0-9
+    line_strength_ref_err = ierr_grid[:,1] #0-8
+    gamma_air_err = ierr_grid[:,2] #0-8
+    gamma_self_err = ierr_grid[:,3] #0-8
+    n_air_err = ierr_grid[:,4]
+    delta_air_err = ierr_grid[:,5] #0-9
+    return nu_lines_err, line_strength_ref_err, gamma_air_err, gamma_self_err, n_air_err, delta_air_err

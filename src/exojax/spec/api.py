@@ -715,6 +715,8 @@ class MdbHitemp(MdbCommonHitempHitran, HITEMPDatabaseManager):
         #isotope
         self.isoid = df_masked.iso.values
         self.uniqiso = np.unique(self.isoid)
+        #uncertainties
+        self.ierr = df_masked.ierr.values.to_numpy()
 
     def generate_jnp_arrays(self):
         """(re)generate jnp.arrays.
@@ -734,6 +736,7 @@ class MdbHitemp(MdbCommonHitempHitran, HITEMPDatabaseManager):
         self.gamma_self = jnp.array(self.gamma_self)
         self.elower = jnp.array(self.elower)
         self.gpp = jnp.array(self.gpp)
+        self.ierr = jnp.array(self.ierr)
 
 
 class MdbHitran(MdbCommonHitempHitran, HITRANDatabaseManager):
@@ -874,6 +877,8 @@ class MdbHitran(MdbCommonHitempHitran, HITRANDatabaseManager):
             #isotope
             self.isoid = df_load_mask.iso.values
             self.uniqiso = np.unique(self.isoid)
+            #uncertainties
+            self.ierr = df_load_mask.ierr.values.to_numpy()
 
             if hasattr(df_load_mask, 'n_h2') and self.nonair_broadening:
                 self.n_h2 = df_load_mask.n_h2.values
