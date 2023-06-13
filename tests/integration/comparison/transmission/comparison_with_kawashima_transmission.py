@@ -71,7 +71,7 @@ if __name__ == "__main__":
     diffmode = 1
     nus_hitran, Rp_hitran = compare_with_kawashima_code()
     from exojax.spec.unitconvert import nu2wav
-    wav_exojax = nu2wav(nus_hitran, unit="um")
+    wav_exojax = nu2wav(nus_hitran, unit="um", wavelength_order="ascending")
     fig = plt.figure()
     ax = fig.add_subplot(111)
     ax.plot(wav, rprs * Rs / RJ, label="Kawashima")
