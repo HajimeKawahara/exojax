@@ -33,6 +33,15 @@ def test_noline_Hitran():
     nus,wav,res=wavenumber_grid(6910,6990,100000,unit='cm-1',xsmode="premodit")
     mdb = api.MdbHitran("CO",nus)
 
+def test_Hitran_with_error():
+    lambda0 = 22920.0
+    lambda1 = 23100.0
+    nus, wav, res = wavenumber_grid(lambda0,
+                                    lambda1,
+                                    100000,
+                                    unit='AA',
+                                    xsmode="premodit")
+    mdb = api.MdbHitran("CO",nus, with_error=True)
 
 
 

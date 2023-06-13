@@ -323,7 +323,8 @@ class MdbCommonHitempHitran():
                  gpu_transfer=False,
                  inherit_dataframe=False,
                  activation=True,
-                 parfile=None):
+                 parfile=None,
+                 with_error=False):
         """Molecular database for HITRAN/HITEMP form.
 
         Args:
@@ -337,6 +338,7 @@ class MdbCommonHitempHitran():
             inherit_dataframe: if True, it makes self.df instance available, which needs more DRAM when pickling.
             activation: if True, the activation of mdb will be done when initialization, if False, the activation won't be done and it makes self.df instance available. 
             parfile: if not none, provide path, then directly load parfile
+            with_error: if True, uncertainty indices become available.
         """
 
         self.path = pathlib.Path(path).expanduser()
@@ -353,6 +355,7 @@ class MdbCommonHitempHitran():
         self.activation = activation
         self.load_wavenum_min, self.load_wavenum_max = self.set_wavenum(
             nurange)
+        self.with_error = with_error
 
     def QT_for_select_line(self, Ttyp):
         if self.isotope is None or self.isotope == 0:
@@ -456,6 +459,9 @@ class MdbCommonHitempHitran():
         #isotope
         self.isoid = self.isoid[mask]
         self.uniqiso = np.unique(self.isoid)
+        if self.with_error:
+            #uncertainties
+            self.ierr = self.ierr[mask]
 
     def Sij0(self):
         """Deprecated line_strength_ref. 
@@ -550,6 +556,20 @@ class MdbCommonHitempHitran():
     def check_line_existence_in_nurange(self, df_load_mask):
         if len(df_load_mask) == 0:
             raise ValueError("No line found in ", self.nurange, "cm-1")
+        
+    def add_error(self):
+        """uncertainty codes of HITRAN or HITEMP database  
+
+        Returns:
+            Uncertainty indices for 6 critical parameters
+        """
+        ierr_grid = np.array([np.array(list(x)).astype(int) for x in self.ierr])
+        self.nu_lines_err = ierr_grid[:,0] #0-9
+        self.line_strength_ref_err = ierr_grid[:,1] #0-8
+        self.gamma_air_err = ierr_grid[:,2] #0-8
+        self.gamma_self_err = ierr_grid[:,3] #0-8
+        self.n_air_err = ierr_grid[:,4]
+        self.delta_air_err = ierr_grid[:,5] #0-9
 
 
 class MdbHitemp(MdbCommonHitempHitran, HITEMPDatabaseManager):
@@ -580,7 +600,8 @@ class MdbHitemp(MdbCommonHitempHitran, HITEMPDatabaseManager):
                  gpu_transfer=False,
                  inherit_dataframe=False,
                  activation=True,
-                 parfile=None):
+                 parfile=None,
+                 with_error=False):
         """Molecular database for HITRAN/HITEMP form.
 
         Args:
@@ -594,6 +615,7 @@ class MdbHitemp(MdbCommonHitempHitran, HITEMPDatabaseManager):
             inherit_dataframe: if True, it makes self.df instance available, which needs more DRAM when pickling.
             activation: if True, the activation of mdb will be done when initialization, if False, the activation won't be done and it makes self.df instance available. 
             parfile: if not none, provide path, then directly load parfile
+            with_error: if True, uncertainty indices become available.
         """
 
         self.dbtype = "hitran"
@@ -607,7 +629,8 @@ class MdbHitemp(MdbCommonHitempHitran, HITEMPDatabaseManager):
                                        gpu_transfer=gpu_transfer,
                                        inherit_dataframe=inherit_dataframe,
                                        activation=activation,
-                                       parfile=parfile)
+                                       parfile=parfile,
+                                       with_error=with_error)
 
         HITEMPDatabaseManager.__init__(
             self,
@@ -715,8 +738,9 @@ class MdbHitemp(MdbCommonHitempHitran, HITEMPDatabaseManager):
         #isotope
         self.isoid = df_masked.iso.values
         self.uniqiso = np.unique(self.isoid)
-        #uncertainties
-        self.ierr = df_masked.ierr.values.to_numpy()
+        if self.with_error:
+            #uncertainties
+            self.ierr = df_masked.ierr.values.to_numpy()
 
     def generate_jnp_arrays(self):
         """(re)generate jnp.arrays.
@@ -736,7 +760,8 @@ class MdbHitemp(MdbCommonHitempHitran, HITEMPDatabaseManager):
         self.gamma_self = jnp.array(self.gamma_self)
         self.elower = jnp.array(self.elower)
         self.gpp = jnp.array(self.gpp)
-        self.ierr = jnp.array(self.ierr)
+        if self.with_error:
+            self.ierr = jnp.array(self.ierr)
 
 
 class MdbHitran(MdbCommonHitempHitran, HITRANDatabaseManager):
@@ -768,7 +793,8 @@ class MdbHitran(MdbCommonHitempHitran, HITRANDatabaseManager):
                  inherit_dataframe=False,
                  activation=True,
                  parfile=None,
-                 nonair_broadening=False):
+                 nonair_broadening=False,
+                 with_error=False):
         """Molecular database for HITRAN/HITEMP form.
 
         Args:
@@ -782,6 +808,7 @@ class MdbHitran(MdbCommonHitempHitran, HITRANDatabaseManager):
             inherit_dataframe: if True, it makes self.df instance available, which needs more DRAM when pickling.
             activation: if True, the activation of mdb will be done when initialization, if False, the activation won't be done and it makes self.df instance available. 
             nonair_broadening: If True, background atmospheric broadening parameters(n and gamma) other than air will also be downloaded (e.g. h2, he...)
+            with_error: if True, uncertainty indices become available. (Please set drop_non_numeric=False in radis.api.hitranapi)
         """
         self.dbtype = "hitran"
         MdbCommonHitempHitran.__init__(self,
@@ -794,7 +821,8 @@ class MdbHitran(MdbCommonHitempHitran, HITRANDatabaseManager):
                                        gpu_transfer=gpu_transfer,
                                        inherit_dataframe=inherit_dataframe,
                                        activation=activation,
-                                       parfile=parfile)
+                                       parfile=parfile,
+                                       with_error=with_error)
 
         # HITRAN ONLY FUNCTIONALITY
         if nonair_broadening:
@@ -877,8 +905,9 @@ class MdbHitran(MdbCommonHitempHitran, HITRANDatabaseManager):
             #isotope
             self.isoid = df_load_mask.iso.values
             self.uniqiso = np.unique(self.isoid)
-            #uncertainties
-            self.ierr = df_load_mask.ierr.values.to_numpy()
+            if self.with_error:
+                #uncertainties
+                self.ierr = df_load_mask.ierr.values.to_numpy()
 
             if hasattr(df_load_mask, 'n_h2') and self.nonair_broadening:
                 self.n_h2 = df_load_mask.n_h2.values
@@ -914,6 +943,8 @@ class MdbHitran(MdbCommonHitempHitran, HITRANDatabaseManager):
         self.gamma_self = jnp.array(self.gamma_self)
         self.elower = jnp.array(self.elower)
         self.gpp = jnp.array(self.gpp)
+        if self.with_error:
+            self.ierr = jnp.array(self.ierr)
 
         if hasattr(self.df_load_mask, 'n_h2') and self.nonair_broadening:
             self.n_h2 = jnp.array(self.n_h2)
