@@ -44,7 +44,7 @@ filename = pkg_resources.resource_filename(
 dat = pd.read_csv(filename, delimiter=",", names=("wavenumber", "flux"))
 nusd = dat['wavenumber'].values
 flux = dat['flux'].values
-wavd = nu2wav(nusd)
+wavd = nu2wav(nusd, wavelength_order="ascending")
 
 sigmain = 0.05
 norm = 20000
@@ -55,7 +55,7 @@ nu_grid, wav, res = wavenumber_grid(np.min(wavd) - 10.0,
                                     np.max(wavd) + 10.0,
                                     Nx,
                                     unit='AA',
-                                    xsmode='premodit')
+                                    xsmode='premodit', wavelength_order="ascending")
 
 Tlow = 400.0
 Thigh = 1500.0

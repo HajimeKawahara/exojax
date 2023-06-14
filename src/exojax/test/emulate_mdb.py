@@ -38,7 +38,8 @@ def mock_wavenumber_grid():
                                     lambda1,
                                     Nx,
                                     unit='AA',
-                                    xsmode="modit")
+                                    xsmode="modit",
+                                    wavelength_order="ascending")
     return nus, wav, res
 
 
@@ -99,8 +100,6 @@ def mock_mdbVALD():
     with open(filename, 'rb') as f:
         mdb = pickle.load(f)
     return mdb
-
-    
 
 
 #if __name__ == "__main__":

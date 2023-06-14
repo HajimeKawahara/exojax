@@ -5,15 +5,27 @@ from exojax.utils.grids import velocity_grid
 from exojax.utils.grids import delta_velocity_from_resolution
 from exojax.utils.grids import check_eslog_wavenumber_grid
 from exojax.utils.grids import check_scale_xsmode
+from exojax.utils.checkarray import is_sorted
 
+@pytest.mark.parametrize("order", ["ascending", "descending"])
+def test_wavenumber_grid_order(order):
+    Nx = 4000
+    nus, wav_revert, res = wavenumber_grid(29200.0,
+                                           29300.,
+                                           Nx,
+                                           unit='AA',
+                                           xsmode="lpf",
+                                           wavelength_order=order)
+    assert is_sorted(wav_revert) == order
 
 def test_wavenumber_grid():
     Nx = 4000
-    nus, wav, res = wavenumber_grid(29200.0,
-                                    29300.,
-                                    Nx,
-                                    unit='AA',
-                                    xsmode="lpf")
+    nus, wav_revert, res = wavenumber_grid(29200.0,
+                                           29300.,
+                                           Nx,
+                                           unit='AA',
+                                           xsmode="lpf",
+                                           wavelength_order="ascending")
     dif = np.log(nus[1:]) - np.log(nus[:-1])
     refval = 8.54915417e-07
     assert np.all(dif == pytest.approx(refval * np.ones_like(dif)))
@@ -39,11 +51,26 @@ def test_velocity_grid():
 
 
 def test_check_eslog_wavenumber_grid():
-    nus, wav, res = wavenumber_grid(22999, 23000, 1000, unit='AA', xsmode="modit")
+    nus, wav, res = wavenumber_grid(22999,
+                                    23000,
+                                    1000,
+                                    unit='AA',
+                                    xsmode="modit",
+                                    wavelength_order="descending")
     assert check_eslog_wavenumber_grid(nus)
-    nus, wav, res = wavenumber_grid(22999, 23000, 10000, unit='AA', xsmode="modit")
+    nus, wav, res = wavenumber_grid(22999,
+                                    23000,
+                                    10000,
+                                    unit='AA',
+                                    xsmode="modit",
+                                    wavelength_order="descending")
     assert check_eslog_wavenumber_grid(nus)
-    nus, wav, res = wavenumber_grid(22999, 23000, 100000, unit='AA', xsmode="modit")
+    nus, wav, res = wavenumber_grid(22999,
+                                    23000,
+                                    100000,
+                                    unit='AA',
+                                    xsmode="modit",
+                                    wavelength_order="descending")
     assert check_eslog_wavenumber_grid(nus)
     nus = np.linspace(1.e8 / 23000., 1.e8 / 22999., 1000)
     assert not check_eslog_wavenumber_grid(nus)
@@ -64,6 +91,15 @@ def test_check_scale_xsmode():
     assert check_scale_xsmode("PREMODIT") == "ESLOG"
     assert check_scale_xsmode("PRESOLAR") == "ESLOG"
     assert check_scale_xsmode("DIT") == "ESLIN"
+
+
+def test_is_sorted():
+    import numpy as np
+    a = np.array([1, 2, 3])
+    assert is_sorted(a) == "ascending"
+    assert is_sorted(a[::-1]) == "descending"
+    a = np.array([1, 3, 2])
+    assert is_sorted(a) == "unordered"
 
 
 if __name__ == "__main__":

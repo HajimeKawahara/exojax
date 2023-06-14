@@ -35,13 +35,12 @@ from numpyro.infer import MCMC, NUTS
 import numpyro
 import numpyro.distributions as dist
 
-
 filename = pkg_resources.resource_filename(
     'exojax', 'data/testdata/' + SAMPLE_SPECTRA_CH4_NEW)
 dat = pd.read_csv(filename, delimiter=",", names=("wavenumber", "flux"))
 nusd = dat['wavenumber'].values
 flux = dat['flux'].values
-wavd = nu2wav(nusd)
+wavd = nu2wav(nusd, wavelength_order="ascending")
 #plt.plot(wavd, flux)
 #plt.show()
 
@@ -55,7 +54,8 @@ nu_grid, wav, res = wavenumber_grid(np.min(wavd) - 10.0,
                                     np.max(wavd) + 10.0,
                                     Nx,
                                     unit='AA',
-                                    xsmode='premodit')
+                                    xsmode='premodit',
+                                    wavelength_order="ascending")
 
 Tlow = 400.0
 Thigh = 1500.0
@@ -94,6 +94,7 @@ g = gravity_jupiter(Rp=0.88, Mp=33.2)
 alpha = 0.1
 MMR_CH4 = 0.0059
 
+
 # raw spectrum model given T0
 def raw_spectrum_model(T0):
     #T-P model
@@ -112,6 +113,7 @@ def raw_spectrum_model(T0):
     F0 = art.run(dtau, Tarr) / norm
     return F0
 
+
 # compute F0 grid given T0 grid
 Ngrid = 200  # delta T = 1 K
 T0_grid = jnp.linspace(1200, 1400, Ngrid)
@@ -124,6 +126,7 @@ for T0 in tqdm.tqdm(T0_grid, desc="computing grid"):
 F0_grid = jnp.array(F0_grid).T
 
 vmapinterp = vmap(jnp.interp, (None, None, 0))
+
 
 def model_c(nu1, y1):
     A = numpyro.sample('A', dist.Uniform(0.5, 2.0))

@@ -464,14 +464,10 @@ class MdbCommonHitempHitran():
             self.ierr = self.ierr[mask]
 
     def Sij0(self):
-        """Deprecated line_strength_ref. 
-
-        Returns:
-            ndarray: line_strength_ref
+        """old line strength definition    
         """
-        msg = "Sij0 instance was replaced to line_strength_ref and will be removed."
-        warnings.warn(msg, FutureWarning)
-        return self.line_strength_ref
+        msg = "Sij0 instance was replaced to line_strength_ref."
+        raise ValueError(msg)
 
     def QT_interp(self, isotope, T):
         """interpolated partition function.

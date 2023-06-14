@@ -50,7 +50,8 @@ class OpaPremodit(OpaCalc):
                  auto_trange=None,
                  manual_params=None,
                  dit_grid_resolution=None,
-                 allow_32bit=False):
+                 allow_32bit=False,
+                 wavelength_order="descending"):
         """initialization of OpaPremodit
 
         Note:
@@ -76,17 +77,20 @@ class OpaPremodit(OpaCalc):
             manual_params (optional): premodit parameter set [dE, Tref, Twt]. Defaults to None.
             dit_grid_resolution (float, optional): force to set broadening_parameter_resolution={mode:manual, value: dit_grid_resolution}), ignores broadening_parameter_resolution.
             allow_32bit (bool, optional): If True, allow 32bit mode of JAX. Defaults to False.
-        
+            wavlength order: wavelength order: "ascending" or "descending"
         """
         super().__init__()
-        check_jax64bit(allow_32bit) 
+        check_jax64bit(allow_32bit)
 
         #default setting
         self.method = "premodit"
         self.diffmode = diffmode
         self.warning = True
         self.nu_grid = nu_grid
-        self.wav = nu2wav(self.nu_grid, unit="AA")
+        self.wavelength_order = wavelength_order
+        self.wav = nu2wav(self.nu_grid,
+                          wavelength_order=self.wavelength_order,
+                          unit="AA")
         self.resolution = resolution_eslog(nu_grid)
         self.mdb = mdb
         self.ngrid_broadpar = None
@@ -244,12 +248,12 @@ class OpaPremodit(OpaCalc):
             single_broadening_parameters=self.single_broadening_parameters,
             warning=self.warning)
         self.ready = True
-        
+
         lbd_coeff, multi_index_uniqgrid, elower_grid, \
             ngamma_ref_grid, n_Texp_grid, R, pmarray = self.opainfo
         self.ngrid_broadpar = len(multi_index_uniqgrid)
         self.ngrid_elower = len(elower_grid)
-        
+
     def xsvector(self, T, P):
         from exojax.spec.premodit import xsvector_zeroth
         from exojax.spec.premodit import xsvector_first
@@ -365,7 +369,8 @@ class OpaModit(OpaCalc):
                  Parr=None,
                  Pself_ref=None,
                  dit_grid_resolution=0.2,
-                 allow_32bit=False):
+                 allow_32bit=False,
+                 wavelength_order="descending"):
         """initialization of OpaModit
 
         Note:
@@ -379,17 +384,22 @@ class OpaModit(OpaCalc):
             Pself_ref (1d array, optional): self pressure array in bar. Defaults to None. If None Pself = 0.0.
             dit_grid_resolution (float, optional): dit grid resolution. Defaxults to 0.2.
             allow_32bit (bool, optional): If True, allow 32bit mode of JAX. Defaults to False.
+            wavlength order: wavelength order: "ascending" or "descending"
+            
         Raises:
             ValueError: _description_
         """
         super().__init__()
-        check_jax64bit(allow_32bit) 
-        
+        check_jax64bit(allow_32bit)
+
         #default setting
         self.method = "modit"
         self.warning = True
         self.nu_grid = nu_grid
-        self.wav = nu2wav(self.nu_grid, unit="AA")
+        self.wavelength_order = wavelength_order
+        self.wav = nu2wav(self.nu_grid,
+                          wavelength_order=self.wavelength_order,
+                          unit="AA")
         self.resolution = resolution_eslog(nu_grid)
         self.mdb = mdb
         self.dit_grid_resolution = dit_grid_resolution
@@ -523,7 +533,7 @@ class OpaModit(OpaCalc):
 
 
 class OpaDirect(OpaCalc):
-    def __init__(self, mdb, nu_grid):
+    def __init__(self, mdb, nu_grid, wavelength_order="descending"):
         """initialization of OpaDirect (LPF)
 
             
@@ -538,7 +548,10 @@ class OpaDirect(OpaCalc):
         self.method = "lpf"
         self.warning = True
         self.nu_grid = nu_grid
-        self.wav = nu2wav(self.nu_grid, unit="AA")
+        self.wavelength_order = wavelength_order
+        self.wav = nu2wav(self.nu_grid,
+                          wavelength_order=self.wavelength_order,
+                          unit="AA")
         self.mdb = mdb
         self.apply_params()
 
