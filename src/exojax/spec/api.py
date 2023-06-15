@@ -841,11 +841,19 @@ class MdbHitran(MdbCommonHitempHitran, HITRANDatabaseManager):
         local_file = self.get_filenames()
 
         # Download files
+        # After radis/pull/574 will be marged, the following lines should be uncommented 
+        # to distinguish hdf5 files with error and without error.
+        #if with_error: 
+        #    local_file = [local_file[0].split('.hdf5')[0] + '_werr.hdf5']
         download_files = self.get_missing_files(local_file)
         if download_files:
             self.download_and_parse(download_files,
                                     cache=True,
-                                    parse_quanta=True)
+                                    parse_quanta=True
+                                    # After radis/pull/574 will be marged, 
+                                    # the following line should be uncommented.
+                                    #,drop_non_numeric=(not with_error)
+                                    )
 
         if len(download_files) > 0:
             self.clean_download_files()
