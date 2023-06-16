@@ -1,6 +1,10 @@
 Get Started
 ===========
 
+.. contents::
+    :depth: 2
+
+
 First, we recommend FP64 unless you can think precision seriously. Use
 jax.config to set FP64:
 
@@ -307,8 +311,8 @@ You can check the contribution function too!
 .. image:: get_started_files/get_started_40_0.png
 
 
-Spectral Operators: rotational broadening, instrumental profile, Doppler velocity shift and so on, any operation on spectra.
-----------------------------------------------------------------------------------------------------------------------------
+4. Spectral Operators: rotational broadening, instrumental profile, Doppler velocity shift and so on, any operation on spectra.
+-----------------------------------------------------------------------------------------------------------------------------------
 
 The above spectrum is called “raw spectrum” in ExoJAX. The effects
 applied to the raw spectrum is handled in ExoJAX by the spectral
