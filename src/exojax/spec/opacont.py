@@ -33,7 +33,7 @@ class OpaCIA(OpaCont):
         self.nu_grid = nu_grid
         self.wavelength_order = wavelength_order
         self.wav = nu2wav(self.nu_grid,
-                          wavelenght_order=self.wavelength_order,
+                          wavelength_order=self.wavelength_order,
                           unit="AA")
         self.cdb = cdb
 
