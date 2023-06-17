@@ -5,8 +5,8 @@ Get Started
     :depth: 2
 
 
-First, we recommend FP64 unless you can think precision seriously. Use
-jax.config to set FP64:
+First, we recommend 64 bit unless you can think precision seriously. Use
+jax.config to set 64 bit:
 
 .. code:: ipython3
 

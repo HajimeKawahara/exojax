@@ -46,7 +46,7 @@ Tuning ExoJAX
 Manual Settings of Opacity (not using opa)
 ==============================================================
 
-If you like, you do not need "opa" nor "art" to compute opacity and spectra. 
+You do not need `opa` nor `art` to compute opacity and spectra, if you want. 
 
 Cross Section using Various Opacity Calculators
 --------------------------------------------------------
