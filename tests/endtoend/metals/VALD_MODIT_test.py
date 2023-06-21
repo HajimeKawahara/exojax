@@ -20,7 +20,8 @@ import numpy as np
 import jax.numpy as jnp
 from exojax.spec import moldb, atomll, contdb, molinfo, initspec, planck
 from exojax.spec import api
-from exojax.spec.rtransfer import pressure_layer, dtauVALD, dtauM_mmwl, dtauHminus_mmwl, dtauCIA_mmwl, rtrun_emis_pure_absorption
+from exojax.spec.rtransfer import pressure_layer, dtauVALD, rtrun_emis_pure_absorption
+from exojax.spec.dtau_mmwl import dtauM_mmwl, dtauHminus_mmwl, dtauCIA_mmwl
 from exojax.utils.grids import wavenumber_grid
 from exojax.utils.instfunc import resolution_to_gaussian_std
 from exojax.spec.modit import vald_all, xsmatrix_vald, exomol, xsmatrix, setdgm_vald_all, setdgm_exomol
@@ -29,11 +30,6 @@ from exojax.spec.spin_rotation import convolve_rigid_rotation
 from exojax.utils.grids import velocity_grid
 
 def test_VALD_MODIT():
-
-    #settings before HMC
-    vsini_max = 100.0
-    vr_array = velocity_grid(res, vsini_max)
-
 
     #wavelength range
     wls, wll = 10395, 10405
@@ -49,6 +45,10 @@ def test_VALD_MODIT():
 
     Rinst=100000. #instrumental spectral resolution
     beta_inst=resolution_to_gaussian_std(Rinst)  #equivalent to beta=c/(2.0*np.sqrt(2.0*np.log(2.0))*R)
+
+    #settings before HMC
+    vsini_max = 100.0
+    vr_array = velocity_grid(res, vsini_max)
 
     #atoms and ions from VALD
     adbV = moldb.AdbVald(path_ValdLineList, nus, crit = 1e-100) #The crit is defined just in case some weak lines may cause an error that results in a gamma of 0... (220219)
@@ -177,9 +177,9 @@ def test_VALD_MODIT():
     mu = ipgauss_sampling(nusd, nus, Frot, beta_inst, RV, vr_array)
     mu = mu/jnp.nanmax(mu)*adjust_continuum
 
-    assert (np.all(~np.isnan(mu)) * \
-            np.all(mu != 0) * \
-            np.all(abs(mu) != np.inf))
+    assert (np.all(mu != 0))
+    assert (np.all(abs(mu) != np.inf))
+    assert (np.all(~np.isnan(mu)))
                 
 if __name__ == "__main__":
     test_VALD_MODIT()

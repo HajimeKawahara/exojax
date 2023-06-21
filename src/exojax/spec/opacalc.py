@@ -616,6 +616,7 @@ class OpaDirect(OpaCalc):
         from exojax.spec.exomol import gamma_exomol
         from exojax.spec.hitran import gamma_hitran
         from exojax.spec.hitran import line_strength
+        from exojax.spec.atomll import gamma_vald3
         from exojax.spec.lpf import xsmatrix as xsmatrix_lpf
 
         numatrix = self.opainfo
@@ -630,6 +631,9 @@ class OpaDirect(OpaCalc):
                                      self.mdb.A)
             SijM = vmaplinestrengh(Tarr, self.mdb.logsij0, self.mdb.nu_lines,
                                    self.mdb.elower, qt)
+            sigmaDM = jit(vmap(doppler_sigma,
+                            (None, 0, None)))(self.mdb.nu_lines, Tarr,
+                                                self.mdb.molmass)
         elif self.mdb.dbtype == "exomol":
             vmapqt = vmap(self.mdb.qr_interp)
             qt = vmapqt(Tarr)
@@ -640,7 +644,24 @@ class OpaDirect(OpaCalc):
             gammaLM = gammaLMP + gammaLMN[None, :]
             SijM = vmaplinestrengh(Tarr, self.mdb.logsij0, self.mdb.nu_lines,
                                    self.mdb.elower, qt)
-        sigmaDM = jit(vmap(doppler_sigma,
-                           (None, 0, None)))(self.mdb.nu_lines, Tarr,
-                                             self.mdb.molmass)
+            sigmaDM = jit(vmap(doppler_sigma,
+                            (None, 0, None)))(self.mdb.nu_lines, Tarr,
+                                                self.mdb.molmass)
+        elif self.mdb.dbtype == "kurucz":
+            qt_284=vmap(self.mdb.QT_interp_284)(Tarr)
+            qt_K = np.zeros([len(self.mdb.QTmask), len(Tarr)])
+            for i, mask in enumerate(self.mdb.QTmask):
+                qt_K[i] = qt_284[:,mask]  #e.g., qt_284[:,76] #Fe I
+            qt_K = jnp.array(qt_K)     
+            vmapvald3 = jit(vmap(gamma_vald3,(0,0,0,0,None,None,None,None,None,None,None,None,None,None,None)))
+            PH,PHe,PHH = Parr*self.mdb.vmrH, Parr*self.mdb.vmrHe, Parr*self.mdb.vmrHH 
+            gammaLM = vmapvald3(Tarr, PH, PHH, PHe, self.mdb.ielem, self.mdb.iion, \
+                                self.mdb.dev_nu_lines, self.mdb.elower, self.mdb.eupper, \
+                                self.mdb.atomicmass, self.mdb.ionE, \
+                                self.mdb.gamRad, self.mdb.gamSta, self.mdb.vdWdamp, 1.0)
+            SijM = vmaplinestrengh(Tarr, self.mdb.logsij0, self.mdb.nu_lines, \
+                                    self.mdb.elower, qt_K.T)  
+            sigmaDM = jit(vmap(doppler_sigma,(None,0,None)))\
+                (self.mdb.nu_lines, Tarr, self.mdb.atomicmass)
+
         return xsmatrix_lpf(numatrix, sigmaDM, gammaLM, SijM)
