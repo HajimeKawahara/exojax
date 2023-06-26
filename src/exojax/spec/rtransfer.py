@@ -1,64 +1,13 @@
 """ radiative transfer
 """
+import warnings
 from jax import jit
 import jax.numpy as jnp
 from exojax.special.expn import E1
-import warnings
 from exojax.spec.layeropacity import layer_optical_depth
 from exojax.spec.layeropacity import layer_optical_depth_CIA
 from exojax.spec.layeropacity import layer_optical_depth_Hminus
 from exojax.spec.layeropacity import layer_optical_depth_VALD
-
-##################################################################################
-# deprecated features, will be removed by Release v2.0
-##################################################################################
-
-
-def dtauM(dParr, xsm, MR, mass, g):
-    warn_msg = "Use `spec.layeropacity.layer_optical_depth` instead"
-    warnings.warn(warn_msg, FutureWarning)
-    return layer_optical_depth(dParr, xsm, MR, mass, g)
-
-
-def dtauCIA(nus, Tarr, Parr, dParr, vmr1, vmr2, mmw, g, nucia, tcia, logac):
-    warn_msg = "Use `spec.layeropacity.layer_optical_depth_CIA` instead"
-    warnings.warn(warn_msg, FutureWarning)
-    return layer_optical_depth_CIA(nus, Tarr, Parr, dParr, vmr1, vmr2, mmw, g,
-                                   nucia, tcia, logac)
-
-
-def dtauHminus(nus, Tarr, Parr, dParr, vmre, vmrh, mmw, g):
-    warn_msg = "Use `spec.layeropacity.layer_optical_depth_Hminus` instead"
-    warnings.warn(warn_msg, FutureWarning)
-    return layer_optical_depth_Hminus(nus, Tarr, Parr, dParr, vmre, vmrh, mmw,
-                                      g)
-
-
-def dtauVALD(dParr, xsm, VMR, mmw, g):
-    warn_msg = "Use `spec.layeropacity.layer_optical_depth_VALD` instead"
-    warnings.warn(warn_msg, FutureWarning)
-    return layer_optical_depth_VALD(dParr, xsm, VMR, mmw, g)
-
-
-def pressure_layer(log_pressure_top=-8.,
-                   log_pressure_btm=2.,
-                   NP=20,
-                   mode='ascending',
-                   reference_point=0.5,
-                   numpy=False):
-    warn_msg = "Use `atm.atmprof.pressure_layer_logspace` instead"
-    warnings.warn(warn_msg, FutureWarning)
-    from exojax.atm.atmprof import pressure_layer_logspace
-    return pressure_layer_logspace(log_pressure_top, log_pressure_btm, NP,
-                                   mode, reference_point, numpy)
-
-
-def rtrun(dtau, S):
-    warnings.warn("Use rtrun_emis_pure_absorption instead", FutureWarning)
-    return rtrun_emis_pure_absorption(dtau, S)
-
-
-##########################################################################################
 
 
 @jit
@@ -160,3 +109,55 @@ def rtrun_trans_pure_absorption(dtau_chord, radius_lower):
         x=radius_lower[::-1],
         axis=0)
     return deltaRp2 + radius_lower[-1]**2
+
+
+##################################################################################
+# deprecated features, will be removed by Release v2.0
+##################################################################################
+
+
+def dtauM(dParr, xsm, MR, mass, g):
+    warn_msg = "Use `spec.layeropacity.layer_optical_depth` instead"
+    warnings.warn(warn_msg, FutureWarning)
+    return layer_optical_depth(dParr, xsm, MR, mass, g)
+
+
+def dtauCIA(nus, Tarr, Parr, dParr, vmr1, vmr2, mmw, g, nucia, tcia, logac):
+    warn_msg = "Use `spec.layeropacity.layer_optical_depth_CIA` instead"
+    warnings.warn(warn_msg, FutureWarning)
+    return layer_optical_depth_CIA(nus, Tarr, Parr, dParr, vmr1, vmr2, mmw, g,
+                                   nucia, tcia, logac)
+
+
+def dtauHminus(nus, Tarr, Parr, dParr, vmre, vmrh, mmw, g):
+    warn_msg = "Use `spec.layeropacity.layer_optical_depth_Hminus` instead"
+    warnings.warn(warn_msg, FutureWarning)
+    return layer_optical_depth_Hminus(nus, Tarr, Parr, dParr, vmre, vmrh, mmw,
+                                      g)
+
+
+def dtauVALD(dParr, xsm, VMR, mmw, g):
+    warn_msg = "Use `spec.layeropacity.layer_optical_depth_VALD` instead"
+    warnings.warn(warn_msg, FutureWarning)
+    return layer_optical_depth_VALD(dParr, xsm, VMR, mmw, g)
+
+
+def pressure_layer(log_pressure_top=-8.,
+                   log_pressure_btm=2.,
+                   NP=20,
+                   mode='ascending',
+                   reference_point=0.5,
+                   numpy=False):
+    warn_msg = "Use `atm.atmprof.pressure_layer_logspace` instead"
+    warnings.warn(warn_msg, FutureWarning)
+    from exojax.atm.atmprof import pressure_layer_logspace
+    return pressure_layer_logspace(log_pressure_top, log_pressure_btm, NP,
+                                   mode, reference_point, numpy)
+
+
+def rtrun(dtau, S):
+    warnings.warn("Use rtrun_emis_pure_absorption instead", FutureWarning)
+    return rtrun_emis_pure_absorption(dtau, S)
+
+##########################################################################################
+

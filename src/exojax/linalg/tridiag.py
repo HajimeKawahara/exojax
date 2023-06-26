@@ -13,10 +13,10 @@ def solve_tridiag(diagonal, lower_diagonal, upper_diagonal, vector):
     the original code was taken from lineax (https://github.com/google/lineax), under Apache 2.0 License (See LICENSES_bundled.txt).
 
     Args:
-        diagonal (1D array): the diagonal component vector of a matrix A
-        lower_diagonal (1D array): the lower diagonal component vector of a matrix A
-        upper_diagonal (1D array): the upper diagonal component vector of a matrix A
-        vector (1D array): the vector b
+        diagonal (1D array): the diagonal component vector of a matrix A [N]
+        lower_diagonal (1D array): the lower diagonal component vector of a matrix A, [N-1] or [N] but lower_diagonal[-1] is ignored
+        upper_diagonal (1D array): the upper diagonal component vector of a matrix A, [N-1] or [N] but upper_diagonal[-1] is ignored
+        vector (1D array): the vector b [N]
 
     Notes:
         notation from: https://en.wikipedia.org/wiki/Tridiagonal_matrix_algorithm
