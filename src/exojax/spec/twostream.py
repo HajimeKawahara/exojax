@@ -1,5 +1,4 @@
 import jax.numpy as jnp
-from jax.numpy import index_exp
 
 
 def compute_tridiag_diagonals(coeff_scattering, coeff_transmission,
@@ -42,11 +41,15 @@ def compute_tridiag_diagonals(coeff_scattering, coeff_transmission,
     return diagonal, lower_diagonal, upper_diagonal
 
 
+def scattering_and_transmission_coefficients():
+    return
+
+
 def test_tridiag_coefficients():
     import numpy as np
-    N = 4
-    S = jnp.array(range(0, N)) + 1
-    T = (jnp.array(range(0, N)) + 1) * 2
+    Nlayer = 4
+    S = jnp.array(range(0, Nlayer)) + 1
+    T = (jnp.array(range(0, Nlayer)) + 1) * 2
     boundaries = (1.0, 2.0, 3.0, 4.0)
     upper_diagonal_top, diagonal_top, diagonal_btm, lower_diagonal_btm = boundaries
     
