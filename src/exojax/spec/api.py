@@ -555,17 +555,18 @@ class MdbCommonHitempHitran():
         
     def add_error(self):
         """uncertainty codes of HITRAN or HITEMP database  
+        ref.: Table 2 and 5 in HITRAN 2004 (Rothman et al. 2005)
 
         Returns:
             Uncertainty indices for 6 critical parameters
         """
-        ierr_grid = np.array([np.array(list(x)).astype(int) for x in self.ierr])
-        self.nu_lines_err = ierr_grid[:,0] #0-9
-        self.line_strength_ref_err = ierr_grid[:,1] #0-8
-        self.gamma_air_err = ierr_grid[:,2] #0-8
-        self.gamma_self_err = ierr_grid[:,3] #0-8
-        self.n_air_err = ierr_grid[:,4]
-        self.delta_air_err = ierr_grid[:,5] #0-9
+        is_place = lambda x,i: (x // 10**(i)) % 10 #extract the digits for 10**i place (0<=i<=5)
+        self.nu_lines_err = is_place(self.ierr,5) #0-9
+        self.line_strength_ref_err = is_place(self.ierr,4) #0-8
+        self.gamma_air_err = is_place(self.ierr,3) #0-8
+        self.gamma_self_err = is_place(self.ierr,2) #0-8
+        self.n_air_err = is_place(self.ierr,1)
+        self.delta_air_err = is_place(self.ierr,0) #0-9
 
 
 class MdbHitemp(MdbCommonHitempHitran, HITEMPDatabaseManager):
@@ -736,7 +737,7 @@ class MdbHitemp(MdbCommonHitempHitran, HITEMPDatabaseManager):
         self.uniqiso = np.unique(self.isoid)
         if self.with_error:
             #uncertainties
-            self.ierr = df_masked.ierr.values.to_numpy()
+            self.ierr = df_masked.ierr.values.to_numpy().astype(np.int64)
 
     def generate_jnp_arrays(self):
         """(re)generate jnp.arrays.
@@ -841,18 +842,15 @@ class MdbHitran(MdbCommonHitempHitran, HITRANDatabaseManager):
         local_file = self.get_filenames()
 
         # Download files
-        # After radis/pull/574 will be marged, the following lines should be uncommented 
-        # to distinguish hdf5 files with error and without error.
-        #if with_error: 
-        #    local_file = [local_file[0].split('.hdf5')[0] + '_werr.hdf5']
+        if with_error: 
+            # to distinguish hdf5 files with error and without error.
+            local_file = [local_file[0].split('.hdf5')[0] + '_werr.hdf5']
         download_files = self.get_missing_files(local_file)
         if download_files:
             self.download_and_parse(download_files,
                                     cache=True,
-                                    parse_quanta=True
-                                    # After radis/pull/574 will be marged, 
-                                    # the following line should be uncommented.
-                                    #,drop_non_numeric=(not with_error)
+                                    parse_quanta=True,
+                                    add_HITRAN_uncertainty_code=with_error
                                     )
 
         if len(download_files) > 0:
@@ -911,7 +909,7 @@ class MdbHitran(MdbCommonHitempHitran, HITRANDatabaseManager):
             self.uniqiso = np.unique(self.isoid)
             if self.with_error:
                 #uncertainties
-                self.ierr = df_load_mask.ierr.values.to_numpy()
+                self.ierr = df_load_mask.ierr.values
 
             if hasattr(df_load_mask, 'n_h2') and self.nonair_broadening:
                 self.n_h2 = df_load_mask.n_h2.values
