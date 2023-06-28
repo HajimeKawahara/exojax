@@ -83,6 +83,20 @@ def toon_zetalambda_coeffs(gamma_1, gamma_2):
 def sh2_zetalambda_coeff():
     raise ValueError("not implemented yet.")
 
+def rtrun_emis_toon(dtau, source_matrix):
+    """Radiative Transfer using the Toon-type two-stream approximaion 
+
+    Args:
+        dtau (2D array): optical depth matrix, dtau  (N_layer, N_nus)
+        source_matrix (2D array): source matrix (N_layer, N_nus)
+
+    Returns:
+        flux in the unit of [erg/cm2/s/cm-1] if using piBarr as a source function.
+    """
+    Nnus = jnp.shape(dtau)[1]
+    zeta_plus, zeta_minus, lambdan = toon_zetalambda_coeffs(gamma_1, gamma_2)
+    set_scat_trans_coeffs(zeta_plus, zeta_minus, lambdan, dtau)
+
 
 def test_tridiag_coefficients():
     import numpy as np
