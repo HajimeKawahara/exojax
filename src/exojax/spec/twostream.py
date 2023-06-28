@@ -63,21 +63,6 @@ def set_scat_trans_coeffs(zeta_plus, zeta_minus, lambdan, dtau):
     return trans_coeff, scat_coeff
 
 
-def toon_zetalambda_coeffs(gamma_1, gamma_2):
-    """computes coupling coefficients zeta and lambda coefficients for Toon-type two stream approximation 
-
-    Args:
-        gamma_1 (_type_): Toon+89 gamma_1 coefficient
-        gamma_2 (_type_): Toon+89 gamma_2 coefficient
-
-    Returns:
-        _type_: coupling zeta (+), coupling zeta (-), lambda coefficients
-    """
-    delta = jnp.sqrt((gamma_1 - gamma_2) / (gamma_1 + gamma_2))
-    zeta_plus = 0.5 * (1.0 + delta)
-    zeta_minus = 0.5 * (1.0 - delta)
-    lambdan = jnp.sqrt(gamma_1**2 - gamma_2**2)
-    return zeta_plus, zeta_minus, lambdan
 
 
 def sh2_zetalambda_coeff():
