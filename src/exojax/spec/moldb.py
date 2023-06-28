@@ -47,7 +47,7 @@ class AdbVald(object):
            For the first time to read the VALD line list, it is converted to HDF/vaex. After the second-time, we use the HDF5 format with vaex instead.
     """
 
-    def __init__(self, path, nurange=[-np.inf, np.inf], margin=0.0, crit=0., Irwin=False, gpu_transfer=True):
+    def __init__(self, path, nurange=[-np.inf, np.inf], margin=0.0, crit=0., Irwin=False, gpu_transfer=True, vmr_fraction=None):
         """Atomic database for VALD3 "Long format".
 
         Args:
@@ -57,16 +57,23 @@ class AdbVald(object):
           crit: line strength lower limit for extraction
           Irwin: if True(1), the partition functions of Irwin1981 is used, otherwise those of Barklem&Collet2016
           gpu_transfer: tranfer data to jnp.array? 
+          vmr_fraction: list of the vmr fractions of hydrogen, H2 molecule, helium. if None, typical quasi-"solar-fraction" will be applied. 
 
         Note:
           (written with reference to moldb.py, but without using feather format)
         """
+
+        self.dbtype = "vald"
 
         # load args
         self.vald3_file = pathlib.Path(path).expanduser()  # VALD3 output
         self.nurange = [np.min(nurange), np.max(nurange)]
         self.margin = margin
         self.crit = crit
+        if vmr_fraction is None:
+            self.vmrH, self.vmrHe, self.vmrHH = [0.0, 0.16, 0.84] #typical quasi-"solar-fraction"
+        else:
+            self.vmrH, self.vmrHe, self.vmrHH = vmr_fraction
 
         # load vald file
         print('Reading VALD file')

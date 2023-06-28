@@ -43,10 +43,7 @@ def test_Hitran_with_error():
                                     100000,
                                     unit='AA',
                                     xsmode="premodit")
-    
-    # After radis/pull/574 will be marged, this error will not rise.
-    with pytest.raises(AttributeError):
-        mdb = api.MdbHitran("CO",nus, with_error=True)
+    mdb = api.MdbHitran("CO",nus, with_error=True)
 
 def test_Hitemp_with_error():
     lambda0 = 22920.0
