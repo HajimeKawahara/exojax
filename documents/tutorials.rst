@@ -22,6 +22,15 @@ Retrieval More
    tutorials/reverse_precompute_grid.rst
 
 
+Transmission Spectra
+----------------------------
+
+.. toctree::
+   :maxdepth: 1
+
+   tutorials/Transmission_beta.rst
+
+
 Molecular/Atomic/Continuum Databases
 ---------------------------------------
 

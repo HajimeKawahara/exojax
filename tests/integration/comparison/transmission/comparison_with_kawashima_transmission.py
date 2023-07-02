@@ -32,10 +32,9 @@ def compare_with_kawashima_code():
                                         26000.0,
                                         Nx,
                                         unit="AA",
-                                        xsmode="premodit")
+                                        xsmode="modit")
 
-    art = ArtTransPure(nu_grid,
-                       pressure_top=1.e-15,
+    art = ArtTransPure(pressure_top=1.e-15,
                        pressure_btm=1.e1,
                        nlayer=100)
     art.change_temperature_range(490.0, 510.0)
@@ -45,8 +44,7 @@ def compare_with_kawashima_code():
     radius_btm = RJ
 
     #mdb = api.MdbExomol('.database/CO/12C-16O/Li2015',nu_grid,inherit_dataframe=False,gpu_transfer=False)
-    mdb = MdbHitran('CO', art.nu_grid, gpu_transfer=True)
-    
+    mdb = MdbHitran('CO', nurange=nu_grid, gpu_transfer=True, inherit_dataframe=False)
     #mdb = MdbHitemp('CO', art.nu_grid, gpu_transfer=False, isotope=1)
 
     mmw = mu_fid * np.ones_like(art.pressure)
