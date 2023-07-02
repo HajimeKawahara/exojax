@@ -1,12 +1,10 @@
 Get Started
 ===========
 
-.. contents::
-    :depth: 2
+Last update: July 2nd (2023) Hajime Kawahara for v1.4
 
-
-First, we recommend 64 bit unless you can think precision seriously. Use
-jax.config to set 64 bit:
+First, we recommend 64-bit unless you can think precision seriously. Use
+jax.config to set 64-bit:
 
 .. code:: ipython3
 
@@ -14,8 +12,9 @@ jax.config to set 64 bit:
     config.update("jax_enable_x64", True)
 
 The following schematic figure explains how ExoJAX works; (1) loading
-databases (*db), (2) calculating opacity (opa), (3) running atmospheric
-radiative transfer (art), (4) applying operations on the spectrum (sop)
+databases (``*db``), (2) calculating opacity (``opa``), (3) running
+atmospheric radiative transfer (``art``), (4) applying operations on the
+spectrum (``sop``)
 
 .. code:: ipython3
 
@@ -25,16 +24,16 @@ radiative transfer (art), (4) applying operations on the spectrum (sop)
 
 
 
-.. image:: get_started_files/get_started_4_0.png
+.. image:: get_started_files/get_started_5_0.png
 
 
 
 1. Loading a molecular database using mdb.
 ------------------------------------------
 
-ExoJAX has an API for molecular databases, called “mdb” (or “adb” for
-atomic datbases). Prior to loading the database, define the wavenumber
-range first.
+ExoJAX has an API for molecular databases, called ``mdb`` (or ``adb``
+for atomic datbases). Prior to loading the database, define the
+wavenumber range first.
 
 .. code:: ipython3
 
@@ -61,9 +60,9 @@ range first.
 
 
 Then, let’s load the molecular database. We here use Carbon monooxide in
-Exomol. CO/12C-16O/Li2015 means Carbon monooxide/ isotopes = 12C + 16O /
-database name. You can check the database name in the ExoMol website
-(https://www.exomol.com/).
+Exomol. ``CO/12C-16O/Li2015`` means
+``Carbon monooxide/ isotopes = 12C + 16O / database name``. You can
+check the database name in the ExoMol website (https://www.exomol.com/).
 
 .. code:: ipython3
 
@@ -92,9 +91,9 @@ database name. You can check the database name in the ExoMol website
 2. Computation of the Cross Section using opa
 ---------------------------------------------
 
-ExoJAX has various opacity calculator classes, so-called “opa”. Here, we
-use a memory-saved opa, OpaPremodit. We assume the robust tempreature
-range we will use is 500-1500K.
+ExoJAX has various opacity calculator classes, so-called ``opa``. Here,
+we use a memory-saved opa, ``OpaPremodit``. We assume the robust
+tempreature range we will use is 500-1500K.
 
 .. code:: ipython3
 
@@ -161,11 +160,11 @@ temperatures.
 
 
 
-.. image:: get_started_files/get_started_16_0.png
+.. image:: get_started_files/get_started_17_0.png
 
 
 You can also plot the line strengths at T=1500K. We can first change the
-mdb reference temperature and then plot the line intensity.
+``mdb`` reference temperature and then plot the line intensity.
 
 .. code:: ipython3
 
@@ -183,16 +182,16 @@ mdb reference temperature and then plot the line intensity.
 
 
 
-.. image:: get_started_files/get_started_18_1.png
+.. image:: get_started_files/get_started_19_1.png
 
 
 3. Atmospheric Radiative Transfer
 ---------------------------------
 
 ExoJAX can solve the radiative transfer and derive the emission
-spectrum. To do so, ExoJAX has “art” class. ArtEmisPure means
+spectrum. To do so, ExoJAX has ``art`` class. ``ArtEmisPure`` means
 Atomospheric Radiative Transfer for Emission with Pure absorption. So,
-ArtEmisPure does not include scattering. We set the number of the
+``ArtEmisPure`` does not include scattering. We set the number of the
 atmospheric layer to 100 (nlayer) and the pressure at bottom and top
 atmosphere to 100 and 1.e-8 bar.
 
@@ -238,7 +237,7 @@ and 10 MJ.
 In addition to the CO cross section, we would consider `collisional
 induced
 absorption <https://en.wikipedia.org/wiki/Collision-induced_absorption_and_emission>`__
-(CIA) as a continuum opacity. “cdb” class can be used.
+(CIA) as a continuum opacity. ``cdb`` class can be used.
 
 .. code:: ipython3
 
@@ -255,9 +254,9 @@ absorption <https://en.wikipedia.org/wiki/Collision-induced_absorption_and_emiss
 
 
 Before running the radiative transfer, we need cross sections for
-layers, called xsmatrix for CO and logacia_matrix for CIA (strictly
-speaking, the latter is not cross section but coefficient because CIA
-intensity is proportional density square).
+layers, called ``xsmatrix`` for CO and ``logacia_matrix`` for CIA
+(strictly speaking, the latter is not cross section but coefficient
+because CIA intensity is proportional density square).
 
 .. code:: ipython3
 
@@ -293,10 +292,12 @@ Then, run the radiative transfer
 
 
 
-.. image:: get_started_files/get_started_37_0.png
+.. image:: get_started_files/get_started_38_0.png
 
 
-You can check the contribution function too!
+You can check the contribution function too! You should check if the
+dominant contribution is within the layer. If not, you need to change
+``pressure_top`` and ``pressure_btm`` in ``ArtEmisPure``
 
 .. code:: ipython3
 
@@ -308,15 +309,16 @@ You can check the contribution function too!
 
 
 
-.. image:: get_started_files/get_started_40_0.png
+.. image:: get_started_files/get_started_41_0.png
 
 
-4. Spectral Operators: rotational broadening, instrumental profile, Doppler velocity shift and so on, any operation on spectra.
------------------------------------------------------------------------------------------------------------------------------------
+Spectral Operators: rotational broadening, instrumental profile, Doppler velocity shift and so on, any operation on spectra.
+----------------------------------------------------------------------------------------------------------------------------
 
 The above spectrum is called “raw spectrum” in ExoJAX. The effects
 applied to the raw spectrum is handled in ExoJAX by the spectral
-operator (sop). First, we apply the spin rotation of a planet.
+operator (``sop``). First, we apply the spin rotational broadening of a
+planet.
 
 .. code:: ipython3
 
@@ -347,10 +349,12 @@ operator (sop). First, we apply the spin rotation of a planet.
 
 
 
-.. image:: get_started_files/get_started_44_0.png
+.. image:: get_started_files/get_started_45_0.png
 
 
-Then, the instrumental profile with relative radial velocity is applied.
+Then, the instrumental profile with relative radial velocity shift is
+applied. Also, we need to match the computed spectrum to the data grid.
+This process is called ``sampling`` (but just interpolation though).
 
 .. code:: ipython3
 
@@ -392,7 +396,7 @@ Then, the instrumental profile with relative radial velocity is applied.
 
 
 
-.. image:: get_started_files/get_started_47_0.png
+.. image:: get_started_files/get_started_48_0.png
 
 
 That’s it.
