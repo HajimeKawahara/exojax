@@ -6,8 +6,8 @@ def compute_tridiag_diagonals(scat_coeff, trans_coeff, upper_diagonal_top,
     """computes the diagonals from scattering and transmission coefficients for the tridiagonal system
 
     Args:
-        scat_coeff (_type_): scattering coefficient of the layer, S_n
-        trans_coeff (_type_): transmission coefficient of the layer T_n
+        scat_coeff (_type_): scattering coefficient of the n-th layer, S_n
+        trans_coeff (_type_): transmission coefficient of the n-th layer, T_n
         upper_diagonal_top (_type_): a[0] upper diagonal top boundary 
         diagonal_top (_type_): b[0] diagonal top boundary
         diagonal_btm (_type_): b[N-1] diagonal bottom boundary
@@ -22,16 +22,16 @@ def compute_tridiag_diagonals(scat_coeff, trans_coeff, upper_diagonal_top,
         _jnp arrays: diagonal [Nlayer], lower dianoals [Nlayer], upper diagonal [Nlayer], 
     """
 
-    Sn_minus_one = jnp.roll(scat_coeff, 1)  #S_{n-1}
-    Tn_minus_one = jnp.roll(trans_coeff, 1)  #T_{n-1}
+    Sn_minus_one = jnp.roll(scat_coeff, 1)  # S_{n-1}
+    Tn_minus_one = jnp.roll(trans_coeff, 1)  # T_{n-1}
     Sn_plus_one = jnp.roll(scat_coeff, -1)  # S_{n+1}
 
-    diagonal = scat_coeff * (Sn_minus_one**2 - Tn_minus_one**2)
-    upper_diagonal = Sn_minus_one * trans_coeff
+    upper_diagonal = Sn_minus_one * trans_coeff  # an
+    diagonal = scat_coeff * \
+        (Sn_minus_one**2 - Tn_minus_one**2) - Sn_minus_one  # bn
+    lower_diagonal = Sn_plus_one * trans_coeff  # cn
 
-    lower_diagonal = Sn_plus_one * trans_coeff
-
-    #boundary setting
+    # boundary setting
     upper_diagonal = upper_diagonal.at[0].set(upper_diagonal_top)
     diagonal = diagonal.at[0].set(diagonal_top)
     diagonal = diagonal.at[-1].set(diagonal_btm)
@@ -52,45 +52,17 @@ def set_scat_trans_coeffs(zeta_plus, zeta_minus, lambdan, dtau):
     Returns:
         _type_: transmission coefficient, scattering coeffcient
     """
-    delta = zeta_plus**2 - zeta_minus**2
-    theta = zeta_plus * zeta_minus
-    tn = lambdan * dtau
-    eplus = jnp.exp(tn)
-    eminus = jnp.exp(-tn)
-    denom = zeta_plus**2 * eplus - zeta_minus**2 * eminus
-    trans_coeff = delta / denom
-    scat_coeff = theta * (eplus - eminus) / denom
+    trans_func = jnp.exp(-lambdan * dtau) # transmission function (Heng 2017, 3.58)
+    denom = zeta_plus**2 - (zeta_minus * trans_func)**2
+    trans_coeff = trans_func * (zeta_plus**2 - zeta_minus**2) / denom
+    scat_coeff = (1.0 - trans_func**2) * zeta_plus * zeta_minus / denom
     return trans_coeff, scat_coeff
-
-
 
 
 def sh2_zetalambda_coeff():
     raise ValueError("not implemented yet.")
 
 
-def test_tridiag_coefficients():
-    import numpy as np
-    Nlayer = 4
-    S = jnp.array(range(0, Nlayer)) + 1
-    T = (jnp.array(range(0, Nlayer)) + 1) * 2
-    boundaries = (1.0, 2.0, 3.0, 4.0)
-    upper_diagonal_top, diagonal_top, diagonal_btm, lower_diagonal_btm = boundaries
 
-    diag, lower, upper = compute_tridiag_diagonals(S, T, upper_diagonal_top,
-                                                   diagonal_top, diagonal_btm,
-                                                   lower_diagonal_btm)
-
-    ref_diag = jnp.array([
-        diagonal_top, S[1] * (S[0]**2 - T[0]**2), S[2] * (S[1]**2 - T[1]**2),
-        diagonal_btm
-    ])
-    assert np.all(ref_diag - diag) == 0.0
-    ref_lower = jnp.array([S[1] * T[0], S[2] * T[1], lower_diagonal_btm])
-    assert np.all(ref_lower - lower[:-1]) == 0.0
-    ref_upper = jnp.array([upper_diagonal_top, S[0] * T[1], S[1] * T[2]])
-    assert np.all(ref_upper - upper[:-1]) == 0.0
-
-
-if __name__ == "__main__":
-    test_tridiag_coefficients()
+#if __name__ == "__main__":
+#   test_tridiag_coefficients()
