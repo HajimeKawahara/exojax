@@ -1,6 +1,7 @@
 from exojax.spec.twostream import compute_tridiag_diagonals
 import jax.numpy as jnp
 
+
 def test_tridiag_coefficients():
     import numpy as np
     Nlayer = 4
@@ -14,14 +15,15 @@ def test_tridiag_coefficients():
                                                    lower_diagonal_btm)
 
     ref_diag = jnp.array([
-        diagonal_top, S[1] * (S[0]**2 - T[0]**2), S[2] * (S[1]**2 - T[1]**2),
+        diagonal_top, S[1] * (S[0]**2 - T[0]**2) -S[0] , S[2] * (S[1]**2 - T[1]**2) -S[1],
         diagonal_btm
     ])
-    assert np.all(ref_diag - diag) == 0.0
+    assert np.array_equal(ref_diag,diag) 
     ref_lower = jnp.array([S[1] * T[0], S[2] * T[1], lower_diagonal_btm])
-    assert np.all(ref_lower - lower[:-1]) == 0.0
+    assert np.array_equal(ref_lower, lower[:-1])
     ref_upper = jnp.array([upper_diagonal_top, S[0] * T[1], S[1] * T[2]])
-    assert np.all(ref_upper - upper[:-1]) == 0.0
+    assert np.array_equal(ref_upper, upper[:-1])
+
 
 if __name__ == "__main__":
     test_tridiag_coefficients()

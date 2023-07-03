@@ -1,5 +1,23 @@
 import jax.numpy as jnp
 
+def set_scat_trans_coeffs(zeta_plus, zeta_minus, lambdan, dtau):
+    """sets scattering and transmission coefficients from zeta and lambda coefficient and dtau
+
+    Args:
+        zeta_plus (_type_): coupling zeta (+) coefficient (e.g. Heng 2017)
+        zeta_minus (_type_): coupling zeta (-) coefficient (e.g. Heng 2017)
+        lambdan (_type_): lambda coefficient
+        dtau (_type_): optical depth interval of the layers
+
+    Returns:
+        _type_: transmission coefficient, scattering coeffcient
+    """
+    trans_func = jnp.exp(-lambdan * dtau) # transmission function (Heng 2017, 3.58)
+    denom = zeta_plus**2 - (zeta_minus * trans_func)**2
+    trans_coeff = trans_func * (zeta_plus**2 - zeta_minus**2) / denom
+    scat_coeff = (1.0 - trans_func**2) * zeta_plus * zeta_minus / denom
+    return trans_coeff, scat_coeff
+
 
 def compute_tridiag_diagonals(scat_coeff, trans_coeff, upper_diagonal_top,
                               diagonal_top, diagonal_btm, lower_diagonal_btm):
@@ -40,23 +58,6 @@ def compute_tridiag_diagonals(scat_coeff, trans_coeff, upper_diagonal_top,
     return diagonal, lower_diagonal, upper_diagonal
 
 
-def set_scat_trans_coeffs(zeta_plus, zeta_minus, lambdan, dtau):
-    """sets scattering and transmission coefficients from zeta and lambda coefficient and dtau
-
-    Args:
-        zeta_plus (_type_): coupling zeta (+) coefficient (e.g. Heng 2017)
-        zeta_minus (_type_): coupling zeta (-) coefficient (e.g. Heng 2017)
-        lambdan (_type_): lambda coefficient
-        dtau (_type_): optical depth interval of the layers
-
-    Returns:
-        _type_: transmission coefficient, scattering coeffcient
-    """
-    trans_func = jnp.exp(-lambdan * dtau) # transmission function (Heng 2017, 3.58)
-    denom = zeta_plus**2 - (zeta_minus * trans_func)**2
-    trans_coeff = trans_func * (zeta_plus**2 - zeta_minus**2) / denom
-    scat_coeff = (1.0 - trans_func**2) * zeta_plus * zeta_minus / denom
-    return trans_coeff, scat_coeff
 
 
 def sh2_zetalambda_coeff():
