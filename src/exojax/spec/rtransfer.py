@@ -111,6 +111,19 @@ def rtrun_trans_pure_absorption(dtau_chord, radius_lower):
     return deltaRp2 + radius_lower[-1]**2
 
 
+from exojax.spec.twostream import set_scat_trans_coeffs
+from exojax.spec.twostream import compute_tridiag_diagonals
+from exojax.spec.toon import toon_zetalambda_coeffs
+from exojax.spec.toon import toon_params_hemispheric_mean
+
+def rtrun_emis_scat_toon_hemispheric_mean(dtau, single_scattering_albedo, asymmetric_parameter, source_matrix):
+    gamma_1, gamma_2, mu1 = toon_params_hemispheric_mean(single_scattering_albedo, asymmetric_parameter)
+    zeta_plus, zeta_minus, lambdan = toon_zetalambda_coeffs(gamma_1, gamma_2):
+    trans_coeff, scat_coeff = set_scat_trans_coeffs(zeta_plus, zeta_minus, lambdan, dtau)
+    diagonal, lower_diagonal, upper_diagonal = compute_tridiag_diagonals(scat_coeff, trans_coeff, upper_diagonal_top,
+                              diagonal_top, diagonal_btm, lower_diagonal_btm)
+
+
 ##################################################################################
 # deprecated features, will be removed by Release v2.0
 ##################################################################################

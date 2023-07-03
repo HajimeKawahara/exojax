@@ -9,6 +9,7 @@ import numpy as np
 import jax.numpy as jnp
 from exojax.spec.planck import piBarr
 from exojax.spec.rtransfer import rtrun_emis_pure_absorption
+from exojax.spec.rtransfer import rtrun_emis_scat_toon_hemispheric_mean
 from exojax.spec.rtransfer import rtrun_trans_pure_absorption
 from exojax.spec.layeropacity import layer_optical_depth
 from exojax.atm.atmprof import atmprof_gray, atmprof_Guillot, atmprof_powerlow
@@ -16,7 +17,6 @@ from exojax.atm.idealgas import number_density
 from exojax.atm.atmprof import normalized_layer_height
 from exojax.spec.opachord import chord_geometric_matrix
 from exojax.spec.opachord import chord_optical_depth
-from exojax.spec.rtransfer import rtrun_trans_pure_absorption
 from exojax.utils.constants import logkB, logm_ucgs
 import warnings
 
@@ -230,6 +230,54 @@ class ArtCommon():
             atmprof_Guillot(self.pressure, gravity, kappa, gamma, Tint, Tirr,
                             self.fguillot))
 
+class ArtEmisScat(ArtCommon):
+    """Atmospheric RT for emission w/ scattering
+
+    Attributes:
+        pressure_layer: pressure profile in bar
+        
+    """
+    def __init__(
+        self,
+        pressure_top=1.e-8,
+        pressure_btm=1.e2,
+        nlayer=100,
+        nu_grid=None,
+        rtsolver="toon_hemispheric_mean"
+    ):
+        """initialization of ArtEmisPure
+
+        Args:
+            rtsolver (str): Radiative Transfer Solver, toon_hemispheric_mean, SH1, SH3 
+
+
+        """
+        super().__init__(pressure_top, pressure_btm, nlayer, nu_grid)
+        self.rtsolver = rtsolver
+        self.method = "emission_with_scattering_using_"+self.rtsolver
+
+    def run(self, dtau, temperature, nu_grid=None):
+        """run radiative transfer
+
+        Args:
+            dtau (2D array): optical depth matrix, dtau  (N_layer, N_nus)
+            temperature (1D array): temperature profile (Nlayer)
+            nu_grid (1D array): if nu_grid is not initialized, provide it. 
+
+        Returns:
+            _type_: _description_
+        """
+        if self.nu_grid is not None:
+            sourcef = piBarr(temperature, self.nu_grid)
+        elif nu_grid is not None:
+            sourcef = piBarr(temperature, nu_grid)
+        else:
+            raise ValueError("the wavenumber grid is not given.")
+        
+        if self.rtsolver == "toon_hemispheric_mean":
+            return rtrun_emis_scat_toon_hemispheric_mean(dtau, sourcef)
+        else:
+            raise ValueError("Unknown radiative transfer solver (rtsolver).")
 
 class ArtEmisPure(ArtCommon):
     """Atmospheric RT for emission w/ pure absorption
