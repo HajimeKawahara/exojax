@@ -115,17 +115,22 @@ from exojax.spec.twostream import set_scat_trans_coeffs
 from exojax.spec.twostream import compute_tridiag_diagonals
 from exojax.spec.toon import toon_zetalambda_coeffs
 from exojax.spec.toon import toon_params_hemispheric_mean
+from exojax.linalg.tridiag import solve_tridiag
 
 def rtrun_emis_scat_toon_hemispheric_mean(dtau, single_scattering_albedo, asymmetric_parameter, source_matrix):
+
     gamma_1, gamma_2, mu1 = toon_params_hemispheric_mean(single_scattering_albedo, asymmetric_parameter)
     zeta_plus, zeta_minus, lambdan = toon_zetalambda_coeffs(gamma_1, gamma_2):
     trans_coeff, scat_coeff = set_scat_trans_coeffs(zeta_plus, zeta_minus, lambdan, dtau)
     diagonal, lower_diagonal, upper_diagonal = compute_tridiag_diagonals(scat_coeff, trans_coeff, upper_diagonal_top,
                               diagonal_top, diagonal_btm, lower_diagonal_btm)
+    canonical_flux_upward = solve_tridiag(diagonal, lower_diagonal, upper_diagonal, vector)
+
 
 
 ##################################################################################
-# deprecated features, will be removed by Release v2.0
+# Raise Error since v1.5
+# Deprecated features, will be completely removed by Release v2.0
 ##################################################################################
 
 

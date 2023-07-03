@@ -20,10 +20,11 @@ def test_rt(db, diffmode, fig=False):
 
     nu_grid, wav, res = mock_wavenumber_grid()
 
-    art = ArtEmisPure(pressure_top=1.e-8,
+    art = ArtEmisScat(pressure_top=1.e-8,
                       pressure_btm=1.e2,
                       nlayer=100,
-                      nu_grid=nu_grid)
+                      nu_grid=nu_grid,
+                      rtsolver="toon_hemispheric_mean")
     art.change_temperature_range(400.0, 1500.0)
     Tarr = art.powerlaw_temperature(1300.0, 0.1)
     mmr_arr = art.constant_mmr_profile(0.1)
