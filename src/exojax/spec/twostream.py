@@ -20,7 +20,7 @@ def set_scat_trans_coeffs(zeta_plus, zeta_minus, lambdan, dtau):
 
 
 def compute_tridiag_diagonals(scat_coeff, trans_coeff, upper_diagonal_top,
-                              diagonal_top, diagonal_btm, lower_diagonal_btm):
+                              diagonal_top):
     """computes the diagonals from scattering and transmission coefficients for the tridiagonal system
 
     Args:
@@ -28,9 +28,7 @@ def compute_tridiag_diagonals(scat_coeff, trans_coeff, upper_diagonal_top,
         trans_coeff (_type_): transmission coefficient of the n-th layer, T_n
         upper_diagonal_top (_type_): a[0] upper diagonal top boundary 
         diagonal_top (_type_): b[0] diagonal top boundary
-        diagonal_btm (_type_): b[N-1] diagonal bottom boundary
-        lower_diagonal_btm (_type_): c[N-2] lower diagonal bottom boundary
-
+        
     Notes:
         While diagonal (b_n) has the Nlayer-dimension, upper and lower diagonals (an and cn) should have Nlayer-1 dimension originally.
         However, the tridiagonal solver linalg.tridiag.solve_tridiag ignores the last elements of upper and lower diagonals.
@@ -49,12 +47,10 @@ def compute_tridiag_diagonals(scat_coeff, trans_coeff, upper_diagonal_top,
         (Sn_minus_one**2 - Tn_minus_one**2) - Sn_minus_one  # bn
     lower_diagonal = Sn_plus_one * trans_coeff  # cn
 
-    # boundary setting
+    # top boundary setting
     upper_diagonal = upper_diagonal.at[0].set(upper_diagonal_top)
     diagonal = diagonal.at[0].set(diagonal_top)
-    diagonal = diagonal.at[-1].set(diagonal_btm)
-    lower_diagonal = lower_diagonal.at[-2].set(lower_diagonal_btm)
-
+    
     return diagonal, lower_diagonal, upper_diagonal
 
 

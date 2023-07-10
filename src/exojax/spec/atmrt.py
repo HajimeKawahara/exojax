@@ -230,6 +230,7 @@ class ArtCommon():
             atmprof_Guillot(self.pressure, gravity, kappa, gamma, Tint, Tirr,
                             self.fguillot))
 
+
 class ArtEmisScat(ArtCommon):
     """Atmospheric RT for emission w/ scattering
 
@@ -237,14 +238,12 @@ class ArtEmisScat(ArtCommon):
         pressure_layer: pressure profile in bar
         
     """
-    def __init__(
-        self,
-        pressure_top=1.e-8,
-        pressure_btm=1.e2,
-        nlayer=100,
-        nu_grid=None,
-        rtsolver="toon_hemispheric_mean"
-    ):
+    def __init__(self,
+                 pressure_top=1.e-8,
+                 pressure_btm=1.e2,
+                 nlayer=100,
+                 nu_grid=None,
+                 rtsolver="toon_hemispheric_mean"):
         """initialization of ArtEmisPure
 
         Args:
@@ -254,7 +253,7 @@ class ArtEmisScat(ArtCommon):
         """
         super().__init__(pressure_top, pressure_btm, nlayer, nu_grid)
         self.rtsolver = rtsolver
-        self.method = "emission_with_scattering_using_"+self.rtsolver
+        self.method = "emission_with_scattering_using_" + self.rtsolver
 
     def run(self, dtau, temperature, nu_grid=None):
         """run radiative transfer
@@ -273,11 +272,18 @@ class ArtEmisScat(ArtCommon):
             sourcef = piBarr(temperature, nu_grid)
         else:
             raise ValueError("the wavenumber grid is not given.")
-        
+
         if self.rtsolver == "toon_hemispheric_mean":
-            return rtrun_emis_scat_toon_hemispheric_mean(dtau, sourcef)
+
+            #temporary
+            single_scattering_albedo = jnp.ones_like(dtau) * 0.000001
+            asymmetric_parameter = jnp.ones_like(dtau) * 0.0
+
+            return rtrun_emis_scat_toon_hemispheric_mean(
+                dtau, single_scattering_albedo, asymmetric_parameter, sourcef)
         else:
             raise ValueError("Unknown radiative transfer solver (rtsolver).")
+
 
 class ArtEmisPure(ArtCommon):
     """Atmospheric RT for emission w/ pure absorption

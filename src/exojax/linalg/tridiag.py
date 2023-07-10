@@ -29,7 +29,7 @@ def solve_tridiag(diagonal, lower_diagonal, upper_diagonal, vector):
     """
 
     size = len(diagonal)
-
+    print("SIZE=",size)
     def thomas_scan(prev_cd_carry, bd):
         c_p, d_p, step = prev_cd_carry
         # the index of `a` doesn't matter at step 0 as
