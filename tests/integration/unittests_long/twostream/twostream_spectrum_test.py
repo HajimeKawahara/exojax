@@ -63,7 +63,8 @@ if __name__ == "__main__":
     
     fig = plt.figure()
     ax = fig.add_subplot(311)
-    ax.plot(nus[10300:10700], F0[10300:10700], label="Toon (ExoMol)")
+    #ax.plot(nus[10300:10700], F0[10300:10700], label="Toon (ExoMol)")
+    ax.plot(nus, F0, label="Toon (ExoMol)")
     plt.legend()
     #plt.yscale("log")
     ax = fig.add_subplot(312)

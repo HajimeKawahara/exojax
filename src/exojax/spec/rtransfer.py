@@ -142,8 +142,8 @@ def rtrun_emis_scat_toon_hemispheric_mean(dtau, single_scattering_albedo,
     zeta_plus, zeta_minus, lambdan = zetalambda_coeffs(gamma_1, gamma_2)
     trans_coeff, scat_coeff = set_scat_trans_coeffs(zeta_plus, zeta_minus,
                                                     lambdan, dtau)
-    delta = 1.e-100
-    #delta = 0.0
+    #delta = 1.e-10
+    delta = 0.0
     trans_coeff = trans_coeff + delta
 
     #debug
@@ -182,11 +182,15 @@ def rtrun_emis_scat_toon_hemispheric_mean(dtau, single_scattering_albedo,
     #diagonal_btm = 1.0 * fac
     #diagonal_btm = 0.0 #debug
     
+    ##### KOREGA HEIRETU NI NATTENAIIYO
+    print()
+    print("KOREGA HEIRETU NI NATTENAIIYO")
     diagonal, lower_diagonal, upper_diagonal = compute_tridiag_diagonals(
         scat_coeff, trans_coeff, upper_diagonal_top, diagonal_top)
 
-    Fs = 10.0
-    vector = vector.at[-1,:].set(- diagonal[-1]*Fs * fac)  
+
+    Fs = 0.0
+    vector = vector.at[-1,:].set(- upper_diagonal[-1]*Fs * fac)  
 
 
     debug_imshow_ts(diagonal, jnp.log10(jnp.abs(diagonal)), "diagonal",
@@ -224,7 +228,7 @@ def rtrun_emis_scat_toon_hemispheric_mean(dtau, single_scattering_albedo,
           vi[nlayer - 1], "<=")
     ####
 
-    Fplus = canonical_flux_upward.T #+ piBplus
+    Fplus = canonical_flux_upward.T + piBplus
     debug_imshow_ts(canonical_flux_upward.T, piBplus, "f+", "piB+")
     #canonical_flux_upward = vmap_solve_tridiag(diagonal, lower_diagonal,
     #                                      upper_diagonal, vector)

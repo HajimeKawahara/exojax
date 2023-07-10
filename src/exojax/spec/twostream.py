@@ -38,9 +38,9 @@ def compute_tridiag_diagonals(scat_coeff, trans_coeff, upper_diagonal_top,
         _jnp arrays: diagonal [Nlayer], lower dianoals [Nlayer], upper diagonal [Nlayer], 
     """
 
-    Sn_minus_one = jnp.roll(scat_coeff, 1)  # S_{n-1}
-    Tn_minus_one = jnp.roll(trans_coeff, 1)  # T_{n-1}
-    Sn_plus_one = jnp.roll(scat_coeff, -1)  # S_{n+1}
+    Sn_minus_one = jnp.roll(scat_coeff, 1, axis=0)  # S_{n-1}
+    Tn_minus_one = jnp.roll(trans_coeff, 1, axis=0)  # T_{n-1}
+    Sn_plus_one = jnp.roll(scat_coeff, -1, axis=0)  # S_{n+1}
 
     upper_diagonal = Sn_minus_one * trans_coeff  # an
     diagonal = scat_coeff * \
