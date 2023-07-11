@@ -166,7 +166,7 @@ def rtrun_emis_scat_toon_hemispheric_mean(dtau, single_scattering_albedo,
 
     # Boundary condition
     ## top layer
-    fac = 1.0
+    fac = 1.e10
     diagonal_top = -1.0 * fac  #b0
     #diagonal_top = 0.0  #debug
     upper_diagonal_top = trans_coeff[0] * fac
@@ -176,19 +176,13 @@ def rtrun_emis_scat_toon_hemispheric_mean(dtau, single_scattering_albedo,
 
     vector = vector.at[0,:].set(scat_coeff[0] * piBminus[0] * fac)
 
-    ## bottom layer
-    #Fs = 0.0  #No surface
-    #lower_diagonal_btm = lower_diagonal[-2]
-    #diagonal_btm = 1.0 * fac
-    #diagonal_btm = 0.0 #debug
-    
     ##### KOREGA HEIRETU NI NATTENAIIYO
     print()
     print("KOREGA HEIRETU NI NATTENAIIYO")
     diagonal, lower_diagonal, upper_diagonal = compute_tridiag_diagonals(
         scat_coeff, trans_coeff, upper_diagonal_top, diagonal_top)
 
-
+    #bottom layer
     Fs = 0.0
     vector = vector.at[-1,:].set(- upper_diagonal[-1]*Fs * fac)  
 
