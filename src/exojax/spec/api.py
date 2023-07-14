@@ -877,7 +877,6 @@ class MdbHitran(MdbCommonHitempHitran, HITRANDatabaseManager):
         self.uniqiso = np.unique(df.iso.values)
         QTref, QTtyp = self.QT_for_select_line(Ttyp)
         self.df_load_mask = self.compute_load_mask(df, QTtyp / QTref)
-
         if self.activation:
             self.activate(df)
         if inherit_dataframe or not self.activation:
