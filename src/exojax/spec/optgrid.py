@@ -36,6 +36,7 @@ def optelower(mdb,
     from jax.config import config
     config.update("jax_enable_x64", True)
     print("Maximum Elower = ",np.max(mdb.elower))
+
     #for single temperature, 0-th order is sufficient
     opa = OpaPremodit(mdb=mdb, nu_grid=nu_grid, diffmode=0)
     opa.manual_setting(dE, Tref_original, Tmax)
@@ -44,10 +45,11 @@ def optelower(mdb,
     nsigmaD = normalized_doppler_sigma(Tmax, mdb.molmass, R)
     qt = mdb.qr_interp(Tmax)
 
+    Tref_broadening = Tref_original
     xsv_master = xsvector_zeroth(Tmax, Pmin, nsigmaD, lbd_coeff, Tref_original,
                                  R, pmarray, opa.nu_grid, elower_grid,
                                  multi_index_uniqgrid, ngamma_ref_grid,
-                                 n_Texp_grid, qt)
+                                 n_Texp_grid, qt, Tref_broadening)
     allow = True
     q = -1
     pbar = tqdm(total=len(elower_grid), desc="opt Emax")
@@ -55,7 +57,7 @@ def optelower(mdb,
         xsv = xsvector_zeroth(Tmax, Pmin, nsigmaD, lbd_coeff[:, :, :, :q],
                               Tref_original, R, pmarray, opa.nu_grid,
                               elower_grid[:q], multi_index_uniqgrid,
-                              ngamma_ref_grid, n_Texp_grid, qt)
+                              ngamma_ref_grid, n_Texp_grid, qt, Tref_broadening)
         maxdelta = np.max(np.abs(xsv / xsv_master - 1.0))
         if maxdelta > accuracy:
             allow = False
@@ -70,7 +72,7 @@ def optelower(mdb,
         xsv = xsvector_zeroth(Tmax, Pmin, nsigmaD, lbd_coeff[:, :, :, :q],
                               Tref_original, R, pmarray, opa.nu_grid,
                               elower_grid[:q], multi_index_uniqgrid,
-                              ngamma_ref_grid, n_Texp_grid, qt)
+                              ngamma_ref_grid, n_Texp_grid, qt, Tref_broadening)
         _plot_comparison(nu_grid, xsv_master, xsv)
     Emax = elower_grid[:q][-1]
     return Emax

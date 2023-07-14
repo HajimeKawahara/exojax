@@ -112,16 +112,16 @@ if __name__ == '__main__':
     from exojax.spec import moldb
     import time
     import numpy as np
-    nus, wav, res = wavenumber_grid(22920, 23000, 1000, unit='AA')
-    mdbCO = moldb.MdbExomol('.database/CO/12C-16O/Li2015', nus, crit=1.e-46)
+    nu_grid, wav, res = wavenumber_grid(22920, 23000, 1000, unit='AA')
+    mdbCO = moldb.MdbExomol('.database/CO/12C-16O/Li2015', nu_grid, crit=1.e-46)
     ts = time.time()
-    numatrix = make_numatrix0(nus, mdbCO.nu_lines)
+    numatrix = make_numatrix0(nu_grid, mdbCO.nu_lines)
     print(np.median(numatrix))
     te = time.time()
     print(te - ts, 'sec')
 
     ts = time.time()
-    numatrixc = make_numatrix0_device(nus, mdbCO.nu_lines)
+    numatrixc = make_numatrix0_device(nu_grid, mdbCO.nu_lines)
     print(np.median(numatrix))
     te = time.time()
     print(te - ts, 'sec')

@@ -5,7 +5,6 @@
 
 """
 
-
 import pytest
 from exojax.test.emulate_mdb import mock_wavenumber_grid
 from exojax.test.emulate_mdb import mock_mdb
@@ -14,6 +13,10 @@ from exojax.spec.opacalc import OpaPremodit
 from exojax.spec.opacalc import OpaModit
 from exojax.spec.opacalc import OpaDirect
 import numpy as np
+
+from jax import config
+
+config.update("jax_enable_x64", True)
 
 
 @pytest.mark.parametrize("db", ["exomol", "hitemp"])
@@ -69,7 +72,11 @@ def test_OpaPremodit_auto(db):
     nu_grid, wav, res = mock_wavenumber_grid()
     Tl = 500.0
     Tu = 1200.0
-    opa = OpaPremodit(mdb=mdb, nu_grid=nu_grid, auto_trange=[Tl, Tu])
+    opa = OpaPremodit(mdb=mdb, nu_grid=nu_grid, auto_trange=[Tl, Tu], diffmode=2)
+
+    print(opa.Tref)
+    print(opa.Twt)
+    print(opa.dE)
     assert opa.Tref == pytest.approx(1153.6267095763965)
     assert opa.Twt == pytest.approx(554.1714566743503)
     assert opa.dE == pytest.approx(2250.0)

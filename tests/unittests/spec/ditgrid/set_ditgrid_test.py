@@ -22,6 +22,7 @@ def test_ditgrid_linear_interval():
                                   weight=weight,
                                   adopt=True)
     diff = weight * val[1:] - weight * val[:-1]
+    print(val)
     ref = np.ones(len(diff)) * 0.09264032
     assert np.all(diff == pytest.approx(ref))
 

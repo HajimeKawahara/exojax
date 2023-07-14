@@ -10,9 +10,19 @@ PACKAGES = find_packages(where='src')
 META_PATH = os.path.join('src', 'exojax', '__init__.py')
 CLASSIFIERS = [
     'Programming Language :: Python',
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Operating System :: OS Independent",
 ]
 INSTALL_REQUIRES = [
-    'numpy<=1.22.3', 'vaex>=4.16.0', 'radis', 'jaxopt', 'jax>=0.2.22', 'numpyro', 'hitran-api'
+    'numpyro',
+    'jaxopt',
+    'jax',
+    "hitran-api",
+    'radis',
+    "numpy<=1.22.3 ",
+    "pygments>=2.15",
+    "pydantic<2.0",
 ]
 
 # END PROJECT SPECIFIC
@@ -53,6 +63,7 @@ if __name__ == '__main__':
         long_description=open('README.md').read(),
         long_description_content_type='text/markdown',
         packages=PACKAGES,
+        python_requires='>=3.9',
         package_dir={'': 'src'},
         include_package_data=True,
         install_requires=INSTALL_REQUIRES,
@@ -62,3 +73,24 @@ if __name__ == '__main__':
             'universal': '1'
         }},
     )
+
+# VAEX UNISTALL and REINSTALL See Issue 2376 vaex https://github.com/vaexio/vaex/issues/2376    
+import subprocess
+import sys
+
+def uninstall(package):
+    subprocess.check_call([sys.executable, "-m", "pip", "uninstall", "-y", package])
+
+def reinstall(package):
+    subprocess.check_call([sys.executable, "-m", "pip", "uninstall", "-y", package])
+    subprocess.check_call([sys.executable, "-m", "pip", "install", package])
+
+uninstall('vaex-core')
+uninstall('vaex-astro')
+uninstall('vaex-jupyter')
+uninstall('vaex-ml')
+uninstall('vaex-hdf5')
+uninstall('vaex-server')
+uninstall('vaex-viz')
+
+reinstall('vaex')

@@ -64,7 +64,32 @@ def test_ipgauss_sampling(fig=False):
         plt.plot(nusd,F)
         plt.plot(nusd,F_naive,ls="dashed")
         plt.show()
-        
+
+def test_SopInstProfile():
+    from exojax.spec.specop import SopInstProfile
+    
+    nus, wav, resolution = wavenumber_grid(4000.0,
+                                               4010.0,
+                                               1000,
+                                               xsmode="premodit")
+    F0 = np.ones_like(nus)
+    F0[500 - 5:500 + 5] = 0.5
+    RV = 10.0
+    beta = 20.0
+    nusd, wav, resolution_inst = wavenumber_grid(4003.0,
+                                               4007.0,
+                                               250,
+                                               xsmode="lpf")
+    
+    SopInst = SopInstProfile(nus, resolution)
+    
+    F = SopInst.ipgauss(F0, beta)
+    F = SopInst.sampling(F, RV, nusd)
+    F_naive = _ipgauss_sampling_naive(nusd, nus, F0, beta, RV)
+    res = np.max(np.abs(1.0 - F_naive/F))
+    print(res)
+    assert res < 1.e-4 #0.1% allowed
+
 
 def test_ipgauss_variable_sampling_using_constant_beta_array(fig=False):
     nus, wav, resolution = wavenumber_grid(4000.0,
@@ -97,5 +122,6 @@ def test_ipgauss_variable_sampling_using_constant_beta_array(fig=False):
 
 
 if __name__ == "__main__":
-    test_ipgauss_sampling(fig=True)
-    test_ipgauss_variable_sampling_using_constant_beta_array(fig=True)
+    #test_ipgauss_sampling(fig=True)
+    #test_ipgauss_variable_sampling_using_constant_beta_array(fig=True)
+    test_SopInstProfile()

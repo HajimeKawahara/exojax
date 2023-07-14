@@ -1,3 +1,5 @@
+   
+
 Molecular Database
 =======================
 
@@ -7,6 +9,7 @@ Molecular Database
    userguide/database.rst	
    userguide/mdb.rst
    userguide/api.rst
+   userguide/nonair.rst
    userguide/qstates.rst
    userguide/atomll.rst
 
@@ -31,7 +34,11 @@ Radiative Transfer
 
    userguide/rtransfer.rst
 
+Spectral Operators
+=======================
 
+   N/A
+   
 Others
 =======================
 
