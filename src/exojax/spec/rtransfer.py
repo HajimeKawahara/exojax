@@ -166,16 +166,15 @@ def rtrun_emis_scat_toon_hemispheric_mean(dtau, single_scattering_albedo,
 
     # Boundary condition
     ## top layer
-    fac = 1.e10
+    fac = 1.0
     diagonal_top = -1.0 * fac  #b0
     #diagonal_top = 0.0  #debug
     upper_diagonal_top = trans_coeff[0] * fac
     #upper_diagonal_top = 0.0 #debug
     vector = jnp.zeros_like(dtau)
 
-
-    vector = vector.at[0,:].set(scat_coeff[0] * piBminus[0] * fac)
-
+    #vector = vector.at[0,:].set(-scat_coeff[0] * piBminus[0] * fac)
+    vector = vector.at[0,:].set(-scat_coeff[0]  * fac)
     ##### KOREGA HEIRETU NI NATTENAIIYO
     print()
     print("KOREGA HEIRETU NI NATTENAIIYO")
@@ -183,14 +182,18 @@ def rtrun_emis_scat_toon_hemispheric_mean(dtau, single_scattering_albedo,
         scat_coeff, trans_coeff, upper_diagonal_top, diagonal_top)
 
     #bottom layer
-    Fs = 0.0
-    vector = vector.at[-1,:].set(- upper_diagonal[-1]*Fs * fac)  
+    Fs = 1.0
+    #vector = vector.at[-1, :].set(-upper_diagonal[-1] * Fs * fac)
+    vector = vector.at[-1, :].set(10000.0 * fac)
 
 
     debug_imshow_ts(diagonal, jnp.log10(jnp.abs(diagonal)), "diagonal",
                     "log abs diagonal")
     debug_imshow_ts(upper_diagonal, lower_diagonal, "upper diagonal",
                     "lower diagonal")
+    debug_imshow_ts(jnp.log10(jnp.abs(upper_diagonal)),
+                    jnp.log10(jnp.abs(lower_diagonal)), "log upper diagonal",
+                    "log lower diagonal")
 
     #print(diagonal, lower_diagonal, upper_diagonal)
 
@@ -202,7 +205,7 @@ def rtrun_emis_scat_toon_hemispheric_mean(dtau, single_scattering_albedo,
 
     #check tridiagonal solver's result
     iwav = 10450
-    nwav  = 20000
+    nwav = 20000
     nlayer = 100
     fp = canonical_flux_upward[iwav, :]
     di = diagonal.T[iwav, :]
@@ -210,8 +213,9 @@ def rtrun_emis_scat_toon_hemispheric_mean(dtau, single_scattering_albedo,
     ui = upper_diagonal.T[iwav, :]
     vi = vector.T[iwav, :]
 
-    recovered_vector = jnp.zeros((nwav,nlayer))
-    recovered_vector = recovered_vector.at[0].set(di[0] * fp[0] + ui[0] * fp[1])
+    recovered_vector = jnp.zeros((nwav, nlayer))
+    recovered_vector = recovered_vector.at[0].set(di[0] * fp[0] +
+                                                  ui[0] * fp[1])
 
     print(di[0] * fp[0] + ui[0] * fp[1], vi[0], "<=")
     print(
