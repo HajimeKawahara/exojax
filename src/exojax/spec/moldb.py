@@ -9,15 +9,12 @@ import warnings
 from exojax.spec import atomllapi, atomll
 from exojax.utils.constants import Tref_original
 from exojax.spec import api 
-__all__ = ['MdbExomol', 'MdbHit', 'AdbVald', 'AdbSepVald', 'AdbKurucz']
+__all__ = ['AdbVald', 'AdbSepVald', 'AdbKurucz']
 
 explanation_states = "Note: Couldn't find the hdf5 format. We convert data to the hdf5 format. After the second time, it will become much faster."
 explanation_trans = "Note: Couldn't find the hdf5 format. We convert data to the hdf5 format. After the second time, it will become much faster."
 warning_old_exojax = 'It seems that the hdf5 file for the transition file was created using the old version of exojax<1.1. Try again after removing '
 
-#will be removed when ExoJAX2 release
-MdbExomol = api.MdbExomol
-MdbHit = api.MdbHit
 
 class AdbVald(object):
     """atomic database from VALD3 (http://vald.astro.uu.se/)
@@ -364,7 +361,7 @@ class AdbKurucz(object):
         vdWdamp (jnp array):  log of (van der Waals damping constant / neutral hydrogen number) (s-1)
     """
 
-    def __init__(self, path, nurange=[-np.inf, np.inf], margin=0.0, crit=0., Irwin=False, gpu_transfer=True):
+    def __init__(self, path, nurange=[-np.inf, np.inf], margin=0.0, crit=0., Irwin=False, gpu_transfer=True, vmr_fraction=None):
         """Atomic database for Kurucz line list "gf????.all".
 
         Args:
@@ -374,16 +371,23 @@ class AdbKurucz(object):
           crit: line strength lower limit for extraction
           Irwin: if True(1), the partition functions of Irwin1981 is used, otherwise those of Barklem&Collet2016
           gpu_transfer: tranfer data to jnp.array? 
+          vmr_fraction: list of the vmr fractions of hydrogen, H2 molecule, helium. if None, typical quasi-"solar-fraction" will be applied. 
 
         Note:
           (written with reference to moldb.py, but without using feather format)
         """
+
+        self.dbtype = "kurucz"
 
         # load args
         self.kurucz_file = pathlib.Path(path).expanduser()
         self.nurange = [np.min(nurange), np.max(nurange)]
         self.margin = margin
         self.crit = crit
+        if vmr_fraction is None:
+            self.vmrH, self.vmrHe, self.vmrHH = [0.0, 0.16, 0.84] #typical quasi-"solar-fraction"
+        else:
+            self.vmrH, self.vmrHe, self.vmrHH = vmr_fraction
 
         # load kurucz file
         print('Reading Kurucz file')

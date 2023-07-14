@@ -8,7 +8,7 @@ import numpy as np
 import warnings
 
 
-def wavenumber_grid(x0, x1, N, xsmode, unit='cm-1'):
+def wavenumber_grid(x0, x1, N, xsmode, wavelength_order="descending", unit='cm-1'):
     """generating the recommended wavenumber grid based on the cross section
     computation mode.
 
@@ -17,6 +17,7 @@ def wavenumber_grid(x0, x1, N, xsmode, unit='cm-1'):
         x1: end wavenumber (cm-1) or wavelength (nm) or (AA)
         N: the number of the wavenumber grid (even number)
         xsmode: cross section computation mode (lpf, dit, modit, premodit)
+        wavlength order: wavelength order: "ascending" or "descending"
         unit: unit of the input grid
         
     Note:
@@ -26,18 +27,36 @@ def wavenumber_grid(x0, x1, N, xsmode, unit='cm-1'):
         evenly-spaced log grid both in wavenumber and wavelength spaces. 
 
     Returns:
-        wavenumber grid evenly spaced in log space in ascending order (nus)
-        corresponding wavelength grid (AA) in ascending order (wav). wav[-1] corresponds to nus[0]
-        spectral resolution
+        nu_grid: wavenumber grid evenly spaced in log space in ascending order (nus)
+        wav: corresponding wavelength grid (AA) in ascending order (wav). wav[-1] corresponds to nus[0]
+        resolution: spectral resolution
     """
-    print("xsmode = ",xsmode)
+    print("xsmode = ", xsmode)
     _check_even_number(N)
     grid_mode = check_scale_xsmode(xsmode)
     grid, unit = _set_grid(x0, x1, N, unit, grid_mode)
-    nus = _set_nus(unit, grid)
-    wav = nu2wav(nus, unit="AA")
-    resolution = _set_resolution(grid_mode, nus)
-    return nus, wav, resolution
+    nu_grid = _set_nus(unit, grid)
+
+    _warning_wavelength_order(wavelength_order)
+
+    wav = nu2wav(nu_grid, wavelength_order=wavelength_order, unit="AA")
+    resolution = grid_resolution(grid_mode, nu_grid)
+    return nu_grid, wav, resolution
+
+def _warning_wavelength_order(wavelength_order):
+    """this is temporary special warning on wavelenght order
+
+    Args:
+        wavlength order: wavelength order: "ascending" or "descending"
+    """
+    print("======================================================================")
+    print("We changed the policy of the order of wavenumber/wavelength grids")
+    print("wavenumber grid shluld be in ascending order and now ")
+    print("users can specify the order of the wavelength grid by themselves.")
+    print("Your wavelength grid is in *** ", wavelength_order, " *** order")
+    print("This might causes the bug if you update ExoJAX. ")
+    print("Note that the older ExoJAX assumes ascending order as wavelength grid.")
+    print("======================================================================")
 
 
 def _set_grid(x0, x1, N, unit, grid_mode):
@@ -65,7 +84,7 @@ def _set_nus(unit, grid):
     return nus
 
 
-def _set_resolution(grid_mode, nus):
+def grid_resolution(grid_mode, nus):
     if grid_mode == 'ESLOG':
         resolution = resolution_eslog(nus)
         minr = resolution
@@ -176,3 +195,5 @@ def check_eslog_wavenumber_grid(nus,
     val2 = np.max(np.abs(w))
 
     return (val1 < crit1 and val2 < crit2)
+
+

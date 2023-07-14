@@ -45,7 +45,6 @@ class CdbCIA(object):
             url = url_HITRANCIA()+self.path.name
             urllib.request.urlretrieve(url, str(self.path))
         except:
-            print(url)
             print('HITRAN download failed')
 
 

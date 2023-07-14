@@ -8,24 +8,62 @@ Basics
    tutorials/optimize_spectrum_JAXopt.rst
    tutorials/reverse_premodit.rst
    
+
+Applications
+====================
+
    
-Molecular/Atomic/Continuum Databases
-=======================================
+Retrieval More
+--------------------------
 
 .. toctree::
    :maxdepth: 1
 
-   tutorials/elower_setting.rst
+   tutorials/reverse_precompute_grid.rst
+
+
+Transmission Spectra
+----------------------------
+
+.. toctree::
+   :maxdepth: 1
+
+   tutorials/Transmission_beta.rst
+
+
+Molecular/Atomic/Continuum Databases
+---------------------------------------
+
+.. toctree::
+   :maxdepth: 1
+
    tutorials/select_quantum_states.rst
    tutorials/branch.rst
    tutorials/Fortrat.rst
    tutorials/CIA_opacity.rst
-   
+
+Tuning ExoJAX
+===========================
+
+.. toctree::
+   :maxdepth: 1
+
+   userguide/memorysetting.rst	
+   tutorials/elower_setting.rst
+
+Multi Molecule/Segments Mdb and Opa Handler
+=============================================
+
+.. toctree::
+   :maxdepth: 1
+
+   tutorials/multimol.rst
+
 
 Manual Settings of Opacity (not using opa)
 ==============================================================
 
-If you like, you do not need "opa" nor "art" to compute opacity and spectra. 
+You do not need `opa` nor `art` to compute opacity and spectra, if you want. 
 
 Cross Section using Various Opacity Calculators
 --------------------------------------------------------

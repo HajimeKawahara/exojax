@@ -4,11 +4,12 @@
  [![arxiv](https://img.shields.io/badge/arxiv-2105.14782-blue)](http://arxiv.org/abs/2105.14782)
  [![paper](https://img.shields.io/badge/paper-ApJS_258_31_(2022)-orange)](https://iopscience.iop.org/article/10.3847/1538-4365/ac3b4d) 
  <a href="https://codeclimate.com/github/HajimeKawahara/exojax/maintainability"><img src="https://api.codeclimate.com/v1/badges/97c5e8835f3ef9c4ad7c/maintainability" /></a>
- 
-Auto-differentiable line-by-line spectral modeling of exoplanets/brown dwarfs/M dwarfs using JAX. Read [the docs](http://secondearths.sakura.ne.jp/exojax) 🐕. 
-In a nutshell, ExoJAX enables you to do a gradient-based optimization and a HMC-NUTS fitting using the latest database.
 
-ExoJAX is compatible at least with
+Auto-differentiable line-by-line spectral modelling of exoplanets/brown dwarfs/M dwarfs using JAX. Read [the docs](http://secondearths.sakura.ne.jp/exojax) 🐕. 
+In short, ExoJAX allows you to do gradient based optimisation and HMC NUTS fitting using the latest database.
+
+ExoJAX is at least compatible with
+
 - [NumPyro](https://github.com/pyro-ppl/numpyro) (PPL)
 - BlackJAX
 - [JAXopt](https://github.com/google/jaxopt) (differentiable optimizer)

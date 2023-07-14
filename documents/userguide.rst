@@ -1,3 +1,5 @@
+   
+
 Molecular Database
 =======================
 
@@ -7,6 +9,7 @@ Molecular Database
    userguide/database.rst	
    userguide/mdb.rst
    userguide/api.rst
+   userguide/nonair.rst
    userguide/qstates.rst
    userguide/atomll.rst
 
@@ -31,7 +34,11 @@ Radiative Transfer
 
    userguide/rtransfer.rst
 
+Spectral Operators
+=======================
 
+   N/A
+   
 Others
 =======================
 
@@ -52,6 +59,15 @@ For Developers
    developers/pytest.rst   
    developers/doc.rst   
    
-   
+
+History
+=======================
+
+.. toctree::
+   :maxdepth: 1
+
+   userguide/history.rst
+
+
 Collaborations using ExoJAX is `welcome <http://secondearths.sakura.ne.jp/en/index.html>`_! 
 Use `the issue tracker <https://github.com/HajimeKawahara/exojax/issues>`_ for starting.

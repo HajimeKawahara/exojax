@@ -1,22 +1,38 @@
+"""molecular name conversion
+
+- CO -> 12C-16O : simple_molname_to_exact_exomol_stable
+- (12C)(16O) -> 12C-16O : exact_molname_hitran_to_exomol
+- (12C)(16O) -> CO : exact_molname_hitran_to_simple_molname
+- 12C-16O -> (12C)(16O) : exact_molname_exomol_to_hitran
+- 12C-16O -> CO exact_molname_exomol_to_simple_molname
+- CO+isotope -> (12C)(16O)  or 12C-16O :exact_exact_molecule_name_from_isotope
+- To get the recommended ExoMol database, use radis.api.exomolapi.get_exomol_database_list("CO2","12C-16O2")
+
+"""
 from radis.db.classes import get_molecule
 import re
 import warnings
 
-
-def exact_hitran_isotope_name_from_isotope(simple_molecule_name, isotope):
+def exact_molecule_name_from_isotope(simple_molecule_name,
+                                           isotope,
+                                           dbtype="hitran"):
     """exact isotope name from isotope (number)
 
     Args:
         simple_molecular_name (str): simple molecular name such as CO
         isotope (int): isotope number starting from 1
+        dbtype (str): "hitran" or "exomol" 
 
     Returns:
-        str: HITRAN exact isotope name such as (12C)(16O)
+        str: HITRAN exact isotope name such as (12C)(16O) for dbtype="hitran", 12C-16O for "exomol"
     """
     from radis.db.molparam import MolParams
     mp = MolParams()
-    return mp.get(simple_molecule_name, isotope, "isotope_name")
-
+    exact_molname = mp.get(simple_molecule_name, isotope, "isotope_name")
+    if dbtype == "hitran":
+        return exact_molname
+    elif dbtype == "exomol":
+        return exact_molname_hitran_to_exomol(exact_molname)
 
 def exact_molecule_name_to_isotope_number(exact_molecule_name):
     """Convert exact molecule name to isotope number
@@ -37,7 +53,7 @@ def exact_molecule_name_to_isotope_number(exact_molecule_name):
         #check hitran exact name
         exact_hitran_molecule_name = exact_molname_exomol_to_hitran(
             exact_molecule_name)
-        print("HITRAN exact name=",exact_hitran_molecule_name)
+        print("HITRAN exact name=", exact_hitran_molecule_name)
         keys = [
             k for k, v in isotope_name_dict.items()
             if v == exact_hitran_molecule_name
@@ -46,7 +62,7 @@ def exact_molecule_name_to_isotope_number(exact_molecule_name):
         molnumber = keys[0][0]
         isotope_number = keys[0][1]
     else:
-        warnings.warn("No isotope number identified.",UserWarning)
+        warnings.warn("No isotope number identified.", UserWarning)
         return None, None
 
     return molnumber, isotope_number
@@ -115,18 +131,47 @@ def exact_molname_exomol_to_hitran(exact_exomol_molecule_name):
         str: exact exomol molecule name such as (12C)(16O)
     """
     component = exact_exomol_molecule_name.split("-")
-    hitran_exact_name=""
+    hitran_exact_name = ""
     hydrolist = ["1H", "1H2", "2H", "2H2"]
     replacelist = ["H", "H2", "D", "D2"]
     for c in component:
         if c in hydrolist:
             ind = hydrolist.index(c)
-            hitran_exact_name=hitran_exact_name+replacelist[ind]
+            hitran_exact_name = hitran_exact_name + replacelist[ind]
         elif c[-1].isdigit():
-            hitran_exact_name=hitran_exact_name+"("+c[:-1]+")"+c[-1]
+            hitran_exact_name = hitran_exact_name + "(" + c[:-1] + ")" + c[-1]
         else:
-            hitran_exact_name=hitran_exact_name+"("+c+")"
+            hitran_exact_name = hitran_exact_name + "(" + c + ")"
     return hitran_exact_name
+
+
+def exact_molname_hitran_to_exomol(exact_molecule_name_hitran):
+    """Convert exact_molname used in HITRAN to those in ExoMol
+
+    Args:
+        exact_exomol_molecule_name (str): exact exomol molecule name such as (12C)(16O)
+
+    Returns:
+        str: exact exomol molecule name such as 12C-16O
+    """
+
+    from collections import defaultdict
+    import re
+    matches = re.findall(r'\((.*?)\)(\d*)', exact_molecule_name_hitran)
+    result = defaultdict(int)
+
+    for item, freq in matches:
+        if freq == '':
+            freq = 1
+        result[item] += int(freq)
+
+    # Format the string, exclude 1 from the counts
+    result_string = '-'.join([
+        f'{key}{value}' if value > 1 else key for key, value in result.items()
+    ])
+
+    return result_string
+
 
 def e2s(exact_exomol_molecule_name):
 
@@ -174,15 +219,15 @@ def split_simple(molname_simple):
     return atom_list, num_list
 
 
-def s2e_stable(molname_simple):
+def simple_molname_to_exact_exomol_stable(molname_simple):
     """convert the simple molname to the exact molname (used in ExoMol) using
     stable isotopes.
 
     Args:
-       molname_simple: simple molname
+        molname_simple: simple molname, such as CO
 
     Return:
-       exact molname
+        exact exomol molecule name such as 12C-16O
     """
     if molname_simple == "H3O_p":
         return "1H3-16O_p"
@@ -202,10 +247,10 @@ def s2e_stable(molname_simple):
 
 if __name__ == '__main__':
 
-    print(s2e_stable('Fe2O3'))
-    print(s2e_stable('CH4'))
-    print(s2e_stable('NaOH'))
-    print(s2e_stable('H3O_p'))
+    print(simple_molname_to_exact_exomol_stable('Fe2O3'))
+    print(simple_molname_to_exact_exomol_stable('CH4'))
+    print(simple_molname_to_exact_exomol_stable('NaOH'))
+    print(simple_molname_to_exact_exomol_stable('H3O_p'))
 
     print(e2s('12C-1H4'))
     print(e2s('23Na-16O-1H'))

@@ -2,13 +2,11 @@
    sphinx-quickstart on Mon Jan 11 14:38:51 2021.
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
-
-`[PDF version] <http://secondearths.sakura.ne.jp/exojax/exojax.pdf>`_
    
 ExoJAX
 ==================================
 
-version 1.3
+version 1.4 (:doc:`userguide/history`)
 
 `ExoJAX <https://github.com/HajimeKawahara/exojax>`_ provides an auto-differentiable high-resolution spectrum model for exoplanets/brown dwarfs using `JAX <https://github.com/google/jax>`_. ExoJAX enables a fully Bayesian inference of the high-dispersion data to fit the line-by-line spectral computation to the observed spectrum, from end-to-end (i.e. from molecular/atomic databases to real spectra), by combining it with `the Hamiltonian Monte Carlo <https://en.wikipedia.org/wiki/Hamiltonian_Monte_Carlo>`_ in recent probabilistic programming languages such as `NumPyro <https://github.com/pyro-ppl/numpyro>`_. So, the notable features of ExoJAX are summarized as 
 

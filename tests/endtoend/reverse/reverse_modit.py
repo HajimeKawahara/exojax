@@ -38,7 +38,7 @@ filename = pkg_resources.resource_filename(
 dat = pd.read_csv(filename, delimiter=",", names=("wavenumber", "flux"))
 nusd = dat['wavenumber'].values
 flux = dat['flux'].values
-wavd = nu2wav(nusd)
+wavd = nu2wav(nusd, wavelength_order="ascending")
 sigmain = 0.05
 norm = 20000
 nflux = flux / norm + np.random.normal(0, sigmain, len(wavd))
@@ -49,7 +49,8 @@ nu_grid, wav, res = wavenumber_grid(np.min(wavd) - 10.0,
                                     np.max(wavd) + 10.0,
                                     Nx,
                                     unit='AA',
-                                    xsmode='modit')
+                                    xsmode='modit',
+                                    wavelength_order="ascending")
 
 # Atmospheric RT setting
 Tlow = 400.0

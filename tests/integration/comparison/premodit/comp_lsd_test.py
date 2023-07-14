@@ -27,41 +27,67 @@ def npadd1D(a, w, cx, ix):
     np.add.at(a, (ix+1), w*cx)
     return a
 
-def compare_line_shape_density(mdb,nu_grid,Ttest=1000.0,interval_contrast=0.1,Ttyp=2000.0):
+def compare_line_shape_density(mdb,nu_grid,Ttest=1000.0,Ttyp=2000.0):
     """ compare the premodit LSD with the direct computation of LSD 3D version
     
     """
     from exojax.spec.lsd import npgetix
     from exojax.spec.hitran import line_strength
     from exojax.spec.premodit import make_elower_grid
-    from exojax.spec.premodit import unbiased_lsd_first
+    #from exojax.spec.premodit import unbiased_lsd_first
+    from exojax.spec.premodit import unbiased_lsd_zeroth
     
     dit_grid_resolution = 0.1    
     R = resolution_eslog(nu_grid)
     ngamma_ref = mdb.alpha_ref / mdb.nu_lines * R
-    ngamma_ref_grid, n_Texp_grid = make_broadpar_grid(
-        ngamma_ref, mdb.n_Texp, Ttyp, dit_grid_resolution=dit_grid_resolution)
-    elower_grid = make_elower_grid(Ttyp,
-                                   mdb.elower,
-                                   interval_contrast=interval_contrast)
-    lbd, multi_index_uniqgrid = generate_lbd(mdb.Sij0, mdb.nu_lines, nu_grid, ngamma_ref,
-                       ngamma_ref_grid, mdb.n_Texp, n_Texp_grid, mdb.elower,
-                       elower_grid, Ttyp)
+    ngamma_ref_grid, n_Texp_grid = make_broadpar_grid(ngamma_ref,
+                       mdb.n_Texp,
+                       2100.0,
+                       900.0,
+                       Ttyp,
+                       dit_grid_resolution=dit_grid_resolution,
+                       twod_factor=4.0 / 3.0,
+                       adopt=True)
+
+    #ngamma_ref_grid, n_Texp_grid = make_broadpar_grid(
+    #    ngamma_ref, mdb.n_Texp, Ttyp, dit_grid_resolution=dit_grid_resolution)
+    
+    dE=300.0
+    elower_grid = make_elower_grid(mdb.elower,dE)
+
+    #lbd, multi_index_uniqgrid = generate_lbd(mdb.Sij0, mdb.nu_lines, nu_grid, ngamma_ref,
+    #                   ngamma_ref_grid, mdb.n_Texp, n_Texp_grid, mdb.elower,
+    #                   elower_grid, Ttyp)
+    Tref=296.0
+    lbd_array, multi_index_uniqgrid = generate_lbd(mdb.line_strength_ref,
+                 mdb.nu_lines,
+                 nu_grid,
+                 ngamma_ref,
+                 ngamma_ref_grid,
+                 mdb.n_Texp,
+                 n_Texp_grid,
+                 mdb.elower,
+                 elower_grid,
+                 Ttyp,
+                 Tref=Tref,
+                 diffmode=0)
+    lbd = lbd_array[0]
+    print(len(elower_grid),len(nu_grid))
     qT = mdb.qr_interp(Ttest)
-    Slsd=unbiased_lsd_first(lbd,Ttest,nu_grid,elower_grid,qT)
+    Slsd=unbiased_lsd_zeroth(lbd,Ttest,Tref, nu_grid,elower_grid,qT)
     Slsd=np.sum(Slsd,axis=1)
     cont_inilsd_nu, index_inilsd_nu = npgetix(mdb.nu_lines, nu_grid)
-    logsij0 = jnp.array(np.log(mdb.Sij0))
+    logsij0 = jnp.array(np.log(mdb.line_strength_ref))
     S=line_strength(Ttest, logsij0, mdb.nu_lines, mdb.elower, qT)
     Slsd_direct = np.zeros_like(nu_grid,dtype=np.float64)
     Slsd_direct = npadd1D(Slsd_direct, S, cont_inilsd_nu, index_inilsd_nu)
     return Slsd, Slsd_direct
 
 def test_comp_lsd():
-    from exojax.spec import moldb
+    from exojax.spec import api
     nu_grid=np.logspace(np.log10(6030.0), np.log10(6060.0), 20000, dtype=np.float64)
-    mdbCH4 = moldb.MdbExomol('.database/CH4/12C-1H4/YT10to10/', nu_grid, gpu_transfer=False)
-    Slsd,Slsd_direct=compare_line_shape_density(mdbCH4,nu_grid,Ttest=1000.0,interval_contrast=0.1,Ttyp=2000.0)    
+    mdbCH4 = api.MdbExomol('.database/CH4/12C-1H4/YT10to10/', nu_grid, gpu_transfer=False)
+    Slsd,Slsd_direct=compare_line_shape_density(mdbCH4,nu_grid,Ttest=1000.0,Ttyp=2000.0)    
     maxdev=np.max(np.abs(Slsd/Slsd_direct-1.0))
     print("max deviation=",maxdev)
     assert np.abs(maxdev) < 0.05

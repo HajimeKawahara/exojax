@@ -1,6 +1,12 @@
 Fitting a spectrum model using Gradient Descent Based Optimization.
 ===================================================================
 
+last update: July 2nd Hajime Kawahara
+
+The ability of the gradient-based optimizations is s one of the major
+advantages of ExoJAX. Here we demonstrate how to optimize the model
+using ``jaxopt`` package.
+
 .. code:: ipython3
 
     import pandas as pd
@@ -8,7 +14,7 @@ Fitting a spectrum model using Gradient Descent Based Optimization.
     import matplotlib.pyplot as plt
     import jax.numpy as jnp
 
-Use FP64 just in case.
+Use 64-bit.
 
 .. code:: ipython3
 
@@ -39,17 +45,19 @@ normalize it and add some noise.
     
     
     plt.plot(wavd[::-1],nflux,alpha=0.5,color="gray")
+    plt.plot(wavd[::-1],flux/norm,alpha=1,color="gray")
+    
     plt.xlabel("wavelength $\AA$")
     plt.show()
 
 
 
-.. image:: optimize_spectrum_JAXopt_files/optimize_spectrum_JAXopt_5_0.png
+.. image:: optimize_spectrum_JAXopt_files/optimize_spectrum_JAXopt_7_0.png
 
 
 Let’s make a model, which should be include CH4, CIA (H2-H2), spin
 rotation, and response… So, import everthing we need. We use PreMODIT as
-“opa”.
+``opa``.
 
 .. code:: ipython3
 
@@ -59,9 +67,16 @@ rotation, and response… So, import everthing we need. We use PreMODIT as
     from exojax.spec.opacalc import OpaPremodit
     from exojax.spec.contdb import CdbCIA
     from exojax.spec.opacont import OpaCIA
-    from exojax.spec.response import ipgauss_sampling
-    from exojax.spec.spin_rotation import convolve_rigid_rotation
+    from exojax.spec.specop import SopRotation
+    from exojax.spec.specop import SopInstProfile
     from exojax.utils.instfunc import resolution_to_gaussian_std
+
+
+.. parsed-literal::
+
+    /home/kawahara/exojax/src/exojax/spec/dtau_mmwl.py:14: FutureWarning: dtau_mmwl might be removed in future.
+      warnings.warn("dtau_mmwl might be removed in future.", FutureWarning)
+
 
 Again recall this figure.
 
@@ -73,7 +88,7 @@ Again recall this figure.
 
 
 
-.. image:: optimize_spectrum_JAXopt_files/optimize_spectrum_JAXopt_9_0.png
+.. image:: optimize_spectrum_JAXopt_files/optimize_spectrum_JAXopt_11_0.png
 
 
 
@@ -81,7 +96,7 @@ Here we will infer here Rp, RV, MMR_CO, T0, alpha, and Vsini.
 
 First, set the model wavenumber grids, which should cover the
 observational range, and the instrumental setting, and Atmospheric RT
-(layer) setting, “art”.
+(layer) setting, ``art``.
 
 .. code:: ipython3
 
@@ -116,10 +131,10 @@ observational range, and the instrumental setting, and Atmospheric RT
       warnings.warn('Resolution may be too small. R=' + str(resolution),
 
 
-Loading the databases, “mdb” for ExoMol/CH4 and “cdb” for CIA. Also,
-define “opa” for both db. It takes ~ a few minites to initialize
-OpaPremodit (if you do not have the database, it takes more for
-downloading for the first time). Have a coffee and wait.
+Loading the databases, ``mdb`` for ExoMol/CH4 and ``cdb`` for CIA. Also,
+define ``opa`` for both databases. It takes ~ a few minites to
+initialize OpaPremodit (if you do not have the database, it takes more
+for downloading for the first time). Have a coffee and wait.
 
 .. code:: ipython3
 
@@ -148,13 +163,6 @@ downloading for the first time). Have a coffee and wait.
 
 .. parsed-literal::
 
-    HITRAN exact name= (12C)(1H)4
-    HITRAN exact name= (12C)(1H)4
-    Background atmosphere:  H2
-
-
-.. parsed-literal::
-
     /home/kawahara/exojax/src/exojax/utils/molname.py:133: FutureWarning: e2s will be replaced to exact_molname_exomol_to_simple_molname.
       warnings.warn(
     /home/kawahara/exojax/src/exojax/utils/molname.py:49: UserWarning: No isotope number identified.
@@ -169,6 +177,9 @@ downloading for the first time). Have a coffee and wait.
 
 .. parsed-literal::
 
+    HITRAN exact name= (12C)(1H)4
+    HITRAN exact name= (12C)(1H)4
+    Background atmosphere:  H2
     Reading .database/CH4/12C-1H4/YT10to10/12C-1H4__YT10to10__06000-06100.trans.bz2
     Reading .database/CH4/12C-1H4/YT10to10/12C-1H4__YT10to10__06100-06200.trans.bz2
     .broad is used.
@@ -178,11 +189,14 @@ downloading for the first time). Have a coffee and wait.
     OpaPremodit: params automatically set.
     Robust range: 397.77407283130566 - 1689.7679243628259 K
     Tref changed: 296.0K->1153.6267095763965K
+    Tref_broadening is set to  774.5966692414833 K
+    # of reference width grid :  3
+    # of temperature exponent grid : 2
 
 
 .. parsed-literal::
 
-    uniqidx: 100%|██████████| 2/2 [00:03<00:00,  1.68s/it]
+    uniqidx: 100%|██████████| 2/2 [00:03<00:00,  1.67s/it]
 
 
 .. parsed-literal::
@@ -204,14 +218,21 @@ We have only 76,483,758 CH4 lines.
     76483758
 
 
-Setting a velocity grid for spin and response…
+Setting spectral operators.
 
 .. code:: ipython3
 
     from exojax.utils.astrofunc import gravity_jupiter
-    from exojax.utils.grids import velocity_grid
-    vsini_max = 100.0
-    vr_array = velocity_grid(res, vsini_max)
+    sop_rot = SopRotation(nu_grid,res,vsini_max=100.0)
+    sop_inst = SopInstProfile(nu_grid,res,vrmax=100.0)
+
+
+.. parsed-literal::
+
+    /home/kawahara/exojax/src/exojax/utils/grids.py:126: UserWarning: Resolution may be too small. R=129859.29489937567
+      warnings.warn('Resolution may be too small. R=' + str(resolution),
+    /home/kawahara/exojax/src/exojax/utils/grids.py:126: UserWarning: Resolution may be too small. R=129859.29489937567
+      warnings.warn('Resolution may be too small. R=' + str(resolution),
 
 
 Now we write the model, which is used in HMC-NUTS.
@@ -238,8 +259,9 @@ Now we write the model, which is used in HMC-NUTS.
         #total tau
         dtau = dtaumCH4 + dtaucH2H2
         F0 = art.run(dtau, Tarr) / norm
-        Frot = convolve_rigid_rotation(F0, vr_array, vsini, u1=0.0, u2=0.0)
-        mu = ipgauss_sampling(nusd, nu_grid, Frot, beta_inst, RV, vr_array)
+        Frot = sop_rot.rigid_rotation(F0, vsini, u1=0.0, u2=0.0)
+        Frot_inst = sop_inst.ipgauss(Frot, beta_inst)
+        mu = sop_inst.sampling(Frot_inst, RV, nusd)
         return mu
     
         
@@ -274,12 +296,12 @@ parameters.
 
 .. parsed-literal::
 
-    [<matplotlib.lines.Line2D at 0x7f02487ad070>]
+    [<matplotlib.lines.Line2D at 0x7f234d98e0d0>]
 
 
 
 
-.. image:: optimize_spectrum_JAXopt_files/optimize_spectrum_JAXopt_25_1.png
+.. image:: optimize_spectrum_JAXopt_files/optimize_spectrum_JAXopt_27_1.png
 
 
 Define the objective function by a L2 norm.
@@ -310,13 +332,14 @@ The best-fit parameters
 
 .. parsed-literal::
 
-    DeviceArray([3.36130210e+00, 9.00000000e+00, 1.35552984e-01,
-                 2.13127711e+03, 1.00055203e-01, 1.87558456e+01,
-                 1.08695956e+01], dtype=float64)
+    DeviceArray([3.32046971e+00, 9.00000000e+00, 1.25542304e-01,
+                 2.10939481e+03, 1.00095859e-01, 1.93251005e+01,
+                 1.14472806e+01], dtype=float64)
 
 
 
-Plot the results. It works well!
+Plot the results. Good but a bit poor compared with the input… O.K. I
+prefer ADAM to GD let’s try next.
 
 .. code:: ipython3
 
@@ -324,6 +347,8 @@ Plot the results. It works well!
     inmodel=model_c(initpar,boost)
     fig, ax = plt.subplots(nrows=1, ncols=1, figsize=(20,6.0))
     ax.plot(wavd[::-1],model,color="C1",lw=3,label="fitted")
+    ax.plot(wavd[::-1],flux/norm,alpha=1,color="black",label="input")
+    
     #ax.plot(wavd[::-1],inmodel,color="gray",lw=3,label="initial parameter")
     ax.plot(wavd[::-1],nflux,"+",color="black",label="data")
     plt.xlabel("wavelength ($\AA$)",fontsize=16)
@@ -333,11 +358,11 @@ Plot the results. It works well!
 
 
 
-.. image:: optimize_spectrum_JAXopt_files/optimize_spectrum_JAXopt_33_0.png
+.. image:: optimize_spectrum_JAXopt_files/optimize_spectrum_JAXopt_35_0.png
 
 
-We can do the optimization one by one update. It’s useful when you wanna
-visualize the optimization process.
+BTW, We can do the optimization one by one update. It’s useful when you
+wanna visualize the optimization process.
 
 .. code:: ipython3
 
@@ -355,7 +380,7 @@ visualize the optimization process.
 
 .. parsed-literal::
 
-    100%|██████████| 300/300 [00:39<00:00,  7.69it/s]
+    100%|██████████| 300/300 [00:40<00:00,  7.41it/s]
 
 
 Using ADAM optimizer
@@ -373,19 +398,42 @@ You might use ADAM, instead of a simple GD. Yes, you can.
     import tqdm
     adam = OptaxSolver(opt=optax.adam(2.e-2), fun=objective)
     state = adam.init_state(initpar)
-    params=np.copy(initpar)
+    params_a=np.copy(initpar)
     
     params_adam=[]
     Nit=300
     for _ in  tqdm.tqdm(range(Nit)):
-        params,state=adam.update(params,state)
-        params_adam.append(params)
+        params_a,state=adam.update(params_a,state)
+        params_adam.append(params_a)
 
 
 .. parsed-literal::
 
-    100%|██████████| 300/300 [00:20<00:00, 14.53it/s]
+    100%|██████████| 300/300 [00:20<00:00, 14.31it/s]
 
+
+.. code:: ipython3
+
+    model_adam=model_c(params_a,boost)
+    fig, ax = plt.subplots(nrows=1, ncols=1, figsize=(20,6.0))
+    ax.plot(wavd[::-1],model,color="C1",lw=4,label="GD")
+    ax.plot(wavd[::-1],model_adam,color="C2",lw=4,ls="dashed",label="ADAM")
+    ax.plot(wavd[::-1],flux/norm,alpha=1,color="black",label="input")
+    
+    #ax.plot(wavd[::-1],inmodel,color="gray",lw=3,label="initial parameter")
+    ax.plot(wavd[::-1],nflux,"+",color="black",label="data")
+    plt.xlabel("wavelength ($\AA$)",fontsize=16)
+    plt.legend(fontsize=16)
+    plt.tick_params(labelsize=16)
+    plt.savefig("gradient_descent_jaxopt.png")
+
+
+
+
+.. image:: optimize_spectrum_JAXopt_files/optimize_spectrum_JAXopt_42_0.png
+
+
+ADAM is faster and better than GD? I love ADAM.
 
 .. code:: ipython3
 
