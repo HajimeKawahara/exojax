@@ -51,6 +51,14 @@ Tuning ExoJAX
    userguide/memorysetting.rst	
    tutorials/elower_setting.rst
 
+Multi Molecule/Segments Mdb and Opa Handler
+=============================================
+
+.. toctree::
+   :maxdepth: 1
+
+   tutorials/multimol.rst
+
 
 Manual Settings of Opacity (not using opa)
 ==============================================================
