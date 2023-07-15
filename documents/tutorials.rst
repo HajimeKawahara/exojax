@@ -22,6 +22,15 @@ Retrieval More
    tutorials/reverse_precompute_grid.rst
 
 
+Transmission Spectra
+----------------------------
+
+.. toctree::
+   :maxdepth: 1
+
+   tutorials/Transmission_beta.rst
+
+
 Molecular/Atomic/Continuum Databases
 ---------------------------------------
 
@@ -42,11 +51,19 @@ Tuning ExoJAX
    userguide/memorysetting.rst	
    tutorials/elower_setting.rst
 
+Multi Molecule/Segments Mdb and Opa Handler
+=============================================
+
+.. toctree::
+   :maxdepth: 1
+
+   tutorials/multimol.rst
+
 
 Manual Settings of Opacity (not using opa)
 ==============================================================
 
-If you like, you do not need "opa" nor "art" to compute opacity and spectra. 
+You do not need `opa` nor `art` to compute opacity and spectra, if you want. 
 
 Cross Section using Various Opacity Calculators
 --------------------------------------------------------

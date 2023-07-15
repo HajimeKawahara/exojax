@@ -1,12 +1,13 @@
 ExoMol, HITEMP, HITRAN
 --------------------------------------
 
-*April 9th (2023) Hajime Kawahara, Yui Kawashima*
+*June 17th (2023) Hajime Kawahara, Yui Kawashima, Yui Kasagi*
 
-Since version 1.2, the standard molecular database I/O for ExoMol, HITEMP, and HITRAN was shared with the radis team. 
+Since version 1.2, the standard molecular database I/O for ExoMol, HITEMP, and HITRAN was shared with the `radis <https://github.com/radis/radis>`_ team. 
 We moved the I/O for these database to `exojax.spec.api <../exojax/exojax.spec.html#module-exojax.spec.api>`_.
 
-
+.. contents::
+    :depth: 2
 
 
 ExoMol
@@ -367,7 +368,7 @@ We can mask attributes even after activation. In the following example, we load 
     >>> print(len(mdb.elower), np.min(mdb.elower))
     26011826 23.794352
 
-Then, we define a mask and apply it to mdb using "apply_mask_mdb" method.
+Then, we define a mask and apply it to mdb using `apply_mask_mdb` method.
 
 .. code:: ipython
 	
@@ -375,4 +376,45 @@ Then, we define a mask and apply it to mdb using "apply_mask_mdb" method.
     >>> mdb.apply_mask_mdb(mask)
     >>> print(len(mdb.elower), np.min(mdb.elower))
     26011817 134.90164
+
+
+Uncertainty Code (HITEMP)
+===========================================
+
+The `with_error` option makes `the uncertainty code <https://hitran.org/docs/uncertainties/>`_ available for HITEMP (for HITRAN not yet; `Issue398 <https://github.com/HajimeKawahara/exojax/issues/398>`_).
+
+.. code:: ipython
+	
+    >>> lambda0 = 22920.0
+    >>> lambda1 = 23100.0
+    >>> nus, wav, res = wavenumber_grid(lambda0,
+                                    lambda1,
+                                    100000,
+                                    unit='AA',
+                                    xsmode="premodit")
+    >>> mdb = api.MdbHitemp("CO",nus, with_error=True)
+    >>> mdb.ierr 
+
+`mdb.ierr` contains the sets of `the uncertainty code <https://hitran.org/docs/uncertainties/>`_ , but it's not user-friendy. Use `mdb.add_error()` to generate more user-friendly attributes.
+
+.. code:: ipython
+	
+    >>> mdb.add_error()
+    >>> mdb.nu_lines_err
+    array([4, 3, 3, 3, 4, 3, 4, 3, 3, 3, 3, 4, 4, 3, 3, 4, 4, 3, 4, 3, 4, 3,
+       4, 4, 3, 4, 3, 3, 3, 4, 3, 3, 3, 4, 3, 3, 4, 3, 3, 3, 4, 3, 3, 4,
+       3, 3, 3, 3, 3, 3, 4, 3, 3, 3, 4, 3, 3, 3, 3, 3, 4, 3, 3, 3, 3, 3,
+       3, 3, 3, 4, 3, 3, 3, 4, 3, 4, 4, 3, 3, 3, 3, 3, 3, 3, 4, 3, 3, 4,
+       3, 3, 3, 3, 3, 3, 4, 3, 3, 3, 3, 3, 4, 3, 3, 3, 3, 3, 4, 3, 3, 3,
+       3, 3, 4, 3, 3, 3, 3, 4, 3, 3, 3, 3, 3, 4, 4, 3, 4, 3, 3, 3, 3, 3,
+       3, 3, 3, 4, 3, 4, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 4, 3, 4, 3, 3, 4,
+       3, 4, 3, 3, 3, 3, 4, 3, 3, 3, 3, 4, 3, 3, 3, 4, 3, 4, 3, 3, 3, 3,
+       3, 4, 3, 3, 3, 3, 3, 3, 3, 4, 4, 3, 3, 4, 3, 4, 3, 3, 3, 3, 3, 4,
+       4, 3, 3, 3, 3, 3, 3, 4, 3, 3, 3, 4, 3, 3, 3, 4, 3, 3, 3, 3, 3, 3,
+       4, 4, 3, 3, 4, 3, 3, 3, 4, 3, 4, 3, 4, 4, 3, 4, 3, 3, 3, 3, 3, 3,
+       3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 4, 4])
+
+This makes the attributes `nu_lines_err`, `line_strength_ref_err`, `gamma_air_err`, `gamma_self_err`, `n_air_err`,and `delta_air_err` availbale.
+These quantities provide `the uncertainty code <https://hitran.org/docs/uncertainties/>`_  for  
+`nu_lines`, `line_strength_ref`, `gamma_air`, `gamma_self`, `n_air`,and `delta_air`, respectively.
 

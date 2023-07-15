@@ -241,12 +241,11 @@ def database_path_hitemp(simple_molname):
     return _hitemp_dbpath[simple_molname]
 
 
-def database_path_exomol(simple_molecule_name, database_root_path=".database"):
+def database_path_exomol(simple_molecule_name):
     """default ExoMol path  
 
     Args:
         simple_molecule_name (str): simple molecule name "H2O" 
-        database_root_path (str, optional): root path of the database. Defaults to ".database".
 
     Returns:
         str: Exomol default data path
@@ -257,5 +256,5 @@ def database_path_exomol(simple_molecule_name, database_root_path=".database"):
         simple_molecule_name)
     mlist, recommended = get_exomol_database_list(simple_molecule_name,
                                                   exact_molname_exomol_stable)
-    dbpath = database_root_path + "/" + simple_molecule_name + "/" + recommended
+    dbpath = simple_molecule_name + "/" + exact_molname_exomol_stable + "/" + recommended
     return dbpath

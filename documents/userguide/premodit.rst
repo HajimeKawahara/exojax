@@ -5,7 +5,7 @@ PreMODIT
 
 
 PreMODIT (Precomputation of line density + MODIT) is the successor algorithm to MODIT. 
-The problem with :doc:`modit`` is that the lineshape density (LSD) has to be recalculated 
+The problem with :doc:`modit` is that the lineshape density (LSD) has to be recalculated 
 from all transition information each time the temperature or pressure conditions are changed. 
 This means that all transition information must be stored in device memory, 
 which is not memory efficient.
@@ -14,14 +14,14 @@ PreMODIT is an algorithm that solves the above problem.
 Details of the algorithm will be described in a forthcoming paper (in prep).
 But, the basic idea is to compress the line information before storing it in device memory.
 While this change saves device memory, the drawback is that the temperature range over which accuracy can be 
-can be guaranteed must be set in advance. 
-Therefore, we need the "auto_trange" option in `OpaPremodit <../exojax/exojax.spec.html#exojax.spec.opacalc.OpaPremodit>`_.
+guaranteed must be set in advance. 
+Therefore, we need the `auto_trange` option in `OpaPremodit <../exojax/exojax.spec.html#exojax.spec.opacalc.OpaPremodit>`_.
 
 .. code:: ipython
 	
     >>> from exojax.spec.opacalc import OpaPremodit
     >>> from jax import config
-    >>> config.update("jax_enable", True)
+    >>> config.update("jax_enable_x64", True)
     >>> diffmode = 0
     >>> opa = OpaPremodit(mdb=mdbCO,
                       nu_grid=nus,
@@ -29,7 +29,7 @@ Therefore, we need the "auto_trange" option in `OpaPremodit <../exojax/exojax.sp
                       auto_trange=[400.0, 1500.0])
 
 This means that 1% accuracy is guaranteed between 400 - 1500 K. 
-Note that `config.update("jax_enable")` enforces JAX to use 64bit; see the next section.
+Note that `config.update("jax_enable_x64")` enforces JAX to use 64 bit; see the next section.
 If you are more familiar with PreMODIT's algorithm, you can specify the parameters directly using the `manual_params` option.
 
 .. code:: ipython
@@ -44,21 +44,21 @@ If you are more familiar with PreMODIT's algorithm, you can specify the paramete
 
 
 On 32bit and 64bit mode
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 We strongly recommend to use JAX 64bit mode:
 
 .. code:: ipython
 	
     >>> from jax import config
-    >>> config.update("jax_enable", True)
+    >>> config.update("jax_enable_x64", True)
 
 But, if you wanna try to use 32bit mode, use `allow_32bit` option.
 
 .. code:: ipython
 
 	>>> from jax import config
-    >>> config.update("jax_enable", False)
+    >>> config.update("jax_enable_x64", False)
     >>> opa = OpaPremodit(mdb=mdbCO,
                       nu_grid=nus,
                       diffmode=diffmode,
@@ -71,7 +71,7 @@ Otherwise, you will see ValueError:
 .. code:: ipython
 
 	>>> from jax import config
-    >>> config.update("jax_enable", False)
+    >>> config.update("jax_enable_x64", False)
     >>> opa = OpaPremodit(mdb=mdbCO,
                       nu_grid=nus,
                       diffmode=diffmode,
@@ -81,9 +81,9 @@ Otherwise, you will see ValueError:
 Changing the Resolution of the Broadening Parameters 
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-By setting `broadening_resolution` option to "{"mode": "manual", "value": 1.0}", 
+By setting `broadening_resolution` option to `{"mode": "manual", "value": 1.0}`, 
 `OpaPremodit` controls the resolution of the broadening parameters.
-The default value of `{"mode": "manual", "value": 0.2}` might be overkilled for real exoplanet/brown dwarf spectrum analysis`.
+The default value of `{"mode": "manual", "value": 0.2}` might be overkilled for real exoplanet/brown dwarf spectrum analysis.
 
 .. code:: ipython
 	

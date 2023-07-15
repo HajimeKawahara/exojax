@@ -1,6 +1,12 @@
 Fitting a spectrum model using Gradient Descent Based Optimization.
 ===================================================================
 
+last update: July 2nd Hajime Kawahara
+
+The ability of the gradient-based optimizations is s one of the major
+advantages of ExoJAX. Here we demonstrate how to optimize the model
+using ``jaxopt`` package.
+
 .. code:: ipython3
 
     import pandas as pd
@@ -8,7 +14,7 @@ Fitting a spectrum model using Gradient Descent Based Optimization.
     import matplotlib.pyplot as plt
     import jax.numpy as jnp
 
-Use FP64 just in case.
+Use 64-bit.
 
 .. code:: ipython3
 
@@ -46,12 +52,12 @@ normalize it and add some noise.
 
 
 
-.. image:: optimize_spectrum_JAXopt_files/optimize_spectrum_JAXopt_5_0.png
+.. image:: optimize_spectrum_JAXopt_files/optimize_spectrum_JAXopt_7_0.png
 
 
 Let’s make a model, which should be include CH4, CIA (H2-H2), spin
 rotation, and response… So, import everthing we need. We use PreMODIT as
-“opa”.
+``opa``.
 
 .. code:: ipython3
 
@@ -82,7 +88,7 @@ Again recall this figure.
 
 
 
-.. image:: optimize_spectrum_JAXopt_files/optimize_spectrum_JAXopt_9_0.png
+.. image:: optimize_spectrum_JAXopt_files/optimize_spectrum_JAXopt_11_0.png
 
 
 
@@ -90,7 +96,7 @@ Here we will infer here Rp, RV, MMR_CO, T0, alpha, and Vsini.
 
 First, set the model wavenumber grids, which should cover the
 observational range, and the instrumental setting, and Atmospheric RT
-(layer) setting, “art”.
+(layer) setting, ``art``.
 
 .. code:: ipython3
 
@@ -125,10 +131,10 @@ observational range, and the instrumental setting, and Atmospheric RT
       warnings.warn('Resolution may be too small. R=' + str(resolution),
 
 
-Loading the databases, “mdb” for ExoMol/CH4 and “cdb” for CIA. Also,
-define “opa” for both db. It takes ~ a few minites to initialize
-OpaPremodit (if you do not have the database, it takes more for
-downloading for the first time). Have a coffee and wait.
+Loading the databases, ``mdb`` for ExoMol/CH4 and ``cdb`` for CIA. Also,
+define ``opa`` for both databases. It takes ~ a few minites to
+initialize OpaPremodit (if you do not have the database, it takes more
+for downloading for the first time). Have a coffee and wait.
 
 .. code:: ipython3
 
@@ -295,7 +301,7 @@ parameters.
 
 
 
-.. image:: optimize_spectrum_JAXopt_files/optimize_spectrum_JAXopt_25_1.png
+.. image:: optimize_spectrum_JAXopt_files/optimize_spectrum_JAXopt_27_1.png
 
 
 Define the objective function by a L2 norm.
@@ -352,7 +358,7 @@ prefer ADAM to GD let’s try next.
 
 
 
-.. image:: optimize_spectrum_JAXopt_files/optimize_spectrum_JAXopt_33_0.png
+.. image:: optimize_spectrum_JAXopt_files/optimize_spectrum_JAXopt_35_0.png
 
 
 BTW, We can do the optimization one by one update. It’s useful when you
@@ -424,7 +430,7 @@ You might use ADAM, instead of a simple GD. Yes, you can.
 
 
 
-.. image:: optimize_spectrum_JAXopt_files/optimize_spectrum_JAXopt_40_0.png
+.. image:: optimize_spectrum_JAXopt_files/optimize_spectrum_JAXopt_42_0.png
 
 
 ADAM is faster and better than GD? I love ADAM.

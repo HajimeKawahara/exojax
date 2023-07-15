@@ -8,7 +8,7 @@ temperature profile and CH4 opacity + CIA.
 In this tutorial, we use PreMODIT as an opacity calculator.
 
 Note that the python file is available in
-tests/endtoend/reverse/reverse_premodit.ipynb
+``tests/endtoend/reverse/reverse_premodit.ipynb``
 
 .. code:: ipython3
 
@@ -81,8 +81,8 @@ normlized it, and add Gaussian noise.
     nflux = flux / norm + np.random.normal(0, sigmain, len(wavd))
 
 We first set the wavenumber grid enough to cover the observed spectrum.
-Also, make “art” (Atmospheric Radiative Transfer) object. beta_inst is a
-STD of instrumental resolution.
+Also, make ``art`` (Atmospheric Radiative Transfer) object.
+``beta_inst`` is a standard deviation of instrumental resolution.
 
 .. code:: ipython3
 
@@ -116,7 +116,7 @@ STD of instrumental resolution.
       warnings.warn('Resolution may be too small. R=' + str(resolution),
 
 
-As usual, we make “mdb” and “opa” for CH4. Because CH4 has a lot of
+As usual, we make ``mdb`` and ``opa`` for CH4. Because CH4 has a lot of
 lines, we use PreMODIT as an opacity calculator.
 
 .. code:: ipython3
