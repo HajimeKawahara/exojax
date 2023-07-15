@@ -52,11 +52,7 @@ if __name__ == '__main__':
             'write_to_template':
             '__version__ = "{version}"\n',
         },
-<<<<<<< HEAD
         version='1.4.0',
-=======
-        version='1.4',
->>>>>>> d2ad2307f5700415a34087421768d1afc78acd72
         author=find_meta('author'),
         author_email=find_meta('email'),
         maintainer=find_meta('author'),
