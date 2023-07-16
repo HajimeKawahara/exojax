@@ -1,4 +1,4 @@
-from exojax.spec.twostream import compute_tridiag_diagonals
+from exojax.spec.twostream import compute_tridiag_diagonals_and_vector
 import jax.numpy as jnp
 
 
@@ -10,7 +10,7 @@ def test_tridiag_coefficients():
     boundaries = (1.0, 2.0)
     upper_diagonal_top, diagonal_top = boundaries
 
-    diag, lower, upper = compute_tridiag_diagonals(S, T, upper_diagonal_top,
+    diag, lower, upper = compute_tridiag_diagonals_and_vector(S, T, upper_diagonal_top,
                                                    diagonal_top)#, diagonal_btm,
                                                    #lower_diagonal_btm)
     ref_diag = jnp.array([
@@ -36,7 +36,7 @@ def test_tridiag_coefficients_parallel_input():
     Tarr = jnp.array([T,T,T]).T
     
     
-    diag, lower, upper = compute_tridiag_diagonals(Sarr, Tarr, upper_diagonal_top,
+    diag, lower, upper = compute_tridiag_diagonals_and_vector(Sarr, Tarr, upper_diagonal_top,
                                                    diagonal_top)
                                                    
     ref_diag = jnp.array([

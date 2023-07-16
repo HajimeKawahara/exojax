@@ -113,7 +113,7 @@ def rtrun_trans_pure_absorption(dtau_chord, radius_lower):
 
 
 from exojax.spec.twostream import set_scat_trans_coeffs
-from exojax.spec.twostream import compute_tridiag_diagonals
+from exojax.spec.twostream import compute_tridiag_diagonals_and_vector
 from exojax.spec.toon import zetalambda_coeffs
 from exojax.spec.toon import params_hemispheric_mean
 from exojax.spec.toon import reduced_source_function
@@ -142,14 +142,24 @@ def rtrun_emis_scat_toon_hemispheric_mean(dtau, single_scattering_albedo,
     zeta_plus, zeta_minus, lambdan = zetalambda_coeffs(gamma_1, gamma_2)
     trans_coeff, scat_coeff = set_scat_trans_coeffs(zeta_plus, zeta_minus,
                                                     lambdan, dtau)
-    #delta = 1.e-10
+    #delta = 1.e-5
     delta = 0.0
     trans_coeff = trans_coeff + delta
 
+    print(jnp.prod(trans_coeff, axis=0))
+    print(jnp.sum(jnp.log(trans_coeff), axis=0))
+
+    #import sys
+    #sys.exit()
+
     #debug
-    debug_imshow_ts(jnp.log10(trans_coeff), jnp.log10(scat_coeff),
+    debug_imshow_ts((trans_coeff), (scat_coeff),
                     "Transmission Coefficient $\mathcal{T}$",
                     "Scattering Coefficient $\mathcal{S}$")
+
+    debug_imshow_ts(jnp.log10(trans_coeff), jnp.log10(scat_coeff),
+                    "Transmission Coefficient $\mathcal{T} log$",
+                    "Scattering Coefficient $\mathcal{S} log$")
 
     #temporary
     source_function_derivative = jnp.zeros_like(source_matrix)
@@ -166,24 +176,24 @@ def rtrun_emis_scat_toon_hemispheric_mean(dtau, single_scattering_albedo,
 
     # Boundary condition
     ## top layerq
-    fac = 1.0
-    diagonal_top = -1.0 * fac  #b0
-    #diagonal_top = 0.0  #debug
-    upper_diagonal_top = trans_coeff[0] * fac
-    #upper_diagonal_top = 0.0 #debug
-    vector = jnp.zeros_like(dtau)
+    diagonal_top = 1.0   #b0
+    upper_diagonal_top = - trans_coeff[0]
+    
+    diagonal, lower_diagonal, upper_diagonal, vector = compute_tridiag_diagonals_and_vector(
+        scat_coeff, trans_coeff, piBplus, upper_diagonal_top, diagonal_top)
 
-    #vector = vector.at[0,:].set(-scat_coeff[0] * piBminus[0] * fac)
-    vector = vector.at[0,:].set(-scat_coeff[0]  * fac)
-
-    diagonal, lower_diagonal, upper_diagonal = compute_tridiag_diagonals(
-        scat_coeff, trans_coeff, upper_diagonal_top, diagonal_top)
+    #boundary
+    #vector = vector.at[0, :].set(piBplus[0, :] - trans_coeff[0,:]*piBplus[1, :] - scat_coeff[0,:]* piBminus[0, :])
+    vector = vector.at[0, :].set(0.0*piBplus[0, :])
+    
+    vector = vector.at[-1, :].set(lower_diagonal[-2,:]*piBplus[-2, :]*diagonal[-1,:]*piBplus[-1,:])
 
     #bottom layer
-    Fs = 1.0
-    vector = vector.at[-1, :].set(-upper_diagonal[-1] * Fs * fac)
-    #vector = vector.at[-1, :].set(10000.0 * fac)
-
+    #Fs = 1.0
+    #vector = vector.at[-1, :].set(-upper_diagonal[-1] * Fs * fac)
+    
+    debug_imshow_ts(vector, jnp.log10(jnp.abs(vector)), "vector",
+                    "log abs vector")
 
     debug_imshow_ts(diagonal, jnp.log10(jnp.abs(diagonal)), "diagonal",
                     "log abs diagonal")
@@ -196,21 +206,32 @@ def rtrun_emis_scat_toon_hemispheric_mean(dtau, single_scattering_albedo,
     #print(diagonal, lower_diagonal, upper_diagonal)
 
     vmap_solve_tridiag = vmap(solve_tridiag, (0, 0, 0, 0), 0)
-    canonical_flux_upward = vmap_solve_tridiag(diagonal.T[0:20000, 0:100],
-                                               lower_diagonal.T[0:20000, 0:99],
-                                               upper_diagonal.T[0:20000, 0:99],
-                                               vector.T[0:20000, 0:100])
+    
+    transpose = False #tridiagonal transpose
+    if transpose:
+        flux_upward = vmap_solve_tridiag(
+            diagonal.T[0:20000, 0:100][:, ::-1],
+            upper_diagonal.T[0:20000, 0:99][:, ::-1],
+            lower_diagonal.T[0:20000, 0:99][:, ::-1], 
+            vector.T[0:20000,0:100][:, ::-1])
+        flux_upward = flux_upward[:, ::-1]
+    else:
+        #original
+        flux_upward = vmap_solve_tridiag(diagonal.T[0:20000, 0:100],
+                                         lower_diagonal.T[0:20000, 0:99],
+                                         upper_diagonal.T[0:20000, 0:99],
+                                         vector.T[0:20000, 0:100])
 
     #check tridiagonal solver's result by manual
-    iwav = 10450
-    manual = manual_recover_tridiagonal(diagonal, lower_diagonal, upper_diagonal, canonical_flux_upward, iwav)
-    import numpy as np
-    assert np.allclose(manual, vector[:, iwav], atol=1.e-16)
+    #iwav = 10450
+    #manual = manual_recover_tridiagonal(diagonal, lower_diagonal, upper_diagonal, flux_upward, iwav)
+    #import numpy as np
+    #assert np.allclose(manual, vector[:, iwav], atol=1.e-16)
 
     ####
 
-    Fplus = canonical_flux_upward.T + piBplus
-    debug_imshow_ts(canonical_flux_upward.T, piBplus, "f+", "piB+")
+    Fplus = flux_upward.T
+    debug_imshow_ts(flux_upward.T, jnp.log10(flux_upward.T), "f+", "f+ (log)")
     #canonical_flux_upward = vmap_solve_tridiag(diagonal, lower_diagonal,
     #                                      upper_diagonal, vector)
     #Fplus = canonical_flux_upward  #+ piBplus
@@ -224,24 +245,28 @@ def rtrun_emis_scat_toon_hemispheric_mean(dtau, single_scattering_albedo,
     Ftop = Fplus[0, :]
     return Ftop
 
-def manual_recover_tridiagonal(diagonal, lower_diagonal, upper_diagonal, canonical_flux_upward, iwav):
+
+def manual_recover_tridiagonal(diagonal, lower_diagonal, upper_diagonal,
+                               canonical_flux_upward, iwav):
     import numpy as np
     nlayer, nwav = diagonal.shape
     fp = canonical_flux_upward[iwav, :]
     di = diagonal.T[iwav, :]
     li = lower_diagonal.T[iwav, :]
     ui = upper_diagonal.T[iwav, :]
-    
+
     recovered_vector = jnp.zeros((nwav, nlayer))
     recovered_vector = recovered_vector.at[0].set(di[0] * fp[0] +
                                                   ui[0] * fp[1])
 
     head = di[0] * fp[0] + ui[0] * fp[1]
-    manual = list(li[0:nlayer - 2] * fp[0:nlayer - 2] + di[1:nlayer - 1] * fp[1:nlayer - 1] + ui[1:nlayer - 1] * fp[2:nlayer])
+    manual = list(li[0:nlayer - 2] * fp[0:nlayer - 2] +
+                  di[1:nlayer - 1] * fp[1:nlayer - 1] +
+                  ui[1:nlayer - 1] * fp[2:nlayer])
     end = li[nlayer - 2] * fp[nlayer - 2] + di[nlayer - 1] * fp[nlayer - 1]
-    manual.insert(0,head)
+    manual.insert(0, head)
     manual.append(end)
-    manual=np.array(manual)
+    manual = np.array(manual)
     return manual
 
 
