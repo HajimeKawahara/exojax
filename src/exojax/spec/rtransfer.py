@@ -165,7 +165,7 @@ def rtrun_emis_scat_toon_hemispheric_mean(dtau, single_scattering_albedo,
     debug_imshow_ts(piBplus, piBminus, "piBplus", "piBminus")
 
     # Boundary condition
-    ## top layer
+    ## top layerq
     fac = 1.0
     diagonal_top = -1.0 * fac  #b0
     #diagonal_top = 0.0  #debug
@@ -175,16 +175,14 @@ def rtrun_emis_scat_toon_hemispheric_mean(dtau, single_scattering_albedo,
 
     #vector = vector.at[0,:].set(-scat_coeff[0] * piBminus[0] * fac)
     vector = vector.at[0,:].set(-scat_coeff[0]  * fac)
-    ##### KOREGA HEIRETU NI NATTENAIIYO
-    print()
-    print("KOREGA HEIRETU NI NATTENAIIYO")
+
     diagonal, lower_diagonal, upper_diagonal = compute_tridiag_diagonals(
         scat_coeff, trans_coeff, upper_diagonal_top, diagonal_top)
 
     #bottom layer
     Fs = 1.0
-    #vector = vector.at[-1, :].set(-upper_diagonal[-1] * Fs * fac)
-    vector = vector.at[-1, :].set(10000.0 * fac)
+    vector = vector.at[-1, :].set(-upper_diagonal[-1] * Fs * fac)
+    #vector = vector.at[-1, :].set(10000.0 * fac)
 
 
     debug_imshow_ts(diagonal, jnp.log10(jnp.abs(diagonal)), "diagonal",
@@ -203,27 +201,12 @@ def rtrun_emis_scat_toon_hemispheric_mean(dtau, single_scattering_albedo,
                                                upper_diagonal.T[0:20000, 0:99],
                                                vector.T[0:20000, 0:100])
 
-    #check tridiagonal solver's result
+    #check tridiagonal solver's result by manual
     iwav = 10450
-    nwav = 20000
-    nlayer = 100
-    fp = canonical_flux_upward[iwav, :]
-    di = diagonal.T[iwav, :]
-    li = lower_diagonal.T[iwav, :]
-    ui = upper_diagonal.T[iwav, :]
-    vi = vector.T[iwav, :]
+    manual = manual_recover_tridiagonal(diagonal, lower_diagonal, upper_diagonal, canonical_flux_upward, iwav)
+    import numpy as np
+    assert np.allclose(manual, vector[:, iwav], atol=1.e-16)
 
-    recovered_vector = jnp.zeros((nwav, nlayer))
-    recovered_vector = recovered_vector.at[0].set(di[0] * fp[0] +
-                                                  ui[0] * fp[1])
-
-    print(di[0] * fp[0] + ui[0] * fp[1], vi[0], "<=")
-    print(
-        li[0:nlayer - 2] * fp[0:nlayer - 2] +
-        di[1:nlayer - 1] * fp[1:nlayer - 1] + ui[1:nlayer - 1] * fp[2:nlayer],
-        vi[1:nlayer - 1], "<=")
-    print(li[nlayer - 2] * fp[nlayer - 2] + di[nlayer - 1] * fp[nlayer - 1],
-          vi[nlayer - 1], "<=")
     ####
 
     Fplus = canonical_flux_upward.T + piBplus
@@ -240,6 +223,26 @@ def rtrun_emis_scat_toon_hemispheric_mean(dtau, single_scattering_albedo,
     plt.show()
     Ftop = Fplus[0, :]
     return Ftop
+
+def manual_recover_tridiagonal(diagonal, lower_diagonal, upper_diagonal, canonical_flux_upward, iwav):
+    import numpy as np
+    nlayer, nwav = diagonal.shape
+    fp = canonical_flux_upward[iwav, :]
+    di = diagonal.T[iwav, :]
+    li = lower_diagonal.T[iwav, :]
+    ui = upper_diagonal.T[iwav, :]
+    
+    recovered_vector = jnp.zeros((nwav, nlayer))
+    recovered_vector = recovered_vector.at[0].set(di[0] * fp[0] +
+                                                  ui[0] * fp[1])
+
+    head = di[0] * fp[0] + ui[0] * fp[1]
+    manual = list(li[0:nlayer - 2] * fp[0:nlayer - 2] + di[1:nlayer - 1] * fp[1:nlayer - 1] + ui[1:nlayer - 1] * fp[2:nlayer])
+    end = li[nlayer - 2] * fp[nlayer - 2] + di[nlayer - 1] * fp[nlayer - 1]
+    manual.insert(0,head)
+    manual.append(end)
+    manual=np.array(manual)
+    return manual
 
 
 ##################################################################################
