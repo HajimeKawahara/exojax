@@ -347,12 +347,12 @@ class ArtTransPure(ArtCommon):
             gravity_btm (float): gravity (cm/s2) at the lower boundary of the bottom layer, g_N
 
         Returns:
-            1D array: transit squared radius in the same unit as sqaure of the radius/radius_btm
+            1D array: transit squared radius normalized by radius_btm**2, i.e. it returns (radius/radius_btm)**2
 
         Notes:
             This function gives the sqaure of the transit radius.
-            If you would like to obtain the transit radius, take sqaure root of the output.
-            If you would like to compute the transit depth, devide the output by the square of stellar radius
+            If you would like to obtain the transit radius, take sqaure root of the output and multiply radius_btm.
+            If you would like to compute the transit depth, divide the output by (stellar radius/radius_btm)**2
 
         """
 

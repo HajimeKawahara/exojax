@@ -97,7 +97,7 @@ def rtrun_trans_pure_absorption(dtau_chord, radius_lower):
         The n-th radius is defined as the lower boundary of the n-th layer. So, radius[0] corresponds to R0.   
         
     Returns:
-        1D array: transit squared radius in the same unit as sqaure of the radius/radius_btm
+        1D array: transit squared radius normalized by radius_lower[-1], i.e. it returns (radius/radius_lower[-1])**2
 
     Notes:
         This function gives the sqaure of the transit radius.

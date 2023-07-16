@@ -1,6 +1,6 @@
 __all__ = []
 
-__version__ = '1.2'
+__version__ = '1.4.0'
 __uri__ = ''
 __author__ = 'ExoJAX contributors'
 __email__ = 'divrot@gmail.com'

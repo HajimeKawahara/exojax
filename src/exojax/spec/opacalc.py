@@ -647,11 +647,11 @@ class OpaDirect(OpaCalc):
             sigmaDM = jit(vmap(doppler_sigma,
                             (None, 0, None)))(self.mdb.nu_lines, Tarr,
                                                 self.mdb.molmass)
-        elif self.mdb.dbtype == "kurucz":
+        elif (self.mdb.dbtype == "kurucz") or (self.mdb.dbtype == "vald"):
             qt_284=vmap(self.mdb.QT_interp_284)(Tarr)
-            qt_K = np.zeros([len(self.mdb.QTmask), len(Tarr)])
+            qt_K = jnp.zeros([len(self.mdb.QTmask), len(Tarr)])
             for i, mask in enumerate(self.mdb.QTmask):
-                qt_K[i] = qt_284[:,mask]  #e.g., qt_284[:,76] #Fe I
+                qt_K = qt_K.at[i].set(qt_284[:,mask]) #e.g., qt_284[:,76] #Fe I
             qt_K = jnp.array(qt_K)     
             vmapvald3 = jit(vmap(gamma_vald3,(0,0,0,0,None,None,None,None,None,None,None,None,None,None,None)))
             PH,PHe,PHH = Parr*self.mdb.vmrH, Parr*self.mdb.vmrHe, Parr*self.mdb.vmrHH 
