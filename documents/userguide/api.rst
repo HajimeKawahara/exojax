@@ -295,6 +295,10 @@ Notice the above array is not masked. So, the length is different from for insta
 Quantum States Filtering (ExoMol/HITEMP) 
 =============================================
 
+.. admonition::
+
+   Currently, we need ``develop`` branch of ``radis`` to use this capability (Sep 17/2023). 
+
 The only quantum state needed to calculate the cross section is the rotational number index. 
 However, some databases also describe vibrational quantum numbers and electronic states. 
 We can use this information to filter/mask.
