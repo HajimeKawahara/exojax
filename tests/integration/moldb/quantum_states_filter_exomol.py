@@ -1,4 +1,12 @@
-# %%
+# 
+#
+#
+
+print("###############################################")
+print("Currently, we need the develop branch of radis")
+print("to test this code. See #405 for more details.")
+print("###############################################")
+
 from exojax.spec import api
 from exojax.utils.grids import wavenumber_grid
 
