@@ -23,6 +23,8 @@ mdb = api.MdbExomol(emf, nus, optional_quantum_states=True, activation=False)
 
 # %%
 print(mdb.df)
+
+
 # %%
 import matplotlib.pyplot as plt
 for dv in range(0, 6):
@@ -36,9 +38,10 @@ for dv in range(0, 6):
 #plt.show()
 
 load_mask = (mdb.df["v_u"] - mdb.df["v_l"] == 3)
+
 mdb.activate(mdb.df, load_mask)
 plt.plot(1.e4 / mdb.nu_lines,
-         mdb.Sij0,
+         mdb.line_strength_ref,
          "+",
          color="black",
          label="activated lines")
