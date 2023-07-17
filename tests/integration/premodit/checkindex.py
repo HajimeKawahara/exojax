@@ -4,7 +4,7 @@
 
 from jax.config import config
 from exojax.utils.grids import wavenumber_grid
-from exojax.spec import moldb
+from exojax.spec import api
 from exojax.spec import initspec
 
 
@@ -16,7 +16,7 @@ wls, wll = 15020, 15050
 Nx = 2000
 nus, wav, reso = wavenumber_grid(wls, wll, Nx, unit="AA", xsmode="premodit")
 
-mdbH2O_orig = moldb.MdbExomol('.database/H2O/1H2-16O/POKAZATEL', nus, crit=crit, Ttyp=Tgue)
+mdbH2O_orig = api.MdbExomol('.database/H2O/1H2-16O/POKAZATEL', nus, crit=crit, Ttyp=Tgue)
 print('N=', len(mdbH2O_orig.nu_lines))
 
 interval_contrast = 0.1
