@@ -142,8 +142,8 @@ def rtrun_emis_scat_toon_hemispheric_mean(dtau, single_scattering_albedo,
     zeta_plus, zeta_minus, lambdan = zetalambda_coeffs(gamma_1, gamma_2)
     trans_coeff, scat_coeff = set_scat_trans_coeffs(zeta_plus, zeta_minus,
                                                     lambdan, dtau)
-    #delta = 1.e-5
-    delta = 0.0
+    delta = 1.e-5
+    #delta = 0.0
     trans_coeff = trans_coeff + delta
 
     print(jnp.prod(trans_coeff, axis=0))
@@ -176,22 +176,28 @@ def rtrun_emis_scat_toon_hemispheric_mean(dtau, single_scattering_albedo,
 
     # Boundary condition
     ## top layerq
-    diagonal_top = 1.0   #b0
-    upper_diagonal_top = - trans_coeff[0]
-    
+    diagonal_top = -1.0  #b0
+    upper_diagonal_top = trans_coeff[0]
+
     diagonal, lower_diagonal, upper_diagonal, vector = compute_tridiag_diagonals_and_vector(
         scat_coeff, trans_coeff, piBplus, upper_diagonal_top, diagonal_top)
 
     #boundary
-    #vector = vector.at[0, :].set(piBplus[0, :] - trans_coeff[0,:]*piBplus[1, :] - scat_coeff[0,:]* piBminus[0, :])
-    vector = vector.at[0, :].set(0.0*piBplus[0, :])
-    
-    vector = vector.at[-1, :].set(lower_diagonal[-2,:]*piBplus[-2, :]*diagonal[-1,:]*piBplus[-1,:])
+    boundary = True
+    if boundary:
+        top = piBplus[0, :] - trans_coeff[0, :] * piBplus[1, :] - scat_coeff[0, :] * piBminus[0, :]
+        vector = vector.at[0, :].set(- top)
+
+        vector = vector.at[-1, :].set(lower_diagonal[-2, :] * piBplus[-2, :] *
+                                      diagonal[-1, :] * piBplus[-1, :])
 
     #bottom layer
     #Fs = 1.0
     #vector = vector.at[-1, :].set(-upper_diagonal[-1] * Fs * fac)
-    
+
+    debug_imshow_ts(jnp.abs(upper_diagonal)+jnp.abs(lower_diagonal), jnp.abs(diagonal), "abs(a)+abs(c)",
+                    "abs(b)")
+
     debug_imshow_ts(vector, jnp.log10(jnp.abs(vector)), "vector",
                     "log abs vector")
 
@@ -206,14 +212,14 @@ def rtrun_emis_scat_toon_hemispheric_mean(dtau, single_scattering_albedo,
     #print(diagonal, lower_diagonal, upper_diagonal)
 
     vmap_solve_tridiag = vmap(solve_tridiag, (0, 0, 0, 0), 0)
-    
-    transpose = False #tridiagonal transpose
+
+    transpose = False  #tridiagonal transpose
     if transpose:
         flux_upward = vmap_solve_tridiag(
             diagonal.T[0:20000, 0:100][:, ::-1],
             upper_diagonal.T[0:20000, 0:99][:, ::-1],
-            lower_diagonal.T[0:20000, 0:99][:, ::-1], 
-            vector.T[0:20000,0:100][:, ::-1])
+            lower_diagonal.T[0:20000, 0:99][:, ::-1], vector.T[0:20000,
+                                                               0:100][:, ::-1])
         flux_upward = flux_upward[:, ::-1]
     else:
         #original
