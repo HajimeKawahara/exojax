@@ -5,6 +5,90 @@
 """
 import jax.numpy as jnp
 from jax.lax import scan
+import numpy as np
+
+######## NEED REFACTORING!!! ######
+
+
+def solve_semitridiag_naive_array(diag, lower_diag, upper_diag, vector):
+    N = len(vector)
+
+    beta = np.zeros(N)
+    beta[N - 1] = diag[N - 1]
+    for j in range(1, N):
+        i = N - 1 - j
+        beta[i] = diag[i] - upper_diag[i] * lower_diag[i] / beta[i + 1]
+
+    delta = np.zeros(N)
+    delta[N - 1] = vector[N - 1] / beta[N - 1]
+    for j in range(1, N):
+        i = N - 1 - j
+        delta[i] = (vector[i] - upper_diag[i] * delta[i + 1]) / beta[i]
+
+    return delta[0]
+
+
+def solve_semitridiag_naive(diag, lower_diag, upper_diag, vector):
+    N = len(vector)
+
+    beta = diag[N - 1]
+    delta = vector[N - 1] / beta
+    for j in range(1, N):
+        i = N - 1 - j
+        beta = diag[i] - upper_diag[i] * lower_diag[i] / beta
+        delta = (vector[i] - upper_diag[i] * delta) / beta
+
+    return delta
+
+
+def solve_vmap_semitridiag_naive_array(diag, lower_diag, upper_diag, vector):
+    Nwav, N = vector.shape
+
+    beta = np.zeros_like(vector)
+    beta[:, N - 1] = diag[:, N - 1]
+    for j in range(1, N):
+        i = N - 1 - j
+        beta[:,
+             i] = diag[:,
+                       i] - upper_diag[:, i] * lower_diag[:, i] / beta[:,
+                                                                       i + 1]
+
+    delta = np.zeros_like(vector)
+    delta[:, N - 1] = vector[:, N - 1] / beta[:, N - 1]
+    for j in range(1, N):
+        i = N - 1 - j
+        delta[:, i] = (vector[:, i] -
+                       upper_diag[:, i] * delta[:, i + 1]) / beta[:, i]
+
+    #return delta[:, 0]
+    return beta, delta
+
+def solve_vmap_semitridiag_naive(diag, lower_diag, upper_diag, vector):
+    Nwav, N = vector.shape
+
+    beta = diag[:, N - 1]
+    delta = vector[:, N - 1] / beta
+
+    import matplotlib.pyplot as plt
+    fig = plt.figure()
+    for j in range(1, N):
+        i = N - 1 - j
+        beta = np.array(diag[:, i] - upper_diag[:, i] * lower_diag[:, i] / beta)
+        delta = np.array((vector[:, i] - upper_diag[:, i] * delta) / beta)
+        if i == 69 or i == 68:
+            plt.plot(beta[10300:10650], label=str(i) + " beta")
+            #plt.plot(delta[10300:10650] / np.max(delta[10300:10650]),
+            #         label=str(i) + " delta")
+        #if j > 25 and j < 35:
+        #    plt.plot(delta[10300:10650], label=str(i))
+        #print("beta",i, beta[10300:10700])
+        #print("delta",i, delta[10300:10700])
+    plt.legend()
+    plt.show()
+    return delta
+
+
+#################
 
 
 def solve_tridiag(diagonal, lower_diagonal, upper_diagonal, vector):
@@ -29,7 +113,8 @@ def solve_tridiag(diagonal, lower_diagonal, upper_diagonal, vector):
     """
 
     size = len(diagonal)
-    print("SIZE=",size)
+    print("SIZE=", size)
+
     def thomas_scan(prev_cd_carry, bd):
         c_p, d_p, step = prev_cd_carry
         # the index of `a` doesn't matter at step 0 as
@@ -58,6 +143,3 @@ def solve_tridiag(diagonal, lower_diagonal, upper_diagonal, vector):
     _, solution = scan(backsub, init_backsub, cd_p, reverse=True, unroll=32)
 
     return solution
-
-
-

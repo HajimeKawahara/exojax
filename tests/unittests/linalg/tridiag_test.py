@@ -2,52 +2,14 @@ import pytest
 import jax.numpy as jnp
 import numpy as np
 from exojax.linalg.tridiag import solve_tridiag
+from exojax.linalg.tridiag import solve_semitridiag_naive
+from exojax.linalg.tridiag import solve_vmap_semitridiag_naive
 
-
-def solve_semitridiag_naive(diag, lower_diag, upper_diag, vector):
-    N = len(vector)
-
-    beta = np.zeros(N)
-    beta[N - 1] = diag[N - 1]
-    for j in range(1, N):
-        i = N - 1 - j
-        beta[i] = diag[i] - upper_diag[i] * lower_diag[i] / beta[i + 1]
-
-    delta = np.zeros(N)
-    delta[N - 1] = vector[N - 1] / beta[N - 1]
-    for j in range(1, N):
-        i = N - 1 - j
-        delta[i] = (vector[i] - upper_diag[i] * delta[i + 1]) / beta[i]
-
-    return delta[0]
-
-
-def solve_vmap_semitridiag_naive(diag, lower_diag, upper_diag, vector):
-    Nwav, N = vector.shape
-
-    beta = np.zeros_like(vector)
-    beta[:, N - 1] = diag[:, N - 1]
-    for j in range(1, N):
-        i = N - 1 - j
-        beta[:,
-             i] = diag[:,
-                       i] - upper_diag[:, i] * lower_diag[:, i] / beta[:,
-                                                                       i + 1]
-
-    delta = np.zeros_like(vector)
-    delta[:, N - 1] = vector[:, N - 1] / beta[:, N - 1]
-    for j in range(1, N):
-        i = N - 1 - j
-        delta[:, i] = (vector[:, i] -
-                       upper_diag[:, i] * delta[:, i + 1]) / beta[:, i]
-
-    return delta[:, 0]
 
 
 def test_solve_vmapsemitridiag():
     from jax.config import config
     config.update("jax_enable_x64", True)
-    from jax import vmap
     nwav = 3
     mat = jnp.array([[1., 8., 0., 0.], [5., 2., 9., 0.], [0., 6., 3., 10.],
                      [0., 0., 7., 4.]])
@@ -66,8 +28,8 @@ def test_solve_vmapsemitridiag():
 
     print(x0, "vmap tridiag")
 
-    #for i in range(nwav):
-    #    assert jnp.sum((mat @ x[i] - vector)**2) == 0.0
+    for i in range(nwav):
+        assert pytest.approx(x0[i]) == ans[0]
 
 
 def test_solve_semitridiag():

@@ -24,9 +24,9 @@ def test_rt(db, diffmode, fig=False):
 #                      nlayer=100,
 #                      nu_grid=nu_grid)
 
-    art = ArtEmisScat(pressure_top=1.e-8,
+    art = ArtEmisScat(pressure_top=1.e-3,
                       pressure_btm=1.e2,
-                      nlayer=100,
+                      nlayer=200,
                       nu_grid=nu_grid,
                       rtsolver="toon_hemispheric_mean")
     art.change_temperature_range(400.0, 1500.0)
@@ -46,8 +46,6 @@ def test_rt(db, diffmode, fig=False):
     xsmatrix = opa.xsmatrix(Tarr, art.pressure)
     dtau = art.opacity_profile_lines(xsmatrix, mmr_arr, opa.mdb.molmass,
                                      gravity)
-    
-
     F0 = art.run(dtau, Tarr)
 
     return nu_grid, F0, F0

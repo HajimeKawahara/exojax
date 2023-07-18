@@ -118,6 +118,8 @@ from exojax.spec.toon import zetalambda_coeffs
 from exojax.spec.toon import params_hemispheric_mean
 from exojax.spec.toon import reduced_source_function
 from exojax.linalg.tridiag import solve_tridiag
+#from exojax.linalg.tridiag import solve_vmap_semitridiag_naive as vmap_solve_tridiag
+from exojax.linalg.tridiag import solve_vmap_semitridiag_naive_array as vmap_solve_tridiag
 
 
 def debug_imshow_ts(val1, val2, title1, title2):
@@ -153,13 +155,15 @@ def rtrun_emis_scat_toon_hemispheric_mean(dtau, single_scattering_albedo,
     #sys.exit()
 
     #debug
-    debug_imshow_ts((trans_coeff), (scat_coeff),
-                    "Transmission Coefficient $\mathcal{T}$",
-                    "Scattering Coefficient $\mathcal{S}$")
+    debug = False
+    if debug:
+        debug_imshow_ts((trans_coeff), (scat_coeff),
+                        "Transmission Coefficient $\mathcal{T}$",
+                        "Scattering Coefficient $\mathcal{S}$")
 
-    debug_imshow_ts(jnp.log10(trans_coeff), jnp.log10(scat_coeff),
-                    "Transmission Coefficient $\mathcal{T} log$",
-                    "Scattering Coefficient $\mathcal{S} log$")
+        debug_imshow_ts(jnp.log10(trans_coeff), jnp.log10(scat_coeff),
+                        "Transmission Coefficient $\mathcal{T} log$",
+                        "Scattering Coefficient $\mathcal{S} log$")
 
     #temporary
     source_function_derivative = jnp.zeros_like(source_matrix)
@@ -172,7 +176,9 @@ def rtrun_emis_scat_toon_hemispheric_mean(dtau, single_scattering_albedo,
                                        gamma_2, source_matrix,
                                        source_function_derivative, -1.0)
 
-    debug_imshow_ts(piBplus, piBminus, "piBplus", "piBminus")
+    debug = False
+    if debug:
+        debug_imshow_ts(piBplus, piBminus, "piBplus", "piBminus")
 
     # Boundary condition
     ## top layerq
@@ -183,7 +189,7 @@ def rtrun_emis_scat_toon_hemispheric_mean(dtau, single_scattering_albedo,
         scat_coeff, trans_coeff, piBplus, upper_diagonal_top, diagonal_top)
 
     #boundary
-    boundary = True
+    boundary = False
     if boundary:
         top = piBplus[0, :] - trans_coeff[0, :] * piBplus[1, :] - scat_coeff[0, :] * piBminus[0, :]
         vector = vector.at[0, :].set(- top)
@@ -194,62 +200,44 @@ def rtrun_emis_scat_toon_hemispheric_mean(dtau, single_scattering_albedo,
     #bottom layer
     #Fs = 1.0
     #vector = vector.at[-1, :].set(-upper_diagonal[-1] * Fs * fac)
+    debug = True
+    if debug:
+        debug_imshow_ts(jnp.abs(upper_diagonal)+jnp.abs(lower_diagonal), jnp.abs(diagonal), "abs(a)+abs(c)",
+                        "abs(b)")
 
-    debug_imshow_ts(jnp.abs(upper_diagonal)+jnp.abs(lower_diagonal), jnp.abs(diagonal), "abs(a)+abs(c)",
-                    "abs(b)")
+        debug_imshow_ts(vector, jnp.log10(jnp.abs(vector)), "vector",
+                        "log abs vector")
 
-    debug_imshow_ts(vector, jnp.log10(jnp.abs(vector)), "vector",
-                    "log abs vector")
-
-    debug_imshow_ts(diagonal, jnp.log10(jnp.abs(diagonal)), "diagonal",
-                    "log abs diagonal")
-    debug_imshow_ts(upper_diagonal, lower_diagonal, "upper diagonal",
-                    "lower diagonal")
-    debug_imshow_ts(jnp.log10(jnp.abs(upper_diagonal)),
-                    jnp.log10(jnp.abs(lower_diagonal)), "log upper diagonal",
-                    "log lower diagonal")
+        debug_imshow_ts(diagonal, jnp.log10(jnp.abs(diagonal)), "diagonal",
+                        "log abs diagonal")
+        debug_imshow_ts(upper_diagonal, lower_diagonal, "upper diagonal",
+                        "lower diagonal")
+        debug_imshow_ts(jnp.log10(jnp.abs(upper_diagonal)),
+                        jnp.log10(jnp.abs(lower_diagonal)), "log upper diagonal",
+                        "log lower diagonal")
 
     #print(diagonal, lower_diagonal, upper_diagonal)
 
-    vmap_solve_tridiag = vmap(solve_tridiag, (0, 0, 0, 0), 0)
-
-    transpose = False  #tridiagonal transpose
-    if transpose:
-        flux_upward = vmap_solve_tridiag(
-            diagonal.T[0:20000, 0:100][:, ::-1],
-            upper_diagonal.T[0:20000, 0:99][:, ::-1],
-            lower_diagonal.T[0:20000, 0:99][:, ::-1], vector.T[0:20000,
-                                                               0:100][:, ::-1])
-        flux_upward = flux_upward[:, ::-1]
-    else:
-        #original
-        flux_upward = vmap_solve_tridiag(diagonal.T[0:20000, 0:100],
-                                         lower_diagonal.T[0:20000, 0:99],
-                                         upper_diagonal.T[0:20000, 0:99],
-                                         vector.T[0:20000, 0:100])
-
-    #check tridiagonal solver's result by manual
-    #iwav = 10450
-    #manual = manual_recover_tridiagonal(diagonal, lower_diagonal, upper_diagonal, flux_upward, iwav)
-    #import numpy as np
-    #assert np.allclose(manual, vector[:, iwav], atol=1.e-16)
-
-    ####
-
-    Fplus = flux_upward.T
-    debug_imshow_ts(flux_upward.T, jnp.log10(flux_upward.T), "f+", "f+ (log)")
-    #canonical_flux_upward = vmap_solve_tridiag(diagonal, lower_diagonal,
-    #                                      upper_diagonal, vector)
-    #Fplus = canonical_flux_upward  #+ piBplus
-
+    # Using complete tridiag solver
+    #vmap_solve_tridiag = vmap(solve_tridiag, (0, 0, 0, 0), 0)
+    nlayer, nwav = diagonal.shape
+    beta, delta= vmap_solve_tridiag(diagonal.T[0:20000, 0:nlayer],
+                                         lower_diagonal.T[0:20000, 0:nlayer-1],
+                                         upper_diagonal.T[0:20000, 0:nlayer-1],
+                                         vector.T[0:20000, 0:nlayer])
+    import numpy as np
+    #beta[np.abs(beta)>100.0]=0.0
+    #delta[np.abs(delta)>100.0]=0.0
+    
+    debug_imshow_ts(np.log10(np.abs(beta.T)), np.log10(np.abs(delta.T)), "beta",
+                        "delta")
+        
+    flux_upward = delta[:,1]
+    
     import matplotlib.pyplot as plt
-    plt.plot(Fplus[0, 10300:10700])
-    plt.plot(Fplus[1, 10300:10700])
-    plt.plot(Fplus[2, 10300:10700])
-
+    plt.plot(flux_upward[10300:10700])
     plt.show()
-    Ftop = Fplus[0, :]
-    return Ftop
+    return flux_upward
 
 
 def manual_recover_tridiagonal(diagonal, lower_diagonal, upper_diagonal,
