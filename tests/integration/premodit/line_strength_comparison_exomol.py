@@ -85,8 +85,6 @@ qt = mdb.qr_interp(Ttest)
 cont, index, R, pmarray = initspec.init_modit(mdb.nu_lines, nus)
 Sij = line_strength(Ttest, mdb.logsij0, mdb.nu_lines, mdb.elower, qt)
 gammaL = gamma_exomol(P, Ttest, mdb.n_Texp, mdb.alpha_ref)
-#gammaL = gamma_hitran(P, Ttest, 0.0, mdb.n_air, mdb.gamma_air,
-#                      mdb.gamma_self) + gamma_natural(mdb.A)
 
 dv_lines = mdb.nu_lines / R
 ngammaL = gammaL / dv_lines
