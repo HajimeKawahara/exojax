@@ -1,6 +1,7 @@
 """ This code compares Premodit line strengths with those of MODIT for Hitemp.
     This test accounts for Issue #288, bug fix large elower value using f32, 
-    The bug was due to the overflow in the function when computing,
+    The bug was due to the overflow in the function when computing.
+    We also provide an example of manual calculation of cross section using PreMODIT as well as using opa.xsvector.
 """
 import numpy as np
 import jax.numpy as jnp
@@ -18,8 +19,12 @@ from exojax.spec.set_ditgrid import ditgrid_log_interval
 from exojax.spec.exomol import gamma_exomol
 from exojax.utils.constants import Tref_original
 from exojax.test.emulate_mdb import mock_mdbExomol
-from jax.config import config
+## also, xs
+from exojax.spec import normalized_doppler_sigma
+from exojax.spec.modit_scanfft import calc_xsection_from_lsd_scanfft
+from exojax.spec.premodit import unbiased_ngamma_grid
 
+from jax.config import config
 config.update("jax_enable_x64", True)
 
 mdb = mock_mdbExomol()
@@ -35,15 +40,7 @@ diffmode = 2
 Ttest = 1200.0
 P = 1.0
 
-# BUGGY
-opa_b = OpaPremodit(mdb=mdb,
-                      nu_grid=nus,
-                      diffmode=diffmode,
-                      auto_trange=[500.0, 1500.0])
-xsv_b = opa_b.xsvector(Ttest,P)
-    
-
-#Pre MODIT LSD
+#PreMODIT LSD
 opa = OpaPremodit(mdb=mdb,
                   nu_grid=nus,
                   auto_trange=[500.0, 1500.0],
@@ -51,6 +48,10 @@ opa = OpaPremodit(mdb=mdb,
 lbd_coeff, multi_index_uniqgrid, elower_grid, \
         ngamma_ref_grid, n_Texp_grid, R, pmarray = opa.opainfo
 
+#automatic computing by xsvector
+xsv = opa.xsvector(Ttest,P)
+
+#tries manual computation of xsvector below
 qt = mdb.qr_interp(Ttest)
 dE = opa.dE
 NE = len(elower_grid)
@@ -64,21 +65,14 @@ elif diffmode == 1:
 elif diffmode == 2:
     Slsd_premodit = unbiased_lsd_second(lbd_coeff, Ttest, opa.Tref, opa.Twt,
                                         opa.nu_grid, elower_grid, qt)
-
+    
 Spremodit = (np.sum(Slsd_premodit, axis=1))
-
-## also, xs
-from exojax.spec import normalized_doppler_sigma
-from exojax.spec.modit_scanfft import calc_xsection_from_lsd_scanfft
-from exojax.spec.premodit import unbiased_ngamma_grid
-
 nsigmaD = normalized_doppler_sigma(Ttest, mdb.molmass, R)
 ngamma_grid = unbiased_ngamma_grid(Ttest, P, ngamma_ref_grid, n_Texp_grid,
-                                   multi_index_uniqgrid)
+                                   multi_index_uniqgrid, opa.Tref_broadening)
 log_ngammaL_grid = jnp.log(ngamma_grid)
-xs_premodit = calc_xsection_from_lsd_scanfft(Slsd_premodit, R, pmarray,
+xsv_manual = calc_xsection_from_lsd_scanfft(Slsd_premodit, R, pmarray,
                                              nsigmaD, nus, log_ngammaL_grid)
-
 #===========================================================================
 # MODIT LSD
 # We need to revert the reference temperature to 296K to reuse mdb for MODIT
@@ -91,8 +85,6 @@ qt = mdb.qr_interp(Ttest)
 cont, index, R, pmarray = initspec.init_modit(mdb.nu_lines, nus)
 Sij = line_strength(Ttest, mdb.logsij0, mdb.nu_lines, mdb.elower, qt)
 gammaL = gamma_exomol(P, Ttest, mdb.n_Texp, mdb.alpha_ref)
-#gammaL = gamma_hitran(P, Ttest, 0.0, mdb.n_air, mdb.gamma_air,
-#                      mdb.gamma_self) + gamma_natural(mdb.A)
 
 dv_lines = mdb.nu_lines / R
 ngammaL = gammaL / dv_lines
@@ -127,19 +119,16 @@ import matplotlib.pyplot as plt
 
 fig = plt.figure()
 ax = fig.add_subplot(211)
-plt.plot(nus, xsv_b, label="premodit/b", ls="dashed")
-plt.plot(nus, xs_premodit, label="premodit")
+plt.plot(nus, xsv, label="premodit", ls="dashed")
+plt.plot(nus, xsv_manual, label="premodit (manual)", ls="dashed")
 plt.plot(nus, xsv_modit, label="modit", ls="dotted")
-#plt.plot(nus, xsv_modit_sld, label="modit (LSD)")
-#plt.plot(nus, dat["xsv"],ls="dashed", label="comparison")
 plt.yscale("log")
 plt.legend()
 ax = fig.add_subplot(212)
-plt.plot(nus, xsv_b / xsv_modit - 1.0, label="premodit/b", ls="dashed")
-plt.plot(nus, xs_premodit / xsv_modit - 1.0)
-#plt.plot(nus, xs_premodit / dat["xsv"] - 1.0)
+plt.plot(nus, xsv / xsv_modit - 1.0, label="premodit", ls="dashed")
+plt.plot(nus, xsv_manual / xsv_modit - 1.0, label="premodit (manual)", ls="dashed")
 
-ax.set_ylim(-0.03, 0.03)
+ax.set_ylim(-0.001, 0.001)
 ax.axhline(0.01, color="gray", ls="dashed")
 ax.axhline(-0.01, color="gray", ls="dashed")
 ax.axhline(0.0, color="gray")

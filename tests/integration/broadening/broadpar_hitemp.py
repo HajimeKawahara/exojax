@@ -1,6 +1,8 @@
 from exojax.spec.api import MdbHitemp
 from exojax.spec.opacalc import OpaPremodit
 from exojax.utils.grids import wavenumber_grid
+from jax import config
+config.update("jax_enable_x64", True)
 
 
 def plot_broadgrid_and_broadpar(broadening_resolution):

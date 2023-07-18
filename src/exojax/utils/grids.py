@@ -51,7 +51,7 @@ def _warning_wavelength_order(wavelength_order):
     """
     print("======================================================================")
     print("We changed the policy of the order of wavenumber/wavelength grids")
-    print("wavenumber grid shluld be in ascending order and now ")
+    print("wavenumber grid should be in ascending order and now ")
     print("users can specify the order of the wavelength grid by themselves.")
     print("Your wavelength grid is in *** ", wavelength_order, " *** order")
     print("This might causes the bug if you update ExoJAX. ")

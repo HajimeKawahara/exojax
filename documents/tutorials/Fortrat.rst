@@ -1,6 +1,11 @@
 Quatum states of Carbon Monoxide and Fortrat Diagram
 ====================================================
 
+.. admonition:: You need an additional installation!!
+		
+		Currently, we need ``develop`` branch of ``radis`` to use this capability (Sep 17/2023).
+
+
 We here see the quantum states of Carbon Monoxide. Also, to see how the
 band head appears, we would like to plot the Fortrat diagram with a
 given quantum number and interval. To do so, we use
