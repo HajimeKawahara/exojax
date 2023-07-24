@@ -24,7 +24,7 @@ def test_rt(db, diffmode, fig=False):
 #                      nlayer=100,
 #                      nu_grid=nu_grid)
 
-    art = ArtEmisScat(pressure_top=1.e-3,
+    art = ArtEmisScat(pressure_top=1.e-5,
                       pressure_btm=1.e2,
                       nlayer=200,
                       nu_grid=nu_grid,

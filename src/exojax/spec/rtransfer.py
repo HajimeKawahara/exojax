@@ -155,12 +155,11 @@ def rtrun_emis_scat_toon_hemispheric_mean(dtau, single_scattering_albedo,
     #sys.exit()
 
     #debug
-    debug = False
+    debug = True
     if debug:
         debug_imshow_ts((trans_coeff), (scat_coeff),
                         "Transmission Coefficient $\mathcal{T}$",
                         "Scattering Coefficient $\mathcal{S}$")
-
         debug_imshow_ts(jnp.log10(trans_coeff), jnp.log10(scat_coeff),
                         "Transmission Coefficient $\mathcal{T} log$",
                         "Scattering Coefficient $\mathcal{S} log$")
@@ -176,64 +175,82 @@ def rtrun_emis_scat_toon_hemispheric_mean(dtau, single_scattering_albedo,
                                        gamma_2, source_matrix,
                                        source_function_derivative, -1.0)
 
-    debug = False
     if debug:
         debug_imshow_ts(piBplus, piBminus, "piBplus", "piBminus")
 
     # Boundary condition
-    ## top layerq
-    diagonal_top = -1.0  #b0
-    upper_diagonal_top = trans_coeff[0]
+    diagonal_top = 1.0 * jnp.ones_like(trans_coeff[0, :])  #b0
+    upper_diagonal_top = trans_coeff[0, :]
+    vector_top = piBplus[0, :] - trans_coeff[0, :] * piBplus[
+        1, :] - scat_coeff[0, :] * piBminus[0, :]
 
+    #tridiagonal elements
     diagonal, lower_diagonal, upper_diagonal, vector = compute_tridiag_diagonals_and_vector(
-        scat_coeff, trans_coeff, piBplus, upper_diagonal_top, diagonal_top)
+        scat_coeff, trans_coeff, piBplus, upper_diagonal_top, diagonal_top,
+        vector_top)
 
-    #boundary
-    boundary = False
-    if boundary:
-        top = piBplus[0, :] - trans_coeff[0, :] * piBplus[1, :] - scat_coeff[0, :] * piBminus[0, :]
-        vector = vector.at[0, :].set(- top)
-
-        vector = vector.at[-1, :].set(lower_diagonal[-2, :] * piBplus[-2, :] *
-                                      diagonal[-1, :] * piBplus[-1, :])
-
-    #bottom layer
-    #Fs = 1.0
-    #vector = vector.at[-1, :].set(-upper_diagonal[-1] * Fs * fac)
-    debug = True
     if debug:
-        debug_imshow_ts(jnp.abs(upper_diagonal)+jnp.abs(lower_diagonal), jnp.abs(diagonal), "abs(a)+abs(c)",
-                        "abs(b)")
-
+        debug_imshow_ts(
+            jnp.abs(upper_diagonal) + jnp.abs(lower_diagonal),
+            jnp.abs(diagonal), "abs(a)+abs(c)", "abs(b)")
         debug_imshow_ts(vector, jnp.log10(jnp.abs(vector)), "vector",
                         "log abs vector")
-
         debug_imshow_ts(diagonal, jnp.log10(jnp.abs(diagonal)), "diagonal",
                         "log abs diagonal")
         debug_imshow_ts(upper_diagonal, lower_diagonal, "upper diagonal",
                         "lower diagonal")
         debug_imshow_ts(jnp.log10(jnp.abs(upper_diagonal)),
-                        jnp.log10(jnp.abs(lower_diagonal)), "log upper diagonal",
-                        "log lower diagonal")
+                        jnp.log10(jnp.abs(lower_diagonal)),
+                        "log upper diagonal", "log lower diagonal")
 
+    #### TEST IMPLEMENTATION
+    import numpy as np
+    nlayer, nwav = diagonal.shape
+    Ttilde = np.zeros_like(trans_coeff)
+    Qtilde = np.zeros_like(trans_coeff)
+
+    Ttilde[0, :] = diagonal[0, :] / upper_diagonal[0, :]
+    Qtilde[0, :] = -vector[0, :] / upper_diagonal[0, :]
+    for i in range(1, nlayer):
+        gamma = diagonal[i, :] - lower_diagonal[i - 1, :] * Ttilde[i - 1, :]
+        Ttilde[i, :] = upper_diagonal[i, :] / gamma
+        Qtilde[i, :] = (vector[i, :] +
+                        lower_diagonal[i, :] * Qtilde[i - 1, :]) / gamma
+
+    debug_imshow_ts((Ttilde), (Qtilde), "Ttilde", "Qtilde")
+    Ttilde = np.array(Ttilde)
+    Ttilde[Ttilde>1.0] = 1.0
+    cumTtilde = np.cumprod(Ttilde,axis=0)
+    debug_imshow_ts((Qtilde),cumTtilde, "Qtilde", "cumprod T")
+    debug_imshow_ts(np.log10(cumTtilde*Qtilde),cumTtilde*Qtilde, "log (cumprod T)*Qtilde", "(cumprod T)*Qtilde")
+
+    spectrum = np.sum(cumTtilde*Qtilde,axis=0)
+    import matplotlib.pyplot as plt
+    plt.plot(spectrum)
+    plt.show() 
+
+    #debug_imshow_ts(np.log10(Ttilde), np.log10(Qtilde), "Ttilde", "Qtilde")
+
+
+    import sys
+    sys.exit()
     #print(diagonal, lower_diagonal, upper_diagonal)
 
     # Using complete tridiag solver
     #vmap_solve_tridiag = vmap(solve_tridiag, (0, 0, 0, 0), 0)
-    nlayer, nwav = diagonal.shape
-    beta, delta= vmap_solve_tridiag(diagonal.T[0:20000, 0:nlayer],
-                                         lower_diagonal.T[0:20000, 0:nlayer-1],
-                                         upper_diagonal.T[0:20000, 0:nlayer-1],
-                                         vector.T[0:20000, 0:nlayer])
+    beta, delta = vmap_solve_tridiag(diagonal.T[0:20000, 0:nlayer],
+                                     lower_diagonal.T[0:20000, 0:nlayer - 1],
+                                     upper_diagonal.T[0:20000, 0:nlayer - 1],
+                                     vector.T[0:20000, 0:nlayer])
     import numpy as np
     #beta[np.abs(beta)>100.0]=0.0
     #delta[np.abs(delta)>100.0]=0.0
-    
-    debug_imshow_ts(np.log10(np.abs(beta.T)), np.log10(np.abs(delta.T)), "beta",
-                        "delta")
-        
-    flux_upward = delta[:,1]
-    
+
+    debug_imshow_ts(np.log10(np.abs(beta.T)), np.log10(np.abs(delta.T)),
+                    "beta", "delta")
+
+    flux_upward = delta[:, 1]
+
     import matplotlib.pyplot as plt
     plt.plot(flux_upward[10300:10700])
     plt.show()
