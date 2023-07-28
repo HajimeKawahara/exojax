@@ -25,18 +25,18 @@ def test_rt(db, diffmode, fig=False):
 #                      nu_grid=nu_grid)
 
     art = ArtEmisScat(pressure_top=1.e-5,
-                      pressure_btm=1.e2,
+                      pressure_btm=1.e1,
                       nlayer=200,
                       nu_grid=nu_grid,
                       rtsolver="toon_hemispheric_mean")
     art.change_temperature_range(400.0, 1500.0)
     Tarr = art.powerlaw_temperature(1300.0, 0.1)
-    mmr_arr = art.constant_mmr_profile(0.1)
+    mmr_arr = art.constant_mmr_profile(0.01)
     gravity = 2478.57
     #gravity = art.constant_gravity_profile(2478.57) #gravity can be profile
 
     mdb = mock_mdb(db)
-    #mdb = api.MdbExomol('.database/CO/12C-16O/Li2015',nu_grid,inherit_dataframe=False,gpu_transfer=False)
+    #mdb = api.MdbExomol('.database/CO/12C-1edt mru 6O/Li2015',nu_grid,inherit_dataframe=False,gpu_transfer=False)
     #mdb = api.MdbHitemp('CO', art.nu_grid, gpu_transfer=False, isotope=1)
     opa = OpaPremodit(mdb=mdb,
                       nu_grid=nu_grid,

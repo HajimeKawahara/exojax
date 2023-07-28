@@ -144,7 +144,7 @@ def rtrun_emis_scat_toon_hemispheric_mean(dtau, single_scattering_albedo,
     zeta_plus, zeta_minus, lambdan = zetalambda_coeffs(gamma_1, gamma_2)
     trans_coeff, scat_coeff = set_scat_trans_coeffs(zeta_plus, zeta_minus,
                                                     lambdan, dtau)
-    delta = 1.e-5
+    delta = 1.e-9
     #delta = 0.0
     trans_coeff = trans_coeff + delta
 
@@ -181,8 +181,8 @@ def rtrun_emis_scat_toon_hemispheric_mean(dtau, single_scattering_albedo,
     # Boundary condition
     diagonal_top = 1.0 * jnp.ones_like(trans_coeff[0, :])  #b0
     upper_diagonal_top = trans_coeff[0, :]
-    vector_top = piBplus[0, :] - trans_coeff[0, :] * piBplus[
-        1, :] - scat_coeff[0, :] * piBminus[0, :]
+    vector_top = piBplus[
+        0, :]   - trans_coeff[0, :] * piBplus[1, :] - scat_coeff[0, :] * piBminus[0, :]
 
     #tridiagonal elements
     diagonal, lower_diagonal, upper_diagonal, vector = compute_tridiag_diagonals_and_vector(
@@ -190,11 +190,12 @@ def rtrun_emis_scat_toon_hemispheric_mean(dtau, single_scattering_albedo,
         vector_top)
 
     if debug:
-        debug_imshow_ts(
-            jnp.abs(upper_diagonal) + jnp.abs(lower_diagonal),
-            jnp.abs(diagonal), "abs(a)+abs(c)", "abs(b)")
-        debug_imshow_ts(vector, jnp.log10(jnp.abs(vector)), "vector",
-                        "log abs vector")
+        debug_imshow_ts(jnp.log10(upper_diagonal), jnp.log10(lower_diagonal),
+                        "log(a)", "log(c)")
+        debug_imshow_ts(jnp.log10(diagonal), jnp.log10(vector), "log(b)",
+                        "log(d)")
+
+        debug_imshow_ts(vector, jnp.log10((vector)), "vector", "log  vector")
         debug_imshow_ts(diagonal, jnp.log10(jnp.abs(diagonal)), "diagonal",
                         "log abs diagonal")
         debug_imshow_ts(upper_diagonal, lower_diagonal, "upper diagonal",
@@ -209,28 +210,66 @@ def rtrun_emis_scat_toon_hemispheric_mean(dtau, single_scattering_albedo,
     Ttilde = np.zeros_like(trans_coeff)
     Qtilde = np.zeros_like(trans_coeff)
 
-    Ttilde[0, :] = diagonal[0, :] / upper_diagonal[0, :]
-    Qtilde[0, :] = -vector[0, :] / upper_diagonal[0, :]
+    Ttilde[0, :] = upper_diagonal[0, :] / diagonal[0, :]
+    Qtilde[0, :] = vector[0, :] / diagonal[0, :]
+
     for i in range(1, nlayer):
         gamma = diagonal[i, :] - lower_diagonal[i - 1, :] * Ttilde[i - 1, :]
         Ttilde[i, :] = upper_diagonal[i, :] / gamma
         Qtilde[i, :] = (vector[i, :] +
-                        lower_diagonal[i, :] * Qtilde[i - 1, :]) / gamma
+                        lower_diagonal[i - 1, :] * Qtilde[i - 1, :]) / gamma
+        
+    Qpure0 = np.zeros_like(Qtilde)
+    Qpure1 = np.zeros_like(Qtilde)
 
-    debug_imshow_ts((Ttilde), (Qtilde), "Ttilde", "Qtilde")
+    for i in range(0, nlayer - 1):
+        Qpure1[i, :] = piBplus[i, :] - trans_coeff[i, :] * piBplus[i + 1, :]
+        Qpure0[i, :] = (1.0 - trans_coeff[i, :])*piBplus[i, :]  
+
+    print("1",Qpure1[0,:])
+    print("tilde",Qtilde[0,:])
+    
+    print("1",Qpure1[1,:])
+    print("tilde",Qtilde[1,:])
+    
+    #negative removal
+    Qpure1[Qpure1<0.0] = 0.0
+    Qtilde[Qtilde<0.0] = 0.0
+
+    debug_imshow_ts((Ttilde), (trans_coeff), "Ttilde", "trans")
     Ttilde = np.array(Ttilde)
-    Ttilde[Ttilde>1.0] = 1.0
-    cumTtilde = np.cumprod(Ttilde,axis=0)
-    debug_imshow_ts((Qtilde),cumTtilde, "Qtilde", "cumprod T")
-    debug_imshow_ts(np.log10(cumTtilde*Qtilde),cumTtilde*Qtilde, "log (cumprod T)*Qtilde", "(cumprod T)*Qtilde")
+    debug_imshow_ts((Qtilde), (Qpure1), "Qtilde", "Qpure")
+    
+    debug_imshow_ts((Qpure0/Qtilde), (Qpure1/Qtilde), "0/tilde", "1/tilde")
+    
 
-    spectrum = np.sum(cumTtilde*Qtilde,axis=0)
+    #Ttilde[Ttilde > 1.0] = 1.0
+    cumTtilde = np.cumprod(Ttilde, axis=0)
+    debug_imshow_ts((Qtilde), cumTtilde, "Qtilde", "cumprod T")
+    contri = cumTtilde * Qtilde
+    debug_imshow_ts(np.log10(contri), contri, "log (cumprod T)*Qtilde",
+                    "(cumprod T)*Qtilde")
+
+    spectrum = np.nansum(cumTtilde * Qtilde, axis=0)
+
+    cumTpure = np.cumprod(trans_coeff, axis=0)
+    spectrum_tpure = np.nansum(cumTtilde * Qpure0, axis=0)
+    spectrum_pure = np.nansum(cumTpure * Qpure0, axis=0)
+    spectrum_pure1 = np.nansum(cumTpure * Qpure1, axis=0)
+    spectrum_pt = np.nansum(cumTpure * Qtilde, axis=0)
+    spectrum = np.nansum(cumTtilde * Qtilde, axis=0)
+    
     import matplotlib.pyplot as plt
-    plt.plot(spectrum)
-    plt.show() 
+    plt.plot(spectrum,label="tilde * tilde ")
+    plt.plot(spectrum_pt,label="pure * tilde ")
+    plt.plot(spectrum_pure, label="pure * pure")
+    plt.plot(spectrum_pure1, label="pure * pure1")
+    plt.plot(spectrum_tpure, label="tilde * pure")
+    
+    plt.legend()
+    plt.show()
 
     #debug_imshow_ts(np.log10(Ttilde), np.log10(Qtilde), "Ttilde", "Qtilde")
-
 
     import sys
     sys.exit()

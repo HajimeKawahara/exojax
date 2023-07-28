@@ -42,10 +42,12 @@ def compute_tridiag_diagonals_and_vector(scat_coeff, trans_coeff, piBplus, upper
     Tn_minus_one = jnp.roll(trans_coeff, 1, axis=0)  # T_{n-1}
     Sn_plus_one = jnp.roll(scat_coeff, -1, axis=0)  # S_{n+1}
 
+    # Case I 
     upper_diagonal = Sn_minus_one  # an
-    diagonal = scat_coeff * (Tn_minus_one**2 - Sn_minus_one**2) + Sn_minus_one  # bn
+    diagonal = scat_coeff * (Tn_minus_one**2 - Sn_minus_one**2) + Sn_minus_one # bn
     diagonal = diagonal/trans_coeff
     lower_diagonal = Sn_plus_one  # cn
+
 
     # top boundary setting
     upper_diagonal = upper_diagonal.at[0].set(upper_diagonal_top) 
