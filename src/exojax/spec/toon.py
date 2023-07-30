@@ -26,8 +26,31 @@ def zetalambda_coeffs(gamma_1, gamma_2):
     return zeta_plus, zeta_minus, lambdan
 
 
-def reduced_source_function(single_scattering_albedo, gamma_1, gamma_2,
-                             source_function, source_function_derivative, sign=1.0):
+def reduced_source_function_isothermal_layer(single_scattering_albedo, gamma_1,
+                                             gamma_2, source_function):
+    """computes reduced source functions (pi \mathcal{B}) for the isothermal layer
+
+    Args:
+        single_scattering_albedo (_type_): single scattering albedo
+        gamma_1 (_type_): Toon+89 gamma_1 coefficient
+        gamma_2 (_type_): Toon+89 gamma_2 coefficient
+        source_function (_type_): pi B(tau)
+        
+        
+    Returns:
+        _type_: reduced source function for the isothermal layer
+    """
+
+    coeff = 2.0 * (1.0 - single_scattering_albedo) / (gamma_1 - gamma_2)
+    return coeff * source_function
+
+
+def reduced_source_function(single_scattering_albedo,
+                            gamma_1,
+                            gamma_2,
+                            source_function,
+                            source_function_derivative,
+                            sign=1.0):
     """computes reduced source functions (pi \mathcal{B}^+ or -)
 
     Args:
@@ -42,8 +65,9 @@ def reduced_source_function(single_scattering_albedo, gamma_1, gamma_2,
     """
 
     coeff = 2.0 * (1.0 - single_scattering_albedo) / (gamma_1 - gamma_2)
-    derivative_term = source_function_derivative/(gamma_1 + gamma_2)
-    return coeff*(source_function + sign*derivative_term)
+    derivative_term = source_function_derivative / (gamma_1 + gamma_2)
+    return coeff * (source_function + sign * derivative_term)
+
 
 def params_eddington(single_scattering_albedo, asymmetric_parameter, mu0):
     gamma_1 = (7.0 - single_scattering_albedo *

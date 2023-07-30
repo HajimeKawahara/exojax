@@ -116,7 +116,7 @@ from exojax.spec.twostream import set_scat_trans_coeffs
 from exojax.spec.twostream import compute_tridiag_diagonals_and_vector
 from exojax.spec.toon import zetalambda_coeffs
 from exojax.spec.toon import params_hemispheric_mean
-from exojax.spec.toon import reduced_source_function
+from exojax.spec.toon import reduced_source_function_isothermal_layer
 from exojax.linalg.tridiag import solve_tridiag
 #from exojax.linalg.tridiag import solve_vmap_semitridiag_naive as vmap_solve_tridiag
 from exojax.linalg.tridiag import solve_vmap_semitridiag_naive_array as vmap_solve_tridiag
@@ -144,15 +144,12 @@ def rtrun_emis_scat_toon_hemispheric_mean(dtau, single_scattering_albedo,
     zeta_plus, zeta_minus, lambdan = zetalambda_coeffs(gamma_1, gamma_2)
     trans_coeff, scat_coeff = set_scat_trans_coeffs(zeta_plus, zeta_minus,
                                                     lambdan, dtau)
-    delta = 1.e-9
-    #delta = 0.0
+    #delta = 1.e-9
+    delta = 0.0
     trans_coeff = trans_coeff + delta
 
-    print(jnp.prod(trans_coeff, axis=0))
-    print(jnp.sum(jnp.log(trans_coeff), axis=0))
-
-    #import sys
-    #sys.exit()
+    import numpy as np
+    nlayer, nwav = trans_coeff.shape
 
     #debug
     debug = True
@@ -165,29 +162,42 @@ def rtrun_emis_scat_toon_hemispheric_mean(dtau, single_scattering_albedo,
                         "Scattering Coefficient $\mathcal{S} log$")
 
     #temporary
-    source_function_derivative = jnp.zeros_like(source_matrix)
+    source_function_derivative = np.zeros_like(source_matrix)
 
-    piBplus = reduced_source_function(single_scattering_albedo, gamma_1,
-                                      gamma_2, source_matrix,
-                                      source_function_derivative, 1.0)
+    debug_imshow_ts((source_matrix), (source_function_derivative), "piB",
+                    "dot piB")
 
-    piBminus = reduced_source_function(single_scattering_albedo, gamma_1,
-                                       gamma_2, source_matrix,
-                                       source_function_derivative, -1.0)
+    piB = reduced_source_function_isothermal_layer(single_scattering_albedo,
+                                                   gamma_1, gamma_2,
+                                                   source_matrix)
 
     if debug:
-        debug_imshow_ts(piBplus, piBminus, "piBplus", "piBminus")
+        debug_imshow_ts(piB, piB, "piBplus", "piBminus")
+
+    # G(eneralized source) vector
+    pn = -jnp.expm1(lambdan * dtau)
+    qn = -jnp.expm1(-lambdan * dtau)
+    fac = 1.0/(zeta_plus + zeta_minus)
+    piGplus = piB * (zeta_plus * pn + zeta_minus * qn) * fac
+    piGminus = piB * (zeta_plus * qn + zeta_minus * pn) * fac
+
+    if debug:
+        debug_imshow_ts(piGplus, piGminus, "piGplus", "piGminus")
+
 
     # Boundary condition
     diagonal_top = 1.0 * jnp.ones_like(trans_coeff[0, :])  #b0
     upper_diagonal_top = trans_coeff[0, :]
-    vector_top = piBplus[
-        0, :]   - trans_coeff[0, :] * piBplus[1, :] - scat_coeff[0, :] * piBminus[0, :]
+    vector_top = -trans_coeff[0, :] * piGplus[0, :]
 
     #tridiagonal elements
     diagonal, lower_diagonal, upper_diagonal, vector = compute_tridiag_diagonals_and_vector(
-        scat_coeff, trans_coeff, piBplus, upper_diagonal_top, diagonal_top,
+        scat_coeff, trans_coeff, piGplus, piGminus, upper_diagonal_top, diagonal_top,
         vector_top)
+    
+    print(vector)
+    import sys
+    sys.exit()
 
     if debug:
         debug_imshow_ts(jnp.log10(upper_diagonal), jnp.log10(lower_diagonal),
@@ -205,43 +215,31 @@ def rtrun_emis_scat_toon_hemispheric_mean(dtau, single_scattering_albedo,
                         "log upper diagonal", "log lower diagonal")
 
     #### TEST IMPLEMENTATION
-    import numpy as np
-    nlayer, nwav = diagonal.shape
     Ttilde = np.zeros_like(trans_coeff)
     Qtilde = np.zeros_like(trans_coeff)
-
     Ttilde[0, :] = upper_diagonal[0, :] / diagonal[0, :]
     Qtilde[0, :] = vector[0, :] / diagonal[0, :]
-
     for i in range(1, nlayer):
         gamma = diagonal[i, :] - lower_diagonal[i - 1, :] * Ttilde[i - 1, :]
         Ttilde[i, :] = upper_diagonal[i, :] / gamma
         Qtilde[i, :] = (vector[i, :] +
                         lower_diagonal[i - 1, :] * Qtilde[i - 1, :]) / gamma
-        
-    Qpure0 = np.zeros_like(Qtilde)
-    Qpure1 = np.zeros_like(Qtilde)
+
+    # COMPARISON With PURE form
+    Qpure = np.zeros_like(Qtilde)
 
     for i in range(0, nlayer - 1):
-        Qpure1[i, :] = piBplus[i, :] - trans_coeff[i, :] * piBplus[i + 1, :]
-        Qpure0[i, :] = (1.0 - trans_coeff[i, :])*piBplus[i, :]  
+        Qpure[i, :] = (1.0 - trans_coeff[i, :]) * piB[i, :]
 
-    print("1",Qpure1[0,:])
-    print("tilde",Qtilde[0,:])
-    
-    print("1",Qpure1[1,:])
-    print("tilde",Qtilde[1,:])
-    
     #negative removal
-    Qpure1[Qpure1<0.0] = 0.0
-    Qtilde[Qtilde<0.0] = 0.0
+    Qtilde[Qtilde < 0.0] = 0.0
 
     debug_imshow_ts((Ttilde), (trans_coeff), "Ttilde", "trans")
     Ttilde = np.array(Ttilde)
-    debug_imshow_ts((Qtilde), (Qpure1), "Qtilde", "Qpure")
-    
-    debug_imshow_ts((Qpure0/Qtilde), (Qpure1/Qtilde), "0/tilde", "1/tilde")
-    
+    debug_imshow_ts((Qtilde), Qpure, "Qtilde", "Qpure")
+
+    debug_imshow_ts((Qpure / Qtilde), np.log10(Qpure / Qtilde), "Q pure/tilde",
+                    "log pure/tilde")
 
     #Ttilde[Ttilde > 1.0] = 1.0
     cumTtilde = np.cumprod(Ttilde, axis=0)
@@ -253,19 +251,17 @@ def rtrun_emis_scat_toon_hemispheric_mean(dtau, single_scattering_albedo,
     spectrum = np.nansum(cumTtilde * Qtilde, axis=0)
 
     cumTpure = np.cumprod(trans_coeff, axis=0)
-    spectrum_tpure = np.nansum(cumTtilde * Qpure0, axis=0)
-    spectrum_pure = np.nansum(cumTpure * Qpure0, axis=0)
-    spectrum_pure1 = np.nansum(cumTpure * Qpure1, axis=0)
+    spectrum_tpure = np.nansum(cumTtilde * Qpure, axis=0)
+    spectrum_pure = np.nansum(cumTpure * Qpure, axis=0)
     spectrum_pt = np.nansum(cumTpure * Qtilde, axis=0)
     spectrum = np.nansum(cumTtilde * Qtilde, axis=0)
-    
+
     import matplotlib.pyplot as plt
-    plt.plot(spectrum,label="tilde * tilde ")
-    plt.plot(spectrum_pt,label="pure * tilde ")
+    plt.plot(spectrum, label="tilde * tilde ")
+    plt.plot(spectrum_pt, label="pure * tilde ")
     plt.plot(spectrum_pure, label="pure * pure")
-    plt.plot(spectrum_pure1, label="pure * pure1")
     plt.plot(spectrum_tpure, label="tilde * pure")
-    
+
     plt.legend()
     plt.show()
 
