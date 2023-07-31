@@ -30,7 +30,7 @@ def solve_semitridiag_naive_array(diag, lower_diag, upper_diag, vector):
 
 def solve_semitridiag_naive(diag, lower_diag, upper_diag, vector):
     N = len(vector)
-
+ 
     beta = diag[N - 1]
     delta = vector[N - 1] / beta
     for j in range(1, N):

@@ -1,5 +1,12 @@
 """ radiative transfer
 """
+from exojax.linalg.tridiag import solve_vmap_semitridiag_naive_array as vmap_solve_tridiag
+from exojax.linalg.tridiag import solve_tridiag
+from exojax.spec.toon import reduced_source_function_isothermal_layer
+from exojax.spec.toon import params_hemispheric_mean
+from exojax.spec.toon import zetalambda_coeffs
+from exojax.spec.twostream import compute_tridiag_diagonals_and_vector
+from exojax.spec.twostream import set_scat_trans_coeffs
 import warnings
 from jax import jit
 import jax.numpy as jnp
@@ -95,7 +102,7 @@ def rtrun_trans_pure_absorption(dtau_chord, radius_lower):
 
     Notes:
         The n-th radius is defined as the lower boundary of the n-th layer. So, radius[0] corresponds to R0.   
-        
+
     Returns:
         1D array: transit squared radius normalized by radius_lower[-1], i.e. it returns (radius/radius_lower[-1])**2
 
@@ -112,14 +119,7 @@ def rtrun_trans_pure_absorption(dtau_chord, radius_lower):
     return deltaRp2 + radius_lower[-1]**2
 
 
-from exojax.spec.twostream import set_scat_trans_coeffs
-from exojax.spec.twostream import compute_tridiag_diagonals_and_vector
-from exojax.spec.toon import zetalambda_coeffs
-from exojax.spec.toon import params_hemispheric_mean
-from exojax.spec.toon import reduced_source_function_isothermal_layer
-from exojax.linalg.tridiag import solve_tridiag
-#from exojax.linalg.tridiag import solve_vmap_semitridiag_naive as vmap_solve_tridiag
-from exojax.linalg.tridiag import solve_vmap_semitridiag_naive_array as vmap_solve_tridiag
+# from exojax.linalg.tridiag import solve_vmap_semitridiag_naive as vmap_solve_tridiag
 
 
 def debug_imshow_ts(val1, val2, title1, title2):
@@ -144,15 +144,15 @@ def rtrun_emis_scat_toon_hemispheric_mean(dtau, single_scattering_albedo,
     zeta_plus, zeta_minus, lambdan = zetalambda_coeffs(gamma_1, gamma_2)
     trans_coeff, scat_coeff = set_scat_trans_coeffs(zeta_plus, zeta_minus,
                                                     lambdan, dtau)
-    #delta = 1.e-9
+    # delta = 1.e-9
     delta = 0.0
     trans_coeff = trans_coeff + delta
 
     import numpy as np
     nlayer, nwav = trans_coeff.shape
 
-    #debug
-    debug = True
+    # debug
+    debug = False
     if debug:
         debug_imshow_ts((trans_coeff), (scat_coeff),
                         "Transmission Coefficient $\mathcal{T}$",
@@ -161,7 +161,7 @@ def rtrun_emis_scat_toon_hemispheric_mean(dtau, single_scattering_albedo,
                         "Transmission Coefficient $\mathcal{T} log$",
                         "Scattering Coefficient $\mathcal{S} log$")
 
-    #temporary
+    # temporary
     source_function_derivative = np.zeros_like(source_matrix)
 
     debug_imshow_ts((source_matrix), (source_function_derivative), "piB",
@@ -174,30 +174,15 @@ def rtrun_emis_scat_toon_hemispheric_mean(dtau, single_scattering_albedo,
     if debug:
         debug_imshow_ts(piB, piB, "piBplus", "piBminus")
 
-    # G(eneralized source) vector
-    pn = -jnp.expm1(lambdan * dtau)
-    qn = -jnp.expm1(-lambdan * dtau)
-    fac = 1.0/(zeta_plus + zeta_minus)
-    piGplus = piB * (zeta_plus * pn + zeta_minus * qn) * fac
-    piGminus = piB * (zeta_plus * qn + zeta_minus * pn) * fac
-
-    if debug:
-        debug_imshow_ts(piGplus, piGminus, "piGplus", "piGminus")
-
-
     # Boundary condition
-    diagonal_top = 1.0 * jnp.ones_like(trans_coeff[0, :])  #b0
+    diagonal_top = 1.0 * jnp.ones_like(trans_coeff[0, :])  # b0
     upper_diagonal_top = trans_coeff[0, :]
-    vector_top = -trans_coeff[0, :] * piGplus[0, :]
+    vector_top = -0.0  # tmp
 
-    #tridiagonal elements
+    # tridiagonal elements
     diagonal, lower_diagonal, upper_diagonal, vector = compute_tridiag_diagonals_and_vector(
-        scat_coeff, trans_coeff, piGplus, piGminus, upper_diagonal_top, diagonal_top,
+        scat_coeff, trans_coeff, piB, upper_diagonal_top, diagonal_top,
         vector_top)
-    
-    print(vector)
-    import sys
-    sys.exit()
 
     if debug:
         debug_imshow_ts(jnp.log10(upper_diagonal), jnp.log10(lower_diagonal),
@@ -214,7 +199,7 @@ def rtrun_emis_scat_toon_hemispheric_mean(dtau, single_scattering_albedo,
                         jnp.log10(jnp.abs(lower_diagonal)),
                         "log upper diagonal", "log lower diagonal")
 
-    #### TEST IMPLEMENTATION
+    # TEST IMPLEMENTATION
     Ttilde = np.zeros_like(trans_coeff)
     Qtilde = np.zeros_like(trans_coeff)
     Ttilde[0, :] = upper_diagonal[0, :] / diagonal[0, :]
@@ -229,10 +214,10 @@ def rtrun_emis_scat_toon_hemispheric_mean(dtau, single_scattering_albedo,
     Qpure = np.zeros_like(Qtilde)
 
     for i in range(0, nlayer - 1):
-        Qpure[i, :] = (1.0 - trans_coeff[i, :]) * piB[i, :]
+        Qpure[i, :] = (1.0 - trans_coeff[i, :] - scat_coeff[i, :]) * piB[i, :]
 
-    #negative removal
-    Qtilde[Qtilde < 0.0] = 0.0
+    # negative removal
+    # Qtilde[Qtilde < 0.0] = 0.0
 
     debug_imshow_ts((Ttilde), (trans_coeff), "Ttilde", "trans")
     Ttilde = np.array(Ttilde)
@@ -241,7 +226,7 @@ def rtrun_emis_scat_toon_hemispheric_mean(dtau, single_scattering_albedo,
     debug_imshow_ts((Qpure / Qtilde), np.log10(Qpure / Qtilde), "Q pure/tilde",
                     "log pure/tilde")
 
-    #Ttilde[Ttilde > 1.0] = 1.0
+    # Ttilde[Ttilde > 1.0] = 1.0
     cumTtilde = np.cumprod(Ttilde, axis=0)
     debug_imshow_ts((Qtilde), cumTtilde, "Qtilde", "cumprod T")
     contri = cumTtilde * Qtilde
@@ -257,29 +242,29 @@ def rtrun_emis_scat_toon_hemispheric_mean(dtau, single_scattering_albedo,
     spectrum = np.nansum(cumTtilde * Qtilde, axis=0)
 
     import matplotlib.pyplot as plt
-    plt.plot(spectrum, label="tilde * tilde ")
-    plt.plot(spectrum_pt, label="pure * tilde ")
-    plt.plot(spectrum_pure, label="pure * pure")
-    plt.plot(spectrum_tpure, label="tilde * pure")
+    plt.plot(spectrum, label="Ttilde * Qtilde ")
+    plt.plot(spectrum_pt, label="Tpure * Qtilde ", ls="dashed", lw=2)
+    plt.plot(spectrum_tpure, label="Ttilde * Qpure")
+    plt.plot(spectrum_pure, label="Tpure * Qpure", ls="dashed", lw=2)
 
     plt.legend()
     plt.show()
 
-    #debug_imshow_ts(np.log10(Ttilde), np.log10(Qtilde), "Ttilde", "Qtilde")
+    # debug_imshow_ts(np.log10(Ttilde), np.log10(Qtilde), "Ttilde", "Qtilde")
 
     import sys
     sys.exit()
-    #print(diagonal, lower_diagonal, upper_diagonal)
+    # print(diagonal, lower_diagonal, upper_diagonal)
 
     # Using complete tridiag solver
-    #vmap_solve_tridiag = vmap(solve_tridiag, (0, 0, 0, 0), 0)
+    # vmap_solve_tridiag = vmap(solve_tridiag, (0, 0, 0, 0), 0)
     beta, delta = vmap_solve_tridiag(diagonal.T[0:20000, 0:nlayer],
                                      lower_diagonal.T[0:20000, 0:nlayer - 1],
                                      upper_diagonal.T[0:20000, 0:nlayer - 1],
                                      vector.T[0:20000, 0:nlayer])
     import numpy as np
-    #beta[np.abs(beta)>100.0]=0.0
-    #delta[np.abs(delta)>100.0]=0.0
+    # beta[np.abs(beta)>100.0]=0.0
+    # delta[np.abs(delta)>100.0]=0.0
 
     debug_imshow_ts(np.log10(np.abs(beta.T)), np.log10(np.abs(delta.T)),
                     "beta", "delta")

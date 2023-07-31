@@ -19,14 +19,13 @@ def set_scat_trans_coeffs(zeta_plus, zeta_minus, lambdan, dtau):
     return trans_coeff, scat_coeff
 
         
-def compute_tridiag_diagonals_and_vector(scat_coeff, trans_coeff, piGplus, piGminus, upper_diagonal_top, diagonal_top, vector_top):
+def compute_tridiag_diagonals_and_vector(scat_coeff, trans_coeff, piB, upper_diagonal_top, diagonal_top, vector_top):
     """computes the diagonals and right-handside vector from scattering and transmission coefficients for the tridiagonal system
 
     Args:
         scat_coeff (_type_): scattering coefficient of the n-th layer, S_n
         trans_coeff (_type_): transmission coefficient of the n-th layer, T_n
-        piGplus (): upward Planck source function, piG^+_n 
-        piGminus (): upward Planck source function, piG^-_n 
+        piB (): Planck source function, piB
         upper_diagonal_top (_type_): a[0] upper diagonal top boundary 
         diagonal_top (_type_): b[0] diagonal top boundary
         vector_top (_type_): vector top boundary 
@@ -41,15 +40,15 @@ def compute_tridiag_diagonals_and_vector(scat_coeff, trans_coeff, piGplus, piGmi
 
     Sn_minus_one = jnp.roll(scat_coeff, 1, axis=0)  # S_{n-1}
     Tn_minus_one = jnp.roll(trans_coeff, 1, axis=0)  # T_{n-1}
-    Sn_plus_one = jnp.roll(scat_coeff, -1, axis=0)  # S_{n+1}
-    Tn_plus_one = jnp.roll(trans_coeff, -1, axis=0)  # T_{n+1}
     
+    rn = scat_coeff/trans_coeff
+    rn_plus_one = jnp.roll(rn, -1, axis=0)
+    rn_minus = Sn_minus_one/trans_coeff
+
     # Case I 
     upper_diagonal = Sn_minus_one  # an
-    fac = scat_coeff * (Tn_minus_one**2 - Sn_minus_one**2)
-    diagonal = fac + Sn_minus_one # bn
-    diagonal = diagonal/trans_coeff
-    lower_diagonal = Sn_plus_one*trans_coeff/Tn_plus_one  # cn
+    diagonal = rn*(Tn_minus_one**2 - Sn_minus_one**2) + rn_minus # bn
+    lower_diagonal = rn_plus_one*trans_coeff  # cn
 
 
     # top boundary setting
@@ -57,10 +56,9 @@ def compute_tridiag_diagonals_and_vector(scat_coeff, trans_coeff, piGplus, piGmi
     diagonal = diagonal.at[0].set(diagonal_top) 
 
     # vector
-    piGplus_minus_one = jnp.roll(piGplus, 1, axis=0)  
-    piGminus_minus_one = jnp.roll(piGminus, 1, axis=0)  
-    
-    vector = upper_diagonal*piGplus + fac*piGplus_minus_one/trans_coeff + Sn_minus_one*scat_coeff*piGminus_minus_one/trans_coeff
+    hatpiB = (1.0 - trans_coeff - scat_coeff)*piB
+    hatpiB_minus_one = jnp.roll(hatpiB, 1, axis=0)  
+    vector = rn_minus*hatpiB - rn*(1.0 - Sn_minus_one)*hatpiB_minus_one
 
     # top bundary
     vector = vector.at[0].set(vector_top)
