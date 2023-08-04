@@ -35,6 +35,41 @@ def solve_twostream_lart_numpy(diagonal, lower_diagonal, upper_diagonal, vector)
     spectrum = np.nansum(contribution_function, axis=0)
     return cumTtilde, Qtilde, spectrum
 
+def solve_twostream_lart(diagonal, lower_diagonal, upper_diagonal, vector):
+    """Two-stream RT solver given tridiagonal system components (LART form) but numpy version
+
+    Args:
+        diagonal (_type_): diagonal component of the tridiagonal system (bn)
+        lower_diagonal (_type_): lower diagonal component of the tridiagonal system (cn)
+        upper_diagonal (_type_): upper diagonal component of the tridiagonal system (an)
+        vector (_type_): right-hand side vector (dn)
+
+    Note:
+        Our definition of the tridiagonal components is 
+        an F+_(n+1) + bn F+_n + c_(n-1) F+_(n-1) = dn 
+        Notice that c_(n-1) is not cn
+
+    Returns:
+        _type_: cumlative T, tilde Q, spectrum 
+    """
+    nlayer, _ = diagonal.shape
+    Ttilde = jnp.zeros_like(diagonal)
+    Qtilde = jnp.zeros_like(diagonal)
+    Ttilde = Ttilde.at[0,:].set(upper_diagonal[0, :] / diagonal[0, :])
+    Qtilde = Qtilde.at[0,:].set(vector[0, :] / diagonal[0, :])
+    for i in range(1, nlayer):
+        gamma = diagonal[i, :] - lower_diagonal[i - 1, :] * Ttilde[i - 1, :]
+        Ttilde[i, :] = upper_diagonal[i, :] / gamma
+        Qtilde[i, :] = (vector[i, :] +
+                        lower_diagonal[i - 1, :] * Qtilde[i - 1, :]) / gamma
+
+    cumTtilde = jnp.cumprod(Ttilde, axis=0)
+    contribution_function = cumTtilde * Qtilde
+    
+    spectrum = jnp.nansum(contribution_function, axis=0)
+    
+    return  cumTtilde, Qtilde, spectrum
+
 def solve_twostream_pure_absorption_numpy(trans_coeff, scat_coeff, piB):
     """solve pure absorption limit for two stream
 
