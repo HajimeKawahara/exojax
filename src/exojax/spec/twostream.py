@@ -1,7 +1,9 @@
 import jax.numpy as jnp
+from jax.lax import scan
 
 
-def solve_twostream_lart_numpy(diagonal, lower_diagonal, upper_diagonal, vector):
+def solve_twostream_lart_numpy(diagonal, lower_diagonal, upper_diagonal,
+                               vector):
     """Two-stream RT solver given tridiagonal system components (LART form) but numpy version
 
     Args:
@@ -24,7 +26,7 @@ def solve_twostream_lart_numpy(diagonal, lower_diagonal, upper_diagonal, vector)
     Qtilde = np.zeros_like(diagonal)
     Ttilde[0, :] = upper_diagonal[0, :] / diagonal[0, :]
     Qtilde[0, :] = vector[0, :] / diagonal[0, :]
-    for i in range(1, nlayer):
+    for i in range(1, nlayer - 1):
         gamma = diagonal[i, :] - lower_diagonal[i - 1, :] * Ttilde[i - 1, :]
         Ttilde[i, :] = upper_diagonal[i, :] / gamma
         Qtilde[i, :] = (vector[i, :] +
@@ -34,6 +36,7 @@ def solve_twostream_lart_numpy(diagonal, lower_diagonal, upper_diagonal, vector)
     contribution_function = cumTtilde * Qtilde
     spectrum = np.nansum(contribution_function, axis=0)
     return cumTtilde, Qtilde, spectrum
+
 
 def solve_twostream_lart(diagonal, lower_diagonal, upper_diagonal, vector):
     """Two-stream RT solver given tridiagonal system components (LART form) but numpy version
@@ -53,22 +56,33 @@ def solve_twostream_lart(diagonal, lower_diagonal, upper_diagonal, vector):
         _type_: cumlative T, tilde Q, spectrum 
     """
     nlayer, _ = diagonal.shape
-    Ttilde = jnp.zeros_like(diagonal)
-    Qtilde = jnp.zeros_like(diagonal)
-    Ttilde = Ttilde.at[0,:].set(upper_diagonal[0, :] / diagonal[0, :])
-    Qtilde = Qtilde.at[0,:].set(vector[0, :] / diagonal[0, :])
-    for i in range(1, nlayer):
-        gamma = diagonal[i, :] - lower_diagonal[i - 1, :] * Ttilde[i - 1, :]
-        Ttilde[i, :] = upper_diagonal[i, :] / gamma
-        Qtilde[i, :] = (vector[i, :] +
-                        lower_diagonal[i - 1, :] * Qtilde[i - 1, :]) / gamma
+
+    #arr = [diagonal[1:nlayer-1], lower_diagonal[0:nlayer-2], upper_diagonal[1:nlayer-1], vector[1,nlayer-1]]
+    #carry_i_1 = [Ttilde, Qtilde, ]
+    def f(carry_i_1, arr):
+        Ttilde_i_1, Qtilde_i_1 = carry_i_1
+        diagonal_i, lower_diagonal_i_1, upper_diagonal_i, vector_i = arr
+        gamma = diagonal_i - lower_diagonal_i_1 * Ttilde_i_1
+        Ttilde_each = upper_diagonal_i / gamma
+        Qtilde_each = (vector_i + lower_diagonal_i_1 * Qtilde_i_1) / gamma
+
+        TandQ = [Ttilde_each, Qtilde_each]
+        return TandQ, TandQ
+
+    #top
+    Ttilde, Qtilde = f()
+    Ttilde = jnp.insert(Ttilde, 0, upper_diagonal[0, :] / diagonal[0, :])
+    Qtilde = jnp.insert(Qtilde, 0, vector[0, :] / diagonal[0, :])
+    
+    #bottom
 
     cumTtilde = jnp.cumprod(Ttilde, axis=0)
     contribution_function = cumTtilde * Qtilde
-    
+
     spectrum = jnp.nansum(contribution_function, axis=0)
-    
-    return  cumTtilde, Qtilde, spectrum
+
+    return cumTtilde, Qtilde, spectrum
+
 
 def solve_twostream_pure_absorption_numpy(trans_coeff, scat_coeff, piB):
     """solve pure absorption limit for two stream
@@ -94,6 +108,7 @@ def solve_twostream_pure_absorption_numpy(trans_coeff, scat_coeff, piB):
 def contribution_function_lart(cumT, Q):
     return cumT * Q
 
+
 def set_scat_trans_coeffs(zeta_plus, zeta_minus, lambdan, dtau):
     """sets scattering and transmission coefficients from zeta and lambda coefficient and dtau
 
@@ -106,14 +121,17 @@ def set_scat_trans_coeffs(zeta_plus, zeta_minus, lambdan, dtau):
     Returns:
         _type_: transmission coefficient, scattering coeffcient
     """
-    trans_func = jnp.exp(-lambdan * dtau) # transmission function (Heng 2017, 3.58)
+    trans_func = jnp.exp(-lambdan *
+                         dtau)  # transmission function (Heng 2017, 3.58)
     denom = zeta_plus**2 - (zeta_minus * trans_func)**2
     trans_coeff = trans_func * (zeta_plus**2 - zeta_minus**2) / denom
     scat_coeff = (1.0 - trans_func**2) * zeta_plus * zeta_minus / denom
     return trans_coeff, scat_coeff
 
-        
-def compute_tridiag_diagonals_and_vector(scat_coeff, trans_coeff, piB, upper_diagonal_top, diagonal_top, vector_top):
+
+def compute_tridiag_diagonals_and_vector(scat_coeff, trans_coeff, piB,
+                                         upper_diagonal_top, diagonal_top,
+                                         vector_top):
     """computes the diagonals and right-handside vector from scattering and transmission coefficients for the tridiagonal system
 
     Args:
@@ -130,29 +148,28 @@ def compute_tridiag_diagonals_and_vector(scat_coeff, trans_coeff, piB, upper_dia
 
     Returns:
         _jnp arrays: diagonal [Nlayer], lower dianoals [Nlayer], upper diagonal [Nlayer], vector [Nlayer], 
-    """ 
+    """
 
     Sn_minus_one = jnp.roll(scat_coeff, 1, axis=0)  # S_{n-1}
     Tn_minus_one = jnp.roll(trans_coeff, 1, axis=0)  # T_{n-1}
-    
-    rn = scat_coeff/trans_coeff
+
+    rn = scat_coeff / trans_coeff
     rn_plus_one = jnp.roll(rn, -1, axis=0)
-    rn_minus = Sn_minus_one/trans_coeff
+    rn_minus = Sn_minus_one / trans_coeff
 
-    # Case I 
+    # Case I
     upper_diagonal = Sn_minus_one  # an
-    diagonal = rn*(Tn_minus_one**2 - Sn_minus_one**2) + rn_minus # bn
-    lower_diagonal = rn_plus_one*trans_coeff  # cn
-
+    diagonal = rn * (Tn_minus_one**2 - Sn_minus_one**2) + rn_minus  # bn
+    lower_diagonal = rn_plus_one * trans_coeff  # cn
 
     # top boundary setting
-    upper_diagonal = upper_diagonal.at[0].set(upper_diagonal_top) 
-    diagonal = diagonal.at[0].set(diagonal_top) 
+    upper_diagonal = upper_diagonal.at[0].set(upper_diagonal_top)
+    diagonal = diagonal.at[0].set(diagonal_top)
 
     # vector
-    hatpiB = (1.0 - trans_coeff - scat_coeff)*piB
-    hatpiB_minus_one = jnp.roll(hatpiB, 1, axis=0)  
-    vector = rn_minus*hatpiB - rn*(1.0 - Sn_minus_one)*hatpiB_minus_one
+    hatpiB = (1.0 - trans_coeff - scat_coeff) * piB
+    hatpiB_minus_one = jnp.roll(hatpiB, 1, axis=0)
+    vector = rn_minus * hatpiB - rn * (1.0 - Sn_minus_one) * hatpiB_minus_one
 
     # top bundary
     vector = vector.at[0].set(vector_top)
@@ -160,11 +177,9 @@ def compute_tridiag_diagonals_and_vector(scat_coeff, trans_coeff, piB, upper_dia
     return diagonal, lower_diagonal, upper_diagonal, vector
 
 
-
-
-
 def sh2_zetalambda_coeff():
     raise ValueError("not implemented yet.")
+
 
 def rtrun_emis_toon(dtau, source_matrix):
     """Radiative Transfer using the Toon-type two-stream approximaion 
@@ -179,7 +194,6 @@ def rtrun_emis_toon(dtau, source_matrix):
     Nnus = jnp.shape(dtau)[1]
     zeta_plus, zeta_minus, lambdan = toon_zetalambda_coeffs(gamma_1, gamma_2)
     set_scat_trans_coeffs(zeta_plus, zeta_minus, lambdan, dtau)
-
 
 
 #if __name__ == "__main__":
