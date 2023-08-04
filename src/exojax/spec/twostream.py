@@ -70,10 +70,18 @@ def solve_twostream_lart(diagonal, lower_diagonal, upper_diagonal, vector):
         return TandQ, TandQ
 
     #top
-    Ttilde, Qtilde = f()
-    Ttilde = jnp.insert(Ttilde, 0, upper_diagonal[0, :] / diagonal[0, :])
-    Qtilde = jnp.insert(Qtilde, 0, vector[0, :] / diagonal[0, :])
+    Tilde0 = upper_diagonal[0, :] / diagonal[0, :]
+    Qtilde0 = vector[0, :] / diagonal[0, :]
+
+    arrin = [
+        diagonal[1:nlayer - 1], lower_diagonal[0:nlayer - 2],
+        upper_diagonal[1:nlayer - 1], vector[1, nlayer - 1]
+    ]
+    Ttilde, Qtilde = scan(f, [Tilde0, Qtilde0], arrin)
     
+    Ttilde = jnp.insert(Ttilde, 0, Tilde0)
+    Qtilde = jnp.insert(Qtilde, 0, Qtilde0)
+
     #bottom
 
     cumTtilde = jnp.cumprod(Ttilde, axis=0)
