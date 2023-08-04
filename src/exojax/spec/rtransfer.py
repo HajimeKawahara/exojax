@@ -1,7 +1,10 @@
 """ radiative transfer
 """
-from exojax.linalg.tridiag import solve_vmap_semitridiag_naive_array as vmap_solve_tridiag
-from exojax.linalg.tridiag import solve_tridiag
+from exojax.spec.twostream import solve_twostream_lart_numpy
+from exojax.spec.twostream import solve_twostream_pure_absorption_numpy
+from exojax.spec.twostream import contribution_function_lart
+
+
 from exojax.spec.toon import reduced_source_function_isothermal_layer
 from exojax.spec.toon import params_hemispheric_mean
 from exojax.spec.toon import zetalambda_coeffs
@@ -15,7 +18,6 @@ from exojax.spec.layeropacity import layer_optical_depth
 from exojax.spec.layeropacity import layer_optical_depth_CIA
 from exojax.spec.layeropacity import layer_optical_depth_Hminus
 from exojax.spec.layeropacity import layer_optical_depth_VALD
-from jax import vmap
 
 
 @jit
@@ -144,39 +146,15 @@ def rtrun_emis_scat_toon_hemispheric_mean(dtau, single_scattering_albedo,
     zeta_plus, zeta_minus, lambdan = zetalambda_coeffs(gamma_1, gamma_2)
     trans_coeff, scat_coeff = set_scat_trans_coeffs(zeta_plus, zeta_minus,
                                                     lambdan, dtau)
-    # delta = 1.e-9
-    delta = 0.0
-    trans_coeff = trans_coeff + delta
-
-    import numpy as np
-    nlayer, nwav = trans_coeff.shape
-
-    # debug
-    debug = False
-    if debug:
-        debug_imshow_ts((trans_coeff), (scat_coeff),
-                        "Transmission Coefficient $\mathcal{T}$",
-                        "Scattering Coefficient $\mathcal{S}$")
-        debug_imshow_ts(jnp.log10(trans_coeff), jnp.log10(scat_coeff),
-                        "Transmission Coefficient $\mathcal{T} log$",
-                        "Scattering Coefficient $\mathcal{S} log$")
-
-    # temporary
-    source_function_derivative = np.zeros_like(source_matrix)
-
-    debug_imshow_ts((source_matrix), (source_function_derivative), "piB",
-                    "dot piB")
 
     piB = reduced_source_function_isothermal_layer(single_scattering_albedo,
                                                    gamma_1, gamma_2,
                                                    source_matrix)
 
-    if debug:
-        debug_imshow_ts(piB, piB, "piBplus", "piBminus")
-
     # Boundary condition
     diagonal_top = 1.0 * jnp.ones_like(trans_coeff[0, :])  # b0
     upper_diagonal_top = trans_coeff[0, :]
+    print("TOP value should be reconsidered more seriously.")
     vector_top = -0.0  # tmp
 
     # tridiagonal elements
@@ -184,97 +162,37 @@ def rtrun_emis_scat_toon_hemispheric_mean(dtau, single_scattering_albedo,
         scat_coeff, trans_coeff, piB, upper_diagonal_top, diagonal_top,
         vector_top)
 
-    if debug:
-        debug_imshow_ts(jnp.log10(upper_diagonal), jnp.log10(lower_diagonal),
-                        "log(a)", "log(c)")
-        debug_imshow_ts(jnp.log10(diagonal), jnp.log10(vector), "log(b)",
-                        "log(d)")
-
-        debug_imshow_ts(vector, jnp.log10((vector)), "vector", "log  vector")
-        debug_imshow_ts(diagonal, jnp.log10(jnp.abs(diagonal)), "diagonal",
-                        "log abs diagonal")
-        debug_imshow_ts(upper_diagonal, lower_diagonal, "upper diagonal",
-                        "lower diagonal")
-        debug_imshow_ts(jnp.log10(jnp.abs(upper_diagonal)),
-                        jnp.log10(jnp.abs(lower_diagonal)),
-                        "log upper diagonal", "log lower diagonal")
-
-    # TEST IMPLEMENTATION
-    Ttilde = np.zeros_like(trans_coeff)
-    Qtilde = np.zeros_like(trans_coeff)
-    Ttilde[0, :] = upper_diagonal[0, :] / diagonal[0, :]
-    Qtilde[0, :] = vector[0, :] / diagonal[0, :]
-    for i in range(1, nlayer):
-        gamma = diagonal[i, :] - lower_diagonal[i - 1, :] * Ttilde[i - 1, :]
-        Ttilde[i, :] = upper_diagonal[i, :] / gamma
-        Qtilde[i, :] = (vector[i, :] +
-                        lower_diagonal[i - 1, :] * Qtilde[i - 1, :]) / gamma
+    cumTtilde, Qtilde, spectrum = solve_twostream_lart_numpy(
+        diagonal, lower_diagonal, upper_diagonal, vector)
+    contribution_function = contribution_function_lart(cumTtilde, Qtilde)
 
     # COMPARISON With PURE form
-    Qpure = np.zeros_like(Qtilde)
+    cumTpure, Qpure, spectrum_pure = solve_twostream_pure_absorption_numpy(
+        trans_coeff, scat_coeff, piB)
 
-    for i in range(0, nlayer - 1):
-        Qpure[i, :] = (1.0 - trans_coeff[i, :] - scat_coeff[i, :]) * piB[i, :]
+    # debug
+    debug = True
+    if debug:
+        debug_imshow_ts((trans_coeff), (scat_coeff),
+                        "Transmission Coefficient $\mathcal{T}$",
+                        "Scattering Coefficient $\mathcal{S}$")
 
-    # negative removal
-    # Qtilde[Qtilde < 0.0] = 0.0
+        debug_imshow_ts(Qtilde, Qpure, "Qtilde", "Qpure")
+        debug_imshow_ts((Qtilde), cumTtilde, "Qtilde", "cumprod T")
+        debug_imshow_ts(jnp.log10(contribution_function), contribution_function, "log (cumprod T)*Qtilde",
+                        "(cumprod T)*Qtilde")
 
-    debug_imshow_ts((Ttilde), (trans_coeff), "Ttilde", "trans")
-    Ttilde = np.array(Ttilde)
-    debug_imshow_ts((Qtilde), Qpure, "Qtilde", "Qpure")
+    
+    if debug:
+        import matplotlib.pyplot as plt
+        plt.plot(spectrum, label="Ttilde * Qtilde ")
+        plt.plot(spectrum_pure, label="Tpure * Qpure", ls="dashed", lw=2)
+        plt.legend()
+        plt.show()
 
-    debug_imshow_ts((Qpure / Qtilde), np.log10(Qpure / Qtilde), "Q pure/tilde",
-                    "log pure/tilde")
+    return spectrum
 
-    # Ttilde[Ttilde > 1.0] = 1.0
-    cumTtilde = np.cumprod(Ttilde, axis=0)
-    debug_imshow_ts((Qtilde), cumTtilde, "Qtilde", "cumprod T")
-    contri = cumTtilde * Qtilde
-    debug_imshow_ts(np.log10(contri), contri, "log (cumprod T)*Qtilde",
-                    "(cumprod T)*Qtilde")
 
-    spectrum = np.nansum(cumTtilde * Qtilde, axis=0)
-
-    cumTpure = np.cumprod(trans_coeff, axis=0)
-    spectrum_tpure = np.nansum(cumTtilde * Qpure, axis=0)
-    spectrum_pure = np.nansum(cumTpure * Qpure, axis=0)
-    spectrum_pt = np.nansum(cumTpure * Qtilde, axis=0)
-    spectrum = np.nansum(cumTtilde * Qtilde, axis=0)
-
-    import matplotlib.pyplot as plt
-    plt.plot(spectrum, label="Ttilde * Qtilde ")
-    plt.plot(spectrum_pt, label="Tpure * Qtilde ", ls="dashed", lw=2)
-    plt.plot(spectrum_tpure, label="Ttilde * Qpure")
-    plt.plot(spectrum_pure, label="Tpure * Qpure", ls="dashed", lw=2)
-
-    plt.legend()
-    plt.show()
-
-    # debug_imshow_ts(np.log10(Ttilde), np.log10(Qtilde), "Ttilde", "Qtilde")
-
-    import sys
-    sys.exit()
-    # print(diagonal, lower_diagonal, upper_diagonal)
-
-    # Using complete tridiag solver
-    # vmap_solve_tridiag = vmap(solve_tridiag, (0, 0, 0, 0), 0)
-    beta, delta = vmap_solve_tridiag(diagonal.T[0:20000, 0:nlayer],
-                                     lower_diagonal.T[0:20000, 0:nlayer - 1],
-                                     upper_diagonal.T[0:20000, 0:nlayer - 1],
-                                     vector.T[0:20000, 0:nlayer])
-    import numpy as np
-    # beta[np.abs(beta)>100.0]=0.0
-    # delta[np.abs(delta)>100.0]=0.0
-
-    debug_imshow_ts(np.log10(np.abs(beta.T)), np.log10(np.abs(delta.T)),
-                    "beta", "delta")
-
-    flux_upward = delta[:, 1]
-
-    import matplotlib.pyplot as plt
-    plt.plot(flux_upward[10300:10700])
-    plt.show()
-    return flux_upward
 
 
 def manual_recover_tridiagonal(diagonal, lower_diagonal, upper_diagonal,
