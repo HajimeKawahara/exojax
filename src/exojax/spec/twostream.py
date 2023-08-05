@@ -1,3 +1,7 @@
+""" Two-stream solvers and related methods 
+
+"""
+
 import jax.numpy as jnp
 from jax.lax import scan
 
@@ -74,34 +78,33 @@ def solve_twostream_lart(diagonal, lower_diagonal, upper_diagonal, vector):
     Qtilde0 = vector[0, :] / diagonal[0, :]
 
     arrin = [
-        diagonal[1:nlayer - 1], lower_diagonal[0:nlayer - 2],
-        upper_diagonal[1:nlayer - 1], vector[1, nlayer - 1]
+        diagonal[1:nlayer - 1, :], lower_diagonal[0:nlayer - 2, :],
+        upper_diagonal[1:nlayer - 1, :], vector[1:nlayer - 1, :]
     ]
     Ttilde, Qtilde = scan(f, [Tilde0, Qtilde0], arrin)
-    
+
     Ttilde = jnp.insert(Ttilde, 0, Tilde0)
     Qtilde = jnp.insert(Qtilde, 0, Qtilde0)
 
     #bottom
+    # Not Yet
 
     cumTtilde = jnp.cumprod(Ttilde, axis=0)
-    contribution_function = cumTtilde * Qtilde
-
-    spectrum = jnp.nansum(contribution_function, axis=0)
+    spectrum = jnp.nansum(cumTtilde * Qtilde, axis=0)
 
     return cumTtilde, Qtilde, spectrum
 
 
 def solve_twostream_pure_absorption_numpy(trans_coeff, scat_coeff, piB):
-    """solve pure absorption limit for two stream
+    """solves pure absorption limit for two stream
 
     Args:
-        trans_coeff (_type_): _description_
-        scat_coeff (_type_): _description_
-        piB (_type_): _description_
+        trans_coeff (_type_): transmission coefficient 
+        scat_coeff (_type_):  scattering coefficient
+        piB (_type_): pi x Planck function
 
     Returns:
-        _type_: cumlative T, tilde Q, spectrum 
+        _type_: cumlative transmission, generalized source, spectrum 
     """
     import numpy as np
     Qpure = np.zeros_like(trans_coeff)
@@ -114,6 +117,15 @@ def solve_twostream_pure_absorption_numpy(trans_coeff, scat_coeff, piB):
 
 
 def contribution_function_lart(cumT, Q):
+    """computes the contribution function from LART cumlative transmission and generalized source 
+
+    Args:
+        cumT (_type_): cumlative transmission
+        Q (_type_): generalized source
+
+    Returns:
+        _type_: contribution fnction in a vector form
+    """
     return cumT * Q
 
 
@@ -187,21 +199,6 @@ def compute_tridiag_diagonals_and_vector(scat_coeff, trans_coeff, piB,
 
 def sh2_zetalambda_coeff():
     raise ValueError("not implemented yet.")
-
-
-def rtrun_emis_toon(dtau, source_matrix):
-    """Radiative Transfer using the Toon-type two-stream approximaion 
-
-    Args:
-        dtau (2D array): optical depth matrix, dtau  (N_layer, N_nus)
-        source_matrix (2D array): source matrix (N_layer, N_nus)
-
-    Returns:
-        flux in the unit of [erg/cm2/s/cm-1] if using piBarr as a source function.
-    """
-    Nnus = jnp.shape(dtau)[1]
-    zeta_plus, zeta_minus, lambdan = toon_zetalambda_coeffs(gamma_1, gamma_2)
-    set_scat_trans_coeffs(zeta_plus, zeta_minus, lambdan, dtau)
 
 
 #if __name__ == "__main__":
