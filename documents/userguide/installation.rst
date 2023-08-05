@@ -19,6 +19,13 @@ Alternatively, clone the code from `github page <https://github.com/HajimeKawaha
 	  
 	  python setup.py install
 
+If the older version of ExoJAX has already been installed, you need to remove all of the old modules. To do so, the following procedure is recommended:
+
+.. code:: sh
+	  
+	  python setup.py clean --all 
+	  python setup.py install
+
 	  
 However, to take advantage of the power of JAX, you need to prepare a GPU environment (if you have). For this, jaxlib need to be linked.
 
