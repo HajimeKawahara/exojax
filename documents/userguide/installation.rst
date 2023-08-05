@@ -19,7 +19,7 @@ Alternatively, clone the code from `github page <https://github.com/HajimeKawaha
 	  
 	  python setup.py install
 
-If the older version of ExoJAX has already been installed, you need to remove all of the old modules. To do so, the following procedure is recommended:
+If the older version of ExoJAX has already been installed, you need to remove all of the old modules (Otherwise, modules that have been deleted and no more exist in the current version remain). To do so, the following procedure is recommended:
 
 .. code:: sh
 	  
