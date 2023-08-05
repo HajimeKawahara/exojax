@@ -33,8 +33,11 @@ def solve_twostream_lart_numpy(diagonal, lower_diagonal, upper_diagonal,
     for i in range(1, nlayer - 1):
         gamma = diagonal[i, :] - lower_diagonal[i - 1, :] * Ttilde[i - 1, :]
         Ttilde[i, :] = upper_diagonal[i, :] / gamma
+
         Qtilde[i, :] = (vector[i, :] +
                         lower_diagonal[i - 1, :] * Qtilde[i - 1, :]) / gamma
+        #Qtilde[i, :] = Ttilde[i, :] / upper_diagonal[i, :] * (
+        #    lower_diagonal[i - 1, :] * Qtilde[i - 1, :] + vector[i, :]) #provide same results
 
     cumTtilde = np.cumprod(Ttilde, axis=0)
     contribution_function = cumTtilde * Qtilde
@@ -190,7 +193,7 @@ def compute_tridiag_diagonals_and_vector(scat_coeff, trans_coeff, piB,
     hatpiB = (1.0 - trans_coeff - scat_coeff) * piB
     hatpiB_minus_one = jnp.roll(hatpiB, 1, axis=0)
     vector = rn_minus * hatpiB - rn * (1.0 - Sn_minus_one) * hatpiB_minus_one
-
+    
     # top bundary
     vector = vector.at[0].set(vector_top)
 

@@ -277,8 +277,8 @@ class ArtEmisScat(ArtCommon):
         if self.rtsolver == "toon_hemispheric_mean":
 
             #temporary
-            single_scattering_albedo = jnp.ones_like(dtau) * 0.01
-            asymmetric_parameter = jnp.ones_like(dtau) * 0.01
+            single_scattering_albedo = jnp.ones_like(dtau) * 0.0001
+            asymmetric_parameter = jnp.ones_like(dtau) * 0.0001
 
             return rtrun_emis_scat_toon_hemispheric_mean(
                 dtau, single_scattering_albedo, asymmetric_parameter, sourcef)

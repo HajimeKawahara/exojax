@@ -173,14 +173,20 @@ def rtrun_emis_scat_toon_hemispheric_mean(dtau, single_scattering_albedo,
     # debug
     debug = True
     if debug:
-        debug_imshow_ts((trans_coeff), (scat_coeff),
-                        "Transmission Coefficient $\mathcal{T}$",
-                        "Scattering Coefficient $\mathcal{S}$")
+        #debug_imshow_ts((trans_coeff), (scat_coeff),
+        #                "Transmission Coefficient $\mathcal{T}$",
+        #                "Scattering Coefficient $\mathcal{S}$")
 
+        #!!! already confirmed that cumTtilde is almost same as cumTpure
+        #debug_imshow_ts(cumTtilde, cumTpure, "cumTtilde", "cumTpure")
+        #debug_imshow_ts(cumTtilde/cumTpure, cumTtilde, "cTtilde/cTpure", "cTtilde")
+
+        
         debug_imshow_ts(Qtilde, Qpure, "Qtilde", "Qpure")
-        debug_imshow_ts((Qtilde), cumTtilde, "Qtilde", "cumprod T")
-        debug_imshow_ts(jnp.log10(contribution_function), contribution_function, "log (cumprod T)*Qtilde",
-                        "(cumprod T)*Qtilde")
+        debug_imshow_ts(Qtilde/Qpure, Qtilde, "Qtilde/Qpure", "Qtilde")
+        #debug_imshow_ts((Qtilde), cumTtilde, "Qtilde", "cumprod T")
+        #debug_imshow_ts(jnp.log10(contribution_function), contribution_function, "log (cumprod T)*Qtilde",
+        #                "(cumprod T)*Qtilde")
 
     
     if debug:
