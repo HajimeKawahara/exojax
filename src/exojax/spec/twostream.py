@@ -192,7 +192,7 @@ def compute_tridiag_diagonals_and_vector(scat_coeff, trans_coeff, piB,
     # vector
     hatpiB = (1.0 - trans_coeff - scat_coeff) * piB
     hatpiB_minus_one = jnp.roll(hatpiB, 1, axis=0)
-    vector = rn_minus * hatpiB - rn * (1.0 - Sn_minus_one) * hatpiB_minus_one
+    vector = rn_minus * hatpiB - rn * (Tn_minus_one - Sn_minus_one) * hatpiB_minus_one
     
     # top bundary
     vector = vector.at[0].set(vector_top)
