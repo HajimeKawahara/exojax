@@ -164,8 +164,11 @@ def rtrun_emis_scat_toon_hemispheric_mean(dtau, single_scattering_albedo,
 
     cumTtilde, Qtilde, spectrum = solve_twostream_lart_numpy(
         diagonal, lower_diagonal, upper_diagonal, vector)
-    contribution_function = contribution_function_lart(cumTtilde, Qtilde)
+    return spectrum, cumTtilde, Qtilde, trans_coeff, scat_coeff, piB
 
+def comparison_with_pure_absorption(cumTtilde, Qtilde, spectrum, trans_coeff, scat_coeff, piB):
+    ##############
+    contribution_function = contribution_function_lart(cumTtilde, Qtilde)
     # COMPARISON With PURE form
     cumTpure, Qpure, spectrum_pure = solve_twostream_pure_absorption_numpy(
         trans_coeff, scat_coeff, piB)
@@ -178,15 +181,15 @@ def rtrun_emis_scat_toon_hemispheric_mean(dtau, single_scattering_albedo,
         #                "Scattering Coefficient $\mathcal{S}$")
 
         #!!! already confirmed that cumTtilde is almost same as cumTpure
-        #debug_imshow_ts(cumTtilde, cumTpure, "cumTtilde", "cumTpure")
-        #debug_imshow_ts(cumTtilde/cumTpure, cumTtilde, "cTtilde/cTpure", "cTtilde")
+        debug_imshow_ts(cumTtilde, cumTpure, "cumTtilde", "cumTpure")
+        debug_imshow_ts(cumTtilde/cumTpure, cumTtilde, "cTtilde/cTpure", "cTtilde")
 
         
         debug_imshow_ts(Qtilde, Qpure, "Qtilde", "Qpure")
         debug_imshow_ts(Qtilde/Qpure, Qtilde, "Qtilde/Qpure", "Qtilde")
         #debug_imshow_ts((Qtilde), cumTtilde, "Qtilde", "cumprod T")
-        #debug_imshow_ts(jnp.log10(contribution_function), contribution_function, "log (cumprod T)*Qtilde",
-        #                "(cumprod T)*Qtilde")
+        debug_imshow_ts(jnp.log10(contribution_function), contribution_function, "log (cumprod T)*Qtilde",
+                        "(cumprod T)*Qtilde")
 
     
     if debug:

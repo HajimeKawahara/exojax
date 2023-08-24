@@ -255,13 +255,14 @@ class ArtEmisScat(ArtCommon):
         self.rtsolver = rtsolver
         self.method = "emission_with_scattering_using_" + self.rtsolver
 
-    def run(self, dtau, temperature, nu_grid=None):
+    def run(self, dtau, temperature, nu_grid=None, show=False):
         """run radiative transfer
 
         Args:
             dtau (2D array): optical depth matrix, dtau  (N_layer, N_nus)
             temperature (1D array): temperature profile (Nlayer)
             nu_grid (1D array): if nu_grid is not initialized, provide it. 
+            show: plot intermediate results
 
         Returns:
             _type_: _description_
@@ -273,18 +274,22 @@ class ArtEmisScat(ArtCommon):
         else:
             raise ValueError("the wavenumber grid is not given.")
 
-
         if self.rtsolver == "toon_hemispheric_mean":
 
             #temporary
             single_scattering_albedo = jnp.ones_like(dtau) * 0.0001
             asymmetric_parameter = jnp.ones_like(dtau) * 0.0001
 
-            return rtrun_emis_scat_toon_hemispheric_mean(
+            spectrum, cumTtilde, Qtilde, trans_coeff, scat_coeff, piB = rtrun_emis_scat_toon_hemispheric_mean(
                 dtau, single_scattering_albedo, asymmetric_parameter, sourcef)
+            if show:
+                from exojax.spec.rtransfer import comparison_with_pure_absorption
+                comparison_with_pure_absorption(cumTtilde, Qtilde, spectrum,
+                                        trans_coeff, scat_coeff, piB)
+
+            return spectrum
         else:
             raise ValueError("Unknown radiative transfer solver (rtsolver).")
-
 
 class ArtEmisPure(ArtCommon):
     """Atmospheric RT for emission w/ pure absorption
@@ -326,6 +331,7 @@ class ArtEmisPure(ArtCommon):
             raise ValueError("the wavenumber grid is not given.")
         return rtrun_emis_pure_absorption(dtau, sourcef)
 
+    
 
 class ArtTransPure(ArtCommon):
     def __init__(self, pressure_top=1.e-8, pressure_btm=1.e2, nlayer=100):
