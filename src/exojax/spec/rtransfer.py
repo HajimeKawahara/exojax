@@ -119,10 +119,6 @@ def rtrun_trans_pure_absorption(dtau_chord, radius_lower):
         axis=0)
     return deltaRp2 + radius_lower[-1]**2
 
-
-# from exojax.linalg.tridiag import solve_vmap_semitridiag_naive as vmap_solve_tridiag
-
-
 def rtrun_emis_scat_toon_hemispheric_mean(dtau, single_scattering_albedo,
                                           asymmetric_parameter, source_matrix):
 
@@ -160,12 +156,10 @@ def panel_imshow(val1, val2, title1, title2):
     a = ax.imshow(val1)
     plt.colorbar(a, shrink=0.5)
     ax.set_aspect(0.35/ax.get_data_ratio())
-
     ax = fig.add_subplot(212)
     ax.set_title(title2)
     a = ax.imshow(val2)
     ax.set_aspect(0.35/ax.get_data_ratio())
-    
     plt.colorbar(a, shrink=0.5)
     plt.show()
 
