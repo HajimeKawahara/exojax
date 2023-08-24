@@ -46,7 +46,13 @@ def test_rt(db, diffmode, fig=False):
     xsmatrix = opa.xsmatrix(Tarr, art.pressure)
     dtau = art.opacity_profile_lines(xsmatrix, mmr_arr, opa.mdb.molmass,
                                      gravity)
-    F0 = art.run(dtau, Tarr, show=True)
+
+    #almost pure absorption
+    import jax.numpy as jnp
+    single_scattering_albedo = jnp.ones_like(dtau) * 0.0001
+    asymmetric_parameter = jnp.ones_like(dtau) * 0.0001
+
+    F0 = art.run(dtau, single_scattering_albedo, asymmetric_parameter, Tarr, show=True)
 
     return nu_grid, F0, F0
     

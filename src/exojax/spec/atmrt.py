@@ -255,7 +255,7 @@ class ArtEmisScat(ArtCommon):
         self.rtsolver = rtsolver
         self.method = "emission_with_scattering_using_" + self.rtsolver
 
-    def run(self, dtau, temperature, nu_grid=None, show=False):
+    def run(self, dtau, single_scattering_albedo, asymmetric_parameter, temperature, nu_grid=None, show=False):
         """run radiative transfer
 
         Args:
@@ -275,11 +275,7 @@ class ArtEmisScat(ArtCommon):
             raise ValueError("the wavenumber grid is not given.")
 
         if self.rtsolver == "toon_hemispheric_mean":
-
-            #temporary
-            single_scattering_albedo = jnp.ones_like(dtau) * 0.0001
-            asymmetric_parameter = jnp.ones_like(dtau) * 0.0001
-
+            
             spectrum, cumTtilde, Qtilde, trans_coeff, scat_coeff, piB = rtrun_emis_scat_toon_hemispheric_mean(
                 dtau, single_scattering_albedo, asymmetric_parameter, sourcef)
             if show:

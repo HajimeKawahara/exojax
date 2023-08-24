@@ -4,7 +4,6 @@ from exojax.spec.twostream import solve_twostream_lart_numpy
 from exojax.spec.twostream import solve_twostream_pure_absorption_numpy
 from exojax.spec.twostream import contribution_function_lart
 
-
 from exojax.spec.toon import reduced_source_function_isothermal_layer
 from exojax.spec.toon import params_hemispheric_mean
 from exojax.spec.toon import zetalambda_coeffs
@@ -124,20 +123,6 @@ def rtrun_trans_pure_absorption(dtau_chord, radius_lower):
 # from exojax.linalg.tridiag import solve_vmap_semitridiag_naive as vmap_solve_tridiag
 
 
-def debug_imshow_ts(val1, val2, title1, title2):
-    import matplotlib.pyplot as plt
-    fig = plt.figure()
-    ax = fig.add_subplot(211)
-    ax.set_title(title1)
-    a = plt.imshow(val1[:, 10300:10700])
-    plt.colorbar(a, shrink=0.5)
-    ax = fig.add_subplot(212)
-    ax.set_title(title2)
-    a = plt.imshow(val2[:, 10300:10700])
-    plt.colorbar(a, shrink=0.5)
-    plt.show()
-
-
 def rtrun_emis_scat_toon_hemispheric_mean(dtau, single_scattering_albedo,
                                           asymmetric_parameter, source_matrix):
 
@@ -166,42 +151,49 @@ def rtrun_emis_scat_toon_hemispheric_mean(dtau, single_scattering_albedo,
         diagonal, lower_diagonal, upper_diagonal, vector)
     return spectrum, cumTtilde, Qtilde, trans_coeff, scat_coeff, piB
 
-def comparison_with_pure_absorption(cumTtilde, Qtilde, spectrum, trans_coeff, scat_coeff, piB):
-    ##############
-    contribution_function = contribution_function_lart(cumTtilde, Qtilde)
-    # COMPARISON With PURE form
+
+def panel_imshow(val1, val2, title1, title2):
+    import matplotlib.pyplot as plt
+    fig = plt.figure()
+    ax = fig.add_subplot(211)
+    ax.set_title(title1)
+    a = ax.imshow(val1)
+    plt.colorbar(a, shrink=0.5)
+    ax.set_aspect(0.35/ax.get_data_ratio())
+
+    ax = fig.add_subplot(212)
+    ax.set_title(title2)
+    a = ax.imshow(val2)
+    ax.set_aspect(0.35/ax.get_data_ratio())
+    
+    plt.colorbar(a, shrink=0.5)
+    plt.show()
+
+
+def comparison_with_pure_absorption(cumTtilde, Qtilde, spectrum, trans_coeff,
+                                    scat_coeff, piB):
     cumTpure, Qpure, spectrum_pure = solve_twostream_pure_absorption_numpy(
         trans_coeff, scat_coeff, piB)
 
-    # debug
-    debug = True
-    if debug:
-        #debug_imshow_ts((trans_coeff), (scat_coeff),
-        #                "Transmission Coefficient $\mathcal{T}$",
-        #                "Scattering Coefficient $\mathcal{S}$")
+    contribution_function = contribution_function_lart(cumTtilde, Qtilde)
+    panel_imshow((trans_coeff), (scat_coeff),
+                 "Transmission Coefficient $\mathcal{T}$",
+                 "Scattering Coefficient $\mathcal{S}$")
 
-        #!!! already confirmed that cumTtilde is almost same as cumTpure
-        debug_imshow_ts(cumTtilde, cumTpure, "cumTtilde", "cumTpure")
-        debug_imshow_ts(cumTtilde/cumTpure, cumTtilde, "cTtilde/cTpure", "cTtilde")
+    panel_imshow(cumTtilde, cumTpure, "cumTtilde", "cumTpure")
+    panel_imshow(cumTtilde / cumTpure, cumTtilde, "cTtilde/cTpure", "cTtilde")
+    panel_imshow(Qtilde, Qpure, "Qtilde", "Qpure")
+    panel_imshow(Qtilde / Qpure, Qtilde, "Qtilde/Qpure", "Qtilde")
+    #debug_imshow_ts((Qtilde), cumTtilde, "Qtilde", "cumprod T")
+    panel_imshow(contribution_function, jnp.log10(contribution_function), 'contribution function ($\tilde{Q} \cumprod \tilde{T}$)', 'log scale')
 
-        
-        debug_imshow_ts(Qtilde, Qpure, "Qtilde", "Qpure")
-        debug_imshow_ts(Qtilde/Qpure, Qtilde, "Qtilde/Qpure", "Qtilde")
-        #debug_imshow_ts((Qtilde), cumTtilde, "Qtilde", "cumprod T")
-        debug_imshow_ts(jnp.log10(contribution_function), contribution_function, "log (cumprod T)*Qtilde",
-                        "(cumprod T)*Qtilde")
-
-    
-    if debug:
-        import matplotlib.pyplot as plt
-        plt.plot(spectrum, label="Ttilde * Qtilde ")
-        plt.plot(spectrum_pure, label="Tpure * Qpure", ls="dashed", lw=2)
-        plt.legend()
-        plt.show()
+    import matplotlib.pyplot as plt
+    plt.plot(spectrum, label="Ttilde * Qtilde ")
+    plt.plot(spectrum_pure, label="Tpure * Qpure", ls="dashed", lw=2)
+    plt.legend()
+    plt.show()
 
     return spectrum
-
-
 
 
 def manual_recover_tridiagonal(diagonal, lower_diagonal, upper_diagonal,
