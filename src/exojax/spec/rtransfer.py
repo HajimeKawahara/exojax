@@ -119,6 +119,7 @@ def rtrun_trans_pure_absorption(dtau_chord, radius_lower):
         axis=0)
     return deltaRp2 + radius_lower[-1]**2
 
+
 def rtrun_emis_scat_toon_hemispheric_mean(dtau, single_scattering_albedo,
                                           asymmetric_parameter, source_matrix):
 
@@ -132,11 +133,20 @@ def rtrun_emis_scat_toon_hemispheric_mean(dtau, single_scattering_albedo,
                                                    gamma_1, gamma_2,
                                                    source_matrix)
 
-    # Boundary condition
-    diagonal_top = 1.0 * jnp.ones_like(trans_coeff[0, :])  # b0
-    upper_diagonal_top = trans_coeff[0, :]
     print("TOP value should be reconsidered more seriously.")
-    vector_top = -0.0  # tmp
+    # Boundary condition
+    diagonal_top = 1.0 * jnp.ones_like(trans_coeff[0, :])  # setting b0=1
+    upper_diagonal_top = trans_coeff[0, :]
+
+    zeta_plus0 = zeta_plus[0, :]
+    zeta_minus0 = zeta_minus[0, :]
+
+    # emission (no reflection)  
+    trans_func0 = jnp.exp(-lambdan[0, :] * dtau[0, :])
+    denom = zeta_plus0**2 - (zeta_minus0*trans_func0)**2
+    omtrans = 1.0 - trans_func0
+    fac = (zeta_plus0 * omtrans - zeta_minus0 * trans_func0 * omtrans)
+    vector_top = (zeta_plus0**2 - zeta_minus0**2) / denom * fac * piB[0, :]
 
     # tridiagonal elements
     diagonal, lower_diagonal, upper_diagonal, vector = compute_tridiag_diagonals_and_vector(
@@ -155,11 +165,11 @@ def panel_imshow(val1, val2, title1, title2):
     ax.set_title(title1)
     a = ax.imshow(val1)
     plt.colorbar(a, shrink=0.5)
-    ax.set_aspect(0.35/ax.get_data_ratio())
+    ax.set_aspect(0.35 / ax.get_data_ratio())
     ax = fig.add_subplot(212)
     ax.set_title(title2)
     a = ax.imshow(val2)
-    ax.set_aspect(0.35/ax.get_data_ratio())
+    ax.set_aspect(0.35 / ax.get_data_ratio())
     plt.colorbar(a, shrink=0.5)
     plt.show()
 
@@ -179,7 +189,9 @@ def comparison_with_pure_absorption(cumTtilde, Qtilde, spectrum, trans_coeff,
     panel_imshow(Qtilde, Qpure, "Qtilde", "Qpure")
     panel_imshow(Qtilde / Qpure, Qtilde, "Qtilde/Qpure", "Qtilde")
     #debug_imshow_ts((Qtilde), cumTtilde, "Qtilde", "cumprod T")
-    panel_imshow(contribution_function, jnp.log10(contribution_function), 'contribution function ($\tilde{Q} \cumprod \tilde{T}$)', 'log scale')
+    panel_imshow(contribution_function, jnp.log10(contribution_function),
+                 'contribution function ($\tilde{Q} \cumprod \tilde{T}$)',
+                 'log scale')
 
     import matplotlib.pyplot as plt
     plt.plot(spectrum, label="Ttilde * Qtilde ")
