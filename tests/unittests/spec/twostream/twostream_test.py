@@ -1,29 +1,9 @@
 from exojax.spec.twostream import compute_tridiag_diagonals_and_vector
 import jax.numpy as jnp
 
-
 def test_tridiag_coefficients():
-    import numpy as np
-    Nlayer = 4
-    S = jnp.array(range(0, Nlayer)) + 1.
-    T = (jnp.array(range(0, Nlayer)) + 1) * 2.
-    boundaries = (1.0, 2.0)
-    upper_diagonal_top, diagonal_top = boundaries
-
-    diag, lower, upper = compute_tridiag_diagonals_and_vector(S, T, upper_diagonal_top,
-                                                   diagonal_top)#, diagonal_btm,
-                                                   #lower_diagonal_btm)
-    ref_diag = jnp.array([
-        diagonal_top, S[1] * (S[0]**2 - T[0]**2) -S[0] , S[2] * (S[1]**2 - T[1]**2) -S[1],
-        S[3] * (S[2]**2 - T[2]**2) -S[2]
-    ])
-    assert np.array_equal(ref_diag,diag) 
-    ref_lower = jnp.array([S[1] * T[0], S[2] * T[1], S[3] * T[2]])
-    assert np.array_equal(ref_lower, lower[:-1])
-    ref_upper = jnp.array([upper_diagonal_top, S[0] * T[1], S[1] * T[2]])
-    assert np.array_equal(ref_upper, upper[:-1])
-
-def test_tridiag_coefficients_parallel_input():
+    """manual check of the LART tridiagonal coefficients
+    """
     import numpy as np
     Nlayer = 4
     B = jnp.array(range(0, Nlayer)) + 1.
@@ -32,7 +12,6 @@ def test_tridiag_coefficients_parallel_input():
     upper_diagonal_top = jnp.array([1.0,1.0,1.0])
     diagonal_top = jnp.array([2.0,2.0,2.0])
     vector_top = jnp.array([1.0,1.0,1.0])
-    #Nparallel = 3
     piB = jnp.array([B,B,B]).T
     scat_coeff = jnp.array([S,S,S]).T
     trans_coeff = jnp.array([T,T,T]).T
@@ -42,15 +21,12 @@ def test_tridiag_coefficients_parallel_input():
                                          vector_top)
                                                    
     ref_diag = jnp.array([
-        diagonal_top[0], S[1] * (S[0]**2 - T[0]**2) -S[0] , S[2] * (S[1]**2 - T[1]**2) -S[1],
+        -T[0]*diagonal_top[0], S[1] * (S[0]**2 - T[0]**2) -S[0] , S[2] * (S[1]**2 - T[1]**2) -S[1],
         S[3] * (S[2]**2 - T[2]**2) -S[2]
     ])
+    ref_diag = -ref_diag/T 
     ref_diag_arr = jnp.array([ref_diag,ref_diag,ref_diag]).T
-    print(ref_diag)
-    print(ref_diag_arr)
-    #assert np.array_equal(ref_diag_arr,diagonal) 
-    print(diagonal)
-
+    assert np.array_equal(ref_diag_arr,diagonal) 
+    
 if __name__ == "__main__":
-    #test_tridiag_coefficients()
-    test_tridiag_coefficients_parallel_input()  
+    test_tridiag_coefficients()  
