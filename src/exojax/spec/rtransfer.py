@@ -1,9 +1,21 @@
-""" radiative transfer
+""" Runs radiative transfer
+
+    The classification of rtrun(s):
+
+    - flux-based emission
+    -- pure absoprtion 
+    --- 2stream: rtrun_emis_pureabs_flux2st, rtrun_emis_pureabs_flux2st_surface
+    -- scattering
+    --- 2stream
+    ---- LART: rtrun_emis_scat_lart_toonhm
+    - intensity-based emission
+    - transmision: rtrun_trans_pureabs
+
+
+
+
 """
 from exojax.spec.twostream import solve_twostream_lart_numpy
-from exojax.spec.twostream import solve_twostream_pure_absorption_numpy
-from exojax.spec.twostream import contribution_function_lart
-
 from exojax.spec.toon import reduced_source_function_isothermal_layer
 from exojax.spec.toon import params_hemispheric_mean
 from exojax.spec.toon import zetalambda_coeffs
@@ -37,9 +49,8 @@ def trans2E3(x):
 
 
 @jit
-def rtrun_emis_pure_absorption(dtau, source_matrix):
-    """Radiative Transfer using two-stream approximaion + 2E3 (Helios-R1 type)
-
+def rtrun_emis_pureabs_flux2st(dtau, source_matrix):
+    """Radiative Transfer for emission spectrum using flux-based two-stream pure absorption with no surface
     Args:
         dtau (2D array): optical depth matrix, dtau  (N_layer, N_nus)
         source_matrix (2D array): source matrix (N_layer, N_nus)
@@ -56,9 +67,8 @@ def rtrun_emis_pure_absorption(dtau, source_matrix):
 
 
 @jit
-def rtrun_emis_pure_absorption_surface(dtau, source_matrix, source_surface):
-    """Radiative Transfer using two-stream approximaion + 2E3 (Helios-R1 type)
-    with a planetary surface.
+def rtrun_emis_pureabs_flux2st_surface(dtau, source_matrix, source_surface):
+    """Radiative Transfer for emission spectrum using flux-based two-stream pure absorption with a planetary surface.
 
     Args:
         dtau (2D array): optical depth matrix, dtau  (N_layer, N_nus)
@@ -76,26 +86,8 @@ def rtrun_emis_pure_absorption_surface(dtau, source_matrix, source_surface):
                    axis=0)
 
 
-@jit
-def rtrun_emis_pure_absorption_direct(dtau, source_matrix):
-    """Radiative Transfer using direct integration.
-
-    Note:
-        Use dtau/mu instead of dtau when you want to use non-unity, where mu=cos(theta)
-
-    Args:
-        dtau (2D array): optical depth matrix, dtau  (N_layer, N_nus)
-        source_matrix (2D array): source matrix (N_layer, N_nus)
-
-    Returns:
-        flux in the unit of [erg/cm2/s/cm-1] if using piBarr as a source function.
-    """
-    taupmu = jnp.cumsum(dtau, axis=0)
-    return jnp.sum(source_matrix * jnp.exp(-taupmu) * dtau, axis=0)
-
-
-def rtrun_trans_pure_absorption(dtau_chord, radius_lower):
-    """Radiative transfer assuming pure absorption 
+def rtrun_trans_pureabs(dtau_chord, radius_lower):
+    """Radiative transfer for transmission spectrum assuming pure absorption 
 
     Args:
         dtau_chord (2D array): chord opacity (Nlayer, N_wavenumber)
@@ -120,9 +112,19 @@ def rtrun_trans_pure_absorption(dtau_chord, radius_lower):
     return deltaRp2 + radius_lower[-1]**2
 
 
-def rtrun_emis_scat_toon_hemispheric_mean(dtau, single_scattering_albedo,
+def rtrun_emis_scat_lart_toonhm(dtau, single_scattering_albedo,
                                           asymmetric_parameter, source_matrix):
+    """Radiative Transfer for emission spectrum using flux-based two-stream scattering LART solver w/ Toon Hemispheric Mean.
 
+    Args:
+        dtau (_type_): _description_
+        single_scattering_albedo (_type_): _description_
+        asymmetric_parameter (_type_): _description_
+        source_matrix (_type_): _description_
+
+    Returns:
+        _type_: _description_
+    """
     gamma_1, gamma_2, mu1 = params_hemispheric_mean(single_scattering_albedo,
                                                     asymmetric_parameter)
     zeta_plus, zeta_minus, lambdan = zetalambda_coeffs(gamma_1, gamma_2)
@@ -132,8 +134,6 @@ def rtrun_emis_scat_toon_hemispheric_mean(dtau, single_scattering_albedo,
     piB = reduced_source_function_isothermal_layer(single_scattering_albedo,
                                                    gamma_1, gamma_2,
                                                    source_matrix)
-
-    print("TOP value should be reconsidered more seriously.")
     # Boundary condition
     diagonal_top = 1.0 * jnp.ones_like(trans_coeff[0, :])  # setting b0=1
     upper_diagonal_top = trans_coeff[0, :]
@@ -158,48 +158,6 @@ def rtrun_emis_scat_toon_hemispheric_mean(dtau, single_scattering_albedo,
     return spectrum, cumTtilde, Qtilde, trans_coeff, scat_coeff, piB
 
 
-def panel_imshow(val1, val2, title1, title2):
-    import matplotlib.pyplot as plt
-    fig = plt.figure()
-    ax = fig.add_subplot(211)
-    ax.set_title(title1)
-    a = ax.imshow(val1)
-    plt.colorbar(a, shrink=0.5)
-    ax.set_aspect(0.35 / ax.get_data_ratio())
-    ax = fig.add_subplot(212)
-    ax.set_title(title2)
-    a = ax.imshow(val2)
-    ax.set_aspect(0.35 / ax.get_data_ratio())
-    plt.colorbar(a, shrink=0.5)
-    plt.show()
-
-
-def comparison_with_pure_absorption(cumTtilde, Qtilde, spectrum, trans_coeff,
-                                    scat_coeff, piB):
-    cumTpure, Qpure, spectrum_pure = solve_twostream_pure_absorption_numpy(
-        trans_coeff, scat_coeff, piB)
-
-    contribution_function = contribution_function_lart(cumTtilde, Qtilde)
-    panel_imshow((trans_coeff), (scat_coeff),
-                 "Transmission Coefficient $\mathcal{T}$",
-                 "Scattering Coefficient $\mathcal{S}$")
-
-    panel_imshow(cumTtilde, cumTpure, "cumTtilde", "cumTpure")
-    panel_imshow(cumTtilde / cumTpure, cumTtilde, "cTtilde/cTpure", "cTtilde")
-    panel_imshow(Qtilde, Qpure, "Qtilde", "Qpure")
-    panel_imshow(Qtilde / Qpure, Qtilde, "Qtilde/Qpure", "Qtilde")
-    #debug_imshow_ts((Qtilde), cumTtilde, "Qtilde", "cumprod T")
-    panel_imshow(contribution_function, jnp.log10(contribution_function),
-                 'contribution function ($\tilde{Q} \cumprod \tilde{T}$)',
-                 'log scale')
-
-    import matplotlib.pyplot as plt
-    plt.plot(spectrum, label="Ttilde * Qtilde ")
-    plt.plot(spectrum_pure, label="Tpure * Qpure", ls="dashed", lw=2)
-    plt.legend()
-    plt.show()
-
-    return spectrum
 
 
 def manual_recover_tridiagonal(diagonal, lower_diagonal, upper_diagonal,
@@ -271,9 +229,9 @@ def pressure_layer(log_pressure_top=-8.,
                                    mode, reference_point, numpy)
 
 
-def rtrun(dtau, S):
-    warnings.warn("Use rtrun_emis_pure_absorption instead", FutureWarning)
-    return rtrun_emis_pure_absorption(dtau, S)
+#def rtrun(dtau, S):
+#    warnings.warn("Use rtrun_emis_pureabs_flux2st instead", FutureWarning)
+#    return rtrun_emis_pureabs_flux2st(dtau, S)
 
 
 ##########################################################################################

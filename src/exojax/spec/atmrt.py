@@ -8,9 +8,9 @@
 import numpy as np
 import jax.numpy as jnp
 from exojax.spec.planck import piBarr
-from exojax.spec.rtransfer import rtrun_emis_pure_absorption
-from exojax.spec.rtransfer import rtrun_emis_scat_toon_hemispheric_mean
-from exojax.spec.rtransfer import rtrun_trans_pure_absorption
+from exojax.spec.rtransfer import rtrun_emis_pureabs_flux2st
+from exojax.spec.rtransfer import rtrun_emis_scat_lart_toonhm
+from exojax.spec.rtransfer import rtrun_trans_pureabs
 from exojax.spec.layeropacity import layer_optical_depth
 from exojax.atm.atmprof import atmprof_gray, atmprof_Guillot, atmprof_powerlow
 from exojax.atm.idealgas import number_density
@@ -275,11 +275,11 @@ class ArtEmisScat(ArtCommon):
             raise ValueError("the wavenumber grid is not given.")
 
         if self.rtsolver == "toon_hemispheric_mean":
-            
-            spectrum, cumTtilde, Qtilde, trans_coeff, scat_coeff, piB = rtrun_emis_scat_toon_hemispheric_mean(
+        
+            spectrum, cumTtilde, Qtilde, trans_coeff, scat_coeff, piB = rtrun_emis_scat_lart_toonhm(
                 dtau, single_scattering_albedo, asymmetric_parameter, sourcef)
             if show:
-                from exojax.spec.rtransfer import comparison_with_pure_absorption
+                from exojax.plot.rtplot import comparison_with_pure_absorption
                 comparison_with_pure_absorption(cumTtilde, Qtilde, spectrum,
                                         trans_coeff, scat_coeff, piB)
 
@@ -325,7 +325,7 @@ class ArtEmisPure(ArtCommon):
             sourcef = piBarr(temperature, nu_grid)
         else:
             raise ValueError("the wavenumber grid is not given.")
-        return rtrun_emis_pure_absorption(dtau, sourcef)
+        return rtrun_emis_pureabs_flux2st(dtau, sourcef)
 
     
 
@@ -364,4 +364,4 @@ class ArtTransPure(ArtCommon):
         cgm = chord_geometric_matrix(normalized_height,
                                      normalized_radius_lower)
         tauchord = chord_optical_depth(cgm, dtau)
-        return rtrun_trans_pure_absorption(tauchord, normalized_radius_lower)
+        return rtrun_trans_pureabs(tauchord, normalized_radius_lower)
