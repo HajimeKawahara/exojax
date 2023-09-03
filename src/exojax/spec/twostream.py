@@ -26,23 +26,22 @@ def solve_lart_twostream_numpy(diagonal, lower_diagonal, upper_diagonal,
     """
     import numpy as np
     nlayer, _ = diagonal.shape
-    Ttilde = np.zeros_like(diagonal)
-    Qtilde = np.zeros_like(diagonal)
-    Ttilde[0, :] = upper_diagonal[0, :] / diagonal[0, :]
-    Qtilde[0, :] = vector[0, :] / diagonal[0, :]
+    That = np.zeros_like(diagonal)
+    Qhat = np.zeros_like(diagonal)
+    That[0, :] = upper_diagonal[0, :] / diagonal[0, :]
+    Qhat[0, :] = vector[0, :] / diagonal[0, :]
 
     for i in range(1, nlayer - 1):
-        gamma = diagonal[i, :] - lower_diagonal[i - 1, :] * Ttilde[i - 1, :]
-        Ttilde[i, :] = upper_diagonal[i, :] / gamma
-        Qtilde[i, :] = (vector[i, :] +
-                        lower_diagonal[i - 1, :] * Qtilde[i - 1, :]) / gamma
+        gamma = diagonal[i, :] - lower_diagonal[i - 1, :] * That[i - 1, :]
+        That[i, :] = upper_diagonal[i, :] / gamma
+        Qhat[i, :] = (vector[i, :] +
+                        lower_diagonal[i - 1, :] * Qhat[i - 1, :]) / gamma
         
-    cumTtilde = np.cumprod(Ttilde, axis=0)
-    contribution_function = cumTtilde * Qtilde
+    cumThat = np.cumprod(That, axis=0)
+    contribution_function = cumThat * Qhat
     spectrum = np.nansum(contribution_function, axis=0)
 
-    print(jnp.shape(Qtilde), jnp.shape(cumTtilde))
-    return cumTtilde, Qtilde, spectrum
+    return cumThat, Qhat, spectrum
 
 
 def solve_lart_twostream(diagonal, lower_diagonal, upper_diagonal, vector):
@@ -60,49 +59,43 @@ def solve_lart_twostream(diagonal, lower_diagonal, upper_diagonal, vector):
         Notice that c_(n-1) is not cn
 
     Returns:
-        _type_: cumlative T, tilde Q, spectrum 
+        _type_: cumlative hat{T}, hat{Q}, spectrum 
     """
     nlayer, _ = diagonal.shape
 
-    #arr = [diagonal[1:nlayer-1], lower_diagonal[0:nlayer-2], upper_diagonal[1:nlayer-1], vector[1,nlayer-1]]
-    #carry_i_1 = [Ttilde, Qtilde, ]
+    # arguments of the scanning function f:
+    # carry_i_1 = [Ttilde_{i-1}, Qtilde_{i-1}]
+    # arr = [diagonal[1:nlayer], lower_diagonal[0:nlayer-1], upper_diagonal[1:nlayer], vector[1,nlayer]]
+    
     def f(carry_i_1, arr):
-        Ttilde_i_1, Qtilde_i_1 = carry_i_1
+        That_i_1, Qtilde_i_1 = carry_i_1
         diagonal_i, lower_diagonal_i_1, upper_diagonal_i, vector_i = arr
-        gamma = diagonal_i - lower_diagonal_i_1 * Ttilde_i_1
-        Ttilde_each = upper_diagonal_i / gamma
-        Qtilde_each = (vector_i + lower_diagonal_i_1 * Qtilde_i_1) / gamma
-
-        TandQ = [Ttilde_each, Qtilde_each]
-        return TandQ, TandQ
+        gamma = diagonal_i - lower_diagonal_i_1 * That_i_1
+        That_each = upper_diagonal_i / gamma
+        Qhat_each = (vector_i + lower_diagonal_i_1 * Qtilde_i_1) / gamma
+        TQ = [That_each, Qhat_each]
+        return TQ, TQ
 
     #top boundary
-    Ttilde0 = upper_diagonal[0, :] / diagonal[0, :]
-    Qtilde0 = vector[0, :] / diagonal[0, :]
+    That0 = upper_diagonal[0, :] / diagonal[0, :]
+    Qhat0 = vector[0, :] / diagonal[0, :]
 
+    #main loop
     arrin = [
-        diagonal[1:nlayer - 1, :], lower_diagonal[0:nlayer - 2, :],
-        upper_diagonal[1:nlayer - 1, :], vector[1:nlayer - 1, :]
+        diagonal[1:nlayer, :], lower_diagonal[0:nlayer - 1, :],
+        upper_diagonal[1:nlayer, :], vector[1:nlayer, :]
     ]
-    print(jnp.shape(Qtilde0))
-    carry, results = scan(f, [Ttilde0, Qtilde0], arrin)
-    Ttilde, Qtilde = results
+    _, stackedTQ = scan(f, [That0, Qhat0], arrin)
+    That, Qhat = stackedTQ
+
     #inserts top boundary
-    print(jnp.shape(Ttilde))
-
-    print(jnp.shape(Qtilde))
-
-    Ttilde = jnp.insert(jnp.array(Ttilde), 0, Ttilde0, axis=0)
-    Qtilde = jnp.insert(jnp.array(Qtilde), 0, Qtilde0, axis=0)
+    That = jnp.insert(jnp.array(That), 0, That0, axis=0)
+    Qhat = jnp.insert(jnp.array(Qhat), 0, Qhat0, axis=0)
     
-    
-    cumTtilde = jnp.cumprod(Ttilde, axis=0)
-    print(jnp.shape(Qtilde), jnp.shape(cumTtilde))
-    import sys
-    sys.exit()
-    spectrum = jnp.nansum(cumTtilde * Qtilde, axis=0)
+    cumThat = jnp.cumprod(That, axis=0)
+    spectrum = jnp.nansum(cumThat * Qhat, axis=0)
 
-    return cumTtilde, Qtilde, spectrum
+    return cumThat, Qhat, spectrum
 
 
 def solve_twostream_pure_absorption_numpy(trans_coeff, scat_coeff, piB):
