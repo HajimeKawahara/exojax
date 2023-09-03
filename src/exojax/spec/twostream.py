@@ -84,9 +84,12 @@ def solve_lart_twostream(diagonal, lower_diagonal, upper_diagonal, vector):
         diagonal[1:nlayer - 1, :], lower_diagonal[0:nlayer - 2, :],
         upper_diagonal[1:nlayer - 1, :], vector[1:nlayer - 1, :]
     ]
-    Ttilde, Qtilde = scan(f, [Ttilde0, Qtilde0], arrin)
-    
+    print(jnp.shape(Qtilde0))
+    carry, results = scan(f, [Ttilde0, Qtilde0], arrin)
+    Ttilde, Qtilde = results
     #inserts top boundary
+    print(jnp.shape(Ttilde))
+
     print(jnp.shape(Qtilde))
 
     Ttilde = jnp.insert(jnp.array(Ttilde), 0, Ttilde0, axis=0)
