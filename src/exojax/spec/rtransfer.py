@@ -15,7 +15,7 @@
 
 
 """
-from exojax.spec.twostream import solve_twostream_lart_numpy
+from exojax.spec.twostream import solve_lart_twostream_numpy
 from exojax.spec.toon import reduced_source_function_isothermal_layer
 from exojax.spec.toon import params_hemispheric_mean
 from exojax.spec.toon import zetalambda_coeffs
@@ -153,7 +153,7 @@ def rtrun_emis_scat_lart_toonhm(dtau, single_scattering_albedo,
         scat_coeff, trans_coeff, piB, upper_diagonal_top, diagonal_top,
         vector_top)
 
-    cumTtilde, Qtilde, spectrum = solve_twostream_lart_numpy(
+    cumTtilde, Qtilde, spectrum = solve_lart_twostream_numpy(
         diagonal, lower_diagonal, upper_diagonal, vector)
     return spectrum, cumTtilde, Qtilde, trans_coeff, scat_coeff, piB
 

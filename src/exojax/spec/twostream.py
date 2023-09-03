@@ -6,7 +6,7 @@ import jax.numpy as jnp
 from jax.lax import scan
 
 
-def solve_twostream_lart_numpy(diagonal, lower_diagonal, upper_diagonal,
+def solve_lart_twostream_numpy(diagonal, lower_diagonal, upper_diagonal,
                                vector):
     """Two-stream RT solver given tridiagonal system components (LART form) but numpy version
 
@@ -30,23 +30,23 @@ def solve_twostream_lart_numpy(diagonal, lower_diagonal, upper_diagonal,
     Qtilde = np.zeros_like(diagonal)
     Ttilde[0, :] = upper_diagonal[0, :] / diagonal[0, :]
     Qtilde[0, :] = vector[0, :] / diagonal[0, :]
+
     for i in range(1, nlayer - 1):
         gamma = diagonal[i, :] - lower_diagonal[i - 1, :] * Ttilde[i - 1, :]
         Ttilde[i, :] = upper_diagonal[i, :] / gamma
-
         Qtilde[i, :] = (vector[i, :] +
                         lower_diagonal[i - 1, :] * Qtilde[i - 1, :]) / gamma
-        #Qtilde[i, :] = Ttilde[i, :] / upper_diagonal[i, :] * (
-        #    lower_diagonal[i - 1, :] * Qtilde[i - 1, :] + vector[i, :]) #provide same results
-
+        
     cumTtilde = np.cumprod(Ttilde, axis=0)
     contribution_function = cumTtilde * Qtilde
     spectrum = np.nansum(contribution_function, axis=0)
+
+    print(jnp.shape(Qtilde), jnp.shape(cumTtilde))
     return cumTtilde, Qtilde, spectrum
 
 
-def solve_twostream_lart(diagonal, lower_diagonal, upper_diagonal, vector):
-    """Two-stream RT solver given tridiagonal system components (LART form) but numpy version
+def solve_lart_twostream(diagonal, lower_diagonal, upper_diagonal, vector):
+    """Two-stream RT solver given tridiagonal system components (LART form)
 
     Args:
         diagonal (_type_): diagonal component of the tridiagonal system (bn)
@@ -76,23 +76,27 @@ def solve_twostream_lart(diagonal, lower_diagonal, upper_diagonal, vector):
         TandQ = [Ttilde_each, Qtilde_each]
         return TandQ, TandQ
 
-    #top
-    Tilde0 = upper_diagonal[0, :] / diagonal[0, :]
+    #top boundary
+    Ttilde0 = upper_diagonal[0, :] / diagonal[0, :]
     Qtilde0 = vector[0, :] / diagonal[0, :]
 
     arrin = [
         diagonal[1:nlayer - 1, :], lower_diagonal[0:nlayer - 2, :],
         upper_diagonal[1:nlayer - 1, :], vector[1:nlayer - 1, :]
     ]
-    Ttilde, Qtilde = scan(f, [Tilde0, Qtilde0], arrin)
+    Ttilde, Qtilde = scan(f, [Ttilde0, Qtilde0], arrin)
+    
+    #inserts top boundary
+    print(jnp.shape(Qtilde))
 
-    Ttilde = jnp.insert(Ttilde, 0, Tilde0)
-    Qtilde = jnp.insert(Qtilde, 0, Qtilde0)
-
-    #bottom
-    # Not Yet
-
+    Ttilde = jnp.insert(jnp.array(Ttilde), 0, Ttilde0, axis=0)
+    Qtilde = jnp.insert(jnp.array(Qtilde), 0, Qtilde0, axis=0)
+    
+    
     cumTtilde = jnp.cumprod(Ttilde, axis=0)
+    print(jnp.shape(Qtilde), jnp.shape(cumTtilde))
+    import sys
+    sys.exit()
     spectrum = jnp.nansum(cumTtilde * Qtilde, axis=0)
 
     return cumTtilde, Qtilde, spectrum
