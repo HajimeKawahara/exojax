@@ -166,10 +166,7 @@ def compute_tridiag_diagonals_and_vector(scat_coeff, trans_coeff, piB,
         vector_top (_type_): vector top boundary 
 
     Notes:
-        While diagonal (b_n) has the Nlayer-dimension, upper and lower diagonals (an and cn) should have Nlayer-1 dimension originally.
-        However, the tridiagonal solver linalg.tridiag.solve_tridiag ignores the last elements of upper and lower diagonals.
-        Therefore, we leave the last elements of the upper and lower diagonals as is. Do not use these elements.
-        In ExoJAX 2 paper, -an F_{n+1}^+ + b_n F_n^+ - cn F_{n-1}^+ = dn
+        In ExoJAX 2 paper, we assume the tridiagonal form as -an F_{n+1}^+ + b_n F_n^+ - cn F_{n-1}^+ = dn
     Returns:
         jnp arrays: diagonal (bn) [Nlayer], lower dianoals (cn) [Nlayer], upper diagonal (an) [Nlayer], vector (dn) [Nlayer], 
     """
