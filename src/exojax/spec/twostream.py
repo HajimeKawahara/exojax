@@ -22,7 +22,7 @@ def solve_lart_twostream_numpy(diagonal, lower_diagonal, upper_diagonal,
         Notice that c_(n-1) is not cn
 
     Returns:
-        _type_: cumlative T, tilde Q, spectrum 
+        _type_: cumlative T, hat Q, spectrum 
     """
     import numpy as np
     nlayer, _ = diagonal.shape
@@ -31,7 +31,7 @@ def solve_lart_twostream_numpy(diagonal, lower_diagonal, upper_diagonal,
     That[0, :] = upper_diagonal[0, :] / diagonal[0, :]
     Qhat[0, :] = vector[0, :] / diagonal[0, :]
 
-    for i in range(1, nlayer - 1):
+    for i in range(1, nlayer): #nlayer - 1 ... 
         gamma = diagonal[i, :] - lower_diagonal[i - 1, :] * That[i - 1, :]
         That[i, :] = upper_diagonal[i, :] / gamma
         Qhat[i, :] = (vector[i, :] +
@@ -64,15 +64,15 @@ def solve_lart_twostream(diagonal, lower_diagonal, upper_diagonal, vector):
     nlayer, _ = diagonal.shape
 
     # arguments of the scanning function f:
-    # carry_i_1 = [Ttilde_{i-1}, Qtilde_{i-1}]
+    # carry_i_1 = [That_{i-1}, Qhat_{i-1}]
     # arr = [diagonal[1:nlayer], lower_diagonal[0:nlayer-1], upper_diagonal[1:nlayer], vector[1,nlayer]]
     
     def f(carry_i_1, arr):
-        That_i_1, Qtilde_i_1 = carry_i_1
+        That_i_1, Qhat_i_1 = carry_i_1
         diagonal_i, lower_diagonal_i_1, upper_diagonal_i, vector_i = arr
         gamma = diagonal_i - lower_diagonal_i_1 * That_i_1
         That_each = upper_diagonal_i / gamma
-        Qhat_each = (vector_i + lower_diagonal_i_1 * Qtilde_i_1) / gamma
+        Qhat_each = (vector_i + lower_diagonal_i_1 * Qhat_i_1) / gamma
         TQ = [That_each, Qhat_each]
         return TQ, TQ
 

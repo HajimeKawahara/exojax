@@ -19,23 +19,25 @@ def panel_imshow(val1, val2, title1, title2):
     plt.show()
 
 
-def comparison_with_pure_absorption(cumTtilde, Qtilde, spectrum, trans_coeff,
+def comparison_with_pure_absorption(cumThat, Qhat, spectrum, trans_coeff,
                                     scat_coeff, piB):
     cumTpure, Qpure, spectrum_pure = solve_twostream_pure_absorption_numpy(
         trans_coeff, scat_coeff, piB)
 
-    contribution_function = contribution_function_lart(cumTtilde, Qtilde)
+    contribution_function = contribution_function_lart(cumThat, Qhat)
     panel_imshow((trans_coeff), (scat_coeff),
                  "Transmission Coefficient $\mathcal{T}$",
                  "Scattering Coefficient $\mathcal{S}$")
 
-    panel_imshow(cumTtilde, cumTpure, "cumTtilde", "cumTpure")
-    panel_imshow(cumTtilde / cumTpure, cumTtilde, "cTtilde/cTpure", "cTtilde")
-    panel_imshow(Qtilde, Qpure, "Qtilde", "Qpure")
+    panel_imshow(cumThat, cumTpure, "cumThat", "cumTpure")
+    panel_imshow(cumThat / cumTpure, cumThat, "cThat/cTpure", "cThat")
+    panel_imshow(Qhat, Qpure, "Qhat", "Qpure")
+    panel_imshow(Qhat / Qpure , Qpure, "Qhat/Qpure", "Qpure")
+    
     panel_imshow(contribution_function, jnp.log10(contribution_function),
-                 'contribution function ($\tilde{Q} \cumprod \tilde{T}$)',
+                 'contribution function ($\hat{Q} \prod \hat{T}$)',
                  'log scale')
-    plt.plot(spectrum, label="Ttilde * Qtilde ")
+    plt.plot(spectrum, label="That * Qhat ")
     plt.plot(spectrum_pure, label="Tpure * Qpure", ls="dashed", lw=2)
     plt.legend()
     plt.show()
