@@ -8,7 +8,7 @@
 import numpy as np
 import jax.numpy as jnp
 from exojax.spec.planck import piBarr
-from exojax.spec.rtransfer import rtrun_emis_pureabs_flux2st
+from exojax.spec.rtransfer import rtrun_emis_pureabs_fbased2st
 from exojax.spec.rtransfer import rtrun_emis_scat_lart_toonhm
 from exojax.spec.rtransfer import rtrun_trans_pureabs
 from exojax.spec.layeropacity import layer_optical_depth
@@ -300,6 +300,8 @@ class ArtEmisPure(ArtCommon):
         pressure_btm=1.e2,
         nlayer=100,
         nu_grid=None,
+        rtsolver="fbased2st",  
+        nstream=2,
     ):
         """initialization of ArtEmisPure
 
@@ -307,6 +309,27 @@ class ArtEmisPure(ArtCommon):
         """
         super().__init__(pressure_top, pressure_btm, nlayer, nu_grid)
         self.method = "emission_with_pure_absorption"
+
+        self.validate_rtsolver(rtsolver, nstream)
+
+    def validate_rtsolver(self, rtsolver, nstream):
+        """validates rtsolver
+
+        Args:
+            rtsolver (str): rtsolver
+            nstream (int): the number of streams
+
+        """
+        valid_rtsolvers = ["fbased2st", "ibased", "ibasedOK"]
+        if rtsolver in valid_rtsolvers:
+            self.rtsolver = rtsolver
+        else:
+            str_valid_rtsolvers = ", ".join(valid_rtsolvers[:-1]) + f", or {valid_rtsolvers[-1]}"
+            raise ValueError("Unknown rtsolver. Use "+str_valid_rtsolvers)
+        if rtsolver == "fbased2st" and nstream != 2:
+            raise ValueError("fbased2st (flux-based two-stream) rtsolver requires nstream = 2.")
+        self.nstream = nstream
+
 
     def run(self, dtau, temperature, nu_grid=None):
         """run radiative transfer
@@ -325,7 +348,7 @@ class ArtEmisPure(ArtCommon):
             sourcef = piBarr(temperature, nu_grid)
         else:
             raise ValueError("the wavenumber grid is not given.")
-        return rtrun_emis_pureabs_flux2st(dtau, sourcef)
+        return rtrun_emis_pureabs_fbased2st(dtau, sourcef)
 
     
 

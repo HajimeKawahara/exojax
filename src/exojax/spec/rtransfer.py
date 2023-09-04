@@ -49,7 +49,7 @@ def trans2E3(x):
 
 
 @jit
-def rtrun_emis_pureabs_flux2st(dtau, source_matrix):
+def rtrun_emis_pureabs_fbased2st(dtau, source_matrix):
     """Radiative Transfer for emission spectrum using flux-based two-stream pure absorption with no surface
     Args:
         dtau (2D array): optical depth matrix, dtau  (N_layer, N_nus)
@@ -67,7 +67,7 @@ def rtrun_emis_pureabs_flux2st(dtau, source_matrix):
 
 
 @jit
-def rtrun_emis_pureabs_flux2st_surface(dtau, source_matrix, source_surface):
+def rtrun_emis_pureabs_fbased2st_surface(dtau, source_matrix, source_surface):
     """Radiative Transfer for emission spectrum using flux-based two-stream pure absorption with a planetary surface.
 
     Args:
@@ -86,8 +86,8 @@ def rtrun_emis_pureabs_flux2st_surface(dtau, source_matrix, source_surface):
                    axis=0)
 
 
-def rtrun_emis_pureabs_int2st_zeroth(dtau, source_matrix, nstream=4):
-    """Radiative Transfer for emission spectrum using intensity-based two-stream pure absorption with no surface
+def rtrun_emis_pureabs_ibased(dtau, source_matrix, nstream=4):
+    """Radiative Transfer for emission spectrum using intensity-based n-stream pure absorption with no surface
     Args:
         dtau (2D array): optical depth matrix, dtau  (N_layer, N_nus)
         source_matrix (2D array): source matrix (N_layer, N_nus)
@@ -99,6 +99,10 @@ def rtrun_emis_pureabs_int2st_zeroth(dtau, source_matrix, nstream=4):
     
     Nnus = jnp.shape(dtau)[1]
     norder, mulist, weight = initialize_gaussian_quadrature(nstream)
+
+    tau = jnp.cumsum(dtau,axis=0)
+    tau_over_mu = tau[:,:]/mulist[jnp.newaxis,jnp.newaxis,:]
+    transmission = jnp.exp(-tau_over_mu)
     return 
 
 def initialize_gaussian_quadrature(nstream):

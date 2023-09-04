@@ -50,7 +50,7 @@ def test_rt_exomol():
     from exojax.spec.modit import xsmatrix
     from exojax.atm.atmprof import pressure_layer_logspace
     from exojax.spec.layeropacity import layer_optical_depth
-    from exojax.spec.rtransfer import rtrun_emis_pureabs_flux2st
+    from exojax.spec.rtransfer import rtrun_emis_pureabs_fbased2st
     from exojax.spec.planck import piBarr
     from exojax.spec.modit import set_ditgrid_matrix_exomol
     from exojax.test.data import TESTDATA_CO_EXOMOL_MODIT_EMISSION_REF
@@ -80,7 +80,7 @@ def test_rt_exomol():
                    nus, dgm_ngammaL)
     dtau = layer_optical_depth(dParr, jnp.abs(xsm), MMR * np.ones_like(Parr), molmass, g)
     sourcef = piBarr(Tarr, nus)
-    F0 = rtrun_emis_pureabs_flux2st(dtau, sourcef)
+    F0 = rtrun_emis_pureabs_fbased2st(dtau, sourcef)
     filename = pkg_resources.resource_filename(
         'exojax', 'data/testdata/' + TESTDATA_CO_EXOMOL_MODIT_EMISSION_REF)
     dat = pd.read_csv(filename, delimiter=",", names=("nus", "flux"))

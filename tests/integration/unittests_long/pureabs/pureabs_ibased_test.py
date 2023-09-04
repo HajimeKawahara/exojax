@@ -4,19 +4,19 @@ from jax.config import config
 from exojax.test.emulate_mdb import mock_mdb
 from exojax.spec.opacalc import OpaPremodit
 from exojax.test.emulate_mdb import mock_wavenumber_grid
-from exojax.spec.atmrt import ArtEmisScat
+from exojax.spec.atmrt import ArtEmisPure
 
 
 @pytest.mark.parametrize("db, diffmode", [("exomol", 1), ("exomol", 2),
                                           ("hitemp", 1), ("hitemp", 2)])
-def test_ArtEmisScat_gives_consistent_results_with_pure_absorption(db, diffmode, fig=False):
+def test_ArtEmisPure_ibased(db, diffmode, fig=False):
 
     nu_grid, wav, res = mock_wavenumber_grid()
-    art = ArtEmisScat(pressure_top=1.e-5,
+    art = ArtEmisPure(pressure_top=1.e-5,
                       pressure_btm=1.e1,
                       nlayer=200,
                       nu_grid=nu_grid,
-                      rtsolver="toon_hemispheric_mean")
+                      rtsolver="ibased")
     art.change_temperature_range(400.0, 1500.0)
     Tarr = art.powerlaw_temperature(1300.0, 0.1)
     mmr_arr = art.constant_mmr_profile(0.01)
