@@ -31,6 +31,9 @@ from exojax.spec.layeropacity import layer_optical_depth_Hminus
 from exojax.spec.layeropacity import layer_optical_depth_VALD
 
 
+def rtrun_not_implemented():
+    raise ValueError("not implemented yet.")
+
 @jit
 def trans2E3(x):
     """transmission function 2E3 (two-stream approximation with no scattering)
