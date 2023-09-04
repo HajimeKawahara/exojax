@@ -86,6 +86,30 @@ def rtrun_emis_pureabs_flux2st_surface(dtau, source_matrix, source_surface):
                    axis=0)
 
 
+def rtrun_emis_pureabs_int2st_zeroth(dtau, source_matrix, nstream=4):
+    """Radiative Transfer for emission spectrum using intensity-based two-stream pure absorption with no surface
+    Args:
+        dtau (2D array): optical depth matrix, dtau  (N_layer, N_nus)
+        source_matrix (2D array): source matrix (N_layer, N_nus)
+        nstream (int): the number of stream (should be even number larger than 2, such as 2,4,6...)
+
+    Returns:
+        flux in the unit of [erg/cm2/s/cm-1] if using piBarr as a source function.
+    """
+    
+    Nnus = jnp.shape(dtau)[1]
+    norder, mulist, weight = initialize_gaussian_quadrature(nstream)
+    return 
+
+def initialize_gaussian_quadrature(nstream):
+    from scipy.special import roots_legendre
+    if nstream % 2 == 0:
+        norder = int(nstream/2)
+    elif:
+        raise ValueError("nstream should be even number larger than 2.")
+    mulist, weight = roots_legendre(norder)
+    return norder, mulist, weight
+
 def rtrun_trans_pureabs(dtau_chord, radius_lower):
     """Radiative transfer for transmission spectrum assuming pure absorption 
 
