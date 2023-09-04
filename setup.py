@@ -20,7 +20,6 @@ INSTALL_REQUIRES = [
     'jax',
     "hitran-api",
     'radis',
-    "numpy<=1.22.3 ",
     "pygments>=2.15",
     "pydantic<2.0",
 ]
