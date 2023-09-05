@@ -41,6 +41,8 @@ def test_rt(db, diffmode, fig=False):
     xsmatrix = opa.xsmatrix(Tarr, art.pressure)
     dtau = art.opacity_profile_lines(xsmatrix, mmr_arr, opa.mdb.molmass,
                                      gravity)
+    
+    
     F0 = art.run(dtau, Tarr)
 
     if db == "hitemp":
