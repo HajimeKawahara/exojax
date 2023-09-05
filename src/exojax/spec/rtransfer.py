@@ -117,7 +117,7 @@ def rtrun_emis_pureabs_ibased(dtau, source_matrix, nstream=4):
     for i, mu in enumerate(mus):
         trans = jnp.exp(-tau/mu)
         dtrans = - jnp.diff(trans, prepend=1.0, axis=0)
-        spec = spec + weights[i]*2.0*jnp.pi*mu*jnp.sum(source_matrix*dtrans, axis=0)
+        spec = spec + weights[i]*2.0*mu*jnp.sum(source_matrix*dtrans, axis=0)
 
     return spec
 
