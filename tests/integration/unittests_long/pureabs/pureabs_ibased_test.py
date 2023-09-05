@@ -14,10 +14,10 @@ def test_ArtEmisPure_ibased(db, diffmode, fig=False):
     nu_grid, wav, res = mock_wavenumber_grid()
     art = ArtEmisPure(pressure_top=1.e-5,
                       pressure_btm=1.e1,
-                      nlayer=200,
+                      nlayer=300,
                       nu_grid=nu_grid,
                       rtsolver="ibased",
-                      nstream=4)
+                      nstream=8)
     art.change_temperature_range(400.0, 1500.0)
     Tarr = art.powerlaw_temperature(1300.0, 0.1)
     mmr_arr = art.constant_mmr_profile(0.01)
@@ -36,10 +36,13 @@ def test_ArtEmisPure_ibased(db, diffmode, fig=False):
     dtau = art.opacity_profile_lines(xsmatrix, mmr_arr, opa.mdb.molmass,
                                      gravity)
 
-    F0 = art.run(dtau, Tarr)
+    F0_ibased = art.run(dtau, Tarr)
 
-    return nu_grid, F0, F0
-    
+    art.rtsolver = "fbased2st"
+    F0_fbased = art.run(dtau, Tarr)
+
+    return nu_grid, F0_ibased, F0_fbased
+
 
 if __name__ == "__main__":
     config.update("jax_enable_x64", True)
@@ -47,30 +50,21 @@ if __name__ == "__main__":
     import matplotlib.pyplot as plt
     diffmode = 0
     #nus_hitemp, F0_hitemp, Fref_hitemp = test_rt("hitemp", diffmode)
-    nus, F0, Fref = test_ArtEmisPure_ibased("exomol", diffmode)  #
-    
-    fig = plt.figure()
-    ax = fig.add_subplot(311)
-    ax.plot(nus, F0, label="intensity based")
-    plt.legend()
-    ax = fig.add_subplot(312)
-    plt.legend()
-    plt.ylabel("flux (cgs)")
+    nus, F0i, F0f = test_ArtEmisPure_ibased("exomol", diffmode)  #
 
-    ax = fig.add_subplot(313)
-    ax.plot(nus[10300:10700],
-            1.0 - F0[10300:10700] / Fref[10300:10700],
-            alpha=0.7,
-            label="dif = (MO - PreMO)/MO Exomol")
-    #ax.plot(nus_hitemp,
-    #        1.0 - F0_hitemp / Fref_hitemp,
-    #        alpha=0.7,
-    #        label="dif = (MO - PreMO)/MO HITEMP")
+    fig = plt.figure()
+    ax = fig.add_subplot(211)
+    ax.plot(nus, F0i, label="intensity based")
+    ax.plot(nus, F0f, label="flux based")
+    plt.legend()
+
+    ax = fig.add_subplot(212)
+    ax.plot(nus, 1.0 - F0i / F0f, alpha=0.7, label="difference")
     plt.xlabel("wavenumber cm-1")
     plt.axhline(0.05, color="gray", lw=0.5)
     plt.axhline(-0.05, color="gray", lw=0.5)
     plt.axhline(0.01, color="gray", lw=0.5)
     plt.axhline(-0.01, color="gray", lw=0.5)
-    plt.ylim(-0.07, 0.07)
+    #plt.ylim(-0.07, 0.07)
     plt.legend()
     plt.show()
