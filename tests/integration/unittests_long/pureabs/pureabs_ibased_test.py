@@ -51,12 +51,9 @@ if __name__ == "__main__":
     
     fig = plt.figure()
     ax = fig.add_subplot(311)
-    #ax.plot(nus[10300:10700], F0[10300:10700], label="Toon (ExoMol)")
-    ax.plot(nus, F0, label="Toon (ExoMol)")
+    ax.plot(nus, F0, label="intensity based")
     plt.legend()
-    #plt.yscale("log")
     ax = fig.add_subplot(312)
-    #ax.plot(nus_hitemp, F0_hitemp, label="PreMODIT (HITEMP)", ls="dashed")
     plt.legend()
     plt.ylabel("flux (cgs)")
 
