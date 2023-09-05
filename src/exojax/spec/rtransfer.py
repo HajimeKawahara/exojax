@@ -112,7 +112,7 @@ def initialize_gaussian_quadrature(nstream):
     from scipy.special import roots_legendre
     if nstream % 2 == 0:
         norder = int(nstream/2)
-    elif:
+    else:
         raise ValueError("nstream should be even number larger than 2.")
     mulist, weight = roots_legendre(norder)
     return norder, mulist, weight
