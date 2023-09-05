@@ -14,7 +14,7 @@ def test_ArtEmisPure_ibased(db, diffmode, fig=False):
     nu_grid, wav, res = mock_wavenumber_grid()
     art = ArtEmisPure(pressure_top=1.e-5,
                       pressure_btm=1.e1,
-                      nlayer=300,
+                      nlayer=200,
                       nu_grid=nu_grid,
                       rtsolver="ibased",
                       nstream=8)
@@ -22,11 +22,8 @@ def test_ArtEmisPure_ibased(db, diffmode, fig=False):
     Tarr = art.powerlaw_temperature(1300.0, 0.1)
     mmr_arr = art.constant_mmr_profile(0.01)
     gravity = 2478.57
-    #gravity = art.constant_gravity_profile(2478.57) #gravity can be profile
-
+    
     mdb = mock_mdb(db)
-    #mdb = api.MdbExomol('.database/CO/12C-1edt mru 6O/Li2015',nu_grid,inherit_dataframe=False,gpu_transfer=False)
-    #mdb = api.MdbHitemp('CO', art.nu_grid, gpu_transfer=False, isotope=1)
     opa = OpaPremodit(mdb=mdb,
                       nu_grid=nu_grid,
                       diffmode=diffmode,
@@ -36,8 +33,10 @@ def test_ArtEmisPure_ibased(db, diffmode, fig=False):
     dtau = art.opacity_profile_lines(xsmatrix, mmr_arr, opa.mdb.molmass,
                                      gravity)
 
+    #intenstiy based 8 stream
     F0_ibased = art.run(dtau, Tarr)
 
+    #fluxed based 2 stream
     art.rtsolver = "fbased2st"
     F0_fbased = art.run(dtau, Tarr)
 

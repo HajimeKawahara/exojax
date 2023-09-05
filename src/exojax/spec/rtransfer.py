@@ -15,20 +15,21 @@
 
 
 """
+from jax import jit
+import jax.numpy as jnp
+from jax.lax import scan
 from exojax.spec.twostream import solve_lart_twostream_numpy
 from exojax.spec.toon import reduced_source_function_isothermal_layer
 from exojax.spec.toon import params_hemispheric_mean
 from exojax.spec.toon import zetalambda_coeffs
 from exojax.spec.twostream import compute_tridiag_diagonals_and_vector
 from exojax.spec.twostream import set_scat_trans_coeffs
-import warnings
-from jax import jit
-import jax.numpy as jnp
 from exojax.special.expn import E1
 from exojax.spec.layeropacity import layer_optical_depth
 from exojax.spec.layeropacity import layer_optical_depth_CIA
 from exojax.spec.layeropacity import layer_optical_depth_Hminus
 from exojax.spec.layeropacity import layer_optical_depth_VALD
+import warnings
 
 
 def rtrun_not_implemented():
@@ -103,21 +104,22 @@ def rtrun_emis_pureabs_ibased(dtau, source_matrix, nstream=4):
 
     Nnus = jnp.shape(dtau)[1]
     mus, weights = initialize_gaussian_quadrature(nstream)
+    tau = jnp.cumsum(dtau, axis=0)    
 
-    tau = jnp.cumsum(dtau, axis=0)
-    import matplotlib.pyplot as plt
-    #plt.plot(tau[:,100])
-    mu=0.5
-    trans=jnp.exp(-tau/mu)
-    #plt.plot(trans[:,100])
-    plt.plot(-jnp.diff(trans, prepend=1.0)[:,100])
-    plt.yscale("log")
-    plt.show()
-    spec = jnp.zeros(Nnus)
-    for i, mu in enumerate(mus):
-        trans = jnp.exp(-tau/mu)
-        dtrans = - jnp.diff(trans, prepend=1.0, axis=0)
-        spec = spec + weights[i]*2.0*mu*jnp.sum(source_matrix*dtrans, axis=0)
+    #The following scan part is equivalent to this for-loop
+    #spec = jnp.zeros(Nnus)
+    #for i, mu in enumerate(mus):
+    #    dtrans = - jnp.diff(jnp.exp(-tau/mu), prepend=1.0, axis=0)
+    #    spec = spec + weights[i]*2.0*mu*jnp.sum(source_matrix*dtrans, axis=0)
+
+    #scan part
+    muws = [mus, weights]
+    def f(carry_fmu, muw):
+        mu, w = muw
+        dtrans = - jnp.diff(jnp.exp(-tau/mu), prepend=1.0, axis=0)    
+        carry_fmu = carry_fmu + 2.0*mu*w*jnp.sum(source_matrix*dtrans, axis=0)
+        return carry_fmu, None
+    spec, _ = scan(f, jnp.zeros(Nnus), muws)
 
     return spec
 
