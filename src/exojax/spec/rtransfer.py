@@ -34,6 +34,7 @@ from exojax.spec.layeropacity import layer_optical_depth_VALD
 def rtrun_not_implemented():
     raise ValueError("not implemented yet.")
 
+
 @jit
 def trans2E3(x):
     """transmission function 2E3 (two-stream approximation with no scattering)
@@ -99,14 +100,27 @@ def rtrun_emis_pureabs_ibased(dtau, source_matrix, nstream=4):
     Returns:
         flux in the unit of [erg/cm2/s/cm-1] if using piBarr as a source function.
     """
-    
-    Nnus = jnp.shape(dtau)[1]
-    norder, mulist, weight = initialize_gaussian_quadrature(nstream)
 
-    tau = jnp.cumsum(dtau,axis=0)
-    tau_over_mu = tau[:,:]/mulist[jnp.newaxis,jnp.newaxis,:]
-    transmission = jnp.exp(-tau_over_mu)
-    return 
+    Nnus = jnp.shape(dtau)[1]
+    mus, weights = initialize_gaussian_quadrature(nstream)
+
+    tau = jnp.cumsum(dtau, axis=0)
+    import matplotlib.pyplot as plt
+    #plt.plot(tau[:,100])
+    mu=0.5
+    trans=jnp.exp(-tau/mu)
+    #plt.plot(trans[:,100])
+    plt.plot(-jnp.diff(trans, prepend=1.0)[:,100])
+    plt.yscale("log")
+    plt.show()
+    spec = jnp.zeros(Nnus)
+    for i, mu in enumerate(mus):
+        trans = jnp.exp(-tau/mu)
+        dtrans = - jnp.diff(trans, prepend=1.0)
+        spec = spec + weights[i]*2.0*jnp.pi*mu*jnp.sum(source_matrix*dtrans, axis=0)
+
+    return spec
+
 
 def initialize_gaussian_quadrature(nstream):
     from scipy.special import roots_legendre
@@ -114,8 +128,17 @@ def initialize_gaussian_quadrature(nstream):
         norder = int(nstream/2)
     else:
         raise ValueError("nstream should be even number larger than 2.")
-    mulist, weight = roots_legendre(norder)
-    return norder, mulist, weight
+    mus, weights = roots_legendre(norder)
+
+    #correction because integration should be between 0 to 1, but roots_legendre uses -1 to 1.
+    mus = 0.5*(mus + 1.0) 
+    weights = 0.5*weights
+    print("Gaussian Quadrature Parameters: ")
+    print("mu = ", mus)
+    print("weight =", weights)
+    
+    return mus, weights
+
 
 def rtrun_trans_pureabs(dtau_chord, radius_lower):
     """Radiative transfer for transmission spectrum assuming pure absorption 
@@ -144,7 +167,7 @@ def rtrun_trans_pureabs(dtau_chord, radius_lower):
 
 
 def rtrun_emis_scat_lart_toonhm(dtau, single_scattering_albedo,
-                                          asymmetric_parameter, source_matrix):
+                                asymmetric_parameter, source_matrix):
     """Radiative Transfer for emission spectrum using flux-based two-stream scattering LART solver w/ Toon Hemispheric Mean.
 
     Args:
@@ -172,7 +195,7 @@ def rtrun_emis_scat_lart_toonhm(dtau, single_scattering_albedo,
     zeta_plus0 = zeta_plus[0, :]
     zeta_minus0 = zeta_minus[0, :]
 
-    # emission (no reflection)  
+    # emission (no reflection)
     trans_func0 = jnp.exp(-lambdan[0, :] * dtau[0, :])
     denom = zeta_plus0**2 - (zeta_minus0*trans_func0)**2
     omtrans = 1.0 - trans_func0
@@ -187,8 +210,6 @@ def rtrun_emis_scat_lart_toonhm(dtau, single_scattering_albedo,
     cumTtilde, Qtilde, spectrum = solve_lart_twostream_numpy(
         diagonal, lower_diagonal, upper_diagonal, vector)
     return spectrum, cumTtilde, Qtilde, trans_coeff, scat_coeff, piB
-
-
 
 
 def manual_recover_tridiagonal(diagonal, lower_diagonal, upper_diagonal,
@@ -260,7 +281,7 @@ def pressure_layer(log_pressure_top=-8.,
                                    mode, reference_point, numpy)
 
 
-#def rtrun(dtau, S):
+# def rtrun(dtau, S):
 #    warnings.warn("Use rtrun_emis_pureabs_flux2st instead", FutureWarning)
 #    return rtrun_emis_pureabs_flux2st(dtau, S)
 

@@ -16,7 +16,8 @@ def test_ArtEmisPure_ibased(db, diffmode, fig=False):
                       pressure_btm=1.e1,
                       nlayer=200,
                       nu_grid=nu_grid,
-                      rtsolver="ibased")
+                      rtsolver="ibased",
+                      nstream=4)
     art.change_temperature_range(400.0, 1500.0)
     Tarr = art.powerlaw_temperature(1300.0, 0.1)
     mmr_arr = art.constant_mmr_profile(0.01)
@@ -35,12 +36,7 @@ def test_ArtEmisPure_ibased(db, diffmode, fig=False):
     dtau = art.opacity_profile_lines(xsmatrix, mmr_arr, opa.mdb.molmass,
                                      gravity)
 
-    #almost pure absorption
-    import jax.numpy as jnp
-    single_scattering_albedo = jnp.ones_like(dtau) * 0.0001
-    asymmetric_parameter = jnp.ones_like(dtau) * 0.0001
-
-    F0 = art.run(dtau, single_scattering_albedo, asymmetric_parameter, Tarr, show=True)
+    F0 = art.run(dtau, Tarr)
 
     return nu_grid, F0, F0
     
@@ -51,7 +47,7 @@ if __name__ == "__main__":
     import matplotlib.pyplot as plt
     diffmode = 0
     #nus_hitemp, F0_hitemp, Fref_hitemp = test_rt("hitemp", diffmode)
-    nus, F0, Fref = test_ArtEmisScat_gives_consistent_results_with_pure_absorption("exomol", diffmode)  #
+    nus, F0, Fref = test_ArtEmisPure_ibased("exomol", diffmode)  #
     
     fig = plt.figure()
     ax = fig.add_subplot(311)
