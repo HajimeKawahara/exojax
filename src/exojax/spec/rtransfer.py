@@ -90,20 +90,20 @@ def rtrun_emis_pureabs_fbased2st_surface(dtau, source_matrix, source_surface):
                    jnp.cumprod(jnp.vstack([jnp.ones(Nnus), TransM]), axis=0),
                    axis=0)
 
-
-def rtrun_emis_pureabs_ibased(dtau, source_matrix, nstream=4):
-    """Radiative Transfer for emission spectrum using intensity-based n-stream pure absorption with no surface
+@jit
+def rtrun_emis_pureabs_ibased(dtau, source_matrix, mus, weights):
+    """Radiative Transfer for emission spectrum using intensity-based n-stream pure absorption with no surface (NEMESIS, pRT-like)
     Args:
         dtau (2D array): optical depth matrix, dtau  (N_layer, N_nus)
         source_matrix (2D array): source matrix (N_layer, N_nus)
-        nstream (int): the number of stream (should be even number larger than 2, such as 2,4,6...)
-
+        mus (list): mu (cos theta) list for integration
+        weights (list): weight list for mu
+        
     Returns:
         flux in the unit of [erg/cm2/s/cm-1] if using piBarr as a source function.
     """
 
     Nnus = jnp.shape(dtau)[1]
-    mus, weights = initialize_gaussian_quadrature(nstream)
     tau = jnp.cumsum(dtau, axis=0)    
 
     #The following scan part is equivalent to this for-loop

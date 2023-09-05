@@ -382,7 +382,9 @@ class ArtEmisPure(ArtCommon):
             return rtfunc(dtau, sourcef)
             #return rtrun_emis_pureabs_fbased2st(dtau, sourcef)
         elif self.rtsolver == "ibased":
-            return rtfunc(dtau, sourcef, self.nstream)
+            from exojax.spec.rtransfer import initialize_gaussian_quadrature
+            mus, weights = initialize_gaussian_quadrature(self.nstream)
+            return rtfunc(dtau, sourcef, mus, weights)
 
 
 class ArtTransPure(ArtCommon):
