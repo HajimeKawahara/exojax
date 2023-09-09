@@ -1,10 +1,12 @@
 Get Started
 ===========
 
-Last update: July 2nd (2023) Hajime Kawahara for v1.4
+Last update: September 9th (2023) Hajime Kawahara for v1.5
 
-First, we recommend 64-bit unless you can think precision seriously. Use
-jax.config to set 64-bit:
+First, we recommend 64-bit if you do not think about numerical errors.
+Use jax.config to set 64-bit. (But note that 32-bit is sufficient in
+most cases. Consider to use 32-bit (faster, less device memory) for your
+real use case.)
 
 .. code:: ipython3
 
@@ -51,18 +53,26 @@ wavenumber range first.
 
     xsmode =  premodit
     xsmode assumes ESLOG in wavenumber space: mode=premodit
+    ======================================================================
+    We changed the policy of the order of wavenumber/wavelength grids
+    wavenumber grid should be in ascending order and now 
+    users can specify the order of the wavelength grid by themselves.
+    Your wavelength grid is in ***  descending  *** order
+    This might causes the bug if you update ExoJAX. 
+    Note that the older ExoJAX assumes ascending order as wavelength grid.
+    ======================================================================
 
 
 .. parsed-literal::
 
-    /home/kawahara/exojax/src/exojax/utils/grids.py:126: UserWarning: Resolution may be too small. R=523403.606697253
+    /home/kawahara/exojax/src/exojax/utils/grids.py:145: UserWarning: Resolution may be too small. R=523403.606697253
       warnings.warn('Resolution may be too small. R=' + str(resolution),
 
 
-Then, let’s load the molecular database. We here use Carbon monooxide in
+Then, let’s load the molecular database. We here use Carbon monoxide in
 Exomol. ``CO/12C-16O/Li2015`` means
-``Carbon monooxide/ isotopes = 12C + 16O / database name``. You can
-check the database name in the ExoMol website (https://www.exomol.com/).
+``Carbon monoxide/ isotopes = 12C + 16O / database name``. You can check
+the database name in the ExoMol website (https://www.exomol.com/).
 
 .. code:: ipython3
 
@@ -74,7 +84,7 @@ check the database name in the ExoMol website (https://www.exomol.com/).
 
 .. parsed-literal::
 
-    /home/kawahara/exojax/src/exojax/utils/molname.py:133: FutureWarning: e2s will be replaced to exact_molname_exomol_to_simple_molname.
+    /home/kawahara/exojax/src/exojax/utils/molname.py:178: FutureWarning: e2s will be replaced to exact_molname_exomol_to_simple_molname.
       warnings.warn(
 
 
@@ -105,31 +115,21 @@ tempreature range we will use is 500-1500K.
 .. parsed-literal::
 
     OpaPremodit: params automatically set.
-    Robust range: 484.50562701065246 - 1804.6009417674848 K
-    Tref changed: 296.0K->521.067611616332K
-    Tref_broadening is set to  866.0254037844389 K
+    Robust range: 484.50562701065246 - 1531.072955816165 K
+    Tref changed: 296.0K->553.9182980610753K
+    OpaPremodit: Tref_broadening is set to  866.0254037844389 K
     # of reference width grid :  4
     # of temperature exponent grid : 2
 
 
 .. parsed-literal::
 
-    uniqidx: 100%|██████████| 2/2 [00:00<00:00, 5174.96it/s]
-
-.. parsed-literal::
-
-    Premodit: Twt= 1153.8856089961712 K Tref= 521.067611616332 K
+    uniqidx: 100%|██████████| 2/2 [00:00<00:00, 6034.97it/s]
 
 
 .. parsed-literal::
 
-    
-
-
-.. parsed-literal::
-
-    Making LSD:|####################| 100%
-    Making LSD:|####################| 100%
+    Premodit: Twt= 1153.8856089961712 K Tref= 553.9182980610753 K
     Making LSD:|####################| 100%
 
 
@@ -178,7 +178,7 @@ You can also plot the line strengths at T=1500K. We can first change the
 
 .. parsed-literal::
 
-    Tref changed: 521.067611616332K->1500.0K
+    Tref changed: 553.9182980610753K->1500.0K
 
 
 
@@ -192,20 +192,18 @@ ExoJAX can solve the radiative transfer and derive the emission
 spectrum. To do so, ExoJAX has ``art`` class. ``ArtEmisPure`` means
 Atomospheric Radiative Transfer for Emission with Pure absorption. So,
 ``ArtEmisPure`` does not include scattering. We set the number of the
-atmospheric layer to 100 (nlayer) and the pressure at bottom and top
-atmosphere to 100 and 1.e-8 bar.
+atmospheric layer to 200 (nlayer) and the pressure at bottom and top
+atmosphere to 100 and 1.e-5 bar.
+
+Since v1.5, one can choose the rtsolver (radiative transfer solver) from
+the flux-based 2 stream solver (``fbase2st``) and the intensity-based
+n-stream sovler (``ibased``). Use ``rtsolver`` option. In the latter
+case, the number of the stream (``nstream``) can be specified.
 
 .. code:: ipython3
 
     from exojax.spec.atmrt import ArtEmisPure
-    art = ArtEmisPure(nu_grid=nu_grid, pressure_btm=1.e2, pressure_top=1.e-8, nlayer=100)
-
-
-
-.. parsed-literal::
-
-    /home/kawahara/exojax/src/exojax/spec/dtau_mmwl.py:14: FutureWarning: dtau_mmwl might be removed in future.
-      warnings.warn("dtau_mmwl might be removed in future.", FutureWarning)
+    art = ArtEmisPure(nu_grid=nu_grid, pressure_btm=1.e1, pressure_top=1.e-8, nlayer=75, rtsolver="ibased", nstream=8)
 
 
 Let’s assume the power law temperature model, within 500 - 1500 K.
@@ -291,8 +289,15 @@ Then, run the radiative transfer
     plt.show()
 
 
+.. parsed-literal::
 
-.. image:: get_started_files/get_started_38_0.png
+    Gaussian Quadrature Parameters: 
+    mu =  [0.06943184 0.33000948 0.66999052 0.93056816]
+    weight = [0.17392742 0.32607258 0.32607258 0.17392742]
+
+
+
+.. image:: get_started_files/get_started_38_1.png
 
 
 You can check the contribution function too! You should check if the
@@ -333,7 +338,7 @@ planet.
 
 .. parsed-literal::
 
-    /home/kawahara/exojax/src/exojax/utils/grids.py:126: UserWarning: Resolution may be too small. R=523403.606697253
+    /home/kawahara/exojax/src/exojax/utils/grids.py:145: UserWarning: Resolution may be too small. R=523403.606697253
       warnings.warn('Resolution may be too small. R=' + str(resolution),
 
 
@@ -372,12 +377,7 @@ This process is called ``sampling`` (but just interpolation though).
 
 .. parsed-literal::
 
-    42.43671169022172
-
-
-.. parsed-literal::
-
-    /home/kawahara/exojax/src/exojax/utils/grids.py:126: UserWarning: Resolution may be too small. R=523403.606697253
+    /home/kawahara/exojax/src/exojax/utils/grids.py:145: UserWarning: Resolution may be too small. R=523403.606697253
       warnings.warn('Resolution may be too small. R=' + str(resolution),
 
 
