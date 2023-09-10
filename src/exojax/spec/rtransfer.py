@@ -16,6 +16,8 @@
 
 """
 from exojax.spec.twostream import solve_lart_twostream_numpy
+from exojax.spec.twostream import solve_lart_twostream
+
 from exojax.spec.toon import reduced_source_function_isothermal_layer
 from exojax.spec.toon import params_hemispheric_mean
 from exojax.spec.toon import zetalambda_coeffs
@@ -86,6 +88,7 @@ def rtrun_emis_pureabs_flux2st_surface(dtau, source_matrix, source_surface):
                    axis=0)
 
 
+@jit
 def rtrun_trans_pureabs(dtau_chord, radius_lower):
     """Radiative transfer for transmission spectrum assuming pure absorption 
 
@@ -111,10 +114,62 @@ def rtrun_trans_pureabs(dtau_chord, radius_lower):
         axis=0)
     return deltaRp2 + radius_lower[-1]**2
 
-
+@jit
 def rtrun_emis_scat_lart_toonhm(dtau, single_scattering_albedo,
-                                          asymmetric_parameter, source_matrix):
-    """Radiative Transfer for emission spectrum using flux-based two-stream scattering LART solver w/ Toon Hemispheric Mean.
+                                asymmetric_parameter, source_matrix):
+    """Radiative Transfer for emission spectrum using flux-based two-stream scattering LART solver w/ Toon Hemispheric Mean with no surface.
+
+    Args:
+        dtau (_type_): _description_
+        single_scattering_albedo (_type_): _description_
+        asymmetric_parameter (_type_): _description_
+        source_matrix (_type_): _description_
+        
+    Returns:
+        _type_: _description_
+    """
+    trans_coeff, scat_coeff, piB, diagonal, lower_diagonal, upper_diagonal, vector = setrt_toonhm(
+        dtau, single_scattering_albedo, asymmetric_parameter, source_matrix)
+
+    nlayer, Nnus = diagonal.shape
+    cumTtilde, Qtilde, spectrum = solve_lart_twostream(diagonal,
+                                                       lower_diagonal,
+                                                       upper_diagonal, vector,
+                                                       jnp.zeros(Nnus))
+
+    return spectrum, cumTtilde, Qtilde, trans_coeff, scat_coeff, piB
+
+@jit
+def rtrun_emis_scat_lart_toonhm_surface(dtau, single_scattering_albedo,
+                                asymmetric_parameter, source_matrix, source_surface):
+    """Radiative Transfer for emission spectrum using flux-based two-stream scattering LART solver w/ Toon Hemispheric Mean with surface.
+
+    Args:
+        dtau (_type_): _description_
+        single_scattering_albedo (_type_): _description_
+        asymmetric_parameter (_type_): _description_
+        source_matrix (_type_): _description_
+        source_surface: source from the surface (N_nus)
+
+    Returns:
+        _type_: _description_
+    """
+    trans_coeff, scat_coeff, piB, diagonal, lower_diagonal, upper_diagonal, vector = setrt_toonhm(
+        dtau, single_scattering_albedo, asymmetric_parameter, source_matrix)
+
+    nlayer, Nnus = diagonal.shape
+    cumTtilde, Qtilde, spectrum = solve_lart_twostream(diagonal,
+                                                       lower_diagonal,
+                                                       upper_diagonal, vector,
+                                                       source_surface)
+
+    return spectrum, cumTtilde, Qtilde, trans_coeff, scat_coeff, piB
+
+
+
+def setrt_toonhm(dtau, single_scattering_albedo,
+                                asymmetric_parameter, source_matrix):
+    """sets rt for rtrun assming Toon Hemispheric Mean 
 
     Args:
         dtau (_type_): _description_
@@ -141,9 +196,9 @@ def rtrun_emis_scat_lart_toonhm(dtau, single_scattering_albedo,
     zeta_plus0 = zeta_plus[0, :]
     zeta_minus0 = zeta_minus[0, :]
 
-    # emission (no reflection)  
+    # emission (no reflection)
     trans_func0 = jnp.exp(-lambdan[0, :] * dtau[0, :])
-    denom = zeta_plus0**2 - (zeta_minus0*trans_func0)**2
+    denom = zeta_plus0**2 - (zeta_minus0 * trans_func0)**2
     omtrans = 1.0 - trans_func0
     fac = (zeta_plus0 * omtrans - zeta_minus0 * trans_func0 * omtrans)
     vector_top = (zeta_plus0**2 - zeta_minus0**2) / denom * fac * piB[0, :]
@@ -153,11 +208,7 @@ def rtrun_emis_scat_lart_toonhm(dtau, single_scattering_albedo,
         scat_coeff, trans_coeff, piB, upper_diagonal_top, diagonal_top,
         vector_top)
 
-    cumTtilde, Qtilde, spectrum = solve_lart_twostream_numpy(
-        diagonal, lower_diagonal, upper_diagonal, vector)
-    return spectrum, cumTtilde, Qtilde, trans_coeff, scat_coeff, piB
-
-
+    return trans_coeff, scat_coeff, piB, diagonal, lower_diagonal, upper_diagonal, vector
 
 
 def manual_recover_tridiagonal(diagonal, lower_diagonal, upper_diagonal,
@@ -232,6 +283,5 @@ def pressure_layer(log_pressure_top=-8.,
 #def rtrun(dtau, S):
 #    warnings.warn("Use rtrun_emis_pureabs_flux2st instead", FutureWarning)
 #    return rtrun_emis_pureabs_flux2st(dtau, S)
-
 
 ##########################################################################################
