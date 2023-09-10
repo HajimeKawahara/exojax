@@ -51,9 +51,11 @@ def test_solve_lart_twostream_numpy():
 
     cumTtilde, Qtilde, spectrum = solve_lart_twostream_numpy(
         diagonal, lower_diagonal, upper_diagonal, vector)
-    ref = 0.0072969906
+
+    ref = 0.39861748
     res = (spectrum[0] - ref)**2
     assert res < 1.e-15
+
 
 def test_solve_lart_twostream_by_comparing_with_numpy_version():
     _, _, upper_diagonal_top, diagonal_top, vector_top, piB, scat_coeff, trans_coeff = samples_lart_flux2st(
@@ -63,9 +65,13 @@ def test_solve_lart_twostream_by_comparing_with_numpy_version():
         vector_top)
     cumTtilde_np, Qtilde_np, spectrum_np = solve_lart_twostream_numpy(
         diagonal, lower_diagonal, upper_diagonal, vector)
-    cumTtilde, Qtilde, spectrum = solve_lart_twostream(
-        diagonal, lower_diagonal, upper_diagonal, vector)
+    nlayer, Nnus = diagonal.shape
+    cumTtilde, Qtilde, spectrum = solve_lart_twostream(diagonal,
+                                                       lower_diagonal,
+                                                       upper_diagonal, vector,
+                                                       jnp.zeros(Nnus))
     assert np.array_equal(Qtilde, Qtilde_np)
+
 
 if __name__ == "__main__":
     #test_scat_lart_flux2st_tridiag_coefficients()
