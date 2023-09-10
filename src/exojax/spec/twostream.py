@@ -44,7 +44,7 @@ def solve_lart_twostream_numpy(diagonal, lower_diagonal, upper_diagonal,
     return cumThat, Qhat, spectrum
 
 
-def solve_lart_twostream(diagonal, lower_diagonal, upper_diagonal, vector):
+def solve_lart_twostream(diagonal, lower_diagonal, upper_diagonal, vector, flux_bottom):
     """Two-stream RT solver given tridiagonal system components (LART form)
 
     Args:
@@ -52,7 +52,8 @@ def solve_lart_twostream(diagonal, lower_diagonal, upper_diagonal, vector):
         lower_diagonal (_type_): lower diagonal component of the tridiagonal system (cn)
         upper_diagonal (_type_): upper diagonal component of the tridiagonal system (an)
         vector (_type_): right-hand side vector (dn)
-
+        flux_bottom: bottom flux FB
+        
     Note:
         Our definition of the tridiagonal components is 
         an F+_(n+1) + bn F+_n + c_(n-1) F+_(n-1) = dn 
@@ -61,7 +62,7 @@ def solve_lart_twostream(diagonal, lower_diagonal, upper_diagonal, vector):
     Returns:
         _type_: cumlative hat{T}, hat{Q}, spectrum 
     """
-    nlayer, _ = diagonal.shape
+    nlayer, Nnus = diagonal.shape
 
     # arguments of the scanning function f:
     # carry_i_1 = [That_{i-1}, Qhat_{i-1}]
@@ -92,9 +93,11 @@ def solve_lart_twostream(diagonal, lower_diagonal, upper_diagonal, vector):
     That = jnp.insert(jnp.array(That), 0, That0, axis=0)
     Qhat = jnp.insert(jnp.array(Qhat), 0, Qhat0, axis=0)
     
-    cumThat = jnp.cumprod(That, axis=0)
+    #(no)surface term
+    Qhat = jnp.vstack([Qhat, flux_bottom])
+    cumThat = jnp.cumprod(jnp.vstack([jnp.ones(Nnus), That]), axis=0)
     spectrum = jnp.nansum(cumThat * Qhat, axis=0)
-
+        
     return cumThat, Qhat, spectrum
 
 
@@ -111,10 +114,12 @@ def solve_twostream_pure_absorption_numpy(trans_coeff, scat_coeff, piB):
     """
     import numpy as np
     Qpure = np.zeros_like(trans_coeff)
-    nlayer, nwav = trans_coeff.shape
+    nlayer, Nnus = trans_coeff.shape
     for i in range(0, nlayer - 1):
         Qpure[i, :] = (1.0 - trans_coeff[i, :] - scat_coeff[i, :]) * piB[i, :]
-    cumTpure = np.cumprod(trans_coeff, axis=0)
+    
+    Qpure = jnp.vstack([Qpure, jnp.zeros(Nnus)])
+    cumTpure = jnp.cumprod(jnp.vstack([jnp.ones(Nnus), trans_coeff]), axis=0)
     spectrum_pure = np.nansum(cumTpure * Qpure, axis=0)
     return cumTpure, Qpure, spectrum_pure
 
