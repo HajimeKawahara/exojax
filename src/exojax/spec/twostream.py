@@ -25,26 +25,31 @@ def solve_lart_twostream_numpy(diagonal, lower_diagonal, upper_diagonal,
         _type_: cumlative T, hat Q, spectrum 
     """
     import numpy as np
+    nlayer, Nnus = diagonal.shape
+
     nlayer, _ = diagonal.shape
     That = np.zeros_like(diagonal)
     Qhat = np.zeros_like(diagonal)
     That[0, :] = upper_diagonal[0, :] / diagonal[0, :]
     Qhat[0, :] = vector[0, :] / diagonal[0, :]
 
-    for i in range(1, nlayer): #nlayer - 1 ... 
+    for i in range(1, nlayer):  #nlayer - 1 ...
         gamma = diagonal[i, :] - lower_diagonal[i - 1, :] * That[i - 1, :]
         That[i, :] = upper_diagonal[i, :] / gamma
         Qhat[i, :] = (vector[i, :] +
-                        lower_diagonal[i - 1, :] * Qhat[i - 1, :]) / gamma
-        
-    cumThat = np.cumprod(That, axis=0)
+                      lower_diagonal[i - 1, :] * Qhat[i - 1, :]) / gamma
+
+    #(no)surface term
+    Qhat = jnp.vstack([Qhat, np.zeros(Nnus)])
+    cumThat = jnp.cumprod(jnp.vstack([jnp.ones(Nnus), That]), axis=0)
     contribution_function = cumThat * Qhat
     spectrum = np.nansum(contribution_function, axis=0)
 
     return cumThat, Qhat, spectrum
 
 
-def solve_lart_twostream(diagonal, lower_diagonal, upper_diagonal, vector):
+def solve_lart_twostream(diagonal, lower_diagonal, upper_diagonal, vector,
+                         flux_bottom):
     """Two-stream RT solver given tridiagonal system components (LART form)
 
     Args:
@@ -52,7 +57,8 @@ def solve_lart_twostream(diagonal, lower_diagonal, upper_diagonal, vector):
         lower_diagonal (_type_): lower diagonal component of the tridiagonal system (cn)
         upper_diagonal (_type_): upper diagonal component of the tridiagonal system (an)
         vector (_type_): right-hand side vector (dn)
-
+        flux_bottom: bottom flux FB
+        
     Note:
         Our definition of the tridiagonal components is 
         an F+_(n+1) + bn F+_n + c_(n-1) F+_(n-1) = dn 
@@ -61,12 +67,12 @@ def solve_lart_twostream(diagonal, lower_diagonal, upper_diagonal, vector):
     Returns:
         _type_: cumlative hat{T}, hat{Q}, spectrum 
     """
-    nlayer, _ = diagonal.shape
+    nlayer, Nnus = diagonal.shape
 
     # arguments of the scanning function f:
     # carry_i_1 = [That_{i-1}, Qhat_{i-1}]
     # arr = [diagonal[1:nlayer], lower_diagonal[0:nlayer-1], upper_diagonal[1:nlayer], vector[1,nlayer]]
-    
+
     def f(carry_i_1, arr):
         That_i_1, Qhat_i_1 = carry_i_1
         diagonal_i, lower_diagonal_i_1, upper_diagonal_i, vector_i = arr
@@ -91,8 +97,10 @@ def solve_lart_twostream(diagonal, lower_diagonal, upper_diagonal, vector):
     #inserts top boundary
     That = jnp.insert(jnp.array(That), 0, That0, axis=0)
     Qhat = jnp.insert(jnp.array(Qhat), 0, Qhat0, axis=0)
-    
-    cumThat = jnp.cumprod(That, axis=0)
+
+    #(no)surface term
+    Qhat = jnp.vstack([Qhat, flux_bottom])
+    cumThat = jnp.cumprod(jnp.vstack([jnp.ones(Nnus), That]), axis=0)
     spectrum = jnp.nansum(cumThat * Qhat, axis=0)
 
     return cumThat, Qhat, spectrum
@@ -111,10 +119,12 @@ def solve_twostream_pure_absorption_numpy(trans_coeff, scat_coeff, piB):
     """
     import numpy as np
     Qpure = np.zeros_like(trans_coeff)
-    nlayer, nwav = trans_coeff.shape
+    nlayer, Nnus = trans_coeff.shape
     for i in range(0, nlayer - 1):
         Qpure[i, :] = (1.0 - trans_coeff[i, :] - scat_coeff[i, :]) * piB[i, :]
-    cumTpure = np.cumprod(trans_coeff, axis=0)
+
+    Qpure = np.vstack([Qpure, np.zeros(Nnus)])
+    cumTpure = np.cumprod(np.vstack([np.ones(Nnus), trans_coeff]), axis=0)
     spectrum_pure = np.nansum(cumTpure * Qpure, axis=0)
     return cumTpure, Qpure, spectrum_pure
 
@@ -190,8 +200,9 @@ def compute_tridiag_diagonals_and_vector(scat_coeff, trans_coeff, piB,
     # vector
     hatpiB = (1.0 - trans_coeff - scat_coeff) * piB
     hatpiB_minus_one = jnp.roll(hatpiB, 1, axis=0)
-    vector = rn_minus * hatpiB - rn * (Tn_minus_one - Sn_minus_one) * hatpiB_minus_one
-    
+    vector = rn_minus * hatpiB - rn * (Tn_minus_one -
+                                       Sn_minus_one) * hatpiB_minus_one
+
     # top bundary
     vector = vector.at[0].set(vector_top)
 
