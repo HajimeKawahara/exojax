@@ -1,16 +1,10 @@
 """ short integration tests for PreMODIT spectrum"""
 import pytest
-import pkg_resources
 from jax.config import config
-import pandas as pd
-import numpy as np
 from exojax.test.emulate_mdb import mock_mdb
-from exojax.test.data import TESTDATA_CO_EXOMOL_MODIT_EMISSION_REF
-from exojax.test.data import TESTDATA_CO_HITEMP_MODIT_EMISSION_REF
 from exojax.spec.opacalc import OpaPremodit
 from exojax.test.emulate_mdb import mock_wavenumber_grid
 from exojax.spec.atmrt import ArtEmisScat
-from exojax.spec.atmrt import ArtEmisPure
 
 
 @pytest.mark.parametrize("db, diffmode", [("exomol", 1), ("exomol", 2),

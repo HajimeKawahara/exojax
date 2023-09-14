@@ -89,9 +89,9 @@ if __name__ == "__main__":
     db = "exomol"
 
     diffmode = 0
-    #nus, xs, dE, Twt, Tref, Tin = test_xsection_premodit(db, diffmode)
-    nus, xs, dE, Twt, Tref, Tin = test_xsection_premodit_for_single_broadening(
-        db, diffmode)
+    nus, xs, dE, Twt, Tref, Tin = test_xsection_premodit(db, diffmode)
+    #nus, xs, dE, Twt, Tref, Tin = test_xsection_premodit_for_single_broadening(
+    #    db, diffmode)
     filename = pkg_resources.resource_filename('exojax',
                                                'data/testdata/' + testdata[db])
 

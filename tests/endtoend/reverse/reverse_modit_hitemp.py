@@ -19,7 +19,7 @@ from exojax.spec import rtransfer as rt
 from exojax.spec import modit
 from exojax.spec import api, contdb
 from exojax.utils.grids import wavenumber_grid
-from exojax.spec.rtransfer import rtrun_emis_pureabs_flux2st, dtauM, dtauCIA, wavenumber_grid
+from exojax.spec.rtransfer import rtrun_emis_pureabs_fbased2st, dtauM, dtauCIA, wavenumber_grid
 from exojax.spec import planck
 from exojax.spec.response import ipgauss_sampling
 from exojax.spec.spin_rotation import convolve_rigid_rotation
@@ -110,7 +110,7 @@ def frun(Tarr, MMR_CO, Mp, Rp, u1, u2, RV, vsini):
                         cdbH2H2.nucia, cdbH2H2.tcia, cdbH2H2.logac)
     dtau = dtaumCO + dtaucH2H2
     sourcef = planck.piBarr(Tarr, nus)
-    F0 = rtrun_emis_pureabs_flux2st(dtau, sourcef) / norm
+    F0 = rtrun_emis_pureabs_fbased2st(dtau, sourcef) / norm
     Frot = convolve_rigid_rotation(F0, vr_array, vsini, u1, u2)
     mu = ipgauss_sampling(nusd, nus, Frot, beta_inst, RV, vr_array)
     return mu

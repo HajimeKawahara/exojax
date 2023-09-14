@@ -110,13 +110,13 @@ if __name__ == "__main__":
     import matplotlib.pyplot as plt
     db = "hitemp"
     diffmode = 0
-    #nus_hitemp, F0_hitemp, Fref_hitemp = test_rt("hitemp", diffmode)
-    #nus, F0, Fref = test_rt("exomol", diffmode)  #
+    nus_hitemp, F0_hitemp, Fref_hitemp = test_rt("hitemp", diffmode)
+    nus, F0, Fref = test_rt("exomol", diffmode)  #
 
-    nus_hitemp, F0_hitemp, Fref_hitemp = test_rt_for_single_broadening_parameters(
-        "hitemp", diffmode)
-    nus, F0, Fref = test_rt_for_single_broadening_parameters(
-        "exomol", diffmode)
+    #nus_hitemp, F0_hitemp, Fref_hitemp = test_rt_for_single_broadening_parameters(
+    #    "hitemp", diffmode)
+    #nus, F0, Fref = test_rt_for_single_broadening_parameters(
+    #    "exomol", diffmode)
 
     fig = plt.figure()
     ax = fig.add_subplot(311)

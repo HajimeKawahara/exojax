@@ -8,7 +8,9 @@
 import numpy as np
 import jax.numpy as jnp
 from exojax.spec.planck import piBarr
-from exojax.spec.rtransfer import rtrun_emis_pureabs_flux2st
+from exojax.spec.rtransfer import rtrun_not_implemented
+from exojax.spec.rtransfer import rtrun_emis_pureabs_fbased2st
+from exojax.spec.rtransfer import rtrun_emis_pureabs_ibased
 from exojax.spec.rtransfer import rtrun_emis_scat_lart_toonhm
 from exojax.spec.rtransfer import rtrun_trans_pureabs
 from exojax.spec.layeropacity import layer_optical_depth
@@ -255,7 +257,13 @@ class ArtEmisScat(ArtCommon):
         self.rtsolver = rtsolver
         self.method = "emission_with_scattering_using_" + self.rtsolver
 
-    def run(self, dtau, single_scattering_albedo, asymmetric_parameter, temperature, nu_grid=None, show=False):
+    def run(self,
+            dtau,
+            single_scattering_albedo,
+            asymmetric_parameter,
+            temperature,
+            nu_grid=None,
+            show=False):
         """run radiative transfer
 
         Args:
@@ -275,17 +283,18 @@ class ArtEmisScat(ArtCommon):
             raise ValueError("the wavenumber grid is not given.")
 
         if self.rtsolver == "toon_hemispheric_mean":
-        
+
             spectrum, cumTtilde, Qtilde, trans_coeff, scat_coeff, piB = rtrun_emis_scat_lart_toonhm(
                 dtau, single_scattering_albedo, asymmetric_parameter, sourcef)
             if show:
                 from exojax.plot.rtplot import comparison_with_pure_absorption
                 comparison_with_pure_absorption(cumTtilde, Qtilde, spectrum,
-                                        trans_coeff, scat_coeff, piB)
+                                                trans_coeff, scat_coeff, piB)
 
             return spectrum
         else:
             raise ValueError("Unknown radiative transfer solver (rtsolver).")
+
 
 class ArtEmisPure(ArtCommon):
     """Atmospheric RT for emission w/ pure absorption
@@ -300,13 +309,55 @@ class ArtEmisPure(ArtCommon):
         pressure_btm=1.e2,
         nlayer=100,
         nu_grid=None,
+        rtsolver="fbased2st",
+        nstream=2,
     ):
         """initialization of ArtEmisPure
 
         
         """
+
         super().__init__(pressure_top, pressure_btm, nlayer, nu_grid)
         self.method = "emission_with_pure_absorption"
+        self.set_capable_rtsolvers()
+        self.validate_rtsolver(rtsolver, nstream)
+
+    def set_capable_rtsolvers(self):
+        self.rtsolver_explanation = {
+            "fbased2st":
+            "Flux-based two-stream solver (ExoJAX1, HELIOS-R1 like)",
+            "ibased":
+            "Intensity-based n-stream solver (e.g. NEMESIS, pRT like)",
+            "ibasedOK":
+            "Intensity-based n-stream solver w/ linear interpolation, see Olson and Kunasz (e.g. HELIOS-R2 like)"
+        }
+        self.rtsolver_dict = {
+            "fbased2st": rtrun_emis_pureabs_fbased2st,
+            "ibased": rtrun_emis_pureabs_ibased,
+            "ibasedOK": rtrun_not_implemented
+        }
+        self.valid_rtsolvers = list(self.rtsolver_dict.keys())
+
+    def validate_rtsolver(self, rtsolver, nstream):
+        """validates rtsolver
+
+        Args:
+            rtsolver (str): rtsolver
+            nstream (int): the number of streams
+
+        """
+
+        if rtsolver in self.valid_rtsolvers:
+            self.rtsolver = rtsolver
+        else:
+            str_valid_rtsolvers = ", ".join(
+                self.valid_rtsolvers[:-1]) + f", or {self.valid_rtsolvers[-1]}"
+            raise ValueError("Unknown rtsolver. Use " + str_valid_rtsolvers)
+        if rtsolver == "fbased2st" and nstream != 2:
+            raise ValueError(
+                "fbased2st (flux-based two-stream) rtsolver requires nstream = 2."
+            )
+        self.nstream = nstream
 
     def run(self, dtau, temperature, nu_grid=None):
         """run radiative transfer
@@ -325,9 +376,16 @@ class ArtEmisPure(ArtCommon):
             sourcef = piBarr(temperature, nu_grid)
         else:
             raise ValueError("the wavenumber grid is not given.")
-        return rtrun_emis_pureabs_flux2st(dtau, sourcef)
 
-    
+        rtfunc = self.rtsolver_dict[self.rtsolver]
+        if self.rtsolver == "fbased2st":
+            return rtfunc(dtau, sourcef)
+            #return rtrun_emis_pureabs_fbased2st(dtau, sourcef)
+        elif self.rtsolver == "ibased":
+            from exojax.spec.rtransfer import initialize_gaussian_quadrature
+            mus, weights = initialize_gaussian_quadrature(self.nstream)
+            return rtfunc(dtau, sourcef, mus, weights)
+
 
 class ArtTransPure(ArtCommon):
     def __init__(self, pressure_top=1.e-8, pressure_btm=1.e2, nlayer=100):

@@ -15,6 +15,9 @@
 
 
 """
+from jax import jit
+import jax.numpy as jnp
+from jax.lax import scan
 from exojax.spec.twostream import solve_lart_twostream_numpy
 from exojax.spec.twostream import solve_lart_twostream
 
@@ -23,14 +26,16 @@ from exojax.spec.toon import params_hemispheric_mean
 from exojax.spec.toon import zetalambda_coeffs
 from exojax.spec.twostream import compute_tridiag_diagonals_and_vector
 from exojax.spec.twostream import set_scat_trans_coeffs
-import warnings
-from jax import jit
-import jax.numpy as jnp
 from exojax.special.expn import E1
 from exojax.spec.layeropacity import layer_optical_depth
 from exojax.spec.layeropacity import layer_optical_depth_CIA
 from exojax.spec.layeropacity import layer_optical_depth_Hminus
 from exojax.spec.layeropacity import layer_optical_depth_VALD
+import warnings
+
+
+def rtrun_not_implemented():
+    raise ValueError("not implemented yet.")
 
 
 @jit
@@ -51,7 +56,7 @@ def trans2E3(x):
 
 
 @jit
-def rtrun_emis_pureabs_flux2st(dtau, source_matrix):
+def rtrun_emis_pureabs_fbased2st(dtau, source_matrix):
     """Radiative Transfer for emission spectrum using flux-based two-stream pure absorption with no surface
     Args:
         dtau (2D array): optical depth matrix, dtau  (N_layer, N_nus)
@@ -69,7 +74,7 @@ def rtrun_emis_pureabs_flux2st(dtau, source_matrix):
 
 
 @jit
-def rtrun_emis_pureabs_flux2st_surface(dtau, source_matrix, source_surface):
+def rtrun_emis_pureabs_fbased2st_surface(dtau, source_matrix, source_surface):
     """Radiative Transfer for emission spectrum using flux-based two-stream pure absorption with a planetary surface.
 
     Args:
@@ -86,6 +91,57 @@ def rtrun_emis_pureabs_flux2st_surface(dtau, source_matrix, source_surface):
     return jnp.sum(Qv *
                    jnp.cumprod(jnp.vstack([jnp.ones(Nnus), TransM]), axis=0),
                    axis=0)
+
+@jit
+def rtrun_emis_pureabs_ibased(dtau, source_matrix, mus, weights):
+    """Radiative Transfer for emission spectrum using intensity-based n-stream pure absorption with no surface (NEMESIS, pRT-like)
+    Args:
+        dtau (2D array): optical depth matrix, dtau  (N_layer, N_nus)
+        source_matrix (2D array): source matrix (N_layer, N_nus)
+        mus (list): mu (cos theta) list for integration
+        weights (list): weight list for mu
+        
+    Returns:
+        flux in the unit of [erg/cm2/s/cm-1] if using piBarr as a source function.
+    """
+
+    Nnus = jnp.shape(dtau)[1]
+    tau = jnp.cumsum(dtau, axis=0)    
+
+    #The following scan part is equivalent to this for-loop
+    #spec = jnp.zeros(Nnus)
+    #for i, mu in enumerate(mus):
+    #    dtrans = - jnp.diff(jnp.exp(-tau/mu), prepend=1.0, axis=0)
+    #    spec = spec + weights[i]*2.0*mu*jnp.sum(source_matrix*dtrans, axis=0)
+
+    #scan part
+    muws = [mus, weights]
+    def f(carry_fmu, muw):
+        mu, w = muw
+        dtrans = - jnp.diff(jnp.exp(-tau/mu), prepend=1.0, axis=0)    
+        carry_fmu = carry_fmu + 2.0*mu*w*jnp.sum(source_matrix*dtrans, axis=0)
+        return carry_fmu, None
+    spec, _ = scan(f, jnp.zeros(Nnus), muws)
+
+    return spec
+
+
+def initialize_gaussian_quadrature(nstream):
+    from scipy.special import roots_legendre
+    if nstream % 2 == 0:
+        norder = int(nstream/2)
+    else:
+        raise ValueError("nstream should be even number larger than 2.")
+    mus, weights = roots_legendre(norder)
+
+    #correction because integration should be between 0 to 1, but roots_legendre uses -1 to 1.
+    mus = 0.5*(mus + 1.0) 
+    weights = 0.5*weights
+    print("Gaussian Quadrature Parameters: ")
+    print("mu = ", mus)
+    print("weight =", weights)
+    
+    return mus, weights
 
 
 @jit
@@ -280,7 +336,7 @@ def pressure_layer(log_pressure_top=-8.,
                                    mode, reference_point, numpy)
 
 
-#def rtrun(dtau, S):
+# def rtrun(dtau, S):
 #    warnings.warn("Use rtrun_emis_pureabs_flux2st instead", FutureWarning)
 #    return rtrun_emis_pureabs_flux2st(dtau, S)
 

@@ -3,14 +3,24 @@ Radiative Transfer
 
 Exojax uses a layer-based atmospheric model for `radiative transfer <https://en.wikipedia.org/wiki/Radiative_transfer>`_ (RT). Currently, the only supported RT is the emission model with no scattering.
 
-Atmospheric Layer Model
----------------------------
+Emission with pure absorption
+--------------------------------
+
+flux-based 2-stream
+^^^^^^^^^^^^^^^^^^^^^^^^
+rtsolver="fbased2st"
 
 The upward flux of the n-th layer (with pressure of :math:`P_n`) is connected to that of the (n-1)-th layer with transmission T and source function S. 
 
 :math:`F_{n} = \mathcal{T}_n F_{n+1} + (1-\mathcal{T}_n) \, \mathcal{S}_n`
 
 where :math:`P_{n-1} < P_n`. So, we need to specify a transmission and source function. 
+
+
+intensity-based RT
+^^^^^^^^^^^^^^^^^^^^^
+rtsolver="ibased"
+
 
 Source Function
 ---------------------------
@@ -28,9 +38,9 @@ we can use `piBarr <../exojax/exojax.spec.html#exojax.spec.planck.piBarr>`_.
 	  >>> sourcef = planck.piBarr(Tarr,nus)
 
 Transmission for Pure Absorption: trans2E3
--------------------------------------------
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Currently, exojax supports only a transmission for pure absorption. In this case, the transmission is given as
+In this case, the transmission is given as
 
 :math:`\mathcal{T}_n = 2 E_3(\Delta \tau_n ) = ( 1 - \Delta \tau_n) \exp{(- \Delta \tau_n)} + (\Delta \tau_n )^2 E_1(\Delta \tau_n )`
 
