@@ -30,23 +30,23 @@ def pressure_layer_logspace(log_pressure_top=-8.,
 
     Note:
         d logP is constant using this function. 
-        d log_e P = dParr[i]/pressure[i] = constant = 1 - pressure_decrease_rate, dParr[0] = (1- pressure_decrease_rate) Parr[0] for ascending mode
     """
     dlogP = (log_pressure_btm - log_pressure_top) / (nlayer - 1)
-    pressure_decrease_rate = 10**-dlogP
     if numpy:
         pressure = np.logspace(log_pressure_top, log_pressure_btm, nlayer)
     else:
         pressure = jnp.logspace(log_pressure_top, log_pressure_btm, nlayer)
+    
     #Issue 414
     #dParr = (1.0 - pressure_decrease_rate**reference_point) * pressure
-    dParr = (10**((1.0 - reference_point) * dlogP) -
-             10**(-reference_point * dlogP)) * pressure
+    m = 10**((1.0 - reference_point) * dlogP) - 10**(-reference_point * dlogP)
+    dParr = m * pressure
+    
     if mode == 'descending':
         pressure = pressure[::-1]
         dParr = dParr[::-1]
 
-    return pressure, dParr, pressure_decrease_rate
+    return pressure, dParr, 10**-dlogP
 
 
 @jit
