@@ -40,7 +40,8 @@ def pressure_layer_logspace(log_pressure_top=-8.,
         pressure = jnp.logspace(log_pressure_top, log_pressure_btm, nlayer)
     #Issue 414
     #dParr = (1.0 - pressure_decrease_rate**reference_point) * pressure
-    dParr = (10**(dlogP*reference_point) - 10**(-dlogP*reference_point)) * pressure
+    dParr = (10**((1.0 - reference_point) * dlogP) -
+             10**(-reference_point * dlogP)) * pressure
     if mode == 'descending':
         pressure = pressure[::-1]
         dParr = dParr[::-1]
@@ -49,7 +50,8 @@ def pressure_layer_logspace(log_pressure_top=-8.,
 
 
 @jit
-def normalized_layer_height(temperature, pressure_decrease_rate, mean_molecular_weight, radius_btm, gravity_btm):
+def normalized_layer_height(temperature, pressure_decrease_rate,
+                            mean_molecular_weight, radius_btm, gravity_btm):
     """compute normalized height/radius at the upper boundary of the atmospheric layer, neglecting atmospheric mass. 
 
     Args:
@@ -70,10 +72,12 @@ def normalized_layer_height(temperature, pressure_decrease_rate, mean_molecular_
     def compute_radius(normalized_radius_lower, arr):
         T_layer = arr[0:1][0]
         mmw_layer = arr[1:2][0]
-        gravity_lower = gravity_btm/normalized_radius_lower
-        Hn_lower = pressure_scale_height(gravity_lower, T_layer, mmw_layer)/radius_btm 
-        fac = pressure_decrease_rate**(-Hn_lower/normalized_radius_lower)  - 1.0
-        normalized_height_layer = fac*normalized_radius_lower
+        gravity_lower = gravity_btm / normalized_radius_lower
+        Hn_lower = pressure_scale_height(gravity_lower, T_layer,
+                                         mmw_layer) / radius_btm
+        fac = pressure_decrease_rate**(-Hn_lower /
+                                       normalized_radius_lower) - 1.0
+        normalized_height_layer = fac * normalized_radius_lower
         carry = normalized_radius_lower + normalized_height_layer
         return carry, [normalized_height_layer, normalized_radius_lower]
 
