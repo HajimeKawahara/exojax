@@ -30,24 +30,26 @@ def pressure_layer_logspace(log_pressure_top=-8.,
 
     Note:
         d logP is constant using this function. 
-        d log_e P = dParr[i]/pressure[i] = constant = 1 - pressure_decrease_rate, dParr[0] = (1- pressure_decrease_rate) Parr[0] for ascending mode
     """
     dlogP = (log_pressure_btm - log_pressure_top) / (nlayer - 1)
-    pressure_decrease_rate = 10**-dlogP
     if numpy:
         pressure = np.logspace(log_pressure_top, log_pressure_btm, nlayer)
     else:
         pressure = jnp.logspace(log_pressure_top, log_pressure_btm, nlayer)
-    dParr = (1.0 - pressure_decrease_rate**reference_point) * pressure
+
+    k = 10**-dlogP
+    dParr = (k**(reference_point - 1.0) - k**reference_point) * pressure
+    
     if mode == 'descending':
         pressure = pressure[::-1]
         dParr = dParr[::-1]
 
-    return pressure, dParr, pressure_decrease_rate
+    return pressure, dParr, k
 
 
 @jit
-def normalized_layer_height(temperature, pressure_decrease_rate, mean_molecular_weight, radius_btm, gravity_btm):
+def normalized_layer_height(temperature, pressure_decrease_rate,
+                            mean_molecular_weight, radius_btm, gravity_btm):
     """compute normalized height/radius at the upper boundary of the atmospheric layer, neglecting atmospheric mass. 
 
     Args:
@@ -68,10 +70,12 @@ def normalized_layer_height(temperature, pressure_decrease_rate, mean_molecular_
     def compute_radius(normalized_radius_lower, arr):
         T_layer = arr[0:1][0]
         mmw_layer = arr[1:2][0]
-        gravity_lower = gravity_btm/normalized_radius_lower
-        Hn_lower = pressure_scale_height(gravity_lower, T_layer, mmw_layer)/radius_btm 
-        fac = pressure_decrease_rate**(-Hn_lower/normalized_radius_lower)  - 1.0
-        normalized_height_layer = fac*normalized_radius_lower
+        gravity_lower = gravity_btm / normalized_radius_lower
+        Hn_lower = pressure_scale_height(gravity_lower, T_layer,
+                                         mmw_layer) / radius_btm
+        fac = pressure_decrease_rate**(-Hn_lower /
+                                       normalized_radius_lower) - 1.0
+        normalized_height_layer = fac * normalized_radius_lower
         carry = normalized_radius_lower + normalized_height_layer
         return carry, [normalized_height_layer, normalized_radius_lower]
 
