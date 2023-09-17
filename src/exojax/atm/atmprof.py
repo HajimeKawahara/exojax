@@ -36,17 +36,15 @@ def pressure_layer_logspace(log_pressure_top=-8.,
         pressure = np.logspace(log_pressure_top, log_pressure_btm, nlayer)
     else:
         pressure = jnp.logspace(log_pressure_top, log_pressure_btm, nlayer)
-    
-    #Issue 414
-    #dParr = (1.0 - pressure_decrease_rate**reference_point) * pressure
-    m = 10**((1.0 - reference_point) * dlogP) - 10**(-reference_point * dlogP)
-    dParr = m * pressure
+
+    k = 10**-dlogP
+    dParr = (k**(reference_point - 1.0) - k**reference_point) * pressure
     
     if mode == 'descending':
         pressure = pressure[::-1]
         dParr = dParr[::-1]
 
-    return pressure, dParr, 10**-dlogP
+    return pressure, dParr, k
 
 
 @jit
