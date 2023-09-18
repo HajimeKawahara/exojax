@@ -3,6 +3,7 @@ import jax.numpy as jnp
 from jax import jit
 from exojax.utils.grids import wavenumber_grid
 from exojax.spec.response import ipgauss_sampling
+from exojax.spec.response import ipgauss_ola_sampling
 from exojax.spec.response import ipgauss_variable_sampling
 from exojax.utils.grids import velocity_grid
 
@@ -65,6 +66,39 @@ def test_ipgauss_sampling(fig=False):
         plt.plot(nusd,F_naive,ls="dashed")
         plt.show()
 
+def test_ipgauss_ola_sampling(fig=False):
+    nus, wav, resolution = wavenumber_grid(4000.0,
+                                               4010.0,
+                                               10000,
+                                               xsmode="premodit")
+    F0 = np.ones_like(nus)
+    F0[5000 - 50:5000 + 50] = 0.5
+    RV = 10.0
+    beta = 20.0
+    nusd, wav, resolution_inst = wavenumber_grid(4003.0,
+                                               4007.0,
+                                               2500,
+                                               xsmode="lpf")
+                                               #settings before HMC
+    vsini_max = 100.0
+    vr_array = velocity_grid(resolution, vsini_max)
+
+    input_matrix = F0.reshape((5,2000))
+
+    F = ipgauss_ola_sampling(nusd, nus, input_matrix, beta, RV, vr_array)
+
+    F_naive = _ipgauss_sampling_naive(nusd, nus, F0, beta, RV)
+    res = np.max(np.abs(1.0 - F_naive/F))
+    print(res)
+    assert res < 1.e-4 #0.1% allowed
+    if fig:
+        import matplotlib.pyplot as plt
+        plt.plot(nusd,F)
+        plt.plot(nusd,F_naive,ls="dashed")
+        plt.show()
+
+
+
 def test_SopInstProfile():
     from exojax.spec.specop import SopInstProfile
     
@@ -124,4 +158,5 @@ def test_ipgauss_variable_sampling_using_constant_beta_array(fig=False):
 if __name__ == "__main__":
     #test_ipgauss_sampling(fig=True)
     #test_ipgauss_variable_sampling_using_constant_beta_array(fig=True)
-    test_SopInstProfile()
+    #test_SopInstProfile()
+    test_ipgauss_ola_sampling(fig=True)

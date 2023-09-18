@@ -108,7 +108,7 @@ def test_olaconv(fig=False):
     #assert maxresidual < 1.e-6 #fp32
 
     if fig:
-        edge = int((Nf - 1) / 2)
+        edge = int((len(f) - 1) / 2)
         plt.plot(x, label="input")
         plt.plot(oac[edge:-edge], label="oaconvolve")
         plt.plot(ola[edge:-edge], ls="dashed", label="OLA test")

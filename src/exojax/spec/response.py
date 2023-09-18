@@ -9,6 +9,54 @@ import jax.numpy as jnp
 from jax.lax import scan
 from exojax.utils.constants import c
 from exojax.signal.convolve import convolve_same
+from exojax.signal.ola import olaconv, ola_lengths, generate_zeropad
+
+
+@jit
+def ipgauss_ola_sampling(nusd, nus, F0, beta, RV, varr_kernel):
+    """Apply the Gaussian IP response using OLA + sampling to a spectrum F.
+    
+    
+    Args:
+        nusd: sampling wavenumber
+        nus: input wavenumber, evenly log-spaced
+        F0: original spectrum (F0)
+        beta: STD of a Gaussian broadening (IP+microturbulence)
+        RV: radial velocity (km/s)
+        varr_kernel: velocity array for the rotational kernel
+        
+    Return:
+        response-applied spectrum (F)
+    """
+    Fgauss = ipgauss_ola(F0, varr_kernel, beta)
+    return sampling(nusd, nus, Fgauss, RV)
+
+@jit
+def ipgauss_ola(F0, varr_kernel, beta):
+    """Apply the Gaussian IP response to a spectrum F using OLA.
+
+    Args:
+        F0: original spectrum (F0)
+        varr_kernel: velocity array for the rotational kernel
+        beta: STD of a Gaussian broadening (IP+microturbulence)
+
+    Return:
+        response-applied spectrum (F)
+    """
+    x = varr_kernel / beta
+    kernel = jnp.exp(-x * x / 2.0)
+    kernel = kernel / jnp.sum(kernel, axis=0)
+    print(jnp.shape(F0), jnp.shape(kernel))
+    ndiv, div_length, filter_length = ola_lengths(F0, kernel)
+    F0_hat, kernel_hat = generate_zeropad(F0, kernel)
+    ola = olaconv(F0_hat, kernel_hat, ndiv, div_length, filter_length)
+    
+    edge = int((len(kernel) - 1) / 2)
+    F = ola[edge:-edge]
+    #F = convolve_same(F0, kernel)
+
+    return F
+
 
 @jit
 def ipgauss_sampling(nusd, nus, F0, beta, RV, varr_kernel):
