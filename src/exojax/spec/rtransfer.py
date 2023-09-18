@@ -34,10 +34,6 @@ from exojax.spec.layeropacity import layer_optical_depth_VALD
 import warnings
 
 
-def rtrun_not_implemented():
-    raise ValueError("not implemented yet.")
-
-
 @jit
 def trans2E3(x):
     """transmission function 2E3 (two-stream approximation with no scattering)
@@ -86,11 +82,12 @@ def rtrun_emis_pureabs_fbased2st_surface(dtau, source_matrix, source_surface):
         flux in the unit of [erg/cm2/s/cm-1] if using piBarr as a source function.
     """
     Nnus = jnp.shape(dtau)[1]
-    TransM = jnp.where(dtau == 0, 1.0, trans2E3(dtau))
-    Qv = jnp.vstack([(1 - TransM) * source_matrix, source_surface])
+    trans = jnp.where(dtau == 0, 1.0, trans2E3(dtau))
+    Qv = jnp.vstack([(1 - trans) * source_matrix, source_surface])
     return jnp.sum(Qv *
-                   jnp.cumprod(jnp.vstack([jnp.ones(Nnus), TransM]), axis=0),
+                   jnp.cumprod(jnp.vstack([jnp.ones(Nnus), trans]), axis=0),
                    axis=0)
+
 
 @jit
 def rtrun_emis_pureabs_ibased(dtau, source_matrix, mus, weights):
@@ -106,7 +103,7 @@ def rtrun_emis_pureabs_ibased(dtau, source_matrix, mus, weights):
     """
 
     Nnus = jnp.shape(dtau)[1]
-    tau = jnp.cumsum(dtau, axis=0)    
+    tau = jnp.cumsum(dtau, axis=0)
 
     #The following scan part is equivalent to this for-loop
     #spec = jnp.zeros(Nnus)
@@ -116,11 +113,14 @@ def rtrun_emis_pureabs_ibased(dtau, source_matrix, mus, weights):
 
     #scan part
     muws = [mus, weights]
+
     def f(carry_fmu, muw):
         mu, w = muw
-        dtrans = - jnp.diff(jnp.exp(-tau/mu), prepend=1.0, axis=0)    
-        carry_fmu = carry_fmu + 2.0*mu*w*jnp.sum(source_matrix*dtrans, axis=0)
+        dtrans = -jnp.diff(jnp.exp(-tau / mu), prepend=1.0, axis=0)
+        carry_fmu = carry_fmu + 2.0 * mu * w * jnp.sum(source_matrix * dtrans,
+                                                       axis=0)
         return carry_fmu, None
+
     spec, _ = scan(f, jnp.zeros(Nnus), muws)
 
     return spec
@@ -129,19 +129,83 @@ def rtrun_emis_pureabs_ibased(dtau, source_matrix, mus, weights):
 def initialize_gaussian_quadrature(nstream):
     from scipy.special import roots_legendre
     if nstream % 2 == 0:
-        norder = int(nstream/2)
+        norder = int(nstream / 2)
     else:
         raise ValueError("nstream should be even number larger than 2.")
     mus, weights = roots_legendre(norder)
 
     #correction because integration should be between 0 to 1, but roots_legendre uses -1 to 1.
-    mus = 0.5*(mus + 1.0) 
-    weights = 0.5*weights
+    mus = 0.5 * (mus + 1.0)
+    weights = 0.5 * weights
     print("Gaussian Quadrature Parameters: ")
     print("mu = ", mus)
     print("weight =", weights)
-    
+
     return mus, weights
+
+
+def rtrun_emis_pureabs_ibased_linsap(dtau, source_matrix_layertop, mus,
+                                     weights):
+    """Radiative Transfer for emission spectrum using intensity-based n-stream pure absorption with no surface w/ linear source approximation = linsap (HELIOS-R2 like)
+
+    Args:
+        dtau (2D array): optical depth matrix, dtau  (N_layer, N_nus)
+        source_matrix_upper (2D array): source matrix at the layer top (N_layer, N_nus)
+        mus (list): mu (cos theta) list for integration
+        weights (list): weight list for mu
+        
+    Returns:
+        flux in the unit of [erg/cm2/s/cm-1] if using piBarr as a source function.
+
+    Notes:
+        See Olson and Kunasz as well as HELIOS-R2 paper (Kitzmann+) for the derivation.
+    
+    
+    """
+
+    Nnus = jnp.shape(dtau)[1]
+    source_matrix_layertop_p1 = jnp.roll(source_matrix_layertop, -1,
+                                         axis=0)  # S_{n+1}
+
+    # NOT IMPLEMENTED YET
+    # need to replace the last element of the above
+    #
+
+    #scan part
+    muws = [mus, weights]
+
+    def f(carry_fmu, muw):
+        mu, w = muw
+
+        dtau_per_mu = dtau/mu
+        trans = jnp.exp(-dtau_per_mu)
+        beta, gamma = coeffs_linsap(dtau_per_mu, trans)
+        dI = beta * source_matrix_layertop + gamma * source_matrix_layertop_p1
+
+        intensity_for_mu = jnp.sum(dI *
+                    jnp.cumprod(jnp.vstack([jnp.ones(Nnus), trans]), axis=0),
+                    axis=0)
+        
+        carry_fmu = carry_fmu + 2.0 * mu * w * intensity_for_mu
+
+        return carry_fmu, None
+
+    spec, _ = scan(f, jnp.zeros(Nnus), muws)
+
+
+def coeffs_linsap(dtau_per_mu, trans):
+    """coefficients of the linsap
+
+    Args:
+        dtau_per_mu (_type_): opacity difference divided by mu (cos theta)
+        trans: transmission of the layers
+    Returns:
+        _type_: beta coefficient, gamma coefficient
+    """
+    fac = (1.0 - trans) / dtau_per_mu
+    beta = 1.0 - fac
+    gamma = -trans + fac
+    return beta, gamma
 
 
 @jit
@@ -170,6 +234,7 @@ def rtrun_trans_pureabs(dtau_chord, radius_lower):
         axis=0)
     return deltaRp2 + radius_lower[-1]**2
 
+
 @jit
 def rtrun_emis_scat_lart_toonhm(dtau, single_scattering_albedo,
                                 asymmetric_parameter, source_matrix):
@@ -195,9 +260,11 @@ def rtrun_emis_scat_lart_toonhm(dtau, single_scattering_albedo,
 
     return spectrum, cumTtilde, Qtilde, trans_coeff, scat_coeff, piB
 
+
 @jit
 def rtrun_emis_scat_lart_toonhm_surface(dtau, single_scattering_albedo,
-                                asymmetric_parameter, source_matrix, source_surface):
+                                        asymmetric_parameter, source_matrix,
+                                        source_surface):
     """Radiative Transfer for emission spectrum using flux-based two-stream scattering LART solver w/ Toon Hemispheric Mean with surface.
 
     Args:
@@ -222,9 +289,8 @@ def rtrun_emis_scat_lart_toonhm_surface(dtau, single_scattering_albedo,
     return spectrum, cumTtilde, Qtilde, trans_coeff, scat_coeff, piB
 
 
-
-def setrt_toonhm(dtau, single_scattering_albedo,
-                                asymmetric_parameter, source_matrix):
+def setrt_toonhm(dtau, single_scattering_albedo, asymmetric_parameter,
+                 source_matrix):
     """sets rt for rtrun assming Toon Hemispheric Mean 
 
     Args:

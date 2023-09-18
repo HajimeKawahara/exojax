@@ -8,7 +8,7 @@
 import numpy as np
 import jax.numpy as jnp
 from exojax.spec.planck import piBarr
-from exojax.spec.rtransfer import rtrun_not_implemented
+from exojax.spec.rtransfer import rtrun_emis_pureabs_ibased_linsap
 from exojax.spec.rtransfer import rtrun_emis_pureabs_fbased2st
 from exojax.spec.rtransfer import rtrun_emis_pureabs_ibased
 from exojax.spec.rtransfer import rtrun_emis_scat_lart_toonhm
@@ -325,16 +325,16 @@ class ArtEmisPure(ArtCommon):
     def set_capable_rtsolvers(self):
         self.rtsolver_explanation = {
             "fbased2st":
-            "Flux-based two-stream solver (ExoJAX1, HELIOS-R1 like)",
+            "Flux-based two-stream solver, isothermal layer (ExoJAX1, HELIOS-R1 like)",
             "ibased":
-            "Intensity-based n-stream solver (e.g. NEMESIS, pRT like)",
-            "ibasedOK":
-            "Intensity-based n-stream solver w/ linear interpolation, see Olson and Kunasz (e.g. HELIOS-R2 like)"
+            "Intensity-based n-stream solver, isothermal layer (e.g. NEMESIS, pRT like)",
+            "ibased_linsap":
+            "Intensity-based n-stream solver w/ linear source approximation (linsap), see Olson and Kunasz (e.g. HELIOS-R2 like)"
         }
         self.rtsolver_dict = {
             "fbased2st": rtrun_emis_pureabs_fbased2st,
             "ibased": rtrun_emis_pureabs_ibased,
-            "ibasedOK": rtrun_not_implemented
+            "ibased_linsap": rtrun_emis_pureabs_ibased_linsap
         }
         self.valid_rtsolvers = list(self.rtsolver_dict.keys())
 
