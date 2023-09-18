@@ -32,11 +32,11 @@ def ipgauss_ola_sampling(nusd, nus, F0, beta, RV, varr_kernel):
     return sampling(nusd, nus, Fgauss, RV)
 
 @jit
-def ipgauss_ola(F0, varr_kernel, beta):
+def ipgauss_ola(folded_F0, varr_kernel, beta):
     """Apply the Gaussian IP response to a spectrum F using OLA.
 
     Args:
-        F0: original spectrum (F0)
+        folded_F0: original spectrum (F0) folded to (ndiv, div_length) form
         varr_kernel: velocity array for the rotational kernel
         beta: STD of a Gaussian broadening (IP+microturbulence)
 
@@ -46,15 +46,14 @@ def ipgauss_ola(F0, varr_kernel, beta):
     x = varr_kernel / beta
     kernel = jnp.exp(-x * x / 2.0)
     kernel = kernel / jnp.sum(kernel, axis=0)
-    print(jnp.shape(F0), jnp.shape(kernel))
-    ndiv, div_length, filter_length = ola_lengths(F0, kernel)
-    F0_hat, kernel_hat = generate_zeropad(F0, kernel)
+    
+    ndiv, div_length, filter_length = ola_lengths(folded_F0, kernel)
+    F0_hat, kernel_hat = generate_zeropad(folded_F0, kernel)
     ola = olaconv(F0_hat, kernel_hat, ndiv, div_length, filter_length)
     
     edge = int((len(kernel) - 1) / 2)
     F = ola[edge:-edge]
-    #F = convolve_same(F0, kernel)
-
+    
     return F
 
 

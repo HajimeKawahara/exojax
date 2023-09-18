@@ -5,6 +5,8 @@ import numpy as np
 from exojax.utils.grids import wavenumber_grid
 from exojax.utils.grids import velocity_grid
 from exojax.spec.spin_rotation import convolve_rigid_rotation
+from exojax.spec.spin_rotation import convolve_rigid_rotation_ola
+
 
 def _convolve_rigid_rotation_np(resolution, F0, vsini, u1=0.0, u2=0.0):
     """Apply the Rotation response to a spectrum F.
@@ -83,6 +85,39 @@ def test_convolve_rigid_rotation(N=1000, fig=False):
         plt.savefig("spin_rotation_test.png")
         plt.show()
 
+def test_convolve_rigid_rotation_ola(N=10000, fig=False):
+    from jax.config import config
+    config.update("jax_enable_x64", True)
+    nus, wav, resolution = wavenumber_grid(4000.0,
+                                               4010.0,
+                                               N,
+                                               xsmode="premodit")
+
+    F0 = np.ones_like(nus)
+    F0[2500 - 50:2500 + 50] = 0.5
+    vsini = 4.0
+    vr_array = velocity_grid(resolution, vsini)
+    input_matrix = F0.reshape((5,int(float(N)/5)))
+    
+    Frot = convolve_rigid_rotation_ola(input_matrix, vr_array, vsini, u1=0.1, u2=0.1)
+    Frot_ = _convolve_rigid_rotation_np(resolution, F0, vsini, u1=0.1, u2=0.1)
+    res = np.sqrt(np.sum(np.abs(1.0 - Frot / Frot_)**2))
+    assert res < 1.e-5
+    if fig:
+        import matplotlib.pyplot as plt
+        figx = plt.figure()
+        ax = figx.add_subplot(211)
+        plt.plot(Frot_, label="numpy.convolve")
+        plt.plot(Frot, label="convolve_rigid_rotation (jnp, FP32)")
+        plt.legend()
+        ax = figx.add_subplot(212)
+        plt.plot(1.0-Frot/Frot_, label="diff")
+        plt.legend()
+        plt.savefig("spin_rotation_test.png")
+        plt.show()
+
+
+
 def test_rotkernel(fig=False):
     N = 201
     x_1 = jnp.linspace(-2.0, 2.0, N)
@@ -105,4 +140,5 @@ def test_rotkernel(fig=False):
 if __name__ == "__main__":
     #test_rotkernel(fig=True)
     #test_convolve_rigid_rotation(1000,fig=True)
-    test_SopRotation(1000)
+    test_convolve_rigid_rotation_ola(10000, fig=True)
+    #test_SopRotation(1000)
