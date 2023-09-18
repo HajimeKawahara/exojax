@@ -13,14 +13,14 @@ from exojax.signal.ola import olaconv, ola_lengths, generate_zeropad
 
 
 @jit
-def ipgauss_ola_sampling(nusd, nus, F0, beta, RV, varr_kernel):
+def ipgauss_ola_sampling(nusd, nus, folded_F0, beta, RV, varr_kernel):
     """Apply the Gaussian IP response using OLA + sampling to a spectrum F.
     
     
     Args:
         nusd: sampling wavenumber
         nus: input wavenumber, evenly log-spaced
-        F0: original spectrum (F0)
+        folded_F0: original spectrum (F0) folded to (ndiv, div_length) form
         beta: STD of a Gaussian broadening (IP+microturbulence)
         RV: radial velocity (km/s)
         varr_kernel: velocity array for the rotational kernel
@@ -28,7 +28,7 @@ def ipgauss_ola_sampling(nusd, nus, F0, beta, RV, varr_kernel):
     Return:
         response-applied spectrum (F)
     """
-    Fgauss = ipgauss_ola(F0, varr_kernel, beta)
+    Fgauss = ipgauss_ola(folded_F0, varr_kernel, beta)
     return sampling(nusd, nus, Fgauss, RV)
 
 @jit
