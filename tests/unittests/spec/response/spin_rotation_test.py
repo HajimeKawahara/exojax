@@ -6,7 +6,8 @@ from exojax.utils.grids import wavenumber_grid
 from exojax.utils.grids import velocity_grid
 from exojax.spec.spin_rotation import convolve_rigid_rotation
 from exojax.spec.spin_rotation import convolve_rigid_rotation_ola
-
+import matplotlib.pyplot as plt
+        
 
 def _convolve_rigid_rotation_np(resolution, F0, vsini, u1=0.0, u2=0.0):
     """Apply the Rotation response to a spectrum F.
@@ -70,20 +71,12 @@ def test_convolve_rigid_rotation(N=1000, fig=False):
     
     Frot = convolve_rigid_rotation(F0, vr_array, vsini, u1=0.1, u2=0.1)
     Frot_ = _convolve_rigid_rotation_np(resolution, F0, vsini, u1=0.1, u2=0.1)
+    
+    if fig:
+        _plotfig(Frot, Frot_)
+
     res = np.sqrt(np.sum(np.abs(1.0 - Frot / Frot_)**2))
     assert res < 1.e-5
-    if fig:
-        import matplotlib.pyplot as plt
-        figx = plt.figure()
-        ax = figx.add_subplot(211)
-        plt.plot(Frot_, label="numpy.convolve")
-        plt.plot(Frot, label="convolve_rigid_rotation (jnp, FP32)")
-        plt.legend()
-        ax = figx.add_subplot(212)
-        plt.plot(1.0-Frot/Frot_, label="diff")
-        plt.legend()
-        plt.savefig("spin_rotation_test.png")
-        plt.show()
 
 def test_convolve_rigid_rotation_ola(N=10000, fig=False):
     from jax.config import config
@@ -101,20 +94,43 @@ def test_convolve_rigid_rotation_ola(N=10000, fig=False):
     
     Frot = convolve_rigid_rotation_ola(input_matrix, vr_array, vsini, u1=0.1, u2=0.1)
     Frot_ = _convolve_rigid_rotation_np(resolution, F0, vsini, u1=0.1, u2=0.1)
+    if fig:
+        _plotfig(Frot, Frot_)
     res = np.sqrt(np.sum(np.abs(1.0 - Frot / Frot_)**2))
     assert res < 1.e-5
+
+def test_SopRotation_ola(N=10000, fig=False):
+    from jax.config import config
+    from exojax.spec.specop import SopRotation
+    config.update("jax_enable_x64", True)
+    nus, wav, resolution = wavenumber_grid(4000.0,
+                                               4010.0,
+                                               N,
+                                               xsmode="premodit")
+
+    F0 = np.ones_like(nus)
+    F0[2500 - 50:2500 + 50] = 0.5
+    vsini = 4.0
+    
+    sos = SopRotation(nus, resolution, vsini, convolution_method = "exojax.signal.olaconv" )    
+    Frot = sos.rigid_rotation(F0, vsini, u1=0.1, u2=0.1)
+    Frot_ = _convolve_rigid_rotation_np(resolution, F0, vsini, u1=0.1, u2=0.1)
+
     if fig:
-        import matplotlib.pyplot as plt
-        figx = plt.figure()
-        ax = figx.add_subplot(211)
-        plt.plot(Frot_, label="numpy.convolve")
-        plt.plot(Frot, label="convolve_rigid_rotation (jnp, FP32)")
-        plt.legend()
-        ax = figx.add_subplot(212)
-        plt.plot(1.0-Frot/Frot_, label="diff")
-        plt.legend()
-        plt.savefig("spin_rotation_test.png")
-        plt.show()
+        _plotfig(Frot, Frot_)
+    res = np.sqrt(np.sum(np.abs(1.0 - Frot / Frot_)**2))
+    assert res < 1.e-5
+
+def _plotfig(Frot, Frot_):
+    figx = plt.figure()
+    ax = figx.add_subplot(211)
+    plt.plot(Frot_, label="numpy.convolve")
+    plt.plot(Frot, label="exojax")
+    plt.legend()
+    ax = figx.add_subplot(212)
+    plt.plot(1.0-Frot/Frot_, label="diff")
+    plt.legend()
+    plt.show()
 
 
 
@@ -140,5 +156,6 @@ def test_rotkernel(fig=False):
 if __name__ == "__main__":
     #test_rotkernel(fig=True)
     #test_convolve_rigid_rotation(1000,fig=True)
-    test_convolve_rigid_rotation_ola(10000, fig=True)
+    #test_convolve_rigid_rotation_ola(10000, fig=True)
     #test_SopRotation(1000)
+    test_SopRotation_ola(10000, fig=True)
