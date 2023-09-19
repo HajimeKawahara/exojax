@@ -37,7 +37,11 @@ Radiative Transfer
 Spectral Operators
 =======================
 
-   N/A
+.. toctree::
+   :maxdepth: 1
+
+   userguide/sop.rst
+
    
 Others
 =======================

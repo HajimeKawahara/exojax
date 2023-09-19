@@ -31,7 +31,7 @@ def _convolve_rigid_rotation_np(resolution, F0, vsini, u1=0.0, u2=0.0):
     #No OLA
     input_length = len(F0)
     filter_length = len(kernel)
-    fft_length = input_length + filter_length - 1
+    #fft_length = input_length + filter_length - 1
     convolved_signal = np.convolve(F0, kernel, mode="same")
     return convolved_signal
 
