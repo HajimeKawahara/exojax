@@ -1,8 +1,8 @@
-"""response.
+"""Response
 
 * input nus/wav should be spaced evenly on a log scale (ESLOG).
 * response is a response operation for the wavenumber grid spaced evenly on a log scale.
-* ipgauss2 are faster than default when N >~ 10000, where N is the dimension of the wavenumber grid.
+
 """
 from jax import jit
 import jax.numpy as jnp
@@ -13,14 +13,14 @@ from exojax.signal.ola import olaconv, ola_lengths, generate_zeropad
 
 
 @jit
-def ipgauss_ola_sampling(nusd, nus, folded_F0, beta, RV, varr_kernel):
+def ipgauss_ola_sampling(nusd, nus, folded_spectrum, beta, RV, varr_kernel):
     """Apply the Gaussian IP response using OLA + sampling to a spectrum F.
     
     
     Args:
         nusd: sampling wavenumber
         nus: input wavenumber, evenly log-spaced
-        folded_F0: original spectrum (F0) folded to (ndiv, div_length) form
+        folded_spectrum: original spectrum (F0) folded to (ndiv, div_length) form
         beta: STD of a Gaussian broadening (IP+microturbulence)
         RV: radial velocity (km/s)
         varr_kernel: velocity array for the rotational kernel
@@ -28,15 +28,15 @@ def ipgauss_ola_sampling(nusd, nus, folded_F0, beta, RV, varr_kernel):
     Return:
         response-applied spectrum (F)
     """
-    Fgauss = ipgauss_ola(folded_F0, varr_kernel, beta)
+    Fgauss = ipgauss_ola(folded_spectrum, varr_kernel, beta)
     return sampling(nusd, nus, Fgauss, RV)
 
 @jit
-def ipgauss_ola(folded_F0, varr_kernel, beta):
+def ipgauss_ola(folded_spectrum, varr_kernel, beta):
     """Apply the Gaussian IP response to a spectrum F using OLA.
 
     Args:
-        folded_F0: original spectrum (F0) folded to (ndiv, div_length) form
+        folded_spectrum: original spectrum (F0) folded to (ndiv, div_length) form
         varr_kernel: velocity array for the rotational kernel
         beta: STD of a Gaussian broadening (IP+microturbulence)
 
@@ -47,8 +47,8 @@ def ipgauss_ola(folded_F0, varr_kernel, beta):
     kernel = jnp.exp(-x * x / 2.0)
     kernel = kernel / jnp.sum(kernel, axis=0)
     
-    ndiv, div_length, filter_length = ola_lengths(folded_F0, kernel)
-    F0_hat, kernel_hat = generate_zeropad(folded_F0, kernel)
+    ndiv, div_length, filter_length = ola_lengths(folded_spectrum, kernel)
+    F0_hat, kernel_hat = generate_zeropad(folded_spectrum, kernel)
     ola = olaconv(F0_hat, kernel_hat, ndiv, div_length, filter_length)
     
     edge = int((len(kernel) - 1) / 2)
@@ -58,14 +58,14 @@ def ipgauss_ola(folded_F0, varr_kernel, beta):
 
 
 @jit
-def ipgauss_sampling(nusd, nus, F0, beta, RV, varr_kernel):
+def ipgauss_sampling(nusd, nus, spectrum, beta, RV, varr_kernel):
     """Apply the Gaussian IP response + sampling to a spectrum F.
     
     
     Args:
         nusd: sampling wavenumber
         nus: input wavenumber, evenly log-spaced
-        F0: original spectrum (F0)
+        spectrum: original spectrum (F0)
         beta: STD of a Gaussian broadening (IP+microturbulence)
         RV: radial velocity (km/s)
         varr_kernel: velocity array for the rotational kernel
@@ -73,15 +73,15 @@ def ipgauss_sampling(nusd, nus, F0, beta, RV, varr_kernel):
     Return:
         response-applied spectrum (F)
     """
-    Fgauss = ipgauss(F0, varr_kernel, beta)
+    Fgauss = ipgauss(spectrum, varr_kernel, beta)
     return sampling(nusd, nus, Fgauss, RV)
 
 @jit
-def ipgauss(F0, varr_kernel, beta):
+def ipgauss(spectrum, varr_kernel, beta):
     """Apply the Gaussian IP response to a spectrum F.
 
     Args:
-        F0: original spectrum (F0)
+        spectrum: original spectrum (F0)
         varr_kernel: velocity array for the rotational kernel
         beta: STD of a Gaussian broadening (IP+microturbulence)
 
@@ -92,7 +92,7 @@ def ipgauss(F0, varr_kernel, beta):
     kernel = jnp.exp(-x * x / 2.0)
     kernel = kernel / jnp.sum(kernel, axis=0)
     #F = jnp.convolve(F0, kernel, mode='same')
-    F = convolve_same(F0, kernel)
+    F = convolve_same(spectrum, kernel)
 
     return F
 
@@ -113,7 +113,7 @@ def sampling(nusd, nus, F, RV):
 
 
 @jit
-def ipgauss_variable_sampling(nusd, nus, F0, beta_variable, RV):
+def ipgauss_variable_sampling(nusd, nus, spectrum, beta_variable, RV):
     """Apply the variable Gaussian IP response + sampling to a spectrum F.
 
     Notes:
@@ -122,7 +122,7 @@ def ipgauss_variable_sampling(nusd, nus, F0, beta_variable, RV):
     Args:
         nusd: sampling wavenumber
         nus: input wavenumber, evenly log-spaced
-        F0: original spectrum (F0)
+        spectrum: original spectrum (F0)
         beta_variable (1D array): STD of a Gaussian broadening, shape=(len(nusd),)
         RV: radial velocity (km/s)
     Return:
@@ -134,7 +134,7 @@ def ipgauss_variable_sampling(nusd, nus, F0, beta_variable, RV):
         dvgrid = c * (jnp.log1p(1.0 - nus / nusd_each))
         kernel = jnp.exp(-(dvgrid + RV)**2 / (2.0 * beta_each**2))
         kernel = kernel / jnp.sum(kernel)
-        return carry, kernel @ F0
+        return carry, kernel @ spectrum
     
     mat = jnp.vstack([nusd, beta_variable]).T
     _, F_convolved = scan(convolve_ipgauss_scan, 0, mat)
