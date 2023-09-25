@@ -24,7 +24,7 @@ def pressure_layer_logspace(log_pressure_top=-8.,
        numpy: if True use numpy array instead of jnp array
 
     Returns:
-         pressure: pressure layer
+         pressure: representative pressure of the layers
          dParr: delta pressure layer
          pressure_decrease_rate: pressure decrease rate of the layer (k-factor; k < 1) pressure[i-1] = pressure_decrease_rate*pressure[i]
 
@@ -45,6 +45,32 @@ def pressure_layer_logspace(log_pressure_top=-8.,
         dParr = dParr[::-1]
 
     return pressure, dParr, k
+
+def pressure_upper_logspace(pressure,pressure_decrease_rate,reference_point=0.5):
+    """computes pressure at the upper point of the layers
+
+    Args:
+        pressure (_type_): representative pressure (output of pressure_layer_logspace)
+        pressure_decrease_rate: pressure decrease rate of the layer (k-factor; k < 1) pressure[i-1] = pressure_decrease_rate*pressure[i]
+        reference_point (float): reference point in a layer (0-1). Center:0.5, lower boundary:1.0, upper boundary:0
+
+    Returns:
+        _type_: pressure at the upper point (\overline{P}_i)
+    """
+    return (pressure_decrease_rate**reference_point)*pressure
+
+def pressure_lower_logspace(pressure,pressure_decrease_rate,reference_point=0.5):
+    """computes pressure at the lower point of the layers
+
+    Args:
+        pressure (_type_): representative pressure (output of pressure_layer_logspace)
+        pressure_decrease_rate: pressure decrease rate of the layer (k-factor; k < 1) pressure[i-1] = pressure_decrease_rate*pressure[i]
+        reference_point (float): reference point in a layer (0-1). Center:0.5, lower boundary:1.0, upper boundary:0
+
+    Returns:
+        _type_: pressure at the lower point (\underline{P}_i)
+    """
+    return (pressure_decrease_rate**(reference_point-1.0))*pressure
 
 
 @jit

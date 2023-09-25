@@ -322,7 +322,23 @@ class ArtEmisPure(ArtCommon):
         self.set_capable_rtsolvers()
         self.validate_rtsolver(rtsolver, nstream)
 
+        
     def set_capable_rtsolvers(self):
+        self.rtsolver_dict = {
+            "fbased2st": rtrun_emis_pureabs_fbased2st,
+            "ibased": rtrun_emis_pureabs_ibased,
+            "ibased_linsap": rtrun_emis_pureabs_ibased_linsap
+        }
+
+        self.valid_rtsolvers = list(self.rtsolver_dict.keys())
+
+        # source function to be used in rtsolver
+        self.source_position_dict = {
+            "fbased2st": "representative",
+            "ibased": "representative",
+            "ibased_linsap": "upper_boundary"
+        }
+        
         self.rtsolver_explanation = {
             "fbased2st":
             "Flux-based two-stream solver, isothermal layer (ExoJAX1, HELIOS-R1 like)",
@@ -331,13 +347,7 @@ class ArtEmisPure(ArtCommon):
             "ibased_linsap":
             "Intensity-based n-stream solver w/ linear source approximation (linsap), see Olson and Kunasz (e.g. HELIOS-R2 like)"
         }
-        self.rtsolver_dict = {
-            "fbased2st": rtrun_emis_pureabs_fbased2st,
-            "ibased": rtrun_emis_pureabs_ibased,
-            "ibased_linsap": rtrun_emis_pureabs_ibased_linsap
-        }
-        self.valid_rtsolvers = list(self.rtsolver_dict.keys())
-
+        
     def validate_rtsolver(self, rtsolver, nstream):
         """validates rtsolver
 
@@ -349,6 +359,9 @@ class ArtEmisPure(ArtCommon):
 
         if rtsolver in self.valid_rtsolvers:
             self.rtsolver = rtsolver
+            self.source_position = self.source_position_dict[self.rtsolver]
+            print("rtsolver: ", self.rtsolver)
+            print(self.rtsolver_explanation[self.rtsolver]) 
         else:
             str_valid_rtsolvers = ", ".join(
                 self.valid_rtsolvers[:-1]) + f", or {self.valid_rtsolvers[-1]}"
@@ -371,22 +384,18 @@ class ArtEmisPure(ArtCommon):
             _type_: _description_
         """
         if self.nu_grid is not None:
-            sourcef = piBarr(temperature, self.nu_grid)
-        elif nu_grid is not None:
-            sourcef = piBarr(temperature, nu_grid)
-        else:
-            raise ValueError("the wavenumber grid is not given.")
+            nu_grid = self.nu_grid
 
+        sourcef = piBarr(temperature, nu_grid)
         rtfunc = self.rtsolver_dict[self.rtsolver]
+        
         if self.rtsolver == "fbased2st":
             return rtfunc(dtau, sourcef)
-            #return rtrun_emis_pureabs_fbased2st(dtau, sourcef)
-        elif self.rtsolver == "ibased":
+        elif self.rtsolver == "ibased" or self.rtsolver == "ibased_linsap":
             from exojax.spec.rtransfer import initialize_gaussian_quadrature
             mus, weights = initialize_gaussian_quadrature(self.nstream)
             return rtfunc(dtau, sourcef, mus, weights)
-
-
+        
 class ArtTransPure(ArtCommon):
     def __init__(self, pressure_top=1.e-8, pressure_btm=1.e2, nlayer=100):
         """initialization of ArtTransPure
