@@ -148,6 +148,8 @@ class ArtCommon():
 
     def init_pressure_profile(self):
         from exojax.atm.atmprof import pressure_layer_logspace
+        from exojax.atm.atmprof import pressure_upper_logspace
+
         self.pressure, self.dParr, self.k = pressure_layer_logspace(
             log_pressure_top=self.log_pressure_top,
             log_pressure_btm=self.log_pressure_btm,
@@ -155,6 +157,7 @@ class ArtCommon():
             mode='ascending',
             reference_point=0.5,
             numpy=True)
+        self.pressure_upper =  pressure_upper_logspace(self.pressure,self.k,reference_point=0.5)
 
     def change_temperature_range(self, Tlow, Thigh):
         """temperature range to be assumed.
@@ -208,7 +211,7 @@ class ArtCommon():
         return self.clip_temperature(
             atmprof_gray(self.pressure, gravity, kappa, Tint))
 
-    def guillot_temeprature(self, gravity, kappa, gamma, Tint, Tirr):
+    def guillot_temperature(self, gravity, kappa, gamma, Tint, Tirr):
         """ Guillot tempearture profile
 
         Notes:  
@@ -231,6 +234,59 @@ class ArtCommon():
         return self.clip_temperature(
             atmprof_Guillot(self.pressure, gravity, kappa, gamma, Tint, Tirr,
                             self.fguillot))
+
+    def powerlaw_temperature_upper(self, T0, alpha):
+        """powerlaw temperature at the upper point (overline{T}) profile
+
+        Args:
+            T0 (float): T at P=1 bar in K
+            alpha (float): powerlaw index
+
+        Returns:
+            array: temperature profile
+        """
+        return self.clip_temperature(atmprof_powerlow(self.pressure_upper, T0,
+                                                      alpha))
+
+    def gray_temperature_upper(self, gravity, kappa, Tint):
+        """ gray temperature at the upper point (overline{T}) profile 
+
+        Args:
+            gravity: gravity (cm/s2)
+            kappa: infrared opacity 
+            Tint: temperature equivalence of the intrinsic energy flow in K
+
+        Returns:
+            array: temperature profile
+
+        """
+        return self.clip_temperature(
+            atmprof_gray(self.pressure_upper, gravity, kappa, Tint))
+
+    def guillot_temperature_upper(self, gravity, kappa, gamma, Tint, Tirr):
+        """ Guillot tempearture at the upper point (overline{T}) profile
+
+        Notes:  
+            Set self.fguillot (default 0.25) to change the assumption of irradiation.
+            self.fguillot = 1. at the substellar point, self.fguillot = 0.5 for a day-side average 
+            and self.fguillot = 0.25 for an averaging over the whole planetary surface
+            See Guillot (2010) Equation (29) for details.
+
+        Args:
+            gravity: gravity (cm/s2)
+            kappa: thermal/IR opacity (kappa_th in Guillot 2010)
+            gamma: ratio of optical and IR opacity (kappa_v/kappa_th), gamma > 1 means thermal inversion
+            Tint: temperature equivalence of the intrinsic energy flow in K
+            Tirr: temperature equivalence of the irradiation in K
+            
+        Returns:
+            array: temperature profile
+
+        """
+        return self.clip_temperature(
+            atmprof_Guillot(self.pressure_upper, gravity, kappa, gamma, Tint, Tirr,
+                            self.fguillot))
+
 
 
 class ArtEmisScat(ArtCommon):
