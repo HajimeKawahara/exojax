@@ -68,7 +68,7 @@ def pressure_lower_logspace(pressure,pressure_decrease_rate,reference_point=0.5)
         reference_point (float): reference point in a layer (0-1). Center:0.5, lower boundary:1.0, upper boundary:0
 
     Returns:
-        _type_: pressure at the lower point (\underline{P}_i)
+        _type_: pressure at the lower point (underline{P}_i)
     """
     return (pressure_decrease_rate**(reference_point-1.0))*pressure
 

@@ -167,20 +167,25 @@ def rtrun_emis_pureabs_ibased_linsap(dtau, source_matrix_up, mus,
     source_matrix_layertop_p1 = jnp.roll(source_matrix_up, -1,
                                          axis=0)  # S_{n+1}
 
+
     # NOT IMPLEMENTED YET
     # need to replace the last element of the above
     #
 
+    # no surface
+    BT_B = jnp.zeros(Nnus)
+
     #scan part
     muws = [mus, weights]
-
+    
+    
     def f(carry_fmu, muw):
         mu, w = muw
 
         dtau_per_mu = dtau/mu
         trans = jnp.exp(-dtau_per_mu) # hat{T}
         beta, gamma = coeffs_linsap(dtau_per_mu, trans)
-        dI = beta * source_matrix_up + gamma * source_matrix_layertop_p1
+        dI = jnp.vstack([beta * source_matrix_up + gamma * source_matrix_layertop_p1, BT_B])
 
         intensity_for_mu = jnp.sum(dI *
                     jnp.cumprod(jnp.vstack([jnp.ones(Nnus), trans]), axis=0),
@@ -191,7 +196,7 @@ def rtrun_emis_pureabs_ibased_linsap(dtau, source_matrix_up, mus,
         return carry_fmu, None
 
     spec, _ = scan(f, jnp.zeros(Nnus), muws)
-
+    return spec
 
 def coeffs_linsap(dtau_per_mu, trans):
     """coefficients of the linsap

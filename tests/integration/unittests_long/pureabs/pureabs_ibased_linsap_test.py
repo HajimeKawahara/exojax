@@ -40,7 +40,11 @@ def test_ArtEmisPure_ibased_linsap(db, diffmode, fig=False):
     art.rtsolver = "fbased2st"
     F0_fbased = art.run(dtau, Tarr)
 
-    return nu_grid, F0_ibased, F0_fbased
+    art.rtsolver = "ibased"
+    F0_iso = art.run(dtau, Tarr)
+
+
+    return nu_grid, F0_ibased, F0_fbased, F0_iso
 
 
 if __name__ == "__main__":
@@ -49,16 +53,19 @@ if __name__ == "__main__":
     import matplotlib.pyplot as plt
     diffmode = 0
     #nus_hitemp, F0_hitemp, Fref_hitemp = test_rt("hitemp", diffmode)
-    nus, F0i, F0f = test_ArtEmisPure_ibased_linsap("exomol", diffmode)  #
+    nus, F0i, F0f, F0_iso = test_ArtEmisPure_ibased_linsap("exomol", diffmode)  #
 
     fig = plt.figure()
     ax = fig.add_subplot(211)
-    ax.plot(nus, F0i, label="intensity based")
+    ax.plot(nus, F0i, label="intensity (linsap)")
+    ax.plot(nus, F0_iso, label="intensity isothermal", ls="dashed")
     ax.plot(nus, F0f, label="flux based")
     plt.legend()
 
     ax = fig.add_subplot(212)
-    ax.plot(nus, 1.0 - F0i / F0f, alpha=0.7, label="difference")
+    ax.plot(nus, 1.0 - F0i / F0f, alpha=0.7, label="difference w/ flux-based")
+    ax.plot(nus, 1.0 - F0i / F0_iso, alpha=0.7, label="difference w/ isothermal")
+    
     plt.xlabel("wavenumber cm-1")
     plt.axhline(0.05, color="gray", lw=0.5)
     plt.axhline(-0.05, color="gray", lw=0.5)

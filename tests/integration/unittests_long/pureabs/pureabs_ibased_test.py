@@ -51,6 +51,9 @@ if __name__ == "__main__":
     #nus_hitemp, F0_hitemp, Fref_hitemp = test_rt("hitemp", diffmode)
     nus, F0i, F0f = test_ArtEmisPure_ibased("exomol", diffmode)  #
 
+    import numpy as np
+    np.savetxt("ibased_spec.txt",np.array([nus,F0i]).T)
+
     fig = plt.figure()
     ax = fig.add_subplot(211)
     ax.plot(nus, F0i, label="intensity based")
