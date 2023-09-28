@@ -8,7 +8,7 @@
 import numpy as np
 import jax.numpy as jnp
 from exojax.spec.planck import piBarr
-from exojax.spec.rtransfer import rtrun_not_implemented
+from exojax.spec.rtransfer import rtrun_emis_pureabs_ibased_linsap
 from exojax.spec.rtransfer import rtrun_emis_pureabs_fbased2st
 from exojax.spec.rtransfer import rtrun_emis_pureabs_ibased
 from exojax.spec.rtransfer import rtrun_emis_scat_lart_toonhm
@@ -26,6 +26,7 @@ import warnings
 class ArtCommon():
     """Common Atmospheric Radiative Transfer
     """
+
     def __init__(self, pressure_top, pressure_btm, nlayer, nu_grid=None):
         """initialization of art
 
@@ -148,6 +149,8 @@ class ArtCommon():
 
     def init_pressure_profile(self):
         from exojax.atm.atmprof import pressure_layer_logspace
+        from exojax.atm.atmprof import pressure_boundary_logspace
+
         self.pressure, self.dParr, self.k = pressure_layer_logspace(
             log_pressure_top=self.log_pressure_top,
             log_pressure_btm=self.log_pressure_btm,
@@ -155,6 +158,8 @@ class ArtCommon():
             mode='ascending',
             reference_point=0.5,
             numpy=True)
+        self.pressure_boundary = pressure_boundary_logspace(
+            self.pressure, self.k, reference_point=0.5)
 
     def change_temperature_range(self, Tlow, Thigh):
         """temperature range to be assumed.
@@ -208,7 +213,7 @@ class ArtCommon():
         return self.clip_temperature(
             atmprof_gray(self.pressure, gravity, kappa, Tint))
 
-    def guillot_temeprature(self, gravity, kappa, gamma, Tint, Tirr):
+    def guillot_temperature(self, gravity, kappa, gamma, Tint, Tirr):
         """ Guillot tempearture profile
 
         Notes:  
@@ -223,7 +228,7 @@ class ArtCommon():
             gamma: ratio of optical and IR opacity (kappa_v/kappa_th), gamma > 1 means thermal inversion
             Tint: temperature equivalence of the intrinsic energy flow in K
             Tirr: temperature equivalence of the irradiation in K
-            
+
         Returns:
             array: temperature profile
 
@@ -232,14 +237,28 @@ class ArtCommon():
             atmprof_Guillot(self.pressure, gravity, kappa, gamma, Tint, Tirr,
                             self.fguillot))
 
+    def powerlaw_temperature_boundary(self, T0, alpha):
+        """powerlaw temperature at the upper point (overline{T}) + TB profile
+
+        Args:
+            T0 (float): T at P=1 bar in K
+            alpha (float): powerlaw index
+
+        Returns:
+            array: layer boundary temperature profile (Nlayer + 1)
+        """
+        return self.clip_temperature(atmprof_powerlow(self.pressure_boundary, T0,
+                                                      alpha))
+
 
 class ArtEmisScat(ArtCommon):
     """Atmospheric RT for emission w/ scattering
 
     Attributes:
         pressure_layer: pressure profile in bar
-        
+
     """
+
     def __init__(self,
                  pressure_top=1.e-8,
                  pressure_btm=1.e2,
@@ -301,8 +320,9 @@ class ArtEmisPure(ArtCommon):
 
     Attributes:
         pressure_layer: pressure profile in bar
-        
+
     """
+
     def __init__(
         self,
         pressure_top=1.e-8,
@@ -314,7 +334,7 @@ class ArtEmisPure(ArtCommon):
     ):
         """initialization of ArtEmisPure
 
-        
+
         """
 
         super().__init__(pressure_top, pressure_btm, nlayer, nu_grid)
@@ -323,20 +343,29 @@ class ArtEmisPure(ArtCommon):
         self.validate_rtsolver(rtsolver, nstream)
 
     def set_capable_rtsolvers(self):
-        self.rtsolver_explanation = {
-            "fbased2st":
-            "Flux-based two-stream solver (ExoJAX1, HELIOS-R1 like)",
-            "ibased":
-            "Intensity-based n-stream solver (e.g. NEMESIS, pRT like)",
-            "ibasedOK":
-            "Intensity-based n-stream solver w/ linear interpolation, see Olson and Kunasz (e.g. HELIOS-R2 like)"
-        }
         self.rtsolver_dict = {
             "fbased2st": rtrun_emis_pureabs_fbased2st,
             "ibased": rtrun_emis_pureabs_ibased,
-            "ibasedOK": rtrun_not_implemented
+            "ibased_linsap": rtrun_emis_pureabs_ibased_linsap
         }
+
         self.valid_rtsolvers = list(self.rtsolver_dict.keys())
+
+        # source function to be used in rtsolver
+        self.source_position_dict = {
+            "fbased2st": "representative",
+            "ibased": "representative",
+            "ibased_linsap": "upper_boundary"
+        }
+
+        self.rtsolver_explanation = {
+            "fbased2st":
+            "Flux-based two-stream solver, isothermal layer (ExoJAX1, HELIOS-R1 like)",
+            "ibased":
+            "Intensity-based n-stream solver, isothermal layer (e.g. NEMESIS, pRT like)",
+            "ibased_linsap":
+            "Intensity-based n-stream solver w/ linear source approximation (linsap), see Olson and Kunasz (e.g. HELIOS-R2 like)"
+        }
 
     def validate_rtsolver(self, rtsolver, nstream):
         """validates rtsolver
@@ -349,6 +378,9 @@ class ArtEmisPure(ArtCommon):
 
         if rtsolver in self.valid_rtsolvers:
             self.rtsolver = rtsolver
+            self.source_position = self.source_position_dict[self.rtsolver]
+            print("rtsolver: ", self.rtsolver)
+            print(self.rtsolver_explanation[self.rtsolver])
         else:
             str_valid_rtsolvers = ", ".join(
                 self.valid_rtsolvers[:-1]) + f", or {self.valid_rtsolvers[-1]}"
@@ -371,17 +403,14 @@ class ArtEmisPure(ArtCommon):
             _type_: _description_
         """
         if self.nu_grid is not None:
-            sourcef = piBarr(temperature, self.nu_grid)
-        elif nu_grid is not None:
-            sourcef = piBarr(temperature, nu_grid)
-        else:
-            raise ValueError("the wavenumber grid is not given.")
+            nu_grid = self.nu_grid
 
+        sourcef = piBarr(temperature, nu_grid)
         rtfunc = self.rtsolver_dict[self.rtsolver]
+
         if self.rtsolver == "fbased2st":
             return rtfunc(dtau, sourcef)
-            #return rtrun_emis_pureabs_fbased2st(dtau, sourcef)
-        elif self.rtsolver == "ibased":
+        elif self.rtsolver == "ibased" or self.rtsolver == "ibased_linsap":
             from exojax.spec.rtransfer import initialize_gaussian_quadrature
             mus, weights = initialize_gaussian_quadrature(self.nstream)
             return rtfunc(dtau, sourcef, mus, weights)
@@ -391,7 +420,7 @@ class ArtTransPure(ArtCommon):
     def __init__(self, pressure_top=1.e-8, pressure_btm=1.e2, nlayer=100):
         """initialization of ArtTransPure
 
-        
+
         """
         super().__init__(pressure_top, pressure_btm, nlayer, nu_grid=None)
         self.method = "transmission_with_pure_absorption"
