@@ -19,7 +19,9 @@ def test_ArtEmisPure_ibased_linsap(db, diffmode, fig=False):
                       rtsolver="ibased_linsap",
                       nstream=8)
     art.change_temperature_range(400.0, 1500.0)
-    Tarr = art.powerlaw_temperature(1300.0, 0.1)
+    T0 = 1300.0
+    nT = 0.1
+    Tarr = art.powerlaw_temperature(T0, nT)
     mmr_arr = art.constant_mmr_profile(0.01)
     gravity = 2478.57
     
@@ -34,7 +36,8 @@ def test_ArtEmisPure_ibased_linsap(db, diffmode, fig=False):
                                      gravity)
 
     #intenstiy based 8 stream
-    F0_ibased = art.run(dtau, Tarr)
+    temperature_boundary = art.powerlaw_temperature_boundary(T0, nT)
+    F0_ibased = art.run(dtau, temperature_boundary)
 
     #fluxed based 2 stream
     art.rtsolver = "fbased2st"

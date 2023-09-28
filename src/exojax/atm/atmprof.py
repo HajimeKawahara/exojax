@@ -39,14 +39,15 @@ def pressure_layer_logspace(log_pressure_top=-8.,
 
     k = 10**-dlogP
     dParr = (k**(reference_point - 1.0) - k**reference_point) * pressure
-    
+
     if mode == 'descending':
         pressure = pressure[::-1]
         dParr = dParr[::-1]
 
     return pressure, dParr, k
 
-def pressure_upper_logspace(pressure,pressure_decrease_rate,reference_point=0.5):
+
+def pressure_upper_logspace(pressure, pressure_decrease_rate, reference_point=0.5):
     """computes pressure at the upper point of the layers
 
     Args:
@@ -59,7 +60,8 @@ def pressure_upper_logspace(pressure,pressure_decrease_rate,reference_point=0.5)
     """
     return (pressure_decrease_rate**reference_point)*pressure
 
-def pressure_lower_logspace(pressure,pressure_decrease_rate,reference_point=0.5):
+
+def pressure_lower_logspace(pressure, pressure_decrease_rate, reference_point=0.5):
     """computes pressure at the lower point of the layers
 
     Args:
@@ -71,6 +73,28 @@ def pressure_lower_logspace(pressure,pressure_decrease_rate,reference_point=0.5)
         _type_: pressure at the lower point (underline{P}_i)
     """
     return (pressure_decrease_rate**(reference_point-1.0))*pressure
+
+
+def pressure_boundary_logspace(pressure, pressure_decrease_rate, reference_point=0.5, numpy=False):
+    """computes pressure at the boundary of the layers (Nlayer + 1)
+
+    Args:
+        pressure (_type_): representative pressure (output of pressure_layer_logspace)
+        pressure_decrease_rate: pressure decrease rate of the layer (k-factor; k < 1) pressure[i-1] = pressure_decrease_rate*pressure[i]
+        reference_point (float): reference point in a layer (0-1). Center:0.5, lower boundary:1.0, upper boundary:0
+        numpy: if True use numpy array instead of jnp array
+
+    Returns:
+        _type_: pressure at the boundary (Nlayer + 1)
+    """
+    pressure_bottom_boundary = (
+        pressure_decrease_rate**(reference_point-1.0))*pressure[-1]
+    pressure_upper = pressure_upper_logspace(
+        pressure, pressure_decrease_rate, reference_point)
+    if numpy:
+        return np.append(pressure_upper, pressure_bottom_boundary)
+    else:
+        return jnp.append(pressure_upper, pressure_bottom_boundary)
 
 
 @jit
@@ -207,7 +231,7 @@ def Teq2Tirr(Teq):
 
     Args:
        Teq: equilibrium temperature
-       
+
     Return:
        Tirr: iradiation temperature
 

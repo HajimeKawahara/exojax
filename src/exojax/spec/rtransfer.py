@@ -144,13 +144,13 @@ def initialize_gaussian_quadrature(nstream):
     return mus, weights
 
 
-def rtrun_emis_pureabs_ibased_linsap(dtau, source_matrix_up, mus,
+def rtrun_emis_pureabs_ibased_linsap(dtau, source_matrix_boundary, mus,
                                      weights):
     """Radiative Transfer for emission spectrum using intensity-based n-stream pure absorption with no surface w/ linear source approximation = linsap (HELIOS-R2 like)
 
     Args:
         dtau (2D array): optical depth matrix, dtau  (N_layer, N_nus)
-        source_matrix_up (2D array): source matrix at the layer upper boundary (N_layer, N_nus)
+        source_matrix_booundary (2D array): source matrix at the layer upper boundary (N_layer + 1, N_nus)
         mus (list): mu (cos theta) list for integration
         weights (list): weight list for mu
         
@@ -164,7 +164,7 @@ def rtrun_emis_pureabs_ibased_linsap(dtau, source_matrix_up, mus,
     """
 
     Nnus = jnp.shape(dtau)[1]
-    source_matrix_layertop_p1 = jnp.roll(source_matrix_up, -1,
+    source_matrix_boundary_p1 = jnp.roll(source_matrix_boundary, -1,
                                          axis=0)  # S_{n+1}
 
 
@@ -172,21 +172,21 @@ def rtrun_emis_pureabs_ibased_linsap(dtau, source_matrix_up, mus,
     # need to replace the last element of the above
     #
 
-    # no surface
-    BT_B = jnp.zeros(Nnus)
-
     #scan part
     muws = [mus, weights]
     
     
     def f(carry_fmu, muw):
         mu, w = muw
-
         dtau_per_mu = dtau/mu
         trans = jnp.exp(-dtau_per_mu) # hat{T}
         beta, gamma = coeffs_linsap(dtau_per_mu, trans)
-        dI = jnp.vstack([beta * source_matrix_up + gamma * source_matrix_layertop_p1, BT_B])
-
+        
+        #adds coeffs at the bottom of the layers
+        beta = jnp.vstack([beta,jnp.ones(Nnus)])
+        gamma = jnp.vstack([gamma,jnp.zeros(Nnus)])
+        
+        dI = beta * source_matrix_boundary + gamma * source_matrix_boundary_p1
         intensity_for_mu = jnp.sum(dI *
                     jnp.cumprod(jnp.vstack([jnp.ones(Nnus), trans]), axis=0),
                     axis=0)
