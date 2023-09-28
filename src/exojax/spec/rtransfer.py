@@ -143,7 +143,7 @@ def initialize_gaussian_quadrature(nstream):
 
     return mus, weights
 
-
+@jit
 def rtrun_emis_pureabs_ibased_linsap(dtau, source_matrix_boundary, mus,
                                      weights):
     """Radiative Transfer for emission spectrum using intensity-based n-stream pure absorption with no surface w/ linear source approximation = linsap (HELIOS-R2 like)
@@ -185,7 +185,7 @@ def rtrun_emis_pureabs_ibased_linsap(dtau, source_matrix_boundary, mus,
         #adds coeffs at the bottom of the layers
         beta = jnp.vstack([beta,jnp.ones(Nnus)])
         gamma = jnp.vstack([gamma,jnp.zeros(Nnus)])
-        
+
         dI = beta * source_matrix_boundary + gamma * source_matrix_boundary_p1
         intensity_for_mu = jnp.sum(dI *
                     jnp.cumprod(jnp.vstack([jnp.ones(Nnus), trans]), axis=0),
