@@ -233,9 +233,9 @@ def rtrun_trans_pureabs(dtau_chord, radius_lower):
         If you would like to compute the transit depth, devide the output by the square of stellar radius
 
     """
-    deltaRp2 = 2.0 * jnp.trapz(
-        (1.0 - jnp.exp(-dtau_chord)) * radius_lower[::-1, None],
-        x=radius_lower[::-1],
+    deltaRp2 = - 2.0 * jnp.trapz(
+        (1.0 - jnp.exp(-dtau_chord)) * radius_lower[:, None],
+        x=radius_lower,
         axis=0)
     return deltaRp2 + radius_lower[-1]**2
 
