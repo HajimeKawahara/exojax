@@ -444,7 +444,8 @@ class ArtTransPure(ArtCommon):
 
         normalized_height, normalized_radius_lower = self.atmosphere_height(
             temperature, mean_molecular_weight, radius_btm, gravity_btm)
+        normalized_radius_top = normalized_radius_lower[0] + normalized_height[0] 
         cgm = chord_geometric_matrix(normalized_height,
                                      normalized_radius_lower)
         tauchord = chord_optical_depth(cgm, dtau)
-        return rtrun_trans_pureabs(tauchord, normalized_radius_lower)
+        return rtrun_trans_pureabs(tauchord, normalized_radius_lower, normalized_radius_top)
