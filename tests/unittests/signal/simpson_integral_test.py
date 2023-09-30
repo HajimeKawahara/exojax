@@ -7,11 +7,14 @@ config.update('jax_enable_x64', True)
 
 def test_compare_simpson_with_manual_computation():
     """ test simpson integral
-
-    f = 0.01, (0.3), 1.0, (1.3), 2.0, (2.7), 3.0
-    h = 0.7, 0.8, 0.9
+    
+    Notes:
+        Settings
+        Nlayer = 3, Nnus = 1
+        f = 0.01, (0.3), 1.0, (1.3), 2.0, (2.7), 3.0
+        h = 0.7, 0.8, 0.9
     """
-    f_lower = jnp.array([[1.0,2.0,3.0]]).T 
+    f_lower = jnp.array([[1.0,2.0,3.0]]).T #(Nlayer, Nnus)
     print(jnp.shape(f_lower))
     f_top = jnp.array([0.01])
     f = jnp.array([[0.3, 1.3, 2.7]]).T
