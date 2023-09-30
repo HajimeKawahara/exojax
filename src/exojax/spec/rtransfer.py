@@ -143,6 +143,7 @@ def initialize_gaussian_quadrature(nstream):
 
     return mus, weights
 
+
 @jit
 def rtrun_emis_pureabs_ibased_linsap(dtau, source_matrix_boundary, mus,
                                      weights):
@@ -167,36 +168,35 @@ def rtrun_emis_pureabs_ibased_linsap(dtau, source_matrix_boundary, mus,
     source_matrix_boundary_p1 = jnp.roll(source_matrix_boundary, -1,
                                          axis=0)  # S_{n+1}
 
-
     # NOT IMPLEMENTED YET
     # need to replace the last element of the above
     #
 
     #scan part
     muws = [mus, weights]
-    
-    
+
     def f(carry_fmu, muw):
         mu, w = muw
-        dtau_per_mu = dtau/mu
-        trans = jnp.exp(-dtau_per_mu) # hat{T}
+        dtau_per_mu = dtau / mu
+        trans = jnp.exp(-dtau_per_mu)  # hat{T}
         beta, gamma = coeffs_linsap(dtau_per_mu, trans)
-        
+
         #adds coeffs at the bottom of the layers
-        beta = jnp.vstack([beta,jnp.ones(Nnus)])
-        gamma = jnp.vstack([gamma,jnp.zeros(Nnus)])
+        beta = jnp.vstack([beta, jnp.ones(Nnus)])
+        gamma = jnp.vstack([gamma, jnp.zeros(Nnus)])
 
         dI = beta * source_matrix_boundary + gamma * source_matrix_boundary_p1
-        intensity_for_mu = jnp.sum(dI *
-                    jnp.cumprod(jnp.vstack([jnp.ones(Nnus), trans]), axis=0),
-                    axis=0)
-        
+        intensity_for_mu = jnp.sum(
+            dI * jnp.cumprod(jnp.vstack([jnp.ones(Nnus), trans]), axis=0),
+            axis=0)
+
         carry_fmu = carry_fmu + 2.0 * mu * w * intensity_for_mu
 
         return carry_fmu, None
 
     spec, _ = scan(f, jnp.zeros(Nnus), muws)
     return spec
+
 
 def coeffs_linsap(dtau_per_mu, trans):
     """coefficients of the linsap
@@ -233,9 +233,9 @@ def rtrun_trans_pureabs(dtau_chord, radius_lower):
         If you would like to compute the transit depth, devide the output by the square of stellar radius
 
     """
-    deltaRp2 = 2.0 * jnp.trapz(
-        (1.0 - jnp.exp(-dtau_chord)) * radius_lower[::-1, None],
-        x=radius_lower[::-1],
+    deltaRp2 = -2.0 * jnp.trapz(
+        (1.0 - jnp.exp(-dtau_chord)) * radius_lower[:, None],
+        x=radius_lower,
         axis=0)
     return deltaRp2 + radius_lower[-1]**2
 
