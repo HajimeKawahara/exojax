@@ -15,7 +15,6 @@ def test_compare_simpson_with_manual_computation():
         h = 0.7, 0.8, 0.9
     """
     f_lower = jnp.array([[1.0,2.0,3.0]]).T #(Nlayer, Nnus)
-    print(jnp.shape(f_lower))
     f_top = jnp.array([0.01])
     f = jnp.array([[0.3, 1.3, 2.7]]).T
     h = jnp.array([0.7,0.8,0.9])

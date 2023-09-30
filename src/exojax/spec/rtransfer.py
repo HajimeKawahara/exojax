@@ -31,6 +31,7 @@ from exojax.spec.layeropacity import layer_optical_depth
 from exojax.spec.layeropacity import layer_optical_depth_CIA
 from exojax.spec.layeropacity import layer_optical_depth_Hminus
 from exojax.spec.layeropacity import layer_optical_depth_VALD
+from exojax.signal.integrate import simpson
 import warnings
 
 
@@ -218,7 +219,7 @@ def rtrun_trans_pureabs_trapezoid(dtau_chord, radius_lower, radius_top):
     """Radiative transfer for transmission spectrum assuming pure absorption with the trapezoid integration (jnp.trapz)
 
     Args:
-        dtau_chord (2D array): chord opacity (Nlayer, N_wavenumber)
+        dtau_chord (2D array): chord optical depth (Nlayer, N_wavenumber)
         radius_lower (1D array): (normalized) radius at the lower boundary, underline(r) (Nlayer). R0 = radius_lower[-1] corresponds to the most bottom of the layers.
         radius_top (float): (normalized) radius at the ToA, i.e. the radius at the most top of the layers
 
@@ -236,14 +237,47 @@ def rtrun_trans_pureabs_trapezoid(dtau_chord, radius_lower, radius_top):
         We assume tau = 0 at the radius_top. then, the edge correction should be (1-T_0)*(delta r_0), but usually negligible though.
 
     """
-    edge_correction_at_ToA = (radius_top - radius_lower[0])*(1.0 - jnp.exp(-dtau_chord[0,:]))
+    dr = radius_top - radius_lower[0]
+    edge_cor = (1.0 - jnp.exp(-dtau_chord[0, :])) * radius_top * dr
 
     #the negative sign is because the radius_lower is in a descending order
-    deltaRp2 = - 2.0 * jnp.trapz(
+    deltaRp2 = -2.0 * jnp.trapz(
         (1.0 - jnp.exp(-dtau_chord)) * radius_lower[:, None],
         x=radius_lower,
-        axis=0) + edge_correction_at_ToA
+        axis=0) + edge_cor
 
+    return deltaRp2 + radius_lower[-1]**2
+
+
+def rtrun_trans_pureabs_simpson(dtau_chord_modpoint, dtau_chord_lower,
+                                radius_midpoint, radius_lower, height):
+    """Radiative transfer for transmission spectrum assuming pure absorption with the Simpson integration (signals.integration.simpson)
+
+    Args:
+        dtau_chord_midpoint (2D array): chord opatical depth at the midpoint (Nlayer, N_wavenumber)
+        dtau_chord_lower (2D array): chord opatical depth at the lower boundary (Nlayer, N_wavenumber)
+        radius_midpoint (1D array) (1D array): (normalized) radius at the midpoint
+        radius_lower (1D array): (normalized) radius at the lower boundary, underline(r) (Nlayer). R0 = radius_lower[-1] corresponds to the most bottom of the layers.
+        height (1D array): (normalized) height of the layers
+    Returns:
+        1D array: transit squared radius normalized by radius_lower[-1], i.e. it returns (radius/radius_lower[-1])**2
+
+    Notes:
+        This function gives the sqaure of the transit radius.
+        If you would like to obtain the transit radius, take sqaure root of the output.
+        If you would like to compute the transit depth, devide the output by the square of stellar radius
+        
+    Notes:
+        We need the edge correction because the trapezoid integration with radius_lower lacks the edge point integration.
+        i.e. the integration of the 0-th layer from radius_lower[0] to radius_top.
+        We assume tau = 0 at the radius_top. then, the edge correction should be (1-T_0)*(delta r_0), but usually negligible though.
+
+    """
+    Nlayer, Nnus = jnp.shape(dtau_chord_modpoint)
+    f = 2.0 * (1.0 - jnp.exp(-dtau_chord_modpoint)) * radius_midpoint[:, None]
+    f_lower = 2.0 * (1.0 - jnp.exp(-dtau_chord_lower)) * radius_lower[:, None]
+    f_top = jnp.zeros(Nnus)
+    deltaRp2 = simpson(f, f_lower, f_top, height)
     return deltaRp2 + radius_lower[-1]**2
 
 
