@@ -213,14 +213,14 @@ def coeffs_linsap(dtau_per_mu, trans):
     return beta, gamma
 
 
-@jit
-def rtrun_trans_pureabs(dtau_chord, radius_lower):
+#@jit
+def rtrun_trans_pureabs(dtau_chord, radius_lower):#,radius_top):
     """Radiative transfer for transmission spectrum assuming pure absorption 
 
     Args:
         dtau_chord (2D array): chord opacity (Nlayer, N_wavenumber)
         radius_lower (1D array): (normalized) radius at the lower boundary, underline(r) (Nlayer). 
-
+        radius_top (float): (normalized) radius at the ToA
     Notes:
         The n-th radius is defined as the lower boundary of the n-th layer. So, radius[0] corresponds to R0.   
 
@@ -233,10 +233,17 @@ def rtrun_trans_pureabs(dtau_chord, radius_lower):
         If you would like to compute the transit depth, devide the output by the square of stellar radius
 
     """
-    deltaRp2 = 2.0 * jnp.trapz(
-        (1.0 - jnp.exp(-dtau_chord)) * radius_lower[::-1, None],
-        x=radius_lower[::-1],
-        axis=0)
+    #edge_correction_at_ToA = (radius_top - radius_lower[0])*(1.0 - jnp.exp(-dtau_chord[0,:]))
+    #deltaRp2 = 2.0 * jnp.trapz(
+    #    (1.0 - jnp.exp(-dtau_chord)) * radius_lower[::-1, None],
+    #    x=radius_lower[::-1],
+    #    axis=0) #+ edge_correction_at_ToA
+    print(radius_lower)
+    deltaRp2 = - 2.0 * jnp.trapz(
+        (1.0 - jnp.exp(-dtau_chord)) * radius_lower[:, None],
+        x=radius_lower,
+        axis=0) #+ edge_correction_at_ToA
+
     return deltaRp2 + radius_lower[-1]**2
 
 

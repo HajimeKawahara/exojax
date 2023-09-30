@@ -26,7 +26,6 @@ import warnings
 class ArtCommon():
     """Common Atmospheric Radiative Transfer
     """
-
     def __init__(self, pressure_top, pressure_btm, nlayer, nu_grid=None):
         """initialization of art
 
@@ -71,24 +70,22 @@ class ArtCommon():
         Returns:
             1D array: height normalized by radius_btm (Nlayer)
             1D array: layer radius r_n normalized by radius_btm (Nlayer)
-            1D array: radius at lower boundary normalized by radius_btm (Nlayer)
-
+            
         Notes:
             Our definitions of the radius_lower, radius_layer, and height are as follows:
             n=0,1,...,N-1
             radius_lower[N-1] = radius_btm (i.e. R0)
             radius_lower[n-1] = radius_lower[n] + height[n]
-            radius_layer[n] =  radius_lower[n] + height[n]/2
             "normalized" means physical length divided by radius_btm
 
 
         """
-        print("k=", self.k)
+        print("pressure decrease rate k=", self.pressure_decrease_rate)
         normalized_height, normalized_radius_lower = normalized_layer_height(
-            temperature, self.k, mean_molecular_weight, radius_btm,
+            temperature, self.pressure_decrease_rate, mean_molecular_weight, radius_btm,
             gravity_btm)
-        normalized_radius_layer = normalized_radius_lower + 0.5 * normalized_height
-        return normalized_height, normalized_radius_layer, normalized_radius_lower
+        return normalized_height, normalized_radius_lower
+
 
     def constant_gravity_profile(self, value):
         return value * np.array([np.ones_like(self.pressure)]).T
@@ -106,8 +103,9 @@ class ArtCommon():
         Returns:
             2D array: gravity in cm2/s (Nlayer, 1), suitable for the input of opacity_profile_lines
         """
-        _, normalized_radius_layer, _ = self.atmosphere_height(
+        normalized_height, normalized_radius_lower = self.atmosphere_height(
             temperature, mean_molecular_weight, radius_btm, gravity_btm)
+        normalized_radius_layer = normalized_radius_lower + 0.5 * normalized_height
         return jnp.array([gravity_btm / normalized_radius_layer]).T
 
     def constant_mmr_profile(self, value):
@@ -151,7 +149,7 @@ class ArtCommon():
         from exojax.atm.atmprof import pressure_layer_logspace
         from exojax.atm.atmprof import pressure_boundary_logspace
 
-        self.pressure, self.dParr, self.k = pressure_layer_logspace(
+        self.pressure, self.dParr, self.pressure_decrease_rate = pressure_layer_logspace(
             log_pressure_top=self.log_pressure_top,
             log_pressure_btm=self.log_pressure_btm,
             nlayer=self.nlayer,
@@ -159,7 +157,7 @@ class ArtCommon():
             reference_point=0.5,
             numpy=True)
         self.pressure_boundary = pressure_boundary_logspace(
-            self.pressure, self.k, reference_point=0.5)
+            self.pressure, self.pressure_decrease_rate, reference_point=0.5)
 
     def change_temperature_range(self, Tlow, Thigh):
         """temperature range to be assumed.
@@ -247,8 +245,8 @@ class ArtCommon():
         Returns:
             array: layer boundary temperature profile (Nlayer + 1)
         """
-        return self.clip_temperature(atmprof_powerlow(self.pressure_boundary, T0,
-                                                      alpha))
+        return self.clip_temperature(
+            atmprof_powerlow(self.pressure_boundary, T0, alpha))
 
 
 class ArtEmisScat(ArtCommon):
@@ -258,7 +256,6 @@ class ArtEmisScat(ArtCommon):
         pressure_layer: pressure profile in bar
 
     """
-
     def __init__(self,
                  pressure_top=1.e-8,
                  pressure_btm=1.e2,
@@ -322,7 +319,6 @@ class ArtEmisPure(ArtCommon):
         pressure_layer: pressure profile in bar
 
     """
-
     def __init__(
         self,
         pressure_top=1.e-8,
@@ -446,7 +442,7 @@ class ArtTransPure(ArtCommon):
 
         """
 
-        normalized_height, _, normalized_radius_lower = self.atmosphere_height(
+        normalized_height, normalized_radius_lower = self.atmosphere_height(
             temperature, mean_molecular_weight, radius_btm, gravity_btm)
         cgm = chord_geometric_matrix(normalized_height,
                                      normalized_radius_lower)
