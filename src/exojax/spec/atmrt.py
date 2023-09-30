@@ -12,7 +12,7 @@ from exojax.spec.rtransfer import rtrun_emis_pureabs_ibased_linsap
 from exojax.spec.rtransfer import rtrun_emis_pureabs_fbased2st
 from exojax.spec.rtransfer import rtrun_emis_pureabs_ibased
 from exojax.spec.rtransfer import rtrun_emis_scat_lart_toonhm
-from exojax.spec.rtransfer import rtrun_trans_pureabs
+from exojax.spec.rtransfer import rtrun_trans_pureabs_trapezoid
 from exojax.spec.layeropacity import layer_optical_depth
 from exojax.atm.atmprof import atmprof_gray, atmprof_Guillot, atmprof_powerlow
 from exojax.atm.idealgas import number_density
@@ -448,4 +448,4 @@ class ArtTransPure(ArtCommon):
         cgm = chord_geometric_matrix(normalized_height,
                                      normalized_radius_lower)
         tauchord = chord_optical_depth(cgm, dtau)
-        return rtrun_trans_pureabs(tauchord, normalized_radius_lower, normalized_radius_top)
+        return rtrun_trans_pureabs_trapezoid(tauchord, normalized_radius_lower, normalized_radius_top)

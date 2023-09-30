@@ -4,7 +4,7 @@ import numpy as np
 from exojax.atm.atmprof import normalized_layer_height
 from exojax.spec.opachord import chord_geometric_matrix
 from exojax.spec.opachord import chord_optical_depth
-from exojax.spec.rtransfer import rtrun_trans_pureabs
+from exojax.spec.rtransfer import rtrun_trans_pureabs_trapezoid
 from jax.config import config
 
 config.update("jax_enable_x64", True)
@@ -16,7 +16,7 @@ def test_transmission_pure_absorption_equals_to_Rp_sqaured_for_opaque():
     dtau_chord = jnp.ones((Nlayer, Nnu)) * jnp.inf
     radius = jnp.array([1.4, 1.3, 1.2, 1.1, 1.0])
 
-    Rp2 = rtrun_trans_pureabs(dtau_chord, radius)
+    Rp2 = rtrun_trans_pureabs_trapezoid(dtau_chord, radius)
 
     assert np.all(Rp2 == radius[0]**2 * np.ones(Nnu))
 
