@@ -25,13 +25,22 @@ def test_transmission_pure_absorption_equals_to_Rp_sqaured_for_opaque():
 # this test code requires gpu 
 def test_chord_geometric_matrix():
     Nlayer = 3
-    height = 0.1 * jnp.ones(Nlayer)
-    radius = jnp.array([1.2, 1.1, 1.0])  #radius[-1] = radius_btm
-
-    cgm = chord_geometric_matrix(height, radius)
+    height = 0.1 * jnp.array([0.15, 0.1, 0.1])
+    radius_lower = jnp.array([1.2, 1.1, 1.0])  #radius[-1] = radius_btm
+    radius_top = radius_lower[0] + height[0]
+    cgm = chord_geometric_matrix(height, radius_lower)
+    ref = np.zeros((Nlayer,Nlayer))
+    ref[0,0]=2*jnp.sqrt(radius_top**2 - radius_lower[0]**2)/height[0]
+    ref[1,0]=_manual_coeff(radius_top, radius_lower[0], radius_lower[1], height[1])
+    ref[1,1]=_manual_coeff(radius_lower[0], radius_lower[1], radius_lower[1], height[1])
+    
+    print(ref)
+    print(cgm)
     print(jnp.sum(cgm))
     #assert jnp.sum(cgm) == pytest.approx(86.49373)
 
+def _manual_coeff(r_k_minus_1, r_k, r_n, h):
+    return 2*(jnp.sqrt(r_k_minus_1**2 - r_n**2) - jnp.sqrt(r_k**2 - r_n**2))/h
 
 def test_check_parallel_Ax_tauchord():
     A = jnp.array([[7, 0, 0], [4, 5, 0], [1, 2, 3]])
@@ -68,7 +77,7 @@ def test_first_layer_height_from_compute_normalized_radius_profile():
 
 
 if __name__ == "__main__":
-    test_check_parallel_Ax_tauchord()
-    test_first_layer_height_from_compute_normalized_radius_profile()
+    #test_check_parallel_Ax_tauchord()
+    #test_first_layer_height_from_compute_normalized_radius_profile()
     test_chord_geometric_matrix()
-    test_transmission_pure_absorption_equals_to_Rp_sqaured_for_opaque()
+    #test_transmission_pure_absorption_equals_to_Rp_sqaured_for_opaque()
