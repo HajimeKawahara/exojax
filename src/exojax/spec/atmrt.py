@@ -13,11 +13,13 @@ from exojax.spec.rtransfer import rtrun_emis_pureabs_fbased2st
 from exojax.spec.rtransfer import rtrun_emis_pureabs_ibased
 from exojax.spec.rtransfer import rtrun_emis_scat_lart_toonhm
 from exojax.spec.rtransfer import rtrun_trans_pureabs_trapezoid
+from exojax.spec.rtransfer import rtrun_trans_pureabs_simpson
 from exojax.spec.layeropacity import layer_optical_depth
 from exojax.atm.atmprof import atmprof_gray, atmprof_Guillot, atmprof_powerlow
 from exojax.atm.idealgas import number_density
 from exojax.atm.atmprof import normalized_layer_height
 from exojax.spec.opachord import chord_geometric_matrix
+from exojax.spec.opachord import chord_geometric_matrix_midpoint
 from exojax.spec.opachord import chord_optical_depth
 from exojax.utils.constants import logkB, logm_ucgs
 import warnings
@@ -82,10 +84,9 @@ class ArtCommon():
         """
         print("pressure decrease rate k=", self.pressure_decrease_rate)
         normalized_height, normalized_radius_lower = normalized_layer_height(
-            temperature, self.pressure_decrease_rate, mean_molecular_weight, radius_btm,
-            gravity_btm)
+            temperature, self.pressure_decrease_rate, mean_molecular_weight,
+            radius_btm, gravity_btm)
         return normalized_height, normalized_radius_lower
-
 
     def constant_gravity_profile(self, value):
         return value * np.array([np.ones_like(self.pressure)]).T
@@ -413,13 +414,57 @@ class ArtEmisPure(ArtCommon):
 
 
 class ArtTransPure(ArtCommon):
-    def __init__(self, pressure_top=1.e-8, pressure_btm=1.e2, nlayer=100):
+    def __init__(self,
+                 pressure_top=1.e-8,
+                 pressure_btm=1.e2,
+                 nlayer=100,
+                 integration="simpson"):
         """initialization of ArtTransPure
 
 
         """
         super().__init__(pressure_top, pressure_btm, nlayer, nu_grid=None)
         self.method = "transmission_with_pure_absorption"
+        self.set_capable_integration()
+        self.validate_integration_scheme(integration)
+
+
+#rtrun_trans_pureabs_simpson(dtau_chord_modpoint, dtau_chord_lower,
+#                                radius_midpoint, radius_lower, height)
+
+    def set_capable_integration(self):
+        self.integration_dict = {
+            "trapezoid": rtrun_trans_pureabs_trapezoid,
+            "simpson": rtrun_trans_pureabs_simpson
+        }
+
+        self.valid_integration = list(self.integration_dict.keys())
+
+        self.integration_explanation = {
+            "trapezoid":
+            "Trapezoid integration, uses the chord optical depth at the lower boundary of the layers only",
+            "simpson":
+            "Simpson integration, uses the chord optical depth at the lower boundary and midppoint of the layers.",
+        }
+
+    def validate_integration_scheme(self, integration):
+        """validates integration
+
+        Args:
+            integration (str): integration
+
+        """
+
+        if integration in self.valid_integration:
+            self.integration = integration
+            print("integration: ", self.integration)
+            print(self.integration_explanation[self.integration])
+        else:
+            str_valid_integration = ", ".join(
+                self.valid_integration[:-1]
+            ) + f", or {self.valid_integration[-1]}"
+            raise ValueError("Unknown integration (scheme). Use " +
+                             str_valid_integration)
 
     def run(self, dtau, temperature, mean_molecular_weight, radius_btm,
             gravity_btm):
@@ -444,8 +489,22 @@ class ArtTransPure(ArtCommon):
 
         normalized_height, normalized_radius_lower = self.atmosphere_height(
             temperature, mean_molecular_weight, radius_btm, gravity_btm)
-        normalized_radius_top = normalized_radius_lower[0] + normalized_height[0] 
+        normalized_radius_top = normalized_radius_lower[0] + normalized_height[
+            0]
         cgm = chord_geometric_matrix(normalized_height,
                                      normalized_radius_lower)
-        tauchord = chord_optical_depth(cgm, dtau)
-        return rtrun_trans_pureabs_trapezoid(tauchord, normalized_radius_lower, normalized_radius_top)
+        dtau_chord_lower = chord_optical_depth(cgm, dtau)
+
+        func = self.integration_dict[self.integration]
+        if self.integration == "trapezoid":
+            return func(dtau_chord_lower, normalized_radius_lower,
+                        normalized_radius_top)
+        elif self.integration == "simpson":
+            normalized_radius_midpoint = normalized_radius_lower + 0.5 * normalized_height
+            cgm_midpoint = chord_geometric_matrix_midpoint(
+                normalized_height, normalized_radius_lower,
+                normalized_radius_midpoint)
+            dtau_chord_midpoint = chord_optical_depth(cgm_midpoint, dtau)
+
+            return func(dtau_chord_modpoint, dtau_chord_lower,
+                        normalized_radius_lower, normalized_height)

@@ -3,7 +3,9 @@ import jax.numpy as jnp
 import numpy as np
 from exojax.atm.atmprof import normalized_layer_height
 from exojax.spec.opachord import chord_geometric_matrix
+from exojax.spec.opachord import chord_geometric_matrix_midpoint
 from exojax.spec.opachord import chord_optical_depth
+
 from exojax.spec.rtransfer import rtrun_trans_pureabs_trapezoid
 from jax.config import config
 
@@ -22,9 +24,9 @@ def test_transmission_pure_absorption_equals_to_Rp_sqaured_for_opaque():
 
 # this test code requires gpu 
 def test_chord_geometric_matrix():
-    Nlayer = 5
+    Nlayer = 3
     height = 0.1 * jnp.ones(Nlayer)
-    radius = jnp.array([1.4, 1.3, 1.2, 1.1, 1.0])  #radius[-1] = radius_btm
+    radius = jnp.array([1.2, 1.1, 1.0])  #radius[-1] = radius_btm
 
     cgm = chord_geometric_matrix(height, radius)
     print(jnp.sum(cgm))

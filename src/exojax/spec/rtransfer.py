@@ -250,15 +250,15 @@ def rtrun_trans_pureabs_trapezoid(dtau_chord, radius_lower, radius_top):
 
 
 def rtrun_trans_pureabs_simpson(dtau_chord_modpoint, dtau_chord_lower,
-                                radius_midpoint, radius_lower, height):
+                                radius_lower, height):
     """Radiative transfer for transmission spectrum assuming pure absorption with the Simpson integration (signals.integration.simpson)
 
     Args:
         dtau_chord_midpoint (2D array): chord opatical depth at the midpoint (Nlayer, N_wavenumber)
         dtau_chord_lower (2D array): chord opatical depth at the lower boundary (Nlayer, N_wavenumber)
-        radius_midpoint (1D array) (1D array): (normalized) radius at the midpoint
         radius_lower (1D array): (normalized) radius at the lower boundary, underline(r) (Nlayer). R0 = radius_lower[-1] corresponds to the most bottom of the layers.
         height (1D array): (normalized) height of the layers
+
     Returns:
         1D array: transit squared radius normalized by radius_lower[-1], i.e. it returns (radius/radius_lower[-1])**2
 
@@ -273,7 +273,8 @@ def rtrun_trans_pureabs_simpson(dtau_chord_modpoint, dtau_chord_lower,
         We assume tau = 0 at the radius_top. then, the edge correction should be (1-T_0)*(delta r_0), but usually negligible though.
 
     """
-    Nlayer, Nnus = jnp.shape(dtau_chord_modpoint)
+    radius_midpoint = radius_lower + 0.5*height
+    _, Nnus = jnp.shape(dtau_chord_modpoint)
     f = 2.0 * (1.0 - jnp.exp(-dtau_chord_modpoint)) * radius_midpoint[:, None]
     f_lower = 2.0 * (1.0 - jnp.exp(-dtau_chord_lower)) * radius_lower[:, None]
     f_top = jnp.zeros(Nnus)
