@@ -4,7 +4,7 @@ from jax import jit
 
 
 @jit
-def chord_geometric_matrix(height, radius_lower):
+def chord_geometric_matrix_lower(height, radius_lower):
     """compute chord geometric matrix
 
     Args:
@@ -19,19 +19,16 @@ def chord_geometric_matrix(height, radius_lower):
         n=0,1,...,N-1
         radius_lower[N-1] = radius_btm (i.e. R0)    
         radius_lower[n-1] = radius_lower[n] + height[n]
-        radius_top = radius_lower[0] + height[0]
         
     """
-    radius_top = radius_lower[0] + height[0]  #radius at TOA
-    radius_shifted = jnp.roll(radius_lower, 1)  # r_{k-1}
-    radius_shifted = radius_shifted.at[0].set(radius_top)
+    radius_upper = radius_lower + height
+    fac_left = jnp.sqrt(radius_upper[None, :]**2 - radius_lower[:, None]**2)
     fac_right = jnp.sqrt(radius_lower[None, :]**2 - radius_lower[:, None]**2)
-    fac_left = jnp.sqrt(radius_shifted[None, :]**2 - radius_lower[:, None]**2)
     raw_matrix = 2.0 * (fac_left - fac_right) / height
     return jnp.tril(raw_matrix)
 
 @jit
-def chord_geometric_matrix_midpoint(height, radius_lower, radius_midpoint):
+def chord_geometric_matrix(height, radius_lower, radius_midpoint):
     """compute chord geometric matrix
 
     Args:
