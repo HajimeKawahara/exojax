@@ -28,7 +28,7 @@ def chord_geometric_matrix_lower(height, radius_lower):
     return jnp.tril(raw_matrix)
 
 @jit
-def chord_geometric_matrix(height, radius_lower, radius_midpoint):
+def chord_geometric_matrix(height, radius_lower):
     """compute chord geometric matrix
 
     Args:
@@ -46,15 +46,17 @@ def chord_geometric_matrix(height, radius_lower, radius_midpoint):
         radius_top = radius_lower[0] + height[0]
         
     """
-    radius_top = radius_lower[0] + height[0]  #radius at TOA
-    radius_shifted = jnp.roll(radius_lower, 1)  # r_{k-1}
-    radius_shifted = radius_shifted.at[0].set(radius_top)
+    radius_upper = radius_lower + height
+    radius_midpoint = radius_lower + height/2.0
+    
+    fac_left = jnp.sqrt(radius_upper[None, :]**2 - radius_midpoint[:, None]**2)
     fac_right = jnp.sqrt(radius_lower[None, :]**2 - radius_midpoint[:, None]**2)
-    fac_left = jnp.sqrt(radius_shifted[None, :]**2 - radius_midpoint[:, None]**2)
-    diag_correction = jnp.diag(jnp.sqrt(radius_lower**2 - radius_midpoint**2))
-    raw_matrix = 2.0 * (fac_left - fac_right + diag_correction) / height
-    return jnp.tril(raw_matrix)
-
+    raw_matrix = 2.0 * (fac_left - fac_right) / height
+    
+    ratio = radius_midpoint/height
+    deep_element_correction = 2.0*(jnp.sqrt(0.25 - ratio) - ratio)
+    
+    return jnp.tril(raw_matrix) + jnp.diag(deep_element_correction)
 
 def chord_optical_depth(chord_geometric_matrix, dtau):
     """chord optical depth vector from a chord geometric matrix and dtau
