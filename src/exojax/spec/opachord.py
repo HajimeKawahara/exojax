@@ -54,7 +54,7 @@ def chord_geometric_matrix(height, radius_lower):
     raw_matrix = 2.0 * (fac_left - fac_right) / height
     
     ratio = radius_midpoint/height
-    deep_element_correction = 2.0*(jnp.sqrt(0.25 - ratio) - ratio)
+    deep_element_correction = jnp.sqrt(1.0 - 4.0*ratio) - 2.0*ratio
     
     return jnp.tril(raw_matrix) + jnp.diag(deep_element_correction)
 
