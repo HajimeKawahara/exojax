@@ -18,8 +18,8 @@ from exojax.spec.layeropacity import layer_optical_depth
 from exojax.atm.atmprof import atmprof_gray, atmprof_Guillot, atmprof_powerlow
 from exojax.atm.idealgas import number_density
 from exojax.atm.atmprof import normalized_layer_height
+from exojax.spec.opachord import chord_geometric_matrix_lower
 from exojax.spec.opachord import chord_geometric_matrix
-from exojax.spec.opachord import chord_geometric_matrix_midpoint
 from exojax.spec.opachord import chord_optical_depth
 from exojax.utils.constants import logkB, logm_ucgs
 import warnings
@@ -426,7 +426,7 @@ class ArtTransPure(ArtCommon):
         super().__init__(pressure_top, pressure_btm, nlayer, nu_grid=None)
         self.method = "transmission_with_pure_absorption"
         self.set_capable_integration()
-        self.validate_integration_scheme(integration)
+        self.set_integration_scheme(integration)
 
 
 #rtrun_trans_pureabs_simpson(dtau_chord_modpoint, dtau_chord_lower,
@@ -447,8 +447,8 @@ class ArtTransPure(ArtCommon):
             "Simpson integration, uses the chord optical depth at the lower boundary and midppoint of the layers.",
         }
 
-    def validate_integration_scheme(self, integration):
-        """validates integration
+    def set_integration_scheme(self, integration):
+        """sets and validates integration
 
         Args:
             integration (str): integration
@@ -491,8 +491,8 @@ class ArtTransPure(ArtCommon):
             temperature, mean_molecular_weight, radius_btm, gravity_btm)
         normalized_radius_top = normalized_radius_lower[0] + normalized_height[
             0]
-        cgm = chord_geometric_matrix(normalized_height,
-                                     normalized_radius_lower)
+        cgm = chord_geometric_matrix_lower(normalized_height,
+                                           normalized_radius_lower)
         dtau_chord_lower = chord_optical_depth(cgm, dtau)
 
         func = self.integration_dict[self.integration]
@@ -500,11 +500,8 @@ class ArtTransPure(ArtCommon):
             return func(dtau_chord_lower, normalized_radius_lower,
                         normalized_radius_top)
         elif self.integration == "simpson":
-            normalized_radius_midpoint = normalized_radius_lower + 0.5 * normalized_height
-            cgm_midpoint = chord_geometric_matrix_midpoint(
-                normalized_height, normalized_radius_lower,
-                normalized_radius_midpoint)
+            cgm_midpoint = chord_geometric_matrix(normalized_height,
+                                                  normalized_radius_lower)
             dtau_chord_midpoint = chord_optical_depth(cgm_midpoint, dtau)
-
-            return func(dtau_chord_modpoint, dtau_chord_lower,
+            return func(dtau_chord_midpoint, dtau_chord_lower,
                         normalized_radius_lower, normalized_height)
