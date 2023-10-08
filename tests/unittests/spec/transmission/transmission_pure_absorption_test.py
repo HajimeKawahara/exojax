@@ -16,12 +16,12 @@ def test_transmission_pure_absorption_equals_to_Rp_sqaured_for_opaque():
     Nlayer = 5
     Nnu = 2
     dtau_chord = jnp.ones((Nlayer, Nnu)) * jnp.inf
-    radius = jnp.array([1.4, 1.3, 1.2, 1.1, 1.0])
-
-    Rp2 = rtrun_trans_pureabs_trapezoid(dtau_chord, radius)
-
-    assert np.all(Rp2 == radius[0]**2 * np.ones(Nnu))
-
+    radius_lower = jnp.array([1.4, 1.3, 1.2, 1.1, 1.0])
+    radius_top = 1.5
+    Rp2 = rtrun_trans_pureabs_trapezoid(dtau_chord, radius_lower, radius_top)
+    assert Rp2[0] > radius_lower[0]**2 
+    assert Rp2[0] < radius_top**2
+    
 # this test code requires gpu 
 def test_chord_geometric_matrix_lower():
     Nlayer = 3
@@ -31,11 +31,11 @@ def test_chord_geometric_matrix_lower():
     cgm = chord_geometric_matrix_lower(height, radius_lower)
     ref = np.zeros((Nlayer,Nlayer))
     ref[0,0]=2*jnp.sqrt(radius_upper[0]**2 - radius_lower[0]**2)/height[0]
-    ref[1,0]=_manual_coeff(radius_upper, radius_lower, height, 1, 0)
-    ref[1,1]=_manual_coeff(radius_upper, radius_lower, height, 1, 1)
-    ref[2,0]=_manual_coeff(radius_upper, radius_lower, height, 2, 0)
-    ref[2,1]=_manual_coeff(radius_upper, radius_lower, height, 2, 1)
-    ref[2,2]=_manual_coeff(radius_upper, radius_lower, height, 2, 2)
+    ref[1,0]=_manual_coeff(radius_upper, radius_lower, radius_lower, height, 1, 0)
+    ref[1,1]=2*jnp.sqrt(radius_upper[1]**2 - radius_lower[1]**2)/height[1]
+    ref[2,0]=_manual_coeff(radius_upper, radius_lower, radius_lower, height, 2, 0)
+    ref[2,1]=_manual_coeff(radius_upper, radius_lower, radius_lower, height, 2, 1)
+    ref[2,2]=2*jnp.sqrt(radius_upper[2]**2 - radius_lower[2]**2)/height[2]
     assert np.all(ref == cgm)
 
 def test_chord_geometric_matrix():
@@ -47,16 +47,15 @@ def test_chord_geometric_matrix():
     cgm = chord_geometric_matrix(height, radius_lower)
     ref = np.zeros((Nlayer,Nlayer))
     ref[0,0]=2*jnp.sqrt(radius_upper[0]**2 - radius_mid[0]**2)/height[0]
-    ref[1,0]=_manual_coeff(radius_upper, radius_mid, height, 1, 0)
-    ref[1,1]=_manual_coeff(radius_upper, radius_mid, height, 1, 1)
-    ref[2,0]=_manual_coeff(radius_upper, radius_mid, height, 2, 0)
-    ref[2,1]=_manual_coeff(radius_upper, radius_mid, height, 2, 1)
-    ref[2,2]=_manual_coeff(radius_upper, radius_mid, height, 2, 2)
-    print(ref)
-    print(cgm)
+    ref[1,0]=_manual_coeff(radius_upper, radius_lower, radius_mid, height, 1, 0)
+    ref[1,1]=2*jnp.sqrt(radius_upper[1]**2 - radius_mid[1]**2)/height[1]
+    ref[2,0]=_manual_coeff(radius_upper, radius_lower, radius_mid, height, 2, 0)
+    ref[2,1]=_manual_coeff(radius_upper, radius_lower, radius_mid, height, 2, 1)
+    ref[2,2]=2*jnp.sqrt(radius_upper[2]**2 - radius_mid[2]**2)/height[2]
+    assert np.all(ref == cgm)
 
-def _manual_coeff(radius_upper, radius_lower, height, n, k):
-    return 2*(jnp.sqrt(radius_upper[k]**2 - radius_lower[n]**2) - jnp.sqrt(radius_lower[k]**2 - radius_lower[n]**2))/height[k]
+def _manual_coeff(radius_upper, radius_lower, radius_ref, height, n, k):
+    return 2*(jnp.sqrt(radius_upper[k]**2 - radius_ref[n]**2) - jnp.sqrt(radius_lower[k]**2 - radius_ref[n]**2))/height[k]
 
 def test_check_parallel_Ax_tauchord():
     A = jnp.array([[7, 0, 0], [4, 5, 0], [1, 2, 3]])
@@ -96,5 +95,5 @@ if __name__ == "__main__":
     #test_check_parallel_Ax_tauchord()
     #test_first_layer_height_from_compute_normalized_radius_profile()
     #test_chord_geometric_matrix_lower()
-    test_chord_geometric_matrix()
-    #test_transmission_pure_absorption_equals_to_Rp_sqaured_for_opaque()
+    #test_chord_geometric_matrix()
+    test_transmission_pure_absorption_equals_to_Rp_sqaured_for_opaque()
