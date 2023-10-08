@@ -45,6 +45,14 @@ def test_chord_geometric_matrix():
     radius_mid = radius_lower + height/2.0
     radius_upper = radius_lower + height
     cgm = chord_geometric_matrix(height, radius_lower)
+    ref = np.zeros((Nlayer,Nlayer))
+    ref[0,0]=2*jnp.sqrt(radius_upper[0]**2 - radius_mid[0]**2)/height[0]
+    ref[1,0]=_manual_coeff(radius_upper, radius_mid, height, 1, 0)
+    ref[1,1]=_manual_coeff(radius_upper, radius_mid, height, 1, 1)
+    ref[2,0]=_manual_coeff(radius_upper, radius_mid, height, 2, 0)
+    ref[2,1]=_manual_coeff(radius_upper, radius_mid, height, 2, 1)
+    ref[2,2]=_manual_coeff(radius_upper, radius_mid, height, 2, 2)
+    print(ref)
     print(cgm)
 
 def _manual_coeff(radius_upper, radius_lower, height, n, k):

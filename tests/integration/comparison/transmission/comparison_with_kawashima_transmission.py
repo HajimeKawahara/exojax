@@ -77,7 +77,9 @@ if __name__ == "__main__":
     ax = fig.add_subplot(111)
     ax.plot(wav, rprs * Rs / RJ, label="Kawashima")
     #plt.yscale("log")
-    ax.plot(wav_exojax[::-1], Rp_trapezoid * Rs / RJ, label="ExoJAX", ls="dotted")
+    ax.plot(wav_exojax[::-1], Rp_trapezoid * Rs / RJ, label="ExoJAX trapezoid", ls="dotted")
+    ax.plot(wav_exojax[::-1], Rp_simpson * Rs / RJ, label="ExoJAX simpson", lw=1)
+    
     plt.legend()
 
     plt.xlabel("wavenumber cm-1")
