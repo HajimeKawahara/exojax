@@ -28,7 +28,7 @@ def chord_geometric_matrix_lower(height, radius_lower):
     return jnp.tril(raw_matrix)
 
 
-#@jit
+@jit
 def chord_geometric_matrix(height, radius_lower):
     """compute chord geometric matrix
 

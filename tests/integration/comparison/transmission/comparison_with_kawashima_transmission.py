@@ -75,9 +75,9 @@ if __name__ == "__main__":
     wav_exojax = nu2wav(nus_hitran, unit="um", wavelength_order="ascending")
     fig = plt.figure()
     ax = fig.add_subplot(111)
-    ax.plot(wav, rprs * Rs / RJ, label="Kawashima")
+    #ax.plot(wav, rprs * Rs / RJ, label="Kawashima")
     #plt.yscale("log")
-    ax.plot(wav_exojax[::-1], Rp_trapezoid * Rs / RJ, label="ExoJAX trapezoid", ls="dotted")
+    #ax.plot(wav_exojax[::-1], Rp_trapezoid * Rs / RJ, label="ExoJAX trapezoid", ls="dotted")
     ax.plot(wav_exojax[::-1], Rp_simpson * Rs / RJ, label="ExoJAX simpson", lw=1)
     
     plt.legend()
