@@ -37,7 +37,16 @@ def test_chord_geometric_matrix_lower():
     ref[2,1]=_manual_coeff(radius_upper, radius_lower, height, 2, 1)
     ref[2,2]=_manual_coeff(radius_upper, radius_lower, height, 2, 2)
     assert np.all(ref == cgm)
-    
+
+def test_chord_geometric_matrix():
+    Nlayer = 3
+    height = jnp.array([0.15, 0.1, 0.1])
+    radius_lower = jnp.array([1.2, 1.1, 1.0])  
+    radius_mid = radius_lower + height/2.0
+    radius_upper = radius_lower + height
+    cgm = chord_geometric_matrix(height, radius_lower)
+    print(cgm)
+
 def _manual_coeff(radius_upper, radius_lower, height, n, k):
     return 2*(jnp.sqrt(radius_upper[k]**2 - radius_lower[n]**2) - jnp.sqrt(radius_lower[k]**2 - radius_lower[n]**2))/height[k]
 
@@ -78,5 +87,6 @@ def test_first_layer_height_from_compute_normalized_radius_profile():
 if __name__ == "__main__":
     #test_check_parallel_Ax_tauchord()
     #test_first_layer_height_from_compute_normalized_radius_profile()
-    test_chord_geometric_matrix_lower()
+    #test_chord_geometric_matrix_lower()
+    test_chord_geometric_matrix()
     #test_transmission_pure_absorption_equals_to_Rp_sqaured_for_opaque()
