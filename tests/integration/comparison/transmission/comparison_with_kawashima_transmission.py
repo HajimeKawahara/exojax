@@ -74,18 +74,19 @@ if __name__ == "__main__":
     from exojax.spec.unitconvert import nu2wav
     wav_exojax = nu2wav(nus_hitran, unit="um", wavelength_order="ascending")
     fig = plt.figure()
-    ax = fig.add_subplot(111)
+    ax = fig.add_subplot(211)
     ax.plot(wav, rprs * Rs / RJ, label="Kawashima")
-    plt.yscale("log")
+    #plt.yscale("log")
     ax.plot(wav_exojax[::-1], Rp_trapezoid * Rs / RJ, label="ExoJAX trapezoid", ls="dotted")
     ax.plot(wav_exojax[::-1], Rp_simpson * Rs / RJ, label="ExoJAX simpson", lw=1)
-    
     plt.legend()
-
+    plt.ylabel("Rp (RJ)")
+    ax = fig.add_subplot(212)
+    ax.plot(wav_exojax[::-1], (1.0 - Rp_trapezoid/Rp_simpson) * Rs / RJ, label="Delta R/R (simpson, trapezoid)")
     plt.xlabel("wavenumber cm-1")
     #plt.ylim(-0.07, 0.07)
     plt.legend()
-    plt.ylabel("Rp (RJ)")
+    plt.ylabel("ratio")
 
     plt.savefig("comparison.png")
     plt.show()
