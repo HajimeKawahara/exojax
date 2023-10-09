@@ -19,7 +19,7 @@ INSTALL_REQUIRES = [
     'jaxopt',
     'jax',
     "hitran-api",
-    'git+https://github.com//radis/radis.git@develop',
+    'git+https://github.com/radis/radis.git@develop',
     "pygments>=2.15",
     "pydantic<2.0",
 ]
