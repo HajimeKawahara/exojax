@@ -57,7 +57,7 @@ def chord_geometric_matrix(height, radius_lower):
     raw_matrix = 2.0 * (jnp.sqrt(fac_left) - jnp.sqrt(fac_right)) / height
     return jnp.tril(raw_matrix)
 
-
+@jit
 def chord_optical_depth(chord_geometric_matrix, dtau):
     """chord optical depth vector from a chord geometric matrix and dtau
     

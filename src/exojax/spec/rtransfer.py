@@ -8,9 +8,16 @@
     -- scattering
     --- 2stream
     ---- LART: rtrun_emis_scat_lart_toonhm
-    - intensity-based emission
-    - transmision: rtrun_trans_pureabs
+    ---- flux-adding: not yet
 
+    - intensity-based emission
+    -- pure absorption 
+    --- isothermal: rtrun_emis_pureabs_ibased
+    --- linear source approximation: rtrun_emis_pureabs_ibased_linsap
+
+    - transmision: 
+    -- trapezoid integration: rtrun_trans_pureabs_trapezoid
+    -- simpson integration: rtrun_trans_pureabs_simpson
 
 
 
@@ -18,7 +25,7 @@
 from jax import jit
 import jax.numpy as jnp
 from jax.lax import scan
-from exojax.spec.twostream import solve_lart_twostream_numpy
+#from exojax.spec.twostream import solve_lart_twostream_numpy
 from exojax.spec.twostream import solve_lart_twostream
 
 from exojax.spec.toon import reduced_source_function_isothermal_layer
