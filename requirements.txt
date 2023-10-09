@@ -2,6 +2,6 @@ numpyro
 jaxopt
 jax
 hitran-api
--e git+https://github.com/radis/radis.git@develop#egg=radis-0.14
+git+https://github.com/radis/radis.git@develop#egg=radis-0.14
 pygments>=2.15
 pydantic<2.0

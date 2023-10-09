@@ -37,23 +37,6 @@ def find_meta(meta, meta_file=read(META_PATH)):
 #    with open('requirements.txt', 'r') as file:
 #        return file.readlines()
 
-def take_package_name(name):
-    if name.startswith("-e"):
-        return name[name.find("=")+1:name.rfind("-")]
-    else:
-        return name.strip()
-
-def load_requires_from_file(filepath):
-    with open(filepath) as fp:
-        return [take_package_name(pkg_name) for pkg_name in fp.readlines()]
-
-def load_links_from_file(filepath):
-    res = []
-    with open(filepath) as fp:
-        for pkg_name in fp.readlines():
-            if pkg_name.startswith("-e"):
-                res.append(pkg_name.split(" ")[1])
-    return res
 
 
 
@@ -80,8 +63,7 @@ if __name__ == '__main__':
         python_requires='>=3.9',
         package_dir={'': 'src'},
         include_package_data=True,
-        install_requires=load_requires_from_file("requirements.txt"),
-        dependency_links=load_links_from_file("requirements.txt"),
+        install_requires=[],
         classifiers=CLASSIFIERS,
         zip_safe=False,
         options={'bdist_wheel': {
