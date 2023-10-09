@@ -15,5 +15,5 @@ def simpson(f, f_lower, f_top, h):
     N=len(f)
     hh = jnp.roll(h, -1) + h  # h_{n+1} + h_n
     fac = hh[:N-1,None]*f_lower[:N-1,:]
-    return 2.0/3.0*jnp.sum(h[:,None]*f) + h[0]*f_top/6.0 + h[-1]*f_lower[-1,:]/6.0 + jnp.sum(fac)/6.0
+    return 2.0/3.0*jnp.sum(h[:,None]*f,axis=0) + h[0]*f_top/6.0 + h[-1]*f_lower[-1,:]/6.0 + jnp.sum(fac,axis=0)/6.0
     

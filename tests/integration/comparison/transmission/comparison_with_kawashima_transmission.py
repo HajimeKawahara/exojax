@@ -57,11 +57,11 @@ def compare_with_kawashima_code():
     xsmatrix = opa.xsmatrix(Tarr, art.pressure)
     dtau = art.opacity_profile_lines(xsmatrix, mmr_arr, opa.mdb.molmass,
                                      gravity)
-    art.set_integration_scheme("trapezoid")
-    Rp2_trapezoid = art.run(dtau, Tarr, mmw, radius_btm, gravity_btm)
     art.set_integration_scheme("simpson")
     Rp2_simpson = art.run(dtau, Tarr, mmw, radius_btm, gravity_btm)
-    print(Rp2_simpson)
+    art.set_integration_scheme("trapezoid")
+    Rp2_trapezoid = art.run(dtau, Tarr, mmw, radius_btm, gravity_btm)
+    
     return nu_grid, np.sqrt(Rp2_trapezoid) * radius_btm / Rs, np.sqrt(Rp2_simpson) * radius_btm / Rs
 
 
@@ -75,9 +75,9 @@ if __name__ == "__main__":
     wav_exojax = nu2wav(nus_hitran, unit="um", wavelength_order="ascending")
     fig = plt.figure()
     ax = fig.add_subplot(111)
-    #ax.plot(wav, rprs * Rs / RJ, label="Kawashima")
-    #plt.yscale("log")
-    #ax.plot(wav_exojax[::-1], Rp_trapezoid * Rs / RJ, label="ExoJAX trapezoid", ls="dotted")
+    ax.plot(wav, rprs * Rs / RJ, label="Kawashima")
+    plt.yscale("log")
+    ax.plot(wav_exojax[::-1], Rp_trapezoid * Rs / RJ, label="ExoJAX trapezoid", ls="dotted")
     ax.plot(wav_exojax[::-1], Rp_simpson * Rs / RJ, label="ExoJAX simpson", lw=1)
     
     plt.legend()

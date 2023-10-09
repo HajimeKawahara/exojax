@@ -245,10 +245,10 @@ def rtrun_trans_pureabs_trapezoid(dtau_chord, radius_lower, radius_top):
         (1.0 - jnp.exp(-dtau_chord)) * radius_lower[:, None],
         x=radius_lower,
         axis=0) + edge_cor
-
     return deltaRp2 + radius_lower[-1]**2
 
 
+@jit
 def rtrun_trans_pureabs_simpson(dtau_chord_modpoint, dtau_chord_lower,
                                 radius_lower, height):
     """Radiative transfer for transmission spectrum assuming pure absorption with the Simpson integration (signals.integration.simpson)
@@ -273,7 +273,7 @@ def rtrun_trans_pureabs_simpson(dtau_chord_modpoint, dtau_chord_lower,
         We assume tau = 0 at the radius_top. then, the edge correction should be (1-T_0)*(delta r_0), but usually negligible though.
 
     """
-    radius_midpoint = radius_lower + 0.5*height
+    radius_midpoint = radius_lower + 0.5 * height
     _, Nnus = jnp.shape(dtau_chord_modpoint)
     f = 2.0 * (1.0 - jnp.exp(-dtau_chord_modpoint)) * radius_midpoint[:, None]
     f_lower = 2.0 * (1.0 - jnp.exp(-dtau_chord_lower)) * radius_lower[:, None]
