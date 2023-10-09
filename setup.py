@@ -14,15 +14,6 @@ CLASSIFIERS = [
     "Programming Language :: Python :: 3.10",
     "Operating System :: OS Independent",
 ]
-INSTALL_REQUIRES = [
-    'numpyro',
-    'jaxopt',
-    'jax',
-    "hitran-api",
-    'git+https://github.com/radis/radis.git@develop',
-    "pygments>=2.15",
-    "pydantic<2.0",
-]
 
 # END PROJECT SPECIFIC
 HERE = os.path.dirname(os.path.realpath(__file__))
@@ -42,6 +33,30 @@ def find_meta(meta, meta_file=read(META_PATH)):
     raise RuntimeError('Unable to find __{meta}__ string.'.format(meta=meta))
 
 
+#def read_requirements():
+#    with open('requirements.txt', 'r') as file:
+#        return file.readlines()
+
+def take_package_name(name):
+    if name.startswith("-e"):
+        return name[name.find("=")+1:name.rfind("-")]
+    else:
+        return name.strip()
+
+def load_requires_from_file(filepath):
+    with open(filepath) as fp:
+        return [take_package_name(pkg_name) for pkg_name in fp.readlines()]
+
+def load_links_from_file(filepath):
+    res = []
+    with open(filepath) as fp:
+        for pkg_name in fp.readlines():
+            if pkg_name.startswith("-e"):
+                res.append(pkg_name.split(" ")[1])
+    return res
+
+
+
 if __name__ == '__main__':
     setup(
         name=NAME,
@@ -51,7 +66,7 @@ if __name__ == '__main__':
             'write_to_template':
             '__version__ = "{version}"\n',
         },
-        version='1.4.1',
+        version='1.4.2',
         author=find_meta('author'),
         author_email=find_meta('email'),
         maintainer=find_meta('author'),
@@ -65,7 +80,8 @@ if __name__ == '__main__':
         python_requires='>=3.9',
         package_dir={'': 'src'},
         include_package_data=True,
-        install_requires=INSTALL_REQUIRES,
+        install_requires=load_requires_from_file("requirements.txt"),
+        dependency_links=load_links_from_file("requirements.txt"),
         classifiers=CLASSIFIERS,
         zip_safe=False,
         options={'bdist_wheel': {
