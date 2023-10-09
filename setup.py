@@ -33,9 +33,9 @@ def find_meta(meta, meta_file=read(META_PATH)):
     raise RuntimeError('Unable to find __{meta}__ string.'.format(meta=meta))
 
 
-#def read_requirements():
-#    with open('requirements.txt', 'r') as file:
-#        return file.readlines()
+def read_requirements():
+    with open('requirements.txt', 'r') as file:
+        return file.readlines()
 
 
 
@@ -63,7 +63,7 @@ if __name__ == '__main__':
         python_requires='>=3.9',
         package_dir={'': 'src'},
         include_package_data=True,
-        install_requires=[],
+        install_requires=read_requirements(),
         classifiers=CLASSIFIERS,
         zip_safe=False,
         options={'bdist_wheel': {
