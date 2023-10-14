@@ -119,13 +119,14 @@ class MdbExomol(CapiMdbExomol):
         # Get cache files to load :
         mgr = self.get_datafile_manager()
         local_files = [mgr.cache_file(f) for f in self.trans_file]
+
         # data frame instance:
         df = self.load(
             local_files,
-            columns=[k for k in self.__dict__ if k not in ["logsij0"]],
-            lower_bound=([("Sij0", 0.0)]),
+            #columns=[k for k in self.__dict__ if k not in ["logsij0"]],
+            #lower_bound=([("Sij0", 0.0)]),
             output="vaex")
-
+        
         self.df_load_mask = self.compute_load_mask(df)
 
         if self.activation:
@@ -177,13 +178,81 @@ class MdbExomol(CapiMdbExomol):
             mask = self.df_load_mask
 
         self.instances_from_dataframes(df[mask])
-        self.compute_broadening(self.jlower.astype(int), self.jupper.astype(int))
+        try: #old radis <=0.14
+            self.compute_broadening(self.jlower.astype(int), self.jupper.astype(int))
+        except:
+            self.set_broadening_coef(df[mask],add_columns=False)
+            
         self.gamma_natural = gn(self.A)
         if self.gpu_transfer:
             self.generate_jnp_arrays()
 
-    def compute_load_mask(self, df):
+    def compute_broadening_(
+        self, jlower, jupper, alpha_ref_def=None, n_Texp_def=None, output=None
+    ):
+        """computing broadening parameters
 
+        Parameters
+        ----------
+        jlower: jlower array
+        jupper: jupper array
+        alpha_ref: set default alpha_ref and apply it. None=use self.alpha_ref_def
+        n_Texp_def: set default n_Texp and apply it. None=use self.n_Texp_def
+
+        Returns
+        -------
+        None. Store values in self.n_Texp and self.alpha_ref.
+
+        """
+        if alpha_ref_def:
+            self.alpha_ref_def = alpha_ref_def
+        if n_Texp_def:
+            self.n_Texp_def = n_Texp_def
+
+        if self.broadf:
+            try:
+                print(".broad is used.")
+                bdat = read_broad(self.broad_file)
+                codelv = check_bdat(bdat)
+                print("Broadening code level=", codelv)
+                if codelv == "a0":
+                    j2alpha_ref, j2n_Texp = make_j2b(
+                        bdat,
+                        alpha_ref_default=self.alpha_ref_def,
+                        n_Texp_default=self.n_Texp_def,
+                        jlower_max=np.max(jlower),
+                    )
+                    self.alpha_ref = np.array(j2alpha_ref[jlower])
+                    self.n_Texp = np.array(j2n_Texp[jlower])
+                elif codelv == "a1":
+                    j2alpha_ref, j2n_Texp = make_j2b(
+                        bdat,
+                        alpha_ref_default=self.alpha_ref_def,
+                        n_Texp_default=self.n_Texp_def,
+                        jlower_max=np.max(jlower),
+                    )
+                    jj2alpha_ref, jj2n_Texp = make_jj2b(
+                        bdat,
+                        j2alpha_ref_def=j2alpha_ref,
+                        j2n_Texp_def=j2n_Texp,
+                        jupper_max=np.max(jupper),
+                    )
+                    self.alpha_ref = np.array(jj2alpha_ref[jlower, jupper])
+                    self.n_Texp = np.array(jj2n_Texp[jlower, jupper])
+            except FileNotFoundError:
+                print(
+                    "Warning: Cannot load .broad. The default broadening parameters are used."
+                )
+                self.alpha_ref = np.array(self.alpha_ref_def * np.ones_like(jlower))
+                self.n_Texp = np.array(self.n_Texp_def * np.ones_like(jlower))
+
+        else:
+            print("The default broadening parameters are used.")
+            self.alpha_ref = np.array(self.alpha_ref_def * np.ones_like(jlower))
+            self.n_Texp = np.array(self.n_Texp_def * np.ones_like(jlower))
+
+
+    def compute_load_mask(self, df):
         #wavelength
         mask = (df.nu_lines > self.nurange[0]) \
                     * (df.nu_lines < self.nurange[1])
