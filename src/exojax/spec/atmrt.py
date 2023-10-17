@@ -12,11 +12,13 @@ from exojax.spec.rtransfer import rtrun_emis_pureabs_ibased_linsap
 from exojax.spec.rtransfer import rtrun_emis_pureabs_fbased2st
 from exojax.spec.rtransfer import rtrun_emis_pureabs_ibased
 from exojax.spec.rtransfer import rtrun_emis_scat_lart_toonhm
-from exojax.spec.rtransfer import rtrun_trans_pureabs
+from exojax.spec.rtransfer import rtrun_trans_pureabs_trapezoid
+from exojax.spec.rtransfer import rtrun_trans_pureabs_simpson
 from exojax.spec.layeropacity import layer_optical_depth
 from exojax.atm.atmprof import atmprof_gray, atmprof_Guillot, atmprof_powerlow
 from exojax.atm.idealgas import number_density
 from exojax.atm.atmprof import normalized_layer_height
+from exojax.spec.opachord import chord_geometric_matrix_lower
 from exojax.spec.opachord import chord_geometric_matrix
 from exojax.spec.opachord import chord_optical_depth
 from exojax.utils.constants import logkB, logm_ucgs
@@ -26,7 +28,6 @@ import warnings
 class ArtCommon():
     """Common Atmospheric Radiative Transfer
     """
-
     def __init__(self, pressure_top, pressure_btm, nlayer, nu_grid=None):
         """initialization of art
 
@@ -71,24 +72,21 @@ class ArtCommon():
         Returns:
             1D array: height normalized by radius_btm (Nlayer)
             1D array: layer radius r_n normalized by radius_btm (Nlayer)
-            1D array: radius at lower boundary normalized by radius_btm (Nlayer)
-
+            
         Notes:
             Our definitions of the radius_lower, radius_layer, and height are as follows:
             n=0,1,...,N-1
             radius_lower[N-1] = radius_btm (i.e. R0)
             radius_lower[n-1] = radius_lower[n] + height[n]
-            radius_layer[n] =  radius_lower[n] + height[n]/2
             "normalized" means physical length divided by radius_btm
 
 
         """
-        print("k=", self.k)
+        print("pressure decrease rate k=", self.pressure_decrease_rate)
         normalized_height, normalized_radius_lower = normalized_layer_height(
-            temperature, self.k, mean_molecular_weight, radius_btm,
-            gravity_btm)
-        normalized_radius_layer = normalized_radius_lower + 0.5 * normalized_height
-        return normalized_height, normalized_radius_layer, normalized_radius_lower
+            temperature, self.pressure_decrease_rate, mean_molecular_weight,
+            radius_btm, gravity_btm)
+        return normalized_height, normalized_radius_lower
 
     def constant_gravity_profile(self, value):
         return value * np.array([np.ones_like(self.pressure)]).T
@@ -106,8 +104,9 @@ class ArtCommon():
         Returns:
             2D array: gravity in cm2/s (Nlayer, 1), suitable for the input of opacity_profile_lines
         """
-        _, normalized_radius_layer, _ = self.atmosphere_height(
+        normalized_height, normalized_radius_lower = self.atmosphere_height(
             temperature, mean_molecular_weight, radius_btm, gravity_btm)
+        normalized_radius_layer = normalized_radius_lower + 0.5 * normalized_height
         return jnp.array([gravity_btm / normalized_radius_layer]).T
 
     def constant_mmr_profile(self, value):
@@ -151,7 +150,7 @@ class ArtCommon():
         from exojax.atm.atmprof import pressure_layer_logspace
         from exojax.atm.atmprof import pressure_boundary_logspace
 
-        self.pressure, self.dParr, self.k = pressure_layer_logspace(
+        self.pressure, self.dParr, self.pressure_decrease_rate = pressure_layer_logspace(
             log_pressure_top=self.log_pressure_top,
             log_pressure_btm=self.log_pressure_btm,
             nlayer=self.nlayer,
@@ -159,7 +158,7 @@ class ArtCommon():
             reference_point=0.5,
             numpy=True)
         self.pressure_boundary = pressure_boundary_logspace(
-            self.pressure, self.k, reference_point=0.5)
+            self.pressure, self.pressure_decrease_rate, reference_point=0.5)
 
     def change_temperature_range(self, Tlow, Thigh):
         """temperature range to be assumed.
@@ -247,8 +246,8 @@ class ArtCommon():
         Returns:
             array: layer boundary temperature profile (Nlayer + 1)
         """
-        return self.clip_temperature(atmprof_powerlow(self.pressure_boundary, T0,
-                                                      alpha))
+        return self.clip_temperature(
+            atmprof_powerlow(self.pressure_boundary, T0, alpha))
 
 
 class ArtEmisScat(ArtCommon):
@@ -258,7 +257,6 @@ class ArtEmisScat(ArtCommon):
         pressure_layer: pressure profile in bar
 
     """
-
     def __init__(self,
                  pressure_top=1.e-8,
                  pressure_btm=1.e2,
@@ -322,7 +320,6 @@ class ArtEmisPure(ArtCommon):
         pressure_layer: pressure profile in bar
 
     """
-
     def __init__(
         self,
         pressure_top=1.e-8,
@@ -417,13 +414,57 @@ class ArtEmisPure(ArtCommon):
 
 
 class ArtTransPure(ArtCommon):
-    def __init__(self, pressure_top=1.e-8, pressure_btm=1.e2, nlayer=100):
+    def __init__(self,
+                 pressure_top=1.e-8,
+                 pressure_btm=1.e2,
+                 nlayer=100,
+                 integration="simpson"):
         """initialization of ArtTransPure
 
 
         """
         super().__init__(pressure_top, pressure_btm, nlayer, nu_grid=None)
         self.method = "transmission_with_pure_absorption"
+        self.set_capable_integration()
+        self.set_integration_scheme(integration)
+
+
+#rtrun_trans_pureabs_simpson(dtau_chord_modpoint, dtau_chord_lower,
+#                                radius_midpoint, radius_lower, height)
+
+    def set_capable_integration(self):
+        self.integration_dict = {
+            "trapezoid": rtrun_trans_pureabs_trapezoid,
+            "simpson": rtrun_trans_pureabs_simpson
+        }
+
+        self.valid_integration = list(self.integration_dict.keys())
+
+        self.integration_explanation = {
+            "trapezoid":
+            "Trapezoid integration, uses the chord optical depth at the lower boundary of the layers only",
+            "simpson":
+            "Simpson integration, uses the chord optical depth at the lower boundary and midppoint of the layers.",
+        }
+
+    def set_integration_scheme(self, integration):
+        """sets and validates integration
+
+        Args:
+            integration (str): integration
+
+        """
+
+        if integration in self.valid_integration:
+            self.integration = integration
+            print("integration: ", self.integration)
+            print(self.integration_explanation[self.integration])
+        else:
+            str_valid_integration = ", ".join(
+                self.valid_integration[:-1]
+            ) + f", or {self.valid_integration[-1]}"
+            raise ValueError("Unknown integration (scheme). Use " +
+                             str_valid_integration)
 
     def run(self, dtau, temperature, mean_molecular_weight, radius_btm,
             gravity_btm):
@@ -446,9 +487,20 @@ class ArtTransPure(ArtCommon):
 
         """
 
-        normalized_height, _, normalized_radius_lower = self.atmosphere_height(
+        normalized_height, normalized_radius_lower = self.atmosphere_height(
             temperature, mean_molecular_weight, radius_btm, gravity_btm)
-        cgm = chord_geometric_matrix(normalized_height,
-                                     normalized_radius_lower)
-        tauchord = chord_optical_depth(cgm, dtau)
-        return rtrun_trans_pureabs(tauchord, normalized_radius_lower)
+        normalized_radius_top = normalized_radius_lower[0] + normalized_height[
+            0]
+        cgm = chord_geometric_matrix_lower(normalized_height,
+                                           normalized_radius_lower)
+        dtau_chord_lower = chord_optical_depth(cgm, dtau)
+        func = self.integration_dict[self.integration]
+        if self.integration == "trapezoid":
+            return func(dtau_chord_lower, normalized_radius_lower,
+                        normalized_radius_top)
+        elif self.integration == "simpson":
+            cgm_midpoint = chord_geometric_matrix(normalized_height,
+                                                  normalized_radius_lower)
+            dtau_chord_midpoint = chord_optical_depth(cgm_midpoint, dtau)
+            return func(dtau_chord_midpoint, dtau_chord_lower,
+                        normalized_radius_lower, normalized_height)
