@@ -16,7 +16,7 @@ def test_ArtEmisScat_LART_gives_consistent_results_with_pure_absorption(db, diff
                       pressure_btm=1.e1,
                       nlayer=200,
                       nu_grid=nu_grid,
-                      rtsolver="toon_hemispheric_mean")
+                      rtsolver="lart_toon_hemispheric_mean")
     art.change_temperature_range(400.0, 1500.0)
     Tarr = art.powerlaw_temperature(1300.0, 0.1)
     mmr_arr = art.constant_mmr_profile(0.01)

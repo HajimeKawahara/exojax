@@ -35,8 +35,8 @@ def test_atmoshperic_height_for_isothermal_with_analytic():
     gravity_btm = 2478.57730044555
     radius_btm = 7149200000.0
     mmw = mu_fid * np.ones_like(art.pressure)
-
-    _, normalized_radius_layer, normalized_radius_lower = art.atmosphere_height(
+    
+    normalized_height, normalized_radius_lower = art.atmosphere_height(
         Tarr, mmw, radius_btm, gravity_btm)
 
     #theoretical value

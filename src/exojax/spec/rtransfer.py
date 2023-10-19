@@ -8,9 +8,16 @@
     -- scattering
     --- 2stream
     ---- LART: rtrun_emis_scat_lart_toonhm
-    - intensity-based emission
-    - transmision: rtrun_trans_pureabs
+    ---- flux-adding: not yet
 
+    - intensity-based emission
+    -- pure absorption 
+    --- isothermal: rtrun_emis_pureabs_ibased
+    --- linear source approximation: rtrun_emis_pureabs_ibased_linsap
+
+    - transmision: 
+    -- trapezoid integration: rtrun_trans_pureabs_trapezoid
+    -- simpson integration: rtrun_trans_pureabs_simpson
 
 
 
@@ -18,7 +25,7 @@
 from jax import jit
 import jax.numpy as jnp
 from jax.lax import scan
-# from exojax.spec.twostream import solve_lart_twostream_numpy
+#from exojax.spec.twostream import solve_lart_twostream_numpy
 from exojax.spec.twostream import solve_lart_twostream
 from exojax.spec.twostream import solve_fluxadding_twostream_forloop
 from exojax.spec.toon import reduced_source_function_isothermal_layer
@@ -31,6 +38,7 @@ from exojax.spec.layeropacity import layer_optical_depth
 from exojax.spec.layeropacity import layer_optical_depth_CIA
 from exojax.spec.layeropacity import layer_optical_depth_Hminus
 from exojax.spec.layeropacity import layer_optical_depth_VALD
+from exojax.signal.integrate import simpson
 import warnings
 
 
@@ -214,15 +222,13 @@ def coeffs_linsap(dtau_per_mu, trans):
 
 
 @jit
-def rtrun_trans_pureabs(dtau_chord, radius_lower):
-    """Radiative transfer for transmission spectrum assuming pure absorption 
+def rtrun_trans_pureabs_trapezoid(dtau_chord, radius_lower, radius_top):
+    """Radiative transfer for transmission spectrum assuming pure absorption with the trapezoid integration (jnp.trapz)
 
     Args:
-        dtau_chord (2D array): chord opacity (Nlayer, N_wavenumber)
-        radius_lower (1D array): (normalized) radius at the lower boundary, underline(r) (Nlayer). 
-
-    Notes:
-        The n-th radius is defined as the lower boundary of the n-th layer. So, radius[0] corresponds to R0.   
+        dtau_chord (2D array): chord optical depth (Nlayer, N_wavenumber)
+        radius_lower (1D array): (normalized) radius at the lower boundary, underline(r) (Nlayer). R0 = radius_lower[-1] corresponds to the most bottom of the layers.
+        radius_top (float): (normalized) radius at the ToA, i.e. the radius at the most top of the layers
 
     Returns:
         1D array: transit squared radius normalized by radius_lower[-1], i.e. it returns (radius/radius_lower[-1])**2
@@ -231,12 +237,55 @@ def rtrun_trans_pureabs(dtau_chord, radius_lower):
         This function gives the sqaure of the transit radius.
         If you would like to obtain the transit radius, take sqaure root of the output.
         If you would like to compute the transit depth, devide the output by the square of stellar radius
+        
+    Notes:
+        We need the edge correction because the trapezoid integration with radius_lower lacks the edge point integration.
+        i.e. the integration of the 0-th layer from radius_lower[0] to radius_top.
+        We assume tau = 0 at the radius_top. then, the edge correction should be (1-T_0)*(delta r_0), but usually negligible though.
 
     """
+    dr = radius_top - radius_lower[0]
+    edge_cor = (1.0 - jnp.exp(-dtau_chord[0, :])) * radius_top * dr
+
+    #the negative sign is because the radius_lower is in a descending order
     deltaRp2 = -2.0 * jnp.trapz(
         (1.0 - jnp.exp(-dtau_chord)) * radius_lower[:, None],
         x=radius_lower,
-        axis=0)
+        axis=0) + edge_cor
+    return deltaRp2 + radius_lower[-1]**2
+
+
+@jit
+def rtrun_trans_pureabs_simpson(dtau_chord_modpoint, dtau_chord_lower,
+                                radius_lower, height):
+    """Radiative transfer for transmission spectrum assuming pure absorption with the Simpson integration (signals.integration.simpson)
+
+    Args:
+        dtau_chord_midpoint (2D array): chord opatical depth at the midpoint (Nlayer, N_wavenumber)
+        dtau_chord_lower (2D array): chord opatical depth at the lower boundary (Nlayer, N_wavenumber)
+        radius_lower (1D array): (normalized) radius at the lower boundary, underline(r) (Nlayer). R0 = radius_lower[-1] corresponds to the most bottom of the layers.
+        height (1D array): (normalized) height of the layers
+
+    Returns:
+        1D array: transit squared radius normalized by radius_lower[-1], i.e. it returns (radius/radius_lower[-1])**2
+
+    Notes:
+        This function gives the sqaure of the transit radius.
+        If you would like to obtain the transit radius, take sqaure root of the output.
+        If you would like to compute the transit depth, devide the output by the square of stellar radius
+        
+    Notes:
+        We need the edge correction because the trapezoid integration with radius_lower lacks the edge point integration.
+        i.e. the integration of the 0-th layer from radius_lower[0] to radius_top.
+        We assume tau = 0 at the radius_top. then, the edge correction should be (1-T_0)*(delta r_0), but usually negligible though.
+
+    """
+    radius_midpoint = radius_lower + 0.5 * height
+    _, Nnus = jnp.shape(dtau_chord_modpoint)
+    f = 2.0 * (1.0 - jnp.exp(-dtau_chord_modpoint)) * radius_midpoint[:, None]
+    f_lower = 2.0 * (1.0 - jnp.exp(-dtau_chord_lower)) * radius_lower[:, None]
+    f_top = jnp.zeros(Nnus)
+    deltaRp2 = simpson(f, f_lower, f_top, height)
     return deltaRp2 + radius_lower[-1]**2
 
 
@@ -254,16 +303,17 @@ def rtrun_emis_scat_lart_toonhm(dtau, single_scattering_albedo,
     Returns:
         _type_: _description_
     """
-    trans_coeff, scat_coeff, piB, diagonal, lower_diagonal, upper_diagonal, vector = setrt_toonhm(
+    trans_coeff, scat_coeff, reduced_piB, zeta_plus, zeta_minus, lambdan = setrt_toonhm(
         dtau, single_scattering_albedo, asymmetric_parameter, source_matrix)
 
+    diagonal, lower_diagonal, upper_diagonal, vector = settridiag_toohm(dtau, zeta_plus, zeta_minus, lambdan, trans_coeff, scat_coeff, reduced_piB)
     nlayer, Nnus = diagonal.shape
     cumTtilde, Qtilde, spectrum = solve_lart_twostream(diagonal,
                                                        lower_diagonal,
                                                        upper_diagonal, vector,
                                                        jnp.zeros(Nnus))
 
-    return spectrum, cumTtilde, Qtilde, trans_coeff, scat_coeff, piB
+    return spectrum, cumTtilde, Qtilde, trans_coeff, scat_coeff, reduced_piB
 
 
 @jit
@@ -344,7 +394,7 @@ def setrt_toonhm(dtau, single_scattering_albedo, asymmetric_parameter,
     return trans_coeff, scat_coeff, reduced_piB, zeta_plus, zeta_minus, lambdan
 
 
-def settridiag_toohm(dtau, zeta_plus, zeta_minus, lambdan, trans_coeff, scat_coeff, piB):
+def settridiag_toohm(dtau, zeta_plus, zeta_minus, lambdan, trans_coeff, scat_coeff, reduced_piB):
     diagonal_top = 1.0 * jnp.ones_like(trans_coeff[0, :])  # setting b0=1
     upper_diagonal_top = trans_coeff[0, :]
 
@@ -356,11 +406,11 @@ def settridiag_toohm(dtau, zeta_plus, zeta_minus, lambdan, trans_coeff, scat_coe
     denom = zeta_plus0**2 - (zeta_minus0 * trans_func0)**2
     omtrans = 1.0 - trans_func0
     fac = (zeta_plus0 * omtrans - zeta_minus0 * trans_func0 * omtrans)
-    vector_top = (zeta_plus0**2 - zeta_minus0**2) / denom * fac * piB[0, :]
+    vector_top = (zeta_plus0**2 - zeta_minus0**2) / denom * fac * reduced_piB[0, :]
 
     # tridiagonal elements
     diagonal, lower_diagonal, upper_diagonal, vector = compute_tridiag_diagonals_and_vector(
-        scat_coeff, trans_coeff, piB, upper_diagonal_top, diagonal_top,
+        scat_coeff, trans_coeff, reduced_piB, upper_diagonal_top, diagonal_top,
         vector_top)
 
     return diagonal, lower_diagonal, upper_diagonal, vector
