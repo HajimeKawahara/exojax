@@ -12,6 +12,8 @@ from exojax.spec.rtransfer import rtrun_emis_pureabs_ibased_linsap
 from exojax.spec.rtransfer import rtrun_emis_pureabs_fbased2st
 from exojax.spec.rtransfer import rtrun_emis_pureabs_ibased
 from exojax.spec.rtransfer import rtrun_emis_scat_lart_toonhm
+from exojax.spec.rtransfer import rtrun_emis_scat_fluxadding_toonhm
+
 from exojax.spec.rtransfer import rtrun_trans_pureabs
 from exojax.spec.layeropacity import layer_optical_depth
 from exojax.atm.atmprof import atmprof_gray, atmprof_Guillot, atmprof_powerlow
@@ -264,7 +266,7 @@ class ArtEmisScat(ArtCommon):
                  pressure_btm=1.e2,
                  nlayer=100,
                  nu_grid=None,
-                 rtsolver="toon_hemispheric_mean"):
+                 rtsolver="lart_toon_hemispheric_mean"):
         """initialization of ArtEmisPure
 
         Args:
@@ -301,7 +303,7 @@ class ArtEmisScat(ArtCommon):
         else:
             raise ValueError("the wavenumber grid is not given.")
 
-        if self.rtsolver == "toon_hemispheric_mean":
+        if self.rtsolver == "lart_toon_hemispheric_mean":
 
             spectrum, cumTtilde, Qtilde, trans_coeff, scat_coeff, piB = rtrun_emis_scat_lart_toonhm(
                 dtau, single_scattering_albedo, asymmetric_parameter, sourcef)
@@ -309,11 +311,15 @@ class ArtEmisScat(ArtCommon):
                 from exojax.plot.rtplot import comparison_with_pure_absorption
                 comparison_with_pure_absorption(cumTtilde, Qtilde, spectrum,
                                                 trans_coeff, scat_coeff, piB)
+        elif self.rtsolver == "fluxadding_toon_hemispheric_mean":
 
-            return spectrum
+
         else:
             raise ValueError("Unknown radiative transfer solver (rtsolver).")
-
+    
+        return spectrum
+        
+        
 
 class ArtEmisPure(ArtCommon):
     """Atmospheric RT for emission w/ pure absorption

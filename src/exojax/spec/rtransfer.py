@@ -18,9 +18,9 @@
 from jax import jit
 import jax.numpy as jnp
 from jax.lax import scan
-from exojax.spec.twostream import solve_lart_twostream_numpy
+# from exojax.spec.twostream import solve_lart_twostream_numpy
 from exojax.spec.twostream import solve_lart_twostream
-
+from exojax.spec.twostream import solve_fluxadding_twostream_numpy
 from exojax.spec.toon import reduced_source_function_isothermal_layer
 from exojax.spec.toon import params_hemispheric_mean
 from exojax.spec.toon import zetalambda_coeffs
@@ -97,7 +97,7 @@ def rtrun_emis_pureabs_ibased(dtau, source_matrix, mus, weights):
         source_matrix (2D array): source matrix (N_layer, N_nus)
         mus (list): mu (cos theta) list for integration
         weights (list): weight list for mu
-        
+
     Returns:
         flux in the unit of [erg/cm2/s/cm-1] if using piBarr as a source function.
     """
@@ -105,13 +105,13 @@ def rtrun_emis_pureabs_ibased(dtau, source_matrix, mus, weights):
     Nnus = jnp.shape(dtau)[1]
     tau = jnp.cumsum(dtau, axis=0)
 
-    #The following scan part is equivalent to this for-loop
-    #spec = jnp.zeros(Nnus)
-    #for i, mu in enumerate(mus):
+    # The following scan part is equivalent to this for-loop
+    # spec = jnp.zeros(Nnus)
+    # for i, mu in enumerate(mus):
     #    dtrans = - jnp.diff(jnp.exp(-tau/mu), prepend=1.0, axis=0)
     #    spec = spec + weights[i]*2.0*mu*jnp.sum(source_matrix*dtrans, axis=0)
 
-    #scan part
+    # scan part
     muws = [mus, weights]
 
     def f(carry_fmu, muw):
@@ -134,7 +134,7 @@ def initialize_gaussian_quadrature(nstream):
         raise ValueError("nstream should be even number larger than 2.")
     mus, weights = roots_legendre(norder)
 
-    #correction because integration should be between 0 to 1, but roots_legendre uses -1 to 1.
+    # correction because integration should be between 0 to 1, but roots_legendre uses -1 to 1.
     mus = 0.5 * (mus + 1.0)
     weights = 0.5 * weights
     print("Gaussian Quadrature Parameters: ")
@@ -154,14 +154,14 @@ def rtrun_emis_pureabs_ibased_linsap(dtau, source_matrix_boundary, mus,
         source_matrix_booundary (2D array): source matrix at the layer upper boundary (N_layer + 1, N_nus)
         mus (list): mu (cos theta) list for integration
         weights (list): weight list for mu
-        
+
     Returns:
         flux in the unit of [erg/cm2/s/cm-1] if using piBarr as a source function.
 
     Notes:
         See Olson and Kunasz as well as HELIOS-R2 paper (Kitzmann+) for the derivation.
-    
-    
+
+
     """
 
     Nnus = jnp.shape(dtau)[1]
@@ -172,7 +172,7 @@ def rtrun_emis_pureabs_ibased_linsap(dtau, source_matrix_boundary, mus,
     # need to replace the last element of the above
     #
 
-    #scan part
+    # scan part
     muws = [mus, weights]
 
     def f(carry_fmu, muw):
@@ -181,7 +181,7 @@ def rtrun_emis_pureabs_ibased_linsap(dtau, source_matrix_boundary, mus,
         trans = jnp.exp(-dtau_per_mu)  # hat{T}
         beta, gamma = coeffs_linsap(dtau_per_mu, trans)
 
-        #adds coeffs at the bottom of the layers
+        # adds coeffs at the bottom of the layers
         beta = jnp.vstack([beta, jnp.ones(Nnus)])
         gamma = jnp.vstack([gamma, jnp.zeros(Nnus)])
 
@@ -250,7 +250,7 @@ def rtrun_emis_scat_lart_toonhm(dtau, single_scattering_albedo,
         single_scattering_albedo (_type_): _description_
         asymmetric_parameter (_type_): _description_
         source_matrix (_type_): _description_
-        
+
     Returns:
         _type_: _description_
     """
@@ -282,10 +282,11 @@ def rtrun_emis_scat_lart_toonhm_surface(dtau, single_scattering_albedo,
     Returns:
         _type_: _description_
     """
-    trans_coeff, scat_coeff, piB, diagonal, lower_diagonal, upper_diagonal, vector = setrt_toonhm(
+    trans_coeff, scat_coeff, piB, zeta_plus, zeta_minus, lambdan = setrt_toonhm(
         dtau, single_scattering_albedo, asymmetric_parameter, source_matrix)
+    diagonal, lower_diagonal, upper_diagonal, vector = settridiag_toohm(
+        dtau, zeta_plus, zeta_minus, lambdan, trans_coeff, scat_coeff, piB)
 
-    nlayer, Nnus = diagonal.shape
     cumTtilde, Qtilde, spectrum = solve_lart_twostream(diagonal,
                                                        lower_diagonal,
                                                        upper_diagonal, vector,
@@ -293,10 +294,33 @@ def rtrun_emis_scat_lart_toonhm_surface(dtau, single_scattering_albedo,
 
     return spectrum, cumTtilde, Qtilde, trans_coeff, scat_coeff, piB
 
+# @jit
+def rtrun_emis_scat_fluxadding_toonhm(dtau, single_scattering_albedo,
+                                      asymmetric_parameter, source_matrix, source_surface, reflectivity_surface):
+    """Radiative Transfer for emission spectrum using flux-based two-stream scattering the flux adding solver w/ Toon Hemispheric Mean with surface.
+
+    Args:
+        dtau (_type_): _description_
+        single_scattering_albedo (_type_): _description_
+        asymmetric_parameter (_type_): _description_
+        source_matrix (_type_): _description_
+        source_surface: source from the surface (N_nus)
+        reflectivity_surface: reflectivity from the surface (N_nus)
+
+    Returns:
+        _type_: _description_
+    """
+    trans_coeff, scat_coeff, reduced_piB, zeta_plus, zeta_minus, lambdan = setrt_toonhm(
+        dtau, single_scattering_albedo, asymmetric_parameter, source_matrix)
+
+    spectrum = solve_fluxadding_twostream_numpy(
+        trans_coeff, scat_coeff, reduced_piB, reflectivity_surface, source_surface)
+    return spectrum
+
 
 def setrt_toonhm(dtau, single_scattering_albedo, asymmetric_parameter,
                  source_matrix):
-    """sets rt for rtrun assming Toon Hemispheric Mean 
+    """sets some coefficients for rtrun assming Toon Hemispheric Mean 
 
     Args:
         dtau (_type_): _description_
@@ -313,10 +337,14 @@ def setrt_toonhm(dtau, single_scattering_albedo, asymmetric_parameter,
     trans_coeff, scat_coeff = set_scat_trans_coeffs(zeta_plus, zeta_minus,
                                                     lambdan, dtau)
 
-    piB = reduced_source_function_isothermal_layer(single_scattering_albedo,
-                                                   gamma_1, gamma_2,
-                                                   source_matrix)
-    # Boundary condition
+    reduced_piB = reduced_source_function_isothermal_layer(single_scattering_albedo,
+                                                           gamma_1, gamma_2,
+                                                           source_matrix)
+
+    return trans_coeff, scat_coeff, reduced_piB, zeta_plus, zeta_minus, lambdan
+
+
+def settridiag_toohm(dtau, zeta_plus, zeta_minus, lambdan, trans_coeff, scat_coeff, piB):
     diagonal_top = 1.0 * jnp.ones_like(trans_coeff[0, :])  # setting b0=1
     upper_diagonal_top = trans_coeff[0, :]
 
@@ -335,7 +363,7 @@ def setrt_toonhm(dtau, single_scattering_albedo, asymmetric_parameter,
         scat_coeff, trans_coeff, piB, upper_diagonal_top, diagonal_top,
         vector_top)
 
-    return trans_coeff, scat_coeff, piB, diagonal, lower_diagonal, upper_diagonal, vector
+    return diagonal, lower_diagonal, upper_diagonal, vector
 
 
 def manual_recover_tridiagonal(diagonal, lower_diagonal, upper_diagonal,
