@@ -1,7 +1,7 @@
 from exojax.spec.twostream import compute_tridiag_diagonals_and_vector
 from exojax.spec.twostream import solve_lart_twostream_numpy
 from exojax.spec.twostream import solve_lart_twostream
-from exojax.spec.twostream import solve_fluxadding_twostream_numpy
+from exojax.spec.twostream import solve_fluxadding_twostream_forloop
 
 
 import jax.numpy as jnp
@@ -14,19 +14,19 @@ def samples_fluxadding_flux2st():
     S = jnp.array(range(0, Nlayer)) + 1.
     T = (jnp.array(range(0, Nlayer)) + 1) * 2.
     piB = jnp.array([B, B, B]).T
-    scat_coeff = jnp.array([S, S, S]).T
-    trans_coeff = jnp.array([T, T, T]).T
+    scat_coeff = jnp.array([S, S, S]).T*0.1
+    trans_coeff = jnp.array([T, T, T]).T*0.1
     return piB, scat_coeff, trans_coeff
 
 
-def test_solve_fluxadding_twostream_numpy():
+def test_solve_fluxadding_twostream_forloop():
     piB, scat_coeff, trans_coeff = samples_fluxadding_flux2st()
     reduced_source_function = piB  # temp
     reflectivity_bottom = jnp.array([0.5, 0.5, 0.5])
     source_bottom = jnp.array([0.1, 0.1, 0.1])
-    F = solve_fluxadding_twostream_numpy(
-        trans_coeff, scat_coeff, reduced_source_function, reflectivity_bottom, source_bottom)
-    print(F)
+    incoming_flux = jnp.array([1.0,1.0,1.0])
+    F = solve_fluxadding_twostream_forloop(
+        trans_coeff, scat_coeff, reduced_source_function, reflectivity_bottom, source_bottom, incoming_flux)
     return
 
 
@@ -103,4 +103,4 @@ if __name__ == "__main__":
     # test_solve_lart_twostream_numpy()
     # test_solve_lart_twostream_by_comparing_with_numpy_version()
 
-    test_solve_fluxadding_twostream_numpy()
+    test_solve_fluxadding_twostream_forloop()

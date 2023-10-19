@@ -9,7 +9,7 @@ from exojax.spec.atmrt import ArtEmisScat
 
 @pytest.mark.parametrize("db, diffmode", [("exomol", 1), ("exomol", 2),
                                           ("hitemp", 1), ("hitemp", 2)])
-def test_ArtEmisScat_gives_consistent_results_with_pure_absorption(db, diffmode, fig=False):
+def test_ArtEmisScat_LART_gives_consistent_results_with_pure_absorption(db, diffmode, fig=False):
 
     nu_grid, wav, res = mock_wavenumber_grid()
     art = ArtEmisScat(pressure_top=1.e-5,
@@ -44,6 +44,8 @@ def test_ArtEmisScat_gives_consistent_results_with_pure_absorption(db, diffmode,
 
     return nu_grid, F0, F0
     
+    
+
 
 if __name__ == "__main__":
     config.update("jax_enable_x64", True)
@@ -51,7 +53,7 @@ if __name__ == "__main__":
     import matplotlib.pyplot as plt
     diffmode = 0
     #nus_hitemp, F0_hitemp, Fref_hitemp = test_rt("hitemp", diffmode)
-    nus, F0, Fref = test_ArtEmisScat_gives_consistent_results_with_pure_absorption("exomol", diffmode)  #
+    nus, F0, Fref = test_ArtEmisScat_LART_gives_consistent_results_with_pure_absorption("exomol", diffmode)  #
     
     fig = plt.figure()
     ax = fig.add_subplot(311)

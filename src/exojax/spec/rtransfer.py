@@ -20,7 +20,7 @@ import jax.numpy as jnp
 from jax.lax import scan
 # from exojax.spec.twostream import solve_lart_twostream_numpy
 from exojax.spec.twostream import solve_lart_twostream
-from exojax.spec.twostream import solve_fluxadding_twostream_numpy
+from exojax.spec.twostream import solve_fluxadding_twostream_forloop
 from exojax.spec.toon import reduced_source_function_isothermal_layer
 from exojax.spec.toon import params_hemispheric_mean
 from exojax.spec.toon import zetalambda_coeffs
@@ -313,7 +313,7 @@ def rtrun_emis_scat_fluxadding_toonhm(dtau, single_scattering_albedo,
     trans_coeff, scat_coeff, reduced_piB, zeta_plus, zeta_minus, lambdan = setrt_toonhm(
         dtau, single_scattering_albedo, asymmetric_parameter, source_matrix)
 
-    spectrum = solve_fluxadding_twostream_numpy(
+    spectrum = solve_fluxadding_twostream_forloop(
         trans_coeff, scat_coeff, reduced_piB, reflectivity_surface, source_surface)
     return spectrum
 

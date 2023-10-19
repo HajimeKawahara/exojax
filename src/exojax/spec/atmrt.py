@@ -312,7 +312,7 @@ class ArtEmisScat(ArtCommon):
                 comparison_with_pure_absorption(cumTtilde, Qtilde, spectrum,
                                                 trans_coeff, scat_coeff, piB)
         elif self.rtsolver == "fluxadding_toon_hemispheric_mean":
-
+            print("not yet implemented")
 
         else:
             raise ValueError("Unknown radiative transfer solver (rtsolver).")

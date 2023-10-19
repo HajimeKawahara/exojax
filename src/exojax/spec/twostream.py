@@ -7,7 +7,7 @@ from jax.lax import scan
 
 
 
-def solve_fluxadding_twostream_numpy(trans_coeff, scat_coeff, reduced_source_function, reflectivity_bottom, source_bottom):
+def solve_fluxadding_twostream_forloop(trans_coeff, scat_coeff, reduced_source_function, reflectivity_bottom, source_bottom, incoming_flux):
     """_summary_
 
     Args:
@@ -16,8 +16,8 @@ def solve_fluxadding_twostream_numpy(trans_coeff, scat_coeff, reduced_source_fun
         reduced_source_function :  pi \mathcal{B} (Nlayer, Nnus)
         reflectivity_bottom (_type_): R^+_N (Nnus)
         source_bottom (_type_): S^+_N (Nnus)
+        incoming_flux: F_star = F_0^- (Nnus)
     """
-    import numpy as np
     nlayer, _ = trans_coeff.shape
     pihatB = (1.0 - trans_coeff - scat_coeff)*reduced_source_function
 
@@ -33,8 +33,8 @@ def solve_fluxadding_twostream_numpy(trans_coeff, scat_coeff, reduced_source_fun
         Sphat = pihatB[i, :] + trans_coeff[i, :] * \
             (Sphat + pihatB[i, :]*Rphat) / denom
         Rphat = scat_coeff[i, :] + trans_coeff[i, :]**2 * Rphat/denom
-
-    return Sphat
+    print(Rphat)
+    return Rphat*incoming_flux + Sphat
 
 
 def solve_lart_twostream_numpy(diagonal, lower_diagonal, upper_diagonal,
