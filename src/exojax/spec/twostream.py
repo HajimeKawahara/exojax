@@ -33,7 +33,60 @@ def solve_fluxadding_twostream_forloop(trans_coeff, scat_coeff, reduced_source_f
         Sphat = pihatB[i, :] + trans_coeff[i, :] * \
             (Sphat + pihatB[i, :]*Rphat) / denom
         Rphat = scat_coeff[i, :] + trans_coeff[i, :]**2 * Rphat/denom
-    print(Rphat)
+    return Rphat*incoming_flux + Sphat
+
+
+def solve_fluxadding_twostream(trans_coeff, scat_coeff, reduced_source_function, reflectivity_bottom, source_bottom, incoming_flux):
+    """_summary_
+
+    Args:
+        trans_coeff (_type_): _description_
+        scat_coeff (_type_): _description_
+        reduced_source_function :  pi \mathcal{B} (Nlayer, Nnus)
+        reflectivity_bottom (_type_): R^+_N (Nnus)
+        source_bottom (_type_): S^+_N (Nnus)
+        incoming_flux: F_star = F_0^- (Nnus)
+    """
+    nlayer, _ = trans_coeff.shape
+    pihatB = (1.0 - trans_coeff - scat_coeff)*reduced_source_function
+
+    # bottom reflection
+    Rphat = scat_coeff[nlayer-1, :] + trans_coeff[nlayer-1, :]**2 * \
+        reflectivity_bottom/(1.0 - scat_coeff[nlayer-1, :]*reflectivity_bottom)
+    Sphat = pihatB[nlayer-1, :] + trans_coeff[nlayer-1, :] * \
+        (source_bottom + pihatB[nlayer-1, :]*reflectivity_bottom) / \
+        (1.0 - scat_coeff[nlayer-1, :]*reflectivity_bottom)
+
+    # arguments of the scanning function f:
+    # carry_i_1 = [That_{i-1}, Qhat_{i-1}]
+    # arr = [diagonal[1:nlayer], lower_diagonal[0:nlayer-1], upper_diagonal[1:nlayer], vector[1,nlayer]]
+
+    def f(carry_i_1, arr):
+        That_i_1, Qhat_i_1 = carry_i_1
+        diagonal_i, lower_diagonal_i_1, upper_diagonal_i, vector_i = arr
+        gamma = diagonal_i - lower_diagonal_i_1 * That_i_1
+        That_each = upper_diagonal_i / gamma
+        Qhat_each = (vector_i + lower_diagonal_i_1 * Qhat_i_1) / gamma
+        TQ = [That_each, Qhat_each]
+        return TQ, TQ
+
+    # top boundary
+    That0 = upper_diagonal[0, :] / diagonal[0, :]
+    Qhat0 = vector[0, :] / diagonal[0, :]
+
+    # main loop
+    arrin = [
+        diagonal[1:nlayer, :], lower_diagonal[0:nlayer - 1, :],
+        upper_diagonal[1:nlayer, :], vector[1:nlayer, :]
+    ]
+    _, stackedTQ = scan(f, [That0, Qhat0], arrin)
+    
+
+    for i in range(0, nlayer-1)[::-1]:  # nlayer - 1 ...
+        denom = 1.0 - scat_coeff[i, :]*Rphat
+        Sphat = pihatB[i, :] + trans_coeff[i, :] * \
+            (Sphat + pihatB[i, :]*Rphat) / denom
+        Rphat = scat_coeff[i, :] + trans_coeff[i, :]**2 * Rphat/denom
     return Rphat*incoming_flux + Sphat
 
 
