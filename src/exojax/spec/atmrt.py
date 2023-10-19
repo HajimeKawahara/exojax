@@ -29,6 +29,7 @@ import warnings
 class ArtCommon():
     """Common Atmospheric Radiative Transfer
     """
+
     def __init__(self, pressure_top, pressure_btm, nlayer, nu_grid=None):
         """initialization of art
 
@@ -73,7 +74,7 @@ class ArtCommon():
         Returns:
             1D array: height normalized by radius_btm (Nlayer)
             1D array: layer radius r_n normalized by radius_btm (Nlayer)
-            
+
         Notes:
             Our definitions of the radius_lower, radius_layer, and height are as follows:
             n=0,1,...,N-1
@@ -258,6 +259,7 @@ class ArtEmisScat(ArtCommon):
         pressure_layer: pressure profile in bar
 
     """
+
     def __init__(self,
                  pressure_top=1.e-8,
                  pressure_btm=1.e2,
@@ -309,15 +311,18 @@ class ArtEmisScat(ArtCommon):
                 comparison_with_pure_absorption(cumTtilde, Qtilde, spectrum,
                                                 trans_coeff, scat_coeff, piB)
         elif self.rtsolver == "fluxadding_toon_hemispheric_mean":
-            print("not yet implemented")
-
+            _, Nnus = dtau.shape
+            source_surface = jnp.zeros(Nnus)
+            reflectivity_surface = jnp.zeros(Nnus)
+            incoming_flux = jnp.zeros(Nnus)
+            spectrum = rtrun_emis_scat_fluxadding_toonhm(dtau, single_scattering_albedo,
+                                                         asymmetric_parameter, sourcef, source_surface, reflectivity_surface, incoming_flux)
         else:
-            print("rtsolver=",self.rtsolver)
+            print("rtsolver=", self.rtsolver)
             raise ValueError("Unknown radiative transfer solver (rtsolver).")
-    
+
         return spectrum
-        
-        
+
 
 class ArtEmisPure(ArtCommon):
     """Atmospheric RT for emission w/ pure absorption
@@ -326,6 +331,7 @@ class ArtEmisPure(ArtCommon):
         pressure_layer: pressure profile in bar
 
     """
+
     def __init__(
         self,
         pressure_top=1.e-8,
@@ -435,7 +441,7 @@ class ArtTransPure(ArtCommon):
         self.set_integration_scheme(integration)
 
 
-#rtrun_trans_pureabs_simpson(dtau_chord_modpoint, dtau_chord_lower,
+# rtrun_trans_pureabs_simpson(dtau_chord_modpoint, dtau_chord_lower,
 #                                radius_midpoint, radius_lower, height)
 
     def set_capable_integration(self):
