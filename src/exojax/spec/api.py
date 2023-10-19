@@ -185,6 +185,7 @@ class MdbExomol(CapiMdbExomol):
     def compute_load_mask(self, df):
 
         #wavelength
+        print(df)
         mask = (df.nu_lines > self.nurange[0]) \
                     * (df.nu_lines < self.nurange[1])
         QTtyp = np.array(self.QT_interp(self.Ttyp))
