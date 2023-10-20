@@ -70,12 +70,10 @@ def solve_fluxadding_twostream(trans_coeff, scat_coeff, reduced_source_function,
         TQ = [That_each, Qhat_each]
         return TQ, TQ
 
-    # top boundary
-    That0 = upper_diagonal[0, :] / diagonal[0, :]
-    Qhat0 = vector[0, :] / diagonal[0, :]
-
+    
     # main loop
     arrin = [
+        scat_coeff[:nlayer-1:-1]
         diagonal[1:nlayer, :], lower_diagonal[0:nlayer - 1, :],
         upper_diagonal[1:nlayer, :], vector[1:nlayer, :]
     ]
