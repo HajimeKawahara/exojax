@@ -7,7 +7,7 @@ from jax.lax import scan
 
 
 def solve_fluxadding_twostream_forloop(trans_coeff, scat_coeff, reduced_source_function, reflectivity_bottom, source_bottom, incoming_flux):
-    """_summary_
+    """Two-stream RT solver using flux adding (using for loop)
 
     Args:
         trans_coeff (_type_): _description_
@@ -36,7 +36,7 @@ def solve_fluxadding_twostream_forloop(trans_coeff, scat_coeff, reduced_source_f
 
 
 def solve_fluxadding_twostream(trans_coeff, scat_coeff, reduced_source_function, reflectivity_bottom, source_bottom, incoming_flux):
-    """_summary_
+    """Two-stream RT solver using flux adding
 
     Args:
         trans_coeff (_type_): _description_
@@ -66,7 +66,7 @@ def solve_fluxadding_twostream(trans_coeff, scat_coeff, reduced_source_function,
         Rphat_each = scat_coeff_i + trans_coeff_i**2 * Rphat_prev/denom
 
         RS = [Rphat_each, Sphat_each]
-        return RS, RS
+        return RS, 0
 
     # main loop
     arrin = [
