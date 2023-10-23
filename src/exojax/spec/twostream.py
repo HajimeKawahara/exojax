@@ -35,7 +35,7 @@ def solve_fluxadding_twostream_forloop(trans_coeff, scat_coeff, reduced_source_f
     return Rphat*incoming_flux + Sphat
 
 
-def solve_fluxadding_twostream(trans_coeff, scat_coeff, reduced_source_function, reflectivity_bottom, source_bottom, incoming_flux):
+def solve_fluxadding_twostream(trans_coeff, scat_coeff, reduced_source_function, reflectivity_bottom, source_bottom):
     """Two-stream RT solver using flux adding
 
     Args:
@@ -44,7 +44,9 @@ def solve_fluxadding_twostream(trans_coeff, scat_coeff, reduced_source_function,
         reduced_source_function :  pi \mathcal{B} (Nlayer, Nnus)
         reflectivity_bottom (_type_): R^+_N (Nnus)
         source_bottom (_type_): S^+_N (Nnus)
-        incoming_flux: F_star = F_0^- (Nnus)
+
+    Returns:
+        Effective reflectivity (hat(R^plus)), Effective source (hat(S^plus))
     """
     nlayer, _ = trans_coeff.shape
     pihatB = (1.0 - trans_coeff - scat_coeff)*reduced_source_function
@@ -75,8 +77,16 @@ def solve_fluxadding_twostream(trans_coeff, scat_coeff, reduced_source_function,
         pihatB[nlayer-2::-1]
     ]
     RS, _ = scan(f, [Rphat0, Sphat0], arrin)
-    Rphat, Sphat = RS
-    return Rphat*incoming_flux + Sphat
+    return RS
+
+#def outgoing_reflection_fluxadding_twostream(trans_coeff, scat_coeff, reduced_source_function, reflectivity_bottom, source_bottom, incoming_flux):
+#    Rphat, Sphat = solve_fluxadding_twostream(trans_coeff, scat_coeff, reduced_source_function, reflectivity_bottom, source_bottom, incoming_flux)
+#    return Rphat*incoming_flux + Sphat
+
+#def outgoing_emission_fluxadding_twostream(trans_coeff, scat_coeff, reduced_source_function, reflectivity_bottom, source_bottom):
+#    _, Sphat = solve_fluxadding_twostream(trans_coeff, scat_coeff, reduced_source_function, reflectivity_bottom, source_bottom)
+#    return Sphat
+
 
 
 def solve_lart_twostream_numpy(diagonal, lower_diagonal, upper_diagonal,

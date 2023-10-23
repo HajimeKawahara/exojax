@@ -345,7 +345,7 @@ def rtrun_emis_scat_lart_toonhm_surface(dtau, single_scattering_albedo,
 
     return spectrum, cumTtilde, Qtilde, trans_coeff, scat_coeff, piB
 
-# @jit
+@jit
 def rtrun_emis_scat_fluxadding_toonhm(dtau, single_scattering_albedo,
                                       asymmetric_parameter, source_matrix, source_surface, reflectivity_surface, incoming_flux):
     """Radiative Transfer for emission spectrum using flux-based two-stream scattering the flux adding solver w/ Toon Hemispheric Mean with surface.
@@ -367,8 +367,8 @@ def rtrun_emis_scat_fluxadding_toonhm(dtau, single_scattering_albedo,
 
     #spectrum = solve_fluxadding_twostream_forloop(
     #    trans_coeff, scat_coeff, reduced_piB, reflectivity_surface, source_surface, incoming_flux)
-    spectrum = solve_fluxadding_twostream(trans_coeff, scat_coeff, reduced_piB, reflectivity_surface, source_surface, incoming_flux)
-
+    _, spectrum = solve_fluxadding_twostream(trans_coeff, scat_coeff, reduced_piB, reflectivity_surface, source_surface)
+    
     return spectrum
 
 

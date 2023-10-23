@@ -252,6 +252,70 @@ class ArtCommon():
             atmprof_powerlow(self.pressure_boundary, T0, alpha))
 
 
+class ArtReflect(ArtCommon):
+    """Atmospheric RT for Reflected light
+
+    Attributes:
+        pressure_layer: pressure profile in bar
+
+    """
+
+    def __init__(self,
+                 pressure_top=1.e-8,
+                 pressure_btm=1.e2,
+                 nlayer=100,
+                 nu_grid=None,
+                 rtsolver="fluxadding_toon_hemispheric_mean"):
+        """initialization of ArtEmisPure
+
+        Args:
+            rtsolver (str): Radiative Transfer Solver, fluxadding_toon_hemispheric_mean
+
+
+        """
+        super().__init__(pressure_top, pressure_btm, nlayer, nu_grid)
+        self.rtsolver = rtsolver
+        self.method = "reflection_using_" + self.rtsolver
+
+    def run(self,
+            dtau,
+            single_scattering_albedo,
+            asymmetric_parameter,
+            temperature,
+            nu_grid=None,
+            show=False):
+        """run radiative transfer
+
+        Args:
+            dtau (2D array): optical depth matrix, dtau  (N_layer, N_nus)
+            temperature (1D array): temperature profile (Nlayer)
+            nu_grid (1D array): if nu_grid is not initialized, provide it. 
+            show: plot intermediate results
+
+        Returns:
+            _type_: _description_
+        """
+        if self.nu_grid is not None:
+            sourcef = piBarr(temperature, self.nu_grid)
+        elif nu_grid is not None:
+            sourcef = piBarr(temperature, nu_grid)
+        else:
+            raise ValueError("the wavenumber grid is not given.")
+
+        if self.rtsolver == "fluxadding_toon_hemispheric_mean":
+            _, Nnus = dtau.shape
+            source_surface = jnp.zeros(Nnus)
+            reflectivity_surface = jnp.zeros(Nnus)
+            incoming_flux = jnp.zeros(Nnus)
+            spectrum = rtrun_emis_scat_fluxadding_toonhm(dtau, single_scattering_albedo,
+                                                         asymmetric_parameter, sourcef, source_surface, reflectivity_surface, incoming_flux)
+        else:
+            print("rtsolver=", self.rtsolver)
+            raise ValueError("Unknown radiative transfer solver (rtsolver).")
+
+        return spectrum
+
+
 class ArtEmisScat(ArtCommon):
     """Atmospheric RT for emission w/ scattering
 
@@ -265,7 +329,7 @@ class ArtEmisScat(ArtCommon):
                  pressure_btm=1.e2,
                  nlayer=100,
                  nu_grid=None,
-                 rtsolver="lart_toon_hemispheric_mean"):
+                 rtsolver="fluxadding_toon_hemispheric_mean"):
         """initialization of ArtEmisPure
 
         Args:
