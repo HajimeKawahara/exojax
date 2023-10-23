@@ -13,6 +13,7 @@ from exojax.spec.rtransfer import rtrun_emis_pureabs_fbased2st
 from exojax.spec.rtransfer import rtrun_emis_pureabs_ibased
 from exojax.spec.rtransfer import rtrun_emis_scat_lart_toonhm
 from exojax.spec.rtransfer import rtrun_emis_scat_fluxadding_toonhm
+from exojax.spec.rtransfer import rtrun_reflect_fluxadding_toonhm
 from exojax.spec.rtransfer import rtrun_trans_pureabs_trapezoid
 from exojax.spec.rtransfer import rtrun_trans_pureabs_simpson
 from exojax.spec.layeropacity import layer_optical_depth
@@ -282,8 +283,10 @@ class ArtReflect(ArtCommon):
             single_scattering_albedo,
             asymmetric_parameter,
             temperature,
-            nu_grid=None,
-            show=False):
+            source_surface, 
+            reflectivity_surface, 
+            incoming_flux,
+            nu_grid=None):
         """run radiative transfer
 
         Args:
@@ -304,11 +307,8 @@ class ArtReflect(ArtCommon):
 
         if self.rtsolver == "fluxadding_toon_hemispheric_mean":
             _, Nnus = dtau.shape
-            source_surface = jnp.zeros(Nnus)
-            reflectivity_surface = jnp.zeros(Nnus)
-            incoming_flux = jnp.zeros(Nnus)
-            #spectrum = rtrun_emis_scat_fluxadding_toonhm(dtau, single_scattering_albedo,
-            #                                             asymmetric_parameter, sourcef, source_surface, reflectivity_surface)
+            spectrum = rtrun_reflect_fluxadding_toonhm(dtau, single_scattering_albedo,
+                                                         asymmetric_parameter, sourcef, source_surface, reflectivity_surface, incoming_flux)
         else:
             print("rtsolver=", self.rtsolver)
             raise ValueError("Unknown radiative transfer solver (rtsolver).")
@@ -367,7 +367,6 @@ class ArtEmisScat(ArtCommon):
             raise ValueError("the wavenumber grid is not given.")
 
         if self.rtsolver == "lart_toon_hemispheric_mean":
-
             spectrum, cumTtilde, Qtilde, trans_coeff, scat_coeff, piB = rtrun_emis_scat_lart_toonhm(
                 dtau, single_scattering_albedo, asymmetric_parameter, sourcef)
             if show:
@@ -375,11 +374,7 @@ class ArtEmisScat(ArtCommon):
                 comparison_with_pure_absorption(cumTtilde, Qtilde, spectrum,
                                                 trans_coeff, scat_coeff, piB)
         elif self.rtsolver == "fluxadding_toon_hemispheric_mean":
-            _, Nnus = dtau.shape
-            source_surface = jnp.zeros(Nnus)
-            reflectivity_surface = jnp.zeros(Nnus)
-            spectrum = rtrun_emis_scat_fluxadding_toonhm(dtau, single_scattering_albedo,
-                                                         asymmetric_parameter, sourcef, source_surface, reflectivity_surface)
+            spectrum = rtrun_emis_scat_fluxadding_toonhm(dtau, single_scattering_albedo, asymmetric_parameter, sourcef)
         else:
             print("rtsolver=", self.rtsolver)
             raise ValueError("Unknown radiative transfer solver (rtsolver).")

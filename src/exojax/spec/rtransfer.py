@@ -347,9 +347,9 @@ def rtrun_emis_scat_lart_toonhm_surface(dtau, single_scattering_albedo,
     return spectrum, cumTtilde, Qtilde, trans_coeff, scat_coeff, piB
 
 
-# @jit
-# def rtrun_emis_scat_fluxadding_toonhm(dtau, single_scattering_albedo,
-#                                      asymmetric_parameter, source_matrix, source_surface, reflectivity_surface, incoming_flux):
+@jit
+def rtrun_reflect_fluxadding_toonhm(dtau, single_scattering_albedo,
+                                    asymmetric_parameter, source_matrix, source_surface, reflectivity_surface, incoming_flux):
     """
     Toon Hemispheric Mean with surface.
 
@@ -360,15 +360,21 @@ def rtrun_emis_scat_lart_toonhm_surface(dtau, single_scattering_albedo,
         source_matrix (_type_): _description_
         source_surface: source from the surface (N_nus)
         reflectivity_surface: reflectivity from the surface (N_nus)
-        
+        incoming flux: incoming flux F_0^- (N_nus)
+
     Returns:
         _type_: _description_
     """
+    trans_coeff, scat_coeff, reduced_piB, zeta_plus, zeta_minus, lambdan = setrt_toonhm(
+        dtau, single_scattering_albedo, asymmetric_parameter, source_matrix)
+
+    Rphat, Sphat = solve_fluxadding_twostream(
+        trans_coeff, scat_coeff, reduced_piB, reflectivity_surface, source_surface)
+    return Rphat*incoming_flux + Sphat
 
 
 @jit
-def rtrun_emis_scat_fluxadding_toonhm(dtau, single_scattering_albedo,
-                                      asymmetric_parameter, source_matrix, source_surface, reflectivity_surface):
+def rtrun_emis_scat_fluxadding_toonhm(dtau, single_scattering_albedo, asymmetric_parameter, source_matrix):
     """Radiative Transfer for emission spectrum (w/ scattering) using flux-based two-stream scattering the flux adding solver w/ Toon Hemispheric Mean with surface.
 
     Args:
@@ -376,12 +382,14 @@ def rtrun_emis_scat_fluxadding_toonhm(dtau, single_scattering_albedo,
         single_scattering_albedo (_type_): _description_
         asymmetric_parameter (_type_): _description_
         source_matrix (_type_): _description_
-        source_surface: source from the surface (N_nus)
-        reflectivity_surface: reflectivity from the surface (N_nus)
 
     Returns:
         _type_: _description_
     """
+    _, Nnus = dtau.shape
+    source_surface = jnp.zeros(Nnus)
+    reflectivity_surface = jnp.zeros(Nnus)
+
     trans_coeff, scat_coeff, reduced_piB, zeta_plus, zeta_minus, lambdan = setrt_toonhm(
         dtau, single_scattering_albedo, asymmetric_parameter, source_matrix)
 
