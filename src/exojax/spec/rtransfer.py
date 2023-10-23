@@ -350,14 +350,13 @@ def rtrun_emis_scat_lart_toonhm_surface(dtau, single_scattering_albedo,
 @jit
 def rtrun_reflect_fluxadding_toonhm(dtau, single_scattering_albedo,
                                     asymmetric_parameter, source_matrix, source_surface, reflectivity_surface, incoming_flux):
-    """
-    Toon Hemispheric Mean with surface.
-
+    """Radiative Transfer for reflected spectrum the flux adding solver w/ Toon Hemispheric Mean with surface.
+    
     Args:
-        dtau (_type_): _description_
-        single_scattering_albedo (_type_): _description_
-        asymmetric_parameter (_type_): _description_
-        source_matrix (_type_): _description_
+        dtau: layer optical depth (Nlayer, N_nus)
+        single_scattering_albedo: single scattering albedo (Nlayer, N_nus)
+        asymmetric_parameter: assymetric parameter (Nlayer, N_nus)
+        source_matrix: source term (Nlayer, N_nus)
         source_surface: source from the surface (N_nus)
         reflectivity_surface: reflectivity from the surface (N_nus)
         incoming flux: incoming flux F_0^- (N_nus)
