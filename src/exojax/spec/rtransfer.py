@@ -25,9 +25,9 @@
 from jax import jit
 import jax.numpy as jnp
 from jax.lax import scan
-#from exojax.spec.twostream import solve_lart_twostream_numpy
+# from exojax.spec.twostream import solve_lart_twostream_numpy
 from exojax.spec.twostream import solve_lart_twostream
-#from exojax.spec.twostream import solve_fluxadding_twostream_forloop
+# from exojax.spec.twostream import solve_fluxadding_twostream_forloop
 from exojax.spec.twostream import solve_fluxadding_twostream
 from exojax.spec.toon import reduced_source_function_isothermal_layer
 from exojax.spec.toon import params_hemispheric_mean
@@ -238,7 +238,7 @@ def rtrun_trans_pureabs_trapezoid(dtau_chord, radius_lower, radius_top):
         This function gives the sqaure of the transit radius.
         If you would like to obtain the transit radius, take sqaure root of the output.
         If you would like to compute the transit depth, devide the output by the square of stellar radius
-        
+
     Notes:
         We need the edge correction because the trapezoid integration with radius_lower lacks the edge point integration.
         i.e. the integration of the 0-th layer from radius_lower[0] to radius_top.
@@ -248,7 +248,7 @@ def rtrun_trans_pureabs_trapezoid(dtau_chord, radius_lower, radius_top):
     dr = radius_top - radius_lower[0]
     edge_cor = (1.0 - jnp.exp(-dtau_chord[0, :])) * radius_top * dr
 
-    #the negative sign is because the radius_lower is in a descending order
+    # the negative sign is because the radius_lower is in a descending order
     deltaRp2 = -2.0 * jnp.trapz(
         (1.0 - jnp.exp(-dtau_chord)) * radius_lower[:, None],
         x=radius_lower,
@@ -274,7 +274,7 @@ def rtrun_trans_pureabs_simpson(dtau_chord_modpoint, dtau_chord_lower,
         This function gives the sqaure of the transit radius.
         If you would like to obtain the transit radius, take sqaure root of the output.
         If you would like to compute the transit depth, devide the output by the square of stellar radius
-        
+
     Notes:
         We need the edge correction because the trapezoid integration with radius_lower lacks the edge point integration.
         i.e. the integration of the 0-th layer from radius_lower[0] to radius_top.
@@ -307,7 +307,8 @@ def rtrun_emis_scat_lart_toonhm(dtau, single_scattering_albedo,
     trans_coeff, scat_coeff, reduced_piB, zeta_plus, zeta_minus, lambdan = setrt_toonhm(
         dtau, single_scattering_albedo, asymmetric_parameter, source_matrix)
 
-    diagonal, lower_diagonal, upper_diagonal, vector = settridiag_toohm(dtau, zeta_plus, zeta_minus, lambdan, trans_coeff, scat_coeff, reduced_piB)
+    diagonal, lower_diagonal, upper_diagonal, vector = settridiag_toohm(
+        dtau, zeta_plus, zeta_minus, lambdan, trans_coeff, scat_coeff, reduced_piB)
     nlayer, Nnus = diagonal.shape
     cumTtilde, Qtilde, spectrum = solve_lart_twostream(diagonal,
                                                        lower_diagonal,
@@ -345,10 +346,12 @@ def rtrun_emis_scat_lart_toonhm_surface(dtau, single_scattering_albedo,
 
     return spectrum, cumTtilde, Qtilde, trans_coeff, scat_coeff, piB
 
-@jit
-def rtrun_emis_scat_fluxadding_toonhm(dtau, single_scattering_albedo,
-                                      asymmetric_parameter, source_matrix, source_surface, reflectivity_surface, incoming_flux):
-    """Radiative Transfer for emission spectrum using flux-based two-stream scattering the flux adding solver w/ Toon Hemispheric Mean with surface.
+
+# @jit
+# def rtrun_emis_scat_fluxadding_toonhm(dtau, single_scattering_albedo,
+#                                      asymmetric_parameter, source_matrix, source_surface, reflectivity_surface, incoming_flux):
+    """
+    Toon Hemispheric Mean with surface.
 
     Args:
         dtau (_type_): _description_
@@ -357,7 +360,24 @@ def rtrun_emis_scat_fluxadding_toonhm(dtau, single_scattering_albedo,
         source_matrix (_type_): _description_
         source_surface: source from the surface (N_nus)
         reflectivity_surface: reflectivity from the surface (N_nus)
-        incoming_flux: incoming flux at the ToA (N_nus)
+        
+    Returns:
+        _type_: _description_
+    """
+
+
+@jit
+def rtrun_emis_scat_fluxadding_toonhm(dtau, single_scattering_albedo,
+                                      asymmetric_parameter, source_matrix, source_surface, reflectivity_surface):
+    """Radiative Transfer for emission spectrum (w/ scattering) using flux-based two-stream scattering the flux adding solver w/ Toon Hemispheric Mean with surface.
+
+    Args:
+        dtau (_type_): _description_
+        single_scattering_albedo (_type_): _description_
+        asymmetric_parameter (_type_): _description_
+        source_matrix (_type_): _description_
+        source_surface: source from the surface (N_nus)
+        reflectivity_surface: reflectivity from the surface (N_nus)
 
     Returns:
         _type_: _description_
@@ -365,10 +385,9 @@ def rtrun_emis_scat_fluxadding_toonhm(dtau, single_scattering_albedo,
     trans_coeff, scat_coeff, reduced_piB, zeta_plus, zeta_minus, lambdan = setrt_toonhm(
         dtau, single_scattering_albedo, asymmetric_parameter, source_matrix)
 
-    #spectrum = solve_fluxadding_twostream_forloop(
-    #    trans_coeff, scat_coeff, reduced_piB, reflectivity_surface, source_surface, incoming_flux)
-    _, spectrum = solve_fluxadding_twostream(trans_coeff, scat_coeff, reduced_piB, reflectivity_surface, source_surface)
-    
+    _, spectrum = solve_fluxadding_twostream(
+        trans_coeff, scat_coeff, reduced_piB, reflectivity_surface, source_surface)
+
     return spectrum
 
 
@@ -410,7 +429,8 @@ def settridiag_toohm(dtau, zeta_plus, zeta_minus, lambdan, trans_coeff, scat_coe
     denom = zeta_plus0**2 - (zeta_minus0 * trans_func0)**2
     omtrans = 1.0 - trans_func0
     fac = (zeta_plus0 * omtrans - zeta_minus0 * trans_func0 * omtrans)
-    vector_top = (zeta_plus0**2 - zeta_minus0**2) / denom * fac * reduced_piB[0, :]
+    vector_top = (zeta_plus0**2 - zeta_minus0**2) / \
+        denom * fac * reduced_piB[0, :]
 
     # tridiagonal elements
     diagonal, lower_diagonal, upper_diagonal, vector = compute_tridiag_diagonals_and_vector(

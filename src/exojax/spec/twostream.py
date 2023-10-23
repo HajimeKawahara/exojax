@@ -6,35 +6,6 @@ import jax.numpy as jnp
 from jax.lax import scan
 
 
-def solve_fluxadding_twostream_forloop(trans_coeff, scat_coeff, reduced_source_function, reflectivity_bottom, source_bottom, incoming_flux):
-    """Two-stream RT solver using flux adding (using for loop)
-
-    Args:
-        trans_coeff (_type_): _description_
-        scat_coeff (_type_): _description_
-        reduced_source_function :  pi \mathcal{B} (Nlayer, Nnus)
-        reflectivity_bottom (_type_): R^+_N (Nnus)
-        source_bottom (_type_): S^+_N (Nnus)
-        incoming_flux: F_star = F_0^- (Nnus)
-    """
-    nlayer, _ = trans_coeff.shape
-    pihatB = (1.0 - trans_coeff - scat_coeff)*reduced_source_function
-
-    # bottom reflection
-    Rphat = scat_coeff[nlayer-1, :] + trans_coeff[nlayer-1, :]**2 * \
-        reflectivity_bottom/(1.0 - scat_coeff[nlayer-1, :]*reflectivity_bottom)
-    Sphat = pihatB[nlayer-1, :] + trans_coeff[nlayer-1, :] * \
-        (source_bottom + pihatB[nlayer-1, :]*reflectivity_bottom) / \
-        (1.0 - scat_coeff[nlayer-1, :]*reflectivity_bottom)
-
-    for i in range(0, nlayer-1)[::-1]:  # nlayer - 1 ...
-        denom = 1.0 - scat_coeff[i, :]*Rphat
-        Sphat = pihatB[i, :] + trans_coeff[i, :] * \
-            (Sphat + pihatB[i, :]*Rphat) / denom
-        Rphat = scat_coeff[i, :] + trans_coeff[i, :]**2 * Rphat/denom
-    return Rphat*incoming_flux + Sphat
-
-
 def solve_fluxadding_twostream(trans_coeff, scat_coeff, reduced_source_function, reflectivity_bottom, source_bottom):
     """Two-stream RT solver using flux adding
 
@@ -78,57 +49,6 @@ def solve_fluxadding_twostream(trans_coeff, scat_coeff, reduced_source_function,
     ]
     RS, _ = scan(f, [Rphat0, Sphat0], arrin)
     return RS
-
-#def outgoing_reflection_fluxadding_twostream(trans_coeff, scat_coeff, reduced_source_function, reflectivity_bottom, source_bottom, incoming_flux):
-#    Rphat, Sphat = solve_fluxadding_twostream(trans_coeff, scat_coeff, reduced_source_function, reflectivity_bottom, source_bottom, incoming_flux)
-#    return Rphat*incoming_flux + Sphat
-
-#def outgoing_emission_fluxadding_twostream(trans_coeff, scat_coeff, reduced_source_function, reflectivity_bottom, source_bottom):
-#    _, Sphat = solve_fluxadding_twostream(trans_coeff, scat_coeff, reduced_source_function, reflectivity_bottom, source_bottom)
-#    return Sphat
-
-
-
-def solve_lart_twostream_numpy(diagonal, lower_diagonal, upper_diagonal,
-                               vector):
-    """Two-stream RT solver given tridiagonal system components (LART form) but numpy version
-
-    Args:
-        diagonal (_type_): diagonal component of the tridiagonal system (bn)
-        lower_diagonal (_type_): lower diagonal component of the tridiagonal system (cn)
-        upper_diagonal (_type_): upper diagonal component of the tridiagonal system (an)
-        vector (_type_): right-hand side vector (dn)
-
-    Note:
-        Our definition of the tridiagonal components is 
-        an F+_(n+1) + bn F+_n + c_(n-1) F+_(n-1) = dn 
-        Notice that c_(n-1) is not cn
-
-    Returns:
-        _type_: cumlative T, hat Q, spectrum 
-    """
-    import numpy as np
-    nlayer, Nnus = diagonal.shape
-
-    nlayer, _ = diagonal.shape
-    That = np.zeros_like(diagonal)
-    Qhat = np.zeros_like(diagonal)
-    That[0, :] = upper_diagonal[0, :] / diagonal[0, :]
-    Qhat[0, :] = vector[0, :] / diagonal[0, :]
-
-    for i in range(1, nlayer):  # nlayer - 1 ...
-        gamma = diagonal[i, :] - lower_diagonal[i - 1, :] * That[i - 1, :]
-        That[i, :] = upper_diagonal[i, :] / gamma
-        Qhat[i, :] = (vector[i, :] +
-                      lower_diagonal[i - 1, :] * Qhat[i - 1, :]) / gamma
-
-    # (no)surface term
-    Qhat = jnp.vstack([Qhat, np.zeros(Nnus)])
-    cumThat = jnp.cumprod(jnp.vstack([jnp.ones(Nnus), That]), axis=0)
-    contribution_function = cumThat * Qhat
-    spectrum = np.nansum(contribution_function, axis=0)
-
-    return cumThat, Qhat, spectrum
 
 
 def solve_lart_twostream(diagonal, lower_diagonal, upper_diagonal, vector,

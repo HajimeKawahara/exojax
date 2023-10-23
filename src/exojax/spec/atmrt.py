@@ -307,8 +307,8 @@ class ArtReflect(ArtCommon):
             source_surface = jnp.zeros(Nnus)
             reflectivity_surface = jnp.zeros(Nnus)
             incoming_flux = jnp.zeros(Nnus)
-            spectrum = rtrun_emis_scat_fluxadding_toonhm(dtau, single_scattering_albedo,
-                                                         asymmetric_parameter, sourcef, source_surface, reflectivity_surface, incoming_flux)
+            #spectrum = rtrun_emis_scat_fluxadding_toonhm(dtau, single_scattering_albedo,
+            #                                             asymmetric_parameter, sourcef, source_surface, reflectivity_surface)
         else:
             print("rtsolver=", self.rtsolver)
             raise ValueError("Unknown radiative transfer solver (rtsolver).")
@@ -378,9 +378,8 @@ class ArtEmisScat(ArtCommon):
             _, Nnus = dtau.shape
             source_surface = jnp.zeros(Nnus)
             reflectivity_surface = jnp.zeros(Nnus)
-            incoming_flux = jnp.zeros(Nnus)
             spectrum = rtrun_emis_scat_fluxadding_toonhm(dtau, single_scattering_albedo,
-                                                         asymmetric_parameter, sourcef, source_surface, reflectivity_surface, incoming_flux)
+                                                         asymmetric_parameter, sourcef, source_surface, reflectivity_surface)
         else:
             print("rtsolver=", self.rtsolver)
             raise ValueError("Unknown radiative transfer solver (rtsolver).")
