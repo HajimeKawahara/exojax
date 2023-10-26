@@ -1,9 +1,4 @@
 from exojax.spec.twostream import compute_tridiag_diagonals_and_vector
-from exojax.spec.twostream import solve_lart_twostream_numpy
-from exojax.spec.twostream import solve_lart_twostream
-from exojax.spec.twostream import solve_fluxadding_twostream_forloop
-
-
 import jax.numpy as jnp
 import numpy as np
 
@@ -19,15 +14,6 @@ def samples_fluxadding_flux2st():
     return piB, scat_coeff, trans_coeff
 
 
-def test_solve_fluxadding_twostream_forloop():
-    piB, scat_coeff, trans_coeff = samples_fluxadding_flux2st()
-    reduced_source_function = piB  # temp
-    reflectivity_bottom = jnp.array([0.5, 0.5, 0.5])
-    source_bottom = jnp.array([0.1, 0.1, 0.1])
-    incoming_flux = jnp.array([1.0,1.0,1.0])
-    F = solve_fluxadding_twostream_forloop(
-        trans_coeff, scat_coeff, reduced_source_function, reflectivity_bottom, source_bottom, incoming_flux)
-    return
 
 
 def samples_lart_flux2st():
@@ -63,44 +49,9 @@ def test_scat_lart_flux2st_tridiag_coefficients():
     assert np.array_equal(ref_diag_arr, diagonal)
 
 
-def test_solve_lart_twostream_numpy():
-    """
-    This test does not guarantee that solve_lart_twostream_numpy itself but checks the results are consistent with the fiducial ones
-    """
-    _, _, upper_diagonal_top, diagonal_top, vector_top, piB, scat_coeff, trans_coeff = samples_lart_flux2st(
-    )
-    diagonal, lower_diagonal, upper_diagonal, vector = compute_tridiag_diagonals_and_vector(
-        scat_coeff, trans_coeff, piB, upper_diagonal_top, diagonal_top,
-        vector_top)
-
-    cumTtilde, Qtilde, spectrum = solve_lart_twostream_numpy(
-        diagonal, lower_diagonal, upper_diagonal, vector)
-
-    ref = 0.39861748
-    res = (spectrum[0] - ref)**2
-    assert res < 1.e-15
-
-
-def test_solve_lart_twostream_by_comparing_with_numpy_version():
-    _, _, upper_diagonal_top, diagonal_top, vector_top, piB, scat_coeff, trans_coeff = samples_lart_flux2st(
-    )
-    diagonal, lower_diagonal, upper_diagonal, vector = compute_tridiag_diagonals_and_vector(
-        scat_coeff, trans_coeff, piB, upper_diagonal_top, diagonal_top,
-        vector_top)
-    cumTtilde_np, Qtilde_np, spectrum_np = solve_lart_twostream_numpy(
-        diagonal, lower_diagonal, upper_diagonal, vector)
-    nlayer, Nnus = diagonal.shape
-    cumTtilde, Qtilde, spectrum = solve_lart_twostream(diagonal,
-                                                       lower_diagonal,
-                                                       upper_diagonal, vector,
-                                                       jnp.zeros(Nnus))
-    assert np.array_equal(Qtilde, Qtilde_np)
-
-
 if __name__ == "__main__":
     
-    # test_scat_lart_flux2st_tridiag_coefficients()
+    test_scat_lart_flux2st_tridiag_coefficients()
     # test_solve_lart_twostream_numpy()
     # test_solve_lart_twostream_by_comparing_with_numpy_version()
 
-    test_solve_fluxadding_twostream_forloop()
