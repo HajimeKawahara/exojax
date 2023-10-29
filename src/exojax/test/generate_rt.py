@@ -46,7 +46,7 @@ def gendata_rt_modit(db):
                    Parr=art.pressure,
                    dit_grid_resolution=0.2)
     xsmatrix = opa.xsmatrix(Tarr, art.pressure)
-    dtau = art.opacity_profile_lines(xsmatrix, mmr_arr, opa.mdb.molmass,
+    dtau = art.opacity_profile_xs(xsmatrix, mmr_arr, opa.mdb.molmass,
                                      gravity)
     F0 = art.run(dtau, Tarr)
     np.savetxt(testdata_modit[db], np.array([nu_grid, F0]).T, delimiter=",")
@@ -73,7 +73,7 @@ def gendata_rt_lpf(db):
     opa = OpaDirect(mdb=mdb, nu_grid=nu_grid)
 
     xsmatrix = opa.xsmatrix(Tarr, art.pressure)
-    dtau = art.opacity_profile_lines(xsmatrix, mmr_arr, opa.mdb.molmass,
+    dtau = art.opacity_profile_xs(xsmatrix, mmr_arr, opa.mdb.molmass,
                                      gravity)
     F0 = art.run(dtau, Tarr)
     np.savetxt(testdata_lpf[db], np.array([nu_grid, F0]).T, delimiter=",")

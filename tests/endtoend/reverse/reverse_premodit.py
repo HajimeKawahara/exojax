@@ -98,7 +98,7 @@ def frun(Tarr, MMR_CH4, Mp, Rp, u1, u2, RV, vsini):
     #molecule
     xsmatrix = opa.xsmatrix(Tarr, art.pressure)
     mmr_arr = art.constant_mmr_profile(MMR_CH4)
-    dtaumCH4 = art.opacity_profile_lines(xsmatrix, mmr_arr, opa.mdb.molmass, g)
+    dtaumCH4 = art.opacity_profile_xs(xsmatrix, mmr_arr, opa.mdb.molmass, g)
     #continuum
     logacia_matrix = opcia.logacia_matrix(Tarr)
     dtaucH2H2 = art.opacity_profile_cia(logacia_matrix, Tarr, vmrH2, vmrH2,

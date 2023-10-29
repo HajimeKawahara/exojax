@@ -75,7 +75,7 @@ def test_jaxopt_spectrum(fig=False):
             #CO
             xsm_CO = opa.xsmatrix(Tarr, art.pressure)
             mmr_profile = art.constant_mmr_profile(MMR_CO)
-            dtaumCO = art.opacity_profile_lines(xsm_CO, mmr_profile,
+            dtaumCO = art.opacity_profile_xs(xsm_CO, mmr_profile,
                                                 mdbCO.molmass, g)
             #CIA
             logacia = opacia.logacia_matrix(Tarr)
