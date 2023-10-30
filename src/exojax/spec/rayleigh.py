@@ -3,7 +3,7 @@ from jax import vmap
 from exojax.atm.polarizability import n_ref_refractive
 
 def xsvector_rayleigh_gas(wavenumber, polarizability, king_factor=1.0):
-    """Computes Rayleigh scattering cross-section of gas from real refractive index (exact form)
+    """Computes Rayleigh scattering cross-section of gas from polarizability
 
     Args:
         wavenumber: wavenumber (cm-1)
@@ -14,21 +14,20 @@ def xsvector_rayleigh_gas(wavenumber, polarizability, king_factor=1.0):
         cross section (cm2) for Rayleigh scattering
 
     Notes:
-        This function uses the exact form of the gas Rayleigh scattering, which depends on the number density of the gas
-        Consider to use xsvector_rayleigh_gas when your situation satisfies number_density*polarizability << 1,
-        which does not require the number density as input.
+        This form assumes number_density*polarizability << 1, 
+        then the cross section does not depend on the number density.
 
     """
     fac = jnp.pi* 8.0 * wavenumber**2 * polarizability
     return 2.0/3.0 * jnp.pi * fac ** 2 * king_factor
 
 
-def xsvector_rayleigh_gas_exact(wavenumber, refractive_index, number_density, king_factor=1.0):
-    """Computes Rayleigh scattering cross-section of gas from real refractive index (exact form)
+def xsvector_rayleigh_gas_exactform(wavenumber, refractive_index, number_density, king_factor=1.0):
+    """Computes Rayleigh scattering cross-section of gas from real refractive index (the exact form)
 
     Args:
         wavenumber: wavenumber (cm-1)
-        refractive_index: real refractive index (hint: one can compute the refractive index using the Lorentz-Lonrez formula (atm.lorentz_lorenz) from polarizability)
+        refractive_index: real refractive index (use atm.lorentz_lorenz to compute this)
         number_density: gas number density (cm-2)
         king_factor: King correction factor which accounts for the depolarization effect (default=1.0)
 
