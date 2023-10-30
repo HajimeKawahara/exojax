@@ -28,7 +28,11 @@ def compare_with_kawashima_code():
     T_fid = 500.0
 
     Nx = 300000
-    nu_grid, wav, res = wavenumber_grid(22900.0, 26000.0, Nx, unit="AA", xsmode="modit")
+    nu_grid, wav, res = wavenumber_grid(22900.0,
+                                        26000.0,
+                                        Nx,
+                                        unit="AA",
+                                        xsmode="modit")
 
     art = ArtTransPure(pressure_top=1.0e-15, pressure_btm=1.0e1, nlayer=100)
     art.change_temperature_range(490.0, 510.0)
@@ -38,7 +42,10 @@ def compare_with_kawashima_code():
     radius_btm = RJ
 
     # mdb = api.MdbExomol('.database/CO/12C-16O/Li2015',nu_grid,inherit_dataframe=False,gpu_transfer=False)
-    mdb = MdbHitran("CO", nurange=nu_grid, gpu_transfer=True, inherit_dataframe=False)
+    mdb = MdbHitran("CO",
+                    nurange=nu_grid,
+                    gpu_transfer=True,
+                    inherit_dataframe=False)
     # mdb = MdbHitemp('CO', art.nu_grid, gpu_transfer=False, isotope=1)
 
     mmw = mu_fid * np.ones_like(art.pressure)
@@ -50,19 +57,16 @@ def compare_with_kawashima_code():
 
     xsmatrix = opa.xsmatrix(Tarr, art.pressure)
     dtau = art.opacity_profile_xs(xsmatrix, mmr_arr, opa.mdb.molmass, gravity)
-    
+
     ### Rayleigh scattering
     from exojax.atm.polarizability import polarizability
-    from exojax.atm.lorentz_lorenz import refractive_index_Lorentz_Lorenz
+    from exojax.atm.polarizability import king_correction_factor
     from exojax.spec.rayleigh import xsvector_rayleigh_gas
-    from exojax.atm.polarizability import n_ref_refractive
 
-    p = polarizability["CO"]
-    refractive_index = refractive_index_Lorentz_Lorenz(p, n_ref_refractive)
-    xsvector_rayleigh = xsvector_rayleigh_gas(nu_grid, refractive_index)
-    dtau_ray = art.opacity_profile_xs(
-        xsvector_rayleigh, mmr_arr, opa.mdb.molmass, gravity
-    )
+    xsvector_rayleigh = xsvector_rayleigh_gas(nu_grid, polarizability["CO"],
+                                              king_correction_factor["CO"])
+    dtau_ray = art.opacity_profile_xs(xsvector_rayleigh, mmr_arr,
+                                      opa.mdb.molmass, gravity)
     print(np.max(dtau_ray))
     dtau = dtau + dtau_ray
     ###
@@ -92,10 +96,14 @@ if __name__ == "__main__":
     ax = fig.add_subplot(211)
     ax.plot(wav, rprs * Rs / RJ, label="Kawashima")
     # plt.yscale("log")
-    ax.plot(
-        wav_exojax[::-1], Rp_trapezoid * Rs / RJ, label="ExoJAX trapezoid", ls="dotted"
-    )
-    ax.plot(wav_exojax[::-1], Rp_simpson * Rs / RJ, label="ExoJAX simpson", lw=1)
+    ax.plot(wav_exojax[::-1],
+            Rp_trapezoid * Rs / RJ,
+            label="ExoJAX trapezoid",
+            ls="dotted")
+    ax.plot(wav_exojax[::-1],
+            Rp_simpson * Rs / RJ,
+            label="ExoJAX simpson",
+            lw=1)
     plt.legend()
     plt.ylabel("Rp (RJ)")
     ax = fig.add_subplot(212)
