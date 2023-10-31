@@ -1,5 +1,4 @@
    
-
 Molecular Database
 =======================
 
@@ -34,7 +33,6 @@ Scattering and Clouds
 
    userguide/rayleigh.rst
    userguide/vterm.rst
-   userguide/comp.rst
 
 
 
@@ -55,8 +53,14 @@ Spectral Operators
    userguide/sop.rst
 
    
+Others
+====================
 
-   
+.. toctree::
+   :maxdepth: 1
+
+   userguide/comp.rst
+
 
 For Developers
 ===================
