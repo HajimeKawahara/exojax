@@ -26,6 +26,18 @@ Opacity Calculation
    userguide/benchmark.rst
    userguide/fp.rst
 
+
+Scattering and Clouds
+========================
+.. toctree::
+   :maxdepth: 1
+
+   userguide/rayleigh.rst
+   userguide/vterm.rst
+   userguide/comp.rst
+
+
+
 Radiative Transfer
 ========================
 
@@ -43,14 +55,6 @@ Spectral Operators
    userguide/sop.rst
 
    
-Others
-=======================
-
-.. toctree::
-   :maxdepth: 1
-
-   userguide/vterm.rst
-   userguide/comp.rst
 
    
 

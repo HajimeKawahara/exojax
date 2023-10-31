@@ -1,6 +1,5 @@
 import jax.numpy as jnp
 from jax import vmap
-from exojax.atm.polarizability import n_ref_refractive
 
 def xsvector_rayleigh_gas(wavenumber, polarizability, king_factor=1.0):
     """Computes Rayleigh scattering cross-section of gas from polarizability
