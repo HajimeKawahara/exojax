@@ -17,7 +17,7 @@ def xsvector_rayleigh_gas(wavenumber, polarizability, king_factor=1.0):
         then the cross section does not depend on the number density.
 
     """
-    fac = jnp.pi* 8.0 * wavenumber**2 * polarizability
+    fac = jnp.pi ** 2 * 8.0 * wavenumber**2 * polarizability
     return 2.0/3.0 * jnp.pi * fac ** 2 * king_factor
 
 
@@ -42,7 +42,7 @@ def xsvector_rayleigh_gas_exactform(wavenumber, refractive_index, number_density
     fac = (refractive_index**2 - 1.0) / (
         number_density * (refractive_index**2 + 2.0)
     )
-    return 24.0 * jnp.pi**3 * (wavenumber**2 * fac) ** 2 * king_factor
+    return 24.0 * jnp.pi * (wavenumber**2 * fac * jnp.pi)**2  * king_factor
 
 
 if __name__ == "__main__":
