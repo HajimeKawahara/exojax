@@ -6,46 +6,49 @@ import jax.numpy as jnp
 from jax.lax import scan
 
 
-def solve_lart_twostream_numpy(diagonal, lower_diagonal, upper_diagonal,
-                               vector):
-    """Two-stream RT solver given tridiagonal system components (LART form) but numpy version
+def solve_fluxadding_twostream(trans_coeff, scat_coeff, reduced_source_function, reflectivity_bottom, source_bottom):
+    """Two-stream RT solver using flux adding
 
     Args:
-        diagonal (_type_): diagonal component of the tridiagonal system (bn)
-        lower_diagonal (_type_): lower diagonal component of the tridiagonal system (cn)
-        upper_diagonal (_type_): upper diagonal component of the tridiagonal system (an)
-        vector (_type_): right-hand side vector (dn)
-
-    Note:
-        Our definition of the tridiagonal components is 
-        an F+_(n+1) + bn F+_n + c_(n-1) F+_(n-1) = dn 
-        Notice that c_(n-1) is not cn
+        trans_coeff (_type_): _description_
+        scat_coeff (_type_): _description_
+        reduced_source_function :  pi \mathcal{B} (Nlayer, Nnus)
+        reflectivity_bottom (_type_): R^+_N (Nnus)
+        source_bottom (_type_): S^+_N (Nnus)
 
     Returns:
-        _type_: cumlative T, hat Q, spectrum 
+        Effective reflectivity (hat(R^plus)), Effective source (hat(S^plus))
     """
-    import numpy as np
-    nlayer, Nnus = diagonal.shape
+    nlayer, _ = trans_coeff.shape
+    pihatB = (1.0 - trans_coeff - scat_coeff)*reduced_source_function
 
-    nlayer, _ = diagonal.shape
-    That = np.zeros_like(diagonal)
-    Qhat = np.zeros_like(diagonal)
-    That[0, :] = upper_diagonal[0, :] / diagonal[0, :]
-    Qhat[0, :] = vector[0, :] / diagonal[0, :]
+    # bottom reflection
+    Rphat0 = scat_coeff[nlayer-1, :] + trans_coeff[nlayer-1, :]**2 * \
+        reflectivity_bottom/(1.0 - scat_coeff[nlayer-1, :]*reflectivity_bottom)
+    Sphat0 = pihatB[nlayer-1, :] + trans_coeff[nlayer-1, :] * \
+        (source_bottom + pihatB[nlayer-1, :]*reflectivity_bottom) / \
+        (1.0 - scat_coeff[nlayer-1, :]*reflectivity_bottom)
 
-    for i in range(1, nlayer):  #nlayer - 1 ...
-        gamma = diagonal[i, :] - lower_diagonal[i - 1, :] * That[i - 1, :]
-        That[i, :] = upper_diagonal[i, :] / gamma
-        Qhat[i, :] = (vector[i, :] +
-                      lower_diagonal[i - 1, :] * Qhat[i - 1, :]) / gamma
+    def f(carry_ip1, arr):
+        Rphat_prev, Sphat_prev = carry_ip1
+        scat_coeff_i, trans_coeff_i, pihatB_i = arr
+        denom = 1.0 - scat_coeff_i*Rphat_prev
 
-    #(no)surface term
-    Qhat = jnp.vstack([Qhat, np.zeros(Nnus)])
-    cumThat = jnp.cumprod(jnp.vstack([jnp.ones(Nnus), That]), axis=0)
-    contribution_function = cumThat * Qhat
-    spectrum = np.nansum(contribution_function, axis=0)
+        Sphat_each = pihatB_i + trans_coeff_i * \
+            (Sphat_prev + pihatB_i*Rphat_prev) / denom
+        Rphat_each = scat_coeff_i + trans_coeff_i**2 * Rphat_prev/denom
 
-    return cumThat, Qhat, spectrum
+        RS = [Rphat_each, Sphat_each]
+        return RS, 0
+
+    # main loop
+    arrin = [
+        scat_coeff[nlayer-2::-1],
+        trans_coeff[nlayer-2::-1],
+        pihatB[nlayer-2::-1]
+    ]
+    RS, _ = scan(f, [Rphat0, Sphat0], arrin)
+    return RS
 
 
 def solve_lart_twostream(diagonal, lower_diagonal, upper_diagonal, vector,
@@ -58,7 +61,7 @@ def solve_lart_twostream(diagonal, lower_diagonal, upper_diagonal, vector,
         upper_diagonal (_type_): upper diagonal component of the tridiagonal system (an)
         vector (_type_): right-hand side vector (dn)
         flux_bottom: bottom flux FB
-        
+
     Note:
         Our definition of the tridiagonal components is 
         an F+_(n+1) + bn F+_n + c_(n-1) F+_(n-1) = dn 
@@ -82,11 +85,11 @@ def solve_lart_twostream(diagonal, lower_diagonal, upper_diagonal, vector,
         TQ = [That_each, Qhat_each]
         return TQ, TQ
 
-    #top boundary
+    # top boundary
     That0 = upper_diagonal[0, :] / diagonal[0, :]
     Qhat0 = vector[0, :] / diagonal[0, :]
 
-    #main loop
+    # main loop
     arrin = [
         diagonal[1:nlayer, :], lower_diagonal[0:nlayer - 1, :],
         upper_diagonal[1:nlayer, :], vector[1:nlayer, :]
@@ -94,11 +97,11 @@ def solve_lart_twostream(diagonal, lower_diagonal, upper_diagonal, vector,
     _, stackedTQ = scan(f, [That0, Qhat0], arrin)
     That, Qhat = stackedTQ
 
-    #inserts top boundary
+    # inserts top boundary
     That = jnp.insert(jnp.array(That), 0, That0, axis=0)
     Qhat = jnp.insert(jnp.array(Qhat), 0, Qhat0, axis=0)
 
-    #(no)surface term
+    # (no)surface term
     Qhat = jnp.vstack([Qhat, flux_bottom])
     cumThat = jnp.cumprod(jnp.vstack([jnp.ones(Nnus), That]), axis=0)
     spectrum = jnp.nansum(cumThat * Qhat, axis=0)
@@ -213,5 +216,5 @@ def sh2_zetalambda_coeff():
     raise ValueError("not implemented yet.")
 
 
-#if __name__ == "__main__":
+# if __name__ == "__main__":
 #   test_tridiag_coefficients()
