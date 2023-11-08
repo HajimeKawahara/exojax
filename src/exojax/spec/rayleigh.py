@@ -12,17 +12,13 @@ def xsvector_rayleigh_gas(wavenumber, polarizability, king_factor=1.0):
     Returns:
         cross section (cm2) for Rayleigh scattering
 
-    Notes:
-        This form assumes number_density*polarizability << 1, 
-        then the cross section does not depend on the number density.
-
     """
     fac = jnp.pi* 8.0 * wavenumber**2 * polarizability
     return 2.0/3.0 * jnp.pi * fac ** 2 * king_factor
 
 
-def xsvector_rayleigh_gas_exactform(wavenumber, refractive_index, number_density, king_factor=1.0):
-    """Computes Rayleigh scattering cross-section of gas from real refractive index (the exact form)
+def xsvector_rayleigh_gas_from_refractive_index(wavenumber, refractive_index, number_density, king_factor=1.0):
+    """Computes Rayleigh scattering cross-section of gas from real refractive index
 
     Args:
         wavenumber: wavenumber (cm-1)
@@ -35,9 +31,7 @@ def xsvector_rayleigh_gas_exactform(wavenumber, refractive_index, number_density
 
     Notes:
         This function uses the exact form of the gas Rayleigh scattering, which depends on the number density of the gas
-        Consider to use xsvector_rayleigh_gas when your situation satisfies number_density*polarizability << 1,
-        which does not require the number density as input.
-
+        
     """
     fac = (refractive_index**2 - 1.0) / (
         number_density * (refractive_index**2 + 2.0)
