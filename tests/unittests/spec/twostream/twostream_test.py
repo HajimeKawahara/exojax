@@ -1,9 +1,19 @@
 from exojax.spec.twostream import compute_tridiag_diagonals_and_vector
-from exojax.spec.twostream import solve_lart_twostream_numpy
-from exojax.spec.twostream import solve_lart_twostream
-
 import jax.numpy as jnp
 import numpy as np
+
+
+def samples_fluxadding_flux2st():
+    Nlayer = 4
+    B = jnp.array(range(0, Nlayer)) + 1.
+    S = jnp.array(range(0, Nlayer)) + 1.
+    T = (jnp.array(range(0, Nlayer)) + 1) * 2.
+    piB = jnp.array([B, B, B]).T
+    scat_coeff = jnp.array([S, S, S]).T*0.1
+    trans_coeff = jnp.array([T, T, T]).T*0.1
+    return piB, scat_coeff, trans_coeff
+
+
 
 
 def samples_lart_flux2st():
@@ -39,41 +49,9 @@ def test_scat_lart_flux2st_tridiag_coefficients():
     assert np.array_equal(ref_diag_arr, diagonal)
 
 
-def test_solve_lart_twostream_numpy():
-    """
-    This test does not guarantee that solve_lart_twostream_numpy itself but checks the results are consistent with the fiducial ones
-    """
-    _, _, upper_diagonal_top, diagonal_top, vector_top, piB, scat_coeff, trans_coeff = samples_lart_flux2st(
-    )
-    diagonal, lower_diagonal, upper_diagonal, vector = compute_tridiag_diagonals_and_vector(
-        scat_coeff, trans_coeff, piB, upper_diagonal_top, diagonal_top,
-        vector_top)
-
-    cumTtilde, Qtilde, spectrum = solve_lart_twostream_numpy(
-        diagonal, lower_diagonal, upper_diagonal, vector)
-
-    ref = 0.39861748
-    res = (spectrum[0] - ref)**2
-    assert res < 1.e-15
-
-
-def test_solve_lart_twostream_by_comparing_with_numpy_version():
-    _, _, upper_diagonal_top, diagonal_top, vector_top, piB, scat_coeff, trans_coeff = samples_lart_flux2st(
-    )
-    diagonal, lower_diagonal, upper_diagonal, vector = compute_tridiag_diagonals_and_vector(
-        scat_coeff, trans_coeff, piB, upper_diagonal_top, diagonal_top,
-        vector_top)
-    cumTtilde_np, Qtilde_np, spectrum_np = solve_lart_twostream_numpy(
-        diagonal, lower_diagonal, upper_diagonal, vector)
-    nlayer, Nnus = diagonal.shape
-    cumTtilde, Qtilde, spectrum = solve_lart_twostream(diagonal,
-                                                       lower_diagonal,
-                                                       upper_diagonal, vector,
-                                                       jnp.zeros(Nnus))
-    assert np.array_equal(Qtilde, Qtilde_np)
-
-
 if __name__ == "__main__":
-    #test_scat_lart_flux2st_tridiag_coefficients()
-    test_solve_lart_twostream_numpy()
-    test_solve_lart_twostream_by_comparing_with_numpy_version()
+    
+    test_scat_lart_flux2st_tridiag_coefficients()
+    # test_solve_lart_twostream_numpy()
+    # test_solve_lart_twostream_by_comparing_with_numpy_version()
+

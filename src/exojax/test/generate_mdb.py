@@ -10,7 +10,7 @@ def gendata_moldb(database):
     """generate test data for CO exomol
     """
     Nx = 10000
-    nus, wav, res = wavenumber_grid(22920.0, 24000.0, Nx, unit='AA')
+    nus, wav, res = wavenumber_grid(22920.0, 24000.0, Nx, unit='AA', xsmode="premodit")
     if database == "exomol":
         from exojax.test.data import TESTDATA_moldb_CO_EXOMOL as filename
         mdbCO = api.MdbExomol('.database/CO/12C-16O/Li2015',
