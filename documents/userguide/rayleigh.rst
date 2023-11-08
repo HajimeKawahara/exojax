@@ -14,7 +14,6 @@ Rayleigh scattering of gas from polarizability can be computed using `spec.rayle
     )
     sigma = xsvector_rayleigh_gas(nus, polarizability["CO"], king_correction_factor["CO"])
 
-If you wanna compute the cross section from refractive index and number density (when n alpha ~> 1), use `spec.rayleigh.xsvector_rayleigh_gas_exactform <../exojax/exojax.spec.html#exojax.spec.rayleigh.xsvector_rayleigh_gas_exactform>`_ 
 
 
 Lorentz - Lorenz relation
