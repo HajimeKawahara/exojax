@@ -32,7 +32,7 @@ def test_ArtEmisScat_fluxadding_gives_consistent_results_with_pure_absorption(db
                       auto_trange=[art.Tlow, art.Thigh])
 
     xsmatrix = opa.xsmatrix(Tarr, art.pressure)
-    dtau = art.opacity_profile_lines(xsmatrix, mmr_arr, opa.mdb.molmass,
+    dtau = art.opacity_profile_xs(xsmatrix, mmr_arr, opa.mdb.molmass,
                                      gravity)
 
     #almost pure absorption

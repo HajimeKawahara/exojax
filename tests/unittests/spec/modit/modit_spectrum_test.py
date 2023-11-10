@@ -42,7 +42,7 @@ def test_rt(db, fig=False):
                    Parr=art.pressure,
                    dit_grid_resolution=0.2)
     xsmatrix = opa.xsmatrix(Tarr, art.pressure)
-    dtau = art.opacity_profile_lines(xsmatrix, mmr_arr, opa.mdb.molmass,
+    dtau = art.opacity_profile_xs(xsmatrix, mmr_arr, opa.mdb.molmass,
                                      gravity)
     F0 = art.run(dtau, Tarr)
 

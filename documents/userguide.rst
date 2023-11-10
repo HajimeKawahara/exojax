@@ -1,5 +1,4 @@
    
-
 Molecular Database
 =======================
 
@@ -26,6 +25,17 @@ Opacity Calculation
    userguide/benchmark.rst
    userguide/fp.rst
 
+
+Scattering and Clouds
+========================
+.. toctree::
+   :maxdepth: 1
+
+   userguide/rayleigh.rst
+   userguide/vterm.rst
+
+
+
 Radiative Transfer
 ========================
 
@@ -44,15 +54,13 @@ Spectral Operators
 
    
 Others
-=======================
+====================
 
 .. toctree::
    :maxdepth: 1
 
-   userguide/vterm.rst
    userguide/comp.rst
 
-   
 
 For Developers
 ===================

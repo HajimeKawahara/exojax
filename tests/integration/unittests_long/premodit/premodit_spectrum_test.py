@@ -39,7 +39,7 @@ def test_rt(db, diffmode, fig=False):
                       auto_trange=[art.Tlow, art.Thigh])
 
     xsmatrix = opa.xsmatrix(Tarr, art.pressure)
-    dtau = art.opacity_profile_lines(xsmatrix, mmr_arr, opa.mdb.molmass,
+    dtau = art.opacity_profile_xs(xsmatrix, mmr_arr, opa.mdb.molmass,
                                      gravity)
     
     
@@ -88,7 +88,7 @@ def test_rt_for_single_broadening_parameters(db, diffmode, fig=False):
                           "value": None
                       })
     xsmatrix = opa.xsmatrix(Tarr, art.pressure)
-    dtau = art.opacity_profile_lines(xsmatrix, mmr_arr, opa.mdb.molmass,
+    dtau = art.opacity_profile_xs(xsmatrix, mmr_arr, opa.mdb.molmass,
                                      gravity)
     F0 = art.run(dtau, Tarr)
 

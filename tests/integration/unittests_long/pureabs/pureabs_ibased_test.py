@@ -30,7 +30,7 @@ def test_ArtEmisPure_ibased(db, diffmode, fig=False):
                       auto_trange=[art.Tlow, art.Thigh])
 
     xsmatrix = opa.xsmatrix(Tarr, art.pressure)
-    dtau = art.opacity_profile_lines(xsmatrix, mmr_arr, opa.mdb.molmass,
+    dtau = art.opacity_profile_xs(xsmatrix, mmr_arr, opa.mdb.molmass,
                                      gravity)
 
     #intenstiy based 8 stream

@@ -13,14 +13,14 @@ from exojax.spec.dtau_mmwl import dtauM_mmwl
 
 
 def layer_optical_depth(dParr, xsmatrix, mixing_ratio, mass, gravity):
-    """dtau of the molecular cross section.
+    """dtau matrix from the cross section matrix/vector.
 
     Note:
         opfac=bar_cgs/(m_u (g)). m_u: atomic mass unit. It can be obtained by fac=1.e3/m_u, where m_u = scipy.constants.m_u.
 
     Args:
         dParr: delta pressure profile (bar) [N_layer]
-        xsmatrix: cross section matrix (cm2) [N_layer, N_nus]
+        xsmatrix: cross section matrix (cm2) [N_layer, N_nus] or cross section vector (cm2) [N_nus]
         mixing_ratio: volume mixing ratio (VMR) or mass mixing ratio (MMR) [N_layer]
         mass: mean molecular weight for VMR or molecular mass for MMR
         gravity: gravity (cm/s2)

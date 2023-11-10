@@ -79,6 +79,15 @@ Cross Section using Various Opacity Calculators
 Others
 ================
 
+Scattering
+--------------------
+
+.. toctree::
+   :maxdepth: 1
+
+   userguide/rayleigh.rst
+
+
 Micro Chemical/Physical Processes
 --------------------------------------
 

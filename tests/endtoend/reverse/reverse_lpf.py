@@ -85,7 +85,7 @@ def model_c(nu1, y1):
     def obyo(y, tag, nusd, nus):
         # CO
         xsm_CO = opa.xsmatrix(Tarr, art.pressure)
-        dtaumCO = art.opacity_profile_lines(xsm_CO, mmr_arr, opa.mdb.molmass,
+        dtaumCO = art.opacity_profile_xs(xsm_CO, mmr_arr, opa.mdb.molmass,
                                             gravity)
         # CIA
         logacia = opacia.logacia_matrix(Tarr)
