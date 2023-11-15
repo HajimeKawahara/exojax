@@ -8,6 +8,11 @@
 # original reference temperature used in HITRAN/HITEMP in K
 Tref_original = 296.0
 
+#temperature at water triple point  (K)
+Ttp_water = 273.16 
+# 0 Celsius degree in Kelvin
+Tc_water = 273.15
+
 # cgs unit
 #Rs = 6.957 * 1.e10
 Rs = 6.9551 * 1.e10
@@ -48,10 +53,10 @@ opfac = 6.022140858549162e+29
 
 if __name__ == "__main__":
     #derivation of Gcr
-    from astropy.constants import G
+    from astropy.constants import G as G_astropy
     from astropy.constants import M_sun
     from astropy import units as u
     day = 24 * 3600 * u.s
-    Gu = (G * M_sun / day).value
+    Gu = (G_astropy * M_sun / day).value
     Gcr_val = Gu**(1.0 / 3.0) * 1.e-3
     print(Gcr_val)
