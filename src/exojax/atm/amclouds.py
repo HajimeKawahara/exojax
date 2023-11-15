@@ -1,48 +1,70 @@
 """Ackerman and Marley 2001 cloud model.
 
 - Ackerman and Marley (2001) ApJ 556, 872, hereafter AM01
+
 """
 from jax import jit
 import jax.numpy as jnp
 from jax import vmap
 
 
-@jit
-def VMRcloud(P, Pbase, fsed, VMRbase, kc=1):
-    """VMR of clouds based on AM01.
+def vmr_cloud_pressure(pressure, cloud_base_pressure, fsed, vmr_cloud_base, kc):
+    """volume mixing ratio of clouds based on AM01 a given single pressure.
 
     Args:
-        P: Pressure (bar)
-        Pbase: base pressure (bar)
+        pressure (float): pressure (bar) where we want to compute VMR of clouds
+        cloud_base_pressure: cloud base pressure (bar)
         fsed: fsed
-        VMRbase: VMR of condensate at cloud base
+        vmr_cloud_base: volume mixing ratio (VMR) of condensate at cloud base
         kc: constant ratio of condenstates to total mixing ratio
 
     Returns:
         VMR of condensates
     """
-    VMRc = jnp.where(Pbase > P, VMRbase*(P/Pbase)**(fsed/kc), 0.0)
-    return VMRc
+    return jnp.where(
+        cloud_base_pressure > pressure,
+        vmr_cloud_base * (pressure / cloud_base_pressure) ** (fsed / kc),
+        0.0,
+    )
 
 
 @jit
-def get_Pbase(Parr, Psat, VMR):
-    """get Pbase from an intersection of a T-P profile and Psat(T) curves
+def vmr_cloud_profile(pressures, cloud_base_pressure, fsed, vmr_cloud_base, kc=1):
+    """volume mixing ratio of clouds based on AM01 given pressure.
+
     Args:
-        Parr: pressure array
-        Psat: saturation pressure arrau
-        VMR: VMR for vapor
+        pressures: pressure array  (Nlayer) (bar) where we want to compute VMR of clouds
+        cloud_base_pressure: cloud base pressure (bar)
+        fsed: fsed
+        vmr_cloud_base: volume mixing ratio (VMR) of condensate at cloud base
+        kc: constant ratio of condenstates to total mixing ratio
 
     Returns:
-        Pbase: base pressure
+        VMR of condensates
+    """
+    vmaped_function = vmap(vmr_cloud_pressure, (0, None, None, None, None), 0)
+    return vmaped_function(pressures, cloud_base_pressure, fsed, vmr_cloud_base, kc)
+
+
+@jit
+def compute_cloud_base_pressure(pressure, saturation_pressure, vmr_vapor):
+    """computes cloud base pressure from an intersection of a T-P profile and Psat(T) curves
+    Args:
+        pressure: pressure array
+        saturation_presure: saturation pressure arrau
+        vmr_vapor: volume mixing ratio (VMR) for vapor
+
+    Returns:
+        cloud base pressure
     """
     # ibase=jnp.searchsorted((Psat/VMR)-Parr,0.0) # 231 +- 9.2 us
-    ibase = jnp.argmin(jnp.abs(jnp.log(Parr)-jnp.log(Psat) +
-                       jnp.log(VMR)))  # 73.8 +- 2.9 us
-    return Parr[ibase]
+    ibase = jnp.argmin(
+        jnp.abs(jnp.log(pressure) - jnp.log(saturation_pressure) + jnp.log(vmr_vapor))
+    )  # 73.8 +- 2.9 us
+    return pressure[ibase]
 
 
-def get_rw(vfs, Kzz, L, rarr):
+def get_rw(terminal_velocity, Kzz, L, rarr):
     """compute rw in AM01 implicitly defined by (11)
 
     Args:
@@ -54,7 +76,7 @@ def get_rw(vfs, Kzz, L, rarr):
     Returns:
        rw: rw (cm) in AM01. i.e. condensate size that balances an upward transport and sedimentation
     """
-    iscale = jnp.searchsorted(vfs, Kzz/L)
+    iscale = jnp.searchsorted(terminal_velocity, Kzz / L)
     rw = rarr[iscale]
     return rw
 
@@ -71,27 +93,31 @@ def get_rg(rw, fsed, alpha, sigmag):
 
     Returns
     """
-    rg = rw*fsed**(1.0/alpha)*jnp.exp(-(alpha/2.0+3.0)*(jnp.log(sigmag))**2)
+    rg = (
+        rw
+        * fsed ** (1.0 / alpha)
+        * jnp.exp(-(alpha / 2.0 + 3.0) * (jnp.log(sigmag)) ** 2)
+    )
     return rg
 
 
-def find_rw(rarr, vf, KzzpL):
+def find_rw(rarr, terminal_velocity, Kzz_over_L):
     """finding rw from rarr and terminal velocity array.
 
     Args:
         rarr: particle radius array (cm)
-        vf: terminal velocity (cm/s)
-        KzzpL: Kzz/L in Ackerman and Marley 2001
+        terminal_velocity: terminal velocity (cm/s)
+        Kzz_over_L: Kzz/L in Ackerman and Marley 2001
 
     Returns:
         rw in Ackerman and Marley 2001
     """
-    iscale = jnp.searchsorted(vf, KzzpL)
+    iscale = jnp.searchsorted(terminal_velocity, Kzz_over_L)
     rw = rarr[iscale]
     return rw
 
 
-def dtau_cloudgeo(Parr, muc, rhoc, mu, VMRc, rg, sigmag, g):
+def layer_optical_depth_cloudgeo(Parr, muc, rhoc, mu, VMRc, rg, sigmag, g):
     """the optical depth using a geometric cross-section approximation, based
     on (16) in AM01.
 
@@ -105,6 +131,6 @@ def dtau_cloudgeo(Parr, muc, rhoc, mu, VMRc, rg, sigmag, g):
        sigmag:sigmag parameter in the lognormal distribution of condensate size, defined by (9) in AM01
     """
 
-    fac = jnp.exp(-2.5*jnp.log(sigmag)**2)
-    dtau = 1.5*muc/mu*VMRc*fac/(rg*rhoc*g)*Parr*1.e6
+    fac = jnp.exp(-2.5 * jnp.log(sigmag) ** 2)
+    dtau = 1.5 * muc / mu * VMRc * fac / (rg * rhoc * g) * Parr * 1.0e6
     return dtau
