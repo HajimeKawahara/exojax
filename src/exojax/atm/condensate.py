@@ -1,7 +1,9 @@
 import pandas as pd
 import pkgutil
 from io import BytesIO
+import jax.numpy as jnp
 from exojax.utils.constants import Tc_water
+
 
 """condensate information.
 
@@ -51,8 +53,19 @@ def read_liquid_ammonia_density():
     density = amdlist[" density (g/cm3)"]
     return temperature.values, density.values
 
+def condensate_density_ammonia(T):
+    """condensate density of liquid ammonia as a function of T
+
+    Args:
+        T (_type_): temperature in Kelvin
+
+    Returns:
+        liquid ammonia density in g/cm3
+    """
+    tp, rhop = read_liquid_ammonia_density()
+    return jnp.interp(T, tp, rhop)
+
 
 if __name__ == "__main__":
     print(condensate_density["Fe"])
-    t, rho = read_liquid_ammonia_density()
-    print(rho)
+    print(condensate_density_ammonia(150.0))    
