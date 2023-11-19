@@ -6,11 +6,12 @@ from exojax.utils.constants import Tc_water
 
 
 """condensate information.
-
 - LF98 Lodders and Fegley (1998)
+- V.G. Manzhelii and A.M. Tolkachev, Sov. Phys. Solid State 5, 2506 (1964)
+- Lange's Handbook of Chemistry, 10th ed. page 1451 and 1468
 """
 
-# condensate density g/cm3
+# solid condensate density g/cm3
 condensate_density = {
     # from LF98 Table 1.18 (p37)
     "Fe": 7.875,  # solid
@@ -24,6 +25,9 @@ condensate_density = {
     "TiO2": 4.245,
     "MgSiO3": 3.194,
     "Mg2SiO4": 3.214,
+    # from virga, but originally from V.G. Manzhelii and A.M. Tolkachev, Sov. Phys. Solid State 5, 2506 (1964)
+    "NH3": 0.84,  # solid, 213K
+    "H2O": 0.93,  # solid, 213K
 }
 
 
@@ -53,8 +57,8 @@ def read_liquid_ammonia_density():
     density = amdlist[" density (g/cm3)"]
     return temperature.values, density.values
 
-def condensate_density_ammonia(T):
-    """condensate density of liquid ammonia as a function of T
+def condensate_density_liquid_ammonia(T):
+    """condensate density of liquid ammonia as a function of T from Lange's Handbook of Chemistry, 10th ed. page 1451 and 1468
 
     Args:
         T (_type_): temperature in Kelvin
@@ -68,4 +72,4 @@ def condensate_density_ammonia(T):
 
 if __name__ == "__main__":
     print(condensate_density["Fe"])
-    print(condensate_density_ammonia(150.0))    
+    print(condensate_density_liquid_ammonia(150.0))    
