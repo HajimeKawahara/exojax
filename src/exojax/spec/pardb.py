@@ -27,8 +27,8 @@ class PdbCloud(object):
             margin: margin for nurange (cm-1)
         """
         self.path = pathlib.Path(path)
-        self.download_and_unzip()
         self.condensate = condensate
+        self.download_and_unzip()
         self.bkgatm = bkgatm
         self.nurange = [np.min(nurange), np.max(nurange)]
         self.margin = margin
@@ -59,11 +59,15 @@ class PdbCloud(object):
                     f.write(data)                
                 shutil.unpack_archive(str(filepath),str(self.path))
             self.virga_condensates = get_file_names_without_extension(find_files_by_extension(str(self.path), ".refrind"))
-            print("Refractive indices of " ,self.virga_condensates, "are available.")
+            if self.condensate in self.virga_condensates:
+                self.refrind_path = self.path/pathlib.Path(self.condensate+".refrind")
+                print("Refractive index file found: ",self.refrind_path)
+            else:
+                print("No refrind file found. Refractive indices of " ,self.virga_condensates, "are available.")
         except:
             print('VIRGA refractive index download failed')
 
-        
+    
 
     def set_saturation_pressure_list(self):
         from exojax.atm.psat import psat_ammonia_AM01, psat_water_AM01
