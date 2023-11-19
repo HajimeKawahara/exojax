@@ -22,7 +22,7 @@ class PdbCloud(object):
 
         Args:
             condensate: condensate, such as NH3, H2O, MgSiO3 etc
-            bkgatm: background atmosphere, such as H2, air
+            bkgatm: background atmosphere, such as "H2", "O2", "N2", "Air" and so on. See exojax.atm.viscosity.
             nurange: wavenumber range list (cm-1) or wavenumber array
             margin: margin for nurange (cm-1)
         """
@@ -32,7 +32,7 @@ class PdbCloud(object):
         self.bkgatm = bkgatm
         self.nurange = [np.min(nurange), np.max(nurange)]
         self.margin = margin
-        self.vfactor, self.trange_vfactor = calc_vfactor(atm="H2")
+        self.vfactor, self.trange_vfactor = calc_vfactor(atm=self.bkgatm)
 
     def download_and_unzip(self):
         """Downloading virga refractive index data
