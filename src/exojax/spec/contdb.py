@@ -43,7 +43,10 @@ class CdbCIA(object):
         try:
             os.makedirs(str(self.path.parent), exist_ok=True)
             url = url_HITRANCIA()+self.path.name
-            urllib.request.urlretrieve(url, str(self.path))
+            data = urllib.request.urlopen(url).read()
+                with open(str(self.path), mode="wb") as f:
+                    f.write(data)   
+            #urllib.request.urlretrieve(url, str(self.path))
         except:
             print('HITRAN download failed')
 
