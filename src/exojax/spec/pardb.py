@@ -59,7 +59,7 @@ class PdbCloud(object):
                     f.write(data)                
                 shutil.unpack_archive(str(filepath),str(self.path))
             self.virga_condensates = get_file_names_without_extension(find_files_by_extension(str(self.path), ".refrind"))
-            print(self.virga_condensates)
+            print("Refractive indices of " ,self.virga_condensates, "are available.")
         except:
             print('VIRGA refractive index download failed')
 
