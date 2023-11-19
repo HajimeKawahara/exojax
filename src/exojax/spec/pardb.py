@@ -17,7 +17,7 @@ __all__ = ["PdbCloud"]
 
 
 class PdbCloud(object):
-    def __init__(self, condensate, bkgatm, nurange=[-np.inf, np.inf], margin=10.0, path="./.database/particulates"):
+    def __init__(self, condensate, bkgatm, nurange=[-np.inf, np.inf], margin=10.0, path="./.database/particulates/virga"):
         """Particulates Database for clouds
 
         Args:
@@ -27,37 +27,43 @@ class PdbCloud(object):
             margin: margin for nurange (cm-1)
         """
         self.path = pathlib.Path(path)
-        self.download()
+        self.download_and_unzip()
         self.condensate = condensate
         self.bkgatm = bkgatm
         self.nurange = [np.min(nurange), np.max(nurange)]
         self.margin = margin
         self.vfactor, self.trange_vfactor = calc_vfactor(atm="H2")
 
-    def download(self):
+    def download_and_unzip(self):
         """Downloading virga refractive index data
 
         Note:
-           The download URL is written in exojax.utils.url.
+            The download URL is written in exojax.utils.url.
         """
         import urllib.request
         import os
+        import shutil
         from exojax.utils.url import url_virga
+        from exojax.utils.files import find_files_by_extension
+        from exojax.utils.files import get_file_names_without_extension
         try:
             os.makedirs(str(self.path), exist_ok=True)
             filepath=self.path/"virga.zip"
             if (filepath).exists():
-                print(str(filepath), " exists.")
+                print(str(filepath), " exists. Remove it if you wanna re-download and unzip.")
             else:
                 print("Downloading ", url_virga())
+                #urllib.request.urlretrieve(url_virga(), str(filepath))
                 data = urllib.request.urlopen(url_virga()).read()
                 with open(str(filepath), mode="wb") as f:
-                    f.write(data)
-                #urllib.request.urlretrieve(url_virga(), str(filepath))
-                
+                    f.write(data)                
+                shutil.unpack_archive(str(filepath),str(self.path))
+            self.virga_condensates = get_file_names_without_extension(find_files_by_extension(str(self.path), ".refrind"))
+            print(self.virga_condensates)
         except:
-            print('VIRGA download failed')
+            print('VIRGA refractive index download failed')
 
+        
 
     def set_saturation_pressure_list(self):
         from exojax.atm.psat import psat_ammonia_AM01, psat_water_AM01
