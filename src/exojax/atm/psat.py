@@ -1,6 +1,7 @@
 """Saturation Vapor Pressure."""
 import jax.numpy as jnp
-from exojax.utils.constants import Tc_water, Ttp_water    
+from exojax.utils.constants import Tc_water, Ttp_water
+
 
 def psat_water_Magnus(T):
     """
@@ -16,13 +17,13 @@ def psat_water_Magnus(T):
         saturation vapor pressure (bar)
     """
     Tcelcius = T - Tc_water
-    
+
     return 6.1094e-3 * jnp.exp(17.625 * (Tcelcius) / ((Tcelcius) + 243.04))
 
 
 def psat_water_AM01(T):
     """
-    Saturation Vapor Pressure for water ()
+    Saturation Vapor Pressure for water (but for T<1048K)
 
     Note:
         Taken from Ackerman and Marley 2001 Appendix A (A4) see also their errata and updated
@@ -35,20 +36,27 @@ def psat_water_AM01(T):
         saturation vapor pressure (bar)
     """
     Tcelcius = T - Tc_water
-    
+    Tcrit = 1048. + Tc_water  # K
     return jnp.where(
-        T > Ttp_water,
-        _psat_water_buck_liquid(Tcelcius),
-        _psat_water_buck_ice(Tcelcius),
+        T > Tcrit,
+        600.0,
+        jnp.where(
+            T < Tc_water,            
+            _psat_water_buck_ice(Tcelcius),
+            _psat_water_buck_liquid(Tcelcius),
+        )
     )
-    
+
 
 def _psat_water_buck_ice(T):
-    return 0.0061115*jnp.exp((23.036*T - T**2/333.7)/(T + 279.82))
+    return 0.0061115 * jnp.exp((23.036 * T - T**2 / 333.7) / (T + 279.82))
+
 
 def _psat_water_buck_liquid(T):
-    #return 0.0061121*jnp.exp((18.729*T - T**2/227.3)/(T + 257.87)) AM Appendix but old
-    return 0.0061121*jnp.exp((18.678*T - T**2/234.5)/(T + 257.14)) #from wikipedia (updated)
+    # return 0.0061121*jnp.exp((18.729*T - T**2/227.3)/(T + 257.87)) AM Appendix but old
+    return 0.0061121 * jnp.exp(
+        (18.678 * T - T**2 / 234.5) / (T + 257.14)
+    )  # from wikipedia (updated)
 
 
 def psat_ammonia_AM01(T):
@@ -70,7 +78,7 @@ def psat_enstatite_AM01(T):
     """Saturation Vapor Pressure for Enstatite (MgSiO3)
 
     Note:
-        Taken from Ackerman and Marley 2001 Appendix A (A4) see also their errata.
+        Taken from Ackerman and Marley 2001 Appendix A (A4) see also their errata, originally from  Barshay and Lewis (1976)
 
     Args:
         T: temperature (K)
@@ -80,22 +88,22 @@ def psat_enstatite_AM01(T):
     """
     return jnp.exp(25.37 - 58663.0 / T)
 
+
 def psat_Fe_AM01(T):
     """
-    Saturation Vapor Pressure for iron ()
+    Saturation Vapor Pressure for iron
 
     Note:
-        Taken from Ackerman and Marley 2001 Appendix A (A3) 
-        
+        Taken from Ackerman and Marley 2001 Appendix A (A3), originally from  Barshay and Lewis (1976)
+
     Args:
         T: temperature (K)
 
     Returns:
-        saturation vapor pressure (bar)        
+        saturation vapor pressure (bar)
     """
-    Tc_Fe = 1800.0 
-    
-    
+    Tc_Fe = 1800.0
+
     return jnp.where(
         T > Tc_Fe,
         _psat_Fe_liquid(T),
@@ -136,7 +144,17 @@ def _psat_Fe_liquid(T):
 if __name__ == "__main__":
     import numpy as np
     import matplotlib.pyplot as plt
-    t = np.linspace(0.0,3000.0,1000)
-    plt.plot(t, psat_Fe_AM01(t))
+
+    t = np.linspace(100.0, 3000.0, 1000)
+    plt.plot(t, psat_water_AM01(t), label="H2O", color="C0")
+    plt.plot(Tc_water, psat_water_AM01(Tc_water), "*", color="C0")
+
+    t = np.linspace(400.0, 3000.0, 1000)
+    plt.plot(t, psat_Fe_AM01(t), label="Fe", color="C1")
+    plt.plot(1800.0, psat_Fe_AM01(1800.0), "*", label="liquid/soild boundary", color="C1")
+    plt.xlabel("T (K)")
+    plt.ylabel("P (bar)")
     plt.yscale("log")
+    plt.xscale("log")
+    plt.legend()
     plt.show()
