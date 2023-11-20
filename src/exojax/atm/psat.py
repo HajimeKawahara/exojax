@@ -80,8 +80,30 @@ def psat_enstatite_AM01(T):
     """
     return jnp.exp(25.37 - 58663.0 / T)
 
+def psat_Fe_AM01(T):
+    """
+    Saturation Vapor Pressure for iron ()
 
-def psat_Fe_solid(T):
+    Note:
+        Taken from Ackerman and Marley 2001 Appendix A (A3) 
+        
+    Args:
+        T: temperature (K)
+
+    Returns:
+        saturation vapor pressure (bar)        
+    """
+    Tc_Fe = 1800.0 
+    
+    
+    return jnp.where(
+        T > Tc_Fe,
+        _psat_Fe_liquid(T),
+        _psat_Fe_solid(T),
+    )
+
+
+def _psat_Fe_solid(T):
     """Saturation Vapor Pressure for Solid Fe (Fe)
 
     Note:
@@ -96,7 +118,7 @@ def psat_Fe_solid(T):
     return jnp.exp(15.71 - 47664.0 / T)
 
 
-def psat_Fe_liquid(T):
+def _psat_Fe_liquid(T):
     """Saturation Vapor Pressure for liquid Fe (Fe)
 
     Note:
@@ -109,3 +131,12 @@ def psat_Fe_liquid(T):
         saturation vapor pressure (bar)
     """
     return jnp.exp(9.86 - 37120.0 / T)
+
+
+if __name__ == "__main__":
+    import numpy as np
+    import matplotlib.pyplot as plt
+    t = np.linspace(0.0,3000.0,1000)
+    plt.plot(t, psat_Fe_AM01(t))
+    plt.yscale("log")
+    plt.show()
