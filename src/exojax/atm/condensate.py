@@ -5,10 +5,14 @@ import jax.numpy as jnp
 from exojax.utils.constants import Tc_water
 
 
-"""condensate information.
 
+"""condensate information.
 - LF98 Lodders and Fegley (1998)
 """
+
+######################
+# CONDENSATE DENSITY #
+######################
 
 # condensate density g/cm3
 condensate_density = {
@@ -24,6 +28,8 @@ condensate_density = {
     "TiO2": 4.245,
     "MgSiO3": 3.194,
     "Mg2SiO4": 3.214,
+    
+    "H2O": 1.00
 }
 
 
@@ -37,6 +43,7 @@ name2formula = {
     "rutile": "TiO2",
     "enstatite": "MgSiO3",
     "forstelite": "Mg2SiO4",
+    "water": "H2O"
 }
 
 
@@ -65,6 +72,14 @@ def condensate_density_ammonia(T):
     tp, rhop = read_liquid_ammonia_density()
     return jnp.interp(T, tp, rhop)
 
+
+###############################
+# CONDENSATE REFRACTIVE INDEX #
+###############################
+
+#condensate_refractive_ = {
+#    "Fe": 
+#}
 
 if __name__ == "__main__":
     print(condensate_density["Fe"])
