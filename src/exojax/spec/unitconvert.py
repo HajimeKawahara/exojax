@@ -36,11 +36,11 @@ def wav2nu(wav, unit):
     """wavelength to wavenumber.
 
     Args:
-       wav: wavelength array in ascending/descending order
-       unit: unit of wavelength
+        wav: wavelength array in ascending/descending order
+        unit: unit of wavelength
 
     Returns:
-       wavenumber (cm-1) in ascending order
+        wavenumber (cm-1) in ascending order
     """
 
     conversion_factors = {
