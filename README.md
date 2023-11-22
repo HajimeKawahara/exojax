@@ -18,13 +18,16 @@ ExoJAX is at least compatible with
 
 <details><summary>ExoJAX Classes</summary>
 
-- Databases: xdb (x=m: molecular, x=a: atomic. x=p: particulates)
+- Databases: *db (mdb: molecular, adb: atomic, cdb:continuum, pdb: particulates)
 - Opacity Calculators: opa  (i.e. Voigt profile)
 - Atmospheric Radiative Transfer: art (emission w, w/o scattering, refelction, transmission)
 - Atompsheric Microphysics: amp (clouds etc)
 
 </details>
 
+## Get Started 
+
+See [this page](http://secondearths.sakura.ne.jp/exojax/develop/tutorials/get_started.html) for the first step!
 
 ## Functions
 
@@ -79,8 +82,6 @@ F = art.run(dtau, Tarr)
 <img src="https://user-images.githubusercontent.com/15956904/116488770-286ea000-a8ce-11eb-982d-7884b423592c.png" Titie="exojax auto \emission spectrum" Width=850px> 
 
 </details>
-
-See [this page](http://secondearths.sakura.ne.jp/exojax/develop/tutorials/get_started.html) for the first step!
 
 <details><summary>Transmission Spectrum :heavy_check_mark: </summary></details>
 <details><summary>Reflection Spectrum :heavy_check_mark: </summary></details>
