@@ -164,4 +164,5 @@ if __name__ == "__main__":
     plt.yscale("log")
     plt.xscale("log")
     plt.legend()
+    plt.savefig("psat.png")
     plt.show()
