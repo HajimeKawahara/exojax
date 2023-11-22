@@ -15,7 +15,17 @@ ExoJAX is at least compatible with
 - [JAXopt](https://github.com/google/jaxopt) (differentiable optimizer)
 
 <img src="https://user-images.githubusercontent.com/15956904/222950543-6de25bb2-48f2-4bc7-a588-77daa105442e.png" Titie="exojax" Width=850px>
- 
+
+<details><summary>ExoJAX Classes</summary>
+
+- Databases: xdb (x=m: molecular, x=a: atomic. x=p: particulates)
+- Opacity Calculators: opa  (i.e. Voigt profile)
+- Atmospheric Radiative Transfer: art (emission w, w/o scattering, refelction, transmission)
+- Atompsheric Microphysics: amp (clouds etc)
+
+</details>
+
+
 ## Functions
 
 <details open><summary>Voigt Profile :heavy_check_mark: </summary>
@@ -48,6 +58,8 @@ xsv = opa.xsvector(1000.0, 1.0) # cross section for 1000K, 1 bar
 
 </details>
 
+
+
 <details><summary>Do you just want to plot the line strength at T=1000K? </summary>
 
 ```python
@@ -68,19 +80,11 @@ F = art.run(dtau, Tarr)
 
 </details>
 
-See http://secondearths.sakura.ne.jp/exojax/develop/tutorials/get_started.html for the first step!
+See [this page](http://secondearths.sakura.ne.jp/exojax/develop/tutorials/get_started.html) for the first step!
 
 <details><summary>Transmission Spectrum :heavy_check_mark: </summary></details>
 <details><summary>Reflection Spectrum :heavy_check_mark: </summary></details>
 
-<details><summary>ExoJAX Classes: </summary>
-
-- Databases: xdb (x=m: molecular, x=a: atomic. x=p: particulates)
-- Opacity Calculators: opa  
-- Atmospheric Radiative Transfer: art
-- Atompsheric Microphysics: amp
-
-</details>
 
 
 
