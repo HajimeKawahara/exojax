@@ -73,6 +73,16 @@ See http://secondearths.sakura.ne.jp/exojax/develop/tutorials/get_started.html f
 <details><summary>Transmission Spectrum :heavy_check_mark: </summary></details>
 <details><summary>Reflection Spectrum :heavy_check_mark: </summary></details>
 
+<details><summary>ExoJAX Classes: </summary>
+
+- Databases: xdb (x=m: molecular, x=a: atomic. x=p: particulates)
+- Opacity Calculators: opa  
+- Atmospheric Radiative Transfer: art
+- Atompsheric Microphysics: amp
+
+</details>
+
+
 
 ## Installation
 
@@ -86,7 +96,7 @@ or
 python setup.py install
 ```
 
-<details><summary> Note on installation w/ GPU support</summary>
+<details><summary>Note on installation w/ GPU support</summary>
 
 :books: You need to install CUDA, NumPyro, JAX w/ NVIDIA GPU support, and cuDNN. 
 
@@ -110,15 +120,6 @@ pip install --upgrade "jax[cuda]" -f https://storage.googleapis.com/jax-releases
 ```
 
 Please visit [here](https://github.com/google/jax) for details.
-
-</details>
-
-<details><summary>ExoJAX Classes: </summary>
-
-- Databases: xdb (x=m: molecular, x=a: atomic. x=p: particulates)
-- Opacity Calculators: opa  
-- Atmospheric Radiative Transfer: art
-- Atompsheric Microphysics: amp
 
 </details>
 
