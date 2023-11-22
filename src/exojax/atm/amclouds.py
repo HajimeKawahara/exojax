@@ -64,6 +64,24 @@ def compute_cloud_base_pressure(pressure, saturation_pressure, vmr_vapor):
     return pressure[ibase]
 
 
+@jit
+def compute_cloud_base_pressure_index(pressure, saturation_pressure, vmr_vapor):
+    """computes cloud base pressure from an intersection of a T-P profile and Psat(T) curves
+    Args:
+        pressure: pressure array
+        saturation_presure: saturation pressure arrau
+        vmr_vapor: volume mixing ratio (VMR) for vapor
+
+    Returns:
+        int: cloud base pressure index
+    """
+    # ibase=jnp.searchsorted((Psat/VMR)-Parr,0.0) # 231 +- 9.2 us
+    ibase = jnp.argmin(
+        jnp.abs(jnp.log(pressure) - jnp.log(saturation_pressure) + jnp.log(vmr_vapor))
+    )  # 73.8 +- 2.9 us
+    return ibase
+
+
 def get_rw(terminal_velocity, Kzz, L, rarr):
     """compute rw in AM01 implicitly defined by (11)
 
