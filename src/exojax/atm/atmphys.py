@@ -4,6 +4,7 @@ from exojax.atm.amclouds import get_rg
 from exojax.atm.amclouds import find_rw
 from exojax.atm.viscosity import calc_vfactor, eta_Rosner
 from exojax.atm.amclouds import compute_cloud_base_pressure_index
+from exojax.atm.amclouds import compute_cloud_base_pressure
 from exojax.atm.amclouds import vmr_cloud_profile
 from exojax.atm.vterm import terminal_velocity
 from exojax.atm.atmprof import pressure_scale_height
@@ -86,6 +87,10 @@ class AmpAmcloud(AmpCloud):
         psat = self.pdb.saturation_pressure(temperatures)
 
         # cloud base pressure/temperature
+        print(pressures)
+        print(psat)
+        print(VMR)
+        p_base = compute_cloud_base_pressure(pressures, psat, VMR)
         ibase = compute_cloud_base_pressure_index(pressures, psat, VMR)
         pressure_base = pressures[ibase]
         temperature_base = temperatures[ibase]

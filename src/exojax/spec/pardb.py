@@ -37,6 +37,9 @@ class PdbCloud(object):
         self.nurange = [np.min(nurange), np.max(nurange)]
         self.margin = margin
 
+        self.set_saturation_pressure_list()
+        self.set_condensate_density()
+
     def download_and_unzip(self):
         """Downloading virga refractive index data
 
@@ -84,20 +87,26 @@ class PdbCloud(object):
 
     def load_virga(self):
         from exojax.spec.unitconvert import wav2nu
+
         _, wave, nn, kk = np.loadtxt(
             open(self.refrind_path, "rt").readlines(), unpack=True, usecols=[0, 1, 2, 3]
         )
-        self.refraction_index_wavenumber = wav2nu(wave, "um")    #wave in micron
+        self.refraction_index_wavenumber = wav2nu(wave, "um")  # wave in micron
         self.refraction_index = nn + kk * (1j)
 
     def set_saturation_pressure_list(self):
-        from exojax.atm.psat import psat_ammonia_AM01, psat_water_AM01, psat_Fe_AM01, psat_enstatite_AM01
+        from exojax.atm.psat import (
+            psat_ammonia_AM01,
+            psat_water_AM01,
+            psat_Fe_AM01,
+            psat_enstatite_AM01,
+        )
 
         self.saturation_pressure_solid_list = {
             "NH3": psat_ammonia_AM01,
             "H2O": psat_water_AM01,
-            "MgSiO3":psat_enstatite_AM01,
-            "Fe":psat_Fe_AM01,
+            "MgSiO3": psat_enstatite_AM01,
+            "Fe": psat_Fe_AM01,
         }
 
     def set_condensate_density(self):
@@ -105,8 +114,8 @@ class PdbCloud(object):
 
         self.rhoc = condensate_density[self.condensate]
 
-    def saturation_pressure(self):
-        return self.saturation_pressure_solid_list[self.condensate]
+    def saturation_pressure(self, temperatures):
+        return self.saturation_pressure_solid_list[self.condensate](temperatures)
 
 
 if __name__ == "__main__":
