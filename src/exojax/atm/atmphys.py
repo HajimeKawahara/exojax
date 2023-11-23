@@ -20,11 +20,21 @@ class AmpCloud():
     """
     def __init__(self):
         self.cloudmodel = None # cloud model
-        
+        self.bkgatm = None
+
+    def set_background_atmosphere(self, temperatures):
+        self.vfactor, self.vfactor_trange = calc_vfactor(atm=self.bkgatm)
+        self.eta_dvisc = eta_Rosner(temperatures, self.vfactor)
+
+    def set_condensates_scale_array(self, size_min=1.e-5, size_max=1.e-3, nsize=1000):
+        logsize_min = jnp.log10(size_min)
+        logsize_max = jnp.log10(size_max)
+        self.rcond_arr = jnp.logspace(logsize_min, logsize_max, nsize)  #cm
+
 
 class AmpAmcloud(AmpCloud):
     
-    def __init__(self, pdb, bkgatm="H2"):
+    def __init__(self, pdb):
         """initialization of amp for Ackerman and Marley 2001 cloud model
 
         Args:
@@ -32,23 +42,9 @@ class AmpAmcloud(AmpCloud):
         """
         self.cloudmodel = "Ackerman and Marley (2001)"
         self.pdb = pdb
-        self.bkgatm = bkgatm
-
-    def set_background_atmosphere(self, pressures, temperatures, mean_molecular_weight):
-        self.vfactor, self.vfactor_trange = calc_vfactor(atm=self.bkgatm)
-        self.eta_dvisc = eta_Rosner(temperatures, self.vfactor)
-        
-
-    
-
-    def set_condensates_scale_array(self, size_min=1.e-5, size_max=1.e-3, nsize=1000)
-        logsize_min = jnp.log10(size_min)
-        logsize_max = jnp.log10(size_max)
-        self.rcond_arr = jnp.logspace(logsize_min, logsize_max, nsize)  #cm
-
+        self.bkgatm = pdb.bkgatm
 
     def calc_ammodel(pressures, temperatures, mean_molecular_weight, gravity, fsed, sigmag, Kzz, VMR, alphav=2.0):
-
 
         # density difference 
         rho  = mean_molecular_weight * m_u * pressures / (kB * temperatures)
