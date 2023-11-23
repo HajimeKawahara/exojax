@@ -22,9 +22,16 @@ class AmpCloud():
         self.cloudmodel = None # cloud model
         self.bkgatm = None
 
-    def set_background_atmosphere(self, temperatures):
-        self.vfactor, self.vfactor_trange = calc_vfactor(atm=self.bkgatm)
-        self.eta_dvisc = eta_Rosner(temperatures, self.vfactor)
+    def check_temperature_range(self, temperatures):
+        _, vfactor_temperature = calc_vfactor(atm=self.bkgatm)
+        if jnp.min(temperatures) < jnp.min(vfactor_temperature):
+            raise ValueError("invalid T range")
+        if jnp.max(temperatures) > jnp.max(vfactor_temperature):
+            raise ValueError("invalid T range")
+
+    def dynamic_viscosity(self, temperatures):
+        vfactor, _ = calc_vfactor(atm=self.bkgatm)
+        return eta_Rosner(temperatures, vfactor)
 
     def set_condensates_scale_array(self, size_min=1.e-5, size_max=1.e-3, nsize=1000):
         logsize_min = jnp.log10(size_min)
@@ -34,23 +41,23 @@ class AmpCloud():
 
 class AmpAmcloud(AmpCloud):
     
-    def __init__(self, pdb):
+    def __init__(self, pdb, bkgatm):
         """initialization of amp for Ackerman and Marley 2001 cloud model
 
         Args:
             pdb (_type_): particulates database (pdb) 
+            bkgatm: background atmosphere, such as H2, Air
         """
         self.cloudmodel = "Ackerman and Marley (2001)"
         self.pdb = pdb
-        self.bkgatm = pdb.bkgatm
-
-    def calc_ammodel(pressures, temperatures, mean_molecular_weight, gravity, fsed, sigmag, Kzz, VMR, alphav=2.0):
+        self.bkgatm = bkgatm
+        
+    def calc_ammodel(self, pressures, temperatures, mean_molecular_weight, gravity, fsed, sigmag, Kzz, VMR, alphav=2.0):
 
         # density difference 
         rho  = mean_molecular_weight * m_u * pressures / (kB * temperatures)
         drho = self.pdb.rhoc - rho
         
-
         # saturation pressure
         psat = self.pdb.saturation_pressure(temperatures)
         
@@ -62,13 +69,15 @@ class AmpAmcloud(AmpCloud):
         # cloud scale height L
         L_cloud = pressure_scale_height(gravity, temperature_base, mean_molecular_weight)
 
-        
+        #viscosity
+        eta_dvisc = self.dynamic_viscosity(temperatures)
+
         #terminal velocity
         vf_vmap = vmap(terminal_velocity, (None, None, 0, 0, 0))
-        vterminal = vf_vmap(self.rcond_arr, gravity, self.eta_dvisc, drho, rho)
-        vfind_rw = vmap(find_rw, (None, 0, None), 0)
-
+        vterminal = vf_vmap(self.rcond_arr, gravity, eta_dvisc, drho, rho)
+        
         # condensate size
+        vfind_rw = vmap(find_rw, (None, 0, None), 0)
         rw = vfind_rw(self.rcond_arr, vterminal, Kzz / L_cloud)
         rg = get_rg(rw, fsed, alphav, sigmag)
 

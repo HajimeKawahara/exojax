@@ -20,7 +20,6 @@ class PdbCloud(object):
     def __init__(
         self,
         condensate,
-        bkgatm,
         nurange=[-np.inf, np.inf],
         margin=10.0,
         path="./.database/particulates/virga",
@@ -29,17 +28,14 @@ class PdbCloud(object):
 
         Args:
             condensate: condensate, such as NH3, H2O, MgSiO3 etc
-            bkgatm: background atmosphere, such as "H2", "O2", "N2", "Air" and so on. See exojax.atm.viscosity.
             nurange: wavenumber range list (cm-1) or wavenumber array
             margin: margin for nurange (cm-1)
         """
         self.path = pathlib.Path(path)
         self.condensate = condensate
         self.download_and_unzip()
-        self.bkgatm = bkgatm
         self.nurange = [np.min(nurange), np.max(nurange)]
         self.margin = margin
-        self.vfactor, self.trange_vfactor = calc_vfactor(atm=self.bkgatm)
 
     def download_and_unzip(self):
         """Downloading virga refractive index data
@@ -114,4 +110,4 @@ class PdbCloud(object):
 
 
 if __name__ == "__main__":
-    pdb = PdbCloud("NH3", "H2")
+    pdb = PdbCloud("NH3")
