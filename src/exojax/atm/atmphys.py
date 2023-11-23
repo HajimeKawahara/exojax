@@ -37,7 +37,6 @@ class AmpCloud:
         if maxt > vmaxt:
             self._issue_warning(maxt, vmaxt, "max", "larger")
 
-    
     def dynamic_viscosity(self, temperatures):
         vfactor, _ = calc_vfactor(atm=self.bkgatm)
         return eta_Rosner(temperatures, vfactor)
@@ -53,10 +52,8 @@ class AmpCloud:
         )
 
 
-
-
 class AmpAmcloud(AmpCloud):
-    def __init__(self, pdb, bkgatm):
+    def __init__(self, pdb, bkgatm, size_min=1.0e-5, size_max=1.0e-3, nsize=1000):
         """initialization of amp for Ackerman and Marley 2001 cloud model
 
         Args:
@@ -66,6 +63,8 @@ class AmpAmcloud(AmpCloud):
         self.cloudmodel = "Ackerman and Marley (2001)"
         self.pdb = pdb
         self.bkgatm = bkgatm
+
+        self.set_condensates_scale_array(size_min, size_max, nsize)
 
     def calc_ammodel(
         self,
@@ -87,10 +86,6 @@ class AmpAmcloud(AmpCloud):
         psat = self.pdb.saturation_pressure(temperatures)
 
         # cloud base pressure/temperature
-        print(pressures)
-        print(psat)
-        print(VMR)
-        p_base = compute_cloud_base_pressure(pressures, psat, VMR)
         ibase = compute_cloud_base_pressure_index(pressures, psat, VMR)
         pressure_base = pressures[ibase]
         temperature_base = temperatures[ibase]
@@ -115,4 +110,4 @@ class AmpAmcloud(AmpCloud):
         # VMR of condensates
         VMRc = vmr_cloud_profile(pressures, pressure_base, fsed, VMR)
 
-        return rg, sigmag, VMRc  # , self.pdb.rhoc, self.molmass_c
+        return rg, VMRc  # , self.pdb.rhoc, self.molmass_c
