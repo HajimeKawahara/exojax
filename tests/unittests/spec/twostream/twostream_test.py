@@ -1,6 +1,9 @@
 from exojax.spec.twostream import compute_tridiag_diagonals_and_vector
 import jax.numpy as jnp
 import numpy as np
+from jax.config import config
+
+config.update("jax_enable_x64", True)
 
 
 def samples_fluxadding_flux2st():
