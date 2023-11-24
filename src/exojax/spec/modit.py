@@ -297,7 +297,7 @@ def set_ditgrid_matrix_hitran(mdb, fT, Parr, Pself_ref, R, molmass,
 
 @jit
 def vald_each(Tarr, PH, PHe, PHH, R, qt_284_T, QTmask, \
-               ielem, iion, atomicmass, ionE, dev_nu_lines, logsij0, elower, eupper, gamRad, gamSta, vdWdamp):
+               ielem, iion, atomicmass, ionE, dev_nu_lines, logsij0, elower, eupper, gamRad, gamSta, vdWdamp, Tref):
     """Compute atomic line information required for MODIT for separated EACH species, using parameters attributed in VALD separated atomic database (asdb).
 
     Args:
@@ -319,6 +319,7 @@ def vald_each(Tarr, PH, PHe, PHH, R, qt_284_T, QTmask, \
         gamRad:  log of gamma of radiation damping (s-1)
         gamSta:  log of gamma of Stark damping (s-1)
         vdWdamp:  log of (van der Waals damping constant / neutral hydrogen number) (s-1)
+        Tref: reference temperature
 
     Returns:
         SijM:  line intensity matrix [N_layer x N_line]
@@ -363,28 +364,28 @@ def vald_all(asdb, Tarr, PH, PHe, PHH, R):
     T_gQT = asdb.T_gQT
     qt_284_T = vmap(interp_QT284, (0, None, None))(Tarr, T_gQT, gQT_284species)
 
-    SijMS, ngammaLMS, nsigmaDlS = jit(vmap(vald_each, (None, None, None, None, None, None, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, )))\
+    SijMS, ngammaLMS, nsigmaDlS = jit(vmap(vald_each, (None, None, None, None, None, None, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, )))\
         (Tarr, PH, PHe, PHH, R, qt_284_T, \
                  asdb.QTmask, asdb.ielem, asdb.iion, asdb.atomicmass, asdb.ionE, \
-                       asdb.dev_nu_lines, asdb.logsij0, asdb.elower, asdb.eupper, asdb.gamRad, asdb.gamSta, asdb.vdWdamp)
+                       asdb.dev_nu_lines, asdb.logsij0, asdb.elower, asdb.eupper, asdb.gamRad, asdb.gamSta, asdb.vdWdamp, asdb.Tref)
 
     return SijMS, ngammaLMS, nsigmaDlS
 
 
-def setdgm_vald_each(ielem, iion, atomicmass, ionE, dev_nu_lines, logsij0, elower, eupper, gamRad, gamSta, vdWdamp, \
+def setdgm_vald_each(ielem, iion, atomicmass, ionE, dev_nu_lines, logsij0, elower, eupper, gamRad, gamSta, vdWdamp, Tref, \
                 QTmask, T_gQT, gQT_284species, PH, PHe, PHH, R, fT, dit_grid_resolution, *kargs):
     warn_msg = " Use `modit.set_ditgrid_matrix_vald_each` instead"
     warnings.warn(warn_msg, FutureWarning)
     return set_ditgrid_matrix_vald_each(ielem, iion, atomicmass, ionE,
                                         dev_nu_lines, logsij0, elower, eupper,
-                                        gamRad, gamSta, vdWdamp, QTmask, T_gQT,
+                                        gamRad, gamSta, vdWdamp, Tref, QTmask, T_gQT,
                                         gQT_284species, PH, PHe, PHH, R, fT,
                                         dit_grid_resolution, *kargs)
 
 
 def set_ditgrid_matrix_vald_each(ielem, iion, atomicmass, ionE, dev_nu_lines,
                                  logsij0, elower, eupper, gamRad, gamSta,
-                                 vdWdamp, QTmask, T_gQT, gQT_284species, PH,
+                                 vdWdamp, Tref, QTmask, T_gQT, gQT_284species, PH,
                                  PHe, PHH, R, fT, dit_grid_resolution, *kargs):
     """Easy Setting of DIT Grid Matrix (dgm) using VALD.
 
@@ -400,6 +401,7 @@ def set_ditgrid_matrix_vald_each(ielem, iion, atomicmass, ionE, dev_nu_lines,
         gamRad:  log of gamma of radiation damping (s-1)
         gamSta:  log of gamma of Stark damping (s-1)
         vdWdamp:  log of (van der Waals damping constant / neutral hydrogen number) (s-1)
+        Tref: reference temperature
         T_gQT:  temperature in the grid obtained from the adb instance
         gQT_284species:  partition function in the grid from the adb instance
         QTmask:  array of index of Q(Tref) grid (gQT) for each line
@@ -421,7 +423,7 @@ def set_ditgrid_matrix_vald_each(ielem, iion, atomicmass, ionE, dev_nu_lines,
                                                        gQT_284species)
         SijM, ngammaLM, nsigmaDl = vald_each(Tarr, PH, PHe, PHH, R, qt_284_T, \
              QTmask, ielem, iion, atomicmass, ionE, \
-                   dev_nu_lines, logsij0, elower, eupper, gamRad, gamSta, vdWdamp)
+                                             dev_nu_lines, logsij0, elower, eupper, gamRad, gamSta, vdWdamp, Tref)
         floop = lambda c, arr: (c,
                                 jnp.nan_to_num(arr,
                                                nan=jnp.nanmin(arr),
@@ -473,7 +475,7 @@ def set_ditgrid_matrix_vald_all(asdb, PH, PHe, PHH, R, fT, dit_grid_resolution,
     lendgm = []
     for i in range(asdb.N_usp):
         dgm_ngammaL_sp = set_ditgrid_matrix_vald_each(asdb.ielem[i], asdb.iion[i], asdb.atomicmass[i], asdb.ionE[i], \
-            asdb.dev_nu_lines[i], asdb.logsij0[i], asdb.elower[i], asdb.eupper[i], asdb.gamRad[i], asdb.gamSta[i], asdb.vdWdamp[i], \
+            asdb.dev_nu_lines[i], asdb.logsij0[i], asdb.elower[i], asdb.eupper[i], asdb.gamRad[i], asdb.gamSta[i], asdb.vdWdamp[i], asdb.Tref, \
             asdb.QTmask[i], T_gQT, gQT_284species, PH, PHe, PHH, R, fT, dit_grid_resolution, *kargs)
         dgm_ngammaLS_BeforePadding.append(dgm_ngammaL_sp)
         lendgm.append(dgm_ngammaL_sp.shape[1])

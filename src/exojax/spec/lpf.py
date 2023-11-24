@@ -86,7 +86,7 @@ def vald(adb, Tarr, PH, PHe, PHH):
 
 def vald_each(Tarr, PH, PHe, PHH, \
             qt_284_T, QTmask, \
-             logsij0, nu_lines, ielem, iion, dev_nu_lines, elower, eupper, atomicmass, ionE, gamRad, gamSta, vdWdamp, ):
+              logsij0, nu_lines, ielem, iion, dev_nu_lines, elower, eupper, atomicmass, ionE, gamRad, gamSta, vdWdamp, Tref, ):
     """Compute VALD line information required for LPF for separated each species
     
     Args:
