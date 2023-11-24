@@ -68,7 +68,7 @@ we need to use float32 for jax.
 
 .. code:: ipython3
 
-    Sij=line_strength(Tfix,mdbCO.logsij0,mdbCO.nu_lines,mdbCO.elower,qt)
+    Sij=line_strength(Tfix,mdbCO.logsij0,mdbCO.nu_lines,mdbCO.elower,qt,mdbCO.Tref)
 
 Then, compute the Lorentz gamma factor (pressure+natural broadening)
 
