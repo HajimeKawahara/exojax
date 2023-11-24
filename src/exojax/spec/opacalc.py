@@ -620,7 +620,7 @@ class OpaDirect(OpaCalc):
         from exojax.spec.lpf import xsmatrix as xsmatrix_lpf
 
         numatrix = self.opainfo
-        vmaplinestrengh = jit(vmap(line_strength, (0, None, None, None, 0, 0)))
+        vmaplinestrengh = jit(vmap(line_strength, (0, None, None, None, 0, None)))
         if self.mdb.dbtype == "hitran":
             vmapqt = vmap(self.mdb.qr_interp, (None, 0))
             qt = vmapqt(self.mdb.isotope, Tarr)

@@ -364,7 +364,7 @@ def vald_all(asdb, Tarr, PH, PHe, PHH, R):
     T_gQT = asdb.T_gQT
     qt_284_T = vmap(interp_QT284, (0, None, None))(Tarr, T_gQT, gQT_284species)
 
-    SijMS, ngammaLMS, nsigmaDlS = jit(vmap(vald_each, (None, None, None, None, None, None, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, )))\
+    SijMS, ngammaLMS, nsigmaDlS = jit(vmap(vald_each, (None, None, None, None, None, None, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, None, )))\
         (Tarr, PH, PHe, PHH, R, qt_284_T, \
                  asdb.QTmask, asdb.ielem, asdb.iion, asdb.atomicmass, asdb.ionE, \
                        asdb.dev_nu_lines, asdb.logsij0, asdb.elower, asdb.eupper, asdb.gamRad, asdb.gamSta, asdb.vdWdamp, asdb.Tref)
