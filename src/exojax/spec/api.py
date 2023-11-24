@@ -380,6 +380,7 @@ class MdbExomol(CapiMdbExomol):
                                                      self.nu_lines,
                                                      self.elower, qr,
                                                      self.Tref)
+        self.logsij0 = np.log(self.line_strength_ref)
         self.Tref = Tref_new
 
 
@@ -618,6 +619,7 @@ class MdbCommonHitempHitran():
                                                      self.nu_lines,
                                                      self.elower, qr,
                                                      self.Tref)
+        self.logsij0 = np.log(self.line_strength_ref)
         self.Tref = Tref_new
 
     def check_line_existence_in_nurange(self, df_load_mask):

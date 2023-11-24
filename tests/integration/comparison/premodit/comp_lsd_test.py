@@ -78,7 +78,7 @@ def compare_line_shape_density(mdb,nu_grid,Ttest=1000.0,Ttyp=2000.0):
     Slsd=np.sum(Slsd,axis=1)
     cont_inilsd_nu, index_inilsd_nu = npgetix(mdb.nu_lines, nu_grid)
     logsij0 = jnp.array(np.log(mdb.line_strength_ref))
-    S=line_strength(Ttest, logsij0, mdb.nu_lines, mdb.elower, qT)
+    S=line_strength(Ttest, logsij0, mdb.nu_lines, mdb.elower, qT, mdb.Tref)
     Slsd_direct = np.zeros_like(nu_grid,dtype=np.float64)
     Slsd_direct = npadd1D(Slsd_direct, S, cont_inilsd_nu, index_inilsd_nu)
     return Slsd, Slsd_direct

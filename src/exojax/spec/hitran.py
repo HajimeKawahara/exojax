@@ -5,18 +5,18 @@ from exojax.utils.constants import hcperk, Tref_original
 from exojax.utils.constants import Patm
 
 
-def line_strength(T, logsij0, nu_lines, elower, qT):
+def line_strength(T, logsij0, nu_lines, elower, qT, Tref):
     """(alias, deprecated) use hitran.line_strength, will be removed. 
    """
-    return line_strength(T, logsij0, nu_lines, elower, qT)
+    return line_strength(T, logsij0, nu_lines, elower, qT, Tref)
 
 
 @jit
-def line_strength(T, logsij0, nu_lines, elower, qr):
+def line_strength(T, logsij0, nu_lines, elower, qr, Tref):
     """Line strength as a function of temperature, JAX/XLA compatible
 
    Notes:
-      Use Tref=296.0 (default) in moldb
+      Tref=296.0 (default) in moldb, but it might have been changed by OpaPremodit.
 
    Args:
       T: temperature (K)
@@ -24,11 +24,11 @@ def line_strength(T, logsij0, nu_lines, elower, qr):
       nu_lines: line center wavenumber (cm-1)
       elower: elower
       qr: partition function ratio qr(T) = Q(T)/Q(Tref)
+      Tref: reference temperature
 
    Returns:
       Sij(T): Line strength (cm)
    """
-    Tref = Tref_original  # reference tempearture (K)
     expow = logsij0 - hcperk * (elower / T - elower / Tref)
     fac = (1.0 - jnp.exp(-hcperk * nu_lines / T)) / (
         1.0 - jnp.exp(-hcperk * nu_lines / Tref))

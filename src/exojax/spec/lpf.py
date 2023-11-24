@@ -36,9 +36,9 @@ def exomol(mdb, Tarr, Parr, molmass):
     """
 
     qt = vmap(mdb.qr_interp)(Tarr)
-    SijM = jit(vmap(line_strength, (0, None, None, None, 0)))(Tarr, mdb.logsij0,
+    SijM = jit(vmap(line_strength, (0, None, None, None, 0, 0)))(Tarr, mdb.logsij0,
                                                      mdb.dev_nu_lines,
-                                                     mdb.elower, qt)
+                                                              mdb.elower, qt, mdb.Tref)
     gammaLMP = jit(vmap(gamma_exomol,
                         (0, 0, None, None)))(Parr, Tarr, mdb.n_Texp,
                                              mdb.alpha_ref)
@@ -70,8 +70,8 @@ def vald(adb, Tarr, PH, PHe, PHH):
     qt = qt_284[:, adb.QTmask]
 
     # Compute line strength matrix
-    SijM = jit(vmap(line_strength,(0,None,None,None,0)))\
-        (Tarr, adb.logsij0, adb.nu_lines, adb.elower, qt)
+    SijM = jit(vmap(line_strength,(0,None,None,None,0,0)))\
+        (Tarr, adb.logsij0, adb.nu_lines, adb.elower, qt, adb.Tref)
 
     # Compute gamma parameters for the pressure and natural broadenings
     gammaLM = jit(vmap(gamma_vald3,(0,0,0,0,None,None,None,None,None,None,None,None,None,None,None)))\
@@ -86,7 +86,7 @@ def vald(adb, Tarr, PH, PHe, PHH):
 
 def vald_each(Tarr, PH, PHe, PHH, \
             qt_284_T, QTmask, \
-             logsij0, nu_lines, ielem, iion, dev_nu_lines, elower, eupper, atomicmass, ionE, gamRad, gamSta, vdWdamp, ):
+              logsij0, nu_lines, ielem, iion, dev_nu_lines, elower, eupper, atomicmass, ionE, gamRad, gamSta, vdWdamp, Tref, ):
     """Compute VALD line information required for LPF for separated each species
     
     Args:
@@ -119,8 +119,8 @@ def vald_each(Tarr, PH, PHe, PHH, \
     qt = qt_284_T[:, QTmask]
 
     # Compute line strength matrix
-    SijM = jit(vmap(line_strength,(0,None,None,None,0)))\
-        (Tarr, logsij0, nu_lines, elower, qt)
+    SijM = jit(vmap(line_strength,(0,None,None,None,0,0)))\
+        (Tarr, logsij0, nu_lines, elower, qt, Tref)
     SijM = jnp.nan_to_num(SijM, nan=0.0)
 
     # Compute gamma parameters for the pressure and natural broadenings

@@ -453,7 +453,7 @@ class OpaModit(OpaCalc):
 
         nsigmaD = normalized_doppler_sigma(T, self.mdb.molmass, R)
         Sij = line_strength(T, self.mdb.logsij0, self.mdb.nu_lines,
-                            self.mdb.elower, qt)
+                            self.mdb.elower, qt, self.mdb.Tref)
 
         ngammaL_grid = ditgrid_log_interval(
             ngammaL, dit_grid_resolution=self.dit_grid_resolution)
@@ -592,7 +592,7 @@ class OpaDirect(OpaCalc):
                                       self.mdb.A)
         sigmaD = doppler_sigma(self.mdb.nu_lines, T, self.mdb.molmass)
         Sij = line_strength(T, self.mdb.logsij0, self.mdb.nu_lines,
-                            self.mdb.elower, qt)
+                            self.mdb.elower, qt, self.mdb.Tref)
         return xsvector_lpf(numatrix, sigmaD, gammaL, Sij)
 
     def xsmatrix(self, Tarr, Parr):
@@ -620,7 +620,7 @@ class OpaDirect(OpaCalc):
         from exojax.spec.lpf import xsmatrix as xsmatrix_lpf
 
         numatrix = self.opainfo
-        vmaplinestrengh = jit(vmap(line_strength, (0, None, None, None, 0)))
+        vmaplinestrengh = jit(vmap(line_strength, (0, None, None, None, 0, None)))
         if self.mdb.dbtype == "hitran":
             vmapqt = vmap(self.mdb.qr_interp, (None, 0))
             qt = vmapqt(self.mdb.isotope, Tarr)
@@ -630,7 +630,7 @@ class OpaDirect(OpaCalc):
                                  self.mdb.gamma_self) + gamma_natural(
                                      self.mdb.A)
             SijM = vmaplinestrengh(Tarr, self.mdb.logsij0, self.mdb.nu_lines,
-                                   self.mdb.elower, qt)
+                                   self.mdb.elower, qt, self.mdb.Tref)
             sigmaDM = jit(vmap(doppler_sigma,
                             (None, 0, None)))(self.mdb.nu_lines, Tarr,
                                                 self.mdb.molmass)
@@ -643,7 +643,7 @@ class OpaDirect(OpaCalc):
             gammaLMN = gamma_natural(self.mdb.A)
             gammaLM = gammaLMP + gammaLMN[None, :]
             SijM = vmaplinestrengh(Tarr, self.mdb.logsij0, self.mdb.nu_lines,
-                                   self.mdb.elower, qt)
+                                   self.mdb.elower, qt, self.mdb.Tref)
             sigmaDM = jit(vmap(doppler_sigma,
                             (None, 0, None)))(self.mdb.nu_lines, Tarr,
                                                 self.mdb.molmass)
@@ -660,7 +660,7 @@ class OpaDirect(OpaCalc):
                                 self.mdb.atomicmass, self.mdb.ionE, \
                                 self.mdb.gamRad, self.mdb.gamSta, self.mdb.vdWdamp, 1.0)
             SijM = vmaplinestrengh(Tarr, self.mdb.logsij0, self.mdb.nu_lines, \
-                                    self.mdb.elower, qt_K.T)  
+                                    self.mdb.elower, qt_K.T, self.mdb.Tref)
             sigmaDM = jit(vmap(doppler_sigma,(None,0,None)))\
                 (self.mdb.nu_lines, Tarr, self.mdb.atomicmass)
 
