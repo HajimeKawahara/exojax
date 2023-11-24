@@ -164,9 +164,9 @@ def exomol(mdb, Tarr, Parr, R, molmass):
         normalized sigmaD matrix
     """
     qt = vmap(mdb.qr_interp)(Tarr)
-    SijM = jit(vmap(line_strength, (0, None, None, None, 0)))(Tarr, mdb.logsij0,
+    SijM = jit(vmap(line_strength, (0, None, None, None, 0, 0)))(Tarr, mdb.logsij0,
                                                      mdb.dev_nu_lines,
-                                                     mdb.elower, qt)
+                                                                 mdb.elower, qt, mdb.Tref)
     gammaLMP = jit(vmap(gamma_exomol,
                         (0, 0, None, None)))(Parr, Tarr, mdb.n_Texp,
                                              mdb.alpha_ref)
@@ -236,9 +236,9 @@ def hitran(mdb, Tarr, Parr, Pself, R, molmass):
        normalized sigmaD matrix
     """
     qt = vmap(mdb.qr_interp_lines)(Tarr)
-    SijM = jit(vmap(line_strength, (0, None, None, None, 0)))(Tarr, mdb.logsij0,
+    SijM = jit(vmap(line_strength, (0, None, None, None, 0, 0)))(Tarr, mdb.logsij0,
                                                      mdb.dev_nu_lines,
-                                                     mdb.elower, qt)
+                                                              mdb.elower, qt, mdb.Tref)
     gammaLMP = jit(vmap(gamma_hitran,
                         (0, 0, 0, None, None, None)))(Parr, Tarr, Pself,
                                                       mdb.n_air, mdb.gamma_air,
@@ -329,8 +329,8 @@ def vald_each(Tarr, PH, PHe, PHH, R, qt_284_T, QTmask, \
     qt = qt_284_T[:, QTmask]
 
     # Compute line strength matrix
-    SijM = jit(vmap(line_strength,(0,None,None,None,0)))\
-        (Tarr, logsij0, dev_nu_lines, elower, qt)
+    SijM = jit(vmap(line_strength,(0,None,None,None,0,0)))\
+        (Tarr, logsij0, dev_nu_lines, elower, qt, Tref)
 
     # Compute gamma parameters for the pressure and natural broadenings
     gammaLM = jit(vmap(gamma_vald3,(0,0,0,0,None,None,None,None,None,None,None,None,None,None,None)))\
