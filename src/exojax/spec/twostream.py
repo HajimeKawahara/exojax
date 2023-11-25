@@ -1,5 +1,10 @@
 """ Two-stream solvers and related methods 
 
+    Note:
+        ExoJAX has two types of the flux-based two-stream solvers for scattering/reflection. 
+        - fluxadding 
+        - LART
+
 """
 
 import jax.numpy as jnp
@@ -10,8 +15,8 @@ def solve_fluxadding_twostream(trans_coeff, scat_coeff, reduced_source_function,
     """Two-stream RT solver using flux adding
 
     Args:
-        trans_coeff (_type_): _description_
-        scat_coeff (_type_): _description_
+        trans_coeff (_type_): Transmission coefficient 
+        scat_coeff (_type_): Scattering coefficient 
         reduced_source_function :  pi \mathcal{B} (Nlayer, Nnus)
         reflectivity_bottom (_type_): R^+_N (Nnus)
         source_bottom (_type_): S^+_N (Nnus)
