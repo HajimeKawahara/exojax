@@ -2,5 +2,4 @@ numpyro
 jaxopt
 jax
 hitran-api
-pygments>=2.15
-pydantic<2.0
+hjson
