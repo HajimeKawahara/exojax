@@ -69,6 +69,8 @@ def test_spectrum(db):
     filename = pkg_resources.resource_filename(
         'exojax', 'data/testdata/' + testdata_spectrum[db])
     dat = pd.read_csv(filename, delimiter=",", names=("nus", "F0"))
+    #print(F0)
+    #print(pytest.approx(dat["F0"].values))
     assert np.all(F0 == pytest.approx(dat["F0"].values))
 
 

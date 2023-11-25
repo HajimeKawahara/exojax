@@ -5,6 +5,9 @@ from exojax.test.emulate_mdb import mock_mdb
 from exojax.spec.opacalc import OpaPremodit
 from exojax.test.emulate_mdb import mock_wavenumber_grid
 from exojax.spec.atmrt import ArtEmisPure
+from jax.config import config
+
+config.update("jax_enable_x64", True)
 
 
 @pytest.mark.parametrize("db, diffmode", [("exomol", 1), ("exomol", 2),

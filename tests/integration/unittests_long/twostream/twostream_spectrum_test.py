@@ -5,6 +5,9 @@ from exojax.test.emulate_mdb import mock_mdb
 from exojax.spec.opacalc import OpaPremodit
 from exojax.test.emulate_mdb import mock_wavenumber_grid
 from exojax.spec.atmrt import ArtEmisScat
+from jax.config import config
+
+config.update("jax_enable_x64", True)
 
 
 @pytest.mark.parametrize("db, diffmode", [("exomol", 1), ("exomol", 2),
@@ -70,7 +73,7 @@ def test_ArtEmisScat_LART_gives_consistent_results_with_pure_absorption(db, diff
                       auto_trange=[art.Tlow, art.Thigh])
 
     xsmatrix = opa.xsmatrix(Tarr, art.pressure)
-    dtau = art.opacity_profile_lines(xsmatrix, mmr_arr, opa.mdb.molmass,
+    dtau = art.opacity_profile_xs(xsmatrix, mmr_arr, opa.mdb.molmass,
                                      gravity)
 
     #almost pure absorption

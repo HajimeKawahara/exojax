@@ -57,7 +57,7 @@ def gendata_xs_modit_exomol():
     dv_lines = mdbCO.nu_lines / R
     ngammaL = gammaL / dv_lines
     nsigmaD = normalized_doppler_sigma(Tfix, Mmol, R)
-    Sij = line_strength(Tfix, mdbCO.logsij0, mdbCO.nu_lines, mdbCO.elower, qt)
+    Sij = line_strength(Tfix, mdbCO.logsij0, mdbCO.nu_lines, mdbCO.elower, qt, mdbCO.Tref)
 
     ngammaL_grid = ditgrid_log_interval(ngammaL, dit_grid_resolution=0.1)
     xsv = xsvector(cont_nu, index_nu, R, pmarray, nsigmaD, ngammaL, Sij,
@@ -107,7 +107,7 @@ def gendata_xs_modit_hitemp(airmode=False):
     dv_lines = mdbCO.nu_lines / R
     ngammaL = gammaL / dv_lines
     nsigmaD = normalized_doppler_sigma(Tfix, Mmol, R)
-    Sij = line_strength(Tfix, mdbCO.logsij0, mdbCO.nu_lines, mdbCO.elower, qt)
+    Sij = line_strength(Tfix, mdbCO.logsij0, mdbCO.nu_lines, mdbCO.elower, qt, mdbCO.Tref)
     cont_nu, index_nu, R, pmarray = init_modit(mdbCO.nu_lines, nu_grid)
     ngammaL_grid = ditgrid_log_interval(ngammaL, dit_grid_resolution=0.1)
 

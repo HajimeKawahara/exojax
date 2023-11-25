@@ -95,6 +95,7 @@ def psat_Fe_AM01(T):
 
     Note:
         Taken from Ackerman and Marley 2001 Appendix A (A3), originally from  Barshay and Lewis (1976)
+        
 
     Args:
         T: temperature (K)
@@ -109,6 +110,7 @@ def psat_Fe_AM01(T):
         _psat_Fe_liquid(T),
         _psat_Fe_solid(T),
     )
+    return jnp.exp(25.37 - 58663.0 / T)
 
 
 def _psat_Fe_solid(T):

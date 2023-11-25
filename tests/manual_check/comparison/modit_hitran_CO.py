@@ -39,7 +39,7 @@ for idx, iso in enumerate(mdbCO.uniqiso):
     mask = mdbCO.isoid == iso
     qt[mask] = qr[idx]
 
-Sij = line_strength(Tfix, mdbCO.logsij0, mdbCO.nu_lines, mdbCO.elower, qt)
+Sij = line_strength(Tfix, mdbCO.logsij0, mdbCO.nu_lines, mdbCO.elower, qt, mdbCO.Tref)
 gammaL = gamma_hitran(Pfix, Tfix, Pfix, mdbCO.n_air,
                       mdbCO.gamma_air, mdbCO.gamma_self)
 # + gamma_natural(A) #uncomment if you inclide a natural width

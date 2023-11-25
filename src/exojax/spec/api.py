@@ -286,6 +286,7 @@ class MdbExomol(CapiMdbExomol):
             self.jlower = df_masked.jlower.values
             self.jupper = df_masked.jupper.values
             self.line_strength_ref = df_masked.Sij0.values
+            self.logsij0 = np.log(self.line_strength_ref)
             self.gpp = df_masked.gup.values
         else:
             raise ValueError("Use vaex dataframe as input.")
@@ -379,6 +380,7 @@ class MdbExomol(CapiMdbExomol):
                                                      self.nu_lines,
                                                      self.elower, qr,
                                                      self.Tref)
+        self.logsij0 = np.log(self.line_strength_ref)
         self.Tref = Tref_new
 
 
@@ -617,6 +619,7 @@ class MdbCommonHitempHitran():
                                                      self.nu_lines,
                                                      self.elower, qr,
                                                      self.Tref)
+        self.logsij0 = np.log(self.line_strength_ref)
         self.Tref = Tref_new
 
     def check_line_existence_in_nurange(self, df_load_mask):
@@ -795,6 +798,7 @@ class MdbHitemp(MdbCommonHitempHitran, HITEMPDatabaseManager):
         self.check_line_existence_in_nurange(df_masked)
         self.nu_lines = df_masked.wav.values
         self.line_strength_ref = df_masked.int.values
+        self.logsij0 = np.log(self.line_strength_ref)
         self.delta_air = df_masked.Pshft.values
         self.A = df_masked.A.values
         self.n_air = df_masked.Tdpair.values
@@ -966,6 +970,7 @@ class MdbHitran(MdbCommonHitempHitran, HITRANDatabaseManager):
         if isinstance(df_load_mask, vaex.dataframe.DataFrameLocal):
             self.nu_lines = df_load_mask.wav.values
             self.line_strength_ref = df_load_mask.int.values
+            self.logsij0 = np.log(self.line_strength_ref)
             self.delta_air = df_load_mask.Pshft.values
             self.A = df_load_mask.A.values
             self.n_air = df_load_mask.Tdpair.values
