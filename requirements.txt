@@ -1,5 +1,3 @@
-numpyro
-jaxopt
 jax
 hitran-api
 radis
