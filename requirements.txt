@@ -1,5 +1,5 @@
 jax
 hitran-api
-git+https://github.com/radis/radis@develop#egg=radis
+-e git+https://github.com/radis/radis@develop#egg=radis
 pygments>=2.15
 pydantic<2.0
