@@ -27,10 +27,8 @@ from exojax.utils.constants import logkB, logm_ucgs
 import warnings
 
 
-
 class ArtCommon:
     """Common Atmospheric Radiative Transfer"""
-
 
     def __init__(self, pressure_top, pressure_btm, nlayer, nu_grid=None):
         """initialization of art
@@ -294,12 +292,14 @@ class ArtReflectPure(ArtCommon):
 
     """
 
-    def __init__(self,
-                 pressure_top=1.e-8,
-                 pressure_btm=1.e2,
-                 nlayer=100,
-                 nu_grid=None,
-                 rtsolver="fluxadding_toon_hemispheric_mean"):
+    def __init__(
+        self,
+        pressure_top=1.0e-8,
+        pressure_btm=1.0e2,
+        nlayer=100,
+        nu_grid=None,
+        rtsolver="fluxadding_toon_hemispheric_mean",
+    ):
         """initialization of ArtEmisPure
 
         Args:
@@ -311,13 +311,14 @@ class ArtReflectPure(ArtCommon):
         self.rtsolver = rtsolver
         self.method = "reflection_using_" + self.rtsolver
 
-    def run(self,
-            dtau,
-            single_scattering_albedo,
-            asymmetric_parameter,
-            reflectivity_surface,
-            incoming_flux
-            ):
+    def run(
+        self,
+        dtau,
+        single_scattering_albedo,
+        asymmetric_parameter,
+        reflectivity_surface,
+        incoming_flux,
+    ):
         """run radiative transfer
 
         Args:
@@ -326,7 +327,7 @@ class ArtReflectPure(ArtCommon):
             asymmetric_parameter: assymetric parameter (Nlayer, N_nus)
             reflectivity_surface: reflectivity from the surface (N_nus)
             incoming flux: incoming flux F_0^- (N_nus)
-            nu_grid (1D array): if nu_grid is not initialized, provide it. 
+            nu_grid (1D array): if nu_grid is not initialized, provide it.
 
 
         Returns:
@@ -337,8 +338,15 @@ class ArtReflectPure(ArtCommon):
             _, Nnus = dtau.shape
             sourcef = jnp.zeros_like(dtau)
             source_surface = jnp.zeros(Nnus)
-            return rtrun_reflect_fluxadding_toonhm(dtau, single_scattering_albedo,
-                                                   asymmetric_parameter, sourcef, source_surface, reflectivity_surface, incoming_flux)
+            return rtrun_reflect_fluxadding_toonhm(
+                dtau,
+                single_scattering_albedo,
+                asymmetric_parameter,
+                sourcef,
+                source_surface,
+                reflectivity_surface,
+                incoming_flux,
+            )
         else:
             print("rtsolver=", self.rtsolver)
             raise ValueError("Unknown radiative transfer solver (rtsolver).")
@@ -352,12 +360,14 @@ class ArtReflectEmis(ArtCommon):
 
     """
 
-    def __init__(self,
-                 pressure_top=1.e-8,
-                 pressure_btm=1.e2,
-                 nlayer=100,
-                 nu_grid=None,
-                 rtsolver="fluxadding_toon_hemispheric_mean"):
+    def __init__(
+        self,
+        pressure_top=1.0e-8,
+        pressure_btm=1.0e2,
+        nlayer=100,
+        nu_grid=None,
+        rtsolver="fluxadding_toon_hemispheric_mean",
+    ):
         """initialization of ArtEmisPure
 
         Args:
@@ -369,15 +379,17 @@ class ArtReflectEmis(ArtCommon):
         self.rtsolver = rtsolver
         self.method = "reflection_using_" + self.rtsolver
 
-    def run(self,
-            dtau,
-            single_scattering_albedo,
-            asymmetric_parameter,
-            temperature,
-            source_surface,
-            reflectivity_surface,
-            incoming_flux,
-            nu_grid=None):
+    def run(
+        self,
+        dtau,
+        single_scattering_albedo,
+        asymmetric_parameter,
+        temperature,
+        source_surface,
+        reflectivity_surface,
+        incoming_flux,
+        nu_grid=None,
+    ):
         """run radiative transfer
 
         Args:
@@ -388,7 +400,7 @@ class ArtReflectEmis(ArtCommon):
             source_surface: source from the surface (N_nus)
             reflectivity_surface: reflectivity from the surface (N_nus)
             incoming flux: incoming flux F_0^- (N_nus)
-            nu_grid (1D array): if nu_grid is not initialized, provide it. 
+            nu_grid (1D array): if nu_grid is not initialized, provide it.
 
 
         Returns:
@@ -402,8 +414,15 @@ class ArtReflectEmis(ArtCommon):
             raise ValueError("the wavenumber grid is not given.")
 
         if self.rtsolver == "fluxadding_toon_hemispheric_mean":
-            return rtrun_reflect_fluxadding_toonhm(dtau, single_scattering_albedo,
-                                                   asymmetric_parameter, sourcef, source_surface, reflectivity_surface, incoming_flux)
+            return rtrun_reflect_fluxadding_toonhm(
+                dtau,
+                single_scattering_albedo,
+                asymmetric_parameter,
+                sourcef,
+                source_surface,
+                reflectivity_surface,
+                incoming_flux,
+            )
         else:
             print("rtsolver=", self.rtsolver)
             raise ValueError("Unknown radiative transfer solver (rtsolver).")
@@ -417,16 +436,18 @@ class ArtEmisScat(ArtCommon):
 
     """
 
-    def __init__(self,
-                 pressure_top=1.e-8,
-                 pressure_btm=1.e2,
-                 nlayer=100,
-                 nu_grid=None,
-                 rtsolver="fluxadding_toon_hemispheric_mean"):
+    def __init__(
+        self,
+        pressure_top=1.0e-8,
+        pressure_btm=1.0e2,
+        nlayer=100,
+        nu_grid=None,
+        rtsolver="fluxadding_toon_hemispheric_mean",
+    ):
         """initialization of ArtEmisPure
 
         Args:
-            rtsolver (str): Radiative Transfer Solver, lart_toon_hemispheric_mean, SH1, SH3 
+            rtsolver (str): Radiative Transfer Solver, lart_toon_hemispheric_mean, SH1, SH3
 
         """
         super().__init__(pressure_top, pressure_btm, nlayer, nu_grid)
@@ -460,17 +481,27 @@ class ArtEmisScat(ArtCommon):
         else:
             raise ValueError("the wavenumber grid is not given.")
 
-
         if self.rtsolver == "lart_toon_hemispheric_mean":
-            spectrum, cumTtilde, Qtilde, trans_coeff, scat_coeff, piB = rtrun_emis_scat_lart_toonhm(
-                dtau, single_scattering_albedo, asymmetric_parameter, sourcef)
+            (
+                spectrum,
+                cumTtilde,
+                Qtilde,
+                trans_coeff,
+                scat_coeff,
+                piB,
+            ) = rtrun_emis_scat_lart_toonhm(
+                dtau, single_scattering_albedo, asymmetric_parameter, sourcef
+            )
             if show:
                 from exojax.plot.rtplot import comparison_with_pure_absorption
-                comparison_with_pure_absorption(cumTtilde, Qtilde, spectrum,
-                                                trans_coeff, scat_coeff, piB)
+
+                comparison_with_pure_absorption(
+                    cumTtilde, Qtilde, spectrum, trans_coeff, scat_coeff, piB
+                )
         elif self.rtsolver == "fluxadding_toon_hemispheric_mean":
             spectrum = rtrun_emis_scat_fluxadding_toonhm(
-                dtau, single_scattering_albedo, asymmetric_parameter, sourcef)
+                dtau, single_scattering_albedo, asymmetric_parameter, sourcef
+            )
         else:
             print("rtsolver=", self.rtsolver)
             raise ValueError("Unknown radiative transfer solver (rtsolver).")
@@ -577,17 +608,36 @@ class ArtEmisPure(ArtCommon):
 
 
 class ArtTransPure(ArtCommon):
+    """Atmospheric Radiative Transfer for transmission spectroscopy
+
+    Notes
+
+    Args:
+        ArtCommon (_type_): ArtCommon class
+    """
+
     def __init__(
         self, pressure_top=1.0e-8, pressure_btm=1.0e2, nlayer=100, integration="simpson"
     ):
-        """initialization of ArtTransPure"""
+        """initialization of ArtTransPure
+        
+        Args:
+            pressure_top (_type_, optional): layer top pressure in bar. Defaults to 1.0e-8.
+            pressure_btm (_type_, optional): layer bottom pressure in bar. Defaults to 1.0e2.
+            nlayer (int, optional): The number of the layers Defaults to 100.
+            integration (str, optional): Integration scheme (simpson, trapezoid). Defaults to "simpson".
+
+        Note:
+            The users can choose the integration scheme of the chord integration from Trapezoid method or Simpson method. 
+
+        """
         super().__init__(pressure_top, pressure_btm, nlayer, nu_grid=None)
         self.method = "transmission_with_pure_absorption"
         self.set_capable_integration()
         self.set_integration_scheme(integration)
 
-
     def set_capable_integration(self):
+        """sets integration scheme directory"""
         self.integration_dict = {
             "trapezoid": rtrun_trans_pureabs_trapezoid,
             "simpson": rtrun_trans_pureabs_simpson,

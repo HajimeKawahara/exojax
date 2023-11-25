@@ -1,14 +1,14 @@
 """ Gas Polarizability 
 
-Notes:
-    Originally taken from PICASO/GPLv3 picaso/rayleigh.py
-    polarizabilities are mainly taken from
-    CRC handbook of chemistry and physics vol. 95 unit=cm3
-    H3+ taken from Kawaoka & Borkman, 1971   
-    Number density at reference conditions of refractive index measurements                                         
-    i.e. number density of the ideal gas at T=273.15K (=0 C) and P=1atm [cm-2], as Patm*bar_cgs / (kB * 273.15) 
-    http://refractiveindex.info   
-    n_ref_refractive = 2.6867810458916872e+19
+    Notes:
+        Originally taken from PICASO/GPLv3 picaso/rayleigh.py
+        polarizabilities are mainly taken from
+        CRC handbook of chemistry and physics vol. 95 unit=cm3
+        H3+ taken from Kawaoka & Borkman, 1971   
+        Number density at reference conditions of refractive index measurements                                         
+        i.e. number density of the ideal gas at T=273.15K (=0 C) and P=1atm [cm-2], as Patm*bar_cgs / (kB * 273.15) 
+        http://refractiveindex.info   
+        n_ref_refractive = 2.6867810458916872e+19
 """
 
 
