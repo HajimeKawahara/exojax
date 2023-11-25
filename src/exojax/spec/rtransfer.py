@@ -482,32 +482,6 @@ def settridiag_toohm(
     return diagonal, lower_diagonal, upper_diagonal, vector
 
 
-def manual_recover_tridiagonal(
-    diagonal, lower_diagonal, upper_diagonal, canonical_flux_upward, iwav
-):
-    import numpy as np
-
-    nlayer, nwav = diagonal.shape
-    fp = canonical_flux_upward[iwav, :]
-    di = diagonal.T[iwav, :]
-    li = lower_diagonal.T[iwav, :]
-    ui = upper_diagonal.T[iwav, :]
-
-    recovered_vector = jnp.zeros((nwav, nlayer))
-    recovered_vector = recovered_vector.at[0].set(di[0] * fp[0] + ui[0] * fp[1])
-
-    head = di[0] * fp[0] + ui[0] * fp[1]
-    manual = list(
-        li[0 : nlayer - 2] * fp[0 : nlayer - 2]
-        + di[1 : nlayer - 1] * fp[1 : nlayer - 1]
-        + ui[1 : nlayer - 1] * fp[2:nlayer]
-    )
-    end = li[nlayer - 2] * fp[nlayer - 2] + di[nlayer - 1] * fp[nlayer - 1]
-    manual.insert(0, head)
-    manual.append(end)
-    manual = np.array(manual)
-    return manual
-
 
 ##################################################################################
 # Raise Error since v1.5
