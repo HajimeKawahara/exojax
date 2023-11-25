@@ -51,7 +51,7 @@ def line_strength_numpy(T, Sij0, nu_lines, elower, qr, Tref=Tref_original):
         / qr
         * np.exp(-hcperk * elower * (1.0 / T - 1.0 / Tref))
         * np.expm1(-hcperk * nu_lines / T)
-        / np.expm1(-hcperk * nu_lines / Tref_original)
+        / np.expm1(-hcperk * nu_lines / Tref)
     )
 
 
