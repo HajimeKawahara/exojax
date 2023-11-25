@@ -1,3 +1,5 @@
+numpyro
+jaxopt
 jax
 hitran-api
 pygments>=2.15
