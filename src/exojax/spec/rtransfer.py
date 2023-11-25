@@ -22,17 +22,11 @@
     -- trapezoid integration: rtrun_trans_pureabs_trapezoid
     -- simpson integration: rtrun_trans_pureabs_simpson
 
-
-
 """
 from jax import jit
 import jax.numpy as jnp
 from jax.lax import scan
-
-# from exojax.spec.twostream import solve_lart_twostream_numpy
 from exojax.spec.twostream import solve_lart_twostream
-
-# from exojax.spec.twostream import solve_fluxadding_twostream_forloop
 from exojax.spec.twostream import solve_fluxadding_twostream
 from exojax.spec.toon import reduced_source_function_isothermal_layer
 from exojax.spec.toon import params_hemispheric_mean
@@ -40,12 +34,7 @@ from exojax.spec.toon import zetalambda_coeffs
 from exojax.spec.twostream import compute_tridiag_diagonals_and_vector
 from exojax.spec.twostream import set_scat_trans_coeffs
 from exojax.special.expn import E1
-from exojax.spec.layeropacity import layer_optical_depth
-from exojax.spec.layeropacity import layer_optical_depth_CIA
-from exojax.spec.layeropacity import layer_optical_depth_Hminus
-from exojax.spec.layeropacity import layer_optical_depth_VALD
 from exojax.signal.integrate import simpson
-import warnings
 
 
 @jit
@@ -480,7 +469,6 @@ def settridiag_toohm(
     )
 
     return diagonal, lower_diagonal, upper_diagonal, vector
-
 
 
 ##################################################################################
