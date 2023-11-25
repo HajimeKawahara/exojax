@@ -2,3 +2,4 @@ jax
 jaxlib
 hitran-api
 hjson
+tqdm
