@@ -1,7 +1,26 @@
-numpyro
-jaxopt
 jax
+jaxlib
 hitran-api
-radis
-pygments>=2.15
-pydantic<2.0
+hjson          # Json with comments (for default_radis.json)
+tqdm
+lxml           # parser used for ExoMol website
+publib>=0.3.2  # Plotting styles for Matplotlib
+peakutils
+ruamel.yaml
+json-tricks>=3.15.0  # to deal with non jsonable formats
+mpldatacursor
+beautifulsoup4
+configparser
+cython
+termcolor
+tables
+joblib
+pandas
+plotly
+progressbar2
+numba
+mpldatacursor
+publib
+plotly
+psutil
+seaborn
