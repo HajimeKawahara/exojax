@@ -1,7 +1,46 @@
 Flux-based Emission with pure absorption
 ------------------------------------------------------
 
-rtsolver="fbased2st"
+Uses ArtPureEmis class
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+The following is a typical example of code for calculating emission using fbased with the `art` class in ExoJAX. 
+For pure absorption emission, `ArtEmisPure` is provided as the `art` class. 
+To specify fbase, it is simply a matter of setting the option as `rtsolver="fbased2st"` when calling it (although this is set by default).
+
+.. code:: ipython
+
+    from exojax.spec.atmrt import ArtEmisPure
+
+    art = ArtEmisPure(pressure_top=1.e-8,
+                      pressure_btm=1.e2,
+                      nlayer=100,
+                      nu_grid=nu_grid, 
+                      rtsolver="fbased2st")
+    
+    art.change_temperature_range(400.0, 1500.0) #sets temperature range
+    Tarr = art.powerlaw_temperature(1300.0, 0.1) # sets a powerlaw T-P profile
+    mmr_arr = art.constant_mmr_profile(0.1) # sets a constant mass mixing ratio
+    gravity = art.constant_gravity_profile(2478.57) #sets a constant gravity 
+
+    # we here call OpaPremodit as opa just to compute xsmatrix 
+    opa = OpaPremodit(mdb=mdb,
+                      nu_grid=nu_grid,
+                      diffmode=diffmode,
+                      auto_trange=[art.Tlow, art.Thigh]) 
+    xsmatrix = opa.xsmatrix(Tarr, art.pressure)
+
+    dtau = art.opacity_profile_xs(xsmatrix, mmr_arr, opa.mdb.molmass, gravity) # computes optical depth profile  
+    F0 = art.run(dtau, Tarr) # computes spectrum
+
+
+
+
+
+Understands One-by-One
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+
 
 The upward flux of the n-th layer (with pressure of :math:`P_n`) is connected to that of the (n-1)-th layer with transmission T and source function S. 
 

@@ -46,8 +46,9 @@ Radiative Transfer
    userguide/rtransfer_fbased_pure.rst
    userguide/rtransfer_ibased_pure.rst
    userguide/rtransfer_fbased.rst
+   userguide/rtransfer_reflection.rst
    userguide/rtransfer_transmission.rst
-   
+
 Spectral Operators
 =======================
 

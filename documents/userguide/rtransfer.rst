@@ -1,6 +1,9 @@
 Radiative Transfer
 ======================
 
+Radiative Transfer Schemes in ExoJAX
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
 Exojax uses a layer-based atmospheric model for `radiative transfer <https://en.wikipedia.org/wiki/Radiative_transfer>`_ (RT). 
 In ExoJAX, one can utilize spectral models for emission, reflection, and transmission. This necessitates solving for radiative transfer. 
 There are various methods to solve radiative transfer, and the following describes those available in ExoJAX.
@@ -15,7 +18,8 @@ These are the fbased computation.
 
 Regarding reflected light in ExoJAX, the flux-adding treatment can be utilized.
 
-These are currently all based on the two-stream approximation. In the future, a four-stream implementation is planned, but as of December 2023, 
+All of the fbased schemes are currently based on the two-stream approximation, althogh the ibased schemes can specify the number of the streams. 
+In the future, a four-stream implementation for the fbased schemes is planned, but as of December 2023, 
 it has not yet been implemented.
 
 For transmission spectroscopy in ExoJAX, the options are primarily limited to differences in the integration methods. 
@@ -29,3 +33,11 @@ Both the Trapezoid integration method and the method using Simpson's rule are av
     rtransfer_fbased.rst
 	rtransfer_fbased_reflection.rst
     rtransfer_transmission.rst
+
+
+Atmospheric Radiative Transfer (art) class
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+ExoJAX's code is primarily written in a function-based manner, allowing for the execution of each process of radiative transfer individually. 
+However, for those who are not interested in the details, the `art` class can be utilized as an interface for radiative transfer.
+
