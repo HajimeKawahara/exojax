@@ -31,7 +31,7 @@ Both the Trapezoid integration method and the method using Simpson's rule are av
     rtransfer_fbased_pure.rst
     rtransfer_ibased_pure.rst
     rtransfer_fbased.rst
-	rtransfer_fbased_reflection.rst
+    rtransfer_fbased_reflection.rst
     rtransfer_transmission.rst
 
 
