@@ -1,7 +1,7 @@
 PreMODIT
 =================
 
-`Last update: May 20th (2023) Hajime Kawahara`
+`Last update: Nov 26th (2023) Hajime Kawahara`
 
 
 PreMODIT (Precomputation of line density + MODIT) is the successor algorithm to MODIT. 
@@ -10,8 +10,8 @@ from all transition information each time the temperature or pressure conditions
 This means that all transition information must be stored in device memory, 
 which is not memory efficient.
 
-PreMODIT is an algorithm that solves the above problem.
-Details of the algorithm will be described in a forthcoming paper (in prep).
+`PreMODIT` is an algorithm that solves the above problem.
+Details of the algorithm will be described in a forthcoming paper (Kawahara, Kawashima et al. in prep).
 But, the basic idea is to compress the line information before storing it in device memory.
 While this change saves device memory, the drawback is that the temperature range over which accuracy can be 
 guaranteed must be set in advance. 
@@ -19,11 +19,11 @@ Therefore, we need the `auto_trange` option in `OpaPremodit <../exojax/exojax.sp
 
 .. code:: ipython
 	
-    >>> from exojax.spec.opacalc import OpaPremodit
-    >>> from jax import config
-    >>> config.update("jax_enable_x64", True)
-    >>> diffmode = 0
-    >>> opa = OpaPremodit(mdb=mdbCO,
+    from exojax.spec.opacalc import OpaPremodit
+    from jax import config
+    config.update("jax_enable_x64", True)
+    diffmode = 0
+    opa = OpaPremodit(mdb=mdbCO,
                       nu_grid=nus,
                       diffmode=diffmode,
                       auto_trange=[400.0, 1500.0])
@@ -34,10 +34,10 @@ If you are more familiar with PreMODIT's algorithm, you can specify the paramete
 
 .. code:: ipython
 	
-    >>> dE = 300.0 # cm-1
-    >>> Tref = 400.0 # in Kelvin
-    >>> Twt = 1000.0 # in Kelvin
-    >>> opa = OpaPremodit(mdb=mdbCO,
+    dE = 300.0 # cm-1
+    Tref = 400.0 # in Kelvin
+    Twt = 1000.0 # in Kelvin
+    opa = OpaPremodit(mdb=mdbCO,
                       nu_grid=nus,
                       diffmode=diffmode,
                       manual_params=[dE, Tref, Twt])
@@ -46,20 +46,23 @@ If you are more familiar with PreMODIT's algorithm, you can specify the paramete
 On 32bit and 64bit mode
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-We strongly recommend to use JAX 64bit mode:
+We strongly recommend to use JAX 64bit mode unless you are confident that 32bit is enough for your case. 
+Because the 64 bit mode uses more device memory and computational time, 
+if you perform real retrieval, confirm that the 32 bit does not any severe impact on the results.
+But, for the first case, the 64 bit is the safe option.
 
 .. code:: ipython
 	
-    >>> from jax import config
-    >>> config.update("jax_enable_x64", True)
+    from jax import config
+    config.update("jax_enable_x64", True)
 
 But, if you wanna try to use 32bit mode, use `allow_32bit` option.
 
 .. code:: ipython
 
-	>>> from jax import config
-    >>> config.update("jax_enable_x64", False)
-    >>> opa = OpaPremodit(mdb=mdbCO,
+	from jax import config
+    config.update("jax_enable_x64", False)
+    opa = OpaPremodit(mdb=mdbCO,
                       nu_grid=nus,
                       diffmode=diffmode,
                       auto_trange=[400.0, 1500.0]
@@ -70,13 +73,13 @@ Otherwise, you will see ValueError:
 
 .. code:: ipython
 
-	>>> from jax import config
-    >>> config.update("jax_enable_x64", False)
-    >>> opa = OpaPremodit(mdb=mdbCO,
+	from jax import config
+    config.update("jax_enable_x64", False)
+    opa = OpaPremodit(mdb=mdbCO,
                       nu_grid=nus,
                       diffmode=diffmode,
                       auto_trange=[400.0, 1500.0])    
-    >>> # -> JAX 32bit mode is not allowed. Use allow_32bit = True or ... 
+    # -> JAX 32bit mode is not allowed. Use allow_32bit = True or ... 
 
 Changing the Resolution of the Broadening Parameters 
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -87,7 +90,7 @@ The default value of `{"mode": "manual", "value": 0.2}` might be overkilled for 
 
 .. code:: ipython
 	
-    >>> opa = OpaPremodit(mdb=mdb,
+    opa = OpaPremodit(mdb=mdb,
                       nu_grid=nu_grid,
                       diffmode=diffmode,
                       auto_trange=[500.0, 1500.0],
@@ -97,7 +100,7 @@ You can check the grid overlaied on the data distribution by
 
 .. code:: ipython
 	
-    >>> opa.plot_broadening_parameters()
+    opa.plot_broadening_parameters()
 
 .. image:: premodit_files/example_manual.png
 
@@ -123,14 +126,15 @@ So, if you wanna change the values, input,  `gamma_ref` and `n_Texp` at 296K int
 
 .. code:: ipython
 	
-    >>> opa = OpaPremodit(mdb=mdb,
+    opa = OpaPremodit(mdb=mdb,
                       nu_grid=nu_grid,
                       diffmode=diffmode,
                       auto_trange=[500.0, 1500.0],
                       broadening_resolution={"mode": "single", "value": None})
     
 
-In the above case, we assumed the median of broadening parameters of mdb. If you want to give the specific values use "single_broadening_parameters" option.
+In the above case, we assumed the median of broadening parameters of mdb. 
+If you want to give the specific values use "single_broadening_parameters" option.
 
 .. image:: premodit_files/example_single.png
 

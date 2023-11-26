@@ -9,7 +9,7 @@ For pure absorption emission, `ArtEmisPure` is provided as the `art` class.
 To specify fbase, it is simply a matter of setting the option as `rtsolver="fbased2st"` when calling it (although this is set by default).
 
 .. code:: ipython
-
+    
     from exojax.spec.atmrt import ArtEmisPure
 
     art = ArtEmisPure(pressure_top=1.e-8,
