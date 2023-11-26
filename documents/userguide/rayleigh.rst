@@ -1,7 +1,11 @@
 Rayleigh scattering
 ========================
 
-Rayleigh scattering of gas from polarizability can be computed using `spec.rayleigh.xsvector_rayleigh_gas <../exojax/exojax.spec.html#exojax.spec.rayleigh.xsvector_rayleigh_gas>`_ .
+The corss section of Rayleigh scattering of gas from polarizability is expressed as 
+
+:math:`\sigma(\nu) = \frac{ 128 \pi^5 }{3} \nu^4 \alpha^2 F_k`
+
+In ExoJAX, this can be computed using `spec.rayleigh.xsvector_rayleigh_gas <../exojax/exojax.spec.html#exojax.spec.rayleigh.xsvector_rayleigh_gas>`_ .
 
 .. code:: ipython3
     	  
@@ -13,6 +17,7 @@ Rayleigh scattering of gas from polarizability can be computed using `spec.rayle
         3000.0, 3100.0, 128, xsmode="premodit", wavelength_order="descending", unit="nm"
     )
     sigma = xsvector_rayleigh_gas(nus, polarizability["CO"], king_correction_factor["CO"])
+
 
 
 

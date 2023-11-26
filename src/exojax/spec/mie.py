@@ -1,3 +1,8 @@
+""" Mie scattering calculation using PyMieScatt
+
+
+"""
+
 import numpy as np
 
 
