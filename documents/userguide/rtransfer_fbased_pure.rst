@@ -1,8 +1,6 @@
 Flux-based Emission with pure absorption
 ------------------------------------------------------
 
-flux-based 2-stream
-^^^^^^^^^^^^^^^^^^^^^^^^
 rtsolver="fbased2st"
 
 The upward flux of the n-th layer (with pressure of :math:`P_n`) is connected to that of the (n-1)-th layer with transmission T and source function S. 
@@ -12,15 +10,11 @@ The upward flux of the n-th layer (with pressure of :math:`P_n`) is connected to
 where :math:`P_{n-1} < P_n`. So, we need to specify a transmission and source function. 
 
 
-intensity-based RT
-^^^^^^^^^^^^^^^^^^^^^
-rtsolver="ibased"
 
+Source function
+^^^^^^^^^^^^^^^^^^^^^^^^
 
-Source Function
----------------------------
-
-In the case that a black body emission as a source as,  
+A black body emission as a source as,  
 
 :math:`\mathcal{S} = \pi B(T)`
 
