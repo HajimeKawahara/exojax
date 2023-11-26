@@ -1,6 +1,6 @@
 """Ackerman and Marley 2001 cloud model.
 
-- Ackerman and Marley (2001) ApJ 556, 872, hereafter AM01
+    - based on Ackerman and Marley (2001) ApJ 556, 872, hereafter AM01
 
 """
 from jax import jit
