@@ -31,14 +31,20 @@ def compute_mie_coeff_lognormal_grid(
 if __name__ == "__main__":
     from exojax.spec.pardb import PdbCloud
 
-    sigmag_arr = [1.0, 3.0, 10.0]
-    rg_arr = [1.0e-6, 1.0e-5, 1.0e-4]
-    pdb_nh3 = PdbCloud("NH3")
+    pdb = PdbCloud("NH3")
+    filename = "miegrid_lognorm_"+pdb.condensate+".mgd"
+    print(filename)
+    
+    Nsigmag = 10
+    sigmag_arr = np.logspace(-1,1,Nsigmag)
+    Nrg = 40
+    rg_arr = np.logspace(-7,-3,Nsigmag) #cm
+    
     miegrid = compute_mie_coeff_lognormal_grid(
-        pdb_nh3.refraction_index,
-        pdb_nh3.refraction_index_wavelength_nm,
+        pdb.refraction_index,
+        pdb.refraction_index_wavelength_nm,
         sigmag_arr,
         rg_arr,
         npart=1.0,
     )
-    np.savez("miegrid_sample.mgd", miegrid)
+    np.savez(filename, miegrid)
