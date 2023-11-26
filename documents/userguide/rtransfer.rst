@@ -11,6 +11,7 @@ one that transfers flux (**fbased**) and another that transfers intensity (**iba
 
 For emission with scattering in ExoJAX, there are implementations for treating the scattering component as an effective reflectivity 
 using **the flux adding treatment** (Robinson and Salvador), and as an effective transmission using **LART** method.
+These are the fbased computation.
 
 Regarding reflected light in ExoJAX, the flux-adding treatment can be utilized.
 
@@ -26,4 +27,5 @@ Both the Trapezoid integration method and the method using Simpson's rule are av
     rtransfer_fbased_pure.rst
     rtransfer_ibased_pure.rst
     rtransfer_fbased.rst
+	rtransfer_fbased_reflection.rst
     rtransfer_transmission.rst
