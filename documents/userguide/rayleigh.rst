@@ -8,7 +8,7 @@ The corss section of Rayleigh scattering of gas from polarizability is expressed
 In ExoJAX, this can be computed using `spec.rayleigh.xsvector_rayleigh_gas <../exojax/exojax.spec.html#exojax.spec.rayleigh.xsvector_rayleigh_gas>`_ .
 
 .. code:: ipython3
-    	  
+    
     from exojax.atm.polarizability import polarizability
     from exojax.atm.polarizability import king_correction_factor
     from exojax.utils.grids import wavenumber_grid
