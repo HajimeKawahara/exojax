@@ -1,78 +1,66 @@
 Radiative Transfer
 ======================
 
-Exojax uses a layer-based atmospheric model for `radiative transfer <https://en.wikipedia.org/wiki/Radiative_transfer>`_ (RT). Currently, the only supported RT is the emission model with no scattering.
+Radiative Transfer Schemes in ExoJAX
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Emission with pure absorption
---------------------------------
+Exojax uses a layer-based atmospheric model for `radiative transfer <https://en.wikipedia.org/wiki/Radiative_transfer>`_ (RT). 
+In ExoJAX, one can utilize spectral models for emission, reflection, and transmission. This necessitates solving for radiative transfer. 
+There are various methods to solve radiative transfer, and the following describes those available in ExoJAX.
 
-flux-based 2-stream
-^^^^^^^^^^^^^^^^^^^^^^^^
-rtsolver="fbased2st"
+Regarding emission in ExoJAX, there are two types: without scattering and with scattering. 
+The non-scattering type assumes **pure absorption**, for which there are two methods: 
+one that transfers flux (**fbased**) and another that transfers intensity (**ibased**).
 
-The upward flux of the n-th layer (with pressure of :math:`P_n`) is connected to that of the (n-1)-th layer with transmission T and source function S. 
+For emission with scattering in ExoJAX, there are implementations for treating the scattering component as an effective reflectivity 
+using **the flux-adding treatment** (`Robinson and Crisp 2018 <https://www.sciencedirect.com/science/article/pii/S0022407317305101?via%3Dihub>`_), 
+and as an effective transmission using the **LART** method.
+These are the fbased computation.
 
-:math:`F_{n} = \mathcal{T}_n F_{n+1} + (1-\mathcal{T}_n) \, \mathcal{S}_n`
+Regarding reflected light in ExoJAX, the flux-adding treatment can be utilized.
 
-where :math:`P_{n-1} < P_n`. So, we need to specify a transmission and source function. 
+All of the fbased schemes are currently based on the two-stream approximation, althogh the ibased schemes can specify the number of the streams. 
+In the future, a four-stream implementation for the fbased schemes is planned, but as of December 2023, 
+it has not yet been implemented.
+
+For transmission spectroscopy in ExoJAX, the options are primarily limited to differences in the integration methods. 
+Both the Trapezoid integration method and the method using Simpson's rule are available.
+
+.. toctree::
+    :maxdepth: 1
+
+    rtransfer_fbased_pure.rst
+    rtransfer_ibased_pure.rst
+    rtransfer_fbased.rst
+    rtransfer_fbased_reflection.rst
+    rtransfer_transmission.rst
 
 
-intensity-based RT
-^^^^^^^^^^^^^^^^^^^^^
-rtsolver="ibased"
-
-
-Source Function
----------------------------
-
-In the case that a black body emission as a source as,  
-
-:math:`\mathcal{S} = \pi B(T)`
-
-we can use `piBarr <../exojax/exojax.spec.html#exojax.spec.planck.piBarr>`_.
-
-
-.. code:: ipython
-
-	  >>> from exojax.spec import planck	  
-	  >>> sourcef = planck.piBarr(Tarr,nus)
-
-Transmission for Pure Absorption: trans2E3
+Atmospheric Radiative Transfer (art) class
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-In this case, the transmission is given as
+ExoJAX's code is primarily written in a function-based manner, allowing for the execution of each process of radiative transfer individually. 
+However, for those who are not interested in the details, the `art` class can be utilized as an interface for radiative transfer.
 
-:math:`\mathcal{T}_n = 2 E_3(\Delta \tau_n ) = ( 1 - \Delta \tau_n) \exp{(- \Delta \tau_n)} + (\Delta \tau_n )^2 E_1(\Delta \tau_n )`
++-----------------------+------------------+----------------+
+|**art** in atmrt.py    |spectrum type     |including...    |
++-----------------------+------------------+----------------+
+|ArtEmisPure            |Emission          | no scattering  |
++-----------------------+------------------+----------------+
+|ArtEmisScat            |Emission          | w/ scattering  |
++-----------------------+------------------+----------------+
+|ArtReflectPure         |Reflection        | no emission    |
++-----------------------+------------------+----------------+
+|ArtReflectEmis         |Reflection        | w/ emission    |
++-----------------------+------------------+----------------+
+|ArtTransPure           |Transmission      |                |
++-----------------------+------------------+----------------+
 
-where :math:`\Delta \tau_n` is delta opacity in the n-th layer, :math:`E_j(x)` is the exopential integral of the :math:`j` -th order. In exojax, :math:`2 E_3(x)` is available as
+See the following APIs for the details of these art classes:
 
-.. code:: ipython
-	  
-	  >>> from exojax.spec.rtransfer import trans2E3
-	  >>> trans2E3(1.0)
-	  DeviceArray(0.21938396, dtype=float32)
+- `exojax.spec.atmrt.ArtEmisPure <../exojax/exojax.spec.html#exojax.spec.atmrt.ArtEmisPure>`_
+- `exojax.spec.atmrt.ArtEmisScat <../exojax/exojax.spec.html#exojax.spec.atmrt.ArtEmisScat>`_
+- `exojax.spec.atmrt.ArtReflectPure <../exojax/exojax.spec.html#exojax.spec.atmrt.ArtReflectPure>`_
+- `exojax.spec.atmrt.ArtReflectEmis <../exojax/exojax.spec.html#exojax.spec.atmrt.ArtReflectEmis>`_
+- `exojax.spec.atmrt.ArtTransPure <../exojax/exojax.spec.html#exojax.spec.atmrt.ArtTransPure>`_
 
-`trans2E3 <../exojax/exojax.spec.html#exojax.spec.rtransfer.trans2E3>`_ is auto-differentiable.
-	  
-.. code:: ipython
-	  	  
-	  >>> from jax import grad
-	  >>> grad(trans2E3)(1.0)
-	  DeviceArray(-0.29698896, dtype=float32)
-
-Here is
-:math:`\Delta \tau`
-dependence of :math:`2 E_3(x)`:
-
-.. image:: transrt.png
-
-	  
-`trans2E3 <../exojax/exojax.spec.html#exojax.spec.rtransfer.trans2E3>`_ is used in `rtrun <../exojax/exojax.spec.html#exojax.spec.rtransfer.rtrun>`_, which gives an emission spectral model with pure absorption. Then, `rtrun <../exojax/exojax.spec.html#exojax.spec.rtransfer.rtrun>`_ has two inputs, one is the arrays of :math:`\Delta \tau_n` and source funtion.
-
-.. code:: python
-	  
-	 F0=rtrun(dtau,sourcef) 
-
-See ":doc:`../tutorials/forward_modeling`" to know how to use `rtrun <../exojax/exojax.spec.html#exojax.spec.rtransfer.rtrun>`_ in a forward modeling. Note that exojax uses a linear algebraic formulation to solve the RT. The detail description is provided in
-`Paper I <https://iopscience.iop.org/article/10.3847/1538-4365/ac3b4d>`_
-.
