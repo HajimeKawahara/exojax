@@ -8,7 +8,10 @@
     -- scattering
     --- 2stream
     ---- LART: rtrun_emis_scat_lart_toonhm
-    ---- flux-adding: not yet
+    ---- flux-adding: rtrun_emis_scat_fluxadding_toonhm
+    -- relfection
+    --- 2stream
+    ---- flux-adding: rtrun_reflect_fluxadding_toonhm
 
     - intensity-based emission
     -- pure absorption 
@@ -19,15 +22,11 @@
     -- trapezoid integration: rtrun_trans_pureabs_trapezoid
     -- simpson integration: rtrun_trans_pureabs_simpson
 
-
-
 """
 from jax import jit
 import jax.numpy as jnp
 from jax.lax import scan
-# from exojax.spec.twostream import solve_lart_twostream_numpy
 from exojax.spec.twostream import solve_lart_twostream
-# from exojax.spec.twostream import solve_fluxadding_twostream_forloop
 from exojax.spec.twostream import solve_fluxadding_twostream
 from exojax.spec.toon import reduced_source_function_isothermal_layer
 from exojax.spec.toon import params_hemispheric_mean
@@ -35,12 +34,7 @@ from exojax.spec.toon import zetalambda_coeffs
 from exojax.spec.twostream import compute_tridiag_diagonals_and_vector
 from exojax.spec.twostream import set_scat_trans_coeffs
 from exojax.special.expn import E1
-from exojax.spec.layeropacity import layer_optical_depth
-from exojax.spec.layeropacity import layer_optical_depth_CIA
-from exojax.spec.layeropacity import layer_optical_depth_Hminus
-from exojax.spec.layeropacity import layer_optical_depth_VALD
 from exojax.signal.integrate import simpson
-import warnings
 
 
 @jit
@@ -49,13 +43,13 @@ def trans2E3(x):
     expressed by 2 E3(x)
 
     Note:
-       The exponetial integral of the third order E3(x) is computed using Abramowitz Stegun (1970) approximation of E1 (exojax.special.E1).
+        The exponetial integral of the third order E3(x) is computed using Abramowitz Stegun (1970) approximation of E1 (exojax.special.E1).
 
     Args:
-       x: input variable
+        x: input variable
 
     Returns:
-       Transmission function T=2 E3(x)
+        Transmission function T=2 E3(x)
     """
     return (1.0 - x) * jnp.exp(-x) + x**2 * E1(x)
 
@@ -73,9 +67,9 @@ def rtrun_emis_pureabs_fbased2st(dtau, source_matrix):
     Nnus = jnp.shape(dtau)[1]
     TransM = jnp.where(dtau == 0, 1.0, trans2E3(dtau))
     Qv = jnp.vstack([(1 - TransM) * source_matrix, jnp.zeros(Nnus)])
-    return jnp.sum(Qv *
-                   jnp.cumprod(jnp.vstack([jnp.ones(Nnus), TransM]), axis=0),
-                   axis=0)
+    return jnp.sum(
+        Qv * jnp.cumprod(jnp.vstack([jnp.ones(Nnus), TransM]), axis=0), axis=0
+    )
 
 
 @jit
@@ -93,9 +87,9 @@ def rtrun_emis_pureabs_fbased2st_surface(dtau, source_matrix, source_surface):
     Nnus = jnp.shape(dtau)[1]
     trans = jnp.where(dtau == 0, 1.0, trans2E3(dtau))
     Qv = jnp.vstack([(1 - trans) * source_matrix, source_surface])
-    return jnp.sum(Qv *
-                   jnp.cumprod(jnp.vstack([jnp.ones(Nnus), trans]), axis=0),
-                   axis=0)
+    return jnp.sum(
+        Qv * jnp.cumprod(jnp.vstack([jnp.ones(Nnus), trans]), axis=0), axis=0
+    )
 
 
 @jit
@@ -126,8 +120,7 @@ def rtrun_emis_pureabs_ibased(dtau, source_matrix, mus, weights):
     def f(carry_fmu, muw):
         mu, w = muw
         dtrans = -jnp.diff(jnp.exp(-tau / mu), prepend=1.0, axis=0)
-        carry_fmu = carry_fmu + 2.0 * mu * w * jnp.sum(source_matrix * dtrans,
-                                                       axis=0)
+        carry_fmu = carry_fmu + 2.0 * mu * w * jnp.sum(source_matrix * dtrans, axis=0)
         return carry_fmu, None
 
     spec, _ = scan(f, jnp.zeros(Nnus), muws)
@@ -137,6 +130,7 @@ def rtrun_emis_pureabs_ibased(dtau, source_matrix, mus, weights):
 
 def initialize_gaussian_quadrature(nstream):
     from scipy.special import roots_legendre
+
     if nstream % 2 == 0:
         norder = int(nstream / 2)
     else:
@@ -154,8 +148,7 @@ def initialize_gaussian_quadrature(nstream):
 
 
 @jit
-def rtrun_emis_pureabs_ibased_linsap(dtau, source_matrix_boundary, mus,
-                                     weights):
+def rtrun_emis_pureabs_ibased_linsap(dtau, source_matrix_boundary, mus, weights):
     """Radiative Transfer for emission spectrum using intensity-based n-stream pure absorption with no surface w/ linear source approximation = linsap (HELIOS-R2 like)
 
     Args:
@@ -174,8 +167,7 @@ def rtrun_emis_pureabs_ibased_linsap(dtau, source_matrix_boundary, mus,
     """
 
     Nnus = jnp.shape(dtau)[1]
-    source_matrix_boundary_p1 = jnp.roll(source_matrix_boundary, -1,
-                                         axis=0)  # S_{n+1}
+    source_matrix_boundary_p1 = jnp.roll(source_matrix_boundary, -1, axis=0)  # S_{n+1}
 
     # NOT IMPLEMENTED YET
     # need to replace the last element of the above
@@ -196,8 +188,8 @@ def rtrun_emis_pureabs_ibased_linsap(dtau, source_matrix_boundary, mus,
 
         dI = beta * source_matrix_boundary + gamma * source_matrix_boundary_p1
         intensity_for_mu = jnp.sum(
-            dI * jnp.cumprod(jnp.vstack([jnp.ones(Nnus), trans]), axis=0),
-            axis=0)
+            dI * jnp.cumprod(jnp.vstack([jnp.ones(Nnus), trans]), axis=0), axis=0
+        )
 
         carry_fmu = carry_fmu + 2.0 * mu * w * intensity_for_mu
 
@@ -249,16 +241,20 @@ def rtrun_trans_pureabs_trapezoid(dtau_chord, radius_lower, radius_top):
     edge_cor = (1.0 - jnp.exp(-dtau_chord[0, :])) * radius_top * dr
 
     # the negative sign is because the radius_lower is in a descending order
-    deltaRp2 = -2.0 * jnp.trapz(
-        (1.0 - jnp.exp(-dtau_chord)) * radius_lower[:, None],
-        x=radius_lower,
-        axis=0) + edge_cor
-    return deltaRp2 + radius_lower[-1]**2
+    deltaRp2 = (
+        -2.0
+        * jnp.trapz(
+            (1.0 - jnp.exp(-dtau_chord)) * radius_lower[:, None], x=radius_lower, axis=0
+        )
+        + edge_cor
+    )
+    return deltaRp2 + radius_lower[-1] ** 2
 
 
 @jit
-def rtrun_trans_pureabs_simpson(dtau_chord_modpoint, dtau_chord_lower,
-                                radius_lower, height):
+def rtrun_trans_pureabs_simpson(
+    dtau_chord_modpoint, dtau_chord_lower, radius_lower, height
+):
     """Radiative transfer for transmission spectrum assuming pure absorption with the Simpson integration (signals.integration.simpson)
 
     Args:
@@ -287,12 +283,13 @@ def rtrun_trans_pureabs_simpson(dtau_chord_modpoint, dtau_chord_lower,
     f_lower = 2.0 * (1.0 - jnp.exp(-dtau_chord_lower)) * radius_lower[:, None]
     f_top = jnp.zeros(Nnus)
     deltaRp2 = simpson(f, f_lower, f_top, height)
-    return deltaRp2 + radius_lower[-1]**2
+    return deltaRp2 + radius_lower[-1] ** 2
 
 
 @jit
-def rtrun_emis_scat_lart_toonhm(dtau, single_scattering_albedo,
-                                asymmetric_parameter, source_matrix):
+def rtrun_emis_scat_lart_toonhm(
+    dtau, single_scattering_albedo, asymmetric_parameter, source_matrix
+):
     """Radiative Transfer for emission spectrum using flux-based two-stream scattering LART solver w/ Toon Hemispheric Mean with no surface.
 
     Args:
@@ -305,23 +302,24 @@ def rtrun_emis_scat_lart_toonhm(dtau, single_scattering_albedo,
         _type_: _description_
     """
     trans_coeff, scat_coeff, reduced_piB, zeta_plus, zeta_minus, lambdan = setrt_toonhm(
-        dtau, single_scattering_albedo, asymmetric_parameter, source_matrix)
+        dtau, single_scattering_albedo, asymmetric_parameter, source_matrix
+    )
 
     diagonal, lower_diagonal, upper_diagonal, vector = settridiag_toohm(
-        dtau, zeta_plus, zeta_minus, lambdan, trans_coeff, scat_coeff, reduced_piB)
+        dtau, zeta_plus, zeta_minus, lambdan, trans_coeff, scat_coeff, reduced_piB
+    )
     nlayer, Nnus = diagonal.shape
-    cumTtilde, Qtilde, spectrum = solve_lart_twostream(diagonal,
-                                                       lower_diagonal,
-                                                       upper_diagonal, vector,
-                                                       jnp.zeros(Nnus))
+    cumTtilde, Qtilde, spectrum = solve_lart_twostream(
+        diagonal, lower_diagonal, upper_diagonal, vector, jnp.zeros(Nnus)
+    )
 
     return spectrum, cumTtilde, Qtilde, trans_coeff, scat_coeff, reduced_piB
 
 
 @jit
-def rtrun_emis_scat_lart_toonhm_surface(dtau, single_scattering_albedo,
-                                        asymmetric_parameter, source_matrix,
-                                        source_surface):
+def rtrun_emis_scat_lart_toonhm_surface(
+    dtau, single_scattering_albedo, asymmetric_parameter, source_matrix, source_surface
+):
     """Radiative Transfer for emission spectrum using flux-based two-stream scattering LART solver w/ Toon Hemispheric Mean with surface.
 
     Args:
@@ -335,23 +333,31 @@ def rtrun_emis_scat_lart_toonhm_surface(dtau, single_scattering_albedo,
         _type_: _description_
     """
     trans_coeff, scat_coeff, piB, zeta_plus, zeta_minus, lambdan = setrt_toonhm(
-        dtau, single_scattering_albedo, asymmetric_parameter, source_matrix)
+        dtau, single_scattering_albedo, asymmetric_parameter, source_matrix
+    )
     diagonal, lower_diagonal, upper_diagonal, vector = settridiag_toohm(
-        dtau, zeta_plus, zeta_minus, lambdan, trans_coeff, scat_coeff, piB)
+        dtau, zeta_plus, zeta_minus, lambdan, trans_coeff, scat_coeff, piB
+    )
 
-    cumTtilde, Qtilde, spectrum = solve_lart_twostream(diagonal,
-                                                       lower_diagonal,
-                                                       upper_diagonal, vector,
-                                                       source_surface)
+    cumTtilde, Qtilde, spectrum = solve_lart_twostream(
+        diagonal, lower_diagonal, upper_diagonal, vector, source_surface
+    )
 
     return spectrum, cumTtilde, Qtilde, trans_coeff, scat_coeff, piB
 
 
 @jit
-def rtrun_reflect_fluxadding_toonhm(dtau, single_scattering_albedo,
-                                    asymmetric_parameter, source_matrix, source_surface, reflectivity_surface, incoming_flux):
+def rtrun_reflect_fluxadding_toonhm(
+    dtau,
+    single_scattering_albedo,
+    asymmetric_parameter,
+    source_matrix,
+    source_surface,
+    reflectivity_surface,
+    incoming_flux,
+):
     """Radiative Transfer for reflected spectrum the flux adding solver w/ Toon Hemispheric Mean with surface.
-    
+
     Args:
         dtau: layer optical depth (Nlayer, N_nus)
         single_scattering_albedo: single scattering albedo (Nlayer, N_nus)
@@ -365,15 +371,19 @@ def rtrun_reflect_fluxadding_toonhm(dtau, single_scattering_albedo,
         _type_: _description_
     """
     trans_coeff, scat_coeff, reduced_piB, zeta_plus, zeta_minus, lambdan = setrt_toonhm(
-        dtau, single_scattering_albedo, asymmetric_parameter, source_matrix)
+        dtau, single_scattering_albedo, asymmetric_parameter, source_matrix
+    )
 
     Rphat, Sphat = solve_fluxadding_twostream(
-        trans_coeff, scat_coeff, reduced_piB, reflectivity_surface, source_surface)
-    return Rphat*incoming_flux + Sphat
+        trans_coeff, scat_coeff, reduced_piB, reflectivity_surface, source_surface
+    )
+    return Rphat * incoming_flux + Sphat
 
 
 @jit
-def rtrun_emis_scat_fluxadding_toonhm(dtau, single_scattering_albedo, asymmetric_parameter, source_matrix):
+def rtrun_emis_scat_fluxadding_toonhm(
+    dtau, single_scattering_albedo, asymmetric_parameter, source_matrix
+):
     """Radiative Transfer for emission spectrum (w/ scattering) using flux-based two-stream scattering the flux adding solver w/ Toon Hemispheric Mean with surface.
 
     Args:
@@ -390,17 +400,18 @@ def rtrun_emis_scat_fluxadding_toonhm(dtau, single_scattering_albedo, asymmetric
     reflectivity_surface = jnp.zeros(Nnus)
 
     trans_coeff, scat_coeff, reduced_piB, zeta_plus, zeta_minus, lambdan = setrt_toonhm(
-        dtau, single_scattering_albedo, asymmetric_parameter, source_matrix)
+        dtau, single_scattering_albedo, asymmetric_parameter, source_matrix
+    )
 
     _, spectrum = solve_fluxadding_twostream(
-        trans_coeff, scat_coeff, reduced_piB, reflectivity_surface, source_surface)
+        trans_coeff, scat_coeff, reduced_piB, reflectivity_surface, source_surface
+    )
 
     return spectrum
 
 
-def setrt_toonhm(dtau, single_scattering_albedo, asymmetric_parameter,
-                 source_matrix):
-    """sets some coefficients for rtrun assming Toon Hemispheric Mean 
+def setrt_toonhm(dtau, single_scattering_albedo, asymmetric_parameter, source_matrix):
+    """sets some coefficients for rtrun assming Toon Hemispheric Mean
 
     Args:
         dtau (_type_): _description_
@@ -411,20 +422,24 @@ def setrt_toonhm(dtau, single_scattering_albedo, asymmetric_parameter,
     Returns:
         _type_: _description_
     """
-    gamma_1, gamma_2, mu1 = params_hemispheric_mean(single_scattering_albedo,
-                                                    asymmetric_parameter)
+    gamma_1, gamma_2, mu1 = params_hemispheric_mean(
+        single_scattering_albedo, asymmetric_parameter
+    )
     zeta_plus, zeta_minus, lambdan = zetalambda_coeffs(gamma_1, gamma_2)
-    trans_coeff, scat_coeff = set_scat_trans_coeffs(zeta_plus, zeta_minus,
-                                                    lambdan, dtau)
+    trans_coeff, scat_coeff = set_scat_trans_coeffs(
+        zeta_plus, zeta_minus, lambdan, dtau
+    )
 
-    reduced_piB = reduced_source_function_isothermal_layer(single_scattering_albedo,
-                                                           gamma_1, gamma_2,
-                                                           source_matrix)
+    reduced_piB = reduced_source_function_isothermal_layer(
+        single_scattering_albedo, gamma_1, gamma_2, source_matrix
+    )
 
     return trans_coeff, scat_coeff, reduced_piB, zeta_plus, zeta_minus, lambdan
 
 
-def settridiag_toohm(dtau, zeta_plus, zeta_minus, lambdan, trans_coeff, scat_coeff, reduced_piB):
+def settridiag_toohm(
+    dtau, zeta_plus, zeta_minus, lambdan, trans_coeff, scat_coeff, reduced_piB
+):
     diagonal_top = 1.0 * jnp.ones_like(trans_coeff[0, :])  # setting b0=1
     upper_diagonal_top = trans_coeff[0, :]
 
@@ -433,42 +448,27 @@ def settridiag_toohm(dtau, zeta_plus, zeta_minus, lambdan, trans_coeff, scat_coe
 
     # emission (no reflection)
     trans_func0 = jnp.exp(-lambdan[0, :] * dtau[0, :])
-    denom = zeta_plus0**2 - (zeta_minus0 * trans_func0)**2
+    denom = zeta_plus0**2 - (zeta_minus0 * trans_func0) ** 2
     omtrans = 1.0 - trans_func0
-    fac = (zeta_plus0 * omtrans - zeta_minus0 * trans_func0 * omtrans)
-    vector_top = (zeta_plus0**2 - zeta_minus0**2) / \
-        denom * fac * reduced_piB[0, :]
+    fac = zeta_plus0 * omtrans - zeta_minus0 * trans_func0 * omtrans
+    vector_top = (zeta_plus0**2 - zeta_minus0**2) / denom * fac * reduced_piB[0, :]
 
     # tridiagonal elements
-    diagonal, lower_diagonal, upper_diagonal, vector = compute_tridiag_diagonals_and_vector(
-        scat_coeff, trans_coeff, reduced_piB, upper_diagonal_top, diagonal_top,
-        vector_top)
+    (
+        diagonal,
+        lower_diagonal,
+        upper_diagonal,
+        vector,
+    ) = compute_tridiag_diagonals_and_vector(
+        scat_coeff,
+        trans_coeff,
+        reduced_piB,
+        upper_diagonal_top,
+        diagonal_top,
+        vector_top,
+    )
 
     return diagonal, lower_diagonal, upper_diagonal, vector
-
-
-def manual_recover_tridiagonal(diagonal, lower_diagonal, upper_diagonal,
-                               canonical_flux_upward, iwav):
-    import numpy as np
-    nlayer, nwav = diagonal.shape
-    fp = canonical_flux_upward[iwav, :]
-    di = diagonal.T[iwav, :]
-    li = lower_diagonal.T[iwav, :]
-    ui = upper_diagonal.T[iwav, :]
-
-    recovered_vector = jnp.zeros((nwav, nlayer))
-    recovered_vector = recovered_vector.at[0].set(di[0] * fp[0] +
-                                                  ui[0] * fp[1])
-
-    head = di[0] * fp[0] + ui[0] * fp[1]
-    manual = list(li[0:nlayer - 2] * fp[0:nlayer - 2] +
-                  di[1:nlayer - 1] * fp[1:nlayer - 1] +
-                  ui[1:nlayer - 1] * fp[2:nlayer])
-    end = li[nlayer - 2] * fp[nlayer - 2] + di[nlayer - 1] * fp[nlayer - 1]
-    manual.insert(0, head)
-    manual.append(end)
-    manual = np.array(manual)
-    return manual
 
 
 ##################################################################################
@@ -479,45 +479,31 @@ def manual_recover_tridiagonal(diagonal, lower_diagonal, upper_diagonal,
 
 def dtauM(dParr, xsm, MR, mass, g):
     warn_msg = "Use `spec.layeropacity.layer_optical_depth` instead"
-    warnings.warn(warn_msg, FutureWarning)
-    return layer_optical_depth(dParr, xsm, MR, mass, g)
+    raise ValueError(warn_msg)
 
 
 def dtauCIA(nus, Tarr, Parr, dParr, vmr1, vmr2, mmw, g, nucia, tcia, logac):
     warn_msg = "Use `spec.layeropacity.layer_optical_depth_CIA` instead"
-    warnings.warn(warn_msg, FutureWarning)
-    return layer_optical_depth_CIA(nus, Tarr, Parr, dParr, vmr1, vmr2, mmw, g,
-                                   nucia, tcia, logac)
+    raise ValueError(warn_msg)
 
 
 def dtauHminus(nus, Tarr, Parr, dParr, vmre, vmrh, mmw, g):
     warn_msg = "Use `spec.layeropacity.layer_optical_depth_Hminus` instead"
-    warnings.warn(warn_msg, FutureWarning)
-    return layer_optical_depth_Hminus(nus, Tarr, Parr, dParr, vmre, vmrh, mmw,
-                                      g)
+    raise ValueError(warn_msg)
 
 
 def dtauVALD(dParr, xsm, VMR, mmw, g):
     warn_msg = "Use `spec.layeropacity.layer_optical_depth_VALD` instead"
-    warnings.warn(warn_msg, FutureWarning)
-    return layer_optical_depth_VALD(dParr, xsm, VMR, mmw, g)
+    raise ValueError(warn_msg)
 
 
-def pressure_layer(log_pressure_top=-8.,
-                   log_pressure_btm=2.,
-                   NP=20,
-                   mode='ascending',
-                   reference_point=0.5,
-                   numpy=False):
+def pressure_layer(
+    log_pressure_top=-8.0,
+    log_pressure_btm=2.0,
+    NP=20,
+    mode="ascending",
+    reference_point=0.5,
+    numpy=False,
+):
     warn_msg = "Use `atm.atmprof.pressure_layer_logspace` instead"
-    warnings.warn(warn_msg, FutureWarning)
-    from exojax.atm.atmprof import pressure_layer_logspace
-    return pressure_layer_logspace(log_pressure_top, log_pressure_btm, NP,
-                                   mode, reference_point, numpy)
-
-
-# def rtrun(dtau, S):
-#    warnings.warn("Use rtrun_emis_pureabs_flux2st instead", FutureWarning)
-#    return rtrun_emis_pureabs_flux2st(dtau, S)
-
-##########################################################################################
+    raise ValueError(warn_msg)

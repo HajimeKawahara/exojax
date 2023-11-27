@@ -97,9 +97,9 @@ we need to use float32 for jax.
 .. code:: ipython3
 
     Sij_HITEMP=line_strength(Tfix,mdbCO_HITEMP.logsij0,mdbCO_HITEMP.nu_lines,\
-             mdbCO_HITEMP.elower,qt_HITEMP)
+             mdbCO_HITEMP.elower,qt_HITEMP,mdbCO_HITEMP.Tref)
     Sij_Li2015=line_strength(Tfix,mdbCO_Li2015.logsij0,mdbCO_Li2015.nu_lines,\
-                    mdbCO_Li2015.elower,qt_Li2015)
+                    mdbCO_Li2015.elower,qt_Li2015,mdbCO_Li2015.Tref)
 
 Then, compute the Lorentz gamma factor (pressure+natural broadening)
 

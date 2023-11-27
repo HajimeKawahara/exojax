@@ -49,7 +49,7 @@ if __name__ == '__main__':
             'write_to_template':
             '__version__ = "{version}"\n',
         },
-        version='1.4.2',
+        version='1.4.3',
         author=find_meta('author'),
         author_email=find_meta('email'),
         maintainer=find_meta('author'),
@@ -75,6 +75,10 @@ if __name__ == '__main__':
 import subprocess
 import sys
 
+def install_radis_develop():
+    subprocess.check_call([sys.executable, "-m", "pip", "install", "-e", 'git+https://github.com/radis/radis@develop#egg=radis'])
+
+
 def uninstall(package):
     subprocess.check_call([sys.executable, "-m", "pip", "uninstall", "-y", package])
 
@@ -82,6 +86,7 @@ def reinstall(package):
     subprocess.check_call([sys.executable, "-m", "pip", "uninstall", "-y", package])
     subprocess.check_call([sys.executable, "-m", "pip", "install", package])
 
+install_radis_develop()
 uninstall('vaex-core')
 uninstall('vaex-astro')
 uninstall('vaex-jupyter')

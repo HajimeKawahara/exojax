@@ -1,4 +1,4 @@
-"""Particulates Database
+""" Particulates Database
 
 - Cloud
 - Haze (in future)
@@ -91,8 +91,6 @@ class PdbCloud(object):
         self.refraction_index_wavenumber = wav2nu(wave, "um")  # wave in micron
         self.refraction_index_wavelength_nm = wave * 1.0e3
         self.refraction_index = nn + kk * (1j)
-
-    
 
     def set_saturation_pressure_list(self):
         from exojax.atm.psat import (

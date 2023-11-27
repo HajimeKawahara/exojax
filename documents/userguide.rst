@@ -32,6 +32,7 @@ Scattering and Clouds
    :maxdepth: 1
 
    userguide/rayleigh.rst
+   userguide/mie.rst
    userguide/vterm.rst
 
 

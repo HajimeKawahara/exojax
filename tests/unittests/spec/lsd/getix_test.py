@@ -1,7 +1,7 @@
 import jax.numpy as jnp
 import pytest
 import numpy as np
-from exojax.spec.lsd import getix, npgetix
+from exojax.utils.indexing import getix, npgetix
 
 def test_getix_ascending():
     x=jnp.array([0.7,1.3])
