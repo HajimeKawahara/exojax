@@ -28,18 +28,37 @@ def compute_mie_coeff_lognormal_grid(
     return miegrid
 
 
+def read_miegrid(filename):
+    miegrid = np.load(filename)["arr_0"]
+    print(np.shape(miegrid))
+    return miegrid
+
+
+from exojax.utils.interp import interp2d_bilinear
+
+
+def evaluate_miegrid(rg, sigmag):
+    interp2d_bilinear()
+
+
 if __name__ == "__main__":
     from exojax.spec.pardb import PdbCloud
 
     pdb = PdbCloud("NH3")
-    filename = "miegrid_lognorm_"+pdb.condensate+".mgd"
+    filename = "miegrid_lognorm_" + pdb.condensate + ".mgd"
+
+    # read_miegrid(filename+".npz")
+    # exit()
+
+    # pdb = PdbCloud("NH3")
+    # filename = "miegrid_lognorm_"+pdb.condensate+".mgd"
     print(filename)
-    
+
     Nsigmag = 10
-    sigmag_arr = np.logspace(-1,1,Nsigmag)
+    sigmag_arr = np.logspace(-1, 1, Nsigmag)
     Nrg = 40
-    rg_arr = np.logspace(-7,-3,Nsigmag) #cm
-    
+    rg_arr = np.logspace(-7, -3, Nsigmag)  # cm
+
     miegrid = compute_mie_coeff_lognormal_grid(
         pdb.refraction_index,
         pdb.refraction_index_wavelength_nm,
@@ -47,4 +66,4 @@ if __name__ == "__main__":
         rg_arr,
         npart=1.0,
     )
-    np.savez(filename, miegrid)
+    np.savez(filename, miegrid, rg_arr, sigmag_arr)
