@@ -92,24 +92,6 @@ class PdbCloud(object):
         self.refraction_index_wavelength_nm = wave * 1.0e3
         self.refraction_index = nn + kk * (1j)
 
-    def compute_each_mie_coeff_lognormal(self, sigmag, rg):
-        from tqdm import tqdm
-        from PyMieScatt import Mie_Lognormal as mief
-        #### needs to modify and check inverse?
-        wavenm = self.refraction_index_wavelength_nm[-30:-8]
-        marr = self.refraction_index[-30:-8]
-        #####
-        npart = 1.0e6
-        cm2nm = 1.0e7
-        mie = []
-        for rgl in tqdm(rg * cm2nm):
-            mie_each = []
-            for i, m in enumerate(marr):
-                coeff = mief(m, wavenm[i], sigmag, rgl, npart)
-                mie_each.append(coeff)
-            mie.append(mie_each)
-        print("Not complete yet")
-        return mie
     
 
     def set_saturation_pressure_list(self):
