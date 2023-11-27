@@ -2,24 +2,27 @@
 
 """
 import numpy as np
+from exojax.utils.interp import interp2d_bilinear
+from jax.config import config
+
+config.update("jax_enable_x64", False)
 
 
 def test_interp2d():
-    xp = np.array([1.0, 4.0])
+    # sets grids
+    xp = np.array([1.0, 4.0, 6.0])
     yp = np.array([2.0, 4.0])
-    fp = np.zeros((2, 2))
-    fp[:, 0] = np.array([1.0, 3.0])
-    fp[:, 1] = np.array([2.0, 4.0])
+    fp = np.zeros((3, 2))
+    fp[:, 0] = np.array([1.0, 3.0, 5.0])
+    fp[:, 1] = np.array([2.0, 4.0, 7.0])
+    # test coordinates
+    x = np.array([2.5])
+    y = np.array([3.0])
+    # evaluates the interpolated value
+    f = interp2d_bilinear(x, y, xp, yp, fp.T)
 
-    f = interp2d(3.0, 3.0, xp, yp, fp)
+    assert f[0] == 2.5
 
 
-from exojax.utils.indexing import getix
-
-
-def interp2d(x, y, xp, yp, fp):
-    cx, ix = getix(x, xp)
-    cy, iy = getix(y, yp)
-    ax = (fp[ix+1,iy] - fp[ix,iy])/(xp[ix+1]-xp[ix])
-    ay = (fp[ix,iy+1] - fp[ix,iy])/(yp[iy+1]-yp[iy])
-    return ax*cx + ay*cy + fp[ix,iy]  
+if __name__ == "__main__":
+    test_interp2d()
