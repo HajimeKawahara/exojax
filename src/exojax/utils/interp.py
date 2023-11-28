@@ -12,10 +12,10 @@ def interp2d_bilinear(x, y, xp, yp, fp):
         y (float or 1D array): y (or y array) you want know the value
         xp (1D array): x grid (x.size = M)
         yp (1D array): y grid (y.size = N)
-        fp (2D array): value grid (shape = (M,N))
+        fp (2D or nD array): value grid (shape = (M,N) or (M,N,...))
 
     Returns:
-        float or 1D array: bilinear interpolated value(s) at (x,y)
+        float or nD array: bilinear interpolated value(s) at (x,y)
     """
     cx, ix = getix(x, xp)
     cy, iy = getix(y, yp)
