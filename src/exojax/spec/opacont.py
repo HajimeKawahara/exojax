@@ -8,12 +8,12 @@ from exojax.utils.grids import nu2wav
 from exojax.spec.hitrancia import interp_logacia_vector
 from exojax.spec.hitrancia import interp_logacia_matrix
 
-__all__ = ['OpaCIA']
+__all__ = ["OpaCIA"]
 
 
-class OpaCont():
-    """Common Opacity Calculator Class
-    """
+class OpaCont:
+    """Common Opacity Calculator Class"""
+
     __slots__ = [
         "opainfo",
     ]
@@ -24,50 +24,58 @@ class OpaCont():
 
 
 class OpaCIA(OpaCont):
-    """Opacity Continuum Calculator Class for CIA
+    """Opacity Continuum Calculator Class for CIA"""
 
-    """
-    def __init__(self, cdb, nu_grid, wavelength_order="descending"):
-        """
-        _summary_
+    def __init__(self, cdb, nu_grid):
+        """initialization of opacity calcluator for CIA
 
         Args:
-            cdb (_type_): Continuum database 
+            cdb (_type_): Continuum database
             nu_grid (_type_): _wavenumber grid
-            wavelength_order (str, optional): _description_. Defaults to "descending".
         """
         self.method = "cia"
         self.warning = True
         self.nu_grid = nu_grid
-        #self.wavelength_order = wavelength_order
-        #self.wav = nu2wav(self.nu_grid,
-        #                  wavelength_order=self.wavelength_order,
-        #                  unit="AA")
         self.cdb = cdb
         self.ready = True
 
     def logacia_vector(self, T):
-        return interp_logacia_vector(T, self.nu_grid, self.cdb.nucia,
-                                     self.cdb.tcia, self.cdb.logac)
+        return interp_logacia_vector(
+            T, self.nu_grid, self.cdb.nucia, self.cdb.tcia, self.cdb.logac
+        )
 
     def logacia_matrix(self, temperature):
-        return interp_logacia_matrix(temperature, self.nu_grid, self.cdb.nucia,
-                                     self.cdb.tcia, self.cdb.logac)
+        return interp_logacia_matrix(
+            temperature, self.nu_grid, self.cdb.nucia, self.cdb.tcia, self.cdb.logac
+        )
+
 
 class OpaHminus(OpaCont):
     def __init__(self):
         self.method = "hminus"
         ValueError("Not implemented yet")
 
+
 class OpaRayleigh(OpaCont):
     def __init__(self):
         self.method = "rayleigh"
         ValueError("Not implemented yet")
 
+from exojax.spec.mie import read_miegrid
+
 class OpaMie(OpaCont):
-    def __init__(self):
+    def __init__(self, pdb, nu_grid):
         self.method = "mie"
+        self.nu_grid = nu_grid
+        self.pdb = pdb
+        self.ready = True
+        self.set_miegrid_filename()
 
-    #def xsvector()
+    def set_miegrid_filename(self):
+        self.miegrid_filename = "miegrid_lognorm_" + self.pdb.condensate + ".mgd"
 
+    def load_miegrid(self):
+        self.miegrid, self.rg_arr, self.sigmag_arr = read_miegrid(self.miegrid_filename)
 
+    
+    # def xsvector()
