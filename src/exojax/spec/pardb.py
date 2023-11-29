@@ -43,7 +43,7 @@ class PdbCloud(object):
         self.ready_mie = False
         self.set_miegrid_filename()
         self.set_miegrid_path()
-        
+
     def download_and_unzip(self):
         """Downloading virga refractive index data
 
@@ -133,22 +133,29 @@ class PdbCloud(object):
 
     def set_miegrid_path(self, miegrid_path=None):
         if miegrid_path is None:
-            self.miegrid_path = self.path / pathlib.Path(self.miegrid_filename)
+            self.miegrid_path = self.path / pathlib.Path(self.miegrid_filename + ".npz")
         else:
-            self.miegrid_path = pathlib.Path(miegrid_path)
+            self.miegrid_path = pathlib.Path(miegrid_path + ".npz")
 
         if self.miegrid_path.exists():
             print("Miegrid file exists:", str(self.miegrid_path))
-            self.ready_mie = True
         else:
             print("Miegrid file does not exist at ", str(self.miegrid_path))
-            print("Generate miegrid file using pdb.generate_miegrid if you use Mie scattering")
-
+            print(
+                "Generate miegrid file using pdb.generate_miegrid if you use Mie scattering"
+            )
 
     def load_miegrid(self):
         from exojax.spec.mie import read_miegrid
 
-        self.miegrid, self.rg_arr, self.sigmag_arr = read_miegrid(self.miegrid_path)
+        if self.miegrid_path.exists():
+            self.miegrid, self.rg_arr, self.sigmag_arr = read_miegrid(self.miegrid_path)
+            self.ready_mie = True
+            print(
+                "pdb.miegrid, pdb.rg_arr, pdb.sigmag_arr are now available. The Mie scattering computation is ready."
+            )
+        else:
+            raise ValueError("Miegrid file Not Found.")
 
     def generate_miegrid(
         self,
@@ -159,6 +166,21 @@ class PdbCloud(object):
         rg_max=-3.0,
         Nrg=40,
     ):
+        """generates miegrid assuming lognormal size distribution
+
+        Args:
+            log_sigmagmin (float, optional): log sigma_g minimum. Defaults to -1.0.
+            log_sigmagmax (float, optional): log sigma_g maximum. Defaults to 1.0.
+            Nsigmag (int, optional): the number of the sigmag grid. Defaults to 10.
+            log_rg_min (float, optional): log r_g (cm) minimum . Defaults to -7.0.
+            log_rg_max (float, optional): log r_g (cm) minimum. Defaults to -3.0.
+            Nrg (int, optional): the number of the rg grid. Defaults to 40.
+
+        Note:
+            it will take a bit long time. 
+
+        """
+
         from exojax.spec.mie import make_miegrid_lognormal
 
         make_miegrid_lognormal(
@@ -171,8 +193,9 @@ class PdbCloud(object):
             rg_max,
             Nrg,
         )
-
+        print(str(self.miegrid_filename), " was generated.")
 
 
 if __name__ == "__main__":
     pdb = PdbCloud("NH3")
+    pdb.load_miegrid()

@@ -66,7 +66,7 @@ def read_miegrid(filename):
         jnp 1d array: array for rg
         jnp 1d array: array for sigmag
     """
-    dat = np.load(filename + ".npz")
+    dat = np.load(filename)
     miegrid = dat["arr_0"]
     rg_arr = dat["arr_1"]
     sigmag_arr = dat["arr_2"]
@@ -76,16 +76,29 @@ def read_miegrid(filename):
 def make_miegrid_lognormal(
     pdb,
     filename,
-    sigmagmin=-1.0,
-    sigmagmax=1.0,
+    log_sigmagmin=-1.0,
+    log_sigmagmax=1.0,
     Nsigmag=10,
-    rg_min=-7.0,
-    rg_max=-3.0,
+    log_rg_min=-7.0,
+    log_rg_max=-3.0,
     Nrg=40,
 ):
+    """ generates miegrid assuming lognormal size distribution
 
-    sigmag_arr = np.logspace(sigmagmin, sigmagmax, Nsigmag)
-    rg_arr = np.logspace(rg_min, rg_max, Nrg)  # cm
+
+    Args:
+        pdb (_type_): particulates database class pdb
+        filename (_type_): _description_
+        log_sigmagmin (float, optional): _description_. Defaults to -1.0.
+        log_sigmagmax (float, optional): _description_. Defaults to 1.0.
+        Nsigmag (int, optional): _description_. Defaults to 10.
+        log_rg_min (float, optional): _description_. Defaults to -7.0.
+        log_rg_max (float, optional): _description_. Defaults to -3.0.
+        Nrg (int, optional): _description_. Defaults to 40.
+    """
+
+    sigmag_arr = np.logspace(log_sigmagmin, log_sigmagmax, Nsigmag)
+    rg_arr = np.logspace(log_rg_min, log_rg_max, Nrg)  # cm
 
     miegrid = compute_mie_coeff_lognormal_grid(
         pdb.refraction_index,
