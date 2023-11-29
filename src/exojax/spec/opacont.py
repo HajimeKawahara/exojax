@@ -61,21 +61,19 @@ class OpaRayleigh(OpaCont):
         self.method = "rayleigh"
         ValueError("Not implemented yet")
 
+
 from exojax.spec.mie import read_miegrid
+import pathlib
 
 class OpaMie(OpaCont):
-    def __init__(self, pdb, nu_grid):
+    def __init__(
+        self,
+        pdb,
+        nu_grid,
+    ):
         self.method = "mie"
         self.nu_grid = nu_grid
         self.pdb = pdb
         self.ready = True
-        self.set_miegrid_filename()
 
-    def set_miegrid_filename(self):
-        self.miegrid_filename = "miegrid_lognorm_" + self.pdb.condensate + ".mgd"
-
-    def load_miegrid(self):
-        self.miegrid, self.rg_arr, self.sigmag_arr = read_miegrid(self.miegrid_filename)
-
-    
     # def xsvector()

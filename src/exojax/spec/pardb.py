@@ -18,6 +18,7 @@ class PdbCloud(object):
         nurange=[-np.inf, np.inf],
         margin=10.0,
         path="./.database/particulates/virga",
+        gen_miegrid=False,
     ):
         """Particulates Database for clouds
 
@@ -25,6 +26,8 @@ class PdbCloud(object):
             condensate: condensate, such as NH3, H2O, MgSiO3 etc
             nurange: wavenumber range list (cm-1) or wavenumber array
             margin: margin for nurange (cm-1)
+            path: database path
+
         """
         self.path = pathlib.Path(path)
         self.condensate = condensate
@@ -35,6 +38,14 @@ class PdbCloud(object):
         self.margin = margin
         self.set_saturation_pressure_list()
         self.set_condensate_density()
+
+        # Mie scattering
+        self.set_miegrid_filename()
+        self.set_miegrid_path()
+        if gen_miegrid:
+            generate_miegrid()
+        else:
+            check_miegrid()
 
     def download_and_unzip(self):
         """Downloading virga refractive index data
@@ -114,6 +125,48 @@ class PdbCloud(object):
 
     def saturation_pressure(self, temperatures):
         return self.saturation_pressure_solid_list[self.condensate](temperatures)
+
+    def set_miegrid_filename(self, miegrid_filename=None):
+        if miegrid_filename is None:
+            self.miegrid_filename = "miegrid_lognorm_" + self.condensate + ".mgd"
+        else:
+            self.miegrid_filename = miegrid_filename
+
+    def set_miegrid_path(self, miegrid_path=None):
+        if miegrid_path is None:
+            self.miegrid_path = self.path / pathlib.Path(self.miegrid_filename)
+        else:
+            self.miegrid_path = pathlib.Path(miegrid_path)
+
+    def load_miegrid(self):
+        from exojax.spec.mie import read_miegrid
+
+        self.miegrid, self.rg_arr, self.sigmag_arr = read_miegrid(self.miegrid_path)
+
+    def generate_miegrid(
+        self,
+        sigmagmin=-1.0,
+        sigmagmax=1.0,
+        Nsigmag=10,
+        rg_min=-7.0,
+        rg_max=-3.0,
+        Nrg=40,
+    ):
+        from exojax.spec.mie import make_miegrid_lognormal
+
+        make_miegrid_lognormal(
+            self.pdb,
+            str(self.miegrid_filename),
+            sigmagmin,
+            sigmagmax,
+            Nsigmag,
+            rg_min,
+            rg_max,
+            Nrg,
+        )
+
+    def check_miegrid(self):
+        return
 
 
 if __name__ == "__main__":

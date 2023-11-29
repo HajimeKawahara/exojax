@@ -51,7 +51,7 @@ def save_miegrid(filename, miegrid, rg_arr, sigmag_arr):
         jnp 1d array: array for rg
         jnp 1d array: array for sigmag
 
-    """        
+    """
     np.savez(filename, miegrid, rg_arr, sigmag_arr)
 
 
@@ -66,20 +66,26 @@ def read_miegrid(filename):
         jnp 1d array: array for rg
         jnp 1d array: array for sigmag
     """
-    dat = np.load(filename+".npz")
+    dat = np.load(filename + ".npz")
     miegrid = dat["arr_0"]
     rg_arr = dat["arr_1"]
     sigmag_arr = dat["arr_2"]
     return jnp.array(miegrid), jnp.array(rg_arr), jnp.array(sigmag_arr)
 
 
-def make_miegrid(compute_mie_coeff_lognormal_grid, save_miegrid, pdb):
-    filename = "miegrid_lognorm_" + pdb.condensate + ".mgd"
+def make_miegrid_lognormal(
+    pdb,
+    filename,
+    sigmagmin=-1.0,
+    sigmagmax=1.0,
+    Nsigmag=10,
+    rg_min=-7.0,
+    rg_max=-3.0,
+    Nrg=40,
+):
 
-    Nsigmag = 10
-    sigmag_arr = np.logspace(-1, 1, Nsigmag)
-    Nrg = 40
-    rg_arr = np.logspace(-7, -3, Nrg)  # cm
+    sigmag_arr = np.logspace(sigmagmin, sigmagmax, Nsigmag)
+    rg_arr = np.logspace(rg_min, rg_max, Nrg)  # cm
 
     miegrid = compute_mie_coeff_lognormal_grid(
         pdb.refraction_index,
@@ -100,7 +106,7 @@ def evaluate_miegrid(rg, sigmag, miegrid, rg_arr, sigmag_arr):
         miegrid (5d array): Mie grid (lognormal)
         sigmag_arr (1d array): sigma_g array
         rg_arr (1d array): rg array
-        
+
     Returns:
         _type_: _description_
     """
@@ -127,10 +133,12 @@ if __name__ == "__main__":
     rg = 3.0e-5
     sigmag = 2.0
     f = evaluate_miegrid(rg, sigmag, miegrid, rg_arr, sigmag_arr)
-    
+
     rg_layer = jnp.array([3.0e-5, 3.0e-5])
     sigmag_layer = jnp.array([2.0, 2.0])
-    f_layer = evaluate_miegrid_layers(rg_layer, sigmag_layer, miegrid, rg_arr, sigmag_arr)
+    f_layer = evaluate_miegrid_layers(
+        rg_layer, sigmag_layer, miegrid, rg_arr, sigmag_arr
+    )
 
     print(jnp.shape(f_layer))
 
@@ -138,5 +146,3 @@ if __name__ == "__main__":
     exit()
 
     # pdb = PdbCloud("NH3")
-
-    make_miegrid(compute_mie_coeff_lognormal_grid, save_miegrid, pdb)
