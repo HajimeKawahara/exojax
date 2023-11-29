@@ -40,13 +40,10 @@ class PdbCloud(object):
         self.set_condensate_density()
 
         # Mie scattering
+        self.ready_mie = False
         self.set_miegrid_filename()
         self.set_miegrid_path()
-        if gen_miegrid:
-            generate_miegrid()
-        else:
-            check_miegrid()
-
+        
     def download_and_unzip(self):
         """Downloading virga refractive index data
 
@@ -129,6 +126,8 @@ class PdbCloud(object):
     def set_miegrid_filename(self, miegrid_filename=None):
         if miegrid_filename is None:
             self.miegrid_filename = "miegrid_lognorm_" + self.condensate + ".mgd"
+        elif miegrid_filename == "auto":
+            raise ValueError("not implemented yet")
         else:
             self.miegrid_filename = miegrid_filename
 
@@ -137,6 +136,14 @@ class PdbCloud(object):
             self.miegrid_path = self.path / pathlib.Path(self.miegrid_filename)
         else:
             self.miegrid_path = pathlib.Path(miegrid_path)
+
+        if self.miegrid_path.exists():
+            print("Miegrid file exists:", str(self.miegrid_path))
+            self.ready_mie = True
+        else:
+            print("Miegrid file does not exist at ", str(self.miegrid_path))
+            print("Generate miegrid file using pdb.generate_miegrid if you use Mie scattering")
+
 
     def load_miegrid(self):
         from exojax.spec.mie import read_miegrid
@@ -165,8 +172,6 @@ class PdbCloud(object):
             Nrg,
         )
 
-    def check_miegrid(self):
-        return
 
 
 if __name__ == "__main__":
