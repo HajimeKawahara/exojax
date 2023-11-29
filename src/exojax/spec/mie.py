@@ -36,7 +36,7 @@ def compute_mie_coeff_lognormal_grid(
     for ind_sigmag, sigmag in enumerate(tqdm(sigmag_arr)):
         for ind_rg, rg in enumerate(tqdm(np.array(rg_arr) * cm2nm)):
             for ind_m, m in enumerate(tqdm(refractive_indices)):
-                coeff = mief(m, refractive_wavenm[ind_m], sigmag, rg, npart)
+                coeff = mief(m, refractive_wavenm[ind_m], sigmag, 2.0*rg, npart) # geoMean is a diameter in PyMieScatt 
                 miegrid[ind_rg, ind_sigmag, ind_m, :] = coeff
 
     return miegrid
@@ -88,13 +88,13 @@ def make_miegrid_lognormal(
 
     Args:
         pdb (_type_): particulates database class pdb
-        filename (_type_): _description_
-        log_sigmagmin (float, optional): _description_. Defaults to -1.0.
-        log_sigmagmax (float, optional): _description_. Defaults to 1.0.
-        Nsigmag (int, optional): _description_. Defaults to 10.
-        log_rg_min (float, optional): _description_. Defaults to -7.0.
-        log_rg_max (float, optional): _description_. Defaults to -3.0.
-        Nrg (int, optional): _description_. Defaults to 40.
+        filename (str): filename
+        log_sigmagmin (float, optional): log sigma_g minimum. Defaults to -1.0.
+        log_sigmagmax (float, optional): log sigma_g maximum. Defaults to 1.0.
+        Nsigmag (int, optional): the number of the sigmag grid. Defaults to 10.
+        log_rg_min (float, optional): log r_g (cm) minimum . Defaults to -7.0.
+        log_rg_max (float, optional): log r_g (cm) minimum. Defaults to -3.0.
+        Nrg (int, optional): the number of the rg grid. Defaults to 40.
     """
 
     sigmag_arr = np.logspace(log_sigmagmin, log_sigmagmax, Nsigmag)
