@@ -127,7 +127,7 @@ class PdbCloud(object):
 
     def set_miegrid_filename(self, miegrid_filename=None):
         if miegrid_filename is None:
-            self.miegrid_filename = "miegrid_lognorm_" + self.condensate + ".mgd"
+            self.miegrid_filename = "miegrid_lognorm_" + self.condensate + ".mg"
         elif miegrid_filename == "auto":
             raise ValueError("not implemented yet")
         else:

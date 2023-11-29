@@ -140,8 +140,11 @@ if __name__ == "__main__":
     import jax.numpy as jnp
 
     pdb = PdbCloud("NH3")
-    filename = "miegrid_lognorm_" + pdb.condensate + ".mgd"
+    filename = "miegrid_lognorm_" + pdb.condensate + ".mg"
+    make_miegrid_lognormal(pdb,filename)
 
+    exit()
+    #load
     miegrid, rg_arr, sigmag_arr = read_miegrid(filename)
     rg = 3.0e-5
     sigmag = 2.0
@@ -154,8 +157,5 @@ if __name__ == "__main__":
     )
 
     print(jnp.shape(f_layer))
-
     print(np.shape(f))
     exit()
-
-    # pdb = PdbCloud("NH3")
