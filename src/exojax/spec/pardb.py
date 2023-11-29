@@ -7,6 +7,8 @@
 
 import numpy as np
 import pathlib
+from exojax.spec.mie import evaluate_miegrid_layers
+
 
 __all__ = ["PdbCloud"]
 
@@ -177,7 +179,7 @@ class PdbCloud(object):
             Nrg (int, optional): the number of the rg grid. Defaults to 40.
 
         Note:
-            it will take a bit long time. 
+            it will take a bit long time.
 
         """
 
@@ -194,6 +196,11 @@ class PdbCloud(object):
             Nrg,
         )
         print(str(self.miegrid_filename), " was generated.")
+
+    def mie_parameters(self, rg_layer, sigmag_layer):
+        return evaluate_miegrid_layers(
+            rg_layer, sigmag_layer, self.miegrid, self.rg_arr, self.sigmag_arr
+        )
 
 
 if __name__ == "__main__":
