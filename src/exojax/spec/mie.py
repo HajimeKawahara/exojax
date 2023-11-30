@@ -82,6 +82,7 @@ def make_miegrid_lognormal(
     log_rg_min=-7.0,
     log_rg_max=-3.0,
     Nrg=40,
+    N0=1.0,
 ):
     """ generates miegrid assuming lognormal size distribution
 
@@ -95,6 +96,14 @@ def make_miegrid_lognormal(
         log_rg_min (float, optional): log r_g (cm) minimum . Defaults to -7.0.
         log_rg_max (float, optional): log r_g (cm) minimum. Defaults to -3.0.
         Nrg (int, optional): the number of the rg grid. Defaults to 40.
+        N0 (float): reference number density of the lognormal distribution, default 1.0 (cm-3)
+    
+    
+    Note:
+        n0(r) dr (cm-3) = N0/sqrt(2 p d log sigma_g)  e^{-(ln d - ln d_g)^2/(2 log^2 sigma_g)} 
+        d_g = 2 r_g
+        d = 2 r
+    
     """
 
     sigmag_arr = np.logspace(log_sigmagmin, log_sigmagmax, Nsigmag)
@@ -105,7 +114,7 @@ def make_miegrid_lognormal(
         pdb.refraction_index_wavelength_nm,
         sigmag_arr,
         rg_arr,
-        npart=1.0,
+        npart=N0,
     )
     save_miegrid(filename, miegrid, rg_arr, sigmag_arr)
 
@@ -120,19 +129,63 @@ def evaluate_miegrid(rg, sigmag, miegrid, rg_arr, sigmag_arr):
         sigmag_arr (1d array): sigma_g array
         rg_arr (1d array): rg array
 
-    Returns:
-        _type_: _description_
-    """
-    beta = interp2d_bilinear(rg, sigmag, rg_arr, sigmag_arr, miegrid)
-    return beta
+    Note:
+        beta derived here is in the unit of 1/Mm (Mega meter) for diameter
+        multiply 2.e-8 to convert to 1/cm for radius. 
 
+
+    Returns:
+        _type_: evaluated values of miegrid  (wavenumber, number of mieparams)
+    """
+    mieparams = interp2d_bilinear(rg, sigmag, rg_arr, sigmag_arr, miegrid) 
+    return mieparams
 
 from jax import vmap
 
 
 def evaluate_miegrid_layers(rg_layer, sigmag_layer, miegrid, rg_arr, sigmag_arr):
+    """_summary_
+
+    Args:
+        rg_layer (1d array): layer wise rg parameters 
+        sigmag_layer (1d array): layer wise sigmag parameters 
+        miegrid (5d array): Mie grid (lognormal)
+        sigmag_arr (1d array): sigma_g array
+        rg_arr (1d array): rg array
+        
+    Returns:
+        _type_: evaluated values of miegrid  (wavenumber, number of mieparams)
+    """
+    
     vmapfunc = vmap(evaluate_miegrid, (0, 0, None, None, None), 0)
     return vmapfunc(rg_layer, sigmag_layer, miegrid, rg_arr, sigmag_arr)
+
+def xsmatrix_and_gmatrix(rg_layer, sigmag_layer, miegrid, rg_arr, sigmag_arr, N0):
+    """_summary_
+
+    Args:
+        rg_layer (_type_): _description_
+        sigmag_layer (_type_): _description_
+        miegrid (_type_): _description_
+        rg_arr (_type_): _description_
+        sigmag_arr (_type_): _description_
+        N0: reference number density of the condensates cm-3
+        
+    Returns:
+        volume extinction coefficient (1/cm) for the reference numbver density N0
+        single scattering albedo
+        asymmetric factor g (mean g)
+    """
+
+
+    mieparams = evaluate_miegrid_layers(rg_layer, sigmag_layer, miegrid, rg_arr, sigmag_arr)
+    convfactor = 2.e-8 # conversiont to cgs
+    beta0_extinction = convfactor * mieparams[:,:,0] # (layer, wav)
+    omega0 = mieparams[:,:,1]/mieparams[:,:,0]
+    g = mieparams[:,:,3]
+
+    return beta0_extinction, omega0, g
+
 
 
 if __name__ == "__main__":
@@ -159,3 +212,4 @@ if __name__ == "__main__":
     print(jnp.shape(f_layer))
     print(np.shape(f))
     exit()
+
