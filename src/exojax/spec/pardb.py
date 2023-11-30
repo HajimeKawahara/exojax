@@ -8,6 +8,7 @@
 import numpy as np
 import pathlib
 from exojax.spec.mie import evaluate_miegrid_layers
+from exojax.spec.mie import compute_mieparams
 
 
 __all__ = ["PdbCloud"]
@@ -20,7 +21,6 @@ class PdbCloud(object):
         nurange=[-np.inf, np.inf],
         margin=10.0,
         path="./.database/particulates/virga",
-        gen_miegrid=False,
     ):
         """Particulates Database for clouds
 
@@ -43,6 +43,7 @@ class PdbCloud(object):
 
         # Mie scattering
         self.ready_mie = False
+        self.N0 = 1.0  # reference number density (cm^-3) to compute beta_0 (mie coefficient as an input of PyMieScatt)
         self.set_miegrid_filename()
         self.set_miegrid_path()
 
@@ -194,12 +195,37 @@ class PdbCloud(object):
             rg_min,
             rg_max,
             Nrg,
+            self.N0,
         )
         print(str(self.miegrid_filename), " was generated.")
 
-    def mie_parameters(self, rg_layer, sigmag_layer):
+    def miegrid_interpolated_values(self, rg_layer, sigmag_layer):
         return evaluate_miegrid_layers(
             rg_layer, sigmag_layer, self.miegrid, self.rg_arr, self.sigmag_arr
+        )
+
+    def mieparams(self, rg_layer, sigmag_layer):
+        """computes Mie parameters i.e. extinction coeff, sinigle scattering albedo, asymmetric factor
+
+        Args:
+            rg_layer (1d array): layer wise rg parameters
+            sigmag_layer (1d array): layer wise sigmag parameters
+            miegrid (5d array): Mie grid (lognormal)
+            rg_arr (1d array): rg array
+            sigmag_arr (1d array): sigma_g array
+            N0: reference number density of the condensates cm-3
+
+        Note:
+            Volume extinction coefficient (1/cm) for the number density N can be computed by beta_extinction = N*beta0_extinction
+
+        Returns:
+            beta0_extinction, volume extinction coefficient (1/cm) normalized by the reference numbver density N0
+            omega0, single scattering albedo
+            g, asymmetric factor (mean g)
+        """
+
+        return compute_mieparams(
+            rg_layer, sigmag_layer, self.miegrid, self.rg_arr, self.sigmag_arr, self.N0
         )
 
 
