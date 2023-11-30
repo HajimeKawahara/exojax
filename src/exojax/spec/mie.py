@@ -123,8 +123,8 @@ def evaluate_miegrid(rg, sigmag, miegrid, rg_arr, sigmag_arr):
     Returns:
         _type_: _description_
     """
-    f = interp2d_bilinear(rg, sigmag, rg_arr, sigmag_arr, miegrid)
-    return f
+    beta = interp2d_bilinear(rg, sigmag, rg_arr, sigmag_arr, miegrid)
+    return beta
 
 
 from jax import vmap
