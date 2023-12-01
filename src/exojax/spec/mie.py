@@ -137,7 +137,7 @@ def evaluate_miegrid(rg, sigmag, miegrid, rg_arr, sigmag_arr):
 
 
     Returns:
-        _type_: evaluated values of miegrid  (wavenumber, number of mieparams)
+        _type_: evaluated values of miegrid, output of MieQ_lognormal Bext (1/Mm), Bsca, Babs, G, Bpr, Bback, Bratio (wavenumber, number of mieparams)
     """
     mieparams = interp2d_bilinear(rg, sigmag, rg_arr, sigmag_arr, miegrid)
     return mieparams
@@ -157,7 +157,7 @@ def evaluate_miegrid_layers(rg_layer, sigmag_layer, miegrid, rg_arr, sigmag_arr)
         sigmag_arr (1d array): sigma_g array
 
     Returns:
-        _type_: evaluated values of miegrid  (wavenumber, number of mieparams)
+        _type_: evaluated values of miegrid, output of MieQ_lognormal Bext (1/Mm) Bsca, Babs, G, Bpr, Bback, Bratio (wavenumber, number of mieparams)
     """
 
     vmapfunc = vmap(evaluate_miegrid, (0, 0, None, None, None), 0)
