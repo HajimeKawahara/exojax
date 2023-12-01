@@ -160,6 +160,10 @@ class PdbCloud(object):
         else:
             raise ValueError("Miegrid file Not Found.")
 
+    def get_indices_nurage(self):
+        
+
+
     def generate_miegrid(
         self,
         sigmagmin=-1.0,
