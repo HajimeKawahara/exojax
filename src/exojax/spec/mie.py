@@ -76,7 +76,8 @@ def read_miegrid(filename):
 
 
 def make_miegrid_lognormal(
-    pdb,
+    refraction_index,
+    refraction_index_wavelength_nm,
     filename,
     log_sigmagmin=-1.0,
     log_sigmagmax=1.0,
@@ -90,7 +91,8 @@ def make_miegrid_lognormal(
 
 
     Args:
-        pdb (_type_): particulates database class pdb
+        refraction_index: complex refracion (refractive) index
+        refraction_index_wavelength_nm: wavelength grid in nm
         filename (str): filename
         log_sigmagmin (float, optional): log sigma_g minimum. Defaults to -1.0.
         log_sigmagmax (float, optional): log sigma_g maximum. Defaults to 1.0.
@@ -112,8 +114,8 @@ def make_miegrid_lognormal(
     rg_arr = np.logspace(log_rg_min, log_rg_max, Nrg)  # cm
 
     miegrid = compute_mie_coeff_lognormal_grid(
-        pdb.refraction_index,
-        pdb.refraction_index_wavelength_nm,
+        refraction_index,
+        refraction_index_wavelength_nm,
         sigmag_arr,
         rg_arr,
         npart=N0,
@@ -201,7 +203,9 @@ if __name__ == "__main__":
 
     pdb = PdbCloud("NH3")
     filename = ".database/particulates/virga/miegrid_lognorm_" + pdb.condensate + ".mg"
-    # make_miegrid_lognormal(pdb,filename)
+    make_miegrid_lognormal(
+        pdb.refraction_index, pdb.refraction_index_wavelength_nm, filename
+    )
 
     # exit()
     # load

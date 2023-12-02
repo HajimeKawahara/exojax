@@ -160,8 +160,9 @@ class PdbCloud(object):
         else:
             raise ValueError("Miegrid file Not Found.")
 
-    #def get_indices_nurage(self):
-        
+    def get_indices_nurage(self):
+        indices = np.searchsorted(self.refraction_index_wavenumber,self.nurange)
+        print(self.refraction_index_wavenumber[indices])
 
 
     def generate_miegrid(
@@ -191,7 +192,8 @@ class PdbCloud(object):
         from exojax.spec.mie import make_miegrid_lognormal
 
         make_miegrid_lognormal(
-            self.pdb,
+            self.refraction_index,
+            self.refraction_index_wavelength_nm,
             str(self.miegrid_filename),
             sigmagmin,
             sigmagmax,
