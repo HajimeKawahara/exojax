@@ -21,6 +21,8 @@ class PdbCloud(object):
         nurange=[-np.inf, np.inf],
         margin=10.0,
         path="./.database/particulates/virga",
+        download=True,
+        refrind_path=None,
     ):
         """Particulates Database for clouds
 
@@ -29,11 +31,16 @@ class PdbCloud(object):
             nurange: wavenumber range list (cm-1) or wavenumber array
             margin: margin for nurange (cm-1)
             path: database path
-
+            download: allow download from virga. default to True
+            refrinf_path: manual setting of path to refraction index file. default to None
         """
         self.path = pathlib.Path(path)
         self.condensate = condensate
-        self.download_and_unzip()
+        if download:
+            self.download_and_unzip()
+        if refrind_path is not None:
+            self.refrind_path = pathlib.Path(refrind_path)
+
         self.load_virga()
 
         self.nurange = [np.min(nurange), np.max(nurange)]
@@ -161,9 +168,8 @@ class PdbCloud(object):
             raise ValueError("Miegrid file Not Found.")
 
     def get_indices_nurage(self):
-        indices = np.searchsorted(self.refraction_index_wavenumber,self.nurange)
+        indices = np.searchsorted(self.refraction_index_wavenumber, self.nurange)
         print(self.refraction_index_wavenumber[indices])
-
 
     def generate_miegrid(
         self,
@@ -194,7 +200,7 @@ class PdbCloud(object):
         make_miegrid_lognormal(
             self.refraction_index,
             self.refraction_index_wavelength_nm,
-            str(self.path/pathlib.Path(self.miegrid_filename)),
+            str(self.path / pathlib.Path(self.miegrid_filename)),
             sigmagmin,
             sigmagmax,
             Nsigmag,

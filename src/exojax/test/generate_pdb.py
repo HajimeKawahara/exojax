@@ -1,24 +1,20 @@
-"""generate test pdb
+"""generate test miegrid
 
 """
+import pkg_resources
 from exojax.spec import pardb
-import pickle
 
 
-def gendata_pardb():
-    """generate test data for ..."""
-    from exojax.test.data import TESTDATA_pardb_NH3 as filename
+def gendata_miegrid():
+    """
+    generates miegrid for test.refrind
+    """
+    refrind_path = pkg_resources.resource_filename(
+        "exojax", "data/testdata/test.refrind"
+    )
 
-    pdb_nh3 = pardb.PdbCloud("NH3")
-    pdb_nh3.load_miegrid()
-    with open(filename, "wb") as f:
-        pickle.dump(pdb_nh3, f)
-
-
-if __name__ == "__main__":
-    pdb_nh3 = pardb.PdbCloud("test")
-    if False:
-        pdb_nh3 = pardb.PdbCloud("NH3")
+    pdb_nh3 = pardb.PdbCloud("test", download=False, refrind_path=refrind_path)
+    if True:
         pdb_nh3.generate_miegrid(
             sigmagmin=-1.0,
             sigmagmax=1.0,
@@ -26,5 +22,7 @@ if __name__ == "__main__":
             rg_max=-4.0,
             Nrg=4,
         )
-    #gendata_pardb()
-    
+
+
+if __name__ == "__main__":
+    gendata_miegrid()

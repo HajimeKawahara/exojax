@@ -32,6 +32,7 @@ condensate_density = {
     # from virga, but originally from V.G. Manzhelii and A.M. Tolkachev, Sov. Phys. Solid State 5, 2506 (1964)
     "NH3": 0.84,  # solid, 213K
     "H2O": 0.93,  # solid, 213K
+    "test": 0.84  # test condensate for testing
 }
 
 

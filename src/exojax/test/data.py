@@ -42,5 +42,5 @@ TESTDATA_CO_HITEMP_PARFILE = "05_HITEMP_SAMPLE.par"
 #test data CIA H2-H2 (4300-4400 cm-1)
 TESTDATA_H2_H2_CIA = "H2-H2_TEST.cia" 
 
-#test data for pardb 
-TESTDATA_pardb_NH3 = "pardb_nh3.pickle"
+#test data for refraction index
+TESTDATA_refrind = "test.refrind"
