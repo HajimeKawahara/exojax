@@ -11,7 +11,6 @@ include src/exojax/data/testdata/spectrum.txt
 include src/exojax/data/testdata/spectrum_ch4.txt
 include src/exojax/data/testdata/spectrum_ch4_new.txt
 include src/exojax/data/testdata/spectrum_co.txt
-include src/exojax/data/testdata/moldb_h2o_exomol.pickle
 include src/exojax/data/testdata/moldb_vald.pickle
 include src/exojax/data/testdata/lpf_test_ref.txt
 include src/exojax/data/testdata/modit_test_ref.txt

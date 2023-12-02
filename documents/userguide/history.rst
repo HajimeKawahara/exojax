@@ -4,6 +4,10 @@ History
 Version History
 ^^^^^^^^^^^^^^^^^^^^
 
+Version 1.5 (planned)
+-----------------------
+
+
 Version 1.4
 -------------------
 
@@ -11,7 +15,7 @@ Version 1.4
 - operators on spectra class #363
 - multiple molecules handler #388
 
-ExoJAX now strongly recommends using 64-bit as default.
+ExoJAX now recommends using 64-bit as default, but can use 32 bit if you are confident.
 
 
 Version 1.3

@@ -1,11 +1,7 @@
 """filenames of test data used in unit tests
 
 """
-# exomol moldb template used in unit tests
-# exojax.src.test.generate should make this file
-TESTDATA_moldb_CO_HITEMP = "moldb_co_hitemp.pickle"
-TESTDATA_moldb_CO_EXOMOL = "moldb_co_exomol.pickle"
-TESTDATA_moldb_CO_HITEMP_SINGLE_ISOTOPE = "moldb_co_hitemp_single_isotope.pickle"
+# exomol moldb template used in unit tests (will be removed)
 TESTDATA_moldb_VALD = "moldb_vald.pickle"
 
 # cross section references
