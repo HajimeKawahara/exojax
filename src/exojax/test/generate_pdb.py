@@ -16,7 +16,7 @@ def gendata_pardb():
 
 
 if __name__ == "__main__":
-    pdb_nh3 = pardb.PdbCloud("NH3")
+    pdb_nh3 = pardb.PdbCloud("test")
     if False:
         pdb_nh3 = pardb.PdbCloud("NH3")
         pdb_nh3.generate_miegrid(
