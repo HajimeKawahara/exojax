@@ -9,14 +9,15 @@ def gendata_pardb():
     """generate test data for ..."""
     from exojax.test.data import TESTDATA_pardb_NH3 as filename
 
-    pdb_nh3 = pardb.PdbCloud("NH3",path="./")
+    pdb_nh3 = pardb.PdbCloud("NH3")
     pdb_nh3.load_miegrid()
     with open(filename, "wb") as f:
         pickle.dump(pdb_nh3, f)
 
 
 if __name__ == "__main__":
-    if True:
+    pdb_nh3 = pardb.PdbCloud("NH3")
+    if False:
         pdb_nh3 = pardb.PdbCloud("NH3")
         pdb_nh3.generate_miegrid(
             sigmagmin=-1.0,
@@ -25,5 +26,5 @@ if __name__ == "__main__":
             rg_max=-4.0,
             Nrg=4,
         )
-    gendata_pardb()
-    print("move pickle file to ../data/testdata/")
+    #gendata_pardb()
+    

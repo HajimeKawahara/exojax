@@ -194,7 +194,7 @@ class PdbCloud(object):
         make_miegrid_lognormal(
             self.refraction_index,
             self.refraction_index_wavelength_nm,
-            str(self.miegrid_filename),
+            str(self.path/pathlib.Path(self.miegrid_filename)),
             sigmagmin,
             sigmagmax,
             Nsigmag,
