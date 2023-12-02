@@ -1,7 +1,7 @@
 """filenames of test data used in unit tests
 
 """
-# exomol moldb template used in unit tests
+# exomol moldb template used in unit tests (will be removed)
 TESTDATA_moldb_VALD = "moldb_vald.pickle"
 
 # cross section references
