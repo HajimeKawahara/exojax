@@ -1,8 +1,10 @@
 """unit conversion for spectrum."""
 
+import warnings
 from exojax.utils.checkarray import is_sorted
 
-def nu2wav(nus, wavelength_order, unit='AA'):
+
+def nu2wav(nus, wavelength_order, unit="AA"):
     """wavenumber to wavelength (AA)
 
     Args:
@@ -11,21 +13,18 @@ def nu2wav(nus, wavelength_order, unit='AA'):
         unit: unit of wavelength
 
     Returns:
-       wavelength (AA)
+        wavelength (AA)
     """
-    conversion_factors = {
-        'nm': 1.e7,
-        'AA': 1.e8,
-        'um': 1.e4
-    }
+    conversion_factors = {"nm": 1.0e7, "AA": 1.0e8, "um": 1.0e4}
 
     if is_sorted(nus) != "ascending":
         raise ValueError("wavenumber should be in ascending order in ExoJAX.")
 
     try:
-        if wavelength_order=="ascending":
+        if wavelength_order == "ascending":
+            _both_ascending_warning()
             return conversion_factors[unit] / nus[::-1]
-        elif wavelength_order=="descending":
+        elif wavelength_order == "descending":
             return conversion_factors[unit] / nus
         else:
             raise ValueError("order should be ascending or descending")
@@ -43,21 +42,22 @@ def wav2nu(wav, unit):
         wavenumber (cm-1) in ascending order
     """
 
-    conversion_factors = {
-        'nm': 1.e7,
-        'AA': 1.e8,
-        'um': 1.e4
-    }
+    conversion_factors = {"nm": 1.0e7, "AA": 1.0e8, "um": 1.0e4}
 
     order = is_sorted(wav)
-
     try:
-        if order=="ascending":
+        if order == "ascending":
+            _both_ascending_warning()
             return conversion_factors[unit] / wav[::-1]
-        elif order=="descending":
+        elif order == "descending":
             return conversion_factors[unit] / wav
         else:
             raise ValueError("wavelength array should be ascending or descending")
     except KeyError:
         raise ValueError("unavailable unit")
 
+def _both_ascending_warning():
+    warnings.warn(
+        "Both input wavelength and output wavenumber are in ascending order.",
+        UserWarning,
+    )

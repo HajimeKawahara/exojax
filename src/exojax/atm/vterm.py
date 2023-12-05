@@ -122,12 +122,6 @@ def terminal_velocity(r, gravity, dynamic_viscosity, rho_cloud, rho_atm, Nkn=0.0
     vft = jnp.select(cond, choice)
     return vft
 
-#deprecated 
-import warnings
-def vf(r, gravity, dynamic_viscosity, rho_cloud, rho_atm, Nkn):
-    warnings.warn("vf will be replaced to terminal_velocity.")
-    return terminal_velocity(r, gravity, dynamic_viscosity, rho_cloud, rho_atm, Nkn)
-
 
 if __name__ == '__main__':
     import matplotlib.pyplot as plt

@@ -18,7 +18,7 @@ class PdbCloud(object):
     def __init__(
         self,
         condensate,
-        nurange=[-np.inf, np.inf],
+        nurange=None,
         margin=10.0,
         path="./.database/particulates/virga",
         download=True,
@@ -28,7 +28,7 @@ class PdbCloud(object):
 
         Args:
             condensate: condensate, such as NH3, H2O, MgSiO3 etc
-            nurange: wavenumber range list (cm-1) or wavenumber array
+            nurange: wavenumber range list (cm-1) or wavenumber array, default to None, then set to the range of the refraction index file
             margin: margin for nurange (cm-1)
             path: database path
             download: allow download from virga. default to True
@@ -43,6 +43,12 @@ class PdbCloud(object):
 
         self.load_virga()
 
+        if nurange is None:
+            tip = 1.0e-11
+            nurange = [
+                self.refraction_index_wavenumber[0] + tip,
+                self.refraction_index_wavenumber[-1] - tip,
+            ]
         self.nurange = [np.min(nurange), np.max(nurange)]
         self.margin = margin
         self.set_saturation_pressure_list()
@@ -105,7 +111,6 @@ class PdbCloud(object):
         _, wave, nn, kk = np.loadtxt(
             open(self.refrind_path, "rt").readlines(), unpack=True, usecols=[0, 1, 2, 3]
         )
-
         self.refraction_index_wavenumber = wav2nu(wave, "um")  # wave in micron
         self.refraction_index_wavelength_nm = wave * 1.0e3
         self.refraction_index = nn + kk * (1j)
@@ -156,6 +161,12 @@ class PdbCloud(object):
             )
 
     def load_miegrid(self):
+        """
+        loads Miegrid
+
+        Raises:
+            ValueError: _description_
+        """
         from exojax.spec.mie import read_miegrid
 
         if self.miegrid_path.exists():
@@ -167,10 +178,34 @@ class PdbCloud(object):
         else:
             raise ValueError("Miegrid file Not Found.")
 
-    def get_indices_nurage(self):
-        indices = np.searchsorted(self.refraction_index_wavenumber, self.nurange)
-        return indices
-    
+        self.reset_miegrid_for_nurange()
+
+    def reset_miegrid_for_nurange(self):
+        """Resets wavenumber indices of miegrid, refraction_index_wavenumber, refraction_index_wavelength_nm, refraction_index
+        Raises:
+            ValueError: _description_
+        """
+        ist, ien = np.searchsorted(self.refraction_index_wavenumber, self.nurange)
+        if ist == 0 or ien == len(self.refraction_index_wavenumber):
+            print("pdb.nurange:", self.nurange, "cm-1")
+            print(
+                "Miegrid wavenumber range:[",
+                self.refraction_index_wavenumber[0],
+                ",",
+                self.refraction_index_wavenumber[-1],
+                "] cm-1",
+            )
+            raise ValueError(
+                "Miegrid wavenumber is out of the input range (pdb.nurange)."
+            )
+        self._redefine_wavenumber_indices(ist - 1, ien + 1)
+
+    def _redefine_wavenumber_indices(self, i, j):
+        self.refraction_index_wavenumber = self.refraction_index_wavenumber[i:j]
+        self.miegrid = self.miegrid[:, :, i:j, :]
+        self.refraction_index_wavelength_nm = self.refraction_index_wavelength_nm[i:j]
+        self.refraction_index = self.refraction_index[i:j]
+
     def generate_miegrid(
         self,
         sigmagmin=-1.0,
