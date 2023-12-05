@@ -169,8 +169,8 @@ class PdbCloud(object):
 
     def get_indices_nurage(self):
         indices = np.searchsorted(self.refraction_index_wavenumber, self.nurange)
-        print(self.refraction_index_wavenumber[indices])
-
+        return indices
+    
     def generate_miegrid(
         self,
         sigmagmin=-1.0,

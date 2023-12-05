@@ -3,14 +3,14 @@
 """
 import pkg_resources
 from exojax.spec import pardb
-
+from exojax.test.data import TESTDATA_refrind
 
 def gendata_miegrid():
     """
     generates miegrid for test.refrind
     """
     refrind_path = pkg_resources.resource_filename(
-        "exojax", "data/testdata/test.refrind"
+        "exojax", "data/testdata/"+TESTDATA_refrind
     )
 
     pdb_nh3 = pardb.PdbCloud("test", download=False, refrind_path=refrind_path)

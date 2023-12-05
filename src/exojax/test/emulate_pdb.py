@@ -1,18 +1,30 @@
 """emulate mdb class for unittest
 """
-import pickle
 import pkg_resources
-import os
-import shutil
-from exojax.spec import api
-from exojax.test.data import TESTDATA_pardb_NH3
+from exojax.test.data import TESTDATA_refrind
+from exojax.spec import pardb
 
 
-def mock_pdb_clouds_NH3():
-    """default mock pdb clouds
+def mock_PdbPlouds():
+    """default mock pdb clouds with miegrid file
+
+    Note:
+        The refrind file is data/testdata/test.refrind
+        The migrid file is data/testdata/miegrid_lognorm_test.mg.npz
+        These files should be copied in exojax installed directory when ExoJAX is installed
+
     Returns:
-        PdbClouds instance  
+        PdbClouds instance
     """
-    dirname = pkg_resources.resource_filename('exojax', 'data/testdata')
-    
-    return pdb
+    refrind_path = pkg_resources.resource_filename(
+        "exojax", "data/testdata/" + TESTDATA_refrind
+    )
+    path = pkg_resources.resource_filename("exojax", "data/testdata/")
+    pdb_nh3 = pardb.PdbCloud(
+        "test", download=False, refrind_path=refrind_path, path=path
+    )
+    return pdb_nh3
+
+
+if __name__ == "__main__":
+    mock_PdbPlouds()
