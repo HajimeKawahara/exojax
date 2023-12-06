@@ -208,11 +208,11 @@ class PdbCloud(object):
 
     def generate_miegrid(
         self,
-        sigmagmin=-1.0,
-        sigmagmax=1.0,
+        log_sigmagmin=-1.0,
+        log_sigmagmax=1.0,
         Nsigmag=10,
-        rg_min=-7.0,
-        rg_max=-3.0,
+        log_rg_min=-7.0,
+        log_rg_max=-3.0,
         Nrg=40,
     ):
         """generates miegrid assuming lognormal size distribution
@@ -236,11 +236,11 @@ class PdbCloud(object):
             self.refraction_index,
             self.refraction_index_wavelength_nm,
             str(self.path / pathlib.Path(self.miegrid_filename)),
-            sigmagmin,
-            sigmagmax,
+            log_sigmagmin,
+            log_sigmagmax,
             Nsigmag,
-            rg_min,
-            rg_max,
+            log_rg_min,
+            log_rg_max,
             Nrg,
             self.N0,
         )
@@ -251,8 +251,8 @@ class PdbCloud(object):
             rg_layer, sigmag_layer, self.miegrid, self.rg_arr, self.sigmag_arr
         )
 
-    def mieparams(self, rg_layer, sigmag_layer):
-        """computes Mie parameters i.e. extinction coeff, sinigle scattering albedo, asymmetric factor
+    def grid_mieparams(self, rg_layer, sigmag_layer):
+        """computes Mie parameters in the original wavenumber grid i.e. extinction coeff, sinigle scattering albedo, asymmetric factor
 
         Args:
             rg_layer (1d array): layer wise rg parameters
@@ -279,3 +279,4 @@ class PdbCloud(object):
 if __name__ == "__main__":
     pdb = PdbCloud("NH3")
     pdb.load_miegrid()
+    

@@ -2,10 +2,13 @@
 
 
 """
-
+from jax import jit
 import numpy as np
 import jax.numpy as jnp
 from exojax.utils.interp import interp2d_bilinear
+
+
+
 
 
 def compute_mie_coeff_lognormal_grid(
@@ -141,7 +144,8 @@ def evaluate_miegrid(rg, sigmag, miegrid, rg_arr, sigmag_arr):
     Returns:
         _type_: evaluated values of miegrid, output of MieQ_lognormal Bext (1/Mm), Bsca, Babs, G, Bpr, Bback, Bratio (wavenumber, number of mieparams)
     """
-    mieparams = interp2d_bilinear(rg, sigmag, rg_arr, sigmag_arr, miegrid)
+    #mieparams = interp2d_bilinear(rg, sigmag, rg_arr, sigmag_arr, miegrid)
+    mieparams = interp2d_bilinear(jnp.log(rg), jnp.log(sigmag), jnp.log(rg_arr), jnp.log(sigmag_arr), miegrid) #interpolation in log space
     return mieparams
 
 
@@ -203,9 +207,9 @@ if __name__ == "__main__":
 
     pdb = PdbCloud("NH3")
     filename = ".database/particulates/virga/miegrid_lognorm_" + pdb.condensate + ".mg"
-    make_miegrid_lognormal(
-        pdb.refraction_index, pdb.refraction_index_wavelength_nm, filename
-    )
+    #make_miegrid_lognormal(
+    #    pdb.refraction_index, pdb.refraction_index_wavelength_nm, filename
+    #)
 
     # exit()
     # load

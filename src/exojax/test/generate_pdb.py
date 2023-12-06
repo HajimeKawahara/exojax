@@ -16,10 +16,10 @@ def gendata_miegrid():
     pdb_nh3 = pardb.PdbCloud("test", download=False, refrind_path=refrind_path)
     if True:
         pdb_nh3.generate_miegrid(
-            sigmagmin=-1.0,
-            sigmagmax=1.0,
+            log_sigmagmin=-1.0,
+            log_sigmagmax=1.0,
             Nsigmag=4,
-            rg_max=-4.0,
+            log_rg_max=-4.0,
             Nrg=4,
         )
 

@@ -62,7 +62,6 @@ class OpaRayleigh(OpaCont):
         ValueError("Not implemented yet")
 
 
-from exojax.spec.mie import read_miegrid
 import pathlib
 
 class OpaMie(OpaCont):
@@ -76,4 +75,5 @@ class OpaMie(OpaCont):
         self.pdb = pdb
         self.ready = True
 
-    # def xsvector()
+    def mieparams_matrix(self,rg_layer, sigmag_layer):
+        dtau,w,g=self.pdb.grid_mieparams(self, rg_layer, sigmag_layer)

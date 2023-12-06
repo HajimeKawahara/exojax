@@ -5,7 +5,7 @@ from exojax.test.data import TESTDATA_refrind
 from exojax.spec import pardb
 
 
-def mock_PdbPlouds():
+def mock_PdbPlouds(nurange=None):
     """default mock pdb clouds with miegrid file
 
     Note:
@@ -21,7 +21,7 @@ def mock_PdbPlouds():
     )
     path = pkg_resources.resource_filename("exojax", "data/testdata/")
     pdb_nh3 = pardb.PdbCloud(
-        "test", download=False, refrind_path=refrind_path, path=path
+        "test", download=False, refrind_path=refrind_path, path=path, nurange=nurange
     )
     return pdb_nh3
 
