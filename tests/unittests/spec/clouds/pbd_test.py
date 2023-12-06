@@ -56,8 +56,6 @@ def test_pdb_clouds_interp():
     print(np.shape(w_g))
     print(np.shape(g_g))
 
-    import jax.numpy as jnp
-    nu_grid = jnp.linspace(12050,14950,100)
     
     
 if __name__ == "__main__":

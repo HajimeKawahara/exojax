@@ -7,7 +7,7 @@
 
 import numpy as np
 import pathlib
-from exojax.spec.mie import evaluate_miegrid_layers
+from exojax.spec.mie import evaluate_miegrid
 from exojax.spec.mie import compute_mieparams
 
 
@@ -247,9 +247,7 @@ class PdbCloud(object):
         print(str(self.miegrid_filename), " was generated.")
 
     def miegrid_interpolated_values(self, rg, sigmag):
-        return evaluate_miegrid_layers(
-            rg, sigmag, self.miegrid, self.rg_arr, self.sigmag_arr
-        )
+        return evaluate_miegrid(rg, sigmag, self.miegrid, self.rg_arr, self.sigmag_arr)
 
     def mieparams_at_refraction_index_wavenumber(self, rg, sigmag):
         """computes Mie parameters in the original refraction index wavenumber, i.e. extinction coeff, sinigle scattering albedo, asymmetric factor
