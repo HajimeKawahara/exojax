@@ -19,6 +19,7 @@ def gendata_miegrid():
             log_sigmagmin=-1.0,
             log_sigmagmax=1.0,
             Nsigmag=4,
+            log_rg_min=-7.0,
             log_rg_max=-4.0,
             Nrg=4,
         )

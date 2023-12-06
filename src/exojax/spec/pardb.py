@@ -246,17 +246,17 @@ class PdbCloud(object):
         )
         print(str(self.miegrid_filename), " was generated.")
 
-    def miegrid_interpolated_values(self, rg_layer, sigmag_layer):
+    def miegrid_interpolated_values(self, rg, sigmag):
         return evaluate_miegrid_layers(
-            rg_layer, sigmag_layer, self.miegrid, self.rg_arr, self.sigmag_arr
+            rg, sigmag, self.miegrid, self.rg_arr, self.sigmag_arr
         )
 
-    def grid_mieparams(self, rg_layer, sigmag_layer):
-        """computes Mie parameters in the original wavenumber grid i.e. extinction coeff, sinigle scattering albedo, asymmetric factor
+    def mieparams_at_refraction_index_wavenumber(self, rg, sigmag):
+        """computes Mie parameters in the original refraction index wavenumber, i.e. extinction coeff, sinigle scattering albedo, asymmetric factor
 
         Args:
-            rg_layer (1d array): layer wise rg parameters
-            sigmag_layer (1d array): layer wise sigmag parameters
+            rg
+            sigmag
             miegrid (5d array): Mie grid (lognormal)
             rg_arr (1d array): rg array
             sigmag_arr (1d array): sigma_g array
@@ -264,19 +264,19 @@ class PdbCloud(object):
 
         Note:
             Volume extinction coefficient (1/cm) for the number density N can be computed by beta_extinction = N*beta0_extinction
+            The output returns are computed at self.refraction_index_wavenumber
 
         Returns:
-            beta0_extinction, volume extinction coefficient (1/cm) normalized by the reference numbver density N0
+            beta0_extinction, volume extinction coefficient (1/cm) normalized by the reference number density N0
             omega0, single scattering albedo
             g, asymmetric factor (mean g)
         """
 
         return compute_mieparams(
-            rg_layer, sigmag_layer, self.miegrid, self.rg_arr, self.sigmag_arr, self.N0
+            rg, sigmag, self.miegrid, self.rg_arr, self.sigmag_arr, self.N0
         )
 
 
 if __name__ == "__main__":
     pdb = PdbCloud("NH3")
     pdb.load_miegrid()
-    

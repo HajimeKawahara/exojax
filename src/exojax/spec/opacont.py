@@ -7,6 +7,7 @@ Notes:
 from exojax.utils.grids import nu2wav
 from exojax.spec.hitrancia import interp_logacia_vector
 from exojax.spec.hitrancia import interp_logacia_matrix
+import jax.numpy as jnp
 
 __all__ = ["OpaCIA"]
 
@@ -64,6 +65,7 @@ class OpaRayleigh(OpaCont):
 
 import pathlib
 
+
 class OpaMie(OpaCont):
     def __init__(
         self,
@@ -75,5 +77,14 @@ class OpaMie(OpaCont):
         self.pdb = pdb
         self.ready = True
 
-    def mieparams_matrix(self,rg_layer, sigmag_layer):
-        dtau,w,g=self.pdb.grid_mieparams(self, rg_layer, sigmag_layer)
+    def mieparams_vector(self, rg, sigmag):
+        
+        dtau_g, w_g, g_g = self.pdb.mieparams_at_refraction_index_wavenumber(rg, sigmag)
+        dtau = jnp.interp(self.nu_grid, self.pdb.refraction_index_wavenumber, dtau_g)
+        w = jnp.interp(self.nu_grid, self.pdb.refraction_index_wavenumber, w_g)
+        g = jnp.interp(self.nu_grid, self.pdb.refraction_index_wavenumber, g_g)
+
+        return dtau, w, g
+
+    def mieparams_matrix(self, rg_layer, sigmag_layer):
+        dtau_g, w_g, g_g = self.pdb.grid_mieparams(self, rg_layer, sigmag_layer)

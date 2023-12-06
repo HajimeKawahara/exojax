@@ -8,9 +8,6 @@ import jax.numpy as jnp
 from exojax.utils.interp import interp2d_bilinear
 
 
-
-
-
 def compute_mie_coeff_lognormal_grid(
     refractive_indices, refractive_wavenm, sigmag_arr, rg_arr, npart=1.0
 ):
@@ -144,33 +141,14 @@ def evaluate_miegrid(rg, sigmag, miegrid, rg_arr, sigmag_arr):
     Returns:
         _type_: evaluated values of miegrid, output of MieQ_lognormal Bext (1/Mm), Bsca, Babs, G, Bpr, Bback, Bratio (wavenumber, number of mieparams)
     """
-    #mieparams = interp2d_bilinear(rg, sigmag, rg_arr, sigmag_arr, miegrid)
-    mieparams = interp2d_bilinear(jnp.log(rg), jnp.log(sigmag), jnp.log(rg_arr), jnp.log(sigmag_arr), miegrid) #interpolation in log space
+    # mieparams = interp2d_bilinear(rg, sigmag, rg_arr, sigmag_arr, miegrid)
+    mieparams = interp2d_bilinear(
+        jnp.log(rg), jnp.log(sigmag), jnp.log(rg_arr), jnp.log(sigmag_arr), miegrid
+    )  # interpolation in log space
     return mieparams
 
 
-from jax import vmap
-
-
-def evaluate_miegrid_layers(rg_layer, sigmag_layer, miegrid, rg_arr, sigmag_arr):
-    """_summary_
-
-    Args:
-        rg_layer (1d array): layer wise rg parameters
-        sigmag_layer (1d array): layer wise sigmag parameters
-        miegrid (5d array): Mie grid (lognormal)
-        rg_arr (1d array): rg array
-        sigmag_arr (1d array): sigma_g array
-
-    Returns:
-        _type_: evaluated values of miegrid, output of MieQ_lognormal Bext (1/Mm) Bsca, Babs, G, Bpr, Bback, Bratio (wavenumber, number of mieparams)
-    """
-
-    vmapfunc = vmap(evaluate_miegrid, (0, 0, None, None, None), 0)
-    return vmapfunc(rg_layer, sigmag_layer, miegrid, rg_arr, sigmag_arr)
-
-
-def compute_mieparams(rg_layer, sigmag_layer, miegrid, rg_arr, sigmag_arr, N0):
+def compute_mieparams(rg, sigmag, miegrid, rg_arr, sigmag_arr, N0):
     """computes Mie parameters i.e. extinction coeff, sinigle scattering albedo, asymmetric factor
 
     Args:
@@ -190,15 +168,15 @@ def compute_mieparams(rg_layer, sigmag_layer, miegrid, rg_arr, sigmag_arr, N0):
         g, asymmetric factor (mean g)
     """
 
-    mieparams = evaluate_miegrid_layers(
-        rg_layer, sigmag_layer, miegrid, rg_arr, sigmag_arr
-    )
+    mieparams = evaluate_miegrid(rg, sigmag, miegrid, rg_arr, sigmag_arr)
     convfactor = 2.0e-8 / N0  # conversiont to cgs
-    beta0_extinction = convfactor * mieparams[:, :, 0]  # (layer, wav)
-    omega0 = mieparams[:, :, 1] / mieparams[:, :, 0]
-    g = mieparams[:, :, 3]
+    beta0_extinction = convfactor * mieparams[:, 0]  # (layer, wav)
+    omega0 = mieparams[:, 1] / mieparams[:, 0]
+    g = mieparams[:, 3]
 
     return beta0_extinction, omega0, g
+
+
 
 
 if __name__ == "__main__":
@@ -207,9 +185,9 @@ if __name__ == "__main__":
 
     pdb = PdbCloud("NH3")
     filename = ".database/particulates/virga/miegrid_lognorm_" + pdb.condensate + ".mg"
-    #make_miegrid_lognormal(
+    # make_miegrid_lognormal(
     #    pdb.refraction_index, pdb.refraction_index_wavelength_nm, filename
-    #)
+    # )
 
     # exit()
     # load
@@ -218,12 +196,3 @@ if __name__ == "__main__":
     sigmag = 2.0
     f = evaluate_miegrid(rg, sigmag, miegrid, rg_arr, sigmag_arr)
 
-    rg_layer = jnp.array([3.0e-5, 3.0e-5])
-    sigmag_layer = jnp.array([2.0, 2.0])
-    f_layer = evaluate_miegrid_layers(
-        rg_layer, sigmag_layer, miegrid, rg_arr, sigmag_arr
-    )
-
-    print(jnp.shape(f_layer))
-    print(np.shape(f))
-    exit()
