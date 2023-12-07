@@ -104,12 +104,14 @@ def get_rg(rw, fsed, alpha, sigmag):
     The computation is based on (13) in AM01.
 
     Args:
-       rw: rw (cm)
-       fsed: fsed
-       alpha: power of the condensate size distribution
-       sigmag: sigmag in the lognormal size distribution
+        rw: rw (cm)
+        fsed: fsed
+        alpha: power of the condensate size distribution
+        sigmag:sigmag parameter in the lognormal distribution of condensate size, defined by (9) in AM01
 
     Returns
+        rg: rg parameter in the lognormal distribution of condensate size, defined by (9) in AM01
+
     """
     rg = (
         rw
@@ -140,13 +142,13 @@ def layer_optical_depth_cloudgeo(Parr, muc, rhoc, mu, VMRc, rg, sigmag, g):
     on (16) in AM01.
 
     Args:
-       Parr: pressure array (bar)
-       muc: mass weight of condensate
-       rhoc: condensate density (g/cm3)
-       mu: mean molecular weight of atmosphere
-       VMRc: VMR array of condensate [Nlayer]
-       rg: rg parameter in the lognormal distribution of condensate size, defined by (9) in AM01
-       sigmag:sigmag parameter in the lognormal distribution of condensate size, defined by (9) in AM01
+        Parr: pressure array (bar)
+        muc: mass weight of condensate
+        rhoc: condensate density (g/cm3)
+        mu: mean molecular weight of atmosphere
+        VMRc: VMR array of condensate [Nlayer]
+        rg: rg parameter in the lognormal distribution of condensate size, defined by (9) in AM01
+        sigmag:sigmag parameter in the lognormal distribution of condensate size, defined by (9) in AM01
     """
 
     fac = jnp.exp(-2.5 * jnp.log(sigmag) ** 2)

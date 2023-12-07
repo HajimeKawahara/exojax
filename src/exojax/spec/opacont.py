@@ -8,6 +8,7 @@ from exojax.utils.grids import nu2wav
 from exojax.spec.hitrancia import interp_logacia_vector
 from exojax.spec.hitrancia import interp_logacia_matrix
 import jax.numpy as jnp
+from jax import vmap
 
 __all__ = ["OpaCIA"]
 
@@ -63,9 +64,6 @@ class OpaRayleigh(OpaCont):
         ValueError("Not implemented yet")
 
 
-import pathlib
-
-
 class OpaMie(OpaCont):
     def __init__(
         self,
@@ -78,7 +76,20 @@ class OpaMie(OpaCont):
         self.ready = True
 
     def mieparams_vector(self, rg, sigmag):
-        
+        """computes the Mie parameter vector (Nnu: wavenumber direction)
+
+        Args:
+            rg (float): rg parameter in the lognormal distribution of condensate size, defined by (9) in AM01
+            sigmag (float): sigmag parameter in the lognormal distribution of condensate size, defined by (9) in AM01
+
+        Notes:
+            AM01 = Ackerman and Marley 2001
+
+        Returns:
+            beta0_extinction vector, volume extinction coefficient (1/cm) normalized by the reference number density N0
+            omega0  vector, single scattering albedo
+            g  vector, asymmetric factor (mean g)
+        """
         dtau_g, w_g, g_g = self.pdb.mieparams_at_refraction_index_wavenumber(rg, sigmag)
         dtau = jnp.interp(self.nu_grid, self.pdb.refraction_index_wavenumber, dtau_g)
         w = jnp.interp(self.nu_grid, self.pdb.refraction_index_wavenumber, w_g)
@@ -87,4 +98,19 @@ class OpaMie(OpaCont):
         return dtau, w, g
 
     def mieparams_matrix(self, rg_layer, sigmag_layer):
-        dtau_g, w_g, g_g = self.pdb.grid_mieparams(self, rg_layer, sigmag_layer)
+        """computes the Mie parameter matrix (Nlayer x Nnu)
+        Args:
+            rg_layer (1d array): layer rg parameters  in the lognormal distribution of condensate size, defined by (9) in AM01
+            sigmag_layer (1d array): layer sigmag parameters in the lognormal distribution of condensate size, defined by (9) in AM01
+
+        Notes:
+            AM01 = Ackerman and Marley 2001
+
+        Returns:
+            beta0_extinction matrix, volume extinction coefficient (1/cm) normalized by the reference number density N0
+            omega0  matrix, single scattering albedo
+            g  matrix, asymmetric factor (mean g)
+        """
+
+        f = vmap(self.mieparams_vector, (0, 0), 0)
+        return f(rg_layer, sigmag_layer)
