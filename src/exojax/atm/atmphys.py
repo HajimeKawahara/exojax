@@ -4,7 +4,6 @@ from exojax.atm.amclouds import get_rg
 from exojax.atm.amclouds import find_rw
 from exojax.atm.viscosity import calc_vfactor, eta_Rosner
 from exojax.atm.amclouds import compute_cloud_base_pressure_index
-from exojax.atm.amclouds import compute_cloud_base_pressure
 from exojax.atm.amclouds import vmr_cloud_profile
 from exojax.atm.vterm import terminal_velocity
 from exojax.atm.atmprof import pressure_scale_height
@@ -78,6 +77,23 @@ class AmpAmcloud(AmpCloud):
         VMR,
         alphav=2.0,
     ):
+        """computes rg and VMR of condenstates based on AM01 
+
+        Args:
+            pressures (_type_): _description_
+            temperatures (_type_): _description_
+            mean_molecular_weight (_type_): _description_
+            gravity (_type_): _description_
+            fsed (_type_): _description_
+            sigmag (_type_): _description_
+            Kzz (_type_): _description_
+            VMR (_type_): _description_
+            alphav (float, optional): _description_. Defaults to 2.0.
+
+        Returns:
+            rg parameter in the lognormal distribution of condensate size, defined by (9) in AM01
+            VMR of condensates
+        """
         # density difference
         rho = mean_molecular_weight * m_u * pressures / (kB * temperatures)
         drho = self.pdb.rhoc - rho

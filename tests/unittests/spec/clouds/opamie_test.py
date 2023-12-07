@@ -5,7 +5,6 @@ from exojax.spec.opacont import OpaMie
 from exojax.utils.grids import wavenumber_grid
 import numpy as np
 import jax.numpy as jnp
-import pytest
 
 
 def test_loading_opamie():

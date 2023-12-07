@@ -4,7 +4,6 @@ Notes:
     Opa does not assume any T-P structure, no fixed T, P, mmr grids.
 
 """
-from exojax.utils.grids import nu2wav
 from exojax.spec.hitrancia import interp_logacia_vector
 from exojax.spec.hitrancia import interp_logacia_matrix
 import jax.numpy as jnp
