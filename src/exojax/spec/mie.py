@@ -160,23 +160,30 @@ def compute_mieparams(rg, sigmag, miegrid, rg_arr, sigmag_arr, N0):
         N0: reference number density of the condensates cm-3
 
     Note:
-        Volume extinction coefficient (1/cm) for the number density N can be computed by beta_extinction = N*beta0_extinction/N0
+        Volume extinction coefficient (1/cm) for the number density N can be computed by beta_extinction = N*sigma0_extinction
+        The original extinction coefficient (beta) from PyMieScat has the unit of 1/Mm (Mega meter) for diameter.
+        Therefore, this method multiplies 2.e-8 to beta for conversion to 1/cm for radius.
 
     Returns:
-        beta0_extinction, volume extinction coefficient (1/cm) normalized by the reference numbver density N0
+        sigma_extinction, extinction cross section (cm2) = volume extinction coefficient (1/cm) normalized by the reference numbver density N0.
         omega0, single scattering albedo
         g, asymmetric factor (mean g)
     """
 
     mieparams = evaluate_miegrid(rg, sigmag, miegrid, rg_arr, sigmag_arr)
-    convfactor = 2.0e-8 / N0  # conversiont to cgs
-    beta0_extinction = convfactor * mieparams[:, 0]  # (layer, wav)
+
+    # conversion to cgs(1/Mega meter to 1/cm)
+    # the factor 2 is due to radius - diameter conversion.
+    # Also we normlize the value by N0 (cm-3).
+    # The final unit is cm2, i.e. cross section
+    # See Note in the comment.
+    convfactor = 2.0e-8 / N0
+    
+    sigma_extinction = convfactor * mieparams[:, 0]  # (layer, wav)
     omega0 = mieparams[:, 1] / mieparams[:, 0]
     g = mieparams[:, 3]
 
-    return beta0_extinction, omega0, g
-
-
+    return sigma_extinction, omega0, g
 
 
 if __name__ == "__main__":
@@ -189,10 +196,8 @@ if __name__ == "__main__":
     #    pdb.refraction_index, pdb.refraction_index_wavelength_nm, filename
     # )
 
-    # exit()
     # load
     miegrid, rg_arr, sigmag_arr = read_miegrid(filename + ".npz")
     rg = 3.0e-5
     sigmag = 2.0
     f = evaluate_miegrid(rg, sigmag, miegrid, rg_arr, sigmag_arr)
-

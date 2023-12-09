@@ -269,17 +269,13 @@ class PdbCloud(object):
         Args:
             rg (float): rg parameter in lognormal distribution
             sigmag (float): sigma_g parameter in lognormal distribution
-            miegrid (5d array): Mie grid (lognormal)
-            rg_arr (1d array): rg array
-            sigmag_arr (1d array): sigma_g array
-            N0: reference number density of the condensates cm-3
 
         Note:
             Volume extinction coefficient (1/cm) for the number density N can be computed by beta_extinction = N*beta0_extinction
             The output returns are computed at self.refraction_index_wavenumber
 
         Returns:
-            beta0_extinction, volume extinction coefficient (1/cm) normalized by the reference number density N0
+            sigma_extinction, extinction cross section (cm2) = volume extinction coefficient (1/cm) normalized by the reference numbver density N0.
             omega0, single scattering albedo
             g, asymmetric factor (mean g)
         """

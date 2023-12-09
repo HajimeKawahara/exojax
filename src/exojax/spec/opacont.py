@@ -86,16 +86,18 @@ class OpaMie(OpaCont):
             Volume extinction coefficient (1/cm) for the number density N can be computed by beta_extinction = N*beta0_extinction/N0
 
         Returns:
-            beta0: beta0_extinction vector, volume extinction coefficient (1/cm) normalized by the reference number density N0
+            sigma_extinction, extinction cross section (cm2) = volume extinction coefficient (1/cm) normalized by the reference numbver density N0.
             w: omega0  vector, single scattering albedo
             g: g  vector, asymmetric factor (mean g)
         """
-        beta0_g, w_g, g_g = self.pdb.mieparams_at_refraction_index_wavenumber(rg, sigmag)
-        beta0 = jnp.interp(self.nu_grid, self.pdb.refraction_index_wavenumber, beta0_g)
-        w = jnp.interp(self.nu_grid, self.pdb.refraction_index_wavenumber, w_g)
-        g = jnp.interp(self.nu_grid, self.pdb.refraction_index_wavenumber, g_g)
+        sigexg, wg, gg = self.pdb.mieparams_at_refraction_index_wavenumber(rg, sigmag)
+        sigma_extinction = jnp.interp(
+            self.nu_grid, self.pdb.refraction_index_wavenumber, sigexg
+        )
+        w = jnp.interp(self.nu_grid, self.pdb.refraction_index_wavenumber, wg)
+        g = jnp.interp(self.nu_grid, self.pdb.refraction_index_wavenumber, gg)
 
-        return beta0, w, g
+        return sigma_extinction, w, g
 
     def mieparams_matrix(self, rg_layer, sigmag_layer):
         """computes the Mie parameters matrix (Nlayer x Nnu)
@@ -108,7 +110,7 @@ class OpaMie(OpaCont):
             Volume extinction coefficient (1/cm) for the number density N can be computed by beta_extinction = N*beta0_extinction/N0
 
         Returns:
-            beta0_extinction matrix, volume extinction coefficient (1/cm) normalized by the reference number density N0
+            sigma_extinction matrix, extinction cross section (cm2) = volume extinction coefficient (1/cm) normalized by the reference number density N0
             omega0  matrix, single scattering albedo
             g  matrix, asymmetric factor (mean g)
         """
