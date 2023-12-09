@@ -127,8 +127,8 @@ def evaluate_miegrid(rg, sigmag, miegrid, rg_arr, sigmag_arr):
     """evaluates the value at rg and sigmag by interpolating miegrid
 
     Args:
-        rg (_type_): rg parameter in lognormal distribution
-        sigmag (_type_): sigma_g parameter in lognormal distribution
+        rg (float): rg parameter in lognormal distribution
+        sigmag (float): sigma_g parameter in lognormal distribution
         miegrid (5d array): Mie grid (lognormal)
         sigmag_arr (1d array): sigma_g array
         rg_arr (1d array): rg array
@@ -155,12 +155,12 @@ def compute_mieparams(rg, sigmag, miegrid, rg_arr, sigmag_arr, N0):
         rg_layer (1d array): layer wise rg parameters
         sigmag_layer (1d array): layer wise sigmag parameters
         miegrid (5d array): Mie grid (lognormal)
-        rg_arr (1d array): rg array
-        sigmag_arr (1d array): sigma_g array
+        rg_arr (1d array): rg array used for computing miegrid
+        sigmag_arr (1d array): sigma_g array used for computing miegrid
         N0: reference number density of the condensates cm-3
 
     Note:
-        Volume extinction coefficient (1/cm) for the number density N can be computed by beta_extinction = N*beta0_extinction
+        Volume extinction coefficient (1/cm) for the number density N can be computed by beta_extinction = N*beta0_extinction/N0
 
     Returns:
         beta0_extinction, volume extinction coefficient (1/cm) normalized by the reference numbver density N0

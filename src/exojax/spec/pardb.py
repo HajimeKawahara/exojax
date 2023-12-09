@@ -247,14 +247,28 @@ class PdbCloud(object):
         print(str(self.miegrid_filename), " was generated.")
 
     def miegrid_interpolated_values(self, rg, sigmag):
+        """evaluates the value at rg and sigmag by interpolating miegrid
+
+        Args:
+            rg (float): rg parameter in lognormal distribution
+            sigmag (float): sigma_g parameter in lognormal distribution
+
+        Note:
+            beta derived here is in the unit of 1/Mm (Mega meter) for diameter
+            multiply 2.e-8 to convert to 1/cm for radius.
+
+        Returns:
+            _type_: evaluated values of miegrid, output of MieQ_lognormal Bext (1/Mm), Bsca, Babs, G, Bpr, Bback, Bratio (wavenumber, number of mieparams)
+        """
+
         return evaluate_miegrid(rg, sigmag, self.miegrid, self.rg_arr, self.sigmag_arr)
 
     def mieparams_at_refraction_index_wavenumber(self, rg, sigmag):
         """computes Mie parameters in the original refraction index wavenumber, i.e. extinction coeff, sinigle scattering albedo, asymmetric factor
 
         Args:
-            rg
-            sigmag
+            rg (float): rg parameter in lognormal distribution
+            sigmag (float): sigma_g parameter in lognormal distribution
             miegrid (5d array): Mie grid (lognormal)
             rg_arr (1d array): rg array
             sigmag_arr (1d array): sigma_g array

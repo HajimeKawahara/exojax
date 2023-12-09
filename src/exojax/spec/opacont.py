@@ -75,7 +75,7 @@ class OpaMie(OpaCont):
         self.ready = True
 
     def mieparams_vector(self, rg, sigmag):
-        """computes the Mie parameter vector (Nnu: wavenumber direction)
+        """computes the Mie parameters vector (Nnu: wavenumber direction)
 
         Args:
             rg (float): rg parameter in the lognormal distribution of condensate size, defined by (9) in AM01
@@ -83,27 +83,29 @@ class OpaMie(OpaCont):
 
         Notes:
             AM01 = Ackerman and Marley 2001
+            Volume extinction coefficient (1/cm) for the number density N can be computed by beta_extinction = N*beta0_extinction/N0
 
         Returns:
-            beta0_extinction vector, volume extinction coefficient (1/cm) normalized by the reference number density N0
-            omega0  vector, single scattering albedo
-            g  vector, asymmetric factor (mean g)
+            beta0: beta0_extinction vector, volume extinction coefficient (1/cm) normalized by the reference number density N0
+            w: omega0  vector, single scattering albedo
+            g: g  vector, asymmetric factor (mean g)
         """
-        dtau_g, w_g, g_g = self.pdb.mieparams_at_refraction_index_wavenumber(rg, sigmag)
-        dtau = jnp.interp(self.nu_grid, self.pdb.refraction_index_wavenumber, dtau_g)
+        beta0_g, w_g, g_g = self.pdb.mieparams_at_refraction_index_wavenumber(rg, sigmag)
+        beta0 = jnp.interp(self.nu_grid, self.pdb.refraction_index_wavenumber, beta0_g)
         w = jnp.interp(self.nu_grid, self.pdb.refraction_index_wavenumber, w_g)
         g = jnp.interp(self.nu_grid, self.pdb.refraction_index_wavenumber, g_g)
 
-        return dtau, w, g
+        return beta0, w, g
 
     def mieparams_matrix(self, rg_layer, sigmag_layer):
-        """computes the Mie parameter matrix (Nlayer x Nnu)
+        """computes the Mie parameters matrix (Nlayer x Nnu)
         Args:
             rg_layer (1d array): layer rg parameters  in the lognormal distribution of condensate size, defined by (9) in AM01
             sigmag_layer (1d array): layer sigmag parameters in the lognormal distribution of condensate size, defined by (9) in AM01
 
         Notes:
             AM01 = Ackerman and Marley 2001
+            Volume extinction coefficient (1/cm) for the number density N can be computed by beta_extinction = N*beta0_extinction/N0
 
         Returns:
             beta0_extinction matrix, volume extinction coefficient (1/cm) normalized by the reference number density N0
