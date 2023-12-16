@@ -41,8 +41,8 @@ def test_atmoshperic_height_for_isothermal_with_analytic():
 
     #theoretical value
     H_btm = pressure_scale_height(gravity_btm, T_fid, mu_fid)
-    dq = np.log(art.pressure[-1]) - np.log(art.pressure)
-    normalized_radius_theory = (np.exp(H_btm * dq / radius_btm))
+    dq = np.log(art.pressure/art.pressure[-1]) 
+    normalized_radius_theory = 1/(1 + H_btm/radius_btm*dq)
     res = 1.0 - (normalized_radius_lower - 1.0) / (normalized_radius_theory -
                                                    1.0)
     assert np.all(np.abs(res[:-1]) < 1.e-11)

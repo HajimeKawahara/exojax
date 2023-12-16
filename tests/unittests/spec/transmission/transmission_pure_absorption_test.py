@@ -85,7 +85,7 @@ def test_first_layer_height_from_compute_normalized_radius_profile():
         temperature, pressure_decrease_rate, mmw, radius_btm, gravity_btm)
 
     normalized_radius_top = normalized_radius_lower[0] + normalized_height[0]
-    assert normalized_radius_top == pytest.approx(1.033503571206093)
+    assert normalized_radius_top == pytest.approx(1.0340775666464417)
     assert jnp.sum(normalized_height[1:]) + 1.0 == pytest.approx(
         normalized_radius_lower[0])
     assert normalized_radius_lower[-1] == 1.0
@@ -93,7 +93,7 @@ def test_first_layer_height_from_compute_normalized_radius_profile():
 
 if __name__ == "__main__":
     #test_check_parallel_Ax_tauchord()
-    #test_first_layer_height_from_compute_normalized_radius_profile()
+    test_first_layer_height_from_compute_normalized_radius_profile()
     #test_chord_geometric_matrix_lower()
     #test_chord_geometric_matrix()
-    test_transmission_pure_absorption_equals_to_Rp_sqaured_for_opaque()
+    #test_transmission_pure_absorption_equals_to_Rp_sqaured_for_opaque()
