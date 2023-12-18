@@ -166,7 +166,7 @@ def compute_mieparams(rg, sigmag, miegrid, rg_arr, sigmag_arr, N0):
 
     Returns:
         sigma_extinction, extinction cross section (cm2) = volume extinction coefficient (1/cm) normalized by the reference numbver density N0.
-        omega0, single scattering albedo
+        sigma_scattering, scattering cross section (cm2) = volume extinction coefficient (1/cm) normalized by the reference numbver density N0.
         g, asymmetric factor (mean g)
     """
 
@@ -178,12 +178,12 @@ def compute_mieparams(rg, sigmag, miegrid, rg_arr, sigmag_arr, N0):
     # The final unit is cm2, i.e. cross section
     # See Note in the comment.
     convfactor = 2.0e-8 / N0
-    
+
     sigma_extinction = convfactor * mieparams[:, 0]  # (layer, wav)
-    omega0 = mieparams[:, 1] / mieparams[:, 0]
+    sigma_scattering = convfactor * mieparams[:, 1]
     g = mieparams[:, 3]
 
-    return sigma_extinction, omega0, g
+    return sigma_extinction, sigma_scattering, g
 
 
 if __name__ == "__main__":

@@ -276,7 +276,7 @@ class PdbCloud(object):
 
         Returns:
             sigma_extinction, extinction cross section (cm2) = volume extinction coefficient (1/cm) normalized by the reference numbver density N0.
-            omega0, single scattering albedo
+            sigma_scattering, scattering cross section (cm2) = volume extinction coefficient (1/cm) normalized by the reference numbver density N0.            
             g, asymmetric factor (mean g)
         """
 
