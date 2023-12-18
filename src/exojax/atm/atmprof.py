@@ -7,13 +7,15 @@ from jax.lax import scan
 from jax import jit
 
 
-def pressure_layer_logspace(log_pressure_top=-8.,
-                            log_pressure_btm=2.,
-                            nlayer=20,
-                            mode='ascending',
-                            reference_point=0.5,
-                            numpy=False):
-    """ Pressure layer evenly spaced in logspace, i.e. logP interval is constant 
+def pressure_layer_logspace(
+    log_pressure_top=-8.0,
+    log_pressure_btm=2.0,
+    nlayer=20,
+    mode="ascending",
+    reference_point=0.5,
+    numpy=False,
+):
+    """Pressure layer evenly spaced in logspace, i.e. logP interval is constant
 
     Args:
        log_pressure_top: log10(P[bar]) at the top layer
@@ -29,7 +31,7 @@ def pressure_layer_logspace(log_pressure_top=-8.,
          pressure_decrease_rate: pressure decrease rate of the layer (k-factor; k < 1) pressure[i-1] = pressure_decrease_rate*pressure[i]
 
     Note:
-        d logP is constant using this function. 
+        d logP is constant using this function.
     """
     dlogP = (log_pressure_btm - log_pressure_top) / (nlayer - 1)
     if numpy:
@@ -38,18 +40,16 @@ def pressure_layer_logspace(log_pressure_top=-8.,
         pressure = jnp.logspace(log_pressure_top, log_pressure_btm, nlayer)
 
     k = 10**-dlogP
-    dParr = (k**(reference_point - 1.0) - k**reference_point) * pressure
+    dParr = (k ** (reference_point - 1.0) - k**reference_point) * pressure
 
-    if mode == 'descending':
+    if mode == "descending":
         pressure = pressure[::-1]
         dParr = dParr[::-1]
 
     return pressure, dParr, k
 
 
-def pressure_upper_logspace(pressure,
-                            pressure_decrease_rate,
-                            reference_point=0.5):
+def pressure_upper_logspace(pressure, pressure_decrease_rate, reference_point=0.5):
     """computes pressure at the upper point of the layers
 
     Args:
@@ -63,9 +63,7 @@ def pressure_upper_logspace(pressure,
     return (pressure_decrease_rate**reference_point) * pressure
 
 
-def pressure_lower_logspace(pressure,
-                            pressure_decrease_rate,
-                            reference_point=0.5):
+def pressure_lower_logspace(pressure, pressure_decrease_rate, reference_point=0.5):
     """computes pressure at the lower point of the layers
 
     Args:
@@ -76,13 +74,12 @@ def pressure_lower_logspace(pressure,
     Returns:
         _type_: pressure at the lower point (underline{P}_i)
     """
-    return (pressure_decrease_rate**(reference_point - 1.0)) * pressure
+    return (pressure_decrease_rate ** (reference_point - 1.0)) * pressure
 
 
-def pressure_boundary_logspace(pressure,
-                               pressure_decrease_rate,
-                               reference_point=0.5,
-                               numpy=False):
+def pressure_boundary_logspace(
+    pressure, pressure_decrease_rate, reference_point=0.5, numpy=False
+):
     """computes pressure at the boundary of the layers (Nlayer + 1)
 
     Args:
@@ -94,10 +91,12 @@ def pressure_boundary_logspace(pressure,
     Returns:
         _type_: pressure at the boundary (Nlayer + 1)
     """
-    pressure_bottom_boundary = (pressure_decrease_rate
-                                **(reference_point - 1.0)) * pressure[-1]
-    pressure_upper = pressure_upper_logspace(pressure, pressure_decrease_rate,
-                                             reference_point)
+    pressure_bottom_boundary = (
+        pressure_decrease_rate ** (reference_point - 1.0)
+    ) * pressure[-1]
+    pressure_upper = pressure_upper_logspace(
+        pressure, pressure_decrease_rate, reference_point
+    )
     if numpy:
         return np.append(pressure_upper, pressure_bottom_boundary)
     else:
@@ -105,14 +104,15 @@ def pressure_boundary_logspace(pressure,
 
 
 @jit
-def normalized_layer_height(temperature, pressure_decrease_rate,
-                            mean_molecular_weight, radius_btm, gravity_btm):
-    """compute normalized height/radius at the upper boundary of the atmospheric layer, neglecting atmospheric mass. 
+def normalized_layer_height(
+    temperature, pressure_decrease_rate, mean_molecular_weight, radius_btm, gravity_btm
+):
+    """compute normalized height/radius at the upper boundary of the atmospheric layer, neglecting atmospheric mass.
 
     Args:
         temperature (1D array): temperature profile (K) of the layer, (Nlayer, from atmospheric top to bottom)
         pressure_decrease_rate:  pressure decrease rate of the layer (k-factor; k < 1) pressure[i-1] = pressure_decrease_rate*pressure[i]
-        mean_molecular_weight (1D array): mean molecular weight profile, (Nlayer, from atmospheric top to bottom) 
+        mean_molecular_weight (1D array): mean molecular weight profile, (Nlayer, from atmospheric top to bottom)
         radius_btm (float): radius (cm) at the lower boundary of the bottom layer, R0 or r_N
         gravity_btm (float): gravity (cm/s2) at the lower boundary of the bottom layer, g_N
 
@@ -127,11 +127,10 @@ def normalized_layer_height(temperature, pressure_decrease_rate,
     def compute_radius(normalized_radius_lower, arr):
         T_layer = arr[0:1][0]
         mmw_layer = arr[1:2][0]
-        gravity_lower = gravity_btm / normalized_radius_lower
-        Hn_lower = pressure_scale_height(gravity_lower, T_layer,
-                                         mmw_layer) / radius_btm
-        fac = pressure_decrease_rate**(-Hn_lower /
-                                       normalized_radius_lower) - 1.0
+        gravity_lower = gravity_btm / normalized_radius_lower**2
+        Hn_lower = pressure_scale_height(gravity_lower, T_layer, mmw_layer) / radius_btm
+        a = 1.0 + Hn_lower / normalized_radius_lower * jnp.log(pressure_decrease_rate)
+        fac = 1.0 / a - 1.0
         normalized_height_layer = fac * normalized_radius_lower
         carry = normalized_radius_lower + normalized_height_layer
         return carry, [normalized_height_layer, normalized_radius_lower]
@@ -143,7 +142,7 @@ def normalized_layer_height(temperature, pressure_decrease_rate,
 
 
 def gh_product(temperature, mean_molecular_weight):
-    """prodict of gravity and pressure scale height
+    """product of gravity and pressure scale height
 
     Args:
         temperature: isothermal temperature (K)
@@ -190,7 +189,7 @@ def atmprof_gray(pressure, gravity, kappa, Tint):
     Args:
         pressure (1D array): pressure array (bar)
         gravity (float): gravity (cm/s2)
-        kappa: infrared opacity 
+        kappa: infrared opacity
         Tint: temperature equivalence of the intrinsic energy flow
 
     Returns:
@@ -198,8 +197,8 @@ def atmprof_gray(pressure, gravity, kappa, Tint):
 
     """
 
-    tau = pressure * 1.e6 * kappa / gravity
-    Tarr = (0.75 * Tint**4 * (2.0 / 3.0 + tau))**0.25
+    tau = pressure * 1.0e6 * kappa / gravity
+    Tarr = (0.75 * Tint**4 * (2.0 / 3.0 + tau)) ** 0.25
     return Tarr
 
 
@@ -216,19 +215,19 @@ def atmprof_Guillot(pressure, gravity, kappa, gamma, Tint, Tirr, f=0.25):
         gamma: ratio of optical and IR opacity (kappa_v/kappa_th), gamma > 1 means thermal inversion
         Tint: temperature equivalence of the intrinsic energy flow
         Tirr: temperature equivalence of the irradiation
-        f = 1 at the substellar point, f = 1/2 for a day-side average 
+        f = 1 at the substellar point, f = 1/2 for a day-side average
             and f = 1/4 for an averaging over the whole planetary surface
 
     Returns:
         array: temperature profile
 
     """
-    tau = pressure * 1.e6 * kappa / gravity  # Equation (51)
+    tau = pressure * 1.0e6 * kappa / gravity  # Equation (51)
     invsq3 = 1.0 / jnp.sqrt(3.0)
     fac = 2.0 / 3.0 + invsq3 * (
-        1.0 / gamma + (gamma - 1.0 / gamma) * jnp.exp(-gamma * tau / invsq3))
-    Tarr = (0.75 * Tint**4 * (2.0 / 3.0 + tau) +
-            0.75 * Tirr**4 * f * fac)**0.25
+        1.0 / gamma + (gamma - 1.0 / gamma) * jnp.exp(-gamma * tau / invsq3)
+    )
+    Tarr = (0.75 * Tint**4 * (2.0 / 3.0 + tau) + 0.75 * Tirr**4 * f * fac) ** 0.25
 
     return Tarr
 
@@ -261,4 +260,4 @@ def Teff2Tirr(Teff, Tint):
     Note:
        Here we assume A=0 (albedo) and beta=1 (fully-energy distributed)
     """
-    return (4.0 * Teff**4 - Tint**4)**0.25
+    return (4.0 * Teff**4 - Tint**4) ** 0.25
