@@ -447,7 +447,7 @@ class ArtEmisScat(ArtCommon):
         """initialization of ArtEmisPure
 
         Args:
-            rtsolver (str): Radiative Transfer Solver, lart_toon_hemispheric_mean, SH1, SH3
+            rtsolver (str): Radiative Transfer Solver, fluxadding_toon_hemispheric_mean (default), lart_toon_hemispheric_mean
 
         """
         super().__init__(pressure_top, pressure_btm, nlayer, nu_grid)
