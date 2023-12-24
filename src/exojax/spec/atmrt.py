@@ -498,19 +498,19 @@ class ArtEmisScat(ArtCommon):
                 spec, spec_pure = comparison_with_pure_absorption(
                     cumTtilde, Qtilde, spectrum, trans_coeff, scat_coeff, piB
                 )
-            return spectrum, spec, spec_pure
+                return spectrum, spec, spec_pure
 
         elif self.rtsolver == "fluxadding_toon_hemispheric_mean":
             spectrum = rtrun_emis_scat_fluxadding_toonhm(
                 dtau, single_scattering_albedo, asymmetric_parameter, sourcef
             )
-            return spectrum
 
         else:
             print("rtsolver=", self.rtsolver)
             raise ValueError("Unknown radiative transfer solver (rtsolver).")
 
-        
+        return spectrum
+
 
 class ArtEmisPure(ArtCommon):
     """Atmospheric RT for emission w/ pure absorption
