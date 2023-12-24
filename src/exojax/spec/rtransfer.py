@@ -305,6 +305,11 @@ def rtrun_emis_scat_lart_toonhm(
         dtau, single_scattering_albedo, asymmetric_parameter, source_matrix
     )
 
+    # avoids zero
+    epsilon = 1.e-8
+    scat_coeff = scat_coeff + epsilon
+    trans_coeff = trans_coeff + epsilon
+
     diagonal, lower_diagonal, upper_diagonal, vector = settridiag_toohm(
         dtau, zeta_plus, zeta_minus, lambdan, trans_coeff, scat_coeff, reduced_piB
     )

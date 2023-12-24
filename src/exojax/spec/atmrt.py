@@ -495,19 +495,22 @@ class ArtEmisScat(ArtCommon):
             if show:
                 from exojax.plot.rtplot import comparison_with_pure_absorption
 
-                comparison_with_pure_absorption(
+                spec, spec_pure = comparison_with_pure_absorption(
                     cumTtilde, Qtilde, spectrum, trans_coeff, scat_coeff, piB
                 )
+            return spectrum, spec, spec_pure
+
         elif self.rtsolver == "fluxadding_toon_hemispheric_mean":
             spectrum = rtrun_emis_scat_fluxadding_toonhm(
                 dtau, single_scattering_albedo, asymmetric_parameter, sourcef
             )
+            return spectrum
+
         else:
             print("rtsolver=", self.rtsolver)
             raise ValueError("Unknown radiative transfer solver (rtsolver).")
 
-        return spectrum
-
+        
 
 class ArtEmisPure(ArtCommon):
     """Atmospheric RT for emission w/ pure absorption
@@ -620,7 +623,7 @@ class ArtTransPure(ArtCommon):
         self, pressure_top=1.0e-8, pressure_btm=1.0e2, nlayer=100, integration="simpson"
     ):
         """initialization of ArtTransPure
-        
+
         Args:
             pressure_top (_type_, optional): layer top pressure in bar. Defaults to 1.0e-8.
             pressure_btm (_type_, optional): layer bottom pressure in bar. Defaults to 1.0e2.
@@ -628,7 +631,7 @@ class ArtTransPure(ArtCommon):
             integration (str, optional): Integration scheme (simpson, trapezoid). Defaults to "simpson".
 
         Note:
-            The users can choose the integration scheme of the chord integration from Trapezoid method or Simpson method. 
+            The users can choose the integration scheme of the chord integration from Trapezoid method or Simpson method.
 
         """
         super().__init__(pressure_top, pressure_btm, nlayer, nu_grid=None)

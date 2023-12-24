@@ -42,4 +42,4 @@ def comparison_with_pure_absorption(cumThat, Qhat, spectrum, trans_coeff,
     plt.legend()
     plt.show()
 
-    return spectrum
+    return spectrum, spectrum_pure
