@@ -169,30 +169,28 @@ F = art.run(dtau, Tarr, nu_grid=nus)
 
 from exojax.spec.atmrt import ArtEmisScat
 arts = ArtEmisScat(nu_grid=nus, pressure_btm=1.e2, pressure_top=1.e-5, nlayer=nlayer)
-arts.change_temperature_range(500.0, 1500.0)
+arts.change_temperature_range(500.0, 1400.0)
 Tarr = arts.powerlaw_temperature(1200.0,0.1)
 mmr_profile = arts.constant_mmr_profile(0.01)
 
 artsl = ArtEmisScat(nu_grid=nus, pressure_btm=1.e2, pressure_top=1.e-5, nlayer=nlayer, rtsolver="lart_toon_hemispheric_mean")
-artsl.change_temperature_range(500.0, 1500.0)
-Tarr = artsl.powerlaw_temperature(1200.0,0.1)
-mmr_profile = artsl.constant_mmr_profile(0.01)
+artsl.change_temperature_range(500.0, 1400.0)
 
 
 
 # In[49]:
 
 
-dtau = arts.opacity_profile_xs(xsmatrix, VMRc, mean_molecular_weight, gravity)
+#dtau = arts.opacity_profile_xs(xsmatrix, VMRc, mean_molecular_weight, gravity)
 
 single_scattering_albedo = betasct[None,:]/beta0[None,:] + np.zeros((len(art.pressure), len(nus)))
 asymmetric_parameter = g + np.zeros((len(art.pressure), len(nus)))
 reflectivity_surface = np.zeros(len(nus))
-incoming_flux = np.ones(len(nus))
-Fs = arts.run(dtau,single_scattering_albedo,asymmetric_parameter,Tarr)
+Fs = arts.run(dtau,np.real(single_scattering_albedo),np.real(asymmetric_parameter),Tarr)
 Fsl, Fsl2, Fslpure = artsl.run(dtau,np.real(single_scattering_albedo),np.real(asymmetric_parameter),Tarr,show=True)
     
 
+#incoming_flux = np.zeros(len(nus))
 
 # In[58]:
 
