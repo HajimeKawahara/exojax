@@ -18,7 +18,7 @@ def wavenumber_grid(x0, x1, N, xsmode, wavelength_order="descending", unit='cm-1
         N: the number of the wavenumber grid (even number)
         xsmode: cross section computation mode (lpf, dit, modit, premodit)
         wavlength order: wavelength order: "ascending" or "descending"
-        unit: unit of the input grid
+        unit: unit of the input grid, "cm-1", "nm", or "AA"
         
     Note:
         The wavenumber (nus) and wavelength (wav) grids are in ascending orders. 
@@ -50,12 +50,9 @@ def _warning_wavelength_order(wavelength_order):
         wavlength order: wavelength order: "ascending" or "descending"
     """
     print("======================================================================")
-    print("We changed the policy of the order of wavenumber/wavelength grids")
-    print("wavenumber grid should be in ascending order and now ")
-    print("users can specify the order of the wavelength grid by themselves.")
+    print("The wavenumber grid should be in ascending order.")
+    print("The users can specify the order of the wavelength grid by themselves.")
     print("Your wavelength grid is in *** ", wavelength_order, " *** order")
-    print("This might causes the bug if you update ExoJAX. ")
-    print("Note that the older ExoJAX assumes ascending order as wavelength grid.")
     print("======================================================================")
 
 

@@ -1,7 +1,4 @@
-#!/usr/bin/env python
-# coding: utf-8
-
-# # Foward Modeling of Jupiter-like Clouds and Reflection Spectrum 
+# See #448
 
 # In[1]:
 
