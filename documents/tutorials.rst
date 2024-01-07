@@ -12,14 +12,16 @@ Basics
 Applications
 ====================
 
-   
-Retrieval More
---------------------------
+Tips for Real Analysis
+-------------------------
 
 .. toctree::
    :maxdepth: 1
 
+   tutorials/Fitting_Telluric_Lines.rst
    tutorials/reverse_precompute_grid.rst
+   userguide/memorysetting.rst	
+   tutorials/elower_setting.rst
 
 
 Transmission Spectra
@@ -42,14 +44,6 @@ Molecular/Atomic/Continuum Databases
    tutorials/Fortrat.rst
    tutorials/CIA_opacity.rst
 
-Tuning ExoJAX
-===========================
-
-.. toctree::
-   :maxdepth: 1
-
-   userguide/memorysetting.rst	
-   tutorials/elower_setting.rst
 
 Multi Molecule/Segments Mdb and Opa Handler
 =============================================
