@@ -17,7 +17,7 @@ def nu2wav(nus, wavelength_order="descending", unit="AA"):
     conversion_factors = {"nm": 1.0e7, "AA": 1.0e8, "um": 1.0e4}
     wavenumber_order = is_sorted(nus)
 
-    if wavenumber_order == "decending" or wavenumber_order == "unordered":
+    if wavenumber_order == "descending" or wavenumber_order == "unordered":
         raise ValueError("wavenumber should be in ascending order in ExoJAX.")
 
     try:
