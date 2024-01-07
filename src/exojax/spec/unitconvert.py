@@ -2,62 +2,56 @@
 
 from exojax.utils.checkarray import is_sorted
 
-def nu2wav(nus, wavelength_order, unit='AA'):
+
+def nu2wav(nus, wavelength_order="descending", unit="AA"):
     """wavenumber to wavelength (AA)
 
     Args:
         nus: wavenumber (cm-1)
-        wavlength order: wavelength order: "ascending" or "descending"
-        unit: unit of wavelength
+        wavlength order: wavelength order: "ascending" or "descending", default to "descending"
+        unit: the unit of the output wavelength, "AA", "nm", or "um"
 
     Returns:
-       wavelength (AA)
+        wavelength (unit)
     """
-    conversion_factors = {
-        'nm': 1.e7,
-        'AA': 1.e8,
-        'um': 1.e4
-    }
+    conversion_factors = {"nm": 1.0e7, "AA": 1.0e8, "um": 1.0e4}
+    wavenumber_order = is_sorted(nus)
 
-    if is_sorted(nus) != "ascending":
+    if wavenumber_order == "decending" or wavenumber_order == "unordered":
         raise ValueError("wavenumber should be in ascending order in ExoJAX.")
 
     try:
-        if wavelength_order=="ascending":
+        if wavelength_order == "ascending":
             return conversion_factors[unit] / nus[::-1]
-        elif wavelength_order=="descending":
+        elif wavelength_order == "descending" or wavenumber_order == "single":
             return conversion_factors[unit] / nus
         else:
             raise ValueError("order should be ascending or descending")
     except KeyError:
         raise ValueError("unavailable unit")
 
+
 def wav2nu(wav, unit):
     """wavelength to wavenumber.
 
     Args:
-       wav: wavelength array in ascending/descending order
-       unit: unit of wavelength
+        wav: wavelength array in ascending/descending order
+        unit: unit of wavelength
 
     Returns:
-       wavenumber (cm-1) in ascending order
+        wavenumber (cm-1) in ascending order
     """
 
-    conversion_factors = {
-        'nm': 1.e7,
-        'AA': 1.e8,
-        'um': 1.e4
-    }
+    conversion_factors = {"nm": 1.0e7, "AA": 1.0e8, "um": 1.0e4}
 
     order = is_sorted(wav)
 
     try:
-        if order=="ascending":
+        if order == "ascending":
             return conversion_factors[unit] / wav[::-1]
-        elif order=="descending":
+        elif order == "descending" or order == "single":
             return conversion_factors[unit] / wav
         else:
             raise ValueError("wavelength array should be ascending or descending")
     except KeyError:
         raise ValueError("unavailable unit")
-
