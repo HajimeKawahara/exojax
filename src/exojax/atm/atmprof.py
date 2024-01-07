@@ -18,17 +18,17 @@ def pressure_layer_logspace(
     """Pressure layer evenly spaced in logspace, i.e. logP interval is constant
 
     Args:
-       log_pressure_top: log10(P[bar]) at the top layer
-       log_pressure_btm: log10(P[bar]) at the bottom layer
-       nlayer: the number of the layers
-       mode: ascending or descending
-       reference_point (float): reference point in a layer (0-1). Center:0.5, lower boundary:1.0, upper boundary:0
-       numpy: if True use numpy array instead of jnp array
+        log_pressure_top: log10(P[bar]) at the top layer
+        log_pressure_btm: log10(P[bar]) at the bottom layer
+        nlayer: the number of the layers
+        mode: ascending or descending
+        reference_point (float): reference point in a layer (0-1). Center:0.5, lower boundary:1.0, upper boundary:0
+        numpy: if True use numpy array instead of jnp array
 
     Returns:
-         pressures: representative pressures (array) of the layers
-         delta_pressures: delta pressure layer, the old name is dParr
-         pressure_decrease_rate: pressure decrease rate of the layer (k-factor; k < 1) pressure[i-1] = pressure_decrease_rate*pressure[i]
+        pressures: representative pressures (array) of the layers
+        delta_pressures: delta pressure layer, the old name is dParr
+        pressure_decrease_rate: pressure decrease rate of the layer (k-factor; k < 1) pressure[i-1] = pressure_decrease_rate*pressure[i]
 
     Note:
         d logP is constant using this function.
@@ -127,9 +127,10 @@ def normalized_layer_height(
     def compute_radius(normalized_radius_lower, arr):
         T_layer = arr[0:1][0]
         mmw_layer = arr[1:2][0]
-        gravity_lower = gravity_btm / normalized_radius_lower
+        gravity_lower = gravity_btm / normalized_radius_lower**2
         Hn_lower = pressure_scale_height(gravity_lower, T_layer, mmw_layer) / radius_btm
-        fac = pressure_decrease_rate ** (-Hn_lower / normalized_radius_lower) - 1.0
+        a = 1.0 + Hn_lower / normalized_radius_lower * jnp.log(pressure_decrease_rate)
+        fac = 1.0 / a - 1.0
         normalized_height_layer = fac * normalized_radius_lower
         carry = normalized_radius_lower + normalized_height_layer
         return carry, [normalized_height_layer, normalized_radius_lower]
@@ -141,7 +142,7 @@ def normalized_layer_height(
 
 
 def gh_product(temperature, mean_molecular_weight):
-    """prodict of gravity and pressure scale height
+    """product of gravity and pressure scale height
 
     Args:
         temperature: isothermal temperature (K)
@@ -235,13 +236,13 @@ def Teq2Tirr(Teq):
     """Tirr from equilibrium temperature and intrinsic temperature.
 
     Args:
-       Teq: equilibrium temperature
+        Teq: equilibrium temperature
 
     Return:
-       Tirr: iradiation temperature
+        Tirr: iradiation temperature
 
     Note:
-       Here we assume A=0 (albedo) and beta=1 (fully-energy distributed)
+        Here we assume A=0 (albedo) and beta=1 (fully-energy distributed)
     """
     return (2.0**0.5) * Teq
 
@@ -250,13 +251,13 @@ def Teff2Tirr(Teff, Tint):
     """Tirr from effective temperature and intrinsic temperature.
 
     Args:
-       Teff: effective temperature
-       Tint: intrinsic temperature
+        Teff: effective temperature
+        Tint: intrinsic temperature
 
     Return:
-       Tirr: iradiation temperature
+        Tirr: iradiation temperature
 
     Note:
-       Here we assume A=0 (albedo) and beta=1 (fully-energy distributed)
+        Here we assume A=0 (albedo) and beta=1 (fully-energy distributed)
     """
     return (4.0 * Teff**4 - Tint**4) ** 0.25
