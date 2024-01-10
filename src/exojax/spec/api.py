@@ -510,7 +510,7 @@ class MdbCommonHitempHitran:
         mask = (df.wav > self.load_wavenum_min) * (df.wav < self.load_wavenum_max)
         mask *= line_strength_numpy(self.Ttyp, df.int, df.wav, df.El, qrtyp) > self.crit
         if self.elower_max is not None:
-            mask *= df.elower < self.elower_max
+            mask *= df.El < self.elower_max
         return mask
 
     def apply_mask_mdb(self, mask):
