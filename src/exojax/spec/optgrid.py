@@ -43,8 +43,12 @@ def optelower(mdb,
     lbd_coeff, multi_index_uniqgrid, elower_grid, \
         ngamma_ref_grid, n_Texp_grid, R, pmarray = opa.opainfo
     nsigmaD = normalized_doppler_sigma(Tmax, mdb.molmass, R)
-    qt = mdb.qr_interp(Tmax)
-
+    
+    if mdb.dbtype == "exomol":
+        qt = mdb.qr_interp(Tmax)
+    elif mdb.dbtype == "hitran":
+        qt = mdb.qr_interp_lines(Tmax)
+        
     Tref_broadening = Tref_original
     xsv_master = xsvector_zeroth(Tmax, Pmin, nsigmaD, lbd_coeff, Tref_original,
                                  R, pmarray, opa.nu_grid, elower_grid,
