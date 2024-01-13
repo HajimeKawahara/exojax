@@ -157,7 +157,7 @@ mols_petit = ['CO_all_iso']
 T0 = 995.56
 alpha = 0.09
 logg = 5.01
-logvmr = [-3.06]
+logvmr = [-13.06]
 
 nus1, f1 = run_exojax(path_data, ld_min, ld_max, mols_exojax, db_exojax, T0, alpha, logg, logvmr)
 nus2, f2 = run_petit(ld_min, ld_max, mols_petit, mols_exojax, T0, alpha, logg, logvmr)
