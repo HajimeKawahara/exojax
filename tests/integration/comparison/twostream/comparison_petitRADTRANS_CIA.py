@@ -112,7 +112,7 @@ def run_petit(ld_min, ld_max, mols, mols_exojax, T0, alpha, logg, logvmr):
     atmosphere = Radtrans(line_species = mols,
                           rayleigh_species = ['H2', 'He'],
                           continuum_opacities = ['H2-H2', 'H2-He'],
-                          wlen_bords_micron = [ld_min*1e-4, ld_max*1e-4],
+                          wlen_bords_micron = [(ld_min - 5.)*1e-4, (ld_max + 5.)*1e-4],
                           mode = 'lbl')
 
     pressures = np.logspace(-3, 2, 200)
@@ -201,14 +201,18 @@ import matplotlib.pyplot as plt
 from matplotlib.ticker import (MultipleLocator, FormatStrFormatter, AutoMinorLocator)
 fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(40,8), gridspec_kw={'height_ratios': [3, 1]})
 plt.subplots_adjust(hspace=0)
+norm = np.median(f1_ibased_obs)
+f1_ibased_obs = f1_ibased_obs / norm
+f1_fbased_obs = f1_fbased_obs / norm
+f2_obs = f2_obs / norm
 ax1.plot(1.0e8/nusd, f1_ibased_obs, label="ExoJAX, intensity-based", c='C0')
 ax1.plot(1.0e8/nusd, f1_fbased_obs, label="ExoJAX, flux-based", c='C1')
 ax1.plot(1.0e8/nusd, f2_obs, label="petitRADTRANS", c='C2')
 
 ax2.plot(1.0e8/nusd, f1_ibased_obs - f2_obs, "+", color="C0", markersize=5)
-ax2.plot(1.0e8/nusd, f1_fbased_obs - f2_obs, "+", color="C1", markersize=5)
+#ax2.plot(1.0e8/nusd, f1_fbased_obs - f2_obs, "+", color="C1", markersize=5)
 
-ax1.set_ylabel("Flux [erg/s/cm$\mathrm{^2}$/cm$\mathrm{^{-1}}$]", fontsize=15)
+ax1.set_ylabel("Normalized Flux", fontsize=15)
 ax2.set_xlabel("Wavelength [$\AA$]", fontsize=15)
 ax2.set_ylabel("Residual", fontsize=15)
 
