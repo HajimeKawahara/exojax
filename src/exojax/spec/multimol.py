@@ -1,6 +1,7 @@
 import numpy as np
 from exojax.spec import api
 import os
+import traceback
 
 
 class MultiMol():
@@ -119,8 +120,13 @@ class MultiMol():
                                           Ttyp=Ttyp,
                                           gpu_transfer=False,
                                           isotope=1))
-                except:
-                    mask[i] = False
+                except Exception as e:
+                    if 'No line found in ' in e.args:
+                        print(self.molmulti[k][i], self.dbmulti[k][i], "in the range of", e.args[1], e.args[2], "will be ignored due to no available lines found")
+                        mask[i] = False
+                    else:
+                        print(traceback.format_exc())
+                        exit()
 
             self.masked_molmulti[k] = np.array(self.molmulti[k])[mask].tolist()
             _multimdb.append(mdb_k)
