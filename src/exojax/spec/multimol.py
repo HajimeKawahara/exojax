@@ -163,7 +163,8 @@ class MultiMol():
                           nu_grid_list,
                           auto_trange,
                           diffmode=2,
-                          dit_grid_resolution=0.2):
+                          dit_grid_resolution=0.2,
+                          allow_32bit=False):
         """multiple opa for PreMODIT
 
         Args:
@@ -185,7 +186,8 @@ class MultiMol():
                                     nu_grid=nu_grid_list[k],
                                     diffmode=diffmode,
                                     auto_trange=auto_trange,
-                                    dit_grid_resolution=dit_grid_resolution)
+                                    dit_grid_resolution=dit_grid_resolution,
+                                    allow_32bit=allow_32bit)
                 opa_k.append(opa_i)
             multiopa.append(opa_k)
 
