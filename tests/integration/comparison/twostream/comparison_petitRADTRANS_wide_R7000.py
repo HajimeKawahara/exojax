@@ -110,7 +110,6 @@ def run_exojax(path_data, ld_min, ld_max, mols, db, T0, alpha, logg, logvmr):
 
 def run_petit(ld_min, ld_max, mols, mols_exojax, T0, alpha, logg, logvmr):
     atmosphere = Radtrans(line_species = mols,
-                          rayleigh_species = ['H2', 'He'],
                           continuum_opacities = ['H2-H2', 'H2-He'],
                           wlen_bords_micron = [(ld_min - 5.)*1e-4, (ld_max + 5.)*1e-4],
                           mode = 'lbl')
