@@ -136,7 +136,7 @@ def params_version2():
     Trangelwt = Trefl + 0.1
     Trefh = 3000.0
     Trangehwt = Trefh + 0.1
-    Tsearchl = 100.0
+    Tsearchl = 50.0
     Tsearchh = 7500.0
     dErangel = 50
     dErangeh = 1000
