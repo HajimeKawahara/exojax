@@ -84,34 +84,102 @@ def generate_elower_grid_trange(
     np.savez(filename, arr, Tarr, Twtarr, Trefarr, dEarr)
 
 
-if __name__ == "__main__":
-    #N = 50
-    N = 75
-    K = N
-    M = 120
-    #L = 29
-    L = 39
-    #Trefl = 100.0
+def params_version1():
+    """
+    parameters for the defaut elower grid trange version 1
+
+    Returns:
+        params for generate_elower_grid_trange
+    """
+    N_Twt = 50
+    N_Tref = N_Twt
+    N_Trange = 120
+    N_dE = 29
+    Trefl = 100.0
+    Trangelwt = Trefl + 0.1
+    Trefh = 2000.0
+    Trangehwt = Trefh + 0.1
+    Tsearchl = 100.0
+    Tsearchh = 5000.0
+    dErangel = 100
+    dErangeh = 1500
+    filename = "elower_grid_trange.npz"
+    return (
+        N_Twt,
+        N_Tref,
+        N_Trange,
+        N_dE,
+        Trefl,
+        Trefh,
+        Trangelwt,
+        Trangehwt,
+        Tsearchl,
+        Tsearchh,
+        dErangel,
+        dErangeh,
+        filename,
+    )
+
+
+def params_version2():
+    """
+    parameters for the defaut elower grid trange version 2
+
+    Returns:
+        params for generate_elower_grid_trange
+    """
+    N_Twt = 75
+    N_Tref = N_Twt
+    N_Trange = 120
+    N_dE = 39
     Trefl = 50.0
     Trangelwt = Trefl + 0.1
-    #Trefh = 2000.0
     Trefh = 3000.0
     Trangehwt = Trefh + 0.1
     Tsearchl = 100.0
-    #Tsearchh = 5000.0
     Tsearchh = 7500.0
-    #dErangel = 100
     dErangel = 50
-    #dErangeh = 1500
     dErangeh = 1000
-    #filename = "elower_grid_trange.npz"
     filename = "elower_grid_trange_v2.npz"
+    return (
+        N_Twt,
+        N_Tref,
+        N_Trange,
+        N_dE,
+        Trefl,
+        Trefh,
+        Trangelwt,
+        Trangehwt,
+        Tsearchl,
+        Tsearchh,
+        dErangel,
+        dErangeh,
+        filename,
+    )
+
+
+if __name__ == "__main__":
+    (
+        N_Twt,
+        N_Tref,
+        N_Trange,
+        N_dE,
+        Trefl,
+        Trefh,
+        Trangelwt,
+        Trangehwt,
+        Tsearchl,
+        Tsearchh,
+        dErangel,
+        dErangeh,
+        filename,
+    ) = params_version2()
 
     generate_elower_grid_trange(
-        N,
-        K,
-        M,
-        L,
+        N_Twt,
+        N_Tref,
+        N_Trange,
+        N_dE,
         Trefl,
         Trefh,
         Trangelwt,
