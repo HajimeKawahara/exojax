@@ -21,7 +21,8 @@ config.update("jax_enable_x64", True)
 # config.update("jax_debug_nans", True)
 
 
-def read_data(filename):
+def read_kawashima_sample_co_data():
+    filename = "../../comparison/transmission/spectrum/CO100percent_500K.dat"
     dat = pd.read_csv(filename, delimiter="   ")
     wav = dat["Wavelength[um]"]
     mask = (wav > 2.25) & (wav < 2.6)
@@ -30,13 +31,12 @@ def read_data(filename):
 
 def test_transmission_is_differentiable():
     # Read data
-    filename = "../../comparison/transmission/spectrum/CO100percent_500K.dat"
-    wav, rprs = read_data(filename)
+    wav, rprs = read_kawashima_sample_co_data()
     inst_nus = wav2nu(np.array(wav), "um")
 
     # Model
     Nx = 3000
-    nu_grid, wav, res = wavenumber_grid(22900.0, 26000.0, Nx, unit="AA", xsmode="modit")
+    nu_grid, wav, res = wavenumber_grid(22900.0, 26000.0, Nx, unit="AA", xsmode="premodit")
 
     art = ArtTransPure(pressure_top=1.0e-15, pressure_btm=1.0e1, nlayer=100)
     art.change_temperature_range(490.0, 510.0)
@@ -45,12 +45,11 @@ def test_transmission_is_differentiable():
     opa = OpaPremodit(
         mdb=mdb,
         nu_grid=nu_grid,
-        auto_trange=[490, 510],
-        dit_grid_resolution=1,
+        auto_trange=[490.0, 510.0],
+        dit_grid_resolution=1.0,
     )
 
     sop_inst = SopInstProfile(nu_grid, res, vrmax=100.0)
-
 
     def model(params):
         mmr_CO, mu_fid, T_fid, gravity_btm, radius_btm, RV = params
@@ -82,6 +81,7 @@ def test_transmission_is_differentiable():
     print()
     print("Parameters: mmr_CO, mu_fid, T_fid, gravity_btm, radius_btm, RV")
     print("Gradient", gradient)
+
     assert np.all(gradient == gradient)
 
 
