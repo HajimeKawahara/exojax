@@ -32,7 +32,7 @@ wav, rprs = read_data(filename)
 inst_nus = wav2nu(np.array(wav), "um")
 
 # Model
-Nx = 300000
+Nx = 3000
 nu_grid, wav, res = wavenumber_grid(22900.0, 26000.0, Nx, unit="AA", xsmode="modit")
 
 art = ArtTransPure(pressure_top=1.0e-15, pressure_btm=1.0e1, nlayer=100)
