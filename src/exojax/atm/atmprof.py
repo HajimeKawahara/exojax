@@ -107,7 +107,10 @@ def pressure_boundary_logspace(
 def normalized_layer_height(
     temperature, pressure_decrease_rate, mean_molecular_weight, radius_btm, gravity_btm
 ):
-    """compute normalized height/radius at the upper boundary of the atmospheric layer, neglecting atmospheric mass.
+    """compute normalized height/radius at the upper boundary of the atmospheric layer, neglecting atmospheric mass, examining non-constant gravity.
+
+    Note:
+        This method computes the height of the atmospheric layers taking the effect of the decrease of gravity (i.e. $ \propto 1/r $) into account.
 
     Args:
         temperature (1D array): temperature profile (K) of the layer, (Nlayer, from atmospheric top to bottom)
@@ -235,13 +238,13 @@ def Teq2Tirr(Teq):
     """Tirr from equilibrium temperature and intrinsic temperature.
 
     Args:
-       Teq: equilibrium temperature
+        Teq: equilibrium temperature
 
     Return:
-       Tirr: iradiation temperature
+        Tirr: iradiation temperature
 
     Note:
-       Here we assume A=0 (albedo) and beta=1 (fully-energy distributed)
+        Here we assume A=0 (albedo) and beta=1 (fully-energy distributed)
     """
     return (2.0**0.5) * Teq
 
@@ -250,13 +253,13 @@ def Teff2Tirr(Teff, Tint):
     """Tirr from effective temperature and intrinsic temperature.
 
     Args:
-       Teff: effective temperature
-       Tint: intrinsic temperature
+        Teff: effective temperature
+        Tint: intrinsic temperature
 
     Return:
-       Tirr: iradiation temperature
+        Tirr: iradiation temperature
 
     Note:
-       Here we assume A=0 (albedo) and beta=1 (fully-energy distributed)
+        Here we assume A=0 (albedo) and beta=1 (fully-energy distributed)
     """
     return (4.0 * Teff**4 - Tint**4) ** 0.25
