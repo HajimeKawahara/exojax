@@ -25,7 +25,7 @@ def chord_geometric_matrix_lower(height, radius_lower):
     fac_left = jnp.sqrt(jnp.tril(radius_upper[None, :]**2 - radius_lower[:, None]**2))
     fac_right = jnp.sqrt(jnp.tril(radius_lower[None, :]**2 - radius_lower[:, None]**2, k=-1))
     raw_matrix = 2.0 * (fac_left - fac_right) / height
-    return jnp.tril(raw_matrix)
+    return raw_matrix
 
 
 @jit
@@ -53,7 +53,7 @@ def chord_geometric_matrix(height, radius_lower):
     fac_left = jnp.tril(radius_upper[None, :]**2 - radius_midpoint[:, None]**2)
     fac_right = jnp.tril(radius_lower[None, :]**2 - radius_midpoint[:, None]**2, k=-1)
     raw_matrix = 2.0 * (jnp.sqrt(fac_left) - jnp.sqrt(fac_right)) / height
-    return jnp.tril(raw_matrix)
+    return raw_matrix
 
 @jit
 def chord_optical_depth(chord_geometric_matrix, dtau):
