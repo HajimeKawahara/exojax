@@ -1,3 +1,8 @@
+"""This example checks if the derivative of transmission spectrum is valid (not nan), see #464.
+
+"""
+
+
 import jax
 from jax.config import config
 import pandas as pd
@@ -6,14 +11,11 @@ import jax.numpy as jnp
 from exojax.utils.grids import wavenumber_grid
 from exojax.spec.opacalc import OpaPremodit
 from exojax.spec.atmrt import ArtTransPure
-from exojax.utils.constants import RJ, Rs
+from exojax.utils.constants import RJ
 from exojax.spec.api import MdbHitran
 from exojax.utils.astrofunc import gravity_jupiter
-
 from exojax.spec.unitconvert import wav2nu
-from exojax.spec.specop import SopRotation
 from exojax.spec.specop import SopInstProfile
-from exojax.utils.instfunc import resolution_to_gaussian_std
 
 config.update("jax_enable_x64", True)
 # config.update("jax_debug_nans", True)
