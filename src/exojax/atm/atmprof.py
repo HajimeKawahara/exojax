@@ -110,7 +110,7 @@ def normalized_layer_height(
     """compute normalized height/radius at the upper boundary of the atmospheric layer, neglecting atmospheric mass, examining non-constant gravity.
 
     Note:
-        This method computes the height of the atmospheric layers taking the effect of the decrease of gravity (i.e. $ \propto 1/r $) into account.
+        This method computes the height of the atmospheric layers taking the effect of the decrease of gravity (i.e. $ \propto 1/r^2 $) into account.
 
     Args:
         temperature (1D array): temperature profile (K) of the layer, (Nlayer, from atmospheric top to bottom)
