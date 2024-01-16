@@ -206,14 +206,14 @@ def evaluate_trange(Tarr, tlide_line_strength, crit, Twt):
     return Tl, Tu
 
 
-def default_elower_grid_trange_file(version=1):
+def default_elower_grid_trange_file(version):
     """default elower_grid_trange filename
 
     Args:
-        version (int, optional): version of default elower_grid_trange file, default to 1
+        version (int): version of default elower_grid_trange file, 1 or 2
 
     Returns:
-        default_elower_grid_trange filename
+        default_elower_grid_trange (degt) filename
 
     Note:
         This file assumes 1 % precision of line strength within [Tl, Tu]
@@ -223,7 +223,7 @@ def default_elower_grid_trange_file(version=1):
         Version 2 a wider temperature range (Jan 2024)
 
     """
-    print("Default elower_grid_trange file version=")
+    print("default elower grid trange (degt) file version:", version)
 
     if version == 1:
         filename = pkg_resources.resource_filename(
@@ -239,24 +239,24 @@ def default_elower_grid_trange_file(version=1):
     return filename
 
 
-def optimal_params(Tl, Tu, diffmode=2, makefig=False, filename=None):
-    """derive the optimal parameters for a given Tu and Tl,
-       which satisfies x % (1% if filename=None) precision within [Tl, Tu]
+def optimal_params(Tl, Tu, diffmode=2, version=2, makefig=False, filename=None):
+    """derive the optimal parameters for a given Tu and Tl, 
+    which satisfies x % (1% if filename=None) precision within [Tl, Tu]
 
     Args:
         Tl (float): lower temperature
         Tu (float): upper temperature
         diffmode (int, optional): diff mode. Defaults to 2.
+        version (int, optional): version of the default_elower_grid_trange_file, 1 or 2 (default)
         makefig (bool, optional): if you wanna make a fig. Defaults to False.
         filename: grid_trange file,  if None default_elower_grid_trange_file is used.
-
 
     Returns:
         float: dE, Tref, Twt (optimal ones)
     """
 
     if filename is None:
-        filename = default_elower_grid_trange_file()
+        filename = default_elower_grid_trange_file(version=version)
     dat = np.load(filename)
     arr = dat["arr_0"]
     # Tarr = dat["arr_1"]
