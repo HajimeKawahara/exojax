@@ -308,8 +308,8 @@ def optimal_params(Tl, Tu, diffmode=2, version=2, makefig=False, filename=None):
             return dEarr[k] * (diffmode + 1), Trefallow[ind[0]], Twtallow[ind[0]]
 
         if i == len(dEarr) - 1:
-            warnings.warn("Couldn't find the params.")
-            return None, None, None
+            raise ValueError("could not find the optimal trange. use a different degt file or regenerate a new one.")
+            
 
 
 def _draw_map(value, ax, Trefarr, Twtarr, Tmax_view):
