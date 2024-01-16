@@ -75,6 +75,7 @@ Copyright 2021-2023, Contributors
 - Stevanus Nugroho (@astrostevanus)
 - Tako Ishikawa (@chonma0ctopus)
 - Yui Kasagi (@YuiKasagi)
+- Shotaro Tada (@sh-tada)
 
 ExoJAX is free software made available under the MIT License. See the ``LICENSE``.
    

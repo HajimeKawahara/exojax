@@ -40,7 +40,7 @@ Atmospheric Radiative Transfer (art) class
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 ExoJAX's code is primarily written in a function-based manner, allowing for the execution of each process of radiative transfer individually. 
-However, for those who are not interested in the details, the `art` class can be utilized as an interface for radiative transfer.
+However, for those who are not interested in the details, the ``art`` class can be utilized as an interface for radiative transfer.
 
 +-----------------------+------------------+----------------+
 |**art** in atmrt.py    |spectrum type     |including...    |
