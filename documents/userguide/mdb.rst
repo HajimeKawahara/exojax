@@ -1,9 +1,9 @@
-Molecular and Atomic Databases (mdb/adb)
-============================================
+Molecular and Atomic Databases (``mdb`` / ``adb``)
+====================================================
 
 Multiple molecular and atomic databases are available in ExoJAX. 
 These molecular database can be controlled using the molecular/atomic database class 
-(mdb/adb) for each database.
+(``mdb`` / ``adb``) for each database.
 
 
 +-----------------------+---------+---------------------------------------------------------------------------------+------------------------------------+
