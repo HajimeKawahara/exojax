@@ -27,13 +27,6 @@ not exist, moldb will try to download it from HITRAN website.
 
     mdbCO_HITEMP=api.MdbHitemp('CO',nus, isotope=1, gpu_transfer=True) # we use istope=1 for comparison
 
-
-.. parsed-literal::
-
-    Downloading 05_HITEMP2019.par.bz2 for CO (1/1).
-    Download complete. Parsing CO database to /home/kawahara/exojax/documents/tutorials/CO-05_HITEMP2019.hdf5
-
-
 .. code:: ipython3
 
     emf='CO/12C-16O/Li2015' #this is isotope=1 12C-16O
@@ -49,14 +42,6 @@ not exist, moldb will try to download it from HITRAN website.
 .. parsed-literal::
 
     HITRAN exact name= (12C)(16O)
-    		 => Downloading from http://www.exomol.com/db/CO/12C-16O/Li2015/12C-16O__Li2015.def
-    		 => Downloading from http://www.exomol.com/db/CO/12C-16O/Li2015/12C-16O__Li2015.pf
-    		 => Downloading from http://www.exomol.com/db/CO/12C-16O/Li2015/12C-16O__Li2015.states.bz2
-    		 => Downloading from http://www.exomol.com/db/CO/12C-16O/12C-16O__H2.broad
-    		 => Downloading from http://www.exomol.com/db/CO/12C-16O/12C-16O__He.broad
-    		 => Downloading from http://www.exomol.com/db/CO/12C-16O/12C-16O__air.broad
-    Error: Couldn't download .broad file at http://www.exomol.com/db/CO/12C-16O/12C-16O__air.broad and save.
-    Note: Caching states data to the vaex format. After the second time, it will become much faster.
     Molecule:  CO
     Isotopologue:  12C-16O
     Background atmosphere:  H2
@@ -64,9 +49,6 @@ not exist, moldb will try to download it from HITRAN website.
     Local folder:  CO/12C-16O/Li2015
     Transition files: 
     	 => File 12C-16O__Li2015.trans
-    		 => Downloading from http://www.exomol.com/db/CO/12C-16O/Li2015/12C-16O__Li2015.trans.bz2
-    		 => Caching the *.trans.bz2 file to the vaex (*.h5) format. After the second time, it will become much faster.
-    		 => You can deleted the 'trans.bz2' file by hand.
     #        i_upper    i_lower    A          nu_lines      gup    jlower    jupper    elower      Sij0
     0        84         42         1.155e-06  2.405586      3      0         1         66960.7124  3.811968898414225e-164
     1        83         41         1.161e-06  2.441775      3      0         1         65819.903   9.663028103692631e-162
