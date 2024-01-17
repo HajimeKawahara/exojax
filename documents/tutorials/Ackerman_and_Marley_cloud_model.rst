@@ -14,11 +14,11 @@ Setting a simple atmopheric model. We need the density of atmosphere.
 
 .. code:: ipython3
 
-    from exojax.spec import rtransfer as rt
+    from exojax.atm.atmprof import pressure_layer_logspace
     from exojax.utils.constants import kB, m_u
     
     NP = 100
-    Parr, dParr, k = rt.pressure_layer(NP=NP, logPtop=-8., logPbtm=4.0)
+    Parr, dParr, k = pressure_layer_logspace(log_pressure_top=-8, log_pressure_btm=4.0, nlayer=NP)
     alpha = 0.097
     T0 = 1200.
     Tarr = T0 * (Parr)**alpha
@@ -164,17 +164,17 @@ The pressure scale height can be computed using atm.atmprof.Hatm.
 
 .. code:: ipython3
 
-    from exojax.atm.atmprof import Hatm
+    from exojax.atm.atmprof import pressure_scale_height
     
     T = 1000  #K
     mu = 2  #mean molecular weight
-    print("scale height=", Hatm(1.e5, T, mu), "cm")
+    print("scale height=", pressure_scale_height(1.e5, T, mu), "cm")
 
 
 
 .. parsed-literal::
 
-    scale height= 415722.9931793715 cm
+    scale height= 415722.99317937146 cm
 
 
 We need a density of condensates.
@@ -189,6 +189,21 @@ We need a density of condensates.
     mu = molmass("H2")
     muc_enstatite = molmass("MgSiO3")
     muc_Fe = molmass("Fe")
+
+
+
+.. parsed-literal::
+
+    ['H2O', 'CO2', 'O3', 'N2O', 'CO', 'CH4', 'O2', 'NO', 'SO2', 'NO2', 'NH3', 'HNO3', 'OH', 'HF', 'HCl', 'HBr', 'HI', 'ClO', 'OCS', 'H2CO', 'HOCl', 'N2', 'HCN', 'CH3Cl', 'H2O2', 'C2H2', 'C2H6', 'PH3', 'COF2', 'SF6', 'H2S', 'HCOOH', 'HO2', 'O', 'ClONO2', 'NO+', 'HOBr', 'C2H4', 'CH3OH', 'CH3Br', 'CH3CN', 'CF4', 'C4H2', 'HC3N', 'H2', 'CS', 'SO3', 'C2N2', 'COCl2', 'SO', 'CH3F', 'GeH4', 'CS2', 'CH3I', 'NF3']
+    ['H2O', 'CO2', 'O3', 'N2O', 'CO', 'CH4', 'O2', 'NO', 'SO2', 'NO2', 'NH3', 'HNO3', 'OH', 'HF', 'HCl', 'HBr', 'HI', 'ClO', 'OCS', 'H2CO', 'HOCl', 'N2', 'HCN', 'CH3Cl', 'H2O2', 'C2H2', 'C2H6', 'PH3', 'COF2', 'SF6', 'H2S', 'HCOOH', 'HO2', 'O', 'ClONO2', 'NO+', 'HOBr', 'C2H4', 'CH3OH', 'CH3Br', 'CH3CN', 'CF4', 'C4H2', 'HC3N', 'H2', 'CS', 'SO3', 'C2N2', 'COCl2', 'SO', 'CH3F', 'GeH4', 'CS2', 'CH3I', 'NF3']
+
+
+.. parsed-literal::
+
+    /home/kawahara/exojax/src/exojax/spec/molinfo.py:64: UserWarning: db_HIT is set as True, but the molecular name 'MgSiO3' does not exist in the HITRAN database. So set db_HIT as False. For reference, all the available molecules in the HITRAN database are as follows:
+      warnings.warn(warn_msg, UserWarning)
+    /home/kawahara/exojax/src/exojax/spec/molinfo.py:64: UserWarning: db_HIT is set as True, but the molecular name 'Fe' does not exist in the HITRAN database. So set db_HIT as False. For reference, all the available molecules in the HITRAN database are as follows:
+      warnings.warn(warn_msg, UserWarning)
 
 
 Let’s compute the terminal velocity. We can compute the terminal
@@ -219,7 +234,7 @@ Marley 2001
     Kzz = 1.e5  #cm2/s
     sigmag = 2.0
     alphav = 1.3
-    L = Hatm(g, 1500, mu)
+    L = pressure_scale_height(g, 1500, mu)
 
 
 .. code:: ipython3
@@ -231,7 +246,7 @@ Marley 2001
 
 .. parsed-literal::
 
-    0.16163647693888086
+    0.16161803517166456
 
 
 
@@ -293,7 +308,7 @@ Then, :math:`r_g` can be computed from :math:`r_w` and other quantities.
 
 .. parsed-literal::
 
-    <matplotlib.legend.Legend at 0x7ff18c758250>
+    <matplotlib.legend.Legend at 0x7f55651dcc10>
 
 
 
@@ -336,36 +351,61 @@ Let’s compare with CIA
 
     #CIA
     from exojax.utils.grids import wavenumber_grid
-    
-    nus, wav, res = wavenumber_grid(9500, 30000, 1000, unit="AA")
+    nus, wav, res = wavenumber_grid(9500, 30000, 1000, unit="AA", xsmode="premodit")
     
     from exojax.spec import contdb
-    
     cdbH2H2 = contdb.CdbCIA('.database/H2-H2_2011.cia', nus)
 
 
 .. parsed-literal::
 
-    xsmode assumes ESLOG in wavenumber space: mode=lpf
+    xsmode =  premodit
+    xsmode assumes ESLOG in wavenumber space: mode=premodit
+    ======================================================================
+    We changed the policy of the order of wavenumber/wavelength grids
+    wavenumber grid should be in ascending order and now 
+    users can specify the order of the wavelength grid by themselves.
+    Your wavelength grid is in ***  descending  *** order
+    This might causes the bug if you update ExoJAX. 
+    Note that the older ExoJAX assumes ascending order as wavelength grid.
+    ======================================================================
     H2-H2
 
 
 .. parsed-literal::
 
-    /home/kawahara/exojax/src/exojax/utils/grids.py:123: UserWarning: Resolution may be too small. R=868.7669794117727
+    /home/kawahara/exojax/src/exojax/utils/grids.py:145: UserWarning: Resolution may be too small. R=868.7669794117727
       warnings.warn('Resolution may be too small. R=' + str(resolution),
 
 
 .. code:: ipython3
 
-    from exojax.spec.rtransfer import dtauCIA
+    from exojax.spec.layeropacity import layer_optical_depth_CIA
     
-    mmw = 2.33  #mean molecular weight
+    mmw = 2.33  # mean molecular weight
     mmrH2 = 0.74
     molmassH2 = molmass("H2")
-    vmrH2 = (mmrH2 * mmw / molmassH2)  #VMR
-    dtaucH2H2=dtauCIA(nus,Tarr,Parr,dParr,vmrH2,vmrH2,\
-                mmw,g,cdbH2H2.nucia,cdbH2H2.tcia,cdbH2H2.logac)
+    vmrH2 = mmrH2 * mmw / molmassH2  # VMR
+    dtaucH2H2 = layer_optical_depth_CIA(
+        nus,
+        Tarr,
+        Parr,
+        dParr,
+        vmrH2,
+        vmrH2,
+        mmw,
+        g,
+        cdbH2H2.nucia,
+        cdbH2H2.tcia,
+        cdbH2H2.logac,
+    )
+
+
+.. parsed-literal::
+
+    /home/kawahara/exojax/src/exojax/spec/dtau_mmwl.py:14: FutureWarning: dtau_mmwl might be removed in future.
+      warnings.warn("dtau_mmwl might be removed in future.", FutureWarning)
+
 
 .. code:: ipython3
 
@@ -416,7 +456,7 @@ Let’s compare with CIA
 .. code:: ipython3
 
     from exojax.spec import planck
-    from exojax.spec.rtransfer import rtrun
+    from exojax.spec.rtransfer import rtrun_emis_pureabs_fbased2st as rtrun
     
     sourcef = planck.piBarr(Tarr, nus)
     F0 = rtrun(dtau, sourcef)

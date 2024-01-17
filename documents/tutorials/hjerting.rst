@@ -65,7 +65,7 @@ need to wrap it by jax.vmap.
 
 .. parsed-literal::
 
-    <matplotlib.legend.Legend at 0x7f02880d01f0>
+    <matplotlib.legend.Legend at 0x7f062c293820>
 
 
 

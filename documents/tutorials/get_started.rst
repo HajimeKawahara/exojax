@@ -91,11 +91,43 @@ the database name in the ExoMol website (https://www.exomol.com/).
 .. parsed-literal::
 
     HITRAN exact name= (12C)(16O)
+    		 => Downloading from http://www.exomol.com/db/CO/12C-16O/Li2015/12C-16O__Li2015.def
+    		 => Downloading from http://www.exomol.com/db/CO/12C-16O/Li2015/12C-16O__Li2015.pf
+    		 => Downloading from http://www.exomol.com/db/CO/12C-16O/Li2015/12C-16O__Li2015.states.bz2
+    		 => Downloading from http://www.exomol.com/db/CO/12C-16O/12C-16O__H2.broad
+    		 => Downloading from http://www.exomol.com/db/CO/12C-16O/12C-16O__He.broad
+    		 => Downloading from http://www.exomol.com/db/CO/12C-16O/12C-16O__air.broad
+    Error: Couldn't download .broad file at http://www.exomol.com/db/CO/12C-16O/12C-16O__air.broad and save.
+    Note: Caching states data to the vaex format. After the second time, it will become much faster.
+    Molecule:  CO
+    Isotopologue:  12C-16O
     Background atmosphere:  H2
-    Reading .database/CO/12C-16O/Li2015/12C-16O__Li2015.trans.bz2
-    .broad is used.
-    Broadening code level= a0
-    default broadening parameters are used for  71  J lower states in  152  states
+    ExoMol database:  None
+    Local folder:  .database/CO/12C-16O/Li2015
+    Transition files: 
+    	 => File 12C-16O__Li2015.trans
+    		 => Downloading from http://www.exomol.com/db/CO/12C-16O/Li2015/12C-16O__Li2015.trans.bz2
+    		 => Caching the *.trans.bz2 file to the vaex (*.h5) format. After the second time, it will become much faster.
+    		 => You can deleted the 'trans.bz2' file by hand.
+    #        i_upper    i_lower    A          nu_lines      gup    jlower    jupper    elower      Sij0
+    0        84         42         1.155e-06  2.405586      3      0         1         66960.7124  3.811968891483239e-164
+    1        83         41         1.161e-06  2.441775      3      0         1         65819.903   9.66302808612315e-162
+    2        82         40         1.162e-06  2.477774      3      0         1         64654.9206  2.743839242930895e-159
+    3        81         39         1.159e-06  2.513606      3      0         1         63465.8042  8.733228323835037e-157
+    4        80         38         1.152e-06  2.549292      3      0         1         62252.5793  3.1152203985525016e-154
+    ...      ...        ...        ...        ...           ...    ...       ...       ...         ...
+    125,491  306        253        7.164e-10  22147.135424  15     6         7         80.7354     1.8282485560395954e-31
+    125,492  474        421        9.852e-10  22147.86595   23     10        11        211.4041    2.0425455628245774e-31
+    125,493  348        295        7.72e-10   22147.897299  17     7         8         107.6424    1.9589545214604644e-31
+    125,494  432        379        9.056e-10  22148.262711  21     9         10        172.978     2.0662209079393328e-31
+    125,495  390        337        8.348e-10  22148.273111  19     8         9         138.3903    2.03878272167021e-31
+    Broadening code level: a0
+
+
+.. parsed-literal::
+
+    /home/kawahara/exojax/src/radis/radis/api/exomolapi.py:606: AccuracyWarning: The default broadening parameter (alpha = 0.07 cm^-1 and n = 0.5) are used for J'' > 80 up to J'' = 152
+      warnings.warn(
 
 
 2. Computation of the Cross Section using opa
@@ -124,7 +156,7 @@ tempreature range we will use is 500-1500K.
 
 .. parsed-literal::
 
-    uniqidx: 100%|██████████| 2/2 [00:00<00:00, 6034.97it/s]
+    uniqidx: 100%|██████████| 2/2 [00:00<00:00, 5656.51it/s]
 
 
 .. parsed-literal::
@@ -206,6 +238,19 @@ case, the number of the stream (``nstream``) can be specified.
     art = ArtEmisPure(nu_grid=nu_grid, pressure_btm=1.e1, pressure_top=1.e-8, nlayer=75, rtsolver="ibased", nstream=8)
 
 
+
+.. parsed-literal::
+
+    rtsolver:  ibased
+    Intensity-based n-stream solver, isothermal layer (e.g. NEMESIS, pRT like)
+
+
+.. parsed-literal::
+
+    /home/kawahara/exojax/src/exojax/spec/dtau_mmwl.py:14: FutureWarning: dtau_mmwl might be removed in future.
+      warnings.warn("dtau_mmwl might be removed in future.", FutureWarning)
+
+
 Let’s assume the power law temperature model, within 500 - 1500 K.
 
 :math:`T = T_0 P^\alpha`
@@ -265,7 +310,7 @@ Convert them to opacity
 
 .. code:: ipython3
 
-    dtau_CO = art.opacity_profile_lines(xsmatrix, mmr_profile, mdb.molmass, gravity)
+    dtau_CO = art.opacity_profile_xs(xsmatrix, mmr_profile, mdb.molmass, gravity)
     vmrH2 = 0.855 #VMR of H2
     mmw = 2.33 # mean molecular weight of the atmosphere
     dtaucia = art.opacity_profile_cia(logacia_matrix, Tarr, vmrH2, vmrH2, mmw, gravity)
@@ -400,5 +445,7 @@ This process is called ``sampling`` (but just interpolation though).
 
 
 That’s it.
+
+
 
 

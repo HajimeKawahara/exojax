@@ -1,8 +1,9 @@
-Transmission_beta.ipynb
-reverse_precompute_grid.ipynb
-reverse_premodit.ipynb
-elower_setting.ipynbq
-Ackerman_and_Marley_cloud_model.ipynb
+get_started.ipynb
+#Transmission_beta.ipynb
+#reverse_precompute_grid.ipynb
+#reverse_premodit.ipynb
+#elower_setting.ipynbq
+#Ackerman_and_Marley_cloud_model.ipynb
 CIA_opacity.ipynb
 Comparing_HITEMP_and_ExoMol.ipynb
 Cross_Section_using_Discrete_Integral_Transform.ipynb
@@ -35,5 +36,4 @@ optimize_spectrum_JAXopt.ipynb
 optimize_voigt.ipynb
 optimize_voigt_JAXopt.ipynb
 pure_absorption_rt.ipynb
-get_started.ipynb
 voigt_function.ipynb
