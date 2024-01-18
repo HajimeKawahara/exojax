@@ -43,6 +43,7 @@ include src/exojax/data/testdata/CO/12C-16O/SAMPLE/12C-16O__SAMPLE.trans.bz2
 include src/exojax/data/testdata/CO/12C-16O/SAMPLE/12C-16O__SAMPLE.trans.hdf5
 
 include src/exojax/data/premodit/elower_grid_trange.npz
+include src/exojax/data/premodit/elower_grid_trange_v2.npz
 
 include src/exojax/data/testdata/test.refrind
 include src/exojax/data/testdata/miegrid_lognorm_test.mg.npz

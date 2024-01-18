@@ -52,6 +52,7 @@ class OpaPremodit(OpaCalc):
         dit_grid_resolution=None,
         allow_32bit=False,
         wavelength_order="descending",
+        version_auto_trange=2
     ):
         """initialization of OpaPremodit
 
@@ -79,6 +80,7 @@ class OpaPremodit(OpaCalc):
             dit_grid_resolution (float, optional): force to set broadening_parameter_resolution={mode:manual, value: dit_grid_resolution}), ignores broadening_parameter_resolution.
             allow_32bit (bool, optional): If True, allow 32bit mode of JAX. Defaults to False.
             wavlength order: wavelength order: "ascending" or "descending"
+            version_auto_trange: version of the default elower grid trange (degt) file, Default to 2 since Jan 2024.
         """
         super().__init__()
         check_jax64bit(allow_32bit)
@@ -95,7 +97,7 @@ class OpaPremodit(OpaCalc):
         self.resolution = resolution_eslog(nu_grid)
         self.mdb = mdb
         self.ngrid_broadpar = None
-
+        self.version_auto_trange = version_auto_trange
         # check if the mdb lines are in nu_grid
         if is_outside_range(self.mdb.nu_lines, self.nu_grid[0], self.nu_grid[-1]):
             raise ValueError("None of the lines in mdb are within nu_grid.")
@@ -116,7 +118,7 @@ class OpaPremodit(OpaCalc):
 
     def auto_setting(self, Tl, Tu):
         print("OpaPremodit: params automatically set.")
-        self.dE, self.Tref, self.Twt = optimal_params(Tl, Tu, self.diffmode)
+        self.dE, self.Tref, self.Twt = optimal_params(Tl, Tu, self.diffmode, self.version_auto_trange)
         self.Tmax = Tu
         self.Tmin = Tl
         self.apply_params()
