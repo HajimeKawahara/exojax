@@ -107,7 +107,10 @@ def pressure_boundary_logspace(
 def normalized_layer_height(
     temperature, pressure_decrease_rate, mean_molecular_weight, radius_btm, gravity_btm
 ):
-    """compute normalized height/radius at the upper boundary of the atmospheric layer, neglecting atmospheric mass.
+    """compute normalized height/radius at the upper boundary of the atmospheric layer, neglecting atmospheric mass, examining non-constant gravity.
+
+    Note:
+        This method computes the height of the atmospheric layers taking the effect of the decrease of gravity (i.e. $ \propto 1/r^2 $) into account.
 
     Args:
         temperature (1D array): temperature profile (K) of the layer, (Nlayer, from atmospheric top to bottom)
@@ -122,11 +125,10 @@ def normalized_layer_height(
     """
     inverse_Tarr = temperature[::-1]
     inverse_mmr_arr = mean_molecular_weight[::-1]
-    Mat = jnp.vstack([inverse_Tarr, inverse_mmr_arr]).T
+    stacked_profiles = jnp.vstack([inverse_Tarr, inverse_mmr_arr]).T
 
     def compute_radius(normalized_radius_lower, arr):
-        T_layer = arr[0:1][0]
-        mmw_layer = arr[1:2][0]
+        T_layer, mmw_layer = arr
         gravity_lower = gravity_btm / normalized_radius_lower**2
         Hn_lower = pressure_scale_height(gravity_lower, T_layer, mmw_layer) / radius_btm
         a = 1.0 + Hn_lower / normalized_radius_lower * jnp.log(pressure_decrease_rate)
@@ -135,7 +137,7 @@ def normalized_layer_height(
         carry = normalized_radius_lower + normalized_height_layer
         return carry, [normalized_height_layer, normalized_radius_lower]
 
-    _, results = scan(compute_radius, 1.0, Mat)
+    _, results = scan(compute_radius, 1.0, stacked_profiles)
     normalized_height = results[0][::-1]
     normalized_radius_lower = results[1][::-1]
     return normalized_height, normalized_radius_lower
