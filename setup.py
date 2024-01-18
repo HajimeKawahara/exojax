@@ -86,7 +86,7 @@ def reinstall(package):
     subprocess.check_call([sys.executable, "-m", "pip", "uninstall", "-y", package])
     subprocess.check_call([sys.executable, "-m", "pip", "install", package])
 
-#install_radis_develop()
+install_radis_develop()
 uninstall('vaex-core')
 uninstall('vaex-astro')
 uninstall('vaex-jupyter')
