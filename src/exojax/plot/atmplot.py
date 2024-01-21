@@ -105,7 +105,8 @@ def plotcf(
         * dtauM
         * (Parr[:, None] / dParr[:, None])
         * nus**3
-        / (np.exp(hcperk * nus / Tarr[:, None]) - 1.0)
+        / np.expm1(hcperk * nus / Tarr[:, None])
+        #/ (np.exp(hcperk * nus / Tarr[:, None]) - 1.0)
     )
 
     if normalize:
