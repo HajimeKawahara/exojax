@@ -5,12 +5,12 @@ Transmission Spectroscopy
 Uses ArtTransPure class
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-To calculate the transmission spectrum in ExoJAX, the `ArtTransPure` class is convenient. 
+To calculate the transmission spectrum in ExoJAX, the ``ArtTransPure`` class is convenient. 
 For chord integration, one can choose either Simpson's method or the trapezoidal method from the integration options.
 Here is the example of the computation of the transmission radius. We here use Simpson's rule for the chord integration. 
 
-In transmission spectroscopy, assuming a constant gravity across layers is often not a good approximation. 
-The `gravity_profile` instance in the `ArtTransPure` class allows for easy calculation of the gravity profile, addressing this concern in ExoJAX.
+In transmission spectroscopy, assuming a constant gravity across the layers is often not a good approximation. 
+The ``gravity_profile`` instance in the ``ArtTransPure`` class allows for easy calculation of the gravity profile, addressing this concern in ExoJAX.
 
 .. code:: ipython
     

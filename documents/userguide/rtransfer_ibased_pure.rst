@@ -4,15 +4,15 @@ Intensity-based Emission with pure absorption
 Uses ArtPureEmis class
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-To perform an ibase (intensity-based) calculation using `ArtEmisPure` in ExoJAX, 
-one simply needs to change the `rtsolver` option to either "ibased" or "ibased_linsap". 
+To perform an ibase (intensity-based) calculation using ``ArtEmisPure`` in ExoJAX, 
+one simply needs to change the ``rtsolver`` option to either "ibased" or "ibased_linsap". 
 
 The difference between **ibased** and **ibased_linsap** (ibased w/ linear source approximation) in ExoJAX lies in the assumptions 
 regarding the distribution of the source function within the layer. 
 The former assumes a uniform source function, while the latter assumes a linearly approximated source function.
 The latter can also be described as a linear version of Olson and Kunasz's method.
 
-In the case of ibased, the number of streams can be specified. This is done using the `nstream` option (which needs to be an even number).
+In the case of ibased, the number of streams can be specified. This is done using the ``nstream`` option (which needs to be an even number).
 
 .. code:: ipython
     

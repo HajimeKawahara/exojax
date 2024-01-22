@@ -1,9 +1,9 @@
-Opacity Calculator Classes (opa)
+Opacity Calculator Classes (``opa``)
 ======================================
 
 Several opacity calculation methods are available in ExoJAX. 
 Opacity calculations can be controlled using the opacity calculation class 
-(`opa`) for each method.
+(``opa``) for each method.
 
 
 +--------------------------+-------------+-----------+------------------------------------+

@@ -5,7 +5,7 @@ Basics
    :maxdepth: 1
 
    tutorials/get_started.rst
-   tutorials/optimize_spectrum_JAXopt.rst
+   tutorials/optimize_spectrum.rst
    tutorials/reverse_premodit.rst
    
 
