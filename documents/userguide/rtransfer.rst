@@ -4,6 +4,10 @@ Radiative Transfer
 Radiative Transfer Schemes in ExoJAX
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+.. image:: ../rt.png
+
+ExoJAX supports the radiative transfer functionalities of the emission (pure absorption, incl. scattering), reflection, and transmission spectra.
+
 Exojax uses a layer-based atmospheric model for `radiative transfer <https://en.wikipedia.org/wiki/Radiative_transfer>`_ (RT). 
 In ExoJAX, one can utilize spectral models for emission, reflection, and transmission. This necessitates solving for radiative transfer. 
 There are various methods to solve radiative transfer, and the following describes those available in ExoJAX.

@@ -13,6 +13,13 @@ real use case.)
     from jax.config import config
     config.update("jax_enable_x64", True)
 
+
+.. parsed-literal::
+
+    /tmp/ipykernel_8741/2124608031.py:1: DeprecationWarning: Accessing jax.config via the jax.config submodule is deprecated.
+      from jax.config import config
+
+
 The following schematic figure explains how ExoJAX works; (1) loading
 databases (``*db``), (2) calculating opacity (``opa``), (3) running
 atmospheric radiative transfer (``art``), (4) applying operations on the
@@ -91,14 +98,6 @@ the database name in the ExoMol website (https://www.exomol.com/).
 .. parsed-literal::
 
     HITRAN exact name= (12C)(16O)
-    		 => Downloading from http://www.exomol.com/db/CO/12C-16O/Li2015/12C-16O__Li2015.def
-    		 => Downloading from http://www.exomol.com/db/CO/12C-16O/Li2015/12C-16O__Li2015.pf
-    		 => Downloading from http://www.exomol.com/db/CO/12C-16O/Li2015/12C-16O__Li2015.states.bz2
-    		 => Downloading from http://www.exomol.com/db/CO/12C-16O/12C-16O__H2.broad
-    		 => Downloading from http://www.exomol.com/db/CO/12C-16O/12C-16O__He.broad
-    		 => Downloading from http://www.exomol.com/db/CO/12C-16O/12C-16O__air.broad
-    Error: Couldn't download .broad file at http://www.exomol.com/db/CO/12C-16O/12C-16O__air.broad and save.
-    Note: Caching states data to the vaex format. After the second time, it will become much faster.
     Molecule:  CO
     Isotopologue:  12C-16O
     Background atmosphere:  H2
@@ -106,9 +105,6 @@ the database name in the ExoMol website (https://www.exomol.com/).
     Local folder:  .database/CO/12C-16O/Li2015
     Transition files: 
     	 => File 12C-16O__Li2015.trans
-    		 => Downloading from http://www.exomol.com/db/CO/12C-16O/Li2015/12C-16O__Li2015.trans.bz2
-    		 => Caching the *.trans.bz2 file to the vaex (*.h5) format. After the second time, it will become much faster.
-    		 => You can deleted the 'trans.bz2' file by hand.
     #        i_upper    i_lower    A          nu_lines      gup    jlower    jupper    elower      Sij0
     0        84         42         1.155e-06  2.405586      3      0         1         66960.7124  3.811968891483239e-164
     1        83         41         1.161e-06  2.441775      3      0         1         65819.903   9.66302808612315e-162
@@ -126,7 +122,7 @@ the database name in the ExoMol website (https://www.exomol.com/).
 
 .. parsed-literal::
 
-    /home/kawahara/exojax/src/radis/radis/api/exomolapi.py:606: AccuracyWarning: The default broadening parameter (alpha = 0.07 cm^-1 and n = 0.5) are used for J'' > 80 up to J'' = 152
+    /home/kawahara/exojax/src/radis/radis/api/exomolapi.py:607: AccuracyWarning: The default broadening parameter (alpha = 0.07 cm^-1 and n = 0.5) are used for J'' > 80 up to J'' = 152
       warnings.warn(
 
 
@@ -139,30 +135,42 @@ tempreature range we will use is 500-1500K.
 
 .. code:: ipython3
 
+    from sys import version
     from exojax.spec.opacalc import OpaPremodit
     
-    opa = OpaPremodit(mdb, nu_grid, auto_trange=[500.0, 1500.0])
+    opa = OpaPremodit(mdb, nu_grid, auto_trange=[500.0, 1500.0],dit_grid_resolution=1.0)
+
+
+.. parsed-literal::
+
+    /home/kawahara/exojax/src/exojax/spec/opacalc.py:171: UserWarning: dit_grid_resolution is not None. Ignoring broadening_parameter_resolution.
+      warnings.warn(
 
 
 .. parsed-literal::
 
     OpaPremodit: params automatically set.
-    Robust range: 484.50562701065246 - 1531.072955816165 K
-    Tref changed: 296.0K->553.9182980610753K
+    default elower grid trange (degt) file version: 2
+    Robust range: 485.7803992045456 - 1514.171191195336 K
+    Tref changed: 296.0K->570.4914318566549K
     OpaPremodit: Tref_broadening is set to  866.0254037844389 K
-    # of reference width grid :  4
+    # of reference width grid :  2
     # of temperature exponent grid : 2
 
 
 .. parsed-literal::
 
-    uniqidx: 100%|██████████| 2/2 [00:00<00:00, 5656.51it/s]
+    uniqidx: 0it [00:00, ?it/s]
+
+.. parsed-literal::
+
+    Premodit: Twt= 1108.7151960064205 K Tref= 570.4914318566549 K
+    Making LSD:|####################| 100%
 
 
 .. parsed-literal::
 
-    Premodit: Twt= 1153.8856089961712 K Tref= 553.9182980610753 K
-    Making LSD:|####################| 100%
+    
 
 
 Then let’s compute cross section for two different temperature 500 and
@@ -210,7 +218,7 @@ You can also plot the line strengths at T=1500K. We can first change the
 
 .. parsed-literal::
 
-    Tref changed: 553.9182980610753K->1500.0K
+    Tref changed: 570.4914318566549K->1500.0K
 
 
 
