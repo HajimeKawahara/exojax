@@ -4,6 +4,10 @@ Radiative Transfer
 Radiative Transfer Schemes in ExoJAX
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+.. image:: ../rt.png
+
+ExoJAX supports the radiative transfer functionalities of the emission (pure absorption, incl. scattering), reflection, and transmission spectra.
+
 Exojax uses a layer-based atmospheric model for `radiative transfer <https://en.wikipedia.org/wiki/Radiative_transfer>`_ (RT). 
 In ExoJAX, one can utilize spectral models for emission, reflection, and transmission. This necessitates solving for radiative transfer. 
 There are various methods to solve radiative transfer, and the following describes those available in ExoJAX.
@@ -40,7 +44,7 @@ Atmospheric Radiative Transfer (art) class
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 ExoJAX's code is primarily written in a function-based manner, allowing for the execution of each process of radiative transfer individually. 
-However, for those who are not interested in the details, the `art` class can be utilized as an interface for radiative transfer.
+However, for those who are not interested in the details, the ``art`` class can be utilized as an interface for radiative transfer.
 
 +-----------------------+------------------+----------------+
 |**art** in atmrt.py    |spectrum type     |including...    |
