@@ -16,7 +16,7 @@ ExoJAX is at least compatible with
 
 <img src="https://github.com/HajimeKawahara/exojax/assets/15956904/671a3dc5-718e-463d-911a-08d8ca94119b" Titie="exojax" Width=850px>
 
-See http://secondearths.sakura.ne.jp/exojax/develop/tutorials/get_started.html for the first step.
+See ["Get Started"](http://secondearths.sakura.ne.jp/exojax/develop/tutorials/get_started.html) for the first step.
 
 ## Installation
 
