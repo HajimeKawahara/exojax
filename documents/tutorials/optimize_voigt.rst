@@ -22,7 +22,7 @@ with a STD of :math:`\beta` and a Lorentian with a gamma parameter of
 
 .. parsed-literal::
 
-    [<matplotlib.lines.Line2D at 0x7f5dc8143100>]
+    [<matplotlib.lines.Line2D at 0x7fb8a0491000>]
 
 
 
@@ -57,7 +57,7 @@ Adding a noise…
 
 .. parsed-literal::
 
-    [<matplotlib.lines.Line2D at 0x7f5dc1f7ba30>]
+    [<matplotlib.lines.Line2D at 0x7fb8a03dbfd0>]
 
 
 
@@ -93,7 +93,7 @@ We define the objective function as :math:`obj = |d - f|^2`
 
 .. parsed-literal::
 
-    0.0041426932 -0.00014259202 -0.0007440491
+    0.010246746 -0.00011916496 -0.0035553267
 
 
 .. code:: ipython3
@@ -145,7 +145,7 @@ Optimized values are given in padam
 
 .. parsed-literal::
 
-    DeviceArray([1.9842807, 1.0219767, 1.9737407], dtype=float32)
+    Array([1.9930655 , 0.88781667, 2.0753138 ], dtype=float32)
 
 
 

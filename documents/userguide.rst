@@ -22,6 +22,7 @@ Opacity Calculation
    userguide/hjerting.rst
    userguide/modit.rst
    userguide/premodit.rst
+   userguide/premodit_trange.rst
    userguide/benchmark.rst
    userguide/fp.rst
 

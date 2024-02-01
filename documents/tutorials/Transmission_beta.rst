@@ -78,7 +78,7 @@ transmission spectrum.
         #HITRAN CO has not so many lines. So we use MODIT here instead of PreMODIT
         opa = OpaModit(mdb=mdb, nu_grid=nu_grid, Tarr_list=Tarr, Parr=art.pressure)
         xsmatrix = opa.xsmatrix(Tarr, art.pressure)
-        dtau = art.opacity_profile_lines(xsmatrix, mmr_arr, opa.mdb.molmass,
+        dtau = art.opacity_profile_xs(xsmatrix, mmr_arr, opa.mdb.molmass,
                                          gravity)
     
         Rp2 = art.run(dtau, Tarr, mmw, radius_btm, gravity_btm)
@@ -117,7 +117,7 @@ this small difference.
 
 .. parsed-literal::
 
-    /tmp/ipykernel_40805/4154571916.py:2: ParserWarning: Falling back to the 'python' engine because the 'c' engine does not support regex separators (separators > 1 char and different from '\s+' are interpreted as regex); you can avoid this warning by specifying engine='python'.
+    /tmp/ipykernel_32698/4154571916.py:2: ParserWarning: Falling back to the 'python' engine because the 'c' engine does not support regex separators (separators > 1 char and different from '\s+' are interpreted as regex); you can avoid this warning by specifying engine='python'.
       dat = pd.read_csv(filename, delimiter="   ")
 
 
@@ -127,7 +127,7 @@ this small difference.
     xsmode assumes ESLOG in wavenumber space: mode=modit
     ======================================================================
     We changed the policy of the order of wavenumber/wavelength grids
-    wavenumber grid shluld be in ascending order and now 
+    wavenumber grid should be in ascending order and now 
     users can specify the order of the wavelength grid by themselves.
     Your wavelength grid is in ***  descending  *** order
     This might causes the bug if you update ExoJAX. 
@@ -137,14 +137,16 @@ this small difference.
 
 .. parsed-literal::
 
-    /home/kawahara/exojax/src/exojax/spec/atmrt.py:43: UserWarning: nu_grid is not given. specify nu_grid when using 'run' 
+    /home/kawahara/exojax/src/exojax/spec/atmrt.py:49: UserWarning: nu_grid is not given. specify nu_grid when using 'run' 
       warnings.warn(
 
 
 .. parsed-literal::
 
-    k= 0.6892612104349697
-    k= 0.6892612104349697
+    integration:  simpson
+    Simpson integration, uses the chord optical depth at the lower boundary and midppoint of the layers.
+    pressure decrease rate k= 0.6892612104349697
+    pressure decrease rate k= 0.6892612104349697
 
 
 

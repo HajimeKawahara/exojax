@@ -1,7 +1,7 @@
 VALD3
 --------------
 
-*Dec 1 (2021) Hiroyuki T. Ishikawa*
+*Dec 1 (2021) Hiroyuki T. Ishikawa* (need to update)
 
 
 See ":doc:`../tutorials/metals`" (forward) and ":doc:`../tutorials/retvald`" (retrieval) as the tutorial to compute a cross section profile using VALD3.

@@ -110,7 +110,7 @@ def psat_Fe_AM01(T):
         _psat_Fe_liquid(T),
         _psat_Fe_solid(T),
     )
-    return jnp.exp(25.37 - 58663.0 / T)
+    #return jnp.exp(25.37 - 58663.0 / T)
 
 
 def _psat_Fe_solid(T):

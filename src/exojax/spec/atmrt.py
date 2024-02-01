@@ -1,8 +1,8 @@
 """Atmospheric Radiative Transfer (art) class
 
     Notes:
-        opacity is computed in art because it uses planet physical quantities 
-        such as gravity, mmr.
+        The opacity is computed in art because it uses planet physical quantities 
+        such as gravity, mmr. "run" method computes a spectrum. 
 
 """
 import numpy as np
@@ -331,7 +331,7 @@ class ArtReflectPure(ArtCommon):
 
 
         Returns:
-            _type_: _description_
+            1D array: spectrum
         """
 
         if self.rtsolver == "fluxadding_toon_hemispheric_mean":
@@ -404,7 +404,7 @@ class ArtReflectEmis(ArtCommon):
 
 
         Returns:
-            _type_: _description_
+            1D array: spectrum
         """
         if self.nu_grid is not None:
             sourcef = piBarr(temperature, self.nu_grid)
@@ -472,7 +472,7 @@ class ArtEmisScat(ArtCommon):
             show: plot intermediate results
 
         Returns:
-            _type_: _description_
+            1D array: spectrum
         """
         if self.nu_grid is not None:
             sourcef = piBarr(temperature, self.nu_grid)
@@ -593,7 +593,7 @@ class ArtEmisPure(ArtCommon):
             nu_grid (1D array): if nu_grid is not initialized, provide it.
 
         Returns:
-            _type_: _description_
+            1D array: emission spectrum
         """
         if self.nu_grid is not None:
             nu_grid = self.nu_grid
@@ -613,10 +613,8 @@ class ArtEmisPure(ArtCommon):
 class ArtTransPure(ArtCommon):
     """Atmospheric Radiative Transfer for transmission spectroscopy
 
-    Notes
-
     Args:
-        ArtCommon (_type_): ArtCommon class
+        ArtCommon: ArtCommon class
     """
 
     def __init__(
@@ -628,7 +626,7 @@ class ArtTransPure(ArtCommon):
             pressure_top (_type_, optional): layer top pressure in bar. Defaults to 1.0e-8.
             pressure_btm (_type_, optional): layer bottom pressure in bar. Defaults to 1.0e2.
             nlayer (int, optional): The number of the layers Defaults to 100.
-            integration (str, optional): Integration scheme (simpson, trapezoid). Defaults to "simpson".
+            integration (str, optional): Integration scheme ("simpson", "trapezoid"). Defaults to "simpson".
 
         Note:
             The users can choose the integration scheme of the chord integration from Trapezoid method or Simpson method.
@@ -657,7 +655,7 @@ class ArtTransPure(ArtCommon):
         """sets and validates integration
 
         Args:
-            integration (str): integration
+            integration (str): integration scheme, i.e. "trapezoid" or "simpson"
 
         """
 
@@ -701,6 +699,7 @@ class ArtTransPure(ArtCommon):
         cgm = chord_geometric_matrix_lower(normalized_height, normalized_radius_lower)
         dtau_chord_lower = chord_optical_depth(cgm, dtau)
         func = self.integration_dict[self.integration]
+
         if self.integration == "trapezoid":
             return func(
                 dtau_chord_lower, normalized_radius_lower, normalized_radius_top

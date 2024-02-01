@@ -5,14 +5,14 @@
  [![paper](https://img.shields.io/badge/paper-ApJS_258_31_(2022)-orange)](https://iopscience.iop.org/article/10.3847/1538-4365/ac3b4d) 
  <a href="https://codeclimate.com/github/HajimeKawahara/exojax/maintainability"><img src="https://api.codeclimate.com/v1/badges/97c5e8835f3ef9c4ad7c/maintainability" /></a>
 
-Auto-differentiable line-by-line spectral modelling of exoplanets/brown dwarfs/M dwarfs using JAX. Read [the docs](http://secondearths.sakura.ne.jp/exojax) 🐕. 
-In short, ExoJAX allows you to do gradient based optimisation and HMC NUTS fitting using the latest database.
+Differentiable spectral modelling of exoplanets/brown dwarfs/M dwarfs using JAX!
+Read [the docs](http://secondearths.sakura.ne.jp/exojax/develop) 🐕. 
+In short, ExoJAX allows you to do gradient based optimizations and HMC-NUTS samplings using the latest database.
 
 ExoJAX is at least compatible with
 
-- [NumPyro](https://github.com/pyro-ppl/numpyro) (PPL)
-- BlackJAX
-- [JAXopt](https://github.com/google/jaxopt) (differentiable optimizer)
+- PPLs: [NumPyro](https://github.com/pyro-ppl/numpyro), [blackjax](https://github.com/blackjax-devs/blackjax) 
+- Optimizers: [JAXopt](https://github.com/google/jaxopt), [optax](https://github.com/google-deepmind/optax), [bayeux](https://github.com/jax-ml/bayeux)
 
 <img src="https://user-images.githubusercontent.com/15956904/222950543-6de25bb2-48f2-4bc7-a588-77daa105442e.png" Titie="exojax" Width=850px>
 
@@ -88,6 +88,7 @@ F = art.run(dtau, Tarr)
 
 
 
+<img src="https://github.com/HajimeKawahara/exojax/assets/15956904/671a3dc5-718e-463d-911a-08d8ca94119b" Titie="exojax" Width=850px>
 
 ## Installation
 
@@ -103,28 +104,9 @@ python setup.py install
 
 <details><summary>Note on installation w/ GPU support</summary>
 
-:books: You need to install CUDA, NumPyro, JAX w/ NVIDIA GPU support, and cuDNN. 
+:books: You need to install CUDA, JAX w/ NVIDIA GPU support.
 
-- NumPyro
-
-ExoJAX supports NumPyro >=0.7.0. Please check the required JAX version by NumPyro. In May 2021, it seems the recent version of [NumPyro](https://github.com/pyro-ppl/numpyro) requires jaxlib>=0.1.62 (see [setup.py](https://github.com/pyro-ppl/numpyro/blob/master/setup.py) of NumPyro for instance). 
-
-- JAX
-
-Check you cuda version:
-
-```
-nvcc -V
-```
-
-Install such as
-
-```
-pip install --upgrade pip
-pip install --upgrade "jax[cuda]" -f https://storage.googleapis.com/jax-releases/jax_releases.html
-```
-
-Please visit [here](https://github.com/google/jax) for details.
+Visit [here](https://github.com/google/jax) for the installation of GPU supported JAX.
 
 </details>
 
@@ -136,4 +118,4 @@ Please visit [here](https://github.com/google/jax) for details.
 
 ## License
 
-🐈 Copyright 2020-2023 ExoJAX contributors. exojax is publicly available under the MIT license.
+🐈 Copyright 2020-2024 ExoJAX contributors. ExoJAX is publicly available under the MIT license.

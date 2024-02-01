@@ -24,27 +24,31 @@ def plottau(nus, dtauM, Tarr=None, Parr=None, unit=None, mode=None, vmin=-3, vma
 
     plt.figure(figsize=(20, 3))
     ax = plt.subplot2grid((1, 20), (0, 3), colspan=18)
-
+    c = None
     if unit == "um" or unit == "nm" or unit == "AA":
         factor, labelx = factor_labelx_for_unit()
-        extent = [
-            factor[unit] / nus[-1],
-            factor[unit] / nus[0],
-            np.log10(Parr[-1]),
-            np.log10(Parr[0]),
-        ]
-        c = imshow_custom(vmin, vmax, ltau[:, ::-1], extent, ax)
+        if Parr is not None:
+            extent = [
+                factor[unit] / nus[-1],
+                factor[unit] / nus[0],
+                np.log10(Parr[-1]),
+                np.log10(Parr[0]),
+            ]
+            c = imshow_custom(vmin, vmax, ltau[:, ::-1], extent, ax)
         plt.xlabel(labelx[unit])
     else:
-        extent = [nus[0], nus[-1], np.log10(Parr[-1]), np.log10(Parr[0])]
-        c = imshow_custom(vmin, vmax, ltau, extent, ax)
+        if Parr is not None:
+            extent = [nus[0], nus[-1], np.log10(Parr[-1]), np.log10(Parr[0])]
+            c = imshow_custom(vmin, vmax, ltau, extent, ax)
         plt.xlabel("wavenumber ($\mathrm{cm}^{-1}$)")
 
-    plt.colorbar(c, shrink=0.8)
+    if c is not None:
+        plt.colorbar(c, shrink=0.8)
     plt.ylabel("log10 (P (bar))")
     ax.set_aspect(0.2 / ax.get_data_ratio())
+
     if Tarr is not None and Parr is not None:
-        _plot_profile_left_panel(Tarr, Parr)
+        _plot_profile_left_panel(Tarr, Parr, xlabel="temperature (K)")
 
 
 def factor_labelx_for_unit():
@@ -101,7 +105,8 @@ def plotcf(
         * dtauM
         * (Parr[:, None] / dParr[:, None])
         * nus**3
-        / (np.exp(hcperk * nus / Tarr[:, None]) - 1.0)
+        / np.expm1(hcperk * nus / Tarr[:, None])
+        #/ (np.exp(hcperk * nus / Tarr[:, None]) - 1.0)
     )
 
     if normalize:

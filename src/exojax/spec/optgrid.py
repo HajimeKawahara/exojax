@@ -122,6 +122,7 @@ def optelower(
         )
         _plot_comparison(nu_grid, xsv_master, xsv)
     Emax = elower_grid[:q][-1]
+    print("Found the optimal maximum elower:",Emax,"cm-1")
     return Emax
 
 

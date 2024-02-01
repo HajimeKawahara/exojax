@@ -1,10 +1,10 @@
-Generating Documents
+Generates documents
 ==============================
 
 We use the google style of the sphinx document.
 
 .. code:: sh
-	  
+	
     pip install sphinx_rtd_theme sphinxemoji
 
 This is an example to generate the sphinx doc.
@@ -18,10 +18,10 @@ This is an example to generate the sphinx doc.
     make clean
     make html
 
-Generating up-to-date documents of tutorials
+Generates the up-to-date documents of tutorials
 ------------------------------------------------
 
-The below commands automatically run the tutorial notebooks and generate rst:
+The following commands automatically run the tutorial notebooks and generate rst:
 
 .. code:: sh
 
@@ -33,4 +33,10 @@ If you just want to generate rst without executing notebooks, try this:
 .. code:: sh
 
     python jupyter2rst.py none
+
+One by One:
+
+.. code:: sh
+
+    python jupyter2rst_each.py (python filename)
 
