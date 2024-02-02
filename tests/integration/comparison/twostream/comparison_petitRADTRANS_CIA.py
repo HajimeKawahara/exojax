@@ -95,6 +95,7 @@ def run_exojax(path_data, ld_min, ld_max, mols, db, T0, alpha, logg, logvmr):
             F0_ibased = art.run(dtau, Tarr)
 
             art.rtsolver = "fbased2st"
+            art.nstream = 2
             F0_fbased = art.run(dtau, Tarr)
 
             mu_ibased.append(F0_ibased)
