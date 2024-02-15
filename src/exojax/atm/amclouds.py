@@ -160,18 +160,18 @@ def normalization_lognormal(
     return fac * mmr_condenstate * atmosphere_density / condensate_bulk_density / rg**3
 
 
-def layer_optical_depth_cloudgeo(Parr, rhoc, MMRc, rg, sigmag, g):
+def layer_optical_depth_cloudgeo(Parr, condensate_substance_density, MMRc, rg, sigmag, g):
     """the optical depth using a geometric cross-section approximation, based
     on (16) in AM01.
 
     Args:
         Parr: pressure array (bar)
-        rhoc: condensate density (g/cm3)
+        condensate_substance_density: condensate substance density (g/cm3)
         MMRc: Mass mixing ratio (array) of condensate [Nlayer]
         rg: rg parameter in the lognormal distribution of condensate size, defined by (9) in AM01
         sigmag:sigmag parameter in the lognormal distribution of condensate size, defined by (9) in AM01
     """
 
     fac = jnp.exp(-2.5 * jnp.log(sigmag) ** 2)
-    dtau = 1.5 * MMRc * fac / (rg * rhoc * g) * Parr * 1.0e6
+    dtau = 1.5 * MMRc * fac / (rg * condensate_substance_density * g) * Parr * 1.0e6
     return dtau
