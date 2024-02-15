@@ -3,47 +3,50 @@
     - based on Ackerman and Marley (2001) ApJ 556, 872, hereafter AM01
 
 """
+
 from jax import jit
 import jax.numpy as jnp
 from jax import vmap
 
 
-def vmr_cloud_pressure(pressure, cloud_base_pressure, fsed, vmr_cloud_base, kc):
-    """volume mixing ratio of clouds based on AM01 a given single pressure.
+def mixing_ratio_cloud_pressure(pressure, cloud_base_pressure, fsed, mr_cloud_base, kc):
+    """mol mixing ratio of clouds based on AM01 a given single pressure.
 
     Args:
         pressure (float): pressure (bar) where we want to compute VMR of clouds
         cloud_base_pressure: cloud base pressure (bar)
         fsed: fsed
-        vmr_cloud_base: volume mixing ratio (VMR) of condensate at cloud base
+        mr_cloud_base: mass mixing ratio (MMR) or mol mixing ratio of condensate at cloud base
         kc: constant ratio of condenstates to total mixing ratio
 
     Returns:
-        VMR of condensates
+        mol mixing ratio of condensates
     """
     return jnp.where(
         cloud_base_pressure > pressure,
-        vmr_cloud_base * (pressure / cloud_base_pressure) ** (fsed / kc),
+        mr_cloud_base * (pressure / cloud_base_pressure) ** (fsed / kc),
         0.0,
     )
 
 
 @jit
-def vmr_cloud_profile(pressures, cloud_base_pressure, fsed, vmr_cloud_base, kc=1):
+def mixing_ratio_cloud_profile(
+    pressures, cloud_base_pressure, fsed, mr_cloud_base, kc=1
+):
     """volume mixing ratio of clouds based on AM01 given pressure.
 
     Args:
         pressures: pressure array  (Nlayer) (bar) where we want to compute VMR of clouds
         cloud_base_pressure: cloud base pressure (bar)
         fsed: fsed
-        vmr_cloud_base: volume mixing ratio (VMR) of condensate at cloud base
+        mr_cloud_base: mass mixing ratio (MMR) or mol mixing ratio of condensate at cloud base
         kc: constant ratio of condenstates to total mixing ratio
 
     Returns:
         VMR of condensates
     """
-    vmaped_function = vmap(vmr_cloud_pressure, (0, None, None, None, None), 0)
-    return vmaped_function(pressures, cloud_base_pressure, fsed, vmr_cloud_base, kc)
+    vmaped_function = vmap(mixing_ratio_cloud_pressure, (0, None, None, None, None), 0)
+    return vmaped_function(pressures, cloud_base_pressure, fsed, mr_cloud_base, kc)
 
 
 @jit
@@ -86,13 +89,13 @@ def get_rw(terminal_velocity, Kzz, L, rarr):
     """compute rw in AM01 implicitly defined by (11)
 
     Args:
-       vfs: terminal velocity (cm/s)
-       Kzz: diffusion coefficient (cm2/s)
-       L: typical convection scale (cm)
-       rarr: condensate scale array
+        vfs: terminal velocity (cm/s)
+        Kzz: diffusion coefficient (cm2/s)
+        L: typical convection scale (cm)
+        rarr: condensate scale array
 
     Returns:
-       rw: rw (cm) in AM01. i.e. condensate size that balances an upward transport and sedimentation
+        rw: rw (cm) in AM01. i.e. condensate size that balances an upward transport and sedimentation
     """
     iscale = jnp.searchsorted(terminal_velocity, Kzz / L)
     rw = rarr[iscale]
@@ -137,20 +140,38 @@ def find_rw(rarr, terminal_velocity, Kzz_over_L):
     return rw
 
 
-def layer_optical_depth_cloudgeo(Parr, muc, rhoc, mu, VMRc, rg, sigmag, g):
+def normalization_lognormal(
+    rg, sigmag, mmr_condenstate, atmosphere_density, condensate_bulk_density
+):
+    """normalization N(z) of the lognormal cloud distribution
+
+    Args:
+        rg (_type_): rg paramter
+        sigmag (_type_): sigmag parameter
+        mmr_condenstate (_type_): mass mixing ratio of the condensate
+        atmosphere_density (_type_): (mass) density of the atmosphere (g/cm3)
+        condensate_bulk_density (_type_): condenstate bulk density (g/cm3)
+
+    Returns:
+        _type_: _description_
+    """
+
+    fac = 3.0 / 4.0 / jnp.pi * jnp.exp(-4.5 * (jnp.log(sigmag)) ** 2)
+    return fac * mmr_condenstate * atmosphere_density / condensate_bulk_density / rg**3
+
+
+def layer_optical_depth_cloudgeo(Parr, rhoc, MMRc, rg, sigmag, g):
     """the optical depth using a geometric cross-section approximation, based
     on (16) in AM01.
 
     Args:
         Parr: pressure array (bar)
-        muc: mass weight of condensate
         rhoc: condensate density (g/cm3)
-        mu: mean molecular weight of atmosphere
-        VMRc: VMR array of condensate [Nlayer]
+        MMRc: Mass mixing ratio (array) of condensate [Nlayer]
         rg: rg parameter in the lognormal distribution of condensate size, defined by (9) in AM01
         sigmag:sigmag parameter in the lognormal distribution of condensate size, defined by (9) in AM01
     """
 
     fac = jnp.exp(-2.5 * jnp.log(sigmag) ** 2)
-    dtau = 1.5 * muc / mu * VMRc * fac / (rg * rhoc * g) * Parr * 1.0e6
+    dtau = 1.5 * MMRc * fac / (rg * rhoc * g) * Parr * 1.0e6
     return dtau

@@ -148,7 +148,7 @@ def evaluate_miegrid(rg, sigmag, miegrid, rg_arr, sigmag_arr):
     return mieparams
 
 
-def compute_mieparams(rg, sigmag, miegrid, rg_arr, sigmag_arr, N0):
+def compute_mieparams(rg, sigmag, miegrid, rg_arr, sigmag_arr, rho_medium, mean_molecular_weight, rho_cloud, molmass_cloud, N0):
     """computes Mie parameters i.e. extinction coeff, sinigle scattering albedo, asymmetric factor
 
     Args:
@@ -177,7 +177,9 @@ def compute_mieparams(rg, sigmag, miegrid, rg_arr, sigmag_arr, N0):
     # Also we normlize the value by N0 (cm-3).
     # The final unit is cm2, i.e. cross section
     # See Note in the comment.
-    convfactor = 2.0e-8 / N0
+    # convfactor = 2.0e-8 / N0
+    epsilon = molmass_cloud/
+    convfactor = / N0
 
     sigma_extinction = convfactor * mieparams[:, 0]  # (layer, wav)
     sigma_scattering = convfactor * mieparams[:, 1]

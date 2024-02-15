@@ -52,7 +52,7 @@ class PdbCloud(object):
         self.nurange = [np.min(nurange), np.max(nurange)]
         self.margin = margin
         self.set_saturation_pressure_list()
-        self.set_condensate_density()
+        self.set_condensate_substance_density()
 
         # Mie scattering
         self.ready_mie = False
@@ -130,10 +130,18 @@ class PdbCloud(object):
             "Fe": psat_Fe_AM01,
         }
 
-    def set_condensate_density(self):
-        from exojax.atm.condensate import condensate_density
+    def set_condensate_substance_density(self):
+        """sets condensate density
 
-        self.rhoc = condensate_density[self.condensate]
+            Note:
+                "condensate substance density" means the mass substance density of the condensate matter itself. 
+                For instance, in the room temperature, for liquid water clouds, condensate_substance_density ~ 1 g/cm3
+                Notice that the mass density of the condensates in the atmosphere is the different quantity.
+                
+        """
+        from exojax.atm.condensate import condensate_substance_density
+
+        self.condensate_substance_density = condensate_substance_density[self.condensate]
 
     def saturation_pressure(self, temperatures):
         return self.saturation_pressure_solid_list[self.condensate](temperatures)

@@ -88,7 +88,7 @@ class OpaMie(OpaCont):
         Returns:
             sigma_extinction, extinction cross section (cm2) = volume extinction coefficient (1/cm) normalized by the reference numbver density N0.
             sigma_scattering, scattering cross section (cm2) = volume extinction coefficient (1/cm) normalized by the reference numbver density N0.
-            g: g  vector, asymmetric factor (mean g)
+            asymmetric factor, (mean g)
         """
         sigexg, sigscg, gg = self.pdb.mieparams_at_refraction_index_wavenumber(
             rg, sigmag
@@ -99,9 +99,9 @@ class OpaMie(OpaCont):
         sigma_scattering = jnp.interp(
             self.nu_grid, self.pdb.refraction_index_wavenumber, sigscg
         )
-        g = jnp.interp(self.nu_grid, self.pdb.refraction_index_wavenumber, gg)
+        asymmetric_factor = jnp.interp(self.nu_grid, self.pdb.refraction_index_wavenumber, gg)
 
-        return sigma_extinction, sigma_scattering, g
+        return sigma_extinction, sigma_scattering, asymmetric_factor
 
     def mieparams_matrix(self, rg_layer, sigmag_layer):
         """computes the Mie parameters matrix (Nlayer x Nnu)

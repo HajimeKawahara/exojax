@@ -4,7 +4,7 @@ from exojax.atm.amclouds import get_rg
 from exojax.atm.amclouds import find_rw
 from exojax.atm.viscosity import calc_vfactor, eta_Rosner
 from exojax.atm.amclouds import compute_cloud_base_pressure_index
-from exojax.atm.amclouds import vmr_cloud_profile
+from exojax.atm.amclouds import mixing_ratio_cloud_profile
 from exojax.atm.vterm import terminal_velocity
 from exojax.atm.atmprof import pressure_scale_height
 from exojax.utils.constants import kB, m_u
@@ -124,6 +124,6 @@ class AmpAmcloud(AmpCloud):
         rg = get_rg(rw, fsed, alphav, sigmag)
 
         # VMR of condensates
-        VMRc = vmr_cloud_profile(pressures, pressure_base, fsed, VMR)
+        VMRc = mixing_ratio_cloud_profile(pressures, pressure_base, fsed, VMR)
 
         return rg, VMRc  # , self.pdb.rhoc, self.molmass_c

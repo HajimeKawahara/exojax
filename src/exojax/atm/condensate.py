@@ -11,12 +11,9 @@ from exojax.utils.constants import Tc_water
 - Lange's Handbook of Chemistry, 10th ed. page 1451 and 1468
 """
 
-######################
-# CONDENSATE DENSITY #
-######################
 
-# solid condensate density g/cm3
-condensate_density = {
+# solid condensate substance density g/cm3
+condensate_substance_density = {
     # from LF98 Table 1.18 (p37)
     "Fe": 7.875,  # solid
     "Si": 2.33,  # solid
@@ -85,5 +82,5 @@ def condensate_density_liquid_ammonia(T):
 #}
 
 if __name__ == "__main__":
-    print(condensate_density["Fe"])
+    print(condensate_substance_density["Fe"])
     print(condensate_density_liquid_ammonia(150.0))    
