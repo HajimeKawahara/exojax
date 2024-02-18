@@ -35,7 +35,7 @@ from exojax.spec.twostream import compute_tridiag_diagonals_and_vector
 from exojax.spec.twostream import set_scat_trans_coeffs
 from exojax.special.expn import E1
 from exojax.signal.integrate import simpson
-
+from jax.scipy.integrate import trapezoid
 
 @jit
 def trans2E3(x):
@@ -216,7 +216,7 @@ def coeffs_linsap(dtau_per_mu, trans):
 
 @jit
 def rtrun_trans_pureabs_trapezoid(dtau_chord, radius_lower, radius_top):
-    """Radiative transfer for transmission spectrum assuming pure absorption with the trapezoid integration (jnp.trapz)
+    """Radiative transfer for transmission spectrum assuming pure absorption with the trapezoid integration (jax.scipy.integrate.trapezoid)
 
     Args:
         dtau_chord (2D array): chord optical depth (Nlayer, N_wavenumber)
@@ -243,7 +243,7 @@ def rtrun_trans_pureabs_trapezoid(dtau_chord, radius_lower, radius_top):
     # the negative sign is because the radius_lower is in a descending order
     deltaRp2 = (
         -2.0
-        * jnp.trapz(
+        * trapezoid(
             (1.0 - jnp.exp(-dtau_chord)) * radius_lower[:, None], x=radius_lower, axis=0
         )
         + edge_cor
