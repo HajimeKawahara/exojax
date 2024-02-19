@@ -7,6 +7,7 @@ from exojax.atm.amclouds import compute_cloud_base_pressure_index
 from exojax.atm.amclouds import mixing_ratio_cloud_profile
 from exojax.atm.vterm import terminal_velocity
 from exojax.atm.atmprof import pressure_scale_height
+from exojax.atm.mixratio import mmr2vmr
 from exojax.utils.constants import kB, m_u
 import warnings
 from jax import vmap
@@ -70,11 +71,12 @@ class AmpAmcloud(AmpCloud):
         pressures,
         temperatures,
         mean_molecular_weight,
+        molecular_mass_condensate,
         gravity,
         fsed,
         sigmag,
         Kzz,
-        VMR,
+        MMR_base,
         alphav=2.0,
     ):
         """computes rg and VMR of condenstates based on AM01 
@@ -83,25 +85,27 @@ class AmpAmcloud(AmpCloud):
             pressures (_type_): _description_
             temperatures (_type_): _description_
             mean_molecular_weight (_type_): _description_
+            molecular_mass_condensate: condensate molecular mass
             gravity (_type_): _description_
             fsed (_type_): _description_
             sigmag (_type_): _description_
             Kzz (_type_): _description_
-            VMR (_type_): _description_
+            MMR_base (_type_): Mass Mixing Ratio of condensate at the cloud base
             alphav (float, optional): _description_. Defaults to 2.0.
 
         Returns:
             rg parameter in the lognormal distribution of condensate size, defined by (9) in AM01
-            VMR of condensates
+            Mass Mixing Ratio (MMR) of condensates
         """
         # density difference
         rho = mean_molecular_weight * m_u * pressures / (kB * temperatures)
-        drho = self.pdb.rhoc - rho
+        drho = self.pdb.condensate_substance_density - rho
 
         # saturation pressure
         psat = self.pdb.saturation_pressure(temperatures)
 
         # cloud base pressure/temperature
+        VMR = mmr2vmr(MMR_base,molecular_mass_condensate, mean_molecular_weight)
         ibase = compute_cloud_base_pressure_index(pressures, psat, VMR)
         pressure_base = pressures[ibase]
         temperature_base = temperatures[ibase]
@@ -123,7 +127,7 @@ class AmpAmcloud(AmpCloud):
         rw = vfind_rw(self.rcond_arr, vterminal, Kzz / L_cloud)
         rg = get_rg(rw, fsed, alphav, sigmag)
 
-        # VMR of condensates
-        VMRc = mixing_ratio_cloud_profile(pressures, pressure_base, fsed, VMR)
+        # MMR of condensates
+        MMR_condensate = mixing_ratio_cloud_profile(pressures, pressure_base, fsed, MMR_base)
 
-        return rg, VMRc  # , self.pdb.rhoc, self.molmass_c
+        return rg, MMR_condensate  # , self.pdb.rhoc, self.molmass_c

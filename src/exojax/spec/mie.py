@@ -9,19 +9,32 @@ from exojax.utils.interp import interp2d_bilinear
 
 
 def compute_mie_coeff_lognormal_grid(
-    refractive_indices, refractive_wavenm, sigmag_arr, rg_arr, npart=1.0
+    refractive_indices, refractive_wavenm, sigmag_arr, rg_arr, N0=1.0
 ):
     """computes miegrid for lognomal distribution parameters rg and sigmag
 
     Args:
         refractive_indices (_type_): refractive indices
         refractive_wavenm (_type_):  wavenlenth in nm for refractive indices
-        sigmag_arr (1d array): sigma_g array
-        rg_arr (1d array): rg array
-        npart (_type_, optional): number of particulates. Defaults to 1.0.
+        sigmag_arr (1d array): sigmag ($\sigma_g$) array
+        rg_arr (1d array): rg ($r_g$) array
+        N0 (_type_, optional): the normalization of the lognormal distribution ($N_0$). Defaults to 1.0.
 
+    Note:
+        N0 ($N_0$) is defined as the normalization of the cloud distribution, 
+        $n(r) pr = N_0 p(r) pr
+        where $r$ is the particulate radius and 
+        $p(r)  = \frac{1}{sqrt{2 \pi}} \frac{1}{r \log{\sigma_g}} \exp{-\frac{(\log{r} - \log{r_g})^2}{2 \log^2{\sigma_g}}}$$
+        is the lognormal distribution.
+        See also https://pymiescatt.readthedocs.io/en/latest/forward.html
+        they use the diameter instead (but p(d) )
+        $p(d) pd = \frac{N_0}{sqrt{2 \pi}} \frac{1}{d \log{\sigma_g}} \exp{-\frac{(\log{d} - \log{d_g})^2}{2 \log^2{\sigma_g}}}$ pd 
+        where  and $d = 2 r$ and $d_g = 2 r_g$. 
+        In ExoJAX Ackerman and Marley cloud model, $N_0$ can be evaluated by `atm.amclouds.normalization_lognormal`.
+    
     Returns:
         _type_: miegrid (N_rg, N_sigmag, N_refractive_indices, 7), 7 is the number of the mie coefficients
+    
     """
     from tqdm import tqdm
     from PyMieScatt import Mie_Lognormal as mief
@@ -37,7 +50,7 @@ def compute_mie_coeff_lognormal_grid(
         for ind_rg, rg in enumerate(tqdm(np.array(rg_arr) * cm2nm)):
             for ind_m, m in enumerate(tqdm(refractive_indices)):
                 coeff = mief(
-                    m, refractive_wavenm[ind_m], sigmag, 2.0 * rg, npart
+                    m, refractive_wavenm[ind_m], sigmag, 2.0 * rg, N0
                 )  # geoMean is a diameter in PyMieScatt
                 miegrid[ind_rg, ind_sigmag, ind_m, :] = coeff
 
@@ -100,14 +113,20 @@ def make_miegrid_lognormal(
         log_rg_min (float, optional): log r_g (cm) minimum . Defaults to -7.0.
         log_rg_max (float, optional): log r_g (cm) minimum. Defaults to -3.0.
         Nrg (int, optional): the number of the rg grid. Defaults to 40.
-        N0 (float): reference number density of the lognormal distribution, default 1.0 (cm-3)
-
+        N0 (float, optional): the normalization of the lognormal distribution ($N_0$). Defaults to 1.0.
 
     Note:
-        n0(r) dr (cm-3) = N0/sqrt(2 p d log sigma_g)  e^{-(ln d - ln d_g)^2/(2 log^2 sigma_g)}
-        d_g = 2 r_g
-        d = 2 r
-
+        N0 ($N_0$) is defined as the normalization of the cloud distribution, 
+        $n(r) pr = N_0 p(r) pr
+        where $r$ is the particulate radius and 
+        $p(r)  = \frac{1}{sqrt{2 \pi}} \frac{1}{r \log{\sigma_g}} \exp{-\frac{(\log{r} - \log{r_g})^2}{2 \log^2{\sigma_g}}}$$
+        is the lognormal distribution.
+        See also https://pymiescatt.readthedocs.io/en/latest/forward.html
+        they use the diameter instead (but p(d) )
+        $p(d) pd = \frac{N_0}{sqrt{2 \pi}} \frac{1}{d \log{\sigma_g}} \exp{-\frac{(\log{d} - \log{d_g})^2}{2 \log^2{\sigma_g}}}$ pd 
+        where  and $d = 2 r$ and $d_g = 2 r_g$. 
+        In ExoJAX Ackerman and Marley cloud model, $N_0$ can be evaluated by `atm.amclouds.normalization_lognormal`.
+    
     """
 
     sigmag_arr = np.logspace(log_sigmagmin, log_sigmagmax, Nsigmag)
@@ -118,7 +137,7 @@ def make_miegrid_lognormal(
         refraction_index_wavelength_nm,
         sigmag_arr,
         rg_arr,
-        npart=N0,
+        N0=N0,
     )
     save_miegrid(filename, miegrid, rg_arr, sigmag_arr)
 
@@ -157,12 +176,24 @@ def compute_mieparams(rg, sigmag, miegrid, rg_arr, sigmag_arr, rho_medium, mean_
         miegrid (5d array): Mie grid (lognormal)
         rg_arr (1d array): rg array used for computing miegrid
         sigmag_arr (1d array): sigma_g array used for computing miegrid
-        N0: reference number density of the condensates cm-3
+        N0 (float, optional): the normalization of the lognormal distribution ($N_0$). Defaults to 1.0.
 
+    Note:
+        N0 ($N_0$) is defined as the normalization of the cloud distribution, 
+        $n(r) pr = N_0 p(r) pr
+        where $r$ is the particulate radius and 
+        $p(r)  = \frac{1}{sqrt{2 \pi}} \frac{1}{r \log{\sigma_g}} \exp{-\frac{(\log{r} - \log{r_g})^2}{2 \log^2{\sigma_g}}}$$
+        is the lognormal distribution.
+        See also https://pymiescatt.readthedocs.io/en/latest/forward.html
+        they use the diameter instead (but p(d) )
+        $p(d) pd = \frac{N_0}{sqrt{2 \pi}} \frac{1}{d \log{\sigma_g}} \exp{-\frac{(\log{d} - \log{d_g})^2}{2 \log^2{\sigma_g}}}$ pd 
+        where  and $d = 2 r$ and $d_g = 2 r_g$. 
+        In ExoJAX Ackerman and Marley cloud model, $N_0$ can be evaluated by `atm.amclouds.normalization_lognormal`.
+    
     Note:
         Volume extinction coefficient (1/cm) for the number density N can be computed by beta_extinction = N*sigma0_extinction
         The original extinction coefficient (beta) from PyMieScat has the unit of 1/Mm (Mega meter) for diameter.
-        Therefore, this method multiplies 2.e-8 to beta for conversion to 1/cm for radius.
+        Therefore, this method multiplies 1.e-8 to beta for conversion to 1/cm for radius.
 
     Returns:
         sigma_extinction, extinction cross section (cm2) = volume extinction coefficient (1/cm) normalized by the reference numbver density N0.
@@ -177,10 +208,8 @@ def compute_mieparams(rg, sigmag, miegrid, rg_arr, sigmag_arr, rho_medium, mean_
     # Also we normlize the value by N0 (cm-3).
     # The final unit is cm2, i.e. cross section
     # See Note in the comment.
-    # convfactor = 2.0e-8 / N0
-    epsilon = molmass_cloud/
-    convfactor = / N0
-
+    convfactor = 1.e-8 / N0
+    
     sigma_extinction = convfactor * mieparams[:, 0]  # (layer, wav)
     sigma_scattering = convfactor * mieparams[:, 1]
     g = mieparams[:, 3]
