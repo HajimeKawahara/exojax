@@ -67,7 +67,7 @@ def rtrun_emis_pureabs_fbased2st(dtau, source_matrix):
     Nnus = jnp.shape(dtau)[1]
     TransM = jnp.where(dtau == 0, 1.0, trans2E3(dtau))
     Qv = jnp.vstack([(1 - TransM) * source_matrix, jnp.zeros(Nnus)])
-    return jnp.sum(
+    return jnp.nansum(
         Qv * jnp.cumprod(jnp.vstack([jnp.ones(Nnus), TransM]), axis=0), axis=0
     )
 
@@ -87,7 +87,7 @@ def rtrun_emis_pureabs_fbased2st_surface(dtau, source_matrix, source_surface):
     Nnus = jnp.shape(dtau)[1]
     trans = jnp.where(dtau == 0, 1.0, trans2E3(dtau))
     Qv = jnp.vstack([(1 - trans) * source_matrix, source_surface])
-    return jnp.sum(
+    return jnp.nansum(
         Qv * jnp.cumprod(jnp.vstack([jnp.ones(Nnus), trans]), axis=0), axis=0
     )
 
