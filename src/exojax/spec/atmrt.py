@@ -5,6 +5,7 @@
         such as gravity, mmr. "run" method computes a spectrum. 
 
 """
+
 import numpy as np
 import jax.numpy as jnp
 from exojax.spec.planck import piBarr
@@ -17,6 +18,7 @@ from exojax.spec.rtransfer import rtrun_reflect_fluxadding_toonhm
 from exojax.spec.rtransfer import rtrun_trans_pureabs_trapezoid
 from exojax.spec.rtransfer import rtrun_trans_pureabs_simpson
 from exojax.spec.layeropacity import layer_optical_depth
+from exojax.spec.layeropacity import layer_optical_depth_clouds_lognormal
 from exojax.atm.atmprof import atmprof_gray, atmprof_Guillot, atmprof_powerlow
 from exojax.atm.idealgas import number_density
 from exojax.atm.atmprof import normalized_layer_height
@@ -140,6 +142,33 @@ class ArtCommon:
         """
         return layer_optical_depth(
             self.dParr, jnp.abs(xs), mixing_ratio, molmass, gravity
+        )
+
+    def opacity_profile_cloud_lognormal(
+        self,
+        extinction_coefficient,
+        condensate_substance_density,
+        mmr_condensate,
+        rg,
+        sigmag,
+        gravity,
+    ):
+        """opacity profile (delta tau) from extinction coefficient assuming the AM cloud model with a lognormal cloud distribution
+        Args:
+            gravity (float/1D profile): constant or 1d profile of gravity in cgs
+
+        Returns:
+            dtau: opacity profile, whose element is optical depth in each layer.
+        """
+        
+        return layer_optical_depth_clouds_lognormal(
+            self.dParr,
+            extinction_coefficient,
+            condensate_substance_density,
+            mmr_condensate,
+            rg,
+            sigmag,
+            gravity,
         )
 
     def opacity_profile_cia(

@@ -4,6 +4,7 @@ Notes:
     Opa does not assume any T-P structure, no fixed T, P, mmr grids.
 
 """
+
 from exojax.spec.hitrancia import interp_logacia_vector
 from exojax.spec.hitrancia import interp_logacia_matrix
 import jax.numpy as jnp
@@ -99,7 +100,9 @@ class OpaMie(OpaCont):
         sigma_scattering = jnp.interp(
             self.nu_grid, self.pdb.refraction_index_wavenumber, sigscg
         )
-        asymmetric_factor = jnp.interp(self.nu_grid, self.pdb.refraction_index_wavenumber, gg)
+        asymmetric_factor = jnp.interp(
+            self.nu_grid, self.pdb.refraction_index_wavenumber, gg
+        )
 
         return sigma_extinction, sigma_scattering, asymmetric_factor
 
