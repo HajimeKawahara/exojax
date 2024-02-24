@@ -3,7 +3,6 @@
 
 """
 
-from jax import jit
 import numpy as np
 import jax.numpy as jnp
 from exojax.utils.interp import interp2d_bilinear

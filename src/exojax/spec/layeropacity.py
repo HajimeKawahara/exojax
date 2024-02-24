@@ -134,13 +134,13 @@ def layer_optical_depth_Hminus(nu_grid, temperature, Parr, dParr, vmre, vmrh, mm
 
 
 def layer_optical_depth_cloudgeo(
-    Parr, condensate_substance_density, mmr_condensate, rg, sigmag, gravity
+    dParr, condensate_substance_density, mmr_condensate, rg, sigmag, gravity
 ):
     """the optical depth using a geometric cross-section approximation, based
     on (16) in AM01.
 
     Args:
-        Parr: pressure array (bar)
+        dParr: delta pressure profile (bar)
         condensate_substance_density: condensate substance density (g/cm3)
         mmr_condensate: Mass mixing ratio (array) of condensate [Nlayer]
         rg: rg parameter in the lognormal distribution of condensate size, defined by (9) in AM01
@@ -155,8 +155,8 @@ def layer_optical_depth_cloudgeo(
         * mmr_condensate
         * fac
         / (rg * condensate_substance_density * gravity)
-        * Parr
-        * 1.0e6
+        * dParr
+        * bar_cgs
     )
     return dtau
 
