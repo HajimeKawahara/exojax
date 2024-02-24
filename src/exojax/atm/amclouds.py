@@ -110,8 +110,8 @@ def get_rg(rw, fsed, alpha, sigmag):
         rw: rw (cm)
         fsed: fsed
         alpha: power of the condensate size distribution
-        sigmag:sigmag parameter in the lognormal distribution of condensate size, defined by (9) in AM01
-
+        sigmag:sigmag parameter (geometric standard deviation) in the lognormal distribution of condensate size, defined by (9) in AM01, must be sigmag > 1
+        
     Returns
         rg: rg parameter in the lognormal distribution of condensate size, defined by (9) in AM01
 

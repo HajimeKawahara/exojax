@@ -7,8 +7,10 @@ import jax.numpy as jnp
 from exojax.spec.hitrancia import interp_logacia_matrix
 from exojax.spec.hminus import log_hminus_continuum
 from exojax.atm.idealgas import number_density
-from exojax.utils.constants import logkB, logm_ucgs
+from exojax.utils.constants import logkB
+from exojax.utils.constants import logm_ucgs
 from exojax.utils.constants import opfac
+from exojax.utils.constants import bar_cgs
 from exojax.spec.dtau_mmwl import dtauM_mmwl
 
 
@@ -142,7 +144,7 @@ def layer_optical_depth_cloudgeo(
         condensate_substance_density: condensate substance density (g/cm3)
         mmr_condensate: Mass mixing ratio (array) of condensate [Nlayer]
         rg: rg parameter in the lognormal distribution of condensate size, defined by (9) in AM01
-        sigmag:sigmag parameter in the lognormal distribution of condensate size, defined by (9) in AM01
+        sigmag:sigmag parameter (geometric standard deviation) in the lognormal distribution of condensate size, defined by (9) in AM01, must be sigmag > 1
         gravity: gravity (cm/s2)
 
     """
@@ -178,15 +180,14 @@ def layer_optical_depth_clouds_lognormal(
         condensate_substance_density: condensate substance density (g/cm3)
         mmr_condensate: Mass mixing ratio (array) of condensate [Nlayer]
         rg: rg parameter in the lognormal distribution of condensate size, defined by (9) in AM01
-        sigmag:sigmag parameter in the lognormal distribution of condensate size, defined by (9) in AM01
+        sigmag:sigmag parameter (geometric standard deviation) in the lognormal distribution of condensate size, defined by (9) in AM01, must be sigmag > 1
         gravity: gravity (cm/s2)
         N0 (float, optional): the normalization of the lognormal distribution ($N_0$). Defaults to 1.0.
 
     Returns:
         2D array: optical depth matrix, dtau  [N_layer, N_nus]
     """
-    logsigmag = jnp.log(sigmag)
-    expfac = jnp.exp(-4.5 * logsigmag**2)
+    expfac = bar_cgs*sigmag**(jnp.log(sigmag**-4.5))  # bar_cgs * exp(-9/2 * (log sigmag)**2), see tests/manual_check/f32/lnmoment_amcloud.py
     fac = 0.75 / jnp.pi / rg**3 / condensate_substance_density
     em = extinction_coefficient * mmr_condensate[:, None] / N0
-    return fac * expfac * em * dParr[:, None] / gravity
+    return expfac * fac * em * dParr[:, None] / gravity
