@@ -14,7 +14,7 @@ def compute_mie_coeff_lognormal_grid(
     """computes miegrid for lognomal distribution parameters rg and sigmag
 
     Args:
-        refractive_indices (_type_): refractive indices
+        refractive_indices (_type_): refractive indices (m = n + ik)
         refractive_wavenm (_type_):  wavenlenth in nm for refractive indices
         sigmag_arr (1d array): sigmag ($\sigma_g$) array
         rg_arr (1d array): rg ($r_g$) array
@@ -47,11 +47,11 @@ def compute_mie_coeff_lognormal_grid(
     miegrid = np.zeros((Nrg, Nsigmag, Nwav, Nmiecoeff), dtype=np.complex128)
 
     for ind_sigmag, sigmag in enumerate(tqdm(sigmag_arr)):
-        for ind_rg, rg in enumerate(tqdm(np.array(rg_arr) * cm2nm)):
+        for ind_rg, rg_nm in enumerate(tqdm(np.array(rg_arr) * cm2nm)):
             for ind_m, m in enumerate(tqdm(refractive_indices)):
                 coeff = mief(
-                    m, refractive_wavenm[ind_m], sigmag, 2.0 * rg, N0
-                )  # geoMean is a diameter in PyMieScatt
+                    m, refractive_wavenm[ind_m], sigmag, 2.0 * rg_nm, N0
+                )  # geoMean is a diameter (nm) in PyMieScatt
                 miegrid[ind_rg, ind_sigmag, ind_m, :] = coeff
 
     return miegrid

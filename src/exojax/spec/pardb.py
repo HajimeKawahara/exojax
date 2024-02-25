@@ -113,7 +113,7 @@ class PdbCloud(object):
         )
         self.refraction_index_wavenumber = wav2nu(wave, "um")  # wave in micron
         self.refraction_index_wavelength_nm = wave * 1.0e3
-        self.refraction_index = nn + kk * (1j)
+        self.refraction_index = nn + kk * (1j) # m = n + ik because PyMieScatt uses this form (not m = n - ik). 
 
     def set_saturation_pressure_list(self):
         from exojax.atm.psat import (
