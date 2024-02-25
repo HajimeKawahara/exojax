@@ -138,3 +138,21 @@ def find_rw(rarr, terminal_velocity, Kzz_over_L):
     iscale = jnp.searchsorted(terminal_velocity, Kzz_over_L)
     rw = rarr[iscale]
     return rw
+
+def geometric_radius(rg, sigmag):
+    """ computes the paritculate geometric radius
+    
+    Args:
+        rg (float): rg parameter in lognormal distribution in cgs
+        sigmag (float): sigma_g parameter in lognormal distribution 
+
+
+    Note:
+        The cross section is given by $S = Q_e \pi r_geo^2$ 
+
+    Returns:
+        _type_: geometric radius in cgs 
+    """
+    #logs = jnp.log(sigmag)
+    #return jnp.exp(logs*logs)*rg
+    return sigmag**jnp.log(sigmag)*rg

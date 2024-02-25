@@ -35,7 +35,7 @@ Scattering and Clouds
    userguide/rayleigh.rst
    userguide/mie.rst
    userguide/vterm.rst
-
+   userguide/comp_pymiescatt.rst
 
 
 Radiative Transfer
