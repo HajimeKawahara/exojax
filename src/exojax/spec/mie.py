@@ -6,6 +6,7 @@
 import numpy as np
 import jax.numpy as jnp
 from exojax.utils.interp import interp2d_bilinear
+import warnings
 
 
 def compute_mie_coeff_lognormal_grid(
@@ -208,6 +209,59 @@ def compute_mieparams(rg, sigmag, miegrid, rg_arr, sigmag_arr, N0):
     g = mieparams[:, 3]
 
     return sigma_extinction, sigma_scattering, g
+
+
+def mie_lognormal_pymiescatt(
+    m,
+    wavelength,
+    sigmag,
+    rg,
+    numberOfParticles,
+    nMedium=1.0,
+    numberOfBins=10000,
+    lower=1,
+    upper=1000,
+):
+    """Mie parameters assuming a lognormal distribution
+
+    Args:
+        m (_type_): _description_
+        wavelength (_type_): _description_
+        sigmag (float): sigma_g parameter in lognormal distribution
+        rg (float): rg parameter in lognormal distribution in cgs
+        numberOfParticles (_type_): _description_
+        nMedium (float, optional): _description_. Defaults to 1.0.
+        numberOfBins (int, optional): _description_. Defaults to 10000.
+        lower (int, optional): _description_. Defaults to 1.
+        upper (int, optional): _description_. Defaults to 1000.
+
+    Returns:
+        _type_: _description_
+    """
+    from PyMieScatt.Mie import Mie_SD
+    from exojax.special.lognormal import pdf
+    #  http://pymiescatt.readthedocs.io/en/latest/forward.html#Mie_Lognormal
+    nMedium = nMedium.real
+    m /= nMedium
+    wavelength /= nMedium
+    ithPart = lambda gammai, dp, dpgi, sigmagi: (
+        gammai / (np.sqrt(2 * np.pi) * np.log(sigmagi) * dp)
+    ) * np.exp(-((np.log(dp) - np.log(dpgi)) ** 2) / (2 * np.log(sigmagi) ** 2))
+    
+    dp = np.logspace(np.log10(lower), np.log10(upper), numberOfBins)
+    
+    ndp = numberOfParticles * ithPart(1, dp, 2.0*rg, sigmag)
+    #ndp = numberOfParticles * pdf(rp, rg, sigmag)
+    #ithPart(1, dp, rg, sigmag)
+
+    if ndp[-1] > np.max(ndp) / 100 or ndp[0] > np.max(ndp) / 100:
+        warnings.warn(
+            "Warning: distribution may not be compact on the specified interval. Consider using a higher upper bound."
+        )
+    Bext, Bsca, Babs, bigG, Bpr, Bback, Bratio = Mie_SD(
+        m, wavelength, dp, ndp, SMPS=False
+    )
+    return Bext, Bsca, Babs, bigG, Bpr, Bback, Bratio
 
 
 if __name__ == "__main__":

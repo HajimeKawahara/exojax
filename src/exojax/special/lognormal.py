@@ -37,6 +37,9 @@ def moment(rg, sigmag, k):
 def cubeweighted_pdf(r, rg, sigmag):
     return r**3*pdf(r,rg,sigmag)/moment(rg, sigmag, 3)
 
+def cubeweighted_mean(rg, sigmag):
+    return moment(rg, sigmag, 4)/moment(rg, sigmag, 3)
+
 if __name__ == "__main__":
     rg = 1.0e-4
     sigmag = 2.0
