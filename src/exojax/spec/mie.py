@@ -6,6 +6,10 @@
 import numpy as np
 import jax.numpy as jnp
 from exojax.utils.interp import interp2d_bilinear
+from exojax.special.lognormal import cubeweighted_pdf
+from exojax.special.lognormal import cubeweighted_mean
+from exojax.special.lognormal import cubeweighted_std
+from scipy.integrate import trapezoid
 import warnings
 
 
@@ -38,8 +42,8 @@ def compute_mie_coeff_lognormal_grid(
 
     """
     from tqdm import tqdm
-    from PyMieScatt import Mie_Lognormal as mief
 
+    # from PyMieScatt import Mie_Lognormal as mief
     cm2nm = 1.0e7
     Nwav = len(refractive_indices)
     Nsigmag = len(sigmag_arr)
@@ -50,10 +54,13 @@ def compute_mie_coeff_lognormal_grid(
     for ind_sigmag, sigmag in enumerate(tqdm(sigmag_arr)):
         for ind_rg, rg_nm in enumerate(tqdm(np.array(rg_arr) * cm2nm)):
             for ind_m, m in enumerate(tqdm(refractive_indices)):
-
-                coeff = mief(
-                    m, refractive_wavenm[ind_m], sigmag, 2.0 * rg_nm, N0
-                )  # geoMean is a diameter (nm) in PyMieScatt
+                rgrid = auto_rgrid(rg_nm, sigmag)
+                coeff = mie_lognormal_pymiescatt(
+                    m, refractive_wavenm[ind_m], sigmag, rg_nm, N0, rgrid
+                )
+                # coeff = mief(
+                #    m, refractive_wavenm[ind_m], sigmag, 2.0 * rg_nm, N0
+                # )  # geoMean is a diameter (nm) in PyMieScatt
                 miegrid[ind_rg, ind_sigmag, ind_m, :] = coeff
 
     return miegrid
@@ -94,8 +101,8 @@ def make_miegrid_lognormal(
     refraction_index,
     refraction_index_wavelength_nm,
     filename,
-    log_sigmagmin=-1.0,
-    log_sigmagmax=1.0,
+    sigmagmin=1.0001,
+    sigmagmax=4.0,
     Nsigmag=10,
     log_rg_min=-7.0,
     log_rg_max=-3.0,
@@ -109,8 +116,8 @@ def make_miegrid_lognormal(
         refraction_index: complex refracion (refractive) index
         refraction_index_wavelength_nm: wavelength grid in nm
         filename (str): filename
-        log_sigmagmin (float, optional): log sigma_g minimum. Defaults to -1.0.
-        log_sigmagmax (float, optional): log sigma_g maximum. Defaults to 1.0.
+        sigmagmin (float, optional): sigma_g minimum. Defaults to 1.0001.
+        sigmagmax (float, optional): sigma_g maximum. Defaults to 4.0.
         Nsigmag (int, optional): the number of the sigmag grid. Defaults to 10.
         log_rg_min (float, optional): log r_g (cm) minimum . Defaults to -7.0.
         log_rg_max (float, optional): log r_g (cm) minimum. Defaults to -3.0.
@@ -131,7 +138,7 @@ def make_miegrid_lognormal(
 
     """
 
-    sigmag_arr = np.logspace(log_sigmagmin, log_sigmagmax, Nsigmag)
+    sigmag_arr = np.logspace(np.log10(sigmagmin), np.log10(sigmagmax), Nsigmag)
     rg_arr = np.logspace(log_rg_min, log_rg_max, Nrg)  # cm
 
     miegrid = compute_mie_coeff_lognormal_grid(
@@ -218,11 +225,8 @@ def mie_lognormal_pymiescatt(
     sigmag,
     rg,
     N0,
-    rgrid_lower,
-    rgrid_upper,
-    nrgrid,
+    rgrid,
     nMedium=1.0,
-    gridmode="linear",
 ):
     """Mie parameters assuming a lognormal distribution
 
@@ -232,11 +236,8 @@ def mie_lognormal_pymiescatt(
         sigmag (float): sigma_g parameter in lognormal distribution
         rg (float): rg parameter in lognormal distribution in cgs
         N0 (_type_):
-        rgrid_lower (int, optional):
-        rgrid_upper (int, optional):
-        nrgrid (int, optional):
+        rgrid: grid of the particulate radius
         nMedium (float, optional): _description_. Defaults to 1.0.
-        gridmode: log or linear
 
     Returns:
         _type_: _description_
@@ -248,22 +249,70 @@ def mie_lognormal_pymiescatt(
     nMedium = nMedium.real
     m /= nMedium
     wavelength /= nMedium
-    ithPart = lambda gammai, dp, dpgi, sigmagi: (
-        gammai / (np.sqrt(2 * np.pi) * np.log(sigmagi) * dp)
-    ) * np.exp(-((np.log(dp) - np.log(dpgi)) ** 2) / (2 * np.log(sigmagi) ** 2))
-    if gridmode == "linear":
-        dp = np.linspace(rgrid_lower, rgrid_upper, nrgrid)
-    elif gridmode == "log":
-        dp = np.logspace(np.log10(rgrid_lower), np.log10(rgrid_upper), nrgrid)
-    else:
-        raise ValueError('gridmode should be "linear" or "log"')
 
-    ndp = N0 * ithPart(1, dp, 2.0 * rg, sigmag)
+    dp = 2.0 * rgrid
+    ndp = N0 * pdf(dp, 2.0 * rg, sigmag)
 
     Bext, Bsca, Babs, bigG, Bpr, Bback, Bratio = Mie_SD(
         m, wavelength, dp, ndp, SMPS=False
     )
     return Bext, Bsca, Babs, bigG, Bpr, Bback, Bratio
+
+
+def auto_rgrid(rg, sigmag, nrgrid=1500):
+    """sets auto rgrid.
+
+    Note:
+        Currently sigmag = 1.0001 to 4 is within 1 % error for the defalut setting. See tests/unittests/spec/clouds/mie_test.py
+
+    Args:
+        rg (_type_): _description_
+        sigmag (_type_): _description_
+        nrgrid (int, optional): _description_. Defaults to 1500.
+
+    Returns:
+        _type_: _description_
+    """
+    if sigmag <= 1.0:
+        raise ValueError("sigamg must be larger than 1.")
+    if sigmag < 1.0001 or sigmag > 4.0:
+        warnings.warn(
+            "May be out of the robust sigmag range (1.0001-4.0). sigmag=" + str(sigmag)
+        )
+
+    n = 13
+    m = 4
+    mu = cubeweighted_mean(rg, sigmag)
+    std = cubeweighted_std(rg, sigmag)
+    if m * std < mu:
+        rgrid_lower = mu - m * std
+        rgrid_upper = mu + n * std
+        dr = (rgrid_upper - rgrid_lower) / nrgrid
+    else:
+        dr = n * mu / nrgrid
+        rgrid_lower = dr
+        rgrid_upper = n * mu
+
+    rgrid = np.linspace(rgrid_lower, rgrid_upper, nrgrid)
+    return rgrid
+
+
+def cubeweighted_integral_checker(rgrid, rg, sigmag, prec=1.0e-2):
+    """checks if the trapezoid integral of the cube-weighted lognormal distribution agrees with 1 within prec given rgrid, rg, sigmag
+
+    Args:
+        rgrid (_type_): _description_
+        rg (_type_): _description_
+        sigmag (_type_): _description_
+        prec (_type_, optional): _description_. Defaults to 1.e-4.
+
+    Returns:
+        bool: True or False
+    """
+    val = cubeweighted_pdf(rgrid, rg, sigmag)
+    intvalue = trapezoid(val, rgrid)
+    error = np.abs(intvalue - 1.0)
+    return error < prec
 
 
 if __name__ == "__main__":

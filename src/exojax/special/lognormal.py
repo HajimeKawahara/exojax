@@ -40,6 +40,11 @@ def cubeweighted_pdf(r, rg, sigmag):
 def cubeweighted_mean(rg, sigmag):
     return moment(rg, sigmag, 4)/moment(rg, sigmag, 3)
 
+def cubeweighted_std(rg, sigmag):
+    mu = cubeweighted_mean(rg, sigmag)
+    var = moment(rg, sigmag, 5)/moment(rg, sigmag, 3)
+    return jnp.sqrt(var - mu**2)
+
 if __name__ == "__main__":
     rg = 1.0e-4
     sigmag = 2.0
