@@ -50,6 +50,7 @@ def compute_mie_coeff_lognormal_grid(
     for ind_sigmag, sigmag in enumerate(tqdm(sigmag_arr)):
         for ind_rg, rg_nm in enumerate(tqdm(np.array(rg_arr) * cm2nm)):
             for ind_m, m in enumerate(tqdm(refractive_indices)):
+
                 coeff = mief(
                     m, refractive_wavenm[ind_m], sigmag, 2.0 * rg_nm, N0
                 )  # geoMean is a diameter (nm) in PyMieScatt
@@ -216,11 +217,12 @@ def mie_lognormal_pymiescatt(
     wavelength,
     sigmag,
     rg,
-    numberOfParticles,
+    N0,
+    rgrid_lower,
+    rgrid_upper,
+    nrgrid,
     nMedium=1.0,
-    numberOfBins=10000,
-    lower=1,
-    upper=1000,
+    gridmode="linear",
 ):
     """Mie parameters assuming a lognormal distribution
 
@@ -229,17 +231,19 @@ def mie_lognormal_pymiescatt(
         wavelength (_type_): _description_
         sigmag (float): sigma_g parameter in lognormal distribution
         rg (float): rg parameter in lognormal distribution in cgs
-        numberOfParticles (_type_): _description_
+        N0 (_type_):
+        rgrid_lower (int, optional):
+        rgrid_upper (int, optional):
+        nrgrid (int, optional):
         nMedium (float, optional): _description_. Defaults to 1.0.
-        numberOfBins (int, optional): _description_. Defaults to 10000.
-        lower (int, optional): _description_. Defaults to 1.
-        upper (int, optional): _description_. Defaults to 1000.
+        gridmode: log or linear
 
     Returns:
         _type_: _description_
     """
     from PyMieScatt.Mie import Mie_SD
     from exojax.special.lognormal import pdf
+
     #  http://pymiescatt.readthedocs.io/en/latest/forward.html#Mie_Lognormal
     nMedium = nMedium.real
     m /= nMedium
@@ -247,17 +251,15 @@ def mie_lognormal_pymiescatt(
     ithPart = lambda gammai, dp, dpgi, sigmagi: (
         gammai / (np.sqrt(2 * np.pi) * np.log(sigmagi) * dp)
     ) * np.exp(-((np.log(dp) - np.log(dpgi)) ** 2) / (2 * np.log(sigmagi) ** 2))
-    
-    dp = np.logspace(np.log10(lower), np.log10(upper), numberOfBins)
-    
-    ndp = numberOfParticles * ithPart(1, dp, 2.0*rg, sigmag)
-    #ndp = numberOfParticles * pdf(rp, rg, sigmag)
-    #ithPart(1, dp, rg, sigmag)
+    if gridmode == "linear":
+        dp = np.linspace(rgrid_lower, rgrid_upper, nrgrid)
+    elif gridmode == "log":
+        dp = np.logspace(np.log10(rgrid_lower), np.log10(rgrid_upper), nrgrid)
+    else:
+        raise ValueError('gridmode should be "linear" or "log"')
 
-    if ndp[-1] > np.max(ndp) / 100 or ndp[0] > np.max(ndp) / 100:
-        warnings.warn(
-            "Warning: distribution may not be compact on the specified interval. Consider using a higher upper bound."
-        )
+    ndp = N0 * ithPart(1, dp, 2.0 * rg, sigmag)
+
     Bext, Bsca, Babs, bigG, Bpr, Bback, Bratio = Mie_SD(
         m, wavelength, dp, ndp, SMPS=False
     )
