@@ -216,8 +216,8 @@ class PdbCloud(object):
 
     def generate_miegrid(
         self,
-        log_sigmagmin=-1.0,
-        log_sigmagmax=1.0,
+        sigmagmin=1.0001,
+        sigmagmax=4.0,
         Nsigmag=10,
         log_rg_min=-7.0,
         log_rg_max=-3.0,
@@ -244,8 +244,8 @@ class PdbCloud(object):
             self.refraction_index,
             self.refraction_index_wavelength_nm,
             str(self.path / pathlib.Path(self.miegrid_filename)),
-            log_sigmagmin,
-            log_sigmagmax,
+            sigmagmin,
+            sigmagmax,
             Nsigmag,
             log_rg_min,
             log_rg_max,
