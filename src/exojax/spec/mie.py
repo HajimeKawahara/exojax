@@ -137,8 +137,8 @@ def make_miegrid_lognormal(
         In ExoJAX Ackerman and Marley cloud model, $N_0$ can be evaluated by `atm.amclouds.normalization_lognormal`.
 
     """
-    deltasmin = np.log10(sigmagmin-1.0)
-    deltasmax = np.log10(sigmagmax-1.0)
+    deltasmin = np.log10(sigmagmin - 1.0)
+    deltasmax = np.log10(sigmagmax - 1.0)
     sigmag_arr = np.logspace(deltasmin, deltasmax, Nsigmag) + 1.0
     print("sigmag arr = ", sigmag_arr)
     rg_arr = np.logspace(log_rg_min, log_rg_max, Nrg)  # cm
@@ -262,9 +262,14 @@ def mie_lognormal_pymiescatt(
 
 
 def auto_rgrid(rg, sigmag, nrgrid=1500):
-    """sets auto rgrid.
+    """sets the automatic rgrid (particulate radius grid).
 
     Note:
+        This method optimizes the sampling grid of the particulate radius (rgrid).
+        The basic strategy is as follows.
+        1. if the cube-weighted lognormal distribution q(x) is enough compact, the sampling points is given by the linear within the range of [mean - m sigma, mean + n sigma]
+        where sigma is the STD of q(x).
+        2. else, i.e., the distribution starts from close to 0 (large sigmag), the range is [0 + dr, n*mean].
         Currently sigmag = 1.0001 to 4 is within 1 % error for the defalut setting. See tests/unittests/spec/clouds/mie_test.py
 
     Args:
@@ -299,14 +304,14 @@ def auto_rgrid(rg, sigmag, nrgrid=1500):
     return rgrid
 
 
-def cubeweighted_integral_checker(rgrid, rg, sigmag, prec=1.0e-2):
+def cubeweighted_integral_checker(rgrid, rg, sigmag, accuracy=1.0e-2):
     """checks if the trapezoid integral of the cube-weighted lognormal distribution agrees with 1 within prec given rgrid, rg, sigmag
 
     Args:
-        rgrid (_type_): _description_
-        rg (_type_): _description_
-        sigmag (_type_): _description_
-        prec (_type_, optional): _description_. Defaults to 1.e-4.
+        rgrid (array): the particulate radius grid
+        rg (float): rg parameter in lognormal distribution in cgs
+        sigmag (float): sigma_g parameter in lognormal distribution
+        accuracy (float, optional): _description_. Defaults to 1.e-2, i.e. 1% accuracy.
 
     Returns:
         bool: True or False
@@ -314,7 +319,7 @@ def cubeweighted_integral_checker(rgrid, rg, sigmag, prec=1.0e-2):
     val = cubeweighted_pdf(rgrid, rg, sigmag)
     intvalue = trapezoid(val, rgrid)
     error = np.abs(intvalue - 1.0)
-    return error < prec
+    return error < accuracy
 
 
 if __name__ == "__main__":

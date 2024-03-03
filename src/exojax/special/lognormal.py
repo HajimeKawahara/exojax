@@ -34,39 +34,48 @@ def moment(rg, sigmag, k):
     power = 0.5 * k**2 * jnp.log(sigmag) ** 2
     return rg**k * jnp.exp(power)
 
+
 def cubeweighted_pdf(r, rg, sigmag):
-    return r**3*pdf(r,rg,sigmag)/moment(rg, sigmag, 3)
+    """cube weighted lognormal distribution
+
+    Args:
+        r (float, array): variable
+        rg (float)): rg parameter
+        sigmag (float): sigmag parameter must be > 1.
+
+    Note:
+        The cube-weighted lognormal distribution is proporitnal to x**3 p(x), where p(x) is the lognormal distribution.
+        The normalization is given by 1/<x**3>, where <x**N> is the N-th moment of the lognormal distribution.
+
+    Returns:
+        float, array: cube-weighted lognormal PDF
+    """
+    return r**3 * pdf(r, rg, sigmag) / moment(rg, sigmag, 3)
+
 
 def cubeweighted_mean(rg, sigmag):
-    return moment(rg, sigmag, 4)/moment(rg, sigmag, 3)
+    """mean of the cube weighted lognormal distribution
+
+    Args:
+        rg (float)): rg parameter
+        sigmag (float): sigmag parameter must be > 1.
+
+    Returns:
+        float: mean of the cube weighted lognormal distribution
+    """
+    return moment(rg, sigmag, 4) / moment(rg, sigmag, 3)
+
 
 def cubeweighted_std(rg, sigmag):
+    """variance of the cube weighted lognormal distribution
+
+    Args:
+        rg (float)): rg parameter
+        sigmag (float): sigmag parameter must be > 1.
+
+    Returns:
+        float: variance of the cube weighted lognormal distribution
+    """
     mu = cubeweighted_mean(rg, sigmag)
-    var = moment(rg, sigmag, 5)/moment(rg, sigmag, 3)
+    var = moment(rg, sigmag, 5) / moment(rg, sigmag, 3)
     return jnp.sqrt(var - mu**2)
-
-if __name__ == "__main__":
-    rg = 1.0e-4
-    sigmag = 2.0
-    e = jnp.sqrt((moment(rg, sigmag, 5) - moment(rg, sigmag, 4) ** 2))/moment(rg, sigmag, 3)
-    rmean = moment(rg, sigmag, 4)/moment(rg, sigmag, 3)
-    print(rg, rmean, e)
-    from jax.scipy.integrate import trapezoid
-    
-    import matplotlib.pyplot as plt
-    arr = jnp.logspace(-8,0,100)
-    
-    i = trapezoid(pdf(arr,rg,sigmag), arr)
-    print(i)
-    
-    i = trapezoid(cubeweighted_pdf(arr,rg,sigmag), arr)
-    print(i)
-
-    
-    plt.plot(arr, pdf(arr,rg,sigmag))
-    plt.plot(arr, cubeweighted_pdf(arr, rg, sigmag))
-    plt.axvline(rg, color="C0")
-    plt.axvline(rmean, color="C1")
-    #plt.xscale("log")
-    #plt.yscale("log")
-    plt.show()

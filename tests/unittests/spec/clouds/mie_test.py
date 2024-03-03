@@ -17,7 +17,7 @@ def test_autogrid():
     sigr = np.linspace(lower_limit_sigmag, upper_limit_sigmag, 100)
     for sigmag in sigr:
         rgrid = auto_rgrid(rg_nm, sigmag)
-        check = cubeweighted_integral_checker(rgrid, rg_nm, sigmag, prec=1.0e-2)
+        check = cubeweighted_integral_checker(rgrid, rg_nm, sigmag, accuracy=1.0e-2)
         if not check:
             import matplotlib.pyplot as plt
             val = cubeweighted_pdf(rgrid, rg_nm, sigmag)
