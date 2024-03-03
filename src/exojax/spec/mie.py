@@ -165,7 +165,7 @@ def evaluate_miegrid(rg, sigmag, miegrid, rg_arr, sigmag_arr):
 
     Note:
         beta derived here is in the unit of 1/Mm (Mega meter) for diameter
-        multiply 2.e-8 to convert to 1/cm for radius.
+        multiply 1.e-8 to convert to 1/cm for radius.
 
 
     Returns:
@@ -173,8 +173,8 @@ def evaluate_miegrid(rg, sigmag, miegrid, rg_arr, sigmag_arr):
     """
     # mieparams = interp2d_bilinear(rg, sigmag, rg_arr, sigmag_arr, miegrid)
     mieparams = interp2d_bilinear(
-        jnp.log(rg), jnp.log(sigmag), jnp.log(rg_arr), jnp.log(sigmag_arr), miegrid
-    )  # interpolation in log space
+        jnp.log(rg), sigmag, jnp.log(rg_arr), sigmag_arr, miegrid
+    )  # interpolation in log space for rg, linear for sigmag
     return mieparams
 
 
@@ -268,12 +268,12 @@ def auto_rgrid(rg, sigmag, nrgrid=1500):
         Currently sigmag = 1.0001 to 4 is within 1 % error for the defalut setting. See tests/unittests/spec/clouds/mie_test.py
 
     Args:
-        rg (_type_): _description_
-        sigmag (_type_): _description_
-        nrgrid (int, optional): _description_. Defaults to 1500.
+        rg (float): rg parameter in lognormal distribution in cgs
+        sigmag (float): sigma_g parameter in lognormal distribution
+        nrgrid (int, optional): the number of rgrid. Defaults to 1500.
 
     Returns:
-        _type_: _description_
+        array: rgrid (the particulate radius grid)
     """
     if sigmag <= 1.0:
         raise ValueError("sigamg must be larger than 1.")

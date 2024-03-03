@@ -113,7 +113,9 @@ class PdbCloud(object):
         )
         self.refraction_index_wavenumber = wav2nu(wave, "um")  # wave in micron
         self.refraction_index_wavelength_nm = wave * 1.0e3
-        self.refraction_index = nn + kk * (1j) # m = n + ik because PyMieScatt uses this form (not m = n - ik). 
+        self.refraction_index = nn + kk * (
+            1j
+        )  # m = n + ik because PyMieScatt uses this form (not m = n - ik).
 
     def set_saturation_pressure_list(self):
         from exojax.atm.psat import (
@@ -133,15 +135,17 @@ class PdbCloud(object):
     def set_condensate_substance_density(self):
         """sets condensate density
 
-            Note:
-                "condensate substance density" means the mass substance density of the condensate matter itself. 
-                For instance, in the room temperature, for liquid water clouds, condensate_substance_density ~ 1 g/cm3
-                Notice that the mass density of the condensates in the atmosphere is the different quantity.
-                
+        Note:
+            "condensate substance density" means the mass substance density of the condensate matter itself.
+            For instance, in the room temperature, for liquid water clouds, condensate_substance_density ~ 1 g/cm3
+            Notice that the mass density of the condensates in the atmosphere is the different quantity.
+
         """
         from exojax.atm.condensate import condensate_substance_density
 
-        self.condensate_substance_density = condensate_substance_density[self.condensate]
+        self.condensate_substance_density = condensate_substance_density[
+            self.condensate
+        ]
 
     def saturation_pressure(self, temperatures):
         return self.saturation_pressure_solid_list[self.condensate](temperatures)
@@ -169,8 +173,7 @@ class PdbCloud(object):
             )
 
     def load_miegrid(self):
-        """
-        loads Miegrid
+        """loads Miegrid
 
         Raises:
             ValueError: _description_
@@ -226,15 +229,15 @@ class PdbCloud(object):
         """generates miegrid assuming lognormal size distribution
 
         Args:
-            log_sigmagmin (float, optional): log sigma_g minimum. Defaults to -1.0.
-            log_sigmagmax (float, optional): log sigma_g maximum. Defaults to 1.0.
+            sigmagmin (float, optional): sigma_g minimum. Defaults to 1.0001.
+            sigmagmax (float, optional): sigma_g maximum. Defaults to 4.0.
             Nsigmag (int, optional): the number of the sigmag grid. Defaults to 10.
             log_rg_min (float, optional): log r_g (cm) minimum . Defaults to -7.0.
             log_rg_max (float, optional): log r_g (cm) minimum. Defaults to -3.0.
             Nrg (int, optional): the number of the rg grid. Defaults to 40.
 
         Note:
-            it will take a bit long time.
+            it will take a bit long time. See src/exojax/tests/generate_pdb.py as a sample code.
 
         """
 
@@ -263,7 +266,7 @@ class PdbCloud(object):
 
         Note:
             beta derived here is in the unit of 1/Mm (Mega meter) for diameter
-            multiply 2.e-8 to convert to 1/cm for radius.
+            multiply 1.e-8 to convert to 1/cm for radius.
 
         Returns:
             _type_: evaluated values of miegrid, output of MieQ_lognormal Bext (1/Mm), Bsca, Babs, G, Bpr, Bback, Bratio (wavenumber, number of mieparams)
@@ -284,7 +287,7 @@ class PdbCloud(object):
 
         Returns:
             sigma_extinction, extinction cross section (cm2) = volume extinction coefficient (1/cm) normalized by the reference numbver density N0.
-            sigma_scattering, scattering cross section (cm2) = volume extinction coefficient (1/cm) normalized by the reference numbver density N0.            
+            sigma_scattering, scattering cross section (cm2) = volume extinction coefficient (1/cm) normalized by the reference numbver density N0.
             g, asymmetric factor (mean g)
         """
 
