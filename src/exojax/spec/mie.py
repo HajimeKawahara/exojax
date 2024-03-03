@@ -53,7 +53,7 @@ def compute_mie_coeff_lognormal_grid(
 
     for ind_sigmag, sigmag in enumerate(tqdm(sigmag_arr)):
         for ind_rg, rg_nm in enumerate(tqdm(np.array(rg_arr) * cm2nm)):
-            for ind_m, m in enumerate(tqdm(refractive_indices)):
+            for ind_m, m in enumerate(refractive_indices):
                 rgrid = auto_rgrid(rg_nm, sigmag)
                 coeff = mie_lognormal_pymiescatt(
                     m, refractive_wavenm[ind_m], sigmag, rg_nm, N0, rgrid
@@ -137,8 +137,10 @@ def make_miegrid_lognormal(
         In ExoJAX Ackerman and Marley cloud model, $N_0$ can be evaluated by `atm.amclouds.normalization_lognormal`.
 
     """
-
-    sigmag_arr = np.logspace(np.log10(sigmagmin), np.log10(sigmagmax), Nsigmag)
+    deltasmin = np.log10(sigmagmin-1.0)
+    deltasmax = np.log10(sigmagmax-1.0)
+    sigmag_arr = np.logspace(deltasmin, deltasmax, Nsigmag) + 1.0
+    print("sigmag arr = ", sigmag_arr)
     rg_arr = np.logspace(log_rg_min, log_rg_max, Nrg)  # cm
 
     miegrid = compute_mie_coeff_lognormal_grid(
