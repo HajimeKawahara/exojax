@@ -7,8 +7,10 @@ Notes:
 
 from exojax.spec.hitrancia import interp_logacia_vector
 from exojax.spec.hitrancia import interp_logacia_matrix
+from exojax.spec.mie import mie_lognormal_pymiescatt
 import jax.numpy as jnp
 from jax import vmap
+import numpy as np
 
 __all__ = ["OpaCIA"]
 
@@ -76,7 +78,7 @@ class OpaMie(OpaCont):
         self.ready = True
 
     def mieparams_vector(self, rg, sigmag):
-        """computes the Mie parameters vector (Nnu: wavenumber direction)
+        """interpolate the Mie parameters vector (Nnu: wavenumber direction) from Miegrid
 
         Args:
             rg (float): rg parameter in the lognormal distribution of condensate size, defined by (9) in AM01
@@ -107,7 +109,7 @@ class OpaMie(OpaCont):
         return sigma_extinction, sigma_scattering, asymmetric_factor
 
     def mieparams_matrix(self, rg_layer, sigmag_layer):
-        """computes the Mie parameters matrix (Nlayer x Nnu)
+        """interpolate the Mie parameters matrix (Nlayer x Nnu) from Miegrid
         Args:
             rg_layer (1d array): layer rg parameters  in the lognormal distribution of condensate size, defined by (9) in AM01
             sigmag_layer (1d array): layer sigmag parameters in the lognormal distribution of condensate size, defined by (9) in AM01
@@ -123,4 +125,64 @@ class OpaMie(OpaCont):
         """
 
         f = vmap(self.mieparams_vector, (0, 0), 0)
+        return f(rg_layer, sigmag_layer)
+
+    def mieparams_vector_direct_from_pymiescatt(self, rg, sigmag):
+        """compute the Mie parameters vector (Nnu: wavenumber direction) from pymiescatt direclty (slow), i.e. no need of Miegrid
+
+        Args:
+            rg (float): rg parameter in the lognormal distribution of condensate size, defined by (9) in AM01
+            sigmag (float): sigmag parameter in the lognormal distribution of condensate size, defined by (9) in AM01
+
+        Notes:
+            AM01 = Ackerman and Marley 2001
+            Volume extinction coefficient (1/cm) for the number density N can be computed by beta_extinction = N*beta0_extinction/N0
+
+        Returns:
+            sigma_extinction, extinction cross section (cm2) = volume extinction coefficient (1/cm) normalized by the reference numbver density N0.
+            sigma_scattering, scattering cross section (cm2) = volume extinction coefficient (1/cm) normalized by the reference numbver density N0.
+            asymmetric factor, (mean g)
+        """
+        from exojax.spec.mie import auto_rgrid
+        from tqdm import tqdm
+        nind = len(self.pdb.refraction_index_wavelength_nm)
+        sigma_extinction = np.zeros(nind)
+        sigma_scattering = np.zeros(nind)
+        asymmetric_factor = np.zeros(nind)
+
+        cm2nm = 1.0e7
+        rg_nm = rg * cm2nm
+        rgrid = auto_rgrid(rg_nm, sigmag)
+        for ind_m, m in enumerate(tqdm(self.pdb.refraction_index)):
+            coeff = mie_lognormal_pymiescatt(
+                m,
+                self.pdb.refraction_index_wavelength_nm[ind_m],
+                sigmag,
+                rg_nm,
+                self.pdb.N0,
+                rgrid,
+            )
+
+            sigma_extinction[ind_m] = coeff[0]
+            sigma_scattering[ind_m] = coeff[1]
+            asymmetric_factor[ind_m] = coeff[3]
+        return sigma_extinction, sigma_scattering, asymmetric_factor
+
+    def mieparams_matrix_direct_from_pymiescatt(self, rg_layer, sigmag_layer):
+        """compute the Mie parameters matrix (Nlayer x Nnu) from pymiescatt direclty (slow), i.e. no need of Miegrid
+        Args:
+            rg_layer (1d array): layer rg parameters  in the lognormal distribution of condensate size, defined by (9) in AM01
+            sigmag_layer (1d array): layer sigmag parameters in the lognormal distribution of condensate size, defined by (9) in AM01
+
+        Notes:
+            AM01 = Ackerman and Marley 2001
+            Volume extinction coefficient (1/cm) for the number density N can be computed by beta_extinction = N*beta0_extinction/N0
+
+        Returns:
+            sigma_extinction matrix, extinction cross section (cm2) = volume extinction coefficient (1/cm) normalized by the reference number density N0
+            omega0  matrix, single scattering albedo
+            g  matrix, asymmetric factor (mean g)
+        """
+
+        f = vmap(self.mieparams_vector_direct_from_pymiescatt, (0, 0), 0)
         return f(rg_layer, sigmag_layer)
