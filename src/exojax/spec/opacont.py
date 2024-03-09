@@ -94,9 +94,11 @@ class OpaMie(OpaCont):
             asymmetric factor, (mean g)
         """
 
-        # loads grid
-        sigexg, sigscg, gg = self.pdb.mieparams_at_refraction_index_wavenumber(
-            rg, sigmag
+        # loads grid (mieparams in cgs)
+        sigexg, sigscg, gg = (
+            self.pdb.mieparams_cgs_at_refraction_index_wavenumber_from_miegrid(
+                rg, sigmag
+            )
         )
 
         # interpolation
@@ -132,7 +134,7 @@ class OpaMie(OpaCont):
         return f(rg_layer, sigmag_layer)
 
     def mieparams_vector_direct_from_pymiescatt(self, rg, sigmag):
-        """compute the Mie parameters vector (Nnu: wavenumber direction) from pymiescatt direclty (slow), i.e. no need of Miegrid
+        """compute the Mie parameters vector (Nnu: wavenumber direction) from pymiescatt direclty (slow), i.e. no need of Miegrid, the unit is in cgs
 
         Args:
             rg (float): rg parameter in the lognormal distribution of condensate size, defined by (9) in AM01
@@ -165,7 +167,10 @@ class OpaMie(OpaCont):
         nind = len(refraction_index_wavenumber_restricted)
         refraction_index_restricted = self.pdb.refraction_index[imin:imax]
 
+
         # generates grid
+        convfactor_to_cgs = 1.0e-8 / self.pdb.N0  # conversion to cgs(1/Mega meter to 1/cm)
+    
         sigexg = np.zeros(nind)
         sigscg = np.zeros(nind)
         gg = np.zeros(nind)
@@ -181,10 +186,10 @@ class OpaMie(OpaCont):
                 rg_nm,
                 self.pdb.N0,
                 rgrid,
-            )
+            ) 
 
-            sigexg[ind_m] = coeff[0]
-            sigscg[ind_m] = coeff[1]
+            sigexg[ind_m] = coeff[0]*convfactor_to_cgs
+            sigscg[ind_m] = coeff[1]*convfactor_to_cgs
             gg[ind_m] = coeff[3]
 
         # interpolation

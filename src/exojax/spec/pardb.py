@@ -8,7 +8,7 @@
 import numpy as np
 import pathlib
 from exojax.spec.mie import evaluate_miegrid
-from exojax.spec.mie import compute_mieparams
+from exojax.spec.mie import compute_mieparams_cgs_from_miegrid
 
 
 __all__ = ["PdbCloud"]
@@ -283,8 +283,8 @@ class PdbCloud(object):
 
         return evaluate_miegrid(rg, sigmag, self.miegrid, self.rg_arr, self.sigmag_arr)
 
-    def mieparams_at_refraction_index_wavenumber(self, rg, sigmag):
-        """computes Mie parameters in the original refraction index wavenumber, i.e. extinction coeff, sinigle scattering albedo, asymmetric factor
+    def mieparams_cgs_at_refraction_index_wavenumber_from_miegrid(self, rg, sigmag):
+        """computes Mie parameters in the original refraction index wavenumber, i.e. extinction coeff, sinigle scattering albedo, asymmetric factor from miegrid
 
         Args:
             rg (float): rg parameter in lognormal distribution
@@ -300,7 +300,7 @@ class PdbCloud(object):
             g, asymmetric factor (mean g)
         """
 
-        return compute_mieparams(
+        return compute_mieparams_cgs_from_miegrid(
             rg, sigmag, self.miegrid, self.rg_arr, self.sigmag_arr, self.N0
         )
 

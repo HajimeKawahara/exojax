@@ -178,8 +178,8 @@ def evaluate_miegrid(rg, sigmag, miegrid, rg_arr, sigmag_arr):
     return mieparams
 
 
-def compute_mieparams(rg, sigmag, miegrid, rg_arr, sigmag_arr, N0):
-    """computes Mie parameters i.e. extinction coeff, sinigle scattering albedo, asymmetric factor
+def compute_mieparams_cgs_from_miegrid(rg, sigmag, miegrid, rg_arr, sigmag_arr, N0):
+    """computes Mie parameters i.e. extinction coeff, sinigle scattering albedo, asymmetric factor using miegrid. This process also convert the unit to cgs
 
     Args:
         rg_layer (1d array): layer wise rg parameters

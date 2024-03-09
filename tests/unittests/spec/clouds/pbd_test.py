@@ -41,7 +41,7 @@ def test_pdb_clouds_dtauwg():
     sigmag_layer = np.array([2.0, 3.0])
     rg_layer = np.array([1.0e-6, 1.0e-5])
 
-    dtau, w, g = pdb.mieparams_at_refraction_index_wavenumber(rg_layer, sigmag_layer)
+    dtau, w, g = pdb.mieparams_cgs_at_refraction_index_wavenumber_from_miegrid(rg_layer, sigmag_layer)
 
 def test_pdb_clouds_interp():
     pdb = mock_PdbPlouds(nurange=[12000.0, 15000.0])
@@ -50,7 +50,7 @@ def test_pdb_clouds_interp():
     #rg_layer = np.array([1.0e-6, 1.0e-5])
     sigmag = 2.0
     rg = 1.e-5
-    dtau_g, w_g, g_g = pdb.mieparams_at_refraction_index_wavenumber(rg, sigmag)
+    dtau_g, w_g, g_g = pdb.mieparams_cgs_at_refraction_index_wavenumber_from_miegrid(rg, sigmag)
     
     print(np.shape(dtau_g))
     print(np.shape(w_g))
