@@ -106,16 +106,25 @@ class PdbCloud(object):
             print("VIRGA refractive index download failed")
 
     def load_virga(self):
+        """loads VIRGA refraction index
+        
+        Notes:
+            self.refraction_index_wavenumber is in ascending and self.refraction_index_wavelength_nm is in descending.
+            Each component of both corresponds to that of self.refraction_index. (no need to put [::-1])   
+        
+        """
         from exojax.spec.unitconvert import wav2nu
 
         _, wave, nn, kk = np.loadtxt(
             open(self.refrind_path, "rt").readlines(), unpack=True, usecols=[0, 1, 2, 3]
         )
-        self.refraction_index_wavenumber = wav2nu(wave, "um")  # wave in micron
-        self.refraction_index_wavelength_nm = wave * 1.0e3
+        self.refraction_index_wavenumber = wav2nu(wave, "um")  # wave in micron ascending
+        self.refraction_index_wavelength_nm = wave * 1.0e3  #descending
         self.refraction_index = nn + kk * (
             1j
         )  # m = n + ik because PyMieScatt uses this form (not m = n - ik).
+
+
 
     def set_saturation_pressure_list(self):
         from exojax.atm.psat import (

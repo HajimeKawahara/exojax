@@ -93,9 +93,13 @@ class OpaMie(OpaCont):
             sigma_scattering, scattering cross section (cm2) = volume extinction coefficient (1/cm) normalized by the reference numbver density N0.
             asymmetric factor, (mean g)
         """
+
+        # loads grid
         sigexg, sigscg, gg = self.pdb.mieparams_at_refraction_index_wavenumber(
             rg, sigmag
         )
+
+        # interpolation
         sigma_extinction = jnp.interp(
             self.nu_grid, self.pdb.refraction_index_wavenumber, sigexg
         )
@@ -145,27 +149,55 @@ class OpaMie(OpaCont):
         """
         from exojax.spec.mie import auto_rgrid
         from tqdm import tqdm
-        nind = len(self.pdb.refraction_index_wavelength_nm)
-        sigma_extinction = np.zeros(nind)
-        sigma_scattering = np.zeros(nind)
-        asymmetric_factor = np.zeros(nind)
+
+        # restrict wavenumber grid
+        nind = len(self.pdb.refraction_index_wavenumber)
+        numin = np.min(self.nu_grid)
+        imin = np.searchsorted(self.pdb.refraction_index_wavenumber, numin)
+        imin = np.max([imin - 1, 0])
+        numax = np.max(self.nu_grid)
+        imax = np.searchsorted(self.pdb.refraction_index_wavenumber, numax)
+        imax = np.min([imax + 1, nind])
+
+        refraction_index_wavenumber_restricted = self.pdb.refraction_index_wavenumber[
+            imin:imax
+        ]
+        nind = len(refraction_index_wavenumber_restricted)
+        refraction_index_restricted = self.pdb.refraction_index[imin:imax]
+
+        # generates grid
+        sigexg = np.zeros(nind)
+        sigscg = np.zeros(nind)
+        gg = np.zeros(nind)
 
         cm2nm = 1.0e7
         rg_nm = rg * cm2nm
         rgrid = auto_rgrid(rg_nm, sigmag)
-        for ind_m, m in enumerate(tqdm(self.pdb.refraction_index)):
+        for ind_m, m in enumerate(tqdm(refraction_index_restricted)):
             coeff = mie_lognormal_pymiescatt(
                 m,
-                self.pdb.refraction_index_wavelength_nm[ind_m],
+                refraction_index_wavenumber_restricted[ind_m],
                 sigmag,
                 rg_nm,
                 self.pdb.N0,
                 rgrid,
             )
 
-            sigma_extinction[ind_m] = coeff[0]
-            sigma_scattering[ind_m] = coeff[1]
-            asymmetric_factor[ind_m] = coeff[3]
+            sigexg[ind_m] = coeff[0]
+            sigscg[ind_m] = coeff[1]
+            gg[ind_m] = coeff[3]
+
+        # interpolation
+        sigma_extinction = np.interp(
+            self.nu_grid, refraction_index_wavenumber_restricted, sigexg
+        )
+        sigma_scattering = np.interp(
+            self.nu_grid, refraction_index_wavenumber_restricted, sigscg
+        )
+        asymmetric_factor = np.interp(
+            self.nu_grid, refraction_index_wavenumber_restricted, gg
+        )
+
         return sigma_extinction, sigma_scattering, asymmetric_factor
 
     def mieparams_matrix_direct_from_pymiescatt(self, rg_layer, sigmag_layer):

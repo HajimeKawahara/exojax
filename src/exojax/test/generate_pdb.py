@@ -6,8 +6,11 @@ from exojax.spec import pardb
 from exojax.test.data import TESTDATA_refrind
 
 def gendata_miegrid():
-    """
-    generates miegrid for test.refrind
+    """generates miegrid for test.refrind
+    
+    Warnings:
+        this is just for testdata. Not for real use!
+
     """
     refrind_path = pkg_resources.resource_filename(
         "exojax", "data/testdata/"+TESTDATA_refrind
@@ -21,7 +24,7 @@ def gendata_miegrid():
             Nsigmag=10,
             log_rg_min=-7.0,
             log_rg_max=-4.0,
-            Nrg=40,
+            Nrg=4,
         )
 
 
