@@ -1,4 +1,5 @@
 """plotting tool for atmospheric structure."""
+
 import numpy as np
 import matplotlib.pyplot as plt
 from exojax.utils.constants import hcperk
@@ -8,14 +9,14 @@ def plottau(nus, dtauM, Tarr=None, Parr=None, unit=None, mode=None, vmin=-3, vma
     """Plot optical depth (tau). This function gives the color map of log10(tau) (or log10(dtau)), optionally w/ a T-P profile.
 
     Args:
-       nus: wavenumber
-       dtauM: dtau matrix
-       Tarr: temperature profile
-       Parr: perssure profile
-       unit: x-axis unit=um (wavelength microns), nm  = (wavelength nm), AA  = (wavelength Angstrom),
-       mode: mode=None (lotting tau), mode=dtau (plotting delta tau for each layer)
-       vmin: color value min (default=-3)
-       vmax: color value max (default=3)
+        nus: wavenumber
+        dtauM: dtau matrix
+        Tarr: temperature profile
+        Parr: perssure profile
+        unit: x-axis unit=um (wavelength microns), nm  = (wavelength nm), AA  = (wavelength Angstrom),
+        mode: mode=None (lotting tau), mode=dtau (plotting delta tau for each layer)
+        vmin: color value min (default=-3)
+        vmax: color value max (default=3)
     """
     if mode == "dtau":
         ltau = np.log10(dtauM)
@@ -106,7 +107,7 @@ def plotcf(
         * (Parr[:, None] / dParr[:, None])
         * nus**3
         / np.expm1(hcperk * nus / Tarr[:, None])
-        #/ (np.exp(hcperk * nus / Tarr[:, None]) - 1.0)
+        # / (np.exp(hcperk * nus / Tarr[:, None]) - 1.0)
     )
 
     if normalize:
@@ -174,11 +175,11 @@ def plot_maxpoint(mask, Parr, maxcf, maxcia, mol="CO"):
     """Plotting max contribution function  points.
 
     Args:
-       mask: weak line mask
-       Parr: Paressure array
-       maxcf: max contribution function of the molecules
-       maxcia: max contribution function of CIA
-       mol: molecular name
+        mask: weak line mask
+        Parr: Paressure array
+        maxcf: max contribution function of the molecules
+        maxcia: max contribution function of CIA
+        mol: molecular name
     """
     plt.figure(figsize=(14, 6))
     xarr = np.array(range(0, len(mask)))
