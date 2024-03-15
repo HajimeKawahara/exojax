@@ -3,13 +3,14 @@
 import numpy as np
 import matplotlib.pyplot as plt
 from exojax.utils.constants import hcperk
+from exojax.utils.grids import check_eslog_wavenumber_grid
+import warnings
 
-
-def plottau(nus, dtauM, Tarr=None, Parr=None, unit=None, mode=None, vmin=-3, vmax=3):
+def plottau(nugrid, dtauM, Tarr=None, Parr=None, unit=None, mode=None, vmin=-3, vmax=3):
     """Plot optical depth (tau). This function gives the color map of log10(tau) (or log10(dtau)), optionally w/ a T-P profile.
 
     Args:
-        nus: wavenumber
+        nus: wavenumber in linear scale
         dtauM: dtau matrix
         Tarr: temperature profile
         Parr: perssure profile
@@ -18,6 +19,9 @@ def plottau(nus, dtauM, Tarr=None, Parr=None, unit=None, mode=None, vmin=-3, vma
         vmin: color value min (default=-3)
         vmax: color value max (default=3)
     """
+    if check_eslog_wavenumber_grid(nugrid):
+        warnings.warn("nugrid looks in log scale, results in a wrong X-axis value. Use log10(nugrid) instead.")
+
     if mode == "dtau":
         ltau = np.log10(dtauM)
     else:
@@ -30,8 +34,8 @@ def plottau(nus, dtauM, Tarr=None, Parr=None, unit=None, mode=None, vmin=-3, vma
         factor, labelx = factor_labelx_for_unit()
         if Parr is not None:
             extent = [
-                factor[unit] / nus[-1],
-                factor[unit] / nus[0],
+                factor[unit] / nugrid[-1],
+                factor[unit] / nugrid[0],
                 np.log10(Parr[-1]),
                 np.log10(Parr[0]),
             ]
@@ -39,7 +43,7 @@ def plottau(nus, dtauM, Tarr=None, Parr=None, unit=None, mode=None, vmin=-3, vma
         plt.xlabel(labelx[unit])
     else:
         if Parr is not None:
-            extent = [nus[0], nus[-1], np.log10(Parr[-1]), np.log10(Parr[0])]
+            extent = [nugrid[0], nugrid[-1], np.log10(Parr[-1]), np.log10(Parr[0])]
             c = imshow_custom(vmin, vmax, ltau, extent, ax)
         plt.xlabel("wavenumber ($\mathrm{cm}^{-1}$)")
 
@@ -72,7 +76,6 @@ def plotcf(
     Parr,
     dParr,
     unit="cm-1",
-    mode=None,
     log=False,
     normalize=True,
     cmap="bone_r",
@@ -89,7 +92,6 @@ def plotcf(
         Parr: perssure profile
         dParr: perssure difference profile
         unit: x-axis unit=cm-1, um (wavelength microns), nm  = (wavelength nm), AA  = (wavelength Angstrom),
-        mode: None=contour, "cmap"=color map
         log: True=use log10(cf)
         normalize: normalize cf for each wavenumber?
         cmap: colormap
@@ -133,12 +135,9 @@ def plotcf(
         xcf = cf
         xnus = nus
 
-    if mode == "cmap":
-        c = ax.imshow(xcf, cmap=cmap, alpha=0.9, extent=extent)
-    else:
-        X, Y = np.meshgrid(xnus, np.log10(Parr))
-        c = ax.contourf(X, Y, cf, 30, cmap=cmap)
-        plt.gca().invert_yaxis()
+    X, Y = np.meshgrid(xnus, np.log10(Parr))
+    c = ax.contourf(X, Y, cf, 30, cmap=cmap)
+    plt.gca().invert_yaxis()
 
     plt.xlabel(labelx[unit])
     plt.ylabel("log10 (P (bar))")
