@@ -18,7 +18,6 @@ joblib
 pandas
 plotly
 progressbar2
-numba
 mpldatacursor
 publib
 plotly
