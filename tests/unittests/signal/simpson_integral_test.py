@@ -2,7 +2,7 @@ import pytest
 import numpy as np
 import jax.numpy as jnp
 from exojax.signal.integrate import simpson
-from jax.config import config
+from jax import config
 
 config.update('jax_enable_x64', True)
 

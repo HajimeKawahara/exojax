@@ -30,7 +30,7 @@ def optelower(
     Returns:
         float: optimal maximum Elower (Eopt) in cm-1
     """
-    from jax.config import config
+    from jax import config
 
     config.update("jax_enable_x64", True)
 

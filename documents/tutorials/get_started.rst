@@ -10,14 +10,14 @@ real use case.)
 
 .. code:: ipython3
 
-    from jax.config import config
+    from jax import config
     config.update("jax_enable_x64", True)
 
 
 .. parsed-literal::
 
     /tmp/ipykernel_8741/2124608031.py:1: DeprecationWarning: Accessing jax.config via the jax.config submodule is deprecated.
-      from jax.config import config
+      from jax import config
 
 
 The following schematic figure explains how ExoJAX works; (1) loading

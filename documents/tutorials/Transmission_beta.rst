@@ -7,7 +7,7 @@ Note that ``ArtTransPure`` is ``art`` for the transmission spectrum.
 
 .. code:: ipython3
 
-    from jax.config import config
+    from jax import config
     import pandas as pd
     import numpy as np
     from exojax.utils.grids import wavenumber_grid

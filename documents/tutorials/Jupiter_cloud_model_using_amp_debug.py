@@ -7,7 +7,7 @@ import jax.numpy as jnp
 import matplotlib.pyplot as plt
 import numpy as np
 
-from jax.config import config
+from jax import config
 config.update("jax_enable_x64", True)
 
 # Sets an atmosphere model

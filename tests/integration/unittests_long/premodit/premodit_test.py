@@ -155,7 +155,7 @@ def _example_lbd():
 
 
 def test_unbiased_lsd():
-    from jax.config import config
+    from jax import config
     config.update("jax_enable_x64", True)
 
     lbd_zeroth, lbd_first, lbd_second, nu_grid, elower_grid, qt = _example_lbd(

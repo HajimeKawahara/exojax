@@ -1,6 +1,6 @@
 """ short integration tests for PreMODIT spectrum"""
 import pytest
-from jax.config import config
+from jax import config
 from exojax.test.emulate_mdb import mock_mdb
 from exojax.spec.opacalc import OpaPremodit
 from exojax.test.emulate_mdb import mock_wavenumber_grid

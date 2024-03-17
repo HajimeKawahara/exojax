@@ -16,7 +16,7 @@ from exojax.test.emulate_mdb import mock_wavenumber_grid
 from exojax.test.emulate_mdb import mock_mdb
 from exojax.spec.opacalc import OpaDirect
 from exojax.spec.atmrt import ArtEmisPure
-from jax.config import config
+from jax import config
 
 config.update("jax_enable_x64", True)
 

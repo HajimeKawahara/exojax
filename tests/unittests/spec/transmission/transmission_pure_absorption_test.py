@@ -7,7 +7,7 @@ from exojax.spec.opachord import chord_geometric_matrix_lower
 from exojax.spec.opachord import chord_optical_depth
 
 from exojax.spec.rtransfer import rtrun_trans_pureabs_trapezoid
-from jax.config import config
+from jax import config
 
 config.update("jax_enable_x64", True)
 

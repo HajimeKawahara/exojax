@@ -1,4 +1,4 @@
-from jax.config import config
+from jax import config
 from exojax.spec.hitran import normalized_doppler_sigma
 from exojax.spec.set_ditgrid import ditgrid_log_interval
 from exojax.spec import moldb

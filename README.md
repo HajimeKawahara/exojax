@@ -48,7 +48,7 @@ from exojax.utils.grids import wavenumber_grid
 from exojax.spec.api import MdbExomol
 from exojax.spec.opacalc import OpaPremodit
 
-from jax.config import config
+from jax import config
 config.update("jax_enable_x64", True)
 
 nu_grid,wav,res=wavenumber_grid(1900.0,2300.0,200000,xsmode="premodit",unit="cm-1",)

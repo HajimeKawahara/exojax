@@ -25,7 +25,7 @@ from exojax.spec import normalized_doppler_sigma
 from exojax.spec.modit_scanfft import calc_xsection_from_lsd_scanfft
 from exojax.spec.premodit import unbiased_ngamma_grid
 
-from jax.config import config
+from jax import config
 config.update("jax_enable_x64", True)
 
 Nx = 5000

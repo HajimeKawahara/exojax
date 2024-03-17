@@ -10,7 +10,7 @@ from exojax.spec.lpf import auto_xsection
 from exojax.spec.hitran import line_strength, doppler_sigma, gamma_hitran, gamma_natural, line_strength_numpy
 from exojax.spec.exomol import gamma_exomol
 from exojax.spec.opacalc import OpaPremodit, OpaDirect
-from jax.config import config
+from jax import config
 config.update("jax_enable_x64", True)
 
 import numpy as np

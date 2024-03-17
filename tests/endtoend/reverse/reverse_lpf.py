@@ -24,7 +24,7 @@ import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 import jax.numpy as jnp
-from jax.config import config
+from jax import config
 
 config.update("jax_enable_x64", True)
 

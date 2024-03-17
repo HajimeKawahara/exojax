@@ -1,4 +1,4 @@
-from jax.config import config
+from jax import config
 
 
 def device_memory_use(opa, art=None, nfree=None, print_summary=True):

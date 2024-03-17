@@ -16,7 +16,7 @@ from exojax.spec.set_ditgrid import ditgrid_log_interval
 from exojax.spec.hitran import normalized_doppler_sigma
 
 #F64/F32
-from jax.config import config
+from jax import config
 config.update("jax_enable_x64", True)
 
 def comperr(Nnu,plotfig=False):

@@ -42,7 +42,7 @@ def test_xs_exomol():
 
 
 def test_rt_exomol():
-    from jax.config import config
+    from jax import config
     config.update("jax_enable_x64", True)
 
     import jax.numpy as jnp

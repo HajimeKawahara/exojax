@@ -4,7 +4,7 @@
 import pytest
 import numpy as np
 from exojax.utils.constants import hcperk
-from jax.config import config
+from jax import config
 from exojax.spec.lbd import lbd_coefficients
 from exojax.spec.lbd import weight
 
@@ -12,7 +12,7 @@ config.update("jax_enable_x64", True)
 
 
 def example_lbd_1():
-    from jax.config import config
+    from jax import config
     config.update("jax_enable_x64", True)
     Twt = 700.0
     Tref = 300.0
@@ -27,7 +27,7 @@ def example_lbd_1():
 
 
 def example_lbd_2():
-    from jax.config import config
+    from jax import config
     config.update("jax_enable_x64", True)
     Twt = 300.0
     Tref = 700.0

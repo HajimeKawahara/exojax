@@ -3,7 +3,7 @@
 """
 import numpy as np
 from exojax.utils.interp import interp2d_bilinear
-from jax.config import config
+from jax import config
 
 config.update("jax_enable_x64", False)
 
