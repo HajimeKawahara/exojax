@@ -48,7 +48,7 @@ def test_SopRotation(N=1000):
     F0[250 - 5:250 + 5] = 0.5
 
     vsini = 40.0
-    sos = SopRotation(nus, resolution, vsini)
+    sos = SopRotation(nus, vsini)
     
     Frot = sos.rigid_rotation(F0, vsini, u1=0.1, u2=0.1)
     Frot_ = _convolve_rigid_rotation_np(resolution, F0, vsini, u1=0.1, u2=0.1)
@@ -112,7 +112,7 @@ def test_SopRotation_ola(N=10000, fig=False):
     F0[2500 - 50:2500 + 50] = 0.5
     vsini = 4.0
     
-    sos = SopRotation(nus, resolution, vsini, convolution_method = "exojax.signal.ola" )    
+    sos = SopRotation(nus, vsini, convolution_method = "exojax.signal.ola" )    
     Frot = sos.rigid_rotation(F0, vsini, u1=0.1, u2=0.1)
     Frot_ = _convolve_rigid_rotation_np(resolution, F0, vsini, u1=0.1, u2=0.1)
 
