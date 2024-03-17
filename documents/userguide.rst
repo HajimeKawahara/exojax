@@ -36,7 +36,7 @@ Scattering and Clouds
    userguide/mie.rst
    userguide/vterm.rst
    userguide/comp_pymiescatt.rst
-
+   userguide/amclouds_comparison_virga.rst
 
 Radiative Transfer
 ========================

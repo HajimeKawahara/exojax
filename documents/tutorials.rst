@@ -32,6 +32,14 @@ Transmission Spectra
 
    tutorials/Transmission_beta.rst
 
+Reflection Spectrum
+------------------------------------
+
+.. toctree::
+   :maxdepth: 1
+
+   tutorials/Jupiter_cloud_model_using_amp.rst
+   tutorials/Jupiter_Hires_Modeling.rst
 
 Molecular/Atomic/Continuum Databases
 ---------------------------------------
