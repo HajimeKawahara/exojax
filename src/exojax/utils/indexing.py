@@ -3,7 +3,6 @@
 * (np)getix provides the contribution and index.
 
 """
-   
 
 import numpy as np
 import tqdm
@@ -23,16 +22,16 @@ def getix(x, xv):
         index (index)
 
     Note:
-       cont is the contribution for i=index+1. 1 - cont is the contribution for i=index. For other i, the contribution should be zero.
+        cont is the contribution for i=index+1. 1 - cont is the contribution for i=index. For other i, the contribution should be zero.
 
     Example:
 
-       >>> from exojax.utils.indexing import getix
-       >>> import jax.numpy as jnp
-       >>> y=jnp.array([1.1,4.3])
-       >>> yv=jnp.arange(6)
-       >>> getix(y,yv)
-       (DeviceArray([0.10000002, 0.3000002 ], dtype=float32), DeviceArray([1, 4], dtype=int32))
+        >>> from exojax.utils.indexing import getix
+        >>> import jax.numpy as jnp
+        >>> y=jnp.array([1.1,4.3])
+        >>> yv=jnp.arange(6)
+        >>> getix(y,yv)
+        (DeviceArray([0.10000002, 0.3000002 ], dtype=float32), DeviceArray([1, 4], dtype=int32))
     """
     indarr = jnp.arange(len(xv))
     pos = jnp.interp(x, xv, indarr)
@@ -52,7 +51,7 @@ def npgetix(x, xv):
         index (index)
 
     Note:
-       cont is the contribution for i=index+1. 1 - cont is the contribution for i=index. For other i, the contribution should be zero.
+        cont is the contribution for i=index+1. 1 - cont is the contribution for i=index. For other i, the contribution should be zero.
     """
     indarr = np.arange(len(xv))
     pos = np.interp(x, xv, indarr)

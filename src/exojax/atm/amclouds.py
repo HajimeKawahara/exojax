@@ -60,10 +60,7 @@ def compute_cloud_base_pressure(pressure, saturation_pressure, vmr_vapor):
     Returns:
         cloud base pressure
     """
-    # ibase=jnp.searchsorted((Psat/VMR)-Parr,0.0) # 231 +- 9.2 us
-    ibase = jnp.argmin(
-        jnp.abs(jnp.log(pressure) - jnp.log(saturation_pressure) + jnp.log(vmr_vapor))
-    )  # 73.8 +- 2.9 us
+    ibase = compute_cloud_base_pressure_index(pressure, saturation_pressure, vmr_vapor)
     return pressure[ibase]
 
 

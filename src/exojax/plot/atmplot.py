@@ -6,6 +6,7 @@ from exojax.utils.constants import hcperk
 from exojax.utils.grids import check_eslog_wavenumber_grid
 import warnings
 
+
 def plottau(nugrid, dtauM, Tarr=None, Parr=None, unit=None, mode=None, vmin=-3, vmax=3):
     """Plot optical depth (tau). This function gives the color map of log10(tau) (or log10(dtau)), optionally w/ a T-P profile.
 
@@ -20,7 +21,9 @@ def plottau(nugrid, dtauM, Tarr=None, Parr=None, unit=None, mode=None, vmin=-3, 
         vmax: color value max (default=3)
     """
     if check_eslog_wavenumber_grid(nugrid):
-        warnings.warn("nugrid looks in log scale, results in a wrong X-axis value. Use log10(nugrid) instead.")
+        warnings.warn(
+            "nugrid looks in log scale, results in a wrong X-axis value. Use log10(nugrid) instead."
+        )
 
     if mode == "dtau":
         ltau = np.log10(dtauM)
@@ -122,17 +125,8 @@ def plotcf(
     factor, labelx = factor_labelx_for_unit()
 
     if unit == "um" or unit == "nm" or unit == "AA":
-        extent = [
-            factor[unit] / nus[-1],
-            factor[unit] / nus[0],
-            np.log10(Parr[-1]),
-            np.log10(Parr[0]),
-        ]
-        xcf = cf[:, ::-1]
         xnus = factor[unit] / nus
     else:
-        extent = [nus[0], nus[-1], np.log10(Parr[-1]), np.log10(Parr[0])]
-        xcf = cf
         xnus = nus
 
     X, Y = np.meshgrid(xnus, np.log10(Parr))
@@ -145,9 +139,13 @@ def plotcf(
     ax.set_aspect(0.2 / ax.get_data_ratio())
 
     if optarr is not None and Parr is not None:
-        _plot_profile_left_panel(optarr, Parr, xlabel=leftxlabel, xlog=leftxlog)
+        xlabel = leftxlabel
+        xlog = leftxlog
     elif Tarr is not None and Parr is not None:
-        _plot_profile_left_panel(Tarr, Parr, xlabel="temperature (K)")
+        xlabel = "temperature (K)"
+        xlog = False
+
+    _plot_profile_left_panel(Tarr, Parr, xlabel=xlabel, xlog=xlog)
 
     return cf
 
