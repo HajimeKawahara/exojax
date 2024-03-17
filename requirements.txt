@@ -18,9 +18,11 @@ joblib
 pandas
 plotly
 progressbar2
+numba
 mpldatacursor
 publib
 plotly
 psutil
 seaborn
 PyMieScatt
+numpy<2
