@@ -63,8 +63,8 @@ vmrH2 = (mmrH2 * mmw / molmassH2)  # VMR
 
 # sos
 vsini_max = 100.0
-sos_rot = SopRotation(nu_grid, res, vsini_max)
-sos_ip = SopInstProfile(nu_grid, res, vsini_max)
+sos_rot = SopRotation(nu_grid, vsini_max)
+sos_ip = SopInstProfile(nu_grid, vsini_max)
 
 
 def model_c(nu1, y1):

@@ -381,7 +381,7 @@ planet.
 .. code:: ipython3
 
     from exojax.spec.specop import SopRotation
-    sop_rot = SopRotation(nu_grid, resolution, vsini_max=100.0)
+    sop_rot = SopRotation(nu_grid, vsini_max=100.0)
     
     vsini = 50.0
     u1=0.0
@@ -418,7 +418,7 @@ This process is called ``sampling`` (but just interpolation though).
 
     from exojax.spec.specop import SopInstProfile
     from exojax.utils.instfunc import resolution_to_gaussian_std
-    sop_inst = SopInstProfile(nu_grid, resolution, vrmax=1000.0)
+    sop_inst = SopInstProfile(nu_grid, vrmax=1000.0)
     
     RV=40.0 #km/s
     resolution_inst = 3000.0
