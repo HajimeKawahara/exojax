@@ -18,7 +18,7 @@ class SopCommon():
     """Common Spectral Operator
     """
 
-    def __init__(self, nu_grid, resolution, vrmax, convolution_method):
+    def __init__(self, nu_grid, vrmax, convolution_method):
         """initialization of Sop
 
         Args:
@@ -31,9 +31,8 @@ class SopCommon():
         self.convolution_method = convolution_method
         self.nu_grid = nu_grid
         self.vrmax = vrmax
-        self.resolution = resolution
-        self.generate_vrarray()
         self.resolution = grid_resolution('ESLOG', self.nu_grid)
+        self.generate_vrarray()
         self.ola_ndiv = 4
 
     def generate_vrarray(self):
@@ -52,11 +51,10 @@ class SopRotation(SopCommon):
 
     def __init__(self,
                  nu_grid,
-                 resolution,
                  vsini_max=100.0,
                  convolution_method="exojax.signal.convolve"
                  ):
-        super().__init__(nu_grid, resolution, vsini_max, convolution_method)
+        super().__init__(nu_grid, vsini_max, convolution_method)
 
     def rigid_rotation(self, spectrum, vsini, u1, u2):
         """apply a rigid rotation
@@ -90,11 +88,10 @@ class SopInstProfile(SopCommon):
 
     def __init__(self,
                  nu_grid,
-                 resolution,
                  vrmax=100.0,
                  convolution_method="exojax.signal.convolve"
                  ):
-        super().__init__(nu_grid, resolution, vrmax, convolution_method)
+        super().__init__(nu_grid, vrmax, convolution_method)
 
     def ipgauss(self, spectrum, standard_deviation):
         """Gaussian Instrumental Profile
