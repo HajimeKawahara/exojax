@@ -13,13 +13,6 @@ real use case.)
     from jax import config
     config.update("jax_enable_x64", True)
 
-
-.. parsed-literal::
-
-    /tmp/ipykernel_8741/2124608031.py:1: DeprecationWarning: Accessing jax.config via the jax.config submodule is deprecated.
-      from jax import config
-
-
 The following schematic figure explains how ExoJAX works; (1) loading
 databases (``*db``), (2) calculating opacity (``opa``), (3) running
 atmospheric radiative transfer (``art``), (4) applying operations on the
