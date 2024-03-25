@@ -8,7 +8,7 @@ modeling. Here, we demonstrate the grid-based retrieval using ExoJAX.
 
 .. code:: ipython3
 
-    from jax.config import config
+    from jax import config
     config.update("jax_enable_x64", True)
 
 .. code:: ipython3

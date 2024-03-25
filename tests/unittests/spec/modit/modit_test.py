@@ -12,7 +12,7 @@ from exojax.spec.set_ditgrid import ditgrid_log_interval
 from exojax.test.emulate_mdb import mock_mdbExomol
 from exojax.test.emulate_mdb import mock_wavenumber_grid
 
-from jax.config import config
+from jax import config
 
 config.update("jax_enable_x64", True)
 

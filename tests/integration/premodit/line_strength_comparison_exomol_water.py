@@ -3,7 +3,7 @@
     The bug was due to the overflow in the function when computing,
 """
 
-from jax.config import config
+from jax import config
 config.update("jax_enable_x64", True)
 
 import numpy as np

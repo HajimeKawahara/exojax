@@ -1,4 +1,4 @@
-from jax.config import config                                                 #
+from jax import config                                                 #
 import numpy as np
 import matplotlib.pyplot as plt
 from scipy.special import expn

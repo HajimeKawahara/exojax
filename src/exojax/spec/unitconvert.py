@@ -1,5 +1,6 @@
 """unit conversion for spectrum."""
 
+import warnings
 from exojax.utils.checkarray import is_sorted
 
 
@@ -22,6 +23,7 @@ def nu2wav(nus, wavelength_order="descending", unit="AA"):
 
     try:
         if wavelength_order == "ascending":
+            _both_ascending_warning()
             return conversion_factors[unit] / nus[::-1]
         elif wavelength_order == "descending" or wavenumber_order == "single":
             return conversion_factors[unit] / nus
@@ -45,9 +47,9 @@ def wav2nu(wav, unit):
     conversion_factors = {"nm": 1.0e7, "AA": 1.0e8, "um": 1.0e4}
 
     order = is_sorted(wav)
-
     try:
         if order == "ascending":
+            _both_ascending_warning()
             return conversion_factors[unit] / wav[::-1]
         elif order == "descending" or order == "single":
             return conversion_factors[unit] / wav
@@ -55,3 +57,9 @@ def wav2nu(wav, unit):
             raise ValueError("wavelength array should be ascending or descending")
     except KeyError:
         raise ValueError("unavailable unit")
+
+def _both_ascending_warning():
+    warnings.warn(
+        "Both input wavelength and output wavenumber are in ascending order.",
+        UserWarning,
+    )

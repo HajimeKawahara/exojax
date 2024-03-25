@@ -7,8 +7,10 @@ import jax.numpy as jnp
 from exojax.spec.hitrancia import interp_logacia_matrix
 from exojax.spec.hminus import log_hminus_continuum
 from exojax.atm.idealgas import number_density
-from exojax.utils.constants import logkB, logm_ucgs
+from exojax.utils.constants import logkB
+from exojax.utils.constants import logm_ucgs
 from exojax.utils.constants import opfac
+from exojax.utils.constants import bar_cgs
 from exojax.spec.dtau_mmwl import dtauM_mmwl
 
 
@@ -29,13 +31,14 @@ def layer_optical_depth(dParr, xsmatrix, mixing_ratio, mass, gravity):
         2D array: optical depth matrix, dtau  [N_layer, N_nus]
     """
 
-    return opfac * xsmatrix * dParr[:, None] * mixing_ratio[:, None] / (
-        mass * gravity)
+    return opfac * xsmatrix * dParr[:, None] * mixing_ratio[:, None] / (mass * gravity)
 
 
-def layer_optical_depth_CIA(nu_grid, temperature, pressure, dParr, vmr1, vmr2,
-                            mmw, g, nucia, tcia, logac):
-    """dtau of the CIA continuum. Not used in art.
+def layer_optical_depth_CIA(
+    nu_grid, temperature, pressure, dParr, vmr1, vmr2, mmw, g, nucia, tcia, logac
+):
+    """dtau of the CIA continuum. Not
+    used in art.
 
     Args:
         nu_grid: wavenumber matrix (cm-1)
@@ -59,9 +62,19 @@ def layer_optical_depth_CIA(nu_grid, temperature, pressure, dParr, vmr1, vmr2,
     logg = jnp.log10(g)
     ddParr = dParr / pressure
     dtauc = (
-        10**(interp_logacia_matrix(temperature, nu_grid, nucia, tcia, logac) +
-             lognarr1[:, None] + lognarr2[:, None] + logkB - logg - logm_ucgs)
-        * temperature[:, None] / mmw * ddParr[:, None])
+        10
+        ** (
+            interp_logacia_matrix(temperature, nu_grid, nucia, tcia, logac)
+            + lognarr1[:, None]
+            + lognarr2[:, None]
+            + logkB
+            - logg
+            - logm_ucgs
+        )
+        * temperature[:, None]
+        / mmw
+        * ddParr[:, None]
+    )
 
     return dtauc
 
@@ -79,14 +92,14 @@ def layer_optical_depth_VALD(dParr, xsm, VMR, mean_molecular_weight, gravity):
     Returns:
         2D array: optical depth matrix, dtau  [N_layer, N_nus]
     """
-    dtauS = jit(vmap(dtauM_mmwl, (None, 0, 0, None, None)))( \
-                            dParr, xsm, VMR, mean_molecular_weight, gravity)
+    dtauS = jit(vmap(dtauM_mmwl, (None, 0, 0, None, None)))(
+        dParr, xsm, VMR, mean_molecular_weight, gravity
+    )
     dtau = jnp.abs(jnp.sum(dtauS, axis=0))
     return dtau
 
 
-def layer_optical_depth_Hminus(nu_grid, temperature, Parr, dParr, vmre, vmrh,
-                               mmw, g):
+def layer_optical_depth_Hminus(nu_grid, temperature, Parr, dParr, vmre, vmrh, mmw, g):
     """dtau of the H- continuum.
 
     Args:
@@ -107,9 +120,74 @@ def layer_optical_depth_Hminus(nu_grid, temperature, Parr, dParr, vmre, vmrh,
     number_density_h = vmrh * narr  # number density for H atoms [N_layer]
     logg = jnp.log10(g)
     ddParr = dParr / Parr
-    logabc = (log_hminus_continuum(nu_grid, temperature, number_density_e,
-                                   number_density_h))
-    dtauh = 10**(logabc + logkB - logg -
-                 logm_ucgs) * temperature[:, None] / mmw * ddParr[:, None]
+    logabc = log_hminus_continuum(
+        nu_grid, temperature, number_density_e, number_density_h
+    )
+    dtauh = (
+        10 ** (logabc + logkB - logg - logm_ucgs)
+        * temperature[:, None]
+        / mmw
+        * ddParr[:, None]
+    )
 
     return dtauh
+
+
+def layer_optical_depth_cloudgeo(
+    dParr, condensate_substance_density, mmr_condensate, rg, sigmag, gravity
+):
+    """the optical depth using a geometric cross-section approximation, based
+    on (16) in AM01.
+
+    Args:
+        dParr: delta pressure profile (bar)
+        condensate_substance_density: condensate substance density (g/cm3)
+        mmr_condensate: Mass mixing ratio (array) of condensate [Nlayer]
+        rg: rg parameter in the lognormal distribution of condensate size, defined by (9) in AM01
+        sigmag:sigmag parameter (geometric standard deviation) in the lognormal distribution of condensate size, defined by (9) in AM01, must be sigmag > 1
+        gravity: gravity (cm/s2)
+
+    """
+
+    fac = jnp.exp(-2.5 * jnp.log(sigmag) ** 2)
+    dtau = (
+        1.5
+        * mmr_condensate
+        * fac
+        / (rg * condensate_substance_density * gravity)
+        * dParr
+        * bar_cgs
+    )
+    return dtau
+
+
+def layer_optical_depth_clouds_lognormal(
+    dParr,
+    extinction_coefficient,
+    condensate_substance_density,
+    mmr_condensate,
+    rg,
+    sigmag,
+    gravity,
+    N0=1.0,
+):
+    """dtau matrix from the cross section matrix/vector for the lognormal particulate distribution.
+
+
+    Args:
+        dParr: delta pressure profile (bar) [N_layer]
+        extinction coefficient: extinction coefficient  in cgs (cm-1) [N_layer, N_nus]
+        condensate_substance_density: condensate substance density (g/cm3)
+        mmr_condensate: Mass mixing ratio (array) of condensate [Nlayer]
+        rg: rg parameter in the lognormal distribution of condensate size, defined by (9) in AM01
+        sigmag:sigmag parameter (geometric standard deviation) in the lognormal distribution of condensate size, defined by (9) in AM01, must be sigmag > 1
+        gravity: gravity (cm/s2)
+        N0 (float, optional): the normalization of the lognormal distribution ($N_0$). Defaults to 1.0.
+
+    Returns:
+        2D array: optical depth matrix, dtau  [N_layer, N_nus]
+    """
+    expfac = bar_cgs*sigmag**(jnp.log(sigmag**-4.5))  # bar_cgs * exp(-9/2 * (log sigmag)**2), see tests/manual_check/f32/lnmoment_amcloud.py
+    fac = 0.75 / jnp.pi / rg**3 / condensate_substance_density
+    em = extinction_coefficient * mmr_condensate[:, None] / N0
+    return expfac * fac * em * dParr[:, None] / gravity

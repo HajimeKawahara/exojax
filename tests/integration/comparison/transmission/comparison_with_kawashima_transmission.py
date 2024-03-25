@@ -1,5 +1,5 @@
 """ short integration tests for PreMODIT transmission"""
-from jax.config import config
+from jax import config
 import pandas as pd
 import numpy as np
 import jax.numpy as jnp

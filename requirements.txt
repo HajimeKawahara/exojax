@@ -24,3 +24,5 @@ publib
 plotly
 psutil
 seaborn
+PyMieScatt
+numpy<2

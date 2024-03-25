@@ -4,7 +4,7 @@
 
 
 import jax
-from jax.config import config
+from jax import config
 import pandas as pd
 import numpy as np
 import jax.numpy as jnp
@@ -49,7 +49,7 @@ def test_transmission_is_differentiable():
         dit_grid_resolution=1.0,
     )
 
-    sop_inst = SopInstProfile(nu_grid, res, vrmax=100.0)
+    sop_inst = SopInstProfile(nu_grid, vrmax=100.0)
 
     def model(params):
         mmr_CO, mu_fid, T_fid, gravity_btm, radius_btm, RV = params

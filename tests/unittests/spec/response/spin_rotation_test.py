@@ -36,7 +36,7 @@ def _convolve_rigid_rotation_np(resolution, F0, vsini, u1=0.0, u2=0.0):
     return convolved_signal
 
 def test_SopRotation(N=1000):
-    from jax.config import config
+    from jax import config
     from exojax.spec.specop import SopRotation
     config.update("jax_enable_x64", True)
     nus, wav, resolution = wavenumber_grid(4000.0,
@@ -48,7 +48,7 @@ def test_SopRotation(N=1000):
     F0[250 - 5:250 + 5] = 0.5
 
     vsini = 40.0
-    sos = SopRotation(nus, resolution, vsini)
+    sos = SopRotation(nus, vsini)
     
     Frot = sos.rigid_rotation(F0, vsini, u1=0.1, u2=0.1)
     Frot_ = _convolve_rigid_rotation_np(resolution, F0, vsini, u1=0.1, u2=0.1)
@@ -57,7 +57,7 @@ def test_SopRotation(N=1000):
 
 
 def test_convolve_rigid_rotation(N=1000, fig=False):
-    from jax.config import config
+    from jax import config
     config.update("jax_enable_x64", True)
     nus, wav, resolution = wavenumber_grid(4000.0,
                                                4010.0,
@@ -79,7 +79,7 @@ def test_convolve_rigid_rotation(N=1000, fig=False):
     assert res < 1.e-5
 
 def test_convolve_rigid_rotation_ola(N=10000, fig=False):
-    from jax.config import config
+    from jax import config
     config.update("jax_enable_x64", True)
     nus, wav, resolution = wavenumber_grid(4000.0,
                                                4010.0,
@@ -100,7 +100,7 @@ def test_convolve_rigid_rotation_ola(N=10000, fig=False):
     assert res < 1.e-5
 
 def test_SopRotation_ola(N=10000, fig=False):
-    from jax.config import config
+    from jax import config
     from exojax.spec.specop import SopRotation
     config.update("jax_enable_x64", True)
     nus, wav, resolution = wavenumber_grid(4000.0,
@@ -112,7 +112,7 @@ def test_SopRotation_ola(N=10000, fig=False):
     F0[2500 - 50:2500 + 50] = 0.5
     vsini = 4.0
     
-    sos = SopRotation(nus, resolution, vsini, convolution_method = "exojax.signal.ola" )    
+    sos = SopRotation(nus, vsini, convolution_method = "exojax.signal.ola" )    
     Frot = sos.rigid_rotation(F0, vsini, u1=0.1, u2=0.1)
     Frot_ = _convolve_rigid_rotation_np(resolution, F0, vsini, u1=0.1, u2=0.1)
 

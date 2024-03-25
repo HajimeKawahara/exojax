@@ -60,8 +60,8 @@ def test_jaxopt_spectrum(fig=False):
 
     # spectral operators
     vsini_max = 100.0
-    sos_rot = SopRotation(nus, resolution, vsini_max)
-    sos_ip = SopInstProfile(nus, resolution, vsini_max)
+    sos_rot = SopRotation(nus,  vsini_max)
+    sos_ip = SopInstProfile(nus, vsini_max)
 
     def model_c(params, boost, nu1):
         Rp, RV, MMR_CO, T0, alpha, vsini = params * boost

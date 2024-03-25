@@ -11,7 +11,7 @@ from scipy.special import erfcx as sc_erfcx
 from exojax.special import erfcx
 from matplotlib.ticker import FormatStrFormatter
 import matplotlib.pyplot as plt
-#from jax.config import config                                                 #
+#from jax import config                                                 #
 #config.update("jax_enable_x64", True)
 
 N = 10000

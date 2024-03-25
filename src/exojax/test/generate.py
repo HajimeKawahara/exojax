@@ -5,7 +5,7 @@ from exojax.spec import api
 from exojax.test.emulate_mdb import mock_wavenumber_grid
 import pathlib
 import os
-from jax.config import config
+from jax import config
 
 config.update("jax_enable_x64", True)
 

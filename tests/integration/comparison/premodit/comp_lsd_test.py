@@ -31,7 +31,7 @@ def compare_line_shape_density(mdb,nu_grid,Ttest=1000.0,Ttyp=2000.0):
     """ compare the premodit LSD with the direct computation of LSD 3D version
     
     """
-    from exojax.spec.lsd import npgetix
+    from exojax.utils.indexing import npgetix
     from exojax.spec.hitran import line_strength
     from exojax.spec.premodit import make_elower_grid
     #from exojax.spec.premodit import unbiased_lsd_first

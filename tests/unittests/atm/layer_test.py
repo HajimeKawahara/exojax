@@ -20,7 +20,7 @@ def test_log_pressure_is_constant():
 def test_atmoshperic_height_for_isothermal_with_analytic():
     from exojax.utils.grids import wavenumber_grid
     from exojax.spec.atmrt import ArtTransPure
-    from jax.config import config
+    from jax import config
 
     config.update("jax_enable_x64", True)
     mu_fid = 28.00863

@@ -30,7 +30,7 @@ def optelower(
     Returns:
         float: optimal maximum Elower (Eopt) in cm-1
     """
-    from jax.config import config
+    from jax import config
 
     config.update("jax_enable_x64", True)
 
@@ -122,6 +122,7 @@ def optelower(
         )
         _plot_comparison(nu_grid, xsv_master, xsv)
     Emax = elower_grid[:q][-1]
+    print("Found the optimal maximum elower:",Emax,"cm-1")
     return Emax
 
 

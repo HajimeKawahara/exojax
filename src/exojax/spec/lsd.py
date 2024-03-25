@@ -1,7 +1,6 @@
 """functions for computation of line shape density (LSD) 
 
    * there are both numpy and jnp versions. (np)*** is numpy version.
-   * (np)getix provides the contribution and index.
    * (np)add(x)D constructs the (x)Dimensional LSD array given the contribution and index.
 
 """
@@ -10,54 +9,7 @@ from jax.numpy import index_exp
 import jax.numpy as jnp
 from jax import jit
 from exojax.utils.progbar import print_progress
-
-def getix(x, xv):
-    """jnp version of getix.
-
-    Args:
-        x: x array
-        xv: x grid, should be ascending order 
-
-    Returns:
-        cont (contribution)
-        index (index)
-
-    Note:
-       cont is the contribution for i=index+1. 1 - cont is the contribution for i=index. For other i, the contribution should be zero.
-
-    Example:
-
-       >>> from exojax.spec.lsd import getix
-       >>> import jax.numpy as jnp
-       >>> y=jnp.array([1.1,4.3])
-       >>> yv=jnp.arange(6)
-       >>> getix(y,yv)
-       (DeviceArray([0.10000002, 0.3000002 ], dtype=float32), DeviceArray([1, 4], dtype=int32))
-    """
-    indarr = jnp.arange(len(xv))
-    pos = jnp.interp(x, xv, indarr)
-    cont, index = jnp.modf(pos)
-    return cont, index.astype(int)
-
-
-def npgetix(x, xv):
-    """numpy version of getix.
-
-    Args:
-        x: x array
-        xv: x grid, should be ascending order
-
-    Returns:
-        cont (contribution)
-        index (index)
-
-    Note:
-       cont is the contribution for i=index+1. 1 - cont is the contribution for i=index. For other i, the contribution should be zero.
-    """
-    indarr = np.arange(len(xv))
-    pos = np.interp(x, xv, indarr)
-    cont, index = np.modf(pos)
-    return cont, index.astype(int)
+from exojax.utils.indexing import getix
 
 
 def add2D(a, w, cx, ix, cy, iy):

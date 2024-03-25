@@ -52,7 +52,7 @@ In this tutorial, we use ``PreMODIT`` as an opacity calculator.
 .. code:: ipython3
 
     # if you wanna use FP64
-    #from jax.config import config
+    #from jax import config
     #config.update("jax_enable_x64", True)
 
 We use numpyro as a probabilistic programming language (PPL). We have

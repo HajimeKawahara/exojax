@@ -11,7 +11,7 @@ from exojax.spec.lbderror import single_tilde_line_strength_first
 from exojax.spec.lbderror import worst_tilde_line_strength_first
 from exojax.spec.lbderror import optimal_params
 
-from jax.config import config
+from jax import config
 
 config.update("jax_enable_x64", True)
 

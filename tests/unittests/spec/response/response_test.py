@@ -115,7 +115,7 @@ def test_SopInstProfile():
                                                250,
                                                xsmode="lpf")
     
-    SopInst = SopInstProfile(nus, resolution)
+    SopInst = SopInstProfile(nus)
     
     F = SopInst.ipgauss(F0, beta)
     F = SopInst.sampling(F, RV, nusd)
@@ -171,7 +171,7 @@ def test_SopInstProfile_ola(fig=False):
                                                250,
                                                xsmode="lpf")
     
-    SopInst = SopInstProfile(nus, resolution, convolution_method="exojax.signal.ola")
+    SopInst = SopInstProfile(nus, convolution_method="exojax.signal.ola")
     
     F = SopInst.ipgauss(F0, beta)
     F = SopInst.sampling(F, RV, nusd)

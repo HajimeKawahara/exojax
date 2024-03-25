@@ -11,7 +11,7 @@ from exojax.spec.opacalc import OpaDirect
 from exojax.spec.opacalc import OpaModit
 from exojax.spec.atmrt import ArtEmisPure
 
-from jax.config import config
+from jax import config
 
 config.update("jax_enable_x64", True)
 

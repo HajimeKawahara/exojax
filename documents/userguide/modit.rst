@@ -71,7 +71,7 @@ We need to compute contributions to the LSD for 'wav' and 'gammaL'. MODIT/DIT us
 .. code:: ipython
 
        >>> #An example how to use getix
-       >>> from exojax.spec.lsd import getix
+       >>> from exojax.utils.indexing import getix
        >>> import jax.numpy as jnp
        >>> y=jnp.array([1.1,4.3])
        >>> yv=jnp.arange(6)
@@ -84,7 +84,7 @@ For wavenumber, the F64 precision is required. So, `npgetix <../exojax/exojax.sp
        
 .. code:: ipython
               
-       >>> from exojax.spec.lsd import npgetix
+       >>> from exojax.utils.indexing import npgetix
        >>> cx, ix=npgetix(wav,wavgrid)
        >>> cx, ix
        (array([0.29999995]), array([2]))

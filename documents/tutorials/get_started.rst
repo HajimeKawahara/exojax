@@ -10,15 +10,8 @@ real use case.)
 
 .. code:: ipython3
 
-    from jax.config import config
+    from jax import config
     config.update("jax_enable_x64", True)
-
-
-.. parsed-literal::
-
-    /tmp/ipykernel_8741/2124608031.py:1: DeprecationWarning: Accessing jax.config via the jax.config submodule is deprecated.
-      from jax.config import config
-
 
 The following schematic figure explains how ExoJAX works; (1) loading
 databases (``*db``), (2) calculating opacity (``opa``), (3) running
@@ -381,7 +374,7 @@ planet.
 .. code:: ipython3
 
     from exojax.spec.specop import SopRotation
-    sop_rot = SopRotation(nu_grid, resolution, vsini_max=100.0)
+    sop_rot = SopRotation(nu_grid, vsini_max=100.0)
     
     vsini = 50.0
     u1=0.0
@@ -418,7 +411,7 @@ This process is called ``sampling`` (but just interpolation though).
 
     from exojax.spec.specop import SopInstProfile
     from exojax.utils.instfunc import resolution_to_gaussian_std
-    sop_inst = SopInstProfile(nu_grid, resolution, vrmax=1000.0)
+    sop_inst = SopInstProfile(nu_grid, vrmax=1000.0)
     
     RV=40.0 #km/s
     resolution_inst = 3000.0

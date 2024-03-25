@@ -4,7 +4,7 @@ from exojax.test.emulate_mdb import mock_mdb
 from exojax.spec.opacalc import OpaPremodit
 from exojax.test.emulate_mdb import mock_wavenumber_grid
 from exojax.spec.atmrt import ArtEmisPure
-from jax.config import config
+from jax import config
 
 
 def test_check_raise_valueerror_when_32bit():

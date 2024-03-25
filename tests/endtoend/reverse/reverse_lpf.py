@@ -24,7 +24,7 @@ import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 import jax.numpy as jnp
-from jax.config import config
+from jax import config
 
 config.update("jax_enable_x64", True)
 
@@ -63,8 +63,8 @@ vmrH2 = (mmrH2 * mmw / molmassH2)  # VMR
 
 # sos
 vsini_max = 100.0
-sos_rot = SopRotation(nu_grid, res, vsini_max)
-sos_ip = SopInstProfile(nu_grid, res, vsini_max)
+sos_rot = SopRotation(nu_grid, vsini_max)
+sos_ip = SopInstProfile(nu_grid, vsini_max)
 
 
 def model_c(nu1, y1):

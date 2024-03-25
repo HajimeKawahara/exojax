@@ -8,7 +8,7 @@ from exojax.signal.ola import generate_padding_matrix
 from exojax.signal.ola import np_olaconv
 from exojax.signal.ola import optimal_fft_length
 import jax.numpy as jnp
-from jax.config import config
+from jax import config
 
 config.update('jax_enable_x64', True)
 

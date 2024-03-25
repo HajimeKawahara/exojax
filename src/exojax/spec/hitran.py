@@ -10,18 +10,18 @@ def line_strength(T, logsij0, nu_lines, elower, qr, Tref):
     """Line strength as a function of temperature, JAX/XLA compatible
 
     Notes:
-       Tref=296.0 (default) in moldb, but it might have been changed by OpaPremodit.
+        Tref=296.0 (default) in moldb, but it might have been changed by OpaPremodit.
 
     Args:
-       T: temperature (K)
-       logsij0: log(Sij(Tref)) (Tref=296K)
-       nu_lines: line center wavenumber (cm-1)
-       elower: elower
-       qr: partition function ratio qr(T) = Q(T)/Q(Tref)
-       Tref: reference temperature
+        T: temperature (K)
+        logsij0: log(Sij(Tref)) (Tref=296K)
+        nu_lines: line center wavenumber (cm-1)
+        elower: elower
+        qr: partition function ratio qr(T) = Q(T)/Q(Tref)
+        Tref: reference temperature
 
     Returns:
-       Sij(T): Line strength (cm)
+        Sij(T): Line strength (cm)
     """
     expow = logsij0 - hcperk * (elower / T - elower / Tref)
     fac = (1.0 - jnp.exp(-hcperk * nu_lines / T)) / (

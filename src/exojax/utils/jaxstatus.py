@@ -1,4 +1,4 @@
-from jax.config import config
+from jax import config
 import warnings
 
 def check_jax64bit(allow_32bit):

@@ -14,9 +14,81 @@ ExoJAX is at least compatible with
 - PPLs: [NumPyro](https://github.com/pyro-ppl/numpyro), [blackjax](https://github.com/blackjax-devs/blackjax) 
 - Optimizers: [JAXopt](https://github.com/google/jaxopt), [optax](https://github.com/google-deepmind/optax), [bayeux](https://github.com/jax-ml/bayeux)
 
-<img src="https://github.com/HajimeKawahara/exojax/assets/15956904/671a3dc5-718e-463d-911a-08d8ca94119b" Titie="exojax" Width=850px>
+<img src="https://user-images.githubusercontent.com/15956904/222950543-6de25bb2-48f2-4bc7-a588-77daa105442e.png" Titie="exojax" Width=850px>
 
-See ["Get Started"](http://secondearths.sakura.ne.jp/exojax/develop/tutorials/get_started.html) for the first step.
+<details><summary>ExoJAX Classes</summary>
+
+- Databases: *db (mdb: molecular, adb: atomic, cdb:continuum, pdb: particulates)
+- Opacity Calculators: opa  (i.e. Voigt profile)
+- Atmospheric Radiative Transfer: art (emission w, w/o scattering, refelction, transmission)
+- Atompsheric Microphysics: amp (clouds etc)
+
+</details>
+
+## Get Started 
+
+See [this page](http://secondearths.sakura.ne.jp/exojax/develop/tutorials/get_started.html) for the first step!
+
+## Functions
+
+<details open><summary>Voigt Profile :heavy_check_mark: </summary>
+
+```python3
+from exojax.spec import voigt
+nu=numpy.linspace(-10,10,100)
+voigt(nu,1.0,2.0) #sigma_D=1.0, gamma_L=2.0
+```
+
+</details>
+
+<details><summary>Cross Section using HITRAN/HITEMP/ExoMol :heavy_check_mark: </summary>
+ 
+```python
+from exojax.utils.grids import wavenumber_grid
+from exojax.spec.api import MdbExomol
+from exojax.spec.opacalc import OpaPremodit
+
+from jax import config
+config.update("jax_enable_x64", True)
+
+nu_grid,wav,res=wavenumber_grid(1900.0,2300.0,200000,xsmode="premodit",unit="cm-1",)
+mdb = MdbExomol(".database/CO/12C-16O/Li2015",nu_grid)
+opa = OpaPremodit(mdb,nu_grid,auto_trange=[900.0,1100.0])
+xsv = opa.xsvector(1000.0, 1.0) # cross section for 1000K, 1 bar
+```
+
+ <img src="https://user-images.githubusercontent.com/15956904/111430765-2eedf180-873e-11eb-9740-9e1a313d590c.png" Titie="exojax auto cross section" Width=850px> 
+
+</details>
+
+
+
+<details><summary>Do you just want to plot the line strength at T=1000K? </summary>
+
+```python
+mdb.change_reference_temperature(1000.) # at 1000K
+plt.plot(mdb.nu_lines,mdb.line_strength_ref,".")
+```
+
+</details>
+
+<details><summary>Emission Spectrum :heavy_check_mark: </summary>
+
+```python
+art = ArtEmisPure(nu_grid=nu_grid, pressure_btm=1.e2, pressure_top=1.e-8, nlayer=100)
+F = art.run(dtau, Tarr)
+```
+
+<img src="https://user-images.githubusercontent.com/15956904/116488770-286ea000-a8ce-11eb-982d-7884b423592c.png" Titie="exojax auto \emission spectrum" Width=850px> 
+
+</details>
+
+<details><summary>Transmission Spectrum :heavy_check_mark: </summary></details>
+<details><summary>Reflection Spectrum :heavy_check_mark: </summary></details>
+
+
+
+<img src="https://github.com/HajimeKawahara/exojax/assets/15956904/671a3dc5-718e-463d-911a-08d8ca94119b" Titie="exojax" Width=850px>
 
 ## Installation
 
@@ -30,13 +102,14 @@ or
 python setup.py install
 ```
 
-<details><summary> Note on installation w/ GPU support</summary>
+<details><summary>Note on installation w/ GPU support</summary>
 
 :books: You need to install CUDA, JAX w/ NVIDIA GPU support.
 
 Visit [here](https://github.com/google/jax) for the installation of GPU supported JAX.
 
 </details>
+
 
 ## References
 [![paper](https://img.shields.io/badge/paper_I-ApJS_258_31_(2022)-orange)](https://iopscience.iop.org/article/10.3847/1538-4365/ac3b4d) 
