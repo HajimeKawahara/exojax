@@ -53,7 +53,7 @@ Vapor saturation pressures can be obtained using atm.psat
     
     P_enstatite = psat_enstatite_AM01(Tarr)
     P_fe_sol = psat_Fe_AM01(Tarr)
-    #P_fe_sol = _psat_Fe_solid(Tarr) #considers only solif Fe
+    #P_fe_sol = _psat_Fe_solid(Tarr) #considers only solid Fe
 
 
 Computes a cloud base pressure.
