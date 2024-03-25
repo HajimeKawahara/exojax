@@ -99,8 +99,9 @@ vapor saturation puressure devided by VMR.
 .. image:: Ackerman_and_Marley_cloud_model_files/Ackerman_and_Marley_cloud_model_12_0.png
 
 
-Compute VMRs of clouds. Because Parr is an array, we apply jax.vmap to
-atm.amclouds.VMRclouds.
+Compute Mass Mixing Ratio (MMRs) of clouds. In this block, we first
+convert mol mixing ratio of condensates to MMR, then computes a cloud
+profile.
 
 .. code:: ipython3
 
@@ -322,7 +323,7 @@ Then, :math:`r_g` can be computed from :math:`r_w` and other quantities.
 
 .. parsed-literal::
 
-    <matplotlib.legend.Legend at 0x7fed9c7c0c70>
+    <matplotlib.legend.Legend at 0x7f7fac15aad0>
 
 
 
@@ -366,6 +367,13 @@ These processes can be reprodced using ``AmpAmcloud``, which uses
     
     dtau_enstatite = layer_optical_depth_cloudgeo(Parr, deltac_enstatite, MMRc_enstatite, rg, sigmag, g)
     dtau_Fe = layer_optical_depth_cloudgeo(Parr, deltac_Fe, MMRc_Fe, rg, sigmag, g)
+
+
+
+.. parsed-literal::
+
+    /home/kawahara/exojax/src/exojax/spec/dtau_mmwl.py:14: FutureWarning: dtau_mmwl might be removed in future.
+      warnings.warn("dtau_mmwl might be removed in future.", FutureWarning)
 
 
 The Mie scattering can be computed using ``OpaMie``.
@@ -428,8 +436,8 @@ The Mie scattering can be computed using ``OpaMie``.
 
 .. parsed-literal::
 
-      0%|          | 0/63 [00:00<?, ?it/s]100%|██████████| 63/63 [00:17<00:00,  3.61it/s]
-    100%|██████████| 63/63 [00:20<00:00,  3.14it/s]
+    100%|██████████| 63/63 [00:17<00:00,  3.55it/s]
+    100%|██████████| 63/63 [00:20<00:00,  3.09it/s]
 
 
 The difference of the geometric approximation and Mie scattering is a
@@ -552,7 +560,7 @@ Let’s compare with CIA
     from exojax.spec import planck
     from exojax.spec.rtransfer import rtrun_emis_pureabs_fbased2st as rtrun
     #from exojax.spec.rtransfer import rtrun_emis_pureabs_ibased as rtrun
-    sourcef = planck.piBarr(Tarr, nus)
+    sourcef = planck.piBarr(Tarr, nugrid)
     F0 = rtrun(dtau, sourcef)
     F0CIA = rtrun(dtaucH2H2, sourcef)
     F0cl = rtrun(dtau_enstatite[:, None] + np.zeros_like(dtaucH2H2), sourcef)
