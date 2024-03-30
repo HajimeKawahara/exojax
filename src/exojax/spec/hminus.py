@@ -7,7 +7,7 @@ from jax.lax import scan
 from exojax.utils.constants import kB, ccgs, hcgs
 
 
-def log_hminus_continuum(nu_grid, temperature, number_density_e, number_density_h):
+def log_hminus_continuum(nu_grid, temperatures, number_density_e, number_density_h):
     """John (1988) H- continuum opacity.
 
     Args:
@@ -17,7 +17,7 @@ def log_hminus_continuum(nu_grid, temperature, number_density_e, number_density_
         number_density_h: H atom number density array [Nlayer]
 
     Returns:
-        log10(absorption coefficient) [Nlayer,Nnu]
+        log10(absorption coefficient in cm-1) [Nlayer,Nnu]
     """
     # wavelength in units of microns
     wavelength_um = 1e4 / nu_grid
@@ -26,13 +26,13 @@ def log_hminus_continuum(nu_grid, temperature, number_density_e, number_density_
     vkappa_ff = vmap(free_free_absorption, (None, 0), 0)
     mkappa_bf = vmap(vkappa_bf, (0, None), 0)
     mkappa_ff = vmap(vkappa_ff, (0, None), 0)
-    kappa_bf = mkappa_bf(wavelength_um, temperature)
-    kappa_ff = mkappa_ff(wavelength_um, temperature)
+    kappa_bf = mkappa_bf(wavelength_um, temperatures)
+    kappa_ff = mkappa_ff(wavelength_um, temperatures)
     #    kappa_bf = bound_free_absorption(wavelength_um, temperature)
     #    kappa_ff = free_free_absorption(wavelength_um, temperature)
 
     electron_pressure = (
-        number_density_e * kB * temperature
+        number_density_e * kB * temperatures
     )  # //electron pressure in dyne/cm2
     hydrogen_density = number_density_h
 

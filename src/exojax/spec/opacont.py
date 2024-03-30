@@ -63,7 +63,7 @@ class OpaHminus(OpaCont):
         self.ready = True
 
     def logahminus_matrix(self, temperatures, number_density_e, number_density_h):
-        """absorption coefficient matrix of H- continuum
+        """absorption coefficient (cm-1) matrix of H- continuum
 
         Args:
             temperatures (_type_): temperature array
@@ -71,7 +71,7 @@ class OpaHminus(OpaCont):
             number_density_h (_type_): number density of H in cgs
 
         Returns:
-            log10(absorption coefficient) [Nlayer,Nnu]
+            log10(absorption coefficient in cm-1 ) [Nlayer,Nnu]
 
         """
         return log_hminus_continuum(
