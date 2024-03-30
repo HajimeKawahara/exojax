@@ -26,3 +26,17 @@ Lorentz - Lorenz relation
 
 When you need the refractive index, the Lorentz-Lorenz relation `exojax.atm.lorentz_lorenz.refractive_index_Lorentz_Lorenz <../exojax/exojax.atm.html#exojax.atm.lorentz_lorenz.refractive_index_Lorentz_Lorenz>`_ is available. This formulae converts polarizability to refractive index.
 
+
+Using OpaRayleigh
+-----------------------------
+
+`OpaRayleigh` is `opa` for Rayleigh scattering. Easy to use.
+
+
+.. code:: ipython3
+    
+    N=1000
+    nu_grid, wav, res = wavenumber_grid(300, 40000.0, N, xsmode="premodit", unit="nm")
+    opa = OpaRayleigh(nu_grid,"N2")
+    xs = opa.xsvector()
+    
