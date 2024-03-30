@@ -31,11 +31,11 @@ def test_opahminus():
     Tarr = jnp.array([3000.0])
     ne = jnp.array([1.0])
     nh = jnp.array([1.0])
-    nu_grid, wav, res = wavenumber_grid(9000.0, 18000.0, N, xsmode="premodit")
+    nu_grid, wav, res = wavenumber_grid(9000.0, 18000.0, N, xsmode="premodit", unit="AA")
     opa = OpaHminus(nu_grid)
 
     a = opa.logahminus_matrix(Tarr, ne, nh)
-    assert np.sum(a) == pytest.approx(-36358.67)
+    assert np.sum(a) == pytest.approx(-36814.26)
 
 
 if __name__ == "__main__":

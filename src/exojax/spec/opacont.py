@@ -9,6 +9,8 @@ from exojax.spec.hitrancia import interp_logacia_vector
 from exojax.spec.hitrancia import interp_logacia_matrix
 from exojax.spec.mie import mie_lognormal_pymiescatt
 from exojax.spec.hminus import log_hminus_continuum
+from exojax.spec.rayleigh import xsvector_rayleigh_gas
+import warnings
 import jax.numpy as jnp
 from jax import vmap
 import numpy as np
@@ -80,9 +82,59 @@ class OpaHminus(OpaCont):
 
 
 class OpaRayleigh(OpaCont):
-    def __init__(self):
+    def __init__(self, nu_grid, molname):
+        """sets opa
+
+        Args:
+            nu_grid (float, array): wavenumber grid
+            molname (str): gas molecule name, such as "N2"
+        """
         self.method = "rayleigh"
-        ValueError("Not implemented yet")
+        self.nu_grid = nu_grid
+        self.molname = molname
+        self.set_auto_polarizability()
+        self.set_auto_king_factor()
+        self.check_ready()
+
+    def set_auto_polarizability(self):
+        from exojax.atm.polarizability import polarizability
+
+        try:
+            self.polarizability = polarizability[self.molname]
+        except:
+            self.polarizability = None
+            warnings.warn(
+                "No polarizability found. Set opa.polarizability by yourself."
+            )
+
+    def set_auto_king_factor(self):
+        from exojax.atm.polarizability import king_correction_factor
+
+        try:
+            self.king_factor = king_correction_factor[self.molname]
+        except:
+            self.king_factor = 1.0
+            warnings.warn(
+                "No king correction factor found. Applied to 1. you can modify by setting opa.king_factor."
+            )
+
+    def check_ready(self):
+        if self.polarizability is None:
+            print("no opa.polarizability. Not ready for OpaRayleigh yet.")
+            self.ready = False
+        else:
+            print("Ready for OpaRayleigh.")
+            self.ready = True
+
+    def xsvector(self):
+        """computes cross section vector of the Rayleigh scattering
+
+        Returns:
+            float, array: Rayleigh scattring cross section vector [Nnus] in cm2
+        """
+        return xsvector_rayleigh_gas(
+            self.nu_grid, self.polarizability, king_factor=self.king_factor
+        )
 
 
 class OpaMie(OpaCont):
