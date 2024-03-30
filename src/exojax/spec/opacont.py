@@ -8,6 +8,9 @@ Notes:
 from exojax.spec.hitrancia import interp_logacia_vector
 from exojax.spec.hitrancia import interp_logacia_matrix
 from exojax.spec.mie import mie_lognormal_pymiescatt
+from exojax.spec.hminus import log_hminus_continuum
+from exojax.spec.rayleigh import xsvector_rayleigh_gas
+import warnings
 import jax.numpy as jnp
 from jax import vmap
 import numpy as np
@@ -48,22 +51,90 @@ class OpaCIA(OpaCont):
             T, self.nu_grid, self.cdb.nucia, self.cdb.tcia, self.cdb.logac
         )
 
-    def logacia_matrix(self, temperature):
+    def logacia_matrix(self, temperatures):
         return interp_logacia_matrix(
-            temperature, self.nu_grid, self.cdb.nucia, self.cdb.tcia, self.cdb.logac
+            temperatures, self.nu_grid, self.cdb.nucia, self.cdb.tcia, self.cdb.logac
         )
 
 
 class OpaHminus(OpaCont):
-    def __init__(self):
+    def __init__(self, nu_grid):
         self.method = "hminus"
-        ValueError("Not implemented yet")
+        self.warning = True
+        self.nu_grid = nu_grid
+        self.ready = True
+
+    def logahminus_matrix(self, temperatures, number_density_e, number_density_h):
+        """absorption coefficient (cm-1) matrix of H- continuum
+
+        Args:
+            temperatures (_type_): temperature array
+            number_density_e (_type_): number density of electron in cgs
+            number_density_h (_type_): number density of H in cgs
+
+        Returns:
+            log10(absorption coefficient in cm-1 ) [Nlayer,Nnu]
+
+        """
+        return log_hminus_continuum(
+            self.nu_grid, temperatures, number_density_e, number_density_h
+        )
 
 
 class OpaRayleigh(OpaCont):
-    def __init__(self):
+    def __init__(self, nu_grid, molname):
+        """sets opa
+
+        Args:
+            nu_grid (float, array): wavenumber grid
+            molname (str): gas molecule name, such as "N2"
+        """
         self.method = "rayleigh"
-        ValueError("Not implemented yet")
+        self.nu_grid = nu_grid
+        self.molname = molname
+        self.set_auto_polarizability()
+        self.set_auto_king_factor()
+        self.check_ready()
+
+    def set_auto_polarizability(self):
+        from exojax.atm.polarizability import polarizability
+
+        try:
+            self.polarizability = polarizability[self.molname]
+        except:
+            self.polarizability = None
+            warnings.warn(
+                "No polarizability found. Set opa.polarizability by yourself."
+            )
+
+    def set_auto_king_factor(self):
+        from exojax.atm.polarizability import king_correction_factor
+
+        try:
+            self.king_factor = king_correction_factor[self.molname]
+        except:
+            self.king_factor = 1.0
+            warnings.warn(
+                "No king correction factor found. Applied to 1. you can modify by setting opa.king_factor."
+            )
+
+    def check_ready(self):
+        if self.polarizability is None:
+            print("no opa.polarizability. Not ready for OpaRayleigh yet.")
+            self.ready = False
+        else:
+            print("Ready for OpaRayleigh.")
+            self.ready = True
+
+    def xsvector(self):
+        """computes cross section vector of the Rayleigh scattering
+
+        Returns:
+            float, array: Rayleigh scattring cross section vector [Nnus] in cm2
+        """
+        return xsvector_rayleigh_gas(
+            self.nu_grid, self.polarizability, king_factor=self.king_factor
+        )
 
 
 class OpaMie(OpaCont):
@@ -167,10 +238,11 @@ class OpaMie(OpaCont):
         nind = len(refraction_index_wavenumber_restricted)
         refraction_index_restricted = self.pdb.refraction_index[imin:imax]
 
-
         # generates grid
-        convfactor_to_cgs = 1.0e-8 / self.pdb.N0  # conversion to cgs(1/Mega meter to 1/cm)
-    
+        convfactor_to_cgs = (
+            1.0e-8 / self.pdb.N0
+        )  # conversion to cgs(1/Mega meter to 1/cm)
+
         sigexg = np.zeros(nind)
         sigscg = np.zeros(nind)
         gg = np.zeros(nind)
@@ -186,10 +258,10 @@ class OpaMie(OpaCont):
                 rg_nm,
                 self.pdb.N0,
                 rgrid,
-            ) 
+            )
 
-            sigexg[ind_m] = coeff[0]*convfactor_to_cgs
-            sigscg[ind_m] = coeff[1]*convfactor_to_cgs
+            sigexg[ind_m] = coeff[0] * convfactor_to_cgs
+            sigscg[ind_m] = coeff[1] * convfactor_to_cgs
             gg[ind_m] = coeff[3]
 
         # interpolation
