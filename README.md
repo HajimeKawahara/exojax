@@ -14,7 +14,7 @@ ExoJAX is at least compatible with
 - PPLs: [NumPyro](https://github.com/pyro-ppl/numpyro), [blackjax](https://github.com/blackjax-devs/blackjax) 
 - Optimizers: [JAXopt](https://github.com/google/jaxopt), [optax](https://github.com/google-deepmind/optax), [bayeux](https://github.com/jax-ml/bayeux)
 
-<img src="https://user-images.githubusercontent.com/15956904/222950543-6de25bb2-48f2-4bc7-a588-77daa105442e.png" Titie="exojax" Width=850px>
+<img src="https://github.com/HajimeKawahara/exojax/assets/15956904/8aa9673b-b64b-4b65-a76c-2966ef1edbc7" Titie="exojax" Width=850px>
 
 <details><summary>ExoJAX Classes</summary>
 
