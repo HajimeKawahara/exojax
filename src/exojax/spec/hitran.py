@@ -48,10 +48,10 @@ def line_strength_numpy(T, Sij0, nu_lines, elower, qr, Tref=Tref_original):
     """
     return (
         Sij0
-        / qr
         * np.exp(-hcperk * elower * (1.0 / T - 1.0 / Tref))
         * np.expm1(-hcperk * nu_lines / T)
         / np.expm1(-hcperk * nu_lines / Tref)
+        / qr  # Apply qr (jnp array) last to minimize rounding errors in 32bit mode.
     )
 
 
@@ -63,7 +63,7 @@ def gamma_hitran(P, T, Pself, n_air, gamma_air_ref, gamma_self_ref):
         P: pressure (bar)
         T: temperature (K)
         Pself: partial pressure (bar)
-        n_air: coefficient of the  temperature  dependence  of  the  air-broadened halfwidth
+        n_air: coefficient of the temperature dependence of the air-broadened halfwidth
         gamma_air_ref: gamma air
         gamma_self_ref: gamma self
 

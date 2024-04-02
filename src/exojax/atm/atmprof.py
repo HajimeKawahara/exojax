@@ -153,7 +153,9 @@ def gh_product(temperature, mean_molecular_weight):
     Returns:
         gravity x pressure scale height cm2/s2
     """
-    return kB * temperature / (m_u * mean_molecular_weight)
+    return (
+        kB * temperature / m_u / mean_molecular_weight
+    )  # Apply mmw (jnp array) last to minimize rounding errors in 32bit mode.
 
 
 def pressure_scale_height(gravity, T, mean_molecular_weight):
