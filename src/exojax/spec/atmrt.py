@@ -87,7 +87,6 @@ class ArtCommon:
 
 
         """
-        print("pressure decrease rate k=", self.pressure_decrease_rate)
         normalized_height, normalized_radius_lower = normalized_layer_height(
             temperature,
             self.pressure_decrease_rate,
@@ -160,7 +159,7 @@ class ArtCommon:
         Returns:
             dtau: opacity profile, whose element is optical depth in each layer.
         """
-        
+
         return layer_optical_depth_clouds_lognormal(
             self.dParr,
             extinction_coefficient,
