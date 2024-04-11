@@ -1,4 +1,4 @@
-Particulates Database (pdb)
+Particulates Database (``pdb``)
 ==================================
 
 The ``pdb`` is the database for particulates in ``ExoJAX``, namely the microphysics of clouds.

@@ -6,7 +6,7 @@ The cross section of Rayleigh scattering of gas from polarizability is expressed
 :math:`\sigma(\nu) = \frac{ 128 \pi^5 }{3} \nu^4 \alpha^2 F_k`
 
 where 
-:math:`\alpha^2`
+:math:`\alpha`
 is polarizability and 
 :math:`F_k`
 is the King factor.
