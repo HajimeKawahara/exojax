@@ -23,6 +23,7 @@
     -- simpson integration: rtrun_trans_pureabs_simpson
 
 """
+
 from jax import jit
 import jax.numpy as jnp
 from jax.lax import scan
@@ -36,6 +37,7 @@ from exojax.spec.twostream import set_scat_trans_coeffs
 from exojax.special.expn import E1
 from exojax.signal.integrate import simpson
 from jax.scipy.integrate import trapezoid
+
 
 @jit
 def trans2E3(x):
@@ -129,6 +131,17 @@ def rtrun_emis_pureabs_ibased(dtau, source_matrix, mus, weights):
 
 
 def initialize_gaussian_quadrature(nstream):
+    """Initialization of Gaussian Quadrature
+
+    Args:
+        nstream (int): the number of the stream
+
+    Raises:
+        ValueError: odd nstream error
+
+    Returns:
+        array, array: cosine angle array (mu), weight array
+    """
     from scipy.special import roots_legendre
 
     if nstream % 2 == 0:
@@ -140,10 +153,6 @@ def initialize_gaussian_quadrature(nstream):
     # correction because integration should be between 0 to 1, but roots_legendre uses -1 to 1.
     mus = 0.5 * (mus + 1.0)
     weights = 0.5 * weights
-    print("Gaussian Quadrature Parameters: ")
-    print("mu = ", mus)
-    print("weight =", weights)
-
     return mus, weights
 
 
@@ -306,7 +315,7 @@ def rtrun_emis_scat_lart_toonhm(
     )
 
     # avoids zero
-    epsilon = 1.e-8
+    epsilon = 1.0e-8
     scat_coeff = scat_coeff + epsilon
     trans_coeff = trans_coeff + epsilon
 
