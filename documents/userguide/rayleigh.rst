@@ -1,11 +1,18 @@
 Rayleigh scattering
 ========================
 
-The corss section of Rayleigh scattering of gas from polarizability is expressed as 
+The cross section of Rayleigh scattering of gas from polarizability is expressed as 
 
 :math:`\sigma(\nu) = \frac{ 128 \pi^5 }{3} \nu^4 \alpha^2 F_k`
 
-In ExoJAX, this can be computed using `spec.rayleigh.xsvector_rayleigh_gas <../exojax/exojax.spec.html#exojax.spec.rayleigh.xsvector_rayleigh_gas>`_ .
+where 
+:math:`\alpha^2`
+is polarizability and 
+:math:`F_k`
+is the King factor.
+
+
+In ExoJAX, the cross section can be computed using `spec.rayleigh.xsvector_rayleigh_gas <../exojax/exojax.spec.html#exojax.spec.rayleigh.xsvector_rayleigh_gas>`_ .
 
 .. code:: ipython3
     
@@ -27,10 +34,10 @@ Lorentz - Lorenz relation
 When you need the refractive index, the Lorentz-Lorenz relation `exojax.atm.lorentz_lorenz.refractive_index_Lorentz_Lorenz <../exojax/exojax.atm.html#exojax.atm.lorentz_lorenz.refractive_index_Lorentz_Lorenz>`_ is available. This formulae converts polarizability to refractive index.
 
 
-Using OpaRayleigh
+Uses OpaRayleigh
 -----------------------------
 
-`OpaRayleigh` is `opa` for Rayleigh scattering. Easy to use.
+``OpaRayleigh`` is ``opa`` for Rayleigh scattering. It's easy to use.
 
 
 .. code:: ipython3
