@@ -47,7 +47,6 @@ voigt(nu,1.0,2.0) #sigma_D=1.0, gamma_L=2.0
 from exojax.utils.grids import wavenumber_grid
 from exojax.spec.api import MdbExomol
 from exojax.spec.opacalc import OpaPremodit
-
 from jax import config
 config.update("jax_enable_x64", True)
 
@@ -85,10 +84,6 @@ F = art.run(dtau, Tarr)
 
 <details><summary>Transmission Spectrum :heavy_check_mark: </summary></details>
 <details><summary>Reflection Spectrum :heavy_check_mark: </summary></details>
-
-
-
-<img src="https://github.com/HajimeKawahara/exojax/assets/15956904/671a3dc5-718e-463d-911a-08d8ca94119b" Titie="exojax" Width=850px>
 
 ## Installation
 
