@@ -87,7 +87,6 @@ class ArtCommon:
 
 
         """
-        print("pressure decrease rate k=", self.pressure_decrease_rate)
         normalized_height, normalized_radius_lower = normalized_layer_height(
             temperature,
             self.pressure_decrease_rate,
@@ -160,7 +159,7 @@ class ArtCommon:
         Returns:
             dtau: opacity profile, whose element is optical depth in each layer.
         """
-        
+
         return layer_optical_depth_clouds_lognormal(
             self.dParr,
             extinction_coefficient,
@@ -329,9 +328,13 @@ class ArtReflectPure(ArtCommon):
         nu_grid=None,
         rtsolver="fluxadding_toon_hemispheric_mean",
     ):
-        """initialization of ArtEmisPure
+        """initialization of ArtReflectPure
 
         Args:
+            pressure_top (float, optional): top pressure in bar. Defaults to 1.0e-8.
+            pressure_btm (float, optional): bottom pressure in bar. Defaults to 1.0e2.
+            nlayer (int, optional): the number of the atmospheric layers. Defaults to 100.
+            nu_grid (float, array, optional): the wavenumber grid. Defaults to None.
             rtsolver (str): Radiative Transfer Solver, fluxadding_toon_hemispheric_mean
 
 
@@ -400,6 +403,10 @@ class ArtReflectEmis(ArtCommon):
         """initialization of ArtEmisPure
 
         Args:
+            pressure_top (float, optional): top pressure in bar. Defaults to 1.0e-8.
+            pressure_btm (float, optional): bottom pressure in bar. Defaults to 1.0e2.
+            nlayer (int, optional): the number of the atmospheric layers. Defaults to 100.
+            nu_grid (float, array, optional): the wavenumber grid. Defaults to None.
             rtsolver (str): Radiative Transfer Solver, fluxadding_toon_hemispheric_mean
 
 
@@ -473,9 +480,13 @@ class ArtEmisScat(ArtCommon):
         nu_grid=None,
         rtsolver="fluxadding_toon_hemispheric_mean",
     ):
-        """initialization of ArtEmisPure
+        """initialization of ArtEmisScat
 
         Args:
+            pressure_top (float, optional): top pressure in bar. Defaults to 1.0e-8.
+            pressure_btm (float, optional): bottom pressure in bar. Defaults to 1.0e2.
+            nlayer (int, optional): the number of the atmospheric layers. Defaults to 100.
+            nu_grid (float, array, optional): the wavenumber grid. Defaults to None.
             rtsolver (str): Radiative Transfer Solver, fluxadding_toon_hemispheric_mean (default), lart_toon_hemispheric_mean
 
         """
@@ -544,6 +555,9 @@ class ArtEmisScat(ArtCommon):
 class ArtEmisPure(ArtCommon):
     """Atmospheric RT for emission w/ pure absorption
 
+    Notes:
+        The default radiative transfer scheme has been the intensity-based transfer since version 1.5
+
     Attributes:
         pressure_layer: pressure profile in bar
 
@@ -555,11 +569,20 @@ class ArtEmisPure(ArtCommon):
         pressure_btm=1.0e2,
         nlayer=100,
         nu_grid=None,
-        rtsolver="fbased2st",
-        nstream=2,
+        rtsolver="ibased",
+        nstream=8,
     ):
-        """initialization of ArtEmisPure"""
+        """
+        initialization of ArtEmisPure
 
+        Args:
+            pressure_top (float, optional): top pressure in bar. Defaults to 1.0e-8.
+            pressure_btm (float, optional): bottom pressure in bar. Defaults to 1.0e2.
+            nlayer (int, optional): the number of the atmospheric layers. Defaults to 100.
+            nu_grid (float, array, optional): the wavenumber grid. Defaults to None.
+            rtsolver (str, optional): radiative transfer solver (ibased, fbased2st, ibased_linsap). Defaults to "ibased".
+            nstream (int, optional): the number of stream. Defaults to 8. Should be 2 for rtsolver = fbased2st
+        """
         super().__init__(pressure_top, pressure_btm, nlayer, nu_grid)
         self.method = "emission_with_pure_absorption"
         self.set_capable_rtsolvers()
@@ -652,8 +675,8 @@ class ArtTransPure(ArtCommon):
         """initialization of ArtTransPure
 
         Args:
-            pressure_top (_type_, optional): layer top pressure in bar. Defaults to 1.0e-8.
-            pressure_btm (_type_, optional): layer bottom pressure in bar. Defaults to 1.0e2.
+            pressure_top (float, optional): layer top pressure in bar. Defaults to 1.0e-8.
+            pressure_btm (float, optional): layer bottom pressure in bar. Defaults to 1.0e2.
             nlayer (int, optional): The number of the layers Defaults to 100.
             integration (str, optional): Integration scheme ("simpson", "trapezoid"). Defaults to "simpson".
 

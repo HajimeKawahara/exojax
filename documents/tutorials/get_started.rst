@@ -1,7 +1,7 @@
 Get Started
 ===========
 
-Last update: September 9th (2023) Hajime Kawahara for v1.5
+Last update: April 11th (2024) Hajime Kawahara for v1.5
 
 First, we recommend 64-bit if you do not think about numerical errors.
 Use jax.config to set 64-bit. (But note that 32-bit is sufficient in
@@ -54,18 +54,15 @@ wavenumber range first.
     xsmode =  premodit
     xsmode assumes ESLOG in wavenumber space: mode=premodit
     ======================================================================
-    We changed the policy of the order of wavenumber/wavelength grids
-    wavenumber grid should be in ascending order and now 
-    users can specify the order of the wavelength grid by themselves.
+    The wavenumber grid should be in ascending order.
+    The users can specify the order of the wavelength grid by themselves.
     Your wavelength grid is in ***  descending  *** order
-    This might causes the bug if you update ExoJAX. 
-    Note that the older ExoJAX assumes ascending order as wavelength grid.
     ======================================================================
 
 
 .. parsed-literal::
 
-    /home/kawahara/exojax/src/exojax/utils/grids.py:145: UserWarning: Resolution may be too small. R=523403.606697253
+    /home/kawahara/exojax/src/exojax/utils/grids.py:142: UserWarning: Resolution may be too small. R=523403.606697253
       warnings.warn('Resolution may be too small. R=' + str(resolution),
 
 
@@ -155,15 +152,11 @@ tempreature range we will use is 500-1500K.
 
     uniqidx: 0it [00:00, ?it/s]
 
+
 .. parsed-literal::
 
     Premodit: Twt= 1108.7151960064205 K Tref= 570.4914318566549 K
     Making LSD:|####################| 100%
-
-
-.. parsed-literal::
-
-    
 
 
 Then let’s compute cross section for two different temperature 500 and
@@ -231,7 +224,10 @@ atmosphere to 100 and 1.e-5 bar.
 Since v1.5, one can choose the rtsolver (radiative transfer solver) from
 the flux-based 2 stream solver (``fbase2st``) and the intensity-based
 n-stream sovler (``ibased``). Use ``rtsolver`` option. In the latter
-case, the number of the stream (``nstream``) can be specified.
+case, the number of the stream (``nstream``) can be specified. Note that
+the default rtsolver for the pure absorption (i.e. no scattering nor
+reflection) has been ``ibased`` since v1.5. In our experience,
+``ibased`` is faster and more accurate than ``fbased``.
 
 .. code:: ipython3
 
@@ -356,7 +352,7 @@ dominant contribution is within the layer. If not, you need to change
 
 .. code:: ipython3
 
-    cf=plotcf(nu_grid, dtau, Tarr,art.pressure, art.dParr)
+    cf = plotcf(nu_grid, dtau, Tarr, art.pressure, art.dParr)
 
 
 
@@ -374,25 +370,26 @@ planet.
 .. code:: ipython3
 
     from exojax.spec.specop import SopRotation
+    
     sop_rot = SopRotation(nu_grid, vsini_max=100.0)
     
     vsini = 50.0
-    u1=0.0
-    u2=0.0 
-    Frot = sop_rot.rigid_rotation(F, vsini, u1, u2) 
+    u1 = 0.0
+    u2 = 0.0
+    Frot = sop_rot.rigid_rotation(F, vsini, u1, u2)
 
 
 .. parsed-literal::
 
-    /home/kawahara/exojax/src/exojax/utils/grids.py:145: UserWarning: Resolution may be too small. R=523403.606697253
+    /home/kawahara/exojax/src/exojax/utils/grids.py:142: UserWarning: Resolution may be too small. R=523403.606697253
       warnings.warn('Resolution may be too small. R=' + str(resolution),
 
 
 .. code:: ipython3
 
-    fig=plt.figure(figsize=(15,4))
-    plt.plot(nu_grid,F, label="raw spectrum")
-    plt.plot(nu_grid,Frot, label="rotated")
+    fig = plt.figure(figsize=(15, 4))
+    plt.plot(nu_grid, F, label="raw spectrum")
+    plt.plot(nu_grid, Frot, label="rotated")
     plt.xlabel("wavenumber (cm-1)")
     plt.ylabel("flux (erg/s/cm2/cm-1)")
     plt.legend()
@@ -411,9 +408,10 @@ This process is called ``sampling`` (but just interpolation though).
 
     from exojax.spec.specop import SopInstProfile
     from exojax.utils.instfunc import resolution_to_gaussian_std
+    
     sop_inst = SopInstProfile(nu_grid, vrmax=1000.0)
     
-    RV=40.0 #km/s
+    RV = 40.0  # km/s
     resolution_inst = 3000.0
     beta_inst = resolution_to_gaussian_std(resolution_inst)
     Finst = sop_inst.ipgauss(Frot, beta_inst)
@@ -423,16 +421,16 @@ This process is called ``sampling`` (but just interpolation though).
 
 .. parsed-literal::
 
-    /home/kawahara/exojax/src/exojax/utils/grids.py:145: UserWarning: Resolution may be too small. R=523403.606697253
+    /home/kawahara/exojax/src/exojax/utils/grids.py:142: UserWarning: Resolution may be too small. R=523403.606697253
       warnings.warn('Resolution may be too small. R=' + str(resolution),
 
 
 .. code:: ipython3
 
-    fig=plt.figure(figsize=(15,4))
-    plt.plot(nu_grid,Frot, label="rotated")
-    plt.plot(nu_grid,Finst, label="rotated+IP")
-    plt.plot(nu_obs,Fobs, ".", label="rotated+IP (sampling)")
+    fig = plt.figure(figsize=(15, 4))
+    plt.plot(nu_grid, Frot, label="rotated")
+    plt.plot(nu_grid, Finst, label="rotated+IP")
+    plt.plot(nu_obs, Fobs, ".", label="rotated+IP (sampling)")
     
     
     plt.xlabel("wavenumber (cm-1)")
@@ -446,7 +444,3 @@ This process is called ``sampling`` (but just interpolation though).
 
 
 That’s it.
-
-
-
-

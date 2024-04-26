@@ -33,7 +33,9 @@ Scattering and Clouds
    :maxdepth: 1
 
    userguide/rayleigh.rst
+   userguide/pdb.rst
    userguide/mie.rst
+   userguide/amp.rst
    userguide/vterm.rst
    userguide/comp_pymiescatt.rst
    userguide/amclouds_comparison_virga.rst

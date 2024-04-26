@@ -14,7 +14,7 @@ ExoJAX is at least compatible with
 - PPLs: [NumPyro](https://github.com/pyro-ppl/numpyro), [blackjax](https://github.com/blackjax-devs/blackjax) 
 - Optimizers: [JAXopt](https://github.com/google/jaxopt), [optax](https://github.com/google-deepmind/optax), [bayeux](https://github.com/jax-ml/bayeux)
 
-<img src="https://user-images.githubusercontent.com/15956904/222950543-6de25bb2-48f2-4bc7-a588-77daa105442e.png" Titie="exojax" Width=850px>
+<img src="https://github.com/HajimeKawahara/exojax/assets/15956904/8aa9673b-b64b-4b65-a76c-2966ef1edbc7" Titie="exojax" Width=850px>
 
 <details><summary>ExoJAX Classes</summary>
 
@@ -47,7 +47,6 @@ voigt(nu,1.0,2.0) #sigma_D=1.0, gamma_L=2.0
 from exojax.utils.grids import wavenumber_grid
 from exojax.spec.api import MdbExomol
 from exojax.spec.opacalc import OpaPremodit
-
 from jax import config
 config.update("jax_enable_x64", True)
 
@@ -85,10 +84,6 @@ F = art.run(dtau, Tarr)
 
 <details><summary>Transmission Spectrum :heavy_check_mark: </summary></details>
 <details><summary>Reflection Spectrum :heavy_check_mark: </summary></details>
-
-
-
-<img src="https://github.com/HajimeKawahara/exojax/assets/15956904/671a3dc5-718e-463d-911a-08d8ca94119b" Titie="exojax" Width=850px>
 
 ## Installation
 

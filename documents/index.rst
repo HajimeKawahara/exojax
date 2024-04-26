@@ -6,7 +6,7 @@
 ExoJAX
 ==================================
 
-Version 1.4 (:doc:`userguide/history`)
+Version 1.5 (:doc:`userguide/history`)
 
 `ExoJAX <https://github.com/HajimeKawahara/exojax>`_ provides an auto-differentiable high-resolution spectrum model for exoplanets/brown dwarfs using `JAX <https://github.com/google/jax>`_. 
 ExoJAX enables a fully Bayesian inference of the high-dispersion data to fit the line-by-line spectral computation to the observed spectrum, 

@@ -45,7 +45,7 @@ In this tutorial, we use ``PreMODIT`` as an opacity calculator.
 
 .. parsed-literal::
 
-    /home/exoplanet01/exojax/src/exojax/spec/dtau_mmwl.py:14: FutureWarning: dtau_mmwl might be removed in future.
+    /home/kawahara/exojax/src/exojax/spec/dtau_mmwl.py:14: FutureWarning: dtau_mmwl might be removed in future.
       warnings.warn("dtau_mmwl might be removed in future.", FutureWarning)
 
 
@@ -81,10 +81,18 @@ normlized it, and add Gaussian noise.
     flux = dat['flux'].values
     wavd = nu2wav(nusd, wavelength_order="ascending")
 
+
+.. parsed-literal::
+
+    /home/kawahara/exojax/src/exojax/spec/unitconvert.py:62: UserWarning: Both input wavelength and output wavenumber are in ascending order.
+      warnings.warn(
+
+
 .. code:: ipython3
 
     sigmain = 0.05
     norm = 20000
+    np.random.seed(1)
     nflux = flux / norm + np.random.normal(0, sigmain, len(wavd))
 
 We first set the wavenumber grid enough to cover the observed spectrum.
@@ -104,18 +112,19 @@ We first set the wavenumber grid enough to cover the observed spectrum.
     xsmode =  premodit
     xsmode assumes ESLOG in wavenumber space: mode=premodit
     ======================================================================
-    We changed the policy of the order of wavenumber/wavelength grids
-    wavenumber grid should be in ascending order and now 
-    users can specify the order of the wavelength grid by themselves.
+    The wavenumber grid should be in ascending order.
+    The users can specify the order of the wavelength grid by themselves.
     Your wavelength grid is in ***  ascending  *** order
-    This might causes the bug if you update ExoJAX. 
-    Note that the older ExoJAX assumes ascending order as wavelength grid.
     ======================================================================
 
 
 .. parsed-literal::
 
-    /home/exoplanet01/exojax/src/exojax/utils/grids.py:145: UserWarning: Resolution may be too small. R=617160.1067701889
+    /home/kawahara/exojax/src/exojax/spec/unitconvert.py:62: UserWarning: Both input wavelength and output wavenumber are in ascending order.
+      warnings.warn(
+    /home/kawahara/exojax/src/exojax/spec/unitconvert.py:62: UserWarning: Both input wavelength and output wavenumber are in ascending order.
+      warnings.warn(
+    /home/kawahara/exojax/src/exojax/utils/grids.py:142: UserWarning: Resolution may be too small. R=617160.1067701889
       warnings.warn('Resolution may be too small. R=' + str(resolution),
 
 
@@ -133,8 +142,8 @@ We would analyze the emission spectrum. So, we use ``ArtEmisPure`` as
 
 .. parsed-literal::
 
-    rtsolver:  fbased2st
-    Flux-based two-stream solver, isothermal layer (ExoJAX1, HELIOS-R1 like)
+    rtsolver:  ibased
+    Intensity-based n-stream solver, isothermal layer (e.g. NEMESIS, pRT like)
 
 
 ``beta_inst`` is a standard deviation of the instrumental profile.
@@ -161,31 +170,27 @@ ExoMol website.
                       nu_grid=nu_grid,
                       diffmode=diffmode,
                       auto_trange=[Tlow, Thigh],
-                      dit_grid_resolution=0.2,allow_32bit=True)
+                      dit_grid_resolution=1.0,allow_32bit=True)
 
 
 .. parsed-literal::
 
-    HITRAN exact name= (12C)(1H)4
-    HITRAN exact name= (12C)(1H)4
-
-
-.. parsed-literal::
-
-    /home/exoplanet01/exojax/src/exojax/utils/molname.py:178: FutureWarning: e2s will be replaced to exact_molname_exomol_to_simple_molname.
+    /home/kawahara/exojax/src/exojax/utils/molname.py:178: FutureWarning: e2s will be replaced to exact_molname_exomol_to_simple_molname.
       warnings.warn(
-    /home/exoplanet01/exojax/src/exojax/utils/molname.py:65: UserWarning: No isotope number identified.
+    /home/kawahara/exojax/src/exojax/utils/molname.py:65: UserWarning: No isotope number identified.
       warnings.warn("No isotope number identified.", UserWarning)
-    /home/exoplanet01/exojax/src/exojax/utils/molname.py:65: UserWarning: No isotope number identified.
+    /home/kawahara/exojax/src/exojax/utils/molname.py:65: UserWarning: No isotope number identified.
       warnings.warn("No isotope number identified.", UserWarning)
-    /home/exoplanet01/exojax/src/exojax/spec/molinfo.py:28: UserWarning: exact molecule name is not Exomol nor HITRAN form.
+    /home/kawahara/exojax/src/exojax/spec/molinfo.py:28: UserWarning: exact molecule name is not Exomol nor HITRAN form.
       warnings.warn("exact molecule name is not Exomol nor HITRAN form.")
-    /home/exoplanet01/exojax/src/exojax/spec/molinfo.py:29: UserWarning: No molmass available
+    /home/kawahara/exojax/src/exojax/spec/molinfo.py:29: UserWarning: No molmass available
       warnings.warn("No molmass available", UserWarning)
 
 
 .. parsed-literal::
 
+    HITRAN exact name= (12C)(1H)4
+    HITRAN exact name= (12C)(1H)4
     Molecule:  CH4
     Isotopologue:  12C-1H4
     Background atmosphere:  H2
@@ -211,7 +216,7 @@ ExoMol website.
 
 .. parsed-literal::
 
-    /home/exoplanet01/anaconda3/lib/python3.10/site-packages/radis-0.15-py3.10-linux-x86_64.egg/radis/api/exomolapi.py:607: AccuracyWarning: The default broadening parameter (alpha = 0.0488 cm^-1 and n = 0.4) are used for J'' > 16 up to J'' = 40
+    /home/kawahara/exojax/src/radis/radis/api/exomolapi.py:607: AccuracyWarning: The default broadening parameter (alpha = 0.0488 cm^-1 and n = 0.4) are used for J'' > 16 up to J'' = 40
       warnings.warn(
 
 
@@ -219,40 +224,41 @@ ExoMol website.
 
     N= 80505310
     OpaPremodit: params automatically set.
-    Robust range: 397.77407283130566 - 1689.7679243628259 K
-    Tref changed: 296.0K->1153.6267095763965K
+    default elower grid trange (degt) file version: 2
+    Robust range: 393.5569458240504 - 1647.2060977798956 K
+    Tref changed: 296.0K->1108.1485374361412K
 
 
 .. parsed-literal::
 
-    /home/exoplanet01/exojax/src/exojax/utils/jaxstatus.py:19: UserWarning: JAX is 32bit mode. We recommend to use 64bit mode. 
+    /home/kawahara/exojax/src/exojax/utils/jaxstatus.py:19: UserWarning: JAX is 32bit mode. We recommend to use 64bit mode. 
     You can change to 64bit mode by writing 
     
         from jax import config 
         config.update("jax_enable_x64", True)
     
       warnings.warn(msg+how_change_msg)
-    /home/exoplanet01/exojax/src/exojax/spec/opacalc.py:169: UserWarning: dit_grid_resolution is not None. Ignoring broadening_parameter_resolution.
+    /home/kawahara/exojax/src/exojax/spec/opacalc.py:171: UserWarning: dit_grid_resolution is not None. Ignoring broadening_parameter_resolution.
       warnings.warn(
-    /home/exoplanet01/exojax/src/exojax/spec/api.py:390: RuntimeWarning: divide by zero encountered in log
+    /home/kawahara/exojax/src/exojax/spec/api.py:326: RuntimeWarning: divide by zero encountered in log
       self.logsij0 = np.log(self.line_strength_ref)
 
 
 .. parsed-literal::
 
     OpaPremodit: Tref_broadening is set to  774.5966692414833 K
-    # of reference width grid :  3
+    # of reference width grid :  2
     # of temperature exponent grid : 2
 
 
 .. parsed-literal::
 
-    uniqidx: 100%|██████████| 1/1 [00:01<00:00,  1.68s/it]
+    uniqidx: 0it [00:00, ?it/s]
 
 
 .. parsed-literal::
 
-    Premodit: Twt= 461.3329793405918 K Tref= 1153.6267095763965 K
+    Premodit: Twt= 457.65619999186345 K Tref= 1108.1485374361412 K
     Making LSD:|####################| 100%
 
 
@@ -374,8 +380,7 @@ The following is the numpyro model, i.e. prior and sample.
     kernel = NUTS(model_c, forward_mode_differentiation=False)
 
 Let’s run the HMC-NUTS. In my environment, it took ~2 hours using A4500.
-We observed here the number of divergences of 179. If you use FP64,
-maybe no divergence.
+We observed here the number of divergences of 2.
 
 .. code:: ipython3
 
@@ -386,21 +391,21 @@ maybe no divergence.
 
 .. parsed-literal::
 
-    sample: 100%|██████████| 1500/1500 [2:18:31<00:00,  5.54s/it, 511 steps of size 4.79e-03. acc. prob=0.69]   
+    sample: 100%|██████████| 1500/1500 [2:25:22<00:00,  5.81s/it, 1023 steps of size 4.53e-03. acc. prob=0.94]  
 
 
 .. parsed-literal::
 
     
                     mean       std    median      5.0%     95.0%     n_eff     r_hat
-       MMR_CH4      0.01      0.00      0.01      0.01      0.01    196.80      1.02
-            RV      9.40      0.38      9.38      8.80     10.07    231.02      1.00
-            Rp      0.57      0.10      0.56      0.42      0.70    196.13      1.02
-            T0   1221.15     17.40   1220.48   1192.18   1246.90    270.27      1.00
-         alpha      0.11      0.01      0.11      0.10      0.12    153.76      1.00
-         vsini     19.68      0.70     19.66     18.48     20.82    203.31      1.00
+       MMR_CH4      0.01      0.00      0.01      0.00      0.01    459.21      1.00
+            RV      9.32      0.40      9.33      8.69      9.99    547.61      1.00
+            Rp      0.67      0.19      0.62      0.40      0.98    448.36      1.00
+            T0   1204.92     17.17   1204.94   1174.23   1229.56    635.51      1.00
+         alpha      0.10      0.01      0.10      0.10      0.11    497.56      1.00
+         vsini     19.50      0.67     19.47     18.47     20.67    648.31      1.00
     
-    Number of divergences: 179
+    Number of divergences: 2
 
 
 .. code:: ipython3
