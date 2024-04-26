@@ -5,17 +5,30 @@
  [![paper](https://img.shields.io/badge/paper-ApJS_258_31_(2022)-orange)](https://iopscience.iop.org/article/10.3847/1538-4365/ac3b4d) 
  <a href="https://codeclimate.com/github/HajimeKawahara/exojax/maintainability"><img src="https://api.codeclimate.com/v1/badges/97c5e8835f3ef9c4ad7c/maintainability" /></a>
 
-Auto-differentiable line-by-line spectral modelling of exoplanets/brown dwarfs/M dwarfs using JAX. Read [the docs](http://secondearths.sakura.ne.jp/exojax) 🐕. 
-In short, ExoJAX allows you to do gradient based optimisation and HMC NUTS fitting using the latest database.
+Differentiable spectral modelling of exoplanets/brown dwarfs/M dwarfs using JAX!
+Read [the docs](http://secondearths.sakura.ne.jp/exojax/develop) 🐕. 
+In short, ExoJAX allows you to do gradient based optimizations and HMC-NUTS samplings using the latest database.
 
 ExoJAX is at least compatible with
 
-- [NumPyro](https://github.com/pyro-ppl/numpyro) (PPL)
-- BlackJAX
-- [JAXopt](https://github.com/google/jaxopt) (differentiable optimizer)
+- PPLs: [NumPyro](https://github.com/pyro-ppl/numpyro), [blackjax](https://github.com/blackjax-devs/blackjax) 
+- Optimizers: [JAXopt](https://github.com/google/jaxopt), [optax](https://github.com/google-deepmind/optax), [bayeux](https://github.com/jax-ml/bayeux)
 
-<img src="https://user-images.githubusercontent.com/15956904/222950543-6de25bb2-48f2-4bc7-a588-77daa105442e.png" Titie="exojax" Width=850px>
- 
+<img src="https://github.com/HajimeKawahara/exojax/assets/15956904/8aa9673b-b64b-4b65-a76c-2966ef1edbc7" Titie="exojax" Width=850px>
+
+<details><summary>ExoJAX Classes</summary>
+
+- Databases: *db (mdb: molecular, adb: atomic, cdb:continuum, pdb: particulates)
+- Opacity Calculators: opa  (i.e. Voigt profile)
+- Atmospheric Radiative Transfer: art (emission w, w/o scattering, refelction, transmission)
+- Atompsheric Microphysics: amp (clouds etc)
+
+</details>
+
+## Get Started 
+
+See [this page](http://secondearths.sakura.ne.jp/exojax/develop/tutorials/get_started.html) for the first step!
+
 ## Functions
 
 <details open><summary>Voigt Profile :heavy_check_mark: </summary>
@@ -34,8 +47,7 @@ voigt(nu,1.0,2.0) #sigma_D=1.0, gamma_L=2.0
 from exojax.utils.grids import wavenumber_grid
 from exojax.spec.api import MdbExomol
 from exojax.spec.opacalc import OpaPremodit
-
-from jax.config import config
+from jax import config
 config.update("jax_enable_x64", True)
 
 nu_grid,wav,res=wavenumber_grid(1900.0,2300.0,200000,xsmode="premodit",unit="cm-1",)
@@ -47,6 +59,8 @@ xsv = opa.xsvector(1000.0, 1.0) # cross section for 1000K, 1 bar
  <img src="https://user-images.githubusercontent.com/15956904/111430765-2eedf180-873e-11eb-9740-9e1a313d590c.png" Titie="exojax auto cross section" Width=850px> 
 
 </details>
+
+
 
 <details><summary>Do you just want to plot the line strength at T=1000K? </summary>
 
@@ -68,7 +82,8 @@ F = art.run(dtau, Tarr)
 
 </details>
 
-See http://secondearths.sakura.ne.jp/exojax/develop/tutorials/get_started.html for the first step!
+<details><summary>Transmission Spectrum :heavy_check_mark: </summary></details>
+<details><summary>Reflection Spectrum :heavy_check_mark: </summary></details>
 
 ## Installation
 
@@ -82,32 +97,14 @@ or
 python setup.py install
 ```
 
-<details><summary> Note on installation w/ GPU support</summary>
+<details><summary>Note on installation w/ GPU support</summary>
 
-:books: You need to install CUDA, NumPyro, JAX w/ NVIDIA GPU support, and cuDNN. 
+:books: You need to install CUDA, JAX w/ NVIDIA GPU support.
 
-- NumPyro
-
-ExoJAX supports NumPyro >=0.7.0. Please check the required JAX version by NumPyro. In May 2021, it seems the recent version of [NumPyro](https://github.com/pyro-ppl/numpyro) requires jaxlib>=0.1.62 (see [setup.py](https://github.com/pyro-ppl/numpyro/blob/master/setup.py) of NumPyro for instance). 
-
-- JAX
-
-Check you cuda version:
-
-```
-nvcc -V
-```
-
-Install such as
-
-```
-pip install --upgrade pip
-pip install --upgrade "jax[cuda]" -f https://storage.googleapis.com/jax-releases/jax_releases.html
-```
-
-Please visit [here](https://github.com/google/jax) for details.
+Visit [here](https://github.com/google/jax) for the installation of GPU supported JAX.
 
 </details>
+
 
 ## References
 [![paper](https://img.shields.io/badge/paper_I-ApJS_258_31_(2022)-orange)](https://iopscience.iop.org/article/10.3847/1538-4365/ac3b4d) 
@@ -116,4 +113,4 @@ Please visit [here](https://github.com/google/jax) for details.
 
 ## License
 
-🐈 Copyright 2020-2023 ExoJAX contributors. exojax is publicly available under the MIT license.
+🐈 Copyright 2020-2024 ExoJAX contributors. ExoJAX is publicly available under the MIT license.

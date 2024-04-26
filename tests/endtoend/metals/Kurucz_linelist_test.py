@@ -56,7 +56,7 @@ def test_Kurucz_linelist():
 
     xsmatrix = opa.xsmatrix(Tarr, Parr)
     mmr_arr = art.constant_mmr_profile(VMR_Fe)
-    dtaua_K = art.opacity_profile_lines(xsmatrix, mmr_arr, mmw, g)
+    dtaua_K = art.opacity_profile_xs(xsmatrix, mmr_arr, mmw, g)
 
     assert np.isclose(np.sum(dtaua_K), 6644.0303)
 

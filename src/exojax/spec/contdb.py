@@ -4,11 +4,10 @@
 """
 import numpy as np
 import jax.numpy as jnp
-from jax import lax
 import pathlib
 from exojax.spec.hitrancia import read_cia
 
-__all__ = ['CdbCIA']
+__all__ = ["CdbCIA"]
 
 
 class CdbCIA(object):
@@ -16,9 +15,9 @@ class CdbCIA(object):
         """Continuum database for HITRAN CIA.
 
         Args:
-           path: path for HITRAN cia file
-           nurange: wavenumber range list (cm-1) or wavenumber array
-           margin: margin for nurange (cm-1)
+            path: path for HITRAN cia file
+            nurange: wavenumber range list (cm-1) or wavenumber array
+            margin: margin for nurange (cm-1)
         """
         self.nurange = [np.min(nurange), np.max(nurange)]
         self.margin = margin
@@ -26,7 +25,8 @@ class CdbCIA(object):
         if not self.path.exists():
             self.download()
         self.nucia, self.tcia, ac = read_cia(
-            path, self.nurange[0]-self.margin, self.nurange[1]+self.margin)
+            path, self.nurange[0] - self.margin, self.nurange[1] + self.margin
+        )
         self.logac = jnp.array(np.log10(ac))
         self.tcia = jnp.array(self.tcia)
         self.nucia = jnp.array(self.nucia)
@@ -35,20 +35,23 @@ class CdbCIA(object):
         """Downloading HITRAN cia file.
 
         Note:
-           The download URL is written in exojax.utils.url.
+            The download URL is written in exojax.utils.url.
         """
         import urllib.request
         import os
         from exojax.utils.url import url_HITRANCIA
+
         try:
             os.makedirs(str(self.path.parent), exist_ok=True)
             url = url_HITRANCIA()+self.path.name
-            urllib.request.urlretrieve(url, str(self.path))
+            data = urllib.request.urlopen(url).read()
+            with open(str(self.path), mode="wb") as f:
+                f.write(data)   
+            #urllib.request.urlretrieve(url, str(self.path))
         except:
-            print('HITRAN download failed')
+            print("HITRAN download failed")
 
 
-if __name__ == '__main__':
-    ciaH2H2 = CdbCIA(
-        '~/exojax/data/CIA/H2-H2_2011.cia', nurange=[4050.0, 4150.0])
+if __name__ == "__main__":
+    ciaH2H2 = CdbCIA("~/exojax/data/CIA/H2-H2_2011.cia", nurange=[4050.0, 4150.0])
     print(ciaH2H2.tcia)

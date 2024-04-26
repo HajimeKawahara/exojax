@@ -7,7 +7,7 @@ from jax.lax import scan
 import tqdm
 from exojax.spec.ditkernel import folded_voigt_kernel_logst
 from jax.numpy import index_exp as joi
-from exojax.spec.dit import getix
+from exojax.utils.indexing import getix
 from exojax.spec.modit import inc2D_givenx
 from exojax.spec.lpf import voigt
 from jax import scipy as jsc

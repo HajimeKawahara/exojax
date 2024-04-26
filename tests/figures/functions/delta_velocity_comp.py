@@ -2,7 +2,7 @@ import jax.numpy as jnp
 import numpy as np
 from exojax.utils.constants import c
 import matplotlib.pyplot as plt
-from jax.config import config
+from jax import config
 #config.update("jax_enable_x64", True)
 
 

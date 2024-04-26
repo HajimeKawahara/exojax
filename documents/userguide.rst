@@ -1,5 +1,4 @@
    
-
 Molecular Database
 =======================
 
@@ -23,8 +22,23 @@ Opacity Calculation
    userguide/hjerting.rst
    userguide/modit.rst
    userguide/premodit.rst
+   userguide/premodit_trange.rst
    userguide/benchmark.rst
    userguide/fp.rst
+
+
+Scattering and Clouds
+========================
+.. toctree::
+   :maxdepth: 1
+
+   userguide/rayleigh.rst
+   userguide/pdb.rst
+   userguide/mie.rst
+   userguide/amp.rst
+   userguide/vterm.rst
+   userguide/comp_pymiescatt.rst
+   userguide/amclouds_comparison_virga.rst
 
 Radiative Transfer
 ========================
@@ -33,22 +47,29 @@ Radiative Transfer
    :maxdepth: 1
 
    userguide/rtransfer.rst
+   userguide/rtransfer_fbased_pure.rst
+   userguide/rtransfer_ibased_pure.rst
+   userguide/rtransfer_fbased.rst
+   userguide/rtransfer_fbased_reflection.rst
+   userguide/rtransfer_transmission.rst
 
 Spectral Operators
-=======================
-
-   N/A
-   
-Others
 =======================
 
 .. toctree::
    :maxdepth: 1
 
-   userguide/vterm.rst
-   userguide/comp.rst
+   userguide/sop.rst
 
    
+Others
+====================
+
+.. toctree::
+   :maxdepth: 1
+
+   userguide/comp.rst
+
 
 For Developers
 ===================

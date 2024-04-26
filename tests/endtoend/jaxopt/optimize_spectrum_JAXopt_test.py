@@ -60,8 +60,8 @@ def test_jaxopt_spectrum(fig=False):
 
     # spectral operators
     vsini_max = 100.0
-    sos_rot = SopRotation(nus, resolution, vsini_max)
-    sos_ip = SopInstProfile(nus, resolution, vsini_max)
+    sos_rot = SopRotation(nus,  vsini_max)
+    sos_ip = SopInstProfile(nus, vsini_max)
 
     def model_c(params, boost, nu1):
         Rp, RV, MMR_CO, T0, alpha, vsini = params * boost
@@ -75,7 +75,7 @@ def test_jaxopt_spectrum(fig=False):
             #CO
             xsm_CO = opa.xsmatrix(Tarr, art.pressure)
             mmr_profile = art.constant_mmr_profile(MMR_CO)
-            dtaumCO = art.opacity_profile_lines(xsm_CO, mmr_profile,
+            dtaumCO = art.opacity_profile_xs(xsm_CO, mmr_profile,
                                                 mdbCO.molmass, g)
             #CIA
             logacia = opacia.logacia_matrix(Tarr)

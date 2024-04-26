@@ -3,7 +3,7 @@ from scipy.special import expn
 from exojax.spec import rtransfer as rt
 import jax.numpy as jnp
 import pytest
-from jax.config import config                                                 #
+from jax import config                                                 #
 config.update("jax_enable_x64", True)
 
 

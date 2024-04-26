@@ -5,21 +5,23 @@ Basics
    :maxdepth: 1
 
    tutorials/get_started.rst
-   tutorials/optimize_spectrum_JAXopt.rst
+   tutorials/optimize_spectrum.rst
    tutorials/reverse_premodit.rst
    
 
 Applications
 ====================
 
-   
-Retrieval More
---------------------------
+Tips for Real Analysis
+-------------------------
 
 .. toctree::
    :maxdepth: 1
 
+   tutorials/Fitting_Telluric_Lines.rst
    tutorials/reverse_precompute_grid.rst
+   userguide/memorysetting.rst	
+   tutorials/elower_setting.rst
 
 
 Transmission Spectra
@@ -30,6 +32,14 @@ Transmission Spectra
 
    tutorials/Transmission_beta.rst
 
+Reflection Spectrum
+------------------------------------
+
+.. toctree::
+   :maxdepth: 1
+
+   tutorials/Jupiter_cloud_model_using_amp.rst
+   tutorials/Jupiter_Hires_Modeling.rst
 
 Molecular/Atomic/Continuum Databases
 ---------------------------------------
@@ -42,14 +52,6 @@ Molecular/Atomic/Continuum Databases
    tutorials/Fortrat.rst
    tutorials/CIA_opacity.rst
 
-Tuning ExoJAX
-===========================
-
-.. toctree::
-   :maxdepth: 1
-
-   userguide/memorysetting.rst	
-   tutorials/elower_setting.rst
 
 Multi Molecule/Segments Mdb and Opa Handler
 =============================================
@@ -78,6 +80,15 @@ Cross Section using Various Opacity Calculators
 
 Others
 ================
+
+Scattering
+--------------------
+
+.. toctree::
+   :maxdepth: 1
+
+   userguide/rayleigh.rst
+
 
 Micro Chemical/Physical Processes
 --------------------------------------

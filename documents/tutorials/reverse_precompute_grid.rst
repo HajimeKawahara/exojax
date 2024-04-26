@@ -8,7 +8,7 @@ modeling. Here, we demonstrate the grid-based retrieval using ExoJAX.
 
 .. code:: ipython3
 
-    from jax.config import config
+    from jax import config
     config.update("jax_enable_x64", True)
 
 .. code:: ipython3
@@ -37,6 +37,13 @@ modeling. Here, we demonstrate the grid-based retrieval using ExoJAX.
     from exojax.utils.grids import wavenumber_grid
     from exojax.utils.instfunc import resolution_to_gaussian_std
     from exojax.test.data import SAMPLE_SPECTRA_CH4_NEW
+
+
+
+.. parsed-literal::
+
+    /home/kawahara/exojax/src/exojax/spec/dtau_mmwl.py:14: FutureWarning: dtau_mmwl might be removed in future.
+      warnings.warn("dtau_mmwl might be removed in future.", FutureWarning)
 
 
 .. code:: ipython3
@@ -76,7 +83,7 @@ We make the grid model using ArtEmissPure and MdbExomol.
     
     Tlow = 400.0
     Thigh = 1500.0
-    art = ArtEmisPure(nu_grid, pressure_top=1.e-8, pressure_btm=1.e2, nlayer=100)
+    art = ArtEmisPure(nu_grid=nu_grid, pressure_top=1.e-8, pressure_btm=1.e2, nlayer=100)
     art.change_temperature_range(Tlow, Thigh)
     Mp = 33.2
     Rinst = 100000.
@@ -116,21 +123,39 @@ We make the grid model using ArtEmissPure and MdbExomol.
 
     xsmode =  premodit
     xsmode assumes ESLOG in wavenumber space: mode=premodit
-    HITRAN exact name= (12C)(1H)4
-    HITRAN exact name= (12C)(1H)4
-    Background atmosphere:  H2
+    ======================================================================
+    We changed the policy of the order of wavenumber/wavelength grids
+    wavenumber grid should be in ascending order and now 
+    users can specify the order of the wavelength grid by themselves.
+    Your wavelength grid is in ***  descending  *** order
+    This might causes the bug if you update ExoJAX. 
+    Note that the older ExoJAX assumes ascending order as wavelength grid.
+    ======================================================================
 
 
 .. parsed-literal::
 
-    /home/kawahara/exojax/src/exojax/utils/grids.py:126: UserWarning: Resolution may be too small. R=617160.1067701889
+    /home/kawahara/exojax/src/exojax/utils/grids.py:145: UserWarning: Resolution may be too small. R=617160.1067701889
       warnings.warn('Resolution may be too small. R=' + str(resolution),
-    /home/kawahara/exojax/src/exojax/utils/molname.py:133: FutureWarning: e2s will be replaced to exact_molname_exomol_to_simple_molname.
+
+
+.. parsed-literal::
+
+    rtsolver:  fbased2st
+    Flux-based two-stream solver, isothermal layer (ExoJAX1, HELIOS-R1 like)
+    HITRAN exact name= (12C)(1H)4
+    HITRAN exact name= (12C)(1H)4
+    		 => Downloading from http://www.exomol.com/db/CH4/12C-1H4/YT10to10/12C-1H4__YT10to10.def
+
+
+.. parsed-literal::
+
+    /home/kawahara/exojax/src/exojax/utils/molname.py:178: FutureWarning: e2s will be replaced to exact_molname_exomol_to_simple_molname.
       warnings.warn(
-    /home/kawahara/exojax/src/exojax/utils/molname.py:49: UserWarning: No isotope number identified.
-      warnings.warn("No isotope number identified.",UserWarning)
-    /home/kawahara/exojax/src/exojax/utils/molname.py:49: UserWarning: No isotope number identified.
-      warnings.warn("No isotope number identified.",UserWarning)
+    /home/kawahara/exojax/src/exojax/utils/molname.py:65: UserWarning: No isotope number identified.
+      warnings.warn("No isotope number identified.", UserWarning)
+    /home/kawahara/exojax/src/exojax/utils/molname.py:65: UserWarning: No isotope number identified.
+      warnings.warn("No isotope number identified.", UserWarning)
     /home/kawahara/exojax/src/exojax/spec/molinfo.py:28: UserWarning: exact molecule name is not Exomol nor HITRAN form.
       warnings.warn("exact molecule name is not Exomol nor HITRAN form.")
     /home/kawahara/exojax/src/exojax/spec/molinfo.py:29: UserWarning: No molmass available
@@ -139,28 +164,13 @@ We make the grid model using ArtEmissPure and MdbExomol.
 
 .. parsed-literal::
 
-    Reading .database/CH4/12C-1H4/YT10to10/12C-1H4__YT10to10__06000-06100.trans.bz2
-    Reading .database/CH4/12C-1H4/YT10to10/12C-1H4__YT10to10__06100-06200.trans.bz2
-    .broad is used.
-    Broadening code level= a1
-    default broadening parameters are used for  23  J lower states in  40  states
-    # of lines =  80505310
-    OpaPremodit: params automatically set.
-    Robust range: 397.7740728313057 - 1635.1214022614588 K
-    Tref changed: 296.0K->433.7496941348324K
-
-
-.. parsed-literal::
-
-    uniqidx: 100%|██████████| 1/1 [00:01<00:00,  1.87s/it]
-
-
-.. parsed-literal::
-
-    Premodit: Twt= 1021.1189195562007 K Tref= 433.7496941348324 K
-    Making LSD:|####################| 100%
-    Making LSD:|####################| 100%
-    H2-H2
+    		 => Downloading from http://www.exomol.com/db/CH4/12C-1H4/YT10to10/12C-1H4__YT10to10.pf
+    		 => Downloading from http://www.exomol.com/db/CH4/12C-1H4/YT10to10/12C-1H4__YT10to10.states.bz2
+    		 => Downloading from http://www.exomol.com/db/CH4/12C-1H4/12C-1H4__H2.broad
+    		 => Downloading from http://www.exomol.com/db/CH4/12C-1H4/12C-1H4__He.broad
+    		 => Downloading from http://www.exomol.com/db/CH4/12C-1H4/12C-1H4__air.broad
+    Error: Couldn't download .broad file at http://www.exomol.com/db/CH4/12C-1H4/12C-1H4__air.broad and save.
+    Note: Caching states data to the vaex format. After the second time, it will become much faster.
 
 
 Because we would like to infer T0 and the rotational broadenings and so

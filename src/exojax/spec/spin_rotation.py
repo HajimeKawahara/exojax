@@ -2,6 +2,36 @@ from jax import custom_jvp
 import jax.numpy as jnp
 from jax import jit
 from exojax.signal.convolve import convolve_same
+from exojax.signal.ola import olaconv, ola_lengths, generate_zeropad
+
+
+@jit
+def convolve_rigid_rotation_ola(folded_F0, vr_array, vsini, u1=0.0, u2=0.0):
+    """Apply the Rotation response to a spectrum F (No OLA and No cuDNN).
+
+    Args:
+        folded_F0: original spectrum (F0) folded to (ndiv, div_length) form
+        vr_array: fix-sized vr array for kernel, see utils.dvgrid_rigid_rotation
+        vsini: V sini for rotation (km/s)
+        RV: radial velocity
+        u1: Limb-darkening coefficient 1
+        u2: Limb-darkening coefficient 2
+
+    Return:
+        response-applied spectrum (F)
+    """
+    kernel = rotkernel(vr_array/vsini, u1, u2)
+    kernel = kernel / jnp.sum(kernel, axis=0)
+
+    ndiv, div_length, filter_length = ola_lengths(folded_F0, kernel)
+    F0_hat, kernel_hat = generate_zeropad(folded_F0, kernel)
+    ola = olaconv(F0_hat, kernel_hat, ndiv, div_length, filter_length)
+    
+    edge = int((len(kernel) - 1) / 2)
+    convolved_signal = ola[edge:-edge]
+    
+    return convolved_signal
+
 
 @jit
 def convolve_rigid_rotation(F0, vr_array, vsini, u1=0.0, u2=0.0):

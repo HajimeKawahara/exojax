@@ -16,7 +16,7 @@ In exojax, hjert is the Voigt-Hjerting function.
 
 .. parsed-literal::
 
-    DeviceArray(0.3047442, dtype=float32)
+    Array(0.3047442, dtype=float32)
 
 
 
@@ -34,7 +34,7 @@ We can differentiate the Voigt-Hjerting function by :math:`x`.
 
 .. parsed-literal::
 
-    DeviceArray(-0.19305044, dtype=float32, weak_type=True)
+    Array(-0.19305044, dtype=float32, weak_type=True)
 
 
 
@@ -65,7 +65,7 @@ need to wrap it by jax.vmap.
 
 .. parsed-literal::
 
-    <matplotlib.legend.Legend at 0x7ff774685370>
+    <matplotlib.legend.Legend at 0x7f062c293820>
 
 
 

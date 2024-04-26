@@ -3,6 +3,7 @@ include src/exojax/data/atom/barklem_collet_2016_pff.txt
 include src/exojax/data/atom/iso_mn.txt
 include src/exojax/data/atom/HITRAN_molparam.txt
 include src/exojax/data/clouds/drag_force.txt
+include src/exojax/data/clouds/ammonia_liquid_density.csv
 include src/exojax/data/abundance/AAG2021.dat
 include src/exojax/data/atom/NIST_Atomic_Ionization_Energies.txt
 
@@ -10,7 +11,6 @@ include src/exojax/data/testdata/spectrum.txt
 include src/exojax/data/testdata/spectrum_ch4.txt
 include src/exojax/data/testdata/spectrum_ch4_new.txt
 include src/exojax/data/testdata/spectrum_co.txt
-include src/exojax/data/testdata/moldb_h2o_exomol.pickle
 include src/exojax/data/testdata/moldb_vald.pickle
 include src/exojax/data/testdata/lpf_test_ref.txt
 include src/exojax/data/testdata/modit_test_ref.txt
@@ -43,6 +43,10 @@ include src/exojax/data/testdata/CO/12C-16O/SAMPLE/12C-16O__SAMPLE.trans.bz2
 include src/exojax/data/testdata/CO/12C-16O/SAMPLE/12C-16O__SAMPLE.trans.hdf5
 
 include src/exojax/data/premodit/elower_grid_trange.npz
+include src/exojax/data/premodit/elower_grid_trange_v2.npz
+
+include src/exojax/data/testdata/test.refrind
+include src/exojax/data/testdata/miegrid_lognorm_test.mg.npz
 
 graft tests
 graft examples

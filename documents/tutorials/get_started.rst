@@ -1,14 +1,16 @@
 Get Started
 ===========
 
-Last update: July 2nd (2023) Hajime Kawahara for v1.4
+Last update: April 11th (2024) Hajime Kawahara for v1.5
 
-First, we recommend 64-bit unless you can think precision seriously. Use
-jax.config to set 64-bit:
+First, we recommend 64-bit if you do not think about numerical errors.
+Use jax.config to set 64-bit. (But note that 32-bit is sufficient in
+most cases. Consider to use 32-bit (faster, less device memory) for your
+real use case.)
 
 .. code:: ipython3
 
-    from jax.config import config
+    from jax import config
     config.update("jax_enable_x64", True)
 
 The following schematic figure explains how ExoJAX works; (1) loading
@@ -51,18 +53,23 @@ wavenumber range first.
 
     xsmode =  premodit
     xsmode assumes ESLOG in wavenumber space: mode=premodit
+    ======================================================================
+    The wavenumber grid should be in ascending order.
+    The users can specify the order of the wavelength grid by themselves.
+    Your wavelength grid is in ***  descending  *** order
+    ======================================================================
 
 
 .. parsed-literal::
 
-    /home/kawahara/exojax/src/exojax/utils/grids.py:126: UserWarning: Resolution may be too small. R=523403.606697253
+    /home/kawahara/exojax/src/exojax/utils/grids.py:142: UserWarning: Resolution may be too small. R=523403.606697253
       warnings.warn('Resolution may be too small. R=' + str(resolution),
 
 
-Then, let’s load the molecular database. We here use Carbon monooxide in
+Then, let’s load the molecular database. We here use Carbon monoxide in
 Exomol. ``CO/12C-16O/Li2015`` means
-``Carbon monooxide/ isotopes = 12C + 16O / database name``. You can
-check the database name in the ExoMol website (https://www.exomol.com/).
+``Carbon monoxide/ isotopes = 12C + 16O / database name``. You can check
+the database name in the ExoMol website (https://www.exomol.com/).
 
 .. code:: ipython3
 
@@ -74,18 +81,39 @@ check the database name in the ExoMol website (https://www.exomol.com/).
 
 .. parsed-literal::
 
-    /home/kawahara/exojax/src/exojax/utils/molname.py:133: FutureWarning: e2s will be replaced to exact_molname_exomol_to_simple_molname.
+    /home/kawahara/exojax/src/exojax/utils/molname.py:178: FutureWarning: e2s will be replaced to exact_molname_exomol_to_simple_molname.
       warnings.warn(
 
 
 .. parsed-literal::
 
     HITRAN exact name= (12C)(16O)
+    Molecule:  CO
+    Isotopologue:  12C-16O
     Background atmosphere:  H2
-    Reading .database/CO/12C-16O/Li2015/12C-16O__Li2015.trans.bz2
-    .broad is used.
-    Broadening code level= a0
-    default broadening parameters are used for  71  J lower states in  152  states
+    ExoMol database:  None
+    Local folder:  .database/CO/12C-16O/Li2015
+    Transition files: 
+    	 => File 12C-16O__Li2015.trans
+    #        i_upper    i_lower    A          nu_lines      gup    jlower    jupper    elower      Sij0
+    0        84         42         1.155e-06  2.405586      3      0         1         66960.7124  3.811968891483239e-164
+    1        83         41         1.161e-06  2.441775      3      0         1         65819.903   9.66302808612315e-162
+    2        82         40         1.162e-06  2.477774      3      0         1         64654.9206  2.743839242930895e-159
+    3        81         39         1.159e-06  2.513606      3      0         1         63465.8042  8.733228323835037e-157
+    4        80         38         1.152e-06  2.549292      3      0         1         62252.5793  3.1152203985525016e-154
+    ...      ...        ...        ...        ...           ...    ...       ...       ...         ...
+    125,491  306        253        7.164e-10  22147.135424  15     6         7         80.7354     1.8282485560395954e-31
+    125,492  474        421        9.852e-10  22147.86595   23     10        11        211.4041    2.0425455628245774e-31
+    125,493  348        295        7.72e-10   22147.897299  17     7         8         107.6424    1.9589545214604644e-31
+    125,494  432        379        9.056e-10  22148.262711  21     9         10        172.978     2.0662209079393328e-31
+    125,495  390        337        8.348e-10  22148.273111  19     8         9         138.3903    2.03878272167021e-31
+    Broadening code level: a0
+
+
+.. parsed-literal::
+
+    /home/kawahara/exojax/src/radis/radis/api/exomolapi.py:607: AccuracyWarning: The default broadening parameter (alpha = 0.07 cm^-1 and n = 0.5) are used for J'' > 80 up to J'' = 152
+      warnings.warn(
 
 
 2. Computation of the Cross Section using opa
@@ -97,39 +125,37 @@ tempreature range we will use is 500-1500K.
 
 .. code:: ipython3
 
+    from sys import version
     from exojax.spec.opacalc import OpaPremodit
     
-    opa = OpaPremodit(mdb, nu_grid, auto_trange=[500.0, 1500.0])
+    opa = OpaPremodit(mdb, nu_grid, auto_trange=[500.0, 1500.0],dit_grid_resolution=1.0)
+
+
+.. parsed-literal::
+
+    /home/kawahara/exojax/src/exojax/spec/opacalc.py:171: UserWarning: dit_grid_resolution is not None. Ignoring broadening_parameter_resolution.
+      warnings.warn(
 
 
 .. parsed-literal::
 
     OpaPremodit: params automatically set.
-    Robust range: 484.50562701065246 - 1804.6009417674848 K
-    Tref changed: 296.0K->521.067611616332K
-    Tref_broadening is set to  866.0254037844389 K
-    # of reference width grid :  4
+    default elower grid trange (degt) file version: 2
+    Robust range: 485.7803992045456 - 1514.171191195336 K
+    Tref changed: 296.0K->570.4914318566549K
+    OpaPremodit: Tref_broadening is set to  866.0254037844389 K
+    # of reference width grid :  2
     # of temperature exponent grid : 2
 
 
 .. parsed-literal::
 
-    uniqidx: 100%|██████████| 2/2 [00:00<00:00, 5174.96it/s]
-
-.. parsed-literal::
-
-    Premodit: Twt= 1153.8856089961712 K Tref= 521.067611616332 K
+    uniqidx: 0it [00:00, ?it/s]
 
 
 .. parsed-literal::
 
-    
-
-
-.. parsed-literal::
-
-    Making LSD:|####################| 100%
-    Making LSD:|####################| 100%
+    Premodit: Twt= 1108.7151960064205 K Tref= 570.4914318566549 K
     Making LSD:|####################| 100%
 
 
@@ -178,7 +204,7 @@ You can also plot the line strengths at T=1500K. We can first change the
 
 .. parsed-literal::
 
-    Tref changed: 521.067611616332K->1500.0K
+    Tref changed: 570.4914318566549K->1500.0K
 
 
 
@@ -192,14 +218,28 @@ ExoJAX can solve the radiative transfer and derive the emission
 spectrum. To do so, ExoJAX has ``art`` class. ``ArtEmisPure`` means
 Atomospheric Radiative Transfer for Emission with Pure absorption. So,
 ``ArtEmisPure`` does not include scattering. We set the number of the
-atmospheric layer to 100 (nlayer) and the pressure at bottom and top
-atmosphere to 100 and 1.e-8 bar.
+atmospheric layer to 200 (nlayer) and the pressure at bottom and top
+atmosphere to 100 and 1.e-5 bar.
+
+Since v1.5, one can choose the rtsolver (radiative transfer solver) from
+the flux-based 2 stream solver (``fbase2st``) and the intensity-based
+n-stream sovler (``ibased``). Use ``rtsolver`` option. In the latter
+case, the number of the stream (``nstream``) can be specified. Note that
+the default rtsolver for the pure absorption (i.e. no scattering nor
+reflection) has been ``ibased`` since v1.5. In our experience,
+``ibased`` is faster and more accurate than ``fbased``.
 
 .. code:: ipython3
 
     from exojax.spec.atmrt import ArtEmisPure
-    art = ArtEmisPure(nu_grid=nu_grid, pressure_btm=1.e2, pressure_top=1.e-8, nlayer=100)
+    art = ArtEmisPure(nu_grid=nu_grid, pressure_btm=1.e1, pressure_top=1.e-8, nlayer=75, rtsolver="ibased", nstream=8)
 
+
+
+.. parsed-literal::
+
+    rtsolver:  ibased
+    Intensity-based n-stream solver, isothermal layer (e.g. NEMESIS, pRT like)
 
 
 .. parsed-literal::
@@ -267,7 +307,7 @@ Convert them to opacity
 
 .. code:: ipython3
 
-    dtau_CO = art.opacity_profile_lines(xsmatrix, mmr_profile, mdb.molmass, gravity)
+    dtau_CO = art.opacity_profile_xs(xsmatrix, mmr_profile, mdb.molmass, gravity)
     vmrH2 = 0.855 #VMR of H2
     mmw = 2.33 # mean molecular weight of the atmosphere
     dtaucia = art.opacity_profile_cia(logacia_matrix, Tarr, vmrH2, vmrH2, mmw, gravity)
@@ -291,8 +331,15 @@ Then, run the radiative transfer
     plt.show()
 
 
+.. parsed-literal::
 
-.. image:: get_started_files/get_started_38_0.png
+    Gaussian Quadrature Parameters: 
+    mu =  [0.06943184 0.33000948 0.66999052 0.93056816]
+    weight = [0.17392742 0.32607258 0.32607258 0.17392742]
+
+
+
+.. image:: get_started_files/get_started_38_1.png
 
 
 You can check the contribution function too! You should check if the
@@ -305,7 +352,7 @@ dominant contribution is within the layer. If not, you need to change
 
 .. code:: ipython3
 
-    cf=plotcf(nu_grid, dtau, Tarr,art.pressure, art.dParr)
+    cf = plotcf(nu_grid, dtau, Tarr, art.pressure, art.dParr)
 
 
 
@@ -323,25 +370,26 @@ planet.
 .. code:: ipython3
 
     from exojax.spec.specop import SopRotation
-    sop_rot = SopRotation(nu_grid, resolution, vsini_max=100.0)
+    
+    sop_rot = SopRotation(nu_grid, vsini_max=100.0)
     
     vsini = 50.0
-    u1=0.0
-    u2=0.0 
-    Frot = sop_rot.rigid_rotation(F, vsini, u1, u2) 
+    u1 = 0.0
+    u2 = 0.0
+    Frot = sop_rot.rigid_rotation(F, vsini, u1, u2)
 
 
 .. parsed-literal::
 
-    /home/kawahara/exojax/src/exojax/utils/grids.py:126: UserWarning: Resolution may be too small. R=523403.606697253
+    /home/kawahara/exojax/src/exojax/utils/grids.py:142: UserWarning: Resolution may be too small. R=523403.606697253
       warnings.warn('Resolution may be too small. R=' + str(resolution),
 
 
 .. code:: ipython3
 
-    fig=plt.figure(figsize=(15,4))
-    plt.plot(nu_grid,F, label="raw spectrum")
-    plt.plot(nu_grid,Frot, label="rotated")
+    fig = plt.figure(figsize=(15, 4))
+    plt.plot(nu_grid, F, label="raw spectrum")
+    plt.plot(nu_grid, Frot, label="rotated")
     plt.xlabel("wavenumber (cm-1)")
     plt.ylabel("flux (erg/s/cm2/cm-1)")
     plt.legend()
@@ -360,9 +408,10 @@ This process is called ``sampling`` (but just interpolation though).
 
     from exojax.spec.specop import SopInstProfile
     from exojax.utils.instfunc import resolution_to_gaussian_std
-    sop_inst = SopInstProfile(nu_grid, resolution, vrmax=1000.0)
     
-    RV=40.0 #km/s
+    sop_inst = SopInstProfile(nu_grid, vrmax=1000.0)
+    
+    RV = 40.0  # km/s
     resolution_inst = 3000.0
     beta_inst = resolution_to_gaussian_std(resolution_inst)
     Finst = sop_inst.ipgauss(Frot, beta_inst)
@@ -372,21 +421,16 @@ This process is called ``sampling`` (but just interpolation though).
 
 .. parsed-literal::
 
-    42.43671169022172
-
-
-.. parsed-literal::
-
-    /home/kawahara/exojax/src/exojax/utils/grids.py:126: UserWarning: Resolution may be too small. R=523403.606697253
+    /home/kawahara/exojax/src/exojax/utils/grids.py:142: UserWarning: Resolution may be too small. R=523403.606697253
       warnings.warn('Resolution may be too small. R=' + str(resolution),
 
 
 .. code:: ipython3
 
-    fig=plt.figure(figsize=(15,4))
-    plt.plot(nu_grid,Frot, label="rotated")
-    plt.plot(nu_grid,Finst, label="rotated+IP")
-    plt.plot(nu_obs,Fobs, ".", label="rotated+IP (sampling)")
+    fig = plt.figure(figsize=(15, 4))
+    plt.plot(nu_grid, Frot, label="rotated")
+    plt.plot(nu_grid, Finst, label="rotated+IP")
+    plt.plot(nu_obs, Fobs, ".", label="rotated+IP (sampling)")
     
     
     plt.xlabel("wavenumber (cm-1)")
@@ -400,5 +444,3 @@ This process is called ``sampling`` (but just interpolation though).
 
 
 That’s it.
-
-

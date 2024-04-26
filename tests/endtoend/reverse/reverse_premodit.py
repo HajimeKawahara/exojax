@@ -26,7 +26,7 @@ from exojax.utils.astrofunc import gravity_jupiter
 from exojax.utils.instfunc import resolution_to_gaussian_std
 from exojax.test.data import SAMPLE_SPECTRA_CH4_NEW
 
-from jax.config import config
+from jax import config
 
 config.update("jax_enable_x64", True)
 
@@ -98,7 +98,7 @@ def frun(Tarr, MMR_CH4, Mp, Rp, u1, u2, RV, vsini):
     #molecule
     xsmatrix = opa.xsmatrix(Tarr, art.pressure)
     mmr_arr = art.constant_mmr_profile(MMR_CH4)
-    dtaumCH4 = art.opacity_profile_lines(xsmatrix, mmr_arr, opa.mdb.molmass, g)
+    dtaumCH4 = art.opacity_profile_xs(xsmatrix, mmr_arr, opa.mdb.molmass, g)
     #continuum
     logacia_matrix = opcia.logacia_matrix(Tarr)
     dtaucH2H2 = art.opacity_profile_cia(logacia_matrix, Tarr, vmrH2, vmrH2,

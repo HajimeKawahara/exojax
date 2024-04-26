@@ -1,7 +1,7 @@
 """ short integration tests for PreMODIT spectrum"""
 import pytest
 import pkg_resources
-from jax.config import config
+from jax import config
 import pandas as pd
 import numpy as np
 from exojax.test.emulate_mdb import mock_mdb
@@ -39,8 +39,10 @@ def test_rt(db, diffmode, fig=False):
                       auto_trange=[art.Tlow, art.Thigh])
 
     xsmatrix = opa.xsmatrix(Tarr, art.pressure)
-    dtau = art.opacity_profile_lines(xsmatrix, mmr_arr, opa.mdb.molmass,
+    dtau = art.opacity_profile_xs(xsmatrix, mmr_arr, opa.mdb.molmass,
                                      gravity)
+    
+    
     F0 = art.run(dtau, Tarr)
 
     if db == "hitemp":
@@ -86,7 +88,7 @@ def test_rt_for_single_broadening_parameters(db, diffmode, fig=False):
                           "value": None
                       })
     xsmatrix = opa.xsmatrix(Tarr, art.pressure)
-    dtau = art.opacity_profile_lines(xsmatrix, mmr_arr, opa.mdb.molmass,
+    dtau = art.opacity_profile_xs(xsmatrix, mmr_arr, opa.mdb.molmass,
                                      gravity)
     F0 = art.run(dtau, Tarr)
 

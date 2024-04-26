@@ -11,7 +11,7 @@ from exojax.spec.dit import xsvector as dit_xsvector
 from exojax.spec import initspec
 from exojax.spec.lpf import auto_xsection as lpf_xsection
 from exojax.spec.hitran import line_strength, doppler_sigma, gamma_hitran, gamma_natural
-from exojax.spec import moldb
+from exojax.spec import api
 from exojax.spec.set_ditgrid import ditgrid_log_interval
 from exojax.spec.hitran import normalized_doppler_sigma
 
@@ -20,7 +20,7 @@ def comperr(Nnu,plotfig=False):
 
     nus=np.linspace(1.e7/2700,1.e7/2100.,Nnu,dtype=np.float64)
 
-    mdbCO=moldb.MdbHit('~/exojax/data/CO/05_hit12.par',nus)
+    mdbCO=api.MdbHitran('~/exojax/data/CO/05_hit12.par',nus)
     
     Mmol=28.010446441149536
     Tref=296.0
@@ -39,7 +39,7 @@ def comperr(Nnu,plotfig=False):
         mask=mdbCO.isoid==iso
         qt[mask]=qr[idx]
         
-    Sij=line_strength(Tfix,mdbCO.logsij0,mdbCO.nu_lines,mdbCO.elower,qt)
+    Sij=line_strength(Tfix,mdbCO.logsij0,mdbCO.nu_lines,mdbCO.elower,qt,mdbCO.Tref)
     gammaL = gamma_hitran(Pfix,Tfix,Pfix, mdbCO.n_air, mdbCO.gamma_air, mdbCO.gamma_self)
     #+ gamma_natural(A) #uncomment if you inclide a natural width
     sigmaD=doppler_sigma(mdbCO.nu_lines,Tfix,Mmol)

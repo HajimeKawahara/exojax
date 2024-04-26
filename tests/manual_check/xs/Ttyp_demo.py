@@ -1,7 +1,7 @@
 from exojax.spec.lpf import auto_xsection
 from exojax.spec import line_strength, doppler_sigma,  gamma_natural
 from exojax.spec.exomol import gamma_exomol
-from exojax.spec import moldb
+from exojax.spec import api
 import numpy as np
 
 def demo(Tfix,Ttyp,crit=1.e-40):
@@ -18,11 +18,11 @@ def demo(Tfix,Ttyp,crit=1.e-40):
     """
     
     nus=np.linspace(1000.0,10000.0,900000,dtype=np.float64) #cm-1
-    mdbCO=moldb.MdbExomol('.database/CO/12C-16O/Li2015',nus, Ttyp=Ttyp, crit=crit)
+    mdbCO=api.MdbExomol('.database/CO/12C-16O/Li2015',nus, Ttyp=Ttyp, crit=crit)
     Mmol=28.010446441149536 # molecular weight
     Pfix=1.e-3 # we compute P=1.e-3 bar
     qt=mdbCO.qr_interp(Tfix)
-    Sij=line_strength(Tfix,mdbCO.logsij0,mdbCO.nu_lines,mdbCO.elower,qt)
+    Sij=line_strength(Tfix,mdbCO.logsij0,mdbCO.nu_lines,mdbCO.elower,qt,mdbCO.Tref)
     gammaL = gamma_exomol(Pfix,Tfix,mdbCO.n_Texp,mdbCO.alpha_ref)\
         + gamma_natural(mdbCO.A)
     # thermal doppler sigma

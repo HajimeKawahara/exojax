@@ -10,13 +10,6 @@ Comparing HITEMP and ExoMol
     import numpy as np
     import matplotlib.pyplot as plt
 
-
-.. parsed-literal::
-
-    2023-03-15 08:37:58.525388: E external/org_tensorflow/tensorflow/stream_executor/cuda/cuda_driver.cc:265] failed call to cuInit: CUDA_ERROR_UNKNOWN: unknown error
-    WARNING:absl:No GPU/TPU found, falling back to CPU. (Set TF_CPP_MIN_LOG_LEVEL=0 and rerun for more info.)
-
-
 First of all, set a wavenumber bin in the unit of wavenumber (cm-1).
 Here we set the wavenumber range as :math:`1000 \le \nu \le 10000`
 (1/cm) with the resolution of 0.01 (1/cm).
@@ -42,17 +35,38 @@ not exist, moldb will try to download it from HITRAN website.
 
 .. parsed-literal::
 
-    HITRAN exact name= (12C)(16O)
-    Background atmosphere:  H2
-    Reading CO/12C-16O/Li2015/12C-16O__Li2015.trans.bz2
-    .broad is used.
-    Broadening code level= a0
-    default broadening parameters are used for  71  J lower states in  152  states
+    /home/kawahara/exojax/src/exojax/utils/molname.py:178: FutureWarning: e2s will be replaced to exact_molname_exomol_to_simple_molname.
+      warnings.warn(
 
 
 .. parsed-literal::
 
-    /home/kawahara/exojax/src/exojax/utils/molname.py:133: FutureWarning: e2s will be replaced to exact_molname_exomol_to_simple_molname.
+    HITRAN exact name= (12C)(16O)
+    Molecule:  CO
+    Isotopologue:  12C-16O
+    Background atmosphere:  H2
+    ExoMol database:  None
+    Local folder:  CO/12C-16O/Li2015
+    Transition files: 
+    	 => File 12C-16O__Li2015.trans
+    #        i_upper    i_lower    A          nu_lines      gup    jlower    jupper    elower      Sij0
+    0        84         42         1.155e-06  2.405586      3      0         1         66960.7124  3.811968898414225e-164
+    1        83         41         1.161e-06  2.441775      3      0         1         65819.903   9.663028103692631e-162
+    2        82         40         1.162e-06  2.477774      3      0         1         64654.9206  2.7438392479197905e-159
+    3        81         39         1.159e-06  2.513606      3      0         1         63465.8042  8.73322833971394e-157
+    4        80         38         1.152e-06  2.549292      3      0         1         62252.5793  3.115220404216648e-154
+    ...      ...        ...        ...        ...           ...    ...       ...       ...         ...
+    125,491  306        253        7.164e-10  22147.135424  15     6         7         80.7354     1.8282485593637477e-31
+    125,492  474        421        9.852e-10  22147.86595   23     10        11        211.4041    2.0425455665383687e-31
+    125,493  348        295        7.72e-10   22147.897299  17     7         8         107.6424    1.9589545250222689e-31
+    125,494  432        379        9.056e-10  22148.262711  21     9         10        172.978     2.0662209116961706e-31
+    125,495  390        337        8.348e-10  22148.273111  19     8         9         138.3903    2.0387827253771594e-31
+    Broadening code level: a0
+
+
+.. parsed-literal::
+
+    /home/kawahara/anaconda3/lib/python3.10/site-packages/radis-0.15-py3.10-linux-x86_64.egg/radis/api/exomolapi.py:607: AccuracyWarning: The default broadening parameter (alpha = 0.07 cm^-1 and n = 0.5) are used for J'' > 80 up to J'' = 152
       warnings.warn(
 
 
@@ -97,9 +111,9 @@ we need to use float32 for jax.
 .. code:: ipython3
 
     Sij_HITEMP=line_strength(Tfix,mdbCO_HITEMP.logsij0,mdbCO_HITEMP.nu_lines,\
-             mdbCO_HITEMP.elower,qt_HITEMP)
+             mdbCO_HITEMP.elower,qt_HITEMP,mdbCO_HITEMP.Tref)
     Sij_Li2015=line_strength(Tfix,mdbCO_Li2015.logsij0,mdbCO_Li2015.nu_lines,\
-                    mdbCO_Li2015.elower,qt_Li2015)
+                    mdbCO_Li2015.elower,qt_Li2015,mdbCO_Li2015.Tref)
 
 Then, compute the Lorentz gamma factor (pressure+natural broadening)
 
@@ -116,7 +130,7 @@ or
 the pressure broadning (ExoMol)
 
 $:raw-latex:`\gamma`^p_L = :raw-latex:`\alpha`\ *{ref} ( T/T*\ {ref}
-)^{-n_{texp}} ( P/P_{ref}), $
+)^{-n\_{texp}} ( P/P\_{ref}), $
 
 and the natural broadening
 

@@ -1,7 +1,7 @@
 Installation and References
 ----------------------------------
 
-*last update: June 11st (2023) Hajime Kawahara*
+*last update: November 26th (2023) Hajime Kawahara*
 
 Linux, Windows WSL, Mac
 ============================
@@ -17,6 +17,13 @@ Alternatively, clone the code from `github page <https://github.com/HajimeKawaha
 
 .. code:: sh
 	  
+	  python setup.py install
+
+If the older version of ExoJAX has already been installed, you need to remove all of the old modules (Otherwise, modules that have been deleted and no more exist in the current version remain). To do so, the following procedure is recommended:
+
+.. code:: sh
+	  
+	  python setup.py clean --all 
 	  python setup.py install
 
 	  
@@ -38,7 +45,7 @@ Here is an example of installation for jaxlib in linux system. See `JAX installa
 Windows Anaconda
 ===================
 
-not supported yet.
+Not supported yet.
 		
 
 		
@@ -59,8 +66,11 @@ Many techniques/databases are used in ExoJAX.
 - ExoMol: `Tennyson et al. (2016) <https://www.sciencedirect.com/science/article/abs/pii/S0022285216300807?via%3Dihub>`_
 - HITRAN/HITEMP
 - VALD3
+- VIRGA for refractive indices of condensates
+- PyMieScatt for Mie scattering
+- Flux-adding treatment by `Robinson and Crisp (2018) <https://www.sciencedirect.com/science/article/pii/S0022407317305101?via%3Dihub>`_
 - RADIS, see below.
-- Other many packages/algorithms. See `arXiv:2105.14782 <http://arxiv.org/abs/2105.14782>`_ for the details.
+- Other many packages/algorithms. See `arXiv:2105.14782 <http://arxiv.org/abs/2105.14782>`_ and a forthcoming paper (Kawahara, Kawashima et al.) for the details.
 
 
 Related Projects

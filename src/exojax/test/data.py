@@ -1,10 +1,7 @@
 """filenames of test data used in unit tests
 
 """
-# exomol moldb template used in unit tests
-# exojax.src.test.generate should make this file
-TESTDATA_moldb_CO_HITEMP = "moldb_co_hitemp.pickle"
-TESTDATA_moldb_CO_HITEMP_SINGLE_ISOTOPE = "moldb_co_hitemp_single_isotope.pickle"
+# exomol moldb template used in unit tests (will be removed)
 TESTDATA_moldb_VALD = "moldb_vald.pickle"
 
 # cross section references
@@ -40,3 +37,6 @@ TESTDATA_CO_HITEMP_PARFILE = "05_HITEMP_SAMPLE.par"
 
 #test data CIA H2-H2 (4300-4400 cm-1)
 TESTDATA_H2_H2_CIA = "H2-H2_TEST.cia" 
+
+#test data for refraction index
+TESTDATA_refrind = "test.refrind"

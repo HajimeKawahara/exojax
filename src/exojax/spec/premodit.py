@@ -4,7 +4,8 @@
 import numpy as np
 import jax.numpy as jnp
 from jax import jit, vmap
-from exojax.spec.lsd import npgetix, npadd3D_multi_index, npadd3D_direct1D
+from exojax.utils.indexing import npgetix
+from exojax.spec.lsd import npadd3D_multi_index, npadd3D_direct1D
 from exojax.utils.constants import hcperk
 from exojax.utils.constants import Tref_original
 from exojax.spec.modit_scanfft import calc_xsection_from_lsd_scanfft

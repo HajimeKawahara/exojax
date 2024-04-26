@@ -6,7 +6,7 @@ step by step, not using ``opa``.
 
 .. code:: ipython3
 
-    from jax.config import config
+    from jax import config
     config.update("jax_enable_x64", True)
 
 .. code:: ipython3
@@ -68,7 +68,7 @@ we need to use float32 for jax.
 
 .. code:: ipython3
 
-    Sij=line_strength(Tfix,mdbCO.logsij0,mdbCO.nu_lines,mdbCO.elower,qt)
+    Sij=line_strength(Tfix,mdbCO.logsij0,mdbCO.nu_lines,mdbCO.elower,qt,mdbCO.Tref)
 
 Then, compute the Lorentz gamma factor (pressure+natural broadening)
 

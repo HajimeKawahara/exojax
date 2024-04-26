@@ -1,7 +1,7 @@
 """ short integration tests for PreMODIT transmission"""
 import pytest
 import pkg_resources
-from jax.config import config
+from jax import config
 import pandas as pd
 import numpy as np
 import jax.numpy as jnp
@@ -38,7 +38,7 @@ def test_rt(db, diffmode, fig=False):
                       auto_trange=[art.Tlow, art.Thigh])
 
     xsmatrix = opa.xsmatrix(Tarr, art.pressure)
-    dtau = art.opacity_profile_lines(xsmatrix, mmr_arr, opa.mdb.molmass,
+    dtau = art.opacity_profile_xs(xsmatrix, mmr_arr, opa.mdb.molmass,
                                      gravity)
     Rp2 = art.run(dtau, Tarr, mmw, radius_btm, gravity_btm)
     print(Rp2)

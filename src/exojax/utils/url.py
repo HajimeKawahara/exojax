@@ -4,13 +4,23 @@
 """
 
 
+def url_virga():
+    """return URL for VIRGA refractive index data from ZENODO
+
+    Returns:
+        URL for VIRGA refractive index data
+    """
+    url = "https://zenodo.org/records/5179187/files/virga.zip"
+    return url
+
+
 def url_HITRAN12():
     """return URL for HITRAN 12 parfile.
 
     Returns:
-       URL for HITRAN 12 parfile
+        URL for HITRAN 12 parfile
     """
-    url = u'https://www.cfa.harvard.edu/HITRAN/HITRAN2012/HITRAN2012/By-Molecule/Uncompressed-files/'
+    url = "https://www.cfa.harvard.edu/HITRAN/HITRAN2012/HITRAN2012/By-Molecule/Uncompressed-files/"
     return url
 
 
@@ -18,9 +28,9 @@ def url_HITRANCIA():
     """return URL for HITRAN CIA ciafile.
 
     Returns:
-       URL for HITRAN CIA file
+        URL for HITRAN CIA file
     """
-    url = u'https://hitran.org/data/CIA/'
+    url = "https://hitran.org/data/CIA/"
     return url
 
 
@@ -28,9 +38,9 @@ def url_HITEMP():
     """return URL for HITEMP bz2 parfile.
 
     Returns:
-       URL for HITEMP bz2 file
+        URL for HITEMP bz2 file
     """
-    url = u'https://hitran.org/hitemp/data/bzip2format/'
+    url = "https://hitran.org/hitemp/data/bzip2format/"
     return url
 
 
@@ -38,9 +48,9 @@ def url_HITEMP10():
     """return URL for HITEMP2010.
 
     Returns:
-       URL for HITEMP2010 db
+        URL for HITEMP2010 db
     """
-    url = u'https://hitran.org/hitemp/data/HITEMP-2010/'
+    url = "https://hitran.org/hitemp/data/HITEMP-2010/"
     return url
 
 
@@ -48,9 +58,9 @@ def url_ExoMol():
     """return URL for ExoMol.
 
     Returns:
-       URL for ExoMol db
+        URL for ExoMol db
     """
-    url = u'http://www.exomol.com/db/'
+    url = "http://www.exomol.com/db/"
     return url
 
 
@@ -58,10 +68,14 @@ def url_Exomol_iso(molecule, isotope_full_name):
     """return URL for ExoMol for isotope.
 
     Returns:
-       URL for ExoMol for isotope
+        URL for ExoMol for isotope
     """
-    url = u'https://exomol.com/data/molecules/' + \
-        str(molecule)+'/'+str(isotope_full_name)
+    url = (
+        "https://exomol.com/data/molecules/"
+        + str(molecule)
+        + "/"
+        + str(isotope_full_name)
+    )
     return url
 
 
@@ -69,7 +83,7 @@ def url_developer_data():
     """return URL for data in exojax.
 
     Returns:
-       URL for ExoJAX
+        URL for ExoJAX
     """
-    url = u'http://secondearths.sakura.ne.jp/exojax/data/'
+    url = "http://secondearths.sakura.ne.jp/exojax/data/"
     return url

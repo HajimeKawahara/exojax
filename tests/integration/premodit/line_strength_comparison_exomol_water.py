@@ -3,7 +3,7 @@
     The bug was due to the overflow in the function when computing,
 """
 
-from jax.config import config
+from jax import config
 config.update("jax_enable_x64", True)
 
 import numpy as np
@@ -70,7 +70,7 @@ Spremodit = (np.sum(Slsd_premodit, axis=1))
 mdb.change_reference_temperature(Tref_original)
 qt = mdb.qr_interp(T)
 cont, index, R, pmarray = initspec.init_modit(mdb.nu_lines, nus)
-Sij = line_strength(T, mdb.logsij0, mdb.nu_lines, mdb.elower, qt)
+Sij = line_strength(T, mdb.logsij0, mdb.nu_lines, mdb.elower, qt, mdb.Tref)
 gammaL = gamma_exomol(P, T, mdb.n_Texp, mdb.alpha_ref)
 dv_lines = mdb.nu_lines / R
 ngammaL = gammaL / dv_lines

@@ -8,7 +8,7 @@ from exojax.signal.ola import generate_padding_matrix
 from exojax.signal.ola import np_olaconv
 from exojax.signal.ola import optimal_fft_length
 import jax.numpy as jnp
-from jax.config import config
+from jax import config
 
 config.update('jax_enable_x64', True)
 
@@ -108,7 +108,7 @@ def test_olaconv(fig=False):
     #assert maxresidual < 1.e-6 #fp32
 
     if fig:
-        edge = int((Nf - 1) / 2)
+        edge = int((len(f) - 1) / 2)
         plt.plot(x, label="input")
         plt.plot(oac[edge:-edge], label="oaconvolve")
         plt.plot(ola[edge:-edge], ls="dashed", label="OLA test")

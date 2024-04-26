@@ -4,6 +4,16 @@ History
 Version History
 ^^^^^^^^^^^^^^^^^^^^
 
+Version 1.5
+-----------------------
+
+- Intensity-based radiative transfer for pure absorption #411 #412 #419
+- Toon-type two-stream radiative transfer (with scattering/reflection), flux-adding (and LART) #428 #477
+- Forward modeling of the reflection spectrum, with an example of Jupiter's reflection spectrum. #477
+- Transmission improvements (Simpson) and more tests #421 #424 #463 #464
+- Rayleigh scattering #115 #430 #434
+- Cloud (Mie) scattering using Ackerman and Marley cloud model #477
+
 Version 1.4
 -------------------
 
@@ -11,7 +21,7 @@ Version 1.4
 - operators on spectra class #363
 - multiple molecules handler #388
 
-ExoJAX now strongly recommends using 64-bit as default.
+ExoJAX now recommends using 64-bit as default, but can use 32 bit if you are confident.
 
 
 Version 1.3

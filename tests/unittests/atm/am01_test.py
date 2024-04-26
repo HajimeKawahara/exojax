@@ -17,14 +17,14 @@ def test_pressure_scale_height_for_Earth():
     assert atmprof.pressure_scale_height(g, T, mu) == pytest.approx(883764.8664527453)
 
 
-def test_vterm():
+def test_terminal_velocity():
     g = 980.
     drho = 1.0
     rho = 1.29*1.e-3  # g/cm3
     vfactor, Tr = viscosity.calc_vfactor(atm='Air')
     eta = viscosity.eta_Rosner(300.0, vfactor)
     r = jnp.logspace(-5, 0, 70)
-    vfall = vterm.vf(r, g, eta, drho, rho)
+    vfall = vterm.terminal_velocity(r, g, eta, drho, rho)
     assert jnp.mean(vfall)== pytest.approx(328.12296)
 
 if __name__ == "__main__":

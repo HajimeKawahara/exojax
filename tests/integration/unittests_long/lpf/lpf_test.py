@@ -16,7 +16,7 @@ from exojax.test.emulate_mdb import mock_wavenumber_grid
 from exojax.test.emulate_mdb import mock_mdb
 from exojax.spec.opacalc import OpaDirect
 from exojax.spec.atmrt import ArtEmisPure
-from jax.config import config
+from jax import config
 
 config.update("jax_enable_x64", True)
 
@@ -63,12 +63,14 @@ def test_spectrum(db):
     opa = OpaDirect(mdb=mdb, nu_grid=nu_grid)
 
     xsmatrix = opa.xsmatrix(Tarr, art.pressure)
-    dtau = art.opacity_profile_lines(xsmatrix, mmr_arr, opa.mdb.molmass,
+    dtau = art.opacity_profile_xs(xsmatrix, mmr_arr, opa.mdb.molmass,
                                      gravity)
     F0 = art.run(dtau, Tarr)
     filename = pkg_resources.resource_filename(
         'exojax', 'data/testdata/' + testdata_spectrum[db])
     dat = pd.read_csv(filename, delimiter=",", names=("nus", "F0"))
+    #print(F0)
+    #print(pytest.approx(dat["F0"].values))
     assert np.all(F0 == pytest.approx(dat["F0"].values))
 
 

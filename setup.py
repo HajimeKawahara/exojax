@@ -14,16 +14,6 @@ CLASSIFIERS = [
     "Programming Language :: Python :: 3.10",
     "Operating System :: OS Independent",
 ]
-INSTALL_REQUIRES = [
-    'numpyro',
-    'jaxopt',
-    'jax',
-    "hitran-api",
-    'radis',
-    "numpy<=1.22.3 ",
-    "pygments>=2.15",
-    "pydantic<2.0",
-]
 
 # END PROJECT SPECIFIC
 HERE = os.path.dirname(os.path.realpath(__file__))
@@ -43,6 +33,13 @@ def find_meta(meta, meta_file=read(META_PATH)):
     raise RuntimeError('Unable to find __{meta}__ string.'.format(meta=meta))
 
 
+def read_requirements():
+    with open('requirements.txt', 'r') as file:
+        return file.readlines()
+
+
+
+
 if __name__ == '__main__':
     setup(
         name=NAME,
@@ -52,7 +49,7 @@ if __name__ == '__main__':
             'write_to_template':
             '__version__ = "{version}"\n',
         },
-        version='1.4.1',
+        version='1.5',
         author=find_meta('author'),
         author_email=find_meta('email'),
         maintainer=find_meta('author'),
@@ -66,7 +63,7 @@ if __name__ == '__main__':
         python_requires='>=3.9',
         package_dir={'': 'src'},
         include_package_data=True,
-        install_requires=INSTALL_REQUIRES,
+        install_requires=read_requirements(),
         classifiers=CLASSIFIERS,
         zip_safe=False,
         options={'bdist_wheel': {
@@ -78,6 +75,10 @@ if __name__ == '__main__':
 import subprocess
 import sys
 
+def install_radis_develop():
+    subprocess.check_call([sys.executable, "-m", "pip", "install", "-e", 'git+https://github.com/radis/radis@develop#egg=radis'])
+
+
 def uninstall(package):
     subprocess.check_call([sys.executable, "-m", "pip", "uninstall", "-y", package])
 
@@ -85,6 +86,7 @@ def reinstall(package):
     subprocess.check_call([sys.executable, "-m", "pip", "uninstall", "-y", package])
     subprocess.check_call([sys.executable, "-m", "pip", "install", package])
 
+install_radis_develop()
 uninstall('vaex-core')
 uninstall('vaex-astro')
 uninstall('vaex-jupyter')

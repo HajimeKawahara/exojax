@@ -19,13 +19,6 @@ spectrum.
     import numpy as np
     from exojax.utils.grids import wavenumber_grid
 
-
-.. parsed-literal::
-
-    2023-03-15 09:49:58.723389: E external/org_tensorflow/tensorflow/stream_executor/cuda/cuda_driver.cc:265] failed call to cuInit: CUDA_ERROR_UNKNOWN: unknown error
-    WARNING:absl:No GPU/TPU found, falling back to CPU. (Set TF_CPP_MIN_LOG_LEVEL=0 and rerun for more info.)
-
-
 .. code:: ipython3
 
     nu_grid,wav,res=wavenumber_grid(23000,23100,2000,unit="AA",xsmode="premodit")
@@ -35,6 +28,20 @@ spectrum.
 
     xsmode =  premodit
     xsmode assumes ESLOG in wavenumber space: mode=premodit
+    ======================================================================
+    We changed the policy of the order of wavenumber/wavelength grids
+    wavenumber grid should be in ascending order and now 
+    users can specify the order of the wavelength grid by themselves.
+    Your wavelength grid is in ***  descending  *** order
+    This might causes the bug if you update ExoJAX. 
+    Note that the older ExoJAX assumes ascending order as wavelength grid.
+    ======================================================================
+
+
+.. parsed-literal::
+
+    /home/kawahara/exojax/src/exojax/utils/grids.py:145: UserWarning: Resolution may be too small. R=460768.77729497064
+      warnings.warn('Resolution may be too small. R=' + str(resolution),
 
 
 Let’s test using a delta function -like spectrum as an input.

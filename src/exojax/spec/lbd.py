@@ -1,6 +1,6 @@
 import numpy as np
 from exojax.utils.constants import hcperk
-from exojax.spec.lsd import npgetix
+from exojax.utils.indexing import npgetix
 
 
 def lbd_coefficients(elower_lines,

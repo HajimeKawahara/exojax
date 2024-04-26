@@ -41,7 +41,7 @@ def molmass_isotope(simple_molecule_name, db_HIT=True):
        molecular mass
 
     Example:
-       >>> from exojax.spec.moinfo import mean_molmass
+       >>> from exojax.spec.molinfo import molmass
        >>> print(molmass("H2"))
        >>> 2.01588
        >>> print(molmass("CO2"))

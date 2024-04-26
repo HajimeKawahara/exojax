@@ -74,7 +74,7 @@ def test_opacity_Fe_vald3(T, P):
     PHH = P * H_He_HH_VMR[2]
     qt = np.ones_like(adbFe.A) * np.float32(adbFe.qr_interp('Fe 1', T))
     # ↑Unlike the case of HITRAN (using Qr_HAPI), we ignored the isotopes.
-    Sij = line_strength(T, adbFe.logsij0, adbFe.nu_lines, adbFe.elower, qt)
+    Sij = line_strength(T, adbFe.logsij0, adbFe.nu_lines, adbFe.elower, qt, adbFe.Tref)
     sigmaD = doppler_sigma(adbFe.nu_lines, T, Amol)
     gammaL = atomll.gamma_vald3(T, PH, PHH, PHe, adbFe.ielem, adbFe.iion,
                                 adbFe.dev_nu_lines, adbFe.elower, adbFe.eupper, adbFe.atomicmass, adbFe.ionE,
@@ -96,7 +96,7 @@ def test_opacity_Fe_uns(T, P):
     PHH = P * H_He_HH_VMR[2]
     qt = np.ones_like(adbFe.A) * np.float32(adbFe.qr_interp('Fe 1', T))
     # ↑Unlike the case of HITRAN (using Qr_HAPI), we ignored the isotopes.
-    Sij = line_strength(T, adbFe.logsij0, adbFe.nu_lines, adbFe.elower, qt)
+    Sij = line_strength(T, adbFe.logsij0, adbFe.nu_lines, adbFe.elower, qt, adbFe.Tref)
     sigmaD = doppler_sigma(adbFe.nu_lines, T, Amol)
     gammaL = atomll.gamma_uns(T, PH, PHH, PHe, adbFe.ielem, adbFe.iion,
                               adbFe.dev_nu_lines, adbFe.elower, adbFe.eupper, adbFe.atomicmass, adbFe.ionE,
@@ -117,7 +117,7 @@ def test_opacity_Fe_KA3(T, P):
     PHH = P * H_He_HH_VMR[2]
     qt = np.ones_like(adbFe.A) * np.float32(adbFe.qr_interp('Fe 1', T))
     # ↑Unlike the case of HITRAN (using Qr_HAPI), we ignored the isotopes.
-    Sij = line_strength(T, adbFe.logsij0, adbFe.nu_lines, adbFe.elower, qt)
+    Sij = line_strength(T, adbFe.logsij0, adbFe.nu_lines, adbFe.elower, qt, adbFe.Tref)
     sigmaD = doppler_sigma(adbFe.nu_lines, T, Amol)
     gammaL = atomll.gamma_KA3(T, PH, PHH, PHe, adbFe.ielem, adbFe.iion,
                               adbFe.dev_nu_lines, adbFe.elower, adbFe.eupper, adbFe.atomicmass, adbFe.ionE,
@@ -138,7 +138,7 @@ def test_opacity_Fe_KA4(T, P):
     PHH = P * H_He_HH_VMR[2]
     qt = np.ones_like(adbFe.A) * np.float32(adbFe.qr_interp('Fe 1', T))
     # ↑Unlike the case of HITRAN (using Qr_HAPI), we ignored the isotopes.
-    Sij = line_strength(T, adbFe.logsij0, adbFe.nu_lines, adbFe.elower, qt)
+    Sij = line_strength(T, adbFe.logsij0, adbFe.nu_lines, adbFe.elower, qt, adbFe.Tref)
     sigmaD = doppler_sigma(adbFe.nu_lines, T, Amol)
     gammaL = atomll.gamma_KA4(T, PH, PHH, PHe, adbFe.ielem, adbFe.iion,
                               adbFe.dev_nu_lines, adbFe.elower, adbFe.eupper, adbFe.atomicmass, adbFe.ionE,
@@ -159,7 +159,7 @@ def test_opacity_Fe_KA3s(T, P):
     PHH = P * H_He_HH_VMR[2]
     qt = np.ones_like(adbFe.A) * np.float32(adbFe.qr_interp('Fe 1', T))
     # ↑Unlike the case of HITRAN (using Qr_HAPI), we ignored the isotopes.
-    Sij = line_strength(T, adbFe.logsij0, adbFe.nu_lines, adbFe.elower, qt)
+    Sij = line_strength(T, adbFe.logsij0, adbFe.nu_lines, adbFe.elower, qt, adbFe.Tref)
     sigmaD = doppler_sigma(adbFe.nu_lines, T, Amol)
     gammaL = atomll.gamma_KA3s(T, PH, PHH, PHe, adbFe.ielem, adbFe.iion,
                                adbFe.dev_nu_lines, adbFe.elower, adbFe.eupper, adbFe.atomicmass, adbFe.ionE,

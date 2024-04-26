@@ -2,7 +2,7 @@
 
 """
 
-from jax.config import config
+from jax import config
 from exojax.utils.grids import wavenumber_grid
 from exojax.spec import api
 from exojax.spec import initspec

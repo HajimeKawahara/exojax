@@ -12,7 +12,7 @@ from exojax.spec.set_ditgrid import ditgrid_log_interval
 from exojax.test.emulate_mdb import mock_mdbExomol
 from exojax.test.emulate_mdb import mock_wavenumber_grid
 
-from jax.config import config
+from jax import config
 
 config.update("jax_enable_x64", True)
 
@@ -31,7 +31,7 @@ def test_xs_exomol():
     dv_lines = mdbCO.nu_lines / R
     ngammaL = gammaL / dv_lines
     nsigmaD = normalized_doppler_sigma(Tfix, Mmol, R)
-    Sij = line_strength(Tfix, mdbCO.logsij0, mdbCO.nu_lines, mdbCO.elower, qt)
+    Sij = line_strength(Tfix, mdbCO.logsij0, mdbCO.nu_lines, mdbCO.elower, qt, mdbCO.Tref)
 
     ngammaL_grid = ditgrid_log_interval(ngammaL, dit_grid_resolution=0.1)
     xsv = xsvector(cont_nu, index_nu, R, pmarray, nsigmaD, ngammaL, Sij, nus,
@@ -50,7 +50,7 @@ def test_rt_exomol():
     from exojax.spec.modit import xsmatrix
     from exojax.atm.atmprof import pressure_layer_logspace
     from exojax.spec.layeropacity import layer_optical_depth
-    from exojax.spec.rtransfer import rtrun_emis_pure_absorption
+    from exojax.spec.rtransfer import rtrun_emis_pureabs_fbased2st
     from exojax.spec.planck import piBarr
     from exojax.spec.modit import set_ditgrid_matrix_exomol
     from exojax.test.data import TESTDATA_CO_EXOMOL_MODIT_EMISSION_REF
@@ -80,7 +80,7 @@ def test_rt_exomol():
                    nus, dgm_ngammaL)
     dtau = layer_optical_depth(dParr, jnp.abs(xsm), MMR * np.ones_like(Parr), molmass, g)
     sourcef = piBarr(Tarr, nus)
-    F0 = rtrun_emis_pure_absorption(dtau, sourcef)
+    F0 = rtrun_emis_pureabs_fbased2st(dtau, sourcef)
     filename = pkg_resources.resource_filename(
         'exojax', 'data/testdata/' + TESTDATA_CO_EXOMOL_MODIT_EMISSION_REF)
     dat = pd.read_csv(filename, delimiter=",", names=("nus", "flux"))
