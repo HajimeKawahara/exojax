@@ -1,7 +1,10 @@
-"""Molecular database (MDB) class using a common API w/ RADIS = (CAPI), will be renamed.
+"""Molecular database API class using a common API w/ RADIS = (CAPI)
 
 * MdbExomol is the MDB for ExoMol
-* MdbHit is the MDB for HITRAN or HITEMP
+* MdbHitran is the MDB for HITRAN
+* MdbHitemp is the MDB for HITEMP
+* MdbCommonHitempHitran is the common MDB for HITEMP and HITRAN
+
 """
 from os.path import exists
 import numpy as np
@@ -32,16 +35,15 @@ __all__ = ["MdbExomol", "MdbHitemp", "MdbHitran"]
 
 
 class MdbExomol(CapiMdbExomol):
-    """molecular database of ExoMol.
+    """molecular database of ExoMol form.
 
-    MdbExomol is a class for ExoMol.
+    MdbExomol is a class for ExoMol database. It inherits the CAPI class MdbExomol and adds some additional features.
 
     Attributes:
         simple_molecule_name: simple molecule name
         nurange: nu range [min,max] (cm-1)
         nu_lines (nd array): line center (cm-1)
         Sij0 (nd array): line strength at T=Tref (cm)
-
         logsij0 (jnp array): log line strength at T=Tref
         A (jnp array): Einstein A coeeficient
         gamma_natural (DataFrame or jnp array): gamma factor of the natural broadening
@@ -158,7 +160,7 @@ class MdbExomol(CapiMdbExomol):
         return wavenum_min, wavenum_max
 
     def activate(self, df, mask=None):
-        """activation of moldb,
+        """Activates of moldb for Exomol,  including making instances, computing broadening parameters, natural width, and transfering instances to gpu arrays when self.gpu_transfer = True
 
         Notes:
             activation includes, making instances, computing broadening parameters, natural width,
@@ -212,7 +214,7 @@ class MdbExomol(CapiMdbExomol):
         return mask
 
     def instances_from_dataframes(self, df_masked):
-        """generate instances from (usually masked) data frame
+        """Generates instances from (usually masked) data frame for Exomol
 
         Args:
             df_masked (DataFrame): (masked) data frame
@@ -237,7 +239,7 @@ class MdbExomol(CapiMdbExomol):
             raise ValueError("Use vaex dataframe as input.")
 
     def apply_mask_mdb(self, mask):
-        """apply mask for mdb class
+        """Applys mask for mdb class for Exomol
 
         Args:
             mask: mask to be applied
@@ -272,7 +274,7 @@ class MdbExomol(CapiMdbExomol):
         return self.line_strength_ref
 
     def generate_jnp_arrays(self):
-        """(re)generate jnp.arrays.
+        """(re)generates jnp.arrays. 
 
         Note:
             We have nd arrays and jnp arrays. We usually apply the mask to nd arrays and then generate jnp array from the corresponding nd array. For instance, self._A is nd array and self.A is jnp array.
@@ -486,11 +488,11 @@ class MdbCommonHitempHitran:
         """interpolated partition function.
 
         Args:
-           isotope: HITRAN isotope number starting from 1
-           T: temperature
+            isotope: HITRAN isotope number starting from 1
+            T: temperature
 
         Returns:
-           Q(idx, T) interpolated in jnp.array
+            Q(idx, T) interpolated in jnp.array
         """
         isotope_index = _isotope_index_from_isotope_number(isotope, self.uniqiso)
         return _QT_interp(isotope_index, T, self.T_gQT, self.gQT)
@@ -818,7 +820,7 @@ class MdbHitran(MdbCommonHitempHitran, HITRANDatabaseManager):
         nonair_broadening=False,
         with_error=False,
     ):
-        """Molecular database for HITRAN/HITEMP form.
+        """Molecular database for HITRAN/HITEMP form. 
 
         Args:
             path: path for HITRAN/HITEMP par file
