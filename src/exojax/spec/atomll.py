@@ -39,7 +39,7 @@ def Sij0(A, gupper, nu_lines, elower, QTref_284, QTmask, Irwin=False):
 
 def gamma_vald3(T, PH, PHH, PHe, ielem, iion,
                 nu_lines, elower, eupper, atomicmass, ionE,
-                gamRad, gamSta, vdWdamp, enh_damp=1.0):  # , vdW_meth="V"):
+                gamRad, gamSta, vdWdamp, enh_damp=1.0, Nelec=0.0):  # , vdW_meth="V"):
     """HWHM of Lorentzian (cm-1) caluculated as gamma/(4*pi*c) [cm-1] for lines
     with the van der Waals gamma in the line list (VALD or Kurucz), otherwise
     estimated according to the Unsoeld (1955)
@@ -57,9 +57,10 @@ def gamma_vald3(T, PH, PHH, PHe, ielem, iion,
       atomicmass: atomic mass [amu]
       ionE: ionization potential [eV]
       gamRad: log of gamma of radiation damping (s-1) (https://www.astro.uu.se/valdwiki/Vald3Format)
-      gamSta: log of gamma of Stark damping (s-1)
+      gamSta: log of gamma of Stark damping ((s * Nelec)^-1)
       vdWdamp:  log of (van der Waals damping constant / neutral hydrogen number) (s-1)
       enh_damp: empirical "enhancement factor" for classical Unsoeld's damping constant cf.) This coefficient (enh_damp) depends on  each species in some codes such as Turbospectrum. #tako210917
+      Nelec: number density of electron
       chi_lam (=h*nu=1.2398e4/wvl[AA]): energy of a photon in the line (computed)
       C6: interaction constant (Eq.11.17 in Gray2005) (computed)
       logg6: log(gamma6) (Eq.11.29 in Gray2005) (computed)
@@ -82,6 +83,7 @@ def gamma_vald3(T, PH, PHH, PHe, ielem, iion,
     """
     gamRad = jnp.where(gamRad == 0., -99, gamRad)
     gamSta = jnp.where(gamSta == 0., -99, gamSta)
+    gamStark = 10**gamSta * Nelec * (T/10000.)**(1/6)
     chi_lam = nu_lines/eV2wn  # [cm-1] -> [eV]
     chi = elower/eV2wn  # [cm-1] -> [eV]
 
@@ -92,7 +94,7 @@ def gamma_vald3(T, PH, PHH, PHe, ielem, iion,
     gam6He = 1e20 * C6**0.4 * PHe*1e6*0.41336 / T**0.7
     gam6HH = 1e20 * C6**0.4 * PHH*1e6*0.85 / T**0.7
     gamma6 = enh_damp * (gam6H + gam6He + gam6HH)
-    gamma_case1 = (gamma6 + 10**gamRad + 10**gamSta) / (4*np.pi*ccgs)
+    gamma_case1 = (gamma6 + 10**gamRad + gamStark) / (4*np.pi*ccgs)
     # Avoid nan (appeared by np.log10(negative C6))
     # (Note: if statements is NOT compatible with JAX)
     # if len(jnp.where(jnp.isnan(gamma_case1))[0]) > 0:
@@ -104,7 +106,7 @@ def gamma_vald3(T, PH, PHH, PHe, ielem, iion,
     gam6He = 10**vdWdamp * (T/10000.)**Texp * PHe*1e6*0.41336 / (kB*T)
     gam6HH = 10**vdWdamp * (T/10000.)**Texp * PHH*1e6*0.85 / (kB*T)
     gamma6 = gam6H + gam6He + gam6HH
-    gamma_case2 = (gamma6 + 10**gamRad + 10**gamSta) / (4*np.pi*ccgs)
+    gamma_case2 = (gamma6 + 10**gamRad + gamStark) / (4*np.pi*ccgs)
     # Adopt case2 for lines with vdW in VALD, otherwise Case1
 
     gamma = (gamma_case1 * jnp.where(vdWdamp >= 0., 1, 0) +
@@ -115,7 +117,7 @@ def gamma_vald3(T, PH, PHH, PHe, ielem, iion,
 
 def gamma_uns(T, PH, PHH, PHe, ielem, iion,
               nu_lines, elower, eupper, atomicmass, ionE,
-              gamRad, gamSta, vdWdamp, enh_damp=1.0):  # , vdW_meth="U"):
+              gamRad, gamSta, vdWdamp, enh_damp=1.0, Nelec=0.0):  # , vdW_meth="U"):
     """HWHM of Lorentzian (cm-1) estimated with the classical approximation by
     Unsoeld (1955)
 
@@ -132,9 +134,10 @@ def gamma_uns(T, PH, PHH, PHe, ielem, iion,
       atomicmass: atomic mass [amu]
       ionE: ionization potential [eV]
       gamRad: log of gamma of radiation damping (s-1) #(https://www.astro.uu.se/valdwiki/Vald3Format)
-      gamSta: log of gamma of Stark damping (s-1)
+      gamSta: log of gamma of Stark damping ((s * Nelec)^-1)
       vdWdamp:  log of (van der Waals damping constant / neutral hydrogen number) (s-1)
       enh_damp: empirical "enhancement factor" for classical Unsoeld's damping constant cf.) This coefficient (enh_damp) depends on  each species in some codes such as Turbospectrum. #tako210917
+      Nelec: number density of electron
       chi_lam (=h*nu=1.2398e4/wvl[AA]): energy of a photon in the line (computed)
       C6: interaction constant (Eq.11.17 in Gray2005) (computed)
       logg6: log(gamma6) (Eq.11.29 in Gray2005) (computed)
@@ -156,6 +159,7 @@ def gamma_uns(T, PH, PHH, PHe, ielem, iion,
     """
     gamRad = jnp.where(gamRad == 0., -99, gamRad)
     gamSta = jnp.where(gamSta == 0., -99, gamSta)
+    gamStark = 10**gamSta * Nelec * (T/10000.)**(1/6)
     chi_lam = nu_lines/eV2wn  # [cm-1] -> [eV]
     chi = elower/eV2wn  # [cm-1] -> [eV]
 
@@ -165,7 +169,7 @@ def gamma_uns(T, PH, PHH, PHe, ielem, iion,
     gam6He = 1e20 * C6**0.4 * PHe*1e6*0.41336 / T**0.7
     gam6HH = 1e20 * C6**0.4 * PHH*1e6*0.85 / T**0.7
     gamma6 = enh_damp * (gam6H + gam6He + gam6HH)
-    gamma_case1 = (gamma6 + 10**gamRad + 10**gamSta) / (4*np.pi*ccgs)
+    gamma_case1 = (gamma6 + 10**gamRad + gamStark) / (4*np.pi*ccgs)
     # Avoid nan (appeared by np.log10(negative C6))
     gamma = jnp.where(jnp.isnan(gamma_case1), 0., gamma_case1)
 
@@ -174,7 +178,7 @@ def gamma_uns(T, PH, PHH, PHe, ielem, iion,
 
 def gamma_KA3(T, PH, PHH, PHe, ielem, iion,
               nu_lines, elower, eupper, atomicmass, ionE,
-              gamRad, gamSta, vdWdamp, enh_damp=1.0):  # , vdW_meth="KA3"):
+              gamRad, gamSta, vdWdamp, enh_damp=1.0, Nelec=0.0):  # , vdW_meth="KA3"):
     """HWHM of Lorentzian (cm-1) caluculated with the 3rd equation in p.4 of
     Kurucz&Avrett1981.
 
@@ -191,9 +195,10 @@ def gamma_KA3(T, PH, PHH, PHe, ielem, iion,
       atomicmass: atomic mass [amu]
       ionE: ionization potential [eV]
       gamRad: log of gamma of radiation damping (s-1) #(https://www.astro.uu.se/valdwiki/Vald3Format)
-      gamSta: log of gamma of Stark damping (s-1)
+      gamSta: log of gamma of Stark damping ((s * Nelec)^-1)
       vdWdamp:  log of (van der Waals damping constant / neutral hydrogen number) (s-1)
       enh_damp: empirical "enhancement factor" for classical Unsoeld's damping constant cf.) This coefficient (enh_damp) depends on  each species in some codes such as Turbospectrum. #tako210917
+      Nelec: number density of electron
       chi_lam (=h*nu=1.2398e4/wvl[AA]): energy of a photon in the line (computed)
       C6: interaction constant (Eq.11.17 in Gray2005) (computed)
       logg6: log(gamma6) (Eq.11.29 in Gray2005) (computed)
@@ -214,6 +219,7 @@ def gamma_KA3(T, PH, PHH, PHe, ielem, iion,
     """
     gamRad = jnp.where(gamRad == 0., -99, gamRad)
     gamSta = jnp.where(gamSta == 0., -99, gamSta)
+    gamStark = 10**gamSta * Nelec * (T/10000.)**(1/6)
     Zeff = iion  # effective charge (=1 for Fe I, 2 for Fe II, etc.)
 
     # Square of effective quantum number of the upper state
@@ -244,14 +250,14 @@ def gamma_KA3(T, PH, PHH, PHe, ielem, iion,
         * (8.04e-25*ecgs**2/hcgs*(gap_msr_rev_cm))**0.4 \
         * PHH*1e6 / (kB*T)
     gamma6 = gam6H + gam6He + gam6HH
-    gamma = (gamma6 + 10**gamRad + 10**gamSta) / (4*np.pi*ccgs)
+    gamma = (gamma6 + 10**gamRad + gamStark) / (4*np.pi*ccgs)
 
     return gamma
 
 
 def gamma_KA4(T, PH, PHH, PHe, ielem, iion,
               nu_lines, elower, eupper, atomicmass, ionE,
-              gamRad, gamSta, vdWdamp, enh_damp=1.0):  # , vdW_meth="KA4"):
+              gamRad, gamSta, vdWdamp, enh_damp=1.0, Nelec=0.0):  # , vdW_meth="KA4"):
     """HWHM of Lorentzian (cm-1) caluculated with the 4rd equation in p.4 of
     Kurucz&Avrett1981.
 
@@ -268,10 +274,11 @@ def gamma_KA4(T, PH, PHH, PHe, ielem, iion,
       atomicmass: atomic mass [amu]
       ionE: ionization potential [eV]
       gamRad: log of gamma of radiation damping (s-1) #(https://www.astro.uu.se/valdwiki/Vald3Format)
-      gamSta: log of gamma of Stark damping (s-1)
+      gamSta: log of gamma of Stark damping ((s * Nelec)^-1)
       vdWdamp:  log of (van der Waals damping constant / neutral hydrogen number) (s-1)
       enh_damp: empirical "enhancement factor" for classical Unsoeld's damping constant
           #cf.) This coefficient (enh_damp) depends on  each species in some codes such as Turbospectrum. #tako210917
+      Nelec: number density of electron
       chi_lam (=h*nu=1.2398e4/wvl[AA]): energy of a photon in the line (computed)
       C6: interaction constant (Eq.11.17 in Gray2005) (computed)
       logg6: log(gamma6) (Eq.11.29 in Gray2005) (computed)
@@ -293,6 +300,7 @@ def gamma_KA4(T, PH, PHH, PHe, ielem, iion,
     """
     gamRad = jnp.where(gamRad == 0., -99, gamRad)
     gamSta = jnp.where(gamSta == 0., -99, gamSta)
+    gamStark = 10**gamSta * Nelec * (T/10000.)**(1/6)
     Zeff = iion  # effective charge (=1 for Fe I, 2 for Fe II, etc.)
 
     # Square of effective quantum number of the upper state
@@ -308,14 +316,14 @@ def gamma_KA4(T, PH, PHH, PHe, ielem, iion,
 
     gamma6 = 4.5e-9 * msr_upper**0.4 \
         * ((PH + 0.42*PHe + 0.85*PHH)*1e6/(kB*T)) * (T/10000.)**0.3
-    gamma = (gamma6 + 10**gamRad + 10**gamSta) / (4*np.pi*ccgs)
+    gamma = (gamma6 + 10**gamRad + gamStark) / (4*np.pi*ccgs)
 
     return gamma
 
 
 def gamma_KA3s(T, PH, PHH, PHe, ielem, iion,
                nu_lines, elower, eupper, atomicmass, ionE,
-               gamRad, gamSta, vdWdamp, enh_damp=1.0):  # , vdW_meth="KA3s"): (supplemetary)
+               gamRad, gamSta, vdWdamp, enh_damp=1.0, Nelec=0.0):  # , vdW_meth="KA3s"): (supplemetary)
     """(supplemetary:) HWHM of Lorentzian (cm-1) caluculated with the 3rd
     equation in p.4 of Kurucz&Avrett1981 but without discriminating iron group
     elements.
@@ -333,9 +341,10 @@ def gamma_KA3s(T, PH, PHH, PHe, ielem, iion,
       atomicmass: atomic mass [amu]
       ionE: ionization potential [eV]
       gamRad: log of gamma of radiation damping (s-1) #(https://www.astro.uu.se/valdwiki/Vald3Format)
-      gamSta: log of gamma of Stark damping (s-1)
+      gamSta: log of gamma of Stark damping ((s * Nelec)^-1)
       vdWdamp:  log of (van der Waals damping constant / neutral hydrogen number) (s-1)
       enh_damp: empirical "enhancement factor" for classical Unsoeld's damping constant cf.) This coefficient (enh_damp) depends on  each species in some codes such as Turbospectrum. #tako210917
+      Nelec: number density of electron
       chi_lam (=h*nu=1.2398e4/wvl[AA]): energy of a photon in the line (computed)
       C6: interaction constant (Eq.11.17 in Gray2005) (computed)
       logg6: log(gamma6) (Eq.11.29 in Gray2005) (computed)
@@ -356,6 +365,7 @@ def gamma_KA3s(T, PH, PHH, PHe, ielem, iion,
     """
     gamRad = jnp.where(gamRad == 0., -99, gamRad)
     gamSta = jnp.where(gamSta == 0., -99, gamSta)
+    gamStark = 10**gamSta * Nelec * (T/10000.)**(1/6)
     Zeff = iion  # effective charge (=1 for Fe I, 2 for Fe II, etc.)
 
     # Square of effective quantum number of the upper state
@@ -383,7 +393,7 @@ def gamma_KA3s(T, PH, PHH, PHe, ielem, iion,
         * (8.04e-25*ecgs**2/hcgs*(gap_msr_rev_cm))**0.4 \
         * PHH*1e6 / (kB*T)
     gamma6 = gam6H + gam6He + gam6HH
-    gamma = (gamma6 + 10**gamRad + 10**gamSta) / (4*np.pi*ccgs)
+    gamma = (gamma6 + 10**gamRad + gamStark) / (4*np.pi*ccgs)
 
     return gamma
 
