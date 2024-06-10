@@ -31,13 +31,11 @@ def read_petitRadtrans_highres_xs_data(
 
 
 def make_fig_tabulate_crosssection_error(
-    p0=1.0e0, p1=1.0e1, t0=899.52154213, t1=1215.08842295
+    p0=1.0e0, p1=1.0e1, t0=899.52154213, t1=1215.08842295, output="fig_tablexs_error.png"
 ):
     from exojax.utils.grids import wavenumber_grid
 
     nu, wav, res = wavenumber_grid(22910, 22960, 2000, xsmode="lpf", unit="AA")
-    print(res)
-
     tc = 10 ** ((np.log10(t1) + np.log10(t0)) / 2.0)
     pc = 10 ** ((np.log10(p1) + np.log10(p0)) / 2.0)
 
@@ -50,9 +48,10 @@ def make_fig_tabulate_crosssection_error(
     mdb_co = MdbHitemp("CO", nurange=[nu[0], nu[-1]])
     mdb_h2o = MdbHitemp("H2O", nurange=[nu[0], nu[-1]])
 
-    fig = plt.figure(figsize=(10, 6))
-    ax = fig.add_subplot(2, 1, 1)
-    ax2 = fig.add_subplot(2, 1, 2)
+    #fig = plt.figure(figsize=(10, 6))
+    f, (ax, ax2) = plt.subplots(2, 1, gridspec_kw={'height_ratios': [2, 1]})
+    #ax = fig.add_subplot(2, 1, 1)
+    #ax2 = fig.add_subplot(2, 1, 2)
     cp = ["C0", "C1"]
     mol = ["H2O","CO"]
     lwi = [1.0, 0.5]
@@ -72,24 +71,26 @@ def make_fig_tabulate_crosssection_error(
             avexs,
             color=cp[i],
             ls="dashed",
-            label="average" + "(" + mol[i] + ")",
+            label="grid interpolation " + "(" + mol[i] + ")",
             lw=lwi[i],
         )
         ax2.plot(nu, xs / avexs - 1.0, color=cp[i], label=mol[i], lw=lwi[i])
     ax.legend()
+    ax2.set_ylim(-0.7,0.7)
     ax2.legend()
     ax2.axhline(0.0, color="k")
     ax.set_ylabel("cross section [cm2]")
     ax2.set_xlabel("wavenumber [cm-1]")
     ax2.set_ylabel("relative error")
-    plt.savefig("fig_tablexs_error.png", bbox_inches="tight", pad_inches=0.1)
-    plt.show()
+    plt.tight_layout()
+    plt.savefig(output, bbox_inches="tight", pad_inches=0.1)
+    #plt.show()
 
 
 
 if __name__ == "__main__":
     # read_petitRadtrans_highres_xs_data()
-    make_fig_tabulate_crosssection_error(p0=1.0e0, p1=1.0e1, t0=899.52154213, t1=899.52154213)
-    make_fig_tabulate_crosssection_error(p0=1.0e0, p1=1.0e0, t0=899.52154213, t1=1215.08842295)
-    make_fig_tabulate_crosssection_error(p0=1.0e0, p1=1.0e1, t0=899.52154213, t1=1215.08842295)
+    make_fig_tabulate_crosssection_error(p0=1.0e0, p1=1.0e1, t0=899.52154213, t1=899.52154213, output="fig_tablexs_error_difp.png")
+    make_fig_tabulate_crosssection_error(p0=1.0e0, p1=1.0e0, t0=899.52154213, t1=1215.08842295, output="fig_tablexs_error_dift.png")
+    make_fig_tabulate_crosssection_error(p0=1.0e0, p1=1.0e1, t0=899.52154213, t1=1215.08842295, output="fig_tablexs_error.png")
     
