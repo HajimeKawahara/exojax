@@ -41,6 +41,9 @@ def make_fig_tabulate_crosssection_error(
     tc = 10 ** ((np.log10(t1) + np.log10(t0)) / 2.0)
     pc = 10 ** ((np.log10(p1) + np.log10(p0)) / 2.0)
 
+    print(p0,p1,pc)
+    print(t0,t1,tc)
+
     from exojax.spec.api import MdbHitemp
     from exojax.spec.opacalc import OpaDirect
 
@@ -56,9 +59,13 @@ def make_fig_tabulate_crosssection_error(
     for i, mdb in enumerate([mdb_h2o, mdb_co]):
         opa = OpaDirect(mdb, nu)
         xs = opa.xsvector(tc, pc)
-        xs0 = opa.xsvector(t0, p0)
-        xs1 = opa.xsvector(t1, p1)
-        avexs = (xs0 + xs1) / 2.0
+        xs00 = opa.xsvector(t0, p0)
+        xs11 = opa.xsvector(t1, p1)
+        xs01 = opa.xsvector(t0, p1)
+        xs10 = opa.xsvector(t1, p0)
+
+        #avexs = (xs00 + xs11) / 2.0
+        avexs = (xs00 + xs10 + xs01 + xs11) / 4.0
         ax.plot(nu, xs, color=cp[i], label="direct (" + mol[i] + ")", lw=lwi[i])
         ax.plot(
             nu,
@@ -79,6 +86,10 @@ def make_fig_tabulate_crosssection_error(
     plt.show()
 
 
+
 if __name__ == "__main__":
     # read_petitRadtrans_highres_xs_data()
-    make_fig_tabulate_crosssection_error()
+    make_fig_tabulate_crosssection_error(p0=1.0e0, p1=1.0e1, t0=899.52154213, t1=899.52154213)
+    make_fig_tabulate_crosssection_error(p0=1.0e0, p1=1.0e0, t0=899.52154213, t1=1215.08842295)
+    make_fig_tabulate_crosssection_error(p0=1.0e0, p1=1.0e1, t0=899.52154213, t1=1215.08842295)
+    
