@@ -39,6 +39,8 @@ def make_fig_tabulate_crosssection_error(
     print(res)
 
     tc = 10 ** ((np.log10(t1) + np.log10(t0)) / 2.0)
+    tc = (t1 + t0) / 2.0
+
     pc = 10 ** ((np.log10(p1) + np.log10(p0)) / 2.0)
 
     from exojax.spec.api import MdbHitemp
@@ -51,7 +53,7 @@ def make_fig_tabulate_crosssection_error(
     ax = fig.add_subplot(2, 1, 1)
     ax2 = fig.add_subplot(2, 1, 2)
     cp = ["C0", "C1"]
-    mol = ["H2O","CO"]
+    mol = ["H2O", "CO"]
     lwi = [1.0, 0.5]
     for i, mdb in enumerate([mdb_h2o, mdb_co]):
         opa = OpaDirect(mdb, nu)
