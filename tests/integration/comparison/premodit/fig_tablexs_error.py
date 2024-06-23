@@ -1,3 +1,7 @@
+"""
+This code is a snippet to check the tabulated cross section error.
+See Issue #491 for more details.
+"""
 import numpy as np
 import matplotlib.pyplot as plt
 import h5py
