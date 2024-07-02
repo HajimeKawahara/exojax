@@ -1,7 +1,7 @@
 ExoMol, HITEMP, HITRAN
 --------------------------------------
 
-*June 17th (2023) Hajime Kawahara, Yui Kawashima, Yui Kasagi*
+*July 2th (2024) Hajime Kawahara, Yui Kawashima, Yui Kasagi*
 
 Since version 1.2, the standard molecular database I/O for ExoMol, HITEMP, and HITRAN was shared with the `radis <https://github.com/radis/radis>`_ team. 
 We moved the I/O for these database to `exojax.spec.api <../exojax/exojax.spec.html#module-exojax.spec.api>`_.
@@ -201,22 +201,22 @@ How to load HITRAN CO database
 
 .. code:: ipython
 	
-	>>> from exojax.spec.api import Mdbhitran
-	>>> Mdbhitran(".database/CO/", nurange=[4200.0, 4300.0])
-	>>> Mdbhitran(".database/05/", nurange=[4200.0, 4300.0])
+	>>> from exojax.spec.api import MdbHitran
+	>>> MdbHitran(".database/CO/", nurange=[4200.0, 4300.0])
+	>>> MdbHitran(".database/05/", nurange=[4200.0, 4300.0])
 	
 
 The style used in ExoJAX 1 is also acceptable (not recommended): 
 
 .. code:: ipython
 	
-	>>> Mdbhitran(".database/CO/05_hit12.par", nurange=[4200.0, 4300.0])
+	>>> MdbHitran(".database/CO/05_hit12.par", nurange=[4200.0, 4300.0])
 
 
 Masking Line Information
 ================================================
 
-We can mask the line information using "apply_mask_mdb" method. Here is an example:
+If needed, we can mask the line information using "apply_mask_mdb" method. Here is an example:
 
 .. code:: python
 
