@@ -152,12 +152,20 @@ class ArtCommon:
         sigmag,
         gravity,
     ):
-        """opacity profile (delta tau) from extinction coefficient assuming the AM cloud model with a lognormal cloud distribution
+        
+        """
+        opacity profile (delta tau) from extinction coefficient assuming the AM cloud model with a lognormal cloud distribution
         Args:
-            gravity (float/1D profile): constant or 1d profile of gravity in cgs
+            extinction coefficient: extinction coefficient  in cgs (cm-1) [N_layer, N_nus]
+            condensate_substance_density: condensate substance density (g/cm3)
+            mmr_condensate: Mass mixing ratio (array) of condensate [Nlayer]
+            rg: rg parameter in the lognormal distribution of condensate size, defined by (9) in AM01
+            sigmag:sigmag parameter (geometric standard deviation) in the lognormal distribution of condensate size, defined by (9) in AM01, must be sigmag > 1
+            gravity: gravity (cm/s2)
 
         Returns:
-            dtau: opacity profile, whose element is optical depth in each layer.
+            2D array: optical depth matrix, dtau  [N_layer, N_nus]
+
         """
 
         return layer_optical_depth_clouds_lognormal(
@@ -173,6 +181,19 @@ class ArtCommon:
     def opacity_profile_cia(
         self, logacia_matrix, temperature, vmr1, vmr2, mmw, gravity
     ):
+        """opacity profile (delta tau) from collision-induced absorption
+        
+        Args:
+            logacia_matrix (_type_): _description_
+            temperature (_type_): _description_
+            vmr1 (_type_): _description_
+            vmr2 (_type_): _description_
+            mmw (_type_): _description_
+            gravity (_type_): _description_
+
+        Returns:
+            _type_: _description_
+        """
         narr = number_density(self.pressure, temperature)
         lognarr1 = jnp.log10(vmr1 * narr)  # log number density
         lognarr2 = jnp.log10(vmr2 * narr)  # log number density
