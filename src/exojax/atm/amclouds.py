@@ -75,7 +75,10 @@ def compute_cloud_base_pressure_index(pressure, saturation_pressure, vmr_vapor):
     Returns:
         int: cloud base pressure index
     """
-    ibase=jnp.searchsorted((saturation_pressure/vmr_vapor)-pressure,0.0) # 231 +- 9.2 us, find index from ascending array 
+    # Note: jnp.searchsorted returns Array()
+    ibase = jnp.searchsorted(
+        (saturation_pressure / vmr_vapor) - pressure, 0.0
+    )  # 231 +- 9.2 us, find index from ascending array
     return ibase
 
 
@@ -105,7 +108,7 @@ def get_rg(rw, fsed, alpha, sigmag):
         fsed: fsed
         alpha: power of the condensate size distribution
         sigmag:sigmag parameter (geometric standard deviation) in the lognormal distribution of condensate size, defined by (9) in AM01, must be sigmag > 1
-        
+
     Returns
         rg: rg parameter in the lognormal distribution of condensate size, defined by (9) in AM01
 
@@ -133,20 +136,21 @@ def find_rw(rarr, terminal_velocity, Kzz_over_L):
     rw = rarr[iscale]
     return rw
 
+
 def geometric_radius(rg, sigmag):
-    """ computes the paritculate geometric radius
-    
+    """computes the paritculate geometric radius
+
     Args:
         rg (float): rg parameter in lognormal distribution in cgs
-        sigmag (float): sigma_g parameter in lognormal distribution 
+        sigmag (float): sigma_g parameter in lognormal distribution
 
 
     Note:
-        The cross section is given by $S = Q_e \pi r_geo^2$ 
+        The cross section is given by $S = Q_e \pi r_geo^2$
 
     Returns:
-        _type_: geometric radius in cgs 
+        _type_: geometric radius in cgs
     """
-    #logs = jnp.log(sigmag)
-    #return jnp.exp(logs*logs)*rg
-    return sigmag**jnp.log(sigmag)*rg
+    # logs = jnp.log(sigmag)
+    # return jnp.exp(logs*logs)*rg
+    return sigmag ** jnp.log(sigmag) * rg

@@ -107,6 +107,7 @@ class AmpAmcloud(AmpCloud):
         # cloud base pressure/temperature
         VMR = mmr2vmr(MMR_base,molecular_mass_condensate, mean_molecular_weight)
         ibase = compute_cloud_base_pressure_index(pressures, psat, VMR)
+        
         pressure_base = pressures[ibase]
         temperature_base = temperatures[ibase]
 
