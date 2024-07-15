@@ -1,6 +1,6 @@
 import jax.numpy as jnp
 from jax import grad
-
+from exojax.atm.amclouds import get_smooth_index, get_value_at_cloud_base
     
 def a_from_searchsorted(x):
     a = jnp.array([1.0, 2.0, 3.0, 4.0, 5.0])
@@ -31,25 +31,11 @@ def check_derivative(a_from_func):
     dfarr = jnp.array(dfarr)
     return xarr,farr,dfarr
 
-# xp = log10(pressures)
-# x = log10(pressure)
-
-def get_smooth_index(xp, x):
-    findex = jnp.arange(len(xp), dtype=float)
-    smooth_index = jnp.interp(x, xp, findex)
-    return smooth_index
-
-#array = log10(pressures) or temperatures
-
-def value_at_smooth_index(array, smooth_index):
-    ind = int(smooth_index)
-    res = smooth_index - float(ind)
-    return (1.0 - res)*array[ind] + res*array[ind+1]
 
 def a_from_smooth_index(x):
     a = jnp.array([1.0, 2.0, 3.0, 4.0, 5.0])
     smooth_index = get_smooth_index(a, x)
-    return value_at_smooth_index(a, smooth_index)
+    return get_value_at_cloud_base(a, smooth_index)
 
 def smooth_index_is_not_null_derivative():
     xarr, farr, dfarr = check_derivative(a_from_smooth_index)

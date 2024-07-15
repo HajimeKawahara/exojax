@@ -49,38 +49,67 @@ def mixing_ratio_cloud_profile(
     return vmaped_function(pressures, cloud_base_pressure, fsed, mr_cloud_base, kc)
 
 
-@jit
-def compute_cloud_base_pressure(pressure, saturation_pressure, vmr_vapor):
-    """computes cloud base pressure from an intersection of a T-P profile and Psat(T) curves
+def get_smooth_index(xp, x):
+    findex = jnp.arange(len(xp), dtype=float)
+    smooth_index = jnp.interp(x, xp, findex)
+    return smooth_index
+
+
+def get_value_at_cloud_base(array, smooth_index):
+    """get value at cloud base from an array
+
     Args:
-        pressure: pressure array
+        array (float): array, such as log pressures or temperatures
+        smooth_index (float): smooth index
+
+    Returns:
+        float: value at cloud base
+    """
+    ind = int(smooth_index)
+    res = smooth_index - float(ind)
+    return (1.0 - res) * array[ind] + res * array[ind + 1]
+
+
+def get_pressure_at_cloud_base(pressures, smooth_index):
+    """get pressure at cloud base from pressures
+
+    Args:
+        pressures: pressure array
+        smooth_index: smooth index
+
+    Returns:
+        float: pressure at cloud base
+    """
+    return 10 ** get_value_at_cloud_base(jnp.log10(pressures), smooth_index)
+
+
+def smooth_index_base_pressure(pressures, saturation_pressure, vmr_vapor):
+    """computes smooth_index for cloud base pressure from an intersection of a T-P profile and Psat(T) curves
+    Args:
+        pressures: pressure array
         saturation_presure: saturation pressure arrau
         vmr_vapor: volume mixing ratio (VMR) for vapor
 
     Returns:
-        cloud base pressure
+        float: smooth_index
     """
-    ibase = compute_cloud_base_pressure_index(pressure, saturation_pressure, vmr_vapor)
-    return pressure[ibase]
+    return get_smooth_index(
+        jnp.log10((saturation_pressure / vmr_vapor) / pressures), 0.0
+    )
 
+def compute_cloud_base_pressure(pressures, saturation_pressure, vmr_vapor):
+    """compute cloud base pressure from a T-P profile and Psat(T) curves
 
-@jit
-def compute_cloud_base_pressure_index(pressure, saturation_pressure, vmr_vapor):
-    """computes cloud base pressure from an intersection of a T-P profile and Psat(T) curves
     Args:
-        pressure: pressure array
+        pressures: pressure array
         saturation_presure: saturation pressure arrau
         vmr_vapor: volume mixing ratio (VMR) for vapor
 
     Returns:
-        int: cloud base pressure index
+        float: cloud base pressure
     """
-    # Note: jnp.searchsorted returns Array()
-    ibase = jnp.searchsorted(
-        (saturation_pressure / vmr_vapor) - pressure, 0.0
-    )  # 231 +- 9.2 us, find index from ascending array
-    return ibase
-
+    smooth_index = smooth_index_base_pressure(pressures, saturation_pressure, vmr_vapor)
+    return get_pressure_at_cloud_base(pressures, smooth_index)
 
 def get_rw(terminal_velocity, Kzz, L, rarr):
     """compute rw in AM01 implicitly defined by (11)
