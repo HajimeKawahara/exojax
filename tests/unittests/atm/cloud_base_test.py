@@ -1,4 +1,4 @@
-"""Unit tests for exojax.atm.amclouds.compute_cloud_base_pressure
+"""Unit tests for exojax.atm.amclouds.(cloud base relationals)
 """
 
 import pytest

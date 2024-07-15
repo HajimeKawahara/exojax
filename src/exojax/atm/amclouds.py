@@ -65,8 +65,10 @@ def get_value_at_cloud_base(array, smooth_index):
     Returns:
         float: value at cloud base
     """
-    ind = int(smooth_index)
-    res = smooth_index - float(ind)
+    # ind = int(smooth_index) #does not work
+    ind = smooth_index.astype(int)
+    # res = smooth_index - float(ind) #does not work
+    res = smooth_index - jnp.floor(smooth_index)
     return (1.0 - res) * array[ind] + res * array[ind + 1]
 
 
@@ -97,6 +99,7 @@ def smooth_index_base_pressure(pressures, saturation_pressure, vmr_vapor):
         jnp.log10((saturation_pressure / vmr_vapor) / pressures), 0.0
     )
 
+
 def compute_cloud_base_pressure(pressures, saturation_pressure, vmr_vapor):
     """compute cloud base pressure from a T-P profile and Psat(T) curves
 
@@ -110,6 +113,7 @@ def compute_cloud_base_pressure(pressures, saturation_pressure, vmr_vapor):
     """
     smooth_index = smooth_index_base_pressure(pressures, saturation_pressure, vmr_vapor)
     return get_pressure_at_cloud_base(pressures, smooth_index)
+
 
 def get_rw(terminal_velocity, Kzz, L, rarr):
     """compute rw in AM01 implicitly defined by (11)
