@@ -1,7 +1,7 @@
 """Get Recommendation from ExoMol."""
 from urllib.request import HTTPError, urlopen
 from bs4 import BeautifulSoup
-
+import numpy as np
 
 def get_exomol_database_list(molecule, isotope_full_name):
     """Parse ExoMol website and return list of available databases, and
@@ -38,6 +38,7 @@ def get_exomol_database_list(molecule, isotope_full_name):
         'a', {'class': 'list-group-item link-list-group-item recommended'}
     )
     databases_recommended = [r.get_attribute_list('title')[0] for r in rows]
+    databases_recommended = list(np.unique(databases_recommended))
 
     # All others
     rows = soup.find_all(
@@ -48,7 +49,7 @@ def get_exomol_database_list(molecule, isotope_full_name):
 
     databases = databases + databases_recommended
 
-    return databases, databases_recommended[0]
+    return list(np.unique(databases)), databases_recommended[0]
 
 
 if __name__ == '__main__':
