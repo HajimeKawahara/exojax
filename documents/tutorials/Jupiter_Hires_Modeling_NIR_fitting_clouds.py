@@ -342,9 +342,10 @@ from exojax.utils.constants import c  # light speed in km/s
 
 # In[19]:
 
-# log_fsed, log_Kzz, vrv, vv, boradening, mmr, normalization factor
-parinit = jnp.array([np.log10(1.0)*10000.0, np.log10(1.e4)*10.0, -5.0, -55.0, 2.5, 1.0, 1.0])
-multiple_factor = jnp.array([0.0001,0.1,1.0, 1.0, 10000.0, 0.01, 1.0])
+# T0, log_fsed, log_Kzz, vrv, vv, boradening, mmr, normalization factor
+#parinit = jnp.array([1.5, np.log10(1.0)*10000.0, np.log10(1.e4)*10.0, -5.0, -55.0, 2.5, 1.0, 1.0])
+parinit = jnp.array([1.5, np.log10(1.0)*10000.0, np.log10(1.e4)*10.0, -5.0, -55.0, 2.5, 1.2, 0.6])
+multiple_factor = jnp.array([100.0, 0.0001,0.1,1.0, 1.0, 10000.0, 0.1, 1.0])
 
 
 def unpack_params(params):
@@ -356,19 +357,24 @@ def unpack_params(params):
 
 def spectral_model(params):
 
-    log_fsed, log_Kzz, vrv, vv, _broadening, const_mmr_ch4, _factor = params * multiple_factor
+    _T0, log_fsed, log_Kzz, vrv, vv, _broadening, const_mmr_ch4, factor = params * multiple_factor
     
+
     #fsed = 10**log_fsed
     Kzz = 10**log_Kzz
 
-    fsed = 3.0
-    #Kzz = 1.0e4
-    # vrv = -5.0
-    # vv = -55.0
+    fsed = 4.0 #4 does not work.... 3 is OK...
+    Kzz = 1.0e4
+    vrv = -5.0
+    vv = -55.0
     factor = 0.7
     broadening = 25000.0
-    # const_mmr_ch4 = 0.01
-    
+    const_mmr_ch4 = 0.12
+    T0 = 150.0
+
+    # temperatures
+    Tarr = art.powerlaw_temperature(T0, 0.2)
+
     # cloud
     rg_layer, MMRc = amp_nh3.calc_ammodel(
         Parr, Tarr, mu, molmass_nh3, gravity, fsed, sigmag, Kzz, MMRbase_nh3
@@ -442,6 +448,8 @@ print(unpack_params(parinit))
 F_samp = spectral_model(res.params)
 F_samp_init = spectral_model(parinit)
 
+print(F_samp)
+
 fig = plt.figure(figsize=(30, 5))
 ax = fig.add_subplot(111)
 plt.plot(nus_obs, spectra, ".", label="observed spectrum")
@@ -451,7 +459,7 @@ plt.plot(nus_obs, F_samp, alpha=0.5, label="best fit", color="C1", lw=3)
 # plt.plot(nus*(1-vpercp_only_show_solar),incoming_flux, label="incoming",color="C2")
 plt.legend()
 plt.xlim(np.min(nus_obs), np.max(nus_obs))
-plt.ylim(0.0, 0.25)
+#plt.ylim(0.0, 0.25)
 plt.savefig("Jupiter_petitIRD.png")
 plt.show()
 
