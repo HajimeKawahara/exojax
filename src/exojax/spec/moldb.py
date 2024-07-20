@@ -94,6 +94,7 @@ class AdbVald(object):
         self.T_gQT = jnp.array(pfTdat.columns[1:], dtype=float)
         self.gQT_284species = jnp.array(self.pfdat.iloc[:, 1:].to_numpy(
             dtype=float))  # grid Q vs T vs Species
+        self.Tref = Tref_original
         self.QTref_284 = np.array(self.QT_interp_284(Tref_original))
         # identify index of QT grid (gQT) for each line
         self._QTmask = self.make_QTmask(self._ielem, self._iion)
