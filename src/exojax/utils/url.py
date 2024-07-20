@@ -5,7 +5,7 @@
 
 
 def url_virga():
-    """return URL for VIRGA refractive index data from ZENODO
+    """returns URL for VIRGA refractive index data from ZENODO
 
     Returns:
         URL for VIRGA refractive index data
@@ -15,7 +15,7 @@ def url_virga():
 
 
 def url_HITRAN12():
-    """return URL for HITRAN 12 parfile.
+    """returns URL for HITRAN 12 parfile.
 
     Returns:
         URL for HITRAN 12 parfile
@@ -25,7 +25,7 @@ def url_HITRAN12():
 
 
 def url_HITRANCIA():
-    """return URL for HITRAN CIA ciafile.
+    """returns URL for HITRAN CIA ciafile.
 
     Returns:
         URL for HITRAN CIA file
@@ -35,7 +35,7 @@ def url_HITRANCIA():
 
 
 def url_HITEMP():
-    """return URL for HITEMP bz2 parfile.
+    """returns URL for HITEMP bz2 parfile.
 
     Returns:
         URL for HITEMP bz2 file
@@ -45,7 +45,7 @@ def url_HITEMP():
 
 
 def url_HITEMP10():
-    """return URL for HITEMP2010.
+    """returns URL for HITEMP2010.
 
     Returns:
         URL for HITEMP2010 db
@@ -55,7 +55,7 @@ def url_HITEMP10():
 
 
 def url_ExoMol():
-    """return URL for ExoMol.
+    """returns URL for ExoMol.
 
     Returns:
         URL for ExoMol db
@@ -65,7 +65,7 @@ def url_ExoMol():
 
 
 def url_Exomol_iso(molecule, isotope_full_name):
-    """return URL for ExoMol for isotope.
+    """returns URL for ExoMol for isotope.
 
     Returns:
         URL for ExoMol for isotope
@@ -80,7 +80,7 @@ def url_Exomol_iso(molecule, isotope_full_name):
 
 
 def url_developer_data():
-    """return URL for data in exojax.
+    """returns URL for data in exojax.
 
     Returns:
         URL for ExoJAX

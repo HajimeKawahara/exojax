@@ -17,37 +17,44 @@ def resolution_to_gaussian_std(resolution):
     spectral resolution.
 
     Args:
-      resolution: spectral resolution R
+        resolution: spectral resolution R
 
     Returns:
-      standard deviation of Gaussian velocity distribution (km/s)
+        standard deviation of Gaussian velocity distribution (km/s)
     """
     return c / (2.0 * np.sqrt(2.0 * np.log(2.0)) * resolution)
 
 
-def resolution_eslog(nu):
+def resolution_eslog(nu_grid):
     """spectral resolution for ESLOG.
 
     Args:
-       nu: wavenumber bin
+        nu_grid: wavenumber bin
 
     Returns:
-       resolution
+        resolution
     """
-    return (len(nu) - 1) / np.log(nu[-1] / nu[0])
+    return (len(nu_grid) - 1) / np.log(nu_grid[-1] / nu_grid[0])
 
 
-def resolution_eslin(nu):
+def resolution_eslin(nu_grid):
     """min max spectral resolution for ESLIN.
 
     Args:
-       nu: wavenumber bin
+        nu_grid: wavenumber bin
 
     Returns:
-       min, approximate, max of the resolution
+        min, approximate, max of the resolution
     """
-    resolution = ((nu[-1] + nu[0]) / 2.0) / ((nu[-1] - nu[0]) / len(nu))
-    return nu[0] / (nu[1] - nu[0]), resolution, nu[-1] / (nu[-1] - nu[-2])
+    resolution = ((nu_grid[-1] + nu_grid[0]) / 2.0) / (
+        (nu_grid[-1] - nu_grid[0]) / len(nu_grid)
+    )
+    return (
+        nu_grid[0] / (nu_grid[1] - nu_grid[0]),
+        resolution,
+        nu_grid[-1] / (nu_grid[-1] - nu_grid[-2]),
+    )
+
 
 def nx_from_resolution_eslog(nu0, nu1, resolution):
     """Compute the number of wavenumber grid for a given resolution for ESLOG
@@ -61,4 +68,3 @@ def nx_from_resolution_eslog(nu0, nu1, resolution):
         int: the number of wavenumber grid for a given resolution
     """
     return int(resolution * np.log(nu1 / nu0)) + 1
-
