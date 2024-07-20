@@ -2,7 +2,7 @@ import re
 
 
 def molecule_color(simple_molecule_name):
-    """return the individual matplotlib color label (CN) for a given molecule simple name  
+    """return the individual matplotlib color label (CN) for a given molecule simple name
 
     Args:
         simple_molecule_name (str): simple molecule name, "H2O"
@@ -10,18 +10,20 @@ def molecule_color(simple_molecule_name):
     Examples:
         >>> format_molecule_color("H2O")
         "C1"
-    
+
 
     Returns:
         str: CN label, such as C1 for "H2O" based on HITRAN identifier. If the molecule does not exist in the HITRAN identifiers, return gray
     """
     from radis.db.classes import get_molecule_identifier
+
     try:
         i = get_molecule_identifier(simple_molecule_name)
-        color = "C"+str(i)
+        color = "C" + str(i)
     except:
         color = "gray"
     return color
+
 
 def molecules_color_list(simple_molecule_name_list):
     """return the individual matplotlib color label (CN) for a given molecule simple name list
@@ -32,16 +34,20 @@ def molecules_color_list(simple_molecule_name_list):
     Returns:
         str: CN label, such as C1 for "H2O"
     """
-    
+
     return [molecule_color(molecule) for molecule in simple_molecule_name_list]
 
+
 def molecules_color_lists(simple_molecule_name_lists):
-    return [[molecule_color(molecule) for molecule in molecules] for molecules in simple_molecule_name_lists]
+    return [
+        [molecule_color(molecule) for molecule in molecules]
+        for molecules in simple_molecule_name_lists
+    ]
 
 
 def format_molecule(simple_molecule_name):
     """Format a given molecule string with subscript numbers and convert it to LaTeX syntax.
-    
+
     This function takes in a molecule string, where elements are represented by their symbols and
     the number of atoms is represented by a subscript number following the symbol. The function
     converts the molecule string to a LaTeX string, with subscript numbers formatted correctly
@@ -61,14 +67,17 @@ def format_molecule(simple_molecule_name):
         >>> format_molecule("CO")
         "$\\mathrm{CO}$"
     """
-    formatted_molecule = re.sub(r'([A-Z][a-z]?)([0-9]+)', r'\1_\2', simple_molecule_name)
+    formatted_molecule = re.sub(
+        r"([A-Z][a-z]?)([0-9]+)", r"\1_\2", simple_molecule_name
+    )
     latex_molecule = f"$\\mathrm{{{formatted_molecule}}}$"
     return latex_molecule
+
 
 def format_molecules_list(molecules):
     """
     Format a list of molecule strings with subscript numbers and convert them to LaTeX syntax.
-    
+
     This function takes in a list of molecule strings, where elements are represented by their symbols and
     the number of atoms is represented by a subscript number following the symbol. The function
     converts each molecule string to a LaTeX string, with subscript numbers formatted correctly
@@ -86,10 +95,11 @@ def format_molecules_list(molecules):
     """
     return [format_molecule(molecule) for molecule in molecules]
 
+
 def format_molecules_lists(molecules_lists):
     """
     Format a list of lists of molecule strings with subscript numbers and convert them to LaTeX syntax.
-    
+
     This function takes in a list of lists of molecule strings, where elements are represented by their symbols and
     the number of atoms is represented by a subscript number following the symbol. The function
     converts each molecule string to a LaTeX string, with subscript numbers formatted correctly
@@ -105,7 +115,10 @@ def format_molecules_lists(molecules_lists):
         >>> format_molecules_lists([["H2O", "CH4", "CO"], ["H2O", "CH4", "CO"]])
         [["$\\mathrm{H_2O}$", "$\\mathrm{CH_4}$", "$\\mathrm{CO}$"], ["$\\mathrm{H_2O}$", "$\\mathrm{CH4}$", "$\\mathrm{CO}$"]]
     """
-    return [[format_molecule(molecule) for molecule in molecules] for molecules in molecules_lists]
+    return [
+        [format_molecule(molecule) for molecule in molecules]
+        for molecules in molecules_lists
+    ]
 
 
 if __name__ == "__main__":
@@ -114,9 +127,9 @@ if __name__ == "__main__":
     for molecule in simple_molecule_name_list:
         print(format_molecule(molecule))
     print(format_molecules_list(simple_molecule_name_list))
-    
+
     print(molecules_color_list(simple_molecule_name_list))
-    
+
     simple_molecule_name_lists = [["H2O", "CH4", "CO"], ["H2O", "NH3", "CO"]]
     print(format_molecules_lists(simple_molecule_name_lists))
     print(molecules_color_lists(simple_molecule_name_lists))

@@ -10,7 +10,7 @@ def device_memory_use(opa, art=None, nfree=None, print_summary=True):
         nfree (int, optional): the number of free parameters. Defaults to None.
         print_summary (bool): printing summary Defaults to True.
     Raises:
-        ValueError: method not implemented yet 
+        ValueError: method not implemented yet
 
     Returns:
         float: estimated device memory use
@@ -29,16 +29,27 @@ def device_memory_use(opa, art=None, nfree=None, print_summary=True):
     if opa.method == "premodit":
         ngrid_broadpar = opa.ngrid_broadpar
         ngrid_elower = opa.ngrid_elower
-        devmemuse, memdict = premodit_devmemory_use(ngrid_nu_grid,
-                                                    ngrid_broadpar,
-                                                    ngrid_elower,
-                                                    nlayer=nlayer,
-                                                    nfree=nfree,
-                                                    precision=precision)
+        devmemuse, memdict = premodit_devmemory_use(
+            ngrid_nu_grid,
+            ngrid_broadpar,
+            ngrid_elower,
+            nlayer=nlayer,
+            nfree=nfree,
+            precision=precision,
+        )
         memcase, info = memdict
-        _print_summary_premodit(opa, nfree, print_summary, nlayer,
-                                ngrid_nu_grid, ngrid_broadpar, ngrid_elower,
-                                devmemuse, memcase, info)
+        _print_summary_premodit(
+            opa,
+            nfree,
+            print_summary,
+            nlayer,
+            ngrid_nu_grid,
+            ngrid_broadpar,
+            ngrid_elower,
+            devmemuse,
+            memcase,
+            info,
+        )
 
     else:
         raise ValueError("unknown method.")
@@ -46,9 +57,18 @@ def device_memory_use(opa, art=None, nfree=None, print_summary=True):
     return devmemuse
 
 
-def _print_summary_premodit(opa, nfree, print_summary, nlayer, ngrid_nu_grid,
-                            ngrid_broadpar, ngrid_elower, devmemuse, memcase,
-                            info):
+def _print_summary_premodit(
+    opa,
+    nfree,
+    print_summary,
+    nlayer,
+    ngrid_nu_grid,
+    ngrid_broadpar,
+    ngrid_elower,
+    devmemuse,
+    memcase,
+    info,
+):
     explanation = ["(less important)", ""]
     if print_summary:
         print("Device memory use prediction:", opa.method)
@@ -57,22 +77,23 @@ def _print_summary_premodit(opa, nfree, print_summary, nlayer, ngrid_nu_grid,
         print("# of the elower grids:", ngrid_elower, explanation[memcase])
         print("# of the layers:", nlayer, explanation[1 - memcase])
         print("# of the free parameters:", nfree, explanation[1 - memcase])
-        print(info + " : required device memory = ", devmemuse / (1024.)**3,
-              "GB")
+        print(info + " : required device memory = ", devmemuse / (1024.0) ** 3, "GB")
 
 
-def premodit_devmemory_use(ngrid_nu_grid,
-                           ngrid_broadpar,
-                           ngrid_elower,
-                           nlayer=None,
-                           nfree=None,
-                           precision="FP64"):
+def premodit_devmemory_use(
+    ngrid_nu_grid,
+    ngrid_broadpar,
+    ngrid_elower,
+    nlayer=None,
+    nfree=None,
+    precision="FP64",
+):
     """compute approximate required device memory for PreMODIT algorithm
 
     Notes:
-        This method estimates the major device moemory use for PreMODIT. In Case 0 (memcase=0), the use is limited by FFT/IFFT by modit_scanfft 
-        while in Case1 (memcase) by LBD. 
-        
+        This method estimates the major device moemory use for PreMODIT. In Case 0 (memcase=0), the use is limited by FFT/IFFT by modit_scanfft
+        while in Case1 (memcase) by LBD.
+
 
     Args:
         ngrid_nu_grid (int): the number of the wavenumber grid
@@ -87,7 +108,7 @@ def premodit_devmemory_use(ngrid_nu_grid,
 
     Returns:
         float: predicted required device memory (byte)
-        (str, str): memory computation case (memcase), info 
+        (str, str): memory computation case (memcase), info
     """
     info = "opacity "
     factor_case0 = 4  # FFT and InvFFT w/ the same size of buffer
@@ -131,9 +152,7 @@ if __name__ == "__main__":
     n_elower = 20
     nlayer = None
     nfree = 10
-    memuse, case = premodit_devmemory_use(n_nu_grid,
-                                          n_broadpar,
-                                          n_elower,
-                                          nlayer=nlayer,
-                                          nfree=nfree)
+    memuse, case = premodit_devmemory_use(
+        n_nu_grid, n_broadpar, n_elower, nlayer=nlayer, nfree=nfree
+    )
     print(case)
