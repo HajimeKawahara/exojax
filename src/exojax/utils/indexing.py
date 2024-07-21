@@ -94,7 +94,6 @@ def uniqidx(input_array):
 
     """
     N, _ = np.shape(input_array)
-    # uniqvals = np.unique(input_array, axis=0)
     uniqvals = unique_rows(input_array)
     uidx = np.zeros(N, dtype=int)
     uidx_p = np.where(input_array == uniqvals[0], True, False)
