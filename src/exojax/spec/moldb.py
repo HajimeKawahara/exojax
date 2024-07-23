@@ -98,7 +98,7 @@ class AdbVald(object):
         self.gQT_284species = jnp.array(self.pfdat.iloc[:, 1:].to_numpy(
             dtype=float))  # grid Q vs T vs Species
         self.Tref = Tref_original
-        self.QTref_284 = np.array(self.QT_interp_284(Tref_original))
+        self.QTref_284 = np.array(atomll.interp_QT_284(Tref_original, self.T_gQT, self.gQT_284species))
         # identify index of QT grid (gQT) for each line
         self._QTmask = self.make_QTmask(self._ielem, self._iion)
 
@@ -252,7 +252,7 @@ class AdbVald(object):
         return self.QT_interp_Irwin_Fe(T, atomspecies)/self.QT_interp_Irwin_Fe(Tref_original, atomspecies)
 
     def QT_interp_284(self, T):
-        """interpolated partition function of all 284 species.
+        """(DEPRECATED) interpolated partition function of all 284 species.
 
         Args:
            T: temperature
@@ -260,13 +260,9 @@ class AdbVald(object):
         Returns:
            Q(T)*284: interpolated in jnp.array for all 284 Atomic Species
         """
-        list_gQT_eachspecies = self.gQT_284species.tolist()
-        listofDA_gQT_eachspecies = list(
-            map(lambda x: jnp.array(x), list_gQT_eachspecies))
-        listofQT = list(map(lambda x: jnp.interp(
-            T, self.T_gQT, x), listofDA_gQT_eachspecies))
-        QT_284 = jnp.array(listofQT)
-        return QT_284
+        warn_msg = "Deprecated Use `atomll.interp_QT_284` instead"
+        warnings.warn(warn_msg, FutureWarning)
+        return atomll.interp_QT_284(T, self.T_gQT, self.gQT_284species)
 
     def make_QTmask(self, ielem, iion):
         """Convert the species identifier to the index for Q(Tref) grid (gQT)
@@ -413,7 +409,7 @@ class AdbKurucz(object):
         self.gQT_284species = jnp.array(self.pfdat.iloc[:, 1:].to_numpy(
             dtype=float))  # grid Q vs T vs Species
         self.Tref = Tref_original
-        self.QTref_284 = np.array(self.QT_interp_284(Tref_original))
+        self.QTref_284 = np.array(atomll.interp_QT_284(Tref_original, self.T_gQT, self.gQT_284species))
         # identify index of QT grid (gQT) for each line
         self._QTmask = self.make_QTmask(self._ielem, self._iion)
 
@@ -566,7 +562,7 @@ class AdbKurucz(object):
         return self.QT_interp_Irwin_Fe(T, atomspecies)/self.QT_interp_Irwin_Fe(Tref_original, atomspecies)
 
     def QT_interp_284(self, T):
-        """interpolated partition function of all 284 species.
+        """(DEPRECATED) interpolated partition function of all 284 species.
 
         Args:
            T: temperature
@@ -574,13 +570,9 @@ class AdbKurucz(object):
         Returns:
            Q(T)*284: interpolated in jnp.array for all 284 Atomic Species
         """
-        list_gQT_eachspecies = self.gQT_284species.tolist()
-        listofDA_gQT_eachspecies = list(
-            map(lambda x: jnp.array(x), list_gQT_eachspecies))
-        listofQT = list(map(lambda x: jnp.interp(
-            T, self.T_gQT, x), listofDA_gQT_eachspecies))
-        QT_284 = jnp.array(listofQT)
-        return QT_284
+        warn_msg = "Deprecated Use `atomll.interp_QT_284` instead"
+        warnings.warn(warn_msg, FutureWarning)
+        return atomll.interp_QT_284(T, self.T_gQT, self.gQT_284species)
 
     def make_QTmask(self, ielem, iion):
         """Convert the species identifier to the index for Q(Tref) grid (gQT)

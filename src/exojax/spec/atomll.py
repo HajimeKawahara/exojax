@@ -782,7 +782,7 @@ def padding_2Darray_for_each_atom(orig_arr, adb, sp):
     return padded_valid_arr
 
 
-def interp_QT284(T, T_gQT, gQT_284species):
+def interp_QT_284(T, T_gQT, gQT_284species):
     """interpolated partition function of all 284 species.
 
     Args:

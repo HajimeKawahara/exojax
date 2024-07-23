@@ -25,7 +25,7 @@ from exojax.spec import normalized_doppler_sigma
 from exojax.spec.hitran import gamma_hitran
 
 # vald
-from exojax.spec.atomll import gamma_vald3, interp_QT284
+from exojax.spec.atomll import gamma_vald3, interp_QT_284
 
 
 def calc_xsection_from_lsd(Slsd, R, pmarray, nsigmaD, nu_grid,
@@ -364,7 +364,7 @@ def vald_all(asdb, Tarr, PH, PHe, PHH, R):
     """
     gQT_284species = asdb.gQT_284species
     T_gQT = asdb.T_gQT
-    qt_284_T = vmap(interp_QT284, (0, None, None))(Tarr, T_gQT, gQT_284species)
+    qt_284_T = vmap(interp_QT_284, (0, None, None))(Tarr, T_gQT, gQT_284species)
 
 
     SijMS, ngammaLMS, nsigmaDlS = jit(vmap(vald_each, (None, None, None, None, None, None, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, None, )))\
@@ -423,9 +423,9 @@ def set_ditgrid_matrix_vald_each(ielem, iion, atomicmass, ionE, dev_nu_lines,
     set_dgm_minmax = []
     Tarr_list = fT(*kargs)
     for Tarr in Tarr_list:
-        qt_284_T = vmap(interp_QT284, (0, None, None))(Tarr, T_gQT,
+        qt_284_T = vmap(interp_QT_284, (0, None, None))(Tarr, T_gQT,
                                                        gQT_284species)
-        QTref_284 = jnp.array(interp_QT284(Tref, T_gQT, gQT_284species))
+        QTref_284 = jnp.array(interp_QT_284(Tref, T_gQT, gQT_284species))
         
         SijM, ngammaLM, nsigmaDl = vald_each(Tarr, PH, PHe, PHH, R, qt_284_T, \
              QTmask, QTref_284, ielem, iion, atomicmass, ionE, \

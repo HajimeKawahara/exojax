@@ -14,7 +14,7 @@ from exojax.spec.exomol import gamma_exomol
 from exojax.spec.hitran import line_strength, doppler_sigma, gamma_natural
 
 # vald
-from exojax.spec.atomll import gamma_vald3
+from exojax.spec.atomll import gamma_vald3, interp_QT_284
 
 import warnings
 
@@ -66,7 +66,7 @@ def vald(adb, Tarr, PH, PHe, PHH):
     
     """
     # Compute normalized partition function for each species
-    qt_284 = vmap(adb.QT_interp_284)(Tarr)
+    qt_284 = vmap(interp_QT_284, (0, None, None))(Tarr, adb.T_gQT, adb.gQT_284species)
     qt = qt_284[:, adb.QTmask]
     qr = qt / adb.QTref_284[adb.QTmask]
     
