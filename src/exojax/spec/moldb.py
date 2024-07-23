@@ -42,6 +42,9 @@ class AdbVald(object):
         gamRad (jnp array): log of gamma of radiation damping (s-1) #(https://www.astro.uu.se/valdwiki/Vald3Format)
         gamSta (jnp array): log of gamma of Stark damping (s-1)
         vdWdamp (jnp array):  log of (van der Waals damping constant / neutral hydrogen number) (s-1)
+        gQT_284species (jnp array): partition function grid of 284 species
+        T_gQT (jnp array): temperatures in the partition function grid
+        QTref_284 (jnp array): partition function at the reference temperature Q(Tref), for 284 species
 
         Note:
            For the first time to read the VALD line list, it is converted to HDF/vaex. After the second-time, we use the HDF5 format with vaex instead.
@@ -310,6 +313,7 @@ class AdbSepVald(object):
         L_max (int): maximum number of spectral lines for a single species
         gQT_284species (jnp array): partition function grid of 284 species
         T_gQT (jnp array): temperatures in the partition function grid
+        QTref_284 (jnp array): partition function at the reference temperature Q(Tref), for 284 species
     """
 
     def __init__(self, adb):
@@ -342,6 +346,7 @@ class AdbSepVald(object):
 
         self.gQT_284species = adb.gQT_284species
         self.T_gQT = adb.T_gQT
+        self.QTref_284 = adb.QTref_284
 
 
 class AdbKurucz(object):
