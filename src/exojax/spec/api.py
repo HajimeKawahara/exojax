@@ -10,7 +10,6 @@ from os.path import exists
 import numpy as np
 import jax.numpy as jnp
 import pathlib
-import vaex
 import warnings
 from exojax.spec.hitran import line_strength_numpy
 from exojax.spec.hitran import gamma_natural as gn
@@ -29,6 +28,8 @@ from radis.api.hitranapi import HITRANDatabaseManager
 from radis.api.hdf5 import update_pytables_to_vaex
 from radis.db.classes import get_molecule
 from radis.levels.partfunc import PartFuncTIPS
+import vaex
+
 import warnings
 
 __all__ = ["MdbExomol", "MdbHitemp", "MdbHitran"]
