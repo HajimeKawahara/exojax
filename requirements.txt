@@ -11,3 +11,8 @@ tables
 pandas
 termcolor
 h5py
+joblib
+astropy
+psutil
+json_tricks
+numpy<2
