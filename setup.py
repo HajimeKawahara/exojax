@@ -12,6 +12,7 @@ CLASSIFIERS = [
     'Programming Language :: Python',
     "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
     "Operating System :: OS Independent",
 ]
 
@@ -72,27 +73,27 @@ if __name__ == '__main__':
     )
 
 # VAEX UNISTALL and REINSTALL See Issue 2376 vaex https://github.com/vaexio/vaex/issues/2376    
-import subprocess
-import sys
+#import subprocess
+#import sys
 
-def install_radis_develop():
-    subprocess.check_call([sys.executable, "-m", "pip", "install", "-e", 'git+https://github.com/radis/radis@develop#egg=radis'])
+#def install_radis_develop():
+#    subprocess.check_call([sys.executable, "-m", "pip", "install", "-e", 'git+https://github.com/radis/radis@develop#egg=radis'])
 
 
-def uninstall(package):
-    subprocess.check_call([sys.executable, "-m", "pip", "uninstall", "-y", package])
+#def uninstall(package):
+#    subprocess.check_call([sys.executable, "-m", "pip", "uninstall", "-y", package])
 
-def reinstall(package):
-    subprocess.check_call([sys.executable, "-m", "pip", "uninstall", "-y", package])
-    subprocess.check_call([sys.executable, "-m", "pip", "install", package])
+#def reinstall(package):
+#    subprocess.check_call([sys.executable, "-m", "pip", "uninstall", "-y", package])
+#    subprocess.check_call([sys.executable, "-m", "pip", "install", package])
 
-install_radis_develop()
-uninstall('vaex-core')
-uninstall('vaex-astro')
-uninstall('vaex-jupyter')
-uninstall('vaex-ml')
-uninstall('vaex-hdf5')
-uninstall('vaex-server')
-uninstall('vaex-viz')
+#install_radis_develop()
+#uninstall('vaex-core')
+#uninstall('vaex-astro')
+#uninstall('vaex-jupyter')
+#uninstall('vaex-ml')
+#uninstall('vaex-hdf5')
+#uninstall('vaex-server')
+#uninstall('vaex-viz')
 
-reinstall('vaex')
+#reinstall('vaex')

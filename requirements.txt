@@ -25,4 +25,4 @@ plotly
 psutil
 seaborn
 PyMieScatt
-numpy<2
+#numpy<2
