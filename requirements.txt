@@ -1,3 +1,4 @@
+radis
 jax
 jaxlib
 hitran-api
@@ -25,4 +26,5 @@ plotly
 psutil
 seaborn
 PyMieScatt
+vaex
 #numpy<2
