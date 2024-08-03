@@ -4,11 +4,9 @@
 import numpy as np
 import jax.numpy as jnp
 import pathlib
-import vaex
 import warnings
 from exojax.spec import atomllapi, atomll
 from exojax.utils.constants import Tref_original
-from exojax.spec import api 
 __all__ = ['AdbVald', 'AdbSepVald', 'AdbKurucz']
 
 explanation_states = "Note: Couldn't find the hdf5 format. We convert data to the hdf5 format. After the second time, it will become much faster."
@@ -47,23 +45,24 @@ class AdbVald(object):
         QTref_284 (jnp array): partition function at the reference temperature Q(Tref), for 284 species
 
         Note:
-           For the first time to read the VALD line list, it is converted to HDF/vaex. After the second-time, we use the HDF5 format with vaex instead.
+            For the first time to read the VALD line list, it is converted to HDF/vaex. After the second-time, we use the HDF5 format with vaex instead.
     """
 
-    def __init__(self, path, nurange=[-np.inf, np.inf], margin=0.0, crit=0., Irwin=False, gpu_transfer=True, vmr_fraction=None):
+    def __init__(self, path, nurange=[-np.inf, np.inf], margin=0.0, crit=0., Irwin=False, gpu_transfer=True, vmr_fraction=None, engine="vaex"):
         """Atomic database for VALD3 "Long format".
 
         Args:
-          path: path for linelists downloaded from VALD3 with a query of "Long format" in the format of "Extract All", "Extract Stellar", or "Extract Element"
-          nurange: wavenumber range list (cm-1) or wavenumber array
-          margin: margin for nurange (cm-1)
-          crit: line strength lower limit for extraction
-          Irwin: if True(1), the partition functions of Irwin1981 is used, otherwise those of Barklem&Collet2016
-          gpu_transfer: tranfer data to jnp.array? 
-          vmr_fraction: list of the vmr fractions of hydrogen, H2 molecule, helium. if None, typical quasi-"solar-fraction" will be applied. 
+            path: path for linelists downloaded from VALD3 with a query of "Long format" in the format of "Extract All", "Extract Stellar", or "Extract Element"
+            nurange: wavenumber range list (cm-1) or wavenumber array
+            margin: margin for nurange (cm-1)
+            crit: line strength lower limit for extraction
+            Irwin: if True(1), the partition functions of Irwin1981 is used, otherwise those of Barklem&Collet2016
+            gpu_transfer: tranfer data to jnp.array? 
+            vmr_fraction: list of the vmr fractions of hydrogen, H2 molecule, helium. if None, typical quasi-"solar-fraction" will be applied. 
+            engine: "vaex" or "pandas"
 
         Note:
-          (written with reference to moldb.py, but without using feather format)
+            (written with reference to moldb.py, but without using feather format)
         """
 
         self.dbtype = "vald"
@@ -80,12 +79,16 @@ class AdbVald(object):
 
         # load vald file
         print('Reading VALD file')
-        if self.vald3_file.with_suffix('.hdf5').exists():
+        if self.vald3_file.with_suffix('.hdf5').exists() and engine == "vaex":
+            import vaex
             valdd = vaex.open(self.vald3_file.with_suffix('.hdf5'))
+        elif self.vald3_file.with_suffix('.hdf5').exists() and engine == "pytables":
+            import pandas as pd
+            valdd = pd.read_hdf(self.vald3_file.with_suffix('.hdf5'))
         else:
             print(
                 "Note: Couldn't find the hdf5 format. We convert data to the hdf5 format.")
-            valdd = atomllapi.read_ExAll(self.vald3_file)  # vaex.DataFrame
+            valdd = atomllapi.read_ExAll(self.vald3_file, engine=engine)  # vaex.DataFrame
         pvaldd = valdd.to_pandas_df()  # pandas.DataFrame
 
         # compute additional transition parameters
@@ -129,7 +132,7 @@ class AdbVald(object):
         """applying mask.
 
         Args:
-           mask: mask to be applied. self.mask is updated.
+            mask: mask to be applied. self.mask is updated.
 
         """
         # numpy float 64 Do not convert them jnp array
@@ -157,7 +160,7 @@ class AdbVald(object):
         """(re)generate jnp.arrays.
 
         Note:
-           We have nd arrays and jnp arrays. We usually apply the mask to nd arrays and then generate jnp array from the corresponding nd array. For instance, self._A is nd array and self.A is jnp array.
+            We have nd arrays and jnp arrays. We usually apply the mask to nd arrays and then generate jnp array from the corresponding nd array. For instance, self._A is nd array and self.A is jnp array.
 
         """
         # jnp arrays
@@ -198,11 +201,11 @@ class AdbVald(object):
         Collet (2016) are adopted.
 
         Args:
-          atomspecies: species e.g., "Fe 1"
-          T: temperature
+            atomspecies: species e.g., "Fe 1"
+            T: temperature
 
         Returns:
-          Q(T): interpolated in jnp.array for the Atomic Species
+            Q(T): interpolated in jnp.array for the Atomic Species
         """
         gQT = self.Atomic_gQT(atomspecies)
         QT = jnp.interp(T, self.T_gQT, gQT)
@@ -214,11 +217,11 @@ class AdbVald(object):
         I (Other species are not yet implemented).
 
         Args:
-          atomspecies: species e.g., "Fe 1"
-          T: temperature
+            atomspecies: species e.g., "Fe 1"
+            T: temperature
 
         Returns:
-          Q(T): interpolated in jnp.array for the Atomic Species
+            Q(T): interpolated in jnp.array for the Atomic Species
         """
         gQT = self.Atomic_gQT(atomspecies)
         QT = atomllapi.partfn_Fe(T)
@@ -229,11 +232,11 @@ class AdbVald(object):
         Barklem & Collet (2016) are adopted.
 
         Args:
-           T: temperature
-           atomspecies: species e.g., "Fe 1"
+            T: temperature
+            atomspecies: species e.g., "Fe 1"
 
         Returns:
-           qr(T)=Q(T)/Q(Tref): interpolated in jnp.array
+            qr(T)=Q(T)/Q(Tref): interpolated in jnp.array
         """
         return self.QT_interp(atomspecies, T)/self.QT_interp(atomspecies, Tref_original)
 
@@ -243,11 +246,11 @@ class AdbVald(object):
         (1981) for Fe I (Other species are not yet implemented).
 
         Args:
-           T: temperature
-           atomspecies: species e.g., "Fe 1"
+            T: temperature
+            atomspecies: species e.g., "Fe 1"
 
         Returns:
-           qr(T)=Q(T)/Q(Tref): interpolated in jnp.array
+            qr(T)=Q(T)/Q(Tref): interpolated in jnp.array
         """
         return self.QT_interp_Irwin_Fe(T, atomspecies)/self.QT_interp_Irwin_Fe(Tref_original, atomspecies)
 
@@ -255,10 +258,10 @@ class AdbVald(object):
         """(DEPRECATED) interpolated partition function of all 284 species.
 
         Args:
-           T: temperature
+            T: temperature
 
         Returns:
-           Q(T)*284: interpolated in jnp.array for all 284 Atomic Species
+            Q(T)*284: interpolated in jnp.array for all 284 Atomic Species
         """
         warn_msg = "Deprecated Use `atomll.interp_QT_284` instead"
         warnings.warn(warn_msg, FutureWarning)
