@@ -2,6 +2,7 @@ jax
 jaxlib
 hitran-api
 beautifulsoup4
+termcolor
 hjson          # Json with comments (for default_radis.json)
 tqdm
 PyMieScatt
