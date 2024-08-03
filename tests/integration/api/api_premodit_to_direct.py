@@ -6,7 +6,6 @@ Uses OpaDIrect after calling PreModit #437 made by @ykawashima (see #437, #438, 
 from exojax.utils.grids import wavenumber_grid
 from exojax.spec import api
 from exojax.spec import molinfo
-from exojax.spec.lpf import auto_xsection
 from exojax.spec.hitran import line_strength, doppler_sigma, gamma_hitran, gamma_natural, line_strength_numpy
 from exojax.spec.exomol import gamma_exomol
 from exojax.spec.opacalc import OpaPremodit, OpaDirect
@@ -15,6 +14,83 @@ config.update("jax_enable_x64", True)
 
 import numpy as np
 import matplotlib.pyplot as plt
+
+
+from exojax.spec.lpf import xsvector, make_numatrix0
+import tqdm
+def auto_xsection(nu, nu_lines, sigmaD, gammaL, Sij, memory_size=15.):
+    """computes cross section .
+
+    Warning:
+        This is NOT auto-differentiable function.
+
+    Args:
+        nu: wavenumber array
+        nu_lines: line center
+        sigmaD: sigma parameter in Doppler profile 
+        gammaL:  broadening coefficient in Lorentz profile 
+        Sij: line strength
+        memory_size: memory size for numatrix0 (MB)
+
+    Returns:
+        numpy.array: cross section (xsv)
+
+    Example:
+        >>> from exojax.spec.lpf import auto_xsection
+        >>> from exojax.spec.hitran import SijT, doppler_sigma, gamma_hitran, gamma_natural
+        >>> from exojax.spec import moldb
+        >>> import numpy as np
+        >>> nus=np.linspace(1000.0,10000.0,900000,dtype=np.float64) #cm-1
+        >>> mdbCO=moldb.MdbHit('~/exojax/data/CO','05_hit12',nus)
+        >>> Mmol=28.010446441149536 # molecular weight
+        >>> Tfix=1000.0 # we assume T=1000K
+        >>> Pfix=1.e-3 # we compute P=1.e-3 bar
+        >>> Ppart=Pfix #partial pressure of CO. here we assume a 100% CO atmosphere. 
+        >>> qt=mdbCO.qr_interp_lines(Tfix)
+        >>> Sij=SijT(Tfix,mdbCO.logsij0,mdbCO.nu_lines,mdbCO.elower,qt)
+        >>> gammaL = gamma_hitran(Pfix,Tfix, Ppart, mdbCO.n_air, mdbCO.gamma_air, mdbCO.gamma_self) + gamma_natural(mdbCO.A) 
+        >>> sigmaD=doppler_sigma(mdbCO.nu_lines,Tfix,Mmol)
+        >>> nu_lines=mdbCO.nu_lines
+        >>> xsv=auto_xsection(nus,nu_lines,sigmaD,gammaL,Sij,memory_size=30)
+        100%|████████████████████████████████████████████████████| 456/456 [00:03<00:00, 80.59it/s]
+    """
+    NL = len(nu_lines)
+    d = int(memory_size/(NL*4/1024./1024.))
+    if d > 0:
+        Ni = int(len(nu)/d)
+        xsv = []
+        for i in tqdm.tqdm(range(0, Ni+1)):
+            s = int(i*d)
+            e = int((i+1)*d)
+            e = min(e, len(nu))
+            numatrix = make_numatrix0(nu[s:e], nu_lines, warning=False)
+            xsv = np.concatenate(
+                [xsv, xsvector(numatrix, sigmaD, gammaL, Sij)])
+    else:
+        NP = int((NL*4/1024./1024.)/memory_size)+1
+        d = int(memory_size/(int(NL/NP)*4/1024./1024.))
+        Ni = int(len(nu)/d)
+        dd = int(NL/NP)
+        xsv = []
+        for i in tqdm.tqdm(range(0, Ni+1)):
+            s = int(i*d)
+            e = int((i+1)*d)
+            e = min(e, len(nu))
+            xsvtmp = np.zeros_like(nu[s:e])
+            for j in range(0, NP+1):
+                ss = int(j*dd)
+                ee = int((j+1)*dd)
+                ee = min(ee, NL)
+                numatrix = make_numatrix0(
+                    nu[s:e], nu_lines[ss:ee], warning=False)
+                xsvtmp = xsvtmp + \
+                    xsvector(numatrix, sigmaD[ss:ee],
+                             gammaL[ss:ee], Sij[ss:ee])
+            xsv = np.concatenate([xsv, xsvtmp])
+
+    return xsv
+
+
 
 nus, wav, res = wavenumber_grid(22980.0,
                                 23030.0,
@@ -62,3 +138,6 @@ ax.plot(1.0e8/np.array(nus), opad.xsvector(T, P), c='C3',ls="dotted")
 ax.set_xlim(22985, 23025)
 ax.set_yscale('log')
 plt.show()
+
+
+

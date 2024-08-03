@@ -4,7 +4,7 @@ from exojax.utils.grids import wavenumber_grid
 from exojax.utils.grids import velocity_grid
 from exojax.utils.grids import delta_velocity_from_resolution
 from exojax.utils.grids import check_eslog_wavenumber_grid
-from exojax.utils.grids import check_scale_xsmode
+from exojax.utils.grids import check_grid_mode_in_xsmode
 from exojax.utils.checkarray import is_sorted
 from exojax.utils.checkarray import is_outside_range
 
@@ -70,16 +70,16 @@ def test_check_eslog_wavenumber_grid():
 
 
 def test_check_scale_xsmode():
-    assert check_scale_xsmode("lpf") == "ESLOG"
-    assert check_scale_xsmode("modit") == "ESLOG"
-    assert check_scale_xsmode("premodit") == "ESLOG"
-    assert check_scale_xsmode("presolar") == "ESLOG"
-    assert check_scale_xsmode("dit") == "ESLIN"
-    assert check_scale_xsmode("LPF") == "ESLOG"
-    assert check_scale_xsmode("MODIT") == "ESLOG"
-    assert check_scale_xsmode("PREMODIT") == "ESLOG"
-    assert check_scale_xsmode("PRESOLAR") == "ESLOG"
-    assert check_scale_xsmode("DIT") == "ESLIN"
+    assert check_grid_mode_in_xsmode("lpf") == "ESLOG"
+    assert check_grid_mode_in_xsmode("modit") == "ESLOG"
+    assert check_grid_mode_in_xsmode("premodit") == "ESLOG"
+    assert check_grid_mode_in_xsmode("presolar") == "ESLOG"
+    assert check_grid_mode_in_xsmode("dit") == "ESLIN"
+    assert check_grid_mode_in_xsmode("LPF") == "ESLOG"
+    assert check_grid_mode_in_xsmode("MODIT") == "ESLOG"
+    assert check_grid_mode_in_xsmode("PREMODIT") == "ESLOG"
+    assert check_grid_mode_in_xsmode("PRESOLAR") == "ESLOG"
+    assert check_grid_mode_in_xsmode("DIT") == "ESLIN"
 
 
 def test_is_sorted():
