@@ -6,3 +6,6 @@ hjson          # Json with comments (for default_radis.json)
 tqdm
 PyMieScatt
 radis
+numba
+pandas
+vaex
