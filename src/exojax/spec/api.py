@@ -237,14 +237,14 @@ class MdbExomol(CapiMdbExomol):
             raise ValueError("Use vaex or pytables as input.")
 
     def instances_from_dataframes_pytables(self, df_masked):
-        self.A = df_masked.cols.A[:]
-        self.nu_lines = df_masked.cols.nu_lines[:]
-        self.elower = df_masked.cols.elower[:]
-        self.jlower = df_masked.cols.jlower[:]
-        self.jupper = df_masked.cols.jupper[:]
-        self.line_strength_ref = df_masked.cols.Sij0[:]
+        self.A = df_masked.A[:]
+        self.nu_lines = df_masked.nu_lines[:]
+        self.elower = df_masked.elower[:]
+        self.jlower = df_masked.jlower[:]
+        self.jupper = df_masked.jupper[:]
+        self.line_strength_ref = df_masked.Sij0[:]
         self.logsij0 = np.log(self.line_strength_ref)
-        self.gpp = df_masked.cols.gup[:]
+        self.gpp = df_masked.gup[:]
 
     def instances_from_dataframes_vaex(self, df_masked):
         self.A = df_masked.A.values
@@ -778,22 +778,22 @@ class MdbHitemp(MdbCommonHitempHitran, HITEMPDatabaseManager):
             raise ValueError("Use vaex or pytables as input.")
 
     def instances_from_dataframes_pytables(self, df_masked):
-        self.nu_lines = df_masked.cols.wav[:]
-        self.line_strength_ref = df_masked.cols.int[:]
+        self.nu_lines = df_masked.wav[:]
+        self.line_strength_ref = df_masked.int[:]
         self.logsij0 = np.log(self.line_strength_ref)
-        self.delta_air = df_masked.cols.Pshft[:]
-        self.A = df_masked.cols.A[:]
-        self.n_air = df_masked.cols.Tdpair[:]
-        self.gamma_air = df_masked.cols.airbrd[:]
-        self.gamma_self = df_masked.cols.selbrd[:]
-        self.elower = df_masked.cols.El[:]
-        self.gpp = df_masked.cols.gp[:]
+        self.delta_air = df_masked.Pshft[:]
+        self.A = df_masked.A[:]
+        self.n_air = df_masked.Tdpair[:]
+        self.gamma_air = df_masked.airbrd[:]
+        self.gamma_self = df_masked.selbrd[:]
+        self.elower = df_masked.El[:]
+        self.gpp = df_masked.gp[:]
             # isotope
-        self.isoid = df_masked.cols.iso[:]
+        self.isoid = df_masked.iso[:]
         self.uniqiso = np.unique(self.isoid)
         if self.with_error:
                 # uncertainties
-            self.ierr = df_masked.cols.ierr[:]
+            self.ierr = df_masked.ierr[:]
 
     def instances_from_dataframes_vaex(self, df_masked):
         self.nu_lines = df_masked.wav.values
@@ -983,38 +983,38 @@ class MdbHitran(MdbCommonHitempHitran, HITRANDatabaseManager):
             raise ValueError("Invalid engine")
 
     def instances_from_dataframes_pytables(self, df_load_mask):
-        self.nu_lines = df_load_mask.cols.wav[:]
-        self.line_strength_ref = df_load_mask.cols.int[:]
+        self.nu_lines = df_load_mask.wav[:]
+        self.line_strength_ref = df_load_mask.int[:]
         self.logsij0 = np.log(self.line_strength_ref)
-        self.delta_air = df_load_mask.cols.Pshft[:]
-        self.A = df_load_mask.cols.A[:]
-        self.n_air = df_load_mask.cols.Tdpair[:]
-        self.gamma_air = df_load_mask.cols.airbrd[:]
-        self.gamma_self = df_load_mask.cols.selbrd[:]
-        self.elower = df_load_mask.cols.El[:]
-        self.gpp = df_load_mask.cols.gp[:]
+        self.delta_air = df_load_mask.Pshft[:]
+        self.A = df_load_mask.A[:]
+        self.n_air = df_load_mask.Tdpair[:]
+        self.gamma_air = df_load_mask.airbrd[:]
+        self.gamma_self = df_load_mask.selbrd[:]
+        self.elower = df_load_mask.El[:]
+        self.gpp = df_load_mask.gp[:]
         # isotope
-        self.isoid = df_load_mask.cols.iso[:]
+        self.isoid = df_load_mask.iso[:]
         self.uniqiso = np.unique(self.isoid)
         if self.with_error:
             # uncertainties
-            self.ierr = df_load_mask.cols.ierr[:]
+            self.ierr = df_load_mask.ierr[:]
 
         if hasattr(df_load_mask, "n_h2") and self.nonair_broadening:
-            self.n_h2 = df_load_mask.cols.n_h2[:]
-            self.gamma_h2 = df_load_mask.cols.gamma_h2[:]
+            self.n_h2 = df_load_mask.n_h2[:]
+            self.gamma_h2 = df_load_mask.gamma_h2[:]
 
         if hasattr(df_load_mask, "n_he") and self.nonair_broadening:
-            self.n_he = df_load_mask.cols.n_he[:]
-            self.gamma_he = df_load_mask.cols.gamma_he[:]
+            self.n_he = df_load_mask.n_he[:]
+            self.gamma_he = df_load_mask.gamma_he[:]
 
         if hasattr(df_load_mask, "n_co2") and self.nonair_broadening:
-            self.n_co2 = df_load_mask.cols.n_co2[:]
-            self.gamma_co2 = df_load_mask.cols.gamma_co2[:]
+            self.n_co2 = df_load_mask.n_co2[:]
+            self.gamma_co2 = df_load_mask.gamma_co2[:]
 
         if hasattr(df_load_mask, "n_h2o") and self.nonair_broadening:
-            self.n_h2o = df_load_mask.cols.n_h2o[:]
-            self.gamma_h2o = df_load_mask.cols.gamma_h2o[:]
+            self.n_h2o = df_load_mask.n_h2o[:]
+            self.gamma_h2o = df_load_mask.gamma_h2o[:]
 
     def instances_from_dataframes_vaex(self, df_load_mask):
         self.nu_lines = df_load_mask.wav.values
