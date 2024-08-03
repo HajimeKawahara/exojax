@@ -2,6 +2,7 @@ radis
 jax
 jaxlib
 hitran-api
+beautifulsoup4
 hjson          # Json with comments (for default_radis.json)
 tqdm
 lxml           # parser used for ExoMol website
@@ -10,7 +11,6 @@ peakutils
 ruamel.yaml
 json-tricks>=3.15.0  # to deal with non jsonable formats
 mpldatacursor
-beautifulsoup4
 configparser
 cython
 termcolor
