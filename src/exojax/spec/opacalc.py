@@ -749,7 +749,7 @@ class OpaDirect(OpaCalc):
         from exojax.spec.exomol import gamma_exomol
         from exojax.spec.hitran import gamma_hitran
         from exojax.spec.hitran import line_strength
-        from exojax.spec.atomll import gamma_vald3
+        from exojax.spec.atomll import gamma_vald3, interp_QT_284
         from exojax.spec.lpf import xsmatrix as xsmatrix_lpf
 
         numatrix = self.opainfo
@@ -796,11 +796,9 @@ class OpaDirect(OpaCalc):
                 self.mdb.nu_lines, Tarr, self.mdb.molmass
             )
         elif (self.mdb.dbtype == "kurucz") or (self.mdb.dbtype == "vald"):
-            qt_284 = vmap(self.mdb.QT_interp_284)(Tarr)
-            qt_K = jnp.zeros([len(self.mdb.QTmask), len(Tarr)])
-            for i, mask in enumerate(self.mdb.QTmask):
-                qt_K = qt_K.at[i].set(qt_284[:, mask])  # e.g., qt_284[:,76] #Fe I
-            qt_K = jnp.array(qt_K)
+            qt_284 = vmap(interp_QT_284, (0, None, None))(Tarr, self.mdb.T_gQT, self.mdb.gQT_284species)
+            qt_K = qt_284[:, self.mdb.QTmask] # e.g., qt_284[:,76] #Fe I
+            qr_K = qt_K / self.mdb.QTref_284[self.mdb.QTmask]    
             vmapvald3 = jit(
                 vmap(
                     gamma_vald3,
@@ -850,7 +848,7 @@ class OpaDirect(OpaCalc):
                 self.mdb.logsij0,
                 self.mdb.nu_lines,
                 self.mdb.elower,
-                qt_K.T,
+                qr_K.T,
                 self.mdb.Tref,
             )
             sigmaDM = jit(vmap(doppler_sigma, (None, 0, None)))(

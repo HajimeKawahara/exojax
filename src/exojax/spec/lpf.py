@@ -7,7 +7,8 @@ from exojax.special.faddeeva import asymptotic_wofz
 from jax import custom_jvp
 from exojax.spec.exomol import gamma_exomol
 from exojax.spec.hitran import line_strength, doppler_sigma, gamma_natural
-from exojax.spec.atomll import gamma_vald3
+# vald
+from exojax.spec.atomll import gamma_vald3, interp_QT_284
 
 
 def exomol(mdb, Tarr, Parr, molmass):
@@ -55,14 +56,13 @@ def vald(adb, Tarr, PH, PHe, PHH):
 
     """
     # Compute normalized partition function for each species
-    qt_284 = vmap(adb.QT_interp_284)(Tarr)
+    qt_284 = vmap(interp_QT_284, (0, None, None))(Tarr, adb.T_gQT, adb.gQT_284species)
     qt = qt_284[:, adb.QTmask]
-
+    qr = qt / adb.QTref_284[adb.QTmask]
+    
     # Compute line strength matrix
-    SijM = jit(vmap(line_strength, (0, None, None, None, 0, None)))(
-        Tarr, adb.logsij0, adb.nu_lines, adb.elower, qt, adb.Tref
-    )
-
+    SijM = jit(vmap(line_strength,(0,None,None,None,0,None)))\
+        (Tarr, adb.logsij0, adb.nu_lines, adb.elower, qr, adb.Tref)
     # Compute gamma parameters for the pressure and natural broadenings
     gammaLM = jit(
         vmap(
@@ -111,29 +111,12 @@ def vald(adb, Tarr, PH, PHe, PHH):
     return SijM, gammaLM, sigmaDM
 
 
-def vald_each(
-    Tarr,
-    PH,
-    PHe,
-    PHH,
-    qt_284_T,
-    QTmask,
-    logsij0,
-    nu_lines,
-    ielem,
-    iion,
-    dev_nu_lines,
-    elower,
-    eupper,
-    atomicmass,
-    ionE,
-    gamRad,
-    gamSta,
-    vdWdamp,
-    Tref,
-):
-    """Computes VALD line information required for LPF for separated each species
 
+def vald_each(Tarr, PH, PHe, PHH, \
+            qt_284_T, QTmask, QTref_284, \
+              logsij0, nu_lines, ielem, iion, dev_nu_lines, elower, eupper, atomicmass, ionE, gamRad, gamSta, vdWdamp, Tref):
+    """Compute VALD line information required for LPF for separated each species
+    
     Args:
         Tarr:  temperature array [N_layer]
         PH:  partial pressure array of neutral hydrogen (H) [N_layer]
@@ -141,6 +124,7 @@ def vald_each(
         PHH:  partial pressure array of molecular hydrogen (H2) [N_layer]
         qt_284_T:  partition function at the temperature T Q(T), for 284 species
         QTmask:  array of index of Q(Tref) grid (gQT) for each line
+        QTref_284:  partition function at the reference temperature Q(Tref), for 284 species
         logsij0:  log line strength at T=Tref
         nu_lines:  line center (cm-1) in np.array (float64)
         ielem:  atomic number (e.g., Fe=26)
@@ -162,11 +146,13 @@ def vald_each(
     """
     # Compute normalized partition function for each species
     qt = qt_284_T[:, QTmask]
+    qr = qt / QTref_284[QTmask]
 
     # Compute line strength matrix
-    SijM = jit(vmap(line_strength, (0, None, None, None, 0, None)))(
-        Tarr, logsij0, nu_lines, elower, qt, Tref
-    )
+
+    SijM = jit(vmap(line_strength,(0,None,None,None,0,None)))\
+        (Tarr, logsij0, nu_lines, elower, qr, Tref)
+
     SijM = jnp.nan_to_num(SijM, nan=0.0)
 
     # Compute gamma parameters for the pressure and natural broadenings
