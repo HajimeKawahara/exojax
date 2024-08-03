@@ -4,7 +4,6 @@ import numpy as np
 import pandas as pd
 from exojax.utils.constants import ccgs, ecgs, mecgs, eV2wn
 import io
-#import vaex
 import pkgutil
 from io import BytesIO
 
@@ -646,10 +645,10 @@ def partfn_Fe(T):
     """Partition function of Fe I from Irwin_1981.
 
     Args:
-       T: temperature
+        T: temperature
 
     Returns:
-       partition function Q
+        partition function Q
     """
     # Irwin_1981
     a = np.zeros(6)
