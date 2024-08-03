@@ -4,7 +4,7 @@ import numpy as np
 import pandas as pd
 from exojax.utils.constants import ccgs, ecgs, mecgs, eV2wn
 import io
-import vaex
+#import vaex
 import pkgutil
 from io import BytesIO
 
@@ -132,7 +132,7 @@ PeriodicTable[:] = [
 ]
 
 
-def read_ExAll(allf):
+def read_ExAll(allf, engine="vaex"):
     """IO for linelists downloaded from VALD3 with a query of "Long format" in the format of "Extract All" or "Extract Element".
 
     Note:
@@ -166,9 +166,10 @@ def read_ExAll(allf):
         Damping Rad.
         Damping Stark
         Damping Waals
+        engine: "vaex" or "pytables" (default: "vaex")
 
     Returns:
-        line data in vaex DataFrame
+        line data in vaex/pytables DataFrame
     """
     dat = pd.read_csv(
         allf,
@@ -247,8 +248,12 @@ def read_ExAll(allf):
         dat.iloc[:, 1] = np.where(
             dat.iloc[:, 1] > 2000, air_to_vac(dat.iloc[:, 1]), dat.iloc[:, 1]
         )
-    dat = vaex.from_pandas(dat)
-    dat.export_hdf5(allf.with_suffix(".hdf5"))
+    if engine == "vaex":
+        import vaex
+        dat = vaex.from_pandas(dat)
+        dat.export_hdf5(allf.with_suffix(".hdf5"))
+    elif engine == "pytables":
+        dat.to_hdf(allf.with_suffix(".h5"), key="dat", mode="w",fomrat="table")
 
     return dat
 
