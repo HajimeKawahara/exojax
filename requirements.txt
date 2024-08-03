@@ -5,5 +5,4 @@ beautifulsoup4
 hjson          # Json with comments (for default_radis.json)
 tqdm
 PyMieScatt
-vaex
 radis
