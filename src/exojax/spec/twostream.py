@@ -26,7 +26,7 @@ def solve_fluxadding_twostream(
     Returns:
         Effective reflectivity (hat(R^plus)), Effective source (hat(S^plus))
     """
-    
+
     nlayer, _ = trans_coeff.shape
     pihatB = (1.0 - trans_coeff - scat_coeff) * reduced_source_function
 
@@ -44,20 +44,12 @@ def solve_fluxadding_twostream(
         Rphat_prev, Sphat_prev = carry_ip1
         scat_coeff_i, trans_coeff_i, pihatB_i = arr
         denom = 1.0 - scat_coeff_i * Rphat_prev
-
         Sphat_each = (
             pihatB_i + trans_coeff_i * (Sphat_prev + pihatB_i * Rphat_prev) / denom
         )
         Rphat_each = scat_coeff_i + trans_coeff_i**2 * Rphat_prev / denom
-
         RS = [Rphat_each, Sphat_each]
-        #check_array = [Rphat_each, trans_coeff_i]
         return RS, 0
-        #return RS, check_array
-
-    # debugging
-    #for i,t in enumerate(trans_coeff[nlayer - 2 :: -1]):
-    #    print(i, t)
 
     # main loop
     arrin = [
@@ -66,12 +58,6 @@ def solve_fluxadding_twostream(
         pihatB[nlayer - 2 :: -1],
     ]
     RS, _ = scan(f, [Rphat0, Sphat0], arrin)
-
-    # debugging
-    #RS, check_array = scan(f, [Rphat0, Sphat0], arrin)
-    #R, x = check_array
-    #for i, Reach in enumerate(R):
-    #    print(i, Reach, x[i])
 
     return RS
 

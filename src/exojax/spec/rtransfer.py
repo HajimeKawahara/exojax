@@ -360,7 +360,7 @@ def rtrun_emis_scat_lart_toonhm_surface(
 
     return spectrum, cumTtilde, Qtilde, trans_coeff, scat_coeff, piB
 
-#@jit
+@jit
 def rtrun_reflect_fluxadding_toonhm(
     dtau,
     single_scattering_albedo,
