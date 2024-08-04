@@ -25,7 +25,7 @@ from exojax.spec import normalized_doppler_sigma
 from exojax.spec.hitran import gamma_hitran
 
 # vald
-from exojax.spec.atomll import gamma_vald3, interp_QT284
+from exojax.spec.atomll import gamma_vald3, interp_QT_284
 
 
 def calc_xsection_from_lsd(Slsd, R, pmarray, nsigmaD, nu_grid,
@@ -296,7 +296,7 @@ def set_ditgrid_matrix_hitran(mdb, fT, Parr, Pself_ref, R, molmass,
 
 
 @jit
-def vald_each(Tarr, PH, PHe, PHH, R, qt_284_T, QTmask, \
+def vald_each(Tarr, PH, PHe, PHH, R, qt_284_T, QTmask, QTref_284, \
                ielem, iion, atomicmass, ionE, dev_nu_lines, logsij0, elower, eupper, gamRad, gamSta, vdWdamp, Tref):
     """Compute atomic line information required for MODIT for separated EACH species, using parameters attributed in VALD separated atomic database (asdb).
 
@@ -308,6 +308,7 @@ def vald_each(Tarr, PH, PHe, PHH, R, qt_284_T, QTmask, \
         R:  spectral resolution [scalar]
         qt_284_T:  partition function at the temperature T Q(T), for 284 species
         QTmask:  array of index of Q(Tref) grid (gQT) for each line
+        QTref_284:  partition function at the reference temperature Q(Tref), for 284 species
         ielem:  atomic number (e.g., Fe=26)
         iion:  ionized level (e.g., neutral=1, singly ionized=2, etc.)
         atomicmass:  atomic mass (amu)
@@ -328,10 +329,11 @@ def vald_each(Tarr, PH, PHe, PHH, R, qt_284_T, QTmask, \
     """
     # Compute normalized partition function for each species
     qt = qt_284_T[:, QTmask]
+    qr = qt / QTref_284[QTmask]
 
     # Compute line strength matrix
     SijM = jit(vmap(line_strength,(0,None,None,None,0,None)))\
-        (Tarr, logsij0, dev_nu_lines, elower, qt, Tref)
+        (Tarr, logsij0, dev_nu_lines, elower, qr, Tref)
 
     # Compute gamma parameters for the pressure and natural broadenings
     gammaLM = jit(vmap(gamma_vald3,(0,0,0,0,None,None,None,None,None,None,None,None,None,None,None)))\
@@ -362,12 +364,14 @@ def vald_all(asdb, Tarr, PH, PHe, PHH, R):
     """
     gQT_284species = asdb.gQT_284species
     T_gQT = asdb.T_gQT
-    qt_284_T = vmap(interp_QT284, (0, None, None))(Tarr, T_gQT, gQT_284species)
+    qt_284_T = vmap(interp_QT_284, (0, None, None))(Tarr, T_gQT, gQT_284species)
 
-    SijMS, ngammaLMS, nsigmaDlS = jit(vmap(vald_each, (None, None, None, None, None, None, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, None, )))\
+
+    SijMS, ngammaLMS, nsigmaDlS = jit(vmap(vald_each, (None, None, None, None, None, None, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, None, )))\
         (Tarr, PH, PHe, PHH, R, qt_284_T, \
-                 asdb.QTmask, asdb.ielem, asdb.iion, asdb.atomicmass, asdb.ionE, \
-                       asdb.dev_nu_lines, asdb.logsij0, asdb.elower, asdb.eupper, asdb.gamRad, asdb.gamSta, asdb.vdWdamp, asdb.Tref)
+                 asdb.QTmask, asdb.QTref_284, asdb.ielem, asdb.iion, asdb.atomicmass, asdb.ionE, \
+                       asdb.dev_nu_lines, asdb.logsij0, asdb.elower, asdb.eupper, asdb.gamRad, asdb.gamSta, asdb.vdWdamp, \
+                        asdb.Tref)
 
     return SijMS, ngammaLMS, nsigmaDlS
 
@@ -419,10 +423,12 @@ def set_ditgrid_matrix_vald_each(ielem, iion, atomicmass, ionE, dev_nu_lines,
     set_dgm_minmax = []
     Tarr_list = fT(*kargs)
     for Tarr in Tarr_list:
-        qt_284_T = vmap(interp_QT284, (0, None, None))(Tarr, T_gQT,
+        qt_284_T = vmap(interp_QT_284, (0, None, None))(Tarr, T_gQT,
                                                        gQT_284species)
+        QTref_284 = jnp.array(interp_QT_284(Tref, T_gQT, gQT_284species))
+        
         SijM, ngammaLM, nsigmaDl = vald_each(Tarr, PH, PHe, PHH, R, qt_284_T, \
-             QTmask, ielem, iion, atomicmass, ionE, \
+             QTmask, QTref_284, ielem, iion, atomicmass, ionE, \
                                              dev_nu_lines, logsij0, elower, eupper, gamRad, gamSta, vdWdamp, Tref)
         floop = lambda c, arr: (c,
                                 jnp.nan_to_num(arr,

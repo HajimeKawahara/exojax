@@ -18,7 +18,6 @@ Note: The input line list needs to be obtained from VALD3 (http://vald.astro.uu.
 import pytest
 import numpy as np
 from exojax.spec import moldb, atomll
-from exojax.spec.lpf import auto_xsection
 from exojax.spec.hitran import line_strength, doppler_sigma
 import matplotlib.pyplot as plt
 from exojax.utils.constants import m_u
@@ -72,9 +71,9 @@ def test_opacity_Fe_vald3(T, P):
     PH = P * H_He_HH_VMR[0]
     PHe = P * H_He_HH_VMR[1]
     PHH = P * H_He_HH_VMR[2]
-    qt = np.ones_like(adbFe.A) * np.float32(adbFe.qr_interp('Fe 1', T))
+    Qr_T = np.ones_like(adbFe.A) * np.float32(adbFe.qr_interp('Fe 1', T))
     # ↑Unlike the case of HITRAN (using Qr_HAPI), we ignored the isotopes.
-    Sij = line_strength(T, adbFe.logsij0, adbFe.nu_lines, adbFe.elower, qt, adbFe.Tref)
+    Sij = line_strength(T, adbFe.logsij0, adbFe.nu_lines, adbFe.elower, Qr_T, adbFe.Tref)
     sigmaD = doppler_sigma(adbFe.nu_lines, T, Amol)
     gammaL = atomll.gamma_vald3(T, PH, PHH, PHe, adbFe.ielem, adbFe.iion,
                                 adbFe.dev_nu_lines, adbFe.elower, adbFe.eupper, adbFe.atomicmass, adbFe.ionE,
@@ -94,9 +93,9 @@ def test_opacity_Fe_uns(T, P):
     PH = P * H_He_HH_VMR[0]
     PHe = P * H_He_HH_VMR[1]
     PHH = P * H_He_HH_VMR[2]
-    qt = np.ones_like(adbFe.A) * np.float32(adbFe.qr_interp('Fe 1', T))
+    Qr_T = np.ones_like(adbFe.A) * np.float32(adbFe.qr_interp('Fe 1', T))
     # ↑Unlike the case of HITRAN (using Qr_HAPI), we ignored the isotopes.
-    Sij = line_strength(T, adbFe.logsij0, adbFe.nu_lines, adbFe.elower, qt, adbFe.Tref)
+    Sij = line_strength(T, adbFe.logsij0, adbFe.nu_lines, adbFe.elower, Qr_T, adbFe.Tref)
     sigmaD = doppler_sigma(adbFe.nu_lines, T, Amol)
     gammaL = atomll.gamma_uns(T, PH, PHH, PHe, adbFe.ielem, adbFe.iion,
                               adbFe.dev_nu_lines, adbFe.elower, adbFe.eupper, adbFe.atomicmass, adbFe.ionE,
@@ -115,9 +114,9 @@ def test_opacity_Fe_KA3(T, P):
     PH = P * H_He_HH_VMR[0]
     PHe = P * H_He_HH_VMR[1]
     PHH = P * H_He_HH_VMR[2]
-    qt = np.ones_like(adbFe.A) * np.float32(adbFe.qr_interp('Fe 1', T))
+    Qr_T = np.ones_like(adbFe.A) * np.float32(adbFe.qr_interp('Fe 1', T))
     # ↑Unlike the case of HITRAN (using Qr_HAPI), we ignored the isotopes.
-    Sij = line_strength(T, adbFe.logsij0, adbFe.nu_lines, adbFe.elower, qt, adbFe.Tref)
+    Sij = line_strength(T, adbFe.logsij0, adbFe.nu_lines, adbFe.elower, Qr_T, adbFe.Tref)
     sigmaD = doppler_sigma(adbFe.nu_lines, T, Amol)
     gammaL = atomll.gamma_KA3(T, PH, PHH, PHe, adbFe.ielem, adbFe.iion,
                               adbFe.dev_nu_lines, adbFe.elower, adbFe.eupper, adbFe.atomicmass, adbFe.ionE,
@@ -136,9 +135,9 @@ def test_opacity_Fe_KA4(T, P):
     PH = P * H_He_HH_VMR[0]
     PHe = P * H_He_HH_VMR[1]
     PHH = P * H_He_HH_VMR[2]
-    qt = np.ones_like(adbFe.A) * np.float32(adbFe.qr_interp('Fe 1', T))
+    Qr_T = np.ones_like(adbFe.A) * np.float32(adbFe.qr_interp('Fe 1', T))
     # ↑Unlike the case of HITRAN (using Qr_HAPI), we ignored the isotopes.
-    Sij = line_strength(T, adbFe.logsij0, adbFe.nu_lines, adbFe.elower, qt, adbFe.Tref)
+    Sij = line_strength(T, adbFe.logsij0, adbFe.nu_lines, adbFe.elower, Qr_T, adbFe.Tref)
     sigmaD = doppler_sigma(adbFe.nu_lines, T, Amol)
     gammaL = atomll.gamma_KA4(T, PH, PHH, PHe, adbFe.ielem, adbFe.iion,
                               adbFe.dev_nu_lines, adbFe.elower, adbFe.eupper, adbFe.atomicmass, adbFe.ionE,
@@ -157,9 +156,9 @@ def test_opacity_Fe_KA3s(T, P):
     PH = P * H_He_HH_VMR[0]
     PHe = P * H_He_HH_VMR[1]
     PHH = P * H_He_HH_VMR[2]
-    qt = np.ones_like(adbFe.A) * np.float32(adbFe.qr_interp('Fe 1', T))
+    Qr_T = np.ones_like(adbFe.A) * np.float32(adbFe.qr_interp('Fe 1', T))
     # ↑Unlike the case of HITRAN (using Qr_HAPI), we ignored the isotopes.
-    Sij = line_strength(T, adbFe.logsij0, adbFe.nu_lines, adbFe.elower, qt, adbFe.Tref)
+    Sij = line_strength(T, adbFe.logsij0, adbFe.nu_lines, adbFe.elower, Qr_T, adbFe.Tref)
     sigmaD = doppler_sigma(adbFe.nu_lines, T, Amol)
     gammaL = atomll.gamma_KA3s(T, PH, PHH, PHe, adbFe.ielem, adbFe.iion,
                                adbFe.dev_nu_lines, adbFe.elower, adbFe.eupper, adbFe.atomicmass, adbFe.ionE,
