@@ -382,9 +382,9 @@ def spectral_model(params):
     dtau_cld = art.opacity_profile_cloud_lognormal(
         sigma_extinction, rhoc, MMRc, rg, sigmag, gravity
     )
-    dtau_cld_scat = art.opacity_profile_cloud_lognormal(
-        sigma_scattering, rhoc, MMRc, rg, sigmag, gravity
-    )
+    #dtau_cld_scat = art.opacity_profile_cloud_lognormal(
+    #    sigma_scattering, rhoc, MMRc, rg, sigmag, gravity
+    #)
     
     asymmetric_parameter = asymmetric_factor + np.zeros((len(art.pressure), len(nus)))
 
@@ -393,7 +393,8 @@ def spectral_model(params):
     xsmatrix = opa.xsmatrix(Tarr, Parr)
     dtau_ch4 = art.opacity_profile_xs(xsmatrix, mmr_ch4, molmass_ch4, gravity)
 
-    single_scattering_albedo = (dtau_cld_scat) / (dtau_cld + dtau_ch4) 
+    #single_scattering_albedo = (dtau_cld_scat) / (dtau_cld + dtau_ch4) 
+    single_scattering_albedo = (sigma_scattering) / (sigma_extinction + xsmatrix) 
 
 
     dtau = dtau_cld + dtau_ch4
