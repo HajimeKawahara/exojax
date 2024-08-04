@@ -345,25 +345,22 @@ parinit = jnp.array(
 multiple_factor = jnp.array([100.0, 0.0001, 0.1, 1.0, 1.0, 10000.0, 0.1, 1.0])
 
 
-import pdb
-
-
 def spectral_model(params):
 
-    _T0, log_fsed, log_Kzz, vrv, vv, _broadening, const_mmr_ch4, factor = (
+    T0, log_fsed, log_Kzz, vrv, vv, _broadening, const_mmr_ch4, factor = (
         params * multiple_factor
     )
-    # fsed = 10**log_fsed
-    # Kzz = 10**log_Kzz
+    fsed = 10**log_fsed
+    Kzz = 10**log_Kzz
 
-    fsed = 4.0  # 4 does not work.... 3 is OK...
-    Kzz = 1.0e4
-    vrv = -5.0
-    vv = -55.0
-    factor = 0.7
+    #fsed = 4.0  # 4 does not work.... 3 is OK...
+    #Kzz = 1.0e4
+    #vrv = -5.0
+    #vv = -55.0
+    #factor = 0.7
     broadening = 25000.0
-    const_mmr_ch4 = 0.12
-    T0 = 150.0
+    #const_mmr_ch4 = 0.12
+    #T0 = 150.0
 
     # temperatures
     Tarr = art.powerlaw_temperature(T0, 0.2)
@@ -382,29 +379,27 @@ def spectral_model(params):
     dtau_cld = art.opacity_profile_cloud_lognormal(
         sigma_extinction, rhoc, MMRc, rg, sigmag, gravity
     )
-    #dtau_cld_scat = art.opacity_profile_cloud_lognormal(
-    #    sigma_scattering, rhoc, MMRc, rg, sigmag, gravity
-    #)
+    dtau_cld_scat = art.opacity_profile_cloud_lognormal(
+        sigma_scattering, rhoc, MMRc, rg, sigmag, gravity
+    )
     
     asymmetric_parameter = asymmetric_factor + np.zeros((len(art.pressure), len(nus)))
 
     # opacity
-    mmr_ch4 = art.constant_mmr_profile(const_mmr_ch4)  # (*_*)/~
+    mmr_ch4 = art.constant_mmr_profile(const_mmr_ch4)  
     xsmatrix = opa.xsmatrix(Tarr, Parr)
     dtau_ch4 = art.opacity_profile_xs(xsmatrix, mmr_ch4, molmass_ch4, gravity)
 
-    #single_scattering_albedo = (dtau_cld_scat) / (dtau_cld + dtau_ch4) 
-    single_scattering_albedo = (sigma_scattering) / (sigma_extinction + xsmatrix) 
+    single_scattering_albedo = (dtau_cld_scat) / (dtau_cld + dtau_ch4) 
+    #single_scattering_albedo = (sigma_scattering) / (sigma_extinction + xsmatrix) 
 
 
     dtau = dtau_cld + dtau_ch4
+    
     # velocity
-
     vpercp = (vrv + vv) / c
     incoming_flux = jnp.interp(nusjax, nusjax_solar * (1.0 + vpercp), solspecjax)
 
-    # the following makes nan.... for fsed = 4.0
-    # pdb.set_trace()
     Fr = art.run(
         dtau,
         single_scattering_albedo,
