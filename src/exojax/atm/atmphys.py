@@ -14,7 +14,7 @@ import warnings
 from jax import vmap
 import jax.numpy as jnp
 
-__all__ = ["AmpCldAM"]
+__all__ = ["AmpAmcloud"]
 
 
 class AmpCloud:
@@ -128,7 +128,7 @@ class AmpAmcloud(AmpCloud):
         vfind_rw = vmap(find_rw, (None, 0, None), 0)
         rw = vfind_rw(self.rcond_arr, vterminal, Kzz / L_cloud)
         rg = get_rg(rw, fsed, alphav, sigmag)
-
+        
         # MMR of condensates
         MMR_condensate = mixing_ratio_cloud_profile(pressures, pressure_base, fsed, MMR_base)
 

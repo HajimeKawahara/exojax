@@ -15,7 +15,7 @@
 
 from jax import config
 
-config.update("jax_enable_x64", False)
+config.update("jax_enable_x64", True)
 
 figshow = False
 
@@ -189,6 +189,7 @@ if miegird_generate:
     )
     print("Please rerun after setting miegird_generate = True")
     import sys
+
     sys.exit()
 else:
     pdb_nh3.load_miegrid()
@@ -301,9 +302,9 @@ opa = OpaPremodit(
 )  # this reduced the device memory use in 5/6.
 
 
-dtau_cld = art.opacity_profile_cloud_lognormal(
-    sigma_extinction, rhoc, MMRc, rg, sigmag, gravity
-)
+#dtau_cld = art.opacity_profile_cloud_lognormal(
+#    sigma_extinction, rhoc, MMRc, rg, sigmag, gravity
+#)
 
 
 # # Spectrum Model
@@ -319,17 +320,14 @@ solspecjax = jnp.array(solspec)
 
 molmass_ch4 = molmass_isotope("CH4", db_HIT=False)
 
-dtau_cld_scat = art.opacity_profile_cloud_lognormal(
-    sigma_scattering, rhoc, MMRc, rg, sigmag, gravity
-)
-sigma_scattering[None, :] / sigma_extinction[None, :] + np.zeros(
-    (len(art.pressure), len(nus))
-)
+#dtau_cld_scat = art.opacity_profile_cloud_lognormal(
+#    sigma_scattering, rhoc, MMRc, rg, sigmag, gravity
+#)
+#sigma_scattering[None, :] / sigma_extinction[None, :] + np.zeros(
+#    (len(art.pressure), len(nus))
+#)
 asymmetric_parameter = asymmetric_factor + np.zeros((len(art.pressure), len(nus)))
 reflectivity_surface = np.zeros(len(nus))
-
-
-# In[18]:
 
 
 from exojax.utils.instfunc import resolution_to_gaussian_std
@@ -339,31 +337,26 @@ sop = SopInstProfile(nus)
 
 from exojax.utils.constants import c  # light speed in km/s
 
-
-# In[19]:
-
 # T0, log_fsed, log_Kzz, vrv, vv, boradening, mmr, normalization factor
-#parinit = jnp.array([1.5, np.log10(1.0)*10000.0, np.log10(1.e4)*10.0, -5.0, -55.0, 2.5, 1.0, 1.0])
-parinit = jnp.array([1.5, np.log10(1.0)*10000.0, np.log10(1.e4)*10.0, -5.0, -55.0, 2.5, 1.2, 0.6])
-multiple_factor = jnp.array([100.0, 0.0001,0.1,1.0, 1.0, 10000.0, 0.1, 1.0])
+# parinit = jnp.array([1.5, np.log10(1.0)*10000.0, np.log10(1.e4)*10.0, -5.0, -55.0, 2.5, 1.0, 1.0])
+parinit = jnp.array(
+    [1.5, np.log10(1.0) * 10000.0, np.log10(1.0e4) * 10.0, -5.0, -55.0, 2.5, 1.2, 0.6]
+)
+multiple_factor = jnp.array([100.0, 0.0001, 0.1, 1.0, 1.0, 10000.0, 0.1, 1.0])
 
 
-def unpack_params(params):
-    return params * multiple_factor
-
-
-# In[189]:
+import pdb
 
 
 def spectral_model(params):
 
-    _T0, log_fsed, log_Kzz, vrv, vv, _broadening, const_mmr_ch4, factor = params * multiple_factor
-    
+    _T0, log_fsed, log_Kzz, vrv, vv, _broadening, const_mmr_ch4, factor = (
+        params * multiple_factor
+    )
+    # fsed = 10**log_fsed
+    # Kzz = 10**log_Kzz
 
-    #fsed = 10**log_fsed
-    Kzz = 10**log_Kzz
-
-    fsed = 4.0 #4 does not work.... 3 is OK...
+    fsed = 4.0  # 4 does not work.... 3 is OK...
     Kzz = 1.0e4
     vrv = -5.0
     vv = -55.0
@@ -386,9 +379,13 @@ def spectral_model(params):
     sigma_extinction, sigma_scattering, asymmetric_factor = opa_nh3.mieparams_vector(
         rg, sigmag
     )
+    dtau_cld = art.opacity_profile_cloud_lognormal(
+        sigma_extinction, rhoc, MMRc, rg, sigmag, gravity
+    )
     dtau_cld_scat = art.opacity_profile_cloud_lognormal(
         sigma_scattering, rhoc, MMRc, rg, sigmag, gravity
     )
+    
     asymmetric_parameter = asymmetric_factor + np.zeros((len(art.pressure), len(nus)))
 
     # opacity
@@ -396,13 +393,17 @@ def spectral_model(params):
     xsmatrix = opa.xsmatrix(Tarr, Parr)
     dtau_ch4 = art.opacity_profile_xs(xsmatrix, mmr_ch4, molmass_ch4, gravity)
 
-    single_scattering_albedo = (dtau_cld_scat) / (dtau_cld + dtau_ch4)
+    single_scattering_albedo = (dtau_cld_scat) / (dtau_cld + dtau_ch4) 
+
 
     dtau = dtau_cld + dtau_ch4
     # velocity
 
     vpercp = (vrv + vv) / c
     incoming_flux = jnp.interp(nusjax, nusjax_solar * (1.0 + vpercp), solspecjax)
+
+    # the following makes nan.... for fsed = 4.0
+    # pdb.set_trace()
     Fr = art.run(
         dtau,
         single_scattering_albedo,
@@ -417,7 +418,11 @@ def spectral_model(params):
     return factor * Fr_samp
 
 
-# In[190]:
+def unpack_params(params):
+    return params * multiple_factor
+
+
+F_samp_init = spectral_model(unpack_params(parinit))
 
 
 def cost_function(params):
@@ -433,33 +438,25 @@ res = adam.run(parinit)
 # solver = jaxopt.LBFGS(fun=cost_function, maxiter=maxiter)
 # res = solver.run(optpar_init)
 
-
-# In[192]:
-
-
 # res.params
 print(unpack_params(res.params))
 print(unpack_params(parinit))
-
-
-# In[196]:
 
 
 F_samp = spectral_model(res.params)
 F_samp_init = spectral_model(parinit)
 
 print(F_samp)
-
-fig = plt.figure(figsize=(30, 5))
-ax = fig.add_subplot(111)
-plt.plot(nus_obs, spectra, ".", label="observed spectrum")
-plt.plot(nus_obs, F_samp_init, alpha=0.5, label="init", color="C1", ls="dashed")
-plt.plot(nus_obs, F_samp, alpha=0.5, label="best fit", color="C1", lw=3)
-# plt.plot(nus,Fr_samp,alpha=0.5,label="forward modelling",color="C1")
-# plt.plot(nus*(1-vpercp_only_show_solar),incoming_flux, label="incoming",color="C2")
-plt.legend()
-plt.xlim(np.min(nus_obs), np.max(nus_obs))
-#plt.ylim(0.0, 0.25)
-plt.savefig("Jupiter_petitIRD.png")
-plt.show()
-
+if True:
+    fig = plt.figure(figsize=(30, 5))
+    ax = fig.add_subplot(111)
+    plt.plot(nus_obs, spectra, ".", label="observed spectrum")
+    plt.plot(nus_obs, F_samp_init, alpha=0.5, label="init", color="C1", ls="dashed")
+    plt.plot(nus_obs, F_samp, alpha=0.5, label="best fit", color="C1", lw=3)
+    # plt.plot(nus,Fr_samp,alpha=0.5,label="forward modelling",color="C1")
+    # plt.plot(nus*(1-vpercp_only_show_solar),incoming_flux, label="incoming",color="C2")
+    plt.legend()
+    plt.xlim(np.min(nus_obs), np.max(nus_obs))
+    # plt.ylim(0.0, 0.25)
+    plt.savefig("Jupiter_petitIRD.png")
+    plt.show()
