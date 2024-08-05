@@ -377,7 +377,7 @@ class MdbCommonHitempHitran:
         self.activation = activation
         self.load_wavenum_min, self.load_wavenum_max = self.set_wavenum(nurange)
         self.with_error = with_error
-        self.engine = get_auto_MEMORY_MAPPING_ENGINE()
+        self.engine = "vaex"#get_auto_MEMORY_MAPPING_ENGINE()
 
     def QT_for_select_line(self, Ttyp):
         if self.isotope is None or self.isotope == 0:
@@ -449,10 +449,10 @@ class MdbCommonHitempHitran:
 
     def compute_load_mask(self, df, qrtyp):
         # wavelength
-        mask = (df.wav > self.load_wavenum_min) * (df.wav < self.load_wavenum_max)
-        mask *= line_strength_numpy(self.Ttyp, df.int, df.wav, df.El, qrtyp) > self.crit
+        mask = (df.wav > self.load_wavenum_min) & (df.wav < self.load_wavenum_max)
+        mask = mask & (line_strength_numpy(self.Ttyp, df.int, df.wav, df.El, qrtyp) > self.crit)
         if self.elower_max is not None:
-            mask *= df.El < self.elower_max
+            mask = mask & (df.El < self.elower_max)
         return mask
 
     def apply_mask_mdb(self, mask):
@@ -670,7 +670,10 @@ class MdbHitemp(MdbCommonHitempHitran, HITEMPDatabaseManager):
             chunksize=100000,
             parallel=True,
         )
-
+        self.engine = get_auto_MEMORY_MAPPING_ENGINE()
+        #self.engine = "vaex"
+        print("engine=",self.engine)
+        
         if parfile is not None:
             from radis.api.hitranapi import hit2df
 
@@ -692,15 +695,18 @@ class MdbHitemp(MdbCommonHitempHitran, HITEMPDatabaseManager):
             )
             # do not re-download files if they exist in another format :
 
-            converted = []
-            for f in download_files:
-                if exists(f.replace(".hdf5", ".h5") and self.engine == "vaex"):
-                    update_pytables_to_vaex(f.replace(".hdf5", ".h5"))
-                    converted.append(f)
-                if exists(f.replace(".hdf5", ".h5") and self.engine == "pytables"):
-                    converted.append(f)
+            # uncooment 24/8/5
+            #converted = []
+            #for f in download_files:
+            #    if exists(f.replace(".hdf5", ".h5") and self.engine == "vaex"):
+            #        update_pytables_to_vaex(f.replace(".hdf5", ".h5"))
+            #        converted.append(f)
+            #    if exists(f.replace(".hdf5", ".h5") and self.engine == "pytables"):
+            #        converted.append(f)
+            #
+            #    download_files = [f for f in download_files if f not in converted]
 
-                download_files = [f for f in download_files if f not in converted]
+
             # do not re-download remaining files that exist. Let user decide what to do.
             # (download & re-parsing is a long solution!)
             download_files = [
@@ -723,18 +729,26 @@ class MdbHitemp(MdbCommonHitempHitran, HITEMPDatabaseManager):
             files_loaded = self.keep_only_relevant(
                 local_files, self.load_wavenum_min, self.load_wavenum_max
             )
-            columns = (None,)
             output = self.engine
-
             isotope_dfform = _convert_proper_isotope(self.isotope)
-            df = self.load(
-                files_loaded,  # filter other files,
-                columns=columns,
-                within=[("iso", isotope_dfform)] if isotope_dfform is not None else [],
-                output=output,
-            )
+            if self.engine == "vaex":
+                columns = (None,)
+                df = self.load(
+                    files_loaded,  # filter other files,
+                    columns=columns,
+                    within=[("iso", isotope_dfform)] if isotope_dfform is not None else [],
+                    output=output,
+                )
+            else:
+                df = self.load(
+                    files_loaded,  # filter other files,
+                    #columns=columns,
+                    within=[("iso", isotope_dfform)] if isotope_dfform is not None else [],
+                    output=output,
+                )
             mask = None
 
+        print(df)  
         self.isoid = df.iso
         self.uniqiso = np.unique(df.iso.values)
         QTref, QTtyp = self.QT_for_select_line(Ttyp)
