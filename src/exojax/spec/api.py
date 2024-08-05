@@ -203,17 +203,17 @@ class MdbExomol(CapiMdbExomol):
     def compute_load_mask(self, df):
         # wavelength
         print(df)
-        mask = (df.nu_lines > self.nurange[0]) * (df.nu_lines < self.nurange[1])
+        mask = (df.nu_lines > self.nurange[0]) & (df.nu_lines < self.nurange[1])
         QTtyp = np.array(self.QT_interp(self.Ttyp))
         QTref_original = np.array(self.QT_interp(Tref_original))
-        mask *= (
+        mask = mask & (
             line_strength_numpy(
                 self.Ttyp, df.Sij0, df.nu_lines, df.elower, QTtyp / QTref_original
             )
             > self.crit
         )
         if self.elower_max is not None:
-            mask *= df.elower < self.elower_max
+            mask = mask & (df.elower < self.elower_max)
         return mask
 
     def instances_from_dataframes(self, df_masked):
