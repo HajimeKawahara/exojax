@@ -4,7 +4,6 @@
 # # Modeling a High Resolution Reflection Spectrum
 
 # Hajime Kawahara July 13th (2024)
-
 # This code analyzes the reflection spectrum of Jupiter. We here try to solve two problems.
 # One is we need to calibrate the wavenumber grid of the data because the calibration lines were insufficient and the wavelength of the data is not accurate.
 # To do so, we use the reflection spectrum model itself.
