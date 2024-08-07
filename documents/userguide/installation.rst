@@ -1,7 +1,12 @@
 Installation and References
 ----------------------------------
 
-*last update: November 26th (2023) Hajime Kawahara*
+*last update: August 7th (2024) Hajime Kawahara*
+
+.. admonition:: Python 3.9 or later is required
+
+    ExoJAX requires python 3.9 or later.
+
 
 Linux, Windows WSL, Mac
 ============================
@@ -35,12 +40,12 @@ You should check the cuda version of your environment as
 
 	  nvcc -V
 
-Here is an example of installation for jaxlib in linux system. See `JAX installation page <https://github.com/google/jax#installation>`_ for the details.
+Here is an example of installation for jaxlib in linux system. See `JAX installation page <https://jax.readthedocs.io/en/latest/installation.html>`_ for the details.
 
 .. code:: sh
-
-		pip install --upgrade pip
-		pip install --upgrade "jax[cuda11_pip]" -f https://storage.googleapis.com/jax-releases/jax_cuda_releases.html
+	
+	pip install -U "jax[cuda12]"
+	
 
 Windows Anaconda
 ===================

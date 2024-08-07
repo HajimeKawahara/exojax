@@ -6,18 +6,18 @@ ExoMol, HITEMP, HITRAN
 Since version 1.2, the standard molecular database I/O for ExoMol, HITEMP, and HITRAN was shared with the `radis <https://github.com/radis/radis>`_ team. 
 We moved the I/O for these database to `exojax.spec.api <../exojax/exojax.spec.html#module-exojax.spec.api>`_.
 
+.. admonition:: On the radis engine: Vaex or pytables?
+    
+    Up until radis 1.4, vaex was used as the file IO engine. However, since vaex has been unable to support Python 3.11 and beyond, 
+    starting from radis 0.15, vaex has become optional, allowing users to choose between pytables and vaex. In response to this change, 
+    ExoJAX adopts the same policy as radis. The choice of which engine to use is made automatically, 
+    but users can specify their preference during the initialization of mdb 
+    by setting ``engine = "vaex"`` or ``engine = "pytables"``. The file extension ``.hdf5`` is associated with vaex, while ``.h5`` is used for pytables. 
+    Given that vaex supports lazy IO, it can provide faster loading times when available.
+
+
 .. contents::
     :depth: 2
-
-.. admonition:: On the radis engine: Vaex or pytables?
-
-Up until radis 1.4, vaex was used as the file IO engine. However, since vaex has been unable to support Python 3.11 and beyond, 
-starting from radis 0.15, vaex has become optional, allowing users to choose between pytables and vaex. In response to this change, 
-ExoJAX adopts the same policy as radis. The choice of which engine to use is made automatically, 
-but users can specify their preference during the initialization of mdb 
-by setting ``engine = "vaex"`` or ``engine = "pytables"``. The file extension ``.hdf5`` is associated with vaex, while ``.h5`` is used for pytables. 
-Given that vaex supports lazy IO, it can provide faster loading times when available.
-
 
 
 ExoMol
