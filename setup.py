@@ -46,8 +46,7 @@ if __name__ == "__main__":
             "write_to": os.path.join("src", "exojax", "{0}_version.py".format(NAME)),
             "write_to_template": '__version__ = "{version}"\n',
         },
-<<<<<<< HEAD
-        version="1.5",
+        version="1.5.1",
         author=find_meta("author"),
         author_email=find_meta("email"),
         maintainer=find_meta("author"),
@@ -57,18 +56,6 @@ if __name__ == "__main__":
         description=find_meta("description"),
         long_description=open("README.md").read(),
         long_description_content_type="text/markdown",
-=======
-        version='1.5.1',
-        author=find_meta('author'),
-        author_email=find_meta('email'),
-        maintainer=find_meta('author'),
-        maintainer_email=find_meta('email'),
-        url=find_meta('uri'),
-        license=find_meta('license'),
-        description=find_meta('description'),
-        long_description=open('README.md').read(),
-        long_description_content_type='text/markdown',
->>>>>>> 9dfdae29d64e9cb1ab69679b1d0ffa0a3c65c911
         packages=PACKAGES,
         python_requires=">=3.9",
         package_dir={"": "src"},
