@@ -5,6 +5,9 @@
 * MdbHitemp is the MDB for HITEMP
 * MdbCommonHitempHitran is the common MDB for HITEMP and HITRAN
 
+Notes:
+    If you use vaex as radis engine, hdf5 files are saved while pytables uses .h5 files. 
+
 """
 
 from os.path import exists
@@ -20,21 +23,34 @@ from exojax.spec import hitranapi
 from exojax.spec.hitranapi import molecid_hitran
 from exojax.spec.molinfo import isotope_molmass
 from exojax.utils.isotopes import molmass_hitran
-
+from radis.api.dbmanager import get_auto_MEMORY_MAPPING_ENGINE
 from radis.api.exomolapi import (
     MdbExomol as CapiMdbExomol,
 )  # MdbExomol in the common API
 from radis.api.hitempapi import HITEMPDatabaseManager
 from radis.api.hitranapi import HITRANDatabaseManager
-from radis.api.hdf5 import update_pytables_to_vaex
 from radis.db.classes import get_molecule
 from radis.levels.partfunc import PartFuncTIPS
-from radis.api.dbmanager import get_auto_MEMORY_MAPPING_ENGINE
-
 import warnings
 
 __all__ = ["MdbExomol", "MdbHitemp", "MdbHitran"]
 
+def _set_engine(engine):
+    """
+    set engine for radis api
+
+    Args:
+        engine (_type_): engine for radis api ("pytables" or "vaex" or None). if None, radis automatically determines.
+
+    Returns:
+        str: engine selected
+    """
+    if engine == None:
+        engine_selected = get_auto_MEMORY_MAPPING_ENGINE()
+    else:
+        engine_selected = engine
+    print("radis engine = ", engine_selected)
+    return engine_selected
 
 class MdbExomol(CapiMdbExomol):
     """molecular database of ExoMol form.
@@ -110,12 +126,7 @@ class MdbExomol(CapiMdbExomol):
         self.skip_optional_data = not optional_quantum_states
         self.activation = activation
         wavenum_min, wavenum_max = self.set_wavenum(nurange)
-
-        if engine == None:
-            self.engine = get_auto_MEMORY_MAPPING_ENGINE()
-        else:
-            self.engine = engine
-        print("radis engine = ",self.engine)
+        self.engine = _set_engine(engine)
 
         super().__init__(
             str(self.path),
@@ -155,6 +166,7 @@ class MdbExomol(CapiMdbExomol):
             print("DataFrame (self.df) available.")
             self.df = df
 
+    
     def set_wavenum(self, nurange):
         if nurange is None:
             wavenum_min = 0.0
@@ -349,9 +361,7 @@ class MdbCommonHitempHitran:
         Ttyp=1000.0,
         isotope=1,
         gpu_transfer=False,
-        inherit_dataframe=False,
         activation=True,
-        parfile=None,
         with_error=False,
         engine=None,
     ):
@@ -365,9 +375,7 @@ class MdbCommonHitempHitran:
             Ttyp: typical temperature to calculate Sij(T) used in crit
             isotope: isotope number, 0 or None = use all isotopes.
             gpu_transfer: tranfer data to jnp.array?
-            inherit_dataframe: if True, it makes self.df instance available, which needs more DRAM when pickling.
             activation: if True, the activation of mdb will be done when initialization, if False, the activation won't be done and it makes self.df instance available.
-            parfile: if not none, provide path, then directly load parfile
             with_error: if True, uncertainty indices become available.
             engine: engine for radis api ("pytables" or "vaex" or None). if None, radis automatically determines. default to None
 
@@ -387,14 +395,8 @@ class MdbCommonHitempHitran:
         self.activation = activation
         self.load_wavenum_min, self.load_wavenum_max = self.set_wavenum(nurange)
         self.with_error = with_error
+        self.engine = _set_engine(engine)
 
-        if engine is None:
-            self.engine = get_auto_MEMORY_MAPPING_ENGINE()
-        else:
-            self.engine = engine 
-        print("radis engine = ",self.engine)
-
-        
     def QT_for_select_line(self, Ttyp):
         if self.isotope is None or self.isotope == 0:
             isotope_for_Qt = 1  # we use isotope=1 for QT
@@ -466,7 +468,9 @@ class MdbCommonHitempHitran:
     def compute_load_mask(self, df, qrtyp):
         # wavelength
         mask = (df.wav > self.load_wavenum_min) & (df.wav < self.load_wavenum_max)
-        mask = mask & (line_strength_numpy(self.Ttyp, df.int, df.wav, df.El, qrtyp) > self.crit)
+        mask = mask & (
+            line_strength_numpy(self.Ttyp, df.int, df.wav, df.El, qrtyp) > self.crit
+        )
         if self.elower_max is not None:
             mask = mask & (df.El < self.elower_max)
         return mask
@@ -672,9 +676,7 @@ class MdbHitemp(MdbCommonHitempHitran, HITEMPDatabaseManager):
             Ttyp=Ttyp,
             isotope=isotope,
             gpu_transfer=gpu_transfer,
-            inherit_dataframe=inherit_dataframe,
             activation=activation,
-            parfile=parfile,
             with_error=with_error,
             engine=engine,
         )
@@ -690,7 +692,6 @@ class MdbHitemp(MdbCommonHitempHitran, HITEMPDatabaseManager):
             parallel=True,
         )
 
-        
         if parfile is not None:
             from radis.api.hitranapi import hit2df
 
@@ -735,12 +736,12 @@ class MdbHitemp(MdbCommonHitempHitran, HITEMPDatabaseManager):
             )
             output = self.engine
             isotope_dfform = _convert_proper_isotope(self.isotope)
-            
+
             if self.engine == "vaex":
-                columns = (None,) #lazy-io
+                columns = (None,)  # lazy-io
             else:
-                columns = None #reads all columns 
-                
+                columns = None  # reads all columns
+
             df = self.load(
                 files_loaded,  # filter other files,
                 columns=columns,
@@ -827,7 +828,7 @@ class MdbHitran(MdbCommonHitempHitran, HITRANDatabaseManager):
         elower (jnp array): the lower state energy (cm-1)
         gpp (jnp array): statistical weight
         n_air (jnp array): air temperature exponent
-        
+
     """
 
     def __init__(
@@ -844,7 +845,7 @@ class MdbHitran(MdbCommonHitempHitran, HITRANDatabaseManager):
         parfile=None,
         nonair_broadening=False,
         with_error=False,
-        engine = None,
+        engine=None,
     ):
         """Molecular database for HITRAN/HITEMP form.
 
@@ -872,9 +873,7 @@ class MdbHitran(MdbCommonHitempHitran, HITRANDatabaseManager):
             Ttyp=Ttyp,
             isotope=isotope,
             gpu_transfer=gpu_transfer,
-            inherit_dataframe=inherit_dataframe,
             activation=activation,
-            parfile=parfile,
             with_error=with_error,
             engine=engine,
         )
@@ -898,7 +897,6 @@ class MdbHitran(MdbCommonHitempHitran, HITRANDatabaseManager):
             extra_params=extra_params,
         )
 
-        
         # Get list of all expected local files for this database:
         local_file = self.get_filenames()
 
