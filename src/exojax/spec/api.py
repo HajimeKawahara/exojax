@@ -346,6 +346,7 @@ class MdbCommonHitempHitran:
         activation=True,
         parfile=None,
         with_error=False,
+        engine=None,
     ):
         """Molecular database for HITRAN/HITEMP form.
 
@@ -361,6 +362,8 @@ class MdbCommonHitempHitran:
             activation: if True, the activation of mdb will be done when initialization, if False, the activation won't be done and it makes self.df instance available.
             parfile: if not none, provide path, then directly load parfile
             with_error: if True, uncertainty indices become available.
+            engine: engine for radis api ("pytables" or "vaex" or None). if None, radis automatically determines. default to None
+
         """
 
         self.path = pathlib.Path(path).expanduser()
@@ -377,8 +380,14 @@ class MdbCommonHitempHitran:
         self.activation = activation
         self.load_wavenum_min, self.load_wavenum_max = self.set_wavenum(nurange)
         self.with_error = with_error
-        self.engine = "vaex"#get_auto_MEMORY_MAPPING_ENGINE()
 
+        if engine is None:
+            self.engine = get_auto_MEMORY_MAPPING_ENGINE()
+        else:
+            self.engine = engine 
+        print("radis engine = ",self.engine)
+
+        
     def QT_for_select_line(self, Ttyp):
         if self.isotope is None or self.isotope == 0:
             isotope_for_Qt = 1  # we use isotope=1 for QT
@@ -627,6 +636,7 @@ class MdbHitemp(MdbCommonHitempHitran, HITEMPDatabaseManager):
         activation=True,
         parfile=None,
         with_error=False,
+        engine=None,
     ):
         """Molecular database for HITRAN/HITEMP form.
 
@@ -642,6 +652,7 @@ class MdbHitemp(MdbCommonHitempHitran, HITEMPDatabaseManager):
             activation: if True, the activation of mdb will be done when initialization, if False, the activation won't be done and it makes self.df instance available.
             parfile: if not none, provide path, then directly load parfile
             with_error: if True, uncertainty indices become available.
+            engine: engine for radis api ("pytables" or "vaex" or None). if None, radis automatically determines. default to None
         """
 
         self.dbtype = "hitran"
@@ -658,6 +669,7 @@ class MdbHitemp(MdbCommonHitempHitran, HITEMPDatabaseManager):
             activation=activation,
             parfile=parfile,
             with_error=with_error,
+            engine=engine,
         )
 
         HITEMPDatabaseManager.__init__(
@@ -665,14 +677,12 @@ class MdbHitemp(MdbCommonHitempHitran, HITEMPDatabaseManager):
             molecule=self.simple_molecule_name,
             name="HITEMP-{molecule}",
             local_databases=self.path.parent,
-            engine="default",
+            engine=self.engine,
             verbose=True,
             chunksize=100000,
             parallel=True,
         )
-        self.engine = get_auto_MEMORY_MAPPING_ENGINE()
-        #self.engine = "vaex"
-        print("engine=",self.engine)
+
         
         if parfile is not None:
             from radis.api.hitranapi import hit2df
@@ -693,19 +703,6 @@ class MdbHitemp(MdbCommonHitempHitran, HITEMPDatabaseManager):
             download_files = self.keep_only_relevant(
                 download_files, self.load_wavenum_min, self.load_wavenum_max
             )
-            # do not re-download files if they exist in another format :
-
-            # uncooment 24/8/5
-            #converted = []
-            #for f in download_files:
-            #    if exists(f.replace(".hdf5", ".h5") and self.engine == "vaex"):
-            #        update_pytables_to_vaex(f.replace(".hdf5", ".h5"))
-            #        converted.append(f)
-            #    if exists(f.replace(".hdf5", ".h5") and self.engine == "pytables"):
-            #        converted.append(f)
-            #
-            #    download_files = [f for f in download_files if f not in converted]
-
 
             # do not re-download remaining files that exist. Let user decide what to do.
             # (download & re-parsing is a long solution!)
@@ -731,24 +728,20 @@ class MdbHitemp(MdbCommonHitempHitran, HITEMPDatabaseManager):
             )
             output = self.engine
             isotope_dfform = _convert_proper_isotope(self.isotope)
+            
             if self.engine == "vaex":
-                columns = (None,)
-                df = self.load(
-                    files_loaded,  # filter other files,
-                    columns=columns,
-                    within=[("iso", isotope_dfform)] if isotope_dfform is not None else [],
-                    output=output,
-                )
+                columns = (None,) #lazy-io
             else:
-                df = self.load(
-                    files_loaded,  # filter other files,
-                    #columns=columns,
-                    within=[("iso", isotope_dfform)] if isotope_dfform is not None else [],
-                    output=output,
-                )
+                columns = None #reads all columns 
+                
+            df = self.load(
+                files_loaded,  # filter other files,
+                columns=columns,
+                within=[("iso", isotope_dfform)] if isotope_dfform is not None else [],
+                output=output,
+            )
             mask = None
 
-        print(df)  
         self.isoid = df.iso
         self.uniqiso = np.unique(df.iso.values)
         QTref, QTtyp = self.QT_for_select_line(Ttyp)
@@ -827,6 +820,7 @@ class MdbHitran(MdbCommonHitempHitran, HITRANDatabaseManager):
         elower (jnp array): the lower state energy (cm-1)
         gpp (jnp array): statistical weight
         n_air (jnp array): air temperature exponent
+        
     """
 
     def __init__(
@@ -843,6 +837,7 @@ class MdbHitran(MdbCommonHitempHitran, HITRANDatabaseManager):
         parfile=None,
         nonair_broadening=False,
         with_error=False,
+        engine = None,
     ):
         """Molecular database for HITRAN/HITEMP form.
 
@@ -858,6 +853,7 @@ class MdbHitran(MdbCommonHitempHitran, HITRANDatabaseManager):
             activation: if True, the activation of mdb will be done when initialization, if False, the activation won't be done and it makes self.df instance available.
             nonair_broadening: If True, background atmospheric broadening parameters(n and gamma) other than air will also be downloaded (e.g. h2, he...)
             with_error: if True, uncertainty indices become available. (Please set drop_non_numeric=False in radis.api.hitranapi)
+            engine: engine for radis api ("pytables" or "vaex" or None). if None, radis automatically determines. default to None
         """
         self.dbtype = "hitran"
         MdbCommonHitempHitran.__init__(
@@ -873,6 +869,7 @@ class MdbHitran(MdbCommonHitempHitran, HITRANDatabaseManager):
             activation=activation,
             parfile=parfile,
             with_error=with_error,
+            engine=engine,
         )
 
         # HITRAN ONLY FUNCTIONALITY
@@ -888,12 +885,13 @@ class MdbHitran(MdbCommonHitempHitran, HITRANDatabaseManager):
             molecule=self.simple_molecule_name,
             name="HITRAN-{molecule}",
             local_databases=self.path.parent,
-            engine="default",
+            engine=self.engine,
             verbose=True,
             parallel=True,
             extra_params=extra_params,
         )
 
+        
         # Get list of all expected local files for this database:
         local_file = self.get_filenames()
 
