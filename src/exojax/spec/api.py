@@ -74,6 +74,7 @@ class MdbExomol(CapiMdbExomol):
         optional_quantum_states=False,
         activation=True,
         local_databases="./",
+        engine=None,
     ):
         """Molecular database for Exomol form.
 
@@ -88,6 +89,7 @@ class MdbExomol(CapiMdbExomol):
             inherit_dataframe: if True, it makes self.df instance available, which needs more DRAM when pickling.
             optional_quantum_states: if True, all of the fields available in self.df will be loaded. if False, the mandatory fields (i,E,g,J) will be loaded.
             activation: if True, the activation of mdb will be done when initialization, if False, the activation won't be done and it makes self.df instance available.
+            engine: engine for radis api ("pytables" or "vaex" or None). if None, radis automatically determines. default to None
 
 
         Note:
@@ -108,7 +110,12 @@ class MdbExomol(CapiMdbExomol):
         self.skip_optional_data = not optional_quantum_states
         self.activation = activation
         wavenum_min, wavenum_max = self.set_wavenum(nurange)
-        self.engine = get_auto_MEMORY_MAPPING_ENGINE()
+
+        if engine == None:
+            self.engine = get_auto_MEMORY_MAPPING_ENGINE()
+        else:
+            self.engine = engine
+        print("radis engine = ",self.engine)
 
         super().__init__(
             str(self.path),
