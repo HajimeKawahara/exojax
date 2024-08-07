@@ -1,4 +1,4 @@
-Computes Transmission Spectra (beta release)
+Computes Transmission Spectra 
 ============================================
 
 We compute a high-resolution transmission spectrum using HITRAN CO and
