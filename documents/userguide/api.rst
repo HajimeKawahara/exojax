@@ -8,13 +8,21 @@ We moved the I/O for these database to `exojax.spec.api <../exojax/exojax.spec.h
 
 .. admonition:: On the radis engine: Vaex or pytables?
     
-    Up until radis 1.4, vaex was used as the file IO engine. However, since vaex has been unable to support Python 3.11 and beyond, 
-    starting from radis 0.15, vaex has become optional, allowing users to choose between pytables and vaex. In response to this change, 
-    ExoJAX adopts the same policy as radis. The choice of which engine to use is made automatically, 
+    Up until ``radis 1.4``, ``vaex`` was used as the file I/O engine. However, since vaex has been unable to support ``Python 3.11`` and beyond, 
+    starting from ``radis 0.15``, ``vaex`` has become optional, allowing users to choose between ``pytables`` and ``vaex``. In response to this change, 
+    ExoJAX adopts the same policy as ``radis``. The choice of which engine to use is made automatically, 
     but users can specify their preference during the initialization of mdb 
     by setting ``engine = "vaex"`` or ``engine = "pytables"``. The file extension ``.hdf5`` is associated with vaex, while ``.h5`` is used for pytables. 
-    Given that vaex supports lazy IO, it can provide faster loading times when available.
+    Given that vaex supports lazy I/O, it can provide much faster loading times when available.
+    See `radis documentation <https://github.com/radis/radis/issues/658>`_ for more discussion.
 
+What type of engine is used can be checked by the following code:
+
+.. code:: python
+
+    >>> from radis.api.dbmanager import get_auto_MEMORY_MAPPING_ENGINE
+    >>> get_auto_MEMORY_MAPPING_ENGINE()
+    'vaex'
 
 .. contents::
     :depth: 2
@@ -48,8 +56,8 @@ Switch gpu_transfer off in this case. Then, we can save the use of the device me
 	>>> mdb = MdbExomol(".database/CO/12C-16O/Li2015", nurange=[4200.0, 4300.0], gpu_transfer=False)
 	>>> mdb.logsij0
 		Traceback (most recent call last):
-  		 File "<stdin>", line 1, in <module>
-		 AttributeError: logsij0
+        File "<stdin>", line 1, in <module>
+		AttributeError: logsij0
 
 This table is a short summary of the line information. "on" means gpu_transfer = True, off corresponds to False. 
 

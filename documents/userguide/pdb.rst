@@ -1,6 +1,13 @@
 Particulates Database (``pdb``)
 ==================================
 
+.. warning::
+    
+    The name ``pdb`` might be a bit confusing because there is a well-known Python debugger called ``pdb``. 
+    However, since there is no method directly named pdb (for example, ``pardb.PdbCloud``), 
+    we use ``pdb`` to mean "particulates database".
+
+
 The ``pdb`` is the database for particulates in ``ExoJAX``, namely the microphysics of clouds.
 Currently, the refractive index is downloaded from ``VIRGA`` and made available within ``pdb``.
 
@@ -15,6 +22,7 @@ Currently, the refractive index is downloaded from ``VIRGA`` and made available 
 For specific examples, please refer to 
 :doc:`comp_pymiescatt`
 for example.
+
 
 
 Available information 

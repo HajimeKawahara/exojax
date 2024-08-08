@@ -19,6 +19,11 @@ So, the notable features of ExoJAX are summarized as
 - **Easy to use the latest molecular/atomic data in** :doc:`userguide/api`,  **and** :doc:`userguide/atomll` 
 - **A transparent open-source project; anyone who wants to participate can join the development!**
 
+.. admonition:: For a more geek-oriented explanation
+   
+   ExoJAX is a spectral model based on the `Differentiable Programming (DP) <https://arxiv.org/abs/2403.14606>`_ paradigm!
+   ExoJAX aims to provide building blocks for retrieval code, much like Minecraft |:bricks:|.
+
 |:green_circle:| If you have an error and/or want to know the up-to-date info, visit `ExoJAX wiki <https://github.com/HajimeKawahara/exojax/wiki>`_. 
 Or use `the discussions form <https://github.com/HajimeKawahara/exojax/discussions>`_ on github or directly raise `issues <https://github.com/HajimeKawahara/exojax/issues>`_.
 
