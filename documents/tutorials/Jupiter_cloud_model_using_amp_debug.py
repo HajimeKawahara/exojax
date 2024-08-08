@@ -6,29 +6,25 @@
 import jax.numpy as jnp
 import matplotlib.pyplot as plt
 import numpy as np
+import numpyro
 
 from jax import config
 config.update("jax_enable_x64", True)
 
-# Sets an atmosphere model
-
-# In[2]:
-
 
 from exojax.utils.constants import kB, m_u
 from exojax.atm.atmprof import pressure_layer_logspace
+from exojax.utils.astrofunc import gravity_jupiter
 nlayer = 200
 Parr, dParr, k = pressure_layer_logspace(log_pressure_top=-5., log_pressure_btm=2.0, nlayer=nlayer)
 alpha = 0.097
 T0 = 200.
 Tarr = T0 * (Parr)**alpha
 
-mu = 2.0  # mean molecular weight
+mu = 2.3  # mean molecular weight
 R = kB / (mu * m_u)
 rho = Parr / (R * Tarr)
-
-g=1.e5
-
+g = gravity_jupiter(1.0,1.0)
 
 # `pdb` is a class for particulates databases. We here use `PdbCloud` for NH3, i.e. `pdb` for the ammonia cloud. 
 # PdbCloud uses the refaction (refractive) indice given by VIRGA. The Mie parameters assuming a log-normal distribution is called `miegrid`. This can be computed pdb.generate_miegrid if you do not have it. To compute `miegrid`, we use PyMieScatt as a calculator.   
@@ -125,7 +121,7 @@ Tarr = art.powerlaw_temperature(1200.0,0.1)
 mmr_profile = art.constant_mmr_profile(0.01)
 
 from exojax.utils.astrofunc import gravity_jupiter
-gravity = gravity_jupiter(1.0,10.0)
+gravity = gravity_jupiter(1.0,1.0)
 
 
 # In[52]:

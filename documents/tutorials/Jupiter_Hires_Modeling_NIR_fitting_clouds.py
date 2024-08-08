@@ -13,9 +13,7 @@
 
 
 from jax import config
-
 config.update("jax_enable_x64", True)
-
 figshow = False
 
 
@@ -24,7 +22,6 @@ figshow = False
 username = "kawahara"
 if username == "exoplanet01":
     import ssl
-
     ssl._create_default_https_context = ssl._create_unverified_context
 
 
@@ -35,11 +32,17 @@ dat = np.loadtxt("jupiter_corrected.dat")
 unmask_nus_obs = dat[:, 0]
 unmask_spectra = dat[:, 1]
 
+#mask = (
+#    (unmask_nus_obs < 6163.5)
+#    + ((unmask_nus_obs > 6166) & (unmask_nus_obs < 6184.5))
+#    + (unmask_nus_obs > 6186)
+#)
+
 mask = (
     (unmask_nus_obs < 6163.5)
     + ((unmask_nus_obs > 6166) & (unmask_nus_obs < 6184.5))
-    + (unmask_nus_obs > 6186)
 )
+
 nus_obs = unmask_nus_obs[mask]
 spectra = unmask_spectra[mask]
 if figshow:
@@ -47,7 +50,6 @@ if figshow:
     plt.plot(nus_obs, spectra, ".")
     plt.plot(unmask_nus_obs, unmask_spectra, alpha=0.5)
     plt.show()
-
 
 # ## Solar spectrum
 
@@ -59,8 +61,6 @@ if figshow:
 # - http://doi.latmos.ipsl.fr/DOI_SOLAR_HRS.v1.1.html
 # - http://bdap.ipsl.fr/voscat_en/solarspectra.html
 #
-
-
 from exojax.spec.unitconvert import wav2nu
 import pandas as pd
 
@@ -86,18 +86,13 @@ if figshow:
     plt.ylim(0.0, 0.25)
 
 
-# ## Atmospheric Model Setting
-
-# See `Jupiter_cloud_model_using_amp.ipynb`
-
-
+### Atmospheric Model Setting
+# See `Jupiter_cloud_model_using_amp.ipynb
 # set the master wavenumber grid
 from exojax.utils.grids import wavenumber_grid
-
 nus, wav, res = wavenumber_grid(
     np.min(nus_obs) - 5.0, np.max(nus_obs) + 5.0, 10000, xsmode="premodit", unit="cm-1"
 )
-print(res)
 
 from exojax.spec.atmrt import ArtReflectPure
 from exojax.utils.astrofunc import gravity_jupiter
@@ -274,25 +269,11 @@ if figshow:
     plt.show()
 
 # Next, we consider the gas component, i.e. methane
-
-# In[12]:
-
-
 from exojax.spec.api import MdbHitemp
-
-
-# Oh, we need HITEMP because our observation is in visible band, i.e., we need higher energy states.
-
-# In[13]:
-
 
 Eopt = 3300.0  # this is from the Elower optimization result
 # mdb_reduced = MdbHitemp("CH4", nurange=[nus_start,nus_end], isotope=1, elower_max=Eopt)
 mdb_reduced = MdbHitemp("CH4", nurange=[nus[0], nus[-1]], isotope=1, elower_max=Eopt)
-
-
-# In[14]:
-
 
 from exojax.spec.opacalc import OpaPremodit
 
@@ -300,13 +281,7 @@ opa = OpaPremodit(
     mdb_reduced, nu_grid=nus, allow_32bit=True, auto_trange=[80.0, 300.0]
 )  # this reduced the device memory use in 5/6.
 
-
-#dtau_cld = art.opacity_profile_cloud_lognormal(
-#    sigma_extinction, rhoc, MMRc, rg, sigmag, gravity
-#)
-
-
-# # Spectrum Model
+## Spectrum Model
 
 import jax.numpy as jnp
 
@@ -318,13 +293,6 @@ solspecjax = jnp.array(solspec)
 # ### gas opacity
 
 molmass_ch4 = molmass_isotope("CH4", db_HIT=False)
-
-#dtau_cld_scat = art.opacity_profile_cloud_lognormal(
-#    sigma_scattering, rhoc, MMRc, rg, sigmag, gravity
-#)
-#sigma_scattering[None, :] / sigma_extinction[None, :] + np.zeros(
-#    (len(art.pressure), len(nus))
-#)
 asymmetric_parameter = asymmetric_factor + np.zeros((len(art.pressure), len(nus)))
 reflectivity_surface = np.zeros(len(nus))
 
@@ -341,7 +309,7 @@ from exojax.utils.constants import c  # light speed in km/s
 parinit = jnp.array(
     [1.5, np.log10(1.0) * 10000.0, np.log10(1.0e4) * 10.0, -5.0, -55.0, 2.5, 1.2, 0.6]
 )
-multiple_factor = jnp.array([100.0, 0.0001, 0.1, 1.0, 1.0, 10000.0, 0.1, 1.0])
+multiple_factor = jnp.array([100.0, 0.0001, 0.1, 1.0, 1.0, 10000.0, 0.01, 1.0])
 
 
 def spectral_model(params):
@@ -351,8 +319,7 @@ def spectral_model(params):
     )
     fsed = 10**log_fsed
     Kzz = 10**log_Kzz
-
-    #fsed = 4.0  # 4 does not work.... 3 is OK...
+    #fsed = 4.0  
     #Kzz = 1.0e4
     #vrv = -5.0
     #vv = -55.0
@@ -363,7 +330,6 @@ def spectral_model(params):
 
     # temperatures
     Tarr = art.powerlaw_temperature(T0, 0.2)
-
     # cloud
     rg_layer, MMRc = amp_nh3.calc_ammodel(
         Parr, Tarr, mu, molmass_nh3, gravity, fsed, sigmag, Kzz, MMRbase_nh3
@@ -390,9 +356,6 @@ def spectral_model(params):
     dtau_ch4 = art.opacity_profile_xs(xsmatrix, mmr_ch4, molmass_ch4, gravity)
 
     single_scattering_albedo = (dtau_cld_scat) / (dtau_cld + dtau_ch4) 
-    #single_scattering_albedo = (sigma_scattering) / (sigma_extinction + xsmatrix) 
-
-
     dtau = dtau_cld + dtau_ch4
     
     # velocity
@@ -437,21 +400,78 @@ res = adam.run(parinit)
 print(unpack_params(res.params))
 print(unpack_params(parinit))
 
-
 F_samp = spectral_model(res.params)
 F_samp_init = spectral_model(parinit)
 
-print(F_samp)
 if True:
     fig = plt.figure(figsize=(30, 5))
     ax = fig.add_subplot(111)
     plt.plot(nus_obs, spectra, ".", label="observed spectrum")
     plt.plot(nus_obs, F_samp_init, alpha=0.5, label="init", color="C1", ls="dashed")
     plt.plot(nus_obs, F_samp, alpha=0.5, label="best fit", color="C1", lw=3)
-    # plt.plot(nus,Fr_samp,alpha=0.5,label="forward modelling",color="C1")
-    # plt.plot(nus*(1-vpercp_only_show_solar),incoming_flux, label="incoming",color="C2")
     plt.legend()
     plt.xlim(np.min(nus_obs), np.max(nus_obs))
-    # plt.ylim(0.0, 0.25)
     plt.savefig("Jupiter_petitIRD.png")
-    plt.show()
+    #plt.show()
+
+print("HMC starts")
+from jax import random
+import numpyro.distributions as dist
+import numpyro
+from numpyro.infer import MCMC, NUTS
+from numpyro.infer import Predictive
+from numpyro.diagnostics import hpdi
+
+# T0, log_fsed, log_Kzz, vrv, vv, boradening, mmr, normalization factor
+#parinit = jnp.array(
+#    [1.5, np.log10(1.0) * 10000.0, np.log10(1.0e4) * 10.0, -5.0, -55.0, 2.5, 1.2, 0.6]
+#)
+#multiple_factor = jnp.array([100.0, 0.0001, 0.1, 1.0, 1.0, 10000.0, 0.01, 1.0])
+
+def model_c(nu1,y1):
+
+    T0_n = numpyro.sample('T0_n', dist.Uniform(0.5,2.0))
+    log_fsed_n = numpyro.sample('log_fsed_n', dist.Uniform(-1.e4,1.e4))
+    log_Kzz_n = numpyro.sample('log_Kzz_n', dist.Uniform(30.0,50.0))
+    vrv = numpyro.sample('vrv', dist.Uniform(-10.0,10.0))
+    vv = numpyro.sample('vv', dist.Uniform(-70.0,-40.0))
+    broadening = 25000.0 #fix
+    molmass_ch4_n = numpyro.sample('MMR_CH4_n', dist.Uniform(0.0, 5.0))
+    factor = numpyro.sample('factor', dist.Uniform(0.0, 1.0))
+    
+    params = jnp.array([T0_n, log_fsed_n, log_Kzz_n, vrv, vv, broadening, molmass_ch4_n, factor])
+    mean = spectral_model(params)
+
+    sigma = numpyro.sample('sigma',dist.Exponential(10.0))
+    err_all = jnp.ones_like(nu1) * sigma
+    #err_all = jnp.sqrt(y1err**2. + sig**2.)
+    numpyro.sample('y1', dist.Normal(mean, err_all), obs=y1)
+
+rng_key = random.PRNGKey(0)
+rng_key, rng_key_ = random.split(rng_key)
+#num_warmup, num_samples = 500, 1000
+######                                                                                                                 
+num_warmup, num_samples = 100, 200                                                                                    
+######                                                                                                                  
+#kernel = NUTS(model_c,forward_mode_differentiation=True)
+kernel = NUTS(model_c)
+mcmc = MCMC(kernel, num_warmup=num_warmup, num_samples=num_samples)
+mcmc.run(rng_key_, nu1=nus_obs, y1=spectra)
+mcmc.print_summary()
+
+
+import pickle
+with open("output/samples.pickle", mode='wb') as f:
+    pickle.dump(mcmc.get_samples(), f)
+
+with open("output/samples.pickle", mode='rb') as f:
+    samples = pickle.load(f)
+
+
+from numpyro.diagnostics import hpdi
+pred = Predictive(model_c,samples,return_sites=["y1"])
+predictions = pred(rng_key_,nu1=nus_obs,y1=None)
+
+median_mu1 = jnp.median(predictions["y1"],axis=0)
+hpdi_mu1 = hpdi(predictions["y1"], 0.95)
+np.savez("output/all.npz",[median_mu1,hpdi_mu1])
