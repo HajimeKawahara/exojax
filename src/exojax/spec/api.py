@@ -187,7 +187,7 @@ class MdbExomol(CapiMdbExomol):
             and all(self.elower == other.elower)
             and all(self.jlower == other.jlower)
             and all(self.jupper == other.jupper)
-            and all(self.line_strength_ref == other.line_strength_ref)
+            and all(self.line_strength_ref_original == other.line_strength_ref_original)
             and all(self.logsij0 == other.logsij0)
             and all(self.gpp == other.gpp)
             and self.bkgdatm == other.bkgdatm
@@ -224,8 +224,8 @@ class MdbExomol(CapiMdbExomol):
         self.elower = df_masked.elower.values
         self.jlower = df_masked.jlower.values
         self.jupper = df_masked.jupper.values
-        self.line_strength_ref = df_masked.Sij0.values
-        self.logsij0 = np.log(self.line_strength_ref)
+        self.line_strength_ref_original = df_masked.Sij0.values
+        self.logsij0 = np.log(self.line_strength_ref_original)
         self.gpp = df_masked.gup.values
 
     def set_wavenum(self, nurange):
@@ -308,7 +308,7 @@ class MdbExomol(CapiMdbExomol):
             >>> mdb.apply_mask_mdb(mask)
         """
         self.A = self.A[mask]
-        self.logsij0 = self.logsij0[mask]
+        #self.logsij0 = self.logsij0[mask]
         self.nu_lines = self.nu_lines[mask]
         self.dev_nu_lines = self.dev_nu_lines[mask]
         self.gamma_natural = self.gamma_natural[mask]
@@ -317,29 +317,19 @@ class MdbExomol(CapiMdbExomol):
         self.elower = self.elower[mask]
         self.jlower = self.jlower[mask]
         self.jupper = self.jupper[mask]
-        self.line_strength_ref = self.line_strength_ref[mask]
+        #self.line_strength_ref = self.line_strength_ref[mask]
         self.gpp = self.gpp[mask]
-
-    def Sij0(self):
-        """Deprecated line_strength_ref.
-
-        Returns:
-            ndarray: line_strength_ref
-        """
-        msg = "Sij0 attribute was replaced to line_strength_ref and will be removed."
-        warnings.warn(msg, FutureWarning)
-        return self.line_strength_ref
 
     def generate_jnp_arrays(self):
         """(re)generates jnp.arrays.
 
         Note:
             We have nd arrays and jnp arrays. We usually apply the mask to nd arrays and then generate jnp array from the corresponding nd array. For instance, self._A is nd array and self.A is jnp array.
-
+            logsij0 is computed assuming Tref=Tref_original because it is not used for PreMODIT.
         """
         # jnp arrays
         self.dev_nu_lines = jnp.array(self.nu_lines)
-        self.logsij0 = jnp.array(np.log(self.line_strength_ref))
+        self.logsij0 = jnp.array(np.log(self.line_strength_ref_original))
         self.gamma_natural = jnp.array(self.gamma_natural)
         self.A = jnp.array(self.A)
         self.elower = jnp.array(self.elower)
@@ -360,7 +350,7 @@ class MdbExomol(CapiMdbExomol):
         """
         return jnp.interp(T, self.T_gQT, self.gQT)
 
-    def qr_interp(self, T):
+    def qr_interp(self, T, Tref):
         """interpolated partition function ratio.
 
         Args:
@@ -369,22 +359,23 @@ class MdbExomol(CapiMdbExomol):
         Returns:
             qr(T)=Q(T)/Q(Tref) interpolated in jnp.array
         """
-        return self.QT_interp(T) / self.QT_interp(self.Tref)
+        return self.QT_interp(T) / self.QT_interp(Tref)
 
-    def change_reference_temperature(self, Tref_new):
-        """change the reference temperature Tref and recompute Sij0
+    def line_strength_ref(self, Tref):
+        """line strength at Tref
 
         Args:
-            Tref_new (float): new Tref in Kelvin
-        """
-        print("Tref changed: " + str(self.Tref) + "K->" + str(Tref_new) + "K")
-        qr = self.qr_interp(Tref_new)
-        self.line_strength_ref = line_strength_numpy(
-            Tref_new, self.line_strength_ref, self.nu_lines, self.elower, qr, self.Tref
-        )
-        self.logsij0 = np.log(self.line_strength_ref)
-        self.Tref = Tref_new
+            Tref (_type_): reference temperature
 
+        Returns:
+            _type_: line strength at Tref
+        """
+        qr = self.qr_interp(Tref, Tref_original)
+        return line_strength_numpy(
+            Tref, self.line_strength_ref_original, self.nu_lines, self.elower, qr, Tref_original
+        )
+    
+    
 
 class MdbCommonHitempHitran:
     def __init__(
