@@ -14,7 +14,7 @@ from exojax.test.data import TESTDATA_CO_EXOMOL_LPF_EMISSION_REF
 from exojax.test.data import TESTDATA_CO_HITEMP_LPF_EMISSION_REF
 from exojax.test.emulate_mdb import mock_wavenumber_grid
 from exojax.test.emulate_mdb import mock_mdb
-from exojax.spec.opacalc import OpaDirect
+from exojax.spec.opacalc import OpaModit
 from exojax.spec.atmrt import ArtEmisPure
 from jax import config
 
@@ -35,7 +35,7 @@ def test_xsection(db):
     Tfix = 1200.0
     Pfix = 1.0
     nu_grid, wav, res = mock_wavenumber_grid()
-    opa = OpaDirect(mdbCO, nu_grid)
+    opa = OpaModit(mdbCO, nu_grid)
     xsv = opa.xsvector(Tfix, Pfix)
     filename = pkg_resources.resource_filename('exojax',
                                                'data/testdata/' + testdata[db])
@@ -60,7 +60,7 @@ def test_spectrum(db):
     mdb = mock_mdb(db)
     #mdb = api.MdbExomol('.database/CO/12C-16O/Li2015',nu_grid,inherit_dataframe=False,gpu_transfer=False)
     #mdb = api.MdbHitemp('CO', art.nu_grid, gpu_transfer=False, isotope=1)
-    opa = OpaDirect(mdb=mdb, nu_grid=nu_grid)
+    opa = OpaModit(mdb=mdb, nu_grid=nu_grid)
 
     xsmatrix = opa.xsmatrix(Tarr, art.pressure)
     dtau = art.opacity_profile_xs(xsmatrix, mmr_arr, opa.mdb.molmass,

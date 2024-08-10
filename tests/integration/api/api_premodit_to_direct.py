@@ -8,7 +8,7 @@ from exojax.spec import api
 from exojax.spec import molinfo
 from exojax.spec.hitran import line_strength, doppler_sigma, gamma_hitran, gamma_natural, line_strength_numpy
 from exojax.spec.exomol import gamma_exomol
-from exojax.spec.opacalc import OpaPremodit, OpaDirect
+from exojax.spec.opacalc import OpaPremodit, OpaModit
 from jax import config
 config.update("jax_enable_x64", True)
 
@@ -121,7 +121,7 @@ opa = OpaPremodit(mdb=mdb,
                   dit_grid_resolution=1.0,
                   allow_32bit=True)
 
-opad = OpaDirect(mdb=mdb,
+opad = OpaModit(mdb=mdb,
                  nu_grid=np.array(nus))
 
 logsij0 = np.log(mdb.line_strength_ref)

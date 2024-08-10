@@ -7,7 +7,7 @@ from exojax.spec import response
 from exojax.spec import molinfo
 from exojax.spec import contdb
 from exojax.spec.api import MdbExomol
-from exojax.spec.opacalc import OpaDirect
+from exojax.spec.opacalc import OpaModit
 from exojax.spec.opacont import OpaCIA
 from exojax.spec.atmrt import ArtEmisPure
 from exojax.spec.specop import SopRotation
@@ -55,7 +55,7 @@ def test_jaxopt_spectrum(fig=False):
     cdbH2H2 = contdb.CdbCIA('.database/H2-H2_2011.cia', nus)
     
     # opa
-    opa = OpaDirect(mdbCO, nus)
+    opa = OpaModit(mdbCO, nus)
     opacia = OpaCIA(cdbH2H2, nus)
 
     # spectral operators

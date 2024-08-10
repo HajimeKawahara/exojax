@@ -567,6 +567,30 @@ class OpaModit(OpaCalc):
         else:
             warnings.warn("Tarr_list/Parr are needed for xsmatrix.", UserWarning)
 
+    def __eq__(self, other):
+        """eq method for OpaDirect, definied by comparing all the attributes and important status
+
+        Args:
+            other (_type_): _description_
+
+        Returns:
+            _type_: _description_
+        """
+        if not isinstance(other, OpaModit):
+            return False
+
+        eq_attributes = (
+            (self.mdb == other.mdb)
+            and (self.wavelength_order == other.wavelength_order)
+            and all(self.nu_grid == other.nu_grid)
+        )
+    
+        return eq_attributes
+
+    def __ne__(self, other):
+        return not self.__eq__(other)
+
+
     def apply_params(self):
         self.dbtype = self.mdb.dbtype
         self.opainfo = initspec.init_modit(self.mdb.nu_lines, self.nu_grid)
@@ -732,6 +756,29 @@ class OpaDirect(OpaCalc):
         )
         self.mdb = mdb
         self.apply_params()
+
+    def __eq__(self, other):
+        """eq method for OpaDirect, definied by comparing all the attributes and important status
+
+        Args:
+            other (_type_): _description_
+
+        Returns:
+            _type_: _description_
+        """
+        if not isinstance(other, OpaDirect):
+            return False
+
+        eq_attributes = (
+            (self.mdb == other.mdb)
+            and (self.wavelength_order == other.wavelength_order)
+            and all(self.nu_grid == other.nu_grid)
+        )
+    
+        return eq_attributes
+
+    def __ne__(self, other):
+        return not self.__eq__(other)
 
     def apply_params(self):
         self.dbtype = self.mdb.dbtype

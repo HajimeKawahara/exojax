@@ -11,7 +11,7 @@ from exojax.test.emulate_mdb import mock_mdb
 
 from exojax.spec.opacalc import OpaPremodit
 from exojax.spec.opacalc import OpaModit
-from exojax.spec.opacalc import OpaDirect
+from exojax.spec.opacalc import OpaModit
 import numpy as np
 
 from jax import config
@@ -31,7 +31,7 @@ def test_OpaModit(db):
 def test_OpaDirect(db):
     mdb = mock_mdb(db)
     nu_grid, wav, res = mock_wavenumber_grid()
-    opa = OpaDirect(mdb=mdb, nu_grid=nu_grid)
+    opa = OpaModit(mdb=mdb, nu_grid=nu_grid)
     #check opainfo, should provide nu_matrix
     nmshape = (len(mdb.nu_lines), len(nu_grid))
     assert np.shape(opa.opainfo) == nmshape

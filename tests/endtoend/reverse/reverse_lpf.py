@@ -12,7 +12,7 @@ from exojax.spec import molinfo
 from exojax.utils.grids import velocity_grid
 from exojax.utils.grids import wavenumber_grid
 from exojax.utils.instfunc import resolution_to_gaussian_std
-from exojax.spec.opacalc import OpaDirect
+from exojax.spec.opacalc import OpaModit
 from exojax.spec.opacont import OpaCIA
 from exojax.spec.atmrt import ArtEmisPure
 from exojax.spec.specop import SopRotation
@@ -53,7 +53,7 @@ mdbCO = MdbExomol('.database/CO/12C-16O/Li2015',
                   nu_grid,
                   crit=1.e-46,
                   gpu_transfer=True)
-opa = OpaDirect(mdb=mdbCO, nu_grid=nu_grid)
+opa = OpaModit(mdb=mdbCO, nu_grid=nu_grid)
 cdbH2H2 = contdb.CdbCIA('.database/H2-H2_2011.cia', nu_grid)
 opacia = OpaCIA(cdbH2H2, nu_grid)
 mmw = 2.33  # mean molecular weight

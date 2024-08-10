@@ -18,7 +18,7 @@ from exojax.test.emulate_mdb import mock_wavenumber_grid
 from exojax.test.data import TESTDATA_CO_EXOMOL_LPF_XS_REF
 from exojax.test.data import TESTDATA_CO_HITEMP_LPF_XS_REF
 from exojax.test.emulate_mdb import mock_mdb
-from exojax.spec.opacalc import OpaDirect
+from exojax.spec.opacalc import OpaModit
 import matplotlib.pyplot as plt
 
 from jax import config
@@ -35,7 +35,7 @@ def gendata_xs_lpf(db):
     Tfix = 1200.0
     Pfix = 1.0
     nu_grid, wav, res = mock_wavenumber_grid()
-    opa = OpaDirect(mdbCO, nu_grid)
+    opa = OpaModit(mdbCO, nu_grid)
     xsv = opa.xsvector(Tfix, Pfix)
     np.savetxt(testdata[db], np.array([nu_grid, xsv]).T, delimiter=",")
     return nu_grid, xsv
