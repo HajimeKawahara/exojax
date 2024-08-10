@@ -22,6 +22,8 @@ import matplotlib.pyplot as plt
 
 from jax import config
 
+from exojax.utils.constants import Tref_original
+
 config.update("jax_enable_x64", True)
 
 testdata = {}
@@ -58,7 +60,7 @@ def gendata_xs_modit_exomol():
     ngammaL = gammaL / dv_lines
     nsigmaD = normalized_doppler_sigma(Tfix, Mmol, R)
     Sij = line_strength(
-        Tfix, mdbCO.logsij0, mdbCO.nu_lines, mdbCO.elower, qt, mdbCO.Tref
+        Tfix, mdbCO.logsij0, mdbCO.nu_lines, mdbCO.elower, qt, Tref_original
     )
 
     ngammaL_grid = ditgrid_log_interval(ngammaL, dit_grid_resolution=0.1)
@@ -111,7 +113,7 @@ def gendata_xs_modit_hitemp(airmode=False):
     ngammaL = gammaL / dv_lines
     nsigmaD = normalized_doppler_sigma(Tfix, Mmol, R)
     Sij = line_strength(
-        Tfix, mdbCO.logsij0, mdbCO.nu_lines, mdbCO.elower, qt, mdbCO.Tref
+        Tfix, mdbCO.logsij0, mdbCO.nu_lines, mdbCO.elower, qt, Tref_original
     )
     cont_nu, index_nu, R, pmarray = init_modit(mdbCO.nu_lines, nu_grid)
     ngammaL_grid = ditgrid_log_interval(ngammaL, dit_grid_resolution=0.1)
