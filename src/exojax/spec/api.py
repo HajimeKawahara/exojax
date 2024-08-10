@@ -201,7 +201,9 @@ class MdbExomol(CapiMdbExomol):
         
         return eq_attributes
 
-    
+    def __ne__(self, other):
+        return not self.__eq__(other)
+
     def attributes_from_dataframes(self, df_masked):
         """Generates attributes from (usually masked) data frame for Exomol
 
@@ -830,6 +832,9 @@ class MdbHitemp(MdbCommonHitempHitran, HITEMPDatabaseManager):
         eq_attributes = self._if_exist_check_eq(other, "ierr", eq_attributes)
 
         return eq_attributes
+    
+    def __ne__(self, other):
+        return not self.__eq__(other)
 
     def _if_exist_check_eq(self, other, attribute, eq_attributes):
         if hasattr(self, attribute) and hasattr(other, attribute):
@@ -1084,6 +1089,10 @@ class MdbHitran(MdbCommonHitempHitran, HITRANDatabaseManager):
             return eq_attributes
         else:
             return False
+        
+    def __ne__(self, other):
+        return not self.__eq__(other)
+
 
     def _attributes_from_dataframes_vaex(self, df_load_mask):
         self.nu_lines = df_load_mask.wav.values
