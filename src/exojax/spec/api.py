@@ -829,16 +829,16 @@ class MdbHitemp(MdbCommonHitempHitran, HITEMPDatabaseManager):
             and self.Ttyp == other.Ttyp
             and self.elower_max == other.elower_max
         )
-        eq_attributes = self._if_exist_check_eq(other, "ierr", eq_attributes)
+        eq_attributes = self._if_exist_check_eq_list(other, "ierr", eq_attributes)
 
         return eq_attributes
     
     def __ne__(self, other):
         return not self.__eq__(other)
 
-    def _if_exist_check_eq(self, other, attribute, eq_attributes):
+    def _if_exist_check_eq_list(self, other, attribute, eq_attributes):
         if hasattr(self, attribute) and hasattr(other, attribute):
-            return eq_attributes and all(self.attribute == other.attribute)
+            return eq_attributes and all(getattr(self,attribute) == getattr(other,attribute))
         elif not hasattr(self, attribute) and not hasattr(other, attribute):
             return eq_attributes
         else:
@@ -1070,25 +1070,27 @@ class MdbHitran(MdbCommonHitempHitran, HITRANDatabaseManager):
             and self.Ttyp == other.Ttyp
             and self.elower_max == other.elower_max
         )
-        eq_attributes = self._if_exist_check_eq(other, "ierr", eq_attributes)
-        eq_attributes = self._if_exist_check_eq(other, "n_h2", eq_attributes)
-        eq_attributes = self._if_exist_check_eq(other, "n_he", eq_attributes)
-        eq_attributes = self._if_exist_check_eq(other, "n_co2", eq_attributes)
-        eq_attributes = self._if_exist_check_eq(other, "n_h2o", eq_attributes)
-        eq_attributes = self._if_exist_check_eq(other, "gamma_h2", eq_attributes)
-        eq_attributes = self._if_exist_check_eq(other, "gamma_he", eq_attributes)
-        eq_attributes = self._if_exist_check_eq(other, "gamma_co2", eq_attributes)
-        eq_attributes = self._if_exist_check_eq(other, "gamma_h2o", eq_attributes)
+        eq_attributes = self._if_exist_check_eq_list(other, "ierr", eq_attributes)
+        eq_attributes = self._if_exist_check_eq_list(other, "n_h2", eq_attributes)
+        eq_attributes = self._if_exist_check_eq_list(other, "n_he", eq_attributes)
+        eq_attributes = self._if_exist_check_eq_list(other, "n_co2", eq_attributes)
+        eq_attributes = self._if_exist_check_eq_list(other, "n_h2o", eq_attributes)
+        eq_attributes = self._if_exist_check_eq_list(other, "gamma_h2", eq_attributes)
+        eq_attributes = self._if_exist_check_eq_list(other, "gamma_he", eq_attributes)
+        eq_attributes = self._if_exist_check_eq_list(other, "gamma_co2", eq_attributes)
+        eq_attributes = self._if_exist_check_eq_list(other, "gamma_h2o", eq_attributes)
 
         return eq_attributes
 
-    def _if_exist_check_eq(self, other, attribute, eq_attributes):
+
+    def _if_exist_check_eq_list(self, other, attribute, eq_attributes):
         if hasattr(self, attribute) and hasattr(other, attribute):
-            return eq_attributes and all(self.attribute == other.attribute)
+            return eq_attributes and all(getattr(self,attribute) == getattr(other,attribute))
         elif not hasattr(self, attribute) and not hasattr(other, attribute):
             return eq_attributes
         else:
             return False
+
         
     def __ne__(self, other):
         return not self.__eq__(other)

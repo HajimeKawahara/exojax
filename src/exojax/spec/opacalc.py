@@ -7,6 +7,7 @@ Notes:
 
 __all__ = ["OpaPremodit", "OpaModit", "OpaDirect"]
 
+from torch import eq
 from exojax.spec import initspec
 from exojax.spec.lbderror import optimal_params
 from exojax.utils.grids import wavenumber_grid
@@ -52,7 +53,7 @@ class OpaPremodit(OpaCalc):
         dit_grid_resolution=None,
         allow_32bit=False,
         wavelength_order="descending",
-        version_auto_trange=2
+        version_auto_trange=2,
     ):
         """initialization of OpaPremodit
 
@@ -116,9 +117,54 @@ class OpaPremodit(OpaCalc):
             print("OpaPremodit: initialization without parameters setting")
             print("Call self.apply_params() to complete the setting.")
 
+    def __eq__(self, other):
+        """eq method for OpaPremodit, definied by comparing all the attributes and important status
+
+        Args:
+            other (_type_): _description_
+
+        Returns:
+            _type_: _description_
+        """
+        if not isinstance(other, OpaPremodit):
+            return False
+
+        eq_attributes = (
+            (self.mdb == other.mdb)
+            and (self.diffmode == other.diffmode)
+            and (self.ngrid_broadpar == other.ngrid_broadpar)
+            and (self.wavelength_order == other.wavelength_order)
+            and (self.version_auto_trange == other.version_auto_trange)
+            and all(self.nu_grid == other.nu_grid)
+        )
+        eq_attributes = self._if_exist_check_eq(other, "dE", eq_attributes)
+        eq_attributes = self._if_exist_check_eq(other, "Tref", eq_attributes)
+        eq_attributes = self._if_exist_check_eq(other, "Twt", eq_attributes)
+        eq_attributes = self._if_exist_check_eq(other, "Tmax", eq_attributes)
+        eq_attributes = self._if_exist_check_eq(other, "Tmin", eq_attributes)
+        eq_attributes = self._if_exist_check_eq(other, "Tref_broadening", eq_attributes)
+
+        return eq_attributes
+
+
+    def _if_exist_check_eq(self, other, attribute, eq_attributes):
+        if hasattr(self, attribute) and hasattr(other, attribute):
+            return eq_attributes and getattr(self,attribute) == getattr(other,attribute)
+        elif not hasattr(self, attribute) and not hasattr(other, attribute):
+            return eq_attributes
+        else:
+            return False
+
+
+    def __ne__(self, other):
+        return not self.__eq__(other)
+
+
     def auto_setting(self, Tl, Tu):
         print("OpaPremodit: params automatically set.")
-        self.dE, self.Tref, self.Twt = optimal_params(Tl, Tu, self.diffmode, self.version_auto_trange)
+        self.dE, self.Tref, self.Twt = optimal_params(
+            Tl, Tu, self.diffmode, self.version_auto_trange
+        )
         self.Tmax = Tu
         self.Tmin = Tl
         self.apply_params()
@@ -796,9 +842,11 @@ class OpaDirect(OpaCalc):
                 self.mdb.nu_lines, Tarr, self.mdb.molmass
             )
         elif (self.mdb.dbtype == "kurucz") or (self.mdb.dbtype == "vald"):
-            qt_284 = vmap(interp_QT_284, (0, None, None))(Tarr, self.mdb.T_gQT, self.mdb.gQT_284species)
-            qt_K = qt_284[:, self.mdb.QTmask] # e.g., qt_284[:,76] #Fe I
-            qr_K = qt_K / self.mdb.QTref_284[self.mdb.QTmask]    
+            qt_284 = vmap(interp_QT_284, (0, None, None))(
+                Tarr, self.mdb.T_gQT, self.mdb.gQT_284species
+            )
+            qt_K = qt_284[:, self.mdb.QTmask]  # e.g., qt_284[:,76] #Fe I
+            qr_K = qt_K / self.mdb.QTref_284[self.mdb.QTmask]
             vmapvald3 = jit(
                 vmap(
                     gamma_vald3,
