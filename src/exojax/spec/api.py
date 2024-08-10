@@ -197,7 +197,7 @@ class MdbExomol(CapiMdbExomol):
             and self.broadf == other.broadf
             and self.exact_molecule_name == other.exact_molecule_name
         )
-        
+
         return eq_attributes
 
     def __ne__(self, other):
@@ -283,14 +283,7 @@ class MdbExomol(CapiMdbExomol):
     def compute_load_mask(self, df):
         # wavelength
         mask = (df.nu_lines > self.nurange[0]) & (df.nu_lines < self.nurange[1])
-        QTtyp = np.array(self.QT_interp(self.Ttyp))
-        QTref_original = np.array(self.QT_interp(Tref_original))
-        mask = mask & (
-            line_strength_numpy(
-                self.Ttyp, df.Sij0, df.nu_lines, df.elower, QTtyp / QTref_original
-            )
-            > self.crit
-        )
+        mask = mask & (self.line_strength_ref(self.Ttyp) > self.crit)
         if self.elower_max is not None:
             mask = mask & (df.elower < self.elower_max)
         return mask
@@ -308,7 +301,7 @@ class MdbExomol(CapiMdbExomol):
             >>> mdb.apply_mask_mdb(mask)
         """
         self.A = self.A[mask]
-        #self.logsij0 = self.logsij0[mask]
+        self.logsij0 = self.logsij0[mask]
         self.nu_lines = self.nu_lines[mask]
         self.dev_nu_lines = self.dev_nu_lines[mask]
         self.gamma_natural = self.gamma_natural[mask]
@@ -317,7 +310,7 @@ class MdbExomol(CapiMdbExomol):
         self.elower = self.elower[mask]
         self.jlower = self.jlower[mask]
         self.jupper = self.jupper[mask]
-        #self.line_strength_ref = self.line_strength_ref[mask]
+        self.line_strength_ref_original = self.line_strength_ref_original[mask]
         self.gpp = self.gpp[mask]
 
     def generate_jnp_arrays(self):
@@ -372,10 +365,14 @@ class MdbExomol(CapiMdbExomol):
         """
         qr = self.qr_interp(Tref, Tref_original)
         return line_strength_numpy(
-            Tref, self.line_strength_ref_original, self.nu_lines, self.elower, qr, Tref_original
+            Tref,
+            self.line_strength_ref_original,
+            self.nu_lines,
+            self.elower,
+            qr,
+            Tref_original,
         )
-    
-    
+
 
 class MdbCommonHitempHitran:
     def __init__(
@@ -822,13 +819,15 @@ class MdbHitemp(MdbCommonHitempHitran, HITEMPDatabaseManager):
         eq_attributes = self._if_exist_check_eq_list(other, "ierr", eq_attributes)
 
         return eq_attributes
-    
+
     def __ne__(self, other):
         return not self.__eq__(other)
 
     def _if_exist_check_eq_list(self, other, attribute, eq_attributes):
         if hasattr(self, attribute) and hasattr(other, attribute):
-            return eq_attributes and all(getattr(self,attribute) == getattr(other,attribute))
+            return eq_attributes and all(
+                getattr(self, attribute) == getattr(other, attribute)
+            )
         elif not hasattr(self, attribute) and not hasattr(other, attribute):
             return eq_attributes
         else:
@@ -1072,19 +1071,18 @@ class MdbHitran(MdbCommonHitempHitran, HITRANDatabaseManager):
 
         return eq_attributes
 
-
     def _if_exist_check_eq_list(self, other, attribute, eq_attributes):
         if hasattr(self, attribute) and hasattr(other, attribute):
-            return eq_attributes and all(getattr(self,attribute) == getattr(other,attribute))
+            return eq_attributes and all(
+                getattr(self, attribute) == getattr(other, attribute)
+            )
         elif not hasattr(self, attribute) and not hasattr(other, attribute):
             return eq_attributes
         else:
             return False
 
-        
     def __ne__(self, other):
         return not self.__eq__(other)
-
 
     def _attributes_from_dataframes_vaex(self, df_load_mask):
         self.nu_lines = df_load_mask.wav.values
