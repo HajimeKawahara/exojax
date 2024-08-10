@@ -13,7 +13,7 @@ def test_line_strength_exomol_t():
     mdb.change_reference_temperature(1200.0)
     mask = np.isfinite(mdb.line_strength_ref)
     val = np.sum(mdb.line_strength_ref[mask])
-    assert val == 1.2823972e-20
+    assert pytest.approx(val) == 1.2823972e-20
 
 
 def test_line_strength_hitemp():
@@ -26,9 +26,9 @@ def test_line_strength_hitemp_t():
     mdb.change_reference_temperature(1200.0)
     mask = np.isfinite(mdb.line_strength_ref)
     val = np.sum(mdb.line_strength_ref[mask])
-    assert val == 1.2651083e-20
+    assert pytest.approx(val) == 1.2651083e-20
 
 
 if __name__ == "__main__":
-    # test_line_strength_exomol_t()
+    test_line_strength_exomol_t()
     test_line_strength_hitemp_t()
