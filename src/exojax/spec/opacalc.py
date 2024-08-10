@@ -631,7 +631,7 @@ class OpaModit(OpaCalc):
 
         nsigmaD = normalized_doppler_sigma(T, self.mdb.molmass, R)
         Sij = line_strength(
-            T, self.mdb.logsij0, self.mdb.nu_lines, self.mdb.elower, qt, self.mdb.Tref
+            T, self.mdb.logsij0, self.mdb.nu_lines, self.mdb.elower, qt, Tref_original
         )
 
         ngammaL_grid = ditgrid_log_interval(
@@ -816,7 +816,7 @@ class OpaDirect(OpaCalc):
             ) + gamma_natural(self.mdb.A)
         sigmaD = doppler_sigma(self.mdb.nu_lines, T, self.mdb.molmass)
         Sij = line_strength(
-            T, self.mdb.logsij0, self.mdb.nu_lines, self.mdb.elower, qt, self.mdb.Tref
+            T, self.mdb.logsij0, self.mdb.nu_lines, self.mdb.elower, qt, Tref_original
         )
         return xsvector_lpf(numatrix, sigmaD, gammaL, Sij)
 
@@ -864,7 +864,7 @@ class OpaDirect(OpaCalc):
                 self.mdb.nu_lines,
                 self.mdb.elower,
                 qt,
-                self.mdb.Tref,
+                Tref_original,
             )
             sigmaDM = jit(vmap(doppler_sigma, (None, 0, None)))(
                 self.mdb.nu_lines, Tarr, self.mdb.molmass
@@ -882,7 +882,7 @@ class OpaDirect(OpaCalc):
                 self.mdb.nu_lines,
                 self.mdb.elower,
                 qt,
-                self.mdb.Tref,
+                Tref_original,
             )
             sigmaDM = jit(vmap(doppler_sigma, (None, 0, None)))(
                 self.mdb.nu_lines, Tarr, self.mdb.molmass
@@ -943,7 +943,7 @@ class OpaDirect(OpaCalc):
                 self.mdb.nu_lines,
                 self.mdb.elower,
                 qr_K.T,
-                self.mdb.Tref,
+                Tref_original,
             )
             sigmaDM = jit(vmap(doppler_sigma, (None, 0, None)))(
                 self.mdb.nu_lines, Tarr, self.mdb.atomicmass
