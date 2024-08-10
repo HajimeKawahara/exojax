@@ -59,7 +59,7 @@ class OpaPremodit(OpaCalc):
         Note:
             If auto_trange nor manual_params is not given in arguments,
             use manual_setting()
-            or provide self.dE, self.Tref, self.Twt and apply self.apply_params()
+            or provide self.dE, self.Twt and apply self.apply_params()
 
         Note:
             The option of "broadening_parameter_resolution" controls the resolution of broadening parameters.
@@ -270,7 +270,7 @@ class OpaPremodit(OpaCalc):
             self.gamma_ref = mdb.alpha_ref * reference_factor
 
     def apply_params(self):
-        self.mdb.change_reference_temperature(self.Tref)
+        #self.mdb.change_reference_temperature(self.Tref)
         self.dbtype = self.mdb.dbtype
 
         # broadening
@@ -288,7 +288,7 @@ class OpaPremodit(OpaCalc):
             self.mdb.elower,
             self.gamma_ref,
             self.n_Texp,
-            self.mdb.line_strength_ref,
+            self.mdb.line_strength(self.Tref), # line strength at Tref (is not necessary for Tref_original)
             self.Twt,
             Tref=self.Tref,
             Tref_broadening=self.Tref_broadening,
