@@ -23,15 +23,13 @@ def test_Kurucz_linelist():
     from exojax.spec import moldb
     from exojax.spec import atomll
     from exojax.spec.atmrt import ArtEmisPure
-    from exojax.spec.opacalc import OpaModit
-    import jax.numpy as jnp
-    from jax import vmap, jit
+    from exojax.spec.opacalc import OpaDirect
     import numpy as np
     from exojax.spec.lpf import xsmatrix
 
     wls, wll = 10350, 10450
     wavenumber_grid_res = 0.01
-    nus, wav, reso = wavenumber_grid(wls, wll, int((wll-wls)/wavenumber_grid_res), unit="AA", xsmode="lpf")
+    nus, wav, res = wavenumber_grid(wls, wll, int((wll-wls)/wavenumber_grid_res), unit="AA", xsmode="lpf")
 
     NP = 100
     T0 = 3000.
@@ -52,7 +50,7 @@ def test_Kurucz_linelist():
 
     VMR_Fe = atomll.get_VMR_uspecies(np.array([[26,1]]))
 
-    opa = OpaModit(mdb=adbK,nu_grid=nus)
+    opa = OpaDirect(mdb=adbK,nu_grid=nus)
 
     xsmatrix = opa.xsmatrix(Tarr, Parr)
     mmr_arr = art.constant_mmr_profile(VMR_Fe)

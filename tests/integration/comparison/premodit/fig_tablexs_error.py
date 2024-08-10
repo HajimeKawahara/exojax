@@ -31,7 +31,6 @@ def read_petitRadtrans_highres_xs_data(
         print(p)
         log10t = np.log10(t)
         print(log10t[1:] - log10t[:-1])
-        # return wns, xs
 
 
 def make_fig_tabulate_crosssection_error(
@@ -49,7 +48,7 @@ def make_fig_tabulate_crosssection_error(
     print(t0,t1,tc)
 
     from exojax.spec.api import MdbHitemp
-    from exojax.spec.opacalc import OpaModit
+    from exojax.spec.opacalc import OpaDirect
 
     mdb_co = MdbHitemp("CO", nurange=[nu[0], nu[-1]])
     mdb_h2o = MdbHitemp("H2O", nurange=[nu[0], nu[-1]])
@@ -59,7 +58,7 @@ def make_fig_tabulate_crosssection_error(
     mol = ["H2O", "CO"]
     lwi = [1.0, 0.5]
     for i, mdb in enumerate([mdb_h2o, mdb_co]):
-        opa = OpaModit(mdb, nu)
+        opa = OpaDirect(mdb, nu)
         xs = opa.xsvector(tc, pc)
         xs00 = opa.xsvector(t0, p0)
         xs11 = opa.xsvector(t1, p1)

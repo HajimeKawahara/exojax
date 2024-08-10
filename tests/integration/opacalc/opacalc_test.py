@@ -1,17 +1,16 @@
 """
     Notes:
-         These tests are classified as the integration test because it 
-         sometimes ends up jaxlib.xla_extension.XlaRuntimeError: RESOURCE_EXAUST due to limited resources.
+        These tests are classified as the integration test because it 
+        sometimes ends up jaxlib.xla_extension.XlaRuntimeError: RESOURCE_EXAUST due to limited resources.
 
 """
 
 import pytest
 from exojax.test.emulate_mdb import mock_wavenumber_grid
 from exojax.test.emulate_mdb import mock_mdb
-
 from exojax.spec.opacalc import OpaPremodit
 from exojax.spec.opacalc import OpaModit
-from exojax.spec.opacalc import OpaModit
+from exojax.spec.opacalc import OpaDirect
 import numpy as np
 
 from jax import config
@@ -31,7 +30,7 @@ def test_OpaModit(db):
 def test_OpaDirect(db):
     mdb = mock_mdb(db)
     nu_grid, wav, res = mock_wavenumber_grid()
-    opa = OpaModit(mdb=mdb, nu_grid=nu_grid)
+    opa = OpaDirect(mdb=mdb, nu_grid=nu_grid)
     #check opainfo, should provide nu_matrix
     nmshape = (len(mdb.nu_lines), len(nu_grid))
     assert np.shape(opa.opainfo) == nmshape
