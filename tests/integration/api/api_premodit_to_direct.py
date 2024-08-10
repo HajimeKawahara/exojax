@@ -7,13 +7,12 @@ from exojax.utils.grids import wavenumber_grid
 from exojax.spec import api
 from exojax.spec import molinfo
 from exojax.spec.hitran import line_strength, doppler_sigma, gamma_hitran, gamma_natural, line_strength_numpy
-from exojax.spec.exomol import gamma_exomol
 from exojax.spec.opacalc import OpaPremodit, OpaDirect
-from jax import config
-config.update("jax_enable_x64", True)
-
 import numpy as np
 import matplotlib.pyplot as plt
+
+from jax import config
+config.update("jax_enable_x64", True)
 
 
 from exojax.spec.lpf import xsvector, make_numatrix0

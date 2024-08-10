@@ -31,7 +31,6 @@ def read_petitRadtrans_highres_xs_data(
         print(p)
         log10t = np.log10(t)
         print(log10t[1:] - log10t[:-1])
-        # return wns, xs
 
 
 def make_fig_tabulate_crosssection_error(
