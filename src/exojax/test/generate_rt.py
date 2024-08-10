@@ -7,7 +7,7 @@ from exojax.test.data import TESTDATA_CO_EXOMOL_MODIT_EMISSION_REF
 from exojax.test.data import TESTDATA_CO_HITEMP_MODIT_EMISSION_REF
     
 from exojax.test.emulate_mdb import mock_mdb
-from exojax.spec.opacalc import OpaModit
+from exojax.spec.opacalc import OpaDirect
 from exojax.spec.opacalc import OpaModit
 from exojax.spec.atmrt import ArtEmisPure
 
@@ -70,7 +70,7 @@ def gendata_rt_lpf(db):
     mdb = mock_mdb(db)
     #mdb = api.MdbExomol('.database/CO/12C-16O/Li2015',nu_grid,inherit_dataframe=False,gpu_transfer=False)
     #mdb = api.MdbHitemp('CO', art.nu_grid, gpu_transfer=False, isotope=1)
-    opa = OpaModit(mdb=mdb, nu_grid=nu_grid)
+    opa = OpaDirect(mdb=mdb, nu_grid=nu_grid)
 
     xsmatrix = opa.xsmatrix(Tarr, art.pressure)
     dtau = art.opacity_profile_xs(xsmatrix, mmr_arr, opa.mdb.molmass,
