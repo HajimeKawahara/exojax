@@ -120,7 +120,6 @@ class MdbExomol(CapiMdbExomol):
         self.database = str(self.path.stem)
         self.bkgdatm = bkgdatm
         # molecbroad = self.exact_molecule_name + '__' + self.bkgdatm
-        # self.Tref = Tref_original
         self.gpu_transfer = gpu_transfer
         self.Ttyp = Ttyp
         self.broadf = broadf
@@ -416,7 +415,6 @@ class MdbCommonHitempHitran:
         self.simple_molecule_name = get_molecule(self.molecid)
         self.crit = crit
         self.elower_max = elower_max
-        #self.Tref = Tref_original
         self.Ttyp = Ttyp
         self.nurange = [np.min(nurange), np.max(nurange)]
         self.isotope = isotope
@@ -561,12 +559,13 @@ class MdbCommonHitempHitran:
         isotope_index = _isotope_index_from_isotope_number(isotope, self.uniqiso)
         return _qr_interp(isotope_index, T, self.T_gQT, self.gQT, Tref)
 
-    def qr_interp_lines(self, T):
+    def qr_interp_lines(self, T, Tref):
         """Partition Function ratio using HAPI partition data.
         (This function works for JAX environment.)
 
         Args:
             T: temperature (K)
+            Tref: reference temperature (K)
 
         Returns:
             Qr_line, partition function ratio array for lines [Nlines]
@@ -575,7 +574,7 @@ class MdbCommonHitempHitran:
             Nlines=len(self.nu_lines)
         """
         return _qr_interp_lines(
-            T, self.isoid, self.uniqiso, self.T_gQT, self.gQT, self.Tref
+            T, self.isoid, self.uniqiso, self.T_gQT, self.gQT, Tref
         )
 
     def exact_isotope_name(self, isotope):
@@ -809,7 +808,6 @@ class MdbHitemp(MdbCommonHitempHitran, HITEMPDatabaseManager):
             and all(self.uniqiso == other.uniqiso)
             and self.isotope == other.isotope
             and self.simple_molecule_name == other.simple_molecule_name
-            and self.Tref == other.Tref
             and self.gpu_transfer == other.gpu_transfer
             and self.Ttyp == other.Ttyp
             and self.elower_max == other.elower_max
@@ -1052,7 +1050,6 @@ class MdbHitran(MdbCommonHitempHitran, HITRANDatabaseManager):
             and all(self.uniqiso == other.uniqiso)
             and self.isotope == other.isotope
             and self.simple_molecule_name == other.simple_molecule_name
-            and self.Tref == other.Tref
             and self.gpu_transfer == other.gpu_transfer
             and self.Ttyp == other.Ttyp
             and self.elower_max == other.elower_max
