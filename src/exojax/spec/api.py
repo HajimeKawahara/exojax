@@ -16,7 +16,6 @@ import jax.numpy as jnp
 import pathlib
 import warnings
 
-from torch import eq
 from exojax.spec.hitran import line_strength_numpy
 from exojax.spec.hitran import gamma_natural as gn
 from exojax.utils.constants import Tref_original
