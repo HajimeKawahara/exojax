@@ -105,7 +105,7 @@ vmr = 1.
 Ppart = P * vmr
 Mmol = molinfo.molmass("CO")
 
-logsij0 = np.log(mdb.line_strength_ref)
+logsij0 = np.log(mdb.line_strength)
 sigmaD = doppler_sigma(mdb.nu_lines,T,Mmol)
 qt = mdb.qr_interp(mdb.isotope, T)
 gammaL = gamma_hitran(P,T, Ppart, mdb.n_air, mdb.gamma_air, mdb.gamma_self) + gamma_natural(mdb.A)
@@ -123,7 +123,7 @@ opa = OpaPremodit(mdb=mdb,
 opad = OpaDirect(mdb=mdb,
                  nu_grid=np.array(nus))
 
-logsij0 = np.log(mdb.line_strength_ref)
+logsij0 = np.log(mdb.line_strength)
 qt = mdb.qr_interp(mdb.isotope, T)
 Sij = line_strength(T,logsij0,mdb.nu_lines,mdb.elower,qt, mdb.Tref)
 #Sij = line_strength(T,logsij0,mdb.nu_lines,mdb.elower,qt)                                                                                                          

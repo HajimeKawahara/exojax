@@ -120,7 +120,6 @@ class MdbExomol(CapiMdbExomol):
         self.database = str(self.path.stem)
         self.bkgdatm = bkgdatm
         # molecbroad = self.exact_molecule_name + '__' + self.bkgdatm
-        self.Tref = Tref_original
         self.gpu_transfer = gpu_transfer
         self.Ttyp = Ttyp
         self.broadf = broadf
@@ -187,17 +186,16 @@ class MdbExomol(CapiMdbExomol):
             and all(self.elower == other.elower)
             and all(self.jlower == other.jlower)
             and all(self.jupper == other.jupper)
-            and all(self.line_strength_ref == other.line_strength_ref)
+            and all(self.line_strength_ref_original == other.line_strength_ref_original)
             and all(self.logsij0 == other.logsij0)
             and all(self.gpp == other.gpp)
             and self.bkgdatm == other.bkgdatm
-            and self.Tref == other.Tref
             and self.gpu_transfer == other.gpu_transfer
             and self.Ttyp == other.Ttyp
             and self.broadf == other.broadf
             and self.exact_molecule_name == other.exact_molecule_name
         )
-        
+
         return eq_attributes
 
     def __ne__(self, other):
@@ -224,8 +222,8 @@ class MdbExomol(CapiMdbExomol):
         self.elower = df_masked.elower.values
         self.jlower = df_masked.jlower.values
         self.jupper = df_masked.jupper.values
-        self.line_strength_ref = df_masked.Sij0.values
-        self.logsij0 = np.log(self.line_strength_ref)
+        self.line_strength_ref_original = df_masked.Sij0.values
+        self.logsij0 = np.log(self.line_strength_ref_original)
         self.gpp = df_masked.gup.values
 
     def set_wavenum(self, nurange):
@@ -317,29 +315,19 @@ class MdbExomol(CapiMdbExomol):
         self.elower = self.elower[mask]
         self.jlower = self.jlower[mask]
         self.jupper = self.jupper[mask]
-        self.line_strength_ref = self.line_strength_ref[mask]
+        self.line_strength_ref_original = self.line_strength_ref_original[mask]
         self.gpp = self.gpp[mask]
-
-    def Sij0(self):
-        """Deprecated line_strength_ref.
-
-        Returns:
-            ndarray: line_strength_ref
-        """
-        msg = "Sij0 attribute was replaced to line_strength_ref and will be removed."
-        warnings.warn(msg, FutureWarning)
-        return self.line_strength_ref
 
     def generate_jnp_arrays(self):
         """(re)generates jnp.arrays.
 
         Note:
             We have nd arrays and jnp arrays. We usually apply the mask to nd arrays and then generate jnp array from the corresponding nd array. For instance, self._A is nd array and self.A is jnp array.
-
+            logsij0 is computed assuming Tref=Tref_original because it is not used for PreMODIT.
         """
         # jnp arrays
         self.dev_nu_lines = jnp.array(self.nu_lines)
-        self.logsij0 = jnp.array(np.log(self.line_strength_ref))
+        self.logsij0 = jnp.array(np.log(self.line_strength_ref_original))
         self.gamma_natural = jnp.array(self.gamma_natural)
         self.A = jnp.array(self.A)
         self.elower = jnp.array(self.elower)
@@ -360,30 +348,36 @@ class MdbExomol(CapiMdbExomol):
         """
         return jnp.interp(T, self.T_gQT, self.gQT)
 
-    def qr_interp(self, T):
+    def qr_interp(self, T, Tref):
         """interpolated partition function ratio.
 
         Args:
             T: temperature
+            Tref: reference temperature
 
         Returns:
-            qr(T)=Q(T)/Q(Tref) interpolated in jnp.array
+            qr(T)=Q(T)/Q(Tref) interpolated
         """
-        return self.QT_interp(T) / self.QT_interp(self.Tref)
+        return self.QT_interp(T) / self.QT_interp(Tref)
 
-    def change_reference_temperature(self, Tref_new):
-        """change the reference temperature Tref and recompute Sij0
+    def line_strength(self, Tref):
+        """line strength at Tref
 
         Args:
-            Tref_new (float): new Tref in Kelvin
+            Tref (_type_): reference temperature
+
+        Returns:
+            _type_: line strength at Tref
         """
-        print("Tref changed: " + str(self.Tref) + "K->" + str(Tref_new) + "K")
-        qr = self.qr_interp(Tref_new)
-        self.line_strength_ref = line_strength_numpy(
-            Tref_new, self.line_strength_ref, self.nu_lines, self.elower, qr, self.Tref
+        qr = self.qr_interp(Tref, Tref_original)
+        return line_strength_numpy(
+            Tref,
+            self.line_strength_ref_original,
+            self.nu_lines,
+            self.elower,
+            qr,
+            Tref_original,
         )
-        self.logsij0 = np.log(self.line_strength_ref)
-        self.Tref = Tref_new
 
 
 class MdbCommonHitempHitran:
@@ -421,7 +415,6 @@ class MdbCommonHitempHitran:
         self.simple_molecule_name = get_molecule(self.molecid)
         self.crit = crit
         self.elower_max = elower_max
-        self.Tref = Tref_original
         self.Ttyp = Ttyp
         self.nurange = [np.min(nurange), np.max(nurange)]
         self.isotope = isotope
@@ -523,7 +516,7 @@ class MdbCommonHitempHitran:
             >>> mdb.apply_mask_mdb(mask)
         """
         self.nu_lines = self.nu_lines[mask]
-        self.line_strength_ref = self.line_strength_ref[mask]
+        self.line_strength_ref_original = self.line_strength_ref_original[mask]
         self.delta_air = self.delta_air[mask]
         self.A = self.A[mask]
         self.n_air = self.n_air[mask]
@@ -538,11 +531,7 @@ class MdbCommonHitempHitran:
             # uncertainties
             self.ierr = self.ierr[mask]
 
-    def Sij0(self):
-        """old line strength definition"""
-        msg = "Sij0 attribute was replaced to line_strength_ref."
-        raise ValueError(msg)
-
+    
     def QT_interp(self, isotope, T):
         """interpolated partition function.
 
@@ -556,25 +545,27 @@ class MdbCommonHitempHitran:
         isotope_index = _isotope_index_from_isotope_number(isotope, self.uniqiso)
         return _QT_interp(isotope_index, T, self.T_gQT, self.gQT)
 
-    def qr_interp(self, isotope, T):
+    def qr_interp(self, isotope, T, Tref):
         """interpolated partition function ratio.
 
         Args:
             isotope: HITRAN isotope number starting from 1
             T: temperature
+            Tref: reference temperature
 
         Returns:
             qr(T)=Q(T)/Q(Tref) interpolated in jnp.array
         """
         isotope_index = _isotope_index_from_isotope_number(isotope, self.uniqiso)
-        return _qr_interp(isotope_index, T, self.T_gQT, self.gQT, self.Tref)
+        return _qr_interp(isotope_index, T, self.T_gQT, self.gQT, Tref)
 
-    def qr_interp_lines(self, T):
+    def qr_interp_lines(self, T, Tref):
         """Partition Function ratio using HAPI partition data.
         (This function works for JAX environment.)
 
         Args:
             T: temperature (K)
+            Tref: reference temperature (K)
 
         Returns:
             Qr_line, partition function ratio array for lines [Nlines]
@@ -583,7 +574,7 @@ class MdbCommonHitempHitran:
             Nlines=len(self.nu_lines)
         """
         return _qr_interp_lines(
-            T, self.isoid, self.uniqiso, self.T_gQT, self.gQT, self.Tref
+            T, self.isoid, self.uniqiso, self.T_gQT, self.gQT, Tref
         )
 
     def exact_isotope_name(self, isotope):
@@ -599,35 +590,29 @@ class MdbCommonHitempHitran:
 
         return exact_molecule_name_from_isotope(self.simple_molecule_name, isotope)
 
-    def change_reference_temperature(self, Tref_new):
-        """change the reference temperature Tref and recompute Sij0
-
+    def line_strength(self, Tref):
+        """line strength at Tref
+        
         Args:
-            Tref_new (float): new Tref in Kelvin
+            Tref (_type_): reference temperature
+
+        Returns:
+            _type_: line strength at Tref
         """
-        print(
-            "Change the reference temperature from "
-            + str(self.Tref)
-            + "K to "
-            + str(Tref_new)
-            + " K."
-        )
         if self.isotope is None or self.isotope == 0:
-            msg1 = "Currently all isotope mode is not fully compatible to change_reference_temperature."
+            msg1 = "Currently all isotope mode is not fully compatible to MdbCommonHitempHitran."
             msg2 = (
-                "QT used in change_reference_temperature is assumed isotope=1 instead."
+                "QT assumed isotope=1 instead."
             )
             warnings.warn(msg1 + msg2, UserWarning)
-            qr = self.qr_interp(1, Tref_new)
+            qr = self.qr_interp(1, Tref, Tref_original)
         else:
-            qr = self.qr_interp(self.isotope, Tref_new)
+            qr = self.qr_interp(self.isotope, Tref, Tref_original)
 
-        self.line_strength_ref = line_strength_numpy(
-            Tref_new, self.line_strength_ref, self.nu_lines, self.elower, qr, self.Tref
+        return line_strength_numpy(
+            Tref, self.line_strength_ref_original, self.nu_lines, self.elower, qr, Tref_original
         )
-        self.logsij0 = np.log(self.line_strength_ref)
-        self.Tref = Tref_new
-
+        
     def check_line_existence_in_nurange(self, df_load_mask):
         if len(df_load_mask) == 0:
             raise ValueError("No line found in ", self.nurange, "cm-1")
@@ -810,7 +795,7 @@ class MdbHitemp(MdbCommonHitempHitran, HITEMPDatabaseManager):
 
         eq_attributes = (
             all(self.nu_lines == other.nu_lines)
-            and all(self.line_strength_ref == other.line_strength_ref)
+            and all(self.line_strength_ref_original == other.line_strength_ref_original)
             and all(self.logsij0 == other.logsij0)
             and all(self.delta_air == other.delta_air)
             and all(self.A == other.A)
@@ -823,7 +808,6 @@ class MdbHitemp(MdbCommonHitempHitran, HITEMPDatabaseManager):
             and all(self.uniqiso == other.uniqiso)
             and self.isotope == other.isotope
             and self.simple_molecule_name == other.simple_molecule_name
-            and self.Tref == other.Tref
             and self.gpu_transfer == other.gpu_transfer
             and self.Ttyp == other.Ttyp
             and self.elower_max == other.elower_max
@@ -831,13 +815,15 @@ class MdbHitemp(MdbCommonHitempHitran, HITEMPDatabaseManager):
         eq_attributes = self._if_exist_check_eq_list(other, "ierr", eq_attributes)
 
         return eq_attributes
-    
+
     def __ne__(self, other):
         return not self.__eq__(other)
 
     def _if_exist_check_eq_list(self, other, attribute, eq_attributes):
         if hasattr(self, attribute) and hasattr(other, attribute):
-            return eq_attributes and all(getattr(self,attribute) == getattr(other,attribute))
+            return eq_attributes and all(
+                getattr(self, attribute) == getattr(other, attribute)
+            )
         elif not hasattr(self, attribute) and not hasattr(other, attribute):
             return eq_attributes
         else:
@@ -855,8 +841,8 @@ class MdbHitemp(MdbCommonHitempHitran, HITEMPDatabaseManager):
 
     def _attributes_from_dataframes(self, df_masked):
         self.nu_lines = df_masked.wav.values
-        self.line_strength_ref = df_masked.int.values
-        self.logsij0 = np.log(self.line_strength_ref)
+        self.line_strength_ref_original = df_masked.int.values
+        self.logsij0 = np.log(self.line_strength_ref_original)
         self.delta_air = df_masked.Pshft.values
         self.A = df_masked.A.values
         self.n_air = df_masked.Tdpair.values
@@ -880,8 +866,8 @@ class MdbHitemp(MdbCommonHitempHitran, HITEMPDatabaseManager):
         """
         # jnp.array copy from the copy sources
         self.dev_nu_lines = jnp.array(self.nu_lines)
-        self.logsij0 = jnp.array(np.log(self.line_strength_ref))
-        self.line_strength_ref = jnp.array(self.line_strength_ref)
+        self.logsij0 = jnp.array(np.log(self.line_strength_ref_original))
+        self.line_strength_ref_original = jnp.array(self.line_strength_ref_original)
         self.delta_air = jnp.array(self.delta_air)
         self.A = jnp.array(self.A)
         self.n_air = jnp.array(self.n_air)
@@ -1051,7 +1037,7 @@ class MdbHitran(MdbCommonHitempHitran, HITRANDatabaseManager):
 
         eq_attributes = (
             all(self.nu_lines == other.nu_lines)
-            and all(self.line_strength_ref == other.line_strength_ref)
+            and all(self.line_strength_ref_original == other.line_strength_ref_original)
             and all(self.logsij0 == other.logsij0)
             and all(self.delta_air == other.delta_air)
             and all(self.A == other.A)
@@ -1064,7 +1050,6 @@ class MdbHitran(MdbCommonHitempHitran, HITRANDatabaseManager):
             and all(self.uniqiso == other.uniqiso)
             and self.isotope == other.isotope
             and self.simple_molecule_name == other.simple_molecule_name
-            and self.Tref == other.Tref
             and self.gpu_transfer == other.gpu_transfer
             and self.Ttyp == other.Ttyp
             and self.elower_max == other.elower_max
@@ -1081,24 +1066,23 @@ class MdbHitran(MdbCommonHitempHitran, HITRANDatabaseManager):
 
         return eq_attributes
 
-
     def _if_exist_check_eq_list(self, other, attribute, eq_attributes):
         if hasattr(self, attribute) and hasattr(other, attribute):
-            return eq_attributes and all(getattr(self,attribute) == getattr(other,attribute))
+            return eq_attributes and all(
+                getattr(self, attribute) == getattr(other, attribute)
+            )
         elif not hasattr(self, attribute) and not hasattr(other, attribute):
             return eq_attributes
         else:
             return False
 
-        
     def __ne__(self, other):
         return not self.__eq__(other)
 
-
     def _attributes_from_dataframes_vaex(self, df_load_mask):
         self.nu_lines = df_load_mask.wav.values
-        self.line_strength_ref = df_load_mask.int.values
-        self.logsij0 = np.log(self.line_strength_ref)
+        self.line_strength_ref_original = df_load_mask.int.values
+        self.logsij0 = np.log(self.line_strength_ref_original)
         self.delta_air = df_load_mask.Pshft.values
         self.A = df_load_mask.A.values
         self.n_air = df_load_mask.Tdpair.values
@@ -1138,8 +1122,8 @@ class MdbHitran(MdbCommonHitempHitran, HITRANDatabaseManager):
         """
         # jnp.array copy from the copy sources
         self.dev_nu_lines = jnp.array(self.nu_lines)
-        self.logsij0 = jnp.array(np.log(self.line_strength_ref))
-        self.line_strength_ref = jnp.array(self.line_strength_ref)
+        self.logsij0 = jnp.array(np.log(self.line_strength_ref_original))
+        self.line_strength_ref_original = jnp.array(self.line_strength_ref_original)
         self.delta_air = jnp.array(self.delta_air)
         self.A = jnp.array(self.A)
         self.n_air = jnp.array(self.n_air)

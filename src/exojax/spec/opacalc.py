@@ -59,7 +59,7 @@ class OpaPremodit(OpaCalc):
         Note:
             If auto_trange nor manual_params is not given in arguments,
             use manual_setting()
-            or provide self.dE, self.Tref, self.Twt and apply self.apply_params()
+            or provide self.dE, self.Twt and apply self.apply_params()
 
         Note:
             The option of "broadening_parameter_resolution" controls the resolution of broadening parameters.
@@ -270,7 +270,7 @@ class OpaPremodit(OpaCalc):
             self.gamma_ref = mdb.alpha_ref * reference_factor
 
     def apply_params(self):
-        self.mdb.change_reference_temperature(self.Tref)
+        #self.mdb.change_reference_temperature(self.Tref)
         self.dbtype = self.mdb.dbtype
 
         # broadening
@@ -288,7 +288,7 @@ class OpaPremodit(OpaCalc):
             self.mdb.elower,
             self.gamma_ref,
             self.n_Texp,
-            self.mdb.line_strength_ref,
+            self.mdb.line_strength(self.Tref), # line strength at Tref (is not necessary for Tref_original)
             self.Twt,
             Tref=self.Tref,
             Tref_broadening=self.Tref_broadening,
@@ -333,9 +333,9 @@ class OpaPremodit(OpaCalc):
         nsigmaD = normalized_doppler_sigma(T, self.mdb.molmass, R)
 
         if self.mdb.dbtype == "hitran":
-            qt = self.mdb.qr_interp(self.mdb.isotope, T)
+            qt = self.mdb.qr_interp(self.mdb.isotope, T, Tref_original)
         elif self.mdb.dbtype == "exomol":
-            qt = self.mdb.qr_interp(T)
+            qt = self.mdb.qr_interp(T, Tref_original)
 
         if self.diffmode == 0:
             return xsvector_zeroth(
@@ -420,9 +420,9 @@ class OpaPremodit(OpaCalc):
         ) = self.opainfo
 
         if self.mdb.dbtype == "hitran":
-            qtarr = vmap(self.mdb.qr_interp, (None, 0))(self.mdb.isotope, Tarr)
+            qtarr = vmap(self.mdb.qr_interp, (None, 0, None))(self.mdb.isotope, Tarr, Tref_original)
         elif self.mdb.dbtype == "exomol":
-            qtarr = vmap(self.mdb.qr_interp)(Tarr)
+            qtarr = vmap(self.mdb.qr_interp, (0, None))(Tarr, Tref_original)
 
         if self.diffmode == 0:
             return xsmatrix_zeroth(
@@ -617,12 +617,12 @@ class OpaModit(OpaCalc):
         cont_nu, index_nu, R, pmarray = self.opainfo
 
         if self.mdb.dbtype == "hitran":
-            qt = self.mdb.qr_interp(self.mdb.isotope, T)
+            qt = self.mdb.qr_interp(self.mdb.isotope, T, Tref_original)
             gammaL = gamma_hitran(
                 P, T, Pself, self.mdb.n_air, self.mdb.gamma_air, self.mdb.gamma_self
             ) + gamma_natural(self.mdb.A)
         elif self.mdb.dbtype == "exomol":
-            qt = self.mdb.qr_interp(T)
+            qt = self.mdb.qr_interp(T, Tref_original)
             gammaL = gamma_exomol(
                 P, T, self.mdb.n_Texp, self.mdb.alpha_ref
             ) + gamma_natural(self.mdb.A)
@@ -631,7 +631,7 @@ class OpaModit(OpaCalc):
 
         nsigmaD = normalized_doppler_sigma(T, self.mdb.molmass, R)
         Sij = line_strength(
-            T, self.mdb.logsij0, self.mdb.nu_lines, self.mdb.elower, qt, self.mdb.Tref
+            T, self.mdb.logsij0, self.mdb.nu_lines, self.mdb.elower, qt, Tref_original
         )
 
         ngammaL_grid = ditgrid_log_interval(
@@ -805,18 +805,18 @@ class OpaDirect(OpaCalc):
         numatrix = self.opainfo
 
         if self.mdb.dbtype == "hitran":
-            qt = self.mdb.qr_interp(self.mdb.isotope, T)
+            qt = self.mdb.qr_interp(self.mdb.isotope, T, Tref_original)
             gammaL = gamma_hitran(
                 P, T, Pself, self.mdb.n_air, self.mdb.gamma_air, self.mdb.gamma_self
             ) + gamma_natural(self.mdb.A)
         elif self.mdb.dbtype == "exomol":
-            qt = self.mdb.qr_interp(T)
+            qt = self.mdb.qr_interp(T, Tref_original)
             gammaL = gamma_exomol(
                 P, T, self.mdb.n_Texp, self.mdb.alpha_ref
             ) + gamma_natural(self.mdb.A)
         sigmaD = doppler_sigma(self.mdb.nu_lines, T, self.mdb.molmass)
         Sij = line_strength(
-            T, self.mdb.logsij0, self.mdb.nu_lines, self.mdb.elower, qt, self.mdb.Tref
+            T, self.mdb.logsij0, self.mdb.nu_lines, self.mdb.elower, qt, Tref_original
         )
         return xsvector_lpf(numatrix, sigmaD, gammaL, Sij)
 
@@ -847,8 +847,8 @@ class OpaDirect(OpaCalc):
         numatrix = self.opainfo
         vmaplinestrengh = jit(vmap(line_strength, (0, None, None, None, 0, None)))
         if self.mdb.dbtype == "hitran":
-            vmapqt = vmap(self.mdb.qr_interp, (None, 0))
-            qt = vmapqt(self.mdb.isotope, Tarr)
+            vmapqt = vmap(self.mdb.qr_interp, (None, 0, None))
+            qt = vmapqt(self.mdb.isotope, Tarr, Tref_original)
             vmaphitran = jit(vmap(gamma_hitran, (0, 0, 0, None, None, None)))
             gammaLM = vmaphitran(
                 Parr,
@@ -864,14 +864,14 @@ class OpaDirect(OpaCalc):
                 self.mdb.nu_lines,
                 self.mdb.elower,
                 qt,
-                self.mdb.Tref,
+                Tref_original,
             )
             sigmaDM = jit(vmap(doppler_sigma, (None, 0, None)))(
                 self.mdb.nu_lines, Tarr, self.mdb.molmass
             )
         elif self.mdb.dbtype == "exomol":
-            vmapqt = vmap(self.mdb.qr_interp)
-            qt = vmapqt(Tarr)
+            vmapqt = vmap(self.mdb.qr_interp,(0, None))
+            qt = vmapqt(Tarr, Tref_original)
             vmapexomol = jit(vmap(gamma_exomol, (0, 0, None, None)))
             gammaLMP = vmapexomol(Parr, Tarr, self.mdb.n_Texp, self.mdb.alpha_ref)
             gammaLMN = gamma_natural(self.mdb.A)
@@ -882,7 +882,7 @@ class OpaDirect(OpaCalc):
                 self.mdb.nu_lines,
                 self.mdb.elower,
                 qt,
-                self.mdb.Tref,
+                Tref_original,
             )
             sigmaDM = jit(vmap(doppler_sigma, (None, 0, None)))(
                 self.mdb.nu_lines, Tarr, self.mdb.molmass
@@ -943,7 +943,7 @@ class OpaDirect(OpaCalc):
                 self.mdb.nu_lines,
                 self.mdb.elower,
                 qr_K.T,
-                self.mdb.Tref,
+                Tref_original,
             )
             sigmaDM = jit(vmap(doppler_sigma, (None, 0, None)))(
                 self.mdb.nu_lines, Tarr, self.mdb.atomicmass

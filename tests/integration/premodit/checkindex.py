@@ -29,7 +29,7 @@ ngamma_ref_grid_H2O, n_Texp_grid_H2O, R_H2O, pmarray_H2O = initspec.init_premodi
     mdbH2O_orig.elower,
     mdbH2O_orig.alpha_ref,
     mdbH2O_orig.n_Texp,
-    mdbH2O_orig.line_strength_ref,
+    mdbH2O_orig.line_strength,
     Twt=Tgue,
     Tref=1000.0,
     Tref_broadening=1000.0,

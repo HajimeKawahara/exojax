@@ -14,6 +14,8 @@ from exojax.test.emulate_mdb import mock_wavenumber_grid
 
 from jax import config
 
+from exojax.utils.constants import Tref_original
+
 config.update("jax_enable_x64", True)
 
 
@@ -25,7 +27,7 @@ def test_xs_exomol():
     Mmol = mdbCO.molmass
     
     cont_nu, index_nu, R, pmarray = init_modit(mdbCO.nu_lines, nus)
-    qt = mdbCO.qr_interp(Tfix)
+    qt = mdbCO.qr_interp(Tfix, Tref_original)
     gammaL = gamma_exomol(Pfix, Tfix, mdbCO.n_Texp,
                           mdbCO.alpha_ref) + gamma_natural(mdbCO.A)
     dv_lines = mdbCO.nu_lines / R
@@ -92,5 +94,5 @@ def test_rt_exomol():
 
 
 if __name__ == "__main__":
-#    test_xs_exomol()
+    test_xs_exomol()
     test_rt_exomol()
