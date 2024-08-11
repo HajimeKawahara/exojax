@@ -449,9 +449,9 @@ def model_c(nu1,y1):
 
 rng_key = random.PRNGKey(0)
 rng_key, rng_key_ = random.split(rng_key)
-#num_warmup, num_samples = 500, 1000
+num_warmup, num_samples = 500, 1000
 ######                                                                                                                 
-num_warmup, num_samples = 100, 200                                                                                    
+#num_warmup, num_samples = 100, 200 #3h
 ######                                                                                                                  
 #kernel = NUTS(model_c,forward_mode_differentiation=True)
 kernel = NUTS(model_c)
