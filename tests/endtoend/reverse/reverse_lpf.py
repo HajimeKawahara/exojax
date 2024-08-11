@@ -9,7 +9,6 @@ from jax import random
 from exojax.spec import contdb
 from exojax.spec.api import MdbExomol
 from exojax.spec import molinfo
-from exojax.utils.grids import velocity_grid
 from exojax.utils.grids import wavenumber_grid
 from exojax.utils.instfunc import resolution_to_gaussian_std
 from exojax.spec.opacalc import OpaDirect
@@ -48,6 +47,7 @@ art.change_temperature_range(400.0, 1500.0)
 instrumental_resolution = 100000.
 beta_inst = resolution_to_gaussian_std(instrumental_resolution)
 Mp = 33.2  # fixing mass...
+
 
 mdbCO = MdbExomol('.database/CO/12C-16O/Li2015',
                   nu_grid,

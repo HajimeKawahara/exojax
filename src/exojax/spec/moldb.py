@@ -1,4 +1,4 @@
-"""Molecular database (MDB) class.
+"""Atomic database (MDB) class.
 
 """
 import numpy as np

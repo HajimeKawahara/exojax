@@ -7,13 +7,12 @@ from exojax.utils.grids import wavenumber_grid
 from exojax.spec import api
 from exojax.spec import molinfo
 from exojax.spec.hitran import line_strength, doppler_sigma, gamma_hitran, gamma_natural, line_strength_numpy
-from exojax.spec.exomol import gamma_exomol
 from exojax.spec.opacalc import OpaPremodit, OpaDirect
-from jax import config
-config.update("jax_enable_x64", True)
-
 import numpy as np
 import matplotlib.pyplot as plt
+
+from jax import config
+config.update("jax_enable_x64", True)
 
 
 from exojax.spec.lpf import xsvector, make_numatrix0
@@ -106,7 +105,7 @@ vmr = 1.
 Ppart = P * vmr
 Mmol = molinfo.molmass("CO")
 
-logsij0 = np.log(mdb.line_strength_ref)
+logsij0 = np.log(mdb.line_strength)
 sigmaD = doppler_sigma(mdb.nu_lines,T,Mmol)
 qt = mdb.qr_interp(mdb.isotope, T)
 gammaL = gamma_hitran(P,T, Ppart, mdb.n_air, mdb.gamma_air, mdb.gamma_self) + gamma_natural(mdb.A)
@@ -124,7 +123,7 @@ opa = OpaPremodit(mdb=mdb,
 opad = OpaDirect(mdb=mdb,
                  nu_grid=np.array(nus))
 
-logsij0 = np.log(mdb.line_strength_ref)
+logsij0 = np.log(mdb.line_strength)
 qt = mdb.qr_interp(mdb.isotope, T)
 Sij = line_strength(T,logsij0,mdb.nu_lines,mdb.elower,qt, mdb.Tref)
 #Sij = line_strength(T,logsij0,mdb.nu_lines,mdb.elower,qt)                                                                                                          
