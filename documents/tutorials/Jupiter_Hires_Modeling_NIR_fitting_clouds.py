@@ -11,6 +11,14 @@
 #
 # This note coresponds to the other one, using the output of the code for the former one (Jupiter_Hires_Modeling_NIR_fitting.ipynb)
 
+### Preparation
+# if this is the first run, set miegird_generate = True, and run the code to generate Mie grid. After that, set False.
+miegird_generate = False
+# when the optimization is performed, set opt_perform = True, after performing it, set False
+opt_perform = False
+# when HMC is performed, set hmc_perform = True, after performing it, set False
+hmc_perform = False
+###
 
 from jax import config
 config.update("jax_enable_x64", True)
@@ -24,7 +32,7 @@ if username == "exoplanet01":
     import ssl
     ssl._create_default_https_context = ssl._create_unverified_context
 
-
+import pickle
 import numpy as np
 import matplotlib.pyplot as plt
 
@@ -43,7 +51,15 @@ mask = (
     + ((unmask_nus_obs > 6166) & (unmask_nus_obs < 6184.5))
 )
 
+
 nus_obs = unmask_nus_obs[mask]
+
+from exojax.spec.unitconvert import nu2wav
+wavtmp = nu2wav(nus_obs, unit="AA")
+print("wavelength range used in this analysis=", np.min(wavtmp), "--" ,np.max(wavtmp),"AA")
+#import sys
+#"sys.exit()
+
 spectra = unmask_spectra[mask]
 if figshow:
     fig = plt.figure(figsize=(20, 5))
@@ -148,7 +164,6 @@ rg_layer, MMRc = amp_nh3.calc_ammodel(
 fsed_range = [0.1, 10.0]
 Kzz_range = [1.0e2, 1.0e6]
 
-miegird_generate = False
 if miegird_generate:
     fsed_grid = np.logspace(np.log10(fsed_range[0]), np.log10(fsed_range[1]), 3)
     Kzz_grid = np.logspace(np.log10(Kzz_range[0]), np.log10(Kzz_range[1]), 5)
@@ -188,14 +203,6 @@ if miegird_generate:
 else:
     pdb_nh3.load_miegrid()
 
-
-# fsed = 3.0
-# rg_layer, MMRc = amp_nh3.calc_ammodel(Parr, Tarr, mu, molmass_nh3, gravity, fsed, sigmag, Kzz, MMRbase_nh3)
-# rg_example = np.nanmean(rg_layer)
-# pdb_nh3.miegrid_interpolated_values(rg_example, sigmag)
-
-
-import matplotlib.pyplot as plt
 
 # to convert MMR to g/L ...
 from exojax.atm.idealgas import number_density
@@ -389,32 +396,31 @@ def cost_function(params):
 
 from jaxopt import OptaxSolver
 import optax
-
-adam = OptaxSolver(opt=optax.adam(1.0e-2), fun=cost_function)
-res = adam.run(parinit)
+if opt_perform == True:
+    adam = OptaxSolver(opt=optax.adam(1.0e-2), fun=cost_function)
+    res = adam.run(parinit)
 # maxiter = 100
 # solver = jaxopt.LBFGS(fun=cost_function, maxiter=maxiter)
 # res = solver.run(optpar_init)
 
-# res.params
-print(unpack_params(res.params))
-print(unpack_params(parinit))
+    # res.params
+    print(unpack_params(res.params))
+    print(unpack_params(parinit))
 
-F_samp = spectral_model(res.params)
-F_samp_init = spectral_model(parinit)
+    F_samp = spectral_model(res.params)
+    F_samp_init = spectral_model(parinit)
 
-if True:
-    fig = plt.figure(figsize=(30, 5))
-    ax = fig.add_subplot(111)
-    plt.plot(nus_obs, spectra, ".", label="observed spectrum")
-    plt.plot(nus_obs, F_samp_init, alpha=0.5, label="init", color="C1", ls="dashed")
-    plt.plot(nus_obs, F_samp, alpha=0.5, label="best fit", color="C1", lw=3)
-    plt.legend()
-    plt.xlim(np.min(nus_obs), np.max(nus_obs))
-    plt.savefig("Jupiter_petitIRD.png")
-    #plt.show()
+    if True:
+        fig = plt.figure(figsize=(30, 5))
+        ax = fig.add_subplot(111)
+        plt.plot(nus_obs, spectra, ".", label="observed spectrum")
+        plt.plot(nus_obs, F_samp_init, alpha=0.5, label="init", color="C1", ls="dashed")
+        plt.plot(nus_obs, F_samp, alpha=0.5, label="best fit", color="C1", lw=3)
+        plt.legend()
+        plt.xlim(np.min(nus_obs), np.max(nus_obs))
+        plt.savefig("Jupiter_petitIRD.png")
+        #plt.show()
 
-print("HMC starts")
 from jax import random
 import numpyro.distributions as dist
 import numpyro
@@ -449,29 +455,33 @@ def model_c(nu1,y1):
 
 rng_key = random.PRNGKey(0)
 rng_key, rng_key_ = random.split(rng_key)
-#num_warmup, num_samples = 500, 1000
-######                                                                                                                 
-num_warmup, num_samples = 100, 200                                                                                    
-######                                                                                                                  
-#kernel = NUTS(model_c,forward_mode_differentiation=True)
-kernel = NUTS(model_c)
-mcmc = MCMC(kernel, num_warmup=num_warmup, num_samples=num_samples)
-mcmc.run(rng_key_, nu1=nus_obs, y1=spectra)
-mcmc.print_summary()
+    
+if hmc_perform == True:
+    print("HMC starts")
+    #num_warmup, num_samples = 500, 1000
+    ######                                                                                                                 
+    num_warmup, num_samples = 100, 200                                                                                    
+    ######                                                                                                                  
+    #kernel = NUTS(model_c,forward_mode_differentiation=True)
+    kernel = NUTS(model_c)
+    mcmc = MCMC(kernel, num_warmup=num_warmup, num_samples=num_samples)
+    mcmc.run(rng_key_, nu1=nus_obs, y1=spectra)
+    mcmc.print_summary()
 
-
-import pickle
-with open("output/samples.pickle", mode='wb') as f:
-    pickle.dump(mcmc.get_samples(), f)
+    import pickle
+    with open("output/samples.pickle", mode='wb') as f:
+        pickle.dump(mcmc.get_samples(), f)
 
 with open("output/samples.pickle", mode='rb') as f:
     samples = pickle.load(f)
 
 
+print("prediction starts")
 from numpyro.diagnostics import hpdi
 pred = Predictive(model_c,samples,return_sites=["y1"])
 predictions = pred(rng_key_,nu1=nus_obs,y1=None)
-
 median_mu1 = jnp.median(predictions["y1"],axis=0)
 hpdi_mu1 = hpdi(predictions["y1"], 0.95)
-np.savez("output/all.npz",[median_mu1,hpdi_mu1])
+    
+if hmc_perform == True:    
+    np.savez("output/all.npz",[median_mu1,hpdi_mu1])
