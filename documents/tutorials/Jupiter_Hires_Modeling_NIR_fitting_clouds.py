@@ -23,12 +23,35 @@ hmc_perform = False
 import os
 os.environ['JAX_TRACEBACK_FILTERING'] = 'off'
 
-
+import pickle
+import numpy as np
+import matplotlib.pyplot as plt
+from exojax.spec.unitconvert import nu2wav
+from exojax.utils.constants import c  # light speed in km/s
 from jax import config
 
 config.update("jax_enable_x64", True)
 figshow = False
 
+def print_wavminmax(wav_obs):
+    print(
+    "wavelength range used in this analysis=",
+    np.min(wav_obs),
+    "--",
+    np.max(wav_obs),
+    "AA",
+)
+
+def plot_opt(nus_obs, spectra, F_samp_init, F_samp):
+    fig = plt.figure(figsize=(30, 5))
+    ax = fig.add_subplot(111)
+    plt.plot(nus_obs, spectra, ".", label="observed spectrum")
+    plt.plot(nus_obs, F_samp_init, alpha=0.5, label="init", color="C1", ls="dashed")
+    plt.plot(nus_obs, F_samp, alpha=0.5, label="best fit", color="C1", lw=3)
+    plt.legend()
+    plt.xlim(np.min(nus_obs), np.max(nus_obs))
+    plt.savefig("Jupiter_petitIRD.png")
+    plt.close()
 
 # Forget about the following code. I need this to run the code somewhere...
 # username="exoplanet01"
@@ -37,35 +60,16 @@ if username == "exoplanet01":
     import ssl
     ssl._create_default_https_context = ssl._create_unverified_context
 
-import pickle
-import numpy as np
-import matplotlib.pyplot as plt
 
 dat = np.loadtxt("jupiter_corrected.dat")
 unmask_nus_obs = dat[:, 0]
 unmask_spectra = dat[:, 1]
-
-# mask = (
-#    (unmask_nus_obs < 6163.5)
-#    + ((unmask_nus_obs > 6166) & (unmask_nus_obs < 6184.5))
-#    + (unmask_nus_obs > 6186)
-# )
-
 mask = (unmask_nus_obs < 6163.5) + ((unmask_nus_obs > 6166) & (unmask_nus_obs < 6184.5))
 
-
 nus_obs = unmask_nus_obs[mask]
-
-from exojax.spec.unitconvert import nu2wav
-
 wav_obs = nu2wav(nus_obs, unit="AA")
-print(
-    "wavelength range used in this analysis=",
-    np.min(wav_obs),
-    "--",
-    np.max(wav_obs),
-    "AA",
-)
+
+print_wavminmax(wav_obs)
 # import sys
 # "sys.exit()
 
@@ -319,7 +323,6 @@ from exojax.spec.specop import SopInstProfile
 
 sop = SopInstProfile(nus)
 
-from exojax.utils.constants import c  # light speed in km/s
 
 # T0, log_fsed, log_Kzz, vrv, vv, boradening, mmr, normalization factor
 # parinit = jnp.array([1.5, np.log10(1.0)*10000.0, np.log10(1.e4)*10.0, -5.0, -55.0, 2.5, 1.0, 1.0])
@@ -336,15 +339,8 @@ def spectral_model(params):
     )
     fsed = 10**log_fsed
     Kzz = 10**log_Kzz
-    # fsed = 4.0
-    # Kzz = 1.0e4
-    # vrv = -5.0
-    # vv = -55.0
-    # factor = 0.7
     broadening = 25000.0
-    # const_mmr_ch4 = 0.12
-    # T0 = 150.0
-
+    
     # temperatures
     Tarr = art.powerlaw_temperature(T0, 0.2)
     # cloud
@@ -407,6 +403,7 @@ def cost_function(params):
 from jaxopt import OptaxSolver
 import optax
 
+
 if opt_perform:
     adam = OptaxSolver(opt=optax.adam(1.0e-2), fun=cost_function)
     res = adam.run(parinit)
@@ -421,15 +418,7 @@ if opt_perform:
     F_samp = spectral_model(res.params)
     F_samp_init = spectral_model(parinit)
 
-    fig = plt.figure(figsize=(30, 5))
-    ax = fig.add_subplot(111)
-    plt.plot(nus_obs, spectra, ".", label="observed spectrum")
-    plt.plot(nus_obs, F_samp_init, alpha=0.5, label="init", color="C1", ls="dashed")
-    plt.plot(nus_obs, F_samp, alpha=0.5, label="best fit", color="C1", lw=3)
-    plt.legend()
-    plt.xlim(np.min(nus_obs), np.max(nus_obs))
-    plt.savefig("Jupiter_petitIRD.png")
-    plt.close()
+    plot_opt(nus_obs, spectra, F_samp_init, F_samp)
 
     print(res.params)
     # plt.show()
@@ -563,3 +552,6 @@ plt.show()
 
 if hmc_perform:
     np.savez("output/all.npz", [median_mu1, hpdi_mu1])
+
+#####################################################
+
