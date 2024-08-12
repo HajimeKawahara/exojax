@@ -7,10 +7,10 @@
 
 import numpy as np
 from exojax.utils.grids import wavenumber_grid
-from exojax.spec.presolar import optimal_mini_batch
-from exojax.spec.presolar import lbd_olaform
-from exojax.spec.presolar import _reshape_lbd
-from exojax.spec.presolar import shapefilter_olaform
+from exojax.experimental.presolar import optimal_mini_batch
+from exojax.experimental.presolar import lbd_olaform
+from exojax.experimental.presolar import _reshape_lbd
+from exojax.experimental.presolar import shapefilter_olaform
 from exojax.utils.constants import Tref_original
 
 def _example_filter(N, filter_length):
