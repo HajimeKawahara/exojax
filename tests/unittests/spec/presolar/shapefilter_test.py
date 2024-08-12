@@ -1,7 +1,7 @@
 import numpy as np
-from exojax.spec.shapefilter import compute_filter_length
-from exojax.spec.shapefilter import generate_voigt_shape_filter
-from exojax.spec import normalized_doppler_sigma
+from exojax.experimental.shapefilter import compute_filter_length
+from exojax.experimental.shapefilter import generate_voigt_shape_filter
+from exojax.spec.hitran import normalized_doppler_sigma
 from exojax.spec.molinfo import molmass_isotope
 from jax import vmap
 import pytest
