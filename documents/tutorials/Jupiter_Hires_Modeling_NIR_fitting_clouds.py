@@ -21,6 +21,7 @@ hmc_perform = False
 ###
 
 from jax import config
+
 config.update("jax_enable_x64", True)
 figshow = False
 
@@ -30,6 +31,7 @@ figshow = False
 username = "kawahara"
 if username == "exoplanet01":
     import ssl
+
     ssl._create_default_https_context = ssl._create_unverified_context
 
 import pickle
@@ -40,25 +42,29 @@ dat = np.loadtxt("jupiter_corrected.dat")
 unmask_nus_obs = dat[:, 0]
 unmask_spectra = dat[:, 1]
 
-#mask = (
+# mask = (
 #    (unmask_nus_obs < 6163.5)
 #    + ((unmask_nus_obs > 6166) & (unmask_nus_obs < 6184.5))
 #    + (unmask_nus_obs > 6186)
-#)
+# )
 
-mask = (
-    (unmask_nus_obs < 6163.5)
-    + ((unmask_nus_obs > 6166) & (unmask_nus_obs < 6184.5))
-)
+mask = (unmask_nus_obs < 6163.5) + ((unmask_nus_obs > 6166) & (unmask_nus_obs < 6184.5))
 
 
 nus_obs = unmask_nus_obs[mask]
 
 from exojax.spec.unitconvert import nu2wav
+
 wavtmp = nu2wav(nus_obs, unit="AA")
-print("wavelength range used in this analysis=", np.min(wavtmp), "--" ,np.max(wavtmp),"AA")
-#import sys
-#"sys.exit()
+print(
+    "wavelength range used in this analysis=",
+    np.min(wavtmp),
+    "--",
+    np.max(wavtmp),
+    "AA",
+)
+# import sys
+# "sys.exit()
 
 spectra = unmask_spectra[mask]
 if figshow:
@@ -106,6 +112,7 @@ if figshow:
 # See `Jupiter_cloud_model_using_amp.ipynb
 # set the master wavenumber grid
 from exojax.utils.grids import wavenumber_grid
+
 nus, wav, res = wavenumber_grid(
     np.min(nus_obs) - 5.0, np.max(nus_obs) + 5.0, 10000, xsmode="premodit", unit="cm-1"
 )
@@ -326,14 +333,14 @@ def spectral_model(params):
     )
     fsed = 10**log_fsed
     Kzz = 10**log_Kzz
-    #fsed = 4.0  
-    #Kzz = 1.0e4
-    #vrv = -5.0
-    #vv = -55.0
-    #factor = 0.7
+    # fsed = 4.0
+    # Kzz = 1.0e4
+    # vrv = -5.0
+    # vv = -55.0
+    # factor = 0.7
     broadening = 25000.0
-    #const_mmr_ch4 = 0.12
-    #T0 = 150.0
+    # const_mmr_ch4 = 0.12
+    # T0 = 150.0
 
     # temperatures
     Tarr = art.powerlaw_temperature(T0, 0.2)
@@ -354,17 +361,17 @@ def spectral_model(params):
     dtau_cld_scat = art.opacity_profile_cloud_lognormal(
         sigma_scattering, rhoc, MMRc, rg, sigmag, gravity
     )
-    
+
     asymmetric_parameter = asymmetric_factor + np.zeros((len(art.pressure), len(nus)))
 
     # opacity
-    mmr_ch4 = art.constant_mmr_profile(const_mmr_ch4)  
+    mmr_ch4 = art.constant_mmr_profile(const_mmr_ch4)
     xsmatrix = opa.xsmatrix(Tarr, Parr)
     dtau_ch4 = art.opacity_profile_xs(xsmatrix, mmr_ch4, molmass_ch4, gravity)
 
-    single_scattering_albedo = (dtau_cld_scat) / (dtau_cld + dtau_ch4) 
+    single_scattering_albedo = (dtau_cld_scat) / (dtau_cld + dtau_ch4)
     dtau = dtau_cld + dtau_ch4
-    
+
     # velocity
     vpercp = (vrv + vv) / c
     incoming_flux = jnp.interp(nusjax, nusjax_solar * (1.0 + vpercp), solspecjax)
@@ -396,12 +403,13 @@ def cost_function(params):
 
 from jaxopt import OptaxSolver
 import optax
+
 if opt_perform == True:
     adam = OptaxSolver(opt=optax.adam(1.0e-2), fun=cost_function)
     res = adam.run(parinit)
-# maxiter = 100
-# solver = jaxopt.LBFGS(fun=cost_function, maxiter=maxiter)
-# res = solver.run(optpar_init)
+    # maxiter = 100
+    # solver = jaxopt.LBFGS(fun=cost_function, maxiter=maxiter)
+    # res = solver.run(optpar_init)
 
     # res.params
     print(unpack_params(res.params))
@@ -410,16 +418,16 @@ if opt_perform == True:
     F_samp = spectral_model(res.params)
     F_samp_init = spectral_model(parinit)
 
-    if True:
-        fig = plt.figure(figsize=(30, 5))
-        ax = fig.add_subplot(111)
-        plt.plot(nus_obs, spectra, ".", label="observed spectrum")
-        plt.plot(nus_obs, F_samp_init, alpha=0.5, label="init", color="C1", ls="dashed")
-        plt.plot(nus_obs, F_samp, alpha=0.5, label="best fit", color="C1", lw=3)
-        plt.legend()
-        plt.xlim(np.min(nus_obs), np.max(nus_obs))
-        plt.savefig("Jupiter_petitIRD.png")
-        #plt.show()
+    fig = plt.figure(figsize=(30, 5))
+    ax = fig.add_subplot(111)
+    plt.plot(nus_obs, spectra, ".", label="observed spectrum")
+    plt.plot(nus_obs, F_samp_init, alpha=0.5, label="init", color="C1", ls="dashed")
+    plt.plot(nus_obs, F_samp, alpha=0.5, label="best fit", color="C1", lw=3)
+    plt.legend()
+    plt.xlim(np.min(nus_obs), np.max(nus_obs))
+    plt.savefig("Jupiter_petitIRD.png")
+    plt.close()
+    # plt.show()
 
 from jax import random
 import numpyro.distributions as dist
@@ -429,59 +437,90 @@ from numpyro.infer import Predictive
 from numpyro.diagnostics import hpdi
 
 # T0, log_fsed, log_Kzz, vrv, vv, boradening, mmr, normalization factor
-#parinit = jnp.array(
+# parinit = jnp.array(
 #    [1.5, np.log10(1.0) * 10000.0, np.log10(1.0e4) * 10.0, -5.0, -55.0, 2.5, 1.2, 0.6]
-#)
-#multiple_factor = jnp.array([100.0, 0.0001, 0.1, 1.0, 1.0, 10000.0, 0.01, 1.0])
+# )
+# multiple_factor = jnp.array([100.0, 0.0001, 0.1, 1.0, 1.0, 10000.0, 0.01, 1.0])
 
-def model_c(nu1,y1):
 
-    T0_n = numpyro.sample('T0_n', dist.Uniform(0.5,2.0))
-    log_fsed_n = numpyro.sample('log_fsed_n', dist.Uniform(-1.e4,1.e4))
-    log_Kzz_n = numpyro.sample('log_Kzz_n', dist.Uniform(30.0,50.0))
-    vrv = numpyro.sample('vrv', dist.Uniform(-10.0,10.0))
-    vv = numpyro.sample('vv', dist.Uniform(-70.0,-40.0))
-    broadening = 25000.0 #fix
-    molmass_ch4_n = numpyro.sample('MMR_CH4_n', dist.Uniform(0.0, 5.0))
-    factor = numpyro.sample('factor', dist.Uniform(0.0, 1.0))
-    
-    params = jnp.array([T0_n, log_fsed_n, log_Kzz_n, vrv, vv, broadening, molmass_ch4_n, factor])
+def model_c(nu1, y1):
+
+    T0_n = numpyro.sample("T0_n", dist.Uniform(0.5, 2.0))
+    log_fsed_n = numpyro.sample("log_fsed_n", dist.Uniform(-1.0e4, 1.0e4))
+    log_Kzz_n = numpyro.sample("log_Kzz_n", dist.Uniform(30.0, 50.0))
+    vrv = numpyro.sample("vrv", dist.Uniform(-10.0, 10.0))
+    vv = numpyro.sample("vv", dist.Uniform(-70.0, -40.0))
+    broadening = 25000.0  # fix
+    molmass_ch4_n = numpyro.sample("MMR_CH4_n", dist.Uniform(0.0, 5.0))
+    factor = numpyro.sample("factor", dist.Uniform(0.0, 1.0))
+
+    params = jnp.array(
+        [T0_n, log_fsed_n, log_Kzz_n, vrv, vv, broadening, molmass_ch4_n, factor]
+    )
     mean = spectral_model(params)
 
-    sigma = numpyro.sample('sigma',dist.Exponential(10.0))
+    sigma = numpyro.sample("sigma", dist.Exponential(10.0))
     err_all = jnp.ones_like(nu1) * sigma
-    #err_all = jnp.sqrt(y1err**2. + sig**2.)
-    numpyro.sample('y1', dist.Normal(mean, err_all), obs=y1)
+    # err_all = jnp.sqrt(y1err**2. + sig**2.)
+    numpyro.sample("y1", dist.Normal(mean, err_all), obs=y1)
+
 
 rng_key = random.PRNGKey(0)
 rng_key, rng_key_ = random.split(rng_key)
-    
+
 if hmc_perform == True:
     print("HMC starts")
-    #num_warmup, num_samples = 500, 1000
-    ######                                                                                                                 
-    num_warmup, num_samples = 100, 200                                                                                    
-    ######                                                                                                                  
-    #kernel = NUTS(model_c,forward_mode_differentiation=True)
+    # num_warmup, num_samples = 500, 1000
+    ######
+    num_warmup, num_samples = 100, 200
+    ######
+    # kernel = NUTS(model_c,forward_mode_differentiation=True)
     kernel = NUTS(model_c)
     mcmc = MCMC(kernel, num_warmup=num_warmup, num_samples=num_samples)
-    mcmc.run(rng_key_, nu1=nus_obs, y1=spectra)
+    if opt_perform == True:
+        mcmc.run(rng_key_, nu1=nus_obs, y1=spectra, init_params=res.params)
+    else:
+        mcmc.run(rng_key_, nu1=nus_obs, y1=spectra)
     mcmc.print_summary()
 
     import pickle
-    with open("output/samples.pickle", mode='wb') as f:
+
+    with open("output/samples.pickle", mode="wb") as f:
         pickle.dump(mcmc.get_samples(), f)
 
-with open("output/samples.pickle", mode='rb') as f:
+with open("output/samples.pickle", mode="rb") as f:
     samples = pickle.load(f)
 
 
 print("prediction starts")
 from numpyro.diagnostics import hpdi
-pred = Predictive(model_c,samples,return_sites=["y1"])
-predictions = pred(rng_key_,nu1=nus_obs,y1=None)
-median_mu1 = jnp.median(predictions["y1"],axis=0)
+
+pred = Predictive(model_c, samples, return_sites=["y1"])
+predictions = pred(rng_key_, nu1=nus_obs, y1=None)
+median_mu1 = jnp.median(predictions["y1"], axis=0)
 hpdi_mu1 = hpdi(predictions["y1"], 0.95)
-    
-if hmc_perform == True:    
-    np.savez("output/all.npz",[median_mu1,hpdi_mu1])
+
+#prediction plot
+fig = plt.figure(figsize=(30, 5))
+ax = fig.add_subplot(111)
+plt.plot(nus_obs, spectra, ".", label="observed spectrum")
+plt.plot(
+    nus_obs, median_mu1, alpha=0.5, label="median prediction", color="C1", ls="dashed"
+)
+ax.fill_between(
+    nus_obs,
+    hpdi_mu1[0],
+    hpdi_mu1[1],
+    alpha=0.3,
+    interpolate=True,
+    color="C0",
+    label="95% area",
+)
+plt.legend()
+plt.xlim(np.min(nus_obs), np.max(nus_obs))
+plt.savefig("Jupiter_fit.png")
+plt.show()
+
+
+if hmc_perform == True:
+    np.savez("output/all.npz", [median_mu1, hpdi_mu1])
