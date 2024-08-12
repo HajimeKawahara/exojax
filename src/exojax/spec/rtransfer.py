@@ -39,6 +39,7 @@ from exojax.signal.integrate import simpson
 from jax.scipy.integrate import trapezoid
 
 
+
 @jit
 def trans2E3(x):
     """transmission function 2E3 (two-stream approximation with no scattering)
@@ -359,7 +360,6 @@ def rtrun_emis_scat_lart_toonhm_surface(
 
     return spectrum, cumTtilde, Qtilde, trans_coeff, scat_coeff, piB
 
-
 @jit
 def rtrun_reflect_fluxadding_toonhm(
     dtau,
@@ -387,10 +387,11 @@ def rtrun_reflect_fluxadding_toonhm(
     trans_coeff, scat_coeff, reduced_piB, zeta_plus, zeta_minus, lambdan = setrt_toonhm(
         dtau, single_scattering_albedo, asymmetric_parameter, source_matrix
     )
-
+    
     Rphat, Sphat = solve_fluxadding_twostream(
         trans_coeff, scat_coeff, reduced_piB, reflectivity_surface, source_surface
     )
+    
     return Rphat * incoming_flux + Sphat
 
 
@@ -436,6 +437,7 @@ def setrt_toonhm(dtau, single_scattering_albedo, asymmetric_parameter, source_ma
     Returns:
         _type_: _description_
     """
+    
     gamma_1, gamma_2, mu1 = params_hemispheric_mean(
         single_scattering_albedo, asymmetric_parameter
     )

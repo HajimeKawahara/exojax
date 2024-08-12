@@ -10,7 +10,7 @@ import jax.numpy as jnp
 
 
 def zetalambda_coeffs(gamma_1, gamma_2):
-    """computes coupling coefficients zeta and lambda coefficients for Toon-type two stream approximation 
+    """computes coupling coefficients zeta and lambda coefficients for Toon-type two stream approximation
 
     Args:
         gamma_1 (_type_): Toon+89 gamma_1 coefficient
@@ -26,8 +26,9 @@ def zetalambda_coeffs(gamma_1, gamma_2):
     return zeta_plus, zeta_minus, lambdan
 
 
-def reduced_source_function_isothermal_layer(single_scattering_albedo, gamma_1,
-                                             gamma_2, source_function):
+def reduced_source_function_isothermal_layer(
+    single_scattering_albedo, gamma_1, gamma_2, source_function
+):
     """computes reduced source functions (pi \mathcal{B}) for the isothermal layer
 
     Args:
@@ -35,8 +36,8 @@ def reduced_source_function_isothermal_layer(single_scattering_albedo, gamma_1,
         gamma_1 (_type_): Toon+89 gamma_1 coefficient
         gamma_2 (_type_): Toon+89 gamma_2 coefficient
         source_function (_type_): pi B(tau)
-        
-        
+
+
     Returns:
         _type_: reduced source function for the isothermal layer
     """
@@ -45,12 +46,14 @@ def reduced_source_function_isothermal_layer(single_scattering_albedo, gamma_1,
     return coeff * source_function
 
 
-def reduced_source_function(single_scattering_albedo,
-                            gamma_1,
-                            gamma_2,
-                            source_function,
-                            source_function_derivative,
-                            sign=1.0):
+def reduced_source_function(
+    single_scattering_albedo,
+    gamma_1,
+    gamma_2,
+    source_function,
+    source_function_derivative,
+    sign=1.0,
+):
     """computes reduced source functions (pi \mathcal{B}^+ or -)
 
     Args:
@@ -70,10 +73,12 @@ def reduced_source_function(single_scattering_albedo,
 
 
 def params_eddington(single_scattering_albedo, asymmetric_parameter, mu0):
-    gamma_1 = (7.0 - single_scattering_albedo *
-               (4.0 + 3.0 * asymmetric_parameter)) / 4.0
-    gamma_2 = -(1.0 - single_scattering_albedo *
-                (4.0 - 3.0 * asymmetric_parameter)) / 4.0
+    gamma_1 = (
+        7.0 - single_scattering_albedo * (4.0 + 3.0 * asymmetric_parameter)
+    ) / 4.0
+    gamma_2 = (
+        -(1.0 - single_scattering_albedo * (4.0 - 3.0 * asymmetric_parameter)) / 4.0
+    )
     gamma_3 = (2.0 - 3.0 * asymmetric_parameter * mu0) / 4.0
     mu1 = 0.5
     return gamma_1, gamma_2, gamma_3, mu1
@@ -81,10 +86,8 @@ def params_eddington(single_scattering_albedo, asymmetric_parameter, mu0):
 
 def params_quadrature(single_scattering_albedo, asymmetric_parameter, mu0):
     s3 = jnp.sqrt(3.0)
-    gamma_1 = s3 * (2.0 - single_scattering_albedo *
-                    (1.0 + asymmetric_parameter)) / 2.0
-    gamma_2 = single_scattering_albedo * s3 * (1.0 -
-                                               asymmetric_parameter) / 2.0
+    gamma_1 = s3 * (2.0 - single_scattering_albedo * (1.0 + asymmetric_parameter)) / 2.0
+    gamma_2 = single_scattering_albedo * s3 * (1.0 - asymmetric_parameter) / 2.0
     gamma_3 = (1.0 - s3 * asymmetric_parameter * mu0) / 2.0
     mu1 = 1.0 / s3
     return gamma_1, gamma_2, gamma_3, mu1

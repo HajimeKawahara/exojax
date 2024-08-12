@@ -15,7 +15,7 @@ import jax.numpy as jnp
 from jax import vmap
 import numpy as np
 
-__all__ = ["OpaCIA"]
+__all__ = ["OpaCIA", "Opahminus", "OpaRayleigh", "OpaMie"]
 
 
 class OpaCont:

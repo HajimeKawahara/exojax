@@ -3,7 +3,8 @@
 from exojax.atm.amclouds import get_rg
 from exojax.atm.amclouds import find_rw
 from exojax.atm.viscosity import calc_vfactor, eta_Rosner
-from exojax.atm.amclouds import compute_cloud_base_pressure_index
+#from exojax.atm.amclouds import compute_cloud_base_pressure_index
+from exojax.atm.amclouds import smooth_index_base_pressure, get_pressure_at_cloud_base, get_value_at_cloud_base
 from exojax.atm.amclouds import mixing_ratio_cloud_profile
 from exojax.atm.vterm import terminal_velocity
 from exojax.atm.atmprof import pressure_scale_height
@@ -13,7 +14,7 @@ import warnings
 from jax import vmap
 import jax.numpy as jnp
 
-__all__ = ["AmpCldAM"]
+__all__ = ["AmpAmcloud"]
 
 
 class AmpCloud:
@@ -106,9 +107,10 @@ class AmpAmcloud(AmpCloud):
 
         # cloud base pressure/temperature
         VMR = mmr2vmr(MMR_base,molecular_mass_condensate, mean_molecular_weight)
-        ibase = compute_cloud_base_pressure_index(pressures, psat, VMR)
-        pressure_base = pressures[ibase]
-        temperature_base = temperatures[ibase]
+        
+        smooth_index = smooth_index_base_pressure(pressures, psat, VMR)
+        pressure_base = get_pressure_at_cloud_base(pressures, smooth_index)
+        temperature_base = get_value_at_cloud_base(temperatures, smooth_index)
 
         # cloud scale height L
         L_cloud = pressure_scale_height(
@@ -126,7 +128,7 @@ class AmpAmcloud(AmpCloud):
         vfind_rw = vmap(find_rw, (None, 0, None), 0)
         rw = vfind_rw(self.rcond_arr, vterminal, Kzz / L_cloud)
         rg = get_rg(rw, fsed, alphav, sigmag)
-
+        
         # MMR of condensates
         MMR_condensate = mixing_ratio_cloud_profile(pressures, pressure_base, fsed, MMR_base)
 

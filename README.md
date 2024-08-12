@@ -19,7 +19,7 @@ ExoJAX is at least compatible with
 <details><summary>ExoJAX Classes</summary>
 
 - Databases: *db (mdb: molecular, adb: atomic, cdb:continuum, pdb: particulates)
-- Opacity Calculators: opa  (i.e. Voigt profile)
+- Opacity Calculators: opa  (Voigt profile, CIA, Mie, Rayleigh scattering etc)
 - Atmospheric Radiative Transfer: art (emission w, w/o scattering, refelction, transmission)
 - Atompsheric Microphysics: amp (clouds etc)
 

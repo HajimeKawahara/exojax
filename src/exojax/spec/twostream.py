@@ -11,12 +11,14 @@ import jax.numpy as jnp
 from jax.lax import scan
 
 
-def solve_fluxadding_twostream(trans_coeff, scat_coeff, reduced_source_function, reflectivity_bottom, source_bottom):
+def solve_fluxadding_twostream(
+    trans_coeff, scat_coeff, reduced_source_function, reflectivity_bottom, source_bottom
+):
     """Two-stream RT solver using flux adding
 
     Args:
-        trans_coeff (_type_): Transmission coefficient 
-        scat_coeff (_type_): Scattering coefficient 
+        trans_coeff (_type_): Transmission coefficient
+        scat_coeff (_type_): Scattering coefficient
         reduced_source_function :  pi \mathcal{B} (Nlayer, Nnus)
         reflectivity_bottom (_type_): R^+_N (Nnus)
         source_bottom (_type_): S^+_N (Nnus)
@@ -24,40 +26,43 @@ def solve_fluxadding_twostream(trans_coeff, scat_coeff, reduced_source_function,
     Returns:
         Effective reflectivity (hat(R^plus)), Effective source (hat(S^plus))
     """
+
     nlayer, _ = trans_coeff.shape
-    pihatB = (1.0 - trans_coeff - scat_coeff)*reduced_source_function
+    pihatB = (1.0 - trans_coeff - scat_coeff) * reduced_source_function
 
     # bottom reflection
-    Rphat0 = scat_coeff[nlayer-1, :] + trans_coeff[nlayer-1, :]**2 * \
-        reflectivity_bottom/(1.0 - scat_coeff[nlayer-1, :]*reflectivity_bottom)
-    Sphat0 = pihatB[nlayer-1, :] + trans_coeff[nlayer-1, :] * \
-        (source_bottom + pihatB[nlayer-1, :]*reflectivity_bottom) / \
-        (1.0 - scat_coeff[nlayer-1, :]*reflectivity_bottom)
+    Rphat0 = scat_coeff[nlayer - 1, :] + trans_coeff[
+        nlayer - 1, :
+    ] ** 2 * reflectivity_bottom / (
+        1.0 - scat_coeff[nlayer - 1, :] * reflectivity_bottom
+    )
+    Sphat0 = pihatB[nlayer - 1, :] + trans_coeff[nlayer - 1, :] * (
+        source_bottom + pihatB[nlayer - 1, :] * reflectivity_bottom
+    ) / (1.0 - scat_coeff[nlayer - 1, :] * reflectivity_bottom)
 
     def f(carry_ip1, arr):
         Rphat_prev, Sphat_prev = carry_ip1
         scat_coeff_i, trans_coeff_i, pihatB_i = arr
-        denom = 1.0 - scat_coeff_i*Rphat_prev
-
-        Sphat_each = pihatB_i + trans_coeff_i * \
-            (Sphat_prev + pihatB_i*Rphat_prev) / denom
-        Rphat_each = scat_coeff_i + trans_coeff_i**2 * Rphat_prev/denom
-
+        denom = 1.0 - scat_coeff_i * Rphat_prev
+        Sphat_each = (
+            pihatB_i + trans_coeff_i * (Sphat_prev + pihatB_i * Rphat_prev) / denom
+        )
+        Rphat_each = scat_coeff_i + trans_coeff_i**2 * Rphat_prev / denom
         RS = [Rphat_each, Sphat_each]
         return RS, 0
 
     # main loop
     arrin = [
-        scat_coeff[nlayer-2::-1],
-        trans_coeff[nlayer-2::-1],
-        pihatB[nlayer-2::-1]
+        scat_coeff[nlayer - 2 :: -1],
+        trans_coeff[nlayer - 2 :: -1],
+        pihatB[nlayer - 2 :: -1],
     ]
     RS, _ = scan(f, [Rphat0, Sphat0], arrin)
+
     return RS
 
 
-def solve_lart_twostream(diagonal, lower_diagonal, upper_diagonal, vector,
-                         flux_bottom):
+def solve_lart_twostream(diagonal, lower_diagonal, upper_diagonal, vector, flux_bottom):
     """Two-stream RT solver given tridiagonal system components (LART form)
 
     Args:
@@ -68,12 +73,12 @@ def solve_lart_twostream(diagonal, lower_diagonal, upper_diagonal, vector,
         flux_bottom: bottom flux FB
 
     Note:
-        Our definition of the tridiagonal components is 
-        an F+_(n+1) + bn F+_n + c_(n-1) F+_(n-1) = dn 
+        Our definition of the tridiagonal components is
+        an F+_(n+1) + bn F+_n + c_(n-1) F+_(n-1) = dn
         Notice that c_(n-1) is not cn
 
     Returns:
-        _type_: cumlative hat{T}, hat{Q}, spectrum 
+        _type_: cumlative hat{T}, hat{Q}, spectrum
     """
     nlayer, Nnus = diagonal.shape
 
@@ -96,8 +101,10 @@ def solve_lart_twostream(diagonal, lower_diagonal, upper_diagonal, vector,
 
     # main loop
     arrin = [
-        diagonal[1:nlayer, :], lower_diagonal[0:nlayer - 1, :],
-        upper_diagonal[1:nlayer, :], vector[1:nlayer, :]
+        diagonal[1:nlayer, :],
+        lower_diagonal[0 : nlayer - 1, :],
+        upper_diagonal[1:nlayer, :],
+        vector[1:nlayer, :],
     ]
     _, stackedTQ = scan(f, [That0, Qhat0], arrin)
     That, Qhat = stackedTQ
@@ -118,14 +125,15 @@ def solve_twostream_pure_absorption_numpy(trans_coeff, scat_coeff, piB):
     """solves pure absorption limit for two stream
 
     Args:
-        trans_coeff (_type_): transmission coefficient 
+        trans_coeff (_type_): transmission coefficient
         scat_coeff (_type_):  scattering coefficient
         piB (_type_): pi x Planck function
 
     Returns:
-        _type_: cumlative transmission, generalized source, spectrum 
+        _type_: cumlative transmission, generalized source, spectrum
     """
     import numpy as np
+
     Qpure = np.zeros_like(trans_coeff)
     nlayer, Nnus = trans_coeff.shape
     for i in range(0, nlayer - 1):
@@ -138,7 +146,7 @@ def solve_twostream_pure_absorption_numpy(trans_coeff, scat_coeff, piB):
 
 
 def contribution_function_lart(cumT, Q):
-    """computes the contribution function from LART cumlative transmission and generalized source 
+    """computes the contribution function from LART cumlative transmission and generalized source
 
     Args:
         cumT (_type_): cumlative transmission
@@ -162,31 +170,31 @@ def set_scat_trans_coeffs(zeta_plus, zeta_minus, lambdan, dtau):
     Returns:
         _type_: transmission coefficient, scattering coeffcient
     """
-    trans_func = jnp.exp(-lambdan *
-                         dtau)  # transmission function (Heng 2017, 3.58)
-    denom = zeta_plus**2 - (zeta_minus * trans_func)**2
+    trans_func = jnp.exp(-lambdan * dtau)  # transmission function (Heng 2017, 3.58)
+    denom = zeta_plus**2 - (zeta_minus * trans_func) ** 2
     trans_coeff = trans_func * (zeta_plus**2 - zeta_minus**2) / denom
     scat_coeff = (1.0 - trans_func**2) * zeta_plus * zeta_minus / denom
+
     return trans_coeff, scat_coeff
 
 
-def compute_tridiag_diagonals_and_vector(scat_coeff, trans_coeff, piB,
-                                         upper_diagonal_top, diagonal_top,
-                                         vector_top):
+def compute_tridiag_diagonals_and_vector(
+    scat_coeff, trans_coeff, piB, upper_diagonal_top, diagonal_top, vector_top
+):
     """computes the diagonals and right-handside vector from scattering and transmission coefficients for the tridiagonal system
 
     Args:
         scat_coeff (_type_): scattering coefficient of the n-th layer, S_n
         trans_coeff (_type_): transmission coefficient of the n-th layer, T_n
         piB (): Planck source function, piB
-        upper_diagonal_top (_type_): a[0] upper diagonal top boundary 
+        upper_diagonal_top (_type_): a[0] upper diagonal top boundary
         diagonal_top (_type_): b[0] diagonal top boundary
-        vector_top (_type_): vector top boundary 
+        vector_top (_type_): vector top boundary
 
     Notes:
         In ExoJAX 2 paper, we assume the tridiagonal form as -an F_{n+1}^+ + b_n F_n^+ - cn F_{n-1}^+ = dn
     Returns:
-        jnp arrays: diagonal (bn) [Nlayer], lower dianoals (cn) [Nlayer], upper diagonal (an) [Nlayer], vector (dn) [Nlayer], 
+        jnp arrays: diagonal (bn) [Nlayer], lower dianoals (cn) [Nlayer], upper diagonal (an) [Nlayer], vector (dn) [Nlayer],
     """
 
     Sn_minus_one = jnp.roll(scat_coeff, 1, axis=0)  # S_{n-1}
@@ -208,8 +216,7 @@ def compute_tridiag_diagonals_and_vector(scat_coeff, trans_coeff, piB,
     # vector
     hatpiB = (1.0 - trans_coeff - scat_coeff) * piB
     hatpiB_minus_one = jnp.roll(hatpiB, 1, axis=0)
-    vector = rn_minus * hatpiB - rn * (Tn_minus_one -
-                                       Sn_minus_one) * hatpiB_minus_one
+    vector = rn_minus * hatpiB - rn * (Tn_minus_one - Sn_minus_one) * hatpiB_minus_one
 
     # top bundary
     vector = vector.at[0].set(vector_top)

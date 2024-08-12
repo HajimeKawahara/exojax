@@ -40,8 +40,8 @@ def xsvector(cnu, indexnu, pmarray, sigmaD, gammaL, S, nu_grid, sigmaD_grid, gam
        This function uses the precomputed neibouring contribution function for wavenumber (nu_ncf). Use npnc1D to compute nu_ncf in float64 precision.
     """
     Ng_nu = len(nu_grid)
-    Ng_sigmaD = len(sigmaD_grid)
-    Ng_gammaL = len(gammaL_grid)
+    #Ng_sigmaD = len(sigmaD_grid)
+    #Ng_gammaL = len(gammaL_grid)
 
     log_sigmaD = jnp.log(sigmaD)
     log_gammaL = jnp.log(gammaL)
