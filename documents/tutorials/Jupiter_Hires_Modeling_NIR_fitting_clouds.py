@@ -15,9 +15,9 @@
 # if this is the first run, set miegird_generate = True, and run the code to generate Mie grid. After that, set False.
 miegird_generate = False
 # when the optimization is performed, set opt_perform = True, after performing it, set False
-opt_perform = True
+opt_perform = False
 # when HMC is performed, set hmc_perform = True, after performing it, set False
-hmc_perform = True
+hmc_perform = False
 ###
 
 import os
@@ -58,12 +58,12 @@ nus_obs = unmask_nus_obs[mask]
 
 from exojax.spec.unitconvert import nu2wav
 
-wavtmp = nu2wav(nus_obs, unit="AA")
+wav_obs = nu2wav(nus_obs, unit="AA")
 print(
     "wavelength range used in this analysis=",
-    np.min(wavtmp),
+    np.min(wav_obs),
     "--",
-    np.max(wavtmp),
+    np.max(wav_obs),
     "AA",
 )
 # import sys
@@ -531,25 +531,34 @@ median_mu1 = jnp.median(predictions["y1"], axis=0)
 hpdi_mu1 = hpdi(predictions["y1"], 0.95)
 
 #prediction plot
-fig = plt.figure(figsize=(30, 5))
+plt.rcParams['font.family']='FreeSerif'
+fig = plt.figure(figsize=(15, 5))
 ax = fig.add_subplot(111)
-plt.plot(nus_obs, spectra, ".", label="observed spectrum")
+#plt.plot(nus_obs, spectra, ".", label="observed spectrum")
+#plt.plot(
+#    nus_obs, median_mu1, alpha=0.5, label="median prediction", color="C1", ls="dashed"
+#)
+plt.plot(wav_obs, spectra, ".", label="observed spectrum")
 plt.plot(
-    nus_obs, median_mu1, alpha=0.5, label="median prediction", color="C1", ls="dashed"
+    wav_obs, median_mu1, alpha=0.5, lw=2, label="median prediction", color="black"
 )
+
 ax.fill_between(
-    nus_obs,
+    wav_obs,
     hpdi_mu1[0],
     hpdi_mu1[1],
     alpha=0.3,
     interpolate=True,
-    color="C0",
+    color="gray",
     label="95% area",
 )
-plt.legend()
-plt.xlim(np.min(nus_obs), np.max(nus_obs))
-plt.savefig("output/Jupiter_fit.png")
-#plt.show()
+plt.legend(fontsize=16)
+plt.xlim(np.min(wav_obs), np.max(wav_obs))
+plt.xlabel("wavelength $\AA$", fontsize=18)
+plt.ylabel("normalized spectrum", fontsize=18)
+plt.tick_params(labelsize=18)
+plt.savefig("output/Jupiter_fit_wav.png", bbox_inches="tight", pad_inches=0.1)
+plt.show()
 
 
 if hmc_perform:
