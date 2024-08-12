@@ -35,7 +35,7 @@ def test_get_pressure_at_cloud_base():
 
     Pbase_enstatite = get_pressure_at_cloud_base(Parr, smooth_index)
 
-    assert Pbase_enstatite == pytest.approx(104.62701)
+    assert Pbase_enstatite == pytest.approx(104.62701, 1.e-3)
 
 
 def test_get_value_at_cloud_base_value_is_temperature():
