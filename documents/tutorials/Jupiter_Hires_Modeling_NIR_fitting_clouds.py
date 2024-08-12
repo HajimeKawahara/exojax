@@ -20,6 +20,10 @@ opt_perform = True
 hmc_perform = True
 ###
 
+import os
+os.environ['JAX_TRACEBACK_FILTERING'] = 'off'
+
+
 from jax import config
 
 config.update("jax_enable_x64", True)
@@ -403,7 +407,7 @@ def cost_function(params):
 from jaxopt import OptaxSolver
 import optax
 
-if opt_perform == True:
+if opt_perform:
     adam = OptaxSolver(opt=optax.adam(1.0e-2), fun=cost_function)
     res = adam.run(parinit)
     # maxiter = 100
@@ -426,6 +430,8 @@ if opt_perform == True:
     plt.xlim(np.min(nus_obs), np.max(nus_obs))
     plt.savefig("Jupiter_petitIRD.png")
     plt.close()
+
+    print(res.params)
     # plt.show()
 
 from jax import random
@@ -464,10 +470,38 @@ def model_c(nu1, y1):
     numpyro.sample("y1", dist.Normal(mean, err_all), obs=y1)
 
 
+
+#initialization
+import jax.numpy as jnp
+if opt_perform:
+    # T0, log_fsed, log_Kzz, vrv, vv, boradening (fix), mmr, normalization factor
+#    init_params = {
+#        "T0_n": 1.5,
+#        }
+    init_params = {
+        "T0_n": 0.89,
+        "log_fsed_n": 0.44,
+        "log_Kzz_n": 40.0,
+        "vrv": -1.1,
+        "vv": -58.3,
+        "MMR_CH4_n":1.58,
+        "factor": 0.597,
+        "sigma": 1.0
+        }
+
+    #    init_params = {
+#        "T0_n": jnp.array(res.params[0]),
+#        "log_fsed_n": jnp.array(res.params[1]),
+#        "log_Kzz_n": jnp.array(res.params[2]),
+#        "vrv": jnp.array(res.params[3]),
+#        "vv": jnp.array(res.params[4]),
+#        "MMR_CH4_n":jnp.array(res.params[6]),
+#        "factor":jnp.array(res.params[7])
+#        }
 rng_key = random.PRNGKey(0)
 rng_key, rng_key_ = random.split(rng_key)
 
-if hmc_perform == True:
+if hmc_perform:
     print("HMC starts")
     # num_warmup, num_samples = 500, 1000
     ######
@@ -477,7 +511,8 @@ if hmc_perform == True:
     kernel = NUTS(model_c)
     mcmc = MCMC(kernel, num_warmup=num_warmup, num_samples=num_samples)
     if opt_perform == True:
-        mcmc.run(rng_key_, nu1=nus_obs, y1=spectra, init_params=res.params)
+        mcmc.run(rng_key_, nu1=nus_obs, y1=spectra, init_params=init_params)
+#        mcmc.run(rng_key_, nu1=nus_obs, y1=spectra)
     else:
         mcmc.run(rng_key_, nu1=nus_obs, y1=spectra)
     mcmc.print_summary()
@@ -517,5 +552,5 @@ plt.savefig("output/Jupiter_fit.png")
 #plt.show()
 
 
-if hmc_perform == True:
+if hmc_perform:
     np.savez("output/all.npz", [median_mu1, hpdi_mu1])
