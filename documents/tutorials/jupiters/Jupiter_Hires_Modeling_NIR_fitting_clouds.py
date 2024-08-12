@@ -23,46 +23,35 @@ hmc_perform = False
 import os
 os.environ['JAX_TRACEBACK_FILTERING'] = 'off'
 
-import .plotjupiter 
-import .miegrid_generate
-
 import pickle
 import numpy as np
 import matplotlib.pyplot as plt
 from exojax.spec.unitconvert import nu2wav
 from exojax.utils.constants import c  # light speed in km/s
-from exojax.atm.idealgas import number_density
-from exojax.utils.constants import m_u
-from exojax.spec.unitconvert import wav2nu
-from exojax.utils.grids import wavenumber_grid
-from exojax.spec.atmrt import ArtReflectPure
-from exojax.utils.astrofunc import gravity_jupiter
-from exojax.spec.pardb import PdbCloud
-from exojax.atm.atmphys import AmpAmcloud
-from exojax.utils.zsol import nsol
-from exojax.atm.mixratio import vmr2mmr
-from exojax.spec.molinfo import molmass_isotope
-from exojax.spec.opacont import OpaMie
-from exojax.utils.instfunc import resolution_to_gaussian_std
-from exojax.spec.specop import SopInstProfile
-from jax import random
-import numpyro.distributions as dist
-import numpyro
-from numpyro.infer import MCMC, NUTS
-from numpyro.infer import Predictive
-from numpyro.diagnostics import hpdi
-from jaxopt import OptaxSolver
-import optax
-
-import pandas as pd
-
-
-import jax.numpy as jnp
 from jax import config
 
 config.update("jax_enable_x64", True)
 figshow = False
 
+def print_wavminmax(wav_obs):
+    print(
+    "wavelength range used in this analysis=",
+    np.min(wav_obs),
+    "--",
+    np.max(wav_obs),
+    "AA",
+)
+
+def plot_opt(nus_obs, spectra, F_samp_init, F_samp):
+    fig = plt.figure(figsize=(30, 5))
+    ax = fig.add_subplot(111)
+    plt.plot(nus_obs, spectra, ".", label="observed spectrum")
+    plt.plot(nus_obs, F_samp_init, alpha=0.5, label="init", color="C1", ls="dashed")
+    plt.plot(nus_obs, F_samp, alpha=0.5, label="best fit", color="C1", lw=3)
+    plt.legend()
+    plt.xlim(np.min(nus_obs), np.max(nus_obs))
+    plt.savefig("Jupiter_petitIRD.png")
+    plt.close()
 
 # Forget about the following code. I need this to run the code somewhere...
 # username="exoplanet01"
@@ -76,19 +65,23 @@ dat = np.loadtxt("jupiter_corrected.dat")
 unmask_nus_obs = dat[:, 0]
 unmask_spectra = dat[:, 1]
 mask = (unmask_nus_obs < 6163.5) + ((unmask_nus_obs > 6166) & (unmask_nus_obs < 6184.5))
+
 nus_obs = unmask_nus_obs[mask]
 wav_obs = nu2wav(nus_obs, unit="AA")
 
-plotjupiter.print_wavminmax(wav_obs)
+print_wavminmax(wav_obs)
 # import sys
 # "sys.exit()
 
 spectra = unmask_spectra[mask]
-
 if figshow:
-    plotjupiter.plot_spec1(unmask_nus_obs, unmask_spectra, nus_obs, spectra)
+    fig = plt.figure(figsize=(20, 5))
+    plt.plot(nus_obs, spectra, ".")
+    plt.plot(unmask_nus_obs, unmask_spectra, alpha=0.5)
+    plt.show()
 
 # ## Solar spectrum
+
 # This is the reflected "solar" spectrum by Jupiter! So, we need the solar spectrum template.
 #
 # I found very good one: High-resolution solar spectrum taken from Meftar et al. (2023)
@@ -97,6 +90,8 @@ if figshow:
 # - http://doi.latmos.ipsl.fr/DOI_SOLAR_HRS.v1.1.html
 # - http://bdap.ipsl.fr/voscat_en/solarspectra.html
 #
+from exojax.spec.unitconvert import wav2nu
+import pandas as pd
 
 # filename = "/home/kawahara/solar-hrs/Spectre_HR_LATMOS_Meftah_V1.txt"
 filename = "/home/" + username + "/solar-hrs/Spectre_HR_LATMOS_Meftah_V1.txt"
@@ -110,31 +105,48 @@ nus_solar = wav2nu(wav_solar, unit="AA")
 vrv = 10.0
 vperc = vrv / 300000
 
-
 if figshow:
-    plotjupiter.plot_spec2(nus_obs, spectra, solspec, nus_solar, vperc)
+    fig = plt.figure(figsize=(20, 5))
+    ax = fig.add_subplot(211)
+    plt.plot(nus_obs, spectra, label="masked spectrum")
+    plt.plot(nus_solar * (1.0 + vperc), solspec, lw=1, label="Solar")
+    plt.xlabel("wavenumber (cm-1)")
+    plt.xlim(np.min(nus_obs), np.max(nus_obs))
+    plt.ylim(0.0, 0.25)
 
 
 ### Atmospheric Model Setting
-# See `Jupiter_cloud_model_using_amp.ipynb, set the master wavenumber grid
+# See `Jupiter_cloud_model_using_amp.ipynb
+# set the master wavenumber grid
+from exojax.utils.grids import wavenumber_grid
 
 nus, wav, res = wavenumber_grid(
     np.min(nus_obs) - 5.0, np.max(nus_obs) + 5.0, 10000, xsmode="premodit", unit="cm-1"
 )
 
+from exojax.spec.atmrt import ArtReflectPure
+from exojax.utils.astrofunc import gravity_jupiter
 
 art = ArtReflectPure(nu_grid=nus, pressure_btm=1.0e2, pressure_top=1.0e-3, nlayer=100)
 art.change_temperature_range(80.0, 400.0)
 Tarr = art.powerlaw_temperature(150.0, 0.2)
 Parr = art.pressure
+
 mu = 2.3  # mean molecular weight
 gravity = gravity_jupiter(1.0, 1.0)
 
-
 if figshow:
-    plotjupiter.plotPT(art, Tarr)
+    fig = plt.figure()
+    ax = fig.add_subplot()
+    ax.plot(Tarr, art.pressure)
+    ax.invert_yaxis()
+    plt.yscale("log")
+    plt.xscale("log")
+    plt.show()
 
 
+from exojax.spec.pardb import PdbCloud
+from exojax.atm.atmphys import AmpAmcloud
 
 pdb_nh3 = PdbCloud("NH3")
 amp_nh3 = AmpAmcloud(pdb_nh3, bkgatm="H2")
@@ -143,6 +155,9 @@ amp_nh3.check_temperature_range(Tarr)
 # condensate substance density
 rhoc = pdb_nh3.condensate_substance_density  # g/cc
 
+from exojax.utils.zsol import nsol
+from exojax.atm.mixratio import vmr2mmr
+from exojax.spec.molinfo import molmass_isotope
 
 n = nsol()  # solar abundance
 abundance_nh3 = n["N"]
@@ -163,25 +178,81 @@ rg_layer, MMRc = amp_nh3.calc_ammodel(
 fsed_range = [0.1, 10.0]
 Kzz_range = [1.0e2, 1.0e6]
 
-
 if miegird_generate:
-    Kzz, rg_layer, MMRc = miegrid_generate.generate_miegrid_new(Tarr, Parr, mu, gravity, pdb_nh3, amp_nh3, molmass_nh3, sigmag, MMRbase_nh3, fsed_range, Kzz_range)
+    fsed_grid = np.logspace(np.log10(fsed_range[0]), np.log10(fsed_range[1]), 3)
+    Kzz_grid = np.logspace(np.log10(Kzz_range[0]), np.log10(Kzz_range[1]), 5)
+
+    import matplotlib.pyplot as plt
+
+    rg_val = []
+    for fsed in fsed_grid:
+        for Kzz in Kzz_grid:
+            rg_layer, MMRc = amp_nh3.calc_ammodel(
+                Parr, Tarr, mu, molmass_nh3, gravity, fsed, sigmag, Kzz, MMRbase_nh3
+            )
+            rg_val.append(np.nanmean(rg_layer))
+            plt.plot(fsed, np.nanmean(rg_layer), ".", color="black")
+            plt.text(fsed, np.nanmean(rg_layer), f"{Kzz:.1e}")
+    rg_val = np.array(rg_val)
+    plt.yscale("log")
+    plt.show()
+
+    rg_range = [np.min(rg_val), np.max(rg_val)]
+    N_rg = 10
+    rg_grid = np.logspace(np.log10(rg_range[0]), np.log10(rg_range[1]), N_rg)
+
+    # make miegrid
+    pdb_nh3.generate_miegrid(
+        sigmagmin=sigmag,
+        sigmagmax=sigmag,
+        Nsigmag=1,
+        log_rg_min=np.log10(rg_range[0]),
+        log_rg_max=np.log10(rg_range[1]),
+        Nrg=N_rg,
+    )
+    print("Please rerun after setting miegird_generate = True")
+    import sys
+
+    sys.exit()
 else:
     pdb_nh3.load_miegrid()
 
 
 # to convert MMR to g/L ...
+from exojax.atm.idealgas import number_density
+from exojax.utils.constants import m_u
 
 fac = molmass_nh3 * m_u * number_density(Parr, Tarr) * 1.0e3  # g/L
 
 if figshow:
-    plotjupiter.plot_cloud_structure(Parr, rg_layer, MMRc, fac)
+    fig = plt.figure()
+    ax = fig.add_subplot(131)
+    plt.plot(rg_layer, Parr)
+    plt.xlabel("rg (cm)")
+    plt.ylabel("pressure (bar)")
+    plt.yscale("log")
+    ax.invert_yaxis()
+    ax = fig.add_subplot(132)
+    plt.plot(MMRc, Parr)
+    plt.xlabel("condensate MMR")
+    plt.yscale("log")
+    # plt.xscale("log")
+    ax.invert_yaxis()
+    ax = fig.add_subplot(133)
+    plt.plot(fac * MMRc, Parr)
+    plt.xlabel("cloud density g/L")
+    plt.yscale("log")
+    # plt.xscale("log")
+    ax.invert_yaxis()
 
+# test fsed value
 fsed = 3.0
 rg_layer, MMRc = amp_nh3.calc_ammodel(
     Parr, Tarr, mu, molmass_nh3, gravity, fsed, sigmag, Kzz, MMRbase_nh3
 )
 rg = np.nanmean(rg_layer)
+
+from exojax.spec.opacont import OpaMie
 
 opa_nh3 = OpaMie(pdb_nh3, nus)
 
@@ -192,10 +263,31 @@ sigma_extinction, sigma_scattering, asymmetric_factor = opa_nh3.mieparams_vector
 #    opa_nh3.mieparams_vector_direct_from_pymiescatt(rg, sigmag)
 # ) # direct computation
 
-# plt.plot(pdb_nh3.refraction_index_wavenumber, miepar[50,:,0])
 
+# plt.plot(pdb_nh3.refraction_index_wavenumber, miepar[50,:,0])
 if figshow:
-    plotjupiter.plot_extinction(nus, sigma_extinction, sigma_scattering, asymmetric_factor)
+    fig = plt.figure(figsize=(10, 5))
+    ax = fig.add_subplot(311)
+    plt.plot(nus, asymmetric_factor, color="black")
+    plt.xscale("log")
+    plt.ylabel("$g$")
+    ax = fig.add_subplot(312)
+    plt.plot(
+        nus,
+        sigma_scattering / sigma_extinction,
+        label="single scattering albedo",
+        color="black",
+    )
+    plt.xscale("log")
+    plt.ylabel("$\\omega$")
+    ax = fig.add_subplot(313)
+    plt.plot(nus, sigma_extinction, label="ext", color="black")
+    plt.xscale("log")
+    plt.yscale("log")
+    plt.xlabel("wavenumber (cm-1)")
+    plt.ylabel("$\\beta_0$")
+    plt.savefig("miefig_high.png")
+    plt.show()
 
 # Next, we consider the gas component, i.e. methane
 from exojax.spec.api import MdbHitemp
@@ -212,6 +304,7 @@ opa = OpaPremodit(
 
 ## Spectrum Model
 
+import jax.numpy as jnp
 
 nusjax = jnp.array(nus)
 nusjax_solar = jnp.array(nus_solar)
@@ -224,6 +317,9 @@ molmass_ch4 = molmass_isotope("CH4", db_HIT=False)
 asymmetric_parameter = asymmetric_factor + np.zeros((len(art.pressure), len(nus)))
 reflectivity_surface = np.zeros(len(nus))
 
+
+from exojax.utils.instfunc import resolution_to_gaussian_std
+from exojax.spec.specop import SopInstProfile
 
 sop = SopInstProfile(nus)
 
@@ -304,6 +400,8 @@ def cost_function(params):
     return jnp.sum((spectra - spectral_model(params)) ** 2)
 
 
+from jaxopt import OptaxSolver
+import optax
 
 
 if opt_perform:
@@ -320,11 +418,17 @@ if opt_perform:
     F_samp = spectral_model(res.params)
     F_samp_init = spectral_model(parinit)
 
-    plotjupiter.plot_opt(nus_obs, spectra, F_samp_init, F_samp)
+    plot_opt(nus_obs, spectra, F_samp_init, F_samp)
 
     print(res.params)
     # plt.show()
 
+from jax import random
+import numpyro.distributions as dist
+import numpyro
+from numpyro.infer import MCMC, NUTS
+from numpyro.infer import Predictive
+from numpyro.diagnostics import hpdi
 
 # T0, log_fsed, log_Kzz, vrv, vv, boradening, mmr, normalization factor
 # parinit = jnp.array(
@@ -409,13 +513,41 @@ with open("output/samples.pickle", mode="rb") as f:
     samples = pickle.load(f)
 
 print("prediction starts")
+from numpyro.diagnostics import hpdi
 pred = Predictive(model_c, samples, return_sites=["y1"])
 predictions = pred(rng_key_, nu1=nus_obs, y1=None)
 median_mu1 = jnp.median(predictions["y1"], axis=0)
 hpdi_mu1 = hpdi(predictions["y1"], 0.95)
 
 #prediction plot
-plotjupiter.plot_prediction(wav_obs, spectra, median_mu1, hpdi_mu1)
+plt.rcParams['font.family']='FreeSerif'
+fig = plt.figure(figsize=(15, 5))
+ax = fig.add_subplot(111)
+#plt.plot(nus_obs, spectra, ".", label="observed spectrum")
+#plt.plot(
+#    nus_obs, median_mu1, alpha=0.5, label="median prediction", color="C1", ls="dashed"
+#)
+plt.plot(wav_obs, spectra, ".", label="observed spectrum")
+plt.plot(
+    wav_obs, median_mu1, alpha=0.5, lw=2, label="median prediction", color="black"
+)
+
+ax.fill_between(
+    wav_obs,
+    hpdi_mu1[0],
+    hpdi_mu1[1],
+    alpha=0.3,
+    interpolate=True,
+    color="gray",
+    label="95% area",
+)
+plt.legend(fontsize=16)
+plt.xlim(np.min(wav_obs), np.max(wav_obs))
+plt.xlabel("wavelength $\AA$", fontsize=18)
+plt.ylabel("normalized spectrum", fontsize=18)
+plt.tick_params(labelsize=18)
+plt.savefig("output/Jupiter_fit_wav.png", bbox_inches="tight", pad_inches=0.1)
+plt.show()
 
 
 if hmc_perform:
