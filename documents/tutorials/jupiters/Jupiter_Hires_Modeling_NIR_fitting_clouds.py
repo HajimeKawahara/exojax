@@ -17,7 +17,7 @@
 # if this is the first run, set miegird_generate = True, and run the code to generate Mie grid. After that, set False.
 miegird_generate = False
 # when the optimization is performed, set opt_perform = True, after performing it, set False
-opt_perform = False
+opt_perform = True
 # when HMC is performed, set hmc_perform = True, after performing it, set False
 hmc_perform = False
 ###
@@ -246,17 +246,17 @@ reflectivity_surface = np.zeros(len(nus))
 sop = SopInstProfile(nus)
 
 
-# T0, log_fsed, log_Kzz, vrv, vv, boradening, mmr, normalization factor
+# log_fsed, log_Kzz, vrv, vv, boradening, mmr, normalization factor
 # parinit = jnp.array([1.5, np.log10(1.0)*10000.0, np.log10(1.e4)*10.0, -5.0, -55.0, 2.5, 1.0, 1.0])
 parinit = jnp.array(
-    [1.5, np.log10(1.0) * 10000.0, np.log10(1.0e4) * 10.0, -5.0, -55.0, 2.5, 1.2, 0.6]
+    [np.log10(1.0) * 10000.0, np.log10(1.0e4) * 10.0, -5.0, -55.0, 2.5, 2.0, 0.6]
 )
-multiple_factor = jnp.array([100.0, 0.0001, 0.1, 1.0, 1.0, 10000.0, 0.01, 1.0])
+multiple_factor = jnp.array([0.0001, 0.1, 1.0, 1.0, 10000.0, 0.001, 1.0])
 
 
 def spectral_model(params):
 
-    T0, log_fsed, log_Kzz, vrv, vv, _broadening, const_mmr_ch4, factor = (
+    log_fsed, log_Kzz, vrv, vv, _broadening, const_mmr_ch4, factor = (
         params * multiple_factor
     )
     fsed = 10**log_fsed
@@ -264,7 +264,6 @@ def spectral_model(params):
     broadening = 25000.0
     
     # temperatures
-    Tarr = art.powerlaw_temperature(T0, 0.2)
     # cloud
     rg_layer, MMRc = amp_nh3.calc_ammodel(
         Parr, Tarr, mu, molmass_nh3, gravity, fsed, sigmag, Kzz, MMRbase_nh3
@@ -341,8 +340,13 @@ if opt_perform:
     plotjupiter.plot_opt(nus_obs, spectra, F_samp_init, F_samp)
 
     print(res.params)
-    # plt.show()
+    plt.show()
+    import sys
+    sys.exit()
 
+
+
+# %%
 
 # T0, log_fsed, log_Kzz, vrv, vv, boradening, mmr, normalization factor
 # parinit = jnp.array(
@@ -353,7 +357,7 @@ if opt_perform:
 
 def model_c(nu1, y1):
 
-    T0_n = numpyro.sample("T0_n", dist.Uniform(0.5, 2.0))
+    #T0_n = numpyro.sample("T0_n", dist.Uniform(0.5, 2.0))
     log_fsed_n = numpyro.sample("log_fsed_n", dist.Uniform(-1.0e4, 1.0e4))
     log_Kzz_n = numpyro.sample("log_Kzz_n", dist.Uniform(30.0, 50.0))
     vrv = numpyro.sample("vrv", dist.Uniform(-10.0, 10.0))
