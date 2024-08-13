@@ -132,16 +132,22 @@ dat = read_tpprofile_jupiter()
 torig = dat["Temperature (K)"]
 porig = dat["Pressure (bar)"]
 
-import sys
-sys.exit()
 
-art = ArtReflectPure(nu_grid=nus, pressure_btm=1.0e2, pressure_top=1.0e-3, nlayer=100)
-art.change_temperature_range(80.0, 400.0)
-Tarr = art.powerlaw_temperature(150.0, 0.2)
+# %%
+print(np.max(torig))
+# %%
+art = ArtReflectPure(nu_grid=nus, pressure_btm=3.0e1, pressure_top=1.0e-3, nlayer=100)
+#art.change_temperature_range(np.min(torig), 450.0)
 Parr = art.pressure
-mu = 2.3  # mean molecular weight
-gravity = gravity_jupiter(1.0, 1.0)
+Tarr = np.interp(Parr, porig, torig)
 
+
+plotjupiter.plottp(torig, porig, Parr, Tarr)
+
+
+# %%
+mu = 2.22  # mean molecular weight NASA Jupiter fact sheet
+gravity = gravity_jupiter(1.0, 1.0)
 
 if figshow:
     plotjupiter.plotPT(art, Tarr)

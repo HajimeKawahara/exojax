@@ -123,3 +123,12 @@ def plot_prediction(wav_obs, spectra, median_mu1, hpdi_mu1):
     plt.savefig("output/Jupiter_fit_wav.png", bbox_inches="tight", pad_inches=0.1)
     plt.show()
 
+
+def plottp(torig, porig, Parr, Tarr):
+    plt.plot(torig, porig)
+    plt.plot(Tarr, Parr)
+    plt.xlim(np.min(Tarr)-10, np.max(Tarr))
+    plt.ylim(np.min(Parr), np.max(Parr))
+    plt.gca().invert_yaxis()
+    plt.yscale("log")
+    plt.show()
