@@ -29,7 +29,7 @@ def mixing_ratio_cloud_pressure(pressure, cloud_base_pressure, fsed, mr_cloud_ba
     )
 
 
-@jit
+#@jit
 def mixing_ratio_cloud_profile(
     pressures, cloud_base_pressure, fsed, mr_cloud_base, kc=1
 ):
@@ -65,9 +65,9 @@ def get_value_at_cloud_base(array, smooth_index):
     Returns:
         float: value at cloud base
     """
-    # ind = int(smooth_index) #does not work
+    
     ind = smooth_index.astype(int)
-    # res = smooth_index - float(ind) #does not work
+    #ind = jnp.clip(ind, 0, len(array) - 2)
     res = smooth_index - jnp.floor(smooth_index)
     return (1.0 - res) * array[ind] + res * array[ind + 1]
 

@@ -23,15 +23,18 @@ hmc_perform = False
 ###
 
 import os
-os.environ['JAX_TRACEBACK_FILTERING'] = 'off'
 
-import plotjupiter 
+os.environ["JAX_TRACEBACK_FILTERING"] = "off"
+
+import plotjupiter
 import miegrid_generate
 
 import pickle
 import numpy as np
 import matplotlib.pyplot as plt
 from exojax.spec.unitconvert import nu2wav
+import pandas as pd
+
 from exojax.utils.constants import c  # light speed in km/s
 from exojax.atm.idealgas import number_density
 from exojax.utils.constants import m_u
@@ -47,6 +50,7 @@ from exojax.spec.molinfo import molmass_isotope
 from exojax.spec.opacont import OpaMie
 from exojax.utils.instfunc import resolution_to_gaussian_std
 from exojax.spec.specop import SopInstProfile
+from exojax.spec.opacalc import OpaPremodit
 from jax import random
 import numpyro.distributions as dist
 import numpyro
@@ -55,11 +59,7 @@ from numpyro.infer import Predictive
 from numpyro.diagnostics import hpdi
 from jaxopt import OptaxSolver
 import optax
-
 from jovispec.tpio import read_tpprofile_jupiter
-
-import pandas as pd
-
 
 import jax.numpy as jnp
 from jax import config
@@ -73,10 +73,11 @@ figshow = False
 username = "kawahara"
 if username == "exoplanet01":
     import ssl
+
     ssl._create_default_https_context = ssl._create_unverified_context
 
 
-dat = np.loadtxt("jupiter_corrected.dat") #made by Jupiter_Hires_Modeling_NIR.ipynb
+dat = np.loadtxt("jupiter_corrected.dat")  # made by Jupiter_Hires_Modeling_NIR.ipynb
 unmask_nus_obs = dat[:, 0]
 unmask_spectra = dat[:, 1]
 mask = (unmask_nus_obs < 6163.5) + ((unmask_nus_obs > 6166) & (unmask_nus_obs < 6184.5))
@@ -126,32 +127,35 @@ nus, wav, res = wavenumber_grid(
     np.min(nus_obs) - 5.0, np.max(nus_obs) + 5.0, 10000, xsmode="premodit", unit="cm-1"
 )
 
-#read the temperature-pressure profile of Jupiter
+# read the temperature-pressure profile of Jupiter
 dat = read_tpprofile_jupiter()
 
 torig = dat["Temperature (K)"]
 porig = dat["Pressure (bar)"]
 
-
-# %%
-print(np.max(torig))
 # %%
 art = ArtReflectPure(nu_grid=nus, pressure_btm=3.0e1, pressure_top=1.0e-3, nlayer=100)
-#art.change_temperature_range(np.min(torig), 450.0)
+# art.change_temperature_range(np.min(torig), 450.0)
+
+# custom temperature profile
 Parr = art.pressure
-Tarr = np.interp(Parr, porig, torig)
+Tarr_np = np.interp(Parr, porig, torig)
+i = np.argmin(Tarr_np)
+Tarr_np[0:i] = Tarr_np[i]
 
+# numpy ndarray should be converted to jnp.array (equivalent to Tarr=jnp.array(Tarr))
+Tarr = art.custom_temperature(Tarr_np)
 
-plotjupiter.plottp(torig, porig, Parr, Tarr)
+if True:
+    plotjupiter.plottp(torig, porig, Parr, Tarr)
 
 
 # %%
 mu = 2.22  # mean molecular weight NASA Jupiter fact sheet
 gravity = gravity_jupiter(1.0, 1.0)
 
-if figshow:
+if True:
     plotjupiter.plotPT(art, Tarr)
-
 
 
 pdb_nh3 = PdbCloud("NH3")
@@ -162,8 +166,8 @@ amp_nh3.check_temperature_range(Tarr)
 rhoc = pdb_nh3.condensate_substance_density  # g/cc
 
 
-n = nsol()  # solar abundance
-abundance_nh3 = n["N"]
+n = nsol()
+abundance_nh3 = 3.0 * n["N"]  # x 3 solar abundance
 molmass_nh3 = molmass_isotope("NH3", db_HIT=False)
 
 # fsed = 10.
@@ -183,7 +187,19 @@ Kzz_range = [1.0e2, 1.0e6]
 
 
 if miegird_generate:
-    Kzz, rg_layer, MMRc = miegrid_generate.generate_miegrid_new(Tarr, Parr, mu, gravity, pdb_nh3, amp_nh3, molmass_nh3, sigmag, MMRbase_nh3, fsed_range, Kzz_range)
+    Kzz, rg_layer, MMRc = miegrid_generate.generate_miegrid_new(
+        Tarr,
+        Parr,
+        mu,
+        gravity,
+        pdb_nh3,
+        amp_nh3,
+        molmass_nh3,
+        sigmag,
+        MMRbase_nh3,
+        fsed_range,
+        Kzz_range,
+    )
 else:
     pdb_nh3.load_miegrid()
 
@@ -213,7 +229,9 @@ sigma_extinction, sigma_scattering, asymmetric_factor = opa_nh3.mieparams_vector
 # plt.plot(pdb_nh3.refraction_index_wavenumber, miepar[50,:,0])
 
 if figshow:
-    plotjupiter.plot_extinction(nus, sigma_extinction, sigma_scattering, asymmetric_factor)
+    plotjupiter.plot_extinction(
+        nus, sigma_extinction, sigma_scattering, asymmetric_factor
+    )
 
 # Next, we consider the gas component, i.e. methane
 from exojax.spec.api import MdbHitemp
@@ -222,32 +240,29 @@ Eopt = 3300.0  # this is from the Elower optimization result
 # mdb_reduced = MdbHitemp("CH4", nurange=[nus_start,nus_end], isotope=1, elower_max=Eopt)
 mdb_reduced = MdbHitemp("CH4", nurange=[nus[0], nus[-1]], isotope=1, elower_max=Eopt)
 
-from exojax.spec.opacalc import OpaPremodit
 
 opa = OpaPremodit(
     mdb_reduced, nu_grid=nus, allow_32bit=True, auto_trange=[80.0, 300.0]
 )  # this reduced the device memory use in 5/6.
 
 ## Spectrum Model
-
-
 nusjax = jnp.array(nus)
 nusjax_solar = jnp.array(nus_solar)
 solspecjax = jnp.array(solspec)
 
 
 # ### gas opacity
-
 molmass_ch4 = molmass_isotope("CH4", db_HIT=False)
 asymmetric_parameter = asymmetric_factor + np.zeros((len(art.pressure), len(nus)))
 reflectivity_surface = np.zeros(len(nus))
 
-
 sop = SopInstProfile(nus)
 
-
+# parinit = jnp.array(
+#    [1.5, np.log10(1.0) * 10000.0, np.log10(1.0e4) * 10.0, -5.0, -55.0, 2.5, 1.0, 1.0]
+# )
+# multiple_factor = jnp.array([100.0, 0.0001, 0.1, 1.0, 1.0, 10000.0, 0.01, 1.0])
 # log_fsed, log_Kzz, vrv, vv, boradening, mmr, normalization factor
-# parinit = jnp.array([1.5, np.log10(1.0)*10000.0, np.log10(1.e4)*10.0, -5.0, -55.0, 2.5, 1.0, 1.0])
 parinit = jnp.array(
     [np.log10(1.0) * 10000.0, np.log10(1.0e4) * 10.0, -5.0, -55.0, 2.5, 2.0, 0.6]
 )
@@ -259,10 +274,11 @@ def spectral_model(params):
     log_fsed, log_Kzz, vrv, vv, _broadening, const_mmr_ch4, factor = (
         params * multiple_factor
     )
+
     fsed = 10**log_fsed
     Kzz = 10**log_Kzz
     broadening = 25000.0
-    
+
     # temperatures
     # cloud
     rg_layer, MMRc = amp_nh3.calc_ammodel(
@@ -321,14 +337,9 @@ def cost_function(params):
     return jnp.sum((spectra - spectral_model(params)) ** 2)
 
 
-
-
 if opt_perform:
     adam = OptaxSolver(opt=optax.adam(1.0e-2), fun=cost_function)
     res = adam.run(parinit)
-    # maxiter = 100
-    # solver = jaxopt.LBFGS(fun=cost_function, maxiter=maxiter)
-    # res = solver.run(optpar_init)
 
     # res.params
     print(unpack_params(res.params))
@@ -342,8 +353,8 @@ if opt_perform:
     print(res.params)
     plt.show()
     import sys
-    sys.exit()
 
+    sys.exit()
 
 
 # %%
@@ -357,7 +368,7 @@ if opt_perform:
 
 def model_c(nu1, y1):
 
-    #T0_n = numpyro.sample("T0_n", dist.Uniform(0.5, 2.0))
+    # T0_n = numpyro.sample("T0_n", dist.Uniform(0.5, 2.0))
     log_fsed_n = numpyro.sample("log_fsed_n", dist.Uniform(-1.0e4, 1.0e4))
     log_Kzz_n = numpyro.sample("log_Kzz_n", dist.Uniform(30.0, 50.0))
     vrv = numpyro.sample("vrv", dist.Uniform(-10.0, 10.0))
@@ -377,24 +388,24 @@ def model_c(nu1, y1):
     numpyro.sample("y1", dist.Normal(mean, err_all), obs=y1)
 
 
-
-#initialization
+# initialization
 import jax.numpy as jnp
+
 if opt_perform:
     # T0, log_fsed, log_Kzz, vrv, vv, boradening (fix), mmr, normalization factor
-#    init_params = {
-#        "T0_n": 1.5,
-#        }
+    #    init_params = {
+    #        "T0_n": 1.5,
+    #        }
     init_params = {
         "T0_n": 0.89,
         "log_fsed_n": 0.44,
         "log_Kzz_n": 40.0,
         "vrv": -1.1,
         "vv": -58.3,
-        "MMR_CH4_n":1.58,
+        "MMR_CH4_n": 1.58,
         "factor": 0.597,
-        "sigma": 1.0
-        }
+        "sigma": 1.0,
+    }
 
     #    init_params = {
 #        "T0_n": jnp.array(res.params[0]),
@@ -419,7 +430,7 @@ if hmc_perform:
     mcmc = MCMC(kernel, num_warmup=num_warmup, num_samples=num_samples)
     if opt_perform == True:
         mcmc.run(rng_key_, nu1=nus_obs, y1=spectra, init_params=init_params)
-#        mcmc.run(rng_key_, nu1=nus_obs, y1=spectra)
+    #        mcmc.run(rng_key_, nu1=nus_obs, y1=spectra)
     else:
         mcmc.run(rng_key_, nu1=nus_obs, y1=spectra)
     mcmc.print_summary()
@@ -436,7 +447,7 @@ predictions = pred(rng_key_, nu1=nus_obs, y1=None)
 median_mu1 = jnp.median(predictions["y1"], axis=0)
 hpdi_mu1 = hpdi(predictions["y1"], 0.95)
 
-#prediction plot
+# prediction plot
 plotjupiter.plot_prediction(wav_obs, spectra, median_mu1, hpdi_mu1)
 
 
@@ -444,4 +455,3 @@ if hmc_perform:
     np.savez("output/all.npz", [median_mu1, hpdi_mu1])
 
 #####################################################
-
