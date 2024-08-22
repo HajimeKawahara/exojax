@@ -1,14 +1,16 @@
 import numpy as np
 import matplotlib.pyplot as plt
 
+
 def print_wavminmax(wav_obs):
     print(
-    "wavelength range used in this analysis=",
-    np.min(wav_obs),
-    "--",
-    np.max(wav_obs),
-    "AA",
-)
+        "wavelength range used in this analysis=",
+        np.min(wav_obs),
+        "--",
+        np.max(wav_obs),
+        "AA",
+    )
+
 
 def plot_opt(nus_obs, spectra, F_samp_init, F_samp):
     fig = plt.figure(figsize=(30, 5))
@@ -19,14 +21,15 @@ def plot_opt(nus_obs, spectra, F_samp_init, F_samp):
     plt.legend()
     plt.xlim(np.min(nus_obs), np.max(nus_obs))
     plt.savefig("Jupiter_petitIRD.png")
-    plt.close()
+    return plt
+
 
 def plot_spec1(unmask_nus_obs, unmask_spectra, nus_obs, spectra):
     fig = plt.figure(figsize=(20, 5))
     plt.plot(nus_obs, spectra, ".")
     plt.plot(unmask_nus_obs, unmask_spectra, alpha=0.5)
-    plt.show()
-    plt.close()
+    return plt
+
 
 def plot_spec2(nus_obs, spectra, solspec, nus_solar, vperc):
     fig = plt.figure(figsize=(20, 5))
@@ -37,7 +40,8 @@ def plot_spec2(nus_obs, spectra, solspec, nus_solar, vperc):
     plt.xlim(np.min(nus_obs), np.max(nus_obs))
     plt.ylim(0.0, 0.25)
     plt.legend()
-    plt.close()
+    return plt
+
 
 def plotPT(art, Tarr):
     fig = plt.figure()
@@ -46,7 +50,8 @@ def plotPT(art, Tarr):
     ax.invert_yaxis()
     plt.yscale("log")
     plt.xscale("log")
-    plt.show()
+    return plt
+
 
 def plot_cloud_structure(Parr, rg_layer, MMRc, fac):
     fig = plt.figure()
@@ -68,6 +73,8 @@ def plot_cloud_structure(Parr, rg_layer, MMRc, fac):
     plt.yscale("log")
     # plt.xscale("log")
     ax.invert_yaxis()
+    return plt
+
 
 def plot_extinction(nus, sigma_extinction, sigma_scattering, asymmetric_factor):
     fig = plt.figure(figsize=(10, 5))
@@ -91,44 +98,45 @@ def plot_extinction(nus, sigma_extinction, sigma_scattering, asymmetric_factor):
     plt.xlabel("wavenumber (cm-1)")
     plt.ylabel("$\\beta_0$")
     plt.savefig("miefig_high.png")
-    plt.show()
+    return plt
+
 
 def plot_prediction(wav_obs, spectra, median_mu1, hpdi_mu1):
-    plt.rcParams['font.family']='FreeSerif'
+    plt.rcParams["font.family"] = "FreeSerif"
     fig = plt.figure(figsize=(15, 5))
     ax = fig.add_subplot(111)
-#plt.plot(nus_obs, spectra, ".", label="observed spectrum")
-#plt.plot(
-#    nus_obs, median_mu1, alpha=0.5, label="median prediction", color="C1", ls="dashed"
-#)
+    # plt.plot(nus_obs, spectra, ".", label="observed spectrum")
+    # plt.plot(
+    #    nus_obs, median_mu1, alpha=0.5, label="median prediction", color="C1", ls="dashed"
+    # )
     plt.plot(wav_obs, spectra, ".", label="observed spectrum")
     plt.plot(
-    wav_obs, median_mu1, alpha=0.5, lw=2, label="median prediction", color="black"
-)
+        wav_obs, median_mu1, alpha=0.5, lw=2, label="median prediction", color="black"
+    )
 
     ax.fill_between(
-    wav_obs,
-    hpdi_mu1[0],
-    hpdi_mu1[1],
-    alpha=0.3,
-    interpolate=True,
-    color="gray",
-    label="95% area",
-)
+        wav_obs,
+        hpdi_mu1[0],
+        hpdi_mu1[1],
+        alpha=0.3,
+        interpolate=True,
+        color="gray",
+        label="95% area",
+    )
     plt.legend(fontsize=16)
     plt.xlim(np.min(wav_obs), np.max(wav_obs))
     plt.xlabel("wavelength $\AA$", fontsize=18)
     plt.ylabel("normalized spectrum", fontsize=18)
     plt.tick_params(labelsize=18)
     plt.savefig("output/Jupiter_fit_wav.png", bbox_inches="tight", pad_inches=0.1)
-    plt.show()
+    return plt
 
 
 def plottp(torig, porig, Parr, Tarr):
     plt.plot(torig, porig)
     plt.plot(Tarr, Parr)
-    plt.xlim(np.min(Tarr)-10, np.max(Tarr))
+    plt.xlim(np.min(Tarr) - 10, np.max(Tarr))
     plt.ylim(np.min(Parr), np.max(Parr))
     plt.gca().invert_yaxis()
     plt.yscale("log")
-    plt.show()
+    return plt

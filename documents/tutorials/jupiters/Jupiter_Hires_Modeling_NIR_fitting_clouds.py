@@ -65,7 +65,7 @@ import jax.numpy as jnp
 from jax import config
 
 config.update("jax_enable_x64", True)
-figshow = False
+figshow = True  # False # if True, the figures are shown
 
 
 # Forget about the following code. I need this to run the code somewhere...
@@ -85,8 +85,6 @@ nus_obs = unmask_nus_obs[mask]
 wav_obs = nu2wav(nus_obs, unit="AA")
 
 plotjupiter.print_wavminmax(wav_obs)
-# import sys
-# "sys.exit()
 
 spectra = unmask_spectra[mask]
 
@@ -119,10 +117,6 @@ vperc = vrv / 300000
 if figshow:
     plotjupiter.plot_spec2(nus_obs, spectra, solspec, nus_solar, vperc)
 
-
-### Atmospheric Model Setting
-# See `Jupiter_cloud_model_using_amp.ipynb, set the master wavenumber grid
-
 nus, wav, res = wavenumber_grid(
     np.min(nus_obs) - 5.0, np.max(nus_obs) + 5.0, 10000, xsmode="premodit", unit="cm-1"
 )
@@ -135,7 +129,6 @@ porig = dat["Pressure (bar)"]
 
 # %%
 art = ArtReflectPure(nu_grid=nus, pressure_btm=3.0e1, pressure_top=1.0e-3, nlayer=100)
-# art.change_temperature_range(np.min(torig), 450.0)
 
 # custom temperature profile
 Parr = art.pressure
@@ -149,7 +142,6 @@ Tarr = art.custom_temperature(Tarr_np)
 if True:
     plotjupiter.plottp(torig, porig, Parr, Tarr)
 
-
 # %%
 mu = 2.22  # mean molecular weight NASA Jupiter fact sheet
 gravity = gravity_jupiter(1.0, 1.0)
@@ -157,18 +149,16 @@ gravity = gravity_jupiter(1.0, 1.0)
 if True:
     plotjupiter.plotPT(art, Tarr)
 
-
 pdb_nh3 = PdbCloud("NH3")
 amp_nh3 = AmpAmcloud(pdb_nh3, bkgatm="H2")
 amp_nh3.check_temperature_range(Tarr)
 
 # condensate substance density
 rhoc = pdb_nh3.condensate_substance_density  # g/cc
-
-
 n = nsol()
 abundance_nh3 = 3.0 * n["N"]  # x 3 solar abundance
 molmass_nh3 = molmass_isotope("NH3", db_HIT=False)
+
 
 # fsed = 10.
 fsed = 3.0
@@ -205,7 +195,6 @@ else:
 
 
 # to convert MMR to g/L ...
-
 fac = molmass_nh3 * m_u * number_density(Parr, Tarr) * 1.0e3  # g/L
 
 if figshow:
@@ -331,6 +320,14 @@ def unpack_params(params):
 
 
 F_samp_init = spectral_model(unpack_params(parinit))
+print("(*_*)")
+
+if figshow:
+    plt = plotjupiter.plot_opt(nus_obs, spectra, F_samp_init, F_samp_init)
+    plt.show()
+
+import sys
+sys.exit()
 
 
 def cost_function(params):
