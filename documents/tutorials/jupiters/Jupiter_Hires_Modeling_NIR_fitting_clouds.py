@@ -1,47 +1,46 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-# # Modeling a High Resolution Reflection Spectrum
+## Modeling a High Resolution Reflection Spectrum
 
-# Hajime Kawahara July 13th (2024)
+# Hajime Kawahara August 24th (2024)
 # This code analyzes the reflection spectrum of Jupiter. We here try to solve two problems.
 # One is we need to calibrate the wavenumber grid of the data because the calibration lines were insufficient and the wavelength of the data is not accurate.
 # To do so, we use the reflection spectrum model itself.
 # The other is, after the wavelenghtcalibration, we try to fit the model to the calibrated data.
-#
 # This note coresponds to the other one, using the output of the code for the former one (Jupiter_Hires_Modeling_NIR_fitting.ipynb)
-
-# %%
 
 ### Preparation
 # if this is the first run, set miegird_generate = True, and run the code to generate Mie grid. After that, set False.
 miegird_generate = False
 # when the optimization is performed, set opt_perform = True, after performing it, set False
-opt_perform = True
+opt_perform = False
 # when HMC is performed, set hmc_perform = True, after performing it, set False
 hmc_perform = False
+# if True, the figures are shown
+figshow = True
 ###
 
 import os
 
 os.environ["JAX_TRACEBACK_FILTERING"] = "off"
 
+
 import plotjupiter
 import miegrid_generate
-
 import pickle
 import numpy as np
 import matplotlib.pyplot as plt
-from exojax.spec.unitconvert import nu2wav
 import pandas as pd
 
-from exojax.utils.constants import c  # light speed in km/s
 from exojax.atm.idealgas import number_density
-from exojax.utils.constants import m_u
+from exojax.spec.unitconvert import nu2wav
 from exojax.spec.unitconvert import wav2nu
+from exojax.utils.constants import c  # light speed in km/s
+from exojax.utils.constants import m_u
 from exojax.utils.grids import wavenumber_grid
-from exojax.spec.atmrt import ArtReflectPure
 from exojax.utils.astrofunc import gravity_jupiter
+from exojax.spec.atmrt import ArtReflectPure
 from exojax.spec.pardb import PdbCloud
 from exojax.atm.atmphys import AmpAmcloud
 from exojax.utils.zsol import nsol
@@ -51,7 +50,8 @@ from exojax.spec.opacont import OpaMie
 from exojax.utils.instfunc import resolution_to_gaussian_std
 from exojax.spec.specop import SopInstProfile
 from exojax.spec.opacalc import OpaPremodit
-from jax import random
+from exojax.spec.api import MdbHitemp
+
 import numpyro.distributions as dist
 import numpyro
 from numpyro.infer import MCMC, NUTS
@@ -61,11 +61,11 @@ from jaxopt import OptaxSolver
 import optax
 from jovispec.tpio import read_tpprofile_jupiter
 
+from jax import random
 import jax.numpy as jnp
 from jax import config
 
 config.update("jax_enable_x64", True)
-figshow = True  # False # if True, the figures are shown
 
 
 # Forget about the following code. I need this to run the code somewhere...
@@ -100,8 +100,6 @@ if figshow:
 # - http://doi.latmos.ipsl.fr/DOI_SOLAR_HRS.v1.1.html
 # - http://bdap.ipsl.fr/voscat_en/solarspectra.html
 #
-
-# filename = "/home/kawahara/solar-hrs/Spectre_HR_LATMOS_Meftah_V1.txt"
 filename = "/home/" + username + "/solar-hrs/Spectre_HR_LATMOS_Meftah_V1.txt"
 dat = pd.read_csv(filename, names=("wav", "flux"), comment=";", delimiter="\t")
 dat["wav"] = dat["wav"] * 10
@@ -158,23 +156,12 @@ rhoc = pdb_nh3.condensate_substance_density  # g/cc
 n = nsol()
 abundance_nh3 = 3.0 * n["N"]  # x 3 solar abundance
 molmass_nh3 = molmass_isotope("NH3", db_HIT=False)
-
-
-# fsed = 10.
-fsed = 3.0
-sigmag = 2.0
-Kzz = 1.0e4
 MMRbase_nh3 = vmr2mmr(abundance_nh3, molmass_nh3, mu)
-
-rg_layer, MMRc = amp_nh3.calc_ammodel(
-    Parr, Tarr, mu, molmass_nh3, gravity, fsed, sigmag, Kzz, MMRbase_nh3
-)
-
 
 # search for rg, sigmag range based on fsed and Kzz range
 fsed_range = [0.1, 10.0]
 Kzz_range = [1.0e2, 1.0e6]
-
+sigmag = 2.0
 
 if miegird_generate:
     Kzz, rg_layer, MMRc = miegrid_generate.generate_miegrid_new(
@@ -193,38 +180,9 @@ if miegird_generate:
 else:
     pdb_nh3.load_miegrid()
 
-
-# to convert MMR to g/L ...
-fac = molmass_nh3 * m_u * number_density(Parr, Tarr) * 1.0e3  # g/L
-
-if figshow:
-    plotjupiter.plot_cloud_structure(Parr, rg_layer, MMRc, fac)
-
-fsed = 3.0
-rg_layer, MMRc = amp_nh3.calc_ammodel(
-    Parr, Tarr, mu, molmass_nh3, gravity, fsed, sigmag, Kzz, MMRbase_nh3
-)
-rg = np.nanmean(rg_layer)
-
 opa_nh3 = OpaMie(pdb_nh3, nus)
 
-sigma_extinction, sigma_scattering, asymmetric_factor = opa_nh3.mieparams_vector(
-    rg, sigmag
-)  # if using MieGrid
-# sigma_extinction, sigma_scattering, asymmetric_factor = (
-#    opa_nh3.mieparams_vector_direct_from_pymiescatt(rg, sigmag)
-# ) # direct computation
-
-# plt.plot(pdb_nh3.refraction_index_wavenumber, miepar[50,:,0])
-
-if figshow:
-    plotjupiter.plot_extinction(
-        nus, sigma_extinction, sigma_scattering, asymmetric_factor
-    )
-
 # Next, we consider the gas component, i.e. methane
-from exojax.spec.api import MdbHitemp
-
 Eopt = 3300.0  # this is from the Elower optimization result
 # mdb_reduced = MdbHitemp("CH4", nurange=[nus_start,nus_end], isotope=1, elower_max=Eopt)
 mdb_reduced = MdbHitemp("CH4", nurange=[nus[0], nus[-1]], isotope=1, elower_max=Eopt)
@@ -242,29 +200,36 @@ solspecjax = jnp.array(solspec)
 
 # ### gas opacity
 molmass_ch4 = molmass_isotope("CH4", db_HIT=False)
-asymmetric_parameter = asymmetric_factor + np.zeros((len(art.pressure), len(nus)))
+# asymmetric_parameter = asymmetric_factor + np.zeros((len(art.pressure), len(nus)))
 reflectivity_surface = np.zeros(len(nus))
 
 sop = SopInstProfile(nus)
 # log_fsed, log_Kzz, vrv, vv, boradening, mmr, normalization factor
-#parinit = jnp.array(
+# parinit = jnp.array(
 #    [np.log10(1.0) * 10000.0, np.log10(1.0e4) * 10.0, -5.0, -55.0, 2.5, 2.0, 0.6]
-#)
-sigmag = 2.0
+# )
 parinit = jnp.array(
-    [np.log10(10.0) * 1e4, np.log10(1.0e3) * 10.0, -5.0, -55.0, 2.5, 2.0, 2.5]
+    [jnp.log10(10.0) * 1e4, jnp.log10(1.0e4) * 10.0, -5.0, -55.0, 2.5, 2.0, 0.6]
 )
-multiple_factor = jnp.array([1e-4, 0.1, 1.0, 1.0, 10000.0, 0.01, 1.0])
+
+
+def unpack_params(params):
+    multiple_factor = jnp.array([1e-4, 0.1, 1.0, 1.0, 10000.0, 0.001, 1.0])
+    par = params * multiple_factor
+    log_fsed = par[0]
+    log_Kzz = par[1]
+    vrv = par[2]
+    vv = par[3]
+    _broadening = par[4]
+    const_mmr_ch4 = par[5]
+    factor = par[6]
+    fsed = 10**log_fsed
+    Kzz = 10**log_Kzz
+    return fsed, Kzz, vrv, vv, _broadening, const_mmr_ch4, factor
 
 
 def spectral_model(params):
-
-    log_fsed, log_Kzz, vrv, vv, _broadening, const_mmr_ch4, factor = (
-        params * multiple_factor
-    )
-
-    fsed = 10**log_fsed
-    Kzz = 10**log_Kzz
+    fsed, Kzz, vrv, vv, _broadening, const_mmr_ch4, factor = unpack_params(params)
     broadening = 25000.0
 
     # temperatures
@@ -275,10 +240,12 @@ def spectral_model(params):
     rg = jnp.mean(rg_layer)
 
     ### this one
-    sigma_extinction, sigma_scattering, asymmetric_factor = opa_nh3.mieparams_vector_direct_from_pymiescatt(rg, sigmag)
-    #sigma_extinction, sigma_scattering, asymmetric_factor = opa_nh3.mieparams_vector(
-    #    rg, sigmag
-    #)
+    # sigma_extinction, sigma_scattering, asymmetric_factor = (
+    #    opa_nh3.mieparams_vector_direct_from_pymiescatt(rg, sigmag)
+    # )
+    sigma_extinction, sigma_scattering, asymmetric_factor = opa_nh3.mieparams_vector(
+        rg, sigmag
+    )
     dtau_cld = art.opacity_profile_cloud_lognormal(
         sigma_extinction, rhoc, MMRc, rg, sigmag, gravity
     )
@@ -314,21 +281,37 @@ def spectral_model(params):
     return factor * Fr_samp
 
 
-def unpack_params(params):
-    return params * multiple_factor
+def factor_mmr_to_gperl(molmass, Parr, Tarr):
+    """factor to convert MMR to g/L
+
+    Args:
+        molmass_nh3 (_type_): molecular mass
+        Parr (_type_): _description_
+        Tarr (_type_): _description_
+
+    Note:
+        mass density (g/L) = fac*MMR
+
+    Returns:
+        _type_: _description_
+    """
+    return molmass * m_u * number_density(Parr, Tarr) * 1.0e3
 
 
+fac = factor_mmr_to_gperl(molmass_nh3, Parr, Tarr)
 
-print(parinit)    
-F_samp_init = spectral_model(unpack_params(parinit))
-print("(*_*)")
 
 if figshow:
+
+    print("(*_*) show init params:")
+    F_samp_init = spectral_model(parinit)
+    fsed, Kzz, vrv, vv, _broadening, const_mmr_ch4, factor = unpack_params(parinit)
+    rg_layer, MMRc = amp_nh3.calc_ammodel(
+        Parr, Tarr, mu, molmass_nh3, gravity, fsed, sigmag, Kzz, MMRbase_nh3
+    )
+    plotjupiter.plot_cloud_structure(Parr, rg_layer, MMRc, fac)
     plt = plotjupiter.plot_opt(nus_obs, spectra, F_samp_init, F_samp_init)
     plt.show()
-
-import sys
-sys.exit()
 
 
 def cost_function(params):
@@ -340,14 +323,14 @@ if opt_perform:
     res = adam.run(parinit)
 
     # res.params
-    print(unpack_params(res.params))
-    print(unpack_params(parinit))
+    print("fsed, Kzz, vrv, vv, _broadening, const_mmr_ch4, factor")
+    print("init:", unpack_params(parinit))
+    print("best:", unpack_params(res.params))
 
     F_samp = spectral_model(res.params)
     F_samp_init = spectral_model(parinit)
 
-    plotjupiter.plot_opt(nus_obs, spectra, F_samp_init, F_samp)
-
+    plt = plotjupiter.plot_opt(nus_obs, spectra, F_samp_init, F_samp)
     print(res.params)
     plt.show()
     import sys
