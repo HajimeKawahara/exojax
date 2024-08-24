@@ -246,16 +246,15 @@ asymmetric_parameter = asymmetric_factor + np.zeros((len(art.pressure), len(nus)
 reflectivity_surface = np.zeros(len(nus))
 
 sop = SopInstProfile(nus)
-
-# parinit = jnp.array(
-#    [1.5, np.log10(1.0) * 10000.0, np.log10(1.0e4) * 10.0, -5.0, -55.0, 2.5, 1.0, 1.0]
-# )
-# multiple_factor = jnp.array([100.0, 0.0001, 0.1, 1.0, 1.0, 10000.0, 0.01, 1.0])
 # log_fsed, log_Kzz, vrv, vv, boradening, mmr, normalization factor
+#parinit = jnp.array(
+#    [np.log10(1.0) * 10000.0, np.log10(1.0e4) * 10.0, -5.0, -55.0, 2.5, 2.0, 0.6]
+#)
+sigmag = 2.0
 parinit = jnp.array(
-    [np.log10(1.0) * 10000.0, np.log10(1.0e4) * 10.0, -5.0, -55.0, 2.5, 2.0, 0.6]
+    [np.log10(10.0) * 1e4, np.log10(1.0e3) * 10.0, -5.0, -55.0, 2.5, 2.0, 2.5]
 )
-multiple_factor = jnp.array([0.0001, 0.1, 1.0, 1.0, 10000.0, 0.001, 1.0])
+multiple_factor = jnp.array([1e-4, 0.1, 1.0, 1.0, 10000.0, 0.01, 1.0])
 
 
 def spectral_model(params):
@@ -276,10 +275,10 @@ def spectral_model(params):
     rg = jnp.mean(rg_layer)
 
     ### this one
-    # sigma_extinction, sigma_scattering, asymmetric_factor = opa_nh3.mieparams_vector_direct_from_pymiescatt(rg, sigmag)
-    sigma_extinction, sigma_scattering, asymmetric_factor = opa_nh3.mieparams_vector(
-        rg, sigmag
-    )
+    sigma_extinction, sigma_scattering, asymmetric_factor = opa_nh3.mieparams_vector_direct_from_pymiescatt(rg, sigmag)
+    #sigma_extinction, sigma_scattering, asymmetric_factor = opa_nh3.mieparams_vector(
+    #    rg, sigmag
+    #)
     dtau_cld = art.opacity_profile_cloud_lognormal(
         sigma_extinction, rhoc, MMRc, rg, sigmag, gravity
     )
@@ -319,6 +318,8 @@ def unpack_params(params):
     return params * multiple_factor
 
 
+
+print(parinit)    
 F_samp_init = spectral_model(unpack_params(parinit))
 print("(*_*)")
 

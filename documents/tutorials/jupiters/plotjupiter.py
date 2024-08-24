@@ -71,7 +71,8 @@ def plot_cloud_structure(Parr, rg_layer, MMRc, fac):
     plt.plot(fac * MMRc, Parr)
     plt.xlabel("cloud density g/L")
     plt.yscale("log")
-    # plt.xscale("log")
+    plt.xscale("log")
+    plt.xlim(1e-8,None)
     ax.invert_yaxis()
     return plt
 
