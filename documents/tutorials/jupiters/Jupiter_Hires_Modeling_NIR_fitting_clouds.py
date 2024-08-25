@@ -14,7 +14,7 @@
 # if this is the first run, set miegird_generate = True, and run the code to generate Mie grid. After that, set False.
 miegird_generate = False
 # when the optimization is performed, set opt_perform = True, after performing it, set False
-opt_perform = False
+opt_perform = True
 # when HMC is performed, set hmc_perform = True, after performing it, set False
 hmc_perform = False
 # if True, the figures are shown
@@ -60,6 +60,7 @@ from numpyro.diagnostics import hpdi
 from jaxopt import OptaxSolver
 import optax
 from jovispec.tpio import read_tpprofile_jupiter
+import tqdm
 
 from jax import random
 import jax.numpy as jnp
@@ -209,12 +210,13 @@ sop = SopInstProfile(nus)
 #    [np.log10(1.0) * 10000.0, np.log10(1.0e4) * 10.0, -5.0, -55.0, 2.5, 2.0, 0.6]
 # )
 parinit = jnp.array(
-    [jnp.log10(10.0) * 1e4, jnp.log10(1.0e4) * 10.0, -5.0, -55.0, 2.5, 2.0, 0.6]
+    [jnp.log10(3.0), jnp.log10(1.0e4), -5.0, -55.0, 2.5, 0.2, 0.6]
 )
 
 
+
 def unpack_params(params):
-    multiple_factor = jnp.array([1e-4, 0.1, 1.0, 1.0, 10000.0, 0.001, 1.0])
+    multiple_factor = jnp.array([1.0, 1.0, 1.0, 1.0, 10000.0, 0.01, 1.0])
     par = params * multiple_factor
     log_fsed = par[0]
     log_Kzz = par[1]
@@ -320,18 +322,36 @@ def cost_function(params):
 
 if opt_perform:
     adam = OptaxSolver(opt=optax.adam(1.0e-2), fun=cost_function)
-    res = adam.run(parinit)
+    # res = adam.run(parinit)
+    
+    params = parinit
+    state = adam.init_state(params)
+    val =[]
+    loss = []
+    for _ in tqdm.tqdm(range(300)):  
+        params, state = adam.update(params, state)
+        val.append(params)
+        loss.append(state.value)
+    val = np.array(val)
+    loss = np.array(loss)
+    
+    fig = plt.figure()
+    ax = fig.add_subplot(111)
+    plt.plot(loss)
+    plt.yscale("log")
+    plt.show()
+
 
     # res.params
     print("fsed, Kzz, vrv, vv, _broadening, const_mmr_ch4, factor")
     print("init:", unpack_params(parinit))
-    print("best:", unpack_params(res.params))
+    print("best:", unpack_params(params))
 
-    F_samp = spectral_model(res.params)
+    F_samp = spectral_model(params)
     F_samp_init = spectral_model(parinit)
 
     plt = plotjupiter.plot_opt(nus_obs, spectra, F_samp_init, F_samp)
-    print(res.params)
+    print(params)
     plt.show()
     import sys
 
@@ -359,7 +379,7 @@ def model_c(nu1, y1):
     factor = numpyro.sample("factor", dist.Uniform(0.0, 1.0))
 
     params = jnp.array(
-        [T0_n, log_fsed_n, log_Kzz_n, vrv, vv, broadening, molmass_ch4_n, factor]
+        [log_fsed_n, log_Kzz_n, vrv, vv, broadening, molmass_ch4_n, factor]
     )
     mean = spectral_model(params)
 

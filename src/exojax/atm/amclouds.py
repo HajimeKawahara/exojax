@@ -29,7 +29,7 @@ def mixing_ratio_cloud_pressure(pressure, cloud_base_pressure, fsed, mr_cloud_ba
     )
 
 
-#@jit
+@jit
 def mixing_ratio_cloud_profile(
     pressures, cloud_base_pressure, fsed, mr_cloud_base, kc=1
 ):
