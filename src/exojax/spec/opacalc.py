@@ -145,19 +145,18 @@ class OpaPremodit(OpaCalc):
 
         return eq_attributes
 
-
     def _if_exist_check_eq(self, other, attribute, eq_attributes):
         if hasattr(self, attribute) and hasattr(other, attribute):
-            return eq_attributes and getattr(self,attribute) == getattr(other,attribute)
+            return eq_attributes and getattr(self, attribute) == getattr(
+                other, attribute
+            )
         elif not hasattr(self, attribute) and not hasattr(other, attribute):
             return eq_attributes
         else:
             return False
 
-
     def __ne__(self, other):
         return not self.__eq__(other)
-
 
     def auto_setting(self, Tl, Tu):
         print("OpaPremodit: params automatically set.")
@@ -270,7 +269,7 @@ class OpaPremodit(OpaCalc):
             self.gamma_ref = mdb.alpha_ref * reference_factor
 
     def apply_params(self):
-        #self.mdb.change_reference_temperature(self.Tref)
+        # self.mdb.change_reference_temperature(self.Tref)
         self.dbtype = self.mdb.dbtype
 
         # broadening
@@ -288,7 +287,9 @@ class OpaPremodit(OpaCalc):
             self.mdb.elower,
             self.gamma_ref,
             self.n_Texp,
-            self.mdb.line_strength(self.Tref), # line strength at Tref (is not necessary for Tref_original)
+            self.mdb.line_strength(
+                self.Tref
+            ),  # line strength at Tref (is not necessary for Tref_original)
             self.Twt,
             Tref=self.Tref,
             Tref_broadening=self.Tref_broadening,
@@ -333,9 +334,11 @@ class OpaPremodit(OpaCalc):
         nsigmaD = normalized_doppler_sigma(T, self.mdb.molmass, R)
 
         if self.mdb.dbtype == "hitran":
-            qt = self.mdb.qr_interp(self.mdb.isotope, T, Tref_original)
+            # qt = self.mdb.qr_interp(self.mdb.isotope, T, Tref_original)
+            qt = self.mdb.qr_interp(self.mdb.isotope, T, self.Tref)
         elif self.mdb.dbtype == "exomol":
-            qt = self.mdb.qr_interp(T, Tref_original)
+            # qt = self.mdb.qr_interp(T, Tref_original)
+            qt = self.mdb.qr_interp(T, self.Tref)
 
         if self.diffmode == 0:
             return xsvector_zeroth(
@@ -420,9 +423,15 @@ class OpaPremodit(OpaCalc):
         ) = self.opainfo
 
         if self.mdb.dbtype == "hitran":
-            qtarr = vmap(self.mdb.qr_interp, (None, 0, None))(self.mdb.isotope, Tarr, Tref_original)
+            # qtarr = vmap(self.mdb.qr_interp, (None, 0, None))(self.mdb.isotope, Tarr, Tref_original)
+            qtarr = vmap(self.mdb.qr_interp, (None, 0, None))(
+                self.mdb.isotope, Tarr, self.Tref
+            )
         elif self.mdb.dbtype == "exomol":
-            qtarr = vmap(self.mdb.qr_interp, (0, None))(Tarr, Tref_original)
+            # qtarr = vmap(self.mdb.qr_interp, (0, None))(Tarr, Tref_original)
+            qtarr = vmap(self.mdb.qr_interp, (None, 0, None))(
+                self.mdb.isotope, Tarr, self.Tref
+            )
 
         if self.diffmode == 0:
             return xsmatrix_zeroth(
@@ -583,12 +592,11 @@ class OpaModit(OpaCalc):
             and (self.wavelength_order == other.wavelength_order)
             and all(self.nu_grid == other.nu_grid)
         )
-    
+
         return eq_attributes
 
     def __ne__(self, other):
         return not self.__eq__(other)
-
 
     def apply_params(self):
         self.dbtype = self.mdb.dbtype
@@ -773,7 +781,7 @@ class OpaDirect(OpaCalc):
             and (self.wavelength_order == other.wavelength_order)
             and all(self.nu_grid == other.nu_grid)
         )
-    
+
         return eq_attributes
 
     def __ne__(self, other):
@@ -870,7 +878,7 @@ class OpaDirect(OpaCalc):
                 self.mdb.nu_lines, Tarr, self.mdb.molmass
             )
         elif self.mdb.dbtype == "exomol":
-            vmapqt = vmap(self.mdb.qr_interp,(0, None))
+            vmapqt = vmap(self.mdb.qr_interp, (0, None))
             qt = vmapqt(Tarr, Tref_original)
             vmapexomol = jit(vmap(gamma_exomol, (0, 0, None, None)))
             gammaLMP = vmapexomol(Parr, Tarr, self.mdb.n_Texp, self.mdb.alpha_ref)
