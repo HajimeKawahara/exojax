@@ -18,10 +18,12 @@ opt_perform = True
 # when HMC is performed, set hmc_perform = True, after performing it, set False
 hmc_perform = False
 # if True, the figures are shown
-figshow = True
+figshow = False
 ###
 
 import os
+
+from torch import log_
 
 os.environ["JAX_TRACEBACK_FILTERING"] = "off"
 
@@ -161,7 +163,8 @@ MMRbase_nh3 = vmr2mmr(abundance_nh3, molmass_nh3, mu)
 
 # search for rg, sigmag range based on fsed and Kzz range
 fsed_range = [0.1, 10.0]
-Kzz = 1.0e4
+Kzz_fixed = 1.0e4
+sigmag_fixed = 2.0
 
 if miegird_generate:
     Kzz, rg_layer, MMRc = miegrid_generate.generate_miegrid_new(
@@ -172,10 +175,10 @@ if miegird_generate:
         pdb_nh3,
         amp_nh3,
         molmass_nh3,
-        sigmag_array,
+        sigmag_fixed,
         MMRbase_nh3,
         fsed_range,
-        Kzz,
+        Kzz_fixed,
     )
 else:
     pdb_nh3.load_miegrid()
@@ -230,13 +233,13 @@ def unpack_params(params):
 
 
 def spectral_model(params):
-    fsed, Kzz, vrv, vv, _broadening, const_mmr_ch4, factor = unpack_params(params)
+    fsed, _Kzz, vrv, vv, _broadening, const_mmr_ch4, factor = unpack_params(params)
     broadening = 25000.0
-
+    Kzz = Kzz_fixed
     # temperatures
     # cloud
     rg_layer, MMRc = amp_nh3.calc_ammodel(
-        Parr, Tarr, mu, molmass_nh3, gravity, fsed, sigmag, Kzz, MMRbase_nh3
+        Parr, Tarr, mu, molmass_nh3, gravity, fsed, sigmag_fixed, Kzz, MMRbase_nh3
     )
     rg = jnp.mean(rg_layer)
 
@@ -245,13 +248,13 @@ def spectral_model(params):
     #    opa_nh3.mieparams_vector_direct_from_pymiescatt(rg, sigmag)
     # )
     sigma_extinction, sigma_scattering, asymmetric_factor = opa_nh3.mieparams_vector(
-        rg, sigmag
+        rg, sigmag_fixed
     )
     dtau_cld = art.opacity_profile_cloud_lognormal(
-        sigma_extinction, rhoc, MMRc, rg, sigmag, gravity
+        sigma_extinction, rhoc, MMRc, rg, sigmag_fixed, gravity
     )
     dtau_cld_scat = art.opacity_profile_cloud_lognormal(
-        sigma_scattering, rhoc, MMRc, rg, sigmag, gravity
+        sigma_scattering, rhoc, MMRc, rg, sigmag_fixed, gravity
     )
 
     asymmetric_parameter = asymmetric_factor + np.zeros((len(art.pressure), len(nus)))
@@ -306,9 +309,9 @@ if figshow:
 
     print("(*_*) show init params:")
     F_samp_init = spectral_model(parinit)
-    fsed, Kzz, vrv, vv, _broadening, const_mmr_ch4, factor = unpack_params(parinit)
+    fsed, _Kzz, vrv, vv, _broadening, const_mmr_ch4, factor = unpack_params(parinit)
     rg_layer, MMRc = amp_nh3.calc_ammodel(
-        Parr, Tarr, mu, molmass_nh3, gravity, fsed, sigmag, Kzz, MMRbase_nh3
+        Parr, Tarr, mu, molmass_nh3, gravity, fsed, sigmag_fixed, Kzz_fixed, MMRbase_nh3
     )
     plotjupiter.plot_cloud_structure(Parr, rg_layer, MMRc, fac)
     plt = plotjupiter.plot_opt(nus_obs, spectra, F_samp_init, F_samp_init)
@@ -353,7 +356,6 @@ if opt_perform:
     print(params)
     plt.show()
     import sys
-
     sys.exit()
 
 
@@ -370,15 +372,15 @@ def model_c(nu1, y1):
 
     # T0_n = numpyro.sample("T0_n", dist.Uniform(0.5, 2.0))
     log_fsed_n = numpyro.sample("log_fsed_n", dist.Uniform(-1.0e4, 1.0e4))
-    log_Kzz_n = numpyro.sample("log_Kzz_n", dist.Uniform(30.0, 50.0))
+    log_Kzz_n_fixed = jnp.log10(Kzz_fixed)
     vrv = numpyro.sample("vrv", dist.Uniform(-10.0, 10.0))
     vv = numpyro.sample("vv", dist.Uniform(-70.0, -40.0))
     broadening = 25000.0  # fix
     molmass_ch4_n = numpyro.sample("MMR_CH4_n", dist.Uniform(0.0, 5.0))
     factor = numpyro.sample("factor", dist.Uniform(0.0, 1.0))
-
+    
     params = jnp.array(
-        [log_fsed_n, log_Kzz_n, vrv, vv, broadening, molmass_ch4_n, factor]
+        [log_fsed_n, log_Kzz_n_fixed, vrv, vv, broadening, molmass_ch4_n, factor]
     )
     mean = spectral_model(params)
 
@@ -391,7 +393,7 @@ def model_c(nu1, y1):
 # initialization
 import jax.numpy as jnp
 
-if opt_perform:
+if hmc_perform:
     # T0, log_fsed, log_Kzz, vrv, vv, boradening (fix), mmr, normalization factor
     #    init_params = {
     #        "T0_n": 1.5,
@@ -399,7 +401,6 @@ if opt_perform:
     init_params = {
         "T0_n": 0.89,
         "log_fsed_n": 0.44,
-        "log_Kzz_n": 40.0,
         "vrv": -1.1,
         "vv": -58.3,
         "MMR_CH4_n": 1.58,
@@ -407,23 +408,14 @@ if opt_perform:
         "sigma": 1.0,
     }
 
-    #    init_params = {
-#        "T0_n": jnp.array(res.params[0]),
-#        "log_fsed_n": jnp.array(res.params[1]),
-#        "log_Kzz_n": jnp.array(res.params[2]),
-#        "vrv": jnp.array(res.params[3]),
-#        "vv": jnp.array(res.params[4]),
-#        "MMR_CH4_n":jnp.array(res.params[6]),
-#        "factor":jnp.array(res.params[7])
-#        }
 rng_key = random.PRNGKey(0)
 rng_key, rng_key_ = random.split(rng_key)
 
 if hmc_perform:
     print("HMC starts")
-    # num_warmup, num_samples = 500, 1000
+    num_warmup, num_samples = 500, 1000
     ######
-    num_warmup, num_samples = 100, 200
+    #num_warmup, num_samples = 100, 200
     ######
     # kernel = NUTS(model_c,forward_mode_differentiation=True)
     kernel = NUTS(model_c)
