@@ -145,19 +145,18 @@ class OpaPremodit(OpaCalc):
 
         return eq_attributes
 
-
     def _if_exist_check_eq(self, other, attribute, eq_attributes):
         if hasattr(self, attribute) and hasattr(other, attribute):
-            return eq_attributes and getattr(self,attribute) == getattr(other,attribute)
+            return eq_attributes and getattr(self, attribute) == getattr(
+                other, attribute
+            )
         elif not hasattr(self, attribute) and not hasattr(other, attribute):
             return eq_attributes
         else:
             return False
 
-
     def __ne__(self, other):
         return not self.__eq__(other)
-
 
     def auto_setting(self, Tl, Tu):
         print("OpaPremodit: params automatically set.")
@@ -246,7 +245,7 @@ class OpaPremodit(OpaCalc):
                 "Unknown mode in broadening_parameter_resolution e.g. manual/single/minmax."
             )
 
-    def compute_gamma_ref_and_n_Texp(self, mdb):
+    def compute_gamma_ref_and_n_Texp(self):
         """convert gamma_ref to the regular formalization and noramlize it for Tref_braodening
 
         Notes:
@@ -257,39 +256,42 @@ class OpaPremodit(OpaCalc):
             mdb (_type_): mdb instance
 
         """
-        if mdb.dbtype == "hitran":
+        if self.mdb.dbtype == "hitran":
             print(
                 "OpaPremodit: gamma_air and n_air are used. gamma_ref = gamma_air/Patm"
             )
-            self.n_Texp = mdb.n_air
+            self.n_Texp = self.mdb.n_air
             reference_factor = (Tref_original / self.Tref_broadening) ** (self.n_Texp)
-            self.gamma_ref = mdb.gamma_air * reference_factor / Patm
-        elif mdb.dbtype == "exomol":
-            self.n_Texp = mdb.n_Texp
+            self.gamma_ref = self.mdb.gamma_air * reference_factor / Patm
+        elif self.mdb.dbtype == "exomol":
+            self.n_Texp = self.mdb.n_Texp
             reference_factor = (Tref_original / self.Tref_broadening) ** (self.n_Texp)
-            self.gamma_ref = mdb.alpha_ref * reference_factor
+            self.gamma_ref = self.mdb.alpha_ref * reference_factor
 
     def apply_params(self):
-        #self.mdb.change_reference_temperature(self.Tref)
+        # self.mdb.change_reference_temperature(self.Tref)
         self.dbtype = self.mdb.dbtype
 
-        # broadening
+        # sets the broadening reference temperature
         if self.single_broadening:
             print("OpaPremodit: a single broadening parameter set is used.")
             self.Tref_broadening = Tref_original
         else:
             self.set_Tref_broadening_to_midpoint()
 
-        self.compute_gamma_ref_and_n_Texp(self.mdb)
+        # self.gamma_ref, self.n_Texp are defined with the reference temperature of Tref_broadening
+        self.compute_gamma_ref_and_n_Texp()
 
+        # comment-1: gamma_ref at Tref_broadening (is not necessary for Tref_original)
+        # comment-2: line strength at Tref (is not necessary for Tref_original)
         self.opainfo = initspec.init_premodit(
             self.mdb.nu_lines,
             self.nu_grid,
             self.mdb.elower,
-            self.gamma_ref,
+            self.gamma_ref, # comment-1
             self.n_Texp,
-            self.mdb.line_strength(self.Tref), # line strength at Tref (is not necessary for Tref_original)
-            self.Twt,
+            self.mdb.line_strength(self.Tref),  # comment-2
+            self.Twt,   
             Tref=self.Tref,
             Tref_broadening=self.Tref_broadening,
             Tmax=self.Tmax,
@@ -333,9 +335,9 @@ class OpaPremodit(OpaCalc):
         nsigmaD = normalized_doppler_sigma(T, self.mdb.molmass, R)
 
         if self.mdb.dbtype == "hitran":
-            qt = self.mdb.qr_interp(self.mdb.isotope, T, Tref_original)
+            qt = self.mdb.qr_interp(self.mdb.isotope, T, self.Tref)
         elif self.mdb.dbtype == "exomol":
-            qt = self.mdb.qr_interp(T, Tref_original)
+            qt = self.mdb.qr_interp(T, self.Tref)
 
         if self.diffmode == 0:
             return xsvector_zeroth(
@@ -420,10 +422,12 @@ class OpaPremodit(OpaCalc):
         ) = self.opainfo
 
         if self.mdb.dbtype == "hitran":
-            qtarr = vmap(self.mdb.qr_interp, (None, 0, None))(self.mdb.isotope, Tarr, Tref_original)
+            qtarr = vmap(self.mdb.qr_interp, (None, 0, None))(
+                self.mdb.isotope, Tarr, self.Tref
+            )
         elif self.mdb.dbtype == "exomol":
-            qtarr = vmap(self.mdb.qr_interp, (0, None))(Tarr, Tref_original)
-
+            qtarr = vmap(self.mdb.qr_interp, (0, None))(Tarr, self.Tref)
+            
         if self.diffmode == 0:
             return xsmatrix_zeroth(
                 Tarr,
@@ -583,12 +587,11 @@ class OpaModit(OpaCalc):
             and (self.wavelength_order == other.wavelength_order)
             and all(self.nu_grid == other.nu_grid)
         )
-    
+
         return eq_attributes
 
     def __ne__(self, other):
         return not self.__eq__(other)
-
 
     def apply_params(self):
         self.dbtype = self.mdb.dbtype
@@ -773,7 +776,7 @@ class OpaDirect(OpaCalc):
             and (self.wavelength_order == other.wavelength_order)
             and all(self.nu_grid == other.nu_grid)
         )
-    
+
         return eq_attributes
 
     def __ne__(self, other):
@@ -870,7 +873,7 @@ class OpaDirect(OpaCalc):
                 self.mdb.nu_lines, Tarr, self.mdb.molmass
             )
         elif self.mdb.dbtype == "exomol":
-            vmapqt = vmap(self.mdb.qr_interp,(0, None))
+            vmapqt = vmap(self.mdb.qr_interp, (0, None))
             qt = vmapqt(Tarr, Tref_original)
             vmapexomol = jit(vmap(gamma_exomol, (0, 0, None, None)))
             gammaLMP = vmapexomol(Parr, Tarr, self.mdb.n_Texp, self.mdb.alpha_ref)
