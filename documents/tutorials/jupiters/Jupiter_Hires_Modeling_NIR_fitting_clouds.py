@@ -21,9 +21,6 @@ hmc_perform = False
 figshow = False
 ###
 import os
-
-from torch import log_
-
 os.environ["JAX_TRACEBACK_FILTERING"] = "off"
 
 
@@ -188,7 +185,6 @@ opa_nh3 = OpaMie(pdb_nh3, nus)
 
 # Next, we consider the gas component, i.e. methane
 Eopt = 3300.0  # this is from the Elower optimization result
-# mdb_reduced = MdbHitemp("CH4", nurange=[nus_start,nus_end], isotope=1, elower_max=Eopt)
 mdb_reduced = MdbHitemp("CH4", nurange=[nus[0], nus[-1]], isotope=1, elower_max=Eopt)
 
 
@@ -208,12 +204,9 @@ molmass_ch4 = molmass_isotope("CH4", db_HIT=False)
 reflectivity_surface = np.zeros(len(nus))
 
 sop = SopInstProfile(nus)
-# log_fsed, log_Kzz, vrv, vv, boradening, mmr, normalization factor
-# parinit = jnp.array(
-#    [np.log10(1.0) * 10000.0, np.log10(1.0e4) * 10.0, -5.0, -55.0, 2.5, 2.0, 0.6]
-# )
+# log_fsed, sigmag, log_Kzz, vrv, vv, boradening, mmr, normalization factor
 parinit = jnp.array(
-    [jnp.log10(3.0), jnp.log10(1.0e4), -5.0, -55.0, 2.5, 0.2, 0.6]
+    [jnp.log10(3.0), sigmag_fixed, jnp.log10(Kzz_fixed), -5.0, -55.0, 2.5, 0.2, 0.6]
 )
 
 
@@ -236,13 +229,14 @@ def unpack_params(params):
 
 
 def spectral_model(params):
-    fsed, _Kzz, vrv, vv, _broadening, const_mmr_ch4, factor = unpack_params(params)
+    # unused parameters are marked with _
+    fsed, _sigmag, _Kzz, vrv, vv, _broadening, const_mmr_ch4, factor = unpack_params(params)
+    
     broadening = 25000.0
-    Kzz = Kzz_fixed
     # temperatures
     # cloud
     rg_layer, MMRc = amp_nh3.calc_ammodel(
-        Parr, Tarr, mu, molmass_nh3, gravity, fsed, sigmag_fixed, Kzz, MMRbase_nh3
+        Parr, Tarr, mu, molmass_nh3, gravity, fsed, sigmag_fixed, Kzz_fixed, MMRbase_nh3
     )
     rg = jnp.mean(rg_layer)
 
@@ -253,9 +247,6 @@ def spectral_model(params):
     sigma_extinction, sigma_scattering, asymmetric_factor = opa_nh3.mieparams_vector(
         rg, sigmag_fixed
     )
-    #sigma_extinction, sigma_scattering, asymmetric_factor = opa_nh3.mieparams_vector(
-    #    rg, sigmag
-    #)
     dtau_cld = art.opacity_profile_cloud_lognormal(
         sigma_extinction, rhoc, MMRc, rg, sigmag_fixed, gravity
     )
@@ -337,7 +328,7 @@ if opt_perform:
 
 
     # res.params
-    print("fsed, Kzz, vrv, vv, _broadening, const_mmr_ch4, factor")
+    print("fsed, sigmag, Kzz, vrv, vv, _broadening, const_mmr_ch4, factor")
     print("init:", unpack_params(parinit))
     print("best:", unpack_params(params))
 
