@@ -387,13 +387,16 @@ import jax.numpy as jnp
 
 if use_init:
     # log_fsed, sigmag, , log_Kzz, vrv, vv, boradening (fix), mmr, normalization factor
-    #best (packed): [  0.79194082   2.           4.          -2.52860584 -57.54213557 2.5          0.41915007   0.54551278]
+    #best (packed): [  0.79194082   2.           4.          -2.52860584 -57.54213557 2.5          0.41915007   0.54551278] #before #521
+#    best (packed): [  1.24906576   2.           4.          -3.03095345 -57.8439118
+#   2.5          0.84884493   0.53314691]
+
     init_params = {
-        "log_fsed_n": 0.79194082,
-        "vrv": -2.5286058,
-        "vv": -57.54213557,
-        "MMR_CH4_n": 0.41915007,
-        "factor":  0.54551278,
+        "log_fsed_n": 1.24906576,
+        "vrv": -3.03095345,
+        "vv": -57.8439118,
+        "MMR_CH4_n": 0.84884493,
+        "factor":  0.53314691,
         "sigma": 1.0,
     }
 
