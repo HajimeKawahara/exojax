@@ -54,7 +54,7 @@ lbd_coeff, multi_index_uniqgrid, elower_grid, \
 xsv = opa.xsvector(Ttest,P)
 
 #tries manual computation of xsvector below
-qt = mdb.qr_interp(mdb.isotope, Ttest)
+qt = mdb.qr_interp(mdb.isotope, Ttest, opa.Tref)
 dE = opa.dE
 NE = len(elower_grid)
 
@@ -82,10 +82,9 @@ xsv_manual = calc_xsection_from_lsd_scanfft(Slsd_premodit, R, pmarray,
 from exojax.spec.modit import xsvector
 from exojax.spec.initspec import init_modit
 
-mdb.change_reference_temperature(Tref_original)
-qt = mdb.qr_interp(mdb.isotope, Ttest)
+qt = mdb.qr_interp(mdb.isotope, Ttest, Tref_original)
 cont, index, R, pmarray = initspec.init_modit(mdb.nu_lines, nus)
-Sij = line_strength(Ttest, mdb.logsij0, mdb.nu_lines, mdb.elower, qt, mdb.Tref)
+Sij = line_strength(Ttest, mdb.logsij0, mdb.nu_lines, mdb.elower, qt, Tref_original)
 gammaL = gamma_hitran(P, Ttest, 0.0, mdb.n_air, mdb.gamma_air,
                       mdb.gamma_self) + gamma_natural(mdb.A)
 
@@ -99,7 +98,7 @@ Slsd_modit = inc2D_givenx(lsd_array, Sij, cont, index, jnp.log(ngammaL),
 Smodit = (np.sum(Slsd_modit, axis=1))
 
 ## also, xs
-Sij = line_strength(Ttest, mdb.logsij0, mdb.nu_lines, mdb.elower, qt, mdb.Tref)
+Sij = line_strength(Ttest, mdb.logsij0, mdb.nu_lines, mdb.elower, qt, Tref_original)
 cont_nu, index_nu, R, pmarray = init_modit(mdb.nu_lines, nus)
 ngammaL_grid = ditgrid_log_interval(ngammaL, dit_grid_resolution=0.1)
 xsv_modit = xsvector(cont_nu, index_nu, R, pmarray, nsigmaD, ngammaL, Sij, nus,
