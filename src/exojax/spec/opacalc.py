@@ -335,10 +335,8 @@ class OpaPremodit(OpaCalc):
         nsigmaD = normalized_doppler_sigma(T, self.mdb.molmass, R)
 
         if self.mdb.dbtype == "hitran":
-            # qt = self.mdb.qr_interp(self.mdb.isotope, T, Tref_original)
             qt = self.mdb.qr_interp(self.mdb.isotope, T, self.Tref)
         elif self.mdb.dbtype == "exomol":
-            # qt = self.mdb.qr_interp(T, Tref_original)
             qt = self.mdb.qr_interp(T, self.Tref)
 
         if self.diffmode == 0:
@@ -424,16 +422,12 @@ class OpaPremodit(OpaCalc):
         ) = self.opainfo
 
         if self.mdb.dbtype == "hitran":
-            # qtarr = vmap(self.mdb.qr_interp, (None, 0, None))(self.mdb.isotope, Tarr, Tref_original)
             qtarr = vmap(self.mdb.qr_interp, (None, 0, None))(
                 self.mdb.isotope, Tarr, self.Tref
             )
         elif self.mdb.dbtype == "exomol":
-            # qtarr = vmap(self.mdb.qr_interp, (0, None))(Tarr, Tref_original)
-            qtarr = vmap(self.mdb.qr_interp, (None, 0, None))(
-                self.mdb.isotope, Tarr, self.Tref
-            )
-
+            qtarr = vmap(self.mdb.qr_interp, (0, None))(Tarr, self.Tref)
+            
         if self.diffmode == 0:
             return xsmatrix_zeroth(
                 Tarr,
