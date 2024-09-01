@@ -245,7 +245,7 @@ class OpaPremodit(OpaCalc):
                 "Unknown mode in broadening_parameter_resolution e.g. manual/single/minmax."
             )
 
-    def compute_gamma_ref_and_n_Texp(self, mdb):
+    def compute_gamma_ref_and_n_Texp(self):
         """convert gamma_ref to the regular formalization and noramlize it for Tref_braodening
 
         Notes:
@@ -256,41 +256,42 @@ class OpaPremodit(OpaCalc):
             mdb (_type_): mdb instance
 
         """
-        if mdb.dbtype == "hitran":
+        if self.mdb.dbtype == "hitran":
             print(
                 "OpaPremodit: gamma_air and n_air are used. gamma_ref = gamma_air/Patm"
             )
-            self.n_Texp = mdb.n_air
+            self.n_Texp = self.mdb.n_air
             reference_factor = (Tref_original / self.Tref_broadening) ** (self.n_Texp)
-            self.gamma_ref = mdb.gamma_air * reference_factor / Patm
-        elif mdb.dbtype == "exomol":
-            self.n_Texp = mdb.n_Texp
+            self.gamma_ref = self.mdb.gamma_air * reference_factor / Patm
+        elif self.mdb.dbtype == "exomol":
+            self.n_Texp = self.mdb.n_Texp
             reference_factor = (Tref_original / self.Tref_broadening) ** (self.n_Texp)
-            self.gamma_ref = mdb.alpha_ref * reference_factor
+            self.gamma_ref = self.mdb.alpha_ref * reference_factor
 
     def apply_params(self):
         # self.mdb.change_reference_temperature(self.Tref)
         self.dbtype = self.mdb.dbtype
 
-        # broadening
+        # sets the broadening reference temperature
         if self.single_broadening:
             print("OpaPremodit: a single broadening parameter set is used.")
             self.Tref_broadening = Tref_original
         else:
             self.set_Tref_broadening_to_midpoint()
 
-        self.compute_gamma_ref_and_n_Texp(self.mdb)
+        # self.gamma_ref, self.n_Texp are defined with the reference temperature of Tref_broadening
+        self.compute_gamma_ref_and_n_Texp()
 
+        # comment-1: gamma_ref at Tref_broadening (is not necessary for Tref_original)
+        # comment-2: line strength at Tref (is not necessary for Tref_original)
         self.opainfo = initspec.init_premodit(
             self.mdb.nu_lines,
             self.nu_grid,
             self.mdb.elower,
-            self.gamma_ref,
+            self.gamma_ref, # comment-1
             self.n_Texp,
-            self.mdb.line_strength(
-                self.Tref
-            ),  # line strength at Tref (is not necessary for Tref_original)
-            self.Twt,
+            self.mdb.line_strength(self.Tref),  # comment-2
+            self.Twt,   
             Tref=self.Tref,
             Tref_broadening=self.Tref_broadening,
             Tmax=self.Tmax,
