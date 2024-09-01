@@ -161,8 +161,7 @@ MMRbase_nh3 = vmr2mmr(abundance_nh3, molmass_nh3, mu)
 
 # search for rg, sigmag range based on fsed and Kzz range
 fsed_range = [0.1, 10.0]
-Kzz_range = [1.0e2, 1.0e6]
-sigmag = 2.0
+Kzz = 1.0e4
 
 if miegird_generate:
     Kzz, rg_layer, MMRc = miegrid_generate.generate_miegrid_new(
@@ -173,10 +172,10 @@ if miegird_generate:
         pdb_nh3,
         amp_nh3,
         molmass_nh3,
-        sigmag,
+        sigmag_array,
         MMRbase_nh3,
         fsed_range,
-        Kzz_range,
+        Kzz,
     )
 else:
     pdb_nh3.load_miegrid()
