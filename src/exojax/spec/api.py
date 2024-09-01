@@ -360,18 +360,18 @@ class MdbExomol(CapiMdbExomol):
         """
         return self.QT_interp(T) / self.QT_interp(Tref)
 
-    def line_strength(self, Tref):
-        """line strength at Tref
+    def line_strength(self, T):
+        """line strength at T
 
         Args:
-            Tref (_type_): reference temperature
+            T (float): temperature
 
         Returns:
-            _type_: line strength at Tref
+            float: line strength at T
         """
-        qr = self.qr_interp(Tref, Tref_original)
+        qr = self.qr_interp(T, Tref_original)
         return line_strength_numpy(
-            Tref,
+            T,
             self.line_strength_ref_original,
             self.nu_lines,
             self.elower,
@@ -590,14 +590,14 @@ class MdbCommonHitempHitran:
 
         return exact_molecule_name_from_isotope(self.simple_molecule_name, isotope)
 
-    def line_strength(self, Tref):
-        """line strength at Tref
+    def line_strength(self, T):
+        """line strength at T
         
         Args:
-            Tref (_type_): reference temperature
+            T (float): temperature
 
         Returns:
-            _type_: line strength at Tref
+            float: line strength at T
         """
         if self.isotope is None or self.isotope == 0:
             msg1 = "Currently all isotope mode is not fully compatible to MdbCommonHitempHitran."
@@ -605,12 +605,12 @@ class MdbCommonHitempHitran:
                 "QT assumed isotope=1 instead."
             )
             warnings.warn(msg1 + msg2, UserWarning)
-            qr = self.qr_interp(1, Tref, Tref_original)
+            qr = self.qr_interp(1, T, Tref_original)
         else:
-            qr = self.qr_interp(self.isotope, Tref, Tref_original)
+            qr = self.qr_interp(self.isotope, T, Tref_original)
 
         return line_strength_numpy(
-            Tref, self.line_strength_ref_original, self.nu_lines, self.elower, qr, Tref_original
+            T, self.line_strength_ref_original, self.nu_lines, self.elower, qr, Tref_original
         )
         
     def check_line_existence_in_nurange(self, df_load_mask):

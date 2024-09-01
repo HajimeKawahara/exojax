@@ -35,7 +35,7 @@ nus, wav, res = wavenumber_grid(22900.0,
                                 unit='AA',
                                 xsmode="premodit")
 
-diffmode = 2
+diffmode = 0
 
 Ttest = 1200.0
 P = 1.0
@@ -52,7 +52,7 @@ lbd_coeff, multi_index_uniqgrid, elower_grid, \
 xsv = opa.xsvector(Ttest,P)
 
 #tries manual computation of xsvector below
-qt = mdb.qr_interp(Ttest)
+qt = mdb.qr_interp(Ttest, opa.Tref)
 dE = opa.dE
 NE = len(elower_grid)
 
@@ -80,8 +80,8 @@ xsv_manual = calc_xsection_from_lsd_scanfft(Slsd_premodit, R, pmarray,
 from exojax.spec.modit import xsvector
 from exojax.spec.initspec import init_modit
 
-mdb.change_reference_temperature(Tref_original)
-qt = mdb.qr_interp(Ttest)
+#mdb.change_reference_temperature(Tref_original)
+qt = mdb.qr_interp(Ttest, Tref_original)
 cont, index, R, pmarray = initspec.init_modit(mdb.nu_lines, nus)
 Sij = line_strength(Ttest, mdb.logsij0, mdb.nu_lines, mdb.elower, qt, mdb.Tref)
 gammaL = gamma_exomol(P, Ttest, mdb.n_Texp, mdb.alpha_ref)

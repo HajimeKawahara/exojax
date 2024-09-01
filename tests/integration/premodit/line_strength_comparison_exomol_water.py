@@ -49,7 +49,7 @@ opa = OpaPremodit(mdb=mdb, nu_grid=nus, auto_trange=[1000.0,1200.0],diffmode=dif
 lbd_coeff, multi_index_uniqgrid, elower_grid, \
         ngamma_ref_grid, n_Texp_grid, R, pmarray = opa.opainfo
     
-qt = mdb.qr_interp(T)
+qt = mdb.qr_interp(T, opa.Tref)
 dE = opa.dE
 NE = len(elower_grid)
 
@@ -67,10 +67,9 @@ Spremodit = (np.sum(Slsd_premodit, axis=1))
 # We need to revert the reference temperature to 296K to reuse mdb for MODIT
 #===========================================================================
 
-mdb.change_reference_temperature(Tref_original)
-qt = mdb.qr_interp(T)
+qt = mdb.qr_interp(T, Tref_original)
 cont, index, R, pmarray = initspec.init_modit(mdb.nu_lines, nus)
-Sij = line_strength(T, mdb.logsij0, mdb.nu_lines, mdb.elower, qt, mdb.Tref)
+Sij = line_strength(T, mdb.logsij0, mdb.nu_lines, mdb.elower, qt, Tref_original)
 gammaL = gamma_exomol(P, T, mdb.n_Texp, mdb.alpha_ref)
 dv_lines = mdb.nu_lines / R
 ngammaL = gammaL / dv_lines
