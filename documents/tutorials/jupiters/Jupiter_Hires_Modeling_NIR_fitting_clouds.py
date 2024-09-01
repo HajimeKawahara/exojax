@@ -14,9 +14,10 @@
 # if this is the first run, set miegird_generate = True, and run the code to generate Mie grid. After that, set False.
 miegird_generate = False
 # when the optimization is performed, set opt_perform = True, after performing it, set False
-opt_perform = True
+opt_perform = False
 # when HMC is performed, set hmc_perform = True, after performing it, set False
-hmc_perform = False
+hmc_perform = True
+use_init = True # uses the initial values (obtained from optimization)
 # if True, the figures are shown
 figshow = False
 ###
@@ -332,11 +333,13 @@ if opt_perform:
     print("init:", unpack_params(parinit))
     print("best:", unpack_params(params))
 
+    print("fsed, sigmag, Kzz, vrv, vv, _broadening, const_mmr_ch4, factor")
+    print("best (packed):", params)
+
     F_samp = spectral_model(params)
     F_samp_init = spectral_model(parinit)
 
     plt = plotjupiter.plot_opt(nus_obs, spectra, F_samp_init, F_samp)
-    print(params)
     plt.savefig("fitting.png")
     import sys
     sys.exit()
@@ -353,17 +356,23 @@ if opt_perform:
 
 def model_c(nu1, y1):
 
+
     # T0_n = numpyro.sample("T0_n", dist.Uniform(0.5, 2.0))
-    log_fsed_n = numpyro.sample("log_fsed_n", dist.Uniform(-1.0e4, 1.0e4))
+    log_fsed_n = numpyro.sample("log_fsed_n", dist.Uniform(0.0, 2.0))
     log_Kzz_n_fixed = jnp.log10(Kzz_fixed)
-    vrv = numpyro.sample("vrv", dist.Uniform(-10.0, 10.0))
+    vrv = numpyro.sample("vrv", dist.Uniform(-5.0, 0.0))
     vv = numpyro.sample("vv", dist.Uniform(-70.0, -40.0))
     broadening = 25000.0  # fix
-    molmass_ch4_n = numpyro.sample("MMR_CH4_n", dist.Uniform(0.0, 5.0))
+    molmass_ch4_n = numpyro.sample("MMR_CH4_n", dist.Uniform(0.0, 1.0))
     factor = numpyro.sample("factor", dist.Uniform(0.0, 1.0))
-    
+
+    # log_fsed, sigmag, log_Kzz, vrv, vv, boradening, mmr, normalization factor
+    #parinit = jnp.array(
+    #    [jnp.log10(3.0), sigmag_fixed, jnp.log10(Kzz_fixed), -5.0, -55.0, 2.5, 0.2, 0.6]
+    #)
+
     params = jnp.array(
-        [log_fsed_n, log_Kzz_n_fixed, vrv, vv, broadening, molmass_ch4_n, factor]
+        [log_fsed_n, sigmag_fixed, log_Kzz_n_fixed, vrv, vv, broadening, molmass_ch4_n, factor]
     )
     mean = spectral_model(params)
 
@@ -376,18 +385,15 @@ def model_c(nu1, y1):
 # initialization
 import jax.numpy as jnp
 
-if hmc_perform:
-    # T0, log_fsed, log_Kzz, vrv, vv, boradening (fix), mmr, normalization factor
-    #    init_params = {
-    #        "T0_n": 1.5,
-    #        }
+if use_init:
+    # log_fsed, sigmag, , log_Kzz, vrv, vv, boradening (fix), mmr, normalization factor
+    #best (packed): [  0.79194082   2.           4.          -2.52860584 -57.54213557 2.5          0.41915007   0.54551278]
     init_params = {
-        "T0_n": 0.89,
-        "log_fsed_n": 0.44,
-        "vrv": -1.1,
-        "vv": -58.3,
-        "MMR_CH4_n": 1.58,
-        "factor": 0.597,
+        "log_fsed_n": 0.79194082,
+        "vrv": -2.5286058,
+        "vv": -57.54213557,
+        "MMR_CH4_n": 0.41915007,
+        "factor":  0.54551278,
         "sigma": 1.0,
     }
 
@@ -398,14 +404,13 @@ if hmc_perform:
     print("HMC starts")
     num_warmup, num_samples = 500, 1000
     ######
-    #num_warmup, num_samples = 100, 200
+    #num_warmup, num_samples = 10, 20
     ######
     # kernel = NUTS(model_c,forward_mode_differentiation=True)
     kernel = NUTS(model_c)
     mcmc = MCMC(kernel, num_warmup=num_warmup, num_samples=num_samples)
-    if opt_perform == True:
+    if use_init:
         mcmc.run(rng_key_, nu1=nus_obs, y1=spectra, init_params=init_params)
-    #        mcmc.run(rng_key_, nu1=nus_obs, y1=spectra)
     else:
         mcmc.run(rng_key_, nu1=nus_obs, y1=spectra)
     mcmc.print_summary()
@@ -427,6 +432,8 @@ plotjupiter.plot_prediction(wav_obs, spectra, median_mu1, hpdi_mu1)
 
 
 if hmc_perform:
-    np.savez("output/all.npz", [median_mu1, hpdi_mu1])
+    np.savez("output/hpdi.npz",hpdi_mu1)
+    np.savez("output/median.npz", median_mu1)
+    np.savez("output/predictions.npz", predictions)
 
 #####################################################
