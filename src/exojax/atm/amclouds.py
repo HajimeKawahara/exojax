@@ -65,9 +65,9 @@ def get_value_at_cloud_base(array, smooth_index):
     Returns:
         float: value at cloud base
     """
-    
+
     ind = smooth_index.astype(int)
-    #ind = jnp.clip(ind, 0, len(array) - 2)
+    # ind = jnp.clip(ind, 0, len(array) - 2)
     res = smooth_index - jnp.floor(smooth_index)
     return (1.0 - res) * array[ind] + res * array[ind + 1]
 
@@ -168,6 +168,39 @@ def find_rw(rarr, terminal_velocity, Kzz_over_L):
     iscale = jnp.searchsorted(terminal_velocity, Kzz_over_L)
     rw = rarr[iscale]
     return rw
+
+
+def sigmag_from_effective_radius(reff, fsed, rw, alpha):
+    """computes sigmag from reff
+
+    Args:
+        reff: effective radius (cm) defined by E_3/E_2 
+        fsed: fsed
+        rw: rw (cm)
+        alpha: alpha
+
+    Returns:
+        sigmag: sigmag
+    """
+    factor = jnp.log(rw / reff * fsed ** (1.0 / alpha))
+    index = jnp.sqrt(2.0/(1.0+alpha)*factor)
+    return jnp.exp(index)
+
+def effective_radius(rg, sigmag):
+    """computes the paritculate effective radius from lognormal parameters, rg and sigmag
+
+    Args:
+        rg (float): rg parameter in lognormal distribution in cgs
+        sigmag (float): sigma_g parameter in lognormal distribution
+
+
+    Note:
+        The cross section is given by $S = Q_e \pi r_eff^2$
+
+    Returns:
+        _type_: effective radius in cgs
+    """
+    return jnp.exp(2.5*jnp.log(sigmag)*jnp.log(sigmag))*rg
 
 
 def geometric_radius(rg, sigmag):
