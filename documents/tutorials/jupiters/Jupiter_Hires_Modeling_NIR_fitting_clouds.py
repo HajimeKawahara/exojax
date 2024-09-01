@@ -20,7 +20,6 @@ hmc_perform = False
 # if True, the figures are shown
 figshow = False
 ###
-
 import os
 
 from torch import log_
@@ -180,6 +179,8 @@ if miegird_generate:
         fsed_range,
         Kzz_fixed,
     )
+    import sys
+    sys.exit()
 else:
     pdb_nh3.load_miegrid()
 
@@ -218,18 +219,20 @@ parinit = jnp.array(
 
 
 def unpack_params(params):
-    multiple_factor = jnp.array([1.0, 1.0, 1.0, 1.0, 10000.0, 0.01, 1.0])
+    multiple_factor = jnp.array([1.0, 1.0, 1.0, 1.0, 1.0, 10000.0, 0.01, 1.0])
     par = params * multiple_factor
     log_fsed = par[0]
-    log_Kzz = par[1]
-    vrv = par[2]
-    vv = par[3]
-    _broadening = par[4]
-    const_mmr_ch4 = par[5]
-    factor = par[6]
+    sigmag = par[1]
+    log_Kzz = par[2]
+    vrv = par[3]
+    vv = par[4]
+    _broadening = par[5]
+    const_mmr_ch4 = par[6]
+    factor = par[7]
     fsed = 10**log_fsed
     Kzz = 10**log_Kzz
-    return fsed, Kzz, vrv, vv, _broadening, const_mmr_ch4, factor
+    
+    return fsed, sigmag, Kzz, vrv, vv, _broadening, const_mmr_ch4, factor
 
 
 def spectral_model(params):
@@ -250,6 +253,9 @@ def spectral_model(params):
     sigma_extinction, sigma_scattering, asymmetric_factor = opa_nh3.mieparams_vector(
         rg, sigmag_fixed
     )
+    #sigma_extinction, sigma_scattering, asymmetric_factor = opa_nh3.mieparams_vector(
+    #    rg, sigmag
+    #)
     dtau_cld = art.opacity_profile_cloud_lognormal(
         sigma_extinction, rhoc, MMRc, rg, sigmag_fixed, gravity
     )
@@ -304,20 +310,6 @@ def factor_mmr_to_gperl(molmass, Parr, Tarr):
 
 fac = factor_mmr_to_gperl(molmass_nh3, Parr, Tarr)
 
-
-if figshow:
-
-    print("(*_*) show init params:")
-    F_samp_init = spectral_model(parinit)
-    fsed, _Kzz, vrv, vv, _broadening, const_mmr_ch4, factor = unpack_params(parinit)
-    rg_layer, MMRc = amp_nh3.calc_ammodel(
-        Parr, Tarr, mu, molmass_nh3, gravity, fsed, sigmag_fixed, Kzz_fixed, MMRbase_nh3
-    )
-    plotjupiter.plot_cloud_structure(Parr, rg_layer, MMRc, fac)
-    plt = plotjupiter.plot_opt(nus_obs, spectra, F_samp_init, F_samp_init)
-    plt.show()
-
-
 def cost_function(params):
     return jnp.sum((spectra - spectral_model(params)) ** 2)
 
@@ -354,7 +346,7 @@ if opt_perform:
 
     plt = plotjupiter.plot_opt(nus_obs, spectra, F_samp_init, F_samp)
     print(params)
-    plt.show()
+    plt.savefig("fitting.png")
     import sys
     sys.exit()
 
