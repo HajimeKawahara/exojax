@@ -21,52 +21,10 @@ config.update("jax_enable_x64", True)
 
 
 @pytest.mark.parametrize(
-    "db, diffmode", [("exomol", 0), ("hitemp", 0)]
-)
-def test_rt(db, diffmode, fig=False):
-
-    nu_grid, wav, res = mock_wavenumber_grid()
-
-    art = ArtEmisPure(
-        pressure_top=1.0e-8, pressure_btm=1.0e2, nlayer=100, nu_grid=nu_grid
-    )
-    art.change_temperature_range(400.0, 1500.0)
-    Tarr = art.powerlaw_temperature(1300.0, 0.1)
-    mmr_arr = art.constant_mmr_profile(0.1)
-    gravity = 2478.57
-    
-    mdb = mock_mdb(db)
-    opa = OpaPremodit(
-        mdb=mdb, nu_grid=nu_grid, diffmode=diffmode, auto_trange=[art.Tlow, art.Thigh]
-    )
-
-    xsmatrix = opa.xsmatrix(Tarr, art.pressure)
-    dtau = art.opacity_profile_xs(xsmatrix, mmr_arr, opa.mdb.molmass, gravity)
-
-    F0 = art.run(dtau, Tarr)
-
-    if db == "hitemp":
-        filename = pkg_resources.resource_filename(
-            "exojax", "data/testdata/" + TESTDATA_CO_HITEMP_MODIT_EMISSION_REF
-        )
-    elif db == "exomol":
-        filename = pkg_resources.resource_filename(
-            "exojax", "data/testdata/" + TESTDATA_CO_EXOMOL_MODIT_EMISSION_REF
-        )
-
-    dat = pd.read_csv(filename, delimiter=",", names=("nus", "flux"))
-    residual = np.abs(F0 / dat["flux"].values - 1.0)
-    print(np.max(residual))
-    # assert np.all(residual < 0.007)
-    return nu_grid, F0, dat["flux"].values
-
-
-@pytest.mark.parametrize(
     "db, diffmode",
     [
         ("exomol", 0),
         ("hitemp", 0),
-        
     ],
 )
 def test_rt_for_single_broadening_parameters(db, diffmode, fig=False):
@@ -74,7 +32,7 @@ def test_rt_for_single_broadening_parameters(db, diffmode, fig=False):
     nu_grid, wav, res = mock_wavenumber_grid()
 
     art = ArtEmisPure(
-        pressure_top=1.0e-8, pressure_btm=1.0e2, nlayer=100, nu_grid=nu_grid
+        pressure_top=1.0e-8, pressure_btm=1.0e2, nlayer=100, nu_grid=nu_grid, rtsolver="fbased2st", nstream=2
     )
     art.change_temperature_range(400.0, 1500.0)
     Tarr = art.powerlaw_temperature(1300.0, 0.1)
@@ -111,9 +69,12 @@ def test_rt_for_single_broadening_parameters(db, diffmode, fig=False):
     # assert np.all(residual < 0.05)
     return nu_grid, F0, dat["flux"].values
 
+
 if __name__ == "__main__":
-    test_rt("exomol", 0)
-    test_rt("hitemp", 0)
-    test_rt_for_single_broadening_parameters("exomol", 0)
-    test_rt_for_single_broadening_parameters("hitemp", 0)
+    nu, F, Fref = test_rt_for_single_broadening_parameters("exomol", 0)
+    import matplotlib.pyplot as plt
+    plt.plot(nu, F, label="F")
+    plt.plot(nu, Fref, label="Fref")
+    plt.show()
     
+    test_rt_for_single_broadening_parameters("hitemp", 0)
