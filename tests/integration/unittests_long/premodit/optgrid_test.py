@@ -29,6 +29,7 @@ def test_optelower_hitemp():
     print("optimal elower_max=",Eopt,"cm-1")
     assert Eopt == pytest.approx(11659.3718)
 
+
 if __name__ == "__main__":
-    #test_optelower_exomol()
+    test_optelower_exomol()
     test_optelower_hitemp()

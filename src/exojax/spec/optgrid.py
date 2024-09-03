@@ -52,9 +52,9 @@ def optelower(
     ) = opa.opainfo
     nsigmaD = normalized_doppler_sigma(Tmax, mdb.molmass, R)
     if mdb.dbtype == "exomol":
-        qt = mdb.qr_interp(Tmax)
+        qt = mdb.qr_interp(Tmax, opa.Tref)
     elif mdb.dbtype == "hitran":
-        qt = mdb.qr_interp(isotope, Tmax)
+        qt = mdb.qr_interp(isotope, Tmax, opa.Tref)
 
     Tref_broadening = Tref_original
     xsv_master = xsvector_zeroth(
