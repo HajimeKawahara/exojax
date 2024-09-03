@@ -23,26 +23,33 @@ config.update("jax_enable_x64", True)
 @pytest.mark.parametrize(
     "db, diffmode",
     [
-        ("exomol", 0),
         ("hitemp", 0),
     ],
 )
 def test_rt_for_single_broadening_parameters(db, diffmode, fig=False):
+    """compares PreMODIT+single broadening with MODIT, so difference is should be small but not very small, 0.0322
+
+    Args:
+        db: exomol or hitemp
+        diffmode: 0, 1, or 2
+        fig: True or False
+
+    Returns:
+        nu_grid, F0, reference F0
+
+    """
 
     nu_grid, wav, res = mock_wavenumber_grid()
 
     art = ArtEmisPure(
-        pressure_top=1.0e-8, pressure_btm=1.0e2, nlayer=100, nu_grid=nu_grid, rtsolver="fbased2st", nstream=2
+        pressure_top=1.0e-8, pressure_btm=1.0e2, nlayer=100, nu_grid=nu_grid
     )
     art.change_temperature_range(400.0, 1500.0)
     Tarr = art.powerlaw_temperature(1300.0, 0.1)
     mmr_arr = art.constant_mmr_profile(0.1)
     gravity = 2478.57
-    # gravity = art.constant_gravity_profile(2478.57) #gravity can be profile
 
     mdb = mock_mdb(db)
-    # mdb = api.MdbExomol('.database/CO/12C-16O/Li2015',nu_grid,inherit_dataframe=False,gpu_transfer=False)
-    # mdb = api.MdbHitemp('CO', art.nu_grid, gpu_transfer=False, isotope=1)
     opa = OpaPremodit(
         mdb=mdb,
         nu_grid=nu_grid,
@@ -66,15 +73,66 @@ def test_rt_for_single_broadening_parameters(db, diffmode, fig=False):
     dat = pd.read_csv(filename, delimiter=",", names=("nus", "flux"))
     residual = np.abs(F0 / dat["flux"].values - 1.0)
     print(np.max(residual))
-    # assert np.all(residual < 0.05)
+    assert np.all(residual < 0.033)
+    return nu_grid, F0, dat["flux"].values
+
+
+@pytest.mark.parametrize("db, diffmode", [("exomol", 1)])
+def test_rt(db, diffmode, fig=False):
+    """compares PreMODIT with MODIT, so difference is very small, 0.005
+
+    Args:
+        db: exomol or hitemp
+        diffmode: 0, 1, or 2
+        fig: True or False
+
+    Returns:
+        nu_grid, F0, reference F0
+
+    """
+    nu_grid, wav, res = mock_wavenumber_grid()
+
+    art = ArtEmisPure(
+        pressure_top=1.0e-8, pressure_btm=1.0e2, nlayer=100, nu_grid=nu_grid
+    )
+    art.change_temperature_range(400.0, 1500.0)
+    Tarr = art.powerlaw_temperature(1300.0, 0.1)
+    mmr_arr = art.constant_mmr_profile(0.1)
+    gravity = 2478.57
+
+    mdb = mock_mdb(db)
+    opa = OpaPremodit(
+        mdb=mdb, nu_grid=nu_grid, diffmode=diffmode, auto_trange=[art.Tlow, art.Thigh]
+    )
+
+    xsmatrix = opa.xsmatrix(Tarr, art.pressure)
+    dtau = art.opacity_profile_xs(xsmatrix, mmr_arr, opa.mdb.molmass, gravity)
+
+    F0 = art.run(dtau, Tarr)
+
+    if db == "hitemp":
+        filename = pkg_resources.resource_filename(
+            "exojax", "data/testdata/" + TESTDATA_CO_HITEMP_MODIT_EMISSION_REF
+        )
+    elif db == "exomol":
+        filename = pkg_resources.resource_filename(
+            "exojax", "data/testdata/" + TESTDATA_CO_EXOMOL_MODIT_EMISSION_REF
+        )
+
+    dat = pd.read_csv(filename, delimiter=",", names=("nus", "flux"))
+    residual = np.abs(F0 / dat["flux"].values - 1.0)
+    print(np.max(residual))
+    assert np.all(residual < 0.005)
     return nu_grid, F0, dat["flux"].values
 
 
 if __name__ == "__main__":
-    nu, F, Fref = test_rt_for_single_broadening_parameters("exomol", 0)
+    # nu, F, Fref = test_rt_for_single_broadening_parameters("exomol", 0)
+    nu, F, Fref = test_rt("exomol", 1)
+    # nu, F, Fref = test_rt("hitemp", 1)
+
     import matplotlib.pyplot as plt
+
     plt.plot(nu, F, label="F")
     plt.plot(nu, Fref, label="Fref")
     plt.show()
-    
-    test_rt_for_single_broadening_parameters("hitemp", 0)
