@@ -421,7 +421,7 @@ class ArtReflectEmis(ArtCommon):
         nu_grid=None,
         rtsolver="fluxadding_toon_hemispheric_mean",
     ):
-        """initialization of ArtEmisPure
+        """initialization of ArtReflectionPure
 
         Args:
             pressure_top (float, optional): top pressure in bar. Defaults to 1.0e-8.
