@@ -2,6 +2,7 @@
 
 Note:
     The original file was from integration/unittests_long/premodit/premodit_spectrum_test.py
+    These tests takes relatively long time to run. So, one of the database is tested at a time (when pytest).
 
 """
 
