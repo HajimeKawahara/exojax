@@ -50,6 +50,7 @@ from exojax.utils.instfunc import resolution_to_gaussian_std
 from exojax.spec.specop import SopInstProfile
 from exojax.spec.opacalc import OpaPremodit
 from exojax.spec.api import MdbHitemp
+from exojax.utils.constants import RJ
 
 import arviz
 import numpyro.distributions as dist
@@ -67,6 +68,7 @@ import jax.numpy as jnp
 from jax import config
 
 config.update("jax_enable_x64", True)
+
 
 
 # Forget about the following code. I need this to run the code somewhere...
@@ -354,6 +356,9 @@ if opt_perform:
 # )
 # multiple_factor = jnp.array([100.0, 0.0001, 0.1, 1.0, 1.0, 10000.0, 0.01, 1.0])
 
+Pjupiter = 9.925*3600 #Jupiter siderial period sec
+cm2km = 1.e-5
+vrotmax = 2*np.pi*RJ/Pjupiter*cm2km #rotation velocity of Jupiter at the equator in km/s (12.57 km/s)
 
 def model_c(nu1, y1):
 
@@ -362,7 +367,9 @@ def model_c(nu1, y1):
     log_fsed_n = numpyro.sample("log_fsed_n", dist.Uniform(0.0, 2.0))
     numpyro.deterministic("fsed", 10**log_fsed_n)
     log_Kzz_n_fixed = jnp.log10(Kzz_fixed)
-    vrv = numpyro.sample("vrv", dist.Uniform(-5.0, 15.0))
+    #vrv = numpyro.sample("vrv", dist.Uniform(-vrotmax, vrotmax))
+    #vrv = numpyro.sample("vrv",  dist.TruncatedNormal(loc=0.0, scale=vrotmax/3.0, low=-vrotmax, high=vrotmax))
+    vrv = 0.0 #fix
     vv = numpyro.sample("vv", dist.Uniform(-70.0, -40.0))
     broadening = 25000.0  # fix
     log_molmass_ch4_n = numpyro.sample("log_MMR_CH4", dist.Uniform(-2, 1))
@@ -397,7 +404,7 @@ if use_init:
 
     init_params = {
         "log_fsed_n": 1.24906576,
-        "vrv": -3.03095345,
+        #"vrv": -3.03095345,
         "vv": -57.8439118,
         "log_MMR_CH4": np.log10(0.84884493),
         "factor":  0.53314691,
