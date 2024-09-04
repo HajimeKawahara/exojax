@@ -1,4 +1,3 @@
-from arrow import get
 from exojax.atm import viscosity
 from exojax.atm import atmprof
 from exojax.atm import vterm
