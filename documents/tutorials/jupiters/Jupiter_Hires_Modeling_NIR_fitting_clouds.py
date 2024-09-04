@@ -51,6 +51,7 @@ from exojax.spec.specop import SopInstProfile
 from exojax.spec.opacalc import OpaPremodit
 from exojax.spec.api import MdbHitemp
 
+import arviz
 import numpyro.distributions as dist
 import numpyro
 from numpyro.infer import MCMC, NUTS
@@ -359,11 +360,14 @@ def model_c(nu1, y1):
 
     # T0_n = numpyro.sample("T0_n", dist.Uniform(0.5, 2.0))
     log_fsed_n = numpyro.sample("log_fsed_n", dist.Uniform(0.0, 2.0))
+    numpyro.deterministic("fsed", 10**log_fsed_n)
     log_Kzz_n_fixed = jnp.log10(Kzz_fixed)
-    vrv = numpyro.sample("vrv", dist.Uniform(-5.0, 0.0))
+    vrv = numpyro.sample("vrv", dist.Uniform(-5.0, 15.0))
     vv = numpyro.sample("vv", dist.Uniform(-70.0, -40.0))
     broadening = 25000.0  # fix
-    molmass_ch4_n = numpyro.sample("MMR_CH4_n", dist.Uniform(0.0, 1.0))
+    log_molmass_ch4_n = numpyro.sample("log_MMR_CH4", dist.Uniform(-2, 1))
+    molmass_ch4_n = 10**log_molmass_ch4_n
+    numpyro.deterministic("mmr_ch4", molmass_ch4_n*0.01)
     factor = numpyro.sample("factor", dist.Uniform(0.0, 1.0))
 
     # log_fsed, sigmag, log_Kzz, vrv, vv, boradening, mmr, normalization factor
@@ -376,7 +380,7 @@ def model_c(nu1, y1):
     )
     mean = spectral_model(params)
 
-    sigma = numpyro.sample("sigma", dist.Exponential(10.0))
+    sigma = numpyro.sample("sigma", dist.Exponential(1.0))
     err_all = jnp.ones_like(nu1) * sigma
     # err_all = jnp.sqrt(y1err**2. + sig**2.)
     numpyro.sample("y1", dist.Normal(mean, err_all), obs=y1)
@@ -395,7 +399,7 @@ if use_init:
         "log_fsed_n": 1.24906576,
         "vrv": -3.03095345,
         "vv": -57.8439118,
-        "MMR_CH4_n": 0.84884493,
+        "log_MMR_CH4": np.log10(0.84884493),
         "factor":  0.53314691,
         "sigma": 1.0,
     }
@@ -418,20 +422,22 @@ if hmc_perform:
         mcmc.run(rng_key_, nu1=nus_obs, y1=spectra)
     mcmc.print_summary()
 
+    # save the samples to the netcdf file
+    arviz.from_numpyro(mcmc).to_netcdf("output/samples.nc")
+
     with open("output/samples.pickle", mode="wb") as f:
         pickle.dump(mcmc.get_samples(), f)
+    with open("output/samples.pickle", mode="rb") as f:
+        samples = pickle.load(f)
 
-with open("output/samples.pickle", mode="rb") as f:
-    samples = pickle.load(f)
+    print("prediction starts")
+    pred = Predictive(model_c, samples, return_sites=["y1"])
+    predictions = pred(rng_key_, nu1=nus_obs, y1=None)
+    median_mu1 = jnp.median(predictions["y1"], axis=0)
+    hpdi_mu1 = hpdi(predictions["y1"], 0.95)
 
-print("prediction starts")
-pred = Predictive(model_c, samples, return_sites=["y1"])
-predictions = pred(rng_key_, nu1=nus_obs, y1=None)
-median_mu1 = jnp.median(predictions["y1"], axis=0)
-hpdi_mu1 = hpdi(predictions["y1"], 0.95)
-
-# prediction plot
-plotjupiter.plot_prediction(wav_obs, spectra, median_mu1, hpdi_mu1)
+    # prediction plot
+    plotjupiter.plot_prediction(wav_obs, spectra, median_mu1, hpdi_mu1)
 
 
 if hmc_perform:
