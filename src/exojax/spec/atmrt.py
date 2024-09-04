@@ -317,6 +317,19 @@ class ArtCommon:
                 self.pressure, gravity, kappa, gamma, Tint, Tirr, self.fguillot
             )
         )
+    
+    def custom_temperature(self, np_temperature):
+        """custom temperature profile from numpy ndarray
+
+        Notes: this function is equivalen to jnp.array(np_temperature), but it is necessary for the compatibility.
+
+        Args:
+            np_temperature (numpy nd array): temperature profile
+
+        Returns:
+            array: jnp.array temperature profile
+        """
+        return jnp.array(np_temperature)
 
     def powerlaw_temperature_boundary(self, T0, alpha):
         """powerlaw temperature at the upper point (overline{T}) + TB profile
