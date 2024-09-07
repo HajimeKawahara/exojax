@@ -94,7 +94,9 @@ def exact_molname_exomol_to_simple_molname(exact_exomol_molecule_name):
     )
 
     try:
-        molname_simple = _molname_exomol_to_simple_molname_no_exception(exact_exomol_molecule_name)
+        molname_simple = _molname_exomol_to_simple_molname_no_exception(
+            exact_exomol_molecule_name
+        )
     except:
         print(
             "Warning: Exact molname ",
@@ -103,10 +105,8 @@ def exact_molname_exomol_to_simple_molname(exact_exomol_molecule_name):
         )
         return exact_exomol_molecule_name
 
-    # exception
-    if molname_simple == "HHO":
-        molname_simple = "H2O"
     return molname_simple
+
 
 def _molname_exomol_to_simple_molname_no_exception(exact_exomol_molecule_name):
     t = exact_exomol_molecule_name.split("-")
@@ -119,6 +119,10 @@ def _molname_exomol_to_simple_molname_no_exception(exact_exomol_molecule_name):
         else:
             num = ""
         molname_simple = molname_simple + alp + num
+
+    # HDO exception
+    if molname_simple == "HHO":
+        molname_simple = "H2O"
     return molname_simple
 
 
