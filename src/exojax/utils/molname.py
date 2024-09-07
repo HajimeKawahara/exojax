@@ -86,19 +86,17 @@ def exact_molname_exomol_to_simple_molname(exact_exomol_molecule_name):
         >>> Warning: Exact molname  trans-31P2-1H-2H cannot be converted to simple molname
         >>> trans-31P2-1H-2H
     """
+    old_name = "exojax.utils.molname.exact_molname_exomol_to_simple_molname"
+    new_name = "radis.api.exomolapi.exact_molname_exomol_to_simple_molname"
+    warnings.warn(
+        old_name + " will be replaced to " + new_name + ".",
+        FutureWarning,
+    )
 
     try:
-        t = exact_exomol_molecule_name.split("-")
-        molname_simple = ""
-        for ele in t:
-            alp = "".join(re.findall(r"\D", ele))
-            num0 = re.split("[A-Z]", ele)[1]
-            if num0.isdigit():
-                num = num0
-            else:
-                num = ""
-            molname_simple = molname_simple + alp + num
-        return molname_simple
+        molname_simple = _molname_exomol_to_simple_molname_no_exception(
+            exact_exomol_molecule_name
+        )
     except:
         print(
             "Warning: Exact molname ",
@@ -106,6 +104,26 @@ def exact_molname_exomol_to_simple_molname(exact_exomol_molecule_name):
             "cannot be converted to simple molname",
         )
         return exact_exomol_molecule_name
+
+    return molname_simple
+
+
+def _molname_exomol_to_simple_molname_no_exception(exact_exomol_molecule_name):
+    t = exact_exomol_molecule_name.split("-")
+    molname_simple = ""
+    for ele in t:
+        alp = "".join(re.findall(r"\D", ele))
+        num0 = re.split("[A-Z]", ele)[1]
+        if num0.isdigit():
+            num = num0
+        else:
+            num = ""
+        molname_simple = molname_simple + alp + num
+
+    # HDO exception
+    if molname_simple == "HHO":
+        molname_simple = "H2O"
+    return molname_simple
 
 
 def exact_molname_hitran_to_simple_molname(exact_hitran_molecule_name):
