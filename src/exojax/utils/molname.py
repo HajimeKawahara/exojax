@@ -10,7 +10,6 @@
 
 """
 
-from hmac import new
 from radis.db.classes import get_molecule
 import re
 import warnings
