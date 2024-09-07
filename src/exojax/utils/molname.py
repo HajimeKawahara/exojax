@@ -92,6 +92,7 @@ def exact_molname_exomol_to_simple_molname(exact_exomol_molecule_name):
         old_name + " will be replaced to " + new_name + ".",
         FutureWarning,
     )
+
     try:
         t = exact_exomol_molecule_name.split("-")
         molname_simple = ""
@@ -103,9 +104,6 @@ def exact_molname_exomol_to_simple_molname(exact_exomol_molecule_name):
             else:
                 num = ""
             molname_simple = molname_simple + alp + num
-        if molname_simple == "HHO":
-            molname_simple = "H2O"
-        return molname_simple
     except:
         print(
             "Warning: Exact molname ",
@@ -113,6 +111,11 @@ def exact_molname_exomol_to_simple_molname(exact_exomol_molecule_name):
             "cannot be converted to simple molname",
         )
         return exact_exomol_molecule_name
+
+    # exception
+    if molname_simple == "HHO":
+        molname_simple = "H2O"
+    return molname_simple
 
 
 def exact_molname_hitran_to_simple_molname(exact_hitran_molecule_name):
