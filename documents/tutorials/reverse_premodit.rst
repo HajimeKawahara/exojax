@@ -1,6 +1,8 @@
 HMC-NUTS Retrieval of a Methane High-Resolution Emission Spectrum
 =================================================================
 
+last update: September 7th (2024) Hajime Kawahara ExoJAX v1.6
+
 In this tutorial, we try to fit the ExoJAX emission model to a mock
 high-resolution spectrum. This spectrum was computed assuming a powerlaw
 temperature profile and CH4 opacity + CIA.
@@ -18,12 +20,6 @@ In this tutorial, we use ``PreMODIT`` as an opacity calculator.
     import jax.numpy as jnp
     import pandas as pd
     import pkg_resources
-
-.. code:: ipython3
-
-    # if needed
-    #import ssl
-    #ssl._create_default_https_context = ssl._create_unverified_context
 
 .. code:: ipython3
 
@@ -110,7 +106,7 @@ We first set the wavenumber grid enough to cover the observed spectrum.
 .. parsed-literal::
 
     xsmode =  premodit
-    xsmode assumes ESLOG in wavenumber space: mode=premodit
+    xsmode assumes ESLOG in wavenumber space: xsmode=premodit
     ======================================================================
     The wavenumber grid should be in ascending order.
     The users can specify the order of the wavelength grid by themselves.
@@ -124,8 +120,8 @@ We first set the wavenumber grid enough to cover the observed spectrum.
       warnings.warn(
     /home/kawahara/exojax/src/exojax/spec/unitconvert.py:62: UserWarning: Both input wavelength and output wavenumber are in ascending order.
       warnings.warn(
-    /home/kawahara/exojax/src/exojax/utils/grids.py:142: UserWarning: Resolution may be too small. R=617160.1067701889
-      warnings.warn('Resolution may be too small. R=' + str(resolution),
+    /home/kawahara/exojax/src/exojax/utils/grids.py:144: UserWarning: Resolution may be too small. R=617160.1067701889
+      warnings.warn("Resolution may be too small. R=" + str(resolution), UserWarning)
 
 
 We would analyze the emission spectrum. So, we use ``ArtEmisPure`` as
@@ -175,11 +171,15 @@ ExoMol website.
 
 .. parsed-literal::
 
-    /home/kawahara/exojax/src/exojax/utils/molname.py:178: FutureWarning: e2s will be replaced to exact_molname_exomol_to_simple_molname.
+    /home/kawahara/exojax/src/exojax/utils/molname.py:197: FutureWarning: e2s will be replaced to exact_molname_exomol_to_simple_molname.
       warnings.warn(
-    /home/kawahara/exojax/src/exojax/utils/molname.py:65: UserWarning: No isotope number identified.
+    /home/kawahara/exojax/src/exojax/utils/molname.py:91: FutureWarning: exojax.utils.molname.exact_molname_exomol_to_simple_molname will be replaced to radis.api.exomolapi.exact_molname_exomol_to_simple_molname.
+      warnings.warn(
+    /home/kawahara/exojax/src/exojax/utils/molname.py:63: UserWarning: No isotope number identified.
       warnings.warn("No isotope number identified.", UserWarning)
-    /home/kawahara/exojax/src/exojax/utils/molname.py:65: UserWarning: No isotope number identified.
+    /home/kawahara/exojax/src/exojax/utils/molname.py:91: FutureWarning: exojax.utils.molname.exact_molname_exomol_to_simple_molname will be replaced to radis.api.exomolapi.exact_molname_exomol_to_simple_molname.
+      warnings.warn(
+    /home/kawahara/exojax/src/exojax/utils/molname.py:63: UserWarning: No isotope number identified.
       warnings.warn("No isotope number identified.", UserWarning)
     /home/kawahara/exojax/src/exojax/spec/molinfo.py:28: UserWarning: exact molecule name is not Exomol nor HITRAN form.
       warnings.warn("exact molecule name is not Exomol nor HITRAN form.")
@@ -191,6 +191,7 @@ ExoMol website.
 
     HITRAN exact name= (12C)(1H)4
     HITRAN exact name= (12C)(1H)4
+    radis engine =  vaex
     Molecule:  CH4
     Isotopologue:  12C-1H4
     Background atmosphere:  H2
@@ -199,24 +200,12 @@ ExoMol website.
     Transition files: 
     	 => File 12C-1H4__YT10to10__06000-06100.trans
     	 => File 12C-1H4__YT10to10__06100-06200.trans
-    #            i_upper    i_lower    A           nu_lines            gup    jlower    jupper    elower       eupper        Sij0
-    0            1033220    1024493    0.00024832  5999.9999849999995  50     12        12        6673.851806  12673.851791  6.323472505220992e-39
-    1            1064746    1291636    0.00039538  5999.999983999999   75     13        12        4933.785965  10933.785949  7.117220393764851e-35
-    2            1071252    1291978    0.0017425   6000.000033         75     13        12        6546.843546  12546.843579  1.2340167731327585e-37
-    3            1071787    1292023    0.00018938  6000.000016         75     13        12        6624.447597  12624.447613  9.197315036051529e-39
-    4            1117488    895034     0.0017477   6000.000004999999   75     11        12        5307.511357  11307.511362  5.114842491594696e-35
-    ...          ...        ...        ...         ...                 ...    ...       ...       ...          ...           ...
-    217,996,053  916862     789269     0.00076054  6199.999923999999   69     10        11        7699.45898   13899.458904  1.711663352498023e-40
-    217,996,054  917793     789351     0.0010122   6199.9998590000005  69     10        11        7782.015923  13982.015782  1.5250560431095478e-40
-    217,996,055  919787     789549     0.00051839  6199.999945         69     10        11        7988.72336   14188.723305  2.8596894155983876e-41
-    217,996,056  97486      134836     3.7486e-05  6199.999949999999   21     4         3         4077.40367   10277.40362   1.136726310326331e-34
-    217,996,057  996182     847586     0.011161    6199.99995          125    11        12        7423.072664  13623.072614  1.7438490879626268e-38
     Broadening code level: a1
 
 
 .. parsed-literal::
 
-    /home/kawahara/exojax/src/radis/radis/api/exomolapi.py:607: AccuracyWarning: The default broadening parameter (alpha = 0.0488 cm^-1 and n = 0.4) are used for J'' > 16 up to J'' = 40
+    /home/kawahara/anaconda3/lib/python3.10/site-packages/radis-0.15.1-py3.10.egg/radis/api/exomolapi.py:683: AccuracyWarning: The default broadening parameter (alpha = 0.0488 cm^-1 and n = 0.4) are used for J'' > 16 up to J'' = 40
       warnings.warn(
 
 
@@ -226,7 +215,7 @@ ExoMol website.
     OpaPremodit: params automatically set.
     default elower grid trange (degt) file version: 2
     Robust range: 393.5569458240504 - 1647.2060977798956 K
-    Tref changed: 296.0K->1108.1485374361412K
+    OpaPremodit: Tref_broadening is set to  774.5966692414833 K
 
 
 .. parsed-literal::
@@ -238,15 +227,12 @@ ExoMol website.
         config.update("jax_enable_x64", True)
     
       warnings.warn(msg+how_change_msg)
-    /home/kawahara/exojax/src/exojax/spec/opacalc.py:171: UserWarning: dit_grid_resolution is not None. Ignoring broadening_parameter_resolution.
+    /home/kawahara/exojax/src/exojax/spec/opacalc.py:215: UserWarning: dit_grid_resolution is not None. Ignoring broadening_parameter_resolution.
       warnings.warn(
-    /home/kawahara/exojax/src/exojax/spec/api.py:326: RuntimeWarning: divide by zero encountered in log
-      self.logsij0 = np.log(self.line_strength_ref)
 
 
 .. parsed-literal::
 
-    OpaPremodit: Tref_broadening is set to  774.5966692414833 K
     # of reference width grid :  2
     # of temperature exponent grid : 2
 
@@ -286,16 +272,6 @@ and ``opa``.
     #settings before HMC
     vsini_max = 100.0
     vr_array = velocity_grid(res, vsini_max)
-
-.. code:: ipython3
-
-    print("ready")
-
-
-.. parsed-literal::
-
-    ready
-
 
 Then, we make a function that computes the model spectrum. Here, we use
 naive functions of a spin rotation and ``ipgass_sampling``, but you can
@@ -351,7 +327,7 @@ also use ``sop`` instead.
 
 
 
-.. image:: reverse_premodit_files/reverse_premodit_27_0.png
+.. image:: reverse_premodit_files/reverse_premodit_25_0.png
 
 
 The following is the numpyro model, i.e. prior and sample.
@@ -379,8 +355,8 @@ The following is the numpyro model, i.e. prior and sample.
     #kernel = NUTS(model_c, forward_mode_differentiation=True)
     kernel = NUTS(model_c, forward_mode_differentiation=False)
 
-Let’s run the HMC-NUTS. In my environment, it took ~2 hours using A4500.
-We observed here the number of divergences of 2.
+Let’s run the HMC-NUTS. In my environment, it took ~2 hours using
+RTX3080. We observed here the number of divergences of 2.
 
 .. code:: ipython3
 
@@ -391,19 +367,19 @@ We observed here the number of divergences of 2.
 
 .. parsed-literal::
 
-    sample: 100%|██████████| 1500/1500 [2:25:22<00:00,  5.81s/it, 1023 steps of size 4.53e-03. acc. prob=0.94]  
+    sample: 100%|██████████| 1500/1500 [1:56:23<00:00,  4.66s/it, 511 steps of size 5.44e-03. acc. prob=0.91]  
 
 
 .. parsed-literal::
 
     
                     mean       std    median      5.0%     95.0%     n_eff     r_hat
-       MMR_CH4      0.01      0.00      0.01      0.00      0.01    459.21      1.00
-            RV      9.32      0.40      9.33      8.69      9.99    547.61      1.00
-            Rp      0.67      0.19      0.62      0.40      0.98    448.36      1.00
-            T0   1204.92     17.17   1204.94   1174.23   1229.56    635.51      1.00
-         alpha      0.10      0.01      0.10      0.10      0.11    497.56      1.00
-         vsini     19.50      0.67     19.47     18.47     20.67    648.31      1.00
+       MMR_CH4      0.01      0.00      0.01      0.00      0.01    262.15      1.00
+            RV      9.30      0.38      9.30      8.65      9.91    608.21      1.00
+            Rp      0.68      0.20      0.64      0.40      0.99    267.23      1.00
+            T0   1204.59     17.39   1204.31   1179.03   1234.06    713.10      1.01
+         alpha      0.10      0.01      0.10      0.10      0.11    354.36      1.00
+         vsini     19.47      0.70     19.46     18.38     20.71    381.05      1.01
     
     Number of divergences: 2
 
@@ -450,5 +426,5 @@ Draw a corner plot
 
 
 
-.. image:: reverse_premodit_files/reverse_premodit_36_0.png
+.. image:: reverse_premodit_files/reverse_premodit_34_0.png
 
