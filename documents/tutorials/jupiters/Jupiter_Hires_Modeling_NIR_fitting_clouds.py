@@ -53,6 +53,7 @@ from exojax.utils.instfunc import resolution_to_gaussian_std
 from exojax.spec.specop import SopInstProfile
 from exojax.spec.opacalc import OpaPremodit
 from exojax.spec.api import MdbHitemp
+from exojax.spec.api import MdbExomol
 from exojax.utils.constants import RJ
 
 import arviz
@@ -194,8 +195,10 @@ opa_nh3 = OpaMie(pdb_nh3, nus)
 
 # Next, we consider the gas component, i.e. methane
 Eopt = 3300.0  # this is from the Elower optimization result
-mdb_reduced = MdbHitemp("CH4", nurange=[nus[0], nus[-1]], isotope=1, elower_max=Eopt)
 
+# HITEMP or ExoMol/MM
+#mdb_reduced = MdbHitemp("CH4", nurange=[nus[0], nus[-1]], isotope=1, elower_max=Eopt)
+mdb_reduced = MdbExomol("CH4/12C-1H4/MM/", nurange=[nus[0], nus[-1]], elower_max=Eopt)
 
 opa = OpaPremodit(
     mdb_reduced, nu_grid=nus, allow_32bit=True, auto_trange=[80.0, 300.0]
