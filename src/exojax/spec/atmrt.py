@@ -26,6 +26,7 @@ from exojax.spec.opachord import chord_geometric_matrix_lower
 from exojax.spec.opachord import chord_geometric_matrix
 from exojax.spec.opachord import chord_optical_depth
 from exojax.utils.constants import logkB, logm_ucgs
+from exojax.utils.indexing import get_smooth_index
 import warnings
 
 
@@ -70,8 +71,10 @@ class ArtCommon:
 
         Args:
             temperature (1D array): temparature profile (Nlayer)
-            mean_molecular_weight (float/1D array): mean molecular weight profile (float/Nlayer)
-            radius_btm (float): the bottom radius of the atmospheric layer
+            mean_molecular_weight (float/1D array): 
+                mean molecular weight profile (float/Nlayer)
+            radius_btm (float): 
+                the bottom radius of the atmospheric layer
             gravity_btm (float): the bottom gravity cm2/s at radius_btm, i.e. G M_p/radius_btm
 
         Returns:
@@ -106,12 +109,15 @@ class ArtCommon:
 
         Args:
             temperature (1D array): temparature profile (Nlayer)
-            mean_molecular_weight (float/1D array): mean molecular weight profile (float/Nlayer)
+            mean_molecular_weight (float/1D array): 
+                mean molecular weight profile (float/Nlayer)
             radius_btm (float): the bottom radius of the atmospheric layer
-            gravity_btm (float): the bottom gravity cm2/s at radius_btm, i.e. G M_p/radius_btm
+            gravity_btm (float): 
+                the bottom gravity cm2/s at radius_btm, i.e. G M_p/radius_btm
 
         Returns:
-            2D array: gravity in cm2/s (Nlayer, 1), suitable for the input of opacity_profile_lines
+            2D array: 
+                gravity in cm2/s (Nlayer, 1), suitable for the input of opacity_profile_lines
         """
         normalized_height, normalized_radius_lower = self.atmosphere_height(
             temperature, mean_molecular_weight, radius_btm, gravity_btm
@@ -152,7 +158,6 @@ class ArtCommon:
         sigmag,
         gravity,
     ):
-        
         """
         opacity profile (delta tau) from extinction coefficient assuming the AM cloud model with a lognormal cloud distribution
         Args:
@@ -182,7 +187,7 @@ class ArtCommon:
         self, logacia_matrix, temperature, vmr1, vmr2, mmw, gravity
     ):
         """opacity profile (delta tau) from collision-induced absorption
-        
+
         Args:
             logacia_matrix (_type_): _description_
             temperature (_type_): _description_
@@ -317,7 +322,7 @@ class ArtCommon:
                 self.pressure, gravity, kappa, gamma, Tint, Tirr, self.fguillot
             )
         )
-    
+
     def custom_temperature(self, np_temperature):
         """custom temperature profile from numpy ndarray
 
@@ -344,6 +349,56 @@ class ArtCommon:
         return self.clip_temperature(
             atmprof_powerlow(self.pressure_boundary, T0, alpha)
         )
+
+
+class ArtAbsPure(ArtCommon):
+    def __init__(
+        self,
+        pressure_top=1.0e-8,
+        pressure_btm=1.0e2,
+        nlayer=100,
+        nu_grid=None,
+        observer="surface",
+    ):
+        """initialization of ArtAbsPure
+
+        Args:
+            pressure_top (float, optional): top pressure in bar. Defaults to 1.0e-8.
+
+            nlayer (int, optional): the number of the atmospheric layers. Defaults to 100.
+            nu_grid (float, array, optional): the wavenumber grid. Defaults to None.
+            observer: "top" (spectrum at the top pressure reflected by the surface) or "surface" (transmission observed at the surface)
+        """
+        super().__init__(pressure_top, pressure_btm, nlayer, nu_grid)
+        self.observer = observer
+        if self.observer == "top":
+            self.factor = 2.0
+        elif self.observer == "surface":
+            self.factor = 1.0
+        else:
+            raise ValueError("observer should be 'top' or 'surface'")
+
+    def run(self, dtau, pressure_surface, incoming_flux, cosine_view_angle=1.0):
+        """run radiative transfer
+
+        Args:
+            dtau (2D array): optical depth matrix, dtau  (N_layer, N_nus)
+            pewssure_surface: pressure at the surface (bar)
+            incoming flux: incoming flux F_0^- (N_nus)
+            cosine_view_angle: cosine of the viewing angle, mu=cos(theta) (1.0 for the top of the atmosphere)
+
+        Returns:
+            1D array: spectrum
+        """
+        smooth_index = get_smooth_index(np.log10(self.pressure), np.log10(pressure_surface))
+
+
+        dtau_opaque = dtau * (
+            1.0 - jnp.heaviside(self.pressure - pressure_surface, 0.5)
+        )  # hard boundary (not differentiable)
+
+        trans = jnp.exp(-jnp.sum(self.factor, dtau_opaque, axis=0) / cosine_view_angle)
+        return trans * incoming_flux
 
 
 class ArtReflectPure(ArtCommon):
@@ -393,7 +448,6 @@ class ArtReflectPure(ArtCommon):
             asymmetric_parameter: assymetric parameter (Nlayer, N_nus)
             reflectivity_surface: reflectivity from the surface (N_nus)
             incoming flux: incoming flux F_0^- (N_nus)
-            nu_grid (1D array): if nu_grid is not initialized, provide it.
 
 
         Returns:
