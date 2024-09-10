@@ -15,13 +15,16 @@
 miegird_generate = False
 # when the optimization is performed, set opt_perform = True, after performing it, set False
 opt_perform = False
+# checking atmosphere states
+check_atm = True
 # when HMC is performed, set hmc_perform = True, after performing it, set False
-hmc_perform = True
-use_init = True # uses the initial values (obtained from optimization)
+hmc_perform = False
+use_init = False  # uses the initial values (obtained from optimization)
 # if True, the figures are shown
 figshow = False
 ###
 import os
+
 os.environ["JAX_TRACEBACK_FILTERING"] = "off"
 
 
@@ -68,7 +71,6 @@ import jax.numpy as jnp
 from jax import config
 
 config.update("jax_enable_x64", True)
-
 
 
 # Forget about the following code. I need this to run the code somewhere...
@@ -129,7 +131,7 @@ torig = dat["Temperature (K)"]
 porig = dat["Pressure (bar)"]
 
 # %%
-art = ArtReflectPure(nu_grid=nus, pressure_btm=3.0e1, pressure_top=1.0e-3, nlayer=100)
+art = ArtReflectPure(nu_grid=nus, pressure_btm=3.0e1, pressure_top=1.0e-3, nlayer=200)
 
 # custom temperature profile
 Parr = art.pressure
@@ -157,7 +159,8 @@ amp_nh3.check_temperature_range(Tarr)
 # condensate substance density
 rhoc = pdb_nh3.condensate_substance_density  # g/cc
 n = nsol()
-abundance_nh3 = 3.0 * n["N"]  # x 3 solar abundance
+# abundance_nh3 = 3.0 * n["N"]  # x 3 solar abundance
+abundance_nh3 = 1.5 * n["N"]  # x 3 solar abundance
 molmass_nh3 = molmass_isotope("NH3", db_HIT=False)
 MMRbase_nh3 = vmr2mmr(abundance_nh3, molmass_nh3, mu)
 
@@ -165,6 +168,7 @@ MMRbase_nh3 = vmr2mmr(abundance_nh3, molmass_nh3, mu)
 fsed_range = [0.1, 10.0]
 Kzz_fixed = 1.0e4
 sigmag_fixed = 2.0
+vrv_fixed = 0.0
 
 if miegird_generate:
     Kzz, rg_layer, MMRc = miegrid_generate.generate_miegrid_new(
@@ -181,6 +185,7 @@ if miegird_generate:
         Kzz_fixed,
     )
     import sys
+
     sys.exit()
 else:
     pdb_nh3.load_miegrid()
@@ -214,7 +219,6 @@ parinit = jnp.array(
 )
 
 
-
 def unpack_params(params):
     multiple_factor = jnp.array([1.0, 1.0, 1.0, 1.0, 1.0, 10000.0, 0.01, 1.0])
     par = params * multiple_factor
@@ -228,17 +232,39 @@ def unpack_params(params):
     factor = par[7]
     fsed = 10**log_fsed
     Kzz = 10**log_Kzz
-    
+
     return fsed, sigmag, Kzz, vrv, vv, _broadening, const_mmr_ch4, factor
 
 
 def spectral_model(params):
+    vv, factor, broadening, asymmetric_parameter, single_scattering_albedo, dtau = (
+        atmospheric_model(params)
+    )
+    # velocity
+    vpercp = (vrv_fixed + vv) / c
+    incoming_flux = jnp.interp(nusjax, nusjax_solar * (1.0 + vpercp), solspecjax)
+
+    Fr = art.run(
+        dtau,
+        single_scattering_albedo,
+        asymmetric_parameter,
+        reflectivity_surface,
+        incoming_flux,
+    )
+
+    std = resolution_to_gaussian_std(broadening)
+    Fr_inst = sop.ipgauss(Fr, std)
+    Fr_samp = sop.sampling(Fr_inst, vv, nus_obs)
+    return factor * Fr_samp
+
+
+def atmospheric_model(params):
     # unused parameters are marked with _
-    fsed, _sigmag, _Kzz, vrv, vv, _broadening, const_mmr_ch4, factor = unpack_params(params)
-    
+    fsed, _sigmag, _Kzz, _vrv, vv, _broadening, const_mmr_ch4, factor = unpack_params(
+        params
+    )
+
     broadening = 25000.0
-    # temperatures
-    # cloud
     rg_layer, MMRc = amp_nh3.calc_ammodel(
         Parr, Tarr, mu, molmass_nh3, gravity, fsed, sigmag_fixed, Kzz_fixed, MMRbase_nh3
     )
@@ -267,23 +293,7 @@ def spectral_model(params):
 
     single_scattering_albedo = (dtau_cld_scat) / (dtau_cld + dtau_ch4)
     dtau = dtau_cld + dtau_ch4
-
-    # velocity
-    vpercp = (vrv + vv) / c
-    incoming_flux = jnp.interp(nusjax, nusjax_solar * (1.0 + vpercp), solspecjax)
-
-    Fr = art.run(
-        dtau,
-        single_scattering_albedo,
-        asymmetric_parameter,
-        reflectivity_surface,
-        incoming_flux,
-    )
-
-    std = resolution_to_gaussian_std(broadening)
-    Fr_inst = sop.ipgauss(Fr, std)
-    Fr_samp = sop.sampling(Fr_inst, vv, nus_obs)
-    return factor * Fr_samp
+    return vv, factor, broadening, asymmetric_parameter, single_scattering_albedo, dtau
 
 
 def factor_mmr_to_gperl(molmass, Parr, Tarr):
@@ -305,6 +315,7 @@ def factor_mmr_to_gperl(molmass, Parr, Tarr):
 
 fac = factor_mmr_to_gperl(molmass_nh3, Parr, Tarr)
 
+
 def cost_function(params):
     return jnp.sum((spectra - spectral_model(params)) ** 2)
 
@@ -312,24 +323,23 @@ def cost_function(params):
 if opt_perform:
     adam = OptaxSolver(opt=optax.adam(1.0e-2), fun=cost_function)
     # res = adam.run(parinit)
-    
+
     params = parinit
     state = adam.init_state(params)
-    val =[]
+    val = []
     loss = []
-    for _ in tqdm.tqdm(range(300)):  
+    for _ in tqdm.tqdm(range(5000)):
         params, state = adam.update(params, state)
         val.append(params)
         loss.append(state.value)
     val = np.array(val)
     loss = np.array(loss)
-    
+
     fig = plt.figure()
     ax = fig.add_subplot(111)
     plt.plot(loss)
     plt.yscale("log")
     plt.show()
-
 
     # res.params
     print("fsed, sigmag, Kzz, vrv, vv, _broadening, const_mmr_ch4, factor")
@@ -345,6 +355,18 @@ if opt_perform:
     plt = plotjupiter.plot_opt(nus_obs, spectra, F_samp_init, F_samp)
     plt.savefig("fitting.png")
     import sys
+
+    sys.exit()
+
+if check_atm:
+    params_check = jnp.array(
+        [0.8533299, 2.0, 4.0, -5.0, -58.81297833, 2.5, 1.93828069, 0.54328201]
+    )
+    vv, factor, broadening, asymmetric_parameter, single_scattering_albedo, dtau = (
+        atmospheric_model(params_check)
+    )
+    
+    import sys
     sys.exit()
 
 
@@ -356,34 +378,45 @@ if opt_perform:
 # )
 # multiple_factor = jnp.array([100.0, 0.0001, 0.1, 1.0, 1.0, 10000.0, 0.01, 1.0])
 
-Pjupiter = 9.925*3600 #Jupiter siderial period sec
-cm2km = 1.e-5
-vrotmax = 2*np.pi*RJ/Pjupiter*cm2km #rotation velocity of Jupiter at the equator in km/s (12.57 km/s)
+Pjupiter = 9.925 * 3600  # Jupiter siderial period sec
+cm2km = 1.0e-5
+vrotmax = (
+    2 * np.pi * RJ / Pjupiter * cm2km
+)  # rotation velocity of Jupiter at the equator in km/s (12.57 km/s)
+
 
 def model_c(nu1, y1):
-
 
     # T0_n = numpyro.sample("T0_n", dist.Uniform(0.5, 2.0))
     log_fsed_n = numpyro.sample("log_fsed_n", dist.Uniform(0.0, 2.0))
     numpyro.deterministic("fsed", 10**log_fsed_n)
     log_Kzz_n_fixed = jnp.log10(Kzz_fixed)
-    #vrv = numpyro.sample("vrv", dist.Uniform(-vrotmax, vrotmax))
-    #vrv = numpyro.sample("vrv",  dist.TruncatedNormal(loc=0.0, scale=vrotmax/3.0, low=-vrotmax, high=vrotmax))
-    vrv = 0.0 #fix
+    # vrv = numpyro.sample("vrv", dist.Uniform(-vrotmax, vrotmax))
+    # vrv = numpyro.sample("vrv",  dist.TruncatedNormal(loc=0.0, scale=vrotmax/3.0, low=-vrotmax, high=vrotmax))
+    vrv = 0.0  # fix
     vv = numpyro.sample("vv", dist.Uniform(-70.0, -40.0))
     broadening = 25000.0  # fix
     log_molmass_ch4_n = numpyro.sample("log_MMR_CH4", dist.Uniform(-2, 1))
     molmass_ch4_n = 10**log_molmass_ch4_n
-    numpyro.deterministic("mmr_ch4", molmass_ch4_n*0.01)
+    numpyro.deterministic("mmr_ch4", molmass_ch4_n * 0.01)
     factor = numpyro.sample("factor", dist.Uniform(0.0, 1.0))
 
     # log_fsed, sigmag, log_Kzz, vrv, vv, boradening, mmr, normalization factor
-    #parinit = jnp.array(
+    # parinit = jnp.array(
     #    [jnp.log10(3.0), sigmag_fixed, jnp.log10(Kzz_fixed), -5.0, -55.0, 2.5, 0.2, 0.6]
-    #)
+    # )
 
     params = jnp.array(
-        [log_fsed_n, sigmag_fixed, log_Kzz_n_fixed, vrv, vv, broadening, molmass_ch4_n, factor]
+        [
+            log_fsed_n,
+            sigmag_fixed,
+            log_Kzz_n_fixed,
+            vrv,
+            vv,
+            broadening,
+            molmass_ch4_n,
+            factor,
+        ]
     )
     mean = spectral_model(params)
 
@@ -398,16 +431,16 @@ import jax.numpy as jnp
 
 if use_init:
     # log_fsed, sigmag, , log_Kzz, vrv, vv, boradening (fix), mmr, normalization factor
-    #best (packed): [  0.79194082   2.           4.          -2.52860584 -57.54213557 2.5          0.41915007   0.54551278] #before #521
-#    best (packed): [  1.24906576   2.           4.          -3.03095345 -57.8439118
-#   2.5          0.84884493   0.53314691]
+    # best (packed): [  0.79194082   2.           4.          -2.52860584 -57.54213557 2.5          0.41915007   0.54551278] #before #521
+    #    best (packed): [  1.24906576   2.           4.          -3.03095345 -57.8439118
+    #   2.5          0.84884493   0.53314691]
 
     init_params = {
         "log_fsed_n": 1.24906576,
-        #"vrv": -3.03095345,
+        # "vrv": -3.03095345,
         "vv": -57.8439118,
         "log_MMR_CH4": np.log10(0.84884493),
-        "factor":  0.53314691,
+        "factor": 0.53314691,
         "sigma": 1.0,
     }
 
@@ -418,7 +451,7 @@ if hmc_perform:
     print("HMC starts")
     num_warmup, num_samples = 500, 1000
     ######
-    #num_warmup, num_samples = 10, 20
+    # num_warmup, num_samples = 10, 20
     ######
     # kernel = NUTS(model_c,forward_mode_differentiation=True)
     kernel = NUTS(model_c)
@@ -448,7 +481,7 @@ if hmc_perform:
 
 
 if hmc_perform:
-    np.savez("output/hpdi.npz",hpdi_mu1)
+    np.savez("output/hpdi.npz", hpdi_mu1)
     np.savez("output/median.npz", median_mu1)
     np.savez("output/predictions.npz", predictions)
 
