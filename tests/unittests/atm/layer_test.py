@@ -1,6 +1,8 @@
 import pytest
 import numpy as np
 from exojax.atm.atmprof import pressure_layer_logspace
+from exojax.atm.atmprof import pressure_upper_logspace
+from exojax.atm.atmprof import pressure_lower_logspace
 from exojax.atm.atmprof import pressure_scale_height
 
 
@@ -15,6 +17,31 @@ def test_log_pressure_is_constant():
 
     # check P[n-1] = k P[n]
     assert np.all(np.abs(1.0 - pressure[1:] * k / pressure[:-1]) < 1.0e-5)
+
+
+def test_pressure_upper_logspace():
+    pressure, dParr, k = pressure_layer_logspace(
+        log_pressure_top=-3.0,
+        log_pressure_btm=2.0,
+        nlayer=6,
+        mode="ascending",
+        numpy=False,
+    )
+    p_upper = pressure_upper_logspace(pressure, k)
+    ref = np.array([-3.5, -2.5, -1.5, -0.5, 0.5, 1.5])
+    assert np.all(np.log10(p_upper) - ref < 1.0e-10)
+
+def test_pressure_lower_logspace():
+    pressure, dParr, k = pressure_layer_logspace(
+        log_pressure_top=-3.0,
+        log_pressure_btm=2.0,
+        nlayer=6,
+        mode="ascending",
+        numpy=False,
+    )
+    p_lower = pressure_lower_logspace(pressure, k)
+    ref = np.array([-2.5, -1.5, -0.5, 0.5, 1.5, 2.5])
+    assert np.all(np.log10(p_lower) - ref < 1.0e-10)
 
 
 def test_atmoshperic_height_for_isothermal_with_analytic():
@@ -52,3 +79,5 @@ def test_atmoshperic_height_for_isothermal_with_analytic():
 if __name__ == "__main__":
     test_log_pressure_is_constant()
     test_atmoshperic_height_for_isothermal_with_analytic()
+    test_pressure_upper_logspace()
+    test_pressure_lower_logspace()
