@@ -31,6 +31,7 @@ def test_pressure_upper_logspace():
     ref = np.array([-3.5, -2.5, -1.5, -0.5, 0.5, 1.5])
     assert np.all(np.log10(p_upper) - ref < 1.0e-10)
 
+
 def test_pressure_lower_logspace():
     pressure, dParr, k = pressure_layer_logspace(
         log_pressure_top=-3.0,
@@ -44,7 +45,17 @@ def test_pressure_lower_logspace():
     assert np.all(np.log10(p_lower) - ref < 1.0e-10)
 
 
-def test_atmoshperic_height_for_isothermal_with_analytic():
+def test_pressure_scale_height_earth():
+    gravity_earth = 980.665  # cm/s2
+    T = 288.15  # K
+    mu_earth = 28.9644
+    H = pressure_scale_height(gravity_earth, T, mu_earth)
+    ref = 843465.7516276574  # cm (8.4km)
+
+    assert H == pytest.approx(ref)
+
+
+def test_atmospheric_scale_height_for_isothermal_with_analytic():
     from exojax.utils.grids import wavenumber_grid
     from exojax.spec.atmrt import ArtTransPure
     from jax import config
@@ -73,11 +84,13 @@ def test_atmoshperic_height_for_isothermal_with_analytic():
     )  # n log(k)
     normalized_radius_theory = 1 / (1 + H_btm / radius_btm * dq)
     res = 1.0 - (normalized_radius_lower - 1.0) / (normalized_radius_theory - 1.0)
+
     assert np.all(np.abs(res[:-1]) < 1.0e-11)
 
 
 if __name__ == "__main__":
     test_log_pressure_is_constant()
-    test_atmoshperic_height_for_isothermal_with_analytic()
+    test_atmospheric_scale_height_for_isothermal_with_analytic()
     test_pressure_upper_logspace()
     test_pressure_lower_logspace()
+    test_pressure_scale_height_earth()
