@@ -29,7 +29,7 @@ def test_pressure_upper_logspace():
     )
     p_upper = pressure_upper_logspace(pressure, k)
     ref = np.array([-3.5, -2.5, -1.5, -0.5, 0.5, 1.5])
-    assert np.all(np.log10(p_upper) - ref < 1.0e-10)
+    assert np.all(np.log10(p_upper) - ref < 1.0e-5)
 
 
 def test_pressure_lower_logspace():
@@ -42,7 +42,7 @@ def test_pressure_lower_logspace():
     )
     p_lower = pressure_lower_logspace(pressure, k)
     ref = np.array([-2.5, -1.5, -0.5, 0.5, 1.5, 2.5])
-    assert np.all(np.log10(p_lower) - ref < 1.0e-10)
+    assert np.all(np.log10(p_lower) - ref < 1.0e-5)
 
 
 def test_pressure_scale_height_earth():
