@@ -62,20 +62,22 @@ def test_unique_rows():
     u = unique_rows(a)
     assert np.all(np.unique(a, axis=0) == u)
 
+
 def test_get_value_at_smooth_index():
     array = np.array([10, 20, 30, 40, 50])
     smooth_index = np.array([0.5, 1.7, 2.5, 3.5])
     result = get_value_at_smooth_index(array, smooth_index)
     expected = np.array([15, 27, 35, 45])
     assert np.allclose(result, expected)
-    
-def test_get_smooth_index():
 
+
+def test_get_smooth_index():
     xp = np.array([10, 20, 30, 40, 50])
     x = np.array([15, 27, 35, 45])
     result = get_smooth_index(xp, x)
     expected = np.array([0.5, 1.7, 2.5, 3.5])
     assert np.allclose(result, expected)
+
 
 if __name__ == "__main__":
     # test_uniqidx_2D()

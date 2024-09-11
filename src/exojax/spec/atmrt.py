@@ -47,6 +47,7 @@ class ArtCommon:
         self.ready = False  # ready for art computation
         self.Tlow = 0.0
         self.Thigh = jnp.inf
+        self.reference_point = 0.5  # ref point (r) for pressure layers
 
         if nu_grid is None:
             warnings.warn(
@@ -71,9 +72,9 @@ class ArtCommon:
 
         Args:
             temperature (1D array): temparature profile (Nlayer)
-            mean_molecular_weight (float/1D array): 
+            mean_molecular_weight (float/1D array):
                 mean molecular weight profile (float/Nlayer)
-            radius_btm (float): 
+            radius_btm (float):
                 the bottom radius of the atmospheric layer
             gravity_btm (float): the bottom gravity cm2/s at radius_btm, i.e. G M_p/radius_btm
 
@@ -109,14 +110,14 @@ class ArtCommon:
 
         Args:
             temperature (1D array): temparature profile (Nlayer)
-            mean_molecular_weight (float/1D array): 
+            mean_molecular_weight (float/1D array):
                 mean molecular weight profile (float/Nlayer)
             radius_btm (float): the bottom radius of the atmospheric layer
-            gravity_btm (float): 
+            gravity_btm (float):
                 the bottom gravity cm2/s at radius_btm, i.e. G M_p/radius_btm
 
         Returns:
-            2D array: 
+            2D array:
                 gravity in cm2/s (Nlayer, 1), suitable for the input of opacity_profile_lines
         """
         normalized_height, normalized_radius_lower = self.atmosphere_height(
@@ -240,11 +241,13 @@ class ArtCommon:
             log_pressure_btm=self.log_pressure_btm,
             nlayer=self.nlayer,
             mode="ascending",
-            reference_point=0.5,
+            reference_point=self.reference_point,
             numpy=True,
         )
         self.pressure_boundary = pressure_boundary_logspace(
-            self.pressure, self.pressure_decrease_rate, reference_point=0.5
+            self.pressure,
+            self.pressure_decrease_rate,
+            reference_point=self.reference_point,
         )
 
     def change_temperature_range(self, Tlow, Thigh):
@@ -358,46 +361,52 @@ class ArtAbsPure(ArtCommon):
         pressure_btm=1.0e2,
         nlayer=100,
         nu_grid=None,
-        observer="surface",
     ):
         """initialization of ArtAbsPure
 
         Args:
             pressure_top (float, optional): top pressure in bar. Defaults to 1.0e-8.
-
+            pressure_btm (float, optional): bottom pressure in bar. Defaults to 1.0e2.
             nlayer (int, optional): the number of the atmospheric layers. Defaults to 100.
             nu_grid (float, array, optional): the wavenumber grid. Defaults to None.
-            observer: "top" (spectrum at the top pressure reflected by the surface) or "surface" (transmission observed at the surface)
         """
         super().__init__(pressure_top, pressure_btm, nlayer, nu_grid)
-        self.observer = observer
-        if self.observer == "top":
-            self.factor = 2.0
-        elif self.observer == "surface":
-            self.factor = 1.0
-        else:
-            raise ValueError("observer should be 'top' or 'surface'")
 
-    def run(self, dtau, pressure_surface, incoming_flux, cosine_view_angle=1.0):
+    def run(self, dtau, pressure_surface, incoming_flux, mu_in, mu_out):
         """run radiative transfer
 
         Args:
             dtau (2D array): optical depth matrix, dtau  (N_layer, N_nus)
-            pewssure_surface: pressure at the surface (bar)
-            incoming flux: incoming flux F_0^- (N_nus)
-            cosine_view_angle: cosine of the viewing angle, mu=cos(theta) (1.0 for the top of the atmosphere)
+            pressure_surface: pressure at the surface (bar)
+            incoming flux: incoming flux (x reflectivity) (N_nus)
+            mu_in (float>0) : cosine of the viewing angle for incoming ray (>0.0)
+            mu_out (float>0 or None): cosine of the viewing angle for outgoing ray, (>0.0)
+                    when mu_out is given (is not None), the observer is located at the top of the atmosphere
+                    if None, the observe is located at the ground.
+
+        Notes:
+            We include the reflectivity by surface in "incoming flux" for the simplicity
+            when the obserber is located at the top of atmosphere (mu_out is not None).
 
         Returns:
             1D array: spectrum
         """
-        smooth_index = get_smooth_index(np.log10(self.pressure), np.log10(pressure_surface))
+        factor = 1.0 / mu_in
+        if mu_out is not None:
+            factor = factor + 1.0 / mu_out
 
+        logk = jnp.log10(self.pressure_decrease_rate)
+        logp_btm = jnp.log10(self.pressure) + (self.reference_point - 1.0) * logk
+        logp_surface = jnp.log10(pressure_surface)
+        smooth_index = get_smooth_index(logp_btm, logp_surface)
+        ind = smooth_index.astype(int)
+        res = smooth_index - jnp.floor(smooth_index)
+        stepfunc = jnp.heaviside(logp_surface - logp_btm, 0.5)
+        tau_opaque = (
+            jnp.sum(dtau * stepfunc[:, jnp.newaxis], axis=0) + dtau[ind, :] * res
+        )
+        trans = jnp.exp(-factor * tau_opaque)
 
-        dtau_opaque = dtau * (
-            1.0 - jnp.heaviside(self.pressure - pressure_surface, 0.5)
-        )  # hard boundary (not differentiable)
-
-        trans = jnp.exp(-jnp.sum(self.factor, dtau_opaque, axis=0) / cosine_view_angle)
         return trans * incoming_flux
 
 
@@ -575,7 +584,9 @@ class ArtEmisScat(ArtCommon):
             pressure_btm (float, optional): bottom pressure in bar. Defaults to 1.0e2.
             nlayer (int, optional): the number of the atmospheric layers. Defaults to 100.
             nu_grid (float, array, optional): the wavenumber grid. Defaults to None.
-            rtsolver (str): Radiative Transfer Solver, fluxadding_toon_hemispheric_mean (default), lart_toon_hemispheric_mean
+            rtsolver (str): Radiative Transfer Solver,
+                "fluxadding_toon_hemispheric_mean" (default),
+                "lart_toon_hemispheric_mean"
 
         """
         super().__init__(pressure_top, pressure_btm, nlayer, nu_grid)

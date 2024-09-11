@@ -26,10 +26,8 @@ def test_get_pressure_at_cloud_base():
     """test get_pressure_at_cloud_base"""
 
     Parr, Tarr, MolMR_enstatite, P_enstatite = _default_cloud_setting()
-    from exojax.atm.amclouds import (
-        smooth_index_base_pressure,
-        get_pressure_at_cloud_base,
-    )
+    from exojax.atm.amclouds import smooth_index_base_pressure
+    from exojax.atm.amclouds import get_pressure_at_cloud_base
 
     smooth_index = smooth_index_base_pressure(Parr, P_enstatite, MolMR_enstatite)
 
