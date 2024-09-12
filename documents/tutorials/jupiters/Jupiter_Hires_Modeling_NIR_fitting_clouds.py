@@ -11,12 +11,15 @@
 # This note coresponds to the other one, using the output of the code for the former one (Jupiter_Hires_Modeling_NIR_fitting.ipynb)
 
 ### Preparation
+# RT model
+#rtmode = "reflect" #uses ArtReflectPure
+rtmode = "abs"  # uses ArtAbsPure
 # if this is the first run, set miegird_generate = True, and run the code to generate Mie grid. After that, set False.
 miegird_generate = False
 # when the optimization is performed, set opt_perform = True, after performing it, set False
-opt_perform = False
+opt_perform = True
 # checking atmosphere states
-check_atm = True
+check_atm = False
 # when HMC is performed, set hmc_perform = True, after performing it, set False
 hmc_perform = False
 use_init = False  # uses the initial values (obtained from optimization)
@@ -35,7 +38,6 @@ import numpy as np
 import matplotlib.pyplot as plt
 import pandas as pd
 
-from exojax.atm.idealgas import number_density
 from exojax.spec.unitconvert import nu2wav
 from exojax.spec.unitconvert import wav2nu
 from exojax.utils.constants import c  # light speed in km/s
@@ -43,6 +45,7 @@ from exojax.utils.constants import m_u
 from exojax.utils.grids import wavenumber_grid
 from exojax.utils.astrofunc import gravity_jupiter
 from exojax.spec.atmrt import ArtReflectPure
+from exojax.spec.atmrt import ArtAbsPure
 from exojax.spec.pardb import PdbCloud
 from exojax.atm.atmphys import AmpAmcloud
 from exojax.utils.zsol import nsol
@@ -86,7 +89,7 @@ if username == "exoplanet01":
 dat = np.loadtxt("jupiter_corrected.dat")  # made by Jupiter_Hires_Modeling_NIR.ipynb
 unmask_nus_obs = dat[:, 0]
 unmask_spectra = dat[:, 1]
-mask = (unmask_nus_obs < 6163.5) + ((unmask_nus_obs > 6166) & (unmask_nus_obs < 6184.5))
+mask = (unmask_nus_obs < 6163.5) + ((unmask_nus_obs > 6166) & (unmask_nus_obs < 6174))
 nus_obs = unmask_nus_obs[mask]
 wav_obs = nu2wav(nus_obs, unit="AA")
 
@@ -131,9 +134,14 @@ dat = read_tpprofile_jupiter()
 torig = dat["Temperature (K)"]
 porig = dat["Pressure (bar)"]
 
-# %%
-art = ArtReflectPure(nu_grid=nus, pressure_btm=3.0e1, pressure_top=1.0e-3, nlayer=200)
-
+# %% choose RT model
+if rtmode == "reflect":
+    art = ArtReflectPure(nu_grid=nus, pressure_btm=3.0e1, pressure_top=1.0e-3, nlayer=200)
+elif rtmode == "abs":
+    art = ArtAbsPure(nu_grid=nus, pressure_btm=3.0e1, pressure_top=1.0e-3, nlayer=200)
+else:
+    raise ValueError("rtmode is not correct")
+ 
 # custom temperature profile
 Parr = art.pressure
 Tarr_np = np.interp(Parr, porig, torig)
@@ -198,15 +206,7 @@ Eopt = 3300.0  # this is from the Elower optimization result
 
 # HITEMP or ExoMol/MM
 #mdb_reduced = MdbHitemp("CH4", nurange=[nus[0], nus[-1]], isotope=1, elower_max=Eopt)
-mdb_reduced = MdbExomol("CH4/12C-1H4/MM/", nurange=[nus[0], nus[-1]], activation=False)
-print(mdb_reduced.df["nu_lines"].min(), mdb_reduced.df["nu_lines"].max())
-#mask = (mdb_reduced.df.nu_lines > 6100.0) & (mdb_reduced.df.nu_lines < 6200.0)
-mask = (mdb_reduced.df.nu_lines > nus[0]) & (mdb_reduced.df.nu_lines < nus[1])
-
-print(mdb_reduced.df[mask])
-import sys
-sys.exit()
-
+mdb_reduced = MdbExomol("CH4/12C-1H4/MM/", nurange=[nus[0], nus[-1]], elower_max=Eopt)
 
 opa = OpaPremodit(
     mdb_reduced, nu_grid=nus, allow_32bit=True, auto_trange=[80.0, 300.0]
@@ -307,24 +307,8 @@ def atmospheric_model(params):
     return vv, factor, broadening, asymmetric_parameter, single_scattering_albedo, dtau
 
 
-def factor_mmr_to_gperl(molmass, Parr, Tarr):
-    """factor to convert MMR to g/L
 
-    Args:
-        molmass_nh3 (_type_): molecular mass
-        Parr (_type_): _description_
-        Tarr (_type_): _description_
-
-    Note:
-        mass density (g/L) = fac*MMR
-
-    Returns:
-        _type_: _description_
-    """
-    return molmass * m_u * number_density(Parr, Tarr) * 1.0e3
-
-
-fac = factor_mmr_to_gperl(molmass_nh3, Parr, Tarr)
+#density_fac = factor_mmr_to_density(molmass_nh3, Parr, Tarr)
 
 
 def cost_function(params):

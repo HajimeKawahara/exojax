@@ -265,3 +265,4 @@ def Teff2Tirr(Teff, Tint):
         Here we assume A=0 (albedo) and beta=1 (fully-energy distributed)
     """
     return (4.0 * Teff**4 - Tint**4) ** 0.25
+
