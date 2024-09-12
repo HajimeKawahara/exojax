@@ -41,7 +41,6 @@ import pandas as pd
 from exojax.spec.unitconvert import nu2wav
 from exojax.spec.unitconvert import wav2nu
 from exojax.utils.constants import c  # light speed in km/s
-from exojax.utils.constants import m_u
 from exojax.utils.grids import wavenumber_grid
 from exojax.utils.astrofunc import gravity_jupiter
 from exojax.spec.atmrt import ArtReflectPure

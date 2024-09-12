@@ -1,6 +1,7 @@
 """converts quantities in the atmosphere, between mass mixing ratio, volume mixing ratio, and density"""
 
 from exojax.atm.idealgas import number_density
+from exojax.utils.constants import m_u
 
 def mmr_to_density(mmr, molmass, Parr, Tarr, unit="g/L"):
     """converts MMR to density
