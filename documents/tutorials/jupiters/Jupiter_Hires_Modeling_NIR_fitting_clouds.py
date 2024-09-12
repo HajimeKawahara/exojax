@@ -198,7 +198,15 @@ Eopt = 3300.0  # this is from the Elower optimization result
 
 # HITEMP or ExoMol/MM
 #mdb_reduced = MdbHitemp("CH4", nurange=[nus[0], nus[-1]], isotope=1, elower_max=Eopt)
-mdb_reduced = MdbExomol("CH4/12C-1H4/MM/", nurange=[nus[0], nus[-1]], elower_max=Eopt)
+mdb_reduced = MdbExomol("CH4/12C-1H4/MM/", nurange=[nus[0], nus[-1]], activation=False)
+print(mdb_reduced.df["nu_lines"].min(), mdb_reduced.df["nu_lines"].max())
+#mask = (mdb_reduced.df.nu_lines > 6100.0) & (mdb_reduced.df.nu_lines < 6200.0)
+mask = (mdb_reduced.df.nu_lines > nus[0]) & (mdb_reduced.df.nu_lines < nus[1])
+
+print(mdb_reduced.df[mask])
+import sys
+sys.exit()
+
 
 opa = OpaPremodit(
     mdb_reduced, nu_grid=nus, allow_32bit=True, auto_trange=[80.0, 300.0]
