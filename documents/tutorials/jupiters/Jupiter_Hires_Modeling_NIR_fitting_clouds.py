@@ -12,8 +12,9 @@
 
 ### Preparation
 # RT model
-#rtmode = "reflect" #uses ArtReflectPure
+# rtmode = "reflect" #uses ArtReflectPure
 rtmode = "abs"  # uses ArtAbsPure
+
 # if this is the first run, set miegird_generate = True, and run the code to generate Mie grid. After that, set False.
 miegird_generate = False
 # when the optimization is performed, set opt_perform = True, after performing it, set False
@@ -129,18 +130,19 @@ nus, wav, res = wavenumber_grid(
 
 # read the temperature-pressure profile of Jupiter
 dat = read_tpprofile_jupiter()
-
 torig = dat["Temperature (K)"]
 porig = dat["Pressure (bar)"]
 
 # %% choose RT model
 if rtmode == "reflect":
-    art = ArtReflectPure(nu_grid=nus, pressure_btm=3.0e1, pressure_top=1.0e-3, nlayer=200)
+    art = ArtReflectPure(
+        nu_grid=nus, pressure_btm=3.0e1, pressure_top=1.0e-3, nlayer=200
+    )
 elif rtmode == "abs":
     art = ArtAbsPure(nu_grid=nus, pressure_btm=3.0e1, pressure_top=1.0e-3, nlayer=200)
 else:
     raise ValueError("rtmode is not correct")
- 
+
 # custom temperature profile
 Parr = art.pressure
 Tarr_np = np.interp(Parr, porig, torig)
@@ -204,7 +206,7 @@ opa_nh3 = OpaMie(pdb_nh3, nus)
 Eopt = 3300.0  # this is from the Elower optimization result
 
 # HITEMP or ExoMol/MM
-#mdb_reduced = MdbHitemp("CH4", nurange=[nus[0], nus[-1]], isotope=1, elower_max=Eopt)
+# mdb_reduced = MdbHitemp("CH4", nurange=[nus[0], nus[-1]], isotope=1, elower_max=Eopt)
 mdb_reduced = MdbExomol("CH4/12C-1H4/MM/", nurange=[nus[0], nus[-1]], elower_max=Eopt)
 
 opa = OpaPremodit(
@@ -223,91 +225,118 @@ molmass_ch4 = molmass_isotope("CH4", db_HIT=False)
 reflectivity_surface = np.zeros(len(nus))
 
 sop = SopInstProfile(nus)
-# log_fsed, sigmag, log_Kzz, vrv, vv, boradening, mmr, normalization factor
-parinit = jnp.array(
-    [jnp.log10(3.0), sigmag_fixed, jnp.log10(Kzz_fixed), -5.0, -55.0, 2.5, 0.2, 0.6]
-)
+
+broadening = 25000.0
+
+if rtmode == "reflect":
+    from model_reflect import unpack_params
+
+    # log_fsed, sigmag, log_Kzz, vrv, vv, boradening, mmr, normalization factor
+    parinit = jnp.array(
+        [jnp.log10(3.0), sigmag_fixed, jnp.log10(Kzz_fixed), -5.0, -55.0, 2.5, 0.2, 0.6]
+    )
+
+    def atmospheric_model(params):
+        # unused parameters are marked with _
+        fsed, _sigmag, _Kzz, _vrv, vv, _broadening, const_mmr_ch4, factor = (
+            unpack_params(params)
+        )
+
+        broadening = 25000.0
+        rg_layer, MMRc = amp_nh3.calc_ammodel(
+            Parr,
+            Tarr,
+            mu,
+            molmass_nh3,
+            gravity,
+            fsed,
+            sigmag_fixed,
+            Kzz_fixed,
+            MMRbase_nh3,
+        )
+        rg = jnp.mean(rg_layer)
+
+        ### this one
+        # sigma_extinction, sigma_scattering, asymmetric_factor = (
+        #    opa_nh3.mieparams_vector_direct_from_pymiescatt(rg, sigmag)
+        # )
+        sigma_extinction, sigma_scattering, asymmetric_factor = (
+            opa_nh3.mieparams_vector(rg, sigmag_fixed)
+        )
+        dtau_cld = art.opacity_profile_cloud_lognormal(
+            sigma_extinction, rhoc, MMRc, rg, sigmag_fixed, gravity
+        )
+        dtau_cld_scat = art.opacity_profile_cloud_lognormal(
+            sigma_scattering, rhoc, MMRc, rg, sigmag_fixed, gravity
+        )
+
+        asymmetric_parameter = asymmetric_factor + np.zeros(
+            (len(art.pressure), len(nus))
+        )
+
+        dtau_ch4 = methane_opacity(const_mmr_ch4)
+        single_scattering_albedo = (dtau_cld_scat) / (dtau_cld + dtau_ch4)
+        dtau = dtau_cld + dtau_ch4
+        return (
+            vv,
+            factor,
+            broadening,
+            asymmetric_parameter,
+            single_scattering_albedo,
+            dtau,
+        )
+
+elif rtmode == "abs":
+    from model_abs import unpack_params
+    # log_surface pressure, vrv, vv, boradening, mmr, normalization factor
+    parinit = jnp.array(
+        [np.log10(1.0), -5.0, -55.0, 2.5, 0.2, 0.6]
+    )
+
+    def atmospheric_model(params):
+        # unused parameters are marked with _
+        surface_pressure, _vrv, vv, _broadening, const_mmr_ch4, factor = unpack_params(
+            params
+        )
+
+        dtau_ch4 = methane_opacity(const_mmr_ch4)
+        return vv, factor, broadening, surface_pressure, dtau_ch4
 
 
-def unpack_params(params):
-    multiple_factor = jnp.array([1.0, 1.0, 1.0, 1.0, 1.0, 10000.0, 0.01, 1.0])
-    par = params * multiple_factor
-    log_fsed = par[0]
-    sigmag = par[1]
-    log_Kzz = par[2]
-    vrv = par[3]
-    vv = par[4]
-    _broadening = par[5]
-    const_mmr_ch4 = par[6]
-    factor = par[7]
-    fsed = 10**log_fsed
-    Kzz = 10**log_Kzz
-
-    return fsed, sigmag, Kzz, vrv, vv, _broadening, const_mmr_ch4, factor
+def methane_opacity(const_mmr_ch4):
+    mmr_ch4 = art.constant_mmr_profile(const_mmr_ch4)
+    xsmatrix = opa.xsmatrix(Tarr, Parr)
+    dtau_ch4 = art.opacity_profile_xs(xsmatrix, mmr_ch4, molmass_ch4, gravity)
+    return dtau_ch4
 
 
 def spectral_model(params):
-    vv, factor, broadening, asymmetric_parameter, single_scattering_albedo, dtau = (
-        atmospheric_model(params)
-    )
+    if rtmode == "reflect":
+        vv, factor, broadening, asymmetric_parameter, single_scattering_albedo, dtau = (
+            atmospheric_model(params)
+        )
+    elif rtmode == "abs":
+        vv, factor, broadening, surface_pressure, dtau = atmospheric_model(params)
+
     # velocity
     vpercp = (vrv_fixed + vv) / c
     incoming_flux = jnp.interp(nusjax, nusjax_solar * (1.0 + vpercp), solspecjax)
 
-    Fr = art.run(
-        dtau,
-        single_scattering_albedo,
-        asymmetric_parameter,
-        reflectivity_surface,
-        incoming_flux,
-    )
+    if rtmode == "reflect":
+        Fr = art.run(
+            dtau,
+            single_scattering_albedo,
+            asymmetric_parameter,
+            reflectivity_surface,
+            incoming_flux,
+        )
+    elif rtmode == "abs":
+        Fr = art.run(dtau, surface_pressure, incoming_flux, 1.0, 1.0)
 
     std = resolution_to_gaussian_std(broadening)
     Fr_inst = sop.ipgauss(Fr, std)
     Fr_samp = sop.sampling(Fr_inst, vv, nus_obs)
     return factor * Fr_samp
-
-
-def atmospheric_model(params):
-    # unused parameters are marked with _
-    fsed, _sigmag, _Kzz, _vrv, vv, _broadening, const_mmr_ch4, factor = unpack_params(
-        params
-    )
-
-    broadening = 25000.0
-    rg_layer, MMRc = amp_nh3.calc_ammodel(
-        Parr, Tarr, mu, molmass_nh3, gravity, fsed, sigmag_fixed, Kzz_fixed, MMRbase_nh3
-    )
-    rg = jnp.mean(rg_layer)
-
-    ### this one
-    # sigma_extinction, sigma_scattering, asymmetric_factor = (
-    #    opa_nh3.mieparams_vector_direct_from_pymiescatt(rg, sigmag)
-    # )
-    sigma_extinction, sigma_scattering, asymmetric_factor = opa_nh3.mieparams_vector(
-        rg, sigmag_fixed
-    )
-    dtau_cld = art.opacity_profile_cloud_lognormal(
-        sigma_extinction, rhoc, MMRc, rg, sigmag_fixed, gravity
-    )
-    dtau_cld_scat = art.opacity_profile_cloud_lognormal(
-        sigma_scattering, rhoc, MMRc, rg, sigmag_fixed, gravity
-    )
-
-    asymmetric_parameter = asymmetric_factor + np.zeros((len(art.pressure), len(nus)))
-
-    # opacity
-    mmr_ch4 = art.constant_mmr_profile(const_mmr_ch4)
-    xsmatrix = opa.xsmatrix(Tarr, Parr)
-    dtau_ch4 = art.opacity_profile_xs(xsmatrix, mmr_ch4, molmass_ch4, gravity)
-
-    single_scattering_albedo = (dtau_cld_scat) / (dtau_cld + dtau_ch4)
-    dtau = dtau_cld + dtau_ch4
-    return vv, factor, broadening, asymmetric_parameter, single_scattering_albedo, dtau
-
-
-
-#density_fac = factor_mmr_to_density(molmass_nh3, Parr, Tarr)
 
 
 def cost_function(params):
@@ -359,8 +388,9 @@ if check_atm:
     vv, factor, broadening, asymmetric_parameter, single_scattering_albedo, dtau = (
         atmospheric_model(params_check)
     )
-    
+
     import sys
+
     sys.exit()
 
 
