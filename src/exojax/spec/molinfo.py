@@ -34,22 +34,22 @@ def molmass_isotope(simple_molecule_name, db_HIT=True):
     """provide molecular mass for the major isotope from the simple molecular name.
 
     Args:
-       molecule: molecular name e.g. CO2, He
-       db_HIT: if True, use the molecular mass considering the natural terrestrial abundance and mass of each isotopologue provided by HITRAN (https://hitran.org/docs/iso-meta/)
+        molecule: molecular name e.g. CO2, He
+        db_HIT: if True, use the molecular mass considering the natural terrestrial abundance and mass of each isotopologue provided by HITRAN (https://hitran.org/docs/iso-meta/)
 
     Returns: 
-       molecular mass
+        molecular mass
 
     Example:
-       >>> from exojax.spec.molinfo import molmass
-       >>> print(molmass("H2"))
-       >>> 2.01588
-       >>> print(molmass("CO2"))
-       >>> 44.0095
-       >>> print(molmass("He"))
-       >>> 4.002602
-       >>> print(molmass("air"))
-       >>> 28.97
+        >>> from exojax.spec.molinfo import molmass
+        >>> print(molmass("H2"))
+        >>> 2.01588
+        >>> print(molmass("CO2"))
+        >>> 44.0095
+        >>> print(molmass("He"))
+        >>> 4.002602
+        >>> print(molmass("air"))
+        >>> 28.97
     """
     molmass_isotope, abundance_isotope = molmass_hitran()
 
@@ -92,19 +92,19 @@ def mean_molmass_manual(simple_molecule_name):
         else:
             if k + 1 < len(listmol):
                 if listmol[k + 1].islower():
-                    em = EachMass[listmol[k] + listmol[k + 1]]
+                    em = element_mass[listmol[k] + listmol[k + 1]]
                     ignore = True
                 else:
-                    em = EachMass[i]
+                    em = element_mass[i]
             else:
-                em = EachMass[i]
+                em = element_mass[i]
 
             tot = tot + em
     mean_molmass = tot
     return mean_molmass
 
 
-EachMass = {
+element_mass = {
     'H': 1.00794,
     'He': 4.002602,
     'Li': 6.941,

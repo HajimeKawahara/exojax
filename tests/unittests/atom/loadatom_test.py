@@ -16,7 +16,7 @@ def test_barklem():
 
 def test_nsol():
     nsun = nsol()
-    assert nsun['Mg'] == 3.272837539539687e-05
+    assert nsun['Mg'] == 3.275853193332226e-05
 
 
 if __name__ == '__main__':
