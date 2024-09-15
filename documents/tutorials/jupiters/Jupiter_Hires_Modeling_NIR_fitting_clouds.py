@@ -12,17 +12,17 @@
 
 ### Preparation
 # RT model
-# rtmode = "reflect" #uses ArtReflectPure
-rtmode = "abs"  # uses ArtAbsPure
+rtmode = "reflect" #uses ArtReflectPure
+# rtmode = "abs"  # uses ArtAbsPure
 
 # if this is the first run, set miegird_generate = True, and run the code to generate Mie grid. After that, set False.
 miegird_generate = False
 # when the optimization is performed, set opt_perform = True, after performing it, set False
-opt_perform = True
+opt_perform = False
 # checking atmosphere states
 check_atm = False
 # when HMC is performed, set hmc_perform = True, after performing it, set False
-hmc_perform = False
+hmc_perform = True
 use_init = False  # uses the initial values (obtained from optimization)
 # if True, the figures are shown
 figshow = False
@@ -168,9 +168,8 @@ amp_nh3.check_temperature_range(Tarr)
 
 # condensate substance density
 rhoc = pdb_nh3.condensate_substance_density  # g/cc
-n = nsol()
-# abundance_nh3 = 3.0 * n["N"]  # x 3 solar abundance
-abundance_nh3 = 1.5 * n["N"]  # x 3 solar abundance
+n = nsol("AG89")
+abundance_nh3 = 3.0 * n["N"]  # x 3 solar abundance
 molmass_nh3 = molmass_isotope("NH3", db_HIT=False)
 MMRbase_nh3 = vmr2mmr(abundance_nh3, molmass_nh3, mu)
 
@@ -233,7 +232,7 @@ if rtmode == "reflect":
 
     # log_fsed, sigmag, log_Kzz, vrv, vv, boradening, mmr, normalization factor
     parinit = jnp.array(
-        [jnp.log10(3.0), sigmag_fixed, jnp.log10(Kzz_fixed), -5.0, -55.0, 2.5, 0.2, 0.6]
+        [jnp.log10(3.0), sigmag_fixed, jnp.log10(Kzz_fixed), -5.0, -55.0, 2.5, 1.0, 0.6]
     )
 
     def atmospheric_model(params):
@@ -368,11 +367,11 @@ if opt_perform:
     plt.show()
 
     # res.params
-    print("fsed, sigmag, Kzz, vrv, vv, _broadening, const_mmr_ch4, factor")
+    print("fsed, sigmag, Kzz, vrv, vr, _broadening, const_mmr_ch4, factor")
     print("init:", unpack_params(parinit))
     print("best:", unpack_params(params))
 
-    print("fsed, sigmag, Kzz, vrv, vv, _broadening, const_mmr_ch4, factor")
+    print("fsed, sigmag, Kzz, vrv, vr, _broadening, const_mmr_ch4, factor")
     print("best (packed):", params)
 
     F_samp = spectral_model(params)
@@ -421,9 +420,9 @@ def model_c(nu1, y1):
     # vrv = numpyro.sample("vrv", dist.Uniform(-vrotmax, vrotmax))
     # vrv = numpyro.sample("vrv",  dist.TruncatedNormal(loc=0.0, scale=vrotmax/3.0, low=-vrotmax, high=vrotmax))
     vrv = 0.0  # fix
-    vv = numpyro.sample("vv", dist.Uniform(-70.0, -40.0))
+    vr = numpyro.sample("vr", dist.Uniform(-70.0, -40.0))
     broadening = 25000.0  # fix
-    log_molmass_ch4_n = numpyro.sample("log_MMR_CH4", dist.Uniform(-2, 1))
+    log_molmass_ch4_n = numpyro.sample("log_MMR_CH4", dist.Uniform(-1, 1))
     molmass_ch4_n = 10**log_molmass_ch4_n
     numpyro.deterministic("mmr_ch4", molmass_ch4_n * 0.01)
     factor = numpyro.sample("factor", dist.Uniform(0.0, 1.0))
@@ -439,7 +438,7 @@ def model_c(nu1, y1):
             sigmag_fixed,
             log_Kzz_n_fixed,
             vrv,
-            vv,
+            vr,
             broadening,
             molmass_ch4_n,
             factor,
@@ -465,7 +464,7 @@ if use_init:
     init_params = {
         "log_fsed_n": 1.24906576,
         # "vrv": -3.03095345,
-        "vv": -57.8439118,
+        "vr": -57.8439118,
         "log_MMR_CH4": np.log10(0.84884493),
         "factor": 0.53314691,
         "sigma": 1.0,
