@@ -125,3 +125,12 @@ def nsol():
             nsun[atm] = 10 ** AAG21[atm][0] / allab
 
     return nsun
+
+def mmr_solar():
+    n = nsol()
+    #sum_n = np.sum([n[atom] for atom in n]) = 1
+    print(sum_n)
+
+
+if __name__ == "__main__":
+    mmr_solar()

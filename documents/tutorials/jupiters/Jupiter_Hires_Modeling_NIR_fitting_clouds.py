@@ -288,17 +288,16 @@ if rtmode == "reflect":
 
 elif rtmode == "abs":
     from model_abs import unpack_params
+
     # log_surface pressure, vrv, vv, boradening, mmr, normalization factor
-    parinit = jnp.array(
-        [np.log10(1.0), -5.0, -55.0, 2.5, 0.2, 0.6]
-    )
+    parinit = jnp.array([np.log10(1.0), -5.0, -55.0, 2.5, 0.2, 0.6])
 
     def atmospheric_model(params):
         # unused parameters are marked with _
-        surface_pressure, _vrv, vv, _broadening, const_mmr_ch4, factor = unpack_params(
+        _surface_pressure, _vrv, vv, _broadening, const_mmr_ch4, factor = unpack_params(
             params
         )
-
+        surface_pressure = 1.0  # fix
         dtau_ch4 = methane_opacity(const_mmr_ch4)
         return vv, factor, broadening, surface_pressure, dtau_ch4
 
@@ -331,7 +330,11 @@ def spectral_model(params):
             incoming_flux,
         )
     elif rtmode == "abs":
-        Fr = art.run(dtau, surface_pressure, incoming_flux, 1.0, 1.0)
+        #mu0 = 1.0
+        #mu1 = 1.0
+        mu0 = jnp.cos(60.0/180.0*jnp.pi)
+        mu1 = jnp.cos(60.0/180.0*jnp.pi)
+        Fr = art.run(dtau, surface_pressure, incoming_flux, mu0, mu1)
 
     std = resolution_to_gaussian_std(broadening)
     Fr_inst = sop.ipgauss(Fr, std)
