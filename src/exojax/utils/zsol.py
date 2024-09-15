@@ -94,7 +94,51 @@ AAG21 = {
 }
 
 
-def nsol():
+def nsol(database="AAG21"):
+    """provides solar abundance dictionary.
+
+    Args:
+        database: name of database, default to AAG21.
+
+    Note: 
+        AAG21   Asplund, M., Amarsi, A. M., & Grevesse, N. 2021, arXiv:2105.01661
+        AG89 	Anders E. & Grevesse N. (1989, Geochimica et Cosmochimica Acta 53, 197) (Photospheric, using Table 2) 	 
+        AGSS09 	Asplund M., Grevesse N., Sauval A.J. & Scott P. (2009, ARAA, 47, 481) (Photospheric, using Table 1) 	 
+        F92 	Feldman U.(1992, Physica Scripta 46, 202) 	 
+        AE82 	Anders E. & Ebihara (1982, Geochimica et Cosmochimica Acta 46, 2363) 	 
+        GS98 	Grevesse, N. & Sauval, A.J. (1998, Space Science Reviews 85, 161) 	 
+        WAM00 	Wilms J., Allen A. & McCray R. (2000, ApJ 542, 914) 	 
+        L03	Lodders K (2003, ApJ 591, 1220) (Photospheric, using Table 1) 	 
+        LPG09photo 	Lodders K., Palme H., Gail H.P. (2009, Landolt-Barnstein, New Series, vol VI/4B, pp 560-630) (Photospheric, using Table 4) 	 
+        LPG09proto 	Lodders K., Palme H., Gail H.P. (2009, Landolt-Barnstein, New Series, vol VI/4B, pp 560-630) (Proto-solar, using Table 10)
+
+    Returns:
+        number ratio of elements for solar abundance
+
+    Example:
+        >>>  nsun=nsol()
+        >>>  print(nsun["Fe"])
+        >>>  2.6602622265852853e-05
+    """
+    
+    if database == "AAG21":
+        return nsol_aag21()
+    
+    try:
+        return nsol_from_others(database)  
+    except:
+        raise ValueError("database not found")
+
+def nsol_from_others():
+    """
+    
+    Notes:
+        reference: https://heasarc.gsfc.nasa.gov/xanadu/xspec/manual/node116.html
+    """
+    import pkg_resources
+    return
+
+def nsol_aag21():
     """provides solar abundance dictionary from AAG21.
 
     Args:
