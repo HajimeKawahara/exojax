@@ -5,6 +5,7 @@
 """
 
 import numpy as np
+from exojax.spec.molinfo import element_mass
 
 
 AAG21 = {
@@ -100,7 +101,7 @@ def nsol():
         database: name of database.
 
     Returns:
-        number ratio of solar abundance
+        number ratio of elements for solar abundance
 
     Example:
         >>>  nsun=nsol()
@@ -125,3 +126,35 @@ def nsol():
             nsun[atm] = 10 ** AAG21[atm][0] / allab
 
     return nsun
+
+
+def mass_fraction_XYZ(number_ratio_elements):
+    """mass fraction of hydroeng, helium, metals, i.e. well known symbols in astronomy X, Y, Z
+
+    Notes:
+        X = mass fraction of hydrogen
+        Y = mass fraction of helium
+        Z = mass fraction of metals
+        For definition, see https://en.wikipedia.org/wiki/Metallicity#Mass_fraction
+
+    Args:
+        number_ratio_elements: element number ratio of abundance, when n = nsol(), X, Y, Z are solar abundance Xsol. Ysol, Zsol.
+
+    Returns:
+        float: X, Y, Z (mass mixing ratios of H, He, metals)
+    """
+    sum_element = sum(
+        [
+            element_mass[atom] * number_ratio_elements[atom]
+            for atom in number_ratio_elements
+        ]
+    )
+    X = element_mass["H"] * number_ratio_elements["H"]
+    Y = element_mass["He"] * number_ratio_elements["He"]
+    Z = sum_element - X - Y
+
+    X = X / sum_element
+    Y = Y / sum_element
+    Z = Z / sum_element
+
+    return X, Y, Z

@@ -92,19 +92,19 @@ def mean_molmass_manual(simple_molecule_name):
         else:
             if k + 1 < len(listmol):
                 if listmol[k + 1].islower():
-                    em = EachMass[listmol[k] + listmol[k + 1]]
+                    em = element_mass[listmol[k] + listmol[k + 1]]
                     ignore = True
                 else:
-                    em = EachMass[i]
+                    em = element_mass[i]
             else:
-                em = EachMass[i]
+                em = element_mass[i]
 
             tot = tot + em
     mean_molmass = tot
     return mean_molmass
 
 
-EachMass = {
+element_mass = {
     'H': 1.00794,
     'He': 4.002602,
     'Li': 6.941,
