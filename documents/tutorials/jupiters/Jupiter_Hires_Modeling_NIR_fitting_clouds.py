@@ -297,7 +297,7 @@ elif rtmode == "abs":
         _surface_pressure, _vrv, vv, _broadening, const_mmr_ch4, factor = unpack_params(
             params
         )
-        surface_pressure = 1.0  # fix
+        surface_pressure = 0.3  # fix
         dtau_ch4 = methane_opacity(const_mmr_ch4)
         return vv, factor, broadening, surface_pressure, dtau_ch4
 

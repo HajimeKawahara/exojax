@@ -1,24 +1,35 @@
 from exojax.utils.zsol import nsol
+from exojax.utils.zsol import mass_fraction
+from exojax.utils.zsol import mass_fraction_XYZ
+import numpy as np
 import pytest
+
 
 def test_check_sum_nsol():
     n = nsol()
     sum_n = sum([n[atom] for atom in n])
     assert sum_n == pytest.approx(1.0)
 
-from exojax.spec.molinfo import element_mass 
 
-def mmr_metal_solar():
+def test_mass_fraction():
     n = nsol()
-    hhe = element_mass["H"]*n["H"] + element_mass["He"]*n["He"]
-    sum_element = sum([element_mass[atom]*n[atom] for atom in n])
-    mmr_metal = (sum_element - hhe)/sum_element
-    
-    
-    print(element_mass["H"]*n["H"]/sum_element)
-    print(element_mass["He"]*n["He"]/sum_element)
-    print(mmr_metal)
+    X = mass_fraction("H", n)
+    Y = mass_fraction("He", n)
+    C = mass_fraction("C", n)
+
+    ref = np.array([0.7438051457070488, 0.24230752749452047, 0.0025561881514610443])
+    assert np.allclose([X, Y, C], ref)
+
+
+def test_solar_abundance():
+    n = nsol()
+    X, Y, Z = mass_fraction_XYZ(n)
+    ref = np.array([0.7438051457070488, 0.24230752749452047, 0.013887326798430723])
+
+    assert np.allclose([X, Y, Z], ref)
+
 
 if __name__ == "__main__":
     test_check_sum_nsol()
-    mmr_metal_solar()
+    test_solar_abundance()
+    test_mass_fraction()

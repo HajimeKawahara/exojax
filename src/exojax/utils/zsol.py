@@ -5,6 +5,7 @@
 """
 
 import numpy as np
+from exojax.spec.molinfo import element_mass
 
 
 AAG21 = {
@@ -27,7 +28,7 @@ AAG21 = {
     "Cl": [5.31, 0.20, 5.23, 0.06],
     "Ar": [6.38, 0.10, -0.50, 0.18],
     "K": [5.07, 0.03, 5.08, 0.04],
-    "Ca": [9, 6.30, 0.03, 6.29, 0.03],
+    "Ca": [6.30, 0.03, 6.29, 0.03],
     "Sc": [3.14, 0.04, 3.04, 0.03],
     "Ti": [4.97, 0.05, 4.90, 0.03],
     "V": [3.90, 0.08, 3.96, 0.03],
@@ -100,7 +101,7 @@ def nsol():
         database: name of database.
 
     Returns:
-        number ratio of solar abundance
+        number ratio of elements for solar abundance
 
     Example:
         >>>  nsun=nsol()
@@ -126,11 +127,53 @@ def nsol():
 
     return nsun
 
-def mmr_solar():
-    n = nsol()
-    #sum_n = np.sum([n[atom] for atom in n]) = 1
-    print(sum_n)
+def mass_fraction(atom,number_ratio_elements):
+    """mass fraction of atom
 
+    Notes:
+        X = mass fraction of hydrogen
+        Y = mass fraction of helium
+        Z = mass fraction of metals
+        For definition, see https://en.wikipedia.org/wiki/Metallicity#Mass_fraction
 
-if __name__ == "__main__":
-    mmr_solar()
+    Args:
+        atom: atom name, such as "H", "He", "C", "O", "Fe", etc.
+        number_ratio_elements: element number ratio of abundance, when n = nsol(), X, Y, Z are solar abundance Xsol. Ysol, Zsol.
+
+    Returns:
+        mass fraction of atom
+    """    
+    weighted_sum_mass = _sum_mass_weighted_elements(number_ratio_elements)
+    return element_mass[atom] * number_ratio_elements[atom]/weighted_sum_mass
+
+def mass_fraction_XYZ(number_ratio_elements):
+    """mass fraction of hydrogen, helium, metals, i.e. well known symbols in astronomy X, Y, Z
+
+    Notes:
+        X = mass fraction of hydrogen
+        Y = mass fraction of helium
+        Z = mass fraction of metals
+        For definition, see https://en.wikipedia.org/wiki/Metallicity#Mass_fraction
+
+    Args:
+        number_ratio_elements: element number ratio of abundance, when n = nsol(), X, Y, Z are solar abundance Xsol. Ysol, Zsol.
+
+    Returns:
+        float: X, Y, Z (mass fraction of H, He, metals)
+    """
+
+    X = mass_fraction("H",number_ratio_elements)
+    Y =  mass_fraction("He",number_ratio_elements)
+    Z = 1.0 - X - Y
+    
+    return X, Y, Z
+
+def _sum_mass_weighted_elements(number_ratio_elements):
+    sum_element = sum(
+        [
+            element_mass[atom] * number_ratio_elements[atom]
+            for atom in number_ratio_elements
+        ]
+    )
+    return sum_element
+
