@@ -7,6 +7,8 @@
 from jax import jit
 import jax.numpy as jnp
 from jax import vmap
+from exojax.utils.indexing import get_smooth_index
+from exojax.utils.indexing import get_value_at_smooth_index
 
 
 def mixing_ratio_cloud_pressure(pressure, cloud_base_pressure, fsed, mr_cloud_base, kc):
@@ -49,28 +51,6 @@ def mixing_ratio_cloud_profile(
     return vmaped_function(pressures, cloud_base_pressure, fsed, mr_cloud_base, kc)
 
 
-def get_smooth_index(xp, x):
-    findex = jnp.arange(len(xp), dtype=float)
-    smooth_index = jnp.interp(x, xp, findex)
-    return smooth_index
-
-
-def get_value_at_cloud_base(array, smooth_index):
-    """get value at cloud base from an array
-
-    Args:
-        array (float): array, such as log pressures or temperatures
-        smooth_index (float): smooth index
-
-    Returns:
-        float: value at cloud base
-    """
-
-    ind = smooth_index.astype(int)
-    # ind = jnp.clip(ind, 0, len(array) - 2)
-    res = smooth_index - jnp.floor(smooth_index)
-    return (1.0 - res) * array[ind] + res * array[ind + 1]
-
 
 def get_pressure_at_cloud_base(pressures, smooth_index):
     """get pressure at cloud base from pressures
@@ -82,7 +62,7 @@ def get_pressure_at_cloud_base(pressures, smooth_index):
     Returns:
         float: pressure at cloud base
     """
-    return 10 ** get_value_at_cloud_base(jnp.log10(pressures), smooth_index)
+    return 10 ** get_value_at_smooth_index(jnp.log10(pressures), smooth_index)
 
 
 def smooth_index_base_pressure(pressures, saturation_pressure, vmr_vapor):
@@ -140,10 +120,13 @@ def get_rg(rw, fsed, alpha, sigmag):
         rw: rw (cm)
         fsed: fsed
         alpha: power of the condensate size distribution
-        sigmag:sigmag parameter (geometric standard deviation) in the lognormal distribution of condensate size, defined by (9) in AM01, must be sigmag > 1
+        sigmag:sigmag parameter (geometric standard deviation) 
+            in the lognormal distribution of condensate size, 
+            defined by (9) in AM01, must be sigmag > 1
 
     Returns
-        rg: rg parameter in the lognormal distribution of condensate size, defined by (9) in AM01
+        rg: rg parameter in the lognormal distribution of condensate size, 
+            defined by (9) in AM01
 
     """
     rg = (
@@ -174,7 +157,7 @@ def sigmag_from_effective_radius(reff, fsed, rw, alpha):
     """computes sigmag from reff
 
     Args:
-        reff: effective radius (cm) defined by E_3/E_2 
+        reff: effective radius (cm) defined by E_3/E_2
         fsed: fsed
         rw: rw (cm)
         alpha: alpha
@@ -183,8 +166,9 @@ def sigmag_from_effective_radius(reff, fsed, rw, alpha):
         sigmag: sigmag
     """
     factor = jnp.log(rw / reff * fsed ** (1.0 / alpha))
-    index = jnp.sqrt(2.0/(1.0+alpha)*factor)
+    index = jnp.sqrt(2.0 / (1.0 + alpha) * factor)
     return jnp.exp(index)
+
 
 def effective_radius(rg, sigmag):
     """computes the paritculate effective radius from lognormal parameters, rg and sigmag
@@ -200,7 +184,7 @@ def effective_radius(rg, sigmag):
     Returns:
         _type_: effective radius in cgs
     """
-    return jnp.exp(2.5*jnp.log(sigmag)*jnp.log(sigmag))*rg
+    return jnp.exp(2.5 * jnp.log(sigmag) * jnp.log(sigmag)) * rg
 
 
 def geometric_radius(rg, sigmag):

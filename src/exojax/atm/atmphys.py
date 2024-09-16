@@ -9,7 +9,7 @@ from exojax.atm.viscosity import calc_vfactor, eta_Rosner
 from exojax.atm.amclouds import (
     smooth_index_base_pressure,
     get_pressure_at_cloud_base,
-    get_value_at_cloud_base,
+    get_value_at_smooth_index,
 )
 from exojax.atm.amclouds import mixing_ratio_cloud_profile
 from exojax.atm.vterm import terminal_velocity
@@ -156,7 +156,7 @@ class AmpAmcloud(AmpCloud):
 
         smooth_index = smooth_index_base_pressure(pressures, psat, VMR)
         pressure_base = get_pressure_at_cloud_base(pressures, smooth_index)
-        temperature_base = get_value_at_cloud_base(temperatures, smooth_index)
+        temperature_base = get_value_at_smooth_index(temperatures, smooth_index)
 
         # cloud scale height L
         L_cloud = pressure_scale_height(
