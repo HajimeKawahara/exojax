@@ -1,3 +1,4 @@
+from cgitb import text
 import arviz
 import matplotlib.pyplot as plt
 import plotjupiter
@@ -17,8 +18,16 @@ spectra = unmask_spectra[mask]
 
 
 azdata = arviz.from_netcdf("output/samples.nc")
-arviz.plot_pair(azdata, kind="kde", divergences=False, marginals=True, 
-                var_names=["fsed", "vr", "mmr_ch4", "factor", "sigma"])
+var = ["fsed", "vr", "mmr_ch4", "factor", "sigma"]
+label = ["$f_\mathrm{sed}$", "$v_r$", "MMR (CH4)", "$A$", "$\sigma$"]
+ax = arviz.plot_pair(azdata, kind="kde", divergences=False, marginals=True, 
+                var_names=var, textsize=30)
+for i, ax_ in enumerate(ax.flatten()):
+    if ax_.get_xlabel():
+        ax_.set_xlabel(label[i-20])
+    if ax_.get_ylabel():
+        ax_.set_ylabel(label[int(i/5)])
+plt.tick_params(labelsize=30)
 plt.savefig("output/pairplot.png")
 
 predictions = np.load("output/predictions.npz", allow_pickle=True)["arr_0"]
@@ -32,3 +41,12 @@ plt = plotjupiter.plot_prediction(wav_obs, spectra, median_mu1, hpdi_mu1)
 #unmask_wav_obs = nu2wav(unmask_nus_obs, unit="AA")
 #plt.plot(unmask_wav_obs, unmask_spectra, ".", alpha=0.3, color="gray")
 plt.savefig("output/Jupiter_fit_wav.png", bbox_inches="tight", pad_inches=0.1)
+
+from exojax.utils.zsol import nsol
+from exojax.utils.zsol import mass_fraction
+
+n = nsol("AG89")
+Xc = mass_fraction("C", n)
+mmr_sol = Xc*16/12
+print("MMR_CH4 for 3 Zsol (AG89) = ",3*mmr_sol)
+print(10**(0.04)*0.01/mmr_sol,"-", 10**(0.22)*0.01/mmr_sol)
