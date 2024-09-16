@@ -5,6 +5,7 @@
 """
 
 import numpy as np
+from exojax import data
 from exojax.spec.molinfo import element_mass
 
 
@@ -94,7 +95,97 @@ AAG21 = {
 }
 
 
-def nsol():
+def nsol(database="AAG21"):
+    """provides solar abundance dictionary.
+
+    Args:
+        database: name of database, default to AAG21.
+
+    Note:
+        AAG21   Asplund, M., Amarsi, A. M., & Grevesse, N. 2021, arXiv:2105.01661
+        AG89 	Anders E. & Grevesse N. (1989, Geochimica et Cosmochimica Acta 53, 197) (Photospheric, using Table 2)
+        AGSS09 	Asplund M., Grevesse N., Sauval A.J. & Scott P. (2009, ARAA, 47, 481) (Photospheric, using Table 1)
+        F92 	Feldman U.(1992, Physica Scripta 46, 202)
+        AE82 	Anders E. & Ebihara (1982, Geochimica et Cosmochimica Acta 46, 2363)
+        GS98 	Grevesse, N. & Sauval, A.J. (1998, Space Science Reviews 85, 161)
+        WAM00 	Wilms J., Allen A. & McCray R. (2000, ApJ 542, 914)
+        L03	Lodders K (2003, ApJ 591, 1220) (Photospheric, using Table 1)
+        LPG09photo 	Lodders K., Palme H., Gail H.P. (2009, Landolt-Barnstein, New Series, vol VI/4B, pp 560-630) (Photospheric, using Table 4)
+        LPG09proto 	Lodders K., Palme H., Gail H.P. (2009, Landolt-Barnstein, New Series, vol VI/4B, pp 560-630) (Proto-solar, using Table 10)
+
+    Returns:
+        number ratio of elements for solar abundance
+
+    Example:
+        >>>  nsun=nsol()
+        >>>  print(nsun["Fe"])
+        >>>  2.6602622265852853e-05
+    """
+    available_databases = _available_abundance_databases()
+    if database not in available_databases:
+        raise ValueError(
+            f"database {database} is not available. Available databases are {available_databases.keys()}"
+        )
+
+    print("Database for solar abundance = ", database)
+    print(available_databases[database])
+    if database == "AAG21":
+        return _nsol_aag21()
+    else:
+        return _nsol_from_xspec(database)
+
+
+def _available_abundance_databases():
+    database_available = {}
+    database_available["AAG21"] = (
+        "Asplund, M., Amarsi, A. M., & Grevesse, N. 2021, arXiv:2105.01661"
+    )
+    database_available["AG89"] = (
+        "Anders E. & Grevesse N. (1989, Geochimica et Cosmochimica Acta 53, 197) (Photospheric, using Table 2)"
+    )
+    database_available["AGSS09"] = (
+        "Asplund M., Grevesse N., Sauval A.J. & Scott P. (2009, ARAA, 47, 481) (Photospheric, using Table 1)"
+    )
+    database_available["F92"] = "Feldman U.(1992, Physica Scripta 46, 202)"
+    database_available["AE82"] = (
+        "Anders E. & Ebihara (1982, Geochimica et Cosmochimica Acta 46, 2363)"
+    )
+    database_available["GS98"] = (
+        "Grevesse, N. & Sauval, A.J. (1998, Space Science Reviews 85, 161)"
+    )
+    database_available["WAM00"] = "Wilms J., Allen A. & McCray R. (2000, ApJ 542, 914)"
+    database_available["L03"] = (
+        "Lodders K (2003, ApJ 591, 1220) (Photospheric, using Table 1)"
+    )
+    database_available["LPG09photo"] = (
+        "Lodders K., Palme H., Gail H.P. (2009, Landolt-Barnstein, New Series, vol VI/4B, pp 560-630) (Photospheric, using Table 4)"
+    )
+    database_available["LPG09proto"] = (
+        "Lodders K., Palme H., Gail H.P. (2009, Landolt-Barnstein, New Series, vol VI/4B, pp 560-630) (Proto-solar, using Table 10)"
+    )
+    return database_available
+
+
+def _nsol_from_xspec(database):
+    """
+
+    Notes:
+        reference: https://heasarc.gsfc.nasa.gov/xanadu/xspec/manual/node116.html
+    """
+    import pkg_resources
+    import pandas as pd
+
+    filename = "data/abundance/xspec_abundance.txt"
+    file_path = pkg_resources.resource_filename("exojax", filename)
+    df = pd.read_csv(file_path, comment="#", delimiter=",")
+    nsol = df.set_index("El")[database].to_dict()
+    total_sum = sum(nsol.values())
+    nsol = {key: value / total_sum for key, value in nsol.items()}
+
+    return nsol
+
+
+def _nsol_aag21():
     """provides solar abundance dictionary from AAG21.
 
     Args:
@@ -128,8 +219,28 @@ def nsol():
     return nsun
 
 
+def mass_fraction(atom, number_ratio_elements):
+    """mass fraction of atom
+
+    Notes:
+        X = mass fraction of hydrogen
+        Y = mass fraction of helium
+        Z = mass fraction of metals
+        For definition, see https://en.wikipedia.org/wiki/Metallicity#Mass_fraction
+
+    Args:
+        atom: atom name, such as "H", "He", "C", "O", "Fe", etc.
+        number_ratio_elements: element number ratio of abundance, when n = nsol(), X, Y, Z are solar abundance Xsol. Ysol, Zsol.
+
+    Returns:
+        mass fraction of atom
+    """
+    weighted_sum_mass = _sum_mass_weighted_elements(number_ratio_elements)
+    return element_mass[atom] * number_ratio_elements[atom] / weighted_sum_mass
+
+
 def mass_fraction_XYZ(number_ratio_elements):
-    """mass fraction of hydroeng, helium, metals, i.e. well known symbols in astronomy X, Y, Z
+    """mass fraction of hydrogen, helium, metals, i.e. well known symbols in astronomy X, Y, Z
 
     Notes:
         X = mass fraction of hydrogen
@@ -141,20 +252,21 @@ def mass_fraction_XYZ(number_ratio_elements):
         number_ratio_elements: element number ratio of abundance, when n = nsol(), X, Y, Z are solar abundance Xsol. Ysol, Zsol.
 
     Returns:
-        float: X, Y, Z (mass mixing ratios of H, He, metals)
+        float: X, Y, Z (mass fraction of H, He, metals)
     """
+
+    X = mass_fraction("H", number_ratio_elements)
+    Y = mass_fraction("He", number_ratio_elements)
+    Z = 1.0 - X - Y
+
+    return X, Y, Z
+
+
+def _sum_mass_weighted_elements(number_ratio_elements):
     sum_element = sum(
         [
             element_mass[atom] * number_ratio_elements[atom]
             for atom in number_ratio_elements
         ]
     )
-    X = element_mass["H"] * number_ratio_elements["H"]
-    Y = element_mass["He"] * number_ratio_elements["He"]
-    Z = sum_element - X - Y
-
-    X = X / sum_element
-    Y = Y / sum_element
-    Z = Z / sum_element
-
-    return X, Y, Z
+    return sum_element

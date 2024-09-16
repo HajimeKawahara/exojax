@@ -10,6 +10,36 @@ import warnings
 import jax.numpy as jnp
 
 
+def get_smooth_index(xp, x):
+    """get smooth index
+
+    Args:
+        xp: x grid
+        x: x array
+    Returns:
+        float: smooth index
+    """
+    findex = jnp.arange(len(xp), dtype=float)
+    smooth_index = jnp.interp(x, xp, findex)
+    return smooth_index
+
+def get_value_at_smooth_index(array, smooth_index):
+    """get value at smooth index position (e.g. cloud base) from an array
+
+    Args:
+        array (float): array, such as log pressures or temperatures
+        smooth_index (float): smooth index
+
+    Returns:
+        float: value at cloud base
+    """
+
+    ind = smooth_index.astype(int)
+    # ind = jnp.clip(ind, 0, len(array) - 2)
+    res = smooth_index - jnp.floor(smooth_index)
+    return (1.0 - res) * array[ind] + res * array[ind + 1]
+
+
 def getix(x, xv):
     """jnp version of getix.
 

@@ -26,10 +26,8 @@ def test_get_pressure_at_cloud_base():
     """test get_pressure_at_cloud_base"""
 
     Parr, Tarr, MolMR_enstatite, P_enstatite = _default_cloud_setting()
-    from exojax.atm.amclouds import (
-        smooth_index_base_pressure,
-        get_pressure_at_cloud_base,
-    )
+    from exojax.atm.amclouds import smooth_index_base_pressure
+    from exojax.atm.amclouds import get_pressure_at_cloud_base
 
     smooth_index = smooth_index_base_pressure(Parr, P_enstatite, MolMR_enstatite)
 
@@ -41,13 +39,12 @@ def test_get_pressure_at_cloud_base():
 def test_get_value_at_cloud_base_value_is_temperature():
     """test get_value_at_cloud_base using value = temperatures"""
     from exojax.atm.amclouds import smooth_index_base_pressure
-    from exojax.atm.amclouds import get_value_at_cloud_base
+    from exojax.utils.indexing import get_value_at_smooth_index
 
     Parr, Tarr, MolMR_enstatite, P_enstatite = _default_cloud_setting()
     smooth_index = smooth_index_base_pressure(Parr, P_enstatite, MolMR_enstatite)
-    Tbase_enstatite = get_value_at_cloud_base(Tarr, smooth_index)
+    Tbase_enstatite = get_value_at_smooth_index(Tarr, smooth_index)
     ref = 1884.2233
-
     assert Tbase_enstatite == pytest.approx(ref)
 
 

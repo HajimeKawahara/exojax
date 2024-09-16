@@ -72,7 +72,7 @@ def plot_cloud_structure(Parr, rg_layer, MMRc, fac):
     plt.xlabel("cloud density g/L")
     plt.yscale("log")
     plt.xscale("log")
-    plt.xlim(1e-8,None)
+    plt.xlim(1e-8, None)
     ax.invert_yaxis()
     return plt
 
@@ -111,25 +111,58 @@ def plot_prediction(wav_obs, spectra, median_mu1, hpdi_mu1):
     #    nus_obs, median_mu1, alpha=0.5, label="median prediction", color="C1", ls="dashed"
     # )
     plt.plot(wav_obs, spectra, ".", label="observed spectrum")
+    mask = wav_obs < 16220.0
+
     plt.plot(
-        wav_obs, median_mu1, alpha=0.5, lw=2, label="median prediction", color="black"
+        wav_obs[mask],
+        median_mu1[mask],
+        alpha=0.5,
+        lw=2,
+        label="median prediction",
+        color="black",
     )
 
     ax.fill_between(
-        wav_obs,
-        hpdi_mu1[0],
-        hpdi_mu1[1],
+        wav_obs[mask],
+        hpdi_mu1[0][mask],
+        hpdi_mu1[1][mask],
         alpha=0.3,
         interpolate=True,
-        color="gray",
+        color="C0",
         label="95% area",
     )
+    
+    plt.plot(
+        wav_obs[~mask],
+        median_mu1[~mask],
+        alpha=0.5,
+        lw=2,
+        color="black",
+    )
+
+    ax.fill_between(
+        wav_obs[~mask],
+        hpdi_mu1[0][~mask],
+        hpdi_mu1[1][~mask],
+        alpha=0.3,
+        interpolate=True,
+        color="C0",
+    )
+    
     plt.legend(fontsize=16)
+    ax.fill_betweenx(
+        [-0.02, 0.13],
+        np.max(wav_obs[mask]),
+        np.min(wav_obs[~mask]),
+        alpha=0.2,
+        interpolate=True,
+        color="gray",
+    )
+    plt.ylim(-0.02, 0.13)
     plt.xlim(np.min(wav_obs), np.max(wav_obs))
     plt.xlabel("wavelength $\AA$", fontsize=18)
     plt.ylabel("normalized spectrum", fontsize=18)
     plt.tick_params(labelsize=18)
-    plt.savefig("output/Jupiter_fit_wav.png", bbox_inches="tight", pad_inches=0.1)
     return plt
 
 

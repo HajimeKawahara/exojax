@@ -1,5 +1,35 @@
+"""converts quantities in the atmosphere, between mass mixing ratio, volume mixing ratio, and density"""
+
+from exojax.atm.idealgas import number_density
+from exojax.utils.constants import m_u
+
+def mmr_to_density(mmr, molmass, Parr, Tarr, unit="g/L"):
+    """converts MMR to density
+
+    Args:
+        mmr: mass mixing ratio
+        molmass_nh3 (_type_): molecular mass
+        Parr (_type_): _description_
+        Tarr (_type_): _description_
+        unit str: unit of the density (g/L, g/cm3)
+
+    Note:
+        mass density (g/L) = fac*MMR
+
+    Returns:
+        _type_: _description_
+    """
+    if unit == "g/L":
+        unit_factor = 1.0e3
+    elif unit == "g/cm3":
+        unit_factor = 1.0
+    else:
+        raise ValueError("unit is not correct")
+    
+    return molmass * m_u * number_density(Parr, Tarr) * unit_factor * mmr
+
 def mmr_to_vmr(mmr, molecular_mass, mean_molecular_weight):
-    """convert mass mixing ratio (mmr) to volume mixing ratio (vmr)
+    """converts mass mixing ratio (mmr) to volume mixing ratio (vmr)
 
     Args:
         mmr (float or array): mass mixing ratio(s)
@@ -13,7 +43,7 @@ def mmr_to_vmr(mmr, molecular_mass, mean_molecular_weight):
 
 
 def vmr_to_mmr(vmr, molecular_mass, mean_molecular_weight):
-    """convert volume mixing ratio (vmr) to mass mixing ratio (mmr)
+    """converts volume mixing ratio (vmr) to mass mixing ratio (mmr)
 
     Args:
         vmr (float or array): volume mixing ratio(s)
@@ -25,3 +55,4 @@ def vmr_to_mmr(vmr, molecular_mass, mean_molecular_weight):
     """
 
     return vmr * molecular_mass / mean_molecular_weight
+
