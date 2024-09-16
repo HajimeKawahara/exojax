@@ -12,7 +12,7 @@
 
 ### Preparation
 # RT model
-rtmode = "reflect" #uses ArtReflectPure
+rtmode = "reflect"  # uses ArtReflectPure
 # rtmode = "abs"  # uses ArtAbsPure
 
 # if this is the first run, set miegird_generate = True, and run the code to generate Mie grid. After that, set False.
@@ -33,6 +33,7 @@ os.environ["JAX_TRACEBACK_FILTERING"] = "off"
 
 
 import plotjupiter
+from loaddata import load_jupiter_reflection
 import miegrid_generate
 import pickle
 import numpy as np
@@ -86,16 +87,10 @@ if username == "exoplanet01":
     ssl._create_default_https_context = ssl._create_unverified_context
 
 
-dat = np.loadtxt("jupiter_corrected.dat")  # made by Jupiter_Hires_Modeling_NIR.ipynb
-unmask_nus_obs = dat[:, 0]
-unmask_spectra = dat[:, 1]
-mask = (unmask_nus_obs < 6163.5) + ((unmask_nus_obs > 6166) & (unmask_nus_obs < 6174))
-nus_obs = unmask_nus_obs[mask]
-wav_obs = nu2wav(nus_obs, unit="AA")
-
+wav_obs, nus_obs, spectra, unmask_nus_obs, unmask_spectra, mask = (
+    load_jupiter_reflection()
+)
 plotjupiter.print_wavminmax(wav_obs)
-
-spectra = unmask_spectra[mask]
 
 if figshow:
     plotjupiter.plot_spec1(unmask_nus_obs, unmask_spectra, nus_obs, spectra)
@@ -329,10 +324,10 @@ def spectral_model(params):
             incoming_flux,
         )
     elif rtmode == "abs":
-        #mu0 = 1.0
-        #mu1 = 1.0
-        mu0 = jnp.cos(60.0/180.0*jnp.pi)
-        mu1 = jnp.cos(60.0/180.0*jnp.pi)
+        # mu0 = 1.0
+        # mu1 = 1.0
+        mu0 = jnp.cos(60.0 / 180.0 * jnp.pi)
+        mu1 = jnp.cos(60.0 / 180.0 * jnp.pi)
         Fr = art.run(dtau, surface_pressure, incoming_flux, mu0, mu1)
 
     std = resolution_to_gaussian_std(broadening)

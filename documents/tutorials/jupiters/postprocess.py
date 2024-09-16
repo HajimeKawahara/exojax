@@ -2,20 +2,15 @@ from cgitb import text
 import arviz
 import matplotlib.pyplot as plt
 import plotjupiter
+from loaddata import load_jupiter_reflection
 import arviz
 from numpyro.diagnostics import hpdi
 import jax.numpy as jnp
 import numpy as np
-from exojax.spec.unitconvert import nu2wav
 
-dat = np.loadtxt("jupiter_corrected.dat")  # made by Jupiter_Hires_Modeling_NIR.ipynb
-unmask_nus_obs = dat[:, 0]
-unmask_spectra = dat[:, 1]
-mask = (unmask_nus_obs < 6163.5) + ((unmask_nus_obs > 6166) & (unmask_nus_obs < 6174))
-nus_obs = unmask_nus_obs[mask]
-wav_obs = nu2wav(nus_obs, unit="AA")
-spectra = unmask_spectra[mask]
-
+wav_obs, nus_obs, spectra, unmask_nus_obs, unmask_spectra, mask = (
+    load_jupiter_reflection()
+)
 
 # PLOT: corner plot
 azdata = arviz.from_netcdf("output/samples.nc")
@@ -28,10 +23,10 @@ ax = arviz.plot_pair(
 for i, ax_ in enumerate(ax.flatten()):
     if ax_.get_xlabel():
         ax_.set_xlabel(label[i - 12])
-        #ax_.set_xlabel(label[i - 20]) #when marginals=True
+        # ax_.set_xlabel(label[i - 20]) #when marginals=True
     if ax_.get_ylabel():
-        ax_.set_ylabel(label[int(i / 4)+1])
-        #ax_.set_ylabel(label[int(i / 5)]) #when marginals=True
+        ax_.set_ylabel(label[int(i / 4) + 1])
+        # ax_.set_ylabel(label[int(i / 5)]) #when marginals=True
 plt.tick_params(labelsize=30)
 plt.savefig("output/pairplot.png", bbox_inches="tight", pad_inches=0.1)
 
