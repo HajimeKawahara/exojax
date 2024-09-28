@@ -8,17 +8,12 @@ We frequently test the codes in this category when writing code.
 ## integration
 Integration test. Longer computation time and/or use real molecular database are allowed.
 
-### integration/comparison
-Internal comparison of opacity/radiative transfer codes 
-We recommend to test the code in this category before the Pull Request.
-
 ## endtoend
-Endtoend test. It takes much longer time than integration tests/unit tests.
+End-to-end test. It takes much longer time than integration tests/unit tests.
 
-To test opacity calculators, use auto/*.py
+## figures
+Some codes for making figures
 
-###  endtoend/manual_check
- not test, but check various things
- To check opacity calculators manually, use auto/*.py
-
+## benchmark
+codes for benchmarking
 
