@@ -1,16 +1,15 @@
 """Terminal velocity of cloud particles.
 
 Note:
-   The code in this module is based on Hans R Pruppacher and James D Klett. Microstructure of atmospheric clouds and precipitation and Akerman and Marley 2001.
+    The code in this module is based on Hans R Pruppacher and James D Klett. Microstructure of atmospheric clouds and precipitation and Akerman and Marley 2001.
 """
 
 import jax.numpy as jnp
 from jax import jit
 
 
-def vf_stokes(r, g, eta, drho, Nkn=0.):
-    """terminal velocity of Stokes flow (Reynolds number < 2, Davies number <
-    42)
+def vf_stokes(r, g, eta, drho, Nkn=0.0):
+    """terminal velocity of Stokes flow (Reynolds number < 2, Davies number < 42)
 
     Args:
         r: particle size (cm)
@@ -27,9 +26,9 @@ def vf_stokes(r, g, eta, drho, Nkn=0.):
         (1.0+1.255*Nkn) is the Cunningham factor
 
     Note:
-       See also (10-138) p415 in Hans R Pruppacher and James D Klett. Microstructure of atmospheric clouds and precipitation. In Microphysics of clouds and precipitation, pages 10–73. Springer, 2010. Equation (B1) in Appendix B of Ackerman and Marley 2001.
+        See also (10-138) p415 in Hans R Pruppacher and James D Klett. Microstructure of atmospheric clouds and precipitation. In Microphysics of clouds and precipitation, pages 10–73. Springer, 2010. Equation (B1) in Appendix B of Ackerman and Marley 2001.
     """
-    return 2.0*g*r*r*drho*(1.0+1.255*Nkn)/(9.0*eta)
+    return 2.0 * g * r * r * drho * (1.0 + 1.255 * Nkn) / (9.0 * eta)
 
 
 def Ndavies(r, g, eta, drho, rho):
@@ -43,14 +42,13 @@ def Ndavies(r, g, eta, drho, rho):
         rho: atmosphere density (g/cm3)
 
     Returns:
-       Davies number (Best Number)
+        Davies number (Best Number)
     """
-    return 32.0*g*r**3*drho*rho/(3.0*eta**2)
+    return 32.0 * g * r**3 * drho * rho / (3.0 * eta**2)
 
 
 def vf_midNre(r, g, eta, drho, rho):
-    """terminal velocity (2 < Reynolds number < 500, 42 < Davies number <
-    10**5)
+    """terminal velocity (2 < Reynolds number < 500, 42 < Davies number < 10**5)
 
     Args:
         r: particle size (cm)
@@ -64,8 +62,8 @@ def vf_midNre(r, g, eta, drho, rho):
     """
     ND = Ndavies(r, g, eta, drho, rho)
     x = jnp.log(ND)
-    logNre = -0.0088*x**2 + 0.85*x - 2.49
-    return eta/(2.0*rho*r)*jnp.exp(logNre)
+    logNre = -0.0088 * x**2 + 0.85 * x - 2.49
+    return eta / (2.0 * rho * r) * jnp.exp(logNre)
 
 
 def vf_largeNre(r, g, eta, drho, rho):
@@ -83,8 +81,7 @@ def vf_largeNre(r, g, eta, drho, rho):
     """
     ND = Ndavies(r, g, eta, drho, rho)
     Cd = 0.45
-    return eta/(2.0*rho*r)*jnp.sqrt(ND/Cd)
-
+    return eta / (2.0 * rho * r) * jnp.sqrt(ND / Cd)
 
 
 @jit
@@ -100,7 +97,7 @@ def terminal_velocity(r, gravity, dynamic_viscosity, rho_cloud, rho_atm, Nkn=0.0
         Nkn: Knudsen number
 
     Return:
-        terminal velocity (cm/s)    
+        terminal velocity (cm/s)
 
     Example:
 
@@ -113,31 +110,33 @@ def terminal_velocity(r, gravity, dynamic_viscosity, rho_cloud, rho_atm, Nkn=0.0
         >>> r=jnp.logspace(-5,0,70)
         >>> terminal_velocity(r,g,eta,drho,rho) #terminal velocity (cm/s)
     """
-    drho = rho_cloud-rho_atm
+    drho = rho_cloud - rho_atm
     ND = Ndavies(r, gravity, dynamic_viscosity, drho, rho_atm)
-    cond = [ND < 42.877543, (ND >= 42.877543) *
-            (ND < 119643.38), ND >= 119643.38]
-    choice = [vf_stokes(r, gravity, dynamic_viscosity, drho, Nkn), vf_midNre(
-        r, gravity, dynamic_viscosity, drho, rho_atm), vf_largeNre(r, gravity, dynamic_viscosity, drho, rho_atm)]
+    cond = [ND < 42.877543, (ND >= 42.877543) * (ND < 119643.38), ND >= 119643.38]
+    choice = [
+        vf_stokes(r, gravity, dynamic_viscosity, drho, Nkn),
+        vf_midNre(r, gravity, dynamic_viscosity, drho, rho_atm),
+        vf_largeNre(r, gravity, dynamic_viscosity, drho, rho_atm),
+    ]
     vft = jnp.select(cond, choice)
     return vft
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     import matplotlib.pyplot as plt
     import exojax.atm.viscosity as vc
 
-    g = 980.
+    g = 980.0
     drho = 1.0
-    rho = 1.29*1.e-3  # g/cm3
-    vfactor, Tr = vc.calc_vfactor(atm='Air')
+    rho = 1.29 * 1.0e-3  # g/cm3
+    vfactor, Tr = vc.calc_vfactor(atm="Air")
     eta = vc.eta_Rosner(300.0, vfactor)
     r = jnp.logspace(-5, 0, 70)
     plt.figure(figsize=(5, 3))
-    plt.plot(r*1.e4, terminal_velocity(r, g, eta, drho, rho), color='black')
-    plt.xscale('log')
-    plt.yscale('log')
-    plt.xlabel('r (micron)')
-    plt.ylabel('terminal velocity (cm/s)')
-    plt.savefig('vterm.pdf', bbox_inches='tight', pad_inches=0.0)
+    plt.plot(r * 1.0e4, terminal_velocity(r, g, eta, drho, rho), color="black")
+    plt.xscale("log")
+    plt.yscale("log")
+    plt.xlabel("r (micron)")
+    plt.ylabel("terminal velocity (cm/s)")
+    plt.savefig("vterm.pdf", bbox_inches="tight", pad_inches=0.0)
     plt.show()
