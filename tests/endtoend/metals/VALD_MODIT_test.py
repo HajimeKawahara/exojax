@@ -20,7 +20,9 @@ import numpy as np
 import jax.numpy as jnp
 from exojax.spec import moldb, atomll, contdb, molinfo, initspec, planck
 from exojax.spec import api
-from exojax.spec.rtransfer import pressure_layer, dtauVALD, rtrun_emis_pureabs_fbased2st
+from exojax.spec.rtransfer import rtrun_emis_pureabs_fbased2st
+from exojax.atm.atmprof import pressure_layer_logspace
+from exojax.spec.layeropacity import layer_optical_depth_VALD as dtauVALD
 from exojax.spec.dtau_mmwl import dtauM_mmwl, dtauHminus_mmwl, dtauCIA_mmwl
 from exojax.utils.grids import wavenumber_grid
 from exojax.utils.instfunc import resolution_to_gaussian_std
@@ -36,7 +38,7 @@ def test_VALD_MODIT():
 
     #Set a model atmospheric layers, wavenumber range for the model, an instrument
     NP = 100
-    Parr, dParr, k = pressure_layer(NP = NP)
+    Parr, dParr, k = pressure_layer_logspace(NP = NP)
     Pref=1.0 #bar
     ONEARR=np.ones_like(Parr)
 

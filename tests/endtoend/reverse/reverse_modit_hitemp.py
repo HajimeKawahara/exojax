@@ -15,7 +15,8 @@ import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 import jax.numpy as jnp
-from exojax.spec import rtransfer as rt
+from exojax.atm.atmprof import pressure_layer_logspace
+
 from exojax.spec import modit
 from exojax.spec import api, contdb
 from exojax.utils.grids import wavenumber_grid
@@ -39,7 +40,7 @@ norm = 20000
 nflux = flux / norm + np.random.normal(0, sigmain, len(wavd))
 
 NP = 100
-Parr, dParr, k = rt.pressure_layer(NP=NP)
+Parr, dParr, k = pressure_layer_logspace(NP=NP)
 Nx = 5000
 nus, wav, res = wavenumber_grid(np.min(wavd) - 5.0,
                                 np.max(wavd) + 5.0,

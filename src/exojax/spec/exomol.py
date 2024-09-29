@@ -1,4 +1,5 @@
 import numpy as np
+from exojax.utils.constants import Tref_original
 from exojax.utils.constants import hcperk, ccgs
 
 
@@ -19,14 +20,13 @@ def line_strength_from_Einstein_coeff(A, g, nu_lines, elower, QTref):
         Mmol: molecular mass (normalized by m_u)
 
     Returns:
-        Sij(T): Line strength (cm)
+        Sij(Tref): Line strength (cm)
     """
-    Tref = 296.0
     line_strength_ref = (
         -A
         * g
-        * np.exp(-hcperk * elower / Tref)
-        * np.expm1(-hcperk * nu_lines / Tref)
+        * np.exp(-hcperk * elower / Tref_original)
+        * np.expm1(-hcperk * nu_lines / Tref_original)
         / (8.0 * np.pi * ccgs * nu_lines**2 * QTref)
     )
     return line_strength_ref
@@ -44,8 +44,7 @@ def gamma_exomol(P, T, n_air, alpha_ref):
     Returns:
         gamma: pressure gamma factor (cm-1)
     """
-    Tref = 296.0  # reference tempearture (K)
-    gamma = alpha_ref * P * (Tref / T) ** n_air
+    gamma = alpha_ref * P * (Tref_original / T) ** n_air
     return gamma
 
 
