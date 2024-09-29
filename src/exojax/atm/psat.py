@@ -1,4 +1,5 @@
 """Saturation Vapor Pressure."""
+
 import jax.numpy as jnp
 from exojax.utils.constants import Tc_water, Ttp_water
 
@@ -36,15 +37,15 @@ def psat_water_AM01(T):
         saturation vapor pressure (bar)
     """
     Tcelcius = T - Tc_water
-    Tcrit = 1048 # K
+    Tcrit = 1048  # K
     return jnp.where(
         T > Tcrit,
         600.0,
         jnp.where(
-            T < Tc_water,            
+            T < Tc_water,
             _psat_water_buck_ice(Tcelcius),
             _psat_water_buck_liquid(Tcelcius),
-        )
+        ),
     )
 
 
@@ -95,7 +96,7 @@ def psat_Fe_AM01(T):
 
     Note:
         Taken from Ackerman and Marley 2001 Appendix A (A3), originally from  Barshay and Lewis (1976)
-        
+
 
     Args:
         T: temperature (K)
@@ -110,7 +111,7 @@ def psat_Fe_AM01(T):
         _psat_Fe_liquid(T),
         _psat_Fe_solid(T),
     )
-    #return jnp.exp(25.37 - 58663.0 / T)
+    # return jnp.exp(25.37 - 58663.0 / T)
 
 
 def _psat_Fe_solid(T):
@@ -141,30 +142,3 @@ def _psat_Fe_liquid(T):
         saturation vapor pressure (bar)
     """
     return jnp.exp(9.86 - 37120.0 / T)
-
-
-if __name__ == "__main__":
-    import numpy as np
-    import matplotlib.pyplot as plt
-
-    t = np.linspace(100.0, 3000.0, 1000)
-    plt.plot(t, psat_water_AM01(t), label="H2O", color="C0")
-    plt.plot(t, psat_ammonia_AM01(t), label="NH3", color="C3")
-
-    t = np.linspace(400.0, 3000.0, 1000)
-    plt.plot(t, psat_Fe_AM01(t), label="Fe", color="C1")
-    plt.plot(1800.0, psat_Fe_AM01(1800.0), "*", color="C1")
-    plt.plot(t, psat_enstatite_AM01(t), label="MgSiO3", color="C2")
-
-    plt.plot(Tc_water, psat_water_AM01(Tc_water), "*", label="liquid/soild boundary", color="C0")
-    
-
-    plt.ylim(1.e3,1.e-8)    
-
-    plt.xlabel("T (K)")
-    plt.ylabel("P (bar)")
-    plt.yscale("log")
-    plt.xscale("log")
-    plt.legend()
-    plt.savefig("psat.png")
-    plt.show()

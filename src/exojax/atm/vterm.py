@@ -120,23 +120,3 @@ def terminal_velocity(r, gravity, dynamic_viscosity, rho_cloud, rho_atm, Nkn=0.0
     ]
     vft = jnp.select(cond, choice)
     return vft
-
-
-if __name__ == "__main__":
-    import matplotlib.pyplot as plt
-    import exojax.atm.viscosity as vc
-
-    g = 980.0
-    drho = 1.0
-    rho = 1.29 * 1.0e-3  # g/cm3
-    vfactor, Tr = vc.calc_vfactor(atm="Air")
-    eta = vc.eta_Rosner(300.0, vfactor)
-    r = jnp.logspace(-5, 0, 70)
-    plt.figure(figsize=(5, 3))
-    plt.plot(r * 1.0e4, terminal_velocity(r, g, eta, drho, rho), color="black")
-    plt.xscale("log")
-    plt.yscale("log")
-    plt.xlabel("r (micron)")
-    plt.ylabel("terminal velocity (cm/s)")
-    plt.savefig("vterm.pdf", bbox_inches="tight", pad_inches=0.0)
-    plt.show()
