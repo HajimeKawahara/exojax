@@ -51,6 +51,7 @@ Molecular/Atomic/Continuum Databases
    tutorials/branch.rst
    tutorials/Fortrat.rst
    tutorials/CIA_opacity.rst
+   tutorials/Forward_modeling_for_Fe_I_lines_of_Kurucz.rst
 
 
 Multi Molecule/Segments Mdb and Opa Handler
