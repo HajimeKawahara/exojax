@@ -50,7 +50,7 @@ from exojax.spec.atmrt import ArtAbsPure
 from exojax.spec.pardb import PdbCloud
 from exojax.atm.atmphys import AmpAmcloud
 from exojax.utils.zsol import nsol
-from exojax.atm.mixratio import vmr2mmr
+from exojax.atm.atmconvert import vmr_to_mmr
 from exojax.spec.molinfo import molmass_isotope
 from exojax.spec.opacont import OpaMie
 from exojax.utils.instfunc import resolution_to_gaussian_std
@@ -166,7 +166,7 @@ rhoc = pdb_nh3.condensate_substance_density  # g/cc
 n = nsol("AG89")
 abundance_nh3 = 3.0 * n["N"]  # x 3 solar abundance
 molmass_nh3 = molmass_isotope("NH3", db_HIT=False)
-MMRbase_nh3 = vmr2mmr(abundance_nh3, molmass_nh3, mu)
+MMRbase_nh3 = vmr_to_mmr(abundance_nh3, molmass_nh3, mu)
 
 # search for rg, sigmag range based on fsed and Kzz range
 fsed_range = [0.1, 10.0]

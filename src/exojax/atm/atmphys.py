@@ -8,7 +8,7 @@ from exojax.atm.amclouds import get_pressure_at_cloud_base
 from exojax.atm.amclouds import get_value_at_smooth_index
 from exojax.atm.amclouds import mixing_ratio_cloud_profile
 from exojax.atm.atmprof import pressure_scale_height
-from exojax.atm.mixratio import mmr2vmr
+from exojax.atm.atmconvert import mmr_to_vmr
 from exojax.atm.vterm import terminal_velocity
 from exojax.atm.viscosity import calc_vfactor
 from exojax.atm.viscosity import eta_Rosner
@@ -149,7 +149,7 @@ class AmpAmcloud(AmpCloud):
         psat = self.pdb.saturation_pressure(temperatures)
 
         # cloud base pressure/temperature
-        VMR = mmr2vmr(MMR_base, molecular_mass_condensate, mean_molecular_weight)
+        VMR = mmr_to_vmr(MMR_base, molecular_mass_condensate, mean_molecular_weight)
 
         smooth_index = smooth_index_base_pressure(pressures, psat, VMR)
         pressure_base = get_pressure_at_cloud_base(pressures, smooth_index)
