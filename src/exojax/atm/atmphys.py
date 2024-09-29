@@ -4,17 +4,13 @@
 from exojax.atm.amclouds import get_rg
 from exojax.atm.amclouds import find_rw
 from exojax.atm.viscosity import calc_vfactor, eta_Rosner
-
-# from exojax.atm.amclouds import compute_cloud_base_pressure_index
-from exojax.atm.amclouds import (
-    smooth_index_base_pressure,
-    get_pressure_at_cloud_base,
-    get_value_at_smooth_index,
-)
+from exojax.atm.amclouds import smooth_index_base_pressure
+from exojax.atm.amclouds import get_pressure_at_cloud_base
+from exojax.atm.amclouds import get_value_at_smooth_index
 from exojax.atm.amclouds import mixing_ratio_cloud_profile
-from exojax.atm.vterm import terminal_velocity
 from exojax.atm.atmprof import pressure_scale_height
 from exojax.atm.mixratio import mmr2vmr
+from exojax.atm.vterm import terminal_velocity
 from exojax.utils.constants import kB, m_u
 import warnings
 from jax import vmap
