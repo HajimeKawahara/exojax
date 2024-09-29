@@ -4,7 +4,7 @@ Ackerman and Marley Cloud Model
 Here, we try to compute a cloud opacity using Ackerman and Marley Model.
 Although ``atmphys.AmpAmcloud`` can easily compute the parameters of the
 AM model, we here try to run the methods one by one. We consider
-enstatite (MgSiO3) and Fe clouds.
+enstatite (MgSiO3).
 
 .. code:: ipython3
 
@@ -49,11 +49,9 @@ Vapor saturation pressures can be obtained using atm.psat
 
 .. code:: ipython3
 
-    from exojax.atm.psat import psat_enstatite_AM01, psat_Fe_AM01, _psat_Fe_solid
+    from exojax.atm.psat import psat_enstatite_AM01
     
     P_enstatite = psat_enstatite_AM01(Tarr)
-    P_fe_sol = psat_Fe_AM01(Tarr)
-    #P_fe_sol = _psat_Fe_solid(Tarr) #considers only solid Fe
 
 
 Computes a cloud base pressure.
@@ -63,7 +61,6 @@ Computes a cloud base pressure.
     from exojax.atm.amclouds import compute_cloud_base_pressure
     
     Pbase_enstatite = compute_cloud_base_pressure(Parr, P_enstatite, MolMR_enstatite)
-    Pbase_Fe_sol = compute_cloud_base_pressure(Parr, P_fe_sol, MolMR_Fe)
 
 
 The cloud base is located at the intersection of a TP profile and the
@@ -78,10 +75,6 @@ vapor saturation puressure devided by VMR.
              color="gray")
     plt.axhline(Pbase_enstatite, color="gray", alpha=0.7, ls="dotted")
     plt.text(500, Pbase_enstatite * 0.8, "cloud base (enstatite)", color="gray")
-    
-    plt.plot(Tarr, P_fe_sol / MolMR_Fe, label="$P_{sat}/\\xi$ (Fe)", color="black")
-    plt.axhline(Pbase_Fe_sol, color="black", alpha=0.7, ls="dotted")
-    plt.text(500, Pbase_Fe_sol * 0.8, "cloud base (Fe)", color="black")
     
     plt.yscale("log")
     plt.ylim(1.e-4, 1.e5)
@@ -107,20 +100,17 @@ profile.
 
     from exojax.atm.amclouds import mixing_ratio_cloud_profile
     from exojax.spec.molinfo import molmass_isotope
-    from exojax.atm.mixratio import vmr2mmr
+    from exojax.atm.atmconvert import vmr_to_mmr
     fsed = 3.
     muc_enstatite = molmass_isotope("MgSiO3")
-    MMRbase_enstatite = vmr2mmr(MolMR_enstatite, muc_enstatite,mu)
+    MMRbase_enstatite = vmr_to_mmr(MolMR_enstatite, muc_enstatite,mu)
     MMRc_enstatite = mixing_ratio_cloud_profile(Parr, Pbase_enstatite, fsed, MMRbase_enstatite)
     
-    muc_Fe = molmass_isotope("Fe")
-    MMRbase_Fe = vmr2mmr(MolMR_Fe,muc_Fe,mu)
-    MMRc_Fe = mixing_ratio_cloud_profile(Parr, Pbase_Fe_sol, fsed, MMRbase_Fe)
+
 
 
 .. parsed-literal::
 
-    ['H2O', 'CO2', 'O3', 'N2O', 'CO', 'CH4', 'O2', 'NO', 'SO2', 'NO2', 'NH3', 'HNO3', 'OH', 'HF', 'HCl', 'HBr', 'HI', 'ClO', 'OCS', 'H2CO', 'HOCl', 'N2', 'HCN', 'CH3Cl', 'H2O2', 'C2H2', 'C2H6', 'PH3', 'COF2', 'SF6', 'H2S', 'HCOOH', 'HO2', 'O', 'ClONO2', 'NO+', 'HOBr', 'C2H4', 'CH3OH', 'CH3Br', 'CH3CN', 'CF4', 'C4H2', 'HC3N', 'H2', 'CS', 'SO3', 'C2N2', 'COCl2', 'SO', 'CH3F', 'GeH4', 'CS2', 'CH3I', 'NF3']
     ['H2O', 'CO2', 'O3', 'N2O', 'CO', 'CH4', 'O2', 'NO', 'SO2', 'NO2', 'NH3', 'HNO3', 'OH', 'HF', 'HCl', 'HBr', 'HI', 'ClO', 'OCS', 'H2CO', 'HOCl', 'N2', 'HCN', 'CH3Cl', 'H2O2', 'C2H2', 'C2H6', 'PH3', 'COF2', 'SF6', 'H2S', 'HCOOH', 'HO2', 'O', 'ClONO2', 'NO+', 'HOBr', 'C2H4', 'CH3OH', 'CH3Br', 'CH3CN', 'CF4', 'C4H2', 'HC3N', 'H2', 'CS', 'SO3', 'C2N2', 'COCl2', 'SO', 'CH3F', 'GeH4', 'CS2', 'CH3I', 'NF3']
 
 
@@ -128,20 +118,18 @@ profile.
 
     /home/kawahara/exojax/src/exojax/spec/molinfo.py:64: UserWarning: db_HIT is set as True, but the molecular name 'MgSiO3' does not exist in the HITRAN database. So set db_HIT as False. For reference, all the available molecules in the HITRAN database are as follows:
       warnings.warn(warn_msg, UserWarning)
-    /home/kawahara/exojax/src/exojax/spec/molinfo.py:64: UserWarning: db_HIT is set as True, but the molecular name 'Fe' does not exist in the HITRAN database. So set db_HIT as False. For reference, all the available molecules in the HITRAN database are as follows:
-      warnings.warn(warn_msg, UserWarning)
 
 
 The followings are the base pressures for enstatite and Fe.
 
 .. code:: ipython3
 
-    print(Pbase_enstatite, Pbase_Fe_sol)
+    print(Pbase_enstatite)
 
 
 .. parsed-literal::
 
-    114.975746 77426.445
+    104.62701
 
 
 Here is the MMR distribution.
@@ -151,7 +139,6 @@ Here is the MMR distribution.
     plt.figure()
     plt.gca().get_xaxis().get_major_formatter().set_powerlimits([-3, 3])
     plt.plot(MMRc_enstatite, Parr, color="gray", label="MMR (enstatite)")
-    plt.plot(MMRc_Fe, Parr, color="black", ls="dashed", label="MMR (Fe)")
     
     
     
@@ -216,7 +203,6 @@ We need the substance density of condensates.
     from exojax.atm.condensate import condensate_substance_density, name2formula
     
     deltac_enstatite = condensate_substance_density[name2formula["enstatite"]]
-    deltac_Fe = condensate_substance_density["Fe"]
 
 
 Let’s compute the terminal velocity. We can compute the terminal
@@ -323,7 +309,7 @@ Then, :math:`r_g` can be computed from :math:`r_w` and other quantities.
 
 .. parsed-literal::
 
-    <matplotlib.legend.Legend at 0x7f7fac15aad0>
+    <matplotlib.legend.Legend at 0x74b83ea63d00>
 
 
 
@@ -366,14 +352,6 @@ These processes can be reprodced using ``AmpAmcloud``, which uses
     from exojax.spec.layeropacity import layer_optical_depth_cloudgeo
     
     dtau_enstatite = layer_optical_depth_cloudgeo(Parr, deltac_enstatite, MMRc_enstatite, rg, sigmag, g)
-    dtau_Fe = layer_optical_depth_cloudgeo(Parr, deltac_Fe, MMRc_Fe, rg, sigmag, g)
-
-
-
-.. parsed-literal::
-
-    /home/kawahara/exojax/src/exojax/spec/dtau_mmwl.py:14: FutureWarning: dtau_mmwl might be removed in future.
-      warnings.warn("dtau_mmwl might be removed in future.", FutureWarning)
 
 
 The Mie scattering can be computed using ``OpaMie``.
@@ -384,8 +362,8 @@ The Mie scattering can be computed using ``OpaMie``.
     from exojax.spec.unitconvert import wav2nu
     
     N = 1000
-    wavelength_start = 5000.0 #AA
-    wavelength_end = 15000.0 #AA
+    wavelength_start = 5000.0  # AA
+    wavelength_end = 15000.0  # AA
     
     
     margin = 10  # cm-1
@@ -394,15 +372,15 @@ The Mie scattering can be computed using ``OpaMie``.
     nugrid, wav, res = wavenumber_grid(nus_start, nus_end, N, xsmode="lpf", unit="cm-1")
     
     
-    
     from exojax.spec.opacont import OpaMie
-    opa_enstatite = OpaMie(pdb_enstatite, nugrid)
-    opa_Fe = OpaMie(pdb_Fe, nugrid)
     
-    rg=1.e-4 #0.1um
-    #beta0, betasct, g = opa.mieparams_vector(rg,sigmag) # if you've already generated miegrid 
-    beta0, betasct, g = opa_enstatite.mieparams_vector_direct_from_pymiescatt(rg,sigmag) # uses direct computation of Mie params using PyMieScatt
-    beta0_Fe, betasct_Fe, g_Fe = opa_Fe.mieparams_vector_direct_from_pymiescatt(rg,sigmag) # uses direct computation of Mie params using PyMieScatt
+    opa_enstatite = OpaMie(pdb_enstatite, nugrid)
+    
+    rg = 1.0e-4  # 0.1um
+    # beta0, betasct, g = opa.mieparams_vector(rg,sigmag) # if you've already generated miegrid
+    beta0, betasct, g = opa_enstatite.mieparams_vector_direct_from_pymiescatt(
+        rg, sigmag
+    )  # uses direct computation of Mie params using PyMieScatt
     
     
     from exojax.spec.layeropacity import layer_optical_depth_clouds_lognormal
@@ -410,17 +388,6 @@ The Mie scattering can be computed using ``OpaMie``.
     dtau_enstatite_mie = layer_optical_depth_clouds_lognormal(
         dParr, beta0, deltac_enstatite, MMRc_enstatite, rg, sigmag, gravity
     )
-    dtau_Fe_mie = layer_optical_depth_clouds_lognormal(
-        dParr, beta0_Fe, deltac_Fe, MMRc_Fe, rg, sigmag, gravity
-    )
-    
-
-
-
-.. parsed-literal::
-
-    /home/kawahara/exojax/src/exojax/utils/grids.py:142: UserWarning: Resolution may be too small. R=907.6757560767178
-      warnings.warn('Resolution may be too small. R=' + str(resolution),
 
 
 .. parsed-literal::
@@ -436,8 +403,7 @@ The Mie scattering can be computed using ``OpaMie``.
 
 .. parsed-literal::
 
-    100%|██████████| 63/63 [00:17<00:00,  3.55it/s]
-    100%|██████████| 63/63 [00:20<00:00,  3.09it/s]
+    100%|██████████| 63/63 [00:17<00:00,  3.57it/s]
 
 
 The difference of the geometric approximation and Mie scattering is a
@@ -446,23 +412,13 @@ bit.
 .. code:: ipython3
 
     fig = plt.figure()
-    ax=fig.add_subplot(121)
+    ax=fig.add_subplot(111)
     plt.plot(dtau_enstatite, Parr, color="C1", ls="dashed", label="geometric approximation")
     plt.plot(np.median(dtau_enstatite_mie,axis=1), Parr, color="C3", label="Mie",alpha=0.5,lw=2)
     plt.legend()
     plt.yscale("log")
     plt.xlabel("$d\\tau$")
     plt.ylabel("Pressure (bar)")
-    #plt.xscale("log")
-    plt.gca().invert_yaxis()
-    
-    ax=fig.add_subplot(122)
-    plt.plot(dtau_Fe, Parr, color="C2", ls="dashed", label="geometric approximation")
-    plt.plot(np.median(dtau_Fe_mie,axis=1), Parr, color="C4",alpha=0.5, label="Mie",lw=2)
-    
-    plt.legend()
-    plt.yscale("log")
-    plt.xlabel("$d\\tau$")
     #plt.xscale("log")
     plt.gca().invert_yaxis()
     plt.show()
@@ -511,7 +467,7 @@ Let’s compare with CIA
 
 .. code:: ipython3
 
-    dtau = dtaucH2H2 + dtau_enstatite_mie+ dtau_Fe_mie
+    dtau = dtaucH2H2 + dtau_enstatite_mie
 
 
 .. code:: ipython3
