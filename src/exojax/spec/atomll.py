@@ -444,33 +444,33 @@ def gamma_KA3s(
     elements.
 
     Args:
-      T: temperature (K)
-      PH: hydrogen pressure (bar)  #1 bar = 1e6 dyn/cm2
-      PHH: H2 molecule pressure (bar)
-      PHe: helium pressure (bar)
-      ielem:  atomic number (e.g., Fe=26)
-      iion:  ionized level (e.g., neutral=1, singly ionized=2, etc.)
-      nu_lines:  transition waveNUMBER in [cm-1] (NOT frequency in [s-1])
-      elower: excitation potential (lower level) [cm-1]
-      eupper: excitation potential (upper level) [cm-1]
-      atomicmass: atomic mass [amu]
-      ionE: ionization potential [eV]
-      gamRad: log of gamma of radiation damping (s-1) #(https://www.astro.uu.se/valdwiki/Vald3Format)
-      gamSta: log of gamma of Stark damping ((s * Nelec)^-1)
-      vdWdamp:  log of (van der Waals damping constant / neutral hydrogen number) (s-1)
-      enh_damp: empirical "enhancement factor" for classical Unsoeld's damping constant cf.) This coefficient (enh_damp) depends on  each species in some codes such as Turbospectrum. #tako210917
-      Nelec: number density of electron
-      chi_lam (=h*nu=1.2398e4/wvl[AA]): energy of a photon in the line (computed)
-      C6: interaction constant (Eq.11.17 in Gray2005) (computed)
-      logg6: log(gamma6) (Eq.11.29 in Gray2005) (computed)
-      gam6H: 17*v**(0.6)*C6**(0.4)*N (v:relative velocity, N:number density of neutral perturber) (computed)
-      Texp: temperature dependency (gamma6 \sim T**((1-α)/2) ranging 0.3–0.4)(computed)
+        T: temperature (K)
+        PH: hydrogen pressure (bar)  #1 bar = 1e6 dyn/cm2
+        PHH: H2 molecule pressure (bar)
+        PHe: helium pressure (bar)
+        ielem:  atomic number (e.g., Fe=26)
+        iion:  ionized level (e.g., neutral=1, singly ionized=2, etc.)
+        nu_lines:  transition waveNUMBER in [cm-1] (NOT frequency in [s-1])
+        elower: excitation potential (lower level) [cm-1]
+        eupper: excitation potential (upper level) [cm-1]
+        atomicmass: atomic mass [amu]
+        ionE: ionization potential [eV]
+        gamRad: log of gamma of radiation damping (s-1) #(https://www.astro.uu.se/valdwiki/Vald3Format)
+        gamSta: log of gamma of Stark damping ((s * Nelec)^-1)
+        vdWdamp:  log of (van der Waals damping constant / neutral hydrogen number) (s-1)
+        enh_damp: empirical "enhancement factor" for classical Unsoeld's damping constant cf.) This coefficient (enh_damp) depends on  each species in some codes such as Turbospectrum. #tako210917
+        Nelec: number density of electron
+        chi_lam (=h*nu=1.2398e4/wvl[AA]): energy of a photon in the line (computed)
+        C6: interaction constant (Eq.11.17 in Gray2005) (computed)
+        logg6: log(gamma6) (Eq.11.29 in Gray2005) (computed)
+        gam6H: 17*v**(0.6)*C6**(0.4)*N (v:relative velocity, N:number density of neutral perturber) (computed)
+        Texp: temperature dependency (gamma6 \sim T**((1-α)/2) ranging 0.3–0.4)(computed)
 
     Returns:
-      gamma: pressure gamma factor (cm-1)
+        gamma: pressure gamma factor (cm-1)
 
     Note:
-      "/(4*np.pi*ccgs)" means:  damping constant -> HWHM of Lorentzian in [cm^-1]
+        "/(4*np.pi*ccgs)" means:  damping constant -> HWHM of Lorentzian in [cm^-1]
 
     * Reference of van der Waals damping constant (pressure/collision gamma):
     *  Kurucz+1981: https://ui.adsabs.harvard.edu/abs/1981SAOSR.391.....K
@@ -534,10 +534,10 @@ def get_unique_species(adb):
     database (adb)
 
     Args:
-       adb: adb instance made by the AdbVald class in moldb.py
+        adb: adb instance made by the AdbVald class in moldb.py
 
     Returns:
-       uspecies: unique elements of the combination of ielem and iion (jnp.array with a shape of N_UniqueSpecies x 2(ielem and iion))
+        uspecies: unique elements of the combination of ielem and iion (jnp.array with a shape of N_UniqueSpecies x 2(ielem and iion))
     """
     seen = []
 
@@ -665,16 +665,16 @@ def uspecies_info(
     ("uspecies" made with "get_unique_species")
 
     Args:
-       uspecies: jnp.array of unique list of the species contributing the opacity
-       ielem_to_index_of_ipccd: jnp.array for conversion from ielem to the index of ipccd
-       mods_ID: jnp.array listing the species whose abundances are different from the solar
-       mods: jnp.array of each abundance deviation from the Sun [dex] for each modified species in mods_ID
-       mods_id_trans: jnp.array for converting index in "mods_ID" of each species into index in uspecies
+        uspecies: jnp.array of unique list of the species contributing the opacity
+        ielem_to_index_of_ipccd: jnp.array for conversion from ielem to the index of ipccd
+        mods_ID: jnp.array listing the species whose abundances are different from the solar
+        mods: jnp.array of each abundance deviation from the Sun [dex] for each modified species in mods_ID
+        mods_id_trans: jnp.array for converting index in "mods_ID" of each species into index in uspecies
 
     Returns:
-       MMR_uspecies_list: jnp.array of mass mixing ratio in the Sun of each species in "uspecies"
-       atomicmass_uspecies_list: jnp.array of atomic mass [amu] of each species in "uspecies"
-       mods_uspecies_list: jnp.array of abundance deviation from the Sun [dex] for each species in "uspecies"
+        MMR_uspecies_list: jnp.array of mass mixing ratio in the Sun of each species in "uspecies"
+        atomicmass_uspecies_list: jnp.array of atomic mass [amu] of each species in "uspecies"
+        mods_uspecies_list: jnp.array of abundance deviation from the Sun [dex] for each species in "uspecies"
     """
     ipccd = atomllapi.load_atomicdata()
     Narr = jnp.array(10 ** (ipccd["solarA"]))  # number density
