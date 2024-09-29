@@ -446,11 +446,11 @@ Let’s compare with CIA
 .. code:: ipython3
 
     from exojax.spec.layeropacity import layer_optical_depth_CIA
-    from exojax.atm.mixratio import mmr2vmr
+    from exojax.atm.atmconvert import mmr_to_vmr
     
     mmrH2 = 0.74
     molmassH2 = molmass_isotope("H2")
-    vmrH2 = mmr2vmr(mmrH2, mu, molmassH2)
+    vmrH2 = mmr_to_vmr(mmrH2, mu, molmassH2)
     dtaucH2H2 = layer_optical_depth_CIA(
         nugrid,
         Tarr,
