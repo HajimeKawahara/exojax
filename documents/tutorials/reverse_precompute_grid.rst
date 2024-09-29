@@ -5,6 +5,7 @@ The opacity calculators in ExoJAX are fully auto-differentiable.
 However, in some case, the precomputation of the spectrum and the
 interpolation of the grid model are useful to perform rapid reverse
 modeling. Here, we demonstrate the grid-based retrieval using ExoJAX.
+For this example, you might need a good GPU.
 
 .. code:: ipython3
 
@@ -42,6 +43,7 @@ modeling. Here, we demonstrate the grid-based retrieval using ExoJAX.
 
 .. parsed-literal::
 
+    2024-09-29 07:22:17.164712: W external/xla/xla/service/gpu/nvptx_compiler.cc:765] The NVIDIA driver's CUDA version is 12.2 which is older than the ptxas CUDA version (12.6.20). Because the driver is older than the ptxas version, XLA is disabling parallel compilation, which may slow down compilation. You should update your NVIDIA driver or use the NVIDIA-provided CUDA forward compatibility packages.
     /home/kawahara/exojax/src/exojax/spec/dtau_mmwl.py:14: FutureWarning: dtau_mmwl might be removed in future.
       warnings.warn("dtau_mmwl might be removed in future.", FutureWarning)
 
@@ -83,7 +85,7 @@ We make the grid model using ArtEmissPure and MdbExomol.
     
     Tlow = 400.0
     Thigh = 1500.0
-    art = ArtEmisPure(nu_grid=nu_grid, pressure_top=1.e-8, pressure_btm=1.e2, nlayer=100)
+    art = ArtEmisPure(nu_grid=nu_grid, pressure_top=1.e-5, pressure_btm=1.e2, nlayer=75)
     art.change_temperature_range(Tlow, Thigh)
     Mp = 33.2
     Rinst = 100000.
@@ -99,7 +101,7 @@ We make the grid model using ArtEmissPure and MdbExomol.
                       nu_grid=nu_grid,
                       diffmode=diffmode,
                       auto_trange=[Tlow, Thigh],
-                      dit_grid_resolution=0.2)
+                      dit_grid_resolution=1.0)
     
     ## CIA setting
     cdbH2H2 = CdbCIA('.database/H2-H2_2011.cia', nu_grid)
@@ -122,39 +124,35 @@ We make the grid model using ArtEmissPure and MdbExomol.
 .. parsed-literal::
 
     xsmode =  premodit
-    xsmode assumes ESLOG in wavenumber space: mode=premodit
+    xsmode assumes ESLOG in wavenumber space: xsmode=premodit
     ======================================================================
-    We changed the policy of the order of wavenumber/wavelength grids
-    wavenumber grid should be in ascending order and now 
-    users can specify the order of the wavelength grid by themselves.
+    The wavenumber grid should be in ascending order.
+    The users can specify the order of the wavelength grid by themselves.
     Your wavelength grid is in ***  descending  *** order
-    This might causes the bug if you update ExoJAX. 
-    Note that the older ExoJAX assumes ascending order as wavelength grid.
     ======================================================================
-
-
-.. parsed-literal::
-
-    /home/kawahara/exojax/src/exojax/utils/grids.py:145: UserWarning: Resolution may be too small. R=617160.1067701889
-      warnings.warn('Resolution may be too small. R=' + str(resolution),
-
-
-.. parsed-literal::
-
-    rtsolver:  fbased2st
-    Flux-based two-stream solver, isothermal layer (ExoJAX1, HELIOS-R1 like)
+    rtsolver:  ibased
+    Intensity-based n-stream solver, isothermal layer (e.g. NEMESIS, pRT like)
     HITRAN exact name= (12C)(1H)4
     HITRAN exact name= (12C)(1H)4
+    radis engine =  vaex
     		 => Downloading from http://www.exomol.com/db/CH4/12C-1H4/YT10to10/12C-1H4__YT10to10.def
 
 
 .. parsed-literal::
 
-    /home/kawahara/exojax/src/exojax/utils/molname.py:178: FutureWarning: e2s will be replaced to exact_molname_exomol_to_simple_molname.
+    /home/kawahara/exojax/src/exojax/spec/unitconvert.py:62: UserWarning: Both input wavelength and output wavenumber are in ascending order.
       warnings.warn(
-    /home/kawahara/exojax/src/exojax/utils/molname.py:65: UserWarning: No isotope number identified.
+    /home/kawahara/exojax/src/exojax/utils/grids.py:144: UserWarning: Resolution may be too small. R=617160.1067701889
+      warnings.warn("Resolution may be too small. R=" + str(resolution), UserWarning)
+    /home/kawahara/exojax/src/exojax/utils/molname.py:197: FutureWarning: e2s will be replaced to exact_molname_exomol_to_simple_molname.
+      warnings.warn(
+    /home/kawahara/exojax/src/exojax/utils/molname.py:91: FutureWarning: exojax.utils.molname.exact_molname_exomol_to_simple_molname will be replaced to radis.api.exomolapi.exact_molname_exomol_to_simple_molname.
+      warnings.warn(
+    /home/kawahara/exojax/src/exojax/utils/molname.py:63: UserWarning: No isotope number identified.
       warnings.warn("No isotope number identified.", UserWarning)
-    /home/kawahara/exojax/src/exojax/utils/molname.py:65: UserWarning: No isotope number identified.
+    /home/kawahara/exojax/src/exojax/utils/molname.py:91: FutureWarning: exojax.utils.molname.exact_molname_exomol_to_simple_molname will be replaced to radis.api.exomolapi.exact_molname_exomol_to_simple_molname.
+      warnings.warn(
+    /home/kawahara/exojax/src/exojax/utils/molname.py:63: UserWarning: No isotope number identified.
       warnings.warn("No isotope number identified.", UserWarning)
     /home/kawahara/exojax/src/exojax/spec/molinfo.py:28: UserWarning: exact molecule name is not Exomol nor HITRAN form.
       warnings.warn("exact molecule name is not Exomol nor HITRAN form.")
@@ -169,8 +167,62 @@ We make the grid model using ArtEmissPure and MdbExomol.
     		 => Downloading from http://www.exomol.com/db/CH4/12C-1H4/12C-1H4__H2.broad
     		 => Downloading from http://www.exomol.com/db/CH4/12C-1H4/12C-1H4__He.broad
     		 => Downloading from http://www.exomol.com/db/CH4/12C-1H4/12C-1H4__air.broad
-    Error: Couldn't download .broad file at http://www.exomol.com/db/CH4/12C-1H4/12C-1H4__air.broad and save.
     Note: Caching states data to the vaex format. After the second time, it will become much faster.
+    Molecule:  CH4
+    Isotopologue:  12C-1H4
+    Background atmosphere:  H2
+    ExoMol database:  None
+    Local folder:  .database/CH4/12C-1H4/YT10to10
+    Transition files: 
+    	 => File 12C-1H4__YT10to10__06000-06100.trans
+    		 => Downloading from http://www.exomol.com/db/CH4/12C-1H4/YT10to10/12C-1H4__YT10to10__06000-06100.trans.bz2
+    		 => Caching the *.trans.bz2 file to the vaex (*.h5) format. After the second time, it will become much faster.
+    		 => You can deleted the 'trans.bz2' file by hand.
+    	 => File 12C-1H4__YT10to10__06100-06200.trans
+    		 => Downloading from http://www.exomol.com/db/CH4/12C-1H4/YT10to10/12C-1H4__YT10to10__06100-06200.trans.bz2
+    		 => Caching the *.trans.bz2 file to the vaex (*.h5) format. After the second time, it will become much faster.
+    		 => You can deleted the 'trans.bz2' file by hand.
+    Broadening code level: a1
+
+
+.. parsed-literal::
+
+    /home/kawahara/exojax/src/radis/radis/api/exomolapi.py:685: AccuracyWarning: The default broadening parameter (alpha = 0.0488 cm^-1 and n = 0.4) are used for J'' > 16 up to J'' = 40
+      warnings.warn(
+
+
+.. parsed-literal::
+
+    # of lines =  80505310
+
+
+.. parsed-literal::
+
+    /home/kawahara/exojax/src/exojax/spec/opacalc.py:215: UserWarning: dit_grid_resolution is not None. Ignoring broadening_parameter_resolution.
+      warnings.warn(
+
+
+.. parsed-literal::
+
+    OpaPremodit: params automatically set.
+    default elower grid trange (degt) file version: 2
+    Robust range: 393.5569458240504 - 1647.2060977798953 K
+    OpaPremodit: Tref_broadening is set to  774.5966692414833 K
+    # of reference width grid :  2
+    # of temperature exponent grid : 2
+
+
+.. parsed-literal::
+
+    uniqidx: 0it [00:00, ?it/s]
+
+
+.. parsed-literal::
+
+    Premodit: Twt= 483.67862012986944 K Tref= 1171.1891720056747 K
+    Making LSD:|####################| 100%
+    Making LSD:|####################| 100%
+    H2-H2
 
 
 Because we would like to infer T0 and the rotational broadenings and so
@@ -185,7 +237,7 @@ on, we define the raw spectrum model as a function of T0.
         #molecule
         xsmatrix = opa.xsmatrix(Tarr, art.pressure)
         mmr_arr = art.constant_mmr_profile(MMR_CH4)
-        dtaumCH4 = art.opacity_profile_lines(xsmatrix, mmr_arr, opa.mdb.molmass, g)
+        dtaumCH4 = art.opacity_profile_xs(xsmatrix, mmr_arr, opa.mdb.molmass, g)
     
         #continuum
         logacia_matrix = opcia.logacia_matrix(Tarr)
@@ -218,7 +270,7 @@ to ‘vmap’ for jnp.interp.
 
 .. parsed-literal::
 
-    computing grid: 100%|██████████| 200/200 [00:08<00:00, 24.28it/s]
+    computing grid: 100%|██████████| 200/200 [00:02<00:00, 80.78it/s] 
 
 
 .. code:: ipython3
@@ -263,19 +315,19 @@ Run HMC-NUTS! It took only within 2 minutes using my laptop (RTX 3080).
 
 .. parsed-literal::
 
-    sample: 100%|██████████| 3000/3000 [01:38<00:00, 30.53it/s, 3 steps of size 3.42e-01. acc. prob=0.75]  
+    sample: 100%|██████████| 3000/3000 [03:15<00:00, 15.32it/s, 127 steps of size 2.96e-02. acc. prob=0.94]
 
 
 .. parsed-literal::
 
     
                     mean       std    median      5.0%     95.0%     n_eff     r_hat
-             A      1.01      0.00      1.01      1.00      1.01    585.55      1.00
-            RV      9.43      0.41      9.43      8.81     10.18    614.05      1.00
-            T0   1154.83     27.51   1156.24   1115.35   1199.99    383.16      1.00
-         vsini     20.42      0.70     20.37     19.31     21.52    528.74      1.00
+             A      1.18      0.07      1.17      1.07      1.28    161.00      1.01
+            RV     10.48      0.40     10.46      9.77     11.09   1245.61      1.00
+            T0   1232.39     18.34   1234.97   1216.98   1254.07     87.59      1.02
+         vsini     19.52      0.67     19.54     18.32     20.49    757.10      1.00
     
-    Number of divergences: 1283
+    Number of divergences: 0
 
 
 .. code:: ipython3
