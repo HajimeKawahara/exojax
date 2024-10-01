@@ -73,6 +73,16 @@ def reduced_source_function(
 
 
 def params_eddington(single_scattering_albedo, asymmetric_parameter, mu0):
+    """computes Toon+89 parameters for Eddington approximation
+
+    Args:
+        single_scattering_albedo (_type_): single scattering albedo
+        asymmetric_parameter (_type_): asymmetric parameter
+        mu0 (_type_): cosine of the incident angle
+
+    Returns:
+        _type_: gamma_1, gamma_2, gamma_3, mu1
+    """
     gamma_1 = (
         7.0 - single_scattering_albedo * (4.0 + 3.0 * asymmetric_parameter)
     ) / 4.0
@@ -85,6 +95,16 @@ def params_eddington(single_scattering_albedo, asymmetric_parameter, mu0):
 
 
 def params_quadrature(single_scattering_albedo, asymmetric_parameter, mu0):
+    """computes Toon+89 parameters for Quadrature approximation
+
+    Args:
+        single_scattering_albedo (_type_): single scattering albedo
+        asymmetric_parameter (_type_): asymmetric parameter
+        mu0 (_type_): cosine of the incident angle
+
+    Returns:
+        _type_: gamma_1, gamma_2, gamma_3, mu1
+    """
     s3 = jnp.sqrt(3.0)
     gamma_1 = s3 * (2.0 - single_scattering_albedo * (1.0 + asymmetric_parameter)) / 2.0
     gamma_2 = single_scattering_albedo * s3 * (1.0 - asymmetric_parameter) / 2.0
@@ -94,6 +114,15 @@ def params_quadrature(single_scattering_albedo, asymmetric_parameter, mu0):
 
 
 def params_hemispheric_mean(single_scattering_albedo, asymmetric_parameter):
+    """computes Toon+89 parameters for Hemispheric Mean approximation
+
+    Args:
+        single_scattering_albedo (_type_): single scattering albedo
+        asymmetric_parameter (_type_): asymmetric parameter
+
+    Returns:
+        _type_: gamma_1, gamma_2, mu1
+    """
     gamma_1 = 2.0 - single_scattering_albedo * (1.0 + asymmetric_parameter)
     gamma_2 = single_scattering_albedo * (1.0 - asymmetric_parameter)
     mu1 = 0.5
