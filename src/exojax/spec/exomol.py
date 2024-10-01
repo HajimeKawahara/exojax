@@ -20,7 +20,7 @@ def line_strength_from_Einstein_coeff(A, g, nu_lines, elower, QTref):
         Mmol: molecular mass (normalized by m_u)
 
     Returns:
-        Sij(Tref): Line strength (cm)
+        Line strength (cm)
     """
     line_strength_ref = (
         -A

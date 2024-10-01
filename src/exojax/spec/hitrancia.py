@@ -31,14 +31,14 @@ def read_cia(filename, nus, nue):
     """READ HITRAN CIA data.
 
     Args:
-       filename: HITRAN CIA file name (_2011.cia)
-       nus: wavenumber min (cm-1)
-       nue: wavenumber max (cm-1)
+        filename: HITRAN CIA file name (_2011.cia)
+        nus: wavenumber min (cm-1)
+        nue: wavenumber max (cm-1)
 
     Returns:
-       nucia: wavenumber (cm-1)
-       tcia: temperature (K)
-       ac: cia coefficient
+        nucia: wavenumber (cm-1)
+        tcia: temperature (K)
+        ac: cia coefficient
     """
     # read first line
     com = filename.split("/")[-1].split("_")[0]

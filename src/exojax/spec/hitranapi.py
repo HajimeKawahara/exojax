@@ -12,10 +12,10 @@ def molecid_hitran(molec):
     """molec id from Hitran/Hitemp filename or molecule name or molecid itself.
 
     Args:
-       molec: Hitran/Hitemp filename or molecule name or molec id itself.
+        molec: Hitran/Hitemp filename or molecule name or molec id itself.
 
     Return:
-       int: molecid (HITRAN molecular id)
+        int: molecid (HITRAN molecular id)
     """
     try:
         hitf = molec.split('_')
