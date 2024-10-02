@@ -41,6 +41,8 @@ Reflection Spectrum
    tutorials/jupiters/Jupiter_cloud_model_using_amp.rst
    tutorials/jupiters/Jupiter_Hires_Modeling.rst
 
+|:ringed_planet:| An example of HMC-NUTS for actual Jupiter reflection spectrum can found `here <https://github.com/HajimeKawahara/exojaxample_jupiter>`_ .
+
 Molecular/Atomic/Continuum Databases
 ---------------------------------------
 
