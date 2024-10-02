@@ -12,7 +12,7 @@ from jax import jit
 from jax.lax import scan
 from exojax.spec.ditkernel import fold_voigt_kernel
 from exojax.spec.atomll import padding_2Darray_for_each_atom
-from exojax.spec.rtransfer import dtauM
+from exojax.spec.layeropacity import layer_optical_depth
 from exojax.spec.lsd import inc3D_givenx
 
 
@@ -247,7 +247,9 @@ def dtauM_vald(
         )  # modify this into individual elemental abundances shortly... (tako)
         mass_X_I = atomicmass_uspecies_list[i]
 
-        dtau_each = dtauM(dParr, xsm_p, MMR_X_I * jnp.ones_like(dParr), mass_X_I, g)
+        dtau_each = layer_optical_depth(
+            dParr, xsm_p, MMR_X_I * jnp.ones_like(dParr), mass_X_I, g
+        )
         # Note that the same mixing ratio is assumed for all atmospheric layers here...
         dtauatom = dtauatom + dtau_each
         # <----process
