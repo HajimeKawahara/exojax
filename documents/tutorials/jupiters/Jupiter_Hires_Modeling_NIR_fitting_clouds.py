@@ -86,8 +86,7 @@ if username == "exoplanet01":
 
     ssl._create_default_https_context = ssl._create_unverified_context
 
-
-wav_obs, nus_obs, spectra, unmask_nus_obs, unmask_spectra, mask = (
+wav_obs, nus_obs, spectra, unmask_wav_obs, unmask_nus_obs, unmask_spectra, mask = (
     load_jupiter_reflection()
 )
 plotjupiter.print_wavminmax(wav_obs)

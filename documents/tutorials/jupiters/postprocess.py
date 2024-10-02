@@ -40,7 +40,7 @@ hpdi_mu1 = hpdi(predictions["y1"], 0.95)
 plt = plotjupiter.plot_prediction(wav_obs, spectra, median_mu1, hpdi_mu1)
 
 # unmask_wav_obs = nu2wav(unmask_nus_obs, unit="AA")
-plt.plot(unmask_wav_obs, unmask_spectra, ".", alpha=0.3, color="gray")
+#plt.plot(unmask_wav_obs, unmask_spectra, ".", alpha=0.3, color="gray")
 plt.savefig("output/Jupiter_fit_wav.png", bbox_inches="tight", pad_inches=0.1)
 
 from exojax.utils.zsol import nsol

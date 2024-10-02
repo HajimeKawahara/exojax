@@ -150,14 +150,14 @@ def plot_prediction(wav_obs, spectra, median_mu1, hpdi_mu1):
     )
     
     plt.legend(fontsize=16)
-    ax.fill_betweenx(
-        [-0.02, 0.13],
-        np.max(wav_obs[mask]),
-        np.min(wav_obs[~mask]),
-        alpha=0.2,
-        interpolate=True,
-        color="gray",
-    )
+    #ax.fill_betweenx(
+    #    [-0.02, 0.13],
+    #    np.max(wav_obs[mask]),
+    #    np.min(wav_obs[~mask]),
+    #    alpha=0.2,
+    #    interpolate=True,
+    #    color="gray",
+    #)
     plt.ylim(-0.02, 0.13)
     plt.xlim(np.min(wav_obs), np.max(wav_obs))
     plt.xlabel("wavelength $\AA$", fontsize=18)
