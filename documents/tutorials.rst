@@ -38,8 +38,8 @@ Reflection Spectrum
 .. toctree::
    :maxdepth: 1
 
-   tutorials/Jupiter_cloud_model_using_amp.rst
-   tutorials/Jupiter_Hires_Modeling.rst
+   tutorials/jupiters/Jupiter_cloud_model_using_amp.rst
+   tutorials/jupiters/Jupiter_Hires_Modeling.rst
 
 Molecular/Atomic/Continuum Databases
 ---------------------------------------
@@ -119,5 +119,7 @@ Others
    tutorials/hjerting.rst
    tutorials/pure_absorption_rt.rst
    tutorials/voigt_function.rst
+   tutorials/Cross_Section_using_Discrete_Integral_Transform.rst
+   tutorials/Cross_Section_using_Modified_Discrete_Integral_Transform.rst
 
 
