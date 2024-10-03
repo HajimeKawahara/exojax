@@ -23,9 +23,11 @@ Generates the up-to-date documents of tutorials
 
 The following commands automatically run the tutorial notebooks and generate rst:
 
+``documents/tutorials/``
+
+
 .. code:: sh
 
-	cd documents/tutorials/
     python jupyter2rst.py exe
 
 If you just want to generate rst without executing notebooks, try this:

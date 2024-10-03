@@ -1,7 +1,7 @@
 Get Started
 ===========
 
-Last update: September 7th (2024) Hajime Kawahara for v1.5
+Last update: October 3rd (2024) Hajime Kawahara for v1.6
 
 First, we recommend 64-bit if you do not think about numerical errors.
 Use jax.config to set 64-bit. (But note that 32-bit is sufficient in

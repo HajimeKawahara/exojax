@@ -1,35 +1,31 @@
 Test codes for developers
 ==============================
 
-ExoJAX has many test codes in the ``tests`` directory. The ``test`` directory contains several types of the collection of ``pytest`` code.
+ExoJAX has many test codes in the ``tests`` directory. ExoJAX has three test categories. 
 
-- ``tests/unittests``: the collection of the unit tests. The GitHub action runs the test code in this directory.
-- ``tests/integration``: the collection of the test codes that need longer time to run than the code in ``unittest``.
+Unit Tests
+-----------------
+``tests/unittests``: Tests in this category are automatically executed by GitHub Actions 
+when a pull request is made to the develop or master branch. 
+Therefore, items that need to be downloaded from external sites or take more than 10 seconds to run should not be included in this category. 
+Tests that take a long time but are considered unit tests should be placed in ``integrations/unittests_long``.
 
-test/unittests
----------------------
+Integration Tests
+-----------------
+``tests/integration``:　This category is for testing the behavior of multiple integrated functions. Tests that have a long execution time, 
+involve external downloads, or depend on the status of external servers should be included here if they are to be part of automated testing.
+ntegration tests also include comparisons with other codes or outputs, ensuring higher reliability. 
+However, since changes in the counterpart code can occur, the tests do not always succeed. 
 
-We recommend to write the unit test code in ``tests/unittests`` directory before pull-request and to perform the unit tests before your submission of the pull-request:
+- ``tests/integration/comparison/transmission`` : An example of a transmission comparison with calculations done by Y. Kawashima using a different method.
+- ``tests/integration/comparison/twostream``: A comparison code with the radiative spectrum calculations performed by petitRADTRANS.
+- ``tests/integration/comparison/clouds``: A comparison with cloud models from VIRGA.
 
-.. code:: sh
+End-to-end Tests
+-----------------
+``tests/endtoend``: In ExoJAX, codes like HMC-NUTS that require long execution times are often used in the final application. 
+Therefore, such tests belong to the end-to-end category. However, due to the long execution times, these tests are not run frequently.
 
-   cd exojax/test/unittests
-   pytest 
-
-
-test/integration/unittest_long
-----------------------------------
-
-In essence, these are the unit tests that need longer time than the code in ``unittest``, sometimes including downloading the data.  
-
-test/integration/comparison
----------------------------
-
-The code for the comparison with external data, packages, etc 
-
-- ``transmission/comparison_with_kawashima_transmission.py``: comparison with Yui Kawashima's computation of the transmission spectrum
-- ``twostream/comparison_petitRADTRANS_*.py``: comparison with pRT
-- ``nonair/nonair_co_hitran_comp.py``: non-air broadening comparison with ``radis``
 
 
 
