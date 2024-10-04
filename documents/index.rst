@@ -56,6 +56,13 @@ Contents
 
    exojax/exojax.rst
 
+ExoJAX example (exojaxample)
+---------------------------------
+
+- |:ringed_planet:| `exojaxample_WASP39b <https://github.com/sh-tada/exojaxample_WASP39b>`_ : An example of HMC-NUTS for actual hot Saturn (JWST/ERS, NIRSPEC/G395H)
+
+- |:ringed_planet:| `exojaxample_jupiter <https://github.com/HajimeKawahara/exojaxample_jupiter>`_ : An example of HMC-NUTS for actual Jupiter reflection spectrum
+
 
 References 
 ---------------------

@@ -30,15 +30,19 @@ ExoJAX is at least compatible with
 
 See [this page](http://secondearths.sakura.ne.jp/exojax/develop/tutorials/get_started.html) for the first step!
 
-## Real Examples
+## Real Examples (external)
 
-to be updated
+- :star: [exojaxample_WASP39b](https://github.com/sh-tada/exojaxample_WASP39b) : An example of HMC-NUTS for actual hot Saturn (JWST/ERS, NIRSPEC/G395H)
+- :star: [exojaxample_jupiter](https://github.com/HajimeKawahara/exojaxample_jupiter) : An example of HMC-NUTS for actual Jupiter reflection spectrum
+
 
 ## References
 [![paper](https://img.shields.io/badge/paper_I-ApJS_258_31_(2022)-orange)](https://iopscience.iop.org/article/10.3847/1538-4365/ac3b4d) 
 
 - Paper I: Kawahara, Kawashima, Masuda, Crossfield, Pannier, van den Bekerom, [ApJS 258, 31 (2022)](https://iopscience.iop.org/article/10.3847/1538-4365/ac3b4d)
 - Paper II: in prep
+
+
 
 ## License
 
