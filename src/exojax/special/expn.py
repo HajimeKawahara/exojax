@@ -8,10 +8,10 @@ def E1(x):
     the first order, E1.
 
     Args:
-       x: input
+        x: input
 
     Returns:
-       The exponential integral of the first order, E1(x)
+        The exponential integral of the first order, E1(x)
     """
     A0 = -0.57721566
     A1 = 0.99999193
@@ -32,9 +32,12 @@ def E1(x):
     x3 = x**3
     x4 = x**4
     x5 = x**5
-    ep1A = -jnp.log(x)+A0+A1*x+A2*x2+A3*x3+A4*x4+A5*x5
-    ep1B = jnp.exp(-x)/x *\
-        (x4+B1*x3+B2*x2+B3*x+B4) /\
-        (x4+C1*x3+C2*x2+C3*x+C4)
+    ep1A = -jnp.log(x) + A0 + A1 * x + A2 * x2 + A3 * x3 + A4 * x4 + A5 * x5
+    ep1B = (
+        jnp.exp(-x)
+        / x
+        * (x4 + B1 * x3 + B2 * x2 + B3 * x + B4)
+        / (x4 + C1 * x3 + C2 * x2 + C3 * x + C4)
+    )
     ep = jnp.where(x <= 1.0, ep1A, ep1B)
     return ep
