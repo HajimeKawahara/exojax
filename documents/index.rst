@@ -91,6 +91,7 @@ Copyright 2021-2024, Contributors
 - Yui Kasagi (@YuiKasagi)
 - Shotaro Tada (@sh-tada)
 - Ko Hosokawa (@KoHosokawa)
+- Hibiki Yama 
 
 ExoJAX is free software made available under the MIT License. See the ``LICENSE``.
    

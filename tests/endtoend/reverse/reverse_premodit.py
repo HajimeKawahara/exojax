@@ -1,4 +1,5 @@
 """ Reverse modeling of Methane emission spectrum using PreMODIT
+    works with ExoJAX v1.6
 """
 
 #!/usr/bin/env python
@@ -64,7 +65,7 @@ nu_grid, wav, res = wavenumber_grid(
 
 Tlow = 400.0
 Thigh = 1500.0
-art = ArtEmisPure(nu_grid, pressure_top=1.0e-8, pressure_btm=1.0e2, nlayer=100)
+art = ArtEmisPure(nu_grid=nu_grid, pressure_top=1.0e-5, pressure_btm=1.0e2, nlayer=100)
 art.change_temperature_range(Tlow, Thigh)
 Mp = 33.2
 
