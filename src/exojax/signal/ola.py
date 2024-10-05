@@ -12,11 +12,11 @@ import math
 
 def optimal_fft_length(filter_length):
     """optimal fft length of OLA
-    
+
     Notes:
         This code was taken and modified from scipy.signal._signaltools._oa_calc_oalens
         under BSD 3-Clause "New" or "Revised" License
-        
+
     Args:
         filter_length (int): filter length
 
@@ -55,7 +55,7 @@ def _input_length(ndiv, div_length):
         div_length (int): divided mini batch length of the input
 
     Returns:
-        int: input length 
+        int: input length
     """
     return ndiv * div_length
 
@@ -93,7 +93,7 @@ def generate_padding_matrix(padding_value, input_matrix, filter_length):
     Args:
         input_matrix (n dimensional array): input matrix, n >= 2, (ndiv, div_length,...)
         fir_filter (array): FIR filter
-        
+
     Returns:
         n dimensional array: input matrix w/ x-pad
     """
@@ -112,35 +112,36 @@ def generate_zeropad(input_matrix, fir_filter):
     Args:
         input_matrix (2D array): input matrix
         fir_filter (array): FIR filter
-        
+
     Returns:
         2D array, 1D array: input matrix w/ zeropad, FIR filter w/ zeropad
     """
     ndiv, div_length, filter_length = ola_lengths(input_matrix, fir_filter)
     fft_length = _fft_length(div_length, filter_length)
     input_matrix_zeropad = jnp.zeros((ndiv, fft_length))
-    input_matrix_zeropad = input_matrix_zeropad.at[
-        index_exp[:, 0:div_length]].add(input_matrix)
+    input_matrix_zeropad = input_matrix_zeropad.at[index_exp[:, 0:div_length]].add(
+        input_matrix
+    )
     fir_filter_zeropad = jnp.zeros(fft_length)
     fir_filter_zeropad = fir_filter_zeropad.at[index_exp[0:filter_length]].add(
-        fir_filter)
+        fir_filter
+    )
 
     return input_matrix_zeropad, fir_filter_zeropad
 
 
 @partial(jit, static_argnums=(2, 3, 4))
-def olaconv(input_matrix_zeropad, fir_filter_zeropad, ndiv, div_length,
-            filter_length):
+def olaconv(input_matrix_zeropad, fir_filter_zeropad, ndiv, div_length, filter_length):
     """Overlap and Add convolve (jax.numpy version)
 
     Args:
-        input_matrix_zeropad (jax.ndarray): reshaped matrix to (ndiv, div_length) of the input w/ zeropad 
-        fir_filter_zeropad (jax.ndarray): real FIR filter w/ zeropad. 
-        
+        input_matrix_zeropad (jax.ndarray): reshaped matrix to (ndiv, div_length) of the input w/ zeropad
+        fir_filter_zeropad (jax.ndarray): real FIR filter w/ zeropad.
+
     Note:
         ndiv is the number of the divided input sectors.
-        div_length is the length of the divided input sectors. 
-        
+        div_length is the length of the divided input sectors.
+
     Returns:
         convolved vector w/ output length of (len(input vector) + len(fir_filter) - 1)
     """
@@ -160,15 +161,16 @@ def overlap_and_add(ftarr, output_length, div_length):
     Args:
         ftarr (jax.ndarray): filtered input matrix
         output_length (int): length of the output of olaconv
-        div_length (int): the length of the divided input sectors, equivalent to block_size in scipy 
-        
+        div_length (int): the length of the divided input sectors, equivalent to block_size in scipy
+
     Returns:
         overlapped and added vector
     """
+
     def fir_filter(y_and_idiv, ft):
         y, idiv = y_and_idiv
         yzero = jnp.zeros(output_length)
-        y = y + dynamic_update_slice(yzero, ft, (idiv * div_length, ))
+        y = y + dynamic_update_slice(yzero, ft, (idiv * div_length,))
         idiv += 1
         return (y, idiv), None
 
@@ -182,9 +184,9 @@ def np_olaconv(input_matrix, fir_filter):
     """Overlap and Add convolve (numpy version)
 
     Args:
-        input_matrix (jax.ndarray): reshaped matrix to (ndiv, div_length) of the input 
+        input_matrix (jax.ndarray): reshaped matrix to (ndiv, div_length) of the input
         fir_filter (jax.ndarray): real FIR filter. The length should be odd.
-        
+
     Returns:
         convolved vector w/ length of (len(input) + len(fir_filter) - 1)
     """
@@ -202,6 +204,7 @@ def np_olaconv(input_matrix, fir_filter):
     ftarr = np.fft.irfft(ytilde, axis=1)
     y = np.zeros(input_length + filter_length - 1)
     for idiv in range(ndiv):
-        y[int(idiv * div_length):int(idiv * div_length +
-                                     fft_length)] += ftarr[idiv, :]
+        y[int(idiv * div_length) : int(idiv * div_length + fft_length)] += ftarr[
+            idiv, :
+        ]
     return y
