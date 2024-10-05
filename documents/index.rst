@@ -71,12 +71,12 @@ References
   `ApJS 258, 31 (2022) <https://iopscience.iop.org/article/10.3847/1538-4365/ac3b4d>`_
   (Paper I)
 
+- Kawahara et al., 2024, in prep. (Paper II)
 
-  
 License & Attribution
 ---------------------
 
-Copyright 2021-2023, Contributors
+Copyright 2021-2024, Contributors
 
 - `Hajime Kawahara <http://secondearths.sakura.ne.jp/en/index.html>`_ (@HajimeKawahara, maintainer)
 - `Yui Kawashima <https://sites.google.com/view/yuikawashima/home>`_ (@ykawashima, co-maintainer)
@@ -85,11 +85,12 @@ Copyright 2021-2023, Contributors
 - Dirk van den Bekerom (@dcmvdbekerom)
 - Daniel Kitzmann (@daniel-kitzmann)
 - Brett Morris (@bmorris3)
-- Erwan Pannier (@erwanp) and `RADIS <https://github.com/radis/radis>`_ community
+- Erwan Pannier (@erwanp) and Nicolas Minesi (@minouHub) from `RADIS <https://github.com/radis/radis>`_ community
 - Stevanus Nugroho (@astrostevanus)
 - Tako Ishikawa (@chonma0ctopus)
 - Yui Kasagi (@YuiKasagi)
 - Shotaro Tada (@sh-tada)
+- Ko Hosokawa (@KoHosokawa)
 
 ExoJAX is free software made available under the MIT License. See the ``LICENSE``.
    
