@@ -28,6 +28,7 @@ TESTDATA_VALD_MODIT_EMISSION_REF = "modit_rt_test_vald_ref.txt"
 SAMPLE_SPECTRA_CO = "spectrum_co.txt"
 SAMPLE_SPECTRA_CH4 = "spectrum_ch4.txt" #exojax version 1.0
 SAMPLE_SPECTRA_CH4_NEW = "spectrum_ch4_new.txt" #generate_methane_spectrum.py
+SAMPLE_SPECTRA_CH4_TRANS = "spectrum_ch4_trans.txt" #generate_methane_trans.py
 
 #sample transmission spectra
 SAMPLE_TRANSMISSION_CH4 = "transmission_ch4.txt"
