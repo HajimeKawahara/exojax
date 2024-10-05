@@ -1,4 +1,5 @@
 """ Reverse modeling of Methane emission spectrum using PreMODIT
+    works with ExoJAX v1.6
 """
 
 #!/usr/bin/env python
