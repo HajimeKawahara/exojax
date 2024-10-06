@@ -1,4 +1,4 @@
-""" Reverse modeling of Methane emission spectrum using PreMODIT, precomputation of F0 grids
+""" Geneartes Methane transmission spectrum using PreMODIT
 """
 
 #!/usr/bin/env python
@@ -9,25 +9,19 @@ from exojax.utils.grids import wavenumber_grid
 from exojax.spec.atmrt import ArtTransPure
 from exojax.spec.api import MdbExomol
 from exojax.spec.opacalc import OpaPremodit
-from exojax.spec.contdb import CdbCIA
-from exojax.spec.opacont import OpaCIA
-from exojax.spec.response import ipgauss, sampling
-from exojax.spec.spin_rotation import convolve_rigid_rotation
-from exojax.utils.grids import velocity_grid
 from exojax.utils.astrofunc import gravity_jupiter
-from exojax.spec import molinfo
 from exojax.utils.instfunc import resolution_to_gaussian_std
 from exojax.test.data import SAMPLE_SPECTRA_CH4_TRANS
-from exojax.utils.constants import RJ, MJ
+from exojax.utils.constants import RJ, Rs
 from exojax.utils.astrofunc import gravity_jupiter
+from exojax.spec.specop import SopInstProfile
+import jax.numpy as jnp
 
 if __name__ == "__main__":
-    # given gravity, temperature exponent, MMR
-    alpha = 0.1
-    MMR_CH4 = 0.0059
-    vsini = 20.0
-    RV = 10.0
-    T0 = 1200.0
+
+    from jax import config
+
+    config.update("jax_enable_x64", True)
 
     # obs grid
     Nx = 1500
@@ -38,11 +32,12 @@ if __name__ == "__main__":
         np.min(wavd) - 10.0, np.max(wavd) + 10.0, Nx, unit="AA", xsmode="premodit"
     )
 
-    Tlow = 400.0
-    Thigh = 1500.0
-    art = ArtTransPure(pressure_top=1.0e-8, pressure_btm=1.0e2, nlayer=100)
+    T_fid = 500.0
+    Tlow = 490.0
+    Thigh = 510.0
+
+    art = ArtTransPure(pressure_top=1.0e-10, pressure_btm=1.0e1, nlayer=100)
     art.change_temperature_range(Tlow, Thigh)
-    Mp = 33.2
 
     Rinst = 100000.0
     beta_inst = resolution_to_gaussian_std(Rinst)
@@ -51,8 +46,9 @@ if __name__ == "__main__":
     mdb = MdbExomol(
         ".database/CH4/12C-1H4/YT10to10/", nurange=nu_grid, gpu_transfer=False
     )
+    
     print("N=", len(mdb.nu_lines))
-    diffmode = 1
+    diffmode = 0
     opa = OpaPremodit(
         mdb=mdb,
         nu_grid=nu_grid,
@@ -63,50 +59,40 @@ if __name__ == "__main__":
     )
 
     ## CIA setting
-    cdbH2H2 = CdbCIA(".database/H2-H2_2011.cia", nu_grid)
-    opcia = OpaCIA(cdb=cdbH2H2, nu_grid=nu_grid)
-    mmw = 2.33  # mean molecular weight
-    mmrH2 = 0.74
-    molmassH2 = molinfo.molmass_isotope("H2")
-    vmrH2 = mmrH2 * mmw / molmassH2  # VMR
-
+    # cdbH2H2 = CdbCIA(".database/H2-H2_2011.cia", nu_grid)
+    mu_fid = 2.2
     # settings before HMC
-    vsini_max = 100.0
-    vr_array = velocity_grid(res, vsini_max)
     radius_btm = RJ
-    gravity_btm = gravity_jupiter(Rp=RJ, Mp=MJ)
+    gravity_btm = gravity_jupiter(1.0, 1.0)
+
+    vrmax = 100.0  # km/s
+    sop = SopInstProfile(nu_grid, vrmax)
 
     # raw spectrum model given T0
-    def flux_model(T0, vsini, RV):
+    def flux_model(mmr_ch4, rv):
         # T-P model
-        Tarr = art.powerlaw_temperature(T0, alpha)
-        mmw_arr = mmw * np.ones_like(art.pressure)
+        Tarr = T_fid * np.ones_like(art.pressure)
+        mmw_arr = mu_fid * np.ones_like(art.pressure)
 
         gravity = art.gravity_profile(Tarr, mmw_arr, radius_btm, gravity_btm)
+        mmr_arr = art.constant_mmr_profile(mmr_ch4)
 
-        mmr_arr = art.constant_mmr_profile(MMR_CH4)
         # molecule
         xsmatrix = opa.xsmatrix(Tarr, art.pressure)
-        dtaumCH4 = art.opacity_profile_xs(xsmatrix, mmr_arr, opa.mdb.molmass, gravity)
+        dtau = art.opacity_profile_xs(xsmatrix, mmr_arr, opa.mdb.molmass, gravity)
 
-        # continuum
-        logacia_matrix = opcia.logacia_matrix(Tarr)
-        dtaucH2H2 = art.opacity_profile_cia(
-            logacia_matrix, Tarr, vmrH2, vmrH2, mmw_arr, gravity
-        )
-
-        dtau = dtaumCH4 + dtaucH2H2
         Rp2 = art.run(dtau, Tarr, mmw_arr, radius_btm, gravity_btm)
-        mu = sampling(nusd, nu_grid, RV=RV)
+        mu = sop.sampling(Rp2, rv, nusd)
 
-        return mu
+        return jnp.sqrt(mu) * radius_btm / Rs
 
     # test and save
-    mu = flux_model(T0, vsini, RV)
+    mmw_ch4_fid = 0.007
+    rv_fid = 10.0
+    Rp_over_Rs = flux_model(mmw_ch4_fid, rv_fid)
 
     import matplotlib.pyplot as plt
 
-    plt.plot(nusd, mu)
+    plt.plot(nusd, Rp_over_Rs)
     plt.savefig("sample_trans.png")
-    # plt.show()
-    np.savetxt(SAMPLE_SPECTRA_CH4_TRANS, np.array([nusd, mu]).T, delimiter=",")
+    np.savetxt(SAMPLE_SPECTRA_CH4_TRANS, np.array([nusd, Rp_over_Rs]).T, delimiter=",")

@@ -1,4 +1,4 @@
-""" Reverse modeling of Methane emission spectrum using PreMODIT, precomputation of F0 grids
+""" Geneartes Methane emission spectrum using PreMODIT, precomputation of F0 grids
 """
 
 #!/usr/bin/env python
@@ -78,8 +78,7 @@ if __name__ == "__main__":
     def flux_model(T0, vsini, RV):
         # T-P model
         Tarr = art.powerlaw_temperature(T0, alpha)
-        gravity = 2478.57
-
+        
         # molecule
         xsmatrix = opa.xsmatrix(Tarr, art.pressure)
         mmr_arr = art.constant_mmr_profile(MMR_CH4)
@@ -98,8 +97,8 @@ if __name__ == "__main__":
 
 
 # test and save
-# mu = flux_model(T0, vsini, RV)
-# import matplotlib.pyplot as plt
-# plt.plot(nusd, mu)
-# plt.show()
-# np.savetxt(SAMPLE_SPECTRA_CH4_NEW, np.array([nusd, mu]).T, delimiter=",")
+mu = flux_model(T0, vsini, RV)
+import matplotlib.pyplot as plt
+plt.plot(nusd, mu)
+plt.show()
+np.savetxt(SAMPLE_SPECTRA_CH4_NEW, np.array([nusd, mu]).T, delimiter=",")
