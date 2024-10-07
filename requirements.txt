@@ -15,4 +15,4 @@ joblib
 astropy
 psutil
 json_tricks
-numpy
+numpy<2
