@@ -58,6 +58,7 @@ def wav2nu(wav, unit):
     except KeyError:
         raise ValueError("unavailable unit")
 
+
 def _both_ascending_warning():
     warnings.warn(
         "Both input wavelength and output wavenumber are in ascending order.",

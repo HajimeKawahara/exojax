@@ -155,7 +155,6 @@ class MdbExomol(CapiMdbExomol):
         # data frame attribute:
         df = self.load(
             local_files,
-            # columns=[k for k in self.__dict__ if k not in ["logsij0"]],
             # lower_bound=([("Sij0", 0.0)]),
             output=self.engine,
         )
@@ -531,7 +530,6 @@ class MdbCommonHitempHitran:
             # uncertainties
             self.ierr = self.ierr[mask]
 
-    
     def QT_interp(self, isotope, T):
         """interpolated partition function.
 
@@ -573,9 +571,7 @@ class MdbCommonHitempHitran:
         Note:
             Nlines=len(self.nu_lines)
         """
-        return _qr_interp_lines(
-            T, self.isoid, self.uniqiso, self.T_gQT, self.gQT, Tref
-        )
+        return _qr_interp_lines(T, self.isoid, self.uniqiso, self.T_gQT, self.gQT, Tref)
 
     def exact_isotope_name(self, isotope):
         """exact isotope name
@@ -592,7 +588,7 @@ class MdbCommonHitempHitran:
 
     def line_strength(self, T):
         """line strength at T
-        
+
         Args:
             T (float): temperature
 
@@ -601,18 +597,21 @@ class MdbCommonHitempHitran:
         """
         if self.isotope is None or self.isotope == 0:
             msg1 = "Currently all isotope mode is not fully compatible to MdbCommonHitempHitran."
-            msg2 = (
-                "QT assumed isotope=1 instead."
-            )
+            msg2 = "QT assumed isotope=1 instead."
             warnings.warn(msg1 + msg2, UserWarning)
             qr = self.qr_interp(1, T, Tref_original)
         else:
             qr = self.qr_interp(self.isotope, T, Tref_original)
 
         return line_strength_numpy(
-            T, self.line_strength_ref_original, self.nu_lines, self.elower, qr, Tref_original
+            T,
+            self.line_strength_ref_original,
+            self.nu_lines,
+            self.elower,
+            qr,
+            Tref_original,
         )
-        
+
     def check_line_existence_in_nurange(self, df_load_mask):
         if len(df_load_mask) == 0:
             raise ValueError("No line found in ", self.nurange, "cm-1")

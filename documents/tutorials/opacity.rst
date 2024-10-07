@@ -31,6 +31,12 @@ not exist, moldb will try to download it from HITRAN website.
     isotope = 1
     mdbCO = api.MdbHitran('CO', nu_grid, isotope=isotope, gpu_transfer=True)
 
+
+.. parsed-literal::
+
+    radis engine =  vaex
+
+
 Define molecular weight of CO (:math:`\sim 12+16=28`), temperature (K),
 and pressure (bar). Also, we here assume the 100 % CO atmosphere,
 i.e. the partial pressure = pressure.
@@ -50,7 +56,8 @@ Here, we use the partition function in mdb
 
 .. code:: ipython3
 
-    qt=mdbCO.qr_interp(isotope,Tfix)
+    from exojax.utils.constants import Tref_original
+    qt=mdbCO.qr_interp(isotope,Tfix, Tref_original)
 
 Let us compute the line strength S(T) at temperature of Tfix.
 
@@ -68,7 +75,7 @@ we need to use float32 for jax.
 
 .. code:: ipython3
 
-    Sij=line_strength(Tfix,mdbCO.logsij0,mdbCO.nu_lines,mdbCO.elower,qt,mdbCO.Tref)
+    Sij=line_strength(Tfix,mdbCO.logsij0,mdbCO.nu_lines,mdbCO.elower,qt,Tref_original)
 
 Then, compute the Lorentz gamma factor (pressure+natural broadening)
 
@@ -86,10 +93,9 @@ and the natural broadening
 
 .. code:: ipython3
 
-    gammaL = gamma_hitran(Pfix,Tfix, Ppart, mdbCO.n_air, \
-                          mdbCO.gamma_air, mdbCO.gamma_self) \
-    + gamma_natural(mdbCO.A)
-
+    gammaL = gamma_hitran(
+        Pfix, Tfix, Ppart, mdbCO.n_air, mdbCO.gamma_air, mdbCO.gamma_self
+    ) + gamma_natural(mdbCO.A)
 
 Thermal broadening
 
@@ -98,7 +104,7 @@ Thermal broadening
 .. code:: ipython3
 
     # thermal doppler sigma
-    sigmaD=doppler_sigma(mdbCO.nu_lines,Tfix,mean_molecular_weight)
+    sigmaD = doppler_sigma(mdbCO.nu_lines, Tfix, mean_molecular_weight)
 
 Then, the line center…
 
@@ -163,5 +169,4 @@ Plot it!
 
 
 .. image:: opacity_files/opacity_22_0.png
-
 

@@ -15,17 +15,37 @@ optional_quantum_states=True option in api.MdbExomol.
 
 .. parsed-literal::
 
-    /home/kawahara/exojax/src/exojax/utils/molname.py:133: FutureWarning: e2s will be replaced to exact_molname_exomol_to_simple_molname.
+    /home/kawahara/exojax/src/exojax/utils/molname.py:197: FutureWarning: e2s will be replaced to exact_molname_exomol_to_simple_molname.
       warnings.warn(
-    /home/kawahara/exojax/src/exojax/spec/api.py:153: UserWarning: nurange=None. Nonactive mode.
+    /home/kawahara/exojax/src/exojax/utils/molname.py:91: FutureWarning: exojax.utils.molname.exact_molname_exomol_to_simple_molname will be replaced to radis.api.exomolapi.exact_molname_exomol_to_simple_molname.
+      warnings.warn(
+    /home/kawahara/exojax/src/exojax/utils/molname.py:91: FutureWarning: exojax.utils.molname.exact_molname_exomol_to_simple_molname will be replaced to radis.api.exomolapi.exact_molname_exomol_to_simple_molname.
+      warnings.warn(
+    /home/kawahara/exojax/src/exojax/spec/api.py:233: UserWarning: nurange=None. Nonactive mode.
       warnings.warn("nurange=None. Nonactive mode.", UserWarning)
 
 
 .. parsed-literal::
 
     HITRAN exact name= (12C)(16O)
+    radis engine =  vaex
+    		 => Downloading from http://www.exomol.com/db/CO/12C-16O/Li2015/12C-16O__Li2015.def
+    		 => Downloading from http://www.exomol.com/db/CO/12C-16O/Li2015/12C-16O__Li2015.pf
+    		 => Downloading from http://www.exomol.com/db/CO/12C-16O/Li2015/12C-16O__Li2015.states.bz2
+    		 => Downloading from http://www.exomol.com/db/CO/12C-16O/12C-16O__H2.broad
+    		 => Downloading from http://www.exomol.com/db/CO/12C-16O/12C-16O__He.broad
+    		 => Downloading from http://www.exomol.com/db/CO/12C-16O/12C-16O__air.broad
+    Note: Caching states data to the vaex format. After the second time, it will become much faster.
+    Molecule:  CO
+    Isotopologue:  12C-16O
     Background atmosphere:  H2
-    Reading CO/12C-16O/Li2015/12C-16O__Li2015.trans.bz2
+    ExoMol database:  None
+    Local folder:  CO/12C-16O/Li2015
+    Transition files: 
+    	 => File 12C-16O__Li2015.trans
+    		 => Downloading from http://www.exomol.com/db/CO/12C-16O/Li2015/12C-16O__Li2015.trans.bz2
+    		 => Caching the *.trans.bz2 file to the vaex (*.h5) format. After the second time, it will become much faster.
+    		 => You can deleted the 'trans.bz2' file by hand.
     DataFrame (self.df) available.
 
 
@@ -83,26 +103,29 @@ So, we have 12 different :math:`\Delta \nu`. Let’s plot them.
     for i, udv in enumerate(np.unique(dv.values)):
         mask = dv == udv
         mdf = mdb.df[mask]
-        ax.plot(mdf["nu_lines"].values,
-                 mdf["Sij0"].values,
-                 ".",
-                 alpha=0.3,
-                 #alpha=0.01 + 0.005 * i,
-                 color="gray")
+        ax.plot(
+            mdf["nu_lines"].values,
+            mdf["Sij0"].values,
+            ".",
+            alpha=0.3,
+            color="gray",
+        )
         ax.text(
-            np.sum(mdf["nu_lines"].values * mdf["Sij0"].values) /
-            np.sum(mdf["Sij0"].values), 1.e2*np.max(mdf["Sij0"].values),"$\\Delta \\nu=$"+str(udv))
+            np.sum(mdf["nu_lines"].values * mdf["Sij0"].values)
+            / np.sum(mdf["Sij0"].values),
+            1.0e2 * np.max(mdf["Sij0"].values),
+            "$\\Delta \\nu=$" + str(udv),
+        )
     
-    for mic in [0.5,1,2,3,4,5,10,20]:
-        x = 1.e4/mic
-        plt.axvline(x,alpha=0.2,color="gray")
-        #plt.text(x,1.e-210,str(mic)+" $\\mu$m",rotation="90")
-        plt.text(x,1.e-39,str(mic)+" $\\mu$m",rotation="90")
+    for mic in [0.5, 1, 2, 3, 4, 5, 10, 20]:
+        x = 1.0e4 / mic
+        plt.axvline(x, alpha=0.2, color="gray")
+        plt.text(x, 1.0e-39, str(mic) + " $\\mu$m", rotation="vertical")
     plt.yscale("log")
-    plt.ylim(1.e-41,1.e-13)
+    plt.ylim(1.0e-41, 1.0e-13)
     plt.tick_params(labelsize=14)
-    plt.xlabel("wavenumber (cm-1)",fontsize=14)
-    plt.ylabel("line strength",fontsize=14)
+    plt.xlabel("wavenumber (cm-1)", fontsize=14)
+    plt.ylabel("line strength", fontsize=14)
     plt.savefig("co_dnu.png", bbox_inches="tight", pad_inches=0.1)
     plt.show()
 
@@ -124,32 +147,25 @@ Let’s go deeper! Expand this for :math:`\Delta \nu=2` (K-band feature).
         vdf = mdb.df[mask]
         plt.plot(vdf["nu_lines"].values, vdf["Sij0"].values, ".", color="black")
         if i < 10:
-            plt.text(np.nanmean(vdf["nu_lines"].values),
-                     8 * np.nanmax(vdf["Sij0"].values),
-                     "$\\nu_{lower}=$" + str(vl),
-                     fontsize=12)
+            plt.text(
+                np.nanmean(vdf["nu_lines"].values),
+                8 * np.nanmax(vdf["Sij0"].values),
+                "$\\nu_{lower}=$" + str(vl),
+                fontsize=12,
+            )
         mask = (dv == 2) * (dJ == -1) * (mdb.df["v_l"] == vl)
         vdf = mdb.df[mask]
         plt.plot(vdf["nu_lines"].values, vdf["Sij0"].values, ".", color="gray")
     
     for mic in [2.3, 2.5, 2.7]:
-        x = 1.e4 / mic
+        x = 1.0e4 / mic
         plt.axvline(x, alpha=0.2, color="gray")
-        #plt.text(x,1.e-210,str(mic)+" $\\mu$m",rotation="90")
-        plt.text(x, 1.e-60, str(mic) + " $\\mu$m", rotation="90")
+        plt.text(x, 1.0e-60, str(mic) + " $\\mu$m", rotation="vertical")
     
-    plt.text(3800.0,
-             1.e-25,
-             "$\\Delta J$ = -1, P-branch",
-             color="gray",
-             fontsize=14)
-    plt.text(4380.0,
-             1.e-25,
-             "$\\Delta J$ = 1, R-branch",
-             color="black",
-             fontsize=14)
+    plt.text(3800.0, 1.0e-25, "$\\Delta J$ = -1, P-branch", color="gray", fontsize=14)
+    plt.text(4380.0, 1.0e-25, "$\\Delta J$ = 1, R-branch", color="black", fontsize=14)
     plt.yscale("log")
-    plt.ylim(1.e-61, 1.e-13)
+    plt.ylim(1.0e-61, 1.0e-13)
     plt.xlim(3500, 4620)
     plt.tick_params(labelsize=14)
     plt.xlabel("wavenumber (cm-1)", fontsize=14)

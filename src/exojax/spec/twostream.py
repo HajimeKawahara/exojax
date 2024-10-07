@@ -222,11 +222,3 @@ def compute_tridiag_diagonals_and_vector(
     vector = vector.at[0].set(vector_top)
 
     return diagonal, lower_diagonal, upper_diagonal, vector
-
-
-def sh2_zetalambda_coeff():
-    raise ValueError("not implemented yet.")
-
-
-# if __name__ == "__main__":
-#   test_tridiag_coefficients()

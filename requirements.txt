@@ -5,7 +5,7 @@ beautifulsoup4
 hjson          # Json with comments (for default_radis.json)
 tqdm
 PyMieScatt
-radis
+radis >= 0.15.2
 numba
 tables
 pandas

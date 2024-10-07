@@ -15,7 +15,7 @@ def check_jax64bit(allow_32bit):
         how_change_msg += '    config.update("jax_enable_x64", True)'+"\n"
             
         if not config.values["jax_enable_x64"] and allow_32bit:
-            msg = "JAX is 32bit mode. We recommend to use 64bit mode. \n"
+            msg = "JAX uses 32bit mode. \n"
             warnings.warn(msg+how_change_msg)
         elif not config.values["jax_enable_x64"]:
             msg = "JAX 32bit mode is not allowed. Use allow_32bit = True or \n"

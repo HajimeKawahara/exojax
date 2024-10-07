@@ -303,13 +303,19 @@ def rtrun_emis_scat_lart_toonhm(
     """Radiative Transfer for emission spectrum using flux-based two-stream scattering LART solver w/ Toon Hemispheric Mean with no surface.
 
     Args:
-        dtau (_type_): _description_
-        single_scattering_albedo (_type_): _description_
-        asymmetric_parameter (_type_): _description_
-        source_matrix (_type_): _description_
+        dtau (2D array): Optical depth matrix, dtau (N_layer, N_nus)
+        single_scattering_albedo (2D array): Single scattering albedo (N_layer, N_nus)
+        asymmetric_parameter (2D array): Asymmetric parameter (N_layer, N_nus)
+        source_matrix (2D array): Source matrix (N_layer, N_nus)
 
     Returns:
-        _type_: _description_
+        tuple: A tuple containing:
+            - spectrum (1D array): Emission spectrum in the unit of [erg/cm2/s/cm-1] if using piBarr as a source function.
+            - cumTtilde (2D array): Cumulative transmission function.
+            - Qtilde (2D array): Scattering source function.
+            - trans_coeff (2D array): Transmission coefficients.
+            - scat_coeff (2D array): Scattering coefficients.
+            - reduced_piB (2D array): Reduced source function.
     """
     trans_coeff, scat_coeff, reduced_piB, zeta_plus, zeta_minus, lambdan = setrt_toonhm(
         dtau, single_scattering_albedo, asymmetric_parameter, source_matrix
@@ -338,14 +344,20 @@ def rtrun_emis_scat_lart_toonhm_surface(
     """Radiative Transfer for emission spectrum using flux-based two-stream scattering LART solver w/ Toon Hemispheric Mean with surface.
 
     Args:
-        dtau (_type_): _description_
-        single_scattering_albedo (_type_): _description_
-        asymmetric_parameter (_type_): _description_
-        source_matrix (_type_): _description_
-        source_surface: source from the surface (N_nus)
+        dtau (2D array): Optical depth matrix, dtau (N_layer, N_nus)
+        single_scattering_albedo (2D array): Single scattering albedo (N_layer, N_nus)
+        asymmetric_parameter (2D array): Asymmetric parameter (N_layer, N_nus)
+        source_matrix (2D array): Source matrix (N_layer, N_nus)
+        source_surface (1D array): Source from the surface (N_nus)
 
     Returns:
-        _type_: _description_
+        tuple: A tuple containing:
+            - spectrum (1D array): Emission spectrum in the unit of [erg/cm2/s/cm-1] if using piBarr as a source function.
+            - cumTtilde (2D array): Cumulative transmission function.
+            - Qtilde (2D array): Scattering source function.
+            - trans_coeff (2D array): Transmission coefficients.
+            - scat_coeff (2D array): Scattering coefficients.
+            - piB (2D array): Reduced source function.
     """
     trans_coeff, scat_coeff, piB, zeta_plus, zeta_minus, lambdan = setrt_toonhm(
         dtau, single_scattering_albedo, asymmetric_parameter, source_matrix
@@ -370,19 +382,19 @@ def rtrun_reflect_fluxadding_toonhm(
     reflectivity_surface,
     incoming_flux,
 ):
-    """Radiative Transfer for reflected spectrum the flux adding solver w/ Toon Hemispheric Mean with surface.
+    """Radiative Transfer for reflected spectrum using the flux adding solver w/ Toon Hemispheric Mean with surface.
 
     Args:
-        dtau: layer optical depth (Nlayer, N_nus)
-        single_scattering_albedo: single scattering albedo (Nlayer, N_nus)
-        asymmetric_parameter: assymetric parameter (Nlayer, N_nus)
-        source_matrix: source term (Nlayer, N_nus)
-        source_surface: source from the surface (N_nus)
-        reflectivity_surface: reflectivity from the surface (N_nus)
-        incoming flux: incoming flux F_0^- (N_nus)
+        dtau (2D array): Layer optical depth (N_layer, N_nus)
+        single_scattering_albedo (2D array): Single scattering albedo (N_layer, N_nus)
+        asymmetric_parameter (2D array): Asymmetric parameter (N_layer, N_nus)
+        source_matrix (2D array): Source term (N_layer, N_nus)
+        source_surface (1D array): Source from the surface (N_nus)
+        reflectivity_surface (1D array): Reflectivity from the surface (N_nus)
+        incoming_flux (1D array): Incoming flux F_0^- (N_nus)
 
     Returns:
-        _type_: _description_
+        1D array: Reflected spectrum in the unit of [erg/cm2/s/cm-1] if using piBarr as a source function.
     """
     trans_coeff, scat_coeff, reduced_piB, zeta_plus, zeta_minus, lambdan = setrt_toonhm(
         dtau, single_scattering_albedo, asymmetric_parameter, source_matrix
@@ -402,13 +414,13 @@ def rtrun_emis_scat_fluxadding_toonhm(
     """Radiative Transfer for emission spectrum (w/ scattering) using flux-based two-stream scattering the flux adding solver w/ Toon Hemispheric Mean with surface.
 
     Args:
-        dtau (_type_): _description_
-        single_scattering_albedo (_type_): _description_
-        asymmetric_parameter (_type_): _description_
-        source_matrix (_type_): _description_
+        dtau (2D array): Optical depth matrix, dtau (N_layer, N_nus)
+        single_scattering_albedo (2D array): Single scattering albedo (N_layer, N_nus)
+        asymmetric_parameter (2D array): Asymmetric parameter (N_layer, N_nus)
+        source_matrix (2D array): Source matrix (N_layer, N_nus)
 
     Returns:
-        _type_: _description_
+        1D array: Emission spectrum in the unit of [erg/cm2/s/cm-1] if using piBarr as a source function.
     """
     _, Nnus = dtau.shape
     source_surface = jnp.zeros(Nnus)
@@ -426,16 +438,21 @@ def rtrun_emis_scat_fluxadding_toonhm(
 
 
 def setrt_toonhm(dtau, single_scattering_albedo, asymmetric_parameter, source_matrix):
-    """sets some coefficients for rtrun assming Toon Hemispheric Mean
+    """Sets some coefficients for radiative transfer assuming Toon Hemispheric Mean.
 
     Args:
-        dtau (_type_): _description_
-        single_scattering_albedo (_type_): _description_
-        asymmetric_parameter (_type_): _description_
-        source_matrix (_type_): _description_
+        dtau (2D array): Optical depth matrix, dtau (N_layer, N_nus)
+        single_scattering_albedo (2D array): Single scattering albedo (N_layer, N_nus)
+        asymmetric_parameter (2D array): Asymmetric parameter (N_layer, N_nus)
+        source_matrix (2D array): Source matrix (N_layer, N_nus)
 
     Returns:
-        _type_: _description_
+        trans_coeff (2D array): Transmission coefficients.
+        scat_coeff (2D array): Scattering coefficients.
+        reduced_piB (2D array): Reduced source function.
+        zeta_plus (2D array): Zeta plus coefficients.
+        zeta_minus (2D array): Zeta minus coefficients.
+        lambdan (2D array): Lambda coefficients.
     """
     
     gamma_1, gamma_2, mu1 = params_hemispheric_mean(
@@ -485,41 +502,3 @@ def settridiag_toohm(
     )
 
     return diagonal, lower_diagonal, upper_diagonal, vector
-
-
-##################################################################################
-# Raise Error since v1.5
-# Deprecated features, will be completely removed by Release v2.0
-##################################################################################
-
-
-def dtauM(dParr, xsm, MR, mass, g):
-    warn_msg = "Use `spec.layeropacity.layer_optical_depth` instead"
-    raise ValueError(warn_msg)
-
-
-def dtauCIA(nus, Tarr, Parr, dParr, vmr1, vmr2, mmw, g, nucia, tcia, logac):
-    warn_msg = "Use `spec.layeropacity.layer_optical_depth_CIA` instead"
-    raise ValueError(warn_msg)
-
-
-def dtauHminus(nus, Tarr, Parr, dParr, vmre, vmrh, mmw, g):
-    warn_msg = "Use `spec.layeropacity.layer_optical_depth_Hminus` instead"
-    raise ValueError(warn_msg)
-
-
-def dtauVALD(dParr, xsm, VMR, mmw, g):
-    warn_msg = "Use `spec.layeropacity.layer_optical_depth_VALD` instead"
-    raise ValueError(warn_msg)
-
-
-def pressure_layer(
-    log_pressure_top=-8.0,
-    log_pressure_btm=2.0,
-    NP=20,
-    mode="ascending",
-    reference_point=0.5,
-    numpy=False,
-):
-    warn_msg = "Use `atm.atmprof.pressure_layer_logspace` instead"
-    raise ValueError(warn_msg)

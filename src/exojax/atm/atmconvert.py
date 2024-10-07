@@ -7,17 +7,17 @@ def mmr_to_density(mmr, molmass, Parr, Tarr, unit="g/L"):
     """converts MMR to density
 
     Args:
-        mmr: mass mixing ratio
-        molmass_nh3 (_type_): molecular mass
-        Parr (_type_): _description_
-        Tarr (_type_): _description_
-        unit str: unit of the density (g/L, g/cm3)
+        mmr (float or array): mass mixing ratio
+        molmass (float): molecular mass
+        Parr (float or array): pressure array (bar)
+        Tarr (float or array): temperature array (K)
+        unit (str): unit of the density ("g/L" or "g/cm3")
 
     Note:
-        mass density (g/L) = fac*MMR
+        mass density (g/L) = fac * MMR
 
     Returns:
-        _type_: _description_
+        float or array: density in the specified unit
     """
     if unit == "g/L":
         unit_factor = 1.0e3
@@ -55,4 +55,3 @@ def vmr_to_mmr(vmr, molecular_mass, mean_molecular_weight):
     """
 
     return vmr * molecular_mass / mean_molecular_weight
-

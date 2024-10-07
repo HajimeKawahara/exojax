@@ -6,7 +6,9 @@
 ExoJAX
 ==================================
 
-Version 1.5 (:doc:`userguide/history`)
+Version 1.6 (:doc:`userguide/history`) 
+
+Note: Paper II will be under peer review. We plan to release version 2.0 at the time of acceptance of the paper II.
 
 `ExoJAX <https://github.com/HajimeKawahara/exojax>`_ provides an auto-differentiable high-resolution spectrum model for exoplanets/brown dwarfs using `JAX <https://github.com/google/jax>`_. 
 ExoJAX enables a fully Bayesian inference of the high-dispersion data to fit the line-by-line spectral computation to the observed spectrum, 
@@ -54,6 +56,13 @@ Contents
 
    exojax/exojax.rst
 
+ExoJAX example (exojaxample)
+---------------------------------
+
+- |:ringed_planet:| `exojaxample_WASP39b <https://github.com/sh-tada/exojaxample_WASP39b>`_ : An example of HMC-NUTS for actual hot Saturn (JWST/ERS, NIRSPEC/G395H)
+
+- |:ringed_planet:| `exojaxample_jupiter <https://github.com/HajimeKawahara/exojaxample_jupiter>`_ : An example of HMC-NUTS for actual Jupiter reflection spectrum
+
 
 References 
 ---------------------
@@ -62,12 +71,12 @@ References
   `ApJS 258, 31 (2022) <https://iopscience.iop.org/article/10.3847/1538-4365/ac3b4d>`_
   (Paper I)
 
+- Kawahara et al., 2024, in prep. (Paper II)
 
-  
 License & Attribution
 ---------------------
 
-Copyright 2021-2023, Contributors
+Copyright 2021-2024, Contributors
 
 - `Hajime Kawahara <http://secondearths.sakura.ne.jp/en/index.html>`_ (@HajimeKawahara, maintainer)
 - `Yui Kawashima <https://sites.google.com/view/yuikawashima/home>`_ (@ykawashima, co-maintainer)
@@ -76,11 +85,13 @@ Copyright 2021-2023, Contributors
 - Dirk van den Bekerom (@dcmvdbekerom)
 - Daniel Kitzmann (@daniel-kitzmann)
 - Brett Morris (@bmorris3)
-- Erwan Pannier (@erwanp) and `RADIS <https://github.com/radis/radis>`_ community
+- Erwan Pannier (@erwanp) and Nicolas Minesi (@minouHub) from `RADIS <https://github.com/radis/radis>`_ community
 - Stevanus Nugroho (@astrostevanus)
 - Tako Ishikawa (@chonma0ctopus)
 - Yui Kasagi (@YuiKasagi)
 - Shotaro Tada (@sh-tada)
+- Ko Hosokawa (@KoHosokawa)
+- Hibiki Yama 
 
 ExoJAX is free software made available under the MIT License. See the ``LICENSE``.
    
