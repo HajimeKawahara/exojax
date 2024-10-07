@@ -1,23 +1,27 @@
 """ Atmospheric MicroPhysics (amp) class 
 """
+
 from exojax.atm.amclouds import get_rg
 from exojax.atm.amclouds import find_rw
-from exojax.atm.viscosity import calc_vfactor, eta_Rosner
-from exojax.atm.amclouds import compute_cloud_base_pressure_index
+from exojax.atm.amclouds import smooth_index_base_pressure
+from exojax.atm.amclouds import get_pressure_at_cloud_base
+from exojax.atm.amclouds import get_value_at_smooth_index
 from exojax.atm.amclouds import mixing_ratio_cloud_profile
-from exojax.atm.vterm import terminal_velocity
 from exojax.atm.atmprof import pressure_scale_height
-from exojax.atm.mixratio import mmr2vmr
+from exojax.atm.atmconvert import mmr_to_vmr
+from exojax.atm.vterm import terminal_velocity
+from exojax.atm.viscosity import calc_vfactor
+from exojax.atm.viscosity import eta_Rosner
 from exojax.utils.constants import kB, m_u
 import warnings
 from jax import vmap
 import jax.numpy as jnp
 
-__all__ = ["AmpCldAM"]
+__all__ = ["AmpAmcloud"]
 
 
 class AmpCloud:
-    """Common Amp cloud"""
+    """Common Amp cloud model class"""
 
     def __init__(self):
         self.cloudmodel = None  # cloud model
@@ -57,7 +61,7 @@ class AmpAmcloud(AmpCloud):
         """initialization of amp for Ackerman and Marley 2001 cloud model
 
         Args:
-            pdb (_type_): particulates database (pdb)
+            pdb (pdb class): particulates database (pdb)
             bkgatm: background atmosphere, such as H2, Air
         """
         self.cloudmodel = "Ackerman and Marley (2001)"
@@ -79,23 +83,63 @@ class AmpAmcloud(AmpCloud):
         MMR_base,
         alphav=2.0,
     ):
-        """computes rg and VMR of condenstates based on AM01 
+        """computes rg and VMR of condensates based on AM01
 
         Args:
-            pressures (_type_): _description_
-            temperatures (_type_): _description_
-            mean_molecular_weight (_type_): _description_
-            molecular_mass_condensate: condensate molecular mass
-            gravity (_type_): _description_
-            fsed (_type_): _description_
-            sigmag (_type_): _description_
-            Kzz (_type_): _description_
-            MMR_base (_type_): Mass Mixing Ratio of condensate at the cloud base
-            alphav (float, optional): _description_. Defaults to 2.0.
+            pressures (array): Pressure profile of the atmosphere (bar)
+            temperatures (array): Temperature profile of the atmosphere (K)
+            mean_molecular_weight (float): Mean molecular weight of the atmosphere
+            molecular_mass_condensate (float): Molecular mass of the condensate
+            gravity (float): Gravitational acceleration (cm/s^2)
+            fsed (float): Sedimentation efficiency factor
+            sigmag (float): Width of the lognormal size distribution
+            Kzz (array): Eddy diffusion coefficient profile (cm^2/s)
+            MMR_base (float): Mass Mixing Ratio of condensate at the cloud base
+            alphav (float, optional): Shape parameter for the lognormal distribution. Defaults to 2.0.
 
         Returns:
-            rg parameter in the lognormal distribution of condensate size, defined by (9) in AM01
-            Mass Mixing Ratio (MMR) of condensates
+            rg (array): Parameter in the lognormal distribution of condensate size, defined by (9) in AM01
+            MMR_condensate (array): Mass Mixing Ratio (MMR) of condensates
+        """
+        rw, MMR_condensate = self.calc_ammodel_rw(
+            pressures,
+            temperatures,
+            mean_molecular_weight,
+            molecular_mass_condensate,
+            gravity,
+            fsed,
+            Kzz,
+            MMR_base,
+        )
+        rg = get_rg(rw, fsed, alphav, sigmag)
+        return rg, MMR_condensate  # , self.pdb.rhoc, self.molmass_c
+
+    def calc_ammodel_rw(
+        self,
+        pressures,
+        temperatures,
+        mean_molecular_weight,
+        molecular_mass_condensate,
+        gravity,
+        fsed,
+        Kzz,
+        MMR_base,
+    ):
+        """computes rw and VMR of condensates based on AM01 without sigmag
+
+        Args:
+            pressures (array): Pressure profile of the atmosphere (bar)
+            temperatures (array): Temperature profile of the atmosphere (K)
+            mean_molecular_weight (float): Mean molecular weight of the atmosphere
+            molecular_mass_condensate (float): Molecular mass of the condensate
+            gravity (float): Gravitational acceleration (cm/s^2)
+            fsed (float): Sedimentation efficiency factor
+            Kzz (array): Eddy diffusion coefficient profile (cm^2/s)
+            MMR_base (float): Mass Mixing Ratio of condensate at the cloud base
+
+        Returns:
+            rw (array): Parameter in the lognormal distribution of condensate size, defined by (9) in AM01
+            MMR_condensate (array): Mass Mixing Ratio (MMR) of condensates
         """
         # density difference
         rho = mean_molecular_weight * m_u * pressures / (kB * temperatures)
@@ -105,10 +149,11 @@ class AmpAmcloud(AmpCloud):
         psat = self.pdb.saturation_pressure(temperatures)
 
         # cloud base pressure/temperature
-        VMR = mmr2vmr(MMR_base,molecular_mass_condensate, mean_molecular_weight)
-        ibase = compute_cloud_base_pressure_index(pressures, psat, VMR)
-        pressure_base = pressures[ibase]
-        temperature_base = temperatures[ibase]
+        VMR = mmr_to_vmr(MMR_base, molecular_mass_condensate, mean_molecular_weight)
+
+        smooth_index = smooth_index_base_pressure(pressures, psat, VMR)
+        pressure_base = get_pressure_at_cloud_base(pressures, smooth_index)
+        temperature_base = get_value_at_smooth_index(temperatures, smooth_index)
 
         # cloud scale height L
         L_cloud = pressure_scale_height(
@@ -125,9 +170,8 @@ class AmpAmcloud(AmpCloud):
         # condensate size
         vfind_rw = vmap(find_rw, (None, 0, None), 0)
         rw = vfind_rw(self.rcond_arr, vterminal, Kzz / L_cloud)
-        rg = get_rg(rw, fsed, alphav, sigmag)
-
         # MMR of condensates
-        MMR_condensate = mixing_ratio_cloud_profile(pressures, pressure_base, fsed, MMR_base)
-
-        return rg, MMR_condensate  # , self.pdb.rhoc, self.molmass_c
+        MMR_condensate = mixing_ratio_cloud_profile(
+            pressures, pressure_base, fsed, MMR_base
+        )
+        return rw, MMR_condensate

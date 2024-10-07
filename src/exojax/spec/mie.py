@@ -49,7 +49,7 @@ def compute_mie_coeff_lognormal_grid(
     Nsigmag = len(sigmag_arr)
     Nrg = len(rg_arr)
     Nmiecoeff = 7
-    miegrid = np.zeros((Nrg, Nsigmag, Nwav, Nmiecoeff), dtype=np.complex128)
+    miegrid = np.zeros((Nrg, Nsigmag, Nwav, Nmiecoeff))
 
     for ind_sigmag, sigmag in enumerate(tqdm(sigmag_arr)):
         for ind_rg, rg_nm in enumerate(tqdm(np.array(rg_arr) * cm2nm)):

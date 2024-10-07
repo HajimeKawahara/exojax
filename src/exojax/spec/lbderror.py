@@ -3,7 +3,6 @@ import jax.numpy as jnp
 from jax import vmap
 from jax import grad
 import numpy as np
-import warnings
 import matplotlib.pyplot as plt
 import pkg_resources
 
@@ -240,7 +239,7 @@ def default_elower_grid_trange_file(version):
 
 
 def optimal_params(Tl, Tu, diffmode=2, version=2, makefig=False, filename=None):
-    """derive the optimal parameters for a given Tu and Tl, 
+    """derive the optimal parameters for a given Tu and Tl,
     which satisfies x % (1% if filename=None) precision within [Tl, Tu]
 
     Args:
@@ -308,8 +307,9 @@ def optimal_params(Tl, Tu, diffmode=2, version=2, makefig=False, filename=None):
             return dEarr[k] * (diffmode + 1), Trefallow[ind[0]], Twtallow[ind[0]]
 
         if i == len(dEarr) - 1:
-            raise ValueError("could not find the optimal trange. use a different degt file or regenerate a new one.")
-            
+            raise ValueError(
+                "could not find the optimal trange. use a different degt file or regenerate a new one."
+            )
 
 
 def _draw_map(value, ax, Trefarr, Twtarr, Tmax_view):

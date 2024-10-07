@@ -13,9 +13,11 @@ from exojax.spec import contdb
 from exojax.spec.layeropacity import layer_optical_depth, layer_optical_depth_CIA
 from exojax.spec.atmrt import ArtEmisPure
 
-from petitRADTRANS import Radtrans
+from petitRADTRANS.radtrans import Radtrans
 from exojax.spec import molinfo
-import petitRADTRANS.nat_cst as nc
+from petitRADTRANS import physical_constants as cst
+from petitRADTRANS.config import petitradtrans_config_parser
+petitradtrans_config_parser.set_input_data_path(r'~/database/petitRADTRANS/input_data')
 
 from exojax.utils.instfunc import resolution_to_gaussian_std
 from exojax.utils.grids import velocity_grid
@@ -75,7 +77,7 @@ def run_exojax(path_data, ld_min, ld_max, mols, db, T0, alpha, logg, logvmr):
                               nlayer=200,
                               nu_grid=nus[k],
                               rtsolver="ibased",
-                              nstream=8)
+                              nstream=6)
 
             dtaum = []
             for i in range(len(mul.masked_molmulti[k])):
@@ -110,15 +112,15 @@ def run_exojax(path_data, ld_min, ld_max, mols, db, T0, alpha, logg, logvmr):
 
 
 def run_petit(ld_min, ld_max, mols, mols_exojax, T0, alpha, logg, logvmr):
-    atmosphere = Radtrans(line_species = mols,
-                          continuum_opacities = ['H2-H2', 'H2-He'],
-                          wlen_bords_micron = [(ld_min - 5.)*1e-4, (ld_max + 5.)*1e-4],
-                          mode = 'lbl')
+    radtrans = Radtrans(pressures = np.logspace(-3, 2, 200),
+                        line_species = mols,
+                        gas_continuum_contributors = ['H2-H2', 'H2-He'],
+                        wavelength_boundaries = [(ld_min - 5.)*1e-4, (ld_max + 5.)*1e-4],
+                        line_opacity_mode = 'lbl')
 
-    pressures = np.logspace(-3, 2, 200)
-    atmosphere.setup_opa_structure(pressures)
-    temperature = T0*(pressures)**alpha
-    temperature = np.clip(temperature, 500, None)
+    pressures_bar = radtrans.pressures * 1e-6
+    temperatures = T0*(pressures_bar)**alpha
+    temperatures = np.clip(temperatures, 500, None)
 
 
     molmass_list = []
@@ -136,21 +138,24 @@ def run_petit(ld_min, ld_max, mols, mols_exojax, T0, alpha, logg, logvmr):
     mmrHe = vmrHe * molmassHe / mmw
 
     mass_fractions = {}
-    mass_fractions['H2'] = mmrH2 * np.ones_like(temperature)
-    mass_fractions['He'] = mmrHe * np.ones_like(temperature)
+    mass_fractions['H2'] = mmrH2 * np.ones_like(temperatures)
+    mass_fractions['He'] = mmrHe * np.ones_like(temperatures)
     for i in range(len(mols)):
-        mass_fractions[mols[i]] = mmr[i] * np.ones_like(temperature)
+        mass_fractions[mols[i]] = mmr[i] * np.ones_like(temperatures)
 
 
-    MMW = mmw * np.ones_like(temperature)
-    gravity = 1e1**(logg)
+    mean_molar_masses = mmw * np.ones_like(temperatures)
+    reference_gravity = 1e1**(logg)
 
-    atmosphere.calc_flux(temperature, mass_fractions, gravity, MMW)
+    frequencies, flux, _ = radtrans.calculate_flux(temperatures=temperatures,
+                                                   mass_fractions=mass_fractions,
+                                                   mean_molar_masses=mean_molar_masses,
+                                                   reference_gravity=reference_gravity,
+                                                   frequencies_to_wavelengths=False)
 
-    ld = nc.c/atmosphere.freq/1e-4 # [um]
+    ld = cst.c/frequencies/1e-4 # [um]
     nus = 1.0e4 / ld # [cm^{-1}]
-    f = atmosphere.flux #[erg cm^{-2} s^{-1} Hz^{-1}]
-    f = f * nc.c #[erg/s/cm^2/cm^{-1}]
+    f = flux * cst.c #[erg cm^{-2} s^{-1} Hz^{-1}] => [erg/s/cm^2/cm^{-1}]
 
     nus = nus[::-1]
     f = f[::-1]
@@ -164,7 +169,7 @@ ld_min = 14600.
 ld_max = 16500.
 mols_exojax = ['H2O', 'CH4']
 db_exojax = ['ExoMol', 'HITEMP']
-mols_petit = ['H2O_main_iso', 'CH4_Hargreaves_main_iso']
+mols_petit = ['1H2-16O__POKAZATEL', '12C-1H4__Hargreaves']
 
 T0 = 995.56
 alpha = 0.09

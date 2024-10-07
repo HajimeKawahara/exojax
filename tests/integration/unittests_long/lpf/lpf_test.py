@@ -23,7 +23,6 @@ config.update("jax_enable_x64", True)
 testdata = {}
 testdata["exomol"] = TESTDATA_CO_EXOMOL_LPF_XS_REF
 testdata["hitemp"] = TESTDATA_CO_HITEMP_LPF_XS_REF
-
 testdata_spectrum = {}
 testdata_spectrum["exomol"] = TESTDATA_CO_EXOMOL_LPF_EMISSION_REF
 testdata_spectrum["hitemp"] = TESTDATA_CO_HITEMP_LPF_EMISSION_REF

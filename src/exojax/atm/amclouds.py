@@ -7,6 +7,8 @@
 from jax import jit
 import jax.numpy as jnp
 from jax import vmap
+from exojax.utils.indexing import get_smooth_index
+from exojax.utils.indexing import get_value_at_smooth_index
 
 
 def mixing_ratio_cloud_pressure(pressure, cloud_base_pressure, fsed, mr_cloud_base, kc):
@@ -49,34 +51,48 @@ def mixing_ratio_cloud_profile(
     return vmaped_function(pressures, cloud_base_pressure, fsed, mr_cloud_base, kc)
 
 
-@jit
-def compute_cloud_base_pressure(pressure, saturation_pressure, vmr_vapor):
-    """computes cloud base pressure from an intersection of a T-P profile and Psat(T) curves
+
+def get_pressure_at_cloud_base(pressures, smooth_index):
+    """get pressure at cloud base from pressures
+
     Args:
-        pressure: pressure array
+        pressures: pressure array
+        smooth_index: smooth index
+
+    Returns:
+        float: pressure at cloud base
+    """
+    return 10 ** get_value_at_smooth_index(jnp.log10(pressures), smooth_index)
+
+
+def smooth_index_base_pressure(pressures, saturation_pressure, vmr_vapor):
+    """computes smooth_index for cloud base pressure from an intersection of a T-P profile and Psat(T) curves
+    Args:
+        pressures: pressure array
         saturation_presure: saturation pressure arrau
         vmr_vapor: volume mixing ratio (VMR) for vapor
 
     Returns:
-        cloud base pressure
+        float: smooth_index
     """
-    ibase = compute_cloud_base_pressure_index(pressure, saturation_pressure, vmr_vapor)
-    return pressure[ibase]
+    return get_smooth_index(
+        jnp.log10((saturation_pressure / vmr_vapor) / pressures), 0.0
+    )
 
 
-@jit
-def compute_cloud_base_pressure_index(pressure, saturation_pressure, vmr_vapor):
-    """computes cloud base pressure from an intersection of a T-P profile and Psat(T) curves
+def compute_cloud_base_pressure(pressures, saturation_pressure, vmr_vapor):
+    """compute cloud base pressure from a T-P profile and Psat(T) curves
+
     Args:
-        pressure: pressure array
+        pressures: pressure array
         saturation_presure: saturation pressure arrau
         vmr_vapor: volume mixing ratio (VMR) for vapor
 
     Returns:
-        int: cloud base pressure index
+        float: cloud base pressure
     """
-    ibase=jnp.searchsorted((saturation_pressure/vmr_vapor)-pressure,0.0) # 231 +- 9.2 us, find index from ascending array 
-    return ibase
+    smooth_index = smooth_index_base_pressure(pressures, saturation_pressure, vmr_vapor)
+    return get_pressure_at_cloud_base(pressures, smooth_index)
 
 
 def get_rw(terminal_velocity, Kzz, L, rarr):
@@ -104,10 +120,13 @@ def get_rg(rw, fsed, alpha, sigmag):
         rw: rw (cm)
         fsed: fsed
         alpha: power of the condensate size distribution
-        sigmag:sigmag parameter (geometric standard deviation) in the lognormal distribution of condensate size, defined by (9) in AM01, must be sigmag > 1
-        
+        sigmag:sigmag parameter (geometric standard deviation) 
+            in the lognormal distribution of condensate size, 
+            defined by (9) in AM01, must be sigmag > 1
+
     Returns
-        rg: rg parameter in the lognormal distribution of condensate size, defined by (9) in AM01
+        rg: rg parameter in the lognormal distribution of condensate size, 
+            defined by (9) in AM01
 
     """
     rg = (
@@ -133,20 +152,55 @@ def find_rw(rarr, terminal_velocity, Kzz_over_L):
     rw = rarr[iscale]
     return rw
 
-def geometric_radius(rg, sigmag):
-    """ computes the paritculate geometric radius
-    
+
+def sigmag_from_effective_radius(reff, fsed, rw, alpha):
+    """computes sigmag from reff
+
+    Args:
+        reff: effective radius (cm) defined by E_3/E_2
+        fsed: fsed
+        rw: rw (cm)
+        alpha: alpha
+
+    Returns:
+        sigmag: sigmag
+    """
+    factor = jnp.log(rw / reff * fsed ** (1.0 / alpha))
+    index = jnp.sqrt(2.0 / (1.0 + alpha) * factor)
+    return jnp.exp(index)
+
+
+def effective_radius(rg, sigmag):
+    """computes the paritculate effective radius from lognormal parameters, rg and sigmag
+
     Args:
         rg (float): rg parameter in lognormal distribution in cgs
-        sigmag (float): sigma_g parameter in lognormal distribution 
+        sigmag (float): sigma_g parameter in lognormal distribution
 
 
     Note:
-        The cross section is given by $S = Q_e \pi r_geo^2$ 
+        The cross section is given by $S = Q_e \pi r_eff^2$
 
     Returns:
-        _type_: geometric radius in cgs 
+        _type_: effective radius in cgs
     """
-    #logs = jnp.log(sigmag)
-    #return jnp.exp(logs*logs)*rg
-    return sigmag**jnp.log(sigmag)*rg
+    return jnp.exp(2.5 * jnp.log(sigmag) * jnp.log(sigmag)) * rg
+
+
+def geometric_radius(rg, sigmag):
+    """computes the paritculate geometric radius
+
+    Args:
+        rg (float): rg parameter in lognormal distribution in cgs
+        sigmag (float): sigma_g parameter in lognormal distribution
+
+
+    Note:
+        The cross section is given by $S = Q_e \pi r_geo^2$
+
+    Returns:
+        _type_: geometric radius in cgs
+    """
+    # logs = jnp.log(sigmag)
+    # return jnp.exp(logs*logs)*rg
+    return sigmag ** jnp.log(sigmag) * rg

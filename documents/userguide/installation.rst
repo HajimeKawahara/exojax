@@ -1,7 +1,17 @@
 Installation and References
 ----------------------------------
 
-*last update: November 26th (2023) Hajime Kawahara*
+*last update October 3rd (2024) Hajime Kawahara*
+
+.. admonition:: Python 3.9 or later is required
+
+    ExoJAX requires python 3.9 or later.
+
+.. Warning:: 
+
+	For using vaex as molecular-based I/O, we currently recommend using Python 3.9. 
+	In the near future, we plan to support Python 3.10 and Python 3.11 as well. Oct 3. (2024) 
+
 
 Linux, Windows WSL, Mac
 ============================
@@ -9,38 +19,37 @@ Linux, Windows WSL, Mac
 At the very least, you can start using exojax through `pypi <https://pypi.org/project/exojax/>`_.
 
 .. code:: sh
-	  
-	  pip install exojax
+	
+	pip install exojax
 
 
 Alternatively, clone the code from `github page <https://github.com/HajimeKawahara/exojax>`_ and run
 
 .. code:: sh
-	  
-	  python setup.py install
+	
+	python setup.py install
 
 If the older version of ExoJAX has already been installed, you need to remove all of the old modules (Otherwise, modules that have been deleted and no more exist in the current version remain). To do so, the following procedure is recommended:
 
 .. code:: sh
-	  
-	  python setup.py clean --all 
-	  python setup.py install
+	
+	python setup.py clean --all 
+	python setup.py install
 
-	  
 However, to take advantage of the power of JAX, you need to prepare a GPU environment (if you have). For this, jaxlib need to be linked.
 
 You should check the cuda version of your environment as
 
 .. code:: sh
 
-	  nvcc -V
+	nvcc -V
 
-Here is an example of installation for jaxlib in linux system. See `JAX installation page <https://github.com/google/jax#installation>`_ for the details.
+Here is an example of installation for jaxlib in linux system. See `JAX installation page <https://jax.readthedocs.io/en/latest/installation.html>`_ for the details.
 
 .. code:: sh
-
-		pip install --upgrade pip
-		pip install --upgrade "jax[cuda11_pip]" -f https://storage.googleapis.com/jax-releases/jax_cuda_releases.html
+	
+	pip install -U "jax[cuda12]"
+	
 
 Windows Anaconda
 ===================
@@ -75,12 +84,12 @@ Many techniques/databases are used in ExoJAX.
 
 Related Projects
 =====================
-  
+
 - `RADIS <https://github.com/radis/radis>`_
 
- | ExoJAX draws a lot of inspiration from a fast line-by-line code for high-resolution infrared molecular spectra `RADIS <https://github.com/radis/radis>`_, including DIT, the use of Vaex, and so on. 
- | Since version 1.2 we have been using a common molecular database I/O API in Radis.
+| ExoJAX draws a lot of inspiration from a fast line-by-line code for high-resolution infrared molecular spectra `RADIS <https://github.com/radis/radis>`_, including DIT, the use of Vaex, and so on. 
+| Since version 1.2 we have been using a common molecular database I/O API in Radis.
 
 - `REACH <http://secondearths.sakura.ne.jp/reach/>`_
-  
- | ExoJAX was originally developed to interpret data from a new high-dispersion coronagraphic capability at the Subaru telescope, the `REACH <http://secondearths.sakura.ne.jp/reach/>`_ project (SCExAO+IRD). REACH is supported by `RESCEU <http://www.resceu.s.u-tokyo.ac.jp/top.php>`_, ABC and `JSPS KAKENHI JP20H00170 <https://kaken.nii.ac.jp/en/grant/KAKENHI-PROJECT-20H00170/>`_ (Kawahara). See also `Lozi et al. (2018) <https://ui.adsabs.harvard.edu/abs/2018SPIE10703E..59L/abstract>`_ for SCExAO, `Kotani et al. (2018) <https://ui.adsabs.harvard.edu/abs/2018SPIE10702E..11K/abstract>`_ for IRD, `Jovanovic et al. (2017) <https://ui.adsabs.harvard.edu/abs/2017arXiv171207762J/abstract>`_ for post-coronagraphic injection, and `Kawahara et al. (2014) <https://ui.adsabs.harvard.edu/abs/2014ApJS..212...27K/abstract>`_ for high dispersion coronagraphy.
+
+| ExoJAX was originally developed to interpret data from a new high-dispersion coronagraphic capability at the Subaru telescope, the `REACH <http://secondearths.sakura.ne.jp/reach/>`_ project (SCExAO+IRD). REACH is supported by `RESCEU <http://www.resceu.s.u-tokyo.ac.jp/top.php>`_, ABC and `JSPS KAKENHI JP20H00170 <https://kaken.nii.ac.jp/en/grant/KAKENHI-PROJECT-20H00170/>`_ (Kawahara). See also `Lozi et al. (2018) <https://ui.adsabs.harvard.edu/abs/2018SPIE10703E..59L/abstract>`_ for SCExAO, `Kotani et al. (2018) <https://ui.adsabs.harvard.edu/abs/2018SPIE10702E..11K/abstract>`_ for IRD, `Jovanovic et al. (2017) <https://ui.adsabs.harvard.edu/abs/2017arXiv171207762J/abstract>`_ for post-coronagraphic injection, and `Kawahara et al. (2014) <https://ui.adsabs.harvard.edu/abs/2014ApJS..212...27K/abstract>`_ for high dispersion coronagraphy.

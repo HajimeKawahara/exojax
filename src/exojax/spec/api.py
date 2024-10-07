@@ -1,14 +1,21 @@
-"""Molecular database (MDB) class using a common API w/ RADIS = (CAPI), will be renamed.
+"""Molecular database API class using a common API w/ RADIS = (CAPI)
 
 * MdbExomol is the MDB for ExoMol
-* MdbHit is the MDB for HITRAN or HITEMP
+* MdbHitran is the MDB for HITRAN
+* MdbHitemp is the MDB for HITEMP
+* MdbCommonHitempHitran is the common MDB for HITEMP and HITRAN
+
+Notes:
+    If you use vaex as radis engine, hdf5 files are saved while pytables uses .h5 files. 
+
 """
+
 from os.path import exists
 import numpy as np
 import jax.numpy as jnp
 import pathlib
-import vaex
 import warnings
+
 from exojax.spec.hitran import line_strength_numpy
 from exojax.spec.hitran import gamma_natural as gn
 from exojax.utils.constants import Tref_original
@@ -17,13 +24,12 @@ from exojax.spec import hitranapi
 from exojax.spec.hitranapi import molecid_hitran
 from exojax.spec.molinfo import isotope_molmass
 from exojax.utils.isotopes import molmass_hitran
-
+from radis.api.dbmanager import get_auto_MEMORY_MAPPING_ENGINE
 from radis.api.exomolapi import (
     MdbExomol as CapiMdbExomol,
 )  # MdbExomol in the common API
 from radis.api.hitempapi import HITEMPDatabaseManager
 from radis.api.hitranapi import HITRANDatabaseManager
-from radis.api.hdf5 import update_pytables_to_vaex
 from radis.db.classes import get_molecule
 from radis.levels.partfunc import PartFuncTIPS
 import warnings
@@ -31,17 +37,34 @@ import warnings
 __all__ = ["MdbExomol", "MdbHitemp", "MdbHitran"]
 
 
-class MdbExomol(CapiMdbExomol):
-    """molecular database of ExoMol.
+def _set_engine(engine):
+    """
+    set engine for radis api
 
-    MdbExomol is a class for ExoMol.
+    Args:
+        engine (_type_): engine for radis api ("pytables" or "vaex" or None). if None, radis automatically determines.
+
+    Returns:
+        str: engine selected
+    """
+    if engine == None:
+        engine_selected = get_auto_MEMORY_MAPPING_ENGINE()
+    else:
+        engine_selected = engine
+    print("radis engine = ", engine_selected)
+    return engine_selected
+
+
+class MdbExomol(CapiMdbExomol):
+    """molecular database of ExoMol form.
+
+    MdbExomol is a class for ExoMol database. It inherits the CAPI class MdbExomol and adds some additional features.
 
     Attributes:
         simple_molecule_name: simple molecule name
         nurange: nu range [min,max] (cm-1)
         nu_lines (nd array): line center (cm-1)
         Sij0 (nd array): line strength at T=Tref (cm)
-
         logsij0 (jnp array): log line strength at T=Tref
         A (jnp array): Einstein A coeeficient
         gamma_natural (DataFrame or jnp array): gamma factor of the natural broadening
@@ -70,6 +93,7 @@ class MdbExomol(CapiMdbExomol):
         optional_quantum_states=False,
         activation=True,
         local_databases="./",
+        engine=None,
     ):
         """Molecular database for Exomol form.
 
@@ -80,10 +104,11 @@ class MdbExomol(CapiMdbExomol):
             Ttyp: typical temperature to calculate Sij(T) used in crit
             bkgdatm: background atmosphere for broadening. e.g. H2, He,
             broadf: if False, the default broadening parameters in .def file is used
-            gpu_transfer: if True, some instances will be transfered to jnp.array. False is recommended for PreMODIT.
-            inherit_dataframe: if True, it makes self.df instance available, which needs more DRAM when pickling.
+            gpu_transfer: if True, some attributes will be transfered to jnp.array. False is recommended for PreMODIT.
+            inherit_dataframe: if True, it makes self.df attribute available, which needs more DRAM when pickling.
             optional_quantum_states: if True, all of the fields available in self.df will be loaded. if False, the mandatory fields (i,E,g,J) will be loaded.
-            activation: if True, the activation of mdb will be done when initialization, if False, the activation won't be done and it makes self.df instance available.
+            activation: if True, the activation of mdb will be done when initialization, if False, the activation won't be done and it makes self.df attribute available.
+            engine: engine for radis api ("pytables" or "vaex" or None). if None, radis automatically determines. default to None
 
 
         Note:
@@ -95,7 +120,6 @@ class MdbExomol(CapiMdbExomol):
         self.database = str(self.path.stem)
         self.bkgdatm = bkgdatm
         # molecbroad = self.exact_molecule_name + '__' + self.bkgdatm
-        self.Tref = Tref_original
         self.gpu_transfer = gpu_transfer
         self.Ttyp = Ttyp
         self.broadf = broadf
@@ -104,6 +128,7 @@ class MdbExomol(CapiMdbExomol):
         self.skip_optional_data = not optional_quantum_states
         self.activation = activation
         wavenum_min, wavenum_max = self.set_wavenum(nurange)
+        self.engine = _set_engine(engine)
 
         super().__init__(
             str(self.path),
@@ -111,7 +136,7 @@ class MdbExomol(CapiMdbExomol):
             molecule=self.simple_molecule_name,
             name="EXOMOL-{molecule}",
             nurange=[wavenum_min, wavenum_max],
-            engine="vaex",
+            engine=self.engine,
             crit=crit,
             bkgdatm=self.bkgdatm,
             broadf=self.broadf,
@@ -127,12 +152,11 @@ class MdbExomol(CapiMdbExomol):
         mgr = self.get_datafile_manager()
         local_files = [mgr.cache_file(f) for f in self.trans_file]
 
-        # data frame instance:
+        # data frame attribute:
         df = self.load(
             local_files,
-            # columns=[k for k in self.__dict__ if k not in ["logsij0"]],
             # lower_bound=([("Sij0", 0.0)]),
-            output="vaex",
+            output=self.engine,
         )
 
         self.df_load_mask = self.compute_load_mask(df)
@@ -142,6 +166,64 @@ class MdbExomol(CapiMdbExomol):
         if inherit_dataframe or not self.activation:
             print("DataFrame (self.df) available.")
             self.df = df
+
+    def __eq__(self, other):
+        """eq method for MdbExomol, definied by comparing all the attributes and important status
+
+        Args:
+            other (_type_): _description_
+
+        Returns:
+            _type_: _description_
+        """
+        if not isinstance(other, MdbExomol):
+            return False
+
+        eq_attributes = (
+            all(self.A == other.A)
+            and all(self.nu_lines == other.nu_lines)
+            and all(self.elower == other.elower)
+            and all(self.jlower == other.jlower)
+            and all(self.jupper == other.jupper)
+            and all(self.line_strength_ref_original == other.line_strength_ref_original)
+            and all(self.logsij0 == other.logsij0)
+            and all(self.gpp == other.gpp)
+            and self.bkgdatm == other.bkgdatm
+            and self.gpu_transfer == other.gpu_transfer
+            and self.Ttyp == other.Ttyp
+            and self.broadf == other.broadf
+            and self.exact_molecule_name == other.exact_molecule_name
+        )
+
+        return eq_attributes
+
+    def __ne__(self, other):
+        return not self.__eq__(other)
+
+    def attributes_from_dataframes(self, df_masked):
+        """Generates attributes from (usually masked) data frame for Exomol
+
+        Args:
+            df_masked (DataFrame): (masked) data frame
+
+        Raises:
+            ValueError: _description_
+        """
+
+        if len(df_masked) == 0:
+            raise ValueError("No line found in ", self.nurange, "cm-1")
+
+        self._attributes_from_dataframes(df_masked)
+
+    def _attributes_from_dataframes(self, df_masked):
+        self.A = df_masked.A.values
+        self.nu_lines = df_masked.nu_lines.values
+        self.elower = df_masked.elower.values
+        self.jlower = df_masked.jlower.values
+        self.jupper = df_masked.jupper.values
+        self.line_strength_ref_original = df_masked.Sij0.values
+        self.logsij0 = np.log(self.line_strength_ref_original)
+        self.gpp = df_masked.gup.values
 
     def set_wavenum(self, nurange):
         if nurange is None:
@@ -158,11 +240,11 @@ class MdbExomol(CapiMdbExomol):
         return wavenum_min, wavenum_max
 
     def activate(self, df, mask=None):
-        """activation of moldb,
+        """Activates of moldb for Exomol,  including making attributes, computing broadening parameters, natural width, and transfering attributes to gpu arrays when self.gpu_transfer = True
 
         Notes:
-            activation includes, making instances, computing broadening parameters, natural width,
-            and transfering instances to gpu arrays when self.gpu_transfer = True
+            activation includes, making attributes, computing broadening parameters, natural width,
+            and transfering attributes to gpu arrays when self.gpu_transfer = True
 
         Args:
             df: DataFrame
@@ -185,7 +267,7 @@ class MdbExomol(CapiMdbExomol):
         else:
             mask = self.df_load_mask
 
-        self.instances_from_dataframes(df[mask])
+        self.attributes_from_dataframes(df[mask])
         try:  # old radis <=0.14
             self.compute_broadening(self.jlower.astype(int), self.jupper.astype(int))
         except:
@@ -197,47 +279,21 @@ class MdbExomol(CapiMdbExomol):
 
     def compute_load_mask(self, df):
         # wavelength
-        print(df)
-        mask = (df.nu_lines > self.nurange[0]) * (df.nu_lines < self.nurange[1])
+        mask = (df.nu_lines > self.nurange[0]) & (df.nu_lines < self.nurange[1])
         QTtyp = np.array(self.QT_interp(self.Ttyp))
         QTref_original = np.array(self.QT_interp(Tref_original))
-        mask *= (
+        mask = mask & (
             line_strength_numpy(
                 self.Ttyp, df.Sij0, df.nu_lines, df.elower, QTtyp / QTref_original
             )
             > self.crit
         )
         if self.elower_max is not None:
-            mask *= df.elower < self.elower_max
+            mask = mask & (df.elower < self.elower_max)
         return mask
 
-    def instances_from_dataframes(self, df_masked):
-        """generate instances from (usually masked) data frame
-
-        Args:
-            df_masked (DataFrame): (masked) data frame
-
-        Raises:
-            ValueError: _description_
-        """
-
-        if len(df_masked) == 0:
-            raise ValueError("No line found in ", self.nurange, "cm-1")
-
-        if isinstance(df_masked, vaex.dataframe.DataFrameLocal):
-            self.A = df_masked.A.values
-            self.nu_lines = df_masked.nu_lines.values
-            self.elower = df_masked.elower.values
-            self.jlower = df_masked.jlower.values
-            self.jupper = df_masked.jupper.values
-            self.line_strength_ref = df_masked.Sij0.values
-            self.logsij0 = np.log(self.line_strength_ref)
-            self.gpp = df_masked.gup.values
-        else:
-            raise ValueError("Use vaex dataframe as input.")
-
     def apply_mask_mdb(self, mask):
-        """apply mask for mdb class
+        """Applys mask for mdb class for Exomol
 
         Args:
             mask: mask to be applied
@@ -258,29 +314,19 @@ class MdbExomol(CapiMdbExomol):
         self.elower = self.elower[mask]
         self.jlower = self.jlower[mask]
         self.jupper = self.jupper[mask]
-        self.line_strength_ref = self.line_strength_ref[mask]
+        self.line_strength_ref_original = self.line_strength_ref_original[mask]
         self.gpp = self.gpp[mask]
 
-    def Sij0(self):
-        """Deprecated line_strength_ref.
-
-        Returns:
-            ndarray: line_strength_ref
-        """
-        msg = "Sij0 instance was replaced to line_strength_ref and will be removed."
-        warnings.warn(msg, FutureWarning)
-        return self.line_strength_ref
-
     def generate_jnp_arrays(self):
-        """(re)generate jnp.arrays.
+        """(re)generates jnp.arrays.
 
         Note:
             We have nd arrays and jnp arrays. We usually apply the mask to nd arrays and then generate jnp array from the corresponding nd array. For instance, self._A is nd array and self.A is jnp array.
-
+            logsij0 is computed assuming Tref=Tref_original because it is not used for PreMODIT.
         """
         # jnp arrays
         self.dev_nu_lines = jnp.array(self.nu_lines)
-        self.logsij0 = jnp.array(np.log(self.line_strength_ref))
+        self.logsij0 = jnp.array(np.log(self.line_strength_ref_original))
         self.gamma_natural = jnp.array(self.gamma_natural)
         self.A = jnp.array(self.A)
         self.elower = jnp.array(self.elower)
@@ -301,30 +347,36 @@ class MdbExomol(CapiMdbExomol):
         """
         return jnp.interp(T, self.T_gQT, self.gQT)
 
-    def qr_interp(self, T):
+    def qr_interp(self, T, Tref):
         """interpolated partition function ratio.
 
         Args:
             T: temperature
+            Tref: reference temperature
 
         Returns:
-            qr(T)=Q(T)/Q(Tref) interpolated in jnp.array
+            qr(T)=Q(T)/Q(Tref) interpolated
         """
-        return self.QT_interp(T) / self.QT_interp(self.Tref)
+        return self.QT_interp(T) / self.QT_interp(Tref)
 
-    def change_reference_temperature(self, Tref_new):
-        """change the reference temperature Tref and recompute Sij0
+    def line_strength(self, T):
+        """line strength at T
 
         Args:
-            Tref_new (float): new Tref in Kelvin
+            T (float): temperature
+
+        Returns:
+            float: line strength at T
         """
-        print("Tref changed: " + str(self.Tref) + "K->" + str(Tref_new) + "K")
-        qr = self.qr_interp(Tref_new)
-        self.line_strength_ref = line_strength_numpy(
-            Tref_new, self.line_strength_ref, self.nu_lines, self.elower, qr, self.Tref
+        qr = self.qr_interp(T, Tref_original)
+        return line_strength_numpy(
+            T,
+            self.line_strength_ref_original,
+            self.nu_lines,
+            self.elower,
+            qr,
+            Tref_original,
         )
-        self.logsij0 = np.log(self.line_strength_ref)
-        self.Tref = Tref_new
 
 
 class MdbCommonHitempHitran:
@@ -337,10 +389,9 @@ class MdbCommonHitempHitran:
         Ttyp=1000.0,
         isotope=1,
         gpu_transfer=False,
-        inherit_dataframe=False,
         activation=True,
-        parfile=None,
         with_error=False,
+        engine=None,
     ):
         """Molecular database for HITRAN/HITEMP form.
 
@@ -352,10 +403,10 @@ class MdbCommonHitempHitran:
             Ttyp: typical temperature to calculate Sij(T) used in crit
             isotope: isotope number, 0 or None = use all isotopes.
             gpu_transfer: tranfer data to jnp.array?
-            inherit_dataframe: if True, it makes self.df instance available, which needs more DRAM when pickling.
-            activation: if True, the activation of mdb will be done when initialization, if False, the activation won't be done and it makes self.df instance available.
-            parfile: if not none, provide path, then directly load parfile
+            activation: if True, the activation of mdb will be done when initialization, if False, the activation won't be done and it makes self.df attribute available.
             with_error: if True, uncertainty indices become available.
+            engine: engine for radis api ("pytables" or "vaex" or None). if None, radis automatically determines. default to None
+
         """
 
         self.path = pathlib.Path(path).expanduser()
@@ -363,7 +414,6 @@ class MdbCommonHitempHitran:
         self.simple_molecule_name = get_molecule(self.molecid)
         self.crit = crit
         self.elower_max = elower_max
-        self.Tref = Tref_original
         self.Ttyp = Ttyp
         self.nurange = [np.min(nurange), np.max(nurange)]
         self.isotope = isotope
@@ -372,6 +422,7 @@ class MdbCommonHitempHitran:
         self.activation = activation
         self.load_wavenum_min, self.load_wavenum_max = self.set_wavenum(nurange)
         self.with_error = with_error
+        self.engine = _set_engine(engine)
 
     def QT_for_select_line(self, Ttyp):
         if self.isotope is None or self.isotope == 0:
@@ -402,8 +453,8 @@ class MdbCommonHitempHitran:
         """activation of moldb,
 
         Notes:
-            activation includes, making instances, computing broadening parameters, natural width,
-            and transfering instances to gpu arrays when self.gpu_transfer = True
+            activation includes, making attributes, computing broadening parameters, natural width,
+            and transfering attributes to gpu arrays when self.gpu_transfer = True
 
         Args:
             df: DataFrame
@@ -426,7 +477,7 @@ class MdbCommonHitempHitran:
         else:
             mask = self.df_load_mask
 
-        self.instances_from_dataframes(df[mask])
+        self.attributes_from_dataframes(df[mask])
         self.gQT, self.T_gQT = hitranapi.make_partition_function_grid_hitran(
             self.molecid, self.uniqiso
         )
@@ -443,10 +494,12 @@ class MdbCommonHitempHitran:
 
     def compute_load_mask(self, df, qrtyp):
         # wavelength
-        mask = (df.wav > self.load_wavenum_min) * (df.wav < self.load_wavenum_max)
-        mask *= line_strength_numpy(self.Ttyp, df.int, df.wav, df.El, qrtyp) > self.crit
+        mask = (df.wav > self.load_wavenum_min) & (df.wav < self.load_wavenum_max)
+        mask = mask & (
+            line_strength_numpy(self.Ttyp, df.int, df.wav, df.El, qrtyp) > self.crit
+        )
         if self.elower_max is not None:
-            mask *= df.El < self.elower_max
+            mask = mask & (df.El < self.elower_max)
         return mask
 
     def apply_mask_mdb(self, mask):
@@ -462,7 +515,7 @@ class MdbCommonHitempHitran:
             >>> mdb.apply_mask_mdb(mask)
         """
         self.nu_lines = self.nu_lines[mask]
-        self.line_strength_ref = self.line_strength_ref[mask]
+        self.line_strength_ref_original = self.line_strength_ref_original[mask]
         self.delta_air = self.delta_air[mask]
         self.A = self.A[mask]
         self.n_air = self.n_air[mask]
@@ -477,43 +530,40 @@ class MdbCommonHitempHitran:
             # uncertainties
             self.ierr = self.ierr[mask]
 
-    def Sij0(self):
-        """old line strength definition"""
-        msg = "Sij0 instance was replaced to line_strength_ref."
-        raise ValueError(msg)
-
     def QT_interp(self, isotope, T):
         """interpolated partition function.
-
-        Args:
-           isotope: HITRAN isotope number starting from 1
-           T: temperature
-
-        Returns:
-           Q(idx, T) interpolated in jnp.array
-        """
-        isotope_index = _isotope_index_from_isotope_number(isotope, self.uniqiso)
-        return _QT_interp(isotope_index, T, self.T_gQT, self.gQT)
-
-    def qr_interp(self, isotope, T):
-        """interpolated partition function ratio.
 
         Args:
             isotope: HITRAN isotope number starting from 1
             T: temperature
 
         Returns:
+            Q(idx, T) interpolated in jnp.array
+        """
+        isotope_index = _isotope_index_from_isotope_number(isotope, self.uniqiso)
+        return _QT_interp(isotope_index, T, self.T_gQT, self.gQT)
+
+    def qr_interp(self, isotope, T, Tref):
+        """interpolated partition function ratio.
+
+        Args:
+            isotope: HITRAN isotope number starting from 1
+            T: temperature
+            Tref: reference temperature
+
+        Returns:
             qr(T)=Q(T)/Q(Tref) interpolated in jnp.array
         """
         isotope_index = _isotope_index_from_isotope_number(isotope, self.uniqiso)
-        return _qr_interp(isotope_index, T, self.T_gQT, self.gQT, self.Tref)
+        return _qr_interp(isotope_index, T, self.T_gQT, self.gQT, Tref)
 
-    def qr_interp_lines(self, T):
+    def qr_interp_lines(self, T, Tref):
         """Partition Function ratio using HAPI partition data.
         (This function works for JAX environment.)
 
         Args:
             T: temperature (K)
+            Tref: reference temperature (K)
 
         Returns:
             Qr_line, partition function ratio array for lines [Nlines]
@@ -521,9 +571,7 @@ class MdbCommonHitempHitran:
         Note:
             Nlines=len(self.nu_lines)
         """
-        return _qr_interp_lines(
-            T, self.isoid, self.uniqiso, self.T_gQT, self.gQT, self.Tref
-        )
+        return _qr_interp_lines(T, self.isoid, self.uniqiso, self.T_gQT, self.gQT, Tref)
 
     def exact_isotope_name(self, isotope):
         """exact isotope name
@@ -538,34 +586,31 @@ class MdbCommonHitempHitran:
 
         return exact_molecule_name_from_isotope(self.simple_molecule_name, isotope)
 
-    def change_reference_temperature(self, Tref_new):
-        """change the reference temperature Tref and recompute Sij0
+    def line_strength(self, T):
+        """line strength at T
 
         Args:
-            Tref_new (float): new Tref in Kelvin
-        """
-        print(
-            "Change the reference temperature from "
-            + str(self.Tref)
-            + "K to "
-            + str(Tref_new)
-            + " K."
-        )
-        if self.isotope is None or self.isotope == 0:
-            msg1 = "Currently all isotope mode is not fully compatible to change_reference_temperature."
-            msg2 = (
-                "QT used in change_reference_temperature is assumed isotope=1 instead."
-            )
-            warnings.warn(msg1 + msg2, UserWarning)
-            qr = self.qr_interp(1, Tref_new)
-        else:
-            qr = self.qr_interp(self.isotope, Tref_new)
+            T (float): temperature
 
-        self.line_strength_ref = line_strength_numpy(
-            Tref_new, self.line_strength_ref, self.nu_lines, self.elower, qr, self.Tref
+        Returns:
+            float: line strength at T
+        """
+        if self.isotope is None or self.isotope == 0:
+            msg1 = "Currently all isotope mode is not fully compatible to MdbCommonHitempHitran."
+            msg2 = "QT assumed isotope=1 instead."
+            warnings.warn(msg1 + msg2, UserWarning)
+            qr = self.qr_interp(1, T, Tref_original)
+        else:
+            qr = self.qr_interp(self.isotope, T, Tref_original)
+
+        return line_strength_numpy(
+            T,
+            self.line_strength_ref_original,
+            self.nu_lines,
+            self.elower,
+            qr,
+            Tref_original,
         )
-        self.logsij0 = np.log(self.line_strength_ref)
-        self.Tref = Tref_new
 
     def check_line_existence_in_nurange(self, df_load_mask):
         if len(df_load_mask) == 0:
@@ -621,6 +666,7 @@ class MdbHitemp(MdbCommonHitempHitran, HITEMPDatabaseManager):
         activation=True,
         parfile=None,
         with_error=False,
+        engine=None,
     ):
         """Molecular database for HITRAN/HITEMP form.
 
@@ -632,10 +678,11 @@ class MdbHitemp(MdbCommonHitempHitran, HITEMPDatabaseManager):
             Ttyp: typical temperature to calculate Sij(T) used in crit
             isotope: isotope number, 0 or None = use all isotopes.
             gpu_transfer: tranfer data to jnp.array?
-            inherit_dataframe: if True, it makes self.df instance available, which needs more DRAM when pickling.
-            activation: if True, the activation of mdb will be done when initialization, if False, the activation won't be done and it makes self.df instance available.
+            inherit_dataframe: if True, it makes self.df attribute available, which needs more DRAM when pickling.
+            activation: if True, the activation of mdb will be done when initialization, if False, the activation won't be done and it makes self.df attribute available.
             parfile: if not none, provide path, then directly load parfile
             with_error: if True, uncertainty indices become available.
+            engine: engine for radis api ("pytables" or "vaex" or None). if None, radis automatically determines. default to None
         """
 
         self.dbtype = "hitran"
@@ -648,10 +695,9 @@ class MdbHitemp(MdbCommonHitempHitran, HITEMPDatabaseManager):
             Ttyp=Ttyp,
             isotope=isotope,
             gpu_transfer=gpu_transfer,
-            inherit_dataframe=inherit_dataframe,
             activation=activation,
-            parfile=parfile,
             with_error=with_error,
+            engine=engine,
         )
 
         HITEMPDatabaseManager.__init__(
@@ -659,7 +705,7 @@ class MdbHitemp(MdbCommonHitempHitran, HITEMPDatabaseManager):
             molecule=self.simple_molecule_name,
             name="HITEMP-{molecule}",
             local_databases=self.path.parent,
-            engine="default",
+            engine=self.engine,
             verbose=True,
             chunksize=100000,
             parallel=True,
@@ -668,7 +714,7 @@ class MdbHitemp(MdbCommonHitempHitran, HITEMPDatabaseManager):
         if parfile is not None:
             from radis.api.hitranapi import hit2df
 
-            df = hit2df(parfile, engine="vaex", cache="regen")
+            df = hit2df(parfile, engine=self.engine, cache="regen")
             if isotope is None:
                 mask = None
             elif isotope == 0:
@@ -684,14 +730,7 @@ class MdbHitemp(MdbCommonHitempHitran, HITEMPDatabaseManager):
             download_files = self.keep_only_relevant(
                 download_files, self.load_wavenum_min, self.load_wavenum_max
             )
-            # do not re-download files if they exist in another format :
 
-            converted = []
-            for f in download_files:
-                if exists(f.replace(".hdf5", ".h5")):
-                    update_pytables_to_vaex(f.replace(".hdf5", ".h5"))
-                    converted.append(f)
-                download_files = [f for f in download_files if f not in converted]
             # do not re-download remaining files that exist. Let user decide what to do.
             # (download & re-parsing is a long solution!)
             download_files = [
@@ -714,10 +753,14 @@ class MdbHitemp(MdbCommonHitempHitran, HITEMPDatabaseManager):
             files_loaded = self.keep_only_relevant(
                 local_files, self.load_wavenum_min, self.load_wavenum_max
             )
-            columns = (None,)
-            output = "vaex"
-
+            output = self.engine
             isotope_dfform = _convert_proper_isotope(self.isotope)
+
+            if self.engine == "vaex":
+                columns = (None,)  # lazy-io
+            else:
+                columns = None  # reads all columns
+
             df = self.load(
                 files_loaded,  # filter other files,
                 columns=columns,
@@ -737,17 +780,68 @@ class MdbHitemp(MdbCommonHitempHitran, HITEMPDatabaseManager):
             print("DataFrame (self.df) available.")
             self.df = df
 
-    def instances_from_dataframes(self, df_masked):
-        """generate instances from (usually masked) data farame
+    def __eq__(self, other):
+        """eq method for MdbHitemp, definied by comparing all the attributes
+
+        Args:
+            other (_type_): _description_
+
+        Returns:
+            _type_: _description_
+        """
+        if not isinstance(other, MdbHitemp):
+            return False
+
+        eq_attributes = (
+            all(self.nu_lines == other.nu_lines)
+            and all(self.line_strength_ref_original == other.line_strength_ref_original)
+            and all(self.logsij0 == other.logsij0)
+            and all(self.delta_air == other.delta_air)
+            and all(self.A == other.A)
+            and all(self.n_air == other.n_air)
+            and all(self.gamma_air == other.gamma_air)
+            and all(self.gamma_self == other.gamma_self)
+            and all(self.elower == other.elower)
+            and all(self.gpp == other.gpp)
+            and all(self.isoid == other.isoid)
+            and all(self.uniqiso == other.uniqiso)
+            and self.isotope == other.isotope
+            and self.simple_molecule_name == other.simple_molecule_name
+            and self.gpu_transfer == other.gpu_transfer
+            and self.Ttyp == other.Ttyp
+            and self.elower_max == other.elower_max
+        )
+        eq_attributes = self._if_exist_check_eq_list(other, "ierr", eq_attributes)
+
+        return eq_attributes
+
+    def __ne__(self, other):
+        return not self.__eq__(other)
+
+    def _if_exist_check_eq_list(self, other, attribute, eq_attributes):
+        if hasattr(self, attribute) and hasattr(other, attribute):
+            return eq_attributes and all(
+                getattr(self, attribute) == getattr(other, attribute)
+            )
+        elif not hasattr(self, attribute) and not hasattr(other, attribute):
+            return eq_attributes
+        else:
+            return False
+
+    def attributes_from_dataframes(self, df_masked):
+        """generate attributes from (usually masked) data farame
 
         Args:
             df_load_mask (DataFrame): (masked) data frame
 
         """
         self.check_line_existence_in_nurange(df_masked)
+        self._attributes_from_dataframes(df_masked)
+
+    def _attributes_from_dataframes(self, df_masked):
         self.nu_lines = df_masked.wav.values
-        self.line_strength_ref = df_masked.int.values
-        self.logsij0 = np.log(self.line_strength_ref)
+        self.line_strength_ref_original = df_masked.int.values
+        self.logsij0 = np.log(self.line_strength_ref_original)
         self.delta_air = df_masked.Pshft.values
         self.A = df_masked.A.values
         self.n_air = df_masked.Tdpair.values
@@ -766,13 +860,13 @@ class MdbHitemp(MdbCommonHitempHitran, HITEMPDatabaseManager):
         """(re)generate jnp.arrays.
 
         Note:
-           We have nd arrays and jnp arrays. We usually apply the mask to nd arrays and then generate jnp array from the corresponding nd array. For instance, self._A is nd array and self.A is jnp array.
+            We have nd arrays and jnp arrays. We usually apply the mask to nd arrays and then generate jnp array from the corresponding nd array. For attributes, self._A is nd array and self.A is jnp array.
 
         """
         # jnp.array copy from the copy sources
         self.dev_nu_lines = jnp.array(self.nu_lines)
-        self.logsij0 = jnp.array(np.log(self.line_strength_ref))
-        self.line_strength_ref = jnp.array(self.line_strength_ref)
+        self.logsij0 = jnp.array(np.log(self.line_strength_ref_original))
+        self.line_strength_ref_original = jnp.array(self.line_strength_ref_original)
         self.delta_air = jnp.array(self.delta_air)
         self.A = jnp.array(self.A)
         self.n_air = jnp.array(self.n_air)
@@ -801,6 +895,7 @@ class MdbHitran(MdbCommonHitempHitran, HITRANDatabaseManager):
         elower (jnp array): the lower state energy (cm-1)
         gpp (jnp array): statistical weight
         n_air (jnp array): air temperature exponent
+
     """
 
     def __init__(
@@ -817,6 +912,7 @@ class MdbHitran(MdbCommonHitempHitran, HITRANDatabaseManager):
         parfile=None,
         nonair_broadening=False,
         with_error=False,
+        engine=None,
     ):
         """Molecular database for HITRAN/HITEMP form.
 
@@ -828,10 +924,11 @@ class MdbHitran(MdbCommonHitempHitran, HITRANDatabaseManager):
             Ttyp: typical temperature to calculate Sij(T) used in crit
             isotope: isotope number. 0 or None= use all isotopes.
             gpu_transfer: tranfer data to jnp.array?
-            inherit_dataframe: if True, it makes self.df instance available, which needs more DRAM when pickling.
-            activation: if True, the activation of mdb will be done when initialization, if False, the activation won't be done and it makes self.df instance available.
+            inherit_dataframe: if True, it makes self.df attribute available, which needs more DRAM when pickling.
+            activation: if True, the activation of mdb will be done when initialization, if False, the activation won't be done and it makes self.df attribute available.
             nonair_broadening: If True, background atmospheric broadening parameters(n and gamma) other than air will also be downloaded (e.g. h2, he...)
             with_error: if True, uncertainty indices become available. (Please set drop_non_numeric=False in radis.api.hitranapi)
+            engine: engine for radis api ("pytables" or "vaex" or None). if None, radis automatically determines. default to None
         """
         self.dbtype = "hitran"
         MdbCommonHitempHitran.__init__(
@@ -843,10 +940,9 @@ class MdbHitran(MdbCommonHitempHitran, HITRANDatabaseManager):
             Ttyp=Ttyp,
             isotope=isotope,
             gpu_transfer=gpu_transfer,
-            inherit_dataframe=inherit_dataframe,
             activation=activation,
-            parfile=parfile,
             with_error=with_error,
+            engine=engine,
         )
 
         # HITRAN ONLY FUNCTIONALITY
@@ -862,7 +958,7 @@ class MdbHitran(MdbCommonHitempHitran, HITRANDatabaseManager):
             molecule=self.simple_molecule_name,
             name="HITRAN-{molecule}",
             local_databases=self.path.parent,
-            engine="default",
+            engine=self.engine,
             verbose=True,
             parallel=True,
             extra_params=extra_params,
@@ -889,7 +985,7 @@ class MdbHitran(MdbCommonHitempHitran, HITRANDatabaseManager):
 
         # Load and return
         columns = None
-        output = "vaex"
+        output = self.engine
 
         isotope_dfform = _convert_proper_isotope(self.isotope)
         df = self.load(
@@ -914,8 +1010,8 @@ class MdbHitran(MdbCommonHitempHitran, HITRANDatabaseManager):
             print("DataFrame (self.df) available.")
             self.df = df
 
-    def instances_from_dataframes(self, df_load_mask):
-        """generate instances from (usually masked) data farame
+    def attributes_from_dataframes(self, df_load_mask):
+        """generate attributes from (usually masked) data farame
 
         Args:
             df_load_mask (DataFrame): (masked) data frame
@@ -924,51 +1020,109 @@ class MdbHitran(MdbCommonHitempHitran, HITRANDatabaseManager):
             ValueError: _description_
         """
         self.check_line_existence_in_nurange(df_load_mask)
-        if isinstance(df_load_mask, vaex.dataframe.DataFrameLocal):
-            self.nu_lines = df_load_mask.wav.values
-            self.line_strength_ref = df_load_mask.int.values
-            self.logsij0 = np.log(self.line_strength_ref)
-            self.delta_air = df_load_mask.Pshft.values
-            self.A = df_load_mask.A.values
-            self.n_air = df_load_mask.Tdpair.values
-            self.gamma_air = df_load_mask.airbrd.values
-            self.gamma_self = df_load_mask.selbrd.values
-            self.elower = df_load_mask.El.values
-            self.gpp = df_load_mask.gp.values
-            # isotope
-            self.isoid = df_load_mask.iso.values
-            self.uniqiso = np.unique(self.isoid)
-            if self.with_error:
-                # uncertainties
-                self.ierr = df_load_mask.ierr.values
+        self._attributes_from_dataframes_vaex(df_load_mask)
 
-            if hasattr(df_load_mask, "n_h2") and self.nonair_broadening:
-                self.n_h2 = df_load_mask.n_h2.values
-                self.gamma_h2 = df_load_mask.gamma_h2.values
+    def __eq__(self, other):
+        """eq method for MdbHitran, definied by comparing all the attributes
 
-            if hasattr(df_load_mask, "n_he") and self.nonair_broadening:
-                self.n_he = df_load_mask.n_he.values
-                self.gamma_he = df_load_mask.gamma_he.values
+        Args:
+            other (_type_): _description_
 
-            if hasattr(df_load_mask, "n_co2") and self.nonair_broadening:
-                self.n_co2 = df_load_mask.n_co2.values
-                self.gamma_co2 = df_load_mask.gamma_co2.values
+        Returns:
+            _type_: _description_
+        """
+        if not isinstance(other, MdbHitran):
+            return False
 
-            if hasattr(df_load_mask, "n_h2o") and self.nonair_broadening:
-                self.n_h2o = df_load_mask.n_h2o.values
-                self.gamma_h2o = df_load_mask.gamma_h2o.values
+        eq_attributes = (
+            all(self.nu_lines == other.nu_lines)
+            and all(self.line_strength_ref_original == other.line_strength_ref_original)
+            and all(self.logsij0 == other.logsij0)
+            and all(self.delta_air == other.delta_air)
+            and all(self.A == other.A)
+            and all(self.n_air == other.n_air)
+            and all(self.gamma_air == other.gamma_air)
+            and all(self.gamma_self == other.gamma_self)
+            and all(self.elower == other.elower)
+            and all(self.gpp == other.gpp)
+            and all(self.isoid == other.isoid)
+            and all(self.uniqiso == other.uniqiso)
+            and self.isotope == other.isotope
+            and self.simple_molecule_name == other.simple_molecule_name
+            and self.gpu_transfer == other.gpu_transfer
+            and self.Ttyp == other.Ttyp
+            and self.elower_max == other.elower_max
+        )
+        eq_attributes = self._if_exist_check_eq_list(other, "ierr", eq_attributes)
+        eq_attributes = self._if_exist_check_eq_list(other, "n_h2", eq_attributes)
+        eq_attributes = self._if_exist_check_eq_list(other, "n_he", eq_attributes)
+        eq_attributes = self._if_exist_check_eq_list(other, "n_co2", eq_attributes)
+        eq_attributes = self._if_exist_check_eq_list(other, "n_h2o", eq_attributes)
+        eq_attributes = self._if_exist_check_eq_list(other, "gamma_h2", eq_attributes)
+        eq_attributes = self._if_exist_check_eq_list(other, "gamma_he", eq_attributes)
+        eq_attributes = self._if_exist_check_eq_list(other, "gamma_co2", eq_attributes)
+        eq_attributes = self._if_exist_check_eq_list(other, "gamma_h2o", eq_attributes)
+
+        return eq_attributes
+
+    def _if_exist_check_eq_list(self, other, attribute, eq_attributes):
+        if hasattr(self, attribute) and hasattr(other, attribute):
+            return eq_attributes and all(
+                getattr(self, attribute) == getattr(other, attribute)
+            )
+        elif not hasattr(self, attribute) and not hasattr(other, attribute):
+            return eq_attributes
+        else:
+            return False
+
+    def __ne__(self, other):
+        return not self.__eq__(other)
+
+    def _attributes_from_dataframes_vaex(self, df_load_mask):
+        self.nu_lines = df_load_mask.wav.values
+        self.line_strength_ref_original = df_load_mask.int.values
+        self.logsij0 = np.log(self.line_strength_ref_original)
+        self.delta_air = df_load_mask.Pshft.values
+        self.A = df_load_mask.A.values
+        self.n_air = df_load_mask.Tdpair.values
+        self.gamma_air = df_load_mask.airbrd.values
+        self.gamma_self = df_load_mask.selbrd.values
+        self.elower = df_load_mask.El.values
+        self.gpp = df_load_mask.gp.values
+        # isotope
+        self.isoid = df_load_mask.iso.values
+        self.uniqiso = np.unique(self.isoid)
+        if self.with_error:
+            # uncertainties
+            self.ierr = df_load_mask.ierr.values
+
+        if hasattr(df_load_mask, "n_h2") and self.nonair_broadening:
+            self.n_h2 = df_load_mask.n_h2.values
+            self.gamma_h2 = df_load_mask.gamma_h2.values
+
+        if hasattr(df_load_mask, "n_he") and self.nonair_broadening:
+            self.n_he = df_load_mask.n_he.values
+            self.gamma_he = df_load_mask.gamma_he.values
+
+        if hasattr(df_load_mask, "n_co2") and self.nonair_broadening:
+            self.n_co2 = df_load_mask.n_co2.values
+            self.gamma_co2 = df_load_mask.gamma_co2.values
+
+        if hasattr(df_load_mask, "n_h2o") and self.nonair_broadening:
+            self.n_h2o = df_load_mask.n_h2o.values
+            self.gamma_h2o = df_load_mask.gamma_h2o.values
 
     def generate_jnp_arrays(self):
         """(re)generate jnp.arrays.
 
         Note:
-           We have nd arrays and jnp arrays. We usually apply the mask to nd arrays and then generate jnp array from the corresponding nd array. For instance, self._A is nd array and self.A is jnp array.
+            We have nd arrays and jnp arrays. We usually apply the mask to nd arrays and then generate jnp array from the corresponding nd array. For instance, self._A is nd array and self.A is jnp array.
 
         """
         # jnp.array copy from the copy sources
         self.dev_nu_lines = jnp.array(self.nu_lines)
-        self.logsij0 = jnp.array(np.log(self.line_strength_ref))
-        self.line_strength_ref = jnp.array(self.line_strength_ref)
+        self.logsij0 = jnp.array(np.log(self.line_strength_ref_original))
+        self.line_strength_ref_original = jnp.array(self.line_strength_ref_original)
         self.delta_air = jnp.array(self.delta_air)
         self.A = jnp.array(self.A)
         self.n_air = jnp.array(self.n_air)

@@ -32,14 +32,19 @@ Transmission Spectra
 
    tutorials/Transmission_beta.rst
 
+|:ringed_planet:| An example of HMC-NUTS for actual hot Saturn (JWST/ERS, NIRSPEC/G395H) can be found `here <https://github.com/sh-tada/exojaxample_WASP39b>`_ .
+
+
 Reflection Spectrum
 ------------------------------------
 
 .. toctree::
    :maxdepth: 1
 
-   tutorials/Jupiter_cloud_model_using_amp.rst
-   tutorials/Jupiter_Hires_Modeling.rst
+   tutorials/jupiters/Jupiter_cloud_model_using_amp.rst
+   tutorials/jupiters/Jupiter_Hires_Modeling.rst
+
+|:ringed_planet:| An example of HMC-NUTS for actual Jupiter reflection spectrum can be found `here <https://github.com/HajimeKawahara/exojaxample_jupiter>`_ .
 
 Molecular/Atomic/Continuum Databases
 ---------------------------------------
@@ -51,6 +56,7 @@ Molecular/Atomic/Continuum Databases
    tutorials/branch.rst
    tutorials/Fortrat.rst
    tutorials/CIA_opacity.rst
+   tutorials/Forward_modeling_for_Fe_I_lines_of_Kurucz.rst
 
 
 Multi Molecule/Segments Mdb and Opa Handler
@@ -118,5 +124,7 @@ Others
    tutorials/hjerting.rst
    tutorials/pure_absorption_rt.rst
    tutorials/voigt_function.rst
+   tutorials/Cross_Section_using_Discrete_Integral_Transform.rst
+   tutorials/Cross_Section_using_Modified_Discrete_Integral_Transform.rst
 
 

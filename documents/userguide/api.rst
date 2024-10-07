@@ -1,10 +1,28 @@
 ExoMol, HITEMP, HITRAN
 --------------------------------------
 
-*June 17th (2023) Hajime Kawahara, Yui Kawashima, Yui Kasagi*
+*August 7th (2024) Hajime Kawahara, Yui Kawashima, Yui Kasagi*
 
 Since version 1.2, the standard molecular database I/O for ExoMol, HITEMP, and HITRAN was shared with the `radis <https://github.com/radis/radis>`_ team. 
 We moved the I/O for these database to `exojax.spec.api <../exojax/exojax.spec.html#module-exojax.spec.api>`_.
+
+.. admonition:: On the radis engine: Vaex or pytables?
+    
+    Up until ``radis 1.4``, ``vaex`` was used as the file I/O engine. However, since vaex has been unable to support ``Python 3.11`` and beyond, 
+    starting from ``radis 0.15``, ``vaex`` has become optional, allowing users to choose between ``pytables`` and ``vaex``. In response to this change, 
+    ExoJAX adopts the same policy as ``radis``. The choice of which engine to use is made automatically, 
+    but users can specify their preference during the initialization of mdb 
+    by setting ``engine = "vaex"`` or ``engine = "pytables"``. The file extension ``.hdf5`` is associated with vaex, while ``.h5`` is used for pytables. 
+    Given that vaex supports lazy I/O, it can provide much faster loading times when available.
+    See `radis documentation <https://github.com/radis/radis/issues/658>`_ for more discussion.
+
+What type of engine is used can be checked by the following code:
+
+.. code:: python
+
+    >>> from radis.api.dbmanager import get_auto_MEMORY_MAPPING_ENGINE
+    >>> get_auto_MEMORY_MAPPING_ENGINE()
+    'vaex'
 
 .. contents::
     :depth: 2
@@ -38,8 +56,8 @@ Switch gpu_transfer off in this case. Then, we can save the use of the device me
 	>>> mdb = MdbExomol(".database/CO/12C-16O/Li2015", nurange=[4200.0, 4300.0], gpu_transfer=False)
 	>>> mdb.logsij0
 		Traceback (most recent call last):
-  		 File "<stdin>", line 1, in <module>
-		 AttributeError: logsij0
+        File "<stdin>", line 1, in <module>
+		AttributeError: logsij0
 
 This table is a short summary of the line information. "on" means gpu_transfer = True, off corresponds to False. 
 
@@ -201,22 +219,22 @@ How to load HITRAN CO database
 
 .. code:: ipython
 	
-	>>> from exojax.spec.api import Mdbhitran
-	>>> Mdbhitran(".database/CO/", nurange=[4200.0, 4300.0])
-	>>> Mdbhitran(".database/05/", nurange=[4200.0, 4300.0])
+	>>> from exojax.spec.api import MdbHitran
+	>>> MdbHitran(".database/CO/", nurange=[4200.0, 4300.0])
+	>>> MdbHitran(".database/05/", nurange=[4200.0, 4300.0])
 	
 
 The style used in ExoJAX 1 is also acceptable (not recommended): 
 
 .. code:: ipython
 	
-	>>> Mdbhitran(".database/CO/05_hit12.par", nurange=[4200.0, 4300.0])
+	>>> MdbHitran(".database/CO/05_hit12.par", nurange=[4200.0, 4300.0])
 
 
 Masking Line Information
 ================================================
 
-We can mask the line information using "apply_mask_mdb" method. Here is an example:
+If needed, we can mask the line information using "apply_mask_mdb" method. Here is an example:
 
 .. code:: python
 

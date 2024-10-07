@@ -1,14 +1,13 @@
 """
     Notes:
-         These tests are classified as the integration test because it 
-         sometimes ends up jaxlib.xla_extension.XlaRuntimeError: RESOURCE_EXAUST due to limited resources.
+        These tests are classified as the integration test because it 
+        sometimes ends up jaxlib.xla_extension.XlaRuntimeError: RESOURCE_EXAUST due to limited resources.
 
 """
 
 import pytest
 from exojax.test.emulate_mdb import mock_wavenumber_grid
 from exojax.test.emulate_mdb import mock_mdb
-
 from exojax.spec.opacalc import OpaPremodit
 from exojax.spec.opacalc import OpaModit
 from exojax.spec.opacalc import OpaDirect

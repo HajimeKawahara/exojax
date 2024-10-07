@@ -1,5 +1,6 @@
-"""generate various grids
+"""generates various grids
 """
+
 from exojax.spec.unitconvert import nu2wav, wav2nu
 from exojax.utils.instfunc import resolution_eslog, resolution_eslin
 from exojax.utils.constants import c
@@ -8,8 +9,8 @@ import numpy as np
 import warnings
 
 
-def wavenumber_grid(x0, x1, N, xsmode, wavelength_order="descending", unit='cm-1'):
-    """generating the recommended wavenumber grid based on the cross section
+def wavenumber_grid(x0, x1, N, xsmode, wavelength_order="descending", unit="cm-1"):
+    """generates the recommended wavenumber grid based on the cross section
     computation mode.
 
     Args:
@@ -19,12 +20,12 @@ def wavenumber_grid(x0, x1, N, xsmode, wavelength_order="descending", unit='cm-1
         xsmode: cross section computation mode (lpf, dit, modit, premodit)
         wavlength order: wavelength order: "ascending" or "descending"
         unit: unit of the input grid, "cm-1", "nm", or "AA"
-        
+
     Note:
-        The wavenumber (nus) and wavelength (wav) grids are in ascending orders. 
+        The wavenumber (nus) and wavelength (wav) grids are in ascending orders.
         Therefore, wav[-1] corresponds to the wavelength of nus[0].
-        ESLIN sets evenly-spaced linear grid in wavenumber space while ESLOG sets 
-        evenly-spaced log grid both in wavenumber and wavelength spaces. 
+        ESLIN sets evenly-spaced linear grid in wavenumber space while ESLOG sets
+        evenly-spaced log grid both in wavenumber and wavelength spaces.
 
     Returns:
         nu_grid: wavenumber grid evenly spaced in log space in ascending order (nus)
@@ -33,7 +34,7 @@ def wavenumber_grid(x0, x1, N, xsmode, wavelength_order="descending", unit='cm-1
     """
     print("xsmode = ", xsmode)
     _check_even_number(N)
-    grid_mode = check_scale_xsmode(xsmode)
+    grid_mode = check_grid_mode_in_xsmode(xsmode)
     grid, unit = _set_grid(x0, x1, N, unit, grid_mode)
     nu_grid = _set_nus(unit, grid)
 
@@ -42,6 +43,7 @@ def wavenumber_grid(x0, x1, N, xsmode, wavelength_order="descending", unit='cm-1
     wav = nu2wav(nu_grid, wavelength_order=wavelength_order, unit="AA")
     resolution = grid_resolution(grid_mode, nu_grid)
     return nu_grid, wav, resolution
+
 
 def _warning_wavelength_order(wavelength_order):
     """this is temporary special warning on wavelenght order
@@ -57,9 +59,9 @@ def _warning_wavelength_order(wavelength_order):
 
 
 def _set_grid(x0, x1, N, unit, grid_mode):
-    if grid_mode == 'ESLOG':
+    if grid_mode == "ESLOG":
         grid = np.logspace(np.log10(x0), np.log10(x1), N, dtype=np.float64)
-    elif grid_mode == 'ESLIN':
+    elif grid_mode == "ESLIN":
         grid, unit = _set_grid_eslin(unit, x0, x1, N)
     else:
         raise ValueError("unavailable xsmode/unit.")
@@ -74,18 +76,18 @@ def _check_even_number(N):
 
 
 def _set_nus(unit, grid):
-    if unit == 'cm-1':
+    if unit == "cm-1":
         nus = grid
-    elif unit == 'nm' or unit == 'AA':
+    elif unit == "nm" or unit == "AA":
         nus = wav2nu(grid, unit)
     return nus
 
 
 def grid_resolution(grid_mode, nus):
-    if grid_mode == 'ESLOG':
+    if grid_mode == "ESLOG":
         resolution = resolution_eslog(nus)
         minr = resolution
-    elif grid_mode == 'ESLIN':
+    elif grid_mode == "ESLIN":
         minr, resolution, _ = resolution_eslin(nus)
     warn_resolution(minr)
     return resolution
@@ -96,7 +98,7 @@ def _set_grid_eslin(unit, x0, x1, N):
         return np.linspace((x0), (x1), N, dtype=np.float64), unit
     else:
         cx0, cx1 = wav2nu(np.array([x0, x1]), unit)
-        unit = 'cm-1'
+        unit = "cm-1"
         return np.linspace((cx0), (cx1), N, dtype=np.float64), unit
 
 
@@ -108,7 +110,7 @@ def velocity_grid(resolution, vmax):
         vmax: maximum velocity (or Vsini) allowed (km/s)
 
     Returns:
-        1D array: delta velocity grid 
+        1D array: delta velocity grid
     """
     dv = delta_velocity_from_resolution(resolution)
     Nk = (vmax / dv) + 1
@@ -122,7 +124,7 @@ def delta_velocity_from_resolution(resolution):
     Args:
         resolution : spectral resolution
 
-    Note: 
+    Note:
         See also [#294](https://github.com/HajimeKawahara/exojax/issues/294) and exojax/tests/figures/functions/delta_velocity_comp.py
 
     Returns:
@@ -139,58 +141,52 @@ def warn_resolution(resolution, crit=700000.0):
         crit: critical resolution
     """
     if resolution < crit:
-        warnings.warn('Resolution may be too small. R=' + str(resolution),
-                      UserWarning)
+        warnings.warn("Resolution may be too small. R=" + str(resolution), UserWarning)
 
 
-def check_scale_xsmode(xsmode):
-    """checking if the scale of xsmode assumes ESLOG(log) or ESLIN(linear)
+def check_grid_mode_in_xsmode(xsmode):
+    """checking if the scale of grid_mode assumes ESLOG(log) or ESLIN(linear)
 
     Args:
-       xsmode: xsmode
+        xsmode: xsmode, (lpf, dit, modit, premodit)
 
     Return:
-       ESLOG/ESLIN/UNKNOWN
+        grid_mode (ESLOG/ESLIN/UNKNOWN)
     """
+
     def _add_upper_case(strlist):
         return strlist + [x.upper() for x in strlist]
 
-    eslog_list = _add_upper_case(['lpf', 'modit', 'premodit', 'presolar'])
-    eslin_list = _add_upper_case(['dit'])
+    eslog_list = _add_upper_case(["lpf", "modit", "premodit", "presolar"])
+    eslin_list = _add_upper_case(["dit"])
     if xsmode in eslog_list:
-        print('xsmode assumes ESLOG in wavenumber space: mode=' + str(xsmode))
-        return 'ESLOG'
+        print("xsmode assumes ESLOG in wavenumber space: xsmode=" + str(xsmode))
+        return "ESLOG"
     elif xsmode in eslin_list:
-        print('xsmode assumes ESLIN in wavenumber space: mode=' + str(xsmode))
-        return 'ESLIN'
+        print("xsmode assumes ESLIN in wavenumber space: xsmode=" + str(xsmode))
+        return "ESLIN"
     else:
         warnings.warn("unknown xsmode.", UserWarning)
-        return 'UNKNOWN'
+        return "UNKNOWN"
 
 
-def check_eslog_wavenumber_grid(nus,
-                                crit1=1.e-5,
-                                crit2=1.e-14,
-                                gridmode='ESLOG'):
+def check_eslog_wavenumber_grid(nus, crit1=1.0e-5, crit2=1.0e-14):
     """checking if wavenumber_grid is evenly spaced in a logarithm scale (ESLOG) or a
     liner scale (ESLIN)
 
     Args:
-       nus: wavenumber grid
-       crit1: criterion for the maximum deviation of log10(nu)/median(log10(nu)) from ESLOG
-       crit2: criterion for the maximum deviation of log10(nu) from ESLOG
-       gridmode: ESLOG or ESLIN
+        nus: wavenumber grid
+        crit1: criterion for the maximum deviation of log10(nu)/median(log10(nu)) from ESLOG
+        crit2: criterion for the maximum deviation of log10(nu) from ESLOG
 
     Returns:
-       True (wavenumber grid is ESLOG) or False (not)
+        True (wavenumber grid is ESLOG) or False (not)
     """
 
     q = np.log10(nus)
     p = q[1:] - q[:-1]
-    w = (p - np.mean(p))
+    w = p - np.mean(p)
     val1 = np.max(np.abs(w)) / np.median(p)
     val2 = np.max(np.abs(w))
 
-    return (val1 < crit1 and val2 < crit2)
-
-
+    return val1 < crit1 and val2 < crit2

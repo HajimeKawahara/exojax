@@ -30,7 +30,7 @@ for dv in range(0, 6):
 load_mask = (mdb.df["vu"] - mdb.df["vl"] == 2)
 mdb.activate(mdb.df, load_mask)
 plt.plot(1.e4 / mdb.nu_lines,
-         mdb.line_strength_ref,
+         mdb.line_strength,
          "+",
          color="black",
          label="activated lines")

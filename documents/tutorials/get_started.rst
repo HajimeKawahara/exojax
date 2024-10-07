@@ -1,7 +1,7 @@
 Get Started
 ===========
 
-Last update: April 11th (2024) Hajime Kawahara for v1.5
+Last update: October 3rd (2024) Hajime Kawahara for v1.6
 
 First, we recommend 64-bit if you do not think about numerical errors.
 Use jax.config to set 64-bit. (But note that 32-bit is sufficient in
@@ -43,7 +43,7 @@ wavenumber range first.
     
     nu_grid, wav, resolution = wavenumber_grid(1900.,
                                                2300.,
-                                               100000,
+                                               70000,
                                                unit="cm-1",
                                                xsmode="premodit")
 
@@ -52,7 +52,7 @@ wavenumber range first.
 .. parsed-literal::
 
     xsmode =  premodit
-    xsmode assumes ESLOG in wavenumber space: mode=premodit
+    xsmode assumes ESLOG in wavenumber space: xsmode=premodit
     ======================================================================
     The wavenumber grid should be in ascending order.
     The users can specify the order of the wavelength grid by themselves.
@@ -62,8 +62,8 @@ wavenumber range first.
 
 .. parsed-literal::
 
-    /home/kawahara/exojax/src/exojax/utils/grids.py:142: UserWarning: Resolution may be too small. R=523403.606697253
-      warnings.warn('Resolution may be too small. R=' + str(resolution),
+    /home/kawahara/exojax/src/exojax/utils/grids.py:144: UserWarning: Resolution may be too small. R=366380.95446155476
+      warnings.warn("Resolution may be too small. R=" + str(resolution), UserWarning)
 
 
 Then, let’s load the molecular database. We here use Carbon monoxide in
@@ -81,13 +81,18 @@ the database name in the ExoMol website (https://www.exomol.com/).
 
 .. parsed-literal::
 
-    /home/kawahara/exojax/src/exojax/utils/molname.py:178: FutureWarning: e2s will be replaced to exact_molname_exomol_to_simple_molname.
+    /home/kawahara/exojax/src/exojax/utils/molname.py:197: FutureWarning: e2s will be replaced to exact_molname_exomol_to_simple_molname.
+      warnings.warn(
+    /home/kawahara/exojax/src/exojax/utils/molname.py:91: FutureWarning: exojax.utils.molname.exact_molname_exomol_to_simple_molname will be replaced to radis.api.exomolapi.exact_molname_exomol_to_simple_molname.
+      warnings.warn(
+    /home/kawahara/exojax/src/exojax/utils/molname.py:91: FutureWarning: exojax.utils.molname.exact_molname_exomol_to_simple_molname will be replaced to radis.api.exomolapi.exact_molname_exomol_to_simple_molname.
       warnings.warn(
 
 
 .. parsed-literal::
 
     HITRAN exact name= (12C)(16O)
+    radis engine =  vaex
     Molecule:  CO
     Isotopologue:  12C-16O
     Background atmosphere:  H2
@@ -95,24 +100,12 @@ the database name in the ExoMol website (https://www.exomol.com/).
     Local folder:  .database/CO/12C-16O/Li2015
     Transition files: 
     	 => File 12C-16O__Li2015.trans
-    #        i_upper    i_lower    A          nu_lines      gup    jlower    jupper    elower      Sij0
-    0        84         42         1.155e-06  2.405586      3      0         1         66960.7124  3.811968891483239e-164
-    1        83         41         1.161e-06  2.441775      3      0         1         65819.903   9.66302808612315e-162
-    2        82         40         1.162e-06  2.477774      3      0         1         64654.9206  2.743839242930895e-159
-    3        81         39         1.159e-06  2.513606      3      0         1         63465.8042  8.733228323835037e-157
-    4        80         38         1.152e-06  2.549292      3      0         1         62252.5793  3.1152203985525016e-154
-    ...      ...        ...        ...        ...           ...    ...       ...       ...         ...
-    125,491  306        253        7.164e-10  22147.135424  15     6         7         80.7354     1.8282485560395954e-31
-    125,492  474        421        9.852e-10  22147.86595   23     10        11        211.4041    2.0425455628245774e-31
-    125,493  348        295        7.72e-10   22147.897299  17     7         8         107.6424    1.9589545214604644e-31
-    125,494  432        379        9.056e-10  22148.262711  21     9         10        172.978     2.0662209079393328e-31
-    125,495  390        337        8.348e-10  22148.273111  19     8         9         138.3903    2.03878272167021e-31
     Broadening code level: a0
 
 
 .. parsed-literal::
 
-    /home/kawahara/exojax/src/radis/radis/api/exomolapi.py:607: AccuracyWarning: The default broadening parameter (alpha = 0.07 cm^-1 and n = 0.5) are used for J'' > 80 up to J'' = 152
+    /home/kawahara/anaconda3/lib/python3.10/site-packages/radis-0.15.1-py3.10.egg/radis/api/exomolapi.py:683: AccuracyWarning: The default broadening parameter (alpha = 0.07 cm^-1 and n = 0.5) are used for J'' > 80 up to J'' = 152
       warnings.warn(
 
 
@@ -133,7 +126,7 @@ tempreature range we will use is 500-1500K.
 
 .. parsed-literal::
 
-    /home/kawahara/exojax/src/exojax/spec/opacalc.py:171: UserWarning: dit_grid_resolution is not None. Ignoring broadening_parameter_resolution.
+    /home/kawahara/exojax/src/exojax/spec/opacalc.py:215: UserWarning: dit_grid_resolution is not None. Ignoring broadening_parameter_resolution.
       warnings.warn(
 
 
@@ -142,7 +135,6 @@ tempreature range we will use is 500-1500K.
     OpaPremodit: params automatically set.
     default elower grid trange (degt) file version: 2
     Robust range: 485.7803992045456 - 1514.171191195336 K
-    Tref changed: 296.0K->570.4914318566549K
     OpaPremodit: Tref_broadening is set to  866.0254037844389 K
     # of reference width grid :  2
     # of temperature exponent grid : 2
@@ -152,11 +144,15 @@ tempreature range we will use is 500-1500K.
 
     uniqidx: 0it [00:00, ?it/s]
 
-
 .. parsed-literal::
 
     Premodit: Twt= 1108.7151960064205 K Tref= 570.4914318566549 K
     Making LSD:|####################| 100%
+
+
+.. parsed-literal::
+
+    
 
 
 Then let’s compute cross section for two different temperature 500 and
@@ -189,28 +185,6 @@ temperatures.
 .. image:: get_started_files/get_started_17_0.png
 
 
-You can also plot the line strengths at T=1500K. We can first change the
-``mdb`` reference temperature and then plot the line intensity.
-
-.. code:: ipython3
-
-    mdb.change_reference_temperature(T_2)
-    plt.plot(mdb.nu_lines,mdb.line_strength_ref,".")
-    plt.xlabel("wavenumber (cm-1)")
-    plt.ylabel("line strength (cm)")
-    plt.yscale("log")
-    plt.show()
-
-
-.. parsed-literal::
-
-    Tref changed: 570.4914318566549K->1500.0K
-
-
-
-.. image:: get_started_files/get_started_19_1.png
-
-
 3. Atmospheric Radiative Transfer
 ---------------------------------
 
@@ -232,7 +206,7 @@ reflection) has been ``ibased`` since v1.5. In our experience,
 .. code:: ipython3
 
     from exojax.spec.atmrt import ArtEmisPure
-    art = ArtEmisPure(nu_grid=nu_grid, pressure_btm=1.e1, pressure_top=1.e-8, nlayer=75, rtsolver="ibased", nstream=8)
+    art = ArtEmisPure(nu_grid=nu_grid, pressure_btm=1.e1, pressure_top=1.e-8, nlayer=50, rtsolver="ibased", nstream=8)
 
 
 
@@ -331,15 +305,8 @@ Then, run the radiative transfer
     plt.show()
 
 
-.. parsed-literal::
 
-    Gaussian Quadrature Parameters: 
-    mu =  [0.06943184 0.33000948 0.66999052 0.93056816]
-    weight = [0.17392742 0.32607258 0.32607258 0.17392742]
-
-
-
-.. image:: get_started_files/get_started_38_1.png
+.. image:: get_started_files/get_started_36_0.png
 
 
 You can check the contribution function too! You should check if the
@@ -356,7 +323,7 @@ dominant contribution is within the layer. If not, you need to change
 
 
 
-.. image:: get_started_files/get_started_41_0.png
+.. image:: get_started_files/get_started_39_0.png
 
 
 Spectral Operators: rotational broadening, instrumental profile, Doppler velocity shift and so on, any operation on spectra.
@@ -381,8 +348,8 @@ planet.
 
 .. parsed-literal::
 
-    /home/kawahara/exojax/src/exojax/utils/grids.py:142: UserWarning: Resolution may be too small. R=523403.606697253
-      warnings.warn('Resolution may be too small. R=' + str(resolution),
+    /home/kawahara/exojax/src/exojax/utils/grids.py:144: UserWarning: Resolution may be too small. R=366380.95446155476
+      warnings.warn("Resolution may be too small. R=" + str(resolution), UserWarning)
 
 
 .. code:: ipython3
@@ -397,7 +364,7 @@ planet.
 
 
 
-.. image:: get_started_files/get_started_45_0.png
+.. image:: get_started_files/get_started_43_0.png
 
 
 Then, the instrumental profile with relative radial velocity shift is
@@ -421,8 +388,8 @@ This process is called ``sampling`` (but just interpolation though).
 
 .. parsed-literal::
 
-    /home/kawahara/exojax/src/exojax/utils/grids.py:142: UserWarning: Resolution may be too small. R=523403.606697253
-      warnings.warn('Resolution may be too small. R=' + str(resolution),
+    /home/kawahara/exojax/src/exojax/utils/grids.py:144: UserWarning: Resolution may be too small. R=366380.95446155476
+      warnings.warn("Resolution may be too small. R=" + str(resolution), UserWarning)
 
 
 .. code:: ipython3
@@ -440,7 +407,7 @@ This process is called ``sampling`` (but just interpolation though).
 
 
 
-.. image:: get_started_files/get_started_48_0.png
+.. image:: get_started_files/get_started_46_0.png
 
 
 That’s it.

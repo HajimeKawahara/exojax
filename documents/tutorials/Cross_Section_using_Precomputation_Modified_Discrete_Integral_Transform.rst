@@ -24,7 +24,7 @@ errors):
     from exojax.spec.hitran import line_strength, doppler_sigma, gamma_hitran, gamma_natural
     from exojax.spec import api
     from exojax.utils.grids import wavenumber_grid
-    
+    from exojax.utils.constants import Tref_original
     # Setting wavenumber bins and loading HITRAN database
     nu_grid, wav, R = wavenumber_grid(1900.0,
                                   2300.0,
@@ -35,7 +35,7 @@ errors):
     mdbCO = api.MdbHitran('CO', nu_grid, isotope=isotope)
     
     # set T, P and partition function
-    Mmol = 28.01  # molecular weight
+    Mmol = mdbCO.molmass
     Tfix = 1000.0  # we assume T=1000K
     Pfix = 1.e-3  # we compute P=1.e-3 bar
     Ppart = Pfix  #partial pressure of CO. here we assume a 100% CO atmosphere.
@@ -44,14 +44,14 @@ errors):
 
 .. parsed-literal::
 
-    2023-03-15 08:31:41.511257: E external/org_tensorflow/tensorflow/stream_executor/cuda/cuda_driver.cc:265] failed call to cuInit: CUDA_ERROR_UNKNOWN: unknown error
-    WARNING:absl:No GPU/TPU found, falling back to CPU. (Set TF_CPP_MIN_LOG_LEVEL=0 and rerun for more info.)
-
-
-.. parsed-literal::
-
     xsmode =  premodit
-    xsmode assumes ESLOG in wavenumber space: mode=premodit
+    xsmode assumes ESLOG in wavenumber space: xsmode=premodit
+    ======================================================================
+    The wavenumber grid should be in ascending order.
+    The users can specify the order of the wavelength grid by themselves.
+    Your wavelength grid is in ***  descending  *** order
+    ======================================================================
+    radis engine =  vaex
 
 
 We need to precompute some quantities. These can be computed using
@@ -64,7 +64,7 @@ section.
     from exojax.spec import initspec
     
     Twt = 1000.0
-    Tref = 400.0
+    Tref_broadening = Tref_original
     dit_grid_resolution = 0.2
     lbd, multi_index_uniqgrid, elower_grid, ngamma_ref_grid, n_Texp_grid, R, pmarray = initspec.init_premodit(
         mdbCO.nu_lines,
@@ -72,9 +72,10 @@ section.
         mdbCO.elower,
         mdbCO.gamma_air,
         mdbCO.n_air,
-        mdbCO.line_strength_ref,
+        mdbCO.line_strength_ref_original,
         Twt=Twt,
-        Tref=Tref,
+        Tref=Tref_original,
+        Tref_broadening=Tref_broadening,
         dit_grid_resolution=dit_grid_resolution,
         diffmode=0,
         warning=False)
@@ -83,13 +84,23 @@ section.
 
 .. parsed-literal::
 
-    uniqidx: 100%|██████████| 4/4 [00:00<00:00, 21236.98it/s]
+    # of reference width grid :  8
+    # of temperature exponent grid : 2
 
 
 .. parsed-literal::
 
-    Premodit: Twt= 1000.0 K Tref= 400.0 K
+    uniqidx: 100%|██████████| 6/6 [00:00<00:00, 23109.11it/s]
+
+.. parsed-literal::
+
+    Premodit: Twt= 1000.0 K Tref= 296.0 K
     Making LSD:|####################| 100%
+
+
+.. parsed-literal::
+
+    
 
 
 Precompute the normalized Dopper width and the partition function ratio:
@@ -100,7 +111,7 @@ Precompute the normalized Dopper width and the partition function ratio:
     
     molecular_mass = mdbCO.molmass
     nsigmaD = normalized_doppler_sigma(Tfix, molecular_mass, R)
-    qt = mdbCO.qr_interp(isotope, Tfix)
+    qt = mdbCO.qr_interp(isotope, Tfix, Tref_original)
         
 
 Let’s compute the cross section! The current PreMODIT has three
@@ -110,10 +121,9 @@ should use xsvector_zeroth.
 .. code:: ipython3
 
     from exojax.spec.premodit import xsvector_zeroth
-    
-    xs = xsvector_zeroth(Tfix, Pfix, nsigmaD, lbd, Tref, R, pmarray, nu_grid,
+    xs = xsvector_zeroth(Tfix, Pfix, nsigmaD, lbd, Tref_original, R, pmarray, nu_grid,
                        elower_grid, multi_index_uniqgrid, ngamma_ref_grid,
-                       n_Texp_grid, qt)
+                       n_Texp_grid, qt, Tref_broadening)
         
 
 
@@ -130,5 +140,30 @@ should use xsvector_zeroth.
 
 
 .. image:: Cross_Section_using_Precomputation_Modified_Discrete_Integral_Transform_files/Cross_Section_using_Precomputation_Modified_Discrete_Integral_Transform_10_0.png
+
+
+.. code:: ipython3
+
+    from exojax.spec.opacalc import OpaDirect
+    opa = OpaDirect(mdbCO, nu_grid)
+    xsv = opa.xsvector(Tfix, Pfix, Ppart)
+
+.. code:: ipython3
+
+    fig = plt.figure(figsize=(10, 5))
+    ax = fig.add_subplot(211)
+    plt.plot(nu_grid, xs, lw=1, alpha=0.5, label="PreMODIT")
+    plt.plot(nu_grid, xsv, lw=1, alpha=0.5, label="Direct LPF")
+    plt.legend(loc="upper right")
+    plt.ylabel("Cross Section (cm2)")
+    ax = fig.add_subplot(212)
+    plt.plot(nu_grid, xsv - xs, lw=2, alpha=0.5, label="PreMODIT")
+    plt.ylabel("LPF - PreMODIT (cm2)")
+    plt.legend(loc="upper left")
+    plt.show()
+
+
+
+.. image:: Cross_Section_using_Precomputation_Modified_Discrete_Integral_Transform_files/Cross_Section_using_Precomputation_Modified_Discrete_Integral_Transform_12_0.png
 
 

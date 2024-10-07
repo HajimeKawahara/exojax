@@ -1,28 +1,18 @@
 jax
 jaxlib
 hitran-api
+beautifulsoup4
 hjson          # Json with comments (for default_radis.json)
 tqdm
-lxml           # parser used for ExoMol website
-publib>=0.3.2  # Plotting styles for Matplotlib
-peakutils
-ruamel.yaml
-json-tricks>=3.15.0  # to deal with non jsonable formats
-mpldatacursor
-beautifulsoup4
-configparser
-cython
-termcolor
-tables
-joblib
-pandas
-plotly
-progressbar2
-numba
-mpldatacursor
-publib
-plotly
-psutil
-seaborn
 PyMieScatt
+radis >= 0.15.2
+numba
+tables
+pandas
+termcolor
+h5py
+joblib
+astropy
+psutil
+json_tricks
 numpy<2

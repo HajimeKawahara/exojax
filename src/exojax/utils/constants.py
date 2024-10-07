@@ -50,13 +50,3 @@ Gcr = 115.38055682147402  #cuberoot of Gravitaional constant in the unit of [km/
 # opfac = bar_cgs/(m_u (g)). m_u: atomic mass unit. bar_cgs: 1 bar in cgs = 1.e6 dyn/cm2
 # obtained as opfac = bar_cgs/m_u(in g) = 1.e6/(m_u(in kg)*1.e3) = 1.e3/m_u(in kg), m_u(in kg) = scipy.constants.m_u.
 opfac = 6.022140858549162e+29
-
-if __name__ == "__main__":
-    #derivation of Gcr
-    from astropy.constants import G as G_astropy
-    from astropy.constants import M_sun
-    from astropy import units as u
-    day = 24 * 3600 * u.s
-    Gu = (G_astropy * M_sun / day).value
-    Gcr_val = Gu**(1.0 / 3.0) * 1.e-3
-    print(Gcr_val)

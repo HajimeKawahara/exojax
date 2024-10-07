@@ -18,38 +18,56 @@ errors):
 .. code:: ipython3
 
     from jax import config
-    config.update('jax_enable_x64', True)
+    
+    config.update("jax_enable_x64", True)
 
 .. code:: ipython3
 
-    from exojax.spec.hitran import SijT, doppler_sigma, gamma_hitran, gamma_natural
+    from exojax.spec.hitran import line_strength
+    from exojax.spec.hitran import doppler_sigma
+    from exojax.spec.hitran import gamma_hitran
+    from exojax.spec.hitran import gamma_natural
     from exojax.utils.grids import wavenumber_grid
+    from exojax.utils.constants import Tref_original
     from exojax.spec import api
     
     # Setting wavenumber bins and loading HITRAN database
-    nus, wav, resolution = wavenumber_grid(1900.0, 2300.0, 350000, unit="cm-1", xsmode="dit")
-    mdbCO = api.MdbHitran('CO', nus, isotope=0, gpu_transfer=True) #here we use all of the isotopes in DIT.
+    nus, wav, resolution = wavenumber_grid(
+        1900.0, 2300.0, 350000, unit="cm-1", xsmode="dit"
+    )
+    mdbCO = api.MdbHitran(
+        "CO", nus, isotope=1, gpu_transfer=True
+    )  # here we use the isotope=1 (12C16O) in DIT.
     
     # set T, P and partition function
-    Mmol = 28.01  # molecular weight
+    Mmol = mdbCO.molmass
     Tfix = 1000.0  # we assume T=1000K
-    Pfix = 1.e-3  # we compute P=1.e-3 bar
-    Ppart = Pfix  #partial pressure of CO. here we assume a 100% CO atmosphere.
-    qt = mdbCO.qr_interp_lines(Tfix) #use all isotopes as a partition function
+    Pfix = 1.0e-3  # we compute P=1.e-3 bar
+    Ppart = Pfix  # partial pressure of CO. here we assume a 100% CO atmosphere.
+    qt = mdbCO.qr_interp_lines(
+        Tfix, Tref_original
+    )  # use all isotopes as a partition function
     
     # compute Sij, gamma_L, sigmaD
-    Sij = SijT(Tfix, mdbCO.logsij0, mdbCO.nu_lines, mdbCO.elower, qt)
-    gammaL = gamma_hitran(Pfix,Tfix, Ppart, mdbCO.n_air, \
-                          mdbCO.gamma_air, mdbCO.gamma_self) \
-    + gamma_natural(mdbCO.A)
+    Sij = line_strength(
+        Tfix, mdbCO.logsij0, mdbCO.nu_lines, mdbCO.elower, qt, Tref_original
+    )
+    gammaL = gamma_hitran(
+        Pfix, Tfix, Ppart, mdbCO.n_air, mdbCO.gamma_air, mdbCO.gamma_self
+    ) + gamma_natural(mdbCO.A)
     sigmaD = doppler_sigma(mdbCO.nu_lines, Tfix, Mmol)
-
 
 
 .. parsed-literal::
 
     xsmode =  dit
-    xsmode assumes ESLIN in wavenumber space: mode=dit
+    xsmode assumes ESLIN in wavenumber space: xsmode=dit
+    ======================================================================
+    The wavenumber grid should be in ascending order.
+    The users can specify the order of the wavelength grid by themselves.
+    Your wavelength grid is in ***  descending  *** order
+    ======================================================================
+    radis engine =  vaex
 
 
 DIT uses a grid of sigmaD, gammaL, and wavenumber.
@@ -58,21 +76,22 @@ set_ditgrid.ditgrid_log_interval makes a 1D grid for sigmaD and gamma.
 .. code:: ipython3
 
     from exojax.spec.set_ditgrid import ditgrid_log_interval
-    sigmaD_grid=ditgrid_log_interval(sigmaD)
-    gammaL_grid=ditgrid_log_interval(gammaL)
+    
+    sigmaD_grid = ditgrid_log_interval(sigmaD)
+    gammaL_grid = ditgrid_log_interval(gammaL)
     
     # we can change the resolution using res option
-    #sigmaD_grid=set_ditgrid(sigmaD,res=0.1)
-    #gammaL_grid=set_ditgrid(gammaL,res=0.1)
+    # sigmaD_grid=set_ditgrid(sigmaD,res=0.1)
+    # gammaL_grid=set_ditgrid(gammaL,res=0.1)
 
 .. code:: ipython3
 
-    #show the grids
-    plt.plot(sigmaD,gammaL,".")
+    # show the grids
+    plt.plot(sigmaD, gammaL, ".")
     for i in sigmaD_grid:
-        plt.axvline(i,lw=1,alpha=0.5,color="C1")
+        plt.axvline(i, lw=1, alpha=0.5, color="C1")
     for i in gammaL_grid:
-        plt.axhline(i,lw=1,alpha=0.5,color="C1")
+        plt.axhline(i, lw=1, alpha=0.5, color="C1")
 
 
 
@@ -84,29 +103,26 @@ needed. These can be computed using init_dit.
 
 .. code:: ipython3
 
-    from exojax.spec import initspec 
-    cnu,indexnu,pmarray=initspec.init_dit(mdbCO.nu_lines,nus)
+    from exojax.spec import initspec
+    
+    cnu, indexnu, pmarray = initspec.init_dit(mdbCO.nu_lines, nus)
 
 Then, let’s compute a cross section!
 
 .. code:: ipython3
 
     from exojax.spec.dit import xsvector
-    xs=xsvector(cnu,indexnu,pmarray,sigmaD,gammaL,Sij,nus,sigmaD_grid,gammaL_grid)
+    
+    xs = xsvector(cnu, indexnu, pmarray, sigmaD, gammaL, Sij, nus, sigmaD_grid, gammaL_grid)
 
-Also, we here try the direct computation using LPF for the comparison
-purpose
+Also, we here try the direct computation using Direct-LPF for the
+comparison purpose
 
 .. code:: ipython3
 
-    from exojax.spec.lpf import auto_xsection
-    xsv=auto_xsection(nus,mdbCO.nu_lines,sigmaD,gammaL,Sij,memory_size=30) 
-
-
-.. parsed-literal::
-
-    100%|███████████████████████████████████████████████████████████████████████████████████| 56/56 [00:08<00:00,  6.96it/s]
-
+    from exojax.spec.opacalc import OpaDirect
+    opa = OpaDirect(mdbCO, nus)
+    xsv = opa.xsvector(Tfix, Pfix, Ppart)
 
 The difference is <~ 1%.
 
@@ -119,7 +135,7 @@ The difference is <~ 1%.
     plt.legend(loc="upper right")
     plt.ylabel("Cross Section (cm2)")
     ax = fig.add_subplot(212)
-    #plt.plot(nus,xsv-xs,lw=2,alpha=0.5,label="precomputed")
+    # plt.plot(nus,xsv-xs,lw=2,alpha=0.5,label="precomputed")
     plt.plot(nus, xsv - xs, lw=2, alpha=0.5)
     plt.ylabel("LPF - DIT (cm2)")
     plt.legend(loc="upper left")
@@ -128,7 +144,8 @@ The difference is <~ 1%.
 
 .. parsed-literal::
 
-    WARNING:matplotlib.legend:No handles with labels found to put in legend.
+    /tmp/ipykernel_809841/4022811313.py:11: UserWarning: No artists with labels found to put in legend.  Note that artists whose label start with an underscore are ignored when legend() is called with no argument.
+      plt.legend(loc="upper left")
 
 
 
