@@ -9,6 +9,8 @@
 import jax.numpy as jnp
 from exojax.utils.constants import hcperk
 
+fac_planck = 3.741771790075259e-05
+
 
 def piBarr(T, nus):
     """pi B_nu (Planck Function)
@@ -23,5 +25,20 @@ def piBarr(T, nus):
     Note:
        hcperk = hc/k in cgs, fac = 2*h*c*c*pi in cgs
     """
-    fac = 3.741771790075259e-05
-    return (fac*nus**3)/(jnp.exp(hcperk*nus/T[:, None])-1.0)
+    
+    return (fac_planck*nus**3)/(jnp.exp(hcperk*nus/T[:, None])-1.0)
+
+def piB(T, nus):
+    """pi B_nu (Planck Function)
+
+    Args:
+        T (float): temperature [K]
+        nus (array): wavenumber grid[cm-1]
+
+    Returns:
+        pi B_nu (erg/s/cm2/cm-1) [Nlayer x Nnu]
+
+    Note:
+        hcperk = hc/k in cgs, fac = 2*h*c*c*pi in cgs
+    """
+    return (fac_planck * nus**3) / (jnp.exp(hcperk * nus / T) - 1.0)
