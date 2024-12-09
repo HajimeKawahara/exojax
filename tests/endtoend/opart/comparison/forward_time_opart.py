@@ -14,7 +14,9 @@ class OpaLayer:
     # user defined class, needs to define self.nugrid
     def __init__(self, Nnus=100000):
         self.nu_grid, self.wav, self.resolution = wavenumber_grid(
-            1900.0, 2300.0, Nnus, unit="cm-1", xsmode="premodit"
+            #1900.0, 2300.0, Nnus, unit="cm-1", xsmode="premodit"
+            2050.0, 2150.0, Nnus, unit="cm-1", xsmode="premodit"
+
         )
         self.mdb_co = MdbExomol(".database/CO/12C-16O/Li2015", nurange=self.nu_grid)
         self.opa_co = OpaPremodit(
@@ -27,7 +29,7 @@ class OpaLayer:
         self.gravity = gravity_jupiter(1.0, 10.0)
 
 
-    #@partial(jit, static_argnums=(0,)) # this is not necessary and makes it extreamly slower
+    #@partial(jit, static_argnums=(0,)) # this is not necessary and makes it significantly slow
     def __call__(self, params):
         temperature, pressure, dP, mixing_ratio = params
         xsv_co = self.opa_co.xsvector(temperature, pressure)
@@ -36,7 +38,7 @@ class OpaLayer:
         )
         return dtau_co
 
-opalayer = OpaLayer(Nnus=100000)
+opalayer = OpaLayer(Nnus=40000)
 opart = OpartEmisPure(opalayer, pressure_top=1.0e-5, pressure_btm=1.0e1, nlayer=200, nstream=8)
 opart.change_temperature_range(400.0, 1500.0)
 def layer_update_function(carry_tauflux, params):
@@ -69,13 +71,14 @@ plot = True
 if plot:
     import matplotlib.pyplot as plt
 
-    fig = plt.figure()
+    fig = plt.figure(figsize=(10,10))
     ax = fig.add_subplot(111)
     for i in range(Ntry):
         plt.plot(opalayer.nu_grid, fluxarr[i])
     #plt.yscale("log")
     plt.ylim(0,30000.0)
-    plt.savefig("forward_opart.png")
+    plt.xlim(2080,2090)
+    plt.savefig("forward_opart_800000.png")
 
 
 jax.profiler.save_device_memory_profile("memory_opart.prof")

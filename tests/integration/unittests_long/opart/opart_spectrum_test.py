@@ -3,7 +3,6 @@
 
 from exojax.spec.opart import OpartEmisPure
 from exojax.spec.layeropacity import single_layer_optical_depth
-from jax.debug import print as jaxprint
 from jax import config
 
 config.update("jax_enable_x64", True)
