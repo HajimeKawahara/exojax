@@ -98,7 +98,7 @@ class OpartEmisPure(ArtCommon):
             layer_update_function (method): 
 
         Returns:
-            _type_: _description_
+            array: flux [Nnus]
         """
         Nnus = len(self.opalayer.nu_grid)
         init_tauintensity = (jnp.zeros(Nnus), jnp.zeros(Nnus))

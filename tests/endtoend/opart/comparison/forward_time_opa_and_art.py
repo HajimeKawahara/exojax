@@ -11,9 +11,10 @@ config.update("jax_enable_x64", True)
 from jax_smi import initialise_tracking
 initialise_tracking()
 
-Nnus = 100000
+Nnus = 300000
 nu_grid, wav, resolution = wavenumber_grid(
     1900.0, 2300.0, Nnus, unit="cm-1", xsmode="premodit"
+#    2050.0, 2150.0, Nnus, unit="cm-1", xsmode="premodit"
 )
 mdb_co = MdbExomol(".database/CO/12C-16O/Li2015", nurange=nu_grid)
 opa_co = OpaPremodit(
@@ -25,7 +26,7 @@ opa_co = OpaPremodit(
 
 gravity = gravity_jupiter(1.0, 10.0)
 art = ArtEmisPure(
-    nu_grid=nu_grid, pressure_top=1.0e-5, pressure_btm=1.0e1, nlayer=500, nstream=8
+    nu_grid=nu_grid, pressure_top=1.0e-5, pressure_btm=1.0e1, nlayer=200, nstream=8
 )
 
 import time
@@ -34,7 +35,7 @@ import tqdm
 
 import matplotlib.pyplot as plt
 
-Ntry = 5
+Ntry = 10
 T = jnp.array(range(0, Ntry)) + 1100.0
 ts = time.time()
 if True:
@@ -60,9 +61,11 @@ plot = True
 if plot:
     import matplotlib.pyplot as plt
 
-    fig = plt.figure()
+    fig = plt.figure(figsize=(10,5))
     ax = fig.add_subplot(111)
     for i in range(Ntry):
         plt.plot(nu_grid, fluxarr[i])
     #plt.yscale("log")
-    plt.savefig("forward_time_opa_and_art.png")
+    plt.ylim(0,30000.0)
+    plt.xlim(2080,2090)
+    plt.savefig("forward_opa_ard_art_200000.png")
