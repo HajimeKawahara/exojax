@@ -8,6 +8,8 @@ import jax.profiler
 from jax import config
 
 config.update("jax_enable_x64", True)
+from jax_smi import initialise_tracking
+initialise_tracking()
 
 Nnus = 100000
 nu_grid, wav, resolution = wavenumber_grid(
@@ -23,7 +25,7 @@ opa_co = OpaPremodit(
 
 gravity = gravity_jupiter(1.0, 10.0)
 art = ArtEmisPure(
-    nu_grid=nu_grid, pressure_top=1.0e-5, pressure_btm=1.0e1, nlayer=200, nstream=8
+    nu_grid=nu_grid, pressure_top=1.0e-5, pressure_btm=1.0e1, nlayer=500, nstream=8
 )
 
 import time

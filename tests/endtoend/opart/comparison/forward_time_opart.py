@@ -10,6 +10,9 @@ import jax.profiler
 import jax.numpy as jnp
 from jax import config
 config.update("jax_enable_x64", True)
+from jax_smi import initialise_tracking
+initialise_tracking()
+
 class OpaLayer:
     # user defined class, needs to define self.nugrid
     def __init__(self, Nnus=100000):
@@ -37,7 +40,7 @@ class OpaLayer:
         return dtau_co
 
 opalayer = OpaLayer(Nnus=100000)
-opart = OpartEmisPure(opalayer, pressure_top=1.0e-5, pressure_btm=1.0e1, nlayer=200, nstream=8)
+opart = OpartEmisPure(opalayer, pressure_top=1.0e-5, pressure_btm=1.0e1, nlayer=500, nstream=8)
 opart.change_temperature_range(400.0, 1500.0)
 def layer_update_function(carry_tauflux, params):
     carry_tauflux = opart.update_layer(carry_tauflux, params)
