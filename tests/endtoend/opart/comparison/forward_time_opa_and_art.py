@@ -8,8 +8,8 @@ import jax.profiler
 from jax import config
 
 config.update("jax_enable_x64", True)
-from jax_smi import initialise_tracking
-initialise_tracking()
+#from jax_smi import initialise_tracking
+#initialise_tracking()
 
 Nnus = 300000
 nu_grid, wav, resolution = wavenumber_grid(
