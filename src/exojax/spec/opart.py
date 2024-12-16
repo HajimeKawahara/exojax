@@ -1,13 +1,13 @@
 from exojax.spec.atmrt import ArtCommon
 from exojax.utils.constants import opfac
 from exojax.spec.rtlayer import fluxsum_scan
-from exojax.spec.rtlayer import fluxsum_vector  # same cost as fluxsum_scan
+
+#   from exojax.spec.rtlayer import fluxsum_vector  # same cost as fluxsum_scan
 from exojax.spec.planck import piB
 from exojax.spec.rtransfer import initialize_gaussian_quadrature
+from exojax.spec.rtransfer import setrt_toonhm
 from jax.lax import scan
 import jax.numpy as jnp
-
-
 
 
 class OpartEmisPure(ArtCommon):
@@ -95,7 +95,7 @@ class OpartEmisPure(ArtCommon):
 
         Args:
             layer_params (list): user defined layer parameters, layer_params[0] should be temperature array
-            layer_update_function (method): 
+            layer_update_function (method):
 
         Returns:
             array: flux [Nnus]
@@ -106,6 +106,66 @@ class OpartEmisPure(ArtCommon):
             layer_update_function, init_tauintensity, layer_params, unroll=False
         )
         return tauflux[1]
+
+    def run(self, opalayer, layer_params, flbl):
+        return self(opalayer, layer_params, flbl)
+
+
+class OpartReflectPure(ArtCommon):
+
+    def __init__(self, pressure_top=1.0e-8, pressure_btm=1.0e2, nlayer=100):
+        super().__init__(pressure_top, pressure_btm, nlayer, opalayer.nu_grid)
+        self.opalayer = opalayer
+        self.nu_grid = self.opalayer.nu_grid
+
+
+    def update_layer(self, carry_rs, params):
+        """updates the layer opacity and flux
+
+        Args:
+            carry_rs (list): carry for the Rphat and Sphat
+            params (list): layer parameters for this layer, params[0] should be temperature
+
+        Returns:
+            list: updated carry_rs
+        """
+        Rphat_prev, Sphat_prev = carry_rs
+        temparature = params[0]
+        source_vector = piB(temparature, self.nu_grid)
+        dtau, single_scattering_albedo, asymmetric_parameter = self.opalayer(params)
+        trans_coeff_i, scat_coeff_i, pihatB_i, zeta_plus, zeta_minus, lambdan = (
+            setrt_toonhm(
+                dtau, single_scattering_albedo, asymmetric_parameter, source_vector
+            )
+        )
+
+        denom = 1.0 - scat_coeff_i * Rphat_prev
+
+        Sphat_each = (
+            pihatB_i + trans_coeff_i * (Sphat_prev + pihatB_i * Rphat_prev) / denom
+        )
+        Rphat_each = scat_coeff_i + trans_coeff_i**2 * Rphat_prev / denom
+        RS = [Rphat_each, Sphat_each]
+        return RS        
+
+    def __call__(self, layer_params, layer_update_function, refectivity_bottom, source_bottom, incoming_flux):
+        """computes outgoing flux
+
+        Args:
+            layer_params (list): user defined layer parameters, layer_params[0] should be temperature array
+            layer_update_function (method):
+            relfectivity_bottom (array): reflectivity at the bottom (Nnus)
+            source_bottom (array): source at the bottom (Nnus)
+            incoming_flux (array): incoming flux [Nnus]
+
+        Returns:
+            array: flux [Nnus]
+        """
+        rs_bottom = (refectivity_bottom, source_bottom)
+        rs, _ = scan(
+            layer_update_function, rs_bottom, layer_params, unroll=False
+        )
+        return rs[0] * incoming_flux + rs[1]
 
     def run(self, opalayer, layer_params, flbl):
         return self(opalayer, layer_params, flbl)
@@ -142,17 +202,23 @@ if __name__ == "__main__":
             dtau_co = opart.opacity_layer_xs(
                 xsv_co, dP, mixing_ratio, self.mdb_co.molmass, gravity
             )
-            return dtau_co
 
-    opart = OpartEmisPure(
-        pressure_top=1.0e-5, pressure_btm=1.0e1, nlayer=200, nstream=8
-    )
+            return dtau_co, single_scattering_albedo, asymmetric_parameter
+
+    
+    
+    opart = OpartReflectPure(pressure_top=1.0e-5, pressure_btm=1.0e1, nlayer=200)
     opalayer = OpaLayer(opart)
+
+
+    def f(carry_ip1, params):
+        RS = opart.update_layer(carry_ip1, params)
+        return RS, None
+
 
     temperature = opart.powerlaw_temperature(1300.0, 0.1)
     mixing_ratio = opart.constant_mmr_profile(0.01)
     layer_params = [temperature, opart.pressure, opart.dParr, mixing_ratio]
-    flux = opart(opalayer, layer_params)
 
     import matplotlib.pyplot as plt
 
