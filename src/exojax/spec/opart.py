@@ -118,7 +118,6 @@ class OpartReflectPure(ArtCommon):
         self.opalayer = opalayer
         self.nu_grid = self.opalayer.nu_grid
 
-
     def update_layer(self, carry_rs, params):
         """updates the layer opacity and flux
 
@@ -145,10 +144,17 @@ class OpartReflectPure(ArtCommon):
             pihatB_i + trans_coeff_i * (Sphat_prev + pihatB_i * Rphat_prev) / denom
         )
         Rphat_each = scat_coeff_i + trans_coeff_i**2 * Rphat_prev / denom
-        RS = [Rphat_each, Sphat_each]
-        return RS        
+        carry_rs = [Rphat_each, Sphat_each]
+        return carry_rs
 
-    def __call__(self, layer_params, layer_update_function, refectivity_bottom, source_bottom, incoming_flux):
+    def __call__(
+        self,
+        layer_params,
+        layer_update_function,
+        refectivity_bottom,
+        source_bottom,
+        incoming_flux,
+    ):
         """computes outgoing flux
 
         Args:
@@ -162,9 +168,7 @@ class OpartReflectPure(ArtCommon):
             array: flux [Nnus]
         """
         rs_bottom = (refectivity_bottom, source_bottom)
-        rs, _ = scan(
-            layer_update_function, rs_bottom, layer_params, unroll=False
-        )
+        rs, _ = scan(layer_update_function, rs_bottom, layer_params, unroll=False)
         return rs[0] * incoming_flux + rs[1]
 
     def run(self, opalayer, layer_params, flbl):
@@ -176,7 +180,7 @@ if __name__ == "__main__":
     from exojax.spec.opacalc import OpaPremodit
     from exojax.utils.grids import wavenumber_grid
     from exojax.test.emulate_mdb import mock_mdbExomol
-
+    from exojax.spec.layeropacity import single_layer_optical_depth
     from jax import config
 
     config.update("jax_enable_x64", True)
@@ -190,7 +194,7 @@ if __name__ == "__main__":
             self.nu_grid, _, _ = wavenumber_grid(
                 1900.0, 2300.0, Nnu, unit="cm-1", xsmode="premodit"
             )
-
+            self.gravity = 2478.57
             self.opa_co = OpaPremodit(
                 self.mdb_co, self.nu_grid, auto_trange=[400.0, 1500.0]
             )
@@ -198,27 +202,37 @@ if __name__ == "__main__":
         def __call__(self, parameters):
             temperature, pressure, dP, mixing_ratio = parameters
             xsv_co = self.opa_co.xsvector(temperature, pressure)
-            gravity = 2478.57
-            dtau_co = opart.opacity_layer_xs(
-                xsv_co, dP, mixing_ratio, self.mdb_co.molmass, gravity
+            dtau_co = single_layer_optical_depth(
+                xsv_co, dP, mixing_ratio, self.mdb_co.molmass, self.gravity
             )
+            single_scattering_albedo = jnp.ones_like(dtau_co) * 0.0001
+            asymmetric_parameter = jnp.ones_like(dtau_co) * 0.0001
 
             return dtau_co, single_scattering_albedo, asymmetric_parameter
 
-    
-    
     opart = OpartReflectPure(pressure_top=1.0e-5, pressure_btm=1.0e1, nlayer=200)
     opalayer = OpaLayer(opart)
 
-
-    def f(carry_ip1, params):
-        RS = opart.update_layer(carry_ip1, params)
-        return RS, None
-
+    def layer_update_function(carry_ip1, params):
+        carry_ip1 = opart.update_layer(carry_ip1, params)
+        return carry_ip1, None
 
     temperature = opart.powerlaw_temperature(1300.0, 0.1)
     mixing_ratio = opart.constant_mmr_profile(0.01)
     layer_params = [temperature, opart.pressure, opart.dParr, mixing_ratio]
+
+    albedo = 0.5
+    incoming_flux = jnp.ones_like(opalayer.nu_grid)
+    reflectivity_surface = albedo * jnp.ones_like(opalayer.nu_grid)
+    source_bottom = jnp.zeros_like(opalayer.nu_grid)
+
+    flux = opart(
+        layer_params,
+        layer_update_function,
+        reflectivity_surface,
+        source_bottom,
+        incoming_flux,
+    )
 
     import matplotlib.pyplot as plt
 
