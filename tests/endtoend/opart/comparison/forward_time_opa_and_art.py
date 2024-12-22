@@ -11,7 +11,7 @@ config.update("jax_enable_x64", True)
 #from jax_smi import initialise_tracking
 #initialise_tracking()
 
-Nnus = 300000
+Nnus = 100000
 nu_grid, wav, resolution = wavenumber_grid(
     1900.0, 2300.0, Nnus, unit="cm-1", xsmode="premodit"
 #    2050.0, 2150.0, Nnus, unit="cm-1", xsmode="premodit"
@@ -35,7 +35,7 @@ import tqdm
 
 import matplotlib.pyplot as plt
 
-Ntry = 10
+Ntry = 100
 T = jnp.array(range(0, Ntry)) + 1100.0
 ts = time.time()
 if True:
