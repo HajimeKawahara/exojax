@@ -14,6 +14,22 @@ from exojax.utils.constants import bar_cgs
 from exojax.spec.dtau_mmwl import dtauM_mmwl
 
 
+def single_layer_optical_depth(xsv, dpressure, mixing_ratio, mass, gravity):
+    """opacity for a single layer (delta tau) from cross section vector, molecular line/Rayleigh scattering
+
+    Args:
+        xsv (array): cross section vector i.e. xsvector (N_wavenumber)
+        dpressure (float): pressure difference (dP) of the layer in bar
+        mixing_ratio (float): mass mixing ratio, (or volume mixing ratio profile)
+        mass (float): molecular mass (or mean molecular weight)
+        gravity (float): constant or 1d profile of gravity in cgs
+
+    Returns:
+        dtau (array): opacity whose element is optical depth in a single layer [N_wavenumber].
+    """
+    return opfac * xsv * dpressure * mixing_ratio / (mass * gravity)
+
+
 def layer_optical_depth(dParr, xsmatrix, mixing_ratio, mass, gravity):
     """dtau matrix from the cross section matrix/vector.
 
@@ -187,7 +203,9 @@ def layer_optical_depth_clouds_lognormal(
     Returns:
         2D array: optical depth matrix, dtau  [N_layer, N_nus]
     """
-    expfac = bar_cgs*sigmag**(jnp.log(sigmag**-4.5))  # bar_cgs * exp(-9/2 * (log sigmag)**2), see tests/manual_check/f32/lnmoment_amcloud.py
+    expfac = bar_cgs * sigmag ** (
+        jnp.log(sigmag**-4.5)
+    )  # bar_cgs * exp(-9/2 * (log sigmag)**2), see tests/manual_check/f32/lnmoment_amcloud.py
     fac = 0.75 / jnp.pi / rg**3 / condensate_substance_density
     em = extinction_coefficient * mmr_condensate[:, None] / N0
     return expfac * fac * em * dParr[:, None] / gravity

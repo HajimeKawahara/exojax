@@ -5,6 +5,7 @@ Basics
    :maxdepth: 1
 
    tutorials/get_started.rst
+   tutorials/get_started_opart.rst
    tutorials/optimize_spectrum.rst
    tutorials/reverse_premodit.rst
    
