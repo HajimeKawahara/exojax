@@ -17,8 +17,8 @@ class OpaLayer:
     # user defined class, needs to define self.nugrid
     def __init__(self, Nnus=100000):
         self.nu_grid, self.wav, self.resolution = wavenumber_grid(
-            1900.0, 2300.0, Nnus, unit="cm-1", xsmode="premodit"
-            #2050.0, 2150.0, Nnus, unit="cm-1", xsmode="premodit"
+            #1900.0, 2300.0, Nnus, unit="cm-1", xsmode="premodit"
+            2050.0, 2150.0, Nnus, unit="cm-1", xsmode="premodit"
 
         )
         self.mdb_co = MdbExomol(".database/CO/12C-16O/Li2015", nurange=self.nu_grid)
