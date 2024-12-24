@@ -1,8 +1,7 @@
 from exojax.spec.atmrt import ArtCommon
 from exojax.utils.constants import opfac
 from exojax.spec.rtlayer import fluxsum_scan
-
-#   from exojax.spec.rtlayer import fluxsum_vector  # same cost as fluxsum_scan
+#from exojax.spec.rtlayer import fluxsum_vector  # same cost as fluxsum_scan
 from exojax.spec.planck import piB
 from exojax.spec.rtransfer import initialize_gaussian_quadrature
 from exojax.spec.rtransfer import setrt_toonhm
@@ -65,7 +64,7 @@ class OpartEmisPure(ArtCommon):
             array: taulow (optical depth at the lower layer, [Nnus])
         """
         return tauup + self.opalayer(params)
-
+        
     def update_layerflux(self, temperature, tauup, taulow, flux):
         """updates the flux of the layer
 
@@ -103,7 +102,9 @@ class OpartEmisPure(ArtCommon):
         Nnus = len(self.opalayer.nu_grid)
         init_tauintensity = (jnp.zeros(Nnus), jnp.zeros(Nnus))
         tauflux, _ = scan(
-            layer_update_function, init_tauintensity, layer_params, unroll=False
+            # for the reason not putting unroll option see #546
+            #layer_update_function, init_tauintensity, layer_params, unroll=False 
+            layer_update_function, init_tauintensity, layer_params
         )
         return tauflux[1]
 
