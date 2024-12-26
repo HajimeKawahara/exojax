@@ -114,7 +114,7 @@ class OpartEmisPure(ArtCommon):
 
 class OpartReflectPure(ArtCommon):
 
-    def __init__(self, pressure_top=1.0e-8, pressure_btm=1.0e2, nlayer=100):
+    def __init__(self, opalayer, pressure_top=1.0e-8, pressure_btm=1.0e2, nlayer=100):
         super().__init__(pressure_top, pressure_btm, nlayer, opalayer.nu_grid)
         self.opalayer = opalayer
         self.nu_grid = self.opalayer.nu_grid
@@ -180,28 +180,27 @@ if __name__ == "__main__":
 
     from exojax.spec.opacalc import OpaPremodit
     from exojax.utils.grids import wavenumber_grid
+    from exojax.test.emulate_mdb import mock_wavenumber_grid
     from exojax.test.emulate_mdb import mock_mdbExomol
     from exojax.spec.layeropacity import single_layer_optical_depth
     from jax import config
 
     config.update("jax_enable_x64", True)
-
     class OpaLayer:
-        # user defined class
-        def __init__(self, opart):
-            self.opart = opart
-            self.mdb_co = mock_mdbExomol()
-            Nnu = 100000
-            self.nu_grid, _, _ = wavenumber_grid(
-                1900.0, 2300.0, Nnu, unit="cm-1", xsmode="premodit"
-            )
+    # user defined class, needs to define self.nugrid
+        def __init__(self, Nnus=150000):
+            self.nu_grid, self.wav, self.resolution = mock_wavenumber_grid()
             self.gravity = 2478.57
+            self.mdb_co = mock_mdbExomol()
+
             self.opa_co = OpaPremodit(
                 self.mdb_co, self.nu_grid, auto_trange=[400.0, 1500.0]
             )
 
-        def __call__(self, parameters):
-            temperature, pressure, dP, mixing_ratio = parameters
+
+
+        def __call__(self, params):
+            temperature, pressure, dP, mixing_ratio = params
             xsv_co = self.opa_co.xsvector(temperature, pressure)
             dtau_co = single_layer_optical_depth(
                 xsv_co, dP, mixing_ratio, self.mdb_co.molmass, self.gravity
@@ -211,9 +210,9 @@ if __name__ == "__main__":
 
             return dtau_co, single_scattering_albedo, asymmetric_parameter
 
-    opart = OpartReflectPure(pressure_top=1.0e-5, pressure_btm=1.0e1, nlayer=200)
-    opalayer = OpaLayer(opart)
-
+    opalayer = OpaLayer()
+    opart = OpartReflectPure(opalayer, pressure_top=1.0e-5, pressure_btm=1.0e1, nlayer=200)
+    
     def layer_update_function(carry_ip1, params):
         carry_ip1 = opart.update_layer(carry_ip1, params)
         return carry_ip1, None
