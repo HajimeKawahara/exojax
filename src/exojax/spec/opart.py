@@ -168,8 +168,9 @@ class OpartReflectPure(ArtCommon):
         Returns:
             array: flux [Nnus]
         """
-        rs_bottom = (refectivity_bottom, source_bottom)
-        rs, _ = scan(layer_update_function, rs_bottom, layer_params, unroll=False)
+        #rs_bottom = (refectivity_bottom, source_bottom)
+        rs_bottom = [refectivity_bottom, source_bottom]
+        rs, _ = scan(layer_update_function, rs_bottom, layer_params)
         return rs[0] * incoming_flux + rs[1]
 
     def run(self, opalayer, layer_params, flbl):
