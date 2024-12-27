@@ -1,5 +1,5 @@
 from exojax.spec.opacalc import OpaPremodit
-from exojax.spec.opart import OpartEmisPure
+from exojax.spec.opart import OpartReflectPure
 from exojax.spec.layeropacity import single_layer_optical_depth
 from exojax.utils.grids import wavenumber_grid
 from exojax.spec.api import MdbExomol
@@ -42,7 +42,7 @@ class OpaLayer:
         return dtau_co
 
 opalayer = OpaLayer(Nnus=100000)
-opart = OpartEmisPure(opalayer, pressure_top=1.0e-5, pressure_btm=1.0e1, nlayer=200, nstream=8)
+opart = OpartReflectPure(opalayer, pressure_top=1.0e-5, pressure_btm=1.0e1, nlayer=200, nstream=8)
 opart.change_temperature_range(400.0, 1500.0)
 def layer_update_function(carry_tauflux, params):
     carry_tauflux = opart.update_layer(carry_tauflux, params)

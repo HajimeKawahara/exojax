@@ -12,7 +12,7 @@ from exojax.test.emulate_mdb import mock_mdb
 from exojax.spec.opacalc import OpaDirect
 from exojax.spec.opacalc import OpaModit
 from exojax.spec.atmrt import ArtEmisPure
-
+import warnings
 from jax import config
 
 config.update("jax_enable_x64", True)
@@ -27,10 +27,20 @@ testdata_lpf["hitemp"] = TESTDATA_CO_HITEMP_LPF_EMISSION_REF
 
 
 def gendata_rt_modit(db):
+    msg = "This function will be removed in the future."
+    msg1 = "Please use generate_testdata_emission_modit instead."
+    warnings.warn(FutureWarning(msg + "/n" + msg1))
+    nu_grid, F0 = generate_testdata_emission_modit(db)
+    return nu_grid, F0
+
+
+def generate_testdata_emission_modit(db):
 
     nu_grid, wav, res = mock_wavenumber_grid()
 
-    art = ArtEmisPure(pressure_top=1.0e-8, pressure_btm=1.0e2, nlayer=100, nu_grid=nu_grid)
+    art = ArtEmisPure(
+        pressure_top=1.0e-8, pressure_btm=1.0e2, nlayer=100, nu_grid=nu_grid
+    )
     art.change_temperature_range(400.0, 1500.0)
     Tarr = art.powerlaw_temperature(1300.0, 0.1)
     mmr_arr = art.constant_mmr_profile(0.1)
@@ -58,7 +68,9 @@ def gendata_rt_modit(db):
 def gendata_rt_lpf(db):
     nu_grid, wav, res = mock_wavenumber_grid()
 
-    art = ArtEmisPure(pressure_top=1.0e-8, pressure_btm=1.0e2, nlayer=100, nu_grid=nu_grid)
+    art = ArtEmisPure(
+        pressure_top=1.0e-8, pressure_btm=1.0e2, nlayer=100, nu_grid=nu_grid
+    )
     art.change_temperature_range(400.0, 1500.0)
     Tarr = art.powerlaw_temperature(1300.0, 0.1)
     mmr_arr = art.constant_mmr_profile(0.1)
