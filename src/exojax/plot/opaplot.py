@@ -1,10 +1,6 @@
 import numpy as np
 
 
-def _log_formatter(value, tick_number):
-    return f"{10**value:.1f}"
-
-
 def plot_lbd(
     lbd_coeff,
     elower_grid,
@@ -36,9 +32,8 @@ def plot_lbd(
     import matplotlib.gridspec as gridspec
     from matplotlib.ticker import FuncFormatter
 
-    lbd_coeff[lbd_coeff == -np.inf] = np.nan
     lbd = np.exp(lbd_coeff[order, :, :, :])
-    # integrates over ngamma_ref
+    # integrates over broadening parameters
     arr = np.nansum(lbd, axis=1)
     arr = np.log10(arr)
     # integrate over Elower
@@ -102,6 +97,10 @@ def plot_lbd(
         ax.text(i, elower_grid[-1], str(ipower), ha="center", va="bottom")
     ax.set_ylabel("$E \, (\mathrm{cm}^{-1})$")
     plt.gca().invert_yaxis()
+
+
+def _log_formatter(value, tick_number):
+    return f"{10**value:.1f}"
 
 
 def _set_xlabel_with_range(grid_for_label, ax, lab, decimals):
