@@ -33,7 +33,6 @@ def save_lbd(
 nu_grid, wav, resolution = wavenumber_grid(
     22900.0, 27000.0, 200000, unit="AA", xsmode="premodit"
 )
-print(resolution)
 mdb = MdbExomol(".database/CO/12C-16O/Li2015/", nurange=nu_grid)
 opa = OpaPremodit(mdb, nu_grid, auto_trange=[500.0, 1000.0], dit_grid_resolution=0.2)
 lbd, midx, gegrid, gngamma, gn, R, pm = opa.opainfo
@@ -42,7 +41,6 @@ plt.savefig("premodit_lbd_co.png", bbox_inches="tight", pad_inches=0.0)
 plt.close()
 filen = "premodit_lbd_coeff_co.npz"
 save_lbd(filen, nu_grid, lbd, midx, gegrid, gngamma, gn)
-
 # H2O case
 nu_grid, wav, resolution = wavenumber_grid(
     14500.0, 15500.0, 100000, unit="AA", xsmode="premodit"

@@ -1,4 +1,5 @@
 import numpy as np
+import matplotlib.pyplot as plt
 
 
 def plot_lbd(
@@ -11,6 +12,7 @@ def plot_lbd(
     vmin=-70,
     vmax=-20,
     order=0,
+    number_of_ticks = 10
 ):
     """Plots the line basis density
 
@@ -27,20 +29,14 @@ def plot_lbd(
         vmin (int, optional): min value of color. Defaults to -70.
         vmax (int, optional): max value of color. Defaults to -20.
         order (int, optional): order of the LBD coefficient. Defaults to 0.
+        number_of_ticks (int, optional): number of ticks. Defaults to 10.
     """
-    import matplotlib.pyplot as plt
     import matplotlib.gridspec as gridspec
     from matplotlib.ticker import FuncFormatter
 
     lbd = np.exp(lbd_coeff[order, :, :, :])
-    # integrates over broadening parameters
-    arr = np.nansum(lbd, axis=1)
-    arr = np.log10(arr)
-    # integrate over Elower
-    arrx = np.nansum(lbd, axis=0)
-    arrx = np.log10(arrx)
-
-    number_of_ticks = 10
+    arr = np.log10(np.nansum(lbd, axis=1))  # integrates over broadening parameters
+    arrx = np.log10(np.nansum(lbd, axis=0))  # integrate over Elower
     n = int(len(nu_grid) / number_of_ticks)
     log_ticks = np.log10(nu_grid[::n])
 
@@ -50,20 +46,8 @@ def plot_lbd(
     ax.set_xticks(log_ticks)
 
     # Warning: interpolation = "none" in imshow is very important, otherwise the fine structure is washed out.
-    c = ax.imshow(
-        arr.T,
-        aspect="auto",
-        cmap="inferno",
-        interpolation="none",
-        extent=[
-            np.log10(nu_grid[0]),
-            np.log10(nu_grid[-1]),
-            elower_grid[-1],
-            elower_grid[0],
-        ],
-        vmin=-70,
-        vmax=-20,
-    )
+    extent = [np.log10(nu_grid[0]),np.log10(nu_grid[-1]),elower_grid[-1],elower_grid[0]]
+    c = _lbd_imshow(extent, vmin, vmax, arr, ax)
     cbar = plt.colorbar(c)
     cbar.set_label("log10(LBD (cm/bin))")
     ax.xaxis.set_major_formatter(FuncFormatter(_log_formatter))
@@ -72,15 +56,8 @@ def plot_lbd(
     plt.gca().invert_yaxis()
 
     ax = fig.add_subplot(gs[0, 4])
-    c = ax.imshow(
-        arrx.T,
-        aspect="auto",
-        cmap="inferno",
-        interpolation="none",
-        extent=[0, len(multi_index_uniqgrid) - 1, elower_grid[-1], elower_grid[0]],
-        vmin=vmin,
-        vmax=vmax,
-    )
+    extent=[0, len(multi_index_uniqgrid) - 1, elower_grid[-1], elower_grid[0]]
+    c = _lbd_imshow(extent, vmin, vmax, arrx, ax)
     ax.xaxis.set_ticklabels([])
     ax.axes.get_xaxis().set_ticks([])
     _set_xlabel_with_range(ngamma_ref_grid, ax, "width", 1)
@@ -90,13 +67,29 @@ def plot_lbd(
 
     cbar = plt.colorbar(c)
     cbar.set_label("log10(LBD (cm/bin))")
+    _put_braodening_indices(elower_grid, multi_index_uniqgrid, ax)
+    ax.set_ylabel("$E \, (\mathrm{cm}^{-1})$")
+    plt.gca().invert_yaxis()
+
+def _lbd_imshow(extent, vmin, vmax, arr, ax):
+    c = ax.imshow(
+        arr.T,
+        aspect="auto",
+        cmap="inferno",
+        interpolation="none",
+        extent = extent,
+        vmin=vmin,
+        vmax=vmax,
+    )
+    
+    return c
+
+def _put_braodening_indices(elower_grid, multi_index_uniqgrid, ax):
     for i, miu in enumerate(multi_index_uniqgrid):
         iwidth = miu[0]
         ipower = miu[1]
         ax.text(i, elower_grid[0], str(iwidth), ha="center", va="top")
         ax.text(i, elower_grid[-1], str(ipower), ha="center", va="bottom")
-    ax.set_ylabel("$E \, (\mathrm{cm}^{-1})$")
-    plt.gca().invert_yaxis()
 
 
 def _log_formatter(value, tick_number):
