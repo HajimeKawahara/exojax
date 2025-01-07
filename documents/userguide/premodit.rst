@@ -1,10 +1,7 @@
 PreMODIT
 =================
 
-`Last update: Nov 26th (2023) Hajime Kawahara`
-
-
-
+`Last update: Jan 8th (2025) Hajime Kawahara`
 
 **PreMODIT (Precomputation of Line Density + MODIT)** is an enhanced algorithm building upon the foundations of MODIT. 
 A key limitation of :doc:`modit` is its requirement to recalculate the lineshape density (LSD) from the complete transition 
@@ -61,7 +58,7 @@ The visualization of the LBD is shown below. For water, the LBD appears densely 
 
 .. code:: ipython
 
-	from exojax.utils.grids import wavenumber_grid
+    from exojax.utils.grids import wavenumber_grid
     from exojax.spec.api import MdbExomol
     from exojax.plot.opaplot import plot_lbd
 
