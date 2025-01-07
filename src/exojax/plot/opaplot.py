@@ -19,6 +19,16 @@ def plot_lbd(
     Note:
         See #548 for more details.
 
+    Examples:
+        nu_grid, wav, resolution = wavenumber_grid(
+            22900.0, 27000.0, 200000, unit="AA", xsmode="premodit"
+        )
+        mdb = MdbExomol(".database/CO/12C-16O/Li2015/", nurange=nu_grid)
+        opa = OpaPremodit(mdb, nu_grid, auto_trange=[500.0, 1000.0], dit_grid_resolution=0.2)
+        lbd, midx, gegrid, gngamma, gn, R, pm = opa.opainfo
+        plot_lbd(lbd, gegrid, gngamma, gn, midx, nu_grid)
+
+
     Args:
         lbd_coeff (array): line basis density coefficients
         elower_grid (array): elower grid
