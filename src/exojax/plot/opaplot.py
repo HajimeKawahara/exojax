@@ -1,9 +1,132 @@
 import numpy as np
 
 
-def plot_broadening_parameters_grids(ngamma_ref_grid, n_Texp_grid, nu_grid,
-                                     resolution, gamma_ref_in, n_Texp_in, crit,
-                                     figname):
+def _log_formatter(value, tick_number):
+    return f"{10**value:.1f}"
+
+
+def plot_lbd(
+    lbd_coeff,
+    elower_grid,
+    ngamma_ref_grid,
+    n_Texp_grid,
+    multi_index_uniqgrid,
+    nu_grid,
+    vmin=-70,
+    vmax=-20,
+    order=0,
+):
+    """Plots the line basis density
+
+    Note:
+        See #548 for more details.
+
+    Args:
+        lbd_coeff (array): line basis density coefficients
+        elower_grid (array): elower grid
+        ngamma_ref_grid (array): n_gamma_ref grid
+        n_Texp_grid (array): n_Texp grid
+        multi_index_uniqgrid (array): multi index grid
+        nu_grid (array): wavenumber grid
+        vmin (int, optional): min value of color. Defaults to -70.
+        vmax (int, optional): max value of color. Defaults to -20.
+        order (int, optional): order of the LBD coefficient. Defaults to 0.
+    """
+    import matplotlib.pyplot as plt
+    import matplotlib.gridspec as gridspec
+    from matplotlib.ticker import FuncFormatter
+
+    lbd_coeff[lbd_coeff == -np.inf] = np.nan
+    lbd = np.exp(lbd_coeff[order, :, :, :])
+    # integrates over ngamma_ref
+    arr = np.nansum(lbd, axis=1)
+    arr = np.log10(arr)
+    # integrate over Elower
+    arrx = np.nansum(lbd, axis=0)
+    arrx = np.log10(arrx)
+
+    number_of_ticks = 10
+    n = int(len(nu_grid) / number_of_ticks)
+    log_ticks = np.log10(nu_grid[::n])
+
+    fig = plt.figure(figsize=(15, 3))
+    gs = gridspec.GridSpec(1, 5, figure=fig)
+    ax = fig.add_subplot(gs[0, :4])
+    ax.set_xticks(log_ticks)
+
+    # Warning: interpolation = "none" in imshow is very important, otherwise the fine structure is washed out.
+    c = ax.imshow(
+        arr.T,
+        aspect="auto",
+        cmap="inferno",
+        interpolation="none",
+        extent=[
+            np.log10(nu_grid[0]),
+            np.log10(nu_grid[-1]),
+            elower_grid[-1],
+            elower_grid[0],
+        ],
+        vmin=-70,
+        vmax=-20,
+    )
+    cbar = plt.colorbar(c)
+    cbar.set_label("log10(LBD (cm/bin))")
+    ax.xaxis.set_major_formatter(FuncFormatter(_log_formatter))
+    ax.set_xlabel("wavenumber $\,(\mathrm{cm}^{-1})$")
+    ax.set_ylabel("$E \, (\mathrm{cm}^{-1})$")
+    plt.gca().invert_yaxis()
+
+    ax = fig.add_subplot(gs[0, 4])
+    c = ax.imshow(
+        arrx.T,
+        aspect="auto",
+        cmap="inferno",
+        interpolation="none",
+        extent=[0, len(multi_index_uniqgrid) - 1, elower_grid[-1], elower_grid[0]],
+        vmin=vmin,
+        vmax=vmax,
+    )
+    ax.xaxis.set_ticklabels([])
+    ax.axes.get_xaxis().set_ticks([])
+    _set_xlabel_with_range(ngamma_ref_grid, ax, "width", 1)
+    ax2 = ax.twiny()
+    ax2.axes.get_xaxis().set_ticks([])
+    _set_xlabel_with_range(n_Texp_grid, ax2, "power", 3)
+
+    cbar = plt.colorbar(c)
+    cbar.set_label("log10(LBD (cm/bin))")
+    for i, miu in enumerate(multi_index_uniqgrid):
+        iwidth = miu[0]
+        ipower = miu[1]
+        ax.text(i, elower_grid[0], str(iwidth), ha="center", va="top")
+        ax.text(i, elower_grid[-1], str(ipower), ha="center", va="bottom")
+    ax.set_ylabel("$E \, (\mathrm{cm}^{-1})$")
+    plt.gca().invert_yaxis()
+
+
+def _set_xlabel_with_range(grid_for_label, ax, lab, decimals):
+    ax.set_xlabel(
+        "# for "
+        + lab
+        + ": "
+        + str(np.round(grid_for_label[0], decimals))
+        + " - "
+        + str(np.round(grid_for_label[-1], decimals))
+        + " cm-1",
+        labelpad=12,
+    )
+
+
+def plot_broadening_parameters_grids(
+    ngamma_ref_grid,
+    n_Texp_grid,
+    nu_grid,
+    resolution,
+    gamma_ref_in,
+    n_Texp_in,
+    crit,
+    figname,
+):
     if 2 * len(gamma_ref_in) > crit:
         n = int(len(gamma_ref_in) / crit)
         gamma_ref = gamma_ref_in[::n]
@@ -21,6 +144,7 @@ def plot_broadening_parameters_grids(ngamma_ref_grid, n_Texp_grid, nu_grid,
     gammag_min, n_Texpg_min = _mesh_grid(n_Texp_grid, mingamma)
 
     import matplotlib.pyplot as plt
+
     fig = plt.figure()
     plt.plot(gamma_ref, n_Texp, ".", alpha=0.3, label="data")
     plt.plot(gammag_min, n_Texpg_min, "x", label="grid (min)", color="gray")
