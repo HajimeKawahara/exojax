@@ -1,23 +1,26 @@
 PreMODIT
 =================
 
-`Last update: Nov 26th (2023) Hajime Kawahara`
+`Last update: Jan 8th (2025) Hajime Kawahara`
+
+**PreMODIT (Precomputation of Line Density + MODIT)** is an enhanced algorithm building upon the foundations of MODIT. 
+A key limitation of :doc:`modit` is its requirement to recalculate the lineshape density (LSD) from the complete transition 
+information whenever the temperature or pressure conditions change. 
+This approach necessitates storing all transition data in device memory, leading to inefficiencies in memory usage.
+
+**PreMODIT** addresses this limitation by introducing a preprocessing step to compress line information prior to storage in device memory. 
+This compression significantly reduces memory requirements. 
 
 
-PreMODIT (Precomputation of line density + MODIT) is the successor algorithm to MODIT. 
-The problem with :doc:`modit` is that the lineshape density (LSD) has to be recalculated 
-from all transition information each time the temperature or pressure conditions are changed. 
-This means that all transition information must be stored in device memory, 
-which is not memory efficient.
+PreMODIT precomputes a density field, referred to as the Line Base Density (LBD), which contains line information. 
+When temperature and pressure are provided, the LBD is converted into LSD, enabling the calculation of opacity using the same method as MODIT. 
+As a result, there is no need to use the molecular database (mdb) for LSD calculations each time.
+However, a trade-off is that the algorithm's accuracy is constrained to a predefined temperature range. 
+To accommodate this limitation, the ``auto_trange`` option is provided in `OpaPremodit <../exojax/exojax.spec.html#exojax.spec.opacalc.OpaPremodit>`_. 
 
-**PreMODIT** is an algorithm that solves the above problem.
-Details of the algorithm will be described in a forthcoming paper (Kawahara, Kawashima et al. in prep).
-But, the basic idea is to compress the line information before storing it in device memory.
-While this change saves device memory, the drawback is that the temperature range over which accuracy can be 
-guaranteed must be set in advance. 
-Therefore, we need the ``auto_trange`` option in `OpaPremodit <../exojax/exojax.spec.html#exojax.spec.opacalc.OpaPremodit>`_.
-``auto_trange`` depends on the version of the default elower grid trange (degt) file. See :doc:`premodit_trange` for the details. 
-One can specify the version of degt file using ``version_auto_trange`` option.
+The functionality of ``auto_trange`` depends on the version of the default elower grid temperature range (degt) file. 
+For more details, refer to :doc:`premodit_trange`. Users can specify the degt file version through the ``version_auto_trange`` option.
+Details of the PreMODIT algorithm will be described in `Paper II <https://arxiv.org/abs/2410.06900>`_.
 
 .. code:: ipython
 	
@@ -30,9 +33,13 @@ One can specify the version of degt file using ``version_auto_trange`` option.
                       diffmode=diffmode,
                       auto_trange=[400.0, 1500.0])
 
-This means that 1% accuracy is guaranteed between 400 - 1500 K. 
-Note that `config.update("jax_enable_x64")` enforces JAX to use 64 bit; see the next section (but you can also use 32 bit, see below).
-If you are more familiar with PreMODIT's algorithm, you can specify the parameters directly using the ``manual_params`` option.
+
+This ensures an accuracy of 1% within the temperature range of 400–1500 K.  
+It is important to note that enabling `config.update("jax_enable_x64")` configures JAX to utilize 64-bit precision; 
+refer to the next section for details. Alternatively, 32-bit precision can also be used, as explained below.  
+
+For users who are well-acquainted with the PreMODIT algorithm, parameters can be specified directly using the ``manual_params`` option.
+
 
 .. code:: ipython
 	
@@ -44,14 +51,47 @@ If you are more familiar with PreMODIT's algorithm, you can specify the paramete
                       diffmode=diffmode,
                       manual_params=[dE, Tref, Twt])
 
+Visulization of the Line Base Density
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+The visualization of the LBD is shown below. For water, the LBD appears densely populated, whereas for CO, it is noticeably sparse.
+
+.. code:: ipython
+
+    from exojax.utils.grids import wavenumber_grid
+    from exojax.spec.api import MdbExomol
+    from exojax.plot.opaplot import plot_lbd
+
+    nu_grid, wav, resolution = wavenumber_grid(
+        14500.0, 15500.0, 100000, unit="AA", xsmode="premodit"
+    )
+    mdb = MdbExomol(".database/H2O/1H2-16O/POKAZATEL/", nurange=nu_grid)
+    opa = OpaPremodit(mdb, nu_grid, auto_trange=[500.0, 1000.0], dit_grid_resolution=0.2)
+    lbd, midx, gegrid, gngamma, gn, R, pm = opa.opainfo
+    plot_lbd(lbd, gegrid, gngamma, gn, midx, nu_grid)
+
+.. image:: premodit_files/premodit_lbd_h2o.png
+
+.. code:: ipython
+
+    nu_grid, wav, resolution = wavenumber_grid(
+        22900.0, 27000.0, 200000, unit="AA", xsmode="premodit"
+    )
+    mdb = MdbExomol(".database/CO/12C-16O/Li2015/", nurange=nu_grid)
+    opa = OpaPremodit(mdb, nu_grid, auto_trange=[500.0, 1000.0], dit_grid_resolution=0.2)
+    lbd, midx, gegrid, gngamma, gn, R, pm = opa.opainfo
+    plot_lbd(lbd, gegrid, gngamma, gn, midx, nu_grid)
+
+.. image:: premodit_files/premodit_lbd_co.png
+
 
 On 32bit and 64bit mode
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-We strongly recommend to use JAX 64bit mode unless you are confident that 32bit is enough for your case. 
-Because the 64 bit mode uses more device memory and computational time, 
-if you perform real retrieval, confirm that the 32 bit does not any severe impact on the results.
-But, for the first case, the 64 bit is the safe option.
+We recommend using JAX's 64-bit mode unless you are confident that 32-bit precision is sufficient for your specific application. 
+While 64-bit mode requires more device memory and computational time, it provides greater numerical stability. 
+If you plan to perform real retrievals, ensure that using 32-bit precision does not significantly impact the results. 
+For initial analyses or cases where precision is critical, 64-bit mode is the safer option.
 
 .. code:: ipython
 	
@@ -117,14 +157,19 @@ Note that ``gamma`` in the above Figure is that at T = ``opa.Tref_broadening``.
 Single Broadening Parameter Set
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-By default, ``OpaPremodit`` constructs one grid for the broadening parameter. 
-However, reducing the number of broadening grids may be useful for fitting, 
-since the device memory usage becomes 
-broadening grid number x free parameter number x atmospheric layer number x wavenumber grid number x F64/F32 byte number. 
-By setting ``broadening_resolution`` option to ``{"mode": "single", "value": None}``, PreMODIT can be used with a single broadening parameter.
-When adopting None to ``"value"``, the median values of ``gamma_ref`` (width cm-1 at reference) and ``n_Texp`` (temperature exponent) at 296K are used. 
-For the single broadening parameter mode, we do not change ``Tref_broadening`` from 296K.
-So, if you wanna change the values, input,  ``gamma_ref`` and ``n_Texp`` at 296K into ``"value"`` as a list ``[gamma_ref, n_Texp]`` .
+
+By default, ``OpaPremodit`` constructs a grid for the broadening parameter. 
+However, reducing the number of broadening grids can be advantageous for fitting purposes, as it decreases device memory usage. 
+The memory usage scales with the product of the number of broadening grids, free parameters, atmospheric layers, wavenumber grid points, 
+and the byte size of F64 or F32 precision.  
+
+To use a single broadening parameter, set the ``broadening_resolution`` option to ``{"mode": "single", "value": None}``. 
+When ``"value"`` is set to ``None``, the median values of ``gamma_ref`` (the width in cm-1 at the reference pressure) 
+and ``n_Texp`` (the temperature exponent) at 296 K are used.  
+
+In single broadening parameter mode, the reference temperature for broadening (``Tref_broadening``) remains fixed at 296 K. 
+To specify custom values, provide ``gamma_ref`` and ``n_Texp`` at 296 K as a list in the format ``[gamma_ref, n_Texp]`` for the ``"value"`` field.
+
 
 .. code:: ipython
 	
