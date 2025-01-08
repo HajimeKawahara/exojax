@@ -17,8 +17,8 @@ class OpaLayer:
     # user defined class, needs to define self.nugrid
     def __init__(self, Nnus=100000):
         self.nu_grid, self.wav, self.resolution = wavenumber_grid(
-            1900.0, 2300.0, Nnus, unit="cm-1", xsmode="premodit"
-            #2050.0, 2150.0, Nnus, unit="cm-1", xsmode="premodit"
+            #1900.0, 2300.0, Nnus, unit="cm-1", xsmode="premodit"
+            2050.0, 2150.0, Nnus, unit="cm-1", xsmode="premodit"
 
         )
         self.mdb_co = MdbExomol(".database/CO/12C-16O/Li2015", nurange=self.nu_grid)
@@ -27,7 +27,6 @@ class OpaLayer:
             self.nu_grid,
             auto_trange=[500.0, 1500.0],
             dit_grid_resolution=1.0,
-            allow_32bit=True
         )
         self.gravity = gravity_jupiter(1.0, 10.0)
 
@@ -43,7 +42,7 @@ class OpaLayer:
 
 opalayer = OpaLayer(Nnus=100000)
 opart = OpartEmisPure(opalayer, pressure_top=1.0e-5, pressure_btm=1.0e1, nlayer=200, nstream=8)
-opart.change_temperature_range(400.0, 1500.0)
+
 def layer_update_function(carry_tauflux, params):
     carry_tauflux = opart.update_layer(carry_tauflux, params)
     return carry_tauflux, None

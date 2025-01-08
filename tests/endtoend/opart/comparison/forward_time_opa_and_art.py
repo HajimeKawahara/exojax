@@ -13,8 +13,8 @@ config.update("jax_enable_x64", True)
 
 Nnus = 100000
 nu_grid, wav, resolution = wavenumber_grid(
-    1900.0, 2300.0, Nnus, unit="cm-1", xsmode="premodit"
-#    2050.0, 2150.0, Nnus, unit="cm-1", xsmode="premodit"
+#    1900.0, 2300.0, Nnus, unit="cm-1", xsmode="premodit"
+    2050.0, 2150.0, Nnus, unit="cm-1", xsmode="premodit"
 )
 mdb_co = MdbExomol(".database/CO/12C-16O/Li2015", nurange=nu_grid)
 opa_co = OpaPremodit(
