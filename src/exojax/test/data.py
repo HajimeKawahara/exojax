@@ -24,6 +24,10 @@ TESTDATA_CO_EXOMOL_PREMODIT_EMISSION_REF = "premodit_rt_test_ref.txt"
 TESTDATA_CO_HITEMP_PREMODIT_EMISSION_REF = "premodit_rt_test_hitemp_ref.txt"
 TESTDATA_VALD_MODIT_EMISSION_REF = "modit_rt_test_vald_ref.txt"
 
+# reflection spectra references
+TESTDATA_CO_EXOMOL_PREMODIT_REFLECTION_REF = "premodit_reflect_test_ref.txt"
+
+
 #sample spectra
 SAMPLE_SPECTRA_CO = "spectrum_co.txt"
 SAMPLE_SPECTRA_CH4 = "spectrum_ch4.txt" #exojax version 1.0
