@@ -9,7 +9,7 @@ from jax.lax import scan
 import jax.numpy as jnp
 
 
-class OpartEmisPure(ArtCommon):
+class OpartReflectPure(ArtCommon):
 
     def __init__(
         self,
@@ -120,7 +120,7 @@ class OpartReflectPure(ArtCommon):
         self.nu_grid = self.opalayer.nu_grid
 
     def update_layer(self, carry_rs, params):
-        """updates the layer opacity and flux
+        """updates the layer opacity and effective reflectivity (Rphat) and source (Sphat)
 
         Args:
             carry_rs (list): carry for the Rphat and Sphat
@@ -133,14 +133,12 @@ class OpartReflectPure(ArtCommon):
         temparature = params[0]
         source_vector = piB(temparature, self.nu_grid)
         dtau, single_scattering_albedo, asymmetric_parameter = self.opalayer(params)
-        trans_coeff_i, scat_coeff_i, pihatB_i, zeta_plus, zeta_minus, lambdan = (
+        trans_coeff_i, scat_coeff_i, pihatB_i, _, _, _ = (
             setrt_toonhm(
                 dtau, single_scattering_albedo, asymmetric_parameter, source_vector
             )
         )
-
         denom = 1.0 - scat_coeff_i * Rphat_prev
-
         Sphat_each = (
             pihatB_i + trans_coeff_i * (Sphat_prev + pihatB_i * Rphat_prev) / denom
         )
@@ -180,7 +178,6 @@ class OpartReflectPure(ArtCommon):
 if __name__ == "__main__":
 
     from exojax.spec.opacalc import OpaPremodit
-    from exojax.utils.grids import wavenumber_grid
     from exojax.test.emulate_mdb import mock_wavenumber_grid
     from exojax.test.emulate_mdb import mock_mdbExomol
     from exojax.spec.layeropacity import single_layer_optical_depth
