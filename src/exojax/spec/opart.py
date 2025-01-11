@@ -10,7 +10,7 @@ from jax.lax import scan
 import jax.numpy as jnp
 
 
-class OpartReflectPure(ArtCommon):
+class OpartEmisPure(ArtCommon):
 
     def __init__(
         self,
@@ -127,14 +127,18 @@ class OpartReflectPure(ArtCommon):
 
         Args:
             carry_rs (list): carry for the Rphat and Sphat
-            params (list): layer parameters for this layer, params[0] should be temperature
+            params (list): layer parameters for this layer
 
         Returns:
             list: updated carry_rs
         """
         Rphat_prev, Sphat_prev = carry_rs
-        temparature = params[0]
-        source_vector = piB(temparature, self.nu_grid)
+        
+        #- no source term
+        # temparature = params[0]
+        # source_vector = piB(temparature, self.nu_grid)
+        #-------------------------------------------------
+        source_vector = jnp.zeros_like(self.nu_grid)
         dtau, single_scattering_albedo, asymmetric_parameter = self.opalayer(params)
         trans_coeff_i, scat_coeff_i, pihatB_i, _, _, _ = setrt_toonhm(
             dtau, single_scattering_albedo, asymmetric_parameter, source_vector
@@ -152,7 +156,6 @@ class OpartReflectPure(ArtCommon):
         layer_params,
         layer_update_function,
         refectivity_bottom,
-        source_bottom,
         incoming_flux,
     ):
         """computes outgoing flux
@@ -161,13 +164,13 @@ class OpartReflectPure(ArtCommon):
             layer_params (list): user defined layer parameters, layer_params[0] should be temperature array
             layer_update_function (method):
             relfectivity_bottom (array): reflectivity at the bottom (Nnus)
-            source_bottom (array): source at the bottom (Nnus)
             incoming_flux (array): incoming flux [Nnus]
 
         Returns:
             array: flux [Nnus]
         """
         # rs_bottom = (refectivity_bottom, source_bottom)
+        source_bottom = jnp.zeros_like(self.nu_grid)
         rs_bottom = [refectivity_bottom, source_bottom]
         rs, _ = scan(layer_update_function, rs_bottom, layer_params)
         return rs[0] * incoming_flux + rs[1]
@@ -213,9 +216,9 @@ if __name__ == "__main__":
         opalayer, pressure_top=1.0e-6, pressure_btm=1.0e0, nlayer=200
     )
 
-    def layer_update_function(carry_ip1, params):
-        carry_ip1 = opart.update_layer(carry_ip1, params)
-        return carry_ip1, None
+    def layer_update_function(carry, params):
+        carry = opart.update_layer(carry, params)
+        return carry, None
 
     temperature = opart.powerlaw_temperature(1300.0, 0.1)
     mixing_ratio = opart.constant_mmr_profile(0.0003)
@@ -227,15 +230,20 @@ if __name__ == "__main__":
     source_bottom = jnp.zeros_like(opalayer.nu_grid)
 
     flux = opart(
-        layer_params,
-        layer_update_function,
-        reflectivity_surface,
-        source_bottom,
-        incoming_flux,
+        layer_params, layer_update_function, reflectivity_surface, incoming_flux
     )
+
+    import pkg_resources
+    import pandas as pd
+    from exojax.test.data import TESTDATA_CO_EXOMOL_PREMODIT_REFLECTION_REF
+    filename = pkg_resources.resource_filename('exojax',
+                                               'data/testdata/' + TESTDATA_CO_EXOMOL_PREMODIT_REFLECTION_REF)
+    dat = pd.read_csv(filename, delimiter=",", names=("nus", "flux"))
+
 
     import matplotlib.pyplot as plt
 
     plt.plot(opalayer.nu_grid, flux)
+    plt.plot(dat["nus"], dat["flux"], ls="dashed")
     plt.savefig("opart_reflection.png")
     plt.show()
