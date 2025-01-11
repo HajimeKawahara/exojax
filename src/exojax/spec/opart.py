@@ -1,7 +1,8 @@
 from exojax.spec.atmrt import ArtCommon
 from exojax.utils.constants import opfac
 from exojax.spec.rtlayer import fluxsum_scan
-#from exojax.spec.rtlayer import fluxsum_vector  # same cost as fluxsum_scan
+
+# from exojax.spec.rtlayer import fluxsum_vector  # same cost as fluxsum_scan
 from exojax.spec.planck import piB
 from exojax.spec.rtransfer import initialize_gaussian_quadrature
 from exojax.spec.rtransfer import setrt_toonhm
@@ -64,7 +65,7 @@ class OpartReflectPure(ArtCommon):
             array: taulow (optical depth at the lower layer, [Nnus])
         """
         return tauup + self.opalayer(params)
-        
+
     def update_layerflux(self, temperature, tauup, taulow, flux):
         """updates the flux of the layer
 
@@ -103,8 +104,10 @@ class OpartReflectPure(ArtCommon):
         init_tauintensity = (jnp.zeros(Nnus), jnp.zeros(Nnus))
         tauflux, _ = scan(
             # for the reason not putting unroll option see #546
-            #layer_update_function, init_tauintensity, layer_params, unroll=False 
-            layer_update_function, init_tauintensity, layer_params
+            # layer_update_function, init_tauintensity, layer_params, unroll=False
+            layer_update_function,
+            init_tauintensity,
+            layer_params,
         )
         return tauflux[1]
 
@@ -133,10 +136,8 @@ class OpartReflectPure(ArtCommon):
         temparature = params[0]
         source_vector = piB(temparature, self.nu_grid)
         dtau, single_scattering_albedo, asymmetric_parameter = self.opalayer(params)
-        trans_coeff_i, scat_coeff_i, pihatB_i, _, _, _ = (
-            setrt_toonhm(
-                dtau, single_scattering_albedo, asymmetric_parameter, source_vector
-            )
+        trans_coeff_i, scat_coeff_i, pihatB_i, _, _, _ = setrt_toonhm(
+            dtau, single_scattering_albedo, asymmetric_parameter, source_vector
         )
         denom = 1.0 - scat_coeff_i * Rphat_prev
         Sphat_each = (
@@ -166,7 +167,7 @@ class OpartReflectPure(ArtCommon):
         Returns:
             array: flux [Nnus]
         """
-        #rs_bottom = (refectivity_bottom, source_bottom)
+        # rs_bottom = (refectivity_bottom, source_bottom)
         rs_bottom = [refectivity_bottom, source_bottom]
         rs, _ = scan(layer_update_function, rs_bottom, layer_params)
         return rs[0] * incoming_flux + rs[1]
@@ -184,9 +185,10 @@ if __name__ == "__main__":
     from jax import config
 
     config.update("jax_enable_x64", True)
+
     class OpaLayer:
-    # user defined class, needs to define self.nugrid
-        def __init__(self, Nnus=150000):
+        # user defined class, needs to define self.nugrid
+        def __init__(self):
             self.nu_grid, self.wav, self.resolution = mock_wavenumber_grid()
             self.gravity = 2478.57
             self.mdb_co = mock_mdbExomol()
@@ -195,31 +197,31 @@ if __name__ == "__main__":
                 self.mdb_co, self.nu_grid, auto_trange=[400.0, 1500.0]
             )
 
-
-
         def __call__(self, params):
             temperature, pressure, dP, mixing_ratio = params
             xsv_co = self.opa_co.xsvector(temperature, pressure)
             dtau_co = single_layer_optical_depth(
                 xsv_co, dP, mixing_ratio, self.mdb_co.molmass, self.gravity
             )
-            single_scattering_albedo = jnp.ones_like(dtau_co) * 0.0001
-            asymmetric_parameter = jnp.ones_like(dtau_co) * 0.0001
+            single_scattering_albedo = jnp.ones_like(dtau_co) * 0.3
+            asymmetric_parameter = jnp.ones_like(dtau_co) * 0.01
 
             return dtau_co, single_scattering_albedo, asymmetric_parameter
 
     opalayer = OpaLayer()
-    opart = OpartReflectPure(opalayer, pressure_top=1.0e-5, pressure_btm=1.0e1, nlayer=200)
-    
+    opart = OpartReflectPure(
+        opalayer, pressure_top=1.0e-6, pressure_btm=1.0e0, nlayer=200
+    )
+
     def layer_update_function(carry_ip1, params):
         carry_ip1 = opart.update_layer(carry_ip1, params)
         return carry_ip1, None
 
     temperature = opart.powerlaw_temperature(1300.0, 0.1)
-    mixing_ratio = opart.constant_mmr_profile(0.01)
+    mixing_ratio = opart.constant_mmr_profile(0.0003)
     layer_params = [temperature, opart.pressure, opart.dParr, mixing_ratio]
 
-    albedo = 0.5
+    albedo = 1.0
     incoming_flux = jnp.ones_like(opalayer.nu_grid)
     reflectivity_surface = albedo * jnp.ones_like(opalayer.nu_grid)
     source_bottom = jnp.zeros_like(opalayer.nu_grid)
@@ -235,4 +237,5 @@ if __name__ == "__main__":
     import matplotlib.pyplot as plt
 
     plt.plot(opalayer.nu_grid, flux)
+    plt.savefig("opart_reflection.png")
     plt.show()
