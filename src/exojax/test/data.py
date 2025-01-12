@@ -41,3 +41,6 @@ TESTDATA_H2_H2_CIA = "H2-H2_TEST.cia"
 
 #test data for refraction index
 TESTDATA_refrind = "test.refrind"
+
+#comparision data from other sources
+COMPDATA_TRANSMISSION_CO = "CO100percent_500K.feather" #from Kawashima
