@@ -16,8 +16,7 @@ config.update("jax_enable_x64", True)
 
 
 def compress_original_kawashima_data():
-    """generate feather file from original data
-    """
+    """generate feather file from original data"""
     filename = "spectrum/CO100percent_500K.dat"
     dat = pd.read_csv(filename, delimiter="   ")
     wav = dat["Wavelength[um]"]
@@ -29,16 +28,15 @@ def compress_original_kawashima_data():
 
 def read_kawashima_data():
     filename = pkg_resources.resource_filename(
-        "exojax", "data/testdata" + COMPDATA_TRANSMISSION_CO
+        "exojax", "data/testdata/" + COMPDATA_TRANSMISSION_CO
     )
-    filename = COMPDATA_TRANSMISSION_CO
     dat = pd.read_feather(filename)
     return dat["Wavelength[um]"], dat["Rp/Rs"]
+
 
 def compare_with_kawashima_code():
     mu_fid = 28.00863
     T_fid = 500.0
-
     Nx = 300000
     nu_grid, wav, res = wavenumber_grid(22900.0, 26000.0, Nx, unit="AA", xsmode="modit")
 
@@ -91,7 +89,7 @@ def compare_with_kawashima_code():
 
 
 if __name__ == "__main__":
-    #compress_original_kawashima_data() # when you want to make feather file from original data
+    # compress_original_kawashima_data() # when you want to make feather file from original data
     import matplotlib.pyplot as plt
 
     wav, rprs = read_kawashima_data()
