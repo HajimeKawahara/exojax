@@ -1,7 +1,7 @@
 """checks the forward model of the opart spectrum
 """
 
-from exojax.spec.opart import OpartReflectPure
+from exojax.spec.opart import OpartEmisPure
 from exojax.spec.layeropacity import single_layer_optical_depth
 from jax import config
 
@@ -40,7 +40,7 @@ def test_forward_opart():
             return dtau_co
 
     opalayer = OpaLayer()
-    opart = OpartReflectPure(
+    opart = OpartEmisPure(
         opalayer, pressure_top=1.0e-8, pressure_btm=1.0e2, nlayer=100, nstream=8
     )
     opart.change_temperature_range(400.0, 1500.0)
