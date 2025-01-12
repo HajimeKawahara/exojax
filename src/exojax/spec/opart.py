@@ -1,5 +1,4 @@
 from exojax.spec.atmrt import ArtCommon
-from exojax.utils.constants import opfac
 from exojax.spec.rtlayer import fluxsum_scan
 
 # from exojax.spec.rtlayer import fluxsum_vector  # same cost as fluxsum_scan
@@ -20,15 +19,14 @@ class OpartEmisPure(ArtCommon):
         nlayer=100,
         nstream=8,
     ):
-        """
-        Initialization of OpartEmisPure
+        """Initialization of OpartEmisPure
 
         Args:
+            opalayer (class): user defined class, needs to define self.nu_grid
             pressure_top (float, optional): top pressure in bar. Defaults to 1.0e-8.
             pressure_btm (float, optional): bottom pressure in bar. Defaults to 1.0e2.
             nlayer (int, optional): the number of the atmospheric layers. Defaults to 100.
-            nu_grid (float, array, optional): the wavenumber grid. Defaults to None.
-            nstream (int, optional): the number of stream. Defaults to 8. Should be 2 for rtsolver = fbased2st
+            nstream (int, optional): the number of the gaussian quadrature. Defaults to 8.
         """
         super().__init__(pressure_top, pressure_btm, nlayer, opalayer.nu_grid)
         self.nstream = nstream
@@ -116,8 +114,22 @@ class OpartEmisPure(ArtCommon):
 
 
 class OpartReflectPure(ArtCommon):
+    """Opart verision of ArtReflectPure.
+
+    This class computes the outgoing flux of the atmosphere with reflection, no emission from atmospheric layers nor surface.
+    Radiative transfer scheme: flux-based two-stream method, using flux-adding treatment, Toon-type hemispheric mean approximation
+    
+    """
 
     def __init__(self, opalayer, pressure_top=1.0e-8, pressure_btm=1.0e2, nlayer=100):
+        """Initialization of OpartReflectPure
+
+        Args:
+            opalayer (class): user defined class, needs to define self.nu_grid
+            pressure_top (float, optional): top pressure in bar. Defaults to 1.0e-8.
+            pressure_btm (float, optional): bottom pressure in bar. Defaults to 1.0e2.
+            nlayer (int, optional): the number of the atmospheric layers. Defaults to 100.
+        """
         super().__init__(pressure_top, pressure_btm, nlayer, opalayer.nu_grid)
         self.opalayer = opalayer
         self.nu_grid = self.opalayer.nu_grid
@@ -133,11 +145,11 @@ class OpartReflectPure(ArtCommon):
             list: updated carry_rs
         """
         Rphat_prev, Sphat_prev = carry_rs
-        
-        #- no source term
+
+        # - no source term
         # temparature = params[0]
         # source_vector = piB(temparature, self.nu_grid)
-        #-------------------------------------------------
+        # -------------------------------------------------
         source_vector = jnp.zeros_like(self.nu_grid)
         dtau, single_scattering_albedo, asymmetric_parameter = self.opalayer(params)
         trans_coeff_i, scat_coeff_i, pihatB_i, _, _, _ = setrt_toonhm(
@@ -236,10 +248,11 @@ if __name__ == "__main__":
     import pkg_resources
     import pandas as pd
     from exojax.test.data import TESTDATA_CO_EXOMOL_PREMODIT_REFLECTION_REF
-    filename = pkg_resources.resource_filename('exojax',
-                                               'data/testdata/' + TESTDATA_CO_EXOMOL_PREMODIT_REFLECTION_REF)
-    dat = pd.read_csv(filename, delimiter=",", names=("nus", "flux"))
 
+    filename = pkg_resources.resource_filename(
+        "exojax", "data/testdata/" + TESTDATA_CO_EXOMOL_PREMODIT_REFLECTION_REF
+    )
+    dat = pd.read_csv(filename, delimiter=",", names=("nus", "flux"))
 
     import matplotlib.pyplot as plt
 

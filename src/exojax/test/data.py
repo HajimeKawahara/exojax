@@ -47,5 +47,8 @@ TESTDATA_CO_HITEMP_PARFILE = "05_HITEMP_SAMPLE.par"
 # test data CIA H2-H2 (4300-4400 cm-1)
 TESTDATA_H2_H2_CIA = "H2-H2_TEST.cia"
 
-# test data for refraction index
+#test data for refraction index
 TESTDATA_refrind = "test.refrind"
+
+#comparision data from other sources
+COMPDATA_TRANSMISSION_CO = "CO100percent_500K.feather" #from Kawashima

@@ -32,6 +32,8 @@ include src/exojax/data/testdata/premodit_rt_test_hitemp_ref.txt
 include src/exojax/data/testdata/modit_rt_test_vald_ref.txt
 include src/exojax/data/testdata/premodit_reflect_test_ref.txt
 
+include src/exojax/data/testdata/CO100percent_500K.feather
+
 
 include src/exojax/data/testdata/H2-H2_TEST.cia
 include src/exojax/data/testdata/CO/05_HITEMP_SAMPLE.par
