@@ -1,11 +1,19 @@
 Intensity-based Emission with pure absorption
 ------------------------------------------------------
 
-Uses ArtPureEmis class
+Intensity-based emission calculation with pure absorption is a method to compute the emergent intensity from a slab of gas 
+with a given temperature-pressure profile and molecular composition.
+
+
+:math:`I_0 (\mu) &= I (\tau_B^\prime, \mu) e^{-\tau_B^\prime} +\int^{\tau_B^\prime}_{0} B (\tau) e^{-\tau^\prime} d \tau^\prime`
+:math:`\approx B(T_B) e^{- \tau_{B}/\mu} + \sum_{n=0}^{N-1} B(T_n) (e^{-\tau_{n}/\mu} - e^{-\tau_{n+1}/\mu}).``
+
+
+Uses ``ArtPureEmis`` class
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-To perform an ibase (intensity-based) calculation using ``ArtEmisPure`` in ExoJAX, 
-one simply needs to change the ``rtsolver`` option to either "ibased" or "ibased_linsap". 
+To perform an ibased (intensity-based) calculation using ``ArtEmisPure`` in ExoJAX, 
+one simply needs to change the ``rtsolver`` option to either ``ibased`` or ``ibased_linsap``. 
 
 The difference between **ibased** and **ibased_linsap** (ibased w/ linear source approximation) in ExoJAX lies in the assumptions 
 regarding the distribution of the source function within the layer. 
@@ -41,3 +49,5 @@ In the case of ibased, the number of streams can be specified. This is done usin
     F0 = art.run(dtau, Tarr) # computes spectrum
 
 
+Layer-wise computation ``OpartEmisPure``
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
