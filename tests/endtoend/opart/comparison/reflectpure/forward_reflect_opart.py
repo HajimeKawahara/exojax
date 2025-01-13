@@ -47,14 +47,14 @@ class OpaLayer:
         return dtau_co, single_scattering_albedo, asymmetric_parameter
 
 opalayer = OpaLayer(Nnus=100000)
-opart = OpartReflectPure(opalayer, pressure_top=1.0e-5, pressure_btm=1.0e1, nlayer=20000)
+opart = OpartReflectPure(opalayer, pressure_top=1.0e-5, pressure_btm=1.0e1, nlayer=200)
 opart.change_temperature_range(400.0, 1500.0)
 def layer_update_function(carry_tauflux, params):
     carry_tauflux = opart.update_layer(carry_tauflux, params)
     return carry_tauflux, None
 
 
-Ntry = 10
+Ntry = 100
 T = jnp.array(range(0, Ntry)) + 1100.0
 #mmr = jnp.ones(Ntry) * 0.01 + jnp.array(range(0, Ntry)) * 1.0e-5
 
