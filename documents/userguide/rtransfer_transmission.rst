@@ -57,6 +57,10 @@ The ``gravity_profile`` instance in the ``ArtTransPure`` class allows for easy c
 Real Example
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+.. image:: ../figures/WASP39b_NIRSpec_G395H.png
+
+Figure. Real HMC-NUTS analysis of the transmission spectrum of WASP-39b observed by JWST/NIRSpec G395H (`Paper II <https://arxiv.org/abs/2410.06900>`_ ). 
+
 An example of calculating the actual transmission spectrum of the hot Saturn WASP-39b observed by JWST can be found in the following repository: 
 
 - `exojaxample_WASP39b <https://github.com/sh-tada/exojaxample_WASP39b>`_ By Shotaro Tada, as used in `Paper II <https://arxiv.org/abs/2410.06900>`_ 

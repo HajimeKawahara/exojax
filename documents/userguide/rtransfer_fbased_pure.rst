@@ -1,4 +1,4 @@
-Flux-based Emission with pure absorption
+Flux-based Emission with pure absorption (optional)
 ------------------------------------------------------
 
 .. warning::
@@ -51,8 +51,7 @@ where :math:`P_{n-1} < P_n`. So, we need to specify a transmission and source fu
 
 
 
-Source function
-^^^^^^^^^^^^^^^^^^^^^^^^
+- Source function
 
 A black body emission as a source as,  
 
@@ -66,8 +65,7 @@ we can use `piBarr <../exojax/exojax.spec.html#exojax.spec.planck.piBarr>`_.
     from exojax.spec import planck	  
 	sourcef = planck.piBarr(Tarr,nus)
 
-Transmission for Pure Absorption: trans2E3
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+- Transmission for Pure Absorption: trans2E3
 
 In this case, the transmission is given as
 
