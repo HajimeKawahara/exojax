@@ -1,6 +1,21 @@
 Transmission Spectroscopy
 ------------------------------
 
+In transmission spectroscopy, the spectrum of the transit depth is measured. The transit depth is the square of the ratio between the planet's radius 
+and the star's radius. Accordingly, ``ExoJAX`` calculates the square of the planet's radius.
+:math:`R_{p,\nu}^2 =  R_{0}^2 + \Delta R_{p,\nu}^2`,
+where 
+:math:`R_0=\underline{r}_{N-1}`
+is the lower boundary of the bottom layer. Atmosphere below this point must remain completely opaque.
+The contribution of the atmospheric layers to the transit radius squared is expressed as
+:math:`\Delta R_{p,\nu}^2 \equiv 2 \int_{R_{0}}^\infty [ 1 - \mathcal{T}_\nu(r)] r d r \approx 2 \int_{\underline{r}_{N-1}}^{\overline{r}_0} [ 1 - \mathcal{T}_\nu(r)] r d r`,
+where 
+:math:`\mathcal{T}_\nu(r) = e^{-t(r)}`
+is the transmission at r and 
+:math:`t(r)` 
+is the chord optical depth at r and 
+:math:`\underline{r}_0` is the lower boundary of the top of atmosphere. 
+
 
 Uses ArtTransPure class
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
