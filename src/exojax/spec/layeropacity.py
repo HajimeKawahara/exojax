@@ -14,12 +14,12 @@ from exojax.utils.constants import bar_cgs
 from exojax.spec.dtau_mmwl import dtauM_mmwl
 
 
-def single_layer_optical_depth(xsv, dpressure, mixing_ratio, mass, gravity):
+def single_layer_optical_depth(dpressure, xsv, mixing_ratio, mass, gravity):
     """opacity for a single layer (delta tau) from cross section vector, molecular line/Rayleigh scattering
 
     Args:
-        xsv (array): cross section vector i.e. xsvector (N_wavenumber)
         dpressure (float): pressure difference (dP) of the layer in bar
+        xsv (array): cross section vector i.e. xsvector (N_wavenumber)
         mixing_ratio (float): mass mixing ratio, (or volume mixing ratio profile)
         mass (float): molecular mass (or mean molecular weight)
         gravity (float): constant or 1d profile of gravity in cgs

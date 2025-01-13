@@ -35,7 +35,7 @@ def test_forward_opart():
             temperature, pressure, dP, mixing_ratio = params
             xsv_co = self.opa_co.xsvector(temperature, pressure)
             dtau_co = single_layer_optical_depth(
-                xsv_co, dP, mixing_ratio, self.mdb_co.molmass, self.gravity
+                dP, xsv_co, mixing_ratio, self.mdb_co.molmass, self.gravity
             )
             return dtau_co
 
