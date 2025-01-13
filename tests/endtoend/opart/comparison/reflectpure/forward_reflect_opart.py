@@ -13,6 +13,10 @@ config.update("jax_enable_x64", True)
 from jax_smi import initialise_tracking
 initialise_tracking()
 
+
+
+
+
 class OpaLayer:
     # user defined class, needs to define self.nugrid
     def __init__(self, Nnus=100000):
@@ -29,7 +33,7 @@ class OpaLayer:
             dit_grid_resolution=1.0,
         )
         self.gravity = gravity_jupiter(1.0, 10.0)
-
+        
 
     #@partial(jit, static_argnums=(0,)) # this is not necessary and makes it significantly slow
     def __call__(self, params):
@@ -38,26 +42,21 @@ class OpaLayer:
         dtau_co = single_layer_optical_depth(
             xsv_co, dP, mixing_ratio, self.mdb_co.molmass, self.gravity
         )
-        return dtau_co
+        single_scattering_albedo = jnp.ones_like(dtau_co) * 0.3
+        asymmetric_parameter = jnp.ones_like(dtau_co) * 0.01
+        return dtau_co, single_scattering_albedo, asymmetric_parameter
 
 opalayer = OpaLayer(Nnus=100000)
-<<<<<<< HEAD
-opart = OpartEmisPure(opalayer, pressure_top=1.0e-5, pressure_btm=1.0e1, nlayer=200, nstream=8)
-
-=======
-opart = OpartReflectPure(opalayer, pressure_top=1.0e-5, pressure_btm=1.0e1, nlayer=200, nstream=8)
+opart = OpartReflectPure(opalayer, pressure_top=1.0e-5, pressure_btm=1.0e1, nlayer=20000)
 opart.change_temperature_range(400.0, 1500.0)
->>>>>>> 16edfdbd3e106b0e24d1bf077a5a1056eb221d31
 def layer_update_function(carry_tauflux, params):
     carry_tauflux = opart.update_layer(carry_tauflux, params)
     return carry_tauflux, None
 
 
-Ntry = 100
+Ntry = 10
 T = jnp.array(range(0, Ntry)) + 1100.0
 #mmr = jnp.ones(Ntry) * 0.01 + jnp.array(range(0, Ntry)) * 1.0e-5
-
-
 
 ts = time.time()
 #with jax.profiler.trace("/tmp/jax-trace", create_perfetto_link=True):
@@ -65,16 +64,22 @@ if True:
     fluxarr = []
     for i in tqdm.tqdm(range(Ntry)):
         temperature = opart.clip_temperature(opart.powerlaw_temperature(T[i], 0.1))
-
-        mixing_ratio = opart.constant_mmr_profile(0.01)
+        mixing_ratio = opart.constant_mmr_profile(0.0003)
         layer_params = [temperature, opart.pressure, opart.dParr, mixing_ratio]
-        flux = opart(layer_params, layer_update_function)
+        albedo = 1.0
+        incoming_flux = jnp.ones_like(opalayer.nu_grid)
+        reflectivity_surface = albedo * jnp.ones_like(opalayer.nu_grid)
+
+        flux = opart(
+            layer_params, layer_update_function, reflectivity_surface, incoming_flux
+        )
+
         fluxarr.append(flux)
         #flux.block_until_ready()
   
 te = time.time()
 print("time=", te - ts)
-plot = True
+plot = False
 if plot:
     import matplotlib.pyplot as plt
 
