@@ -3,12 +3,16 @@ Transmission Spectroscopy
 
 In transmission spectroscopy, the spectrum of the transit depth is measured. The transit depth is the square of the ratio between the planet's radius 
 and the star's radius. Accordingly, ``ExoJAX`` calculates the square of the planet's radius.
+
 :math:`R_{p,\nu}^2 =  R_{0}^2 + \Delta R_{p,\nu}^2`,
+
 where 
 :math:`R_0=\underline{r}_{N-1}`
 is the lower boundary of the bottom layer. Atmosphere below this point must remain completely opaque.
 The contribution of the atmospheric layers to the transit radius squared is expressed as
+
 :math:`\Delta R_{p,\nu}^2 \equiv 2 \int_{R_{0}}^\infty [ 1 - \mathcal{T}_\nu(r)] r d r \approx 2 \int_{\underline{r}_{N-1}}^{\overline{r}_0} [ 1 - \mathcal{T}_\nu(r)] r d r`,
+
 where 
 :math:`\mathcal{T}_\nu(r) = e^{-t(r)}`
 is the transmission at r and 
@@ -25,7 +29,7 @@ For chord integration, one can choose either Simpson's method or the trapezoidal
 Here is the example of the computation of the transmission radius. We here use Simpson's rule for the chord integration. 
 
 In transmission spectroscopy, assuming a constant gravity across the layers is often not a good approximation. 
-The ``gravity_profile`` instance in the ``ArtTransPure`` class allows for easy calculation of the gravity profile, addressing this concern in ExoJAX.
+The ``gravity_profile`` instance in the ``ArtTransPure`` class allows for easy calculation of the gravity profile, addressing this concern in ``ExoJAX``.
 
 .. code:: ipython
     
@@ -50,3 +54,9 @@ The ``gravity_profile`` instance in the ``ArtTransPure`` class allows for easy c
     dtau = art.opacity_profile_xs(xsmatrix, mmr_arr, opa.mdb.molmass,gravity)
     Rp2 = art.run(dtau, Tarr, mmw, radius_btm, gravity_btm)
     
+Real Example
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+An example of calculating the actual transmission spectrum of the hot Saturn WASP-39b observed by JWST can be found in the following repository: 
+
+- `exojaxample_WASP39b <https://github.com/sh-tada/exojaxample_WASP39b>`_ By Shotaro Tada, as used in `Paper II <https://arxiv.org/abs/2410.06900>`_ 
