@@ -1,18 +1,29 @@
 Intensity-based Emission with pure absorption
 ------------------------------------------------------
 
-Intensity-based emission calculation with pure absorption is a method to compute the emergent intensity from a slab of gas 
-with a given temperature-pressure profile and molecular composition.
+Intensity-based (ibased) emission calculation with pure absorption is a method to compute the outgoing flux from the top of the atmosphere,  
+with a given temperature-pressure and opacity profile, by transfering **intensity** (not flux) through the layers assuming **no scattering**. 
 
+:math:`I_0 (\mu) = I (\tau_B^\prime, \mu) e^{-\tau_B^\prime} +\int^{\tau_B^\prime}_{0} B (\tau) e^{-\tau^\prime} d \tau^\prime`
 
-:math:`I_0 (\mu) &= I (\tau_B^\prime, \mu) e^{-\tau_B^\prime} +\int^{\tau_B^\prime}_{0} B (\tau) e^{-\tau^\prime} d \tau^\prime`
-:math:`\approx B(T_B) e^{- \tau_{B}/\mu} + \sum_{n=0}^{N-1} B(T_n) (e^{-\tau_{n}/\mu} - e^{-\tau_{n+1}/\mu}).``
+:math:`\approx B(T_B) e^{- \tau_{B}/\mu} + \sum_{n=0}^{N-1} B(T_n) (e^{-\tau_{n}/\mu} - e^{-\tau_{n+1}/\mu}).`
 
+For the 
+:math:`\mathsf{N}` 
+-stream, the outgoing flux can be computed as
+
+:math:`F_\mathrm{out} = 2 \pi \int_0^1 \mu I_0(\mu)  d \mu`
+
+:math:`\approx 2 \pi \sum_{i=1}^{\mathsf{N}^\prime} w_i \mu_i I_0 (\mu_i),`
+
+where 
+:math:`\mathsf{N}^\prime = \mathsf{N}/2`
+.
 
 Uses ``ArtPureEmis`` class
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-To perform an ibased (intensity-based) calculation using ``ArtEmisPure`` in ExoJAX, 
+To perform tue ibased calculation using ``ArtEmisPure`` in ExoJAX, 
 one simply needs to change the ``rtsolver`` option to either ``ibased`` or ``ibased_linsap``. 
 
 The difference between **ibased** and **ibased_linsap** (ibased w/ linear source approximation) in ExoJAX lies in the assumptions 
@@ -20,7 +31,9 @@ regarding the distribution of the source function within the layer.
 The former assumes a uniform source function, while the latter assumes a linearly approximated source function.
 The latter can also be described as a linear version of Olson and Kunasz's method.
 
-In the case of ibased, the number of streams can be specified. This is done using the ``nstream`` option (which needs to be an even number).
+In the case of ibased, the number of streams (
+:math:`\mathsf{N}` 
+) can be specified. This is done using the ``nstream`` option (which needs to be an even number).
 
 .. code:: ipython
     
