@@ -1,12 +1,17 @@
-Flux-based Emission with pure absorption
+Flux-based Emission with pure absorption (optional)
 ------------------------------------------------------
 
-Uses ArtPureEmis class
+.. warning::
+
+    Currently, the flux-based ``EmisPure`` is optional. Unless there is a specific reason, the use of the intensity-based (``ibased``) method is recommended.
+    See :doc:`../userguide/rtransfer_ibased_pure` for the intensity-based method.
+
+Uses ``ArtPureEmis`` class
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-The following is a typical example of code for calculating emission using fbased with the `art` class in ExoJAX. 
-For pure absorption emission, `ArtEmisPure` is provided as the `art` class. 
-To specify fbase, it is simply a matter of setting the option as `rtsolver="fbased2st"` when calling it (although this is set by default).
+The following is a typical example of code for calculating emission using fbased with the ``art`` class in ExoJAX. 
+For pure absorption emission, ``ArtEmisPure`` is provided as the ``art`` class. 
+To specify fbase, it is simply a matter of setting the option as ``rtsolver="fbased2st"`` when calling it (this is not default).
 
 .. code:: ipython
     
@@ -35,12 +40,8 @@ To specify fbase, it is simply a matter of setting the option as `rtsolver="fbas
 
 
 
-
-
 Understands One-by-One
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-
 
 The upward flux of the n-th layer (with pressure of :math:`P_n`) is connected to that of the (n-1)-th layer with transmission T and source function S. 
 
@@ -50,8 +51,7 @@ where :math:`P_{n-1} < P_n`. So, we need to specify a transmission and source fu
 
 
 
-Source function
-^^^^^^^^^^^^^^^^^^^^^^^^
+- Source function
 
 A black body emission as a source as,  
 
@@ -62,11 +62,10 @@ we can use `piBarr <../exojax/exojax.spec.html#exojax.spec.planck.piBarr>`_.
 
 .. code:: ipython
 
-    >>> from exojax.spec import planck	  
-	>>> sourcef = planck.piBarr(Tarr,nus)
+    from exojax.spec import planck	  
+	sourcef = planck.piBarr(Tarr,nus)
 
-Transmission for Pure Absorption: trans2E3
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+- Transmission for Pure Absorption: trans2E3
 
 In this case, the transmission is given as
 
@@ -76,17 +75,16 @@ where :math:`\Delta \tau_n` is delta opacity in the n-th layer, :math:`E_j(x)` i
 
 .. code:: ipython
     
-    >>> from exojax.spec.rtransfer import trans2E3
-    >>> trans2E3(1.0)
-    DeviceArray(0.21938396, dtype=float32)
+    from exojax.spec.rtransfer import trans2E3
+    trans2E3(1.0) #-> DeviceArray(0.21938396, dtype=float32)
 
 `trans2E3 <../exojax/exojax.spec.html#exojax.spec.rtransfer.trans2E3>`_ is auto-differentiable.
 	
 .. code:: ipython
         
-    >>> from jax import grad
-    >>> grad(trans2E3)(1.0)
-    DeviceArray(-0.29698896, dtype=float32)
+    from jax import grad
+    grad(trans2E3)(1.0) #-> DeviceArray(-0.29698896, dtype=float32)
+    
 
 Here is
 :math:`\Delta \tau`
@@ -101,6 +99,6 @@ dependence of :math:`2 E_3(x)`:
     
     F0=rtrun(dtau,sourcef) 
 
-See ":doc:`../tutorials/forward_modeling`" to know how to use `rtrun <../exojax/exojax.spec.html#exojax.spec.rtransfer.rtrun>`_ in a forward modeling. Note that exojax uses a linear algebraic formulation to solve the RT. The detail description is provided in
+Note that exojax uses a linear algebraic formulation to solve the RT. The detail description is provided in 
 `Paper I <https://iopscience.iop.org/article/10.3847/1538-4365/ac3b4d>`_
 .

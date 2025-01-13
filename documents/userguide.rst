@@ -47,12 +47,11 @@ Radiative Transfer
    :maxdepth: 1
 
    userguide/rtransfer.rst
-   userguide/rtransfer_fbased_pure.rst
    userguide/rtransfer_ibased_pure.rst
    userguide/rtransfer_fbased.rst
-   userguide/rtransfer_fbased_reflection.rst
    userguide/rtransfer_transmission.rst
-
+   userguide/rtransfer_fbased_pure.rst
+   
 Spectral Operators
 =======================
 
