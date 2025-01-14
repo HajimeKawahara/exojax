@@ -49,15 +49,18 @@ def layer_optical_depth(dParr, xsmatrix, mixing_ratio, mass, gravity):
 
     return opfac * xsmatrix * dParr[:, None] * mixing_ratio[:, None] / (mass * gravity)
 
-def singlelayer_optical_depth_CIA(temperature, pressure, dpressure, vmr1, vmr2, mmw, g, logacia_vector):
-    """dtau of the CIA continuum for a single layer (for opart). 
-    
+
+def singlelayer_optical_depth_CIA(
+    temperature, pressure, dpressure, vmr1, vmr2, mmw, g, logacia_vector
+):
+    """dtau of the CIA continuum for a single layer (for opart).
+
     Args:
         temperature (float): layer temperature (K)
         pressure (float): layer pressure (bar)
         dpressure (float) : delta temperature (bar)
-        vmr1 (float): volume mixing ratio (VMR) for molecules 1 
-        vmr2 (float): volume mixing ratio (VMR) for molecules 2 
+        vmr1 (float): volume mixing ratio (VMR) for molecules 1
+        vmr2 (float): volume mixing ratio (VMR) for molecules 2
         mmw: mean molecular weight of atmosphere
         g: gravity (cm2/s)
         logacia_vector: log CIA coefficient vector [N_nus], usually obtained by opacont.OpaCIA.logacia_vector(temperature)
@@ -71,15 +74,7 @@ def singlelayer_optical_depth_CIA(temperature, pressure, dpressure, vmr1, vmr2, 
     logg = jnp.log10(g)
     ddpressure = dpressure / pressure
     dtauc = (
-        10
-        ** (
-            logacia_vector
-            + logn1
-            + logn2
-            + logkB
-            - logg
-            - logm_ucgs
-        )
+        10 ** (logacia_vector + logn1 + logn2 + logkB - logg - logm_ucgs)
         * temperature
         / mmw
         * ddpressure
@@ -88,12 +83,11 @@ def singlelayer_optical_depth_CIA(temperature, pressure, dpressure, vmr1, vmr2, 
     return dtauc
 
 
-
 def layer_optical_depth_CIA(
     nu_grid, temperature, pressure, dParr, vmr1arr, vmr2arr, mmw, g, nucia, tcia, logac
 ):
-    """dtau of the CIA continuum. 
-    
+    """dtau of the CIA continuum.
+
     Warnings:
         Not used in art.
 
@@ -156,14 +150,16 @@ def layer_optical_depth_VALD(dParr, xsm, VMR, mean_molecular_weight, gravity):
     return dtau
 
 
-def layer_optical_depth_Hminus(nu_grid, temperature, Parr, dParr, vmre, vmrh, mmw, g):
-    """dtau of the H- continuum.
+def single_layer_optical_depth_Hminus(
+    nu_grid, temperature, pressure, dpressure, vmre, vmrh, mmw, g
+):
+    """dtau of the H- continuum for a single layer (e.g. for opart).
 
     Args:
-        nu_grid: wavenumber matrix (cm-1)
-        Tarr: temperature array (K)
-        Parr: temperature array (bar)
-        dParr: delta temperature array (bar)
+        nu_grid (array): wavenumber matrix (cm-1) [N_nus]
+        temperature (float): temperature (K)
+        pressure (float): pressure (bar)
+        dpressure (float): delta pressure (bar)
         vmre: volume mixing ratio (VMR) for e- [N_layer]
         vmrH: volume mixing ratio (VMR) for H atoms [N_layer]
         mmw: mean molecular weight of atmosphere
@@ -172,11 +168,47 @@ def layer_optical_depth_Hminus(nu_grid, temperature, Parr, dParr, vmre, vmrh, mm
     Returns:
         optical depth matrix  [N_layer, N_nus]
     """
-    narr = number_density(Parr, temperature)
+    n = number_density(pressure, temperature)
+    number_density_e = vmre * n  # number density for e- [N_layer]
+    number_density_h = vmrh * n  # number density for H atoms [N_layer]
+    logg = jnp.log10(g)
+    ddParr = dpressure / pressure
+    logabc = log_hminus_continuum(
+        nu_grid, temperature, number_density_e, number_density_h
+    )
+    dtauh = (
+        10 ** (logabc + logkB - logg - logm_ucgs)
+        * temperature
+        / mmw
+        * ddParr
+    )
+
+    return dtauh
+
+
+def layer_optical_depth_Hminus(
+    nu_grid, temperature, pressure, dParr, vmre, vmrh, mmw, gravity
+):
+    """dtau of the H- continuum.
+
+    Args:
+        nu_grid (array): wavenumber matrix (cm-1) [N_nus]
+        temperature (array): temperature array (K) [N_layer]
+        pressure (array): pressure array (bar) [N_layer]
+        dParr (array): delta temperature array (bar) [N_layer]
+        vmre (array): volume mixing ratio (VMR) for e- [N_layer]
+        vmrH: volume mixing ratio (VMR) for H atoms [N_layer]
+        mmw: mean molecular weight of atmosphere
+        gravity: gravity (cm2/s)
+
+    Returns:
+        optical depth matrix  [N_layer, N_nus]
+    """
+    narr = number_density(pressure, temperature)
     number_density_e = vmre * narr  # number density for e- [N_layer]
     number_density_h = vmrh * narr  # number density for H atoms [N_layer]
-    logg = jnp.log10(g)
-    ddParr = dParr / Parr
+    logg = jnp.log10(gravity)
+    ddParr = dParr / pressure
     logabc = log_hminus_continuum(
         nu_grid, temperature, number_density_e, number_density_h
     )
