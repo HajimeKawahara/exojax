@@ -51,7 +51,7 @@ def layer_optical_depth(dParr, xsmatrix, mixing_ratio, mass, gravity):
     return opfac * xsmatrix * dParr[:, None] * mixing_ratio[:, None] / (mass * gravity)
 
 
-def singlelayer_optical_depth_CIA(
+def single_layer_optical_depth_CIA(
     temperature, pressure, dpressure, vmr1, vmr2, mmw, g, logacia_vector
 ):
     """dtau of the CIA continuum for a single layer (for opart).
