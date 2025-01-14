@@ -177,12 +177,7 @@ def single_layer_optical_depth_Hminus(
     logabc = log_hminus_continuum_single(
         nu_grid, temperature, number_density_e, number_density_h
     )
-    dtauh = (
-        10 ** (logabc + logkB - logg - logm_ucgs)
-        * temperature
-        / mmw
-        * ddParr
-    )
+    dtauh = 10 ** (logabc + logkB - logg - logm_ucgs) * temperature / mmw * ddParr
 
     return dtauh
 
@@ -249,6 +244,40 @@ def layer_optical_depth_cloudgeo(
         * bar_cgs
     )
     return dtau
+
+
+def single_layer_optical_depth_clouds_lognormal(
+    dpressure,
+    extinction_coefficient,
+    condensate_substance_density,
+    mmr_condensate,
+    rg,
+    sigmag,
+    gravity,
+    N0=1.0,
+):
+    """dtau matrix from the cross section matrix/vector for the lognormal particulate distribution, for a single layer.
+
+
+    Args:
+        dpressure (float): delta pressure (bar)
+        extinction coefficient (array): extinction coefficient  in cgs (cm-1) [N_nus]
+        condensate_substance_density: condensate substance density (g/cm3)
+        mmr_condensate: Mass mixing ratio (array) of condensate [Nlayer]
+        rg: rg parameter in the lognormal distribution of condensate size, defined by (9) in AM01
+        sigmag:sigmag parameter (geometric standard deviation) in the lognormal distribution of condensate size, defined by (9) in AM01, must be sigmag > 1
+        gravity: gravity (cm/s2)
+        N0 (float, optional): the normalization of the lognormal distribution ($N_0$). Defaults to 1.0.
+
+    Returns:
+        1D array: optical depth matrix, dtau  [N_nus]
+    """
+    expfac = bar_cgs * sigmag ** (
+        jnp.log(sigmag**-4.5)
+    )  # bar_cgs * exp(-9/2 * (log sigmag)**2), see tests/manual_check/f32/lnmoment_amcloud.py
+    fac = 0.75 / jnp.pi / rg**3 / condensate_substance_density
+    em = extinction_coefficient * mmr_condensate / N0
+    return expfac * fac * em * dpressure / gravity
 
 
 def layer_optical_depth_clouds_lognormal(
