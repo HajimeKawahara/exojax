@@ -6,6 +6,7 @@ from jax import jit, vmap
 import jax.numpy as jnp
 from exojax.spec.hitrancia import interp_logacia_matrix
 from exojax.spec.hminus import log_hminus_continuum
+from exojax.spec.hminus import log_hminus_continuum_single
 from exojax.atm.idealgas import number_density
 from exojax.utils.constants import logkB
 from exojax.utils.constants import logm_ucgs
@@ -173,7 +174,7 @@ def single_layer_optical_depth_Hminus(
     number_density_h = vmrh * n  # number density for H atoms [N_layer]
     logg = jnp.log10(g)
     ddParr = dpressure / pressure
-    logabc = log_hminus_continuum(
+    logabc = log_hminus_continuum_single(
         nu_grid, temperature, number_density_e, number_density_h
     )
     dtauh = (
