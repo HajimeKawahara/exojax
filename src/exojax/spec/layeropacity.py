@@ -15,7 +15,7 @@ from exojax.spec.dtau_mmwl import dtauM_mmwl
 
 
 def single_layer_optical_depth(dpressure, xsv, mixing_ratio, mass, gravity):
-    """opacity for a single layer (delta tau) from cross section vector, molecular line/Rayleigh scattering
+    """opacity for a single layer (delta tau) from cross section vector, molecular line/Rayleigh scattering (for opart)
 
     Args:
         dpressure (float): pressure difference (dP) of the layer in bar
@@ -37,9 +37,9 @@ def layer_optical_depth(dParr, xsmatrix, mixing_ratio, mass, gravity):
         opfac=bar_cgs/(m_u (g)). m_u: atomic mass unit. It can be obtained by fac=1.e3/m_u, where m_u = scipy.constants.m_u.
 
     Args:
-        dParr: delta pressure profile (bar) [N_layer]
-        xsmatrix: cross section matrix (cm2) [N_layer, N_nus] or cross section vector (cm2) [N_nus]
-        mixing_ratio: volume mixing ratio (VMR) or mass mixing ratio (MMR) [N_layer]
+        dParr (array): delta pressure profile (bar) [N_layer]
+        xsmatrix (2D or 1D array): cross section matrix (cm2) [N_layer, N_nus] or cross section vector (cm2) [N_nus]
+        mixing_ratio (array): volume mixing ratio (VMR) or mass mixing ratio (MMR) [N_layer]
         mass: mean molecular weight for VMR or molecular mass for MMR
         gravity: gravity (cm/s2)
 
@@ -49,32 +49,73 @@ def layer_optical_depth(dParr, xsmatrix, mixing_ratio, mass, gravity):
 
     return opfac * xsmatrix * dParr[:, None] * mixing_ratio[:, None] / (mass * gravity)
 
-
-def layer_optical_depth_CIA(
-    nu_grid, temperature, pressure, dParr, vmr1, vmr2, mmw, g, nucia, tcia, logac
-):
-    """dtau of the CIA continuum. Not
-    used in art.
-
+def singlelayer_optical_depth_CIA(temperature, pressure, dpressure, vmr1, vmr2, mmw, g, logacia_vector):
+    """dtau of the CIA continuum for a single layer (for opart). 
+    
     Args:
-        nu_grid: wavenumber matrix (cm-1)
-        temperature: temperature array (K)
-        pressure: pressure array (bar)
-        dParr: delta temperature array (bar)
-        vmr1: volume mixing ratio (VMR) for molecules 1 [N_layer]
-        vmr2: volume mixing ratio (VMR) for molecules 2 [N_layer]
+        temperature (float): layer temperature (K)
+        pressure (float): layer pressure (bar)
+        dpressure (float) : delta temperature (bar)
+        vmr1 (float): volume mixing ratio (VMR) for molecules 1 
+        vmr2 (float): volume mixing ratio (VMR) for molecules 2 
         mmw: mean molecular weight of atmosphere
         g: gravity (cm2/s)
-        nucia: wavenumber array for CIA
-        tcia: temperature array for CIA
+        logacia_vector: log CIA coefficient vector [N_nus], usually obtained by opacont.OpaCIA.logacia_vector(temperature)
+
+    Returns:
+        1D array: optical depth matrix, dtau  [N_nus]
+    """
+    n = number_density(pressure, temperature)
+    logn1 = jnp.log10(vmr1 * n)  # log number density
+    logn2 = jnp.log10(vmr2 * n)  # log number density
+    logg = jnp.log10(g)
+    ddpressure = dpressure / pressure
+    dtauc = (
+        10
+        ** (
+            logacia_vector
+            + logn1
+            + logn2
+            + logkB
+            - logg
+            - logm_ucgs
+        )
+        * temperature
+        / mmw
+        * ddpressure
+    )
+
+    return dtauc
+
+
+
+def layer_optical_depth_CIA(
+    nu_grid, temperature, pressure, dParr, vmr1arr, vmr2arr, mmw, g, nucia, tcia, logac
+):
+    """dtau of the CIA continuum. 
+    
+    Warnings:
+        Not used in art.
+
+    Args:
+        nu_grid (array): wavenumber matrix (cm-1)
+        temperature (array): temperature array (K)
+        pressure (array): pressure array (bar)
+        dParr (array): delta temperature array (bar)
+        vmr1arr (array): volume mixing ratio (VMR) for molecules 1 [N_layer]
+        vmr2arr  (array): volume mixing ratio (VMR) for molecules 2 [N_layer]
+        mmw: mean molecular weight of atmosphere
+        g: gravity (cm2/s)
+        nucia (array): wavenumber array for CIA
+        tcia (array): temperature array for CIA
         logac: log10(absorption coefficient of CIA)
 
     Returns:
         2D array: optical depth matrix, dtau  [N_layer, N_nus]
     """
     narr = number_density(pressure, temperature)
-    lognarr1 = jnp.log10(vmr1 * narr)  # log number density
-    lognarr2 = jnp.log10(vmr2 * narr)  # log number density
+    lognarr1 = jnp.log10(vmr1arr * narr)  # log number density
+    lognarr2 = jnp.log10(vmr2arr * narr)  # log number density
     logg = jnp.log10(g)
     ddParr = dParr / pressure
     dtauc = (
