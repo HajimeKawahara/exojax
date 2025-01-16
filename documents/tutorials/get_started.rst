@@ -118,7 +118,6 @@ tempreature range we will use is 500-1500K.
 
 .. code:: ipython3
 
-    from sys import version
     from exojax.spec.opacalc import OpaPremodit
     
     opa = OpaPremodit(mdb, nu_grid, auto_trange=[500.0, 1500.0],dit_grid_resolution=1.0)
