@@ -15,7 +15,7 @@ import jax.numpy as jnp
 from jax import vmap
 import numpy as np
 
-__all__ = ["OpaCIA", "Opahminus", "OpaRayleigh", "OpaMie"]
+__all__ = ["OpaCont", "OpaCIA", "OpaHminus", "OpaRayleigh", "OpaMie"]
 
 
 class OpaCont:
@@ -58,6 +58,8 @@ class OpaCIA(OpaCont):
 
 
 class OpaHminus(OpaCont):
+    """Opacity Continuum Calculator Class for H-"""
+
     def __init__(self, nu_grid):
         self.method = "hminus"
         self.warning = True
