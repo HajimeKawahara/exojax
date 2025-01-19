@@ -1,7 +1,7 @@
 Installation and References
 ----------------------------------
 
-*last update October 3rd (2024) Hajime Kawahara*
+*last update January 19th (2025) Hajime Kawahara*
 
 .. admonition:: Python 3.9 or later is required
 
@@ -9,8 +9,8 @@ Installation and References
 
 .. Warning:: 
 
-	For using vaex as molecular-based I/O, we currently recommend using Python 3.9. 
-	In the near future, we plan to support Python 3.10 and Python 3.11 as well. Oct 3. (2024) 
+	For using `vaex <https://github.com/vaexio/vaex>`_` in the common API for the molecular database I/O, we currently recommend using Python 3.9 or 3.10. 
+	
 
 
 Linux, Windows WSL, Mac
@@ -62,6 +62,8 @@ References
 =================
 
 |:green_circle:| **ExoJAX Paper I**:  Kawahara, Kawashima, Masuda, Crossfield, Pannier, van den Bekerom (2021) accepted by ApJS: `arXiv:2105.14782 <http://arxiv.org/abs/2105.14782>`_
+
+|:green_circle:| **ExoJAX Paper II**:  Kawahara, Kawashima, Tada et al: `arXiv:2410.06900 <http://arxiv.org/abs/2410.06900>`_
 
 
 Many techniques/databases are used in ExoJAX.
