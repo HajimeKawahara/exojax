@@ -37,9 +37,14 @@ Contents
    userguide/installation.rst
 
 .. toctree::
+   :maxdepth: 1
+   
+   tutorials/Differentiable_Programming.rst
+
+.. toctree::
    :maxdepth: 2
    :caption: Tutorials:
-	     
+
    tutorials.rst
 
 .. toctree::
