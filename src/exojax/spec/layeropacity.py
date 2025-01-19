@@ -262,11 +262,11 @@ def single_layer_optical_depth_clouds_lognormal(
     Args:
         dpressure (float): delta pressure (bar)
         extinction coefficient (array): extinction coefficient  in cgs (cm-1) [N_nus]
-        condensate_substance_density: condensate substance density (g/cm3)
-        mmr_condensate: Mass mixing ratio (array) of condensate [Nlayer]
-        rg: rg parameter in the lognormal distribution of condensate size, defined by (9) in AM01
-        sigmag:sigmag parameter (geometric standard deviation) in the lognormal distribution of condensate size, defined by (9) in AM01, must be sigmag > 1
-        gravity: gravity (cm/s2)
+        condensate_substance_density (float): condensate substance density (g/cm3)
+        mmr_condensate (float): Mass mixing ratio of condensate
+        rg (float): rg parameter in the lognormal distribution of condensate size, defined by (9) in AM01
+        sigmag (float):sigmag parameter (geometric standard deviation) in the lognormal distribution of condensate size, defined by (9) in AM01, must be sigmag > 1
+        gravity (float): gravity (cm/s2)
         N0 (float, optional): the normalization of the lognormal distribution ($N_0$). Defaults to 1.0.
 
     Returns:
@@ -294,13 +294,13 @@ def layer_optical_depth_clouds_lognormal(
 
 
     Args:
-        dParr: delta pressure profile (bar) [N_layer]
-        extinction coefficient: extinction coefficient  in cgs (cm-1) [N_layer, N_nus]
-        condensate_substance_density: condensate substance density (g/cm3)
-        mmr_condensate: Mass mixing ratio (array) of condensate [Nlayer]
-        rg: rg parameter in the lognormal distribution of condensate size, defined by (9) in AM01
-        sigmag:sigmag parameter (geometric standard deviation) in the lognormal distribution of condensate size, defined by (9) in AM01, must be sigmag > 1
-        gravity: gravity (cm/s2)
+        dParr (array): delta pressure profile (bar) [N_layer]
+        extinction coefficient (array): extinction coefficient  in cgs (cm-1) [N_layer, N_nus]
+        condensate_substance_density (float): condensate substance density (g/cm3)
+        mmr_condensate (array): Mass mixing ratio (array) of condensate [Nlayer]
+        rg (float): rg parameter in the lognormal distribution of condensate size, defined by (9) in AM01
+        sigmag (float):sigmag parameter (geometric standard deviation) in the lognormal distribution of condensate size, defined by (9) in AM01, must be sigmag > 1
+        gravity (float): gravity (cm/s2)
         N0 (float, optional): the normalization of the lognormal distribution ($N_0$). Defaults to 1.0.
 
     Returns:
