@@ -9,8 +9,8 @@ Installation and References
 
 .. Warning:: 
 
-	For using `vaex <https://github.com/vaexio/vaex>`_` in the common API for the molecular database I/O, we currently recommend using Python 3.9 or 3.10. 
-	
+	For using `vaex <https://github.com/vaexio/vaex>`_ in the common API for the molecular database I/O, we currently recommend using Python 3.9 or 3.10. 
+
 
 
 Linux, Windows WSL, Mac

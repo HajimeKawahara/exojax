@@ -7,7 +7,7 @@ Last Update: January 19th (2025) Hajime Kawahara
 differentiable spectral model written in
 `JAX <https://jax.readthedocs.io/en/latest/>`__. Here, we aim to provide
 a brief introduction to what can be achieved with differentiable models
-for users who may not be familiar with `Differential
+for users who may not be familiar with `Differentiable
 Programming <https://arxiv.org/abs/2403.14606>`__ (DP).
 
 Here, as the simplest example of a spectrum, we use an absorption
