@@ -19,10 +19,12 @@ opacity calculation methods, depending on factors such as the number of
 lines. Finally, by providing temperature and pressure, the cross-section
 can be calculated.
 
-Currently, molecular databases such as ExoMol and HITRAN/HITEMP are
-continuously being improved. ExoJAX’s ability to compute cross-sections
-directly from the molecular database level offers the advantage of
-always utilizing the latest versions of these databases.
+Currently, molecular databases such as
+`ExoMol <https://www.exomol.com/>`__ and
+`HITRAN/HITEMP <https://hitran.org/>`__ are continuously being improved.
+ExoJAX’s ability to compute cross-sections directly from the molecular
+database level offers the advantage of always utilizing the latest
+versions of these databases.
 
 .. code:: ipython3
 
@@ -44,9 +46,10 @@ always utilizing the latest versions of these databases.
     
     fig = plt.figure(figsize=(10,3))
     plt.plot(nu_grid,xs_t0,label="T="+str(t0)+"K")
-    plt.plot(nu_grid,xs_t1,label="T="+str(t0)+"1200K")
+    plt.plot(nu_grid,xs_t1,label="T="+str(t1)+"K")
     plt.xlabel("wavenumber (cm-1)")
     plt.ylabel("cross section (cm2)")
+    plt.legend()
     plt.show()
 
 
@@ -97,11 +100,89 @@ always utilizing the latest versions of these databases.
 .. image:: OnDemand_Opacity_files/OnDemand_Opacity_3_4.png
 
 
+In this way, ExoJAX directly computes opacity from molecular databases,
+allowing users to trace spectral features back to specific lines and
+analyze how they depend on temperature and pressure.
+
+Here, let’s take a single example to examine the properties of a
+spectral line. In this wavenumber region of carbon monoxide, the
+spectrum shows some structure. What kind of lines are responsible for
+these features? By increasing the temperature to 3000 K, additional
+lines become visible. Plotting the rotational quantum numbers
+(:math:`J`) reveals that these lines exhibit gradual changes in
+:math:`J`. The difference in rotational quantum numbers between
+transitions is :math:`\Delta J=+1`, indicating that these lines are part
+of the R-branch. For further details, refer to `R-branch and P-branch of
+CO <tutorials/branch.html>`__.
+
+When plotting the line strengths at different temperatures, it becomes
+evident that as the temperature increases, the strength of lines with
+higher rotational quantum numbers also increases, making these lines
+more prominent. Additionally, the lower energy levels of high-:math:`J`
+lines indeed have significantly larger values, confirming that these
+lines are only visible at higher temperatures.
+
+By tracing back to the molecular database, we can gain a deeper
+understanding of the spectrum in this manner.
+
+.. code:: ipython3
+
+    import numpy as np
+    Thot = 3000.0 #K
+    xs_thot = opa.xsvector(Thot,p0)
+    mask = np.isfinite(mdb.line_strength(Thot)) #mask for finite values
+    
+    fig = plt.figure(figsize=(10,7.5))
+    ax = fig.add_subplot(511)
+    ax.plot(nu_grid,xs_t1,label="T="+str(t1)+"K")
+    ax.plot(nu_grid,xs_thot,label="T="+str(Thot)+"K")
+    ax.set_xlim(nu_grid[0],nu_grid[-1])
+    ax.set_ylabel("cross section (cm2)")
+    ax.legend()
+    
+    ax3 = fig.add_subplot(512)
+    ax3.plot(mdb.nu_lines[mask], mdb.jlower[mask], ".", label="Jlower")
+    ax3.set_xlim(nu_grid[0],nu_grid[-1])
+    ax3.set_ylabel("Jlower")
+    ax3.legend()
+    
+    ax4 = fig.add_subplot(513)
+    ax4.plot(mdb.nu_lines[mask], mdb.jupper[mask] - mdb.jlower[mask], ".", label="$\Delta$J")
+    ax4.set_xlim(nu_grid[0],nu_grid[-1])
+    ax4.set_ylabel("$\Delta$J")
+    ax4.legend()
+    
+    ax2 = fig.add_subplot(514)
+    ax2.plot(mdb.nu_lines, mdb.line_strength(t1), "+", label=str(t1)+"K")
+    ax2.plot(mdb.nu_lines, mdb.line_strength(Thot), ".", label=str(Thot)+"K")
+    ax2.set_xlim(nu_grid[0],nu_grid[-1])
+    ax2.set_ylabel("line strength (cm)")
+    ax2.legend()
+    
+    
+    ax5 = fig.add_subplot(515)
+    ax5.plot(mdb.nu_lines[mask], mdb.elower[mask], ".", label="elower")
+    ax5.set_xlim(nu_grid[0],nu_grid[-1])
+    ax5.set_ylabel("E")
+    ax5.legend()
+    ax5.set_xlabel("wavenumber (cm-1)")
+    
+    plt.show()
+
+
+
+
+.. image:: OnDemand_Opacity_files/OnDemand_Opacity_5_0.png
+
+
 In addition to the benefits of allowing users to always utilize the
 latest molecular databases and track the assumptions and methods used to
 compute cross-sections, on-demand computation also eliminates
-interpolation errors inherent in table-based data. Let’s examine this
-error with a simple example.
+interpolation errors inherent in table-based data. Next, let’s examine
+this error with a simple example.
+
+Errors Associated with Interpolating Table Data
+-----------------------------------------------
 
 When calculating opacity using precomputed table data, it is necessary
 to interpolate cross-sections from neighboring temperature grid points
@@ -135,6 +216,15 @@ two approaches: the arithmetic mean and the logarithmic mean.
     xs = opa.xsvector(tc, p0)
     xs_log = opa.xsvector(tc_log, p0)
     
+    
+    #diffrence
+    diff = np.mean(averaged_xs)/np.mean(xs) - 1.0
+    diff_log_lin = np.mean(averaged_xs_log)/np.mean(xs) - 1.0
+    diff_lin_log = np.mean(averaged_xs)/np.mean(xs_log) - 1.0
+    diff_log_log = np.mean(averaged_xs_log)/np.mean(xs_log) - 1.0
+    xmin = 0
+    xmax = 0.03
+    
     f, (ax, ax2, ax3) = plt.subplots(3, 1, gridspec_kw={"height_ratios": [2, 1, 1]}, figsize=(10, 8))
     
     ax.plot(nu_grid, averaged_xs, label="grid interpolation", lw=1, color="red")
@@ -145,9 +235,16 @@ two approaches: the arithmetic mean and the logarithmic mean.
     
     ax2.plot(nu_grid, averaged_xs / xs - 1.0, label="difference between grid interpolation and mean T", ls="solid") 
     ax2.plot(nu_grid, averaged_xs / xs_log - 1.0, label="difference between grid interpolation and log mean T", ls="dashed")
+    ax2.text(nu_grid[0] - 0.25, 0.15, "ave", color="gray")
+    ax2.axhline(diff, color="gray", ls = "solid", xmin=xmin, xmax=xmax)
+    ax2.axhline(diff_lin_log, color="gray", ls = "dashed", xmin=xmin, xmax=xmax)
+    
     
     ax3.plot(nu_grid, averaged_xs_log / xs - 1.0, label="difference between log grid interpolation  and mean T", ls="solid") 
     ax3.plot(nu_grid, averaged_xs_log / xs_log - 1.0, label="difference between log grid interpolation and log mean T", ls="dashed")
+    ax3.text(nu_grid[0] - 0.25, -0.15, "ave", color="gray")
+    ax3.axhline(diff_log_lin, color="gray", ls = "solid",  xmin=xmin, xmax=xmax)
+    ax3.axhline(diff_log_log, color="gray", ls = "dashed", xmin=xmin, xmax=xmax)
     
     
     ax.legend()
@@ -167,7 +264,7 @@ two approaches: the arithmetic mean and the logarithmic mean.
 
 
 
-.. image:: OnDemand_Opacity_files/OnDemand_Opacity_5_0.png
+.. image:: OnDemand_Opacity_files/OnDemand_Opacity_8_0.png
 
 
 With a temperature grid of 300 K intervals, the arithmetic mean
@@ -200,26 +297,33 @@ is necessary to use a logarithmic grid. Here, we will interpolate using
     averaged_xs = (xs00 + xs01) / 2.0
     averaged_xs_log = 10**((np.log10(xs00) + np.log10(xs01)) / 2.0)
     
+    #diffrence
+    diff = np.mean(averaged_xs)/np.mean(xs) - 1.0
+    diff_log = np.mean(averaged_xs_log)/np.mean(xs) - 1.0
     
     #direct calculation
     xs = opa.xsvector(t0, pc_log)
     
-    f, (ax, ax2, ax3) = plt.subplots(3, 1, gridspec_kw={"height_ratios": [2, 1, 1]}, figsize=(10, 8))
+    f, (ax, ax2, ax3) = plt.subplots(3, 1, gridspec_kw={"height_ratios": [2, 1, 1]}, figsize=(10, 7))
     
     ax.plot(nu_grid, averaged_xs, label="grid interpolation", lw=2, color="C0", ls="dashed")
     ax.plot(nu_grid, averaged_xs_log, label="log grid interpolation", lw=2, color="C1", ls="dotted")
     
     ax.plot(nu_grid, xs, label="log mean P", ls="solid", lw=2, color="C2")
     ax2.plot(nu_grid, averaged_xs / xs - 1.0, label="difference between grid interpolation and log mean P", ls="solid", color="C0") 
+    ax2.text(nu_grid[0] - 0.25, -0.16, "ave", color="C0")
+    ax2.axhline(diff, color="C0", ls = "solid",  xmin=xmin, xmax=xmax)
+    
     ax3.plot(nu_grid, averaged_xs_log / xs - 1.0, label="difference between log grid interpolation and log mean P", ls="solid", color="C1") 
-    
-    
+    ax3.text(nu_grid[0] - 0.25, -0.3, "ave", color="C1")
+    ax3.axhline(diff_log, color="C1", ls = "solid",  xmin=xmin, xmax=xmax)
+                
     ax.legend()
-    ax2.set_ylim(-0.7, 0.7)
+    ax2.set_ylim(-0.8, 0.8)
     ax2.legend()
     ax2.axhline(0.0, color="k")
     
-    ax3.set_ylim(-0.7, 0.7)
+    ax3.set_ylim(-0.8, 0.8)
     ax3.legend()
     ax3.axhline(0.0, color="k")
     
@@ -231,14 +335,16 @@ is necessary to use a logarithmic grid. Here, we will interpolate using
 
 
 
-.. image:: OnDemand_Opacity_files/OnDemand_Opacity_8_0.png
+.. image:: OnDemand_Opacity_files/OnDemand_Opacity_11_0.png
 
 
-When interpolating pressure, the tail of the line profile is affected,
-leading to a different error profile compared to temperature
+For pressure interpolation, the tail of the line profile is affected,
+resulting in an error profile different from that of temperature
 interpolation. Since line strength remains unchanged during pressure
-interpolation, the impact may be relatively minor for cases without
-high-resolution spectroscopy.
+interpolation, the impact may be relatively minor in cases without
+high-resolution spectroscopy (middle panel). However, this advantage is
+lost when cross-section interpolation is performed in logarithmic space
+due to nonlinear effects (bottom panel).
 
 As shown, using precomputed table data can introduce non-negligible
 errors in cross-section calculations, especially for high-resolution
