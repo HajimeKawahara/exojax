@@ -1,5 +1,5 @@
-Get Started
-===========
+Get Started with the emission spectrum
+===========================================================
 
 Last update: October 3rd (2024) Hajime Kawahara for v1.6
 

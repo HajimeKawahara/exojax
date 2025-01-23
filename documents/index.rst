@@ -6,14 +6,13 @@
 ExoJAX
 ==================================
 
-Version 1.6 (:doc:`userguide/history`) 
+Version 2.0 (:doc:`userguide/history`) 
 
-Note: Paper II will be under peer review. We plan to release version 2.0 at the time of acceptance of the paper II.
 
 `ExoJAX <https://github.com/HajimeKawahara/exojax>`_ provides an auto-differentiable high-resolution spectrum model for exoplanets/brown dwarfs using `JAX <https://github.com/google/jax>`_. 
 ExoJAX enables a fully Bayesian inference of the high-dispersion data to fit the line-by-line spectral computation to the observed spectrum, 
 from end-to-end (i.e. from molecular/atomic databases to real spectra), 
-by combining it with `the Hamiltonian Monte Carlo <https://en.wikipedia.org/wiki/Hamiltonian_Monte_Carlo>`_ 
+by combining it with `the Hamiltonian Monte Carlo <https://en.wikipedia.org/wiki/Hamiltonian_Monte_Carlo>`_ or the other inference techniques
 in recent probabilistic programming languages such as `NumPyro <https://github.com/pyro-ppl/numpyro>`_. 
 So, the notable features of ExoJAX are summarized as 
 
@@ -33,14 +32,15 @@ Contents
 ==================================
 
 .. toctree::
-   :maxdepth: 1
-	      
-   userguide/installation.rst
+   :maxdepth: 2
+   :caption: Introduction:
 
+   introduction.rst
+   
 .. toctree::
    :maxdepth: 2
    :caption: Tutorials:
-	     
+
    tutorials.rst
 
 .. toctree::
@@ -63,20 +63,21 @@ ExoJAX example (exojaxample)
 
 - |:ringed_planet:| `exojaxample_jupiter <https://github.com/HajimeKawahara/exojaxample_jupiter>`_ : An example of HMC-NUTS for actual Jupiter reflection spectrum
 
+- |:page_facing_up:| HMC-NUTS for Gl 229 B  (T-dwarf) Emission Spectrum `Kawashima et al. <https://arxiv.org/abs/2410.11561>`_
 
 References 
 ---------------------
 
-- Kawahara, Kawashima, Masuda, Crossfield, Pannier, van den Bekerom,
-  `ApJS 258, 31 (2022) <https://iopscience.iop.org/article/10.3847/1538-4365/ac3b4d>`_
-  (Paper I)
+- |:page_facing_up:|  Kawahara, Kawashima, Masuda, Crossfield, Pannier, van den Bekerom,
+   `ApJS 258, 31 (2022) <https://iopscience.iop.org/article/10.3847/1538-4365/ac3b4d>`_
+   (Paper I)
 
-- Kawahara et al., 2024, in prep. (Paper II)
+- |:page_facing_up:| Kawahara et al., 2025, in prep. `ArXiv <https://arxiv.org/abs/2410.06900>`_ (Paper II)
 
 License & Attribution
 ---------------------
 
-Copyright 2021-2024, Contributors
+Copyright 2021-2025, Contributors
 
 - `Hajime Kawahara <http://secondearths.sakura.ne.jp/en/index.html>`_ (@HajimeKawahara, maintainer)
 - `Yui Kawashima <https://sites.google.com/view/yuikawashima/home>`_ (@ykawashima, co-maintainer)
