@@ -113,7 +113,7 @@ lines become visible. Plotting the rotational quantum numbers
 :math:`J`. The difference in rotational quantum numbers between
 transitions is :math:`\Delta J=+1`, indicating that these lines are part
 of the R-branch. For further details, refer to `R-branch and P-branch of
-CO <tutorials/branch.html>`__.
+CO <branch.html>`__.
 
 When plotting the line strengths at different temperatures, it becomes
 evident that as the temperature increases, the strength of lines with
