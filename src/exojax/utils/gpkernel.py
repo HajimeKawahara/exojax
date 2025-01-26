@@ -1,11 +1,14 @@
-"""Kernels used in Gaussian process."""
+"""Kernels and some functions used in the Gaussian Process modeling of a correlated noise.
+
+Note:
+    see "get started" page for the usage of this module.
+
+"""
 
 from jax import random
 from jax import jit
 import jax.numpy as jnp
 import tqdm
-import numpyro.distributions as dist
-import numpyro
 
 
 def sampling_prediction(
@@ -18,7 +21,7 @@ def sampling_prediction(
     key,
 ):
     """computes GP predictions
-    
+
     Args:
         x (array): variable vector x [N]
         data (array): data vector [N]
@@ -30,11 +33,14 @@ def sampling_prediction(
 
     Returns:
         2D array: predictions with a GP model [num_samples, N]
-    
+
     Note:
         The reason why we do not use jax.vmap for average_covariance_gpmodel is that it requires extremely large device memory.
-    
+
     """
+    import numpyro.distributions as dist
+    import numpyro
+
     num_samples = len(scale_sampling)
     gp_predictions = []
     for i in tqdm.tqdm(range(0, num_samples)):
@@ -73,7 +79,7 @@ def gpkernel_RBF(x, scale, amplitude, err):
 @jit
 def average_covariance_gpmodel(x, data, model, scale, amplitude, err):
     """computes average and covariance of GP model
-    
+
     Args:
         x (array): variable vector (N)
         data (array): data vector (N)
@@ -109,11 +115,26 @@ def gpkernel_RBF_cross(x, y, scale, amplitude):
 
 
 @jit
-def average_covariance_gpmodel_cross(x, y, data, model, scale, amplitude, sigma):
-    err = sigma * jnp.ones_like(x)
-    cov = gpkernel_RBF(x, scale, amplitude, err)
+def average_covariance_gpmodel_cross(x, y, data, model_x, model_y, scale, amplitude, err_x, err_y):
+    """computes average and covariance of GP model for cross terms
+    
+    Args:
+        x (array): variable vector for input (N)
+        y (array): variable vector for output (M)
+        data (array): data vector (N)
+        model_x (array): model vector for input (N)
+        model_y (array): model vector for output (M)
+        scale (float): scale parameter
+        amplitude (float) : amplitude (scalar)
+        err_x (1D array): diagnonal error vector for input (N)
+        err_y (1D array): diagnonal error vector for output (M)
+        
+    Returns:
+        1D array, 2D array: average vector (M), covariance matrix (M,M)
+    """
+    cov = gpkernel_RBF(x, scale, amplitude, err_x)
     covx = gpkernel_RBF_cross(x, y, scale, amplitude)
-    covxx = gpkernel_RBF(y, scale, amplitude, err)
-    A = jnp.linalg.solve(cov, data - model)
+    covxx = gpkernel_RBF(y, scale, amplitude, err_y)
+    A = jnp.linalg.solve(cov, data - model_x)
     IKw = jnp.linalg.inv(cov)
-    return model + covx @ A, covxx - covx @ IKw @ covx.T
+    return model_y + covx @ A, covxx - covx @ IKw @ covx.T
