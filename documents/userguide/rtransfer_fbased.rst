@@ -121,7 +121,7 @@ Also, ``OpartReflectPure``, the ``opart`` version of ``ReflectPure``,  is availa
             temperature, pressure, dP, mixing_ratio = params
             xsv_co = self.opa_co.xsvector(temperature, pressure)
             dtau_co = single_layer_optical_depth(
-                xsv_co, dP, mixing_ratio, self.mdb_co.molmass, self.gravity
+                dP, xsv_co, mixing_ratio, self.mdb_co.molmass, self.gravity
             )
             single_scattering_albedo = jnp.ones_like(dtau_co) * 0.3
             asymmetric_parameter = jnp.ones_like(dtau_co) * 0.01

@@ -52,3 +52,4 @@ def fluxsum_scan(tauup, taulow, mus, weights):
     muws = [mus, weights]
     flux, _ = scan(f, jnp.zeros_like(tauup), muws)
     return flux
+

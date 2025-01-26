@@ -36,13 +36,12 @@ class OpaLayer:
         temperature, pressure, dP, mixing_ratio = params
         xsv_co = self.opa_co.xsvector(temperature, pressure)
         dtau_co = single_layer_optical_depth(
-            xsv_co, dP, mixing_ratio, self.mdb_co.molmass, self.gravity
+            dP, xsv_co, mixing_ratio, self.mdb_co.molmass, self.gravity
         )
         return dtau_co
 
 opalayer = OpaLayer(Nnus=100000)
 opart = OpartEmisPure(opalayer, pressure_top=1.0e-5, pressure_btm=1.0e1, nlayer=200, nstream=8)
-
 def layer_update_function(carry_tauflux, params):
     carry_tauflux = opart.update_layer(carry_tauflux, params)
     return carry_tauflux, None
