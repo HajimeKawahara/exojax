@@ -1,4 +1,4 @@
-Basics
+Get Started
 ==============
 
 .. toctree::
@@ -6,9 +6,17 @@ Basics
 
    tutorials/get_started.rst
    tutorials/get_started_opart.rst
+   tutorials/Transmission_beta.rst
    tutorials/optimize_spectrum.rst
+
+Retrieval
+===============
+
+.. toctree::
+   :maxdepth: 1
+
    tutorials/reverse_premodit.rst
-   
+
 
 Applications
 ====================
@@ -25,13 +33,6 @@ Tips for Real Analysis
    tutorials/elower_setting.rst
 
 
-Transmission Spectra
-----------------------------
-
-.. toctree::
-   :maxdepth: 1
-
-   tutorials/Transmission_beta.rst
 
 |:ringed_planet:| An example of HMC-NUTS for actual hot Saturn (JWST/ERS, NIRSPEC/G395H) can be found `here <https://github.com/sh-tada/exojaxample_WASP39b>`_ .
 

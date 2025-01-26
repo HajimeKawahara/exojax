@@ -47,11 +47,27 @@ class OpaCIA(OpaCont):
         self.ready = True
 
     def logacia_vector(self, T):
+        """computes absorption coefficient vector of CIA
+
+        Args:
+            T (float): temperature (K)
+
+        Returns:
+            1D array: logarithm of absorption coefficient [Nnus] at T in the unit of cm5
+        """
         return interp_logacia_vector(
             T, self.nu_grid, self.cdb.nucia, self.cdb.tcia, self.cdb.logac
         )
 
     def logacia_matrix(self, temperatures):
+        """computes absorption coefficient matrix of CIA
+
+        Args:
+            temperatures (array): temperature array (K) [Nlayer]
+
+        Returns:
+            2D array: logarithm of absorption coefficient [Nlayer, Nnus] in the unit of cm5
+        """
         return interp_logacia_matrix(
             temperatures, self.nu_grid, self.cdb.nucia, self.cdb.tcia, self.cdb.logac
         )
