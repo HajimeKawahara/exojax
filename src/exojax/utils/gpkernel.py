@@ -1,7 +1,7 @@
 """Kernels and some functions used in the Gaussian Process modeling of a correlated noise.
 
 Note:
-    see "get started" page for the usage of this module.
+    see "get_started" page for the usage of this module.
 
 """
 
@@ -115,9 +115,11 @@ def gpkernel_RBF_cross(x, y, scale, amplitude):
 
 
 @jit
-def average_covariance_gpmodel_cross(x, y, data, model_x, model_y, scale, amplitude, err_x, err_y):
+def average_covariance_gpmodel_cross(
+    x, y, data, model_x, model_y, scale, amplitude, err_x, err_y
+):
     """computes average and covariance of GP model for cross terms
-    
+
     Args:
         x (array): variable vector for input (N)
         y (array): variable vector for output (M)
@@ -128,7 +130,7 @@ def average_covariance_gpmodel_cross(x, y, data, model_x, model_y, scale, amplit
         amplitude (float) : amplitude (scalar)
         err_x (1D array): diagnonal error vector for input (N)
         err_y (1D array): diagnonal error vector for output (M)
-        
+
     Returns:
         1D array, 2D array: average vector (M), covariance matrix (M,M)
     """

@@ -5,6 +5,7 @@ from exojax.utils.gpkernel import gpkernel_RBF_cross
 from exojax.utils.gpkernel import average_covariance_gpmodel
 from exojax.utils.gpkernel import average_covariance_gpmodel_cross
 
+
 def test_gpkernel_RBF():
     import jax.numpy as jnp
 
