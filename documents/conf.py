@@ -20,11 +20,11 @@ sys.path.insert(0, os.path.abspath("~/exojax"))
 # -- Project information -----------------------------------------------------
 
 project = "ExoJAX"
-copyright = "2020-2024, ExoJAX contributors"
+copyright = "2020-2025, ExoJAX contributors"
 author = "ExoJAX contributors"
 
 # The full version, including alpha/beta/rc tags
-release = "1.6.0"
+release = "2.0.0"
 
 
 # -- General configuration ---------------------------------------------------

@@ -42,10 +42,10 @@ generating the emission spectrum.
 This spectral model is incorporated into the probabilistic model in
 NumPyro, and retrieval is performed by sampling using HMC-NUTS.
 
-.. figure:: https://private-user-images.githubusercontent.com/15956904/406665489-be119d16-f265-4342-b368-41ca35d9a98a.png?jwt=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJnaXRodWIuY29tIiwiYXVkIjoicmF3LmdpdGh1YnVzZXJjb250ZW50LmNvbSIsImtleSI6ImtleTUiLCJleHAiOjE3Mzc4MTMzNTcsIm5iZiI6MTczNzgxMzA1NywicGF0aCI6Ii8xNTk1NjkwNC80MDY2NjU0ODktYmUxMTlkMTYtZjI2NS00MzQyLWIzNjgtNDFjYTM1ZDlhOThhLnBuZz9YLUFtei1BbGdvcml0aG09QVdTNC1ITUFDLVNIQTI1NiZYLUFtei1DcmVkZW50aWFsPUFLSUFWQ09EWUxTQTUzUFFLNFpBJTJGMjAyNTAxMjUlMkZ1cy1lYXN0LTElMkZzMyUyRmF3czRfcmVxdWVzdCZYLUFtei1EYXRlPTIwMjUwMTI1VDEzNTA1N1omWC1BbXotRXhwaXJlcz0zMDAmWC1BbXotU2lnbmF0dXJlPTZkYTM5ZmJmM2QwYmNkOGJlMTM5OWZjMWMzNWQzMDM0OGU2NTkyODg1OWM2NGY3MjM5NTkwNGU3YjVlMWE0OWQmWC1BbXotU2lnbmVkSGVhZGVycz1ob3N0In0._45K-7r9oD2qav5mCLsfNwFbaKVgfRtn9K9h15-OreM
-   :alt: structure of ExoJAX
+.. figure:: https://secondearths.sakura.ne.jp/exojax/figures/exojax_get_started.png
+   :alt: Figure. Structure of ExoJAX
 
-   structure of ExoJAX
+   Figure. Structure of ExoJAX
 
 1. Loading a molecular database using mdb
 -----------------------------------------
