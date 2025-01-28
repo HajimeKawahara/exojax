@@ -6,7 +6,6 @@
 import numpy as np
 import jax.numpy as jnp
 from exojax.utils.grids import wavenumber_grid
-from exojax.spec import api
 from exojax.spec.opacalc import OpaPremodit
 from exojax.spec import initspec
 from exojax.spec.premodit import unbiased_lsd_zeroth
@@ -106,11 +105,10 @@ xsv_modit = xsvector(cont_nu, index_nu, R, pmarray, nsigmaD, ngammaL, Sij, nus,
 
 from exojax.test.data import TESTDATA_CO_EXOMOL_MODIT_XS_REF
 from exojax.test.data import TESTDATA_CO_HITEMP_MODIT_XS_REF_AIR
-import pkg_resources
+from importlib.resources import files
 import pandas as pd
 
-filename = pkg_resources.resource_filename(
-    'exojax', 'data/testdata/' + TESTDATA_CO_HITEMP_MODIT_XS_REF_AIR)
+filename = files("exojax").joinpath('data/testdata/' + TESTDATA_CO_HITEMP_MODIT_XS_REF_AIR)
 dat = pd.read_csv(filename, delimiter=",", names=("nus", "xsv"))
 
 #np.savetxt("xsv_modit.txt", np.array([nus, xsv_modit]).T, delimiter=",")

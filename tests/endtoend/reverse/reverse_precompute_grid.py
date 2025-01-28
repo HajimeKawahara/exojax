@@ -10,7 +10,7 @@ import jax.numpy as jnp
 from jax import vmap
 
 import pandas as pd
-import pkg_resources
+from importlib.resources import files
 
 from exojax.spec.atmrt import ArtEmisPure
 from exojax.spec.api import MdbExomol
@@ -35,8 +35,7 @@ from numpyro.infer import MCMC, NUTS
 import numpyro
 import numpyro.distributions as dist
 
-filename = pkg_resources.resource_filename(
-    'exojax', 'data/testdata/' + SAMPLE_SPECTRA_CH4_NEW)
+filename = files('exojax').joinpath('data/testdata/' + SAMPLE_SPECTRA_CH4_NEW)
 dat = pd.read_csv(filename, delimiter=",", names=("wavenumber", "flux"))
 nusd = dat['wavenumber'].values
 flux = dat['flux'].values

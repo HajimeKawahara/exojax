@@ -172,11 +172,11 @@ def _nsol_from_xspec(database):
     Notes:
         reference: https://heasarc.gsfc.nasa.gov/xanadu/xspec/manual/node116.html
     """
-    import pkg_resources
+    from importlib.resources import files
     import pandas as pd
 
     filename = "data/abundance/xspec_abundance.txt"
-    file_path = pkg_resources.resource_filename("exojax", filename)
+    file_path = files('exojax').joinpath(filename)
     df = pd.read_csv(file_path, comment="#", delimiter=",")
     nsol = df.set_index("El")[database].to_dict()
     total_sum = sum(nsol.values())

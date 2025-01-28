@@ -1,5 +1,4 @@
-import pytest
-import pkg_resources
+from importlib.resources import files
 import pandas as pd
 import numpy as np
 from exojax.spec.modit import xsvector
@@ -38,9 +37,7 @@ def test_xs_exomol():
     ngammaL_grid = ditgrid_log_interval(ngammaL, dit_grid_resolution=0.1)
     xsv = xsvector(cont_nu, index_nu, R, pmarray, nsigmaD, ngammaL, Sij, nus,
                    ngammaL_grid)
-    
-    filename = pkg_resources.resource_filename(
-        'exojax', 'data/testdata/' + TESTDATA_CO_EXOMOL_MODIT_XS_REF)
+    filename =  files("exojax").joinpath('data/testdata/' + TESTDATA_CO_EXOMOL_MODIT_XS_REF)
     dat = pd.read_csv(filename, delimiter=",", names=("nus", "xsv"))
     #assert np.all(xsv == pytest.approx(dat["xsv"].values))
 
@@ -83,8 +80,7 @@ def test_rt_exomol():
     dtau = layer_optical_depth(dParr, jnp.abs(xsm), MMR * np.ones_like(Parr), molmass, g)
     sourcef = piBarr(Tarr, nus)
     F0 = rtrun_emis_pureabs_fbased2st(dtau, sourcef)
-    filename = pkg_resources.resource_filename(
-        'exojax', 'data/testdata/' + TESTDATA_CO_EXOMOL_MODIT_EMISSION_REF)
+    filename = files("exojax").joinpath('data/testdata/' + TESTDATA_CO_EXOMOL_MODIT_EMISSION_REF)
     dat = pd.read_csv(filename, delimiter=",", names=("nus", "flux"))
     residual = np.abs(F0 / dat["flux"].values - 1.0)
     print(np.max(residual))

@@ -1,7 +1,7 @@
 """ short integration tests for PreMODIT spectrum"""
 
 import pytest
-import pkg_resources
+from importlib.resources import files
 from jax import config
 import pandas as pd
 import numpy as np
@@ -44,14 +44,14 @@ def test_rt(db, diffmode, fig=False):
     F0 = art.run(dtau, Tarr)
 
     if db == "hitemp":
-        filename = pkg_resources.resource_filename(
-            "exojax", "data/testdata/" + TESTDATA_CO_HITEMP_MODIT_EMISSION_REF
-        )
+        filename = files("exojax").joinpath(
+            "data/testdata/" + TESTDATA_CO_HITEMP_MODIT_EMISSION_REF
+        )       
     elif db == "exomol":
-        filename = pkg_resources.resource_filename(
-            "exojax", "data/testdata/" + TESTDATA_CO_EXOMOL_MODIT_EMISSION_REF
+        filename = files("exojax").joinpath(
+            "data/testdata/" + TESTDATA_CO_EXOMOL_MODIT_EMISSION_REF
         )
-
+        
     dat = pd.read_csv(filename, delimiter=",", names=("nus", "flux"))
     residual = np.abs(F0 / dat["flux"].values - 1.0)
     print(np.max(residual))
@@ -98,12 +98,12 @@ def test_rt_for_single_broadening_parameters(db, diffmode, fig=False):
     F0 = art.run(dtau, Tarr)
 
     if db == "hitemp":
-        filename = pkg_resources.resource_filename(
-            "exojax", "data/testdata/" + TESTDATA_CO_HITEMP_MODIT_EMISSION_REF
-        )
+        filename = files("exojax").joinpath(
+            "data/testdata/" + TESTDATA_CO_HITEMP_MODIT_EMISSION_REF
+        )        
     elif db == "exomol":
-        filename = pkg_resources.resource_filename(
-            "exojax", "data/testdata/" + TESTDATA_CO_EXOMOL_MODIT_EMISSION_REF
+        filename = files("exojax").joinpath(
+            "data/testdata/" + TESTDATA_CO_EXOMOL_MODIT_EMISSION_REF
         )
 
     dat = pd.read_csv(filename, delimiter=",", names=("nus", "flux"))

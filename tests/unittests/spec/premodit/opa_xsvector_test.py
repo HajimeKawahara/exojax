@@ -8,7 +8,7 @@
 """
 
 import pytest
-import pkg_resources
+from importlib.resources import files
 import pandas as pd
 import numpy as np
 from exojax.spec.opacalc import OpaPremodit
@@ -51,9 +51,7 @@ def test_xsection_premodit(db, diffmode):
         mdb=mdb, nu_grid=nu_grid, diffmode=diffmode, auto_trange=[500.0, 1500.0]
     )
     xsv = opa.xsvector(Ttest, Ptest)
-    filename = pkg_resources.resource_filename(
-        "exojax", "data/testdata/" + testdata[db]
-    )
+    filename = files("exojax").joinpath("data/testdata/" + testdata[db])
     dat = pd.read_csv(filename, delimiter=",", names=("nus", "xsv"))
     res = np.max(np.abs(1.0 - xsv / dat["xsv"].values))
     # print(res)
@@ -78,9 +76,7 @@ def test_xsection_premodit_for_single_broadening(db, diffmode):
         broadening_resolution={"mode": "single", "value": None},
     )
     xsv = opa.xsvector(Ttest, Ptest)
-    filename = pkg_resources.resource_filename(
-        "exojax", "data/testdata/" + testdata[db]
-    )
+    filename = files("exojax").joinpath("data/testdata/" + testdata[db])
     dat = pd.read_csv(filename, delimiter=",", names=("nus", "xsv"))
     res = np.max(np.abs(1.0 - xsv / dat["xsv"].values))
     # print(res)

@@ -1,21 +1,20 @@
 """generate test miegrid
 
 """
-import pkg_resources
+
+from importlib.resources import files
 from exojax.spec import pardb
 from exojax.test.data import TESTDATA_refrind
 
+
 def gendata_miegrid():
     """generates miegrid for test.refrind
-    
+
     Warnings:
         this is just for testdata. Not for real use!
 
     """
-    refrind_path = pkg_resources.resource_filename(
-        "exojax", "data/testdata/"+TESTDATA_refrind
-    )
-
+    refrind_path = files("exojax").joinpath("data/testdata/" + TESTDATA_refrind)
     pdb_nh3 = pardb.PdbCloud("test", download=False, refrind_path=refrind_path)
     if True:
         pdb_nh3.generate_miegrid(

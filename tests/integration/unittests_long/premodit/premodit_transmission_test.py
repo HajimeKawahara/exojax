@@ -1,10 +1,7 @@
 """ short integration tests for PreMODIT transmission"""
 import pytest
-import pkg_resources
 from jax import config
-import pandas as pd
 import numpy as np
-import jax.numpy as jnp
 from exojax.test.emulate_mdb import mock_mdb
 from exojax.spec.opacalc import OpaPremodit
 from exojax.test.emulate_mdb import mock_wavenumber_grid

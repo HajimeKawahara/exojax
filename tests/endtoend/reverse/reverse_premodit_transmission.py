@@ -10,7 +10,7 @@ from jax import random
 import jax.numpy as jnp
 
 import pandas as pd
-import pkg_resources
+from importlib.resources import files
 
 from exojax.spec.atmrt import ArtTransPure
 from exojax.spec.api import MdbExomol
@@ -38,9 +38,7 @@ import numpyro
 import numpyro.distributions as dist
 
 # loading the data
-filename = pkg_resources.resource_filename(
-    "exojax", "data/testdata/" + SAMPLE_SPECTRA_CH4_TRANS
-)
+filename = files("exojax").joinpath("data/testdata/" + SAMPLE_SPECTRA_CH4_TRANS)
 dat = pd.read_csv(filename, delimiter=",", names=("wavenumber", "flux"))
 nusd = dat["wavenumber"].values
 radius_ratio = dat["flux"].values

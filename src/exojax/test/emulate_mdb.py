@@ -1,7 +1,7 @@
 """emulate mdb class for unittest
 """
 import pickle
-import pkg_resources
+from importlib.resources import files
 import os
 import shutil
 from exojax.spec import api
@@ -48,7 +48,7 @@ def mock_mdbExomol(crit=0.):
     Returns:
         mdbExomol instance  
     """
-    dirname = pkg_resources.resource_filename('exojax', 'data/testdata/CO')
+    dirname = files('exojax').joinpath('data/testdata/CO')
     target_dir = os.getcwd() + "/CO"
     if os.path.exists(target_dir):
         shutil.rmtree(target_dir)
@@ -78,8 +78,7 @@ def mock_mdbHitemp(multi_isotope=False):
         isotope = 1
 
     from exojax.test.data import TESTDATA_CO_HITEMP_PARFILE
-    parfile = pkg_resources.resource_filename(
-        'exojax', 'data/testdata/CO/' + TESTDATA_CO_HITEMP_PARFILE)
+    parfile = files('exojax').joinpath('data/testdata/CO/' + TESTDATA_CO_HITEMP_PARFILE)
     nus, wav, res = mock_wavenumber_grid()
     mdb = api.MdbHitemp('CO',
                         nus,
@@ -95,8 +94,7 @@ def mock_mdbVALD():
     Returns:
         AdbVald instance
     """
-    filename = pkg_resources.resource_filename(
-        'exojax', 'data/testdata/' + TESTDATA_moldb_VALD)
+    filename = files('exojax').joinpath('data/testdata/' + TESTDATA_moldb_VALD)
     with open(filename, 'rb') as f:
         mdb = pickle.load(f)
     return mdb

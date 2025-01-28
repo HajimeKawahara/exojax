@@ -7,7 +7,7 @@ import jax.numpy as jnp
 from jax import config
 import pandas as pd
 import numpy as np
-import pkg_resources
+from importlib.resources import files
 
 from exojax.spec.opacalc import OpaPremodit
 from exojax.spec.atmrt import ArtTransPure
@@ -24,9 +24,7 @@ config.update("jax_enable_x64", True)
 
 
 def test_transmission_is_differentiable():
-    filename = pkg_resources.resource_filename(
-        "exojax", "data/testdata/" + COMPDATA_TRANSMISSION_CO
-    )
+    filename = files("exojax").joinpath("data/testdata/" + COMPDATA_TRANSMISSION_CO)
     dat = pd.read_feather(filename)
     wav = (dat["Wavelength[um]"],)
     rprs = dat["Rp/Rs"]
