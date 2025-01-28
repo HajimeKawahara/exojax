@@ -4,7 +4,7 @@ from jax import vmap
 from jax import grad
 import numpy as np
 import matplotlib.pyplot as plt
-import pkg_resources
+from importlib.resources import files
 
 
 def _beta(t, tref):
@@ -225,13 +225,9 @@ def default_elower_grid_trange_file(version):
     print("default elower grid trange (degt) file version:", version)
 
     if version == 1:
-        filename = pkg_resources.resource_filename(
-            "exojax", "data/premodit/elower_grid_trange.npz"
-        )
+        filename = files('exojax').joinpath("data/premodit/elower_grid_trange.npz")
     elif version == 2:
-        filename = pkg_resources.resource_filename(
-            "exojax", "data/premodit/elower_grid_trange_v2.npz"
-        )
+        filename = files('exojax').joinpath("data/premodit/elower_grid_trange_v2.npz")
     else:
         raise ValueError("currently version=1 or 2 are available.")
 

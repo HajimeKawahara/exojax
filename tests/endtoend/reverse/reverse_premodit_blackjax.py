@@ -10,7 +10,7 @@ import matplotlib.pyplot as plt
 import jax.numpy as jnp
 
 import pandas as pd
-import pkg_resources
+from importlib.resources import files
 
 from exojax.spec.atmrt import ArtEmisPure
 from exojax.spec.api import MdbExomol
@@ -38,9 +38,7 @@ import jax.scipy.stats as stats
 from jax import random
 
 # loading the data
-filename = pkg_resources.resource_filename(
-    "exojax", "data/testdata/" + SAMPLE_SPECTRA_CH4_NEW
-)
+filename = files("exojax").joinpath("data/testdata/" + SAMPLE_SPECTRA_CH4_NEW)
 dat = pd.read_csv(filename, delimiter=",", names=("wavenumber", "flux"))
 nusd = dat["wavenumber"].values
 flux = dat["flux"].values

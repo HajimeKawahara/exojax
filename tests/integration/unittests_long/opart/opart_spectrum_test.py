@@ -14,7 +14,7 @@ def test_forward_opart():
     from exojax.test.emulate_mdb import mock_wavenumber_grid
     import pandas as pd
     import numpy as np
-    import pkg_resources
+    from importlib.resources import files
     from exojax.test.data import TESTDATA_CO_EXOMOL_MODIT_EMISSION_REF
 
     from jax import config
@@ -27,7 +27,10 @@ def test_forward_opart():
             self.mdb_co = mock_mdbExomol()
             self.nu_grid, _, _ = mock_wavenumber_grid()
             self.opa_co = OpaPremodit(
-                self.mdb_co, self.nu_grid, auto_trange=[400.0, 1500.0], dit_grid_resolution=1.0
+                self.mdb_co,
+                self.nu_grid,
+                auto_trange=[400.0, 1500.0],
+                dit_grid_resolution=1.0,
             )
             self.gravity = 2478.57
 
@@ -54,9 +57,8 @@ def test_forward_opart():
     mixing_ratio = opart.constant_mmr_profile(0.1)
     layer_params = [temperature, opart.pressure, opart.dParr, mixing_ratio]
     flux = opart(layer_params, layer_update_function)
-
-    filename = pkg_resources.resource_filename(
-        "exojax", "data/testdata/" + TESTDATA_CO_EXOMOL_MODIT_EMISSION_REF
+    filename = files("exojax").joinpath(
+        "data/testdata/" + TESTDATA_CO_EXOMOL_MODIT_EMISSION_REF
     )
     dat = pd.read_csv(filename, delimiter=",", names=("nus", "flux"))
     residual = np.abs(flux / dat["flux"].values - 1.0)

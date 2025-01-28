@@ -16,7 +16,7 @@ from jax import vmap
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
-import pkg_resources
+from importlib.resources import files
 from exojax.spec import modit
 from exojax.spec import api
 from exojax.utils.grids import wavenumber_grid
@@ -34,9 +34,7 @@ from exojax.spec.unitconvert import nu2wav
 from exojax.test.data import SAMPLE_SPECTRA_CH4_NEW
 
 # loading data
-filename = pkg_resources.resource_filename(
-    "exojax", "data/testdata/" + SAMPLE_SPECTRA_CH4_NEW
-)
+filename = files("exojax").joinpath("data/testdata/" + SAMPLE_SPECTRA_CH4_NEW)
 dat = pd.read_csv(filename, delimiter=",", names=("wavenumber", "flux"))
 nusd = dat["wavenumber"].values
 flux = dat["flux"].values

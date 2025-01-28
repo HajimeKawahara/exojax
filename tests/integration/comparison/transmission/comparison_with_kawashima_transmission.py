@@ -1,7 +1,7 @@
 """ short integration tests for PreMODIT transmission"""
 
 from jax import config
-import pkg_resources
+from importlib.resources import files
 import pandas as pd
 import numpy as np
 from exojax.utils.grids import wavenumber_grid
@@ -27,9 +27,7 @@ def compress_original_kawashima_data():
 
 
 def read_kawashima_data():
-    filename = pkg_resources.resource_filename(
-        "exojax", "data/testdata/" + COMPDATA_TRANSMISSION_CO
-    )
+    filename = files("exojax").joinpath("data/testdata/" + COMPDATA_TRANSMISSION_CO)
     dat = pd.read_feather(filename)
     return dat["Wavelength[um]"], dat["Rp/Rs"]
 
