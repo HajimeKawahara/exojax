@@ -146,10 +146,7 @@ class OpartReflectPure(ArtCommon):
         """
         Rphat_prev, Sphat_prev = carry_rs
 
-        # - no source term
-        # temparature = params[0]
-        # source_vector = piB(temparature, self.nu_grid)
-        # -------------------------------------------------
+        # no source term
         source_vector = jnp.zeros_like(self.nu_grid)
         dtau, single_scattering_albedo, asymmetric_parameter = self.opalayer(params)
         trans_coeff_i, scat_coeff_i, pihatB_i, _, _, _ = setrt_toonhm(
@@ -183,6 +180,82 @@ class OpartReflectPure(ArtCommon):
         """
         # rs_bottom = (refectivity_bottom, source_bottom)
         source_bottom = jnp.zeros_like(self.nu_grid)
+        rs_bottom = [refectivity_bottom, source_bottom]
+        rs, _ = scan(layer_update_function, rs_bottom, layer_params)
+        return rs[0] * incoming_flux + rs[1]
+
+    def run(self, opalayer, layer_params, flbl):
+        return self(opalayer, layer_params, flbl)
+
+class OpartReflectEmis(ArtCommon):
+    """Opart verision of ArtReflectEmis.
+
+    This class computes the outgoing flux of the atmosphere with reflection, with emission from atmospheric layers.
+    Radiative transfer scheme: flux-based two-stream method, using flux-adding treatment, Toon-type hemispheric mean approximation
+    
+    """
+
+    def __init__(self, opalayer, pressure_top=1.0e-8, pressure_btm=1.0e2, nlayer=100):
+        """Initialization of OpartReflectPure
+
+        Args:
+            opalayer (class): user defined class, needs to define self.nu_grid
+            pressure_top (float, optional): top pressure in bar. Defaults to 1.0e-8.
+            pressure_btm (float, optional): bottom pressure in bar. Defaults to 1.0e2.
+            nlayer (int, optional): the number of the atmospheric layers. Defaults to 100.
+        """
+        super().__init__(pressure_top, pressure_btm, nlayer, opalayer.nu_grid)
+        self.opalayer = opalayer
+        self.nu_grid = self.opalayer.nu_grid
+
+    def update_layer(self, carry_rs, params):
+        """updates the layer opacity and effective reflectivity (Rphat) and source (Sphat)
+
+        Args:
+            carry_rs (list): carry for the Rphat and Sphat
+            params (list): layer parameters for this layer
+
+        Returns:
+            list: updated carry_rs
+        """
+        Rphat_prev, Sphat_prev = carry_rs
+
+        # blackbody source term in the layers 
+        temparature = params[0]
+        source_vector = piB(temparature, self.nu_grid)
+        # -------------------------------------------------
+        dtau, single_scattering_albedo, asymmetric_parameter = self.opalayer(params)
+        trans_coeff_i, scat_coeff_i, pihatB_i, _, _, _ = setrt_toonhm(
+            dtau, single_scattering_albedo, asymmetric_parameter, source_vector
+        )
+        denom = 1.0 - scat_coeff_i * Rphat_prev
+        Sphat_each = (
+            pihatB_i + trans_coeff_i * (Sphat_prev + pihatB_i * Rphat_prev) / denom
+        )
+        Rphat_each = scat_coeff_i + trans_coeff_i**2 * Rphat_prev / denom
+        carry_rs = [Rphat_each, Sphat_each]
+        return carry_rs
+
+    def __call__(
+        self,
+        layer_params,
+        layer_update_function,
+        source_bottom,
+        refectivity_bottom,
+        incoming_flux,
+    ):
+        """computes outgoing flux
+
+        Args:
+            layer_params (list): user defined layer parameters, layer_params[0] should be temperature array
+            layer_update_function (method):
+            source_bottom (array): source at the bottom [Nnus]
+            relfectivity_bottom (array): reflectivity at the bottom [Nnus]
+            incoming_flux (array): incoming flux [Nnus]
+            
+        Returns:
+            array: flux [Nnus]
+        """
         rs_bottom = [refectivity_bottom, source_bottom]
         rs, _ = scan(layer_update_function, rs_bottom, layer_params)
         return rs[0] * incoming_flux + rs[1]
