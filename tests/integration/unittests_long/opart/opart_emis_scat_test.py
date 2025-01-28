@@ -1,20 +1,21 @@
 """checks the forward model of the opart spectrum
 """
-from importlib.resources import files
-import pandas as pd
+
+import pytest
 import numpy as np
 import jax.numpy as jnp
-from exojax.test.data import TESTDATA_CO_EXOMOL_PREMODIT_REFLECTION_REF
 from exojax.test.emulate_mdb import mock_wavenumber_grid
 from exojax.test.emulate_mdb import mock_mdbExomol
 from exojax.spec.opacalc import OpaPremodit
-from exojax.spec.opart import OpartReflectPure
+from exojax.spec.opart import OpartEmisScat
 from exojax.spec.layeropacity import single_layer_optical_depth
 
 from jax import config
+
 config.update("jax_enable_x64", True)
 
-def test_forward_reflection_opart():
+
+def test_forward_emis_scat_opart():
     class OpaLayer:
         # user defined class, needs to define self.nugrid
         def __init__(self):
@@ -38,9 +39,7 @@ def test_forward_reflection_opart():
             return dtau_co, single_scattering_albedo, asymmetric_parameter
 
     opalayer = OpaLayer()
-    opart = OpartReflectPure(
-        opalayer, pressure_top=1.0e-6, pressure_btm=1.0e0, nlayer=200
-    )
+    opart = OpartEmisScat(opalayer, pressure_top=1.0e-6, pressure_btm=1.0e0, nlayer=200)
 
     def layer_update_function(carry, params):
         carry = opart.update_layer(carry, params)
@@ -49,36 +48,18 @@ def test_forward_reflection_opart():
     temperature = opart.powerlaw_temperature(1300.0, 0.1)
     mixing_ratio = opart.constant_mmr_profile(0.0003)
     layer_params = [temperature, opart.pressure, opart.dParr, mixing_ratio]
-
-    albedo = 1.0
-    incoming_flux = jnp.ones_like(opalayer.nu_grid)
-    reflectivity_surface = albedo * jnp.ones_like(opalayer.nu_grid)
-    
-    flux = opart(
-        layer_params, layer_update_function, reflectivity_surface, incoming_flux
-    )
-
-    filename = files('exojax').joinpath('data/testdata/' + TESTDATA_CO_EXOMOL_PREMODIT_REFLECTION_REF)
-  
-    dat = pd.read_csv(filename, delimiter=",", names=("nus", "flux"))
-
-    residual = np.abs(flux / dat["flux"].values - 1.0)
-    print(np.max(residual))
-
-    assert np.max(residual) < 6.2e-11 #6.175882028003343e-11 1/12 2025
+    flux = opart(layer_params, layer_update_function)
+    print(np.mean(flux))
+    ref = 515245.12625256577  # 1/28 2025
+    assert np.mean(flux) == pytest.approx(ref)
     plot = False
     if plot:
         import matplotlib.pyplot as plt
 
         fig = plt.figure()
-        ax = fig.add_subplot(211)
         plt.plot(opalayer.nu_grid, flux)
-        plt.plot(dat["nus"].values, dat["flux"].values, ls="--")
-        ax = fig.add_subplot(212)
-        plt.plot(opalayer.nu_grid, residual)
-
-        plt.savefig("forward_opart_reflect.png")
+        plt.savefig("forward_opart_emis_scat.png")
 
 
 if __name__ == "__main__":
-    test_forward_reflection_opart()
+    test_forward_emis_scat_opart()
