@@ -287,9 +287,42 @@ Next, define the objective function.
 In this example, we will optimize two parameters of the temperature
 profile (T0 and powerlaw index alpha). For gradient-based optimization,
 we need to compute gradients. Typically, gradients are calculated using
-``jax.grad``, which employs reverse differentiation. However, this
+``jax.grad``, which employs reverse-mode differentiation. However, this
 approach consumes a significant amount of memory. Instead, we use
-forward differentiation. For this purpose, we utilize ``jax.jacfwd``.
+forward-mode differentiation.
+
+The differences between forward-mode and reverse-mode differentiation
+can be summarized as shown in the figure below. In forward-mode
+differentiation, function composition and differentiation propagate from
+the input side (left) to the output side (right), allowing function
+values and derivative values at each step to be discarded from memory.
+Each step of computation uses the Jacobian-Vector Product (JVP;
+directional derivative itself).
+
+On the other hand, in reverse-mode differentiation (also known as
+backpropagation), differentiation proceeds from the output side (right)
+to the input side (left). Each step uses the Vector-Jacobian Product
+(VJP), but computing the VJP requires function values after updates
+(denoted as :math:`f({\bf \omega})`) in the figure. Therefore, the
+function must first be composed from the input side to the output side,
+and intermediate results must be stored. This leads to higher (device)
+memory usage.
+
+The advantage of reverse-mode differentiation is that when the input
+vector has a higher dimension than the output vector (e.g., when the
+output is a single cost function), its computational cost is lower than
+that of forward-mode differentiation. In typical retrieval scenarios,
+this advantage is not very significant. However, when the number of
+estimated parameters is large, it can become a critical issue, so
+careful consideration of the memory-computation tradeoff is recommended.
+
+.. figure:: https://secondearths.sakura.ne.jp/exojax/figures/exojax_fr.png
+   :alt: Figure forward-mode and reverse-mode differentiation
+
+   Figure forward-mode and reverse-mode differentiation
+
+For this purpose, we utilize ``jax.jacfwd`` as the Jacobian computation
+using the forward-mode.
 
 .. code:: ipython3
 
