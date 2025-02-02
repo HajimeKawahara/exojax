@@ -16,7 +16,7 @@ Retrieval
    :maxdepth: 1
 
    tutorials/reverse_premodit.rst
-
+   tutorials/get_started_ns.rst
 
 Applications
 ====================
