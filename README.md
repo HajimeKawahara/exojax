@@ -8,7 +8,7 @@
 
 Differentiable spectral modelling of exoplanets/brown dwarfs/M dwarfs using [JAX](https://github.com/jax-ml/jax)!
 Read [the docs](http://secondearths.sakura.ne.jp/exojax) 🐕. 
-In short, ExoJAX allows you to do gradient based optimizations, HMC-NUTS, and SVI using the latest database.
+In short, ExoJAX allows you to do gradient based optimizations, HMC-NUTS, nested sampling, and SVI using the latest database.
 
 ExoJAX is at least compatible with
 
