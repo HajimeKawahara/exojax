@@ -71,6 +71,7 @@ Many techniques/databases are used in ExoJAX.
 - JAX: Bradbury, J., Frostig, R., Hawkins, P., et al. 2018, JAX: composable transformations of Python+NumPy programs, `JAX <http://github.com/google/jax>`_
 - NumPyro: Phan, D., Pradhan, N., & Jankowiak, M. 2019, `arXiv:1912.11554 <http://arxiv.org/abs/1912.11554>`_
 - JAXopt: Blondel, M., Berthet, Q., Cuturi, M. et al. 2021 `arXiv:2105.15183 <http://arxiv.org/abs/2105.15183>`_
+- `Optax <https://optax.readthedocs.io/en/latest/>`_
 - Vaex: Breddels and Veljanoski (2018) `arXiv:https://arxiv.org/abs/1801.02638 <https://arxiv.org/abs/1801.02638>`_
 - Algorithm 916: Zaghloul and Ali (2012) `arXiv:1106.0151 <https://arxiv.org/abs/1106.0151>`_
 - DIT: `van den Bekerom and Pannier (2021) <https://www.sciencedirect.com/science/article/abs/pii/S0022407320310049>`_ 
