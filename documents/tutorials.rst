@@ -1,5 +1,5 @@
-Get Started
-==============
+Getting Started
+====================
 
 .. toctree::
    :maxdepth: 1
@@ -9,20 +9,13 @@ Get Started
    tutorials/Transmission_beta.rst
    tutorials/optimize_spectrum.rst
 
-Retrieval
+Retrievals
 ===============
 
-For HMC-NUTS, see 
+For HMC-NUTS, visit  `Getting Started Page <tutorials/get_started.html>`_ again.
 
-.. toctree::
-   :maxdepth: 1
-
-   tutorials/get_started.rst
-
-again
-
-SVI, nested samping
----------------------
+SVI, Nested Samping via NumPyro
+-----------------------------------
 .. toctree::
    :maxdepth: 1
 
