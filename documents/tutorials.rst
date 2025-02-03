@@ -12,12 +12,23 @@ Get Started
 Retrieval
 ===============
 
+For HMC-NUTS, see 
+
 .. toctree::
    :maxdepth: 1
 
-   tutorials/reverse_premodit.rst
-   tutorials/get_started_ns.rst
+   tutorials/get_started.rst
 
+again
+
+SVI, nested samping
+---------------------
+.. toctree::
+   :maxdepth: 1
+
+   tutorials/get_started_svi.rst
+   tutorials/get_started_ns.rst
+   
 Applications
 ====================
 
