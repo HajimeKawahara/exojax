@@ -66,16 +66,16 @@ Contents
 
    exojax/exojax.rst
 
-ExoJAX example (exojaxample)
+ExoJAX examples (exojaxample)
 ---------------------------------
 
 - |:ringed_planet:| `exojaxample_WASP39b <https://github.com/sh-tada/exojaxample_WASP39b>`_ : An example of HMC-NUTS for actual hot Saturn (JWST/ERS, NIRSPEC/G395H)
 
 - |:ringed_planet:| `exojaxample_jupiter <https://github.com/HajimeKawahara/exojaxample_jupiter>`_ : An example of HMC-NUTS for actual Jupiter reflection spectrum
 
-- |:page_facing_up:| HMC-NUTS for Gl 229 B  (T-dwarf) Emission Spectrum `Kawashima et al. <https://arxiv.org/abs/2410.11561>`_
+- |:page_facing_up:| HMC-NUTS for Gl 229 B  (T-dwarf) Emission Spectrum `Kawashima et al. <https://arxiv.org/abs/2410.11561>`_ (arXiv)
 
-- |:page_facing_up:| HMC analysis of experimental spectroscopy data for hot methane gas `Hosokawa et al. <https://github.com/KoHosokawa/Gascell_Exojax>`_
+- |:test_tube:| HMC analysis of experimental spectroscopy data for hot methane gas `Gascell_Exojax. <https://github.com/KoHosokawa/Gascell_Exojax>`_
 
 References 
 ---------------------
@@ -84,7 +84,7 @@ References
    `ApJS 258, 31 (2022) <https://iopscience.iop.org/article/10.3847/1538-4365/ac3b4d>`_
    (Paper I)
 
-- |:page_facing_up:| Kawahara et al., 2025, in prep. `ArXiv <https://arxiv.org/abs/2410.06900>`_ (Paper II)
+- |:page_facing_up:| Kawahara et al., 2025, under review. `ArXiv <https://arxiv.org/abs/2410.06900>`_ (Paper II)
 
 License & Attribution
 ---------------------
