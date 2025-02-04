@@ -156,7 +156,7 @@ def olaconv(input_matrix_zeropad, fir_filter_zeropad, ndiv, div_length, filter_l
 
 
 def overlap_and_add(ftarr, output_length, div_length):
-    """Compute overlap and add
+    """Compute overlap and add using scan
 
     Args:
         ftarr (jax.ndarray): filtered input matrix
