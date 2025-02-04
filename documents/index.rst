@@ -32,10 +32,7 @@ Or use `the discussions form <https://github.com/HajimeKawahara/exojax/discussio
 
 .. Warning:: 
 
-	Recently, logging into HITRAN has become mandatory to access HITEMP files, 
-   causing issues with automated HITEMP file retrieval by RADIS. For more details, 
-   please refer to `this resource <https://github.com/radis/radis/issues/717>`_.
-   (Feb. 3, 2025) 
+	Recently, logging into HITRAN has become mandatory to access HITEMP files, causing issues with automated HITEMP file retrieval by RADIS. For more details, please refer to `this resource <https://github.com/radis/radis/issues/717>`_. (Feb. 3, 2025) 
 
 
 Contents
