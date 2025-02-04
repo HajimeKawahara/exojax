@@ -15,10 +15,10 @@ It enables fully Bayesian inference for high-dispersion data, fitting line-by-li
 -- from molecular/atomic databases to real spectra -- 
 by integrating with Hamiltonian Monte Carlo - No U Turn Sampler (HMC-NUTS), Stochastic Variational Inference (SVI), 
 Nested Sampling, and other inference techniques available in modern probabilistic programming frameworks 
-such as NumPyro <https://github.com/pyro-ppl/numpyro>.
+such as `NumPyro <https://github.com/pyro-ppl/numpyro>`_.
 So, the notable features of ExoJAX are summarized as 
 
-- **HMC-NUTS, SVI, Nested Sampling, Gradient-based Optimizer available**
+- **HMC-NUTS, SVI, Nested Sampling, Gradient-based Inference Techiques and Optimizers Available**
 - **Easy to use the latest molecular/atomic data in** :doc:`userguide/api`,  **and** :doc:`userguide/atomll` 
 - **A transparent open-source project; anyone who wants to participate can join the development!**
 
