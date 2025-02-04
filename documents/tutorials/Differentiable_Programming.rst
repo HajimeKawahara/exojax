@@ -1,7 +1,7 @@
 Why Differentiable Spectral Modeling?
 =====================================
 
-Last Update: January 19th (2025) Hajime Kawahara
+Last Update: Febrary 4th (2025) Hajime Kawahara
 
 `ExoJAX <https://github.com/HajimeKawahara/exojax>`__ is a
 differentiable spectral model written in
@@ -30,7 +30,6 @@ follows:
     nu0 = 1000.0
     nu_grid = jnp.linspace(nu0-20,nu0+20,1000)
     
-    
     sigma = line_strength*voigt(nu_grid - nu0,logbeta,gamma)
     
     plt.plot(nu_grid, sigma) 
@@ -50,11 +49,12 @@ follows:
 .. image:: Differentiable_Programming_files/Differentiable_Programming_4_1.png
 
 
-When light with a flat spectrum $ f_0 $ passes through a region filled
-with molecule X at a number density $ n $ over a path length $ L $, the
-transmitted spectrum is given by :math:`f_0 \exp(-\tau_\nu)`, where the
-optical depth :math:`\tau_\nu = n L \sigma_\nu`. Using the column
-density :math:`N = n L`, this can be expressed as
+When light with a flat spectrum :math:`f_0` passes through a region
+filled with molecule X at a number density :math:`n` over a path length
+:math:`L`, the transmitted spectrum is given by
+:math:`f_0 \exp(-\tau_\nu)`, where the optical depth
+:math:`\tau_\nu = n L \sigma_\nu`. Using the column density
+:math:`N = n L`, this can be expressed as
 :math:`f_\nu = f_0 \exp{(-N \sigma_\nu )}`.
 
 .. code:: ipython3
@@ -104,7 +104,7 @@ estimating ``N`` and ``beta``.
         f = f0*jnp.exp(-sigma*N)
         return f
 
-gradient-based optimization
+Gradient-based Optimization
 ---------------------------
 
 In a differentiable spectral model, gradient-based optimization is
@@ -368,18 +368,22 @@ such as NumPyro and BlackJAX can be used. Here, we’ll use NumPyro.
 
 .. parsed-literal::
 
-    sample: 100%|██████████| 3000/3000 [00:08<00:00, 367.22it/s, 3 steps of size 6.79e-01. acc. prob=0.91] 
-
+    sample: 100%|██████████| 3000/3000 [00:08<00:00, 361.90it/s, 3 steps of size 6.79e-01. acc. prob=0.91] 
 
 .. parsed-literal::
 
     
                     mean       std    median      5.0%     95.0%     n_eff     r_hat
-          logN     20.99      0.01     20.99     20.97     21.01   1216.97      1.00
-       logbeta      0.01      0.03      0.02     -0.03      0.06   1406.12      1.00
-       sigmain      0.10      0.00      0.10      0.10      0.11   1592.41      1.00
+          logN     20.99      0.01     20.99     20.97     21.01   1217.43      1.00
+       logbeta      0.01      0.03      0.02     -0.03      0.06   1406.41      1.00
+       sigmain      0.10      0.00      0.10      0.10      0.11   1592.57      1.00
     
     Number of divergences: 0
+
+
+.. parsed-literal::
+
+    
 
 
 .. code:: ipython3
@@ -447,5 +451,107 @@ such as NumPyro and BlackJAX can be used. Here, we’ll use NumPyro.
 
 
 .. image:: Differentiable_Programming_files/Differentiable_Programming_35_1.png
+
+
+Here, we used a simple absorption line spectrum, so the HMC execution
+time should be within a few seconds to a few minutes. ExoJAX can compute
+**emission spectra, reflection spectra, and transmission spectra** from
+atmospheric layers, all of which are differentiable and can be used for
+Bayesian analysis with HMC, just like in this example.
+
+For more details, please start by referring to `Getting Started
+Guide <get_started.html>`__.
+
+When the model is differentiable, inference methods other than HMC that
+utilize gradients are also possible. Next, as an example, let’s try
+Stochastic Variational Inference (SVI).
+
+.. code:: ipython3
+
+    from numpyro.infer import SVI
+    from numpyro.infer import Trace_ELBO
+    import numpyro.optim as optim
+    from numpyro.infer.autoguide import AutoMultivariateNormal
+    
+    guide = AutoMultivariateNormal(model)
+    optimizer = optim.Adam(0.01)
+    svi = SVI(model, guide, optimizer, loss=Trace_ELBO())
+
+SVI is faster compared to HMC.
+
+.. code:: ipython3
+
+    num_steps = 10000
+    rng_key = random.PRNGKey(0)
+    rng_key, rng_key_run = random.split(rng_key)
+    svi_result = svi.run(rng_key_run, num_steps, y=fobs)
+
+
+.. parsed-literal::
+
+    100%|██████████| 10000/10000 [00:04<00:00, 2037.36it/s, init loss: -102.3971, avg. loss [9501-10000]: -840.5520]
+
+
+.. code:: ipython3
+
+    params = svi_result.params
+    predictive_posterior = Predictive(
+        model,
+        guide=guide,
+        params=params,
+        num_samples=2000,
+        return_sites=pararr,
+    )
+    posterior_sample = predictive_posterior(rng_key, y=None)
+
+
+Let’s compare the posterior distributions of **HMC (orange)** and **SVI
+(green)**.
+
+.. code:: ipython3
+
+    import arviz
+    idata = arviz.from_dict(posterior=posterior_sample)
+    
+    axes = arviz.plot_pair(
+        arviz.from_numpyro(mcmc),
+        var_names=pararr,
+        kind="kde",
+        marginals=True,
+        show=False,
+        kde_kwargs={"contourf_kwargs":{"cmap":"plasma","alpha":0.5},"contour_kwargs":{"alpha":0}},
+        marginal_kwargs={"color":"orange"},
+    )
+    axes2 = arviz.plot_pair(
+        idata,
+        ax = axes,
+        var_names=pararr,
+        kind="kde",
+        marginals=True,
+        show=False,
+        reference_values={"logN": 21.0, "logbeta": 0.0, "sigmain": 0.1},
+        kde_kwargs={"contourf_kwargs":{"alpha":0.5,"cmap":"viridis"}, "contour_kwargs":{"alpha":0}},
+        marginal_kwargs={"color":"green"}
+    )
+    plt.show()
+
+
+
+.. image:: Differentiable_Programming_files/Differentiable_Programming_43_0.png
+
+
+Please refer to the `SVI getting started
+guide <get_started_svi.html>`__.
+
+Here, we introduced both HMC and SVI, but inference methods that do not
+rely on differentiation, such as Nested Sampling, are also efficient
+thanks to JAX’s XLA acceleration. See `this
+guide <get_started_ns.html>`__ for more details.
+
+Conclusion
+~~~~~~~~~~
+
+In summary, differentiable models greatly expand the possibilities for
+retrieval inference!
 
 

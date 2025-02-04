@@ -12,6 +12,9 @@ Getting Started
 Retrievals
 ===============
 
+HMC-NUTS
+------------
+
 For HMC-NUTS, visit  `Getting Started Page <tutorials/get_started.html>`_ again.
 
 SVI, Nested Samping via NumPyro

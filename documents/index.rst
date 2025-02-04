@@ -9,14 +9,16 @@ ExoJAX
 Version 2.0 (:doc:`userguide/history`) 
 
 
-`ExoJAX <https://github.com/HajimeKawahara/exojax>`_ provides an auto-differentiable high-resolution spectrum model for exoplanets/brown dwarfs using `JAX <https://github.com/google/jax>`_. 
-ExoJAX enables a fully Bayesian inference of the high-dispersion data to fit the line-by-line spectral computation to the observed spectrum, 
-from end-to-end (i.e. from molecular/atomic databases to real spectra), 
-by combining it with `the Hamiltonian Monte Carlo <https://en.wikipedia.org/wiki/Hamiltonian_Monte_Carlo>`_ or the other inference techniques
-in recent probabilistic programming languages such as `NumPyro <https://github.com/pyro-ppl/numpyro>`_. 
+`ExoJAX <https://github.com/HajimeKawahara/exojax>`_ provides an auto-differentiable high-resolution spectrum model 
+for exoplanets/brown dwarfs using `JAX <https://github.com/google/jax>`_. 
+It enables fully Bayesian inference for high-dispersion data, fitting line-by-line spectral computations to observed spectra end-to-end
+-- from molecular/atomic databases to real spectra -- 
+by integrating with Hamiltonian Monte Carlo - No U Turn Sampler (HMC-NUTS), Stochastic Variational Inference (SVI), 
+Nested Sampling, and other inference techniques available in modern probabilistic programming frameworks 
+such as NumPyro <https://github.com/pyro-ppl/numpyro>.
 So, the notable features of ExoJAX are summarized as 
 
-- **HMC-NUTS, gradient-based optimizer available**
+- **HMC-NUTS, SVI, Nested Sampling, Gradient-based Optimizer available**
 - **Easy to use the latest molecular/atomic data in** :doc:`userguide/api`,  **and** :doc:`userguide/atomll` 
 - **A transparent open-source project; anyone who wants to participate can join the development!**
 
@@ -27,6 +29,11 @@ So, the notable features of ExoJAX are summarized as
 
 |:green_circle:| If you have an error and/or want to know the up-to-date info, visit `ExoJAX wiki <https://github.com/HajimeKawahara/exojax/wiki>`_. 
 Or use `the discussions form <https://github.com/HajimeKawahara/exojax/discussions>`_ on github or directly raise `issues <https://github.com/HajimeKawahara/exojax/issues>`_.
+
+.. Warning:: 
+
+	Recently, logging into HITRAN has become mandatory to access HITEMP files, causing issues with automated HITEMP file retrieval by RADIS. For more details, please refer to `this resource <https://github.com/radis/radis/issues/717>`_. (Feb. 3, 2025) 
+
 
 Contents
 ==================================
@@ -56,14 +63,16 @@ Contents
 
    exojax/exojax.rst
 
-ExoJAX example (exojaxample)
+ExoJAX examples (exojaxample)
 ---------------------------------
 
 - |:ringed_planet:| `exojaxample_WASP39b <https://github.com/sh-tada/exojaxample_WASP39b>`_ : An example of HMC-NUTS for actual hot Saturn (JWST/ERS, NIRSPEC/G395H)
 
 - |:ringed_planet:| `exojaxample_jupiter <https://github.com/HajimeKawahara/exojaxample_jupiter>`_ : An example of HMC-NUTS for actual Jupiter reflection spectrum
 
-- |:page_facing_up:| HMC-NUTS for Gl 229 B  (T-dwarf) Emission Spectrum `Kawashima et al. <https://arxiv.org/abs/2410.11561>`_
+- |:page_facing_up:| HMC-NUTS for Gl 229 B  (T-dwarf) Emission Spectrum `Kawashima et al. <https://arxiv.org/abs/2410.11561>`_ (arXiv)
+
+- |:test_tube:| HMC analysis of experimental spectroscopy data for hot methane gas `Gascell_Exojax. <https://github.com/KoHosokawa/Gascell_Exojax>`_
 
 References 
 ---------------------
@@ -72,7 +81,7 @@ References
    `ApJS 258, 31 (2022) <https://iopscience.iop.org/article/10.3847/1538-4365/ac3b4d>`_
    (Paper I)
 
-- |:page_facing_up:| Kawahara et al., 2025, in prep. `ArXiv <https://arxiv.org/abs/2410.06900>`_ (Paper II)
+- |:page_facing_up:| Kawahara et al., 2025, under review. `ArXiv <https://arxiv.org/abs/2410.06900>`_ (Paper II)
 
 License & Attribution
 ---------------------
