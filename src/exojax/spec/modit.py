@@ -106,7 +106,7 @@ def xsvector(cnu, indexnu, R, pmarray, nsigmaD, ngammaL, S, nu_grid, ngammaL_gri
 
 
 @jit
-def xsmatrix(cnu, indexnu, R, pmarray, nsigmaDl, ngammaLM, SijM, nu_grid, dgm_ngammaL):
+def xsmatrix(cnu, indexnu, resolution, pmarray, nsigmaDl, ngammaLM, SijM, nu_grid, dgm_ngammaL):
     """Cross section matrix for xsvector (MODIT)
 
     Notes:
@@ -116,19 +116,19 @@ def xsmatrix(cnu, indexnu, R, pmarray, nsigmaDl, ngammaLM, SijM, nu_grid, dgm_ng
 
 
     Args:
-       cnu: contribution by npgetix for wavenumber
-       indexnu: index by npgetix for wavenumber
-       R: spectral resolution
-       pmarray: (+1,-1) array whose length of len(nu_grid)+1
-       nu_lines: line center (Nlines)
-       nsigmaDl: normalized doppler sigma in layers in R^(Nlayer x 1)
-       ngammaLM: gamma factor matrix in R^(Nlayer x Nline)
-       SijM: line strength matrix in R^(Nlayer x Nline)
-       nu_grid: linear wavenumber grid
-       dgm_ngammaL: DIT Grid Matrix for normalized gammaL R^(Nlayer, NDITgrid)
+        cnu: contribution by npgetix for wavenumber
+        indexnu: index by npgetix for wavenumber
+        resolution: spectral resolution, same as resolution (3rd return value) from utils.grids.wavenumber_grid
+        pmarray: (+1,-1) array whose length of len(nu_grid)+1
+        nu_lines: line center [Nlines]
+        nsigmaDl: normalized doppler sigma in layers in [Nlayer, 1]
+        ngammaLM: gamma factor matrix in [Nlayer, Nline]
+        SijM: line strength matrix in [Nlayer, Nline]
+        nu_grid: linear wavenumber grid
+        dgm_ngammaL: DIT Grid Matrix for normalized gammaL [Nlayer, NDITgrid]
 
     Return:
-       cross section matrix in R^(Nlayer x Nwav)
+        cross section matrix in [Nlayer x Nwav]
     """
     NDITgrid = jnp.shape(dgm_ngammaL)[1]
     Nline = len(cnu)
@@ -141,7 +141,7 @@ def xsmatrix(cnu, indexnu, R, pmarray, nsigmaDl, ngammaLM, SijM, nu_grid, dgm_ng
         Sij = arr[Nline + 1 : 2 * Nline + 1]
         ngammaL_grid = arr[2 * Nline + 1 : 2 * Nline + NDITgrid + 1]
         arr = xsvector(
-            cnu, indexnu, R, pmarray, nsigmaD, ngammaL, Sij, nu_grid, ngammaL_grid
+            cnu, indexnu, resolution, pmarray, nsigmaD, ngammaL, Sij, nu_grid, ngammaL_grid
         )
         return carry, arr
 
