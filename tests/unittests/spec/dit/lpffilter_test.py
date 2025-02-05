@@ -5,10 +5,11 @@ This filter is used in MODIT/PreMODIT to convolve the line profile.
 
 import pytest
 import jax.numpy as jnp
+from jax import vmap
 import numpy as np
 from exojax.test.emulate_mdb import mock_wavenumber_grid
 from exojax.spec.ditkernel import fold_voigt_kernel_logst
-from exojax.spec.lpf import voigt
+from exojax.spec.lpffilter import generate_lpffilter
 from jax import config
 
 
@@ -18,10 +19,9 @@ def lpffilter_agreement_with_fold_voigt_kernel_logst():
     pmarray = np.ones(len(nu_grid) + 1)
     pmarray[1::2] = pmarray[1::2] * -1.0
     nsigmaD = 5.0
-    ngammaL_grid = jnp.array([10.0])
+    ngammaL_grid = jnp.array([1.0, 10.0, 100.0])
     log_ngammaL_grid = jnp.log(ngammaL_grid)
     Ng_nu = len(nu_grid)
-
     vk = fold_voigt_kernel_logst(
         jnp.fft.rfftfreq(2 * Ng_nu, 1),
         jnp.log(nsigmaD),
@@ -29,56 +29,44 @@ def lpffilter_agreement_with_fold_voigt_kernel_logst():
         Ng_nu,
         pmarray,
     )
+    vkfilter = jnp.fft.irfft(vk,axis=0)
+    vmap_generate_lpffilter = vmap(generate_lpffilter, (None, None, 0),0)
+    lpffilter = vmap_generate_lpffilter(Ng_nu, nsigmaD, ngammaL_grid)
+    diff_filter = np.abs(vkfilter.T - lpffilter)
+    print(np.max(diff_filter))
+    
+    assert np.max(diff_filter) < 3.0e-9 #2.7824980652901843e-09 Feb 5th 2025
 
-    vkfilter = jnp.fft.irfft(vk[:, 0])
+    return vk, vkfilter, lpffilter, diff_filter, ngammaL_grid
 
-    # diff = vkfilter[1:Ng_nu] - vkfilter[Ng_nu+1:][::-1]
-    # print(np.sum(diff)) # should be nearly zero
-    # print(vkfilter[0], vkfilter[Ng_nu]) #DC component, Nyquist component
 
-    # Oneside
-
-    lpffilter = generate_lpffilter(nsigmaD, ngammaL_grid[0], Ng_nu)
-
-    diff_filter = np.abs(vkfilter - lpffilter)
+if __name__ == "__main__":
+    vk, vkfilter, lpffilter, diff_filter, ngammaL_grid = lpffilter_agreement_with_fold_voigt_kernel_logst()
 
     # ifft/fft error
-    vkrecover = jnp.fft.rfft(vkfilter)
-    diff_fftrecover = np.abs(vk[:, 0] - vkrecover)
+    vkrecover = jnp.fft.rfft(vkfilter, axis=0)
+    diff_fftrecover = np.abs(vk - vkrecover)
 
     import matplotlib.pyplot as plt
 
     fig = plt.figure()
     ax = fig.add_subplot(211)
-    plt.plot(vkfilter[0:Ng_nu], label="tilde vk", alpha=0.3)
-    plt.plot(lpffilter, label="lpffilter", ls="dashed", alpha=0.3)
-    plt.plot(diff_filter, label="diff", alpha=0.3)
+    ax.set_title("lpffilter vs vk")
+    for i in range(0, len(ngammaL_grid)):
+        plt.plot(vkfilter[:,i], label="tilde vk", alpha=0.3, color="C"+str(i))
+        plt.plot(lpffilter[i, :], label="lpffilter", ls="dashed", alpha=1.0, color="C"+str(i))
+        plt.plot(diff_filter[i,:], label="diff", alpha=0.3, color="C"+str(i))
     plt.yscale("log")
     plt.legend()
     ax = fig.add_subplot(212)
-    plt.plot(vk[:, 0], alpha=0.3, label="vk")
-    plt.plot(vkrecover, label="vkrecover", alpha=0.3)
-    plt.plot(diff_fftrecover, label="diff", alpha=0.3)
-    plt.legend()
+    ax.set_title("ifft/fft error")
+    for i in range(0, len(ngammaL_grid)):
+        #plt.plot(vk[:, i], alpha=0.3, label="vk")
+        #plt.plot(vkrecover[:,i], label="vkrecover", alpha=0.3)
+        plt.plot(diff_fftrecover[:,i], label="diff", alpha=0.3, color="C"+str(i))
+        plt.legend()
     plt.savefig("tildevk.png")
 
 
-def generate_lpffilter(nsigmaD, ngammaL, nfilter):
-    """Generates LPF filter
-
-    Args:
-        nsigmaD (float): normalized gaussian standard deviation, resolution*betaT/nu betaT is the STD of Doppler broadening
-        ngammaL (float): normalized Lorentzian half width
-        nfilter (int): length of the wavenumber grid of lpffilter
-
-    Returns:
-        array: LPF filter
-    """
-    # dq is equivalent to resolution*jnp.log(nu_grid) - resolutiona*jnp.log(nu_grid[0]) (+ Nyquist)
-    dq = jnp.arange(0, nfilter + 1)
-    lpffilter_oneside = voigt(dq, nsigmaD, ngammaL)
-    return jnp.concatenate([lpffilter_oneside, lpffilter_oneside[1:-1][::-1]])
 
 
-if __name__ == "__main__":
-    lpffilter_agreement_with_fold_voigt_kernel_logst()
