@@ -84,18 +84,18 @@ def xsvector(cnu, indexnu, R, pmarray, nsigmaD, ngammaL, S, nu_grid, ngammaL_gri
         However, this will be changed when cufft fixes the 4GB limit.
 
     Args:
-       cnu: contribution by npgetix for wavenumber
-       indexnu: index by npgetix for wavenumber
-       R: spectral resolution
-       pmarray: (+1,-1) array whose length of len(nu_grid)+1
-       nsigmaD: normaized Gaussian STD
-       gammaL: Lorentzian half width (Nlines)
-       S: line strength (Nlines)
-       nu_grid: linear wavenumber grid
-       gammaL_grid: gammaL grid
+        cnu: contribution by npgetix for wavenumber
+        indexnu: index by npgetix for wavenumber
+        R: spectral resolution
+        pmarray: (+1,-1) array whose length of len(nu_grid)+1
+        nsigmaD: normaized Gaussian STD
+        gammaL: Lorentzian half width (Nlines)
+        S: line strength (Nlines)
+        nu_grid: linear wavenumber grid
+        gammaL_grid: gammaL grid
 
     Returns:
-       Cross section in the log nu grid
+        Cross section in the log nu grid
     """
 
     log_ngammaL_grid = jnp.log(ngammaL_grid)
