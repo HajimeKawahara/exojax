@@ -571,7 +571,7 @@ class OpaModit(OpaCalc):
             warnings.warn("Tarr_list/Parr are needed for xsmatrix.", UserWarning)
 
     def __eq__(self, other):
-        """eq method for OpaDirect, definied by comparing all the attributes and important status
+        """eq method for OpaModit, definied by comparing all the attributes and important status
 
         Args:
             other (_type_): _description_
