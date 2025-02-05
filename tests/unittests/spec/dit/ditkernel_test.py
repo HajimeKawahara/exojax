@@ -10,7 +10,7 @@ from exojax.spec.initspec import init_modit
 from jax import config
 
 
-def test_fold_voigt_kernel_logst(fig=False):
+def test_fold_voigt_kernel_logst():
     
     config.update("jax_enable_x64", True)
     mdb = mock_mdbExomol()
@@ -28,6 +28,7 @@ def test_fold_voigt_kernel_logst(fig=False):
     log_ngammaL_grid = jnp.log(ngammaL_grid)
     _, _, R, pmarray = init_modit(mdb.nu_lines, nu_grid)
     Ng_nu = len(nu_grid)
+
     vk = fold_voigt_kernel_logst(
         jnp.fft.rfftfreq(2 * Ng_nu, 1),
         jnp.log(nsigmaD),
@@ -35,20 +36,19 @@ def test_fold_voigt_kernel_logst(fig=False):
         Ng_nu,
         pmarray,
     )
+    
     ref = [362.08269655,326.81894669,294.27354816] # feb 5th 2025
-
-    if fig:
-        import matplotlib.pyplot as plt
-        plt.plot(vk[:,0],label="0")
-        plt.plot(vk[:,1],label="1")
-        plt.plot(vk[:,2],label="2")
-        plt.yscale("log")
-        plt.xscale("log")
-        plt.legend()
-        plt.savefig("fold_voigt_kernel_logst.png")
-
     assert vk.shape == (len(nu_grid)+1, len(log_ngammaL_grid))
     assert jnp.all(jnp.sum(vk, axis=0) == pytest.approx(ref))
+    return vk
 
 if __name__ == "__main__":
-    test_fold_voigt_kernel_logst(fig=True)
+    vk = test_fold_voigt_kernel_logst()
+    import matplotlib.pyplot as plt
+    plt.plot(vk[:,0],label="0",alpha=0.3)
+    plt.plot(vk[:,1],label="1",alpha=0.2)
+    plt.plot(vk[:,2],label="2",alpha=0.1)
+    plt.yscale("log")
+    plt.legend()
+    plt.savefig("fold_voigt_kernel_logst.png")
+
