@@ -1,7 +1,7 @@
 from importlib.resources import files
 import pandas as pd
 import numpy as np
-from exojax.spec.modit import xsvector
+from exojax.spec.modit_scanfft import xsvector_scanfft
 from exojax.test.data import TESTDATA_CO_EXOMOL_MODIT_XS_REF
 from exojax.spec import normalized_doppler_sigma, gamma_natural
 from exojax.spec.hitran import line_strength
@@ -35,7 +35,7 @@ def test_xs_exomol():
     Sij = line_strength(Tfix, mdbCO.logsij0, mdbCO.nu_lines, mdbCO.elower, qt, mdbCO.Tref)
 
     ngammaL_grid = ditgrid_log_interval(ngammaL, dit_grid_resolution=0.1)
-    xsv = xsvector(cont_nu, index_nu, R, pmarray, nsigmaD, ngammaL, Sij, nus,
+    xsv = xsvector_scanfft(cont_nu, index_nu, R, pmarray, nsigmaD, ngammaL, Sij, nus,
                    ngammaL_grid)
     filename =  files("exojax").joinpath('data/testdata/' + TESTDATA_CO_EXOMOL_MODIT_XS_REF)
     dat = pd.read_csv(filename, delimiter=",", names=("nus", "xsv"))
