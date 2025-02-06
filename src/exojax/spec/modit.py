@@ -70,24 +70,24 @@ def set_ditgrid_matrix_exomol(mdb, fT, Parr, R, molmass, dit_grid_resolution, *k
     """Easy Setting of DIT Grid Matrix (dgm) using Exomol.
 
     Args:
-       mdb: mdb instance
-       fT: function of temperature array
-       Parr: pressure array
-       R: spectral resolution
-       molmass: molecular mass
-       dit_grid_resolution: resolution of dgm
+        mdb: mdb instance
+        fT: function of temperature array
+        Parr: pressure array
+        R: spectral resolution
+        molmass: molecular mass
+        dit_grid_resolution: resolution of dgm
        *kargs: arguments for fT
 
     Returns:
-       DIT Grid Matrix (dgm) of normalized gammaL
+        DIT Grid Matrix (dgm) of normalized gammaL
 
     Example:
 
-       >>> fT = lambda T0,alpha: T0[:,None]*(Parr[None,:]/Pref)**alpha[:,None]
-       >>> T0_test=np.array([1100.0,1500.0,1100.0,1500.0])
-       >>> alpha_test=np.array([0.2,0.2,0.05,0.05])
-       >>> dit_grid_resolution=0.2
-       >>> dgm_ngammaL=setdgm_exomol(mdbCH4,fT,Parr,R,molmassCH4,dit_grid_resolution,T0_test,alpha_test)
+        >>> fT = lambda T0,alpha: T0[:,None]*(Parr[None,:]/Pref)**alpha[:,None]
+        >>> T0_test=np.array([1100.0,1500.0,1100.0,1500.0])
+        >>> alpha_test=np.array([0.2,0.2,0.05,0.05])
+        >>> dit_grid_resolution=0.2
+        >>> dgm_ngammaL=setdgm_exomol(mdbCH4,fT,Parr,R,molmassCH4,dit_grid_resolution,T0_test,alpha_test)
     """
     set_dgm_minmax = []
     Tarr_list = fT(*kargs)
@@ -104,17 +104,17 @@ def hitran(mdb, Tarr, Parr, Pself, R, molmass):
     """compute molecular line information required for MODIT using HITRAN/HITEMP mdb.
 
     Args:
-       mdb: mdb instance
-       Tarr: Temperature array
-       Parr: Pressure array
-       Pself: Partial pressure array
-       R: spectral resolution
-       molmass: molecular mass
+        mdb: mdb instance
+        Tarr: Temperature array
+        Parr: Pressure array
+        Pself: Partial pressure array
+        R: spectral resolution
+        molmass: molecular mass
 
     Returns:
-       line intensity matrix,
-       normalized gammaL matrix,
-       normalized sigmaD matrix
+        line intensity matrix,
+        normalized gammaL matrix,
+        normalized sigmaD matrix
     """
     qt = vmap(mdb.qr_interp_lines, (0, None))(Tarr, Tref_original)
     SijM = jit(vmap(line_strength, (0, None, None, None, 0, None)))(
@@ -144,25 +144,25 @@ def set_ditgrid_matrix_hitran(
     """Easy Setting of DIT Grid Matrix (dgm) using HITRAN/HITEMP.
 
     Args:
-       mdb: mdb instance
-       fT: function of temperature array
-       Parr: pressure array
-       Pself_ref: reference partial pressure array
-       R: spectral resolution
-       molmass: molecular mass
-       dit_grid_resolution: resolution of dgm
+        mdb: mdb instance
+        fT: function of temperature array
+        Parr: pressure array
+        Pself_ref: reference partial pressure array
+        R: spectral resolution
+        molmass: molecular mass
+        dit_grid_resolution: resolution of dgm
        *kargs: arguments for fT
 
     Returns:
-       DIT Grid Matrix (dgm) of normalized gammaL
+        DIT Grid Matrix (dgm) of normalized gammaL
 
     Example:
 
-       >>> fT = lambda T0,alpha: T0[:,None]*(Parr[None,:]/Pref)**alpha[:,None]
-       >>> T0_test=np.array([1100.0,1500.0,1100.0,1500.0])
-       >>> alpha_test=np.array([0.2,0.2,0.05,0.05])
-       >>> dit_grid_resolution=0.2
-       >>> dgm_ngammaL=setdgm_hitran(mdbCH4,fT,Parr,Pself,R,molmassCH4,dit_grid_resolution,T0_test,alpha_test)
+        >>> fT = lambda T0,alpha: T0[:,None]*(Parr[None,:]/Pref)**alpha[:,None]
+        >>> T0_test=np.array([1100.0,1500.0,1100.0,1500.0])
+        >>> alpha_test=np.array([0.2,0.2,0.05,0.05])
+        >>> dit_grid_resolution=0.2
+        >>> dgm_ngammaL=setdgm_hitran(mdbCH4,fT,Parr,Pself,R,molmassCH4,dit_grid_resolution,T0_test,alpha_test)
     """
     set_dgm_minmax = []
     Tarr_list = fT(*kargs)
