@@ -86,7 +86,7 @@ xsv_manual = calc_xsection_from_lsd_scanfft(
 # MODIT LSD
 # We need to revert the reference temperature to 296K to reuse mdb for MODIT
 # ===========================================================================
-from exojax.spec.modit import xsvector
+from exojax.spec.modit_scanfft import xsvector_scanfft
 from exojax.spec.initspec import init_modit
 
 qt = mdb.qr_interp(mdb.isotope, Ttest, Tref_original)
@@ -110,7 +110,7 @@ Smodit = np.sum(Slsd_modit, axis=1)
 Sij = line_strength(Ttest, mdb.logsij0, mdb.nu_lines, mdb.elower, qt, Tref_original)
 cont_nu, index_nu, R, pmarray = init_modit(mdb.nu_lines, nus)
 ngammaL_grid = ditgrid_log_interval(ngammaL, dit_grid_resolution=0.1)
-xsv_modit = xsvector(
+xsv_modit = xsvector_scanfft(
     cont_nu, index_nu, R, pmarray, nsigmaD, ngammaL, Sij, nus, ngammaL_grid
 )
 # xsv_modit_sld = xsvector(cont_nu, index_nu, R, pmarray, nsigmaD, ngammaL, Smodit, nus,

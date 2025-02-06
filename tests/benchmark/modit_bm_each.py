@@ -1,6 +1,6 @@
 import pytest
 import time
-from exojax.spec.modit import xsvector
+from exojax.spec.modit_scanfft import xsvector_scanfft
 from exojax.spec.set_ditgrid import ditgrid_log_interval
 from exojax.spec import initspec
 import jax.numpy as jnp
@@ -18,7 +18,7 @@ def xs(Nline):
     ngammaL = gammaL/(nu_lines/R)
     ngammaL_grid = ditgrid_log_interval(ngammaL, dit_grid_resolution=0.1)
     S = jnp.array(np.random.normal(size=Nline))
-    xsv = xsvector(cnu, indexnu, R, pmarray, nsigmaD,
+    xsv = xsvector_scanfft(cnu, indexnu, R, pmarray, nsigmaD,
                    ngammaL, S, nus, ngammaL_grid)
     xsv.block_until_ready()
     return True
