@@ -1,6 +1,6 @@
 import pytest
 import time
-from exojax.spec.modit import xsvector
+from exojax.spec.modit_scanfft import xsvector_scanfft
 from exojax.spec.set_ditgrid import ditgrid_log_interval
 import numpy as np
 import jax.numpy as jnp
@@ -24,7 +24,7 @@ def xs(Nc, Nline=10000):
     a = []
     for i in range(0, Nc):
         tsx = time.time()
-        xsv = xsvector(cnu, indexnu, R, pmarray, nsigmaD,
+        xsv = xsvector_scanfft(cnu, indexnu, R, pmarray, nsigmaD,
                        ngammaL, S, nus, ngammaL_grid)
         xsv.block_until_ready()
         tex = time.time()
