@@ -10,6 +10,7 @@ from jax.lax import scan
 from exojax.spec.ditkernel import fold_voigt_kernel_logst
 from exojax.spec.lsd import inc2D_givenx
 
+
 def calc_xsection_from_lsd_zeroscan(
     Slsd, R, pmarray, nsigmaD, nu_grid, log_ngammaL_grid
 ):
@@ -34,8 +35,10 @@ def calc_xsection_from_lsd_zeroscan(
 
     def f(val, x):
         Slsd_k, vk_k = x
-        ftSlsd_k = jnp.fft.rfft(jnp.vstack([Slsd_k, jnp.zeros_like(Slsd_k)]))
-        val += ftSlsd_k*vk_k
+        Slsd_buf_k = jnp.concatenate([Slsd_k, jnp.zeros_like(Slsd_k)])
+        ftSlsd_k = jnp.fft.rfft(Slsd_buf_k)
+        v = ftSlsd_k * vk_k
+        val += v  # ftSlsd_k*vk_k
         return val, None
 
     Ng_nu = len(nu_grid)
@@ -46,13 +49,47 @@ def calc_xsection_from_lsd_zeroscan(
         Ng_nu,
         pmarray,
     )
-    # nscan, fftval = scan(f, 0, Sbuf.T)
-    # fftval = fftval.T
 
-    # fftvalsum = jnp.sum(fftval * vk, axis=(1, ))
-    nscan, fftvalvk = scan(f, 0, [Slsd, vk])
+    init = jnp.zeros(vk.shape[0], dtype=_check_complex(vk[0, 0]))
+    fftvalvk, _ = scan(f, init, [Slsd.T, vk.T])
+    return jnp.fft.irfft(fftvalvk)[:Ng_nu] * R / nu_grid
 
-    return fftvalsum
+
+def _check_complex(x):
+    if x.dtype == jnp.float32:
+        return jnp.complex64
+    elif x.dtype == jnp.float64:
+        return jnp.complex128
+    else:
+        raise ValueError("Invalid dtype")
+
+def xsvector_zeroscan(
+    cnu, indexnu, R, pmarray, nsigmaD, ngammaL, S, nu_grid, ngammaL_grid
+):
+    """Cross section vector (MODIT zeroscan)
+
+    Args:
+        cnu: contribution by npgetix for wavenumber
+        indexnu: index by npgetix for wavenumber
+        R: spectral resolution
+        pmarray: (+1,-1) array whose length of len(nu_grid)+1
+        nsigmaD: normaized Gaussian STD
+        gammaL: Lorentzian half width (Nlines)
+        S: line strength (Nlines)
+        nu_grid: linear wavenumber grid
+        gammaL_grid: gammaL grid
+
+    Returns:
+        Cross section in the log nu grid
+    """
+
+    log_ngammaL_grid = jnp.log(ngammaL_grid)
+    lsd_array = jnp.zeros((len(nu_grid), len(ngammaL_grid)))
+    Slsd = inc2D_givenx(lsd_array, S, cnu, indexnu, jnp.log(ngammaL), log_ngammaL_grid)
+    xs = calc_xsection_from_lsd_zeroscan(
+        Slsd, R, pmarray, nsigmaD, nu_grid, log_ngammaL_grid
+    )
+    return xs
 
 
 def calc_xsection_from_lsd_scanfft(
@@ -93,7 +130,6 @@ def calc_xsection_from_lsd_scanfft(
         Ng_nu,
         pmarray,
     )
-
     # convolves
     fftvalsum = jnp.sum(fftval * vk, axis=(1,))
     return jnp.fft.irfft(fftvalsum)[:Ng_nu] * R / nu_grid
