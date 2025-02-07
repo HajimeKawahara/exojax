@@ -1,8 +1,6 @@
 """Line profile computation using Discrete Integral Transform using scan+fft (#277).
 
-* MODIT using scan+fft allows > 4GB fft memory. but approximately 2 times slower than modit.
-* When you use modit and get the error such as "failed to initialize batched cufft plan with customized allocator: Allocating 8000000160 bytes exceeds the memory limit of 4294967296 bytes.", 
-you should consider to modit_scanfft
+* MODIT using scan+fft allows > 4GB fft memory
 
 """
 
@@ -11,6 +9,50 @@ from jax import jit, vmap
 from jax.lax import scan
 from exojax.spec.ditkernel import fold_voigt_kernel_logst
 from exojax.spec.lsd import inc2D_givenx
+
+def calc_xsection_from_lsd_zeroscan(
+    Slsd, R, pmarray, nsigmaD, nu_grid, log_ngammaL_grid
+):
+    """Compute cross section from LSD in MODIT algorithm using scan+fft to avoid 4GB memory limit in fft and zero padding in scan
+
+    Notes:
+        #277
+
+    Args:
+        Slsd: line shape density
+        R: spectral resolution
+        pmarray: (+1,-1) array whose length of len(nu_grid)+1
+        nsigmaD: normaized Gaussian STD
+        nu_grid: linear wavenumber grid
+        log_gammaL_grid: logarithm of gammaL grid
+
+    Returns:
+        Cross section in the log nu grid
+    """
+
+    # Sbuf = jnp.vstack([Slsd, jnp.zeros_like(Slsd)])
+
+    def f(val, x):
+        Slsd_k, vk_k = x
+        ftSlsd_k = jnp.fft.rfft(jnp.vstack([Slsd_k, jnp.zeros_like(Slsd_k)]))
+        val += ftSlsd_k*vk_k
+        return val, None
+
+    Ng_nu = len(nu_grid)
+    vk = fold_voigt_kernel_logst(
+        jnp.fft.rfftfreq(2 * Ng_nu, 1),
+        jnp.log(nsigmaD),
+        log_ngammaL_grid,
+        Ng_nu,
+        pmarray,
+    )
+    # nscan, fftval = scan(f, 0, Sbuf.T)
+    # fftval = fftval.T
+
+    # fftvalsum = jnp.sum(fftval * vk, axis=(1, ))
+    nscan, fftvalvk = scan(f, 0, [Slsd, vk])
+
+    return fftvalsum
 
 
 def calc_xsection_from_lsd_scanfft(
