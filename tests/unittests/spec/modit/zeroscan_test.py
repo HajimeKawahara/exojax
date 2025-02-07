@@ -2,7 +2,6 @@
 """
 
 import jax.numpy as jnp
-from exojax.spec.opacalc import OpaModit
 from exojax.spec.hitran import line_strength
 from exojax.spec.set_ditgrid import ditgrid_log_interval
 from exojax.spec.exomol import gamma_exomol
@@ -24,8 +23,6 @@ def test_agreement_scanfft_zeroscan_modit():
     nus, wav, res = mock_wavenumber_grid()
     Ttest = 1200.0
     P = 1.0
-
-    opamodit = OpaModit(mdb, nus)
 
     # MODIT manual
     # We need to revert the reference temperature to 296K to reuse mdb for MODIT
