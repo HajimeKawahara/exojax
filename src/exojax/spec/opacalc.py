@@ -614,7 +614,7 @@ class OpaModit(OpaCalc):
         from exojax.spec.exomol import gamma_exomol
         from exojax.spec.hitran import gamma_hitran
         from exojax.spec.set_ditgrid import ditgrid_log_interval
-        from exojax.spec.modit_scanfft import xsvector_scanfft
+        from exojax.spec.modit_scanfft import xsvector_zeroscan
         from exojax.spec import normalized_doppler_sigma
 
         cont_nu, index_nu, R, pmarray = self.opainfo
@@ -640,7 +640,7 @@ class OpaModit(OpaCalc):
         ngammaL_grid = ditgrid_log_interval(
             ngammaL, dit_grid_resolution=self.dit_grid_resolution
         )
-        return xsvector_scanfft(
+        return xsvector_zeroscan(
             cont_nu,
             index_nu,
             R,
@@ -708,7 +708,7 @@ class OpaModit(OpaCalc):
         Returns:
             jnp.array : cross section matrix (Nlayer, N_wavenumber)
         """
-        from exojax.spec.modit_scanfft import xsmatrix_scanfft
+        from exojax.spec.modit_scanfft import xsmatrix_zeroscan
         from exojax.spec.modit import exomol
         from exojax.spec.modit import hitran
 
@@ -723,7 +723,7 @@ class OpaModit(OpaCalc):
             # qtarr = vmap(self.mdb.qr_interp)(Tarr)
             SijM, ngammaLM, nsigmaDl = exomol(self.mdb, Tarr, Parr, R, self.mdb.molmass)
 
-        return xsmatrix_scanfft(
+        return xsmatrix_zeroscan(
             cont_nu,
             index_nu,
             R,
