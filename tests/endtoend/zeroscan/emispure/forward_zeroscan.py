@@ -27,7 +27,7 @@ opa_co = OpaPremodit(
 
 gravity = gravity_jupiter(1.0, 10.0)
 art = ArtEmisPure(
-    nu_grid=nu_grid, pressure_top=1.0e-5, pressure_btm=1.0e1, nlayer=1500, nstream=8
+    nu_grid=nu_grid, pressure_top=1.0e-5, pressure_btm=1.0e1, nlayer=1300, nstream=8
 )
 
 import time
@@ -36,7 +36,7 @@ import tqdm
 
 import matplotlib.pyplot as plt
 
-Ntry = 5
+Ntry = 10
 T = jnp.array(range(0, Ntry)) + 1100.0
 ts = time.time()
 if True:
@@ -53,10 +53,11 @@ if True:
   
 #    plt.plot(nu_grid,flux)
 
-exit()
 te = time.time()
 print("time=", te - ts)
-jax.profiler.save_device_memory_profile("memory_zeroscan.prof")
+
+#jax.profiler.save_device_memory_profile("memory_zeroscan.prof")
+jax.profiler.save_device_memory_profile("memory_scanfft.prof")
 
 plot = True
 if plot:

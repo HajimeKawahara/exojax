@@ -1,5 +1,8 @@
 """Line profile computation using PremoDIT = Precomputation of LSD version of MODIT
 
+Notes:
+    calc_xsection_from_lsd_scanfft has been replace to calc_xsection_from_lsd_zeroscan since 2.0 #577
+
 """
 
 import numpy as np
@@ -9,7 +12,7 @@ from exojax.utils.indexing import npgetix
 from exojax.spec.lsd import npadd3D_multi_index, npadd3D_direct1D
 from exojax.utils.constants import hcperk
 from exojax.utils.constants import Tref_original
-from exojax.spec.modit_scanfft import calc_xsection_from_lsd_scanfft
+#from exojax.spec.modit_scanfft import calc_xsection_from_lsd_scanfft
 from exojax.spec.modit_scanfft import calc_xsection_from_lsd_zeroscan
 from exojax.spec.set_ditgrid import ditgrid_log_interval, ditgrid_linear_interval
 from exojax.utils.indexing import uniqidx_neibouring
@@ -115,7 +118,10 @@ def xsvector_first(
         T, P, ngamma_ref_grid, n_Texp_grid, multi_index_uniqgrid, Tref_broadening
     )
     log_ngammaL_grid = jnp.log(ngamma_grid)
-    xs = calc_xsection_from_lsd_scanfft(
+    # xs = calc_xsection_from_lsd_scanfft(
+    #    Slsd, R, pmarray, nsigmaD, nu_grid, log_ngammaL_grid
+    # )
+    xs = calc_xsection_from_lsd_zeroscan(
         Slsd, R, pmarray, nsigmaD, nu_grid, log_ngammaL_grid
     )
     return xs
@@ -163,7 +169,10 @@ def xsvector_zeroth(
         T, P, ngamma_ref_grid, n_Texp_grid, multi_index_uniqgrid, Tref_broadening
     )
     log_ngammaL_grid = jnp.log(ngamma_grid)
-    xs = calc_xsection_from_lsd_scanfft(
+    # xs = calc_xsection_from_lsd_scanfft(
+    #    Slsd, R, pmarray, nsigmaD, nu_grid, log_ngammaL_grid
+    # )
+    xs = calc_xsection_from_lsd_zeroscan(
         Slsd, R, pmarray, nsigmaD, nu_grid, log_ngammaL_grid
     )
     return xs
@@ -216,7 +225,8 @@ def xsmatrix_zeroth(
         Tarr, Parr, ngamma_ref_grid, n_Texp_grid, multi_index_uniqgrid, Tref_broadening
     )
     log_ngammaL_grid = jnp.log(ngamma_grid)
-    #xsm = vmap(calc_xsection_from_lsd_scanfft, (0, None, None, 0, None, 0),
+    # v1.6
+    # xsm = vmap(calc_xsection_from_lsd_scanfft, (0, None, None, 0, None, 0),
     #           0)(Slsd, R, pmarray, nsigmaD, nu_grid, log_ngammaL_grid)
     xsm = vmap(calc_xsection_from_lsd_zeroscan, (0, None, None, 0, None, 0), 0)(
         Slsd, R, pmarray, nsigmaD, nu_grid, log_ngammaL_grid
@@ -273,7 +283,11 @@ def xsmatrix_first(
         Tarr, Parr, ngamma_ref_grid, n_Texp_grid, multi_index_uniqgrid, Tref_broadening
     )
     log_ngammaL_grid = jnp.log(ngamma_grid)
-    xsm = vmap(calc_xsection_from_lsd_scanfft, (0, None, None, 0, None, 0), 0)(
+    # v1.6
+    # xsm = vmap(calc_xsection_from_lsd_scanfft, (0, None, None, 0, None, 0), 0)(
+    #    Slsd, R, pmarray, nsigmaD, nu_grid, log_ngammaL_grid
+    # )
+    xsm = vmap(calc_xsection_from_lsd_zeroscan, (0, None, None, 0, None, 0), 0)(
         Slsd, R, pmarray, nsigmaD, nu_grid, log_ngammaL_grid
     )
     return xsm
@@ -328,7 +342,11 @@ def xsmatrix_second(
         Tarr, Parr, ngamma_ref_grid, n_Texp_grid, multi_index_uniqgrid, Tref_broadening
     )
     log_ngammaL_grid = jnp.log(ngamma_grid)
-    xsm = vmap(calc_xsection_from_lsd_scanfft, (0, None, None, 0, None, 0), 0)(
+    # v1.6
+    # xsm = vmap(calc_xsection_from_lsd_scanfft, (0, None, None, 0, None, 0), 0)(
+    #    Slsd, R, pmarray, nsigmaD, nu_grid, log_ngammaL_grid
+    # )
+    xsm = vmap(calc_xsection_from_lsd_zeroscan, (0, None, None, 0, None, 0), 0)(
         Slsd, R, pmarray, nsigmaD, nu_grid, log_ngammaL_grid
     )
     return xsm
