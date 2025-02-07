@@ -56,8 +56,8 @@ if True:
 te = time.time()
 print("time=", te - ts)
 
-#jax.profiler.save_device_memory_profile("memory_zeroscan.prof")
-jax.profiler.save_device_memory_profile("memory_scanfft.prof")
+jax.profiler.save_device_memory_profile("memory_zeroscan.prof")
+#jax.profiler.save_device_memory_profile("memory_scanfft.prof")
 
 plot = True
 if plot:

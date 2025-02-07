@@ -1,6 +1,8 @@
-"""Line profile computation using Discrete Integral Transform using scan+fft (#277).
+"""Line profile computation using Discrete Integral Transform using zeroscan, scan+fft (#277).
 
-* MODIT using scan+fft allows > 4GB fft memory
+* Currently, zeroscan is the default method
+
+* MODIT using zeroscan/scan+fft allows > 4GB fft memory
 
 """
 
@@ -31,14 +33,12 @@ def calc_xsection_from_lsd_zeroscan(
         Cross section in the log nu grid
     """
 
-    # Sbuf = jnp.vstack([Slsd, jnp.zeros_like(Slsd)])
-
     def f(val, x):
         Slsd_k, vk_k = x
         Slsd_buf_k = jnp.concatenate([Slsd_k, jnp.zeros_like(Slsd_k)])
         ftSlsd_k = jnp.fft.rfft(Slsd_buf_k)
         v = ftSlsd_k * vk_k
-        val += v  # ftSlsd_k*vk_k
+        val += v
         return val, None
 
     Ng_nu = len(nu_grid)
@@ -63,10 +63,11 @@ def _check_complex(x):
     else:
         raise ValueError("Invalid dtype")
 
+
 def xsvector_zeroscan(
     cnu, indexnu, R, pmarray, nsigmaD, ngammaL, S, nu_grid, ngammaL_grid
 ):
-    """Cross section vector (MODIT zeroscan)
+    """Cross section vector (MODIT/zeroscan)
 
     Args:
         cnu: contribution by npgetix for wavenumber
@@ -95,7 +96,7 @@ def xsvector_zeroscan(
 def calc_xsection_from_lsd_scanfft(
     Slsd, R, pmarray, nsigmaD, nu_grid, log_ngammaL_grid
 ):
-    """Compute cross section from LSD in MODIT algorithm using scan+fft to avoid 4GB memory limit in fft (see #277)
+    """Compute cross section from LSD in MODIT algorithm using scan+fft to avoid 4GB memory limit in fft (see #277), deprecated
 
     Args:
         Slsd: line shape density
@@ -139,7 +140,7 @@ def calc_xsection_from_lsd_scanfft(
 def xsvector_scanfft(
     cnu, indexnu, R, pmarray, nsigmaD, ngammaL, S, nu_grid, ngammaL_grid
 ):
-    """Cross section vector (MODIT scanfft)
+    """Cross section vector (MODIT scanfft), deprecated
 
     Args:
         cnu: contribution by npgetix for wavenumber
