@@ -1,6 +1,6 @@
 import pytest
 import time
-from build.lib.exojax.spec.modit import xsvector_scanfft
+from exojax.spec.modit import xsvector_scanfft
 from exojax.spec.set_ditgrid import ditgrid_log_interval
 from exojax.spec import initspec
 import jax.numpy as jnp

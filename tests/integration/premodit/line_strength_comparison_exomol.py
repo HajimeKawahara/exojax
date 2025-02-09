@@ -76,7 +76,7 @@ xsv_manual = calc_xsection_from_lsd_scanfft(Slsd_premodit, R, pmarray,
 # MODIT LSD
 # We need to revert the reference temperature to 296K to reuse mdb for MODIT
 #===========================================================================
-from build.lib.exojax.spec.modit import xsvector_scanfft
+from exojax.spec.modit import xsvector_scanfft
 from exojax.spec.initspec import init_modit
 
 #mdb.change_reference_temperature(Tref_original)
