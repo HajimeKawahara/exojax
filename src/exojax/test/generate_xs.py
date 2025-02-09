@@ -2,7 +2,7 @@ from exojax.test.data import TESTDATA_CO_EXOMOL_MODIT_XS_REF
 from exojax.test.data import TESTDATA_CO_HITEMP_MODIT_XS_REF
 from exojax.test.data import TESTDATA_CO_HITEMP_MODIT_XS_REF_AIR
 import numpy as np
-from exojax.spec.modit_scanfft import xsvector_scanfft
+from build.lib.exojax.spec.modit import xsvector_scanfft
 from exojax.spec.hitran import line_strength
 from exojax.spec.molinfo import molmass_isotope
 from exojax.spec import normalized_doppler_sigma, gamma_natural

@@ -23,7 +23,7 @@ from exojax.utils.constants import Tref_original
 
 ## also, xs
 from exojax.spec import normalized_doppler_sigma
-from exojax.spec.modit_scanfft import calc_xsection_from_lsd_scanfft
+from exojax.spec.profconv import calc_xsection_from_lsd_scanfft
 from exojax.spec.premodit import unbiased_ngamma_grid
 
 from jax import config
@@ -86,7 +86,7 @@ xsv_manual = calc_xsection_from_lsd_scanfft(
 # MODIT LSD
 # We need to revert the reference temperature to 296K to reuse mdb for MODIT
 # ===========================================================================
-from exojax.spec.modit_scanfft import xsvector_scanfft
+from build.lib.exojax.spec.modit import xsvector_scanfft
 from exojax.spec.initspec import init_modit
 
 qt = mdb.qr_interp(mdb.isotope, Ttest, Tref_original)

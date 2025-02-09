@@ -13,7 +13,7 @@ from exojax.spec.lsd import npadd3D_multi_index, npadd3D_direct1D
 from exojax.utils.constants import hcperk
 from exojax.utils.constants import Tref_original
 #from exojax.spec.modit_scanfft import calc_xsection_from_lsd_scanfft
-from exojax.spec.modit_scanfft import calc_xsection_from_lsd_zeroscan
+from exojax.spec.profconv import calc_xsection_from_lsd_zeroscan
 from exojax.spec.set_ditgrid import ditgrid_log_interval, ditgrid_linear_interval
 from exojax.utils.indexing import uniqidx_neibouring
 from exojax.spec import normalized_doppler_sigma

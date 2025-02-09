@@ -10,8 +10,8 @@ from exojax.test.emulate_mdb import mock_mdbExomol
 from exojax.test.emulate_mdb import mock_wavenumber_grid
 from exojax.spec import normalized_doppler_sigma
 from exojax.spec.initspec import init_modit
-from exojax.spec.modit_scanfft import xsvector_scanfft
-from exojax.spec.modit_scanfft import xsvector_zeroscan
+from build.lib.exojax.spec.modit import xsvector_scanfft
+from build.lib.exojax.spec.modit import xsvector_zeroscan
 
 
 def test_agreement_scanfft_zeroscan_modit():

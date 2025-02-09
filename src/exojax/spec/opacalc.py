@@ -25,12 +25,24 @@ import warnings
 
 
 class OpaCalc:
-    """Common Opacity Calculator Class"""
+    """Common Opacity Calculator Class
+
+    Attributes:
+        opainfo: information set used in each opacity method
+        method (str,None): opacity calculation method, i.e. "premodit", "modit", "lpf"
+        ready (bool): ready for opacity computation
+        alias (bool): mode of the aliasing part for the convolution (MODIT/PreMODIT).
+            False = the closed mode, left and right alising sides are overlapped and won't be used.
+            True = the open mode, left and right aliasing sides are not overlapped and the alias part will be used in OLA.
+
+
+    """
 
     def __init__(self):
         self.opainfo = None
         self.method = None  # which opacity calc method is used
         self.ready = False  # ready for opacity computation
+        self.alias = False  # close or open
 
 
 class OpaPremodit(OpaCalc):
@@ -288,10 +300,10 @@ class OpaPremodit(OpaCalc):
             self.mdb.nu_lines,
             self.nu_grid,
             self.mdb.elower,
-            self.gamma_ref, # comment-1
+            self.gamma_ref,  # comment-1
             self.n_Texp,
             self.mdb.line_strength(self.Tref),  # comment-2
-            self.Twt,   
+            self.Twt,
             Tref=self.Tref,
             Tref_broadening=self.Tref_broadening,
             Tmax=self.Tmax,
@@ -427,7 +439,7 @@ class OpaPremodit(OpaCalc):
             )
         elif self.mdb.dbtype == "exomol":
             qtarr = vmap(self.mdb.qr_interp, (0, None))(Tarr, self.Tref)
-            
+
         if self.diffmode == 0:
             return xsmatrix_zeroth(
                 Tarr,
@@ -614,7 +626,7 @@ class OpaModit(OpaCalc):
         from exojax.spec.exomol import gamma_exomol
         from exojax.spec.hitran import gamma_hitran
         from exojax.spec.set_ditgrid import ditgrid_log_interval
-        from exojax.spec.modit_scanfft import xsvector_zeroscan
+        from build.lib.exojax.spec.modit import xsvector_zeroscan
         from exojax.spec import normalized_doppler_sigma
 
         cont_nu, index_nu, R, pmarray = self.opainfo
@@ -640,17 +652,22 @@ class OpaModit(OpaCalc):
         ngammaL_grid = ditgrid_log_interval(
             ngammaL, dit_grid_resolution=self.dit_grid_resolution
         )
-        return xsvector_zeroscan(
-            cont_nu,
-            index_nu,
-            R,
-            pmarray,
-            nsigmaD,
-            ngammaL,
-            Sij,
-            self.nu_grid,
-            ngammaL_grid,
-        )
+
+        if self.alias:
+            xsv = None
+        else:
+            xsv = xsvector_zeroscan(
+                cont_nu,
+                index_nu,
+                R,
+                pmarray,
+                nsigmaD,
+                ngammaL,
+                Sij,
+                self.nu_grid,
+                ngammaL_grid,
+            )
+        return xsv
 
     def setdgm(self, Tarr_list, Parr, Pself_ref=None):
         """_summary_
@@ -708,7 +725,7 @@ class OpaModit(OpaCalc):
         Returns:
             jnp.array : cross section matrix (Nlayer, N_wavenumber)
         """
-        from exojax.spec.modit_scanfft import xsmatrix_zeroscan
+        from build.lib.exojax.spec.modit import xsmatrix_zeroscan
         from exojax.spec.modit import exomol
         from exojax.spec.modit import hitran
 

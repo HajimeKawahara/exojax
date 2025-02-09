@@ -10,7 +10,7 @@ from exojax.spec.premodit import unbiased_lsd_first
 from exojax.spec.premodit import unbiased_lsd_second
 from exojax.test.emulate_mdb import mock_mdbExomol
 from exojax.test.emulate_mdb import mock_wavenumber_grid
-from exojax.spec.modit_scanfft import calc_xsection_from_lsd_scanfft
+from exojax.spec.profconv import calc_xsection_from_lsd_scanfft
 from exojax.spec.premodit import unbiased_ngamma_grid
 from exojax.spec import normalized_doppler_sigma
 
