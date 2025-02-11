@@ -1,6 +1,9 @@
 import jax.numpy as jnp
 from exojax.spec.lpf import voigt
 
+def _close_filter_length(filter_length_oneside):
+    return 2*filter_length_oneside
+
 def generate_closed_lpffilter(filter_length, nsigmaD, ngammaL):
     """Generates the closed form LPF filter
 
@@ -22,6 +25,9 @@ def generate_closed_lpffilter(filter_length, nsigmaD, ngammaL):
     dq = jnp.arange(0, filter_length + 1)
     lpffilter_oneside = voigt(dq, nsigmaD, ngammaL)
     return jnp.concatenate([lpffilter_oneside, lpffilter_oneside[1:-1][::-1]])
+
+def _open_filter_length(filter_length_oneside):
+    return 2*filter_length_oneside+1
 
 def generate_open_lpffilter(nfilter, nsigmaD, ngammaL):
     """Generates the open form LPF filter

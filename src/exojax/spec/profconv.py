@@ -1,15 +1,20 @@
 """line profile convolution with LSD
 
+    - calc_open_xsection_from_lsd_zeroscan: compute open cross section from LSD in MODIT algorithm using scan+fft to avoid 4GB memory limit in fft and zero padding in scan
     - calc_xsection_from_lsd_zeroscan: compute cross section from LSD in MODIT algorithm using scan+fft to avoid 4GB memory limit in fft and zero padding in scan
     - calc_xsection_from_lsd_scanfft: compute cross section from LSD in MODIT algorithm using scan+fft to avoid 4GB memory limit in fft (see #277), deprecated
 
 """
 
+from sympy import div
 from exojax.spec.ditkernel import fold_voigt_kernel_logst
-
+from exojax.spec.lpffilter import generate_open_lpffilter
+from exojax.signal.ola import _fft_length
+from exojax.spec.lpffilter import _open_filter_length
 
 import jax.numpy as jnp
 from jax.lax import scan
+from jax import vmap
 
 
 def _check_complex(x):
@@ -19,6 +24,49 @@ def _check_complex(x):
         return jnp.complex128
     else:
         raise ValueError("Invalid dtype")
+
+
+def calc_open_xsection_from_lsd_zeroscan(
+    Slsd, R, nsigmaD, nu_grid_extended, log_ngammaL_grid, filter_length_oneside
+):
+    """Compute open cross section from LSD in MODIT algorithm using scan+fft to avoid 4GB memory limit in fft and zero padding in scan
+
+    Notes:
+        The aliasing part is closed and thereby can't be used in OLA.
+        #277
+
+    Args:
+        Slsd (array): line shape density [Nnus, Ngamma]
+        R (float): spectral resolution
+        nsigmaD (float): normaized Gaussian STD
+        nu_grid_extended (array): extended wavenumber grid to aliasing parts [Nnus + Nfilter - 1]
+        log_gammaL_grid (array): logarithm of gammaL grid [Ngamma]
+        filter_length_oneside (int): one side length of the wavenumber grid of lpffilter, Nfilter = 2*filter_length_oneside + 1
+
+    Returns:
+        Closed Cross section in the log nu grid [Nnus]
+    """
+
+    div_length = Slsd.shape[0]
+    filter_length = _open_filter_length(filter_length_oneside)
+    fft_length = _fft_length(div_length, filter_length)
+
+    def f(val, x):
+        Slsd_k, lpffilter_k = x
+        Slsd_buf_k = jnp.concatenate([Slsd_k, jnp.zeros_like(filter_length - 1)])
+        ftSlsd_k = jnp.fft.rfft(Slsd_buf_k)
+        lpffilter_buf_k = jnp.concatenate([lpffilter_k, jnp.zeros(div_length - 1)])
+        vk_k = jnp.fft.rfft(lpffilter_buf_k)
+        v = ftSlsd_k * vk_k
+        val += v
+        return val, None
+
+    ngammaL_grid = jnp.exp(log_ngammaL_grid)
+    vmap_generate_lpffilter = vmap(generate_open_lpffilter, (None, None, 0), 0)
+    lpffilter = vmap_generate_lpffilter(filter_length_oneside, nsigmaD, ngammaL_grid)
+    init = jnp.zeros(fft_length, dtype=_check_complex(lpffilter[0, 0]))
+    fftvalvk, _ = scan(f, init, [Slsd.T, lpffilter.T])
+    return jnp.fft.irfft(fftvalvk) * R / nu_grid_extended
 
 
 def calc_xsection_from_lsd_zeroscan(
@@ -35,7 +83,7 @@ def calc_xsection_from_lsd_zeroscan(
         R (float): spectral resolution
         pmarray: (+1,-1) array whose length of len(nu_grid)+1
         nsigmaD (float): normaized Gaussian STD
-        nu_grid (array): linear wavenumber grid [Nnus]
+        nu_grid (array): wavenumber grid [Nnus]
         log_gammaL_grid (array): logarithm of gammaL grid [Ngamma]
 
     Returns:
@@ -79,7 +127,7 @@ def calc_xsection_from_lsd_scanfft(
         R (float): spectral resolution
         pmarray: (+1,-1) array whose length of len(nu_grid)+1
         nsigmaD (float): normaized Gaussian STD
-        nu_grid (array): linear wavenumber grid [Nnus]
+        nu_grid (array): wavenumber grid [Nnus]
         log_gammaL_grid (array): logarithm of gammaL grid [Ngamma]
 
     Returns:
