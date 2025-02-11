@@ -1,15 +1,14 @@
 import numpy as np
 from exojax.spec import api
 import os
-import traceback
 
 
 class MultiMol():
-    """multiple molecular database handler
+    """multiple molecular database and opacity calculator handler (multi Mdb/Opa Listing)
 
         Notes:
             MultiMol provides an easy way to generate multiple mdb (multimdb) and multiple opa (multiopa) 
-            for multiple molecules/wavenumber segements.
+            for multiple molecules/wavenumber segements/stitching.
 
         Attributes:
             molmulti: multiple simple molecule names [n_wavenumber_segments, n_molecules], such as [["H2O","CO"],["H2O"],["CO"]]
