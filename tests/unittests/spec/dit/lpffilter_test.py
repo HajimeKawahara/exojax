@@ -81,7 +81,7 @@ def lpffilter_agreement_with_fold_voigt_kernel_logst(figure=False):
     filter_length_oneside = len(nu_grid)
     vk = fold_voigt_kernel_logst(
         jnp.fft.rfftfreq(2 * filter_length_oneside, 1),
-        jnp.log(nsigmaD),
+        nsigmaD,
         log_ngammaL_grid,
         filter_length_oneside,
         pmarray,

@@ -69,12 +69,12 @@ def fold_voigt_kernel(k, beta, gammaL, vmax, pmarray):
     return valG * valL
 
 
-def voigt_kernel_logst(k, log_nstbeta, log_ngammaL):
+def voigt_kernel_logst(k, beta, log_ngammaL):
     """Fourier Kernel of the Voigt Profile for a common normalized beta.
 
     Args:
         k: conjugate wavenumber
-        log_nstbeta: log normalized Gaussian standard deviation (scalar)
+        beta: normalized Gaussian standard deviation (scalar)
         log_ngammaL: log normalized Lorentian Half Width (Nlines)
 
     Returns:
@@ -86,7 +86,6 @@ def voigt_kernel_logst(k, log_nstbeta, log_ngammaL):
         wL=2*gamma
     """
 
-    beta = jnp.exp(log_nstbeta)
     gammaL = jnp.exp(log_ngammaL)
     val = jnp.exp(-2.0 * ((jnp.pi * beta * k[:, None])**2 +
                           jnp.pi * gammaL[None, :] * k[:, None]))
@@ -94,7 +93,7 @@ def voigt_kernel_logst(k, log_nstbeta, log_ngammaL):
     return val
 
 
-def fold_voigt_kernel_logst(k, log_nstbeta, log_ngammaL, vmax, pmarray):
+def fold_voigt_kernel_logst(k, beta, log_ngammaL, vmax, pmarray):
     """Folded Fourier Kernel of the Voigt Profile for a common normalized beta.
     See https://github.com/dcmvdbekerom/discrete-integral-
     transform/blob/master/demo/discrete_integral_transform_log.py for the alias
@@ -102,7 +101,7 @@ def fold_voigt_kernel_logst(k, log_nstbeta, log_ngammaL, vmax, pmarray):
 
     Args:
         k: conjugate wavenumber
-        log_nstbeta: log normalized Gaussian standard deviation (scalar)
+        beta: normalized Gaussian standard deviation (scalar, not log)
         log_ngammaL: log normalized Lorentian Half Width (Nlines)
         vmax: vmax
         pmarray: (+1,-1) array whose length of len(nu_grid)+1
@@ -116,7 +115,7 @@ def fold_voigt_kernel_logst(k, log_nstbeta, log_ngammaL, vmax, pmarray):
         wL=2*gamma
     """
 
-    beta = jnp.exp(log_nstbeta)
+    
     gammaL = jnp.exp(log_ngammaL)
 
     Nk = len(k)

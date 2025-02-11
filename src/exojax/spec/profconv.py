@@ -20,38 +20,18 @@ def _check_complex(x):
     else:
         raise ValueError("Invalid dtype")
 
-def calc_open_xsection_from_lsd_zeroscan(
-Slsd, R, pmarray, nsigmaD, nu_grid, log_ngammaL_grid
-):
-    """Compute open cross section from LSD in MODIT algorithm using scan+fft to avoid 4GB memory limit in fft and zero padding in scan
-
-    Notes:
-        The aliasing part is closed and thereby can't be used in OLA.
-        #277
-
-    Args:
-        Slsd (array): line shape density
-        R (float): spectral resolution
-        pmarray: (+1,-1) array whose length of len(nu_grid)+1
-        nsigmaD (float): normaized Gaussian STD
-        nu_grid (array): linear wavenumber grid [Nnus]
-        log_gammaL_grid (array): logarithm of gammaL grid [Ngamma]
-
-    Returns:
-        Open cross section in the log nu grid [Nnus + Nfilter - 1]
-    """
 
 def calc_xsection_from_lsd_zeroscan(
     Slsd, R, pmarray, nsigmaD, nu_grid, log_ngammaL_grid
 ):
-    """Compute (closed) cross section array from LSD in MODIT algorithm using scan+fft to avoid 4GB memory limit in fft and zero padding in scan
+    """Compute cross section from LSD in MODIT algorithm using scan+fft to avoid 4GB memory limit in fft and zero padding in scan
 
     Notes:
         The aliasing part is closed and thereby can't be used in OLA.
         #277
 
     Args:
-        Slsd (array): line shape density
+        Slsd (array): line shape density [Nnus, Ngamma]
         R (float): spectral resolution
         pmarray: (+1,-1) array whose length of len(nu_grid)+1
         nsigmaD (float): normaized Gaussian STD
@@ -59,7 +39,7 @@ def calc_xsection_from_lsd_zeroscan(
         log_gammaL_grid (array): logarithm of gammaL grid [Ngamma]
 
     Returns:
-        (Closed) Cross section in the log nu grid [Nnus]
+        Closed Cross section in the log nu grid [Nnus]
     """
 
     def f(val, x):
@@ -71,10 +51,13 @@ def calc_xsection_from_lsd_zeroscan(
         return val, None
 
     Ng_nu = len(nu_grid)
-    vk =  
-        jnp.log(nsigmaD),
+    vk = fold_voigt_kernel_logst(
+        jnp.fft.rfftfreq(2 * Ng_nu, 1),
+        nsigmaD,
         log_ngammaL_grid,
-        
+        Ng_nu,
+        pmarray,
+    )
 
     init = jnp.zeros(vk.shape[0], dtype=_check_complex(vk[0, 0]))
     fftvalvk, _ = scan(f, init, [Slsd.T, vk.T])
@@ -92,15 +75,15 @@ def calc_xsection_from_lsd_scanfft(
 
 
     Args:
-        Slsd: line shape density
-        R: spectral resolution
+        Slsd (array): line shape density [Nnus, Ngamma]
+        R (float): spectral resolution
         pmarray: (+1,-1) array whose length of len(nu_grid)+1
-        nsigmaD: normaized Gaussian STD
-        nu_grid: linear wavenumber grid
-        log_gammaL_grid: logarithm of gammaL grid
+        nsigmaD (float): normaized Gaussian STD
+        nu_grid (array): linear wavenumber grid [Nnus]
+        log_gammaL_grid (array): logarithm of gammaL grid [Ngamma]
 
     Returns:
-        Closed cross section in the log nu grid  [Nnus]
+        Closed Cross section in the log nu grid [Mnus]
     """
 
     # add buffer
@@ -119,7 +102,7 @@ def calc_xsection_from_lsd_scanfft(
     # filter kernel
     vk = fold_voigt_kernel_logst(
         jnp.fft.rfftfreq(2 * Ng_nu, 1),
-        jnp.log(nsigmaD),
+        nsigmaD,
         log_ngammaL_grid,
         Ng_nu,
         pmarray,
