@@ -1,3 +1,4 @@
+from jax import config
 import pytest
 from exojax.spec.profconv import calc_xsection_from_lsd_zeroscan
 from exojax.spec.profconv import calc_open_xsection_from_lsd_zeroscan
@@ -84,29 +85,49 @@ def _ref_value_xsv(i):
     else:
         raise ValueError("Invalid i")
 
+
+
 def test_basic_convolution_calc_open_xsection_from_lsd_zeroscan(i):
+    config.update("jax_enable_x64", True)
     Nsignal, Ngamma, Slsd = _sld_sample(i)
     # these are used for log-linear conversuion, so assume identical convolution in this test
     R = 1.0
     nu_grid, wav, res = wavenumber_grid(22000, 23000, Nsignal, unit="AA", xsmode="premodit", wavelength_order="descending")
     nsigmaD = 1.0
     log_ngammaL_grid = jnp.ones(Ngamma)
-    filter_length_oneside = 10
+    filter_length_oneside = 15
     nu_grid_extended = extended_wavenumber_grid(nu_grid, filter_length_oneside, filter_length_oneside)
 
     xsv = calc_open_xsection_from_lsd_zeroscan(
         Slsd, R, nsigmaD, nu_grid_extended, log_ngammaL_grid, filter_length_oneside
     )
-    #xsv_ref = _ref_value_xsv(0)
-    #assert jnp.allclose(xsv, xsv_ref)
-    return xsv
+    xsv = xsv*nu_grid_extended # avoid the log conversion
+    xsv_ref = _ref_value_xsv(-i-1)
+
+    if i==-1:
+        res_alias = np.max(np.abs(xsv[-filter_length_oneside-1:]/xsv_ref[0:filter_length_oneside+1] - 1.0))
+    elif i == 0:
+        res_alias = np.max(np.abs(xsv[1:filter_length_oneside]/xsv_ref[1:filter_length_oneside] - 1.0))
+    else:
+        raise ValueError("Invalid i")
+    print(res_alias)
+        #assert res_alias < 2.5e-4 #0.00023432348053409324
+    return xsv, xsv_ref, filter_length_oneside
 
 
 if __name__ == "__main__":
     import matplotlib.pyplot as plt
     #xsv = test_basic_convolution_calc_xsection_from_lsd_zeroscan(0)
     #xsv = test_basic_convolution_calc_xsection_from_lsd_zeroscan(-1)
-    xsv = test_basic_convolution_calc_open_xsection_from_lsd_zeroscan(-1)
-    plt.plot(xsv)
+    xsv, xsv_ref,filter_length_oneside = test_basic_convolution_calc_open_xsection_from_lsd_zeroscan(0)
+    fig = plt.figure()
+    ax = fig.add_subplot(211)
+    plt.plot(xsv[0:filter_length_oneside])
+    plt.plot(xsv_ref[0:filter_length_oneside],"+")
+    #plt.plot(xsv[-filter_length_oneside-1:])
+    #plt.plot(xsv_ref[0:filter_length_oneside+1],"+")
+    ax = fig.add_subplot(212)
+    plt.plot(xsv[1:filter_length_oneside]/xsv_ref[1:filter_length_oneside] - 1,".")
+    
     #plt.yscale("log")
     plt.show()
