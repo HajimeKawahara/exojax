@@ -70,7 +70,7 @@ def _test_values_lpffilter():
     return filter_length_oneside, nsigmaD, ngammaL
 
 
-def lpffilter_agreement_with_fold_voigt_kernel_logst(figure=False):
+def closed_lpffilter_agreement_with_fold_voigt_kernel_logst(figure=False):
     config.update("jax_enable_x64", True)
     nu_grid, wav, resolution = mock_wavenumber_grid()
     pmarray = np.ones(len(nu_grid) + 1)
@@ -129,6 +129,7 @@ def _lpffilter_figure(ngammaL_grid, vkfilter, lpffilter, diff_filter, diff_fftre
         plt.plot(diff_fftrecover[:, i], label="diff", alpha=0.3, color="C" + str(i))
         plt.legend()
     plt.savefig("tildevk.png")
+    plt.show()
 
 @pytest.mark.parametrize("i", [0, -1])
 def test_lpffilter_aliasing_area(i, figure=False):
@@ -185,6 +186,7 @@ def test_lpffilter_aliasing_area(i, figure=False):
 
 
 if __name__ == "__main__":
+    closed_lpffilter_agreement_with_fold_voigt_kernel_logst(figure=True)
     #test_generate_closed_lpffilter()
-    test_generate_open_lpffilter()
+    #test_generate_open_lpffilter()
     #test_lpffilter_aliasing_area(0)
