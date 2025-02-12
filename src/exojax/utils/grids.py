@@ -80,12 +80,9 @@ def _warning_wavelength_order(wavelength_order):
     Args:
         wavlength order: wavelength order: "ascending" or "descending"
     """
-    print("======================================================================")
-    print("The wavenumber grid should be in ascending order.")
-    print("The users can specify the order of the wavelength grid by themselves.")
     print("Your wavelength grid is in *** ", wavelength_order, " *** order")
-    print("======================================================================")
-
+    print("The wavenumber grid is in ascending order by definition.")
+    print("Please be careful when you use the wavelength grid.")
 
 def _set_grid(x0, x1, N, unit, grid_mode):
     if grid_mode == "ESLOG":
