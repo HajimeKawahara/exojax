@@ -1,8 +1,13 @@
 import pytest
 from exojax.spec.profconv import calc_xsection_from_lsd_zeroscan
+from exojax.spec.profconv import calc_open_xsection_from_lsd_zeroscan
 from exojax.spec.profconv import calc_xsection_from_lsd_scanfft
+from exojax.utils.grids import extended_wavenumber_grid
+from exojax.utils.grids import wavenumber_grid
 import jax.numpy as jnp
 import numpy as np
+
+
 
 
 @pytest.mark.parametrize("i", [0, -1])
@@ -79,11 +84,29 @@ def _ref_value_xsv(i):
     else:
         raise ValueError("Invalid i")
 
+def test_basic_convolution_calc_open_xsection_from_lsd_zeroscan(i):
+    Nsignal, Ngamma, Slsd = _sld_sample(i)
+    # these are used for log-linear conversuion, so assume identical convolution in this test
+    R = 1.0
+    nu_grid, wav, res = wavenumber_grid(22000, 23000, Nsignal, unit="AA", xsmode="premodit", wavelength_order="descending")
+    nsigmaD = 1.0
+    log_ngammaL_grid = jnp.ones(Ngamma)
+    filter_length_oneside = 10
+    nu_grid_extended = extended_wavenumber_grid(nu_grid, filter_length_oneside, filter_length_oneside)
+
+    xsv = calc_open_xsection_from_lsd_zeroscan(
+        Slsd, R, nsigmaD, nu_grid_extended, log_ngammaL_grid, filter_length_oneside
+    )
+    #xsv_ref = _ref_value_xsv(0)
+    #assert jnp.allclose(xsv, xsv_ref)
+    return xsv
+
+
 if __name__ == "__main__":
     import matplotlib.pyplot as plt
-    xsv = test_basic_convolution_calc_xsection_from_lsd_zeroscan(0)
-    xsv = test_basic_convolution_calc_xsection_from_lsd_zeroscan(-1)
-    
-    # plt.plot(xsv)
-    # plt.yscale("log")
-    # plt.show()
+    #xsv = test_basic_convolution_calc_xsection_from_lsd_zeroscan(0)
+    #xsv = test_basic_convolution_calc_xsection_from_lsd_zeroscan(-1)
+    xsv = test_basic_convolution_calc_open_xsection_from_lsd_zeroscan(-1)
+    plt.plot(xsv)
+    #plt.yscale("log")
+    plt.show()

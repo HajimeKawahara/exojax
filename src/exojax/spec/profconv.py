@@ -7,6 +7,7 @@
 """
 
 from sympy import div
+from exojax.spec import lpf
 from exojax.spec.ditkernel import fold_voigt_kernel_logst
 from exojax.spec.lpffilter import generate_open_lpffilter
 from exojax.signal.ola import _fft_length
@@ -53,22 +54,22 @@ def calc_open_xsection_from_lsd_zeroscan(
 
     def f(val, x):
         Slsd_k, lpffilter_k = x
-        Slsd_buf_k = jnp.concatenate([Slsd_k, jnp.zeros_like(filter_length - 1)])
+        Slsd_buf_k = jnp.concatenate([Slsd_k, jnp.zeros(filter_length - 1)])
         ftSlsd_k = jnp.fft.rfft(Slsd_buf_k)
         lpffilter_buf_k = jnp.concatenate([lpffilter_k, jnp.zeros(div_length - 1)])
         vk_k = jnp.fft.rfft(lpffilter_buf_k)
         v = ftSlsd_k * vk_k
+        val + v
         val += v
         return val, None
 
     ngammaL_grid = jnp.exp(log_ngammaL_grid)
     vmap_generate_lpffilter = vmap(generate_open_lpffilter, (None, None, 0), 0)
     lpffilter = vmap_generate_lpffilter(filter_length_oneside, nsigmaD, ngammaL_grid)
-    init = jnp.zeros(fft_length, dtype=_check_complex(lpffilter[0, 0]))
-    fftvalvk, _ = scan(f, init, [Slsd.T, lpffilter.T])
-    return jnp.fft.irfft(fftvalvk) * R / nu_grid_extended
-
-
+    init = jnp.zeros(int(fft_length/2)+1, dtype=_check_complex(lpffilter[0, 0]))
+    fftvalvk, _ = scan(f, init, [Slsd.T, lpffilter])
+    return  jnp.fft.irfft(fftvalvk) * R / nu_grid_extended
+    
 def calc_xsection_from_lsd_zeroscan(
     Slsd, R, pmarray, nsigmaD, nu_grid, log_ngammaL_grid
 ):
