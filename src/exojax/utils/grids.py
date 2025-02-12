@@ -9,6 +9,23 @@ import numpy as np
 import warnings
 
 
+
+def extended_wavenumber_grid(nu_grid, nleft, nright):
+    if not check_eslog_wavenumber_grid(nu_grid):
+        raise ValueError("nu_grid should be evenly spaced in log space (ESLOG)")
+    resolution = grid_resolution("ESLOG", nu_grid)
+    
+    lnx1 = np.log10(nu_grid[0])
+    lnx0 = lnx1 - nleft/resolution/np.log(10)
+    left = np.logspace(lnx0, lnx1, nleft+1, dtype=np.float64)
+
+    lnx0 = np.log10(nu_grid[-1])
+    lnx1 = lnx0 + nright/resolution/np.log(10)
+    right = np.logspace(lnx0, lnx1, nright+1, dtype=np.float64)
+
+    return np.concatenate([left[:-1], nu_grid, right[1:]])
+
+
 def wavenumber_grid(x0, x1, N, xsmode, wavelength_order="descending", unit="cm-1"):
     """generates the recommended wavenumber grid based on the cross section
     computation mode.

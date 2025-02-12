@@ -1,5 +1,6 @@
 import pytest
 import numpy as np
+from exojax.utils.grids import extended_wavenumber_grid
 from exojax.utils.grids import wavenumber_grid
 from exojax.utils.grids import velocity_grid
 from exojax.utils.grids import delta_velocity_from_resolution
@@ -8,6 +9,20 @@ from exojax.utils.grids import check_grid_mode_in_xsmode
 from exojax.utils.checkarray import is_sorted
 from exojax.utils.checkarray import is_outside_range
 
+
+
+def test_extended_wavenumber_grid():
+    Nx = 20
+    nus, wav_revert, res = wavenumber_grid(
+        1000, 10000, Nx, unit="AA", xsmode="premodit", wavelength_order="ascending"
+    )
+    nleft = 6
+    nright = 7
+    nus_ext = extended_wavenumber_grid(nus, nleft, nright)
+    lnus_ext = np.log(nus_ext)
+    dlognu = lnus_ext[1:]-lnus_ext[:-1]
+    assert np.all(dlognu == pytest.approx(1.0/res*np.ones_like(dlognu)))
+    
 
 @pytest.mark.parametrize("order", ["ascending", "descending"])
 def test_wavenumber_grid_order(order):
@@ -111,7 +126,6 @@ def test_is_outside_range(xarr, xs, xe, expected):
     assert is_outside_range(xarr, xs, xe) == expected
 
 
+
 if __name__ == "__main__":
-    test_wavenumber_grid()
-    test_delta_velocity_from_resolution()
-    test_velocity_grid()
+    test_extended_wavenumber_grid()
