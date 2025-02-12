@@ -105,29 +105,42 @@ def test_basic_convolution_calc_open_xsection_from_lsd_zeroscan(i):
     xsv_ref = _ref_value_xsv(-i-1)
 
     if i==-1:
-        res_alias = np.max(np.abs(xsv[-filter_length_oneside-1:]/xsv_ref[0:filter_length_oneside+1] - 1.0))
+        #res_alias = np.max(np.abs(xsv[-filter_length_oneside-1:]/xsv_ref[0:filter_length_oneside+1] - 1.0))
+        res_alias = np.sum(xsv[-filter_length_oneside-1:]-xsv_ref[0:filter_length_oneside+1])
+    
     elif i == 0:
-        res_alias = np.max(np.abs(xsv[1:filter_length_oneside]/xsv_ref[1:filter_length_oneside] - 1.0))
+        #res_alias = np.max(np.abs(xsv[1:filter_length_oneside]/xsv_ref[1:filter_length_oneside] - 1.0))
+        res_alias = np.sum(xsv[0:filter_length_oneside] - xsv_ref[0:filter_length_oneside])
     else:
         raise ValueError("Invalid i")
     print(res_alias)
         #assert res_alias < 2.5e-4 #0.00023432348053409324
-    return xsv, xsv_ref, filter_length_oneside
+    return xsv, xsv_ref, filter_length_oneside, res_alias
 
 
 if __name__ == "__main__":
     import matplotlib.pyplot as plt
     #xsv = test_basic_convolution_calc_xsection_from_lsd_zeroscan(0)
     #xsv = test_basic_convolution_calc_xsection_from_lsd_zeroscan(-1)
-    xsv, xsv_ref,filter_length_oneside = test_basic_convolution_calc_open_xsection_from_lsd_zeroscan(0)
+    xsv, xsv_ref,filter_length_oneside, res_alias = test_basic_convolution_calc_open_xsection_from_lsd_zeroscan(0)
+    d1=0.00012503326575752718
+    d2=0.0001357465803679611
+    #because the summation is not preserved....
+    filter_sum = _ref_value_xsv(0)
+    print(jnp.sum(xsv)+d1+d2)
+    print(jnp.sum(filter_sum)+jnp.sum(filter_sum[1:]))
+    
     fig = plt.figure()
     ax = fig.add_subplot(211)
-    plt.plot(xsv[0:filter_length_oneside])
+    plt.plot(xsv[0:filter_length_oneside],"o")
     plt.plot(xsv_ref[0:filter_length_oneside],"+")
-    #plt.plot(xsv[-filter_length_oneside-1:])
+    plt.plot(xsv)
+    plt.plot(xsv_ref,ls="dashed")
+    
+    #plt.plot(xsv[-filter_length_oneside-1:],"o")
     #plt.plot(xsv_ref[0:filter_length_oneside+1],"+")
     ax = fig.add_subplot(212)
     plt.plot(xsv[1:filter_length_oneside]/xsv_ref[1:filter_length_oneside] - 1,".")
-    
+    #plt.plot(xsv[-filter_length_oneside-1:] - xsv_ref[0:filter_length_oneside+1],".")
     #plt.yscale("log")
     plt.show()
