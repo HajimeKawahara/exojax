@@ -43,7 +43,19 @@ class OpaCalc:
         self.method = None  # which opacity calc method is used
         self.ready = False  # ready for opacity computation
         self.alias = False  # close or open
-
+    
+    def check_alias(self):
+        """check the aliasing mode
+        
+        Raises:
+            ValueError: alias should be 'close' or 'open'
+        """
+        if self.alias == "close":
+            print("cross section (xsvector/xsmatrix) is calculated in the closed mode. The aliasing part cannnot be used.")
+        elif self.alias == "open":
+            print("cross section (xsvector/xsmatrix) is calculated in the open mode. The aliasing part can be used.")
+        else:
+            raise ValueError("alias should be 'close' or 'open'.")
 
 class OpaPremodit(OpaCalc):
     """Opacity Calculator Class for PreMODIT
@@ -540,6 +552,8 @@ class OpaModit(OpaCalc):
         Pself_ref=None,
         dit_grid_resolution=0.2,
         allow_32bit=False,
+        alias="close",
+        wingcut=1.0,
         wavelength_order="descending",
     ):
         """initialization of OpaModit
@@ -555,6 +569,8 @@ class OpaModit(OpaCalc):
             Pself_ref (1d array, optional): self pressure array in bar. Defaults to None. If None Pself = 0.0.
             dit_grid_resolution (float, optional): dit grid resolution. Defaxults to 0.2.
             allow_32bit (bool, optional): If True, allow 32bit mode of JAX. Defaults to False.
+            alias (str, optional): If "open", opa will give the open-type cross-section (with aliasing parts). Defaults to "close".
+            wingcut (float, optional): wingcut for the convolution used in open cross section. Defaults to 1.0. For alias="close", always 1.0 is used by definition.
             wavlength order: wavelength order: "ascending" or "descending"
 
         Raises:
@@ -581,6 +597,8 @@ class OpaModit(OpaCalc):
             self.setdgm(Tarr_list, Parr, Pself_ref=Pself_ref)
         else:
             warnings.warn("Tarr_list/Parr are needed for xsmatrix.", UserWarning)
+        self.alias = alias
+        self.check_alias()
 
     def __eq__(self, other):
         """eq method for OpaModit, definied by comparing all the attributes and important status
@@ -627,6 +645,7 @@ class OpaModit(OpaCalc):
         from exojax.spec.hitran import gamma_hitran
         from exojax.spec.set_ditgrid import ditgrid_log_interval
         from exojax.spec.modit import xsvector_zeroscan
+        from exojax.spec.modit import xsvector_open_zeroscan
         from exojax.spec import normalized_doppler_sigma
 
         cont_nu, index_nu, R, pmarray = self.opainfo
@@ -654,7 +673,17 @@ class OpaModit(OpaCalc):
         )
 
         if self.alias:
-            xsv = None
+            xsv = xsvector_open_zeroscan(cont_nu,
+                index_nu,
+                R,
+                nsigmaD,
+                ngammaL,
+                Sij,
+                self.nu_grid,
+                ngammaL_grid,
+                self.nu_grid_extend,
+                self.filter_length_oneside,
+            )
         else:
             xsv = xsvector_zeroscan(
                 cont_nu,
