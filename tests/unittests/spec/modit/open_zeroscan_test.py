@@ -39,7 +39,6 @@ def test_open_close_xsmatrix_modit_agreement(db="exomol"):
         Parr=art.pressure,
         dit_grid_resolution=0.2,
         alias="close",
-        cutwing=1.0,
     )
     xsmatrix_close = opa_close.xsmatrix(Tarr, art.pressure)
     opa_open = OpaModit(
@@ -120,8 +119,7 @@ def test_agreement_open_and_close_zeroscan_modit():
 
 if __name__ == "__main__":
     test_open_close_xsmatrix_modit_agreement(db="exomol")
-    exit()
-
+    
     nu_close, xsv_close, nu_open, xsv_open, diff = (
         test_agreement_open_and_close_zeroscan_modit()
     )
