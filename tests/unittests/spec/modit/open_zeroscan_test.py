@@ -20,11 +20,12 @@ from exojax.test.emulate_mdb import mock_wavenumber_grid
 from exojax.spec.atmrt import ArtEmisPure
 
 from jax import config
+
 config.update("jax_enable_x64", True)
 
 
-def test_open_xsmatrix_modit(db="exomol"):
-    nu_grid, wav, res = mock_wavenumber_grid()
+def test_open_close_xsmatrix_modit_agreement(db="exomol"):
+    nu_grid, _, _ = mock_wavenumber_grid()
     art = ArtEmisPure(
         pressure_top=1.0e-8, pressure_btm=1.0e2, nlayer=100, nu_grid=nu_grid
     )
@@ -38,10 +39,9 @@ def test_open_xsmatrix_modit(db="exomol"):
         Parr=art.pressure,
         dit_grid_resolution=0.2,
         alias="close",
-        cutwing = 1.0,
+        cutwing=1.0,
     )
-    xsmatrix_close = opa_close.xsmatrix(Tarr, art.pressu
-                                        re)
+    xsmatrix_close = opa_close.xsmatrix(Tarr, art.pressure)
     opa_open = OpaModit(
         mdb=mdb,
         nu_grid=nu_grid,
@@ -49,16 +49,20 @@ def test_open_xsmatrix_modit(db="exomol"):
         Parr=art.pressure,
         dit_grid_resolution=0.2,
         alias="open",
-        cutwing = 1.0,
+        cutwing=1.0,
     )
     xsmatrix_open = opa_open.xsmatrix(Tarr, art.pressure)
-    
-    diff = xsmatrix_close/xsmatrix_open[:, opa_open.filter_length_oneside:-opa_open.filter_length_oneside] - 1.0
-    maxdiff = jnp.max(jnp.abs(diff))
-    print(maxdiff) #0.0037521072125156207 Feb. 17th 2025
-    assert maxdiff < 0.0038
- 
 
+    diff = (
+        xsmatrix_close
+        / xsmatrix_open[
+            :, opa_open.filter_length_oneside : -opa_open.filter_length_oneside
+        ]
+        - 1.0
+    )
+    maxdiff = jnp.max(jnp.abs(diff))
+    print(maxdiff)  # 0.0037521072125156207 Feb. 17th 2025
+    assert maxdiff < 0.0038
 
 
 def test_agreement_open_and_close_zeroscan_modit():
@@ -96,19 +100,31 @@ def test_agreement_open_and_close_zeroscan_modit():
     nextend = len(nus)
     nu_grid_extended = extended_wavenumber_grid(nus, nextend, nextend)
     xsv_zeroscan_open = xsvector_open_zeroscan(
-        cont_nu, index_nu, R, nsigmaD, ngammaL, Sij, nus, ngammaL_grid, nu_grid_extended, nextend)
+        cont_nu,
+        index_nu,
+        R,
+        nsigmaD,
+        ngammaL,
+        Sij,
+        nus,
+        ngammaL_grid,
+        nu_grid_extended,
+        nextend,
+    )
 
-    diff = xsv_zeroscan_close/xsv_zeroscan_open[nextend:-nextend] - 1.0
+    diff = xsv_zeroscan_close / xsv_zeroscan_open[nextend:-nextend] - 1.0
     print(jnp.max(jnp.abs(diff)))
-    assert jnp.max(jnp.abs(diff)) < 2.01e-5 #2.0011695423982623e-05 Feb. 17th 2025
-    return nus, xsv_zeroscan_close,  nu_grid_extended, xsv_zeroscan_open, diff
+    assert jnp.max(jnp.abs(diff)) < 2.01e-5  # 2.0011695423982623e-05 Feb. 17th 2025
+    return nus, xsv_zeroscan_close, nu_grid_extended, xsv_zeroscan_open, diff
 
 
 if __name__ == "__main__":
-    test_open_xsmatrix_modit(db="exomol")
+    test_open_close_xsmatrix_modit_agreement(db="exomol")
     exit()
 
-    nu_close, xsv_close, nu_open, xsv_open, diff = test_agreement_open_and_close_zeroscan_modit()
+    nu_close, xsv_close, nu_open, xsv_open, diff = (
+        test_agreement_open_and_close_zeroscan_modit()
+    )
     import matplotlib.pyplot as plt
 
     fig = plt.figure()
@@ -124,4 +140,3 @@ if __name__ == "__main__":
     plt.xlabel("wavenumber (cm-1)")
     plt.savefig("test_agreement_open_and_close_zeroscan_modit.png")
     plt.show()
-
