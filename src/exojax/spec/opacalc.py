@@ -38,24 +38,44 @@ class OpaCalc:
 
     """
 
-    def __init__(self):
+    def __init__(self, nu_grid):
+        self.nu_grid = nu_grid
         self.opainfo = None
         self.method = None  # which opacity calc method is used
         self.ready = False  # ready for opacity computation
         self.alias = False  # close or open
-    
-    def check_alias(self):
-        """check the aliasing mode
+        self.cutwing = 1.0
         
+    def set_alias_mode(self):
+        """set and check the aliasing mode
+
         Raises:
             ValueError: alias should be 'close' or 'open'
         """
         if self.alias == "close":
-            print("cross section (xsvector/xsmatrix) is calculated in the closed mode. The aliasing part cannnot be used.")
+            print(
+                "cross section (xsvector/xsmatrix) is calculated in the closed mode. The aliasing part cannnot be used."
+            )
         elif self.alias == "open":
-            print("cross section (xsvector/xsmatrix) is calculated in the open mode. The aliasing part can be used.")
+            print(
+                "cross section (xsvector/xsmatrix) is calculated in the open mode. The aliasing part can be used."
+            )
+
+            from exojax.utils.grids import extended_wavenumber_grid
+            self.set_alias_left_right_from_cutwing()
+            self.nu_grid_extended = extended_wavenumber_grid(
+                self.nu_grid, self.nleft, self.nright
+            )
         else:
             raise ValueError("alias should be 'close' or 'open'.")
+
+    def set_alias_left_right_from_cutwing(self):
+        """sets the number of points to be added to the left and right of the nu_grid based on the cutwing ratio
+        """
+        ngrid = len(self.nu_grid)
+        self.nleft = int(ngrid * self.cutwing)
+        self.nright = int(ngrid * self.cutwing)
+
 
 class OpaPremodit(OpaCalc):
     """Opacity Calculator Class for PreMODIT
@@ -106,14 +126,13 @@ class OpaPremodit(OpaCalc):
             wavlength order: wavelength order: "ascending" or "descending"
             version_auto_trange: version of the default elower grid trange (degt) file, Default to 2 since Jan 2024.
         """
-        super().__init__()
+        super().__init__(nu_grid)
         check_jax64bit(allow_32bit)
 
         # default setting
         self.method = "premodit"
         self.diffmode = diffmode
         self.warning = True
-        self.nu_grid = nu_grid
         self.wavelength_order = wavelength_order
         self.wav = nu2wav(
             self.nu_grid, wavelength_order=self.wavelength_order, unit="AA"
@@ -553,7 +572,7 @@ class OpaModit(OpaCalc):
         dit_grid_resolution=0.2,
         allow_32bit=False,
         alias="close",
-        wingcut=1.0,
+        cutwing=1.0,
         wavelength_order="descending",
     ):
         """initialization of OpaModit
@@ -570,19 +589,18 @@ class OpaModit(OpaCalc):
             dit_grid_resolution (float, optional): dit grid resolution. Defaxults to 0.2.
             allow_32bit (bool, optional): If True, allow 32bit mode of JAX. Defaults to False.
             alias (str, optional): If "open", opa will give the open-type cross-section (with aliasing parts). Defaults to "close".
-            wingcut (float, optional): wingcut for the convolution used in open cross section. Defaults to 1.0. For alias="close", always 1.0 is used by definition.
+            cutwing (float, optional): wingcut for the convolution used in open cross section. Defaults to 1.0. For alias="close", always 1.0 is used by definition.
             wavlength order: wavelength order: "ascending" or "descending"
 
         Raises:
             ValueError: _description_
         """
-        super().__init__()
+        super().__init__(nu_grid)
         check_jax64bit(allow_32bit)
 
         # default setting
         self.method = "modit"
         self.warning = True
-        self.nu_grid = nu_grid
         self.wavelength_order = wavelength_order
         self.wav = nu2wav(
             self.nu_grid, wavelength_order=self.wavelength_order, unit="AA"
@@ -598,7 +616,8 @@ class OpaModit(OpaCalc):
         else:
             warnings.warn("Tarr_list/Parr are needed for xsmatrix.", UserWarning)
         self.alias = alias
-        self.check_alias()
+        self.cutwing = cutwing
+        self.set_alias_mode()
 
     def __eq__(self, other):
         """eq method for OpaModit, definied by comparing all the attributes and important status
@@ -672,8 +691,9 @@ class OpaModit(OpaCalc):
             ngammaL, dit_grid_resolution=self.dit_grid_resolution
         )
 
-        if self.alias:
-            xsv = xsvector_open_zeroscan(cont_nu,
+        if self.alias == "open":
+            xsv = xsvector_open_zeroscan(
+                cont_nu,
                 index_nu,
                 R,
                 nsigmaD,
@@ -684,7 +704,7 @@ class OpaModit(OpaCalc):
                 self.nu_grid_extend,
                 self.filter_length_oneside,
             )
-        else:
+        elif self.alias == "close":
             xsv = xsvector_zeroscan(
                 cont_nu,
                 index_nu,
@@ -792,12 +812,11 @@ class OpaDirect(OpaCalc):
             mdb (mdb class): mdbExomol, mdbHitemp, mdbHitran
             nu_grid (): wavenumber grid (cm-1)
         """
-        super().__init__()
+        super().__init__(nu_grid)
 
         # default setting
         self.method = "lpf"
         self.warning = True
-        self.nu_grid = nu_grid
         self.wavelength_order = wavelength_order
         self.wav = nu2wav(
             self.nu_grid, wavelength_order=self.wavelength_order, unit="AA"
