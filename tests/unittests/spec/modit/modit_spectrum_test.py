@@ -19,11 +19,10 @@ testdata["exomol"] = TESTDATA_CO_EXOMOL_MODIT_EMISSION_REF
 testdata["hitemp"] = TESTDATA_CO_HITEMP_MODIT_EMISSION_REF
 
 
+
 @pytest.mark.parametrize("db", ["exomol", "hitemp"])
-def test_rt(db, fig=False):
-
+def test_rt_modit(db, fig=False):
     nu_grid, wav, res = mock_wavenumber_grid()
-
     art = ArtEmisPure(
         pressure_top=1.0e-8, pressure_btm=1.0e2, nlayer=100, nu_grid=nu_grid
     )
@@ -31,11 +30,7 @@ def test_rt(db, fig=False):
     Tarr = art.powerlaw_temperature(1300.0, 0.1)
     mmr_arr = art.constant_mmr_profile(0.1)
     gravity = 2478.57
-    # gravity = art.constant_gravity_profile(2478.57) #gravity can be profile
-
     mdb = mock_mdb(db)
-    # mdb = api.MdbExomol('.database/CO/12C-16O/Li2015',nu_grid,inherit_dataframe=False,gpu_transfer=False)
-    # mdb = api.MdbHitemp('CO', art.nu_grid, gpu_transfer=False, isotope=1)
     opa = OpaModit(
         mdb=mdb,
         nu_grid=nu_grid,
@@ -49,8 +44,9 @@ def test_rt(db, fig=False):
     filename = files("exojax").joinpath("data/testdata/" + testdata[db])
     dat = pd.read_csv(filename, delimiter=",", names=("nus", "flux"))
     residual = np.abs(F0 / dat["flux"].values - 1.0)
-    print(np.max(residual))
-    # assert np.all(residual < 1.e-6)
+    maxres = np.max(residual)
+    
+    assert maxres < 3.0e-8 #2.7443685102213067e-08 Feb. 17th 2025
     return nu_grid, F0, dat["flux"].values
 
 
@@ -58,17 +54,21 @@ if __name__ == "__main__":
     import matplotlib.pyplot as plt
 
     diffmode = 0
-    nus_hitemp, F0_hitemp, Fref_hitemp = test_rt("hitemp", diffmode)  #
-    nus, F0, Fref = test_rt("exomol", diffmode)  #
+    nus_hitemp, F0_hitemp, Fref_hitemp = test_rt_modit("hitemp", diffmode)  #
+    nus, F0, Fref = test_rt_modit("exomol", diffmode)  #
+
+
+
     fig = plt.figure()
     ax = fig.add_subplot(311)
     ax.plot(nus, Fref, label="MODIT (ExoMol)")
-    ax.plot(nus, F0, label="MODIT (ExoMol, new)", ls="dashed")
+    ax.plot(nus, F0, label="MODIT (ExoMol, close)", ls="dashed")
+    
     plt.legend()
     # plt.yscale("log")
     ax = fig.add_subplot(312)
     ax.plot(nus_hitemp, Fref_hitemp, label="MODIT (HITEMP)")
-    ax.plot(nus_hitemp, F0_hitemp, label="MODIT (HITEMP, new)", ls="dashed")
+    ax.plot(nus_hitemp, F0_hitemp, label="MODIT (HITEMP, close)", ls="dashed")
     plt.legend()
     plt.ylabel("flux (cgs)")
 
@@ -82,4 +82,5 @@ if __name__ == "__main__":
     plt.axhline(-0.01, color="gray", lw=0.5)
     plt.ylim(-0.07, 0.07)
     plt.legend()
-    plt.show()
+    plt.savefig("modit_test.png")
+    #plt.show()

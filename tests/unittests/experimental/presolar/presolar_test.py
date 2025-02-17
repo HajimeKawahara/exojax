@@ -42,6 +42,8 @@ def _simple_example_lbd():
 
 
 def test_reshape_lbd_simple():
+    """reshaping LBD (input length,:,:) to (ndiv, div_length, :, :) w/ padding_value
+    """
     lbd = _simple_example_lbd()
     input_length = np.shape(lbd)[0]
     ndiv, div_length = 3, 5

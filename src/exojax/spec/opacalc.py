@@ -43,9 +43,13 @@ class OpaCalc:
         self.opainfo = None
         self.method = None  # which opacity calc method is used
         self.ready = False  # ready for opacity computation
-        self.alias = False  # close or open
+        self.alias = "close"  # close or open
+
+        # open xsvector/xsmatrix
         self.cutwing = 1.0
-        
+        self.nu_grid_extended = None
+        self.filter_length_oneside = None
+
     def set_alias_mode(self):
         """set and check the aliasing mode
 
@@ -62,19 +66,18 @@ class OpaCalc:
             )
 
             from exojax.utils.grids import extended_wavenumber_grid
-            self.set_alias_left_right_from_cutwing()
+
+            self.set_filter_length_oneside_from_cutwing()
             self.nu_grid_extended = extended_wavenumber_grid(
-                self.nu_grid, self.nleft, self.nright
+                self.nu_grid, self.filter_length_oneside, self.filter_length_oneside
             )
         else:
             raise ValueError("alias should be 'close' or 'open'.")
 
-    def set_alias_left_right_from_cutwing(self):
-        """sets the number of points to be added to the left and right of the nu_grid based on the cutwing ratio
-        """
+    def set_filter_length_oneside_from_cutwing(self):
+        """sets the number of points to be added to the left and right (filter_lenth_oneside) of the nu_grid based on the cutwing ratio"""
         ngrid = len(self.nu_grid)
-        self.nleft = int(ngrid * self.cutwing)
-        self.nright = int(ngrid * self.cutwing)
+        self.filter_length_oneside = int(ngrid * self.cutwing)
 
 
 class OpaPremodit(OpaCalc):
@@ -701,7 +704,7 @@ class OpaModit(OpaCalc):
                 Sij,
                 self.nu_grid,
                 ngammaL_grid,
-                self.nu_grid_extend,
+                self.nu_grid_extended,
                 self.filter_length_oneside,
             )
         elif self.alias == "close":
@@ -775,6 +778,7 @@ class OpaModit(OpaCalc):
             jnp.array : cross section matrix (Nlayer, N_wavenumber)
         """
         from exojax.spec.modit import xsmatrix_zeroscan
+        from exojax.spec.modit import xsmatrix_open_zeroscan
         from exojax.spec.modit import exomol
         from exojax.spec.modit import hitran
 
@@ -788,18 +792,34 @@ class OpaModit(OpaCalc):
         elif self.mdb.dbtype == "exomol":
             # qtarr = vmap(self.mdb.qr_interp)(Tarr)
             SijM, ngammaLM, nsigmaDl = exomol(self.mdb, Tarr, Parr, R, self.mdb.molmass)
+        if self.alias == "open":
+            xsm = xsmatrix_open_zeroscan(
+                cont_nu,
+                index_nu,
+                R,
+                nsigmaDl,
+                ngammaLM,
+                SijM,
+                self.nu_grid,
+                self.dgm_ngammaL,
+                self.nu_grid_extended,
+                self.filter_length_oneside,
+            )
 
-        return xsmatrix_zeroscan(
-            cont_nu,
-            index_nu,
-            R,
-            pmarray,
-            nsigmaDl,
-            ngammaLM,
-            SijM,
-            self.nu_grid,
-            self.dgm_ngammaL,
-        )
+        elif self.alias == "close":
+            xsm = xsmatrix_zeroscan(
+                cont_nu,
+                index_nu,
+                R,
+                pmarray,
+                nsigmaDl,
+                ngammaLM,
+                SijM,
+                self.nu_grid,
+                self.dgm_ngammaL,
+            )
+        
+        return xsm
 
 
 class OpaDirect(OpaCalc):

@@ -6,8 +6,6 @@
 
 """
 
-from sympy import div
-from exojax.spec import lpf
 from exojax.spec.ditkernel import fold_voigt_kernel_logst
 from exojax.spec.lpffilter import generate_open_lpffilter
 from exojax.signal.ola import _fft_length

@@ -14,6 +14,53 @@ from exojax.spec.modit import xsvector_open_zeroscan
 from exojax.spec.modit import xsvector_zeroscan
 from exojax.utils.grids import extended_wavenumber_grid
 
+from exojax.test.emulate_mdb import mock_mdb
+from exojax.spec.opacalc import OpaModit
+from exojax.test.emulate_mdb import mock_wavenumber_grid
+from exojax.spec.atmrt import ArtEmisPure
+
+from jax import config
+config.update("jax_enable_x64", True)
+
+
+def test_open_xsmatrix_modit(db="exomol"):
+    nu_grid, wav, res = mock_wavenumber_grid()
+    art = ArtEmisPure(
+        pressure_top=1.0e-8, pressure_btm=1.0e2, nlayer=100, nu_grid=nu_grid
+    )
+    art.change_temperature_range(400.0, 1500.0)
+    Tarr = art.powerlaw_temperature(1300.0, 0.1)
+    mdb = mock_mdb(db)
+    opa_close = OpaModit(
+        mdb=mdb,
+        nu_grid=nu_grid,
+        Tarr_list=Tarr,
+        Parr=art.pressure,
+        dit_grid_resolution=0.2,
+        alias="close",
+        cutwing = 1.0,
+    )
+    xsmatrix_close = opa_close.xsmatrix(Tarr, art.pressu
+                                        re)
+    opa_open = OpaModit(
+        mdb=mdb,
+        nu_grid=nu_grid,
+        Tarr_list=Tarr,
+        Parr=art.pressure,
+        dit_grid_resolution=0.2,
+        alias="open",
+        cutwing = 1.0,
+    )
+    xsmatrix_open = opa_open.xsmatrix(Tarr, art.pressure)
+    
+    diff = xsmatrix_close/xsmatrix_open[:, opa_open.filter_length_oneside:-opa_open.filter_length_oneside] - 1.0
+    maxdiff = jnp.max(jnp.abs(diff))
+    print(maxdiff) #0.0037521072125156207 Feb. 17th 2025
+    assert maxdiff < 0.0038
+ 
+
+
+
 def test_agreement_open_and_close_zeroscan_modit():
     """test agreement between scanfft and zeroscan calculation"""
     from jax import config
@@ -58,6 +105,9 @@ def test_agreement_open_and_close_zeroscan_modit():
 
 
 if __name__ == "__main__":
+    test_open_xsmatrix_modit(db="exomol")
+    exit()
+
     nu_close, xsv_close, nu_open, xsv_open, diff = test_agreement_open_and_close_zeroscan_modit()
     import matplotlib.pyplot as plt
 

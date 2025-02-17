@@ -32,8 +32,18 @@ from exojax.spec.hitran import gamma_hitran
 from exojax.spec.atomll import gamma_vald3, interp_QT_284
 from exojax.utils.constants import Tref_original
 
+
 def xsvector_open_zeroscan(
-    cnu, indexnu, R, nsigmaD, ngammaL, S, nu_grid, ngammaL_grid, nu_grid_extended, filter_length_oneside
+    cnu,
+    indexnu,
+    R,
+    nsigmaD,
+    ngammaL,
+    S,
+    nu_grid,
+    ngammaL_grid,
+    nu_grid_extended,
+    filter_length_oneside,
 ):
     """Cross section vector (MODIT/open/zeroscan)
 
@@ -49,8 +59,9 @@ def xsvector_open_zeroscan(
         gammaL: Lorentzian half width (Nlines)
         S: line strength (Nlines)
         nu_grid: wavenumber grid (ESLOG)
-        nu_grid_extended: extended wavenumber grid to aliasing parts
-        gammaL_grid: gammaL grid
+        ngammaL_grid: normalized gammaL grid
+        nu_grid_extended: extended wavenumber grid (ESLOG)
+        filter_length_oneside: filter length for the convolution
 
     Returns:
         Cross section in the log nu grid
@@ -59,10 +70,73 @@ def xsvector_open_zeroscan(
     log_ngammaL_grid = jnp.log(ngammaL_grid)
     lsd_array = jnp.zeros((len(nu_grid), len(ngammaL_grid)))
     Slsd = inc2D_givenx(lsd_array, S, cnu, indexnu, jnp.log(ngammaL), log_ngammaL_grid)
-    xs = calc_open_xsection_from_lsd_zeroscan(Slsd, R, nsigmaD, nu_grid_extended, log_ngammaL_grid, filter_length_oneside
+    xs = calc_open_xsection_from_lsd_zeroscan(
+        Slsd, R, nsigmaD, nu_grid_extended, log_ngammaL_grid, filter_length_oneside
     )
-        
+
     return xs
+
+
+def xsmatrix_open_zeroscan(
+    cnu,
+    indexnu,
+    R,
+    nsigmaDl,
+    ngammaLM,
+    SijM,
+    nu_grid,
+    dgm_ngammaL,
+    nu_grid_extended,
+    filter_length_oneside,
+):
+    """Cross section matrix for xsvector (MODIT/open/zeroscan)
+
+    Notes:
+        The aliasing part is closed and thereby can't be used in OLA.
+        #277
+
+    Args:
+        cnu: contribution by npgetix for wavenumber
+        indexnu: index by npgetix for wavenumber
+        R: spectral resolution
+        nu_lines: line center (Nlines)
+        nsigmaDl: normalized doppler sigma in layers in R^(Nlayer x 1)
+        ngammaLM: gamma factor matrix in R^(Nlayer x Nline)
+        SijM: line strength matrix in R^(Nlayer x Nline)
+        nu_grid: wavenumber grid (ESLOG)
+        dgm_ngammaL: DIT Grid Matrix for normalized gammaL R^(Nlayer, NDITgrid)
+        nu_grid_extended: extended wavenumber grid (ESLOG)
+        filter_length_oneside: filter length for the convolution
+
+    Return:
+        cross section matrix in R^(Nlayer x Nwav)
+    """
+    NDITgrid = jnp.shape(dgm_ngammaL)[1]
+    Nline = len(cnu)
+    Mat = jnp.hstack([nsigmaDl, ngammaLM, SijM, dgm_ngammaL])
+
+    def fxs(x, arr):
+        carry = 0.0
+        nsigmaD = arr[0]
+        ngammaL = arr[1 : Nline + 1]
+        Sij = arr[Nline + 1 : 2 * Nline + 1]
+        ngammaL_grid = arr[2 * Nline + 1 : 2 * Nline + NDITgrid + 1]
+        arr = xsvector_open_zeroscan(
+            cnu,
+            indexnu,
+            R,
+            nsigmaD,
+            ngammaL,
+            Sij,
+            nu_grid,
+            ngammaL_grid,
+            nu_grid_extended,
+            filter_length_oneside,
+        )
+        return carry, arr
+
+    val, xsm = scan(fxs, 0.0, Mat)
+    return xsm
 
 
 def xsvector_zeroscan(
@@ -125,7 +199,6 @@ def xsmatrix_zeroscan(
     NDITgrid = jnp.shape(dgm_ngammaL)[1]
     Nline = len(cnu)
     Mat = jnp.hstack([nsigmaDl, ngammaLM, SijM, dgm_ngammaL])
-
     def fxs(x, arr):
         carry = 0.0
         nsigmaD = arr[0:1]
