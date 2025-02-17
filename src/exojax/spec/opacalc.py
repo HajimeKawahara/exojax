@@ -9,6 +9,13 @@ __all__ = ["OpaPremodit", "OpaModit", "OpaDirect"]
 
 from exojax.spec import initspec
 from exojax.spec.lbderror import optimal_params
+from exojax.spec.premodit import xsvector_zeroth
+from exojax.spec.premodit import xsvector_first
+from exojax.spec.premodit import xsvector_second
+from exojax.spec.premodit import xsmatrix_zeroth
+from exojax.spec.premodit import xsmatrix_first
+from exojax.spec.premodit import xsmatrix_second
+        
 from exojax.utils.grids import wavenumber_grid
 from exojax.utils.instfunc import nx_from_resolution_eslog
 from exojax.utils.grids import nu2wav
@@ -364,9 +371,6 @@ class OpaPremodit(OpaCalc):
         self.ngrid_elower = len(elower_grid)
 
     def xsvector(self, T, P):
-        from exojax.spec.premodit import xsvector_zeroth
-        from exojax.spec.premodit import xsvector_first
-        from exojax.spec.premodit import xsvector_second
         from exojax.spec import normalized_doppler_sigma
 
         (
@@ -385,8 +389,12 @@ class OpaPremodit(OpaCalc):
         elif self.mdb.dbtype == "exomol":
             qt = self.mdb.qr_interp(T, self.Tref)
 
+        xsv = self.xsvector_close(T, P, lbd_coeff, multi_index_uniqgrid, elower_grid, ngamma_ref_grid, n_Texp_grid, R, pmarray, nsigmaD, qt)
+        return xsv
+
+    def xsvector_close(self, T, P, lbd_coeff, multi_index_uniqgrid, elower_grid, ngamma_ref_grid, n_Texp_grid, R, pmarray, nsigmaD, qt):
         if self.diffmode == 0:
-            return xsvector_zeroth(
+            xsv = xsvector_zeroth(
                 T,
                 P,
                 nsigmaD,
@@ -403,7 +411,7 @@ class OpaPremodit(OpaCalc):
                 self.Tref_broadening,
             )
         elif self.diffmode == 1:
-            return xsvector_first(
+            xsv = xsvector_first(
                 T,
                 P,
                 nsigmaD,
@@ -421,7 +429,7 @@ class OpaPremodit(OpaCalc):
                 self.Tref_broadening,
             )
         elif self.diffmode == 2:
-            return xsvector_second(
+            xsv = xsvector_second(
                 T,
                 P,
                 nsigmaD,
@@ -438,7 +446,9 @@ class OpaPremodit(OpaCalc):
                 qt,
                 self.Tref_broadening,
             )
-
+            
+        return xsv
+    
     def xsmatrix(self, Tarr, Parr):
         """cross section matrix
 
@@ -452,9 +462,6 @@ class OpaPremodit(OpaCalc):
         Returns:
             jnp.array : cross section matrix (Nlayer, N_wavenumber)
         """
-        from exojax.spec.premodit import xsmatrix_zeroth
-        from exojax.spec.premodit import xsmatrix_first
-        from exojax.spec.premodit import xsmatrix_second
         from jax import vmap
 
         (
@@ -474,8 +481,12 @@ class OpaPremodit(OpaCalc):
         elif self.mdb.dbtype == "exomol":
             qtarr = vmap(self.mdb.qr_interp, (0, None))(Tarr, self.Tref)
 
+        xsm = self.xsmatrix_close(Tarr, Parr, lbd_coeff, multi_index_uniqgrid, elower_grid, ngamma_ref_grid, n_Texp_grid, R, pmarray, qtarr)
+        return xsm
+
+    def xsmatrix_close(self, Tarr, Parr, lbd_coeff, multi_index_uniqgrid, elower_grid, ngamma_ref_grid, n_Texp_grid, R, pmarray, qtarr):
         if self.diffmode == 0:
-            return xsmatrix_zeroth(
+            xsm = xsmatrix_zeroth(
                 Tarr,
                 Parr,
                 self.Tref,
@@ -493,7 +504,7 @@ class OpaPremodit(OpaCalc):
             )
 
         elif self.diffmode == 1:
-            return xsmatrix_first(
+            xsm = xsmatrix_first(
                 Tarr,
                 Parr,
                 self.Tref,
@@ -512,7 +523,7 @@ class OpaPremodit(OpaCalc):
             )
 
         elif self.diffmode == 2:
-            return xsmatrix_second(
+            xsm = xsmatrix_second(
                 Tarr,
                 Parr,
                 self.Tref,
@@ -532,6 +543,8 @@ class OpaPremodit(OpaCalc):
 
         else:
             raise ValueError("diffmode should be 0, 1, 2.")
+        return xsm
+
 
     def plot_broadening_parameters(self, figname="broadpar_grid.png", crit=300000):
         """plot broadening parameters and grids
