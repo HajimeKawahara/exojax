@@ -12,24 +12,26 @@ from exojax.utils.indexing import npgetix
 from exojax.spec.lsd import npadd3D_multi_index, npadd3D_direct1D
 from exojax.utils.constants import hcperk
 from exojax.utils.constants import Tref_original
-#from exojax.spec.profconv import calc_xsection_from_lsd_scanfft
+
+# from exojax.spec.profconv import calc_xsection_from_lsd_scanfft
 from exojax.spec.profconv import calc_xsection_from_lsd_zeroscan
+from exojax.spec.profconv import calc_open_xsection_from_lsd_zeroscan
 from exojax.spec.set_ditgrid import ditgrid_log_interval, ditgrid_linear_interval
 from exojax.utils.indexing import uniqidx_neibouring
 from exojax.spec import normalized_doppler_sigma
 from exojax.spec.lbd import lbd_coefficients
+from functools import partial
 
 
-@jit
-def xsvector_second(
+
+@partial(jit, static_argnums=14)
+def xsvector_open_zeroth(
     T,
     P,
     nsigmaD,
     lbd_coeff,
     Tref,
-    Twt,
     R,
-    pmarray,
     nu_grid,
     elower_grid,
     multi_index_uniqgrid,
@@ -37,16 +39,18 @@ def xsvector_second(
     n_Texp_grid,
     qt,
     Tref_broadening,
+    nu_grid_extended,
+    filter_length_oneside,
+    Twt=None,
 ):
-    """compute cross section vector, with scan+fft, using the second Taylor expansion
+    """compute cross section vector, with scan+fft, using the zero-th Taylor expansion
 
     Args:
         T (_type_): temperature in Kelvin
         P (_type_): pressure in bar
         nsigmaD: normalized doplar STD
-        lbd_coeff (_type_): log biased line shape density (LBD), coefficient
-        Tref: reference temperature used to compute lbd_zeroth and lbd_first in Kelvin
-        Twt: temperature used in the weight point
+        lbd_coeff (_type_): log biased line shape density (LBD) coefficient
+        Tref: reference temperature used to compute lbd_zeroth in Kelvin
         R (_type_): spectral resolution
         nu_grid (_type_): wavenumber grid
         elower_grid (_type_): E lower grid
@@ -55,34 +59,33 @@ def xsvector_second(
         n_Texp_grid (_type_): temperature exponent grid
         qt (_type_): partirion function ratio
         Tref_broadening: reference temperature for broadening in Kelvin
-
-
+        nu_grid_extended: extended wavenumber grid to aliasing parts
+        filter_length_oneside: one side length of the wavenumber grid of lpffilter
+        Twt: not used
     Returns:
         jnp.array: cross section in cgs vector
     """
-    Slsd = unbiased_lsd_second(lbd_coeff, T, Tref, Twt, nu_grid, elower_grid, qt)
+    Slsd = unbiased_lsd_zeroth(lbd_coeff[0], T, Tref, nu_grid, elower_grid, qt)
     ngamma_grid = unbiased_ngamma_grid(
         T, P, ngamma_ref_grid, n_Texp_grid, multi_index_uniqgrid, Tref_broadening
     )
     log_ngammaL_grid = jnp.log(ngamma_grid)
-    # xs = calc_xsection_from_lsd_scanfft(Slsd, R, pmarray, nsigmaD, nu_grid,
-    #                                    log_ngammaL_grid)
-    xs = calc_xsection_from_lsd_zeroscan(
-        Slsd, R, pmarray, nsigmaD, nu_grid, log_ngammaL_grid
+
+    xs = calc_open_xsection_from_lsd_zeroscan(
+        Slsd, R, nsigmaD, nu_grid_extended, log_ngammaL_grid, filter_length_oneside
     )
+
     return xs
 
 
-@jit
-def xsvector_first(
+@partial(jit, static_argnums=14)
+def xsvector_open_first(
     T,
     P,
     nsigmaD,
     lbd_coeff,
     Tref,
-    Twt,
     R,
-    pmarray,
     nu_grid,
     elower_grid,
     multi_index_uniqgrid,
@@ -90,6 +93,9 @@ def xsvector_first(
     n_Texp_grid,
     qt,
     Tref_broadening,
+    nu_grid_extended,
+    filter_length_oneside,
+    Twt,
 ):
     """compute cross section vector, with scan+fft, using the first Taylor expansion
 
@@ -100,7 +106,6 @@ def xsvector_first(
         lbd_zeroth (_type_): log biased line shape density (LBD), zeroth coefficient
         lbd_first (_type_): log biased line shape density (LBD), first coefficient
         Tref: reference temperature used to compute lbd_zeroth and lbd_first in Kelvin
-        Twt: temperature used in the weight point
         R (_type_): spectral resolution
         nu_grid (_type_): wavenumber grid
         elower_grid (_type_): E lower grid
@@ -109,6 +114,335 @@ def xsvector_first(
         n_Texp_grid (_type_): temperature exponent grid
         qt (_type_): partirion function ratio
         Tref_broadening: reference temperature for broadening in Kelvin
+        nu_grid_extended: extended wavenumber grid to aliasing parts
+        filter_length_oneside: one side length of the wavenumber grid of lpffilter
+        Twt: temperature used in the weight point
+
+    Returns:
+        jnp.array: cross section in cgs vector
+    """
+    Slsd = unbiased_lsd_first(lbd_coeff, T, Tref, Twt, nu_grid, elower_grid, qt)
+    ngamma_grid = unbiased_ngamma_grid(
+        T, P, ngamma_ref_grid, n_Texp_grid, multi_index_uniqgrid, Tref_broadening
+    )
+    log_ngammaL_grid = jnp.log(ngamma_grid)
+    xs = calc_open_xsection_from_lsd_zeroscan(
+        Slsd, R, nsigmaD, nu_grid_extended, log_ngammaL_grid, filter_length_oneside
+    )
+    return xs
+
+
+@partial(jit, static_argnums=14)
+def xsvector_open_second(
+    T,
+    P,
+    nsigmaD,
+    lbd_coeff,
+    Tref,
+    R,
+    nu_grid,
+    elower_grid,
+    multi_index_uniqgrid,
+    ngamma_ref_grid,
+    n_Texp_grid,
+    qt,
+    Tref_broadening,
+    nu_grid_extended,
+    filter_length_oneside,
+    Twt,
+):
+    """compute open cross section vector, with scan+fft, using the second Taylor expansion
+
+    Args:
+        T (_type_): temperature in Kelvin
+        P (_type_): pressure in bar
+        nsigmaD: normalized doplar STD
+        lbd_coeff (_type_): log biased line shape density (LBD), coefficient
+        Tref: reference temperature used to compute lbd_zeroth and lbd_first in Kelvin
+        R (_type_): spectral resolution
+        nu_grid (_type_): wavenumber grid
+        elower_grid (_type_): E lower grid
+        multi_index_uniqgrid (_type_): multi index of unique broadening parameter grid
+        ngamma_ref_grid (_type_): normalized pressure broadening half-width
+        n_Texp_grid (_type_): temperature exponent grid
+        qt (_type_): partirion function ratio
+        Tref_broadening: reference temperature for broadening in Kelvin
+        nu_grid_extended: extended wavenumber grid to aliasing parts
+        filter_length_oneside: one side length of the wavenumber grid of lpffilter
+        Twt: temperature used in the weight point
+
+    Returns:
+        jnp.array: cross section in cgs vector
+    """
+    Slsd = unbiased_lsd_second(lbd_coeff, T, Tref, Twt, nu_grid, elower_grid, qt)
+    ngamma_grid = unbiased_ngamma_grid(
+        T, P, ngamma_ref_grid, n_Texp_grid, multi_index_uniqgrid, Tref_broadening
+    )
+    log_ngammaL_grid = jnp.log(ngamma_grid)
+    xs = calc_open_xsection_from_lsd_zeroscan(
+        Slsd, R, nsigmaD, nu_grid_extended, log_ngammaL_grid, filter_length_oneside
+    )
+    return xs
+
+@partial(jit, static_argnums=14)
+def xsmatrix_open_zeroth(
+    Tarr,
+    Parr,
+    Tref,
+    R,
+    lbd_coeff,
+    nu_grid,
+    ngamma_ref_grid,
+    n_Texp_grid,
+    multi_index_uniqgrid,
+    elower_grid,
+    Mmol,
+    qtarr,
+    Tref_broadening,
+    nu_grid_extended,
+    filter_length_oneside,
+    Twt=None,
+):
+    """compute open cross section matrix given atmospheric layers, for diffmode=0, with scan+fft
+
+    Args:
+        Tarr (_type_): temperature layers
+        Parr (_type_): pressure layers
+        Tref: reference temperature in K
+        R (float): spectral resolution
+        lbd_coeff (_type_):
+        nu_grid (_type_): wavenumber grid
+        ngamma_ref_grid (_type_): normalized half-width grid
+        n_Texp_grid (_type_): temperature exponent grid
+        multi_index_uniqgrid (_type_): multi index for uniq broadpar grid
+        elower_grid (_type_): Elower grid
+        Mmol (_type_): molecular mass
+        qtarr (_type_): partition function ratio layers
+        Tref_broadening: reference temperature for broadening in Kelvin
+        nu_grid_extended: extended wavenumber grid to aliasing parts
+        filter_length_oneside: one side length of the wavenumber grid of lpffilter
+        Twt: not used
+
+    Returns:
+        jnp.array : cross section matrix (Nlayer, N_wavenumber)
+    """
+    nsigmaD = vmap(normalized_doppler_sigma, (0, None, None), 0)(Tarr, Mmol, R)
+    Slsd = vmap(unbiased_lsd_zeroth, (None, 0, None, None, None, 0), 0)(
+        lbd_coeff[0], Tarr, Tref, nu_grid, elower_grid, qtarr
+    )
+    ngamma_grid = vmap(unbiased_ngamma_grid, (0, 0, None, None, None, None), 0)(
+        Tarr, Parr, ngamma_ref_grid, n_Texp_grid, multi_index_uniqgrid, Tref_broadening
+    )
+    log_ngammaL_grid = jnp.log(ngamma_grid)
+    xsm = vmap(calc_open_xsection_from_lsd_zeroscan, (0, None, 0, None, 0, None), 0)(
+        Slsd, R, nsigmaD, nu_grid_extended, log_ngammaL_grid, filter_length_oneside
+    )
+    return xsm
+
+@partial(jit, static_argnums=14)
+def xsmatrix_open_first(
+    Tarr,
+    Parr,
+    Tref,
+    R,
+    lbd_coeff,
+    nu_grid,
+    ngamma_ref_grid,
+    n_Texp_grid,
+    multi_index_uniqgrid,
+    elower_grid,
+    Mmol,
+    qtarr,
+    Tref_broadening,
+    nu_grid_extended,
+    filter_length_oneside,
+    Twt,
+):
+    """compute open cross section matrix given atmospheric layers, for diffmode=1, with scan+fft
+
+    Args:
+        Tarr (_type_): temperature layers
+        Parr (_type_): pressure layers
+        Tref: reference temperature in K
+        R (float): spectral resolution
+        lbd_coeff (_type_): LBD coefficient
+        nu_grid (_type_): wavenumber grid
+        ngamma_ref_grid (_type_): normalized half-width grid
+        n_Texp_grid (_type_): temperature exponent grid
+        multi_index_uniqgrid (_type_): multi index for uniq broadpar grid
+        elower_grid (_type_): Elower grid
+        Mmol (_type_): molecular mass
+        qtarr (_type_): partition function ratio layers
+        Tref_broadening: reference temperature for broadening in Kelvin
+        nu_grid_extended: extended wavenumber grid to aliasing parts
+        filter_length_oneside: one side length of the wavenumber grid of lpffilter
+        Twt: weight temperature in K
+
+    Returns:
+        jnp.array : cross section matrix (Nlayer, N_wavenumber)
+    """
+    nsigmaD = vmap(normalized_doppler_sigma, (0, None, None), 0)(Tarr, Mmol, R)
+    Slsd = vmap(unbiased_lsd_first, (None, 0, None, None, None, None, 0), 0)(
+        lbd_coeff, Tarr, Tref, Twt, nu_grid, elower_grid, qtarr
+    )
+    ngamma_grid = vmap(unbiased_ngamma_grid, (0, 0, None, None, None, None), 0)(
+        Tarr, Parr, ngamma_ref_grid, n_Texp_grid, multi_index_uniqgrid, Tref_broadening
+    )
+    log_ngammaL_grid = jnp.log(ngamma_grid)
+    xsm = vmap(calc_open_xsection_from_lsd_zeroscan, (0, None, 0, None, 0, None), 0)(
+        Slsd, R, nsigmaD, nu_grid_extended, log_ngammaL_grid, filter_length_oneside
+    )
+    return xsm
+
+
+@partial(jit, static_argnums=14)
+def xsmatrix_open_second(
+    Tarr,
+    Parr,
+    Tref,
+    R,
+    lbd_coeff,
+    nu_grid,
+    ngamma_ref_grid,
+    n_Texp_grid,
+    multi_index_uniqgrid,
+    elower_grid,
+    Mmol,
+    qtarr,
+    Tref_broadening,
+    nu_grid_extended,
+    filter_length_oneside,
+    Twt,
+):
+    """compute open cross section matrix given atmospheric layers, for diffmode=1, with scan+fft
+
+    Args:
+        Tarr (_type_): temperature layers
+        Parr (_type_): pressure layers
+        Tref: reference temperature in K
+        R (float): spectral resolution
+        pmarray (_type_): pmarray
+        lbd_coeff (_type_): LBD coefficient
+        nu_grid (_type_): wavenumber grid
+        ngamma_ref_grid (_type_): normalized half-width grid
+        n_Texp_grid (_type_): temperature exponent grid
+        multi_index_uniqgrid (_type_): multi index for uniq broadpar grid
+        elower_grid (_type_): Elower grid
+        Mmol (_type_): molecular mass
+        qtarr (_type_): partition function ratio layers
+        Tref_broadening: reference temperature for broadening in Kelvin
+        nu_grid_extended: extended wavenumber grid to aliasing parts
+        filter_length_oneside: one side length of the wavenumber grid of lpffilter
+        Twt: weight temperature in K
+
+    Returns:
+        jnp.array : cross section matrix (Nlayer, N_wavenumber)
+    """
+    nsigmaD = vmap(normalized_doppler_sigma, (0, None, None), 0)(Tarr, Mmol, R)
+    Slsd = vmap(unbiased_lsd_second, (None, 0, None, None, None, None, 0), 0)(
+        lbd_coeff, Tarr, Tref, Twt, nu_grid, elower_grid, qtarr
+    )
+    ngamma_grid = vmap(unbiased_ngamma_grid, (0, 0, None, None, None, None), 0)(
+        Tarr, Parr, ngamma_ref_grid, n_Texp_grid, multi_index_uniqgrid, Tref_broadening
+    )
+    log_ngammaL_grid = jnp.log(ngamma_grid)
+    xsm = vmap(calc_open_xsection_from_lsd_zeroscan, (0, None, 0, None, 0, None), 0)(
+        Slsd, R, nsigmaD, nu_grid_extended, log_ngammaL_grid, filter_length_oneside
+    )
+    return xsm
+
+
+@jit
+def xsvector_zeroth(
+    T,
+    P,
+    nsigmaD,
+    lbd_coeff,
+    Tref,
+    R,
+    pmarray,
+    nu_grid,
+    elower_grid,
+    multi_index_uniqgrid,
+    ngamma_ref_grid,
+    n_Texp_grid,
+    qt,
+    Tref_broadening,
+    Twt=None,
+):
+    """compute cross section vector, with scan+fft, using the zero-th Taylor expansion
+
+    Args:
+        T (_type_): temperature in Kelvin
+        P (_type_): pressure in bar
+        nsigmaD: normalized doplar STD
+        lbd_coeff (_type_): log biased line shape density (LBD) coefficient
+        Tref: reference temperature used to compute lbd_zeroth in Kelvin
+        R (_type_): spectral resolution
+        pmarray: (+1,-1) array whose length of len(nu_grid)+1
+        nu_grid (_type_): wavenumber grid
+        elower_grid (_type_): E lower grid
+        multi_index_uniqgrid (_type_): multi index of unique broadening parameter grid
+        ngamma_ref_grid (_type_): normalized pressure broadening half-width
+        n_Texp_grid (_type_): temperature exponent grid
+        qt (_type_): partirion function ratio
+        Tref_broadening: reference temperature for broadening in Kelvin
+        Twt: not used
+    Returns:
+        jnp.array: cross section in cgs vector
+    """
+    Slsd = unbiased_lsd_zeroth(lbd_coeff[0], T, Tref, nu_grid, elower_grid, qt)
+    ngamma_grid = unbiased_ngamma_grid(
+        T, P, ngamma_ref_grid, n_Texp_grid, multi_index_uniqgrid, Tref_broadening
+    )
+    log_ngammaL_grid = jnp.log(ngamma_grid)
+    # xs = calc_xsection_from_lsd_scanfft(
+    #    Slsd, R, pmarray, nsigmaD, nu_grid, log_ngammaL_grid
+    # )
+    xs = calc_xsection_from_lsd_zeroscan(
+        Slsd, R, pmarray, nsigmaD, nu_grid, log_ngammaL_grid
+    )
+    return xs
+
+
+
+@jit
+def xsvector_first(
+    T,
+    P,
+    nsigmaD,
+    lbd_coeff,
+    Tref,
+    R,
+    pmarray,
+    nu_grid,
+    elower_grid,
+    multi_index_uniqgrid,
+    ngamma_ref_grid,
+    n_Texp_grid,
+    qt,
+    Tref_broadening,
+    Twt,
+):
+    """compute cross section vector, with scan+fft, using the first Taylor expansion
+
+    Args:
+        T (_type_): temperature in Kelvin
+        P (_type_): pressure in bar
+        nsigmaD: normalized doplar STD
+        lbd_zeroth (_type_): log biased line shape density (LBD), zeroth coefficient
+        lbd_first (_type_): log biased line shape density (LBD), first coefficient
+        Tref: reference temperature used to compute lbd_zeroth and lbd_first in Kelvin
+        R (_type_): spectral resolution
+        pmarray (_type_): (+1,-1) array whose length of len(nu_grid)+1
+        nu_grid (_type_): wavenumber grid
+        elower_grid (_type_): E lower grid
+        multi_index_uniqgrid (_type_): multi index of unique broadening parameter grid
+        ngamma_ref_grid (_type_): normalized pressure broadening half-width
+        n_Texp_grid (_type_): temperature exponent grid
+        qt (_type_): partirion function ratio
+        Tref_broadening: reference temperature for broadening in Kelvin
+        Twt: temperature used in the weight point
 
     Returns:
         jnp.array: cross section in cgs vector
@@ -128,7 +462,7 @@ def xsvector_first(
 
 
 @jit
-def xsvector_zeroth(
+def xsvector_second(
     T,
     P,
     nsigmaD,
@@ -143,16 +477,18 @@ def xsvector_zeroth(
     n_Texp_grid,
     qt,
     Tref_broadening,
+    Twt,
 ):
-    """compute cross section vector, with scan+fft, using the zero-th Taylor expansion
+    """compute cross section vector, with scan+fft, using the second Taylor expansion
 
     Args:
         T (_type_): temperature in Kelvin
         P (_type_): pressure in bar
         nsigmaD: normalized doplar STD
-        lbd_coeff (_type_): log biased line shape density (LBD) coefficient
-        Tref: reference temperature used to compute lbd_zeroth in Kelvin
+        lbd_coeff (_type_): log biased line shape density (LBD), coefficient
+        Tref: reference temperature used to compute lbd_zeroth and lbd_first in Kelvin
         R (_type_): spectral resolution
+        pmarray (_type_): (+1,-1) array whose length of len(nu_grid)+1
         nu_grid (_type_): wavenumber grid
         elower_grid (_type_): E lower grid
         multi_index_uniqgrid (_type_): multi index of unique broadening parameter grid
@@ -160,22 +496,23 @@ def xsvector_zeroth(
         n_Texp_grid (_type_): temperature exponent grid
         qt (_type_): partirion function ratio
         Tref_broadening: reference temperature for broadening in Kelvin
+        Twt: temperature used in the weight point
 
     Returns:
         jnp.array: cross section in cgs vector
     """
-    Slsd = unbiased_lsd_zeroth(lbd_coeff[0], T, Tref, nu_grid, elower_grid, qt)
+    Slsd = unbiased_lsd_second(lbd_coeff, T, Tref, Twt, nu_grid, elower_grid, qt)
     ngamma_grid = unbiased_ngamma_grid(
         T, P, ngamma_ref_grid, n_Texp_grid, multi_index_uniqgrid, Tref_broadening
     )
     log_ngammaL_grid = jnp.log(ngamma_grid)
-    # xs = calc_xsection_from_lsd_scanfft(
-    #    Slsd, R, pmarray, nsigmaD, nu_grid, log_ngammaL_grid
-    # )
+    # xs = calc_xsection_from_lsd_scanfft(Slsd, R, pmarray, nsigmaD, nu_grid,
+    #                                    log_ngammaL_grid)
     xs = calc_xsection_from_lsd_zeroscan(
         Slsd, R, pmarray, nsigmaD, nu_grid, log_ngammaL_grid
     )
     return xs
+
 
 
 @jit
@@ -194,6 +531,7 @@ def xsmatrix_zeroth(
     Mmol,
     qtarr,
     Tref_broadening,
+    Twt=None,
 ):
     """compute cross section matrix given atmospheric layers, for diffmode=0, with scan+fft
 
@@ -212,7 +550,7 @@ def xsmatrix_zeroth(
         Mmol (_type_): molecular mass
         qtarr (_type_): partition function ratio layers
         Tref_broadening: reference temperature for broadening in Kelvin
-
+        Twt: not used
 
     Returns:
         jnp.array : cross section matrix (Nlayer, N_wavenumber)
@@ -239,7 +577,6 @@ def xsmatrix_first(
     Tarr,
     Parr,
     Tref,
-    Twt,
     R,
     pmarray,
     lbd_coeff,
@@ -251,6 +588,7 @@ def xsmatrix_first(
     Mmol,
     qtarr,
     Tref_broadening,
+    Twt,
 ):
     """compute cross section matrix given atmospheric layers, for diffmode=1, with scan+fft
 
@@ -258,7 +596,6 @@ def xsmatrix_first(
         Tarr (_type_): temperature layers
         Parr (_type_): pressure layers
         Tref: reference temperature in K
-        Twt: weight temperature in K
         R (float): spectral resolution
         pmarray (_type_): pmarray
         lbd_coeff (_type_): LBD coefficient
@@ -270,7 +607,7 @@ def xsmatrix_first(
         Mmol (_type_): molecular mass
         qtarr (_type_): partition function ratio layers
         Tref_broadening: reference temperature for broadening in Kelvin
-
+        Twt: weight temperature in K
 
     Returns:
         jnp.array : cross section matrix (Nlayer, N_wavenumber)
@@ -298,7 +635,6 @@ def xsmatrix_second(
     Tarr,
     Parr,
     Tref,
-    Twt,
     R,
     pmarray,
     lbd_coeff,
@@ -310,6 +646,7 @@ def xsmatrix_second(
     Mmol,
     qtarr,
     Tref_broadening,
+    Twt,
 ):
     """compute cross section matrix given atmospheric layers, for diffmode=1, with scan+fft
 
@@ -317,7 +654,6 @@ def xsmatrix_second(
         Tarr (_type_): temperature layers
         Parr (_type_): pressure layers
         Tref: reference temperature in K
-        Twt: weight temperature in K
         R (float): spectral resolution
         pmarray (_type_): pmarray
         lbd_coeff (_type_): LBD coefficient
@@ -329,7 +665,7 @@ def xsmatrix_second(
         Mmol (_type_): molecular mass
         qtarr (_type_): partition function ratio layers
         Tref_broadening: reference temperature for broadening in Kelvin
-
+        Twt: weight temperature in K
 
     Returns:
         jnp.array : cross section matrix (Nlayer, N_wavenumber)
