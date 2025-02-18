@@ -172,7 +172,7 @@ def xsvector_zeroscan(
     )
     return xs
 
-
+#@partial(jit, static_argnums=(0,1,2,3,7))
 def xsmatrix_zeroscan(
     cnu, indexnu, R, pmarray, nsigmaDl, ngammaLM, SijM, nu_grid, dgm_ngammaL
 ):
