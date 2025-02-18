@@ -12,7 +12,8 @@ from exojax.utils.indexing import npgetix
 from exojax.spec.lsd import npadd3D_multi_index, npadd3D_direct1D
 from exojax.utils.constants import hcperk
 from exojax.utils.constants import Tref_original
-#from exojax.spec.profconv import calc_xsection_from_lsd_scanfft
+
+# from exojax.spec.profconv import calc_xsection_from_lsd_scanfft
 from exojax.spec.profconv import calc_xsection_from_lsd_zeroscan
 from exojax.spec.set_ditgrid import ditgrid_log_interval, ditgrid_linear_interval
 from exojax.utils.indexing import uniqidx_neibouring
@@ -27,7 +28,6 @@ def xsvector_second(
     nsigmaD,
     lbd_coeff,
     Tref,
-    Twt,
     R,
     pmarray,
     nu_grid,
@@ -37,6 +37,7 @@ def xsvector_second(
     n_Texp_grid,
     qt,
     Tref_broadening,
+    Twt,
 ):
     """compute cross section vector, with scan+fft, using the second Taylor expansion
 
@@ -46,7 +47,6 @@ def xsvector_second(
         nsigmaD: normalized doplar STD
         lbd_coeff (_type_): log biased line shape density (LBD), coefficient
         Tref: reference temperature used to compute lbd_zeroth and lbd_first in Kelvin
-        Twt: temperature used in the weight point
         R (_type_): spectral resolution
         nu_grid (_type_): wavenumber grid
         elower_grid (_type_): E lower grid
@@ -55,7 +55,7 @@ def xsvector_second(
         n_Texp_grid (_type_): temperature exponent grid
         qt (_type_): partirion function ratio
         Tref_broadening: reference temperature for broadening in Kelvin
-
+        Twt: temperature used in the weight point
 
     Returns:
         jnp.array: cross section in cgs vector
@@ -80,7 +80,6 @@ def xsvector_first(
     nsigmaD,
     lbd_coeff,
     Tref,
-    Twt,
     R,
     pmarray,
     nu_grid,
@@ -90,6 +89,7 @@ def xsvector_first(
     n_Texp_grid,
     qt,
     Tref_broadening,
+    Twt,
 ):
     """compute cross section vector, with scan+fft, using the first Taylor expansion
 
@@ -100,7 +100,6 @@ def xsvector_first(
         lbd_zeroth (_type_): log biased line shape density (LBD), zeroth coefficient
         lbd_first (_type_): log biased line shape density (LBD), first coefficient
         Tref: reference temperature used to compute lbd_zeroth and lbd_first in Kelvin
-        Twt: temperature used in the weight point
         R (_type_): spectral resolution
         nu_grid (_type_): wavenumber grid
         elower_grid (_type_): E lower grid
@@ -109,6 +108,7 @@ def xsvector_first(
         n_Texp_grid (_type_): temperature exponent grid
         qt (_type_): partirion function ratio
         Tref_broadening: reference temperature for broadening in Kelvin
+        Twt: temperature used in the weight point
 
     Returns:
         jnp.array: cross section in cgs vector
@@ -143,6 +143,7 @@ def xsvector_zeroth(
     n_Texp_grid,
     qt,
     Tref_broadening,
+    Twt=None,
 ):
     """compute cross section vector, with scan+fft, using the zero-th Taylor expansion
 
@@ -160,7 +161,7 @@ def xsvector_zeroth(
         n_Texp_grid (_type_): temperature exponent grid
         qt (_type_): partirion function ratio
         Tref_broadening: reference temperature for broadening in Kelvin
-
+        Twt: not used
     Returns:
         jnp.array: cross section in cgs vector
     """
@@ -194,6 +195,7 @@ def xsmatrix_zeroth(
     Mmol,
     qtarr,
     Tref_broadening,
+    Twt=None,
 ):
     """compute cross section matrix given atmospheric layers, for diffmode=0, with scan+fft
 
@@ -212,7 +214,7 @@ def xsmatrix_zeroth(
         Mmol (_type_): molecular mass
         qtarr (_type_): partition function ratio layers
         Tref_broadening: reference temperature for broadening in Kelvin
-
+        Twt: not used
 
     Returns:
         jnp.array : cross section matrix (Nlayer, N_wavenumber)
@@ -239,7 +241,6 @@ def xsmatrix_first(
     Tarr,
     Parr,
     Tref,
-    Twt,
     R,
     pmarray,
     lbd_coeff,
@@ -251,6 +252,7 @@ def xsmatrix_first(
     Mmol,
     qtarr,
     Tref_broadening,
+    Twt,
 ):
     """compute cross section matrix given atmospheric layers, for diffmode=1, with scan+fft
 
@@ -258,7 +260,6 @@ def xsmatrix_first(
         Tarr (_type_): temperature layers
         Parr (_type_): pressure layers
         Tref: reference temperature in K
-        Twt: weight temperature in K
         R (float): spectral resolution
         pmarray (_type_): pmarray
         lbd_coeff (_type_): LBD coefficient
@@ -270,7 +271,7 @@ def xsmatrix_first(
         Mmol (_type_): molecular mass
         qtarr (_type_): partition function ratio layers
         Tref_broadening: reference temperature for broadening in Kelvin
-
+        Twt: weight temperature in K
 
     Returns:
         jnp.array : cross section matrix (Nlayer, N_wavenumber)
@@ -298,7 +299,6 @@ def xsmatrix_second(
     Tarr,
     Parr,
     Tref,
-    Twt,
     R,
     pmarray,
     lbd_coeff,
@@ -310,6 +310,7 @@ def xsmatrix_second(
     Mmol,
     qtarr,
     Tref_broadening,
+    Twt,
 ):
     """compute cross section matrix given atmospheric layers, for diffmode=1, with scan+fft
 
@@ -317,7 +318,6 @@ def xsmatrix_second(
         Tarr (_type_): temperature layers
         Parr (_type_): pressure layers
         Tref: reference temperature in K
-        Twt: weight temperature in K
         R (float): spectral resolution
         pmarray (_type_): pmarray
         lbd_coeff (_type_): LBD coefficient
@@ -329,7 +329,7 @@ def xsmatrix_second(
         Mmol (_type_): molecular mass
         qtarr (_type_): partition function ratio layers
         Tref_broadening: reference temperature for broadening in Kelvin
-
+        Twt: weight temperature in K
 
     Returns:
         jnp.array : cross section matrix (Nlayer, N_wavenumber)

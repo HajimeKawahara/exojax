@@ -9,13 +9,6 @@ __all__ = ["OpaPremodit", "OpaModit", "OpaDirect"]
 
 from exojax.spec import initspec
 from exojax.spec.lbderror import optimal_params
-from exojax.spec.premodit import xsvector_zeroth
-from exojax.spec.premodit import xsvector_first
-from exojax.spec.premodit import xsvector_second
-from exojax.spec.premodit import xsmatrix_zeroth
-from exojax.spec.premodit import xsmatrix_first
-from exojax.spec.premodit import xsmatrix_second
-        
 from exojax.utils.grids import wavenumber_grid
 from exojax.utils.instfunc import nx_from_resolution_eslog
 from exojax.utils.grids import nu2wav
@@ -44,7 +37,7 @@ class OpaCalc:
 
 
     """
-
+    
     def __init__(self, nu_grid):
         self.nu_grid = nu_grid
         self.opainfo = None
@@ -94,7 +87,7 @@ class OpaPremodit(OpaCalc):
         opainfo: information set used in PreMODIT
 
     """
-
+    
     def __init__(
         self,
         mdb,
@@ -155,7 +148,6 @@ class OpaPremodit(OpaCalc):
         if is_outside_range(self.mdb.nu_lines, self.nu_grid[0], self.nu_grid[-1]):
             raise ValueError("None of the lines in mdb are within nu_grid.")
 
-        # broadening parameter setting
         self.determine_broadening_parameter_resolution(
             broadening_resolution, dit_grid_resolution
         )
@@ -168,6 +160,8 @@ class OpaPremodit(OpaCalc):
         else:
             print("OpaPremodit: initialization without parameters setting")
             print("Call self.apply_params() to complete the setting.")
+
+        self._sets_capable_opacalculators()
 
     def __eq__(self, other):
         """eq method for OpaPremodit, definied by comparing all the attributes and important status
@@ -370,6 +364,20 @@ class OpaPremodit(OpaCalc):
         self.ngrid_broadpar = len(multi_index_uniqgrid)
         self.ngrid_elower = len(elower_grid)
 
+    def _sets_capable_opacalculators(self):
+        """sets capable opacalculators
+        """
+        #opa calculators for PreMODIT
+        from exojax.spec.premodit import xsvector_zeroth
+        from exojax.spec.premodit import xsvector_first
+        from exojax.spec.premodit import xsvector_second
+        from exojax.spec.premodit import xsmatrix_zeroth
+        from exojax.spec.premodit import xsmatrix_first
+        from exojax.spec.premodit import xsmatrix_second
+
+        self.xsvector_close = {0:xsvector_zeroth, 1:xsvector_first, 2:xsvector_second}
+        self.xsmatrix_close = {0:xsmatrix_zeroth, 1:xsmatrix_first, 2:xsmatrix_second}
+
     def xsvector(self, T, P):
         from exojax.spec import normalized_doppler_sigma
 
@@ -389,66 +397,26 @@ class OpaPremodit(OpaCalc):
         elif self.mdb.dbtype == "exomol":
             qt = self.mdb.qr_interp(T, self.Tref)
 
-        xsv = self.xsvector_close(T, P, lbd_coeff, multi_index_uniqgrid, elower_grid, ngamma_ref_grid, n_Texp_grid, R, pmarray, nsigmaD, qt)
+        xsvector_func = self.xsvector_close[self.diffmode]
+        xsv = xsvector_func(
+            T,
+            P,
+            nsigmaD,
+            lbd_coeff,
+            self.Tref,
+            R,
+            pmarray,
+            self.nu_grid,
+            elower_grid,
+            multi_index_uniqgrid,
+            ngamma_ref_grid,
+            n_Texp_grid,
+            qt,
+            self.Tref_broadening,
+            self.Twt,
+        )
         return xsv
 
-    def xsvector_close(self, T, P, lbd_coeff, multi_index_uniqgrid, elower_grid, ngamma_ref_grid, n_Texp_grid, R, pmarray, nsigmaD, qt):
-        if self.diffmode == 0:
-            xsv = xsvector_zeroth(
-                T,
-                P,
-                nsigmaD,
-                lbd_coeff,
-                self.Tref,
-                R,
-                pmarray,
-                self.nu_grid,
-                elower_grid,
-                multi_index_uniqgrid,
-                ngamma_ref_grid,
-                n_Texp_grid,
-                qt,
-                self.Tref_broadening,
-            )
-        elif self.diffmode == 1:
-            xsv = xsvector_first(
-                T,
-                P,
-                nsigmaD,
-                lbd_coeff,
-                self.Tref,
-                self.Twt,
-                R,
-                pmarray,
-                self.nu_grid,
-                elower_grid,
-                multi_index_uniqgrid,
-                ngamma_ref_grid,
-                n_Texp_grid,
-                qt,
-                self.Tref_broadening,
-            )
-        elif self.diffmode == 2:
-            xsv = xsvector_second(
-                T,
-                P,
-                nsigmaD,
-                lbd_coeff,
-                self.Tref,
-                self.Twt,
-                R,
-                pmarray,
-                self.nu_grid,
-                elower_grid,
-                multi_index_uniqgrid,
-                ngamma_ref_grid,
-                n_Texp_grid,
-                qt,
-                self.Tref_broadening,
-            )
-            
-        return xsv
-    
     def xsmatrix(self, Tarr, Parr):
         """cross section matrix
 
@@ -481,70 +449,25 @@ class OpaPremodit(OpaCalc):
         elif self.mdb.dbtype == "exomol":
             qtarr = vmap(self.mdb.qr_interp, (0, None))(Tarr, self.Tref)
 
-        xsm = self.xsmatrix_close(Tarr, Parr, lbd_coeff, multi_index_uniqgrid, elower_grid, ngamma_ref_grid, n_Texp_grid, R, pmarray, qtarr)
+        xsmatrix_func = self.xsmatrix_close[self.diffmode]
+        xsm = xsmatrix_func(
+            Tarr,
+            Parr,
+            self.Tref,
+            R,
+            pmarray,
+            lbd_coeff,
+            self.nu_grid,
+            ngamma_ref_grid,
+            n_Texp_grid,
+            multi_index_uniqgrid,
+            elower_grid,
+            self.mdb.molmass,
+            qtarr,
+            self.Tref_broadening,
+            self.Twt,
+        )
         return xsm
-
-    def xsmatrix_close(self, Tarr, Parr, lbd_coeff, multi_index_uniqgrid, elower_grid, ngamma_ref_grid, n_Texp_grid, R, pmarray, qtarr):
-        if self.diffmode == 0:
-            xsm = xsmatrix_zeroth(
-                Tarr,
-                Parr,
-                self.Tref,
-                R,
-                pmarray,
-                lbd_coeff,
-                self.nu_grid,
-                ngamma_ref_grid,
-                n_Texp_grid,
-                multi_index_uniqgrid,
-                elower_grid,
-                self.mdb.molmass,
-                qtarr,
-                self.Tref_broadening,
-            )
-
-        elif self.diffmode == 1:
-            xsm = xsmatrix_first(
-                Tarr,
-                Parr,
-                self.Tref,
-                self.Twt,
-                R,
-                pmarray,
-                lbd_coeff,
-                self.nu_grid,
-                ngamma_ref_grid,
-                n_Texp_grid,
-                multi_index_uniqgrid,
-                elower_grid,
-                self.mdb.molmass,
-                qtarr,
-                self.Tref_broadening,
-            )
-
-        elif self.diffmode == 2:
-            xsm = xsmatrix_second(
-                Tarr,
-                Parr,
-                self.Tref,
-                self.Twt,
-                R,
-                pmarray,
-                lbd_coeff,
-                self.nu_grid,
-                ngamma_ref_grid,
-                n_Texp_grid,
-                multi_index_uniqgrid,
-                elower_grid,
-                self.mdb.molmass,
-                qtarr,
-                self.Tref_broadening,
-            )
-
-        else:
-            raise ValueError("diffmode should be 0, 1, 2.")
-        return xsm
-
 
     def plot_broadening_parameters(self, figname="broadpar_grid.png", crit=300000):
         """plot broadening parameters and grids
@@ -831,7 +754,7 @@ class OpaModit(OpaCalc):
                 self.nu_grid,
                 self.dgm_ngammaL,
             )
-        
+
         return xsm
 
 

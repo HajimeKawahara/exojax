@@ -23,8 +23,8 @@ def test_opacalc_set_alias_left_right_from_cutwing():
     opa = OpaCalc(nu_grid)
     opa.set_filter_length_oneside_from_cutwing()
     
-    assert len(nu_grid) == opa.nleft
-    assert len(nu_grid) == opa.nright
+    assert len(nu_grid) == opa.filter_length_oneside
+    assert len(nu_grid) == opa.filter_length_oneside
 
 def test_opacalc_set_alias_left_right_from_cutwing_half():
     nu_grid = _set_wavenumber_grid()    
@@ -32,8 +32,8 @@ def test_opacalc_set_alias_left_right_from_cutwing_half():
     opa.cutwing = 0.5
     opa.set_filter_length_oneside_from_cutwing()
     
-    assert int(len(nu_grid)/2) == opa.nleft
-    assert int(len(nu_grid)/2) == opa.nright
+    assert int(len(nu_grid)/2) == opa.filter_length_oneside
+    assert int(len(nu_grid)/2) == opa.filter_length_oneside
 
 
 if __name__ == "__main__":
