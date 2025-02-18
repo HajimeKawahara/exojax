@@ -37,7 +37,7 @@ class OpaCalc:
 
 
     """
-    
+
     def __init__(self, nu_grid):
         self.nu_grid = nu_grid
         self.opainfo = None
@@ -87,7 +87,7 @@ class OpaPremodit(OpaCalc):
         opainfo: information set used in PreMODIT
 
     """
-    
+
     def __init__(
         self,
         mdb,
@@ -372,9 +372,8 @@ class OpaPremodit(OpaCalc):
         self.ngrid_elower = len(elower_grid)
 
     def _sets_capable_opacalculators(self):
-        """sets capable opacalculators
-        """
-        #opa calculators for PreMODIT
+        """sets capable opacalculators"""
+        # opa calculators for PreMODIT
         from exojax.spec.premodit import xsvector_zeroth
         from exojax.spec.premodit import xsvector_first
         from exojax.spec.premodit import xsvector_second
@@ -384,12 +383,30 @@ class OpaPremodit(OpaCalc):
         from exojax.spec.premodit import xsvector_open_zeroth
         from exojax.spec.premodit import xsvector_open_first
         from exojax.spec.premodit import xsvector_open_second
+        from exojax.spec.premodit import xsmatrix_open_zeroth
+        from exojax.spec.premodit import xsmatrix_open_first
+        from exojax.spec.premodit import xsmatrix_open_second
 
-        self.xsvector_close = {0:xsvector_zeroth, 1:xsvector_first, 2:xsvector_second}
-        self.xsmatrix_close = {0:xsmatrix_zeroth, 1:xsmatrix_first, 2:xsmatrix_second}
-        self.xsvector_open = {0:xsvector_open_zeroth, 1:xsvector_open_first, 2:xsvector_open_second}
-        
-
+        self.xsvector_close = {
+            0: xsvector_zeroth,
+            1: xsvector_first,
+            2: xsvector_second,
+        }
+        self.xsmatrix_close = {
+            0: xsmatrix_zeroth,
+            1: xsmatrix_first,
+            2: xsmatrix_second,
+        }
+        self.xsvector_open = {
+            0: xsvector_open_zeroth,
+            1: xsvector_open_first,
+            2: xsvector_open_second,
+        }
+        self.xsmatrix_open = {
+            0: xsmatrix_open_zeroth,
+            1: xsmatrix_open_first,
+            2: xsmatrix_open_second,
+        }
 
     def xsvector(self, T, P):
         from exojax.spec import normalized_doppler_sigma
@@ -413,44 +430,44 @@ class OpaPremodit(OpaCalc):
         if self.alias == "open":
             xsvector_func = self.xsvector_open[self.diffmode]
             xsv = xsvector_func(
-            T,
-            P,
-            nsigmaD,
-            lbd_coeff,
-            self.Tref,
-            R,
-            self.nu_grid,
-            elower_grid,
-            multi_index_uniqgrid,
-            ngamma_ref_grid,
-            n_Texp_grid,
-            qt,
-            self.Tref_broadening,
-            self.nu_grid_extended,
-            self.filter_length_oneside,
-            self.Twt
+                T,
+                P,
+                nsigmaD,
+                lbd_coeff,
+                self.Tref,
+                R,
+                self.nu_grid,
+                elower_grid,
+                multi_index_uniqgrid,
+                ngamma_ref_grid,
+                n_Texp_grid,
+                qt,
+                self.Tref_broadening,
+                self.nu_grid_extended,
+                self.filter_length_oneside,
+                self.Twt,
             )
 
         elif self.alias == "close":
             xsvector_func = self.xsvector_close[self.diffmode]
             xsv = xsvector_func(
-            T,
-            P,
-            nsigmaD,
-            lbd_coeff,
-            self.Tref,
-            R,
-            pmarray,
-            self.nu_grid,
-            elower_grid,
-            multi_index_uniqgrid,
-            ngamma_ref_grid,
-            n_Texp_grid,
-            qt,
-            self.Tref_broadening,
-            self.Twt,
+                T,
+                P,
+                nsigmaD,
+                lbd_coeff,
+                self.Tref,
+                R,
+                pmarray,
+                self.nu_grid,
+                elower_grid,
+                multi_index_uniqgrid,
+                ngamma_ref_grid,
+                n_Texp_grid,
+                qt,
+                self.Tref_broadening,
+                self.Twt,
             )
-        
+
         return xsv
 
     def xsmatrix(self, Tarr, Parr):
@@ -485,24 +502,45 @@ class OpaPremodit(OpaCalc):
         elif self.mdb.dbtype == "exomol":
             qtarr = vmap(self.mdb.qr_interp, (0, None))(Tarr, self.Tref)
 
-        xsmatrix_func = self.xsmatrix_close[self.diffmode]
-        xsm = xsmatrix_func(
-            Tarr,
-            Parr,
-            self.Tref,
-            R,
-            pmarray,
-            lbd_coeff,
-            self.nu_grid,
-            ngamma_ref_grid,
-            n_Texp_grid,
-            multi_index_uniqgrid,
-            elower_grid,
-            self.mdb.molmass,
-            qtarr,
-            self.Tref_broadening,
-            self.Twt,
-        )
+        if self.alias == "open":
+            xsmatrix_func = self.xsmatrix_open[self.diffmode]
+            xsm = xsmatrix_func(
+                Tarr,
+                Parr,
+                self.Tref,
+                R,
+                lbd_coeff,
+                self.nu_grid,
+                ngamma_ref_grid,
+                n_Texp_grid,
+                multi_index_uniqgrid,
+                elower_grid,
+                self.mdb.molmass,
+                qtarr,
+                self.Tref_broadening,
+                self.nu_grid_extended,
+                self.filter_length_oneside,
+                self.Twt,
+            )
+        elif self.alias == "close":
+            xsmatrix_func = self.xsmatrix_close[self.diffmode]
+            xsm = xsmatrix_func(
+                Tarr,
+                Parr,
+                self.Tref,
+                R,
+                pmarray,
+                lbd_coeff,
+                self.nu_grid,
+                ngamma_ref_grid,
+                n_Texp_grid,
+                multi_index_uniqgrid,
+                elower_grid,
+                self.mdb.molmass,
+                qtarr,
+                self.Tref_broadening,
+                self.Twt,
+            )
         return xsm
 
     def plot_broadening_parameters(self, figname="broadpar_grid.png", crit=300000):
