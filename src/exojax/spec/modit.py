@@ -31,8 +31,9 @@ from exojax.spec.hitran import gamma_hitran
 # vald
 from exojax.spec.atomll import gamma_vald3, interp_QT_284
 from exojax.utils.constants import Tref_original
+from functools import partial
 
-
+@partial(jit, static_argnums=9)
 def xsvector_open_zeroscan(
     cnu,
     indexnu,
@@ -76,7 +77,7 @@ def xsvector_open_zeroscan(
 
     return xs
 
-
+@partial(jit, static_argnums=9)
 def xsmatrix_open_zeroscan(
     cnu,
     indexnu,

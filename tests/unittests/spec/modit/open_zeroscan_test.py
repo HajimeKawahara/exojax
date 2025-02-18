@@ -65,7 +65,7 @@ def test_open_close_xsmatrix_modit_agreement(db="exomol"):
 
 
 def test_agreement_open_and_close_zeroscan_modit():
-    """test agreement between scanfft and zeroscan calculation"""
+    """test agreement between scanfft and zeroscan calculation for MODIT"""
     from jax import config
 
     config.update("jax_enable_x64", True)
@@ -119,7 +119,7 @@ def test_agreement_open_and_close_zeroscan_modit():
 
 if __name__ == "__main__":
     test_open_close_xsmatrix_modit_agreement(db="exomol")
-    
+
     nu_close, xsv_close, nu_open, xsv_open, diff = (
         test_agreement_open_and_close_zeroscan_modit()
     )
