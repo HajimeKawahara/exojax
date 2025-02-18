@@ -1,4 +1,4 @@
-""" This test checks the agreement between MODIT scanfft and zeroscan calculation 
+""" This test checks the agreement between MODIT open and close alising for zeroscan calculation 
 """
 
 import jax.numpy as jnp
@@ -13,7 +13,6 @@ from exojax.spec.initspec import init_modit
 from exojax.spec.modit import xsvector_open_zeroscan
 from exojax.spec.modit import xsvector_zeroscan
 from exojax.utils.grids import extended_wavenumber_grid
-
 from exojax.test.emulate_mdb import mock_mdb
 from exojax.spec.opacalc import OpaModit
 from exojax.test.emulate_mdb import mock_wavenumber_grid
