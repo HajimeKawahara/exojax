@@ -23,6 +23,7 @@ Opacity Calculation
    userguide/modit.rst
    userguide/premodit.rst
    userguide/premodit_trange.rst
+   tutorials/Open_Close_Cross_Section.rst
    userguide/benchmark.rst
    userguide/fp.rst
 
