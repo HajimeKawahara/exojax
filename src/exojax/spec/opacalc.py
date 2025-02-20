@@ -78,6 +78,7 @@ class OpaCalc:
         """sets the number of points to be added to the left and right (filter_lenth_oneside) of the nu_grid based on the cutwing ratio"""
         ngrid = len(self.nu_grid)
         self.filter_length_oneside = int(ngrid * self.cutwing)
+        self.filter_length = 2 * self.filter_length_oneside + 1
 
 
 class OpaPremodit(OpaCalc):

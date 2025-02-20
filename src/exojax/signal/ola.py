@@ -3,6 +3,7 @@ import jax.numpy as jnp
 from jax.lax import scan
 from jax.numpy import index_exp
 from jax.lax import dynamic_update_slice
+from jax.lax import dynamic_slice
 from jax import jit
 from functools import partial
 from scipy.fft import next_fast_len
@@ -60,7 +61,7 @@ def _input_length(ndiv, div_length):
     return ndiv * div_length
 
 
-def _output_length(ndiv, div_length, filter_length):
+def ola_output_length(ndiv, div_length, filter_length):
     """OLA final output length
 
     Args:
@@ -150,7 +151,7 @@ def olaconv(input_matrix_zeropad, fir_filter_zeropad, ndiv, div_length, filter_l
     xtilde = jnp.fft.rfft(input_matrix_zeropad, axis=1)
     ytilde = xtilde * ftilde[jnp.newaxis, :]
     ftarr = jnp.fft.irfft(ytilde, axis=1)
-    output_length = _output_length(ndiv, div_length, filter_length)
+    output_length = ola_output_length(ndiv, div_length, filter_length)
     fftval = overlap_and_add(ftarr, output_length, div_length)
     return fftval
 
