@@ -1,5 +1,6 @@
 import numpy as np
 from exojax.spec import api
+import traceback
 import os
 
 
@@ -8,7 +9,7 @@ class MultiMol():
 
         Notes:
             MultiMol provides an easy way to generate multiple mdb (multimdb) and multiple opa (multiopa) 
-            for multiple molecules/wavenumber segements/stitching.
+            for multiple molecules/wavenumber segments/stitching.
 
         Attributes:
             molmulti: multiple simple molecule names [n_wavenumber_segments, n_molecules], such as [["H2O","CO"],["H2O"],["CO"]]
