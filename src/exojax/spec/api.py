@@ -32,6 +32,11 @@ from radis.api.hitempapi import HITEMPDatabaseManager
 from radis.api.hitranapi import HITRANDatabaseManager
 from radis.db.classes import get_molecule
 from radis.levels.partfunc import PartFuncTIPS
+from radis import __version__ as radis_version
+from packaging import version
+        
+
+
 import warnings
 
 __all__ = ["MdbExomol", "MdbHitemp", "MdbHitran"]
@@ -94,6 +99,7 @@ class MdbExomol(CapiMdbExomol):
         activation=True,
         local_databases="./",
         engine=None,
+        broadener_species="H2",
     ):
         """Molecular database for Exomol form.
 
@@ -109,7 +115,7 @@ class MdbExomol(CapiMdbExomol):
             optional_quantum_states: if True, all of the fields available in self.df will be loaded. if False, the mandatory fields (i,E,g,J) will be loaded.
             activation: if True, the activation of mdb will be done when initialization, if False, the activation won't be done and it makes self.df attribute available.
             engine: engine for radis api ("pytables" or "vaex" or None). if None, radis automatically determines. default to None
-
+            broadener_species: broadener species for broadening. default to "H2", corresponding "species" in radis.api.exomolapi.MdbExomol.set_broadening_coef, available >= radis-0.16
 
         Note:
             The trans/states files can be very large. For the first time to read it, we convert it to HDF/vaex. After the second-time, we use the HDF5 format with vaex instead.
@@ -129,6 +135,7 @@ class MdbExomol(CapiMdbExomol):
         self.activation = activation
         wavenum_min, wavenum_max = self.set_wavenum(nurange)
         self.engine = _set_engine(engine)
+        self.broadener_species = broadener_species
 
         super().__init__(
             str(self.path),
@@ -268,10 +275,19 @@ class MdbExomol(CapiMdbExomol):
             mask = self.df_load_mask
 
         self.attributes_from_dataframes(df[mask])
-        try:  # old radis <=0.14
+        
+        if version.parse(radis_version) <= version.parse("0.14"):
             self.compute_broadening(self.jlower.astype(int), self.jupper.astype(int))
-        except:
-            self.set_broadening_coef(df[mask], add_columns=False)
+        else:
+            try:
+                # new broadener see radis#716, radis#742
+                print("Broadener: ", self.broadener_species)
+                self.set_broadening_coef(
+                    df[mask], add_columns=False, species=self.broadener_species
+                )
+            except:
+                print("broadener_species option is not available. Broadener: H2")
+                self.set_broadening_coef(df[mask], add_columns=False)
 
         self.gamma_natural = gn(self.A)
         if self.gpu_transfer:
