@@ -1,5 +1,7 @@
-Wavenumber Grid Stitching, and Open and Close Cross Sections
-============================================================
+Wavenumber Grid Stitching, and Open and Closed Cross Sections
+=============================================================
+
+2025/2/20 Hajime Kawahara
 
 .. code:: ipython3
 
