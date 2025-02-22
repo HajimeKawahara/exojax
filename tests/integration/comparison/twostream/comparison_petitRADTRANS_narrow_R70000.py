@@ -8,7 +8,7 @@ import os
 
 from exojax.atm.atmprof import pressure_layer_logspace
 from exojax.utils.grids import wavenumber_grid
-from exojax.spec.multimol import MultiMol
+from exojax.spec.multimol import MultiOpa
 from exojax.spec import contdb
 from exojax.spec.layeropacity import layer_optical_depth, layer_optical_depth_CIA
 from exojax.spec.atmrt import ArtEmisPure
@@ -44,7 +44,7 @@ def run_exojax(path_data, ld_min, ld_max, mols, db, T0, alpha, logg, logvmr):
     res = [res]
 
 
-    mul = MultiMol(molmulti=[mols], dbmulti=[db], database_root_path=path_data)
+    mul = MultiOpa(molmulti=[mols], dbmulti=[db], database_root_path=path_data)
     multimdb = mul.multimdb(nus, crit=1.e-30, Ttyp=1000.)
     multiopa = mul.multiopa_premodit(multimdb, nus, auto_trange=[500.,1500.], dit_grid_resolution=1.0)
 

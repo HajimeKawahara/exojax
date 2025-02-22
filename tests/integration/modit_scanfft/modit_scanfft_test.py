@@ -2,7 +2,7 @@ import pytest
 from importlib.resources import files
 import pandas as pd
 import numpy as np
-from exojax.spec.modit_scanfft import xsvector_scanfft
+from exojax.spec.modit import xsvector_scanfft
 from exojax.spec.hitran import line_strength
 from exojax.test.data import TESTDATA_CO_EXOMOL_MODIT_XS_REF
 from exojax.spec import normalized_doppler_sigma, gamma_natural
@@ -53,7 +53,7 @@ def test_rt_exomol():
     from exojax.atm.atmprof import pressure_layer_logspace
 
     from exojax.spec.modit import exomol
-    from exojax.spec.modit_scanfft import xsmatrix_scanfft
+    from exojax.spec.modit import xsmatrix_scanfft
     from exojax.spec.layeropacity import layer_optical_depth
     from exojax.spec.rtransfer import rtrun_emis_pureabs_fbased2st
     from exojax.spec.planck import piBarr
@@ -109,7 +109,7 @@ def test_rt_vald():
     from exojax.spec import rtransfer as rt
     from exojax.spec.modit import set_ditgrid_matrix_vald_all
     from exojax.spec.modit import vald_all
-    from exojax.spec.modit_scanfft import xsmatrix_vald_scanfft
+    from exojax.spec.modit import xsmatrix_vald_scanfft
     from exojax.spec.planck import piBarr
     from exojax.test.data import TESTDATA_VALD_MODIT_EMISSION_REF
     from exojax.atm.atmprof import pressure_layer_logspace

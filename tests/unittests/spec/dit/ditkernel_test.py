@@ -28,7 +28,7 @@ def test_fold_voigt_kernel_logst():
 
     vk = fold_voigt_kernel_logst(
         jnp.fft.rfftfreq(2 * Ng_nu, 1),
-        jnp.log(nsigmaD),
+        nsigmaD,
         log_ngammaL_grid,
         Ng_nu,
         pmarray,

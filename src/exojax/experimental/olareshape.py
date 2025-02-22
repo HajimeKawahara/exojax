@@ -1,27 +1,13 @@
-"""PreSOLAR Precomputing Shape density and OverLap Add convolution Rxxxx
+"""ola reshaping functions
 
     * LBD -> hat(LBD)
     * shapefilter -> hat(shapefilter)
 
 """
 import numpy as np
-import jax.numpy as jnp
 from exojax.signal.ola import optimal_fft_length
 from exojax.signal.ola import generate_padding_matrix
 
-def shapefilter_olaform(shapefilter, div_length, padding_value=0.0):
-    """generate zero-padding shape filter
-
-    Args:
-        shapefilter (array): shape filter
-        div_length (int): mini batch length
-        padding_value: padding value (default = 0.0) 
-        
-    Returns: 
-        zero-padding shape filter, hat(V)
-        """
-    residual = div_length - 1
-    return _padding_zeros_axis(shapefilter, padding_value, residual)
 
 
 def lbd_olaform(lbd, ndiv, div_length, filter_length):

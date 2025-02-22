@@ -764,7 +764,6 @@ class MdbHitemp(MdbCommonHitempHitran, HITEMPDatabaseManager):
             clean_cache_files = True
             if len(download_files) > 0 and clean_cache_files:
                 self.clean_download_files()
-
             # Load and return
             files_loaded = self.keep_only_relevant(
                 local_files, self.load_wavenum_min, self.load_wavenum_max
