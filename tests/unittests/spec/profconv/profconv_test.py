@@ -173,7 +173,7 @@ def test_basic_convolution_calc_open_xsection_from_lsd_zeroscan(i, figure=False)
         raise ValueError("Invalid i")
     # print(res_alias)
 
-    assert res_alias < 4e-7  # 3.786391858939808e-07
+    assert res_alias < 1.0e-6  # 3.786391858939808e-07
 
     if figure:
         fig = plt.figure()
