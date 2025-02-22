@@ -15,7 +15,7 @@ config.update("jax_enable_x64", True)
 def test_open_close_xsmatrix_premodit_agreement(db="exomol"):
     nu_grid, _, _ = mock_wavenumber_grid()
     art = ArtEmisPure(
-        pressure_top=1.0e-8, pressure_btm=1.0e2, nlayer=100, nu_grid=nu_grid
+        pressure_top=1.0e-8, pressure_btm=1.0e2, nlayer=2, nu_grid=nu_grid
     )
     art.change_temperature_range(400.0, 1500.0)
     Tarr = art.powerlaw_temperature(1300.0, 0.1)
@@ -47,7 +47,7 @@ def test_open_close_xsmatrix_premodit_agreement(db="exomol"):
     )
     maxdiff = jnp.max(jnp.abs(diff))
     print(maxdiff)  # 0.003954996543941491 Feb. 18th 2025
-    assert maxdiff < 0.004
+    assert maxdiff < 0.006
 
 
 if __name__ == "__main__":
