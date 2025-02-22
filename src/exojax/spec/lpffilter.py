@@ -49,3 +49,26 @@ def generate_open_lpffilter(filter_length_oneside, nsigmaD, ngammaL):
     """
     dq = jnp.arange(-filter_length_oneside, filter_length_oneside + 1)
     return voigt(dq, nsigmaD, ngammaL)
+
+def compute_filter_length(wavenumber_halfwidth, representative_wavenumber,
+                          spectral_resolution):
+    """compute the length of the FIR line shape filter
+
+    Args:
+        wavenumber_halfwidth (float): half width at representative wavenumber (cm-1) 
+        representative_wavenumber (float): representative wavenumber (cm-1)
+        spectral_resolution (float): spectral resolution R0
+
+    Returns:
+        int: filter length
+        
+    Examples:
+        from exojax.utils.instfunc import resolution_eslog
+        spectral_resolution = resolution_eslog(nu_grid)
+        filter_length = compute_filter_length(50.0, 4000.0, spectral_resolution)
+    """
+    filter_length = 2 * int(spectral_resolution * wavenumber_halfwidth /
+                            representative_wavenumber) + 1
+    if filter_length < 3:
+        raise ValueError("filter_length less than 3")
+    return filter_length
