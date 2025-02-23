@@ -142,7 +142,7 @@ class MdbExomol(CapiMdbExomol):
             nurange=[wavenum_min, wavenum_max],
             engine=self.engine,
             crit=crit,
-            bkgdatm=self.bkgdatm,
+            bkgdatm=self.bkgdatm, #uses radis <= 0.15.2
             broadf=self.broadf,
             cache=True,
             skip_optional_data=self.skip_optional_data,
@@ -275,17 +275,16 @@ class MdbExomol(CapiMdbExomol):
         
         if version.parse(radis_version) <= version.parse("0.14"):
             self.compute_broadening(self.jlower.astype(int), self.jupper.astype(int))
+        elif version.parse(radis_version) <= version.parse("0.15.2"):
+            print("Broadener: ", self.bkgdatm)
+            self.set_broadening_coef(df[mask], add_columns=False)
         else:
-            try:
-                # new broadener see radis#716, radis#742
-                print("Broadener: ", self.bkgdatm)
-                self.set_broadening_coef(
-                    df[mask], add_columns=False, species=self.bkgdatm
-                )
-            except:
-                print("broadener_species option is not available. Broadener: H2")
-                self.set_broadening_coef(df[mask], add_columns=False)
-
+            # new broadener see radis#716, radis#742
+            print("Broadener: ", self.bkgdatm)
+            self.set_broadening_coef(
+                df[mask], add_columns=False, species=self.bkgdatm
+            )
+        
         self.gamma_natural = gn(self.A)
         if self.gpu_transfer:
             self.generate_jnp_arrays()
