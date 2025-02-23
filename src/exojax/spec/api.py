@@ -93,6 +93,7 @@ class MdbExomol(CapiMdbExomol):
         Ttyp=1000.0,
         bkgdatm="H2",
         broadf=True,
+        broadf_download=True,
         gpu_transfer=True,
         inherit_dataframe=False,
         optional_quantum_states=False,
@@ -110,6 +111,7 @@ class MdbExomol(CapiMdbExomol):
             Ttyp: typical temperature to calculate Sij(T) used in crit
             bkgdatm: background atmosphere for broadening. e.g. H2, He,
             broadf: if False, the default broadening parameters in .def file is used
+            broadf_download: if False, not try to download the potential broadening files. default to True
             gpu_transfer: if True, some attributes will be transfered to jnp.array. False is recommended for PreMODIT.
             inherit_dataframe: if True, it makes self.df attribute available, which needs more DRAM when pickling.
             optional_quantum_states: if True, all of the fields available in self.df will be loaded. if False, the mandatory fields (i,E,g,J) will be loaded.
@@ -129,6 +131,7 @@ class MdbExomol(CapiMdbExomol):
         self.gpu_transfer = gpu_transfer
         self.Ttyp = Ttyp
         self.broadf = broadf
+        self.broadf_download = broadf_download
         self.simple_molecule_name = e2s(self.exact_molecule_name)
         self.molmass = isotope_molmass(self.exact_molecule_name)
         self.skip_optional_data = not optional_quantum_states
@@ -147,6 +150,7 @@ class MdbExomol(CapiMdbExomol):
             crit=crit,
             bkgdatm=self.bkgdatm,
             broadf=self.broadf,
+            broadf_download=self.broadf_download,
             cache=True,
             skip_optional_data=self.skip_optional_data,
         )

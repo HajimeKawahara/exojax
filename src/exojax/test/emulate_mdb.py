@@ -60,7 +60,8 @@ def mock_mdbExomol(crit=0.):
                         crit=crit,
                         inherit_dataframe=True,
                         gpu_transfer=True,
-                        broadf=False)
+                        broadf_download=False
+                        )
     return mdb
 
 

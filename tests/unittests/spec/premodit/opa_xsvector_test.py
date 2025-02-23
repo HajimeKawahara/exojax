@@ -50,6 +50,7 @@ def test_xsection_premodit(db, diffmode):
     opa = OpaPremodit(
         mdb=mdb, nu_grid=nu_grid, diffmode=diffmode, auto_trange=[500.0, 1500.0]
     )
+    print(mdb.df)
     xsv = opa.xsvector(Ttest, Ptest)
     filename = files("exojax").joinpath("data/testdata/" + testdata[db])
     dat = pd.read_csv(filename, delimiter=",", names=("nus", "xsv"))
