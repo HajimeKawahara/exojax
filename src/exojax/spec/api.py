@@ -130,12 +130,9 @@ class MdbExomol(CapiMdbExomol):
         if radis_version >= "0.16":
             self.broadf_download = broadf_download
         else:
-            warnings.warn(
-                "radis==",
-                radis_version,
-                " does not support broadf_download (requires >=0.16).",
-                UserWarning,
-            )
+            print("radis==", radis_version)
+            msg = "The current version of radis does not support broadf_download (requires >=0.16)."
+            warnings.warn(msg, UserWarning)
         self.simple_molecule_name = e2s(self.exact_molecule_name)
         self.molmass = isotope_molmass(self.exact_molecule_name)
         self.skip_optional_data = not optional_quantum_states
