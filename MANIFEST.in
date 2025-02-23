@@ -46,6 +46,15 @@ include src/exojax/data/testdata/CO/12C-16O/SAMPLE/12C-16O__SAMPLE.states.hdf5
 include src/exojax/data/testdata/CO/12C-16O/SAMPLE/12C-16O__SAMPLE.trans.bz2
 include src/exojax/data/testdata/CO/12C-16O/SAMPLE/12C-16O__SAMPLE.trans.hdf5
 
+include src/exojax/data/testdata/H2O/1H2-16O/SAMPLE/1H2-16O__H2.broad
+include src/exojax/data/testdata/H2O/1H2-16O/SAMPLE/1H2-16O__He.broad
+include src/exojax/data/testdata/H2O/1H2-16O/SAMPLE/1H2-16O__SAMPLE.def
+include src/exojax/data/testdata/H2O/1H2-16O/SAMPLE/1H2-16O__SAMPLE.pf
+include src/exojax/data/testdata/H2O/1H2-16O/SAMPLE/1H2-16O__SAMPLE.states.bz2
+include src/exojax/data/testdata/H2O/1H2-16O/SAMPLE/1H2-16O__SAMPLE.states.hdf5
+include src/exojax/data/testdata/H2O/1H2-16O/SAMPLE/1H2-16O__SAMPLE__04300-04400.trans.bz2
+include src/exojax/data/testdata/H2O/1H2-16O/SAMPLE/1H2-16O__SAMPLE__04300-04400.trans.hdf5
+
 include src/exojax/data/premodit/elower_grid_trange.npz
 include src/exojax/data/premodit/elower_grid_trange_v2.npz
 

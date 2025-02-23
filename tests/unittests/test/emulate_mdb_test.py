@@ -3,12 +3,15 @@ from exojax.test.emulate_mdb import mock_mdbHitemp
 import numpy as np
 import pytest
 
-def test_mock_mdbExoMol():
-    mdb = mock_mdbExomol()
+@pytest.mark.parametrize("molecule", ["CO", "H2O"])
+def test_mock_mdbExoMol(molecule):
+    mdb = mock_mdbExomol(molecule)
     print(np.sum(mdb.logsij0))
     print(len(mdb.logsij0))
-    assert np.sum(mdb.logsij0) == pytest.approx(-69819.11)
-    assert len(mdb.logsij0) == 259
+    ref = {"CO": -69819.11, "H2O": -12637.281}
+    lenval = {"CO": 259, "H2O": 197}
+    assert np.sum(mdb.logsij0) == pytest.approx(ref[molecule])
+    assert len(mdb.logsij0) == lenval[molecule]
 
 
 def test_mock_mdbHitemp():
@@ -25,5 +28,6 @@ def test_mock_mdbHitemp():
     assert len(mdb.logsij0) == 1368
 
 if __name__ == "__main__":
-    test_mock_mdbExoMol()
+    test_mock_mdbExoMol("CO")
+    test_mock_mdbExoMol("H2O")
     test_mock_mdbHitemp()
