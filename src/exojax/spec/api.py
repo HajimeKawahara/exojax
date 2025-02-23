@@ -15,9 +15,6 @@ import numpy as np
 import jax.numpy as jnp
 import pathlib
 import warnings
-
-from sympy import rad
-
 from exojax.spec.hitran import line_strength_numpy
 from exojax.spec.hitran import gamma_natural as gn
 from exojax.utils.constants import Tref_original
