@@ -16,6 +16,8 @@ import jax.numpy as jnp
 import pathlib
 import warnings
 
+from sympy import rad
+
 from exojax.spec.hitran import line_strength_numpy
 from exojax.spec.hitran import gamma_natural as gn
 from exojax.utils.constants import Tref_original
@@ -34,7 +36,6 @@ from radis.db.classes import get_molecule
 from radis.levels.partfunc import PartFuncTIPS
 from radis import __version__ as radis_version
 from packaging import version
-        
 
 
 import warnings
@@ -116,7 +117,7 @@ class MdbExomol(CapiMdbExomol):
             optional_quantum_states: if True, all of the fields available in self.df will be loaded. if False, the mandatory fields (i,E,g,J) will be loaded.
             activation: if True, the activation of mdb will be done when initialization, if False, the activation won't be done and it makes self.df attribute available.
             engine: engine for radis api ("pytables" or "vaex" or None). if None, radis automatically determines. default to None
-        
+
         Note:
             The trans/states files can be very large. For the first time to read it, we convert it to HDF/vaex. After the second-time, we use the HDF5 format with vaex instead.
         """
@@ -129,28 +130,50 @@ class MdbExomol(CapiMdbExomol):
         self.gpu_transfer = gpu_transfer
         self.Ttyp = Ttyp
         self.broadf = broadf
-        self.broadf_download = broadf_download
+        if radis_version >= "0.16":
+            self.broadf_download = broadf_download
+        else:
+            warnings.warn(
+                "radis==",
+                radis_version,
+                " does not support broadf_download (requires >=0.16).",
+                UserWarning,
+            )
         self.simple_molecule_name = e2s(self.exact_molecule_name)
         self.molmass = isotope_molmass(self.exact_molecule_name)
         self.skip_optional_data = not optional_quantum_states
         self.activation = activation
         wavenum_min, wavenum_max = self.set_wavenum(nurange)
         self.engine = _set_engine(engine)
-        
-        super().__init__(
-            str(self.path),
-            local_databases=local_databases,
-            molecule=self.simple_molecule_name,
-            name="EXOMOL-{molecule}",
-            nurange=[wavenum_min, wavenum_max],
-            engine=self.engine,
-            crit=crit,
-            bkgdatm=self.bkgdatm, #uses radis <= 0.15.2
-            broadf=self.broadf,
-            broadf_download=self.broadf_download,
-            cache=True,
-            skip_optional_data=self.skip_optional_data,
-        )
+
+        if radis_version >= "0.16":
+            super().__init__(
+                str(self.path),
+                local_databases=local_databases,
+                molecule=self.simple_molecule_name,
+                name="EXOMOL-{molecule}",
+                nurange=[wavenum_min, wavenum_max],
+                engine=self.engine,
+                crit=crit,
+                broadf=self.broadf,
+                broadf_download=self.broadf_download,
+                cache=True,
+                skip_optional_data=self.skip_optional_data,
+            )
+        else:
+            super().__init__(
+                str(self.path),
+                local_databases=local_databases,
+                molecule=self.simple_molecule_name,
+                name="EXOMOL-{molecule}",
+                nurange=[wavenum_min, wavenum_max],
+                engine=self.engine,
+                crit=crit,
+                bkgdatm=self.bkgdatm,  # uses radis <= 0.15.2
+                broadf=self.broadf,
+                cache=True,
+                skip_optional_data=self.skip_optional_data,
+            )
 
         self.crit = crit
         self.elower_max = elower_max
@@ -276,7 +299,7 @@ class MdbExomol(CapiMdbExomol):
             mask = self.df_load_mask
 
         self.attributes_from_dataframes(df[mask])
-        
+
         if version.parse(radis_version) <= version.parse("0.14"):
             self.compute_broadening(self.jlower.astype(int), self.jupper.astype(int))
         elif version.parse(radis_version) <= version.parse("0.15.2"):
@@ -285,10 +308,8 @@ class MdbExomol(CapiMdbExomol):
         else:
             # new broadener see radis#716, radis#742
             print("Broadener: ", self.bkgdatm)
-            self.set_broadening_coef(
-                df[mask], add_columns=False, species=self.bkgdatm
-            )
-        
+            self.set_broadening_coef(df[mask], add_columns=False, species=self.bkgdatm)
+
         self.gamma_natural = gn(self.A)
         if self.gpu_transfer:
             self.generate_jnp_arrays()
