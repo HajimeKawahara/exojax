@@ -99,7 +99,8 @@ def save_states(input_state_filename, state_filename, masked_df):
 if __name__ == "__main__":
     # regenerate hdf for exomol
 
-    molecule = "CO"
+    molecule = "H2O" #
+    #molecule = "CO" #
     
     masked_df = gendata_moldb(molecule, compress_states=True)
     print("********************* NOTICE *****************************")
