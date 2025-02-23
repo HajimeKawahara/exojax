@@ -54,7 +54,7 @@ def test_xsection_premodit(db, diffmode):
     filename = files("exojax").joinpath("data/testdata/" + testdata[db])
     dat = pd.read_csv(filename, delimiter=",", names=("nus", "xsv"))
     res = np.max(np.abs(1.0 - xsv / dat["xsv"].values))
-    # print(res)
+    print(res)
     assert res < 0.012
     return opa.nu_grid, xsv, opa.dE, opa.Twt, opa.Tref, Ttest
 
@@ -84,3 +84,7 @@ def test_xsection_premodit_for_single_broadening(db, diffmode):
         res < 0.06
     )  # < 6% (HITEMP) / 4% (ExoMOL) diff from exact broadening parameters using MODIT
     return opa.nu_grid, xsv, opa.dE, opa.Twt, opa.Tref, Ttest
+
+if __name__ == "__main__":
+    test_xsection_premodit("exomol", 0)
+    
