@@ -14,6 +14,6 @@ def test_eq_Exomol():
 
 
 if __name__ == "__main__":
-    test_eq_Hitemp()
+    #test_eq_Hitemp()
     test_eq_Exomol()
     
