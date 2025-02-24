@@ -32,14 +32,30 @@ class MultiMol:
         """initialization
 
         Args:
-            molmulti (_type_): multiple simple molecule names [n_wavenumber_segments, n_molecules], such as [["H2O","CO"],["H2O"],["CO"]]
-            dbmulti (_type_): multiple database names, such as [["HITEMP","EXOMOL"],["HITEMP","HITRAN12"]]],
-            database_root_path (str, optional): _description_. Defaults to ".database".
+            molmulti (nested list): multiple simple molecule names, such as [["H2O","CO"],["H2O"],["CO"]]
+            dbmulti (nested list): multiple database names, such as [["HITEMP","EXOMOL"],["HITEMP"],["HITRAN12"]]
+            database_root_path (str, optional): database root path. Defaults to ".database".
         """
         self.molmulti = molmulti
         self.dbmulti = dbmulti
+
+        if self._check_structure(self.molmulti, self.dbmulti):
+            pass
+        else:
+            print("molmulti=", molmulti, "dbmulti=", dbmulti)
+            raise ValueError("molmulti and dbmulti have different structures")
+        
         self.database_root_path = database_root_path
         self.generate_database_directories()
+
+    def _check_structure(self, a, b):
+        if isinstance(a, list) and isinstance(b, list):
+            if len(a) != len(b):
+                return False
+            return all(
+                self._check_structure(sub_a, sub_b) for sub_a, sub_b in zip(a, b)
+            )
+        return not isinstance(a, list) and not isinstance(b, list)
 
     def generate_database_directories(self):
         """generate database directory array"""
