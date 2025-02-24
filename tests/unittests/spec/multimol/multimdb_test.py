@@ -36,8 +36,8 @@ def test_multiopa_single_nu_grid():
 
 def test_multiopa_multi_nu_grid():
     molmulti = [["CO", "H2O"], ["H2O"]]
-
-    mul = MultiMol(molmulti=molmulti, dbmulti=[["SAMPLE", "SAMPLE"], ["SAMPLE"]])
+    dbmulti = [["SAMPLE", "SAMPLE"], ["SAMPLE"]]
+    mul = MultiMol(molmulti=molmulti, dbmulti=dbmulti)
     nu_grid, wav, res = mock_wavenumber_grid()
     N = int(len(nu_grid) / 2)
     nu_grid_list = [nu_grid[:N], nu_grid[N:]]

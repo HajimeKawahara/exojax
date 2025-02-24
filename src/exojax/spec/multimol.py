@@ -29,7 +29,7 @@ class MultiMol:
     """
 
     def __init__(self, molmulti, dbmulti, database_root_path=".database"):
-        """initialization
+        """initialization of multimol
 
         Args:
             molmulti (nested list): multiple simple molecule names, such as [["H2O","CO"],["H2O"],["CO"]]
@@ -44,7 +44,7 @@ class MultiMol:
         else:
             print("molmulti=", molmulti, "dbmulti=", dbmulti)
             raise ValueError("molmulti and dbmulti have different structures")
-        
+
         self.database_root_path = database_root_path
         self.generate_database_directories()
 
@@ -93,9 +93,9 @@ class MultiMol:
             and self.mols_num (same shape as self.masked_molmulti but gives indices of self.mols_unique)
 
         Args:
-            nu_grid_list (_type_): _description_
-            crit (_type_, optional): _description_. Defaults to 0..
-            Ttyp (_type_, optional): _description_. Defaults to 1000..
+            nu_grid_list (list): list of wavelength grids
+            crit (float, optional): line strength criterion. Defaults to 0..
+            Ttyp (float, optional): Typical temperature. Defaults to 1000..
 
         Returns:
             lists of mdb: multi mdb
@@ -202,7 +202,8 @@ class MultiMol:
         multimdb,
         nu_grid_list,
         auto_trange,
-        diffmode=2,
+        stitch=None,
+        diffmode=0,
         dit_grid_resolution=0.2,
         allow_32bit=False,
     ):
@@ -211,14 +212,20 @@ class MultiMol:
         Args:
             multimdb (): multimdb
             nu_grid_list (): wavenumber grid list
-            auto_trange (optional): temperature range [Tl, Tu], in which line strength is within 1 % prescision. Defaults to None.
-            diffmode (int, optional): _description_. Defaults to 2.
+            auto_trange (list): temperature range [Tl, Tu], in which line strength is within 1 % prescision. Defaults to None.
+            stitch (list): The list of the number of nu-stitching segments for nu_grid_list (same structure). If None, no nu-stitching.
+            diffmode (int, optional): _description_. Defaults to 0.
             dit_grid_resolution (float, optional): force to set broadening_parameter_resolution={mode:manual, value: dit_grid_resolution}), ignores broadening_parameter_resolution.
 
         Returns:
             _type_: _description_
         """
         from exojax.spec.opacalc import OpaPremodit
+
+        if stitch is not None:
+            self._check_structure_stitch(nu_grid_list, stitch)
+        else:
+            self.stitch = None
 
         multiopa = []
         for k in range(len(multimdb)):
@@ -236,6 +243,18 @@ class MultiMol:
             multiopa.append(opa_k)
 
         return multiopa
+
+    def _check_structure_stitch(self, nu_grid_list, stitch):
+        if self._check_structure(nu_grid_list, stitch):
+            # check nu_grid is divided by stitch
+            for k in range(len(nu_grid_list)):
+                if len(nu_grid_list[k]) % stitch[k] != 0:
+                    raise ValueError(
+                        "nu_grid_list is not divided by the stitch for k=", k
+                    )
+            self.stitch = stitch
+        else:
+            raise ValueError("nu_grid_list and stitch have different structures")
 
     def molmass(self):
         """return molecular mass list and H and He
