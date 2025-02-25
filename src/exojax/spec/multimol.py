@@ -1,6 +1,8 @@
 import numpy as np
 from exojax.spec import api
 from exojax.test.emulate_mdb import mock_mdbExomol
+from exojax.spec.opacalc import OpaPremodit
+
 import traceback
 import os
 
@@ -115,7 +117,8 @@ class MultiMol:
                             api.MdbExomol(
                                 os.path.join(
                                     self.database_root_path, self.db_dirs[k][i]
-                                ),
+         from exojax.spec.opacalc import OpaPremodit
+                               ),
                                 nu_grid_list[k],
                                 crit=crit,
                                 Ttyp=Ttyp,
@@ -220,38 +223,66 @@ class MultiMol:
         Returns:
             _type_: _description_
         """
-        from exojax.spec.opacalc import OpaPremodit
-
+        
         if stitch is not None:
             self._check_structure_stitch(nu_grid_list, stitch)
         else:
-            self.stitch = None
+            self.stitch = [1] * len(nu_grid_list)
 
         multiopa = []
-        for k in range(len(multimdb)):
+        for k_nuseg in range(len(multimdb)):
             opa_k = []
-            for i in range(len(multimdb[k])):
-                opa_i = OpaPremodit(
-                    mdb=multimdb[k][i],
-                    nu_grid=nu_grid_list[k],
-                    diffmode=diffmode,
-                    auto_trange=auto_trange,
-                    dit_grid_resolution=dit_grid_resolution,
-                    allow_32bit=allow_32bit,
-                )
+            for i_mol in range(len(multimdb[k_nuseg])):
+                if self.stitch[k_nuseg] == 1:
+                    opa_i = self.store_single_opa(multimdb[k_nuseg][i_mol], nu_grid_list[k_nuseg], auto_trange, diffmode, dit_grid_resolution, allow_32bit, k_nuseg, i_mol)
+                else:
+                    opa_i = self.store_opa_stitch(multimdb[k_nuseg][i_mol], nu_grid_list[k_nuseg], auto_trange, diffmode, dit_grid_resolution, allow_32bit, k_nuseg, i_mol)
                 opa_k.append(opa_i)
             multiopa.append(opa_k)
 
         return multiopa
+
+    def store_single_opa(self, multimdb_each, nu_grid_list_seg, auto_trange, diffmode, dit_grid_resolution, allow_32bit, k_nuseg):
+        opa_i = OpaPremodit(
+                        mdb=multimdb_each,
+                        nu_grid=nu_grid_list_seg,
+                        diffmode=diffmode,
+                        auto_trange=auto_trange,
+                        dit_grid_resolution=dit_grid_resolution,
+                        allow_32bit=allow_32bit,
+                    )
+        return opa_i
+
+    def store_opa_stitch(self, multimdb_each, nu_grid_list_seg, auto_trange, diffmode, dit_grid_resolution, allow_32bit, k_nuseg):
+        opa_i = []
+        nu_grid_st = np.array_split(nu_grid_list_seg, self.stitch[k_nuseg])
+        for nu_grid_st_each in nu_grid_st:
+            opa_i.append(OpaPremodit(
+                        mdb=multimdb_each,
+                        nu_grid=nu_grid_st,
+                        diffmode=diffmode,
+                        auto_trange=auto_trange,
+                        dit_grid_resolution=dit_grid_resolution,
+                        allow_32bit=allow_32bit,
+                        alias="open"
+                        ))
+            
+        return opa_i
 
     def _check_structure_stitch(self, nu_grid_list, stitch):
         if self._check_structure(nu_grid_list, stitch):
             # check nu_grid is divided by stitch
             for k in range(len(nu_grid_list)):
                 if len(nu_grid_list[k]) % stitch[k] != 0:
-                    raise ValueError(
-                        "nu_grid_list is not divided by the stitch for k=", k
+                    msg = (
+                        "nu_grid length = "
+                        + str(len(nu_grid_list[k]))
+                        + " cannot be divided by stitch["
+                        + str(k)
+                        + "]="
+                        + str(stitch[k])
                     )
+                    raise ValueError(msg)
             self.stitch = stitch
         else:
             raise ValueError("nu_grid_list and stitch have different structures")
