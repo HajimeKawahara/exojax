@@ -117,8 +117,7 @@ class MultiMol:
                             api.MdbExomol(
                                 os.path.join(
                                     self.database_root_path, self.db_dirs[k][i]
-         from exojax.spec.opacalc import OpaPremodit
-                               ),
+                                ),
                                 nu_grid_list[k],
                                 crit=crit,
                                 Ttyp=Ttyp,
@@ -225,7 +224,7 @@ class MultiMol:
         """
         
         if stitch is not None:
-            self._check_structure_stitch(nu_grid_list, stitch)
+            self._check_structure(nu_grid_list, stitch)
         else:
             self.stitch = [1] * len(nu_grid_list)
 
@@ -269,24 +268,7 @@ class MultiMol:
             
         return opa_i
 
-    def _check_structure_stitch(self, nu_grid_list, stitch):
-        if self._check_structure(nu_grid_list, stitch):
-            # check nu_grid is divided by stitch
-            for k in range(len(nu_grid_list)):
-                if len(nu_grid_list[k]) % stitch[k] != 0:
-                    msg = (
-                        "nu_grid length = "
-                        + str(len(nu_grid_list[k]))
-                        + " cannot be divided by stitch["
-                        + str(k)
-                        + "]="
-                        + str(stitch[k])
-                    )
-                    raise ValueError(msg)
-            self.stitch = stitch
-        else:
-            raise ValueError("nu_grid_list and stitch have different structures")
-
+    
     def molmass(self):
         """return molecular mass list and H and He
 

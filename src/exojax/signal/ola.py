@@ -3,7 +3,6 @@ import jax.numpy as jnp
 from jax.lax import scan
 from jax.numpy import index_exp
 from jax.lax import dynamic_update_slice
-from jax.lax import dynamic_slice
 from jax import jit
 from functools import partial
 from scipy.fft import next_fast_len
@@ -160,7 +159,7 @@ def overlap_and_add(ftarr, output_length, div_length):
     """Compute overlap and add using scan
 
     Args:
-        ftarr (jax.ndarray): filtered input matrix
+        ftarr (jax.ndarray): filtered input matrix [ndiv, fft_length]
         output_length (int): length of the output of olaconv
         div_length (int): the length of the divided input sectors, equivalent to block_size in scipy
 
@@ -176,6 +175,32 @@ def overlap_and_add(ftarr, output_length, div_length):
         return (y, idiv), None
 
     y = jnp.zeros(output_length)
+    fftval_and_nscan, _ = scan(fir_filter, (y, 0), ftarr)
+    fftval, nscan = fftval_and_nscan
+    return fftval
+
+
+def overlap_and_add_matrix(ftarr, output_length, div_length):
+    """Compute overlap and add using scan for matrix input (ndiv, nlayer, fft_length)
+
+    Args:
+        ftarr (jax.ndarray): filtered input matrix [ndiv, nlayer, fft_length]
+        output_length (int): length of the output of olaconv
+        div_length (int): the length of the divided input sectors, equivalent to block_size in scipy
+
+    Returns:
+        overlapped and added matrix [nlayer, output_length]
+    """
+    nlayer = ftarr.shape[1]
+
+    def fir_filter(y_and_idiv, ft):
+        y, idiv = y_and_idiv
+        yzero = jnp.zeros((nlayer, output_length))
+        y = y + dynamic_update_slice(yzero, ft, (0, idiv * div_length))
+        idiv += 1
+        return (y, idiv), None
+
+    y = jnp.zeros((nlayer, output_length))
     fftval_and_nscan, _ = scan(fir_filter, (y, 0), ftarr)
     fftval, nscan = fftval_and_nscan
     return fftval

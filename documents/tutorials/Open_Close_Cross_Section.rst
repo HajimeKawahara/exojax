@@ -32,11 +32,18 @@ these subdivided wavenumber grids and then combined?
 
 .. parsed-literal::
 
+    /home/kawahara/anaconda3/lib/python3.10/site-packages/pandas/core/arrays/masked.py:60: UserWarning: Pandas requires version '1.3.6' or newer of 'bottleneck' (version '1.3.5' currently installed).
+      from pandas.core import (
+
+
+.. parsed-literal::
+
     xsmode =  modit
     xsmode assumes ESLOG in wavenumber space: xsmode=modit
     Your wavelength grid is in ***  ascending  *** order
     The wavenumber grid is in ascending order by definition.
     Please be careful when you use the wavelength grid.
+    radis== 0.15.2
     HITRAN exact name= (12C)(16O)
     radis engine =  vaex
 
@@ -47,6 +54,8 @@ these subdivided wavenumber grids and then combined?
       warnings.warn(
     /home/kawahara/exojax/src/exojax/spec/unitconvert.py:63: UserWarning: Both input wavelength and output wavenumber are in ascending order.
       warnings.warn(
+    /home/kawahara/exojax/src/exojax/spec/api.py:135: UserWarning: The current version of radis does not support broadf_download (requires >=0.16).
+      warnings.warn(msg, UserWarning)
     /home/kawahara/exojax/src/exojax/utils/molname.py:197: FutureWarning: e2s will be replaced to exact_molname_exomol_to_simple_molname.
       warnings.warn(
     /home/kawahara/exojax/src/exojax/utils/molname.py:91: FutureWarning: exojax.utils.molname.exact_molname_exomol_to_simple_molname will be replaced to radis.api.exomolapi.exact_molname_exomol_to_simple_molname.
@@ -64,6 +73,7 @@ these subdivided wavenumber grids and then combined?
     Local folder:  CO/12C-16O/SAMPLE
     Transition files: 
     	 => File 12C-16O__SAMPLE.trans
+    Broadener:  H2
     Broadening code level: a0
     DataFrame (self.df) available.
     xsmode =  premodit
@@ -75,7 +85,7 @@ these subdivided wavenumber grids and then combined?
 
 .. parsed-literal::
 
-    /home/kawahara/exojax/src/radis/radis/api/exomolapi.py:685: AccuracyWarning: The default broadening parameter (alpha = 0.07 cm^-1 and n = 0.5) are used for J'' > 80 up to J'' = 152
+    /home/kawahara/anaconda3/lib/python3.10/site-packages/radis-0.15.2-py3.10.egg/radis/api/exomolapi.py:685: AccuracyWarning: The default broadening parameter (alpha = 0.07 cm^-1 and n = 0.5) are used for J'' > 80 up to J'' = 152
       warnings.warn(
 
 
@@ -122,18 +132,14 @@ wavenumber grids using PreMODIT.
 
 .. parsed-literal::
 
-    OpaPremodit: params automatically set.
-    default elower grid trange (degt) file version: 2
-
-
-.. parsed-literal::
-
     /home/kawahara/exojax/src/exojax/spec/opacalc.py:270: UserWarning: dit_grid_resolution is not None. Ignoring broadening_parameter_resolution.
       warnings.warn(
 
 
 .. parsed-literal::
 
+    OpaPremodit: params automatically set.
+    default elower grid trange (degt) file version: 2
     Robust range: 393.5569458240504 - 1647.2060977798956 K
     OpaPremodit: Tref_broadening is set to  774.5966692414833 K
 
@@ -154,12 +160,12 @@ wavenumber grids using PreMODIT.
 
 .. parsed-literal::
 
-    uniqidx: 100%|██████████| 2/2 [00:00<00:00, 17586.18it/s]
+    uniqidx: 100%|██████████| 2/2 [00:00<00:00, 16163.02it/s]
 
 .. parsed-literal::
 
     Premodit: Twt= 457.65619999186345 K Tref= 1108.1485374361412 K
-    Making LSD:|--------------------| 0%
+    Making LSD:|#####---------------| 25%
 
 .. parsed-literal::
 
@@ -194,7 +200,7 @@ wavenumber grids using PreMODIT.
 
 .. parsed-literal::
 
-    uniqidx: 100%|██████████| 1/1 [00:00<00:00, 11275.01it/s]
+    uniqidx: 100%|██████████| 1/1 [00:00<00:00, 7084.97it/s]
 
 
 .. parsed-literal::
@@ -222,7 +228,7 @@ wavenumber grids using PreMODIT.
 
 .. parsed-literal::
 
-    uniqidx: 100%|██████████| 2/2 [00:00<00:00, 14899.84it/s]
+    uniqidx: 100%|██████████| 2/2 [00:00<00:00, 4911.36it/s]
 
 
 .. parsed-literal::
@@ -338,7 +344,7 @@ can be specified using the ``cutwing`` parameter.
 
 .. parsed-literal::
 
-    uniqidx: 100%|██████████| 2/2 [00:00<00:00, 19784.45it/s]
+    uniqidx: 100%|██████████| 2/2 [00:00<00:00, 9903.91it/s]
 
 
 .. parsed-literal::
@@ -370,7 +376,7 @@ can be specified using the ``cutwing`` parameter.
 
 .. parsed-literal::
 
-    uniqidx: 100%|██████████| 1/1 [00:00<00:00, 12595.51it/s]
+    uniqidx: 100%|██████████| 1/1 [00:00<00:00, 5127.51it/s]
 
 
 .. parsed-literal::
@@ -398,7 +404,7 @@ can be specified using the ``cutwing`` parameter.
 
 .. parsed-literal::
 
-    uniqidx: 100%|██████████| 2/2 [00:00<00:00, 7869.24it/s]
+    uniqidx: 100%|██████████| 2/2 [00:00<00:00, 3227.63it/s]
 
 
 .. parsed-literal::
@@ -488,8 +494,8 @@ cross sections, instead of the manual stitching.
     
     import jax.numpy as jnp
     xsv_matrix = jnp.vstack([xsv_open_left,xsv_open_right])
-    output_length = ola_output_length(xsv_matrix.shape[0], len(nu_grid_left), opa_open_left.filter_length)
-    xsv_ola_stitch = overlap_and_add(xsv_matrix,output_length, filter_length_oneside)
+    output_length = ola_output_length(xsv_matrix.shape[0], opa_open_left.div_length , opa_open_left.filter_length)
+    xsv_ola_stitch = overlap_and_add(xsv_matrix,output_length, opa_open_left.div_length) 
 
 
 .. code:: ipython3
@@ -513,5 +519,169 @@ cross sections, instead of the manual stitching.
 
 .. image:: Open_Close_Cross_Section_files/Open_Close_Cross_Section_18_0.png
 
+
+Then, we change the cutwing to 0.5, that is we cut the wing at a half of
+div_length. The corresponding (non stitch) xsv should have cutwing=0.25
+because the length of signal is 2 x of that for stitching.
+
+.. code:: ipython3
+
+    opa_open_right = OpaPremodit(
+        mdb=mdb,
+        nu_grid=nu_grid_right,
+        dit_grid_resolution=0.2,
+        auto_trange=[400.0, 1500.0],
+        alias="open",
+        cutwing=0.5,
+    )
+    xsv_open_right = opa_open_right.xsvector(T,P)
+    
+    opa_open_left = OpaPremodit(
+        mdb=mdb,
+        nu_grid=nu_grid_left,
+        dit_grid_resolution=0.2,
+        auto_trange=[400.0, 1500.0],
+        alias="open",
+        cutwing=0.5,
+    )
+    xsv_open_left = opa_open_left.xsvector(T,P)
+    xsv_matrix = jnp.vstack([xsv_open_left,xsv_open_right])
+    output_length = ola_output_length(xsv_matrix.shape[0], opa_open_left.div_length , opa_open_left.filter_length)
+    xsv_ola_stitch = overlap_and_add(xsv_matrix,output_length, opa_open_left.div_length) 
+    
+    opa_open_all = OpaPremodit(
+        mdb=mdb,
+        nu_grid=nu_grid,
+        dit_grid_resolution=0.2,
+        auto_trange=[400.0, 1500.0],
+        alias="open",
+        cutwing=0.25,
+    )
+    xsv_open_all= opa_open_all.xsvector(T,P)
+
+
+
+.. parsed-literal::
+
+    /home/kawahara/exojax/src/exojax/spec/opacalc.py:270: UserWarning: dit_grid_resolution is not None. Ignoring broadening_parameter_resolution.
+      warnings.warn(
+    /home/kawahara/exojax/src/exojax/spec/initspec.py:280: UserWarning: Some of the line centers are outside of the wavenumber grid.
+      warnings.warn(
+    /home/kawahara/exojax/src/exojax/spec/initspec.py:282: UserWarning: All of the line center should be within wavenumber grid for PreMODIT/MODIT/DIT.
+      warnings.warn(
+
+
+.. parsed-literal::
+
+    OpaPremodit: params automatically set.
+    default elower grid trange (degt) file version: 2
+    Robust range: 393.5569458240504 - 1647.2060977798956 K
+    OpaPremodit: Tref_broadening is set to  774.5966692414833 K
+    # of reference width grid :  3
+    # of temperature exponent grid : 2
+
+
+.. parsed-literal::
+
+    uniqidx: 100%|██████████| 2/2 [00:00<00:00, 11507.01it/s]
+    /home/kawahara/exojax/src/exojax/spec/opacalc.py:270: UserWarning: dit_grid_resolution is not None. Ignoring broadening_parameter_resolution.
+      warnings.warn(
+
+
+.. parsed-literal::
+
+    Premodit: Twt= 457.65619999186345 K Tref= 1108.1485374361412 K
+    Making LSD:|####################| 100%
+    cross section (xsvector/xsmatrix) is calculated in the open mode. The aliasing part can be used.
+    OpaPremodit: params automatically set.
+    default elower grid trange (degt) file version: 2
+    Robust range: 393.5569458240504 - 1647.2060977798956 K
+    OpaPremodit: Tref_broadening is set to  774.5966692414833 K
+
+
+.. parsed-literal::
+
+    /home/kawahara/exojax/src/exojax/spec/initspec.py:280: UserWarning: Some of the line centers are outside of the wavenumber grid.
+      warnings.warn(
+    /home/kawahara/exojax/src/exojax/spec/initspec.py:282: UserWarning: All of the line center should be within wavenumber grid for PreMODIT/MODIT/DIT.
+      warnings.warn(
+
+
+.. parsed-literal::
+
+    # of reference width grid :  3
+    # of temperature exponent grid : 2
+
+
+.. parsed-literal::
+
+    uniqidx: 100%|██████████| 1/1 [00:00<00:00, 7145.32it/s]
+
+
+.. parsed-literal::
+
+    Premodit: Twt= 457.65619999186345 K Tref= 1108.1485374361412 K
+    Making LSD:|--------------------| 0%
+
+.. parsed-literal::
+
+    /home/kawahara/exojax/src/exojax/spec/opacalc.py:270: UserWarning: dit_grid_resolution is not None. Ignoring broadening_parameter_resolution.
+      warnings.warn(
+
+
+.. parsed-literal::
+
+    Making LSD:|####################| 100%
+    cross section (xsvector/xsmatrix) is calculated in the open mode. The aliasing part can be used.
+    OpaPremodit: params automatically set.
+    default elower grid trange (degt) file version: 2
+    Robust range: 393.5569458240504 - 1647.2060977798956 K
+    OpaPremodit: Tref_broadening is set to  774.5966692414833 K
+    # of reference width grid :  3
+    # of temperature exponent grid : 2
+
+
+.. parsed-literal::
+
+    uniqidx: 100%|██████████| 2/2 [00:00<00:00, 5384.22it/s]
+
+
+.. parsed-literal::
+
+    Premodit: Twt= 457.65619999186345 K Tref= 1108.1485374361412 K
+    Making LSD:|####################| 100%
+    cross section (xsvector/xsmatrix) is calculated in the open mode. The aliasing part can be used.
+
+
+We trim the unused alising left and right parts from the xsv:
+
+.. code:: ipython3
+
+    xsv_ola_stitch_trim = xsv_ola_stitch[opa_open_left.filter_length_oneside:-opa_open_left.filter_length_oneside]
+    xsv_open_all_trim = xsv_open_all[opa_open_all.filter_length_oneside:-opa_open_all.filter_length_oneside]
+
+
+.. code:: ipython3
+
+    import matplotlib.pyplot as plt
+    fig = plt.figure(figsize=(10, 5))
+    ax = fig.add_subplot(211)
+    plt.plot(nu_grid, xsv_ola_stitch_trim, color="C0", ls="dashed", label="stitch")
+    plt.plot(nu_grid, xsv_open_all_trim,alpha=0.5, color="gray", label="all")
+    plt.yscale("log")
+    plt.xlim(nu_grid[0],nu_grid[-1])
+    plt.ylim(1.0e-25,3.0e-20)
+    plt.legend()
+    ax = fig.add_subplot(212)
+    plt.plot(nu_grid, xsv_open_all_trim/xsv_ola_stitch_trim -1.0, color="C0", label="diff")
+    plt.xlim(nu_grid[0],nu_grid[-1])
+    plt.legend()
+    plt.show()
+    
+
+
+
+
+.. image:: Open_Close_Cross_Section_files/Open_Close_Cross_Section_23_0.png
 
 
