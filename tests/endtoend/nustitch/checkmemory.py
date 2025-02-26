@@ -1,0 +1,24 @@
+from exojax.spec.opastitch import OpaPremoditStitch
+from exojax.spec.opacalc import OpaPremodit
+from exojax.utils.grids import wavenumber_grid
+from exojax.spec.api import MdbExomol
+import numpy as np
+import jax.numpy as jnp
+
+from jax import config 
+config.update("jax_enable_x64", True)
+N=100000
+nus, wav, res = wavenumber_grid(22000.0, 24000.0, N, unit="AA", xsmode="premodit")
+mdb = MdbExomol(".database/H2O/1H2-16O/POKAZATEL", nus)
+
+nlayer = 200
+Tarr = jnp.ones(nlayer)*1000.0
+Parr = jnp.ones(nlayer)
+
+opa = OpaPremodit(mdb, nus, auto_trange=[500,1300], alias="close")
+xsm = opa.xsmatrix(Tarr, Parr)
+exit()
+opas = OpaPremoditStitch(mdb, nus, ndiv, auto_trange=[500,1300], cutwing = 0.5)
+Tarr = jnp.array([1000.0, 1100.0])
+Parr = jnp.array([1.0, 1.5])
+xsm_s = opas.xsmatrix(Tarr, Parr)

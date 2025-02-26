@@ -1,3 +1,6 @@
+"""opastitch -- opa with nu stitching
+"""
+
 from exojax.spec.opacalc import OpaPremodit
 from exojax.utils.grids import nu2wav
 from exojax.utils.instfunc import resolution_eslog
@@ -8,7 +11,7 @@ import numpy as np
 import jax.numpy as jnp
 
 class OpaPremoditStitch:
-
+    """premodit with nu stitching"""
     def __init__(
         self,
         mdb,
@@ -24,6 +27,23 @@ class OpaPremoditStitch:
         wavelength_order="descending",
         version_auto_trange=2,
     ):
+        """initializes the premodit with nu stitching
+
+        Args:
+            mdb (mdb): molecular database
+            nu_grid (array): (original) wavenumber grid, should be reducilbe by ndiv
+            ndiv (int): the number of division (stitching)
+            cutwing (float, optional): wingcut for the convolution used in open cross section. Defaults to 1.0.
+            diffmode (int, optional): _description_. Defaults to 0.
+            broadening_resolution (dict, optional): definition of the broadening parameter resolution. Default to {"mode": "manual", value: 0.2}. See Note.
+            auto_trange (optional): temperature range [Tl, Tu], in which line strength is within 1 % prescision. Defaults to None.
+            manual_params (optional): premodit parameter set [dE, Tref, Twt]. Defaults to None.
+            dit_grid_resolution (float, optional): force to set broadening_parameter_resolution={mode:manual, value: dit_grid_resolution}), ignores broadening_parameter_resolution.
+            allow_32bit (bool, optional): If True, allow 32bit mode of JAX. Defaults to False.
+            wavlength order: wavelength order: "ascending" or "descending"
+            version_auto_trange: version of the default elower grid trange (degt) file, Default to 2 since Jan 2024.
+        """
+
         self.mdb = mdb
         self.nu_grid = nu_grid
         self.ndiv = ndiv
@@ -49,6 +69,8 @@ class OpaPremoditStitch:
         self.set_ola_lengths_from_opa_list_zero()
     
     def set_opa_list(self):
+        """set opa_list from nu_grid_list
+        """
         self.opa_list = []
         for nu_grid in self.nu_grid_list:
             self.opa_list.append(
@@ -69,11 +91,18 @@ class OpaPremoditStitch:
             )
     
     def set_ola_lengths_from_opa_list_zero(self):
+        """set filter_length, filter_length_oneside, div_length from opa_list[0]
+        """
         self.filter_length_oneside = self.opa_list[0].filter_length_oneside
         self.filter_length = self.opa_list[0].filter_length
         self.div_length = self.opa_list[0].div_length
 
     def check_nu_grid_reducible(self):
+        """check if nu_grid is reducible by ndiv
+
+        Raises:
+            ValueError: if nu_grid is not reducible by ndiv
+        """
         if len(self.nu_grid) % self.ndiv != 0:
             msg = (
                 "nu_grid_all length = "
@@ -84,6 +113,15 @@ class OpaPremoditStitch:
             raise ValueError(msg)
 
     def xsvector(self, T, P):
+        """cross section vector with stitching
+
+        Args:
+            T (float): temperature in K
+            P (float): pressure in bar
+
+        Returns:
+            array: cross section vector [Nnus]
+        """
         xsv_matrix = []
         for opa in self.opa_list:
             xsv_matrix.append(opa.xsvector(T, P))
@@ -94,6 +132,15 @@ class OpaPremoditStitch:
         return xsv_ola_stitch[self.filter_length_oneside:-self.filter_length_oneside]
 
     def xsmatrix(self, Tarr, Parr):
+        """cross section matrix with stitching
+
+        Args:
+            Tarr (array): temperature array in K [Nlayer]
+            Parr (array): pressure array in bar [Nlayer]
+
+        Returns:
+            2D array: cross section matrix [Nlayer, Nnus]
+        """
         xsm_matrix = []
         for opa in self.opa_list:
             xsm_matrix.append(opa.xsmatrix(Tarr, Parr))
