@@ -159,7 +159,7 @@ def overlap_and_add(ftarr, output_length, div_length):
     """Compute overlap and add using scan
 
     Args:
-        ftarr (jax.ndarray): filtered input matrix [ndiv, fft_length]
+        ftarr (jax.ndarray): filtered input matrix with shape [ndiv, fft_length], where 'ndiv' is the number of divided input sectors and 'fft_length' is the length of the FFT block
         output_length (int): length of the output of olaconv
         div_length (int): the length of the divided input sectors, equivalent to block_size in scipy
 
