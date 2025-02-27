@@ -9,9 +9,9 @@ from exojax.signal.ola import overlap_and_add
 from exojax.signal.ola import ola_output_length
 from exojax.signal.ola import overlap_and_add_matrix
 from jax.lax import scan
+from jax.lax import dynamic_slice
 import numpy as np
 import jax.numpy as jnp
-
 
 class OpaPremoditStitch:
     """premodit with nu stitching"""
@@ -123,11 +123,11 @@ class OpaPremoditStitch:
                 + str(self.ndiv)
             )
             raise ValueError(msg)
-
+            
     def sets_opainfo_list(self):
 
-        self.lbd_coeff_list = []
-        self.nu_grid_extended_list = []
+        self.lbd_coeff_jnp_array = []
+        self.nu_grid_extended_jnp_array = []
         for opa in self.opa_list:
             (
                 lbd_coeff,
@@ -138,9 +138,12 @@ class OpaPremoditStitch:
                 R,
                 _,
             ) = opa.opainfo
-            self.lbd_coeff_list.append(lbd_coeff)
-            self.nu_grid_extended_list.append(opa.nu_grid_extended)
+            self.lbd_coeff_jnp_array.append(lbd_coeff)
+            self.nu_grid_extended_jnp_array.append(opa.nu_grid_extended)
             
+        self.lbd_coeff_jnp_array = jnp.array(self.lbd_coeff_jnp_array)
+        self.nu_grid_extended_jnp_array = jnp.array(self.nu_grid_extended_jnp_array)
+        
         self.multi_index_uniqgrid = multi_index_uniqgrid
         self.elower_grid = elower_grid
         self.ngamma_ref_grid = ngamma_ref_grid
@@ -188,9 +191,13 @@ class OpaPremoditStitch:
             qt = self.mdb.qr_interp(T, self.Tref)
 
         xsvector_nu_func = self.xsvector_nu_open[self.diffmode]
-
-        def floop(carry, lbd_coeff):
-            
+        output_length = ola_output_length(
+            self.ndiv, self.div_length, self.filter_length
+        )
+        
+        def floop(icarry, lbd_coeff):
+            nu_grid_each = dynamic_slice(self.nu_grid, (icarry,), (self.div_length,))
+        
             xsv_nu = xsvector_nu_func(
                 T,
                 P,
@@ -198,7 +205,7 @@ class OpaPremoditStitch:
                 lbd_coeff,
                 self.Tref,
                 self.R,
-                self.nu_grid_each, #######################
+                nu_grid_each,
                 self.elower_grid,
                 self.multi_index_uniqgrid,
                 self.ngamma_ref_grid,
@@ -209,13 +216,14 @@ class OpaPremoditStitch:
                 self.Twt,
             )
 
-            return carry, xsv_nu
-
-        _, xsv_nu = scan(floop, 0.0, self.lbd_coeff_list)
+            return icarry + self.div_length, xsv_nu
+        _, xsv_matrix = scan(floop, 0, self.lbd_coeff_jnp_array)
+        xsv_matrix = xsv_matrix/self.nu_grid_extended_jnp_array
+        xsv_ola_stitch = overlap_and_add(xsv_matrix, output_length, self.div_length)
         
-        print(xsv_nu.shape)
-        return xsv_nu
-
+        return xsv_ola_stitch[self.filter_length_oneside : -self.filter_length_oneside]
+        
+        
     def xsvector_inherit(self, T, P):
         """cross section vector with stitching
 
