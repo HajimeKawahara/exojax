@@ -1,17 +1,21 @@
 """opastitch -- opa with nu stitching
 """
 
+from exojax.spec import lbd
 from exojax.spec.opacalc import OpaPremodit
 from exojax.utils.grids import nu2wav
 from exojax.utils.instfunc import resolution_eslog
 from exojax.signal.ola import overlap_and_add
 from exojax.signal.ola import ola_output_length
 from exojax.signal.ola import overlap_and_add_matrix
+from jax.lax import scan
 import numpy as np
 import jax.numpy as jnp
 
+
 class OpaPremoditStitch:
     """premodit with nu stitching"""
+
     def __init__(
         self,
         mdb,
@@ -26,6 +30,7 @@ class OpaPremoditStitch:
         allow_32bit=False,
         wavelength_order="descending",
         version_auto_trange=2,
+        inherit_opapremodit=False,
     ):
         """initializes the premodit with nu stitching
 
@@ -65,12 +70,17 @@ class OpaPremoditStitch:
 
         self.check_nu_grid_reducible()
         self.nu_grid_list = np.array_split(nu_grid, self.ndiv)
+
+        # uses OpePremodit to sets parameters
         self.set_opa_list()
-        self.set_ola_lengths_from_opa_list_zero()
-    
+        self.set_common_parameters_from_opa_list_zero()
+        self.sets_opainfo_list()
+        #del self.opa_list
+
+        self._sets_capable_opacalculators()
+
     def set_opa_list(self):
-        """set opa_list from nu_grid_list
-        """
+        """set opa_list from nu_grid_list"""
         self.opa_list = []
         for nu_grid in self.nu_grid_list:
             self.opa_list.append(
@@ -89,13 +99,15 @@ class OpaPremoditStitch:
                     version_auto_trange=self.version_auto_trange,
                 )
             )
-    
-    def set_ola_lengths_from_opa_list_zero(self):
-        """set filter_length, filter_length_oneside, div_length from opa_list[0]
-        """
+
+    def set_common_parameters_from_opa_list_zero(self):
+        """set filter_length, filter_length_oneside, div_length from opa_list[0]"""
         self.filter_length_oneside = self.opa_list[0].filter_length_oneside
         self.filter_length = self.opa_list[0].filter_length
         self.div_length = self.opa_list[0].div_length
+        self.Tref_broadening = self.opa_list[0].Tref_broadening
+        self.Twt = self.opa_list[0].Twt
+        self.Tref = self.opa_list[0].Tref
 
     def check_nu_grid_reducible(self):
         """check if nu_grid is reducible by ndiv
@@ -112,7 +124,99 @@ class OpaPremoditStitch:
             )
             raise ValueError(msg)
 
+    def sets_opainfo_list(self):
+
+        self.lbd_coeff_list = []
+        self.nu_grid_extended_list = []
+        for opa in self.opa_list:
+            (
+                lbd_coeff,
+                multi_index_uniqgrid,
+                elower_grid,
+                ngamma_ref_grid,
+                n_Texp_grid,
+                R,
+                _,
+            ) = opa.opainfo
+            self.lbd_coeff_list.append(lbd_coeff)
+            self.nu_grid_extended_list.append(opa.nu_grid_extended)
+            
+        self.multi_index_uniqgrid = multi_index_uniqgrid
+        self.elower_grid = elower_grid
+        self.ngamma_ref_grid = ngamma_ref_grid
+        self.n_Texp_grid = n_Texp_grid            
+        self.R = R
+
+    def _sets_capable_opacalculators(self):
+        """sets capable open opacalculators"""
+        # opa calculators for PreMODIT
+        from exojax.spec.premodit import xsvector_nu_open_zeroth
+        from exojax.spec.premodit import xsvector_nu_open_first
+        from exojax.spec.premodit import xsvector_nu_open_second
+        from exojax.spec.premodit import xsmatrix_nu_open_zeroth
+        from exojax.spec.premodit import xsmatrix_nu_open_first
+        from exojax.spec.premodit import xsmatrix_nu_open_second
+
+        self.xsvector_nu_open = {
+            0: xsvector_nu_open_zeroth,
+            1: xsvector_nu_open_first,
+            2: xsvector_nu_open_second,
+        }
+        self.xsmatrix_nu_open = {
+            0: xsmatrix_nu_open_zeroth,
+            1: xsmatrix_nu_open_first,
+            2: xsmatrix_nu_open_second,
+        }
+
     def xsvector(self, T, P):
+        """cross section vector with stitching
+
+        Args:
+            T (float): temperature in K
+            P (float): pressure in bar
+
+        Returns:
+            array: cross section vector [Nnus]
+        """
+        from exojax.spec import normalized_doppler_sigma
+
+        nsigmaD = normalized_doppler_sigma(T, self.mdb.molmass, self.R)
+
+        if self.mdb.dbtype == "hitran":
+            qt = self.mdb.qr_interp(self.mdb.isotope, T, self.Tref)
+        elif self.mdb.dbtype == "exomol":
+            qt = self.mdb.qr_interp(T, self.Tref)
+
+        xsvector_nu_func = self.xsvector_nu_open[self.diffmode]
+
+        def floop(carry, lbd_coeff):
+            
+            xsv_nu = xsvector_nu_func(
+                T,
+                P,
+                nsigmaD,
+                lbd_coeff,
+                self.Tref,
+                self.R,
+                self.nu_grid_each, #######################
+                self.elower_grid,
+                self.multi_index_uniqgrid,
+                self.ngamma_ref_grid,
+                self.n_Texp_grid,
+                qt,
+                self.Tref_broadening,
+                self.filter_length_oneside,
+                self.Twt,
+            )
+
+            return carry, xsv_nu
+
+        _, xsv_nu = scan(floop, 0.0, self.lbd_coeff_list)
+        
+        print(xsv_nu.shape)
+        return xsv_nu
+
+    def xsvector_inherit(self, T, P):
         """cross section vector with stitching
 
         Args:
@@ -127,9 +231,11 @@ class OpaPremoditStitch:
             xsv_matrix.append(opa.xsvector(T, P))
         xsv_matrix = jnp.vstack(xsv_matrix)
 
-        output_length = ola_output_length(self.ndiv, self.div_length, self.filter_length)
-        xsv_ola_stitch = overlap_and_add(xsv_matrix,output_length, self.div_length)
-        return xsv_ola_stitch[self.filter_length_oneside:-self.filter_length_oneside]
+        output_length = ola_output_length(
+            self.ndiv, self.div_length, self.filter_length
+        )
+        xsv_ola_stitch = overlap_and_add(xsv_matrix, output_length, self.div_length)
+        return xsv_ola_stitch[self.filter_length_oneside : -self.filter_length_oneside]
 
     def xsmatrix(self, Tarr, Parr):
         """cross section matrix with stitching
@@ -146,7 +252,12 @@ class OpaPremoditStitch:
             xsm_matrix.append(opa.xsmatrix(Tarr, Parr))
         xsm_matrix = jnp.array(xsm_matrix)
 
-        output_length = ola_output_length(self.ndiv, self.div_length, self.filter_length)
-        xsmatrix_ola_stitch = overlap_and_add_matrix(xsm_matrix, output_length, self.div_length)
-        return xsmatrix_ola_stitch[:,self.filter_length_oneside:-self.filter_length_oneside]
-
+        output_length = ola_output_length(
+            self.ndiv, self.div_length, self.filter_length
+        )
+        xsmatrix_ola_stitch = overlap_and_add_matrix(
+            xsm_matrix, output_length, self.div_length
+        )
+        return xsmatrix_ola_stitch[
+            :, self.filter_length_oneside : -self.filter_length_oneside
+        ]

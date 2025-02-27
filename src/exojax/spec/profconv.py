@@ -26,7 +26,7 @@ def _check_complex(x):
 
 
 def calc_open_xsection_from_lsd_zeroscan(
-    Slsd, R, nsigmaD, nu_grid_extended, log_ngammaL_grid, filter_length_oneside
+    Slsd, R, nsigmaD, log_ngammaL_grid, filter_length_oneside
 ):
     """Compute open cross section from LSD in MODIT algorithm using scan+fft to avoid 4GB memory limit in fft and zero padding in scan
 
@@ -38,12 +38,12 @@ def calc_open_xsection_from_lsd_zeroscan(
         Slsd (array): line shape density [Nnus, Ngamma]
         R (float): spectral resolution
         nsigmaD (float): normaized Gaussian STD
-        nu_grid_extended (array): extended wavenumber grid to aliasing parts [Nnus + Nfilter - 1]
         log_gammaL_grid (array): logarithm of gammaL grid [Ngamma]
         filter_length_oneside (int): one side length of the wavenumber grid of lpffilter, Nfilter = 2*filter_length_oneside + 1
 
     Returns:
-        Closed Cross section in the log nu grid [Nnus]
+        Closed Cross section x nu_grid_extended in the log nu grid [Nnus] 
+        
     """
 
     div_length = Slsd.shape[0]
@@ -66,7 +66,7 @@ def calc_open_xsection_from_lsd_zeroscan(
     lpffilter = vmap_generate_lpffilter(filter_length_oneside, nsigmaD, ngammaL_grid)
     init = jnp.zeros(int(fft_length/2)+1, dtype=_check_complex(lpffilter[0, 0]))
     fftvalvk, _ = scan(f, init, [Slsd.T, lpffilter])
-    return  jnp.fft.irfft(fftvalvk) * R / nu_grid_extended
+    return  jnp.fft.irfft(fftvalvk) * R 
     
 def calc_xsection_from_lsd_zeroscan(
     Slsd, R, pmarray, nsigmaD, nu_grid, log_ngammaL_grid

@@ -151,9 +151,8 @@ def test_basic_convolution_calc_open_xsection_from_lsd_zeroscan(i, figure=False)
         nu_grid, filter_length_oneside, filter_length_oneside
     )
     xsv = calc_open_xsection_from_lsd_zeroscan(
-        Slsd, R, nsigmaD, nu_grid_extended, log_ngammaL_grid, filter_length_oneside
+        Slsd, R, nsigmaD, log_ngammaL_grid, filter_length_oneside
     )
-    xsv = xsv * nu_grid_extended  # avoid the log conversion
     xsv_ref = _ref_value_xsv_open_lpffilter(i)
     if i == -1:
         res_alias = np.max(
