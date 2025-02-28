@@ -7,6 +7,7 @@ Notes:
 
 __all__ = ["OpaPremodit", "OpaModit", "OpaDirect"]
 
+from sympy import div
 from exojax.spec import initspec
 from exojax.spec.lbderror import optimal_params
 from exojax.utils.grids import wavenumber_grid
@@ -20,6 +21,15 @@ from exojax.utils.checkarray import is_outside_range
 import jax.numpy as jnp
 from jax import jit
 from jax import vmap
+from exojax.utils.grids import nu2wav
+from exojax.utils.instfunc import resolution_eslog
+from exojax.signal.ola import overlap_and_add
+from exojax.signal.ola import ola_output_length
+from exojax.signal.ola import overlap_and_add_matrix
+from jax.lax import scan
+from jax.lax import dynamic_slice
+from jax import vmap
+
 import numpy as np
 import warnings
 
@@ -49,43 +59,88 @@ class OpaCalc:
         self.method = None  # which opacity calc method is used
         self.ready = False  # ready for opacity computation
         self.alias = "close"  # close or open
+        self.nstitch = 1
 
         # open xsvector/xsmatrix
         self.cutwing = 1.0
         self.nu_grid_extended = None
         self.filter_length_oneside = 0
 
-    def set_alias_mode(self):
-        """set and check the aliasing mode
+    def set_aliasing(self):
+        """set the aliasing
 
         Raises:
             ValueError: alias should be 'close' or 'open'
         """
-        if self.alias == "close":
+        from exojax.utils.grids import extended_wavenumber_grid
+        self.set_filter_length_oneside_from_cutwing()
+
+        if self.nstitch > 1:
+            print("cross section is calculated in the stitching mode.")
+            self.nu_grid_array = np.array(np.array_split(self.nu_grid, self.nstitch))
+            self.nu_grid_extended_array = []
+            for i in range(self.nstitch):
+                self.nu_grid_extended_array.append(
+                    extended_wavenumber_grid(
+                        self.nu_grid_array[i, :],
+                        self.filter_length_oneside,
+                        self.filter_length_oneside,
+                    )
+                )
+            self.nu_grid_extended_array = np.array(self.nu_grid_extended_array)
+            self.wing_cut_width = [
+                self.nu_grid[0] - self.nu_grid_extended_array[0,0],
+                self.nu_grid_extended_array[-1,-1] - self.nu_grid[-1],
+            ]
+        elif self.alias == "close":
             print(
                 "cross section (xsvector/xsmatrix) is calculated in the closed mode. The aliasing part cannnot be used."
             )
+            resolution = resolution_eslog(self.nu_grid)
+            lnx0 = np.log10(self.nu_grid[0]) - len(self.nu_grid) / resolution / np.log(10)
+            lnx1 = np.log10(self.nu_grid[-1]) + len(self.nu_grid) / resolution / np.log(10)
+            self.wing_cut_width = [self.nu_grid[0] - 10**lnx0, 10**lnx1 - self.nu_grid[-1]]
         elif self.alias == "open":
             print(
                 "cross section (xsvector/xsmatrix) is calculated in the open mode. The aliasing part can be used."
             )
 
-            from exojax.utils.grids import extended_wavenumber_grid
-
-            self.set_filter_length_oneside_from_cutwing()
             self.nu_grid_extended = extended_wavenumber_grid(
                 self.nu_grid, self.filter_length_oneside, self.filter_length_oneside
             )
-            self.wing_cut_width = [self.nu_grid[0] - self.nu_grid_extended[0], self.nu_grid_extended[-1] - self.nu_grid[-1]] 
-            print("wing cut width = ",self.wing_cut_width,"cm-1")
+            self.wing_cut_width = [
+                self.nu_grid[0] - self.nu_grid_extended[0],
+                self.nu_grid_extended[-1] - self.nu_grid[-1],
+            ]
+            
         else:
             raise ValueError("alias should be 'close' or 'open'.")
-
+        
+        print("wing cut width = ", self.wing_cut_width, "cm-1")
+        
     def set_filter_length_oneside_from_cutwing(self):
         """sets the number of points to be added to the left and right (filter_lenth_oneside) of the nu_grid based on the cutwing ratio"""
-        self.div_length = len(self.nu_grid)
-        self.filter_length_oneside = int(self.div_length * self.cutwing)
+        self.div_length = len(self.nu_grid) // self.nstitch
+        self.filter_length_oneside = int(len(self.nu_grid) * self.cutwing)
         self.filter_length = 2 * self.filter_length_oneside + 1
+        self.output_length = ola_output_length(
+            self.nstitch, self.div_length, self.filter_length
+        )
+        
+    def check_nu_grid_reducible(self):
+        """check if nu_grid is reducible by ndiv
+
+        Raises:
+            ValueError: if nu_grid is not reducible by ndiv
+        """
+        if len(self.nu_grid) % self.nstitch != 0:
+            msg = (
+                "nu_grid_all length = "
+                + str(len(self.nu_grid))
+                + " cannot be divided by stitch="
+                + str(self.nstitch)
+            )
+            raise ValueError(msg)
 
 
 class OpaPremodit(OpaCalc):
@@ -107,6 +162,7 @@ class OpaPremodit(OpaCalc):
         dit_grid_resolution=None,
         allow_32bit=False,
         alias="close",
+        nstitch=1,
         cutwing=1.0,
         wavelength_order="descending",
         version_auto_trange=2,
@@ -173,9 +229,16 @@ class OpaPremodit(OpaCalc):
             print("OpaPremodit: initialization without parameters setting")
             print("Call self.apply_params() to complete the setting.")
 
-        self.alias = alias
+        self.nstitch = nstitch
         self.cutwing = cutwing
-        self.set_alias_mode()
+
+        if self.nstitch > 1:
+            print("OpaPremodit: Stitching mode is used: nstitch =", self.nstitch)
+            self.check_nu_grid_reducible()
+        else:
+            self.alias = alias
+        self.set_aliasing()
+
         self._sets_capable_opacalculators()
 
     def __eq__(self, other):
@@ -394,6 +457,12 @@ class OpaPremodit(OpaCalc):
         from exojax.spec.premodit import xsmatrix_open_zeroth
         from exojax.spec.premodit import xsmatrix_open_first
         from exojax.spec.premodit import xsmatrix_open_second
+        from exojax.spec.premodit import xsvector_nu_open_zeroth
+        from exojax.spec.premodit import xsvector_nu_open_first
+        from exojax.spec.premodit import xsvector_nu_open_second
+        from exojax.spec.premodit import xsmatrix_nu_open_zeroth
+        from exojax.spec.premodit import xsmatrix_nu_open_first
+        from exojax.spec.premodit import xsmatrix_nu_open_second
 
         self.xsvector_close = {
             0: xsvector_zeroth,
@@ -415,6 +484,16 @@ class OpaPremodit(OpaCalc):
             1: xsmatrix_open_first,
             2: xsmatrix_open_second,
         }
+        self.xsvector_stitch = {
+            0: xsvector_nu_open_zeroth,
+            1: xsvector_nu_open_first,
+            2: xsvector_nu_open_second,
+        }
+        self.xsmatrix_stitch = {
+            0: xsmatrix_nu_open_zeroth,
+            1: xsmatrix_nu_open_first,
+            2: xsmatrix_nu_open_second,
+        }
 
     def xsvector(self, T, P):
         from exojax.spec import normalized_doppler_sigma
@@ -435,7 +514,55 @@ class OpaPremodit(OpaCalc):
         elif self.mdb.dbtype == "exomol":
             qt = self.mdb.qr_interp(T, self.Tref)
 
-        if self.alias == "open":
+        if self.nstitch > 1:
+
+            def floop(icarry, lbd_coeff):
+                nu_grid_each = dynamic_slice(
+                    self.nu_grid, (icarry * self.div_length,), (self.div_length,)
+                )
+                xsv_nu = self.xsvector_stitch[self.diffmode](
+                    T,
+                    P,
+                    nsigmaD,
+                    lbd_coeff,
+                    self.Tref,
+                    R,
+                    nu_grid_each,
+                    elower_grid,
+                    multi_index_uniqgrid,
+                    ngamma_ref_grid,
+                    n_Texp_grid,
+                    qt,
+                    self.Tref_broadening,
+                    self.filter_length_oneside,
+                    self.Twt,
+                )
+
+                return icarry + 1, xsv_nu
+
+            shape_lbd = lbd_coeff.shape
+            lbd_coeff_reshaped = np.zeros(
+                (
+                    self.nstitch,
+                    shape_lbd[0],
+                    self.div_length,
+                    shape_lbd[2],
+                    shape_lbd[3],
+                )
+            )
+            for i in range(self.nstitch):
+                lbd_coeff_reshaped[i, ...] = lbd_coeff[
+                    :, i * self.div_length : (i + 1) * self.div_length, ...
+                ]
+            lbd_coeff_reshaped = jnp.array(lbd_coeff_reshaped)
+
+            _, xsv_matrix = scan(floop, 0, lbd_coeff_reshaped)
+            
+            xsv_matrix = xsv_matrix / self.nu_grid_extended_array
+            xsv_ola_stitch = overlap_and_add(xsv_matrix, self.output_length, self.div_length)
+            xsv = xsv_ola_stitch[self.filter_length_oneside : -self.filter_length_oneside]
+
+        elif self.alias == "open" and self.nstitch == 1:
             xsvector_func = self.xsvector_open[self.diffmode]
             xsv = xsvector_func(
                 T,
@@ -456,7 +583,7 @@ class OpaPremodit(OpaCalc):
                 self.Twt,
             )
 
-        elif self.alias == "close":
+        elif self.alias == "close" and self.nstitch == 1:
             xsvector_func = self.xsvector_close[self.diffmode]
             xsv = xsvector_func(
                 T,
@@ -475,6 +602,8 @@ class OpaPremodit(OpaCalc):
                 self.Tref_broadening,
                 self.Twt,
             )
+        else:
+            raise ValueError("alias should be 'close' or 'open'.")
 
         return xsv
 
@@ -510,7 +639,61 @@ class OpaPremodit(OpaCalc):
         elif self.mdb.dbtype == "exomol":
             qtarr = vmap(self.mdb.qr_interp, (0, None))(Tarr, self.Tref)
 
-        if self.alias == "open":
+        if self.nstitch > 1:
+            def floop(icarry, lbd_coeff):
+                nu_grid_each = dynamic_slice(
+                    self.nu_grid, (icarry * self.div_length,), (self.div_length,)
+                )
+                xsm_nu = self.xsmatrix_stitch[self.diffmode](
+                    Tarr,
+                    Parr,
+                    self.Tref,
+                    R,
+                    lbd_coeff,
+                    nu_grid_each,
+                    ngamma_ref_grid,
+                    n_Texp_grid,
+                    multi_index_uniqgrid,
+                    elower_grid,
+                    self.mdb.molmass,
+                    qtarr,
+                    self.Tref_broadening,
+                    self.filter_length_oneside,
+                    self.Twt,
+                )
+
+                return icarry + 1, xsm_nu
+
+            shape_lbd = lbd_coeff.shape
+            lbd_coeff_reshaped = np.zeros(
+                (
+                    self.nstitch,
+                    shape_lbd[0],
+                    self.div_length,
+                    shape_lbd[2],
+                    shape_lbd[3],
+                )
+            )
+            for i in range(self.nstitch):
+                lbd_coeff_reshaped[i, ...] = lbd_coeff[
+                    :, i * self.div_length : (i + 1) * self.div_length, ...
+                ]
+            lbd_coeff_reshaped = jnp.array(lbd_coeff_reshaped)
+
+
+            _, xsm_matrix = scan(floop, 0, lbd_coeff_reshaped)
+            xsm_matrix = xsm_matrix / self.nu_grid_extended_array[:, jnp.newaxis, :]
+            xsmatrix_ola_stitch = overlap_and_add_matrix(
+                xsm_matrix, self.output_length, self.div_length
+            )
+            return xsmatrix_ola_stitch[
+                :, self.filter_length_oneside : -self.filter_length_oneside
+            ]
+
+
+
+
+        elif self.alias == "open":
             xsmatrix_func = self.xsmatrix_open[self.diffmode]
             xsm = xsmatrix_func(
                 Tarr,
@@ -638,7 +821,7 @@ class OpaModit(OpaCalc):
             warnings.warn("Tarr_list/Parr are needed for xsmatrix.", UserWarning)
         self.alias = alias
         self.cutwing = cutwing
-        self.set_alias_mode()
+        self.set_aliasing()
 
     def __eq__(self, other):
         """eq method for OpaModit, definied by comparing all the attributes and important status
