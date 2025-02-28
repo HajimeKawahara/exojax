@@ -33,8 +33,8 @@ def calc_open_nu_xsection_from_lsd_zeroscan(
         The aliasing part is closed and thereby can't be used in OLA.
         #277
         Why the output is not cross section, but (nu_grid_extended x Cross section)?
-        This is related to the scan in OpaStitch.
-        I did not want to use wavenumber_grid_extended in the scan in xsvector/xsmatrix
+        This is related to the scan in OpaPremoditStitch.   
+        I (@HajimeKawahara) did not want to use wavenumber_grid_extended in the scan in OpaPremoditStitch.xsvector/xsmatrix 2/28 2025
     
 
 
