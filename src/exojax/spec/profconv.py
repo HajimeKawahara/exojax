@@ -10,7 +10,6 @@ from exojax.spec.ditkernel import fold_voigt_kernel_logst
 from exojax.spec.lpffilter import generate_open_lpffilter
 from exojax.signal.ola import _fft_length
 from exojax.spec.lpffilter import _open_filter_length
-
 import jax.numpy as jnp
 from jax.lax import scan
 from jax import vmap
@@ -25,14 +24,19 @@ def _check_complex(x):
         raise ValueError("Invalid dtype")
 
 
-def calc_open_xsection_from_lsd_zeroscan(
+def calc_open_nu_xsection_from_lsd_zeroscan(
     Slsd, R, nsigmaD, log_ngammaL_grid, filter_length_oneside
 ):
-    """Compute open cross section from LSD in MODIT algorithm using scan+fft to avoid 4GB memory limit in fft and zero padding in scan
+    """Compute (wavenumber x open cross section9 from LSD in MODIT algorithm using scan+fft to avoid 4GB memory limit in fft and zero padding in scan
 
     Notes:
         The aliasing part is closed and thereby can't be used in OLA.
         #277
+        Why the output is not cross section, but (nu_grid_extended x Cross section)?
+        This is related to the scan in OpaStitch.
+        I did not want to use wavenumber_grid_extended in the scan in xsvector/xsmatrix
+    
+
 
     Args:
         Slsd (array): line shape density [Nnus, Ngamma]
@@ -42,7 +46,7 @@ def calc_open_xsection_from_lsd_zeroscan(
         filter_length_oneside (int): one side length of the wavenumber grid of lpffilter, Nfilter = 2*filter_length_oneside + 1
 
     Returns:
-        Closed Cross section x nu_grid_extended in the log nu grid [Nnus] 
+        Open (nu_grid_extended x Cross section) in the log nu grid [Nnus] 
         
     """
 

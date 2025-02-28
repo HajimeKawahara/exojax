@@ -1,6 +1,6 @@
 import pytest
 from exojax.spec.profconv import calc_xsection_from_lsd_zeroscan
-from exojax.spec.profconv import calc_open_xsection_from_lsd_zeroscan
+from exojax.spec.profconv import calc_open_nu_xsection_from_lsd_zeroscan
 from exojax.spec.profconv import calc_xsection_from_lsd_scanfft
 from exojax.utils.grids import extended_wavenumber_grid
 from exojax.utils.grids import wavenumber_grid
@@ -150,7 +150,7 @@ def test_basic_convolution_calc_open_xsection_from_lsd_zeroscan(i, figure=False)
     nu_grid_extended = extended_wavenumber_grid(
         nu_grid, filter_length_oneside, filter_length_oneside
     )
-    xsv = calc_open_xsection_from_lsd_zeroscan(
+    xsv = calc_open_nu_xsection_from_lsd_zeroscan(
         Slsd, R, nsigmaD, log_ngammaL_grid, filter_length_oneside
     )
     xsv_ref = _ref_value_xsv_open_lpffilter(i)

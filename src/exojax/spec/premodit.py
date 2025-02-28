@@ -15,7 +15,7 @@ from exojax.utils.constants import Tref_original
 
 # from exojax.spec.profconv import calc_xsection_from_lsd_scanfft
 from exojax.spec.profconv import calc_xsection_from_lsd_zeroscan
-from exojax.spec.profconv import calc_open_xsection_from_lsd_zeroscan
+from exojax.spec.profconv import calc_open_nu_xsection_from_lsd_zeroscan
 from exojax.spec.set_ditgrid import ditgrid_log_interval, ditgrid_linear_interval
 from exojax.utils.indexing import uniqidx_neibouring
 from exojax.spec import normalized_doppler_sigma
@@ -107,7 +107,7 @@ def xsvector_nu_open_zeroth(
     )
     log_ngammaL_grid = jnp.log(ngamma_grid)
 
-    xs = calc_open_xsection_from_lsd_zeroscan(
+    xs = calc_open_nu_xsection_from_lsd_zeroscan(
         Slsd, R, nsigmaD, log_ngammaL_grid, filter_length_oneside
     )
 
@@ -199,7 +199,7 @@ def xsvector_nu_open_first(
         T, P, ngamma_ref_grid, n_Texp_grid, multi_index_uniqgrid, Tref_broadening
     )
     log_ngammaL_grid = jnp.log(ngamma_grid)
-    xs = calc_open_xsection_from_lsd_zeroscan(
+    xs = calc_open_nu_xsection_from_lsd_zeroscan(
         Slsd, R, nsigmaD, log_ngammaL_grid, filter_length_oneside
     )
 
@@ -290,7 +290,7 @@ def xsvector_nu_open_second(
         T, P, ngamma_ref_grid, n_Texp_grid, multi_index_uniqgrid, Tref_broadening
     )
     log_ngammaL_grid = jnp.log(ngamma_grid)
-    xs = calc_open_xsection_from_lsd_zeroscan(
+    xs = calc_open_nu_xsection_from_lsd_zeroscan(
         Slsd, R, nsigmaD, log_ngammaL_grid, filter_length_oneside
     )
 
@@ -383,7 +383,7 @@ def xsmatrix_nu_open_zeroth(
         Tarr, Parr, ngamma_ref_grid, n_Texp_grid, multi_index_uniqgrid, Tref_broadening
     )
     log_ngammaL_grid = jnp.log(ngamma_grid)
-    xsm = vmap(calc_open_xsection_from_lsd_zeroscan, (0, None, 0, 0, None), 0)(
+    xsm = vmap(calc_open_nu_xsection_from_lsd_zeroscan, (0, None, 0, 0, None), 0)(
         Slsd, R, nsigmaD, log_ngammaL_grid, filter_length_oneside
     )
 
@@ -477,7 +477,7 @@ def xsmatrix_nu_open_first(
         Tarr, Parr, ngamma_ref_grid, n_Texp_grid, multi_index_uniqgrid, Tref_broadening
     )
     log_ngammaL_grid = jnp.log(ngamma_grid)
-    xsm = vmap(calc_open_xsection_from_lsd_zeroscan, (0, None, 0, 0, None), 0)(
+    xsm = vmap(calc_open_nu_xsection_from_lsd_zeroscan, (0, None, 0, 0, None), 0)(
         Slsd, R, nsigmaD, log_ngammaL_grid, filter_length_oneside
     )
 
@@ -572,7 +572,7 @@ def xsmatrix_nu_open_second(
         Tarr, Parr, ngamma_ref_grid, n_Texp_grid, multi_index_uniqgrid, Tref_broadening
     )
     log_ngammaL_grid = jnp.log(ngamma_grid)
-    xsm = vmap(calc_open_xsection_from_lsd_zeroscan, (0, None, 0, 0, None), 0)(
+    xsm = vmap(calc_open_nu_xsection_from_lsd_zeroscan, (0, None, 0, 0, None), 0)(
         Slsd, R, nsigmaD, log_ngammaL_grid, filter_length_oneside
     )
 

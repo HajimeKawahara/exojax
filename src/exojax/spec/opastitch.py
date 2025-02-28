@@ -1,7 +1,6 @@
 """opastitch -- opa with nu stitching
 """
 
-from exojax.spec import lbd
 from exojax.spec.opacalc import OpaPremodit
 from exojax.utils.grids import nu2wav
 from exojax.utils.instfunc import resolution_eslog
@@ -10,6 +9,7 @@ from exojax.signal.ola import ola_output_length
 from exojax.signal.ola import overlap_and_add_matrix
 from jax.lax import scan
 from jax.lax import dynamic_slice
+from jax import vmap
 import numpy as np
 import jax.numpy as jnp
 
@@ -30,7 +30,6 @@ class OpaPremoditStitch:
         allow_32bit=False,
         wavelength_order="descending",
         version_auto_trange=2,
-        inherit_opapremodit=False,
     ):
         """initializes the premodit with nu stitching
 
@@ -222,10 +221,65 @@ class OpaPremoditStitch:
         xsv_ola_stitch = overlap_and_add(xsv_matrix, output_length, self.div_length)
         
         return xsv_ola_stitch[self.filter_length_oneside : -self.filter_length_oneside]
+
+    def xsmatrix(self, Tarr, Parr):
+        """cross section marix with stitching
+        
+        Args:
+            Tarr (array): temperature array in K [Nlayer]
+            Parr (array): pressure array in bar [Nlayer]
+
+        Returns:
+            2D array: cross section matrix [Nlayer, Nnus]
+        """
+        
+
+        if self.mdb.dbtype == "hitran":
+            qtarr = vmap(self.mdb.qr_interp, (None, 0, None))(
+                self.mdb.isotope, Tarr, self.Tref
+            )
+        elif self.mdb.dbtype == "exomol":
+            qtarr = vmap(self.mdb.qr_interp, (0, None))(Tarr, self.Tref)
+
+        
+        xsmatrix_nu_func = self.xsmatrix_nu_open[self.diffmode]
+        output_length = ola_output_length(
+            self.ndiv, self.div_length, self.filter_length
+        )
+        
+        def floop(icarry, lbd_coeff):
+            nu_grid_each = dynamic_slice(self.nu_grid, (icarry,), (self.div_length,))
+        
+            xsm_nu = xsmatrix_nu_func(
+                Tarr,
+                Parr,
+                self.Tref,
+                self.R,
+                lbd_coeff,
+                nu_grid_each,
+                self.ngamma_ref_grid,
+                self.n_Texp_grid,
+                self.multi_index_uniqgrid,
+                self.elower_grid,
+                self.mdb.molmass,
+                qtarr,
+                self.Tref_broadening,
+                self.filter_length_oneside,
+                Twt=None
+            )          
+            
+
+            return icarry + self.div_length, xsm_nu
+        _, xsm_matrix = scan(floop, 0, self.lbd_coeff_jnp_array)
+        xsm_matrix = xsm_matrix/self.nu_grid_extended_jnp_array[:,jnp.newaxis,:]
+        xsmatrix_ola_stitch = overlap_and_add_matrix(
+            xsm_matrix, output_length, self.div_length
+        )
+        return xsmatrix_ola_stitch[:, self.filter_length_oneside : -self.filter_length_oneside]
         
         
-    def xsvector_inherit(self, T, P):
-        """cross section vector with stitching
+    def xsvector_for_loop(self, T, P):
+        """cross section vector with stitching using for loop
 
         Args:
             T (float): temperature in K
@@ -245,8 +299,8 @@ class OpaPremoditStitch:
         xsv_ola_stitch = overlap_and_add(xsv_matrix, output_length, self.div_length)
         return xsv_ola_stitch[self.filter_length_oneside : -self.filter_length_oneside]
 
-    def xsmatrix(self, Tarr, Parr):
-        """cross section matrix with stitching
+    def xsmatrix_for_loop(self, Tarr, Parr):
+        """cross section matrix with stitching using for loop
 
         Args:
             Tarr (array): temperature array in K [Nlayer]
