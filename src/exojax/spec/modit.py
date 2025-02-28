@@ -15,7 +15,7 @@ from jax.lax import scan
 from exojax.spec.lsd import inc2D_givenx
 from exojax.spec.profconv import calc_xsection_from_lsd_scanfft
 from exojax.spec.profconv import calc_xsection_from_lsd_zeroscan
-from exojax.spec.profconv import calc_open_xsection_from_lsd_zeroscan
+from exojax.spec.profconv import calc_open_nu_xsection_from_lsd_zeroscan
 from exojax.spec.set_ditgrid import minmax_ditgrid_matrix
 from exojax.spec.set_ditgrid import precompute_modit_ditgrid_matrix
 
@@ -71,11 +71,11 @@ def xsvector_open_zeroscan(
     log_ngammaL_grid = jnp.log(ngammaL_grid)
     lsd_array = jnp.zeros((len(nu_grid), len(ngammaL_grid)))
     Slsd = inc2D_givenx(lsd_array, S, cnu, indexnu, jnp.log(ngammaL), log_ngammaL_grid)
-    xs = calc_open_xsection_from_lsd_zeroscan(
-        Slsd, R, nsigmaD, nu_grid_extended, log_ngammaL_grid, filter_length_oneside
+    xs = calc_open_nu_xsection_from_lsd_zeroscan(
+        Slsd, R, nsigmaD, log_ngammaL_grid, filter_length_oneside
     )
 
-    return xs
+    return xs/nu_grid_extended
 
 @partial(jit, static_argnums=9)
 def xsmatrix_open_zeroscan(

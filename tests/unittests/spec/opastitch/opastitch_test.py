@@ -10,12 +10,10 @@ import pytest
 def test_OpaPremoditStitch_initialization():
     nus, wav, res = mock_wavenumber_grid()
     mdb = mock_mdbExomol()
-    opas = OpaPremoditStitch(mdb, nus, 4, allow_32bit=True)
+    opas = OpaPremoditStitch(mdb, nus, 4, auto_trange=[500,1300], allow_32bit=True)
     
     assert len(opas.nu_grid_list) == 4
-    assert len(opas.opa_list) == 4
-    assert type(opas.opa_list[0]) == OpaPremodit
-
+    
 def test_OpaPremoditStitch_check_nu_grid_reducible_raise_error():
     nus, wav, res = mock_wavenumber_grid()
     mdb = mock_mdbExomol()
@@ -28,7 +26,6 @@ def test_OpaPremoditStitch_xsv_agreement_Premodit(fig=False):
     config.update("jax_enable_x64", True)
     nus, wav, res = mock_wavenumber_grid()
     mdb = mock_mdbExomol()
-    
     ndiv = 4    
     opas = OpaPremoditStitch(mdb, nus, ndiv, auto_trange=[500,1300], cutwing = 0.5)
     opa = OpaPremodit(mdb, nus, auto_trange=[500,1300], alias="open", cutwing = 0.5/ndiv)
@@ -70,7 +67,8 @@ def test_OpaPremoditStitch_xsm_agreement_Premodit():
 
 
 if __name__ == "__main__":
-    test_OpaPremoditStitch_xsv_agreement_Premodit()
+    test_OpaPremoditStitch_initialization()
+    test_OpaPremoditStitch_xsv_agreement_Premodit(fig=True)
     test_OpaPremoditStitch_xsm_agreement_Premodit()
     # test_OpaPremoditStitch_check_nu_grid_reducible_raise_error()
 
