@@ -70,6 +70,7 @@ def test_OpaPremoditStitch_xsm_agreement_Premodit():
 
 
 if __name__ == "__main__":
+    test_OpaPremoditStitch_xsv_agreement_Premodit()
     test_OpaPremoditStitch_xsm_agreement_Premodit()
     # test_OpaPremoditStitch_check_nu_grid_reducible_raise_error()
 
