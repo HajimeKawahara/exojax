@@ -123,15 +123,19 @@ def uniqidx(input_array):
         >>> uidx, uval=uniqidx(a) #->[0,1,2,1,3,0], [[4,1],[7,1],[7,2],[8,0]]
 
     """
-    N, _ = np.shape(input_array)
     uniqvals = unique_rows(input_array)
+    uidx = genearte_uidx_from_uniqvals(input_array, uniqvals)
+    return uidx, uniqvals
+
+def genearte_uidx_from_uniqvals(input_array, uniqvals):
+    N, _ = np.shape(input_array)
     uidx = np.zeros(N, dtype=int)
     uidx_p = np.where(input_array == uniqvals[0], True, False)
     uidx[np.array(np.prod(uidx_p, axis=1), dtype=bool)] = 0
     for i, uv in enumerate(tqdm.tqdm(uniqvals[1:], desc="uniqidx")):
         uidx_p = np.where(input_array == uv, True, False)
         uidx[np.array(np.prod(uidx_p, axis=1), dtype=bool)] = i + 1
-    return uidx, uniqvals
+    return uidx
 
 
 def uniqidx_neibouring(index_array):
@@ -160,7 +164,6 @@ def uniqidx_neibouring(index_array):
         neighbor_indices[i, 2], multi_index_update = find_or_add_index(
             multi_index[i, :] + np.array([1, 1]), multi_index_update
         )
-
     return uidx, neighbor_indices, multi_index_update
 
 

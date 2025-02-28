@@ -76,9 +76,25 @@ class OpaPremoditStitch:
         self.set_opa_list()
         self.set_common_parameters_from_opa_list_zero()
         self.sets_opainfo_list()
-        #del self.opa_list
+        # del self.opa_list
 
         self._sets_capable_opacalculators()
+
+    def precomputation_opa(self):
+        OpaPremodit(
+            self.mdb,
+            self.nu_grid,
+            diffmode=self.diffmode,
+            broadening_resolution=self.broadening_resolution,
+            auto_trange=self.auto_trange,
+            manual_params=self.manual_params,
+            dit_grid_resolution=self.dit_grid_resolution,
+            allow_32bit=self.allow_32bit,
+            alias="open",
+            cutwing=self.cutwing,
+            wavelength_order=self.wavelength_order,
+            version_auto_trange=self.version_auto_trange,
+        )
 
     def set_opa_list(self):
         """set opa_list from nu_grid_list"""
@@ -124,11 +140,13 @@ class OpaPremoditStitch:
                 + str(self.ndiv)
             )
             raise ValueError(msg)
-            
+
     def sets_opainfo_list(self):
 
-        self.lbd_coeff_jnp_array = []
+        lbd_coeff_list = []
         self.nu_grid_extended_jnp_array = []
+        self.n_multiind = []
+        self.miu_array = []
         for opa in self.opa_list:
             (
                 lbd_coeff,
@@ -139,17 +157,60 @@ class OpaPremoditStitch:
                 R,
                 _,
             ) = opa.opainfo
-            self.lbd_coeff_jnp_array.append(lbd_coeff)
-            self.nu_grid_extended_jnp_array.append(opa.nu_grid_extended)
             
-        self.lbd_coeff_jnp_array = jnp.array(self.lbd_coeff_jnp_array)
+            lbd_coeff_list.append(lbd_coeff)
+            self.nu_grid_extended_jnp_array.append(opa.nu_grid_extended)
+            self.n_multiind.append(multi_index_uniqgrid.shape[0])
+            self.miu_array.append(multi_index_uniqgrid)
+
+        # self.lbd_coeff_jnp_array = jnp.array(lbd_coeff_list)
+        # print(self.lbd_coeff_jnp_array.shape)
+
         self.nu_grid_extended_jnp_array = jnp.array(self.nu_grid_extended_jnp_array)
+        imax = self.construct_lbd_coeff_jnp_array(lbd_coeff_list, lbd_coeff)
+        self.generate_multi_index_uniqgrid_jnp_array(imax)
+
+
+        if False:
+            (
+                    lbd_coeff,
+                    multi_index_uniqgrid,
+                    elower_grid,
+                    ngamma_ref_grid,
+                    n_Texp_grid,
+                    R,
+                    _,
+                ) = self.opa_list[imax].opainfo
+                
+            self.multi_index_uniqgrid = multi_index_uniqgrid
         
-        self.multi_index_uniqgrid = multi_index_uniqgrid
         self.elower_grid = elower_grid
         self.ngamma_ref_grid = ngamma_ref_grid
-        self.n_Texp_grid = n_Texp_grid            
+        self.n_Texp_grid = n_Texp_grid
         self.R = R
+
+    def generate_multi_index_uniqgrid_jnp_array(self, imax):
+        self.multi_index_uniqgrid_jnp_array = np.zeros((self.ndiv, self.n_multiind[imax], 2))
+        for i in range(self.ndiv):
+            self.multi_index_uniqgrid_jnp_array[i, : self.n_multiind[i], :] = self.miu_array[i]
+
+        #self.multi_index_uniqgrid_jnp_array = jnp.array(self.multi_index_uniqgrid_jnp_array)
+        self.multi_index_uniqgrid_jnp_array = np.array(self.multi_index_uniqgrid_jnp_array)
+
+    def construct_lbd_coeff_jnp_array(self, lbd_coeff_list, lbd_coeff):
+        self.n_multiind = np.array(self.n_multiind)
+        lshape = np.concatenate([[self.ndiv], lbd_coeff.shape])
+        nmax = np.max(self.n_multiind)
+        imax = np.argmax(self.n_multiind)
+        lshape[3] = np.max([lshape[3], nmax])
+        self.lbd_coeff_jnp_array = np.ones(lshape) * -np.inf
+        for i in range(self.ndiv):
+            self.lbd_coeff_jnp_array[i, :, :, : self.n_multiind[i], ...] = (
+                lbd_coeff_list[i]
+            )
+        del lbd_coeff_list
+        self.lbd_coeff_jnp_array = jnp.array(self.lbd_coeff_jnp_array)
+        return imax
 
     def _sets_capable_opacalculators(self):
         """sets capable open opacalculators"""
@@ -195,10 +256,15 @@ class OpaPremoditStitch:
         output_length = ola_output_length(
             self.ndiv, self.div_length, self.filter_length
         )
-        
+        a = jnp.array(self.multi_index_uniqgrid_jnp_array.flatten())
+        print(a.shape)
+        print(a[0:12].reshape(6,2))
+        print(self.multi_index_uniqgrid_jnp_array[0,:,:])
+        #exit()
         def floop(icarry, lbd_coeff):
-            nu_grid_each = dynamic_slice(self.nu_grid, (icarry,), (self.div_length,))
-        
+            nu_grid_each = dynamic_slice(self.nu_grid, (icarry*self.div_length,), (self.div_length,))
+            multi_index_uniqgrid = dynamic_slice(a, (icarry*12,), (12,)).reshape(6,2)
+            multi_index_uniqgrid[:, 0]
             xsv_nu = xsvector_nu_func(
                 T,
                 P,
@@ -208,7 +274,7 @@ class OpaPremoditStitch:
                 self.R,
                 nu_grid_each,
                 self.elower_grid,
-                self.multi_index_uniqgrid,
+                multi_index_uniqgrid,
                 self.ngamma_ref_grid,
                 self.n_Texp_grid,
                 qt,
@@ -217,16 +283,17 @@ class OpaPremoditStitch:
                 self.Twt,
             )
 
-            return icarry + self.div_length, xsv_nu
+            return icarry + 1, xsv_nu
+
         _, xsv_matrix = scan(floop, 0, self.lbd_coeff_jnp_array)
-        xsv_matrix = xsv_matrix/self.nu_grid_extended_jnp_array
+        xsv_matrix = xsv_matrix / self.nu_grid_extended_jnp_array
         xsv_ola_stitch = overlap_and_add(xsv_matrix, output_length, self.div_length)
-        
+
         return xsv_ola_stitch[self.filter_length_oneside : -self.filter_length_oneside]
 
     def xsmatrix(self, Tarr, Parr):
         """cross section marix with stitching
-        
+
         Args:
             Tarr (array): temperature array in K [Nlayer]
             Parr (array): pressure array in bar [Nlayer]
@@ -234,7 +301,6 @@ class OpaPremoditStitch:
         Returns:
             2D array: cross section matrix [Nlayer, Nnus]
         """
-        
 
         if self.mdb.dbtype == "hitran":
             qtarr = vmap(self.mdb.qr_interp, (None, 0, None))(
@@ -243,15 +309,16 @@ class OpaPremoditStitch:
         elif self.mdb.dbtype == "exomol":
             qtarr = vmap(self.mdb.qr_interp, (0, None))(Tarr, self.Tref)
 
-        
         xsmatrix_nu_func = self.xsmatrix_nu_open[self.diffmode]
         output_length = ola_output_length(
             self.ndiv, self.div_length, self.filter_length
         )
+
         
         def floop(icarry, lbd_coeff):
-            nu_grid_each = dynamic_slice(self.nu_grid, (icarry,), (self.div_length,))
-        
+            multi_index_uniqgrid = self.multi_index_uniqgrid_jnp_array[icarry,:,:]
+            nu_grid_each = dynamic_slice(self.nu_grid, (icarry*self.div_length,), (self.div_length,))
+            
             xsm_nu = xsmatrix_nu_func(
                 Tarr,
                 Parr,
@@ -261,25 +328,27 @@ class OpaPremoditStitch:
                 nu_grid_each,
                 self.ngamma_ref_grid,
                 self.n_Texp_grid,
-                self.multi_index_uniqgrid,
+                multi_index_uniqgrid,
                 self.elower_grid,
                 self.mdb.molmass,
                 qtarr,
                 self.Tref_broadening,
                 self.filter_length_oneside,
-                Twt=None
-            )          
-            
+                Twt=None,
+            )
 
-            return icarry + self.div_length, xsm_nu
+            return icarry + 1, xsm_nu
+
         _, xsm_matrix = scan(floop, 0, self.lbd_coeff_jnp_array)
-        xsm_matrix = xsm_matrix/self.nu_grid_extended_jnp_array[:,jnp.newaxis,:]
+
+        xsm_matrix = xsm_matrix / self.nu_grid_extended_jnp_array[:, jnp.newaxis, :]
         xsmatrix_ola_stitch = overlap_and_add_matrix(
             xsm_matrix, output_length, self.div_length
         )
-        return xsmatrix_ola_stitch[:, self.filter_length_oneside : -self.filter_length_oneside]
-        
-        
+        return xsmatrix_ola_stitch[
+            :, self.filter_length_oneside : -self.filter_length_oneside
+        ]
+
     def xsvector_for_loop(self, T, P):
         """cross section vector with stitching using for loop
 

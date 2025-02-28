@@ -34,6 +34,11 @@ class OpaCalc:
         alias (bool): mode of the aliasing part for the convolution (MODIT/PreMODIT).
             False = the closed mode, left and right alising sides are overlapped and won't be used.
             True = the open mode, left and right aliasing sides are not overlapped and the alias part will be used in OLA.
+        nu_grid_extended (jnp.array): extended wavenumber grid for the open mode
+        filter_length_oneside (int): oneside number of points to be added to the left and right of the nu_grid based on the cutwing ratio
+        filter_length (int): total number of points to be added to the left and right of the nu_grid based on the cutwing ratio
+        cutwing (float): wingcut for the convolution used in open cross section. Defaults to 1.0. For alias="close", always 1.0 is used by definition.
+        wing_cut_width (list): min and max wing cut width in cm-1
 
 
     """
@@ -71,6 +76,8 @@ class OpaCalc:
             self.nu_grid_extended = extended_wavenumber_grid(
                 self.nu_grid, self.filter_length_oneside, self.filter_length_oneside
             )
+            self.wing_cut_width = [self.nu_grid[0] - self.nu_grid_extended[0], self.nu_grid_extended[-1] - self.nu_grid[-1]] 
+            print("wing cut width = ",self.wing_cut_width,"cm-1")
         else:
             raise ValueError("alias should be 'close' or 'open'.")
 
@@ -112,7 +119,7 @@ class OpaPremodit(OpaCalc):
             or provide self.dE, self.Twt and apply self.apply_params()
 
         Note:
-            The option of "broadening_parameter_resolution" controls the resolution of broadening parameters.
+            The option of "broadening_resolution" controls the resolution of broadening parameters.
             When you wanna use the manual resolution, set broadening_parameter_resolution = {mode: "manual", value: 0.2}.
             When you wanna use the min and max values of broadening parameters in database, set broadening_parameter_resolution = {mode: "minmax", value: None}.
             When you wanna give single broadening parameters: set broadening_parameter_resolution = {mode: "single", value: None} the median values of gamma_ref, n_Texp are used
@@ -127,7 +134,7 @@ class OpaPremodit(OpaCalc):
             broadening_resolution (dict, optional): definition of the broadening parameter resolution. Default to {"mode": "manual", value: 0.2}. See Note.
             auto_trange (optional): temperature range [Tl, Tu], in which line strength is within 1 % prescision. Defaults to None.
             manual_params (optional): premodit parameter set [dE, Tref, Twt]. Defaults to None.
-            dit_grid_resolution (float, optional): force to set broadening_parameter_resolution={mode:manual, value: dit_grid_resolution}), ignores broadening_parameter_resolution.
+            dit_grid_resolution (float, optional): force to set broadening_resolution={mode:manual, value: dit_grid_resolution}), ignores broadening_resolution.
             allow_32bit (bool, optional): If True, allow 32bit mode of JAX. Defaults to False.
             alias (str, optional): If "open", opa will give the open-type cross-section (with aliasing parts). Defaults to "close".
             cutwing (float, optional): wingcut for the convolution used in open cross section. Defaults to 1.0. For alias="close", always 1.0 is used by definition.
