@@ -1159,7 +1159,7 @@ def broadpar_getix(ngamma_ref, ngamma_ref_grid, n_Texp, n_Texp_grid):
     )
 
     check_multi_index_uniqgrid_shape(ngamma_ref_grid, n_Texp_grid, multi_index_uniqgrid)
-    
+
     ngrid_broadpar = len(multi_index_uniqgrid)
     
     return (
@@ -1171,21 +1171,33 @@ def broadpar_getix(ngamma_ref, ngamma_ref_grid, n_Texp, n_Texp_grid):
         ngrid_broadpar,
     )
 
-def check_multi_index_uniqgrid_shape(ngamma_ref_grid, n_Texp_grid, multi_index_uniqgrid):
+
+def check_multi_index_uniqgrid_shape(
+    ngamma_ref_grid, n_Texp_grid, multi_index_uniqgrid
+):
     """checks the shape of multi_index_uniqgrid. See #586
-    
+
     Args:
         ngamma_ref_grid (array): normalized half-width at reference grid
         n_Texp_grid (array): temperature exponent grid
         multi_index_uniqgrid (array): multi index of unique broadening parameter grid [nbroad,2]
 
-    Raises:
-        ValueError: The shape of multi_index_uniqgrid is not consistent with ngamma_ref_grid, n_Texp_grid
     """
-    if multi_index_uniqgrid.shape[0] != len(ngamma_ref_grid) * len(n_Texp_grid):
-        print("multi_index_uniqgrid.shape[0]:", multi_index_uniqgrid.shape[0])
-        print("ngamma_ref:", len(ngamma_ref_grid), "n_Texp:", len(n_Texp_grid))
-        msg = "multi_index_uniqgrid.shape[0] should be len(ngamma_ref_grid) * len(n_Texp_grid)"
+    if np.max(multi_index_uniqgrid[:, 0]) >= len(ngamma_ref_grid):
+        msg = "max np.max(multi_index_uniqgrid[:,0]) = " + str(
+            np.max(multi_index_uniqgrid[:, 0])
+        )
+        msg = (
+            msg
+            + "should be smaller than len(ngamma_ref_grid) = "
+            + str(len(ngamma_ref_grid))
+        )
+        raise ValueError(msg)
+    if np.max(multi_index_uniqgrid[:, 1]) >= len(n_Texp_grid):
+        msg = "max np.max(multi_index_uniqgrid[:,1]) = " + str(
+            np.max(multi_index_uniqgrid[:, 1])
+        )
+        msg = msg + "should be smaller than len(n_Texp_grid) = " + str(len(n_Texp_grid))
         raise ValueError(msg)
 
 
