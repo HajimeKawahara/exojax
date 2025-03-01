@@ -7,6 +7,7 @@
 import numpy as np
 import warnings
 
+
 def ditgrid_log_interval(input_variable, dit_grid_resolution=0.1, adopt=True):
     """generate DIT GRID with constant interval in logarithm scale
 
@@ -20,21 +21,29 @@ def ditgrid_log_interval(input_variable, dit_grid_resolution=0.1, adopt=True):
         grid for DIT
     """
     if np.min(input_variable) <= 0.0:
-        msg = "There exists negative or zero value. MODIT/DIT does not support this case."
+        msg = (
+            "There exists negative or zero value. MODIT/DIT does not support this case."
+        )
         raise ValueError(msg)
-    
+
     lxmin = np.log(np.min(input_variable))
     lxmax = np.log(np.max(input_variable))
     lxmax = np.nextafter(lxmax, np.inf, dtype=lxmax.dtype)
-    dlog = lxmax-lxmin
-    Ng = int(dlog/dit_grid_resolution)+2
+    dlog = lxmax - lxmin
+    Ng = int(dlog / dit_grid_resolution) + 2
     if adopt == False:
-        grid = np.exp(np.linspace(lxmin, lxmin+(Ng-1)*dit_grid_resolution, Ng))
+        grid = np.exp(np.linspace(lxmin, lxmin + (Ng - 1) * dit_grid_resolution, Ng))
     else:
         grid = np.exp(np.linspace(lxmin, lxmax, Ng))
+
+    grid[0] = np.nextafter(np.min(input_variable), -np.inf, dtype=grid[0].dtype)
+    grid[-1] = np.nextafter(grid[-1], np.inf, dtype=grid[-1].dtype)  # 586
     return grid
 
-def ditgrid_linear_interval(input_variable, dit_grid_resolution=0.1, weight = None, adopt=True):
+
+def ditgrid_linear_interval(
+    input_variable, dit_grid_resolution=0.1, weight=None, adopt=True
+):
     """generate DIT GRID with constant interval in linear scale
 
     Args:
@@ -50,19 +59,21 @@ def ditgrid_linear_interval(input_variable, dit_grid_resolution=0.1, weight = No
 
     if np.min(input_variable) <= 0.0:
         warnings.warn("There exists negative or zero value.")
-        
-    #assert np.min(weight * input_variable) > 0.0, "There exists negative or zero value. Consider to use np.abs."        
+
+    # assert np.min(weight * input_variable) > 0.0, "There exists negative or zero value. Consider to use np.abs."
     wxmin = np.min(weight * input_variable)
     wxmax = np.max(weight * input_variable)
-    dwx = wxmax-wxmin
-    Ng = int(dwx/dit_grid_resolution)+2
+    dwx = wxmax - wxmin
+    Ng = int(dwx / dit_grid_resolution) + 2
     if adopt == False:
-        grid = np.linspace(wxmin, wxmin+(Ng-1)*dit_grid_resolution, Ng)
+        grid = np.linspace(wxmin, wxmin + (Ng - 1) * dit_grid_resolution, Ng)
     else:
         grid = np.linspace(wxmin, wxmax, Ng)
-    
-    grid = grid/weight
-    grid[-1] = np.nextafter(grid[-1], np.inf, dtype=grid[-1].dtype)
+
+    grid = grid / weight
+
+    grid[0] = np.nextafter(wxmin / weight, -np.inf, dtype=grid[0].dtype)
+    grid[-1] = np.nextafter(grid[-1], np.inf, dtype=grid[-1].dtype)  # 586
     return grid
 
 
@@ -84,13 +95,13 @@ def ditgrid_matrix(x, res=0.1, adopt=True):
 
     Nlayer = np.shape(mmax)[0]
     gm = []
-    dlog = np.max(mmax-mmin)
-    Ng = (dlog/res).astype(int)+2
+    dlog = np.max(mmax - mmin)
+    Ng = (dlog / res).astype(int) + 2
     for i in range(0, Nlayer):
         lxmin = mmin[i]
         lxmax = mmax[i]
         if adopt == False:
-            grid = np.exp(np.linspace(lxmin, lxmin+(Ng-1)*res, Ng))
+            grid = np.exp(np.linspace(lxmin, lxmin + (Ng - 1) * res, Ng))
         else:
             grid = np.exp(np.linspace(lxmin, lxmax, Ng))
         gm.append(grid)
@@ -113,8 +124,8 @@ def minmax_ditgrid_matrix(x, dit_grid_resolution=0.1, adopt=True):
     mmin = np.min(np.log10(x), axis=1)
     Nlayer = np.shape(mmax)[0]
     dgm_minmax = []
-    dlog = np.max(mmax-mmin)
-    Ng = (dlog/dit_grid_resolution).astype(int)+2
+    dlog = np.max(mmax - mmin)
+    Ng = (dlog / dit_grid_resolution).astype(int) + 2
     for i in range(0, Nlayer):
         lxmin = mmin[i]
         lxmax = mmax[i]
@@ -122,6 +133,7 @@ def minmax_ditgrid_matrix(x, dit_grid_resolution=0.1, adopt=True):
         dgm_minmax.append(grid)
     dgm_minmax = np.array(dgm_minmax)
     return dgm_minmax
+
 
 def precompute_modit_ditgrid_matrix(set_gm_minmax, dit_grid_resolution=0.1, adopt=True):
     """Precomputing MODIT GRID MATRIX for normalized GammaL.
@@ -137,18 +149,17 @@ def precompute_modit_ditgrid_matrix(set_gm_minmax, dit_grid_resolution=0.1, adop
     set_gm_minmax = np.array(set_gm_minmax)
     lminarray = np.min(set_gm_minmax[:, :, 0], axis=0)  # min
     lmaxarray = np.max(set_gm_minmax[:, :, 1], axis=0)  # max
-    dlog = np.max(lmaxarray-lminarray)
+    dlog = np.max(lmaxarray - lminarray)
     gm = []
-    Ng = (dlog/dit_grid_resolution).astype(int)+2
+    Ng = (dlog / dit_grid_resolution).astype(int) + 2
     Nlayer = len(lminarray)
     for i in range(0, Nlayer):
         lxmin = lminarray[i]
         lxmax = lmaxarray[i]
         if adopt == False:
-            grid = np.logspace(lxmin, lxmin+(Ng-1)*dit_grid_resolution, Ng)
+            grid = np.logspace(lxmin, lxmin + (Ng - 1) * dit_grid_resolution, Ng)
         else:
             grid = np.logspace(lxmin, lxmax, Ng)
         gm.append(grid)
     gm = np.array(gm)
     return gm
-

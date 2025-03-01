@@ -812,7 +812,7 @@ def broadpar_getix(ngamma_ref, ngamma_ref_grid, n_Texp, n_Texp_grid):
     )
 
 def check_multi_index_uniqgrid_shape(ngamma_ref_grid, n_Texp_grid, multi_index_uniqgrid):
-    """checks the shape of multi_index_uniqgrid
+    """checks the shape of multi_index_uniqgrid. See #586
     
     Args:
         ngamma_ref_grid (array): normalized half-width at reference grid
