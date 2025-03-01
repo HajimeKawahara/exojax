@@ -4,11 +4,9 @@ tested using A100 40GB
 """
 
 
-from exojax.spec.opastitch import OpaPremoditStitch
 from exojax.spec.opacalc import OpaPremodit
 from exojax.utils.grids import wavenumber_grid
 from exojax.spec.api import MdbExomol
-import numpy as np
 import jax.numpy as jnp
 
 from jax_smi import initialise_tracking
@@ -32,7 +30,7 @@ print(Tarr.shape)
 
 # can compute
 ndiv=20
-opas = OpaPremoditStitch(mdb, nus, ndiv, auto_trange=[500,1300], cutwing = 0.5)
+opas = OpaPremodit(mdb, nus, nstitch=ndiv, auto_trange=[500,1300], cutwing = 0.5)
 Tarr = jnp.array([1000.0, 1100.0])
 Parr = jnp.array([1.0, 1.5])
 xsm_s = opas.xsmatrix(Tarr, Parr)
