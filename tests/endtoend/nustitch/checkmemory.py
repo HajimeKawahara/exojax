@@ -31,6 +31,6 @@ print(Tarr.shape)
 # can compute
 ndiv=20
 opas = OpaPremodit(mdb, nus, nstitch=ndiv, auto_trange=[500,1300], cutwing = 0.05)
-Tarr = jnp.array([1000.0, 1100.0])
-Parr = jnp.array([1.0, 1.5])
+#Tarr = jnp.array([1000.0, 1100.0])
+#Parr = jnp.array([1.0, 1.5])
 xsm_s = opas.xsmatrix(Tarr, Parr)
