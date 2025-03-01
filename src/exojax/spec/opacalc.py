@@ -249,6 +249,7 @@ class OpaPremodit(OpaCalc):
         self._sets_capable_opacalculators()
         if nstitch > 1:
             self.reshape_lbd_coeff()
+        
 
     def __eq__(self, other):
         """eq method for OpaPremodit, definied by comparing all the attributes and important status

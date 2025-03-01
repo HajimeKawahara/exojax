@@ -33,7 +33,6 @@ def test_premodit_opa_and_manual_agreement(diffmode):
         mdb=mdb, nu_grid=nus, auto_trange=[1000.0, 1500.0], diffmode=diffmode
     )
     (
-        lbd_coeff,
         multi_index_uniqgrid,
         elower_grid,
         ngamma_ref_grid,
@@ -48,15 +47,15 @@ def test_premodit_opa_and_manual_agreement(diffmode):
     qt = mdb.qr_interp(Ttest, opa.Tref)
     if diffmode == 0:
         Slsd_premodit = unbiased_lsd_zeroth(
-            lbd_coeff[0], Ttest, opa.Tref, nus, elower_grid, qt
+            opa.lbd_coeff[0], Ttest, opa.Tref, nus, elower_grid, qt
         )
     elif diffmode == 1:
         Slsd_premodit = unbiased_lsd_first(
-            lbd_coeff, Ttest, opa.Tref, opa.Twt, opa.nu_grid, elower_grid, qt
+            opa.lbd_coeff, Ttest, opa.Tref, opa.Twt, opa.nu_grid, elower_grid, qt
         )
     elif diffmode == 2:
         Slsd_premodit = unbiased_lsd_second(
-            lbd_coeff, Ttest, opa.Tref, opa.Twt, opa.nu_grid, elower_grid, qt
+            opa.lbd_coeff, Ttest, opa.Tref, opa.Twt, opa.nu_grid, elower_grid, qt
         )
     nsigmaD = normalized_doppler_sigma(Ttest, mdb.molmass, R)
     ngamma_grid = unbiased_ngamma_grid(

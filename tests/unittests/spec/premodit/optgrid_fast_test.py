@@ -23,3 +23,6 @@ def test_optelower_exomol_fast():
     Eopt = optelower(mdb, nu_grid, Tmax, Pmin, accuracy=0.0)
     print("optimal elower_max=",Eopt,"cm-1")
     assert Eopt == pytest.approx(11615.5075)
+
+if __name__ == "__main__":
+    test_optelower_exomol_fast()
