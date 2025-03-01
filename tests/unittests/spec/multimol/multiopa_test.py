@@ -59,7 +59,7 @@ def test_multiopa_multi_nu_grid_nustich_raise_error():
     multimdb = mul.multimdb(nu_grid_list)
     
     #N=10000 cannot be divided by 3"
-    nustitch = [1,3]
+    nstitch_list = [1,3]
 
     with pytest.raises(ValueError):
         multiopa = mul.multiopa_premodit(
@@ -68,7 +68,7 @@ def test_multiopa_multi_nu_grid_nustich_raise_error():
             auto_trange=[500.0, 1500.0],
             dit_grid_resolution=0.2,
             allow_32bit=True,
-            stitch=nustitch
+            nstitch_list=nstitch_list
         )
 
 
@@ -81,7 +81,7 @@ def test_multiopa_multi_nu_grid_nustich():
     nu_grid_list = [nu_grid[:N], nu_grid[N:]]
     multimdb = mul.multimdb(nu_grid_list)
     
-    nustitch = [1,4]
+    nstitch_list = [1,4]
 
     multiopa = mul.multiopa_premodit(
             multimdb,
@@ -89,12 +89,12 @@ def test_multiopa_multi_nu_grid_nustich():
             auto_trange=[500.0, 1500.0],
             dit_grid_resolution=0.2,
             allow_32bit=True,
-            stitch=nustitch
+            nstitch_list=nstitch_list
     )
 
 
 if __name__ == "__main__":
-    test_multiopa_single_nu_grid()
+    #test_multiopa_single_nu_grid()
     #test_multiopa_multi_nu_grid()
-    #test_multiopa_multi_nu_grid_nustich_raise_error()
+    test_multiopa_multi_nu_grid_nustich_raise_error()
     #test_multiopa_multi_nu_grid_nustich()

@@ -1,10 +1,28 @@
+Reduces Device Memory Usage by Dividing and Stitching the Wavenumber Grid (:math:`\nu` - stitching)
+===================================================================================================
+
+Hajime Kawahara March 1st (2025)
+
+Here, we explain the method of reducing GPU device memory usage by
+dividing the wavenumber grid (:math:`\nu` - stitching). This approach is
+particularly effective for transmission spectroscopy, where
+`opart <get_started_opart.html>`__ cannot be used. When applying this
+method, `forward-mode
+differentiation <get_started_opart.html#optimization-of-opart-using-forward-differentiation>`__
+should be used for derivatives. While :math:`\nu` - stitching `can be
+performed manually <Open_Close_Cross_Section.html>`__, we describe the
+procedure using ``opastitch`` in this section.
+
+Currently, the only opacity calculator that supports
+:math:`\nu`-stitching is PreMODIT (v2.0), which can be used with
+``OpaPremodit``.
+
 .. code:: ipython3
 
-    from exojax.spec.opastitch import OpaPremoditStitch
+    from exojax.spec.opacalc import OpaPremodit
     from exojax.utils.grids import wavenumber_grid
     from exojax.spec.api import MdbExomol
     from exojax.spec.atmrt import ArtTransPure
-    import numpy as np
     import jax.numpy as jnp
     
     
@@ -21,6 +39,11 @@
       warnings.warn("dtau_mmwl might be removed in future.", FutureWarning)
 
 
+In this example, the OH molecule is used to compute opacity over the
+1.7–2.3 micron range, divided into 300,000 segments, with 300
+atmospheric layers. At the time of creating this notebook, the
+computation was performed on a gaming laptop with 8GB of device memory.
+
 .. code:: ipython3
 
     N=300000
@@ -28,18 +51,6 @@
     print("resolution=",res)
     mdb = MdbExomol(".database/OH/16O-1H/MoLLIST/", nus)
 
-
-
-.. parsed-literal::
-
-    xsmode =  premodit
-    xsmode assumes ESLOG in wavenumber space: xsmode=premodit
-    Your wavelength grid is in ***  descending  *** order
-    The wavenumber grid is in ascending order by definition.
-    Please be careful when you use the wavelength grid.
-    resolution= 992451.1535950146
-    HITRAN exact name= (16O)H
-    radis engine =  vaex
 
 
 .. parsed-literal::
@@ -56,6 +67,14 @@
 
 .. parsed-literal::
 
+    xsmode =  premodit
+    xsmode assumes ESLOG in wavenumber space: xsmode=premodit
+    Your wavelength grid is in ***  descending  *** order
+    The wavenumber grid is in ascending order by definition.
+    Please be careful when you use the wavelength grid.
+    resolution= 992451.1535950146
+    HITRAN exact name= (16O)H
+    radis engine =  vaex
     Molecule:  OH
     Isotopologue:  16O-1H
     ExoMol database:  None
@@ -75,7 +94,7 @@
 
 .. code:: ipython3
 
-    art = ArtTransPure(pressure_top=1.e-8, pressure_btm=1.e1, nlayer=200)
+    art = ArtTransPure(pressure_top=1.e-10, pressure_btm=1.e1, nlayer=300) #300 OK
     Tarr = jnp.ones_like(art.pressure)*3000.0
     Parr = art.pressure
 
@@ -92,24 +111,26 @@
       warnings.warn(
 
 
+Now, we proceed with the opacity calculation. Here, the wavenumber range
+is divided into 20 segments, and the opacity is computed by summing over
+them using OLA. The parameter ``cutwing`` specifies where to truncate
+the line wings. In this case, ``cutwing`` is set to 0.015, meaning the
+truncation occurs at 0.015 times the wavenumber grid spacing, which
+corresponds to approximately 20 cm-1.
+
+Please refer to `this section <Open_Close_Cross_Section.html>`__ for the
+mechanism of OLA-based combination.
+
 .. code:: ipython3
 
     ndiv=20
-    opas = OpaPremoditStitch(mdb, nus, ndiv, auto_trange=[500,1300], cutwing = 0.5)
+    opas = OpaPremodit(mdb, nus, nstitch=ndiv, auto_trange=[500,1300], cutwing = 0.015)
     xsm_s = opas.xsmatrix(Tarr, Parr)
 
 
 
 .. parsed-literal::
 
-    /home/kawahara/exojax/src/exojax/spec/initspec.py:280: UserWarning: Some of the line centers are outside of the wavenumber grid.
-      warnings.warn(
-    /home/kawahara/exojax/src/exojax/spec/initspec.py:282: UserWarning: All of the line center should be within wavenumber grid for PreMODIT/MODIT/DIT.
-      warnings.warn(
-
-
-.. parsed-literal::
-
     OpaPremodit: params automatically set.
     default elower grid trange (degt) file version: 2
     Robust range: 485.7803992045456 - 1334.4906506037173 K
@@ -120,193 +141,7 @@
 
 .. parsed-literal::
 
-    uniqidx: 0it [00:00, ?it/s]
-    /home/kawahara/exojax/src/exojax/spec/initspec.py:280: UserWarning: Some of the line centers are outside of the wavenumber grid.
-      warnings.warn(
-    /home/kawahara/exojax/src/exojax/spec/initspec.py:282: UserWarning: All of the line center should be within wavenumber grid for PreMODIT/MODIT/DIT.
-      warnings.warn(
-
-
-.. parsed-literal::
-
-    Premodit: Twt= 1049.0651485510987 K Tref= 539.7840596059918 K
-    Making LSD:|####################| 100%
-    cross section (xsvector/xsmatrix) is calculated in the open mode. The aliasing part can be used.
-    OpaPremodit: params automatically set.
-    default elower grid trange (degt) file version: 2
-    Robust range: 485.7803992045456 - 1334.4906506037173 K
-    OpaPremodit: Tref_broadening is set to  806.2257748298548 K
-    # of reference width grid :  4
-    # of temperature exponent grid : 2
-
-
-.. parsed-literal::
-
-    uniqidx: 0it [00:00, ?it/s]
-    /home/kawahara/exojax/src/exojax/spec/initspec.py:280: UserWarning: Some of the line centers are outside of the wavenumber grid.
-      warnings.warn(
-    /home/kawahara/exojax/src/exojax/spec/initspec.py:282: UserWarning: All of the line center should be within wavenumber grid for PreMODIT/MODIT/DIT.
-      warnings.warn(
-
-
-.. parsed-literal::
-
-    Premodit: Twt= 1049.0651485510987 K Tref= 539.7840596059918 K
-    Making LSD:|####################| 100%
-    cross section (xsvector/xsmatrix) is calculated in the open mode. The aliasing part can be used.
-    OpaPremodit: params automatically set.
-    default elower grid trange (degt) file version: 2
-    Robust range: 485.7803992045456 - 1334.4906506037173 K
-    OpaPremodit: Tref_broadening is set to  806.2257748298548 K
-    # of reference width grid :  4
-    # of temperature exponent grid : 2
-
-
-.. parsed-literal::
-
-    uniqidx: 0it [00:00, ?it/s]
-
-.. parsed-literal::
-
-    Premodit: Twt= 1049.0651485510987 K Tref= 539.7840596059918 K
-    Making LSD:|####################| 100%
-    cross section (xsvector/xsmatrix) is calculated in the open mode. The aliasing part can be used.
-    OpaPremodit: params automatically set.
-    default elower grid trange (degt) file version: 2
-    Robust range: 485.7803992045456 - 1334.4906506037173 K
-    OpaPremodit: Tref_broadening is set to  806.2257748298548 K
-
-
-.. parsed-literal::
-
-    
-    /home/kawahara/exojax/src/exojax/spec/initspec.py:280: UserWarning: Some of the line centers are outside of the wavenumber grid.
-      warnings.warn(
-    /home/kawahara/exojax/src/exojax/spec/initspec.py:282: UserWarning: All of the line center should be within wavenumber grid for PreMODIT/MODIT/DIT.
-      warnings.warn(
-
-
-.. parsed-literal::
-
-    # of reference width grid :  4
-    # of temperature exponent grid : 2
-
-
-.. parsed-literal::
-
-    uniqidx: 0it [00:00, ?it/s]
-
-
-.. parsed-literal::
-
-    Premodit: Twt= 1049.0651485510987 K Tref= 539.7840596059918 K
-    Making LSD:|####################| 100%
-
-
-.. parsed-literal::
-
-    /home/kawahara/exojax/src/exojax/spec/initspec.py:280: UserWarning: Some of the line centers are outside of the wavenumber grid.
-      warnings.warn(
-    /home/kawahara/exojax/src/exojax/spec/initspec.py:282: UserWarning: All of the line center should be within wavenumber grid for PreMODIT/MODIT/DIT.
-      warnings.warn(
-
-
-.. parsed-literal::
-
-    cross section (xsvector/xsmatrix) is calculated in the open mode. The aliasing part can be used.
-    OpaPremodit: params automatically set.
-    default elower grid trange (degt) file version: 2
-    Robust range: 485.7803992045456 - 1334.4906506037173 K
-    OpaPremodit: Tref_broadening is set to  806.2257748298548 K
-    # of reference width grid :  4
-    # of temperature exponent grid : 2
-
-
-.. parsed-literal::
-
-    uniqidx: 0it [00:00, ?it/s]
-
-
-.. parsed-literal::
-
-    Premodit: Twt= 1049.0651485510987 K Tref= 539.7840596059918 K
-    Making LSD:|####################| 100%
-
-
-.. parsed-literal::
-
-    /home/kawahara/exojax/src/exojax/spec/initspec.py:280: UserWarning: Some of the line centers are outside of the wavenumber grid.
-      warnings.warn(
-    /home/kawahara/exojax/src/exojax/spec/initspec.py:282: UserWarning: All of the line center should be within wavenumber grid for PreMODIT/MODIT/DIT.
-      warnings.warn(
-
-
-.. parsed-literal::
-
-    cross section (xsvector/xsmatrix) is calculated in the open mode. The aliasing part can be used.
-    OpaPremodit: params automatically set.
-    default elower grid trange (degt) file version: 2
-    Robust range: 485.7803992045456 - 1334.4906506037173 K
-    OpaPremodit: Tref_broadening is set to  806.2257748298548 K
-    # of reference width grid :  4
-    # of temperature exponent grid : 2
-
-
-.. parsed-literal::
-
-    uniqidx: 0it [00:00, ?it/s]
-
-
-.. parsed-literal::
-
-    Premodit: Twt= 1049.0651485510987 K Tref= 539.7840596059918 K
-    Making LSD:|####################| 100%
-    cross section (xsvector/xsmatrix) is calculated in the open mode. The aliasing part can be used.
-    OpaPremodit: params automatically set.
-    default elower grid trange (degt) file version: 2
-    Robust range: 485.7803992045456 - 1334.4906506037173 K
-    OpaPremodit: Tref_broadening is set to  806.2257748298548 K
-    # of reference width grid :  4
-    # of temperature exponent grid : 2
-
-
-.. parsed-literal::
-
-    /home/kawahara/exojax/src/exojax/spec/initspec.py:280: UserWarning: Some of the line centers are outside of the wavenumber grid.
-      warnings.warn(
-    /home/kawahara/exojax/src/exojax/spec/initspec.py:282: UserWarning: All of the line center should be within wavenumber grid for PreMODIT/MODIT/DIT.
-      warnings.warn(
-    uniqidx: 100%|██████████| 1/1 [00:00<00:00, 11618.57it/s]
-
-
-.. parsed-literal::
-
-    Premodit: Twt= 1049.0651485510987 K Tref= 539.7840596059918 K
-    Making LSD:|####################| 100%
-
-
-.. parsed-literal::
-
-    /home/kawahara/exojax/src/exojax/spec/initspec.py:280: UserWarning: Some of the line centers are outside of the wavenumber grid.
-      warnings.warn(
-    /home/kawahara/exojax/src/exojax/spec/initspec.py:282: UserWarning: All of the line center should be within wavenumber grid for PreMODIT/MODIT/DIT.
-      warnings.warn(
-
-
-.. parsed-literal::
-
-    cross section (xsvector/xsmatrix) is calculated in the open mode. The aliasing part can be used.
-    OpaPremodit: params automatically set.
-    default elower grid trange (degt) file version: 2
-    Robust range: 485.7803992045456 - 1334.4906506037173 K
-    OpaPremodit: Tref_broadening is set to  806.2257748298548 K
-    # of reference width grid :  4
-    # of temperature exponent grid : 2
-
-
-.. parsed-literal::
-
-    uniqidx: 0it [00:00, ?it/s]
+    uniqidx: 100%|██████████| 2/2 [00:00<00:00, 5482.75it/s]
 
 .. parsed-literal::
 
@@ -317,398 +152,21 @@
 .. parsed-literal::
 
     
-    /home/kawahara/exojax/src/exojax/spec/initspec.py:280: UserWarning: Some of the line centers are outside of the wavenumber grid.
-      warnings.warn(
 
 
 .. parsed-literal::
 
-    cross section (xsvector/xsmatrix) is calculated in the open mode. The aliasing part can be used.
-    OpaPremodit: params automatically set.
-    default elower grid trange (degt) file version: 2
-    Robust range: 485.7803992045456 - 1334.4906506037173 K
-    OpaPremodit: Tref_broadening is set to  806.2257748298548 K
+    OpaPremodit: Stitching mode is used: nstitch = 20
+    cross section is calculated in the stitching mode.
+    wing cut width =  [19.66940912454993, 26.732490348052124] cm-1
 
 
 .. parsed-literal::
 
-    /home/kawahara/exojax/src/exojax/spec/initspec.py:282: UserWarning: All of the line center should be within wavenumber grid for PreMODIT/MODIT/DIT.
-      warnings.warn(
+    2025-03-01 18:59:24.343399: W external/xla/xla/hlo/transforms/simplifiers/hlo_rematerialization.cc:3021] Can't reduce memory use below 3.15GiB (3379151558 bytes) by rematerialization; only reduced to 3.52GiB (3775929320 bytes), down from 3.52GiB (3775948936 bytes) originally
 
 
-.. parsed-literal::
-
-    # of reference width grid :  4
-    # of temperature exponent grid : 2
-
-
-.. parsed-literal::
-
-    uniqidx: 0it [00:00, ?it/s]
-
-.. parsed-literal::
-
-    Premodit: Twt= 1049.0651485510987 K Tref= 539.7840596059918 K
-    Making LSD:|####################| 100%
-    cross section (xsvector/xsmatrix) is calculated in the open mode. The aliasing part can be used.
-    OpaPremodit: params automatically set.
-    default elower grid trange (degt) file version: 2
-
-
-.. parsed-literal::
-
-    
-    /home/kawahara/exojax/src/exojax/spec/initspec.py:280: UserWarning: Some of the line centers are outside of the wavenumber grid.
-      warnings.warn(
-    /home/kawahara/exojax/src/exojax/spec/initspec.py:282: UserWarning: All of the line center should be within wavenumber grid for PreMODIT/MODIT/DIT.
-      warnings.warn(
-
-
-.. parsed-literal::
-
-    Robust range: 485.7803992045456 - 1334.4906506037173 K
-    OpaPremodit: Tref_broadening is set to  806.2257748298548 K
-    # of reference width grid :  4
-    # of temperature exponent grid : 2
-
-
-.. parsed-literal::
-
-    uniqidx: 0it [00:00, ?it/s]
-
-
-.. parsed-literal::
-
-    Premodit: Twt= 1049.0651485510987 K Tref= 539.7840596059918 K
-    Making LSD:|####################| 100%
-
-
-.. parsed-literal::
-
-    /home/kawahara/exojax/src/exojax/spec/initspec.py:280: UserWarning: Some of the line centers are outside of the wavenumber grid.
-      warnings.warn(
-    /home/kawahara/exojax/src/exojax/spec/initspec.py:282: UserWarning: All of the line center should be within wavenumber grid for PreMODIT/MODIT/DIT.
-      warnings.warn(
-
-
-.. parsed-literal::
-
-    cross section (xsvector/xsmatrix) is calculated in the open mode. The aliasing part can be used.
-    OpaPremodit: params automatically set.
-    default elower grid trange (degt) file version: 2
-    Robust range: 485.7803992045456 - 1334.4906506037173 K
-    OpaPremodit: Tref_broadening is set to  806.2257748298548 K
-    # of reference width grid :  4
-    # of temperature exponent grid : 2
-
-
-.. parsed-literal::
-
-    uniqidx: 0it [00:00, ?it/s]
-
-
-.. parsed-literal::
-
-    Premodit: Twt= 1049.0651485510987 K Tref= 539.7840596059918 K
-    Making LSD:|####################| 100%
-
-
-.. parsed-literal::
-
-    /home/kawahara/exojax/src/exojax/spec/initspec.py:280: UserWarning: Some of the line centers are outside of the wavenumber grid.
-      warnings.warn(
-    /home/kawahara/exojax/src/exojax/spec/initspec.py:282: UserWarning: All of the line center should be within wavenumber grid for PreMODIT/MODIT/DIT.
-      warnings.warn(
-
-
-.. parsed-literal::
-
-    cross section (xsvector/xsmatrix) is calculated in the open mode. The aliasing part can be used.
-    OpaPremodit: params automatically set.
-    default elower grid trange (degt) file version: 2
-    Robust range: 485.7803992045456 - 1334.4906506037173 K
-    OpaPremodit: Tref_broadening is set to  806.2257748298548 K
-    # of reference width grid :  4
-    # of temperature exponent grid : 2
-
-
-.. parsed-literal::
-
-    uniqidx: 0it [00:00, ?it/s]
-
-.. parsed-literal::
-
-    Premodit: Twt= 1049.0651485510987 K Tref= 539.7840596059918 K
-    Making LSD:|--------------------| 0%
-
-.. parsed-literal::
-
-    
-
-
-.. parsed-literal::
-
-    Making LSD:|####################| 100%
-
-
-.. parsed-literal::
-
-    /home/kawahara/exojax/src/exojax/spec/initspec.py:280: UserWarning: Some of the line centers are outside of the wavenumber grid.
-      warnings.warn(
-    /home/kawahara/exojax/src/exojax/spec/initspec.py:282: UserWarning: All of the line center should be within wavenumber grid for PreMODIT/MODIT/DIT.
-      warnings.warn(
-
-
-.. parsed-literal::
-
-    cross section (xsvector/xsmatrix) is calculated in the open mode. The aliasing part can be used.
-    OpaPremodit: params automatically set.
-    default elower grid trange (degt) file version: 2
-    Robust range: 485.7803992045456 - 1334.4906506037173 K
-    OpaPremodit: Tref_broadening is set to  806.2257748298548 K
-    # of reference width grid :  4
-    # of temperature exponent grid : 2
-
-
-.. parsed-literal::
-
-    uniqidx: 0it [00:00, ?it/s]
-
-.. parsed-literal::
-
-    Premodit: Twt= 1049.0651485510987 K Tref= 539.7840596059918 K
-    Making LSD:|--------------------| 0%
-
-.. parsed-literal::
-
-    
-
-
-.. parsed-literal::
-
-    Making LSD:|####################| 100%
-    cross section (xsvector/xsmatrix) is calculated in the open mode. The aliasing part can be used.
-    OpaPremodit: params automatically set.
-    default elower grid trange (degt) file version: 2
-
-
-.. parsed-literal::
-
-    /home/kawahara/exojax/src/exojax/spec/initspec.py:280: UserWarning: Some of the line centers are outside of the wavenumber grid.
-      warnings.warn(
-    /home/kawahara/exojax/src/exojax/spec/initspec.py:282: UserWarning: All of the line center should be within wavenumber grid for PreMODIT/MODIT/DIT.
-      warnings.warn(
-
-
-.. parsed-literal::
-
-    Robust range: 485.7803992045456 - 1334.4906506037173 K
-    OpaPremodit: Tref_broadening is set to  806.2257748298548 K
-    # of reference width grid :  4
-    # of temperature exponent grid : 2
-
-
-.. parsed-literal::
-
-    uniqidx: 100%|██████████| 1/1 [00:00<00:00, 8612.53it/s]
-
-
-.. parsed-literal::
-
-    Premodit: Twt= 1049.0651485510987 K Tref= 539.7840596059918 K
-    Making LSD:|####################| 100%
-
-
-.. parsed-literal::
-
-    /home/kawahara/exojax/src/exojax/spec/initspec.py:280: UserWarning: Some of the line centers are outside of the wavenumber grid.
-      warnings.warn(
-    /home/kawahara/exojax/src/exojax/spec/initspec.py:282: UserWarning: All of the line center should be within wavenumber grid for PreMODIT/MODIT/DIT.
-      warnings.warn(
-
-
-.. parsed-literal::
-
-    cross section (xsvector/xsmatrix) is calculated in the open mode. The aliasing part can be used.
-    OpaPremodit: params automatically set.
-    default elower grid trange (degt) file version: 2
-    Robust range: 485.7803992045456 - 1334.4906506037173 K
-    OpaPremodit: Tref_broadening is set to  806.2257748298548 K
-    # of reference width grid :  4
-    # of temperature exponent grid : 2
-
-
-.. parsed-literal::
-
-    uniqidx: 0it [00:00, ?it/s]
-
-.. parsed-literal::
-
-    Premodit: Twt= 1049.0651485510987 K Tref= 539.7840596059918 K
-    Making LSD:|####################| 100%
-    cross section (xsvector/xsmatrix) is calculated in the open mode. The aliasing part can be used.
-    OpaPremodit: params automatically set.
-    default elower grid trange (degt) file version: 2
-
-
-.. parsed-literal::
-
-    
-    /home/kawahara/exojax/src/exojax/spec/initspec.py:280: UserWarning: Some of the line centers are outside of the wavenumber grid.
-      warnings.warn(
-    /home/kawahara/exojax/src/exojax/spec/initspec.py:282: UserWarning: All of the line center should be within wavenumber grid for PreMODIT/MODIT/DIT.
-      warnings.warn(
-
-
-.. parsed-literal::
-
-    Robust range: 485.7803992045456 - 1334.4906506037173 K
-    OpaPremodit: Tref_broadening is set to  806.2257748298548 K
-    # of reference width grid :  4
-    # of temperature exponent grid : 2
-
-
-.. parsed-literal::
-
-    uniqidx: 0it [00:00, ?it/s]
-
-
-.. parsed-literal::
-
-    Premodit: Twt= 1049.0651485510987 K Tref= 539.7840596059918 K
-    Making LSD:|####################| 100%
-    cross section (xsvector/xsmatrix) is calculated in the open mode. The aliasing part can be used.
-    OpaPremodit: params automatically set.
-    default elower grid trange (degt) file version: 2
-    Robust range: 485.7803992045456 - 1334.4906506037173 K
-    OpaPremodit: Tref_broadening is set to  806.2257748298548 K
-    # of reference width grid :  4
-    # of temperature exponent grid : 2
-
-
-.. parsed-literal::
-
-    /home/kawahara/exojax/src/exojax/spec/initspec.py:280: UserWarning: Some of the line centers are outside of the wavenumber grid.
-      warnings.warn(
-    /home/kawahara/exojax/src/exojax/spec/initspec.py:282: UserWarning: All of the line center should be within wavenumber grid for PreMODIT/MODIT/DIT.
-      warnings.warn(
-    uniqidx: 0it [00:00, ?it/s]
-
-
-.. parsed-literal::
-
-    Premodit: Twt= 1049.0651485510987 K Tref= 539.7840596059918 K
-    Making LSD:|####################| 100%
-    cross section (xsvector/xsmatrix) is calculated in the open mode. The aliasing part can be used.
-    OpaPremodit: params automatically set.
-    default elower grid trange (degt) file version: 2
-    Robust range: 485.7803992045456 - 1334.4906506037173 K
-    OpaPremodit: Tref_broadening is set to  806.2257748298548 K
-
-
-.. parsed-literal::
-
-    /home/kawahara/exojax/src/exojax/spec/initspec.py:280: UserWarning: Some of the line centers are outside of the wavenumber grid.
-      warnings.warn(
-    /home/kawahara/exojax/src/exojax/spec/initspec.py:282: UserWarning: All of the line center should be within wavenumber grid for PreMODIT/MODIT/DIT.
-      warnings.warn(
-
-
-.. parsed-literal::
-
-    # of reference width grid :  4
-    # of temperature exponent grid : 2
-
-
-.. parsed-literal::
-
-    uniqidx: 0it [00:00, ?it/s]
-
-
-.. parsed-literal::
-
-    Premodit: Twt= 1049.0651485510987 K Tref= 539.7840596059918 K
-    Making LSD:|####################| 100%
-    cross section (xsvector/xsmatrix) is calculated in the open mode. The aliasing part can be used.
-    OpaPremodit: params automatically set.
-    default elower grid trange (degt) file version: 2
-    Robust range: 485.7803992045456 - 1334.4906506037173 K
-    OpaPremodit: Tref_broadening is set to  806.2257748298548 K
-
-
-.. parsed-literal::
-
-    /home/kawahara/exojax/src/exojax/spec/initspec.py:280: UserWarning: Some of the line centers are outside of the wavenumber grid.
-      warnings.warn(
-    /home/kawahara/exojax/src/exojax/spec/initspec.py:282: UserWarning: All of the line center should be within wavenumber grid for PreMODIT/MODIT/DIT.
-      warnings.warn(
-
-
-.. parsed-literal::
-
-    # of reference width grid :  4
-    # of temperature exponent grid : 2
-
-
-.. parsed-literal::
-
-    uniqidx: 0it [00:00, ?it/s]
-
-
-.. parsed-literal::
-
-    Premodit: Twt= 1049.0651485510987 K Tref= 539.7840596059918 K
-    Making LSD:|####################| 100%
-    cross section (xsvector/xsmatrix) is calculated in the open mode. The aliasing part can be used.
-    OpaPremodit: params automatically set.
-    default elower grid trange (degt) file version: 2
-    Robust range: 485.7803992045456 - 1334.4906506037173 K
-    OpaPremodit: Tref_broadening is set to  806.2257748298548 K
-
-
-.. parsed-literal::
-
-    /home/kawahara/exojax/src/exojax/spec/initspec.py:280: UserWarning: Some of the line centers are outside of the wavenumber grid.
-      warnings.warn(
-    /home/kawahara/exojax/src/exojax/spec/initspec.py:282: UserWarning: All of the line center should be within wavenumber grid for PreMODIT/MODIT/DIT.
-      warnings.warn(
-
-
-.. parsed-literal::
-
-    # of reference width grid :  4
-    # of temperature exponent grid : 2
-
-
-.. parsed-literal::
-
-    uniqidx: 0it [00:00, ?it/s]
-
-
-.. parsed-literal::
-
-    Premodit: Twt= 1049.0651485510987 K Tref= 539.7840596059918 K
-    Making LSD:|####################| 100%
-    cross section (xsvector/xsmatrix) is calculated in the open mode. The aliasing part can be used.
-
-
-.. code:: ipython3
-
-    print(xsm_s.shape), mdb.molmass
-
-
-.. parsed-literal::
-
-    (200, 300000)
-
-
-
-
-.. parsed-literal::
-
-    (None, 17.00274)
-
-
+You can check the wing-cut wavenumber :math:`\Delta \nu \sim 20` cm-1.
 
 .. code:: ipython3
 
@@ -717,35 +175,20 @@
     g = gravity_jupiter(1.0,1.0)
     dtau = art.opacity_profile_xs(xsm_s,mmr,mdb.molmass,g)
 
+Let’s check the contribution function. It is clear that lines are
+present across a wide wavenumber range.
+
 .. code:: ipython3
 
     from exojax.plot.atmplot import plotcf
-    plotcf(nus, dtau, Tarr, Parr, art.dParr)
+    cf = plotcf(nus, dtau, Tarr, Parr, art.dParr)
 
 
 
-
-.. parsed-literal::
-
-    Array([[1.97650795e-19, 1.97676809e-19, 1.97695833e-19, ...,
-            5.91997093e-10, 6.14140209e-10, 6.00202669e-10],
-           [2.43423092e-19, 2.43449301e-19, 2.43480598e-19, ...,
-            6.56970251e-10, 6.81543629e-10, 6.66076409e-10],
-           [2.99799342e-19, 2.99831899e-19, 2.99854835e-19, ...,
-            7.29074375e-10, 7.56344742e-10, 7.39179957e-10],
-           ...,
-           [1.22700111e-01, 1.22696862e-01, 1.22693597e-01, ...,
-            2.72327805e-02, 2.67659134e-02, 2.71003107e-02],
-           [1.49024274e-01, 1.49015197e-01, 1.49006080e-01, ...,
-            2.41963976e-02, 2.37929635e-02, 2.41064741e-02],
-           [1.80416719e-01, 1.80398098e-01, 1.80379395e-01, ...,
-            2.04440504e-02, 2.01167876e-02, 2.03986421e-02]], dtype=float64)
+.. image:: Cross_Section_using_OpaStitch_files/Cross_Section_using_OpaStitch_11_0.png
 
 
-
-
-.. image:: Cross_Section_using_OpaStitch_files/Cross_Section_using_OpaStitch_6_1.png
-
+Let’s calculate the transmitted light spectrum.
 
 .. code:: ipython3
 
@@ -756,18 +199,25 @@
 .. code:: ipython3
 
     import matplotlib.pyplot as plt
-    plt.plot(nus, r2)
+    
+    plt.figure(figsize=(15, 4))
+    plt.plot(nus, r2, alpha=0.7)
+    plt.ylabel("$R^2$")
+    plt.xlabel("wavenumber (cm-1)")
 
 
 
 
 .. parsed-literal::
 
-    [<matplotlib.lines.Line2D at 0x78963dfe6710>]
+    Text(0.5, 0, 'wavenumber (cm-1)')
 
 
 
 
-.. image:: Cross_Section_using_OpaStitch_files/Cross_Section_using_OpaStitch_8_1.png
+.. image:: Cross_Section_using_OpaStitch_files/Cross_Section_using_OpaStitch_14_1.png
+
+
+That’s it!
 
 

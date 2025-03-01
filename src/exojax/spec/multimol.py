@@ -225,6 +225,7 @@ class MultiMol:
 
         if nstitch_list is not None:
             self._check_structure(nu_grid_list, nstitch_list)
+            self.nstitch_list = nstitch_list
         else:
             self.nstitch_list = [1] * len(nu_grid_list)
         del nstitch_list
