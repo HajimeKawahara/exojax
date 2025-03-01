@@ -11,7 +11,8 @@ method, `forward-mode
 differentiation <get_started_opart.html#optimization-of-opart-using-forward-differentiation>`__
 should be used for derivatives. While :math:`\nu` - stitching `can be
 performed manually <Open_Close_Cross_Section.html>`__, we describe the
-procedure using ``opastitch`` in this section.
+procedure using :math:`\nu` - stitching in ``OpaPremodit`` in this
+section.
 
 Currently, the only opacity calculator that supports
 :math:`\nu`-stitching is PreMODIT (v2.0), which can be used with
