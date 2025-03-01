@@ -7,6 +7,7 @@ Notes:
 
 __all__ = ["OpaPremodit", "OpaModit", "OpaDirect"]
 
+from torch import mul
 from exojax.spec import initspec
 from exojax.spec.lbderror import optimal_params
 from exojax.utils.grids import wavenumber_grid
@@ -402,6 +403,9 @@ class OpaPremodit(OpaCalc):
             self.gamma_ref = self.mdb.alpha_ref * reference_factor
 
     def apply_params(self):
+        """apply the parameters to the class
+            define self.lbd_coeff and self.opainfo
+        """
         # self.mdb.change_reference_temperature(self.Tref)
         self.dbtype = self.mdb.dbtype
 
@@ -509,6 +513,10 @@ class OpaPremodit(OpaCalc):
         }
 
     def reshape_lbd_coeff(self):
+        """reshape lbd_coeff for stitching mode
+            this method deletes self.lbd_coeff and creates self.lbd_coeff_reshaped
+            self.lbd_coeff_reshaped has a dimension of (self.nstitch, diffmode+1, self.div_length, len(elower_grid))  
+        """
         
         shape_lbd = self.lbd_coeff.shape
         lbd_coeff_reshaped = np.zeros(
@@ -545,8 +553,13 @@ class OpaPremodit(OpaCalc):
         elif self.mdb.dbtype == "exomol":
             qt = self.mdb.qr_interp(T, self.Tref)
 
-        if self.nstitch > 1:
+        #print(multi_index_uniqgrid.shape)
+        #print(n_Texp_grid.shape)
+        #print(multi_index_uniqgrid)
+        #exit()
+        
 
+        if self.nstitch > 1:
             def floop(icarry, lbd_coeff):
                 nu_grid_each = dynamic_slice(
                     self.nu_grid, (icarry * self.div_length,), (self.div_length,)
