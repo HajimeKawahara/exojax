@@ -94,7 +94,7 @@ def test_multiopa_multi_nu_grid_nustich():
 
 
 if __name__ == "__main__":
-    #test_multiopa_single_nu_grid()
+    test_multiopa_single_nu_grid()
     #test_multiopa_multi_nu_grid()
     #test_multiopa_multi_nu_grid_nustich_raise_error()
-    test_multiopa_multi_nu_grid_nustich()
+    #test_multiopa_multi_nu_grid_nustich()

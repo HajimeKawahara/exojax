@@ -204,7 +204,7 @@ class MultiMol:
         multimdb,
         nu_grid_list,
         auto_trange,
-        stitch=None,
+        nstitch_list=None,
         diffmode=0,
         dit_grid_resolution=0.2,
         allow_32bit=False,
@@ -215,60 +215,59 @@ class MultiMol:
             multimdb (): multimdb
             nu_grid_list (): wavenumber grid list
             auto_trange (list): temperature range [Tl, Tu], in which line strength is within 1 % prescision. Defaults to None.
-            stitch (list): The list of the number of nu-stitching segments for nu_grid_list (same structure). If None, no nu-stitching.
+            nstitch_list (list): The list of the number of nu-stitching segments for nu_grid_list (same structure). If None, no nu-stitching.
             diffmode (int, optional): _description_. Defaults to 0.
             dit_grid_resolution (float, optional): force to set broadening_parameter_resolution={mode:manual, value: dit_grid_resolution}), ignores broadening_parameter_resolution.
 
         Returns:
             _type_: _description_
         """
-        
-        if stitch is not None:
-            self._check_structure(nu_grid_list, stitch)
+
+        if nstitch_list is not None:
+            self._check_structure(nu_grid_list, nstitch_list)
         else:
-            self.stitch = [1] * len(nu_grid_list)
+            self.nstitch_list = [1] * len(nu_grid_list)
+        del nstitch_list
 
         multiopa = []
         for k_nuseg in range(len(multimdb)):
             opa_k = []
             for i_mol in range(len(multimdb[k_nuseg])):
-                if self.stitch[k_nuseg] == 1:
-                    opa_i = self.store_single_opa(multimdb[k_nuseg][i_mol], nu_grid_list[k_nuseg], auto_trange, diffmode, dit_grid_resolution, allow_32bit, k_nuseg, i_mol)
-                else:
-                    opa_i = self.store_opa_stitch(multimdb[k_nuseg][i_mol], nu_grid_list[k_nuseg], auto_trange, diffmode, dit_grid_resolution, allow_32bit, k_nuseg, i_mol)
+                opa_i = self.store_single_opa(
+                    multimdb[k_nuseg][i_mol],
+                    nu_grid_list[k_nuseg],
+                    auto_trange,
+                    diffmode,
+                    dit_grid_resolution,
+                    allow_32bit,
+                    self.nstitch_list[k_nuseg],
+                )
                 opa_k.append(opa_i)
             multiopa.append(opa_k)
 
         return multiopa
 
-    def store_single_opa(self, multimdb_each, nu_grid_list_seg, auto_trange, diffmode, dit_grid_resolution, allow_32bit, k_nuseg):
+    def store_single_opa(
+        self,
+        multimdb_each,
+        nu_grid_list_seg,
+        auto_trange,
+        diffmode,
+        dit_grid_resolution,
+        allow_32bit,
+        nstitch,
+    ):
         opa_i = OpaPremodit(
-                        mdb=multimdb_each,
-                        nu_grid=nu_grid_list_seg,
-                        diffmode=diffmode,
-                        auto_trange=auto_trange,
-                        dit_grid_resolution=dit_grid_resolution,
-                        allow_32bit=allow_32bit,
-                    )
+            mdb=multimdb_each,
+            nu_grid=nu_grid_list_seg,
+            diffmode=diffmode,
+            auto_trange=auto_trange,
+            dit_grid_resolution=dit_grid_resolution,
+            allow_32bit=allow_32bit,
+            nstitch=nstitch,
+        )
         return opa_i
 
-    def store_opa_stitch(self, multimdb_each, nu_grid_list_seg, auto_trange, diffmode, dit_grid_resolution, allow_32bit, k_nuseg):
-        opa_i = []
-        nu_grid_st = np.array_split(nu_grid_list_seg, self.stitch[k_nuseg])
-        for nu_grid_st_each in nu_grid_st:
-            opa_i.append(OpaPremodit(
-                        mdb=multimdb_each,
-                        nu_grid=nu_grid_st,
-                        diffmode=diffmode,
-                        auto_trange=auto_trange,
-                        dit_grid_resolution=dit_grid_resolution,
-                        allow_32bit=allow_32bit,
-                        alias="open"
-                        ))
-            
-        return opa_i
-
-    
     def molmass(self):
         """return molecular mass list and H and He
 

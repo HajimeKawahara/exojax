@@ -8,12 +8,10 @@ Notes:
 import numpy as np
 import jax.numpy as jnp
 from jax import jit, vmap
-from py import log
 from exojax.utils.indexing import npgetix
 from exojax.spec.lsd import npadd3D_multi_index, npadd3D_direct1D
 from exojax.utils.constants import hcperk
 from exojax.utils.constants import Tref_original
-
 # from exojax.spec.profconv import calc_xsection_from_lsd_scanfft
 from exojax.spec.profconv import calc_xsection_from_lsd_zeroscan
 from exojax.spec.profconv import calc_open_nu_xsection_from_lsd_zeroscan
@@ -24,7 +22,7 @@ from exojax.spec.lbd import lbd_coefficients
 from functools import partial
 
 
-#@partial(jit, static_argnums=14)
+@partial(jit, static_argnums=14)
 def xsvector_open_zeroth(
     T,
     P,
@@ -83,7 +81,7 @@ def xsvector_open_zeroth(
     )
     return xs / nu_grid_extended
 
-#@partial(jit, static_argnums=13)
+@partial(jit, static_argnums=13)
 def xsvector_nu_open_zeroth(
     T,
     P,
@@ -126,14 +124,7 @@ def xsvector_nu_open_zeroth(
     ngamma_grid = unbiased_ngamma_grid(
         T, P, ngamma_ref_grid, n_Texp_grid, multi_index_uniqgrid, Tref_broadening
     )
-    print(n_Texp_grid)
-    print(multi_index_uniqgrid)
-    print(ngamma_grid)
     log_ngammaL_grid = jnp.log(ngamma_grid)
-    print(log_ngammaL_grid)
-    print(lbd_coeff.shape)
-    print("exit at L135 in premodit.py")
-    exit()
     
     xs = calc_open_nu_xsection_from_lsd_zeroscan(
         Slsd, R, nsigmaD, log_ngammaL_grid, filter_length_oneside
@@ -204,7 +195,7 @@ def xsvector_open_first(
     )
     return xs / nu_grid_extended
 
-
+@partial(jit, static_argnums=13)
 def xsvector_nu_open_first(
     T,
     P,
@@ -317,7 +308,7 @@ def xsvector_open_second(
     )
     return xs / nu_grid_extended
 
-
+@partial(jit, static_argnums=13)
 def xsvector_nu_open_second(
     T,
     P,
@@ -429,7 +420,7 @@ def xsmatrix_open_zeroth(
     )
     return xsm / nu_grid_extended
 
-
+@partial(jit, static_argnums=13)
 def xsmatrix_nu_open_zeroth(
     Tarr,
     Parr,
@@ -547,7 +538,7 @@ def xsmatrix_open_first(
     )
     return xsm / nu_grid_extended
 
-
+@partial(jit, static_argnums=13)
 def xsmatrix_nu_open_first(
     Tarr,
     Parr,
@@ -665,7 +656,7 @@ def xsmatrix_open_second(
     )
     return xsm / nu_grid_extended
 
-
+@partial(jit, static_argnums=13)
 def xsmatrix_nu_open_second(
     Tarr,
     Parr,
@@ -1166,20 +1157,10 @@ def broadpar_getix(ngamma_ref, ngamma_ref_grid, n_Texp, n_Texp_grid):
     uidx_lines, neighbor_indices, multi_index_uniqgrid = uniqidx_neibouring(
         multi_index_lines
     )
+
+    check_multi_index_uniqgrid_shape(ngamma_ref_grid, n_Texp_grid, multi_index_uniqgrid)
+    
     ngrid_broadpar = len(multi_index_uniqgrid)
-    for uniq_index in np.unique(uidx_lines):
-        print(uniq_index, multi_index_uniqgrid[uniq_index]) #
-    print(np.unique(uidx_lines))
-    print(np.max(n_Texp))
-    print(np.max(ngamma_ref))
-    print(multi_index_lines)
-    #print(multi_cont_lines)
-    #print(n_Texp)
-    print(ngamma_ref_grid)
-    print(n_Texp_grid)
-    print(multi_index_uniqgrid)
-    print("end at L1172 in premodit.py")
-    exit()
     
     return (
         multi_index_lines,
@@ -1189,6 +1170,23 @@ def broadpar_getix(ngamma_ref, ngamma_ref_grid, n_Texp, n_Texp_grid):
         multi_index_uniqgrid,
         ngrid_broadpar,
     )
+
+def check_multi_index_uniqgrid_shape(ngamma_ref_grid, n_Texp_grid, multi_index_uniqgrid):
+    """checks the shape of multi_index_uniqgrid. See #586
+    
+    Args:
+        ngamma_ref_grid (array): normalized half-width at reference grid
+        n_Texp_grid (array): temperature exponent grid
+        multi_index_uniqgrid (array): multi index of unique broadening parameter grid [nbroad,2]
+
+    Raises:
+        ValueError: The shape of multi_index_uniqgrid is not consistent with ngamma_ref_grid, n_Texp_grid
+    """
+    if multi_index_uniqgrid.shape[0] != len(ngamma_ref_grid) * len(n_Texp_grid):
+        print("multi_index_uniqgrid.shape[0]:", multi_index_uniqgrid.shape[0])
+        print("ngamma_ref:", len(ngamma_ref_grid), "n_Texp:", len(n_Texp_grid))
+        msg = "multi_index_uniqgrid.shape[0] should be len(ngamma_ref_grid) * len(n_Texp_grid)"
+        raise ValueError(msg)
 
 
 def compute_dElower(T, interval_contrast=0.1):
@@ -1487,7 +1485,6 @@ def unbiased_lsd_second(lbd_coeff, T, Tref, Twt, nu_grid, elower_grid, qt):
     Slsd = jnp.sum(jnp.exp(lfb + lbd_coeff[0]) + unbiased_coeff, axis=-1)
     return (Slsd.T * g_bias(nu_grid, T, Tref) / qt).T
 
-@jit ##debug
 def unbiased_ngamma_grid(
     T, P, ngamma_ref_grid, n_Texp_grid, multi_index_uniqgrid, Tref_broadening
 ):
@@ -1510,5 +1507,4 @@ def unbiased_ngamma_grid(
     """
     ngamma_ref_g = ngamma_ref_grid[multi_index_uniqgrid[:, 0]]
     n_Texp_g = n_Texp_grid[multi_index_uniqgrid[:, 1]]
-    return n_Texp_g
-    #return ngamma_ref_g * (T / Tref_broadening) ** (-n_Texp_g) * P
+    return ngamma_ref_g * (T / Tref_broadening) ** (-n_Texp_g) * P
