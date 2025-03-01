@@ -54,14 +54,16 @@ def ditgrid_linear_interval(input_variable, dit_grid_resolution=0.1, weight = No
     #assert np.min(weight * input_variable) > 0.0, "There exists negative or zero value. Consider to use np.abs."        
     wxmin = np.min(weight * input_variable)
     wxmax = np.max(weight * input_variable)
-    wxmax = np.nextafter(wxmax, np.inf, dtype=wxmax.dtype)
     dwx = wxmax-wxmin
     Ng = int(dwx/dit_grid_resolution)+2
     if adopt == False:
         grid = np.linspace(wxmin, wxmin+(Ng-1)*dit_grid_resolution, Ng)
     else:
         grid = np.linspace(wxmin, wxmax, Ng)
-    return grid/weight
+    
+    grid = grid/weight
+    grid[-1] = np.nextafter(grid[-1], np.inf, dtype=grid[-1].dtype)
+    return grid
 
 
 def ditgrid_matrix(x, res=0.1, adopt=True):
