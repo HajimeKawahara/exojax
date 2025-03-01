@@ -45,7 +45,7 @@ def test_device_memory_use_premodit_art_opa():
                           "value": 0.2
                       })
     nfree = 10
-    nbroad_ref = 8
+    nbroad_ref = 6
     nfp64 = 8
     nelower_ref = 283
     # CASE 0

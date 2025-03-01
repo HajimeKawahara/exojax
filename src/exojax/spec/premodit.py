@@ -23,7 +23,6 @@ from exojax.spec.lbd import lbd_coefficients
 from functools import partial
 
 
-
 @partial(jit, static_argnums=14)
 def xsvector_open_zeroth(
     T,
@@ -184,6 +183,7 @@ def xsvector_open_second(
     )
     return xs
 
+
 @partial(jit, static_argnums=14)
 def xsmatrix_open_zeroth(
     Tarr,
@@ -238,6 +238,7 @@ def xsmatrix_open_zeroth(
         Slsd, R, nsigmaD, nu_grid_extended, log_ngammaL_grid, filter_length_oneside
     )
     return xsm
+
 
 @partial(jit, static_argnums=14)
 def xsmatrix_open_first(
@@ -405,7 +406,6 @@ def xsvector_zeroth(
     return xs
 
 
-
 @jit
 def xsvector_first(
     T,
@@ -512,7 +512,6 @@ def xsvector_second(
         Slsd, R, pmarray, nsigmaD, nu_grid, log_ngammaL_grid
     )
     return xs
-
 
 
 @jit
@@ -799,6 +798,9 @@ def broadpar_getix(ngamma_ref, ngamma_ref_grid, n_Texp, n_Texp_grid):
     uidx_lines, neighbor_indices, multi_index_uniqgrid = uniqidx_neibouring(
         multi_index_lines
     )
+
+    check_multi_index_uniqgrid_shape(ngamma_ref_grid, n_Texp_grid, multi_index_uniqgrid)
+    
     ngrid_broadpar = len(multi_index_uniqgrid)
     return (
         multi_index_lines,
@@ -808,6 +810,23 @@ def broadpar_getix(ngamma_ref, ngamma_ref_grid, n_Texp, n_Texp_grid):
         multi_index_uniqgrid,
         ngrid_broadpar,
     )
+
+def check_multi_index_uniqgrid_shape(ngamma_ref_grid, n_Texp_grid, multi_index_uniqgrid):
+    """checks the shape of multi_index_uniqgrid
+    
+    Args:
+        ngamma_ref_grid (array): normalized half-width at reference grid
+        n_Texp_grid (array): temperature exponent grid
+        multi_index_uniqgrid (array): multi index of unique broadening parameter grid [nbroad,2]
+
+    Raises:
+        ValueError: The shape of multi_index_uniqgrid is not consistent with ngamma_ref_grid, n_Texp_grid
+    """
+    if multi_index_uniqgrid.shape[0] != len(ngamma_ref_grid) * len(n_Texp_grid):
+        print("multi_index_uniqgrid.shape[0]:", multi_index_uniqgrid.shape[0])
+        print("ngamma_ref:", len(ngamma_ref_grid), "n_Texp:", len(n_Texp_grid))
+        msg = "multi_index_uniqgrid.shape[0] should be len(ngamma_ref_grid) * len(n_Texp_grid)"
+        raise ValueError(msg)
 
 
 def compute_dElower(T, interval_contrast=0.1):
