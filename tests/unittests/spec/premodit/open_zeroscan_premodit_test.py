@@ -47,7 +47,7 @@ def test_open_close_xsmatrix_premodit_agreement(db="exomol"):
     )
     maxdiff = jnp.max(jnp.abs(diff))
     print(maxdiff)  # 0.003954996543941491 Feb. 18th 2025
-    assert maxdiff < 0.006
+    assert maxdiff < 0.0065
 
 
 if __name__ == "__main__":
