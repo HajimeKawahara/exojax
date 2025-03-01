@@ -7,7 +7,6 @@ Notes:
 
 __all__ = ["OpaPremodit", "OpaModit", "OpaDirect"]
 
-from sympy import div
 from exojax.spec import initspec
 from exojax.spec.lbderror import optimal_params
 from exojax.utils.grids import wavenumber_grid
@@ -18,16 +17,15 @@ from exojax.utils.constants import Patm
 from exojax.utils.constants import Tref_original
 from exojax.utils.jaxstatus import check_jax64bit
 from exojax.utils.checkarray import is_outside_range
-import jax.numpy as jnp
-from jax import jit
-from jax import vmap
 from exojax.utils.grids import nu2wav
 from exojax.utils.instfunc import resolution_eslog
 from exojax.signal.ola import overlap_and_add
 from exojax.signal.ola import ola_output_length
 from exojax.signal.ola import overlap_and_add_matrix
+import jax.numpy as jnp
 from jax.lax import scan
 from jax.lax import dynamic_slice
+from jax import jit
 from jax import vmap
 
 import numpy as np
@@ -641,8 +639,7 @@ class OpaPremodit(OpaCalc):
         Returns:
             jnp.array : cross section matrix (Nlayer, N_wavenumber)
         """
-        from jax import vmap
-
+        
         (
             multi_index_uniqgrid,
             elower_grid,
@@ -744,7 +741,7 @@ class OpaPremodit(OpaCalc):
         """
         from exojax.plot.opaplot import plot_broadening_parameters_grids
 
-        _, _, _, ngamma_ref_grid, n_Texp_grid, _, _ = self.opainfo
+        _, _, ngamma_ref_grid, n_Texp_grid, _, _ = self.opainfo
         gamma_ref_in = self.gamma_ref
         n_Texp_in = self.n_Texp
         plot_broadening_parameters_grids(
