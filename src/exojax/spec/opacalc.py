@@ -7,7 +7,6 @@ Notes:
 
 __all__ = ["OpaPremodit", "OpaModit", "OpaDirect"]
 
-from torch import mul
 from exojax.spec import initspec
 from exojax.spec.lbderror import optimal_params
 from exojax.utils.grids import wavenumber_grid
@@ -249,7 +248,6 @@ class OpaPremodit(OpaCalc):
         self._sets_capable_opacalculators()
         if nstitch > 1:
             self.reshape_lbd_coeff()
-        
 
     def __eq__(self, other):
         """eq method for OpaPremodit, definied by comparing all the attributes and important status
@@ -405,7 +403,7 @@ class OpaPremodit(OpaCalc):
 
     def apply_params(self):
         """apply the parameters to the class
-            define self.lbd_coeff and self.opainfo
+        define self.lbd_coeff and self.opainfo
         """
         # self.mdb.change_reference_temperature(self.Tref)
         self.dbtype = self.mdb.dbtype
@@ -449,12 +447,14 @@ class OpaPremodit(OpaCalc):
             single_broadening_parameters=self.single_broadening_parameters,
             warning=self.warning,
         )
-        self.opainfo = (multi_index_uniqgrid,
+        self.opainfo = (
+            multi_index_uniqgrid,
             elower_grid,
             ngamma_ref_grid,
             n_Texp_grid,
             R,
-            pmarray)
+            pmarray,
+        )
         self.ready = True
 
         self.ngrid_broadpar = len(multi_index_uniqgrid)
@@ -515,18 +515,18 @@ class OpaPremodit(OpaCalc):
 
     def reshape_lbd_coeff(self):
         """reshape lbd_coeff for stitching mode
-            this method deletes self.lbd_coeff and creates self.lbd_coeff_reshaped
-            self.lbd_coeff_reshaped has a dimension of (self.nstitch, diffmode+1, self.div_length, len(elower_grid))  
+        this method deletes self.lbd_coeff and creates self.lbd_coeff_reshaped
+        self.lbd_coeff_reshaped has a dimension of (self.nstitch, diffmode+1, self.div_length, N_broadening, len(elower_grid))
         """
-        
+
         shape_lbd = self.lbd_coeff.shape
         lbd_coeff_reshaped = np.zeros(
             (
                 self.nstitch,
                 shape_lbd[0],
                 self.div_length,
-                shape_lbd[2],
-                shape_lbd[3],
+                shape_lbd[2],  # N_broadening
+                shape_lbd[3],  # N_Elower
             )
         )
         for i in range(self.nstitch):
@@ -554,13 +554,13 @@ class OpaPremodit(OpaCalc):
         elif self.mdb.dbtype == "exomol":
             qt = self.mdb.qr_interp(T, self.Tref)
 
-        #print(multi_index_uniqgrid.shape)
-        #print(n_Texp_grid.shape)
-        #print(multi_index_uniqgrid)
-        #exit()
-        
+        # print(multi_index_uniqgrid.shape)
+        # print(n_Texp_grid.shape)
+        # print(multi_index_uniqgrid)
+        # exit()
 
         if self.nstitch > 1:
+
             def floop(icarry, lbd_coeff):
                 nu_grid_each = dynamic_slice(
                     self.nu_grid, (icarry * self.div_length,), (self.div_length,)
@@ -594,7 +594,6 @@ class OpaPremodit(OpaCalc):
             xsv = xsv_ola_stitch[
                 self.filter_length_oneside : -self.filter_length_oneside
             ]
-
         elif self.alias == "open" and self.nstitch == 1:
             xsvector_func = self.xsvector_open[self.diffmode]
             xsv = xsvector_func(
@@ -653,7 +652,7 @@ class OpaPremodit(OpaCalc):
         Returns:
             jnp.array : cross section matrix (Nlayer, N_wavenumber)
         """
-        
+
         (
             multi_index_uniqgrid,
             elower_grid,

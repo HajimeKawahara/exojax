@@ -61,6 +61,7 @@ def ditgrid_linear_interval(input_variable, dit_grid_resolution=0.1, weight = No
         grid = np.linspace(wxmin, wxmin+(Ng-1)*dit_grid_resolution, Ng)
     else:
         grid = np.linspace(wxmin, wxmax, Ng)
+    
     return grid/weight
 
 

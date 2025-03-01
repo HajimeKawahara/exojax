@@ -8,6 +8,7 @@ Notes:
 import numpy as np
 import jax.numpy as jnp
 from jax import jit, vmap
+from py import log
 from exojax.utils.indexing import npgetix
 from exojax.spec.lsd import npadd3D_multi_index, npadd3D_direct1D
 from exojax.utils.constants import hcperk
@@ -23,7 +24,7 @@ from exojax.spec.lbd import lbd_coefficients
 from functools import partial
 
 
-@partial(jit, static_argnums=14)
+#@partial(jit, static_argnums=14)
 def xsvector_open_zeroth(
     T,
     P,
@@ -80,10 +81,9 @@ def xsvector_open_zeroth(
         Tref_broadening,
         filter_length_oneside,
     )
-
     return xs / nu_grid_extended
 
-
+#@partial(jit, static_argnums=13)
 def xsvector_nu_open_zeroth(
     T,
     P,
@@ -121,17 +121,24 @@ def xsvector_nu_open_zeroth(
         Twt: not used
     Returns:
         jnp.array: nu sigma (nu_grid_extended x cross section) in cgs vector
-    """
+    """        
     Slsd = unbiased_lsd_zeroth(lbd_coeff[0], T, Tref, nu_grid, elower_grid, qt)
     ngamma_grid = unbiased_ngamma_grid(
         T, P, ngamma_ref_grid, n_Texp_grid, multi_index_uniqgrid, Tref_broadening
     )
+    print(n_Texp_grid)
+    print(multi_index_uniqgrid)
+    print(ngamma_grid)
     log_ngammaL_grid = jnp.log(ngamma_grid)
-
+    print(log_ngammaL_grid)
+    print(lbd_coeff.shape)
+    print("exit at L135 in premodit.py")
+    exit()
+    
     xs = calc_open_nu_xsection_from_lsd_zeroscan(
         Slsd, R, nsigmaD, log_ngammaL_grid, filter_length_oneside
     )
-
+    
     return xs
 
 
@@ -1160,6 +1167,20 @@ def broadpar_getix(ngamma_ref, ngamma_ref_grid, n_Texp, n_Texp_grid):
         multi_index_lines
     )
     ngrid_broadpar = len(multi_index_uniqgrid)
+    for uniq_index in np.unique(uidx_lines):
+        print(uniq_index, multi_index_uniqgrid[uniq_index]) #
+    print(np.unique(uidx_lines))
+    print(np.max(n_Texp))
+    print(np.max(ngamma_ref))
+    print(multi_index_lines)
+    #print(multi_cont_lines)
+    #print(n_Texp)
+    print(ngamma_ref_grid)
+    print(n_Texp_grid)
+    print(multi_index_uniqgrid)
+    print("end at L1172 in premodit.py")
+    exit()
+    
     return (
         multi_index_lines,
         multi_cont_lines,
@@ -1466,7 +1487,7 @@ def unbiased_lsd_second(lbd_coeff, T, Tref, Twt, nu_grid, elower_grid, qt):
     Slsd = jnp.sum(jnp.exp(lfb + lbd_coeff[0]) + unbiased_coeff, axis=-1)
     return (Slsd.T * g_bias(nu_grid, T, Tref) / qt).T
 
-
+@jit ##debug
 def unbiased_ngamma_grid(
     T, P, ngamma_ref_grid, n_Texp_grid, multi_index_uniqgrid, Tref_broadening
 ):
@@ -1489,4 +1510,5 @@ def unbiased_ngamma_grid(
     """
     ngamma_ref_g = ngamma_ref_grid[multi_index_uniqgrid[:, 0]]
     n_Texp_g = n_Texp_grid[multi_index_uniqgrid[:, 1]]
-    return ngamma_ref_g * (T / Tref_broadening) ** (-n_Texp_g) * P
+    return n_Texp_g
+    #return ngamma_ref_g * (T / Tref_broadening) ** (-n_Texp_g) * P

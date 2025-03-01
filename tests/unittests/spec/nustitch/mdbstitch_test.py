@@ -12,12 +12,14 @@ nu_grid, _, _ = wavenumber_grid(4325.0, 4365.0, 2*filter_length_oneside, xsmode=
 T=1000.0 #K
 P=1.0 #bar
 
-opa_stitch_all = OpaPremodit(
+opa = OpaPremodit(
     mdb=mdb,
     nu_grid=nu_grid,
     dit_grid_resolution=0.2,
     auto_trange=[400.0, 1500.0],
-#    nstitch=2,
+    #nstitch=2,
+    alias="open",
     cutwing=0.5,
 )
-xsv_stitch_all= opa_stitch_all.xsvector(T,P)
+#opa.plot_broadening_parameters()
+xsv_stitch_all= opa.xsvector(T,P)
