@@ -739,10 +739,8 @@ Let’s perform a retrieval on this mock spectrum with correlated noise.
         mu = fspec(T0, alpha, mmr, 10**logg, RV, vsini)
     
         # GP
-        logtau = numpyro.sample("logtau", dist.Uniform(-1.0, 1.0))  # tau=1 <=> 1cm-1
-        tau = 10 ** (logtau)
-        loga = numpyro.sample("loga", dist.Uniform(4, 8))  # 100-10000
-        a = 10 ** (loga)
+        tau = numpyro.sample("tau", dist.LogUniform(0.1, 10.0))  # tau=1 <=> 1cm-1
+        a = numpyro.sample("a", dist.LogUniform(1.e4, 1.e8))  # 100-10000
     
         # noise model parameters priors
         sigmain = numpyro.sample("sigmain", dist.Exponential(1.0e-3))
@@ -868,8 +866,8 @@ specified number of samples (``num_samples``).
 .. code:: ipython3
 
     import tqdm
-    scale_sampling = 10 ** posterior_sample_gp["logtau"]
-    amplitude_sampling = 10 ** posterior_sample_gp["loga"]
+    scale_sampling = posterior_sample_gp["tau"]
+    amplitude_sampling = posterior_sample_gp["a"]
     err_sampling = jnp.array(posterior_sample_gp["sigmain"])[:,None]*jnp.ones((num_samples, len(nu_obs)))
     prediction_spectrum = predictions_gp["spectrum"]
     key = random.PRNGKey(20)
@@ -897,7 +895,7 @@ specified number of samples (``num_samples``).
             )
             mn = dist.MultivariateNormal(loc=ave, covariance_matrix=cov)
             key, _ = random.split(key)
-            mk = numpyro.sample("a", mn, rng_key=key)
+            mk = numpyro.sample("mk", mn, rng_key=key)
     
             gp_predictions.append(mk)
         return jnp.array(gp_predictions)
