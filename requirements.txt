@@ -13,6 +13,7 @@ termcolor
 h5py
 joblib
 astropy
+astroquery
 psutil
 json_tricks
 numpy<2
