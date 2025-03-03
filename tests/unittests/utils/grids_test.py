@@ -127,5 +127,7 @@ def test_is_outside_range(xarr, xs, xe, expected):
 
 
 
+
 if __name__ == "__main__":
     test_extended_wavenumber_grid()
+    #test_optimal_nu_grid_length()

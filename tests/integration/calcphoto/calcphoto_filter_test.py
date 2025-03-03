@@ -2,6 +2,7 @@ import jax.numpy as jnp
 import numpy as np
 from exojax.utils.grids import wavenumber_grid
 from exojax.spec.unitconvert import wav2nu
+from exojax.utils.photometry import get_filter_from_svo, average_resolution
 #from astropy import units as u
 
 #http://svo2.cab.inta-csic.es/theory/fps/
@@ -9,30 +10,15 @@ up_resolution_factor = 2**5
 filter_name = '2MASS/2MASS.H'
 
 
-from astroquery.svo_fps import SvoFps
-data = SvoFps.get_transmission_data(filter_name)
-unit = str(data['Wavelength'].unit)
-wl_ref = data['Wavelength']
-nu_ref, transmission_ref = wav2nu(np.array(wl_ref), unit=unit, values=np.array(data['Transmission']))
 
 
-import matplotlib.pyplot as plt
-fig = plt.figure()
-ax = fig.add_subplot(211)
-plt.plot(data['Wavelength'], data['Transmission'])
-ax = fig.add_subplot(212)
-plt.plot(nu_ref, transmission_ref)
-plt.show()
+nu_ref, transmission_ref = get_filter_from_svo(filter_name)
 
 
-print(nu_ref)
+resolution_photo = average_resolution(nu_ref) * up_resolution_factor
+print("resolution_photo=",resolution_photo)
+
 exit()
-#####
-wl_min = np.min(wl_ref)
-wl_max = np.max(wl_ref)
-dlmd = (wl_max - wl_min) / len(wl_ref)
-Rinst_p = 0.5 * (wl_min + wl_max) / dlmd
-R = Rinst_p * up_resolution_factor
 
 nu_min = 1.0e8/(wl_max + 5.0)
 nu_max = 1.0e8/(wl_min - 5.0)

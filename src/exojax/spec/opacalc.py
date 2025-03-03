@@ -10,7 +10,7 @@ __all__ = ["OpaPremodit", "OpaModit", "OpaDirect"]
 from exojax.spec import initspec
 from exojax.spec.lbderror import optimal_params
 from exojax.utils.grids import wavenumber_grid
-from exojax.utils.instfunc import nx_from_resolution_eslog
+from exojax.utils.instfunc import nx_even_from_resolution_eslog
 from exojax.utils.grids import nu2wav
 from exojax.utils.instfunc import resolution_eslog
 from exojax.utils.constants import Patm
@@ -247,9 +247,7 @@ class OpaPremodit(OpaCalc):
 
     def set_nu_grid(self, x0, x1, unit, resolution=700000, Nx=None):
         if Nx is None:
-            Nx = nx_from_resolution_eslog(x0, x1, resolution)
-        if np.mod(Nx, 2) == 1:
-            Nx = Nx + 1
+            Nx = nx_even_from_resolution_eslog(x0, x1, resolution)
         self.nu_grid, self.wav, self.resolution = wavenumber_grid(
             x0, x1, Nx, unit=unit, xsmode="premodit"
         )
