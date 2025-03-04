@@ -5,6 +5,7 @@ from exojax.utils.photometry import download_filter_from_svo
 from exojax.utils.photometry import average_resolution
 from exojax.utils.photometry import download_zero_magnitude_flux_from_svo
 from exojax.utils.instfunc import nx_even_from_resolution_eslog
+import matplotlib.pyplot as plt
 
 # from astropy import units as u
 
@@ -17,21 +18,12 @@ resolution_photo = average_resolution(nu_ref) * up_resolution_factor
 print("resolution_photo=", resolution_photo)
 
 Nx = nx_even_from_resolution_eslog(np.min(nu_ref), np.max(nu_ref), resolution_photo)
-nu_ref_min = 5460.0
-nu_ref_max = 6950.0
 
-
-import matplotlib.pyplot as plt
 plt.plot(nu_ref, transmission_ref)
-plt.axvline(nu_ref_min, color="red")
-plt.axvline(nu_ref_max, color="red")
-plt.yscale("log")
 plt.savefig("transmission.png")
-plt.show()
+#plt.show()
 
-nus, wav, res = wavenumber_grid(
-    nu_ref[0] + 1.0, nu_ref[-1] + 1.0, Nx, unit="cm-1", xsmode="premodit"
-)
+nus, wav, res = wavenumber_grid(nu_ref[0], nu_ref[-1], Nx, unit="cm-1", xsmode="premodit")
 transmission = np.interp(nus, nu_ref, transmission_ref)
 
 def calc_apparent_magnitute(flux, f_ref=1.0):
