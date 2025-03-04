@@ -1,3 +1,4 @@
+from math import log
 import numpy as np
 import jax.numpy as jnp
 from exojax.spec.unitconvert import wav2nu
@@ -14,18 +15,19 @@ def apparent_magnitude(flux_filter, nu_grid_filter, transmission_filter, f0_nu_c
         f0_nu_cgs (float): zero magnitude flux in the unit of erg/s/cm^2/cm-1
 
     """
+    factor = 1.0e20
+    logfactor = 20.0
     integrated_flux = jnp.trapezoid(
-        flux_filter * transmission_filter, nu_grid_filter
+        (flux_filter * factor) * transmission_filter, nu_grid_filter
     ) / jnp.trapezoid(transmission_filter, nu_grid_filter)
-    return -2.5 * jnp.log10(integrated_flux / f0_nu_cgs)
+    return -2.5 * jnp.log10(integrated_flux / f0_nu_cgs - logfactor)
 
 
 def apparent_magnitude_isothermal_sphere(
     temperature, radius, distance, nu_ref, transmission_ref, f0_nu_cgs
 ):
-    
     """calc apparent magnitude of an isothermal sphere
-    
+
     Args:
         temperature (float): temperature (K)
         radius (float): radius (RJ)
@@ -39,10 +41,10 @@ def apparent_magnitude_isothermal_sphere(
     from exojax.utils.constants import RJ
     from exojax.utils.constants import pc
 
-    factor = 1.e10
+    factor = 1.0e10
     logfactor = 20.0
     RJperpc = RJ / pc * factor
-    absflux = piB(temperature, nu_ref) * (radius) ** 2 / (distance) ** 2 * RJperpc ** 2
+    absflux = piB(temperature, nu_ref) * (radius) ** 2 / (distance) ** 2 * RJperpc**2
     f = jnp.trapezoid(absflux * transmission_ref, nu_ref) / jnp.trapezoid(
         transmission_ref, nu_ref
     )
