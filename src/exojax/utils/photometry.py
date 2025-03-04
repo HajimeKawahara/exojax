@@ -1,7 +1,18 @@
 import numpy as np
+import jax.numpy as jnp
 from exojax.spec.unitconvert import wav2nu
 from exojax.utils.constants import ccgs
 
+
+
+def magnitude_isothermal_sphere(temperature, radius, distance, nu_ref, transmission_ref, f0_nu_cgs):
+    from exojax.utils.constants import RJ
+    from exojax.utils.constants import pc
+    from exojax.spec.planck import piB
+    absflux = piB(temperature, nu_ref)*(radius*RJ)**2/(distance*pc)**2
+    print(absflux)
+    f = jnp.trapezoid(absflux*transmission_ref, nu_ref)/jnp.trapezoid(transmission_ref, nu_ref)
+    return -2.5*jnp.log10(f/f0_nu_cgs)
 
 def download_filter_from_svo(filter_name):
     """download filter transmission data from SVO
@@ -74,3 +85,16 @@ def average_resolution(nu_ref):
     dnu_ave = (nu_ref_max - nu_ref_min) / len(nu_ref)
     nuave = (nu_ref_max + nu_ref_min) / 2.0
     return nuave / dnu_ave
+
+if __name__ == "__main__":
+    from jax import config
+    config.update("jax_enable_x64", True)
+
+    radius = 0.85 #RJ
+    distance = 17.72 #pc"
+    temperature = 1700.0 #K
+    filter_name = "Keck/NIRC2.Ks"
+    nu_ref, transmission_ref = download_filter_from_svo(filter_name)
+    nu0, f0_nu_cgs = download_zero_magnitude_flux_from_svo(filter_name, unit="cm-1")
+    mag = magnitude_isothermal_sphere(temperature, radius, distance, nu_ref, transmission_ref, f0_nu_cgs)
+    print(mag)
