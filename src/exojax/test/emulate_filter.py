@@ -20,3 +20,8 @@ def mock_filter():
     f0 = 1.20623691665283e-09
     
     return nu0, f0, dat["nu"].values, dat["transmission"].values
+
+if __name__ == "__main__":
+    nu0, f0, nu_ref, transmission_ref = mock_filter()
+    print(nu0, f0, nu_ref, transmission_ref)
+    
