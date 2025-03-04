@@ -20,7 +20,7 @@ def apparent_magnitude(flux_filter, nu_grid_filter, transmission_filter, f0_nu_c
     integrated_flux = jnp.trapezoid(
         (flux_filter * factor) * transmission_filter, nu_grid_filter
     ) / jnp.trapezoid(transmission_filter, nu_grid_filter)
-    return -2.5 * jnp.log10(integrated_flux / f0_nu_cgs - logfactor)
+    return -2.5 * (jnp.log10(integrated_flux / f0_nu_cgs) - logfactor)
 
 
 def apparent_magnitude_isothermal_sphere(
