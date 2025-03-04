@@ -1,11 +1,9 @@
-from math import log
 import numpy as np
 import jax.numpy as jnp
 from exojax.spec.unitconvert import wav2nu
 from exojax.utils.constants import ccgs
 
-
-def apparent_magnitude(flux_filter, nu_grid_filter, transmission_filter, f0_nu_cgs):
+def apparent_magnitude(flux_filter, nu_grid_filter, transmission_filter, f0_nu_cgs, factor = 1.0e20):
     """computes apparent magnitude
 
     Args:
@@ -13,10 +11,10 @@ def apparent_magnitude(flux_filter, nu_grid_filter, transmission_filter, f0_nu_c
         nu_grid_filter (array): wavenumber grid (cm-1)
         transmission_filter (array): transmission filter (dimensionless, 0 to 1)
         f0_nu_cgs (float): zero magnitude flux in the unit of erg/s/cm^2/cm-1
-
+        factor (float): factor to prevent numerical error. Defaults to 1.0e20.
     """
-    factor = 1.0e20
-    logfactor = 20.0
+    
+    logfactor = jnp.log10(factor)
     integrated_flux = jnp.trapezoid(
         (flux_filter * factor) * transmission_filter, nu_grid_filter
     ) / jnp.trapezoid(transmission_filter, nu_grid_filter)
@@ -41,14 +39,8 @@ def apparent_magnitude_isothermal_sphere(
     from exojax.utils.constants import RJ
     from exojax.utils.constants import pc
 
-    factor = 1.0e10
-    logfactor = 20.0
-    RJperpc = RJ / pc * factor
-    absflux = piB(temperature, nu_ref) * (radius) ** 2 / (distance) ** 2 * RJperpc**2
-    f = jnp.trapezoid(absflux * transmission_ref, nu_ref) / jnp.trapezoid(
-        transmission_ref, nu_ref
-    )
-    return -2.5 * (jnp.log10(f / f0_nu_cgs) - logfactor)
+    absflux = piB(temperature, nu_ref) * (radius) ** 2 / (distance) ** 2 * (RJ / pc)**2
+    return apparent_magnitude(absflux, nu_ref, transmission_ref, f0_nu_cgs)
 
 
 def download_filter_from_svo(filter_name):
