@@ -1,6 +1,18 @@
 """filenames of test data used in unit tests
 
 """
+def get_testdata_filename(filename):
+    """get the full path of the test data file
+
+    Args:
+        filename (str): filename of the test data
+
+    Returns:
+        str: full path of the test data file
+
+    """
+    from importlib.resources import files
+    return files('exojax').joinpath("test/data/" + filename)
 
 # exomol moldb template used in unit tests (will be removed)
 TESTDATA_moldb_VALD = "moldb_vald.pickle"
@@ -52,3 +64,8 @@ TESTDATA_refrind = "test.refrind"
 
 #comparision data from other sources
 COMPDATA_TRANSMISSION_CO = "CO100percent_500K.feather" #from Kawashima
+
+#test data for photometry
+TESTDATA_FILTER_SDSS_G = "filter_sdss_g.csv"
+
+

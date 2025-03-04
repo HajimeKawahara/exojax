@@ -2,11 +2,13 @@
 """
 
 import pickle
-from importlib.resources import files
 import os
 import shutil
+
+from requests import get
 from exojax.spec import api
 from exojax.test.data import TESTDATA_moldb_VALD
+from exojax.test.data import get_testdata_filename
 from exojax.utils.grids import wavenumber_grid
 
 
@@ -51,7 +53,7 @@ def mock_mdbExomol(molecule="CO", crit=0.0):
         mdbExomol instance
     """
     
-    dirname = files("exojax").joinpath("data/testdata/"+molecule)
+    dirname = get_testdata_filename(molecule)
     target_dir = os.getcwd() + "/"+molecule
     if os.path.exists(target_dir):
         shutil.rmtree(target_dir)
@@ -90,7 +92,7 @@ def mock_mdbHitemp(multi_isotope=False):
 
     from exojax.test.data import TESTDATA_CO_HITEMP_PARFILE
 
-    parfile = files("exojax").joinpath("data/testdata/CO/" + TESTDATA_CO_HITEMP_PARFILE)
+    parfile = get_testdata_filename(TESTDATA_CO_HITEMP_PARFILE)
     nus, wav, res = mock_wavenumber_grid()
     mdb = api.MdbHitemp(
         "CO",
@@ -108,7 +110,7 @@ def mock_mdbVALD():
     Returns:
         AdbVald instance
     """
-    filename = files("exojax").joinpath("data/testdata/" + TESTDATA_moldb_VALD)
+    filename = get_testdata_filename(TESTDATA_moldb_VALD)
     with open(filename, "rb") as f:
         mdb = pickle.load(f)
     return mdb

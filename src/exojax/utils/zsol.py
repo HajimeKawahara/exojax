@@ -5,7 +5,6 @@
 """
 
 import numpy as np
-from exojax import data
 from exojax.spec.molinfo import element_mass
 
 
