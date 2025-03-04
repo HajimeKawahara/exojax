@@ -94,6 +94,9 @@ if __name__ == "__main__":
     distance = 17.72 #pc"
     temperature = 1700.0 #K
     filter_name = "Keck/NIRC2.Ks"
+    #temperature = 2100.0 #K
+    #filter_name = "2MASS/2MASS.J"
+    
     nu_ref, transmission_ref = download_filter_from_svo(filter_name)
     nu0, f0_nu_cgs = download_zero_magnitude_flux_from_svo(filter_name, unit="cm-1")
     mag = magnitude_isothermal_sphere(temperature, radius, distance, nu_ref, transmission_ref, f0_nu_cgs)
