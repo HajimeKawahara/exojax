@@ -14,6 +14,6 @@ def generate_filter_sdss_g():
 if __name__ == "__main__":
     nu0, f0 = generate_filter_sdss_g()
     print(nu0, f0)
-    #nu0 21258.71108019469
+    #nu0 = 21258.71108019469
     #f0 = 1.20623691665283e-09
     
