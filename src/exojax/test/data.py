@@ -12,7 +12,7 @@ def get_testdata_filename(filename):
 
     """
     from importlib.resources import files
-    return files('exojax').joinpath("test/data/" + filename)
+    return files('exojax').joinpath("data/testdata/" + filename)
 
 # exomol moldb template used in unit tests (will be removed)
 TESTDATA_moldb_VALD = "moldb_vald.pickle"
