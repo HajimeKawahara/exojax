@@ -4,15 +4,50 @@ from exojax.spec.unitconvert import wav2nu
 from exojax.utils.constants import ccgs
 
 
+def apparent_magnitude(flux_filter, nu_grid_filter, transmission_filter, f0_nu_cgs):
+    """computes apparent magnitude
 
-def magnitude_isothermal_sphere(temperature, radius, distance, nu_ref, transmission_ref, f0_nu_cgs):
+    Args:
+        flux (array): flux in the unit of erg/s/cm^2/cm-1
+        nu_grid_filter (array): wavenumber grid (cm-1)
+        transmission_filter (array): transmission filter (dimensionless, 0 to 1)
+        f0_nu_cgs (float): zero magnitude flux in the unit of erg/s/cm^2/cm-1
+
+    """
+    integrated_flux = jnp.trapezoid(
+        flux_filter * transmission_filter, nu_grid_filter
+    ) / jnp.trapezoid(transmission_filter, nu_grid_filter)
+    return -2.5 * jnp.log10(integrated_flux / f0_nu_cgs)
+
+
+def apparent_magnitude_isothermal_sphere(
+    temperature, radius, distance, nu_ref, transmission_ref, f0_nu_cgs
+):
+    
+    """calc apparent magnitude of an isothermal sphere
+    
+    Args:
+        temperature (float): temperature (K)
+        radius (float): radius (RJ)
+        distance (float): distance (pc)
+        nu_ref (array): wavenumber (cm-1)
+        transmission_ref (array): transmission filter (dimensionless, 0 to 1)
+        f0_nu_cgs (float): zero magnitude flux in the unit of erg/s/cm^2/cm-1
+
+    """
+    from exojax.spec.planck import piB
     from exojax.utils.constants import RJ
     from exojax.utils.constants import pc
-    from exojax.spec.planck import piB
-    absflux = piB(temperature, nu_ref)*(radius*RJ)**2/(distance*pc)**2
-    print(absflux)
-    f = jnp.trapezoid(absflux*transmission_ref, nu_ref)/jnp.trapezoid(transmission_ref, nu_ref)
-    return -2.5*jnp.log10(f/f0_nu_cgs)
+
+    factor = 1.e10
+    logfactor = 20.0
+    RJperpc = RJ / pc * factor
+    absflux = piB(temperature, nu_ref) * (radius) ** 2 / (distance) ** 2 * RJperpc ** 2
+    f = jnp.trapezoid(absflux * transmission_ref, nu_ref) / jnp.trapezoid(
+        transmission_ref, nu_ref
+    )
+    return -2.5 * (jnp.log10(f / f0_nu_cgs) - logfactor)
+
 
 def download_filter_from_svo(filter_name):
     """download filter transmission data from SVO
@@ -86,18 +121,22 @@ def average_resolution(nu_ref):
     nuave = (nu_ref_max + nu_ref_min) / 2.0
     return nuave / dnu_ave
 
+
 if __name__ == "__main__":
     from jax import config
+
     config.update("jax_enable_x64", True)
 
-    radius = 0.85 #RJ
-    distance = 17.72 #pc"
-    temperature = 1700.0 #K
+    radius = 0.85  # RJ
+    distance = 17.72  # pc"
+    temperature = 1700.0  # K
     filter_name = "Keck/NIRC2.Ks"
-    #temperature = 2100.0 #K
-    #filter_name = "2MASS/2MASS.J"
-    
+    # temperature = 2100.0 #K
+    filter_name = "2MASS/2MASS.J"
+
     nu_ref, transmission_ref = download_filter_from_svo(filter_name)
     nu0, f0_nu_cgs = download_zero_magnitude_flux_from_svo(filter_name, unit="cm-1")
-    mag = magnitude_isothermal_sphere(temperature, radius, distance, nu_ref, transmission_ref, f0_nu_cgs)
+    mag = apparent_magnitude_isothermal_sphere(
+        temperature, radius, distance, nu_ref, transmission_ref, f0_nu_cgs
+    )
     print(mag)

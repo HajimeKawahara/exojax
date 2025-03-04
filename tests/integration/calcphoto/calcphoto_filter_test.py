@@ -4,7 +4,11 @@ from exojax.utils.grids import wavenumber_grid
 from exojax.utils.photometry import download_filter_from_svo
 from exojax.utils.photometry import average_resolution
 from exojax.utils.photometry import download_zero_magnitude_flux_from_svo
+from exojax.utils.photometry import apparent_magnitude
 from exojax.utils.instfunc import nx_even_from_resolution_eslog
+from exojax.utils.constants import RJ
+from exojax.utils.constants import pc
+    
 import matplotlib.pyplot as plt
 
 # from astropy import units as u
@@ -23,30 +27,7 @@ plt.plot(nu_ref, transmission_ref)
 plt.savefig("transmission.png")
 #plt.show()
 
-nus, wav, res = wavenumber_grid(nu_ref[0], nu_ref[-1], Nx, unit="cm-1", xsmode="premodit")
-transmission = np.interp(nus, nu_ref, transmission_ref)
+nus_filter, wav_filter, res = wavenumber_grid(nu_ref[0], nu_ref[-1], Nx, unit="cm-1", xsmode="premodit")
+transmission_filter = np.interp(nus_filter, nu_ref, transmission_ref)
+#apparent_magnitude(1.0, 1.0, 1.0, nus_filter, transmission_filter, f0)
 
-def calc_apparent_magnitute(flux, f_ref=1.0):
-    #flux (erg/s/cm^2/cm-1)
-    pass
-
-
-    
-
-
-
-def calc_photo(mu, f_ref=1.0):
-    mu = jnp.concatenate(mu)
-    mu = mu * f_ref  # [erg/s/cm^2/cm^{-1}]
-    # [erg/s/cm^2/cm^{-1}] => [erg/s/cm^2/cm]
-    mu = mu / (jnp.concatenate(wavd_p) * 1.0e-8) ** 2.0e0
-    # [erg/s/cm^2/cm] => [W/m^2/um]
-    mu = mu * 1.0e-7 * 1.0e4 * 1.0e-4
-
-    fdl = jnp.trapz(mu * jnp.concatenate(tr), jnp.concatenate(wavd_p))
-    dl = jnp.trapz(jnp.concatenate(tr), jnp.concatenate(wavd_p))
-    f = fdl / dl
-
-    H_mag = -2.5 * jnp.log10(f / f0)
-
-    return H_mag
