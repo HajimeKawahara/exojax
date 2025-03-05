@@ -60,7 +60,7 @@ Spectral Operators
    :maxdepth: 1
 
    userguide/sop.rst
-
+   tutorials/Photometry.rst
    
 Others
 ====================
