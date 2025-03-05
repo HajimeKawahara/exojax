@@ -56,8 +56,8 @@ def resolution_eslin(nu_grid):
     )
 
 
-def nx_from_resolution_eslog(nu0, nu1, resolution):
-    """Compute the number of wavenumber grid for a given resolution for ESLOG
+def nx_even_from_resolution_eslog(nu0, nu1, resolution):
+    """Compute the even number of wavenumber grid for a given resolution for ESLOG
 
     Args:
         nu0 (float): wavenumber min
@@ -65,6 +65,7 @@ def nx_from_resolution_eslog(nu0, nu1, resolution):
         resolution (float): resolution
 
     Returns:
-        int: the number of wavenumber grid for a given resolution
+        int: the even number of wavenumber grid for a given resolution
     """
-    return int(resolution * np.log(nu1 / nu0)) + 1
+    N = np.ceil(resolution * np.log(nu1 / nu0))
+    return int(np.ceil(N / 2.0) * 2  )

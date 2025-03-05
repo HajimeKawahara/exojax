@@ -1,6 +1,21 @@
 """filenames of test data used in unit tests
 
 """
+TESTDATA_DIR = "data/testdata/"
+
+def get_testdata_filename(filename):
+    """get the full path of the test data file
+
+    Args:
+        filename (str): filename of the test data
+        dirname (str): directory name of the test data  (default: "data/testdata/")
+
+    Returns:
+        str: full path of the test data file
+
+    """
+    from importlib.resources import files
+    return files('exojax').joinpath(TESTDATA_DIR + filename)
 
 # exomol moldb template used in unit tests (will be removed)
 TESTDATA_moldb_VALD = "moldb_vald.pickle"
@@ -42,7 +57,7 @@ SAMPLE_SPECTRA_CH4_TRANS = "spectrum_ch4_trans.txt"  # generate_methane_trans.py
 SAMPLE_TRANSMISSION_CH4 = "transmission_ch4.txt"
 
 # test data par file
-TESTDATA_CO_HITEMP_PARFILE = "05_HITEMP_SAMPLE.par"
+TESTDATA_CO_HITEMP_PARFILE = "CO/05_HITEMP_SAMPLE.par"
 
 # test data CIA H2-H2 (4300-4400 cm-1)
 TESTDATA_H2_H2_CIA = "H2-H2_TEST.cia"
@@ -52,3 +67,8 @@ TESTDATA_refrind = "test.refrind"
 
 #comparision data from other sources
 COMPDATA_TRANSMISSION_CO = "CO100percent_500K.feather" #from Kawashima
+
+#test data for photometry
+TESTDATA_FILTER_SDSS_G = "filter_sdss_g.csv"
+
+

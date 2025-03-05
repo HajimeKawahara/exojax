@@ -13,6 +13,8 @@ termcolor
 h5py
 joblib
 astropy
+astroquery
 psutil
 json_tricks
+habanero<=1.2.6
 numpy<2
