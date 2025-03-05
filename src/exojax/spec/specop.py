@@ -7,7 +7,6 @@
 
 """
 
-from re import S
 import numpy as np
 import pandas as pd
 import pathlib
@@ -21,6 +20,9 @@ from exojax.utils.photometry import apparent_magnitude
 
 
 class SopPhoto:
+    """
+    Spectral Operator for photometry
+    """
 
     def __init__(
         self,
@@ -28,19 +30,30 @@ class SopPhoto:
         filter_bank="svo",
         path=".database/filter",
         download=True,
-        up_resolution_factor=2**5,
+        up_resolution_factor=32.0,
+        factor=1.0e20,
     ):
+        """initialization
+
+        Args:
+            filter_id (str): filter id (e.g. "2MASS/2MASS.Ks")
+            filter_bank (str, optional) filter bank. Defaults to "svo".
+            path (str, optional): path to store the data. Defaults to ".database/filter".
+            download (bool, optional): Download or uses the saved data. Defaults to True.
+            up_resolution_factor (float, optional): _description_. Defaults to 32.0.
+            factor (float): factor to normalize the flux to prevent underflow
+        """
         self.up_resolution_factor = up_resolution_factor
-        self.factor = 1.0e20
-        
+        self.factor = factor
+
         self.filter_id = filter_id
         self.facility, self.filter_tag = self.filter_id.split("/")
         self.filter_bank = filter_bank
-    
-        self.path = pathlib.Path(path) / filter_bank  / self.facility
+
+        self.path = pathlib.Path(path) / filter_bank / self.facility
         self.filepath = self.path / f"{self.filter_tag}.csv"
         self.infopath = self.path / f"{self.filter_tag}.info.csv"
-        
+
         self.download = download
 
         if download:
@@ -49,13 +62,17 @@ class SopPhoto:
         else:
             self.load_filter()
 
-        self.set_transmission_filter()
-    
-        
+        self.computes_interpolated_transmission_filter()
+
     def load_filter(self):
+        """loads the filter from the saved dataset
+
+        Raises:
+            ValueError: datasets not found
+        """
         if not self.filepath.exists():
             raise ValueError(f"filter file {self.filepath} does not exist.")
-        
+
         print("load ", self.filepath)
         df = pd.read_csv(self.filepath)
         self.nu_ref = df["nu"].values
@@ -67,12 +84,18 @@ class SopPhoto:
         self.resolution_photo = dg["resolution_photo"].values[0]
 
     def download_filter(self):
+        """downloads the filter
+
+        Raises:
+            ValueError: No filter bank
+        """
         if self.filter_bank == "svo":
             self.download_filter_svo()
         else:
             raise ValueError("No filter bank (e.g. svo).")
 
     def download_filter_svo(self):
+        """downloads the filter from SVO"""
         from exojax.utils.photometry import download_filter_from_svo
         from exojax.utils.photometry import download_zero_magnitude_flux_from_svo
         from exojax.utils.photometry import average_resolution
@@ -87,7 +110,9 @@ class SopPhoto:
         print("resolution_photo=", self.resolution_photo)
 
     def save_filter(self):
+        """save the filter dataset"""
         import os
+
         os.makedirs(str(self.path), exist_ok=True)
         pd.DataFrame(
             {
@@ -105,7 +130,12 @@ class SopPhoto:
         ).to_csv(self.infopath)
         print("save ", self.infopath)
 
-    def set_transmission_filter(self):
+    def computes_interpolated_transmission_filter(self, xsmode="premodit"):
+        """computes
+
+        Args:
+            xsmode (str, optional): xsmode for wavenumber_grid. Defaults to "premodit".
+        """
         from exojax.utils.grids import wavenumber_grid
         from exojax.utils.instfunc import nx_even_from_resolution_eslog
 
@@ -113,13 +143,21 @@ class SopPhoto:
             np.min(self.nu_ref), np.max(self.nu_ref), self.resolution_photo
         )
         self.nu_grid_filter, self.wav_filter, self.res_filter = wavenumber_grid(
-            self.nu_ref[0], self.nu_ref[-1], Nx, unit="cm-1", xsmode="premodit"
+            self.nu_ref[0], self.nu_ref[-1], Nx, unit="cm-1", xsmode=xsmode
         )
         self.transmission_filter = np.interp(
             self.nu_grid_filter, self.nu_ref, self.transmission_ref
         )
 
     def apparent_magnitude(self, flux):
+        """computes apparent magnitude
+
+        Args:
+            flux (array): flux in the unit of erg/s/cm2/cm-1, the same dimension as self.transmission_filter
+
+        Returns:
+            float: apparent magnitude
+        """
         return apparent_magnitude(
             flux,
             self.nu_grid_filter,
