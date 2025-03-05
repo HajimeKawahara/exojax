@@ -3,6 +3,14 @@
 * This module contains various url for downloading. Because url can be changed by the orner of the site, you might need to change it. Or, if you notice the change, it would be great if you send a pull-request.
 """
 
+def url_svo_filter():
+    """returns URL for SVO filter data.
+
+    Returns:
+        URL for SVO filter data
+    """
+    url = "http://svo2.cab.inta-csic.es/theory/fps/"
+    return url
 
 def url_virga():
     """returns URL for VIRGA refractive index data from ZENODO

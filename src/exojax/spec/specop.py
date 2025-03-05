@@ -65,7 +65,7 @@ class SopPhoto:
         self.nu_center = dg["nu_center"].values[0]
         self.f0_nu_cgs = dg["f0_nu_cgs"].values[0]
         self.resolution_photo = dg["resolution_photo"].values[0]
-        
+
     def download_filter(self):
         if self.filter_bank == "svo":
             self.download_filter_svo()
@@ -119,7 +119,7 @@ class SopPhoto:
             self.nu_grid_filter, self.nu_ref, self.transmission_ref
         )
 
-    def calc_photo(self, flux):
+    def apparent_magnitude(self, flux):
         return apparent_magnitude(
             flux,
             self.nu_grid_filter,

@@ -2,8 +2,12 @@ import numpy as np
 import jax.numpy as jnp
 from exojax.spec.unitconvert import wav2nu
 from exojax.utils.constants import ccgs
+from exojax.utils.url import url_svo_filter
 
-def apparent_magnitude(flux_filter, nu_grid_filter, transmission_filter, f0_nu_cgs, factor = 1.0e20):
+
+def apparent_magnitude(
+    flux_filter, nu_grid_filter, transmission_filter, f0_nu_cgs, factor=1.0e20
+):
     """computes apparent magnitude
 
     Args:
@@ -13,7 +17,7 @@ def apparent_magnitude(flux_filter, nu_grid_filter, transmission_filter, f0_nu_c
         f0_nu_cgs (float): zero magnitude flux in the unit of erg/s/cm^2/cm-1
         factor (float): factor to prevent numerical error. Defaults to 1.0e20.
     """
-    
+
     logfactor = jnp.log10(factor)
     integrated_flux = jnp.trapezoid(
         (flux_filter * factor) * transmission_filter, nu_grid_filter
@@ -39,15 +43,17 @@ def apparent_magnitude_isothermal_sphere(
     from exojax.utils.constants import RJ
     from exojax.utils.constants import pc
 
-    absflux = piB(temperature, nu_ref) * (radius) ** 2 / (distance) ** 2 * (RJ / pc)**2
+    absflux = (
+        piB(temperature, nu_ref) * (radius) ** 2 / (distance) ** 2 * (RJ / pc) ** 2
+    )
     return apparent_magnitude(absflux, nu_ref, transmission_ref, f0_nu_cgs)
 
 
-def download_filter_from_svo(filter_name):
+def download_filter_from_svo(filter_id):
     """download filter transmission data from SVO
 
     Args:
-        filter_name (str): filter name such as "2MASS/2MASS.Ks" see http://svo2.cab.inta-csic.es/theory/fps/
+        filter_id (str): filter id name such as "2MASS/2MASS.Ks" see http://svo2.cab.inta-csic.es/theory/fps/
 
     Returns:
         array: wavenumber (cm-1)
@@ -57,7 +63,9 @@ def download_filter_from_svo(filter_name):
     #
     from astroquery.svo_fps import SvoFps
 
-    data = SvoFps.get_transmission_data(filter_name)
+    print("filter_id = ", filter_id)
+    print("You can check the available filters at", url_svo_filter())
+    data = SvoFps.get_transmission_data(filter_id)
     unit = str(data["Wavelength"].unit)
     wl_ref = np.array(data["Wavelength"])
     nu_ref, transmission_ref = wav2nu(
@@ -66,11 +74,11 @@ def download_filter_from_svo(filter_name):
     return nu_ref, transmission_ref
 
 
-def download_zero_magnitude_flux_from_svo(filter_name, unit="cm-1"):
+def download_zero_magnitude_flux_from_svo(filter_id, unit="cm-1"):
     """download zero magnitude flux from SVO
 
     Args:
-        filter_name (str): filter name such as "2MASS/2MASS.Ks" see http://svo2.cab.inta-csic.es/theory/fps/
+        filter_id (str): filter id name such as "2MASS/2MASS.Ks" see http://svo2.cab.inta-csic.es/theory/fps/
         unit (str, optional): unit of the output. Defaults to "cm-1".
 
     Returns:
@@ -79,9 +87,9 @@ def download_zero_magnitude_flux_from_svo(filter_name, unit="cm-1"):
     """
     from astroquery.svo_fps import SvoFps
 
-    facility = filter_name.split("/")[0]
+    facility = filter_id.split("/")[0]
     filters = SvoFps.get_filter_list(facility=facility)
-    filter_data = filters[filters["filterID"] == filter_name]
+    filter_data = filters[filters["filterID"] == filter_id]
     lambda0_um = filter_data["WavelengthPhot"] * 1.0e-4
     f0_orig = filter_data["ZeroPoint"]
     if filter_data["ZeroPointUnit"] == "Jy":
