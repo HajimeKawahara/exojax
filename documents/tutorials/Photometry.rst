@@ -74,12 +74,12 @@ In this example, let’s compute the apparent magnitude (which is
 essentially the absolute magnitude!) of a blackbody sphere with the same
 temperature as the Sun placed at 10 pc.
 
-Recall the flux from a black body sphere with a radius :math:`R`,
-temperature :math:`T` at distance of :math:`d` is given by
+Recall the flux from a black body sphere with a radius R, temperature T
+at distance of d is given by
 
-:math:`f_\nu = \pi B(\nu, T) \frac{R^2}{d^2}` ,
+:math:`f_\nu = \pi B_\nu (T) \frac{R^2}{d^2}`
 
-where :math:`B(\nu, T)` is the Planck function.
+where :math:`B_\nu (T)` is the Planck function.
 
 .. code:: ipython3
 
