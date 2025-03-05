@@ -90,21 +90,22 @@ def download_zero_magnitude_flux_from_svo(filter_id, unit="cm-1"):
     facility = filter_id.split("/")[0]
     filters = SvoFps.get_filter_list(facility=facility)
     filter_data = filters[filters["filterID"] == filter_id]
-    lambda0_um = filter_data["WavelengthPhot"] * 1.0e-4
-    f0_orig = filter_data["ZeroPoint"]
-    if filter_data["ZeroPointUnit"] == "Jy":
-        pass
-    else:
+    
+    if filter_data["ZeroPointUnit"] != "Jy":
         raise ValueError("ZeroPointUnit should be Jy")
 
-    f0_nu_cgs = f0_orig.value[0] * 1.0e-23 * ccgs  # erg/s/cm^2/cm-1
-    if unit == "cm-1":
-        return 1.0e4 / lambda0_um, f0_nu_cgs  # cm-1, erg/s/cm^2/cm-1
-    elif unit == "um":
-        return lambda0_um, f0_nu_cgs * 1.0e4 / lambda0_um**2  # um, erg/s/cm2/um
-    elif unit == "AA":
-        return 1.0e4 * lambda0_um, f0_nu_cgs / lambda0_um**2  # AA erg/s/cm2/AA
-    else:
+    lambda0_um = filter_data["WavelengthPhot"].value[0] * 1.0e-4
+    f0_orig = filter_data["ZeroPoint"].value[0]
+    f0_nu_cgs = f0_orig * 1.0e-23 * ccgs  # erg/s/cm^2/cm-1
+    
+    conversion = {
+        "cm-1": (1.0e4 / lambda0_um, f0_nu_cgs),
+        "um":   (lambda0_um, f0_nu_cgs * 1.0e4 / lambda0_um**2),
+        "AA":   (1.0e4 * lambda0_um, f0_nu_cgs / lambda0_um**2)
+    }
+    try:
+        return conversion[unit]
+    except KeyError:
         raise ValueError("unit should be cm-1, um, or AA")
 
 
