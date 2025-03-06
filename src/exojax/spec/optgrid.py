@@ -42,7 +42,6 @@ def optelower(
     opa = OpaPremodit(mdb=mdb, nu_grid=nu_grid, diffmode=0)
     opa.manual_setting(dE, Tref_original, Tmax)
     (
-        lbd_coeff,
         multi_index_uniqgrid,
         elower_grid,
         ngamma_ref_grid,
@@ -61,7 +60,7 @@ def optelower(
         Tmax,
         Pmin,
         nsigmaD,
-        lbd_coeff,
+        opa.lbd_coeff,
         Tref_original,
         R,
         pmarray,
@@ -81,7 +80,7 @@ def optelower(
             Tmax,
             Pmin,
             nsigmaD,
-            lbd_coeff[:, :, :, :q],
+            opa.lbd_coeff[:, :, :, :q],
             Tref_original,
             R,
             pmarray,
@@ -108,7 +107,7 @@ def optelower(
             Tmax,
             Pmin,
             nsigmaD,
-            lbd_coeff[:, :, :, :q],
+            opa.lbd_coeff[:, :, :, :q],
             Tref_original,
             R,
             pmarray,

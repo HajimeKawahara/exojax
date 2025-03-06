@@ -15,7 +15,7 @@ def test_opacalc_check_alias_invalid():
     opa = OpaCalc(nu_grid)
     opa.alias = "invalid"
     with pytest.raises(ValueError):
-        opa.set_alias_mode()
+        opa.set_aliasing()
     
     
 def test_opacalc_set_alias_left_right_from_cutwing():

@@ -293,7 +293,7 @@ class MdbExomol(CapiMdbExomol):
             mask = self.df_load_mask
 
         self.attributes_from_dataframes(df[mask])
-
+        
         if version.parse(radis_version) <= version.parse("0.14"):
             self.compute_broadening(self.jlower.astype(int), self.jupper.astype(int))
         elif version.parse(radis_version) <= version.parse("0.15.2"):

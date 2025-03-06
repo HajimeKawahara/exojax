@@ -10,7 +10,6 @@ from exojax.spec.ditkernel import fold_voigt_kernel_logst
 from exojax.spec.lpffilter import generate_open_lpffilter
 from exojax.signal.ola import _fft_length
 from exojax.spec.lpffilter import _open_filter_length
-
 import jax.numpy as jnp
 from jax.lax import scan
 from jax import vmap
@@ -25,25 +24,30 @@ def _check_complex(x):
         raise ValueError("Invalid dtype")
 
 
-def calc_open_xsection_from_lsd_zeroscan(
-    Slsd, R, nsigmaD, nu_grid_extended, log_ngammaL_grid, filter_length_oneside
+def calc_open_nu_xsection_from_lsd_zeroscan(
+    Slsd, R, nsigmaD, log_ngammaL_grid, filter_length_oneside
 ):
-    """Compute open cross section from LSD in MODIT algorithm using scan+fft to avoid 4GB memory limit in fft and zero padding in scan
+    """Compute (wavenumber x open cross section9 from LSD in MODIT algorithm using scan+fft to avoid 4GB memory limit in fft and zero padding in scan
 
     Notes:
         The aliasing part is closed and thereby can't be used in OLA.
         #277
+        Why the output is not cross section, but (nu_grid_extended x Cross section)?
+        This is related to the scan in OpaPremoditStitch.   
+        I (@HajimeKawahara) did not want to use wavenumber_grid_extended in the scan in OpaPremoditStitch.xsvector/xsmatrix 2/28 2025
+    
+
 
     Args:
         Slsd (array): line shape density [Nnus, Ngamma]
         R (float): spectral resolution
         nsigmaD (float): normaized Gaussian STD
-        nu_grid_extended (array): extended wavenumber grid to aliasing parts [Nnus + Nfilter - 1]
         log_gammaL_grid (array): logarithm of gammaL grid [Ngamma]
         filter_length_oneside (int): one side length of the wavenumber grid of lpffilter, Nfilter = 2*filter_length_oneside + 1
 
     Returns:
-        Closed Cross section in the log nu grid [Nnus]
+        Open (nu_grid_extended x Cross section) in the log nu grid [Nnus] 
+        
     """
 
     div_length = Slsd.shape[0]
@@ -66,7 +70,7 @@ def calc_open_xsection_from_lsd_zeroscan(
     lpffilter = vmap_generate_lpffilter(filter_length_oneside, nsigmaD, ngammaL_grid)
     init = jnp.zeros(int(fft_length/2)+1, dtype=_check_complex(lpffilter[0, 0]))
     fftvalvk, _ = scan(f, init, [Slsd.T, lpffilter])
-    return  jnp.fft.irfft(fftvalvk) * R / nu_grid_extended
+    return  jnp.fft.irfft(fftvalvk) * R 
     
 def calc_xsection_from_lsd_zeroscan(
     Slsd, R, pmarray, nsigmaD, nu_grid, log_ngammaL_grid

@@ -84,7 +84,7 @@ def ditgrid_matrix(x, res=0.1, adopt=True):
         x: simgaD or gammaL matrix (Nlayer x Nline)
         res: grid resolution. res=0.1 (defaut) means a grid point per digit
         adopt: if True, min, max grid points are used at min and max values of x.
-               In this case, the grid width does not need to be res exactly.
+                In this case, the grid width does not need to be res exactly.
 
     Returns:
         grid for DIT (Nlayer x NDITgrid)

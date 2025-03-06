@@ -8,7 +8,8 @@ Getting Started
    tutorials/get_started_opart.rst
    tutorials/Transmission_beta.rst
    tutorials/optimize_spectrum.rst
-
+   tutorials/Cross_Section_using_OpaStitch.rst
+   
 Retrievals
 ===============
 

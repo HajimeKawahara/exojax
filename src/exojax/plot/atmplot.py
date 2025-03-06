@@ -16,7 +16,7 @@ def plottau(nugrid, dtauM, Tarr=None, Parr=None, unit=None, mode=None, vmin=-3, 
         Tarr: temperature profile
         Parr: perssure profile
         unit: x-axis unit=um (wavelength microns), nm  = (wavelength nm), AA  = (wavelength Angstrom),
-        mode: mode=None (lotting tau), mode=dtau (plotting delta tau for each layer)
+        mode: mode=None (plotting tau), mode=dtau (plotting delta tau for each layer)
         vmin: color value min (default=-3)
         vmax: color value max (default=3)
     """
