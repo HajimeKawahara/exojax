@@ -24,6 +24,7 @@ G = 6.67408e-08
 #MJ = 1.89813 * 1.e30  # Jovian mass
 MJ = 1.8986 * 1.e30  # Jovian mass
 gJ = 2478.57730044555  # Jovian gravity
+loggJ = 3.3942024679792957 # Jovian logg
 m_u = 1.66053904e-24  # atomic mass unit [g]
 kB = 1.38064852e-16
 logkB = -15.859916868309735  # log10(kB)
