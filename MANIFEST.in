@@ -35,6 +35,8 @@ include src/exojax/data/testdata/premodit_reflect_test_ref.txt
 include src/exojax/data/testdata/CO100percent_500K.feather
 include src/exojax/data/testdata/filter_sdss_g.csv
 
+include src/exojax/data/testdata/luhman16a_spectra_detector1.csv
+
 include src/exojax/data/testdata/H2-H2_TEST.cia
 include src/exojax/data/testdata/CO/05_HITEMP_SAMPLE.par
 include src/exojax/data/testdata/CO/12C-16O/SAMPLE/12C-16O__H2.broad
