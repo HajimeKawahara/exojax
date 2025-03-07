@@ -48,6 +48,6 @@ c = 299792.458
 Gcr = 115.38055682147402  #cuberoot of Gravitaional constant in the unit of [km/s] normalized by day and Msun
 
 # opacity factor
-# opfac = bar_cgs/(m_u (g)). m_u: atomic mass unit. bar_cgs: 1 bar in cgs = 1.e6 dyn/cm2
-# obtained as opfac = bar_cgs/m_u(in g) = 1.e6/(m_u(in kg)*1.e3) = 1.e3/m_u(in kg), m_u(in kg) = scipy.constants.m_u.
-opfac = 6.022140858549162e+29
+# opacity_factor = bar_cgs/(m_u (g)). m_u: atomic mass unit. bar_cgs: 1 bar in cgs = 1.e6 dyn/cm2
+# obtained as opacity_factor = bar_cgs/m_u(in g) = 1.e6/(m_u(in kg)*1.e3) = 1.e3/m_u(in kg), m_u(in kg) = scipy.constants.m_u.
+opacity_factor = 6.022140858549162e+29

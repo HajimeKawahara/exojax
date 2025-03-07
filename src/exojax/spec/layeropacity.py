@@ -10,7 +10,7 @@ from exojax.spec.hminus import log_hminus_continuum_single
 from exojax.atm.idealgas import number_density
 from exojax.utils.constants import logkB
 from exojax.utils.constants import logm_ucgs
-from exojax.utils.constants import opfac
+from exojax.utils.constants import opacity_factor
 from exojax.utils.constants import bar_cgs
 from exojax.spec.dtau_mmwl import dtauM_mmwl
 
@@ -28,7 +28,7 @@ def single_layer_optical_depth(dpressure, xsv, mixing_ratio, mass, gravity):
     Returns:
         dtau (array): opacity whose element is optical depth in a single layer [N_wavenumber].
     """
-    return opfac * xsv * dpressure * mixing_ratio / (mass * gravity)
+    return opacity_factor * xsv * dpressure * mixing_ratio / (mass * gravity)
 
 
 def layer_optical_depth(dParr, xsmatrix, mixing_ratio, mass, gravity):
@@ -48,7 +48,7 @@ def layer_optical_depth(dParr, xsmatrix, mixing_ratio, mass, gravity):
         2D array: optical depth matrix, dtau  [N_layer, N_nus]
     """
 
-    return opfac * xsmatrix * dParr[:, None] * mixing_ratio[:, None] / (mass * gravity)
+    return opacity_factor * xsmatrix * dParr[:, None] * mixing_ratio[:, None] / (mass * gravity)
 
 
 def single_layer_optical_depth_CIA(

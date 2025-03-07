@@ -7,7 +7,7 @@ from exojax.spec.hitrancia import interp_logacia_matrix
 from exojax.spec.hminus import log_hminus_continuum
 from exojax.atm.idealgas import number_density
 from exojax.utils.constants import logkB, logm_ucgs
-from exojax.utils.constants import opfac
+from exojax.utils.constants import opacity_factor
 import warnings
 
 warnings.warn("dtau_mmwl might be removed in future.", FutureWarning)
@@ -74,7 +74,7 @@ def dtauM_mmwl(dParr, xsm, MR, mass, g):
         optical depth matrix [N_layer, N_nus]
     """
 
-    return opfac * xsm * dParr[:, None] * MR[:, None] / (mass[:, None] * g)
+    return opacity_factor * xsm * dParr[:, None] * MR[:, None] / (mass[:, None] * g)
 
 
 def dtauHminus_mmwl(nus, Tarr, Parr, dParr, vmre, vmrh, mmw, g):

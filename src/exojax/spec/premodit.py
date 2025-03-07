@@ -12,6 +12,7 @@ from exojax.utils.indexing import npgetix
 from exojax.spec.lsd import npadd3D_multi_index, npadd3D_direct1D
 from exojax.utils.constants import hcperk
 from exojax.utils.constants import Tref_original
+
 # from exojax.spec.profconv import calc_xsection_from_lsd_scanfft
 from exojax.spec.profconv import calc_xsection_from_lsd_zeroscan
 from exojax.spec.profconv import calc_open_nu_xsection_from_lsd_zeroscan
@@ -81,6 +82,7 @@ def xsvector_open_zeroth(
     )
     return xs / nu_grid_extended
 
+
 @partial(jit, static_argnums=13)
 def xsvector_nu_open_zeroth(
     T,
@@ -119,17 +121,17 @@ def xsvector_nu_open_zeroth(
         Twt: not used
     Returns:
         jnp.array: nu sigma (nu_grid_extended x cross section) in cgs vector
-    """        
+    """
     Slsd = unbiased_lsd_zeroth(lbd_coeff[0], T, Tref, nu_grid, elower_grid, qt)
     ngamma_grid = unbiased_ngamma_grid(
         T, P, ngamma_ref_grid, n_Texp_grid, multi_index_uniqgrid, Tref_broadening
     )
     log_ngammaL_grid = jnp.log(ngamma_grid)
-    
+
     xs = calc_open_nu_xsection_from_lsd_zeroscan(
         Slsd, R, nsigmaD, log_ngammaL_grid, filter_length_oneside
     )
-    
+
     return xs
 
 
@@ -194,6 +196,7 @@ def xsvector_open_first(
         Twt,
     )
     return xs / nu_grid_extended
+
 
 @partial(jit, static_argnums=13)
 def xsvector_nu_open_first(
@@ -308,6 +311,7 @@ def xsvector_open_second(
     )
     return xs / nu_grid_extended
 
+
 @partial(jit, static_argnums=13)
 def xsvector_nu_open_second(
     T,
@@ -420,6 +424,7 @@ def xsmatrix_open_zeroth(
     )
     return xsm / nu_grid_extended
 
+
 @partial(jit, static_argnums=13)
 def xsmatrix_nu_open_zeroth(
     Tarr,
@@ -436,7 +441,7 @@ def xsmatrix_nu_open_zeroth(
     qtarr,
     Tref_broadening,
     filter_length_oneside,
-    Twt=None
+    Twt=None,
 ):
     """compute nu sigma (wavenumber x cross section)  matrix, with scan+fft, using the zero-th Taylor expansion
 
@@ -537,6 +542,7 @@ def xsmatrix_open_first(
         Twt,
     )
     return xsm / nu_grid_extended
+
 
 @partial(jit, static_argnums=13)
 def xsmatrix_nu_open_first(
@@ -655,6 +661,7 @@ def xsmatrix_open_second(
         Twt,
     )
     return xsm / nu_grid_extended
+
 
 @partial(jit, static_argnums=13)
 def xsmatrix_nu_open_second(
@@ -1158,10 +1165,18 @@ def broadpar_getix(ngamma_ref, ngamma_ref_grid, n_Texp, n_Texp_grid):
         multi_index_lines
     )
 
-    check_multi_index_uniqgrid_shape(ngamma_ref_grid, n_Texp_grid, multi_index_uniqgrid)
+    status = check_multi_index_uniqgrid_shape(
+        ngamma_ref_grid, n_Texp_grid, multi_index_uniqgrid
+    )
+
+    if status == 1:
+        error_diagnositcs(status, multi_index_uniqgrid, ngamma_ref, ngamma_ref_grid)
+    elif status == 2:
+        error_diagnositcs(status, multi_index_uniqgrid, n_Texp, n_Texp_grid)
+
 
     ngrid_broadpar = len(multi_index_uniqgrid)
-    
+
     return (
         multi_index_lines,
         multi_cont_lines,
@@ -1182,23 +1197,36 @@ def check_multi_index_uniqgrid_shape(
         n_Texp_grid (array): temperature exponent grid
         multi_index_uniqgrid (array): multi index of unique broadening parameter grid [nbroad,2]
 
+    Returns:
+        status (int): 0=pass, 1=ngamma_ref_grid error, 2=n_Texp_grid error
+
     """
+
     if np.max(multi_index_uniqgrid[:, 0]) >= len(ngamma_ref_grid):
-        msg = "max np.max(multi_index_uniqgrid[:,0]) = " + str(
-            np.max(multi_index_uniqgrid[:, 0])
-        )
-        msg = (
-            msg
-            + "should be smaller than len(ngamma_ref_grid) = "
-            + str(len(ngamma_ref_grid))
-        )
-        raise ValueError(msg)
-    if np.max(multi_index_uniqgrid[:, 1]) >= len(n_Texp_grid):
-        msg = "max np.max(multi_index_uniqgrid[:,1]) = " + str(
-            np.max(multi_index_uniqgrid[:, 1])
-        )
-        msg = msg + "should be smaller than len(n_Texp_grid) = " + str(len(n_Texp_grid))
-        raise ValueError(msg)
+        return 1
+    elif np.max(multi_index_uniqgrid[:, 1]) >= len(n_Texp_grid):
+        return 2
+
+    return 0
+
+
+
+def error_diagnositcs(status, multi_index_uniqgrid, val, val_grid):
+    print("****** ERROR Diagnostics ******")
+    valname = ["ngamma_ref_grid", "n_Texp_grid"]
+    index = status - 1
+    msg = (
+        "max np.max(multi_index_uniqgrid[:,"
+        + str(index)
+        + "]) = "
+        + str(np.max(multi_index_uniqgrid[:, index]))
+        + " should be smaller than len("+valname[index]+") = "
+        + str(len(val_grid))
+    )
+    print(msg)
+    
+    msgtell = "If you see this error, please contact @HajimeKawahara via github ExoJAX page! (#586)"
+    raise ValueError(msgtell)
 
 
 def compute_dElower(T, interval_contrast=0.1):
@@ -1277,6 +1305,9 @@ def generate_lbd(
         >>> n_Texp = n_Texp_grid[multi_index_uniqgrid[:,0]] # temperature exponent for the unique broad par
 
     """
+    _print_grids(0, ngamma_ref, ngamma_ref_grid)
+    _print_grids(1, n_Texp, n_Texp_grid)
+    
 
     cont_nu, index_nu = npgetix(nu_lines, nu_grid)
     single_broadening = _check_single_broadening(ngamma_ref_grid, n_Texp_grid)
@@ -1343,10 +1374,16 @@ def generate_lbd(
         lbd_coeff.append(lbd_diff[:-1, :, :])
         # [:-1,:,:] is to remove the mostright bin of nu direction (check Ng_nu_plus_one)
 
-    #lbd_coeff = np.array(lbd_coeff) #almost same
+    # lbd_coeff = np.array(lbd_coeff) #almost same
     lbd_coeff = jnp.array(lbd_coeff)
 
     return lbd_coeff, multi_index_uniqgrid
+
+def _print_grids(index, val, val_grid):
+    valname = ["ngamma_ref_grid", "n_Texp_grid"]
+    print("max value of ",valname[index], ":", np.max(val))
+    print("min value of ",valname[index], ":", np.min(val))
+    print(valname[index], "grid :", val_grid)
 
 
 def _check_single_broadening(ngamma_ref_grid, n_Texp_grid):
@@ -1496,6 +1533,7 @@ def unbiased_lsd_second(lbd_coeff, T, Tref, Twt, nu_grid, elower_grid, qt):
     # + jnp.exp(lfb + lbd_coeff[1] + 2*logdt * jnp.log(0.5))
     Slsd = jnp.sum(jnp.exp(lfb + lbd_coeff[0]) + unbiased_coeff, axis=-1)
     return (Slsd.T * g_bias(nu_grid, T, Tref) / qt).T
+
 
 def unbiased_ngamma_grid(
     T, P, ngamma_ref_grid, n_Texp_grid, multi_index_uniqgrid, Tref_broadening

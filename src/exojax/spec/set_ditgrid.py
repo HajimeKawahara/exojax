@@ -36,8 +36,9 @@ def ditgrid_log_interval(input_variable, dit_grid_resolution=0.1, adopt=True):
     else:
         grid = np.exp(np.linspace(lxmin, lxmax, Ng))
 
-    grid[0] = np.nextafter(np.min(input_variable), -np.inf, dtype=grid[0].dtype)
-    grid[-1] = np.nextafter(grid[-1], np.inf, dtype=grid[-1].dtype)  # 586
+    grid[0] = np.nextafter(np.min(input_variable), -np.inf, dtype=np.float32)
+    grid[-1] = np.nextafter(grid[-1], np.inf, dtype=np.float32)  # 586
+    
     return grid
 
 
@@ -72,8 +73,8 @@ def ditgrid_linear_interval(
 
     grid = grid / weight
 
-    grid[0] = np.nextafter(wxmin / weight, -np.inf, dtype=grid[0].dtype)
-    grid[-1] = np.nextafter(grid[-1], np.inf, dtype=grid[-1].dtype)  # 586
+    grid[0] = np.nextafter(wxmin / weight, -np.inf, dtype=np.float32)
+    grid[-1] = np.nextafter(grid[-1], np.inf, dtype=np.float32)  # 586
     return grid
 
 
