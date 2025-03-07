@@ -12,33 +12,33 @@ from exojax.utils.constants import hcperk
 fac_planck = 3.741771790075259e-05
 
 
-def piBarr(T, nus):
+def piBarr(Tarr, nu_grid):
     """pi B_nu (Planck Function)
 
     Args:
-       T: temperature [K]
-       nus: wavenumber [cm-1]
+       Tarr (array): temperature in the unit of K [Nlayer]
+       nu_grid (array): wavenumber grid in the unit of cm-1 [Nnu]
 
     Returns:
-       pi B_nu (erg/s/cm2/cm-1) [Nlayer x Nnu]
+       pi B_nu (erg/s/cm2/cm-1) [Nlayer, Nnu]
 
     Note:
        hcperk = hc/k in cgs, fac = 2*h*c*c*pi in cgs
     """
     
-    return (fac_planck*nus**3)/(jnp.exp(hcperk*nus/T[:, None])-1.0)
+    return (fac_planck*nu_grid**3)/(jnp.exp(hcperk*nu_grid/Tarr[:, None])-1.0)
 
-def piB(T, nus):
+def piB(T, nu_grid):
     """pi B_nu (Planck Function)
 
     Args:
-        T (float): temperature [K]
-        nus (array): wavenumber grid[cm-1]
+        T (float): temperature in the unit of K
+        nu_grid (array): wavenumber grid in the unit of cm-1 [Nnu]
 
     Returns:
-        pi B_nu (erg/s/cm2/cm-1) [Nlayer x Nnu]
+        pi B_nu (erg/s/cm2/cm-1) [Nnu]
 
     Note:
         hcperk = hc/k in cgs, fac = 2*h*c*c*pi in cgs
     """
-    return (fac_planck * nus**3) / (jnp.exp(hcperk * nus / T) - 1.0)
+    return (fac_planck * nu_grid**3) / (jnp.exp(hcperk * nu_grid / T) - 1.0)

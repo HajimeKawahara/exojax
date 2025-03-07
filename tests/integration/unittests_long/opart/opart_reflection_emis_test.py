@@ -46,7 +46,7 @@ def test_forward_reflection_emis_opart():
         return carry, None
 
     temperature = opart.powerlaw_temperature(1300.0, 0.1)
-    mixing_ratio = opart.constant_mmr_profile(0.0003)
+    mixing_ratio = opart.constant_profile(0.0003)
     layer_params = [temperature, opart.pressure, opart.dParr, mixing_ratio]
 
     albedo = 1.0

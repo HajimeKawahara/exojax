@@ -64,7 +64,7 @@ if True:
     fluxarr = []
     for i in tqdm.tqdm(range(Ntry)):
         temperature = opart.clip_temperature(opart.powerlaw_temperature(T[i], 0.1))
-        mixing_ratio = opart.constant_mmr_profile(0.0003)
+        mixing_ratio = opart.constant_profile(0.0003)
         layer_params = [temperature, opart.pressure, opart.dParr, mixing_ratio]
         albedo = 1.0
         incoming_flux = jnp.ones_like(opalayer.nu_grid)

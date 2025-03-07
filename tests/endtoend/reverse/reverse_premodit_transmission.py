@@ -100,7 +100,7 @@ def frun(T0, MMR_CH4, Mp, Rp, RV):
     mmw_arr = mu_fid * np.ones_like(art.pressure)
 
     gravity = art.gravity_profile(Tarr, mmw_arr, radius_btm, gravity_btm)
-    mmr_arr = art.constant_mmr_profile(MMR_CH4)
+    mmr_arr = art.constant_profile(MMR_CH4)
 
     # molecule
     xsmatrix = opa.xsmatrix(Tarr, art.pressure)

@@ -17,7 +17,7 @@ def generate_spectrum(db, diffmode, rtsolver, fig=False):
                       rtsolver=rtsolver)
     art.change_temperature_range(400.0, 1500.0)
     Tarr = art.powerlaw_temperature(1300.0, 0.1)
-    mmr_arr = art.constant_mmr_profile(0.01)
+    mmr_arr = art.constant_profile(0.01)
     gravity = 2478.57
     #gravity = art.constant_gravity_profile(2478.57) #gravity can be profile
 

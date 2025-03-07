@@ -27,7 +27,7 @@ def test_rt(db, diffmode, fig=False):
     )
     art.change_temperature_range(400.0, 1500.0)
     Tarr = art.powerlaw_temperature(1300.0, 0.1)
-    mmr_arr = art.constant_mmr_profile(0.1)
+    mmr_arr = art.constant_profile(0.1)
     gravity = 2478.57
     # gravity = art.constant_gravity_profile(2478.57) #gravity can be profile
 
@@ -79,7 +79,7 @@ def test_rt_for_single_broadening_parameters(db, diffmode, fig=False):
     )
     art.change_temperature_range(400.0, 1500.0)
     Tarr = art.powerlaw_temperature(1300.0, 0.1)
-    mmr_arr = art.constant_mmr_profile(0.1)
+    mmr_arr = art.constant_profile(0.1)
     gravity = 2478.57
     # gravity = art.constant_gravity_profile(2478.57) #gravity can be profile
 

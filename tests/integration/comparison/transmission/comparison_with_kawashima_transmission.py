@@ -41,7 +41,7 @@ def compare_with_kawashima_code():
     art = ArtTransPure(pressure_top=1.0e-15, pressure_btm=1.0e1, nlayer=100)
     art.change_temperature_range(490.0, 510.0)
     Tarr = T_fid * np.ones_like(art.pressure)
-    mmr_arr = art.constant_mmr_profile(1.0)
+    mmr_arr = art.constant_profile(1.0)
     gravity_btm = gravity_jupiter(1.0, 1.0)
     radius_btm = RJ
 

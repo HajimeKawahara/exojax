@@ -27,7 +27,7 @@ def test_rt_modit(db, fig=False):
     )
     art.change_temperature_range(400.0, 1500.0)
     Tarr = art.powerlaw_temperature(1300.0, 0.1)
-    mmr_arr = art.constant_mmr_profile(0.1)
+    mmr_arr = art.constant_profile(0.1)
     gravity = 2478.57
     mdb = mock_mdb(db)
     opa = OpaModit(

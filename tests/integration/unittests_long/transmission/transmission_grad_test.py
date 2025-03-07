@@ -52,7 +52,7 @@ def test_transmission_is_differentiable():
     def model(params):
         mmr_CO, mu_fid, T_fid, gravity_btm, radius_btm, RV = params
         Tarr = T_fid * np.ones_like(art.pressure)
-        mmr_arr = art.constant_mmr_profile(mmr_CO)
+        mmr_arr = art.constant_profile(mmr_CO)
         mmw = mu_fid * np.ones_like(art.pressure)
         gravity = art.gravity_profile(Tarr, mmw, radius_btm, gravity_btm)
         xsmatrix = opa.xsmatrix(Tarr, art.pressure)
