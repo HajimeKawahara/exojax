@@ -1,12 +1,17 @@
 from exojax.test.data import TESTDATA_LUH16A
 from exojax.test.data import get_testdata_filename
 from exojax.spec.unitconvert import wav2nu
+import numpy as np
 import pandas as pd
 
 
-def sample_emission_spectrum():
+def sample_emission_spectrum(noise=0.03, seed=0):
     """load a sample emission spectrum of Luhman 16A, used in PAPER I (Kawahara et al. 2022)
 
+    Args:
+        noise (float, optional): additional noise level. Defaults to 0.03. None: original data
+        seed (int, optional): seed of random number generator. Defaults to 0.
+        
     Returns:
         array: wavenumber grid (cm-1)
         array: relative flux (normalized)
@@ -23,6 +28,11 @@ def sample_emission_spectrum():
     err_flux = df["err_normalized_flux"].values
     nu_grid, relative_flux = wav2nu(wav_micron, unit="um", values=relative_flux)
     nu_grid, err_flux = wav2nu(wav_micron, unit="um", values=err_flux)
+
+    if noise is not None:
+        np.random.seed(seed)
+        relative_flux = relative_flux + np.random.normal(0, noise, len(relative_flux))
+        err_flux = np.sqrt(err_flux**2 + noise**2)
 
     # masking outliers (probably telluric residulas)
     mask = (nu_grid < 4366.95) + (nu_grid > 4367.05)

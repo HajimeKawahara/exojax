@@ -6,8 +6,6 @@ This script performs a Bayesian analysis of the high-resolution emission spectru
 
 """
 
-import os
-
 # from jax import config
 # config.update("jax_enable_x64", True)
 
@@ -33,9 +31,12 @@ from jax import jit
 
 nu_grid_obs, f_obs, f_obs_err, Kmag, Kmag_err, filter_id = sample_emission_spectrum()
 
-# plt.plot(nu_grid_obs, f_obs, ".")
-# plt.savefig("obsspec.png")
-
+fig = plt.figure(figsize=(20, 4))
+plt.plot(nu_grid_obs, f_obs, ".", c="k", label="data", alpha=0.3)
+plt.ylim(0.4, 1.3)
+plt.legend()
+plt.savefig("obsspec.png")
+exit()
 
 distance = 1.996  # pc Bedin et al. 2023
 
@@ -339,7 +340,7 @@ plt.plot(
     lw=2,
     alpha=0.7,
 )
-plt.ylim(0.6, 1.5)
+plt.ylim(0.4, 1.3)
 plt.title("Kmag (model)=" + str(Kmag_model) + ", Kmag (obs)=" + str(Kmag))
 plt.legend()
 plt.savefig("spec.png", bbox_inches="tight")
