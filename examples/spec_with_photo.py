@@ -36,7 +36,6 @@ plt.plot(nu_grid_obs, f_obs, ".", c="k", label="data", alpha=0.3)
 plt.ylim(0.4, 1.3)
 plt.legend()
 plt.savefig("obsspec.png")
-exit()
 
 distance = 1.996  # pc Bedin et al. 2023
 
