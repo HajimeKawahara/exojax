@@ -335,7 +335,7 @@ plt.plot(nu_grid_obs, f_obs, ".", c="k", label="data", alpha=0.3)
 plt.plot(
     nu_grid_obs,
     a * spec_model,
-    label="NUTS best model (T0=1325K)",
+    label="check",
     lw=2,
     alpha=0.7,
 )
@@ -344,104 +344,16 @@ plt.title("Kmag (model)=" + str(Kmag_model) + ", Kmag (obs)=" + str(Kmag))
 plt.legend()
 plt.savefig("spec.png", bbox_inches="tight")
 
-# ----
-# optimization using forward-mode differentiation
-optimization = True
-
-
-if optimization:
-    from jax import jacfwd
-    import optax
-
-    facT = 1.0e3
-    facM = 1.0e2
-    facvsini = 1.0e2
-    params_init = [
-        1.0,
-        1500.00 / facT,
-        0.09,
-        4.92,
-        30 / facM,
-        logvmr_sample,
-        0.0,
-        0.0,
-        30.0,
-        10.0,
-    ]
-
-    def objective(params):
-        a, T0, alpha, logg, Mp, logvmr, u1, u2, RV, vsini = recover_params(params)
-        mu = fspec(T0, alpha, logg, Mp, logvmr, u1, u2, RV, vsini)
-        f = (a * mu - f_obs) / f_obs_err
-        return jnp.dot(f, f)
-
-    def recover_params(params):
-        a, T0, alpha, logg, Mp, logvmr, u1, u2, RV, vsini = params
-        T0 = T0 * facT
-        Mp = 33.2
-        u1 = 0.0  # fix
-        u2 = 0.0  # fix
-        RV = 28.2  # fix
-        vsini = vsini * facvsini
-        return a, T0, alpha, logg, Mp, logvmr, u1, u2, RV, vsini
-
-    # ----
-    # defines the forward-mode differentiation of the objective function (JVP)
-    def dfluxt_jacfwd(params):
-        return jacfwd(objective)(params)
-
-    solver = optax.adamw(learning_rate=0.001)
-    opt_state = solver.init(params_init)
-
-    trajectory = []
-    import copy
-
-    params = copy.deepcopy(params_init)
-
-    for i in range(100):
-        grad = dfluxt_jacfwd(params)
-        updates, opt_state = solver.update(grad, opt_state, params)
-        params = optax.apply_updates(params, updates)
-        trajectory.append(params)
-        if np.mod(i, 10) == 0:
-            print("Objective function:", params)
-
-    a, T0, alpha, logg, Mp, logvmr, u1, u2, RV, vsini = recover_params(params)
-
-    spec_model_opt = a * fspec(T0, alpha, logg, Mp, logvmr, u1, u2, RV, vsini)
-    print(spec_model_opt)
-
-    
-    fig = plt.figure(figsize=(12, 4))
-    plt.plot(nu_grid_obs, f_obs, ".", c="k", label="data", alpha=0.3)
-    plt.plot(
-        nu_grid_obs,
-        spec_model_opt,
-        label="optimized model",
-        lw=3,
-        alpha=0.8,
-        color="C1",
-    )
-    plt.plot(
-        nu_grid_obs, spec_model, label="initial model", lw=2, alpha=0.5
-    )
-
-    plt.ylim(0.7, 1.5)
-    plt.legend()
-    plt.savefig("spec_opt.png", bbox_inches="tight")
-
-#
-
-
+# %%
 # Bayesian analysis
+# ---------------------
+
 from jax import random
 import numpyro
 import numpyro.distributions as dist
 from numpyro.infer import MCMC, NUTS
 from numpyro.infer import Predictive
 from numpyro.diagnostics import hpdi
-
-# from exojax.utils.gpkernel import gpkernel_RBF
 
 mols_unique = ["H2O", "CO", "CH4"]
 
@@ -487,10 +399,8 @@ def model_c(nu_grid_obs, y1, y1err, y2, y2err):
 rng_key = random.PRNGKey(0)
 rng_key, rng_key_ = random.split(rng_key)
 # num_warmup, num_samples = 25, 100
-# num_warmup, num_samples = 50, 200
-######
 num_warmup, num_samples = 500, 500
-######
+
 kernel = NUTS(model_c, forward_mode_differentiation=True)
 mcmc = MCMC(kernel, num_warmup=num_warmup, num_samples=num_samples)
 mcmc.run(
