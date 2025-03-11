@@ -27,9 +27,8 @@ from jax import jit
 
 nu_grid_obs, f_obs, f_obs_err, Kmag, Kmag_err, filter_id = sample_emission_spectrum()
 
-plt.plot(nu_grid_obs, f_obs, ".")
-plt.savefig("obsspec.png")
-exit()
+# plt.plot(nu_grid_obs, f_obs, ".")
+# plt.savefig("obsspec.png")
 
 # ----
 # prior knowledge of the system
@@ -60,12 +59,15 @@ nu_grid_spec, wav, res = wavenumber_grid(
 )
 print("resolution = ", res)
 
-filter_id = "Keck/NIRC2.Ks"
-sop_photo = SopPhoto(filter_id)
+# ----
+# photometry forward model setting
+sop_photo = SopPhoto(filter_id, up_resolution_factor=10)
 nu_grid_photo = sop_photo.nu_grid_filter
 
-print("len(nu_grid_photo) = ", len(nu_grid_photo))
-print("len(nu_grid_spec) = ", len(nu_grid_spec))
+print("len(nu_grid_photo) = ", len(nu_grid_photo)) #11082
+print("len(nu_grid_spec) = ", len(nu_grid_spec))   #6000
+
+# photometry model is more time-consuming than the spectroscopy model
 
 # ----
 # molecules/CIA database settings, uses nu_photo becuase it's wider than nu_grid_obs
@@ -86,8 +88,8 @@ molmasses = jnp.array([mdb_h2o.molmass, mdb_ch4.molmass, mdb_co.molmass])
 molmasses = jnp.array([mdb_h2o.molmass])
 
 
-cdbH2H2 = contdb.CdbCIA(os.path.join(path_data, "H2-H2_2011.cia"), nu_grid_photo)
-cdbH2He = contdb.CdbCIA(os.path.join(path_data, "H2-He_2011.cia"), nu_grid_photo)
+cdbH2H2 = contdb.CdbCIA(".database/H2-H2_2011.cia", nu_grid_photo)
+cdbH2He = contdb.CdbCIA(".database/H2-He_2011.cia", nu_grid_photo)
 
 molmassH2 = molinfo.molmass("H2")
 molmassHe = molinfo.molmass("He", db_HIT=False)
@@ -235,7 +237,7 @@ def fspec(T0, alpha, logg, Mp, logvmr, u1, u2, RV, vsini):
     Frot = sop_rot.rigid_rotation(F0, vsini, u1, u2)
     Frot_inst = sop_inst.ipgauss(Frot, beta_inst)
 
-    mu = sop_inst.sampling(Frot_inst, RV, nu_grid_obs_array[0, :])
+    mu = sop_inst.sampling(Frot_inst, RV, nu_grid_obs[0, :])
     mu = mu * (Rp2 / distance**2) * (RJ / pc) ** 2
     return mu / Fref
 
@@ -280,14 +282,14 @@ def fphoto(T0, alpha, logg, Mp, logvmr):
 # ----
 # checks the forward models
 
-# best fit (HMC-NUTS) median
-Mp = 72.69
-RV = -0.91
-T0 = 1325.0
-alpha = 0.02
+# examples
+Mp = 33.2
+RV = 28.1
+T0 = 1293.0
+alpha = 0.098
 logvmr_sample = [-3.06, -2.83, -7.65]
-logg = 4.76
-vsini = 34.92
+logg = 4.9
+vsini = 16.2
 
 spec_model = fspec(
     T0=T0,
@@ -302,25 +304,8 @@ spec_model = fspec(
 )
 print(spec_model)
 mu = spec_model
-err_all = f_obserr[0]
-a = jnp.dot(mu / err_all, f_obs[0] / err_all) / jnp.dot(mu / err_all, mu / err_all)
-
-# test high T model
-spec_model_high = fspec(
-    T0=1800.0,
-    alpha=alpha,
-    logg=logg,
-    Mp=Mp,
-    logvmr=logvmr_sample,
-    u1=0.0,
-    u2=0.0,
-    RV=RV,
-    vsini=vsini,
-)
-print(spec_model_high)
-mu2 = spec_model_high
-err_all = f_obserr[0]
-a2 = jnp.dot(mu2 / err_all, f_obs[0] / err_all) / jnp.dot(mu2 / err_all, mu2 / err_all)
+err_all = f_obs_err
+a = jnp.dot(mu / err_all, f_obs / err_all) / jnp.dot(mu / err_all, mu / err_all)
 
 
 Kmag_model = fphoto(
@@ -335,30 +320,22 @@ print(Kmag_model)
 
 # fig = plt.figure(figsize=(12, 4))
 fig = plt.figure(figsize=(20, 4))
-plt.plot(nu_grid_obs_array[0, :], f_obs[0], ".", c="k", label="data", alpha=0.3)
+plt.plot(nu_grid_obs, f_obs, ".", c="k", label="data", alpha=0.3)
 plt.plot(
-    nu_grid_obs_array[0, :],
+    nu_grid_obs,
     a * spec_model,
     label="NUTS best model (T0=1325K)",
     lw=2,
     alpha=0.7,
 )
-plt.plot(
-    nu_grid_obs_array[0, :],
-    a2 * spec_model_high,
-    label="model high-T (T0=1800K)",
-    lw=2,
-    alpha=0.7,
-)
-
 plt.ylim(0.6, 1.5)
-plt.title("Kmag (model)=" + str(Kmag_model) + ", Kmag (obs)=" + str(Ks_mag_obs))
+plt.title("Kmag (model)=" + str(Kmag_model) + ", Kmag (obs)=" + str(Kmag))
 plt.legend()
 plt.savefig("spec.png", bbox_inches="tight")
 
-exit()
+# ----
 # optimization using forward-mode differentiation
-optimization = False
+optimization = True
 
 
 if optimization:
@@ -373,12 +350,12 @@ if optimization:
         1500.00 / facT,
         0.09,
         4.92,
-        72.7 / facM,
+        30 / facM,
         logvmr_sample,
         0.0,
         0.0,
-        5.99,
-        40.0,
+        30.0,
+        10.0,
     ]
 
     def objective(params):
@@ -390,14 +367,11 @@ if optimization:
     def recover_params(params):
         a, T0, alpha, logg, Mp, logvmr, u1, u2, RV, vsini = params
         T0 = T0 * facT
-        # T0 = 1500.0 #fix
-        # alpha = 0.09 # fix
-        Mp = 72.7  # fix
+        Mp = 33.2
         u1 = 0.0  # fix
         u2 = 0.0  # fix
-        RV = 5.99  # fix
+        RV = 28.2  # fix
         vsini = vsini * facvsini
-        vsini = 40.0  # fix
         return a, T0, alpha, logg, Mp, logvmr, u1, u2, RV, vsini
 
     # ----
@@ -426,10 +400,11 @@ if optimization:
     spec_model_opt = a * fspec(T0, alpha, logg, Mp, logvmr, u1, u2, RV, vsini)
     print(spec_model_opt)
 
+    
     fig = plt.figure(figsize=(12, 4))
-    plt.plot(nu_grid_obs_array[0, :], f_obs[0], ".", c="k", label="data", alpha=0.3)
+    plt.plot(nu_grid_obs, f_obs, ".", c="k", label="data", alpha=0.3)
     plt.plot(
-        nu_grid_obs_array[0, :],
+        nu_grid_obs,
         spec_model_opt,
         label="optimized model",
         lw=3,
@@ -437,7 +412,7 @@ if optimization:
         color="C1",
     )
     plt.plot(
-        nu_grid_obs_array[0, :], spec_model, label="initial model", lw=2, alpha=0.5
+        nu_grid_obs, spec_model, label="initial model", lw=2, alpha=0.5
     )
 
     plt.ylim(0.7, 1.5)
@@ -465,14 +440,14 @@ def model_c(nu_grid_obs, y1, y1err, y2, y2err):
     # logg = numpyro.sample(
     #    "logg", dist.TruncatedNormal(5.5, 0.1, low=5.0)
     # )  # Wang et al. (2022)
-    Mp = numpyro.sample("Mp", dist.Normal(72.7, 0.8))  # Brandt et al. (2021)
+    Mp = numpyro.sample("Mp", dist.Normal(33.5, 0.3))  # Brandt et al. (2021)
     # Mp = numpyro.sample(
     #    "Mp", dist.TruncatedNormal(72.7, 0.8, low=1.0)
     # )  # Brandt et al. (2021)
-    RV = numpyro.sample("RV", dist.Uniform(-10, 20))  # HK
+    RV = numpyro.sample("RV", dist.Uniform(26, 30))  # HK
     T0 = numpyro.sample("T0", dist.Uniform(1000.0, 2500.0))
-    alpha = numpyro.sample("alpha", dist.Uniform(0.0, 0.2))
-    vsini = numpyro.sample("vsini", dist.Uniform(30.0, 60.0))  # HK
+    alpha = numpyro.sample("alpha", dist.Uniform(0.05, 0.15))
+    vsini = numpyro.sample("vsini", dist.Uniform(10.0, 20.0))  # HK
     logvmr = []
     for i in range(len(mols_unique)):
         logvmr.append(numpyro.sample("log" + mols_unique[i], dist.Uniform(-10.0, 0.0)))
@@ -512,10 +487,10 @@ import time
 t1 = time.perf_counter()
 mcmc.run(
     rng_key_,
-    nu_grid_obs=nu_grid_obs_array[0, :],
+    nu_grid_obs=nu_grid_obs[0, :],
     y1=f_obs[0],
     y1err=f_obserr[0],
-    y2=Ks_mag_obs,
+    y2=Kmag,
     y2err=Ks_mag_obserr,
 )
 t2 = time.perf_counter()
@@ -545,7 +520,7 @@ from numpyro.diagnostics import hpdi
 pred = Predictive(model_c, samples, return_sites=["y1", "y2"])
 predictions = pred(
     rng_key_,
-    nu_grid_obs=nu_grid_obs_array[0, :],
+    nu_grid_obs=nu_grid_obs[0, :],
     y1=None,
     y1err=f_obserr[0, :],
     y2=None,
@@ -567,7 +542,7 @@ hpdi_mu3 = []
 for i in range(len(mols_unique)):
     predictions = pred(
         rng_key_,
-        nu_grid_obs=nu_grid_obs_array[0, :],
+        nu_grid_obs=nu_grid_obs[0, :],
         y1=None,
         y1err=jnp.concatenate(f_obserr),
         y2=None,
