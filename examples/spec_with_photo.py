@@ -71,9 +71,12 @@ print("len(nu_grid_spec) = ", len(nu_grid_spec))   #6000
 # %%
 # Molecular and CIA database settings
 # --------------------------------------
-
-mols = ["H2O", "CH4", "CO"]
-db = ["ExoMol", "HITEMP", "ExoMol"]
+#
+# Here, we set the molecular and CIA databases for the forward model.
+# We use H2O, CH4, and CO for the molecular opacity and H2-H2 and H2-He for the CIA opacity.
+# The molecular databases are from ExoMol (H2O and CO) and HITEMP (CH4), 
+# and the CIA databases are from the HITRAN CIA database.
+#
 
 # molecules/CIA database settings, uses nu_photo becuase it's wider than nu_grid_obs
 from exojax.spec.api import MdbExomol
@@ -99,7 +102,7 @@ cdbH2He = contdb.CdbCIA(".database/H2-He_2011.cia", nu_grid_photo)
 molmassH2 = molinfo.molmass("H2")
 molmassHe = molinfo.molmass("He", db_HIT=False)
 
-
+# moelcular weight calculator
 def mean_molecular_weight(vmr, vmrH2, vmrHe):
     mmw = jnp.sum(vmr * molmasses) + vmrH2 * molmassH2 + vmrHe * molmassHe
     return mmw
@@ -108,6 +111,14 @@ def mean_molecular_weight(vmr, vmrH2, vmrHe):
 # %%
 # opacity calculators for spectroscopy
 # --------------------------------------
+#
+# Next, we define the opacity for the spectrum. 
+# Here, we use `OpaPremodit`` to generate `opa` of H2O, CO, and CH4 using their respective `mdb`. 
+# The `dit_grid_resolution` parameter determines the accuracy of the pressure width generation; 
+# in this case, we set it to a low accuracy of 1.0. Please check the required accuracy as needed.
+# `auto_trange` is the valid temperature range for the opacity calculation.
+#
+
 
 from exojax.spec.opacalc import OpaPremodit
 from exojax.spec.opacont import OpaCIA
@@ -142,6 +153,9 @@ opa_spec_cia_H2He = OpaCIA(cdbH2He, nu_grid_spec)
 # %%
 # opacity calculators for photometry
 # --------------------------------------
+#
+# We also define the opacity for the photometry.
+#
 
 opa_photo_h2o = OpaPremodit(
     mdb_h2o,
@@ -170,6 +184,11 @@ opa_photo_cia_H2He = OpaCIA(cdbH2He, nu_grid_photo)
 # %%
 # sets atmospheric radiative transfer model and spectral operators
 # -----------------------------------------------------------------
+#
+# Here, we set the atmospheric radiative transfer model and the spectral operators.
+# we calculate the emission without scattering (pure absorption), so we construct `art` using `ArtEmisPure`.
+#
+
 from exojax.spec.atmrt import ArtEmisPure
 
 art = ArtEmisPure(pressure_btm=1.0e2, pressure_top=1.0e-4, nlayer=200)
@@ -185,6 +204,9 @@ sop_inst = SopInstProfile(nu_grid_spec, vrmax=100.0)
 # %%
 # defines the forward model for the spectroscopy
 # ---------------------------------------------------
+#
+# Here, we define the forward model for the spectroscopy, `fspec``.
+#
 
 from exojax.utils.astrofunc import square_radius_from_mass_logg
 from exojax.utils.constants import RJ
@@ -255,6 +277,10 @@ def fspec(T0, alpha, logg, Mp, logvmr, u1, u2, RV, vsini):
 # %%
 # defines photometry model
 # ------------------------------
+#
+# We also define the photometry model, `fphoto`.
+#
+
 @jit
 def fphoto(T0, alpha, logg, Mp, logvmr):
     Tarr, Parr, gravity, Rp2, vmr, vmrH2, vmrHe, mmw = calc_atmosphere(
@@ -293,8 +319,11 @@ def fphoto(T0, alpha, logg, Mp, logvmr):
 # %%
 # checks the forward models
 # ----------------------------
+#
+# We check the forward models, `fspec` and `fphoto`, using an arbitrary parameters.
+#
 
-# examples
+# just examples
 Mp = 33.2
 RV = 28.1
 T0 = 1293.0
@@ -348,6 +377,12 @@ plt.savefig("spec.png", bbox_inches="tight")
 # %%
 # Bayesian analysis
 # ---------------------
+#
+#We define the probabilistic model using NumPyro. `fspec` is used as the mean of the Gaussian. 
+# Since the observed spectrum is a relative spectrum, the output of `fspec` must be normalized. 
+# Following Kawashima et al. (2025), we select a normalization constant that minimizes 
+# the residuals (strictly speaking, chi-square) between the model and the observed spectrum.
+#
 
 from jax import random
 import numpyro
@@ -361,17 +396,11 @@ mols_unique = ["H2O", "CO", "CH4"]
 
 def model_c(nu_grid_obs, y1, y1err, y2, y2err):
     logg = numpyro.sample("logg", dist.Uniform(4.0, 6.0))
-    # logg = numpyro.sample(
-    #    "logg", dist.TruncatedNormal(5.5, 0.1, low=5.0)
-    # )  # Wang et al. (2022)
-    Mp = numpyro.sample("Mp", dist.Normal(33.5, 0.3))  # Brandt et al. (2021)
-    # Mp = numpyro.sample(
-    #    "Mp", dist.TruncatedNormal(72.7, 0.8, low=1.0)
-    # )  # Brandt et al. (2021)
-    RV = numpyro.sample("RV", dist.Uniform(26, 30))  # HK
+    Mp = numpyro.sample("Mp", dist.Normal(33.5, 0.3))  
+    RV = numpyro.sample("RV", dist.Uniform(26, 30))  
     T0 = numpyro.sample("T0", dist.Uniform(1000.0, 2500.0))
     alpha = numpyro.sample("alpha", dist.Uniform(0.05, 0.15))
-    vsini = numpyro.sample("vsini", dist.Uniform(10.0, 20.0))  # HK
+    vsini = numpyro.sample("vsini", dist.Uniform(10.0, 20.0))  
     logvmr = []
     for i in range(len(mols_unique)):
         logvmr.append(numpyro.sample("log" + mols_unique[i], dist.Uniform(-10.0, 0.0)))
@@ -384,8 +413,8 @@ def model_c(nu_grid_obs, y1, y1err, y2, y2err):
 
     mu = fspec(T0, alpha, logg, Mp, logvmr, u1, u2, RV, vsini)
 
-    # normalizes the model spectrum to the data
-    ## solution of d/da |(a mu - fobs)/err_all|^2 = 0 for a
+    # Normalizes the model spectrum to the data
+    # The following equation is the solution of d/da |(a mu - fobs)/err_all|^2 = 0 for a
     a = jnp.dot(mu / err_all, f_obs[0] / err_all) / jnp.dot(mu / err_all, mu / err_all)
     numpyro.deterministic("a", a)
     mu = a * mu
@@ -396,7 +425,17 @@ def model_c(nu_grid_obs, y1, y1err, y2, y2err):
     numpyro.sample("y1", dist.Normal(mu, err_all), obs=y1)
     numpyro.sample("y2", dist.Normal(Kmag, y2err), obs=y2)
 
-
+# %%
+# MCMC sampling
+# ----------------
+#
+# We perform MCMC sampling using NUTS. It will take tens of hours or more.
+# One way to check whether NUTS is running properly is to log the process and periodically monitor it using tools like 
+# `ezlog` (https://github.com/HajimeKawahara/ezlog). 
+# If the number of steps per chain becomes excessively large, some adjustments may be necessary. 
+# Based on experience, the number of steps per chain tends to increase during the warm-up phase, 
+# then decrease and stabilize at a certain level.
+#
 rng_key = random.PRNGKey(0)
 rng_key, rng_key_ = random.split(rng_key)
 # num_warmup, num_samples = 25, 100
@@ -414,7 +453,12 @@ mcmc.run(
 )
 mcmc.print_summary()
 
-
+# %%
+# saving and plotting
+# ----------------------
+#
+# We save the MCMC results and the samples and plot the trace.
+#
 import arviz as az
 
 az.plot_trace(mcmc, backend_kwargs={"constrained_layout": True})
