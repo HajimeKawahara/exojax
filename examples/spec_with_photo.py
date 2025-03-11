@@ -247,7 +247,7 @@ def fspec(T0, alpha, logg, Mp, logvmr, u1, u2, RV, vsini):
     Frot = sop_rot.rigid_rotation(F0, vsini, u1, u2)
     Frot_inst = sop_inst.ipgauss(Frot, beta_inst)
 
-    mu = sop_inst.sampling(Frot_inst, RV, nu_grid_obs[0, :])
+    mu = sop_inst.sampling(Frot_inst, RV, nu_grid_obs)
     mu = mu * (Rp2 / distance**2) * (RJ / pc) ** 2
     return mu / Fref
 
@@ -499,11 +499,11 @@ import time
 t1 = time.perf_counter()
 mcmc.run(
     rng_key_,
-    nu_grid_obs=nu_grid_obs[0, :],
-    y1=f_obs[0],
-    y1err=f_obserr[0],
+    nu_grid_obs=nu_grid_obs,
+    y1=f_obs,
+    y1err=f_obs_err,
     y2=Kmag,
-    y2err=Ks_mag_obserr,
+    y2err=Kmag_err,
 )
 t2 = time.perf_counter()
 print(t2 - t1)
@@ -532,11 +532,11 @@ from numpyro.diagnostics import hpdi
 pred = Predictive(model_c, samples, return_sites=["y1", "y2"])
 predictions = pred(
     rng_key_,
-    nu_grid_obs=nu_grid_obs[0, :],
+    nu_grid_obs=nu_grid_obs,
     y1=None,
-    y1err=f_obserr[0, :],
+    y1err=f_obs_err,
     y2=None,
-    y2err=Ks_mag_obserr,
+    y2err=Kmag_err,
 )
 with open("./output_bn/pred.pickle", mode="wb") as f:
     pickle.dump(predictions, f)
@@ -554,11 +554,11 @@ hpdi_mu3 = []
 for i in range(len(mols_unique)):
     predictions = pred(
         rng_key_,
-        nu_grid_obs=nu_grid_obs[0, :],
+        nu_grid_obs=nu_grid_obs,
         y1=None,
-        y1err=jnp.concatenate(f_obserr),
+        y1err=jnp.concatenate(f_obs_err),
         y2=None,
-        y2err=Ks_mag_obserr,
+        y2err=Kmag_err,
         onl=mols_unique[i],
     )
     median_mu3.append(jnp.median(predictions["y1"], axis=0))
@@ -567,106 +567,3 @@ for i in range(len(mols_unique)):
         "./output_bn/" + mols_unique[i] + ".npz",
         [median_mu3[i], hpdi_mu3[i][0], hpdi_mu3[i][1]],
     )
-
-
-import matplotlib.pyplot as plt
-from matplotlib.ticker import MultipleLocator, FormatStrFormatter, AutoMinorLocator
-
-plt.switch_backend("agg")
-i_min = 0
-i_max = 0
-for k in range(len(ord_list)):
-    i_max = i_max + len(ld_obs[k])
-    print(i_min, i_max, np.shape(ld_obs))
-    fig, ax = plt.subplots(figsize=(28, 6.0))
-    ax.plot(ld_obs[k], f_obs[k], "+", color="black", label="data")
-    ax.plot(ld_obs[k], median_mu1[i_min:i_max], color="C0", label="median")
-    ax.fill_between(
-        ld_obs[k],
-        hpdi_mu1[0][i_min:i_max],
-        hpdi_mu1[1][i_min:i_max],
-        alpha=0.3,
-        interpolate=True,
-        color="C0",
-        label="95% area",
-    )
-
-    plt.xlabel("Wavelength [$\AA$]", fontsize=15)
-    plt.ylabel("Normalized Flux", fontsize=15)
-    ax.set_xlim(np.min(ld_obs[k]), np.max(ld_obs[k]))
-    ax.set_ylim(0.6, 1.3)
-
-    ax.xaxis.set_ticks_position("both")
-    ax.yaxis.set_ticks_position("both")
-    ax.xaxis.set_minor_locator(AutoMinorLocator())
-    ax.yaxis.set_minor_locator(AutoMinorLocator())
-
-    plt.legend(fontsize=16)
-    plt.tick_params(labelsize=16)
-    # plt.show()
-
-    num = str(ord_list[k][0]) + "-" + str(ord_list[k][1])
-    plt.savefig("./output/fit" + num + ".pdf", bbox_inches="tight")
-    plt.close()
-
-    i_min = i_max
-
-
-i_min = 0
-i_max = 0
-for k in range(len(ord_list)):
-    i_max = i_max + len(ld_obs[k])
-    print(i_min, i_max, np.shape(ld_obs))
-    fig, ax = plt.subplots(figsize=(28, 6.0))
-    ax.plot(ld_obs[k], f_obs[k], "+", color="black", label="data")
-    ax.plot(ld_obs[k], median_mu1[i_min:i_max], color="C0", label="all", zorder=10.0)
-    ax.fill_between(
-        ld_obs[k],
-        hpdi_mu1[0][i_min:i_max],
-        hpdi_mu1[1][i_min:i_max],
-        alpha=0.3,
-        interpolate=True,
-        color="C0",
-        label="95% area",
-    )
-    for i in range(len(mols_unique)):
-        j = i + 1
-        ax.plot(
-            ld_obs[k],
-            median_mu3[i][i_min:i_max],
-            color="C" + str(j),
-            label="w/o " + mols_unique[i],
-        )
-
-    plt.xlabel("Wavelength [$\AA$]", fontsize=15)
-    plt.ylabel("Normalized Flux", fontsize=15)
-    ax.set_xlim(np.min(ld_obs[k]), np.max(ld_obs[k]))
-    ax.set_ylim(0.6, 1.3)
-
-    ax.xaxis.set_ticks_position("both")
-    ax.yaxis.set_ticks_position("both")
-    ax.xaxis.set_minor_locator(AutoMinorLocator())
-    ax.yaxis.set_minor_locator(AutoMinorLocator())
-
-    plt.legend(fontsize=16)
-    plt.tick_params(labelsize=16)
-    # plt.show()
-
-    num = str(ord_list[k][0]) + "-" + str(ord_list[k][1])
-    plt.savefig("./output/fit_wo" + num + ".pdf", bbox_inches="tight")
-    plt.close()
-
-    i_min = i_max
-
-
-import corner
-
-figure = corner.corner(
-    samples,
-    show_titles=True,
-    quantiles=[0.16, 0.5, 0.84],
-    color="C0",
-    label_kwargs={"fontsize": 20},
-    smooth=1.0,
-)  # smooth parameter needed
-figure.savefig("./output/corner.pdf", bbox_inches="tight")
