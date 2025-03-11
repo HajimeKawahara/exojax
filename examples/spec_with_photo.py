@@ -22,32 +22,31 @@ from exojax.utils.instfunc import resolution_to_gaussian_std
 
 from jax import jit
 
-# ----
-# loads test spectrum data, used in Paper I (Kawahara et al. 2022)
+# %%
+# loads test spectrum data and sets prior knowledge, used in Paper I (Kawahara et al. 2022)
+# -------------------------------------------------------------------------------------------
+#
+# Here, we sets the test spectrum data of Luhman 16A, which is used in Paper I (Kawahara et al. 2022).
+# Kmag and Kmag_err are the K-band magnitude and its error, respectively.
+# we also sets the instrumental resolution and the prior knowledge of the planet.
+#
+
 
 nu_grid_obs, f_obs, f_obs_err, Kmag, Kmag_err, filter_id = sample_emission_spectrum()
 
 # plt.plot(nu_grid_obs, f_obs, ".")
 # plt.savefig("obsspec.png")
 
-# ----
-# prior knowledge of the system
+
 distance = 1.996  # pc Bedin et al. 2023
 
-# ----
 # instrument settings
-
 Rinst = 100000.0  # instrumental spectral resolution
 beta_inst = resolution_to_gaussian_std(Rinst)
 
-mols = ["H2O", "CH4", "CO"]
-db = ["ExoMol", "HITEMP", "ExoMol"]
-
-# ----
 # normalization (just to use the spectrum to be around 1)
 Fref = 2.0e-15
 
-# ----
 # wavenumber grid setting for the forward model
 nu_min = np.min(nu_grid_obs)
 nu_max = np.max(nu_grid_obs)
@@ -69,7 +68,13 @@ print("len(nu_grid_spec) = ", len(nu_grid_spec))   #6000
 
 # photometry model is more time-consuming than the spectroscopy model
 
-# ----
+# %%
+# Molecular and CIA database settings
+# --------------------------------------
+
+mols = ["H2O", "CH4", "CO"]
+db = ["ExoMol", "HITEMP", "ExoMol"]
+
 # molecules/CIA database settings, uses nu_photo becuase it's wider than nu_grid_obs
 from exojax.spec.api import MdbExomol
 from exojax.spec.api import MdbHitemp
@@ -100,8 +105,10 @@ def mean_molecular_weight(vmr, vmrH2, vmrHe):
     return mmw
 
 
-# ----
-# Sets opacity calculators for spectroscopy
+# %%
+# opacity calculators for spectroscopy
+# --------------------------------------
+
 from exojax.spec.opacalc import OpaPremodit
 from exojax.spec.opacont import OpaCIA
 
@@ -132,8 +139,10 @@ opa_spec_ch4 = OpaPremodit(
 opa_spec_cia_H2H2 = OpaCIA(cdbH2H2, nu_grid_spec)
 opa_spec_cia_H2He = OpaCIA(cdbH2He, nu_grid_spec)
 
-# ----
-# Sets opacity calculators for photometry
+# %%
+# opacity calculators for photometry
+# --------------------------------------
+
 opa_photo_h2o = OpaPremodit(
     mdb_h2o,
     nu_grid_photo,
@@ -158,7 +167,9 @@ opa_photo_ch4 = OpaPremodit(
 opa_photo_cia_H2H2 = OpaCIA(cdbH2H2, nu_grid_photo)
 opa_photo_cia_H2He = OpaCIA(cdbH2He, nu_grid_photo)
 
-# sets atmospheric radiative transfer model
+# %%
+# sets atmospheric radiative transfer model and spectral operators
+# -----------------------------------------------------------------
 from exojax.spec.atmrt import ArtEmisPure
 
 art = ArtEmisPure(pressure_btm=1.0e2, pressure_top=1.0e-4, nlayer=200)
@@ -171,14 +182,16 @@ from exojax.spec.specop import SopInstProfile
 sop_rot = SopRotation(nu_grid_spec, vsini_max=100.0)
 sop_inst = SopInstProfile(nu_grid_spec, vrmax=100.0)
 
+# %%
+# defines the forward model for the spectroscopy
+# ---------------------------------------------------
 
 from exojax.utils.astrofunc import square_radius_from_mass_logg
 from exojax.utils.constants import RJ
 from exojax.utils.constants import pc
 
 
-# ----
-# calculates the atmosphere
+# defines the calculation of the atmosphere
 def calc_atmosphere(T0, alpha, logg, Mp, logvmr):
     Tarr = art.powerlaw_temperature(T0, alpha)
     Parr = art.pressure
@@ -193,7 +206,6 @@ def calc_atmosphere(T0, alpha, logg, Mp, logvmr):
     return Tarr, Parr, gravity, Rp2, vmr, vmrH2, vmrHe, mmw
 
 
-# ----
 # defines a constant vmr profile
 def constant_vmr_profile(vmr):
     vmr_profile_h2o = art.constant_profile(vmr[0])
@@ -201,8 +213,6 @@ def constant_vmr_profile(vmr):
     vmr_profile_ch4 = art.constant_profile(vmr[2])
     return vmr_profile_h2o, vmr_profile_co, vmr_profile_ch4
 
-
-# ----
 # defines a spectral forward model
 @jit
 def fspec(T0, alpha, logg, Mp, logvmr, u1, u2, RV, vsini):
@@ -242,8 +252,9 @@ def fspec(T0, alpha, logg, Mp, logvmr, u1, u2, RV, vsini):
     return mu / Fref
 
 
-# ----
+# %%
 # defines photometry model
+# ------------------------------
 @jit
 def fphoto(T0, alpha, logg, Mp, logvmr):
     Tarr, Parr, gravity, Rp2, vmr, vmrH2, vmrHe, mmw = calc_atmosphere(
@@ -279,8 +290,9 @@ def fphoto(T0, alpha, logg, Mp, logvmr):
     return mag
 
 
-# ----
+# %%
 # checks the forward models
+# ----------------------------
 
 # examples
 Mp = 33.2

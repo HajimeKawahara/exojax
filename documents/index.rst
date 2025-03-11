@@ -52,6 +52,13 @@ Contents
 
 .. toctree::
    :maxdepth: 2
+   :caption: Gallery:
+
+   examples/index
+
+
+.. toctree::
+   :maxdepth: 2
    :caption: User Guide:
 
    userguide.rst   
@@ -63,14 +70,7 @@ Contents
 
    exojax/exojax.rst
 
-Examples
-==================================
 
-.. toctree::
-   :maxdepth: 2
-   :caption: Examples:
-
-   auto_examples/index
 
 ExoJAX examples (exojaxample)
 ---------------------------------
