@@ -14,7 +14,6 @@ import os
 import numpy as np
 import jax.numpy as jnp
 import matplotlib.pyplot as plt
-from exojax.spec.unitconvert import wav2nu
 from exojax.spec.specop import SopPhoto
 from exojax.test.emulate_spec import sample_emission_spectrum
 from exojax.utils.grids import wavenumber_grid
@@ -373,7 +372,7 @@ if optimization:
     def objective(params):
         a, T0, alpha, logg, Mp, logvmr, u1, u2, RV, vsini = recover_params(params)
         mu = fspec(T0, alpha, logg, Mp, logvmr, u1, u2, RV, vsini)
-        f = (a * mu - jnp.concatenate(f_obs)) / jnp.concatenate(f_obserr)
+        f = (a * mu - f_obs) / f_obs_err
         return jnp.dot(f, f)
 
     def recover_params(params):
@@ -494,9 +493,6 @@ num_warmup, num_samples = 500, 500
 ######
 kernel = NUTS(model_c, forward_mode_differentiation=True)
 mcmc = MCMC(kernel, num_warmup=num_warmup, num_samples=num_samples)
-import time
-
-t1 = time.perf_counter()
 mcmc.run(
     rng_key_,
     nu_grid_obs=nu_grid_obs,
@@ -505,8 +501,6 @@ mcmc.run(
     y2=Kmag,
     y2err=Kmag_err,
 )
-t2 = time.perf_counter()
-print(t2 - t1)
 mcmc.print_summary()
 
 
@@ -526,7 +520,6 @@ with open("./output_bn/samples.pickle", mode="wb") as f:
 with open("./output_bn/samples.pickle", mode="rb") as f:
     samples = pickle.load(f)
 
-exit()
 from numpyro.diagnostics import hpdi
 
 pred = Predictive(model_c, samples, return_sites=["y1", "y2"])
@@ -549,21 +542,3 @@ median_mu2 = jnp.median(predictions["y2"], axis=0)
 hpdi_mu2 = hpdi(predictions["y2"], 0.95)
 np.savez("./output_bn/Kmag.npz", [median_mu2, hpdi_mu2[0], hpdi_mu2[1]])
 
-median_mu3 = []
-hpdi_mu3 = []
-for i in range(len(mols_unique)):
-    predictions = pred(
-        rng_key_,
-        nu_grid_obs=nu_grid_obs,
-        y1=None,
-        y1err=jnp.concatenate(f_obs_err),
-        y2=None,
-        y2err=Kmag_err,
-        onl=mols_unique[i],
-    )
-    median_mu3.append(jnp.median(predictions["y1"], axis=0))
-    hpdi_mu3.append(hpdi(predictions["y1"], 0.95))
-    np.savez(
-        "./output_bn/" + mols_unique[i] + ".npz",
-        [median_mu3[i], hpdi_mu3[i][0], hpdi_mu3[i][1]],
-    )
