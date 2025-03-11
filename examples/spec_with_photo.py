@@ -1,10 +1,11 @@
-""" 
+"""
 NUTS analysis of the high-resolution emission spectrum with photometric information
 ====================================================================================
 
 This script performs a Bayesian analysis of the high-resolution emission spectrum with photometric information.
 
 """
+
 import os
 
 # from jax import config
@@ -13,56 +14,47 @@ import os
 import numpy as np
 import jax.numpy as jnp
 import matplotlib.pyplot as plt
-from exojax.test
 from exojax.spec.unitconvert import wav2nu
 from exojax.spec.specop import SopPhoto
+from exojax.test.emulate_spec import sample_emission_spectrum
 from exojax.utils.grids import wavenumber_grid
+from exojax.utils.instfunc import resolution_to_gaussian_std
 
 from jax import jit
 
 # ----
+# loads test spectrum data, used in Paper I (Kawahara et al. 2022)
+
+nu_grid_obs, f_obs, f_obs_err, Kmag, Kmag_err, filter_id = sample_emission_spectrum()
+
+plt.plot(nu_grid_obs, f_obs, ".")
+plt.savefig("obsspec.png")
+exit()
+
+# ----
 # prior knowledge of the system
-distance = 1.996  #pc Bedin et al. 2023 
+distance = 1.996  # pc Bedin et al. 2023
 
+# ----
 # instrument settings
-from exojax.utils.instfunc import resolution_to_gaussian_std
 
-Rinst = 30000.0  # instrumental spectral resolution
+Rinst = 100000.0  # instrumental spectral resolution
 beta_inst = resolution_to_gaussian_std(Rinst)
 
-ord_list = [[60, 61]]
 mols = ["H2O", "CH4", "CO"]
 db = ["ExoMol", "HITEMP", "ExoMol"]
 
-db_dir = moldata.set_db_dir(mols, db)
-path_obs, path_data, path_repo = setting.set_path()
-
-# loads observation data
-ld_obs, f_obs, f_obserr, ord, _ = obs.spec(path_obs, ord_list, ord_norm=60)
-
-# masking
-ind = np.arange(0, len(f_obs[0]))
-mask = ind < 3660  # + (ind > 3730) #only CO
-#mask = (ind < 3660) + (ind > 3730)
-
-f_obs[0] = f_obs[0][mask]
-f_obserr[0] = f_obserr[0][mask]
-ld_obs[0] = ld_obs[0][mask]
-
+# ----
 # normalization (just to use the spectrum to be around 1)
 Fref = 2.0e-15
 
-
-# waveunmber grid for observation
-nu_grid_obs_array = []
-for wav in ld_obs:
-    nu_grid_obs_array.append(wav2nu(wav, unit="AA"))
-nu_grid_obs_array = jnp.array(nu_grid_obs_array)
-nu_min = wav2nu(np.max([np.max(arr) for arr in ld_obs]), unit="AA")
-nu_max = wav2nu(np.min([np.min(arr) for arr in ld_obs]), unit="AA")
+# ----
+# wavenumber grid setting for the forward model
+nu_min = np.min(nu_grid_obs)
+nu_max = np.max(nu_grid_obs)
 
 margin = 1.0
-ngrid = 20000
+ngrid = 6000
 nu_grid_spec, wav, res = wavenumber_grid(
     nu_min - margin, nu_max + margin, ngrid, xsmode="premodit"
 )
@@ -75,6 +67,7 @@ nu_grid_photo = sop_photo.nu_grid_filter
 print("len(nu_grid_photo) = ", len(nu_grid_photo))
 print("len(nu_grid_spec) = ", len(nu_grid_spec))
 
+# ----
 # molecules/CIA database settings, uses nu_photo becuase it's wider than nu_grid_obs
 from exojax.spec.api import MdbExomol
 from exojax.spec.api import MdbHitemp
@@ -105,7 +98,8 @@ def mean_molecular_weight(vmr, vmrH2, vmrHe):
     return mmw
 
 
-# sets opacity calculators for spectroscopy
+# ----
+# Sets opacity calculators for spectroscopy
 from exojax.spec.opacalc import OpaPremodit
 from exojax.spec.opacont import OpaCIA
 
@@ -136,7 +130,8 @@ opa_spec_ch4 = OpaPremodit(
 opa_spec_cia_H2H2 = OpaCIA(cdbH2H2, nu_grid_spec)
 opa_spec_cia_H2He = OpaCIA(cdbH2He, nu_grid_spec)
 
-# sets opacity calculators for photometry
+# ----
+# Sets opacity calculators for photometry
 opa_photo_h2o = OpaPremodit(
     mdb_h2o,
     nu_grid_photo,
@@ -180,7 +175,8 @@ from exojax.utils.constants import RJ
 from exojax.utils.constants import pc
 
 
-# calculate the atmosphere
+# ----
+# calculates the atmosphere
 def calc_atmosphere(T0, alpha, logg, Mp, logvmr):
     Tarr = art.powerlaw_temperature(T0, alpha)
     Parr = art.pressure
@@ -195,7 +191,8 @@ def calc_atmosphere(T0, alpha, logg, Mp, logvmr):
     return Tarr, Parr, gravity, Rp2, vmr, vmrH2, vmrHe, mmw
 
 
-# vmr profile
+# ----
+# defines a constant vmr profile
 def constant_vmr_profile(vmr):
     vmr_profile_h2o = art.constant_profile(vmr[0])
     vmr_profile_co = art.constant_profile(vmr[1])
@@ -203,7 +200,8 @@ def constant_vmr_profile(vmr):
     return vmr_profile_h2o, vmr_profile_co, vmr_profile_ch4
 
 
-# define the spectral forward model
+# ----
+# defines a spectral forward model
 @jit
 def fspec(T0, alpha, logg, Mp, logvmr, u1, u2, RV, vsini):
 
@@ -242,6 +240,7 @@ def fspec(T0, alpha, logg, Mp, logvmr, u1, u2, RV, vsini):
     return mu / Fref
 
 
+# ----
 # defines photometry model
 @jit
 def fphoto(T0, alpha, logg, Mp, logvmr):
@@ -278,11 +277,12 @@ def fphoto(T0, alpha, logg, Mp, logvmr):
     return mag
 
 
-# check the forward models
+# ----
+# checks the forward models
 
 # best fit (HMC-NUTS) median
 Mp = 72.69
-RV= -0.91
+RV = -0.91
 T0 = 1325.0
 alpha = 0.02
 logvmr_sample = [-3.06, -2.83, -7.65]
@@ -305,7 +305,7 @@ mu = spec_model
 err_all = f_obserr[0]
 a = jnp.dot(mu / err_all, f_obs[0] / err_all) / jnp.dot(mu / err_all, mu / err_all)
 
-#test high T model
+# test high T model
 spec_model_high = fspec(
     T0=1800.0,
     alpha=alpha,
@@ -333,14 +333,22 @@ Kmag_model = fphoto(
 print(Kmag_model)
 
 
-#fig = plt.figure(figsize=(12, 4))
+# fig = plt.figure(figsize=(12, 4))
 fig = plt.figure(figsize=(20, 4))
 plt.plot(nu_grid_obs_array[0, :], f_obs[0], ".", c="k", label="data", alpha=0.3)
 plt.plot(
-    nu_grid_obs_array[0, :], a * spec_model, label="NUTS best model (T0=1325K)", lw=2, alpha=0.7
+    nu_grid_obs_array[0, :],
+    a * spec_model,
+    label="NUTS best model (T0=1325K)",
+    lw=2,
+    alpha=0.7,
 )
 plt.plot(
-    nu_grid_obs_array[0, :], a2 * spec_model_high, label="model high-T (T0=1800K)", lw=2, alpha=0.7
+    nu_grid_obs_array[0, :],
+    a2 * spec_model_high,
+    label="model high-T (T0=1800K)",
+    lw=2,
+    alpha=0.7,
 )
 
 plt.ylim(0.6, 1.5)
@@ -392,6 +400,8 @@ if optimization:
         vsini = 40.0  # fix
         return a, T0, alpha, logg, Mp, logvmr, u1, u2, RV, vsini
 
+    # ----
+    # defines the forward-mode differentiation of the objective function (JVP)
     def dfluxt_jacfwd(params):
         return jacfwd(objective)(params)
 
