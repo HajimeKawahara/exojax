@@ -43,7 +43,7 @@ See [this page](http://secondearths.sakura.ne.jp/exojax/tutorials/get_started.ht
 [![paper II](https://img.shields.io/badge/arxiv-2410.06900-blue)](https://arxiv.org/abs/2410.06900)
  
 - Paper I: Kawahara, Kawashima, Masuda, Crossfield, Pannier, van den Bekerom, [ApJS 258, 31 (2022)](https://iopscience.iop.org/article/10.3847/1538-4365/ac3b4d)
-- Paper II: Kawahara, Kawashima, Tada et al. [AAS under review](https://arxiv.org/abs/2410.06900) 
+- Paper II: Kawahara, Kawashima, Tada et al. [arXiv](https://arxiv.org/abs/2410.06900) 
 
 
 
