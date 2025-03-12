@@ -1,2 +1,2 @@
-Welcome to ExoJAX Gallery
-=============================
+Gallery: More Practical Sample Codes
+=====================================

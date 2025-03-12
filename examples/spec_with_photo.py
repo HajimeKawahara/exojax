@@ -377,7 +377,7 @@ plt.savefig("spec.png", bbox_inches="tight")
 # Bayesian analysis
 # ---------------------
 #
-#We define the probabilistic model using NumPyro. `fspec` is used as the mean of the Gaussian. 
+# We define the probabilistic model using NumPyro. `fspec` is used as the mean of the Gaussian. 
 # Since the observed spectrum is a relative spectrum, the output of `fspec` must be normalized. 
 # Following Kawashima et al. (2025), we select a normalization constant that minimizes 
 # the residuals (strictly speaking, chi-square) between the model and the observed spectrum.

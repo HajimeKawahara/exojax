@@ -72,8 +72,8 @@ Contents
 
 
 
-ExoJAX examples (exojaxample)
----------------------------------
+Actual Analysis Examples using ExoJAX (external) 
+------------------------------------------------------
 
 - |:ringed_planet:| `exojaxample_WASP39b <https://github.com/sh-tada/exojaxample_WASP39b>`_ : An example of HMC-NUTS for actual hot Saturn (JWST/ERS, NIRSPEC/G395H)
 
