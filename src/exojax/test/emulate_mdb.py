@@ -5,7 +5,6 @@ import pickle
 import os
 import shutil
 
-from requests import get
 from exojax.spec import api
 from exojax.test.data import TESTDATA_moldb_VALD
 from exojax.test.data import get_testdata_filename

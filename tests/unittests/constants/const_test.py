@@ -1,4 +1,4 @@
-from exojax.utils.constants import opfac, bar_cgs, Gcr
+from exojax.utils.constants import opacity_factor, bar_cgs, Gcr
 from scipy.constants import m_u
 import pytest
 
@@ -7,7 +7,7 @@ def test_opfac():
     kg2g = 1.0e3
     val = bar_cgs / (m_u * kg2g)
 
-    assert opfac == pytest.approx(val)
+    assert opacity_factor == pytest.approx(val)
 
 
 def test_Gcr():

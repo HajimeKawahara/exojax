@@ -20,7 +20,7 @@ def test_rt(db, diffmode, fig=False):
     art = ArtTransPure(pressure_top=1.e-8, pressure_btm=1.e2, nlayer=100)
     art.change_temperature_range(400.0, 1500.0)
     Tarr = art.powerlaw_temperature(1300.0, 0.1)
-    mmr_arr = art.constant_mmr_profile(0.1)
+    mmr_arr = art.constant_profile(0.1)
     mmw = 2.33 * np.ones_like(art.pressure)
     gravity_btm = 2478.57
     radius_btm = RJ

@@ -5,8 +5,22 @@
 """
 
 from exojax.utils.constants import gJ
+from exojax.utils.constants import loggJ
+
 import jax.numpy as jnp
 
+def square_radius_from_mass_logg(Mp, logg):
+    """square of radius from mass and logg.
+
+    Args:
+        Mp: mass in the unit of Jupiter mass
+        logg: logg (log10 gravity in cgs)
+
+    Returns:
+        Rp**2 in the unit of sqaured Jupiter radius
+
+    """
+    return Mp * 10**(loggJ - logg)
 
 
 def logg_jupiter(Rp, Mp):

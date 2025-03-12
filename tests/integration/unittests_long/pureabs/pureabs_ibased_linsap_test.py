@@ -25,7 +25,7 @@ def test_ArtEmisPure_ibased_linsap(db, diffmode, fig=False):
     T0 = 1300.0
     nT = 0.1
     Tarr = art.powerlaw_temperature(T0, nT)
-    mmr_arr = art.constant_mmr_profile(0.01)
+    mmr_arr = art.constant_profile(0.01)
     gravity = 2478.57
     
     mdb = mock_mdb(db)

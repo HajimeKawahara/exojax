@@ -15,7 +15,7 @@ def nu2wav(nus, wavelength_order="descending", unit="AA", values=None):
         values: corresponding values, e.g. f(nus) for nus
     Returns:
         wavelength (unit)
-        values (optional): corresponding values in the same order as wavelength
+        values (optional): corresponding values in the same order as wavelength, if values is not None.
     """
     conversion_factors = {"nm": 1.0e7, "AA": 1.0e8, "um": 1.0e4}
     wavenumber_order = is_sorted(nus)
@@ -47,12 +47,12 @@ def wav2nu(wav, unit, values=None):
 
     Args:
         wav: wavelength array in ascending/descending order
-        unit: unit of wavelength
+        unit: the unit of the output wavelength, "AA", "nm", or "um"
         values: corresponding values, e.g. f(wav) for wav
         
     Returns:
         wavenumber (cm-1) in ascending order
-        values (optional): corresponding values in the same order as wavenumber
+        values (optional): corresponding values in the same order as wavenumber, if values is not None.
     """
 
     conversion_factors = {"nm": 1.0e7, "AA": 1.0e8, "um": 1.0e4}

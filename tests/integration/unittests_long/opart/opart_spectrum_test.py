@@ -54,7 +54,7 @@ def test_forward_opart():
 
     temperature = opart.powerlaw_temperature(1300.0, 0.1)
     temperature = opart.clip_temperature(temperature)
-    mixing_ratio = opart.constant_mmr_profile(0.1)
+    mixing_ratio = opart.constant_profile(0.1)
     layer_params = [temperature, opart.pressure, opart.dParr, mixing_ratio]
     flux = opart(layer_params, layer_update_function)
     filename = files("exojax").joinpath(

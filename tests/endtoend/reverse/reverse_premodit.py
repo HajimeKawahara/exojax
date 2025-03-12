@@ -101,7 +101,7 @@ def frun(Tarr, MMR_CH4, Mp, Rp, u1, u2, RV, vsini):
     g = gravity_jupiter(Rp=Rp, Mp=Mp)  # gravity in the unit of Jupiter
     # molecule
     xsmatrix = opa.xsmatrix(Tarr, art.pressure)
-    mmr_arr = art.constant_mmr_profile(MMR_CH4)
+    mmr_arr = art.constant_profile(MMR_CH4)
     dtaumCH4 = art.opacity_profile_xs(xsmatrix, mmr_arr, opa.mdb.molmass, g)
     # continuum
     logacia_matrix = opcia.logacia_matrix(Tarr)

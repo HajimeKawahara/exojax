@@ -126,7 +126,7 @@ class ArtCommon:
         normalized_radius_layer = normalized_radius_lower + 0.5 * normalized_height
         return jnp.array([gravity_btm / normalized_radius_layer]).T
 
-    def constant_mmr_profile(self, value):
+    def constant_profile(self, value):
         return value * np.ones_like(self.pressure)
 
     def opacity_profile_lines(self, xs, mixing_ratio, molmass, gravity):

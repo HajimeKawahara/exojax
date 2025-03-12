@@ -43,7 +43,7 @@ if True:
 #with jax.profiler.trace("/tmp/jax-trace", create_perfetto_link=True):
     for i in tqdm.tqdm(range(Ntry)):
         temperature = art.powerlaw_temperature(T[i], 0.1)
-        mixing_ratio = art.constant_mmr_profile(0.01)
+        mixing_ratio = art.constant_profile(0.01)
         xsmatrix = opa_co.xsmatrix(temperature, art.pressure)
         dtau = art.opacity_profile_xs(xsmatrix, mixing_ratio, mdb_co.molmass, gravity)
         flux = art.run(dtau, temperature)

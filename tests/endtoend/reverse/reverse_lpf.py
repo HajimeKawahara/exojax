@@ -77,7 +77,7 @@ def model_c(nu1, y1):
 
     # T-P model//
     Tarr = art.powerlaw_temperature(T0, alpha)
-    mmr_arr = art.constant_mmr_profile(MMR_CO)
+    mmr_arr = art.constant_profile(MMR_CO)
 
     def obyo(y, tag, nusd, nus):
         # CO
