@@ -129,6 +129,9 @@ class ArtCommon:
     def constant_profile(self, value):
         return value * np.ones_like(self.pressure)
 
+    def constant_mmr_profile(self, value):
+        return self.constant_profile(value)
+    
     def opacity_profile_lines(self, xs, mixing_ratio, molmass, gravity):
         raise ValueError(
             "opacity_profile_lines was removed. Use opacity_profile_xs instead"
