@@ -1,2 +1,2 @@
-Gallery: More Practical Sample Codes
-=====================================
+|:art:| More Practical Samples
+================================

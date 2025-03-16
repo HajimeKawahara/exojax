@@ -1,15 +1,15 @@
-Getting Started
-====================
+|:jack_o_lantern:| Getting Started
+=====================================
 
 .. toctree::
    :maxdepth: 1
 
    tutorials/get_started.rst
    tutorials/get_started_transmission.rst
-   tutorials/Transmission_beta.rst
    tutorials/optimize_spectrum.rst
    tutorials/get_started_opart.rst
    tutorials/Cross_Section_using_OpaStitch.rst
+   
    
 Retrievals
 ===============
