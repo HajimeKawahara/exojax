@@ -11,6 +11,8 @@ Molecular Database
    userguide/nonair.rst
    userguide/qstates.rst
    userguide/atomll.rst
+   tutorials/multimol.rst
+
 
 Opacity Calculation
 =======================
@@ -27,17 +29,27 @@ Opacity Calculation
    userguide/benchmark.rst
    userguide/fp.rst
 
+Manual Settings of Opacity (not using opa)
+============================================
 
-Scattering and Clouds
+You do not need `opa` nor `art` to compute opacity and spectra, if you want. 
+
+.. toctree::
+   :maxdepth: 1
+
+   tutorials/opacity.rst
+   tutorials/Cross_Section_using_Precomputation_Modified_Discrete_Integral_Transform.rst
+   tutorials/Comparing_HITEMP_and_ExoMol.rst
+   
+
+Clouds
 ========================
 .. toctree::
    :maxdepth: 1
 
-   userguide/rayleigh.rst
-   userguide/pdb.rst
-   userguide/mie.rst
-   userguide/amp.rst
    userguide/vterm.rst
+   userguide/pdb.rst
+   userguide/amp.rst
    userguide/comp_pymiescatt.rst
    userguide/amclouds_comparison_virga.rst
 

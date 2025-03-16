@@ -509,8 +509,8 @@ analysis.
 .. image:: get_started_transmission_files/get_started_transmission_48_0.png
 
 
-5. Retrieval of an Emission Spectrum
-------------------------------------
+5. Retrieval of a Transmission Spectrum
+---------------------------------------
 
 Next, let’s perform a “retrieval” on the simulated spectrum created
 above. Retrieval involves estimating the parameters of an atmospheric
@@ -522,6 +522,19 @@ model has six parameters.
 .. code:: ipython3
 
     def fspec(T0, alpha, mmr, radius_btm, gravity_btm, RV):
+        """ computes planet radius sqaure spectrum
+        
+        Args:
+            T0 (float): temperature at 1 bar
+            alpha (float): power law index of temperature
+            mmr (float): Mass mixing ratio of CO
+            radius_btm (float): radius at the bottom in cm
+            gravity_btm (float): gravity at the bottom in cm/s2
+            RV (float): radial velocity in km/s
+    
+        Returns:
+            _type_: _description_
+        """
         
         Tarr = art.powerlaw_temperature(T0, alpha)
         gravity = art.gravity_profile(Tarr, mmw, radius_btm, gravity_btm)
