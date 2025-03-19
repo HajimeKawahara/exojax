@@ -1,5 +1,5 @@
-Getting Started with Simulating the Transmission Spectrum
-=========================================================
+Getting Started with Transmission Spectroscopy
+==============================================
 
 Last update: March 15th (2025) Hajime Kawahara for v2.0
 

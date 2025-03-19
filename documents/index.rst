@@ -77,6 +77,8 @@ Actual Analysis Examples using ExoJAX (external)
 
 - |:ringed_planet:| `exojaxample_WASP39b <https://github.com/sh-tada/exojaxample_WASP39b>`_ : An example of HMC-NUTS for actual hot Saturn (JWST/ERS, NIRSPEC/G395H)
 
+- |:ringed_planet:| Chromatic Transit Variation for WASP-39b `Tada et al. <https://arxiv.org/abs/2503.08988>`_ (arXiv)
+
 - |:ringed_planet:| `exojaxample_jupiter <https://github.com/HajimeKawahara/exojaxample_jupiter>`_ : An example of HMC-NUTS for actual Jupiter reflection spectrum
 
 - |:page_facing_up:| HMC-NUTS for Gl 229 B  (T-dwarf) Emission Spectrum `Kawashima et al. <https://arxiv.org/abs/2410.11561>`_ (arXiv)

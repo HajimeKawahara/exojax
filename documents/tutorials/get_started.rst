@@ -1,5 +1,5 @@
-Getting Started with Simulating the Emission Spectrum
-=====================================================
+Getting Started with Emission Spectroscopy
+==========================================
 
 Last update: January 26th (2025) Hajime Kawahara for v2.0
 

@@ -1,5 +1,5 @@
-Getting Started with a Reflection Spectrum of Jupiter
-=====================================================
+Getting Started with Reflection Spectroscopy
+============================================
 
 Hajime Kawahara 3/19 (2025)
 
