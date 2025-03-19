@@ -6,7 +6,7 @@
 
    tutorials/get_started.rst
    tutorials/get_started_transmission.rst
-   tutorials/optimize_spectrum.rst
+   tutorials/get_started_reflection.rst
    tutorials/get_started_opart.rst
    tutorials/Cross_Section_using_OpaStitch.rst
    
