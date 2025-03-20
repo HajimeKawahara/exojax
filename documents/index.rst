@@ -77,13 +77,16 @@ Actual Analysis Examples using ExoJAX (external)
 
 - |:ringed_planet:| `exojaxample_WASP39b <https://github.com/sh-tada/exojaxample_WASP39b>`_ : An example of HMC-NUTS for actual hot Saturn (JWST/ERS, NIRSPEC/G395H)
 
-- |:ringed_planet:| Chromatic Transit Variation for WASP-39b `Tada et al. <https://arxiv.org/abs/2503.08988>`_ (arXiv)
+- |:ringed_planet:| `AtmosphericRetrieval_HR7672B <https://github.com/YuiKasagi/AtmosphericRetrieval_HR7672B>`_ : An example of HMC-NUTS for a faint companion HR 7672 B by Subaru/REACH.
 
 - |:ringed_planet:| `exojaxample_jupiter <https://github.com/HajimeKawahara/exojaxample_jupiter>`_ : An example of HMC-NUTS for actual Jupiter reflection spectrum
 
+- |:test_tube:| HMC analysis of experimental spectroscopy data for hot methane gas `Gascell_Exojax. <https://github.com/KoHosokawa/Gascell_Exojax>`_
+
+- |:page_facing_up:| Chromatic Transit Variation for WASP-39b `Tada et al. <https://arxiv.org/abs/2503.08988>`_ (arXiv)
+
 - |:page_facing_up:| HMC-NUTS for Gl 229 B  (T-dwarf) Emission Spectrum `Kawashima et al. <https://arxiv.org/abs/2410.11561>`_ (arXiv)
 
-- |:test_tube:| HMC analysis of experimental spectroscopy data for hot methane gas `Gascell_Exojax. <https://github.com/KoHosokawa/Gascell_Exojax>`_
 
 References 
 ---------------------
