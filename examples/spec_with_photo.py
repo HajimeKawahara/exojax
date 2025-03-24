@@ -18,6 +18,9 @@ from exojax.utils.grids import wavenumber_grid
 from exojax.utils.instfunc import resolution_to_gaussian_std
 
 from jax import jit
++import os
++os.makedirs("./output", exist_ok=True)
++os.makedirs("./output_bn", exist_ok=True)
 
 # %%
 # loads test spectrum data and sets prior knowledge, used in Paper I (Kawahara et al. 2022)
