@@ -95,7 +95,6 @@ mdb_co = MdbExomol(
 mdb_ch4 = MdbHitemp(".database/CH4", nurange=nu_grid_photo, gpu_transfer=False)
 
 molmasses = jnp.array([mdb_h2o.molmass, mdb_ch4.molmass, mdb_co.molmass])
-molmasses = jnp.array([mdb_h2o.molmass])
 
 
 cdbH2H2 = contdb.CdbCIA(".database/H2-H2_2011.cia", nu_grid_photo)
