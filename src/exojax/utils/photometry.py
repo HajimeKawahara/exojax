@@ -20,9 +20,9 @@ def apparent_magnitude(
     """
 
     logfactor = jnp.log10(factor)
-    integrated_flux = jnp.trapezoid(
+    integrated_flux = trapezoid(
         (flux_filter * factor) * transmission_filter, nu_grid_filter
-    ) / jnp.trapezoid(transmission_filter, nu_grid_filter)
+    ) / trapezoid(transmission_filter, nu_grid_filter)
     return -2.5 * (jnp.log10(integrated_flux / f0_nu_cgs) - logfactor)
 
 
