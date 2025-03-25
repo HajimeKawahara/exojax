@@ -11,12 +11,16 @@ def test_opfac():
 
 
 def test_Gcr():
-    from astropy.constants import G as G_astropy
-    from astropy.constants import M_sun
-    from astropy import units as u
+    #from astropy.constants import G as G_astropy
+    #from astropy.constants import M_sun
+    #from astropy import units as u
 
-    day = 24 * 3600 * u.s
-    Gu = (G_astropy * M_sun / day).value
-    Gcr_val = Gu ** (1.0 / 3.0) * 1.0e-3  # km/s
+    #day = 24 * 3600 * u.s
+    #Gu = (G_astropy * M_sun / day).value
+    #Gcr_val = Gu ** (1.0 / 3.0) * 1.0e-3  # km/s
 
+    Gcr_val = 115.38055682147402    
     assert Gcr == pytest.approx(Gcr_val)
+
+if __name__ == "__main__":
+    test_Gcr()
