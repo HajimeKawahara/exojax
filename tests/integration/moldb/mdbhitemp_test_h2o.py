@@ -4,7 +4,7 @@ from exojax.spec.api import MdbHitemp
 
 
 def test_moldb_hitemp():
-    mdb = MdbHitemp(".database/CO/05_HITEMP2019/",
+    mdb = MdbHitemp(".database/H2O/01_HITEMP2010/",
                     nurange=[4200.0, 4300.0],
                     crit=1.e-30,
                     isotope=None,
@@ -13,7 +13,7 @@ def test_moldb_hitemp():
 
 
 def test_moldb_hitemp_direct_name():
-    mdb = MdbHitemp(".database/CO/",
+    mdb = MdbHitemp(".database/H2O/",
                     nurange=[4200.0, 4300.0],
                     isotope=None,
                     crit=1.e-30)
@@ -21,7 +21,7 @@ def test_moldb_hitemp_direct_name():
 
 
 def test_moldb_hitemp_direct_molecid():
-    mdb = MdbHitemp(".database/05/",
+    mdb = MdbHitemp(".database/01/",
                     nurange=[4200.0, 4300.0],
                     isotope=None,
                     crit=1.e-30)
@@ -29,20 +29,19 @@ def test_moldb_hitemp_direct_molecid():
 
 
 def test_moldb_hitemp_interp():
-    from exojax.utils.constants import Tref_original
-    mdb = MdbHitemp(".database/CO/", nurange=[4200.0, 4300.0], crit=1.e-30)
+    mdb = MdbHitemp(".database/H2O/", nurange=[4200.0, 4300.0], crit=1.e-30)
     T = 1000.0
     ref = [3.5402815, 3.5526853, 3.5537634, 3.5472596, 3.5603657]
     for i, isotope in enumerate(mdb.uniqiso):
-        assert mdb.qr_interp(isotope, T, Tref_original) == pytest.approx(ref[i])
+        assert mdb.qr_interp(isotope, T) == pytest.approx(ref[i])
 
-    qr = mdb.qr_interp_lines(T, Tref_original)
+    qr = mdb.qr_interp_lines(T)
 
 
 def test_moldb_hitemp_isotope():
     num = []
     for iso in [0, 1, 2, 3, 4, 5, 6]:
-        mdb = MdbHitemp(".database/CO/", nurange=[4200.0, 4300.0], isotope=iso)
+        mdb = MdbHitemp(".database/H2O/", nurange=[4200.0, 4300.0], isotope=iso)
         num.append(len(mdb.nu_lines))
     num = np.array(num)
     assert num[0] == 4259

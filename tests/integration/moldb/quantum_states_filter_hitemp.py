@@ -1,4 +1,3 @@
-# %%
 from exojax.spec import api
 from exojax.utils.grids import wavenumber_grid
 
@@ -7,9 +6,7 @@ nus, wav, r = wavenumber_grid(24000.0, 26000.0, 1000, unit="AA", xsmode="premodi
 # when
 mdb = api.MdbHitemp("CO", nus, activation=False)
 
-# %%
 print(mdb.df)
-# %%
 import matplotlib.pyplot as plt
 for dv in range(0, 6):
     mask = mdb.df["vu"] - mdb.df["vl"] == dv
@@ -23,8 +20,10 @@ for dv in range(0, 6):
 
 load_mask = (mdb.df["vu"] - mdb.df["vl"] == 3)
 mdb.activate(mdb.df, load_mask)
+
+
 plt.plot(1.e4 / mdb.nu_lines,
-         mdb.line_strength,
+         mdb.line_strength_ref_original,
          "+",
          color="black",
          label="activated lines")
