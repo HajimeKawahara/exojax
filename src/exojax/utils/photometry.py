@@ -3,6 +3,7 @@ import jax.numpy as jnp
 from exojax.spec.unitconvert import wav2nu
 from exojax.utils.constants import ccgs
 from exojax.utils.url import url_svo_filter
+from jax.scipy.integrate import trapezoid
 
 
 def apparent_magnitude(
