@@ -7,7 +7,7 @@ Note:
 """
 
 import pytest
-import pkg_resources
+from importlib.resources import files
 from jax import config
 import pandas as pd
 import numpy as np
@@ -47,7 +47,7 @@ def test_rt_for_single_broadening_parameters(db, diffmode, fig=False):
     )
     art.change_temperature_range(400.0, 1500.0)
     Tarr = art.powerlaw_temperature(1300.0, 0.1)
-    mmr_arr = art.constant_mmr_profile(0.1)
+    mmr_arr = art.constant_profile(0.1)
     gravity = 2478.57
 
     mdb = mock_mdb(db)
@@ -63,14 +63,10 @@ def test_rt_for_single_broadening_parameters(db, diffmode, fig=False):
     F0 = art.run(dtau, Tarr)
 
     if db == "hitemp":
-        filename = pkg_resources.resource_filename(
-            "exojax", "data/testdata/" + TESTDATA_CO_HITEMP_MODIT_EMISSION_REF
-        )
+        filename = files('exojax').joinpath("data/testdata/" + TESTDATA_CO_HITEMP_MODIT_EMISSION_REF)
     elif db == "exomol":
-        filename = pkg_resources.resource_filename(
-            "exojax", "data/testdata/" + TESTDATA_CO_EXOMOL_MODIT_EMISSION_REF
-        )
-
+        filename = files('exojax').joinpath("data/testdata/" + TESTDATA_CO_EXOMOL_MODIT_EMISSION_REF)
+        
     dat = pd.read_csv(filename, delimiter=",", names=("nus", "flux"))
     residual = np.abs(F0 / dat["flux"].values - 1.0)
     print(np.max(residual))
@@ -98,7 +94,7 @@ def test_rt(db, diffmode, fig=False):
     )
     art.change_temperature_range(400.0, 1500.0)
     Tarr = art.powerlaw_temperature(1300.0, 0.1)
-    mmr_arr = art.constant_mmr_profile(0.1)
+    mmr_arr = art.constant_profile(0.1)
     gravity = 2478.57
 
     mdb = mock_mdb(db)
@@ -112,13 +108,10 @@ def test_rt(db, diffmode, fig=False):
     F0 = art.run(dtau, Tarr)
 
     if db == "hitemp":
-        filename = pkg_resources.resource_filename(
-            "exojax", "data/testdata/" + TESTDATA_CO_HITEMP_MODIT_EMISSION_REF
-        )
+        filename = files('exojax').joinpath("data/testdata/" + TESTDATA_CO_HITEMP_MODIT_EMISSION_REF)
     elif db == "exomol":
-        filename = pkg_resources.resource_filename(
-            "exojax", "data/testdata/" + TESTDATA_CO_EXOMOL_MODIT_EMISSION_REF
-        )
+        filename = files('exojax').joinpath("data/testdata/" + TESTDATA_CO_EXOMOL_MODIT_EMISSION_REF)
+        
 
     dat = pd.read_csv(filename, delimiter=",", names=("nus", "flux"))
     residual = np.abs(F0 / dat["flux"].values - 1.0)

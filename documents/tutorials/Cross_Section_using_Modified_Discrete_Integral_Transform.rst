@@ -1,7 +1,7 @@
 Cross Section for Many Lines using MODIT
 ========================================
 
-Update: October 30/2022, Hajime Kawahara
+Update: Febrary 7th/2025, Hajime Kawahara
 
 We demonstarte the Modified Discrete Integral Transform (MODIT), which
 is the modified version of DIT for exojax. MODIT uses the evenly-spaced
@@ -122,9 +122,9 @@ Let’s compute the cross section!
 
 .. code:: ipython3
 
-    from exojax.spec.modit import xsvector
+    from exojax.spec.modit_scanfft import xsvector_scanfft
     
-    xs = xsvector(cnu, indexnu, R, pmarray, nsigmaD, ngammaL, Sij, nus, ngammaL_grid)
+    xs = xsvector_scanfft(cnu, indexnu, R, pmarray, nsigmaD, ngammaL, Sij, nus, ngammaL_grid)
 
 Also, we here try the direct computation using LPF for the comparison
 purpose
@@ -176,4 +176,5 @@ There is about 1 % deviation between LPF and MODIT.
 
 
 .. image:: Cross_Section_using_Modified_Discrete_Integral_Transform_files/Cross_Section_using_Modified_Discrete_Integral_Transform_18_0.png
+
 

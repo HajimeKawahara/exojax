@@ -30,7 +30,13 @@ include src/exojax/data/testdata/lpf_rt_test_ref.txt
 include src/exojax/data/testdata/premodit_rt_test_ref.txt
 include src/exojax/data/testdata/premodit_rt_test_hitemp_ref.txt
 include src/exojax/data/testdata/modit_rt_test_vald_ref.txt
+include src/exojax/data/testdata/premodit_reflect_test_ref.txt
 
+include src/exojax/data/testdata/CO100percent_500K.feather
+include src/exojax/data/testdata/filter_sdss_g.csv
+
+include src/exojax/data/testdata/luhman16a_spectra_detector1.csv
+include src/exojax/data/testdata/jupiter_corrected.dat
 
 
 include src/exojax/data/testdata/H2-H2_TEST.cia
@@ -43,6 +49,15 @@ include src/exojax/data/testdata/CO/12C-16O/SAMPLE/12C-16O__SAMPLE.states.bz2
 include src/exojax/data/testdata/CO/12C-16O/SAMPLE/12C-16O__SAMPLE.states.hdf5
 include src/exojax/data/testdata/CO/12C-16O/SAMPLE/12C-16O__SAMPLE.trans.bz2
 include src/exojax/data/testdata/CO/12C-16O/SAMPLE/12C-16O__SAMPLE.trans.hdf5
+
+include src/exojax/data/testdata/H2O/1H2-16O/SAMPLE/1H2-16O__H2.broad
+include src/exojax/data/testdata/H2O/1H2-16O/SAMPLE/1H2-16O__He.broad
+include src/exojax/data/testdata/H2O/1H2-16O/SAMPLE/1H2-16O__SAMPLE.def
+include src/exojax/data/testdata/H2O/1H2-16O/SAMPLE/1H2-16O__SAMPLE.pf
+include src/exojax/data/testdata/H2O/1H2-16O/SAMPLE/1H2-16O__SAMPLE.states.bz2
+include src/exojax/data/testdata/H2O/1H2-16O/SAMPLE/1H2-16O__SAMPLE.states.hdf5
+include src/exojax/data/testdata/H2O/1H2-16O/SAMPLE/1H2-16O__SAMPLE__04300-04400.trans.bz2
+include src/exojax/data/testdata/H2O/1H2-16O/SAMPLE/1H2-16O__SAMPLE__04300-04400.trans.hdf5
 
 include src/exojax/data/premodit/elower_grid_trange.npz
 include src/exojax/data/premodit/elower_grid_trange_v2.npz

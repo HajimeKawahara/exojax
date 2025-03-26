@@ -10,7 +10,7 @@ import matplotlib.pyplot as plt
 import jax.numpy as jnp
 
 import pandas as pd
-import pkg_resources
+from importlib.resources import files
 
 from exojax.spec.atmrt import ArtEmisPure
 from exojax.spec.api import MdbExomol
@@ -38,9 +38,7 @@ import jax.scipy.stats as stats
 from jax import random
 
 # loading the data
-filename = pkg_resources.resource_filename(
-    "exojax", "data/testdata/" + SAMPLE_SPECTRA_CH4_NEW
-)
+filename = files("exojax").joinpath("data/testdata/" + SAMPLE_SPECTRA_CH4_NEW)
 dat = pd.read_csv(filename, delimiter=",", names=("wavenumber", "flux"))
 nusd = dat["wavenumber"].values
 flux = dat["flux"].values
@@ -100,7 +98,7 @@ def frun(Tarr, MMR_CH4, Mp, Rp, u1, u2, RV, vsini):
     g = gravity_jupiter(Rp=Rp, Mp=Mp)  # gravity in the unit of Jupiter
     # molecule
     xsmatrix = opa.xsmatrix(Tarr, art.pressure)
-    mmr_arr = art.constant_mmr_profile(MMR_CH4)
+    mmr_arr = art.constant_profile(MMR_CH4)
     dtaumCH4 = art.opacity_profile_xs(xsmatrix, mmr_arr, opa.mdb.molmass, g)
     # continuum
     logacia_matrix = opcia.logacia_matrix(Tarr)

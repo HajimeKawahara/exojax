@@ -5,7 +5,7 @@
 """
 
 import pytest
-import pkg_resources
+from importlib.resources import files
 import pandas as pd
 import numpy as np
 from exojax.test.data import TESTDATA_CO_EXOMOL_LPF_XS_REF
@@ -36,8 +36,7 @@ def test_xsection(db):
     nu_grid, wav, res = mock_wavenumber_grid()
     opa = OpaDirect(mdbCO, nu_grid)
     xsv = opa.xsvector(Tfix, Pfix)
-    filename = pkg_resources.resource_filename('exojax',
-                                               'data/testdata/' + testdata[db])
+    filename = files("exojax").joinpath("data/testdata/" + testdata[db])
     dat = pd.read_csv(filename, delimiter=",", names=("nus", "xsv"))
     assert np.all(xsv == pytest.approx(dat["xsv"].values))
 
@@ -52,7 +51,7 @@ def test_spectrum(db):
                       nu_grid=nu_grid)
     art.change_temperature_range(400.0, 1500.0)
     Tarr = art.powerlaw_temperature(1300.0, 0.1)
-    mmr_arr = art.constant_mmr_profile(0.1)
+    mmr_arr = art.constant_profile(0.1)
     gravity = 2478.57
     #gravity = art.constant_gravity_profile(2478.57) #gravity can be profile
 
@@ -65,8 +64,7 @@ def test_spectrum(db):
     dtau = art.opacity_profile_xs(xsmatrix, mmr_arr, opa.mdb.molmass,
                                      gravity)
     F0 = art.run(dtau, Tarr)
-    filename = pkg_resources.resource_filename(
-        'exojax', 'data/testdata/' + testdata_spectrum[db])
+    filename = files("exojax").joinpath("data/testdata/" + testdata_spectrum[db])
     dat = pd.read_csv(filename, delimiter=",", names=("nus", "F0"))
     #print(F0)
     #print(pytest.approx(dat["F0"].values))

@@ -10,7 +10,7 @@ import jax.numpy as jnp
 from jax import vmap
 
 import pandas as pd
-import pkg_resources
+from importlib.resources import files
 
 from exojax.spec.atmrt import ArtEmisPure
 from exojax.spec.api import MdbExomol
@@ -35,8 +35,7 @@ from numpyro.infer import MCMC, NUTS
 import numpyro
 import numpyro.distributions as dist
 
-filename = pkg_resources.resource_filename(
-    'exojax', 'data/testdata/' + SAMPLE_SPECTRA_CH4_NEW)
+filename = files('exojax').joinpath('data/testdata/' + SAMPLE_SPECTRA_CH4_NEW)
 dat = pd.read_csv(filename, delimiter=",", names=("wavenumber", "flux"))
 nusd = dat['wavenumber'].values
 flux = dat['flux'].values
@@ -102,7 +101,7 @@ def raw_spectrum_model(T0):
 
     #molecule
     xsmatrix = opa.xsmatrix(Tarr, art.pressure)
-    mmr_arr = art.constant_mmr_profile(MMR_CH4)
+    mmr_arr = art.constant_profile(MMR_CH4)
     dtaumCH4 = art.opacity_profile_xs(xsmatrix, mmr_arr, opa.mdb.molmass, g)
 
     #continuum

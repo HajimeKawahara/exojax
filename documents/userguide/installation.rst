@@ -1,7 +1,7 @@
 Installation and References
 ----------------------------------
 
-*last update October 3rd (2024) Hajime Kawahara*
+*last update January 19th (2025) Hajime Kawahara*
 
 .. admonition:: Python 3.9 or later is required
 
@@ -9,8 +9,8 @@ Installation and References
 
 .. Warning:: 
 
-	For using vaex as molecular-based I/O, we currently recommend using Python 3.9. 
-	In the near future, we plan to support Python 3.10 and Python 3.11 as well. Oct 3. (2024) 
+	For using `vaex <https://github.com/vaexio/vaex>`_ in the common API for the molecular database I/O, we currently recommend using Python 3.9 or 3.10. 
+
 
 
 Linux, Windows WSL, Mac
@@ -63,12 +63,15 @@ References
 
 |:green_circle:| **ExoJAX Paper I**:  Kawahara, Kawashima, Masuda, Crossfield, Pannier, van den Bekerom (2021) accepted by ApJS: `arXiv:2105.14782 <http://arxiv.org/abs/2105.14782>`_
 
+|:green_circle:| **ExoJAX Paper II**:  Kawahara, Kawashima, Tada et al: `arXiv:2410.06900 <http://arxiv.org/abs/2410.06900>`_
+
 
 Many techniques/databases are used in ExoJAX.
 
 - JAX: Bradbury, J., Frostig, R., Hawkins, P., et al. 2018, JAX: composable transformations of Python+NumPy programs, `JAX <http://github.com/google/jax>`_
 - NumPyro: Phan, D., Pradhan, N., & Jankowiak, M. 2019, `arXiv:1912.11554 <http://arxiv.org/abs/1912.11554>`_
 - JAXopt: Blondel, M., Berthet, Q., Cuturi, M. et al. 2021 `arXiv:2105.15183 <http://arxiv.org/abs/2105.15183>`_
+- `Optax <https://optax.readthedocs.io/en/latest/>`_
 - Vaex: Breddels and Veljanoski (2018) `arXiv:https://arxiv.org/abs/1801.02638 <https://arxiv.org/abs/1801.02638>`_
 - Algorithm 916: Zaghloul and Ali (2012) `arXiv:1106.0151 <https://arxiv.org/abs/1106.0151>`_
 - DIT: `van den Bekerom and Pannier (2021) <https://www.sciencedirect.com/science/article/abs/pii/S0022407320310049>`_ 

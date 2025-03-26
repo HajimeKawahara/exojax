@@ -16,7 +16,7 @@ from jax import vmap
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
-import pkg_resources
+from importlib.resources import files
 from exojax.spec import modit
 from exojax.spec import api
 from exojax.utils.grids import wavenumber_grid
@@ -34,9 +34,7 @@ from exojax.spec.unitconvert import nu2wav
 from exojax.test.data import SAMPLE_SPECTRA_CH4_NEW
 
 # loading data
-filename = pkg_resources.resource_filename(
-    "exojax", "data/testdata/" + SAMPLE_SPECTRA_CH4_NEW
-)
+filename = files("exojax").joinpath("data/testdata/" + SAMPLE_SPECTRA_CH4_NEW)
 dat = pd.read_csv(filename, delimiter=",", names=("wavenumber", "flux"))
 nusd = dat["wavenumber"].values
 flux = dat["flux"].values
@@ -114,7 +112,7 @@ def frun(Tarr, MMR_CH4, Mp, Rp, u1, u2, RV, vsini):
     gravity = gravity_jupiter(Rp=Rp, Mp=Mp)  # gravity in the unit of Jupiter
     # CH4
     xsmatrix = opa.xsmatrix(Tarr, art.pressure)
-    mmr_profile = art.constant_mmr_profile(MMR_CH4)
+    mmr_profile = art.constant_profile(MMR_CH4)
     dtaumCH4 = art.opacity_profile_xs(xsmatrix, mmr_profile, opa.mdb.molmass, gravity)
     # CIA
     logacia = opcia.logacia_matrix(Tarr)

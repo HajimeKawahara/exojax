@@ -1,6 +1,6 @@
 __all__ = []
 
-__version__ = '1.6'
+__version__ = '2.0'
 __uri__ = 'http://secondearths.sakura.ne.jp/exojax/'
 __author__ = 'Hajime Kawahara and collaborators'
 __email__ = 'divrot@gmail.com'

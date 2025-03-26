@@ -6,7 +6,6 @@
 import numpy as np
 import jax.numpy as jnp
 from exojax.utils.grids import wavenumber_grid
-from exojax.spec import api
 from exojax.spec.opacalc import OpaPremodit
 from exojax.spec import initspec
 from exojax.spec.premodit import unbiased_lsd_zeroth
@@ -21,7 +20,7 @@ from exojax.utils.constants import Tref_original
 from exojax.test.emulate_mdb import mock_mdbExomol
 ## also, xs
 from exojax.spec import normalized_doppler_sigma
-from exojax.spec.modit_scanfft import calc_xsection_from_lsd_scanfft
+from exojax.spec.profconv import calc_xsection_from_lsd_scanfft
 from exojax.spec.premodit import unbiased_ngamma_grid
 
 from jax import config
@@ -77,7 +76,7 @@ xsv_manual = calc_xsection_from_lsd_scanfft(Slsd_premodit, R, pmarray,
 # MODIT LSD
 # We need to revert the reference temperature to 296K to reuse mdb for MODIT
 #===========================================================================
-from exojax.spec.modit import xsvector
+from exojax.spec.modit import xsvector_scanfft
 from exojax.spec.initspec import init_modit
 
 #mdb.change_reference_temperature(Tref_original)
@@ -99,18 +98,17 @@ Smodit = (np.sum(Slsd_modit, axis=1))
 Sij = line_strength(Ttest, mdb.logsij0, mdb.nu_lines, mdb.elower, qt, mdb.Tref)
 cont_nu, index_nu, R, pmarray = init_modit(mdb.nu_lines, nus)
 ngammaL_grid = ditgrid_log_interval(ngammaL, dit_grid_resolution=0.1)
-xsv_modit = xsvector(cont_nu, index_nu, R, pmarray, nsigmaD, ngammaL, Sij, nus,
+xsv_modit = xsvector_scanfft(cont_nu, index_nu, R, pmarray, nsigmaD, ngammaL, Sij, nus,
                      ngammaL_grid)
 #xsv_modit_sld = xsvector(cont_nu, index_nu, R, pmarray, nsigmaD, ngammaL, Smodit, nus,
 #                     ngammaL_grid)
 
 from exojax.test.data import TESTDATA_CO_EXOMOL_MODIT_XS_REF
 from exojax.test.data import TESTDATA_CO_HITEMP_MODIT_XS_REF_AIR
-import pkg_resources
+from importlib.resources import files
 import pandas as pd
 
-filename = pkg_resources.resource_filename(
-    'exojax', 'data/testdata/' + TESTDATA_CO_HITEMP_MODIT_XS_REF_AIR)
+filename = files("exojax").joinpath('data/testdata/' + TESTDATA_CO_HITEMP_MODIT_XS_REF_AIR)
 dat = pd.read_csv(filename, delimiter=",", names=("nus", "xsv"))
 
 #np.savetxt("xsv_modit.txt", np.array([nus, xsv_modit]).T, delimiter=",")
@@ -128,7 +126,7 @@ ax = fig.add_subplot(212)
 plt.plot(nus, xsv / xsv_modit - 1.0, label="premodit", ls="dashed")
 plt.plot(nus, xsv_manual / xsv_modit - 1.0, label="premodit (manual)", ls="dashed")
 
-ax.set_ylim(-0.001, 0.001)
+ax.set_ylim(-0.003, 0.003)
 ax.axhline(0.01, color="gray", ls="dashed")
 ax.axhline(-0.01, color="gray", ls="dashed")
 ax.axhline(0.0, color="gray")

@@ -60,7 +60,7 @@ def _input_length(ndiv, div_length):
     return ndiv * div_length
 
 
-def _output_length(ndiv, div_length, filter_length):
+def ola_output_length(ndiv, div_length, filter_length):
     """OLA final output length
 
     Args:
@@ -150,16 +150,16 @@ def olaconv(input_matrix_zeropad, fir_filter_zeropad, ndiv, div_length, filter_l
     xtilde = jnp.fft.rfft(input_matrix_zeropad, axis=1)
     ytilde = xtilde * ftilde[jnp.newaxis, :]
     ftarr = jnp.fft.irfft(ytilde, axis=1)
-    output_length = _output_length(ndiv, div_length, filter_length)
+    output_length = ola_output_length(ndiv, div_length, filter_length)
     fftval = overlap_and_add(ftarr, output_length, div_length)
     return fftval
 
 
 def overlap_and_add(ftarr, output_length, div_length):
-    """Compute overlap and add
+    """Compute overlap and add using scan
 
     Args:
-        ftarr (jax.ndarray): filtered input matrix
+        ftarr (jax.ndarray): filtered input matrix with shape [ndiv, fft_length], where 'ndiv' is the number of divided input sectors and 'fft_length' is the length of the FFT block
         output_length (int): length of the output of olaconv
         div_length (int): the length of the divided input sectors, equivalent to block_size in scipy
 
@@ -175,6 +175,32 @@ def overlap_and_add(ftarr, output_length, div_length):
         return (y, idiv), None
 
     y = jnp.zeros(output_length)
+    fftval_and_nscan, _ = scan(fir_filter, (y, 0), ftarr)
+    fftval, nscan = fftval_and_nscan
+    return fftval
+
+
+def overlap_and_add_matrix(ftarr, output_length, div_length):
+    """Compute overlap and add using scan for matrix input (ndiv, nlayer, fft_length)
+
+    Args:
+        ftarr (jax.ndarray): filtered input matrix [ndiv, nlayer, fft_length]
+        output_length (int): length of the output of olaconv
+        div_length (int): the length of the divided input sectors, equivalent to block_size in scipy
+
+    Returns:
+        overlapped and added matrix [nlayer, output_length]
+    """
+    nlayer = ftarr.shape[1]
+
+    def fir_filter(y_and_idiv, ft):
+        y, idiv = y_and_idiv
+        yzero = jnp.zeros((nlayer, output_length))
+        y = y + dynamic_update_slice(yzero, ft, (0, idiv * div_length))
+        idiv += 1
+        return (y, idiv), None
+
+    y = jnp.zeros((nlayer, output_length))
     fftval_and_nscan, _ = scan(fir_filter, (y, 0), ftarr)
     fftval, nscan = fftval_and_nscan
     return fftval

@@ -2,15 +2,21 @@ import numpy as np
 from exojax.utils.instfunc import resolution_to_gaussian_std
 from exojax.utils.instfunc import resolution_eslin
 from exojax.utils.instfunc import resolution_eslog
-from exojax.utils.instfunc import nx_from_resolution_eslog
+from exojax.utils.instfunc import nx_even_from_resolution_eslog
 import pytest
+
+from exojax.utils.grids import wavenumber_grid
+
+
+
 
 
 def test_nx_from_resolution_eslog():
     nu0 = 4000.0
     nu1 = 4500.0
     resolution = 849010.2113833647
-    Nx = nx_from_resolution_eslog(nu0, nu1, resolution)
+    Nx = nx_even_from_resolution_eslog(nu0, nu1, resolution)
+    
     assert Nx == 100000
 
 

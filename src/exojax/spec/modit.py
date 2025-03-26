@@ -4,6 +4,7 @@
 * This module consists of selected functions in `addit package <https://github.com/HajimeKawahara/addit>`_.
 * The concept of "folding" can be understood by reading `the discussion <https://github.com/radis/radis/issues/186#issuecomment-764465580>`_ by D.C.M van den Bekerom.
 * See also `DIT for non evenly-spaced linear grid <https://github.com/dcmvdbekerom/discrete-integral-transform/blob/master/demo/discrete_integral_transform_log.py>`_ by  D.C.M van den Bekerom, as a reference of this code.
+
 """
 
 import warnings
@@ -11,8 +12,10 @@ import numpy as np
 import jax.numpy as jnp
 from jax import jit, vmap
 from jax.lax import scan
-from exojax.spec.ditkernel import fold_voigt_kernel_logst
 from exojax.spec.lsd import inc2D_givenx
+from exojax.spec.profconv import calc_xsection_from_lsd_scanfft
+from exojax.spec.profconv import calc_xsection_from_lsd_zeroscan
+from exojax.spec.profconv import calc_open_nu_xsection_from_lsd_zeroscan
 from exojax.spec.set_ditgrid import minmax_ditgrid_matrix
 from exojax.spec.set_ditgrid import precompute_modit_ditgrid_matrix
 
@@ -28,107 +31,248 @@ from exojax.spec.hitran import gamma_hitran
 # vald
 from exojax.spec.atomll import gamma_vald3, interp_QT_284
 from exojax.utils.constants import Tref_original
+from functools import partial
 
+@partial(jit, static_argnums=9)
+def xsvector_open_zeroscan(
+    cnu,
+    indexnu,
+    R,
+    nsigmaD,
+    ngammaL,
+    S,
+    nu_grid,
+    ngammaL_grid,
+    nu_grid_extended,
+    filter_length_oneside,
+):
+    """Cross section vector (MODIT/open/zeroscan)
 
-def calc_xsection_from_lsd(Slsd, R, pmarray, nsigmaD, nu_grid, log_ngammaL_grid):
-    """Compute cross section from LSD in MODIT algorithm
-
-    The original code is rundit_fold_logredst in `addit package <https://github.com/HajimeKawahara/addit>`_ ). MODIT folded voigt for ESLOG for reduced wavenumebr inputs (against the truncation error) for a constant normalized beta
+    Notes:
+        The aliasing part is closed and thereby can't be used in OLA.
+        #277
 
     Args:
-        Slsd: line shape density
+        cnu: contribution by npgetix for wavenumber
+        indexnu: index by npgetix for wavenumber
         R: spectral resolution
-        pmarray: (+1,-1) array whose length of len(nu_grid)+1
         nsigmaD: normaized Gaussian STD
-        nu_grid: linear wavenumber grid
-        log_gammaL_grid: logarithm of gammaL grid
-
-    Note:
-    When you have the error such as:
-    "failed to initialize batched cufft plan with customized allocator:
-    Allocating 8000000160 bytes exceeds the memory limit of 4294967296 bytes."
-    consider to use moditscanfft.calc_xsection_from_lsd, instead.
+        gammaL: Lorentzian half width (Nlines)
+        S: line strength (Nlines)
+        nu_grid: wavenumber grid (ESLOG)
+        ngammaL_grid: normalized gammaL grid
+        nu_grid_extended: extended wavenumber grid (ESLOG)
+        filter_length_oneside: filter length for the convolution
 
     Returns:
         Cross section in the log nu grid
     """
 
-    Sbuf = jnp.vstack([Slsd, jnp.zeros_like(Slsd)])
-    fftval = jnp.fft.rfft(Sbuf, axis=0)
-    Ng_nu = len(nu_grid)
-    # -----------------------------------------------
-    # MODIT w/o new folding
-    # til_Voigt=voigt_kernel_logst(k, log_nstbeta,log_ngammaL_grid)
-    # til_Slsd = jnp.fft.rfft(Sbuf,axis=0)
-    # fftvalsum = jnp.sum(til_Slsd*til_Voigt,axis=(1,))
-    # return jnp.fft.irfft(fftvalsum)[:Ng_nu]*R/nu_grid
-    # -----------------------------------------------
-    vk = fold_voigt_kernel_logst(
-        jnp.fft.rfftfreq(2 * Ng_nu, 1),
-        jnp.log(nsigmaD),
-        log_ngammaL_grid,
-        Ng_nu,
-        pmarray,
+    log_ngammaL_grid = jnp.log(ngammaL_grid)
+    lsd_array = jnp.zeros((len(nu_grid), len(ngammaL_grid)))
+    Slsd = inc2D_givenx(lsd_array, S, cnu, indexnu, jnp.log(ngammaL), log_ngammaL_grid)
+    xs = calc_open_nu_xsection_from_lsd_zeroscan(
+        Slsd, R, nsigmaD, log_ngammaL_grid, filter_length_oneside
     )
-    fftvalsum = jnp.sum(fftval * vk, axis=(1,))
-    return jnp.fft.irfft(fftvalsum)[:Ng_nu] * R / nu_grid
 
+    return xs/nu_grid_extended
 
-@jit
-def xsvector(cnu, indexnu, R, pmarray, nsigmaD, ngammaL, S, nu_grid, ngammaL_grid):
-    """Cross section vector (MODIT)
+@partial(jit, static_argnums=9)
+def xsmatrix_open_zeroscan(
+    cnu,
+    indexnu,
+    R,
+    nsigmaDl,
+    ngammaLM,
+    SijM,
+    nu_grid,
+    dgm_ngammaL,
+    nu_grid_extended,
+    filter_length_oneside,
+):
+    """Cross section matrix for xsvector (MODIT/open/zeroscan)
 
     Notes:
-        Currently due to #277, we recommend to use
-        modit_scanfft.xsvector_scanfft instead of xsvector.
-        However, this will be changed when cufft fixes the 4GB limit.
+        The aliasing part is closed and thereby can't be used in OLA.
+        #277
 
     Args:
-       cnu: contribution by npgetix for wavenumber
-       indexnu: index by npgetix for wavenumber
-       R: spectral resolution
-       pmarray: (+1,-1) array whose length of len(nu_grid)+1
-       nsigmaD: normaized Gaussian STD
-       gammaL: Lorentzian half width (Nlines)
-       S: line strength (Nlines)
-       nu_grid: linear wavenumber grid
-       gammaL_grid: gammaL grid
+        cnu: contribution by npgetix for wavenumber
+        indexnu: index by npgetix for wavenumber
+        R: spectral resolution
+        nu_lines: line center (Nlines)
+        nsigmaDl: normalized doppler sigma in layers in R^(Nlayer x 1)
+        ngammaLM: gamma factor matrix in R^(Nlayer x Nline)
+        SijM: line strength matrix in R^(Nlayer x Nline)
+        nu_grid: wavenumber grid (ESLOG)
+        dgm_ngammaL: DIT Grid Matrix for normalized gammaL R^(Nlayer, NDITgrid)
+        nu_grid_extended: extended wavenumber grid (ESLOG)
+        filter_length_oneside: filter length for the convolution
+
+    Return:
+        cross section matrix in R^(Nlayer x Nwav)
+    """
+    NDITgrid = jnp.shape(dgm_ngammaL)[1]
+    Nline = len(cnu)
+    Mat = jnp.hstack([nsigmaDl, ngammaLM, SijM, dgm_ngammaL])
+
+    def fxs(x, arr):
+        carry = 0.0
+        nsigmaD = arr[0]
+        ngammaL = arr[1 : Nline + 1]
+        Sij = arr[Nline + 1 : 2 * Nline + 1]
+        ngammaL_grid = arr[2 * Nline + 1 : 2 * Nline + NDITgrid + 1]
+        arr = xsvector_open_zeroscan(
+            cnu,
+            indexnu,
+            R,
+            nsigmaD,
+            ngammaL,
+            Sij,
+            nu_grid,
+            ngammaL_grid,
+            nu_grid_extended,
+            filter_length_oneside,
+        )
+        return carry, arr
+
+    val, xsm = scan(fxs, 0.0, Mat)
+    return xsm
+
+
+def xsvector_zeroscan(
+    cnu, indexnu, R, pmarray, nsigmaD, ngammaL, S, nu_grid, ngammaL_grid
+):
+    """Cross section vector (MODIT/close/zeroscan)
+
+    Notes:
+        The aliasing part is closed and thereby can't be used in OLA.
+        #277
+
+    Args:
+        cnu: contribution by npgetix for wavenumber
+        indexnu: index by npgetix for wavenumber
+        R: spectral resolution
+        pmarray: (+1,-1) array whose length of len(nu_grid)+1
+        nsigmaD: normaized Gaussian STD
+        gammaL: Lorentzian half width (Nlines)
+        S: line strength (Nlines)
+        nu_grid: wavenumber grid (ESLOG)
+        gammaL_grid: gammaL grid
 
     Returns:
-       Cross section in the log nu grid
+        Cross section in the log nu grid
     """
 
     log_ngammaL_grid = jnp.log(ngammaL_grid)
     lsd_array = jnp.zeros((len(nu_grid), len(ngammaL_grid)))
     Slsd = inc2D_givenx(lsd_array, S, cnu, indexnu, jnp.log(ngammaL), log_ngammaL_grid)
-    xs = calc_xsection_from_lsd(Slsd, R, pmarray, nsigmaD, nu_grid, log_ngammaL_grid)
+    xs = calc_xsection_from_lsd_zeroscan(
+        Slsd, R, pmarray, nsigmaD, nu_grid, log_ngammaL_grid
+    )
+    return xs
+
+#@partial(jit, static_argnums=(0,1,2,3,7))
+def xsmatrix_zeroscan(
+    cnu, indexnu, R, pmarray, nsigmaDl, ngammaLM, SijM, nu_grid, dgm_ngammaL
+):
+    """Cross section matrix for xsvector (MODIT), zeroscan
+
+    Notes:
+        The aliasing part is closed and thereby can't be used in OLA.
+        #277
+
+    Args:
+        cnu: contribution by npgetix for wavenumber
+        indexnu: index by npgetix for wavenumber
+        R: spectral resolution
+        pmarray: (+1,-1) array whose length of len(nu_grid)+1
+        nu_lines: line center (Nlines)
+        nsigmaDl: normalized doppler sigma in layers in R^(Nlayer x 1)
+        ngammaLM: gamma factor matrix in R^(Nlayer x Nline)
+        SijM: line strength matrix in R^(Nlayer x Nline)
+        nu_grid: wavenumber grid (ESLOG)
+        dgm_ngammaL: DIT Grid Matrix for normalized gammaL R^(Nlayer, NDITgrid)
+
+    Return:
+        cross section matrix in R^(Nlayer x Nwav)
+    """
+    NDITgrid = jnp.shape(dgm_ngammaL)[1]
+    Nline = len(cnu)
+    Mat = jnp.hstack([nsigmaDl, ngammaLM, SijM, dgm_ngammaL])
+    def fxs(x, arr):
+        carry = 0.0
+        nsigmaD = arr[0:1]
+        ngammaL = arr[1 : Nline + 1]
+        Sij = arr[Nline + 1 : 2 * Nline + 1]
+        ngammaL_grid = arr[2 * Nline + 1 : 2 * Nline + NDITgrid + 1]
+        arr = xsvector_zeroscan(
+            cnu, indexnu, R, pmarray, nsigmaD, ngammaL, Sij, nu_grid, ngammaL_grid
+        )
+        return carry, arr
+
+    val, xsm = scan(fxs, 0.0, Mat)
+    return xsm
+
+
+@jit
+def xsvector_scanfft(
+    cnu, indexnu, R, pmarray, nsigmaD, ngammaL, S, nu_grid, ngammaL_grid
+):
+    """Cross section vector (MODIT scanfft), deprecated
+
+    Notes:
+        This function is deprecated. Use xsvector_zeroscan instead.
+        The aliasing part is closed and thereby can't be used in OLA.
+
+    Args:
+        cnu: contribution by npgetix for wavenumber
+        indexnu: index by npgetix for wavenumber
+        R: spectral resolution
+        pmarray: (+1,-1) array whose length of len(nu_grid)+1
+        nsigmaD: normaized Gaussian STD
+        gammaL: Lorentzian half width (Nlines)
+        S: line strength (Nlines)
+        nu_grid: linear wavenumber grid
+        gammaL_grid: gammaL grid
+
+    Returns:
+        Cross section in the log nu grid
+    """
+
+    log_ngammaL_grid = jnp.log(ngammaL_grid)
+    lsd_array = jnp.zeros((len(nu_grid), len(ngammaL_grid)))
+    Slsd = inc2D_givenx(lsd_array, S, cnu, indexnu, jnp.log(ngammaL), log_ngammaL_grid)
+    xs = calc_xsection_from_lsd_scanfft(
+        Slsd, R, pmarray, nsigmaD, nu_grid, log_ngammaL_grid
+    )
     return xs
 
 
 @jit
-def xsmatrix(cnu, indexnu, R, pmarray, nsigmaDl, ngammaLM, SijM, nu_grid, dgm_ngammaL):
-    """Cross section matrix for xsvector (MODIT)
+def xsmatrix_scanfft(
+    cnu, indexnu, R, pmarray, nsigmaDl, ngammaLM, SijM, nu_grid, dgm_ngammaL
+):
+    """Cross section matrix for xsvector (MODIT), scan+fft
 
     Notes:
-        Currently due to #277, we recommend to use
-        modit_scanfft.xsmatrix_scanfft instead of xsmatrix.
-        However, this will be changed when cufft fixes the 4GB limit.
-
+        This function is deprecated. Use xsmatrix_zeroscan instead.
+        The aliasing part is closed and thereby can't be used in OLA.
 
     Args:
-       cnu: contribution by npgetix for wavenumber
-       indexnu: index by npgetix for wavenumber
-       R: spectral resolution
-       pmarray: (+1,-1) array whose length of len(nu_grid)+1
-       nu_lines: line center (Nlines)
-       nsigmaDl: normalized doppler sigma in layers in R^(Nlayer x 1)
-       ngammaLM: gamma factor matrix in R^(Nlayer x Nline)
-       SijM: line strength matrix in R^(Nlayer x Nline)
-       nu_grid: linear wavenumber grid
-       dgm_ngammaL: DIT Grid Matrix for normalized gammaL R^(Nlayer, NDITgrid)
+        cnu: contribution by npgetix for wavenumber
+        indexnu: index by npgetix for wavenumber
+        R: spectral resolution
+        pmarray: (+1,-1) array whose length of len(nu_grid)+1
+        nu_lines: line center (Nlines)
+        nsigmaDl: normalized doppler sigma in layers in R^(Nlayer x 1)
+        ngammaLM: gamma factor matrix in R^(Nlayer x Nline)
+        SijM: line strength matrix in R^(Nlayer x Nline)
+        nu_grid: linear wavenumber grid
+        dgm_ngammaL: DIT Grid Matrix for normalized gammaL R^(Nlayer, NDITgrid)
 
     Return:
-       cross section matrix in R^(Nlayer x Nwav)
+        cross section matrix in R^(Nlayer x Nwav)
     """
     NDITgrid = jnp.shape(dgm_ngammaL)[1]
     Nline = len(cnu)
@@ -140,13 +284,40 @@ def xsmatrix(cnu, indexnu, R, pmarray, nsigmaDl, ngammaLM, SijM, nu_grid, dgm_ng
         ngammaL = arr[1 : Nline + 1]
         Sij = arr[Nline + 1 : 2 * Nline + 1]
         ngammaL_grid = arr[2 * Nline + 1 : 2 * Nline + NDITgrid + 1]
-        arr = xsvector(
+        arr = xsvector_scanfft(
             cnu, indexnu, R, pmarray, nsigmaD, ngammaL, Sij, nu_grid, ngammaL_grid
         )
         return carry, arr
 
     val, xsm = scan(fxs, 0.0, Mat)
     return xsm
+
+
+@jit
+def xsmatrix_vald_scanfft(
+    cnuS, indexnuS, R, pmarray, nsigmaDlS, ngammaLMS, SijMS, nu_grid, dgm_ngammaLS
+):
+    """Cross section matrix for xsvector (MODIT) with scan+fft, for VALD lines (asdb)
+
+    Args:
+        cnuS: contribution by npgetix for wavenumber [N_species x N_line]
+        indexnuS: index by npgetix for wavenumber [N_species x N_line]
+        R: spectral resolution
+        pmarray: (+1,-1) array whose length of len(nu_grid)+1
+        nsigmaDlS: normalized sigmaD matrix [N_species x N_layer x 1]
+        ngammaLMS: normalized gammaL matrix [N_species x N_layer x N_line]
+        SijMS: line intensity matrix [N_species x N_layer x N_line]
+        nu_grid: linear wavenumber grid
+        dgm_ngammaLS: DIT Grid Matrix (dgm) of normalized gammaL [N_species x N_layer x N_DITgrid]
+
+    Return:
+        xsmS: cross section matrix [N_species x N_layer x N_wav]
+    """
+    xsmS = jit(vmap(xsmatrix_scanfft, (0, 0, None, None, 0, 0, 0, None, 0)))(
+        cnuS, indexnuS, R, pmarray, nsigmaDlS, ngammaLMS, SijMS, nu_grid, dgm_ngammaLS
+    )
+    xsmS = jnp.abs(xsmS)
+    return xsmS
 
 
 def exomol(mdb, Tarr, Parr, R, molmass):
@@ -191,24 +362,24 @@ def set_ditgrid_matrix_exomol(mdb, fT, Parr, R, molmass, dit_grid_resolution, *k
     """Easy Setting of DIT Grid Matrix (dgm) using Exomol.
 
     Args:
-       mdb: mdb instance
-       fT: function of temperature array
-       Parr: pressure array
-       R: spectral resolution
-       molmass: molecular mass
-       dit_grid_resolution: resolution of dgm
+        mdb: mdb instance
+        fT: function of temperature array
+        Parr: pressure array
+        R: spectral resolution
+        molmass: molecular mass
+        dit_grid_resolution: resolution of dgm
        *kargs: arguments for fT
 
     Returns:
-       DIT Grid Matrix (dgm) of normalized gammaL
+        DIT Grid Matrix (dgm) of normalized gammaL
 
     Example:
 
-       >>> fT = lambda T0,alpha: T0[:,None]*(Parr[None,:]/Pref)**alpha[:,None]
-       >>> T0_test=np.array([1100.0,1500.0,1100.0,1500.0])
-       >>> alpha_test=np.array([0.2,0.2,0.05,0.05])
-       >>> dit_grid_resolution=0.2
-       >>> dgm_ngammaL=setdgm_exomol(mdbCH4,fT,Parr,R,molmassCH4,dit_grid_resolution,T0_test,alpha_test)
+        >>> fT = lambda T0,alpha: T0[:,None]*(Parr[None,:]/Pref)**alpha[:,None]
+        >>> T0_test=np.array([1100.0,1500.0,1100.0,1500.0])
+        >>> alpha_test=np.array([0.2,0.2,0.05,0.05])
+        >>> dit_grid_resolution=0.2
+        >>> dgm_ngammaL=setdgm_exomol(mdbCH4,fT,Parr,R,molmassCH4,dit_grid_resolution,T0_test,alpha_test)
     """
     set_dgm_minmax = []
     Tarr_list = fT(*kargs)
@@ -225,17 +396,17 @@ def hitran(mdb, Tarr, Parr, Pself, R, molmass):
     """compute molecular line information required for MODIT using HITRAN/HITEMP mdb.
 
     Args:
-       mdb: mdb instance
-       Tarr: Temperature array
-       Parr: Pressure array
-       Pself: Partial pressure array
-       R: spectral resolution
-       molmass: molecular mass
+        mdb: mdb instance
+        Tarr: Temperature array
+        Parr: Pressure array
+        Pself: Partial pressure array
+        R: spectral resolution
+        molmass: molecular mass
 
     Returns:
-       line intensity matrix,
-       normalized gammaL matrix,
-       normalized sigmaD matrix
+        line intensity matrix,
+        normalized gammaL matrix,
+        normalized sigmaD matrix
     """
     qt = vmap(mdb.qr_interp_lines, (0, None))(Tarr, Tref_original)
     SijM = jit(vmap(line_strength, (0, None, None, None, 0, None)))(
@@ -265,25 +436,25 @@ def set_ditgrid_matrix_hitran(
     """Easy Setting of DIT Grid Matrix (dgm) using HITRAN/HITEMP.
 
     Args:
-       mdb: mdb instance
-       fT: function of temperature array
-       Parr: pressure array
-       Pself_ref: reference partial pressure array
-       R: spectral resolution
-       molmass: molecular mass
-       dit_grid_resolution: resolution of dgm
+        mdb: mdb instance
+        fT: function of temperature array
+        Parr: pressure array
+        Pself_ref: reference partial pressure array
+        R: spectral resolution
+        molmass: molecular mass
+        dit_grid_resolution: resolution of dgm
        *kargs: arguments for fT
 
     Returns:
-       DIT Grid Matrix (dgm) of normalized gammaL
+        DIT Grid Matrix (dgm) of normalized gammaL
 
     Example:
 
-       >>> fT = lambda T0,alpha: T0[:,None]*(Parr[None,:]/Pref)**alpha[:,None]
-       >>> T0_test=np.array([1100.0,1500.0,1100.0,1500.0])
-       >>> alpha_test=np.array([0.2,0.2,0.05,0.05])
-       >>> dit_grid_resolution=0.2
-       >>> dgm_ngammaL=setdgm_hitran(mdbCH4,fT,Parr,Pself,R,molmassCH4,dit_grid_resolution,T0_test,alpha_test)
+        >>> fT = lambda T0,alpha: T0[:,None]*(Parr[None,:]/Pref)**alpha[:,None]
+        >>> T0_test=np.array([1100.0,1500.0,1100.0,1500.0])
+        >>> alpha_test=np.array([0.2,0.2,0.05,0.05])
+        >>> dit_grid_resolution=0.2
+        >>> dgm_ngammaL=setdgm_hitran(mdbCH4,fT,Parr,Pself,R,molmassCH4,dit_grid_resolution,T0_test,alpha_test)
     """
     set_dgm_minmax = []
     Tarr_list = fT(*kargs)

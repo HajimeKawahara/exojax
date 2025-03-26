@@ -303,7 +303,7 @@ def voigt(nuvector, sigmaD, gammaL):
 
 
 @jit
-def vvoigt(numatrix, sigmaD, gammas):
+def vvoigt(numatrix, sigmaD, gammaL):
     """Custom JVP version of vmaped voigt profile.
 
     Args:
@@ -315,7 +315,7 @@ def vvoigt(numatrix, sigmaD, gammas):
         Voigt profile vector in R^Nwav
     """
     vmap_voigt = vmap(voigt, (0, 0, 0), 0)
-    return vmap_voigt(numatrix, sigmaD, gammas)
+    return vmap_voigt(numatrix, sigmaD, gammaL)
 
 
 @jit

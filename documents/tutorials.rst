@@ -1,50 +1,43 @@
-Basics
-==============
+|:jack_o_lantern:| Getting Started
+=====================================
 
 .. toctree::
    :maxdepth: 1
 
    tutorials/get_started.rst
-   tutorials/optimize_spectrum.rst
-   tutorials/reverse_premodit.rst
+   tutorials/get_started_transmission.rst
+   tutorials/get_started_reflection.rst
+   tutorials/get_started_opart.rst
+   tutorials/Cross_Section_using_OpaStitch.rst
    
+   
+Retrievals
+===============
 
-Applications
-====================
+HMC-NUTS
+------------
 
-Tips for Real Analysis
--------------------------
+For HMC-NUTS, visit  `Getting Started Page <tutorials/get_started.html>`_ again.
+
+SVI using NumPyro
+-----------------------------------
+.. toctree::
+   :maxdepth: 1
+
+   tutorials/get_started_svi.rst
+   
+Nested Sampling using JAXNS/NumPyro
+--------------------------------------
 
 .. toctree::
    :maxdepth: 1
 
-   tutorials/Fitting_Telluric_Lines.rst
-   tutorials/reverse_precompute_grid.rst
-   userguide/memorysetting.rst	
-   tutorials/elower_setting.rst
+   tutorials/get_started_ns.rst
 
 
-Transmission Spectra
-----------------------------
+A Primer on Planet Atmosphere Model in ExoJAX
+===============================================
 
-.. toctree::
-   :maxdepth: 1
-
-   tutorials/Transmission_beta.rst
-
-|:ringed_planet:| An example of HMC-NUTS for actual hot Saturn (JWST/ERS, NIRSPEC/G395H) can be found `here <https://github.com/sh-tada/exojaxample_WASP39b>`_ .
-
-
-Reflection Spectrum
-------------------------------------
-
-.. toctree::
-   :maxdepth: 1
-
-   tutorials/jupiters/Jupiter_cloud_model_using_amp.rst
-   tutorials/jupiters/Jupiter_Hires_Modeling.rst
-
-|:ringed_planet:| An example of HMC-NUTS for actual Jupiter reflection spectrum can be found `here <https://github.com/HajimeKawahara/exojaxample_jupiter>`_ .
 
 Molecular/Atomic/Continuum Databases
 ---------------------------------------
@@ -56,36 +49,8 @@ Molecular/Atomic/Continuum Databases
    tutorials/branch.rst
    tutorials/Fortrat.rst
    tutorials/CIA_opacity.rst
+   tutorials/Hminus.rst
    tutorials/Forward_modeling_for_Fe_I_lines_of_Kurucz.rst
-
-
-Multi Molecule/Segments Mdb and Opa Handler
-=============================================
-
-.. toctree::
-   :maxdepth: 1
-
-   tutorials/multimol.rst
-
-
-Manual Settings of Opacity (not using opa)
-==============================================================
-
-You do not need `opa` nor `art` to compute opacity and spectra, if you want. 
-
-Cross Section using Various Opacity Calculators
---------------------------------------------------------
-
-.. toctree::
-   :maxdepth: 1
-
-   tutorials/opacity.rst
-   tutorials/Cross_Section_using_Precomputation_Modified_Discrete_Integral_Transform.rst
-   tutorials/Comparing_HITEMP_and_ExoMol.rst
-   
-
-Others
-================
 
 Scattering
 --------------------
@@ -94,16 +59,39 @@ Scattering
    :maxdepth: 1
 
    userguide/rayleigh.rst
+   userguide/mie.rst
 
 
-Micro Chemical/Physical Processes
---------------------------------------
+Clouds and Reflection Spectrum
+------------------------------------
 
 .. toctree::
    :maxdepth: 1
 
+   tutorials/jupiters/Jupiter_cloud_model_using_amp.rst
+   tutorials/jupiters/Jupiter_Hires_Modeling.rst
    tutorials/Ackerman_and_Marley_cloud_model.rst
-   tutorials/Terminal_Velocity_of_Cloud_Particles.rst   
+   
+
+|:ringed_planet:| An example of HMC-NUTS for actual Jupiter reflection spectrum can be found `here <https://github.com/HajimeKawahara/exojaxample_jupiter>`_ .
+
+
+Tips for Real Analysis
+-------------------------
+
+.. toctree::
+   :maxdepth: 1
+
+   tutorials/Photometry.rst
+   userguide/memorysetting.rst	
+   tutorials/elower_setting.rst
+   tutorials/Fitting_Telluric_Lines.rst
+   tutorials/reverse_precompute_grid.rst
+
+
+|:ringed_planet:| An example of HMC-NUTS for actual hot Saturn (JWST/ERS, NIRSPEC/G395H) can be found `here <https://github.com/sh-tada/exojaxample_WASP39b>`_ .
+
+
    
 Macro Physical Processes
 --------------------------------------

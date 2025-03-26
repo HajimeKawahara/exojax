@@ -6,7 +6,7 @@ Forward modeling of the emission spectrum using Fe I line list from Kurucz
 | created: : 2022/04/22
 
 This notebook demonstrates how to use Kurucz database, not using
-``opa``.
+``opa``. Currently, ``opa`` cannot be used for metal lines yet.
 
 .. code:: ipython3
 

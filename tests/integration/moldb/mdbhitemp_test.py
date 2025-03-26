@@ -29,13 +29,14 @@ def test_moldb_hitemp_direct_molecid():
 
 
 def test_moldb_hitemp_interp():
+    from exojax.utils.constants import Tref_original
     mdb = MdbHitemp(".database/CO/", nurange=[4200.0, 4300.0], crit=1.e-30)
     T = 1000.0
     ref = [3.5402815, 3.5526853, 3.5537634, 3.5472596, 3.5603657]
     for i, isotope in enumerate(mdb.uniqiso):
-        assert mdb.qr_interp(isotope, T) == pytest.approx(ref[i])
+        assert mdb.qr_interp(isotope, T, Tref_original) == pytest.approx(ref[i])
 
-    qr = mdb.qr_interp_lines(T)
+    qr = mdb.qr_interp_lines(T, Tref_original)
 
 
 def test_moldb_hitemp_isotope():

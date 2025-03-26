@@ -20,11 +20,11 @@ sys.path.insert(0, os.path.abspath("~/exojax"))
 # -- Project information -----------------------------------------------------
 
 project = "ExoJAX"
-copyright = "2020-2024, ExoJAX contributors"
+copyright = "2020-2025, ExoJAX contributors"
 author = "ExoJAX contributors"
 
 # The full version, including alpha/beta/rc tags
-release = "1.6.0"
+release = "2.0.0"
 
 
 # -- General configuration ---------------------------------------------------
@@ -36,6 +36,7 @@ extensions = [
     "sphinx.ext.autodoc",
     "sphinx.ext.napoleon",
     "sphinxemoji.sphinxemoji",
+    "sphinx_gallery.gen_gallery",
 ]
 
 # Add any paths that contain templates here, relative to this directory.
@@ -63,3 +64,16 @@ html_logo = "_static/logo.png"
 #    'style_nav_header_background': '#333',
 # }
 html_css_files = ["header.css"]
+
+# Sphinx-Gallery
+from sphinx_gallery.sorting import FileNameSortKey
+sphinx_gallery_conf = {
+    "examples_dirs": ["../examples"],
+    "gallery_dirs": ["examples"],
+    "within_subsection_order": FileNameSortKey,
+    "filename_pattern": "/plot_",
+    "ignore_pattern": "/_",
+    "backreferences_dir": "backreferences",
+    "doc_module": ("exojax",),
+    "reference_url": {"exojax": None},
+}

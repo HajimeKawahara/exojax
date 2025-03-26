@@ -2,7 +2,7 @@ from exojax.test.data import TESTDATA_CO_EXOMOL_MODIT_XS_REF
 from exojax.test.data import TESTDATA_CO_HITEMP_MODIT_XS_REF
 from exojax.test.data import TESTDATA_CO_HITEMP_MODIT_XS_REF_AIR
 import numpy as np
-from exojax.spec.modit import xsvector
+from exojax.spec.modit import xsvector_scanfft
 from exojax.spec.hitran import line_strength
 from exojax.spec.molinfo import molmass_isotope
 from exojax.spec import normalized_doppler_sigma, gamma_natural
@@ -64,7 +64,7 @@ def gendata_xs_modit_exomol():
     )
 
     ngammaL_grid = ditgrid_log_interval(ngammaL, dit_grid_resolution=0.1)
-    xsv = xsvector(
+    xsv = xsvector_scanfft(
         cont_nu, index_nu, R, pmarray, nsigmaD, ngammaL, Sij, nu_grid, ngammaL_grid
     )
 
@@ -118,7 +118,7 @@ def gendata_xs_modit_hitemp(airmode=False):
     cont_nu, index_nu, R, pmarray = init_modit(mdbCO.nu_lines, nu_grid)
     ngammaL_grid = ditgrid_log_interval(ngammaL, dit_grid_resolution=0.1)
 
-    xsv = xsvector(
+    xsv = xsvector_scanfft(
         cont_nu, index_nu, R, pmarray, nsigmaD, ngammaL, Sij, nu_grid, ngammaL_grid
     )
 

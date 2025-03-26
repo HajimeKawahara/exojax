@@ -75,7 +75,7 @@ if __name__ == "__main__":
         mmw_arr = mu_fid * np.ones_like(art.pressure)
 
         gravity = art.gravity_profile(Tarr, mmw_arr, radius_btm, gravity_btm)
-        mmr_arr = art.constant_mmr_profile(mmr_ch4)
+        mmr_arr = art.constant_profile(mmr_ch4)
 
         # molecule
         xsmatrix = opa.xsmatrix(Tarr, art.pressure)

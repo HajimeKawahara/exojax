@@ -6,18 +6,19 @@
 ExoJAX
 ==================================
 
-Version 1.6 (:doc:`userguide/history`) 
+Version 2.0 (:doc:`userguide/history`) 
 
-Note: Paper II will be under peer review. We plan to release version 2.0 at the time of acceptance of the paper II.
 
-`ExoJAX <https://github.com/HajimeKawahara/exojax>`_ provides an auto-differentiable high-resolution spectrum model for exoplanets/brown dwarfs using `JAX <https://github.com/google/jax>`_. 
-ExoJAX enables a fully Bayesian inference of the high-dispersion data to fit the line-by-line spectral computation to the observed spectrum, 
-from end-to-end (i.e. from molecular/atomic databases to real spectra), 
-by combining it with `the Hamiltonian Monte Carlo <https://en.wikipedia.org/wiki/Hamiltonian_Monte_Carlo>`_ 
-in recent probabilistic programming languages such as `NumPyro <https://github.com/pyro-ppl/numpyro>`_. 
+`ExoJAX <https://github.com/HajimeKawahara/exojax>`_ provides an auto-differentiable high-resolution spectrum model 
+for exoplanets/brown dwarfs using `JAX <https://github.com/google/jax>`_. 
+It enables fully Bayesian inference for high-dispersion data, fitting line-by-line spectral computations to observed spectra end-to-end
+-- from molecular/atomic databases to real spectra -- 
+by integrating with Hamiltonian Monte Carlo - No U Turn Sampler (HMC-NUTS), Stochastic Variational Inference (SVI), 
+Nested Sampling, and other inference techniques available in modern probabilistic programming frameworks 
+such as `NumPyro <https://github.com/pyro-ppl/numpyro>`_.
 So, the notable features of ExoJAX are summarized as 
 
-- **HMC-NUTS, gradient-based optimizer available**
+- **HMC-NUTS, SVI, Nested Sampling, Gradient-based Inference Techiques and Optimizers Available**
 - **Easy to use the latest molecular/atomic data in** :doc:`userguide/api`,  **and** :doc:`userguide/atomll` 
 - **A transparent open-source project; anyone who wants to participate can join the development!**
 
@@ -29,19 +30,32 @@ So, the notable features of ExoJAX are summarized as
 |:green_circle:| If you have an error and/or want to know the up-to-date info, visit `ExoJAX wiki <https://github.com/HajimeKawahara/exojax/wiki>`_. 
 Or use `the discussions form <https://github.com/HajimeKawahara/exojax/discussions>`_ on github or directly raise `issues <https://github.com/HajimeKawahara/exojax/issues>`_.
 
+.. Warning:: 
+
+	Recently, logging into HITRAN has become mandatory to access HITEMP files, causing issues with automated HITEMP file retrieval by RADIS. For more details, please refer to `this resource <https://github.com/radis/radis/issues/717>`_. (Feb. 3, 2025) 
+
+
 Contents
 ==================================
 
 .. toctree::
-   :maxdepth: 1
-	      
-   userguide/installation.rst
+   :maxdepth: 2
+   :caption: Introduction:
 
+   introduction.rst
+   
 .. toctree::
    :maxdepth: 2
    :caption: Tutorials:
-	     
+
    tutorials.rst
+
+.. toctree::
+   :maxdepth: 2
+   :caption: Gallery:
+
+   examples/index
+
 
 .. toctree::
    :maxdepth: 2
@@ -56,27 +70,37 @@ Contents
 
    exojax/exojax.rst
 
-ExoJAX example (exojaxample)
----------------------------------
+
+
+Actual Analysis Examples using ExoJAX (external) 
+------------------------------------------------------
 
 - |:ringed_planet:| `exojaxample_WASP39b <https://github.com/sh-tada/exojaxample_WASP39b>`_ : An example of HMC-NUTS for actual hot Saturn (JWST/ERS, NIRSPEC/G395H)
 
+- |:ringed_planet:| `AtmosphericRetrieval_HR7672B <https://github.com/YuiKasagi/AtmosphericRetrieval_HR7672B>`_ : An example of HMC-NUTS for a faint companion HR 7672 B by Subaru/REACH.
+
 - |:ringed_planet:| `exojaxample_jupiter <https://github.com/HajimeKawahara/exojaxample_jupiter>`_ : An example of HMC-NUTS for actual Jupiter reflection spectrum
+
+- |:test_tube:| HMC analysis of experimental spectroscopy data for hot methane gas `Gascell_Exojax. <https://github.com/KoHosokawa/Gascell_Exojax>`_
+
+- |:page_facing_up:| Chromatic Transit Variation for WASP-39b `Tada et al. <https://arxiv.org/abs/2503.08988>`_ (arXiv)
+
+- |:page_facing_up:| HMC-NUTS for Gl 229 B  (T-dwarf) Emission Spectrum `Kawashima et al. <https://arxiv.org/abs/2410.11561>`_ (arXiv)
 
 
 References 
 ---------------------
 
-- Kawahara, Kawashima, Masuda, Crossfield, Pannier, van den Bekerom,
-  `ApJS 258, 31 (2022) <https://iopscience.iop.org/article/10.3847/1538-4365/ac3b4d>`_
-  (Paper I)
+- |:page_facing_up:|  Kawahara, Kawashima, Masuda, Crossfield, Pannier, van den Bekerom,
+   `ApJS 258, 31 (2022) <https://iopscience.iop.org/article/10.3847/1538-4365/ac3b4d>`_
+   (Paper I)
 
-- Kawahara et al., 2024, in prep. (Paper II)
+- |:page_facing_up:| Kawahara et al., 2025, under review. `ArXiv <https://arxiv.org/abs/2410.06900>`_ (Paper II)
 
 License & Attribution
 ---------------------
 
-Copyright 2021-2024, Contributors
+Copyright 2021-2025, Contributors
 
 - `Hajime Kawahara <http://secondearths.sakura.ne.jp/en/index.html>`_ (@HajimeKawahara, maintainer)
 - `Yui Kawashima <https://sites.google.com/view/yuikawashima/home>`_ (@ykawashima, co-maintainer)

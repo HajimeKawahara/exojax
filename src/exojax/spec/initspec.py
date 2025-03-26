@@ -3,6 +3,7 @@
 The functions in this module are a wrapper for initialization processes
 for opacity computation.
 """
+
 import jax.numpy as jnp
 import numpy as np
 import warnings
@@ -41,12 +42,12 @@ def init_dit(nu_lines, nu_grid, warning=False):
         cont (contribution) jnp.array
         index (index) jnp.array
         pmarray: (+1.,-1.) array whose length of len(nu_grid)+1
-        
+
     Note:
         cont is the contribution for i=index+1. 1 - cont is the contribution for i=index. For other i, the contribution should be zero.
     """
-    warn_dtype64(nu_lines, warning, tag='nu_lines')
-    warn_dtype64(nu_grid, warning, tag='nu_grid')
+    warn_dtype64(nu_lines, warning, tag="nu_lines")
+    warn_dtype64(nu_grid, warning, tag="nu_grid")
     warn_outside_wavenumber_grid(nu_lines, nu_grid)
     warn_out_of_nu_grid(nu_lines, nu_grid)
 
@@ -70,12 +71,12 @@ def init_modit(nu_lines, nu_grid, warning=False):
         index: (index for q) jnp.array
         spectral_resolution: spectral resolution (R)
         pmarray: (+1.,-1.) array whose length of len(nu_grid)+1
-        
+
     Note:
         cont is the contribution for i=index+1. 1 - cont is the contribution for i=index. For other i, the contribution should be zero. dq is computed using numpy not jnp.numpy. If you use jnp, you might observe a significant residual because of the float32 truncation error.
     """
-    warn_dtype64(nu_lines, warning, tag='nu_lines')
-    warn_dtype64(nu_grid, warning, tag='nu_grid')
+    warn_dtype64(nu_lines, warning, tag="nu_lines")
+    warn_dtype64(nu_grid, warning, tag="nu_grid")
     warn_outside_wavenumber_grid(nu_lines, nu_grid)
     warn_out_of_nu_grid(nu_lines, nu_grid)
 
@@ -84,8 +85,7 @@ def init_modit(nu_lines, nu_grid, warning=False):
     pmarray = np.ones(len(nu_grid) + 1)
     pmarray[1::2] = pmarray[1::2] * -1.0
 
-    return jnp.array(cont), jnp.array(index), spectral_resolution, jnp.array(
-        pmarray)
+    return jnp.array(cont), jnp.array(index), spectral_resolution, jnp.array(pmarray)
 
 
 def warn_out_of_nu_grid(nu_lines, nu_grid):
@@ -93,15 +93,14 @@ def warn_out_of_nu_grid(nu_lines, nu_grid):
 
     Note:
         See Issue 341, https://github.com/HajimeKawahara/exojax/issues/341
-        Only for DIT and MODIT. For PreMODIT or newer Opacalc, this issue is automatically fixed. 
+        Only for DIT and MODIT. For PreMODIT or newer Opacalc, this issue is automatically fixed.
 
     Args:
         nu_lines (_type_): line center
         nu_grid (_type_): wavenumber grid
     """
     if nu_lines[0] < nu_grid[0] or nu_lines[-1] > nu_grid[-1]:
-        warnings.warn("There are lines whose center is out of nu_grid",
-                      UserWarning)
+        warnings.warn("There are lines whose center is out of nu_grid", UserWarning)
         print("This may artifact at the edges. See Issue #341.")
         print("https://github.com/HajimeKawahara/exojax/issues/341")
         print("line center [cm-1], nu_grid [cm-1]")
@@ -109,24 +108,26 @@ def warn_out_of_nu_grid(nu_lines, nu_grid):
         print("right:", nu_lines[-1], nu_grid[-1])
 
 
-def init_premodit(nu_lines,
-                  nu_grid,
-                  elower,
-                  gamma_ref,
-                  n_Texp,
-                  line_strength_ref,
-                  Twt,
-                  Tref,
-                  Tref_broadening,
-                  Tmax=None,
-                  Tmin=None,
-                  dE=160.0,
-                  dit_grid_resolution=0.2,
-                  diffmode=0,
-                  single_broadening=False,
-                  single_broadening_parameters=None,
-                  warning=False):
-    """Initialization for PreMODIT. 
+def init_premodit(
+    nu_lines,
+    nu_grid,
+    elower,
+    gamma_ref,
+    n_Texp,
+    line_strength_ref,
+    Twt,
+    Tref,
+    Tref_broadening,
+    Tmax=None,
+    Tmin=None,
+    dE=160.0,
+    dit_grid_resolution=0.2,
+    diffmode=0,
+    single_broadening=False,
+    single_broadening_parameters=None,
+    warning=False,
+):
+    """Initialization for PreMODIT.
 
     Args:
         nu_lines: wavenumber list of lines [Nline] (should be numpy F64)
@@ -138,18 +139,18 @@ def init_premodit(nu_lines,
         Twt: temperature for weight in Kelvin
         Tref: reference temperature of premodit grid
         Tref_broadening: reference temperature for broadening.
-        Tmax: max temperature to construct n_Texp grid, if None, max(Twt and Tref) is used 
-        Tmin: min temperature to construct n_Texp grid, if None, max(Twt and Tref) is used 
+        Tmax: max temperature to construct n_Texp grid, if None, max(Twt and Tref) is used
+        Tmin: min temperature to construct n_Texp grid, if None, max(Twt and Tref) is used
         dE: Elower grid interval
-        dit_grid_resolution (float): DIT grid resolution. when np.inf, the minmax simplex is used 
+        dit_grid_resolution (float): DIT grid resolution. when np.inf, the minmax simplex is used
         diffmode (int): i-th Taylor expansion is used for the weight, default is 1.
-        single_broadening (optional): if True, single_braodening_parameters is used. Defaults to False. 
+        single_broadening (optional): if True, single_braodening_parameters is used. Defaults to False.
         single_broadening_parameters (optional): [gamma_ref, n_Texp] at 296K for single broadening. When None, the median is used.
 
     Returns:
         cont_nu: contribution for wavenumber jnp.array
         index_nu: index for wavenumber jnp.array
-        elower_grid: elower grid 
+        elower_grid: elower grid
         cont_broadpar: contribution for broadening parmaeters
         index_broadpar: index for broadening parmaeters
         R: spectral resolution
@@ -159,9 +160,9 @@ def init_premodit(nu_lines,
     Note:
         cont is the contribution for i=index+1. 1 - cont is the contribution for i=index. For other i, the contribution should be zero. dq is computed using numpy not jnp.numpy. If you use jnp, you might observe a significant residual because of the float32 truncation error.
     """
-    warn_dtype64(nu_lines, warning, tag='nu_lines')
-    warn_dtype64(nu_grid, warning, tag='nu_grid')
-    warn_dtype64(elower, warning, tag='elower')
+    warn_dtype64(nu_lines, warning, tag="nu_lines")
+    warn_dtype64(nu_grid, warning, tag="nu_grid")
+    warn_dtype64(elower, warning, tag="elower")
     warn_outside_wavenumber_grid(nu_lines, nu_grid)
 
     if Tmax is None:
@@ -175,7 +176,8 @@ def init_premodit(nu_lines,
 
     if single_broadening:
         ngamma_ref_grid, n_Texp_grid = broadening_grid_for_single_broadening_mode(
-            nu_lines, gamma_ref, n_Texp, single_broadening_parameters, R)
+            nu_lines, gamma_ref, n_Texp, single_broadening_parameters, R
+        )
     else:
         ngamma_ref_grid, n_Texp_grid = make_broadpar_grid(
             ngamma_ref,
@@ -183,38 +185,50 @@ def init_premodit(nu_lines,
             Tmax,
             Tmin,
             Tref_broadening,
-            dit_grid_resolution=dit_grid_resolution)
+            dit_grid_resolution=dit_grid_resolution,
+        )
 
     print("# of reference width grid : ", len(ngamma_ref_grid))
     print("# of temperature exponent grid :", len(n_Texp_grid))
 
-    wavmask = (nu_lines >= nu_grid[0]) * (nu_lines <= nu_grid[-1])  #Issue 341
+    wavmask = (nu_lines >= nu_grid[0]) * (nu_lines <= nu_grid[-1])  # Issue 341
 
-    lbd_coeff, multi_index_uniqgrid = generate_lbd(line_strength_ref[wavmask],
-                                                   nu_lines[wavmask],
-                                                   nu_grid,
-                                                   ngamma_ref[wavmask],
-                                                   ngamma_ref_grid,
-                                                   n_Texp[wavmask],
-                                                   n_Texp_grid,
-                                                   elower[wavmask],
-                                                   elower_grid,
-                                                   Twt,
-                                                   Tref=Tref,
-                                                   diffmode=diffmode)
+    lbd_coeff, multi_index_uniqgrid = generate_lbd(
+        line_strength_ref[wavmask],
+        nu_lines[wavmask],
+        nu_grid,
+        ngamma_ref[wavmask],
+        ngamma_ref_grid,
+        n_Texp[wavmask],
+        n_Texp_grid,
+        elower[wavmask],
+        elower_grid,
+        Twt,
+        Tref=Tref,
+        diffmode=diffmode,
+    )
     pmarray = np.ones(len(nu_grid) + 1)
-    pmarray[1::2] = (pmarray[1::2] * -1.0)
+    pmarray[1::2] = pmarray[1::2] * -1.0
     pmarray = jnp.array(pmarray)
 
-    return lbd_coeff, multi_index_uniqgrid, elower_grid, ngamma_ref_grid, n_Texp_grid, R, pmarray
+    return (
+        lbd_coeff,
+        multi_index_uniqgrid,
+        elower_grid,
+        ngamma_ref_grid,
+        n_Texp_grid,
+        R,
+        pmarray,
+    )
 
 
-def broadening_grid_for_single_broadening_mode(nu_lines, gamma_ref, n_Texp,
-                                               single_broadening_parameters,
-                                               R):
+def broadening_grid_for_single_broadening_mode(
+    nu_lines, gamma_ref, n_Texp, single_broadening_parameters, R
+):
     if single_broadening_parameters[0] is not None:
         ngamma_ref_grid = jnp.array(
-            [single_broadening_parameters[0] / np.median(nu_lines) * R])
+            [single_broadening_parameters[0] / np.median(nu_lines) * R]
+        )
     else:
         ngamma_ref_grid = jnp.array([np.median(gamma_ref / nu_lines) * R])
     if single_broadening_parameters[1] is not None:
@@ -236,7 +250,7 @@ def init_modit_vald(nu_linesM, nus, N_usp):
         contS: (contribution) jnp.array [N_species x N_line]
         indexS: (index) jnp.array [N_species x N_line]
         R: spectral resolution
-    
+
         pmarray: (+1,-1) array whose length of len(nu_grid)+1
     """
     contS = np.zeros_like(nu_linesM)
@@ -245,15 +259,21 @@ def init_modit_vald(nu_linesM, nus, N_usp):
         nu_lines = nu_linesM[i]
         nu_lines_nan = np.where(nu_lines == 0, np.nan, nu_lines)
         contS[i], indexnu_dammy, R, pmarray = init_modit(
-            nu_lines_nan, nus)  # np.array(a), np.array(b), c, np.array(d)
-        indexS[i] = np.hstack([ indexnu_dammy[np.where(~np.isnan(nu_lines_nan))], \
-               (len(nus)+1) * np.ones(len(np.where(np.isnan(nu_lines_nan))[0]), dtype='int32') ])
+            nu_lines_nan, nus
+        )  # np.array(a), np.array(b), c, np.array(d)
+        indexS[i] = np.hstack(
+            [
+                indexnu_dammy[np.where(~np.isnan(nu_lines_nan))],
+                (len(nus) + 1)
+                * np.ones(len(np.where(np.isnan(nu_lines_nan))[0]), dtype="int32"),
+            ]
+        )
     contS = jnp.array(contS)
-    indexS = jnp.array(indexS, dtype='int32')
+    indexS = jnp.array(indexS, dtype="int32")
     return contS, indexS, R, pmarray
 
 
-def warn_dtype64(arr, warning, tag=''):
+def warn_dtype64(arr, warning, tag=""):
     """check arr's dtype.
 
     Args:
@@ -261,8 +281,8 @@ def warn_dtype64(arr, warning, tag=''):
         warning: True/False
         tag:
     """
-    if (arr.dtype != np.float64 and warning):
-        warnings.warn(tag + ' is not np.float64 but ' + str(arr.dtype))
+    if arr.dtype != np.float64 and warning:
+        warnings.warn(tag + " is not np.float64 but " + str(arr.dtype))
 
 
 def warn_outside_wavenumber_grid(nu_lines, nu_grid):
@@ -275,10 +295,8 @@ def warn_outside_wavenumber_grid(nu_lines, nu_grid):
     Note:
         For MODIT/DIT, if the lines whose center are outside of the wavenumber grid, they contribute the edges of the wavenumber grid. This function is to check it. This warning often occurs when you set non-negative value to ``margin`` in MdbExomol, MdbHit, AdbVALD, and AdbKurucz in moldb. See `#190 <https://github.com/HajimeKawahara/exojax/issues/190>`_   for the details.
     """
-    if np.min(nu_lines) < np.min(nu_grid) or np.max(nu_lines) > np.max(
-            nu_grid):
+    if np.min(nu_lines) < np.min(nu_grid) or np.max(nu_lines) > np.max(nu_grid):
+        warnings.warn("Some of the line centers are outside of the wavenumber grid.")
         warnings.warn(
-            'Some of the line centers are outside of the wavenumber grid.')
-        warnings.warn(
-            'All of the line center should be within wavenumber grid for PreMODIT/MODIT/DIT.'
+            "All of the line center should be within wavenumber grid for PreMODIT/MODIT/DIT."
         )

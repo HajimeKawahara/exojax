@@ -1,7 +1,8 @@
 """emulate mdb class for unittest
 """
-import pkg_resources
 from exojax.test.data import TESTDATA_refrind
+from exojax.test.data import get_testdata_filename
+
 from exojax.spec import pardb
 
 
@@ -16,10 +17,8 @@ def mock_PdbPlouds(nurange=None):
     Returns:
         PdbClouds instance
     """
-    refrind_path = pkg_resources.resource_filename(
-        "exojax", "data/testdata/" + TESTDATA_refrind
-    )
-    path = pkg_resources.resource_filename("exojax", "data/testdata/")
+    refrind_path = get_testdata_filename(TESTDATA_refrind)
+    path = get_testdata_filename("")
     pdb_nh3 = pardb.PdbCloud(
         "test", download=False, refrind_path=refrind_path, path=path, nurange=nurange
     )
