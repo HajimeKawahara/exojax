@@ -1,6 +1,7 @@
 Transmission Spectroscopy
 ------------------------------
 
+
 In transmission spectroscopy, the spectrum of the transit depth is measured. The transit depth is the square of the ratio between the planet's radius 
 and the star's radius. Accordingly, ``ExoJAX`` calculates the square of the planet's radius.
 
@@ -53,7 +54,13 @@ The ``gravity_profile`` instance in the ``ArtTransPure`` class allows for easy c
     
     dtau = art.opacity_profile_xs(xsmatrix, mmr_arr, opa.mdb.molmass,gravity)
     Rp2 = art.run(dtau, Tarr, mmw, radius_btm, gravity_btm)
-    
+
+
+|:jack_o_lantern:| See 
+`Getting Started with simulating the Transmission Spectrum <../tutorials/get_started_transmission.html>`_
+as a tutorial. 
+
+
 Real Example
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 

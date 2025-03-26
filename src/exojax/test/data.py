@@ -73,3 +73,6 @@ TESTDATA_FILTER_SDSS_G = "filter_sdss_g.csv"
 
 #test spectral data for CO bandhead used in Kawahara et al. (2022) Paper I
 TESTDATA_LUH16A = "luhman16a_spectra_detector1.csv"
+
+#test spectral data for reflection of Jupiter
+TESTDATA_JUPITER = "jupiter_corrected.dat"

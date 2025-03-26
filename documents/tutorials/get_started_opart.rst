@@ -45,6 +45,10 @@ by CO and the CIA continuum opacity of H2 are defined for each layer.
 The ``__call__`` method should take the parameters of a layer as input
 and return the optical depth (delta tau) for that layer.
 
+Note that you can also use the
+`nu-stitching <Cross_Section_using_OpaStitch.html>`__ option in
+``OpaPremodit`` if you want to cut the wing.
+
 .. code:: ipython3
 
     from exojax.spec.api import MdbExomol
@@ -70,6 +74,8 @@ and return the optical depth (delta tau) for that layer.
                 self.nu_grid,
                 auto_trange=[500.0, 1500.0],
                 dit_grid_resolution=1.0,
+                #nstitch=10, # nu-stitch option
+                #cutwing=0.015, #nu-stitch option
                 allow_32bit=True
             )
             # sets CIA
@@ -259,8 +265,8 @@ should be sufficient to perform the computation.
 .. image:: get_started_opart_files/get_started_opart_18_0.png
 
 
-2. Optimization of ``opart`` using forward differentiation
-----------------------------------------------------------
+2. Optimization of ``opart`` using Forward-mode Differentiation
+---------------------------------------------------------------
 
 Next, we will perform gradient-based optimization using ``opart``.
 First, let’s generate mock data.

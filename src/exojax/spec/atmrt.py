@@ -129,6 +129,9 @@ class ArtCommon:
     def constant_profile(self, value):
         return value * np.ones_like(self.pressure)
 
+    def constant_mmr_profile(self, value):
+        return self.constant_profile(value)
+    
     def opacity_profile_lines(self, xs, mixing_ratio, molmass, gravity):
         raise ValueError(
             "opacity_profile_lines was removed. Use opacity_profile_xs instead"
@@ -849,8 +852,8 @@ class ArtTransPure(ArtCommon):
         normalized_radius_top = normalized_radius_lower[0] + normalized_height[0]
         cgm = chord_geometric_matrix_lower(normalized_height, normalized_radius_lower)
         dtau_chord_lower = chord_optical_depth(cgm, dtau)
-        func = self.integration_dict[self.integration]
 
+        func = self.integration_dict[self.integration]
         if self.integration == "trapezoid":
             return func(
                 dtau_chord_lower, normalized_radius_lower, normalized_radius_top

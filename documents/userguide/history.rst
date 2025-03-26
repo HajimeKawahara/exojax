@@ -1,6 +1,82 @@
 History
 ===============
 
+Version 2.0
+-----------------------
+
+In this update, we include further refactoring, additional documentation, and new features for device-memory saving algorithms, 
+`opart <https://github.com/HajimeKawahara/exojax/issues/542>`_
+and The 
+`nu-stitching <https://github.com/HajimeKawahara/exojax/issues/542>`_
+, which were not described in the initial submission 
+(
+`version 1 on the ArXiv manuscript <https://arxiv.org/abs/2410.06900v1>`_ 
+). 
+
+Opart: layer-by-layer opacity and radiative transfer
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+The 
+`opart <https://github.com/HajimeKawahara/exojax/issues/542>`_
+method has recently demonstrated at least comparable computation times to conventional methods for cases like pure absorption with emission (``EmisPure``). By calculating without separating ``opa`` and ``art``, it eliminates dependency on ``nlayer`` for memory requirements. This means that calculations can likely be performed even on GPUs with limited device memory, such as those without the large 80GB memory capacity of an A100 GPU. We consider this a valuable addition for version 2.
+See 
+`here <https://secondearths.sakura.ne.jp/exojax/tutorials/get_started_opart.html>`_
+as a tutorial.
+
+Available Opart classes
+^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+- ``OpartEmisPure``
+- ``OpartReflectPure``
+- ``OpartEmisScat``
+- ``OpartReflectEmis``
+
+#542 #546 #547 #558 #565 #559 #556 #557 #568
+
+Wavenumber Stitching ($\nu$-stitching)
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+We implemented the 
+`nu-stitching <https://github.com/HajimeKawahara/exojax/issues/566>`_
+, the method to divide the wavenumber grid, using 
+`OLA <https://secondearths.sakura.ne.jp/exojax/tutorials/Open_Close_Cross_Section.html>`_
+, in `PreMODIT` as an option (with ``nstitch`` and ``cutwing`` arguments). 
+
+.. code-block:: python
+
+    from exojax.spec import OpaPremodit
+    opa = OpaPremodit(mdb, nus, nstitch=10, auto_trange=[500,1300], cutwing = 0.015)
+
+See 
+`here <https://secondearths.sakura.ne.jp/exojax/tutorials/Cross_Section_using_OpaStitch.html>`_ 
+for the details.
+
+Note that $\nu$-stitching can be used even in ``opart``.
+
+#566  #581
+
+Improvements
+^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+- (**OpaPremodit, OpaModit**) Reduction in device memory usage by performing zero-padding within the scan #577 #578
+- (**MdbExomol**) Exomol `broadener_species` option, the capability of `air` and/or other species #580
+
+Documentation Update
+^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+- visualization of LBD #548 #553
+- GP modeling in getting started #554
+- How to use SVI with ExoJAX #572 
+- How to use Nested Sampling with ExoJAX #107 #570
+- others #560 #561
+
+Removed 
+^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+- spec.modit.calc_xsection_from_lsd #576
+- spec.modit.xsvector #576
+- spec.modit.xsmatrix #576
+
 Version 1.6 
 -----------------------
 

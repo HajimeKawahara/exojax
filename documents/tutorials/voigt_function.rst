@@ -1,20 +1,23 @@
-Voigt profile
-=============
+On the Voigt profile
+====================
+
+Here, we use a differentiable Voigt profile to examine its properties.
 
 .. code:: ipython3
 
-    from exojax.spec import voigt
+    from exojax.spec.lpf import voigt
     import jax.numpy as jnp
     import matplotlib.pyplot as plt
 
 Let’s compute the Voigt function :math:`V(\nu, \beta, \gamma_L)` using
-exojax! :math:`V(\nu, \beta, \gamma_L)` is a convolution of a Gaussian
+ExoJAX! :math:`V(\nu, \beta, \gamma_L)` is a convolution of a Gaussian
 with a STD of :math:`\beta` and a Lorentian with a gamma parameter of
 :math:`\gamma_L`.
 
 .. code:: ipython3
 
     nu=jnp.linspace(-10,10,100)
+    
     plt.plot(nu, voigt(nu,1.0,2.0)) #beta=1.0, gamma_L=2.0
 
 
@@ -22,7 +25,7 @@ with a STD of :math:`\beta` and a Lorentian with a gamma parameter of
 
 .. parsed-literal::
 
-    [<matplotlib.lines.Line2D at 0x7faaf9d64358>]
+    [<matplotlib.lines.Line2D at 0x7dc5bbfd0a30>]
 
 
 
@@ -30,17 +33,20 @@ with a STD of :math:`\beta` and a Lorentian with a gamma parameter of
 .. image:: voigt_function_files/voigt_function_3_1.png
 
 
-The function “voigt” is vmapped for nu (input=0), therefore a bit hard
-to handle when you want to differentiate. Instead, you can use
-“voigtone”, which is not vmapped for all of the input arguments.
+The function ``spec.lpf.voigt`` is
+`vmapped <https://docs.jax.dev/en/latest/automatic-vectorization.html#id2>`__
+for the wavenumber (``nu``) as input=0, therefore a bit hard to handle
+when you want to differentiate. Instead, you can use
+``spec.lpf.voigtone``, which is not vmapped for all of the input
+arguments.
 
 .. code:: ipython3
 
-    from exojax.spec import voigtone 
+    from exojax.spec.lpf import voigtone
     from jax import grad, vmap
     
-    dvoigt_nu=vmap(grad(voigtone,argnums=0),(0,None,None),0) #derivative by nu
-    dvoigt_beta=vmap(grad(voigtone,argnums=1),(0,None,None),0) #derivative by beta
+    dvoigt_nu = vmap(grad(voigtone, argnums=0), (0, None, None), 0)  # derivative by nu
+    dvoigt_beta = vmap(grad(voigtone, argnums=1), (0, None, None), 0)  # derivative by beta
 
 .. code:: ipython3
 
@@ -54,7 +60,7 @@ to handle when you want to differentiate. Instead, you can use
 
 .. parsed-literal::
 
-    <matplotlib.legend.Legend at 0x7faaf9b45c50>
+    <matplotlib.legend.Legend at 0x7dc5b974c370>
 
 
 
@@ -185,7 +191,7 @@ We got a posterior sampling.
 .. image:: voigt_function_files/voigt_function_20_0.png
 
 
-curve of growth
+Curve of Growth
 ---------------
 
 As an application, we consider the curve of growth. The curve of growth
@@ -233,8 +239,8 @@ increasing the absorption sterength, the power converges to 1/2.
 .. image:: voigt_function_files/voigt_function_27_0.png
 
 
-Now we have auto-diff for the Voigt. So, we can directly compute the
-power as a function of :math:`a`.
+Now we have the auto-diff for the Voigt function. So, we can directly
+compute the power as a function of :math:`a`.
 
 $power = :raw-latex:`\frac{\partial}{\partial \log_{10} a }`
 :raw-latex:`\log`\_{10} ( EW ) $
@@ -248,6 +254,8 @@ $power = :raw-latex:`\frac{\partial}{\partial \log_{10} a }`
 
     dlogEW=grad(logEW)
     vlogdEW=vmap(dlogEW,0,0)
+
+In this way, the curve of growth can be directly calculated.
 
 .. code:: ipython3
 
@@ -263,6 +271,9 @@ $power = :raw-latex:`\frac{\partial}{\partial \log_{10} a }`
 
 
 
-.. image:: voigt_function_files/voigt_function_31_0.png
+.. image:: voigt_function_files/voigt_function_32_0.png
+
+
+That’s it
 
 
