@@ -7,8 +7,7 @@ Unfortunately, the standard :pymod:`pickle` module sometimes fails to serialise 
 
 .. code-block:: text
 
-   pickle.PicklingError: Can't pickle <function xsvector_zeroth at 0x7be0f3f29b40>: \
-     it's not the same object as exojax.spec.premodit.xsvector_zeroth
+   _pickle.PicklingError: Can't pickle <function xsvector_zeroth at 0x7be0f3f29b40>: it's not the same object as exojax.spec.premodit.xsvector_zeroth
 
 The solution is to use :pymod:`cloudpickle`, which is able to handle dynamic objects created by **JAX**.
 
