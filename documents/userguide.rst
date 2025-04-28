@@ -80,6 +80,7 @@ Others
 .. toctree::
    :maxdepth: 1
 
+   userguide/opa_pickle.rst
    userguide/comp.rst
 
 
