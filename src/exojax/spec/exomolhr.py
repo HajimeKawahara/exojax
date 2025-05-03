@@ -141,6 +141,7 @@ def fetch_opacity_zip(  # noqa: WPS211 (a few branches are fine here)
     with zipfile.ZipFile(zip_path) as zf:
         csv_members = [m for m in zf.namelist() if m.lower().endswith(".csv")]
         if not csv_members:
+            print("Check available molecules at https://www.exomol.com/exomolhr")
             raise RuntimeError("No CSV file found in the archive.")
         if len(csv_members) > 1:
             raise RuntimeError(f"Multiple CSV files found: {csv_members}")
@@ -176,18 +177,22 @@ def load_exomolhr_csv(csv_path: str | pathlib.Path) -> pd.DataFrame:
 
 
 if __name__ == "__main__":
+
+    from exojax.test.emulate_mdb import mock_wavenumber_grid
+
+    nus, wav, res = mock_wavenumber_grid()
+
     csv_path = fetch_opacity_zip(
         wvmin=0,
         wvmax=None,
-        numin=0,
-        numax=2000,
-        T=1300,
-        Smin=1e-40,
-        iso="12C-16O2",
-        out_dir="opacity_zips",
+        numin=nus[0],
+        numax=nus[-1],
+        T=296.0,
+        Smin=1e-30,
+        iso="1H2-16O",
+        out_dir="./exomolhr_data",
     )
     print("Downloaded and unzipped to", csv_path)
-
 
     df = load_exomolhr_csv(csv_path)
     
