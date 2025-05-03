@@ -76,3 +76,6 @@ TESTDATA_LUH16A = "luhman16a_spectra_detector1.csv"
 
 #test spectral data for reflection of Jupiter
 TESTDATA_JUPITER = "jupiter_corrected.dat"
+
+#test csv file for exomolhr
+TESTDATA_EXOMOLHR_CSV = "20250503072507__1H2-16O__296.0K.csv"
