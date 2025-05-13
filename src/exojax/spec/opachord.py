@@ -4,7 +4,22 @@ from jax import jit, custom_jvp
 
 @custom_jvp
 def safe_sqrt(x):
-    # Avoids division by zero in the derivative of sqrt
+    """Element-wise square root with a *safe* derivative.
+
+    The custom JVP sets the gradient to zero
+    where x <= 0 to avoid divide-by-zero during autodiff.
+
+    Args:
+        x (jnp.ndarray): Input array.
+    Returns:
+        jnp.ndarray: Element-wise square root of the input array.
+
+    Notes:
+        * Without @jit on functions such as ``chord_geometric_matrix_lower``
+          or ``chord_geometric_matrix``, both branches of jnp.where may
+          execute and still cause a divide-by-zero.
+        * Added in PR #598.
+    """
     return jnp.sqrt(x)
 
 
@@ -12,16 +27,8 @@ def safe_sqrt(x):
 def _(primals, tangents):
     (x,), (t,) = primals, tangents
     y = safe_sqrt(x)
-
-    # Derivative: t / (2 * y), with zero for x <= 0 to prevent NaN
     dx = jnp.where(x > 0, t / (2 * y), 0.0)
     return y, dx
-
-
-# Note:
-# Without @jit for `chord_geometric_matrix_lower` and `chord_geometric_matrix`,
-# both branches of the `where` condition may be evaluated,
-# which can lead to division by zero when x = 0. Using @jit is recommended.
 
 
 @jit
