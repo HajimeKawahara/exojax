@@ -9,38 +9,13 @@ import zipfile
 import pandas as pd
 
 
-
 from exojax.utils.molname import e2s
 from exojax.spec.molinfo import isotope_molmass
 
 
-class MdbExomolHR:
-    def __init__(
-        self,
-        path,
-        nurange,
-        Ttyp=1000.0,
-        bkgdatm="H2",
-        gpu_transfer=True,
-        activation=True,
-        local_databases="./",
-    ):
-        self.dbtype = "exomolhr"
-        self.path = pathlib.Path(path).expanduser()
-        self.exact_molecule_name = self.path.parents[0].stem
-        self.database = str(self.path.stem)
-        self.bkgdatm = bkgdatm
-        # molecbroad = self.exact_molecule_name + '__' + self.bkgdatm
-        self.gpu_transfer = gpu_transfer
-        self.Ttyp = Ttyp
-        self.simple_molecule_name = e2s(self.exact_molecule_name)
-        self.molmass = isotope_molmass(self.exact_molecule_name)
-        self.activation = activation
-        wavenum_min, wavenum_max = np.min(nurange), np.max(nurange)
-
-
 EXOMOLHR_API_ROOT = "https://www.exomol.com/exomolhr/get-data/"  # <- base for HTML
 EXOMOLHR_DOWNLOAD_ROOT = "https://www.exomol.com/exomolhr/get-data/download/"
+
 
 def fetch_opacity_zip(  # noqa: WPS211 (a few branches are fine here)
     *,
@@ -130,7 +105,9 @@ def fetch_opacity_zip(  # noqa: WPS211 (a few branches are fine here)
     # 3. download ZIP (streaming) unless it is already present
     # ------------------------------------------------------------------
     if not zip_path.exists():
-        with sess.get(dl_url, stream=True, timeout=600) as resp, zip_path.open("wb") as fh:
+        with sess.get(dl_url, stream=True, timeout=600) as resp, zip_path.open(
+            "wb"
+        ) as fh:
             resp.raise_for_status()
             for block in resp.iter_content(chunk):
                 fh.write(block)
@@ -153,9 +130,9 @@ def fetch_opacity_zip(  # noqa: WPS211 (a few branches are fine here)
 
     return csv_path
 
+
 def load_exomolhr_csv(csv_path: str | pathlib.Path) -> pd.DataFrame:
-    """Load a CSV file from an ExoMolHR ZIP archive into a DataFrame.
-    """
+    """Load a CSV file from an ExoMolHR ZIP archive into a DataFrame."""
     # ------------------------------------------------------------------
     # 3. read CSV into DataFrame
     # ------------------------------------------------------------------
@@ -174,6 +151,48 @@ def load_exomolhr_csv(csv_path: str | pathlib.Path) -> pd.DataFrame:
     df.columns = [c.strip() for c in df.columns]
 
     return df
+
+
+class MdbExomolHR:
+    def __init__(
+        self,
+        exact_molecule_name,
+        nurange,
+        crit=1.0e-30,
+        Ttyp=1000.0,
+        gpu_transfer=True,
+        activation=True,
+        local_databases="./",
+    ):
+        self.dbtype = "exomolhr"
+        self.exact_molecule_name = exact_molecule_name
+        self.gpu_transfer = gpu_transfer
+        self.crit = crit
+        self.Ttyp = Ttyp
+        self.simple_molecule_name = e2s(self.exact_molecule_name)
+        self.molmass = isotope_molmass(self.exact_molecule_name)
+        self.activation = activation
+        self.local_databases = local_databases
+
+        self.wavenum_min, self.wavenum_max = np.min(nurange), np.max(nurange)
+
+        self.fetch_hr()
+        
+
+    def fetch_hr(self):
+        """Download the ExoMolHR data for the given parameters."""
+        self.csv_path = fetch_opacity_zip(
+            wvmin=0,
+            wvmax=None,
+            numin=self.wavenum_min,
+            numax=self.wavenum_max,
+            T=self.Ttyp,
+            Smin=self.crit,
+            iso=self.simple_molecule_name,
+            out_dir=self.local_databases,
+        )
+
+
 
 
 if __name__ == "__main__":
@@ -195,5 +214,5 @@ if __name__ == "__main__":
     print("Downloaded and unzipped to", csv_path)
 
     df = load_exomolhr_csv(csv_path)
-    
+
     print(df.head())
