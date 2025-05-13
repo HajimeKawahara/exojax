@@ -1,5 +1,34 @@
 import jax.numpy as jnp
-from jax import jit
+from jax import jit, custom_jvp
+
+
+@custom_jvp
+def safe_sqrt(x):
+    """Element-wise square root with a *safe* derivative.
+
+    The custom JVP sets the gradient to zero
+    where x <= 0 to avoid divide-by-zero during autodiff.
+
+    Args:
+        x (jnp.ndarray): Input array.
+    Returns:
+        jnp.ndarray: Element-wise square root of the input array.
+
+    Notes:
+        * Without @jit on functions such as ``chord_geometric_matrix_lower``
+          or ``chord_geometric_matrix``, both branches of jnp.where may
+          execute and still cause a divide-by-zero.
+        * Added in PR #598.
+    """
+    return jnp.sqrt(x)
+
+
+@safe_sqrt.defjvp
+def _(primals, tangents):
+    (x,), (t,) = primals, tangents
+    y = safe_sqrt(x)
+    dx = jnp.where(x > 0, t / (2 * y), 0.0)
+    return y, dx
 
 
 @jit
@@ -21,13 +50,9 @@ def chord_geometric_matrix_lower(height, radius_lower):
 
     """
     radius_upper = radius_lower + height
-    fac_left = jnp.sqrt(
-        jnp.tril(radius_upper[None, :] ** 2 - radius_lower[:, None] ** 2)
-    )
-    fac_right = jnp.sqrt(
-        jnp.tril(radius_lower[None, :] ** 2 - radius_lower[:, None] ** 2, k=-1)
-    )
-    raw_matrix = 2.0 * (fac_left - fac_right) / height
+    fac_left = jnp.tril(radius_upper[None, :] ** 2 - radius_lower[:, None] ** 2)
+    fac_right = jnp.tril(radius_lower[None, :] ** 2 - radius_lower[:, None] ** 2, k=-1)
+    raw_matrix = 2.0 * (safe_sqrt(fac_left) - safe_sqrt(fac_right)) / height
     return raw_matrix
 
 
@@ -57,7 +82,7 @@ def chord_geometric_matrix(height, radius_lower):
     fac_right = jnp.tril(
         radius_lower[None, :] ** 2 - radius_midpoint[:, None] ** 2, k=-1
     )
-    raw_matrix = 2.0 * (jnp.sqrt(fac_left) - jnp.sqrt(fac_right)) / height
+    raw_matrix = 2.0 * (safe_sqrt(fac_left) - safe_sqrt(fac_right)) / height
     return raw_matrix
 
 

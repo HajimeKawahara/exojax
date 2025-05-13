@@ -5,7 +5,7 @@ beautifulsoup4
 hjson          # Json with comments (for default_radis.json)
 tqdm
 PyMieScatt
-radis >= 0.15.2
+radis == 0.15.2 # temporary downgrade to avoid issues with the latest version (#822)
 numba
 tables
 pandas
