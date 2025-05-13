@@ -9,7 +9,6 @@ import zipfile
 import pandas as pd
 
 
-
 from exojax.utils.molname import e2s
 from exojax.spec.molinfo import isotope_molmass
 
@@ -17,30 +16,108 @@ from exojax.spec.molinfo import isotope_molmass
 class MdbExomolHR:
     def __init__(
         self,
-        path,
+        exact_molecule_name,
         nurange,
+        crit=1.0e-40,
         Ttyp=1000.0,
-        bkgdatm="H2",
         gpu_transfer=True,
         activation=True,
-        local_databases="./",
+        inherit_dataframe=False,
+        local_databases="./opacity_zips",
     ):
         self.dbtype = "exomolhr"
-        self.path = pathlib.Path(path).expanduser()
-        self.exact_molecule_name = self.path.parents[0].stem
-        self.database = str(self.path.stem)
-        self.bkgdatm = bkgdatm
-        # molecbroad = self.exact_molecule_name + '__' + self.bkgdatm
+        self.exact_molecule_name = exact_molecule_name
         self.gpu_transfer = gpu_transfer
+        self.crit = crit
         self.Ttyp = Ttyp
+        self.local_databases = local_databases
+
         self.simple_molecule_name = e2s(self.exact_molecule_name)
         self.molmass = isotope_molmass(self.exact_molecule_name)
         self.activation = activation
-        wavenum_min, wavenum_max = np.min(nurange), np.max(nurange)
+        self.wavenum_min, self.wavenum_max = np.min(nurange), np.max(nurange)
+
+        self.fetch_data()
+        df = load_exomolhr_csv(self.csv_path)
+        if self.activation:
+            self.activate(df)
+        if inherit_dataframe or not self.activation:
+            print("DataFrame (self.df) available.")
+            self.df = df
+
+    def fetch_data(self):
+        self.csv_path = fetch_opacity_zip(
+            wvmin=0,
+            wvmax=None,
+            numin=self.wavenum_min,
+            numax=self.wavenum_max,
+            T=self.Ttyp,
+            Smin=self.crit,
+            iso=self.exact_molecule_name,
+            out_dir=self.local_databases,
+        )
+        print("Downloaded and unzipped to", self.csv_path)
+        
+    
+    def attributes_from_dataframes(self, df_masked):
+        """Generates attributes from (usually masked) data frame for Exomol
+
+        Args:
+            df_masked (DataFrame): (masked) data frame
+
+        Raises:
+            ValueError: _description_
+        """
+
+        if len(df_masked) == 0:
+            raise ValueError("No line found in ", self.nurange, "cm-1")
+
+        self._attributes_from_dataframes(df_masked)
+
+    def _attributes_from_dataframes(self, df_masked):
+        self.A = df_masked["A"].values
+        self.nu_lines = df_masked["nu"].values
+        self.elower = df_masked['E"'].values
+        self.jlower = df_masked['J"'].values
+        self.jupper = df_masked["J'"].values
+        self.line_strength_ref_original = df_masked["S"].values
+        self.logsij0 = np.log(self.line_strength_ref_original)
+        self.gpp = df_masked["g'"].values
+
+
+    def activate(self, df, mask=None):
+        """Activates of moldb for Exomol,  including making attributes, computing broadening parameters, natural width, and transfering attributes to gpu arrays when self.gpu_transfer = True
+
+        Notes:
+            activation includes, making attributes, computing broadening parameters, natural width,
+            and transfering attributes to gpu arrays when self.gpu_transfer = True
+
+        Args:
+            df: DataFrame
+            mask: mask of DataFrame to be used for the activation, if None, no additional mask is applied.
+
+        Note:
+            self.df_load_mask is always applied when the activation.
+
+        Examples:
+
+            >>> # we would extract the line with delta nu = 2 here
+            >>> mdb = api.MdbExomolHR(emf, nus, optional_quantum_states=True, activation=False)
+            >>> load_mask = (mdb.df["v_u"] - mdb.df["v_l"] == 2)
+            >>> mdb.activate(mdb.df, load_mask)
+
+
+        """
+        if mask is not None:
+            self.attributes_from_dataframes(df[mask])
+        else:
+            self.attributes_from_dataframes(df)
+
 
 
 EXOMOLHR_API_ROOT = "https://www.exomol.com/exomolhr/get-data/"  # <- base for HTML
 EXOMOLHR_DOWNLOAD_ROOT = "https://www.exomol.com/exomolhr/get-data/download/"
+
 
 def fetch_opacity_zip(  # noqa: WPS211 (a few branches are fine here)
     *,
@@ -130,7 +207,9 @@ def fetch_opacity_zip(  # noqa: WPS211 (a few branches are fine here)
     # 3. download ZIP (streaming) unless it is already present
     # ------------------------------------------------------------------
     if not zip_path.exists():
-        with sess.get(dl_url, stream=True, timeout=600) as resp, zip_path.open("wb") as fh:
+        with sess.get(dl_url, stream=True, timeout=600) as resp, zip_path.open(
+            "wb"
+        ) as fh:
             resp.raise_for_status()
             for block in resp.iter_content(chunk):
                 fh.write(block)
@@ -152,9 +231,9 @@ def fetch_opacity_zip(  # noqa: WPS211 (a few branches are fine here)
 
     return csv_path
 
+
 def load_exomolhr_csv(csv_path: str | pathlib.Path) -> pd.DataFrame:
-    """Load a CSV file from an ExoMolHR ZIP archive into a DataFrame.
-    """
+    """Load a CSV file from an ExoMolHR ZIP archive into a DataFrame."""
     # ------------------------------------------------------------------
     # 3. read CSV into DataFrame
     # ------------------------------------------------------------------
@@ -180,7 +259,7 @@ if __name__ == "__main__":
         wvmin=0,
         wvmax=None,
         numin=0,
-        numax=2000,
+        numax=4000,
         T=1300,
         Smin=1e-40,
         iso="12C-16O2",
@@ -188,7 +267,15 @@ if __name__ == "__main__":
     )
     print("Downloaded and unzipped to", csv_path)
 
-
     df = load_exomolhr_csv(csv_path)
+
+    print(df["nu"].values)
+    print(df["S"].values)
+    print(df['E"'].values) #Elower
     
+    print(df['J"'].values) #Jlower
+    print(df["J'"].values) #Jupper
+    print(df["g'"].values) #gup
+    
+
     print(df.head())
