@@ -25,6 +25,7 @@ class MdbExomolHR:
         inherit_dataframe=False,
         local_databases="./opacity_zips",
     ):
+        
         self.dbtype = "exomolhr"
         self.exact_molecule_name = exact_molecule_name
         self.gpu_transfer = gpu_transfer
@@ -36,8 +37,9 @@ class MdbExomolHR:
         self.molmass = isotope_molmass(self.exact_molecule_name)
         self.activation = activation
         self.wavenum_min, self.wavenum_max = np.min(nurange), np.max(nurange)
-
+        
         self.fetch_data()
+        
         df = load_exomolhr_csv(self.csv_path)
         if self.activation:
             self.activate(df)
@@ -253,47 +255,6 @@ def load_exomolhr_csv(csv_path: str | pathlib.Path) -> pd.DataFrame:
     df.columns = [c.strip() for c in df.columns]
 
     return df
-
-
-class MdbExomolHR:
-    def __init__(
-        self,
-        exact_molecule_name,
-        nurange,
-        crit=1.0e-30,
-        Ttyp=1000.0,
-        gpu_transfer=True,
-        activation=True,
-        local_databases="./",
-    ):
-        self.dbtype = "exomolhr"
-        self.exact_molecule_name = exact_molecule_name
-        self.gpu_transfer = gpu_transfer
-        self.crit = crit
-        self.Ttyp = Ttyp
-        self.simple_molecule_name = e2s(self.exact_molecule_name)
-        self.molmass = isotope_molmass(self.exact_molecule_name)
-        self.activation = activation
-        self.local_databases = local_databases
-
-        self.wavenum_min, self.wavenum_max = np.min(nurange), np.max(nurange)
-
-        self.fetch_hr()
-        
-
-    def fetch_hr(self):
-        """Download the ExoMolHR data for the given parameters."""
-        self.csv_path = fetch_opacity_zip(
-            wvmin=0,
-            wvmax=None,
-            numin=self.wavenum_min,
-            numax=self.wavenum_max,
-            T=self.Ttyp,
-            Smin=self.crit,
-            iso=self.simple_molecule_name,
-            out_dir=self.local_databases,
-        )
-
 
 
 

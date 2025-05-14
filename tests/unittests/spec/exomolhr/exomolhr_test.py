@@ -6,6 +6,7 @@ def test_exomolhr_load():
     csv_path = get_testdata_filename(TESTDATA_EXOMOLHR_CSV)
     df = load_exomolhr_csv(csv_path)
 
+
 if __name__ == "__main__":
     test_exomolhr_load()
     print("Test passed.")
