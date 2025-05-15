@@ -19,7 +19,7 @@ class MdbExomolHR:
         exact_molecule_name,
         nurange,
         crit=1.0e-40,
-        Ttyp=1000.0,
+        Tref=1000.0,
         gpu_transfer=True,
         activation=True,
         inherit_dataframe=False,
@@ -30,7 +30,7 @@ class MdbExomolHR:
         self.exact_molecule_name = exact_molecule_name
         self.gpu_transfer = gpu_transfer
         self.crit = crit
-        self.Ttyp = Ttyp
+        self.Tref = Tref
         self.local_databases = local_databases
 
         self.simple_molecule_name = e2s(self.exact_molecule_name)
@@ -53,7 +53,7 @@ class MdbExomolHR:
             wvmax=None,
             numin=self.wavenum_min,
             numax=self.wavenum_max,
-            T=self.Ttyp,
+            T=self.Tref,
             Smin=self.crit,
             iso=self.exact_molecule_name,
             out_dir=self.local_databases,
@@ -77,6 +77,10 @@ class MdbExomolHR:
         self._attributes_from_dataframes(df_masked)
 
     def _attributes_from_dataframes(self, df_masked):
+        """ 
+        Notes:
+            df_masked["S"] is the line strength at T (self.Ttyp)   
+        """
         self.A = df_masked["A"].values
         self.nu_lines = df_masked["nu"].values
         self.elower = df_masked['E"'].values
@@ -277,14 +281,4 @@ if __name__ == "__main__":
     print("Downloaded and unzipped to", csv_path)
 
     df = load_exomolhr_csv(csv_path)
-
-    print(df["nu"].values)
-    print(df["S"].values)
-    print(df['E"'].values) #Elower
-    
-    print(df['J"'].values) #Jlower
-    print(df["J'"].values) #Jupper
-    print(df["g'"].values) #gup
-    
-
     print(df.head())
