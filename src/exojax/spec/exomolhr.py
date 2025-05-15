@@ -14,12 +14,18 @@ from exojax.spec.molinfo import isotope_molmass
 
 
 class MdbExomolHR:
+    """MdbExomolHR class for ExomolHR database
+
+    Notes:
+        The ExomolHR database is emprical high-res line strengths/info for a given single temperature
+
+    """
     def __init__(
         self,
         exact_molecule_name,
         nurange,
+        temperature,
         crit=1.0e-40,
-        Tref=1000.0,
         gpu_transfer=True,
         activation=True,
         inherit_dataframe=False,
@@ -30,7 +36,7 @@ class MdbExomolHR:
         self.exact_molecule_name = exact_molecule_name
         self.gpu_transfer = gpu_transfer
         self.crit = crit
-        self.Tref = Tref
+        self.temperature = temperature
         self.local_databases = local_databases
 
         self.simple_molecule_name = e2s(self.exact_molecule_name)
@@ -53,7 +59,7 @@ class MdbExomolHR:
             wvmax=None,
             numin=self.wavenum_min,
             numax=self.wavenum_max,
-            T=self.Tref,
+            T=self.temperature,
             Smin=self.crit,
             iso=self.exact_molecule_name,
             out_dir=self.local_databases,
@@ -86,8 +92,8 @@ class MdbExomolHR:
         self.elower = df_masked['E"'].values
         self.jlower = df_masked['J"'].values
         self.jupper = df_masked["J'"].values
-        self.line_strength_ref_original = df_masked["S"].values
-        self.logsij0 = np.log(self.line_strength_ref_original)
+        self.line_strength = df_masked["S"].values
+        self.logsij0 = np.log(self.line_strength)
         self.gpp = df_masked["g'"].values
 
 
