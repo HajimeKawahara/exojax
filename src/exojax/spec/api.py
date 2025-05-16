@@ -686,7 +686,7 @@ class MdbHitemp(MdbCommonHitempHitran, HITEMPDatabaseManager):
 
     def __init__(
         self,
-        path,
+        molecule_path,
         nurange=[-np.inf, np.inf],
         crit=0.0,
         elower_max=None,
@@ -702,7 +702,7 @@ class MdbHitemp(MdbCommonHitempHitran, HITEMPDatabaseManager):
         """Molecular database for HITRAN/HITEMP form.
 
         Args:
-            molecule: molecule
+            molecule_path: molecule name
             nurange: wavenumber range list (cm-1) [min,max] or wavenumber grid
             crit: line strength lower limit for extraction
             elower_max: maximum lower state energy, Elower (cm-1)
@@ -719,7 +719,7 @@ class MdbHitemp(MdbCommonHitempHitran, HITEMPDatabaseManager):
         self.dbtype = "hitran"
         MdbCommonHitempHitran.__init__(
             self,
-            path=path,
+            path=molecule_path,
             nurange=nurange,
             crit=crit,
             elower_max=elower_max,
@@ -930,7 +930,7 @@ class MdbHitran(MdbCommonHitempHitran, HITRANDatabaseManager):
 
     def __init__(
         self,
-        path,
+        molecule_path,
         nurange=[-np.inf, np.inf],
         crit=0.0,
         elower_max=None,
@@ -963,7 +963,7 @@ class MdbHitran(MdbCommonHitempHitran, HITRANDatabaseManager):
         self.dbtype = "hitran"
         MdbCommonHitempHitran.__init__(
             self,
-            path=path,
+            path=molecule_path,
             nurange=nurange,
             crit=crit,
             elower_max=elower_max,
