@@ -13,7 +13,7 @@ iso_dict = list_isotopologues(molecules)
 lslist = ["-", "--", "-.", ":", "-", "--", "-.", ":"]
 lwlist = [1.0, 1.0, 1.0, 1.0, 2.0, 2.0, 2.0, 2.0]
 markers_list = [".", "o", "s", "D", "^", "v", "<", ">"]
-k=0
+k = 0
 for molecule in iso_dict:
     isos = iso_dict[molecule]
     print("##############################")
@@ -23,10 +23,15 @@ for molecule in iso_dict:
         try:
             xdb = XdbExomolHR(iso, nus, temperature)
             plt.plot(
-                1.e8/xdb.nu_lines, xdb.line_strength, markers_list[j], label=iso, ls=lslist[j], lw=lwlist[j]
+                1.0e8 / xdb.nu_lines,
+                xdb.line_strength,
+                markers_list[j],
+                label=iso,
+                ls=lslist[j],
+                lw=lwlist[j],
             )
         except:
-            k=k+1
+            k = k + 1
             print(f"No line? {iso}")
 print(k)
 plt.yscale("log")
