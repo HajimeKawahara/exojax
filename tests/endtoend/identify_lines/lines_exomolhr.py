@@ -21,9 +21,9 @@ for molecule in iso_dict:
     for j, iso in enumerate(isos):
         print(iso)
         try:
-            mdb = XdbExomolHR(iso, nus, temperature)
+            xdb = XdbExomolHR(iso, nus, temperature)
             plt.plot(
-                1.e8/mdb.nu_lines, mdb.line_strength, markers_list[j], label=iso, ls=lslist[j], lw=lwlist[j]
+                1.e8/xdb.nu_lines, xdb.line_strength, markers_list[j], label=iso, ls=lslist[j], lw=lwlist[j]
             )
         except:
             k=k+1
