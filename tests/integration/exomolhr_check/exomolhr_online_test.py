@@ -1,4 +1,5 @@
 from exojax.spec.exomolhr import XdbExomolHR
+from exojax.spec.exomolhr import list_exomolhr_molecules
 
 def test_mdbexomolhr_online():
     temperature = 1000.0
@@ -23,9 +24,14 @@ def test_mdbexomolhr_exomol_comparison():
     plt.legend()
     plt.show()
     
+def test_list_exomolhr_molecules():
+    # Test the list_exomolhr_molecules function
+    molecules = list_exomolhr_molecules()
+    assert len(molecules) > 0, "No molecules found in ExoMolHR database"
+    print("Molecules in ExoMolHR database:", molecules)
 
 if __name__ == "__main__":
     #test_mdbexomolhr_online()
     test_mdbexomolhr_exomol_comparison()
-    
+    test_list_exomolhr_molecules()
     print("Test passed.")

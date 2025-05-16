@@ -4,22 +4,43 @@ import pathlib
 import requests
 import numpy as np
 from urllib.parse import urljoin
-from bs4 import BeautifulSoup  # pip install beautifulsoup4  (pure‑Python)
+from typing import Sequence
+from bs4 import BeautifulSoup
 import zipfile
 import pandas as pd
 
-
 from exojax.utils.molname import e2s
 from exojax.spec.molinfo import isotope_molmass
+from exojax.utils.url import url_lists_exomolhr
 
+EXOMOLHR_HOME, EXOMOLHR_API_ROOT, EXOMOLHR_DOWNLOAD_ROOT = url_lists_exomolhr()
 
 class XdbExomolHR:
     """XdbExomolHR class for ExomolHR database
 
+    Warnings:
+        XdbExomolHR is not MDB.
+        
     Notes:
         The ExomolHR database (eXtra db) is emprical high-res line strengths/info for a given single temperature.
         Xdb is a database that does not belong to regular types of ExoJAX databases.
-        
+
+    Attributes:
+        simple_molecule_name: simple molecule name
+        nurange: nu range [min,max] (cm-1)
+        nu_lines (nd array): line center (cm-1)
+        Sij0 (nd array): line strength at T=Tref (cm)
+        logsij0 (jnp array): log line strength at T=Tref
+        A (jnp array): Einstein A coeeficient
+        gamma_natural (DataFrame or jnp array): gamma factor of the natural broadening
+        elower (DataFrame or jnp array): the lower state energy (cm-1)
+        gpp (DataFrame or jnp array): statistical weight
+        jlower (DataFrame or jnp array): J_lower
+        jupper (DataFrame or jnp array): J_upper
+        n_Texp (DataFrame or jnp array): temperature exponent
+        dev_nu_lines (jnp array): line center in device (cm-1)
+    
+
     """
     def __init__(
         self,
@@ -32,7 +53,19 @@ class XdbExomolHR:
         inherit_dataframe=False,
         local_databases="./opacity_zips",
     ):
-        
+        """Molecular database for ExomolHR.
+
+        Args:
+            path: path for Exomol data directory/tag. For instance, "/home/CO/12C-16O/Li2015"
+            nurange: wavenumber range list (cm-1) [min,max] or wavenumber grid, if None, it starts as the nonactive mode
+            temperature: temperature in Kelvin
+            crit: line strength lower limit for extraction
+            gpu_transfer: if True, some attributes will be transfered to jnp.array. False is recommended for PreMODIT.
+            inherit_dataframe: if True, it makes self.df attribute available, which needs more DRAM when pickling.
+            activation: if True, the activation of mdb will be done when initialization, if False, the activation won't be done and it makes self.df attribute available.
+            local_databases: path for local databases, default is "./opacity_zips"
+
+        """
         self.dbtype = "exomolhr"
         self.exact_molecule_name = exact_molecule_name
         self.gpu_transfer = gpu_transfer
@@ -128,8 +161,7 @@ class XdbExomolHR:
 
 
 
-EXOMOLHR_API_ROOT = "https://www.exomol.com/exomolhr/get-data/"  # <- base for HTML
-EXOMOLHR_DOWNLOAD_ROOT = "https://www.exomol.com/exomolhr/get-data/download/"
+
 
 
 def fetch_opacity_zip(  # noqa: WPS211 (a few branches are fine here)
@@ -269,8 +301,79 @@ def load_exomolhr_csv(csv_path: str | pathlib.Path) -> pd.DataFrame:
 
 
 
+def list_exomolhr_molecules(
+    html_source: str | bytes | pathlib.Path | None = None,
+    *,
+    session: requests.Session | None = None,
+) -> Sequence[str]:
+    """Return the list of molecule formulas shown on the ExoMolHR landing page.
+
+    The function can work in three modes:
+
+    1. **Online**  `html_source is None`  
+       → download *https://www.exomol.com/exomolhr/* live.
+    2. **From file** `html_source` is a `pathlib.Path` or filename  
+       → read the saved HTML.
+    3. **From string/bytes**  `html_source` is raw HTML content  
+       → parse directly.
+
+    Args:
+        html_source : str | bytes | pathlib.Path | None, optional
+            Where to get the HTML.  Pass ``None`` (default) to fetch online.
+        session : requests.Session | None, optional
+            Re-use a session if you call repeatedly.
+
+    Returns: Sequence[str]
+        Formulas in the order they appear in the table
+        (duplicates are removed).
+
+    Raises
+    ------
+    RuntimeError
+        If the molecule table cannot be located in the HTML.
+    """
+    # ------------------------------------------------------------------
+    # 1. obtain the HTML text
+    # ------------------------------------------------------------------
+    if html_source is None:
+        sess = session or requests.Session()
+        resp = sess.get(EXOMOLHR_HOME, timeout=60)
+        resp.raise_for_status()
+        html_text = resp.text
+    elif isinstance(html_source, (bytes, str)):
+        # already HTML content
+        html_text = html_source.decode() if isinstance(html_source, bytes) else html_source
+    else:
+        # assume a filesystem path
+        html_text = pathlib.Path(html_source).read_text(encoding="utf-8")
+
+    # ------------------------------------------------------------------
+    # 2. parse and extract formulas
+    # ------------------------------------------------------------------
+    soup = BeautifulSoup(html_text, "html.parser")
+    rows = soup.select("#dataTable tbody tr")
+    if not rows:
+        raise RuntimeError("Could not find the molecule table (id='dataTable').")
+
+    formulas: list[str] = []
+    for row in rows:
+        first_td = row.find("td")
+        if not first_td:
+            continue
+        formula = first_td.get_text(strip=True).replace("\u200b", "")  # strip zero-width spaces
+        if formula and formula not in formulas:
+            formulas.append(formula)
+
+    return formulas
+
+
 if __name__ == "__main__":
 
+    mols = list_exomolhr_molecules()          # downloads live HTML
+    print(f"Currently {len(mols)} molecules are available:")
+    print(", ".join(mols))
+
+    exit()
     from exojax.test.emulate_mdb import mock_wavenumber_grid
 
     nus, wav, res = mock_wavenumber_grid()
