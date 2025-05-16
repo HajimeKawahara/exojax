@@ -81,6 +81,7 @@ Others
    :maxdepth: 1
 
    userguide/opa_pickle.rst
+   tutorials/exomolhr.rst
    userguide/comp.rst
 
 
