@@ -13,12 +13,13 @@ from exojax.utils.molname import e2s
 from exojax.spec.molinfo import isotope_molmass
 
 
-class MdbExomolHR:
-    """MdbExomolHR class for ExomolHR database
+class XdbExomolHR:
+    """XdbExomolHR class for ExomolHR database
 
     Notes:
-        The ExomolHR database is emprical high-res line strengths/info for a given single temperature
-
+        The ExomolHR database (eXtra db) is emprical high-res line strengths/info for a given single temperature.
+        Xdb is a database that does not belong to regular types of ExoJAX databases.
+        
     """
     def __init__(
         self,

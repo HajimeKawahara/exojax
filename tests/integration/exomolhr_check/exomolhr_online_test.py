@@ -1,8 +1,8 @@
-from exojax.spec.exomolhr import MdbExomolHR
+from exojax.spec.exomolhr import XdbExomolHR
 
 def test_mdbexomolhr_online():
     temperature = 1000.0
-    mdb = MdbExomolHR("12C-16O2", [0.0,2000.0], temperature)
+    mdb = XdbExomolHR("12C-16O2", [0.0,2000.0], temperature)
 
 
 def test_mdbexomolhr_exomol_comparison():
@@ -12,7 +12,7 @@ def test_mdbexomolhr_exomol_comparison():
     nus, _, _ = mock_wavenumber_grid()
     temperature = 296.0
     
-    mdb = MdbExomolHR("1H2-16O", nus, temperature)
+    mdb = XdbExomolHR("1H2-16O", nus, temperature)
     mdb_orig = mock_mdbExomol("H2O")
     
     plt.plot(mdb.nu_lines, mdb.line_strength, ".", label="ExoMolHR")
