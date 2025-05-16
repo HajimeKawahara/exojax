@@ -1,22 +1,37 @@
 from exojax.spec.exomolhr import XdbExomolHR
 from exojax.spec.exomolhr import list_exomolhr_molecules
+from exojax.spec.exomolhr import list_isotopologues
 from exojax.utils.grids import wavenumber_grid
 import matplotlib.pyplot as plt
 
-nus, _, _ = wavenumber_grid(22800.0,23600.0, 10, xsmode="premodit")
+nus, _, _ = wavenumber_grid(22800.0, 23600.0, 10, xsmode="premodit")
 temperature = 1300.0
 molecules = list_exomolhr_molecules()
-for molecule in molecules:
-    print(molecule)
-    try:
-        mdb = XdbExomolHR(molecule, nus, temperature)
-        plt.plot(mdb.nu_lines, mdb.line_strength, label=exact_molecule)
-    except:
-        print(f"Failed to load {molecule}")
+iso_dict = list_isotopologues(molecules)
 
+
+lslist = ["-", "--", "-.", ":", "-", "--", "-.", ":"]
+lwlist = [1.0, 1.0, 1.0, 1.0, 2.0, 2.0, 2.0, 2.0]
+markers_list = [".", "o", "s", "D", "^", "v", "<", ">"]
+k=0
+for molecule in iso_dict:
+    isos = iso_dict[molecule]
+    print("##############################")
+    print(isos)
+    for j, iso in enumerate(isos):
+        print(iso)
+        try:
+            mdb = XdbExomolHR(iso, nus, temperature)
+            plt.plot(
+                mdb.nu_lines, mdb.line_strength, markers_list[j], label=iso, ls=lslist[j], lw=lwlist[j]
+            )
+        except:
+            k=k+1
+            print(f"No line? {iso}")
+print(k)
+plt.yscale("log")
 plt.xlabel("Wavenumber (cm-1)")
 plt.ylabel("Line Strength (cm/molecule)")
 plt.legend()
 plt.savefig("exomolhr_lines.png")
 plt.show()
-

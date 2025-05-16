@@ -21,12 +21,13 @@ from exojax.utils.url import url_lists_exomolhr
 EXOMOLHR_HOME, EXOMOLHR_API_ROOT, EXOMOLHR_DOWNLOAD_ROOT = url_lists_exomolhr()
 _ISO_INPUT_RE = re.compile(r"^\d+[A-Z][a-z]?-\d+[A-Z][a-z]?.*$")  # e.g. 27Al-35Cl
 
+
 class XdbExomolHR:
     """XdbExomolHR class for ExomolHR database
 
     Warnings:
         XdbExomolHR is not MDB.
-        
+
     Notes:
         The ExomolHR database (eXtra db) is emprical high-res line strengths/info for a given single temperature.
         Xdb is a database that does not belong to regular types of ExoJAX databases.
@@ -45,9 +46,10 @@ class XdbExomolHR:
         jupper (DataFrame or jnp array): J_upper
         n_Texp (DataFrame or jnp array): temperature exponent
         dev_nu_lines (jnp array): line center in device (cm-1)
-    
+
 
     """
+
     def __init__(
         self,
         exact_molecule_name,
@@ -83,9 +85,10 @@ class XdbExomolHR:
         self.molmass = isotope_molmass(self.exact_molecule_name)
         self.activation = activation
         self.wavenum_min, self.wavenum_max = np.min(nurange), np.max(nurange)
-        
+        self.nurange = nurange
+
         self.fetch_data()
-        
+
         df = load_exomolhr_csv(self.csv_path)
         if self.activation:
             self.activate(df)
@@ -105,8 +108,7 @@ class XdbExomolHR:
             out_dir=self.local_databases,
         )
         print("Downloaded and unzipped to", self.csv_path)
-        
-    
+
     def attributes_from_dataframes(self, df_masked):
         """Generates attributes from (usually masked) data frame for Exomol
 
@@ -123,9 +125,9 @@ class XdbExomolHR:
         self._attributes_from_dataframes(df_masked)
 
     def _attributes_from_dataframes(self, df_masked):
-        """ 
+        """
         Notes:
-            df_masked["S"] is the line strength at T (self.Ttyp)   
+            df_masked["S"] is the line strength at T (self.Ttyp)
         """
         self.A = df_masked["A"].values
         self.nu_lines = df_masked["nu"].values
@@ -135,7 +137,6 @@ class XdbExomolHR:
         self.line_strength = df_masked["S"].values
         self.logsij0 = np.log(self.line_strength)
         self.gpp = df_masked["g'"].values
-
 
     def activate(self, df, mask=None):
         """Activates of moldb for Exomol,  including making attributes, computing broadening parameters, natural width, and transfering attributes to gpu arrays when self.gpu_transfer = True
@@ -164,10 +165,6 @@ class XdbExomolHR:
             self.attributes_from_dataframes(df[mask])
         else:
             self.attributes_from_dataframes(df)
-
-
-
-
 
 
 def fetch_opacity_zip(  # noqa: WPS211 (a few branches are fine here)
@@ -306,7 +303,6 @@ def load_exomolhr_csv(csv_path: str | pathlib.Path) -> pd.DataFrame:
     return df
 
 
-
 def list_exomolhr_molecules(
     html_source: str | bytes | pathlib.Path | None = None,
     *,
@@ -316,11 +312,11 @@ def list_exomolhr_molecules(
 
     The function can work in three modes:
 
-    1. **Online**  `html_source is None`  
+    1. **Online**  `html_source is None`
        → download *https://www.exomol.com/exomolhr/* live.
-    2. **From file** `html_source` is a `pathlib.Path` or filename  
+    2. **From file** `html_source` is a `pathlib.Path` or filename
        → read the saved HTML.
-    3. **From string/bytes**  `html_source` is raw HTML content  
+    3. **From string/bytes**  `html_source` is raw HTML content
        → parse directly.
 
     Args:
@@ -348,7 +344,9 @@ def list_exomolhr_molecules(
         html_text = resp.text
     elif isinstance(html_source, (bytes, str)):
         # already HTML content
-        html_text = html_source.decode() if isinstance(html_source, bytes) else html_source
+        html_text = (
+            html_source.decode() if isinstance(html_source, bytes) else html_source
+        )
     else:
         # assume a filesystem path
         html_text = pathlib.Path(html_source).read_text(encoding="utf-8")
@@ -366,14 +364,13 @@ def list_exomolhr_molecules(
         first_td = row.find("td")
         if not first_td:
             continue
-        formula = first_td.get_text(strip=True).replace("\u200b", "")  # strip zero-width spaces
+        formula = first_td.get_text(strip=True).replace(
+            "\u200b", ""
+        )  # strip zero-width spaces
         if formula and formula not in formulas:
             formulas.append(formula)
 
     return formulas
-
-
-
 
 
 def _fetch_isos_for_one(
@@ -412,15 +409,15 @@ def _fetch_isos_for_one(
     soup = BeautifulSoup(r.text, "html.parser")
     candidates = soup.select('input[name="iso"]')
     return [
-        inp["value"]
-        for inp in candidates
-        if _ISO_INPUT_RE.match(inp.get("value", ""))
+        inp["value"] for inp in candidates if _ISO_INPUT_RE.match(inp.get("value", ""))
     ]
+
 
 # helper -------------------------------------------------------------
 def _slug(molecule: str) -> str:
     """Turn H3+  -> H3_p   and  H3O+ -> H3O_p  (no change otherwise)."""
     return molecule.replace("+", "_p")
+
 
 # fetch one molecule -------------------------------------------------
 def _fetch_isos_for_one(
@@ -429,7 +426,7 @@ def _fetch_isos_for_one(
     session: requests.Session,
     timeout: float = 120.0,
 ) -> list[str]:
-    url = EXOMOLHR_HOME           # "https://www.exomol.com/exomolhr/"
+    url = EXOMOLHR_HOME  # "https://www.exomol.com/exomolhr/"
     resp = session.get(url, params={"molecule": _slug(molecule)}, timeout=timeout)
     resp.raise_for_status()
 
@@ -446,29 +443,31 @@ def _fetch_isos_for_one(
     seen = set()
     return [t for t in tags if not (t in seen or seen.add(t))]
 
+
 def list_isotopologues(
     simple_molecule_list: Iterable[str],
     *,
     max_workers: int | None = None,
 ) -> dict[str, list[str]]:
     """Return {molecule: [iso₁, iso₂, …]} for the given molecules.
-    
+
     Args:
         simple_molecule_list: list of simple molecule names, e.g. [AlCl, AlH, AlO, C2, C2H2, CaH, CH4, CN, CO2]
         max_workers: number of workers for parallel processing
-    
+
     Returns:
         dict[str, list[str]]: dictionary of isotopologues (simple_molecule_name:[list of exact_molecule_name]) for each molecule
         e.g. {'H2O': ['1H2-16O'], 'C2H2': ['12C2-1H2'], 'H3O+': ['1H3-16O_p']}
     """
-    simple_molecule_list = list(dict.fromkeys(simple_molecule_list))  # de-dup & keep order
+    simple_molecule_list = list(dict.fromkeys(simple_molecule_list))
     iso_map: dict[str, list[str]] = {}
 
     with requests.Session() as sess, _cf.ThreadPoolExecutor(
         max_workers=max_workers
     ) as pool:
         fut_to_mol = {
-            pool.submit(_fetch_isos_for_one, m, session=sess): m for m in simple_molecule_list
+            pool.submit(_fetch_isos_for_one, m, session=sess): m
+            for m in simple_molecule_list
         }
         for fut in _cf.as_completed(fut_to_mol):
             mol = fut_to_mol[fut]
@@ -480,15 +479,14 @@ def list_isotopologues(
 
     return iso_map
 
+
 if __name__ == "__main__":
-    mols = list_exomolhr_molecules()          # downloads live HTML
+    mols = list_exomolhr_molecules()  # downloads live HTML
     print(f"Currently {len(mols)} molecules are available:")
     print(", ".join(mols))
     iso_dict = list_isotopologues(mols)
     print(iso_dict)
-    exit()
-    
-    exit()
+
     from exojax.test.emulate_mdb import mock_wavenumber_grid
 
     nus, wav, res = mock_wavenumber_grid()
