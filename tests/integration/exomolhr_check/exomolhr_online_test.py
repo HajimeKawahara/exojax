@@ -1,5 +1,6 @@
 from exojax.spec.exomolhr import XdbExomolHR
 from exojax.spec.exomolhr import list_exomolhr_molecules
+from exojax.spec.exomolhr import list_isotopologues
 
 def test_mdbexomolhr_online():
     temperature = 1000.0
@@ -30,8 +31,17 @@ def test_list_exomolhr_molecules():
     assert len(molecules) > 0, "No molecules found in ExoMolHR database"
     print("Molecules in ExoMolHR database:", molecules)
 
+def test_list_isotopologues():
+    mols = list_exomolhr_molecules()          # downloads live HTML
+    print(f"Currently {len(mols)} molecules are available:")
+    print(", ".join(mols))
+    iso_dict = list_isotopologues(mols)
+    print(iso_dict)
+    
+
 if __name__ == "__main__":
     #test_mdbexomolhr_online()
     test_mdbexomolhr_exomol_comparison()
     test_list_exomolhr_molecules()
+    test_list_isotopologues()
     print("Test passed.")

@@ -2,18 +2,24 @@ import os
 import re
 import pathlib
 import requests
+import logging
+import time
 import numpy as np
 from urllib.parse import urljoin
 from typing import Sequence
+from typing import Iterable
 from bs4 import BeautifulSoup
 import zipfile
 import pandas as pd
+import concurrent.futures as _cf
+
 
 from exojax.utils.molname import e2s
 from exojax.spec.molinfo import isotope_molmass
 from exojax.utils.url import url_lists_exomolhr
 
 EXOMOLHR_HOME, EXOMOLHR_API_ROOT, EXOMOLHR_DOWNLOAD_ROOT = url_lists_exomolhr()
+_ISO_INPUT_RE = re.compile(r"^\d+[A-Z][a-z]?-\d+[A-Z][a-z]?.*$")  # e.g. 27Al-35Cl
 
 class XdbExomolHR:
     """XdbExomolHR class for ExomolHR database
@@ -367,12 +373,121 @@ def list_exomolhr_molecules(
     return formulas
 
 
-if __name__ == "__main__":
 
+
+
+def _fetch_isos_for_one(
+    molecule: str,
+    *,
+    session: requests.Session,
+    timeout: float = 120.0,
+) -> list[str]:
+    """Return a list of isotopologue tags for *one* molecule.
+
+    The HTML for a single-molecule query contains a group of check-boxes
+    like:
+
+        <input class="form-check-input iso-checkbox"
+               type="checkbox" name="iso" value="27Al-35Cl">
+               ...
+        <input ... value="27Al-37Cl">
+
+    We grab every checkbox with ``name="iso"`` whose value looks like
+    ``{mass number}{Element}-{mass number}{Element}``.
+
+    Notes
+    -----
+    * The server occasionally throttles rapid, repeated requests.  A small
+      “courtesy sleep” keeps us polite.
+    * If no isotopologue check-boxes are found **or** the pattern does not
+      match the expected “27Al-35Cl” style, an empty list is returned
+      instead of raising – this keeps the whole mapping operation robust.
+    """
+    url = f"{EXOMOLHR_HOME}?molecule={molecule}"
+    time.sleep(0.3)  # be gentle with ExoMol servers
+
+    r = session.get(url, timeout=timeout)
+    r.raise_for_status()
+
+    soup = BeautifulSoup(r.text, "html.parser")
+    candidates = soup.select('input[name="iso"]')
+    return [
+        inp["value"]
+        for inp in candidates
+        if _ISO_INPUT_RE.match(inp.get("value", ""))
+    ]
+
+# helper -------------------------------------------------------------
+def _slug(molecule: str) -> str:
+    """Turn H3+  -> H3_p   and  H3O+ -> H3O_p  (no change otherwise)."""
+    return molecule.replace("+", "_p")
+
+# fetch one molecule -------------------------------------------------
+def _fetch_isos_for_one(
+    molecule: str,
+    *,
+    session: requests.Session,
+    timeout: float = 120.0,
+) -> list[str]:
+    url = EXOMOLHR_HOME           # "https://www.exomol.com/exomolhr/"
+    resp = session.get(url, params={"molecule": _slug(molecule)}, timeout=timeout)
+    resp.raise_for_status()
+
+    soup = BeautifulSoup(resp.text, "html.parser")
+    iso_inputs = soup.select("input.iso-checkbox")
+
+    wanted_class = f"{_slug(molecule)}-checkbox"
+    tags = [
+        inp["value"].strip()
+        for inp in iso_inputs
+        if wanted_class in inp.get("class", [])
+    ]
+    # preserve order, remove dups
+    seen = set()
+    return [t for t in tags if not (t in seen or seen.add(t))]
+
+def list_isotopologues(
+    simple_molecule_list: Iterable[str],
+    *,
+    max_workers: int | None = None,
+) -> dict[str, list[str]]:
+    """Return {molecule: [iso₁, iso₂, …]} for the given molecules.
+    
+    Args:
+        simple_molecule_list: list of simple molecule names, e.g. [AlCl, AlH, AlO, C2, C2H2, CaH, CH4, CN, CO2]
+        max_workers: number of workers for parallel processing
+    
+    Returns:
+        dict[str, list[str]]: dictionary of isotopologues (simple_molecule_name:[list of exact_molecule_name]) for each molecule
+        e.g. {'H2O': ['1H2-16O'], 'C2H2': ['12C2-1H2'], 'H3O+': ['1H3-16O_p']}
+    """
+    simple_molecule_list = list(dict.fromkeys(simple_molecule_list))  # de-dup & keep order
+    iso_map: dict[str, list[str]] = {}
+
+    with requests.Session() as sess, _cf.ThreadPoolExecutor(
+        max_workers=max_workers
+    ) as pool:
+        fut_to_mol = {
+            pool.submit(_fetch_isos_for_one, m, session=sess): m for m in simple_molecule_list
+        }
+        for fut in _cf.as_completed(fut_to_mol):
+            mol = fut_to_mol[fut]
+            try:
+                iso_map[mol] = fut.result()
+            except Exception as exc:  # noqa: BLE001
+                logging.warning("Failed to fetch %s: %s", mol, exc)
+                iso_map[mol] = []
+
+    return iso_map
+
+if __name__ == "__main__":
     mols = list_exomolhr_molecules()          # downloads live HTML
     print(f"Currently {len(mols)} molecules are available:")
     print(", ".join(mols))
-
+    iso_dict = list_isotopologues(mols)
+    print(iso_dict)
+    exit()
+    
     exit()
     from exojax.test.emulate_mdb import mock_wavenumber_grid
 
