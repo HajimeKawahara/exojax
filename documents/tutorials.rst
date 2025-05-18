@@ -83,9 +83,10 @@ Tips for Real Analysis
    :maxdepth: 1
 
    tutorials/Photometry.rst
+   tutorials/Fitting_Telluric_Lines.rst
+   tutorials/exomolhr.rst
    userguide/memorysetting.rst	
    tutorials/elower_setting.rst
-   tutorials/Fitting_Telluric_Lines.rst
    tutorials/reverse_precompute_grid.rst
 
 
