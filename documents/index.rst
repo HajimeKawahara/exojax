@@ -8,6 +8,8 @@ ExoJAX
 
 Version 2.0 (:doc:`userguide/history`) 
 
+|:frog:| `DeepWiki for ExoJAX <https://deepwiki.com/HajimeKawahara/exojax>`_
+
 
 `ExoJAX <https://github.com/HajimeKawahara/exojax>`_ provides an auto-differentiable high-resolution spectrum model 
 for exoplanets/brown dwarfs using `JAX <https://github.com/google/jax>`_. 

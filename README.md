@@ -1,13 +1,14 @@
 # ExoJAX
  [![License](https://img.shields.io/github/license/HajimeKawahara/exojax)](https://github.com/HajimeKawahara/exojax/blob/develop/LICENSE)
  [![Docs](https://img.shields.io/badge/docs-exojax-brightgreen)](http://secondearths.sakura.ne.jp/exojax/)
+ [![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/HajimeKawahara/exojax)
  [![arxiv](https://img.shields.io/badge/arxiv-2105.14782-blue)](http://arxiv.org/abs/2105.14782)
  [![arxiv](https://img.shields.io/badge/arxiv-2410.06900-red)](http://arxiv.org/abs/2410.06900)
  [![paper](https://img.shields.io/badge/paper-ApJS_258_31_(2022)-orange)](https://iopscience.iop.org/article/10.3847/1538-4365/ac3b4d) 
  <a href="https://codeclimate.com/github/HajimeKawahara/exojax/maintainability"><img src="https://api.codeclimate.com/v1/badges/97c5e8835f3ef9c4ad7c/maintainability" /></a>
 
 Differentiable spectral modelling of exoplanets/brown dwarfs/M dwarfs using JAX!
-Read [the docs](http://secondearths.sakura.ne.jp/exojax/) 🐕. 
+Read [the docs](http://secondearths.sakura.ne.jp/exojax/) 🐕 or [deepwiki for ExoJAX](https://deepwiki.com/HajimeKawahara/exojax). 
 
 In short, ExoJAX allows you to do gradient based optimizations, HMC-NUTS, and SVI using the latest database.
 
