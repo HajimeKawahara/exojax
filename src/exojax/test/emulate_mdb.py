@@ -6,6 +6,7 @@ import os
 import shutil
 
 from exojax.spec import api
+from exojax.spec import customapi
 from exojax.test.data import TESTDATA_moldb_VALD
 from exojax.test.data import get_testdata_filename
 from exojax.utils.grids import wavenumber_grid
@@ -27,15 +28,14 @@ def mock_mdb(db):
         mdb = mock_mdbExomol()
     elif db == "hitemp":
         mdb = mock_mdbHitemp()
+    elif db == "hargreaves":
+        mdb = mock_mdbHargreaves()
     else:
         raise ValueError("no exisiting dbname.")
     return mdb
 
 
-def mock_wavenumber_grid():
-    Nx = 20000
-    lambda0 = 22920.0
-    lambda1 = 23100.0
+def mock_wavenumber_grid(lambda0=22920.0, lambda1=23100.0, Nx=20000):
     nus, wav, res = wavenumber_grid(
         lambda0, lambda1, Nx, unit="AA", xsmode="modit", wavelength_order="ascending"
     )
@@ -114,9 +114,25 @@ def mock_mdbVALD():
         mdb = pickle.load(f)
     return mdb
 
+def mock_mdbHargreaves():
+    molecule="FeH"
+    dirname = get_testdata_filename(molecule)
+    target_dir = os.getcwd() + "/" + molecule
+    if os.path.exists(target_dir):
+        shutil.rmtree(target_dir)
+    shutil.copytree(dirname, target_dir)
+    
+    path = "FeH/SAMPLE"
+    nus, wav, res = mock_wavenumber_grid(lambda0=15820.0, lambda1=20040.0)
+    mdb = customapi.MdbHargreaves(
+        str(path),
+        nus,
+    )
+    return mdb
 
 if __name__ == "__main__":
-    mdb = mock_mdbExomol()
-    mdb = mock_mdbExomol("H2O")
+#    mdb = mock_mdbExomol()
+#    mdb = mock_mdbExomol("H2O")
 #    mdb = mock_mdbHitemp()
 #    print(mdb.df)
+    mdb = mock_mdbHargreaves()
