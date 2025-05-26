@@ -25,7 +25,7 @@ def test_line_strength_hargreaves():
     mdb = mock_mdbHargreaves()
     df = mdb.df
     Sij0 = df["Sij0"].values
-    assert pytest.approx(np.sum(Sij0)) == 1.59740e-17
+    assert np.sum(Sij0) == pytest.approx(1.59740e-17)
 
 if __name__ == "__main__": 
     test_line_strength_hargreaves()
