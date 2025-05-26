@@ -137,9 +137,6 @@ class MdbHargreaves(HargreavesDatabaseManager):
         # columns: "wavenumber", "intensity", "e_lower", "einsteinA", "j_lower", "branch", "omega"
         df_raw = self.load(local_files, output=self.engine)
 
-        # remove NaN values (correspond to unidentified lines)
-        #df_raw.dropna(ignore_index=True, inplace=True)
-
         # convert to exomol format
         # columns: "A", "nu_lines", "elower", "jlower", "jupper", "Sij0", "gup"
         df = self.convert_to_exomol(df_raw)
