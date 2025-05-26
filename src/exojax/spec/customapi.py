@@ -154,7 +154,7 @@ class MdbHargreaves(HargreavesDatabaseManager):
         nurange_min = self.nurange[0] if self.nurange[0] is not None else -np.inf
         nurange_max = self.nurange[1] if self.nurange[1] is not None else np.inf
         if (nurange_raw[1] < nurange_min) or (nurange_max < nurange_raw[0]):
-            raise ValueError("No line found in ", self.nurange, "cm-1")
+            raise ValueError(f"No line found in {self.nurange} cm-1")
 
         df = self._convert_to_exomol(df_raw)
         return df
