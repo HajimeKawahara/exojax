@@ -115,18 +115,17 @@ def mock_mdbVALD():
     return mdb
 
 def mock_mdbHargreaves():
-    molecule="FeH"
-    dirname = get_testdata_filename(molecule)
-    target_dir = os.getcwd() + "/" + molecule
-    if os.path.exists(target_dir):
-        shutil.rmtree(target_dir)
-    shutil.copytree(dirname, target_dir)
+    """default mock mdb of the Hargreaves 2010 form for unit test
+    Returns:
+        MdbHargreaves instance
+    """
     
     path = "FeH/SAMPLE"
     nus, wav, res = mock_wavenumber_grid(lambda0=15820.0, lambda1=20040.0)
     mdb = customapi.MdbHargreaves(
         str(path),
         nus,
+        download=False, # default
     )
     return mdb
 
