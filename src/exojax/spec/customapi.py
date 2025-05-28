@@ -215,12 +215,27 @@ class MdbHargreaves(HargreavesDatabaseManager):
 
         return df_new
     
-    def activate_with_exomol(self, mdb_exomol):
-        df_hargreaves = self.df
+    def activate_with_exomol(self, mdb_exomol, extend=True):
+        """Activate the Hargreaves database with an existing ExoMol database.
+        Args:
+            mdb_exomol (MdbExomol): An existing ExoMol database to extend
+            extend (bool): If True, extend the existing database with Hargreaves data
+        Returns:
+            MdbExomol: A new ExoMol database with Hargreaves data activated
+        """
+        if extend:
+            # MoLLIST (ExoMol) + Hargreaves
+            if not hasattr(mdb_exomol, "df"):
+                raise ValueError("The mdb_exomol must have a df attribute. Do not activate MdbExomol.")
+            df_activate = pd.concat([mdb_exomol.df, self.df], ignore_index=True)
+            df_activate = df_activate.sort_values(by=["nu_lines"])  # sort by nu_lines
+        else:
+            # Hargreaves only
+            df_activate = self.df
         # avoid to modify the original mdb_exomol
         mdb_exomol_cp = copy.deepcopy(mdb_exomol)
-        mdb_exomol_cp.df = df_hargreaves
-        mdb_exomol_cp.df_load_mask = mdb_exomol_cp.compute_load_mask(df_hargreaves) # need nurange
-        mdb_exomol_cp.activate(df_hargreaves)
+        mdb_exomol_cp.df = df_activate
+        mdb_exomol_cp.df_load_mask = mdb_exomol_cp.compute_load_mask(df_activate) # need nurange
+        mdb_exomol_cp.activate(df_activate)
         return mdb_exomol_cp
 
