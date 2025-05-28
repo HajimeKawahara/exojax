@@ -27,9 +27,12 @@ from jax.lax import scan
 from jax.lax import dynamic_slice
 from jax import jit
 from jax import vmap
+from jax import checkpoint, checkpoint_policies
+
 
 import numpy as np
 import warnings
+from functools import partial
 
 
 class OpaCalc:
@@ -573,7 +576,7 @@ class OpaPremodit(OpaCalc):
             xsv = xsv_ola_stitch[
                 self.filter_length_oneside : -self.filter_length_oneside
             ]
-        
+
         elif self.nstitch == 1:
             xsvector_func = self.xsvector_close[self.diffmode]
             xsv = xsvector_func(
@@ -630,6 +633,9 @@ class OpaPremodit(OpaCalc):
 
         if self.nstitch > 1:
 
+            @partial(
+                checkpoint, policy=checkpoint_policies.dots_with_no_batch_dims_saveable
+            )
             def floop(icarry, lbd_coeff):
                 nu_grid_each = dynamic_slice(
                     self.nu_grid, (icarry * self.div_length,), (self.div_length,)
