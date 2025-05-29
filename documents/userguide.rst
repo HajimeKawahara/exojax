@@ -13,6 +13,7 @@ Databases
    userguide/atomll.rst
    tutorials/multimol.rst
    userguide/pdb.rst
+   userguide/customapi.rst
    userguide/xdb.rst   
 
 Opacity Calculation
