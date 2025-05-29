@@ -93,11 +93,9 @@ Actual Analysis Examples using ExoJAX (external)
 References 
 ---------------------
 
-- |:page_facing_up:|  Kawahara, Kawashima, Masuda, Crossfield, Pannier, van den Bekerom,
-   `ApJS 258, 31 (2022) <https://iopscience.iop.org/article/10.3847/1538-4365/ac3b4d>`_
-   (Paper I)
+- |:page_facing_up:|  Kawahara, Kawashima, Masuda, Crossfield, Pannier, van den Bekerom, `ApJS 258, 31 (2022) <https://iopscience.iop.org/article/10.3847/1538-4365/ac3b4d>`_ (Paper I)
 
-- |:page_facing_up:| Kawahara et al., 2025, under review. `ArXiv <https://arxiv.org/abs/2410.06900>`_ (Paper II)
+- |:page_facing_up:| Kawahara, Kawashima, Tada et al., `ApJ 985, 263 (2025) <https://iopscience.iop.org/article/10.3847/1538-4357/adcba2>`_, (Paper II)
 
 License & Attribution
 ---------------------
@@ -106,16 +104,16 @@ Copyright 2021-2025, Contributors
 
 - `Hajime Kawahara <http://secondearths.sakura.ne.jp/en/index.html>`_ (@HajimeKawahara, maintainer)
 - `Yui Kawashima <https://sites.google.com/view/yuikawashima/home>`_ (@ykawashima, co-maintainer)
+- Shotaro Tada (@sh-tada)
+- Yui Kasagi (@YuiKasagi)
 - Kento Masuda (@kemasuda)
+- Tako Ishikawa (@chonma0ctopus)
 - Ian Crossfield
 - Dirk van den Bekerom (@dcmvdbekerom)
 - Daniel Kitzmann (@daniel-kitzmann)
 - Brett Morris (@bmorris3)
 - Erwan Pannier (@erwanp) and Nicolas Minesi (@minouHub) from `RADIS <https://github.com/radis/radis>`_ community
 - Stevanus Nugroho (@astrostevanus)
-- Tako Ishikawa (@chonma0ctopus)
-- Yui Kasagi (@YuiKasagi)
-- Shotaro Tada (@sh-tada)
 - Ko Hosokawa (@KoHosokawa)
 - Hibiki Yama 
 
