@@ -7,6 +7,7 @@ include src/exojax/data/clouds/ammonia_liquid_density.csv
 include src/exojax/data/abundance/AAG2021.dat
 include src/exojax/data/abundance/xspec_abundance.txt
 include src/exojax/data/atom/NIST_Atomic_Ionization_Energies.txt
+include src/exojax/data/opacity/FeH_Hargreaves2010.csv
 
 include src/exojax/data/testdata/spectrum.txt
 include src/exojax/data/testdata/spectrum_ch4.txt
