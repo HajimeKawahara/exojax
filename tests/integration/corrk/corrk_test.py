@@ -9,36 +9,77 @@ from exojax.test.emulate_mdb import mock_mdbExomol
 from exojax.test.emulate_mdb import mock_wavenumber_grid
 import matplotlib.pyplot as plt
 from exojax.spec.opacalc import OpaPremodit
-from jax import config 
+from jax import config
+
 config.update("jax_enable_x64", True)  # use double precision
 
 fig = False
 
-N = 70000
-#nus, wav, res = wavenumber_grid(6400.0, 6800.0, N, unit="cm-1", xsmode = "premodit")
-#mdb = MdbExomol(".databases/H2O/1H2-16O/POKAZATEL/",nus)
-#print("resolution = ", res)
+# N = 70000
+# nus, wav, res = wavenumber_grid(6400.0, 6800.0, N, unit="cm-1", xsmode = "premodit")
+# mdb = MdbExomol(".databases/H2O/1H2-16O/POKAZATEL/",nus)
+# print("resolution = ", res)
 
-nus, wav, res = mock_wavenumber_grid(lambda0=22920.0, lambda1=22940.0, Nx=2000)
+nus, wav, res = mock_wavenumber_grid(lambda0=22930.0, lambda1=22940.0, Nx=2000)
 mdb = mock_mdbExomol("H2O")
 
-T=1000.0
-P = 1.e-2
-opa = OpaPremodit(mdb, nus, auto_trange=[1000.0,1100.0])
+T = 1000.0
+P = 1.0e-2
+opa = OpaPremodit(mdb, nus, auto_trange=[1000.0, 1100.0])
 
-xsv = opa.xsvector(T,P)
-indx = jnp.argsort(xsv)
+xsv = opa.xsvector(T, P)
+idx = jnp.argsort(xsv)
+k_g = xsv[idx]
+g = jnp.arange(xsv.size, dtype=xsv.dtype) / xsv.size
 
-plt.plot(xsv[indx], label="xsv sorted")
+#segments
+Ng = 10
+edges = jnp.linspace(0.0, 1.0, Ng + 1)  # 0,1/Ng,…,1
+cut_idx = jnp.searchsorted(g, edges)  # shape (Ng+1,)
+
+nus_segments = [nus[idx[cut_idx[i] : cut_idx[i + 1]]] for i in range(Ng)]
+xsv_segments = [xsv[idx[cut_idx[i] : cut_idx[i + 1]]] for i in range(Ng)]
+cut_idx = np.linspace(0, len(k_g), Ng + 1, dtype=int)
+
+j = 6
+k_low = k_g[cut_idx[j]]
+k_high = k_g[cut_idx[j + 1] - 1]
+k_med = k_low + (k_high - k_low) * 0.5
+mask = (xsv >= k_low) & (xsv < k_high)
+y_base = xsv.min() * 0.5 * jnp.ones_like(k_low)
+
+fig = plt.figure(figsize=(10, 3.5))
+plt.subplot(1, 2, 1)
+plt.plot(nus, xsv, label="xsv")
+plt.fill_between(
+    # nus, k_low, k_high,
+    nus,
+    y_base,
+    k_med,
+    where=mask,
+    step="mid",
+    color="tab:orange",
+    alpha=0.35,
+)
+plt.plot(nus_segments[j], xsv_segments[j], ".")
+plt.axhline(xsv_segments[j].max(), alpha=0.3, color="gray")
+plt.axhline(xsv_segments[j].min(), alpha=0.3, color="gray")
+
+plt.ylim(xsv.min() * 0.5, xsv.max() * 2)
 plt.yscale("log")
-plt.xlabel("Index")
-plt.ylabel("Cross section (cm2/molecule)")
+plt.xlabel("$\\nu$ (cm-1)")
+plt.ylabel("k($\\nu$)")
+
+plt.subplot(1, 2, 2)
+plt.plot(g, k_g, label="xsv sorted")
+plt.ylim(xsv.min() * 0.5, xsv.max() * 2)
+plt.axhline(xsv_segments[j].max(), alpha=0.3, color="gray")
+plt.axhline(xsv_segments[j].min(), alpha=0.3, color="gray")
+plt.axvline(edges[j], alpha=0.3, color="gray")
+plt.axvline(edges[j+1], alpha=0.3, color="gray")
+
+plt.yscale("log")
+plt.xlabel("g")
+plt.ylabel("k(g)")
+plt.savefig("corrk_test.png", dpi=300, bbox_inches="tight")
 plt.show()
-
-
-if fig:
-    plt.plot(nus, xsv, label="xsv")
-    plt.yscale("log")
-    plt.xlabel("Wavenumber (cm-1)")
-    plt.ylabel("Cross section (cm2/molecule)")
-    plt.show()
