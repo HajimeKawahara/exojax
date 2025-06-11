@@ -24,8 +24,8 @@ from exojax.opacity import modit
 from exojax.database import api , contdb
 from exojax.rt.rtransfer import rtrun_emis_pureabs_fbased2st
 from exojax.rt import planck
-from exojax.spec.response import ipgauss_sampling
-from exojax.spec.spin_rotation import convolve_rigid_rotation
+from exojax.postproc.response import ipgauss_sampling
+from exojax.postproc.spin_rotation import convolve_rigid_rotation
 from exojax.database import molinfo 
 from exojax.utils.grids import wavenumber_grid
 from exojax.utils.grids import velocity_grid

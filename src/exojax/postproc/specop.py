@@ -7,15 +7,17 @@
 
 """
 
+import pathlib
+
 import numpy as np
 import pandas as pd
-import pathlib
-from exojax.utils.grids import velocity_grid
-from exojax.spec.spin_rotation import convolve_rigid_rotation
-from exojax.spec.spin_rotation import convolve_rigid_rotation_ola
-from exojax.spec.response import ipgauss, sampling
-from exojax.spec.response import ipgauss_ola, sampling
-from exojax.utils.grids import grid_resolution
+
+from exojax.postproc.response import ipgauss, ipgauss_ola, sampling
+from exojax.postproc.spin_rotation import (
+    convolve_rigid_rotation,
+    convolve_rigid_rotation_ola,
+)
+from exojax.utils.grids import grid_resolution, velocity_grid
 from exojax.utils.photometry import apparent_magnitude
 
 
@@ -96,9 +98,11 @@ class SopPhoto:
 
     def download_filter_svo(self):
         """downloads the filter from SVO"""
-        from exojax.utils.photometry import download_filter_from_svo
-        from exojax.utils.photometry import download_zero_magnitude_flux_from_svo
-        from exojax.utils.photometry import average_resolution
+        from exojax.utils.photometry import (
+            average_resolution,
+            download_filter_from_svo,
+            download_zero_magnitude_flux_from_svo,
+        )
 
         self.nu_ref, self.transmission_ref = download_filter_from_svo(self.filter_id)
         self.nu_center, self.f0_nu_cgs = download_zero_magnitude_flux_from_svo(

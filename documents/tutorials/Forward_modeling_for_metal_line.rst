@@ -310,7 +310,7 @@ Rotational & instrumental broadening
 
 .. code:: ipython3
 
-    from exojax.spec import response
+    from exojax.postproc import response
     from exojax.utils.constants import c #[km/s]
     import jax.numpy as jnp
     

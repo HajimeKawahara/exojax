@@ -22,7 +22,7 @@ from exojax.utils.instfunc import resolution_to_gaussian_std
 from exojax.test.data import SAMPLE_SPECTRA_CH4_TRANS
 from exojax.utils.constants import RJ, Rs
 from exojax.utils.astrofunc import gravity_jupiter
-from exojax.spec.specop import SopInstProfile
+from exojax.postproc.specop import SopInstProfile
 
 
 from jax import config

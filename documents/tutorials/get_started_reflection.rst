@@ -429,7 +429,7 @@ resolution of around 25,000 seems appropriate.
 
 .. code:: ipython3
 
-    from exojax.spec.specop import SopInstProfile
+    from exojax.postproc.specop import SopInstProfile
     
     # asymmetric_parameter = asymmetric_factor + np.zeros((len(art.pressure), len(nus)))
     reflectivity_surface = np.zeros(len(nus))

@@ -2,9 +2,9 @@ import numpy as np
 import jax.numpy as jnp
 from jax import jit
 from exojax.utils.grids import wavenumber_grid
-from exojax.spec.response import ipgauss_sampling
-from exojax.spec.response import ipgauss_ola_sampling
-from exojax.spec.response import ipgauss_variable_sampling
+from exojax.postproc.response import ipgauss_sampling
+from exojax.postproc.response import ipgauss_ola_sampling
+from exojax.postproc.response import ipgauss_variable_sampling
 from exojax.utils.grids import velocity_grid
 
 from exojax.utils.constants import c
@@ -100,7 +100,7 @@ def test_ipgauss_ola_sampling(fig=False):
 
 
 def test_SopInstProfile():
-    from exojax.spec.specop import SopInstProfile
+    from exojax.postproc.specop import SopInstProfile
     
     nus, wav, resolution = wavenumber_grid(4000.0,
                                                4010.0,
@@ -156,7 +156,7 @@ def test_ipgauss_variable_sampling_using_constant_beta_array(fig=False):
 
 
 def test_SopInstProfile_ola(fig=False):
-    from exojax.spec.specop import SopInstProfile
+    from exojax.postproc.specop import SopInstProfile
     
     nus, wav, resolution = wavenumber_grid(4000.0,
                                                4010.0,

@@ -5,12 +5,13 @@
 
 """
 
-from jax import jit
 import jax.numpy as jnp
+from jax import jit
 from jax.lax import scan
-from exojax.utils.constants import c
+
 from exojax.signal.convolve import convolve_same
-from exojax.signal.ola import olaconv, ola_lengths, generate_zeropad
+from exojax.signal.ola import generate_zeropad, ola_lengths, olaconv
+from exojax.utils.constants import c
 
 
 @jit

@@ -374,7 +374,7 @@ planet.
 
 .. code:: ipython3
 
-    from exojax.spec.specop import SopRotation
+    from exojax.postproc.specop import SopRotation
     
     sop_rot = SopRotation(nu_grid, vsini_max=100.0)
     
@@ -406,7 +406,7 @@ analysis.
 
 .. code:: ipython3
 
-    from exojax.spec.specop import SopInstProfile
+    from exojax.postproc.specop import SopInstProfile
     from exojax.utils.instfunc import resolution_to_gaussian_std
     
     sop_inst = SopInstProfile(nu_grid, vrmax=1000.0)

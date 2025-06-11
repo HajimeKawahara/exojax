@@ -358,7 +358,7 @@ planet.
 
 .. code:: ipython3
 
-    from exojax.spec.specop import SopRotation
+    from exojax.postproc.specop import SopRotation
     
     sop_rot = SopRotation(nu_grid, vsini_max=100.0)
     
@@ -390,7 +390,7 @@ analysis.
 
 .. code:: ipython3
 
-    from exojax.spec.specop import SopInstProfile
+    from exojax.postproc.specop import SopInstProfile
     from exojax.utils.instfunc import resolution_to_gaussian_std
     
     sop_inst = SopInstProfile(nu_grid, vrmax=1000.0)
@@ -520,7 +520,7 @@ uninformative prior, such as the one proposed by Kipping.
 
 .. code:: python
 
-       from exojax.spec.limb_darkening import ld_kipping
+       from exojax.postproc.limb_darkening import ld_kipping
        q1 = numpyro.sample('q1', dist.Uniform(0.0,1.0))
        q2 = numpyro.sample('q2', dist.Uniform(0.0,1.0))
        u1,u2 = ld_kipping(q1,q2)

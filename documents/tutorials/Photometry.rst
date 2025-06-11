@@ -12,7 +12,7 @@ SDSS G-band filter is used.
 
 .. code:: ipython3
 
-    from exojax.spec.specop import SopPhoto    
+    from exojax.postproc.specop import SopPhoto    
     
     filter_name = "SLOAN/SDSS.g"
     sop_photo = SopPhoto(filter_name, download=True)

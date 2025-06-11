@@ -12,7 +12,7 @@ This script performs a Bayesian analysis of the high-resolution emission spectru
 import numpy as np
 import jax.numpy as jnp
 import matplotlib.pyplot as plt
-from exojax.spec.specop import SopPhoto
+from exojax.postproc.specop import SopPhoto
 from exojax.test.emulate_spec import sample_emission_spectrum
 from exojax.utils.grids import wavenumber_grid
 from exojax.utils.instfunc import resolution_to_gaussian_std
@@ -196,8 +196,8 @@ art = ArtEmisPure(pressure_btm=1.0e2, pressure_top=1.0e-4, nlayer=200)
 # does not set nu_grid because we use two types of nu_grid (for obs and photo)
 
 # Spectral Operators (planet rotation and instrumental profile)
-from exojax.spec.specop import SopRotation
-from exojax.spec.specop import SopInstProfile
+from exojax.postproc.specop import SopRotation
+from exojax.postproc.specop import SopInstProfile
 
 sop_rot = SopRotation(nu_grid_spec, vsini_max=100.0)
 sop_inst = SopInstProfile(nu_grid_spec, vrmax=100.0)

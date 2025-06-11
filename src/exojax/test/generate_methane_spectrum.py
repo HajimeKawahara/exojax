@@ -11,8 +11,8 @@ from exojax.database.api  import MdbExomol
 from exojax.opacity.opacalc import OpaPremodit
 from exojax.database.contdb  import CdbCIA
 from exojax.opacity.opacont import OpaCIA
-from exojax.spec.response import ipgauss_sampling
-from exojax.spec.spin_rotation import convolve_rigid_rotation
+from exojax.postproc.response import ipgauss_sampling
+from exojax.postproc.spin_rotation import convolve_rigid_rotation
 from exojax.utils.grids import velocity_grid
 from exojax.utils.astrofunc import gravity_jupiter
 

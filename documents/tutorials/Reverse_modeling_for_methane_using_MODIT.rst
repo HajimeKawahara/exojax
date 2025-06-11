@@ -198,8 +198,8 @@ frun returns a spectral model.
     from exojax.opacity.modit import exomol,xsmatrix
     from exojax.rt.rtransfer import dtauM, dtauCIA, rtrun
     from exojax.rt import planck, response
-    from exojax.spec.response import ipgauss_sampling
-    from exojax.spec.spin_rotation import convolve_rigid_rotation
+    from exojax.postproc.response import ipgauss_sampling
+    from exojax.postproc.spin_rotation import convolve_rigid_rotation
     from exojax.utils.grids import velocity_grid
     vsini_max = 100.0
     vr_array = velocity_grid(res, vsini_max)

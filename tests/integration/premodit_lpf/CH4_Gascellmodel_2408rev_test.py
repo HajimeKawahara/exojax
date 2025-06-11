@@ -6,7 +6,7 @@
 from exojax.utils.grids import wavenumber_grid
 from exojax.database.api  import MdbHitemp
 from exojax.database.hitran  import line_strength
-from exojax.spec.specop import SopInstProfile
+from exojax.postproc.specop import SopInstProfile
 from Trans_model_1Voigt_HITEMP_nu_2408rev_test import (
     Trans_model_MultiVoigt_test,
     create_mdbs_multi,

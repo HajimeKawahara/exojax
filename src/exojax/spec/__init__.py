@@ -98,6 +98,10 @@ _ALIAS_MAP = {
     "nonair":        "exojax.database.nonair",
     "pardb":         "exojax.database.pardb",
     "qstate":        "exojax.database.qstate",
+    "limb_darkening":"exojax.postproc.limb_darkening",
+    "response":      "exojax.postproc.response",
+    "specop":        "exojax.postproc.specop",
+    "spin_rotation": "exojax.postproc.spin_rotation",
 }
 
 

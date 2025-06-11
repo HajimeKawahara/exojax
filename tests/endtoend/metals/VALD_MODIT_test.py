@@ -34,8 +34,8 @@ from exojax.opacity.modit import (
     setdgm_vald_all,
     setdgm_exomol,
 )
-from exojax.spec.response import ipgauss_sampling
-from exojax.spec.spin_rotation import convolve_rigid_rotation
+from exojax.postproc.response import ipgauss_sampling
+from exojax.postproc.spin_rotation import convolve_rigid_rotation
 from exojax.utils.grids import velocity_grid
 
 

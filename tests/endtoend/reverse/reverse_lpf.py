@@ -14,8 +14,8 @@ from exojax.utils.instfunc import resolution_to_gaussian_std
 from exojax.opacity.opacalc import OpaDirect
 from exojax.opacity.opacont import OpaCIA
 from exojax.rt.atmrt import ArtEmisPure
-from exojax.spec.specop import SopRotation
-from exojax.spec.specop import SopInstProfile
+from exojax.postproc.specop import SopRotation
+from exojax.postproc.specop import SopInstProfile
 
 from exojax.utils.grids import wav2nu
 from exojax.utils.astrofunc import gravity_jupiter

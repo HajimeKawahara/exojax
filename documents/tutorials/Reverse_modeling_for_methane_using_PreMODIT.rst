@@ -189,8 +189,8 @@ We here use numpyro as a PPL (probabilistic programming language).
 
 .. code:: ipython3
 
-    from exojax.spec.response import ipgauss_sampling
-    from exojax.spec.spin_rotation import convolve_rigid_rotation
+    from exojax.postproc.response import ipgauss_sampling
+    from exojax.postproc.spin_rotation import convolve_rigid_rotation
     from exojax.utils.grids import velocity_grid
     vsini_max = 100.0
     vr_array = velocity_grid(res, vsini_max)

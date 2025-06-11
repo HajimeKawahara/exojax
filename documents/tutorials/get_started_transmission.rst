@@ -478,7 +478,7 @@ analysis.
 
 .. code:: ipython3
 
-    from exojax.spec.specop import SopInstProfile
+    from exojax.postproc.specop import SopInstProfile
     from exojax.utils.instfunc import resolution_to_gaussian_std
     
     sop_inst = SopInstProfile(nu_grid, vrmax=1000.0)

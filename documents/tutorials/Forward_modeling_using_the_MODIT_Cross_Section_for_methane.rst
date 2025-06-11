@@ -285,8 +285,8 @@ response to the raw spectrum.
 .. code:: ipython3
 
     #response and rotation settings 
-    from exojax.spec.response import ipgauss_sampling
-    from exojax.spec.spin_rotation import convolve_rigid_rotation
+    from exojax.postproc.response import ipgauss_sampling
+    from exojax.postproc.spin_rotation import convolve_rigid_rotation
     from exojax.utils.grids import velocity_grid
     vsini_max = 100.0
     vr_array = velocity_grid(resolution, vsini_max)

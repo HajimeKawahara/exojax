@@ -17,7 +17,7 @@ from exojax.utils.astrofunc import gravity_jupiter
 from exojax.utils.constants import RJ
 from exojax.test.data import COMPDATA_TRANSMISSION_CO
 from exojax.utils.grids import wav2nu
-from exojax.spec.specop import SopInstProfile
+from exojax.postproc.specop import SopInstProfile
 
 config.update("jax_enable_x64", True)
 # config.update("jax_debug_nans", True)

@@ -21,7 +21,7 @@ petitradtrans_config_parser.set_input_data_path(r'~/database/petitRADTRANS/input
 
 from exojax.utils.instfunc import resolution_to_gaussian_std
 from exojax.utils.grids import velocity_grid
-from exojax.spec import response
+from exojax.postproc import response
 
 
 

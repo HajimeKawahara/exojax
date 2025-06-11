@@ -1,4 +1,4 @@
-from exojax.spec.specop import SopPhoto    
+from exojax.postproc.specop import SopPhoto    
 import matplotlib.pyplot as plt
 
 # http://svo2.cab.inta-csic.es/theory/fps/
