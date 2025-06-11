@@ -185,7 +185,7 @@ def dtauM_vald(
     dgm_sigmaD,
     dgm_gammaL,
 ):
-    """Compute dtau caused by VALD lines from cross section xs (DIT)
+    """Compute dtau caused by VALD lines from cross section xs (DIT), duplicated
 
     Args:
         dParr: delta pressure profile (bar) [N_layer]
