@@ -39,7 +39,7 @@ You can create a miegrid as shown in the code below.
 
 .. code:: ipython3
     
-    from exojax.opacity.mie import compute_mie_coeff_lognormal_grid
+    from exojax.database.mie import compute_mie_coeff_lognormal_grid
     from exojax.spec.pardb import PdbCloud
 
     pdb = PdbCloud("NH3")

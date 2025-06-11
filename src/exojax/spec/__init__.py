@@ -78,7 +78,6 @@ _ALIAS_MAP = {
     "ditkernel":      "exojax.opacity.ditkernel",
     "make_numatrix":  "exojax.opacity.make_numatrix",
     "opacont":        "exojax.opacity.opacont",
-    "mie":            "exojax.opacity.mie",
     "rayleigh":       "exojax.opacity.rayleigh",
     "generate_elower_grid_trange": "exojax.opacity.generate_elower_grid_trange",
     "profconv":       "exojax.opacity.profconv",
@@ -92,6 +91,8 @@ _ALIAS_MAP = {
     "rtransfer":      "exojax.rt.rtransfer",
     "toon":           "exojax.rt.toon",
     "twostream":      "exojax.rt.twostream",
+    "mie":            "exojax.database.mie",
+    
 }
 
 for _old, _new in _ALIAS_MAP.items():

@@ -13,7 +13,7 @@ from jax import vmap
 
 from exojax.spec.hitrancia import interp_logacia_matrix, interp_logacia_vector
 from exojax.spec.hminus import log_hminus_continuum
-from exojax.opacity.mie import mie_lognormal_pymiescatt
+from exojax.database.mie import mie_lognormal_pymiescatt
 from exojax.opacity.rayleigh import xsvector_rayleigh_gas
 
 __all__ = ["OpaCont", "OpaCIA", "OpaHminus", "OpaRayleigh", "OpaMie"]
@@ -241,7 +241,7 @@ class OpaMie(OpaCont):
         """
         from tqdm import tqdm
 
-        from exojax.opacity.mie import auto_rgrid
+        from exojax.database.mie import auto_rgrid
 
         # restrict wavenumber grid
         nind = len(self.pdb.refraction_index_wavenumber)

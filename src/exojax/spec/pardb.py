@@ -7,8 +7,8 @@
 
 import numpy as np
 import pathlib
-from exojax.opacity.mie import evaluate_miegrid
-from exojax.opacity.mie import compute_mieparams_cgs_from_miegrid
+from exojax.database.mie import evaluate_miegrid
+from exojax.database.mie import compute_mieparams_cgs_from_miegrid
 
 
 __all__ = ["PdbCloud"]
@@ -187,7 +187,7 @@ class PdbCloud(object):
         Raises:
             ValueError: _description_
         """
-        from exojax.opacity.mie import read_miegrid
+        from exojax.database.mie import read_miegrid
 
         if self.miegrid_path.exists():
             self.miegrid, self.rg_arr, self.sigmag_arr = read_miegrid(self.miegrid_path)
@@ -250,7 +250,7 @@ class PdbCloud(object):
 
         """
 
-        from exojax.opacity.mie import make_miegrid_lognormal
+        from exojax.database.mie import make_miegrid_lognormal
 
         make_miegrid_lognormal(
             self.refraction_index,
