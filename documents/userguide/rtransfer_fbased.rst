@@ -90,7 +90,7 @@ Also, ``OpartReflectPure``, the ``opart`` version of ``ReflectPure``,  is availa
 
 .. code:: python
 
-    from exojax.spec.opacalc import OpaPremodit
+    from exojax.opacity.opacalc import OpaPremodit
     from exojax.spec.opart import OpartReflectPure
     from exojax.spec.layeropacity import single_layer_optical_depth
     from exojax.utils.grids import wavenumber_grid

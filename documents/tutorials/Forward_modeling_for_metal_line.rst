@@ -162,7 +162,7 @@ nu matrix
 
 .. code:: ipython3
 
-    from exojax.spec.initspec import init_lpf
+    from exojax.opacity.initspec import init_lpf
     numatrix=init_lpf(adbFe.nu_lines,nus)
 
 Compute dtau for each atomic species (or ion) in a SEPARATE array
@@ -201,7 +201,7 @@ Calculate delta tau
     #For now, ASSUME all atoms exist as neutral atoms.
     #In fact, we can't ignore the effect of molecular formation e.g. TiO (」゜□゜)」
     
-    from exojax.spec.lpf import xsmatrix
+    from exojax.opacity.lpf import xsmatrix
     from exojax.spec.rtransfer import dtauM
     from exojax.spec.atomllapi import load_atomicdata
     

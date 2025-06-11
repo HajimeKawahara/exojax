@@ -1,4 +1,4 @@
-from exojax.spec.opacalc import OpaCalc
+from exojax.opacity.opacalc import OpaCalc
 import pytest
 def _set_wavenumber_grid():
     from exojax.utils.grids import wavenumber_grid

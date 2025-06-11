@@ -19,7 +19,7 @@ Star (GJ699).
     from exojax.utils.instfunc import resolution_to_gaussian_std
     
     from exojax.spec import moldb, atomll, contdb
-    from exojax.spec import modit, initspec
+    from exojax.opacity import modit, initspec
     from exojax.spec import molinfo
 
 Load observed data.
@@ -222,7 +222,7 @@ spectral model.
 
 .. code:: ipython3
 
-    from exojax.spec.modit import vald_all, xsmatrix_vald, exomol, xsmatrix
+    from exojax.opacity.modit import vald_all, xsmatrix_vald, exomol, xsmatrix
     from exojax.spec.rtransfer import  dtauVALD, dtauM_mmwl, dtauHminus_mmwl, dtauCIA_mmwl, rtrun
     from exojax.spec import planck, response
 

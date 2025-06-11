@@ -1,7 +1,7 @@
 """opacity for mie test
 """
 from exojax.test.emulate_pdb import mock_PdbPlouds
-from exojax.spec.opacont import OpaMie
+from exojax.opacity.opacont import OpaMie
 from exojax.utils.grids import wavenumber_grid
 import numpy as np
 import jax.numpy as jnp

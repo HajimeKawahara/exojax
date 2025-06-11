@@ -1,7 +1,7 @@
 import numpy as np
 from exojax.spec import api
 from exojax.test.emulate_mdb import mock_mdbExomol
-from exojax.spec.opacalc import OpaPremodit
+from exojax.opacity.opacalc import OpaPremodit
 
 import traceback
 import os

@@ -7,20 +7,20 @@
 
 import pytest
 import numpy as np
-from exojax.spec.premodit import compute_dElower
-from exojax.spec.premodit import make_elower_grid
-from exojax.spec.premodit import make_broadpar_grid
-from exojax.spec.premodit import broadpar_getix
-from exojax.spec.premodit import parallel_merge_grids
-from exojax.spec.premodit import unbiased_ngamma_grid
+from exojax.opacity.premodit import compute_dElower
+from exojax.opacity.premodit import make_elower_grid
+from exojax.opacity.premodit import make_broadpar_grid
+from exojax.opacity.premodit import broadpar_getix
+from exojax.opacity.premodit import parallel_merge_grids
+from exojax.opacity.premodit import unbiased_ngamma_grid
 from exojax.test.emulate_broadpar import mock_broadpar_exomol
 from exojax.test.emulate_broadpar import mock_broadpar
-from exojax.spec.premodit import logf_bias, g_bias
+from exojax.opacity.premodit import logf_bias, g_bias
 from exojax.utils.constants import Tref_original
-from exojax.spec.premodit import unbiased_lsd_zeroth
-from exojax.spec.premodit import unbiased_lsd_first
-from exojax.spec.premodit import unbiased_lsd_second
-from exojax.spec.premodit import reference_temperature_broadening_at_midpoint
+from exojax.opacity.premodit import unbiased_lsd_zeroth
+from exojax.opacity.premodit import unbiased_lsd_first
+from exojax.opacity.premodit import unbiased_lsd_second
+from exojax.opacity.premodit import reference_temperature_broadening_at_midpoint
 
 
 def test_compute_dElower():

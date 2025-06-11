@@ -6,8 +6,8 @@ Here, we try to compute a emission spectrum using DIT.
 .. code:: ipython3
 
     from exojax.spec import rtransfer as rt
-    from exojax.spec import dit
-    from exojax.spec import lpf
+    from exojax.opacity import dit
+    from exojax.opacity import lpf
     import numpy as np
     import matplotlib.pyplot as plt
     plt.style.use('bmh')
@@ -125,7 +125,7 @@ plot.ditplot.plot_dgm
 
 .. code:: ipython3
 
-    from exojax.spec import initspec 
+    from exojax.opacity import initspec 
     cnu,indexnu,pmarray=initspec.init_dit(mdbCO.nu_lines,nus)
 
 Let’s compute a cross section matrix.
@@ -160,7 +160,7 @@ the comparison purpose.
 .. code:: ipython3
 
     #direct LPF for comparison
-    from exojax.spec.lpf import xsmatrix
+    from exojax.opacity.lpf import xsmatrix
     numatrix=initspec.init_lpf(mdbCO.nu_lines,nus)
     xsmdirect=xsmatrix(numatrix,sigmaDM,gammaLM,SijM)
 

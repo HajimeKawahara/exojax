@@ -1,14 +1,13 @@
 """Line Profile Functions method for opacity calculation."""
 
-from jax import jit, vmap
 import jax.numpy as jnp
-from exojax.special.faddeeva import rewofz, imwofz
-from exojax.special.faddeeva import asymptotic_wofz
-from jax import custom_jvp
-from exojax.spec.exomol import gamma_exomol
-from exojax.spec.hitran import line_strength, doppler_sigma, gamma_natural
+from jax import custom_jvp, jit, vmap
+
 # vald
 from exojax.spec.atomll import gamma_vald3, interp_QT_284
+from exojax.spec.exomol import gamma_exomol
+from exojax.spec.hitran import doppler_sigma, gamma_natural, line_strength
+from exojax.special.faddeeva import asymptotic_wofz, imwofz, rewofz
 
 
 def exomol(mdb, Tarr, Parr, molmass):

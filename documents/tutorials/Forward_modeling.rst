@@ -110,7 +110,7 @@ nu matrix
 
 .. code:: ipython3
 
-    from exojax.spec import make_numatrix0
+    from exojax.opacity import make_numatrix0
     numatrix=make_numatrix0(nus,mdbCO.nu_lines)
 
 Or you can use initspec.init_lpf instead.
@@ -118,7 +118,7 @@ Or you can use initspec.init_lpf instead.
 .. code:: ipython3
 
     #Or you can use initspec.init_lpf instead.
-    from exojax.spec import initspec
+    from exojax.opacity import initspec
     numatrix=initspec.init_lpf(mdbCO.nu_lines,nus)
 
 Providing numatrix, thermal broadening, gamma, and line strength, we can
@@ -126,7 +126,7 @@ compute cross section.
 
 .. code:: ipython3
 
-    from exojax.spec.lpf import xsmatrix
+    from exojax.opacity.lpf import xsmatrix
     xsm=xsmatrix(numatrix,sigmaDM,gammaLM,SijM)
 
 xsmatrix has the shape of (# of layers, # of nu grid)

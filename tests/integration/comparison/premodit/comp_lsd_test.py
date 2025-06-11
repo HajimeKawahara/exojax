@@ -4,8 +4,8 @@
 
 """
 import numpy as np
-from exojax.spec.premodit import make_broadpar_grid
-from exojax.spec.premodit import generate_lbd
+from exojax.opacity.premodit import make_broadpar_grid
+from exojax.opacity.premodit import generate_lbd
 from exojax.utils.instfunc import resolution_eslog
 import numpy as np
 import jax.numpy as jnp
@@ -33,9 +33,9 @@ def compare_line_shape_density(mdb,nu_grid,Ttest=1000.0,Ttyp=2000.0):
     """
     from exojax.utils.indexing import npgetix
     from exojax.spec.hitran import line_strength
-    from exojax.spec.premodit import make_elower_grid
-    #from exojax.spec.premodit import unbiased_lsd_first
-    from exojax.spec.premodit import unbiased_lsd_zeroth
+    from exojax.opacity.premodit import make_elower_grid
+    #from exojax.opacity.premodit import unbiased_lsd_first
+    from exojax.opacity.premodit import unbiased_lsd_zeroth
     
     dit_grid_resolution = 0.1    
     R = resolution_eslog(nu_grid)

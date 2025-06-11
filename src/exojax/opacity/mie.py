@@ -3,14 +3,18 @@
 
 """
 
-import numpy as np
-import jax.numpy as jnp
-from exojax.utils.interp import interp2d_bilinear
-from exojax.special.lognormal import cubeweighted_pdf
-from exojax.special.lognormal import cubeweighted_mean
-from exojax.special.lognormal import cubeweighted_std
-from scipy.integrate import trapezoid
 import warnings
+
+import jax.numpy as jnp
+import numpy as np
+from scipy.integrate import trapezoid
+
+from exojax.special.lognormal import (
+    cubeweighted_mean,
+    cubeweighted_pdf,
+    cubeweighted_std,
+)
+from exojax.utils.interp import interp2d_bilinear
 
 
 def compute_mie_coeff_lognormal_grid(
@@ -245,6 +249,7 @@ def mie_lognormal_pymiescatt(
         _type_: _description_
     """
     from PyMieScatt.Mie import Mie_SD
+
     from exojax.special.lognormal import pdf
 
     #  http://pymiescatt.readthedocs.io/en/latest/forward.html#Mie_Lognormal
@@ -323,8 +328,9 @@ def cubeweighted_integral_checker(rgrid, rg, sigmag, accuracy=1.0e-2):
 
 
 if __name__ == "__main__":
-    from exojax.spec.pardb import PdbCloud
     import jax.numpy as jnp
+
+    from exojax.spec.pardb import PdbCloud
 
     pdb = PdbCloud("NH3")
     filename = ".database/particulates/virga/miegrid_lognorm_" + pdb.condensate + ".mg"

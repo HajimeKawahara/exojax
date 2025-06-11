@@ -3,10 +3,13 @@
 
 import numpy as np
 import tqdm
-from exojax.spec.lbderror import single_tilde_line_strength_zeroth
-from exojax.spec.lbderror import worst_tilde_line_strength_first
-from exojax.spec.lbderror import worst_tilde_line_strength_second
-from exojax.spec.lbderror import evaluate_trange
+
+from exojax.opacity.lbderror import (
+    evaluate_trange,
+    single_tilde_line_strength_zeroth,
+    worst_tilde_line_strength_first,
+    worst_tilde_line_strength_second,
+)
 
 
 def generate_elower_grid_trange(

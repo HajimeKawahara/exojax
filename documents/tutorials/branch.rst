@@ -77,10 +77,10 @@ calculator. We assume T=1300K and P=1bar.
 .. code:: ipython3
 
     from exojax.spec.hitran import line_strength, doppler_sigma
-    from exojax.spec.initspec import init_lpf
+    from exojax.opacity.initspec import init_lpf
     from exojax.spec.exomol import gamma_exomol, gamma_natural
     from exojax.spec import molinfo
-    from exojax.spec.lpf import xsvector
+    from exojax.opacity.lpf import xsvector
     from exojax.utils.constants import Tref_original
     
     Mmol = molinfo.molmass("CO")  # molecular weight

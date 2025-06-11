@@ -1,10 +1,11 @@
-from exojax.utils.constants import hcperk
-import jax.numpy as jnp
-from jax import vmap
-from jax import grad
-import numpy as np
-import matplotlib.pyplot as plt
 from importlib.resources import files
+
+import jax.numpy as jnp
+import matplotlib.pyplot as plt
+import numpy as np
+from jax import grad, vmap
+
+from exojax.utils.constants import hcperk
 
 
 def _beta(t, tref):

@@ -53,8 +53,8 @@ Note that you can also use the
 
     from exojax.spec.api import MdbExomol
     from exojax.spec.contdb import CdbCIA
-    from exojax.spec.opacalc import OpaPremodit
-    from exojax.spec.opacont import OpaCIA
+    from exojax.opacity.opacalc import OpaPremodit
+    from exojax.opacity.opacont import OpaCIA
     from exojax.spec.layeropacity import single_layer_optical_depth
     from exojax.spec.layeropacity import single_layer_optical_depth_CIA
     from exojax.utils.grids import wavenumber_grid

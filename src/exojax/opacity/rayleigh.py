@@ -42,8 +42,7 @@ def xsvector_rayleigh_gas_from_refractive_index(
 
 
 if __name__ == "__main__":
-    from exojax.atm.polarizability import polarizability
-    from exojax.atm.polarizability import king_correction_factor
+    from exojax.atm.polarizability import king_correction_factor, polarizability
     from exojax.utils.grids import wavenumber_grid
 
     nus, wav, res = wavenumber_grid(

@@ -1,5 +1,6 @@
 import jax.numpy as jnp
-from exojax.spec.lpf import voigt
+
+from exojax.opacity.lpf import voigt
 
 
 def _close_filter_length(filter_length_oneside):

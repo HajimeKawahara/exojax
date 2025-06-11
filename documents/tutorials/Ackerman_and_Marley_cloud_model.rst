@@ -372,7 +372,7 @@ The Mie scattering can be computed using ``OpaMie``.
     nugrid, wav, res = wavenumber_grid(nus_start, nus_end, N, xsmode="lpf", unit="cm-1")
     
     
-    from exojax.spec.opacont import OpaMie
+    from exojax.opacity.opacont import OpaMie
     
     opa_enstatite = OpaMie(pdb_enstatite, nugrid)
     

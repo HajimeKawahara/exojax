@@ -2,7 +2,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 from exojax.utils.grids import wavenumber_grid
 from exojax.spec.api import MdbExomol
-from exojax.spec.opacalc import OpaPremodit
+from exojax.opacity.opacalc import OpaPremodit
 from exojax.plot.opaplot import plot_lbd
 from jax import config
 

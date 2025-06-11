@@ -2,22 +2,22 @@ from exojax.test.data import TESTDATA_CO_EXOMOL_MODIT_XS_REF
 from exojax.test.data import TESTDATA_CO_HITEMP_MODIT_XS_REF
 from exojax.test.data import TESTDATA_CO_HITEMP_MODIT_XS_REF_AIR
 import numpy as np
-from exojax.spec.modit import xsvector_scanfft
+from exojax.opacity.modit import xsvector_scanfft
 from exojax.spec.hitran import line_strength
 from exojax.spec.molinfo import molmass_isotope
 from exojax.spec import normalized_doppler_sigma, gamma_natural
 from exojax.spec.hitran import line_strength
 from exojax.spec.hitran import gamma_hitran
 from exojax.spec.exomol import gamma_exomol
-from exojax.spec.initspec import init_modit
-from exojax.spec.set_ditgrid import ditgrid_log_interval
+from exojax.opacity.initspec import init_modit
+from exojax.opacity.set_ditgrid import ditgrid_log_interval
 from exojax.test.emulate_mdb import mock_mdbExomol
 from exojax.test.emulate_mdb import mock_mdbHitemp
 from exojax.test.emulate_mdb import mock_wavenumber_grid
 from exojax.test.data import TESTDATA_CO_EXOMOL_LPF_XS_REF
 from exojax.test.data import TESTDATA_CO_HITEMP_LPF_XS_REF
 from exojax.test.emulate_mdb import mock_mdb
-from exojax.spec.opacalc import OpaDirect
+from exojax.opacity.opacalc import OpaDirect
 import matplotlib.pyplot as plt
 
 from jax import config

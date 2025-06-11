@@ -13,8 +13,8 @@ This notebook demonstrates how to use Kurucz database, not using
     from exojax.utils.grids import wavenumber_grid
     from exojax.spec import atomll
     from exojax.spec.hitran import doppler_sigma, line_strength 
-    from exojax.spec.initspec import init_lpf
-    from exojax.spec.lpf import xsmatrix
+    from exojax.opacity.initspec import init_lpf
+    from exojax.opacity.lpf import xsmatrix
     from exojax.spec.layeropacity import layer_optical_depth, layer_optical_depth_Hminus, layer_optical_depth_CIA
     import matplotlib.pyplot as plt
     from jax import vmap, jit

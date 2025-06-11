@@ -1,7 +1,7 @@
 import pytest
 from exojax.spec.multimol import MultiMol
 from exojax.test.emulate_mdb import mock_wavenumber_grid
-from exojax.spec.opacalc import OpaPremodit
+from exojax.opacity.opacalc import OpaPremodit
 
 def test_multiopa_single_nu_grid():
     mul = MultiMol(molmulti=[["CO", "H2O"]], dbmulti=[["SAMPLE", "SAMPLE"]])

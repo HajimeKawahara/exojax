@@ -3,7 +3,7 @@ from jax import config
 config.update("jax_enable_x64", True)
 from exojax.utils.grids import wavenumber_grid
 from exojax.test.emulate_mdb import mock_mdb
-from exojax.spec.opacalc import OpaPremodit
+from exojax.opacity.opacalc import OpaPremodit
 
 def test_opapremodit_exomol_call():
     """this test was used to identify #586. Leave here, just in case"""

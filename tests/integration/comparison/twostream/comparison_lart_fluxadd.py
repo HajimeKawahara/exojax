@@ -2,7 +2,7 @@
 import pytest
 from jax import config
 from exojax.test.emulate_mdb import mock_mdb
-from exojax.spec.opacalc import OpaPremodit
+from exojax.opacity.opacalc import OpaPremodit
 from exojax.test.emulate_mdb import mock_wavenumber_grid
 from exojax.spec.atmrt import ArtEmisScat
 

@@ -1,7 +1,7 @@
 import pytest
-from exojax.spec.profconv import calc_xsection_from_lsd_zeroscan
-from exojax.spec.profconv import calc_open_nu_xsection_from_lsd_zeroscan
-from exojax.spec.profconv import calc_xsection_from_lsd_scanfft
+from exojax.opacity.profconv import calc_xsection_from_lsd_zeroscan
+from exojax.opacity.profconv import calc_open_nu_xsection_from_lsd_zeroscan
+from exojax.opacity.profconv import calc_xsection_from_lsd_scanfft
 from exojax.utils.grids import extended_wavenumber_grid
 from exojax.utils.grids import wavenumber_grid
 import jax.numpy as jnp

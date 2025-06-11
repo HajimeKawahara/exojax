@@ -44,7 +44,7 @@ is available.
 
 .. code:: ipython3
 
-    from exojax.spec.opacont import OpaCIA
+    from exojax.opacity.opacont import OpaCIA
     opacia = OpaCIA(cdbH2H2, nu_grid=nu_grid)
 
 Let’s calculate (the logarithm of) the CIA absorption coefficient at

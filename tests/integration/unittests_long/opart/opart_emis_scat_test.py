@@ -6,7 +6,7 @@ import numpy as np
 import jax.numpy as jnp
 from exojax.test.emulate_mdb import mock_wavenumber_grid
 from exojax.test.emulate_mdb import mock_mdbExomol
-from exojax.spec.opacalc import OpaPremodit
+from exojax.opacity.opacalc import OpaPremodit
 from exojax.spec.opart import OpartEmisScat
 from exojax.spec.layeropacity import single_layer_optical_depth
 

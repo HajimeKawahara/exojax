@@ -4,12 +4,13 @@
    * (np)add(x)D constructs the (x)Dimensional LSD array given the contribution and index.
 
 """
-import numpy as np
-from jax.numpy import index_exp
 import jax.numpy as jnp
+import numpy as np
 from jax import jit
-from exojax.utils.progbar import print_progress
+from jax.numpy import index_exp
+
 from exojax.utils.indexing import getix
+from exojax.utils.progbar import print_progress
 
 
 def add2D(a, w, cx, ix, cy, iy):

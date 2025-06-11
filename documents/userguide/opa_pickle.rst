@@ -21,7 +21,7 @@ Worked example
     from exojax.spec.atmrt import ArtTransPure
     from exojax.utils.grids import wavenumber_grid
     from exojax.spec.api import MdbExomol
-    from exojax.spec.opacalc import OpaPremodit
+    from exojax.opacity.opacalc import OpaPremodit
     import cloudpickle
 
 

@@ -235,11 +235,11 @@ We will now compare the spectra from ExoMol and Harg2010.
 
 .. code:: ipython3
 
-    from exojax.spec.opacalc import OpaPremodit
+    from exojax.opacity.opacalc import OpaPremodit
     from exojax.spec.atmrt import ArtEmisPure
     
     from exojax.spec.contdb import CdbCIA
-    from exojax.spec.opacont import OpaCIA
+    from exojax.opacity.opacont import OpaCIA
     
     cdb = CdbCIA(database_dir + "H2-H2_2011.cia", nurange=nu_grid)
     

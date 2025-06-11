@@ -1,4 +1,4 @@
-from exojax.spec.optgrid import optelower
+from exojax.opacity.optgrid import optelower
 import pytest
 from jax import config
 config.update("jax_enable_x64", True)

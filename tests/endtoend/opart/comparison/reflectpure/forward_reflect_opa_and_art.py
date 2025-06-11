@@ -1,4 +1,4 @@
-from exojax.spec.opacalc import OpaPremodit
+from exojax.opacity.opacalc import OpaPremodit
 from exojax.spec.atmrt import ArtReflectPure
 from exojax.utils.grids import wavenumber_grid
 from exojax.spec.api import MdbExomol

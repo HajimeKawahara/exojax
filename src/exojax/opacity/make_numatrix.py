@@ -1,7 +1,8 @@
-from jax import jit
+import warnings
+
 import jax.numpy as jnp
 import numpy as np
-import warnings
+from jax import jit
 
 
 def make_numatrix0(nu, hatnu, warning=True):

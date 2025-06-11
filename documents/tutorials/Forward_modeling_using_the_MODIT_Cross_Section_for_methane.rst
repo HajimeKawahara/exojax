@@ -9,7 +9,7 @@ exist.
 .. code:: ipython3
 
     from exojax.spec import rtransfer as rt
-    from exojax.spec import modit
+    from exojax.opacity import modit
 
 .. code:: ipython3
 
@@ -160,7 +160,7 @@ can be computed using init_dit.
 
 .. code:: ipython3
 
-    from exojax.spec import initspec 
+    from exojax.opacity import initspec 
     cnu,indexnu,R,pmarray=initspec.init_modit(mdbCH4.nu_lines,nus)
 
 Let’s compute a cross section matrix using modit.xsmatrix.

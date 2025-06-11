@@ -10,17 +10,17 @@ import numpy as np
 import jax.numpy as jnp
 from exojax.utils.grids import wavenumber_grid
 from exojax.spec import api
-from exojax.spec.opacalc import OpaPremodit
-from exojax.spec import initspec, molinfo
+from exojax.opacity.opacalc import OpaPremodit
+from exojax.opacity import initspec, molinfo
 from exojax.spec import molinfo
-from exojax.spec.premodit import unbiased_lsd_zeroth
-from exojax.spec.premodit import unbiased_lsd_first
-from exojax.spec.premodit import unbiased_lsd_second
-from exojax.spec.lsd import inc2D_givenx
-from exojax.spec import modit
+from exojax.opacity.premodit import unbiased_lsd_zeroth
+from exojax.opacity.premodit import unbiased_lsd_first
+from exojax.opacity.premodit import unbiased_lsd_second
+from exojax.opacity.lsd import inc2D_givenx
+from exojax.opacity import modit
 from exojax.spec.hitran import line_strength
 from exojax.utils.grids import wavenumber_grid
-from exojax.spec.set_ditgrid import ditgrid_log_interval
+from exojax.opacity.set_ditgrid import ditgrid_log_interval
 from exojax.spec.exomol import gamma_exomol
 from exojax.utils.constants import Tref_original
 

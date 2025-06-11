@@ -138,7 +138,7 @@ tempreature range we will use is 500-1500K.
 
 .. code:: ipython3
 
-    from exojax.spec.opacalc import OpaPremodit
+    from exojax.opacity.opacalc import OpaPremodit
     opa = OpaPremodit(mdb, nu_grid, auto_trange=[500.0, 1500.0], dit_grid_resolution=1.0)
 
 
@@ -288,7 +288,7 @@ absorption <https://en.wikipedia.org/wiki/Collision-induced_absorption_and_emiss
 .. code:: ipython3
 
     from exojax.spec.contdb import CdbCIA
-    from exojax.spec.opacont import OpaCIA
+    from exojax.opacity.opacont import OpaCIA
     
     cdb = CdbCIA(".database/H2-H2_2011.cia", nurange=nu_grid)
     opacia = OpaCIA(cdb, nu_grid=nu_grid)

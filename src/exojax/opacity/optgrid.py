@@ -1,10 +1,10 @@
 import numpy as np
-from exojax.spec.premodit import xsvector_zeroth
-from exojax.spec.opacalc import OpaPremodit
-from exojax.utils.constants import Tref_original
-from exojax.spec import normalized_doppler_sigma
-from exojax.utils.constants import Tref_original
 from tqdm import tqdm
+
+from exojax.spec import normalized_doppler_sigma
+from exojax.opacity.opacalc import OpaPremodit
+from exojax.opacity.premodit import xsvector_zeroth
+from exojax.utils.constants import Tref_original
 
 
 def optelower(

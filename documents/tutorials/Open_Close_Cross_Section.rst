@@ -95,7 +95,7 @@ wavenumber grids using PreMODIT (``nustitch=1`` by default).
 
 .. code:: ipython3
 
-    from exojax.spec.opacalc import OpaPremodit
+    from exojax.opacity.opacalc import OpaPremodit
     
     T=1000.0 #K
     P=1.0 #bar
@@ -304,7 +304,7 @@ reproduce the algorithm in ``OpaPremodit``. This can be done using
 
 .. code:: ipython3
 
-    from exojax.spec.premodit import xsvector_open_zeroth
+    from exojax.opacity.premodit import xsvector_open_zeroth
     from exojax.spec import normalized_doppler_sigma
     
     def xsv_open(opa,T,P):

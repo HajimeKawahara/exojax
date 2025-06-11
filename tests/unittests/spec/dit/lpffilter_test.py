@@ -12,9 +12,9 @@ import jax.numpy as jnp
 from jax import vmap
 import numpy as np
 from exojax.test.emulate_mdb import mock_wavenumber_grid
-from exojax.spec.ditkernel import fold_voigt_kernel_logst
-from exojax.spec.lpffilter import generate_closed_lpffilter
-from exojax.spec.lpffilter import generate_open_lpffilter
+from exojax.opacity.ditkernel import fold_voigt_kernel_logst
+from exojax.opacity.lpffilter import generate_closed_lpffilter
+from exojax.opacity.lpffilter import generate_open_lpffilter
 from jax import config
 
 

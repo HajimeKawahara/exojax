@@ -1,5 +1,5 @@
 """test for pressure_at_given_opacity"""
-from exojax.spec.opacitytools import pressure_at_given_opacity
+from exojax.utils.opautils import pressure_at_given_opacity
 import numpy as np
 import jax.numpy as jnp
 

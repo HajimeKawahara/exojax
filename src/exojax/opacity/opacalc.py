@@ -7,32 +7,22 @@ Notes:
 
 __all__ = ["OpaPremodit", "OpaModit", "OpaDirect"]
 
-from exojax.spec import initspec
-from exojax.spec.lbderror import optimal_params
-from exojax.utils.grids import wavenumber_grid
-from exojax.utils.instfunc import nx_even_from_resolution_eslog
-from exojax.utils.grids import nu2wav
-from exojax.utils.instfunc import resolution_eslog
-from exojax.utils.constants import Patm
-from exojax.utils.constants import Tref_original
-from exojax.utils.jaxstatus import check_jax64bit
-from exojax.utils.checkarray import is_outside_range
-from exojax.utils.grids import nu2wav
-from exojax.utils.instfunc import resolution_eslog
-from exojax.signal.ola import overlap_and_add
-from exojax.signal.ola import ola_output_length
-from exojax.signal.ola import overlap_and_add_matrix
-import jax.numpy as jnp
-from jax.lax import scan
-from jax.lax import dynamic_slice
-from jax import jit
-from jax import vmap
-from jax import checkpoint, checkpoint_policies
-
-
-import numpy as np
 import warnings
 from functools import partial
+
+import jax.numpy as jnp
+import numpy as np
+from jax import checkpoint, checkpoint_policies, jit, vmap
+from jax.lax import dynamic_slice, scan
+
+from exojax.signal.ola import ola_output_length, overlap_and_add, overlap_and_add_matrix
+from exojax.opacity import initspec
+from exojax.opacity.lbderror import optimal_params
+from exojax.utils.checkarray import is_outside_range
+from exojax.utils.constants import Patm, Tref_original
+from exojax.utils.grids import nu2wav, wavenumber_grid
+from exojax.utils.instfunc import nx_even_from_resolution_eslog, resolution_eslog
+from exojax.utils.jaxstatus import check_jax64bit
 
 
 class OpaCalc:
@@ -337,7 +327,7 @@ class OpaPremodit(OpaCalc):
 
     def set_Tref_broadening_to_midpoint(self):
         """Set self.Tref_broadening using log midpoint of Tmax and Tmin"""
-        from exojax.spec.premodit import reference_temperature_broadening_at_midpoint
+        from exojax.opacity.premodit import reference_temperature_broadening_at_midpoint
 
         self.Tref_broadening = reference_temperature_broadening_at_midpoint(
             self.Tmin, self.Tmax
@@ -466,18 +456,20 @@ class OpaPremodit(OpaCalc):
     def _sets_capable_opacalculators(self):
         """sets capable opacalculators"""
         # opa calculators for PreMODIT
-        from exojax.spec.premodit import xsvector_zeroth
-        from exojax.spec.premodit import xsvector_first
-        from exojax.spec.premodit import xsvector_second
-        from exojax.spec.premodit import xsmatrix_zeroth
-        from exojax.spec.premodit import xsmatrix_first
-        from exojax.spec.premodit import xsmatrix_second
-        from exojax.spec.premodit import xsvector_nu_open_zeroth
-        from exojax.spec.premodit import xsvector_nu_open_first
-        from exojax.spec.premodit import xsvector_nu_open_second
-        from exojax.spec.premodit import xsmatrix_nu_open_zeroth
-        from exojax.spec.premodit import xsmatrix_nu_open_first
-        from exojax.spec.premodit import xsmatrix_nu_open_second
+        from exojax.opacity.premodit import (
+            xsmatrix_first,
+            xsmatrix_nu_open_first,
+            xsmatrix_nu_open_second,
+            xsmatrix_nu_open_zeroth,
+            xsmatrix_second,
+            xsmatrix_zeroth,
+            xsvector_first,
+            xsvector_nu_open_first,
+            xsvector_nu_open_second,
+            xsvector_nu_open_zeroth,
+            xsvector_second,
+            xsvector_zeroth,
+        )
 
         self.xsvector_close = {
             0: xsvector_zeroth,
@@ -820,14 +812,11 @@ class OpaModit(OpaCalc):
         Returns:
             1D array: cross section in cm2
         """
-        from exojax.spec import normalized_doppler_sigma, gamma_natural
-        from exojax.spec.hitran import line_strength
+        from exojax.spec import gamma_natural, normalized_doppler_sigma
         from exojax.spec.exomol import gamma_exomol
-        from exojax.spec.hitran import gamma_hitran
-        from exojax.spec.set_ditgrid import ditgrid_log_interval
-        from exojax.spec.modit import xsvector_zeroscan
-        from exojax.spec.modit import xsvector_open_zeroscan
-        from exojax.spec import normalized_doppler_sigma
+        from exojax.spec.hitran import gamma_hitran, line_strength
+        from exojax.opacity.modit import xsvector_open_zeroscan, xsvector_zeroscan
+        from exojax.opacity.set_ditgrid import ditgrid_log_interval
 
         cont_nu, index_nu, R, pmarray = self.opainfo
 
@@ -891,10 +880,11 @@ class OpaModit(OpaCalc):
         Returns:
             _type_: dgm (DIT grid matrix) for gammaL
         """
-        from exojax.spec.set_ditgrid import minmax_ditgrid_matrix
-        from exojax.spec.set_ditgrid import precompute_modit_ditgrid_matrix
-        from exojax.spec.modit import hitran
-        from exojax.spec.modit import exomol
+        from exojax.opacity.modit import exomol, hitran
+        from exojax.opacity.set_ditgrid import (
+            minmax_ditgrid_matrix,
+            precompute_modit_ditgrid_matrix,
+        )
 
         cont_nu, index_nu, R, pmarray = self.opainfo
         if len(np.shape(Tarr_list)) == 1:
@@ -936,10 +926,12 @@ class OpaModit(OpaCalc):
         Returns:
             jnp.array : cross section matrix (Nlayer, N_wavenumber)
         """
-        from exojax.spec.modit import xsmatrix_zeroscan
-        from exojax.spec.modit import xsmatrix_open_zeroscan
-        from exojax.spec.modit import exomol
-        from exojax.spec.modit import hitran
+        from exojax.opacity.modit import (
+            exomol,
+            hitran,
+            xsmatrix_open_zeroscan,
+            xsmatrix_zeroscan,
+        )
 
         cont_nu, index_nu, R, pmarray = self.opainfo
 
@@ -1042,12 +1034,10 @@ class OpaDirect(OpaCalc):
         Returns:
             1D array: cross section in cm2
         """
-        from exojax.spec import gamma_natural
-        from exojax.spec import doppler_sigma
+        from exojax.spec import doppler_sigma, gamma_natural
         from exojax.spec.exomol import gamma_exomol
-        from exojax.spec.hitran import gamma_hitran
-        from exojax.spec.hitran import line_strength
-        from exojax.spec.lpf import xsvector as xsvector_lpf
+        from exojax.spec.hitran import gamma_hitran, line_strength
+        from exojax.opacity.lpf import xsvector as xsvector_lpf
 
         numatrix = self.opainfo
 
@@ -1083,13 +1073,11 @@ class OpaDirect(OpaCalc):
         Returns:
             jnp.array : cross section matrix (Nlayer, N_wavenumber)
         """
-        from exojax.spec import gamma_natural
-        from exojax.spec import doppler_sigma
-        from exojax.spec.exomol import gamma_exomol
-        from exojax.spec.hitran import gamma_hitran
-        from exojax.spec.hitran import line_strength
+        from exojax.spec import doppler_sigma, gamma_natural
         from exojax.spec.atomll import gamma_vald3, interp_QT_284
-        from exojax.spec.lpf import xsmatrix as xsmatrix_lpf
+        from exojax.spec.exomol import gamma_exomol
+        from exojax.spec.hitran import gamma_hitran, line_strength
+        from exojax.opacity.lpf import xsmatrix as xsmatrix_lpf
 
         numatrix = self.opainfo
         vmaplinestrengh = jit(vmap(line_strength, (0, None, None, None, 0, None)))

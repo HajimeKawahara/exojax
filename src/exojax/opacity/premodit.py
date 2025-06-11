@@ -5,22 +5,24 @@ Notes:
 
 """
 
-import numpy as np
-import jax.numpy as jnp
-from jax import jit, vmap
-from exojax.utils.indexing import npgetix
-from exojax.spec.lsd import npadd3D_multi_index, npadd3D_direct1D
-from exojax.utils.constants import hcperk
-from exojax.utils.constants import Tref_original
-
-# from exojax.spec.profconv import calc_xsection_from_lsd_scanfft
-from exojax.spec.profconv import calc_xsection_from_lsd_zeroscan
-from exojax.spec.profconv import calc_open_nu_xsection_from_lsd_zeroscan
-from exojax.spec.set_ditgrid import ditgrid_log_interval, ditgrid_linear_interval
-from exojax.utils.indexing import uniqidx_neibouring
-from exojax.spec import normalized_doppler_sigma
-from exojax.spec.lbd import lbd_coefficients
 from functools import partial
+
+import jax.numpy as jnp
+import numpy as np
+from jax import jit, vmap
+
+from exojax.spec import normalized_doppler_sigma
+from exojax.opacity.lbd import lbd_coefficients
+from exojax.opacity.lsd import npadd3D_direct1D, npadd3D_multi_index
+
+# from exojax.opacity.profconv import calc_xsection_from_lsd_scanfft
+from exojax.opacity.profconv import (
+    calc_open_nu_xsection_from_lsd_zeroscan,
+    calc_xsection_from_lsd_zeroscan,
+)
+from exojax.opacity.set_ditgrid import ditgrid_linear_interval, ditgrid_log_interval
+from exojax.utils.constants import Tref_original, hcperk
+from exojax.utils.indexing import npgetix, uniqidx_neibouring
 
 
 @partial(jit, static_argnums=14)

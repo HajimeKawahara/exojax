@@ -73,7 +73,7 @@ does not change the cross section within 1 %.
 
 .. code:: ipython3
 
-    from exojax.spec.optgrid import optelower
+    from exojax.opacity.optgrid import optelower
     
     Tmax = 700.0 #K
     Pmin = 1.e-8 #bar

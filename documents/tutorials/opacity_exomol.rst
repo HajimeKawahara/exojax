@@ -6,7 +6,7 @@ step by step.
 
 .. code:: ipython3
 
-    from exojax.spec.lpf import auto_xsection
+    from exojax.opacity.lpf import auto_xsection
     from exojax.spec import SijT, doppler_sigma,  gamma_natural
     from exojax.spec.exomol import gamma_exomol
     from exojax.spec import api

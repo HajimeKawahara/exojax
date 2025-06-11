@@ -1,6 +1,6 @@
 from exojax.test.emulate_mdb import mock_mdbHitemp, mock_mdbExomol
 from exojax.utils.grids import wavenumber_grid
-from exojax.spec.opacalc import OpaPremodit
+from exojax.opacity.opacalc import OpaPremodit
 
 def test_opapremodit_hitemp_call():
     nus, wav, res = wavenumber_grid(22920.0, 23100.0, 20000, unit="AA", xsmode="premodit")

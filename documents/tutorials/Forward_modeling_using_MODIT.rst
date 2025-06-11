@@ -6,8 +6,8 @@ Here, we try to compute a emission spectrum using MODIT.
 .. code:: ipython3
 
     from exojax.spec import rtransfer as rt
-    from exojax.spec import modit
-    from exojax.spec import lpf
+    from exojax.opacity import modit
+    from exojax.opacity import lpf
     import numpy as np
     import matplotlib.pyplot as plt
     plt.style.use('bmh')
@@ -132,7 +132,7 @@ Initialize modit!
 
 .. code:: ipython3
 
-    from exojax.spec import initspec 
+    from exojax.opacity import initspec 
     cnu,indexnu,R,pmarray=initspec.init_modit(mdbCO.nu_lines,nus)
 
 Compute the cross section array!
@@ -171,7 +171,7 @@ the comparison purpose.
     sigmaDM=jit(vmap(doppler_sigma,(None,0,None)))\
             (mdbCO.nu_lines,Tarr,molmassCO)
     
-    from exojax.spec.lpf import xsmatrix
+    from exojax.opacity.lpf import xsmatrix
     numatrix=initspec.init_lpf(mdbCO.nu_lines,nus)
     xsmdirect=xsmatrix(numatrix,sigmaDM,gammaLM,SijM)
 

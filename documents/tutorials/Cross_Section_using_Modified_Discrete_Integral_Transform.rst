@@ -83,7 +83,7 @@ ngamma.
 
 .. code:: ipython3
 
-    from exojax.spec.set_ditgrid import ditgrid_log_interval
+    from exojax.opacity.set_ditgrid import ditgrid_log_interval
     
     ngammaL_grid = ditgrid_log_interval(ngammaL)
 
@@ -114,7 +114,7 @@ can be computed using init_dit.
 
 .. code:: ipython3
 
-    from exojax.spec import initspec
+    from exojax.opacity import initspec
     
     cnu, indexnu, R, pmarray = initspec.init_modit(mdbCO.nu_lines, nus)
 
@@ -122,7 +122,7 @@ Let’s compute the cross section!
 
 .. code:: ipython3
 
-    from exojax.spec.modit_scanfft import xsvector_scanfft
+    from exojax.opacity.modit_scanfft import xsvector_scanfft
     
     xs = xsvector_scanfft(cnu, indexnu, R, pmarray, nsigmaD, ngammaL, Sij, nus, ngammaL_grid)
 
@@ -131,7 +131,7 @@ purpose
 
 .. code:: ipython3
 
-    from exojax.spec.opacalc import OpaDirect
+    from exojax.opacity.opacalc import OpaDirect
     opa = OpaDirect(mdbCO, nus)
     xsv = opa.xsvector(Tfix, Pfix, Ppart)
 

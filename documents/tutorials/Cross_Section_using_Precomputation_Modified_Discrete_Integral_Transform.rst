@@ -61,7 +61,7 @@ section.
 
 .. code:: ipython3
 
-    from exojax.spec import initspec
+    from exojax.opacity import initspec
     
     Twt = 1000.0
     Tref_broadening = Tref_original
@@ -120,7 +120,7 @@ should use xsvector_zeroth.
 
 .. code:: ipython3
 
-    from exojax.spec.premodit import xsvector_zeroth
+    from exojax.opacity.premodit import xsvector_zeroth
     xs = xsvector_zeroth(Tfix, Pfix, nsigmaD, lbd, Tref_original, R, pmarray, nu_grid,
                        elower_grid, multi_index_uniqgrid, ngamma_ref_grid,
                        n_Texp_grid, qt, Tref_broadening)
@@ -144,7 +144,7 @@ should use xsvector_zeroth.
 
 .. code:: ipython3
 
-    from exojax.spec.opacalc import OpaDirect
+    from exojax.opacity.opacalc import OpaDirect
     opa = OpaDirect(mdbCO, nu_grid)
     xsv = opa.xsvector(Tfix, Pfix, Ppart)
 

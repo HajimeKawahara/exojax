@@ -3,8 +3,8 @@
 
 import pytest
 import jax.numpy as jnp
-from exojax.spec.opacalc import OpaPremodit
-from exojax.spec.opacalc import OpaModit
+from exojax.opacity.opacalc import OpaPremodit
+from exojax.opacity.opacalc import OpaModit
 from exojax.test.emulate_mdb import mock_mdbExomol
 from exojax.test.emulate_mdb import mock_wavenumber_grid
     

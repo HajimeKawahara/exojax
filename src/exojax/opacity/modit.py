@@ -8,30 +8,35 @@
 """
 
 import warnings
-import numpy as np
+from functools import partial
+
 import jax.numpy as jnp
+import numpy as np
 from jax import jit, vmap
 from jax.lax import scan
-from exojax.spec.lsd import inc2D_givenx
-from exojax.spec.profconv import calc_xsection_from_lsd_scanfft
-from exojax.spec.profconv import calc_xsection_from_lsd_zeroscan
-from exojax.spec.profconv import calc_open_nu_xsection_from_lsd_zeroscan
-from exojax.spec.set_ditgrid import minmax_ditgrid_matrix
-from exojax.spec.set_ditgrid import precompute_modit_ditgrid_matrix
 
-# exomol
-from exojax.spec.exomol import gamma_exomol
-from exojax.spec import gamma_natural
-from exojax.spec.hitran import line_strength
-from exojax.spec import normalized_doppler_sigma
-
-# hitran/hitemp
-from exojax.spec.hitran import gamma_hitran
+from exojax.spec import gamma_natural, normalized_doppler_sigma
 
 # vald
 from exojax.spec.atomll import gamma_vald3, interp_QT_284
+
+# exomol
+from exojax.spec.exomol import gamma_exomol
+
+# hitran/hitemp
+from exojax.spec.hitran import gamma_hitran, line_strength
+from exojax.opacity.lsd import inc2D_givenx
+from exojax.opacity.profconv import (
+    calc_open_nu_xsection_from_lsd_zeroscan,
+    calc_xsection_from_lsd_scanfft,
+    calc_xsection_from_lsd_zeroscan,
+)
+from exojax.opacity.set_ditgrid import (
+    minmax_ditgrid_matrix,
+    precompute_modit_ditgrid_matrix,
+)
 from exojax.utils.constants import Tref_original
-from functools import partial
+
 
 @partial(jit, static_argnums=9)
 def xsvector_open_zeroscan(
@@ -943,7 +948,7 @@ def dgmatrix(x, dit_grid_resolution=0.1, adopt=True):
     """
     warn_msg = "Deprecated Use `set_ditgrid.ditgrid_matrix` instead"
     warnings.warn(warn_msg, FutureWarning)
-    from exojax.spec.set_ditgrid import ditgrid_matrix
+    from exojax.opacity.set_ditgrid import ditgrid_matrix
 
     return ditgrid_matrix(x, dit_grid_resolution, adopt)
 
@@ -963,7 +968,7 @@ def ditgrid(x, dit_grid_resolution=0.1, adopt=True):
 
     warn_msg = "Deprecated Use `set_ditgrid.ditgrid_log_interval` instead"
     warnings.warn(warn_msg, FutureWarning)
-    from exojax.spec.set_ditgrid import ditgrid_log_interval
+    from exojax.opacity.set_ditgrid import ditgrid_log_interval
 
     return ditgrid_log_interval(x, dit_grid_resolution, adopt)
 

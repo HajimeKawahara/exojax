@@ -26,7 +26,7 @@ from exojax.spec.layeropacity import layer_optical_depth_VALD as dtauVALD
 from exojax.spec.dtau_mmwl import dtauM_mmwl, dtauHminus_mmwl, dtauCIA_mmwl
 from exojax.utils.grids import wavenumber_grid
 from exojax.utils.instfunc import resolution_to_gaussian_std
-from exojax.spec.modit import (
+from exojax.opacity.modit import (
     vald_all,
     xsmatrix_vald,
     exomol,

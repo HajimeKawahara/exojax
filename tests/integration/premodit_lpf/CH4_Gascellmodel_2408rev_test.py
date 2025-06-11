@@ -96,7 +96,7 @@ strline_ind_array_nu = jnp.sort(strline_ind_array)
 
 mdb_weak, nu_center_voigt, mdb_voigt = create_mdbs_multi(mdb, strline_ind_array_nu)
 # opa = create_opapremodit(mdb_weak, nu_grid, Tarr)
-from exojax.spec.opacalc import OpaPremodit
+from exojax.opacity.opacalc import OpaPremodit
 
 opa = OpaPremodit(
     mdb=mdb_voigt,

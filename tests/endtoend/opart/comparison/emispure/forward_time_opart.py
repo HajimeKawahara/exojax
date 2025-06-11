@@ -1,4 +1,4 @@
-from exojax.spec.opacalc import OpaPremodit
+from exojax.opacity.opacalc import OpaPremodit
 from exojax.spec.opart import OpartEmisPure
 from exojax.spec.layeropacity import single_layer_optical_depth
 from exojax.utils.grids import wavenumber_grid

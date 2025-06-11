@@ -7,8 +7,8 @@ from exojax.spec import response
 from exojax.spec import molinfo
 from exojax.spec import contdb
 from exojax.spec.api import MdbExomol
-from exojax.spec.opacalc import OpaDirect
-from exojax.spec.opacont import OpaCIA
+from exojax.opacity.opacalc import OpaDirect
+from exojax.opacity.opacont import OpaCIA
 from exojax.spec.atmrt import ArtEmisPure
 from exojax.spec.specop import SopRotation
 from exojax.spec.specop import SopInstProfile

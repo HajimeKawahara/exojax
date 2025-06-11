@@ -1,4 +1,4 @@
-from exojax.spec.lbderror import single_tilde_line_strength_zeroth
+from exojax.opacity.lbderror import single_tilde_line_strength_zeroth
 import matplotlib.pyplot as plt
 import numpy as np
 

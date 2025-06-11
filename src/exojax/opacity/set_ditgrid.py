@@ -4,8 +4,9 @@
 
 """
 
-import numpy as np
 import warnings
+
+import numpy as np
 
 
 def ditgrid_log_interval(input_variable, dit_grid_resolution=0.1, adopt=True):

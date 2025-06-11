@@ -134,7 +134,7 @@ Initialize PreMODIT. In this process, we precompute Line Basis Density
 
 .. code:: ipython3
 
-    from exojax.spec.initspec import init_premodit
+    from exojax.opacity.initspec import init_premodit
     
     interval_contrast = 0.1
     dit_grid_resolution = 0.1
@@ -200,7 +200,7 @@ We here use numpyro as a PPL (probabilistic programming language).
 
     from exojax.spec.rtransfer import dtauM, dtauCIA, rtrun
     from exojax.spec import planck
-    from exojax.spec import premodit
+    from exojax.opacity import premodit
     from jax import vmap
     
     

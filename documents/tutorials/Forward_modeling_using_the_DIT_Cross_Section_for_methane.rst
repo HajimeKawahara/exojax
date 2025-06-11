@@ -4,8 +4,8 @@ Forward Modeling of an Emission Spectrum using the DIT Cross Section
 .. code:: ipython3
 
     from exojax.spec import rtransfer as rt
-    from exojax.spec import dit
-    from exojax.spec import lpf
+    from exojax.opacity import dit
+    from exojax.opacity import lpf
 
 .. code:: ipython3
 
@@ -138,7 +138,7 @@ DIT
 
 .. code:: ipython3
 
-    from exojax.spec import initspec 
+    from exojax.opacity import initspec 
     cnu,indexnu,pmarray=initspec.init_dit(mdbCH4.nu_lines,nus)
     xsmdit=dit.xsmatrix(cnu,indexnu,pmarray,sigmaDM,gammaLM,SijM,nus,dgm_sigmaD,dgm_gammaL)
 

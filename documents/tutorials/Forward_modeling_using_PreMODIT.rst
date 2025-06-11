@@ -12,7 +12,7 @@ to use FP64 as follows:
 .. code:: ipython3
 
     from exojax.spec import rtransfer as rt
-    from exojax.spec import premodit
+    from exojax.opacity import premodit
     import numpy as np
     import matplotlib.pyplot as plt
     plt.style.use('bmh')
@@ -70,7 +70,7 @@ gpu_transfer=False can save the device memory use.
 
 .. code:: ipython3
 
-    from exojax.spec.opacalc import OpaPremodit
+    from exojax.opacity.opacalc import OpaPremodit
     diffmode = 0
     opa = OpaPremodit(mdb=mdbCO,
                           nu_grid=nus,
@@ -152,8 +152,8 @@ the comparison purpose.
     #we need sigmaDM for LPF
     from exojax.spec import doppler_sigma
     from jax import jit
-    from exojax.spec.initspec import init_lpf
-    from exojax.spec.lpf import xsmatrix as xsmatrix_lpf
+    from exojax.opacity.initspec import init_lpf
+    from exojax.opacity.lpf import xsmatrix as xsmatrix_lpf
     from exojax.spec.exomol import gamma_exomol
     from exojax.spec import gamma_natural
     from exojax.spec import SijT

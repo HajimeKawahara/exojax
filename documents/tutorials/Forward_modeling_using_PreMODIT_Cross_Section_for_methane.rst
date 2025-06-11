@@ -121,7 +121,7 @@ the line strenght is within 1%.
 
 .. code:: ipython3
 
-    from exojax.spec.opacalc import OpaPremodit
+    from exojax.opacity.opacalc import OpaPremodit
     diffmode = 0
     opa = OpaPremodit(mdb=mdbCH4,
                           nu_grid=nus,

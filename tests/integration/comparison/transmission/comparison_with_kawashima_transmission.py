@@ -7,7 +7,7 @@ import numpy as np
 from exojax.utils.grids import wavenumber_grid
 from exojax.utils.astrofunc import gravity_jupiter
 from exojax.utils.constants import RJ, Rs
-from exojax.spec.opacalc import OpaModit
+from exojax.opacity.opacalc import OpaModit
 from exojax.spec.atmrt import ArtTransPure
 from exojax.spec.api import MdbHitran
 from exojax.test.data import COMPDATA_TRANSMISSION_CO
@@ -62,7 +62,7 @@ def compare_with_kawashima_code():
     ### Rayleigh scattering
     from exojax.atm.polarizability import polarizability
     from exojax.atm.polarizability import king_correction_factor
-    from exojax.spec.rayleigh import xsvector_rayleigh_gas
+    from exojax.opacity.rayleigh import xsvector_rayleigh_gas
 
     xsvector_rayleigh = xsvector_rayleigh_gas(
         nu_grid, polarizability["CO"], king_correction_factor["CO"]

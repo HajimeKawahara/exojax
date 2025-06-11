@@ -130,7 +130,7 @@ Initialize MODIT
 
 .. code:: ipython3
 
-    from exojax.spec import initspec
+    from exojax.opacity import initspec
     cnu,indexnu,R,pmarray=initspec.init_modit(mdbCH4.nu_lines,nus)
 
 Do not confuse R with Rinst. R is the spectral resolution of the raw
@@ -157,7 +157,7 @@ automatically set DGM based on the T-P model and given ranges.
 .. code:: ipython3
 
     # Precomputing gdm_ngammaL                                                                                              
-    from exojax.spec.modit import setdgm_exomol
+    from exojax.opacity.modit import setdgm_exomol
     from jax import jit, vmap
     
     fT = lambda T0,alpha: T0[:,None]*(Parr[None,:]/Pref)**alpha[:,None]
@@ -195,7 +195,7 @@ frun returns a spectral model.
 
 .. code:: ipython3
 
-    from exojax.spec.modit import exomol,xsmatrix
+    from exojax.opacity.modit import exomol,xsmatrix
     from exojax.spec.rtransfer import dtauM, dtauCIA, rtrun
     from exojax.spec import planck, response
     from exojax.spec.response import ipgauss_sampling

@@ -4,16 +4,15 @@ The functions in this module are a wrapper for initialization processes
 for opacity computation.
 """
 
-import jax.numpy as jnp
-import numpy as np
 import warnings
 
+import jax.numpy as jnp
+import numpy as np
+
+from exojax.opacity.make_numatrix import make_numatrix0
+from exojax.opacity.premodit import generate_lbd, make_broadpar_grid, make_elower_grid
 from exojax.utils.indexing import npgetix
-from exojax.spec.make_numatrix import make_numatrix0
 from exojax.utils.instfunc import resolution_eslog
-from exojax.spec.premodit import make_elower_grid
-from exojax.spec.premodit import make_broadpar_grid
-from exojax.spec.premodit import generate_lbd
 
 
 def init_lpf(nu_lines, nu_grid):

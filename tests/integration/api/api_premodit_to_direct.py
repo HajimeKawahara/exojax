@@ -7,7 +7,7 @@ from exojax.utils.grids import wavenumber_grid
 from exojax.spec import api
 from exojax.spec import molinfo
 from exojax.spec.hitran import line_strength, doppler_sigma, gamma_hitran, gamma_natural, line_strength_numpy
-from exojax.spec.opacalc import OpaPremodit, OpaDirect
+from exojax.opacity.opacalc import OpaPremodit, OpaDirect
 import numpy as np
 import matplotlib.pyplot as plt
 
@@ -15,7 +15,7 @@ from jax import config
 config.update("jax_enable_x64", True)
 
 
-from exojax.spec.lpf import xsvector, make_numatrix0
+from exojax.opacity.lpf import xsvector, make_numatrix0
 import tqdm
 def auto_xsection(nu, nu_lines, sigmaD, gammaL, Sij, memory_size=15.):
     """computes cross section .
@@ -35,7 +35,7 @@ def auto_xsection(nu, nu_lines, sigmaD, gammaL, Sij, memory_size=15.):
         numpy.array: cross section (xsv)
 
     Example:
-        >>> from exojax.spec.lpf import auto_xsection
+        >>> from exojax.opacity.lpf import auto_xsection
         >>> from exojax.spec.hitran import SijT, doppler_sigma, gamma_hitran, gamma_natural
         >>> from exojax.spec import moldb
         >>> import numpy as np

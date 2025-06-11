@@ -4,14 +4,14 @@
 import pytest
 import numpy as np
 import jax.numpy as jnp
-from exojax.spec.opacalc import OpaPremodit
-from exojax.spec.premodit import unbiased_lsd_zeroth
-from exojax.spec.premodit import unbiased_lsd_first
-from exojax.spec.premodit import unbiased_lsd_second
+from exojax.opacity.opacalc import OpaPremodit
+from exojax.opacity.premodit import unbiased_lsd_zeroth
+from exojax.opacity.premodit import unbiased_lsd_first
+from exojax.opacity.premodit import unbiased_lsd_second
 from exojax.test.emulate_mdb import mock_mdbExomol
 from exojax.test.emulate_mdb import mock_wavenumber_grid
-from exojax.spec.profconv import calc_xsection_from_lsd_scanfft
-from exojax.spec.premodit import unbiased_ngamma_grid
+from exojax.opacity.profconv import calc_xsection_from_lsd_scanfft
+from exojax.opacity.premodit import unbiased_ngamma_grid
 from exojax.spec import normalized_doppler_sigma
 
 
