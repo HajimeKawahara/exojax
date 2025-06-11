@@ -10,15 +10,22 @@ from jax import config
 
 config.update("jax_enable_x64", True)  # use double precision
 
-#from exojax.utils.grids import wavenumber_grid
-#from exojax.spec.api import MdbExomol
+# from exojax.utils.grids import wavenumber_grid
+# from exojax.spec.api import MdbExomol
 # N = 70000
 # nus, wav, res = wavenumber_grid(6400.0, 6800.0, N, unit="cm-1", xsmode = "premodit")
 # mdb = MdbExomol(".databases/H2O/1H2-16O/POKAZATEL/",nus)
 # print("resolution = ", res)
 
-nus, wav, res = mock_wavenumber_grid(lambda0=22930.0, lambda1=22940.0, Nx=2000)
+nus, wav, res = mock_wavenumber_grid(lambda0=22930.0, lambda1=22940.0, Nx=20000)
 mdb = mock_mdbExomol("H2O")
+
+def compute_g(xsv):
+    idx = jnp.argsort(xsv)
+    k_g = xsv[idx]
+    g = jnp.arange(xsv.size, dtype=xsv.dtype) / xsv.size
+    return idx, k_g, g
+
 
 opa = OpaPremodit(mdb, nus, auto_trange=[500.0, 1500.0])
 
@@ -27,10 +34,8 @@ P = 1.0e-2
 xsv = opa.xsvector(T, P)
 
 
-def computeg(nus, xsv, Ng=10):
-    idx = jnp.argsort(xsv)
-    k_g = xsv[idx]
-    g = jnp.arange(xsv.size, dtype=xsv.dtype) / xsv.size
+def sample_g(nus, xsv, Ng=10):
+    idx, k_g, g = compute_g(xsv)
 
     # segments
     edges = jnp.linspace(0.0, 1.0, Ng + 1)  # 0,1/Ng,…,1
@@ -114,7 +119,7 @@ for i, (T, P, title) in enumerate(zip(temperatures, pressures, titles)):
         y_base,
         y_base_,
         y_top,
-    ) = computeg(nus, xsv)
+    ) = sample_g(nus, xsv)
     plotxsv_1(nus, xsv, nus_segments, xsv_segments, j, k_med, mask, y_base, title, ax)
     if i < 4:
         ax.xaxis.set_ticklabels([])
@@ -140,7 +145,7 @@ xsv = opa.xsvector(T, P)
     y_base,
     y_base_,
     y_top,
-) = computeg(nus, xsv)
+) = sample_g(nus, xsv)
 
 
 def plotxsv(nus, xsv, nus_segments, xsv_segments, j, k_med, mask, y_base):
