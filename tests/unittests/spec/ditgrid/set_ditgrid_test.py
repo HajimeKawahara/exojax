@@ -1,7 +1,7 @@
 import jax.numpy as jnp
 import pytest
 import numpy as np
-from exojax.spec.set_ditgrid import ditgrid_log_interval, ditgrid_linear_interval
+from exojax.opacity.set_ditgrid import ditgrid_log_interval, ditgrid_linear_interval
 
 
 def test_ditgrid_log_interval():

@@ -17,8 +17,8 @@ Note: The input line list needs to be obtained from VALD3 (http://vald.astro.uu.
 
 import pytest
 import numpy as np
-from exojax.spec import moldb, atomll
-from exojax.spec.hitran import line_strength, doppler_sigma
+from exojax.database import moldb , atomll
+from exojax.database.hitran  import line_strength, doppler_sigma
 import matplotlib.pyplot as plt
 from exojax.utils.constants import m_u
 import os

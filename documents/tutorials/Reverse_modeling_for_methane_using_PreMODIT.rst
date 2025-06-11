@@ -54,7 +54,7 @@ instrument,
 
 .. code:: ipython3
 
-    from exojax.spec.rtransfer import pressure_layer,wavenumber_grid
+    from exojax.rt.rtransfer import pressure_layer,wavenumber_grid
     from exojax.utils.instfunc import resolution_to_gaussian_std
     
     NP=100
@@ -83,8 +83,8 @@ memory use.
 
 .. code:: ipython3
 
-    from exojax.spec import api, contdb
-    from exojax.spec import molinfo
+    from exojax.database import api , contdb
+    from exojax.database import molinfo 
     
     mmw=2.33 #mean molecular weight
     
@@ -134,7 +134,7 @@ Initialize PreMODIT. In this process, we precompute Line Basis Density
 
 .. code:: ipython3
 
-    from exojax.spec.initspec import init_premodit
+    from exojax.opacity.initspec import init_premodit
     
     interval_contrast = 0.1
     dit_grid_resolution = 0.1
@@ -189,8 +189,8 @@ We here use numpyro as a PPL (probabilistic programming language).
 
 .. code:: ipython3
 
-    from exojax.spec.response import ipgauss_sampling
-    from exojax.spec.spin_rotation import convolve_rigid_rotation
+    from exojax.postproc.response import ipgauss_sampling
+    from exojax.postproc.spin_rotation import convolve_rigid_rotation
     from exojax.utils.grids import velocity_grid
     vsini_max = 100.0
     vr_array = velocity_grid(res, vsini_max)
@@ -198,9 +198,9 @@ We here use numpyro as a PPL (probabilistic programming language).
 
 .. code:: ipython3
 
-    from exojax.spec.rtransfer import dtauM, dtauCIA, rtrun
-    from exojax.spec import planck
-    from exojax.spec import premodit
+    from exojax.rt.rtransfer import dtauM, dtauCIA, rtrun
+    from exojax.rt import planck
+    from exojax.opacity import premodit
     from jax import vmap
     
     

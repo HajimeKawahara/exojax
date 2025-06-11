@@ -19,7 +19,7 @@ Make “mdb”.
 .. code:: ipython3
 
     from exojax.utils.grids import wavenumber_grid
-    from exojax.spec.api import MdbExomol
+    from exojax.database.api  import MdbExomol
     
     nu_grid, wav, resolution = wavenumber_grid(2200.,
                                                2300.,
@@ -73,7 +73,7 @@ does not change the cross section within 1 %.
 
 .. code:: ipython3
 
-    from exojax.spec.optgrid import optelower
+    from exojax.opacity.optgrid import optelower
     
     Tmax = 700.0 #K
     Pmin = 1.e-8 #bar

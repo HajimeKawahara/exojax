@@ -71,7 +71,7 @@ wavenumber range first.
 
 .. parsed-literal::
 
-    /home/kawahara/exojax/src/exojax/spec/unitconvert.py:82: UserWarning: Both input wavelength and output wavenumber are in ascending order.
+    /home/kawahara/exojax/src/exojax/utils.grids.py:82: UserWarning: Both input wavelength and output wavenumber are in ascending order.
       warnings.warn(
 
 
@@ -82,7 +82,7 @@ the database name in the ExoMol website (https://www.exomol.com/).
 
 .. code:: ipython3
 
-    from exojax.spec.api import MdbExomol
+    from exojax.database.api  import MdbExomol
     mdb = MdbExomol(".database/CO/12C-16O/Li2015", nurange=nu_grid)
 
 
@@ -165,7 +165,7 @@ tempreature range we will use is 500-1500K.
 
 .. code:: ipython3
 
-    from exojax.spec.opacalc import OpaPremodit
+    from exojax.opacity.opacalc import OpaPremodit
     opa = OpaPremodit(mdb, nu_grid, auto_trange=[500.0, 1500.0], dit_grid_resolution=1.0)
 
 
@@ -255,7 +255,7 @@ Simpson’s rule as the integration scheme. The default setting is
 
 .. code:: ipython3
 
-    from exojax.spec.atmrt import ArtTransPure
+    from exojax.rt.atmrt import ArtTransPure
     
     art = ArtTransPure(
         pressure_btm=1.0e1,
@@ -344,8 +344,8 @@ absorption <https://en.wikipedia.org/wiki/Collision-induced_absorption_and_emiss
 
 .. code:: ipython3
 
-    from exojax.spec.contdb import CdbCIA
-    from exojax.spec.opacont import OpaCIA
+    from exojax.database.contdb  import CdbCIA
+    from exojax.opacity.opacont import OpaCIA
     
     cdb = CdbCIA(".database/H2-H2_2011.cia", nurange=nu_grid)
     opacia = OpaCIA(cdb, nu_grid=nu_grid)
@@ -427,8 +427,8 @@ along the chord direction. This can be done as follows:
 
 .. code:: ipython3
 
-    from exojax.spec.opachord import chord_geometric_matrix
-    from exojax.spec.opachord import chord_optical_depth
+    from exojax.rt.chord import chord_geometric_matrix
+    from exojax.rt.chord import chord_optical_depth
     
     normalized_height, normalized_radius_lower = art.atmosphere_height(Tarr, mmw, radius_btm, gravity_btm)        
     cgm = chord_geometric_matrix(normalized_height, normalized_radius_lower)
@@ -478,7 +478,7 @@ analysis.
 
 .. code:: ipython3
 
-    from exojax.spec.specop import SopInstProfile
+    from exojax.postproc.specop import SopInstProfile
     from exojax.utils.instfunc import resolution_to_gaussian_std
     
     sop_inst = SopInstProfile(nu_grid, vrmax=1000.0)

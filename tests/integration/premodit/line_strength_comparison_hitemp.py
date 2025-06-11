@@ -7,24 +7,24 @@
 import numpy as np
 import jax.numpy as jnp
 from exojax.utils.grids import wavenumber_grid
-from exojax.spec import api
-from exojax.spec.opacalc import OpaPremodit
-from exojax.spec import initspec
-from exojax.spec.premodit import unbiased_lsd_zeroth
-from exojax.spec.premodit import unbiased_lsd_first
-from exojax.spec.premodit import unbiased_lsd_second
-from exojax.spec.lsd import inc2D_givenx
-from exojax.spec.hitran import line_strength
+from exojax.database import api 
+from exojax.opacity.opacalc import OpaPremodit
+from exojax.opacity import initspec
+from exojax.opacity.premodit import unbiased_lsd_zeroth
+from exojax.opacity.premodit import unbiased_lsd_first
+from exojax.opacity.premodit import unbiased_lsd_second
+from exojax.opacity.lsd import inc2D_givenx
+from exojax.database.hitran  import line_strength
 from exojax.utils.grids import wavenumber_grid
-from exojax.spec.set_ditgrid import ditgrid_log_interval
-from exojax.spec.hitran import gamma_hitran
-from exojax.spec.hitran import gamma_natural
+from exojax.opacity.set_ditgrid import ditgrid_log_interval
+from exojax.database.hitran  import gamma_hitran
+from exojax.database.hitran  import gamma_natural
 from exojax.utils.constants import Tref_original
 
 ## also, xs
-from exojax.spec import normalized_doppler_sigma
-from exojax.spec.profconv import calc_xsection_from_lsd_scanfft
-from exojax.spec.premodit import unbiased_ngamma_grid
+from exojax.database.hitran import normalized_doppler_sigma
+from exojax.opacity.profconv import calc_xsection_from_lsd_scanfft
+from exojax.opacity.premodit import unbiased_ngamma_grid
 
 from jax import config
 
@@ -86,8 +86,8 @@ xsv_manual = calc_xsection_from_lsd_scanfft(
 # MODIT LSD
 # We need to revert the reference temperature to 296K to reuse mdb for MODIT
 # ===========================================================================
-from exojax.spec.modit import xsvector_scanfft
-from exojax.spec.initspec import init_modit
+from exojax.opacity.modit import xsvector_scanfft
+from exojax.opacity.initspec import init_modit
 
 qt = mdb.qr_interp(mdb.isotope, Ttest, Tref_original)
 cont, index, R, pmarray = initspec.init_modit(mdb.nu_lines, nus)

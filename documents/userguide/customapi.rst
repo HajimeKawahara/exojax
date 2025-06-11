@@ -53,7 +53,7 @@ al. (2003).
 
 .. code:: ipython3
 
-    from exojax.spec.api import MdbExomol
+    from exojax.database.api  import MdbExomol
     
     mdb_exomol = MdbExomol(database_dir + "FeH/56Fe-1H/MoLLIST", nurange=nu_grid)
     mdb_exomol_noactivation =  MdbExomol(database_dir + "FeH/56Fe-1H/MoLLIST", nurange=nu_grid, activation=False)
@@ -170,7 +170,7 @@ estimated using
 .. code:: ipython3
 
     import numpy as np
-    from exojax.spec.customapi import MdbHargreaves
+    from exojax.database.customapi  import MdbHargreaves
     from exojax.utils.constants import Tref_original   
     
     QTref_original = np.array(mdb_exomol.QT_interp(Tref_original))
@@ -235,11 +235,11 @@ We will now compare the spectra from ExoMol and Harg2010.
 
 .. code:: ipython3
 
-    from exojax.spec.opacalc import OpaPremodit
-    from exojax.spec.atmrt import ArtEmisPure
+    from exojax.opacity.opacalc import OpaPremodit
+    from exojax.rt.atmrt import ArtEmisPure
     
-    from exojax.spec.contdb import CdbCIA
-    from exojax.spec.opacont import OpaCIA
+    from exojax.database.contdb  import CdbCIA
+    from exojax.opacity.opacont import OpaCIA
     
     cdb = CdbCIA(database_dir + "H2-H2_2011.cia", nurange=nu_grid)
     

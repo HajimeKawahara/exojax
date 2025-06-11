@@ -3,7 +3,7 @@ Reducing memory for HITEMP CH4
 
 .. code:: ipython3
 
-    from exojax.spec import moldb
+    from exojax.database import moldb 
     import numpy as np
     import seaborn as sns
     import matplotlib.pyplot as plt

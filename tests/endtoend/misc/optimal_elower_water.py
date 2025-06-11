@@ -3,9 +3,9 @@ This example determine the optimal Elower maximum for water (ExoMol, POKAZATEL),
 We need to assume a max T (and min P) to compare the cross section whose E above Emax is cutted with the ground truth.
 """
 
-from exojax.spec.optgrid import optelower
+from exojax.opacity.optgrid import optelower
 from exojax.utils.grids import wavenumber_grid
-from exojax.spec.api import MdbExomol
+from exojax.database.api  import MdbExomol
 import numpy as np
 
 Nx = 15000

@@ -20,10 +20,10 @@ Currently, the only opacity calculator that supports
 
 .. code:: ipython3
 
-    from exojax.spec.opacalc import OpaPremodit
+    from exojax.opacity.opacalc import OpaPremodit
     from exojax.utils.grids import wavenumber_grid
-    from exojax.spec.api import MdbExomol
-    from exojax.spec.atmrt import ArtTransPure
+    from exojax.database.api  import MdbExomol
+    from exojax.rt.atmrt import ArtTransPure
     import jax.numpy as jnp
     
     
@@ -56,7 +56,7 @@ computation was performed on a gaming laptop with 8GB of device memory.
 
 .. parsed-literal::
 
-    /home/kawahara/exojax/src/exojax/spec/unitconvert.py:63: UserWarning: Both input wavelength and output wavenumber are in ascending order.
+    /home/kawahara/exojax/src/exojax/utils.grids.py:63: UserWarning: Both input wavelength and output wavenumber are in ascending order.
       warnings.warn(
     /home/kawahara/exojax/src/exojax/utils/molname.py:197: FutureWarning: e2s will be replaced to exact_molname_exomol_to_simple_molname.
       warnings.warn(

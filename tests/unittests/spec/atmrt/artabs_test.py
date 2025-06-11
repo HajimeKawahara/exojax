@@ -1,5 +1,5 @@
 import pytest
-from exojax.spec.atmrt import ArtAbsPure
+from exojax.rt.atmrt import ArtAbsPure
 from exojax.utils.grids import wavenumber_grid
 import jax.numpy as jnp
 

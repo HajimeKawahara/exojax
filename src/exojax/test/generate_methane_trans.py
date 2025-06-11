@@ -6,15 +6,15 @@
 import numpy as np
 import matplotlib.pyplot as plt
 from exojax.utils.grids import wavenumber_grid
-from exojax.spec.atmrt import ArtTransPure
-from exojax.spec.api import MdbExomol
-from exojax.spec.opacalc import OpaPremodit
+from exojax.rt.atmrt import ArtTransPure
+from exojax.database.api  import MdbExomol
+from exojax.opacity.opacalc import OpaPremodit
 from exojax.utils.astrofunc import gravity_jupiter
 from exojax.utils.instfunc import resolution_to_gaussian_std
 from exojax.test.data import SAMPLE_SPECTRA_CH4_TRANS
 from exojax.utils.constants import RJ, Rs
 from exojax.utils.astrofunc import gravity_jupiter
-from exojax.spec.specop import SopInstProfile
+from exojax.postproc.specop import SopInstProfile
 import jax.numpy as jnp
 
 if __name__ == "__main__":

@@ -36,7 +36,7 @@ How to load ExoMol CO database
 
 .. code:: ipython
 	
-	>>> from exojax.spec.api import MdbExomol
+	>>> from exojax.database.api  import MdbExomol
 	>>> mdb = MdbExomol(".database/CO/12C-16O/Li2015", nurange=[4200.0, 4300.0])
 
 We can check the attribute_names in mdb by 
@@ -100,7 +100,7 @@ Here are examples for loading CO from HITEMP.
 
 .. code:: ipython
 	
-	>>> from exojax.spec.api import MdbHitemp
+	>>> from exojax.database.api  import MdbHitemp
 	>>> MdbHitemp("CO", nurange=[4200.0, 4300.0])
 	>>> MdbHitemp(".database/CO/", nurange=[4200.0, 4300.0])
 	>>> MdbHitemp(".database/05/", nurange=[4200.0, 4300.0])
@@ -194,7 +194,7 @@ The following is an example of reading .par directly:
 
 .. code:: ipython
 	
-	>>> from exojax.spec.api import MdbHitemp
+	>>> from exojax.database.api  import MdbHitemp
 	>>> from exojax.utils.grids import wavenumber_grid
 	>>> nus, wav, res = wavenumber_grid(22920.0,23100.0,20000,unit="AA",xsmode="modit")
 	xsmode =  modit
@@ -219,7 +219,7 @@ How to load HITRAN CO database
 
 .. code:: ipython
 	
-	>>> from exojax.spec.api import MdbHitran
+	>>> from exojax.database.api  import MdbHitran
 	>>> MdbHitran(".database/CO/", nurange=[4200.0, 4300.0])
 	>>> MdbHitran(".database/05/", nurange=[4200.0, 4300.0])
 	
@@ -240,7 +240,7 @@ If needed, we can mask the line information using "apply_mask_mdb" method. Here 
 
     >>> import numpy as np
     >>> from exojax.utils.grids import wavenumber_grid
-    >>> from exojax.spec import api
+    >>> from exojax.database import api 
     >>> nus,wav,res=wavenumber_grid(6910,6990,100000,unit='cm-1',xsmode="premodit")
     >>> 
     >>> # ExoMol                                                                                                                      
@@ -331,7 +331,7 @@ Here is an example of the initialization.
 .. code:: ipython
 	
     >>> from exojax.utils.grids import wavenumber_grid
-    >>> from exojax.spec import api
+    >>> from exojax.database import api 
 	
     >>> nus, wav, res = wavenumber_grid(24000.0, 26000.0, 1000, unit="AA")
     >>> mdb = api.MdbExomol(""CO/12C-16O/Li2015/"", nus, optional_quantum_states=True, activation=False)
@@ -376,7 +376,7 @@ We can mask attributes even after activation. In the following example, we load 
 	
     >>> import numpy as np
     >>> from exojax.utils.grids import wavenumber_grid
-    >>> from exojax.spec import api
+    >>> from exojax.database import api 
     >>> nus,wav,res=wavenumber_grid(6910,6990,100000,unit='cm-1',xsmode="premodit")
     xsmode =  premodit
     xsmode assumes ESLOG in wavenumber space: mode=premodit

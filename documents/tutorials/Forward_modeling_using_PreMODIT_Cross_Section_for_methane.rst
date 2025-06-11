@@ -10,7 +10,7 @@ many methane lines exist. This situation mocks a T-type brown dwarf.
 
 .. code:: ipython3
 
-    from exojax.spec import rtransfer as rt
+    from exojax.rt import rtransfer as rt
 
 .. code:: ipython3
 
@@ -60,7 +60,7 @@ device.
 
 .. code:: ipython3
 
-    from exojax.spec import api, contdb
+    from exojax.database import api , contdb
     mdbCH4=api.MdbExomol('.database/CH4/12C-1H4/YT10to10/',nus,gpu_transfer=False)
     cdbH2H2=contdb.CdbCIA('.database/H2-H2_2011.cia',nus)
 
@@ -121,7 +121,7 @@ the line strenght is within 1%.
 
 .. code:: ipython3
 
-    from exojax.spec.opacalc import OpaPremodit
+    from exojax.opacity.opacalc import OpaPremodit
     diffmode = 0
     opa = OpaPremodit(mdb=mdbCH4,
                           nu_grid=nus,
@@ -182,7 +182,7 @@ computing delta tau for CH4
 
 .. code:: ipython3
 
-    from exojax.spec.rtransfer import dtauM
+    from exojax.rt.rtransfer import dtauM
     import jax.numpy as jnp
     Rp=0.88
     Mp=33.2
@@ -194,8 +194,8 @@ computing delta tau for CIA
 
 .. code:: ipython3
 
-    from exojax.spec.rtransfer import dtauCIA
-    from exojax.spec import molinfo
+    from exojax.rt.rtransfer import dtauCIA
+    from exojax.database import molinfo 
     mmw=2.33 #mean molecular weight
     mmrH2=0.74
     molmassH2=molinfo.molmass_isotope("H2")
@@ -226,8 +226,8 @@ radiative transfering…
 
 .. code:: ipython3
 
-    from exojax.spec import planck
-    from exojax.spec.rtransfer import rtrun
+    from exojax.rt import planck
+    from exojax.rt.rtransfer import rtrun
     sourcef = planck.piBarr(Tarr,nus)
     F0=rtrun(dtau,sourcef)
 
@@ -251,8 +251,8 @@ response to the raw spectrum.
 .. code:: ipython3
 
     #response and rotation settings 
-    from exojax.spec.response import ipgauss_sampling
-    from exojax.spec.spin_rotation import convolve_rigid_rotation
+    from exojax.postproc.response import ipgauss_sampling
+    from exojax.postproc.spin_rotation import convolve_rigid_rotation
     from exojax.utils.grids import velocity_grid
     vsini_max = 100.0
     vr_array = velocity_grid(resolution, vsini_max)

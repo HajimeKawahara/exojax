@@ -1,9 +1,9 @@
-""" unit tests for PreMODIT cross section
+"""unit tests for PreMODIT cross section
 
-    Note:
-        This tests compares the results by PreMODIT with thoses by MODIT.
-        If you are interested more manual comparison, see integrations/premodit/line_strength_comparison_*****.py
-        ***** = exomol or hitemp, which compares cross section and line strength, starting from molecular databases. 
+Note:
+    This tests compares the results by PreMODIT with thoses by MODIT.
+    If you are interested more manual comparison, see integrations/premodit/line_strength_comparison_*****.py
+    ***** = exomol or hitemp, which compares cross section and line strength, starting from molecular databases.
 
 """
 
@@ -11,7 +11,7 @@ import pytest
 from importlib.resources import files
 import pandas as pd
 import numpy as np
-from exojax.spec.opacalc import OpaPremodit
+from exojax.opacity.opacalc import OpaPremodit
 from exojax.test.emulate_mdb import mock_mdb
 from exojax.test.emulate_mdb import mock_wavenumber_grid
 
@@ -50,14 +50,11 @@ def test_xsection_premodit(db, diffmode):
     opa = OpaPremodit(
         mdb=mdb, nu_grid=nu_grid, diffmode=diffmode, auto_trange=[500.0, 1500.0]
     )
-    print(mdb.df)
     xsv = opa.xsvector(Ttest, Ptest)
     filename = files("exojax").joinpath("data/testdata/" + testdata[db])
     dat = pd.read_csv(filename, delimiter=",", names=("nus", "xsv"))
     res = np.max(np.abs(1.0 - xsv / dat["xsv"].values))
-    print(res)
     assert res < 0.012
-    return opa.nu_grid, xsv, opa.dE, opa.Twt, opa.Tref, Ttest
 
 
 @pytest.mark.parametrize("db, diffmode", [("exomol", 0), ("hitemp", 2)])
@@ -80,12 +77,6 @@ def test_xsection_premodit_for_single_broadening(db, diffmode):
     filename = files("exojax").joinpath("data/testdata/" + testdata[db])
     dat = pd.read_csv(filename, delimiter=",", names=("nus", "xsv"))
     res = np.max(np.abs(1.0 - xsv / dat["xsv"].values))
-    # print(res)
     assert (
         res < 0.06
     )  # < 6% (HITEMP) / 4% (ExoMOL) diff from exact broadening parameters using MODIT
-    return opa.nu_grid, xsv, opa.dE, opa.Twt, opa.Tref, Ttest
-
-if __name__ == "__main__":
-    test_xsection_premodit("exomol", 0)
-    

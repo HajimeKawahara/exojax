@@ -8,20 +8,20 @@ import os
 
 from exojax.atm.atmprof import pressure_layer_logspace
 from exojax.utils.grids import wavenumber_grid
-from exojax.spec.multimol import MultiOpa
-from exojax.spec import contdb
-from exojax.spec.layeropacity import layer_optical_depth, layer_optical_depth_CIA
-from exojax.spec.atmrt import ArtEmisPure
+from exojax.database.multimol  import MultiOpa
+from exojax.database import contdb 
+from exojax.rt.layeropacity import layer_optical_depth, layer_optical_depth_CIA
+from exojax.rt.atmrt import ArtEmisPure
 
 from petitRADTRANS.radtrans import Radtrans
-from exojax.spec import molinfo
+from exojax.database import molinfo 
 from petitRADTRANS import physical_constants as cst
 from petitRADTRANS.config import petitradtrans_config_parser
 petitradtrans_config_parser.set_input_data_path(r'~/database/petitRADTRANS/input_data')
 
 from exojax.utils.instfunc import resolution_to_gaussian_std
 from exojax.utils.grids import velocity_grid
-from exojax.spec import response
+from exojax.postproc import response
 
 
 

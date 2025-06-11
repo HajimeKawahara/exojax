@@ -24,7 +24,7 @@ Details of the PreMODIT algorithm will be described in `Paper II <https://arxiv.
 
 .. code:: ipython
 	
-    from exojax.spec.opacalc import OpaPremodit
+    from exojax.opacity.opacalc import OpaPremodit
     from jax import config
     config.update("jax_enable_x64", True)
     diffmode = 0
@@ -59,7 +59,7 @@ The visualization of the LBD is shown below. For water, the LBD appears densely 
 .. code:: ipython
 
     from exojax.utils.grids import wavenumber_grid
-    from exojax.spec.api import MdbExomol
+    from exojax.database.api  import MdbExomol
     from exojax.plot.opaplot import plot_lbd
 
     nu_grid, wav, resolution = wavenumber_grid(

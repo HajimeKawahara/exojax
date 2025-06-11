@@ -1,4 +1,4 @@
-from exojax.spec.specop import SopPhoto    
+from exojax.postproc.specop import SopPhoto    
 import matplotlib.pyplot as plt
 
 # http://svo2.cab.inta-csic.es/theory/fps/
@@ -7,7 +7,7 @@ filter_name = "SLOAN/SDSS.g"
 sop_photo = SopPhoto(filter_name, download=True)
 
 # Sun
-from exojax.spec.planck import piB
+from exojax.rt.planck import piB
 from exojax.utils.constants import RJ, Rs
 from exojax.utils.constants import pc
 

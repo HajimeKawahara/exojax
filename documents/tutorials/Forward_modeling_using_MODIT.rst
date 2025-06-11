@@ -5,9 +5,9 @@ Here, we try to compute a emission spectrum using MODIT.
 
 .. code:: ipython3
 
-    from exojax.spec import rtransfer as rt
-    from exojax.spec import modit
-    from exojax.spec import lpf
+    from exojax.rt import rtransfer as rt
+    from exojax.opacity import modit
+    from exojax.opacity import lpf
     import numpy as np
     import matplotlib.pyplot as plt
     plt.style.use('bmh')
@@ -40,7 +40,7 @@ Loading a molecular database of CO and CIA (H2-H2)…
 
 .. code:: ipython3
 
-    from exojax.spec import api, contdb
+    from exojax.database import api , contdb
     mdbCO=api.MdbExomol('.database/CO/12C-16O/Li2015',nus)
     cdbH2H2=contdb.CdbCIA('.database/H2-H2_2011.cia',nus)
 
@@ -57,7 +57,7 @@ Loading a molecular database of CO and CIA (H2-H2)…
 
 .. code:: ipython3
 
-    from exojax.spec import molinfo
+    from exojax.database import molinfo 
     molmassCO=molinfo.molmass("CO")
 
 Computing the relative partition function,
@@ -72,8 +72,8 @@ Pressure and Natural broadenings
 .. code:: ipython3
 
     from jax import jit
-    from exojax.spec.exomol import gamma_exomol
-    from exojax.spec import gamma_natural
+    from exojax.database.exomol  import gamma_exomol
+    from exojax.database.hitran import gamma_natural
     
     gammaLMP = jit(vmap(gamma_exomol,(0,0,None,None)))\
             (Parr,Tarr,mdbCO.n_Texp,mdbCO.alpha_ref)
@@ -93,14 +93,14 @@ vector for the layers.
 
 .. code:: ipython3
 
-    from exojax.spec import normalized_doppler_sigma
+    from exojax.database.hitran import normalized_doppler_sigma
     nsigmaDl=normalized_doppler_sigma(Tarr,molmassCO,R)[:,np.newaxis]
 
 And line strength
 
 .. code:: ipython3
 
-    from exojax.spec import SijT
+    from exojax.database.hitran import SijT
     SijM=jit(vmap(SijT,(0,None,None,None,0)))\
         (Tarr,mdbCO.logsij0,mdbCO.nu_lines,mdbCO.elower,qt)
 
@@ -132,7 +132,7 @@ Initialize modit!
 
 .. code:: ipython3
 
-    from exojax.spec import initspec 
+    from exojax.opacity import initspec 
     cnu,indexnu,R,pmarray=initspec.init_modit(mdbCO.nu_lines,nus)
 
 Compute the cross section array!
@@ -167,11 +167,11 @@ the comparison purpose.
     #direct LPF for comparison
     
     #we need sigmaDM for LPF
-    from exojax.spec import doppler_sigma
+    from exojax.database.hitran import doppler_sigma
     sigmaDM=jit(vmap(doppler_sigma,(None,0,None)))\
             (mdbCO.nu_lines,Tarr,molmassCO)
     
-    from exojax.spec.lpf import xsmatrix
+    from exojax.opacity.lpf import xsmatrix
     numatrix=initspec.init_lpf(mdbCO.nu_lines,nus)
     xsmdirect=xsmatrix(numatrix,sigmaDM,gammaLM,SijM)
 
@@ -227,7 +227,7 @@ computing delta tau for CO
 
 .. code:: ipython3
 
-    from exojax.spec.rtransfer import dtauM
+    from exojax.rt.rtransfer import dtauM
     Rp=0.88
     Mp=33.2
     g=2478.57730044555*Mp/Rp**2
@@ -243,7 +243,7 @@ computing delta tau for CIA
 
 .. code:: ipython3
 
-    from exojax.spec.rtransfer import dtauCIA
+    from exojax.rt.rtransfer import dtauCIA
     mmw=2.33 #mean molecular weight
     mmrH2=0.74
     molmassH2=molinfo.molmass("H2")
@@ -275,8 +275,8 @@ radiative transfering…
 
 .. code:: ipython3
 
-    from exojax.spec import planck
-    from exojax.spec.rtransfer import rtrun
+    from exojax.rt import planck
+    from exojax.rt.rtransfer import rtrun
     sourcef = planck.piBarr(Tarr,nus)
     F0=rtrun(dtau,sourcef)
     F0direct=rtrun(dtaudirect,sourcef)
@@ -328,7 +328,7 @@ spectrum
 
 .. code:: ipython3
 
-    from exojax.spec import response
+    from exojax.postproc import response
     from exojax.utils.constants import c
     import jax.numpy as jnp
     

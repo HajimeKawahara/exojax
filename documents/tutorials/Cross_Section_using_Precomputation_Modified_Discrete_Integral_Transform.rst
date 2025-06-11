@@ -21,8 +21,8 @@ errors):
 .. code:: ipython3
 
     import matplotlib.pyplot as plt
-    from exojax.spec.hitran import line_strength, doppler_sigma, gamma_hitran, gamma_natural
-    from exojax.spec import api
+    from exojax.database.hitran  import line_strength, doppler_sigma, gamma_hitran, gamma_natural
+    from exojax.database import api 
     from exojax.utils.grids import wavenumber_grid
     from exojax.utils.constants import Tref_original
     # Setting wavenumber bins and loading HITRAN database
@@ -61,7 +61,7 @@ section.
 
 .. code:: ipython3
 
-    from exojax.spec import initspec
+    from exojax.opacity import initspec
     
     Twt = 1000.0
     Tref_broadening = Tref_original
@@ -107,7 +107,7 @@ Precompute the normalized Dopper width and the partition function ratio:
 
 .. code:: ipython3
 
-    from exojax.spec import normalized_doppler_sigma
+    from exojax.database.hitran import normalized_doppler_sigma
     
     molecular_mass = mdbCO.molmass
     nsigmaD = normalized_doppler_sigma(Tfix, molecular_mass, R)
@@ -120,7 +120,7 @@ should use xsvector_zeroth.
 
 .. code:: ipython3
 
-    from exojax.spec.premodit import xsvector_zeroth
+    from exojax.opacity.premodit import xsvector_zeroth
     xs = xsvector_zeroth(Tfix, Pfix, nsigmaD, lbd, Tref_original, R, pmarray, nu_grid,
                        elower_grid, multi_index_uniqgrid, ngamma_ref_grid,
                        n_Texp_grid, qt, Tref_broadening)
@@ -144,7 +144,7 @@ should use xsvector_zeroth.
 
 .. code:: ipython3
 
-    from exojax.spec.opacalc import OpaDirect
+    from exojax.opacity.opacalc import OpaDirect
     opa = OpaDirect(mdbCO, nu_grid)
     xsv = opa.xsvector(Tfix, Pfix, Ppart)
 

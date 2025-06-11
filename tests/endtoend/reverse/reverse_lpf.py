@@ -6,18 +6,18 @@ from numpyro.infer import MCMC, NUTS
 import numpyro
 import numpyro.distributions as dist
 from jax import random
-from exojax.spec import contdb
-from exojax.spec.api import MdbExomol
-from exojax.spec import molinfo
+from exojax.database import contdb 
+from exojax.database.api  import MdbExomol
+from exojax.database import molinfo 
 from exojax.utils.grids import wavenumber_grid
 from exojax.utils.instfunc import resolution_to_gaussian_std
-from exojax.spec.opacalc import OpaDirect
-from exojax.spec.opacont import OpaCIA
-from exojax.spec.atmrt import ArtEmisPure
-from exojax.spec.specop import SopRotation
-from exojax.spec.specop import SopInstProfile
+from exojax.opacity.opacalc import OpaDirect
+from exojax.opacity.opacont import OpaCIA
+from exojax.rt.atmrt import ArtEmisPure
+from exojax.postproc.specop import SopRotation
+from exojax.postproc.specop import SopInstProfile
 
-from exojax.spec.unitconvert import wav2nu
+from exojax.utils.grids import wav2nu
 from exojax.utils.astrofunc import gravity_jupiter
 import pandas as pd
 import numpy as np

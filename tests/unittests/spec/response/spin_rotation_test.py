@@ -1,11 +1,11 @@
 import pytest
-from exojax.spec.spin_rotation import rotkernel
+from exojax.postproc.spin_rotation import rotkernel
 import jax.numpy as jnp
 import numpy as np
 from exojax.utils.grids import wavenumber_grid
 from exojax.utils.grids import velocity_grid
-from exojax.spec.spin_rotation import convolve_rigid_rotation
-from exojax.spec.spin_rotation import convolve_rigid_rotation_ola
+from exojax.postproc.spin_rotation import convolve_rigid_rotation
+from exojax.postproc.spin_rotation import convolve_rigid_rotation_ola
 import matplotlib.pyplot as plt
         
 
@@ -37,7 +37,7 @@ def _convolve_rigid_rotation_np(resolution, F0, vsini, u1=0.0, u2=0.0):
 
 def test_SopRotation(N=1000):
     from jax import config
-    from exojax.spec.specop import SopRotation
+    from exojax.postproc.specop import SopRotation
     config.update("jax_enable_x64", True)
     nus, wav, resolution = wavenumber_grid(4000.0,
                                                4010.0,
@@ -101,7 +101,7 @@ def test_convolve_rigid_rotation_ola(N=10000, fig=False):
 
 def test_SopRotation_ola(N=10000, fig=False):
     from jax import config
-    from exojax.spec.specop import SopRotation
+    from exojax.postproc.specop import SopRotation
     config.update("jax_enable_x64", True)
     nus, wav, resolution = wavenumber_grid(4000.0,
                                                4010.0,

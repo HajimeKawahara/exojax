@@ -17,7 +17,7 @@ Please note that the initialization of OpaMie requires a particulate database (`
 
 .. code:: ipython3
     
-    from exojax.spec.opacont import OpaMie
+    from exojax.opacity.opacont import OpaMie
     opa = OpaMie(pdb_nh3, nus)
     sigma_extinction, sigma_scattering, asymmetric_factor = opa.mieparams_vector_direct_from_pymiescatt(rg, sigmag)
     #sigma_extinction, sigma_scattering, asymmetric_factor = opa.mieparams_vector(rg,sigmag) # if using MieGrid
@@ -39,8 +39,8 @@ You can create a miegrid as shown in the code below.
 
 .. code:: ipython3
     
-    from exojax.spec.mie import compute_mie_coeff_lognormal_grid
-    from exojax.spec.pardb import PdbCloud
+    from exojax.database.mie import compute_mie_coeff_lognormal_grid
+    from exojax.database.pardb  import PdbCloud
 
     pdb = PdbCloud("NH3")
     filename = "miegrid_lognorm_"+pdb.condensate+".mgd"

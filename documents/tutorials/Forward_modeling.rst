@@ -3,7 +3,7 @@ Forward Modeling of an Emission Spectrum
 
 .. code:: ipython3
 
-    from exojax.spec import rtransfer as rt
+    from exojax.rt import rtransfer as rt
 
 .. code:: ipython3
 
@@ -51,7 +51,7 @@ Loading a molecular database of CO and CIA (H2-H2)…
 
 .. code:: ipython3
 
-    from exojax.spec import api, contdb
+    from exojax.database import api , contdb
     mdbCO=api.MdbExomol('.database/CO/12C-16O/Li2015',nus,crit=1.e-46)
     cdbH2H2=contdb.CdbCIA('.database/H2-H2_2011.cia',nus)
 
@@ -67,7 +67,7 @@ Loading a molecular database of CO and CIA (H2-H2)…
 
 .. code:: ipython3
 
-    from exojax.spec import molinfo
+    from exojax.database import molinfo 
     molmassCO=molinfo.molmass("CO")
 
 Computing the relative partition function,
@@ -82,8 +82,8 @@ Pressure and Natural broadenings
 .. code:: ipython3
 
     from jax import jit
-    from exojax.spec.exomol import gamma_exomol
-    from exojax.spec import gamma_natural
+    from exojax.database.exomol  import gamma_exomol
+    from exojax.database.hitran import gamma_natural
     
     gammaLMP = jit(vmap(gamma_exomol,(0,0,None,None)))\
             (Parr,Tarr,mdbCO.n_Texp,mdbCO.alpha_ref)
@@ -94,7 +94,7 @@ Doppler broadening
 
 .. code:: ipython3
 
-    from exojax.spec import doppler_sigma
+    from exojax.database.hitran import doppler_sigma
     sigmaDM=jit(vmap(doppler_sigma,(None,0,None)))\
             (mdbCO.nu_lines,Tarr,molmassCO)
 
@@ -102,7 +102,7 @@ And line strength
 
 .. code:: ipython3
 
-    from exojax.spec import SijT
+    from exojax.database.hitran import SijT
     SijM=jit(vmap(SijT,(0,None,None,None,0)))\
         (Tarr,mdbCO.logsij0,mdbCO.nu_lines,mdbCO.elower,qt)
 
@@ -110,7 +110,7 @@ nu matrix
 
 .. code:: ipython3
 
-    from exojax.spec import make_numatrix0
+    from exojax.opacity import make_numatrix0
     numatrix=make_numatrix0(nus,mdbCO.nu_lines)
 
 Or you can use initspec.init_lpf instead.
@@ -118,7 +118,7 @@ Or you can use initspec.init_lpf instead.
 .. code:: ipython3
 
     #Or you can use initspec.init_lpf instead.
-    from exojax.spec import initspec
+    from exojax.opacity import initspec
     numatrix=initspec.init_lpf(mdbCO.nu_lines,nus)
 
 Providing numatrix, thermal broadening, gamma, and line strength, we can
@@ -126,7 +126,7 @@ compute cross section.
 
 .. code:: ipython3
 
-    from exojax.spec.lpf import xsmatrix
+    from exojax.opacity.lpf import xsmatrix
     xsm=xsmatrix(numatrix,sigmaDM,gammaLM,SijM)
 
 xsmatrix has the shape of (# of layers, # of nu grid)
@@ -160,7 +160,7 @@ computing delta tau for CO
 
 .. code:: ipython3
 
-    from exojax.spec.rtransfer import dtauM
+    from exojax.rt.rtransfer import dtauM
     Rp=0.88
     Mp=33.2
     g=2478.57730044555*Mp/Rp**2
@@ -173,7 +173,7 @@ computing delta tau for CIA
 
 .. code:: ipython3
 
-    from exojax.spec.rtransfer import dtauCIA
+    from exojax.rt.rtransfer import dtauCIA
     mmw=2.33 #mean molecular weight
     mmrH2=0.74
     molmassH2=molinfo.molmass("H2")
@@ -204,8 +204,8 @@ radiative transfering…
 
 .. code:: ipython3
 
-    from exojax.spec import planck
-    from exojax.spec.rtransfer import rtrun
+    from exojax.rt import planck
+    from exojax.rt.rtransfer import rtrun
     sourcef = planck.piBarr(Tarr,nus)
     F0=rtrun(dtau,sourcef)
 
@@ -231,7 +231,7 @@ spectrum
 
 .. code:: ipython3
 
-    from exojax.spec import response
+    from exojax.postproc import response
     from exojax.utils.constants import c
     import jax.numpy as jnp
     

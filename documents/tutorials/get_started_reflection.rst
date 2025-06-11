@@ -54,7 +54,7 @@ et al. (2023). Get the data.
 
 .. code:: ipython3
 
-    from exojax.spec.unitconvert import wav2nu
+    from exojax.utils.grids import wav2nu
     import pandas as pd
     filename = "/home/kawahara/solar-hrs/Spectre_HR_LATMOS_Meftah_V1.txt"
     dat = pd.read_csv(filename, names=("wav","flux"), comment=";", delimiter="\t")
@@ -89,7 +89,7 @@ reflected light.
 
     import numpy as np
     from exojax.utils.grids import wavenumber_grid
-    from exojax.spec.atmrt import ArtReflectPure
+    from exojax.rt.atmrt import ArtReflectPure
     
     nus, wav, res = wavenumber_grid(
         np.min(nu_obs) - 5.0, np.max(nu_obs) + 5.0, 10000, xsmode="premodit", unit="cm-1"
@@ -174,7 +174,7 @@ Jupiter are well understood, using an AM model should not be excessive.
 
 .. code:: ipython3
 
-    from exojax.spec.pardb import PdbCloud
+    from exojax.database.pardb  import PdbCloud
     from exojax.atm.atmphys import AmpAmcloud
     
     
@@ -205,7 +205,7 @@ ammonia at the cloud base.
 
     from exojax.utils.zsol import nsol
     from exojax.atm.atmconvert import vmr_to_mmr
-    from exojax.spec.molinfo import molmass_isotope
+    from exojax.database.molinfo  import molmass_isotope
     
     # condensate substance density
     rhoc = pdb_nh3.condensate_substance_density  # g/cc
@@ -328,13 +328,13 @@ Mie scattering is ``OpaMie``.
 
 .. code:: ipython3
 
-    from exojax.spec.opacont import OpaMie
+    from exojax.opacity.opacont import OpaMie
     
     opa_nh3 = OpaMie(pdb_nh3, nus)
 
 .. code:: ipython3
 
-    from exojax.spec.api import MdbHitemp
+    from exojax.database.api  import MdbHitemp
     mdb_reduced = MdbHitemp("CH4", nurange=[nus[0], nus[-1]], isotope=1, elower_max=3300.0)
 
 
@@ -360,7 +360,7 @@ Mie scattering is ``OpaMie``.
 .. code:: ipython3
 
     import jax.numpy as jnp
-    from exojax.spec.opacalc import OpaPremodit
+    from exojax.opacity.opacalc import OpaPremodit
     
     opa = OpaPremodit(mdb_reduced, nu_grid=nus, allow_32bit=True, auto_trange=[80.0, 300.0])  
     
@@ -429,7 +429,7 @@ resolution of around 25,000 seems appropriate.
 
 .. code:: ipython3
 
-    from exojax.spec.specop import SopInstProfile
+    from exojax.postproc.specop import SopInstProfile
     
     # asymmetric_parameter = asymmetric_factor + np.zeros((len(art.pressure), len(nus)))
     reflectivity_surface = np.zeros(len(nus))

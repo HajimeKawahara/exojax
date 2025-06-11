@@ -9,15 +9,15 @@ import pandas as pd
 import numpy as np
 from importlib.resources import files
 
-from exojax.spec.opacalc import OpaPremodit
-from exojax.spec.atmrt import ArtTransPure
-from exojax.spec.api import MdbHitran
+from exojax.opacity.opacalc import OpaPremodit
+from exojax.rt.atmrt import ArtTransPure
+from exojax.database.api  import MdbHitran
 from exojax.utils.grids import wavenumber_grid
 from exojax.utils.astrofunc import gravity_jupiter
 from exojax.utils.constants import RJ
 from exojax.test.data import COMPDATA_TRANSMISSION_CO
-from exojax.spec.unitconvert import wav2nu
-from exojax.spec.specop import SopInstProfile
+from exojax.utils.grids import wav2nu
+from exojax.postproc.specop import SopInstProfile
 
 config.update("jax_enable_x64", True)
 # config.update("jax_debug_nans", True)

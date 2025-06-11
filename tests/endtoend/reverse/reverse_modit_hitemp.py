@@ -5,7 +5,7 @@
 #!/usr/bin/env python
 # coding: utf-8
 import arviz
-from exojax.spec.modit import setdgm_hitran
+from exojax.opacity.modit import setdgm_hitran
 from numpyro.diagnostics import hpdi
 from numpyro.infer import Predictive
 from numpyro.infer import MCMC, NUTS
@@ -17,16 +17,16 @@ import matplotlib.pyplot as plt
 import jax.numpy as jnp
 from jax import random
 from exojax.atm.atmprof import pressure_layer_logspace
-from exojax.spec import initspec
-from exojax.spec.layeropacity import layer_optical_depth
-from exojax.spec.layeropacity import layer_optical_depth_CIA
-from exojax.spec import modit
-from exojax.spec import api, contdb
-from exojax.spec.rtransfer import rtrun_emis_pureabs_fbased2st
-from exojax.spec import planck
-from exojax.spec.response import ipgauss_sampling
-from exojax.spec.spin_rotation import convolve_rigid_rotation
-from exojax.spec import molinfo
+from exojax.opacity import initspec
+from exojax.rt.layeropacity import layer_optical_depth
+from exojax.rt.layeropacity import layer_optical_depth_CIA
+from exojax.opacity import modit
+from exojax.database import api , contdb
+from exojax.rt.rtransfer import rtrun_emis_pureabs_fbased2st
+from exojax.rt import planck
+from exojax.postproc.response import ipgauss_sampling
+from exojax.postproc.spin_rotation import convolve_rigid_rotation
+from exojax.database import molinfo 
 from exojax.utils.grids import wavenumber_grid
 from exojax.utils.grids import velocity_grid
 from exojax.utils.constants import RJ

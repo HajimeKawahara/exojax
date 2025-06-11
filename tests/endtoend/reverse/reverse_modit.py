@@ -17,20 +17,20 @@ import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 from importlib.resources import files
-from exojax.spec import modit
-from exojax.spec import api
+from exojax.opacity import modit
+from exojax.database import api 
 from exojax.utils.grids import wavenumber_grid
-from exojax.spec.atmrt import ArtEmisPure
-from exojax.spec.opacalc import OpaModit
-from exojax.spec.contdb import CdbCIA
-from exojax.spec.opacont import OpaCIA
-from exojax.spec import molinfo
-from exojax.spec.response import ipgauss_sampling
-from exojax.spec.spin_rotation import convolve_rigid_rotation
+from exojax.rt.atmrt import ArtEmisPure
+from exojax.opacity.opacalc import OpaModit
+from exojax.database.contdb  import CdbCIA
+from exojax.opacity.opacont import OpaCIA
+from exojax.database import molinfo 
+from exojax.postproc.response import ipgauss_sampling
+from exojax.postproc.spin_rotation import convolve_rigid_rotation
 from exojax.utils.astrofunc import gravity_jupiter
 from exojax.utils.grids import velocity_grid
 from exojax.utils.instfunc import resolution_to_gaussian_std
-from exojax.spec.unitconvert import nu2wav
+from exojax.utils.grids import nu2wav
 from exojax.test.data import SAMPLE_SPECTRA_CH4_NEW
 
 # loading data

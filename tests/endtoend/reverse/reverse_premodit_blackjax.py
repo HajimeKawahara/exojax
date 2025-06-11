@@ -12,15 +12,15 @@ import jax.numpy as jnp
 import pandas as pd
 from importlib.resources import files
 
-from exojax.spec.atmrt import ArtEmisPure
-from exojax.spec.api import MdbExomol
-from exojax.spec.opacalc import OpaPremodit
-from exojax.spec.contdb import CdbCIA
-from exojax.spec.opacont import OpaCIA
-from exojax.spec.response import ipgauss_sampling
-from exojax.spec.spin_rotation import convolve_rigid_rotation
-from exojax.spec import molinfo
-from exojax.spec.unitconvert import nu2wav
+from exojax.rt.atmrt import ArtEmisPure
+from exojax.database.api  import MdbExomol
+from exojax.opacity.opacalc import OpaPremodit
+from exojax.database.contdb  import CdbCIA
+from exojax.opacity.opacont import OpaCIA
+from exojax.postproc.response import ipgauss_sampling
+from exojax.postproc.spin_rotation import convolve_rigid_rotation
+from exojax.database import molinfo 
+from exojax.utils.grids import nu2wav
 from exojax.utils.grids import wavenumber_grid
 from exojax.utils.grids import velocity_grid
 from exojax.utils.astrofunc import gravity_jupiter

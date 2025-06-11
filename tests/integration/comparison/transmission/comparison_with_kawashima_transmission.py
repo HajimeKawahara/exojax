@@ -7,9 +7,9 @@ import numpy as np
 from exojax.utils.grids import wavenumber_grid
 from exojax.utils.astrofunc import gravity_jupiter
 from exojax.utils.constants import RJ, Rs
-from exojax.spec.opacalc import OpaModit
-from exojax.spec.atmrt import ArtTransPure
-from exojax.spec.api import MdbHitran
+from exojax.opacity.opacalc import OpaModit
+from exojax.rt.atmrt import ArtTransPure
+from exojax.database.api  import MdbHitran
 from exojax.test.data import COMPDATA_TRANSMISSION_CO
 
 config.update("jax_enable_x64", True)
@@ -62,7 +62,7 @@ def compare_with_kawashima_code():
     ### Rayleigh scattering
     from exojax.atm.polarizability import polarizability
     from exojax.atm.polarizability import king_correction_factor
-    from exojax.spec.rayleigh import xsvector_rayleigh_gas
+    from exojax.opacity.rayleigh import xsvector_rayleigh_gas
 
     xsvector_rayleigh = xsvector_rayleigh_gas(
         nu_grid, polarizability["CO"], king_correction_factor["CO"]
@@ -93,7 +93,7 @@ if __name__ == "__main__":
     wav, rprs = read_kawashima_data()
     diffmode = 1
     nus_hitran, Rp_trapezoid, Rp_simpson = compare_with_kawashima_code()
-    from exojax.spec.unitconvert import nu2wav
+    from exojax.utils.grids import nu2wav
 
     wav_exojax = nu2wav(nus_hitran, unit="um", wavelength_order="ascending")
     fig = plt.figure()

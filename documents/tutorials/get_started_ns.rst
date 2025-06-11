@@ -84,7 +84,7 @@ wavenumber range first.
 
 .. parsed-literal::
 
-    /home/kawahara/exojax/src/exojax/spec/unitconvert.py:63: UserWarning: Both input wavelength and output wavenumber are in ascending order.
+    /home/kawahara/exojax/src/exojax/utils.grids.py:63: UserWarning: Both input wavelength and output wavenumber are in ascending order.
       warnings.warn(
 
 
@@ -95,7 +95,7 @@ the database name in the ExoMol website (https://www.exomol.com/).
 
 .. code:: ipython3
 
-    from exojax.spec.api import MdbExomol
+    from exojax.database.api  import MdbExomol
     mdb = MdbExomol(".database/CO/12C-16O/Li2015", nurange=nu_grid)
 
 
@@ -138,7 +138,7 @@ tempreature range we will use is 500-1500K.
 
 .. code:: ipython3
 
-    from exojax.spec.opacalc import OpaPremodit
+    from exojax.opacity.opacalc import OpaPremodit
     opa = OpaPremodit(mdb, nu_grid, auto_trange=[500.0, 1500.0], dit_grid_resolution=1.0)
 
 
@@ -229,7 +229,7 @@ reflection) has been ``ibased`` since v1.5. In our experience,
 
 .. code:: ipython3
 
-    from exojax.spec.atmrt import ArtEmisPure
+    from exojax.rt.atmrt import ArtEmisPure
     
     art = ArtEmisPure(
         nu_grid=nu_grid,
@@ -287,8 +287,8 @@ absorption <https://en.wikipedia.org/wiki/Collision-induced_absorption_and_emiss
 
 .. code:: ipython3
 
-    from exojax.spec.contdb import CdbCIA
-    from exojax.spec.opacont import OpaCIA
+    from exojax.database.contdb  import CdbCIA
+    from exojax.opacity.opacont import OpaCIA
     
     cdb = CdbCIA(".database/H2-H2_2011.cia", nurange=nu_grid)
     opacia = OpaCIA(cdb, nu_grid=nu_grid)
@@ -374,7 +374,7 @@ planet.
 
 .. code:: ipython3
 
-    from exojax.spec.specop import SopRotation
+    from exojax.postproc.specop import SopRotation
     
     sop_rot = SopRotation(nu_grid, vsini_max=100.0)
     
@@ -406,7 +406,7 @@ analysis.
 
 .. code:: ipython3
 
-    from exojax.spec.specop import SopInstProfile
+    from exojax.postproc.specop import SopInstProfile
     from exojax.utils.instfunc import resolution_to_gaussian_std
     
     sop_inst = SopInstProfile(nu_grid, vrmax=1000.0)

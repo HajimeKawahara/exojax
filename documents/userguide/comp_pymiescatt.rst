@@ -5,7 +5,7 @@ We import ``pdb`` with ``MgSiO3`` to use the refractive index.
 
 .. code:: ipython3
 
-    from exojax.spec.pardb import PdbCloud
+    from exojax.database.pardb  import PdbCloud
     miedir = "/home/kawahara/exojax/documents/tutorials/.database/particulates/virga"
     #miedir = "/home/exoplanet01/exojax/documents/tutorials/.database/particulates/virga"
     pdb = PdbCloud("MgSiO3", path=miedir)

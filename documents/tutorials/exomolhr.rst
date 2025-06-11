@@ -23,7 +23,7 @@ function:
 
 .. code:: ipython3
 
-    from exojax.spec.exomolhr import list_exomolhr_molecules
+    from exojax.database.exomolhr import list_exomolhr_molecules
     
     molecules = list_exomolhr_molecules()
     print(molecules)
@@ -39,7 +39,7 @@ function:
 
 .. code:: ipython3
 
-    from exojax.spec.exomolhr import list_isotopologues
+    from exojax.database.exomolhr import list_isotopologues
     iso_dict = list_isotopologues(molecules)
     print(iso_dict)
 
@@ -55,7 +55,7 @@ has its own dedicated interface.
 
 .. code:: ipython3
 
-    from exojax.spec.exomolhr import XdbExomolHR
+    from exojax.database.exomolhr import XdbExomolHR
     from exojax.utils.grids import wavenumber_grid
     import matplotlib.pyplot as plt
     
@@ -78,7 +78,7 @@ has its own dedicated interface.
 
 .. parsed-literal::
 
-    /home/kawahara/exojax/src/exojax/spec/unitconvert.py:82: UserWarning: Both input wavelength and output wavenumber are in ascending order.
+    /home/kawahara/exojax/src/exojax/utils.grids.py:82: UserWarning: Both input wavelength and output wavenumber are in ascending order.
       warnings.warn(
     /home/kawahara/exojax/src/exojax/utils/grids.py:170: UserWarning: Resolution may be too small. R=260.97413588061954
       warnings.warn("Resolution may be too small. R=" + str(resolution), UserWarning)

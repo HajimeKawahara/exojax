@@ -1,6 +1,6 @@
 import pytest
-from exojax.spec.nonair import temperature_exponent_nonair, gamma_nonair
-from exojax.spec.nonair import  nonair_coeff_CO_in_H2
+from exojax.database.nonair  import temperature_exponent_nonair, gamma_nonair
+from exojax.database.nonair  import  nonair_coeff_CO_in_H2
 import numpy as np
 
 def test_n_Texp_nonair_CO_H2():

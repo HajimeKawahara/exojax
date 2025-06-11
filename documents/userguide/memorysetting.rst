@@ -17,8 +17,8 @@ For PreMODIT, `exojax.utils.memuse.device_memory_use` can estimate an approximat
 
     >>> from exojax.utils.memuse import device_memory_use
     >>> from exojax.test.emulate_mdb import mock_wavenumber_grid
-    >>> from exojax.spec.atmrt import ArtEmisPure
-    >>> from exojax.spec.opacalc import OpaPremodit
+    >>> from exojax.rt.atmrt import ArtEmisPure
+    >>> from exojax.opacity.opacalc import OpaPremodit
     >>> from exojax.test.emulate_mdb import mock_mdbExomol
     >>> nu_grid, wav, res = mock_wavenumber_grid()
     >>> art = ArtEmisPure(nu_grid,

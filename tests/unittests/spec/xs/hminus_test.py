@@ -1,13 +1,13 @@
 import numpy as np
 import jax.numpy as jnp
 import pytest
-from exojax.spec.hminus import free_free_absorption
-from exojax.spec.hminus import bound_free_absorption
-from exojax.spec.hminus import log_hminus_continuum
-from exojax.spec.hminus import log_hminus_continuum_single
-from exojax.spec.layeropacity import layer_optical_depth_Hminus
-from exojax.spec.layeropacity import single_layer_optical_depth_Hminus
-from exojax.spec.opacont import OpaHminus
+from exojax.database.hminus  import free_free_absorption
+from exojax.database.hminus  import bound_free_absorption
+from exojax.database.hminus  import log_hminus_continuum
+from exojax.database.hminus  import log_hminus_continuum_single
+from exojax.rt.layeropacity import layer_optical_depth_Hminus
+from exojax.rt.layeropacity import single_layer_optical_depth_Hminus
+from exojax.opacity.opacont import OpaHminus
 from exojax.utils.grids import wavenumber_grid
 
 

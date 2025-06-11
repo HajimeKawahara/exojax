@@ -5,7 +5,7 @@
 """
 
 import numpy as np
-from exojax.spec.molinfo import element_mass
+from exojax.database.molinfo  import element_mass
 
 
 AAG21 = {

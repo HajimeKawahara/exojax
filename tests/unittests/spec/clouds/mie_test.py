@@ -1,6 +1,6 @@
 from exojax.special.lognormal import cubeweighted_pdf
-from exojax.spec.mie import auto_rgrid
-from exojax.spec.mie import cubeweighted_integral_checker
+from exojax.database.mie import auto_rgrid
+from exojax.database.mie import cubeweighted_integral_checker
 import numpy as np
 
 

@@ -3,14 +3,14 @@ import numpy as np
 import matplotlib.pyplot as plt
 from scipy.special import expn
 from exojax.special.expn import E1
-from exojax.spec import rtransfer as rt
+from exojax.rt import rtransfer as rt
 import jax.numpy as jnp
 
 import numpy as np
 import matplotlib.pyplot as plt
 from scipy.special import expn
 from exojax.special.expn import E1
-from exojax.spec import rtransfer as rt
+from exojax.rt import rtransfer as rt
 import jax.numpy as jnp
 x = np.logspace(-4, 1.9, 1000)
 
