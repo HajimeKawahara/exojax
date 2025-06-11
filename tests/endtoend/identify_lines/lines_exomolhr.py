@@ -1,6 +1,6 @@
-from exojax.spec.exomolhr import XdbExomolHR
-from exojax.spec.exomolhr import list_exomolhr_molecules
-from exojax.spec.exomolhr import list_isotopologues
+from exojax.database.exomolhr import XdbExomolHR
+from exojax.database.exomolhr import list_exomolhr_molecules
+from exojax.database.exomolhr import list_isotopologues
 from exojax.utils.grids import wavenumber_grid
 import matplotlib.pyplot as plt
 

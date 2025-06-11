@@ -1,7 +1,8 @@
-from radis.api.dbmanager import DatabaseManager
-import requests   
 from io import StringIO
+
 import pandas as pd
+import requests
+from radis.api.dbmanager import DatabaseManager
 
 
 class CustomDatabaseManager(DatabaseManager):  
@@ -126,7 +127,7 @@ class HargreavesDatabaseManager(CustomDatabaseManager):
         writer.combine_temp_batch_files(local_file)  
           
         # add metadata to the local file  
-        from radis import __version__  
+        from radis import __version__
           
         writer.add_metadata(  
             local_file,  

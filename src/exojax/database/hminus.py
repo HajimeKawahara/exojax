@@ -1,10 +1,11 @@
 """H minus opacity by John (1988)"""
 
-import numpy as np
 import jax.numpy as jnp
+import numpy as np
 from jax import vmap
 from jax.lax import scan
-from exojax.utils.constants import kB, ccgs, hcgs
+
+from exojax.utils.constants import ccgs, hcgs, kB
 
 
 def log_hminus_continuum_single(

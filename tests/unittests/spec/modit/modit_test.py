@@ -4,9 +4,9 @@ import numpy as np
 from exojax.opacity.modit import xsvector_scanfft
 
 from exojax.test.data import TESTDATA_CO_EXOMOL_MODIT_XS_REF
-from exojax.spec import normalized_doppler_sigma, gamma_natural
-from exojax.spec.hitran import line_strength
-from exojax.spec.exomol import gamma_exomol
+from exojax.database.hitran import normalized_doppler_sigma, gamma_natural
+from exojax.database.hitran  import line_strength
+from exojax.database.exomol  import gamma_exomol
 from exojax.opacity.initspec import init_modit
 from exojax.opacity.set_ditgrid import ditgrid_log_interval
 from exojax.test.emulate_mdb import mock_mdbExomol

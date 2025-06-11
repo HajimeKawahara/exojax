@@ -51,8 +51,8 @@ Note that you can also use the
 
 .. code:: ipython3
 
-    from exojax.spec.api import MdbExomol
-    from exojax.spec.contdb import CdbCIA
+    from exojax.database.api  import MdbExomol
+    from exojax.database.contdb  import CdbCIA
     from exojax.opacity.opacalc import OpaPremodit
     from exojax.opacity.opacont import OpaCIA
     from exojax.rt.layeropacity import single_layer_optical_depth

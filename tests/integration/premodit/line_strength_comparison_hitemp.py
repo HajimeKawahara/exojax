@@ -7,22 +7,22 @@
 import numpy as np
 import jax.numpy as jnp
 from exojax.utils.grids import wavenumber_grid
-from exojax.spec import api
+from exojax.database import api 
 from exojax.opacity.opacalc import OpaPremodit
 from exojax.opacity import initspec
 from exojax.opacity.premodit import unbiased_lsd_zeroth
 from exojax.opacity.premodit import unbiased_lsd_first
 from exojax.opacity.premodit import unbiased_lsd_second
 from exojax.opacity.lsd import inc2D_givenx
-from exojax.spec.hitran import line_strength
+from exojax.database.hitran  import line_strength
 from exojax.utils.grids import wavenumber_grid
 from exojax.opacity.set_ditgrid import ditgrid_log_interval
-from exojax.spec.hitran import gamma_hitran
-from exojax.spec.hitran import gamma_natural
+from exojax.database.hitran  import gamma_hitran
+from exojax.database.hitran  import gamma_natural
 from exojax.utils.constants import Tref_original
 
 ## also, xs
-from exojax.spec import normalized_doppler_sigma
+from exojax.database.hitran import normalized_doppler_sigma
 from exojax.opacity.profconv import calc_xsection_from_lsd_scanfft
 from exojax.opacity.premodit import unbiased_ngamma_grid
 

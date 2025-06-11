@@ -94,7 +94,7 @@ Also, ``OpartReflectPure``, the ``opart`` version of ``ReflectPure``,  is availa
     from exojax.rt.opart import OpartReflectPure
     from exojax.rt.layeropacity import single_layer_optical_depth
     from exojax.utils.grids import wavenumber_grid
-    from exojax.spec.api import MdbExomol
+    from exojax.database.api  import MdbExomol
     from exojax.utils.astrofunc import gravity_jupiter
     import jax.numpy as jnp
     from jax import config

@@ -40,7 +40,7 @@ SDSS G-band filter is used.
 
 .. parsed-literal::
 
-    /home/kawahara/exojax/src/exojax/spec/unitconvert.py:82: UserWarning: Both input wavelength and output wavenumber are in ascending order.
+    /home/kawahara/exojax/src/exojax/utils.grids.py:82: UserWarning: Both input wavelength and output wavenumber are in ascending order.
       warnings.warn(
     /home/kawahara/exojax/src/exojax/utils/grids.py:170: UserWarning: Resolution may be too small. R=6123.03886194115
       warnings.warn("Resolution may be too small. R=" + str(resolution), UserWarning)

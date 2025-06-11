@@ -14,14 +14,14 @@ import pandas as pd
 from importlib.resources import files
 
 from exojax.rt.atmrt import ArtEmisPure
-from exojax.spec.api import MdbExomol
+from exojax.database.api  import MdbExomol
 from exojax.opacity.opacalc import OpaPremodit
-from exojax.spec.contdb import CdbCIA
+from exojax.database.contdb  import CdbCIA
 from exojax.opacity.opacont import OpaCIA
 from exojax.spec.response import ipgauss_sampling
 from exojax.spec.spin_rotation import convolve_rigid_rotation
-from exojax.spec import molinfo
-from exojax.spec.unitconvert import nu2wav
+from exojax.database import molinfo 
+from exojax.utils.grids import nu2wav
 from exojax.utils.grids import wavenumber_grid
 from exojax.utils.grids import velocity_grid
 from exojax.utils.astrofunc import gravity_jupiter

@@ -21,8 +21,8 @@ if not os.path.isfile(filepath_Kurucz):
 
 def test_Kurucz_linelist():
     from exojax.utils.grids import wavenumber_grid
-    from exojax.spec import moldb
-    from exojax.spec import atomll
+    from exojax.database import moldb 
+    from exojax.database import atomll 
     from exojax.rt.atmrt import ArtEmisPure
     from exojax.opacity.opacalc import OpaDirect
     import numpy as np

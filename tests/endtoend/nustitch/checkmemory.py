@@ -6,7 +6,7 @@ tested using A100 40GB
 
 from exojax.opacity.opacalc import OpaPremodit
 from exojax.utils.grids import wavenumber_grid
-from exojax.spec.api import MdbExomol
+from exojax.database.api  import MdbExomol
 import jax.numpy as jnp
 
 from jax_smi import initialise_tracking

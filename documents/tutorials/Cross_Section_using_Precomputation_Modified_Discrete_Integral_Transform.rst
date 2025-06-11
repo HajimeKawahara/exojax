@@ -21,8 +21,8 @@ errors):
 .. code:: ipython3
 
     import matplotlib.pyplot as plt
-    from exojax.spec.hitran import line_strength, doppler_sigma, gamma_hitran, gamma_natural
-    from exojax.spec import api
+    from exojax.database.hitran  import line_strength, doppler_sigma, gamma_hitran, gamma_natural
+    from exojax.database import api 
     from exojax.utils.grids import wavenumber_grid
     from exojax.utils.constants import Tref_original
     # Setting wavenumber bins and loading HITRAN database
@@ -107,7 +107,7 @@ Precompute the normalized Dopper width and the partition function ratio:
 
 .. code:: ipython3
 
-    from exojax.spec import normalized_doppler_sigma
+    from exojax.database.hitran import normalized_doppler_sigma
     
     molecular_mass = mdbCO.molmass
     nsigmaD = normalized_doppler_sigma(Tfix, molecular_mass, R)

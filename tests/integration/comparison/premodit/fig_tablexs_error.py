@@ -47,7 +47,7 @@ def make_fig_tabulate_crosssection_error(
     print(p0,p1,pc)
     print(t0,t1,tc)
 
-    from exojax.spec.api import MdbHitemp
+    from exojax.database.api  import MdbHitemp
     from exojax.opacity.opacalc import OpaDirect
 
     mdb_co = MdbHitemp("CO", nurange=[nu[0], nu[-1]])

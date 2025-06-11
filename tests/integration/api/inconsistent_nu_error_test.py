@@ -1,4 +1,4 @@
-from exojax.spec.api import MdbHitran
+from exojax.database.api  import MdbHitran
 from exojax.opacity.opacalc import OpaPremodit
 from exojax.utils.grids import wavenumber_grid
 from exojax.utils.checkarray import is_outside_range

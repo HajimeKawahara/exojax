@@ -2,20 +2,22 @@
 
 * CdbCIA is the CDB for CIA
 """
-import numpy as np
-import jax.numpy as jnp
 import pathlib
-from exojax.spec.hitrancia import read_cia
+
+import jax.numpy as jnp
+import numpy as np
+
+from exojax.database.hitrancia import read_cia
 
 __all__ = ["CdbCIA"]
 
 
-class CdbCIA(object):
+class CdbCIA:
     def __init__(self, path, nurange=[-np.inf, np.inf], margin=10.0):
-        """Continuum database for HITRAN CIA.
+        """Continuum database for hitrancia.
 
         Args:
-            path: path for HITRAN cia file
+            path: path for hitrancia file
             nurange: wavenumber range list (cm-1) or wavenumber array
             margin: margin for nurange (cm-1)
         """
@@ -32,13 +34,14 @@ class CdbCIA(object):
         self.nucia = jnp.array(self.nucia)
 
     def download(self):
-        """Downloading HITRAN cia file.
+        """Downloading hitrancia file.
 
         Note:
             The download URL is written in exojax.utils.url.
         """
-        import urllib.request
         import os
+        import urllib.request
+
         from exojax.utils.url import url_HITRANCIA
 
         try:

@@ -5,7 +5,7 @@ We need to assume a max T (and min P) to compare the cross section whose E above
 
 from exojax.opacity.optgrid import optelower
 from exojax.utils.grids import wavenumber_grid
-from exojax.spec.api import MdbExomol
+from exojax.database.api  import MdbExomol
 import numpy as np
 
 Nx = 15000

@@ -21,12 +21,12 @@ from exojax.opacity import initspec
 from exojax.rt.layeropacity import layer_optical_depth
 from exojax.rt.layeropacity import layer_optical_depth_CIA
 from exojax.opacity import modit
-from exojax.spec import api, contdb
+from exojax.database import api , contdb
 from exojax.rt.rtransfer import rtrun_emis_pureabs_fbased2st
 from exojax.rt import planck
 from exojax.spec.response import ipgauss_sampling
 from exojax.spec.spin_rotation import convolve_rigid_rotation
-from exojax.spec import molinfo
+from exojax.database import molinfo 
 from exojax.utils.grids import wavenumber_grid
 from exojax.utils.grids import velocity_grid
 from exojax.utils.constants import RJ

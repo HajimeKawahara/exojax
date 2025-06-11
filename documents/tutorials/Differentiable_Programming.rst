@@ -22,7 +22,7 @@ follows:
 
     import jax.numpy as jnp
     import matplotlib.pyplot as plt
-    from exojax.spec import voigt
+    from exojax.database.hitran import voigt
     
     logbeta = 1.0
     gamma = 1.0

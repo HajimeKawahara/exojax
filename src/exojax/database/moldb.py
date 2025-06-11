@@ -2,11 +2,13 @@
 
 """
 
-import numpy as np
-import jax.numpy as jnp
 import pathlib
 import warnings
-from exojax.spec import atomllapi, atomll
+
+import jax.numpy as jnp
+import numpy as np
+
+from exojax.database import atomll , atomllapi
 from exojax.utils.constants import Tref_original
 
 __all__ = ["AdbVald", "AdbSepVald", "AdbKurucz"]
@@ -18,7 +20,7 @@ warning_old_exojax = "It seems that the hdf5 file for the transition file was cr
 warnings.warn("moldb module will be renenamed to adb in future.", FutureWarning)
 
 
-class AdbVald(object):
+class AdbVald:
     """atomic database from VALD3 (http://vald.astro.uu.se/)
 
     AdbVald is a class for VALD3.
@@ -353,7 +355,7 @@ class AdbVald(object):
         return QTmask_sp
 
 
-class AdbSepVald(object):
+class AdbSepVald:
     """atomic database from VALD3 with an additional axis for separating each
     species (atom or ion)
 
@@ -413,7 +415,7 @@ class AdbSepVald(object):
         self.QTref_284 = adb.QTref_284
 
 
-class AdbKurucz(object):
+class AdbKurucz:
     """atomic database from Kurucz (http://kurucz.harvard.edu/linelists/)
 
     AdbKurucz is a class for Kurucz line list.

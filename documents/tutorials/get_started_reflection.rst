@@ -54,7 +54,7 @@ et al. (2023). Get the data.
 
 .. code:: ipython3
 
-    from exojax.spec.unitconvert import wav2nu
+    from exojax.utils.grids import wav2nu
     import pandas as pd
     filename = "/home/kawahara/solar-hrs/Spectre_HR_LATMOS_Meftah_V1.txt"
     dat = pd.read_csv(filename, names=("wav","flux"), comment=";", delimiter="\t")
@@ -174,7 +174,7 @@ Jupiter are well understood, using an AM model should not be excessive.
 
 .. code:: ipython3
 
-    from exojax.spec.pardb import PdbCloud
+    from exojax.database.pardb  import PdbCloud
     from exojax.atm.atmphys import AmpAmcloud
     
     
@@ -205,7 +205,7 @@ ammonia at the cloud base.
 
     from exojax.utils.zsol import nsol
     from exojax.atm.atmconvert import vmr_to_mmr
-    from exojax.spec.molinfo import molmass_isotope
+    from exojax.database.molinfo  import molmass_isotope
     
     # condensate substance density
     rhoc = pdb_nh3.condensate_substance_density  # g/cc
@@ -334,7 +334,7 @@ Mie scattering is ``OpaMie``.
 
 .. code:: ipython3
 
-    from exojax.spec.api import MdbHitemp
+    from exojax.database.api  import MdbHitemp
     mdb_reduced = MdbHitemp("CH4", nurange=[nus[0], nus[-1]], isotope=1, elower_max=3300.0)
 
 

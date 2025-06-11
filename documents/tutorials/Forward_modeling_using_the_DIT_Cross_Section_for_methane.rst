@@ -48,7 +48,7 @@ Loading a molecular database of CH4 and CIA (H2-H2)…
 
 .. code:: ipython3
 
-    from exojax.spec import api, contdb
+    from exojax.database import api , contdb
     mdbCH4=api.MdbExomol('.database/CH4/12C-1H4/YT10to10/',nus,crit=1.e-30)
     cdbH2H2=contdb.CdbCIA('.database/H2-H2_2011.cia',nus)
 
@@ -79,7 +79,7 @@ Loading a molecular database of CH4 and CIA (H2-H2)…
 
 .. code:: ipython3
 
-    from exojax.spec import molinfo
+    from exojax.database import molinfo 
     molmassCH4=molinfo.molmass("CH4")
 
 Computing the relative partition function,
@@ -94,8 +94,8 @@ Pressure and Natural broadenings
 .. code:: ipython3
 
     from jax import jit
-    from exojax.spec.exomol import gamma_exomol
-    from exojax.spec import gamma_natural
+    from exojax.database.exomol  import gamma_exomol
+    from exojax.database.hitran import gamma_natural
     
     gammaLMP = jit(vmap(gamma_exomol,(0,0,None,None)))\
             (Parr,Tarr,mdbCH4.n_Texp,mdbCH4.alpha_ref)
@@ -106,7 +106,7 @@ Doppler broadening
 
 .. code:: ipython3
 
-    from exojax.spec import doppler_sigma
+    from exojax.database.hitran import doppler_sigma
     sigmaDM=jit(vmap(doppler_sigma,(None,0,None)))\
             (mdbCH4.nu_lines,Tarr,molmassCH4)
 
@@ -114,7 +114,7 @@ And line strength
 
 .. code:: ipython3
 
-    from exojax.spec import SijT
+    from exojax.database.hitran import SijT
     SijM=jit(vmap(SijT,(0,None,None,None,0)))\
         (Tarr,mdbCH4.logsij0,mdbCH4.nu_lines,mdbCH4.elower,qt)
 

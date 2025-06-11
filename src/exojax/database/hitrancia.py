@@ -1,7 +1,6 @@
-import numpy as np
 import jax.numpy as jnp
+import numpy as np
 from jax import jit, vmap
-
 
 HITRAN_DEFCIA = {
     "H2-CH4 (equilibrium)": "H2-CH4_eq_2011.cia",
@@ -28,10 +27,10 @@ HITRAN_DEFCIA = {
 
 
 def read_cia(filename, nus, nue):
-    """READ HITRAN CIA data.
+    """READ hitrancia data.
 
     Args:
-        filename: HITRAN CIA file name (_2011.cia)
+        filename: hitrancia file name (_2011.cia)
         nus: wavenumber min (cm-1)
         nue: wavenumber max (cm-1)
 
@@ -43,7 +42,7 @@ def read_cia(filename, nus, nue):
     # read first line
     com = filename.split("/")[-1].split("_")[0]
     print(com)
-    f = open(filename, "r")
+    f = open(filename)
     header = f.readline()
     info = header.strip().split()
     nnu = int(info[3])
@@ -53,7 +52,7 @@ def read_cia(filename, nus, nue):
         # print(column)
         nu.append(float(column[0]))
     f.close()
-    f = open(filename, "r")
+    f = open(filename)
     tcia = []
     for line in f:
         line = line.strip()

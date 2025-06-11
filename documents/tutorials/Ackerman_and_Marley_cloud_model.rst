@@ -99,7 +99,7 @@ profile.
 .. code:: ipython3
 
     from exojax.atm.amclouds import mixing_ratio_cloud_profile
-    from exojax.spec.molinfo import molmass_isotope
+    from exojax.database.molinfo  import molmass_isotope
     from exojax.atm.atmconvert import vmr_to_mmr
     fsed = 3.
     muc_enstatite = molmass_isotope("MgSiO3")
@@ -323,7 +323,7 @@ These processes can be reprodced using ``AmpAmcloud``, which uses
 .. code:: ipython3
 
     from exojax.atm.atmphys import AmpAmcloud
-    from exojax.spec.pardb import PdbCloud
+    from exojax.database.pardb  import PdbCloud
     pdb_enstatite = PdbCloud("MgSiO3")
     pdb_Fe = PdbCloud("Fe")
     
@@ -359,7 +359,7 @@ The Mie scattering can be computed using ``OpaMie``.
 .. code:: ipython3
 
     from exojax.utils.grids import wavenumber_grid
-    from exojax.spec.unitconvert import wav2nu
+    from exojax.utils.grids import wav2nu
     
     N = 1000
     wavelength_start = 5000.0  # AA
@@ -434,7 +434,7 @@ Let’s compare with CIA
 
     #CIA
     
-    from exojax.spec import contdb
+    from exojax.database import contdb 
     cdbH2H2 = contdb.CdbCIA('.database/H2-H2_2011.cia', nugrid)
 
 

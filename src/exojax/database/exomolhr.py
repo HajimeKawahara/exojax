@@ -1,21 +1,20 @@
-import os
-import re
-import pathlib
-import requests
-import logging
-import time
-import numpy as np
-from urllib.parse import urljoin
-from typing import Sequence
-from typing import Iterable
-from bs4 import BeautifulSoup
-import zipfile
-import pandas as pd
 import concurrent.futures as _cf
+import logging
+import os
+import pathlib
+import re
+import time
+import zipfile
+from collections.abc import Iterable, Sequence
+from urllib.parse import urljoin
 
+import numpy as np
+import pandas as pd
+import requests
+from bs4 import BeautifulSoup
 
+from exojax.database.molinfo  import isotope_molmass
 from exojax.utils.molname import e2s
-from exojax.spec.molinfo import isotope_molmass
 from exojax.utils.url import url_lists_exomolhr
 
 EXOMOLHR_HOME, EXOMOLHR_API_ROOT, EXOMOLHR_DOWNLOAD_ROOT = url_lists_exomolhr()

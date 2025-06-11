@@ -60,7 +60,7 @@ device.
 
 .. code:: ipython3
 
-    from exojax.spec import api, contdb
+    from exojax.database import api , contdb
     mdbCH4=api.MdbExomol('.database/CH4/12C-1H4/YT10to10/',nus,gpu_transfer=False)
     cdbH2H2=contdb.CdbCIA('.database/H2-H2_2011.cia',nus)
 
@@ -195,7 +195,7 @@ computing delta tau for CIA
 .. code:: ipython3
 
     from exojax.rt.rtransfer import dtauCIA
-    from exojax.spec import molinfo
+    from exojax.database import molinfo 
     mmw=2.33 #mean molecular weight
     mmrH2=0.74
     molmassH2=molinfo.molmass_isotope("H2")

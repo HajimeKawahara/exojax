@@ -15,16 +15,16 @@ import numpy as np
 from jax import jit, vmap
 from jax.lax import scan
 
-from exojax.spec import gamma_natural, normalized_doppler_sigma
+from exojax.database.hitran import gamma_natural, normalized_doppler_sigma
 
 # vald
-from exojax.spec.atomll import gamma_vald3, interp_QT_284
+from exojax.database.atomll  import gamma_vald3, interp_QT_284
 
 # exomol
-from exojax.spec.exomol import gamma_exomol
+from exojax.database.exomol  import gamma_exomol
 
 # hitran/hitemp
-from exojax.spec.hitran import gamma_hitran, line_strength
+from exojax.database.hitran  import gamma_hitran, line_strength
 from exojax.opacity.lsd import inc2D_givenx
 from exojax.opacity.profconv import (
     calc_open_nu_xsection_from_lsd_zeroscan,

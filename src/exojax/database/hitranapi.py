@@ -1,10 +1,11 @@
 """API for HITRAN and HITEMP outside HAPI."""
-import numpy as np
-from radis.db.classes import get_molecule
-from radis.db.classes import get_molecule_identifier
-import jax.numpy as jnp
-from contextlib import redirect_stdout
 import os
+from contextlib import redirect_stdout
+
+import jax.numpy as jnp
+import numpy as np
+from radis.db.classes import get_molecule, get_molecule_identifier
+
 with redirect_stdout(open(os.devnull, 'w')):
     import hapi
 

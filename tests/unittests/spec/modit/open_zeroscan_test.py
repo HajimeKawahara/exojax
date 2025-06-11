@@ -2,10 +2,10 @@
 """
 
 import jax.numpy as jnp
-from exojax.spec.hitran import line_strength
+from exojax.database.hitran  import line_strength
 from exojax.opacity.set_ditgrid import ditgrid_log_interval
-from exojax.spec.exomol import gamma_exomol
-from exojax.spec import normalized_doppler_sigma
+from exojax.database.exomol  import gamma_exomol
+from exojax.database.hitran import normalized_doppler_sigma
 from exojax.opacity.initspec import init_modit
 from exojax.opacity.modit import xsvector_open_zeroscan
 from exojax.opacity.modit import xsvector_zeroscan

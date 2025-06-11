@@ -12,7 +12,7 @@ import numpy as np
 from jax import jit
 from jax.lax import scan
 
-from exojax.spec.atomll import padding_2Darray_for_each_atom
+from exojax.database.atomll  import padding_2Darray_for_each_atom
 from exojax.opacity.ditkernel import fold_voigt_kernel
 from exojax.rt.layeropacity import layer_optical_depth
 from exojax.opacity.lsd import inc3D_givenx

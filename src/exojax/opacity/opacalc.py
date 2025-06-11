@@ -516,7 +516,7 @@ class OpaPremodit(OpaCalc):
         del self.lbd_coeff
 
     def xsvector(self, T, P):
-        from exojax.spec import normalized_doppler_sigma
+        from exojax.database.hitran import normalized_doppler_sigma
 
         (
             multi_index_uniqgrid,
@@ -812,9 +812,9 @@ class OpaModit(OpaCalc):
         Returns:
             1D array: cross section in cm2
         """
-        from exojax.spec import gamma_natural, normalized_doppler_sigma
-        from exojax.spec.exomol import gamma_exomol
-        from exojax.spec.hitran import gamma_hitran, line_strength
+        from exojax.database.hitran import gamma_natural, normalized_doppler_sigma
+        from exojax.database.exomol  import gamma_exomol
+        from exojax.database.hitran  import gamma_hitran, line_strength
         from exojax.opacity.modit import xsvector_open_zeroscan, xsvector_zeroscan
         from exojax.opacity.set_ditgrid import ditgrid_log_interval
 
@@ -1034,9 +1034,9 @@ class OpaDirect(OpaCalc):
         Returns:
             1D array: cross section in cm2
         """
-        from exojax.spec import doppler_sigma, gamma_natural
-        from exojax.spec.exomol import gamma_exomol
-        from exojax.spec.hitran import gamma_hitran, line_strength
+        from exojax.database.hitran import doppler_sigma, gamma_natural
+        from exojax.database.exomol  import gamma_exomol
+        from exojax.database.hitran  import gamma_hitran, line_strength
         from exojax.opacity.lpf import xsvector as xsvector_lpf
 
         numatrix = self.opainfo
@@ -1073,10 +1073,10 @@ class OpaDirect(OpaCalc):
         Returns:
             jnp.array : cross section matrix (Nlayer, N_wavenumber)
         """
-        from exojax.spec import doppler_sigma, gamma_natural
-        from exojax.spec.atomll import gamma_vald3, interp_QT_284
-        from exojax.spec.exomol import gamma_exomol
-        from exojax.spec.hitran import gamma_hitran, line_strength
+        from exojax.database.hitran import doppler_sigma, gamma_natural
+        from exojax.database.atomll  import gamma_vald3, interp_QT_284
+        from exojax.database.exomol  import gamma_exomol
+        from exojax.database.hitran  import gamma_hitran, line_strength
         from exojax.opacity.lpf import xsmatrix as xsmatrix_lpf
 
         numatrix = self.opainfo

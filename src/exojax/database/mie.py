@@ -330,7 +330,7 @@ def cubeweighted_integral_checker(rgrid, rg, sigmag, accuracy=1.0e-2):
 if __name__ == "__main__":
     import jax.numpy as jnp
 
-    from exojax.spec.pardb import PdbCloud
+    from exojax.database.pardb  import PdbCloud
 
     pdb = PdbCloud("NH3")
     filename = ".database/particulates/virga/miegrid_lognorm_" + pdb.condensate + ".mg"

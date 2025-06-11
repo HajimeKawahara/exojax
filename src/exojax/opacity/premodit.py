@@ -11,7 +11,7 @@ import jax.numpy as jnp
 import numpy as np
 from jax import jit, vmap
 
-from exojax.spec import normalized_doppler_sigma
+from exojax.database.hitran import normalized_doppler_sigma
 from exojax.opacity.lbd import lbd_coefficients
 from exojax.opacity.lsd import npadd3D_direct1D, npadd3D_multi_index
 

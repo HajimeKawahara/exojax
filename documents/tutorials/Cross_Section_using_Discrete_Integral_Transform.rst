@@ -23,13 +23,13 @@ errors):
 
 .. code:: ipython3
 
-    from exojax.spec.hitran import line_strength
-    from exojax.spec.hitran import doppler_sigma
-    from exojax.spec.hitran import gamma_hitran
-    from exojax.spec.hitran import gamma_natural
+    from exojax.database.hitran  import line_strength
+    from exojax.database.hitran  import doppler_sigma
+    from exojax.database.hitran  import gamma_hitran
+    from exojax.database.hitran  import gamma_natural
     from exojax.utils.grids import wavenumber_grid
     from exojax.utils.constants import Tref_original
-    from exojax.spec import api
+    from exojax.database import api 
     
     # Setting wavenumber bins and loading HITRAN database
     nus, wav, resolution = wavenumber_grid(

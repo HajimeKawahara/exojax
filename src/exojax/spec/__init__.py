@@ -1,24 +1,12 @@
 __all__ = []
 
-__version__ = '1.6'
+__version__ = '2.0'
 __uri__ = ''
 __author__ = 'ExoJAX contributors'
 __email__ = 'divrot@gmail.com'
 __license__ = ''
 __description__ = 'auto-differentiable spectral modules in exojax'
 
-from exojax.spec.hitran import (line_strength, doppler_sigma,
-                                gamma_natural, normalized_doppler_sigma)
-
-from exojax.opacity.lpf import (
-    hjert,
-    voigt,
-    voigtone,
-    vvoigt,
-)
-
-from exojax.opacity.make_numatrix import (
-    make_numatrix0, )
 
 """
 Compatibility layer for legacy imports.
@@ -92,8 +80,29 @@ _ALIAS_MAP = {
     "toon":           "exojax.rt.toon",
     "twostream":      "exojax.rt.twostream",
     "mie":            "exojax.database.mie",
-    
+    "api":            "exojax.database.api",
+    "atomll":        "exojax.database.atomll",
+    "atomllapi":     "exojax.database.atomllapi",
+    "contdb":        "exojax.database.contdb",
+    "customapi":     "exojax.database.customapi",
+    "dbmanager":     "exojax.database.dbmanager", 
+    "exomol":        "exojax.database.exomol",
+    "exomolhr":      "exojax.database.exomolhr",
+    "hitran":        "exojax.database.hitran",
+    "hitranapi":     "exojax.database.hitranapi",
+    "hitrancia":     "exojax.database.hitrancia",
+    "hminus":        "exojax.database.hminus",
+    "moldb":         "exojax.database.moldb",
+    "molinfo":       "exojax.database.molinfo",
+    "multimol":      "exojax.database.multimol",
+    "nonair":        "exojax.database.nonair",
+    "pardb":         "exojax.database.pardb",
+    "qstate":        "exojax.database.qstate",
 }
+
+
+
+
 
 for _old, _new in _ALIAS_MAP.items():
     _alias(_old, _new)

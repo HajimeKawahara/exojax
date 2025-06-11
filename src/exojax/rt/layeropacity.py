@@ -3,12 +3,9 @@
 """
 
 import jax.numpy as jnp
-from jax import jit, vmap
-
 from exojax.atm.idealgas import number_density
-from exojax.spec.dtau_mmwl import dtauM_mmwl
-from exojax.spec.hitrancia import interp_logacia_matrix
-from exojax.spec.hminus import log_hminus_continuum, log_hminus_continuum_single
+from exojax.database.hitrancia import interp_logacia_matrix
+from exojax.database.hminus  import log_hminus_continuum, log_hminus_continuum_single
 from exojax.utils.constants import bar_cgs, logkB, logm_ucgs, opacity_factor
 
 
@@ -126,26 +123,6 @@ def layer_optical_depth_CIA(
     )
 
     return dtauc
-
-
-def layer_optical_depth_VALD(dParr, xsm, VMR, mean_molecular_weight, gravity):
-    """dtau of the atomic (+ionic) cross section from VALD.
-
-    Args:
-        dParr: delta pressure profile (bar) [N_layer]
-        xsm: cross section matrix (cm2) [N_species x N_layer x N_wav]
-        VMR: volume mixing ratio [N_species x N_layer]
-        mean_molecular_weight: mean molecular weight [N_layer]
-        gravity: gravity (cm/s2)
-
-    Returns:
-        2D array: optical depth matrix, dtau  [N_layer, N_nus]
-    """
-    dtauS = jit(vmap(dtauM_mmwl, (None, 0, 0, None, None)))(
-        dParr, xsm, VMR, mean_molecular_weight, gravity
-    )
-    dtau = jnp.abs(jnp.sum(dtauS, axis=0))
-    return dtau
 
 
 def single_layer_optical_depth_Hminus(

@@ -1,6 +1,6 @@
 import numpy as np
-from exojax.utils.constants import Tref_original
-from exojax.utils.constants import hcperk, ccgs
+
+from exojax.utils.constants import Tref_original, ccgs, hcperk
 
 
 def line_strength_from_Einstein_coeff(A, g, nu_lines, elower, QTref):

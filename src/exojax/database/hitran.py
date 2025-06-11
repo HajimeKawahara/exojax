@@ -1,8 +1,8 @@
-from jax import jit
 import jax.numpy as jnp
 import numpy as np
-from exojax.utils.constants import hcperk, Tref_original
-from exojax.utils.constants import Patm
+from jax import jit
+
+from exojax.utils.constants import Patm, Tref_original, hcperk
 
 
 @jit

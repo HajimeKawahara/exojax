@@ -3,9 +3,9 @@ Comparing HITEMP and ExoMol
 
 .. code:: ipython3
 
-    from exojax.spec.hitran import line_strength, doppler_sigma, gamma_hitran, gamma_natural
-    from exojax.spec.exomol import gamma_exomol
-    from exojax.spec import api
+    from exojax.database.hitran  import line_strength, doppler_sigma, gamma_hitran, gamma_natural
+    from exojax.database.exomol  import gamma_exomol
+    from exojax.database import api 
     import numpy as np
     import matplotlib.pyplot as plt
 
@@ -78,7 +78,7 @@ i.e. the partial pressure = pressure.
 
 .. code:: ipython3
 
-    from exojax.spec import molinfo
+    from exojax.database import molinfo 
     
     molecular_mass = molinfo.molmass("CO")  # molecular weight
     Tfix = 1300.0  # we assume T=1300K

@@ -3,6 +3,7 @@
 """
 import numpy as np
 
+
 def m_transition_state(jlower, branch):
     """compute m-value of the transition from rotational state
 

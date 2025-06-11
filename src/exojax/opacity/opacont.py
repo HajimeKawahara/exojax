@@ -11,8 +11,8 @@ import jax.numpy as jnp
 import numpy as np
 from jax import vmap
 
-from exojax.spec.hitrancia import interp_logacia_matrix, interp_logacia_vector
-from exojax.spec.hminus import log_hminus_continuum
+from exojax.database.hitrancia import interp_logacia_matrix, interp_logacia_vector
+from exojax.database.hminus  import log_hminus_continuum
 from exojax.database.mie import mie_lognormal_pymiescatt
 from exojax.opacity.rayleigh import xsvector_rayleigh_gas
 

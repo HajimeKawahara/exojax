@@ -3,11 +3,11 @@ from importlib.resources import files
 import pandas as pd
 import numpy as np
 from exojax.opacity.modit import xsvector_scanfft
-from exojax.spec.hitran import line_strength
+from exojax.database.hitran  import line_strength
 from exojax.test.data import TESTDATA_CO_EXOMOL_MODIT_XS_REF
-from exojax.spec import normalized_doppler_sigma, gamma_natural
-from exojax.spec.hitran import line_strength
-from exojax.spec.exomol import gamma_exomol
+from exojax.database.hitran import normalized_doppler_sigma, gamma_natural
+from exojax.database.hitran  import line_strength
+from exojax.database.exomol  import gamma_exomol
 from exojax.utils.grids import wavenumber_grid
 from exojax.opacity.initspec import init_modit, init_modit_vald
 from exojax.opacity.set_ditgrid import ditgrid_log_interval
@@ -105,7 +105,7 @@ def test_rt_exomol():
 
 
 def test_rt_vald():
-    from exojax.spec import moldb, atomll
+    from exojax.database import moldb , atomll
     from exojax.rt import rtransfer as rt
     from exojax.opacity.modit import set_ditgrid_matrix_vald_all
     from exojax.opacity.modit import vald_all

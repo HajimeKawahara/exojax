@@ -1,7 +1,7 @@
 import pytest
-from exojax.spec.multimol import MultiMol
+from exojax.database.multimol  import MultiMol
 from exojax.test.emulate_mdb import mock_wavenumber_grid
-from exojax.spec.api import MdbExomol
+from exojax.database.api  import MdbExomol
 
 
 def test_multimdb_single_nu_grid():

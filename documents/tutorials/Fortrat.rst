@@ -8,7 +8,7 @@ optional_quantum_states=True option in api.MdbExomol.
 
 .. code:: ipython3
 
-    from exojax.spec import api
+    from exojax.database import api 
     emf='CO/12C-16O/Li2015'   
     mdb = api.MdbExomol(emf, None, optional_quantum_states=True)
 

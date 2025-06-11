@@ -1,7 +1,7 @@
 from exojax.opacity.lpf import auto_xsection
-from exojax.spec.hitran import line_strength, doppler_sigma, gamma_hitran, gamma_natural
-from exojax.spec.exomol import gamma_exomol
-from exojax.spec import moldb
+from exojax.database.hitran  import line_strength, doppler_sigma, gamma_hitran, gamma_natural
+from exojax.database.exomol  import gamma_exomol
+from exojax.database import moldb 
 import numpy as np
 import seaborn as sns
 import matplotlib.pyplot as plt

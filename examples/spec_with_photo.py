@@ -77,14 +77,14 @@ print("len(nu_grid_spec) = ", len(nu_grid_spec))   #6000
 # Here, we set the molecular and CIA databases for the forward model.
 # We use H2O, CH4, and CO for the molecular opacity and H2-H2 and H2-He for the CIA opacity.
 # The molecular databases are from ExoMol (H2O and CO) and HITEMP (CH4), 
-# and the CIA databases are from the HITRAN CIA database.
+# and the CIA databases are from the hitrancia database.
 #
 
 # molecules/CIA database settings, uses nu_photo becuase it's wider than nu_grid_obs
-from exojax.spec.api import MdbExomol
-from exojax.spec.api import MdbHitemp
-from exojax.spec import contdb
-from exojax.spec import molinfo
+from exojax.database.api  import MdbExomol
+from exojax.database.api  import MdbHitemp
+from exojax.database import contdb 
+from exojax.database import molinfo 
 
 mdb_h2o = MdbExomol(
     ".database/H2O/1H2-16O/POKAZATEL", nurange=nu_grid_photo, gpu_transfer=False

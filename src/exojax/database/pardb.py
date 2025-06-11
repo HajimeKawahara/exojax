@@ -5,16 +5,16 @@
 
 """
 
-import numpy as np
 import pathlib
-from exojax.database.mie import evaluate_miegrid
-from exojax.database.mie import compute_mieparams_cgs_from_miegrid
 
+import numpy as np
+
+from exojax.database.mie import compute_mieparams_cgs_from_miegrid, evaluate_miegrid
 
 __all__ = ["PdbCloud"]
 
 
-class PdbCloud(object):
+class PdbCloud:
     def __init__(
         self,
         condensate,
@@ -66,12 +66,15 @@ class PdbCloud(object):
         Note:
             The download URL is written in exojax.utils.url.
         """
-        import urllib.request
         import os
         import shutil
+        import urllib.request
+
+        from exojax.utils.files import (
+            find_files_by_extension,
+            get_file_names_without_extension,
+        )
         from exojax.utils.url import url_virga
-        from exojax.utils.files import find_files_by_extension
-        from exojax.utils.files import get_file_names_without_extension
 
         try:
             os.makedirs(str(self.path), exist_ok=True)
@@ -113,10 +116,10 @@ class PdbCloud(object):
             Each component of both corresponds to that of self.refraction_index. (no need to put [::-1])   
         
         """
-        from exojax.spec.unitconvert import wav2nu
+        from exojax.utils.grids import wav2nu
 
         _, wave, nn, kk = np.loadtxt(
-            open(self.refrind_path, "rt").readlines(), unpack=True, usecols=[0, 1, 2, 3]
+            open(self.refrind_path).readlines(), unpack=True, usecols=[0, 1, 2, 3]
         )
         self.refraction_index_wavenumber = wav2nu(wave, "um")  # wave in micron ascending
         self.refraction_index_wavelength_nm = wave * 1.0e3  #descending
@@ -129,9 +132,9 @@ class PdbCloud(object):
     def set_saturation_pressure_list(self):
         from exojax.atm.psat import (
             psat_ammonia_AM01,
-            psat_water_AM01,
-            psat_Fe_AM01,
             psat_enstatite_AM01,
+            psat_Fe_AM01,
+            psat_water_AM01,
         )
 
         self.saturation_pressure_solid_list = {

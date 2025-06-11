@@ -4,9 +4,9 @@ Uses OpaDIrect after calling PreModit #437 made by @ykawashima (see #437, #438, 
 """
 
 from exojax.utils.grids import wavenumber_grid
-from exojax.spec import api
-from exojax.spec import molinfo
-from exojax.spec.hitran import line_strength, doppler_sigma, gamma_hitran, gamma_natural, line_strength_numpy
+from exojax.database import api 
+from exojax.database import molinfo 
+from exojax.database.hitran  import line_strength, doppler_sigma, gamma_hitran, gamma_natural, line_strength_numpy
 from exojax.opacity.opacalc import OpaPremodit, OpaDirect
 import numpy as np
 import matplotlib.pyplot as plt
@@ -36,8 +36,8 @@ def auto_xsection(nu, nu_lines, sigmaD, gammaL, Sij, memory_size=15.):
 
     Example:
         >>> from exojax.opacity.lpf import auto_xsection
-        >>> from exojax.spec.hitran import SijT, doppler_sigma, gamma_hitran, gamma_natural
-        >>> from exojax.spec import moldb
+        >>> from exojax.database.hitran  import SijT, doppler_sigma, gamma_hitran, gamma_natural
+        >>> from exojax.database import moldb 
         >>> import numpy as np
         >>> nus=np.linspace(1000.0,10000.0,900000,dtype=np.float64) #cm-1
         >>> mdbCO=moldb.MdbHit('~/exojax/data/CO','05_hit12',nus)

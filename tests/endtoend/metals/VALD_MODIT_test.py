@@ -18,8 +18,8 @@ path_ValdLineList = ".database/vald4214450.gz"
 
 import numpy as np
 import jax.numpy as jnp
-from exojax.spec import moldb, atomll, contdb, molinfo, initspec, planck
-from exojax.spec import api
+from exojax.database import moldb , atomll, contdb, molinfo, initspec, planck
+from exojax.database import api 
 from exojax.rt.rtransfer import rtrun_emis_pureabs_fbased2st
 from exojax.atm.atmprof import pressure_layer_logspace
 from exojax.rt.layeropacity import layer_optical_depth_VALD as dtauVALD

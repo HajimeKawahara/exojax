@@ -18,7 +18,7 @@ from exojax is like that.
 .. code:: ipython
 	  
 	  >>> from exojax.utils.grids import wavenumber_grid
-	  >>> from exojax.spec import moldb
+	  >>> from exojax.database import moldb 
 	  >>> nus,wav,res=nugrid(22880.,23000.,1000,unit="AA")
 	  >>> mdbCO=moldb.MdbHit('.database/05_HITEMP2019.par.bz2',nus)
 	  bunziping
@@ -95,7 +95,7 @@ HITRAN provides
 
 .. code:: ipython
 
-	  >>> from exojax.spec import contdb	  
+	  >>> from exojax.database import contdb 	  
 	  >>> cdbH2H2=contdb.CdbCIA('.database/H2-H2_2011.cia',nus)
 
 See ":doc:`../tutorials/CIA_opacity`" for tutorial.

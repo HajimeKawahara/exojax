@@ -10,19 +10,14 @@ Notes:
 
 """
 
-from os.path import exists
-import numpy as np
-import jax.numpy as jnp
 import pathlib
 import warnings
-from exojax.spec.hitran import line_strength_numpy
-from exojax.spec.hitran import gamma_natural as gn
-from exojax.utils.constants import Tref_original
-from exojax.utils.molname import e2s
-from exojax.spec import hitranapi
-from exojax.spec.hitranapi import molecid_hitran
-from exojax.spec.molinfo import isotope_molmass
-from exojax.utils.isotopes import molmass_hitran
+from os.path import exists
+
+import jax.numpy as jnp
+import numpy as np
+from packaging import version
+from radis import __version__ as radis_version
 from radis.api.dbmanager import get_auto_MEMORY_MAPPING_ENGINE
 from radis.api.exomolapi import (
     MdbExomol as CapiMdbExomol,
@@ -31,11 +26,15 @@ from radis.api.hitempapi import HITEMPDatabaseManager
 from radis.api.hitranapi import HITRANDatabaseManager
 from radis.db.classes import get_molecule
 from radis.levels.partfunc import PartFuncTIPS
-from radis import __version__ as radis_version
-from packaging import version
 
-
-import warnings
+from exojax.database import hitranapi
+from exojax.database.hitran  import gamma_natural as gn
+from exojax.database.hitran  import line_strength_numpy
+from exojax.database.hitranapi import molecid_hitran
+from exojax.database.molinfo  import isotope_molmass
+from exojax.utils.constants import Tref_original
+from exojax.utils.isotopes import molmass_hitran
+from exojax.utils.molname import e2s
 
 __all__ = ["MdbExomol", "MdbHitemp", "MdbHitran"]
 

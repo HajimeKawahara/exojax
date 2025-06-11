@@ -4,9 +4,9 @@ from io import BytesIO
 import numpy as np
 from exojax.utils.grids import wavenumber_grid
 from exojax.spec import response
-from exojax.spec import molinfo
-from exojax.spec import contdb
-from exojax.spec.api import MdbExomol
+from exojax.database import molinfo 
+from exojax.database import contdb 
+from exojax.database.api  import MdbExomol
 from exojax.opacity.opacalc import OpaDirect
 from exojax.opacity.opacont import OpaCIA
 from exojax.rt.atmrt import ArtEmisPure

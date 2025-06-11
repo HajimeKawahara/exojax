@@ -1,4 +1,4 @@
-from exojax.spec.multimol import database_path_hitran12
+from exojax.database.multimol  import database_path_hitran12
 
 def test_database_path_hitran12():
     _hitran_dbpath = {

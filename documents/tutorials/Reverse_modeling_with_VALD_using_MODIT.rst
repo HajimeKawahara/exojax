@@ -18,9 +18,9 @@ Star (GJ699).
     from exojax.rt.rtransfer import pressure_layer,nugrid
     from exojax.utils.instfunc import resolution_to_gaussian_std
     
-    from exojax.spec import moldb, atomll, contdb
+    from exojax.database import moldb , atomll, contdb
     from exojax.opacity import modit, initspec
-    from exojax.spec import molinfo
+    from exojax.database import molinfo 
 
 Load observed data.
 

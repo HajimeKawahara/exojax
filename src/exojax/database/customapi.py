@@ -1,16 +1,18 @@
-import pathlib
-import pandas as pd
-import numpy as np
 import copy
-import warnings
+import pathlib
 import pkgutil
+import warnings
 from io import BytesIO
+
+import numpy as np
+import pandas as pd
+
+from exojax.database.api  import _set_engine
+from exojax.database.dbmanager  import HargreavesDatabaseManager
+from exojax.database.hitran  import line_strength_numpy
+from exojax.database.qstate  import branch_to_number
+from exojax.utils.constants import Tref_original, ccgs, hcperk
 from exojax.utils.molname import e2s
-from exojax.spec.api import _set_engine
-from exojax.spec.hitran import line_strength_numpy
-from exojax.spec.qstate import branch_to_number
-from exojax.utils.constants import Tref_original, hcperk, ccgs
-from exojax.spec.dbmanager import HargreavesDatabaseManager
 
 HARGREAVES_URL = "https://content.cld.iop.org/journals/1538-3881/140/4/919/revision1/aj357217t5_mrt.txt"
 

@@ -6,7 +6,7 @@ start from ploting the cross section of CO in 1900-2300 cm-1.
 
 .. code:: ipython3
 
-    from exojax.spec.api import MdbExomol
+    from exojax.database.api  import MdbExomol
     from exojax.utils.grids import wavenumber_grid
     nus,wave,resolution = wavenumber_grid(1900.0,2300.0,150000,xsmode="lpf")
 
@@ -76,10 +76,10 @@ calculator. We assume T=1300K and P=1bar.
 
 .. code:: ipython3
 
-    from exojax.spec.hitran import line_strength, doppler_sigma
+    from exojax.database.hitran  import line_strength, doppler_sigma
     from exojax.opacity.initspec import init_lpf
-    from exojax.spec.exomol import gamma_exomol, gamma_natural
-    from exojax.spec import molinfo
+    from exojax.database.exomol  import gamma_exomol, gamma_natural
+    from exojax.database import molinfo 
     from exojax.opacity.lpf import xsvector
     from exojax.utils.constants import Tref_original
     
@@ -246,7 +246,7 @@ micron!
 
 .. parsed-literal::
 
-    /home/kawahara/exojax/src/exojax/spec/unitconvert.py:63: UserWarning: Both input wavelength and output wavenumber are in ascending order.
+    /home/kawahara/exojax/src/exojax/utils.grids.py:63: UserWarning: Both input wavelength and output wavenumber are in ascending order.
       warnings.warn(
     /home/kawahara/exojax/src/exojax/utils/molname.py:197: FutureWarning: e2s will be replaced to exact_molname_exomol_to_simple_molname.
       warnings.warn(

@@ -11,8 +11,8 @@ step by step, not using ``opa``.
 
 .. code:: ipython3
 
-    from exojax.spec.hitran import line_strength, doppler_sigma, gamma_hitran, gamma_natural
-    from exojax.spec import api
+    from exojax.database.hitran  import line_strength, doppler_sigma, gamma_hitran, gamma_natural
+    from exojax.database import api 
     import numpy as np
     import matplotlib.pyplot as plt
     plt.style.use('bmh')

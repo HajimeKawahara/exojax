@@ -1,20 +1,22 @@
-import numpy as np
-from exojax.spec import atomllapi
-from exojax.utils.constants import (
-    ccgs,
-    m_u,
-    kB,
-    hcperk,
-    ecgs,
-    hcgs,
-    Rcgs,
-    a0,
-    eV2wn,
-    Tref_original,
-)
-import jax.numpy as jnp
-from jax.lax import scan
 import warnings
+
+import jax.numpy as jnp
+import numpy as np
+from jax.lax import scan
+
+from exojax.database import atomllapi
+from exojax.utils.constants import (
+    Rcgs,
+    Tref_original,
+    a0,
+    ccgs,
+    ecgs,
+    eV2wn,
+    hcgs,
+    hcperk,
+    kB,
+    m_u,
+)
 
 
 def Sij0(A, gupper, nu_lines, elower, QTref_284, QTmask, Irwin=False):

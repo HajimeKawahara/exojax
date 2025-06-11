@@ -82,7 +82,7 @@ wavenumber range first.
 
 .. parsed-literal::
 
-    /home/kawahara/exojax/src/exojax/spec/unitconvert.py:63: UserWarning: Both input wavelength and output wavenumber are in ascending order.
+    /home/kawahara/exojax/src/exojax/utils.grids.py:63: UserWarning: Both input wavelength and output wavenumber are in ascending order.
       warnings.warn(
 
 
@@ -93,7 +93,7 @@ the database name in the ExoMol website (https://www.exomol.com/).
 
 .. code:: ipython3
 
-    from exojax.spec.api import MdbExomol
+    from exojax.database.api  import MdbExomol
     mdb = MdbExomol(".database/CO/12C-16O/Li2015", nurange=nu_grid)
 
 
@@ -285,7 +285,7 @@ absorption <https://en.wikipedia.org/wiki/Collision-induced_absorption_and_emiss
 
 .. code:: ipython3
 
-    from exojax.spec.contdb import CdbCIA
+    from exojax.database.contdb  import CdbCIA
     from exojax.opacity.opacont import OpaCIA
     
     cdb = CdbCIA(".database/H2-H2_2011.cia", nurange=nu_grid)

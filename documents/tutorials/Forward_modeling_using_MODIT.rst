@@ -40,7 +40,7 @@ Loading a molecular database of CO and CIA (H2-H2)…
 
 .. code:: ipython3
 
-    from exojax.spec import api, contdb
+    from exojax.database import api , contdb
     mdbCO=api.MdbExomol('.database/CO/12C-16O/Li2015',nus)
     cdbH2H2=contdb.CdbCIA('.database/H2-H2_2011.cia',nus)
 
@@ -57,7 +57,7 @@ Loading a molecular database of CO and CIA (H2-H2)…
 
 .. code:: ipython3
 
-    from exojax.spec import molinfo
+    from exojax.database import molinfo 
     molmassCO=molinfo.molmass("CO")
 
 Computing the relative partition function,
@@ -72,8 +72,8 @@ Pressure and Natural broadenings
 .. code:: ipython3
 
     from jax import jit
-    from exojax.spec.exomol import gamma_exomol
-    from exojax.spec import gamma_natural
+    from exojax.database.exomol  import gamma_exomol
+    from exojax.database.hitran import gamma_natural
     
     gammaLMP = jit(vmap(gamma_exomol,(0,0,None,None)))\
             (Parr,Tarr,mdbCO.n_Texp,mdbCO.alpha_ref)
@@ -93,14 +93,14 @@ vector for the layers.
 
 .. code:: ipython3
 
-    from exojax.spec import normalized_doppler_sigma
+    from exojax.database.hitran import normalized_doppler_sigma
     nsigmaDl=normalized_doppler_sigma(Tarr,molmassCO,R)[:,np.newaxis]
 
 And line strength
 
 .. code:: ipython3
 
-    from exojax.spec import SijT
+    from exojax.database.hitran import SijT
     SijM=jit(vmap(SijT,(0,None,None,None,0)))\
         (Tarr,mdbCO.logsij0,mdbCO.nu_lines,mdbCO.elower,qt)
 
@@ -167,7 +167,7 @@ the comparison purpose.
     #direct LPF for comparison
     
     #we need sigmaDM for LPF
-    from exojax.spec import doppler_sigma
+    from exojax.database.hitran import doppler_sigma
     sigmaDM=jit(vmap(doppler_sigma,(None,0,None)))\
             (mdbCO.nu_lines,Tarr,molmassCO)
     

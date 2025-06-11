@@ -12,7 +12,7 @@ from exojax.test.emulate_mdb import mock_mdbExomol
 from exojax.test.emulate_mdb import mock_wavenumber_grid
 from exojax.opacity.profconv import calc_xsection_from_lsd_scanfft
 from exojax.opacity.premodit import unbiased_ngamma_grid
-from exojax.spec import normalized_doppler_sigma
+from exojax.database.hitran import normalized_doppler_sigma
 
 
 @pytest.mark.parametrize("diffmode", [0, 1, 2])

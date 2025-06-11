@@ -22,8 +22,8 @@ errors):
 .. code:: ipython3
 
     import matplotlib.pyplot as plt
-    from exojax.spec.hitran import line_strength, doppler_sigma, gamma_hitran, gamma_natural
-    from exojax.spec import api
+    from exojax.database.hitran  import line_strength, doppler_sigma, gamma_hitran, gamma_natural
+    from exojax.database import api 
     from exojax.utils.grids import wavenumber_grid
     from exojax.utils.constants import Tref_original
     
@@ -71,7 +71,7 @@ with the normalized gammaL and q = R log(nu).
 
 .. code:: ipython3
 
-    from exojax.spec.hitran import normalized_doppler_sigma
+    from exojax.database.hitran  import normalized_doppler_sigma
     
     dv_lines = mdbCO.nu_lines / R
     nsigmaD = normalized_doppler_sigma(Tfix, Mmol, R)

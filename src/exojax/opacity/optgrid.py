@@ -1,7 +1,7 @@
 import numpy as np
 from tqdm import tqdm
 
-from exojax.spec import normalized_doppler_sigma
+from exojax.database.hitran import normalized_doppler_sigma
 from exojax.opacity.opacalc import OpaPremodit
 from exojax.opacity.premodit import xsvector_zeroth
 from exojax.utils.constants import Tref_original

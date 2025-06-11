@@ -9,7 +9,7 @@ from exojax.utils.astrofunc import gravity_jupiter
 from exojax.utils.constants import RJ, Rs
 from exojax.opacity.opacalc import OpaModit
 from exojax.rt.atmrt import ArtTransPure
-from exojax.spec.api import MdbHitran
+from exojax.database.api  import MdbHitran
 from exojax.test.data import COMPDATA_TRANSMISSION_CO
 
 config.update("jax_enable_x64", True)
@@ -93,7 +93,7 @@ if __name__ == "__main__":
     wav, rprs = read_kawashima_data()
     diffmode = 1
     nus_hitran, Rp_trapezoid, Rp_simpson = compare_with_kawashima_code()
-    from exojax.spec.unitconvert import nu2wav
+    from exojax.utils.grids import nu2wav
 
     wav_exojax = nu2wav(nus_hitran, unit="um", wavelength_order="ascending")
     fig = plt.figure()

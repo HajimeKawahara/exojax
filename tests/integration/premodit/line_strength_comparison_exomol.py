@@ -12,14 +12,14 @@ from exojax.opacity.premodit import unbiased_lsd_zeroth
 from exojax.opacity.premodit import unbiased_lsd_first
 from exojax.opacity.premodit import unbiased_lsd_second
 from exojax.opacity.lsd import inc2D_givenx
-from exojax.spec.hitran import line_strength
+from exojax.database.hitran  import line_strength
 from exojax.utils.grids import wavenumber_grid
 from exojax.opacity.set_ditgrid import ditgrid_log_interval
-from exojax.spec.exomol import gamma_exomol
+from exojax.database.exomol  import gamma_exomol
 from exojax.utils.constants import Tref_original
 from exojax.test.emulate_mdb import mock_mdbExomol
 ## also, xs
-from exojax.spec import normalized_doppler_sigma
+from exojax.database.hitran import normalized_doppler_sigma
 from exojax.opacity.profconv import calc_xsection_from_lsd_scanfft
 from exojax.opacity.premodit import unbiased_ngamma_grid
 

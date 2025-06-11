@@ -18,7 +18,7 @@ provides the Voigt-Hjerting function.
 
 .. code:: ipython3
 
-    from exojax.spec import hjert
+    from exojax.opacity.lpf import hjert
     hjert(1.0,1.0)
 
 
@@ -84,7 +84,7 @@ with a STD of :math:`\beta` and a Lorentian with a gamma parameter of
 
 .. code:: ipython3
 
-    from exojax.spec import voigt
+    from exojax.database.hitran import voigt
     import jax.numpy as jnp
     import matplotlib.pyplot as plt
       

@@ -28,10 +28,10 @@ API in radis.api!
 
     from exojax.utils.grids import wavenumber_grid
     from exojax.rt.rtransfer import pressure_layer 
-    from exojax.spec import moldb, molinfo, contdb
-    from exojax.spec import atomll
-    from exojax.spec.exomol import gamma_exomol
-    from exojax.spec import SijT, doppler_sigma
+    from exojax.database import moldb , molinfo, contdb
+    from exojax.database import atomll 
+    from exojax.database.exomol  import gamma_exomol
+    from exojax.database.hitran import SijT, doppler_sigma
     from exojax.rt import planck
     import matplotlib.pyplot as plt
     import jax.numpy as jnp
@@ -203,7 +203,7 @@ Calculate delta tau
     
     from exojax.opacity.lpf import xsmatrix
     from exojax.rt.rtransfer import dtauM
-    from exojax.spec.atomllapi import load_atomicdata
+    from exojax.database.atomllapi import load_atomicdata
     
     ipccd = load_atomicdata()
     ieleml = jnp.array(ipccd['ielem'])

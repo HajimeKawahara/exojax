@@ -1,10 +1,11 @@
-import numpy as np
-from exojax.spec import api
-from exojax.test.emulate_mdb import mock_mdbExomol
-from exojax.opacity.opacalc import OpaPremodit
-
-import traceback
 import os
+import traceback
+
+import numpy as np
+
+from exojax.opacity.opacalc import OpaPremodit
+from exojax.database import api 
+from exojax.test.emulate_mdb import mock_mdbExomol
 
 
 class MultiMol:
@@ -277,7 +278,7 @@ class MultiMol:
             molmassH2: molecular mass for hydorogen
             molmassHe: molecular mass for helium
         """
-        from exojax.spec import molinfo
+        from exojax.database import molinfo 
 
         molmass_list = []
         for i in range(len(self.mols_unique)):
@@ -334,8 +335,9 @@ def database_path_exomol(simple_molecule_name):
     Returns:
         str: Exomol default data path
     """
-    from exojax.utils.molname import simple_molname_to_exact_exomol_stable
     from radis.api.exomolapi import get_exomol_database_list
+
+    from exojax.utils.molname import simple_molname_to_exact_exomol_stable
 
     exact_molname_exomol_stable = simple_molname_to_exact_exomol_stable(
         simple_molecule_name

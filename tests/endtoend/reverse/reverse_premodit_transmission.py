@@ -13,9 +13,9 @@ import pandas as pd
 from importlib.resources import files
 
 from exojax.rt.atmrt import ArtTransPure
-from exojax.spec.api import MdbExomol
+from exojax.database.api  import MdbExomol
 from exojax.opacity.opacalc import OpaPremodit
-from exojax.spec.unitconvert import nu2wav
+from exojax.utils.grids import nu2wav
 from exojax.utils.grids import wavenumber_grid
 from exojax.utils.astrofunc import gravity_jupiter
 from exojax.utils.instfunc import resolution_to_gaussian_std
