@@ -47,8 +47,8 @@ We add Gaussian noise to data. nusd is the observing wavenumber grid.
     from exojax.spec.exomol import gamma_exomol
     from exojax.spec.hitran import SijT, doppler_sigma, gamma_natural, gamma_hitran
     from exojax.spec.hitrancia import read_cia, logacia
-    from exojax.spec.rtransfer import rtrun, dtauM, dtauCIA, wavenumber_grid
-    from exojax.spec import planck, response
+    from exojax.rt.rtransfer import rtrun, dtauM, dtauCIA, wavenumber_grid
+    from exojax.rt import planck, response
     from exojax.opacity.lpf import xsvector
     from exojax.spec import molinfo
     from exojax.utils.constants import RJ, pc, Rs, c
@@ -58,7 +58,7 @@ Rp, RV, MMR_CO, T0, alpha, and Vsini.
 
 .. code:: ipython3
 
-    from exojax.spec import rtransfer as rt
+    from exojax.rt import rtransfer as rt
     NP=100
     Parr, dParr, k=rt.pressure_layer(NP=NP)
     Nx=1500

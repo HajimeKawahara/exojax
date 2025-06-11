@@ -20,9 +20,9 @@ import numpy as np
 import jax.numpy as jnp
 from exojax.spec import moldb, atomll, contdb, molinfo, initspec, planck
 from exojax.spec import api
-from exojax.spec.rtransfer import rtrun_emis_pureabs_fbased2st
+from exojax.rt.rtransfer import rtrun_emis_pureabs_fbased2st
 from exojax.atm.atmprof import pressure_layer_logspace
-from exojax.spec.layeropacity import layer_optical_depth_VALD as dtauVALD
+from exojax.rt.layeropacity import layer_optical_depth_VALD as dtauVALD
 from exojax.spec.dtau_mmwl import dtauM_mmwl, dtauHminus_mmwl, dtauCIA_mmwl
 from exojax.utils.grids import wavenumber_grid
 from exojax.utils.instfunc import resolution_to_gaussian_std

@@ -255,7 +255,7 @@ Simpson’s rule as the integration scheme. The default setting is
 
 .. code:: ipython3
 
-    from exojax.spec.atmrt import ArtTransPure
+    from exojax.rt.atmrt import ArtTransPure
     
     art = ArtTransPure(
         pressure_btm=1.0e1,
@@ -427,8 +427,8 @@ along the chord direction. This can be done as follows:
 
 .. code:: ipython3
 
-    from exojax.spec.opachord import chord_geometric_matrix
-    from exojax.spec.opachord import chord_optical_depth
+    from exojax.rt.chord import chord_geometric_matrix
+    from exojax.rt.chord import chord_optical_depth
     
     normalized_height, normalized_radius_lower = art.atmosphere_height(Tarr, mmw, radius_btm, gravity_btm)        
     cgm = chord_geometric_matrix(normalized_height, normalized_radius_lower)

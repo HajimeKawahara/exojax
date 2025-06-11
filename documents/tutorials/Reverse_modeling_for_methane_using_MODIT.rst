@@ -51,7 +51,7 @@ instrument,
 
 .. code:: ipython3
 
-    from exojax.spec.rtransfer import pressure_layer,wavenumber_grid
+    from exojax.rt.rtransfer import pressure_layer,wavenumber_grid
     from exojax.utils.constants import c
     from exojax.utils.instfunc import resolution_to_gaussian_std
     
@@ -196,8 +196,8 @@ frun returns a spectral model.
 .. code:: ipython3
 
     from exojax.opacity.modit import exomol,xsmatrix
-    from exojax.spec.rtransfer import dtauM, dtauCIA, rtrun
-    from exojax.spec import planck, response
+    from exojax.rt.rtransfer import dtauM, dtauCIA, rtrun
+    from exojax.rt import planck, response
     from exojax.spec.response import ipgauss_sampling
     from exojax.spec.spin_rotation import convolve_rigid_rotation
     from exojax.utils.grids import velocity_grid

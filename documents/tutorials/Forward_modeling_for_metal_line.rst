@@ -27,12 +27,12 @@ API in radis.api!
 .. code:: ipython3
 
     from exojax.utils.grids import wavenumber_grid
-    from exojax.spec.rtransfer import pressure_layer 
+    from exojax.rt.rtransfer import pressure_layer 
     from exojax.spec import moldb, molinfo, contdb
     from exojax.spec import atomll
     from exojax.spec.exomol import gamma_exomol
     from exojax.spec import SijT, doppler_sigma
-    from exojax.spec import planck
+    from exojax.rt import planck
     import matplotlib.pyplot as plt
     import jax.numpy as jnp
     from jax import vmap, jit
@@ -202,7 +202,7 @@ Calculate delta tau
     #In fact, we can't ignore the effect of molecular formation e.g. TiO (」゜□゜)」
     
     from exojax.opacity.lpf import xsmatrix
-    from exojax.spec.rtransfer import dtauM
+    from exojax.rt.rtransfer import dtauM
     from exojax.spec.atomllapi import load_atomicdata
     
     ipccd = load_atomicdata()
@@ -238,7 +238,7 @@ compute delta tau for CIA
 
     cdbH2H2=contdb.CdbCIA('.database/H2-H2_2011.cia', nus)
     
-    from exojax.spec.rtransfer import dtauCIA
+    from exojax.rt.rtransfer import dtauCIA
     mmw=2.33 #mean molecular weight
     mmrH2=0.74
     molmassH2=molinfo.molmass("H2")
@@ -278,8 +278,8 @@ Radiative transfer
 
 .. code:: ipython3
 
-    from exojax.spec import planck
-    from exojax.spec.rtransfer import rtrun
+    from exojax.rt import planck
+    from exojax.rt.rtransfer import rtrun
     sourcef = planck.piBarr(Tarr, nus)
     F0=rtrun(dtau, sourcef)
 

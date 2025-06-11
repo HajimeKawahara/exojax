@@ -23,7 +23,7 @@ def test_Kurucz_linelist():
     from exojax.utils.grids import wavenumber_grid
     from exojax.spec import moldb
     from exojax.spec import atomll
-    from exojax.spec.atmrt import ArtEmisPure
+    from exojax.rt.atmrt import ArtEmisPure
     from exojax.opacity.opacalc import OpaDirect
     import numpy as np
     from exojax.opacity.lpf import xsmatrix

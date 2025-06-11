@@ -24,20 +24,24 @@
 
 """
 
-from jax import jit
 import jax.numpy as jnp
+from jax import jit
 from jax.lax import scan
-from exojax.spec.twostream import solve_lart_twostream
-from exojax.spec.twostream import solve_fluxadding_twostream
-from exojax.spec.toon import reduced_source_function_isothermal_layer
-from exojax.spec.toon import params_hemispheric_mean
-from exojax.spec.toon import zetalambda_coeffs
-from exojax.spec.twostream import compute_tridiag_diagonals_and_vector
-from exojax.spec.twostream import set_scat_trans_coeffs
-from exojax.special.expn import E1
-from exojax.signal.integrate import simpson
 from jax.scipy.integrate import trapezoid
 
+from exojax.signal.integrate import simpson
+from exojax.rt.toon import (
+    params_hemispheric_mean,
+    reduced_source_function_isothermal_layer,
+    zetalambda_coeffs,
+)
+from exojax.rt.twostream import (
+    compute_tridiag_diagonals_and_vector,
+    set_scat_trans_coeffs,
+    solve_fluxadding_twostream,
+    solve_lart_twostream,
+)
+from exojax.special.expn import E1
 
 
 @jit

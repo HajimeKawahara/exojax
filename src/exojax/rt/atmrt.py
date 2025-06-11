@@ -6,28 +6,40 @@
 
 """
 
-import numpy as np
+import warnings
+
 import jax.numpy as jnp
-from exojax.spec.planck import piBarr
-from exojax.spec.rtransfer import rtrun_emis_pureabs_ibased_linsap
-from exojax.spec.rtransfer import rtrun_emis_pureabs_fbased2st
-from exojax.spec.rtransfer import rtrun_emis_pureabs_ibased
-from exojax.spec.rtransfer import rtrun_emis_scat_lart_toonhm
-from exojax.spec.rtransfer import rtrun_emis_scat_fluxadding_toonhm
-from exojax.spec.rtransfer import rtrun_reflect_fluxadding_toonhm
-from exojax.spec.rtransfer import rtrun_trans_pureabs_trapezoid
-from exojax.spec.rtransfer import rtrun_trans_pureabs_simpson
-from exojax.spec.layeropacity import layer_optical_depth
-from exojax.spec.layeropacity import layer_optical_depth_clouds_lognormal
-from exojax.atm.atmprof import atmprof_gray, atmprof_Guillot, atmprof_powerlow
+import numpy as np
+
+from exojax.atm.atmprof import (
+    atmprof_gray,
+    atmprof_Guillot,
+    atmprof_powerlow,
+    normalized_layer_height,
+)
 from exojax.atm.idealgas import number_density
-from exojax.atm.atmprof import normalized_layer_height
-from exojax.spec.opachord import chord_geometric_matrix_lower
-from exojax.spec.opachord import chord_geometric_matrix
-from exojax.spec.opachord import chord_optical_depth
+from exojax.rt.chord import (
+    chord_geometric_matrix,
+    chord_geometric_matrix_lower,
+    chord_optical_depth,
+)
+from exojax.rt.layeropacity import (
+    layer_optical_depth,
+    layer_optical_depth_clouds_lognormal,
+)
+from exojax.rt.planck import piBarr
+from exojax.rt.rtransfer import (
+    rtrun_emis_pureabs_fbased2st,
+    rtrun_emis_pureabs_ibased,
+    rtrun_emis_pureabs_ibased_linsap,
+    rtrun_emis_scat_fluxadding_toonhm,
+    rtrun_emis_scat_lart_toonhm,
+    rtrun_reflect_fluxadding_toonhm,
+    rtrun_trans_pureabs_simpson,
+    rtrun_trans_pureabs_trapezoid,
+)
 from exojax.utils.constants import logkB, logm_ucgs
 from exojax.utils.indexing import get_smooth_index
-import warnings
 
 
 class ArtCommon:
@@ -232,8 +244,10 @@ class ArtCommon:
             raise ValueError("Number of the layer should be integer")
 
     def init_pressure_profile(self):
-        from exojax.atm.atmprof import pressure_layer_logspace
-        from exojax.atm.atmprof import pressure_boundary_logspace
+        from exojax.atm.atmprof import (
+            pressure_boundary_logspace,
+            pressure_layer_logspace,
+        )
 
         (
             self.pressure,
@@ -758,7 +772,7 @@ class ArtEmisPure(ArtCommon):
         if self.rtsolver == "fbased2st":
             return rtfunc(dtau, sourcef)
         elif self.rtsolver == "ibased" or self.rtsolver == "ibased_linsap":
-            from exojax.spec.rtransfer import initialize_gaussian_quadrature
+            from exojax.rt.rtransfer import initialize_gaussian_quadrature
 
             mus, weights = initialize_gaussian_quadrature(self.nstream)
             return rtfunc(dtau, sourcef, mus, weights)

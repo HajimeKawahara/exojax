@@ -15,7 +15,7 @@ Star (GJ699).
     import matplotlib.pyplot as plt
     import jax.numpy as jnp
     
-    from exojax.spec.rtransfer import pressure_layer,nugrid
+    from exojax.rt.rtransfer import pressure_layer,nugrid
     from exojax.utils.instfunc import resolution_to_gaussian_std
     
     from exojax.spec import moldb, atomll, contdb
@@ -223,8 +223,8 @@ spectral model.
 .. code:: ipython3
 
     from exojax.opacity.modit import vald_all, xsmatrix_vald, exomol, xsmatrix
-    from exojax.spec.rtransfer import  dtauVALD, dtauM_mmwl, dtauHminus_mmwl, dtauCIA_mmwl, rtrun
-    from exojax.spec import planck, response
+    from exojax.rt.rtransfer import  dtauVALD, dtauM_mmwl, dtauHminus_mmwl, dtauCIA_mmwl, rtrun
+    from exojax.rt import planck, response
 
 .. code:: ipython3
 

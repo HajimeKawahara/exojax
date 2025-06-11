@@ -10,7 +10,7 @@ from exojax.test.data import TESTDATA_CO_EXOMOL_MODIT_EMISSION_REF
 from exojax.test.data import TESTDATA_CO_HITEMP_MODIT_EMISSION_REF
 from exojax.opacity.opacalc import OpaModit
 from exojax.test.emulate_mdb import mock_wavenumber_grid
-from exojax.spec.atmrt import ArtEmisPure
+from exojax.rt.atmrt import ArtEmisPure
 
 config.update("jax_enable_x64", True)
 

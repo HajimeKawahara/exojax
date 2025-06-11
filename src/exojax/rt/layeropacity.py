@@ -2,17 +2,14 @@
 
 """
 
-from jax import jit, vmap
 import jax.numpy as jnp
-from exojax.spec.hitrancia import interp_logacia_matrix
-from exojax.spec.hminus import log_hminus_continuum
-from exojax.spec.hminus import log_hminus_continuum_single
+from jax import jit, vmap
+
 from exojax.atm.idealgas import number_density
-from exojax.utils.constants import logkB
-from exojax.utils.constants import logm_ucgs
-from exojax.utils.constants import opacity_factor
-from exojax.utils.constants import bar_cgs
 from exojax.spec.dtau_mmwl import dtauM_mmwl
+from exojax.spec.hitrancia import interp_logacia_matrix
+from exojax.spec.hminus import log_hminus_continuum, log_hminus_continuum_single
+from exojax.utils.constants import bar_cgs, logkB, logm_ucgs, opacity_factor
 
 
 def single_layer_optical_depth(dpressure, xsv, mixing_ratio, mass, gravity):

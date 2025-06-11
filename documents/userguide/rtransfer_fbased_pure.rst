@@ -15,7 +15,7 @@ To specify fbase, it is simply a matter of setting the option as ``rtsolver="fba
 
 .. code:: ipython
     
-    from exojax.spec.atmrt import ArtEmisPure
+    from exojax.rt.atmrt import ArtEmisPure
 
     art = ArtEmisPure(pressure_top=1.e-8,
                       pressure_btm=1.e2,
@@ -62,7 +62,7 @@ we can use `piBarr <../exojax/exojax.spec.html#exojax.spec.planck.piBarr>`_.
 
 .. code:: ipython
 
-    from exojax.spec import planck	  
+    from exojax.rt import planck	  
 	sourcef = planck.piBarr(Tarr,nus)
 
 - Transmission for Pure Absorption: trans2E3
@@ -75,7 +75,7 @@ where :math:`\Delta \tau_n` is delta opacity in the n-th layer, :math:`E_j(x)` i
 
 .. code:: ipython
     
-    from exojax.spec.rtransfer import trans2E3
+    from exojax.rt.rtransfer import trans2E3
     trans2E3(1.0) #-> DeviceArray(0.21938396, dtype=float32)
 
 `trans2E3 <../exojax/exojax.spec.html#exojax.spec.rtransfer.trans2E3>`_ is auto-differentiable.

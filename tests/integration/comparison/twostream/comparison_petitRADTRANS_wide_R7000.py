@@ -10,8 +10,8 @@ from exojax.atm.atmprof import pressure_layer_logspace
 from exojax.utils.grids import wavenumber_grid
 from exojax.spec.multimol import MultiOpa
 from exojax.spec import contdb
-from exojax.spec.layeropacity import layer_optical_depth, layer_optical_depth_CIA
-from exojax.spec.atmrt import ArtEmisPure
+from exojax.rt.layeropacity import layer_optical_depth, layer_optical_depth_CIA
+from exojax.rt.atmrt import ArtEmisPure
 
 from petitRADTRANS.radtrans import Radtrans
 from exojax.spec import molinfo

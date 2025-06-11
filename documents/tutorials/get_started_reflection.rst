@@ -89,7 +89,7 @@ reflected light.
 
     import numpy as np
     from exojax.utils.grids import wavenumber_grid
-    from exojax.spec.atmrt import ArtReflectPure
+    from exojax.rt.atmrt import ArtReflectPure
     
     nus, wav, res = wavenumber_grid(
         np.min(nu_obs) - 5.0, np.max(nu_obs) + 5.0, 10000, xsmode="premodit", unit="cm-1"

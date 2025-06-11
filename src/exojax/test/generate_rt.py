@@ -11,8 +11,8 @@ from exojax.test.emulate_mdb import mock_mdb
 from exojax.opacity.opacalc import OpaDirect
 from exojax.opacity.opacalc import OpaModit
 from exojax.opacity.opacalc import OpaPremodit
-from exojax.spec.atmrt import ArtEmisPure
-from exojax.spec.atmrt import ArtReflectPure
+from exojax.rt.atmrt import ArtEmisPure
+from exojax.rt.atmrt import ArtReflectPure
 import warnings
 import jax.numpy as jnp
 from jax import config

@@ -53,7 +53,7 @@ Here is an example of ``ArtReflectPure``:
 .. code:: python
 
     import jax.numpy as jnp
-    from exojax.spec.atmrt import ArtReflectPure
+    from exojax.rt.atmrt import ArtReflectPure
     
     art = ArtReflectPure(pressure_top=1.e-5,
                          pressure_btm=1.e0,
@@ -91,8 +91,8 @@ Also, ``OpartReflectPure``, the ``opart`` version of ``ReflectPure``,  is availa
 .. code:: python
 
     from exojax.opacity.opacalc import OpaPremodit
-    from exojax.spec.opart import OpartReflectPure
-    from exojax.spec.layeropacity import single_layer_optical_depth
+    from exojax.rt.opart import OpartReflectPure
+    from exojax.rt.layeropacity import single_layer_optical_depth
     from exojax.utils.grids import wavenumber_grid
     from exojax.spec.api import MdbExomol
     from exojax.utils.astrofunc import gravity_jupiter

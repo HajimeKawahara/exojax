@@ -236,7 +236,7 @@ We will now compare the spectra from ExoMol and Harg2010.
 .. code:: ipython3
 
     from exojax.opacity.opacalc import OpaPremodit
-    from exojax.spec.atmrt import ArtEmisPure
+    from exojax.rt.atmrt import ArtEmisPure
     
     from exojax.spec.contdb import CdbCIA
     from exojax.opacity.opacont import OpaCIA

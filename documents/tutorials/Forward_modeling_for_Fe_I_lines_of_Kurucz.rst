@@ -15,7 +15,7 @@ This notebook demonstrates how to use Kurucz database, not using
     from exojax.spec.hitran import doppler_sigma, line_strength 
     from exojax.opacity.initspec import init_lpf
     from exojax.opacity.lpf import xsmatrix
-    from exojax.spec.layeropacity import layer_optical_depth, layer_optical_depth_Hminus, layer_optical_depth_CIA
+    from exojax.rt.layeropacity import layer_optical_depth, layer_optical_depth_Hminus, layer_optical_depth_CIA
     import matplotlib.pyplot as plt
     from jax import vmap, jit
     import numpy as np
@@ -56,7 +56,7 @@ Sets a T-P profile and partial pressures
 
 .. code:: ipython3
 
-    from exojax.spec.atmrt import ArtEmisPure
+    from exojax.rt.atmrt import ArtEmisPure
     nlayer = 100
     T0 = 3000.0  # 10000. #3000. #1295.0 #K
     alpha = 0.1

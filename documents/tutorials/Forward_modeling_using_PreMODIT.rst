@@ -11,7 +11,7 @@ to use FP64 as follows:
 
 .. code:: ipython3
 
-    from exojax.spec import rtransfer as rt
+    from exojax.rt import rtransfer as rt
     from exojax.opacity import premodit
     import numpy as np
     import matplotlib.pyplot as plt
@@ -133,7 +133,7 @@ gravity and Mass Mixing Ratio :)
 
 .. code:: ipython3
 
-    from exojax.spec.rtransfer import dtauM
+    from exojax.rt.rtransfer import dtauM
     g = 2478.57 # gravity
     MMR = 0.1
     dtau = dtauM(dParr, xsm, MMR * np.ones_like(Parr), molmassCO, g)
@@ -212,8 +212,8 @@ Let’s see the cross section matrix!
 
 .. code:: ipython3
 
-    from exojax.spec import planck
-    from exojax.spec.rtransfer import rtrun
+    from exojax.rt import planck
+    from exojax.rt.rtransfer import rtrun
     sourcef = planck.piBarr(Tarr,nus)
     F0=rtrun(dtau,sourcef)
     

@@ -1,5 +1,5 @@
 import jax.numpy as jnp
-from jax import jit, custom_jvp
+from jax import custom_jvp, jit
 
 
 @custom_jvp

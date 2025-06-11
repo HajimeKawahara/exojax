@@ -85,7 +85,7 @@ where :math:`B_\nu (T)` is the Planck function.
 
     
     # Sun
-    from exojax.spec.planck import piB
+    from exojax.rt.planck import piB
     from exojax.utils.constants import RJ, Rs
     from exojax.utils.constants import pc
     

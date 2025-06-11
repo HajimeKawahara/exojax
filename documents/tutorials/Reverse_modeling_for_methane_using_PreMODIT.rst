@@ -54,7 +54,7 @@ instrument,
 
 .. code:: ipython3
 
-    from exojax.spec.rtransfer import pressure_layer,wavenumber_grid
+    from exojax.rt.rtransfer import pressure_layer,wavenumber_grid
     from exojax.utils.instfunc import resolution_to_gaussian_std
     
     NP=100
@@ -198,8 +198,8 @@ We here use numpyro as a PPL (probabilistic programming language).
 
 .. code:: ipython3
 
-    from exojax.spec.rtransfer import dtauM, dtauCIA, rtrun
-    from exojax.spec import planck
+    from exojax.rt.rtransfer import dtauM, dtauCIA, rtrun
+    from exojax.rt import planck
     from exojax.opacity import premodit
     from jax import vmap
     

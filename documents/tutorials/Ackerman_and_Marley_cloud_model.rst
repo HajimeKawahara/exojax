@@ -349,7 +349,7 @@ These processes can be reprodced using ``AmpAmcloud``, which uses
 
 .. code:: ipython3
 
-    from exojax.spec.layeropacity import layer_optical_depth_cloudgeo
+    from exojax.rt.layeropacity import layer_optical_depth_cloudgeo
     
     dtau_enstatite = layer_optical_depth_cloudgeo(Parr, deltac_enstatite, MMRc_enstatite, rg, sigmag, g)
 
@@ -383,7 +383,7 @@ The Mie scattering can be computed using ``OpaMie``.
     )  # uses direct computation of Mie params using PyMieScatt
     
     
-    from exojax.spec.layeropacity import layer_optical_depth_clouds_lognormal
+    from exojax.rt.layeropacity import layer_optical_depth_clouds_lognormal
     
     dtau_enstatite_mie = layer_optical_depth_clouds_lognormal(
         dParr, beta0, deltac_enstatite, MMRc_enstatite, rg, sigmag, gravity
@@ -445,7 +445,7 @@ Let’s compare with CIA
 
 .. code:: ipython3
 
-    from exojax.spec.layeropacity import layer_optical_depth_CIA
+    from exojax.rt.layeropacity import layer_optical_depth_CIA
     from exojax.atm.atmconvert import mmr_to_vmr
     
     mmrH2 = 0.74
@@ -513,9 +513,9 @@ Let’s compare with CIA
 
 .. code:: ipython3
 
-    from exojax.spec import planck
-    from exojax.spec.rtransfer import rtrun_emis_pureabs_fbased2st as rtrun
-    #from exojax.spec.rtransfer import rtrun_emis_pureabs_ibased as rtrun
+    from exojax.rt import planck
+    from exojax.rt.rtransfer import rtrun_emis_pureabs_fbased2st as rtrun
+    #from exojax.rt.rtransfer import rtrun_emis_pureabs_ibased as rtrun
     sourcef = planck.piBarr(Tarr, nugrid)
     F0 = rtrun(dtau, sourcef)
     F0CIA = rtrun(dtaucH2H2, sourcef)

@@ -36,7 +36,7 @@ In the case of ibased, the number of streams (
 
 .. code:: ipython
     
-    from exojax.spec.atmrt import ArtEmisPure
+    from exojax.rt.atmrt import ArtEmisPure
 
     art = ArtEmisPure(pressure_top=1.e-8,
                       pressure_btm=1.e2,
@@ -72,8 +72,8 @@ Here is an example. The user needs to define a class that returns the optical de
 .. code:: ipython
     
     from exojax.opacity.opacalc import OpaPremodit
-    from exojax.spec.opart import OpartEmisPure
-    from exojax.spec.layeropacity import single_layer_optical_depth
+    from exojax.rt.opart import OpartEmisPure
+    from exojax.rt.layeropacity import single_layer_optical_depth
     from exojax.utils.grids import wavenumber_grid
     from exojax.spec.api import MdbExomol
     from exojax.utils.astrofunc import gravity_jupiter

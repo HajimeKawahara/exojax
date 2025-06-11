@@ -12,7 +12,7 @@ import jax.numpy as jnp
 import pandas as pd
 from importlib.resources import files
 
-from exojax.spec.atmrt import ArtEmisPure
+from exojax.rt.atmrt import ArtEmisPure
 from exojax.spec.api import MdbExomol
 from exojax.opacity.opacalc import OpaPremodit
 from exojax.spec.contdb import CdbCIA

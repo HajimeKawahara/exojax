@@ -1,12 +1,12 @@
-from exojax.spec.atmrt import ArtCommon
-from exojax.spec.rtlayer import fluxsum_scan
-
-# from exojax.spec.rtlayer import fluxsum_vector  # same cost as fluxsum_scan
-from exojax.spec.planck import piB
-from exojax.spec.rtransfer import initialize_gaussian_quadrature
-from exojax.spec.rtransfer import setrt_toonhm
-from jax.lax import scan
 import jax.numpy as jnp
+from jax.lax import scan
+
+from exojax.rt.atmrt import ArtCommon
+
+# from exojax.rt.rtlayer import fluxsum_vector  # same cost as fluxsum_scan
+from exojax.rt.planck import piB
+from exojax.rt.rtlayer import fluxsum_scan
+from exojax.rt.rtransfer import initialize_gaussian_quadrature, setrt_toonhm
 
 
 class OpartEmisPure(ArtCommon):

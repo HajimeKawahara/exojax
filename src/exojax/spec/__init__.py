@@ -38,7 +38,7 @@ import warnings
 # --- emit warning once per Python session ---
 warnings.warn(
     "`exojax.spec` is deprecated and will be removed in v3.0. "
-    "Update your imports to `exojax.opacity`.",
+    "Update your imports to `exojax.opacity` or `exojax.rt`.",
     DeprecationWarning,
     stacklevel=2,
 )
@@ -83,6 +83,15 @@ _ALIAS_MAP = {
     "generate_elower_grid_trange": "exojax.opacity.generate_elower_grid_trange",
     "profconv":       "exojax.opacity.profconv",
     "lpffilter":      "exojax.opacity.lpffilter",
+    "chord":          "exojax.rt.chord",
+    "atmrt":          "exojax.rt.atmrt",
+    "opart":          "exojax.rt.opart",
+    "layeropacity":   "exojax.rt.layeropacity",
+    "planck":         "exojax.rt.planck",
+    "rtlayer":        "exojax.rt.rtlayer",
+    "rtransfer":      "exojax.rt.rtransfer",
+    "toon":           "exojax.rt.toon",
+    "twostream":      "exojax.rt.twostream",
 }
 
 for _old, _new in _ALIAS_MAP.items():

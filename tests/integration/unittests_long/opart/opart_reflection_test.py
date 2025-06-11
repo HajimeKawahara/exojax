@@ -8,8 +8,8 @@ from exojax.test.data import TESTDATA_CO_EXOMOL_PREMODIT_REFLECTION_REF
 from exojax.test.emulate_mdb import mock_wavenumber_grid
 from exojax.test.emulate_mdb import mock_mdbExomol
 from exojax.opacity.opacalc import OpaPremodit
-from exojax.spec.opart import OpartReflectPure
-from exojax.spec.layeropacity import single_layer_optical_depth
+from exojax.rt.opart import OpartReflectPure
+from exojax.rt.layeropacity import single_layer_optical_depth
 
 from jax import config
 config.update("jax_enable_x64", True)

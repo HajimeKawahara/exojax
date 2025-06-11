@@ -4,7 +4,7 @@ from jax import config
 from exojax.test.emulate_mdb import mock_mdb
 from exojax.opacity.opacalc import OpaPremodit
 from exojax.test.emulate_mdb import mock_wavenumber_grid
-from exojax.spec.atmrt import ArtEmisScat
+from exojax.rt.atmrt import ArtEmisScat
 from jax import config
 
 config.update("jax_enable_x64", True)

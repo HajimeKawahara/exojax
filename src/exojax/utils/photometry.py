@@ -40,7 +40,7 @@ def apparent_magnitude_isothermal_sphere(
         f0_nu_cgs (float): zero magnitude flux in the unit of erg/s/cm^2/cm-1
 
     """
-    from exojax.spec.planck import piB
+    from exojax.rt.planck import piB
     from exojax.utils.constants import RJ
     from exojax.utils.constants import pc
 

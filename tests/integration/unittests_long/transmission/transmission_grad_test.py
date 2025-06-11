@@ -10,7 +10,7 @@ import numpy as np
 from importlib.resources import files
 
 from exojax.opacity.opacalc import OpaPremodit
-from exojax.spec.atmrt import ArtTransPure
+from exojax.rt.atmrt import ArtTransPure
 from exojax.spec.api import MdbHitran
 from exojax.utils.grids import wavenumber_grid
 from exojax.utils.astrofunc import gravity_jupiter

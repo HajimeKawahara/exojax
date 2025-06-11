@@ -13,7 +13,7 @@ from exojax.utils.grids import wavenumber_grid
 from exojax.utils.instfunc import resolution_to_gaussian_std
 from exojax.opacity.opacalc import OpaDirect
 from exojax.opacity.opacont import OpaCIA
-from exojax.spec.atmrt import ArtEmisPure
+from exojax.rt.atmrt import ArtEmisPure
 from exojax.spec.specop import SopRotation
 from exojax.spec.specop import SopInstProfile
 

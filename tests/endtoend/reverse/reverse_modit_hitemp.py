@@ -18,12 +18,12 @@ import jax.numpy as jnp
 from jax import random
 from exojax.atm.atmprof import pressure_layer_logspace
 from exojax.opacity import initspec
-from exojax.spec.layeropacity import layer_optical_depth
-from exojax.spec.layeropacity import layer_optical_depth_CIA
+from exojax.rt.layeropacity import layer_optical_depth
+from exojax.rt.layeropacity import layer_optical_depth_CIA
 from exojax.opacity import modit
 from exojax.spec import api, contdb
-from exojax.spec.rtransfer import rtrun_emis_pureabs_fbased2st
-from exojax.spec import planck
+from exojax.rt.rtransfer import rtrun_emis_pureabs_fbased2st
+from exojax.rt import planck
 from exojax.spec.response import ipgauss_sampling
 from exojax.spec.spin_rotation import convolve_rigid_rotation
 from exojax.spec import molinfo

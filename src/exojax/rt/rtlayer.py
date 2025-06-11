@@ -3,6 +3,7 @@
 import jax.numpy as jnp
 from jax.lax import scan
 
+
 # fluxsum vetrorized
 def fluxsum_vector(tauup, taulow, mus, weights):
     """flux sum for vectorized calculation

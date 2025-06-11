@@ -53,9 +53,9 @@ def test_rt_exomol():
     from exojax.opacity.modit import exomol
     from exojax.opacity.modit import xsmatrix_scanfft
     from exojax.atm.atmprof import pressure_layer_logspace
-    from exojax.spec.layeropacity import layer_optical_depth
-    from exojax.spec.rtransfer import rtrun_emis_pureabs_fbased2st
-    from exojax.spec.planck import piBarr
+    from exojax.rt.layeropacity import layer_optical_depth
+    from exojax.rt.rtransfer import rtrun_emis_pureabs_fbased2st
+    from exojax.rt.planck import piBarr
     from exojax.opacity.modit import set_ditgrid_matrix_exomol
     from exojax.test.data import TESTDATA_CO_EXOMOL_MODIT_EMISSION_REF
     

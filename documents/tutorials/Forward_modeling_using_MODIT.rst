@@ -5,7 +5,7 @@ Here, we try to compute a emission spectrum using MODIT.
 
 .. code:: ipython3
 
-    from exojax.spec import rtransfer as rt
+    from exojax.rt import rtransfer as rt
     from exojax.opacity import modit
     from exojax.opacity import lpf
     import numpy as np
@@ -227,7 +227,7 @@ computing delta tau for CO
 
 .. code:: ipython3
 
-    from exojax.spec.rtransfer import dtauM
+    from exojax.rt.rtransfer import dtauM
     Rp=0.88
     Mp=33.2
     g=2478.57730044555*Mp/Rp**2
@@ -243,7 +243,7 @@ computing delta tau for CIA
 
 .. code:: ipython3
 
-    from exojax.spec.rtransfer import dtauCIA
+    from exojax.rt.rtransfer import dtauCIA
     mmw=2.33 #mean molecular weight
     mmrH2=0.74
     molmassH2=molinfo.molmass("H2")
@@ -275,8 +275,8 @@ radiative transfering…
 
 .. code:: ipython3
 
-    from exojax.spec import planck
-    from exojax.spec.rtransfer import rtrun
+    from exojax.rt import planck
+    from exojax.rt.rtransfer import rtrun
     sourcef = planck.piBarr(Tarr,nus)
     F0=rtrun(dtau,sourcef)
     F0direct=rtrun(dtaudirect,sourcef)

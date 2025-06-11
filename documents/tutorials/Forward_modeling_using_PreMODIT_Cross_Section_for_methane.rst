@@ -10,7 +10,7 @@ many methane lines exist. This situation mocks a T-type brown dwarf.
 
 .. code:: ipython3
 
-    from exojax.spec import rtransfer as rt
+    from exojax.rt import rtransfer as rt
 
 .. code:: ipython3
 
@@ -182,7 +182,7 @@ computing delta tau for CH4
 
 .. code:: ipython3
 
-    from exojax.spec.rtransfer import dtauM
+    from exojax.rt.rtransfer import dtauM
     import jax.numpy as jnp
     Rp=0.88
     Mp=33.2
@@ -194,7 +194,7 @@ computing delta tau for CIA
 
 .. code:: ipython3
 
-    from exojax.spec.rtransfer import dtauCIA
+    from exojax.rt.rtransfer import dtauCIA
     from exojax.spec import molinfo
     mmw=2.33 #mean molecular weight
     mmrH2=0.74
@@ -226,8 +226,8 @@ radiative transfering…
 
 .. code:: ipython3
 
-    from exojax.spec import planck
-    from exojax.spec.rtransfer import rtrun
+    from exojax.rt import planck
+    from exojax.rt.rtransfer import rtrun
     sourcef = planck.piBarr(Tarr,nus)
     F0=rtrun(dtau,sourcef)
 
