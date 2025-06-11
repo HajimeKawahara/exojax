@@ -1,10 +1,9 @@
-""" This test checks the agreement between MODIT open and close alising for zeroscan calculation 
-"""
+"""This test checks the agreement between MODIT open and close alising for zeroscan calculation"""
 
 import jax.numpy as jnp
-from exojax.database.hitran  import line_strength
+from exojax.database.hitran import line_strength
 from exojax.opacity.set_ditgrid import ditgrid_log_interval
-from exojax.database.exomol  import gamma_exomol
+from exojax.database.exomol import gamma_exomol
 from exojax.database.hitran import normalized_doppler_sigma
 from exojax.opacity.initspec import init_modit
 from exojax.opacity.modit import xsvector_open_zeroscan
@@ -58,7 +57,6 @@ def test_open_close_xsmatrix_modit_agreement(db="exomol"):
         - 1.0
     )
     maxdiff = jnp.max(jnp.abs(diff))
-    print(maxdiff)  # 0.0038
     assert maxdiff < 0.006
 
 
@@ -110,28 +108,4 @@ def test_agreement_open_and_close_zeroscan_modit():
     )
 
     diff = xsv_zeroscan_close / xsv_zeroscan_open[nextend:-nextend] - 1.0
-    print(jnp.max(jnp.abs(diff)))
-    assert jnp.max(jnp.abs(diff)) < 1.e-4  # 2.0011695423982623e-05 Feb. 17th 2025
-    return nus, xsv_zeroscan_close, nu_grid_extended, xsv_zeroscan_open, diff
-
-
-if __name__ == "__main__":
-    test_open_close_xsmatrix_modit_agreement(db="exomol")
-    nu_close, xsv_close, nu_open, xsv_open, diff = (
-        test_agreement_open_and_close_zeroscan_modit()
-    )
-    import matplotlib.pyplot as plt
-
-    fig = plt.figure()
-    ax = fig.add_subplot(211)
-    plt.plot(nu_close, xsv_close, label="close")
-    plt.plot(nu_open, xsv_open, label="open", ls="dashed")
-    plt.ylabel("mddit xs")
-    plt.yscale("log")
-    plt.legend()
-    ax = fig.add_subplot(212)
-    plt.plot(nu_close, diff, label="close")
-    plt.ylabel("diff")
-    plt.xlabel("wavenumber (cm-1)")
-    plt.savefig("test_agreement_open_and_close_zeroscan_modit.png")
-    plt.show()
+    assert jnp.max(jnp.abs(diff)) < 1.0e-4  # 2.0011695423982623e-05 Feb. 17th 2025

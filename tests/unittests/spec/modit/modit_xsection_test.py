@@ -1,5 +1,4 @@
-""" short integration tests for MODIT cross section
-"""
+"""short integration tests for MODIT cross section"""
 
 import pytest
 from importlib.resources import files
@@ -36,36 +35,4 @@ def test_xsection_modit(db):
     filename = files("exojax").joinpath("data/testdata/" + testdata[db])
     dat = pd.read_csv(filename, delimiter=",", names=("nus", "xsv"))
     res = np.max(np.abs(1.0 - xsv / dat["xsv"].values))
-    print(res)
     assert res < 1.0e-4
-    return opa.nu_grid, xsv, Ttest
-
-
-if __name__ == "__main__":
-    # comparison with MODIT
-    import matplotlib.pyplot as plt
-
-    # db = "hitemp"
-    db = "exomol"
-
-    nus, xs, Tin = test_xsection_modit(db)
-    filename = files("exojax").joinpath("data/testdata/" + testdata[db])
-    dat = pd.read_csv(filename, delimiter=",", names=("nus", "xsv"))
-    fig = plt.figure()
-    ax = fig.add_subplot(211)
-    plt.title(" T=" + str(Tin))
-    ax.plot(nus, xs, label="MODIT", ls="dashed")
-    ax.plot(nus, dat["xsv"], label="MODIT ref")
-    plt.legend()
-    plt.yscale("log")
-    plt.ylabel("cross section (cm2)")
-    ax = fig.add_subplot(212)
-    ax.plot(nus, 1.0 - xs / dat["xsv"], label="dif = (MODIT ref - MODIT)/MODIT ref")
-    plt.ylabel("dif")
-    plt.xlabel("wavenumber cm-1")
-    plt.axhline(0.01, color="gray", lw=0.5)
-    plt.axhline(-0.01, color="gray", lw=0.5)
-    # plt.ylim(-0.05, 0.05)
-    plt.legend()
-    plt.savefig("modit_" + str(db) + ".png")
-    plt.show()

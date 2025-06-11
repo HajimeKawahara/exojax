@@ -25,7 +25,6 @@ def test_basic_convolution_calc_xsection_from_lsd_zeroscan(i):
     )
     xsv_ref = _ref_value_xsv_closed_vkform(i)
     assert jnp.allclose(xsv, xsv_ref)
-    return xsv
 
 
 @pytest.mark.parametrize("i", [0, -1])
@@ -172,8 +171,6 @@ def test_basic_convolution_calc_open_xsection_from_lsd_zeroscan(i, figure=False)
         raise ValueError("Invalid i")
     # print(res_alias)
 
-    assert res_alias < 1.0e-6  # 3.786391858939808e-07
-
     if figure:
         fig = plt.figure()
         ax = fig.add_subplot(211)
@@ -197,6 +194,8 @@ def test_basic_convolution_calc_open_xsection_from_lsd_zeroscan(i, figure=False)
                 "o",
             )
         plt.show()
+
+    assert res_alias < 1.0e-6  # 3.786391858939808e-07
 
 
 if __name__ == "__main__":

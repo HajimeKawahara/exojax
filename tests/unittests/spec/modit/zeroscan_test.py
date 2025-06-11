@@ -1,10 +1,9 @@
-""" This test checks the agreement between MODIT scanfft and zeroscan calculation 
-"""
+"""This test checks the agreement between MODIT scanfft and zeroscan calculation"""
 
 import jax.numpy as jnp
-from exojax.database.hitran  import line_strength
+from exojax.database.hitran import line_strength
 from exojax.opacity.set_ditgrid import ditgrid_log_interval
-from exojax.database.exomol  import gamma_exomol
+from exojax.database.exomol import gamma_exomol
 from exojax.utils.constants import Tref_original
 from exojax.test.emulate_mdb import mock_mdbExomol
 from exojax.test.emulate_mdb import mock_wavenumber_grid
@@ -51,24 +50,4 @@ def test_agreement_scanfft_zeroscan_modit():
 
     dxsv = jnp.abs(xsv_scanfft / xsv_zeroscan - 1)
     maxdiff = jnp.max(dxsv)
-    print(maxdiff)
-    assert maxdiff < 2.0e-12  # 1.5e-12 
-    return xsv_scanfft, xsv_zeroscan
-
-
-
-
-if __name__ == "__main__":
-    xsv_scanfft, xsv_zeroscan = test_agreement_scanfft_zeroscan_modit()
-    import matplotlib.pyplot as plt
-
-    fig = plt.figure()
-    ax = fig.add_subplot(211)
-    plt.plot(xsv_scanfft, label="scanfft")
-    plt.plot(xsv_zeroscan, label="zeroscan")
-    plt.yscale("log")
-    plt.legend()
-    ax = fig.add_subplot(212)
-    plt.plot(xsv_scanfft - xsv_zeroscan, label="diff")
-    plt.legend()
-    plt.savefig("test_agreement_scanfft_zeroscan_modit.png")
+    assert maxdiff < 2.0e-12  # 1.5e-12
