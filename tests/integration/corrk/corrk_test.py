@@ -1,17 +1,17 @@
-"""This module tests the correlated k distribution implementation in Exojax."""
+"""This module tests the correlated k distribution implementation in ExoJAX."""
 
 import numpy as np
 import jax.numpy as jnp
 from exojax.test.emulate_mdb import mock_mdbExomol
 from exojax.test.emulate_mdb import mock_wavenumber_grid
 import matplotlib.pyplot as plt
-from exojax.spec.opacalc import OpaPremodit
+from exojax.opacity.opacalc import OpaPremodit
 from jax import config
 
 config.update("jax_enable_x64", True)  # use double precision
 
 # from exojax.utils.grids import wavenumber_grid
-# from exojax.spec.api import MdbExomol
+# from exojax.database.api import MdbExomol
 # N = 70000
 # nus, wav, res = wavenumber_grid(6400.0, 6800.0, N, unit="cm-1", xsmode = "premodit")
 # mdb = MdbExomol(".databases/H2O/1H2-16O/POKAZATEL/",nus)
