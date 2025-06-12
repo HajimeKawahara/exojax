@@ -1,7 +1,7 @@
 import jax.numpy as jnp
 import matplotlib.pyplot as plt
-from exojax.spec.twostream import contribution_function_lart
-from exojax.spec.twostream import solve_twostream_pure_absorption_numpy
+from exojax.rt.twostream import contribution_function_lart
+from exojax.rt.twostream import solve_twostream_pure_absorption_numpy
 
 
 def panel_imshow(val1, val2, title1, title2):

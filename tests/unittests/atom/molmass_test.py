@@ -1,7 +1,7 @@
 """test for molmass calculation"""
 
 import pytest
-from exojax.spec.molinfo import molmass_isotope
+from exojax.database.molinfo  import molmass_isotope
 
 
 def test_molmass():

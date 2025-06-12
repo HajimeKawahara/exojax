@@ -1,10 +1,10 @@
 import numpy as np
 import jax.numpy as jnp
 import pytest
-from exojax.spec.rayleigh import xsvector_rayleigh_gas
+from exojax.opacity.rayleigh import xsvector_rayleigh_gas
 from exojax.atm.polarizability import polarizability
 from exojax.utils.grids import wavenumber_grid
-from exojax.spec.opacont import OpaRayleigh
+from exojax.opacity.opacont import OpaRayleigh
 
 def test_rayleigh():
     """

@@ -51,7 +51,7 @@ instrument,
 
 .. code:: ipython3
 
-    from exojax.spec.rtransfer import pressure_layer,wavenumber_grid
+    from exojax.rt.rtransfer import pressure_layer,wavenumber_grid
     from exojax.utils.constants import c
     from exojax.utils.instfunc import resolution_to_gaussian_std
     
@@ -79,8 +79,8 @@ Loading molecular database, CIA, and define some values.
 
 .. code:: ipython3
 
-    from exojax.spec import api, contdb
-    from exojax.spec import molinfo
+    from exojax.database import api , contdb
+    from exojax.database import molinfo 
     
     mmw=2.33 #mean molecular weight
     
@@ -130,7 +130,7 @@ Initialize MODIT
 
 .. code:: ipython3
 
-    from exojax.spec import initspec
+    from exojax.opacity import initspec
     cnu,indexnu,R,pmarray=initspec.init_modit(mdbCH4.nu_lines,nus)
 
 Do not confuse R with Rinst. R is the spectral resolution of the raw
@@ -157,7 +157,7 @@ automatically set DGM based on the T-P model and given ranges.
 .. code:: ipython3
 
     # Precomputing gdm_ngammaL                                                                                              
-    from exojax.spec.modit import setdgm_exomol
+    from exojax.opacity.modit import setdgm_exomol
     from jax import jit, vmap
     
     fT = lambda T0,alpha: T0[:,None]*(Parr[None,:]/Pref)**alpha[:,None]
@@ -195,11 +195,11 @@ frun returns a spectral model.
 
 .. code:: ipython3
 
-    from exojax.spec.modit import exomol,xsmatrix
-    from exojax.spec.rtransfer import dtauM, dtauCIA, rtrun
-    from exojax.spec import planck, response
-    from exojax.spec.response import ipgauss_sampling
-    from exojax.spec.spin_rotation import convolve_rigid_rotation
+    from exojax.opacity.modit import exomol,xsmatrix
+    from exojax.rt.rtransfer import dtauM, dtauCIA, rtrun
+    from exojax.rt import planck, response
+    from exojax.postproc.response import ipgauss_sampling
+    from exojax.postproc.spin_rotation import convolve_rigid_rotation
     from exojax.utils.grids import velocity_grid
     vsini_max = 100.0
     vr_array = velocity_grid(res, vsini_max)

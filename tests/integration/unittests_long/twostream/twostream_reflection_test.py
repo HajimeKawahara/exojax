@@ -3,10 +3,10 @@
 import pytest
 from jax import config
 from exojax.test.emulate_mdb import mock_mdb
-from exojax.spec.opacalc import OpaPremodit
+from exojax.opacity.opacalc import OpaPremodit
 from exojax.test.emulate_mdb import mock_wavenumber_grid
-from exojax.spec.atmrt import ArtReflectEmis
-from exojax.spec.atmrt import ArtReflectPure
+from exojax.rt.atmrt import ArtReflectEmis
+from exojax.rt.atmrt import ArtReflectPure
 from jax import config
 
 config.update("jax_enable_x64", True)
@@ -61,7 +61,7 @@ def test_ArtReflectPure_no_scattering_reflected_by_surface(db, diffmode, fig=Fal
     "db, diffmode", [("exomol", 1), ("exomol", 2), ("hitemp", 1), ("hitemp", 2)]
 )
 def test_ArtReflectEmis_Emission_plus_stellar_refelction(db, diffmode, fig=False):
-    from exojax.spec.planck import piBarr
+    from exojax.rt.planck import piBarr
 
     nu_grid, wav, res = mock_wavenumber_grid()
     art = ArtReflectEmis(

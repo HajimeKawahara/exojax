@@ -8,8 +8,8 @@ exist.
 
 .. code:: ipython3
 
-    from exojax.spec import rtransfer as rt
-    from exojax.spec import modit
+    from exojax.rt import rtransfer as rt
+    from exojax.opacity import modit
 
 .. code:: ipython3
 
@@ -54,7 +54,7 @@ Loading a molecular database of CH4 and CIA (H2-H2)…
 
 .. code:: ipython3
 
-    from exojax.spec import api, contdb
+    from exojax.database import api , contdb
     mdbCH4=api.MdbExomol('.database/CH4/12C-1H4/YT10to10/',nus,crit=1.e-30, Ttyp=300)
     cdbH2H2=contdb.CdbCIA('.database/H2-H2_2011.cia',nus)
 
@@ -90,7 +90,7 @@ larger number, consider to use PreMODIT.
 
 .. code:: ipython3
 
-    from exojax.spec import molinfo
+    from exojax.database import molinfo 
     molmassCH4=molinfo.molmass("CH4")
 
 Computing the relative partition function,
@@ -105,8 +105,8 @@ Pressure and Natural broadenings
 .. code:: ipython3
 
     from jax import jit
-    from exojax.spec.exomol import gamma_exomol
-    from exojax.spec import gamma_natural
+    from exojax.database.exomol  import gamma_exomol
+    from exojax.database.hitran import gamma_natural
     
     gammaLMP = jit(vmap(gamma_exomol,(0,0,None,None)))\
             (Parr,Tarr,mdbCH4.n_Texp,mdbCH4.alpha_ref)
@@ -117,7 +117,7 @@ And line strength
 
 .. code:: ipython3
 
-    from exojax.spec import SijT
+    from exojax.database.hitran import SijT
     SijM=jit(vmap(SijT,(0,None,None,None,0)))\
         (Tarr,mdbCH4.logsij0,mdbCH4.nu_lines,mdbCH4.elower,qt)
 
@@ -128,7 +128,7 @@ with the normalized gammaL and q = R log(nu).
 
 .. code:: ipython3
 
-    from exojax.spec import normalized_doppler_sigma
+    from exojax.database.hitran import normalized_doppler_sigma
     import numpy as np
     nsigmaDl=normalized_doppler_sigma(Tarr,molmassCH4,resolution)[:,np.newaxis]
 
@@ -160,7 +160,7 @@ can be computed using init_dit.
 
 .. code:: ipython3
 
-    from exojax.spec import initspec 
+    from exojax.opacity import initspec 
     cnu,indexnu,R,pmarray=initspec.init_modit(mdbCH4.nu_lines,nus)
 
 Let’s compute a cross section matrix using modit.xsmatrix.
@@ -217,7 +217,7 @@ computing delta tau for CH4
 
 .. code:: ipython3
 
-    from exojax.spec.rtransfer import dtauM
+    from exojax.rt.rtransfer import dtauM
     import jax.numpy as jnp
     Rp=0.88
     Mp=33.2
@@ -229,7 +229,7 @@ computing delta tau for CIA
 
 .. code:: ipython3
 
-    from exojax.spec.rtransfer import dtauCIA
+    from exojax.rt.rtransfer import dtauCIA
     mmw=2.33 #mean molecular weight
     mmrH2=0.74
     molmassH2=molinfo.molmass("H2")
@@ -260,8 +260,8 @@ radiative transfering…
 
 .. code:: ipython3
 
-    from exojax.spec import planck
-    from exojax.spec.rtransfer import rtrun
+    from exojax.rt import planck
+    from exojax.rt.rtransfer import rtrun
     sourcef = planck.piBarr(Tarr,nus)
     F0=rtrun(dtau,sourcef)
 
@@ -285,8 +285,8 @@ response to the raw spectrum.
 .. code:: ipython3
 
     #response and rotation settings 
-    from exojax.spec.response import ipgauss_sampling
-    from exojax.spec.spin_rotation import convolve_rigid_rotation
+    from exojax.postproc.response import ipgauss_sampling
+    from exojax.postproc.spin_rotation import convolve_rigid_rotation
     from exojax.utils.grids import velocity_grid
     vsini_max = 100.0
     vr_array = velocity_grid(resolution, vsini_max)

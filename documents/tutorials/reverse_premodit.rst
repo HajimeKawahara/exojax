@@ -23,15 +23,15 @@ In this tutorial, we use ``PreMODIT`` as an opacity calculator.
 
 .. code:: ipython3
 
-    from exojax.spec.atmrt import ArtEmisPure
-    from exojax.spec.api import MdbExomol
-    from exojax.spec.opacalc import OpaPremodit
-    from exojax.spec.contdb import CdbCIA
-    from exojax.spec.opacont import OpaCIA
-    from exojax.spec.response import ipgauss_sampling
-    from exojax.spec.spin_rotation import convolve_rigid_rotation
-    from exojax.spec import molinfo
-    from exojax.spec.unitconvert import nu2wav
+    from exojax.rt.atmrt import ArtEmisPure
+    from exojax.database.api  import MdbExomol
+    from exojax.opacity.opacalc import OpaPremodit
+    from exojax.database.contdb  import CdbCIA
+    from exojax.opacity.opacont import OpaCIA
+    from exojax.postproc.response import ipgauss_sampling
+    from exojax.postproc.spin_rotation import convolve_rigid_rotation
+    from exojax.database import molinfo 
+    from exojax.utils.grids import nu2wav
     from exojax.utils.grids import wavenumber_grid
     from exojax.utils.grids import velocity_grid
     from exojax.utils.astrofunc import gravity_jupiter
@@ -80,7 +80,7 @@ normlized it, and add Gaussian noise.
 
 .. parsed-literal::
 
-    /home/kawahara/exojax/src/exojax/spec/unitconvert.py:62: UserWarning: Both input wavelength and output wavenumber are in ascending order.
+    /home/kawahara/exojax/src/exojax/utils.grids.py:62: UserWarning: Both input wavelength and output wavenumber are in ascending order.
       warnings.warn(
 
 
@@ -116,9 +116,9 @@ We first set the wavenumber grid enough to cover the observed spectrum.
 
 .. parsed-literal::
 
-    /home/kawahara/exojax/src/exojax/spec/unitconvert.py:62: UserWarning: Both input wavelength and output wavenumber are in ascending order.
+    /home/kawahara/exojax/src/exojax/utils.grids.py:62: UserWarning: Both input wavelength and output wavenumber are in ascending order.
       warnings.warn(
-    /home/kawahara/exojax/src/exojax/spec/unitconvert.py:62: UserWarning: Both input wavelength and output wavenumber are in ascending order.
+    /home/kawahara/exojax/src/exojax/utils.grids.py:62: UserWarning: Both input wavelength and output wavenumber are in ascending order.
       warnings.warn(
     /home/kawahara/exojax/src/exojax/utils/grids.py:144: UserWarning: Resolution may be too small. R=617160.1067701889
       warnings.warn("Resolution may be too small. R=" + str(resolution), UserWarning)

@@ -1,7 +1,7 @@
-from exojax.spec.opacalc import OpaPremodit
-from exojax.spec.atmrt import ArtEmisPure
+from exojax.opacity.opacalc import OpaPremodit
+from exojax.rt.atmrt import ArtEmisPure
 from exojax.utils.grids import wavenumber_grid
-from exojax.spec.api import MdbExomol
+from exojax.database.api  import MdbExomol
 from exojax.utils.astrofunc import gravity_jupiter
 import jax.profiler
 

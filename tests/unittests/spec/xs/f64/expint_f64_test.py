@@ -1,6 +1,6 @@
 import numpy as np
 from scipy.special import expn
-from exojax.spec import rtransfer as rt
+from exojax.rt import rtransfer as rt
 import jax.numpy as jnp
 import pytest
 from jax import config                                                 #

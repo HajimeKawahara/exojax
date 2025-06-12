@@ -18,10 +18,10 @@ Worked example
 
 .. code-block:: python
 
-    from exojax.spec.atmrt import ArtTransPure
+    from exojax.rt.atmrt import ArtTransPure
     from exojax.utils.grids import wavenumber_grid
-    from exojax.spec.api import MdbExomol
-    from exojax.spec.opacalc import OpaPremodit
+    from exojax.database.api  import MdbExomol
+    from exojax.opacity.opacalc import OpaPremodit
     import cloudpickle
 
 

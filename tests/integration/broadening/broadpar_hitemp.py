@@ -1,5 +1,5 @@
-from exojax.spec.api import MdbHitemp
-from exojax.spec.opacalc import OpaPremodit
+from exojax.database.api  import MdbHitemp
+from exojax.opacity.opacalc import OpaPremodit
 from exojax.utils.grids import wavenumber_grid
 from jax import config
 config.update("jax_enable_x64", True)

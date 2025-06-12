@@ -8,7 +8,7 @@ In exojax, hjert is the Voigt-Hjerting function.
 
 .. code:: ipython3
 
-    from exojax.spec import hjert
+    from exojax.opacity.lpf import hjert
     hjert(1.0,1.0)
 
 

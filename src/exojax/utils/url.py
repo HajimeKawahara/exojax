@@ -45,10 +45,10 @@ def url_HITRAN12():
 
 
 def url_HITRANCIA():
-    """returns URL for HITRAN CIA ciafile.
+    """returns URL for hitrancia ciafile.
 
     Returns:
-        URL for HITRAN CIA file
+        URL for hitrancia file
     """
     url = "https://hitran.org/data/CIA/"
     return url

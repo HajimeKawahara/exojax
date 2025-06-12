@@ -38,7 +38,7 @@ An example to use the VALD3 database for a given species ("Extract Element") fro
 
 .. code:: python
 
-	>>> from exojax.spec import moldb
+	>>> from exojax.database import moldb 
 	>>> from exojax.utils.grids import wavenumber_grid
 	>>> nus = 1e8/np.array([1e5, 1500.])
 	>>> filepath_VALD3 = '.database/vald2600.gz'
@@ -49,7 +49,7 @@ Another example to use the VALD3 database for multiple species ("Extract All") w
 
 .. code:: python
 
-	>>> from exojax.spec import moldb
+	>>> from exojax.database import moldb 
 	>>> from exojax.utils.grids import wavenumber_grid
 	>>> nus, wav, res = wavenumber_grid(10398, 10406, 2000, unit="AA", xsmode="modit")
 	>>> filepath = '.database/vald4214450.gz'
@@ -65,7 +65,7 @@ The doppler broadening is calculated for example as:
 
 .. code:: python
 
-		>>> from exojax.spec.hitran import doppler_sigma
+		>>> from exojax.database.hitran  import doppler_sigma
 		>>> T = 3000 #temperature
 		>>> Amol=np.float64( adbFe.atomicmass[0] ) #atomic mass
 		>>> sigmaD = doppler_sigma(adbFe.nu_lines, T, Amol)
@@ -92,7 +92,7 @@ The example is as:
 
 .. code:: python
 
-		>>> from exojax.spec.lpf import auto_xsection, moldb, atomll
+		>>> from exojax.opacity.lpf import auto_xsection, moldb, atomll
 		>>> gammaL = atomll.gamma_vald3(T, PH, PHH, PHe, adbFe.ielem, adbFe.iion, \
 		adbFe.dev_nu_lines, adbFe.elower, adbFe.eupper, adbFe.atomicmass, adbFe.ionE, \
 		adbFe.gamRad, adbFe.gamSta, adbFe.vdWdamp, enh_damp=1.0)

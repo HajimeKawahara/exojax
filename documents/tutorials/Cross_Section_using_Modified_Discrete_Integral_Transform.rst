@@ -22,8 +22,8 @@ errors):
 .. code:: ipython3
 
     import matplotlib.pyplot as plt
-    from exojax.spec.hitran import line_strength, doppler_sigma, gamma_hitran, gamma_natural
-    from exojax.spec import api
+    from exojax.database.hitran  import line_strength, doppler_sigma, gamma_hitran, gamma_natural
+    from exojax.database import api 
     from exojax.utils.grids import wavenumber_grid
     from exojax.utils.constants import Tref_original
     
@@ -71,7 +71,7 @@ with the normalized gammaL and q = R log(nu).
 
 .. code:: ipython3
 
-    from exojax.spec.hitran import normalized_doppler_sigma
+    from exojax.database.hitran  import normalized_doppler_sigma
     
     dv_lines = mdbCO.nu_lines / R
     nsigmaD = normalized_doppler_sigma(Tfix, Mmol, R)
@@ -83,7 +83,7 @@ ngamma.
 
 .. code:: ipython3
 
-    from exojax.spec.set_ditgrid import ditgrid_log_interval
+    from exojax.opacity.set_ditgrid import ditgrid_log_interval
     
     ngammaL_grid = ditgrid_log_interval(ngammaL)
 
@@ -114,7 +114,7 @@ can be computed using init_dit.
 
 .. code:: ipython3
 
-    from exojax.spec import initspec
+    from exojax.opacity import initspec
     
     cnu, indexnu, R, pmarray = initspec.init_modit(mdbCO.nu_lines, nus)
 
@@ -122,7 +122,7 @@ Let’s compute the cross section!
 
 .. code:: ipython3
 
-    from exojax.spec.modit_scanfft import xsvector_scanfft
+    from exojax.opacity.modit_scanfft import xsvector_scanfft
     
     xs = xsvector_scanfft(cnu, indexnu, R, pmarray, nsigmaD, ngammaL, Sij, nus, ngammaL_grid)
 
@@ -131,7 +131,7 @@ purpose
 
 .. code:: ipython3
 
-    from exojax.spec.opacalc import OpaDirect
+    from exojax.opacity.opacalc import OpaDirect
     opa = OpaDirect(mdbCO, nus)
     xsv = opa.xsvector(Tfix, Pfix, Ppart)
 

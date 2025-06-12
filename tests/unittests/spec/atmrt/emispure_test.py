@@ -1,4 +1,4 @@
-""" unit test for ArtEmisPure with OpaPremodit
+"""unit test for ArtEmisPure with OpaPremodit
 
 Note:
     The original file was from integration/unittests_long/premodit/premodit_spectrum_test.py
@@ -14,9 +14,9 @@ import numpy as np
 from exojax.test.emulate_mdb import mock_mdb
 from exojax.test.data import TESTDATA_CO_EXOMOL_MODIT_EMISSION_REF
 from exojax.test.data import TESTDATA_CO_HITEMP_MODIT_EMISSION_REF
-from exojax.spec.opacalc import OpaPremodit
+from exojax.opacity.opacalc import OpaPremodit
 from exojax.test.emulate_mdb import mock_wavenumber_grid
-from exojax.spec.atmrt import ArtEmisPure
+from exojax.rt.atmrt import ArtEmisPure
 
 config.update("jax_enable_x64", True)
 
@@ -63,15 +63,17 @@ def test_rt_for_single_broadening_parameters(db, diffmode, fig=False):
     F0 = art.run(dtau, Tarr)
 
     if db == "hitemp":
-        filename = files('exojax').joinpath("data/testdata/" + TESTDATA_CO_HITEMP_MODIT_EMISSION_REF)
+        filename = files("exojax").joinpath(
+            "data/testdata/" + TESTDATA_CO_HITEMP_MODIT_EMISSION_REF
+        )
     elif db == "exomol":
-        filename = files('exojax').joinpath("data/testdata/" + TESTDATA_CO_EXOMOL_MODIT_EMISSION_REF)
-        
+        filename = files("exojax").joinpath(
+            "data/testdata/" + TESTDATA_CO_EXOMOL_MODIT_EMISSION_REF
+        )
+
     dat = pd.read_csv(filename, delimiter=",", names=("nus", "flux"))
     residual = np.abs(F0 / dat["flux"].values - 1.0)
-    print(np.max(residual))
     assert np.all(residual < 0.033)
-    return nu_grid, F0, dat["flux"].values
 
 
 @pytest.mark.parametrize("db, diffmode", [("exomol", 1)])
@@ -108,25 +110,14 @@ def test_rt(db, diffmode, fig=False):
     F0 = art.run(dtau, Tarr)
 
     if db == "hitemp":
-        filename = files('exojax').joinpath("data/testdata/" + TESTDATA_CO_HITEMP_MODIT_EMISSION_REF)
+        filename = files("exojax").joinpath(
+            "data/testdata/" + TESTDATA_CO_HITEMP_MODIT_EMISSION_REF
+        )
     elif db == "exomol":
-        filename = files('exojax').joinpath("data/testdata/" + TESTDATA_CO_EXOMOL_MODIT_EMISSION_REF)
-        
+        filename = files("exojax").joinpath(
+            "data/testdata/" + TESTDATA_CO_EXOMOL_MODIT_EMISSION_REF
+        )
 
     dat = pd.read_csv(filename, delimiter=",", names=("nus", "flux"))
     residual = np.abs(F0 / dat["flux"].values - 1.0)
-    print(np.max(residual))
     assert np.all(residual < 0.005)
-    return nu_grid, F0, dat["flux"].values
-
-
-if __name__ == "__main__":
-    # nu, F, Fref = test_rt_for_single_broadening_parameters("exomol", 0)
-    nu, F, Fref = test_rt("exomol", 1)
-    # nu, F, Fref = test_rt("hitemp", 1)
-
-    import matplotlib.pyplot as plt
-
-    plt.plot(nu, F, label="F")
-    plt.plot(nu, Fref, label="Fref")
-    plt.show()

@@ -1,4 +1,4 @@
-from exojax.spec.opacalc import OpaPremodit
+from exojax.opacity.opacalc import OpaPremodit
 from exojax.test.emulate_mdb import mock_mdbExomol
 from exojax.test.emulate_mdb import mock_wavenumber_grid
 import numpy as np

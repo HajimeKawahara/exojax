@@ -3,9 +3,9 @@ import pytest
 from jax import config
 import numpy as np
 from exojax.test.emulate_mdb import mock_mdb
-from exojax.spec.opacalc import OpaPremodit
+from exojax.opacity.opacalc import OpaPremodit
 from exojax.test.emulate_mdb import mock_wavenumber_grid
-from exojax.spec.atmrt import ArtTransPure
+from exojax.rt.atmrt import ArtTransPure
 from exojax.utils.constants import RJ
 
 config.update("jax_enable_x64", True)

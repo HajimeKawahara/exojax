@@ -3,9 +3,9 @@ Forward Modeling of an Emission Spectrum using the DIT Cross Section
 
 .. code:: ipython3
 
-    from exojax.spec import rtransfer as rt
-    from exojax.spec import dit
-    from exojax.spec import lpf
+    from exojax.rt import rtransfer as rt
+    from exojax.opacity import dit
+    from exojax.opacity import lpf
 
 .. code:: ipython3
 
@@ -48,7 +48,7 @@ Loading a molecular database of CH4 and CIA (H2-H2)…
 
 .. code:: ipython3
 
-    from exojax.spec import api, contdb
+    from exojax.database import api , contdb
     mdbCH4=api.MdbExomol('.database/CH4/12C-1H4/YT10to10/',nus,crit=1.e-30)
     cdbH2H2=contdb.CdbCIA('.database/H2-H2_2011.cia',nus)
 
@@ -79,7 +79,7 @@ Loading a molecular database of CH4 and CIA (H2-H2)…
 
 .. code:: ipython3
 
-    from exojax.spec import molinfo
+    from exojax.database import molinfo 
     molmassCH4=molinfo.molmass("CH4")
 
 Computing the relative partition function,
@@ -94,8 +94,8 @@ Pressure and Natural broadenings
 .. code:: ipython3
 
     from jax import jit
-    from exojax.spec.exomol import gamma_exomol
-    from exojax.spec import gamma_natural
+    from exojax.database.exomol  import gamma_exomol
+    from exojax.database.hitran import gamma_natural
     
     gammaLMP = jit(vmap(gamma_exomol,(0,0,None,None)))\
             (Parr,Tarr,mdbCH4.n_Texp,mdbCH4.alpha_ref)
@@ -106,7 +106,7 @@ Doppler broadening
 
 .. code:: ipython3
 
-    from exojax.spec import doppler_sigma
+    from exojax.database.hitran import doppler_sigma
     sigmaDM=jit(vmap(doppler_sigma,(None,0,None)))\
             (mdbCH4.nu_lines,Tarr,molmassCH4)
 
@@ -114,7 +114,7 @@ And line strength
 
 .. code:: ipython3
 
-    from exojax.spec import SijT
+    from exojax.database.hitran import SijT
     SijM=jit(vmap(SijT,(0,None,None,None,0)))\
         (Tarr,mdbCH4.logsij0,mdbCH4.nu_lines,mdbCH4.elower,qt)
 
@@ -138,7 +138,7 @@ DIT
 
 .. code:: ipython3
 
-    from exojax.spec import initspec 
+    from exojax.opacity import initspec 
     cnu,indexnu,pmarray=initspec.init_dit(mdbCH4.nu_lines,nus)
     xsmdit=dit.xsmatrix(cnu,indexnu,pmarray,sigmaDM,gammaLM,SijM,nus,dgm_sigmaD,dgm_gammaL)
 
@@ -170,7 +170,7 @@ computing delta tau for CH4
 
 .. code:: ipython3
 
-    from exojax.spec.rtransfer import dtauM
+    from exojax.rt.rtransfer import dtauM
     import jax.numpy as jnp
     Rp=0.88
     Mp=33.2
@@ -197,7 +197,7 @@ computing delta tau for CIA
 
 .. code:: ipython3
 
-    from exojax.spec.rtransfer import dtauCIA
+    from exojax.rt.rtransfer import dtauCIA
     mmw=2.33 #mean molecular weight
     mmrH2=0.74
     molmassH2=molinfo.molmass("H2")
@@ -228,8 +228,8 @@ radiative transfering…
 
 .. code:: ipython3
 
-    from exojax.spec import planck
-    from exojax.spec.rtransfer import rtrun
+    from exojax.rt import planck
+    from exojax.rt.rtransfer import rtrun
     sourcef = planck.piBarr(Tarr,nus)
     F0=rtrun(dtau,sourcef)
 

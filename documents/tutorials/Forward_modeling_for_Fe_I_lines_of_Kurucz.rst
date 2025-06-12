@@ -11,11 +11,11 @@ This notebook demonstrates how to use Kurucz database, not using
 .. code:: ipython3
 
     from exojax.utils.grids import wavenumber_grid
-    from exojax.spec import atomll
-    from exojax.spec.hitran import doppler_sigma, line_strength 
-    from exojax.spec.initspec import init_lpf
-    from exojax.spec.lpf import xsmatrix
-    from exojax.spec.layeropacity import layer_optical_depth, layer_optical_depth_Hminus, layer_optical_depth_CIA
+    from exojax.database import atomll 
+    from exojax.database.hitran  import doppler_sigma, line_strength 
+    from exojax.opacity.initspec import init_lpf
+    from exojax.opacity.lpf import xsmatrix
+    from exojax.rt.layeropacity import layer_optical_depth, layer_optical_depth_Hminus, layer_optical_depth_CIA
     import matplotlib.pyplot as plt
     from jax import vmap, jit
     import numpy as np
@@ -48,7 +48,7 @@ Sets a wavenumber grid
 
 .. parsed-literal::
 
-    /home/kawahara/exojax/src/exojax/spec/unitconvert.py:63: UserWarning: Both input wavelength and output wavenumber are in ascending order.
+    /home/kawahara/exojax/src/exojax/utils.grids.py:63: UserWarning: Both input wavelength and output wavenumber are in ascending order.
       warnings.warn(
 
 
@@ -56,7 +56,7 @@ Sets a T-P profile and partial pressures
 
 .. code:: ipython3
 
-    from exojax.spec.atmrt import ArtEmisPure
+    from exojax.rt.atmrt import ArtEmisPure
     nlayer = 100
     T0 = 3000.0  # 10000. #3000. #1295.0 #K
     alpha = 0.1
@@ -107,7 +107,7 @@ Sets a T-P profile and partial pressures
         kuruczlines:  fullpath to the input line list obtained from Kurucz linelists (http://kurucz.harvard.edu/linelists/):
             For a example in this notebook, gf2600.all downloaded from (http://kurucz.harvard.edu/linelists/gfall/) is used.
     """
-    from exojax.spec.moldb import AdbKurucz
+    from exojax.database.moldb  import AdbKurucz
     kuruczlines = '.database/gf2600.all'
     adbK = AdbKurucz(kuruczlines, nu_grid)
 
@@ -208,7 +208,7 @@ Delta tau for CIA and Hminus
 
 .. code:: ipython3
 
-    from exojax.spec.contdb import CdbCIA
+    from exojax.database.contdb  import CdbCIA
     cdbH2H2 = CdbCIA('.database/H2-H2_2011.cia', nu_grid)
     
     vmrh=H_He_HH_VMR[0]
@@ -276,7 +276,7 @@ VALD3 <http://secondearths.sakura.ne.jp/exojax/tutorials/metals.html>`__)
             For more details of VALD data access, please see "Forward modeling for metal line.ipynb" (https://github.com/HajimeKawahara/exojax/blob/master/examples/tutorial/Forward%20modeling%20for%20metal%20line.ipynb)
     """
     
-    from exojax.spec.moldb import AdbVald
+    from exojax.database.moldb  import AdbVald
     valdlines = '.database/vald2600.gz'
     adbV = AdbVald(valdlines, nu_grid)
 

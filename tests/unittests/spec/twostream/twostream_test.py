@@ -1,4 +1,4 @@
-from exojax.spec.twostream import compute_tridiag_diagonals_and_vector
+from exojax.rt.twostream import compute_tridiag_diagonals_and_vector
 import jax.numpy as jnp
 import numpy as np
 from jax import config

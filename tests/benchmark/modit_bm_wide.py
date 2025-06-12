@@ -1,10 +1,10 @@
 import pytest
 import time
-from exojax.spec.modit import xsvector_scanfft
-from exojax.spec.set_ditgrid import ditgrid_log_interval
+from exojax.opacity.modit import xsvector_scanfft
+from exojax.opacity.set_ditgrid import ditgrid_log_interval
 import numpy as np
 import jax.numpy as jnp
-from exojax.spec import initspec
+from exojax.opacity import initspec
 
 
 def xs(Nc, Nline=10000):

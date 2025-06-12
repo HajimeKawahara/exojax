@@ -1,4 +1,4 @@
-""" short integration tests for MODIT spectrum"""
+"""short integration tests for MODIT spectrum"""
 
 import pytest
 from importlib.resources import files
@@ -8,9 +8,9 @@ import numpy as np
 from exojax.test.emulate_mdb import mock_mdb
 from exojax.test.data import TESTDATA_CO_EXOMOL_MODIT_EMISSION_REF
 from exojax.test.data import TESTDATA_CO_HITEMP_MODIT_EMISSION_REF
-from exojax.spec.opacalc import OpaModit
+from exojax.opacity.opacalc import OpaModit
 from exojax.test.emulate_mdb import mock_wavenumber_grid
-from exojax.spec.atmrt import ArtEmisPure
+from exojax.rt.atmrt import ArtEmisPure
 
 config.update("jax_enable_x64", True)
 
@@ -46,37 +46,3 @@ def test_rt_modit(db, fig=False):
     maxres = np.max(residual)
 
     assert maxres < 3.0e-8  # 2.7443685102213067e-08 Feb. 17th 2025
-    return nu_grid, F0, dat["flux"].values
-
-
-if __name__ == "__main__":
-    import matplotlib.pyplot as plt
-
-    diffmode = 0
-    nus_hitemp, F0_hitemp, Fref_hitemp = test_rt_modit("hitemp", diffmode)  #
-    nus, F0, Fref = test_rt_modit("exomol", diffmode)  #
-
-    fig = plt.figure()
-    ax = fig.add_subplot(311)
-    ax.plot(nus, Fref, label="MODIT (ExoMol)")
-    ax.plot(nus, F0, label="MODIT (ExoMol, close)", ls="dashed")
-    plt.legend()
-    
-    ax = fig.add_subplot(312)
-    ax.plot(nus_hitemp, Fref_hitemp, label="MODIT (HITEMP)")
-    ax.plot(nus_hitemp, F0_hitemp, label="MODIT (HITEMP, close)", ls="dashed")
-    plt.legend()
-    plt.ylabel("flux (cgs)")
-
-    ax = fig.add_subplot(313)
-    ax.plot(nus, 1.0 - F0 / Fref, alpha=0.7, label="dif (Exomol)")
-    ax.plot(nus_hitemp, 1.0 - F0_hitemp / Fref_hitemp, alpha=0.7, label="dif (HITEMP)")
-    plt.xlabel("wavenumber cm-1")
-    plt.axhline(0.05, color="gray", lw=0.5)
-    plt.axhline(-0.05, color="gray", lw=0.5)
-    plt.axhline(0.01, color="gray", lw=0.5)
-    plt.axhline(-0.01, color="gray", lw=0.5)
-    plt.ylim(-0.07, 0.07)
-    plt.legend()
-    plt.savefig("modit_test.png")
-    # plt.show()

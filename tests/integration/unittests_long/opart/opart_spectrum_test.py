@@ -1,15 +1,15 @@
 """checks the forward model of the opart spectrum
 """
 
-from exojax.spec.opart import OpartEmisPure
-from exojax.spec.layeropacity import single_layer_optical_depth
+from exojax.rt.opart import OpartEmisPure
+from exojax.rt.layeropacity import single_layer_optical_depth
 from jax import config
 
 config.update("jax_enable_x64", True)
 
 
 def test_forward_opart():
-    from exojax.spec.opacalc import OpaPremodit
+    from exojax.opacity.opacalc import OpaPremodit
     from exojax.test.emulate_mdb import mock_mdbExomol
     from exojax.test.emulate_mdb import mock_wavenumber_grid
     import pandas as pd

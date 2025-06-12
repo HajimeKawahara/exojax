@@ -3,15 +3,15 @@ import pkgutil
 from io import BytesIO
 import numpy as np
 from exojax.utils.grids import wavenumber_grid
-from exojax.spec import response
-from exojax.spec import molinfo
-from exojax.spec import contdb
-from exojax.spec.api import MdbExomol
-from exojax.spec.opacalc import OpaDirect
-from exojax.spec.opacont import OpaCIA
-from exojax.spec.atmrt import ArtEmisPure
-from exojax.spec.specop import SopRotation
-from exojax.spec.specop import SopInstProfile
+from exojax.postproc import response
+from exojax.database import molinfo 
+from exojax.database import contdb 
+from exojax.database.api  import MdbExomol
+from exojax.opacity.opacalc import OpaDirect
+from exojax.opacity.opacont import OpaCIA
+from exojax.rt.atmrt import ArtEmisPure
+from exojax.postproc.specop import SopRotation
+from exojax.postproc.specop import SopInstProfile
 from exojax.utils.instfunc import resolution_to_gaussian_std
 import jax.numpy as jnp
 

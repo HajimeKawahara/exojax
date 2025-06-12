@@ -14,7 +14,7 @@ Currently, the refractive index is downloaded from ``VIRGA`` and made available 
 
 .. code:: ipython3
     
-    from exojax.spec.pardb import PdbCloud
+    from exojax.database.pardb  import PdbCloud
     miedir = "/home/kawahara/exojax/documents/tutorials/.database/particulates/virga"
     pdb = PdbCloud("MgSiO3", path=miedir)
 

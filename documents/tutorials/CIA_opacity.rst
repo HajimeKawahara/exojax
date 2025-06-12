@@ -22,7 +22,7 @@ started <get_started.html>`__ guide.
     
     nu_grid, wav, res = wavenumber_grid(5000, 50000, 1000, unit="AA", xsmode="lpf")
     
-    from exojax.spec import contdb
+    from exojax.database import contdb 
     cdbH2H2 = contdb.CdbCIA(".database/H2-H2_2011.cia", nu_grid)
 
 
@@ -44,7 +44,7 @@ is available.
 
 .. code:: ipython3
 
-    from exojax.spec.opacont import OpaCIA
+    from exojax.opacity.opacont import OpaCIA
     opacia = OpaCIA(cdbH2H2, nu_grid=nu_grid)
 
 Let’s calculate (the logarithm of) the CIA absorption coefficient at
@@ -84,6 +84,6 @@ absorption coefficients.
 
 .. code:: ipython3
 
-    from exojax.spec.hitrancia import interp_logacia_vector
+    from exojax.database.hitrancia import interp_logacia_vector
     lc = interp_logacia_vector(Tfix, nu_grid, cdbH2H2.nucia, cdbH2H2.tcia, cdbH2H2.logac).T
 

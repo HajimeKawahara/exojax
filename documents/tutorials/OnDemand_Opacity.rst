@@ -30,8 +30,8 @@ versions of these databases.
 
     import matplotlib.pyplot as plt
     from exojax.utils.grids import wavenumber_grid
-    from exojax.spec.api import MdbExomol
-    from exojax.spec.opacalc import OpaDirect
+    from exojax.database.api  import MdbExomol
+    from exojax.opacity.opacalc import OpaDirect
     
     nu_grid, wav, res = wavenumber_grid(22930, 22960, 2000, xsmode="lpf", unit="AA")
     mdb = MdbExomol('.database/CO/12C-16O/Li2015', nurange=nu_grid)
@@ -68,7 +68,7 @@ versions of these databases.
 
 .. parsed-literal::
 
-    /home/kawahara/exojax/src/exojax/spec/unitconvert.py:63: UserWarning: Both input wavelength and output wavenumber are in ascending order.
+    /home/kawahara/exojax/src/exojax/utils.grids.py:63: UserWarning: Both input wavelength and output wavenumber are in ascending order.
       warnings.warn(
     /home/kawahara/exojax/src/exojax/utils/molname.py:197: FutureWarning: e2s will be replaced to exact_molname_exomol_to_simple_molname.
       warnings.warn(

@@ -54,9 +54,9 @@ these subdivided wavenumber grids and then combined?
 
 .. parsed-literal::
 
-    /home/kawahara/exojax/src/exojax/spec/unitconvert.py:63: UserWarning: Both input wavelength and output wavenumber are in ascending order.
+    /home/kawahara/exojax/src/exojax/utils.grids.py:63: UserWarning: Both input wavelength and output wavenumber are in ascending order.
       warnings.warn(
-    /home/kawahara/exojax/src/exojax/spec/unitconvert.py:63: UserWarning: Both input wavelength and output wavenumber are in ascending order.
+    /home/kawahara/exojax/src/exojax/utils.grids.py:63: UserWarning: Both input wavelength and output wavenumber are in ascending order.
       warnings.warn(
     /home/kawahara/exojax/src/exojax/utils/molname.py:197: FutureWarning: e2s will be replaced to exact_molname_exomol_to_simple_molname.
       warnings.warn(
@@ -95,7 +95,7 @@ wavenumber grids using PreMODIT (``nustitch=1`` by default).
 
 .. code:: ipython3
 
-    from exojax.spec.opacalc import OpaPremodit
+    from exojax.opacity.opacalc import OpaPremodit
     
     T=1000.0 #K
     P=1.0 #bar
@@ -304,8 +304,8 @@ reproduce the algorithm in ``OpaPremodit``. This can be done using
 
 .. code:: ipython3
 
-    from exojax.spec.premodit import xsvector_open_zeroth
-    from exojax.spec import normalized_doppler_sigma
+    from exojax.opacity.premodit import xsvector_open_zeroth
+    from exojax.database.hitran import normalized_doppler_sigma
     
     def xsv_open(opa,T,P):
         opa.alias = "open"

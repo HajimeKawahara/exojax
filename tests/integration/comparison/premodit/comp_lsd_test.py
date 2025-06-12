@@ -4,8 +4,8 @@
 
 """
 import numpy as np
-from exojax.spec.premodit import make_broadpar_grid
-from exojax.spec.premodit import generate_lbd
+from exojax.opacity.premodit import make_broadpar_grid
+from exojax.opacity.premodit import generate_lbd
 from exojax.utils.instfunc import resolution_eslog
 import numpy as np
 import jax.numpy as jnp
@@ -32,10 +32,10 @@ def compare_line_shape_density(mdb,nu_grid,Ttest=1000.0,Ttyp=2000.0):
     
     """
     from exojax.utils.indexing import npgetix
-    from exojax.spec.hitran import line_strength
-    from exojax.spec.premodit import make_elower_grid
-    #from exojax.spec.premodit import unbiased_lsd_first
-    from exojax.spec.premodit import unbiased_lsd_zeroth
+    from exojax.database.hitran  import line_strength
+    from exojax.opacity.premodit import make_elower_grid
+    #from exojax.opacity.premodit import unbiased_lsd_first
+    from exojax.opacity.premodit import unbiased_lsd_zeroth
     
     dit_grid_resolution = 0.1    
     R = resolution_eslog(nu_grid)
@@ -84,7 +84,7 @@ def compare_line_shape_density(mdb,nu_grid,Ttest=1000.0,Ttyp=2000.0):
     return Slsd, Slsd_direct
 
 def test_comp_lsd():
-    from exojax.spec import api
+    from exojax.database import api 
     nu_grid=np.logspace(np.log10(6030.0), np.log10(6060.0), 20000, dtype=np.float64)
     mdbCH4 = api.MdbExomol('.database/CH4/12C-1H4/YT10to10/', nu_grid, gpu_transfer=False)
     Slsd,Slsd_direct=compare_line_shape_density(mdbCH4,nu_grid,Ttest=1000.0,Ttyp=2000.0)    

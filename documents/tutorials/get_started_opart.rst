@@ -51,12 +51,12 @@ Note that you can also use the
 
 .. code:: ipython3
 
-    from exojax.spec.api import MdbExomol
-    from exojax.spec.contdb import CdbCIA
-    from exojax.spec.opacalc import OpaPremodit
-    from exojax.spec.opacont import OpaCIA
-    from exojax.spec.layeropacity import single_layer_optical_depth
-    from exojax.spec.layeropacity import single_layer_optical_depth_CIA
+    from exojax.database.api  import MdbExomol
+    from exojax.database.contdb  import CdbCIA
+    from exojax.opacity.opacalc import OpaPremodit
+    from exojax.opacity.opacont import OpaCIA
+    from exojax.rt.layeropacity import single_layer_optical_depth
+    from exojax.rt.layeropacity import single_layer_optical_depth_CIA
     from exojax.utils.grids import wavenumber_grid
     from exojax.utils.astrofunc import gravity_jupiter
     
@@ -135,7 +135,7 @@ instead.)
 
 .. code:: ipython3
 
-    from exojax.spec.opart import OpartEmisPure
+    from exojax.rt.opart import OpartEmisPure
     
     opalayer = OpaLayer(Nnus=150000)
     opart = OpartEmisPure(opalayer, pressure_top=1.0e-5, pressure_btm=1.0e1, nlayer=200, nstream=8)

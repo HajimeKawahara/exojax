@@ -12,7 +12,7 @@ This script performs a Bayesian analysis of the high-resolution emission spectru
 import numpy as np
 import jax.numpy as jnp
 import matplotlib.pyplot as plt
-from exojax.spec.specop import SopPhoto
+from exojax.postproc.specop import SopPhoto
 from exojax.test.emulate_spec import sample_emission_spectrum
 from exojax.utils.grids import wavenumber_grid
 from exojax.utils.instfunc import resolution_to_gaussian_std
@@ -77,14 +77,14 @@ print("len(nu_grid_spec) = ", len(nu_grid_spec))   #6000
 # Here, we set the molecular and CIA databases for the forward model.
 # We use H2O, CH4, and CO for the molecular opacity and H2-H2 and H2-He for the CIA opacity.
 # The molecular databases are from ExoMol (H2O and CO) and HITEMP (CH4), 
-# and the CIA databases are from the HITRAN CIA database.
+# and the CIA databases are from the hitrancia database.
 #
 
 # molecules/CIA database settings, uses nu_photo becuase it's wider than nu_grid_obs
-from exojax.spec.api import MdbExomol
-from exojax.spec.api import MdbHitemp
-from exojax.spec import contdb
-from exojax.spec import molinfo
+from exojax.database.api  import MdbExomol
+from exojax.database.api  import MdbHitemp
+from exojax.database import contdb 
+from exojax.database import molinfo 
 
 mdb_h2o = MdbExomol(
     ".database/H2O/1H2-16O/POKAZATEL", nurange=nu_grid_photo, gpu_transfer=False
@@ -121,8 +121,8 @@ def mean_molecular_weight(vmr, vmrH2, vmrHe):
 #
 
 
-from exojax.spec.opacalc import OpaPremodit
-from exojax.spec.opacont import OpaCIA
+from exojax.opacity.opacalc import OpaPremodit
+from exojax.opacity.opacont import OpaCIA
 
 trange = [500.0, 2500.0]
 dgres = 1.0
@@ -190,14 +190,14 @@ opa_photo_cia_H2He = OpaCIA(cdbH2He, nu_grid_photo)
 # we calculate the emission without scattering (pure absorption), so we construct `art` using `ArtEmisPure`.
 #
 
-from exojax.spec.atmrt import ArtEmisPure
+from exojax.rt.atmrt import ArtEmisPure
 
 art = ArtEmisPure(pressure_btm=1.0e2, pressure_top=1.0e-4, nlayer=200)
 # does not set nu_grid because we use two types of nu_grid (for obs and photo)
 
 # Spectral Operators (planet rotation and instrumental profile)
-from exojax.spec.specop import SopRotation
-from exojax.spec.specop import SopInstProfile
+from exojax.postproc.specop import SopRotation
+from exojax.postproc.specop import SopInstProfile
 
 sop_rot = SopRotation(nu_grid_spec, vsini_max=100.0)
 sop_inst = SopInstProfile(nu_grid_spec, vrmax=100.0)

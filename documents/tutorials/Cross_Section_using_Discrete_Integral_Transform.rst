@@ -23,13 +23,13 @@ errors):
 
 .. code:: ipython3
 
-    from exojax.spec.hitran import line_strength
-    from exojax.spec.hitran import doppler_sigma
-    from exojax.spec.hitran import gamma_hitran
-    from exojax.spec.hitran import gamma_natural
+    from exojax.database.hitran  import line_strength
+    from exojax.database.hitran  import doppler_sigma
+    from exojax.database.hitran  import gamma_hitran
+    from exojax.database.hitran  import gamma_natural
     from exojax.utils.grids import wavenumber_grid
     from exojax.utils.constants import Tref_original
-    from exojax.spec import api
+    from exojax.database import api 
     
     # Setting wavenumber bins and loading HITRAN database
     nus, wav, resolution = wavenumber_grid(
@@ -75,7 +75,7 @@ set_ditgrid.ditgrid_log_interval makes a 1D grid for sigmaD and gamma.
 
 .. code:: ipython3
 
-    from exojax.spec.set_ditgrid import ditgrid_log_interval
+    from exojax.opacity.set_ditgrid import ditgrid_log_interval
     
     sigmaD_grid = ditgrid_log_interval(sigmaD)
     gammaL_grid = ditgrid_log_interval(gammaL)
@@ -103,7 +103,7 @@ needed. These can be computed using init_dit.
 
 .. code:: ipython3
 
-    from exojax.spec import initspec
+    from exojax.opacity import initspec
     
     cnu, indexnu, pmarray = initspec.init_dit(mdbCO.nu_lines, nus)
 
@@ -111,7 +111,7 @@ Then, let’s compute a cross section!
 
 .. code:: ipython3
 
-    from exojax.spec.dit import xsvector
+    from exojax.opacity.dit import xsvector
     
     xs = xsvector(cnu, indexnu, pmarray, sigmaD, gammaL, Sij, nus, sigmaD_grid, gammaL_grid)
 
@@ -120,7 +120,7 @@ comparison purpose
 
 .. code:: ipython3
 
-    from exojax.spec.opacalc import OpaDirect
+    from exojax.opacity.opacalc import OpaDirect
     opa = OpaDirect(mdbCO, nus)
     xsv = opa.xsvector(Tfix, Pfix, Ppart)
 

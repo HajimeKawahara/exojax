@@ -5,8 +5,8 @@ import pickle
 import os
 import shutil
 
-from exojax.spec import api
-from exojax.spec import customapi
+from exojax.database import api 
+from exojax.database import customapi 
 from exojax.test.data import TESTDATA_moldb_VALD
 from exojax.test.data import get_testdata_filename
 from exojax.utils.grids import wavenumber_grid

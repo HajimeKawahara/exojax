@@ -11,8 +11,8 @@ to use FP64 as follows:
 
 .. code:: ipython3
 
-    from exojax.spec import rtransfer as rt
-    from exojax.spec import premodit
+    from exojax.rt import rtransfer as rt
+    from exojax.opacity import premodit
     import numpy as np
     import matplotlib.pyplot as plt
     plt.style.use('bmh')
@@ -48,7 +48,7 @@ gpu_transfer=False can save the device memory use.
 
 .. code:: ipython3
 
-    from exojax.spec import api, contdb
+    from exojax.database import api , contdb
     mdbCO=api.MdbExomol('.database/CO/12C-16O/Li2015',nus,gpu_transfer=False)
     cdbH2H2=contdb.CdbCIA('.database/H2-H2_2011.cia',nus)
 
@@ -70,7 +70,7 @@ gpu_transfer=False can save the device memory use.
 
 .. code:: ipython3
 
-    from exojax.spec.opacalc import OpaPremodit
+    from exojax.opacity.opacalc import OpaPremodit
     diffmode = 0
     opa = OpaPremodit(mdb=mdbCO,
                           nu_grid=nus,
@@ -133,7 +133,7 @@ gravity and Mass Mixing Ratio :)
 
 .. code:: ipython3
 
-    from exojax.spec.rtransfer import dtauM
+    from exojax.rt.rtransfer import dtauM
     g = 2478.57 # gravity
     MMR = 0.1
     dtau = dtauM(dParr, xsm, MMR * np.ones_like(Parr), molmassCO, g)
@@ -150,13 +150,13 @@ the comparison purpose.
     
     
     #we need sigmaDM for LPF
-    from exojax.spec import doppler_sigma
+    from exojax.database.hitran import doppler_sigma
     from jax import jit
-    from exojax.spec.initspec import init_lpf
-    from exojax.spec.lpf import xsmatrix as xsmatrix_lpf
-    from exojax.spec.exomol import gamma_exomol
-    from exojax.spec import gamma_natural
-    from exojax.spec import SijT
+    from exojax.opacity.initspec import init_lpf
+    from exojax.opacity.lpf import xsmatrix as xsmatrix_lpf
+    from exojax.database.exomol  import gamma_exomol
+    from exojax.database.hitran import gamma_natural
+    from exojax.database.hitran import SijT
     from jax import vmap
     
     qt = vmap(mdbCO.qr_interp)(Tarr)
@@ -212,8 +212,8 @@ Let’s see the cross section matrix!
 
 .. code:: ipython3
 
-    from exojax.spec import planck
-    from exojax.spec.rtransfer import rtrun
+    from exojax.rt import planck
+    from exojax.rt.rtransfer import rtrun
     sourcef = planck.piBarr(Tarr,nus)
     F0=rtrun(dtau,sourcef)
     
@@ -250,7 +250,7 @@ spectrum
 
 .. code:: ipython3
 
-    from exojax.spec import response
+    from exojax.postproc import response
     from exojax.utils.constants import c
     import jax.numpy as jnp
     
