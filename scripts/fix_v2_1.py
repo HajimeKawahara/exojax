@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
-"""ejxfix-spec2new
+"""fix_v2_1.py
 ===================
 One‑shot *codemod* that migrates **legacy ``exojax.spec`` imports** to the new
-package layout (``exojax.opacity``, ``exojax.rt`` …) released in ExoJAX ≥ 0.13.
+package layout (``exojax.opacity``, ``exojax.rt`` …) released in ExoJAX v2.1.
 
 Highlights
 ----------
@@ -15,7 +15,7 @@ Highlights
 
 Usage::
 
-    python -m ejxfix_spec2new <path> [<path> ...]
+    python -m fix_v2_1 <path> [<path> ...]
 
 Requirements: Python 3.8+, no external deps (``re`` only) – so the tool can run
 in minimal environments.
@@ -24,7 +24,6 @@ from __future__ import annotations
 
 import argparse
 import re
-import sys
 from pathlib import Path
 from typing import Dict, List
 
@@ -33,55 +32,55 @@ from typing import Dict, List
 # ---------------------------------------------------------------------------
 ALIAS_MAP: Dict[str, str] = {
     # --- opacity layer ------------------------------------------------------
-    "opacalc":        "exojax.opacity.opacalc",
-    "initspec":       "exojax.opacity.initspec",
-    "premodit":       "exojax.opacity.premodit.premodit",
-    "modit":          "exojax.opacity.modit.modit",
-    "lpf":            "exojax.opacity.lpf.lpf",
-    "set_ditgrid":    "exojax.opacity._common.set_ditgrid",
-    "optgrid":        "exojax.opacity.premodit.optgrid",
-    "lbd":            "exojax.opacity.premodit.lbd",
-    "lsd":            "exojax.opacity._common.lsd",
-    "lbderror":       "exojax.opacity.premodit.lbderror",
-    "dit":            "exojax.opacity.modit.dit",
-    "ditkernel":      "exojax.opacity._common.ditkernel",
-    "make_numatrix":  "exojax.opacity.lpf.make_numatrix",
-    "opacont":        "exojax.opacity.opacont",
-    "rayleigh":       "exojax.opacity.rayleigh",
+    "opacalc": "exojax.opacity.opacalc",
+    "initspec": "exojax.opacity.initspec",
+    "premodit": "exojax.opacity.premodit.premodit",
+    "modit": "exojax.opacity.modit.modit",
+    "lpf": "exojax.opacity.lpf.lpf",
+    "set_ditgrid": "exojax.opacity._common.set_ditgrid",
+    "optgrid": "exojax.opacity.premodit.optgrid",
+    "lbd": "exojax.opacity.premodit.lbd",
+    "lsd": "exojax.opacity._common.lsd",
+    "lbderror": "exojax.opacity.premodit.lbderror",
+    "dit": "exojax.opacity.modit.dit",
+    "ditkernel": "exojax.opacity._common.ditkernel",
+    "make_numatrix": "exojax.opacity.lpf.make_numatrix",
+    "opacont": "exojax.opacity.opacont",
+    "rayleigh": "exojax.opacity.rayleigh",
     "generate_elower_grid_trange": "exojax.opacity.premodit.generate_elower_grid_trange",
-    "profconv":       "exojax.opacity._common.profconv",
-    "lpffilter":      "exojax.opacity._common.lpffilter",
-    "chord":          "exojax.rt.chord",
-    "atmrt":          "exojax.rt.atmrt",
-    "opart":          "exojax.rt.opart",
-    "layeropacity":   "exojax.rt.layeropacity",
-    "planck":         "exojax.rt.planck",
-    "rtlayer":        "exojax.rt.rtlayer",
-    "rtransfer":      "exojax.rt.rtransfer",
-    "toon":           "exojax.rt.toon",
-    "twostream":      "exojax.rt.twostream",
-    "mie":            "exojax.database.mie",
-    "api":            "exojax.database.api",
-    "atomll":        "exojax.database.atomll",
-    "atomllapi":     "exojax.database.atomllapi",
-    "contdb":        "exojax.database.contdb",
-    "customapi":     "exojax.database.customapi",
-    "dbmanager":     "exojax.database.dbmanager", 
-    "exomol":        "exojax.database.exomol",
-    "exomolhr":      "exojax.database.exomolhr",
-    "hitran":        "exojax.database.hitran",
-    "hitranapi":     "exojax.database.hitranapi",
-    "hitrancia":     "exojax.database.hitrancia",
-    "hminus":        "exojax.database.hminus",
-    "moldb":         "exojax.database.moldb",
-    "molinfo":       "exojax.database.molinfo",
-    "multimol":      "exojax.database.multimol",
-    "nonair":        "exojax.database.nonair",
-    "pardb":         "exojax.database.pardb",
-    "qstate":        "exojax.database.qstate",
-    "limb_darkening":"exojax.postproc.limb_darkening",
-    "response":      "exojax.postproc.response",
-    "specop":        "exojax.postproc.specop",
+    "profconv": "exojax.opacity._common.profconv",
+    "lpffilter": "exojax.opacity._common.lpffilter",
+    "chord": "exojax.rt.chord",
+    "atmrt": "exojax.rt.atmrt",
+    "opart": "exojax.rt.opart",
+    "layeropacity": "exojax.rt.layeropacity",
+    "planck": "exojax.rt.planck",
+    "rtlayer": "exojax.rt.rtlayer",
+    "rtransfer": "exojax.rt.rtransfer",
+    "toon": "exojax.rt.toon",
+    "twostream": "exojax.rt.twostream",
+    "mie": "exojax.database.mie",
+    "api": "exojax.database.api",
+    "atomll": "exojax.database.atomll",
+    "atomllapi": "exojax.database.atomllapi",
+    "contdb": "exojax.database.contdb",
+    "customapi": "exojax.database.customapi",
+    "dbmanager": "exojax.database.dbmanager",
+    "exomol": "exojax.database.exomol",
+    "exomolhr": "exojax.database.exomolhr",
+    "hitran": "exojax.database.hitran",
+    "hitranapi": "exojax.database.hitranapi",
+    "hitrancia": "exojax.database.hitrancia",
+    "hminus": "exojax.database.hminus",
+    "moldb": "exojax.database.moldb",
+    "molinfo": "exojax.database.molinfo",
+    "multimol": "exojax.database.multimol",
+    "nonair": "exojax.database.nonair",
+    "pardb": "exojax.database.pardb",
+    "qstate": "exojax.database.qstate",
+    "limb_darkening": "exojax.postproc.limb_darkening",
+    "response": "exojax.postproc.response",
+    "specop": "exojax.postproc.specop",
     "spin_rotation": "exojax.postproc.spin_rotation",
 }
 
@@ -90,12 +89,14 @@ RE_SPEC_FROM_SUB = re.compile(r"\bfrom\s+exojax\.spec\.(\w+)\b")
 RE_SPEC_IMPORT_SUB = re.compile(r"\bimport\s+exojax\.spec\.(\w+)\b")
 # Handles: `from exojax.spec import a, b, c`  (capturing the alias list)
 RE_SPEC_IMPORT_GROUP = re.compile(
-    r"^\s*from\s+exojax\.spec\s+import\s+([A-Za-z0-9_,\s]+)")
+    r"^\s*from\s+exojax\.spec\s+import\s+([A-Za-z0-9_,\s]+)"
+)
 
 
 # ---------------------------------------------------------------------------
 # 2. Core rewrite helpers
 # ---------------------------------------------------------------------------
+
 
 def _rewrite_from_sub(line: str) -> str:
     """Rewrite ¬from exojax.spec.<sub> import …¬ pattern."""
@@ -147,6 +148,7 @@ def _rewrite_group_import(line: str) -> str | None:
 # 3. File‑level processing
 # ---------------------------------------------------------------------------
 
+
 def rewrite_content(text: str) -> str:
     """Return rewritten source (or original text if no changes)."""
     changed = False
@@ -179,9 +181,11 @@ def rewrite_file(path: Path) -> None:
 # 4. CLI entry point
 # ---------------------------------------------------------------------------
 
+
 def main() -> None:  # pragma: no cover
     parser = argparse.ArgumentParser(
-        description="Migrate exojax.spec imports to the new package layout")
+        description="Migrate exojax.spec imports to the new package layout"
+    )
     parser.add_argument("paths", nargs="+", help="Files or directories to process")
     args = parser.parse_args()
 
