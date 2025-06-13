@@ -157,7 +157,7 @@ automatically set DGM based on the T-P model and given ranges.
 .. code:: ipython3
 
     # Precomputing gdm_ngammaL                                                                                              
-    from exojax.opacity.modit import setdgm_exomol
+    from exojax.opacity.modit.modit import setdgm_exomol
     from jax import jit, vmap
     
     fT = lambda T0,alpha: T0[:,None]*(Parr[None,:]/Pref)**alpha[:,None]
@@ -195,7 +195,7 @@ frun returns a spectral model.
 
 .. code:: ipython3
 
-    from exojax.opacity.modit import exomol,xsmatrix
+    from exojax.opacity.modit.modit import exomol,xsmatrix
     from exojax.rt.rtransfer import dtauM, dtauCIA, rtrun
     from exojax.rt import planck, response
     from exojax.postproc.response import ipgauss_sampling

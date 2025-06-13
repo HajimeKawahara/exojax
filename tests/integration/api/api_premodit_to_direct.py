@@ -15,7 +15,7 @@ from jax import config
 config.update("jax_enable_x64", True)
 
 
-from exojax.opacity.lpf import xsvector, make_numatrix0
+from exojax.opacity.lpf.lpf import xsvector, make_numatrix0
 import tqdm
 def auto_xsection(nu, nu_lines, sigmaD, gammaL, Sij, memory_size=15.):
     """computes cross section .
@@ -35,7 +35,7 @@ def auto_xsection(nu, nu_lines, sigmaD, gammaL, Sij, memory_size=15.):
         numpy.array: cross section (xsv)
 
     Example:
-        >>> from exojax.opacity.lpf import auto_xsection
+        >>> from exojax.opacity.lpf.lpf import auto_xsection
         >>> from exojax.database.hitran  import SijT, doppler_sigma, gamma_hitran, gamma_natural
         >>> from exojax.database import moldb 
         >>> import numpy as np

@@ -2,12 +2,12 @@
 
 import jax.numpy as jnp
 from exojax.database.hitran import line_strength
-from exojax.opacity.set_ditgrid import ditgrid_log_interval
+from exojax.opacity._common.set_ditgrid import ditgrid_log_interval
 from exojax.database.exomol import gamma_exomol
 from exojax.database.hitran import normalized_doppler_sigma
 from exojax.opacity.initspec import init_modit
-from exojax.opacity.modit import xsvector_open_zeroscan
-from exojax.opacity.modit import xsvector_zeroscan
+from exojax.opacity.modit.modit import xsvector_open_zeroscan
+from exojax.opacity.modit.modit import xsvector_zeroscan
 from exojax.opacity.opacalc import OpaModit
 from exojax.rt.atmrt import ArtEmisPure
 from exojax.utils.grids import extended_wavenumber_grid

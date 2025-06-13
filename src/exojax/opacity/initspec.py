@@ -9,8 +9,8 @@ import warnings
 import jax.numpy as jnp
 import numpy as np
 
-from exojax.opacity.make_numatrix import make_numatrix0
-from exojax.opacity.premodit import generate_lbd, make_broadpar_grid, make_elower_grid
+from exojax.opacity.lpf.make_numatrix import make_numatrix0
+from exojax.opacity.premodit.premodit import generate_lbd, make_broadpar_grid, make_elower_grid
 from exojax.utils.indexing import npgetix
 from exojax.utils.instfunc import resolution_eslog
 

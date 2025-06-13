@@ -4,7 +4,7 @@
 """
 
 import pytest
-from exojax.opacity.lpf import ljert
+from exojax.opacity.lpf.lpf import ljert
 from scipy.special import wofz as sc_wofz
 import jax.numpy as jnp
 from jax import jit, vmap

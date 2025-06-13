@@ -110,7 +110,7 @@ nu matrix
 
 .. code:: ipython3
 
-    from exojax.opacity import make_numatrix0
+    from exojax.opacity.lpf.make_numatrix import make_numatrix0
     numatrix=make_numatrix0(nus,mdbCO.nu_lines)
 
 Or you can use initspec.init_lpf instead.
@@ -126,7 +126,7 @@ compute cross section.
 
 .. code:: ipython3
 
-    from exojax.opacity.lpf import xsmatrix
+    from exojax.opacity.lpf.lpf import xsmatrix
     xsm=xsmatrix(numatrix,sigmaDM,gammaLM,SijM)
 
 xsmatrix has the shape of (# of layers, # of nu grid)

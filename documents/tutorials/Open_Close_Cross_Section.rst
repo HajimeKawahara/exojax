@@ -304,7 +304,7 @@ reproduce the algorithm in ``OpaPremodit``. This can be done using
 
 .. code:: ipython3
 
-    from exojax.opacity.premodit import xsvector_open_zeroth
+    from exojax.opacity.premodit.premodit import xsvector_open_zeroth
     from exojax.database.hitran import normalized_doppler_sigma
     
     def xsv_open(opa,T,P):

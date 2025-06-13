@@ -9,7 +9,7 @@ exist.
 .. code:: ipython3
 
     from exojax.rt import rtransfer as rt
-    from exojax.opacity import modit
+    from exojax.opacity.modit import modit
 
 .. code:: ipython3
 

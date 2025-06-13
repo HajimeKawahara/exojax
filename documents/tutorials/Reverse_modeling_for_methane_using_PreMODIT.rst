@@ -200,7 +200,7 @@ We here use numpyro as a PPL (probabilistic programming language).
 
     from exojax.rt.rtransfer import dtauM, dtauCIA, rtrun
     from exojax.rt import planck
-    from exojax.opacity import premodit
+    from exojax.opacity.premodit.premodit import premodit
     from jax import vmap
     
     

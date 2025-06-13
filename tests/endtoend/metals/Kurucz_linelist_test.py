@@ -26,7 +26,7 @@ def test_Kurucz_linelist():
     from exojax.rt.atmrt import ArtEmisPure
     from exojax.opacity.opacalc import OpaDirect
     import numpy as np
-    from exojax.opacity.lpf import xsmatrix
+    from exojax.opacity.lpf.lpf import xsmatrix
 
     wls, wll = 10350, 10450
     wavenumber_grid_res = 0.01

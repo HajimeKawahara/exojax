@@ -3,7 +3,7 @@ import jax.numpy as jnp
 import numpy as np
 from exojax.test.emulate_mdb import mock_wavenumber_grid
 from exojax.database.hitran import normalized_doppler_sigma
-from exojax.opacity.ditkernel import fold_voigt_kernel_logst
+from exojax.opacity._common.ditkernel import fold_voigt_kernel_logst
 from jax import config
 
 

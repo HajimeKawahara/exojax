@@ -12,15 +12,15 @@ import numpy as np
 from jax import jit, vmap
 
 from exojax.database.hitran import normalized_doppler_sigma
-from exojax.opacity.lbd import lbd_coefficients
-from exojax.opacity.lsd import npadd3D_direct1D, npadd3D_multi_index
+from exojax.opacity.premodit.lbd import lbd_coefficients
+from exojax.opacity._common.lsd import npadd3D_direct1D, npadd3D_multi_index
 
-# from exojax.opacity.profconv import calc_xsection_from_lsd_scanfft
-from exojax.opacity.profconv import (
+# from exojax.opacity._common.profconv import calc_xsection_from_lsd_scanfft
+from exojax.opacity._common.profconv import (
     calc_open_nu_xsection_from_lsd_zeroscan,
     calc_xsection_from_lsd_zeroscan,
 )
-from exojax.opacity.set_ditgrid import ditgrid_linear_interval, ditgrid_log_interval
+from exojax.opacity._common.set_ditgrid import ditgrid_linear_interval, ditgrid_log_interval
 from exojax.utils.constants import Tref_original, hcperk
 from exojax.utils.indexing import npgetix, uniqidx_neibouring
 
