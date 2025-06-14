@@ -15,7 +15,7 @@ from importlib.resources import files
 
 from exojax.rt.atmrt import ArtEmisPure
 from exojax.database.api  import MdbExomol
-from exojax.opacity.opacalc import OpaPremodit
+from exojax.opacity import OpaPremodit
 from exojax.database.contdb  import CdbCIA
 from exojax.opacity.opacont import OpaCIA
 from exojax.postproc.response import ipgauss_sampling

@@ -1,5 +1,5 @@
 from exojax.test.emulate_mdb import mock_mdbHitemp
-from exojax.opacity.opacalc import OpaPremodit
+from exojax.opacity import OpaPremodit
 from exojax.utils.grids import wavenumber_grid
 import copy
 

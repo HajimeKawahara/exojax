@@ -2,7 +2,7 @@
 """
 
 import jax.numpy as jnp
-from exojax.opacity.opacalc import OpaModit
+from exojax.opacity import OpaModit
 from exojax.database.hitran  import line_strength
 from exojax.opacity._common.set_ditgrid import ditgrid_log_interval
 from exojax.database.exomol  import gamma_exomol

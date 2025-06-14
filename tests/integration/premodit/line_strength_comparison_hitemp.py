@@ -8,7 +8,7 @@ import numpy as np
 import jax.numpy as jnp
 from exojax.utils.grids import wavenumber_grid
 from exojax.database import api 
-from exojax.opacity.opacalc import OpaPremodit
+from exojax.opacity import OpaPremodit
 from exojax.opacity import initspec
 from exojax.opacity.premodit.premodit import unbiased_lsd_zeroth
 from exojax.opacity.premodit.premodit import unbiased_lsd_first

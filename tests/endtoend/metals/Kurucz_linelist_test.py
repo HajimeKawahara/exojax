@@ -24,7 +24,7 @@ def test_Kurucz_linelist():
     from exojax.database import moldb 
     from exojax.database import atomll 
     from exojax.rt.atmrt import ArtEmisPure
-    from exojax.opacity.opacalc import OpaDirect
+    from exojax.opacity import OpaDirect
     import numpy as np
     from exojax.opacity.lpf.lpf import xsmatrix
 

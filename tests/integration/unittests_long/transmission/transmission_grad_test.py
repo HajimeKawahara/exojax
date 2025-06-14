@@ -9,7 +9,7 @@ import pandas as pd
 import numpy as np
 from importlib.resources import files
 
-from exojax.opacity.opacalc import OpaPremodit
+from exojax.opacity import OpaPremodit
 from exojax.rt.atmrt import ArtTransPure
 from exojax.database.api  import MdbHitran
 from exojax.utils.grids import wavenumber_grid

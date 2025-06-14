@@ -4,7 +4,7 @@
 import pytest
 import numpy as np
 import jax.numpy as jnp
-from exojax.opacity.opacalc import OpaPremodit
+from exojax.opacity import OpaPremodit
 from exojax.opacity.premodit.premodit import unbiased_lsd_zeroth
 from exojax.opacity.premodit.premodit import unbiased_lsd_first
 from exojax.opacity.premodit.premodit import unbiased_lsd_second

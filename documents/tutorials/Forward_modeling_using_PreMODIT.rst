@@ -70,7 +70,7 @@ gpu_transfer=False can save the device memory use.
 
 .. code:: ipython3
 
-    from exojax.opacity.opacalc import OpaPremodit
+    from exojax.opacity import OpaPremodit
     diffmode = 0
     opa = OpaPremodit(mdb=mdbCO,
                           nu_grid=nus,

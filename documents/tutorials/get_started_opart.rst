@@ -53,7 +53,7 @@ Note that you can also use the
 
     from exojax.database.api  import MdbExomol
     from exojax.database.contdb  import CdbCIA
-    from exojax.opacity.opacalc import OpaPremodit
+    from exojax.opacity import OpaPremodit
     from exojax.opacity.opacont import OpaCIA
     from exojax.rt.layeropacity import single_layer_optical_depth
     from exojax.rt.layeropacity import single_layer_optical_depth_CIA

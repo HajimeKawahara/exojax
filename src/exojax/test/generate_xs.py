@@ -17,7 +17,7 @@ from exojax.test.emulate_mdb import mock_wavenumber_grid
 from exojax.test.data import TESTDATA_CO_EXOMOL_LPF_XS_REF
 from exojax.test.data import TESTDATA_CO_HITEMP_LPF_XS_REF
 from exojax.test.emulate_mdb import mock_mdb
-from exojax.opacity.opacalc import OpaDirect
+from exojax.opacity import OpaDirect
 import matplotlib.pyplot as plt
 
 from jax import config

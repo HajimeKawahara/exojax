@@ -144,7 +144,7 @@ should use xsvector_zeroth.
 
 .. code:: ipython3
 
-    from exojax.opacity.opacalc import OpaDirect
+    from exojax.opacity import OpaDirect
     opa = OpaDirect(mdbCO, nu_grid)
     xsv = opa.xsvector(Tfix, Pfix, Ppart)
 

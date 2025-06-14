@@ -1,6 +1,6 @@
 """
 Deprecated shim: the real classes are in `exojax.opacity`.
-Kept only so that legacy code `from exojax.opacity.opacalc import OpaPremodit`
+Kept only so that legacy code `from exojax.opacity import OpaPremodit`
 continues to work until v3.0.
 """
 

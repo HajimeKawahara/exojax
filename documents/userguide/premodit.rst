@@ -24,7 +24,7 @@ Details of the PreMODIT algorithm will be described in `Paper II <https://arxiv.
 
 .. code:: ipython
 	
-    from exojax.opacity.opacalc import OpaPremodit
+    from exojax.opacity import OpaPremodit
     from jax import config
     config.update("jax_enable_x64", True)
     diffmode = 0

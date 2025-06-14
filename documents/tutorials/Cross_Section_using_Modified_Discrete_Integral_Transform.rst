@@ -131,7 +131,7 @@ purpose
 
 .. code:: ipython3
 
-    from exojax.opacity.opacalc import OpaDirect
+    from exojax.opacity import OpaDirect
     opa = OpaDirect(mdbCO, nus)
     xsv = opa.xsvector(Tfix, Pfix, Ppart)
 
