@@ -5,7 +5,7 @@
 #!/usr/bin/env python
 # coding: utf-8
 import arviz
-from exojax.opacity.modit import setdgm_hitran
+from exojax.opacity.modit.modit import setdgm_hitran
 from numpyro.diagnostics import hpdi
 from numpyro.infer import Predictive
 from numpyro.infer import MCMC, NUTS
@@ -20,7 +20,7 @@ from exojax.atm.atmprof import pressure_layer_logspace
 from exojax.opacity import initspec
 from exojax.rt.layeropacity import layer_optical_depth
 from exojax.rt.layeropacity import layer_optical_depth_CIA
-from exojax.opacity import modit
+from exojax.opacity.modit import modit
 from exojax.database import api , contdb
 from exojax.rt.rtransfer import rtrun_emis_pureabs_fbased2st
 from exojax.rt import planck

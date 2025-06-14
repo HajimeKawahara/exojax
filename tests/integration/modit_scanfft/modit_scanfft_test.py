@@ -2,7 +2,7 @@ import pytest
 from importlib.resources import files
 import pandas as pd
 import numpy as np
-from exojax.opacity.modit import xsvector_scanfft
+from exojax.opacity.modit.modit import xsvector_scanfft
 from exojax.database.hitran  import line_strength
 from exojax.test.data import TESTDATA_CO_EXOMOL_MODIT_XS_REF
 from exojax.database.hitran import normalized_doppler_sigma, gamma_natural
@@ -10,7 +10,7 @@ from exojax.database.hitran  import line_strength
 from exojax.database.exomol  import gamma_exomol
 from exojax.utils.grids import wavenumber_grid
 from exojax.opacity.initspec import init_modit, init_modit_vald
-from exojax.opacity.set_ditgrid import ditgrid_log_interval
+from exojax.opacity._common.set_ditgrid import ditgrid_log_interval
 from exojax.test.emulate_mdb import mock_mdbExomol, mock_mdbVALD
 from exojax.test.emulate_mdb import mock_wavenumber_grid
 
@@ -52,12 +52,12 @@ def test_rt_exomol():
     import jax.numpy as jnp
     from exojax.atm.atmprof import pressure_layer_logspace
 
-    from exojax.opacity.modit import exomol
-    from exojax.opacity.modit import xsmatrix_scanfft
+    from exojax.opacity.modit.modit import exomol
+    from exojax.opacity.modit.modit import xsmatrix_scanfft
     from exojax.rt.layeropacity import layer_optical_depth
     from exojax.rt.rtransfer import rtrun_emis_pureabs_fbased2st
     from exojax.rt.planck import piBarr
-    from exojax.opacity.modit import set_ditgrid_matrix_exomol
+    from exojax.opacity.modit.modit import set_ditgrid_matrix_exomol
     from exojax.test.data import TESTDATA_CO_EXOMOL_MODIT_EMISSION_REF
 
     nus, wav, res = mock_wavenumber_grid()
@@ -107,9 +107,9 @@ def test_rt_exomol():
 def test_rt_vald():
     from exojax.database import moldb , atomll
     from exojax.rt import rtransfer as rt
-    from exojax.opacity.modit import set_ditgrid_matrix_vald_all
-    from exojax.opacity.modit import vald_all
-    from exojax.opacity.modit import xsmatrix_vald_scanfft
+    from exojax.opacity.modit.modit import set_ditgrid_matrix_vald_all
+    from exojax.opacity.modit.modit import vald_all
+    from exojax.opacity.modit.modit import xsmatrix_vald_scanfft
     from exojax.rt.planck import piBarr
     from exojax.test.data import TESTDATA_VALD_MODIT_EMISSION_REF
     from exojax.atm.atmprof import pressure_layer_logspace

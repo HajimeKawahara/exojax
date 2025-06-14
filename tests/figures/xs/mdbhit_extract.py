@@ -1,4 +1,4 @@
-from exojax.opacity.lpf import auto_xsection
+from exojax.opacity.lpf.lpf import auto_xsection
 from exojax.database.hitran  import line_strength, doppler_sigma, gamma_hitran, gamma_natural
 from exojax.database.exomol  import gamma_exomol
 from exojax.database import moldb 

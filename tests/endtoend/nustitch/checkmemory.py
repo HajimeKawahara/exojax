@@ -4,7 +4,7 @@ tested using A100 40GB
 """
 
 
-from exojax.opacity.opacalc import OpaPremodit
+from exojax.opacity import OpaPremodit
 from exojax.utils.grids import wavenumber_grid
 from exojax.database.api  import MdbExomol
 import jax.numpy as jnp

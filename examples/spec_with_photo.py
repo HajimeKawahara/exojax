@@ -121,7 +121,7 @@ def mean_molecular_weight(vmr, vmrH2, vmrHe):
 #
 
 
-from exojax.opacity.opacalc import OpaPremodit
+from exojax.opacity import OpaPremodit
 from exojax.opacity.opacont import OpaCIA
 
 trange = [500.0, 2500.0]

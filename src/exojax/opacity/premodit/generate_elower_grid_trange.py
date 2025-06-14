@@ -4,7 +4,7 @@
 import numpy as np
 import tqdm
 
-from exojax.opacity.lbderror import (
+from exojax.opacity.premodit.lbderror import (
     evaluate_trange,
     single_tilde_line_strength_zeroth,
     worst_tilde_line_strength_first,

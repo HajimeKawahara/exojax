@@ -14,7 +14,7 @@ from importlib.resources import files
 
 from exojax.rt.atmrt import ArtTransPure
 from exojax.database.api  import MdbExomol
-from exojax.opacity.opacalc import OpaPremodit
+from exojax.opacity import OpaPremodit
 from exojax.utils.grids import nu2wav
 from exojax.utils.grids import wavenumber_grid
 from exojax.utils.astrofunc import gravity_jupiter

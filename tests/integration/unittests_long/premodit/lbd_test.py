@@ -5,8 +5,8 @@ import pytest
 import numpy as np
 from exojax.utils.constants import hcperk
 from jax import config
-from exojax.opacity.lbd import lbd_coefficients
-from exojax.opacity.lbd import weight
+from exojax.opacity.premodit.lbd import lbd_coefficients
+from exojax.opacity.premodit.lbd import weight
 
 config.update("jax_enable_x64", True)
 
@@ -44,7 +44,7 @@ def example_lbd_2():
 def test_lbd_coefficients():
     """We check here consistency with lbderror.weight_point2_dE
     """
-    from exojax.opacity.lbderror import weight_point2_dE
+    from exojax.opacity.premodit.lbderror import weight_point2_dE
     from jax import grad
     c0, c1, c2, i, Twt, Tref, dE, p1, p2 = example_lbd_1()
     cref0a = weight_point2_dE(1.0 / Twt, 1.0 / Tref, dE, p1)

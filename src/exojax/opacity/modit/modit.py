@@ -25,13 +25,13 @@ from exojax.database.exomol  import gamma_exomol
 
 # hitran/hitemp
 from exojax.database.hitran  import gamma_hitran, line_strength
-from exojax.opacity.lsd import inc2D_givenx
-from exojax.opacity.profconv import (
+from exojax.opacity._common.lsd import inc2D_givenx
+from exojax.opacity._common.profconv import (
     calc_open_nu_xsection_from_lsd_zeroscan,
     calc_xsection_from_lsd_scanfft,
     calc_xsection_from_lsd_zeroscan,
 )
-from exojax.opacity.set_ditgrid import (
+from exojax.opacity._common.set_ditgrid import (
     minmax_ditgrid_matrix,
     precompute_modit_ditgrid_matrix,
 )
@@ -948,7 +948,7 @@ def dgmatrix(x, dit_grid_resolution=0.1, adopt=True):
     """
     warn_msg = "Deprecated Use `set_ditgrid.ditgrid_matrix` instead"
     warnings.warn(warn_msg, FutureWarning)
-    from exojax.opacity.set_ditgrid import ditgrid_matrix
+    from exojax.opacity._common.set_ditgrid import ditgrid_matrix
 
     return ditgrid_matrix(x, dit_grid_resolution, adopt)
 
@@ -968,7 +968,7 @@ def ditgrid(x, dit_grid_resolution=0.1, adopt=True):
 
     warn_msg = "Deprecated Use `set_ditgrid.ditgrid_log_interval` instead"
     warnings.warn(warn_msg, FutureWarning)
-    from exojax.opacity.set_ditgrid import ditgrid_log_interval
+    from exojax.opacity._common.set_ditgrid import ditgrid_log_interval
 
     return ditgrid_log_interval(x, dit_grid_resolution, adopt)
 

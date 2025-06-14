@@ -13,9 +13,9 @@ from jax import jit
 from jax.lax import scan
 
 from exojax.database.atomll  import padding_2Darray_for_each_atom
-from exojax.opacity.ditkernel import fold_voigt_kernel
+from exojax.opacity._common.ditkernel import fold_voigt_kernel
 from exojax.rt.layeropacity import layer_optical_depth
-from exojax.opacity.lsd import inc3D_givenx
+from exojax.opacity._common.lsd import inc3D_givenx
 
 
 @jit
@@ -164,7 +164,7 @@ def vald(adb, Tarr, PH, PHe, PHH):
         sigmaDM: sigmaD matrix
 
     """
-    from exojax.opacity.lpf import vald as vald_
+    from exojax.opacity.lpf.lpf import vald as vald_
 
     return vald_(adb, Tarr, PH, PHe, PHH)
 
@@ -286,7 +286,7 @@ def ditgrid(x, dit_grid_resolution=0.1, adopt=True):
 
     warn_msg = " Use `set_ditgrid.ditgrid_log_interval` instead"
     warnings.warn(warn_msg, FutureWarning)
-    from exojax.opacity.set_ditgrid import ditgrid_log_interval
+    from exojax.opacity._common.set_ditgrid import ditgrid_log_interval
 
     return ditgrid_log_interval(x, dit_grid_resolution, adopt)
 
@@ -305,6 +305,6 @@ def dgmatrix(x, dit_grid_resolution=0.1, adopt=True):
     """
     warn_msg = " Use `set_ditgrid.ditgrid_matrix` instead"
     warnings.warn(warn_msg, FutureWarning)
-    from exojax.opacity.set_ditgrid import ditgrid_matrix
+    from exojax.opacity._common.set_ditgrid import ditgrid_matrix
 
     return ditgrid_matrix(x, dit_grid_resolution, adopt)

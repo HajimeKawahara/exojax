@@ -1,7 +1,7 @@
 import pytest
 import time
-from exojax.opacity.modit import xsvector_scanfft
-from exojax.opacity.set_ditgrid import ditgrid_log_interval
+from exojax.opacity.modit.modit import xsvector_scanfft
+from exojax.opacity._common.set_ditgrid import ditgrid_log_interval
 import numpy as np
 import jax.numpy as jnp
 from exojax.opacity import initspec

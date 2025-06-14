@@ -75,7 +75,7 @@ set_ditgrid.ditgrid_log_interval makes a 1D grid for sigmaD and gamma.
 
 .. code:: ipython3
 
-    from exojax.opacity.set_ditgrid import ditgrid_log_interval
+    from exojax.opacity._common.set_ditgrid import ditgrid_log_interval
     
     sigmaD_grid = ditgrid_log_interval(sigmaD)
     gammaL_grid = ditgrid_log_interval(gammaL)
@@ -111,7 +111,7 @@ Then, let’s compute a cross section!
 
 .. code:: ipython3
 
-    from exojax.opacity.dit import xsvector
+    from exojax.opacity.modit.dit import xsvector
     
     xs = xsvector(cnu, indexnu, pmarray, sigmaD, gammaL, Sij, nus, sigmaD_grid, gammaL_grid)
 
@@ -120,7 +120,7 @@ comparison purpose
 
 .. code:: ipython3
 
-    from exojax.opacity.opacalc import OpaDirect
+    from exojax.opacity import OpaDirect
     opa = OpaDirect(mdbCO, nus)
     xsv = opa.xsvector(Tfix, Pfix, Ppart)
 

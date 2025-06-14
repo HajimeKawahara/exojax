@@ -93,7 +93,7 @@ For wavenumber, the F64 precision is required. So, `npgetix <../exojax/exojax.sp
        
 .. code:: ipython
               
-       >>> from exojax.opacity.modit import inc2D_givenx
+       >>> from exojax.opacity.modit.modit import inc2D_givenx
        >>> inc2D_givenx(lsd,w,cx,ix,ngammaL,ngammaLgrid)
        DeviceArray([[0.        , 0.        , 0.        , 0.        ],
                     [0.        , 0.        , 0.        , 0.        ],

@@ -4,7 +4,7 @@ import pytest
 from importlib.resources import files
 import pandas as pd
 import numpy as np
-from exojax.opacity.opacalc import OpaModit
+from exojax.opacity import OpaModit
 from exojax.test.emulate_mdb import mock_mdb
 from exojax.test.emulate_mdb import mock_wavenumber_grid
 

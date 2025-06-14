@@ -80,7 +80,7 @@ calculator. We assume T=1300K and P=1bar.
     from exojax.opacity.initspec import init_lpf
     from exojax.database.exomol  import gamma_exomol, gamma_natural
     from exojax.database import molinfo 
-    from exojax.opacity.lpf import xsvector
+    from exojax.opacity.lpf.lpf import xsvector
     from exojax.utils.constants import Tref_original
     
     Mmol = molinfo.molmass("CO")  # molecular weight

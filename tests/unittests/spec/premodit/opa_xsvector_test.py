@@ -11,7 +11,7 @@ import pytest
 from importlib.resources import files
 import pandas as pd
 import numpy as np
-from exojax.opacity.opacalc import OpaPremodit
+from exojax.opacity import OpaPremodit
 from exojax.test.emulate_mdb import mock_mdb
 from exojax.test.emulate_mdb import mock_wavenumber_grid
 

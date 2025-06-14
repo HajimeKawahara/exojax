@@ -11,7 +11,7 @@ from exojax.database.api  import MdbExomol
 from exojax.database import molinfo 
 from exojax.utils.grids import wavenumber_grid
 from exojax.utils.instfunc import resolution_to_gaussian_std
-from exojax.opacity.opacalc import OpaDirect
+from exojax.opacity import OpaDirect
 from exojax.opacity.opacont import OpaCIA
 from exojax.rt.atmrt import ArtEmisPure
 from exojax.postproc.specop import SopRotation

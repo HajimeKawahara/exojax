@@ -5,11 +5,11 @@ import pytest
 import numpy as np
 from jax import grad
 from exojax.utils.constants import hcperk
-from exojax.opacity.lbderror import weight_point1_dE, weight_point2_dE
-from exojax.opacity.lbderror import single_tilde_line_strength_zeroth
-from exojax.opacity.lbderror import single_tilde_line_strength_first
-from exojax.opacity.lbderror import worst_tilde_line_strength_first
-from exojax.opacity.lbderror import optimal_params
+from exojax.opacity.premodit.lbderror import weight_point1_dE, weight_point2_dE
+from exojax.opacity.premodit.lbderror import single_tilde_line_strength_zeroth
+from exojax.opacity.premodit.lbderror import single_tilde_line_strength_first
+from exojax.opacity.premodit.lbderror import worst_tilde_line_strength_first
+from exojax.opacity.premodit.lbderror import optimal_params
 
 from jax import config
 

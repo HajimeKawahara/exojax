@@ -1,5 +1,5 @@
 # %%
-from exojax.opacity.lbderror import optimal_params
+from exojax.opacity.premodit.lbderror import optimal_params
 Tl_in = 500.0  #K
 Tu_in = 1200.0  #K
 diffmode = 2

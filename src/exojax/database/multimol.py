@@ -3,7 +3,7 @@ import traceback
 
 import numpy as np
 
-from exojax.opacity.opacalc import OpaPremodit
+from exojax.opacity import OpaPremodit
 from exojax.database import api 
 from exojax.test.emulate_mdb import mock_mdbExomol
 
