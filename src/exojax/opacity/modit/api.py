@@ -1,5 +1,4 @@
 import warnings
-import jax.numpy as jnp
 import numpy as np
 
 from exojax.opacity.base import OpaCalc
@@ -8,7 +7,7 @@ from exojax.utils.constants import Tref_original
 from exojax.utils.grids import nu2wav
 from exojax.utils.jaxstatus import check_jax64bit
 from exojax.utils.instfunc import resolution_eslog
-
+from exojax.opacity.modit.core import _setdgm
 
 class OpaModit(OpaCalc):
     """Opacity Calculator Class for MODIT
@@ -68,7 +67,8 @@ class OpaModit(OpaCalc):
             raise ValueError("For MODIT, gpu_transfer should be True in mdb.")
         self.apply_params()
         if Tarr_list is not None and Parr is not None:
-            self.setdgm(Tarr_list, Parr, Pself_ref=Pself_ref)
+            _, _, R, _ = self.opainfo
+            self.dgm_ngammaL = _setdgm(self.mdb, self.dit_grid_resolution, R, Tarr_list, Parr, Pself_ref=Pself_ref)
         else:
             warnings.warn("Tarr_list/Parr are needed for xsmatrix.", UserWarning)
         self.alias = alias
@@ -171,47 +171,7 @@ class OpaModit(OpaCalc):
             )
         return xsv
 
-    def setdgm(self, Tarr_list, Parr, Pself_ref=None):
-        """_summary_
-
-        Args:
-            Tarr_list (1d or 2d array): tempearture array to be tested such as [Tarr_1, Tarr_2, ..., Tarr_n]
-            Parr (1d array): pressure array in bar
-            Pself_ref (1d array, optional): self pressure array in bar. Defaults to None. If None Pself = 0.0.
-
-        Returns:
-            _type_: dgm (DIT grid matrix) for gammaL
-        """
-        from exojax.opacity.modit.modit import exomol, hitran
-        from exojax.opacity._common.set_ditgrid import (
-            minmax_ditgrid_matrix,
-            precompute_modit_ditgrid_matrix,
-        )
-
-        cont_nu, index_nu, R, pmarray = self.opainfo
-        if len(np.shape(Tarr_list)) == 1:
-            Tarr_list = np.array([Tarr_list])
-        if Pself_ref is None:
-            Pself_ref = np.zeros_like(Parr)
-
-        set_dgm_minmax = []
-        for Tarr in Tarr_list:
-            if self.mdb.dbtype == "exomol":
-                SijM, ngammaLM, nsigmaDl = exomol(
-                    self.mdb, Tarr, Parr, R, self.mdb.molmass
-                )
-            elif self.mdb.dbtype == "hitran":
-                SijM, ngammaLM, nsigmaDl = hitran(
-                    self.mdb, Tarr, Parr, Pself_ref, R, self.mdb.molmass
-                )
-            set_dgm_minmax.append(
-                minmax_ditgrid_matrix(ngammaLM, self.dit_grid_resolution)
-            )
-        dgm_ngammaL = precompute_modit_ditgrid_matrix(
-            set_dgm_minmax, dit_grid_resolution=self.dit_grid_resolution
-        )
-        self.dgm_ngammaL = jnp.array(dgm_ngammaL)
-
+    
     def xsmatrix(self, Tarr, Parr):
         """cross section matrix
 

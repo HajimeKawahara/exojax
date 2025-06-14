@@ -10,7 +10,7 @@ from exojax.signal.ola import overlap_and_add, overlap_and_add_matrix
 from exojax.opacity import initspec
 from exojax.opacity.premodit.lbderror import optimal_params
 from exojax.utils.checkarray import is_outside_range
-from exojax.utils.constants import Patm, Tref_original
+from exojax.utils.constants import Tref_original
 from exojax.utils.grids import nu2wav, wavenumber_grid
 from exojax.utils.instfunc import nx_even_from_resolution_eslog, resolution_eslog
 from exojax.utils.jaxstatus import check_jax64bit
