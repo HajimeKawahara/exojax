@@ -1,4 +1,13 @@
+"""API for Modified Discrete Integral Transform (MODIT) opacity calculations.
+
+This module provides the OpaModit class for efficient opacity calculations
+using the MODIT method, which provides a balance between accuracy and speed.
+"""
+
 import warnings
+from typing import Optional, Union, Literal, List
+
+import jax.numpy as jnp
 import numpy as np
 
 from exojax.opacity.base import OpaCalc
@@ -9,46 +18,57 @@ from exojax.utils.jaxstatus import check_jax64bit
 from exojax.utils.instfunc import resolution_eslog
 from exojax.opacity.modit.core import _setdgm
 
+
 class OpaModit(OpaCalc):
-    """Opacity Calculator Class for MODIT
+    """Opacity Calculator Class for Modified Discrete Integral Transform (MODIT).
+
+    MODIT provides a balance between accuracy and computational efficiency by using
+    pre-computed discrete integral transforms with optimized grids.
 
     Attributes:
-        opainfo: information set used in MODIT: cont_nu, index_nu, R, pmarray
-
+        method: Always "modit" for this calculator
+        mdb: Molecular database instance
+        wavelength_order: Order of wavelength grid
+        opainfo: Opacity information (cont_nu, index_nu, R, pmarray)
+        dgm_ngammaL: DIT grid matrix for gammaL (computed if Tarr_list/Parr provided)
+        alias: Aliasing mode ("close" or "open")
+        cutwing: Wing cut parameter for convolution
     """
 
     def __init__(
         self,
         mdb,
-        nu_grid,
-        Tarr_list=None,
-        Parr=None,
-        Pself_ref=None,
-        dit_grid_resolution=0.2,
-        allow_32bit=False,
-        alias="close",
-        cutwing=1.0,
-        wavelength_order="descending",
-    ):
-        """initialization of OpaModit
+        nu_grid: Union[np.ndarray, jnp.ndarray],
+        Tarr_list: Optional[Union[np.ndarray, List[np.ndarray]]] = None,
+        Parr: Optional[Union[np.ndarray, jnp.ndarray]] = None,
+        Pself_ref: Optional[Union[np.ndarray, jnp.ndarray]] = None,
+        dit_grid_resolution: float = 0.2,
+        allow_32bit: bool = False,
+        alias: Literal["close", "open"] = "close",
+        cutwing: float = 1.0,
+        wavelength_order: Literal["ascending", "descending"] = "descending",
+    ) -> None:
+        """Initialize OpaModit opacity calculator.
 
         Note:
-            Tarr_list and Parr are used to compute xsmatrix. No need for xsvector
+            Tarr_list and Parr are used to compute xsmatrix. Not required for xsvector.
 
         Args:
-            mdb (mdb class): mdbExomol, mdbHitemp, mdbHitran
-            nu_grid (): wavenumber grid (cm-1)
-            Tarr_list (1d or 2d array, optional): tempearture array to be tested such as [Tarr_1, Tarr_2, ..., Tarr_n]
-            Parr (1d array, optional): pressure array in bar
-            Pself_ref (1d array, optional): self pressure array in bar. Defaults to None. If None Pself = 0.0.
-            dit_grid_resolution (float, optional): dit grid resolution. Defaxults to 0.2.
-            allow_32bit (bool, optional): If True, allow 32bit mode of JAX. Defaults to False.
-            alias (str, optional): If "open", opa will give the open-type cross-section (with aliasing parts). Defaults to "close".
-            cutwing (float, optional): wingcut for the convolution used in open cross section. Defaults to 1.0. For alias="close", always 1.0 is used by definition.
-            wavlength order: wavelength order: "ascending" or "descending"
+            mdb: Molecular database (mdbExomol, mdbHitemp, mdbHitran)
+            nu_grid: Wavenumber grid in cm⁻¹
+            Tarr_list: Temperature array(s) to be tested. Can be 1D or list of 1D arrays
+                      such as [Tarr_1, Tarr_2, ..., Tarr_n]
+            Parr: Pressure array in bar
+            Pself_ref: Self-pressure array in bar. If None, defaults to zero
+            dit_grid_resolution: DIT grid resolution
+            allow_32bit: If True, allow 32-bit mode of JAX
+            alias: Aliasing mode - "open" gives open-type cross-section with aliasing parts,
+                  "close" gives closed-type without aliasing
+            cutwing: Wing cut for convolution in open cross section. Always 1.0 for "close" mode
+            wavelength_order: Wavelength grid order
 
         Raises:
-            ValueError: _description_
+            ValueError: If gpu_transfer is False in mdb (required for MODIT)
         """
         super().__init__(nu_grid)
         check_jax64bit(allow_32bit)
@@ -68,51 +88,58 @@ class OpaModit(OpaCalc):
         self.apply_params()
         if Tarr_list is not None and Parr is not None:
             _, _, R, _ = self.opainfo
-            self.dgm_ngammaL = _setdgm(self.mdb, self.dit_grid_resolution, R, Tarr_list, Parr, Pself_ref=Pself_ref)
+            self.dgm_ngammaL = _setdgm(
+                self.mdb,
+                self.dit_grid_resolution,
+                R,
+                Tarr_list,
+                Parr,
+                Pself_ref=Pself_ref,
+            )
         else:
             warnings.warn("Tarr_list/Parr are needed for xsmatrix.", UserWarning)
         self.alias = alias
         self.cutwing = cutwing
         self.set_aliasing()
 
-    def __eq__(self, other):
-        """eq method for OpaModit, definied by comparing all the attributes and important status
+    def __eq__(self, other: object) -> bool:
+        """Check equality with another OpaModit instance.
 
         Args:
-            other (_type_): _description_
+            other: Object to compare with
 
         Returns:
-            _type_: _description_
+            True if instances are equivalent, False otherwise
         """
         if not isinstance(other, OpaModit):
             return False
 
-        eq_attributes = (
+        return (
             (self.mdb == other.mdb)
             and (self.wavelength_order == other.wavelength_order)
-            and all(self.nu_grid == other.nu_grid)
+            and np.array_equal(self.nu_grid, other.nu_grid)
         )
 
-        return eq_attributes
-
-    def __ne__(self, other):
+    def __ne__(self, other: object) -> bool:
+        """Check inequality with another OpaModit instance."""
         return not self.__eq__(other)
 
-    def apply_params(self):
+    def apply_params(self) -> None:
+        """Apply database parameters and initialize opacity info."""
         self.dbtype = self.mdb.dbtype
         self.opainfo = initspec.init_modit(self.mdb.nu_lines, self.nu_grid)
         self.ready = True
 
-    def xsvector(self, T, P, Pself=0.0):
-        """cross section vector
+    def xsvector(self, T: float, P: float, Pself: float = 0.0) -> jnp.ndarray:
+        """Compute cross section vector for given temperature and pressure.
 
         Args:
-            T (float): temperature
-            P (float): pressure in bar
-            Pself (float, optional): self pressure for HITEMP/HITRAN. Defaults to 0.0.
+            T: Temperature in Kelvin
+            P: Pressure in bar
+            Pself: Self-pressure for HITEMP/HITRAN in bar
 
         Returns:
-            1D array: cross section in cm2
+            Cross section vector in cm²
         """
         from exojax.database.hitran import gamma_natural, normalized_doppler_sigma
         from exojax.database.exomol import gamma_exomol
@@ -121,17 +148,24 @@ class OpaModit(OpaCalc):
         from exojax.opacity._common.set_ditgrid import ditgrid_log_interval
 
         cont_nu, index_nu, R, pmarray = self.opainfo
+        dbtype = self.mdb.dbtype
 
-        if self.mdb.dbtype == "hitran":
+        # Compute broadening and line strength based on database type
+        if dbtype == "hitran":
             qt = self.mdb.qr_interp(self.mdb.isotope, T, Tref_original)
             gammaL = gamma_hitran(
                 P, T, Pself, self.mdb.n_air, self.mdb.gamma_air, self.mdb.gamma_self
             ) + gamma_natural(self.mdb.A)
-        elif self.mdb.dbtype == "exomol":
+        elif dbtype == "exomol":
             qt = self.mdb.qr_interp(T, Tref_original)
             gammaL = gamma_exomol(
                 P, T, self.mdb.n_Texp, self.mdb.alpha_ref
             ) + gamma_natural(self.mdb.A)
+        else:
+            raise ValueError(
+                f"Unsupported database type for xsvector: '{dbtype}'. "
+                "Supported types: hitran, exomol"
+            )
         dv_lines = self.mdb.nu_lines / R
         ngammaL = gammaL / dv_lines
 
@@ -171,22 +205,23 @@ class OpaModit(OpaCalc):
             )
         return xsv
 
-    
-    def xsmatrix(self, Tarr, Parr):
-        """cross section matrix
+    def xsmatrix(
+        self, Tarr: Union[np.ndarray, jnp.ndarray], Parr: Union[np.ndarray, jnp.ndarray]
+    ) -> jnp.ndarray:
+        """Compute cross section matrix for temperature and pressure arrays.
 
-        Notes:
-            Currently Pself is regarded to be zero for HITEMP/HITRAN
+        Note:
+            Self-pressure (Pself) is currently set to zero for HITEMP/HITRAN.
 
         Args:
-            Tarr (): tempearture array in K
-            Parr (): pressure array in bar
-
-        Raises:
-            ValueError: _description_
+            Tarr: Temperature array in K
+            Parr: Pressure array in bar
 
         Returns:
-            jnp.array : cross section matrix (Nlayer, N_wavenumber)
+            Cross section matrix with shape (Nlayer, N_wavenumber) in cm²
+
+        Raises:
+            ValueError: If database type is not supported
         """
         from exojax.opacity.modit.modit import (
             exomol,
@@ -196,15 +231,20 @@ class OpaModit(OpaCalc):
         )
 
         cont_nu, index_nu, R, pmarray = self.opainfo
+        dbtype = self.mdb.dbtype
 
-        if self.mdb.dbtype == "hitran":
-            # qtarr = vmap(self.mdb.qr_interp, (None, 0))(self.mdb.isotope, Tarr)
+        # Compute parameters based on database type
+        if dbtype == "hitran":
             SijM, ngammaLM, nsigmaDl = hitran(
                 self.mdb, Tarr, Parr, np.zeros_like(Parr), R, self.mdb.molmass
             )
-        elif self.mdb.dbtype == "exomol":
-            # qtarr = vmap(self.mdb.qr_interp)(Tarr)
+        elif dbtype == "exomol":
             SijM, ngammaLM, nsigmaDl = exomol(self.mdb, Tarr, Parr, R, self.mdb.molmass)
+        else:
+            raise ValueError(
+                f"Unsupported database type for xsmatrix: '{dbtype}'. "
+                "Supported types: hitran, exomol"
+            )
         if self.alias == "open":
             xsm = xsmatrix_open_zeroscan(
                 cont_nu,

@@ -28,7 +28,7 @@ For this example, you might need a good GPU.
     from exojax.database.api  import MdbExomol
     from exojax.opacity import OpaPremodit
     from exojax.database.contdb  import CdbCIA
-    from exojax.opacity.opacont import OpaCIA
+    from exojax.opacity import OpaCIA
     from exojax.postproc.response import ipgauss_sampling
     from exojax.postproc.spin_rotation import convolve_rigid_rotation
     from exojax.database import molinfo 

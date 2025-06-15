@@ -4,7 +4,7 @@ import pytest
 from exojax.opacity.rayleigh import xsvector_rayleigh_gas
 from exojax.atm.polarizability import polarizability
 from exojax.utils.grids import wavenumber_grid
-from exojax.opacity.opacont import OpaRayleigh
+from exojax.opacity import OpaRayleigh
 
 def test_rayleigh():
     """

@@ -7,7 +7,7 @@ from exojax.database.hminus  import log_hminus_continuum
 from exojax.database.hminus  import log_hminus_continuum_single
 from exojax.rt.layeropacity import layer_optical_depth_Hminus
 from exojax.rt.layeropacity import single_layer_optical_depth_Hminus
-from exojax.opacity.opacont import OpaHminus
+from exojax.opacity import OpaHminus
 from exojax.utils.grids import wavenumber_grid
 
 
