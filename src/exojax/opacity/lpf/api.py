@@ -156,7 +156,7 @@ class OpaDirect(OpaCalc):
         dbtype = self.mdb.dbtype
         
         # Vectorized line strength function (fixed typo)
-        vmaplinestrength = jit(vmap(line_strength, (0, None, None, None, 0, None)))
+        vmap_line_strength = jit(vmap(line_strength, (0, None, None, None, 0, None)))
         
         if dbtype == "hitran":
             vmapqt = vmap(self.mdb.qr_interp, (None, 0, None))
@@ -170,7 +170,7 @@ class OpaDirect(OpaCalc):
                 self.mdb.gamma_air,
                 self.mdb.gamma_self,
             ) + gamma_natural(self.mdb.A)
-            SijM = vmaplinestrength(
+            SijM = vmap_line_strength(
                 Tarr,
                 self.mdb.logsij0,
                 self.mdb.nu_lines,
@@ -188,7 +188,7 @@ class OpaDirect(OpaCalc):
             gammaLMP = vmapexomol(Parr, Tarr, self.mdb.n_Texp, self.mdb.alpha_ref)
             gammaLMN = gamma_natural(self.mdb.A)
             gammaLM = gammaLMP + gammaLMN[None, :]
-            SijM = vmaplinestrength(
+            SijM = vmap_line_strength(
                 Tarr,
                 self.mdb.logsij0,
                 self.mdb.nu_lines,
@@ -249,7 +249,7 @@ class OpaDirect(OpaCalc):
                 self.mdb.vdWdamp,
                 1.0,
             )
-            SijM = vmaplinestrengh(
+            SijM = vmap_line_strength(
                 Tarr,
                 self.mdb.logsij0,
                 self.mdb.nu_lines,
