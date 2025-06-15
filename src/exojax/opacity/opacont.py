@@ -11,24 +11,13 @@ import jax.numpy as jnp
 import numpy as np
 from jax import vmap
 
+from exojax.opacity.base import OpaCont
 from exojax.database.hitrancia import interp_logacia_matrix, interp_logacia_vector
-from exojax.database.hminus  import log_hminus_continuum
+from exojax.database.hminus import log_hminus_continuum
 from exojax.database.mie import mie_lognormal_pymiescatt
 from exojax.opacity.rayleigh import xsvector_rayleigh_gas
 
-__all__ = ["OpaCont", "OpaCIA", "OpaHminus", "OpaRayleigh", "OpaMie"]
-
-
-class OpaCont:
-    """Common Opacity Calculator Class"""
-
-    __slots__ = [
-        "opainfo",
-    ]
-
-    def __init__(self):
-        self.method = None  # which opacity cont method is used
-        self.ready = False  # ready for opacity computation
+__all__ = ["OpaCIA", "OpaHminus", "OpaRayleigh", "OpaMie"]
 
 
 class OpaCIA(OpaCont):

@@ -23,7 +23,7 @@ from exojax.utils.grids import wavenumber_grid
 from exojax.rt.atmrt import ArtEmisPure
 from exojax.opacity import OpaModit
 from exojax.database.contdb  import CdbCIA
-from exojax.opacity.opacont import OpaCIA
+from exojax.opacity import OpaCIA
 from exojax.database import molinfo 
 from exojax.postproc.response import ipgauss_sampling
 from exojax.postproc.spin_rotation import convolve_rigid_rotation

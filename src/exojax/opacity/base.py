@@ -16,6 +16,16 @@ from exojax.utils.instfunc import resolution_eslog
 
 logger = logging.getLogger(__name__)
 
+class OpaCont:
+    """Common Opacity Calculator Class"""
+
+    __slots__ = [
+        "opainfo",
+    ]
+
+    def __init__(self):
+        self.method = None  # which opacity cont method is used
+        self.ready = False  # ready for opacity computation
 
 class OpaCalc:
     """Base Opacity Calculator Class for ExoJAX.

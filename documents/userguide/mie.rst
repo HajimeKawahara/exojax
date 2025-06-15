@@ -17,7 +17,7 @@ Please note that the initialization of OpaMie requires a particulate database (`
 
 .. code:: ipython3
     
-    from exojax.opacity.opacont import OpaMie
+    from exojax.opacity import OpaMie
     opa = OpaMie(pdb_nh3, nus)
     sigma_extinction, sigma_scattering, asymmetric_factor = opa.mieparams_vector_direct_from_pymiescatt(rg, sigmag)
     #sigma_extinction, sigma_scattering, asymmetric_factor = opa.mieparams_vector(rg,sigmag) # if using MieGrid
