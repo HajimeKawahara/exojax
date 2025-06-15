@@ -1,4 +1,12 @@
+"""API for Pre-computed Modified Discrete Integral Transform (PreMODIT) opacity calculations.
+
+This module provides the OpaPremodit class for high-performance opacity calculations
+using pre-computed grids. PreMODIT offers the fastest computation speed by using
+optimized parameter grids and efficient memory management.
+"""
+
 from functools import partial
+from typing import Optional, Union, Literal, Dict, Any, Tuple, List
 
 import jax.numpy as jnp
 import numpy as np
@@ -20,57 +28,63 @@ from exojax.opacity.premodit.core import _compute_common_broadening_parameters
 
 
 class OpaPremodit(OpaCalc):
-    """Opacity Calculator Class for PreMODIT
+    """Opacity Calculator Class for Pre-computed Modified Discrete Integral Transform (PreMODIT).
+
+    PreMODIT provides the fastest opacity calculations by using pre-computed parameter grids
+    and optimized memory management. It achieves high performance through efficient grid
+    interpolation and reduced computational overhead.
 
     Attributes:
-        opainfo: information set used in PreMODIT
-
+        method: Always "premodit" for this calculator
+        mdb: Molecular database instance
+        wavelength_order: Order of wavelength grid
+        opainfo: Pre-computed opacity information and grids
+        diffmode: Differentiation mode for optimization
+        broadening_parameter_resolution: Broadening parameter resolution configuration
+        single_broadening: Whether using single broadening mode
+        ngrid_broadpar: Number of broadening parameter grid points
     """
 
     def __init__(
         self,
         mdb,
-        nu_grid,
-        diffmode=0,
-        broadening_resolution={"mode": "manual", "value": 0.2},
-        auto_trange=None,
-        manual_params=None,
-        dit_grid_resolution=None,
-        allow_32bit=False,
-        nstitch=1,
-        cutwing=1.0,
-        wavelength_order="descending",
-        version_auto_trange=2,
-    ):
-        """initialization of OpaPremodit
+        nu_grid: Union[np.ndarray, jnp.ndarray],
+        diffmode: int = 0,
+        broadening_resolution: Dict[str, Any] = {"mode": "manual", "value": 0.2},
+        auto_trange: Optional[Tuple[float, float]] = None,
+        manual_params: Optional[Tuple[float, float, float]] = None,
+        dit_grid_resolution: Optional[float] = None,
+        allow_32bit: bool = False,
+        nstitch: int = 1,
+        cutwing: float = 1.0,
+        wavelength_order: Literal["ascending", "descending"] = "descending",
+        version_auto_trange: int = 2,
+    ) -> None:
+        """Initialize OpaPremodit opacity calculator.
 
         Note:
-            If auto_trange nor manual_params is not given in arguments,
-            use manual_setting()
-            or provide self.dE, self.Twt and apply self.apply_params()
-
-        Note:
-            The option of "broadening_resolution" controls the resolution of broadening parameters.
-            When you wanna use the manual resolution, set broadening_parameter_resolution = {mode: "manual", value: 0.2}.
-            When you wanna use the min and max values of broadening parameters in database, set broadening_parameter_resolution = {mode: "minmax", value: None}.
-            When you wanna give single broadening parameters: set broadening_parameter_resolution = {mode: "single", value: None} the median values of gamma_ref, n_Texp are used
-            or set broadening_parameter_resolution = {mode: "single", value: [gamma_ref, n_Texp]} values are at 296K, for the fixed parameter set.
-            The use of device memory: "manual" >= "minmax" > "single". In general, small value (such as 0.2) requires large device memory.
-            We recommend to check the difference of the final specrum between "manual", "minmax", and "single" when you had a device memory problem.
+            If neither auto_trange nor manual_params are provided, use manual_setting()
+            or provide self.dE, self.Twt and call self.apply_params().
 
         Args:
-            mdb (mdb class): mdbExomol, mdbHitemp, mdbHitran
-            nu_grid (): wavenumber grid (cm-1)
-            diffmode (int, optional): _description_. Defaults to 0.
-            broadening_resolution (dict, optional): definition of the broadening parameter resolution. Default to {"mode": "manual", value: 0.2}. See Note.
-            auto_trange (optional): temperature range [Tl, Tu], in which line strength is within 1 % prescision. Defaults to None.
-            manual_params (optional): premodit parameter set [dE, Tref, Twt]. Defaults to None.
-            dit_grid_resolution (float, optional): force to set broadening_resolution={mode:manual, value: dit_grid_resolution}), ignores broadening_resolution.
-            allow_32bit (bool, optional): If True, allow 32bit mode of JAX. Defaults to False.
-            nstitch (int, optional): number of stitching. Defaults to 1.
-            cutwing (float, optional): wingcut for the convolution used when nstitch > 1. Defaults to 1.0.
-            wavlength order: wavelength order: "ascending" or "descending"
-            version_auto_trange: version of the default elower grid trange (degt) file, Default to 2 since Jan 2024.
+            mdb: Molecular database (mdbExomol, mdbHitemp, mdbHitran)
+            nu_grid: Wavenumber grid in cm⁻¹
+            diffmode: Differentiation mode for optimization
+            broadening_resolution: Broadening parameter resolution configuration.
+                - "manual": Use specified resolution value (higher memory usage)
+                - "minmax": Use min/max values from database (medium memory)
+                - "single": Use single broadening parameters (lowest memory)
+            auto_trange: Temperature range [Tl, Tu] for 1% line strength precision
+            manual_params: Manual PreMODIT parameter set [dE, Tref, Twt]
+            dit_grid_resolution: Deprecated - use broadening_resolution instead
+            allow_32bit: If True, allow 32-bit mode of JAX
+            nstitch: Number of frequency domain stitching segments
+            cutwing: Wing cut for convolution when nstitch > 1
+            wavelength_order: Wavelength grid order
+            version_auto_trange: Version of default elower grid trange file
+
+        Raises:
+            ValueError: If no molecular lines are within the wavenumber grid
         """
         super().__init__(nu_grid)
         check_jax64bit(allow_32bit)
@@ -121,14 +135,14 @@ class OpaPremodit(OpaCalc):
         if nstitch > 1:
             self.reshape_lbd_coeff()
 
-    def __eq__(self, other):
-        """eq method for OpaPremodit, definied by comparing all the attributes and important status
+    def __eq__(self, other: object) -> bool:
+        """Check equality with another OpaPremodit instance.
 
         Args:
-            other (_type_): _description_
+            other: Object to compare with
 
         Returns:
-            _type_: _description_
+            True if instances are equivalent, False otherwise
         """
         if not isinstance(other, OpaPremodit):
             return False
@@ -139,7 +153,7 @@ class OpaPremodit(OpaCalc):
             and (self.ngrid_broadpar == other.ngrid_broadpar)
             and (self.wavelength_order == other.wavelength_order)
             and (self.version_auto_trange == other.version_auto_trange)
-            and all(self.nu_grid == other.nu_grid)
+            and np.array_equal(self.nu_grid, other.nu_grid)
         )
         eq_attributes = self._if_exist_check_eq(other, "dE", eq_attributes)
         eq_attributes = self._if_exist_check_eq(other, "Tref", eq_attributes)
@@ -150,7 +164,10 @@ class OpaPremodit(OpaCalc):
 
         return eq_attributes
 
-    def _if_exist_check_eq(self, other, attribute, eq_attributes):
+    def _if_exist_check_eq(
+        self, other: object, attribute: str, eq_attributes: bool
+    ) -> bool:
+        """Check equality of optional attributes if they exist."""
         if hasattr(self, attribute) and hasattr(other, attribute):
             return eq_attributes and getattr(self, attribute) == getattr(
                 other, attribute
@@ -160,10 +177,17 @@ class OpaPremodit(OpaCalc):
         else:
             return False
 
-    def __ne__(self, other):
+    def __ne__(self, other: object) -> bool:
+        """Check inequality with another OpaPremodit instance."""
         return not self.__eq__(other)
 
-    def auto_setting(self, Tl, Tu):
+    def auto_setting(self, Tl: float, Tu: float) -> None:
+        """Automatically set PreMODIT parameters for given temperature range.
+
+        Args:
+            Tl: Lower temperature limit in K
+            Tu: Upper temperature limit in K
+        """
         print("OpaPremodit: params automatically set.")
         self.dE, self.Tref, self.Twt = optimal_params(
             Tl, Tu, self.diffmode, self.version_auto_trange
@@ -172,7 +196,14 @@ class OpaPremodit(OpaCalc):
         self.Tmin = Tl
         self.apply_params()
 
-    def manual_setting(self, dE, Tref, Twt, Tmax=None, Tmin=None):
+    def manual_setting(
+        self,
+        dE: float,
+        Tref: float,
+        Twt: float,
+        Tmax: Optional[float] = None,
+        Tmin: Optional[float] = None,
+    ) -> None:
         """setting PreMODIT parameters by manual
 
         Args:
@@ -202,8 +233,8 @@ class OpaPremodit(OpaCalc):
             x0, x1, Nx, unit=unit, xsmode="premodit"
         )
 
-    def set_Tref_broadening_to_midpoint(self):
-        """Set self.Tref_broadening using log midpoint of Tmax and Tmin"""
+    def set_Tref_broadening_to_midpoint(self) -> None:
+        """Set self.Tref_broadening using log midpoint of Tmax and Tmin."""
         from exojax.opacity.premodit.premodit import (
             reference_temperature_broadening_at_midpoint,
         )
@@ -213,9 +244,10 @@ class OpaPremodit(OpaCalc):
         )
         print("OpaPremodit: Tref_broadening is set to ", self.Tref_broadening, "K")
 
-    def apply_params(self):
-        """apply the parameters to the class
-        define self.lbd_coeff and self.opainfo
+    def apply_params(self) -> None:
+        """Apply parameters to the class and compute pre-computed grids.
+
+        Defines self.lbd_coeff and self.opainfo for opacity calculations.
         """
         # self.mdb.change_reference_temperature(self.Tref)
         self.dbtype = self.mdb.dbtype
@@ -228,7 +260,9 @@ class OpaPremodit(OpaCalc):
             self.set_Tref_broadening_to_midpoint()
 
         # self.n_Texp, self.gamma_ref are defined with the reference temperature of Tref_broadening
-        self.n_Texp, self.gamma_ref = _compute_common_broadening_parameters(self.mdb, self.Tref_broadening)
+        self.n_Texp, self.gamma_ref = _compute_common_broadening_parameters(
+            self.mdb, self.Tref_broadening
+        )
 
         # comment-1: gamma_ref at Tref_broadening (is not necessary for Tref_original)
         # comment-2: line strength at Tref (is not necessary for Tref_original)
@@ -334,7 +368,16 @@ class OpaPremodit(OpaCalc):
         self.lbd_coeff_reshaped = np.array(lbd_coeff_reshaped)
         del self.lbd_coeff
 
-    def xsvector(self, T, P):
+    def xsvector(self, T: float, P: float) -> jnp.ndarray:
+        """Compute cross section vector for given temperature and pressure.
+
+        Args:
+            T: Temperature in Kelvin
+            P: Pressure in bar
+
+        Returns:
+            Cross section vector in cm²
+        """
         from exojax.database.hitran import normalized_doppler_sigma
 
         (
@@ -347,10 +390,16 @@ class OpaPremodit(OpaCalc):
         ) = self.opainfo
         nsigmaD = normalized_doppler_sigma(T, self.mdb.molmass, R)
 
-        if self.mdb.dbtype == "hitran":
+        dbtype = self.mdb.dbtype
+        if dbtype == "hitran":
             qt = self.mdb.qr_interp(self.mdb.isotope, T, self.Tref)
-        elif self.mdb.dbtype == "exomol":
+        elif dbtype == "exomol":
             qt = self.mdb.qr_interp(T, self.Tref)
+        else:
+            raise ValueError(
+                f"Unsupported database type for xsvector: '{dbtype}'. "
+                "Supported types: hitran, exomol"
+            )
 
         if self.nstitch > 1:
 
@@ -412,18 +461,20 @@ class OpaPremodit(OpaCalc):
 
         return xsv
 
-    def xsmatrix(self, Tarr, Parr):
-        """cross section matrix
+    def xsmatrix(
+        self, Tarr: Union[np.ndarray, jnp.ndarray], Parr: Union[np.ndarray, jnp.ndarray]
+    ) -> jnp.ndarray:
+        """Compute cross section matrix for temperature and pressure arrays.
 
         Args:
-            Tarr (): tempearture array in K
-            Parr (): pressure array in bar
-
-        Raises:
-            ValueError: _description_
+            Tarr: Temperature array in K
+            Parr: Pressure array in bar
 
         Returns:
-            jnp.array : cross section matrix (Nlayer, N_wavenumber)
+            Cross section matrix with shape (Nlayer, N_wavenumber) in cm²
+
+        Raises:
+            ValueError: If nstitch configuration is invalid
         """
 
         (
@@ -435,12 +486,18 @@ class OpaPremodit(OpaCalc):
             pmarray,
         ) = self.opainfo
 
-        if self.mdb.dbtype == "hitran":
+        dbtype = self.mdb.dbtype
+        if dbtype == "hitran":
             qtarr = vmap(self.mdb.qr_interp, (None, 0, None))(
                 self.mdb.isotope, Tarr, self.Tref
             )
-        elif self.mdb.dbtype == "exomol":
+        elif dbtype == "exomol":
             qtarr = vmap(self.mdb.qr_interp, (0, None))(Tarr, self.Tref)
+        else:
+            raise ValueError(
+                f"Unsupported database type for xsmatrix: '{dbtype}'. "
+                "Supported types: hitran, exomol"
+            )
 
         if self.nstitch > 1:
 
