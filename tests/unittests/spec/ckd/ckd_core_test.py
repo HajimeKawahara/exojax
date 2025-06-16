@@ -5,7 +5,14 @@ import numpy as np
 import jax.numpy as jnp
 from jax import config
 
-from exojax.opacity.ckd.core import compute_g_ordinates, gauss_legendre_grid
+from exojax.opacity.ckd.core import (
+    compute_g_ordinates, 
+    gauss_legendre_grid,
+    safe_log_k,
+    interpolate_log_k_to_g_grid,
+    compute_ckd_single_tp,
+    compute_ckd_tp_grid
+)
 
 config.update("jax_enable_x64", True)
 
@@ -85,9 +92,74 @@ def test_gauss_legendre_grid_transformation():
     assert jnp.allclose(weights, expected_weights)
 
 
+def test_safe_log_k():
+    """Test safe_log_k handles zeros correctly and uses precision-aware defaults."""
+    k_values = jnp.array([1.0, 0.0, 2.0])
+    
+    # Test with explicit min_value
+    log_k = safe_log_k(k_values, 1e-30)
+    assert jnp.isclose(log_k[0], 0.0)  # log(1) = 0
+    assert jnp.isfinite(log_k[1])      # log(0) replaced with finite value
+    assert jnp.isclose(log_k[2], jnp.log(2.0))  # log(2)
+    
+    # Test precision-aware defaults
+    k_values_f32 = jnp.array([1.0, 0.0, 2.0], dtype=jnp.float32)
+    k_values_f64 = jnp.array([1.0, 0.0, 2.0], dtype=jnp.float64)
+    
+    log_k_f32 = safe_log_k(k_values_f32)  # Should use 1e-30
+    log_k_f64 = safe_log_k(k_values_f64)  # Should use 1e-100
+    
+    # Both should be finite but f64 should allow smaller values
+    assert jnp.isfinite(log_k_f32[1])
+    assert jnp.isfinite(log_k_f64[1])
+    assert log_k_f64[1] < log_k_f32[1]  # 1e-100 gives smaller log than 1e-30
+
+
+def test_interpolate_log_k_to_g_grid():
+    """Test interpolation matches jnp.interp behavior."""
+    g_ordinates = jnp.array([0.0, 0.5, 1.0])
+    log_k_sorted = jnp.array([1.0, 2.0, 3.0])
+    g_grid = jnp.array([0.0, 0.25, 0.5, 1.0])
+    
+    result = interpolate_log_k_to_g_grid(g_ordinates, log_k_sorted, g_grid)
+    expected = jnp.interp(g_grid, g_ordinates, log_k_sorted)
+    
+    assert jnp.allclose(result, expected)
+
+
+def test_compute_ckd_tp_grid():
+    """Test T,P grid computation produces correct shapes."""
+    from exojax.test.emulate_mdb import mock_mdbExomol, mock_wavenumber_grid
+    from exojax.opacity.opacalc import OpaPremodit
+    
+    # Small test case
+    nus, wav, res = mock_wavenumber_grid(lambda0=22930.0, lambda1=22932.0, Nx=1000)
+    mdb = mock_mdbExomol("H2O") 
+    opa = OpaPremodit(mdb, nus, auto_trange=[500.0, 1500.0])
+    
+    T_grid = jnp.array([800.0, 1000.0])
+    P_grid = jnp.array([0.1, 1.0])
+    Ng = 8
+    
+    log_kggrid, ggrid, weights = compute_ckd_tp_grid(T_grid, P_grid, opa, Ng)
+    
+    # Check shapes
+    assert log_kggrid.shape == (2, 2, 8)  # (nT, nP, Ng)
+    assert ggrid.shape == (8,)
+    assert weights.shape == (8,)
+    
+    # Check all values are finite
+    assert jnp.all(jnp.isfinite(log_kggrid))
+    assert jnp.all(jnp.isfinite(ggrid))
+    assert jnp.all(jnp.isfinite(weights))
+
+
 if __name__ == "__main__":
     test_compute_g_ordinates_basic()
     test_compute_g_ordinates_properties()
     test_gauss_legendre_grid_basic()
     test_gauss_legendre_grid_transformation()
+    test_safe_log_k()
+    test_interpolate_log_k_to_g_grid()
+    test_compute_ckd_tp_grid()
     print("All tests passed!")
