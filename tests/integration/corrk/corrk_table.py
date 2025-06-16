@@ -1,62 +1,73 @@
-"""This module tests the correlated k distribution implementation in Exojax."""
+"""This module tests the correlated k distribution implementation in ExoJAX.
+
+Demonstrates CKD method using the new compute_g_ordinates and gauss_legendre_grid functions
+from the ExoJAX opacity.ckd.core module.
+"""
 
 import numpy as np
 import jax.numpy as jnp
 from exojax.test.emulate_mdb import mock_mdbExomol
 from exojax.test.emulate_mdb import mock_wavenumber_grid
-import matplotlib.pyplot as plt
 from exojax.opacity.opacalc import OpaPremodit
+from exojax.opacity.ckd.core import compute_g_ordinates, gauss_legendre_grid
 from jax import config
 
 config.update("jax_enable_x64", True)  # use double precision
 
-# from exojax.utils.grids import wavenumber_grid
-# from exojax.database.api  import MdbExomol
-# N = 70000
-# nus, wav, res = wavenumber_grid(6400.0, 6800.0, N, unit="cm-1", xsmode = "premodit")
-# mdb = MdbExomol(".databases/H2O/1H2-16O/POKAZATEL/",nus)
-# print("resolution = ", res)
-
+# Setup wavenumber grid and molecular database
 nus, wav, res = mock_wavenumber_grid(lambda0=22930.0, lambda1=22940.0, Nx=20000)
 mdb = mock_mdbExomol("H2O")
 
-def compute_g(xsv):
-    idx = jnp.argsort(xsv)
-    k_g = xsv[idx]
-    g = jnp.arange(xsv.size, dtype=xsv.dtype) / xsv.size
-    return idx, k_g, g
-
-
-def gauss_legendre(Ng):
-    x, w = np.polynomial.legendre.leggauss(Ng)  # [-1,1]
-    gpoint = 0.5 * (1.0 + x)
-    return gpoint, 0.5 * w
-
-
-Ng = 32
-ggrid, weights = gauss_legendre(Ng)
-
-
+# Initialize opacity calculator
 opa = OpaPremodit(mdb, nus, auto_trange=[500.0, 1500.0])
 
+# Set temperature and pressure conditions
 T = 1000.0
 P = 1.0e-2
+
+# Compute cross-section vector
+print("Computing cross-section vector...")
 xsv = opa.xsvector(T, P)
-idx, k_g, g = compute_g(xsv)
-log_k_g = jnp.log(k_g)  # log(k_g) for interpolation
 
-from jax.numpy import interp
-log_kggrid = interp(ggrid, g, log_k_g)  # interpolate ggrid to the sorted xsv
+# Generate CKD g-ordinates using new function
+print("Computing g-ordinates...")
+idx, k_g, g = compute_g_ordinates(xsv)
+log_k_g = jnp.log(jnp.maximum(k_g, 1e-30))  # Avoid log(0)
 
+# Generate Gauss-Legendre quadrature grid using new function  
+Ng = 32
+print(f"Generating Gauss-Legendre grid with {Ng} points...")
+ggrid, weights = gauss_legendre_grid(Ng)
 
-#dnus_ = nus[1] - nus[0] 
-dnus_ = nus[-1] - nus[-2] 
-L = 1.e22
-print(np.sum(jnp.exp(-xsv*L)*dnus_))
+# Interpolate log(k) values onto g-grid
+print("Interpolating onto g-grid...")
+log_kggrid = jnp.interp(ggrid, g, log_k_g)
 
-dnus_whole = nus[-1] - nus[0]  # the whole range of nus
-print(jnp.sum(weights*jnp.exp(-jnp.exp(log_kggrid)*L))*dnus_whole)
+# Validation: Compare direct integration vs CKD quadrature
+print("\nValidating CKD approximation...")
 
-print(res)
+# Direct spectral integration
+dnus_ = nus[-1] - nus[-2]  # wavenumber spacing
+L = 1.e22  # optical depth parameter
+direct_sum = jnp.sum(jnp.exp(-xsv * L) * dnus_)
 
-exit()
+# CKD quadrature integration
+dnus_whole = nus[-1] - nus[0]  # total spectral range
+ckd_sum = jnp.sum(weights * jnp.exp(-jnp.exp(log_kggrid) * L)) * dnus_whole
+
+# Results
+print(f"Direct integration result: {direct_sum:.6e}")
+print(f"CKD quadrature result:    {ckd_sum:.6e}")
+relative_error = abs(direct_sum - ckd_sum) / direct_sum
+print(f"Relative error:           {relative_error:.6e}")
+
+# Validation check
+tolerance = 0.01
+assert relative_error < tolerance, f"CKD error {relative_error} exceeds tolerance {tolerance}"
+
+print(f"\n✓ CKD validation successful! Relative error < {tolerance}")
+print(f"✓ Grid resolution: {res:.1f}")
+print(f"✓ Number of spectral points: {len(nus)}")
+print(f"✓ Number of g-points: {Ng}")
+
+print("\nCKD table generation completed successfully!")
