@@ -11,8 +11,8 @@ from jax import vmap
 from jax.lax import scan
 
 from exojax.signal.ola import _fft_length
-from exojax.opacity.ditkernel import fold_voigt_kernel_logst
-from exojax.opacity.lpffilter import _open_filter_length, generate_open_lpffilter
+from exojax.opacity._common.ditkernel import fold_voigt_kernel_logst
+from exojax.opacity._common.lpffilter import _open_filter_length, generate_open_lpffilter
 
 
 def _check_complex(x):

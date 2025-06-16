@@ -6,8 +6,8 @@ Here, we try to compute a emission spectrum using DIT.
 .. code:: ipython3
 
     from exojax.rt import rtransfer as rt
-    from exojax.opacity import dit
-    from exojax.opacity import lpf
+    from exojax.opacity.modit import dit
+    from exojax.opacity.lpf import lpf
     import numpy as np
     import matplotlib.pyplot as plt
     plt.style.use('bmh')
@@ -160,7 +160,7 @@ the comparison purpose.
 .. code:: ipython3
 
     #direct LPF for comparison
-    from exojax.opacity.lpf import xsmatrix
+    from exojax.opacity.lpf.lpf import xsmatrix
     numatrix=initspec.init_lpf(mdbCO.nu_lines,nus)
     xsmdirect=xsmatrix(numatrix,sigmaDM,gammaLM,SijM)
 

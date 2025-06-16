@@ -195,7 +195,7 @@ We use Direct LFP.
 .. code:: ipython3
 
     from exojax.opacity.initspec import init_lpf
-    from exojax.opacity.lpf import xsvector
+    from exojax.opacity.lpf.lpf import xsvector
     
     numatrix_HITEMP = init_lpf(mdbCO_HITEMP.nu_lines, nus)
     xsv_HITEMP = xsvector(numatrix_HITEMP, sigmaD_HITEMP, gammaL_HITEMP, Sij_HITEMP)

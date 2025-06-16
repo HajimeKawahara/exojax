@@ -44,7 +44,7 @@ We implemented the
 
 .. code-block:: python
 
-    from exojax.opacity.opacalc import OpaPremodit
+    from exojax.opacity import OpaPremodit
     opa = OpaPremodit(mdb, nus, nstitch=10, auto_trange=[500,1300], cutwing = 0.015)
 
 See 

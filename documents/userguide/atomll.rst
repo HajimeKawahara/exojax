@@ -92,7 +92,7 @@ The example is as:
 
 .. code:: python
 
-		>>> from exojax.opacity.lpf import auto_xsection, moldb, atomll
+		>>> from exojax.opacity.lpf.lpf import auto_xsection, moldb, atomll
 		>>> gammaL = atomll.gamma_vald3(T, PH, PHH, PHe, adbFe.ielem, adbFe.iion, \
 		adbFe.dev_nu_lines, adbFe.elower, adbFe.eupper, adbFe.atomicmass, adbFe.ionE, \
 		adbFe.gamRad, adbFe.gamSta, adbFe.vdWdamp, enh_damp=1.0)

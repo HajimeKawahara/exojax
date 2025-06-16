@@ -5,7 +5,7 @@ See Issue #510, #515
 import copy
 from exojax.test.emulate_mdb import mock_mdbHitemp, mock_mdbExomol
 from exojax.utils.grids import wavenumber_grid
-from exojax.opacity.opacalc import OpaPremodit
+from exojax.opacity import OpaPremodit
 import copy
 
 

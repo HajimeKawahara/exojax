@@ -17,13 +17,13 @@ import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 from importlib.resources import files
-from exojax.opacity import modit
+from exojax.opacity.modit import modit
 from exojax.database import api 
 from exojax.utils.grids import wavenumber_grid
 from exojax.rt.atmrt import ArtEmisPure
-from exojax.opacity.opacalc import OpaModit
+from exojax.opacity import OpaModit
 from exojax.database.contdb  import CdbCIA
-from exojax.opacity.opacont import OpaCIA
+from exojax.opacity import OpaCIA
 from exojax.database import molinfo 
 from exojax.postproc.response import ipgauss_sampling
 from exojax.postproc.spin_rotation import convolve_rigid_rotation

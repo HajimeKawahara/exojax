@@ -1,111 +1,148 @@
-__all__ = []
+"""Deprecated compatibility layer for the old `exojax.spec` namespace.
 
-__version__ = '2.0'
-__uri__ = ''
-__author__ = 'ExoJAX contributors'
-__email__ = 'divrot@gmail.com'
-__license__ = ''
-__description__ = 'auto-differentiable spectral modules in exojax'
+All symbols will be **removed in ExoJAX v3.0**.
+Update your code to the new packages:
 
-
+    exojax.opacity.*   (opacity calculators)
+    exojax.rt.*        (radiative-transfer utilities)
+    exojax.database.*  (line-list databases)
+    exojax.postproc.*  (post-processing helpers)
 """
-Compatibility layer for legacy imports.
 
-`exojax.spec` will be **removed in v1.0**.  
-Please import the new packages instead:
+from __future__ import annotations
 
-    exojax.opacity.*  (for opacity calculators)
-    exojax.rt.*       (for radiative-transfer helpers)
-
-This file keeps old code running during the deprecation window.
-"""
-from importlib import import_module
+import importlib
 import sys
+import types
 import warnings
+from typing import Final, Dict
 
-# --- emit warning once per Python session ---
+# ────────────────────────────────────────────────────────────────────
+# Emit the deprecation warning only once
+# ────────────────────────────────────────────────────────────────────
 warnings.warn(
     "`exojax.spec` is deprecated and will be removed in v3.0. "
-    "Update your imports to `exojax.opacity` or `exojax.rt`.",
+    "Switch to `exojax.opacity`, `exojax.rt`, …",
     DeprecationWarning,
     stacklevel=2,
 )
 
-# --- helper to register an alias ---
-def _alias(old_subname: str, new_fqdn: str) -> None:
-    """
-    Map `exojax.spec.<old_subname>` → NEW fully-qualified module.
-
-    Parameters
-    ----------
-    old_subname : str
-        e.g. "modit"
-    new_fqdn : str
-        e.g. "exojax.opacity.modit"
-    """
-    new_mod = import_module(new_fqdn)
-    old_key = f"{__name__}.{old_subname}"
-    sys.modules[old_key] = new_mod
-    globals()[old_subname] = new_mod
-
-
-# ---- alias table (extend as needed) ----
-_ALIAS_MAP = {
-    # opacity layer
-    "opacalc":        "exojax.opacity.opacalc",
-    "initspec":       "exojax.opacity.initspec",
-    "premodit":       "exojax.opacity.premodit",
-    "modit":          "exojax.opacity.modit",
-    "lpf":            "exojax.opacity.lpf",
-    "set_ditgrid":    "exojax.opacity.set_ditgrid",
-    "optgrid":        "exojax.opacity.optgrid",
-    "lbd":            "exojax.opacity.lbd",
-    "lsd":            "exojax.opacity.lsd",
-    "lbderror":       "exojax.opacity.lbderror",
-    "dit":            "exojax.opacity.dit",
-    "ditkernel":      "exojax.opacity.ditkernel",
-    "make_numatrix":  "exojax.opacity.make_numatrix",
-    "opacont":        "exojax.opacity.opacont",
-    "rayleigh":       "exojax.opacity.rayleigh",
-    "generate_elower_grid_trange": "exojax.opacity.generate_elower_grid_trange",
-    "profconv":       "exojax.opacity.profconv",
-    "lpffilter":      "exojax.opacity.lpffilter",
-    "chord":          "exojax.rt.chord",
-    "atmrt":          "exojax.rt.atmrt",
-    "opart":          "exojax.rt.opart",
-    "layeropacity":   "exojax.rt.layeropacity",
-    "planck":         "exojax.rt.planck",
-    "rtlayer":        "exojax.rt.rtlayer",
-    "rtransfer":      "exojax.rt.rtransfer",
-    "toon":           "exojax.rt.toon",
-    "twostream":      "exojax.rt.twostream",
-    "mie":            "exojax.database.mie",
-    "api":            "exojax.database.api",
-    "atomll":        "exojax.database.atomll",
-    "atomllapi":     "exojax.database.atomllapi",
-    "contdb":        "exojax.database.contdb",
-    "customapi":     "exojax.database.customapi",
-    "dbmanager":     "exojax.database.dbmanager", 
-    "exomol":        "exojax.database.exomol",
-    "exomolhr":      "exojax.database.exomolhr",
-    "hitran":        "exojax.database.hitran",
-    "hitranapi":     "exojax.database.hitranapi",
-    "hitrancia":     "exojax.database.hitrancia",
-    "hminus":        "exojax.database.hminus",
-    "moldb":         "exojax.database.moldb",
-    "molinfo":       "exojax.database.molinfo",
-    "multimol":      "exojax.database.multimol",
-    "nonair":        "exojax.database.nonair",
-    "pardb":         "exojax.database.pardb",
-    "qstate":        "exojax.database.qstate",
-    "limb_darkening":"exojax.postproc.limb_darkening",
-    "response":      "exojax.postproc.response",
-    "specop":        "exojax.postproc.specop",
+# ────────────────────────────────────────────────────────────────────
+# 1) Symbol-level aliases  (old attr  → fully-qualified new attr)
+# ────────────────────────────────────────────────────────────────────
+_ALIASES: Final[Dict[str, str]] = {
+    # --- main opacity APIs ---
+    "opacalc": "exojax.opacity.opacalc",
+    "initspec": "exojax.opacity.initspec",
+    "premodit": "exojax.opacity.premodit.premodit",
+    "modit": "exojax.opacity.modit.modit",
+    "lpf": "exojax.opacity.lpf.lpf",
+    "set_ditgrid": "exojax.opacity._common.set_ditgrid",
+    "optgrid": "exojax.opacity.premodit.optgrid",
+    "lbd": "exojax.opacity.premodit.lbd",
+    "lsd": "exojax.opacity._common.lsd",
+    "lbderror": "exojax.opacity.premodit.lbderror",
+    "dit": "exojax.opacity.modit.dit",
+    "ditkernel": "exojax.opacity._common.ditkernel",
+    "make_numatrix": "exojax.opacity.lpf.make_numatrix",
+    "opacont": "exojax.opacity.opacont",
+    "rayleigh": "exojax.opacity.rayleigh",
+    "generate_elower_grid_trange": "exojax.opacity.premodit.generate_elower_grid_trange",
+    "profconv": "exojax.opacity._common.profconv",
+    "lpffilter": "exojax.opacity._common.lpffilter",
+    "chord": "exojax.rt.chord",
+    "atmrt": "exojax.rt.atmrt",
+    "opart": "exojax.rt.opart",
+    "layeropacity": "exojax.rt.layeropacity",
+    "planck": "exojax.rt.planck",
+    "rtlayer": "exojax.rt.rtlayer",
+    "rtransfer": "exojax.rt.rtransfer",
+    "toon": "exojax.rt.toon",
+    "twostream": "exojax.rt.twostream",
+    "mie": "exojax.database.mie",
+    "api": "exojax.database.api",
+    "atomll": "exojax.database.atomll",
+    "atomllapi": "exojax.database.atomllapi",
+    "contdb": "exojax.database.contdb",
+    "customapi": "exojax.database.customapi",
+    "dbmanager": "exojax.database.dbmanager",
+    "exomol": "exojax.database.exomol",
+    "exomolhr": "exojax.database.exomolhr",
+    "hitran": "exojax.database.hitran",
+    "hitranapi": "exojax.database.hitranapi",
+    "hitrancia": "exojax.database.hitrancia",
+    "hminus": "exojax.database.hminus",
+    "moldb": "exojax.database.moldb",
+    "molinfo": "exojax.database.molinfo",
+    "multimol": "exojax.database.multimol",
+    "nonair": "exojax.database.nonair",
+    "pardb": "exojax.database.pardb",
+    "qstate": "exojax.database.qstate",
+    "limb_darkening": "exojax.postproc.limb_darkening",
+    "response": "exojax.postproc.response",
+    "specop": "exojax.postproc.specop",
     "spin_rotation": "exojax.postproc.spin_rotation",
+    "OpaPremodit": "exojax.opacity.OpaPremodit",
+    "OpaDirect": "exojax.opacity.OpaDirect",
+    "OpaModit": "exojax.opacity.OpaModit",
+}
+
+# ────────────────────────────────────────────────────────────────────
+# 2) Sub-module aliases  (e.g. import exojax.spec.opacalc as oc)
+# ────────────────────────────────────────────────────────────────────
+
+_SUBMODULES: Final[dict[str, str]] = {
+    "opacalc": "exojax.opacity",
+    "lpf": "exojax.opacity.lpf",
+    "modit": "exojax.opacity.modit",  #
+    "premodit": "exojax.opacity.premodit",  #
 }
 
 
-for _old, _new in _ALIAS_MAP.items():
-    _alias(_old, _new)
+# ────────────────────────────────────────────────────────────────────
+# 3) Lazy attribute resolution
+# ────────────────────────────────────────────────────────────────────
+def __getattr__(name: str):  # noqa: D401
+    """Resolve deprecated names on first access (lazy import)."""
+    target = _ALIASES.get(name)
+    if target is None:
+        raise AttributeError(f"{__name__!r} has no attribute {name!r}")
 
-__all__ = list(_ALIAS_MAP)
+    mod_path, _, attr = target.rpartition(".")
+    module = importlib.import_module(mod_path)
+    obj = getattr(module, attr)
+
+    # Cache for next time
+    globals()[name] = obj
+    return obj
+
+
+# ────────────────────────────────────────────────────────────────────
+# 4) Inject lightweight proxy sub-modules
+# ────────────────────────────────────────────────────────────────────
+class _Moved(types.ModuleType):
+    """Proxy module that forwards everything to *new_fqn*."""
+
+    def __init__(self, new_fqn: str, old_fqn: str):
+        super().__init__(old_fqn)
+        self._new_fqn = new_fqn
+        self.__doc__ = f"Deprecated alias for `{new_fqn}`."
+
+    def __getattr__(self, item):
+        return getattr(importlib.import_module(self._new_fqn), item)
+
+    def __dir__(self):
+        return dir(importlib.import_module(self._new_fqn))
+
+
+for _old, _new in _SUBMODULES.items():
+    full_old = f"{__name__}.{_old}"
+    if full_old not in sys.modules:
+        shim = _Moved(_new, full_old)
+        sys.modules[full_old] = shim
+        globals()[_old] = shim
+
+# ────────────────────────────────────────────────────────────────────
+# 5) Public names for tab completion / dir()
+# ────────────────────────────────────────────────────────────────────
+__all__ = sorted(set(_ALIASES) | set(_SUBMODULES))

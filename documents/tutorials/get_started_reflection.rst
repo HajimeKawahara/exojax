@@ -328,7 +328,7 @@ Mie scattering is ``OpaMie``.
 
 .. code:: ipython3
 
-    from exojax.opacity.opacont import OpaMie
+    from exojax.opacity import OpaMie
     
     opa_nh3 = OpaMie(pdb_nh3, nus)
 
@@ -360,7 +360,7 @@ Mie scattering is ``OpaMie``.
 .. code:: ipython3
 
     import jax.numpy as jnp
-    from exojax.opacity.opacalc import OpaPremodit
+    from exojax.opacity import OpaPremodit
     
     opa = OpaPremodit(mdb_reduced, nu_grid=nus, allow_32bit=True, auto_trange=[80.0, 300.0])  
     

@@ -2,15 +2,15 @@
 
 import jax.numpy as jnp
 from exojax.database.hitran import line_strength
-from exojax.opacity.set_ditgrid import ditgrid_log_interval
+from exojax.opacity._common.set_ditgrid import ditgrid_log_interval
 from exojax.database.exomol import gamma_exomol
 from exojax.utils.constants import Tref_original
 from exojax.test.emulate_mdb import mock_mdbExomol
 from exojax.test.emulate_mdb import mock_wavenumber_grid
 from exojax.database.hitran import normalized_doppler_sigma
 from exojax.opacity.initspec import init_modit
-from exojax.opacity.modit import xsvector_scanfft
-from exojax.opacity.modit import xsvector_zeroscan
+from exojax.opacity.modit.modit import xsvector_scanfft
+from exojax.opacity.modit.modit import xsvector_zeroscan
 
 
 def test_agreement_scanfft_zeroscan_modit():

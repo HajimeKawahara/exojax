@@ -18,7 +18,7 @@ provides the Voigt-Hjerting function.
 
 .. code:: ipython3
 
-    from exojax.opacity.lpf import hjert
+    from exojax.opacity.lpf.lpf import hjert
     hjert(1.0,1.0)
 
 

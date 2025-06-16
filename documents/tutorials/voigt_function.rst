@@ -5,7 +5,7 @@ Here, we use a differentiable Voigt profile to examine its properties.
 
 .. code:: ipython3
 
-    from exojax.opacity.lpf import voigt
+    from exojax.opacity.lpf.lpf import voigt
     import jax.numpy as jnp
     import matplotlib.pyplot as plt
 
@@ -42,7 +42,7 @@ arguments.
 
 .. code:: ipython3
 
-    from exojax.opacity.lpf import voigtone
+    from exojax.opacity.lpf.lpf import voigtone
     from jax import grad, vmap
     
     dvoigt_nu = vmap(grad(voigtone, argnums=0), (0, None, None), 0)  # derivative by nu

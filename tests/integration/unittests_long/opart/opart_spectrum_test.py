@@ -9,7 +9,7 @@ config.update("jax_enable_x64", True)
 
 
 def test_forward_opart():
-    from exojax.opacity.opacalc import OpaPremodit
+    from exojax.opacity import OpaPremodit
     from exojax.test.emulate_mdb import mock_mdbExomol
     from exojax.test.emulate_mdb import mock_wavenumber_grid
     import pandas as pd

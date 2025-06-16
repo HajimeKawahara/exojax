@@ -3,7 +3,7 @@
 - This test compares hjert with scipy wofz, see Appendix in Paper I.
 """
 
-from exojax.opacity.lpf import hjert
+from exojax.opacity.lpf.lpf import hjert
 from scipy.special import wofz as sc_wofz
 import jax.numpy as jnp
 from jax import jit, vmap

@@ -3,8 +3,8 @@
 import jax.numpy as jnp
 import pytest
 import time
-from exojax.opacity.lpf import xsvector
-from exojax.opacity.make_numatrix import make_numatrix0
+from exojax.opacity.lpf.lpf import xsvector
+from exojax.opacity.lpf.make_numatrix import make_numatrix0
 import numpy as np
 
 

@@ -14,7 +14,7 @@ from exojax.test.data import TESTDATA_CO_EXOMOL_LPF_EMISSION_REF
 from exojax.test.data import TESTDATA_CO_HITEMP_LPF_EMISSION_REF
 from exojax.test.emulate_mdb import mock_wavenumber_grid
 from exojax.test.emulate_mdb import mock_mdb
-from exojax.opacity.opacalc import OpaDirect
+from exojax.opacity import OpaDirect
 from exojax.rt.atmrt import ArtEmisPure
 from jax import config
 

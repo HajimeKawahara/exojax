@@ -129,7 +129,7 @@ calculators.
 .. code:: ipython3
 
     from exojax.opacity.initspec import init_lpf
-    from exojax.opacity.lpf import xsvector
+    from exojax.opacity.lpf.lpf import xsvector
     
     numatrix = init_lpf(mdbCO.nu_lines, nu_grid)
     xsv = xsvector(numatrix, sigmaD, gammaL, Sij)

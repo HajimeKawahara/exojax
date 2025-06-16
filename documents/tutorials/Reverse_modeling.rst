@@ -43,13 +43,13 @@ We add Gaussian noise to data. nusd is the observing wavenumber grid.
 
 .. code:: ipython3
 
-    from exojax.opacity.lpf import xsmatrix
+    from exojax.opacity.lpf.lpf import xsmatrix
     from exojax.database.exomol  import gamma_exomol
     from exojax.database.hitran  import SijT, doppler_sigma, gamma_natural, gamma_hitran
     from exojax.database.hitrancia import read_cia, logacia
     from exojax.rt.rtransfer import rtrun, dtauM, dtauCIA, wavenumber_grid
     from exojax.rt import planck, response
-    from exojax.opacity.lpf import xsvector
+    from exojax.opacity.lpf.lpf import xsvector
     from exojax.database import molinfo 
     from exojax.utils.constants import RJ, pc, Rs, c
 
@@ -128,7 +128,7 @@ Again, numatrix should be precomputed prior to HMC-NUTS.
 
 .. code:: ipython3
 
-    from exojax.opacity import make_numatrix0
+    from exojax.opacity.lpf.make_numatrix import make_numatrix0
     numatrix_CO=make_numatrix0(nus,mdbCO.nu_lines)
 
 .. code:: ipython3

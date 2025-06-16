@@ -201,7 +201,7 @@ Calculate delta tau
     #For now, ASSUME all atoms exist as neutral atoms.
     #In fact, we can't ignore the effect of molecular formation e.g. TiO (」゜□゜)」
     
-    from exojax.opacity.lpf import xsmatrix
+    from exojax.opacity.lpf.lpf import xsmatrix
     from exojax.rt.rtransfer import dtauM
     from exojax.database.atomllapi import load_atomicdata
     
