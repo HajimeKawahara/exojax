@@ -57,22 +57,67 @@ class OpaCKD(OpaCalc):
         base_opa,
         Ng: int = 32,
         nu_bands: Optional[Union[np.ndarray, jnp.ndarray]] = None,
+        band_width: float = 50.0,
+        band_spacing: str = "log",
+        band_overlap_factor: float = 0.0,
     ) -> None:
         """Initialize OpaCKD opacity calculator.
         
         Args:
             base_opa: Base opacity calculator (OpaPremodit, OpaModit, etc.)
             Ng: Number of Gauss-Legendre quadrature points
-            nu_bands: Wavenumber bands for CKD table generation
-                     If None, uses base_opa.nu_grid
+            nu_bands: Wavenumber bands for CKD table generation.
+                     If None, auto-generates from base_opa.nu_grid using band_width
+            band_width: Width of each spectral band (cm⁻¹), used if nu_bands is None
+            band_spacing: "linear" or "log" spacing for auto-generated bands (default: "log")
+            band_overlap_factor: Overlap factor for adjacent bands (0.0-0.5)
         
         Raises:
-            ValueError: If base opacity calculator is not ready
+            ValueError: If base opacity calculator is not ready or invalid parameters
         """
+        if not hasattr(base_opa, 'nu_grid'):
+            raise ValueError("Base opacity calculator must have nu_grid attribute")
+            
+        # Initialize parent with base_opa's grid for compatibility
         super().__init__(base_opa.nu_grid)
         
-        # TODO: Implement initialization
-        pass
+        self.method = "ckd"
+        self.base_opa = base_opa
+        self.Ng = Ng
+        self.band_width = band_width
+        self.band_spacing = band_spacing
+        self.band_overlap_factor = band_overlap_factor
+        
+        # Set up spectral bands
+        if nu_bands is not None:
+            # Use provided bands
+            self.nu_bands = jnp.asarray(nu_bands)
+        else:
+            # Auto-generate bands from base_opa grid
+            self._setup_spectral_bands()
+        
+        # Initialize state
+        self.ckd_info = None
+        self.ready = False
+    
+    def _setup_spectral_bands(self) -> None:
+        """Set up spectral bands from base opacity grid."""
+        from exojax.utils.spectral_bands import spectral_bands
+        
+        # Get spectral range from base opacity calculator
+        nu_min = float(self.base_opa.nu_grid[0])
+        nu_max = float(self.base_opa.nu_grid[-1])
+        
+        # Generate band centers
+        nu_bands = spectral_bands(
+            nu_min=nu_min,
+            nu_max=nu_max, 
+            band_width=self.band_width,
+            spacing=self.band_spacing,
+            overlap_factor=self.band_overlap_factor
+        )
+        
+        self.nu_bands = jnp.asarray(nu_bands)
     
     def precompute_tables(
         self,

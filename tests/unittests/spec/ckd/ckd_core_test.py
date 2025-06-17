@@ -10,8 +10,8 @@ from exojax.opacity.ckd.core import (
     gauss_legendre_grid,
     safe_log_k,
     interpolate_log_k_to_g_grid,
-    compute_ckd_single_tp,
-    compute_ckd_tp_grid
+    compute_ckd_from_xsv,
+    compute_ckd_tables
 )
 
 config.update("jax_enable_x64", True)
@@ -127,8 +127,8 @@ def test_interpolate_log_k_to_g_grid():
     assert jnp.allclose(result, expected)
 
 
-def test_compute_ckd_tp_grid():
-    """Test T,P grid computation produces correct shapes."""
+def test_compute_ckd_tables():
+    """Test CKD table computation produces correct shapes."""
     from exojax.test.emulate_mdb import mock_mdbExomol, mock_wavenumber_grid
     from exojax.opacity.opacalc import OpaPremodit
     
@@ -141,7 +141,15 @@ def test_compute_ckd_tp_grid():
     P_grid = jnp.array([0.1, 1.0])
     Ng = 8
     
-    log_kggrid, ggrid, weights = compute_ckd_tp_grid(T_grid, P_grid, opa, Ng)
+    # Create T,P meshgrid and compute cross-section matrix
+    T_mesh, P_mesh = jnp.meshgrid(T_grid, P_grid, indexing='ij')
+    T_flat = T_mesh.flatten()
+    P_flat = P_mesh.flatten()
+    xsmatrix_flat = opa.xsmatrix(T_flat, P_flat)
+    nnu = xsmatrix_flat.shape[1]
+    xsmatrix = xsmatrix_flat.reshape(2, 2, nnu)
+    
+    log_kggrid, ggrid, weights = compute_ckd_tables(xsmatrix, Ng)
     
     # Check shapes
     assert log_kggrid.shape == (2, 2, 8)  # (nT, nP, Ng)
@@ -161,5 +169,5 @@ if __name__ == "__main__":
     test_gauss_legendre_grid_transformation()
     test_safe_log_k()
     test_interpolate_log_k_to_g_grid()
-    test_compute_ckd_tp_grid()
+    test_compute_ckd_tables()
     print("All tests passed!")

@@ -131,56 +131,94 @@ def interpolate_log_k_to_g_grid(
     return log_kg_grid
 
 
-def compute_ckd_single_tp(
-    T: float,
-    P: float,
-    base_opa,
+@jit
+def compute_ckd_from_xsv(
+    xsv: jnp.ndarray,
     g_grid: jnp.ndarray
 ) -> jnp.ndarray:
-    """Compute CKD log_kggrid for single T,P condition.
+    """Compute CKD log_kggrid from cross-section vector.
     
     Pure JAX function that computes the complete CKD workflow
-    for a single temperature and pressure condition.
+    from a cross-section vector to log k-values on g-grid.
     
     Args:
-        T: Temperature in Kelvin
-        P: Pressure in bar
-        base_opa: Base opacity calculator (OpaPremodit, OpaModit, etc.)
+        xsv: Cross-section vector, shape (nnu,)
         g_grid: Gauss-Legendre g-ordinates, shape (Ng,)
         
     Returns:
         log_kggrid: Log k-values on g-grid, shape (Ng,)
     """
-    # Step 1: Compute cross-section vector
-    xsv = base_opa.xsvector(T, P)
-    
-    # Step 2: Compute g-ordinates and sorted k-values
+    # Step 1: Compute g-ordinates and sorted k-values
     idx, k_g, g = compute_g_ordinates(xsv)
     
-    # Step 3: Safe logarithm
+    # Step 2: Safe logarithm
     log_k_g = safe_log_k(k_g)
     
-    # Step 4: Interpolate to g-grid
+    # Step 3: Interpolate to g-grid
     log_kggrid = interpolate_log_k_to_g_grid(g, log_k_g, g_grid)
     
     return log_kggrid
 
 
-def compute_ckd_tp_grid_vectorized(
-    T_grid: Union[np.ndarray, jnp.ndarray],
-    P_grid: Union[np.ndarray, jnp.ndarray], 
-    base_opa,
-    Ng: int = 32
-) -> Tuple[jnp.ndarray, jnp.ndarray, jnp.ndarray]:
-    """Compute CKD tables for temperature and pressure grids using vmap.
+@jit
+def compute_ckd_from_xsmatrix(
+    xsmatrix: jnp.ndarray,
+    g_grid: jnp.ndarray
+) -> jnp.ndarray:
+    """Compute CKD log_kggrid from cross-section matrix.
     
-    Fully vectorized implementation that processes all T,P combinations
-    simultaneously without loops.
+    Pure JAX function that processes a cross-section matrix to compute
+    CKD tables using vectorized operations.
     
     Args:
-        T_grid: Temperature grid in Kelvin, shape (nT,)
-        P_grid: Pressure grid in bar, shape (nP,)
-        base_opa: Base opacity calculator instance
+        xsmatrix: Cross-section matrix, shape (nT, nP, nnu) or (batch, nnu)
+        g_grid: Gauss-Legendre g-ordinates, shape (Ng,)
+        
+    Returns:
+        log_kggrid: CKD tables, shape matching input batch dimensions + (Ng,)
+    """
+    original_shape = xsmatrix.shape
+    
+    # Handle different input shapes
+    if len(original_shape) == 2:
+        # Shape: (batch, nnu) -> process directly
+        batch_size, nnu = original_shape
+        xsmatrix_flat = xsmatrix
+        output_shape = (batch_size, len(g_grid))
+    elif len(original_shape) == 3:
+        # Shape: (nT, nP, nnu) -> flatten to (nT*nP, nnu)
+        nT, nP, nnu = original_shape
+        batch_size = nT * nP
+        xsmatrix_flat = xsmatrix.reshape(batch_size, nnu)
+        output_shape = (nT, nP, len(g_grid))
+    else:
+        raise ValueError(f"Unsupported xsmatrix shape: {original_shape}")
+    
+    # Vectorize the single spectrum processing function
+    process_batch = vmap(compute_ckd_from_xsv, in_axes=(0, None), out_axes=0)
+    log_kggrid_flat = process_batch(xsmatrix_flat, g_grid)
+    
+    # Reshape back to original batch structure
+    if len(original_shape) == 3:
+        log_kggrid = log_kggrid_flat.reshape(output_shape)
+    else:
+        log_kggrid = log_kggrid_flat
+    
+    return log_kggrid
+
+
+def compute_ckd_tables(
+    xsmatrix: jnp.ndarray,
+    Ng: int = 32
+) -> Tuple[jnp.ndarray, jnp.ndarray, jnp.ndarray]:
+    """Compute complete CKD tables from pre-computed cross-section matrix.
+    
+    Pure JAX function that takes pre-computed cross-sections and generates
+    complete CKD tables including quadrature grid and weights. The opacity 
+    calculation is decoupled from this function.
+    
+    Args:
+        xsmatrix: Pre-computed cross-section matrix, shape (nT, nP, nnu)
         Ng: Number of Gauss-Legendre quadrature points
         
     Returns:
@@ -189,53 +227,11 @@ def compute_ckd_tp_grid_vectorized(
             - ggrid: G-ordinates, shape (Ng,)
             - weights: Quadrature weights, shape (Ng,)
     """
-    T_grid = jnp.asarray(T_grid)
-    P_grid = jnp.asarray(P_grid)
-    nT, nP = len(T_grid), len(P_grid)
-    
-    # Generate Gauss-Legendre grid once
+    # Generate Gauss-Legendre grid
     ggrid, weights = gauss_legendre_grid(Ng)
     
-    # Create meshgrid and flatten for xsmatrix
-    T_mesh, P_mesh = jnp.meshgrid(T_grid, P_grid, indexing='ij')
-    T_flat = T_mesh.flatten()  # Shape: (nT*nP,)
-    P_flat = P_mesh.flatten()  # Shape: (nT*nP,)
-    
-    # Compute cross-section matrix for all flattened T,P combinations
-    # xsmatrix shape: (nT*nP, nnu)
-    xsmatrix_flat = base_opa.xsmatrix(T_flat, P_flat)
-    
-    # Reshape back to grid format: (nT*nP, nnu) -> (nT, nP, nnu)
-    nnu = xsmatrix_flat.shape[1]
-    xsmatrix = xsmatrix_flat.reshape(nT, nP, nnu)
-    
-    def process_single_spectrum(xsv: jnp.ndarray) -> jnp.ndarray:
-        """Process single cross-section vector to log_kggrid."""
-        # Compute g-ordinates and sorted k-values
-        idx, k_g, g = compute_g_ordinates(xsv)
-        
-        # Safe logarithm
-        log_k_g = safe_log_k(k_g)
-        
-        # Interpolate to g-grid
-        log_kg_single = interpolate_log_k_to_g_grid(g, log_k_g, ggrid)
-        
-        return log_kg_single
-    
-    # Vectorize properly: we need to process each (i,j) spectrum separately
-    # Input xsmatrix has shape (nT, nP, nnu)
-    # We want output shape (nT, nP, Ng)
-    
-    # Method 1: Flatten and reshape approach
-    # Flatten to (nT*nP, nnu), process, then reshape to (nT, nP, Ng)
-    xsmatrix_flat_for_processing = xsmatrix.reshape(nT * nP, nnu)
-    
-    # Vectorize over the flattened batch dimension
-    process_batch = vmap(process_single_spectrum, in_axes=0, out_axes=0)
-    log_kggrid_flat = process_batch(xsmatrix_flat_for_processing)
-    
-    # Reshape back to (nT, nP, Ng)
-    log_kggrid = log_kggrid_flat.reshape(nT, nP, Ng)
+    # Process cross-section matrix to CKD tables
+    log_kggrid = compute_ckd_from_xsmatrix(xsmatrix, ggrid)
     
     return log_kggrid, ggrid, weights
 
