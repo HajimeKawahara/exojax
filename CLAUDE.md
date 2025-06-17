@@ -127,41 +127,45 @@ Database Layer → Opacity Calculation → Atmospheric RT → Post-Processing
 - Implement required interface methods
 - Consider memory and computational trade-offs
 
-## CKD Implementation Status (2025-06-16)
+## CKD Implementation Status (2025-06-17)
 
 ### ✅ Completed:
-- **core.py**: All CKD core functions implemented and tested
+- **core.py**: Pure JAX functions (decoupled from opacity calculators)
   - `compute_g_ordinates()`: Sorts cross-sections, computes g-ordinates
   - `gauss_legendre_grid()`: Generates [0,1] quadrature points 
-  - `safe_log_k()`: **FIXED** precision-aware defaults (1e-100 for float64, 1e-30 for float32)
+  - `safe_log_k()`: Precision-aware defaults (1e-100 for float64, 1e-30 for float32)
   - `interpolate_log_k_to_g_grid()`: JAX interpolation to g-grid
-  - `compute_ckd_tp_grid()`: Full T,P grid CKD computation using vmap
-- **Tests**: All 7 unit tests passing
-- **Git**: Changes committed and pushed to `correlatedk` branch
+  - `compute_ckd_from_xsv()`: Single spectrum CKD computation
+  - `compute_ckd_from_xsmatrix()`: Batch CKD processing 
+  - `compute_ckd_tables()`: Complete CKD workflow
 
-### 🔄 Next: Implement `precompute_tables()` in `api.py`
-**Key Issue Identified**: 
-- `core.py` returns shape `(nT, nP, Ng)` 
-- `api.py` expects shape `(nT, nP, Ng, nnu_bands)`
+- **spectral_bands.py**: Reusable spectral band utilities  
+  - `spectral_bands()`: Generate band centers with linear/log spacing
+  - `subgrid_for_band()`: Extract subgrids from full wavenumber grids
+  - `band_coverage_info()`: Analyze spectral coverage
 
-**Recommended Implementation**:
-```python
-def precompute_tables(self, T_grid, P_grid):
-    from .core import compute_ckd_tp_grid
-    log_kggrid, ggrid, weights = compute_ckd_tp_grid(T_grid, P_grid, self.base_opa, self.Ng)
-    
-    # Add band dimension for compatibility: (nT, nP, Ng) -> (nT, nP, Ng, 1)
-    self.ckd_info = CKDTableInfo(
-        log_kggrid=log_kggrid[..., jnp.newaxis],
-        ggrid=ggrid, weights=weights,
-        T_grid=jnp.asarray(T_grid), P_grid=jnp.asarray(P_grid),
-        nu_bands=jnp.array([jnp.mean(self.base_opa.nu_grid)])
-    )
-    self.ready = True
-```
+- **api.py**: OpaCKD class with grid setting
+  - Auto-generates logarithmic spectral bands (default)
+  - Supports custom band specification
+  - Configurable band width, spacing, and overlap
+
+- **Tests**: All 12 unit tests passing
+  - 3 spectral_bands tests (linear/log spacing, validation)
+  - 7 CKD core tests (updated for pure functions)
+  - 2 OpaCKD API tests (initialization, custom bands)
+
+- **Git**: All changes committed to `correlatedk` branch
+
+### 🔄 Next: Implement `precompute_tables()` orchestration
+**Architecture**: 
+- Use `spectral_bands` utilities for band management
+- Call `subgrid_for_band()` to extract portions of `base_opa.nu_grid`
+- Process each band with `compute_ckd_tables()` from pure core functions
+- Combine results into final CKDTableInfo structure
 
 ### 🎯 Office Quick Start:
 ```bash
 git pull origin correlatedk
-# Tell Claude: "Continue CKD implementation. Implement precompute_tables() in api.py"
+# All files ready: core.py, api.py, spectral_bands.py, comprehensive tests
+# Tell Claude: "Implement precompute_tables() orchestration using the new architecture"
 ```
