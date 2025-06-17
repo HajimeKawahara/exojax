@@ -11,33 +11,45 @@ subgrids from full wavenumber grids. These functions are useful for:
 import numpy as np
 
 
-def spectral_bands(nu_min, nu_max, band_width=50.0, spacing="linear", overlap_factor=0.0):
-    """Generate spectral band centers for banded calculations.
+def _set_grid_eslog(x0, x1, N):
+    """Generate logarithmically spaced grid (ESLOG)."""
+    return np.logspace(np.log10(x0), np.log10(x1), N, dtype=np.float64)
+
+
+def _set_grid_eslin(x0, x1, N):
+    """Generate linearly spaced grid (ESLIN)."""
+    return np.linspace(x0, x1, N, dtype=np.float64)
+
+
+def spectral_band_edges(nu_min, nu_max, band_width=50.0, spacing="linear", overlap_factor=0.0):
+    """Generate spectral band edges for banded calculations (primary function).
     
-    Creates spectral bands covering the range [nu_min, nu_max] with either
-    linear or logarithmic spacing of band centers.
+    Creates spectral band edges covering the range [nu_min, nu_max] with either
+    linear or logarithmic spacing. This edges-first approach ensures precise
+    and mathematically consistent band boundaries.
     
     Args:
         nu_min: Minimum wavenumber (cm⁻¹)
         nu_max: Maximum wavenumber (cm⁻¹)  
         band_width: Width of each spectral band (cm⁻¹)
-        spacing: "linear" or "log" - how to distribute band centers
+        spacing: "linear" or "log" - how to distribute band edges
         overlap_factor: Fraction of band_width to overlap adjacent bands (0.0-0.5)
         
     Returns:
-        nu_bands: Band centers, shape (nnu_bands,), ascending order
+        band_edges: Array of [left, right] edges for each band, 
+                   shape (nnu_bands, 2)
         
     Raises:
         ValueError: If invalid parameters or spacing mode
         
     Example:
         >>> # Linear spacing (uniform band coverage)
-        >>> nu_bands = spectral_bands(1000.0, 1200.0, band_width=50.0, spacing="linear")
-        >>> # Returns: [1025, 1075, 1125, 1175]
+        >>> edges = spectral_band_edges(1000.0, 1200.0, band_width=50.0, spacing="linear")
+        >>> # Returns: [[1000, 1050], [1050, 1100], [1100, 1150], [1150, 1200]]
         
-        >>> # Log spacing (more bands at lower wavenumbers)  
-        >>> nu_bands = spectral_bands(1000.0, 2000.0, band_width=50.0, spacing="log")
-        >>> # Returns denser spacing near 1000 cm⁻¹, sparser near 2000 cm⁻¹
+        >>> # Log spacing (precise logarithmic distribution)  
+        >>> edges = spectral_band_edges(1000.0, 2000.0, band_width=50.0, spacing="log")
+        >>> # Returns precisely log-spaced edges
     """
     if nu_min >= nu_max:
         raise ValueError("nu_min must be less than nu_max")
@@ -52,36 +64,71 @@ def spectral_bands(nu_min, nu_max, band_width=50.0, spacing="linear", overlap_fa
     band_spacing = band_width * (1.0 - overlap_factor)
     
     if spacing == "linear":
-        # Linear spacing: uniform distribution of band centers
+        # Linear spacing: create edges with uniform spacing
         total_range = nu_max - nu_min
-        n_bands = int(np.ceil(total_range / band_spacing)) + 1
+        n_bands = int(np.ceil(total_range / band_spacing))
         
-        # Generate linearly spaced band centers
-        band_centers = nu_min + band_width/2 + np.arange(n_bands) * band_spacing
+        # Generate edge positions directly
+        edge_positions = _set_grid_eslin(nu_min, nu_max, n_bands + 1)
         
-        # Keep only bands whose centers are within the extended range
-        valid_mask = band_centers <= (nu_max + band_width/2)
-        band_centers = band_centers[valid_mask]
+        # Create [left, right] pairs
+        band_edges = np.column_stack([edge_positions[:-1], edge_positions[1:]])
         
     elif spacing == "log":
-        # Logarithmic spacing: more bands at lower wavenumbers
-        # Calculate number of bands based on logarithmic scale
+        # Logarithmic spacing: create edges with log spacing
         log_range = np.log10(nu_max) - np.log10(nu_min)
-        # Estimate spacing in log space to achieve roughly band_spacing in linear space
-        # Use geometric mean as representative wavenumber for spacing estimate
+        # Estimate number of bands needed
         nu_geometric_mean = np.sqrt(nu_min * nu_max)
         log_spacing_estimate = band_spacing / (nu_geometric_mean * np.log(10))
-        n_bands = int(np.ceil(log_range / log_spacing_estimate)) + 1
+        n_bands = max(1, int(np.ceil(log_range / log_spacing_estimate)))
         
-        # Generate logarithmically spaced band centers
-        # Start from nu_min + band_width/2 to ensure first band covers nu_min
-        log_start = np.log10(nu_min + band_width/2)
-        log_end = np.log10(nu_max + band_width/2)  # Extended to ensure coverage
-        band_centers = np.logspace(log_start, log_end, n_bands)
+        # Generate edge positions directly in log space
+        edge_positions = _set_grid_eslog(nu_min, nu_max, n_bands + 1)
         
-        # Filter to keep only bands that provide meaningful coverage
-        # Remove bands whose centers are too close to boundaries
-        valid_mask = (band_centers >= nu_min + band_width/4) & (band_centers <= nu_max + band_width/4)
-        band_centers = band_centers[valid_mask]
+        # Create [left, right] pairs
+        band_edges = np.column_stack([edge_positions[:-1], edge_positions[1:]])
     
-    return band_centers
+    return band_edges
+
+
+def spectral_bands(nu_min, nu_max, band_width=50.0, spacing="linear", overlap_factor=0.0):
+    """Generate spectral band centers and edges for banded calculations.
+    
+    This function computes band centers from precisely calculated edges,
+    ensuring mathematical consistency and avoiding precision issues.
+    
+    Args:
+        nu_min: Minimum wavenumber (cm⁻¹)
+        nu_max: Maximum wavenumber (cm⁻¹)  
+        band_width: Width of each spectral band (cm⁻¹)
+        spacing: "linear" or "log" - how to distribute band centers
+        overlap_factor: Fraction of band_width to overlap adjacent bands (0.0-0.5)
+        
+    Returns:
+        nu_bands: Band centers, shape (nnu_bands,), ascending order
+        band_edges: Band edge positions, shape (nnu_bands, 2)
+        
+    Example:
+        >>> # Linear spacing
+        >>> nu_bands, edges = spectral_bands(1000.0, 1200.0, band_width=50.0, spacing="linear")
+        >>> # nu_bands: [1025, 1075, 1125, 1175]
+        >>> # edges: [[1000, 1050], [1050, 1100], [1100, 1150], [1150, 1200]]
+        
+        >>> # Log spacing
+        >>> nu_bands, edges = spectral_bands(1000.0, 2000.0, band_width=50.0, spacing="log")
+        >>> # Returns precisely computed centers and edges from log-spaced calculation
+    """
+    # Get edges first (primary computation)
+    band_edges = spectral_band_edges(nu_min, nu_max, band_width, spacing, overlap_factor)
+    
+    # Compute centers from edges
+    if spacing == "linear":
+        # Arithmetic mean for linear spacing
+        nu_bands = (band_edges[:, 0] + band_edges[:, 1]) / 2.0
+    elif spacing == "log":
+        # Geometric mean for log spacing
+        nu_bands = np.sqrt(band_edges[:, 0] * band_edges[:, 1])
+    
+    return nu_bands, band_edges
+
+
