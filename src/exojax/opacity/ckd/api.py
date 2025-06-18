@@ -108,8 +108,8 @@ class OpaCKD(OpaCalc):
         nu_min = float(self.base_opa.nu_grid[0])
         nu_max = float(self.base_opa.nu_grid[-1])
         
-        # Generate band centers
-        nu_bands = spectral_bands(
+        # Generate band centers and edges
+        nu_bands, band_edges = spectral_bands(
             nu_min=nu_min,
             nu_max=nu_max, 
             band_width=self.band_width,
@@ -118,6 +118,85 @@ class OpaCKD(OpaCalc):
         )
         
         self.nu_bands = jnp.asarray(nu_bands)
+        self.band_edges = jnp.asarray(band_edges)
+    
+    def _validate_precompute_inputs(
+        self, 
+        T_grid: jnp.ndarray, 
+        P_grid: jnp.ndarray
+    ) -> None:
+        """Validate inputs for precompute_tables.
+        
+        Args:
+            T_grid: Temperature grid in Kelvin
+            P_grid: Pressure grid in bar
+            
+        Raises:
+            ValueError: If validation fails
+        """
+        # Check base opacity calculator
+        if not hasattr(self.base_opa, 'xsmatrix'):
+            raise ValueError("Base opacity calculator must have xsmatrix method")
+        
+        # Validate grid dimensions
+        if len(T_grid) == 0 or len(P_grid) == 0:
+            raise ValueError("T_grid and P_grid must not be empty")
+        
+        # Validate physical values
+        if jnp.any(T_grid <= 0):
+            raise ValueError("All temperatures must be positive")
+        
+        if jnp.any(P_grid <= 0):
+            raise ValueError("All pressures must be positive")
+    
+    def _process_spectral_band(
+        self, 
+        i: int, 
+        band_edge: jnp.ndarray, 
+        xsmatrix_full: jnp.ndarray,
+        ggrid: jnp.ndarray, 
+        weights: jnp.ndarray,
+        compute_ckd_tables
+    ) -> Optional[jnp.ndarray]:
+        """Process a single spectral band for CKD computation.
+        
+        Args:
+            i: Band index
+            band_edge: [left, right] edge positions
+            xsmatrix_full: Full cross-section matrix
+            ggrid: Gauss-Legendre g-ordinates
+            weights: Gauss-Legendre weights
+            compute_ckd_tables: CKD computation function
+            
+        Returns:
+            CKD results for this band, or None if band has no coverage
+        """
+        # Extract wavenumber range for this band using edges
+        nu_left, nu_right = band_edge[0], band_edge[1]
+        
+        # Find indices in base_opa.nu_grid that fall within this band
+        mask = (self.base_opa.nu_grid >= nu_left) & (self.base_opa.nu_grid <= nu_right)
+        
+        if not jnp.any(mask):
+            print(f"  Band {i+1}: No coverage, skipping")
+            return None
+        
+        # Extract subgrid cross-sections for this band (no expensive xsmatrix call!)
+        # Handle both 2D (nT, nnu) and 3D (nT, nP, nnu) cases
+        if len(xsmatrix_full.shape) == 3:
+            xsmatrix_band = xsmatrix_full[:, :, mask]
+        else:
+            xsmatrix_band = xsmatrix_full[:, mask]
+        n_freq_band = jnp.sum(mask)
+        
+        print(f"  Band {i+1}: [{nu_left:.1f}, {nu_right:.1f}] cm⁻¹, {n_freq_band} frequencies")
+        
+        # Compute CKD for this band
+        log_kggrid_band, _, _ = compute_ckd_tables(
+            xsmatrix_band, self.Ng
+        )
+        
+        return log_kggrid_band
     
     def precompute_tables(
         self,
@@ -130,8 +209,58 @@ class OpaCKD(OpaCalc):
             T_grid: Temperature grid in Kelvin
             P_grid: Pressure grid in bar
         """
-        # TODO: Implement table pre-computation
-        pass
+        # Step 1: Setup and validation
+        # Convert to JAX arrays
+        T_grid = jnp.asarray(T_grid)
+        P_grid = jnp.asarray(P_grid)
+        
+        # Validate inputs
+        self._validate_precompute_inputs(T_grid, P_grid)
+        
+        # Step 2: Generate Gauss-Legendre g-grid and weights
+        from exojax.opacity.ckd.core import gauss_legendre_grid, compute_ckd_tables
+        
+        ggrid, weights = gauss_legendre_grid(self.Ng)
+        
+        print(f"Setup complete: T_grid shape {T_grid.shape}, P_grid shape {P_grid.shape}")
+        print(f"Generated g-grid: {self.Ng} points, range [{ggrid[0]:.4f}, {ggrid[-1]:.4f}]")
+        
+        # Step 3: Compute full cross-section matrix once (expensive operation)
+        print("Computing full cross-section matrix...")
+        xsmatrix_full = self.base_opa.xsmatrix(T_grid, P_grid)
+        print(f"Cross-section matrix shape: {xsmatrix_full.shape}")
+        
+        # Initialize storage for all bands
+        nT, nP = len(T_grid), len(P_grid)
+        nnu_bands = len(self.nu_bands)
+        log_kggrid = jnp.zeros((nT, nP, self.Ng, nnu_bands))
+        
+        # Process each spectral band using precise edges
+        print(f"Processing {nnu_bands} spectral bands...")
+        for i, band_edge in enumerate(self.band_edges):
+            # Process this band
+            log_kggrid_band = self._process_spectral_band(
+                i, band_edge, xsmatrix_full, ggrid, weights, compute_ckd_tables
+            )
+            
+            # Store results if band has coverage
+            if log_kggrid_band is not None:
+                log_kggrid = log_kggrid.at[:, :, :, i].set(log_kggrid_band)
+            
+        # Step 5: Create CKD table info and finalize
+        print("Creating CKD table info...")
+        self.ckd_info = CKDTableInfo(
+            log_kggrid=log_kggrid,
+            ggrid=ggrid,
+            weights=weights,
+            T_grid=T_grid,
+            P_grid=P_grid,
+            nu_bands=self.nu_bands
+        )
+        
+        self.ready = True
+        print(f"CKD precomputation complete! Ready for interpolation.")
+        print(f"Table dimensions: T={len(T_grid)}, P={len(P_grid)}, g={self.Ng}, bands={nnu_bands}")
     
     def xsvector(self, T: float, P: float) -> jnp.ndarray:
         """Compute cross section vector using CKD interpolation.

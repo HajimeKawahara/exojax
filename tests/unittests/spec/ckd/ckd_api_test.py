@@ -24,6 +24,10 @@ def test_opa_ckd_init():
     assert opa_ckd.band_spacing == "log"  # Default
     assert len(opa_ckd.nu_bands) > 0
     assert opa_ckd.ready == False
+    
+    # Check that band_edges are now available (new feature)
+    assert hasattr(opa_ckd, 'band_edges')
+    assert opa_ckd.band_edges.shape == (len(opa_ckd.nu_bands), 2)
 
 
 def test_opa_ckd_custom_bands():
