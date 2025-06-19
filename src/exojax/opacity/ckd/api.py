@@ -267,35 +267,13 @@ class OpaCKD(OpaCalc):
         Returns:
             Interpolated log k-values, shape (Ng, nnu_bands)
         """
-        # log_kggrid shape: (nT, nP, Ng, nnu_bands)
-        # Vectorized interpolation approach
-        
-        def interpolate_2d_slice(log_k_2d_slice):
-            """Interpolate single 2D slice (nT, nP) at given T,P."""
-            # log_k_2d_slice shape: (nT, nP)
-            # First interpolate over T dimension for each P
-            def interp_over_T(log_k_column):
-                """Interpolate over T for single P column."""
-                return jnp.interp(T, self.ckd_info.T_grid, log_k_column)
-            
-            # Apply to each P column: (nT, nP) -> (nP,)
-            log_k_T = vmap(interp_over_T, in_axes=1)(log_k_2d_slice)
-            
-            # Then interpolate over P dimension: (nP,) -> scalar
-            log_k_TP = jnp.interp(P, self.ckd_info.P_grid, log_k_T)
-            return log_k_TP
-        
-        # Apply vectorized interpolation over (Ng, nnu_bands) dimensions
-        # Reshape from (nT, nP, Ng, nnu_bands) to (Ng*nnu_bands, nT, nP)
-        nT, nP, Ng, nnu_bands = self.ckd_info.log_kggrid.shape
-        log_k_reshaped = self.ckd_info.log_kggrid.transpose(2, 3, 0, 1).reshape(-1, nT, nP)
-        
-        # Vectorize interpolation over all (g, band) combinations
-        log_k_flat = vmap(interpolate_2d_slice)(log_k_reshaped)  # Shape: (Ng*nnu_bands,)
-        
-        # Reshape back to (Ng, nnu_bands)
-        log_k_interp = log_k_flat.reshape(Ng, nnu_bands)
-        return log_k_interp
+        from .core import interpolate_log_k_2d
+        return interpolate_log_k_2d(
+            self.ckd_info.log_kggrid,
+            self.ckd_info.T_grid,
+            self.ckd_info.P_grid,
+            T, P
+        )
 
     def xsvector(self, T: float, P: float) -> jnp.ndarray:
         """Compute cross section vector using CKD interpolation.

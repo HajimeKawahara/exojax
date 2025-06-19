@@ -235,3 +235,58 @@ def compute_ckd_tables(
     
     return log_kggrid, ggrid, weights
 
+
+@jit  
+def interpolate_log_k_2d(
+    log_kggrid: jnp.ndarray,
+    T_grid: jnp.ndarray,
+    P_grid: jnp.ndarray, 
+    T: float,
+    P: float
+) -> jnp.ndarray:
+    """JAX-compatible 2D interpolation of log_kggrid at given T,P.
+    
+    Pure JAX function for interpolating pre-computed CKD tables at a specific
+    temperature and pressure point. Uses vectorized operations for efficiency.
+    
+    Args:
+        log_kggrid: Pre-computed log k-values, shape (nT, nP, Ng, nnu_bands)
+        T_grid: Temperature grid in Kelvin, shape (nT,)
+        P_grid: Pressure grid in bar, shape (nP,)
+        T: Target temperature in Kelvin
+        P: Target pressure in bar
+        
+    Returns:
+        Interpolated log k-values, shape (Ng, nnu_bands)
+    """
+    # log_kggrid shape: (nT, nP, Ng, nnu_bands)
+    # Vectorized interpolation approach
+    
+    def interpolate_2d_slice(log_k_2d_slice):
+        """Interpolate single 2D slice (nT, nP) at given T,P."""
+        # log_k_2d_slice shape: (nT, nP)
+        # First interpolate over T dimension for each P
+        def interp_over_T(log_k_column):
+            """Interpolate over T for single P column."""
+            return jnp.interp(T, T_grid, log_k_column)
+        
+        # Apply to each P column: (nT, nP) -> (nP,)
+        log_k_T = vmap(interp_over_T, in_axes=1)(log_k_2d_slice)
+        
+        # Then interpolate over P dimension: (nP,) -> scalar
+        log_k_TP = jnp.interp(P, P_grid, log_k_T)
+        return log_k_TP
+    
+    # Apply vectorized interpolation over (Ng, nnu_bands) dimensions
+    # Reshape from (nT, nP, Ng, nnu_bands) to (Ng*nnu_bands, nT, nP)
+    nT, nP, Ng, nnu_bands = log_kggrid.shape
+    log_k_reshaped = log_kggrid.transpose(2, 3, 0, 1).reshape(-1, nT, nP)
+    
+    # Vectorize interpolation over all (g, band) combinations
+    log_k_flat = vmap(interpolate_2d_slice)(log_k_reshaped)  # Shape: (Ng*nnu_bands,)
+    
+    # Reshape back to (Ng, nnu_bands)
+    log_k_interp = log_k_flat.reshape(Ng, nnu_bands)
+    
+    return log_k_interp
+
