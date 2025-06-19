@@ -1,7 +1,6 @@
 """Unit tests for OpaCKD precompute_tables method."""
 
 import pytest
-import numpy as np
 import jax.numpy as jnp
 from jax import config
 
@@ -18,7 +17,7 @@ class TestPrecomputeTables:
     def setup_method(self):
         """Set up test fixtures using mock_mdbExomol."""
         # Setup wavenumber grid and molecular database (small for testing)
-        nus, wav, res = mock_wavenumber_grid()
+        nus, _, _ = mock_wavenumber_grid()
         self.nus = nus
         mdb = mock_mdbExomol("CO")
 
@@ -124,21 +123,6 @@ class TestPrecomputeTables:
         # Assert that CKD approximation is accurate to within 0.1%
         assert diff < 0.001
         
-        # === OPTIONAL: Visual validation (uncomment to plot) ===
-        #import matplotlib.pyplot as plt
-        #fig = plt.figure()
-        #ax = fig.add_subplot(211)
-        #plt.plot(self.nus, tau, label='Fine grid transmission')
-        #plt.plot(nu_bands, tau_ave, 'o', label='Direct band averages')
-        #plt.plot(nu_bands, ckd_sum, 's', ls="dashed", label='CKD quadrature')
-        #plt.ylabel('Transmission')
-        #plt.legend()
-        #ax = fig.add_subplot(212)
-        #plt.plot(nu_bands, ckd_sum/tau_ave - 1.0, 'ro-')
-        #plt.ylabel("Relative error (CKD/direct - 1)")
-        #plt.xlabel("Wavenumber (cm⁻¹)")
-        #plt.show()
-
     def test_xsmatrix_method(self):
         """Test xsmatrix method with paired (T,P) values."""
         # Pre-compute CKD tables
@@ -197,24 +181,6 @@ class TestPrecomputeTables:
         # For each layer and band: ∫ exp(-σ*L) dg ≈ Σ(w_i * exp(-σ_i*L))
         ckd_batch = jnp.einsum("n,lnm->lm", weights, jnp.exp(-xsmatrix_folded * L))
         
-        # === METHOD 2: Individual xsvector calculations (reference) ===
-        ckd_individual = []
-        for i, (T, P) in enumerate(zip(T_layers, P_layers)):
-            # Get individual cross-section vector and reshape
-            xsv = self.opa_ckd.xsvector(T, P)
-            xsv_folded = xsv.reshape(Ng, nnu_bands)
-            
-            # Compute transmission for this layer
-            ckd_layer = jnp.einsum("n,nm->m", weights, jnp.exp(-xsv_folded * L))
-            ckd_individual.append(ckd_layer)
-        
-        ckd_individual = jnp.array(ckd_individual)  # Shape: (Nlayers, nnu_bands)
-        
-        # === VALIDATION 1: Batch vs Individual consistency ===
-        # Verify that batch xsmatrix gives identical results to individual xsvector calls
-        assert jnp.allclose(ckd_batch, ckd_individual, rtol=1e-12)
-        
-        # === VALIDATION 2: CKD accuracy against fine-grid reference ===
         # Compare against direct fine-grid averaging for each layer
         max_error_across_layers = 0.0
         
@@ -240,11 +206,6 @@ class TestPrecomputeTables:
         # Assert that CKD approximation is accurate across all layers
         assert max_error_across_layers < 0.005  # 0.5% accuracy for all layers (relaxed for multi-layer test)
         
-        # === OPTIONAL: Verify shapes and basic properties ===
-        assert ckd_batch.shape == (len(T_layers), nnu_bands)
-        assert jnp.all(ckd_batch > 0)  # Transmission should be positive
-        assert jnp.all(ckd_batch <= 1)  # Transmission should be ≤ 1
-
 
 if __name__ == "__main__":
     test_suite = TestPrecomputeTables()

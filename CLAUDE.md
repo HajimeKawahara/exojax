@@ -169,3 +169,6 @@ git pull origin correlatedk
 # All files ready: core.py, api.py, spectral_bands.py, comprehensive tests
 # Tell Claude: "Implement precompute_tables() orchestration using the new architecture"
 ```
+
+### Exit
+Before good bye, do not forget git add, commit, and push!
