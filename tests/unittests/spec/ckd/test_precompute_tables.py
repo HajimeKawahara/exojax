@@ -139,6 +139,30 @@ class TestPrecomputeTables:
         #plt.xlabel("Wavenumber (cm⁻¹)")
         #plt.show()
 
+    def test_xsmatrix_method(self):
+        """Test xsmatrix method with paired (T,P) values."""
+        # Pre-compute CKD tables
+        self.opa_ckd.precompute_tables(self.T_grid, self.P_grid)
+        
+        # Test with paired (T,P) values
+        T_test = jnp.array([995.0, 1005.0, 1000.0])  # 3 temperature values
+        P_test = jnp.array([0.033, 0.034, 0.0325])   # 3 corresponding pressure values
+        
+        # Call xsmatrix
+        xsmatrix_result = self.opa_ckd.xsmatrix(T_test, P_test)
+        
+        # Check output shape
+        Nlayer = len(T_test)
+        expected_cols = self.opa_ckd.Ng * len(self.opa_ckd.nu_bands)
+        expected_shape = (Nlayer, expected_cols)
+        assert xsmatrix_result.shape == expected_shape
+        
+        # Verify consistency with xsvector for each (T,P) pair
+        for i in range(len(T_test)):
+            xsv_individual = self.opa_ckd.xsvector(T_test[i], P_test[i])
+            xsv_from_matrix = xsmatrix_result[i, :]
+            assert jnp.allclose(xsv_individual, xsv_from_matrix, rtol=1e-10)
+
 
 if __name__ == "__main__":
     test_suite = TestPrecomputeTables()
@@ -155,6 +179,9 @@ if __name__ == "__main__":
     print("✓ Validation test passed")
 
     test_suite.test_average_transmission()
-    print("✓  integration test")
+    print("✓ Integration test passed")
+
+    test_suite.test_xsmatrix_method()
+    print("✓ xsmatrix test passed")
 
     print("✅ All tests passed!")

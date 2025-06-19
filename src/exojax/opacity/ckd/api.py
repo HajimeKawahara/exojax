@@ -295,7 +295,6 @@ class OpaCKD(OpaCalc):
         
         # Reshape back to (Ng, nnu_bands)
         log_k_interp = log_k_flat.reshape(Ng, nnu_bands)
-        
         return log_k_interp
 
     def xsvector(self, T: float, P: float) -> jnp.ndarray:
@@ -311,13 +310,17 @@ class OpaCKD(OpaCalc):
         Returns:
             Cross section vector in cm², shape (Ng * nnu_bands,)
             Flattened as: [band0_g0, band0_g1, ..., band0_gN, band1_g0, ...]
+        
+        Notes:
+            To fold the xsvector, run xsvector.reshape(Ng, nnu_bands). 
+        
         """
         # Step 1: Interpolate log_kggrid at given T,P
         log_k_interp = self._interpolate_log_k(T, P)  # Shape: (Ng, nnu_bands)
         
         # Step 2: Flatten (nu_bands, g_points) -> 1D
         # Flatten in band-major order: [band0_g0, band0_g1, ..., band0_gN, band1_g0, ...]
-        log_k_flat = log_k_interp.T.flatten()  # Shape: (Ng * nnu_bands,)
+        log_k_flat = log_k_interp.flatten()  
         
         # Step 3: Un-log to get actual k-values  
         k_values = jnp.exp(log_k_flat)
@@ -331,15 +334,24 @@ class OpaCKD(OpaCalc):
     ) -> jnp.ndarray:
         """Compute cross section matrix using CKD interpolation.
         
+        Computes CKD cross-sections for paired (T,P) values: (T1,P1), (T2,P2), ...
+        This follows the same interface as OpaPremodit.xsmatrix.
+        
         Args:
-            T_array: Temperature array in Kelvin
-            P_array: Pressure array in bar
+            T_array: Temperature array in Kelvin, shape (Nlayer,)
+            P_array: Pressure array in bar, shape (Nlayer,)
             
         Returns:
-            Cross section matrix in cm²
+            Cross section matrix in cm², shape (Nlayer, Ng * nnu_bands)
+            Each row contains the CKD cross-section vector for the corresponding (T,P) pair.
+            
         """
-        # TODO: Implement xsmatrix
-        pass
+        # Vectorize xsvector over (T,P) pairs
+        xsvector_vmap = vmap(self.xsvector, in_axes=(0, 0))
+        # Compute cross-section matrix: shape (Nlayer, Ng * nnu_bands)
+        xsmatrix = xsvector_vmap(T_array, P_array)
+        
+        return xsmatrix
     
     def save_tables(self, filepath: str) -> None:
         """Save pre-computed CKD tables to file.
