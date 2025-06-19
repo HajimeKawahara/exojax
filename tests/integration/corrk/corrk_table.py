@@ -1,7 +1,10 @@
 """This module tests the correlated k distribution implementation in ExoJAX.
 
-Demonstrates CKD method using the new compute_g_ordinates and gauss_legendre_grid functions
-from the ExoJAX opacity.ckd.core module.
+Demonstrates CKD method using the implemented core functions:
+- compute_g_ordinates: sorts cross-sections and computes g-ordinates
+- safe_log_k: computes safe logarithm avoiding log(0)
+- gauss_legendre_grid: generates quadrature points and weights
+- interpolate_log_k_to_g_grid: interpolates log(k) onto g-grid
 """
 
 import numpy as np
@@ -9,7 +12,12 @@ import jax.numpy as jnp
 from exojax.test.emulate_mdb import mock_mdbExomol
 from exojax.test.emulate_mdb import mock_wavenumber_grid
 from exojax.opacity.opacalc import OpaPremodit
-from exojax.opacity.ckd.core import compute_g_ordinates, gauss_legendre_grid
+from exojax.opacity.ckd.core import (
+    compute_g_ordinates, 
+    gauss_legendre_grid,
+    safe_log_k,
+    interpolate_log_k_to_g_grid
+)
 from jax import config
 
 config.update("jax_enable_x64", True)  # use double precision
@@ -29,19 +37,22 @@ P = 1.0e-2
 print("Computing cross-section vector...")
 xsv = opa.xsvector(T, P)
 
-# Generate CKD g-ordinates using new function
+# Generate CKD g-ordinates using core function
 print("Computing g-ordinates...")
 idx, k_g, g = compute_g_ordinates(xsv)
-log_k_g = jnp.log(jnp.maximum(k_g, 1e-30))  # Avoid log(0)
 
-# Generate Gauss-Legendre quadrature grid using new function  
+# Compute safe logarithm using core function
+print("Computing safe logarithm...")
+log_k_g = safe_log_k(k_g)
+
+# Generate Gauss-Legendre quadrature grid using core function  
 Ng = 32
 print(f"Generating Gauss-Legendre grid with {Ng} points...")
 ggrid, weights = gauss_legendre_grid(Ng)
 
-# Interpolate log(k) values onto g-grid
+# Interpolate log(k) values onto g-grid using core function
 print("Interpolating onto g-grid...")
-log_kggrid = jnp.interp(ggrid, g, log_k_g)
+log_kggrid = interpolate_log_k_to_g_grid(g, log_k_g, ggrid)
 
 # Validation: Compare direct integration vs CKD quadrature
 print("\nValidating CKD approximation...")
