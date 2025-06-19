@@ -3,9 +3,6 @@
 This module provides utilities for generating spectral bands and extracting
 subgrids from full wavenumber grids. These functions are useful for:
 - Correlated-K Distribution (CKD) computations
-- Memory-efficient opacity calculations
-- Spectral chunking and segmentation
-- Instrumental band analysis
 """
 
 import numpy as np
@@ -21,19 +18,18 @@ def _set_grid_eslin(x0, x1, N):
     return np.linspace(x0, x1, N, dtype=np.float64)
 
 
-def spectral_band_edges(nu_min, nu_max, band_width=50.0, spacing="linear", overlap_factor=0.0):
+def spectral_band_edges(nu_min, nu_max, band_width=50.0, spacing="linear"):
     """Generate spectral band edges for banded calculations (primary function).
     
     Creates spectral band edges covering the range [nu_min, nu_max] with either
     linear or logarithmic spacing. This edges-first approach ensures precise
-    and mathematically consistent band boundaries.
+    and mathematically consistent band boundaries for CKD computation.
     
     Args:
         nu_min: Minimum wavenumber (cm⁻¹)
         nu_max: Maximum wavenumber (cm⁻¹)  
         band_width: Width of each spectral band (cm⁻¹)
         spacing: "linear" or "log" - how to distribute band edges
-        overlap_factor: Fraction of band_width to overlap adjacent bands (0.0-0.5)
         
     Returns:
         band_edges: Array of [left, right] edges for each band, 
@@ -55,18 +51,13 @@ def spectral_band_edges(nu_min, nu_max, band_width=50.0, spacing="linear", overl
         raise ValueError("nu_min must be less than nu_max")
     if band_width <= 0:
         raise ValueError("band_width must be positive")
-    if overlap_factor < 0 or overlap_factor >= 0.5:
-        raise ValueError("overlap_factor must be in range [0, 0.5)")
     if spacing not in ["linear", "log"]:
         raise ValueError("spacing must be 'linear' or 'log'")
-    
-    # Calculate effective spacing between band centers
-    band_spacing = band_width * (1.0 - overlap_factor)
     
     if spacing == "linear":
         # Linear spacing: create edges with uniform spacing
         total_range = nu_max - nu_min
-        n_bands = int(np.ceil(total_range / band_spacing))
+        n_bands = int(np.ceil(total_range / band_width))
         
         # Generate edge positions directly
         edge_positions = _set_grid_eslin(nu_min, nu_max, n_bands + 1)
@@ -79,7 +70,7 @@ def spectral_band_edges(nu_min, nu_max, band_width=50.0, spacing="linear", overl
         log_range = np.log10(nu_max) - np.log10(nu_min)
         # Estimate number of bands needed
         nu_geometric_mean = np.sqrt(nu_min * nu_max)
-        log_spacing_estimate = band_spacing / (nu_geometric_mean * np.log(10))
+        log_spacing_estimate = band_width / (nu_geometric_mean * np.log(10))
         n_bands = max(1, int(np.ceil(log_range / log_spacing_estimate)))
         
         # Generate edge positions directly in log space
@@ -91,7 +82,7 @@ def spectral_band_edges(nu_min, nu_max, band_width=50.0, spacing="linear", overl
     return band_edges
 
 
-def spectral_bands(nu_min, nu_max, band_width=50.0, spacing="linear", overlap_factor=0.0):
+def spectral_bands(nu_min, nu_max, band_width=50.0, spacing="linear"):
     """Generate spectral band centers and edges for banded calculations.
     
     This function computes band centers from precisely calculated edges,
@@ -102,7 +93,6 @@ def spectral_bands(nu_min, nu_max, band_width=50.0, spacing="linear", overlap_fa
         nu_max: Maximum wavenumber (cm⁻¹)  
         band_width: Width of each spectral band (cm⁻¹)
         spacing: "linear" or "log" - how to distribute band centers
-        overlap_factor: Fraction of band_width to overlap adjacent bands (0.0-0.5)
         
     Returns:
         nu_bands: Band centers, shape (nnu_bands,), ascending order
@@ -119,7 +109,7 @@ def spectral_bands(nu_min, nu_max, band_width=50.0, spacing="linear", overlap_fa
         >>> # Returns precisely computed centers and edges from log-spaced calculation
     """
     # Get edges first (primary computation)
-    band_edges = spectral_band_edges(nu_min, nu_max, band_width, spacing, overlap_factor)
+    band_edges = spectral_band_edges(nu_min, nu_max, band_width, spacing)
     
     # Compute centers from edges
     if spacing == "linear":

@@ -59,7 +59,6 @@ class OpaCKD(OpaCalc):
         nu_bands: Optional[Union[np.ndarray, jnp.ndarray]] = None,
         band_width: float = 50.0,
         band_spacing: str = "log",
-        band_overlap_factor: float = 0.0,
     ) -> None:
         """Initialize OpaCKD opacity calculator.
         
@@ -70,7 +69,6 @@ class OpaCKD(OpaCalc):
                      If None, auto-generates from base_opa.nu_grid using band_width
             band_width: Width of each spectral band (cm⁻¹), used if nu_bands is None
             band_spacing: "linear" or "log" spacing for auto-generated bands (default: "log")
-            band_overlap_factor: Overlap factor for adjacent bands (0.0-0.5)
         
         Raises:
             ValueError: If base opacity calculator is not ready or invalid parameters
@@ -86,7 +84,6 @@ class OpaCKD(OpaCalc):
         self.Ng = Ng
         self.band_width = band_width
         self.band_spacing = band_spacing
-        self.band_overlap_factor = band_overlap_factor
         
         # Set up spectral bands
         if nu_bands is not None:
@@ -113,8 +110,7 @@ class OpaCKD(OpaCalc):
             nu_min=nu_min,
             nu_max=nu_max, 
             band_width=self.band_width,
-            spacing=self.band_spacing,
-            overlap_factor=self.band_overlap_factor
+            spacing=self.band_spacing
         )
         
         self.nu_bands = jnp.asarray(nu_bands)
