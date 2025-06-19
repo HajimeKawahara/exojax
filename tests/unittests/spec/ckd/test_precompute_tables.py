@@ -163,6 +163,88 @@ class TestPrecomputeTables:
             xsv_from_matrix = xsmatrix_result[i, :]
             assert jnp.allclose(xsv_individual, xsv_from_matrix, rtol=1e-10)
 
+    def test_xsmatrix_average_transmission(self):
+        """Test xsmatrix batch transmission calculation accuracy against reference.
+        
+        This test validates that xsmatrix produces accurate transmission results
+        when used for multiple atmospheric layers, comparing against both individual
+        xsvector calls and direct fine-grid averaging for each layer.
+        """
+        # Pre-compute CKD tables for interpolation
+        self.opa_ckd.precompute_tables(self.T_grid, self.P_grid)
+        Ng = self.opa_ckd.Ng
+        nnu_bands = len(self.opa_ckd.nu_bands)
+
+        # Define multiple atmospheric layers with different (T,P) conditions
+        T_layers = jnp.array([995.0, 1000.0, 1005.0])  # 3 atmospheric layers
+        P_layers = jnp.array([0.033, 0.034, 0.032])    # Corresponding pressures
+        
+        # Optical depth parameter for transmission calculation
+        L = 1.0e22  # Large value to test in optically thick regime
+        
+        # === METHOD 1: Batch xsmatrix calculation ===
+        # Get cross-section matrix for all layers at once
+        xsmatrix_result = self.opa_ckd.xsmatrix(T_layers, P_layers)  # Shape: (3, Ng*nnu_bands)
+        
+        # Reshape to (Nlayers, Ng, nnu_bands) for transmission calculation
+        xsmatrix_folded = xsmatrix_result.reshape(len(T_layers), Ng, nnu_bands)
+        
+        # Extract CKD quadrature information
+        weights = self.opa_ckd.ckd_info.weights      # Gauss-Legendre weights
+        band_edges = self.opa_ckd.ckd_info.band_edges # Band boundaries
+        
+        # Compute batch transmission using CKD quadrature for each layer
+        # For each layer and band: ∫ exp(-σ*L) dg ≈ Σ(w_i * exp(-σ_i*L))
+        ckd_batch = jnp.einsum("n,lnm->lm", weights, jnp.exp(-xsmatrix_folded * L))
+        
+        # === METHOD 2: Individual xsvector calculations (reference) ===
+        ckd_individual = []
+        for i, (T, P) in enumerate(zip(T_layers, P_layers)):
+            # Get individual cross-section vector and reshape
+            xsv = self.opa_ckd.xsvector(T, P)
+            xsv_folded = xsv.reshape(Ng, nnu_bands)
+            
+            # Compute transmission for this layer
+            ckd_layer = jnp.einsum("n,nm->m", weights, jnp.exp(-xsv_folded * L))
+            ckd_individual.append(ckd_layer)
+        
+        ckd_individual = jnp.array(ckd_individual)  # Shape: (Nlayers, nnu_bands)
+        
+        # === VALIDATION 1: Batch vs Individual consistency ===
+        # Verify that batch xsmatrix gives identical results to individual xsvector calls
+        assert jnp.allclose(ckd_batch, ckd_individual, rtol=1e-12)
+        
+        # === VALIDATION 2: CKD accuracy against fine-grid reference ===
+        # Compare against direct fine-grid averaging for each layer
+        max_error_across_layers = 0.0
+        
+        for layer_idx, (T, P) in enumerate(zip(T_layers, P_layers)):
+            # Get fine-grid cross-section for this layer
+            xsv_fine = self.base_opa.xsvector(T, P)
+            tau_fine = jnp.exp(-xsv_fine * L)  # Fine-grid transmission
+            
+            # Compute reference band averages by direct integration
+            tau_reference = []
+            for band_idx in range(nnu_bands):
+                # Create mask for frequencies within this band
+                mask = (band_edges[band_idx,0] <= self.nus) * (self.nus < band_edges[band_idx,1])
+                # Arithmetic average over the band
+                tau_reference.append(jnp.mean(tau_fine[mask]))
+            tau_reference = jnp.array(tau_reference)
+            
+            # Compare CKD result for this layer against reference
+            ckd_layer_result = ckd_batch[layer_idx, :]
+            layer_error = jnp.sqrt(jnp.sum((ckd_layer_result/tau_reference - 1.0)**2)/nnu_bands)
+            max_error_across_layers = max(max_error_across_layers, layer_error)
+        
+        # Assert that CKD approximation is accurate across all layers
+        assert max_error_across_layers < 0.005  # 0.5% accuracy for all layers (relaxed for multi-layer test)
+        
+        # === OPTIONAL: Verify shapes and basic properties ===
+        assert ckd_batch.shape == (len(T_layers), nnu_bands)
+        assert jnp.all(ckd_batch > 0)  # Transmission should be positive
+        assert jnp.all(ckd_batch <= 1)  # Transmission should be ≤ 1
+
 
 if __name__ == "__main__":
     test_suite = TestPrecomputeTables()
@@ -183,5 +265,8 @@ if __name__ == "__main__":
 
     test_suite.test_xsmatrix_method()
     print("✓ xsmatrix test passed")
+
+    test_suite.test_xsmatrix_average_transmission()
+    print("✓ xsmatrix transmission test passed")
 
     print("✅ All tests passed!")
