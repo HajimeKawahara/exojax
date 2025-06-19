@@ -28,6 +28,7 @@ class CKDTableInfo:
         T_grid: Temperature grid, shape (nT,)
         P_grid: Pressure grid, shape (nP,)
         nu_bands: Wavenumber band centers, shape (nnu_bands,)
+        band_edges: Wavenumber band edges, shape (nnu_bands, 2)
     """
     log_kggrid: jnp.ndarray
     ggrid: jnp.ndarray
@@ -35,6 +36,7 @@ class CKDTableInfo:
     T_grid: jnp.ndarray
     P_grid: jnp.ndarray
     nu_bands: jnp.ndarray
+    band_edges: jnp.ndarray
 
 
 class OpaCKD(OpaCalc):
@@ -150,8 +152,6 @@ class OpaCKD(OpaCalc):
         i: int, 
         band_edge: jnp.ndarray, 
         xsmatrix_full: jnp.ndarray,
-        ggrid: jnp.ndarray, 
-        weights: jnp.ndarray,
         compute_ckd_tables
     ) -> Optional[jnp.ndarray]:
         """Process a single spectral band for CKD computation.
@@ -160,8 +160,6 @@ class OpaCKD(OpaCalc):
             i: Band index
             band_edge: [left, right] edge positions
             xsmatrix_full: Full cross-section matrix
-            ggrid: Gauss-Legendre g-ordinates
-            weights: Gauss-Legendre weights
             compute_ckd_tables: CKD computation function
             
         Returns:
@@ -236,7 +234,7 @@ class OpaCKD(OpaCalc):
         for i, band_edge in enumerate(self.band_edges):
             # Process this band
             log_kggrid_band = self._process_spectral_band(
-                i, band_edge, xsmatrix_full, ggrid, weights, compute_ckd_tables
+                i, band_edge, xsmatrix_full, compute_ckd_tables
             )
             
             # Store results if band has coverage
@@ -251,7 +249,8 @@ class OpaCKD(OpaCalc):
             weights=weights,
             T_grid=T_grid,
             P_grid=P_grid,
-            nu_bands=self.nu_bands
+            nu_bands=self.nu_bands,
+            band_edges=self.band_edges
         )
         
         self.ready = True
