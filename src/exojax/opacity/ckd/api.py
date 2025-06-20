@@ -6,7 +6,7 @@ maintaining accuracy through k-distribution statistical representation.
 """
 
 from __future__ import annotations
-from typing import Optional, Union
+from typing import Union, Optional
 from dataclasses import dataclass
 
 import jax.numpy as jnp
@@ -62,7 +62,6 @@ class OpaCKD(OpaCalc):
         self,
         base_opa,
         Ng: int = 32,
-        nu_bands: Optional[Union[np.ndarray, jnp.ndarray]] = None,
         band_width: float = 50.0,
         band_spacing: str = "log",
     ) -> None:
@@ -71,10 +70,8 @@ class OpaCKD(OpaCalc):
         Args:
             base_opa: Base opacity calculator (OpaPremodit, OpaModit, etc.)
             Ng: Number of Gauss-Legendre quadrature points
-            nu_bands: Wavenumber bands for CKD table generation.
-                     If None, auto-generates from base_opa.nu_grid using band_width
-            band_width: Width of each spectral band (cm⁻¹), used if nu_bands is None
-            band_spacing: "linear" or "log" spacing for auto-generated bands (default: "log")
+            band_width: Width of each spectral band (cm⁻¹)
+            band_spacing: "linear" or "log" spacing for band generation (default: "log")
 
         Raises:
             ValueError: If base opacity calculator is not ready or invalid parameters
@@ -91,13 +88,8 @@ class OpaCKD(OpaCalc):
         self.band_width = band_width
         self.band_spacing = band_spacing
 
-        # Set up spectral bands
-        if nu_bands is not None:
-            # Use provided bands
-            self.nu_bands = jnp.asarray(nu_bands)
-        else:
-            # Auto-generate bands from base_opa grid
-            self._setup_spectral_bands()
+        # Auto-generate spectral bands from base_opa grid
+        self._setup_spectral_bands()
 
         # Initialize state
         self.ckd_info = None

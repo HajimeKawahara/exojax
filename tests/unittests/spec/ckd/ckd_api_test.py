@@ -31,12 +31,17 @@ def test_opa_ckd_init():
 
 
 def test_opa_ckd_custom_bands():
-    """Test OpaCKD with custom bands."""
+    """Test OpaCKD with custom band settings."""
     mock_base_opa = MockBaseOpa()
-    custom_bands = np.array([1100.0, 1300.0, 1500.0])
-    opa_ckd = OpaCKD(mock_base_opa, nu_bands=custom_bands)
     
-    np.testing.assert_array_equal(opa_ckd.nu_bands, custom_bands)
+    # Test with different band width and spacing
+    opa_ckd = OpaCKD(mock_base_opa, band_width=200.0, band_spacing="linear")
+    
+    # Check that bands were auto-generated with the specified parameters
+    assert opa_ckd.band_width == 200.0
+    assert opa_ckd.band_spacing == "linear"
+    assert len(opa_ckd.nu_bands) > 0
+    assert hasattr(opa_ckd, 'band_edges')
 
 
 if __name__ == "__main__":
