@@ -14,8 +14,9 @@ adoption as a standard method in climate models and planetary
 atmospheric calculations [3]. A good reference for correlated
 k-distribution can be found, for example, in Liou’s textbook[4].
 
--  [1] An introduction to atmospheric radiation, volume 84. Elsevier,
-   2002.
+-  [1] Wo Malkmus. Random lorentz band model with exponential-tailed s-
+   1 line-intensity distribution function. Journal of the Optical
+   Society of America, 57(3):323–329, 196
 -  [2] Richard Goody, Robert West, Luke Chen, and David Crisp. The
    correlated-k method for radiation calculations in nonhomogeneous
    atmospheres. JQSRT, 42:539–550, December 1989.
@@ -23,9 +24,8 @@ k-distribution can be found, for example, in Liou’s textbook[4].
    distribution method for modelling nongray gaseous absorption, thermal
    emission, and multiple scattering in vertically inhomogeneous
    atmospheres. JGR, 96:9027–9064, May 1991.
--  [4] Wo Malkmus. Random lorentz band model with exponential-tailed s-
-   1 line-intensity distribution function. Journal of the Optical
-   Society of America, 57(3):323–329, 196
+-  [4] An introduction to atmospheric radiation, volume 84. Elsevier,
+   2002.
 
 The cross-section σ(ν) (or opacity) is a non-injective function when
 viewed over a wavenumber region broader than the line width, meaning
