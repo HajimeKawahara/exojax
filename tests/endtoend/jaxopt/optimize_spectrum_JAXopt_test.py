@@ -9,7 +9,7 @@ from exojax.database import contdb
 from exojax.database.api  import MdbExomol
 from exojax.opacity import OpaDirect
 from exojax.opacity import OpaCIA
-from exojax.rt.atmrt import ArtEmisPure
+from exojax.rt import ArtEmisPure
 from exojax.postproc.specop import SopRotation
 from exojax.postproc.specop import SopInstProfile
 from exojax.utils.instfunc import resolution_to_gaussian_std

@@ -5,8 +5,8 @@ from jax import config
 from exojax.test.emulate_mdb import mock_mdb
 from exojax.opacity import OpaPremodit
 from exojax.test.emulate_mdb import mock_wavenumber_grid
-from exojax.rt.atmrt import ArtReflectEmis
-from exojax.rt.atmrt import ArtReflectPure
+from exojax.rt import ArtReflectEmis
+from exojax.rt import ArtReflectPure
 from jax import config
 
 config.update("jax_enable_x64", True)

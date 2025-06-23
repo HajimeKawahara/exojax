@@ -219,7 +219,7 @@ reflection) has been ``ibased`` since v1.5. In our experience,
 
 .. code:: ipython3
 
-    from exojax.rt.atmrt import ArtEmisPure
+    from exojax.rt import ArtEmisPure
     
     art = ArtEmisPure(
         nu_grid=nu_grid,

@@ -44,10 +44,3 @@ def __getattr__(name: str):  # noqa: D401
     # Cache the resolved object so future look-ups are fast
     globals()[name] = obj
     return obj
-
-# --------------------------------------------------------------------
-# Optional: explicit sub-module proxies so that
-# `import exojax.opacity.premodit.api` also works naturally.
-# (All sub-packages already have their own __init__.py,
-# so nothing special is required here.)
-# --------------------------------------------------------------------

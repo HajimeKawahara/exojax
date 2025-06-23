@@ -9,7 +9,7 @@ from exojax.opacity.initspec import init_modit
 from exojax.opacity.modit.modit import xsvector_open_zeroscan
 from exojax.opacity.modit.modit import xsvector_zeroscan
 from exojax.opacity import OpaModit
-from exojax.rt.atmrt import ArtEmisPure
+from exojax.rt import ArtEmisPure
 from exojax.utils.grids import extended_wavenumber_grid
 from exojax.utils.constants import Tref_original
 from exojax.test.emulate_mdb import mock_mdb

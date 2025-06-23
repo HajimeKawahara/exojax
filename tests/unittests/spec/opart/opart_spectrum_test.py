@@ -1,7 +1,6 @@
-"""checks the forward model of the opart spectrum
-"""
+"""checks the forward model of the opart spectrum"""
 
-from exojax.rt.opart import OpartEmisPure
+from exojax.rt import OpartEmisPure
 from exojax.rt.layeropacity import single_layer_optical_depth
 from jax import config
 
@@ -65,7 +64,7 @@ def test_forward_opart():
     print(np.max(residual))
 
     assert np.max(residual) < 0.0056  #  0.005548556139982397 2024/12/07
-    plot = True
+    plot = False
     if plot:
         import matplotlib.pyplot as plt
 

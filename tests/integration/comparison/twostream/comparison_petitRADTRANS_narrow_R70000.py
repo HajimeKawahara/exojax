@@ -11,7 +11,7 @@ from exojax.utils.grids import wavenumber_grid
 from exojax.database.multimol  import MultiOpa
 from exojax.database import contdb 
 from exojax.rt.layeropacity import layer_optical_depth, layer_optical_depth_CIA
-from exojax.rt.atmrt import ArtEmisPure
+from exojax.rt import ArtEmisPure
 
 from petitRADTRANS.radtrans import Radtrans
 from exojax.database import molinfo 

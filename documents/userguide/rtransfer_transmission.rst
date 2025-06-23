@@ -34,7 +34,7 @@ The ``gravity_profile`` instance in the ``ArtTransPure`` class allows for easy c
 
 .. code:: ipython
     
-    from exojax.rt.atmrt import ArtTransPure
+    from exojax.rt import ArtTransPure
     from exojax.utils.constants import RJ
 
     art = ArtTransPure(pressure_top=1.e-8, pressure_btm=1.e2, nlayer=100, integration="simpson") # integration="trapezoid" if you want

@@ -24,7 +24,7 @@ For this example, you might need a good GPU.
     import pandas as pd
     import pkg_resources
     
-    from exojax.rt.atmrt import ArtEmisPure
+    from exojax.rt import ArtEmisPure
     from exojax.database.api  import MdbExomol
     from exojax.opacity import OpaPremodit
     from exojax.database.contdb  import CdbCIA

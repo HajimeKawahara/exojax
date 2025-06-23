@@ -4,7 +4,7 @@ from jax import config
 from exojax.test.emulate_mdb import mock_mdb
 from exojax.opacity import OpaPremodit
 from exojax.test.emulate_mdb import mock_wavenumber_grid
-from exojax.rt.atmrt import ArtEmisScat
+from exojax.rt import ArtEmisScat
 
 
 def generate_spectrum(db, diffmode, rtsolver, fig=False):

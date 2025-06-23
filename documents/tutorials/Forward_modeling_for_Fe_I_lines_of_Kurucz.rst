@@ -56,7 +56,7 @@ Sets a T-P profile and partial pressures
 
 .. code:: ipython3
 
-    from exojax.rt.atmrt import ArtEmisPure
+    from exojax.rt import ArtEmisPure
     nlayer = 100
     T0 = 3000.0  # 10000. #3000. #1295.0 #K
     alpha = 0.1

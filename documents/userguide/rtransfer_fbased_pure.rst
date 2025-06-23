@@ -15,7 +15,7 @@ To specify fbase, it is simply a matter of setting the option as ``rtsolver="fba
 
 .. code:: ipython
     
-    from exojax.rt.atmrt import ArtEmisPure
+    from exojax.rt import ArtEmisPure
 
     art = ArtEmisPure(pressure_top=1.e-8,
                       pressure_btm=1.e2,

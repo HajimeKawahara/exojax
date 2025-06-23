@@ -190,7 +190,7 @@ opa_photo_cia_H2He = OpaCIA(cdbH2He, nu_grid_photo)
 # we calculate the emission without scattering (pure absorption), so we construct `art` using `ArtEmisPure`.
 #
 
-from exojax.rt.atmrt import ArtEmisPure
+from exojax.rt import ArtEmisPure
 
 art = ArtEmisPure(pressure_btm=1.0e2, pressure_top=1.0e-4, nlayer=200)
 # does not set nu_grid because we use two types of nu_grid (for obs and photo)
