@@ -6,8 +6,8 @@ from exojax.rt.rtransfer import (
     rtrun_emis_pureabs_ibased_linsap,
     rtrun_emis_scat_fluxadding_toonhm,
     rtrun_emis_scat_lart_toonhm,
+    initialize_gaussian_quadrature
 )
-
 
 
 class ArtEmisScat(ArtCommon):
@@ -135,7 +135,8 @@ class ArtEmisPure(ArtCommon):
         self.method = "emission_with_pure_absorption"
         self.set_capable_rtsolvers()
         self.validate_rtsolver(rtsolver, nstream)
-
+        self.mus, self.weights = initialize_gaussian_quadrature(self.nstream)
+            
     def set_capable_rtsolvers(self):
         self.rtsolver_dict = {
             "fbased2st": rtrun_emis_pureabs_fbased2st,
@@ -204,7 +205,4 @@ class ArtEmisPure(ArtCommon):
         if self.rtsolver == "fbased2st":
             return rtfunc(dtau, sourcef)
         elif self.rtsolver == "ibased" or self.rtsolver == "ibased_linsap":
-            from exojax.rt.rtransfer import initialize_gaussian_quadrature
-
-            mus, weights = initialize_gaussian_quadrature(self.nstream)
-            return rtfunc(dtau, sourcef, mus, weights)
+            return rtfunc(dtau, sourcef, self.mus, self.weights)
