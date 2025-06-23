@@ -255,7 +255,7 @@ Simpson’s rule as the integration scheme. The default setting is
 
 .. code:: ipython3
 
-    from exojax.rt.atmrt import ArtTransPure
+    from exojax.rt import ArtTransPure
     
     art = ArtTransPure(
         pressure_btm=1.0e1,

@@ -57,7 +57,7 @@ def test_pressure_scale_height_earth():
 
 def test_atmospheric_scale_height_for_isothermal_with_analytic():
     from exojax.utils.grids import wavenumber_grid
-    from exojax.rt.atmrt import ArtTransPure
+    from exojax.rt import ArtTransPure
     from jax import config
 
     config.update("jax_enable_x64", True)

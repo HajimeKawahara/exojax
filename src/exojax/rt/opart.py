@@ -1,7 +1,7 @@
 import jax.numpy as jnp
 from jax.lax import scan
 
-from exojax.rt.atmrt import ArtCommon
+from exojax.rt.common import ArtCommon
 
 # from exojax.rt.rtlayer import fluxsum_vector  # same cost as fluxsum_scan
 from exojax.rt.planck import piB

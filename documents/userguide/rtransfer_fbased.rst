@@ -53,7 +53,7 @@ Here is an example of ``ArtReflectPure``:
 .. code:: python
 
     import jax.numpy as jnp
-    from exojax.rt.atmrt import ArtReflectPure
+    from exojax.rt import ArtReflectPure
     
     art = ArtReflectPure(pressure_top=1.e-5,
                          pressure_btm=1.e0,
