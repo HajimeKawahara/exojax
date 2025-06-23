@@ -1,13 +1,5 @@
 from __future__ import annotations  # ← must be the first **statement**
 
-"""Atmospheric Radiative Transfer (art) class
-
-Notes:
-    The opacity is computed in art because it uses planet physical quantities
-    such as gravity, mmr. "run" method computes a spectrum.
-
-"""
-
 """
 Deprecated shim: the real classes are in `exojax.rt`.
 Kept only so that legacy code `from exojax.rt import ArtEmisPure`

@@ -135,7 +135,7 @@ instead.)
 
 .. code:: ipython3
 
-    from exojax.rt.opart import OpartEmisPure
+    from exojax.rt import OpartEmisPure
     
     opalayer = OpaLayer(Nnus=150000)
     opart = OpartEmisPure(opalayer, pressure_top=1.0e-5, pressure_btm=1.0e1, nlayer=200, nstream=8)

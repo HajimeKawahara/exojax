@@ -22,6 +22,10 @@ _ALIAS: Final[dict[str, str]] = {
     "ArtAbsPure": "exojax.rt.reflect:ArtAbsPure",
     "ArtReflectPure": "exojax.rt.reflect:ArtReflectPure",
     "ArtReflectEmis": "exojax.rt.reflect:ArtReflectEmis",
+    "OpartEmisPure": "exojax.rt.emis:OpartEmisPure",
+    "OpartEmisScat": "exojax.rt.emis:OpartEmisScat",
+    "OpartReflectPure": "exojax.rt.reflect:OpartReflectPure",
+    "OpartReflectEmis": "exojax.rt.reflect:OpartReflectEmis",
 }
 
 __all__ = list(_ALIAS)          # tab completion & help()

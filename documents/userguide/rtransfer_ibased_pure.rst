@@ -72,7 +72,7 @@ Here is an example. The user needs to define a class that returns the optical de
 .. code:: ipython
     
     from exojax.opacity import OpaPremodit
-    from exojax.rt.opart import OpartEmisPure
+    from exojax.rt import OpartEmisPure
     from exojax.rt.layeropacity import single_layer_optical_depth
     from exojax.utils.grids import wavenumber_grid
     from exojax.database.api  import MdbExomol

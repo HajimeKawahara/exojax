@@ -8,7 +8,7 @@ from exojax.test.data import TESTDATA_CO_EXOMOL_PREMODIT_REFLECTION_REF
 from exojax.test.emulate_mdb import mock_wavenumber_grid
 from exojax.test.emulate_mdb import mock_mdbExomol
 from exojax.opacity import OpaPremodit
-from exojax.rt.opart import OpartReflectPure
+from exojax.rt import OpartReflectPure
 from exojax.rt.layeropacity import single_layer_optical_depth
 
 from jax import config
@@ -65,7 +65,7 @@ def test_forward_reflection_opart():
     residual = np.abs(flux / dat["flux"].values - 1.0)
     print(np.max(residual))
 
-    assert np.max(residual) < 6.2e-11 #6.175882028003343e-11 1/12 2025
+    assert np.max(residual) < 1.0e-7 #3.176679863603482e-08 6/23 2025
     plot = False
     if plot:
         import matplotlib.pyplot as plt

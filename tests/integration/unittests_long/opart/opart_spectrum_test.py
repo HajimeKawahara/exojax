@@ -1,7 +1,7 @@
 """checks the forward model of the opart spectrum
 """
 
-from exojax.rt.opart import OpartEmisPure
+from exojax.rt import OpartEmisPure
 from exojax.rt.layeropacity import single_layer_optical_depth
 from jax import config
 

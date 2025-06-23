@@ -7,7 +7,7 @@ from exojax.test.data import TESTDATA_CO_EXOMOL_PREMODIT_REFLECTION_REF
 from exojax.test.emulate_mdb import mock_wavenumber_grid
 from exojax.test.emulate_mdb import mock_mdbExomol
 from exojax.opacity import OpaPremodit
-from exojax.rt.opart import OpartReflectEmis
+from exojax.rt import OpartReflectEmis
 from exojax.rt.layeropacity import single_layer_optical_depth
 
 from jax import config
