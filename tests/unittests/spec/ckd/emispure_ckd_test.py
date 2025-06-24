@@ -39,7 +39,7 @@ class TestArtEmisPureCKD:
 
         # Initialize OpaCKD with small parameters for testing
         self.opa_ckd = OpaCKD(
-            self.base_opa, Ng=32, band_width=4.0
+            self.base_opa, Ng=32, band_width=0.5
         )  # Small band width for testing
 
     def test_run_ckd(self):
@@ -88,10 +88,16 @@ class TestArtEmisPureCKD:
         """
         # if plotting needed, uncomment below
         import matplotlib.pyplot as plt
-        plt.plot(self.nu_grid, F0, label="F0 (Premodit)")
+        plt.plot(self.nu_grid, F0, label="F0 (LBL by Premodit)", alpha=0.5)
         plt.plot(self.opa_ckd.nu_bands, F0_ckd, label="F0 (CKD)")
-        plt.plot(self.opa_ckd.nu_bands, flux_average_reference, label="F0 (Reference)")
+        plt.plot(self.opa_ckd.nu_bands, flux_average_reference, label="F0 (mean of LBL)")
+        plt.legend()
         plt.xlabel("Wavenumber (cm^-1)")
+        plt.ylabel("absolute Flux")
+        resolution = self.opa_ckd.nu_bands[0]/(band_edges[0, 1] - band_edges[0, 0])
+        print("Resolution:", resolution)
+        plt.title("CKD Spectrum Comparison (Resolution: {:.2f}, error: {:.4f})".format(resolution, res))
+        plt.savefig("ckd_test_spectrum"+str(int(resolution))+".png")
         plt.show()
         """
 
