@@ -57,7 +57,7 @@ class TestArtTransPureCKD:
                                        self.opa_ckd.ckd_info.weights, self.opa_ckd.nu_bands)
 
         res = np.sqrt(np.sum((transit_ckd - transit_avg)**2)/len(transit_ckd))/np.mean(transit_avg)
-        assert res < 0.01
+        assert res < 0.0002 #0.00011118885289798786 2025/6/24
 
         """
         # if plotting needed, uncomment below
