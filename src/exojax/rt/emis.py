@@ -7,7 +7,7 @@ from exojax.rt.rtransfer import (
     rtrun_emis_scat_fluxadding_toonhm,
     rtrun_emis_scat_lart_toonhm,
     initialize_gaussian_quadrature,
-    setrt_toonhm
+    setrt_toonhm,
 )
 from exojax.rt.rtlayer import fluxsum_scan
 from exojax.rt.common import ArtCommon
@@ -122,6 +122,28 @@ class ArtEmisPure(ArtCommon):
             return rtfunc(dtau, sourcef)
         elif self.rtsolver == "ibased" or self.rtsolver == "ibased_linsap":
             return rtfunc(dtau, sourcef, self.mus, self.weights)
+
+    def run_ckd(self, dtau_ckd, temperature, weights, nu_bands):
+        """run radiative transfer for CKD
+
+        Args:
+            dtau_ckd (3D array): optical depth matrix, dtau  (N_layer, Ng, Nbands)
+            temperature (1D array): temperature profile (Nlayer,)
+            weights (1D array): weights for the Gaussian quadrature (Ng,)
+            nu_bands (1D array): wavenumber grid for the CKD, (Nbands)
+
+        Returns:
+            1D array: emission spectrum (Nbands,)
+        """
+
+        sourcef = piBarr(temperature, nu_bands)
+        nlayer, Ng, Nbands = dtau_ckd.shape
+        flux_ckd = rtrun_emis_pureabs_ibased(
+            dtau_ckd.reshape((nlayer, Ng * Nbands)), sourcef, self.mus, self.weights
+        )
+        flux_ckd = flux_ckd.reshape((Ng, Nbands))
+        # integrate over the Gaussian quadrature
+        return jnp.einsum("n,nm->m", weights, flux_ckd)
 
 
 class OpartEmisPure(ArtCommon):

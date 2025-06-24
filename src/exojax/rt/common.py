@@ -127,8 +127,9 @@ class ArtCommon:
         """opacity profile (delta tau) from cross section matrix or vector, molecular line/Rayleigh scattering
 
         Args:
-            xs (2D array/1D array): cross section matrix i.e. xsmatrix (Nlayer, N_wavenumber) or vector i.e. xsvector (N_wavenumber)
-            mixing_ratio (1D array): mass mixing ratio, Nlayer, (or volume mixing ratio profile)
+            xs (3D array/2D array): cross section matrix/ cross section tensor for CKD 
+                i.e. xsmatrix (Nlayer, N_wavenumber) or xstensor_ckd (Nlayer, Ng, Nbands) 
+            mixing_ratio (1D array): mass mixing ratio (Nlayer,), Nlayer, (or volume mixing ratio profile)
             molmass (float): molecular mass (or mean molecular weight)
             gravity (float/1D profile): constant or 1d profile of gravity in cgs
 
@@ -138,6 +139,8 @@ class ArtCommon:
         return layer_optical_depth(
             self.dParr, jnp.abs(xs), mixing_ratio, molmass, gravity
         )
+    
+    
 
     def opacity_profile_cloud_lognormal(
         self,
