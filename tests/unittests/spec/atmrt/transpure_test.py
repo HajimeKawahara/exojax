@@ -65,3 +65,6 @@ def test_consistency_ArtTransPure(db, diffmode, fig=False):
     
     print(f"Max relative difference: {max_relative_diff:.2e}")
     assert max_relative_diff < 1e-4, f"Transmission differs from reference by {max_relative_diff:.2e}"
+
+if __name__ == "__main__":
+    test_consistency_ArtTransPure("exomol", 1, fig=False)

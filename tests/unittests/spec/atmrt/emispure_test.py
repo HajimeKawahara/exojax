@@ -77,7 +77,7 @@ def test_rt_for_single_broadening_parameters(db, diffmode, fig=False):
 
 
 @pytest.mark.parametrize("db, diffmode", [("exomol", 1)])
-def test_rt(db, diffmode, fig=False):
+def test_consistency_ArtEmisPure(db, diffmode, fig=False):
     """compares PreMODIT with MODIT, so difference is very small, 0.005
 
     Args:
