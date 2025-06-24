@@ -74,6 +74,13 @@ class TestArtEmisPureCKD:
         dtau_ckd = self.base_art.opacity_profile_xs_ckd(xs_ckd, self.mmr_arr, self.base_opa.mdb.molmass, self.gravity) #shape is (100,16,5)
         F0_ckd = self.base_art.run_ckd(dtau_ckd, self.Tarr, self.opa_ckd.ckd_info.weights, self.opa_ckd.nu_bands)
 
+        import matplotlib.pyplot as plt
+        plt.plot(self.nu_grid, F0, label="F0 (Premodit)")
+        plt.plot(self.opa_ckd.nu_bands, F0_ckd, label="F0 (CKD)")
+        plt.xlabel("Wavenumber (cm^-1)")
+        plt.show()
+
+
 if __name__ == "__main__":
     tt = TestArtEmisPureCKD()
     tt.setup_method()
