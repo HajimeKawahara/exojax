@@ -136,8 +136,8 @@ class ArtEmisPure(ArtCommon):
             1D array: emission spectrum (Nbands,)
         """
 
-        sourcef = piBarr(temperature, nu_bands)
         nlayer, Ng, Nbands = dtau_ckd.shape
+        sourcef = piBarr(temperature, jnp.tile(nu_bands, Ng))
         flux_ckd = rtrun_emis_pureabs_ibased(
             dtau_ckd.reshape((nlayer, Ng * Nbands)), sourcef, self.mus, self.weights
         )

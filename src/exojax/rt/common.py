@@ -11,6 +11,7 @@ from exojax.atm.atmprof import (
 from exojax.atm.idealgas import number_density
 from exojax.rt.layeropacity import (
     layer_optical_depth,
+    layer_optical_depth_ckd,
     layer_optical_depth_clouds_lognormal,
 )
 from exojax.utils.constants import logkB, logm_ucgs
@@ -138,6 +139,22 @@ class ArtCommon:
         """
         return layer_optical_depth(
             self.dParr, jnp.abs(xs), mixing_ratio, molmass, gravity
+        )
+
+    def opacity_profile_xs_ckd(self, xstensor_ckd, mixing_ratio, molmass, gravity):
+        """Compute opacity profile from CKD cross section tensor.
+
+        Args:
+            xstensor_ckd (3D array): CKD cross section tensor (Nlayer, Ng, Nbands)
+            mixing_ratio (1D array): mass mixing ratio (Nlayer,)
+            molmass (float): molecular mass
+            gravity (float/1D profile): gravity in cgs
+
+        Returns:
+            3D array: CKD optical depth tensor (Nlayer, Ng, Nbands)
+        """
+        return layer_optical_depth_ckd(
+            self.dParr, jnp.abs(xstensor_ckd), mixing_ratio, molmass, gravity
         )
     
     
