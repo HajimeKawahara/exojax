@@ -115,3 +115,57 @@ class ArtTransPure(ArtCommon):
                 normalized_radius_lower,
                 normalized_height,
             )
+
+    def run_ckd(self, dtau_ckd, temperature, mean_molecular_weight, radius_btm, 
+                gravity_btm, weights, nu_bands):
+        """run radiative transfer for CKD transmission
+        
+        Args:
+            dtau_ckd (3D array): optical depth tensor, dtau (N_layer, Ng, Nbands)
+            temperature (1D array): temperature profile (Nlayer)
+            mean_molecular_weight (1D array): mean molecular weight profile (Nlayer)
+            radius_btm (float): radius (cm) at the lower boundary of the bottom layer
+            gravity_btm (float): gravity (cm/s2) at the lower boundary of the bottom layer
+            weights (1D array): weights for the Gaussian quadrature (Ng,)
+            nu_bands (1D array): wavenumber grid for the CKD, (Nbands)
+            
+        Returns:
+            1D array: transit squared radius normalized by radius_btm**2 (Nbands,)
+        """
+        import jax.numpy as jnp
+        
+        nlayer, Ng, Nbands = dtau_ckd.shape
+        
+        # Compute atmosphere geometry once (independent of frequency)
+        normalized_height, normalized_radius_lower = self.atmosphere_height(
+            temperature, mean_molecular_weight, radius_btm, gravity_btm
+        )
+        normalized_radius_top = normalized_radius_lower[0] + normalized_height[0]
+        
+        # Reshape dtau_ckd to 2D for chord calculations
+        dtau_2d = dtau_ckd.reshape((nlayer, Ng * Nbands))
+        
+        # Compute chord optical depths
+        cgm = chord_geometric_matrix_lower(normalized_height, normalized_radius_lower)
+        dtau_chord_lower = chord_optical_depth(cgm, dtau_2d)
+        
+        func = self.integration_dict[self.integration]
+        if self.integration == "trapezoid":
+            transit_2d = func(
+                dtau_chord_lower, normalized_radius_lower, normalized_radius_top
+            )
+        elif self.integration == "simpson":
+            cgm_midpoint = chord_geometric_matrix(
+                normalized_height, normalized_radius_lower
+            )
+            dtau_chord_midpoint = chord_optical_depth(cgm_midpoint, dtau_2d)
+            transit_2d = func(
+                dtau_chord_midpoint,
+                dtau_chord_lower,
+                normalized_radius_lower,
+                normalized_height,
+            )
+        
+        # Reshape back to (Ng, Nbands) and integrate over g-ordinates
+        transit_ckd = transit_2d.reshape((Ng, Nbands))
+        return jnp.einsum("n,nm->m", weights, transit_ckd)
