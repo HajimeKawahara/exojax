@@ -117,7 +117,7 @@ class ArtTransPure(ArtCommon):
             )
 
     def run_ckd(self, dtau_ckd, temperature, mean_molecular_weight, radius_btm, 
-                gravity_btm, weights, nu_bands):
+                gravity_btm, weights):
         """run radiative transfer for CKD transmission
         
         Args:
@@ -127,7 +127,6 @@ class ArtTransPure(ArtCommon):
             radius_btm (float): radius (cm) at the lower boundary of the bottom layer
             gravity_btm (float): gravity (cm/s2) at the lower boundary of the bottom layer
             weights (1D array): weights for the Gaussian quadrature (Ng,)
-            nu_bands (1D array): wavenumber grid for the CKD, (Nbands)
             
         Returns:
             1D array: transit squared radius normalized by radius_btm**2 (Nbands,)

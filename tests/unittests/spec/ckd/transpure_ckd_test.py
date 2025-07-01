@@ -73,7 +73,7 @@ class TestArtTransPureCKD:
         xs_ckd = self.opa_ckd.xstensor_ckd(self.Tarr, self.base_art.pressure)
         dtau_ckd = self.base_art.opacity_profile_xs_ckd(xs_ckd, self.mmr_arr, self.base_opa.mdb.molmass, self.gravity)
         F0_ckd = self.base_art.run_ckd(dtau_ckd, self.Tarr, self.mean_molecular_weight, self.radius_btm, self.gravity,
-                                       self.opa_ckd.ckd_info.weights, self.opa_ckd.nu_bands)
+                                       self.opa_ckd.ckd_info.weights)
 
         res = np.sqrt(np.sum((F0_ckd - transit_avg)**2)/len(F0_ckd))/np.mean(transit_avg)
         assert res < 0.05
