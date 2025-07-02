@@ -84,9 +84,8 @@ class TestPrecomputeTables:
         Tin = 1000.0  # Temperature between grid points (990, 1010)
         Pin = 0.033   # Pressure between grid points (0.032, 0.034)
         
-        # Get CKD cross-section vector and reshape to (Ng, nnu_bands) format
-        xsv = self.opa_ckd.xsvector(Tin, Pin)
-        xsv_folding = xsv.reshape(Ng, nnu_bands)  # g-ordinates × bands
+        # Get CKD cross-section array with shape (Ng, nnu_bands)
+        xsv_folding = self.opa_ckd.xsarray_ckd(Tin, Pin)  # g-ordinates × bands
         
         # Optical depth parameter for transmission calculation
         L = 1.0e22  # Large value to test in optically thick regime
@@ -123,8 +122,8 @@ class TestPrecomputeTables:
         # Assert that CKD approximation is accurate to within 0.1%
         assert diff < 0.001
         
-    def test_xsmatrix_method(self):
-        """Test xsmatrix method with paired (T,P) values."""
+    def test_xstensor_ckd_method(self):
+        """Test xstensor_ckd method with paired (T,P) values."""
         # Pre-compute CKD tables
         self.opa_ckd.precompute_tables(self.T_grid, self.P_grid)
         
@@ -132,27 +131,26 @@ class TestPrecomputeTables:
         T_test = jnp.array([995.0, 1005.0, 1000.0])  # 3 temperature values
         P_test = jnp.array([0.033, 0.034, 0.0325])   # 3 corresponding pressure values
         
-        # Call xsmatrix
-        xsmatrix_result = self.opa_ckd.xsmatrix(T_test, P_test)
+        # Call xstensor_ckd
+        xstensor_result = self.opa_ckd.xstensor_ckd(T_test, P_test)
         
-        # Check output shape
+        # Check output shape - 3D (Nlayer, Ng, nnu_bands)
         Nlayer = len(T_test)
-        expected_cols = self.opa_ckd.Ng * len(self.opa_ckd.nu_bands)
-        expected_shape = (Nlayer, expected_cols)
-        assert xsmatrix_result.shape == expected_shape
+        expected_shape = (Nlayer, self.opa_ckd.Ng, len(self.opa_ckd.nu_bands))
+        assert xstensor_result.shape == expected_shape
         
-        # Verify consistency with xsvector for each (T,P) pair
+        # Verify consistency with xsarray_ckd for each (T,P) pair
         for i in range(len(T_test)):
-            xsv_individual = self.opa_ckd.xsvector(T_test[i], P_test[i])
-            xsv_from_matrix = xsmatrix_result[i, :]
-            assert jnp.allclose(xsv_individual, xsv_from_matrix, rtol=1e-10)
+            xsarray_individual = self.opa_ckd.xsarray_ckd(T_test[i], P_test[i])
+            xsarray_from_tensor = xstensor_result[i, :, :]
+            assert jnp.allclose(xsarray_individual, xsarray_from_tensor, rtol=1e-10)
 
-    def test_xsmatrix_average_transmission(self):
-        """Test xsmatrix batch transmission calculation accuracy against reference.
+    def test_xstensor_ckd_average_transmission(self):
+        """Test xstensor_ckd batch transmission calculation accuracy against reference.
         
-        This test validates that xsmatrix produces accurate transmission results
+        This test validates that xstensor_ckd produces accurate transmission results
         when used for multiple atmospheric layers, comparing against both individual
-        xsvector calls and direct fine-grid averaging for each layer.
+        xsarray_ckd calls and direct fine-grid averaging for each layer.
         """
         # Pre-compute CKD tables for interpolation
         self.opa_ckd.precompute_tables(self.T_grid, self.P_grid)
@@ -166,12 +164,12 @@ class TestPrecomputeTables:
         # Optical depth parameter for transmission calculation
         L = 1.0e22  # Large value to test in optically thick regime
         
-        # === METHOD 1: Batch xsmatrix calculation ===
-        # Get cross-section matrix for all layers at once
-        xsmatrix_result = self.opa_ckd.xsmatrix(T_layers, P_layers)  # Shape: (3, Ng*nnu_bands)
+        # === METHOD 1: Batch xstensor_ckd calculation ===
+        # Get cross-section tensor for all layers at once
+        xstensor_result = self.opa_ckd.xstensor_ckd(T_layers, P_layers)  # Shape: (3, Ng, nnu_bands)
         
-        # Reshape to (Nlayers, Ng, nnu_bands) for transmission calculation
-        xsmatrix_folded = xsmatrix_result.reshape(len(T_layers), Ng, nnu_bands)
+        # No reshaping needed - already in correct format
+        xstensor_folded = xstensor_result
         
         # Extract CKD quadrature information
         weights = self.opa_ckd.ckd_info.weights      # Gauss-Legendre weights
@@ -179,7 +177,7 @@ class TestPrecomputeTables:
         
         # Compute batch transmission using CKD quadrature for each layer
         # For each layer and band: ∫ exp(-σ*L) dg ≈ Σ(w_i * exp(-σ_i*L))
-        ckd_batch = jnp.einsum("n,lnm->lm", weights, jnp.exp(-xsmatrix_folded * L))
+        ckd_batch = jnp.einsum("n,lnm->lm", weights, jnp.exp(-xstensor_folded * L))
         
         # Compare against direct fine-grid averaging for each layer
         max_error_across_layers = 0.0
@@ -224,10 +222,10 @@ if __name__ == "__main__":
     test_suite.test_average_transmission()
     print("✓ Integration test passed")
 
-    test_suite.test_xsmatrix_method()
-    print("✓ xsmatrix test passed")
+    test_suite.test_xstensor_ckd_method()
+    print("✓ xstensor_ckd test passed")
 
-    test_suite.test_xsmatrix_average_transmission()
-    print("✓ xsmatrix transmission test passed")
+    test_suite.test_xstensor_ckd_average_transmission()
+    print("✓ xstensor_ckd transmission test passed")
 
     print("✅ All tests passed!")

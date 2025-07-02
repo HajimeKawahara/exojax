@@ -257,46 +257,45 @@ class OpaCKD(OpaCalc):
             self.ckd_info.log_kggrid, self.ckd_info.T_grid, self.ckd_info.P_grid, T, P
         )
 
-    def xsvector(self, T: float, P: float) -> jnp.ndarray:
-        """Compute cross section vector using CKD interpolation.
+    def xsarray_ckd(self, T: float, P: float) -> jnp.ndarray:
+        """Compute CKD cross section array using interpolation.
 
-        Interpolates pre-computed CKD tables at given T,P and returns a 1D vector
-        by flattening the (nu_bands, g_points) dimensions.
+        Interpolates pre-computed CKD tables at given T,P and returns the 2D array
+        with shape (Ng, nnu_bands) containing g-ordinates and spectral bands.
 
         Args:
             T: Temperature in Kelvin
             P: Pressure in bar
 
         Returns:
-            Cross section vector in cm², shape (Ng * nnu_bands,)
-            Flattened as: [band0_g0, band0_g1, ..., band0_gN, band1_g0, ...]
-
-        Notes:
-            To fold the xsvector, run xsvector.reshape(Ng, nnu_bands).
+            Cross section array in cm², shape (Ng, nnu_bands)
+            First dimension: g-ordinates (quadrature points)
+            Second dimension: spectral bands
 
         """
         log_k_interp = self._interpolate_log_k(T, P)  # Shape: (Ng, nnu_bands)
-        log_k_flat = log_k_interp.flatten()
-        return jnp.exp(log_k_flat)
+        return jnp.exp(log_k_interp)
 
-    def xsmatrix(
+    def xstensor_ckd(
         self,
         T_array: Union[np.ndarray, jnp.ndarray],
         P_array: Union[np.ndarray, jnp.ndarray],
     ) -> jnp.ndarray:
-        """Compute cross section matrix using CKD interpolation.
+        """Compute CKD cross section tensor using interpolation.
 
         Computes CKD cross-sections for paired (T,P) values: (T1,P1), (T2,P2), ...
-        This follows the same interface as OpaPremodit.xsmatrix.
+        Returns a 3D tensor with layers, g-ordinates, and spectral bands.
 
         Args:
             T_array: Temperature array in Kelvin, shape (Nlayer,)
             P_array: Pressure array in bar, shape (Nlayer,)
 
         Returns:
-            Cross section matrix in cm², shape (Nlayer, Ng * nnu_bands)
-            Each row contains the CKD cross-section vector for the corresponding (T,P) pair.
+            Cross section tensor in cm², shape (Nlayer, Ng, nnu_bands)
+            First dimension: atmospheric layers
+            Second dimension: g-ordinates (quadrature points)
+            Third dimension: spectral bands
 
         """
-        xsvector_vmap = vmap(self.xsvector, in_axes=(0, 0))
-        return xsvector_vmap(T_array, P_array)
+        xsarray_vmap = vmap(self.xsarray_ckd, in_axes=(0, 0))
+        return xsarray_vmap(T_array, P_array)
