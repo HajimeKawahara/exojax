@@ -68,7 +68,7 @@ class TestArtAbsPureCKD:
         incoming_flux_ckd = np.zeros(len(self.opa_ckd.nu_bands))
         
         for band_idx in range(len(self.opa_ckd.nu_bands)):
-            mask = (band_edges[band_idx, 0] <= self.nu_grid) * (
+            mask = (band_edges[band_idx, 0] <= self.nu_grid) & (
                 self.nu_grid < band_edges[band_idx, 1]
             )
             incoming_flux_ckd[band_idx] = np.mean(self.incoming_flux[mask])
