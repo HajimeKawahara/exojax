@@ -42,7 +42,7 @@ class TestArtTransPureCKD:
         transit_avg = []
         band_edges = self.opa_ckd.band_edges
         for band_idx in range(len(self.opa_ckd.nu_bands)):
-            mask = (band_edges[band_idx, 0] <= self.nu_grid) * (self.nu_grid < band_edges[band_idx, 1])
+            mask = (band_edges[band_idx, 0] <= self.nu_grid) & (self.nu_grid < band_edges[band_idx, 1])
             transit_avg.append(np.mean(transit_lbl[mask]))
         transit_avg = np.array(transit_avg)
 
