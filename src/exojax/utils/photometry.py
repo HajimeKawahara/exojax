@@ -68,6 +68,8 @@ def download_filter_from_svo(filter_id):
     print("You can check the available filters at", url_svo_filter())
     data = SvoFps.get_transmission_data(filter_id)
     unit = str(data["Wavelength"].unit)
+    if unit == "Angstrom": # for astropy >= 7.1.0
+        unit = "AA"
     wl_ref = np.array(data["Wavelength"])
     nu_ref, transmission_ref = wav2nu(
         wl_ref, unit=unit, values=np.array(data["Transmission"])
