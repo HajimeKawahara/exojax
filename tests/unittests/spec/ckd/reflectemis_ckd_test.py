@@ -73,7 +73,7 @@ class TestArtReflectEmisCKD:
         
         for band_idx in range(len(self.opa_ckd.nu_bands)):
             # Create mask for frequencies within this band
-            mask = (band_edges[band_idx, 0] <= self.nu_grid) * (
+            mask = (band_edges[band_idx, 0] <= self.nu_grid) & (
                 self.nu_grid < band_edges[band_idx, 1]
             )
             # Average scattering parameters over the band
