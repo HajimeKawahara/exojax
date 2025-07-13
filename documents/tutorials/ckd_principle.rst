@@ -174,7 +174,7 @@ the corresponding ν space in the domain.
 
 .. parsed-literal::
 
-    uniqidx: 100%|██████████| 3/3 [00:00<00:00, 33465.19it/s]
+    uniqidx: 100%|██████████| 3/3 [00:00<00:00, 28926.23it/s]
 
 .. parsed-literal::
 
@@ -311,7 +311,7 @@ CKD module. Using ``OpaCKD``, we will demonstrate how CKD works.
 .. code:: ipython3
 
     ggrid = opa_ckd.ckd_info.ggrid
-    xsckd = opa_ckd.xsvector(1000.0, 0.01)
+    xsckd = opa_ckd.xsarray_ckd(1000.0, 0.01)
     
     # For fair comparison, interpolate result['k_g'] to the same g-grid as CKD
     
@@ -325,8 +325,6 @@ CKD module. Using ``OpaCKD``, we will demonstrate how CKD works.
     plt.title('Comparison: Full resolution vs CKD compressed representation')
     plt.tight_layout()
     plt.show()
-    
-
 
 
 

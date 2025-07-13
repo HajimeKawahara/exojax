@@ -273,8 +273,10 @@ def interpolate_log_k_2d(
         # Apply to each P column: (nT, nP) -> (nP,)
         log_k_T = vmap(interp_over_T, in_axes=1)(log_k_2d_slice)
         
-        # Then interpolate over P dimension: (nP,) -> scalar
-        log_k_TP = jnp.interp(P, P_grid, log_k_T)
+        # Then interpolate over P dimension in log scale: (nP,) -> scalar
+        # Use log scale for pressure due to wide dynamic range
+        log_k_TP = jnp.interp(jnp.log(P), jnp.log(P_grid), log_k_T)
+        
         return log_k_TP
     
     # Apply vectorized interpolation over (Ng, nnu_bands) dimensions

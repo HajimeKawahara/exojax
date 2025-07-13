@@ -7,7 +7,7 @@ from exojax.rt.rtransfer import (
     rtrun_emis_scat_fluxadding_toonhm,
     rtrun_emis_scat_lart_toonhm,
     initialize_gaussian_quadrature,
-    setrt_toonhm
+    setrt_toonhm,
 )
 from exojax.rt.rtlayer import fluxsum_scan
 from exojax.rt.common import ArtCommon
@@ -122,6 +122,31 @@ class ArtEmisPure(ArtCommon):
             return rtfunc(dtau, sourcef)
         elif self.rtsolver == "ibased" or self.rtsolver == "ibased_linsap":
             return rtfunc(dtau, sourcef, self.mus, self.weights)
+
+    def run_ckd(self, dtau_ckd, temperature, weights, nu_bands):
+        """run radiative transfer for CKD
+
+        Args:
+            dtau_ckd (3D array): optical depth matrix, dtau  (N_layer, Ng, Nbands)
+            temperature (1D array): temperature profile (Nlayer,)
+            weights (1D array): weights for the Gaussian quadrature (Ng,)
+            nu_bands (1D array): wavenumber grid for the CKD, (Nbands)
+
+        Returns:
+            1D array: emission spectrum (Nbands,)
+        """
+
+        nlayer, Ng, Nbands = dtau_ckd.shape
+        #sourcef = piBarr(temperature, jnp.tile(nu_bands, Ng))
+        sourcef = jnp.tile(piBarr(temperature, nu_bands), Ng)
+
+
+        flux_ckd = rtrun_emis_pureabs_ibased(
+            dtau_ckd.reshape((nlayer, Ng * Nbands)), sourcef, self.mus, self.weights
+        )
+        flux_ckd = flux_ckd.reshape((Ng, Nbands))
+        # integrate over the Gaussian quadrature
+        return jnp.einsum("n,nm->m", weights, flux_ckd)
 
 
 class OpartEmisPure(ArtCommon):
@@ -316,6 +341,46 @@ class ArtEmisScat(ArtCommon):
             raise ValueError("Unknown radiative transfer solver (rtsolver).")
 
         return spectrum
+
+    def run_ckd(self, dtau_ckd, single_scattering_albedo, asymmetric_parameter, 
+                temperature, weights, nu_bands):
+        """run radiative transfer for CKD with scattering
+        
+        Args:
+            dtau_ckd (3D array): optical depth tensor, dtau (N_layer, Ng, Nbands)
+            single_scattering_albedo (2D array): single scattering albedo (N_layer, Nbands)
+            asymmetric_parameter (2D array): asymmetric parameter (N_layer, Nbands)
+            temperature (1D array): temperature profile (Nlayer,)
+            weights (1D array): weights for the Gaussian quadrature (Ng,)
+            nu_bands (1D array): wavenumber grid for the CKD, (Nbands)
+            
+        Returns:
+            1D array: emission spectrum (Nbands,)
+        """
+        nlayer, Ng, Nbands = dtau_ckd.shape
+        
+        # Create source function and tile scattering parameters to match dtau_ckd shape
+        sourcef = jnp.tile(piBarr(temperature, nu_bands), Ng)
+        
+        # Reshape 3D dtau to 2D and tile 2D scattering parameters to match
+        dtau_2d = dtau_ckd.reshape((nlayer, Ng * Nbands))
+        ssa_2d = jnp.tile(single_scattering_albedo, Ng)
+        g_2d = jnp.tile(asymmetric_parameter, Ng)
+        
+        if self.rtsolver == "lart_toon_hemispheric_mean":
+            (spectrum, _, _, _, _, _) = rtrun_emis_scat_lart_toonhm(
+                dtau_2d, ssa_2d, g_2d, sourcef
+            )
+        elif self.rtsolver == "fluxadding_toon_hemispheric_mean":
+            spectrum = rtrun_emis_scat_fluxadding_toonhm(
+                dtau_2d, ssa_2d, g_2d, sourcef
+            )
+        else:
+            raise ValueError(f"Unknown rtsolver for CKD: {self.rtsolver}")
+            
+        # Reshape back to (Ng, Nbands) and integrate over g-ordinates
+        flux_ckd = spectrum.reshape((Ng, Nbands))
+        return jnp.einsum("n,nm->m", weights, flux_ckd)
 
 
 class OpartEmisScat(ArtCommon):

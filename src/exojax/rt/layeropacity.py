@@ -45,6 +45,23 @@ def layer_optical_depth(dParr, xsmatrix, mixing_ratio, mass, gravity):
     return opacity_factor * xsmatrix * dParr[:, None] * mixing_ratio[:, None] / (mass * gravity)
 
 
+def layer_optical_depth_ckd(dParr, xstensor_ckd, mixing_ratio, mass, gravity):
+    """dtau tensor from the CKD cross section tensor for correlated-k distribution.
+
+    Args:
+        dParr (array): delta pressure profile (bar) [N_layer]
+        xstensor_ckd (3D array): CKD cross section tensor (cm2) [N_layer, N_g, N_bands]
+        mixing_ratio (array): volume mixing ratio (VMR) or mass mixing ratio (MMR) [N_layer]
+        mass: mean molecular weight for VMR or molecular mass for MMR
+        gravity: gravity (cm/s2)
+
+    Returns:
+        3D array: optical depth tensor, dtau_ckd [N_layer, N_g, N_bands]
+    """
+
+    return opacity_factor * xstensor_ckd * dParr[:, None, None] * mixing_ratio[:, None, None] / (mass * gravity)
+
+
 def single_layer_optical_depth_CIA(
     temperature, pressure, dpressure, vmr1, vmr2, mmw, g, logacia_vector
 ):

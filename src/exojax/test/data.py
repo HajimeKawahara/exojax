@@ -46,6 +46,9 @@ TESTDATA_VALD_MODIT_EMISSION_REF = "modit_rt_test_vald_ref.txt"
 # reflection spectra references (only ExoMol)
 TESTDATA_CO_EXOMOL_PREMODIT_REFLECTION_REF = "premodit_reflect_test_ref.txt"
 
+# transmission spectra references
+TESTDATA_CO_EXOMOL_PREMODIT_TRANSMISSION_REF = "premodit_trans_test_ref.txt"
+
 
 #sample spectra
 SAMPLE_SPECTRA_CO = "spectrum_co.txt"

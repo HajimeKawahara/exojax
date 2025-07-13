@@ -64,6 +64,54 @@ class ArtAbsPure(ArtCommon):
 
         return trans * incoming_flux
 
+    def run_ckd(self, dtau_ckd, pressure_surface, incoming_flux, mu_in, mu_out, weights):
+        """run radiative transfer for CKD absorption
+        
+        Args:
+            dtau_ckd (3D array): optical depth tensor, dtau (N_layer, Ng, Nbands)
+            pressure_surface (float): pressure at the surface (bar)
+            incoming_flux (1D array): incoming flux (Nbands)
+            mu_in (float>0): cosine of the viewing angle for incoming ray (>0.0)
+            mu_out (float>0 or None): cosine of the viewing angle for outgoing ray
+            weights (1D array): weights for the Gaussian quadrature (Ng,)
+            
+        Returns:
+            1D array: absorbed/transmitted spectrum (Nbands,)
+        """
+        import jax.numpy as jnp
+        
+        nlayer, Ng, Nbands = dtau_ckd.shape
+        
+        # Compute viewing angle factor
+        factor = 1.0 / mu_in
+        if mu_out is not None:
+            factor = factor + 1.0 / mu_out
+
+        # Tile incoming flux to match CKD dimensions
+        incoming_flux_2d = jnp.tile(incoming_flux, Ng)
+        
+        # Reshape dtau_ckd to 2D for calculations
+        dtau_2d = dtau_ckd.reshape((nlayer, Ng * Nbands))
+        
+        # Compute absorption using same logic as standard run method
+        logk = jnp.log10(self.pressure_decrease_rate)
+        logp_btm = jnp.log10(self.pressure) + (self.reference_point - 1.0) * logk
+        logp_surface = jnp.log10(pressure_surface)
+        smooth_index = get_smooth_index(logp_btm, logp_surface)
+        ind = smooth_index.astype(int)
+        res = smooth_index - jnp.floor(smooth_index)
+        stepfunc = jnp.heaviside(logp_surface - logp_btm, 0.5)
+        
+        tau_opaque = (
+            jnp.sum(dtau_2d * stepfunc[:, jnp.newaxis], axis=0) + dtau_2d[ind, :] * res
+        )
+        trans_2d = jnp.exp(-factor * tau_opaque)
+        spectrum_2d = trans_2d * incoming_flux_2d
+        
+        # Reshape back to (Ng, Nbands) and integrate over g-ordinates
+        spectrum_ckd = spectrum_2d.reshape((Ng, Nbands))
+        return jnp.einsum("n,nm->m", weights, spectrum_ckd)
+
 
 class ArtReflectPure(ArtCommon):
     """Atmospheric RT for Pure Reflected light (no source term)
@@ -134,6 +182,62 @@ class ArtReflectPure(ArtCommon):
         else:
             print("rtsolver=", self.rtsolver)
             raise ValueError("Unknown radiative transfer solver (rtsolver).")
+
+    def run_ckd(
+        self,
+        dtau_ckd,
+        single_scattering_albedo,
+        asymmetric_parameter,
+        reflectivity_surface,
+        incoming_flux,
+        weights,
+    ):
+        """run radiative transfer for CKD reflection
+        
+        Args:
+            dtau_ckd (3D array): optical depth tensor, dtau (N_layer, Ng, Nbands)
+            single_scattering_albedo (2D array): single scattering albedo (Nlayer, Nbands)
+            asymmetric_parameter (2D array): asymmetric parameter (Nlayer, Nbands)
+            reflectivity_surface (1D array): reflectivity from the surface (Nbands)
+            incoming_flux (1D array): incoming flux F_0^- (Nbands)
+            weights (1D array): weights for the Gaussian quadrature (Ng,)
+            
+        Returns:
+            1D array: reflected spectrum (Nbands,)
+        """
+        import jax.numpy as jnp
+        
+        nlayer, Ng, Nbands = dtau_ckd.shape
+        
+        # Reshape 3D dtau to 2D and tile 2D scattering parameters to match
+        dtau_2d = dtau_ckd.reshape((nlayer, Ng * Nbands))
+        ssa_2d = jnp.tile(single_scattering_albedo, Ng)
+        g_2d = jnp.tile(asymmetric_parameter, Ng)
+        
+        # Tile surface and incoming flux parameters
+        reflectivity_2d = jnp.tile(reflectivity_surface, Ng)
+        incoming_flux_2d = jnp.tile(incoming_flux, Ng)
+        
+        if self.rtsolver == "fluxadding_toon_hemispheric_mean":
+            sourcef = jnp.zeros_like(dtau_2d)
+            source_surface = jnp.zeros(Ng * Nbands)
+            
+            spectrum = rtrun_reflect_fluxadding_toonhm(
+                dtau_2d,
+                ssa_2d,
+                g_2d,
+                sourcef,
+                source_surface,
+                reflectivity_2d,
+                incoming_flux_2d,
+            )
+        else:
+            print("rtsolver=", self.rtsolver)
+            raise ValueError("Unknown radiative transfer solver (rtsolver).")
+        
+        # Reshape back to (Ng, Nbands) and integrate over g-ordinates
+        spectrum_ckd = spectrum.reshape((Ng, Nbands))
+        return jnp.einsum("n,nm->m", weights, spectrum_ckd)
 
 
 class ArtReflectEmis(ArtCommon):
@@ -214,6 +318,69 @@ class ArtReflectEmis(ArtCommon):
         else:
             print("rtsolver=", self.rtsolver)
             raise ValueError("Unknown radiative transfer solver (rtsolver).")
+
+    def run_ckd(
+        self,
+        dtau_ckd,
+        single_scattering_albedo,
+        asymmetric_parameter,
+        temperature,
+        source_surface,
+        reflectivity_surface,
+        incoming_flux,
+        weights,
+        nu_bands,
+    ):
+        """run radiative transfer for CKD reflection with emission
+        
+        Args:
+            dtau_ckd (3D array): optical depth tensor, dtau (N_layer, Ng, Nbands)
+            single_scattering_albedo (2D array): single scattering albedo (Nlayer, Nbands)
+            asymmetric_parameter (2D array): asymmetric parameter (Nlayer, Nbands)
+            temperature (1D array): temperature profile (Nlayer)
+            source_surface (1D array): source from the surface (Nbands)
+            reflectivity_surface (1D array): reflectivity from the surface (Nbands)
+            incoming_flux (1D array): incoming flux F_0^- (Nbands)
+            weights (1D array): weights for the Gaussian quadrature (Ng,)
+            nu_bands (1D array): wavenumber grid for the CKD (Nbands)
+            
+        Returns:
+            1D array: reflected spectrum with emission (Nbands,)
+        """
+        import jax.numpy as jnp
+        
+        nlayer, Ng, Nbands = dtau_ckd.shape
+        
+        # Create source function and tile scattering parameters to match dtau_ckd shape
+        sourcef = jnp.tile(piBarr(temperature, nu_bands), Ng)
+        
+        # Reshape 3D dtau to 2D and tile 2D scattering parameters to match
+        dtau_2d = dtau_ckd.reshape((nlayer, Ng * Nbands))
+        ssa_2d = jnp.tile(single_scattering_albedo, Ng)
+        g_2d = jnp.tile(asymmetric_parameter, Ng)
+        
+        # Tile surface and incoming flux parameters
+        source_surface_2d = jnp.tile(source_surface, Ng)
+        reflectivity_2d = jnp.tile(reflectivity_surface, Ng)
+        incoming_flux_2d = jnp.tile(incoming_flux, Ng)
+        
+        if self.rtsolver == "fluxadding_toon_hemispheric_mean":
+            spectrum = rtrun_reflect_fluxadding_toonhm(
+                dtau_2d,
+                ssa_2d,
+                g_2d,
+                sourcef,
+                source_surface_2d,
+                reflectivity_2d,
+                incoming_flux_2d,
+            )
+        else:
+            print("rtsolver=", self.rtsolver)
+            raise ValueError("Unknown radiative transfer solver (rtsolver).")
+        
+        # Reshape back to (Ng, Nbands) and integrate over g-ordinates
+        spectrum_ckd = spectrum.reshape((Ng, Nbands))
+        return jnp.einsum("n,nm->m", weights, spectrum_ckd)
 
 
 class OpartReflectPure(ArtCommon):
