@@ -79,7 +79,6 @@ calculations.
     Your wavelength grid is in ***  ascending  *** order
     The wavenumber grid is in ascending order by definition.
     Please be careful when you use the wavelength grid.
-    radis== 0.15.2
     HITRAN exact name= H2(16O)
     radis engine =  vaex
 
@@ -94,8 +93,6 @@ calculations.
       warnings.warn(
     /home/kawahara/exojax/src/exojax/utils/grids.py:85: UserWarning: Both input wavelength and output wavenumber are in ascending order.
       warnings.warn(
-    /home/kawahara/exojax/src/exojax/database/api.py:134: UserWarning: The current version of radis does not support broadf_download (requires >=0.16).
-      warnings.warn(msg, UserWarning)
     /home/kawahara/exojax/src/exojax/utils/molname.py:197: FutureWarning: e2s will be replaced to exact_molname_exomol_to_simple_molname.
       warnings.warn(
     /home/kawahara/exojax/src/exojax/utils/molname.py:91: FutureWarning: exojax.utils.molname.exact_molname_exomol_to_simple_molname will be replaced to radis.api.exomolapi.exact_molname_exomol_to_simple_molname.
@@ -108,7 +105,6 @@ calculations.
 
     Molecule:  H2O
     Isotopologue:  1H2-16O
-    Background atmosphere:  H2
     ExoMol database:  None
     Local folder:  H2O/1H2-16O/SAMPLE
     Transition files: 
@@ -236,7 +232,7 @@ using line-by-line calculations.
 
 .. parsed-literal::
 
-    uniqidx:   0%|          | 0/3 [00:00<?, ?it/s]uniqidx: 100%|██████████| 3/3 [00:00<00:00, 8473.34it/s]
+    uniqidx: 100%|██████████| 3/3 [00:00<00:00, 20661.60it/s]
 
 .. parsed-literal::
 
@@ -452,13 +448,13 @@ band averages for validation.
     
     plt.xlabel('Wavenumber (cm⁻¹)', fontsize=12)
     plt.ylabel('(R_p/R_*)²', fontsize=12)
-    plt.title(f'CKD vs Line-by-Line Transmission Spectrum\\n'
+    plt.title(f'CKD vs Line-by-Line Transmission Spectrum,'
               f'Resolution: {resolution:.0f}, RMS Error: {res:.6f}', fontsize=14)
     plt.legend(fontsize=11)
     plt.grid(True, alpha=0.3)
     
     # Add text box with key parameters
-    textstr = f'Ng = {opa_ckd.Ng}\\nBands = {len(opa_ckd.nu_bands)}\\nLayers = {art.nlayer}\\nMax Δ = {np.max(transit_diff_ppm):.1f} ppm'
+    textstr = f'Ng = {opa_ckd.Ng}, Bands = {len(opa_ckd.nu_bands)}, nLayers = {art.nlayer}, Max Δ = {np.max(transit_diff_ppm):.1f} ppm'
     props = dict(boxstyle='round', facecolor='wheat', alpha=0.8)
     plt.text(0.02, 0.98, textstr, transform=plt.gca().transAxes, fontsize=10,
              verticalalignment='top', bbox=props)
