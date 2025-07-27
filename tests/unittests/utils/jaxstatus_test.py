@@ -1,9 +1,9 @@
 import pytest
 from exojax.utils.jaxstatus import check_jax64bit
 from exojax.test.emulate_mdb import mock_mdb
-from exojax.spec.opacalc import OpaPremodit
+from exojax.opacity import OpaPremodit
 from exojax.test.emulate_mdb import mock_wavenumber_grid
-from exojax.spec.atmrt import ArtEmisPure
+from exojax.rt import ArtEmisPure
 from jax import config
 
 

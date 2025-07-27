@@ -2,7 +2,7 @@
 
 """
 
-from exojax.spec import pardb
+from exojax.database import pardb 
 from exojax.test.data import TESTDATA_refrind
 from exojax.test.data import get_testdata_filename
 

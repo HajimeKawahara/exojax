@@ -2,7 +2,7 @@ We compare trans2E3 (2 E3) with a simple transmission.
 
 .. code:: ipython3
 
-    from exojax.spec.rtransfer import trans2E3
+    from exojax.rt.rtransfer import trans2E3
 
 .. code:: ipython3
 

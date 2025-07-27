@@ -8,11 +8,11 @@ from exojax.test.data import TESTDATA_CO_HITEMP_MODIT_EMISSION_REF
 from exojax.test.data import TESTDATA_CO_EXOMOL_PREMODIT_REFLECTION_REF
 from exojax.test.data import TESTDATA_CO_EXOMOL_PREMODIT_REFLECTION_REF
 from exojax.test.emulate_mdb import mock_mdb
-from exojax.spec.opacalc import OpaDirect
-from exojax.spec.opacalc import OpaModit
-from exojax.spec.opacalc import OpaPremodit
-from exojax.spec.atmrt import ArtEmisPure
-from exojax.spec.atmrt import ArtReflectPure
+from exojax.opacity import OpaDirect
+from exojax.opacity import OpaModit
+from exojax.opacity import OpaPremodit
+from exojax.rt import ArtEmisPure
+from exojax.rt import ArtReflectPure
 import warnings
 import jax.numpy as jnp
 from jax import config

@@ -1,9 +1,9 @@
-from exojax.spec.toon import zetalambda_coeffs
-from exojax.spec.toon import reduced_source_function_isothermal_layer
-from exojax.spec.toon import reduced_source_function
-from exojax.spec.toon import params_eddington
-from exojax.spec.toon import params_quadrature
-from exojax.spec.toon import params_hemispheric_mean
+from exojax.rt.toon import zetalambda_coeffs
+from exojax.rt.toon import reduced_source_function_isothermal_layer
+from exojax.rt.toon import reduced_source_function
+from exojax.rt.toon import params_eddington
+from exojax.rt.toon import params_quadrature
+from exojax.rt.toon import params_hemispheric_mean
 
 import jax.numpy as jnp
 

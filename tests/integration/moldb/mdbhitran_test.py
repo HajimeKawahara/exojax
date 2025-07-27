@@ -1,6 +1,6 @@
 import pytest
 import numpy as np
-from exojax.spec.api import MdbHitran
+from exojax.database.api  import MdbHitran
 
 
 def test_moldb_hitran():

@@ -7,6 +7,7 @@ include src/exojax/data/clouds/ammonia_liquid_density.csv
 include src/exojax/data/abundance/AAG2021.dat
 include src/exojax/data/abundance/xspec_abundance.txt
 include src/exojax/data/atom/NIST_Atomic_Ionization_Energies.txt
+include src/exojax/data/opacity/FeH_Hargreaves2010.csv
 
 include src/exojax/data/testdata/spectrum.txt
 include src/exojax/data/testdata/spectrum_ch4.txt
@@ -31,6 +32,7 @@ include src/exojax/data/testdata/premodit_rt_test_ref.txt
 include src/exojax/data/testdata/premodit_rt_test_hitemp_ref.txt
 include src/exojax/data/testdata/modit_rt_test_vald_ref.txt
 include src/exojax/data/testdata/premodit_reflect_test_ref.txt
+include src/exojax/data/testdata/premodit_trans_test_ref.txt
 
 include src/exojax/data/testdata/CO100percent_500K.feather
 include src/exojax/data/testdata/filter_sdss_g.csv
@@ -58,6 +60,8 @@ include src/exojax/data/testdata/H2O/1H2-16O/SAMPLE/1H2-16O__SAMPLE.states.bz2
 include src/exojax/data/testdata/H2O/1H2-16O/SAMPLE/1H2-16O__SAMPLE.states.hdf5
 include src/exojax/data/testdata/H2O/1H2-16O/SAMPLE/1H2-16O__SAMPLE__04300-04400.trans.bz2
 include src/exojax/data/testdata/H2O/1H2-16O/SAMPLE/1H2-16O__SAMPLE__04300-04400.trans.hdf5
+
+include src/exojax/data/testdata/20250503072507__1H2-16O__296.0K.csv
 
 include src/exojax/data/premodit/elower_grid_trange.npz
 include src/exojax/data/premodit/elower_grid_trange_v2.npz

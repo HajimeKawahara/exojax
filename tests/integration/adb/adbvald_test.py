@@ -1,5 +1,5 @@
 import os
-from exojax.spec.moldb import AdbVald, AdbSepVald
+from exojax.database.moldb  import AdbVald, AdbSepVald
 
 import urllib.request
 from exojax.utils.url import url_developer_data

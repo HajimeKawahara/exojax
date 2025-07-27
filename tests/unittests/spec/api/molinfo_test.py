@@ -1,7 +1,7 @@
 import pytest
-from exojax.spec.molinfo import molmass_isotope
-from exojax.spec.molinfo import isotope_molmass
-from exojax.spec.molinfo import molmass #deprecated
+from exojax.database.molinfo  import molmass_isotope
+from exojax.database.molinfo  import isotope_molmass
+from exojax.database.molinfo  import molmass #deprecated
 
 
 def test_isotope_molmass():

@@ -1,6 +1,6 @@
-from exojax.spec.atmrt import ArtCommon
-from exojax.spec.atmrt import ArtEmisPure
-from exojax.spec.atmrt import ArtTransPure
+from exojax.rt.common import ArtCommon
+from exojax.rt import ArtEmisPure
+from exojax.rt import ArtTransPure
 from exojax.test.emulate_mdb import mock_wavenumber_grid
 
 def test_ArtCommon():

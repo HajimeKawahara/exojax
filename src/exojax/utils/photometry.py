@@ -1,6 +1,6 @@
 import numpy as np
 import jax.numpy as jnp
-from exojax.spec.unitconvert import wav2nu
+from exojax.utils.grids import wav2nu
 from exojax.utils.constants import ccgs
 from exojax.utils.url import url_svo_filter
 from jax.scipy.integrate import trapezoid
@@ -40,7 +40,7 @@ def apparent_magnitude_isothermal_sphere(
         f0_nu_cgs (float): zero magnitude flux in the unit of erg/s/cm^2/cm-1
 
     """
-    from exojax.spec.planck import piB
+    from exojax.rt.planck import piB
     from exojax.utils.constants import RJ
     from exojax.utils.constants import pc
 
@@ -68,6 +68,8 @@ def download_filter_from_svo(filter_id):
     print("You can check the available filters at", url_svo_filter())
     data = SvoFps.get_transmission_data(filter_id)
     unit = str(data["Wavelength"].unit)
+    if unit == "Angstrom": # for astropy >= 7.1.0
+        unit = "AA"
     wl_ref = np.array(data["Wavelength"])
     nu_ref, transmission_ref = wav2nu(
         wl_ref, unit=unit, values=np.array(data["Transmission"])

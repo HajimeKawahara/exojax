@@ -1,6 +1,6 @@
 """test for loading atomic data."""
 
-from exojax.spec.atomllapi import load_atomicdata, load_pf_Barklem2016
+from exojax.database.atomllapi import load_atomicdata, load_pf_Barklem2016
 from exojax.utils.zsol import nsol
 
 

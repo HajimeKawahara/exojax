@@ -1,5 +1,5 @@
 import pytest
-from exojax.spec.api import MdbExomol
+from exojax.database.api  import MdbExomol
 from exojax.utils.constants import Tref_original
 
 def test_moldb_exomol():

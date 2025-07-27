@@ -1,5 +1,5 @@
-from exojax.spec.unitconvert import wav2nu
-from exojax.spec.unitconvert import nu2wav
+from exojax.utils.grids import wav2nu
+from exojax.utils.grids import nu2wav
 
 import pytest
 import numpy as np

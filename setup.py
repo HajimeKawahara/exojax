@@ -46,7 +46,7 @@ if __name__ == "__main__":
             "write_to": os.path.join("src", "exojax", "{0}_version.py".format(NAME)),
             "write_to_template": '__version__ = "{version}"\n',
         },
-        version="2.0",
+        version="2.1",
         author=find_meta("author"),
         author_email=find_meta("email"),
         maintainer=find_meta("author"),

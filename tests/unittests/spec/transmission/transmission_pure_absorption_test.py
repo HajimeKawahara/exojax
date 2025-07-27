@@ -2,11 +2,11 @@ import pytest
 import jax.numpy as jnp
 import numpy as np
 from exojax.atm.atmprof import normalized_layer_height
-from exojax.spec.opachord import chord_geometric_matrix
-from exojax.spec.opachord import chord_geometric_matrix_lower
-from exojax.spec.opachord import chord_optical_depth
+from exojax.rt.chord import chord_geometric_matrix
+from exojax.rt.chord import chord_geometric_matrix_lower
+from exojax.rt.chord import chord_optical_depth
 
-from exojax.spec.rtransfer import rtrun_trans_pureabs_trapezoid
+from exojax.rt.rtransfer import rtrun_trans_pureabs_trapezoid
 from jax import config
 
 config.update("jax_enable_x64", True)

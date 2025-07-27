@@ -9,7 +9,7 @@ However, we have begun to offer pilot versions of handlers to facilitate handlin
 
 .. code:: ipython3
 
-	from exojax.spec.multimol import MultiMol
+	from exojax.database.multimol  import MultiMol
     
     mul = MultiMol(molmulti=[["H2O","CH4"],["H2O","CH4"]], 
                dbmulti=[["ExoMol","HITEMP"],["ExoMol","HITEMP"]])

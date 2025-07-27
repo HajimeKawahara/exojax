@@ -76,6 +76,15 @@ Clouds and Reflection Spectrum
 |:ringed_planet:| An example of HMC-NUTS for actual Jupiter reflection spectrum can be found `here <https://github.com/HajimeKawahara/exojaxample_jupiter>`_ .
 
 
+Correlated-k-distribution (CKD)
+--------------------------------------
+
+.. toctree::
+   :maxdepth: 1
+
+   tutorials/ckd_emispure.rst
+   tutorials/ckd_transpure.rst
+   
 Tips for Real Analysis
 -------------------------
 
@@ -83,9 +92,10 @@ Tips for Real Analysis
    :maxdepth: 1
 
    tutorials/Photometry.rst
+   tutorials/Fitting_Telluric_Lines.rst
+   tutorials/exomolhr.rst
    userguide/memorysetting.rst	
    tutorials/elower_setting.rst
-   tutorials/Fitting_Telluric_Lines.rst
    tutorials/reverse_precompute_grid.rst
 
 

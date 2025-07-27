@@ -13,7 +13,7 @@ Click below for the details for mdb class for each database.
 
 .. code:: ipython
 	  
-	  >>> from exojax.spec import moldb
+	  >>> from exojax.database import moldb 
 	  >>> from exojax.utils.grids import wavenumber_grid
 	  >>> nus,wav,res=nugrid(22880.,23000.,1000,unit="AA")
 	  >>> mdbCO=moldb.MdbExomol('.database/CO/12C-16O/Li2015',nus)
@@ -66,7 +66,7 @@ where :math:`c_2 = h c/k_B`. In exojax, S(T) is computed using the normalized pa
 
 .. code:: ipython
 	  
-	  >>> from exojax.spec import SijT
+	  >>> from exojax.database.hitran import SijT
 	  >>> qt=mdbCO.qr_interp(Tfix)
 	  >>> Sij=SijT(Tfix,mdbCO.logsij0,mdbCO.nu_lines,mdbCO.elower,qt)
 

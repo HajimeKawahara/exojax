@@ -1,4 +1,4 @@
-from exojax.spec.limb_darkening import ld_kipping
+from exojax.postproc.limb_darkening import ld_kipping
 import pytest
 
 def test_ld_kipping():

@@ -3,8 +3,8 @@
 
 import pytest
 import time
-from exojax.spec.lpf import xsvector
-from exojax.spec.make_numatrix import make_numatrix0
+from exojax.opacity.lpf.lpf import xsvector
+from exojax.opacity.lpf.make_numatrix import make_numatrix0
 import numpy as np
 
 

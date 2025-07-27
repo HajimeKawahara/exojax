@@ -3,8 +3,8 @@ import numpy as np
 import jax.numpy as jnp
 import pytest
 from exojax.atm import condensate
-from exojax.spec.layeropacity import layer_optical_depth_clouds_lognormal
-from exojax.spec.layeropacity import single_layer_optical_depth_clouds_lognormal
+from exojax.rt.layeropacity import layer_optical_depth_clouds_lognormal
+from exojax.rt.layeropacity import single_layer_optical_depth_clouds_lognormal
 from exojax.utils.grids import wavenumber_grid
 
 

@@ -12,7 +12,7 @@ SDSS G-band filter is used.
 
 .. code:: ipython3
 
-    from exojax.spec.specop import SopPhoto    
+    from exojax.postproc.specop import SopPhoto    
     
     filter_name = "SLOAN/SDSS.g"
     sop_photo = SopPhoto(filter_name, download=True)
@@ -40,7 +40,7 @@ SDSS G-band filter is used.
 
 .. parsed-literal::
 
-    /home/kawahara/exojax/src/exojax/spec/unitconvert.py:82: UserWarning: Both input wavelength and output wavenumber are in ascending order.
+    /home/kawahara/exojax/src/exojax/utils.grids.py:82: UserWarning: Both input wavelength and output wavenumber are in ascending order.
       warnings.warn(
     /home/kawahara/exojax/src/exojax/utils/grids.py:170: UserWarning: Resolution may be too small. R=6123.03886194115
       warnings.warn("Resolution may be too small. R=" + str(resolution), UserWarning)
@@ -85,7 +85,7 @@ where :math:`B_\nu (T)` is the Planck function.
 
     
     # Sun
-    from exojax.spec.planck import piB
+    from exojax.rt.planck import piB
     from exojax.utils.constants import RJ, Rs
     from exojax.utils.constants import pc
     

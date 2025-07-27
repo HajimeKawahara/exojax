@@ -1,8 +1,8 @@
 from exojax.test.data import TESTDATA_LUH16A
 from exojax.test.data import TESTDATA_JUPITER
 from exojax.test.data import get_testdata_filename
-from exojax.spec.unitconvert import wav2nu
-from exojax.spec.unitconvert import nu2wav
+from exojax.utils.grids import wav2nu
+from exojax.utils.grids import nu2wav
 import numpy as np
 import pandas as pd
 

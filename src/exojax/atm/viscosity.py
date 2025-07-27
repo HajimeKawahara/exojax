@@ -88,7 +88,7 @@ def calc_vfactor(atm="H2", LJPparam=None):
 
 
     """
-    from exojax.spec.molinfo import molmass_isotope
+    from exojax.database.molinfo  import molmass_isotope
     from exojax.utils.constants import kB, m_u
 
     mu = molmass_isotope(atm)

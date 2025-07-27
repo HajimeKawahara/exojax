@@ -1,5 +1,5 @@
    
-Molecular Database
+Databases
 =======================
 
 .. toctree::
@@ -12,7 +12,9 @@ Molecular Database
    userguide/qstates.rst
    userguide/atomll.rst
    tutorials/multimol.rst
-
+   userguide/pdb.rst
+   userguide/customapi.rst
+   userguide/xdb.rst   
 
 Opacity Calculation
 =======================
@@ -26,6 +28,7 @@ Opacity Calculation
    userguide/premodit.rst
    userguide/premodit_trange.rst
    tutorials/Open_Close_Cross_Section.rst
+   tutorials/ckd_principle.rst
    userguide/benchmark.rst
    userguide/fp.rst
 
@@ -48,7 +51,6 @@ Clouds
    :maxdepth: 1
 
    userguide/vterm.rst
-   userguide/pdb.rst
    userguide/amp.rst
    userguide/comp_pymiescatt.rst
    userguide/amclouds_comparison_virga.rst
@@ -80,6 +82,7 @@ Others
 .. toctree::
    :maxdepth: 1
 
+   userguide/opa_pickle.rst
    userguide/comp.rst
 
 
