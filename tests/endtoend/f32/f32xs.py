@@ -1,12 +1,9 @@
 """test for Issue 619, 32-bit mode test for premodit
 """
-
 from jax import config
-config.update("jax_enable_x64", False) #this does not
-#config.update("jax_enable_x64", True) #this works
+config.update("jax_enable_x64", False)
 
 from exojax.utils.grids import wavenumber_grid
-
 nu_grid, wav, resolution = wavenumber_grid(
     22920.0, 23000.0, 3500, unit="AA", xsmode="premodit"
 )
