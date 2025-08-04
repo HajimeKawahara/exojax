@@ -20,7 +20,10 @@ from exojax.opacity._common.profconv import (
     calc_open_nu_xsection_from_lsd_zeroscan,
     calc_xsection_from_lsd_zeroscan,
 )
-from exojax.opacity._common.set_ditgrid import ditgrid_linear_interval, ditgrid_log_interval
+from exojax.opacity._common.set_ditgrid import (
+    ditgrid_linear_interval,
+    ditgrid_log_interval,
+)
 from exojax.utils.constants import Tref_original, hcperk
 from exojax.utils.indexing import npgetix, uniqidx_neibouring
 
@@ -1156,7 +1159,7 @@ def broadpar_getix(ngamma_ref, ngamma_ref_grid, n_Texp, n_Texp_grid):
         >>> print(multi_index_lines[iline_interest]) # multi index from a line
         >>> print(multi_cont_lines[iline_interest]) # multi contribution from a line
         >>> print(uidx_lines[iline_interest]) # uniq index of a line
-        >>> print(multi_index_uniqgrid[uniq_index]) # multi index from uniq_index
+        >>> print(multi_index_uniqgrid[uniq_qr_interp_numpyindex]) # multi index from uniq_index
         >>> ui,uj,uk=neighbor_uidx[uniq_index, :] # neighbour uniq index
     """
     cont_ngamma_ref, index_ngamma_ref = npgetix(ngamma_ref, ngamma_ref_grid)
@@ -1175,7 +1178,6 @@ def broadpar_getix(ngamma_ref, ngamma_ref_grid, n_Texp, n_Texp_grid):
         error_diagnositcs(status, multi_index_uniqgrid, ngamma_ref, ngamma_ref_grid)
     elif status == 2:
         error_diagnositcs(status, multi_index_uniqgrid, n_Texp, n_Texp_grid)
-
 
     ngrid_broadpar = len(multi_index_uniqgrid)
 
@@ -1212,7 +1214,6 @@ def check_multi_index_uniqgrid_shape(
     return 0
 
 
-
 def error_diagnositcs(status, multi_index_uniqgrid, val, val_grid):
     print("****** ERROR Diagnostics ******")
     valname = ["ngamma_ref_grid", "n_Texp_grid"]
@@ -1222,11 +1223,13 @@ def error_diagnositcs(status, multi_index_uniqgrid, val, val_grid):
         + str(index)
         + "]) = "
         + str(np.max(multi_index_uniqgrid[:, index]))
-        + " should be smaller than len("+valname[index]+") = "
+        + " should be smaller than len("
+        + valname[index]
+        + ") = "
         + str(len(val_grid))
     )
     print(msg)
-    
+
     msgtell = "If you see this error, please contact @HajimeKawahara via github ExoJAX page! (#586)"
     raise ValueError(msgtell)
 
@@ -1309,7 +1312,6 @@ def generate_lbd(
     """
     _print_grids(0, ngamma_ref, ngamma_ref_grid)
     _print_grids(1, n_Texp, n_Texp_grid)
-    
 
     cont_nu, index_nu = npgetix(nu_lines, nu_grid)
     single_broadening = _check_single_broadening(ngamma_ref_grid, n_Texp_grid)
@@ -1376,15 +1378,15 @@ def generate_lbd(
         lbd_coeff.append(lbd_diff[:-1, :, :])
         # [:-1,:,:] is to remove the mostright bin of nu direction (check Ng_nu_plus_one)
 
-    # lbd_coeff = np.array(lbd_coeff) #almost same
-    lbd_coeff = jnp.array(lbd_coeff)
+    lbd_coeff = np.array(lbd_coeff)
 
     return lbd_coeff, multi_index_uniqgrid
 
+
 def _print_grids(index, val, val_grid):
     valname = ["ngamma_ref_grid", "n_Texp_grid"]
-    print("max value of ",valname[index], ":", np.max(val))
-    print("min value of ",valname[index], ":", np.min(val))
+    print("max value of ", valname[index], ":", np.max(val))
+    print("min value of ", valname[index], ":", np.min(val))
     print(valname[index], "grid :", val_grid)
 
 

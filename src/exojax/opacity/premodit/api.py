@@ -265,7 +265,8 @@ class OpaPremodit(OpaCalc):
         )
 
         # comment-1: gamma_ref at Tref_broadening (is not necessary for Tref_original)
-        # comment-2: line strength at Tref (is not necessary for Tref_original)
+        # comment-2: line strength at Tref (is not necessary for Tref_original), should be np.float64
+        
         (
             self.lbd_coeff,
             multi_index_uniqgrid,
