@@ -6,7 +6,7 @@
 * MdbCommonHitempHitran is the common MDB for HITEMP and HITRAN
 
 Notes:
-    If you use vaex as radis engine, hdf5 files are saved while pytables uses .h5 files. 
+    If you use vaex as radis engine, hdf5 files are saved while pytables uses .h5 files.
 
 """
 
@@ -28,10 +28,10 @@ from radis.db.classes import get_molecule
 from radis.levels.partfunc import PartFuncTIPS
 
 from exojax.database import hitranapi
-from exojax.database.hitran  import gamma_natural as gn
-from exojax.database.hitran  import line_strength_numpy
+from exojax.database.hitran import gamma_natural as gn
+from exojax.database.hitran import line_strength_numpy
 from exojax.database.hitranapi import molecid_hitran
-from exojax.database.molinfo  import isotope_molmass
+from exojax.database.molinfo import isotope_molmass
 from exojax.utils.constants import Tref_original
 from exojax.utils.isotopes import molmass_hitran
 from exojax.utils.molname import e2s
@@ -292,7 +292,7 @@ class MdbExomol(CapiMdbExomol):
             mask = self.df_load_mask
 
         self.attributes_from_dataframes(df[mask])
-        
+
         if version.parse(radis_version) <= version.parse("0.14"):
             self.compute_broadening(self.jlower.astype(int), self.jupper.astype(int))
         elif version.parse(radis_version) <= version.parse("0.15.2"):
@@ -357,7 +357,7 @@ class MdbExomol(CapiMdbExomol):
         # jnp arrays
         self.dev_nu_lines = jnp.array(self.nu_lines)
         self.logsij0 = jnp.array(np.log(self.line_strength_ref_original))
-        
+
     def QT_interp(self, T):
         """interpolated partition function.
 
@@ -379,7 +379,6 @@ class MdbExomol(CapiMdbExomol):
             Q(T) interpolated in np.array
         """
         return np.interp(T, self.T_gQT, self.gQT)
-
 
     def qr_interp(self, T, Tref):
         """interpolated partition function ratio.
@@ -405,7 +404,6 @@ class MdbExomol(CapiMdbExomol):
         """
         return self.QT_interp_numpy(T) / self.QT_interp_numpy(Tref)
 
-
     def line_strength(self, T):
         """line strength at T
 
@@ -415,9 +413,7 @@ class MdbExomol(CapiMdbExomol):
         Returns:
             float: line strength at T
         """
-        
         qr = self.qr_interp_numpy(T, Tref_original)
-        
         return line_strength_numpy(
             T,
             self.line_strength_ref_original,
@@ -426,7 +422,6 @@ class MdbExomol(CapiMdbExomol):
             qr,
             Tref_original,
         )
-
 
 
 class MdbCommonHitempHitran:
@@ -915,7 +910,7 @@ class MdbHitemp(MdbCommonHitempHitran, HITEMPDatabaseManager):
         # jnp.array copy from the copy sources
         self.dev_nu_lines = jnp.array(self.nu_lines)
         self.logsij0 = jnp.array(np.log(self.line_strength_ref_original))
-        
+
 
 class MdbHitran(MdbCommonHitempHitran, HITRANDatabaseManager):
     """molecular database of HITRAN
@@ -1161,7 +1156,7 @@ class MdbHitran(MdbCommonHitempHitran, HITRANDatabaseManager):
         # jnp.array copy from the copy sources
         self.dev_nu_lines = jnp.array(self.nu_lines)
         self.logsij0 = jnp.array(np.log(self.line_strength_ref_original))
-        
+
 
 def _convert_proper_isotope(isotope):
     """covert isotope (int) to proper type for df

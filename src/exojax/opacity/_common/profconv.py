@@ -107,11 +107,9 @@ def calc_xsection_from_lsd_zeroscan(
         log_ngammaL_grid,
         Ng_nu,
         pmarray,
-    )
-    
+    )    
     init = jnp.zeros(vk.shape[0], dtype=_check_complex(vk[0, 0]))
     fftvalvk, _ = scan(f, init, [Slsd.T, vk.T])
-    
     return jnp.fft.irfft(fftvalvk)[:Ng_nu] * R / nu_grid
 
 
