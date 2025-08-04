@@ -5,7 +5,6 @@
     - calc_xsection_from_lsd_scanfft: compute cross section from LSD in MODIT algorithm using scan+fft to avoid 4GB memory limit in fft (see #277), deprecated
 
 """
-
 import jax.numpy as jnp
 from jax import vmap
 from jax.lax import scan
@@ -109,9 +108,10 @@ def calc_xsection_from_lsd_zeroscan(
         Ng_nu,
         pmarray,
     )
-
+    
     init = jnp.zeros(vk.shape[0], dtype=_check_complex(vk[0, 0]))
     fftvalvk, _ = scan(f, init, [Slsd.T, vk.T])
+    
     return jnp.fft.irfft(fftvalvk)[:Ng_nu] * R / nu_grid
 
 

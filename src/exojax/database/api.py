@@ -56,6 +56,9 @@ def _set_engine(engine):
     print("radis engine = ", engine_selected)
     return engine_selected
 
+def _checkf64(instance, name):
+    if instance.dtype != np.float64:
+        raise TypeError(name+" must be np.float64, but got {}".format(instance).dtype)
 
 class MdbExomol(CapiMdbExomol):
     """molecular database of ExoMol form.
@@ -310,8 +313,8 @@ class MdbExomol(CapiMdbExomol):
     def compute_load_mask(self, df):
         # wavelength
         mask = (df.nu_lines > self.nurange[0]) & (df.nu_lines < self.nurange[1])
-        QTtyp = np.array(self.QT_interp(self.Ttyp))
-        QTref_original = np.array(self.QT_interp(Tref_original))
+        QTtyp = np.array(self.QT_interp_numpy(self.Ttyp))
+        QTref_original = np.array(self.QT_interp_numpy(Tref_original))
         mask = mask & (
             line_strength_numpy(
                 self.Ttyp, df.Sij0, df.nu_lines, df.elower, QTtyp / QTref_original
@@ -357,15 +360,7 @@ class MdbExomol(CapiMdbExomol):
         # jnp arrays
         self.dev_nu_lines = jnp.array(self.nu_lines)
         self.logsij0 = jnp.array(np.log(self.line_strength_ref_original))
-        self.gamma_natural = jnp.array(self.gamma_natural)
-        self.A = jnp.array(self.A)
-        self.elower = jnp.array(self.elower)
-        self.gpp = jnp.array(self.gpp)
-        self.jlower = jnp.array(self.jlower, dtype=int)
-        self.jupper = jnp.array(self.jupper, dtype=int)
-        self.alpha_ref = jnp.array(self.alpha_ref)
-        self.n_Texp = jnp.array(self.n_Texp)
-
+        
     def QT_interp(self, T):
         """interpolated partition function.
 
@@ -376,6 +371,18 @@ class MdbExomol(CapiMdbExomol):
             Q(T) interpolated in jnp.array
         """
         return jnp.interp(T, self.T_gQT, self.gQT)
+
+    def QT_interp_numpy(self, T):
+        """interpolated partition function using numpy.
+
+        Args:
+            T: temperature
+
+        Returns:
+            Q(T) interpolated in np.array
+        """
+        return np.interp(T, self.T_gQT, self.gQT)
+
 
     def qr_interp(self, T, Tref):
         """interpolated partition function ratio.
@@ -389,6 +396,19 @@ class MdbExomol(CapiMdbExomol):
         """
         return self.QT_interp(T) / self.QT_interp(Tref)
 
+    def qr_interp_numpy(self, T, Tref):
+        """interpolated partition function ratio numpy version.
+
+        Args:
+            T: temperature
+            Tref: reference temperature
+
+        Returns:
+            qr(T)=Q(T)/Q(Tref) interpolated
+        """
+        return self.QT_interp_numpy(T) / self.QT_interp_numpy(Tref)
+
+
     def line_strength(self, T):
         """line strength at T
 
@@ -398,7 +418,9 @@ class MdbExomol(CapiMdbExomol):
         Returns:
             float: line strength at T
         """
-        qr = self.qr_interp(T, Tref_original)
+        
+        qr = self.qr_interp_numpy(T, Tref_original)
+        
         return line_strength_numpy(
             T,
             self.line_strength_ref_original,
@@ -407,6 +429,7 @@ class MdbExomol(CapiMdbExomol):
             qr,
             Tref_original,
         )
+
 
 
 class MdbCommonHitempHitran:
@@ -895,17 +918,7 @@ class MdbHitemp(MdbCommonHitempHitran, HITEMPDatabaseManager):
         # jnp.array copy from the copy sources
         self.dev_nu_lines = jnp.array(self.nu_lines)
         self.logsij0 = jnp.array(np.log(self.line_strength_ref_original))
-        self.line_strength_ref_original = jnp.array(self.line_strength_ref_original)
-        self.delta_air = jnp.array(self.delta_air)
-        self.A = jnp.array(self.A)
-        self.n_air = jnp.array(self.n_air)
-        self.gamma_air = jnp.array(self.gamma_air)
-        self.gamma_self = jnp.array(self.gamma_self)
-        self.elower = jnp.array(self.elower)
-        self.gpp = jnp.array(self.gpp)
-        if self.with_error:
-            self.ierr = jnp.array(self.ierr)
-
+        
 
 class MdbHitran(MdbCommonHitempHitran, HITRANDatabaseManager):
     """molecular database of HITRAN
@@ -1151,33 +1164,7 @@ class MdbHitran(MdbCommonHitempHitran, HITRANDatabaseManager):
         # jnp.array copy from the copy sources
         self.dev_nu_lines = jnp.array(self.nu_lines)
         self.logsij0 = jnp.array(np.log(self.line_strength_ref_original))
-        self.line_strength_ref_original = jnp.array(self.line_strength_ref_original)
-        self.delta_air = jnp.array(self.delta_air)
-        self.A = jnp.array(self.A)
-        self.n_air = jnp.array(self.n_air)
-        self.gamma_air = jnp.array(self.gamma_air)
-        self.gamma_self = jnp.array(self.gamma_self)
-        self.elower = jnp.array(self.elower)
-        self.gpp = jnp.array(self.gpp)
-        if self.with_error:
-            self.ierr = jnp.array(self.ierr)
-
-        if hasattr(self.df_load_mask, "n_h2") and self.nonair_broadening:
-            self.n_h2 = jnp.array(self.n_h2)
-            self.gamma_h2 = jnp.array(self.gamma_h2)
-
-        if hasattr(self.df_load_mask, "n_he") and self.nonair_broadening:
-            self.n_he = jnp.array(self.n_he)
-            self.gamma_he = jnp.array(self.gamma_he)
-
-        if hasattr(self.df_load_mask, "n_co2") and self.nonair_broadening:
-            self.n_co2 = jnp.array(self.n_co2)
-            self.gamma_co2 = jnp.array(self.gamma_co2)
-
-        if hasattr(self.df_load_mask, "n_h2o") and self.nonair_broadening:
-            self.n_h2o = jnp.array(self.n_h2o)
-            self.gamma_h2o = jnp.array(self.gamma_h2o)
-
+        
 
 def _convert_proper_isotope(isotope):
     """covert isotope (int) to proper type for df

@@ -721,7 +721,7 @@ def xsmatrix_nu_open_second(
     return xsm
 
 
-@jit
+@jit 
 def xsvector_zeroth(
     T,
     P,
@@ -1368,6 +1368,7 @@ def generate_lbd(
                 neighbor_uidx,
                 sumz=1.0,
             )
+            
         if idiff == 0:
             lbd_diff = convert_to_jnplog(lbd_diff)
         else:
@@ -1376,9 +1377,8 @@ def generate_lbd(
         lbd_coeff.append(lbd_diff[:-1, :, :])
         # [:-1,:,:] is to remove the mostright bin of nu direction (check Ng_nu_plus_one)
 
-    # lbd_coeff = np.array(lbd_coeff) #almost same
-    lbd_coeff = jnp.array(lbd_coeff)
-
+    lbd_coeff = np.array(lbd_coeff) 
+    
     return lbd_coeff, multi_index_uniqgrid
 
 def _print_grids(index, val, val_grid):

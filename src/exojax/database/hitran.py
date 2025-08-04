@@ -46,13 +46,14 @@ def line_strength_numpy(T, Sij0, nu_lines, elower, qr, Tref=Tref_original):
     Returns:
         line strength at Ttyp
     """
-    return (
+    _line_strength = (
         Sij0
         * np.exp(-hcperk * elower * (1.0 / T - 1.0 / Tref))
         * np.expm1(-hcperk * nu_lines / T)
         / np.expm1(-hcperk * nu_lines / Tref)
         / qr  # Apply qr (jnp array) last to minimize rounding errors in 32bit mode.
     )
+    return _line_strength
 
 
 @jit
