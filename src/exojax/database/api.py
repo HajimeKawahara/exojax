@@ -56,9 +56,6 @@ def _set_engine(engine):
     print("radis engine = ", engine_selected)
     return engine_selected
 
-def _checkf64(instance, name):
-    if instance.dtype != np.float64:
-        raise TypeError(name+" must be np.float64, but got {}".format(instance).dtype)
 
 class MdbExomol(CapiMdbExomol):
     """molecular database of ExoMol form.
