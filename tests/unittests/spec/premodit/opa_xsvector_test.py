@@ -21,7 +21,7 @@ from exojax.test.data import TESTDATA_CO_HITEMP_MODIT_XS_REF_AIR
 
 from jax import config
 
-config.update("jax_enable_x64", True)
+config.update("jax_enable_x64", False)
 
 testdata = {}
 testdata["exomol"] = TESTDATA_CO_EXOMOL_MODIT_XS_REF
