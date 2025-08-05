@@ -81,10 +81,9 @@ def test_xsection_premodit_for_single_broadening(db, diffmode):
     filename = files("exojax").joinpath("data/testdata/" + testdata[db])
     dat = pd.read_csv(filename, delimiter=",", names=("nus", "xsv"))
     res = np.max(np.abs(1.0 - xsv / dat["xsv"].values))
-    print("maximum difference = ", res)
-    #assert (
-    #    res < 0.06
-    #)  # < 6% (HITEMP) / 4% (ExoMOL) diff from exact broadening parameters using MODIT
+    assert (
+        res < 0.06
+    ), f"maximum difference = {res} exceeds threshold 0.06"  # < 6% (HITEMP) / 4% (ExoMOL) diff from exact broadening parameters using MODIT
 
 if __name__ == "__main__":
     #test_xsection_premodit("exomol", 0)
