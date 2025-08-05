@@ -77,7 +77,6 @@ def test_premodit_opa_and_manual_agreement(diffmode, jax_enable_x64):
     )
 
     dxsv = jnp.abs(xsv_manual / xsv - 1)
-    import matplotlib.pyplot as plt
 
     if jax_enable_x64:
         assert np.max(dxsv) < 1.0e-11  # (several x e-12, feb 4th 2025)
