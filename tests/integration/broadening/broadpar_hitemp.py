@@ -1,4 +1,4 @@
-from exojax.database.api  import MdbHitemp
+from exojax.database.hitemp.api import MdbHitemp
 from exojax.opacity import OpaPremodit
 from exojax.utils.grids import wavenumber_grid
 from jax import config

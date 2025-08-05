@@ -334,7 +334,7 @@ Mie scattering is ``OpaMie``.
 
 .. code:: ipython3
 
-    from exojax.database.api  import MdbHitemp
+    from exojax.database.hitemp.api import MdbHitemp
     mdb_reduced = MdbHitemp("CH4", nurange=[nus[0], nus[-1]], isotope=1, elower_max=3300.0)
 
 

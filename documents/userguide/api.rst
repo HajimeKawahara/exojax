@@ -100,7 +100,7 @@ Here are examples for loading CO from HITEMP.
 
 .. code:: ipython
 	
-	>>> from exojax.database.api  import MdbHitemp
+	>>> from exojax.database.hitemp.api import MdbHitemp
 	>>> MdbHitemp("CO", nurange=[4200.0, 4300.0])
 	>>> MdbHitemp(".database/CO/", nurange=[4200.0, 4300.0])
 	>>> MdbHitemp(".database/05/", nurange=[4200.0, 4300.0])
@@ -194,7 +194,7 @@ The following is an example of reading .par directly:
 
 .. code:: ipython
 	
-	>>> from exojax.database.api  import MdbHitemp
+	>>> from exojax.database.hitemp.api import MdbHitemp
 	>>> from exojax.utils.grids import wavenumber_grid
 	>>> nus, wav, res = wavenumber_grid(22920.0,23100.0,20000,unit="AA",xsmode="modit")
 	xsmode =  modit
