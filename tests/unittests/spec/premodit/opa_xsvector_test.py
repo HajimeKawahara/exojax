@@ -54,8 +54,7 @@ def test_xsection_premodit(db, diffmode):
     filename = files("exojax").joinpath("data/testdata/" + testdata[db])
     dat = pd.read_csv(filename, delimiter=",", names=("nus", "xsv"))
     res = np.max(np.abs(1.0 - xsv / dat["xsv"].values))
-    print("maximum difference = ", res)
-    #assert res < 0.012
+    assert res < 0.012, f"maximum difference = {res} exceeds threshold 0.012"
 
 
 @pytest.mark.parametrize("db, diffmode", [("exomol", 0), ("hitemp", 2)])
