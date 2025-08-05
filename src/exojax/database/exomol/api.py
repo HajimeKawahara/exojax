@@ -25,11 +25,9 @@ from exojax.database.hitran import line_strength_numpy
 from exojax.database.molinfo import isotope_molmass
 from exojax.utils.constants import Tref_original
 from exojax.utils.molname import e2s
-
 from exojax.database._common.setradis import _set_engine
 
 __all__ = ["MdbExomol"]
-
 
 
 class MdbExomol(CapiMdbExomol):
