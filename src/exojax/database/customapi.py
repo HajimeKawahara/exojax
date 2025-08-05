@@ -8,8 +8,8 @@ import numpy as np
 import pandas as pd
 
 from exojax.database._common.setradis  import _set_engine
-from exojax.database.dbmanager  import HargreavesDatabaseManager
 from exojax.database.core.line_strength import line_strength_numpy
+from exojax.database.core.line_strength import Einstein_coeff_from_line_strength
 from exojax.database.qstate  import branch_to_number
 from exojax.utils.constants import Tref_original, ccgs, hcperk
 from exojax.utils.molname import e2s
@@ -36,27 +36,8 @@ def set_wavenum(nurange):
         wavenum_max = None
     return wavenum_min, wavenum_max
 
-def Einstein_coeff_from_line_strength(nu_lines, Sij, elower, g, Q, T):
-    """Einstein coefficient from line strength
 
-    Args:
-        nu_lines (float): line center wavenumber (cm-1)
-        Sij (float): line strength (cm)
-        elower (float): elower
-        g (float): upper state statistical weight
-        Q (float): partition function
-        T (float): temperature
-
-    Returns:
-        Einstein coefficient (s-1)
-    """    
-    Aij = - ((Sij * 8.0 * np.pi * ccgs * nu_lines**2 * Q) 
-            / g
-            / np.exp(-hcperk * elower / T) 
-            / np.expm1(-hcperk * nu_lines / T))
-    return Aij
-
-class MdbHargreaves(HargreavesDatabaseManager):
+class MdbHargreaves():
     """molecular database of Hargreaves et al. (2010) in ExoMol form.
     
     Attributes:
@@ -77,9 +58,6 @@ class MdbHargreaves(HargreavesDatabaseManager):
             QTref_raw=11691.1386, #5534.78,
             scale_intensity=1/3,
             engine=None,
-            verbose=True,
-            download=False,
-            cache=True,
             ):
         """
         Args:
@@ -89,9 +67,6 @@ class MdbHargreaves(HargreavesDatabaseManager):
             QTref_raw (float): Partition function at reference temperature (Tref_raw=2200.0 K) of Hargreaves line list (default value is from Dulick et al. 2003)
             scale_intensity (float): correction for line intensity adopted in Sonora (see Marley et al. 2021; Morley et al. 2024)
             engine (str): Computational engine to use
-            verbose (bool): Verbosity flag
-            download (bool): if True, file will be downloaded from HARGREAVES_URL to path_to_database/FeH/Hargreaves2010/FeH-aj357217t5_mrt.h5. The default is False.
-            cache (bool): Cache setting for file management
         """
         self.path = pathlib.Path(path).expanduser()
         self.database = str(self.path.stem)
@@ -105,47 +80,8 @@ class MdbHargreaves(HargreavesDatabaseManager):
         self.QTref_raw = QTref_raw
         self.scale_intensity = scale_intensity
 
-        if download:
-            super().__init__(
-                name="Hargreaves2010-{molecule}",
-                molecule=self.simple_molecule_name,
-                local_databases=self.path,
-                url=HARGREAVES_URL,
-                engine=self.engine,
-                verbose=verbose,
-            )
-
-            assert cache  # cache only used for cache='regen' or cache='force' modes, cache=False is not expected
-            
-            local_files, urlnames = self.get_filenames()
-    
-            if cache == "regen":  
-                self.remove_local_files(local_files)  
-            
-            self.check_deprecated_files(  
-                self.get_existing_files(local_files),  
-                auto_remove=True if cache != "force" else False,  
-            )  
-            
-            get_main_files = True  
-            if local_files and not self.get_missing_files(local_files):  
-                get_main_files = False  
-            
-            # download files  
-            if get_main_files:  
-                for urlname, local_file in zip(urlnames, local_files):
-                    self.parse_to_local_file(urlname, local_file) 
-            
-            clean_cache_files = True
-            if get_main_files and clean_cache_files:
-                    self.clean_download_files()
-
-            # load the original data of Hargreaves et al. (2010)
-            # columns: "wavenumber", "intensity", "e_lower", "einsteinA", "j_lower", "branch", "omega"
-            df_raw = self.load(local_files, output=self.engine)
-        else:
-            Harg2010 = pkgutil.get_data("exojax", "data/opacity/FeH_Hargreaves2010.csv")
-            df_raw = pd.read_csv(BytesIO(Harg2010), sep=",", comment="#")
+        Harg2010 = pkgutil.get_data("exojax", "data/opacity/FeH_Hargreaves2010.csv")
+        df_raw = pd.read_csv(BytesIO(Harg2010), sep=",", comment="#")
 
         # convert to exomol format
         # columns: "A", "nu_lines", "elower", "jlower", "jupper", "Sij0", "gup"

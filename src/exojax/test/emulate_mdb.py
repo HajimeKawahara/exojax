@@ -92,7 +92,7 @@ def mock_mdbHitemp(multi_isotope=False):
     from exojax.test.data import TESTDATA_CO_HITEMP_PARFILE
 
     parfile = get_testdata_filename(TESTDATA_CO_HITEMP_PARFILE)
-    nus, wav, res = mock_wavenumber_grid()
+    nus, _, _ = mock_wavenumber_grid()
     mdb = MdbHitemp(
         "CO",
         nus,
@@ -122,11 +122,10 @@ def mock_mdbHargreaves():
     """
 
     path = "FeH/SAMPLE"
-    nus, wav, res = mock_wavenumber_grid(lambda0=15820.0, lambda1=20040.0)
+    nus, _, _ = mock_wavenumber_grid(lambda0=15820.0, lambda1=20040.0)
     mdb = MdbHargreaves(
         str(path),
         nus,
-        download=False,  # default
     )
     return mdb
 

@@ -2,7 +2,9 @@ import jax.numpy as jnp
 import numpy as np
 from jax import jit
 
-from exojax.utils.constants import Tref_original, hcperk
+from exojax.utils.constants import Tref_original
+from exojax.utils.constants import ccgs
+from exojax.utils.constants import hcperk
 
 
 @jit
@@ -55,3 +57,22 @@ def line_strength_numpy(T, Sij0, nu_lines, elower, qr, Tref=Tref_original):
     )
 
 
+def Einstein_coeff_from_line_strength(nu_lines, Sij, elower, g, Q, T):
+    """Einstein coefficient from line strength
+
+    Args:
+        nu_lines (float): line center wavenumber (cm-1)
+        Sij (float): line strength (cm)
+        elower (float): elower
+        g (float): upper state statistical weight
+        Q (float): partition function
+        T (float): temperature
+
+    Returns:
+        Einstein coefficient (s-1)
+    """    
+    Aij = - ((Sij * 8.0 * np.pi * ccgs * nu_lines**2 * Q) 
+            / g
+            / np.exp(-hcperk * elower / T) 
+            / np.expm1(-hcperk * nu_lines / T))
+    return Aij
