@@ -4,8 +4,8 @@ Comparing HITEMP and ExoMol
 .. code:: ipython3
 
     from exojax.database.hitran  import line_strength, doppler_sigma, gamma_hitran, gamma_natural
-    from exojax.database.exomol  import gamma_exomol
-    from exojax.database import api 
+    from exojax.database.exomol.exomol_functions  import gamma_exomol
+    from exojax.database.exomol import api 
     import numpy as np
     import matplotlib.pyplot as plt
 

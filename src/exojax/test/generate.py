@@ -2,7 +2,7 @@
 
 """
 
-from exojax.database import api 
+from exojax.database.exomol import api 
 from exojax.test.emulate_mdb import mock_wavenumber_grid
 import numpy as np
 import pathlib

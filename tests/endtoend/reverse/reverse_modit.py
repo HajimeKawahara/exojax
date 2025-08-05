@@ -18,7 +18,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from importlib.resources import files
 from exojax.opacity.modit import modit
-from exojax.database import api 
+from exojax.database.exomol import api 
 from exojax.utils.grids import wavenumber_grid
 from exojax.rt import ArtEmisPure
 from exojax.opacity import OpaModit

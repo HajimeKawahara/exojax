@@ -81,7 +81,7 @@ print("len(nu_grid_spec) = ", len(nu_grid_spec))   #6000
 #
 
 # molecules/CIA database settings, uses nu_photo becuase it's wider than nu_grid_obs
-from exojax.database.api  import MdbExomol
+from exojax.database.exomol.api import MdbExomol
 from exojax.database.api  import MdbHitemp
 from exojax.database import contdb 
 from exojax.database import molinfo 

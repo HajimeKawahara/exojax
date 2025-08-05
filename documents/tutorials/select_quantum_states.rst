@@ -24,7 +24,7 @@ optional_quantum_states=True.
 
 .. code:: ipython3
 
-    from exojax.database import api 
+    from exojax.database.exomol import api 
     mdb = api.MdbExomol("CO/12C-16O/Li2015/", nu_grid, optional_quantum_states=True, activation=False)
 
 

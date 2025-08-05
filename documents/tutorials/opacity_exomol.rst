@@ -8,8 +8,8 @@ step by step.
 
     from exojax.opacity.lpf.lpf import auto_xsection
     from exojax.database.hitran import SijT, doppler_sigma,  gamma_natural
-    from exojax.database.exomol  import gamma_exomol
-    from exojax.database import api 
+    from exojax.database.exomol.exomol_functions  import gamma_exomol
+    from exojax.database.exomol import api 
     import numpy as np
     import matplotlib.pyplot as plt
     plt.style.use('bmh')
@@ -25,7 +25,7 @@ We call moldb instance with the path of exomole files.
     # Setting wavenumber bins and loading HITRAN database
     nus=np.linspace(1000.0,10000.0,900000,dtype=np.float64) #cm-1
     emf='CO/12C-16O/Li2015'
-    mdbCO=api.MdbExomol(emf,nus,gpu_transfer=True)
+    mdbCO=exomol.api.MdbExomol(emf,nus,gpu_transfer=True)
 
 
 .. parsed-literal::

@@ -21,7 +21,7 @@ from exojax.opacity import initspec
 from exojax.rt.layeropacity import layer_optical_depth
 from exojax.rt.layeropacity import layer_optical_depth_CIA
 from exojax.opacity.modit import modit
-from exojax.database import api , contdb
+from exojax.database.exomol import api , contdb
 from exojax.rt.rtransfer import rtrun_emis_pureabs_fbased2st
 from exojax.rt import planck
 from exojax.postproc.response import ipgauss_sampling

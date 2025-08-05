@@ -6,7 +6,7 @@ from exojax.utils.grids import wavenumber_grid
 from exojax.postproc import response
 from exojax.database import molinfo 
 from exojax.database import contdb 
-from exojax.database.api  import MdbExomol
+from exojax.database.exomol.api import MdbExomol
 from exojax.opacity import OpaDirect
 from exojax.opacity import OpaCIA
 from exojax.rt import ArtEmisPure

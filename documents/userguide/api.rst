@@ -36,7 +36,7 @@ How to load ExoMol CO database
 
 .. code:: ipython
 	
-	>>> from exojax.database.api  import MdbExomol
+	>>> from exojax.database.exomol.api import MdbExomol
 	>>> mdb = MdbExomol(".database/CO/12C-16O/Li2015", nurange=[4200.0, 4300.0])
 
 We can check the attribute_names in mdb by 
@@ -240,7 +240,7 @@ If needed, we can mask the line information using "apply_mask_mdb" method. Here 
 
     >>> import numpy as np
     >>> from exojax.utils.grids import wavenumber_grid
-    >>> from exojax.database import api 
+    >>> from exojax.database.exomol import api 
     >>> nus,wav,res=wavenumber_grid(6910,6990,100000,unit='cm-1',xsmode="premodit")
     >>> 
     >>> # ExoMol                                                                                                                      
@@ -331,7 +331,7 @@ Here is an example of the initialization.
 .. code:: ipython
 	
     >>> from exojax.utils.grids import wavenumber_grid
-    >>> from exojax.database import api 
+    >>> from exojax.database.exomol import api 
 	
     >>> nus, wav, res = wavenumber_grid(24000.0, 26000.0, 1000, unit="AA")
     >>> mdb = api.MdbExomol(""CO/12C-16O/Li2015/"", nus, optional_quantum_states=True, activation=False)
@@ -376,7 +376,7 @@ We can mask attributes even after activation. In the following example, we load 
 	
     >>> import numpy as np
     >>> from exojax.utils.grids import wavenumber_grid
-    >>> from exojax.database import api 
+    >>> from exojax.database.exomol import api 
     >>> nus,wav,res=wavenumber_grid(6910,6990,100000,unit='cm-1',xsmode="premodit")
     xsmode =  premodit
     xsmode assumes ESLOG in wavenumber space: mode=premodit

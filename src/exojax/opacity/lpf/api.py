@@ -98,7 +98,7 @@ class OpaDirect(OpaCalc):
             ValueError: If database type is not supported
         """
         from exojax.database.hitran import doppler_sigma, gamma_natural
-        from exojax.database.exomol import gamma_exomol
+        from exojax.database.exomol.exomol_functions import gamma_exomol
         from exojax.database.hitran import gamma_hitran, line_strength
         from exojax.opacity.lpf.lpf import xsvector as xsvector_lpf
 
@@ -148,7 +148,7 @@ class OpaDirect(OpaCalc):
         """
         from exojax.database.hitran import doppler_sigma, gamma_natural
         from exojax.database.atomll import gamma_vald3, interp_QT_284
-        from exojax.database.exomol import gamma_exomol
+        from exojax.database.exomol.exomol_functions import gamma_exomol
         from exojax.database.hitran import gamma_hitran, line_strength
         from exojax.opacity.lpf.lpf import xsmatrix as xsmatrix_lpf
 

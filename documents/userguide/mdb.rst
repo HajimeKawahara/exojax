@@ -9,7 +9,7 @@ These molecular database can be controlled using the molecular/atomic database c
 +-----------------------+---------+---------------------------------------------------------------------------------+------------------------------------+
 |**database**           |mdb/adb  |**API**                                                                          | **notes**                          |
 +-----------------------+---------+---------------------------------------------------------------------------------+------------------------------------+
-|ExoMol                 |MdbExomol|`spec.api.MdbExomol <../exojax/exojax.spec.html#exojax.spec.api.MdbExomol>`_.    | auto download.                     |
+|ExoMol                 |MdbExomol|`spec.exomol.api.MdbExomol <../exojax/exojax.spec.html#exojax.spec.exomol.api.MdbExomol>`_.    | auto download.                     |
 +-----------------------+---------+---------------------------------------------------------------------------------+------------------------------------+
 |HITEMP                 |MdbHitemp|`sepc.api.MdbHitemp <../exojax/exojax.spec.html#exojax.spec.api.MdbHitemp>`_.    | auto download or .par              |
 +-----------------------+---------+---------------------------------------------------------------------------------+------------------------------------+

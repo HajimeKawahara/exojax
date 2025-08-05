@@ -39,7 +39,7 @@ testdata["hitemp"] = TESTDATA_CO_HITEMP_MODIT_XS_REF_AIR
 def test_xsection_premodit(db, diffmode):
     from jax import config
 
-    config.update("jax_enable_x64", False)
+    config.update("jax_enable_x64", True)
 
     ### DO NOT CHANGE ###
     Ttest = 1200  # fix to compare w/ precomputed xs by MODIT.

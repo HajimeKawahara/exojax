@@ -9,7 +9,7 @@ nu_grid, wav, resolution = wavenumber_grid(
 )
 print("Resolution=", resolution)
 
-from exojax.database.api  import MdbExomol
+from exojax.database.exomol.api import MdbExomol
 mdb = MdbExomol(".database/CO/12C-16O/Li2015", nurange=nu_grid)
 from exojax.opacity import OpaPremodit
 opa = OpaPremodit(mdb, nu_grid, auto_trange=[500.0, 1500.0], dit_grid_resolution=1.0, allow_32bit=True)

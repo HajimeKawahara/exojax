@@ -4,7 +4,7 @@ Uses OpaDIrect after calling PreModit #437 made by @ykawashima (see #437, #438, 
 """
 
 from exojax.utils.grids import wavenumber_grid
-from exojax.database import api 
+from exojax.database.exomol import api 
 from exojax.database import molinfo 
 from exojax.database.hitran  import line_strength, doppler_sigma, gamma_hitran, gamma_natural, line_strength_numpy
 from exojax.opacity import OpaPremodit, OpaDirect

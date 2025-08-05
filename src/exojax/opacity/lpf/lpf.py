@@ -5,7 +5,7 @@ from jax import custom_jvp, jit, vmap
 
 # vald
 from exojax.database.atomll  import gamma_vald3, interp_QT_284
-from exojax.database.exomol  import gamma_exomol
+from exojax.database.exomol.exomol_functions  import gamma_exomol
 from exojax.database.hitran  import doppler_sigma, gamma_natural, line_strength
 from exojax.special.faddeeva import asymptotic_wofz, imwofz, rewofz
 

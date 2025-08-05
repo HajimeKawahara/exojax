@@ -13,7 +13,7 @@ import pandas as pd
 from importlib.resources import files
 
 from exojax.rt import ArtEmisPure
-from exojax.database.api  import MdbExomol
+from exojax.database.exomol.api import MdbExomol
 from exojax.opacity import OpaPremodit
 from exojax.database.contdb  import CdbCIA
 from exojax.opacity import OpaCIA

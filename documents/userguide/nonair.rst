@@ -43,7 +43,7 @@ The formula is from Y. Tan et al (2022). Here is an example. We use the datafram
 
 .. code:: ipython
 	
-	>>> from exojax.database import api 
+	>>> from exojax.database.exomol import api 
 	>>> from exojax.utils.grids import wavenumber_grid
 	>>> 
 	>>> nus, wav, r = wavenumber_grid(24000.0, 26000.0, 1000, unit="AA", xsmode="premodit")

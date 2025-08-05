@@ -15,7 +15,7 @@ from exojax.opacity._common.lsd import inc2D_givenx
 from exojax.database.hitran  import line_strength
 from exojax.utils.grids import wavenumber_grid
 from exojax.opacity._common.set_ditgrid import ditgrid_log_interval
-from exojax.database.exomol  import gamma_exomol
+from exojax.database.exomol.exomol_functions  import gamma_exomol
 from exojax.utils.constants import Tref_original
 from exojax.test.emulate_mdb import mock_mdbExomol
 ## also, xs

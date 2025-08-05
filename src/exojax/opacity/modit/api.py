@@ -142,7 +142,7 @@ class OpaModit(OpaCalc):
             Cross section vector in cm²
         """
         from exojax.database.hitran import gamma_natural, normalized_doppler_sigma
-        from exojax.database.exomol import gamma_exomol
+        from exojax.database.exomol.exomol_functions import gamma_exomol
         from exojax.database.hitran import gamma_hitran, line_strength
         from exojax.opacity.modit.modit import xsvector_open_zeroscan, xsvector_zeroscan
         from exojax.opacity._common.set_ditgrid import ditgrid_log_interval

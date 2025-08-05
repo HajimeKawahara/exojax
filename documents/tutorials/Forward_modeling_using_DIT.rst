@@ -40,8 +40,8 @@ Loading a molecular database of CO and CIA (H2-H2)…
 
 .. code:: ipython3
 
-    from exojax.database import api , contdb
-    mdbCO=api.MdbExomol('.database/CO/12C-16O/Li2015',nus)
+    from exojax.database.exomol import api , contdb
+    mdbCO=exomol.api.MdbExomol('.database/CO/12C-16O/Li2015',nus)
     cdbH2H2=contdb.CdbCIA('.database/H2-H2_2011.cia',nus)
 
 
@@ -72,7 +72,7 @@ Pressure and Natural broadenings
 .. code:: ipython3
 
     from jax import jit
-    from exojax.database.exomol  import gamma_exomol
+    from exojax.database.exomol.exomol_functions  import gamma_exomol
     from exojax.database.hitran import gamma_natural
     
     gammaLMP = jit(vmap(gamma_exomol,(0,0,None,None)))\

@@ -1,4 +1,4 @@
-from exojax.database import api 
+from exojax.database.exomol import api 
 from exojax.utils.grids import wavenumber_grid
 import pytest
 

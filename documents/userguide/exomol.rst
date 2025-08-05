@@ -120,7 +120,7 @@ The path to the def file should be given using pathlib.Path.
 
 .. code:: python
 	  
-    from exojax.database.exomol api import read_def
+    from exojax.database.exomol.exomol_functions api import read_def
     import pathlib
     deff=pathlib.Path("~/exojax/examples/luhman16/.database/CO2/12C-16O2/UCL-4000/12C-16O2__UCL-4000.def")
     n_Texp, alpha_ref, molmass, numinf, numtag = read_def(deff)
@@ -135,7 +135,7 @@ For these files, the path can be just string.
 
 .. code:: python
 	  
-    from exojax.database.exomol api import read_pf, read_states, read_transf
+    from exojax.database.exomol.exomol_functions api import read_pf, read_states, read_transf
     pff="~/exojax/data/exomol/CO/12C-16O/Li2015/12C-16O__Li2015.pf"
     dat=read_pf(pff)
     statesf="~/exojax/data/exomol/CO/12C-16O/Li2015/12C-16O__Li2015.states.bz2"
@@ -151,7 +151,7 @@ Compute gup and Elower
 
 .. code:: python
 	  
-    from exojax.database.exomol api import pickup_gE
+    from exojax.database.exomol.exomol_functions api import pickup_gE
     A, nu_lines, elower, gup, jlower, jupper=pickup_gE(states,trans)
 
     
@@ -163,8 +163,8 @@ Read .broad file
 
 .. code:: python
 	  
-    from exojax.database.exomol api import read_broad, check_bdat
-    from exojax.database.exomol api import make_j2b, make_jj2b
+    from exojax.database.exomol.exomol_functions api import read_broad, check_bdat
+    from exojax.database.exomol.exomol_functions api import make_j2b, make_jj2b
 
     broadf="~/exojax/data/broad/1H2-16O__H2.broad"
     bdat=read_broad(broadf)

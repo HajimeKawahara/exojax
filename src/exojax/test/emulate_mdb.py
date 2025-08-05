@@ -5,8 +5,9 @@ import pickle
 import os
 import shutil
 
-from exojax.database import api 
-from exojax.database import customapi 
+from exojax.database.exomol.api import MdbExomol
+from exojax.database.api import MdbHitemp 
+from exojax.database.customapi import MdbHargreaves 
 from exojax.test.data import TESTDATA_moldb_VALD
 from exojax.test.data import get_testdata_filename
 from exojax.utils.grids import wavenumber_grid
@@ -64,7 +65,7 @@ def mock_mdbExomol(molecule="CO", crit=0.0):
     }
     path = path_dict[molecule]
     nus, wav, res = mock_wavenumber_grid()
-    mdb = api.MdbExomol(
+    mdb = MdbExomol(
         str(path),
         nus,
         crit=crit,
@@ -93,7 +94,7 @@ def mock_mdbHitemp(multi_isotope=False):
 
     parfile = get_testdata_filename(TESTDATA_CO_HITEMP_PARFILE)
     nus, wav, res = mock_wavenumber_grid()
-    mdb = api.MdbHitemp(
+    mdb = MdbHitemp(
         "CO",
         nus,
         isotope=isotope,
@@ -122,7 +123,7 @@ def mock_mdbHargreaves():
     
     path = "FeH/SAMPLE"
     nus, wav, res = mock_wavenumber_grid(lambda0=15820.0, lambda1=20040.0)
-    mdb = customapi.MdbHargreaves(
+    mdb = MdbHargreaves(
         str(path),
         nus,
         download=False, # default

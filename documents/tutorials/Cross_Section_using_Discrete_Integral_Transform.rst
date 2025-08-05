@@ -29,7 +29,7 @@ errors):
     from exojax.database.hitran  import gamma_natural
     from exojax.utils.grids import wavenumber_grid
     from exojax.utils.constants import Tref_original
-    from exojax.database import api 
+    from exojax.database.exomol import api 
     
     # Setting wavenumber bins and loading HITRAN database
     nus, wav, resolution = wavenumber_grid(

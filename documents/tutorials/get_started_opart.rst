@@ -51,7 +51,7 @@ Note that you can also use the
 
 .. code:: ipython3
 
-    from exojax.database.api  import MdbExomol
+    from exojax.database.exomol.api import MdbExomol
     from exojax.database.contdb  import CdbCIA
     from exojax.opacity import OpaPremodit
     from exojax.opacity import OpaCIA

@@ -23,7 +23,7 @@ errors):
 
     import matplotlib.pyplot as plt
     from exojax.database.hitran  import line_strength, doppler_sigma, gamma_hitran, gamma_natural
-    from exojax.database import api 
+    from exojax.database.exomol import api 
     from exojax.utils.grids import wavenumber_grid
     from exojax.utils.constants import Tref_original
     

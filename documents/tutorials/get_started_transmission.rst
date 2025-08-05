@@ -82,7 +82,7 @@ the database name in the ExoMol website (https://www.exomol.com/).
 
 .. code:: ipython3
 
-    from exojax.database.api  import MdbExomol
+    from exojax.database.exomol.api import MdbExomol
     mdb = MdbExomol(".database/CO/12C-16O/Li2015", nurange=nu_grid)
 
 

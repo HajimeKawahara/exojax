@@ -21,7 +21,7 @@ from exojax.database.hitran import gamma_natural, normalized_doppler_sigma
 from exojax.database.atomll  import gamma_vald3, interp_QT_284
 
 # exomol
-from exojax.database.exomol  import gamma_exomol
+from exojax.database.exomol.exomol_functions  import gamma_exomol
 
 # hitran/hitemp
 from exojax.database.hitran  import gamma_hitran, line_strength

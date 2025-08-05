@@ -7,7 +7,7 @@ import numpyro
 import numpyro.distributions as dist
 from jax import random
 from exojax.database import contdb 
-from exojax.database.api  import MdbExomol
+from exojax.database.exomol.api import MdbExomol
 from exojax.database import molinfo 
 from exojax.utils.grids import wavenumber_grid
 from exojax.utils.instfunc import resolution_to_gaussian_std

@@ -60,8 +60,8 @@ device.
 
 .. code:: ipython3
 
-    from exojax.database import api , contdb
-    mdbCH4=api.MdbExomol('.database/CH4/12C-1H4/YT10to10/',nus,gpu_transfer=False)
+    from exojax.database.exomol import api , contdb
+    mdbCH4=exomol.api.MdbExomol('.database/CH4/12C-1H4/YT10to10/',nus,gpu_transfer=False)
     cdbH2H2=contdb.CdbCIA('.database/H2-H2_2011.cia',nus)
 
 

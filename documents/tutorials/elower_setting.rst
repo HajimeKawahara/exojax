@@ -19,7 +19,7 @@ Make “mdb”.
 .. code:: ipython3
 
     from exojax.utils.grids import wavenumber_grid
-    from exojax.database.api  import MdbExomol
+    from exojax.database.exomol.api import MdbExomol
     
     nu_grid, wav, resolution = wavenumber_grid(2200.,
                                                2300.,

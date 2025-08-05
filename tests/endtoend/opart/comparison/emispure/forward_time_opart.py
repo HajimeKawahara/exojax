@@ -2,7 +2,7 @@ from exojax.opacity import OpaPremodit
 from exojax.rt import OpartEmisPure
 from exojax.rt.layeropacity import single_layer_optical_depth
 from exojax.utils.grids import wavenumber_grid
-from exojax.database.api  import MdbExomol
+from exojax.database.exomol.api import MdbExomol
 from exojax.utils.astrofunc import gravity_jupiter
 import time
 import tqdm
