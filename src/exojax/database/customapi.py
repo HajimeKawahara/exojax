@@ -11,33 +11,13 @@ from exojax.database._common.setradis  import _set_engine
 from exojax.database.core.line_strength import line_strength_numpy
 from exojax.database.core.line_strength import Einstein_coeff_from_line_strength
 from exojax.database.qstate  import branch_to_number
-from exojax.utils.constants import Tref_original, ccgs, hcperk
+from exojax.utils.constants import Tref_original
 from exojax.utils.molname import e2s
 
 HARGREAVES_URL = "https://content.cld.iop.org/journals/1538-3881/140/4/919/revision1/aj357217t5_mrt.txt"
 
-def set_wavenum(nurange):
-    """Set the wavenumber range for the database.
 
-    Args:
-        nurange (list): Wavenumber range for the database
-    Returns:
-        tuple: Minimum and maximum wavenumber
-    """
-    if nurange is None:
-        wavenum_min = 0.0
-        wavenum_max = 0.0
-        warnings.warn("nurange=None.", UserWarning)
-    else:
-        wavenum_min, wavenum_max = np.min(nurange), np.max(nurange)
-    if wavenum_min == -np.inf:
-        wavenum_min = None
-    if wavenum_max == np.inf:
-        wavenum_max = None
-    return wavenum_min, wavenum_max
-
-
-class MdbHargreaves():
+class MdbHargreaves:
     """molecular database of Hargreaves et al. (2010) in ExoMol form.
     
     Attributes:
@@ -72,7 +52,7 @@ class MdbHargreaves():
         self.database = str(self.path.stem)
         self.exact_molecule_name = self.path.parents[0].stem
         self.simple_molecule_name = e2s(self.exact_molecule_name)
-        wavenum_min, wavenum_max = set_wavenum(nurange)
+        wavenum_min, wavenum_max = _set_wavenum_hargreaves(nurange)
         self.nurange = [wavenum_min, wavenum_max]
         self.engine = _set_engine(engine)
 
@@ -176,4 +156,24 @@ class MdbHargreaves():
         mdb_exomol_cp.df_load_mask = mdb_exomol_cp.compute_load_mask(df_activate) # need nurange
         mdb_exomol_cp.activate(df_activate)
         return mdb_exomol_cp
+
+def _set_wavenum_hargreaves(nurange):
+    """Set the wavenumber range for the database.
+
+    Args:
+        nurange (list): Wavenumber range for the database
+    Returns:
+        tuple: Minimum and maximum wavenumber
+    """
+    if nurange is None:
+        wavenum_min = 0.0
+        wavenum_max = 0.0
+        warnings.warn("nurange=None.", UserWarning)
+    else:
+        wavenum_min, wavenum_max = np.min(nurange), np.max(nurange)
+    if wavenum_min == -np.inf:
+        wavenum_min = None
+    if wavenum_max == np.inf:
+        wavenum_max = None
+    return wavenum_min, wavenum_max
 

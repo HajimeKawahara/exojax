@@ -1,5 +1,5 @@
 from exojax.test.emulate_mdb import mock_mdbHargreaves
-from exojax.database.customapi  import set_wavenum
+from exojax.database.customapi  import _set_wavenum_hargreaves
 import numpy as np
 import pytest
 
@@ -16,9 +16,9 @@ import pytest
 def test_set_wavenum(input_nurange, expected_output, expect_warning):
     if expect_warning:
         with pytest.warns(UserWarning, match="nurange=None."):
-            result = set_wavenum(input_nurange)
+            result = _set_wavenum_hargreaves(input_nurange)
     else:
-        result = set_wavenum(input_nurange)
+        result = _set_wavenum_hargreaves(input_nurange)
     assert result == expected_output
 
 def test_line_strength_hargreaves():
