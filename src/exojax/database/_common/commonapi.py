@@ -5,7 +5,7 @@ from radis.db.classes import get_molecule
 from radis.levels.partfunc import PartFuncTIPS
 
 from exojax.database import hitranapi
-from exojax.database.hitran import line_strength_numpy
+from exojax.database.core.line_strength import line_strength_numpy
 from exojax.database.hitranapi import molecid_hitran
 from exojax.utils.constants import Tref_original
 from exojax.utils.isotopes import molmass_hitran
@@ -100,7 +100,7 @@ class MdbCommonHitempHitran:
         Examples:
 
             >>> # we would extract the line with delta nu = 2 here
-            >>> mdb = api.MdbExomol(emf, nus, optional_quantum_states=True, activation=False)
+            >>> mdb = MdbExomol(emf, nus, optional_quantum_states=True, activation=False)
             >>> load_mask = (mdb.df["v_u"] - mdb.df["v_l"] == 2)
             >>> mdb.activate(mdb.df, load_mask)
 
@@ -143,7 +143,7 @@ class MdbCommonHitempHitran:
             mask: mask to be applied
 
         Examples:
-            >>> mdb = api.MdbHitemp(emf, nus)
+            >>> mdb = MdbHitemp(emf, nus)
             >>> # we would extract the lines with n_air > 0.01
             >>> mask = mdb.n_air > 0.01
             >>> mdb.apply_mask_mdb(mask)

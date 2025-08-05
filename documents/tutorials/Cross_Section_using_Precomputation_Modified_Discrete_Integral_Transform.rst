@@ -21,8 +21,8 @@ errors):
 .. code:: ipython3
 
     import matplotlib.pyplot as plt
-    from exojax.database.hitran  import line_strength, doppler_sigma, gamma_hitran, gamma_natural
-    from exojax.database.exomol import api 
+    from exojax.database.core.line_strength import line_strength, doppler_sigma, gamma_hitran, gamma_natural
+    from exojax.database.exomol.api import MdbExomol 
     from exojax.utils.grids import wavenumber_grid
     from exojax.utils.constants import Tref_original
     # Setting wavenumber bins and loading HITRAN database
@@ -32,7 +32,7 @@ errors):
                                   unit="cm-1",
                                   xsmode="premodit")
     isotope=1
-    mdbCO = api.MdbHitran('CO', nu_grid, isotope=isotope)
+    mdbCO = MdbHitran('CO', nu_grid, isotope=isotope)
     
     # set T, P and partition function
     Mmol = mdbCO.molmass
@@ -107,7 +107,7 @@ Precompute the normalized Dopper width and the partition function ratio:
 
 .. code:: ipython3
 
-    from exojax.database.hitran import normalized_doppler_sigma
+    from exojax.database.core.broadening import normalized_doppler_sigma
     
     molecular_mass = mdbCO.molmass
     nsigmaD = normalized_doppler_sigma(Tfix, molecular_mass, R)

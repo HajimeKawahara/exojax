@@ -22,14 +22,14 @@ errors):
 .. code:: ipython3
 
     import matplotlib.pyplot as plt
-    from exojax.database.hitran  import line_strength, doppler_sigma, gamma_hitran, gamma_natural
-    from exojax.database.exomol import api 
+    from exojax.database.core.line_strength import line_strength, doppler_sigma, gamma_hitran, gamma_natural
+    from exojax.database.exomol.api import MdbExomol 
     from exojax.utils.grids import wavenumber_grid
     from exojax.utils.constants import Tref_original
     
     # Setting wavenumber bins and loading HITRAN database
     nus, wav, R = wavenumber_grid(1900.0, 2300.0, 350000, unit="cm-1", xsmode="modit")
-    mdbCO = api.MdbHitran("CO", nus, isotope=1)  # use isotope=1 12C-16O
+    mdbCO = MdbHitran("CO", nus, isotope=1)  # use isotope=1 12C-16O
     
     # set T, P and partition function
     Mmol = mdbCO.molmass

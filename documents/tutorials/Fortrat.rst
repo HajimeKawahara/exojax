@@ -4,13 +4,13 @@ Quatum states of Carbon Monoxide and Fortrat Diagram
 We here see the quantum states of Carbon Monoxide. Also, to see how the
 band head appears, we would like to plot the Fortrat diagram with a
 given quantum number and interval. To do so, we use
-optional_quantum_states=True option in api.MdbExomol.
+optional_quantum_states=True option inMdbExomol.
 
 .. code:: ipython3
 
-    from exojax.database.exomol import api 
+    from exojax.database.exomol.api import MdbExomol 
     emf='CO/12C-16O/Li2015'   
-    mdb = api.MdbExomol(emf, None, optional_quantum_states=True)
+    mdb =MdbExomol(emf, None, optional_quantum_states=True)
 
 
 .. parsed-literal::

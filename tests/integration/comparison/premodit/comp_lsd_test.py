@@ -32,7 +32,7 @@ def compare_line_shape_density(mdb,nu_grid,Ttest=1000.0,Ttyp=2000.0):
     
     """
     from exojax.utils.indexing import npgetix
-    from exojax.database.hitran  import line_strength
+    from exojax.database.core.line_strength import line_strength
     from exojax.opacity.premodit.premodit import make_elower_grid
     #from exojax.opacity.premodit.premodit import unbiased_lsd_first
     from exojax.opacity.premodit.premodit import unbiased_lsd_zeroth
@@ -84,9 +84,9 @@ def compare_line_shape_density(mdb,nu_grid,Ttest=1000.0,Ttyp=2000.0):
     return Slsd, Slsd_direct
 
 def test_comp_lsd():
-    from exojax.database.exomol import api 
+    from exojax.database.exomol.api import MdbExomol 
     nu_grid=np.logspace(np.log10(6030.0), np.log10(6060.0), 20000, dtype=np.float64)
-    mdbCH4 = api.MdbExomol('.database/CH4/12C-1H4/YT10to10/', nu_grid, gpu_transfer=False)
+    mdbCH4 =MdbExomol('.database/CH4/12C-1H4/YT10to10/', nu_grid, gpu_transfer=False)
     Slsd,Slsd_direct=compare_line_shape_density(mdbCH4,nu_grid,Ttest=1000.0,Ttyp=2000.0)    
     maxdev=np.max(np.abs(Slsd/Slsd_direct-1.0))
     print("max deviation=",maxdev)

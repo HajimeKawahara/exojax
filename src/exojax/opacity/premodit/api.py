@@ -379,7 +379,7 @@ class OpaPremodit(OpaCalc):
         Returns:
             Cross section vector in cm²
         """
-        from exojax.database.hitran import normalized_doppler_sigma
+        from exojax.database.core.broadening import normalized_doppler_sigma
 
         (
             multi_index_uniqgrid,

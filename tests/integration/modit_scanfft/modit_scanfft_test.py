@@ -3,11 +3,11 @@ from importlib.resources import files
 import pandas as pd
 import numpy as np
 from exojax.opacity.modit.modit import xsvector_scanfft
-from exojax.database.hitran  import line_strength
+from exojax.database.core.line_strength import line_strength
 from exojax.test.data import TESTDATA_CO_EXOMOL_MODIT_XS_REF
-from exojax.database.hitran import normalized_doppler_sigma, gamma_natural
-from exojax.database.hitran  import line_strength
-from exojax.database.exomol.exomol_functions  import gamma_exomol
+from exojax.database.core.broadening import normalized_doppler_sigma, gamma_natural
+from exojax.database.core.line_strength import line_strength
+from exojax.database.core.broadening  import gamma_exomol
 from exojax.utils.grids import wavenumber_grid
 from exojax.opacity.initspec import init_modit, init_modit_vald
 from exojax.opacity._common.set_ditgrid import ditgrid_log_interval

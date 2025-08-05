@@ -23,19 +23,19 @@ errors):
 
 .. code:: ipython3
 
-    from exojax.database.hitran  import line_strength
+    from exojax.database.core.line_strength import line_strength
     from exojax.database.hitran  import doppler_sigma
     from exojax.database.hitran  import gamma_hitran
     from exojax.database.hitran  import gamma_natural
     from exojax.utils.grids import wavenumber_grid
     from exojax.utils.constants import Tref_original
-    from exojax.database.exomol import api 
+    from exojax.database.exomol.api import MdbExomol 
     
     # Setting wavenumber bins and loading HITRAN database
     nus, wav, resolution = wavenumber_grid(
         1900.0, 2300.0, 350000, unit="cm-1", xsmode="dit"
     )
-    mdbCO = api.MdbHitran(
+    mdbCO = MdbHitran(
         "CO", nus, isotope=1, gpu_transfer=True
     )  # here we use the isotope=1 (12C16O) in DIT.
     

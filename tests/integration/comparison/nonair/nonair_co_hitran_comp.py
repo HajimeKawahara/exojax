@@ -1,11 +1,11 @@
 # %%
-from exojax.database.exomol import api 
+from exojax.database.hitran.api import MdbHitran
 from exojax.utils.grids import wavenumber_grid
 
 nus, wav, r = wavenumber_grid(24000.0, 26000.0, 1000, unit="AA", xsmode="premodit")
 
 # when
-mdb = api.MdbHitran("CO", nus, inherit_dataframe=True, nonair_broadening=True)
+mdb = MdbHitran("CO", nus, inherit_dataframe=True, nonair_broadening=True)
 
 # %%
 

@@ -20,8 +20,8 @@ from radis import __version__ as radis_version
 from radis.api.exomolapi import (
     MdbExomol as CapiMdbExomol,
 )  # MdbExomol in the common API
-from exojax.database.hitran import gamma_natural as gn
-from exojax.database.hitran import line_strength_numpy
+from exojax.database.core.broadening import gamma_natural as gn
+from exojax.database.core.line_strength import line_strength_numpy
 from exojax.database.molinfo import isotope_molmass
 from exojax.utils.constants import Tref_original
 from exojax.utils.molname import e2s
@@ -253,7 +253,7 @@ class MdbExomol(CapiMdbExomol):
         Examples:
 
             >>> # we would extract the line with delta nu = 2 here
-            >>> mdb = api.MdbExomol(emf, nus, optional_quantum_states=True, activation=False)
+            >>> mdb = MdbExomol(emf, nus, optional_quantum_states=True, activation=False)
             >>> load_mask = (mdb.df["v_u"] - mdb.df["v_l"] == 2)
             >>> mdb.activate(mdb.df, load_mask)
 
@@ -302,7 +302,7 @@ class MdbExomol(CapiMdbExomol):
             mask: mask to be applied
 
         Examples:
-            >>> mdb = api.MdbExomol(emf, nus)
+            >>> mdb = MdbExomol(emf, nus)
             >>> # we would extract the lines with elower > 100.
             >>> mask = mdb.elower > 100.
             >>> mdb.apply_mask_mdb(mask)

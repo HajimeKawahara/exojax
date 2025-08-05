@@ -3,12 +3,12 @@ from exojax.test.data import TESTDATA_CO_HITEMP_MODIT_XS_REF
 from exojax.test.data import TESTDATA_CO_HITEMP_MODIT_XS_REF_AIR
 import numpy as np
 from exojax.opacity.modit.modit import xsvector_scanfft
-from exojax.database.hitran  import line_strength
+from exojax.database.core.line_strength import line_strength
 from exojax.database.molinfo  import molmass_isotope
-from exojax.database.hitran import normalized_doppler_sigma, gamma_natural
-from exojax.database.hitran  import line_strength
+from exojax.database.core.broadening import normalized_doppler_sigma, gamma_natural
+from exojax.database.core.line_strength import line_strength
 from exojax.database.hitran  import gamma_hitran
-from exojax.database.exomol.exomol_functions  import gamma_exomol
+from exojax.database.core.broadening  import gamma_exomol
 from exojax.opacity.initspec import init_modit
 from exojax.opacity._common.set_ditgrid import ditgrid_log_interval
 from exojax.test.emulate_mdb import mock_mdbExomol
@@ -98,8 +98,8 @@ def gendata_xs_modit_hitemp(airmode=False):
     #    #### HERE IS Temporary
     nu_grid, wav, res = mock_wavenumber_grid()
     mdbCO = mock_mdbHitemp(multi_isotope=False)
-    # from exojax.database.exomol import api 
-    # mdbCO = api.MdbHitemp('CO', nus, gpu_transfer=True, isotope=1)
+    # from exojax.database.exomol.api import MdbExomol 
+    # mdbCO = MdbHitemp('CO', nus, gpu_transfer=True, isotope=1)
     # print(len(mdbCO.nu_lines))
     # print(np.min(mdbCO.nu_lines),np.max(mdbCO.nu_lines))
     Mmol = mdbCO.molmass

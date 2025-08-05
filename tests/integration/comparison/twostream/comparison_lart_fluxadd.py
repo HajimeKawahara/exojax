@@ -22,8 +22,8 @@ def generate_spectrum(db, diffmode, rtsolver, fig=False):
     #gravity = art.constant_gravity_profile(2478.57) #gravity can be profile
 
     mdb = mock_mdb(db)
-    #mdb = api.MdbExomol('.database/CO/12C-1edt mru 6O/Li2015',nu_grid,inherit_dataframe=False,gpu_transfer=False)
-    #mdb = api.MdbHitemp('CO', art.nu_grid, gpu_transfer=False, isotope=1)
+    #mdb =MdbExomol('.database/CO/12C-1edt mru 6O/Li2015',nu_grid,inherit_dataframe=False,gpu_transfer=False)
+    #mdb = MdbHitemp('CO', art.nu_grid, gpu_transfer=False, isotope=1)
     opa = OpaPremodit(mdb=mdb,
                       nu_grid=nu_grid,
                       diffmode=diffmode,

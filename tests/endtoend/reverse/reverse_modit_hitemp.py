@@ -21,7 +21,7 @@ from exojax.opacity import initspec
 from exojax.rt.layeropacity import layer_optical_depth
 from exojax.rt.layeropacity import layer_optical_depth_CIA
 from exojax.opacity.modit import modit
-from exojax.database.exomol import api , contdb
+from exojax.database.exomol.api import MdbExomol , contdb
 from exojax.rt.rtransfer import rtrun_emis_pureabs_fbased2st
 from exojax.rt import planck
 from exojax.postproc.response import ipgauss_sampling
@@ -57,7 +57,7 @@ vmrH2 = mmrH2 * mmw / molmassH2  # VMR
 
 #
 Mp = 33.2
-mdbCO = api.MdbHitemp(".database/CO", nus, crit=1.0e-30, gpu_transfer=True)
+mdbCO = MdbHitemp(".database/CO", nus, crit=1.0e-30, gpu_transfer=True)
 cdbH2H2 = contdb.CdbCIA(".database/H2-H2_2011.cia", nus)
 print("N=", len(mdbCO.nu_lines))
 

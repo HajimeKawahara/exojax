@@ -3,9 +3,9 @@ Comparing HITEMP and ExoMol
 
 .. code:: ipython3
 
-    from exojax.database.hitran  import line_strength, doppler_sigma, gamma_hitran, gamma_natural
-    from exojax.database.exomol.exomol_functions  import gamma_exomol
-    from exojax.database.exomol import api 
+    from exojax.database.core.line_strength import line_strength, doppler_sigma, gamma_hitran, gamma_natural
+    from exojax.database.core.broadening  import gamma_exomol
+    from exojax.database.exomol.api import MdbExomol 
     import numpy as np
     import matplotlib.pyplot as plt
 
@@ -24,7 +24,7 @@ not exist, moldb will try to download it from HITRAN website.
 
 .. code:: ipython3
 
-    mdbCO_HITEMP = api.MdbHitemp(
+    mdbCO_HITEMP = MdbHitemp(
         "CO", nus, isotope=1, gpu_transfer=True
     )  # we use istope=1 for comparison
 
@@ -39,7 +39,7 @@ not exist, moldb will try to download it from HITRAN website.
 .. code:: ipython3
 
     emf = "CO/12C-16O/Li2015"  # this is isotope=1 12C-16O
-    mdbCO_Li2015 = api.MdbExomol(emf, nus, gpu_transfer=True)
+    mdbCO_Li2015 =MdbExomol(emf, nus, gpu_transfer=True)
 
 
 .. parsed-literal::

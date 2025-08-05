@@ -79,7 +79,7 @@ Loading molecular database, CIA, and define some values.
 
 .. code:: ipython3
 
-    from exojax.database.exomol import api , contdb
+    from exojax.database.exomol.api import MdbExomol , contdb
     from exojax.database import molinfo 
     
     mmw=2.33 #mean molecular weight

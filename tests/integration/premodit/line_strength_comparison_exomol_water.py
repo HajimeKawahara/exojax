@@ -9,7 +9,7 @@ config.update("jax_enable_x64", True)
 import numpy as np
 import jax.numpy as jnp
 from exojax.utils.grids import wavenumber_grid
-from exojax.database.exomol import api 
+from exojax.database.exomol.api import MdbExomol 
 from exojax.opacity import OpaPremodit
 from exojax.opacity import initspec, molinfo
 from exojax.database import molinfo 
@@ -18,10 +18,10 @@ from exojax.opacity.premodit.premodit import unbiased_lsd_first
 from exojax.opacity.premodit.premodit import unbiased_lsd_second
 from exojax.opacity._common.lsd import inc2D_givenx
 from exojax.opacity.modit import modit
-from exojax.database.hitran  import line_strength
+from exojax.database.core.line_strength import line_strength
 from exojax.utils.grids import wavenumber_grid
 from exojax.opacity._common.set_ditgrid import ditgrid_log_interval
-from exojax.database.exomol.exomol_functions  import gamma_exomol
+from exojax.database.core.broadening  import gamma_exomol
 from exojax.utils.constants import Tref_original
 
 wls, wll, Ndata = 15035, 15040, 100
@@ -34,7 +34,7 @@ wavmax = np.max(wavd) + 5.0
 nus, wav, reso = wavenumber_grid(wavmin, wavmax, Nx, unit="AA", xsmode="modit")
 #Load H2O data with premodit
 molmassH2O = molinfo.molmass_isotope("H2O")
-mdb = api.MdbExomol('.database/H2O/1H2-16O/POKAZATEL', nus, gpu_transfer=True)
+mdb =MdbExomol('.database/H2O/1H2-16O/POKAZATEL', nus, gpu_transfer=True)
 #mdb.change_reference_temperature(Tref)
 print('N_H2O=', len(mdb.nu_lines))
 

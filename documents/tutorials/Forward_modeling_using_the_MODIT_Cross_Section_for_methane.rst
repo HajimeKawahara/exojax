@@ -54,7 +54,7 @@ Loading a molecular database of CH4 and CIA (H2-H2)…
 
 .. code:: ipython3
 
-    from exojax.database.exomol import api , contdb
+    from exojax.database.exomol.api import MdbExomol , contdb
     mdbCH4=exomol.api.MdbExomol('.database/CH4/12C-1H4/YT10to10/',nus,crit=1.e-30, Ttyp=300)
     cdbH2H2=contdb.CdbCIA('.database/H2-H2_2011.cia',nus)
 
@@ -105,8 +105,8 @@ Pressure and Natural broadenings
 .. code:: ipython3
 
     from jax import jit
-    from exojax.database.exomol.exomol_functions  import gamma_exomol
-    from exojax.database.hitran import gamma_natural
+    from exojax.database.core.broadening  import gamma_exomol
+    from exojax.database.core.broadening import gamma_natural
     
     gammaLMP = jit(vmap(gamma_exomol,(0,0,None,None)))\
             (Parr,Tarr,mdbCH4.n_Texp,mdbCH4.alpha_ref)
@@ -117,7 +117,7 @@ And line strength
 
 .. code:: ipython3
 
-    from exojax.database.hitran import SijT
+    from exojax.database.core.broadening import SijT
     SijM=jit(vmap(SijT,(0,None,None,None,0)))\
         (Tarr,mdbCH4.logsij0,mdbCH4.nu_lines,mdbCH4.elower,qt)
 
@@ -128,7 +128,7 @@ with the normalized gammaL and q = R log(nu).
 
 .. code:: ipython3
 
-    from exojax.database.hitran import normalized_doppler_sigma
+    from exojax.database.core.broadening import normalized_doppler_sigma
     import numpy as np
     nsigmaDl=normalized_doppler_sigma(Tarr,molmassCH4,resolution)[:,np.newaxis]
 

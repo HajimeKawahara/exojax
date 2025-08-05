@@ -4,9 +4,9 @@ Uses OpaDIrect after calling PreModit #437 made by @ykawashima (see #437, #438, 
 """
 
 from exojax.utils.grids import wavenumber_grid
-from exojax.database.exomol import api 
+from exojax.database.exomol.api import MdbExomol 
 from exojax.database import molinfo 
-from exojax.database.hitran  import line_strength, doppler_sigma, gamma_hitran, gamma_natural, line_strength_numpy
+from exojax.database.core.line_strength import line_strength, doppler_sigma, gamma_hitran, gamma_natural, line_strength_numpy
 from exojax.opacity import OpaPremodit, OpaDirect
 import numpy as np
 import matplotlib.pyplot as plt
@@ -97,7 +97,7 @@ nus, wav, res = wavenumber_grid(22980.0,
                                 unit='AA',
                                 xsmode="premodit")
 
-mdb = api.MdbHitemp(".database/CO/05_HITEMP2019",nus,crit=1.e-30,Ttyp=1000.,gpu_transfer=True,isotope=1)
+mdb = MdbHitemp(".database/CO/05_HITEMP2019",nus,crit=1.e-30,Ttyp=1000.,gpu_transfer=True,isotope=1)
 
 P = 1.e-3
 T = 1000.

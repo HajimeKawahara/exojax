@@ -30,8 +30,8 @@ API in radis.api!
     from exojax.rt.rtransfer import pressure_layer 
     from exojax.database import moldb , molinfo, contdb
     from exojax.database import atomll 
-    from exojax.database.exomol.exomol_functions  import gamma_exomol
-    from exojax.database.hitran import SijT, doppler_sigma
+    from exojax.database.core.broadening  import gamma_exomol
+    from exojax.database.core.broadening import SijT, doppler_sigma
     from exojax.rt import planck
     import matplotlib.pyplot as plt
     import jax.numpy as jnp

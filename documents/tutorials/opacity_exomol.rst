@@ -7,9 +7,9 @@ step by step.
 .. code:: ipython3
 
     from exojax.opacity.lpf.lpf import auto_xsection
-    from exojax.database.hitran import SijT, doppler_sigma,  gamma_natural
-    from exojax.database.exomol.exomol_functions  import gamma_exomol
-    from exojax.database.exomol import api 
+    from exojax.database.core.broadening import SijT, doppler_sigma,  gamma_natural
+    from exojax.database.core.broadening  import gamma_exomol
+    from exojax.database.exomol.api import MdbExomol 
     import numpy as np
     import matplotlib.pyplot as plt
     plt.style.use('bmh')

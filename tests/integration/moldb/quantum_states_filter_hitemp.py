@@ -1,10 +1,10 @@
-from exojax.database.exomol import api 
+from exojax.database.exomol.api import MdbExomol 
 from exojax.utils.grids import wavenumber_grid
 
 nus, wav, r = wavenumber_grid(24000.0, 26000.0, 1000, unit="AA", xsmode="premodit")
 
 # when
-mdb = api.MdbHitemp("CO", nus, activation=False)
+mdb = MdbHitemp("CO", nus, activation=False)
 
 print(mdb.df)
 import matplotlib.pyplot as plt

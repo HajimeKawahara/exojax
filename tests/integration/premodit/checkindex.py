@@ -4,7 +4,7 @@
 
 from jax import config
 from exojax.utils.grids import wavenumber_grid
-from exojax.database.exomol import api 
+from exojax.database.exomol.api import MdbExomol 
 from exojax.opacity import initspec
 
 
@@ -16,7 +16,7 @@ wls, wll = 15020, 15050
 Nx = 2000
 nus, wav, reso = wavenumber_grid(wls, wll, Nx, unit="AA", xsmode="premodit")
 
-mdbH2O_orig = api.MdbExomol(
+mdbH2O_orig =MdbExomol(
     ".database/H2O/1H2-16O/POKAZATEL", nus, crit=crit, Ttyp=Tgue
 )
 print("N=", len(mdbH2O_orig.nu_lines))
