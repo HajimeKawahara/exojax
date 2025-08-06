@@ -170,7 +170,7 @@ estimated using
 .. code:: ipython3
 
     import numpy as np
-    from exojax.database.customapi  import MdbHargreaves
+    from exojax.database import MdbHargreaves
     from exojax.utils.constants import Tref_original   
     
     QTref_original = np.array(mdb_exomol.QT_interp(Tref_original))

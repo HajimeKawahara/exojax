@@ -19,7 +19,8 @@ from exojax.database.core.broadening import gamma_natural
 from exojax.database.core.broadening import normalized_doppler_sigma
 
 # vald
-from exojax.database.atomll  import gamma_vald3, interp_QT_284
+from exojax.database.core_atom.broadening import gamma_vald3
+from exojax.database.core_atom.pf import interp_QT_284
 
 # exomol
 from exojax.database.core.broadening  import gamma_exomol

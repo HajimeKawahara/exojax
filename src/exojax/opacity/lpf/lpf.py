@@ -4,7 +4,8 @@ import jax.numpy as jnp
 from jax import custom_jvp, jit, vmap
 
 # vald
-from exojax.database.atomll  import gamma_vald3, interp_QT_284
+from exojax.database.core_atom.broadening import gamma_vald3
+from exojax.database.core_atom.pf import interp_QT_284
 from exojax.database.core.broadening  import gamma_exomol
 from exojax.database.core.broadening  import doppler_sigma
 from exojax.database.core.broadening  import gamma_natural

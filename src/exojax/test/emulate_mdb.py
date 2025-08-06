@@ -6,7 +6,7 @@ import shutil
 
 from exojax.database.exomol.api import MdbExomol
 from exojax.database.hitemp.api import MdbHitemp
-from exojax.database.customapi import MdbHargreaves
+from exojax.database.hargreaves.api import MdbHargreaves
 from exojax.test.data import TESTDATA_moldb_VALD
 from exojax.test.data import get_testdata_filename
 from exojax.utils.grids import wavenumber_grid

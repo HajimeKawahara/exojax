@@ -119,7 +119,7 @@ Sets a T-P profile and partial pressures
 
 .. parsed-literal::
 
-    /home/kawahara/exojax/src/exojax/spec/atomllapi.py:616: FutureWarning: Calling float on a single element Series is deprecated and will raise a TypeError in the future. Use float(ser.iloc[0]) instead
+    /home/kawahara/exojax/src/exojax/spec/core_atom.io.py:616: FutureWarning: Calling float on a single element Series is deprecated and will raise a TypeError in the future. Use float(ser.iloc[0]) instead
       ionE = float(
 
 
@@ -288,7 +288,7 @@ VALD3 <http://secondearths.sakura.ne.jp/exojax/tutorials/metals.html>`__)
 
 .. parsed-literal::
 
-    /home/kawahara/exojax/src/exojax/spec/atomllapi.py:616: FutureWarning: Calling float on a single element Series is deprecated and will raise a TypeError in the future. Use float(ser.iloc[0]) instead
+    /home/kawahara/exojax/src/exojax/spec/core_atom.io.py:616: FutureWarning: Calling float on a single element Series is deprecated and will raise a TypeError in the future. Use float(ser.iloc[0]) instead
       ionE = float(
 
 

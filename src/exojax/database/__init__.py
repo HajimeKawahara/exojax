@@ -19,6 +19,12 @@ _ALIAS: Final[dict[str, str]] = {
     "MdbExomol": "exojax.database.exomol.api:MdbExomol",
     "MdbHitemp": "exojax.database.hitemp.api:MdbHitemp",
     "MdbHitran": "exojax.database.hitran.api:MdbHitran",
+    "MdbHargreaves": "exojax.database.hargreaves.api:MdbHargreaves",
+    "XdbExomolHR": "exojax.database.exomolhr.api:XdbExomolHR",
+    "AdbVald": "exojax.database.vald.api:AdbVald",
+    "AdbSepVald": "exojax.database.vald.api:AdbSepVald",
+    "AdbKurucz": "exojax.database.kurucz.api:AdbKurucz",
+    "PdbCloud": "exojax.database.pardb:PdbCloud",
 }
 
 __all__ = list(_ALIAS)          # tab completion & help()
