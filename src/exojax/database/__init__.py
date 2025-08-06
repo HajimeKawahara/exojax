@@ -19,6 +19,8 @@ _ALIAS: Final[dict[str, str]] = {
     "MdbExomol": "exojax.database.exomol.api:MdbExomol",
     "MdbHitemp": "exojax.database.hitemp.api:MdbHitemp",
     "MdbHitran": "exojax.database.hitran.api:MdbHitran",
+    "XdbExomolHR": "exojax.database.exomolhr.api:XdbExomolHR",
+    "PdbCloud": "exojax.database.pardb:PdbCloud",
 }
 
 __all__ = list(_ALIAS)          # tab completion & help()

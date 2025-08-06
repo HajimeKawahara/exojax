@@ -10,7 +10,8 @@ from exojax.database.exomolhr._downloader import _fetch_opacity_zip
 
 EXOMOLHR_HOME, EXOMOLHR_API_ROOT, EXOMOLHR_DOWNLOAD_ROOT = url_lists_exomolhr()
 
-
+list_exomolhr_molecules = _list_exomolhr_molecules
+list_exomolhr_isotopes = _list_isotopologues
 class XdbExomolHR:
     """XdbExomolHR class for ExomolHR database
 
