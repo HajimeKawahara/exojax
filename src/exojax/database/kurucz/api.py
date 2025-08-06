@@ -8,8 +8,17 @@ import numpy as np
 
 from exojax.database.core_atom.line_strength import line_strength_atom
 from exojax.database.core_atom.pf import interp_QT_284
+from exojax.database.core_atom.pf import partfn_Fe
 
-from exojax.database import atomllapi
+from exojax.database.core_atom.io import read_kurucz
+from exojax.database.core_atom.io import load_pf_Barklem2016
+from exojax.database.core_atom.io import load_atomicdata
+from exojax.database.core_atom.io import load_ionization_energies
+from exojax.database.core_atom.io import pick_ionE
+from exojax.database.core_atom.io import PeriodicTable
+from exojax.database.core_atom.io import load_atomicdata
+from exojax.database.core_atom.io import load_ionization_energies
+from exojax.database.core_atom.io import pick_ionE  
 from exojax.utils.constants import Tref_original
 
 __all__ = ["AdbKurucz"]
@@ -100,10 +109,10 @@ class AdbKurucz:
             self._gamRad,
             self._gamSta,
             self._vdWdamp,
-        ) = atomllapi.read_kurucz(self.kurucz_file)
+        ) = read_kurucz(self.kurucz_file)
 
         # load the partition functions (for 284 atomic species)
-        pfTdat, self.pfdat = atomllapi.load_pf_Barklem2016()  # Barklem & Collet (2016)
+        pfTdat, self.pfdat = load_pf_Barklem2016()  # Barklem & Collet (2016)
         self.T_gQT = jnp.array(pfTdat.columns[1:], dtype=float)
         self.gQT_284species = jnp.array(
             self.pfdat.iloc[:, 1:].to_numpy(dtype=float)
@@ -122,7 +131,7 @@ class AdbKurucz:
             self.nu_lines,
             self._elower,
             self.QTref_284,
-            atomll.self._QTmask,
+            self._QTmask,
             Irwin,
         )  # 211013
 
@@ -138,18 +147,18 @@ class AdbKurucz:
             self.generate_jnp_arrays()
 
         # Compile atomic-specific data for each absorption line of interest
-        ipccd = atomllapi.load_atomicdata()
+        ipccd = load_atomicdata()
         self.solarA = jnp.array(
             list(map(lambda x: ipccd[ipccd["ielem"] == x].iat[0, 4], self.ielem))
         )
         self.atomicmass = jnp.array(
             list(map(lambda x: ipccd[ipccd["ielem"] == x].iat[0, 5], self.ielem))
         )
-        df_ionE = atomllapi.load_ionization_energies()
+        df_ionE = load_ionization_energies()
         self.ionE = jnp.array(
             list(
                 map(
-                    atomllapi.pick_ionE,
+                    pick_ionE,
                     self.ielem,
                     self.iion,
                     [
@@ -256,8 +265,8 @@ class AdbKurucz:
         Returns:
             Q(T): interpolated in jnp.array for the Atomic Species
         """
-        gQT = self.Atomic_gQT(atomspecies)
-        QT = atomllapi.partfn_Fe(T)
+        #gQT = self.Atomic_gQT(atomspecies)
+        QT = partfn_Fe(T)
         return QT
 
     def qr_interp(self, atomspecies, T):
@@ -317,7 +326,7 @@ class AdbKurucz:
         """
 
         def species_to_QTmask(ielem, iion):
-            sp_Roman = atomllapi.PeriodicTable[ielem] + "_" + "I" * iion
+            sp_Roman = PeriodicTable[ielem] + "_" + "I" * iion
             QTmask = np.where(self.pfdat["T[K]"] == sp_Roman)[0][0]
             return QTmask
 

@@ -62,7 +62,7 @@ _ALIASES: Final[Dict[str, str]] = {
     "mie": "exojax.database.mie",
     "api": "exojax.database.api",
     "atomll": "exojax.database.atomll",
-    "atomllapi": "exojax.database.atomllapi",
+    "core_atom.io": "exojax.database.core_atom.io",
     "contdb": "exojax.database.contdb",
     "customapi": "exojax.database.customapi",
     "dbmanager": "exojax.database.dbmanager",

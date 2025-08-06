@@ -4,12 +4,23 @@ import pathlib
 import warnings
 import jax.numpy as jnp
 import numpy as np
-#from exojax.database import atomll
-from exojax.database import atomllapi
+from exojax.database.core_atom.io import load_pf_Barklem2016
+from exojax.database.core_atom.io import load_atomicdata
+from exojax.database.core_atom.io import load_ionization_energies
+from exojax.database.core_atom.io import pick_ionE
+from exojax.database.core_atom.io import PeriodicTable
+from exojax.database.core_atom.io import load_atomicdata
+from exojax.database.core_atom.io import load_ionization_energies
+from exojax.database.core_atom.io import pick_ionE  
+from exojax.database.core_atom.io import read_ExAll
+from exojax.database.core_atom.io import pickup_param
+
 from exojax.database.core_atom.line_strength import line_strength_atom
 from exojax.database.core_atom.pf import interp_QT_284
+from exojax.database.core_atom.pf import partfn_Fe
 from exojax.database.core_atom.misc import get_unique_species
 from exojax.database.core_atom.misc import sep_arr_of_sp
+
 from exojax.utils.constants import Tref_original
 
 __all__ = ["AdbVald", "AdbSepVald"]
@@ -112,7 +123,7 @@ class AdbVald:
             print(
                 "Note: Couldn't find the hdf5 format. We convert data to the hdf5 format."
             )
-            valdd = atomllapi.read_ExAll(
+            valdd = read_ExAll(
                 self.vald3_file, engine=engine
             )  # vaex.DataFrame
         pvaldd = valdd.to_pandas_df()  # pandas.DataFrame
@@ -131,10 +142,10 @@ class AdbVald:
             self._gamRad,
             self._gamSta,
             self._vdWdamp,
-        ) = atomllapi.pickup_param(pvaldd)
+        ) = pickup_param(pvaldd)
 
         # load the partition functions (for 284 atomic species)
-        pfTdat, self.pfdat = atomllapi.load_pf_Barklem2016()  # Barklem & Collet (2016)
+        pfTdat, self.pfdat = load_pf_Barklem2016()  # Barklem & Collet (2016)
         self.T_gQT = jnp.array(pfTdat.columns[1:], dtype=float)
         self.gQT_284species = jnp.array(
             self.pfdat.iloc[:, 1:].to_numpy(dtype=float)
@@ -169,18 +180,18 @@ class AdbVald:
             self.generate_jnp_arrays()
 
         # Compile atomic-specific data for each absorption line of interest
-        ipccd = atomllapi.load_atomicdata()
+        ipccd = load_atomicdata()
         self.solarA = jnp.array(
             list(map(lambda x: ipccd[ipccd["ielem"] == x].iat[0, 4], self.ielem))
         )
         self.atomicmass = jnp.array(
             list(map(lambda x: ipccd[ipccd["ielem"] == x].iat[0, 5], self.ielem))
         )
-        df_ionE = atomllapi.load_ionization_energies()
+        df_ionE = load_ionization_energies()
         self.ionE = jnp.array(
             list(
                 map(
-                    atomllapi.pick_ionE,
+                    pick_ionE,
                     self.ielem,
                     self.iion,
                     [
@@ -288,7 +299,7 @@ class AdbVald:
             Q(T): interpolated in jnp.array for the Atomic Species
         """
         gQT = self.Atomic_gQT(atomspecies)
-        QT = atomllapi.partfn_Fe(T)
+        QT = partfn_Fe(T)
         return QT
 
     def qr_interp(self, atomspecies, T):
@@ -348,7 +359,7 @@ class AdbVald:
         """
 
         def species_to_QTmask(ielem, iion):
-            sp_Roman = atomllapi.PeriodicTable[ielem] + "_" + "I" * iion
+            sp_Roman = PeriodicTable[ielem] + "_" + "I" * iion
             QTmask = np.where(self.pfdat["T[K]"] == sp_Roman)[0][0]
             return QTmask
 

@@ -1,6 +1,6 @@
 import numpy as np
 import jax.numpy as jnp
-from exojax.database import atomllapi
+from exojax.database import core_atom.io
 from exojax.utils.constants import Tref_original
 from exojax.utils.constants import ccgs
 from exojax.utils.constants import hcperk
@@ -29,7 +29,7 @@ def line_strength_atom(A, gupper, nu_lines, elower, QTref_284, QTmask, Irwin=Fal
 
     # Use Irwin_1981 for Fe I (mask==76)  #test211013Tako
     if Irwin == True:
-        QTref[jnp.where(QTmask == 76)[0]] = atomllapi.partfn_Fe(Tref_original)
+        QTref[jnp.where(QTmask == 76)[0]] = core_atom.io.partfn_Fe(Tref_original)
 
     S0 = (
         -A

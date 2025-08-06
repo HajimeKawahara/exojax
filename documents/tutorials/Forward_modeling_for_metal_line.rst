@@ -203,7 +203,7 @@ Calculate delta tau
     
     from exojax.opacity.lpf.lpf import xsmatrix
     from exojax.rt.rtransfer import dtauM
-    from exojax.database.atomllapi import load_atomicdata
+    from exojax.database.core_atom.io import load_atomicdata
     
     ipccd = load_atomicdata()
     ieleml = jnp.array(ipccd['ielem'])
