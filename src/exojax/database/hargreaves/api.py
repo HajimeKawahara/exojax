@@ -10,7 +10,7 @@ import pandas as pd
 from exojax.database._common.setradis  import _set_engine
 from exojax.database.core.line_strength import line_strength_numpy
 from exojax.database.core.line_strength import Einstein_coeff_from_line_strength
-from exojax.database.qstate  import branch_to_number
+from exojax.database.molinfo  import branch_to_number
 from exojax.utils.constants import Tref_original
 from exojax.utils.molname import e2s
 

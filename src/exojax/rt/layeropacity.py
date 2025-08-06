@@ -4,7 +4,7 @@
 
 import jax.numpy as jnp
 from exojax.atm.idealgas import number_density
-from exojax.database.hitrancia import interp_logacia_matrix
+from exojax.database.core.abscoeff import interp_logacia_matrix
 from exojax.database.hminus  import log_hminus_continuum, log_hminus_continuum_single
 from exojax.utils.constants import bar_cgs, logkB, logm_ucgs, opacity_factor
 

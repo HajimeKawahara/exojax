@@ -50,7 +50,7 @@ The formula is from Y. Tan et al (2022). Here is an example. We use the datafram
 	>>> mdb = MdbHitemp("CO", nus, inherit_dataframe=True)
 	>>> 
 	>>> # manual non-air broadening
-	>>> from exojax.database.qstate  import m_transition_state
+	>>> from exojax.database.molinfo  import m_transition_state
 	>>> from exojax.database.nonair  import gamma_nonair, temperature_exponent_nonair
 	>>> from exojax.database.nonair  import nonair_coeff_CO_in_H2
 	>>> 

@@ -1,9 +1,9 @@
-# src/exojax/database/__init__.py
+# src/exojax/database/molinfo/__init__.py
 """
-Public interface for database information.
+Public interface for molecular information.
 
 Heavy sub-modules are imported lazily so that
-`import exojax.database` stays lightweight.
+`import exojax.database.molinfo` stays lightweight.
 """
 
 from __future__ import annotations
@@ -16,16 +16,13 @@ from typing import Final
 # Mapping: public name  →  "module.path:attribute"
 # --------------------------------------------------------------------
 _ALIAS: Final[dict[str, str]] = {
-    "MdbExomol": "exojax.database.exomol.api:MdbExomol",
-    "MdbHitemp": "exojax.database.hitemp.api:MdbHitemp",
-    "MdbHitran": "exojax.database.hitran.api:MdbHitran",
-    "MdbHargreaves": "exojax.database.hargreaves.api:MdbHargreaves",
-    "XdbExomolHR": "exojax.database.exomolhr.api:XdbExomolHR",
-    "AdbVald": "exojax.database.vald.api:AdbVald",
-    "AdbSepVald": "exojax.database.vald.api:AdbSepVald",
-    "AdbKurucz": "exojax.database.kurucz.api:AdbKurucz",
-    "PdbCloud": "exojax.database.pardb:PdbCloud",
-    "CdbCIA": "exojax.database.cia.api:CdbCIA",
+    "molmass": "exojax.database.molinfo.mass:molmass",
+    "isotope_molmass": "exojax.database.molinfo.mass:isotope_molmass",
+    "molmass_isotope": "exojax.database.molinfo.mass:molmass_isotope",
+    "mean_molmass_manual": "exojax.database.molinfo.mass:mean_molmass_manual",
+    "element_mass": "exojax.database.molinfo.mass:element_mass",
+    "m_transition_state": "exojax.database.molinfo.qstate:m_transition_state",
+    "branch_to_number": "exojax.database.molinfo.qstate:branch_to_number",
 }
 
 __all__ = list(_ALIAS)          # tab completion & help()

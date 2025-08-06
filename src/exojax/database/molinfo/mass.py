@@ -1,11 +1,21 @@
+"""molecular and elemental mass
+
+This module provides functions to calculate molecular masses based on isotopic composition.
+
+- molmass_isotope: Computes the molecular mass for a given molecule, considering its isotopic composition.
+- isotope_molmass: Retrieves the molecular mass for a specific isotopic form of a molecule.
+- molmass: Deprecated, use molmass_isotope instead. Will be removed in a future release (after v0.9.0).
+- mean_molmass_manual: Calculates the mean molecular mass based on a simple molecular formula.
+- element_mass: A dictionary containing the atomic masses of elements.
+
+"""
+
 import warnings
 
 from exojax.utils.isotopes import molmass_hitran
-from exojax.utils.molname import (
-    exact_molecule_name_to_isotope_number,
-    exact_molname_exomol_to_simple_molname,
-    exact_molname_hitran_to_simple_molname,
-)
+from exojax.utils.molname import exact_molecule_name_to_isotope_number
+from exojax.utils.molname import exact_molname_exomol_to_simple_molname
+from exojax.utils.molname import exact_molname_hitran_to_simple_molname
 
 
 def isotope_molmass(exact_molecule_name):
