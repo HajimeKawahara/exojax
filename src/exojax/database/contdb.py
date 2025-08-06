@@ -22,7 +22,7 @@ def __getattr__(name: str):
     """Lazy attribute loader that also raises a deprecation warning."""
     if name == "CdbCIA":
         warnings.warn(
-            "exojax.database.api.CdbCIA is deprecated. "
+            "exojax.database.contdb.CdbCIA is deprecated. "
             "Import it from exojax.database.cia.api instead.",
             DeprecationWarning,
             stacklevel=2,
