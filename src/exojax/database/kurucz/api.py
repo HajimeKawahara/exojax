@@ -16,7 +16,6 @@ from exojax.database.core_atom.io import load_atomicdata
 from exojax.database.core_atom.io import load_ionization_energies
 from exojax.database.core_atom.io import pick_ionE
 from exojax.database.core_atom.io import PeriodicTable
-from exojax.database.core_atom.io import load_atomicdata
 # from exojax.database.core_atom.io import load_ionization_energies  # Duplicate import removed
 from exojax.utils.constants import Tref_original
 
