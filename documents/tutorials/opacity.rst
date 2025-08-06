@@ -11,8 +11,8 @@ step by step, not using ``opa``.
 
 .. code:: ipython3
 
-    from exojax.database.hitran  import line_strength, doppler_sigma, gamma_hitran, gamma_natural
-    from exojax.database import api 
+    from exojax.database.core.line_strength import line_strength, doppler_sigma, gamma_hitran, gamma_natural
+    from exojax.database.exomol.api import MdbExomol 
     import numpy as np
     import matplotlib.pyplot as plt
     plt.style.use('bmh')
@@ -29,7 +29,7 @@ not exist, moldb will try to download it from HITRAN website.
     # Setting wavenumber bins and loading HITRAN database
     nu_grid = np.linspace(2000.0, 2150.0, 150000, dtype=np.float64)  #cm-1
     isotope = 1
-    mdbCO = api.MdbHitran('CO', nu_grid, isotope=isotope, gpu_transfer=True)
+    mdbCO = MdbHitran('CO', nu_grid, isotope=isotope, gpu_transfer=True)
 
 
 .. parsed-literal::

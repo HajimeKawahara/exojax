@@ -13,17 +13,17 @@ def test_agreement_premodit_modit(diffmode):
     """test agreement between PreMODIT and MODIT (zeroscan) for close aliasing"""
     from jax import config
 
-    config.update("jax_enable_x64", True)
+    config.update("jax_enable_x64", False)
     mdb = mock_mdbExomol()
     nus, wav, res = mock_wavenumber_grid()
     Ttest = 1200.0
     P = 1.0
     # PreMODIT LSD
     opa = OpaPremodit(
-        mdb=mdb, nu_grid=nus, auto_trange=[1000.0, 1500.0], diffmode=diffmode
+        mdb=mdb, nu_grid=nus, auto_trange=[1000.0, 1500.0], diffmode=diffmode, allow_32bit=True
     )
     xsv = opa.xsvector(Ttest, P)
-    opa_modit = OpaModit(mdb, nus)
+    opa_modit = OpaModit(mdb, nus, allow_32bit=True)
     xsv_modit = opa_modit.xsvector(Ttest, P)
     dxsv = jnp.abs(xsv_modit / xsv - 1)
     maxdiff = jnp.max(dxsv)

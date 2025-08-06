@@ -18,7 +18,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from importlib.resources import files
 from exojax.opacity.modit import modit
-from exojax.database import api 
+from exojax.database.exomol.api import MdbExomol 
 from exojax.utils.grids import wavenumber_grid
 from exojax.rt import ArtEmisPure
 from exojax.opacity import OpaModit
@@ -66,7 +66,7 @@ Rinst = 100000.0
 beta_inst = resolution_to_gaussian_std(Rinst)
 
 ## CH4 setting
-mdbCH4 = api.MdbExomol(
+mdbCH4 =MdbExomol(
     ".database/CH4/12C-1H4/YT10to10/",
     nu_grid,
     crit=1.0e-30,

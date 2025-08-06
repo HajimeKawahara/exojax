@@ -44,7 +44,7 @@ We add Gaussian noise to data. nusd is the observing wavenumber grid.
 .. code:: ipython3
 
     from exojax.opacity.lpf.lpf import xsmatrix
-    from exojax.database.exomol  import gamma_exomol
+    from exojax.database.core.broadening  import gamma_exomol
     from exojax.database.hitran  import SijT, doppler_sigma, gamma_natural, gamma_hitran
     from exojax.database.hitrancia import read_cia, logacia
     from exojax.rt.rtransfer import rtrun, dtauM, dtauCIA, wavenumber_grid
@@ -91,8 +91,8 @@ Loading the molecular database of CO and the CIA
 
 .. code:: ipython3
 
-    from exojax.database import api , contdb
-    mdbCO=api.MdbExomol('.database/CO/12C-16O/Li2015',nus,crit=1.e-46)
+    from exojax.database.exomol.api import MdbExomol , contdb
+    mdbCO=exomol.api.MdbExomol('.database/CO/12C-16O/Li2015',nus,crit=1.e-46)
     cdbH2H2=contdb.CdbCIA('.database/H2-H2_2011.cia',nus)
 
 

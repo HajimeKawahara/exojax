@@ -48,8 +48,8 @@ gpu_transfer=False can save the device memory use.
 
 .. code:: ipython3
 
-    from exojax.database import api , contdb
-    mdbCO=api.MdbExomol('.database/CO/12C-16O/Li2015',nus,gpu_transfer=False)
+    from exojax.database.exomol.api import MdbExomol , contdb
+    mdbCO=exomol.api.MdbExomol('.database/CO/12C-16O/Li2015',nus,gpu_transfer=False)
     cdbH2H2=contdb.CdbCIA('.database/H2-H2_2011.cia',nus)
 
 
@@ -146,17 +146,17 @@ the comparison purpose.
     #direct LPF for comparison
     
     #Reload mdb beacuse we need gpu_transfer for LPF. This makes big difference in the device memory use. 
-    mdbCO=api.MdbExomol('.database/CO/12C-16O/Li2015',nus, gpu_transfer=True)
+    mdbCO=exomol.api.MdbExomol('.database/CO/12C-16O/Li2015',nus, gpu_transfer=True)
     
     
     #we need sigmaDM for LPF
-    from exojax.database.hitran import doppler_sigma
+    from exojax.database.core.broadening import doppler_sigma
     from jax import jit
     from exojax.opacity.initspec import init_lpf
     from exojax.opacity.lpf.lpf import xsmatrix as xsmatrix_lpf
-    from exojax.database.exomol  import gamma_exomol
-    from exojax.database.hitran import gamma_natural
-    from exojax.database.hitran import SijT
+    from exojax.database.core.broadening  import gamma_exomol
+    from exojax.database.core.broadening import gamma_natural
+    from exojax.database.core.broadening import SijT
     from jax import vmap
     
     qt = vmap(mdbCO.qr_interp)(Tarr)

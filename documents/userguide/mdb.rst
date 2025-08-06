@@ -9,11 +9,11 @@ These molecular database can be controlled using the molecular/atomic database c
 +-----------------------+---------+---------------------------------------------------------------------------------+------------------------------------+
 |**database**           |mdb/adb  |**API**                                                                          | **notes**                          |
 +-----------------------+---------+---------------------------------------------------------------------------------+------------------------------------+
-|ExoMol                 |MdbExomol|`spec.api.MdbExomol <../exojax/exojax.spec.html#exojax.spec.api.MdbExomol>`_.    | auto download.                     |
+|ExoMol                 |MdbExomol|`spec.exomol.api.MdbExomol <../exojax/exojax.spec.html#exojax.spec.exomol.api.MdbExomol>`_.    | auto download.                     |
 +-----------------------+---------+---------------------------------------------------------------------------------+------------------------------------+
-|HITEMP                 |MdbHitemp|`sepc.api.MdbHitemp <../exojax/exojax.spec.html#exojax.spec.api.MdbHitemp>`_.    | auto download or .par              |
+|HITEMP                 |MdbHitemp|`sepc.MdbHitemp <../exojax/exojax.spec.html#exojax.spec.MdbHitemp>`_.    | auto download or .par              |
 +-----------------------+---------+---------------------------------------------------------------------------------+------------------------------------+
-|HITRAN                 |MdbHitran|`spec.api.MdbHitran <../exojax/exojax.spec.html#exojax.spec.api.MdbHitran>`_.    | auto download                      |
+|HITRAN                 |MdbHitran|`spec.MdbHitran <../exojax/exojax.spec.html#exojax.spec.MdbHitran>`_.    | auto download                      |
 +-----------------------+---------+---------------------------------------------------------------------------------+------------------------------------+
 |Vald                   |AdbVald  |`sepc.moldb.AdbVald <../exojax/exojax.spec.html#exojax.spec.moldb.AdbVald>`_.    | manual download                    |
 +-----------------------+---------+---------------------------------------------------------------------------------+------------------------------------+

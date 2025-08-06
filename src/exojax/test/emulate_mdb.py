@@ -1,12 +1,12 @@
-"""emulate mdb class for unittest
-"""
+"""emulate mdb class for unittest"""
 
 import pickle
 import os
 import shutil
 
-from exojax.database import api 
-from exojax.database import customapi 
+from exojax.database.exomol.api import MdbExomol
+from exojax.database.hitemp.api import MdbHitemp
+from exojax.database.customapi import MdbHargreaves
 from exojax.test.data import TESTDATA_moldb_VALD
 from exojax.test.data import get_testdata_filename
 from exojax.utils.grids import wavenumber_grid
@@ -51,20 +51,20 @@ def mock_mdbExomol(molecule="CO", crit=0.0):
     Returns:
         mdbExomol instance
     """
-    
+
     dirname = get_testdata_filename(molecule)
-    target_dir = os.getcwd() + "/"+molecule
+    target_dir = os.getcwd() + "/" + molecule
     if os.path.exists(target_dir):
         shutil.rmtree(target_dir)
     shutil.copytree(dirname, target_dir)
-    
+
     path_dict = {
         "CO": "CO/12C-16O/SAMPLE",
         "H2O": "H2O/1H2-16O/SAMPLE",
     }
     path = path_dict[molecule]
     nus, wav, res = mock_wavenumber_grid()
-    mdb = api.MdbExomol(
+    mdb = MdbExomol(
         str(path),
         nus,
         crit=crit,
@@ -92,8 +92,8 @@ def mock_mdbHitemp(multi_isotope=False):
     from exojax.test.data import TESTDATA_CO_HITEMP_PARFILE
 
     parfile = get_testdata_filename(TESTDATA_CO_HITEMP_PARFILE)
-    nus, wav, res = mock_wavenumber_grid()
-    mdb = api.MdbHitemp(
+    nus, _, _ = mock_wavenumber_grid()
+    mdb = MdbHitemp(
         "CO",
         nus,
         isotope=isotope,
@@ -114,24 +114,25 @@ def mock_mdbVALD():
         mdb = pickle.load(f)
     return mdb
 
+
 def mock_mdbHargreaves():
     """default mock mdb of the Hargreaves 2010 form for unit test
     Returns:
         MdbHargreaves instance
     """
-    
+
     path = "FeH/SAMPLE"
-    nus, wav, res = mock_wavenumber_grid(lambda0=15820.0, lambda1=20040.0)
-    mdb = customapi.MdbHargreaves(
+    nus, _, _ = mock_wavenumber_grid(lambda0=15820.0, lambda1=20040.0)
+    mdb = MdbHargreaves(
         str(path),
         nus,
-        download=False, # default
     )
     return mdb
 
+
 if __name__ == "__main__":
-#    mdb = mock_mdbExomol()
-#    mdb = mock_mdbExomol("H2O")
-#    mdb = mock_mdbHitemp()
-#    print(mdb.df)
+    #    mdb = mock_mdbExomol()
+    #    mdb = mock_mdbExomol("H2O")
+    #    mdb = mock_mdbHitemp()
+    #    print(mdb.df)
     mdb = mock_mdbHargreaves()

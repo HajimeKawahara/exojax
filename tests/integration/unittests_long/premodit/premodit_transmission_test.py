@@ -27,8 +27,8 @@ def test_rt(db, diffmode, fig=False):
     gravity = art.gravity_profile(Tarr, mmw, radius_btm, gravity_btm)
 
     mdb = mock_mdb(db)
-    #mdb = api.MdbExomol('.database/CO/12C-16O/Li2015',nu_grid,inherit_dataframe=False,gpu_transfer=False)
-    #mdb = api.MdbHitemp('CO', art.nu_grid, gpu_transfer=False, isotope=1)
+    #mdb =MdbExomol('.database/CO/12C-16O/Li2015',nu_grid,inherit_dataframe=False,gpu_transfer=False)
+    #mdb = MdbHitemp('CO', art.nu_grid, gpu_transfer=False, isotope=1)
     opa = OpaPremodit(mdb=mdb,
                       nu_grid=nu_grid,
                       diffmode=diffmode,

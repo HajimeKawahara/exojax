@@ -1,9 +1,9 @@
 # %%
-from exojax.database import api 
+from exojax.database.exomol.api import MdbExomol 
 from exojax.utils.grids import wavenumber_grid
 
 nus, wav, r = wavenumber_grid(24000.0, 26000.0, 1000, unit="AA", xsmode="premodit")
-mdb = api.MdbHitemp("CO", nus, inherit_dataframe=True)
+mdb = MdbHitemp("CO", nus, inherit_dataframe=True)
 
 # %%
 # manual non-air broadening

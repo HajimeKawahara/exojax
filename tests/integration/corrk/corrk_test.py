@@ -10,13 +10,6 @@ from jax import config
 
 config.update("jax_enable_x64", True)  # use double precision
 
-# from exojax.utils.grids import wavenumber_grid
-# from exojax.database.api import MdbExomol
-# N = 70000
-# nus, wav, res = wavenumber_grid(6400.0, 6800.0, N, unit="cm-1", xsmode = "premodit")
-# mdb = MdbExomol(".databases/H2O/1H2-16O/POKAZATEL/",nus)
-# print("resolution = ", res)
-
 nus, wav, res = mock_wavenumber_grid(lambda0=22930.0, lambda1=22940.0, Nx=20000)
 mdb = mock_mdbExomol("H2O")
 

@@ -30,7 +30,7 @@ versions of these databases.
 
     import matplotlib.pyplot as plt
     from exojax.utils.grids import wavenumber_grid
-    from exojax.database.api  import MdbExomol
+    from exojax.database.exomol.api import MdbExomol
     from exojax.opacity import OpaDirect
     
     nu_grid, wav, res = wavenumber_grid(22930, 22960, 2000, xsmode="lpf", unit="AA")

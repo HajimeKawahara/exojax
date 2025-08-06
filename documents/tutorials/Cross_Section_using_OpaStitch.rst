@@ -22,7 +22,7 @@ Currently, the only opacity calculator that supports
 
     from exojax.opacity import OpaPremodit
     from exojax.utils.grids import wavenumber_grid
-    from exojax.database.api  import MdbExomol
+    from exojax.database.exomol.api import MdbExomol
     from exojax.rt import ArtTransPure
     import jax.numpy as jnp
     

@@ -19,9 +19,6 @@ from exojax.test.emulate_mdb import mock_wavenumber_grid
 from exojax.test.data import TESTDATA_CO_EXOMOL_MODIT_XS_REF
 from exojax.test.data import TESTDATA_CO_HITEMP_MODIT_XS_REF_AIR
 
-from jax import config
-
-config.update("jax_enable_x64", True)
 
 testdata = {}
 testdata["exomol"] = TESTDATA_CO_EXOMOL_MODIT_XS_REF
@@ -40,6 +37,9 @@ testdata["hitemp"] = TESTDATA_CO_HITEMP_MODIT_XS_REF_AIR
     ],
 )
 def test_xsection_premodit(db, diffmode):
+    from jax import config
+
+    config.update("jax_enable_x64", True)
 
     ### DO NOT CHANGE ###
     Ttest = 1200  # fix to compare w/ precomputed xs by MODIT.
@@ -48,17 +48,20 @@ def test_xsection_premodit(db, diffmode):
     mdb = mock_mdb(db)
     nu_grid, wav, res = mock_wavenumber_grid()
     opa = OpaPremodit(
-        mdb=mdb, nu_grid=nu_grid, diffmode=diffmode, auto_trange=[500.0, 1500.0]
+        mdb=mdb, nu_grid=nu_grid, diffmode=diffmode, auto_trange=[500.0, 1500.0], allow_32bit=True
     )
     xsv = opa.xsvector(Ttest, Ptest)
     filename = files("exojax").joinpath("data/testdata/" + testdata[db])
     dat = pd.read_csv(filename, delimiter=",", names=("nus", "xsv"))
     res = np.max(np.abs(1.0 - xsv / dat["xsv"].values))
-    assert res < 0.012
+    assert res < 0.012, f"maximum difference = {res} exceeds threshold 0.012"
 
 
 @pytest.mark.parametrize("db, diffmode", [("exomol", 0), ("hitemp", 2)])
 def test_xsection_premodit_for_single_broadening(db, diffmode):
+    from jax import config
+
+    config.update("jax_enable_x64", True)
 
     ### DO NOT CHANGE ###
     Ttest = 1200  # fix to compare w/ precomputed xs by MODIT.
@@ -71,7 +74,7 @@ def test_xsection_premodit_for_single_broadening(db, diffmode):
         nu_grid=nu_grid,
         diffmode=diffmode,
         auto_trange=[500.0, 1500.0],
-        broadening_resolution={"mode": "single", "value": None},
+        broadening_resolution={"mode": "single", "value": None}, allow_32bit=True
     )
     xsv = opa.xsvector(Ttest, Ptest)
     filename = files("exojax").joinpath("data/testdata/" + testdata[db])
@@ -79,4 +82,12 @@ def test_xsection_premodit_for_single_broadening(db, diffmode):
     res = np.max(np.abs(1.0 - xsv / dat["xsv"].values))
     assert (
         res < 0.06
-    )  # < 6% (HITEMP) / 4% (ExoMOL) diff from exact broadening parameters using MODIT
+    ), f"maximum difference = {res} exceeds threshold 0.06"  # < 6% (HITEMP) / 4% (ExoMOL) diff from exact broadening parameters using MODIT
+
+if __name__ == "__main__":
+    #test_xsection_premodit("exomol", 0)
+    test_xsection_premodit("exomol", 1)
+    #test_xsection_premodit("exomol", 2)
+    #test_xsection_premodit("hitemp", 0)
+    #test_xsection_premodit("hitemp", 1)
+    #test_xsection_premodit("hitemp", 2)

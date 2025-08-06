@@ -4,7 +4,9 @@ import traceback
 import numpy as np
 
 from exojax.opacity import OpaPremodit
-from exojax.database import api 
+from exojax.database.exomol.api import MdbExomol
+from exojax.database.hitran.api import MdbHitran
+from exojax.database.hitemp.api import MdbHitemp
 from exojax.test.emulate_mdb import mock_mdbExomol
 
 
@@ -12,7 +14,7 @@ class MultiMol:
     """multiple molecular database and opacity calculator handler (multi Mdb/Opa Listing)
 
     Notes:
-        MultiMol provides an easy way to generate multiple mdb (multimdb) and multiple opa (multiopa)
+        MultiMol provides an easy way to generate multiple mdb (multiapi.mdb) and multiple opa (multiopa)
         for multiple molecules/wavenumber segments/stitching.
 
     Attributes:
@@ -115,7 +117,7 @@ class MultiMol:
                 try:
                     if self.dbmulti[k][i] in ["ExoMol", "exomol"]:
                         mdb_k.append(
-                            api.MdbExomol(
+                            MdbExomol(
                                 os.path.join(
                                     self.database_root_path, self.db_dirs[k][i]
                                 ),
@@ -127,7 +129,7 @@ class MultiMol:
                         )
                     elif self.dbmulti[k][i] in ["HITRAN12", "hitran12"]:
                         mdb_k.append(
-                            api.MdbHitran(
+                            MdbHitran(
                                 os.path.join(
                                     self.database_root_path, self.db_dirs[k][i]
                                 ),
@@ -140,7 +142,7 @@ class MultiMol:
                         )
                     elif self.dbmulti[k][i] in ["HITEMP", "hitemp"]:
                         mdb_k.append(
-                            api.MdbHitemp(
+                            MdbHitemp(
                                 os.path.join(
                                     self.database_root_path, self.db_dirs[k][i]
                                 ),
