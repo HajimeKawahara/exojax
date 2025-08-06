@@ -8,5 +8,6 @@ from exojax.database.vald.api import AdbSepVald as AdbSepVald
 from exojax.database.kurucz.api import AdbKurucz as AdbKurucz
 from exojax.database.exomolhr.api import XdbExomolHR as XdbExomolHR
 from exojax.database.pardb import PdbCloud as PdbCloud
+from exojax.database.cia.api import CdbCIA as CdbCIA
 
 __all__: list[str]

@@ -46,7 +46,7 @@ We add Gaussian noise to data. nusd is the observing wavenumber grid.
     from exojax.opacity.lpf.lpf import xsmatrix
     from exojax.database.core.broadening  import gamma_exomol
     from exojax.database.hitran  import SijT, doppler_sigma, gamma_natural, gamma_hitran
-    from exojax.database.hitrancia import read_cia, logacia
+    from exojax.database.cia.io import read_cia, logacia
     from exojax.rt.rtransfer import rtrun, dtauM, dtauCIA, wavenumber_grid
     from exojax.rt import planck, response
     from exojax.opacity.lpf.lpf import xsvector
