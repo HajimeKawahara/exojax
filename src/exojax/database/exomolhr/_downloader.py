@@ -7,7 +7,6 @@ from bs4 import BeautifulSoup
 import pathlib
 import re
 from collections.abc import Sequence
-import pandas as pd
 
 from exojax.utils.url import url_lists_exomolhr
 
