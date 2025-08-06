@@ -77,7 +77,7 @@ _ALIASES: Final[Dict[str, str]] = {
     "multimol": "exojax.database.multimol",
     "nonair": "exojax.database.nonair",
     "pardb": "exojax.database.pardb",
-    "qstate": "exojax.database.qstate",
+    "qstate": "exojax.database.molinfo",
     "limb_darkening": "exojax.postproc.limb_darkening",
     "response": "exojax.postproc.response",
     "specop": "exojax.postproc.specop",

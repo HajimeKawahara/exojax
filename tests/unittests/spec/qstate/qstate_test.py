@@ -1,4 +1,4 @@
-from exojax.database.qstate  import m_transition_state
+from exojax.database.molinfo  import m_transition_state
 
 def test_m_transtion_state():
     # See HITRAN 2020 paper
