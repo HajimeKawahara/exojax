@@ -4,7 +4,7 @@ This module provides functions to calculate molecular masses based on isotopic c
 
 - molmass_isotope: Computes the molecular mass for a given molecule, considering its isotopic composition.
 - isotope_molmass: Retrieves the molecular mass for a specific isotopic form of a molecule.
-- molmass: Deprecated
+- molmass: Deprecated, use molmass_isotope instead. Will be removed in a future release (after v0.9.0).
 - mean_molmass_manual: Calculates the mean molecular mass based on a simple molecular formula.
 - element_mass: A dictionary containing the atomic masses of elements.
 
