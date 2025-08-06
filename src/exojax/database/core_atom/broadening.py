@@ -2,9 +2,7 @@ import warnings
 
 import jax.numpy as jnp
 import numpy as np
-from jax.lax import scan
 
-from exojax.database import core_atom.io
 from exojax.utils.constants import Rcgs
 from exojax.utils.constants import a0
 from exojax.utils.constants import ccgs

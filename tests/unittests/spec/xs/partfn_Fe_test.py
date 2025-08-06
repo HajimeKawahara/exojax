@@ -5,7 +5,7 @@
 
 import pytest
 import numpy as np
-from exojax.database.core_atom.io import partfn_Fe
+from exojax.database.core_atom.pf import partfn_Fe
 
 
 def test_partfn_Fe():
