@@ -4,9 +4,9 @@ import numpy as np
 from radis.db.classes import get_molecule
 from radis.levels.partfunc import PartFuncTIPS
 
-from exojax.database import hitranapi
 from exojax.database.core.line_strength import line_strength_numpy
-from exojax.database.hitranapi import molecid_hitran
+from exojax.database._common.hitranapi import molecid_hitran
+from exojax.database._common.hitranapi import make_partition_function_grid_hitran
 from exojax.utils.constants import Tref_original
 from exojax.utils.isotopes import molmass_hitran
 from exojax.database._common.setradis import _set_engine
@@ -112,7 +112,7 @@ class MdbCommonHitempHitran:
             mask = self.df_load_mask
 
         self.attributes_from_dataframes(df[mask])
-        self.gQT, self.T_gQT = hitranapi.make_partition_function_grid_hitran(
+        self.gQT, self.T_gQT = make_partition_function_grid_hitran(
             self.molecid, self.uniqiso
         )
 

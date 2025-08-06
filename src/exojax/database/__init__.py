@@ -19,6 +19,7 @@ _ALIAS: Final[dict[str, str]] = {
     "MdbExomol": "exojax.database.exomol.api:MdbExomol",
     "MdbHitemp": "exojax.database.hitemp.api:MdbHitemp",
     "MdbHitran": "exojax.database.hitran.api:MdbHitran",
+    "MdbHargreaves": "exojax.database.hargreaves.api:MdbHargreaves",
     "XdbExomolHR": "exojax.database.exomolhr.api:XdbExomolHR",
     "PdbCloud": "exojax.database.pardb:PdbCloud",
 }

@@ -69,7 +69,7 @@ _ALIASES: Final[Dict[str, str]] = {
     "exomol": "exojax.database.exomol",
     "exomolhr": "exojax.database.exomolhr",
     "hitran": "exojax.database.hitran",
-    "hitranapi": "exojax.database.hitranapi",
+    "hitranapi": "exojax.database._common.hitranapi",
     "hitrancia": "exojax.database.hitrancia",
     "hminus": "exojax.database.hminus",
     "moldb": "exojax.database.moldb",

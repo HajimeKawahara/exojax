@@ -1,5 +1,5 @@
 from exojax.test.emulate_mdb import mock_mdbHargreaves
-from exojax.database.customapi  import _set_wavenum_hargreaves
+from exojax.database.hargreaves.api import _set_wavenum_hargreaves
 import numpy as np
 import pytest
 
