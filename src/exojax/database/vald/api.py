@@ -11,7 +11,6 @@ from exojax.database.core_atom.io import pick_ionE
 from exojax.database.core_atom.io import PeriodicTable
 from exojax.database.core_atom.io import load_atomicdata
 from exojax.database.core_atom.io import load_ionization_energies
-from exojax.database.core_atom.io import pick_ionE  
 from exojax.database.core_atom.io import read_ExAll
 from exojax.database.core_atom.io import pickup_param
 
