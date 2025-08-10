@@ -7,7 +7,9 @@ from bs4 import BeautifulSoup
 import pathlib
 import re
 from collections.abc import Sequence
-
+from typing import Optional
+from typing import Union
+    
 from exojax.utils.url import url_lists_exomolhr
 
 EXOMOLHR_HOME, EXOMOLHR_API_ROOT, EXOMOLHR_DOWNLOAD_ROOT = url_lists_exomolhr()
@@ -15,14 +17,14 @@ EXOMOLHR_HOME, EXOMOLHR_API_ROOT, EXOMOLHR_DOWNLOAD_ROOT = url_lists_exomolhr()
 def _fetch_opacity_zip(  # noqa: WPS211 (a few branches are fine here)
     *,
     wvmin: float,
-    wvmax: float | None,
+    wvmax: Optional[float],
     numin: float,
     numax: float,
     T: int,
     Smin: float,
     iso: str,
-    out_dir: str | os.PathLike = ".",
-    session: requests.Session | None = None,
+    out_dir: Union[str, os.PathLike] = ".",
+    session: Optional[requests.Session] = None,
     chunk: int = 1 << 19,  # 512 kB blocks
 ) -> pathlib.Path:
     """Return a local ExoMolHR CSV—downloaded only if necessary.
@@ -127,7 +129,7 @@ def _fetch_opacity_zip(  # noqa: WPS211 (a few branches are fine here)
 
 
 
-def _load_exomolhr_csv(csv_path: str | pathlib.Path) -> pd.DataFrame:
+def _load_exomolhr_csv(csv_path: Union[str, pathlib.Path]) -> pd.DataFrame:
     """Load a CSV file from an ExoMolHR ZIP archive into a DataFrame."""
     # ------------------------------------------------------------------
     # 3. read CSV into DataFrame
@@ -150,9 +152,9 @@ def _load_exomolhr_csv(csv_path: str | pathlib.Path) -> pd.DataFrame:
 
 
 def _list_exomolhr_molecules(
-    html_source: str | bytes | pathlib.Path | None = None,
+    html_source: Optional[Union[str, bytes, pathlib.Path]] = None,
     *,
-    session: requests.Session | None = None,
+    session: Optional[requests.Session] = None,
 ) -> Sequence[str]:
     """Return the list of molecule formulas shown on the ExoMolHR landing page.
 

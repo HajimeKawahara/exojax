@@ -6,6 +6,8 @@ import requests
 import re
 from bs4 import BeautifulSoup
 from exojax.utils.url import url_lists_exomolhr
+from typing import Optional
+    
 
 EXOMOLHR_HOME, EXOMOLHR_API_ROOT, EXOMOLHR_DOWNLOAD_ROOT = url_lists_exomolhr()
 
@@ -44,9 +46,8 @@ def _isotope_index_from_isotope_number(isotope, uniqiso):
 
 
 def _list_isotopologues(
-    simple_molecule_list: Iterable[str],
-    *,
-    max_workers: int | None = None,
+    max_workers: Optional[int] = None
+
 ) -> dict[str, list[str]]:
     """Return {molecule: [iso₁, iso₂, …]} for the given molecules.
 
