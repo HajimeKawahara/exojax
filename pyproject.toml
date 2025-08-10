@@ -21,12 +21,11 @@ maintainers = [{ name = "Hajime Kawahara", email = "divrot@gmail.com" }]
 
 description = "Differentiable exoplanet spectroscopy and atmospheric tools in JAX."
 readme = { file = "README.md", content-type = "text/markdown" }
-requires-python = ">=3.9"
+requires-python = ">=3.10"
 
 # Classifiers ported from setup.py. Add more if applicable.
 classifiers = [
   "Programming Language :: Python",
-  "Programming Language :: Python :: 3.9",
   "Programming Language :: Python :: 3.10",
   "Programming Language :: Python :: 3.11",
   "Operating System :: OS Independent",
