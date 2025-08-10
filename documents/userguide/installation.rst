@@ -3,13 +3,13 @@ Installation and References
 
 *last update January 19th (2025) Hajime Kawahara, updated for pyproject.toml build system*
 
-.. admonition:: Python 3.10 or later is required
+.. admonition:: Python 3.9 or later is required
 
-    ExoJAX requires Python 3.10 or later.
+    ExoJAX requires Python 3.9 or later.
 
 .. warning::
 
-    For using `vaex <https://github.com/vaexio/vaex>`_ in the common API for molecular database I/O, we currently recommend using Python 3.10.
+    For using `vaex <https://github.com/vaexio/vaex>`_ in the common API for molecular database I/O, we currently recommend using Python 3.9 or 3.10.
 
 Linux, Windows WSL, macOS
 =========================
@@ -70,6 +70,8 @@ If you do not have a GPU, you can simply install the CPU version:
 .. code:: sh
 
     pip install --upgrade jax
+
+
 
 Windows Anaconda
 ===================
