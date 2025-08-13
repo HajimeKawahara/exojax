@@ -104,11 +104,32 @@ class OpaPremodit(OpaCalc):
             self.nu_grid, wavelength_order=self.wavelength_order, unit="AA"
         )
         self.resolution = resolution_eslog(nu_grid)
-        self.mdb = mdb
+
+        self.dbtype = mdb.dbtype
+        self.molmass = mdb.molmass
+        self.T_gQT = mdb.T_gQT
+        self.gQT = mdb.gQT
+
+        if self.dbtype == "hitran":
+            self.isotope = mdb.isotope
+            self.uniqiso = mdb.uniqiso
+            self.n_air = mdb.n_air
+            self.gamma_air = mdb.gamma_air
+        elif self.dbtype == "exomol":
+            self.n_Texp = mdb.n_Texp
+            self.alpha_ref = mdb.alpha_ref
+        else:
+            raise ValueError(
+                f"Unknown database type: '{self.dbtype}'. Supported types: hitran, exomol"
+            )
+
+        self.nu_lines = mdb.nu_lines
+        self.elower = mdb.elower
+
         self.ngrid_broadpar = None
         self.version_auto_trange = version_auto_trange
         # check if the mdb lines are in nu_grid
-        if is_outside_range(self.mdb.nu_lines, self.nu_grid[0], self.nu_grid[-1]):
+        if is_outside_range(self.nu_lines, self.nu_grid[0], self.nu_grid[-1]):
             raise ValueError("None of the lines in mdb are within nu_grid.")
 
         (
@@ -120,8 +141,14 @@ class OpaPremodit(OpaCalc):
 
         if auto_trange is not None:
             self.auto_setting(auto_trange[0], auto_trange[1])
+            self.line_strength_Tref = mdb.line_strength(self.Tref)
+            del mdb
+            self.apply_params()
         elif manual_params is not None:
             self.manual_setting(manual_params[0], manual_params[1], manual_params[2])
+            self.line_strength_Tref = mdb.line_strength(self.Tref)
+            del mdb
+            self.apply_params()
         else:
             print("OpaPremodit: initialization without parameters setting")
             print("Call self.apply_params() to complete the setting.")
@@ -206,7 +233,6 @@ class OpaPremodit(OpaCalc):
         )
         self.Tmax = Tu
         self.Tmin = Tl
-        self.apply_params()
 
     def manual_setting(
         self,
@@ -236,7 +262,6 @@ class OpaPremodit(OpaCalc):
 
         self.Tmax = Tmax
         self.Tmin = Tmin
-        self.apply_params()
 
     def set_nu_grid(self, x0, x1, unit, resolution=700000, Nx=None):
         if Nx is None:
@@ -262,26 +287,6 @@ class OpaPremodit(OpaCalc):
         Defines self.lbd_coeff and self.opainfo for opacity calculations.
         """
         # self.mdb.change_reference_temperature(self.Tref)
-        self.dbtype = self.mdb.dbtype
-        self.molmass = self.mdb.molmass
-        self.T_gQT = self.mdb.T_gQT
-        self.gQT = self.mdb.gQT
-        if self.dbtype == "hitran":
-            self.isotope = self.mdb.isotope
-            self.uniqiso = self.mdb.uniqiso
-            n_air = self.mdb.n_air
-            gamma_air = self.mdb.gamma_air
-        elif self.dbtype == "exomol":
-            n_Texp = self.mdb.n_Texp
-            alpha_ref = self.mdb.alpha_ref
-        else:
-            raise ValueError(
-                f"Unknown database type: '{self.dbtype}'. Supported types: hitran, exomol"
-            )
-        nu_lines = self.mdb.nu_lines
-        elower = self.mdb.elower
-        line_strength_Tref = self.mdb.line_strength(self.Tref)
-        self.mdb = None  # Free memory
 
         # sets the broadening reference temperature
         if self.single_broadening:
@@ -293,12 +298,15 @@ class OpaPremodit(OpaCalc):
         # self.n_Texp, self.gamma_ref are defined with the reference temperature of Tref_broadening
         if self.dbtype == "hitran":
             self.n_Texp, self.gamma_ref = _compute_broadening_parameters_hitran(
-                n_air, gamma_air, self.Tref_broadening
+                self.n_air, self.gamma_air, self.Tref_broadening
             )
+            self.n_air = None
+            self.gamma_air = None
         elif self.dbtype == "exomol":
             self.n_Texp, self.gamma_ref = _compute_broadening_parameters_exomol(
-                n_Texp, alpha_ref, self.Tref_broadening
+                self.n_Texp, self.alpha_ref, self.Tref_broadening
             )
+            self.alpha_ref = None
 
         # comment-1: gamma_ref at Tref_broadening (is not necessary for Tref_original)
         # comment-2: line strength at Tref (is not necessary for Tref_original), should be np.float64
@@ -312,12 +320,12 @@ class OpaPremodit(OpaCalc):
             R,
             pmarray,
         ) = initspec.init_premodit(
-            nu_lines,
+            self.nu_lines,
             self.nu_grid,
-            elower,
+            self.elower,
             self.gamma_ref,  # comment-1
             self.n_Texp,
-            line_strength_Tref,  # comment-2
+            self.line_strength_Tref,  # comment-2
             self.Twt,
             Tref=self.Tref,
             Tref_broadening=self.Tref_broadening,
@@ -330,6 +338,9 @@ class OpaPremodit(OpaCalc):
             single_broadening_parameters=self.single_broadening_parameters,
             warning=self.warning,
         )
+        self.nu_lines = None  # free memory
+        self.elower = None  # free memory
+        self.line_strength_Tref = None  # free memory
         self.opainfo = (
             multi_index_uniqgrid,
             elower_grid,

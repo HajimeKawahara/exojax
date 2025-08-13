@@ -2,6 +2,7 @@ import jax.numpy as jnp
 import numpy as np
 from exojax.database._common.isotope_functions import _isotope_index_from_isotope_number
 
+
 def _QT_interp(isotope_index, T, T_gQT, gQT):
     """interpolated partition function.
 
@@ -73,3 +74,21 @@ def _qr_interp_lines(T, isoid, uniqiso, T_gQT, gQT, Tref):
         qr_each_isotope = _qr_interp(isotope_index, T, T_gQT, gQT, Tref)
         qr_line = qr_line.at[jnp.index_exp[mask_idx]].set(qr_each_isotope)
     return qr_line
+
+
+def qr_interp(isotope, uniqiso, T, Tref, T_gQT, gQT):
+    """interpolated partition function ratio.
+
+    Args:
+        isotope: HITRAN isotope number starting from 1
+        uniqiso: unique isotope array
+        T: temperature
+        Tref: reference temperature
+        gQT: jnp array of partition function grid
+        T_gQT: jnp array of temperature grid for gQT
+
+    Returns:
+        qr(T)=Q(T)/Q(Tref) interpolated in jnp.array
+    """
+    isotope_index = _isotope_index_from_isotope_number(isotope, uniqiso)
+    return _qr_interp(isotope_index, T, T_gQT, gQT, Tref)
