@@ -109,6 +109,7 @@ class OpaPremodit(OpaCalc):
         self.molmass = mdb.molmass
         self.T_gQT = mdb.T_gQT
         self.gQT = mdb.gQT
+        self.line_strength = mdb.line_strength
 
         if self.dbtype == "hitran":
             self.isotope = mdb.isotope
@@ -141,14 +142,8 @@ class OpaPremodit(OpaCalc):
 
         if auto_trange is not None:
             self.auto_setting(auto_trange[0], auto_trange[1])
-            self.line_strength_Tref = mdb.line_strength(self.Tref)
-            del mdb
-            self.apply_params()
         elif manual_params is not None:
             self.manual_setting(manual_params[0], manual_params[1], manual_params[2])
-            self.line_strength_Tref = mdb.line_strength(self.Tref)
-            del mdb
-            self.apply_params()
         else:
             print("OpaPremodit: initialization without parameters setting")
             print("Call self.apply_params() to complete the setting.")
@@ -183,18 +178,27 @@ class OpaPremodit(OpaCalc):
         eq_attributes = (
             (self.dbtype == other.dbtype)
             and (self.molmass == other.molmass)
-            and np.allclose(self.opainfo[0], other.opainfo[0])
-            and np.allclose(self.opainfo[1], other.opainfo[1])
-            and np.allclose(self.opainfo[2], other.opainfo[2])
-            and np.allclose(self.opainfo[3], other.opainfo[3])
-            and (self.opainfo[4] == other.opainfo[4])
-            and np.allclose(self.opainfo[5], other.opainfo[5])
+            and np.array_equal(self.T_gQT, other.T_gQT)
+            and np.array_equal(self.gQT, other.gQT)
             and (self.diffmode == other.diffmode)
             and (self.ngrid_broadpar == other.ngrid_broadpar)
             and (self.wavelength_order == other.wavelength_order)
             and (self.version_auto_trange == other.version_auto_trange)
             and np.array_equal(self.nu_grid, other.nu_grid)
         )
+        if (
+            getattr(self, "opainfo", None) is not None
+            and getattr(other, "opainfo", None) is not None
+        ):
+            eq_attributes = (
+                eq_attributes
+                and np.array_equal(self.opainfo[0], other.opainfo[0])
+                and np.array_equal(self.opainfo[1], other.opainfo[1])
+                and np.array_equal(self.opainfo[2], other.opainfo[2])
+                and np.array_equal(self.opainfo[3], other.opainfo[3])
+                and (self.opainfo[4] == other.opainfo[4])
+                and np.array_equal(self.opainfo[5], other.opainfo[5])
+            )
         eq_attributes = self._if_exist_check_eq(other, "dE", eq_attributes)
         eq_attributes = self._if_exist_check_eq(other, "Tref", eq_attributes)
         eq_attributes = self._if_exist_check_eq(other, "Twt", eq_attributes)
@@ -235,6 +239,11 @@ class OpaPremodit(OpaCalc):
         self.Tmax = Tu
         self.Tmin = Tl
 
+        self.line_strength_Tref = self.line_strength(self.Tref)
+        del self.line_strength
+
+        self.apply_params()
+
     def manual_setting(
         self,
         dE: float,
@@ -264,6 +273,11 @@ class OpaPremodit(OpaCalc):
         self.Tmax = Tmax
         self.Tmin = Tmin
 
+        self.line_strength_Tref = self.line_strength(self.Tref)
+        del self.line_strength
+
+        self.apply_params()
+
     def set_nu_grid(self, x0, x1, unit, resolution=700000, Nx=None):
         if Nx is None:
             Nx = nx_even_from_resolution_eslog(x0, x1, resolution)
@@ -287,8 +301,6 @@ class OpaPremodit(OpaCalc):
 
         Defines self.lbd_coeff and self.opainfo for opacity calculations.
         """
-        # self.mdb.change_reference_temperature(self.Tref)
-
         # sets the broadening reference temperature
         if self.single_broadening:
             print("OpaPremodit: a single broadening parameter set is used.")
@@ -301,13 +313,13 @@ class OpaPremodit(OpaCalc):
             self.n_Texp, self.gamma_ref = _compute_broadening_parameters_hitran(
                 self.n_air, self.gamma_air, self.Tref_broadening
             )
-            self.n_air = None
-            self.gamma_air = None
+            del self.n_air
+            del self.gamma_air
         elif self.dbtype == "exomol":
             self.n_Texp, self.gamma_ref = _compute_broadening_parameters_exomol(
                 self.n_Texp, self.alpha_ref, self.Tref_broadening
             )
-            self.alpha_ref = None
+            del self.alpha_ref
 
         # comment-1: gamma_ref at Tref_broadening (is not necessary for Tref_original)
         # comment-2: line strength at Tref (is not necessary for Tref_original), should be np.float64
@@ -339,9 +351,9 @@ class OpaPremodit(OpaCalc):
             single_broadening_parameters=self.single_broadening_parameters,
             warning=self.warning,
         )
-        self.nu_lines = None  # free memory
-        self.elower = None  # free memory
-        self.line_strength_Tref = None  # free memory
+        del self.nu_lines
+        del self.elower
+        del self.line_strength_Tref
         self.opainfo = (
             multi_index_uniqgrid,
             elower_grid,
