@@ -1,7 +1,7 @@
 """Core functionality for PreMODIT opacity calculations."""
 
 import warnings
-from typing import Tuple, Optional, Dict, Any, Union, List, Literal
+from typing import Tuple, Optional, Dict, Any, List
 
 import numpy as np
 from exojax.utils.constants import Patm, Tref_original

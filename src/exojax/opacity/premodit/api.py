@@ -29,6 +29,9 @@ from exojax.opacity.premodit.core import (
     _compute_broadening_parameters_exomol,
 )
 
+from exojax.database._common.partition_function import qr_interp as qr_interp_hitran
+from exojax.database.exomol.partition_function import qr_interp as qr_interp_exomol
+
 
 class OpaPremodit(OpaCalc):
     """Opacity Calculator Class for Pre-computed Modified Discrete Integral Transform (PreMODIT).
@@ -151,8 +154,7 @@ class OpaPremodit(OpaCalc):
             return False
 
         eq_attributes = (
-            (self.mdb == other.mdb)
-            and (self.dbtype == other.dbtype)
+            self.dbtype == other.dbtype
             and (self.molmass == other.molmass)
             and (self.T_gQT == other.T_gQT)
             and (self.gQT == other.gQT)
@@ -266,6 +268,7 @@ class OpaPremodit(OpaCalc):
         self.gQT = self.mdb.gQT
         if self.dbtype == "hitran":
             self.isotope = self.mdb.isotope
+            self.uniqiso = self.mdb.uniqiso
             n_air = self.mdb.n_air
             gamma_air = self.mdb.gamma_air
         elif self.dbtype == "exomol":
@@ -278,6 +281,7 @@ class OpaPremodit(OpaCalc):
         nu_lines = self.mdb.nu_lines
         elower = self.mdb.elower
         line_strength_Tref = self.mdb.line_strength(self.Tref)
+        self.mdb = None  # Free memory
 
         # sets the broadening reference temperature
         if self.single_broadening:
@@ -425,9 +429,11 @@ class OpaPremodit(OpaCalc):
 
         dbtype = self.dbtype
         if dbtype == "hitran":
-            qt = self.mdb.qr_interp(self.isotope, T, self.Tref)
+            qt = qr_interp_hitran(
+                self.isotope, self.uniqiso, T, self.Tref, self.T_gQT, self.gQT
+            )
         elif dbtype == "exomol":
-            qt = self.mdb.qr_interp(T, self.Tref)
+            qt = qr_interp_exomol(T, self.Tref, self.T_gQT, self.gQT)
         else:
             raise ValueError(
                 f"Unsupported database type for xsvector: '{dbtype}'. "
@@ -521,11 +527,13 @@ class OpaPremodit(OpaCalc):
 
         dbtype = self.dbtype
         if dbtype == "hitran":
-            qtarr = vmap(self.mdb.qr_interp, (None, 0, None))(
-                self.isotope, Tarr, self.Tref
+            qtarr = vmap(qr_interp_hitran, (None, None, 0, None, None, None))(
+                self.isotope, self.uniqiso, Tarr, self.Tref, self.T_gQT, self.gQT
             )
         elif dbtype == "exomol":
-            qtarr = vmap(self.mdb.qr_interp, (0, None))(Tarr, self.Tref)
+            qtarr = vmap(qr_interp_exomol, (0, None, None, None))(
+                Tarr, self.Tref, self.T_gQT, self.gQT
+            )
         else:
             raise ValueError(
                 f"Unsupported database type for xsmatrix: '{dbtype}'. "
