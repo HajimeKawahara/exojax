@@ -82,6 +82,7 @@ def _compute_broadening_parameters_hitran(
 
     Notes:
         gamma(T) = (gamma at Tref_original) * (Tref_original/Tref_broadening)^n
+                  * (T/Tref_broadening)^(-n) * (P/1bar)
 
     Returns:
         Tuple of (n_Texp, gamma_ref) for temperature exponent and reference gamma
