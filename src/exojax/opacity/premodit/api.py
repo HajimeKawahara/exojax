@@ -181,7 +181,7 @@ class OpaPremodit(OpaCalc):
             return False
 
         eq_attributes = (
-            self.dbtype == other.dbtype
+            (self.dbtype == other.dbtype)
             and (self.molmass == other.molmass)
             and (self.T_gQT == other.T_gQT)
             and (self.gQT == other.gQT)
