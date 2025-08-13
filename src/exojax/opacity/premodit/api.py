@@ -152,6 +152,13 @@ class OpaPremodit(OpaCalc):
 
         eq_attributes = (
             (self.mdb == other.mdb)
+            and (self.dbtype == other.dbtype)
+            and (self.molmass == other.molmass)
+            and (self.T_gQT == other.T_gQT)
+            and (self.gQT == other.gQT)
+            and (self.n_Texp == other.n_Texp)
+            and (self.gamma_ref == other.gamma_ref)
+            and (self.opainfo == other.opainfo)
             and (self.diffmode == other.diffmode)
             and (self.ngrid_broadpar == other.ngrid_broadpar)
             and (self.wavelength_order == other.wavelength_order)
