@@ -24,7 +24,10 @@ from exojax.utils.instfunc import nx_even_from_resolution_eslog, resolution_eslo
 from exojax.utils.jaxstatus import check_jax64bit
 
 from exojax.opacity.premodit.core import _select_broadening_mode
-from exojax.opacity.premodit.core import _compute_common_broadening_parameters
+from exojax.opacity.premodit.core import (
+    _compute_broadening_parameters_hitran,
+    _compute_broadening_parameters_exomol,
+)
 
 
 class OpaPremodit(OpaCalc):
@@ -251,6 +254,23 @@ class OpaPremodit(OpaCalc):
         """
         # self.mdb.change_reference_temperature(self.Tref)
         self.dbtype = self.mdb.dbtype
+        self.molmass = self.mdb.molmass
+        self.T_gQT = self.mdb.T_gQT
+        self.gQT = self.mdb.gQT
+        if self.dbtype == "hitran":
+            self.isotope = self.mdb.isotope
+            n_air = self.mdb.n_air
+            gamma_air = self.mdb.gamma_air
+        elif self.dbtype == "exomol":
+            n_Texp = self.mdb.n_Texp
+            alpha_ref = self.mdb.alpha_ref
+        else:
+            raise ValueError(
+                f"Unknown database type: '{self.dbtype}'. Supported types: hitran, exomol"
+            )
+        nu_lines = self.mdb.nu_lines
+        elower = self.mdb.elower
+        line_strength_Tref = self.mdb.line_strength(self.Tref)
 
         # sets the broadening reference temperature
         if self.single_broadening:
@@ -260,13 +280,18 @@ class OpaPremodit(OpaCalc):
             self.set_Tref_broadening_to_midpoint()
 
         # self.n_Texp, self.gamma_ref are defined with the reference temperature of Tref_broadening
-        self.n_Texp, self.gamma_ref = _compute_common_broadening_parameters(
-            self.mdb, self.Tref_broadening
-        )
+        if self.dbtype == "hitran":
+            self.n_Texp, self.gamma_ref = _compute_broadening_parameters_hitran(
+                n_air, gamma_air, self.Tref_broadening
+            )
+        elif self.dbtype == "exomol":
+            self.n_Texp, self.gamma_ref = _compute_broadening_parameters_exomol(
+                n_Texp, alpha_ref, self.Tref_broadening
+            )
 
         # comment-1: gamma_ref at Tref_broadening (is not necessary for Tref_original)
         # comment-2: line strength at Tref (is not necessary for Tref_original), should be np.float64
-        
+
         (
             self.lbd_coeff,
             multi_index_uniqgrid,
@@ -276,12 +301,12 @@ class OpaPremodit(OpaCalc):
             R,
             pmarray,
         ) = initspec.init_premodit(
-            self.mdb.nu_lines,
+            nu_lines,
             self.nu_grid,
-            self.mdb.elower,
+            elower,
             self.gamma_ref,  # comment-1
             self.n_Texp,
-            self.mdb.line_strength(self.Tref),  # comment-2
+            line_strength_Tref,  # comment-2
             self.Twt,
             Tref=self.Tref,
             Tref_broadening=self.Tref_broadening,
@@ -389,11 +414,11 @@ class OpaPremodit(OpaCalc):
             R,
             pmarray,
         ) = self.opainfo
-        nsigmaD = normalized_doppler_sigma(T, self.mdb.molmass, R)
+        nsigmaD = normalized_doppler_sigma(T, self.molmass, R)
 
-        dbtype = self.mdb.dbtype
+        dbtype = self.dbtype
         if dbtype == "hitran":
-            qt = self.mdb.qr_interp(self.mdb.isotope, T, self.Tref)
+            qt = self.mdb.qr_interp(self.isotope, T, self.Tref)
         elif dbtype == "exomol":
             qt = self.mdb.qr_interp(T, self.Tref)
         else:
@@ -487,10 +512,10 @@ class OpaPremodit(OpaCalc):
             pmarray,
         ) = self.opainfo
 
-        dbtype = self.mdb.dbtype
+        dbtype = self.dbtype
         if dbtype == "hitran":
             qtarr = vmap(self.mdb.qr_interp, (None, 0, None))(
-                self.mdb.isotope, Tarr, self.Tref
+                self.isotope, Tarr, self.Tref
             )
         elif dbtype == "exomol":
             qtarr = vmap(self.mdb.qr_interp, (0, None))(Tarr, self.Tref)
@@ -520,7 +545,7 @@ class OpaPremodit(OpaCalc):
                     n_Texp_grid,
                     multi_index_uniqgrid,
                     elower_grid,
-                    self.mdb.molmass,
+                    self.molmass,
                     qtarr,
                     self.Tref_broadening,
                     self.filter_length_oneside,
@@ -552,7 +577,7 @@ class OpaPremodit(OpaCalc):
                 n_Texp_grid,
                 multi_index_uniqgrid,
                 elower_grid,
-                self.mdb.molmass,
+                self.molmass,
                 qtarr,
                 self.Tref_broadening,
                 self.Twt,

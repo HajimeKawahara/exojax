@@ -1,7 +1,7 @@
 """Core functionality for PreMODIT opacity calculations."""
 
 import warnings
-from typing import Tuple, Optional, Dict, Any, Union, List
+from typing import Tuple, Optional, Dict, Any, Union, List, Literal
 
 import numpy as np
 from exojax.utils.constants import Patm, Tref_original
@@ -67,14 +67,44 @@ def _select_broadening_mode(
         )
 
 
-def _compute_common_broadening_parameters(
-    mdb, Tref_broadening: float
+def _compute_broadening_parameters_hitran(
+    n_air: np.ndarray,
+    gamma_air: np.ndarray,
+    Tref_broadening: float,
 ) -> Tuple[np.ndarray, np.ndarray]:
-    """Compute gamma_common for the database.
+    """
+    Compute HITRAN broadening parameters at a reference temperature.
 
     Args:
-        mdb: Molecular database (mdbExomol, mdbHitemp, mdbHitran)
-        Tref_broadening: Reference temperature for broadening in Kelvin
+        n_air: air temperature exponent
+        gamma_air: gamma factor of air pressure broadening
+        Tref_broadening: Reference temperature for broadening in Kelvin.
+
+    Notes:
+        gamma(T) = (gamma at Tref_original) * (Tref_original/Tref_broadening)^n
+
+    Returns:
+        Tuple of (n_Texp, gamma_ref) for temperature exponent and reference gamma
+    """
+    print("OpaPremodit: gamma_air and n_air are used. gamma_ref = gamma_air/Patm")
+
+    n_Texp = n_air
+    gamma_ref = gamma_air * (Tref_original / Tref_broadening) ** n_air / Patm
+    return n_Texp, gamma_ref
+
+
+def _compute_broadening_parameters_exomol(
+    n_Texp: np.ndarray,
+    alpha_ref: np.ndarray,
+    Tref_broadening: float,
+) -> Tuple[np.ndarray, np.ndarray]:
+    """
+    Compute ExoMol broadening parameters at a reference temperature.
+
+    Args:
+        n_Texp : temperature exponent
+        alpha_ref : broadening parameter
+        Tref_broadening: Reference temperature for broadening in Kelvin.
 
     Notes:
         gamma(T) = (gamma at Tref_original) * (Tref_original/Tref_broadening)^n
@@ -82,26 +112,6 @@ def _compute_common_broadening_parameters(
 
     Returns:
         Tuple of (n_Texp, gamma_ref) for temperature exponent and reference gamma
-
-    Raises:
-        ValueError: If database type is not supported
     """
-    dbtype = mdb.dbtype
-
-    if dbtype == "hitran":
-        print("OpaPremodit: gamma_air and n_air are used. gamma_ref = gamma_air/Patm")
-        n_Texp = mdb.n_air
-        gamma_ref = (
-            mdb.gamma_air * (Tref_original / Tref_broadening) ** mdb.n_air / Patm
-        )
-        return n_Texp, gamma_ref
-
-    elif dbtype == "exomol":
-        n_Texp = mdb.n_Texp
-        gamma_ref = mdb.alpha_ref * (Tref_original / Tref_broadening) ** mdb.n_Texp
-        return n_Texp, gamma_ref
-
-    else:
-        raise ValueError(
-            f"Unknown database type: '{dbtype}'. " "Supported types: hitran, exomol"
-        )
+    gamma_ref = alpha_ref * (Tref_original / Tref_broadening) ** n_Texp
+    return n_Texp, gamma_ref
