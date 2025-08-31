@@ -1,9 +1,7 @@
 import numpy as np
 import concurrent.futures as _cf
 import logging
-from collections.abc import Iterable
 import requests
-import re
 from bs4 import BeautifulSoup
 from exojax.utils.url import url_lists_exomolhr
 from typing import Optional
