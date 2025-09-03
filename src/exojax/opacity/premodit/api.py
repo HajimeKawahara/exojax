@@ -298,10 +298,15 @@ class OpaPremodit(OpaCalc):
         # line strength at Tref
         if self.dbtype == "hitran":
             qr = qr_interp_hitran(
-                self.isotope, self.uniqiso, self.Tref, self.Tref, self.T_gQT, self.gQT
+                self.isotope,
+                self.uniqiso,
+                self.Tref,
+                Tref_original,
+                self.T_gQT,
+                self.gQT,
             )
         elif self.dbtype == "exomol":
-            qr = qr_interp_exomol(self.Tref, self.Tref, self.T_gQT, self.gQT)
+            qr = qr_interp_exomol(self.Tref, Tref_original, self.T_gQT, self.gQT)
         self.line_strength_Tref = line_strength_numpy(
             self.Tref, self.line_strength_ref_original, self.nu_lines, self.elower, qr
         )
