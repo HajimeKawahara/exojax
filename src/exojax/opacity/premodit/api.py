@@ -31,6 +31,7 @@ from exojax.opacity.premodit.core import (
 
 from exojax.database._common.partition_function import qr_interp as qr_interp_hitran
 from exojax.database.exomol.partition_function import qr_interp as qr_interp_exomol
+from exojax.database.core.line_strength import line_strength_numpy
 
 
 class OpaPremodit(OpaCalc):
@@ -109,7 +110,7 @@ class OpaPremodit(OpaCalc):
         self.molmass = mdb.molmass
         self.T_gQT = mdb.T_gQT
         self.gQT = mdb.gQT
-        self.line_strength = mdb.line_strength
+        self.line_strength_ref_original = mdb.line_strength_ref_original
 
         if self.dbtype == "hitran":
             self.isotope = mdb.isotope
@@ -126,6 +127,7 @@ class OpaPremodit(OpaCalc):
 
         self.nu_lines = mdb.nu_lines
         self.elower = mdb.elower
+        del mdb
 
         self.ngrid_broadpar = None
         self.version_auto_trange = version_auto_trange
@@ -238,10 +240,6 @@ class OpaPremodit(OpaCalc):
         )
         self.Tmax = Tu
         self.Tmin = Tl
-
-        self.line_strength_Tref = self.line_strength(self.Tref)
-        del self.line_strength
-
         self.apply_params()
 
     def manual_setting(
@@ -272,10 +270,6 @@ class OpaPremodit(OpaCalc):
 
         self.Tmax = Tmax
         self.Tmin = Tmin
-
-        self.line_strength_Tref = self.line_strength(self.Tref)
-        del self.line_strength
-
         self.apply_params()
 
     def set_nu_grid(self, x0, x1, unit, resolution=700000, Nx=None):
@@ -301,6 +295,18 @@ class OpaPremodit(OpaCalc):
 
         Defines self.lbd_coeff and self.opainfo for opacity calculations.
         """
+        # line strength at Tref
+        if self.dbtype == "hitran":
+            qr = qr_interp_hitran(
+                self.isotope, self.uniqiso, self.Tref, self.Tref, self.T_gQT, self.gQT
+            )
+        elif self.dbtype == "exomol":
+            qr = qr_interp_exomol(self.Tref, self.Tref, self.T_gQT, self.gQT)
+        self.line_strength_Tref = line_strength_numpy(
+            self.Tref, self.line_strength_ref_original, self.nu_lines, self.elower, qr
+        )
+        del self.line_strength_ref_original
+
         # sets the broadening reference temperature
         if self.single_broadening:
             print("OpaPremodit: a single broadening parameter set is used.")

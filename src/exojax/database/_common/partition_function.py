@@ -1,3 +1,4 @@
+import warnings
 import jax.numpy as jnp
 import numpy as np
 from exojax.database._common.isotope_functions import _isotope_index_from_isotope_number
@@ -90,5 +91,10 @@ def qr_interp(isotope, uniqiso, T, Tref, T_gQT, gQT):
     Returns:
         qr(T)=Q(T)/Q(Tref) interpolated in jnp.array
     """
+    if isotope is None or isotope == 0:
+        msg1 = "Currently all isotope mode is not fully compatible to MdbCommonHitempHitran."
+        msg2 = "QT assumed isotope=1 instead."
+        warnings.warn(msg1 + msg2, UserWarning)
+        isotope = 1
     isotope_index = _isotope_index_from_isotope_number(isotope, uniqiso)
     return _qr_interp(isotope_index, T, T_gQT, gQT, Tref)
