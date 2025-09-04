@@ -34,6 +34,13 @@ Nested Sampling using JAXNS/NumPyro
 
    tutorials/get_started_ns.rst
 
+Equilibrium Chemistry Retrieval
+--------------------------------------
+
+.. toctree::
+   :maxdepth: 1
+
+   tutorials/equilibrium_chemistry.rst
 
 A Primer on Planet Atmosphere Model in ExoJAX
 ===============================================
