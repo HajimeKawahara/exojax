@@ -24,7 +24,7 @@ class TestArtEmisPureCKD:
         # Setup wavenumber grid and molecular database (small for testing)
         nu_grid, _, _ = mock_wavenumber_grid()
         self.nu_grid = nu_grid
-        mdb = mock_mdbExomol("H2O")
+        self.mdb = mock_mdbExomol("H2O")
 
         self.base_art = ArtEmisPure(
             pressure_top=1.0e-8, pressure_btm=1.0e2, nlayer=100, nu_grid=nu_grid
@@ -35,7 +35,7 @@ class TestArtEmisPureCKD:
         self.gravity = 2478.57
 
         # Initialize base opacity calculator
-        self.base_opa = OpaPremodit(mdb, nu_grid, auto_trange=[500.0, 1500.0])
+        self.base_opa = OpaPremodit(self.mdb, nu_grid, auto_trange=[500.0, 1500.0])
 
         # Initialize OpaCKD with small parameters for testing
         self.opa_ckd = OpaCKD(
@@ -48,7 +48,7 @@ class TestArtEmisPureCKD:
         # run normal spectrum
         xsmatrix = self.base_opa.xsmatrix(self.Tarr, self.base_art.pressure)
         dtau = self.base_art.opacity_profile_xs(
-            xsmatrix, self.mmr_arr, self.base_opa.mdb.molmass, self.gravity
+            xsmatrix, self.mmr_arr, self.mdb.molmass, self.gravity
         )
         F0 = self.base_art.run(dtau, self.Tarr)
         # Compute reference band averages by direct integration
@@ -75,15 +75,17 @@ class TestArtEmisPureCKD:
         self.opa_ckd.precompute_tables(self.T_grid, self.P_grid)
         xs_ckd = self.opa_ckd.xstensor_ckd(self.Tarr, self.base_art.pressure)
         dtau_ckd = self.base_art.opacity_profile_xs_ckd(
-            xs_ckd, self.mmr_arr, self.base_opa.mdb.molmass, self.gravity
+            xs_ckd, self.mmr_arr, self.mdb.molmass, self.gravity
         )  # shape is (100,16,5)
         F0_ckd = self.base_art.run_ckd(
             dtau_ckd, self.Tarr, self.opa_ckd.ckd_info.weights, self.opa_ckd.nu_bands
         )
 
-        res = np.sqrt(np.sum((F0_ckd - flux_average_reference)**2)/len(F0_ckd))/np.mean(flux_average_reference)
-        
-        assert res < 0.05 # 0.04067868171246608 2025/6/24
+        res = np.sqrt(
+            np.sum((F0_ckd - flux_average_reference) ** 2) / len(F0_ckd)
+        ) / np.mean(flux_average_reference)
+
+        assert res < 0.05  # 0.04067868171246608 2025/6/24
 
         """
         # if plotting needed, uncomment below
@@ -100,6 +102,7 @@ class TestArtEmisPureCKD:
         plt.savefig("ckd_test_spectrum"+str(int(resolution))+".png")
         plt.show()
         """
+
 
 if __name__ == "__main__":
     tt = TestArtEmisPureCKD()

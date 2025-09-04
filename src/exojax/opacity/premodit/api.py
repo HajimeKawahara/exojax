@@ -24,7 +24,14 @@ from exojax.utils.instfunc import nx_even_from_resolution_eslog, resolution_eslo
 from exojax.utils.jaxstatus import check_jax64bit
 
 from exojax.opacity.premodit.core import _select_broadening_mode
-from exojax.opacity.premodit.core import _compute_common_broadening_parameters
+from exojax.opacity.premodit.core import (
+    _compute_broadening_parameters_hitran,
+    _compute_broadening_parameters_exomol,
+)
+
+from exojax.database._common.partition_function import qr_interp as qr_interp_hitran
+from exojax.database.exomol.partition_function import qr_interp as qr_interp_exomol
+from exojax.database.core.line_strength import line_strength_numpy
 
 
 class OpaPremodit(OpaCalc):
@@ -98,11 +105,34 @@ class OpaPremodit(OpaCalc):
             self.nu_grid, wavelength_order=self.wavelength_order, unit="AA"
         )
         self.resolution = resolution_eslog(nu_grid)
-        self.mdb = mdb
+
+        self.dbtype = mdb.dbtype
+        self.molmass = mdb.molmass
+        self.T_gQT = mdb.T_gQT
+        self.gQT = mdb.gQT
+        self.line_strength_ref_original = mdb.line_strength_ref_original
+
+        if self.dbtype == "hitran":
+            self.isotope = mdb.isotope
+            self.uniqiso = mdb.uniqiso
+            self.n_air = mdb.n_air
+            self.gamma_air = mdb.gamma_air
+        elif self.dbtype == "exomol":
+            self.n_Texp = mdb.n_Texp
+            self.alpha_ref = mdb.alpha_ref
+        else:
+            raise ValueError(
+                f"Unknown database type: '{self.dbtype}'. Supported types: hitran, exomol"
+            )
+
+        self.nu_lines = mdb.nu_lines
+        self.elower = mdb.elower
+        del mdb
+
         self.ngrid_broadpar = None
         self.version_auto_trange = version_auto_trange
         # check if the mdb lines are in nu_grid
-        if is_outside_range(self.mdb.nu_lines, self.nu_grid[0], self.nu_grid[-1]):
+        if is_outside_range(self.nu_lines, self.nu_grid[0], self.nu_grid[-1]):
             raise ValueError("None of the lines in mdb are within nu_grid.")
 
         (
@@ -148,13 +178,29 @@ class OpaPremodit(OpaCalc):
             return False
 
         eq_attributes = (
-            (self.mdb == other.mdb)
+            (self.dbtype == other.dbtype)
+            and (self.molmass == other.molmass)
+            and np.array_equal(self.T_gQT, other.T_gQT)
+            and np.array_equal(self.gQT, other.gQT)
             and (self.diffmode == other.diffmode)
             and (self.ngrid_broadpar == other.ngrid_broadpar)
             and (self.wavelength_order == other.wavelength_order)
             and (self.version_auto_trange == other.version_auto_trange)
             and np.array_equal(self.nu_grid, other.nu_grid)
         )
+        if (
+            getattr(self, "opainfo", None) is not None
+            and getattr(other, "opainfo", None) is not None
+        ):
+            eq_attributes = (
+                eq_attributes
+                and np.array_equal(self.opainfo[0], other.opainfo[0])
+                and np.array_equal(self.opainfo[1], other.opainfo[1])
+                and np.array_equal(self.opainfo[2], other.opainfo[2])
+                and np.array_equal(self.opainfo[3], other.opainfo[3])
+                and (self.opainfo[4] == other.opainfo[4])
+                and np.array_equal(self.opainfo[5], other.opainfo[5])
+            )
         eq_attributes = self._if_exist_check_eq(other, "dE", eq_attributes)
         eq_attributes = self._if_exist_check_eq(other, "Tref", eq_attributes)
         eq_attributes = self._if_exist_check_eq(other, "Twt", eq_attributes)
@@ -249,8 +295,22 @@ class OpaPremodit(OpaCalc):
 
         Defines self.lbd_coeff and self.opainfo for opacity calculations.
         """
-        # self.mdb.change_reference_temperature(self.Tref)
-        self.dbtype = self.mdb.dbtype
+        # line strength at Tref
+        if self.dbtype == "hitran":
+            qr = qr_interp_hitran(
+                self.isotope,
+                self.uniqiso,
+                self.Tref,
+                Tref_original,
+                self.T_gQT,
+                self.gQT,
+            )
+        elif self.dbtype == "exomol":
+            qr = qr_interp_exomol(self.Tref, Tref_original, self.T_gQT, self.gQT)
+        self.line_strength_Tref = line_strength_numpy(
+            self.Tref, self.line_strength_ref_original, self.nu_lines, self.elower, qr
+        )
+        del self.line_strength_ref_original
 
         # sets the broadening reference temperature
         if self.single_broadening:
@@ -260,13 +320,21 @@ class OpaPremodit(OpaCalc):
             self.set_Tref_broadening_to_midpoint()
 
         # self.n_Texp, self.gamma_ref are defined with the reference temperature of Tref_broadening
-        self.n_Texp, self.gamma_ref = _compute_common_broadening_parameters(
-            self.mdb, self.Tref_broadening
-        )
+        if self.dbtype == "hitran":
+            self.n_Texp, self.gamma_ref = _compute_broadening_parameters_hitran(
+                self.n_air, self.gamma_air, self.Tref_broadening
+            )
+            del self.n_air
+            del self.gamma_air
+        elif self.dbtype == "exomol":
+            self.n_Texp, self.gamma_ref = _compute_broadening_parameters_exomol(
+                self.n_Texp, self.alpha_ref, self.Tref_broadening
+            )
+            del self.alpha_ref
 
         # comment-1: gamma_ref at Tref_broadening (is not necessary for Tref_original)
         # comment-2: line strength at Tref (is not necessary for Tref_original), should be np.float64
-        
+
         (
             self.lbd_coeff,
             multi_index_uniqgrid,
@@ -276,12 +344,12 @@ class OpaPremodit(OpaCalc):
             R,
             pmarray,
         ) = initspec.init_premodit(
-            self.mdb.nu_lines,
+            self.nu_lines,
             self.nu_grid,
-            self.mdb.elower,
+            self.elower,
             self.gamma_ref,  # comment-1
             self.n_Texp,
-            self.mdb.line_strength(self.Tref),  # comment-2
+            self.line_strength_Tref,  # comment-2
             self.Twt,
             Tref=self.Tref,
             Tref_broadening=self.Tref_broadening,
@@ -294,6 +362,9 @@ class OpaPremodit(OpaCalc):
             single_broadening_parameters=self.single_broadening_parameters,
             warning=self.warning,
         )
+        del self.nu_lines
+        del self.elower
+        del self.line_strength_Tref
         self.opainfo = (
             multi_index_uniqgrid,
             elower_grid,
@@ -389,13 +460,15 @@ class OpaPremodit(OpaCalc):
             R,
             pmarray,
         ) = self.opainfo
-        nsigmaD = normalized_doppler_sigma(T, self.mdb.molmass, R)
+        nsigmaD = normalized_doppler_sigma(T, self.molmass, R)
 
-        dbtype = self.mdb.dbtype
+        dbtype = self.dbtype
         if dbtype == "hitran":
-            qt = self.mdb.qr_interp(self.mdb.isotope, T, self.Tref)
+            qt = qr_interp_hitran(
+                self.isotope, self.uniqiso, T, self.Tref, self.T_gQT, self.gQT
+            )
         elif dbtype == "exomol":
-            qt = self.mdb.qr_interp(T, self.Tref)
+            qt = qr_interp_exomol(T, self.Tref, self.T_gQT, self.gQT)
         else:
             raise ValueError(
                 f"Unsupported database type for xsvector: '{dbtype}'. "
@@ -487,13 +560,15 @@ class OpaPremodit(OpaCalc):
             pmarray,
         ) = self.opainfo
 
-        dbtype = self.mdb.dbtype
+        dbtype = self.dbtype
         if dbtype == "hitran":
-            qtarr = vmap(self.mdb.qr_interp, (None, 0, None))(
-                self.mdb.isotope, Tarr, self.Tref
+            qtarr = vmap(qr_interp_hitran, (None, None, 0, None, None, None))(
+                self.isotope, self.uniqiso, Tarr, self.Tref, self.T_gQT, self.gQT
             )
         elif dbtype == "exomol":
-            qtarr = vmap(self.mdb.qr_interp, (0, None))(Tarr, self.Tref)
+            qtarr = vmap(qr_interp_exomol, (0, None, None, None))(
+                Tarr, self.Tref, self.T_gQT, self.gQT
+            )
         else:
             raise ValueError(
                 f"Unsupported database type for xsmatrix: '{dbtype}'. "
@@ -520,7 +595,7 @@ class OpaPremodit(OpaCalc):
                     n_Texp_grid,
                     multi_index_uniqgrid,
                     elower_grid,
-                    self.mdb.molmass,
+                    self.molmass,
                     qtarr,
                     self.Tref_broadening,
                     self.filter_length_oneside,
@@ -552,7 +627,7 @@ class OpaPremodit(OpaCalc):
                 n_Texp_grid,
                 multi_index_uniqgrid,
                 elower_grid,
-                self.mdb.molmass,
+                self.molmass,
                 qtarr,
                 self.Tref_broadening,
                 self.Twt,

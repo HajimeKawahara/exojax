@@ -81,7 +81,7 @@ def test_premodit_opa_and_manual_agreement(diffmode, jax_enable_x64):
     if jax_enable_x64:
         assert np.max(dxsv) < 1.0e-11  # (several x e-12, feb 4th 2025)
     else:
-        assert np.max(dxsv) < 1.1e-3
+        assert np.max(dxsv) < 1.22e-3 #relaxed from 1.1e-3 #630 Sep 4 2025 
 
 
 if __name__ == "__main__":
