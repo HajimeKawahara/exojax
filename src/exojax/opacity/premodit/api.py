@@ -7,6 +7,7 @@ optimized parameter grids and efficient memory management.
 
 from functools import partial
 from typing import Optional, Union, Literal, Dict, Any, Tuple, List
+from dataclasses import dataclass
 
 import jax.numpy as jnp
 import numpy as np
@@ -32,6 +33,52 @@ from exojax.opacity.premodit.core import (
 from exojax.database._common.partition_function import qr_interp as qr_interp_hitran
 from exojax.database.exomol.partition_function import qr_interp as qr_interp_exomol
 from exojax.database.core.line_strength import line_strength_numpy
+from exojax.database.contracts import MDBSnapshot
+
+
+@dataclass
+class _MDBLikeFromSnapshot:
+    """Minimal mdb-like adapter built from MDBSnapshot.
+
+    Provides only the attribute surface used by OpaPremodit.__init__ so the
+    old constructor path stays unchanged. All arrays are NumPy arrays.
+    """
+
+    dbtype: str
+    molmass: float
+    T_gQT: np.ndarray
+    gQT: np.ndarray
+    nu_lines: np.ndarray
+    elower: np.ndarray
+    line_strength_ref_original: np.ndarray
+    # HITRAN-only (optional)
+    isotope: Optional[np.ndarray] = None
+    uniqiso: Optional[np.ndarray] = None
+    n_air: Optional[np.ndarray] = None
+    gamma_air: Optional[np.ndarray] = None
+    # ExoMol-only (optional)
+    n_Texp: Optional[np.ndarray] = None
+    alpha_ref: Optional[np.ndarray] = None
+
+    @classmethod
+    def from_snapshot(cls, snap: MDBSnapshot) -> "_MDBLikeFromSnapshot":
+        meta = snap.meta
+        lines = snap.lines
+        return cls(
+            dbtype=meta.dbtype,
+            molmass=meta.molmass,
+            T_gQT=meta.T_gQT,
+            gQT=meta.gQT,
+            nu_lines=lines.nu_lines,
+            elower=lines.elower,
+            line_strength_ref_original=lines.line_strength_ref_original,
+            isotope=snap.isotope,
+            uniqiso=snap.uniqiso,
+            n_air=snap.n_air,
+            gamma_air=snap.gamma_air,
+            n_Texp=snap.n_Texp,
+            alpha_ref=snap.alpha_ref,
+        )
 
 
 class OpaPremodit(OpaCalc):
@@ -164,6 +211,40 @@ class OpaPremodit(OpaCalc):
         self._sets_capable_opacalculators()
         if nstitch > 1:
             self.reshape_lbd_coeff()
+
+    @classmethod
+    def from_snapshot(
+        cls,
+        mdb_snapshot: MDBSnapshot,
+        nu_grid: Union[np.ndarray, jnp.ndarray],
+        **kwargs,
+    ) -> "OpaPremodit":
+        """Build OpaPremodit from a data-only MDBSnapshot.
+
+        This constructor avoids a hard dependency on concrete mdb classes
+        by adapting the snapshot to the minimal attribute surface expected
+        by the legacy ``__init__``.
+        """
+        mdb_like = _MDBLikeFromSnapshot.from_snapshot(mdb_snapshot)
+        return cls(mdb_like, nu_grid, **kwargs)
+
+    @classmethod
+    def from_mdb(
+        cls,
+        mdb,
+        nu_grid: Union[np.ndarray, jnp.ndarray],
+        **kwargs,
+    ) -> "OpaPremodit":
+        """Back-compat helper: snapshotize the mdb before constructing.
+
+        Example:
+            mdb = MdbExomol(".../CO/12C-16O/Li2015", nu_grid)
+            opa = OpaPremodit.from_mdb(mdb, nu_grid, manual_params=(5.0, 1000.0, 1200.0))
+        """
+        if not hasattr(mdb, "to_snapshot"):
+            raise TypeError("mdb must implement .to_snapshot()")
+        snap = mdb.to_snapshot()
+        return cls.from_snapshot(snap, nu_grid, **kwargs)
 
     def __eq__(self, other: object) -> bool:
         """Check equality with another OpaPremodit instance.
