@@ -18,6 +18,7 @@ from exojax.opacity.base import OpaCalc
 from exojax.signal.ola import overlap_and_add, overlap_and_add_matrix
 from exojax.opacity import initspec
 from exojax.opacity.premodit.lbderror import optimal_params
+from exojax.opacity.premodit.info import PreMODITInfo
 from exojax.utils.checkarray import is_outside_range
 from exojax.utils.constants import Tref_original
 from exojax.utils.grids import nu2wav, wavenumber_grid
@@ -460,6 +461,7 @@ class OpaPremodit(OpaCalc):
         del self.nu_lines
         del self.elower
         del self.line_strength_Tref
+        # legacy tuple remains for backward compatibility
         self.opainfo = (
             multi_index_uniqgrid,
             elower_grid,
@@ -467,6 +469,15 @@ class OpaPremodit(OpaCalc):
             n_Texp_grid,
             R,
             pmarray,
+        )
+        # new immutable VO mirrors opainfo
+        self.pre_modit_info = PreMODITInfo(
+            multi_index_uniqgrid=multi_index_uniqgrid,
+            elower_grid=elower_grid,
+            ngamma_ref_grid=ngamma_ref_grid,
+            n_Texp_grid=n_Texp_grid,
+            R=R,
+            pmarray=pmarray,
         )
         self.ready = True
 
