@@ -30,9 +30,14 @@ from exojax.opacity.premodit.core import (
     _compute_broadening_parameters_exomol,
 )
 
-from exojax.database._common.partition_function import qr_interp as qr_interp_hitran
-from exojax.database.exomol.partition_function import qr_interp as qr_interp_exomol
 from exojax.database.core.line_strength import line_strength_numpy
+from exojax.opacity.contracts import PartitionFunctionProvider, BroadeningStrategy
+from exojax.opacity.providers import (
+    ExomolPartitionProvider,
+    HitranPartitionProvider,
+    ExomolBroadening,
+    HitranBroadening,
+)
 from exojax.database.contracts import MDBSnapshot
 
 
@@ -174,6 +179,13 @@ class OpaPremodit(OpaCalc):
 
         self.nu_lines = mdb.nu_lines
         self.elower = mdb.elower
+        # Set default providers if not overridden later
+        if self.dbtype == "exomol":
+            self.pf_provider: PartitionFunctionProvider = ExomolPartitionProvider(self.T_gQT, self.gQT)
+            self.broadening_strategy: BroadeningStrategy = ExomolBroadening(self.n_Texp, self.alpha_ref)
+        elif self.dbtype == "hitran":
+            self.pf_provider = HitranPartitionProvider(self.isotope, self.uniqiso, self.T_gQT, self.gQT)
+            self.broadening_strategy = HitranBroadening(self.n_air, self.gamma_air)
         del mdb
 
         self.ngrid_broadpar = None
@@ -217,6 +229,8 @@ class OpaPremodit(OpaCalc):
         cls,
         mdb_snapshot: MDBSnapshot,
         nu_grid: Union[np.ndarray, jnp.ndarray],
+        pf_provider: Optional[PartitionFunctionProvider] = None,
+        broadening_strategy: Optional[BroadeningStrategy] = None,
         **kwargs,
     ) -> "OpaPremodit":
         """Build OpaPremodit from a data-only MDBSnapshot.
@@ -226,13 +240,20 @@ class OpaPremodit(OpaCalc):
         by the legacy ``__init__``.
         """
         mdb_like = _MDBLikeFromSnapshot.from_snapshot(mdb_snapshot)
-        return cls(mdb_like, nu_grid, **kwargs)
+        opa = cls(mdb_like, nu_grid, **kwargs)
+        if pf_provider is not None:
+            opa.pf_provider = pf_provider
+        if broadening_strategy is not None:
+            opa.broadening_strategy = broadening_strategy
+        return opa
 
     @classmethod
     def from_mdb(
         cls,
         mdb,
         nu_grid: Union[np.ndarray, jnp.ndarray],
+        pf_provider: Optional[PartitionFunctionProvider] = None,
+        broadening_strategy: Optional[BroadeningStrategy] = None,
         **kwargs,
     ) -> "OpaPremodit":
         """Back-compat helper: snapshotize the mdb before constructing.
@@ -244,7 +265,13 @@ class OpaPremodit(OpaCalc):
         if not hasattr(mdb, "to_snapshot"):
             raise TypeError("mdb must implement .to_snapshot()")
         snap = mdb.to_snapshot()
-        return cls.from_snapshot(snap, nu_grid, **kwargs)
+        return cls.from_snapshot(
+            snap,
+            nu_grid,
+            pf_provider=pf_provider,
+            broadening_strategy=broadening_strategy,
+            **kwargs,
+        )
 
     def __eq__(self, other: object) -> bool:
         """Check equality with another OpaPremodit instance.
@@ -377,17 +404,7 @@ class OpaPremodit(OpaCalc):
         Defines self.lbd_coeff and self.opainfo for opacity calculations.
         """
         # line strength at Tref
-        if self.dbtype == "hitran":
-            qr = qr_interp_hitran(
-                self.isotope,
-                self.uniqiso,
-                self.Tref,
-                Tref_original,
-                self.T_gQT,
-                self.gQT,
-            )
-        elif self.dbtype == "exomol":
-            qr = qr_interp_exomol(self.Tref, Tref_original, self.T_gQT, self.gQT)
+        qr = self.pf_provider.qr_single(self.Tref, Tref_original)
         self.line_strength_Tref = line_strength_numpy(
             self.Tref, self.line_strength_ref_original, self.nu_lines, self.elower, qr
         )
@@ -401,16 +418,13 @@ class OpaPremodit(OpaCalc):
             self.set_Tref_broadening_to_midpoint()
 
         # self.n_Texp, self.gamma_ref are defined with the reference temperature of Tref_broadening
-        if self.dbtype == "hitran":
-            self.n_Texp, self.gamma_ref = _compute_broadening_parameters_hitran(
-                self.n_air, self.gamma_air, self.Tref_broadening
-            )
+        self.n_Texp, self.gamma_ref = self.broadening_strategy.compute(self.Tref_broadening)
+        # Drop heavy arrays that are no longer needed after computing gamma_ref
+        if hasattr(self, "n_air"):
             del self.n_air
+        if hasattr(self, "gamma_air"):
             del self.gamma_air
-        elif self.dbtype == "exomol":
-            self.n_Texp, self.gamma_ref = _compute_broadening_parameters_exomol(
-                self.n_Texp, self.alpha_ref, self.Tref_broadening
-            )
+        if hasattr(self, "alpha_ref"):
             del self.alpha_ref
 
         # comment-1: gamma_ref at Tref_broadening (is not necessary for Tref_original)
@@ -543,18 +557,7 @@ class OpaPremodit(OpaCalc):
         ) = self.opainfo
         nsigmaD = normalized_doppler_sigma(T, self.molmass, R)
 
-        dbtype = self.dbtype
-        if dbtype == "hitran":
-            qt = qr_interp_hitran(
-                self.isotope, self.uniqiso, T, self.Tref, self.T_gQT, self.gQT
-            )
-        elif dbtype == "exomol":
-            qt = qr_interp_exomol(T, self.Tref, self.T_gQT, self.gQT)
-        else:
-            raise ValueError(
-                f"Unsupported database type for xsvector: '{dbtype}'. "
-                "Supported types: hitran, exomol"
-            )
+        qt = self.pf_provider.qr_single(T, self.Tref)
 
         if self.nstitch > 1:
 
@@ -641,20 +644,7 @@ class OpaPremodit(OpaCalc):
             pmarray,
         ) = self.opainfo
 
-        dbtype = self.dbtype
-        if dbtype == "hitran":
-            qtarr = vmap(qr_interp_hitran, (None, None, 0, None, None, None))(
-                self.isotope, self.uniqiso, Tarr, self.Tref, self.T_gQT, self.gQT
-            )
-        elif dbtype == "exomol":
-            qtarr = vmap(qr_interp_exomol, (0, None, None, None))(
-                Tarr, self.Tref, self.T_gQT, self.gQT
-            )
-        else:
-            raise ValueError(
-                f"Unsupported database type for xsmatrix: '{dbtype}'. "
-                "Supported types: hitran, exomol"
-            )
+        qtarr = jnp.asarray(self.pf_provider.qr_vector(np.asarray(Tarr), self.Tref))
 
         if self.nstitch > 1:
 
