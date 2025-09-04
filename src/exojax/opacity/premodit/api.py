@@ -243,7 +243,7 @@ class OpaPremodit(OpaCalc):
         self.set_aliasing()
 
         self._sets_capable_opacalculators()
-        if nstitch > 1:
+        if self.nstitch > 1:
             self.reshape_lbd_coeff()
 
     @classmethod

@@ -33,3 +33,18 @@ Notes
 - ``from_mdb`` mirrors legacy usage but routes through a snapshot internally.
 - Both APIs accept the same keyword options as the original constructor.
 
+Optional Memory Policy
+----------------------
+
+Override memory/runtime knobs explicitly (defaults unchanged if omitted):
+
+.. code-block:: python
+
+   from exojax.opacity.policies import MemoryPolicy
+
+   opa3 = OpaPremodit.from_mdb(
+       mdb,
+       nu_grid,
+       manual_params=(5.0, 1000.0, 1200.0),
+       memory_policy=MemoryPolicy(allow_32bit=True, nstitch=2, cutwing=0.5),
+   )
