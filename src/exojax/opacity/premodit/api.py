@@ -243,7 +243,8 @@ class OpaPremodit(OpaCalc):
         self.set_aliasing()
 
         self._sets_capable_opacalculators()
-        if self.nstitch > 1:
+        # Only reshape here if parameters were already applied (lbd_coeff exists)
+        if self.nstitch > 1 and hasattr(self, "lbd_coeff"):
             self.reshape_lbd_coeff()
 
     @classmethod
@@ -504,6 +505,8 @@ class OpaPremodit(OpaCalc):
 
         self.ngrid_broadpar = len(multi_index_uniqgrid)
         self.ngrid_elower = len(elower_grid)
+        if self.nstitch > 1:
+            self.reshape_lbd_coeff()
 
     def _get_info_tuple(self):
         """Return (multi_index_uniqgrid, elower_grid, ngamma_ref_grid, n_Texp_grid, R, pmarray).

@@ -33,6 +33,16 @@ Opacity Calculation
    userguide/benchmark.rst
    userguide/fp.rst
 
+
+Loose Coupling Between Classes
+============================================
+
+.. toctree::
+   :maxdepth: 1
+
+   userguide/di_opa_mdb.rst
+
+
 Manual Settings of Opacity (not using opa)
 ============================================
 

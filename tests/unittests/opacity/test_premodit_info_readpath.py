@@ -1,6 +1,7 @@
 import numpy as np
 
 from exojax.opacity.premodit.api import OpaPremodit
+from exojax.opacity.policies import MemoryPolicy
 from exojax.database.contracts import MDBMeta, Lines, MDBSnapshot
 
 
@@ -42,7 +43,7 @@ def test_get_info_tuple_prefers_vo(monkeypatch):
 
     snap = _fake_snapshot_exomol()
     nu_grid = np.linspace(990.0, 1010.0, 8)
-    opa = OpaPremodit.from_snapshot(snap, nu_grid)
+    opa = OpaPremodit.from_snapshot(snap, nu_grid, memory_policy=MemoryPolicy(allow_32bit=True))
     opa.manual_setting(dE=5.0, Tref=1000.0, Twt=1100.0)
 
     # Both paths present: VO and legacy tuple must match
@@ -56,4 +57,3 @@ def test_get_info_tuple_prefers_vo(monkeypatch):
     t3 = opa._get_info_tuple()
     for a, b in zip(t3, t2):
         np.testing.assert_allclose(a, b)
-

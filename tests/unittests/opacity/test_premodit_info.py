@@ -1,6 +1,7 @@
 import numpy as np
 
 from exojax.opacity.premodit.api import OpaPremodit
+from exojax.opacity.policies import MemoryPolicy
 from exojax.database.contracts import MDBMeta, Lines, MDBSnapshot
 
 
@@ -65,7 +66,7 @@ def test_apply_params_sets_pre_modit_info(monkeypatch):
     nu_grid = np.linspace(990.0, 1010.0, 8)
 
     # Build via DI path (providers auto-selected)
-    opa = OpaPremodit.from_snapshot(snap, nu_grid)
+    opa = OpaPremodit.from_snapshot(snap, nu_grid, memory_policy=MemoryPolicy(allow_32bit=True))
     opa.manual_setting(dE=5.0, Tref=1000.0, Twt=1100.0)
 
     # VO must exist and mirror opainfo

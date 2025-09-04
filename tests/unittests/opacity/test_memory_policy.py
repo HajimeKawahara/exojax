@@ -3,6 +3,7 @@ import numpy as np
 from exojax.opacity.premodit.api import OpaPremodit
 from exojax.opacity.policies import MemoryPolicy
 from exojax.database.contracts import MDBMeta, Lines, MDBSnapshot
+from exojax.utils.grids import wavenumber_grid
 
 
 def _fake_snap():
@@ -29,12 +30,32 @@ def test_memory_policy_overrides_ctor(monkeypatch):
     # keep heavy init hermetic
     import exojax.opacity.initspec as initspec
 
-    def _stub_init_premodit(*args, **kwargs):
-        lbd = np.zeros((1, 2, 1, 1))
-        mi = np.array([[0, 0]])
+    def _stub_init_premodit(
+        nu_lines,
+        nu_grid,
+        elower,
+        gamma_ref,
+        n_Texp,
+        line_strength_Tref,
+        Twt,
+        *,
+        Tref,
+        Tref_broadening,
+        Tmax,
+        Tmin,
+        dE,
+        dit_grid_resolution,
+        diffmode,
+        single_broadening,
+        single_broadening_parameters,
+        warning,
+    ):
+        L = len(nu_grid)
+        lbd = np.zeros((diffmode + 1, L, 2, 1))
+        mi = np.array([[0, 0], [1, 1]])
         elg = np.array([0.0])
-        ngr = np.array([0.01])
-        ntg = np.array([0.5])
+        ngr = np.array([0.01, 0.02])
+        ntg = np.array([0.5, 0.5])
         R = 1.0
         pm = np.array([1.0])
         return lbd, mi, elg, ngr, ntg, R, pm
@@ -42,7 +63,8 @@ def test_memory_policy_overrides_ctor(monkeypatch):
     monkeypatch.setattr(initspec, "init_premodit", _stub_init_premodit)
 
     snap = _fake_snap()
-    nu_grid = np.linspace(990.0, 1010.0, 8)
+    # PreMODIT expects an ESLOG grid; use helper to generate it
+    nu_grid, _, _ = wavenumber_grid(990.0, 1010.0, 8, xsmode="premodit")
 
     # ctor sets allow_32bit=False, nstitch=1, cutwing=1.0
     # policy overrides them to True, 2, 0.5
@@ -57,4 +79,3 @@ def test_memory_policy_overrides_ctor(monkeypatch):
     # Sanity: apply_params still runs
     opa.manual_setting(dE=5.0, Tref=1000.0, Twt=1100.0)
     assert hasattr(opa, "pre_modit_info")
-
