@@ -6,14 +6,14 @@ optimized parameter grids and efficient memory management.
 """
 
 from functools import partial
+import logging
 from typing import Optional, Union, Literal, Dict, Any, Tuple, List
 from dataclasses import dataclass
-
 import jax.numpy as jnp
 import numpy as np
-from jax import checkpoint, checkpoint_policies, vmap
+from jax import checkpoint
+from jax import checkpoint_policies
 from jax.lax import dynamic_slice, scan
-
 from exojax.opacity.base import OpaCalc
 from exojax.signal.ola import overlap_and_add, overlap_and_add_matrix
 from exojax.opacity import initspec
@@ -21,26 +21,23 @@ from exojax.opacity.premodit.lbderror import optimal_params
 from exojax.opacity.premodit.info import PreMODITInfo
 from exojax.utils.checkarray import is_outside_range
 from exojax.utils.constants import Tref_original
-from exojax.utils.grids import nu2wav, wavenumber_grid
-from exojax.utils.instfunc import nx_even_from_resolution_eslog, resolution_eslog
+from exojax.utils.grids import nu2wav
+from exojax.utils.grids import wavenumber_grid
+from exojax.utils.instfunc import nx_even_from_resolution_eslog
+from exojax.utils.instfunc import resolution_eslog
 from exojax.utils.jaxstatus import check_jax64bit
-
 from exojax.opacity.premodit.core import _select_broadening_mode
-from exojax.opacity.premodit.core import (
-    _compute_broadening_parameters_hitran,
-    _compute_broadening_parameters_exomol,
-)
-
 from exojax.database.core.line_strength import line_strength_numpy
-from exojax.opacity.contracts import PartitionFunctionProvider, BroadeningStrategy
-from exojax.opacity.providers import (
-    ExomolPartitionProvider,
-    HitranPartitionProvider,
-    ExomolBroadening,
-    HitranBroadening,
-)
+from exojax.opacity.contracts import PartitionFunctionProvider
+from exojax.opacity.contracts import BroadeningStrategy
+from exojax.opacity.providers import ExomolPartitionProvider
+from exojax.opacity.providers import HitranPartitionProvider
+from exojax.opacity.providers import ExomolBroadening
+from exojax.opacity.providers import HitranBroadening
 from exojax.database.contracts import MDBSnapshot
 from exojax.opacity.policies import MemoryPolicy
+
+logger = logging.getLogger(__name__)
 
 
 @dataclass
@@ -121,6 +118,8 @@ class OpaPremodit(OpaCalc):
         wavelength_order: Literal["ascending", "descending"] = "descending",
         version_auto_trange: int = 2,
         memory_policy: Optional[MemoryPolicy] = None,
+        *,
+        delete_mdb_after_init: bool = True,
     ) -> None:
         """Initialize OpaPremodit opacity calculator.
 
@@ -149,6 +148,9 @@ class OpaPremodit(OpaCalc):
             memory_policy: Optional policy object to override ``allow_32bit``,
                 ``nstitch``, and ``cutwing``. When provided, values in the policy
                 take precedence over the corresponding constructor params.
+            delete_mdb_after_init: Drop the local reference to the provided mdb
+                inside ``__init__`` to encourage early GC. External references are
+                unaffected. Defaults to True (same as prior behavior).
 
         Raises:
             ValueError: If no molecular lines are within the wavenumber grid
@@ -202,12 +204,21 @@ class OpaPremodit(OpaCalc):
         self.elower = mdb.elower
         # Set default providers if not overridden later
         if self.dbtype == "exomol":
-            self.pf_provider: PartitionFunctionProvider = ExomolPartitionProvider(self.T_gQT, self.gQT)
-            self.broadening_strategy: BroadeningStrategy = ExomolBroadening(self.n_Texp, self.alpha_ref)
+            self.pf_provider: PartitionFunctionProvider = ExomolPartitionProvider(
+                self.T_gQT, self.gQT
+            )
+            self.broadening_strategy: BroadeningStrategy = ExomolBroadening(
+                self.n_Texp, self.alpha_ref
+            )
         elif self.dbtype == "hitran":
-            self.pf_provider = HitranPartitionProvider(self.isotope, self.uniqiso, self.T_gQT, self.gQT)
+            self.pf_provider = HitranPartitionProvider(
+                self.isotope, self.uniqiso, self.T_gQT, self.gQT
+            )
             self.broadening_strategy = HitranBroadening(self.n_air, self.gamma_air)
-        del mdb
+
+        if delete_mdb_after_init:
+            logger.info("OpaPremodit: delete mdb to save memory")
+            del mdb
 
         self.ngrid_broadpar = None
         self.version_auto_trange = version_auto_trange
@@ -227,15 +238,15 @@ class OpaPremodit(OpaCalc):
         elif manual_params is not None:
             self.manual_setting(manual_params[0], manual_params[1], manual_params[2])
         else:
-            print("OpaPremodit: initialization without parameters setting")
-            print("Call self.apply_params() to complete the setting.")
+            logger.info("OpaPremodit: initialization without parameters setting")
+            logger.info("Call self.apply_params() to complete the setting.")
 
         self.nstitch = _nstitch
         self.cutwing = _cutwing
         self.memory_policy = memory_policy
 
         if self.nstitch > 1:
-            print("OpaPremodit: Stitching mode is used: nstitch =", self.nstitch)
+            logger.info("OpaPremodit: Stitching mode is used: nstitch = %s", self.nstitch)
             self.check_nu_grid_reducible()
             self.alias = "open"
         else:
@@ -365,7 +376,7 @@ class OpaPremodit(OpaCalc):
             Tl: Lower temperature limit in K
             Tu: Upper temperature limit in K
         """
-        print("OpaPremodit: params automatically set.")
+        logger.info("OpaPremodit: params automatically set.")
         self.dE, self.Tref, self.Twt = optimal_params(
             Tl, Tu, self.diffmode, self.version_auto_trange
         )
@@ -390,7 +401,7 @@ class OpaPremodit(OpaCalc):
             Tmax (float/None): max temperature (K) for braodening grid
             Tmin (float/None): min temperature (K) for braodening grid
         """
-        print("OpaPremodit: params manually set.")
+        logger.info("OpaPremodit: params manually set.")
         self.Twt = Twt
         self.Tref = Tref
         self.dE = dE
@@ -419,7 +430,7 @@ class OpaPremodit(OpaCalc):
         self.Tref_broadening = reference_temperature_broadening_at_midpoint(
             self.Tmin, self.Tmax
         )
-        print("OpaPremodit: Tref_broadening is set to ", self.Tref_broadening, "K")
+        logger.info("OpaPremodit: Tref_broadening is set to %s K", self.Tref_broadening)
 
     def apply_params(self) -> None:
         """Apply parameters to the class and compute pre-computed grids.
@@ -435,13 +446,15 @@ class OpaPremodit(OpaCalc):
 
         # sets the broadening reference temperature
         if self.single_broadening:
-            print("OpaPremodit: a single broadening parameter set is used.")
+            logger.info("OpaPremodit: a single broadening parameter set is used.")
             self.Tref_broadening = Tref_original
         else:
             self.set_Tref_broadening_to_midpoint()
 
         # self.n_Texp, self.gamma_ref are defined with the reference temperature of Tref_broadening
-        self.n_Texp, self.gamma_ref = self.broadening_strategy.compute(self.Tref_broadening)
+        self.n_Texp, self.gamma_ref = self.broadening_strategy.compute(
+            self.Tref_broadening
+        )
         # Drop heavy arrays that are no longer needed after computing gamma_ref
         if hasattr(self, "n_air"):
             del self.n_air
