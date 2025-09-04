@@ -31,7 +31,7 @@ def make_fake_snapshot_exomol():
 def test_default_provider_selection_exomol():
     snap = make_fake_snapshot_exomol()
     nu_grid = np.linspace(990.0, 1020.0, 16)
-    opa = OpaPremodit.from_snapshot(snap, nu_grid)
+    opa = OpaPremodit.from_snapshot(snap, nu_grid, allow_32bit=True)
     assert isinstance(opa.pf_provider, ExomolPartitionProvider)
     assert isinstance(opa.broadening_strategy, ExomolBroadening)
 
@@ -69,6 +69,7 @@ def test_custom_provider_injection():
         nu_grid,
         pf_provider=pf,
         broadening_strategy=broad,
+        allow_32bit=True,
     )
 
     # Trigger apply_params via manual_setting to compute gamma_ref using the fake provider
@@ -76,4 +77,3 @@ def test_custom_provider_injection():
 
     # Validate the broadening strategy output was used
     assert np.allclose(opa.gamma_ref, 4.567)
-

@@ -5,8 +5,11 @@ These keep only NumPy arrays and lightweight state, avoiding heavy dependencies.
 
 from __future__ import annotations
 
-import numpy as np
 from typing import Tuple
+
+import jax.numpy as jnp
+import numpy as np
+from jax import vmap
 
 from exojax.opacity.contracts import PartitionFunctionProvider, BroadeningStrategy
 from exojax.database._common.partition_function import qr_interp as qr_interp_hitran
@@ -22,12 +25,13 @@ class ExomolPartitionProvider(PartitionFunctionProvider):
         self.T_gQT = T_gQT
         self.gQT = gQT
 
-    def qr_single(self, T: float, Tref: float) -> np.ndarray:
-        return np.asarray(qr_interp_exomol(T, Tref, self.T_gQT, self.gQT))
+    def qr_single(self, T: float, Tref: float):
+        return qr_interp_exomol(T, Tref, self.T_gQT, self.gQT)
 
-    def qr_vector(self, Tarr: np.ndarray, Tref: float) -> np.ndarray:
-        Tarr = np.asarray(Tarr)
-        return np.asarray([qr_interp_exomol(T, Tref, self.T_gQT, self.gQT) for T in Tarr])
+    def qr_vector(self, Tarr: np.ndarray, Tref: float):
+        Tarr = jnp.asarray(Tarr)
+        fn = lambda T: qr_interp_exomol(T, Tref, self.T_gQT, self.gQT)
+        return vmap(fn, in_axes=0)(Tarr)
 
 
 class HitranPartitionProvider(PartitionFunctionProvider):
@@ -37,16 +41,13 @@ class HitranPartitionProvider(PartitionFunctionProvider):
         self.T_gQT = T_gQT
         self.gQT = gQT
 
-    def qr_single(self, T: float, Tref: float) -> np.ndarray:
-        return np.asarray(
-            qr_interp_hitran(self.isotope, self.uniqiso, T, Tref, self.T_gQT, self.gQT)
-        )
+    def qr_single(self, T: float, Tref: float):
+        return qr_interp_hitran(self.isotope, self.uniqiso, T, Tref, self.T_gQT, self.gQT)
 
-    def qr_vector(self, Tarr: np.ndarray, Tref: float) -> np.ndarray:
-        Tarr = np.asarray(Tarr)
-        return np.asarray(
-            [qr_interp_hitran(self.isotope, self.uniqiso, T, Tref, self.T_gQT, self.gQT) for T in Tarr]
-        )
+    def qr_vector(self, Tarr: np.ndarray, Tref: float):
+        Tarr = jnp.asarray(Tarr)
+        fn = lambda T: qr_interp_hitran(self.isotope, self.uniqiso, T, Tref, self.T_gQT, self.gQT)
+        return vmap(fn, in_axes=0)(Tarr)
 
 
 class ExomolBroadening(BroadeningStrategy):
@@ -65,4 +66,3 @@ class HitranBroadening(BroadeningStrategy):
 
     def compute(self, Tref_broadening: float) -> Tuple[np.ndarray, np.ndarray]:
         return _compute_broadening_parameters_hitran(self._n_air, self._gamma_air, Tref_broadening)
-

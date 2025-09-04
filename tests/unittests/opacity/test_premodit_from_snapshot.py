@@ -28,7 +28,7 @@ def test_from_snapshot_minimal_construction():
     snap = make_fake_snapshot_exomol()
     nu_grid = np.linspace(990.0, 1020.0, 32)
 
-    opa = OpaPremodit.from_snapshot(snap, nu_grid)
+    opa = OpaPremodit.from_snapshot(snap, nu_grid, allow_32bit=True)
 
     assert opa.method == "premodit"
     assert opa.dbtype == "exomol"
@@ -53,6 +53,5 @@ def test_from_mdb_calls_to_snapshot():
     mdb = FakeMdb(snap)
     nu_grid = np.linspace(990.0, 1020.0, 16)
 
-    opa = OpaPremodit.from_mdb(mdb, nu_grid)
+    opa = OpaPremodit.from_mdb(mdb, nu_grid, allow_32bit=True)
     assert opa.dbtype == "exomol"
-

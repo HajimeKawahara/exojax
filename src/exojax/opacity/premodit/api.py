@@ -644,7 +644,7 @@ class OpaPremodit(OpaCalc):
             pmarray,
         ) = self.opainfo
 
-        qtarr = jnp.asarray(self.pf_provider.qr_vector(np.asarray(Tarr), self.Tref))
+        qtarr = jnp.asarray(self.pf_provider.qr_vector(Tarr, self.Tref))
 
         if self.nstitch > 1:
 
