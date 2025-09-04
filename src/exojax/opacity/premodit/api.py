@@ -484,6 +484,15 @@ class OpaPremodit(OpaCalc):
         self.ngrid_broadpar = len(multi_index_uniqgrid)
         self.ngrid_elower = len(elower_grid)
 
+    def _get_info_tuple(self):
+        """Return (multi_index_uniqgrid, elower_grid, ngamma_ref_grid, n_Texp_grid, R, pmarray).
+
+        Prefer the immutable PreMODITInfo if available; fall back to legacy self.opainfo.
+        """
+        if hasattr(self, "pre_modit_info") and self.pre_modit_info is not None:
+            return self.pre_modit_info.as_tuple()
+        return self.opainfo
+
     def _sets_capable_opacalculators(self):
         """sets capable opacalculators"""
         # opa calculators for PreMODIT
@@ -565,7 +574,7 @@ class OpaPremodit(OpaCalc):
             n_Texp_grid,
             R,
             pmarray,
-        ) = self.opainfo
+        ) = self._get_info_tuple()
         nsigmaD = normalized_doppler_sigma(T, self.molmass, R)
 
         qt = self.pf_provider.qr_single(T, self.Tref)
@@ -653,7 +662,7 @@ class OpaPremodit(OpaCalc):
             n_Texp_grid,
             R,
             pmarray,
-        ) = self.opainfo
+        ) = self._get_info_tuple()
 
         qtarr = jnp.asarray(self.pf_provider.qr_vector(Tarr, self.Tref))
 
