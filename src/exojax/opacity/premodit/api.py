@@ -40,6 +40,7 @@ from exojax.opacity.providers import (
     HitranBroadening,
 )
 from exojax.database.contracts import MDBSnapshot
+from exojax.opacity.policies import MemoryPolicy
 
 
 @dataclass
@@ -119,6 +120,7 @@ class OpaPremodit(OpaCalc):
         cutwing: float = 1.0,
         wavelength_order: Literal["ascending", "descending"] = "descending",
         version_auto_trange: int = 2,
+        memory_policy: Optional[MemoryPolicy] = None,
     ) -> None:
         """Initialize OpaPremodit opacity calculator.
 
@@ -143,11 +145,29 @@ class OpaPremodit(OpaCalc):
             wavelength_order: Wavelength grid order
             version_auto_trange: Version of default elower grid trange file
 
+        Keyword Args:
+            memory_policy: Optional policy object to override ``allow_32bit``,
+                ``nstitch``, and ``cutwing``. When provided, values in the policy
+                take precedence over the corresponding constructor params.
+
         Raises:
             ValueError: If no molecular lines are within the wavenumber grid
         """
         super().__init__(nu_grid)
-        check_jax64bit(allow_32bit)
+
+        # Resolve memory/runtime knobs (policy takes precedence over ctor values)
+        _allow_32bit = allow_32bit
+        _nstitch = nstitch
+        _cutwing = cutwing
+        if memory_policy is not None:
+            if memory_policy.allow_32bit is not None:
+                _allow_32bit = memory_policy.allow_32bit
+            if memory_policy.nstitch is not None:
+                _nstitch = memory_policy.nstitch
+            if memory_policy.cutwing is not None:
+                _cutwing = memory_policy.cutwing
+
+        check_jax64bit(_allow_32bit)
 
         # default setting
         self.method = "premodit"
@@ -210,8 +230,9 @@ class OpaPremodit(OpaCalc):
             print("OpaPremodit: initialization without parameters setting")
             print("Call self.apply_params() to complete the setting.")
 
-        self.nstitch = nstitch
-        self.cutwing = cutwing
+        self.nstitch = _nstitch
+        self.cutwing = _cutwing
+        self.memory_policy = memory_policy
 
         if self.nstitch > 1:
             print("OpaPremodit: Stitching mode is used: nstitch =", self.nstitch)
