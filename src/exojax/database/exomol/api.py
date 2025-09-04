@@ -26,6 +26,7 @@ from exojax.database.molinfo import isotope_molmass
 from exojax.utils.constants import Tref_original
 from exojax.utils.molname import e2s
 from exojax.database._common.setradis import _set_engine
+from exojax.database.contracts import MDBMeta, Lines, MDBSnapshot
 
 __all__ = ["MdbExomol"]
 
@@ -394,4 +395,39 @@ class MdbExomol(CapiMdbExomol):
             self.elower,
             qr,
             Tref_original,
+        )
+
+    # --- Snapshots / DTO export ---
+    def to_snapshot(self) -> MDBSnapshot:
+        """Export a data-only snapshot of this ExoMol MDB.
+
+        The snapshot is immutable and contains only NumPy arrays and
+        primitives, suitable for passing into opacity code without
+        depending on this concrete database class.
+        """
+        meta = MDBMeta(
+            dbtype="exomol",
+            molmass=float(self.molmass),
+            T_gQT=np.asarray(self.T_gQT),
+            gQT=np.asarray(self.gQT),
+        )
+
+        lines = Lines(
+            nu_lines=np.asarray(self.nu_lines),
+            elower=np.asarray(self.elower),
+            line_strength_ref_original=np.asarray(self.line_strength_ref_original),
+        )
+
+        n_Texp = (
+            np.asarray(self.n_Texp) if hasattr(self, "n_Texp") and self.n_Texp is not None else None
+        )
+        alpha_ref = (
+            np.asarray(self.alpha_ref) if hasattr(self, "alpha_ref") and self.alpha_ref is not None else None
+        )
+
+        return MDBSnapshot(
+            meta=meta,
+            lines=lines,
+            n_Texp=n_Texp,
+            alpha_ref=alpha_ref,
         )
