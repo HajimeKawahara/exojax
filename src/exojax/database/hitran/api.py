@@ -3,6 +3,7 @@ import numpy as np
 from radis.api.hitranapi import HITRANDatabaseManager
 from exojax.database._common.commonapi import MdbCommonHitempHitran
 from exojax.database._common.isotope_functions import _convert_proper_isotope
+from exojax.database.contracts import MDBMeta, Lines, MDBSnapshot
 
 
 class MdbHitran(MdbCommonHitempHitran, HITRANDatabaseManager):
@@ -249,3 +250,31 @@ class MdbHitran(MdbCommonHitempHitran, HITRANDatabaseManager):
         # jnp.array copy from the copy sources
         self.dev_nu_lines = jnp.array(self.nu_lines)
         self.logsij0 = jnp.array(np.log(self.line_strength_ref_original))
+
+    # --- Snapshots / DTO export ---
+    def to_snapshot(self) -> MDBSnapshot:
+        """Export a data-only snapshot for HITRAN-schema databases.
+
+        Contains NumPy arrays only to decouple opacity code from DB classes.
+        """
+        meta = MDBMeta(
+            dbtype="hitran",
+            molmass=float(self.molmass),
+            T_gQT=np.asarray(self.T_gQT),
+            gQT=np.asarray(self.gQT),
+        )
+
+        lines = Lines(
+            nu_lines=np.asarray(self.nu_lines),
+            elower=np.asarray(self.elower),
+            line_strength_ref_original=np.asarray(self.line_strength_ref_original),
+        )
+
+        return MDBSnapshot(
+            meta=meta,
+            lines=lines,
+            isotope=np.asarray(self.isoid) if hasattr(self, "isoid") else None,
+            uniqiso=np.asarray(self.uniqiso) if hasattr(self, "uniqiso") else None,
+            n_air=np.asarray(self.n_air) if hasattr(self, "n_air") else None,
+            gamma_air=np.asarray(self.gamma_air) if hasattr(self, "gamma_air") else None,
+        )

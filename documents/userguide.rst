@@ -27,10 +27,21 @@ Opacity Calculation
    userguide/modit.rst
    userguide/premodit.rst
    userguide/premodit_trange.rst
+   userguide/opacity_di.rst
    tutorials/Open_Close_Cross_Section.rst
    tutorials/ckd_principle.rst
    userguide/benchmark.rst
    userguide/fp.rst
+
+
+Loose Coupling Between Classes
+============================================
+
+.. toctree::
+   :maxdepth: 1
+
+   userguide/di_opa_mdb.rst
+
 
 Manual Settings of Opacity (not using opa)
 ============================================

@@ -39,7 +39,7 @@ def optelower(
     print("Maximum Elower = ", np.max(mdb.elower))
 
     # for single temperature, 0-th order is sufficient
-    opa = OpaPremodit(mdb=mdb, nu_grid=nu_grid, diffmode=0)
+    opa = OpaPremodit.from_mdb(mdb, nu_grid=nu_grid, diffmode=0)
     opa.manual_setting(dE, Tref_original, Tmax)
     (
         multi_index_uniqgrid,
