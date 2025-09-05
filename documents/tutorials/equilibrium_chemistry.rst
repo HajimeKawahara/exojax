@@ -1,7 +1,7 @@
 Emission Spectroscopy with Equilibirum Chemistry
 ================================================
 
-Last update: August 24th (2025) Hajime Kawahara for v2.1
+Last update: August 24th (2025) Hajime Kawahara for v2.2.0
 
 In this getting started guide, we will use ExoJAX to simulate a
 high-resolution emission spectrum from an atmosphere with CO molecular
@@ -746,5 +746,4 @@ display a corner plot. Here, we’ve used ArviZ for visualization.
 
 
 We see the strong degeneracy between metalicity and gravity!!!
-
 

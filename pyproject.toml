@@ -10,7 +10,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "ExoJAX"
-# Version is provided by setuptools-scm from your Git tags (e.g., v2.1).
+# Version is provided by setuptools-scm from your Git tags (e.g., v2.2.0).
 # Remove any hard-coded version numbers in setup.py. Keep dynamic below.
 dynamic = ["version"]
 

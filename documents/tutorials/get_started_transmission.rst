@@ -1,7 +1,7 @@
 Getting Started with Transmission Spectroscopy
 ==============================================
 
-Last update: March 15th (2025) Hajime Kawahara for v2.0
+Last update: March 15th (2025) Hajime Kawahara for v2.2.0
 
 In this getting started guide, we will use ExoJAX to simulate a
 high-resolution **transmission** spectrum from an atmosphere with CO
@@ -750,5 +750,4 @@ may be helpful.
    by Shotaro Tada (@sh-tada)
 
 That’s it.
-
 
