@@ -15,7 +15,7 @@ procedure using :math:`\nu` - stitching in ``OpaPremodit`` in this
 section.
 
 Currently, the only opacity calculator that supports
-:math:`\nu`-stitching is PreMODIT (v2.0), which can be used with
+:math:`\nu`-stitching is PreMODIT (v2.2), which can be used with
 ``OpaPremodit``.
 
 .. code:: ipython3
@@ -220,5 +220,4 @@ Let’s calculate the transmitted light spectrum.
 
 
 That’s it!
-
 

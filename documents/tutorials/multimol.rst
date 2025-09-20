@@ -27,5 +27,4 @@ The cross section can be computed using ``multiopa[order][molecule].xsmatrix`` a
         for i in range(len(mul.masked_molmulti[k])):
             xsm = multiopa[k][i].xsmatrix(Tarr, Parr)
 
-We continue to develop this user-friendly multi molecule/segements handler until the release 2.0. Any feedback is welcome!
-
+We continue to develop this user-friendly multi molecule/segements handler for release 2.2.0. Any feedback is welcome!
