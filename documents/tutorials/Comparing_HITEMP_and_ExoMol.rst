@@ -3,9 +3,13 @@ Comparing HITEMP and ExoMol
 
 .. code:: ipython3
 
-    from exojax.database.core.line_strength import line_strength, doppler_sigma, gamma_hitran, gamma_natural
+    from exojax.database.core.line_strength import line_strength
+    from exojax.database.core.broadening  import doppler_sigma
+    from exojax.database.core.broadening  import gamma_hitran
+    from exojax.database.core.broadening  import gamma_natural
     from exojax.database.core.broadening  import gamma_exomol
-    from exojax.database.exomol.api import MdbExomol 
+    from exojax.database.exomol.api import MdbExomol
+    from exojax.database.hitemp.api import MdbHitemp
     import numpy as np
     import matplotlib.pyplot as plt
 
@@ -32,8 +36,21 @@ not exist, moldb will try to download it from HITRAN website.
 .. parsed-literal::
 
     radis engine =  vaex
-    Downloading 05_HITEMP2019.par.bz2 for CO (1/1).
-    Download complete. Parsing CO database to /home/kawahara/exojax/documents/tutorials/CO-05_HITEMP2019.hdf5
+    tosss  {'ENCRYPTION_KEY': 'Y4OG6orz1ng3xBpegpj_QmYb-3f7_OvMx6UfMiyRlTw=', 'HITRAN_USERNAME': 'gAAAAABn4pSK0S_unODzf8VGcmEv9LOE59ieBYv8sDVPZB25LRvs-c3z9_lnLlhd2gGYbMR-wOHIyQqkm-DIZ58_L2uAduTvbjJ0JBjAgZddtWgmO-TLCfI=', 'HITRAN_PASSWORD': 'gAAAAABn4pSKXNM5OmFnW_WWeFp_mPg1UlVQg2FuSPsg192eWgpSephsl1b4LuSs-QtuMupi9xUuKnmfS3V7BYudOHnYIaIZLQ==', 'HITRAN_EMAIL': 'gAAAAABn4pSK0S_unODzf8VGcmEv9LOE59ieBYv8sDVPZB25LRvs-c3z9_lnLlhd2gGYbMR-wOHIyQqkm-DIZ58_L2uAduTvbjJ0JBjAgZddtWgmO-TLCfI='}
+    Login successful.
+    Starting download from https://hitran.org/files/HITEMP/bzip2format/05_HITEMP2019.par.bz2 to 05_HITEMP2019.par.bz2
+    Total size to download: 14834352 bytes
+
+
+.. parsed-literal::
+
+    05_HITEMP2019.par.bz2: 100%|██████████| 14.8M/14.8M [00:03<00:00, 3.81MB/s]
+
+
+.. parsed-literal::
+
+    
+    Download complete!
 
 
 .. code:: ipython3
@@ -56,19 +73,94 @@ not exist, moldb will try to download it from HITRAN website.
 
     HITRAN exact name= (12C)(16O)
     radis engine =  vaex
+    Total download size ['12C-16O__Li2015.def'] is: 0.000005 GB
+    		 => Downloading from https://www.exomol.com/db/CO/12C-16O/Li2015/12C-16O__Li2015.def
+    Total download size ['12C-16O__Li2015.pf'] is: 0.000218 GB
+    		 => Downloading from https://www.exomol.com/db/CO/12C-16O/Li2015/12C-16O__Li2015.pf
+    Total download size ['12C-16O__Li2015.states.bz2'] is: 0.000051 GB
+    		 => Downloading from https://www.exomol.com/db/CO/12C-16O/Li2015/12C-16O__Li2015.states.bz2
+
+
+.. parsed-literal::
+
+    /home/kawahara/anaconda3/lib/python3.10/site-packages/radis/api/exomolapi.py:1702: UserWarning: Failed to fetch size for 12C-16O__self.broad: HTTP Error 404: Not Found
+      warnings.warn(f"Failed to fetch size for {pfname}: {e}", UserWarning)
+    /home/kawahara/anaconda3/lib/python3.10/site-packages/radis/api/exomolapi.py:1702: UserWarning: Failed to fetch size for 12C-16O__Ar.broad: HTTP Error 404: Not Found
+      warnings.warn(f"Failed to fetch size for {pfname}: {e}", UserWarning)
+    /home/kawahara/anaconda3/lib/python3.10/site-packages/radis/api/exomolapi.py:1702: UserWarning: Failed to fetch size for 12C-16O__CH4.broad: HTTP Error 404: Not Found
+      warnings.warn(f"Failed to fetch size for {pfname}: {e}", UserWarning)
+    /home/kawahara/anaconda3/lib/python3.10/site-packages/radis/api/exomolapi.py:1702: UserWarning: Failed to fetch size for 12C-16O__CO.broad: HTTP Error 404: Not Found
+      warnings.warn(f"Failed to fetch size for {pfname}: {e}", UserWarning)
+    /home/kawahara/anaconda3/lib/python3.10/site-packages/radis/api/exomolapi.py:1702: UserWarning: Failed to fetch size for 12C-16O__CO2.broad: HTTP Error 404: Not Found
+      warnings.warn(f"Failed to fetch size for {pfname}: {e}", UserWarning)
+    /home/kawahara/anaconda3/lib/python3.10/site-packages/radis/api/exomolapi.py:1702: UserWarning: Failed to fetch size for 12C-16O__H2O.broad: HTTP Error 404: Not Found
+      warnings.warn(f"Failed to fetch size for {pfname}: {e}", UserWarning)
+    /home/kawahara/anaconda3/lib/python3.10/site-packages/radis/api/exomolapi.py:1702: UserWarning: Failed to fetch size for 12C-16O__N2.broad: HTTP Error 404: Not Found
+      warnings.warn(f"Failed to fetch size for {pfname}: {e}", UserWarning)
+    /home/kawahara/anaconda3/lib/python3.10/site-packages/radis/api/exomolapi.py:1702: UserWarning: Failed to fetch size for 12C-16O__NH3.broad: HTTP Error 404: Not Found
+      warnings.warn(f"Failed to fetch size for {pfname}: {e}", UserWarning)
+    /home/kawahara/anaconda3/lib/python3.10/site-packages/radis/api/exomolapi.py:1702: UserWarning: Failed to fetch size for 12C-16O__NO.broad: HTTP Error 404: Not Found
+      warnings.warn(f"Failed to fetch size for {pfname}: {e}", UserWarning)
+    /home/kawahara/anaconda3/lib/python3.10/site-packages/radis/api/exomolapi.py:1702: UserWarning: Failed to fetch size for 12C-16O__O2.broad: HTTP Error 404: Not Found
+      warnings.warn(f"Failed to fetch size for {pfname}: {e}", UserWarning)
+    /home/kawahara/anaconda3/lib/python3.10/site-packages/radis/api/exomolapi.py:1702: UserWarning: Failed to fetch size for 12C-16O__CS.broad: HTTP Error 404: Not Found
+      warnings.warn(f"Failed to fetch size for {pfname}: {e}", UserWarning)
+
+
+.. parsed-literal::
+
+    Total download size ['12C-16O__H2.broad', '12C-16O__He.broad', '12C-16O__air.broad', '12C-16O__self.broad', '12C-16O__Ar.broad', '12C-16O__CH4.broad', '12C-16O__CO.broad', '12C-16O__CO2.broad', '12C-16O__H2.broad', '12C-16O__H2O.broad', '12C-16O__N2.broad', '12C-16O__NH3.broad', '12C-16O__NO.broad', '12C-16O__O2.broad', '12C-16O__NH3.broad', '12C-16O__CS.broad'] is: 0.000015 GB
+    		 => Downloading from https://www.exomol.com/db/CO/12C-16O/12C-16O__H2.broad
+    		 => Downloading from https://www.exomol.com/db/CO/12C-16O/12C-16O__He.broad
+    		 => Downloading from https://www.exomol.com/db/CO/12C-16O/12C-16O__air.broad
+    		 => Downloading from https://www.exomol.com/db/CO/12C-16O/12C-16O__self.broad
+    Error: Couldn't download .broad file at https://www.exomol.com/db/CO/12C-16O/12C-16O__self.broad and save.
+    		 => Downloading from https://www.exomol.com/db/CO/12C-16O/12C-16O__Ar.broad
+    Error: Couldn't download .broad file at https://www.exomol.com/db/CO/12C-16O/12C-16O__Ar.broad and save.
+    		 => Downloading from https://www.exomol.com/db/CO/12C-16O/12C-16O__CH4.broad
+    Error: Couldn't download .broad file at https://www.exomol.com/db/CO/12C-16O/12C-16O__CH4.broad and save.
+    		 => Downloading from https://www.exomol.com/db/CO/12C-16O/12C-16O__CO.broad
+    Error: Couldn't download .broad file at https://www.exomol.com/db/CO/12C-16O/12C-16O__CO.broad and save.
+    		 => Downloading from https://www.exomol.com/db/CO/12C-16O/12C-16O__CO2.broad
+    Error: Couldn't download .broad file at https://www.exomol.com/db/CO/12C-16O/12C-16O__CO2.broad and save.
+    		 => Downloading from https://www.exomol.com/db/CO/12C-16O/12C-16O__H2.broad
+    		 => Downloading from https://www.exomol.com/db/CO/12C-16O/12C-16O__H2O.broad
+    Error: Couldn't download .broad file at https://www.exomol.com/db/CO/12C-16O/12C-16O__H2O.broad and save.
+    		 => Downloading from https://www.exomol.com/db/CO/12C-16O/12C-16O__N2.broad
+    Error: Couldn't download .broad file at https://www.exomol.com/db/CO/12C-16O/12C-16O__N2.broad and save.
+    		 => Downloading from https://www.exomol.com/db/CO/12C-16O/12C-16O__NH3.broad
+    Error: Couldn't download .broad file at https://www.exomol.com/db/CO/12C-16O/12C-16O__NH3.broad and save.
+    		 => Downloading from https://www.exomol.com/db/CO/12C-16O/12C-16O__NO.broad
+    Error: Couldn't download .broad file at https://www.exomol.com/db/CO/12C-16O/12C-16O__NO.broad and save.
+    		 => Downloading from https://www.exomol.com/db/CO/12C-16O/12C-16O__O2.broad
+    Error: Couldn't download .broad file at https://www.exomol.com/db/CO/12C-16O/12C-16O__O2.broad and save.
+    		 => Downloading from https://www.exomol.com/db/CO/12C-16O/12C-16O__NH3.broad
+    Error: Couldn't download .broad file at https://www.exomol.com/db/CO/12C-16O/12C-16O__NH3.broad and save.
+    		 => Downloading from https://www.exomol.com/db/CO/12C-16O/12C-16O__CS.broad
+    Error: Couldn't download .broad file at https://www.exomol.com/db/CO/12C-16O/12C-16O__CS.broad and save.
+    
+    Summary of broadening files downloaded:
+    	Success: ['H2' 'He' 'air' 'H2']
+    	Fail: ['self' 'Ar' 'CH4' 'CO' 'CO2' 'H2O' 'N2' 'NH3' 'NO' 'O2' 'NH3' 'CS']
+    
+    Note: Caching states data to the vaex format. After the second time, it will become much faster.
     Molecule:  CO
     Isotopologue:  12C-16O
-    Background atmosphere:  H2
     ExoMol database:  None
     Local folder:  CO/12C-16O/Li2015
     Transition files: 
     	 => File 12C-16O__Li2015.trans
+    Total download size ['12C-16O__Li2015.trans.bz2'] is: 0.001307 GB
+    		 => Downloading from https://www.exomol.com/db/CO/12C-16O/Li2015/12C-16O__Li2015.trans.bz2
+    		 => Caching the *.trans.bz2 file to the vaex (*.h5) format. After the second time, it will become much faster.
+    		 => You can deleted the 'trans.bz2' file by hand.
+    Broadener:  H2
     Broadening code level: a0
 
 
 .. parsed-literal::
 
-    /home/kawahara/exojax/src/radis/radis/api/exomolapi.py:685: AccuracyWarning: The default broadening parameter (alpha = 0.07 cm^-1 and n = 0.5) are used for J'' > 80 up to J'' = 152
+    /home/kawahara/anaconda3/lib/python3.10/site-packages/radis/api/exomolapi.py:727: AccuracyWarning: The default broadening parameter (alpha = 0.07 cm^-1 and n = 0.5) are used for J'' > 80 up to J'' = 152
       warnings.warn(
 
 
