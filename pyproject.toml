@@ -1,0 +1,85 @@
+# pyproject.toml for ExoJAX
+# - Uses PEP 621 metadata (project table)
+# - Builds with setuptools + setuptools-scm (version from VCS tags)
+# - Packages are under src/ (package_dir={"": "src"})
+
+[build-system]
+# setuptools-scm is listed here because version is dynamic (from SCM).
+requires = ["setuptools>=69", "wheel", "setuptools-scm>=8"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "ExoJAX"
+# Version is provided by setuptools-scm from your Git tags (e.g., v2.2.0).
+# Remove any hard-coded version numbers in setup.py. Keep dynamic below.
+dynamic = ["version"]
+
+# Optional but recommended: fill in author info if you want it embedded here.
+# If you prefer to keep metadata in src/exojax/__init__.py, you can leave these out.
+authors = [{ name = "Hajime Kawahara and ExoJAX developers", email = "divrot@gmail.com" }]
+maintainers = [{ name = "Hajime Kawahara", email = "divrot@gmail.com" }]
+
+description = "Differentiable exoplanet spectroscopy and atmospheric tools in JAX."
+readme = { file = "README.md", content-type = "text/markdown" }
+requires-python = ">=3.9"
+
+# Classifiers ported from setup.py. Add more if applicable.
+classifiers = [
+  "Programming Language :: Python",
+  "Programming Language :: Python :: 3.9",
+  "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3.11",
+  "Operating System :: OS Independent",
+]
+
+# Runtime dependencies migrated from requirements.txt.
+# NOTE:
+# - Keep "numpy<2" because your requirements pin it.
+# - jax/jaxlib wheels are platform-specific; declaring both is common.
+dependencies = [
+  "jax",
+  "jaxlib",
+  "hitran-api",
+  "beautifulsoup4",
+  "hjson",
+  "tqdm",
+  "PyMieScatt",
+  "radis>=0.15.2",
+  "numba",
+  "tables",
+  "pandas",
+  "termcolor",
+  "h5py",
+  "joblib",
+  "astroquery",
+  "psutil",
+  "json_tricks",
+  "habanero<=1.2.6",
+  "numpy<2",
+]
+
+[project.urls]
+# Fill these as appropriate for your project.
+"Homepage" = "https://secondearths.sakura.ne.jp/exojax/"
+"Repository" = "https://github.com/HajimeKawahara/exojax"
+"Documentation" = "https://secondearths.sakura.ne.jp/exojax/"
+"Bug Tracker" = "https://github.com/HajimeKawahara/exojax/issues"
+
+[tool.setuptools]
+# This mirrors package_dir={"": "src"} from setup.py.
+package-dir = { "" = "src" }
+# Honor MANIFEST.in and package data inside packages.
+include-package-data = true
+
+[tool.setuptools.packages.find]
+# Equivalent to find_packages(where="src")
+where = ["src"]
+
+[tool.setuptools_scm]
+# Configure setuptools-scm to write the resolved version string into your package.
+# This keeps the prior behavior: write __version__ into exojax/ExoJAX_version.py.
+write_to = "src/exojax/ExoJAX_version.py"
+# Optional templates and schemes can be customized if you need exact formatting:
+# write_to_template = "__version__ = \"{version}\"\n"
+# version_scheme = "guess-next-dev"
+# local_scheme = "node-and-date"

@@ -84,7 +84,7 @@ with a STD of :math:`\beta` and a Lorentian with a gamma parameter of
 
 .. code:: ipython3
 
-    from exojax.database.hitran import voigt
+    from exojax.database.core.broadening import voigt
     import jax.numpy as jnp
     import matplotlib.pyplot as plt
       

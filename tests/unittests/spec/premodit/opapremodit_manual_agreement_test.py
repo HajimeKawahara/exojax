@@ -1,5 +1,4 @@
-""" This test checks the agreement between OpaPremodit and PreMODIT manual execution
-"""
+"""This test checks the agreement between OpaPremodit and PreMODIT manual execution"""
 
 import pytest
 import numpy as np
@@ -12,17 +11,19 @@ from exojax.test.emulate_mdb import mock_mdbExomol
 from exojax.test.emulate_mdb import mock_wavenumber_grid
 from exojax.opacity._common.profconv import calc_xsection_from_lsd_scanfft
 from exojax.opacity.premodit.premodit import unbiased_ngamma_grid
-from exojax.database.hitran import normalized_doppler_sigma
+from exojax.database.core.broadening import normalized_doppler_sigma
 
 
-@pytest.mark.parametrize("diffmode", [0, 1, 2])
-def test_premodit_opa_and_manual_agreement(diffmode):
-    """Test the agreement between the automatic computation of cross section by xsvector 
+@pytest.mark.parametrize(
+    "diffmode, jax_enable_x64", [(0, True), (0, False), (1, True), (1, False), (2, True), (2, False)]
+)
+def test_premodit_opa_and_manual_agreement(diffmode, jax_enable_x64):
+    """Test the agreement between the automatic computation of cross section by xsvector
     and manual computation of cross section by calc_xsection_from_lsd_scanfft. for Premodit
     """
     from jax import config
 
-    config.update("jax_enable_x64", True)
+    config.update("jax_enable_x64", jax_enable_x64)
 
     mdb = mock_mdbExomol()
     nus, wav, res = mock_wavenumber_grid()
@@ -30,7 +31,11 @@ def test_premodit_opa_and_manual_agreement(diffmode):
     P = 1.0
     # PreMODIT LSD
     opa = OpaPremodit(
-        mdb=mdb, nu_grid=nus, auto_trange=[1000.0, 1500.0], diffmode=diffmode
+        mdb=mdb,
+        nu_grid=nus,
+        auto_trange=[1000.0, 1500.0],
+        diffmode=diffmode,
+        allow_32bit=True,
     )
     (
         multi_index_uniqgrid,
@@ -72,10 +77,14 @@ def test_premodit_opa_and_manual_agreement(diffmode):
     )
 
     dxsv = jnp.abs(xsv_manual / xsv - 1)
-    assert np.max(dxsv) < 1.0e-11  # (several x e-12, feb 4th 2025)
+
+    if jax_enable_x64:
+        assert np.max(dxsv) < 1.0e-11  # (several x e-12, feb 4th 2025)
+    else:
+        assert np.max(dxsv) < 1.22e-3 #relaxed from 1.1e-3 #630 Sep 4 2025 
 
 
 if __name__ == "__main__":
-    test_premodit_opa_and_manual_agreement(diffmode=0)
-    test_premodit_opa_and_manual_agreement(diffmode=1)
-    test_premodit_opa_and_manual_agreement(diffmode=2)
+    test_premodit_opa_and_manual_agreement(diffmode=0, jax_enable_x64=True)
+    test_premodit_opa_and_manual_agreement(diffmode=1, jax_enable_x64=True)
+    test_premodit_opa_and_manual_agreement(diffmode=2, jax_enable_x64=True)

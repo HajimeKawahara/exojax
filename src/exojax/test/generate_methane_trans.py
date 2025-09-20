@@ -7,7 +7,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from exojax.utils.grids import wavenumber_grid
 from exojax.rt import ArtTransPure
-from exojax.database.api  import MdbExomol
+from exojax.database.exomol.api import MdbExomol
 from exojax.opacity import OpaPremodit
 from exojax.utils.astrofunc import gravity_jupiter
 from exojax.utils.instfunc import resolution_to_gaussian_std

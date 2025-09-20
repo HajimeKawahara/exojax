@@ -1,58 +1,55 @@
-import jax.numpy as jnp
 import numpy as np
+import jax.numpy as jnp
 from jax import jit
+from exojax.utils.constants import Patm
+from exojax.utils.constants import Tref_original
+from exojax.utils.constants import ccgs
+from exojax.utils.constants import hcperk
 
-from exojax.utils.constants import Patm, Tref_original, hcperk
 
+def line_strength_from_Einstein_coeff(A, g, nu_lines, elower, QTref):
+    """Reference Line Strength in Tref=296K, S0 from Einstein coefficient.
 
-@jit
-def line_strength(T, logsij0, nu_lines, elower, qr, Tref):
-    """Line strength as a function of temperature, JAX/XLA compatible
-
-    Notes:
-        Tref=296.0 (default) in moldb, but it might have been changed by OpaPremodit.
+    Note:
+        This function is not used in other codes in ExoJAX.
+        But it can be used for the conversion of the line strength from the original ExoMol form
+        into HITRAN form.
 
     Args:
-        T: temperature (K)
-        logsij0: log(Sij(Tref)) (Tref=296K)
+        A: Einstein coefficient (s-1)
+        g: the upper state statistical weight
         nu_lines: line center wavenumber (cm-1)
         elower: elower
-        qr: partition function ratio qr(T) = Q(T)/Q(Tref)
-        Tref: reference temperature
+        QTref: partition function Q(Tref)
+        Mmol: molecular mass (normalized by m_u)
 
     Returns:
-        Sij(T): Line strength (cm)
+        Line strength (cm)
     """
-    expow = logsij0 - hcperk * (elower / T - elower / Tref)
-    fac = (1.0 - jnp.exp(-hcperk * nu_lines / T)) / (
-        1.0 - jnp.exp(-hcperk * nu_lines / Tref)
+    line_strength_ref = (
+        -A
+        * g
+        * np.exp(-hcperk * elower / Tref_original)
+        * np.expm1(-hcperk * nu_lines / Tref_original)
+        / (8.0 * np.pi * ccgs * nu_lines**2 * QTref)
     )
-    # expow=logsij0-hcperk*elower*(1.0/T-1.0/Tref)
-    # fac=jnp.expm1(-hcperk*nu_lines/T)/jnp.expm1(-hcperk*nu_lines/Tref)
-    return jnp.exp(expow) / qr * fac
+    return line_strength_ref
 
 
-def line_strength_numpy(T, Sij0, nu_lines, elower, qr, Tref=Tref_original):
-    """Line strength as a function of temperature, numpy version
+def gamma_exomol(P, T, n_air, alpha_ref):
+    """gamma factor by a pressure broadening.
 
     Args:
+        P: pressure (bar)
         T: temperature (K)
-        Sij0: line strength at Tref=296K
-        elower: elower
-        nu_lines: line center wavenumber
-        qr : partition function ratio qr(T) = Q(T)/Q(Tref)
-        Tref: reference temeparture
+        n_air: coefficient of the  temperature  dependence  of  the  air-broadened halfwidth
+        alpha_ref: broadening parameter
 
     Returns:
-        line strength at Ttyp
+        gamma: pressure gamma factor (cm-1)
     """
-    return (
-        Sij0
-        * np.exp(-hcperk * elower * (1.0 / T - 1.0 / Tref))
-        * np.expm1(-hcperk * nu_lines / T)
-        / np.expm1(-hcperk * nu_lines / Tref)
-        / qr  # Apply qr (jnp array) last to minimize rounding errors in 32bit mode.
-    )
+    gamma = alpha_ref * P * (Tref_original / T) ** n_air
+    return gamma
 
 
 @jit

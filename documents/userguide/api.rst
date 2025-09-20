@@ -36,7 +36,7 @@ How to load ExoMol CO database
 
 .. code:: ipython
 	
-	>>> from exojax.database.api  import MdbExomol
+	>>> from exojax.database.exomol.api import MdbExomol
 	>>> mdb = MdbExomol(".database/CO/12C-16O/Li2015", nurange=[4200.0, 4300.0])
 
 We can check the attribute_names in mdb by 
@@ -100,7 +100,7 @@ Here are examples for loading CO from HITEMP.
 
 .. code:: ipython
 	
-	>>> from exojax.database.api  import MdbHitemp
+	>>> from exojax.database.hitemp.api import MdbHitemp
 	>>> MdbHitemp("CO", nurange=[4200.0, 4300.0])
 	>>> MdbHitemp(".database/CO/", nurange=[4200.0, 4300.0])
 	>>> MdbHitemp(".database/05/", nurange=[4200.0, 4300.0])
@@ -194,7 +194,7 @@ The following is an example of reading .par directly:
 
 .. code:: ipython
 	
-	>>> from exojax.database.api  import MdbHitemp
+	>>> from exojax.database.hitemp.api import MdbHitemp
 	>>> from exojax.utils.grids import wavenumber_grid
 	>>> nus, wav, res = wavenumber_grid(22920.0,23100.0,20000,unit="AA",xsmode="modit")
 	xsmode =  modit
@@ -240,11 +240,11 @@ If needed, we can mask the line information using "apply_mask_mdb" method. Here 
 
     >>> import numpy as np
     >>> from exojax.utils.grids import wavenumber_grid
-    >>> from exojax.database import api 
+    >>> from exojax.database.exomol.api import MdbExomol 
     >>> nus,wav,res=wavenumber_grid(6910,6990,100000,unit='cm-1',xsmode="premodit")
     >>> 
     >>> # ExoMol                                                                                                                      
-    >>> mdb = api.MdbExomol("/home/kawashima/database/H2O/1H2-16O/POKAZATEL",nus)
+    >>> mdb =MdbExomol("/home/kawashima/database/H2O/1H2-16O/POKAZATEL",nus)
     >>> print(len(mdb.elower), np.min(mdb.elower))
     >>> 
     >>> mask = mdb.elower > 100.
@@ -252,7 +252,7 @@ If needed, we can mask the line information using "apply_mask_mdb" method. Here 
     >>> print(len(mdb.elower), np.min(mdb.elower))
     >>> 
     >>> # HITEMP                                                                                                                      
-    >>> mdb = api.MdbHitemp("/home/kawashima/database/H2O/01_HITEMP2010",nus)
+    >>> mdb = MdbHitemp("/home/kawashima/database/H2O/01_HITEMP2010",nus)
     >>> print(len(mdb.n_air), np.min(mdb.n_air))
     >>> 
     >>> mask = mdb.n_air > 0.01
@@ -260,7 +260,7 @@ If needed, we can mask the line information using "apply_mask_mdb" method. Here 
     >>> print(len(mdb.n_air), np.min(mdb.n_air))
     >>> 
     >>> # HITRAN                                                                                                                      
-    >>> mdb = api.MdbHitran("/home/kawashima/database/H2O/01_hit12.par",nus)
+    >>> mdb = MdbHitran("/home/kawashima/database/H2O/01_hit12.par",nus)
     >>> print(len(mdb.n_air), np.min(mdb.n_air))
     >>> 
     >>> mask = mdb.n_air > 0.01
@@ -331,10 +331,10 @@ Here is an example of the initialization.
 .. code:: ipython
 	
     >>> from exojax.utils.grids import wavenumber_grid
-    >>> from exojax.database import api 
+    >>> from exojax.database.exomol.api import MdbExomol 
 	
     >>> nus, wav, res = wavenumber_grid(24000.0, 26000.0, 1000, unit="AA")
-    >>> mdb = api.MdbExomol(""CO/12C-16O/Li2015/"", nus, optional_quantum_states=True, activation=False)
+    >>> mdb =MdbExomol(""CO/12C-16O/Li2015/"", nus, optional_quantum_states=True, activation=False)
 
 Then, let's check DataFrame. 
 
@@ -376,11 +376,11 @@ We can mask attributes even after activation. In the following example, we load 
 	
     >>> import numpy as np
     >>> from exojax.utils.grids import wavenumber_grid
-    >>> from exojax.database import api 
+    >>> from exojax.database.exomol.api import MdbExomol 
     >>> nus,wav,res=wavenumber_grid(6910,6990,100000,unit='cm-1',xsmode="premodit")
     xsmode =  premodit
     xsmode assumes ESLOG in wavenumber space: mode=premodit
-    >>> mdb = api.MdbExomol(".database/H2O/1H2-16O/POKAZATEL",nus)
+    >>> mdb =MdbExomol(".database/H2O/1H2-16O/POKAZATEL",nus)
     HITRAN exact name= H2(16O)
     Background atmosphere:  H2
     Reading .database/H2O/1H2-16O/POKAZATEL/1H2-16O__POKAZATEL__06900-07000.trans.bz2
@@ -414,7 +414,7 @@ The `with_error` option makes `the uncertainty code <https://hitran.org/docs/unc
                                     100000,
                                     unit='AA',
                                     xsmode="premodit")
-    >>> mdb = api.MdbHitemp("CO",nus, with_error=True)
+    >>> mdb = MdbHitemp("CO",nus, with_error=True)
     >>> mdb.ierr 
 
 `mdb.ierr` contains the sets of `the uncertainty code <https://hitran.org/docs/uncertainties/>`_ , but it's not user-friendy. Use `mdb.add_error()` to generate more user-friendly attributes.

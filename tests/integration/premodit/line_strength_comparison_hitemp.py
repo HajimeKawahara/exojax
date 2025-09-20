@@ -7,14 +7,14 @@
 import numpy as np
 import jax.numpy as jnp
 from exojax.utils.grids import wavenumber_grid
-from exojax.database import api 
+from exojax.database.exomol.api import MdbExomol 
 from exojax.opacity import OpaPremodit
 from exojax.opacity import initspec
 from exojax.opacity.premodit.premodit import unbiased_lsd_zeroth
 from exojax.opacity.premodit.premodit import unbiased_lsd_first
 from exojax.opacity.premodit.premodit import unbiased_lsd_second
 from exojax.opacity._common.lsd import inc2D_givenx
-from exojax.database.hitran  import line_strength
+from exojax.database.core.line_strength import line_strength
 from exojax.utils.grids import wavenumber_grid
 from exojax.opacity._common.set_ditgrid import ditgrid_log_interval
 from exojax.database.hitran  import gamma_hitran
@@ -22,7 +22,7 @@ from exojax.database.hitran  import gamma_natural
 from exojax.utils.constants import Tref_original
 
 ## also, xs
-from exojax.database.hitran import normalized_doppler_sigma
+from exojax.database.core.broadening import normalized_doppler_sigma
 from exojax.opacity._common.profconv import calc_xsection_from_lsd_scanfft
 from exojax.opacity.premodit.premodit import unbiased_ngamma_grid
 
@@ -33,7 +33,7 @@ config.update("jax_enable_x64", True)
 Nx = 5000
 nus, wav, res = wavenumber_grid(22800.0, 23100.0, Nx, unit="AA", xsmode="modit")
 
-mdb = api.MdbHitemp("CO", nus, gpu_transfer=True, isotope=1)
+mdb = MdbHitemp("CO", nus, gpu_transfer=True, isotope=1)
 
 diffmode = 0
 

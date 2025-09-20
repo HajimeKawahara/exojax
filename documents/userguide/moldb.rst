@@ -66,7 +66,7 @@ where :math:`c_2 = h c/k_B`. In exojax, S(T) is computed using the normalized pa
 
 .. code:: ipython
 	  
-	  >>> from exojax.database.hitran import SijT
+	  >>> from exojax.database.core.broadening import SijT
 	  >>> qt=mdbCO.qr_interp(Tfix)
 	  >>> Sij=SijT(Tfix,mdbCO.logsij0,mdbCO.nu_lines,mdbCO.elower,qt)
 

@@ -53,7 +53,7 @@ al. (2003).
 
 .. code:: ipython3
 
-    from exojax.database.api  import MdbExomol
+    from exojax.database.exomol.api import MdbExomol
     
     mdb_exomol = MdbExomol(database_dir + "FeH/56Fe-1H/MoLLIST", nurange=nu_grid)
     mdb_exomol_noactivation =  MdbExomol(database_dir + "FeH/56Fe-1H/MoLLIST", nurange=nu_grid, activation=False)
@@ -170,7 +170,7 @@ estimated using
 .. code:: ipython3
 
     import numpy as np
-    from exojax.database.customapi  import MdbHargreaves
+    from exojax.database import MdbHargreaves
     from exojax.utils.constants import Tref_original   
     
     QTref_original = np.array(mdb_exomol.QT_interp(Tref_original))

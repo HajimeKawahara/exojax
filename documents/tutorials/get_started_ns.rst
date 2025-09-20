@@ -1,7 +1,7 @@
 Nested Sampling of an Emission Spectrum Using JAXNS
 ===================================================
 
-Last update: Febrary 2nd (2025) Hajime Kawahara for v2.0
+Last update: Febrary 2nd (2025) Hajime Kawahara for v2.2.0
 
 In this guide, we perform retrieval of an emission spectrum using
 `nested
@@ -95,7 +95,7 @@ the database name in the ExoMol website (https://www.exomol.com/).
 
 .. code:: ipython3
 
-    from exojax.database.api  import MdbExomol
+    from exojax.database.exomol.api import MdbExomol
     mdb = MdbExomol(".database/CO/12C-16O/Li2015", nurange=nu_grid)
 
 
@@ -613,5 +613,4 @@ display a corner plot. Here, we’ve used ArviZ for visualization.
 
 
 That’s it!
-
 

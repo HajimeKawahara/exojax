@@ -1,55 +1,77 @@
 Installation and References
 ----------------------------------
 
-*last update January 19th (2025) Hajime Kawahara*
+*last update January 19th (2025) Hajime Kawahara, updated for pyproject.toml build system*
 
 .. admonition:: Python 3.9 or later is required
 
-    ExoJAX requires python 3.9 or later.
+    ExoJAX requires Python 3.9 or later.
 
-.. Warning:: 
+.. warning::
 
-	For using `vaex <https://github.com/vaexio/vaex>`_ in the common API for the molecular database I/O, we currently recommend using Python 3.9 or 3.10. 
+    For using `vaex <https://github.com/vaexio/vaex>`_ in the common API for molecular database I/O, we currently recommend using Python 3.9 or 3.10.
 
+Linux, Windows WSL, macOS
+=========================
 
-
-Linux, Windows WSL, Mac
-============================
-
-At the very least, you can start using exojax through `pypi <https://pypi.org/project/exojax/>`_.
-
-.. code:: sh
-	
-	pip install exojax
-
-
-Alternatively, clone the code from `github page <https://github.com/HajimeKawahara/exojax>`_ and run
-
-.. code:: sh
-	
-	python setup.py install
-
-If the older version of ExoJAX has already been installed, you need to remove all of the old modules (Otherwise, modules that have been deleted and no more exist in the current version remain). To do so, the following procedure is recommended:
-
-.. code:: sh
-	
-	python setup.py clean --all 
-	python setup.py install
-
-However, to take advantage of the power of JAX, you need to prepare a GPU environment (if you have). For this, jaxlib need to be linked.
-
-You should check the cuda version of your environment as
+The simplest way to install ExoJAX is from `PyPI <https://pypi.org/project/exojax/>`_:
 
 .. code:: sh
 
-	nvcc -V
+    pip install exojax
 
-Here is an example of installation for jaxlib in linux system. See `JAX installation page <https://jax.readthedocs.io/en/latest/installation.html>`_ for the details.
+Alternatively, clone the code from the `GitHub repository <https://github.com/HajimeKawahara/exojax>`_ and install locally:
 
 .. code:: sh
-	
-	pip install -U "jax[cuda12]"
-	
+
+    git clone https://github.com/HajimeKawahara/exojax.git
+    cd exojax
+    pip install .
+
+.. note::
+
+    This project now uses a ``pyproject.toml``-based build.  
+    ``setup.py install`` is deprecated and should not be used.
+
+If you have an older version of ExoJAX already installed, it is recommended to uninstall it first to avoid conflicts with removed modules:
+
+.. code:: sh
+
+    pip uninstall exojax
+
+JAX and GPU Support
+===================
+
+To take advantage of GPU acceleration, you need a compatible GPU and to install the appropriate ``jaxlib`` build for your CUDA or ROCm version.
+
+First, check your CUDA version (if using NVIDIA GPUs):
+
+.. code:: sh
+
+    nvcc -V
+
+Then install JAX with GPU support as described in the official  
+`JAX installation guide <https://jax.readthedocs.io/en/latest/installation.html>`_.
+
+Example for CUDA 12:
+
+.. code:: sh
+
+    pip install --upgrade "jax[cuda12]" -f https://storage.googleapis.com/jax-releases/jax_cuda_releases.html
+
+Example for CUDA 11:
+
+.. code:: sh
+
+    pip install --upgrade "jax[cuda11]" -f https://storage.googleapis.com/jax-releases/jax_cuda_releases.html
+
+If you do not have a GPU, you can simply install the CPU version:
+
+.. code:: sh
+
+    pip install --upgrade jax
+
+
 
 Windows Anaconda
 ===================

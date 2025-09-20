@@ -23,3 +23,4 @@ def test_molmass_H2O():
 
 def test_molmass_CH4():
     assert molmass("CH4") == pytest.approx(16.0313)
+

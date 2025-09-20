@@ -1,7 +1,7 @@
 Getting Started with Emission Spectroscopy
 ==========================================
 
-Last update: January 26th (2025) Hajime Kawahara for v2.0
+Last update: September 5th (2025) Hajime Kawahara for v2.3
 
 In this getting started guide, we will use ExoJAX to simulate a
 high-resolution emission spectrum from an atmosphere with CO molecular
@@ -68,17 +68,15 @@ wavenumber range first.
 
     xsmode =  premodit
     xsmode assumes ESLOG in wavenumber space: xsmode=premodit
-    ======================================================================
-    The wavenumber grid should be in ascending order.
-    The users can specify the order of the wavelength grid by themselves.
     Your wavelength grid is in ***  descending  *** order
-    ======================================================================
+    The wavenumber grid is in ascending order by definition.
+    Please be careful when you use the wavelength grid.
     Resolution= 1004211.9840291934
 
 
 .. parsed-literal::
 
-    /home/kawahara/exojax/src/exojax/utils.grids.py:63: UserWarning: Both input wavelength and output wavenumber are in ascending order.
+    /home/kawahara/exojax/src/exojax/utils/grids.py:85: UserWarning: Both input wavelength and output wavenumber are in ascending order.
       warnings.warn(
 
 
@@ -89,7 +87,7 @@ the database name in the ExoMol website (https://www.exomol.com/).
 
 .. code:: ipython3
 
-    from exojax.database.api  import MdbExomol
+    from exojax.database.exomol.api import MdbExomol
     mdb = MdbExomol(".database/CO/12C-16O/Li2015", nurange=nu_grid)
 
 
@@ -109,17 +107,17 @@ the database name in the ExoMol website (https://www.exomol.com/).
     radis engine =  vaex
     Molecule:  CO
     Isotopologue:  12C-16O
-    Background atmosphere:  H2
     ExoMol database:  None
     Local folder:  .database/CO/12C-16O/Li2015
     Transition files: 
     	 => File 12C-16O__Li2015.trans
+    Broadener:  H2
     Broadening code level: a0
 
 
 .. parsed-literal::
 
-    /home/kawahara/anaconda3/lib/python3.10/site-packages/radis-0.15.2-py3.10.egg/radis/api/exomolapi.py:685: AccuracyWarning: The default broadening parameter (alpha = 0.07 cm^-1 and n = 0.5) are used for J'' > 80 up to J'' = 152
+    /home/kawahara/anaconda3/lib/python3.10/site-packages/radis/api/exomolapi.py:727: AccuracyWarning: The default broadening parameter (alpha = 0.07 cm^-1 and n = 0.5) are used for J'' > 80 up to J'' = 152
       warnings.warn(
 
 
@@ -133,23 +131,39 @@ tempreature range we will use is 500-1500K.
 .. code:: ipython3
 
     from exojax.opacity import OpaPremodit
-    opa = OpaPremodit(mdb, nu_grid, auto_trange=[500.0, 1500.0], dit_grid_resolution=1.0)
+    
+    molmass = mdb.molmass # we use molmass later
+    snap = mdb.to_snapshot() # extract snapshot from mdb
+    del mdb # save the memory
+    
+    opa = OpaPremodit.from_snapshot(
+        snap,
+        nu_grid,
+        auto_trange=(500.0, 1500.0),
+        dit_grid_resolution=1.0,
+    )
+    
+    # for ExoJAX<=2.2, use the following code instead
+    # opa = OpaPremodit(mdb,nu_grid,auto_trange=(500.0, 1500.0),dit_grid_resolution=1.0,)
+
 
 
 .. parsed-literal::
 
-    /home/kawahara/exojax/src/exojax/spec/opacalc.py:215: UserWarning: dit_grid_resolution is not None. Ignoring broadening_parameter_resolution.
+    /home/kawahara/exojax/src/exojax/opacity/premodit/core.py:28: UserWarning: dit_grid_resolution is not None. Ignoring broadening_parameter_resolution.
       warnings.warn(
 
 
 .. parsed-literal::
 
-    OpaPremodit: params automatically set.
     default elower grid trange (degt) file version: 2
     Robust range: 485.7803992045456 - 1514.171191195336 K
-    OpaPremodit: Tref_broadening is set to  866.0254037844389 K
-    # of reference width grid :  2
-    # of temperature exponent grid : 2
+    max value of  ngamma_ref_grid : 9.450919102366303
+    min value of  ngamma_ref_grid : 7.881095721823979
+    ngamma_ref_grid grid : [7.88109541 9.4509201 ]
+    max value of  n_Texp_grid : 0.658
+    min value of  n_Texp_grid : 0.5
+    n_Texp_grid grid : [0.49999997 0.65800005]
 
 
 .. parsed-literal::
@@ -298,7 +312,7 @@ Convert them to opacity
 
 .. code:: ipython3
 
-    dtau_CO = art.opacity_profile_xs(xsmatrix, mmr_profile, mdb.molmass, gravity)
+    dtau_CO = art.opacity_profile_xs(xsmatrix, mmr_profile, molmass, gravity)
     vmrH2 = 0.855  # VMR of H2
     mmw = 2.33  # mean molecular weight of the atmosphere
     dtaucia = art.opacity_profile_cia(logacia_matrix, Tarr, vmrH2, vmrH2, mmw, gravity)
@@ -442,7 +456,7 @@ model has six parameters.
         Tarr = art.powerlaw_temperature(T0, alpha)
         xsmatrix = opa.xsmatrix(Tarr, art.pressure)
         mmr_arr = art.constant_mmr_profile(mmr)
-        dtau = art.opacity_profile_xs(xsmatrix, mmr_arr, opa.mdb.molmass, g)
+        dtau = art.opacity_profile_xs(xsmatrix, mmr_arr, molmass, g)
         #continuum
         logacia_matrix = opacia.logacia_matrix(Tarr)
         dtaucH2H2 = art.opacity_profile_cia(logacia_matrix, Tarr, vmrH2, vmrH2,
@@ -470,7 +484,7 @@ various parameter sets.
 
 .. parsed-literal::
 
-    [<matplotlib.lines.Line2D at 0x77fcf8b386a0>]
+    [<matplotlib.lines.Line2D at 0x7800d44f3eb0>]
 
 
 

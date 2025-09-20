@@ -25,7 +25,7 @@ For this example, you might need a good GPU.
     import pkg_resources
     
     from exojax.rt import ArtEmisPure
-    from exojax.database.api  import MdbExomol
+    from exojax.database.exomol.api import MdbExomol
     from exojax.opacity import OpaPremodit
     from exojax.database.contdb  import CdbCIA
     from exojax.opacity import OpaCIA

@@ -84,6 +84,6 @@ absorption coefficients.
 
 .. code:: ipython3
 
-    from exojax.database.hitrancia import interp_logacia_vector
+    from exojax.database.core.abscoeff import interp_logacia_vector
     lc = interp_logacia_vector(Tfix, nu_grid, cdbH2H2.nucia, cdbH2H2.tcia, cdbH2H2.logac).T
 

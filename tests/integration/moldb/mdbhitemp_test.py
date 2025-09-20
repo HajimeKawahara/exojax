@@ -1,6 +1,6 @@
 import pytest
 import numpy as np
-from exojax.database.api  import MdbHitemp
+from exojax.database.hitemp.api import MdbHitemp
 
 
 def test_moldb_hitemp():

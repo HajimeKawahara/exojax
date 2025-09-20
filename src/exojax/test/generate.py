@@ -2,7 +2,7 @@
 
 """
 
-from exojax.database import api 
+from exojax.database.exomol.api import MdbExomol 
 from exojax.test.emulate_mdb import mock_wavenumber_grid
 import numpy as np
 import pathlib
@@ -30,7 +30,7 @@ def gendata_moldb(molecule="CO", compress_states=False):
         "H2O": ".database/H2O/1H2-16O/POKAZATEL",
     }
     line_strength_criterion = {"CO": 0.0, "H2O": 1.0e-30}
-    mdb = api.MdbExomol(
+    mdb =MdbExomol(
         exomoldb[molecule], nus, inherit_dataframe=True, gpu_transfer=True, broadf=False
     )
     line_mask = mdb.df["Sij0"] > line_strength_criterion[molecule]
@@ -53,7 +53,7 @@ def make_hdf(molecule):
     path = pathlib.Path(sample_directory_name[molecule]).expanduser()
     print(path)
     nus, wav, res = mock_wavenumber_grid()
-    mdb = api.MdbExomol(str(path), nus, inherit_dataframe=True, gpu_transfer=True, broadf=False)
+    mdb =MdbExomol(str(path), nus, inherit_dataframe=True, gpu_transfer=True, broadf=False)
 
 
 def save_trans(trans_filename, masked_df):

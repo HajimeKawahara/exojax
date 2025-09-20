@@ -1,7 +1,7 @@
 Getting Started with Transmission Spectroscopy
 ==============================================
 
-Last update: March 15th (2025) Hajime Kawahara for v2.0
+Last update: March 15th (2025) Hajime Kawahara for v2.2.0
 
 In this getting started guide, we will use ExoJAX to simulate a
 high-resolution **transmission** spectrum from an atmosphere with CO
@@ -82,7 +82,7 @@ the database name in the ExoMol website (https://www.exomol.com/).
 
 .. code:: ipython3
 
-    from exojax.database.api  import MdbExomol
+    from exojax.database.exomol.api import MdbExomol
     mdb = MdbExomol(".database/CO/12C-16O/Li2015", nurange=nu_grid)
 
 
@@ -750,5 +750,4 @@ may be helpful.
    by Shotaro Tada (@sh-tada)
 
 That’s it.
-
 

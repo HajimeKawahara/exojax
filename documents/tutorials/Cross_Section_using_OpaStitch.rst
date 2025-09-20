@@ -15,14 +15,14 @@ procedure using :math:`\nu` - stitching in ``OpaPremodit`` in this
 section.
 
 Currently, the only opacity calculator that supports
-:math:`\nu`-stitching is PreMODIT (v2.0), which can be used with
+:math:`\nu`-stitching is PreMODIT (v2.2), which can be used with
 ``OpaPremodit``.
 
 .. code:: ipython3
 
     from exojax.opacity import OpaPremodit
     from exojax.utils.grids import wavenumber_grid
-    from exojax.database.api  import MdbExomol
+    from exojax.database.exomol.api import MdbExomol
     from exojax.rt import ArtTransPure
     import jax.numpy as jnp
     
@@ -220,5 +220,4 @@ Let’s calculate the transmitted light spectrum.
 
 
 That’s it!
-
 

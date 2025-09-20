@@ -1,10 +1,10 @@
 """This test checks the agreement between MODIT open and close alising for zeroscan calculation"""
 
 import jax.numpy as jnp
-from exojax.database.hitran import line_strength
+from exojax.database.core.line_strength import line_strength
 from exojax.opacity._common.set_ditgrid import ditgrid_log_interval
-from exojax.database.exomol import gamma_exomol
-from exojax.database.hitran import normalized_doppler_sigma
+from exojax.database.core.broadening import gamma_exomol
+from exojax.database.core.broadening import normalized_doppler_sigma
 from exojax.opacity.initspec import init_modit
 from exojax.opacity.modit.modit import xsvector_open_zeroscan
 from exojax.opacity.modit.modit import xsvector_zeroscan

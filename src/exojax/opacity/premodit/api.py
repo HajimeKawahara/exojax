@@ -6,25 +6,83 @@ optimized parameter grids and efficient memory management.
 """
 
 from functools import partial
+import logging
 from typing import Optional, Union, Literal, Dict, Any, Tuple, List
-
+from dataclasses import dataclass
 import jax.numpy as jnp
 import numpy as np
-from jax import checkpoint, checkpoint_policies, vmap
+from jax import checkpoint
+from jax import checkpoint_policies
 from jax.lax import dynamic_slice, scan
-
 from exojax.opacity.base import OpaCalc
 from exojax.signal.ola import overlap_and_add, overlap_and_add_matrix
 from exojax.opacity import initspec
 from exojax.opacity.premodit.lbderror import optimal_params
+from exojax.opacity.premodit.info import PreMODITInfo
 from exojax.utils.checkarray import is_outside_range
 from exojax.utils.constants import Tref_original
-from exojax.utils.grids import nu2wav, wavenumber_grid
-from exojax.utils.instfunc import nx_even_from_resolution_eslog, resolution_eslog
+from exojax.utils.grids import nu2wav
+from exojax.utils.grids import wavenumber_grid
+from exojax.utils.instfunc import nx_even_from_resolution_eslog
+from exojax.utils.instfunc import resolution_eslog
 from exojax.utils.jaxstatus import check_jax64bit
-
 from exojax.opacity.premodit.core import _select_broadening_mode
-from exojax.opacity.premodit.core import _compute_common_broadening_parameters
+from exojax.database.core.line_strength import line_strength_numpy
+from exojax.opacity.contracts import PartitionFunctionProvider
+from exojax.opacity.contracts import BroadeningStrategy
+from exojax.opacity.providers import ExomolPartitionProvider
+from exojax.opacity.providers import HitranPartitionProvider
+from exojax.opacity.providers import ExomolBroadening
+from exojax.opacity.providers import HitranBroadening
+from exojax.database.contracts import MDBSnapshot
+from exojax.opacity.policies import MemoryPolicy
+
+logger = logging.getLogger(__name__)
+
+
+@dataclass
+class _MDBLikeFromSnapshot:
+    """Minimal mdb-like adapter built from MDBSnapshot.
+
+    Provides only the attribute surface used by OpaPremodit.__init__ so the
+    old constructor path stays unchanged. All arrays are NumPy arrays.
+    """
+
+    dbtype: str
+    molmass: float
+    T_gQT: np.ndarray
+    gQT: np.ndarray
+    nu_lines: np.ndarray
+    elower: np.ndarray
+    line_strength_ref_original: np.ndarray
+    # HITRAN-only (optional)
+    isotope: Optional[np.ndarray] = None
+    uniqiso: Optional[np.ndarray] = None
+    n_air: Optional[np.ndarray] = None
+    gamma_air: Optional[np.ndarray] = None
+    # ExoMol-only (optional)
+    n_Texp: Optional[np.ndarray] = None
+    alpha_ref: Optional[np.ndarray] = None
+
+    @classmethod
+    def from_snapshot(cls, snap: MDBSnapshot) -> "_MDBLikeFromSnapshot":
+        meta = snap.meta
+        lines = snap.lines
+        return cls(
+            dbtype=meta.dbtype,
+            molmass=meta.molmass,
+            T_gQT=meta.T_gQT,
+            gQT=meta.gQT,
+            nu_lines=lines.nu_lines,
+            elower=lines.elower,
+            line_strength_ref_original=lines.line_strength_ref_original,
+            isotope=snap.isotope,
+            uniqiso=snap.uniqiso,
+            n_air=snap.n_air,
+            gamma_air=snap.gamma_air,
+            n_Texp=snap.n_Texp,
+            alpha_ref=snap.alpha_ref,
+        )
 
 
 class OpaPremodit(OpaCalc):
@@ -59,6 +117,9 @@ class OpaPremodit(OpaCalc):
         cutwing: float = 1.0,
         wavelength_order: Literal["ascending", "descending"] = "descending",
         version_auto_trange: int = 2,
+        memory_policy: Optional[MemoryPolicy] = None,
+        *,
+        delete_mdb_after_init: bool = True,
     ) -> None:
         """Initialize OpaPremodit opacity calculator.
 
@@ -83,11 +144,32 @@ class OpaPremodit(OpaCalc):
             wavelength_order: Wavelength grid order
             version_auto_trange: Version of default elower grid trange file
 
+        Keyword Args:
+            memory_policy: Optional policy object to override ``allow_32bit``,
+                ``nstitch``, and ``cutwing``. When provided, values in the policy
+                take precedence over the corresponding constructor params.
+            delete_mdb_after_init: Drop the local reference to the provided mdb
+                inside ``__init__`` to encourage early GC. External references are
+                unaffected. Defaults to True (same as prior behavior).
+
         Raises:
             ValueError: If no molecular lines are within the wavenumber grid
         """
         super().__init__(nu_grid)
-        check_jax64bit(allow_32bit)
+
+        # Resolve memory/runtime knobs (policy takes precedence over ctor values)
+        _allow_32bit = allow_32bit
+        _nstitch = nstitch
+        _cutwing = cutwing
+        if memory_policy is not None:
+            if memory_policy.allow_32bit is not None:
+                _allow_32bit = memory_policy.allow_32bit
+            if memory_policy.nstitch is not None:
+                _nstitch = memory_policy.nstitch
+            if memory_policy.cutwing is not None:
+                _cutwing = memory_policy.cutwing
+
+        check_jax64bit(_allow_32bit)
 
         # default setting
         self.method = "premodit"
@@ -98,11 +180,50 @@ class OpaPremodit(OpaCalc):
             self.nu_grid, wavelength_order=self.wavelength_order, unit="AA"
         )
         self.resolution = resolution_eslog(nu_grid)
-        self.mdb = mdb
+
+        self.dbtype = mdb.dbtype
+        self.molmass = mdb.molmass
+        self.T_gQT = mdb.T_gQT
+        self.gQT = mdb.gQT
+        self.line_strength_ref_original = mdb.line_strength_ref_original
+
+        if self.dbtype == "hitran":
+            self.isotope = mdb.isotope
+            self.uniqiso = mdb.uniqiso
+            self.n_air = mdb.n_air
+            self.gamma_air = mdb.gamma_air
+        elif self.dbtype == "exomol":
+            self.n_Texp = mdb.n_Texp
+            self.alpha_ref = mdb.alpha_ref
+        else:
+            raise ValueError(
+                f"Unknown database type: '{self.dbtype}'. Supported types: hitran, exomol"
+            )
+
+        self.nu_lines = mdb.nu_lines
+        self.elower = mdb.elower
+        # Set default providers if not overridden later
+        if self.dbtype == "exomol":
+            self.pf_provider: PartitionFunctionProvider = ExomolPartitionProvider(
+                self.T_gQT, self.gQT
+            )
+            self.broadening_strategy: BroadeningStrategy = ExomolBroadening(
+                self.n_Texp, self.alpha_ref
+            )
+        elif self.dbtype == "hitran":
+            self.pf_provider = HitranPartitionProvider(
+                self.isotope, self.uniqiso, self.T_gQT, self.gQT
+            )
+            self.broadening_strategy = HitranBroadening(self.n_air, self.gamma_air)
+
+        if delete_mdb_after_init:
+            logger.info("OpaPremodit: delete mdb to save memory")
+            del mdb
+
         self.ngrid_broadpar = None
         self.version_auto_trange = version_auto_trange
         # check if the mdb lines are in nu_grid
-        if is_outside_range(self.mdb.nu_lines, self.nu_grid[0], self.nu_grid[-1]):
+        if is_outside_range(self.nu_lines, self.nu_grid[0], self.nu_grid[-1]):
             raise ValueError("None of the lines in mdb are within nu_grid.")
 
         (
@@ -117,14 +238,15 @@ class OpaPremodit(OpaCalc):
         elif manual_params is not None:
             self.manual_setting(manual_params[0], manual_params[1], manual_params[2])
         else:
-            print("OpaPremodit: initialization without parameters setting")
-            print("Call self.apply_params() to complete the setting.")
+            logger.info("OpaPremodit: initialization without parameters setting")
+            logger.info("Call self.apply_params() to complete the setting.")
 
-        self.nstitch = nstitch
-        self.cutwing = cutwing
+        self.nstitch = _nstitch
+        self.cutwing = _cutwing
+        self.memory_policy = memory_policy
 
         if self.nstitch > 1:
-            print("OpaPremodit: Stitching mode is used: nstitch =", self.nstitch)
+            logger.info("OpaPremodit: Stitching mode is used: nstitch = %s", self.nstitch)
             self.check_nu_grid_reducible()
             self.alias = "open"
         else:
@@ -132,8 +254,58 @@ class OpaPremodit(OpaCalc):
         self.set_aliasing()
 
         self._sets_capable_opacalculators()
-        if nstitch > 1:
+        # Only reshape here if parameters were already applied (lbd_coeff exists)
+        if self.nstitch > 1 and hasattr(self, "lbd_coeff"):
             self.reshape_lbd_coeff()
+
+    @classmethod
+    def from_snapshot(
+        cls,
+        mdb_snapshot: MDBSnapshot,
+        nu_grid: Union[np.ndarray, jnp.ndarray],
+        pf_provider: Optional[PartitionFunctionProvider] = None,
+        broadening_strategy: Optional[BroadeningStrategy] = None,
+        **kwargs,
+    ) -> "OpaPremodit":
+        """Build OpaPremodit from a data-only MDBSnapshot.
+
+        This constructor avoids a hard dependency on concrete mdb classes
+        by adapting the snapshot to the minimal attribute surface expected
+        by the legacy ``__init__``.
+        """
+        mdb_like = _MDBLikeFromSnapshot.from_snapshot(mdb_snapshot)
+        opa = cls(mdb_like, nu_grid, **kwargs)
+        if pf_provider is not None:
+            opa.pf_provider = pf_provider
+        if broadening_strategy is not None:
+            opa.broadening_strategy = broadening_strategy
+        return opa
+
+    @classmethod
+    def from_mdb(
+        cls,
+        mdb,
+        nu_grid: Union[np.ndarray, jnp.ndarray],
+        pf_provider: Optional[PartitionFunctionProvider] = None,
+        broadening_strategy: Optional[BroadeningStrategy] = None,
+        **kwargs,
+    ) -> "OpaPremodit":
+        """Back-compat helper: snapshotize the mdb before constructing.
+
+        Example:
+            mdb = MdbExomol(".../CO/12C-16O/Li2015", nu_grid)
+            opa = OpaPremodit.from_mdb(mdb, nu_grid, manual_params=(5.0, 1000.0, 1200.0))
+        """
+        if not hasattr(mdb, "to_snapshot"):
+            raise TypeError("mdb must implement .to_snapshot()")
+        snap = mdb.to_snapshot()
+        return cls.from_snapshot(
+            snap,
+            nu_grid,
+            pf_provider=pf_provider,
+            broadening_strategy=broadening_strategy,
+            **kwargs,
+        )
 
     def __eq__(self, other: object) -> bool:
         """Check equality with another OpaPremodit instance.
@@ -148,13 +320,29 @@ class OpaPremodit(OpaCalc):
             return False
 
         eq_attributes = (
-            (self.mdb == other.mdb)
+            (self.dbtype == other.dbtype)
+            and (self.molmass == other.molmass)
+            and np.array_equal(self.T_gQT, other.T_gQT)
+            and np.array_equal(self.gQT, other.gQT)
             and (self.diffmode == other.diffmode)
             and (self.ngrid_broadpar == other.ngrid_broadpar)
             and (self.wavelength_order == other.wavelength_order)
             and (self.version_auto_trange == other.version_auto_trange)
             and np.array_equal(self.nu_grid, other.nu_grid)
         )
+        if (
+            getattr(self, "opainfo", None) is not None
+            and getattr(other, "opainfo", None) is not None
+        ):
+            eq_attributes = (
+                eq_attributes
+                and np.array_equal(self.opainfo[0], other.opainfo[0])
+                and np.array_equal(self.opainfo[1], other.opainfo[1])
+                and np.array_equal(self.opainfo[2], other.opainfo[2])
+                and np.array_equal(self.opainfo[3], other.opainfo[3])
+                and (self.opainfo[4] == other.opainfo[4])
+                and np.array_equal(self.opainfo[5], other.opainfo[5])
+            )
         eq_attributes = self._if_exist_check_eq(other, "dE", eq_attributes)
         eq_attributes = self._if_exist_check_eq(other, "Tref", eq_attributes)
         eq_attributes = self._if_exist_check_eq(other, "Twt", eq_attributes)
@@ -188,7 +376,7 @@ class OpaPremodit(OpaCalc):
             Tl: Lower temperature limit in K
             Tu: Upper temperature limit in K
         """
-        print("OpaPremodit: params automatically set.")
+        logger.info("OpaPremodit: params automatically set.")
         self.dE, self.Tref, self.Twt = optimal_params(
             Tl, Tu, self.diffmode, self.version_auto_trange
         )
@@ -213,7 +401,7 @@ class OpaPremodit(OpaCalc):
             Tmax (float/None): max temperature (K) for braodening grid
             Tmin (float/None): min temperature (K) for braodening grid
         """
-        print("OpaPremodit: params manually set.")
+        logger.info("OpaPremodit: params manually set.")
         self.Twt = Twt
         self.Tref = Tref
         self.dE = dE
@@ -242,30 +430,42 @@ class OpaPremodit(OpaCalc):
         self.Tref_broadening = reference_temperature_broadening_at_midpoint(
             self.Tmin, self.Tmax
         )
-        print("OpaPremodit: Tref_broadening is set to ", self.Tref_broadening, "K")
+        logger.info("OpaPremodit: Tref_broadening is set to %s K", self.Tref_broadening)
 
     def apply_params(self) -> None:
         """Apply parameters to the class and compute pre-computed grids.
 
         Defines self.lbd_coeff and self.opainfo for opacity calculations.
         """
-        # self.mdb.change_reference_temperature(self.Tref)
-        self.dbtype = self.mdb.dbtype
+        # line strength at Tref
+        qr = self.pf_provider.qr_single(self.Tref, Tref_original)
+        self.line_strength_Tref = line_strength_numpy(
+            self.Tref, self.line_strength_ref_original, self.nu_lines, self.elower, qr
+        )
+        del self.line_strength_ref_original
 
         # sets the broadening reference temperature
         if self.single_broadening:
-            print("OpaPremodit: a single broadening parameter set is used.")
+            logger.info("OpaPremodit: a single broadening parameter set is used.")
             self.Tref_broadening = Tref_original
         else:
             self.set_Tref_broadening_to_midpoint()
 
         # self.n_Texp, self.gamma_ref are defined with the reference temperature of Tref_broadening
-        self.n_Texp, self.gamma_ref = _compute_common_broadening_parameters(
-            self.mdb, self.Tref_broadening
+        self.n_Texp, self.gamma_ref = self.broadening_strategy.compute(
+            self.Tref_broadening
         )
+        # Drop heavy arrays that are no longer needed after computing gamma_ref
+        if hasattr(self, "n_air"):
+            del self.n_air
+        if hasattr(self, "gamma_air"):
+            del self.gamma_air
+        if hasattr(self, "alpha_ref"):
+            del self.alpha_ref
 
         # comment-1: gamma_ref at Tref_broadening (is not necessary for Tref_original)
-        # comment-2: line strength at Tref (is not necessary for Tref_original)
+        # comment-2: line strength at Tref (is not necessary for Tref_original), should be np.float64
+
         (
             self.lbd_coeff,
             multi_index_uniqgrid,
@@ -275,12 +475,12 @@ class OpaPremodit(OpaCalc):
             R,
             pmarray,
         ) = initspec.init_premodit(
-            self.mdb.nu_lines,
+            self.nu_lines,
             self.nu_grid,
-            self.mdb.elower,
+            self.elower,
             self.gamma_ref,  # comment-1
             self.n_Texp,
-            self.mdb.line_strength(self.Tref),  # comment-2
+            self.line_strength_Tref,  # comment-2
             self.Twt,
             Tref=self.Tref,
             Tref_broadening=self.Tref_broadening,
@@ -293,6 +493,10 @@ class OpaPremodit(OpaCalc):
             single_broadening_parameters=self.single_broadening_parameters,
             warning=self.warning,
         )
+        del self.nu_lines
+        del self.elower
+        del self.line_strength_Tref
+        # legacy tuple remains for backward compatibility
         self.opainfo = (
             multi_index_uniqgrid,
             elower_grid,
@@ -301,10 +505,30 @@ class OpaPremodit(OpaCalc):
             R,
             pmarray,
         )
+        # new immutable VO mirrors opainfo
+        self.pre_modit_info = PreMODITInfo(
+            multi_index_uniqgrid=multi_index_uniqgrid,
+            elower_grid=elower_grid,
+            ngamma_ref_grid=ngamma_ref_grid,
+            n_Texp_grid=n_Texp_grid,
+            R=R,
+            pmarray=pmarray,
+        )
         self.ready = True
 
         self.ngrid_broadpar = len(multi_index_uniqgrid)
         self.ngrid_elower = len(elower_grid)
+        if self.nstitch > 1:
+            self.reshape_lbd_coeff()
+
+    def _get_info_tuple(self):
+        """Return (multi_index_uniqgrid, elower_grid, ngamma_ref_grid, n_Texp_grid, R, pmarray).
+
+        Prefer the immutable PreMODITInfo if available; fall back to legacy self.opainfo.
+        """
+        if hasattr(self, "pre_modit_info") and self.pre_modit_info is not None:
+            return self.pre_modit_info.as_tuple()
+        return self.opainfo
 
     def _sets_capable_opacalculators(self):
         """sets capable opacalculators"""
@@ -378,7 +602,7 @@ class OpaPremodit(OpaCalc):
         Returns:
             Cross section vector in cm²
         """
-        from exojax.database.hitran import normalized_doppler_sigma
+        from exojax.database.core.broadening import normalized_doppler_sigma
 
         (
             multi_index_uniqgrid,
@@ -387,19 +611,10 @@ class OpaPremodit(OpaCalc):
             n_Texp_grid,
             R,
             pmarray,
-        ) = self.opainfo
-        nsigmaD = normalized_doppler_sigma(T, self.mdb.molmass, R)
+        ) = self._get_info_tuple()
+        nsigmaD = normalized_doppler_sigma(T, self.molmass, R)
 
-        dbtype = self.mdb.dbtype
-        if dbtype == "hitran":
-            qt = self.mdb.qr_interp(self.mdb.isotope, T, self.Tref)
-        elif dbtype == "exomol":
-            qt = self.mdb.qr_interp(T, self.Tref)
-        else:
-            raise ValueError(
-                f"Unsupported database type for xsvector: '{dbtype}'. "
-                "Supported types: hitran, exomol"
-            )
+        qt = self.pf_provider.qr_single(T, self.Tref)
 
         if self.nstitch > 1:
 
@@ -484,20 +699,9 @@ class OpaPremodit(OpaCalc):
             n_Texp_grid,
             R,
             pmarray,
-        ) = self.opainfo
+        ) = self._get_info_tuple()
 
-        dbtype = self.mdb.dbtype
-        if dbtype == "hitran":
-            qtarr = vmap(self.mdb.qr_interp, (None, 0, None))(
-                self.mdb.isotope, Tarr, self.Tref
-            )
-        elif dbtype == "exomol":
-            qtarr = vmap(self.mdb.qr_interp, (0, None))(Tarr, self.Tref)
-        else:
-            raise ValueError(
-                f"Unsupported database type for xsmatrix: '{dbtype}'. "
-                "Supported types: hitran, exomol"
-            )
+        qtarr = jnp.asarray(self.pf_provider.qr_vector(Tarr, self.Tref))
 
         if self.nstitch > 1:
 
@@ -519,7 +723,7 @@ class OpaPremodit(OpaCalc):
                     n_Texp_grid,
                     multi_index_uniqgrid,
                     elower_grid,
-                    self.mdb.molmass,
+                    self.molmass,
                     qtarr,
                     self.Tref_broadening,
                     self.filter_length_oneside,
@@ -551,7 +755,7 @@ class OpaPremodit(OpaCalc):
                 n_Texp_grid,
                 multi_index_uniqgrid,
                 elower_grid,
-                self.mdb.molmass,
+                self.molmass,
                 qtarr,
                 self.Tref_broadening,
                 self.Twt,

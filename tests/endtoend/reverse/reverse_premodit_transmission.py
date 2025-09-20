@@ -13,7 +13,7 @@ import pandas as pd
 from importlib.resources import files
 
 from exojax.rt import ArtTransPure
-from exojax.database.api  import MdbExomol
+from exojax.database.exomol.api import MdbExomol
 from exojax.opacity import OpaPremodit
 from exojax.utils.grids import nu2wav
 from exojax.utils.grids import wavenumber_grid

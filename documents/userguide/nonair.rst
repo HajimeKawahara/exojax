@@ -20,7 +20,7 @@ We can directly use non-air broadening coefficients for some molecules using the
                                     100000,
                                     unit='AA',
                                     xsmode="modit")
-    >>> mdb = api.MdbHitran("CO",nus, nonair_broadening=True)
+    >>> mdb = MdbHitran("CO",nus, nonair_broadening=True)
     >>> print(mdb.n_h2)
 
 +-----------------------+-------------+
@@ -43,14 +43,14 @@ The formula is from Y. Tan et al (2022). Here is an example. We use the datafram
 
 .. code:: ipython
 	
-	>>> from exojax.database import api 
+	>>> from exojax.database.exomol.api import MdbExomol 
 	>>> from exojax.utils.grids import wavenumber_grid
 	>>> 
 	>>> nus, wav, r = wavenumber_grid(24000.0, 26000.0, 1000, unit="AA", xsmode="premodit")
-	>>> mdb = api.MdbHitemp("CO", nus, inherit_dataframe=True)
+	>>> mdb = MdbHitemp("CO", nus, inherit_dataframe=True)
 	>>> 
 	>>> # manual non-air broadening
-	>>> from exojax.database.qstate  import m_transition_state
+	>>> from exojax.database.molinfo  import m_transition_state
 	>>> from exojax.database.nonair  import gamma_nonair, temperature_exponent_nonair
 	>>> from exojax.database.nonair  import nonair_coeff_CO_in_H2
 	>>> 

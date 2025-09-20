@@ -20,7 +20,7 @@ class TestArtAbsPureCKD:
         # Setup wavenumber grid and molecular database (small for testing)
         nu_grid, _, _ = mock_wavenumber_grid()
         self.nu_grid = nu_grid
-        mdb = mock_mdbExomol("H2O")
+        self.mdb = mock_mdbExomol("H2O")
 
         self.base_art = ArtAbsPure(
             pressure_top=1.0e-8, pressure_btm=1.0e2, nlayer=100, nu_grid=nu_grid
@@ -29,7 +29,7 @@ class TestArtAbsPureCKD:
         self.gravity = 2478.57
 
         # Initialize base opacity calculator
-        self.base_opa = OpaPremodit(mdb, nu_grid, auto_trange=[500.0, 1500.0])
+        self.base_opa = OpaPremodit(self.mdb, nu_grid, auto_trange=[500.0, 1500.0])
 
         # Initialize OpaCKD with small parameters for testing
         self.opa_ckd = OpaCKD(
@@ -60,13 +60,13 @@ class TestArtAbsPureCKD:
         # Get CKD optical depth tensor
         xs_ckd = self.opa_ckd.xstensor_ckd(Tarr, self.base_art.pressure)
         dtau_ckd = self.base_art.opacity_profile_xs_ckd(
-            xs_ckd, self.mmr_arr, self.base_opa.mdb.molmass, self.gravity
+            xs_ckd, self.mmr_arr, self.mdb.molmass, self.gravity
         )
 
         # Prepare incoming flux for CKD (average over bands)
         band_edges = self.opa_ckd.band_edges
         incoming_flux_ckd = np.zeros(len(self.opa_ckd.nu_bands))
-        
+
         for band_idx in range(len(self.opa_ckd.nu_bands)):
             mask = (band_edges[band_idx, 0] <= self.nu_grid) & (
                 self.nu_grid < band_edges[band_idx, 1]
@@ -75,15 +75,21 @@ class TestArtAbsPureCKD:
 
         # Run CKD absorption
         A_ckd = self.base_art.run_ckd(
-            dtau_ckd, self.pressure_surface, incoming_flux_ckd, 
-            self.mu_in, self.mu_out, self.opa_ckd.ckd_info.weights
+            dtau_ckd,
+            self.pressure_surface,
+            incoming_flux_ckd,
+            self.mu_in,
+            self.mu_out,
+            self.opa_ckd.ckd_info.weights,
         )
 
         # Basic validation - check output shape and no NaN values
         assert A_ckd.shape == (len(self.opa_ckd.nu_bands),)
         assert not np.any(np.isnan(A_ckd))
         assert np.all(A_ckd >= 0)  # Transmitted flux should be non-negative
-        assert np.all(A_ckd <= np.max(incoming_flux_ckd))  # Should not exceed incoming flux
+        assert np.all(
+            A_ckd <= np.max(incoming_flux_ckd)
+        )  # Should not exceed incoming flux
 
         print(f"CKD absorption test passed! Output shape: {A_ckd.shape}")
         print(f"Transmission range: [{np.min(A_ckd):.2e}, {np.max(A_ckd):.2e}]")
@@ -106,13 +112,13 @@ class TestArtAbsPureCKD:
         # Get CKD optical depth tensor
         xs_ckd = self.opa_ckd.xstensor_ckd(Tarr, self.base_art.pressure)
         dtau_ckd = self.base_art.opacity_profile_xs_ckd(
-            xs_ckd, self.mmr_arr, self.base_opa.mdb.molmass, self.gravity
+            xs_ckd, self.mmr_arr, self.mdb.molmass, self.gravity
         )
 
         # Prepare incoming flux for CKD
         band_edges = self.opa_ckd.band_edges
         incoming_flux_ckd = np.zeros(len(self.opa_ckd.nu_bands))
-        
+
         for band_idx in range(len(self.opa_ckd.nu_bands)):
             mask = (band_edges[band_idx, 0] <= self.nu_grid) * (
                 self.nu_grid < band_edges[band_idx, 1]
@@ -121,8 +127,12 @@ class TestArtAbsPureCKD:
 
         # Run CKD absorption with ground observer
         A_ckd_ground = self.base_art.run_ckd(
-            dtau_ckd, self.pressure_surface, incoming_flux_ckd, 
-            self.mu_in, None, self.opa_ckd.ckd_info.weights
+            dtau_ckd,
+            self.pressure_surface,
+            incoming_flux_ckd,
+            self.mu_in,
+            None,
+            self.opa_ckd.ckd_info.weights,
         )
 
         # Basic validation

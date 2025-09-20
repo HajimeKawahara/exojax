@@ -280,9 +280,8 @@ def init_premodit(
         len(ngamma_ref_grid),
         len(n_Texp_grid),
     )
-
     wavmask = (nu_lines >= nu_grid[0]) * (nu_lines <= nu_grid[-1])  # Issue 341
-
+    
     lbd_coeff, multi_index_uniqgrid = generate_lbd(
         line_strength_ref[wavmask],
         nu_lines[wavmask],

@@ -6,7 +6,7 @@ start from ploting the cross section of CO in 1900-2300 cm-1.
 
 .. code:: ipython3
 
-    from exojax.database.api  import MdbExomol
+    from exojax.database.exomol.api import MdbExomol
     from exojax.utils.grids import wavenumber_grid
     nus,wave,resolution = wavenumber_grid(1900.0,2300.0,150000,xsmode="lpf")
 
@@ -76,9 +76,9 @@ calculator. We assume T=1300K and P=1bar.
 
 .. code:: ipython3
 
-    from exojax.database.hitran  import line_strength, doppler_sigma
+    from exojax.database.core.line_strength import line_strength, doppler_sigma
     from exojax.opacity.initspec import init_lpf
-    from exojax.database.exomol  import gamma_exomol, gamma_natural
+    from exojax.database.core.broadening  import gamma_exomol, gamma_natural
     from exojax.database import molinfo 
     from exojax.opacity.lpf.lpf import xsvector
     from exojax.utils.constants import Tref_original

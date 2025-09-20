@@ -31,6 +31,12 @@ python -m pytest -k "test_pattern"
 # Install in development mode
 python setup.py install
 
+# Alternative: Install with pip in development mode
+pip install -e .
+
+# Check installed version
+python -c "import exojax; print(exojax.__version__)"
+
 # Update documentation
 ./update_doc.sh
 ```
@@ -126,49 +132,8 @@ Database Layer → Opacity Calculation → Atmospheric RT → Post-Processing
 - Inherit from `OpaCalc` base class in `opacity/opacalc.py`
 - Implement required interface methods
 - Consider memory and computational trade-offs
-
-## CKD Implementation Status (2025-06-17)
-
-### ✅ Completed:
-- **core.py**: Pure JAX functions (decoupled from opacity calculators)
-  - `compute_g_ordinates()`: Sorts cross-sections, computes g-ordinates
-  - `gauss_legendre_grid()`: Generates [0,1] quadrature points 
-  - `safe_log_k()`: Precision-aware defaults (1e-100 for float64, 1e-30 for float32)
-  - `interpolate_log_k_to_g_grid()`: JAX interpolation to g-grid
-  - `compute_ckd_from_xsv()`: Single spectrum CKD computation
-  - `compute_ckd_from_xsmatrix()`: Batch CKD processing 
-  - `compute_ckd_tables()`: Complete CKD workflow
-
-- **spectral_bands.py**: Reusable spectral band utilities  
-  - `spectral_bands()`: Generate band centers with linear/log spacing
-  - `subgrid_for_band()`: Extract subgrids from full wavenumber grids
-  - `band_coverage_info()`: Analyze spectral coverage
-
-- **api.py**: OpaCKD class with grid setting
-  - Auto-generates logarithmic spectral bands (default)
-  - Supports custom band specification
-  - Configurable band width, spacing, and overlap
-
-- **Tests**: All 12 unit tests passing
-  - 3 spectral_bands tests (linear/log spacing, validation)
-  - 7 CKD core tests (updated for pure functions)
-  - 2 OpaCKD API tests (initialization, custom bands)
-
-- **Git**: All changes committed to `correlatedk` branch
-
-### 🔄 Next: Implement `precompute_tables()` orchestration
-**Architecture**: 
-- Use `spectral_bands` utilities for band management
-- Call `subgrid_for_band()` to extract portions of `base_opa.nu_grid`
-- Process each band with `compute_ckd_tables()` from pure core functions
-- Combine results into final CKDTableInfo structure
-
-### 🎯 Office Quick Start:
-```bash
-git pull origin correlatedk
-# All files ready: core.py, api.py, spectral_bands.py, comprehensive tests
-# Tell Claude: "Implement precompute_tables() orchestration using the new architecture"
-```
-
-### Exit
-Before good bye, do not forget git add, commit, and push!
+# important-instruction-reminders
+Do what has been asked; nothing more, nothing less.
+NEVER create files unless they're absolutely necessary for achieving your goal.
+ALWAYS prefer editing an existing file to creating a new one.
+NEVER proactively create documentation files (*.md) or README files. Only create documentation files if explicitly requested by the User.

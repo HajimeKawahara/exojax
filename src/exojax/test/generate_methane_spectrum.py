@@ -7,7 +7,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from exojax.utils.grids import wavenumber_grid
 from exojax.rt import ArtEmisPure
-from exojax.database.api  import MdbExomol
+from exojax.database.exomol.api import MdbExomol
 from exojax.opacity import OpaPremodit
 from exojax.database.contdb  import CdbCIA
 from exojax.opacity import OpaCIA
