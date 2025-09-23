@@ -8,6 +8,7 @@ maintaining accuracy through k-distribution statistical representation.
 from __future__ import annotations
 from typing import Union, Optional
 from dataclasses import dataclass
+import json
 
 import jax.numpy as jnp
 import numpy as np
@@ -17,8 +18,11 @@ from exojax.opacity.base import OpaCalc
 from exojax.opacity.ckd.core import gauss_legendre_grid
 from exojax.opacity.ckd.core import compute_ckd_tables
 from exojax.opacity.ckd.core import interpolate_log_k_2d
-from exojax.utils.spectral_bands import spectral_bands
+from exojax.opacity.ckd.io import _hash_json
+from exojax.opacity.ckd.io import _base_fingerprint
+from exojax.opacity.ckd.io import _ckd_save_as_npz
 
+from exojax.utils.spectral_bands import spectral_bands
 
 @dataclass(frozen=True)
 class CKDTableInfo:
@@ -41,6 +45,7 @@ class CKDTableInfo:
     P_grid: jnp.ndarray
     nu_bands: jnp.ndarray
     band_edges: jnp.ndarray
+
 
 
 class OpaCKD(OpaCalc):
@@ -189,6 +194,10 @@ class OpaCKD(OpaCalc):
         self,
         T_grid: Union[np.ndarray, jnp.ndarray],
         P_grid: Union[np.ndarray, jnp.ndarray],
+        *,
+        to_path: Optional[str] = None,
+        io_format: str = "npz",
+        overwrite: bool = False,
     ) -> None:
         """Pre-compute CKD tables for given T,P grids.
 
@@ -242,6 +251,20 @@ class OpaCKD(OpaCalc):
         print(
             f"Table dimensions: T={len(T_grid)}, P={len(P_grid)}, g={self.Ng}, bands={nnu_bands}"
         )
+        # Optionally save to file
+        if to_path is not None:
+            if io_format != "npz":
+                raise ValueError(f"Unsupported io_format={io_format}. Only 'npz' is supported for now.")
+            _ckd_save_as_npz(self, to_path, overwrite=overwrite)
+            print(f"Saved CKD table to: {to_path}")
+
+    def save_tables(self, path: str, *, io_format: str = "npz", overwrite: bool = False) -> None:
+        if not self.ready or self.ckd_info is None:
+            raise RuntimeError("CKD table is not prepared. Run precompute_tables first.")
+        if io_format != "npz":
+            raise ValueError(f"Unsupported io_format={io_format}. Only 'npz' is supported for now.")
+        _ckd_save_as_npz(self, path, overwrite=overwrite)
+
 
     def _interpolate_log_k(self, T: float, P: float) -> jnp.ndarray:
         """JAX-compatible 2D interpolation of log_kggrid at given T,P.
@@ -299,3 +322,69 @@ class OpaCKD(OpaCalc):
         """
         xsarray_vmap = vmap(self.xsarray_ckd, in_axes=(0, 0))
         return xsarray_vmap(T_array, P_array)
+
+    @classmethod
+    def load_tables(cls, base_opa, path: str, *, io_format: str = "npz"):
+        if io_format != "npz":
+            raise ValueError("Only npz is supported for now.")
+
+        with np.load(path, allow_pickle=False) as data:
+            meta_bytes = np.asarray(data["meta"], dtype=np.uint8)
+            meta = json.loads(meta_bytes.tobytes().decode("utf-8"))
+
+            expect = _hash_json(_base_fingerprint(base_opa))
+            if meta.get("base_fingerprint_hash") != expect:
+                raise ValueError("Loaded CKD table does not match base_opa fingerprint.")
+
+            ggrid_np = np.asarray(data["ggrid"])
+            weights_np = np.asarray(data["weights"])
+            log_kggrid_np = np.asarray(data["log_kggrid"])
+            T_grid_np = np.asarray(data["T_grid"])
+            P_grid_np = np.asarray(data["P_grid"])
+            nu_bands_np = np.asarray(data["nu_bands"])
+            band_edges_np = np.asarray(data["band_edges"])
+
+        Ng_meta = int(meta.get("Ng", ggrid_np.shape[0]))
+        if ggrid_np.shape[0] != Ng_meta:
+            raise ValueError(
+                f"Inconsistent Ng between metadata ({Ng_meta}) and g-grid ({ggrid_np.shape[0]})"
+            )
+        if log_kggrid_np.ndim != 4 or log_kggrid_np.shape[2] != Ng_meta:
+            raise ValueError("log_kggrid shape does not match Ng in metadata")
+
+        n_bands = log_kggrid_np.shape[3]
+        if nu_bands_np.shape[0] != n_bands or band_edges_np.shape[0] != n_bands:
+            raise ValueError("Spectral band metadata does not match log_kggrid dimensions")
+
+        if band_edges_np.size:
+            inferred_band_width = float(band_edges_np[0, 1] - band_edges_np[0, 0])
+        else:
+            inferred_band_width = None
+        if "band_width" in meta:
+            band_width = float(meta["band_width"])
+        elif inferred_band_width is not None:
+            band_width = inferred_band_width
+        else:
+            raise ValueError("Missing band_width in metadata and cannot infer from band edges")
+        band_spacing = str(meta.get("band_spacing", "log"))
+
+        self = cls(
+            base_opa,
+            Ng=Ng_meta,
+            band_width=band_width,
+            band_spacing=band_spacing,
+        )
+
+        self.ckd_info = CKDTableInfo(
+            log_kggrid=jnp.asarray(log_kggrid_np),
+            ggrid=jnp.asarray(ggrid_np),
+            weights=jnp.asarray(weights_np),
+            T_grid=jnp.asarray(T_grid_np),
+            P_grid=jnp.asarray(P_grid_np),
+            nu_bands=jnp.asarray(nu_bands_np),
+            band_edges=jnp.asarray(band_edges_np),
+        )
+        self.nu_bands = self.ckd_info.nu_bands
+        self.band_edges = self.ckd_info.band_edges
+        self.ready = True
+        return self
