@@ -202,13 +202,14 @@ using line-by-line calculations.
 .. code:: ipython3
 
     # Initialize standard opacity calculator (Premodit)
-    base_opa = OpaPremodit(mdb, nu_grid, auto_trange=[800.0, 1600.0])
+    base_opa = OpaPremodit.from_mdb(mdb, nu_grid, auto_trange=[800.0, 1600.0])
     print(f"Base opacity calculator: {base_opa.__class__.__name__}")
+    molmass = mdb.molmass  # Molecular mass of H2O in atomic mass units
     
     # Compute line-by-line cross-sections and transmission spectrum
     print("\nComputing line-by-line transmission spectrum...")
     xsmatrix = base_opa.xsmatrix(Tarr, art.pressure)
-    dtau = art.opacity_profile_xs(xsmatrix, mmr_arr, base_opa.mdb.molmass, gravity)
+    dtau = art.opacity_profile_xs(xsmatrix, mmr_arr, molmass, gravity)
     transit_lbl = art.run(dtau, Tarr, mean_molecular_weight, radius_btm, gravity)
     
     print(f"Line-by-line spectrum computed!")
@@ -218,10 +219,8 @@ using line-by-line calculations.
 
 .. parsed-literal::
 
-    OpaPremodit: params automatically set.
     default elower grid trange (degt) file version: 2
     Robust range: 771.9537482657882 - 1647.2060977798953 K
-    OpaPremodit: Tref_broadening is set to  1131.3708498984759 K
     max value of  ngamma_ref_grid : 21.825321843011604
     min value of  ngamma_ref_grid : 13.242701248020088
     ngamma_ref_grid grid : [13.24270058 15.00453705 17.00077107 19.26258809 21.8253231 ]
@@ -232,7 +231,7 @@ using line-by-line calculations.
 
 .. parsed-literal::
 
-    uniqidx: 100%|██████████| 3/3 [00:00<00:00, 20661.60it/s]
+    uniqidx: 100%|██████████| 3/3 [00:00<00:00, 24867.42it/s]
 
 .. parsed-literal::
 
@@ -280,12 +279,14 @@ transmission spectrum.
     print("\nPre-computing CKD tables...")
     T_grid = np.linspace(np.min(Tarr), np.max(Tarr), 10)
     P_grid = np.logspace(np.log10(np.min(art.pressure)), np.log10(np.max(art.pressure)), 10)
-    opa_ckd.precompute_tables(T_grid, P_grid)
+    
+    opa_ckd.precompute_tables(T_grid, P_grid, to_path="ckd_h2o.npz", overwrite=True) # CKDTableInfo is saved to ckd_h2o.npz you can load it using OpaCKD.load_tables
+    #opa_ckd.load_tables(base_opa=base_opa,path="ckd_h2o.npz")  # Load pre-computed CKD tables, once you ran precompute_tables
     
     # Get CKD cross-section tensor and compute CKD spectrum
     print("Computing CKD transmission spectrum...")
     xs_ckd = opa_ckd.xstensor_ckd(Tarr, art.pressure)
-    dtau_ckd = art.opacity_profile_xs_ckd(xs_ckd, mmr_arr, base_opa.mdb.molmass, gravity)
+    dtau_ckd = art.opacity_profile_xs_ckd(xs_ckd, mmr_arr, molmass, gravity)
     transit_ckd = art.run_ckd(dtau_ckd, Tarr, mean_molecular_weight, radius_btm, gravity, opa_ckd.ckd_info.weights)
     
     print(f"CKD spectrum computed!")
@@ -301,79 +302,6 @@ transmission spectrum.
       Spectral range: 4329.3 - 4362.8 cm⁻¹
     
     Pre-computing CKD tables...
-    Generated g-grid: 16 points, range [0.0053, 0.9947]
-    Processing 68 spectral bands...
-      Band 1: [4329.0, 4329.5] cm⁻¹, 295 frequencies
-      Band 2: [4329.5, 4330.0] cm⁻¹, 294 frequencies
-      Band 3: [4330.0, 4330.5] cm⁻¹, 294 frequencies
-      Band 4: [4330.5, 4331.0] cm⁻¹, 294 frequencies
-      Band 5: [4331.0, 4331.5] cm⁻¹, 294 frequencies
-      Band 6: [4331.5, 4332.0] cm⁻¹, 294 frequencies
-      Band 7: [4332.0, 4332.5] cm⁻¹, 294 frequencies
-      Band 8: [4332.5, 4333.0] cm⁻¹, 294 frequencies
-      Band 9: [4333.0, 4333.5] cm⁻¹, 294 frequencies
-      Band 10: [4333.5, 4334.0] cm⁻¹, 295 frequencies
-      Band 11: [4334.0, 4334.5] cm⁻¹, 294 frequencies
-      Band 12: [4334.5, 4335.0] cm⁻¹, 294 frequencies
-      Band 13: [4335.0, 4335.5] cm⁻¹, 294 frequencies
-      Band 14: [4335.5, 4336.0] cm⁻¹, 294 frequencies
-      Band 15: [4336.0, 4336.5] cm⁻¹, 294 frequencies
-      Band 16: [4336.5, 4337.0] cm⁻¹, 294 frequencies
-      Band 17: [4337.0, 4337.5] cm⁻¹, 294 frequencies
-      Band 18: [4337.5, 4338.0] cm⁻¹, 294 frequencies
-      Band 19: [4338.0, 4338.5] cm⁻¹, 294 frequencies
-      Band 20: [4338.5, 4339.0] cm⁻¹, 295 frequencies
-      Band 21: [4339.0, 4339.5] cm⁻¹, 294 frequencies
-      Band 22: [4339.5, 4340.0] cm⁻¹, 294 frequencies
-      Band 23: [4340.0, 4340.5] cm⁻¹, 294 frequencies
-      Band 24: [4340.5, 4341.0] cm⁻¹, 294 frequencies
-      Band 25: [4341.0, 4341.5] cm⁻¹, 294 frequencies
-      Band 26: [4341.5, 4342.0] cm⁻¹, 294 frequencies
-      Band 27: [4342.0, 4342.5] cm⁻¹, 294 frequencies
-      Band 28: [4342.5, 4343.0] cm⁻¹, 294 frequencies
-      Band 29: [4343.0, 4343.5] cm⁻¹, 294 frequencies
-      Band 30: [4343.5, 4344.0] cm⁻¹, 295 frequencies
-      Band 31: [4344.0, 4344.5] cm⁻¹, 294 frequencies
-      Band 32: [4344.5, 4345.0] cm⁻¹, 294 frequencies
-      Band 33: [4345.0, 4345.5] cm⁻¹, 294 frequencies
-      Band 34: [4345.5, 4346.0] cm⁻¹, 294 frequencies
-      Band 35: [4346.0, 4346.5] cm⁻¹, 294 frequencies
-      Band 36: [4346.5, 4347.0] cm⁻¹, 294 frequencies
-      Band 37: [4347.0, 4347.5] cm⁻¹, 294 frequencies
-      Band 38: [4347.5, 4348.0] cm⁻¹, 294 frequencies
-      Band 39: [4348.0, 4348.5] cm⁻¹, 295 frequencies
-      Band 40: [4348.5, 4349.0] cm⁻¹, 294 frequencies
-      Band 41: [4349.0, 4349.5] cm⁻¹, 294 frequencies
-      Band 42: [4349.5, 4350.0] cm⁻¹, 294 frequencies
-      Band 43: [4350.0, 4350.5] cm⁻¹, 294 frequencies
-      Band 44: [4350.5, 4351.0] cm⁻¹, 294 frequencies
-      Band 45: [4351.0, 4351.5] cm⁻¹, 294 frequencies
-      Band 46: [4351.5, 4352.0] cm⁻¹, 294 frequencies
-      Band 47: [4352.0, 4352.5] cm⁻¹, 294 frequencies
-      Band 48: [4352.5, 4353.0] cm⁻¹, 294 frequencies
-      Band 49: [4353.0, 4353.5] cm⁻¹, 295 frequencies
-      Band 50: [4353.5, 4354.0] cm⁻¹, 294 frequencies
-      Band 51: [4354.0, 4354.5] cm⁻¹, 294 frequencies
-      Band 52: [4354.5, 4355.0] cm⁻¹, 294 frequencies
-      Band 53: [4355.0, 4355.5] cm⁻¹, 294 frequencies
-      Band 54: [4355.5, 4356.0] cm⁻¹, 294 frequencies
-      Band 55: [4356.0, 4356.5] cm⁻¹, 294 frequencies
-      Band 56: [4356.5, 4357.0] cm⁻¹, 294 frequencies
-      Band 57: [4357.0, 4357.5] cm⁻¹, 294 frequencies
-      Band 58: [4357.5, 4358.0] cm⁻¹, 294 frequencies
-      Band 59: [4358.0, 4358.5] cm⁻¹, 295 frequencies
-      Band 60: [4358.5, 4359.0] cm⁻¹, 294 frequencies
-      Band 61: [4359.0, 4359.5] cm⁻¹, 294 frequencies
-      Band 62: [4359.5, 4360.0] cm⁻¹, 294 frequencies
-      Band 63: [4360.0, 4360.5] cm⁻¹, 294 frequencies
-      Band 64: [4360.5, 4361.0] cm⁻¹, 294 frequencies
-      Band 65: [4361.0, 4361.5] cm⁻¹, 294 frequencies
-      Band 66: [4361.5, 4362.0] cm⁻¹, 294 frequencies
-      Band 67: [4362.0, 4362.5] cm⁻¹, 294 frequencies
-      Band 68: [4362.5, 4363.0] cm⁻¹, 295 frequencies
-    Creating CKD table info...
-    CKD precomputation complete! Ready for interpolation.
-    Table dimensions: T=10, P=10, g=16, bands=68
     Computing CKD transmission spectrum...
     CKD spectrum computed!
     CKD transit range: [1.042468, 1.071653]
@@ -502,5 +430,7 @@ Key Steps:
    using CKD
 6. **Validation**: Compare CKD results with line-by-line band averages
 7. **Visualization**: Plot comparison and analyze accuracy in ppm
+
+
 
 
