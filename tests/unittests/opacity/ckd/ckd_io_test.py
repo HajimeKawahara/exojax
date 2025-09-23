@@ -43,12 +43,19 @@ def test_ckd_table_roundtrip(tmp_path, band_spacing):
     out_path = tmp_path / "ckd_table.npz"
     _ckd_save_as_npz(opa, out_path)
 
-    loaded = OpaCKD.load_tables(base, out_path)
+    loaded = OpaCKD.from_saved_tables(base, out_path)
 
     assert loaded.ready is True
     assert loaded.Ng == opa.Ng
     assert loaded.band_width == pytest.approx(opa.band_width)
     assert loaded.band_spacing == opa.band_spacing
+
+    inplace = OpaCKD(base, Ng=4, band_width=1.0, band_spacing="linear")
+    inplace.load_tables(out_path)
+    assert inplace.ready is True
+    assert inplace.Ng == opa.Ng
+    assert inplace.band_spacing == loaded.band_spacing
+    np.testing.assert_allclose(np.asarray(inplace.ckd_info.log_kggrid), np.asarray(log_kggrid))
     np.testing.assert_allclose(np.asarray(loaded.ckd_info.ggrid), np.asarray(ggrid))
     np.testing.assert_allclose(
         np.asarray(loaded.ckd_info.log_kggrid), np.asarray(log_kggrid)

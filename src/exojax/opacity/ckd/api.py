@@ -323,8 +323,8 @@ class OpaCKD(OpaCalc):
         xsarray_vmap = vmap(self.xsarray_ckd, in_axes=(0, 0))
         return xsarray_vmap(T_array, P_array)
 
-    @classmethod
-    def load_tables(cls, base_opa, path: str, *, io_format: str = "npz"):
+    @staticmethod
+    def _load_tables_payload(base_opa, path: str, io_format: str):
         if io_format != "npz":
             raise ValueError("Only npz is supported for now.")
 
@@ -336,28 +336,32 @@ class OpaCKD(OpaCalc):
             if meta.get("base_fingerprint_hash") != expect:
                 raise ValueError("Loaded CKD table does not match base_opa fingerprint.")
 
-            ggrid_np = np.asarray(data["ggrid"])
-            weights_np = np.asarray(data["weights"])
-            log_kggrid_np = np.asarray(data["log_kggrid"])
-            T_grid_np = np.asarray(data["T_grid"])
-            P_grid_np = np.asarray(data["P_grid"])
-            nu_bands_np = np.asarray(data["nu_bands"])
-            band_edges_np = np.asarray(data["band_edges"])
-
-        Ng_meta = int(meta.get("Ng", ggrid_np.shape[0]))
-        if ggrid_np.shape[0] != Ng_meta:
-            raise ValueError(
-                f"Inconsistent Ng between metadata ({Ng_meta}) and g-grid ({ggrid_np.shape[0]})"
+            arrays = dict(
+                log_kggrid=np.asarray(data["log_kggrid"]),
+                ggrid=np.asarray(data["ggrid"]),
+                weights=np.asarray(data["weights"]),
+                T_grid=np.asarray(data["T_grid"]),
+                P_grid=np.asarray(data["P_grid"]),
+                nu_bands=np.asarray(data["nu_bands"]),
+                band_edges=np.asarray(data["band_edges"]),
             )
+
+        Ng_meta = int(meta.get("Ng", arrays["ggrid"].shape[0]))
+        if arrays["ggrid"].shape[0] != Ng_meta:
+            raise ValueError(
+                f"Inconsistent Ng between metadata ({Ng_meta}) and g-grid ({arrays['ggrid'].shape[0]})"
+            )
+
+        log_kggrid_np = arrays["log_kggrid"]
         if log_kggrid_np.ndim != 4 or log_kggrid_np.shape[2] != Ng_meta:
             raise ValueError("log_kggrid shape does not match Ng in metadata")
 
         n_bands = log_kggrid_np.shape[3]
-        if nu_bands_np.shape[0] != n_bands or band_edges_np.shape[0] != n_bands:
+        if arrays["nu_bands"].shape[0] != n_bands or arrays["band_edges"].shape[0] != n_bands:
             raise ValueError("Spectral band metadata does not match log_kggrid dimensions")
 
-        if band_edges_np.size:
-            inferred_band_width = float(band_edges_np[0, 1] - band_edges_np[0, 0])
+        if arrays["band_edges"].size:
+            inferred_band_width = float(arrays["band_edges"][0, 1] - arrays["band_edges"][0, 0])
         else:
             inferred_band_width = None
         if "band_width" in meta:
@@ -368,23 +372,55 @@ class OpaCKD(OpaCalc):
             raise ValueError("Missing band_width in metadata and cannot infer from band edges")
         band_spacing = str(meta.get("band_spacing", "log"))
 
-        self = cls(
-            base_opa,
+        return dict(
+            base_opa=base_opa,
             Ng=Ng_meta,
             band_width=band_width,
             band_spacing=band_spacing,
+            arrays=arrays,
         )
 
+    def _apply_loaded_tables(self, payload):
+        arrays = payload["arrays"]
+        self.base_opa = payload["base_opa"]
+        self.Ng = payload["Ng"]
+        self.band_width = payload["band_width"]
+        self.band_spacing = payload["band_spacing"]
         self.ckd_info = CKDTableInfo(
-            log_kggrid=jnp.asarray(log_kggrid_np),
-            ggrid=jnp.asarray(ggrid_np),
-            weights=jnp.asarray(weights_np),
-            T_grid=jnp.asarray(T_grid_np),
-            P_grid=jnp.asarray(P_grid_np),
-            nu_bands=jnp.asarray(nu_bands_np),
-            band_edges=jnp.asarray(band_edges_np),
+            log_kggrid=jnp.asarray(arrays["log_kggrid"]),
+            ggrid=jnp.asarray(arrays["ggrid"]),
+            weights=jnp.asarray(arrays["weights"]),
+            T_grid=jnp.asarray(arrays["T_grid"]),
+            P_grid=jnp.asarray(arrays["P_grid"]),
+            nu_bands=jnp.asarray(arrays["nu_bands"]),
+            band_edges=jnp.asarray(arrays["band_edges"]),
         )
         self.nu_bands = self.ckd_info.nu_bands
         self.band_edges = self.ckd_info.band_edges
         self.ready = True
+
+    def load_tables(
+        self,
+        path: str,
+        *,
+        io_format: str = "npz",
+        base_opa=None,
+    ):
+        base = base_opa if base_opa is not None else getattr(self, "base_opa", None)
+        if base is None:
+            raise ValueError("base_opa must be provided when loading CKD tables.")
+        payload = self._load_tables_payload(base, path, io_format)
+        self._apply_loaded_tables(payload)
         return self
+
+    @classmethod
+    def from_saved_tables(cls, base_opa, path: str, *, io_format: str = "npz"):
+        payload = cls._load_tables_payload(base_opa, path, io_format)
+        instance = cls(
+            base_opa,
+            Ng=payload["Ng"],
+            band_width=payload["band_width"],
+            band_spacing=payload["band_spacing"],
+        )
+        instance._apply_loaded_tables(payload)
+        return instance
