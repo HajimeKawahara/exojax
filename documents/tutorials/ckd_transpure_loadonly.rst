@@ -5,7 +5,8 @@ Hajime Kawahara with Claude Code, September 24th (2025)
 
 This tutorial demonstrates how to use the Correlated K-Distribution
 (CKD) method for atmospheric transmission calculations with ExoJAX, by
-loading exisiting saved data.
+loading exisiting saved data. We also run a simple HMC-NUTS using
+generated data.
 
 .. code:: ipython3
 
@@ -15,7 +16,7 @@ loading exisiting saved data.
     from jax import config
     
     # ExoJAX imports
-    from exojax.test.emulate_mdb import mock_mdbExomol, mock_wavenumber_grid
+    from exojax.test.emulate_mdb import mock_wavenumber_grid
     from exojax.opacity import OpaCKD
     from exojax.rt import ArtTransPure
     
@@ -161,10 +162,11 @@ transmission spectrum.
 .. code:: ipython3
 
     opa_ckd = OpaCKD.from_saved_tables("ckd_h2o.npz") #one liner, no initialization needed
-    molmass = 18.01528  # Molecular mass of H2O (g/mol)
     # Alternatively, load only the CKD object and then load tables
     #ckd = OpaCKD.load_only()                       
     #ckd.load_tables("ckd_h2o.npz")   
+    molmass = 18.02  # Molecular mass of H2O (g/mol)
+    
     
     print(f"CKD Opacity Calculator Setup:")
     print(f"  Number of g-ordinates (Ng): {opa_ckd.Ng}")
@@ -199,25 +201,32 @@ transmission spectrum.
     Pre-computing CKD tables...
     Computing CKD transmission spectrum...
     CKD spectrum computed!
-    CKD transit range: [1.042467, 1.071652]
+    CKD transit range: [1.042467, 1.071651]
 
 
-4. Visualize Transmission Spectra Comparison
---------------------------------------------
+4. Generate Mock Data
+---------------------
+
+.. code:: ipython3
+
+    3#make mock data
+    from numpy.random import default_rng
+    
+    rng = default_rng(seed=12)
+    sigma = 0.003
+    mock_data = transit_ckd + rng.normal(0, sigma, len(transit_ckd))
+
 
 .. code:: ipython3
 
     # Create comparison plot
     plt.figure(figsize=(14, 8))
-    
-    # Plot line-by-line spectrum (high resolution)
-    
-    # Plot CKD spectrum
     plt.plot(opa_ckd.nu_bands, transit_ckd, 
              'o-', label="CKD Method", 
-             markersize=4, linewidth=2, color='red')
-    
-    
+             markersize=4, linewidth=2, color='C0')
+    plt.plot(opa_ckd.nu_bands, mock_data, 
+             'o-', label="Mock Data", 
+             markersize=4, color='black', alpha=0.6)
     plt.xlabel('Wavenumber (cm⁻¹)', fontsize=12)
     plt.ylabel('(R_p/R_*)²', fontsize=12)
     plt.legend(fontsize=11)
@@ -230,9 +239,159 @@ transmission spectrum.
 
 
 
-.. image:: ckd_transpure_loadonly_files/ckd_transpure_loadonly_9_0.png
+.. image:: ckd_transpure_loadonly_files/ckd_transpure_loadonly_10_0.png
+
+
+5. Runs HMC-NUTS!
+-----------------
+
+.. code:: ipython3
+
+    import jax.numpy as jnp
+    
+    def fspec(mmr_const):
+        mmr_arr = jnp.full(50, mmr_const)  # Constant H2O mixing ratio
+    
+        xs_ckd = opa_ckd.xstensor_ckd(Tarr, art.pressure)
+        dtau_ckd = art.opacity_profile_xs_ckd(xs_ckd, mmr_arr, molmass, gravity)
+        mu = art.run_ckd(dtau_ckd, Tarr, mean_molecular_weight, radius_btm, gravity, opa_ckd.ckd_info.weights)
+        return mu
+
+
+.. code:: ipython3
+
+    plt.plot(opa_ckd.nu_bands, fspec(0.1), 'o-', label="CKD Method (mmr=0.1)", markersize=4, linewidth=2, color='C0')
+    plt.plot(opa_ckd.nu_bands, fspec(0.01), 'o-', label="CKD Method (mmr=0.05)", markersize=4, linewidth=2, color='C1')
 
 
 
+
+
+.. parsed-literal::
+
+    [<matplotlib.lines.Line2D at 0x7799b0194ee0>]
+
+
+
+
+.. image:: ckd_transpure_loadonly_files/ckd_transpure_loadonly_13_1.png
+
+
+.. code:: ipython3
+
+    from numpyro.infer import MCMC, NUTS
+    import numpyro.distributions as dist
+    import numpyro
+    from jax import random
+
+.. code:: ipython3
+
+    def model_prob(spectrum):
+    
+        #atmospheric/spectral model parameters priors
+        mmr = numpyro.sample('MMR', dist.Uniform(0.0, 0.3))
+        mu = fspec(mmr)
+    
+        #noise model parameters priors
+        sigmain = numpyro.sample('sigmain', dist.Exponential(1.e0)) 
+    
+        numpyro.sample('spectrum', dist.Normal(mu, sigmain), obs=spectrum)
+
+.. code:: ipython3
+
+    rng_key = random.PRNGKey(0)
+    rng_key, rng_key_ = random.split(rng_key)
+    num_warmup, num_samples = 500, 1000
+    #kernel = NUTS(model_prob, forward_mode_differentiation=True)
+    kernel = NUTS(model_prob, forward_mode_differentiation=False)
+
+.. code:: ipython3
+
+    mcmc = MCMC(kernel, num_warmup=num_warmup, num_samples=num_samples)
+    mcmc.run(rng_key_, spectrum=mock_data)
+    mcmc.print_summary()
+
+
+.. parsed-literal::
+
+    sample: 100%|██████████| 1500/1500 [00:10<00:00, 139.48it/s, 3 steps of size 8.29e-01. acc. prob=0.92] 
+
+.. parsed-literal::
+
+    
+                    mean       std    median      5.0%     95.0%     n_eff     r_hat
+           MMR      0.11      0.01      0.11      0.09      0.13    508.97      1.00
+       sigmain      0.00      0.00      0.00      0.00      0.00   1082.87      1.00
+    
+    Number of divergences: 0
+
+
+.. parsed-literal::
+
+    
+
+
+.. code:: ipython3
+
+    from numpyro.diagnostics import hpdi
+    from numpyro.infer import Predictive
+    import jax.numpy as jnp
+    
+    # SAMPLING
+    posterior_sample = mcmc.get_samples()
+    pred = Predictive(model_prob, posterior_sample, return_sites=['spectrum'])
+    predictions = pred(rng_key_, spectrum=None)
+    median_mu1 = jnp.median(predictions['spectrum'], axis=0)
+    hpdi_mu1 = hpdi(predictions['spectrum'], 0.9)
+
+.. code:: ipython3
+
+    fig, ax = plt.subplots(nrows=1, ncols=1, figsize=(15, 4.5))
+    ax.plot(opa_ckd.nu_bands, median_mu1, color='C1')
+    ax.fill_between(opa_ckd.nu_bands,
+                    hpdi_mu1[0],
+                    hpdi_mu1[1],
+                    alpha=0.3,
+                    interpolate=True,
+                    color='C1',
+                    label='90% area')
+    ax.errorbar(opa_ckd.nu_bands, mock_data, sigma, fmt=".", label="mock spectrum", color="black",alpha=0.5)
+    plt.xlabel('wavenumber (cm-1)', fontsize=16)
+    plt.legend(fontsize=14)
+    plt.tick_params(labelsize=14)
+    plt.show()
+
+
+
+.. image:: ckd_transpure_loadonly_files/ckd_transpure_loadonly_19_0.png
+
+
+.. code:: ipython3
+
+    import arviz
+    
+    pararr = ["MMR", "sigmain"]
+    arviz.plot_pair(
+        arviz.from_numpyro(mcmc),
+        kind="kde",
+        divergences=False,
+        marginals=True,
+        reference_values={
+            "MMR": 0.1,
+            "sigmain": 0.003,
+        },
+        reference_values_kwargs={
+            "marker": "o",
+            "markersize": 12,
+            "linestyle": "None",
+            "color": "orange",
+            },
+        textsize=20,
+    )
+    plt.show()
+
+
+
+.. image:: ckd_transpure_loadonly_files/ckd_transpure_loadonly_20_0.png
 
 
