@@ -1,7 +1,7 @@
 Reduces Device Memory Usage by Dividing and Stitching the Wavenumber Grid (:math:`\nu` - stitching)
 ===================================================================================================
 
-Hajime Kawahara March 1st (2025)
+Hajime Kawahara September 25th (2025)
 
 Here, we explain the method of reducing GPU device memory usage by
 dividing the wavenumber grid (:math:`\nu` - stitching). This approach is
@@ -15,7 +15,7 @@ procedure using :math:`\nu` - stitching in ``OpaPremodit`` in this
 section.
 
 Currently, the only opacity calculator that supports
-:math:`\nu`-stitching is PreMODIT (v2.2), which can be used with
+:math:`\nu`-stitching is PreMODIT (v2.0), which can be used with
 ``OpaPremodit``.
 
 .. code:: ipython3
@@ -31,15 +31,6 @@ Currently, the only opacity calculator that supports
     config.update("jax_enable_x64", True)
 
 
-
-.. parsed-literal::
-
-    /home/kawahara/anaconda3/lib/python3.10/site-packages/pandas/core/arrays/masked.py:60: UserWarning: Pandas requires version '1.3.6' or newer of 'bottleneck' (version '1.3.5' currently installed).
-      from pandas.core import (
-    /home/kawahara/exojax/src/exojax/spec/dtau_mmwl.py:13: FutureWarning: dtau_mmwl might be removed in future.
-      warnings.warn("dtau_mmwl might be removed in future.", FutureWarning)
-
-
 In this example, the OH molecule is used to compute opacity over the
 1.7–2.3 micron range, divided into 300,000 segments, with 300
 atmospheric layers. At the time of creating this notebook, the
@@ -51,19 +42,8 @@ computation was performed on a gaming laptop with 8GB of device memory.
     nus, wav, res = wavenumber_grid(17000.0, 23000.0, N, unit="AA", xsmode="premodit")
     print("resolution=",res)
     mdb = MdbExomol(".database/OH/16O-1H/MoLLIST/", nus)
+    molmass = mdb.molmass
 
-
-
-.. parsed-literal::
-
-    /home/kawahara/exojax/src/exojax/utils.grids.py:63: UserWarning: Both input wavelength and output wavenumber are in ascending order.
-      warnings.warn(
-    /home/kawahara/exojax/src/exojax/utils/molname.py:197: FutureWarning: e2s will be replaced to exact_molname_exomol_to_simple_molname.
-      warnings.warn(
-    /home/kawahara/exojax/src/exojax/utils/molname.py:91: FutureWarning: exojax.utils.molname.exact_molname_exomol_to_simple_molname will be replaced to radis.api.exomolapi.exact_molname_exomol_to_simple_molname.
-      warnings.warn(
-    /home/kawahara/exojax/src/exojax/utils/molname.py:91: FutureWarning: exojax.utils.molname.exact_molname_exomol_to_simple_molname will be replaced to radis.api.exomolapi.exact_molname_exomol_to_simple_molname.
-      warnings.warn(
 
 
 .. parsed-literal::
@@ -88,7 +68,15 @@ computation was performed on a gaming laptop with 8GB of device memory.
 
 .. parsed-literal::
 
-    /home/kawahara/anaconda3/lib/python3.10/site-packages/radis-0.16-py3.10.egg/radis/api/exomolapi.py:1527: UserWarning: Could not load `16O-1H__H2.broad`. The default broadening parameters are used.
+    /home/kawahara/exojax/src/exojax/utils/grids.py:85: UserWarning: Both input wavelength and output wavenumber are in ascending order.
+      warnings.warn(
+    /home/kawahara/exojax/src/exojax/utils/molname.py:197: FutureWarning: e2s will be replaced to exact_molname_exomol_to_simple_molname.
+      warnings.warn(
+    /home/kawahara/exojax/src/exojax/utils/molname.py:91: FutureWarning: exojax.utils.molname.exact_molname_exomol_to_simple_molname will be replaced to radis.api.exomolapi.exact_molname_exomol_to_simple_molname.
+      warnings.warn(
+    /home/kawahara/exojax/src/exojax/utils/molname.py:91: FutureWarning: exojax.utils.molname.exact_molname_exomol_to_simple_molname will be replaced to radis.api.exomolapi.exact_molname_exomol_to_simple_molname.
+      warnings.warn(
+    /home/kawahara/anaconda3/lib/python3.10/site-packages/radis/api/exomolapi.py:1626: UserWarning: Could not load `16O-1H__H2.broad`. The default broadening parameters are used.
     
       warnings.warn(
 
@@ -108,7 +96,7 @@ computation was performed on a gaming laptop with 8GB of device memory.
 
 .. parsed-literal::
 
-    /home/kawahara/exojax/src/exojax/spec/atmrt.py:53: UserWarning: nu_grid is not given. specify nu_grid when using 'run' 
+    /home/kawahara/exojax/src/exojax/rt/common.py:40: UserWarning: nu_grid is not given. specify nu_grid when using 'run' 
       warnings.warn(
 
 
@@ -125,24 +113,28 @@ mechanism of OLA-based combination.
 .. code:: ipython3
 
     ndiv=20
-    opas = OpaPremodit(mdb, nus, nstitch=ndiv, auto_trange=[500,1300], cutwing = 0.015)
+    snap = mdb.to_snapshot()
+    del mdb
+    opas = OpaPremodit.from_snapshot(snap, nus, nstitch=ndiv, auto_trange=[500,1300], cutwing = 0.015)
     xsm_s = opas.xsmatrix(Tarr, Parr)
 
 
 
 .. parsed-literal::
 
-    OpaPremodit: params automatically set.
     default elower grid trange (degt) file version: 2
     Robust range: 485.7803992045456 - 1334.4906506037173 K
-    OpaPremodit: Tref_broadening is set to  806.2257748298548 K
-    # of reference width grid :  4
-    # of temperature exponent grid : 2
+    max value of  ngamma_ref_grid : 9.677379608844298
+    min value of  ngamma_ref_grid : 7.156060542679381
+    ngamma_ref_grid grid : [7.15606022 7.91349981 8.75111089 9.67738056]
+    max value of  n_Texp_grid : 0.5
+    min value of  n_Texp_grid : 0.5
+    n_Texp_grid grid : [0.49999997 0.50000006]
 
 
 .. parsed-literal::
 
-    uniqidx: 100%|██████████| 2/2 [00:00<00:00, 5482.75it/s]
+    uniqidx: 100%|██████████| 2/2 [00:00<00:00, 4807.23it/s]
 
 .. parsed-literal::
 
@@ -153,18 +145,7 @@ mechanism of OLA-based combination.
 .. parsed-literal::
 
     
-
-
-.. parsed-literal::
-
-    OpaPremodit: Stitching mode is used: nstitch = 20
-    cross section is calculated in the stitching mode.
-    wing cut width =  [19.66940912454993, 26.732490348052124] cm-1
-
-
-.. parsed-literal::
-
-    2025-03-01 18:59:24.343399: W external/xla/xla/hlo/transforms/simplifiers/hlo_rematerialization.cc:3021] Can't reduce memory use below 3.15GiB (3379151558 bytes) by rematerialization; only reduced to 3.52GiB (3775929320 bytes), down from 3.52GiB (3775948936 bytes) originally
+    2025-09-25 08:26:58.752216: W external/xla/xla/hlo/transforms/simplifiers/hlo_rematerialization.cc:3023] Can't reduce memory use below 3.15GiB (3379151558 bytes) by rematerialization; only reduced to 3.52GiB (3775929320 bytes), down from 3.52GiB (3775948936 bytes) originally
 
 
 You can check the wing-cut wavenumber :math:`\Delta \nu \sim 20` cm-1.
@@ -174,7 +155,7 @@ You can check the wing-cut wavenumber :math:`\Delta \nu \sim 20` cm-1.
     from exojax.utils.astrofunc import gravity_jupiter
     mmr = jnp.ones_like(Parr)*0.01
     g = gravity_jupiter(1.0,1.0)
-    dtau = art.opacity_profile_xs(xsm_s,mmr,mdb.molmass,g)
+    dtau = art.opacity_profile_xs(xsm_s,mmr,molmass,g)
 
 Let’s check the contribution function. It is clear that lines are
 present across a wide wavenumber range.
@@ -220,4 +201,5 @@ Let’s calculate the transmitted light spectrum.
 
 
 That’s it!
+
 
