@@ -6,7 +6,7 @@
 ExoJAX
 ==================================
 
-Version 2.0 (:doc:`userguide/history`) 
+Version 2.2 (:doc:`userguide/history`) 
 
 |:frog:| `DeepWiki for ExoJAX <https://deepwiki.com/HajimeKawahara/exojax>`_
 
@@ -35,7 +35,6 @@ Or use `the discussions form <https://github.com/HajimeKawahara/exojax/discussio
 .. Warning:: 
 
 	Recently, logging into HITRAN has become mandatory to access HITEMP files, causing issues with automated HITEMP file retrieval by RADIS. For more details, please refer to `this resource <https://github.com/radis/radis/issues/717>`_. (Feb. 3, 2025) 
-
 
 Contents
 ==================================
@@ -73,10 +72,12 @@ Contents
    exojax/exojax.rst
 
 
+Exoplanets and Inference
+----------------------------
 
+- `Exoplanets and Inference <https://github.com/HajimeKawahara/exoinference>`_ : Handout on exoplanets and Bayesian inference. 
 
-
-ExoJAX References 
+ExoJAX References
 ---------------------
 
 - |:page_facing_up:|  Kawahara, Kawashima, Masuda, Crossfield, Pannier, van den Bekerom, `ApJS 258, 31 (2022) <https://iopscience.iop.org/article/10.3847/1538-4365/ac3b4d>`_ (Paper I)
@@ -86,22 +87,19 @@ ExoJAX References
 Publications that have used ExoJAX to date
 ------------------------------------------------
 
-- `Kasagi et al. AJ in press <https://arxiv.org/abs/2508.01281>`_ Unveiling the Atmosphere of HR 7672 B from the Near-Infrared High-Resolution Spectrum Using REACH/Subaru
-   |:ringed_planet:| `AtmosphericRetrieval_HR7672B <https://github.com/YuiKasagi/AtmosphericRetrieval_HR7672B>`_ : An example of HMC-NUTS for a faint companion HR 7672 B by Subaru/REACH.
-- `Kawashima et al. ApJ 988, 53 (2025) <https://arxiv.org/abs/2410.11561>`_ Atmospheric retrieval of Subaru/IRD high-resolution spectrum of the archetype T-type brown dwarf Gl 229 B
-- `Hosokawa et al. ApJ 984, 92 (2025) <https://arxiv.org/abs/2503.22031>`_ Measurement of Methane Line Broadening in Hot Hydrogen/Helium Atmospheres at lambda = 1.60–1.63 mu m for Substellar Object Spectroscopy
+- `Kasagi et al. AJ in press <https://arxiv.org/abs/2508.01281>`_ : Unveiling the Atmosphere of HR 7672 B from the Near-Infrared High-Resolution Spectrum Using REACH/Subaru
+   |:ringed_planet:| `AtmosphericRetrieval_HR7672B <https://github.com/YuiKasagi/AtmosphericRetrieval_HR7672B>`_ An example of HMC-NUTS for a faint companion HR 7672 B by Subaru/REACH.
+- `Kawashima et al. ApJ 988, 53 (2025) <https://arxiv.org/abs/2410.11561>`_ : Atmospheric retrieval of Subaru/IRD high-resolution spectrum of the archetype T-type brown dwarf Gl 229 B
+   GL229B, Subaru/IRD
+- `Hosokawa et al. ApJ 984, 92 (2025) <https://arxiv.org/abs/2503.22031>`_ : Measurement of Methane Line Broadening in Hot Hydrogen/Helium Atmospheres at lambda = 1.60-1.63 mu m for Substellar Object Spectroscopy
    |:test_tube:| HMC analysis of experimental spectroscopy data for hot methane gas `Gascell_Exojax. <https://github.com/KoHosokawa/Gascell_Exojax>`_
-- `Tada et al. AJ 169, 255 (2025) <https://arxiv.org/abs/2503.08988>`_ Probing 2D Asymmetries of an Exoplanet Atmosphere from Chromatic Transit Variation
-- `Kawahara et al. ApJ 985, 263 (2025) <https://arxiv.org/abs/2410.06900>`_ Differentiable Modeling of Planet and Substellar Atmosphere: High-Resolution Emission, Transmission, and Reflection Spectroscopy with ExoJAX2, Paper II 
+- `Tada et al. AJ 169, 255 (2025) <https://arxiv.org/abs/2503.08988>`_ : Probing 2D Asymmetries of an Exoplanet Atmosphere from Chromatic Transit Variation
+   WASP-39b, JWST transmission 
+- `Kawahara et al. ApJ 985, 263 (2025) <https://arxiv.org/abs/2410.06900>`_ : Differentiable Modeling of Planet and Substellar Atmosphere: High-Resolution Emission, Transmission, and Reflection Spectroscopy with ExoJAX2, Paper II 
    |:ringed_planet:| `exojaxample_WASP39b <https://github.com/sh-tada/exojaxample_WASP39b>`_ : An example of HMC-NUTS for actual hot Saturn (JWST/ERS, NIRSPEC/G395H)
-   |:ringed_planet:| `exojaxample_jupiter <https://github.com/HajimeKawahara/exojaxample_jupiter>`_ : An example of HMC-NUTS for actual Jupiter reflection spectrum
+   |:ringed_planet:| `exojaxample_jupiter <https://github.com/HajimeKawahara/exojaxample_jupiter>`_ An example of HMC-NUTS for actual Jupiter reflection spectrum
 - `Kawahara et al. ApJS 258, 31 (2022) <https://arxiv.org/abs/2105.14782>`_ Autodifferentiable Spectrum Model for High-Dispersion Characterization of Exoplanets and Brown Dwarfs, ExoJAX Paper I (CoP)
-
-
-
-
-
-
+   Luhman16A, VLT/CRIRES 
 
 License & Attribution
 ---------------------
@@ -123,5 +121,5 @@ Copyright 2021-2025, Contributors
 - Ko Hosokawa (@KoHosokawa)
 - Hibiki Yama 
 
-ExoJAX is free software made available under the MIT License. See the ``LICENSE``.
+ExoJAX is free software made available under the MIT License.
    

@@ -11,6 +11,8 @@ Opacity calculations can be controlled using the opacity calculation class
 +--------------------------+-------------+-----------+------------------------------------+
 |:doc:`premodit` (default) |OpaPremodit  |ESLOG      | memory saving, need to set T range |
 +--------------------------+-------------+-----------+------------------------------------+
+|CKD                       |OpaCKD       |arbitrary  |Correlated k-Distribution           |
++--------------------------+-------------+-----------+------------------------------------+
 |Direct LPF                |OpaDirect    |arbitrary  | line by line, arbitrary T          |
 +--------------------------+-------------+-----------+------------------------------------+
 |:doc:`modit`              |OpaMODIT     |ESLOG      | arbitrary T                        |
@@ -21,4 +23,4 @@ Opacity calculations can be controlled using the opacity calculation class
 Links to API
 ----------------
 
-- `OpaPremodit <../exojax/exojax.spec.html#exojax.spec.opacalc.OpaPremodit>`_
+- `OpaPremodit <../exojax/exojax.spec.html#exojax.opacity.api.OpaPremodit>`_
