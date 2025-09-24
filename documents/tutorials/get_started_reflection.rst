@@ -1,7 +1,7 @@
 Getting Started with Reflection Spectroscopy
 ============================================
 
-Hajime Kawahara 3/19 (2025)
+Hajime Kawahara September 24th (2025)
 
 In this tutorial, we analyze the high-resolution near-infrared
 reflection spectrum of Jupiter. This is a simplified version of the
@@ -95,6 +95,7 @@ reflected light.
         np.min(nu_obs) - 5.0, np.max(nu_obs) + 5.0, 10000, xsmode="premodit", unit="cm-1"
     )
     
+    
     art = ArtReflectPure(
             nu_grid=nus, pressure_btm=3.0e1, pressure_top=1.0e-3, nlayer=200
         )
@@ -107,12 +108,6 @@ reflected light.
     Your wavelength grid is in ***  descending  *** order
     The wavenumber grid is in ascending order by definition.
     Please be careful when you use the wavelength grid.
-
-
-.. parsed-literal::
-
-    /home/kawahara/exojax/src/exojax/spec/dtau_mmwl.py:13: FutureWarning: dtau_mmwl might be removed in future.
-      warnings.warn("dtau_mmwl might be removed in future.", FutureWarning)
 
 
 Now, let’s use the temperature-pressure (T-P) profile of Jupiter
@@ -288,28 +283,6 @@ https://github.com/bsumlin/PyMieScatt
             Nrg=N_rg,
     )
 
-
-.. parsed-literal::
-
-    rg range= [1.1033197077960357e-06, 1.103319707796036e-05]
-    sigmag arr =  [2.]
-
-
-.. parsed-literal::
-
-    100%|██████████| 10/10 [09:10<00:00, 55.05s/it]
-    100%|██████████| 1/1 [09:10<00:00, 550.53s/it]
-
-.. parsed-literal::
-
-    miegrid_lognorm_NH3.mg  was generated.
-
-
-.. parsed-literal::
-
-    
-
-
 If you have already generated *miegrid*, you can load it using
 ``load_miegrid``.
 
@@ -340,7 +313,8 @@ Mie scattering is ``OpaMie``.
 
 .. parsed-literal::
 
-    radis engine =  pytables
+    radis engine =  vaex
+    tosss  {'ENCRYPTION_KEY': 'Y4OG6orz1ng3xBpegpj_QmYb-3f7_OvMx6UfMiyRlTw=', 'HITRAN_USERNAME': 'gAAAAABn4pSK0S_unODzf8VGcmEv9LOE59ieBYv8sDVPZB25LRvs-c3z9_lnLlhd2gGYbMR-wOHIyQqkm-DIZ58_L2uAduTvbjJ0JBjAgZddtWgmO-TLCfI=', 'HITRAN_PASSWORD': 'gAAAAABn4pSKXNM5OmFnW_WWeFp_mPg1UlVQg2FuSPsg192eWgpSephsl1b4LuSs-QtuMupi9xUuKnmfS3V7BYudOHnYIaIZLQ==', 'HITRAN_EMAIL': 'gAAAAABn4pSK0S_unODzf8VGcmEv9LOE59ieBYv8sDVPZB25LRvs-c3z9_lnLlhd2gGYbMR-wOHIyQqkm-DIZ58_L2uAduTvbjJ0JBjAgZddtWgmO-TLCfI='}
     Login successful.
     Starting download from https://hitran.org/files/HITEMP/bzip2format/06_HITEMP2020.par.bz2 to 06_HITEMP2020.par.bz2
     Total size to download: 445562914 bytes
@@ -348,7 +322,7 @@ Mie scattering is ``OpaMie``.
 
 .. parsed-literal::
 
-    06_HITEMP2020.par.bz2: 100%|██████████| 446M/446M [00:59<00:00, 7.49MB/s] 
+    06_HITEMP2020.par.bz2: 100%|██████████| 446M/446M [02:14<00:00, 3.31MB/s]   
 
 
 .. parsed-literal::
@@ -361,8 +335,15 @@ Mie scattering is ``OpaMie``.
 
     import jax.numpy as jnp
     from exojax.opacity import OpaPremodit
+    molmass = mdb_reduced.molmass # we use molmass later
     
-    opa = OpaPremodit(mdb_reduced, nu_grid=nus, allow_32bit=True, auto_trange=[80.0, 300.0])  
+    # one liner version
+    #opa = OpaPremodit.from_mdb(mdb_reduced, nu_grid=nus, allow_32bit=True, auto_trange=[80.0, 300.0])  
+    
+    # uses snap and delete mdb_reduced to save memory
+    snap = mdb_reduced.to_snapshot() # extract snapshot from mdb
+    del mdb_reduced # save the memory
+    opa = OpaPremodit.from_snapshot(snap, nu_grid=nus, allow_32bit=True, auto_trange=[80.0, 300.0])
     
     ## Spectrum Model
     nusjax = jnp.array(nus)
@@ -373,13 +354,9 @@ Mie scattering is ``OpaMie``.
 
 .. parsed-literal::
 
-    OpaPremodit: params automatically set.
     default elower grid trange (degt) file version: 2
     Robust range: 79.45501192821337 - 740.1245313998245 K
-    OpaPremodit: Tref_broadening is set to  154.91933384829665 K
     OpaPremodit: gamma_air and n_air are used. gamma_ref = gamma_air/Patm
-    # of reference width grid :  7
-    # of temperature exponent grid : 4
     max value of  ngamma_ref_grid : 31.65553199866716
     min value of  ngamma_ref_grid : 13.8937057424919
     ngamma_ref_grid grid : [13.89370441 15.93761568 18.28220622 20.97171063 24.05686937 27.59588734
@@ -391,7 +368,7 @@ Mie scattering is ``OpaMie``.
 
 .. parsed-literal::
 
-    uniqidx: 100%|██████████| 8/8 [00:00<00:00, 1644.10it/s]
+    uniqidx: 100%|██████████| 8/8 [00:00<00:00, 1808.77it/s]
 
 .. parsed-literal::
 
@@ -402,12 +379,6 @@ Mie scattering is ``OpaMie``.
 .. parsed-literal::
 
     
-
-
-.. parsed-literal::
-
-    cross section (xsvector/xsmatrix) is calculated in the closed mode. The aliasing part cannnot be used.
-    wing cut width =  [35.893247577590955, 36.31638492791535] cm-1
 
 
 Encapsulate the methane opacity calculation into a function.
