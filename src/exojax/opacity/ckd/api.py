@@ -466,6 +466,32 @@ class OpaCKD(OpaCalc):
         self.base_opa = base_opa
 
     @classmethod
-    def from_saved_tables(cls, path: str, *, io_format: str = "npz", base_opa=None):
+    def from_saved_tables(cls, *args, io_format: str = "npz", base_opa=None, **kwargs):
+        """Instantiate ``OpaCKD`` from a saved table.
+
+        Supports both ``OpaCKD.from_saved_tables(path, base_opa=...)`` and the legacy
+        calling pattern ``OpaCKD.from_saved_tables(base_opa, path)`` used in earlier
+        code and tests.
+        """
+        if kwargs:
+            raise TypeError(
+                "from_saved_tables received unexpected keyword arguments: "
+                f"{', '.join(kwargs)}"
+            )
+
+        if len(args) == 1:
+            (path,) = args
+        elif len(args) == 2:
+            if base_opa is not None:
+                raise TypeError(
+                    "from_saved_tables received duplicate base_opa arguments"
+                )
+            base_opa, path = args
+        else:
+            raise TypeError(
+                "from_saved_tables expects `(path)` or `(base_opa, path)` positional"
+                " arguments"
+            )
+
         inst = cls.load_only()
         return inst.load_tables(path, io_format=io_format, base_opa=base_opa)
