@@ -91,6 +91,7 @@ Correlated-k-distribution (CKD)
 
    tutorials/ckd_emispure.rst
    tutorials/ckd_transpure.rst
+   tutorials/ckd_transpure_loadonly.rst
    
 Tips for Real Analysis
 -------------------------
