@@ -74,28 +74,34 @@ Contents
 
 
 
-Actual Analysis Examples using ExoJAX (external) 
-------------------------------------------------------
-
-- |:ringed_planet:| `exojaxample_WASP39b <https://github.com/sh-tada/exojaxample_WASP39b>`_ : An example of HMC-NUTS for actual hot Saturn (JWST/ERS, NIRSPEC/G395H)
-
-- |:ringed_planet:| `AtmosphericRetrieval_HR7672B <https://github.com/YuiKasagi/AtmosphericRetrieval_HR7672B>`_ : An example of HMC-NUTS for a faint companion HR 7672 B by Subaru/REACH.
-
-- |:ringed_planet:| `exojaxample_jupiter <https://github.com/HajimeKawahara/exojaxample_jupiter>`_ : An example of HMC-NUTS for actual Jupiter reflection spectrum
-
-- |:test_tube:| HMC analysis of experimental spectroscopy data for hot methane gas `Gascell_Exojax. <https://github.com/KoHosokawa/Gascell_Exojax>`_
-
-- |:page_facing_up:| Chromatic Transit Variation for WASP-39b `Tada et al. <https://arxiv.org/abs/2503.08988>`_ (arXiv)
-
-- |:page_facing_up:| HMC-NUTS for Gl 229 B  (T-dwarf) Emission Spectrum `Kawashima et al. <https://arxiv.org/abs/2410.11561>`_ (arXiv)
 
 
-References 
+ExoJAX References 
 ---------------------
 
 - |:page_facing_up:|  Kawahara, Kawashima, Masuda, Crossfield, Pannier, van den Bekerom, `ApJS 258, 31 (2022) <https://iopscience.iop.org/article/10.3847/1538-4365/ac3b4d>`_ (Paper I)
-
 - |:page_facing_up:| Kawahara, Kawashima, Tada et al., `ApJ 985, 263 (2025) <https://iopscience.iop.org/article/10.3847/1538-4357/adcba2>`_, (Paper II)
+
+
+Publications that have used ExoJAX to date
+------------------------------------------------
+
+- `Kasagi et al. AJ in press <https://arxiv.org/abs/2508.01281>`_ Unveiling the Atmosphere of HR 7672 B from the Near-Infrared High-Resolution Spectrum Using REACH/Subaru
+   |:ringed_planet:| `AtmosphericRetrieval_HR7672B <https://github.com/YuiKasagi/AtmosphericRetrieval_HR7672B>`_ : An example of HMC-NUTS for a faint companion HR 7672 B by Subaru/REACH.
+- `Kawashima et al. ApJ 988, 53 (2025) <https://arxiv.org/abs/2410.11561>`_ Atmospheric retrieval of Subaru/IRD high-resolution spectrum of the archetype T-type brown dwarf Gl 229 B
+- `Hosokawa et al. ApJ 984, 92 (2025) <https://arxiv.org/abs/2503.22031>`_ Measurement of Methane Line Broadening in Hot Hydrogen/Helium Atmospheres at lambda = 1.60–1.63 mu m for Substellar Object Spectroscopy
+   |:test_tube:| HMC analysis of experimental spectroscopy data for hot methane gas `Gascell_Exojax. <https://github.com/KoHosokawa/Gascell_Exojax>`_
+- `Tada et al. AJ 169, 255 (2025) <https://arxiv.org/abs/2503.08988>`_ Probing 2D Asymmetries of an Exoplanet Atmosphere from Chromatic Transit Variation
+- `Kawahara et al. ApJ 985, 263 (2025) <https://arxiv.org/abs/2410.06900>`_ Differentiable Modeling of Planet and Substellar Atmosphere: High-Resolution Emission, Transmission, and Reflection Spectroscopy with ExoJAX2, Paper II 
+   |:ringed_planet:| `exojaxample_WASP39b <https://github.com/sh-tada/exojaxample_WASP39b>`_ : An example of HMC-NUTS for actual hot Saturn (JWST/ERS, NIRSPEC/G395H)
+   |:ringed_planet:| `exojaxample_jupiter <https://github.com/HajimeKawahara/exojaxample_jupiter>`_ : An example of HMC-NUTS for actual Jupiter reflection spectrum
+- `Kawahara et al. ApJS 258, 31 (2022) <https://arxiv.org/abs/2105.14782>`_ Autodifferentiable Spectrum Model for High-Dispersion Characterization of Exoplanets and Brown Dwarfs, ExoJAX Paper I (CoP)
+
+
+
+
+
+
 
 License & Attribution
 ---------------------
