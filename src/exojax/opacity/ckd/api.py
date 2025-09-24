@@ -24,6 +24,7 @@ from exojax.opacity.ckd.io import _ckd_save_as_npz
 
 from exojax.utils.spectral_bands import spectral_bands
 
+
 @dataclass(frozen=True)
 class CKDTableInfo:
     """Immutable container for CKD table information.
@@ -45,7 +46,6 @@ class CKDTableInfo:
     P_grid: jnp.ndarray
     nu_bands: jnp.ndarray
     band_edges: jnp.ndarray
-
 
 
 class OpaCKD(OpaCalc):
@@ -99,6 +99,26 @@ class OpaCKD(OpaCalc):
         # Initialize state
         self.ckd_info = None
         self.ready = False
+
+    @classmethod
+    def load_only(cls) -> OpaCKD:
+        """headless initialization for loading from saved tables (without base_opa)."""
+        self = object.__new__(cls)  # no __init__
+        # mimimal initialization
+        self.method = "ckd"
+        self.base_opa = None
+        self.Ng = None
+        self.band_width = None
+        self.band_spacing = "log"
+        self.ckd_info = None
+        self.nu_bands = None
+        self.band_edges = None
+        self.ready = False
+        self._expected_base_hash = None  # uses validation when loading
+        self._expected_base_meta = None
+        # dummy attributes to satisfy OpaCalc
+        self.nu_grid = None
+        return self
 
     def _setup_spectral_bands(self) -> None:
         """Set up spectral bands from base opacity grid."""
@@ -254,17 +274,24 @@ class OpaCKD(OpaCalc):
         # Optionally save to file
         if to_path is not None:
             if io_format != "npz":
-                raise ValueError(f"Unsupported io_format={io_format}. Only 'npz' is supported for now.")
+                raise ValueError(
+                    f"Unsupported io_format={io_format}. Only 'npz' is supported for now."
+                )
             _ckd_save_as_npz(self, to_path, overwrite=overwrite)
             print(f"Saved CKD table to: {to_path}")
 
-    def save_tables(self, path: str, *, io_format: str = "npz", overwrite: bool = False) -> None:
+    def save_tables(
+        self, path: str, *, io_format: str = "npz", overwrite: bool = False
+    ) -> None:
         if not self.ready or self.ckd_info is None:
-            raise RuntimeError("CKD table is not prepared. Run precompute_tables first.")
+            raise RuntimeError(
+                "CKD table is not prepared. Run precompute_tables first."
+            )
         if io_format != "npz":
-            raise ValueError(f"Unsupported io_format={io_format}. Only 'npz' is supported for now.")
+            raise ValueError(
+                f"Unsupported io_format={io_format}. Only 'npz' is supported for now."
+            )
         _ckd_save_as_npz(self, path, overwrite=overwrite)
-
 
     def _interpolate_log_k(self, T: float, P: float) -> jnp.ndarray:
         """JAX-compatible 2D interpolation of log_kggrid at given T,P.
@@ -332,9 +359,21 @@ class OpaCKD(OpaCalc):
             meta_bytes = np.asarray(data["meta"], dtype=np.uint8)
             meta = json.loads(meta_bytes.tobytes().decode("utf-8"))
 
-            expect = _hash_json(_base_fingerprint(base_opa))
-            if meta.get("base_fingerprint_hash") != expect:
-                raise ValueError("Loaded CKD table does not match base_opa fingerprint.")
+            expected_hash = meta.get("base_fingerprint_hash")
+            expected_meta = meta.get("base_fingerprint")
+
+            if base_opa is not None:
+                actual_fp = _base_fingerprint(base_opa)
+                actual_hash = _hash_json(actual_fp)
+                if expected_hash is not None and expected_hash != actual_hash:
+                    raise ValueError(
+                        "Loaded CKD table does not match base_opa fingerprint."
+                    )
+            else:
+                if expected_hash is None:
+                    raise ValueError(
+                        "Loaded CKD table is missing base fingerprint metadata; provide base_opa to validate."
+                    )
 
             arrays = dict(
                 log_kggrid=np.asarray(data["log_kggrid"]),
@@ -357,11 +396,18 @@ class OpaCKD(OpaCalc):
             raise ValueError("log_kggrid shape does not match Ng in metadata")
 
         n_bands = log_kggrid_np.shape[3]
-        if arrays["nu_bands"].shape[0] != n_bands or arrays["band_edges"].shape[0] != n_bands:
-            raise ValueError("Spectral band metadata does not match log_kggrid dimensions")
+        if (
+            arrays["nu_bands"].shape[0] != n_bands
+            or arrays["band_edges"].shape[0] != n_bands
+        ):
+            raise ValueError(
+                "Spectral band metadata does not match log_kggrid dimensions"
+            )
 
         if arrays["band_edges"].size:
-            inferred_band_width = float(arrays["band_edges"][0, 1] - arrays["band_edges"][0, 0])
+            inferred_band_width = float(
+                arrays["band_edges"][0, 1] - arrays["band_edges"][0, 0]
+            )
         else:
             inferred_band_width = None
         if "band_width" in meta:
@@ -369,7 +415,9 @@ class OpaCKD(OpaCalc):
         elif inferred_band_width is not None:
             band_width = inferred_band_width
         else:
-            raise ValueError("Missing band_width in metadata and cannot infer from band edges")
+            raise ValueError(
+                "Missing band_width in metadata and cannot infer from band edges"
+            )
         band_spacing = str(meta.get("band_spacing", "log"))
 
         return dict(
@@ -378,6 +426,8 @@ class OpaCKD(OpaCalc):
             band_width=band_width,
             band_spacing=band_spacing,
             arrays=arrays,
+            expected_base_hash=expected_hash,
+            expected_base_fingerprint=expected_meta,
         )
 
     def _apply_loaded_tables(self, payload):
@@ -398,29 +448,50 @@ class OpaCKD(OpaCalc):
         self.nu_bands = self.ckd_info.nu_bands
         self.band_edges = self.ckd_info.band_edges
         self.ready = True
+        self._expected_base_meta = payload.get("expected_base_fingerprint")
 
-    def load_tables(
-        self,
-        path: str,
-        *,
-        io_format: str = "npz",
-        base_opa=None,
-    ):
-        base = base_opa if base_opa is not None else getattr(self, "base_opa", None)
-        if base is None:
-            raise ValueError("base_opa must be provided when loading CKD tables.")
-        payload = self._load_tables_payload(base, path, io_format)
+    def load_tables(self, path: str, *, io_format: str = "npz", base_opa=None):
+        payload = self._load_tables_payload(base_opa, path, io_format)
         self._apply_loaded_tables(payload)
+        if base_opa is not None:
+            self.base_opa = base_opa
+        self._expected_base_hash = payload.get("expected_base_hash")
         return self
 
+    def attach_base(self, base_opa, *, strict: bool = True) -> None:
+        """attach base opacity calculator after loading tables."""
+        actual = _hash_json(_base_fingerprint(base_opa))
+        if strict and getattr(self, "_expected_base_hash", None) not in (None, actual):
+            raise ValueError("base_opa fingerprint mismatch with loaded CKD table.")
+        self.base_opa = base_opa
+
     @classmethod
-    def from_saved_tables(cls, base_opa, path: str, *, io_format: str = "npz"):
-        payload = cls._load_tables_payload(base_opa, path, io_format)
-        instance = cls(
-            base_opa,
-            Ng=payload["Ng"],
-            band_width=payload["band_width"],
-            band_spacing=payload["band_spacing"],
-        )
-        instance._apply_loaded_tables(payload)
-        return instance
+    def from_saved_tables(cls, *args, io_format: str = "npz", base_opa=None, **kwargs):
+        """Instantiate ``OpaCKD`` from a saved table.
+
+        Supports both ``OpaCKD.from_saved_tables(path, base_opa=...)`` and the legacy
+        calling pattern ``OpaCKD.from_saved_tables(base_opa, path)`` used in earlier
+        code and tests.
+        """
+        if kwargs:
+            raise TypeError(
+                "from_saved_tables received unexpected keyword arguments: "
+                f"{', '.join(kwargs)}"
+            )
+
+        if len(args) == 1:
+            (path,) = args
+        elif len(args) == 2:
+            if base_opa is not None:
+                raise TypeError(
+                    "from_saved_tables received duplicate base_opa arguments"
+                )
+            base_opa, path = args
+        else:
+            raise TypeError(
+                "from_saved_tables expects `(path)` or `(base_opa, path)` positional"
+                " arguments"
+            )
+
+        inst = cls.load_only()
+        return inst.load_tables(path, io_format=io_format, base_opa=base_opa)
