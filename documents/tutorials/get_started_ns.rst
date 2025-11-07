@@ -1,7 +1,7 @@
 Nested Sampling of an Emission Spectrum Using JAXNS
 ===================================================
 
-Last update: Febrary 2nd (2025) Hajime Kawahara for v2.2.0
+Last update: September 25th (2025) Hajime Kawahara for v2.0
 
 In this guide, we perform retrieval of an emission spectrum using
 `nested
@@ -48,11 +48,6 @@ This spectral model is incorporated into the probabilistic model in
 NumPyro with JAXNS, and retrieval is performed by sampling using nested
 sampling.
 
-.. figure:: https://secondearths.sakura.ne.jp/exojax/figures/exojax_ns.png
-   :alt: Figure. Structure of ExoJAX
-
-   Figure. Structure of ExoJAX
-
 1. Loading a molecular database using mdb
 -----------------------------------------
 
@@ -74,17 +69,15 @@ wavenumber range first.
 
     xsmode =  premodit
     xsmode assumes ESLOG in wavenumber space: xsmode=premodit
-    ======================================================================
-    The wavenumber grid should be in ascending order.
-    The users can specify the order of the wavelength grid by themselves.
     Your wavelength grid is in ***  descending  *** order
-    ======================================================================
+    The wavenumber grid is in ascending order by definition.
+    Please be careful when you use the wavelength grid.
     Resolution= 1004211.9840291934
 
 
 .. parsed-literal::
 
-    /home/kawahara/exojax/src/exojax/utils.grids.py:63: UserWarning: Both input wavelength and output wavenumber are in ascending order.
+    /home/kawahara/exojax/src/exojax/utils/grids.py:85: UserWarning: Both input wavelength and output wavenumber are in ascending order.
       warnings.warn(
 
 
@@ -97,6 +90,7 @@ the database name in the ExoMol website (https://www.exomol.com/).
 
     from exojax.database.exomol.api import MdbExomol
     mdb = MdbExomol(".database/CO/12C-16O/Li2015", nurange=nu_grid)
+    molmass = mdb.molmass
 
 
 .. parsed-literal::
@@ -115,17 +109,17 @@ the database name in the ExoMol website (https://www.exomol.com/).
     radis engine =  vaex
     Molecule:  CO
     Isotopologue:  12C-16O
-    Background atmosphere:  H2
     ExoMol database:  None
     Local folder:  .database/CO/12C-16O/Li2015
     Transition files: 
     	 => File 12C-16O__Li2015.trans
+    Broadener:  H2
     Broadening code level: a0
 
 
 .. parsed-literal::
 
-    /home/kawahara/exojax/src/radis/radis/api/exomolapi.py:685: AccuracyWarning: The default broadening parameter (alpha = 0.07 cm^-1 and n = 0.5) are used for J'' > 80 up to J'' = 152
+    /home/kawahara/anaconda3/lib/python3.10/site-packages/radis/api/exomolapi.py:727: AccuracyWarning: The default broadening parameter (alpha = 0.07 cm^-1 and n = 0.5) are used for J'' > 80 up to J'' = 152
       warnings.warn(
 
 
@@ -139,27 +133,27 @@ tempreature range we will use is 500-1500K.
 .. code:: ipython3
 
     from exojax.opacity import OpaPremodit
-    opa = OpaPremodit(mdb, nu_grid, auto_trange=[500.0, 1500.0], dit_grid_resolution=1.0)
+    snap = mdb.to_snapshot()
+    del mdb
+    opa = OpaPremodit.from_snapshot(snap, nu_grid, auto_trange=[500.0, 1500.0], dit_grid_resolution=1.0)
 
 
 .. parsed-literal::
 
-    OpaPremodit: params automatically set.
-    default elower grid trange (degt) file version: 2
-    Robust range: 485.7803992045456 - 1514.171191195336 K
-    OpaPremodit: Tref_broadening is set to  866.0254037844389 K
-
-
-.. parsed-literal::
-
-    /home/kawahara/exojax/src/exojax/spec/opacalc.py:215: UserWarning: dit_grid_resolution is not None. Ignoring broadening_parameter_resolution.
+    /home/kawahara/exojax/src/exojax/opacity/premodit/core.py:28: UserWarning: dit_grid_resolution is not None. Ignoring broadening_parameter_resolution.
       warnings.warn(
 
 
 .. parsed-literal::
 
-    # of reference width grid :  2
-    # of temperature exponent grid : 2
+    default elower grid trange (degt) file version: 2
+    Robust range: 485.7803992045456 - 1514.171191195336 K
+    max value of  ngamma_ref_grid : 9.450919102366303
+    min value of  ngamma_ref_grid : 7.881095721823979
+    ngamma_ref_grid grid : [7.88109541 9.4509201 ]
+    max value of  n_Texp_grid : 0.658
+    min value of  n_Texp_grid : 0.5
+    n_Texp_grid grid : [0.49999997 0.65800005]
 
 
 .. parsed-literal::
@@ -247,12 +241,6 @@ reflection) has been ``ibased`` since v1.5. In our experience,
     Intensity-based n-stream solver, isothermal layer (e.g. NEMESIS, pRT like)
 
 
-.. parsed-literal::
-
-    /home/kawahara/exojax/src/exojax/spec/dtau_mmwl.py:13: FutureWarning: dtau_mmwl might be removed in future.
-      warnings.warn("dtau_mmwl might be removed in future.", FutureWarning)
-
-
 Let’s assume the power law temperature model, within 500 - 1500 K.
 
 :math:`T = T_0 P^\alpha`
@@ -314,7 +302,7 @@ Convert them to opacity
 
 .. code:: ipython3
 
-    dtau_CO = art.opacity_profile_xs(xsmatrix, mmr_profile, mdb.molmass, gravity)
+    dtau_CO = art.opacity_profile_xs(xsmatrix, mmr_profile, molmass, gravity)
     vmrH2 = 0.855  # VMR of H2
     mmw = 2.33  # mean molecular weight of the atmosphere
     dtaucia = art.opacity_profile_cia(logacia_matrix, Tarr, vmrH2, vmrH2, mmw, gravity)
@@ -458,7 +446,7 @@ model has six parameters.
         Tarr = art.powerlaw_temperature(T0, alpha)
         xsmatrix = opa.xsmatrix(Tarr, art.pressure)
         mmr_arr = art.constant_mmr_profile(mmr)
-        dtau = art.opacity_profile_xs(xsmatrix, mmr_arr, opa.mdb.molmass, g)
+        dtau = art.opacity_profile_xs(xsmatrix, mmr_arr, molmass, g)
         #continuum
         logacia_matrix = opacia.logacia_matrix(Tarr)
         dtaucH2H2 = art.opacity_profile_cia(logacia_matrix, Tarr, vmrH2, vmrH2,
@@ -486,7 +474,7 @@ various parameter sets.
 
 .. parsed-literal::
 
-    [<matplotlib.lines.Line2D at 0x7f24fc2bd0a0>]
+    [<matplotlib.lines.Line2D at 0x7604285e2bc0>]
 
 
 
@@ -516,10 +504,10 @@ arguments of ``fspec``.
 
 .. parsed-literal::
 
-    2025-02-02 18:08:47.555832: E external/local_xla/xla/stream_executor/cuda/cuda_fft.cc:477] Unable to register cuFFT factory: Attempting to register factory for plugin cuFFT when one has already been registered
-    WARNING: All log messages before absl::InitializeLog() is called are written to STDERR
-    E0000 00:00:1738487327.576968  203197 cuda_dnn.cc:8310] Unable to register cuDNN factory: Attempting to register factory for plugin cuDNN when one has already been registered
-    E0000 00:00:1738487327.583472  203197 cuda_blas.cc:1418] Unable to register cuBLAS factory: Attempting to register factory for plugin cuBLAS when one has already been registered
+    2025-09-25 09:03:06.062605: E external/local_xla/xla/stream_executor/cuda/cuda_fft.cc:485] Unable to register cuFFT factory: Attempting to register factory for plugin cuFFT when one has already been registered
+    2025-09-25 09:03:06.075042: E external/local_xla/xla/stream_executor/cuda/cuda_dnn.cc:8454] Unable to register cuDNN factory: Attempting to register factory for plugin cuDNN when one has already been registered
+    2025-09-25 09:03:06.079436: E external/local_xla/xla/stream_executor/cuda/cuda_blas.cc:1452] Unable to register cuBLAS factory: Attempting to register factory for plugin cuBLAS when one has already been registered
+    2025-09-25 09:03:06.764560: W tensorflow/compiler/tf2tensorrt/utils/py_utils.cc:38] TF-TRT Warning: Could not find TensorRT
 
 
 .. code:: ipython3
@@ -613,4 +601,5 @@ display a corner plot. Here, we’ve used ArviZ for visualization.
 
 
 That’s it!
+
 

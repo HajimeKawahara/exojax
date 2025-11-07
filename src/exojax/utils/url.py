@@ -50,7 +50,7 @@ def url_HITRANCIA():
     Returns:
         URL for hitrancia file
     """
-    url = "https://hitran.org/data/CIA/"
+    url = "https://hitran.org/data/CIA/main/"
     return url
 
 

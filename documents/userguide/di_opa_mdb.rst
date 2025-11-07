@@ -19,15 +19,16 @@ Minimal Example
    nu_grid, _, _ = wavenumber_grid(4200.0, 4300.0, 20000, xsmode="premodit")
    mdb = MdbExomol(".database/CO/12C-16O/Li2015", nurange=nu_grid)
 
-   # 2) Snapshot path (data-only DTO)
-   snap = mdb.to_snapshot()
-   opa_snap = OpaPremodit.from_snapshot(
-       snap, nu_grid, manual_params=(5.0, 1000.0, 1200.0)
-   )
-
-   # 3) Back-compat path (routes through snapshot internally)
+   # 2) Back-compat path (routes through snapshot internally)
    opa_mdb = OpaPremodit.from_mdb(
        mdb, nu_grid, manual_params=(5.0, 1000.0, 1200.0)
+   )
+
+   # 3) Snapshot path (data-only DTO)
+   snap = mdb.to_snapshot()
+   del mdb # mdb is no longer needed
+   opa_snap = OpaPremodit.from_snapshot(
+       snap, nu_grid, manual_params=(5.0, 1000.0, 1200.0)
    )
 
 Optional: Memory Policy
