@@ -1,7 +1,7 @@
 Getting Started with Transmission Spectroscopy
 ==============================================
 
-Last update: March 15th (2025) Hajime Kawahara for v2.2.0
+Last update: September 24th (2025) Hajime Kawahara for v2.2.0
 
 In this getting started guide, we will use ExoJAX to simulate a
 high-resolution **transmission** spectrum from an atmosphere with CO
@@ -71,7 +71,7 @@ wavenumber range first.
 
 .. parsed-literal::
 
-    /home/kawahara/exojax/src/exojax/utils.grids.py:82: UserWarning: Both input wavelength and output wavenumber are in ascending order.
+    /home/kawahara/exojax/src/exojax/utils/grids.py:85: UserWarning: Both input wavelength and output wavenumber are in ascending order.
       warnings.warn(
 
 
@@ -99,60 +99,20 @@ the database name in the ExoMol website (https://www.exomol.com/).
 .. parsed-literal::
 
     HITRAN exact name= (12C)(16O)
-    radis engine =  pytables
-    		 => Downloading from http://www.exomol.com/db/CO/12C-16O/Li2015/12C-16O__Li2015.def
-    		 => Downloading from http://www.exomol.com/db/CO/12C-16O/Li2015/12C-16O__Li2015.pf
-    		 => Downloading from http://www.exomol.com/db/CO/12C-16O/Li2015/12C-16O__Li2015.states.bz2
-    		 => Downloading from http://www.exomol.com/db/CO/12C-16O/12C-16O__H2.broad
-    		 => Downloading from http://www.exomol.com/db/CO/12C-16O/12C-16O__He.broad
-    		 => Downloading from http://www.exomol.com/db/CO/12C-16O/12C-16O__air.broad
-    		 => Downloading from http://www.exomol.com/db/CO/12C-16O/12C-16O__self.broad
-    Error: Couldn't download .broad file at http://www.exomol.com/db/CO/12C-16O/12C-16O__self.broad and save.
-    		 => Downloading from http://www.exomol.com/db/CO/12C-16O/12C-16O__Ar.broad
-    Error: Couldn't download .broad file at http://www.exomol.com/db/CO/12C-16O/12C-16O__Ar.broad and save.
-    		 => Downloading from http://www.exomol.com/db/CO/12C-16O/12C-16O__CH4.broad
-    Error: Couldn't download .broad file at http://www.exomol.com/db/CO/12C-16O/12C-16O__CH4.broad and save.
-    		 => Downloading from http://www.exomol.com/db/CO/12C-16O/12C-16O__CO.broad
-    Error: Couldn't download .broad file at http://www.exomol.com/db/CO/12C-16O/12C-16O__CO.broad and save.
-    		 => Downloading from http://www.exomol.com/db/CO/12C-16O/12C-16O__CO2.broad
-    Error: Couldn't download .broad file at http://www.exomol.com/db/CO/12C-16O/12C-16O__CO2.broad and save.
-    		 => Downloading from http://www.exomol.com/db/CO/12C-16O/12C-16O__H2.broad
-    		 => Downloading from http://www.exomol.com/db/CO/12C-16O/12C-16O__H2O.broad
-    Error: Couldn't download .broad file at http://www.exomol.com/db/CO/12C-16O/12C-16O__H2O.broad and save.
-    		 => Downloading from http://www.exomol.com/db/CO/12C-16O/12C-16O__N2.broad
-    Error: Couldn't download .broad file at http://www.exomol.com/db/CO/12C-16O/12C-16O__N2.broad and save.
-    		 => Downloading from http://www.exomol.com/db/CO/12C-16O/12C-16O__NH3.broad
-    Error: Couldn't download .broad file at http://www.exomol.com/db/CO/12C-16O/12C-16O__NH3.broad and save.
-    		 => Downloading from http://www.exomol.com/db/CO/12C-16O/12C-16O__NO.broad
-    Error: Couldn't download .broad file at http://www.exomol.com/db/CO/12C-16O/12C-16O__NO.broad and save.
-    		 => Downloading from http://www.exomol.com/db/CO/12C-16O/12C-16O__O2.broad
-    Error: Couldn't download .broad file at http://www.exomol.com/db/CO/12C-16O/12C-16O__O2.broad and save.
-    		 => Downloading from http://www.exomol.com/db/CO/12C-16O/12C-16O__NH3.broad
-    Error: Couldn't download .broad file at http://www.exomol.com/db/CO/12C-16O/12C-16O__NH3.broad and save.
-    		 => Downloading from http://www.exomol.com/db/CO/12C-16O/12C-16O__CS.broad
-    Error: Couldn't download .broad file at http://www.exomol.com/db/CO/12C-16O/12C-16O__CS.broad and save.
-    
-    Summary of broadening files downloaded:
-    	Success: ['H2' 'He' 'air' 'H2']
-    	Fail: ['self' 'Ar' 'CH4' 'CO' 'CO2' 'H2O' 'N2' 'NH3' 'NO' 'O2' 'NH3' 'CS']
-    
-    Note: Caching states data to the pytables format. After the second time, it will become much faster.
+    radis engine =  vaex
     Molecule:  CO
     Isotopologue:  12C-16O
     ExoMol database:  None
     Local folder:  .database/CO/12C-16O/Li2015
     Transition files: 
     	 => File 12C-16O__Li2015.trans
-    		 => Downloading from http://www.exomol.com/db/CO/12C-16O/Li2015/12C-16O__Li2015.trans.bz2
-    		 => Caching the *.trans.bz2 file to the pytables (*.h5) format. After the second time, it will become much faster.
-    		 => You can deleted the 'trans.bz2' file by hand.
     Broadener:  H2
     Broadening code level: a0
 
 
 .. parsed-literal::
 
-    /home/kawahara/miniconda3/lib/python3.12/site-packages/radis-0.16-py3.12.egg/radis/api/exomolapi.py:687: AccuracyWarning: The default broadening parameter (alpha = 0.07 cm^-1 and n = 0.5) are used for J'' > 80 up to J'' = 152
+    /home/kawahara/anaconda3/lib/python3.10/site-packages/radis/api/exomolapi.py:727: AccuracyWarning: The default broadening parameter (alpha = 0.07 cm^-1 and n = 0.5) are used for J'' > 80 up to J'' = 152
       warnings.warn(
 
 
@@ -166,23 +126,22 @@ tempreature range we will use is 500-1500K.
 .. code:: ipython3
 
     from exojax.opacity import OpaPremodit
-    opa = OpaPremodit(mdb, nu_grid, auto_trange=[500.0, 1500.0], dit_grid_resolution=1.0)
+    molmass = mdb.molmass # we use molmass later
+    snap = mdb.to_snapshot() # extract snapshot from mdb
+    del mdb # save the memory
+    opa = OpaPremodit.from_snapshot(snap, nu_grid, auto_trange=[500.0, 1500.0], dit_grid_resolution=1.0)
 
 
 .. parsed-literal::
 
-    /home/kawahara/exojax/src/exojax/spec/opacalc.py:348: UserWarning: dit_grid_resolution is not None. Ignoring broadening_parameter_resolution.
+    /home/kawahara/exojax/src/exojax/opacity/premodit/core.py:28: UserWarning: dit_grid_resolution is not None. Ignoring broadening_parameter_resolution.
       warnings.warn(
 
 
 .. parsed-literal::
 
-    OpaPremodit: params automatically set.
     default elower grid trange (degt) file version: 2
     Robust range: 485.7803992045456 - 1514.171191195336 K
-    OpaPremodit: Tref_broadening is set to  866.0254037844389 K
-    # of reference width grid :  2
-    # of temperature exponent grid : 2
     max value of  ngamma_ref_grid : 9.450919102366303
     min value of  ngamma_ref_grid : 7.881095721823979
     ngamma_ref_grid grid : [7.88109541 9.4509201 ]
@@ -199,8 +158,6 @@ tempreature range we will use is 500-1500K.
 
     Premodit: Twt= 1108.7151960064205 K Tref= 570.4914318566549 K
     Making LSD:|####################| 100%
-    cross section (xsvector/xsmatrix) is calculated in the closed mode. The aliasing part cannnot be used.
-    wing cut width =  [15.12718787427093, 15.23298725175755] cm-1
 
 
 .. parsed-literal::
@@ -272,9 +229,7 @@ Simpson’s rule as the integration scheme. The default setting is
 
 .. parsed-literal::
 
-    /home/kawahara/exojax/src/exojax/spec/dtau_mmwl.py:13: FutureWarning: dtau_mmwl might be removed in future.
-      warnings.warn("dtau_mmwl might be removed in future.", FutureWarning)
-    /home/kawahara/exojax/src/exojax/spec/atmrt.py:53: UserWarning: nu_grid is not given. specify nu_grid when using 'run' 
+    /home/kawahara/exojax/src/exojax/rt/common.py:40: UserWarning: nu_grid is not given. specify nu_grid when using 'run' 
       warnings.warn(
 
 
@@ -373,7 +328,7 @@ Convert them to opacity
 
     
     
-    dtau_CO = art.opacity_profile_xs(xsmatrix, mmr_profile, mdb.molmass, gravity)
+    dtau_CO = art.opacity_profile_xs(xsmatrix, mmr_profile, molmass, gravity)
     vmrH2 = 0.855  # VMR of H2
     dtaucia = art.opacity_profile_cia(logacia_matrix, Tarr, vmrH2, vmrH2, mmw[:, None], gravity)
 
@@ -447,14 +402,6 @@ upper to the lower layers, is included.
 
 .. parsed-literal::
 
-    /home/kawahara/exojax/src/exojax/plot/atmplot.py:51: SyntaxWarning: invalid escape sequence '\m'
-      plt.xlabel("wavenumber ($\mathrm{cm}^{-1}$)")
-    /home/kawahara/exojax/src/exojax/plot/atmplot.py:68: SyntaxWarning: invalid escape sequence '\m'
-      labelx["um"] = "wavelength ($\mu \mathrm{m}$)"
-    /home/kawahara/exojax/src/exojax/plot/atmplot.py:70: SyntaxWarning: invalid escape sequence '\A'
-      labelx["AA"] = "wavelength ($\AA$)"
-    /home/kawahara/exojax/src/exojax/plot/atmplot.py:71: SyntaxWarning: invalid escape sequence '\m'
-      labelx["cm-1"] = "wavenumber ($\mathrm{cm}^{-1}$)"
     /home/kawahara/exojax/src/exojax/plot/atmplot.py:24: UserWarning: nugrid looks in log scale, results in a wrong X-axis value. Use log10(nugrid) instead.
       warnings.warn(
 
@@ -542,7 +489,7 @@ model has six parameters.
         #molecule
         xsmatrix = opa.xsmatrix(Tarr, art.pressure)
         mmr_arr = art.constant_mmr_profile(mmr)
-        dtau = art.opacity_profile_xs(xsmatrix, mmr_arr, opa.mdb.molmass, gravity)
+        dtau = art.opacity_profile_xs(xsmatrix, mmr_arr, molmass, gravity)
         #continuum
         logacia_matrix = opacia.logacia_matrix(Tarr)
         dtaucH2H2 = art.opacity_profile_cia(logacia_matrix, Tarr, vmrH2, vmrH2,
@@ -570,7 +517,7 @@ various parameter sets.
 
 .. parsed-literal::
 
-    [<matplotlib.lines.Line2D at 0x745a21794980>]
+    [<matplotlib.lines.Line2D at 0x738810660250>]
 
 
 
@@ -595,13 +542,6 @@ arguments of ``fspec``.
     import numpyro.distributions as dist
     import numpyro
     from jax import random
-
-
-.. parsed-literal::
-
-    /home/kawahara/miniconda3/lib/python3.12/site-packages/tqdm/auto.py:21: TqdmWarning: IProgress not found. Please update jupyter and ipywidgets. See https://ipywidgets.readthedocs.io/en/stable/user_install.html
-      from .autonotebook import tqdm as notebook_tqdm
-
 
 .. code:: ipython3
 
@@ -750,4 +690,5 @@ may be helpful.
    by Shotaro Tada (@sh-tada)
 
 That’s it.
+
 

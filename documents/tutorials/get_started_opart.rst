@@ -1,7 +1,7 @@
 Getting Started with Opart; GPU memory-efficient Emission Spectrum
 ==================================================================
 
-Last update: January 14th (2025) Hajime Kawahara
+Last update: September 25th (2025) Hajime Kawahara
 
 This is a device memory efficient version of `Getting Started with
 Simulating the Emission Spectra <get_started.html>`__!
@@ -69,8 +69,12 @@ Note that you can also use the
             )
             # sets mdb for CO
             self.mdb_co = MdbExomol(".database/CO/12C-16O/Li2015", nurange=self.nu_grid)
-            self.opa_co = OpaPremodit(
-                self.mdb_co,
+            snap = self.mdb_co.to_snapshot()
+            self.molmass = self.mdb_co.molmass
+            del self.mdb_co # mdb is no longer needed
+            
+            self.opa_co = OpaPremodit.from_snapshot(
+                snap,
                 self.nu_grid,
                 auto_trange=[500.0, 1500.0],
                 dit_grid_resolution=1.0,
@@ -91,19 +95,12 @@ Note that you can also use the
             # computes CO opacity
             xsv_co = self.opa_co.xsvector(temperature, pressure)
             dtau_co = single_layer_optical_depth(
-                dP, xsv_co, mixing_ratio, self.mdb_co.molmass, self.gravity
+                dP, xsv_co, mixing_ratio, self.molmass, self.gravity
             )
             # computes CIA opacity
             logacia_vector = self.opa_cia.logacia_vector(temperature)
             dtau_cia = single_layer_optical_depth_CIA(temperature, pressure, dP, self.vmrH2, self.vmrH2, self.mmw, self.gravity, logacia_vector)
             return dtau_co + dtau_cia
-
-
-.. parsed-literal::
-
-    /home/kawahara/exojax/src/exojax/spec/dtau_mmwl.py:13: FutureWarning: dtau_mmwl might be removed in future.
-      warnings.warn("dtau_mmwl might be removed in future.", FutureWarning)
-
 
 For molecular opacity, note that the opacity for a single layer is
 calculated here. First, ``opa.xsvector`` (the cross-section vector along
@@ -145,55 +142,43 @@ instead.)
 
 .. parsed-literal::
 
-    xsmode =  premodit
-    xsmode assumes ESLOG in wavenumber space: xsmode=premodit
-    ======================================================================
-    The wavenumber grid should be in ascending order.
-    The users can specify the order of the wavelength grid by themselves.
-    Your wavelength grid is in ***  descending  *** order
-    ======================================================================
-    HITRAN exact name= (12C)(16O)
-    radis engine =  vaex
-
-
-.. parsed-literal::
-
     /home/kawahara/exojax/src/exojax/utils/molname.py:197: FutureWarning: e2s will be replaced to exact_molname_exomol_to_simple_molname.
       warnings.warn(
     /home/kawahara/exojax/src/exojax/utils/molname.py:91: FutureWarning: exojax.utils.molname.exact_molname_exomol_to_simple_molname will be replaced to radis.api.exomolapi.exact_molname_exomol_to_simple_molname.
       warnings.warn(
     /home/kawahara/exojax/src/exojax/utils/molname.py:91: FutureWarning: exojax.utils.molname.exact_molname_exomol_to_simple_molname will be replaced to radis.api.exomolapi.exact_molname_exomol_to_simple_molname.
       warnings.warn(
+    /home/kawahara/anaconda3/lib/python3.10/site-packages/radis/api/exomolapi.py:727: AccuracyWarning: The default broadening parameter (alpha = 0.07 cm^-1 and n = 0.5) are used for J'' > 80 up to J'' = 152
+      warnings.warn(
+    /home/kawahara/exojax/src/exojax/opacity/premodit/core.py:28: UserWarning: dit_grid_resolution is not None. Ignoring broadening_parameter_resolution.
+      warnings.warn(
 
 
 .. parsed-literal::
 
+    xsmode =  premodit
+    xsmode assumes ESLOG in wavenumber space: xsmode=premodit
+    Your wavelength grid is in ***  descending  *** order
+    The wavenumber grid is in ascending order by definition.
+    Please be careful when you use the wavelength grid.
+    HITRAN exact name= (12C)(16O)
+    radis engine =  vaex
     Molecule:  CO
     Isotopologue:  12C-16O
-    Background atmosphere:  H2
     ExoMol database:  None
     Local folder:  .database/CO/12C-16O/Li2015
     Transition files: 
     	 => File 12C-16O__Li2015.trans
+    Broadener:  H2
     Broadening code level: a0
-
-
-.. parsed-literal::
-
-    /home/kawahara/anaconda3/lib/python3.10/site-packages/radis-0.15.2-py3.10.egg/radis/api/exomolapi.py:685: AccuracyWarning: The default broadening parameter (alpha = 0.07 cm^-1 and n = 0.5) are used for J'' > 80 up to J'' = 152
-      warnings.warn(
-    /home/kawahara/exojax/src/exojax/spec/opacalc.py:215: UserWarning: dit_grid_resolution is not None. Ignoring broadening_parameter_resolution.
-      warnings.warn(
-
-
-.. parsed-literal::
-
-    OpaPremodit: params automatically set.
     default elower grid trange (degt) file version: 2
     Robust range: 485.7803992045456 - 1514.171191195336 K
-    OpaPremodit: Tref_broadening is set to  866.0254037844389 K
-    # of reference width grid :  2
-    # of temperature exponent grid : 2
+    max value of  ngamma_ref_grid : 21.998297968028478
+    min value of  ngamma_ref_grid : 15.952820597839843
+    ngamma_ref_grid grid : [15.95281982 21.99830055]
+    max value of  n_Texp_grid : 0.671
+    min value of  n_Texp_grid : 0.5
+    n_Texp_grid grid : [0.49999997 0.67100006]
 
 
 .. parsed-literal::
@@ -357,7 +342,7 @@ using the forward-mode.
 
 .. parsed-literal::
 
-    [Array(-0.30389497, dtype=float64), Array(-0.03122399, dtype=float64)]
+    [Array(0.27718641, dtype=float64), Array(0.04045218, dtype=float64)]
 
 
 Or alternatively ``jax.jvp`` (Jacobian-Vector Product) can be
@@ -392,7 +377,7 @@ used.　Using ``jax.jvp`` might be slightly slower than ``jacfwd``, but…
 
 .. parsed-literal::
 
-    [-8.83467787e-06 -4.74474356e-03]
+    [2.77186406e-05 4.04521815e-02]
 
 
 Let’s plot the objective function as a function of T.
@@ -420,7 +405,7 @@ Let’s plot the objective function as a function of T.
 
 .. parsed-literal::
 
-    100%|██████████| 50/50 [10:21<00:00, 12.44s/it]
+    100%|██████████| 50/50 [10:32<00:00, 12.66s/it]
 
 
 .. code:: ipython3
@@ -466,16 +451,16 @@ Let’s perform optimization using the gradient (JVP) with
 
 .. parsed-literal::
 
-    Objective function: 1.99E-01 T0:  899.9991999987783 alpha:  0.08999991999873427
-    Objective function: 3.48E-01 T0:  926.6781692992693 alpha:  0.0931724823153698
-    Objective function: 1.68E-01 T0:  901.8653101013599 alpha:  0.09225547157640661
-    Objective function: 2.08E-01 T0:  895.2651875787137 alpha:  0.0935864758062235
-    Objective function: 1.81E-01 T0:  896.1425462222461 alpha:  0.09567910622999228
-    Objective function: 1.59E-01 T0:  897.9766116513349 alpha:  0.09752100457624553
-    Objective function: 1.50E-01 T0:  899.7120460192209 alpha:  0.09889100848017918
-    Objective function: 1.49E-01 T0:  900.9991516321255 alpha:  0.0997522033521371
-    Objective function: 1.50E-01 T0:  901.1835152084095 alpha:  0.10013304971008916
-    Objective function: 1.49E-01 T0:  900.2631301037181 alpha:  0.10015558983532892
+    Objective function: 1.99E-01 T0:  899.9991999987778 alpha:  0.08999991999873372
+    Objective function: 3.49E-01 T0:  926.6924046684388 alpha:  0.0931610617973799
+    Objective function: 1.68E-01 T0:  901.897371699816 alpha:  0.0922289341581765
+    Objective function: 2.08E-01 T0:  895.2982801717703 alpha:  0.09354319749318145
+    Objective function: 1.81E-01 T0:  896.1786576292948 alpha:  0.09562125862129014
+    Objective function: 1.59E-01 T0:  898.0226257349213 alpha:  0.09746113862102375
+    Objective function: 1.51E-01 T0:  899.7691070778741 alpha:  0.09882083369071266
+    Objective function: 1.50E-01 T0:  901.0660142800502 alpha:  0.09967102377785796
+    Objective function: 1.51E-01 T0:  901.2427246384227 alpha:  0.10004201129018957
+    Objective function: 1.50E-01 T0:  900.3106409251709 alpha:  0.10006144102716251
 
 
 Plots the optimization trajectory
