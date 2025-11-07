@@ -70,7 +70,9 @@ def model_c(nu1, y1):
     MMR_CO = numpyro.sample("MMR_CO", dist.Uniform(0.0, 0.015))
     T0 = numpyro.sample("T0", dist.Uniform(1000.0, 1500.0))
     alpha = numpyro.sample("alpha", dist.Uniform(0.05, 0.2))
-    vsini = numpyro.sample("vsini", dist.Uniform(15.0, 25.0))
+    vsini = numpyro.sample("vcdbH2H2 = contdb.CdbCIA(".database/H2-H2_2011.cia", nu_grid)
+opacia = OpaCIA(cdbH2H2, nu_grid)
+sini", dist.Uniform(15.0, 25.0))
     gravity = gravity_jupiter(Mp, Rp)  # gravity in the unit of Jupiter
     u1 = 0.0
     u2 = 0.0
