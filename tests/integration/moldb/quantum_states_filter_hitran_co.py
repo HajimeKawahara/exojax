@@ -1,9 +1,6 @@
-# %%
-
-print("###############################################")
-print("Currently, we need the develop branch of radis")
-print("to test this code. See #405 for more details.")
-print("###############################################")
+#
+# This script shows how to filter quantum states in HITRAN database using MdbHitran class.
+#
 
 from exojax.database.hitran.api import MdbHitran
 from exojax.utils.grids import wavenumber_grid
@@ -30,7 +27,7 @@ for dv in range(0, 6):
 load_mask = (mdb.df["vu"] - mdb.df["vl"] == 2)
 mdb.activate(mdb.df, load_mask)
 plt.plot(1.e4 / mdb.nu_lines,
-         mdb.line_strength,
+         mdb.line_strength_ref_original,
          "+",
          color="black",
          label="activated lines")
@@ -40,7 +37,7 @@ plt.legend()
 plt.ylabel("line strength at 296 K")
 plt.xlabel("micron")
 plt.yscale("log")
-#plt.xscale("log")
+plt.xscale("log")
 plt.show()
 
 # %%
