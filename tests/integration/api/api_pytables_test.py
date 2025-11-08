@@ -1,5 +1,5 @@
-
-from exojax.database.hitemp.api import MdbHitemp, MdbExomol
+from exojax.database.hitemp.api import MdbHitemp
+from exojax.database.exomol.api import MdbExomol
 
 mdb = MdbExomol("CO/12C-16O/Li2015", nurange=[4000.0, 4100.0], engine="vaex")
 mdb = MdbExomol("CO/12C-16O/Li2015", nurange=[4000.0, 4100.0], engine="pytables")
