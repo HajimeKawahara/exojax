@@ -387,6 +387,14 @@ class OpaPremodit(OpaCalc):
 
         self.memory_policy = None
         self.set_aliasing()
+        self._sets_capable_opacalculators()
+        if self.nstitch > 1:
+            if hasattr(self, "lbd_coeff_reshaped"):
+                pass
+            elif hasattr(self, "lbd_coeff"):
+                self.reshape_lbd_coeff()
+            else:
+                raise ValueError("Serialized opa missing lbd coefficients for stitching mode.")
         self.ready = True
     def __eq__(self, other: object) -> bool:
         """Check equality with another OpaPremodit instance.

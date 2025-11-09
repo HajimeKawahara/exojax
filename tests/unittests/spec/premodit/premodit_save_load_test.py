@@ -37,12 +37,13 @@ def _build_minimal_ready_opa() -> OpaPremodit:
     opa.nstitch = 1
     opa.alias = "close"
 
-    multi_index_uniqgrid = np.array([[0, 0, 0]])
+    multi_index_uniqgrid = np.array([[0, 0]])
     elower_grid = np.array([0.1, 0.2])
     ngamma_ref_grid = np.array([0.05])
     n_Texp_grid = np.array([0.01])
     R = np.array([1.0])
-    pmarray = np.array([[1.0]])
+    pmarray = np.ones(len(nu_grid) + 1, dtype=np.float64)
+    pmarray[1::2] *= -1.0
     opa.ngrid_broadpar = len(multi_index_uniqgrid)
     opa.ngrid_elower = len(elower_grid)
 
@@ -58,7 +59,11 @@ def _build_minimal_ready_opa() -> OpaPremodit:
 
     opa.gamma_ref = np.array([0.2])
     opa.n_Texp = np.array([0.7])
-    opa.lbd_coeff = np.ones((1, opa.ngrid_elower, len(n_Texp_grid)))
+    # Structure mirrors real initspec output: (difforder, nu_bins, broadening_pts, elower_bins)
+    opa.lbd_coeff = np.ones(
+        (1, len(opa.nu_grid), opa.ngrid_broadpar, opa.ngrid_elower),
+        dtype=np.float64,
+    )
 
     T_gQT = np.array([100.0, 200.0])
     gQT = np.array([1.0, 2.0])
@@ -99,3 +104,15 @@ def test_save_and_load_roundtrip_zarr(tmp_path):
     assert np.allclose(loaded.gamma_ref, opa.gamma_ref)
     assert np.allclose(loaded.n_Texp, opa.n_Texp)
     assert np.array_equal(loaded.opainfo[0], opa.opainfo[0])
+
+
+def test_save_and_load_roundtrip_zarr_xsvector(tmp_path):
+    opa = _build_minimal_ready_opa()
+    artifact = tmp_path / "opa_roundtrip"
+    saveopa_premodit(opa, str(artifact), format="zarr")
+
+    loaded = OpaPremodit.from_saved_opa(str(artifact) + ".zarr")
+
+    P = 1.0  # bar
+    T_1 = 500.0  # K
+    xsv_1 = loaded.xsvector(T_1, P)  # cm2
