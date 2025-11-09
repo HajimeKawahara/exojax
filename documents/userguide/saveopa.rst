@@ -3,7 +3,7 @@ Saving and Loading ``OpaPremodit``
 
 *Hajime Kawahara, 11/9 (2025)*
 
-You can save and load pre-calculated :class:`exojax.spec.opacalc.OpaPremodit` objects using the functions in :mod:`exojax.opacity.io.ioopa`.  
+You can save and load pre-calculated :class:`exojax.spec.opacalc.OpaPremodit` objects using the functions in :mod:`exojax.opacity.io`.  
 This is useful when you want to avoid re-computing the LSD (Line Shape Database) for the same spectral grid and temperature range.
 
 
