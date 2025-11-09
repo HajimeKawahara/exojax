@@ -87,3 +87,15 @@ def test_save_and_load_roundtrip(tmp_path):
     assert np.allclose(loaded.gamma_ref, opa.gamma_ref)
     assert np.allclose(loaded.n_Texp, opa.n_Texp)
     assert np.array_equal(loaded.opainfo[0], opa.opainfo[0])
+
+def test_save_and_load_roundtrip_zarr(tmp_path):
+    opa = _build_minimal_ready_opa()
+    artifact = tmp_path / "opa_roundtrip"
+    saveopa_premodit(opa, str(artifact), format="zarr")
+
+    loaded = OpaPremodit.from_saved_opa(str(artifact) + ".zarr")
+
+    assert loaded == opa
+    assert np.allclose(loaded.gamma_ref, opa.gamma_ref)
+    assert np.allclose(loaded.n_Texp, opa.n_Texp)
+    assert np.array_equal(loaded.opainfo[0], opa.opainfo[0])

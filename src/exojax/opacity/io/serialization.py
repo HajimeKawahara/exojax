@@ -96,5 +96,12 @@ def _load_from_zarr(zarr_path: Path) -> Tuple[Dict[str, np.ndarray], Dict[str, A
     group = zarr.open(zarr_path, mode="r")
     arrays = {name: np.asarray(group[name]) for name in group.keys()}
     meta = dict(group.attrs)
-    group.close()
+    close_group = getattr(group, "close", None)
+    if callable(close_group):
+        close_group()
+    else:
+        store = getattr(group, "store", None)
+        close_store = getattr(store, "close", None)
+        if callable(close_store):
+            close_store()
     return arrays, meta

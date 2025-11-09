@@ -152,7 +152,15 @@ def _save_as_zarr(path: str, arrays: Dict[str, np.ndarray], meta: Dict[str, Any]
 
     # Save metadata
     zarr_group.attrs.update(meta)
-    zarr_group.close()
+    # zarr.Group lacks close() on some versions; close what we can.
+    close_group = getattr(zarr_group, "close", None)
+    if callable(close_group):
+        close_group()
+    else:
+        store = getattr(zarr_group, "store", None)
+        close_store = getattr(store, "close", None)
+        if callable(close_store):
+            close_store()
 
 
 def _serialize_pf_provider(opa: OpaPremodit, arrays: Dict[str, np.ndarray]) -> Dict[str, Any]:

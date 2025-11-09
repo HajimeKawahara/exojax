@@ -56,6 +56,7 @@ dependencies = [
   "json_tricks",
   "habanero<=1.2.6",
   "numpy<2",
+  "zarr",
 ]
 
 [project.urls]
