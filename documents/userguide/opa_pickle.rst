@@ -5,7 +5,7 @@ Saving Pre‑calculated ``OpaPremodit`` Objects with ``cloudpickle`` (not recomm
 
 .. Warning::
 
-    Now, we have a better way to save and load `OpaPremodit` using `exojax.opacity.io.ioopa` module. Please see :ref:`here <userguide-saveopa>`.
+    Now, we have a better way to save and load `OpaPremodit` using `exojax.opacity.io.ioopa` module. Please see :doc:`saveopa`.
 
 
 
