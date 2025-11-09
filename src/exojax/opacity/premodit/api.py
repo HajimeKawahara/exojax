@@ -8,7 +8,6 @@ optimized parameter grids and efficient memory management.
 from functools import partial
 import logging
 from typing import Optional, Union, Literal, Dict, Any, Tuple, List
-from dataclasses import dataclass
 import jax.numpy as jnp
 import numpy as np
 from jax import checkpoint
@@ -36,77 +35,15 @@ from exojax.opacity.providers import ExomolBroadening
 from exojax.opacity.providers import HitranBroadening
 from exojax.database.contracts import MDBSnapshot
 from exojax.opacity.policies import MemoryPolicy
+from exojax.opacity.io.mdblike_adapter import _MDBLikeFromSnapshot
+from exojax.opacity.io.serialization import (
+    _load,
+    _validate_schema,
+    _ensure_compatible_versions,
+    _require,
+)
 
 logger = logging.getLogger(__name__)
-
-
-@dataclass
-class _MDBLikeFromSnapshot:
-    """Minimal mdb-like adapter built from MDBSnapshot.
-
-    Provides only the attribute surface used by OpaPremodit.__init__ so the
-    old constructor path stays unchanged. All arrays are NumPy arrays.
-    """
-
-    dbtype: str
-    molmass: float
-    T_gQT: np.ndarray
-    gQT: np.ndarray
-    nu_lines: np.ndarray
-    elower: np.ndarray
-    line_strength_ref_original: np.ndarray
-    # HITRAN-only (optional)
-    isotope: Optional[int] = None
-    uniqiso: Optional[np.ndarray] = None
-    n_air: Optional[np.ndarray] = None
-    gamma_air: Optional[np.ndarray] = None
-    # ExoMol-only (optional)
-    n_Texp: Optional[np.ndarray] = None
-    alpha_ref: Optional[np.ndarray] = None
-    # HITRAN-only bookkeeping of per-line isotope ids
-    isoid: Optional[np.ndarray] = None
-
-    @classmethod
-    def from_snapshot(cls, snap: MDBSnapshot) -> "_MDBLikeFromSnapshot":
-        meta = snap.meta
-        lines = snap.lines
-        isotope_ids = snap.isotope
-        uniqiso = snap.uniqiso
-        isotope_sel: Optional[int] = None
-
-        if meta.dbtype == "hitran":
-            # Preserve the scalar isotope selection (e.g., 1) expected by HitranPartitionProvider.
-            if uniqiso is not None and len(uniqiso) > 0:
-                unique_iso = np.unique(uniqiso)
-                if unique_iso.size == 1:
-                    isotope_sel = int(unique_iso[0])
-                else:
-                    isotope_sel = 0
-            elif isotope_ids is not None and len(isotope_ids) > 0:
-                unique_iso = np.unique(isotope_ids)
-                if unique_iso.size == 1:
-                    isotope_sel = int(unique_iso[0])
-                else:
-                    isotope_sel = 0
-
-        return cls(
-            dbtype=meta.dbtype,
-            molmass=meta.molmass,
-            T_gQT=meta.T_gQT,
-            gQT=meta.gQT,
-            nu_lines=lines.nu_lines,
-            elower=lines.elower,
-            line_strength_ref_original=lines.line_strength_ref_original,
-            isotope=isotope_sel,
-            uniqiso=uniqiso,
-            n_air=snap.n_air,
-            gamma_air=snap.gamma_air,
-            n_Texp=snap.n_Texp,
-            alpha_ref=snap.alpha_ref,
-            isoid=isotope_ids,
-        )
-
-
 class OpaPremodit(OpaCalc):
     """Opacity Calculator Class for Pre-computed Modified Discrete Integral Transform (PreMODIT).
 
@@ -328,7 +265,129 @@ class OpaPremodit(OpaCalc):
             broadening_strategy=broadening_strategy,
             **kwargs,
         )
+    
+    @classmethod
+    def from_saved_opa(cls, path: str, *, strict: bool=True,
+                       allow_downgrade: bool=False) -> "OpaPremodit":
+        from exojax.opacity.io.serialization import _sha256_array
 
+        arrays, meta = _load(path)
+        _validate_schema(meta["schema_version"], allow_downgrade)
+        if strict:
+            _ensure_compatible_versions(meta["exojax_version"])
+        _require(
+            arrays,
+            [
+                "nu_grid",
+                "multi_index_uniqgrid",
+                "elower_grid",
+                "ngamma_ref_grid",
+                "n_Texp_grid",
+                "R",
+                "pmarray",
+                "gamma_ref",
+                "n_Texp",
+            ],
+        )
+        layout = meta.get("lbd_layout")
+        if layout == "reshaped":
+            _require(arrays, ["lbd_coeff_reshaped"])
+        elif layout == "flat":
+            _require(arrays, ["lbd_coeff"])
+        else:
+            raise ValueError(
+                "Missing layout metadata for lbd_coeff. Got: "
+                f"{layout!r}. Saved file may be corrupted."
+            )
+        if "nu_grid_digest" in meta:
+            digest = _sha256_array(np.asarray(arrays["nu_grid"]))
+            if digest != meta["nu_grid_digest"]:
+                raise ValueError("nu_grid digest mismatch. Saved file may be corrupted.")
+        obj = cls.__new__(cls)
+        obj._init_from_arrays_and_meta(arrays, meta)
+        return obj
+
+    def _init_from_arrays_and_meta(self, arrays, meta) -> None:
+        """Internal helper to rebuild state from serialized payload."""
+        nu_grid = np.asarray(arrays["nu_grid"])
+        OpaCalc.__init__(self, nu_grid)
+
+        state = meta.get("opa_state", {})
+        self.method = state.get("method", "premodit")
+        self.dbtype = state["dbtype"]
+        self.molmass = float(state["molmass"])
+        self.diffmode = int(state["diffmode"])
+        self.warning = bool(state.get("warning", True))
+        self.wavelength_order = state["wavelength_order"]
+        self.wav = nu2wav(
+            self.nu_grid, wavelength_order=self.wavelength_order, unit="AA"
+        )
+        self.resolution = resolution_eslog(self.nu_grid)
+        self.version_auto_trange = int(state["version_auto_trange"])
+        self.single_broadening = bool(state["single_broadening"])
+        sb_params = state.get("single_broadening_parameters")
+        self.single_broadening_parameters = (
+            tuple(float(p) for p in sb_params) if sb_params is not None else None
+        )
+        self.dE = float(state["dE"])
+        self.Tref = float(state["Tref"])
+        self.Twt = float(state["Twt"])
+        self.Tmax = float(state["Tmax"])
+        self.Tmin = float(state["Tmin"])
+        self.Tref_broadening = float(state["Tref_broadening"])
+        self.dit_grid_resolution = state.get("dit_grid_resolution")
+        if self.dit_grid_resolution is not None:
+            self.dit_grid_resolution = float(self.dit_grid_resolution)
+        self.cutwing = float(state["cutwing"])
+        self.nstitch = int(state["nstitch"])
+        self.alias = state["alias"]
+        self.ngrid_broadpar = int(state["ngrid_broadpar"])
+        self.ngrid_elower = int(state["ngrid_elower"])
+
+        self.multi_index_uniqgrid = np.asarray(arrays["multi_index_uniqgrid"])
+        self.elower_grid = np.asarray(arrays["elower_grid"])
+        self.ngamma_ref_grid = np.asarray(arrays["ngamma_ref_grid"])
+        self.n_Texp_grid = np.asarray(arrays["n_Texp_grid"])
+        self.R = np.asarray(arrays["R"])
+        self.pmarray = np.asarray(arrays["pmarray"])
+        self.pre_modit_info = PreMODITInfo(
+            multi_index_uniqgrid=self.multi_index_uniqgrid,
+            elower_grid=self.elower_grid,
+            ngamma_ref_grid=self.ngamma_ref_grid,
+            n_Texp_grid=self.n_Texp_grid,
+            R=self.R,
+            pmarray=self.pmarray,
+        )
+        self.opainfo = self.pre_modit_info.as_tuple()
+
+        self.gamma_ref = np.asarray(arrays["gamma_ref"])
+        self.n_Texp = np.asarray(arrays["n_Texp"])
+
+        contracts = meta.get("provider_contracts", {})
+        partition_contract = contracts.get("partition")
+        broadening_contract = contracts.get("broadening")
+        if partition_contract is None or broadening_contract is None:
+            raise ValueError("Provider contracts missing from serialized opa.")
+
+        pf_provider, pf_state = _restore_partition_provider(partition_contract, arrays)
+        self.pf_provider = pf_provider
+        self.T_gQT = pf_state["T_gQT"]
+        self.gQT = pf_state["gQT"]
+        self.isotope = pf_state.get("isotope")
+        self.uniqiso = pf_state.get("uniqiso")
+
+        self.broadening_strategy = _restore_broadening_strategy(
+            broadening_contract, arrays
+        )
+        layout = meta.get("lbd_layout")
+        if layout == "reshaped":
+            self.lbd_coeff_reshaped = np.asarray(arrays["lbd_coeff_reshaped"])
+        else:
+            self.lbd_coeff = np.asarray(arrays["lbd_coeff"])
+
+        self.memory_policy = None
+        self.set_aliasing()
+        self.ready = True
     def __eq__(self, other: object) -> bool:
         """Check equality with another OpaPremodit instance.
 
@@ -808,3 +867,43 @@ class OpaPremodit(OpaCalc):
             crit,
             figname,
         )
+
+
+def _restore_partition_provider(contract: Dict[str, Any], arrays: Dict[str, np.ndarray]):
+    kind = contract.get("kind")
+    if kind == "exomol":
+        _require(arrays, ["pf_T_gQT", "pf_gQT"])
+        T_gQT = np.asarray(arrays["pf_T_gQT"])
+        gQT = np.asarray(arrays["pf_gQT"])
+        provider = ExomolPartitionProvider(T_gQT, gQT)
+        return provider, {"T_gQT": T_gQT, "gQT": gQT}
+    if kind == "hitran":
+        _require(arrays, ["pf_T_gQT", "pf_gQT"])
+        isotope = contract.get("isotope")
+        if isotope is None:
+            raise ValueError("Hitran partition provider missing isotope metadata.")
+        T_gQT = np.asarray(arrays["pf_T_gQT"])
+        gQT = np.asarray(arrays["pf_gQT"])
+        uniqiso = (
+            np.asarray(arrays["pf_uniqiso"]) if "pf_uniqiso" in arrays else None
+        )
+        provider = HitranPartitionProvider(isotope, uniqiso, T_gQT, gQT)
+        return provider, {"T_gQT": T_gQT, "gQT": gQT, "isotope": isotope, "uniqiso": uniqiso}
+    raise ValueError(f"Unsupported partition provider kind: {kind}")
+
+
+def _restore_broadening_strategy(contract: Dict[str, Any], arrays: Dict[str, np.ndarray]):
+    kind = contract.get("kind")
+    if kind == "exomol":
+        _require(arrays, ["broadening_n_Texp_template", "broadening_alpha_ref"])
+        n_Texp = np.asarray(arrays["broadening_n_Texp_template"])
+        alpha_ref = np.asarray(arrays["broadening_alpha_ref"])
+        strategy = ExomolBroadening(n_Texp, alpha_ref)
+        return strategy
+    if kind == "hitran":
+        _require(arrays, ["broadening_n_air", "broadening_gamma_air"])
+        n_air = np.asarray(arrays["broadening_n_air"])
+        gamma_air = np.asarray(arrays["broadening_gamma_air"])
+        strategy = HitranBroadening(n_air, gamma_air)
+        return strategy
+    raise ValueError(f"Unsupported broadening strategy kind: {kind}")
