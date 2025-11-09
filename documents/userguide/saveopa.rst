@@ -37,12 +37,12 @@ First, we create an :class:`OpaPremodit` object as usual:
         dit_grid_resolution=1.0,
     )
 
-Then, we save the `opa` object using :func:`saveopa_premodit`.
+Then, we save the `opa` object using :func:`saveopa`.
 
 .. code-block:: python
 
-    from exojax.opacity.io.ioopa import saveopa_premodit
-    saveopa_premodit(opa, "opa.zarr", format="zarr")
+    from exojax.opacity import saveopa
+    saveopa(opa, "opa.zarr", format="zarr")
 
 
 To load the saved `opa` object, use the class method :meth:`OpaPremodit.from_saved_opa`.
