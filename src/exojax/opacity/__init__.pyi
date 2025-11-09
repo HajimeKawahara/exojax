@@ -7,5 +7,16 @@ from exojax.opacity.opacont import OpaCIA as OpaCIA
 from exojax.opacity.opacont import OpaRayleigh as OpaRayleigh
 from exojax.opacity.opacont import OpaHminus as OpaHminus
 from exojax.opacity.opacont import OpaMie as OpaMie
+from exojax.opacity.io.ioopa import saveopa as saveopa
 
-__all__: list[str]
+__all__: list[str] = [
+    "OpaPremodit",
+    "OpaDirect",
+    "OpaModit",
+    "OpaCKD",
+    "OpaCIA",
+    "OpaRayleigh",
+    "OpaHminus",
+    "OpaMie",
+    "saveopa",
+]
