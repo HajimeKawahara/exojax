@@ -116,3 +116,23 @@ def test_save_and_load_roundtrip_zarr_xsvector(tmp_path):
     P = 1.0  # bar
     T_1 = 500.0  # K
     xsv_1 = loaded.xsvector(T_1, P)  # cm2
+
+
+def test_aux_metadata_persists_through_roundtrip(tmp_path):
+    opa = _build_minimal_ready_opa()
+    artifact = tmp_path / "opa_aux_payload"
+    aux_payload = {
+        "molmass": np.float64(28.01),
+        "labels": ["co", 1],
+        "nested": {"values": np.array([1, 2, 3], dtype=np.int32)},
+    }
+
+    saveopa_premodit(opa, str(artifact), format="npz", aux=aux_payload)
+
+    loaded = OpaPremodit.from_saved_opa(str(artifact) + ".npz")
+
+    assert loaded.aux == {
+        "molmass": 28.01,
+        "labels": ["co", 1],
+        "nested": {"values": [1, 2, 3]},
+    }

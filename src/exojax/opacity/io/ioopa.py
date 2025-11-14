@@ -23,12 +23,38 @@ from exojax.opacity.providers import (
 )
 
 
+def _normalize_aux_payload(aux: Dict[str, Any]) -> Dict[str, Any]:
+    """Convert aux data into JSON-friendly Python primitives."""
+
+    def _convert(value: Any) -> Any:
+        if isinstance(value, dict):
+            return {str(k): _convert(v) for k, v in value.items()}
+        if isinstance(value, (list, tuple, set)):
+            return [_convert(v) for v in value]
+        if isinstance(value, np.ndarray):
+            return [_convert(v) for v in value.tolist()]
+        if isinstance(value, np.generic):
+            return value.item()
+        if isinstance(value, (str, bool)) or value is None:
+            return value
+        if isinstance(value, (int, float)):
+            return value
+        raise TypeError(
+            "Auxiliary metadata contains unsupported type "
+            f"{type(value).__name__}. Only JSON-serializable primitives, "
+            "lists, dicts, and numpy scalars/arrays are allowed."
+        )
+
+    return {str(key): _convert(val) for key, val in aux.items()}
+
+
 def saveopa(
     opa: OpaCalc,
     path: str,
     *,
     format: Literal["zarr", "npz"] = "zarr",
     extra_meta: Dict[str, Any] | None = None,
+    aux: Dict[str, Any] | None = None,
 ) -> None:
     """Generic entry point for persisting ``Opa*`` calculators to disk.
 
@@ -37,7 +63,13 @@ def saveopa(
     ``saveopa_direct``) to document the expected extension points.
     """
     if isinstance(opa, OpaPremodit):
-        saveopa_premodit(opa, path, format=format, extra_meta=extra_meta)
+        saveopa_premodit(
+            opa,
+            path,
+            format=format,
+            extra_meta=extra_meta,
+            aux=aux,
+        )
         return
     if isinstance(opa, OpaCKD):
         raise NotImplementedError(
@@ -63,6 +95,7 @@ def saveopa_premodit(
     *,
     format: Literal["zarr", "npz"] = "zarr",
     extra_meta: Dict[str, Any] | None = None,
+    aux: Dict[str, Any] | None = None,
 ) -> None:
     """Persist an initialized ``OpaPremodit`` to disk."""
     if not isinstance(opa, OpaPremodit):
@@ -157,6 +190,9 @@ def saveopa_premodit(
 
     if extra_meta:
         meta["user_meta"] = extra_meta
+
+    if aux is not None:
+        meta["aux"] = _normalize_aux_payload(aux)
 
     if format == "zarr":
         _save_as_zarr(path, arrays, meta)

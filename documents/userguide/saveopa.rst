@@ -37,12 +37,13 @@ First, we create an :class:`OpaPremodit` object as usual:
         dit_grid_resolution=1.0,
     )
 
-Then, we save the `opa` object using :func:`saveopa`.
+Then, we save the `opa` object using :func:`saveopa`.  
+Optional auxiliary metadata such as the molecular mass can be stored alongside the opacity object by passing the ``aux`` keyword.
 
 .. code-block:: python
 
     from exojax.opacity import saveopa
-    saveopa(opa, "opa.zarr", format="zarr")
+    saveopa(opa, "opa.zarr", format="zarr", aux={"molmass": molmass})
 
 
 To load the saved `opa` object, use the class method :meth:`OpaPremodit.from_saved_opa`.
@@ -52,4 +53,8 @@ To load the saved `opa` object, use the class method :meth:`OpaPremodit.from_sav
     from exojax.opacity import OpaPremodit
     opa = OpaPremodit.from_saved_opa("opa.zarr")
 
-Note that when loading the saved `opa`, you need to provide `molmass` separately, since it is not stored in the saved file.
+Any auxiliary metadata provided at save-time is available via the ``opa.aux`` dictionary after loading:
+
+.. code-block:: python
+
+    molmass = opa.aux["molmass"]

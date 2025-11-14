@@ -60,6 +60,7 @@ class OpaPremodit(OpaCalc):
         broadening_parameter_resolution: Broadening parameter resolution configuration
         single_broadening: Whether using single broadening mode
         ngrid_broadpar: Number of broadening parameter grid points
+        aux: User-specified auxiliary metadata persisted through save/load
     """
 
     def __init__(
@@ -132,6 +133,7 @@ class OpaPremodit(OpaCalc):
 
         # default setting
         self.method = "premodit"
+        self.aux: Dict[str, Any] = {}
         self.diffmode = diffmode
         self.warning = True
         self.wavelength_order = wavelength_order
@@ -311,6 +313,7 @@ class OpaPremodit(OpaCalc):
         """Internal helper to rebuild state from serialized payload."""
         nu_grid = np.asarray(arrays["nu_grid"])
         OpaCalc.__init__(self, nu_grid)
+        self.aux = dict(meta.get("aux", {}))
 
         state = meta.get("opa_state", {})
         self.method = state.get("method", "premodit")
