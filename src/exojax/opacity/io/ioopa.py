@@ -215,46 +215,42 @@ def _save_as_npz(path: str, arrays: Dict[str, np.ndarray], meta: Dict[str, Any])
 
 
 def _save_as_zarr(path: str, arrays: Dict[str, np.ndarray], meta: Dict[str, Any]) -> None:
-    import zarr
-        
+    import zarr        
+    
     # Determine Zarr version and set up compressor accordingly
     try:
         major = int(zarr.__version__.split(".")[0])
     except Exception:
         major = 2  # assume v2 if version parsing fails
-
-    if major >= 3:
-        try:
-            import numcodecs.zarr3 as ncz3
-            compressor = ncz3.Zlib(level=1)
-        except ImportError:
-            compressor = None  # no compression fallback
-    else:
-        # Zarr v2: traditional numcodecs.Zlib
-        try:
-            from numcodecs import Zlib
-            compressor = Zlib(level=1)
-        except ImportError:
-            compressor = None
+    print(f"Detected Zarr version: {zarr.__version__} (major: {major})")
 
     # Create a Zarr group
     zarr_path = path if path.endswith(".zarr") else path + ".zarr"
     zarr_group = zarr.open(zarr_path, mode="w")
 
     # Save arrays
-    for name, array in arrays.items():
-        #zarr_group.create_dataset(name, data=array, shape=array.shape, compressor=compressor)
-        a = np.asarray(array)
-        if a.shape == ():  # scalar
-            zarr_group.create_array(name, data=a, compressor=compressor)
-        else:
-            zarr_group.create_dataset(
-                name,
-                data=a,
-                shape=a.shape,
-                dtype=a.dtype,
-                compressor=compressor,
-            )
+    if major >= 3:
+        try:
+            import numcodecs.zarr3 as ncz3
+            compressor = ncz3.Zlib(level=1)
+        except ImportError:
+            compressor = None  # no compression fallback
+    
+        for name, array in arrays.items():
+            a = np.asarray(array)
+            if a.shape == ():  # scalar
+                zarr_group.create_array(name, data=a, compressors=compressor)
+            else:
+                zarr_group.create_dataset(
+                    name,
+                    data=a,
+                    shape=a.shape,
+                    dtype=a.dtype,
+                    compressors=compressor,
+                )
+    else:
+        for name, array in arrays.items():
+            zarr_group.create_dataset(name, data=array, compressor=zarr.get_codec({'id': 'zlib', 'level': 1}))
 
     # Save metadata
     zarr_group.attrs.update(meta)
