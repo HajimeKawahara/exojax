@@ -12,6 +12,9 @@ from exojax.utils.grids import wavenumber_grid
 
 
 def test_hminus_ff():
+    from jax import config
+    config.update("jax_enable_x64", True)
+
     Tin = 3000.0
     wav = 1.4
     ref = 2.0075e-26
@@ -21,6 +24,9 @@ def test_hminus_ff():
 
 
 def test_hminus_bf():
+    from jax import config
+    config.update("jax_enable_x64", True)
+
     Tin = 3000.0
     wav = 1.4
     ref = 4.065769e-25
@@ -36,6 +42,9 @@ def _setting_test_hminus():
     Returns:
         temperatures, number_density_e, number_density_h, nu_grid, ref_value
     """
+    from jax import config
+    config.update("jax_enable_x64", True)
+
     N = 1000
     temperatures = jnp.array([3000.0])
     number_density_e = jnp.array([1.0])
@@ -48,6 +57,9 @@ def _setting_test_hminus():
 
 
 def test_log_hminus_continuum():
+    from jax import config
+    config.update("jax_enable_x64", True)
+
     temperatures, number_density_e, number_density_h, nu_grid, ref_value = (
         _setting_test_hminus()
     )
@@ -58,6 +70,9 @@ def test_log_hminus_continuum():
 
 
 def test_log_hminus_continuum_single():
+    from jax import config
+    config.update("jax_enable_x64", True)
+
     temperatures, number_density_e, number_density_h, nu_grid, ref_value = (
         _setting_test_hminus()
     )
@@ -70,6 +85,9 @@ def test_log_hminus_continuum_single():
 
 
 def test_opahminus():
+    from jax import config
+    config.update("jax_enable_x64", True)
+
     Tarr, ne, nh, nu_grid, ref_value = _setting_test_hminus()
     opa = OpaHminus(nu_grid)
     a = opa.logahminus_matrix(Tarr, ne, nh)
@@ -77,6 +95,7 @@ def test_opahminus():
 
 
 def _setting_test_layer_hminus_dtau():
+
     N = 1000
     nu_grid, wav, res = wavenumber_grid(
         9000.0, 18000.0, N, xsmode="premodit", unit="AA"
@@ -93,6 +112,9 @@ def _setting_test_layer_hminus_dtau():
 
 
 def test_layer_optical_depth_Hminus():
+    from jax import config
+    config.update("jax_enable_x64", True)
+
     nu_grid, temperatures, pressures, dParr, vmre, vmrh, mmw, gravity, ref_value = (
         _setting_test_layer_hminus_dtau()
     )
@@ -105,6 +127,9 @@ def test_layer_optical_depth_Hminus():
 
 
 def test_single_layer_optical_depth_Hminus():
+    from jax import config
+    config.update("jax_enable_x64", True)
+
     nu_grid, temperatures, pressures, dParr, vmre, vmrh, mmw, gravity, ref_value = (
         _setting_test_layer_hminus_dtau()
     )
