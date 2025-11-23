@@ -16,12 +16,11 @@ from exojax.test.emulate_mdb import mock_mdb
 from exojax.test.emulate_mdb import mock_mdbExomol
 from exojax.test.emulate_mdb import mock_wavenumber_grid
 
-from jax import config
-
-config.update("jax_enable_x64", True)
-
 
 def test_open_close_xsmatrix_modit_agreement(db="exomol"):
+    from jax import config                                                 #
+    config.update("jax_enable_x64", True)
+
     nu_grid, _, _ = mock_wavenumber_grid()
     art = ArtEmisPure(
         pressure_top=1.0e-8, pressure_btm=1.0e2, nlayer=2, nu_grid=nu_grid
@@ -63,7 +62,6 @@ def test_open_close_xsmatrix_modit_agreement(db="exomol"):
 def test_agreement_open_and_close_zeroscan_modit():
     """test agreement between scanfft and zeroscan calculation for MODIT"""
     from jax import config
-
     config.update("jax_enable_x64", True)
     mdb = mock_mdbExomol()
     nus, wav, res = mock_wavenumber_grid()
