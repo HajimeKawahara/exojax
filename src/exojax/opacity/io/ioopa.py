@@ -84,8 +84,7 @@ def saveopa(
             "saveopa_direct is not implemented yet for OpaDirect instances."
         )
     raise TypeError(
-        "saveopa does not support persisting instances of "
-        f"{opa.__class__.__name__}."
+        "saveopa does not support persisting instances of " f"{opa.__class__.__name__}."
     )
 
 
@@ -104,7 +103,9 @@ def saveopa_premodit(
         raise ValueError("OpaPremodit is not ready. Call apply_params() before saving.")
     for attr in ("gamma_ref", "n_Texp", "ngrid_broadpar", "ngrid_elower"):
         if not hasattr(opa, attr):
-            raise ValueError(f"OpaPremodit missing attribute '{attr}' required for saving.")
+            raise ValueError(
+                f"OpaPremodit missing attribute '{attr}' required for saving."
+            )
 
     info_tuple = opa._get_info_tuple()
     (
@@ -199,7 +200,10 @@ def saveopa_premodit(
     else:
         _save_as_npz(path, arrays, meta)
 
-def _save_as_npz(path: str, arrays: Dict[str, np.ndarray], meta: Dict[str, Any]) -> None:
+
+def _save_as_npz(
+    path: str, arrays: Dict[str, np.ndarray], meta: Dict[str, Any]
+) -> None:
     import json
     import numpy as np
     import os
@@ -211,12 +215,14 @@ def _save_as_npz(path: str, arrays: Dict[str, np.ndarray], meta: Dict[str, Any])
     # Save metadata as JSON
     meta_path = os.path.splitext(npz_path)[0] + "_metadata.json"
     with open(meta_path, "w") as f:
-        json.dump(meta, f, indent=4)    
+        json.dump(meta, f, indent=4)
 
 
-def _save_as_zarr(path: str, arrays: Dict[str, np.ndarray], meta: Dict[str, Any]) -> None:
-    import zarr        
-    
+def _save_as_zarr(
+    path: str, arrays: Dict[str, np.ndarray], meta: Dict[str, Any]
+) -> None:
+    import zarr
+
     # Determine Zarr version and set up compressor accordingly
     try:
         major = int(zarr.__version__.split(".")[0])
@@ -230,27 +236,23 @@ def _save_as_zarr(path: str, arrays: Dict[str, np.ndarray], meta: Dict[str, Any]
 
     # Save arrays
     if major >= 3:
-        try:
-            import numcodecs.zarr3 as ncz3
-            compressor = ncz3.Zlib(level=1)
-        except ImportError:
-            compressor = None  # no compression fallback
-    
+        from zarr import codecs
+
+        compressor = codecs.GzipCodec(level=1)
         for name, array in arrays.items():
             a = np.asarray(array)
-            if a.shape == ():  # scalar
-                zarr_group.create_array(name, data=a, compressors=compressor)
-            else:
-                zarr_group.create_dataset(
-                    name,
-                    data=a,
-                    shape=a.shape,
-                    dtype=a.dtype,
-                    compressors=compressor,
-                )
+            ds = zarr_group.create_array(
+                name,
+                shape=a.shape,
+                dtype=a.dtype,
+                compressors=[compressor],
+            )
+            ds[...] = a
     else:
         for name, array in arrays.items():
-            zarr_group.create_dataset(name, data=array, compressor=zarr.get_codec({'id': 'zlib', 'level': 1}))
+            zarr_group.create_dataset(
+                name, data=array, compressor=zarr.get_codec({"id": "zlib", "level": 1})
+            )
 
     # Save metadata
     zarr_group.attrs.update(meta)
@@ -265,7 +267,9 @@ def _save_as_zarr(path: str, arrays: Dict[str, np.ndarray], meta: Dict[str, Any]
             close_store()
 
 
-def _serialize_pf_provider(opa: OpaPremodit, arrays: Dict[str, np.ndarray]) -> Dict[str, Any]:
+def _serialize_pf_provider(
+    opa: OpaPremodit, arrays: Dict[str, np.ndarray]
+) -> Dict[str, Any]:
     """Capture the partition-function provider configuration."""
     provider = getattr(opa, "pf_provider", None)
     if provider is None:
@@ -287,7 +291,9 @@ def _serialize_pf_provider(opa: OpaPremodit, arrays: Dict[str, np.ndarray]) -> D
     )
 
 
-def _serialize_broadening_strategy(opa: OpaPremodit, arrays: Dict[str, np.ndarray]) -> Dict[str, Any]:
+def _serialize_broadening_strategy(
+    opa: OpaPremodit, arrays: Dict[str, np.ndarray]
+) -> Dict[str, Any]:
     """Capture the broadening strategy configuration."""
     strategy = getattr(opa, "broadening_strategy", None)
     if strategy is None:
