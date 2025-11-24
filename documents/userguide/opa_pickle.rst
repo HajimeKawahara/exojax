@@ -1,7 +1,13 @@
-Saving Pre‑calculated ``OpaPremodit`` Objects with ``cloudpickle``
-==================================================================
+Saving Pre‑calculated ``OpaPremodit`` Objects with ``cloudpickle`` (not recommended)
+======================================================================================
 
 *Shotaro Tada, 4/28 (2025)*
+
+.. Warning::
+
+    Now, we have a better way to save and load `OpaPremodit` using `exojax.opacity.io.ioopa` module. Please see :doc:`saveopa`.
+
+
 
 When you work with **ExoJAX** over a very wide spectral range, the number of molecular lines can be enormous.  Initialising an :class:`exojax.spec.opacalc.OpaPremodit` instance may therefore take several minutes.  If you need to run the calculation repeatedly under different conditions, it is convenient to serialise the initialised object once and reload it later instead of rebuilding it every time.
 

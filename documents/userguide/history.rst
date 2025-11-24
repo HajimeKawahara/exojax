@@ -1,6 +1,253 @@
 History
 ===============
 
+Version 2.2.2
+---------------
+
+What's Changed
+^^^^^^^^^^^^^^^^^^^
+
+* Tutorial update by @HajimeKawahara in https://github.com/HajimeKawahara/exojax/pull/641
+* url for HITRAN/CIA updated by @HajimeKawahara in https://github.com/HajimeKawahara/exojax/pull/644
+* version 2.2.2 by @HajimeKawahara in https://github.com/HajimeKawahara/exojax/pull/645
+
+
+**Full Changelog**: https://github.com/HajimeKawahara/exojax/compare/v2.2.1...v2.2.2
+
+Version 2.2.1
+-----------------
+
+- bug fix for when loading OpaPremodit with MdbHitemp #639
+
+- added save/load mode for `OpaCKD` #635 #636 #637 
+
+What's Changed
+^^^^^^^^^^^^^^^^^^^^^
+
+* send Release v2 2 0 back to develop by @HajimeKawahara in https://github.com/HajimeKawahara/exojax/pull/633
+* Add NPZ-based I/O support for OpaCKD precomputed tables by @HajimeKawahara in https://github.com/HajimeKawahara/exojax/pull/635
+* Opackd loadonly by @HajimeKawahara in https://github.com/HajimeKawahara/exojax/pull/636
+* added HMC example for OpaCKD by @HajimeKawahara in https://github.com/HajimeKawahara/exojax/pull/637
+* Tutorials update by @HajimeKawahara in https://github.com/HajimeKawahara/exojax/pull/638
+* Bugfix hitemp opapremodit by @HajimeKawahara in https://github.com/HajimeKawahara/exojax/pull/639
+* version 2.2.1 by @HajimeKawahara in https://github.com/HajimeKawahara/exojax/pull/640
+
+Full Changelog: https://github.com/HajimeKawahara/exojax/compare/v2.2.0...v2.2.1
+
+
+Version 2.2.0
+-----------------------
+The main target for version 2.2.0 is the capability of differentiable TCE (thermal chemical equilibrium).
+Note that we are developing the differentiable TCE package `ExoGibbs <https://github.com/HajimeKawahara/exogibbs>`_.
+
+`Equilibrium Retrieval <https://secondearths.sakura.ne.jp/exojax/tutorials/equilibrium_chemistry.html>`_
+
+Overview
+^^^^^^^^^^^^^^
+
+Release 2.2.0 (branch ``release_v2_2_0``) is a substantial update since tag v2.1,
+focusing on PreMODIT performance/memory, database API refactors, packaging modernization,
+and new snapshot/provider abstractions to decouple opacity from DB classes.
+Summary below is based on local Git history; I can cross-check the milestone if you paste it.
+
+pyproject
+^^^^^^^^^^^^^^^^^^^^
+
+We migrate ExoJAX from ``setup.py`` to a modern PEP 517/518 and PEP 621 compliant ``pyproject.toml`` build. (#626)
+
+restructure
+^^^^^^^^^^^^^^^^^
+
+- ``MdbExomol``, ``MdbHitemp``, ``MdbHitran``, ``MdbHargreaves``, ``AdbVald``, ``AdbSepVald``, ``AdbKurucz``, ``XdbExomolHR``, ``PdbCloud``, ``CdbCIA`` moved to subdirectories under ``database`` (#622, #623, #624)
+
+These classes can be called as::
+
+   from exojax.database import MdbExomol
+
+Connect MDB to OpaPremodit
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+**What’s new:** OpaPremodit now accepts databases via high-level helpers and data-only snapshots.
+This decouples opacity from DB classes, improves memory use, and keeps APIs clean.
+
+Quick Start (recommended)
+~~~~~~~~~~~~~~~~~~~~~~~~~
+
+- ExoMol::
+
+    mdb = MdbExomol(".../CO/12C-16O/Li2015", nu_grid, crit=1e-30, Ttyp=1000.0)
+    opa = OpaPremodit.from_mdb(
+        mdb, nu_grid,
+        auto_trange=(500.0, 1500.0),
+        broadening_resolution={"mode": "manual", "value": 0.2},
+        memory_policy=MemoryPolicy(allow_32bit=True, nstitch=4, cutwing=1.0)
+    )
+
+- HITRAN/HITEMP::
+
+    mdb = MdbHitran("path/to/CO.par", nu_grid, isotope=0)
+    opa = OpaPremodit.from_mdb(mdb, nu_grid, ...)
+
+Example::
+
+   from exojax.database.exomol.api import MdbExomol
+   from exojax.opacity.premodit.api import OpaPremodit
+   from exojax.opacity.policies import MemoryPolicy
+
+   mdb = MdbExomol(".database/CO/12C-16O/Li2015", nu_grid)
+   opa = OpaPremodit.from_mdb(
+       mdb, nu_grid,
+       auto_trange=(500,1500),
+       broadening_resolution={"mode":"manual","value":0.2},
+       memory_policy=MemoryPolicy(allow_32bit=True, nstitch=2)
+   )
+   xs = opa.xsvector(T=1200.0, P=0.1)  # or opa.xsmatrix(Tarr, Parr)
+
+Snapshots (advanced/portable)
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+- Export once, construct anywhere::
+
+    snap = mdb.to_snapshot()
+    opa = OpaPremodit.from_snapshot(snap, nu_grid)
+
+- Optional providers override:
+    - **Partition:** ExoMol/HITRAN providers are auto-selected; pass a custom ``pf_provider`` if needed.
+    - **Broadening:** ExoMol/HITRAN strategies are auto-selected; pass a custom ``broadening_strategy`` to override.
+
+Memory and Runtime Controls
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+- ``memory_policy``: central knob for ``allow_32bit``, ``nstitch`` (ν-stitching), and ``cutwing``.
+  Policy values override constructor args.
+
+- ``broadening_resolution``:
+    - ``manual``: fixed resolution (highest memory)
+    - ``minmax``: DB-driven min/max grids (medium memory)
+    - ``single``: single broadening set (lowest memory)
+
+Notes
+~~~~~
+
+- ``from_mdb`` calls ``.to_snapshot()`` internally and frees the DB by default
+  (``delete_mdb_after_init=True``). Keep it with ``delete_mdb_after_init=False``.
+- Ensure MDB lines intersect ``nu_grid``; otherwise a ``ValueError`` is raised.
+- Direct constructor ``OpaPremodit(mdb, nu_grid, ...)`` remains supported;
+  ``from_mdb`` is the preferred path for clarity and memory efficiency.
+
+Highlights
+^^^^^^^^^^^^^^^
+
+- PreMODIT: adds ``MemoryPolicy``, provider-based partition/broadening,
+  ``from_mdb`` / ``from_snapshot`` constructors, and precomputed ``line_strength_Tref`` for speed.
+- Snapshots: new ``MDBSnapshot`` / ``MDBMeta`` / ``Lines`` DTOs;
+  ``MdbExomol``, ``MdbHitran``, ``MdbHitemp`` implement ``.to_snapshot()``.
+- Database refactor: split ExoMol vs HITRAN/HITEMP broadening paths;
+  reorganized modules; added ``XdbExomolHR`` for high-res empirical lines.
+- Atomic DB (VALD/Kurucz): ``AdbVald``, ``AdbSepVald``, ``AdbKurucz`` exposed via ``exojax.database``.
+- CIA: dedicated ``exojax.database.cia.api.CdbCIA`` with ``contdb`` kept as a deprecation shim.
+- Float32: optional 32-bit mode for PreMODIT (faster + lower memory).
+- Chemistry: groundwork to connect equilibrium chemistry (``exogibbs``), new tutorial/docs, and H2 CIA usage in examples.
+- Packaging: switch to ``pyproject.toml`` + setuptools-scm; Python ≥ 3.9; CI config updates.
+- Tests/Docs: snapshot tests for MDBs, additional opacity tests, relaxed tolerances where needed; “Get Started” refresh.
+
+Breaking/Deprecations
+^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+- ``exojax.database.moldb`` removed; use ``exojax.database.exomol`` / ``hitran`` / ``hitemp`` classes (``MdbExomol``, ``MdbHitran``, ``MdbHitemp``) or atomic ``Adb*``.
+- Prefer ``exojax.database.cia.api.CdbCIA``; ``contdb.CdbCIA`` emits ``DeprecationWarning``.
+- Minimum Python now 3.9 (declared in ``pyproject.toml``).
+
+Included PRs (since v2.1)
+^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+- #631 di_mdb_opa: DB–opacity integration refactor, memory/policies/providers, tests/docs.
+- #630 premodit_mem: PreMODIT memory improvements + snapshot path and tests.
+- #629 connect_exogibbs: equilibrium chemistry integration + tutorial.
+- #626 pyproject: packaging migration, Python version floor, CI.
+- #624 mmrefacmdb / #623 morerefactmdb / #622 refacmdb: DB refactors (molinfo/qstate moves, ExoMolHR restructure, HITRAN/HITEMP splits).
+- #620 32bitxs: float32 cross-section support + tests.
+
+bug fixes
+^^^^^^^^^^^^^^^
+
+
+- #619 #620 32-bit overflow
+
+What's Changed
+^^^^^^^^^^^^^^^
+
+* bug fix of the overflow of the line strength when 32 bit mode by @HajimeKawahara in https://github.com/HajimeKawahara/exojax/pull/620
+* refactoring database module by @HajimeKawahara in https://github.com/HajimeKawahara/exojax/pull/622
+* More refactoring of database by @HajimeKawahara in https://github.com/HajimeKawahara/exojax/pull/623
+* refactoring database (cia, molinfo) by @HajimeKawahara in https://github.com/HajimeKawahara/exojax/pull/624
+* Pyproject by @HajimeKawahara in https://github.com/HajimeKawahara/exojax/pull/626
+* HMC retrieval of the Equilibrium Chemistry, Connecting to ExoGibbs by @HajimeKawahara in https://github.com/HajimeKawahara/exojax/pull/629
+* Detach OpaPremodit from mdb to reduce memory footprint by @sh-tada in https://github.com/HajimeKawahara/exojax/pull/630
+* PreMODIT DI: value object, MemoryPolicy, ctor parity, and docs (non-breaking) by @HajimeKawahara in https://github.com/HajimeKawahara/exojax/pull/631
+* Release v2.2.0 by @HajimeKawahara in https://github.com/HajimeKawahara/exojax/pull/632
+
+**Full Changelog**: https://github.com/HajimeKawahara/exojax/compare/v2.1...v2.2.0
+
+Version 2.1
+-----------------------
+
+The main target of v2.1 is major refactoring for the new development of ExoJAX3 (#606 #607 #608) and to implement the differentiable CKD (#484).
+This capability will be used to computes magnitude and/or low/mid res spectrum to calibrate high-res spectra.
+
+
+New Features
+^^^^^^^^^^^^^^^^^
+
+- Correlated-k distribution (CKD; beta-version), #484 #610 #614
+  - `tutorial for emission <https://secondearths.sakura.ne.jp/exojax/tutorials/ckd_emispure.html>`_
+  - `tutorial for transmission <https://secondearths.sakura.ne.jp/exojax/tutorials/ckd_transpure.html>`_
+  - `what is CKD? <https://secondearths.sakura.ne.jp/exojax/tutorials/ckd_principle.html>`_
+
+- extra database for ExoMolHR #595 #600 , see this `tutorial <https://secondearths.sakura.ne.jp/exojax/tutorials/exomolhr.html>`_
+- FeH line list by Hargreaves et al. (2010), #603 by @YuiKasagi
+- checkpoint (memory release) for transmission reverse-mode diff #604 by @sh-tada
+
+See #597 as direction toward ExoJAX3
+
+Refactoring
+^^^^^^^^^^^^^^^^^
+
+Separates database, opacity, rt, postproc from spec, and a script for fixing 
+#606 #607 #611
+
+The main change in this update is the redistribution of modules previously located in `exojax.spec` into four function-specific subpackages: `exojax.database` (db), `exojax.opacity` (opa), `exojax.rt` (art), and `exojax.postproc`.
+To assist with this transition, we have included a script that automatically updates your import statements from `exojax.spec` to their appropriate new locations.
+The script is located at `exojax/scripts/fix_v2_1.py`. You will need to install libcst to run it.
+
+... code-block:: sh
+
+    pip install libcst
+
+Please make sure to back up your original files before using the script.
+Usage instructions are as follows:
+
+... code-block:: sh
+
+    python -m fix_v2_1 your_project/
+
+
+- `OpaPremodit`, `OpaDirect`, `OpaModit` can be called such as  
+
+... code-block:: python
+
+    from exojax.opacity import OpaPremodit
+
+Bug Fixes
+^^^^^^^^^^^^^
+-  Reflect updates to astropy (unit "Angstrom") by @YuiKasagi  #615
+
+Removed methods
+^^^^^^^^^^^^^^^^^^^^^^^^
+
+- removed `dtau_mmwl`
+- merged `nu2wav` and `wav2nu` from `unitconvert` to `utils.grids`
+
 Version 2.0
 -----------------------
 

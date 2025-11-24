@@ -13,6 +13,8 @@ from jax import jit, vmap
 import numpy as np
 
 def test_comparison_ljert_scipy():
+    from jax import config                                                 #
+    config.update("jax_enable_x64", True)
 
     Na=300
     vl=-3

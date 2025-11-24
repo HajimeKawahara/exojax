@@ -18,6 +18,9 @@ ref = sc_erfcx(xvc)
 
 
 def test_comparison_erfcx_scipy():
+    from jax import config
+    config.update("jax_enable_x64", True)
+
     d = (verfcx(xv) - ref) / ref
     assert np.max(d) < 2.e-6
 
