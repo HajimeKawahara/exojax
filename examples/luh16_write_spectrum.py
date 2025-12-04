@@ -11,6 +11,8 @@ This script computes the brown dwarf spectrum of Luhman16B using ExoJAX, and com
 from jax import config
 config.update("jax_enable_x64", True)
 
+# sphinx_gallery_thumbnail_path = '_static/single_spectrum_sample_median.png'
+
 # %%
 import os
 import numpy as np
