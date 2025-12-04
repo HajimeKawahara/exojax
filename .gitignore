@@ -4,3 +4,7 @@ dist/
 *.egg-info/
 __pycache__
 
+examples/luh16/opaCH4.zarr
+examples/luh16/opaH2O.zarr
+examples/luh16/opaHF.zarr
+examples/luh16/opaCO.zarr
