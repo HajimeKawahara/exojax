@@ -321,18 +321,29 @@ mu_single = frun(
 )
 
 # %% 
-# plotting the result
+# saveing and plotting the result
 # -----------------------------------------------
 
-fig, ax = plt.subplots(figsize=(10, 4))
-wav_model = 1e8 / np.asarray(nusd)
-ax.plot(wav_model, flux, "+", color="gray", label="Data")
-ax.plot(wav_model, np.asarray(mu_single), lw=1, label="Model", alpha=0.8, color="C1")
-ax.set_xlim(wav_model.min(), wav_model.max())  
-ax.set_xlabel("Wavelength [angstrom]")
-ax.set_ylabel("Flux (normalized)")
-ax.legend(loc="best")
-fig.tight_layout()
-fig.savefig("single_spectrum_sample_median.png", dpi=200)
+def plotfig(filename, xrange=None):
+    fig = plt.figure(figsize=(10, 6))
+    ax = fig.add_subplot(2, 1, 1)
+    ax.plot(wavd, flux, ".", color="gray", label="Data", alpha=0.5)
+    ax.plot(wavd, np.asarray(mu_single), lw=1, label="Model", alpha=0.8, color="C1")
+    ax.set_xlim(wavd.min(), wavd.max())  
+    ax.set_ylabel("Flux (normalized)")
+    ax.legend(loc="best")
+    ax2 = fig.add_subplot(2, 1, 2)
+    ax2.plot(wavd, flux - np.asarray(mu_single), ".", color="gray", label="residual", alpha=0.5)
+    if xrange is not None:
+        ax.set_xlim(xrange[0], xrange[1])
+        ax2.set_xlim(xrange[0], xrange[1])
+    ax2.set_xlabel("Wavelength [angstrom]")
+    ax2.set_ylabel("Residual")
+    fig.tight_layout()
+    fig.savefig(filename, dpi=200)
+    plt.close(fig)
+    print(f"saved to: {filename}")
 
-print("saved to: single_spectrum_sample_median.png")
+np.savetxt("luh16B_spectrum_model.dat", np.vstack((wavd, flux, np.asarray(mu_single))).T)
+
+plotfig("single_spectrum_sample_median.png")
