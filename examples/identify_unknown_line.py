@@ -8,7 +8,6 @@ It uses ExoMolHR database.
 """
 
 # %%
-from tabnanny import check
 from jax import config
 
 config.update("jax_enable_x64", True)
