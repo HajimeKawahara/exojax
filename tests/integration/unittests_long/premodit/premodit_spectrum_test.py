@@ -39,7 +39,7 @@ def test_rt(db, diffmode, fig=False):
     )
 
     xsmatrix = opa.xsmatrix(Tarr, art.pressure)
-    dtau = art.opacity_profile_xs(xsmatrix, mmr_arr, opa.mdb.molmass, gravity)
+    dtau = art.opacity_profile_xs(xsmatrix, mmr_arr, mdb.molmass, gravity)
 
     F0 = art.run(dtau, Tarr)
 
@@ -94,7 +94,7 @@ def test_rt_for_single_broadening_parameters(db, diffmode, fig=False):
         broadening_resolution={"mode": "single", "value": None},
     )
     xsmatrix = opa.xsmatrix(Tarr, art.pressure)
-    dtau = art.opacity_profile_xs(xsmatrix, mmr_arr, opa.mdb.molmass, gravity)
+    dtau = art.opacity_profile_xs(xsmatrix, mmr_arr, mdb.molmass, gravity)
     F0 = art.run(dtau, Tarr)
 
     if db == "hitemp":

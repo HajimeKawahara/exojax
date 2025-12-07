@@ -3,10 +3,13 @@
 Uses OpaDIrect after calling PreModit #437 made by @ykawashima (see #437, #438, #439) 
 """
 
+from exojax.utils.constants import Tref_original
 from exojax.utils.grids import wavenumber_grid
-from exojax.database.exomol.api import MdbExomol 
+from exojax.database.hitemp.api import MdbHitemp
 from exojax.database import molinfo 
-from exojax.database.core.line_strength import line_strength, doppler_sigma, gamma_hitran, gamma_natural, line_strength_numpy
+from exojax.database.core.line_strength import line_strength
+from exojax.database.core.broadening import doppler_sigma
+from exojax.database.core.broadening import gamma_hitran, gamma_natural
 from exojax.opacity import OpaPremodit, OpaDirect
 import numpy as np
 import matplotlib.pyplot as plt
@@ -15,7 +18,8 @@ from jax import config
 config.update("jax_enable_x64", True)
 
 
-from exojax.opacity.lpf.lpf import xsvector, make_numatrix0
+from exojax.opacity.lpf.lpf import xsvector
+from exojax.opacity.lpf.make_numatrix import make_numatrix0
 import tqdm
 def auto_xsection(nu, nu_lines, sigmaD, gammaL, Sij, memory_size=15.):
     """computes cross section .
@@ -105,15 +109,14 @@ vmr = 1.
 Ppart = P * vmr
 Mmol = molinfo.molmass("CO")
 
-logsij0 = np.log(mdb.line_strength)
+logsij0 = np.log(mdb.line_strength_ref_original)
 sigmaD = doppler_sigma(mdb.nu_lines,T,Mmol)
-qt = mdb.qr_interp(mdb.isotope, T)
+qt = mdb.qr_interp(mdb.isotope, T, Tref_original)
 gammaL = gamma_hitran(P,T, Ppart, mdb.n_air, mdb.gamma_air, mdb.gamma_self) + gamma_natural(mdb.A)
-Sij = line_strength(T,logsij0,mdb.nu_lines,mdb.elower,qt, mdb.Tref)
+Sij = line_strength(T,logsij0,mdb.nu_lines,mdb.elower,qt, Tref_original)
 #Sij = line_strength(T,logsij0,mdb.nu_lines,mdb.elower,qt)                                                                                                          
-xsv0 = auto_xsection(np.array(nus),mdb.nu_lines,sigmaD,gammaL,Sij,memory_size=30)
 
-opa = OpaPremodit(mdb=mdb,
+opa = OpaPremodit.from_mdb(mdb=mdb,
                   nu_grid=np.array(nus),
                   diffmode=2,
                   auto_trange=[500., 1500.],
@@ -123,15 +126,11 @@ opa = OpaPremodit(mdb=mdb,
 opad = OpaDirect(mdb=mdb,
                  nu_grid=np.array(nus))
 
-logsij0 = np.log(mdb.line_strength)
-qt = mdb.qr_interp(mdb.isotope, T)
-Sij = line_strength(T,logsij0,mdb.nu_lines,mdb.elower,qt, mdb.Tref)
-#Sij = line_strength(T,logsij0,mdb.nu_lines,mdb.elower,qt)                                                                                                          
-xsv = auto_xsection(np.array(nus),mdb.nu_lines,sigmaD,gammaL,Sij,memory_size=30)
+logsij0 = np.log(mdb.line_strength_ref_original)
+qt = mdb.qr_interp(mdb.isotope, T, Tref_original)
+Sij = line_strength(T,logsij0,mdb.nu_lines,mdb.elower,qt, Tref_original)
 
 fig, ax = plt.subplots()
-ax.plot(1.0e8/np.array(nus), xsv0, c='C0')
-ax.plot(1.0e8/np.array(nus), xsv, c='C1')
 ax.plot(1.0e8/np.array(nus), opa.xsvector(T, P), c='C2',ls="dashed")
 ax.plot(1.0e8/np.array(nus), opad.xsvector(T, P), c='C3',ls="dotted")
 ax.set_xlim(22985, 23025)

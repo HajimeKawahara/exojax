@@ -1,4 +1,7 @@
-from exojax.database.exomol.api import MdbExomol 
+#
+# This script shows how to filter quantum states in HITEMP database using MdbHitemp class.
+#
+from exojax.database.hitemp.api import MdbHitemp
 from exojax.utils.grids import wavenumber_grid
 
 nus, wav, r = wavenumber_grid(24000.0, 26000.0, 1000, unit="AA", xsmode="premodit")
