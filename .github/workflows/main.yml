@@ -96,8 +96,8 @@ jobs:
           python -m pip install --upgrade pip
           # fix to numpy2 
           pip install "numpy>=2.0"
-          # install radis from the main branch (0.16.4)
-          pip install "radis@git+https://github.com/radis/radis.git@main"
+          # install radis from the master branch (0.16.4)
+          pip install "radis@git+https://github.com/radis/radis.git@master"
           pip install .
           pip install pytest
 
