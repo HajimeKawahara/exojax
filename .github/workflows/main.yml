@@ -72,3 +72,56 @@ jobs:
         uses: EnricoMi/publish-unit-test-result-action@v2
         with:
           files: artifacts/**/*.xml
+
+
+  pytest-numpy2-radis-dev:
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        python-version: [ "3.9", "3.10", "3.11" ]
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: "pip"
+
+      - name: Install project with numpy2 + radis-dev
+        run: |
+          python -m pip install --upgrade pip
+          # fix to numpy2 
+          pip install "numpy>=2.0"
+          # install radis from the main branch (0.16.4)
+          pip install "radis@git+https://github.com/radis/radis.git@main"
+          pip install .
+          pip install pytest
+
+      - name: Run pytest (numpy2 + radis-dev)
+        run: |
+          mkdir -p results
+          python -m pytest tests/unittests --junitxml results/pytest.xml
+        continue-on-error: true
+
+      - name: Upload Unit Test Results (numpy2)
+        if: ${{ always() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: unit-test-results-numpy2-py${{ matrix.python-version }}
+          path: results/*.xml
+
+      - name: Download Artifacts
+        if: ${{ always() }}
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+
+      - name: Publish Unit Test Results (numpy2)
+        if: ${{ always() }}
+        uses: EnricoMi/publish-unit-test-result-action@v2
+        with:
+          files: artifacts/**/*.xml

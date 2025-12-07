@@ -55,12 +55,16 @@ dependencies = [
   "psutil",
   "json_tricks",
   "habanero<=1.2.6",
-<<<<<<< HEAD
-=======
   "numpy<2",
   "zarr",
->>>>>>> 417cf86badd8d6ec974a1946ab0337197b37f42f
 ]
+
+# install from git for the latest radis+numpy2 support
+numpy2 = [
+  "numpy>=2.0",
+  "radis @ git+https://github.com/radis/radis.git@main",
+]
+
 
 [project.urls]
 # Fill these as appropriate for your project.
