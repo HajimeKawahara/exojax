@@ -3,11 +3,51 @@ import traceback
 
 import numpy as np
 
+from exojax.database.contracts import MDBSnapshot
 from exojax.opacity import OpaPremodit
 from exojax.database.exomol.api import MdbExomol
 from exojax.database.hitran.api import MdbHitran
 from exojax.database.hitemp.api import MdbHitemp
 from exojax.test.emulate_mdb import mock_mdbExomol
+
+
+class MultiMDBCollection(list):
+    """List-like container for selected MDB instances.
+
+    Provides ``to_snapshot`` so downstream code can switch to the snapshot
+    strategy without losing backwards compatibility with list semantics.
+    """
+
+    payload_kind = "mdb"
+
+    def __init__(self, nested_mdbs):
+        super().__init__(nested_mdbs)
+
+    def to_snapshot(self):
+        snapshot_rows = []
+        for seg in self:
+            seg_snapshots = []
+            for mdb in seg:
+                if not hasattr(mdb, "to_snapshot"):
+                    raise AttributeError(
+                        f"{type(mdb).__name__} does not implement to_snapshot()."
+                    )
+                seg_snapshots.append(mdb.to_snapshot())
+            snapshot_rows.append(seg_snapshots)
+        return MultiMDBSnapshot(snapshot_rows)
+
+
+class MultiMDBSnapshot(list):
+    """List-like container holding MDBSnapshot payloads."""
+
+    payload_kind = "snapshot"
+
+    def __init__(self, nested_snapshots):
+        super().__init__(nested_snapshots)
+
+    def to_snapshot(self):
+        """Allow idempotent chaining."""
+        return self
 
 
 class MultiMol:
@@ -62,13 +102,29 @@ class MultiMol:
             )
         return not isinstance(a, list) and not isinstance(b, list)
 
+    def _prepare_nu_grid_list(self, nu_grid_input):
+        """Normalize nu_grid input to match the segment structure."""
+        if isinstance(nu_grid_input, list):
+            grids = nu_grid_input
+        elif isinstance(nu_grid_input, tuple):
+            grids = list(nu_grid_input)
+        else:
+            grids = [nu_grid_input]
+
+        if len(grids) != len(self.molmulti):
+            raise ValueError(
+                "nu_grid_list must have the same number of segments as molmulti "
+                f"(expected {len(self.molmulti)}, got {len(grids)})"
+            )
+        return grids
+
     def generate_database_directories(self):
         """generate database directory array"""
         dbpath_lookup = {
-            "ExoMol": database_path_exomol,
+            "ExoMol": lambda mol: database_path_exomol(mol, self.database_root_path),
             "HITRAN12": database_path_hitran12,
             "HITEMP": database_path_hitemp,
-            "exomol": database_path_exomol,
+            "exomol": lambda mol: database_path_exomol(mol, self.database_root_path),
             "hitran12": database_path_hitran12,
             "hitemp": database_path_hitemp,
             "SAMPLE": database_path_sample,
@@ -105,6 +161,8 @@ class MultiMol:
         Returns:
             lists of mdb: multi mdb
         """
+        nu_grid_segments = self._prepare_nu_grid_list(nu_grid_list)
+
         _multimdb = []
         self.masked_molmulti = self.molmulti[:]
         for k, mol in enumerate(self.molmulti):
@@ -121,10 +179,11 @@ class MultiMol:
                                 os.path.join(
                                     self.database_root_path, self.db_dirs[k][i]
                                 ),
-                                nu_grid_list[k],
+                                nu_grid_segments[k],
                                 crit=crit,
                                 Ttyp=Ttyp,
                                 gpu_transfer=False,
+                                broadf_download=False,
                             )
                         )
                     elif self.dbmulti[k][i] in ["HITRAN12", "hitran12"]:
@@ -133,7 +192,7 @@ class MultiMol:
                                 os.path.join(
                                     self.database_root_path, self.db_dirs[k][i]
                                 ),
-                                nu_grid_list[k],
+                                nu_grid_segments[k],
                                 crit=crit,
                                 Ttyp=Ttyp,
                                 gpu_transfer=False,
@@ -146,7 +205,7 @@ class MultiMol:
                                 os.path.join(
                                     self.database_root_path, self.db_dirs[k][i]
                                 ),
-                                nu_grid_list[k],
+                                nu_grid_segments[k],
                                 crit=crit,
                                 Ttyp=Ttyp,
                                 gpu_transfer=False,
@@ -175,7 +234,7 @@ class MultiMol:
             _multimdb.append(mdb_k)
             self.derive_unique_molecules()
 
-        return _multimdb
+        return MultiMDBCollection(_multimdb)
 
     def derive_unique_molecules(self):
         """derive unique molecules in masked_molmulti and set self.mols_unique and self.mols_num
@@ -226,11 +285,13 @@ class MultiMol:
             _type_: _description_
         """
 
+        nu_grid_segments = self._prepare_nu_grid_list(nu_grid_list)
+
         if nstitch_list is not None:
-            self._check_structure(nu_grid_list, nstitch_list)
+            self._check_structure(nu_grid_segments, nstitch_list)
             self.nstitch_list = nstitch_list
         else:
-            self.nstitch_list = [1] * len(nu_grid_list)
+            self.nstitch_list = [1] * len(nu_grid_segments)
         del nstitch_list
 
         multiopa = []
@@ -239,7 +300,7 @@ class MultiMol:
             for i_mol in range(len(multimdb[k_nuseg])):
                 opa_i = self.store_single_opa(
                     multimdb[k_nuseg][i_mol],
-                    nu_grid_list[k_nuseg],
+                    nu_grid_segments[k_nuseg],
                     auto_trange,
                     diffmode,
                     dit_grid_resolution,
@@ -261,16 +322,25 @@ class MultiMol:
         allow_32bit,
         nstitch,
     ):
-        opa_i = OpaPremodit(
+        opa_kwargs = {
+            "diffmode": diffmode,
+            "auto_trange": auto_trange,
+            "dit_grid_resolution": dit_grid_resolution,
+            "allow_32bit": allow_32bit,
+            "nstitch": nstitch,
+        }
+
+        if isinstance(multimdb_each, MDBSnapshot):
+            return OpaPremodit.from_snapshot(multimdb_each, nu_grid_list_seg, **opa_kwargs)
+        if hasattr(multimdb_each, "to_snapshot"):
+            return OpaPremodit.from_mdb(multimdb_each, nu_grid_list_seg, **opa_kwargs)
+
+        # Legacy path for custom MDB implementations without snapshot support.
+        return OpaPremodit(
             mdb=multimdb_each,
             nu_grid=nu_grid_list_seg,
-            diffmode=diffmode,
-            auto_trange=auto_trange,
-            dit_grid_resolution=dit_grid_resolution,
-            allow_32bit=allow_32bit,
-            nstitch=nstitch,
+            **opa_kwargs,
         )
-        return opa_i
 
     def molmass(self):
         """return molecular mass list and H and He
@@ -328,29 +398,84 @@ def database_path_hitemp(simple_molname):
     return _hitemp_dbpath[simple_molname]
 
 
-def database_path_exomol(simple_molecule_name):
+def database_path_exomol(simple_molecule_name, database_root_path=None):
     """default ExoMol path
 
     Args:
         simple_molecule_name (str): simple molecule name "H2O"
+        database_root_path (str, optional): base directory that already
+            contains molecule/exact folders. Used to detect offline datasets.
 
     Returns:
         str: Exomol default data path
     """
-    from radis.api.exomolapi import get_exomol_database_list
-
     from exojax.utils.molname import simple_molname_to_exact_exomol_stable
 
     exact_molname_exomol_stable = simple_molname_to_exact_exomol_stable(
         simple_molecule_name
     )
-    mlist, recommended = get_exomol_database_list(
-        simple_molecule_name, exact_molname_exomol_stable
+
+    dataset_name = _discover_local_exomol_dataset(
+        simple_molecule_name, exact_molname_exomol_stable, database_root_path
     )
-    dbpath = (
-        simple_molecule_name + "/" + exact_molname_exomol_stable + "/" + recommended
-    )
-    return dbpath
+    if dataset_name is None:
+        dataset_name = _query_recommended_exomol_dataset(
+            simple_molecule_name, exact_molname_exomol_stable
+        )
+
+    return f"{simple_molecule_name}/{exact_molname_exomol_stable}/{dataset_name}"
+
+
+def _discover_local_exomol_dataset(simple_molecule_name, exact_name, root_path):
+    """Return the first locally available dataset under the provided root."""
+    if root_path is None:
+        return None
+
+    base_dir = os.path.join(root_path, simple_molecule_name, exact_name)
+    if not os.path.isdir(base_dir):
+        return None
+
+    try:
+        candidates = sorted(
+            [
+                entry
+                for entry in os.listdir(base_dir)
+                if os.path.isdir(os.path.join(base_dir, entry))
+            ]
+        )
+    except OSError:
+        return None
+
+    if not candidates:
+        return None
+
+    non_sample = [cand for cand in candidates if cand.upper() != "SAMPLE"]
+    if non_sample:
+        return non_sample[0]
+    return candidates[0]
+
+
+def _query_recommended_exomol_dataset(simple_molecule_name, exact_name):
+    """Ask RADIS for the recommended dataset, propagating actionable errors."""
+    try:
+        from radis.api.exomolapi import get_exomol_database_list
+    except Exception as exc:  # pragma: no cover - defensive guard
+        raise RuntimeError(
+            "radis.api.exomolapi is required to locate ExoMol data. "
+            "Install RADIS or place the dataset under database_root_path."
+        ) from exc
+
+    from urllib.error import URLError
+
+    try:
+        _, recommended = get_exomol_database_list(simple_molecule_name, exact_name)
+    except URLError as exc:
+        raise RuntimeError(
+            "Unable to reach ExoMol servers to determine the recommended dataset. "
+            "Provide the files locally (e.g., database_root_path/CO/12C-16O/<dataset>)."
+        ) from exc
+
+    return recommended
 
 
 def database_path_sample(simple_molname):

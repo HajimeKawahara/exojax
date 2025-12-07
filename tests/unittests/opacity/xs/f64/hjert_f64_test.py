@@ -11,10 +11,10 @@ from scipy.special import wofz as sc_wofz
 import jax.numpy as jnp
 from jax import jit, vmap
 import numpy as np
-from jax import config                                                 #
-config.update("jax_enable_x64", True)
 
 def test_comparison_hjert_scipy():
+    from jax import config                                                 #
+    config.update("jax_enable_x64", True)
 
     Na=300
     vl=-3

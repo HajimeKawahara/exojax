@@ -24,6 +24,7 @@ _ALIAS: Final[dict[str, str]] = {
     "OpaRayleigh": "exojax.opacity.opacont:OpaRayleigh",
     "OpaHminus": "exojax.opacity.opacont:OpaHminus",
     "OpaMie": "exojax.opacity.opacont:OpaMie", 
+    "saveopa": "exojax.opacity.io.ioopa:saveopa",
 }
 
 __all__ = list(_ALIAS)          # tab completion & help()

@@ -26,6 +26,7 @@ Opacity Calculation
    userguide/hjerting.rst
    userguide/modit.rst
    userguide/premodit.rst
+   userguide/saveopa.rst
    userguide/premodit_trange.rst
    userguide/opacity_di.rst
    tutorials/Open_Close_Cross_Section.rst

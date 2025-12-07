@@ -45,8 +45,7 @@ def _isotope_index_from_isotope_number(isotope, uniqiso):
 
 def _list_isotopologues(
     simple_molecule_list: list[str],
-    max_workers: Optional[int] = None
-
+    max_workers: Optional[int] = None,
 ) -> dict[str, list[str]]:
     """Return {molecule: [iso₁, iso₂, …]} for the given molecules.
 
