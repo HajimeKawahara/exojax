@@ -63,7 +63,7 @@ dependencies = [
 [project.optional-dependencies]
 numpy2 = [
   "numpy>=2.0",
-  "radis @ git+https://github.com/radis/radis.git@main",
+  "radis @ git+https://github.com/radis/radis.git@master",
 ]
 
 [project.urls]
