@@ -60,11 +60,11 @@ dependencies = [
 ]
 
 # install from git for the latest radis+numpy2 support
+[project.optional-dependencies]
 numpy2 = [
   "numpy>=2.0",
   "radis @ git+https://github.com/radis/radis.git@main",
 ]
-
 
 [project.urls]
 # Fill these as appropriate for your project.
