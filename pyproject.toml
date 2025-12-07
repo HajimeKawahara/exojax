@@ -47,7 +47,6 @@ dependencies = [
   "tqdm",
   "PyMieScatt",
   "radis>=0.15.2",
-  "numba",
   "tables",
   "pandas",
   "termcolor",
