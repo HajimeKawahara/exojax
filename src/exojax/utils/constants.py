@@ -25,7 +25,6 @@ G = 6.67408e-08
 MJ = 1.8986 * 1.e30  # Jovian mass
 gJ = 2478.57730044555  # Jovian gravity
 loggJ = 3.3942024679792957 # Jovian logg
-m_u = 1.66053904e-24  # atomic mass unit [g]
 kB = 1.38064852e-16
 logkB = -15.859916868309735  # log10(kB)
 hcperk = 1.4387773538277202  # hc/kB (cm K)
@@ -39,6 +38,10 @@ Rcgs = 1.0973731568e5  # Rydberg constant [cm-1]
 a0 = 5.2917720859e-9  # Bohr radius [cm]
 bar_cgs = 1.e6 # 1 bar in cgs = 1e6 dyn/cm2
 
+# atomic mass unit [g] based on CODATA
+m_u_2014 = 1.66053904e-24  # CODATA 2014
+m_u_2018 = 1.6605390666e-24  # CODATA 2018
+m_u = 1.66053906892e-24 # CODATA 2022
 
 # in bar unit (1bar = 10**6 dyn/cm2 (cgs))
 Patm = 1.01325  # 1 atm in bar
