@@ -39,8 +39,8 @@ a0 = 5.2917720859e-9  # Bohr radius [cm]
 bar_cgs = 1.e6 # 1 bar in cgs = 1e6 dyn/cm2
 
 # atomic mass unit [g] based on CODATA
-# m_u = 1.66053904e-24  CODATA 2014
-# m_u = 1.6605390666e-24  # CODATA 2018
+m_u_2014 = 1.66053904e-24  # CODATA 2014
+m_u_2018 = 1.6605390666e-24  # CODATA 2018
 m_u = 1.66053906892e-24 # CODATA 2022
 
 # in bar unit (1bar = 10**6 dyn/cm2 (cgs))
