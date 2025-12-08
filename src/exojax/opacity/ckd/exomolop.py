@@ -11,8 +11,8 @@ from pathlib import Path
 
 import h5py
 import numpy as np
-
-from petitRADTRANS import physical_constants as cst
+from exojax.utils.constants import ccgs
+from exojax.utils.constants import m_u
 
 
 def _reshape_kcoeff(kcoeff: np.ndarray, n_pressures: int, n_temperatures: int) -> np.ndarray:
@@ -37,7 +37,7 @@ def load_ktable(path: Path):
         pressures = fh5["p"][:]
         kcoeff = np.array(fh5["kcoeff"])
 
-    frequencies = cst.c * bin_centers[::-1]  # Hz, descending
+    frequencies = ccgs * bin_centers[::-1]  # Hz, descending
     g_size = samples.size
     tp_grid_size = temperatures.size * pressures.size
 
@@ -51,7 +51,8 @@ def load_ktable(path: Path):
     opacity_grid = np.zeros((g_size, frequencies.size, 1, tp_grid_size))
     opacity_grid[:, :, 0, :] = k_table
     opacity_grid[opacity_grid < 0.0] = 0.0
-    opacity_grid *= 1.0 / (mol_mass * cst.amu)
+    opacity_grid *= 1.0 / (mol_mass * m_u)
+    
 
     return {
         "molecule": molecule,
@@ -89,5 +90,4 @@ def main():
 
 
 if __name__ == "__main__":
-    print(cst.c, cst.amu) #29979245800.0 1.6605390666e-24
     main()
