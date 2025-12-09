@@ -1,7 +1,7 @@
-"""Minimal example to inspect a petitRADTRANS correlated-k opacity HDF5 file.
+"""Loading a petitRADTRANS correlated-k opacity HDF5 file.
 
-Run from the repository root:
-    python load_h5_example.py 12C-16O__Li2015.R1000_0.3-50mu.ktable.petitRADTRANS.h5
+This code is based on load_hdf5_ktables in petitRADTRANS under the MIT license.
+
 """
 
 from __future__ import annotations
@@ -12,7 +12,7 @@ from pathlib import Path
 import h5py
 import numpy as np
 from exojax.utils.constants import ccgs
-from exojax.utils.constants import m_u
+from exojax.utils.constants import m_u_2018 # CODATA 2018 values was used in pRT
 
 
 def _reshape_kcoeff(kcoeff: np.ndarray, n_pressures: int, n_temperatures: int) -> np.ndarray:
@@ -51,7 +51,7 @@ def load_ktable(path: Path):
     opacity_grid = np.zeros((g_size, frequencies.size, 1, tp_grid_size))
     opacity_grid[:, :, 0, :] = k_table
     opacity_grid[opacity_grid < 0.0] = 0.0
-    opacity_grid *= 1.0 / (mol_mass * m_u)
+    opacity_grid *= 1.0 / (mol_mass * m_u_2018)
     
 
     return {
