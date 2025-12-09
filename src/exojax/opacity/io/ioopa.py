@@ -1,9 +1,7 @@
 from __future__ import annotations
 
 from typing import Any, Dict, Literal
-import numpy as np
 
-from exojax import __version__
 from exojax.opacity.base import OpaCalc
 from exojax.opacity.ckd.api import OpaCKD
 from exojax.opacity.lpf.api import OpaDirect

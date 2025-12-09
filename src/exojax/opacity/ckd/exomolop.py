@@ -6,6 +6,7 @@ This code is based on load_hdf5_ktables in petitRADTRANS under the MIT license.
 from __future__ import annotations
 
 import argparse
+from cProfile import label
 from pathlib import Path
 
 import h5py
@@ -27,7 +28,7 @@ def _reshape_kcoeff(kcoeff: np.ndarray, n_pressures: int, n_temperatures: int) -
 
 
 def load_ktable(path: Path):
-    """Load a correlated-k opacity file and return metadata and the opacity grid."""
+    """Load a correlated-k opacity file and return metadata and the cross-section grid."""
     with h5py.File(path, "r") as fh5:
         molecule = fh5["mol_name"][()][0].decode("utf-8")
         mol_mass = float(fh5["mol_mass"][()][0])
@@ -38,12 +39,12 @@ def load_ktable(path: Path):
         pressures = fh5["p"][:]       # bar
         kcoeff = np.array(fh5["kcoeff"])
 
-    frequencies = ccgs * bin_centers[::-1]  # Hz (reversed order)
+    wavenumber = bin_centers[::-1]  # cm-1 (reversed order)
 
     n_t = temperatures.size
     n_p = pressures.size
     g_size = samples.size
-    n_freq = frequencies.size
+    n_freq = wavenumber.size
 
     # k_table shape: (g, freq, T*P)
     k_table = _reshape_kcoeff(
@@ -52,15 +53,15 @@ def load_ktable(path: Path):
         n_temperatures=n_t,
     )
 
-    # === Convert to (T, P, g, freq) ===
-    # Current shape: (g, freq, T*P)
+    # === Convert to (T, P, g, wavenumber) ===
+    # Current shape: (g, wavenumber, T*P)
     # First reshape (T*P -> P, T), then reorder axes.
-    opacity_grid = k_table.reshape(g_size, n_freq, n_p, n_t)      # -> (g, freq, P, T)
-    opacity_grid = np.transpose(opacity_grid, (3, 2, 0, 1))       # -> (T, P, g, freq)
+    xsgrid = k_table.reshape(g_size, n_freq, n_p, n_t)      # -> (g, wavenumber, P, T)
+    xsgrid = np.transpose(xsgrid, (3, 2, 0, 1))       # -> (T, P, g, wavenumber)
 
-    # Clip negative values and convert cross-sections to mass opacities.
-    opacity_grid[opacity_grid < 0.0] = 0.0
-    opacity_grid *= 1.0 / (mol_mass * m_u_2018)
+    # Clip negative values
+    xsgrid[xsgrid < 0.0] = 0.0
+    #opacity_grid *= 1.0 / (mol_mass * m_u_2018) # convert to cm2 per gram
 
     return {
         "molecule": molecule,
@@ -69,12 +70,16 @@ def load_ktable(path: Path):
         "pressures_bar": pressures,
         "g_samples": samples,
         "g_weights": weights,
-        "frequencies_Hz": frequencies,
-        "opacity_grid": opacity_grid,  # shape: (T, P, g, freq)
+        "wavenumber_cm-1": wavenumber,
+        "xs_grid": xsgrid,  # shape: (T, P, g, wavenumber)
     }
 
 
-def main():
+
+if __name__ == "__main__":
+    from jax import config 
+    config.update("jax_enable_x64", True)
+
     parser = argparse.ArgumentParser(description="Load a petitRADTRANS correlated-k opacity .h5 file.")
     parser.add_argument(
         "h5_file",
@@ -82,20 +87,50 @@ def main():
         help="Path to a *.ktable.petitRADTRANS.h5 file (e.g., 12C-16O__Li2015.R1000_0.3-50mu.ktable.petitRADTRANS.h5)",
     )
     args = parser.parse_args()
-
     info = load_ktable(args.h5_file)
 
-    print(f"Loaded molecule          : {info['molecule']}")
-    print(f"Molecular mass [amu]     : {info['molecular_mass_amu']}")
-    print(f"T grid size              : {info['temperatures_K'].size}")
-    print(f"P grid size              : {info['pressures_bar'].size}")
-    print(f"g-ordinates (len {info['g_samples'].size}): {np.array2string(info['g_samples'], precision=3)}")
-    print(f"Opacity grid shape       : {info['opacity_grid'].shape} (T, P, g, freq)")
+    from exojax.utils.grids import wavenumber_grid
+    from exojax.database.exomol.api import MdbExomol
+    from exojax.opacity import OpaPremodit
 
-    # Quick sanity check
-    sample_value = info["opacity_grid"][0, 0, 0, 0]  # (T=0, P=0, g=0, freq=0)
-    print(f"First opacity value      : {sample_value:.3e} cm^2 g^-1")
+    nu_grid, wav, resolution = wavenumber_grid(22920.0, 24000.0, 100000, unit="AA", xsmode="premodit")
+    mdb = MdbExomol(".database/CO/12C-16O/Li2015", nurange=nu_grid)
+
+    molmass = mdb.molmass # we use molmass later
+    snap = mdb.to_snapshot() # extract snapshot from mdb
+    del mdb # save the memory
+
+    opa = OpaPremodit.from_snapshot(
+        snap,
+        nu_grid,
+        auto_trange=(500.0, 1500.0),
+        dit_grid_resolution=1.0,
+    )
 
 
-if __name__ == "__main__":
-    main()
+    import matplotlib.pyplot as plt
+    iT = 10
+    jP = 10
+    temperature = info['temperatures_K'][iT]
+    pressure = info['pressures_bar'][jP]
+    print(temperature, "K", pressure,"bar")
+    
+    xsv = opa.xsvector(temperature, pressure)
+    
+    ktable = info['xs_grid']
+    nu_ckd = info['wavenumber_cm-1']
+    wav_ckd = 1e4/nu_ckd  # micron
+    print(np.min(nu_ckd), np.max(nu_ckd))
+    print(np.min(wav_ckd), np.max(wav_ckd))
+    xs_ckd = np.sum(ktable[iT, jP, :, :] * info['g_weights'][:, np.newaxis], axis=0)
+    
+    fig = plt.figure(figsize=(12,4))
+    plt.plot(wav_ckd*1.e4, xs_ckd, label="ckd", alpha=0.7)
+    plt.plot(wav, xsv, label="premodit", alpha=0.7)
+    plt.yscale("log")
+    plt.xlabel("Wavelength [angstrom]")
+    plt.ylabel("Cross section [cm$^2$]")
+    plt.xlim(22000,24000)
+    plt.tight_layout()
+    plt.show()
+
