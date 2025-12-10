@@ -685,7 +685,9 @@ splitting. See below for details.
 Want to analyze JWST data? The Gallery and the following repositories
 may be helpful.
 
--  `ExoJAX gallery <../examples/index.html>`__
+-  `HMC-NUTS analysis using WASP39b transmission spectrum as observed by
+   JWST
+   G395H <../examples/WASP39b_transmission_JWST-NIRSpec.html#sphx-glr-examples-wasp39b-transmission-jwst-nirspec-py>`__
 -  `exojaxample_WASP39b <https://github.com/sh-tada/exojaxample_WASP39b>`__
    by Shotaro Tada (@sh-tada)
 

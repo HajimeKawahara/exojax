@@ -5,6 +5,11 @@ WASP-39 b Transmission Spectrum Retrieval with ExoJAX + NumPyro
 This example demonstrates how to retrieve the JWST NIRSpec/G395H
 transmission spectrum using *ExoJAX* and *NumPyro*'s Hamiltonian
 Monte-Carlo **NUTS** sampler for Bayesian inference.
+
+See Section 7.2 of https://arxiv.org/abs/2410.06900 for details.
+
+Shotaro Tada, December 11st (2025)
+
 """
 # %%
 
