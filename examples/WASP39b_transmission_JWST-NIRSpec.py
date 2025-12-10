@@ -6,8 +6,7 @@ This example demonstrates how to retrieve the JWST NIRSpec/G395H
 transmission spectrum using *ExoJAX* and *NumPyro*'s Hamiltonian
 Monte-Carlo **NUTS** sampler for Bayesian inference.
 """
-
-# sphinx_gallery_thumbnail_number = 1
+# %%
 
 import os
 
@@ -44,6 +43,9 @@ import numpyro.optim as optim
 from numpyro import handlers
 from numpyro.infer.autoguide import AutoMultivariateNormal, AutoGuideList
 from numpyro.infer.initialization import init_to_value
+
+# sphinx_gallery_thumbnail_path = '_static/transit.png'
+
 
 # %%
 # Setup and configuration
@@ -87,7 +89,7 @@ inst_nus = wav2nu(wav_obs, "nm")
 
 # %%
 # Instrumental resolution
-# ---------------------
+# -------------------------
 #
 # Read the NIRSpec/G395H resolving-power curve and interpolate it so the
 # forward model can convert to a Gaussian instrumental broadening kernel.
@@ -113,7 +115,7 @@ Rinst = res_G395H(np.mean(wav_obs))
 
 # %%
 # Wavenumber grid and spectral operators
-# ---------------------------
+# -------------------------------------------------
 #
 # Build a high-resolution wavenumber grid for forward modelling and construct
 # spectral operators to mimic rotation and the NIRSpec line-spread function.
