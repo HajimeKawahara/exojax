@@ -9,9 +9,11 @@ import argparse
 from pathlib import Path
 import h5py
 import numpy as np
+import jax.numpy as jnp
+from exojax.opacity.ckd.contracts import CKDTableInfo
 
 
-def load_ktable(path: Path):
+def load_ckd(path: Path):
     """Load a correlated-k opacity file and return metadata and the cross-section grid."""
     with h5py.File(path, "r") as fh5:
         molecule = fh5["mol_name"][()][0].decode("utf-8")
@@ -29,19 +31,21 @@ def load_ktable(path: Path):
     xsgrid = np.swapaxes(xsgrid, 2, 3)
     
     # Clip negative values
-    xsgrid[xsgrid < 0.0] = 0.0
+    small_value = 1e-30
+    xsgrid[xsgrid <= 0.0] = small_value
 
-    return {
-        "molecule": molecule,
-        "molecular_mass_amu": mol_mass,
-        "temperatures_K": temperatures,
-        "pressures_bar": pressures,
-        "g_samples": samples,
-        "g_weights": weights,
-        "wavenumber_cm-1": wavenumber,
-        "xs_grid": xsgrid,  # shape: (T, P, g, wavenumber)
-    }
+    ckdinfo = CKDTableInfo(
+        log_kggrid=jnp.log(jnp.array(xsgrid)),
+        ggrid=jnp.array(samples),
+        weights=jnp.array(weights),
+        T_grid=jnp.array(temperatures),
+        P_grid=jnp.array(pressures),
+        nu_bands=jnp.array(wavenumber),
+        band_edges=jnp.array([]),  # Not used in this context
+    )
 
+
+    return ckdinfo
 
 
 if __name__ == "__main__":
@@ -55,7 +59,7 @@ if __name__ == "__main__":
         help="Path to a *.ktable.petitRADTRANS.h5 file (e.g., 12C-16O__Li2015.R1000_0.3-50mu.ktable.petitRADTRANS.h5)",
     )
     args = parser.parse_args()
-    info = load_ktable(args.h5_file)
+    ckd_info = load_ckd(args.h5_file)
 
     from exojax.utils.grids import wavenumber_grid
     from exojax.database.exomol.api import MdbExomol
@@ -79,18 +83,18 @@ if __name__ == "__main__":
     import matplotlib.pyplot as plt
     iT = 10
     jP = 10
-    temperature = info['temperatures_K'][iT]
-    pressure = info['pressures_bar'][jP]
+    temperature = ckd_info.T_grid[iT]
+    pressure = ckd_info.P_grid[jP]
     print(temperature, "K", pressure,"bar")
     
     xsv = opa.xsvector(temperature, pressure)
     
-    ktable = info['xs_grid']
-    nu_ckd = info['wavenumber_cm-1']
+    ktable = jnp.exp(ckd_info.log_kggrid)
+    nu_ckd = ckd_info.nu_bands
     wav_ckd = 1e4/nu_ckd  # micron
     print(np.min(nu_ckd), np.max(nu_ckd))
     print(np.min(wav_ckd), np.max(wav_ckd))
-    xs_ckd = np.sum(ktable[iT, jP, :, :] * info['g_weights'][:, np.newaxis], axis=0)
+    xs_ckd = np.sum(ktable[iT, jP, :, :] * ckd_info.weights[:, np.newaxis], axis=0)
     
     fig = plt.figure(figsize=(12,4))
     plt.plot(wav_ckd*1.e4, xs_ckd, label="ckd", alpha=0.7)
