@@ -2,7 +2,7 @@ import os
 from exojax.database.moldb  import AdbVald, AdbSepVald
 
 import urllib.request
-from exojax.utils.url import url_developer_data
+from exojax.provider.url import url_developer_data
 
 filepath_VALD3 = '.database/vald2600.gz'
 path_ValdLineList = '.database/vald4214450.gz'
