@@ -11,29 +11,13 @@ import h5py
 import numpy as np
 import jax.numpy as jnp
 from exojax.opacity.ckd.contracts import CKDTableInfo
+from exojax.provider.exomolop import load_ckd
 
-
-def load_ckd(path: Path):
+def load_exomolop_ckd(path: Path):
     """Load a correlated-k opacity file and return metadata and the cross-section grid."""
-    with h5py.File(path, "r") as fh5:
-        molecule = fh5["mol_name"][()][0].decode("utf-8")
-        mol_mass = float(fh5["mol_mass"][()][0])
-        wavenumber = fh5["bin_centers"][:]  # cm-1
-        samples = fh5["samples"][:]  # g-ordinates
-        weights = fh5["weights"][:]
-        temperatures = fh5["t"][:]    # K
-        pressures = fh5["p"][:]       # bar
-        kcoeff = np.array(fh5["kcoeff"])
 
+    xsgrid, samples, weights, temperatures, pressures, wavenumber, molecule, mol_mass = load_ckd(path)
     
-    # reshape to (T, P, g, wavenumber)
-    xsgrid = np.swapaxes(kcoeff, 0, 1)
-    xsgrid = np.swapaxes(xsgrid, 2, 3)
-    
-    # Clip negative values
-    small_value = 1e-30
-    xsgrid[xsgrid <= 0.0] = small_value
-
     ckdinfo = CKDTableInfo(
         log_kggrid=jnp.log(jnp.array(xsgrid)),
         ggrid=jnp.array(samples),
@@ -59,7 +43,7 @@ if __name__ == "__main__":
         help="Path to a *.ktable.petitRADTRANS.h5 file (e.g., 12C-16O__Li2015.R1000_0.3-50mu.ktable.petitRADTRANS.h5)",
     )
     args = parser.parse_args()
-    ckd_info = load_ckd(args.h5_file)
+    ckd_info = load_exomolop_ckd(args.h5_file)
 
     from exojax.utils.grids import wavenumber_grid
     from exojax.database.exomol.api import MdbExomol
