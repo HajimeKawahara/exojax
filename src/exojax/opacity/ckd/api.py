@@ -7,7 +7,6 @@ maintaining accuracy through k-distribution statistical representation.
 
 from __future__ import annotations
 from typing import Union, Optional
-from dataclasses import dataclass
 import json
 
 import jax.numpy as jnp
@@ -15,37 +14,16 @@ import numpy as np
 from jax import vmap
 
 from exojax.opacity.base import OpaCalc
+from exojax.opacity.ckd.contracts import CKDTableInfo
 from exojax.opacity.ckd.core import gauss_legendre_grid
 from exojax.opacity.ckd.core import compute_ckd_tables
 from exojax.opacity.ckd.core import interpolate_log_k_2d
 from exojax.opacity.ckd.io import _hash_json
 from exojax.opacity.ckd.io import _base_fingerprint
 from exojax.opacity.ckd.io import _ckd_save_as_npz
-
 from exojax.utils.spectral_bands import spectral_bands
 
 
-@dataclass(frozen=True)
-class CKDTableInfo:
-    """Immutable container for CKD table information.
-
-    Attributes:
-        log_kggrid: Log k-values on g-grid, shape (nT, nP, Ng, nnu_bands)
-        ggrid: Gauss-Legendre g-ordinates, shape (Ng,)
-        weights: Gauss-Legendre quadrature weights, shape (Ng,)
-        T_grid: Temperature grid, shape (nT,)
-        P_grid: Pressure grid, shape (nP,)
-        nu_bands: Wavenumber band centers, shape (nnu_bands,)
-        band_edges: Wavenumber band edges, shape (nnu_bands, 2)
-    """
-
-    log_kggrid: jnp.ndarray
-    ggrid: jnp.ndarray
-    weights: jnp.ndarray
-    T_grid: jnp.ndarray
-    P_grid: jnp.ndarray
-    nu_bands: jnp.ndarray
-    band_edges: jnp.ndarray
 
 
 class OpaCKD(OpaCalc):
@@ -495,3 +473,43 @@ class OpaCKD(OpaCalc):
 
         inst = cls.load_only()
         return inst.load_tables(path, io_format=io_format, base_opa=base_opa)
+
+    @classmethod
+    def from_external(cls, provider: str, path: str):
+        """Instantiate ``OpaCKD`` from an external CKD table provider.
+
+        Currently supports provider ``\"exomolop\"`` which follows the return contract
+        of :func:`exojax.provider.exomolop.load_ckd`.
+        """
+        provider_key = provider.lower()
+        if provider_key != "exomolop":
+            raise ValueError(f"Unsupported CKD provider '{provider}'.")
+
+        from exojax.provider import exomolop as exomolop_provider
+
+        (
+            xsgrid,
+            samples,
+            weights,
+            temperatures,
+            pressures,
+            nu_centers,
+            _molecule,
+            _mol_mass,
+        ) = exomolop_provider.load_ckd(path)
+
+        inst = cls.load_only()
+        inst.Ng = int(len(samples))
+        inst.ckd_info = CKDTableInfo(
+            log_kggrid=jnp.log(jnp.asarray(xsgrid)),
+            ggrid=jnp.asarray(samples),
+            weights=jnp.asarray(weights),
+            T_grid=jnp.asarray(temperatures),
+            P_grid=jnp.asarray(pressures),
+            nu_bands=jnp.asarray(nu_centers),
+            band_edges=jnp.asarray([]),
+        )
+        inst.nu_bands = inst.ckd_info.nu_bands
+        inst.band_edges = inst.ckd_info.band_edges
+        inst.ready = True
+        return inst
