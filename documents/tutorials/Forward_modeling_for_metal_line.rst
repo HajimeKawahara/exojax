@@ -153,7 +153,7 @@ Load a database of atomic lines from VALD3
     path_valdlines = '.database/HiroyukiIshikawa.4214450.gz'
     
     import urllib.request
-    from exojax.utils.url import url_developer_data
+    from exojax.provider.url import url_developer_data
     if not os.path.isdir(path_valdlines.split('/')[0]):
         print("Directory '" + path_valdlines.split('/')[0] + "' NOT found! This causes below.")
     if not os.path.isfile(path_valdlines):

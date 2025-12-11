@@ -3,7 +3,7 @@ import concurrent.futures as _cf
 import logging
 import requests
 from bs4 import BeautifulSoup
-from exojax.utils.url import url_lists_exomolhr
+from exojax.provider.url import url_lists_exomolhr
 from typing import Optional
     
 

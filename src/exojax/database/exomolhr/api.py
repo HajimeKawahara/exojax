@@ -1,6 +1,6 @@
 import numpy as np
 from exojax.utils.molname import e2s
-from exojax.utils.url import url_lists_exomolhr
+from exojax.provider.url import url_lists_exomolhr
 from exojax.database.molinfo import isotope_molmass
 from exojax.database._common.isotope_functions import _list_isotopologues
 from exojax.database.exomolhr._downloader import _load_exomolhr_csv
