@@ -64,7 +64,7 @@ class PdbCloud:
         """Downloading virga refractive index data
 
         Note:
-            The download URL is written in exojax.utils.url.
+            The download URL is written in exojax.provider.url.
         """
         import os
         import shutil
@@ -74,7 +74,7 @@ class PdbCloud:
             find_files_by_extension,
             get_file_names_without_extension,
         )
-        from exojax.utils.url import url_virga
+        from exojax.provider.url import url_virga
 
         try:
             os.makedirs(str(self.path), exist_ok=True)

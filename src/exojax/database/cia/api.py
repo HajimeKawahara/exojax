@@ -37,12 +37,12 @@ class CdbCIA:
         """Downloading hitrancia file.
 
         Note:
-            The download URL is written in exojax.utils.url.
+            The download URL is written in exojax.provider.url.
         """
         import os
         import urllib.request
 
-        from exojax.utils.url import url_HITRANCIA
+        from exojax.provider.url import url_HITRANCIA
 
         try:
             os.makedirs(str(self.path.parent), exist_ok=True)
