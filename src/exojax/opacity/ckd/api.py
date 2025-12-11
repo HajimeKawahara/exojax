@@ -473,3 +473,43 @@ class OpaCKD(OpaCalc):
 
         inst = cls.load_only()
         return inst.load_tables(path, io_format=io_format, base_opa=base_opa)
+
+    @classmethod
+    def from_external(cls, provider: str, path: str):
+        """Instantiate ``OpaCKD`` from an external CKD table provider.
+
+        Currently supports provider ``\"exomolop\"`` which follows the return contract
+        of :func:`exojax.provider.exomolop.load_ckd`.
+        """
+        provider_key = provider.lower()
+        if provider_key != "exomolop":
+            raise ValueError(f"Unsupported CKD provider '{provider}'.")
+
+        from exojax.provider import exomolop as exomolop_provider
+
+        (
+            xsgrid,
+            samples,
+            weights,
+            temperatures,
+            pressures,
+            nu_centers,
+            _molecule,
+            _mol_mass,
+        ) = exomolop_provider.load_ckd(path)
+
+        inst = cls.load_only()
+        inst.Ng = int(len(samples))
+        inst.ckd_info = CKDTableInfo(
+            log_kggrid=jnp.log(jnp.asarray(xsgrid)),
+            ggrid=jnp.asarray(samples),
+            weights=jnp.asarray(weights),
+            T_grid=jnp.asarray(temperatures),
+            P_grid=jnp.asarray(pressures),
+            nu_bands=jnp.asarray(nu_centers),
+            band_edges=jnp.asarray([]),
+        )
+        inst.nu_bands = inst.ckd_info.nu_bands
+        inst.band_edges = inst.ckd_info.band_edges
+        inst.ready = True
+        return inst

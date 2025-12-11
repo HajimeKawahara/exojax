@@ -1,20 +1,25 @@
-"""Loading a petitRADTRANS correlated-k opacity HDF5 file.
+"""Loading a exomolop correlated-k opacity HDF5 file.
 
 A part of this file is originally based on load_hdf5_ktables in petitRADTRANS under the MIT license.
 """
 
 from __future__ import annotations
 
-import argparse
 from pathlib import Path
-import h5py
-import numpy as np
 import jax.numpy as jnp
 from exojax.opacity.ckd.contracts import CKDTableInfo
 from exojax.provider.exomolop import load_ckd
 
 def load_exomolop_ckd(path: Path):
-    """Load a correlated-k opacity file and return metadata and the cross-section grid."""
+    """Load a correlated-k opacity file from exomolop and return metadata and the cross-section grid.
+    
+    Args:
+        path (Path): Path to the CKD h5 file.
+
+    Returns:
+        CKDTableInfo: An object containing the cross-section grid and metadata.
+
+    """
 
     xsgrid, samples, weights, temperatures, pressures, wavenumber, molecule, mol_mass = load_ckd(path)
 
