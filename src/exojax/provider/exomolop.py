@@ -1,10 +1,8 @@
 from __future__ import annotations
 
-import argparse
 from pathlib import Path
 import h5py
 import numpy as np
-import jax.numpy as jnp
 
 def load_ckd(path: Path):
     """Load a correlated-k opacity file and return metadata and the cross-section grid."""
