@@ -37,12 +37,16 @@ def test_from_external_exomolop_basic(monkeypatch):
             mol_mass,
         )
 
-    # Monkeypatch before importing the API path that uses it
-    import exojax.provider.exomolop as exomolop_provider
-
-    monkeypatch.setattr(exomolop_provider, "load_ckd", fake_load_ckd)
-
     from exojax.opacity.ckd.api import OpaCKD
+    import sys
+    from types import ModuleType
+
+    dummy_exomolop = ModuleType("exojax.provider.exomolop")
+    dummy_exomolop.load_ckd = fake_load_ckd
+    dummy_exomolop.download_exomolop_h5 = lambda path: path
+    monkeypatch.setitem(sys.modules, "exojax.provider.exomolop", dummy_exomolop)
+    import exojax.provider as provider_pkg
+    monkeypatch.setattr(provider_pkg, "exomolop", dummy_exomolop, raising=False)
 
     ckd = OpaCKD.from_external("exomolop", "dummy.h5")
 
@@ -64,3 +68,52 @@ def test_from_external_exomolop_basic(monkeypatch):
     np.testing.assert_allclose(np.asarray(xst[0]), xsgrid[0, 0], rtol=1e-6, atol=0.0)
     np.testing.assert_allclose(np.asarray(xst[1]), xsgrid[1, 1], rtol=1e-6, atol=0.0)
 
+
+def test_from_external_exomolop_nurange(monkeypatch):
+    # Synthetic CKD grid dimensions
+    nT, nP, Ng, nBands = 1, 1, 2, 4
+
+    temperatures = np.array([500.0], dtype=np.float32)
+    pressures = np.array([0.1], dtype=np.float32)
+    samples = np.array([0.25, 0.75], dtype=np.float32)
+    weights = np.array([0.5, 0.5], dtype=np.float32)
+    nu_centers = np.array([900.0, 1000.0, 1100.0, 1200.0], dtype=np.float32)
+
+    xsgrid = np.zeros((nT, nP, Ng, nBands), dtype=np.float32)
+    xsgrid[0, 0, :, 0] = [1.0, 2.0]
+    xsgrid[0, 0, :, 1] = [10.0, 20.0]
+    xsgrid[0, 0, :, 2] = [100.0, 200.0]
+    xsgrid[0, 0, :, 3] = [1000.0, 2000.0]
+
+    def fake_load_ckd(_):
+        return (
+            xsgrid.copy(),
+            samples.copy(),
+            weights.copy(),
+            temperatures.copy(),
+            pressures.copy(),
+            nu_centers.copy(),
+            "H2O",
+            18.0,
+        )
+
+    from exojax.opacity.ckd.api import OpaCKD
+    import sys
+    from types import ModuleType
+
+    dummy_exomolop = ModuleType("exojax.provider.exomolop")
+    dummy_exomolop.load_ckd = fake_load_ckd
+    dummy_exomolop.download_exomolop_h5 = lambda path: path
+    monkeypatch.setitem(sys.modules, "exojax.provider.exomolop", dummy_exomolop)
+    import exojax.provider as provider_pkg
+    monkeypatch.setattr(provider_pkg, "exomolop", dummy_exomolop, raising=False)
+
+    ckd = OpaCKD.from_external("exomolop", "dummy.h5", nurange=(950.0, 1150.0))
+
+    # Only the middle two bands should remain
+    assert ckd.ckd_info.nu_bands.shape == (2,)
+    np.testing.assert_allclose(ckd.ckd_info.nu_bands, [1000.0, 1100.0])
+    assert ckd.ckd_info.log_kggrid.shape == (nT, nP, Ng, 2)
+    np.testing.assert_allclose(
+        np.exp(np.asarray(ckd.ckd_info.log_kggrid)), xsgrid[..., 1:3]
+    )
