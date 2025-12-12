@@ -74,6 +74,9 @@ class OpaCKD(OpaCalc):
         # Auto-generate spectral bands from base_opa grid
         self._setup_spectral_bands()
 
+        # molmass if available
+        self.molmass = None
+
         # Initialize state
         self.ckd_info = None
         self.ready = False
@@ -91,6 +94,7 @@ class OpaCKD(OpaCalc):
         self.ckd_info = None
         self.nu_bands = None
         self.band_edges = None
+        self.molmass = None
         self.ready = False
         self._expected_base_hash = None  # uses validation when loading
         self._expected_base_meta = None
@@ -486,6 +490,14 @@ class OpaCKD(OpaCalc):
             raise ValueError(f"Unsupported CKD provider '{provider}'.")
 
         from exojax.provider import exomolop as exomolop_provider
+        from exojax.provider.exomolop import download_exomolop_h5
+
+        # check path is file or directory
+        import pathlib
+        path = pathlib.Path(path).expanduser()
+        if path.is_dir():
+            # download ExoMol opacity file
+            path = download_exomolop_h5(path)
 
         (
             xsgrid,
@@ -495,7 +507,7 @@ class OpaCKD(OpaCalc):
             pressures,
             nu_centers,
             _molecule,
-            _mol_mass,
+            molmass,
         ) = exomolop_provider.load_ckd(path)
 
         inst = cls.load_only()
@@ -511,5 +523,7 @@ class OpaCKD(OpaCalc):
         )
         inst.nu_bands = inst.ckd_info.nu_bands
         inst.band_edges = inst.ckd_info.band_edges
+        inst.molmass = molmass
         inst.ready = True
         return inst
+
