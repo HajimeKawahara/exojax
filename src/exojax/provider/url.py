@@ -3,6 +3,7 @@
 * This module contains various url for downloading. Because url can be changed by the orner of the site, you might need to change it. Or, if you notice the change, it would be great if you send a pull-request.
 """
 
+
 def url_lists_exomolhr():
     """returns URL for ExoMolHR.
 
@@ -80,7 +81,7 @@ def url_ExoMol():
     Returns:
         URL for ExoMol db
     """
-    url = "http://www.exomol.com/db/"
+    url = "https://www.exomol.com/db/"
     return url
 
 
@@ -107,3 +108,4 @@ def url_developer_data():
     """
     url = "http://secondearths.sakura.ne.jp/exojax/data/"
     return url
+
