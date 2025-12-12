@@ -89,6 +89,7 @@ Correlated-k-distribution (CKD)
 .. toctree::
    :maxdepth: 1
 
+   tutorials/transmission_ckd_exomolop.rst
    tutorials/ckd_emispure.rst
    tutorials/ckd_transpure.rst
    tutorials/ckd_transpure_loadonly.rst
