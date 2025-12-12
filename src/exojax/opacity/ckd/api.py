@@ -490,6 +490,14 @@ class OpaCKD(OpaCalc):
             raise ValueError(f"Unsupported CKD provider '{provider}'.")
 
         from exojax.provider import exomolop as exomolop_provider
+        from exojax.provider.exomolop import download_exomolop_h5
+
+        # check path is file or directory
+        import pathlib
+        path = pathlib.Path(path).expanduser()
+        if path.is_dir():
+            # download ExoMol opacity file
+            path = download_exomolop_h5(path)
 
         (
             xsgrid,
@@ -518,3 +526,4 @@ class OpaCKD(OpaCalc):
         inst.molmass = molmass
         inst.ready = True
         return inst
+
