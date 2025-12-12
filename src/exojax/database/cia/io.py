@@ -1,6 +1,4 @@
-import jax.numpy as jnp
 import numpy as np
-from jax import jit, vmap
 
 HITRAN_DEFCIA = {
     "H2-CH4 (equilibrium)": "H2-CH4_eq_2011.cia",
@@ -41,7 +39,7 @@ def read_cia(filename, nus, nue):
     """
     # read first line
     com = filename.split("/")[-1].split("_")[0]
-    print(com)
+    print("Load CIA: ", com)
     f = open(filename)
     header = f.readline()
     info = header.strip().split()
@@ -64,11 +62,11 @@ def read_cia(filename, nus, nue):
     nu = np.array(nu)
     ijnu = np.digitize([nus, nue], nu)
     nucia = np.array(nu[ijnu[0] : ijnu[1] + 1])
+
     # read data
     data = np.loadtxt(filename, comments=com)
     nt = data.shape[0] / nnu
     data = data.reshape((int(nt), int(nnu), 2))
     ac = data[:, ijnu[0] : ijnu[1] + 1, 1]
+
     return nucia, tcia, ac
-
-
