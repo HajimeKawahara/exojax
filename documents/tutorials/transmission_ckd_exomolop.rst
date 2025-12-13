@@ -59,7 +59,8 @@ data file, you can specify the file path directly instead.
 
 .. code:: ipython3
 
-    opa = OpaCKD.from_external("exomolop", ".database/CO/12C-16O/Li2015/")
+    nurange = [1000.0, 10000.0]
+    opa = OpaCKD.from_external("exomolop", ".database/CO/12C-16O/Li2015/", nurange=nurange)
     
     #opa = OpaCKD.from_external("exomolop","12C-16O__Li2015.R1000_0.3-50mu.ktable.petitRADTRANS.h5")
     #opa = OpaCKD.from_external("exomolop", ".database/CO/12C-16O/Li2015/12C-16O__Li2015.R1000_0.3-50mu.ktable.petitRADTRANS.h5")
@@ -76,7 +77,7 @@ data file, you can specify the file path directly instead.
 .. parsed-literal::
 
     Downloading from https://www.exomol.com/db/CO/12C-16O/Li2015/12C-16O__Li2015.R1000_0.3-50mu.ktable.petitRADTRANS.h5
-    Saved to .database/CO/12C-16O/Li2015/12C-16O__Li2015.R1000_0.3-50mu.ktable.petitRADTRANS.h5
+    .database/CO/12C-16O/Li2015/12C-16O__Li2015.R1000_0.3-50mu.ktable.petitRADTRANS.h5 already exists. Skip downloading.
 
 
 Computing a Transmission Spectra using CKD
