@@ -6,7 +6,7 @@ maintaining accuracy through k-distribution statistical representation.
 """
 
 from __future__ import annotations
-from typing import Union, Optional
+from typing import Optional, Sequence, Union
 import json
 
 import jax.numpy as jnp
@@ -479,8 +479,16 @@ class OpaCKD(OpaCalc):
         return inst.load_tables(path, io_format=io_format, base_opa=base_opa)
 
     @classmethod
-    def from_external(cls, provider: str, path: str):
+    def from_external(
+        cls, provider: str, path: str, nurange: Optional[Sequence[float]] = None
+    ):
         """Instantiate ``OpaCKD`` from an external CKD table provider.
+
+        Args:
+            provider: Name of the CKD table provider, such as ``"exomolop"``.
+            path: Path to the CKD table file or directory
+            nurange: Optional ``(nu_min, nu_max)`` wavenumber window. If given, only
+                bands whose centers fall within the range are loaded.
 
         Currently supports provider ``\"exomolop\"`` which follows the return contract
         of :func:`exojax.provider.exomolop.load_ckd`.
@@ -510,6 +518,22 @@ class OpaCKD(OpaCalc):
             molmass,
         ) = exomolop_provider.load_ckd(path)
 
+        if nurange is not None:
+            nurange = np.asarray(nurange)
+            if len(nurange) < 2:
+                raise ValueError("nurange must be a 2 or more -element sequence (nu_min, ...,nu_max)")
+            nu_min = np.min(nurange)
+            nu_max = np.max(nurange)
+            if nu_min > nu_max:
+                raise ValueError("nurange must satisfy nu_min <= nu_max")
+            nu_mask = (nu_centers >= nu_min) & (nu_centers <= nu_max)
+            if not np.any(nu_mask):
+                raise ValueError(
+                    "Requested nurange does not overlap any CKD wavenumber bands"
+                )
+            xsgrid = xsgrid[..., nu_mask]
+            nu_centers = nu_centers[nu_mask]
+
         inst = cls.load_only()
         inst.Ng = int(len(samples))
         inst.ckd_info = CKDTableInfo(
@@ -526,4 +550,3 @@ class OpaCKD(OpaCalc):
         inst.molmass = molmass
         inst.ready = True
         return inst
-
