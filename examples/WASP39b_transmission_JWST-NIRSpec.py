@@ -79,13 +79,13 @@ opa_save = False
 # hot-Saturn exoplanet **WASP-39 b** from the JWST Early-Release Science
 # (ERS) program (Alderson et al. 2023).
 wav_obs = np.load(
-    "WASP39b_NIRSpec_data/wavelength.npy"
+    "wasp39_data/wavelength.npy"
 )  # observed wavelength grid (nm)
 rp_mean = np.load(
-    "WASP39b_NIRSpec_data/wasp39b_nirspec_g395h_rp_mean.npy"
+    "wasp39_data/wasp39b_nirspec_g395h_rp_mean.npy"
 )  # mean R_p/R_s spectrum
 rp_std = np.load(
-    "WASP39b_NIRSpec_data/wasp39b_nirspec_g395h_rp_std.npy"
+    "wasp39_data/wasp39b_nirspec_g395h_rp_std.npy"
 )  # 1 std uncertainty
 
 # Convert from wavelength to wavenumber for modelling
@@ -102,7 +102,7 @@ inst_nus = wav2nu(wav_obs, "nm")
 
 def load_resolution_curve():
     """Load and cache the NIRSpec/G395H resolution curve from the FITS table."""
-    with fits.open("WASP39b_NIRSpec_data/jwst_nirspec_g395h_disp.fits") as hdul:
+    with fits.open("wasp39_data/jwst_nirspec_g395h_disp.fits") as hdul:
         data = np.asarray([list(row) for row in hdul[1].data])
     return data
 
