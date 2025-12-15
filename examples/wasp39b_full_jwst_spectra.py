@@ -2,13 +2,12 @@
 WASP-39 b Transmission Spectrum Retrieval with ExoJAX + NumPyro
 ===============================================================
 
-This example demonstrates how to retrieve the JWST NIRSpec/G395H
-transmission spectrum using *ExoJAX* and *NumPyro*'s Hamiltonian
-Monte-Carlo **NUTS** sampler for Bayesian inference.
+This example demonstrates how to retrieve the JWST transmission 
+spectrum of NIRISS/SOSS+NIRSPEC/G395H+MIRI using *ExoJAX* and 
+*NumPyro*'s Hamiltonian Monte-Carlo **NUTS** sampler for Bayesian 
+inference.
 
-See Section 7.2 of https://arxiv.org/abs/2410.06900 for details.
-
-Shotaro Tada, December 11st (2025)
+Hajime Kawahara, Shotaro Tada
 
 """
 # %%
@@ -275,35 +274,12 @@ def load_molecular_opacities():
 
 opa_mols, molmass_arr = load_molecular_opacities()
 
+# %% 
+# Spectral model function
+# -----------------------
 
-# %%
-# Probabilistic model
-# -------------------
-#
-# The NumPyro model couples planetary/stellar parameters, molecular mixing
-# ratios, a grey cloud deck, and a simple isothermal temperature structure. It
-# produces a model transmission spectrum convolved with rotation and the
-# instrumental profile, then compares it to the observed ``R_p/R_s`` data.
-
-
-def model_c(rp_mean, rp_std):
-    """NumPyro model: forward spectral model + priors."""
-
-    # --- Planet / star parameters -----------------------------------------
-    Mp = numpyro.sample("Mp", dist.TruncatedNormal(Mp_mean, Mp_std, low=0)) * MJ
-    Rstar = (
-        numpyro.sample("Rs", dist.TruncatedNormal(Rstar_mean, Rstar_std, low=0)) * Rs
-    )
-    radius_btm = numpyro.sample("Radius_btm", dist.Uniform(1.0, 1.5)) * RJ
-    RV = numpyro.sample("RV", dist.Uniform(-200, 0))
-
-    # --- Atmospheric composition -----------------------------------------
-    vmr_arr = []
-    for mol in opa_mols:
-        logVMR = numpyro.sample(f"logVMR_{mol}", dist.Uniform(-15, 0))
-        vmr_arr.append(art.constant_mmr_profile(jnp.power(10.0, logVMR)))
-    vmr_arr = jnp.array(vmr_arr)
-
+def spectral_model(radius_btm, Mp, Rstar, RV, vmr_arr, T0, logP_cloud):
+    
     vmr_tot = jnp.clip(jnp.sum(vmr_arr, axis=0), 0.0, 1.0)
     vmrH2 = (1.0 - vmr_tot) * 6.0 / 7.0
     vmrHe = (1.0 - vmr_tot) * 1.0 / 7.0
@@ -315,13 +291,8 @@ def model_c(rp_mean, rp_std):
     )
 
     # --- Temperature structure -------------------------------------------
-    T0 = numpyro.sample("T0", dist.Uniform(Tlow, Thigh))
     Tarr = T0 * jnp.ones_like(art.pressure)  # constant T profile
 
-    # --- Grey cloud deck ---------------------------------------------------
-    # We model a wavelength-independent (gray) cloud deck as a Gaussian in
-    # log10-pressure. The cloud center logP_cloud is a free parameter.
-    logP_cloud = numpyro.sample("logP_cloud", dist.Uniform(-11, 1))
 
     # Fixed cloud width in log10(P) space (narrow deck).
     width_cloud = 1.0 / 25.0
@@ -347,8 +318,6 @@ def model_c(rp_mean, rp_std):
     gravity = art.gravity_profile(Tarr, mmw, radius_btm, gravity_btm)
 
     # --- Opacity summation -------------------------------------------------
-     
-
     # CIA
     for molA, molB in [("H2", "H2"), ("H2", "He")]:
         logacia_matrix = opa_cias[molA + molB].logacia_matrix(Tarr)
@@ -368,14 +337,51 @@ def model_c(rp_mean, rp_std):
     )  # (radius/radius_btm)^2 spectrum
 
     # --- Broadening kernels ------------------------------------------------
-    vsini = 2 * jnp.pi * radius_btm / (period_day * 86400) / 1e5  # km/s
-    u1 = u2 = 0.0  # quadratic limb‑darkening (planet)
-    Frot = sop_rot_nirspec.rigid_rotation(rp2, vsini, u1, u2)
-    Frot_inst = sop_inst_nirspec.ipgauss(Frot, beta_inst_nirspec)
+    Frot_inst = sop_inst_nirspec.ipgauss(rp2, beta_inst_nirspec)
     Rp2_sample = sop_inst_nirspec.sampling(Frot_inst, RV, inst_nirspec_nus)
 
     mu = jnp.sqrt(Rp2_sample) * (radius_btm / Rstar)  # (radius/Rstar) spectrum
+    return mu
 
+
+# %%
+# Probabilistic model
+# -------------------
+#
+# The NumPyro model couples planetary/stellar parameters, molecular mixing
+# ratios, a grey cloud deck, and a simple isothermal temperature structure. It
+# produces a model transmission spectrum convolved with rotation and the
+# instrumental profile, then compares it to the observed ``R_p/R_s`` data.
+
+
+def model_c(rp_mean, rp_std):
+    """NumPyro model: forward spectral model + priors."""
+
+    # --- Atmospheric composition -----------------------------------------
+    vmr_arr = []
+    for mol in opa_mols:
+        logVMR = numpyro.sample(f"logVMR_{mol}", dist.Uniform(-15, 0))
+        vmr_arr.append(art.constant_mmr_profile(jnp.power(10.0, logVMR)))
+    vmr_arr = jnp.array(vmr_arr)
+
+    # --- Temperature structure -------------------------------------------
+    T0 = numpyro.sample("T0", dist.Uniform(Tlow, Thigh))
+
+    # --- Grey cloud deck ---------------------------------------------------
+    # We model a wavelength-independent (gray) cloud deck as a Gaussian in
+    # log10-pressure. The cloud center logP_cloud is a free parameter.
+    logP_cloud = numpyro.sample("logP_cloud", dist.Uniform(-11, 1))
+    
+
+    # --- Planet / star parameters -----------------------------------------
+    Mp = numpyro.sample("Mp", dist.TruncatedNormal(Mp_mean, Mp_std, low=0)) * MJ
+    Rstar = (
+        numpyro.sample("Rs", dist.TruncatedNormal(Rstar_mean, Rstar_std, low=0)) * Rs
+    )
+    radius_btm = numpyro.sample("Radius_btm", dist.Uniform(1.0, 1.5)) * RJ
+    RV = numpyro.sample("RV", dist.Uniform(-200, 0))
+
+    mu = spectral_model()
     # --- Likelihood -------------------------------------------------------
     numpyro.deterministic("rp_mu", mu[::-1])
     numpyro.sample("rp", dist.Normal(mu[::-1], rp_std), obs=rp_mean)
