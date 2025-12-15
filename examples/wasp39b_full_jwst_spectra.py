@@ -35,6 +35,7 @@ from exojax.postproc.specop import SopRotation, SopInstProfile
 
 from exojax.database.contdb import CdbCIA
 from exojax.opacity.opacont import OpaCIA
+from exojax.opacity import OpaCKD
 from exojax.database import molinfo
 from exojax.database.api import MdbHitemp, MdbExomol
 from exojax.opacity.premodit.api import OpaPremodit
@@ -146,21 +147,21 @@ Rinst = res_G395H(np.mean(wav_obs_nirspec))
 
 
 # %%
-# Wavenumber grid and spectral operators
-# -------------------------------------------------
+# Wavenumber grid and spectral operators for NIRSPEC
+# ------------------------------------------------------
 #
 # Build a high-resolution wavenumber grid for forward modelling and construct
 # spectral operators to mimic rotation and the NIRSpec line-spread function.
 
-N = 30_000  # spectral points; lower for faster demo
-nu_grid, wav_grid, res_high = wavenumber_grid(
-    np.min(wav_obs_nirspec) - 15, np.max(wav_obs_nirspec) + 15, N=N, unit="nm", xsmode="premodit"
+N_nirspec = 30_000  # spectral points; lower for faster demo
+nu_grid_nirspec, wav_grid_nirspec, res_high_nirspec = wavenumber_grid(
+    np.min(wav_obs_nirspec) - 15, np.max(wav_obs_nirspec) + 15, N=N_nirspec, unit="nm", xsmode="premodit"
 )
-print(f"wavenumber grid: R≈{res_high:.0f}")
+print(f"wavenumber grid: R≈{res_high_nirspec:.0f}")
 
-beta_inst = resolution_to_gaussian_std(Rinst)
-sop_rot = SopRotation(nu_grid, vsini_max=100.0)  # rigid rotation kernel
-sop_inst = SopInstProfile(nu_grid, vrmax=300.0)  # IP & sampling
+beta_inst_nirspec = resolution_to_gaussian_std(Rinst)
+sop_rot_nirspec = SopRotation(nu_grid_nirspec, vsini_max=100.0)  # rigid rotation kernel
+sop_inst_nirspec = SopInstProfile(nu_grid_nirspec, vrmax=300.0)  # IP & sampling
 
 # %%
 # Atmospheric radiative‑transfer object
@@ -188,7 +189,7 @@ ciapath_list = {
     "H2He": "path_to/.db_CIA/H2-He_2011.cia",
 }
 opa_cias = {
-    name: OpaCIA(CdbCIA(path, nurange=nu_grid), nu_grid=nu_grid)
+    name: OpaCIA(CdbCIA(path, nurange=nu_grid_nirspec), nu_grid=nu_grid_nirspec)
     for name, path in ciapath_list.items()
 }
 
@@ -219,7 +220,7 @@ def build_premodit_from_snapshot(snapshot, molmass, mol):
     """Create preMODIT opacity and persist it for reuse."""
     opa = OpaPremodit.from_snapshot(
         snapshot,
-        nu_grid,
+        nu_grid_nirspec,
         nstitch=ndiv,
         diffmode=diffmode,
         auto_trange=[Tlow, Thigh],
@@ -230,6 +231,11 @@ def build_premodit_from_snapshot(snapshot, molmass, mol):
     saveopa(opa, "opa_" + mol + ".zarr", format="zarr", aux={"molmass": molmass})
     return opa
 
+def load_or_build_ckd_from_exomolop(mol, nurange):
+    if opa_load:
+        opa = OpaCKD.from_external("exomolop", ".database/"+mol, nurange=nurange)
+    
+    #NEED TO IMPLEMENT BUILDING CKD FROM EXOMOLOP SNAPSHOT
 
 def load_or_build_opacity(mol, path, mdb_factory):
     """Load saved opacity or build from database snapshot."""
@@ -252,14 +258,14 @@ def load_molecular_opacities():
     print("Loading HITEMP/ExoMol databases …")
     for mol, path in molpath_list_HITEMP.items():
         print(f"  * {mol} (HITEMP)")
-        mdb_factory = lambda p: MdbHitemp(p, nu_grid, gpu_transfer=False, isotope=1)
+        mdb_factory = lambda p: MdbHitemp(p, nu_grid_nirspec, gpu_transfer=False, isotope=1)
         opa, molmass = load_or_build_opacity(mol, path, mdb_factory)
         opa_mols_local[mol] = opa
         molmass_list.append(molmass)
 
     for mol, path in molpath_list_Exomol.items():
         print(f"  * {mol} (ExoMol)")
-        mdb_factory = lambda p: MdbExomol(p, nu_grid, gpu_transfer=False)
+        mdb_factory = lambda p: MdbExomol(p, nu_grid_nirspec, gpu_transfer=False)
         opa, molmass = load_or_build_opacity(mol, path, mdb_factory)
         opa_mols_local[mol] = opa
         molmass_list.append(molmass)
@@ -334,39 +340,39 @@ def model_c(rp_mean, rp_std):
         dtau_c / jnp.sqrt(jnp.pi) * jnp.exp(-jnp.clip(cloud_profile**2, -50, 50))
     )
     # Broadcast to all wavelengths to make the cloud gray.
-    dtau_cloud = jnp.broadcast_to(dtau_cloud, (pressure_arr.size, nu_grid.size))
+    dtau_nirspec = jnp.broadcast_to(dtau_cloud, (pressure_arr.size, nu_grid_nirspec.size))
 
     # --- Gravity profile --------------------------------------------------
     gravity_btm = gravity_jupiter(radius_btm / RJ, Mp / MJ)
     gravity = art.gravity_profile(Tarr, mmw, radius_btm, gravity_btm)
 
     # --- Opacity summation -------------------------------------------------
-    dtau = dtau_cloud
+     
 
     # CIA
     for molA, molB in [("H2", "H2"), ("H2", "He")]:
         logacia_matrix = opa_cias[molA + molB].logacia_matrix(Tarr)
         vmrX, vmrY = (vmrH2, vmrH2) if molB == "H2" else (vmrH2, vmrHe)
-        dtau += art.opacity_profile_cia(
+        dtau_nirspec += art.opacity_profile_cia(
             logacia_matrix, Tarr, vmrX, vmrY, mmw[:, None], gravity
         )
 
     # Line opacity
     for i, mol in enumerate(opa_mols):
         xsmatrix = opa_mols[mol].xsmatrix(Tarr, art.pressure)
-        dtau += art.opacity_profile_xs(xsmatrix, vmr_arr[i], mmw[:, None], gravity)
+        dtau_nirspec += art.opacity_profile_xs(xsmatrix, vmr_arr[i], mmw[:, None], gravity)
 
     # --- Radiative‑transfer ------------------------------------------------
     rp2 = art.run(
-        dtau, Tarr, mmw, radius_btm, gravity_btm
+        dtau_nirspec, Tarr, mmw, radius_btm, gravity_btm
     )  # (radius/radius_btm)^2 spectrum
 
     # --- Broadening kernels ------------------------------------------------
     vsini = 2 * jnp.pi * radius_btm / (period_day * 86400) / 1e5  # km/s
     u1 = u2 = 0.0  # quadratic limb‑darkening (planet)
-    Frot = sop_rot.rigid_rotation(rp2, vsini, u1, u2)
-    Frot_inst = sop_inst.ipgauss(Frot, beta_inst)
-    Rp2_sample = sop_inst.sampling(Frot_inst, RV, inst_nirspec_nus)
+    Frot = sop_rot_nirspec.rigid_rotation(rp2, vsini, u1, u2)
+    Frot_inst = sop_inst_nirspec.ipgauss(Frot, beta_inst_nirspec)
+    Rp2_sample = sop_inst_nirspec.sampling(Frot_inst, RV, inst_nirspec_nus)
 
     mu = jnp.sqrt(Rp2_sample) * (radius_btm / Rstar)  # (radius/Rstar) spectrum
 
