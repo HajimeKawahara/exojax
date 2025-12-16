@@ -66,9 +66,9 @@ DIR_SAVE = "output_wasp39b"
 os.makedirs(DIR_SAVE, exist_ok=True)
 
 # Opacity loading flag: set to True to load precomputed opacities
-opa_load = True
+opa_load = False
 # Opacity saving flag: set to True to save computed opacities
-opa_save = False
+opa_save = True
 
 
 # %%
@@ -225,14 +225,14 @@ def load_molecular_opacities():
     print("Loading HITEMP/ExoMol databases …")
     for mol, path in molpath_list_HITEMP.items():
         print(f"  * {mol} (HITEMP)")
-        mdb_factory = lambda p: MdbHitemp(p, nu_grid, gpu_transfer=False, isotope=1)
+        mdb_factory = lambda p: MdbHitemp(str(p), nu_grid, gpu_transfer=False, isotope=1)
         opa, molmass = load_or_build_opacity(mol, path, mdb_factory)
         opa_mols_local[mol] = opa
         molmass_list.append(molmass)
 
     for mol, path in molpath_list_Exomol.items():
         print(f"  * {mol} (ExoMol)")
-        mdb_factory = lambda p: MdbExomol(p, nu_grid, gpu_transfer=False)
+        mdb_factory = lambda p: MdbExomol(str(p), nu_grid, gpu_transfer=False)
         opa, molmass = load_or_build_opacity(mol, path, mdb_factory)
         opa_mols_local[mol] = opa
         molmass_list.append(molmass)
