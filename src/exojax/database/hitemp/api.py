@@ -74,16 +74,19 @@ class MdbHitemp(MdbCommonHitempHitran, HITEMPDatabaseManager):
             engine=engine,
         )
 
+        local_db_root = self.path.parent
+        local_db_root = str(local_db_root) # convert to str for radis compatibility
+
         HITEMPDatabaseManager.__init__(
             self,
             molecule=self.simple_molecule_name,
-            name="HITEMP-{molecule}",
-            local_databases=self.path.parent,
+            name=f"HITEMP-{self.simple_molecule_name}",
+            local_databases=local_db_root,
             engine=self.engine,
             verbose=True,
             chunksize=100000,
             parallel=True,
-        )
+        )   
 
         if parfile is not None:
             from radis.api.hitranapi import hit2df
