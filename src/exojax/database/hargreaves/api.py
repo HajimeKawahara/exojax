@@ -101,8 +101,10 @@ class MdbHargreaves:
         intensity_raw = self.scale_intensity * df_raw_sorted["intensity"].values
         A_raw = self.scale_intensity * df_raw_sorted["einsteinA"].values
 
-        jlower = df_raw_sorted["j_lower"].values
-        jlower[np.isnan(jlower)] = np.nanmean(df_raw_sorted["j_lower"].unique()) #set constant value
+        #jlower = df_raw_sorted["j_lower"].values
+        #jlower[np.isnan(jlower)] = np.nanmean(df_raw_sorted["j_lower"].unique()) #set constant value
+        mean_j = np.nanmean(df_raw_sorted["j_lower"].unique())
+        jlower = df_raw_sorted["j_lower"].fillna(mean_j).to_numpy()
 
         branch = branch_to_number(df_raw_sorted["branch"].values, fillvalue=1) #set R branch
         jupper = jlower + branch
