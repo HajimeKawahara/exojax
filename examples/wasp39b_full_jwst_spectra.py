@@ -119,6 +119,22 @@ inst_nirspec_nus = wav2nu(wav_obs_nirspec, "nm")
 inst_miri_nus = wav2nu(wav_obs_miri, "nm")
 
 
+# plot
+import matplotlib.pyplot as plt
+plt.errorbar(wav_obs_niriss_1, rp_mean_niriss_1, yerr=[rp_err_low_niriss_1, rp_err_high_niriss_1], fmt='.', label='NIRISS Order 1', alpha=0.3)
+plt.errorbar(wav_obs_niriss_2, rp_mean_niriss_2, yerr=[rp_err_low_niriss_2, rp_err_high_niriss_2], fmt='.', label='NIRISS Order 2', alpha=0.3)
+plt.errorbar(wav_obs_nirspec, rp_mean_nirspec, yerr=rp_std_nirspec, fmt='.', label='NIRSpec G395H', alpha=0.3)
+plt.errorbar(wav_obs_miri, rp_mean_miri, yerr=rp_err_miri, fmt='.', label='MIRI', alpha=0.9)
+plt.xscale('log')
+plt.xlabel('Wavelength [nm]')
+plt.ylabel('Rp/Rs')
+plt.legend()
+plt.title('WASP-39b Transmission Spectrum')
+plt.savefig('wasp39b_transmission_spectrum.png', dpi=200)
+plt.close()
+exit()
+
+
 # %%
 # Instrumental resolution
 # -------------------------
