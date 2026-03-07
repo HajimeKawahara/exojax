@@ -71,6 +71,12 @@ If you do not have a GPU, you can simply install the CPU version:
 
     pip install --upgrade jax
 
+TPU support
+=================
+
+ExoJAX has been reported to run on TPU as well. Please refer to
+`this report <https://github.com/HajimeKawahara/exojax/issues/682>`_
+for details.
 
 
 Windows Anaconda
