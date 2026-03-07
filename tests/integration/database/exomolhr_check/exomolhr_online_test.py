@@ -1,6 +1,6 @@
-from exojax.database.exomolhr import XdbExomolHR
-from exojax.database.exomolhr import list_exomolhr_molecules
-from exojax.database.exomolhr import list_isotopologues
+from exojax.database.exomolhr.api import XdbExomolHR
+from exojax.database.exomolhr.api import list_exomolhr_molecules
+from exojax.database._common.isotope_functions import _list_isotopologues
 
 
 def test_mdbexomolhr_online():
@@ -45,7 +45,7 @@ def test_list_isotopologues():
     mols = list_exomolhr_molecules()  # downloads live HTML
     print(f"Currently {len(mols)} molecules are available:")
     print(", ".join(mols))
-    iso_dict = list_isotopologues(mols)
+    iso_dict = _list_isotopologues(mols)
     print(iso_dict)
 
 

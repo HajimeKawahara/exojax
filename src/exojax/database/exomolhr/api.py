@@ -1,11 +1,11 @@
 import numpy as np
 from exojax.utils.molname import e2s
-from exojax.utils.url import url_lists_exomolhr
+from exojax.provider.url import url_lists_exomolhr
+from exojax.provider.exomolhr import _load_exomolhr_csv
+from exojax.provider.exomolhr import _list_exomolhr_molecules
+from exojax.provider.exomolhr import _fetch_opacity_zip
 from exojax.database.molinfo import isotope_molmass
 from exojax.database._common.isotope_functions import _list_isotopologues
-from exojax.database.exomolhr._downloader import _load_exomolhr_csv
-from exojax.database.exomolhr._downloader import _list_exomolhr_molecules
-from exojax.database.exomolhr._downloader import _fetch_opacity_zip
 
 
 EXOMOLHR_HOME, EXOMOLHR_API_ROOT, EXOMOLHR_DOWNLOAD_ROOT = url_lists_exomolhr()

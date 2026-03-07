@@ -10,7 +10,7 @@ from collections.abc import Sequence
 from typing import Optional
 from typing import Union
     
-from exojax.utils.url import url_lists_exomolhr
+from exojax.provider.url import url_lists_exomolhr
 
 EXOMOLHR_HOME, EXOMOLHR_API_ROOT, EXOMOLHR_DOWNLOAD_ROOT = url_lists_exomolhr()
 

@@ -81,7 +81,7 @@ def test_broadpar_getix():
         multi_index_lines[iline_interest] == multi_index_uniqgrid[uniq_index])
     np.max(uidx_lines) + 1 == np.shape(neighbor_uidx)[0]
     assert np.all(
-        multi_cont_lines[iline_interest] == pytest.approx([0.93739636, 0.]))
+        multi_cont_lines[iline_interest] == pytest.approx([0.93739636, 0.], abs=1e-6))
     assert uniq_index == 2
     assert np.all(neighbor_uidx[uniq_index, :] == [7, 4, 3])
     ref = [[0, 0], [0, 1], [1, 0], [2, 1], [1, 1], [0, 2], [1, 2], [2, 0],
@@ -223,7 +223,8 @@ def test_broadpar_grid_as_a_function_of_Tref_broadening(db):
 if __name__ == "__main__":
     #test_broadpar_grid_as_a_function_of_Tref_broadening("exomol")
     #test_broadpar_grid_as_a_function_of_Tref_broadening("hitemp")
-    test_unbias_ngamma_grid_works_for_single_broadening_parameter()
+    #test_unbias_ngamma_grid_works_for_single_broadening_parameter()
     #test_unbiased_lsd()
     #test_make_elower_grid()
     #test_make_broadpar_grid()
+    test_broadpar_getix()

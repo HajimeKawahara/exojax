@@ -31,8 +31,11 @@ from exojax.utils.grids import wavenumber_grid
 from exojax.utils.grids import velocity_grid
 from exojax.utils.constants import RJ
 from exojax.utils.instfunc import resolution_to_gaussian_std
+from exojax.test.data import get_testdata_filename, SAMPLE_SPECTRA_CO
 
-dat = pd.read_csv("spectrum_co.txt", delimiter=",", names=("wav", "flux"))
+dat = pd.read_csv(
+    get_testdata_filename(SAMPLE_SPECTRA_CO), delimiter=",", names=("wav", "flux")
+)
 wavd = dat["wav"].values
 flux = dat["flux"].values
 nusd = jnp.array(1.0e8 / wavd[::-1])

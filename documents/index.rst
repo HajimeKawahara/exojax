@@ -87,7 +87,8 @@ ExoJAX References
 Publications that have used ExoJAX to date
 ------------------------------------------------
 
-- `Kasagi et al. AJ in press <https://arxiv.org/abs/2508.01281>`_ : Unveiling the Atmosphere of HR 7672 B from the Near-Infrared High-Resolution Spectrum Using REACH/Subaru
+- `Yama et al. ApJ in press <https://arxiv.org/abs/2511.23018>`_ : ExoJAX Retrievals of VLT/CRIRES Spectra of Luhman 16AB: C/O Ratios and Systematic Uncertainties
+- `Kasagi et al. AJ 170, 211 (2025) <https://arxiv.org/abs/2508.01281>`_ : Unveiling the Atmosphere of HR 7672 B from the Near-Infrared High-Resolution Spectrum Using REACH/Subaru
    |:ringed_planet:| `AtmosphericRetrieval_HR7672B <https://github.com/YuiKasagi/AtmosphericRetrieval_HR7672B>`_ An example of HMC-NUTS for a faint companion HR 7672 B by Subaru/REACH.
 - `Kawashima et al. ApJ 988, 53 (2025) <https://arxiv.org/abs/2410.11561>`_ : Atmospheric retrieval of Subaru/IRD high-resolution spectrum of the archetype T-type brown dwarf Gl 229 B
    GL229B, Subaru/IRD

@@ -26,7 +26,7 @@ import os
 filepath_VALD3 = ".database/vald2600.gz"
 if not os.path.isfile(filepath_VALD3):
     import urllib.request
-    from exojax.utils.url import url_developer_data
+    from exojax.provider.url import url_developer_data
 
     try:
         url = url_developer_data() + "vald2600.gz"

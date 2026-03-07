@@ -6,8 +6,7 @@ maintaining accuracy through k-distribution statistical representation.
 """
 
 from __future__ import annotations
-from typing import Union, Optional
-from dataclasses import dataclass
+from typing import Optional, Sequence, Union
 import json
 
 import jax.numpy as jnp
@@ -15,37 +14,16 @@ import numpy as np
 from jax import vmap
 
 from exojax.opacity.base import OpaCalc
+from exojax.opacity.ckd.contracts import CKDTableInfo
 from exojax.opacity.ckd.core import gauss_legendre_grid
 from exojax.opacity.ckd.core import compute_ckd_tables
 from exojax.opacity.ckd.core import interpolate_log_k_2d
 from exojax.opacity.ckd.io import _hash_json
 from exojax.opacity.ckd.io import _base_fingerprint
 from exojax.opacity.ckd.io import _ckd_save_as_npz
-
 from exojax.utils.spectral_bands import spectral_bands
 
 
-@dataclass(frozen=True)
-class CKDTableInfo:
-    """Immutable container for CKD table information.
-
-    Attributes:
-        log_kggrid: Log k-values on g-grid, shape (nT, nP, Ng, nnu_bands)
-        ggrid: Gauss-Legendre g-ordinates, shape (Ng,)
-        weights: Gauss-Legendre quadrature weights, shape (Ng,)
-        T_grid: Temperature grid, shape (nT,)
-        P_grid: Pressure grid, shape (nP,)
-        nu_bands: Wavenumber band centers, shape (nnu_bands,)
-        band_edges: Wavenumber band edges, shape (nnu_bands, 2)
-    """
-
-    log_kggrid: jnp.ndarray
-    ggrid: jnp.ndarray
-    weights: jnp.ndarray
-    T_grid: jnp.ndarray
-    P_grid: jnp.ndarray
-    nu_bands: jnp.ndarray
-    band_edges: jnp.ndarray
 
 
 class OpaCKD(OpaCalc):
@@ -96,6 +74,9 @@ class OpaCKD(OpaCalc):
         # Auto-generate spectral bands from base_opa grid
         self._setup_spectral_bands()
 
+        # molmass if available
+        self.molmass = None
+
         # Initialize state
         self.ckd_info = None
         self.ready = False
@@ -113,6 +94,7 @@ class OpaCKD(OpaCalc):
         self.ckd_info = None
         self.nu_bands = None
         self.band_edges = None
+        self.molmass = None
         self.ready = False
         self._expected_base_hash = None  # uses validation when loading
         self._expected_base_meta = None
@@ -495,3 +477,76 @@ class OpaCKD(OpaCalc):
 
         inst = cls.load_only()
         return inst.load_tables(path, io_format=io_format, base_opa=base_opa)
+
+    @classmethod
+    def from_external(
+        cls, provider: str, path: str, nurange: Optional[Sequence[float]] = None
+    ):
+        """Instantiate ``OpaCKD`` from an external CKD table provider.
+
+        Args:
+            provider: Name of the CKD table provider, such as ``"exomolop"``.
+            path: Path to the CKD table file or directory
+            nurange: Optional ``(nu_min, nu_max)`` wavenumber window. If given, only
+                bands whose centers fall within the range are loaded.
+
+        Currently supports provider ``\"exomolop\"`` which follows the return contract
+        of :func:`exojax.provider.exomolop.load_ckd`.
+        """
+        provider_key = provider.lower()
+        if provider_key != "exomolop":
+            raise ValueError(f"Unsupported CKD provider '{provider}'.")
+
+        from exojax.provider import exomolop as exomolop_provider
+        from exojax.provider.exomolop import download_exomolop_h5
+
+        # check path is file or directory
+        import pathlib
+        path = pathlib.Path(path).expanduser()
+        if path.is_dir():
+            # download ExoMol opacity file
+            path = download_exomolop_h5(path)
+
+        (
+            xsgrid,
+            samples,
+            weights,
+            temperatures,
+            pressures,
+            nu_centers,
+            _molecule,
+            molmass,
+        ) = exomolop_provider.load_ckd(path)
+
+        if nurange is not None:
+            nurange = np.asarray(nurange)
+            if len(nurange) < 2:
+                raise ValueError("nurange must be a 2 or more -element sequence (nu_min, ...,nu_max)")
+            nu_min = np.min(nurange)
+            nu_max = np.max(nurange)
+            if nu_min > nu_max:
+                raise ValueError("nurange must satisfy nu_min <= nu_max")
+            nu_mask = (nu_centers >= nu_min) & (nu_centers <= nu_max)
+            if not np.any(nu_mask):
+                raise ValueError(
+                    "Requested nurange does not overlap any CKD wavenumber bands"
+                )
+            xsgrid = xsgrid[..., nu_mask]
+            nu_centers = nu_centers[nu_mask]
+
+        inst = cls.load_only()
+        inst.Ng = int(len(samples))
+        inst.ckd_info = CKDTableInfo(
+            log_kggrid=jnp.log(jnp.asarray(xsgrid)),
+            ggrid=jnp.asarray(samples),
+            weights=jnp.asarray(weights),
+            T_grid=jnp.asarray(temperatures),
+            P_grid=jnp.asarray(pressures),
+            nu_bands=jnp.asarray(nu_centers),
+            band_edges=jnp.asarray([]),
+        )
+        inst.nu_bands = inst.ckd_info.nu_bands
+        inst.band_edges = inst.ckd_info.band_edges
+        inst.molmass = molmass
+        inst.ready = True
+        return inst

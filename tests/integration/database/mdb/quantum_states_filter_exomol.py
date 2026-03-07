@@ -1,11 +1,6 @@
 #
+# This script shows how to filter quantum states in ExoMol database using MdbExomol class.
 #
-#
-
-print("###############################################")
-print("Currently, we need the develop branch of radis")
-print("to test this code. See #405 for more details.")
-print("###############################################")
 
 from exojax.database.exomol.api import MdbExomol
 from exojax.utils.grids import wavenumber_grid
@@ -52,7 +47,7 @@ load_mask = mdb.df["v_u"] - mdb.df["v_l"] == 3
 
 mdb.activate(mdb.df, load_mask)
 plt.plot(
-    1.0e4 / mdb.nu_lines, mdb.line_strength, "+", color="black", label="activated lines"
+    1.0e4 / mdb.nu_lines, mdb.line_strength_ref_original, "+", color="black", label="activated lines"
 )
 plt.legend()
 plt.title(emf)

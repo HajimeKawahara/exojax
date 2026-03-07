@@ -10,7 +10,7 @@ import pathlib
 import numpy as np
 
 from exojax.database.mie import compute_mieparams_cgs_from_miegrid, evaluate_miegrid
-
+from exojax.provider.virga import download_and_unzip
 __all__ = ["PdbCloud"]
 
 
@@ -32,12 +32,12 @@ class PdbCloud:
             margin: margin for nurange (cm-1)
             path: database path
             download: allow download from virga. default to True
-            refrinf_path: manual setting of path to refraction index file. default to None
+            refrind_path: manual setting of path to refraction index file. default to None
         """
         self.path = pathlib.Path(path)
         self.condensate = condensate
         if download:
-            self.download_and_unzip()
+            self.virga_condensates, self.refrind_path = download_and_unzip(self.path, self.condensate)
         if refrind_path is not None:
             self.refrind_path = pathlib.Path(refrind_path)
 
@@ -60,54 +60,7 @@ class PdbCloud:
         self.set_miegrid_filename()
         self.set_miegrid_path()
 
-    def download_and_unzip(self):
-        """Downloading virga refractive index data
-
-        Note:
-            The download URL is written in exojax.utils.url.
-        """
-        import os
-        import shutil
-        import urllib.request
-
-        from exojax.utils.files import (
-            find_files_by_extension,
-            get_file_names_without_extension,
-        )
-        from exojax.utils.url import url_virga
-
-        try:
-            os.makedirs(str(self.path), exist_ok=True)
-            filepath = self.path / "virga.zip"
-            if (filepath).exists():
-                print(
-                    str(filepath),
-                    " exists. Remove it if you wanna re-download and unzip.",
-                )
-            else:
-                print("Downloading ", url_virga())
-                # urllib.request.urlretrieve(url_virga(), str(filepath))
-                data = urllib.request.urlopen(url_virga()).read()
-                with open(str(filepath), mode="wb") as f:
-                    f.write(data)
-                shutil.unpack_archive(str(filepath), str(self.path))
-            self.virga_condensates = get_file_names_without_extension(
-                find_files_by_extension(str(self.path), ".refrind")
-            )
-            if self.condensate in self.virga_condensates:
-                self.refrind_path = self.path / pathlib.Path(
-                    self.condensate + ".refrind"
-                )
-                print("Refractive index file found: ", self.refrind_path)
-            else:
-                print(
-                    "No refrind file found. Refractive indices of ",
-                    self.virga_condensates,
-                    "are available.",
-                )
-        except:
-            print("VIRGA refractive index download failed")
-
+    
     def load_virga(self):
         """loads VIRGA refraction index
         
