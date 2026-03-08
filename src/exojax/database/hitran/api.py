@@ -8,7 +8,20 @@ from exojax.database._common.radis_adapter import (
 )
 from exojax.database.contracts import MDBMeta, Lines, MDBSnapshot
 
-HITRANDatabaseManager = get_hitran_database_manager_class()
+# Inheritance remains for compatibility; backend init details should stay in
+# adapter/backend helpers.
+try:
+    HITRANDatabaseManager = get_hitran_database_manager_class()
+except ImportError as exc:
+    if "requires RADIS" not in str(exc):
+        raise
+    _missing_radis_exc = exc
+
+    class HITRANDatabaseManager:
+        """Fallback manager used when RADIS is unavailable at import time."""
+
+        def __init__(self, *args, **kwargs):
+            raise ImportError(str(_missing_radis_exc)) from _missing_radis_exc
 
 class MdbHitran(MdbCommonHitempHitran, HITRANDatabaseManager):
     """molecular database of HITRAN
@@ -79,6 +92,7 @@ class MdbHitran(MdbCommonHitempHitran, HITRANDatabaseManager):
 
         # HITRAN ONLY FUNCTIONALITY
         self.nonair_broadening = bool(nonair_broadening)
+        # Keep backend manager constructor semantics out of this call site.
         init_hitran_manager(
             self,
             molecule=self.simple_molecule_name,

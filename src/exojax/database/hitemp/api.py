@@ -10,7 +10,20 @@ from exojax.database._common.radis_adapter import (
 )
 from exojax.database.contracts import MDBMeta, Lines, MDBSnapshot
 
-HITEMPDatabaseManager = get_hitemp_database_manager_class()
+# Inheritance remains for compatibility; backend init details should stay in
+# adapter/backend helpers.
+try:
+    HITEMPDatabaseManager = get_hitemp_database_manager_class()
+except ImportError as exc:
+    if "requires RADIS" not in str(exc):
+        raise
+    _missing_radis_exc = exc
+
+    class HITEMPDatabaseManager:
+        """Fallback manager used when RADIS is unavailable at import time."""
+
+        def __init__(self, *args, **kwargs):
+            raise ImportError(str(_missing_radis_exc)) from _missing_radis_exc
 
 
 class MdbHitemp(MdbCommonHitempHitran, HITEMPDatabaseManager):
@@ -82,6 +95,7 @@ class MdbHitemp(MdbCommonHitempHitran, HITEMPDatabaseManager):
         local_db_root = self.path.parent
         local_db_root = str(local_db_root) # convert to str for radis compatibility
 
+        # Keep backend manager constructor and collision handling localized.
         init_hitemp_manager(
             self,
             molecule=self.simple_molecule_name,
