@@ -1,10 +1,11 @@
 import jax.numpy as jnp
 import numpy as np
-from radis.api.hitranapi import HITRANDatabaseManager
 from exojax.database._common.commonapi import MdbCommonHitempHitran
 from exojax.database._common.isotope_functions import _convert_proper_isotope
+from exojax.database._common.radis_adapter import get_hitran_database_manager_class
 from exojax.database.contracts import MDBMeta, Lines, MDBSnapshot
 
+HITRANDatabaseManager = get_hitran_database_manager_class()
 
 class MdbHitran(MdbCommonHitempHitran, HITRANDatabaseManager):
     """molecular database of HITRAN

@@ -370,7 +370,7 @@ def database_path_hitran12(simple_molecule_name):
     Returns:
         str: HITRAN12 default data path, such as "H2O/01_hit12.par" for "H2O"
     """
-    from radis.db.classes import get_molecule_identifier
+    from exojax.database._common.radis_adapter import get_molecule_identifier
 
     ihitran = get_molecule_identifier(simple_molecule_name)
     return simple_molecule_name + "/" + str(ihitran).zfill(2) + "_hit12.par"
@@ -457,8 +457,10 @@ def _discover_local_exomol_dataset(simple_molecule_name, exact_name, root_path):
 
 def _query_recommended_exomol_dataset(simple_molecule_name, exact_name):
     """Ask RADIS for the recommended dataset, propagating actionable errors."""
+    from exojax.database._common.radis_adapter import get_exomol_database_list_func
+
     try:
-        from radis.api.exomolapi import get_exomol_database_list
+        get_exomol_database_list = get_exomol_database_list_func()
     except Exception as exc:  # pragma: no cover - defensive guard
         raise RuntimeError(
             "radis.api.exomolapi is required to locate ExoMol data. "
