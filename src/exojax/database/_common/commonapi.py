@@ -5,6 +5,7 @@ import numpy as np
 from exojax.database.core.line_strength import line_strength_numpy
 from exojax.database._common.hitranapi import molecid_hitran
 from exojax.database._common.hitranapi import make_partition_function_grid_hitran
+# Backend-facing molecule/partition queries are consumed via adapter helpers.
 from exojax.database._common.radis_adapter import (
     get_molecule,
     get_partition_function_value,
