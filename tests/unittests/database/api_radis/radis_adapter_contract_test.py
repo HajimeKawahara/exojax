@@ -9,12 +9,48 @@ import pytest
 from exojax.database._common import radis_adapter
 
 
+def _block_radis_imports(monkeypatch):
+    real_import_module = radis_adapter.import_module
+
+    def guarded_import_module(module_name):
+        if module_name == "radis" or module_name.startswith("radis."):
+            raise ModuleNotFoundError("No module named 'radis'", name="radis")
+        return real_import_module(module_name)
+
+    monkeypatch.setattr(radis_adapter, "import_module", guarded_import_module)
+
+    loaded = [k for k in sys.modules if k == "radis" or k.startswith("radis.")]
+    for module_name in loaded:
+        monkeypatch.delitem(sys.modules, module_name, raising=False)
+
+
 def _install_module(monkeypatch, module_name, **attrs):
     module = types.ModuleType(module_name)
     for key, value in attrs.items():
         setattr(module, key, value)
     monkeypatch.setitem(sys.modules, module_name, module)
     return module
+
+
+@pytest.mark.parametrize(
+    "func,args",
+    [
+        (radis_adapter.get_radis_version, ()),
+        (radis_adapter.get_auto_memory_mapping_engine, ()),
+        (radis_adapter.get_exomol_mdb_class, ()),
+        (radis_adapter.get_hit2df_func, ()),
+        (radis_adapter.get_molecule_identifier, ("CO",)),
+        (radis_adapter.get_partition_function_value, (5, 1, 296.0)),
+        (radis_adapter.get_isotope_name, ("CO", 1)),
+    ],
+)
+def test_missing_radis_errors_are_normalized_to_importerror(monkeypatch, func, args):
+    _block_radis_imports(monkeypatch)
+    with pytest.raises(ImportError) as excinfo:
+        func(*args)
+    message = str(excinfo.value)
+    assert "requires RADIS" in message
+    assert "pip install radis" in message
 
 
 def test_identity_translation_helpers_roundtrip_and_isotope_name(monkeypatch):
