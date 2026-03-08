@@ -16,19 +16,21 @@ import warnings
 import jax.numpy as jnp
 import numpy as np
 from packaging import version
-from radis import __version__ as radis_version
-from radis.api.exomolapi import (
-    MdbExomol as CapiMdbExomol,
-)  # MdbExomol in the common API
 from exojax.database.core.broadening import gamma_natural as gn
 from exojax.database.core.line_strength import line_strength_numpy
 from exojax.database.molinfo import isotope_molmass
+from exojax.database._common.radis_adapter import (
+    get_exomol_mdb_class,
+    get_radis_version,
+)
 from exojax.utils.constants import Tref_original
 from exojax.utils.molname import e2s
 from exojax.database._common.setradis import _set_engine
 from exojax.database.contracts import MDBMeta, Lines, MDBSnapshot
 
 __all__ = ["MdbExomol"]
+CapiMdbExomol = get_exomol_mdb_class()
+radis_version = get_radis_version()
 
 
 class MdbExomol(CapiMdbExomol):

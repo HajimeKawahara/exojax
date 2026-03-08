@@ -4,7 +4,10 @@ from contextlib import redirect_stdout
 
 import jax.numpy as jnp
 import numpy as np
-from radis.db.classes import get_molecule, get_molecule_identifier
+from exojax.database._common.radis_adapter import (
+    get_molecule,
+    get_molecule_identifier,
+)
 
 with redirect_stdout(open(os.devnull, 'w')):
     import hapi
@@ -63,5 +66,4 @@ def make_partition_function_grid_hitran(M, I_list):
         T_gQT[idx] = np.append(T_gQT[idx], l_add)
 
     return jnp.array(gQT), jnp.array(T_gQT)
-
 

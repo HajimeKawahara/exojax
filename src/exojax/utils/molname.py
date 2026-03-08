@@ -9,10 +9,13 @@
 - To get the recommended ExoMol database, use radis.api.exomolapi.get_exomol_database_list("CO2","12C-16O2")
 
 """
-
-from radis.db.classes import get_molecule
 import re
 import warnings
+from exojax.database._common.radis_adapter import (
+    get_isotope_name_dict,
+    get_molecule,
+    get_molparams_class,
+)
 
 
 def exact_molecule_name_from_isotope(simple_molecule_name, isotope, dbtype="hitran"):
@@ -26,8 +29,7 @@ def exact_molecule_name_from_isotope(simple_molecule_name, isotope, dbtype="hitr
     Returns:
         str: HITRAN exact isotope name such as (12C)(16O) for dbtype="hitran", 12C-16O for "exomol"
     """
-    from radis.db.molparam import MolParams
-
+    MolParams = get_molparams_class()
     mp = MolParams()
     exact_molname = mp.get(simple_molecule_name, isotope, "isotope_name")
     if dbtype == "hitran":
@@ -45,7 +47,7 @@ def exact_molecule_name_to_isotope_number(exact_molecule_name):
     Returns:
         int: molecular number, isotope number (or None, None)
     """
-    from radis.db.molparam import isotope_name_dict
+    isotope_name_dict = get_isotope_name_dict()
 
     # check exomol exact name
     keys = [k for k, v in isotope_name_dict.items() if v == exact_molecule_name]

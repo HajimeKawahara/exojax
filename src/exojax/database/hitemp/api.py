@@ -1,11 +1,16 @@
 from os.path import exists
+from pathlib import Path
 import jax.numpy as jnp
 import numpy as np
-from radis.api.hitempapi import HITEMPDatabaseManager
 from exojax.database._common.commonapi import MdbCommonHitempHitran
 from exojax.database._common.isotope_functions import _convert_proper_isotope
+from exojax.database._common.radis_adapter import (
+    get_hitemp_database_manager_class,
+    get_hit2df_func,
+)
 from exojax.database.contracts import MDBMeta, Lines, MDBSnapshot
 
+HITEMPDatabaseManager = get_hitemp_database_manager_class()
 
 
 class MdbHitemp(MdbCommonHitempHitran, HITEMPDatabaseManager):
@@ -77,20 +82,39 @@ class MdbHitemp(MdbCommonHitempHitran, HITEMPDatabaseManager):
         local_db_root = self.path.parent
         local_db_root = str(local_db_root) # convert to str for radis compatibility
 
-        HITEMPDatabaseManager.__init__(
-            self,
-            molecule=self.simple_molecule_name,
-            name=f"HITEMP-{self.simple_molecule_name}",
-            local_databases=local_db_root,
-            engine=self.engine,
-            verbose=True,
-            chunksize=100000,
-            parallel=True,
-        )   
+        db_name = f"HITEMP-{self.simple_molecule_name}"
+        try:
+            HITEMPDatabaseManager.__init__(
+                self,
+                molecule=self.simple_molecule_name,
+                name=db_name,
+                local_databases=local_db_root,
+                engine=self.engine,
+                verbose=True,
+                chunksize=100000,
+                parallel=True,
+            )
+        except ValueError as exc:
+            # Some environments have a pre-existing RADIS registration for the
+            # same databank name but a different local path. Retry with a local
+            # unique name to preserve behavior for the current dataset path.
+            if "already registered in radis.json" not in str(exc):
+                raise
+            local_tag = Path(local_db_root).expanduser().resolve().name or "local"
+            db_name = f"HITEMP-{self.simple_molecule_name}-{local_tag}"
+            HITEMPDatabaseManager.__init__(
+                self,
+                molecule=self.simple_molecule_name,
+                name=db_name,
+                local_databases=local_db_root,
+                engine=self.engine,
+                verbose=True,
+                chunksize=100000,
+                parallel=True,
+            )
 
         if parfile is not None:
-            from radis.api.hitranapi import hit2df
-
+            hit2df = get_hit2df_func()
             df = hit2df(parfile, engine=self.engine, cache="regen")
             if isotope is None:
                 mask = None
