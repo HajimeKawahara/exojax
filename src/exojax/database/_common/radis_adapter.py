@@ -68,18 +68,20 @@ def get_molecule_identifier(simple_molecule_name):
     return _get_molecule_identifier(simple_molecule_name)
 
 
-def get_partfunc_tips_class():
-    """Return ``radis.levels.partfunc.PartFuncTIPS`` class."""
+def get_partition_function_value(molecule_identifier, isotope, temperature):
+    """Return partition function value for molecule/isotope at temperature."""
     from radis.levels.partfunc import PartFuncTIPS
 
-    return PartFuncTIPS
+    partfunc = PartFuncTIPS(molecule_identifier, isotope)
+    return partfunc.at(T=temperature)
 
 
-def get_molparams_class():
-    """Return ``radis.db.molparam.MolParams`` class lazily."""
+def get_isotope_name(simple_molecule_name, isotope):
+    """Return exact isotope name for molecule/isotope pair."""
     from radis.db.molparam import MolParams
 
-    return MolParams
+    molparams = MolParams()
+    return molparams.get(simple_molecule_name, isotope, "isotope_name")
 
 
 def get_isotope_name_dict():
