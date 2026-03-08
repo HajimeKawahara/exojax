@@ -11,15 +11,36 @@ ExoJAX call sites should prefer these adapter helpers over embedding RADIS
 constructor/version semantics directly.
 """
 import warnings
+from importlib import import_module
 from pathlib import Path
 from packaging import version
 
 
+def _raise_missing_radis_import_error(exc, feature):
+    """Raise a normalized ImportError when RADIS itself is missing."""
+    missing_name = getattr(exc, "name", "")
+    if missing_name == "radis" or missing_name.startswith("radis."):
+        msg = f"{feature} requires RADIS. Install it with `pip install radis`."
+        raise ImportError(msg) from exc
+    raise exc
+
+
+def _import_attr(module_path, attr_name, feature):
+    """Import an attribute and normalize missing-RADIS errors."""
+    try:
+        module = import_module(module_path)
+    except ModuleNotFoundError as exc:
+        _raise_missing_radis_import_error(exc, feature)
+    return getattr(module, attr_name)
+
+
 def get_radis_version():
     """Return ``radis.__version__``."""
-    from radis import __version__ as radis_version
-
-    return radis_version
+    try:
+        radis_module = import_module("radis")
+    except ModuleNotFoundError as exc:
+        _raise_missing_radis_import_error(exc, "RADIS version check")
+    return radis_module.__version__
 
 
 def supports_exomol_broadf_download():
@@ -54,30 +75,39 @@ def exomol_broadening_mode():
 
 def get_auto_memory_mapping_engine():
     """Return RADIS auto-selected memory mapping engine."""
-    from radis.api.dbmanager import get_auto_MEMORY_MAPPING_ENGINE
-
+    get_auto_MEMORY_MAPPING_ENGINE = _import_attr(
+        "radis.api.dbmanager",
+        "get_auto_MEMORY_MAPPING_ENGINE",
+        "RADIS-backed engine auto-selection",
+    )
     return get_auto_MEMORY_MAPPING_ENGINE()
 
 
 def get_exomol_mdb_class():
     """Return RADIS common-API ExoMol MDB class."""
-    from radis.api.exomolapi import MdbExomol
-
-    return MdbExomol
+    return _import_attr(
+        "radis.api.exomolapi",
+        "MdbExomol",
+        "ExoMol database manager access",
+    )
 
 
 def get_hitran_database_manager_class():
     """Return RADIS HITRAN database manager class."""
-    from radis.api.hitranapi import HITRANDatabaseManager
-
-    return HITRANDatabaseManager
+    return _import_attr(
+        "radis.api.hitranapi",
+        "HITRANDatabaseManager",
+        "HITRAN database manager access",
+    )
 
 
 def get_hitemp_database_manager_class():
     """Return RADIS HITEMP database manager class."""
-    from radis.api.hitempapi import HITEMPDatabaseManager
-
-    return HITEMPDatabaseManager
+    return _import_attr(
+        "radis.api.hitempapi",
+        "HITEMPDatabaseManager",
+        "HITEMP database manager access",
+    )
 
 
 def init_exomol_manager(
@@ -198,50 +228,64 @@ def init_hitemp_manager(
 
 def get_hit2df_func():
     """Return ``radis.api.hitranapi.hit2df`` for lazy call-sites."""
-    from radis.api.hitranapi import hit2df
-
-    return hit2df
+    return _import_attr("radis.api.hitranapi", "hit2df", "HITRAN/HITEMP parser access")
 
 
 def get_exomol_database_list_func():
     """Return ``radis.api.exomolapi.get_exomol_database_list`` lazily."""
-    from radis.api.exomolapi import get_exomol_database_list
-
-    return get_exomol_database_list
+    return _import_attr(
+        "radis.api.exomolapi",
+        "get_exomol_database_list",
+        "ExoMol dataset discovery",
+    )
 
 
 def get_molecule(molecule_identifier):
     """Return RADIS simple molecule name from identifier."""
-    from radis.db.classes import get_molecule as _get_molecule
-
+    _get_molecule = _import_attr(
+        "radis.db.classes",
+        "get_molecule",
+        "molecule-name lookup",
+    )
     return _get_molecule(molecule_identifier)
 
 
 def get_molecule_identifier(simple_molecule_name):
     """Return RADIS HITRAN molecule identifier from simple name."""
-    from radis.db.classes import get_molecule_identifier as _get_molecule_identifier
-
+    _get_molecule_identifier = _import_attr(
+        "radis.db.classes",
+        "get_molecule_identifier",
+        "molecule-identifier lookup",
+    )
     return _get_molecule_identifier(simple_molecule_name)
 
 
 def get_partition_function_value(molecule_identifier, isotope, temperature):
     """Return partition function value for molecule/isotope at temperature."""
-    from radis.levels.partfunc import PartFuncTIPS
-
+    PartFuncTIPS = _import_attr(
+        "radis.levels.partfunc",
+        "PartFuncTIPS",
+        "partition-function query",
+    )
     partfunc = PartFuncTIPS(molecule_identifier, isotope)
     return partfunc.at(T=temperature)
 
 
 def get_isotope_name(simple_molecule_name, isotope):
     """Return exact isotope name for molecule/isotope pair."""
-    from radis.db.molparam import MolParams
-
+    MolParams = _import_attr(
+        "radis.db.molparam",
+        "MolParams",
+        "isotope-name lookup",
+    )
     molparams = MolParams()
     return molparams.get(simple_molecule_name, isotope, "isotope_name")
 
 
 def get_isotope_name_dict():
     """Return ``radis.db.molparam.isotope_name_dict`` lazily."""
-    from radis.db.molparam import isotope_name_dict
-
-    return isotope_name_dict
+    return _import_attr(
+        "radis.db.molparam",
+        "isotope_name_dict",
+        "isotope-name table lookup",
+    )
