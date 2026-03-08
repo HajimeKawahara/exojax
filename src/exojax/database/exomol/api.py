@@ -20,8 +20,8 @@ from exojax.database.core.line_strength import line_strength_numpy
 from exojax.database.molinfo import isotope_molmass
 from exojax.database._common.radis_adapter import (
     exomol_broadening_mode,
-    exomol_init_needs_bkgdatm,
     get_exomol_mdb_class,
+    init_exomol_manager,
     supports_exomol_broadf_download,
     warn_if_exomol_broadf_download_unsupported,
 )
@@ -114,34 +114,19 @@ class MdbExomol(CapiMdbExomol):
         wavenum_min, wavenum_max = self.set_wavenum(nurange)
         self.engine = _set_engine(engine)
 
-        if not exomol_init_needs_bkgdatm():
-            super().__init__(
-                str(self.path),
-                local_databases=local_databases,
-                molecule=self.simple_molecule_name,
-                name="EXOMOL-{molecule}",
-                nurange=[wavenum_min, wavenum_max],
-                engine=self.engine,
-                crit=crit,
-                broadf=self.broadf,
-                broadf_download=self.broadf_download,
-                cache=True,
-                skip_optional_data=self.skip_optional_data,
-            )
-        else:
-            super().__init__(
-                str(self.path),
-                local_databases=local_databases,
-                molecule=self.simple_molecule_name,
-                name="EXOMOL-{molecule}",
-                nurange=[wavenum_min, wavenum_max],
-                engine=self.engine,
-                crit=crit,
-                bkgdatm=self.bkgdatm,  # uses radis <= 0.15.2
-                broadf=self.broadf,
-                cache=True,
-                skip_optional_data=self.skip_optional_data,
-            )
+        init_exomol_manager(
+            self,
+            path=str(self.path),
+            local_databases=local_databases,
+            molecule=self.simple_molecule_name,
+            nurange=[wavenum_min, wavenum_max],
+            engine=self.engine,
+            crit=crit,
+            broadf=self.broadf,
+            broadf_download=getattr(self, "broadf_download", broadf_download),
+            skip_optional_data=self.skip_optional_data,
+            bkgdatm=self.bkgdatm,
+        )
 
         self.crit = crit
         self.elower_max = elower_max

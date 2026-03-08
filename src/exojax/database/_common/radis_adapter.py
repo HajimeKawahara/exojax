@@ -4,6 +4,7 @@ This module centralizes RADIS imports so exojax modules do not import RADIS
 directly. The goal is dependency isolation only; behavior is unchanged.
 """
 import warnings
+from pathlib import Path
 from packaging import version
 
 
@@ -70,6 +71,122 @@ def get_hitemp_database_manager_class():
     from radis.api.hitempapi import HITEMPDatabaseManager
 
     return HITEMPDatabaseManager
+
+
+def init_exomol_manager(
+    instance,
+    *,
+    path,
+    local_databases,
+    molecule,
+    nurange,
+    engine,
+    crit,
+    broadf,
+    broadf_download,
+    skip_optional_data,
+    bkgdatm,
+):
+    """Initialize ExoMol backend manager on an existing instance.
+
+    This keeps backend/version-specific constructor kwargs localized in the
+    adapter while preserving inheritance-based architecture.
+    """
+    exomol_manager_class = get_exomol_mdb_class()
+    if not exomol_init_needs_bkgdatm():
+        exomol_manager_class.__init__(
+            instance,
+            path,
+            local_databases=local_databases,
+            molecule=molecule,
+            name="EXOMOL-{molecule}",
+            nurange=nurange,
+            engine=engine,
+            crit=crit,
+            broadf=broadf,
+            broadf_download=broadf_download,
+            cache=True,
+            skip_optional_data=skip_optional_data,
+        )
+    else:
+        exomol_manager_class.__init__(
+            instance,
+            path,
+            local_databases=local_databases,
+            molecule=molecule,
+            name="EXOMOL-{molecule}",
+            nurange=nurange,
+            engine=engine,
+            crit=crit,
+            bkgdatm=bkgdatm,  # uses radis <= 0.15.2
+            broadf=broadf,
+            cache=True,
+            skip_optional_data=skip_optional_data,
+        )
+
+
+def init_hitran_manager(
+    instance,
+    *,
+    molecule,
+    local_databases,
+    engine,
+    nonair_broadening,
+):
+    """Initialize HITRAN backend manager on an existing instance."""
+    hitran_manager_class = get_hitran_database_manager_class()
+    extra_params = "all" if nonair_broadening else None
+    hitran_manager_class.__init__(
+        instance,
+        molecule=molecule,
+        name="HITRAN-{molecule}",
+        local_databases=local_databases,
+        engine=engine,
+        verbose=True,
+        parallel=True,
+        extra_params=extra_params,
+    )
+
+
+def init_hitemp_manager(
+    instance,
+    *,
+    molecule,
+    local_databases,
+    engine,
+):
+    """Initialize HITEMP backend manager on an existing instance.
+
+    Handles RADIS databank-name collisions for pre-registered environments.
+    """
+    hitemp_manager_class = get_hitemp_database_manager_class()
+    db_name = f"HITEMP-{molecule}"
+    try:
+        hitemp_manager_class.__init__(
+            instance,
+            molecule=molecule,
+            name=db_name,
+            local_databases=local_databases,
+            engine=engine,
+            verbose=True,
+            chunksize=100000,
+            parallel=True,
+        )
+    except ValueError as exc:
+        if "already registered in radis.json" not in str(exc):
+            raise
+        local_tag = Path(local_databases).expanduser().resolve().name or "local"
+        db_name = f"HITEMP-{molecule}-{local_tag}"
+        hitemp_manager_class.__init__(
+            instance,
+            molecule=molecule,
+            name=db_name,
+            local_databases=local_databases,
+            engine=engine,
+            verbose=True,
+            chunksize=100000,
+            parallel=True,
+        )
 
 
 def get_hit2df_func():

@@ -2,7 +2,10 @@ import jax.numpy as jnp
 import numpy as np
 from exojax.database._common.commonapi import MdbCommonHitempHitran
 from exojax.database._common.isotope_functions import _convert_proper_isotope
-from exojax.database._common.radis_adapter import get_hitran_database_manager_class
+from exojax.database._common.radis_adapter import (
+    get_hitran_database_manager_class,
+    init_hitran_manager,
+)
 from exojax.database.contracts import MDBMeta, Lines, MDBSnapshot
 
 HITRANDatabaseManager = get_hitran_database_manager_class()
@@ -75,22 +78,13 @@ class MdbHitran(MdbCommonHitempHitran, HITRANDatabaseManager):
         )
 
         # HITRAN ONLY FUNCTIONALITY
-        if nonair_broadening:
-            self.nonair_broadening = True
-            extra_params = "all"
-        else:
-            self.nonair_broadening = False
-            extra_params = None
-
-        HITRANDatabaseManager.__init__(
+        self.nonair_broadening = bool(nonair_broadening)
+        init_hitran_manager(
             self,
             molecule=self.simple_molecule_name,
-            name="HITRAN-{molecule}",
             local_databases=self.path.parent,
             engine=self.engine,
-            verbose=True,
-            parallel=True,
-            extra_params=extra_params,
+            nonair_broadening=self.nonair_broadening,
         )
 
         # Get list of all expected local files for this database:
