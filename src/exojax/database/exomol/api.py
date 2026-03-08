@@ -31,7 +31,20 @@ from exojax.database._common.setradis import _set_engine
 from exojax.database.contracts import MDBMeta, Lines, MDBSnapshot
 
 __all__ = ["MdbExomol"]
-CapiMdbExomol = get_exomol_mdb_class()
+# Inheritance remains for compatibility; backend-specific init/version logic
+# should stay in the RADIS backend adapter helpers.
+try:
+    CapiMdbExomol = get_exomol_mdb_class()
+except ImportError as exc:
+    if "requires RADIS" not in str(exc):
+        raise
+    _missing_radis_exc = exc
+
+    class CapiMdbExomol:
+        """Fallback base class used when RADIS is unavailable at import time."""
+
+        def __init__(self, *args, **kwargs):
+            raise ImportError(str(_missing_radis_exc)) from _missing_radis_exc
 
 
 class MdbExomol(CapiMdbExomol):
@@ -114,6 +127,7 @@ class MdbExomol(CapiMdbExomol):
         wavenum_min, wavenum_max = self.set_wavenum(nurange)
         self.engine = _set_engine(engine)
 
+        # Keep RADIS constructor differences localized in backend layer.
         init_exomol_manager(
             self,
             path=str(self.path),
