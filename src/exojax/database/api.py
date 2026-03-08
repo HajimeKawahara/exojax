@@ -12,14 +12,24 @@ This shim will be removed in a future **major** release.
 """
 from __future__ import annotations
 
+import importlib
 import warnings
 
-# Real implementations now live in the sub-packages
-from .exomol.api import MdbExomol as _MdbExomol
-from .hitemp.api import MdbHitemp as _MdbHitemp
-from .hitran.api import MdbHitran as _MdbHitran
-
 __all__ = ["MdbExomol", "MdbHitemp", "MdbHitran"]
+
+_ALIASES = {
+    "MdbExomol": ("exojax.database.exomol.api", "MdbExomol"),
+    "MdbHitemp": ("exojax.database.hitemp.api", "MdbHitemp"),
+    "MdbHitran": ("exojax.database.hitran.api", "MdbHitran"),
+}
+
+
+def _resolve(name: str):
+    module_path, attr = _ALIASES[name]
+    module = importlib.import_module(module_path)
+    resolved = getattr(module, attr)
+    globals()[name] = resolved
+    return resolved
 
 
 def __getattr__(name: str):
@@ -31,7 +41,7 @@ def __getattr__(name: str):
             DeprecationWarning,
             stacklevel=2,
         )
-        return _MdbExomol
+        return _resolve(name)
     if name == "MdbHitemp":
         warnings.warn(
             "exojax.database.api.MdbHitemp is deprecated. "
@@ -39,7 +49,7 @@ def __getattr__(name: str):
             DeprecationWarning,
             stacklevel=2,
         )
-        return _MdbHitemp
+        return _resolve(name)
     if name == "MdbHitran":
         warnings.warn(
             "exojax.database.api.MdbHitran is deprecated. "
@@ -47,11 +57,5 @@ def __getattr__(name: str):
             DeprecationWarning,
             stacklevel=2,
         )
-        return _MdbHitran
+        return _resolve(name)
     raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
-
-
-# Eager bindings for static type checkers and IDEs
-MdbExomol = _MdbExomol
-MdbHitemp = _MdbHitemp
-MdbHitran = _MdbHitran
