@@ -1,7 +1,14 @@
-"""RADIS dependency boundary for ExoJAX internals.
+"""RADIS backend implementation layer for ExoJAX database APIs.
 
-This module centralizes RADIS imports so exojax modules do not import RADIS
-directly. The goal is dependency isolation only; behavior is unchanged.
+This module is the current backend boundary between ExoJAX database code and
+RADIS-specific behavior. In addition to import indirection, this layer is the
+preferred home for backend-specific logic such as:
+- manager construction/init details
+- backend capability checks
+- backend compatibility shims and legacy-path handling
+
+ExoJAX call sites should prefer these adapter helpers over embedding RADIS
+constructor/version semantics directly.
 """
 import warnings
 from pathlib import Path
