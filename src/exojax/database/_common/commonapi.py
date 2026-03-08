@@ -7,7 +7,7 @@ from exojax.database._common.hitranapi import molecid_hitran
 from exojax.database._common.hitranapi import make_partition_function_grid_hitran
 from exojax.database._common.radis_adapter import (
     get_molecule,
-    get_partfunc_tips_class,
+    get_partition_function_value,
 )
 from exojax.utils.constants import Tref_original
 from exojax.utils.isotopes import molmass_hitran
@@ -65,10 +65,8 @@ class MdbCommonHitempHitran:
             isotope_for_Qt = 1  # we use isotope=1 for QT
         else:
             isotope_for_Qt = int(self.isotope)
-        PartFuncTIPS = get_partfunc_tips_class()
-        Q = PartFuncTIPS(self.molecid, isotope_for_Qt)
-        QTref = Q.at(T=Tref_original)
-        QTtyp = Q.at(T=Ttyp)
+        QTref = get_partition_function_value(self.molecid, isotope_for_Qt, Tref_original)
+        QTtyp = get_partition_function_value(self.molecid, isotope_for_Qt, Ttyp)
         return QTref, QTtyp
 
     def set_wavenum(self, nurange):

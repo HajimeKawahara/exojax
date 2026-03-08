@@ -13,8 +13,8 @@ import re
 import warnings
 from exojax.database._common.radis_adapter import (
     get_isotope_name_dict,
+    get_isotope_name,
     get_molecule,
-    get_molparams_class,
 )
 
 
@@ -29,9 +29,7 @@ def exact_molecule_name_from_isotope(simple_molecule_name, isotope, dbtype="hitr
     Returns:
         str: HITRAN exact isotope name such as (12C)(16O) for dbtype="hitran", 12C-16O for "exomol"
     """
-    MolParams = get_molparams_class()
-    mp = MolParams()
-    exact_molname = mp.get(simple_molecule_name, isotope, "isotope_name")
+    exact_molname = get_isotope_name(simple_molecule_name, isotope)
     if dbtype == "hitran":
         return exact_molname
     elif dbtype == "exomol":
