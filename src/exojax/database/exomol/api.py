@@ -15,13 +15,15 @@ import warnings
 
 import jax.numpy as jnp
 import numpy as np
-from packaging import version
 from exojax.database.core.broadening import gamma_natural as gn
 from exojax.database.core.line_strength import line_strength_numpy
 from exojax.database.molinfo import isotope_molmass
 from exojax.database._common.radis_adapter import (
+    exomol_broadening_mode,
+    exomol_init_needs_bkgdatm,
     get_exomol_mdb_class,
-    get_radis_version,
+    supports_exomol_broadf_download,
+    warn_if_exomol_broadf_download_unsupported,
 )
 from exojax.utils.constants import Tref_original
 from exojax.utils.molname import e2s
@@ -30,7 +32,6 @@ from exojax.database.contracts import MDBMeta, Lines, MDBSnapshot
 
 __all__ = ["MdbExomol"]
 CapiMdbExomol = get_exomol_mdb_class()
-radis_version = get_radis_version()
 
 
 class MdbExomol(CapiMdbExomol):
@@ -102,12 +103,10 @@ class MdbExomol(CapiMdbExomol):
         self.gpu_transfer = gpu_transfer
         self.Ttyp = Ttyp
         self.broadf = broadf
-        if radis_version >= "0.16":
+        if supports_exomol_broadf_download():
             self.broadf_download = broadf_download
         else:
-            print("radis==", radis_version)
-            msg = "The current version of radis does not support broadf_download (requires >=0.16)."
-            warnings.warn(msg, UserWarning)
+            warn_if_exomol_broadf_download_unsupported()
         self.simple_molecule_name = e2s(self.exact_molecule_name)
         self.molmass = isotope_molmass(self.exact_molecule_name)
         self.skip_optional_data = not optional_quantum_states
@@ -115,7 +114,7 @@ class MdbExomol(CapiMdbExomol):
         wavenum_min, wavenum_max = self.set_wavenum(nurange)
         self.engine = _set_engine(engine)
 
-        if radis_version >= "0.16":
+        if not exomol_init_needs_bkgdatm():
             super().__init__(
                 str(self.path),
                 local_databases=local_databases,
@@ -269,9 +268,10 @@ class MdbExomol(CapiMdbExomol):
 
         self.attributes_from_dataframes(df[mask])
 
-        if version.parse(radis_version) <= version.parse("0.14"):
+        broadening_mode = exomol_broadening_mode()
+        if broadening_mode == "compute_broadening":
             self.compute_broadening(self.jlower.astype(int), self.jupper.astype(int))
-        elif version.parse(radis_version) <= version.parse("0.15.2"):
+        elif broadening_mode == "set_broadening_coef_legacy":
             print("Broadener: ", self.bkgdatm)
             self.set_broadening_coef(df[mask], add_columns=False)
         else:

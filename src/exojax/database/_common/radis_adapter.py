@@ -3,6 +3,8 @@
 This module centralizes RADIS imports so exojax modules do not import RADIS
 directly. The goal is dependency isolation only; behavior is unchanged.
 """
+import warnings
+from packaging import version
 
 
 def get_radis_version():
@@ -10,6 +12,36 @@ def get_radis_version():
     from radis import __version__ as radis_version
 
     return radis_version
+
+
+def supports_exomol_broadf_download():
+    """Return whether backend supports ExoMol ``broadf_download``."""
+    return version.parse(get_radis_version()) >= version.parse("0.16")
+
+
+def exomol_init_needs_bkgdatm():
+    """Return whether ExoMol manager init expects ``bkgdatm`` argument."""
+    return not supports_exomol_broadf_download()
+
+
+def warn_if_exomol_broadf_download_unsupported():
+    """Emit the legacy warning message for backends without broadf_download."""
+    if supports_exomol_broadf_download():
+        return
+    radis_version = get_radis_version()
+    print("radis==", radis_version)
+    msg = "The current version of radis does not support broadf_download (requires >=0.16)."
+    warnings.warn(msg, UserWarning)
+
+
+def exomol_broadening_mode():
+    """Return ExoMol broadening mode key used by ExoJAX call sites."""
+    radis_version = get_radis_version()
+    if version.parse(radis_version) <= version.parse("0.14"):
+        return "compute_broadening"
+    if version.parse(radis_version) <= version.parse("0.15.2"):
+        return "set_broadening_coef_legacy"
+    return "set_broadening_coef_species"
 
 
 def get_auto_memory_mapping_engine():
