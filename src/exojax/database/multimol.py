@@ -5,10 +5,48 @@ import numpy as np
 
 from exojax.database.contracts import MDBSnapshot
 from exojax.opacity import OpaPremodit
-from exojax.database.exomol.api import MdbExomol
-from exojax.database.hitran.api import MdbHitran
-from exojax.database.hitemp.api import MdbHitemp
-from exojax.test.emulate_mdb import mock_mdbExomol
+
+# Lazily imported RADIS-backed classes to reduce import-time pressure.
+MdbExomol = None
+MdbHitran = None
+MdbHitemp = None
+mock_mdbExomol = None
+
+
+def _load_mdb_exomol():
+    global MdbExomol
+    if MdbExomol is None:
+        from exojax.database.exomol.api import MdbExomol as _MdbExomol
+
+        MdbExomol = _MdbExomol
+    return MdbExomol
+
+
+def _load_mdb_hitran():
+    global MdbHitran
+    if MdbHitran is None:
+        from exojax.database.hitran.api import MdbHitran as _MdbHitran
+
+        MdbHitran = _MdbHitran
+    return MdbHitran
+
+
+def _load_mdb_hitemp():
+    global MdbHitemp
+    if MdbHitemp is None:
+        from exojax.database.hitemp.api import MdbHitemp as _MdbHitemp
+
+        MdbHitemp = _MdbHitemp
+    return MdbHitemp
+
+
+def _load_mock_mdb_exomol():
+    global mock_mdbExomol
+    if mock_mdbExomol is None:
+        from exojax.test.emulate_mdb import mock_mdbExomol as _mock_mdbExomol
+
+        mock_mdbExomol = _mock_mdbExomol
+    return mock_mdbExomol
 
 
 class MultiMDBCollection(list):
@@ -174,8 +212,9 @@ class MultiMol:
                 print("Sets mdb for ", simple_molecule_name)
                 try:
                     if self.dbmulti[k][i] in ["ExoMol", "exomol"]:
+                        mdb_exomol_class = _load_mdb_exomol()
                         mdb_k.append(
-                            MdbExomol(
+                            mdb_exomol_class(
                                 os.path.join(
                                     self.database_root_path, self.db_dirs[k][i]
                                 ),
@@ -187,8 +226,9 @@ class MultiMol:
                             )
                         )
                     elif self.dbmulti[k][i] in ["HITRAN12", "hitran12"]:
+                        mdb_hitran_class = _load_mdb_hitran()
                         mdb_k.append(
-                            MdbHitran(
+                            mdb_hitran_class(
                                 os.path.join(
                                     self.database_root_path, self.db_dirs[k][i]
                                 ),
@@ -200,8 +240,9 @@ class MultiMol:
                             )
                         )
                     elif self.dbmulti[k][i] in ["HITEMP", "hitemp"]:
+                        mdb_hitemp_class = _load_mdb_hitemp()
                         mdb_k.append(
-                            MdbHitemp(
+                            mdb_hitemp_class(
                                 os.path.join(
                                     self.database_root_path, self.db_dirs[k][i]
                                 ),
@@ -213,7 +254,8 @@ class MultiMol:
                             )
                         )
                     elif self.dbmulti[k][i] in ["SAMPLE"]:
-                        mdb_k.append(mock_mdbExomol(simple_molecule_name))
+                        mock_mdb_exomol_func = _load_mock_mdb_exomol()
+                        mdb_k.append(mock_mdb_exomol_func(simple_molecule_name))
 
                 except Exception as e:
                     if "No line found in " in e.args:
