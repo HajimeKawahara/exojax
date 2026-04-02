@@ -1,6 +1,6 @@
 import numpy as np
 import jax.numpy as jnp
-from exojax.database import core_atom.io
+from exojax.database.core_atom import io
 from exojax.utils.constants import Tref_original
 from exojax.utils.constants import ccgs
 from exojax.utils.constants import hcperk

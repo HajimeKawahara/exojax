@@ -338,7 +338,7 @@ class AdbVald:
 
         Returns:
             Q(T)*284: interpolated in jnp.array for all 284 Atomic Species
-        """get_unique_species
+        """
         warn_msg = "Deprecated Use `atomll.interp_QT_284` instead"
         warnings.warn(warn_msg, FutureWarning)
         return interp_QT_284(T, self.T_gQT, self.gQT_284species)
