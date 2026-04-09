@@ -11,13 +11,17 @@ import pathlib
 
 import numpy as np
 import pandas as pd
+import jax.numpy as jnp
 
 from exojax.postproc.response import ipgauss, ipgauss_ola, sampling
 from exojax.postproc.spin_rotation import (
     convolve_rigid_rotation,
     convolve_rigid_rotation_ola,
+    convolve_rigid_rotation_trans,
+    # convolve_rigid_rotation_ola_trans,
+    rigid_rotation_trans_theta
 )
-from exojax.utils.grids import grid_resolution, velocity_grid
+from exojax.utils.grids import grid_resolution, velocity_grid, delta_velocity_from_resolution
 from exojax.utils.photometry import apparent_magnitude
 
 
@@ -239,6 +243,37 @@ class SopRotation(SopCommonConv):
             )
         else:
             raise ValueError("No convolution_method.")
+
+    def rigid_rotation_trans(self, spectrum, vsini, int_grid="velocity"):
+        """apply a rigid rotation for transmission geometry
+
+        Args:
+            spectrum (nd array): 1D spectrum
+            vsini (float): V sini in km/s
+            int_grid: integration over velocity or theta grids
+
+        Raises:
+            ValueError: _description_
+
+        Returns:
+            nd array: rotationally broaden spectrum
+        """
+        self.resolution = grid_resolution("ESLOG", self.nu_grid)
+        dv = delta_velocity_from_resolution(self.resolution)
+
+        if int_grid == "velocity":
+            return convolve_rigid_rotation_trans(spectrum, self.vrarray, dv, vsini)
+        elif int_grid == "theta":
+            if vsini <= dv:
+                raise ValueError("delta velocity from resolution exceeds the rotational velocity. Try again with higher resolution.")
+            else:
+                # define dtheta by the velocity grid resolution (equal to pi/2 - arccos(dv/vsini))
+                dtheta = jnp.arcsin(dv/vsini)
+                Nt = jnp.ceil(jnp.pi / dtheta).astype(jnp.int32)
+                theta_array = (jnp.arange(Nt) + 0.5) / Nt * jnp.pi
+                return rigid_rotation_trans_theta(spectrum, self.nu_grid, theta_array, vsini)
+        else:
+            raise ValueError("No int_method.")
 
 
 class SopInstProfile(SopCommonConv):

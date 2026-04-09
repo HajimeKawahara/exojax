@@ -16,7 +16,6 @@ def convolve_rigid_rotation_ola(folded_F0, vr_array, vsini, u1=0.0, u2=0.0):
         folded_F0: original spectrum (F0) folded to (ndiv, div_length) form
         vr_array: fix-sized vr array for kernel, see utils.dvgrid_rigid_rotation
         vsini: V sini for rotation (km/s)
-        RV: radial velocity
         u1: Limb-darkening coefficient 1
         u2: Limb-darkening coefficient 2
 
@@ -104,41 +103,99 @@ def rotkernel_jvp(primals, tangents):
     return primal_out, tangent_out
 
 
-def rigid_rotation_trans_theta(nu_grid, F0, vsini):
+# @jit
+# def convolve_rigid_rotation_ola_trans(folded_F0, vr_array, dv, vsini):
+#     """Apply the Rotation response to a transmission spectrum F (No OLA and No cuDNN).
+
+#     Args:
+#         folded_F0: original spectrum (F0) folded to (ndiv, div_length) form
+#         vr_array: fix-sized vr array for kernel, see utils.dvgrid_rigid_rotation
+#         dv:
+#         vsini: V sini for rotation (km/s)
+
+#     Return:
+#         response-applied spectrum (F)
+#     """
+#     int_kernel = integrated_rotkernel_trans((vr_array-0.5*dv)/vsini, (vr_array+0.5*dv)/vsini)
+#     int_kernel = int_kernel / jnp.sum(int_kernel, axis=0)
+
+#     ndiv, div_length, filter_length = ola_lengths(folded_F0, int_kernel)
+#     F0_hat, int_kernel_hat = generate_zeropad(folded_F0, int_kernel)
+#     ola = olaconv(F0_hat, int_kernel_hat, ndiv, div_length, filter_length)
+
+#     edge = int((len(int_kernel) - 1) / 2)
+#     convolved_signal = ola[edge:-edge]
+
+#     return convolved_signal
+
+
+@jit
+def convolve_rigid_rotation_trans(F0, vr_array, dv, vsini):
+    """Apply the Rotation response to a transmission spectrum F (No OLA and No cuDNN).
+
+    Args:
+        F0: original spectrum (F0)
+        vr_array: fix-sized vr array for kernel, see utils.dvgrid_rigid_rotation
+        dv: velocity grid width
+        vsini: V sini for rotation (km/s)
+
+    Return:
+        response-applied spectrum (F)
+    """
+    int_kernel = integrated_rotkernel_trans((vr_array-0.5*dv)/vsini, (vr_array+0.5*dv)/vsini)
+    int_kernel = int_kernel / jnp.sum(int_kernel, axis=0)
+
+    #==== still require cuDNN in Oct.15 2022================
+    #convolved_signal = jnp.convolve(F0,kernel,mode="same")
+    #=======================================================
+
+    convolved_signal = convolve_same(F0, int_kernel)
+
+    return convolved_signal
+
+
+@jit
+def integrated_rotkernel_trans(x1, x2):
+    """integrated rotation kernel
+
+    Args:
+        x1: Velocity at bin_edge / vsini
+        x2: Velocity at bin_edge / vsini
+
+    Return:
+        integrated rotational kernel
+    """
+    # clip outside the [-vsini, vsini] range
+    x1_c = jnp.clip(x1, -1., 1.)
+    x2_c = jnp.clip(x2, -1., 1.)
+    int_kernel = jnp.abs(jnp.arcsin(x2_c) - jnp.arcsin(x1_c)) / jnp.pi
+    return int_kernel
+
+
+@jit
+def rigid_rotation_trans_theta(F0, nu_grid, theta_array, vsini):
     """Apply the Rotation response to a spectrum F for transmission geometry with equal theta grid.
 
     Note:
         Equal theta grid is used, so the velocity grid is not uniform
 
     Args:
-        nu_grid: wavenumber grid
         F0: original spectrum (F0)
+        nu_grid: wavenumber grid in cm-1
+        theta_array: fix-sized theta array
         vsini: V sini for rotation (km/s)
-
-    Raises:
-        ValueError: _description_
 
     Return:
         response-applied spectrum (F)
     """
-    res = grid_resolution("ESLOG", nu_grid)
-    dv = delta_velocity_from_resolution(res)
-    if vsini <= dv:
-        raise ValueError("delta velocity from resolution exceeds the rotational velocity. Try again with higher resolution.")
-    else:
-        # define dtheta by the velocity grid resolution (equal to pi/2 - arccos(dv/vsini))
-        dtheta = jnp.arcsin(dv/vsini)
-        Nt = jnp.ceil(jnp.pi / dtheta).astype(jnp.int32)
-        theta_array = (jnp.arange(Nt) + 0.5) / Nt * jnp.pi
+    RV_array = vsini * jnp.cos(theta_array)
 
-        RV_array = vsini * jnp.cos(theta_array)
+    def f(acc, rv):
+        sp_sft = sampling(nu_grid, nu_grid, F0, rv)
+        acc = acc + sp_sft
+        return acc, None
 
-        def f(acc, rv):
-            sp_sft = sampling(nu_grid, nu_grid, F0, rv)
-            acc = acc + sp_sft
-            return acc, None
+    acc0 = jnp.zeros_like(F0)
+    acc, _ = scan(f, acc0, RV_array)
 
-        acc0 = jnp.zeros_like(F0)
-        acc, _ = scan(f, acc0, RV_array)
-
-        return acc/Nt
+    return acc/len(theta_array)
