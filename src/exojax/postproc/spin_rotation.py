@@ -1,8 +1,11 @@
 import jax.numpy as jnp
 from jax import custom_jvp, jit
+from jax.lax import scan
 
 from exojax.signal.convolve import convolve_same
 from exojax.signal.ola import generate_zeropad, ola_lengths, olaconv
+from exojax.utils.grids import grid_resolution, delta_velocity_from_resolution
+from exojax.postproc.response import sampling
 
 
 @jit
@@ -99,3 +102,43 @@ def rotkernel_jvp(primals, tangents):
     primal_out = rotkernel(x, u1, u2)
     tangent_out = dHdx * ux + dHdu1 * uu1 + dHdu2 * uu2
     return primal_out, tangent_out
+
+
+def rigid_rotation_trans_theta(nu_grid, F0, vsini):
+    """Apply the Rotation response to a spectrum F for transmission geometry with equal theta grid.
+
+    Note:
+        Equal theta grid is used, so the velocity grid is not uniform
+
+    Args:
+        nu_grid: wavenumber grid
+        F0: original spectrum (F0)
+        vsini: V sini for rotation (km/s)
+
+    Raises:
+        ValueError: _description_
+
+    Return:
+        response-applied spectrum (F)
+    """
+    res = grid_resolution("ESLOG", nu_grid)
+    dv = delta_velocity_from_resolution(res)
+    if vsini <= dv:
+        raise ValueError("delta velocity from resolution exceeds the rotational velocity. Try again with higher resolution.")
+    else:
+        # define dtheta by the velocity grid resolution (equal to pi/2 - arccos(dv/vsini))
+        dtheta = jnp.arcsin(dv/vsini)
+        Nt = jnp.ceil(jnp.pi / dtheta).astype(jnp.int32)
+        theta_array = (jnp.arange(Nt) + 0.5) / Nt * jnp.pi
+
+        RV_array = vsini * jnp.cos(theta_array)
+
+        def f(acc, rv):
+            sp_sft = sampling(nu_grid, nu_grid, F0, rv)
+            acc = acc + sp_sft
+            return acc, None
+
+        acc0 = jnp.zeros_like(F0)
+        acc, _ = scan(f, acc0, RV_array)
+
+        return acc/Nt
