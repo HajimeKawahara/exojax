@@ -103,30 +103,30 @@ def rotkernel_jvp(primals, tangents):
     return primal_out, tangent_out
 
 
-# @jit
-# def convolve_rigid_rotation_ola_trans(folded_F0, vr_array, dv, vsini):
-#     """Apply the Rotation response to a transmission spectrum F (No OLA and No cuDNN).
+@jit
+def convolve_rigid_rotation_ola_trans(folded_F0, vr_array, dv, vsini):
+    """Apply the Rotation response to a transmission spectrum F (OLA).
 
-#     Args:
-#         folded_F0: original spectrum (F0) folded to (ndiv, div_length) form
-#         vr_array: fix-sized vr array for kernel, see utils.dvgrid_rigid_rotation
-#         dv:
-#         vsini: V sini for rotation (km/s)
+    Args:
+        folded_F0: original spectrum (F0) folded to (ndiv, div_length) form
+        vr_array: fix-sized vr array for kernel, see utils.dvgrid_rigid_rotation
+        dv: velocity grid width
+        vsini: V sini for rotation (km/s)
 
-#     Return:
-#         response-applied spectrum (F)
-#     """
-#     int_kernel = integrated_rotkernel_trans((vr_array-0.5*dv)/vsini, (vr_array+0.5*dv)/vsini)
-#     int_kernel = int_kernel / jnp.sum(int_kernel, axis=0)
+    Return:
+        response-applied spectrum (F)
+    """
+    int_kernel = integrated_rotkernel_trans((vr_array-0.5*dv)/vsini, (vr_array+0.5*dv)/vsini)
+    int_kernel = int_kernel / jnp.sum(int_kernel, axis=0)
 
-#     ndiv, div_length, filter_length = ola_lengths(folded_F0, int_kernel)
-#     F0_hat, int_kernel_hat = generate_zeropad(folded_F0, int_kernel)
-#     ola = olaconv(F0_hat, int_kernel_hat, ndiv, div_length, filter_length)
+    ndiv, div_length, filter_length = ola_lengths(folded_F0, int_kernel)
+    F0_hat, int_kernel_hat = generate_zeropad(folded_F0, int_kernel)
+    ola = olaconv(F0_hat, int_kernel_hat, ndiv, div_length, filter_length)
 
-#     edge = int((len(int_kernel) - 1) / 2)
-#     convolved_signal = ola[edge:-edge]
+    edge = int((len(int_kernel) - 1) / 2)
+    convolved_signal = ola[edge:-edge]
 
-#     return convolved_signal
+    return convolved_signal
 
 
 @jit

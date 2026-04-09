@@ -18,7 +18,7 @@ from exojax.postproc.spin_rotation import (
     convolve_rigid_rotation,
     convolve_rigid_rotation_ola,
     convolve_rigid_rotation_trans,
-    # convolve_rigid_rotation_ola_trans,
+    convolve_rigid_rotation_ola_trans,
     rigid_rotation_trans_theta
 )
 from exojax.utils.grids import grid_resolution, velocity_grid, delta_velocity_from_resolution
@@ -262,7 +262,16 @@ class SopRotation(SopCommonConv):
         dv = delta_velocity_from_resolution(self.resolution)
 
         if int_grid == "velocity":
-            return convolve_rigid_rotation_trans(spectrum, self.vrarray, dv, vsini)
+            if (
+                self.convolution_method == self.convolution_method_list[0]
+            ):  # "exojax.signal.convolve"
+                return convolve_rigid_rotation_trans(spectrum, self.vrarray, dv, vsini)
+            elif (
+                self.convolution_method == self.convolution_method_list[1]
+            ):  # "exojax.signal.olaconv"
+                div_length = self.check_ola_reducible(spectrum)
+                folded_spectrum = spectrum.reshape((self.ola_ndiv, div_length))
+                return convolve_rigid_rotation_ola_trans(folded_spectrum, self.vrarray, dv, vsini)
         elif int_grid == "theta":
             if vsini <= dv:
                 raise ValueError("delta velocity from resolution exceeds the rotational velocity. Try again with higher resolution.")
