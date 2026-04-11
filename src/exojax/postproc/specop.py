@@ -18,8 +18,7 @@ from exojax.postproc.spin_rotation import (
     convolve_rigid_rotation,
     convolve_rigid_rotation_ola,
     convolve_rigid_rotation_trans,
-    convolve_rigid_rotation_ola_trans,
-    rigid_rotation_trans_theta
+    convolve_rigid_rotation_ola_trans
 )
 from exojax.utils.grids import grid_resolution, velocity_grid, delta_velocity_from_resolution
 from exojax.utils.photometry import apparent_magnitude
@@ -244,44 +243,27 @@ class SopRotation(SopCommonConv):
         else:
             raise ValueError("No convolution_method.")
 
-    def rigid_rotation_trans(self, spectrum, vsini, int_grid="velocity"):
+    def rigid_rotation_trans(self, spectrum, vsini):
         """apply a rigid rotation for transmission geometry
 
         Args:
             spectrum (nd array): 1D spectrum
             vsini (float): V sini in km/s
-            int_grid: integration over velocity or theta grids
-
-        Raises:
-            ValueError: _description_
 
         Returns:
             nd array: rotationally broaden spectrum
         """
         dv = delta_velocity_from_resolution(self.resolution)
-
-        if int_grid == "velocity":
-            if (
-                self.convolution_method == self.convolution_method_list[0]
-            ):  # "exojax.signal.convolve"
-                return convolve_rigid_rotation_trans(spectrum, self.vrarray, dv, vsini)
-            elif (
-                self.convolution_method == self.convolution_method_list[1]
-            ):  # "exojax.signal.olaconv"
-                div_length = self.check_ola_reducible(spectrum)
-                folded_spectrum = spectrum.reshape((self.ola_ndiv, div_length))
-                return convolve_rigid_rotation_ola_trans(folded_spectrum, self.vrarray, dv, vsini)
-        elif int_grid == "theta":
-            if vsini <= dv:
-                raise ValueError("delta velocity from resolution exceeds the rotational velocity. Try again with higher resolution.")
-            else:
-                # define dtheta by the velocity grid resolution (equal to pi/2 - arccos(dv/vsini))
-                dtheta = jnp.arcsin(dv/vsini)
-                Nt = jnp.ceil(jnp.pi / dtheta).astype(jnp.int32)
-                theta_array = (jnp.arange(Nt) + 0.5) / Nt * jnp.pi
-                return rigid_rotation_trans_theta(spectrum, self.nu_grid, theta_array, vsini)
-        else:
-            raise ValueError("No int_method.")
+        if (
+            self.convolution_method == self.convolution_method_list[0]
+        ):  # "exojax.signal.convolve"
+            return convolve_rigid_rotation_trans(spectrum, self.vrarray, dv, vsini)
+        elif (
+            self.convolution_method == self.convolution_method_list[1]
+        ):  # "exojax.signal.olaconv"
+            div_length = self.check_ola_reducible(spectrum)
+            folded_spectrum = spectrum.reshape((self.ola_ndiv, div_length))
+            return convolve_rigid_rotation_ola_trans(folded_spectrum, self.vrarray, dv, vsini)
 
 
 class SopInstProfile(SopCommonConv):

@@ -172,30 +172,43 @@ def integrated_rotkernel_trans(x1, x2):
     return int_kernel
 
 
-@jit
-def rigid_rotation_trans_theta(F0, nu_grid, theta_array, vsini):
-    """Apply the Rotation response to a spectrum F for transmission geometry with equal theta grid.
+def generate_equal_theta_array(Nt, hemisphere=True):
+    """generate equal theta array
 
-    Note:
-        Equal theta grid is used, so the velocity grid is not uniform
+    Args:
+        Nt (int): number of theta array
+        hemisphere (bool): If true, provide grids from 0 to pi
+
+    Returns:
+        array: theta array
+     """
+    if hemisphere:
+        theta_array = (jnp.arange(Nt) + 0.5) / Nt * jnp.pi
+    else:
+        theta_array = (jnp.arange(Nt) + 0.5) / Nt * 2. * jnp.pi
+    return theta_array
+
+@jit
+def rv_profile(F0, nu_grid, rv_array, weight_array):
+    """Apply the user-specified radial velocity response to a spectrum F
 
     Args:
         F0: original spectrum (F0)
         nu_grid: wavenumber grid in cm-1
-        theta_array: fix-sized theta array
-        vsini: V sini for rotation (km/s)
+        rv_array: radial velocity array
+        weight_array: weight corresponding to the rv_array
 
     Return:
         response-applied spectrum (F)
     """
-    RV_array = vsini * jnp.cos(theta_array)
-
-    def f(acc, rv):
+    def f(acc, ipt):
+        rv, weight = ipt
         sp_sft = sampling(nu_grid, nu_grid, F0, rv)
-        acc = acc + sp_sft
+        acc = acc + sp_sft * weight
         return acc, None
 
     acc0 = jnp.zeros_like(F0)
-    acc, _ = scan(f, acc0, RV_array)
+    ipt = [rv_array, weight_array]
+    acc, _ = scan(f, acc0, ipt)
 
-    return acc/len(theta_array)
+    return acc/jnp.sum(weight_array)
