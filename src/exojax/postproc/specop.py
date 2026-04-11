@@ -258,7 +258,6 @@ class SopRotation(SopCommonConv):
         Returns:
             nd array: rotationally broaden spectrum
         """
-        self.resolution = grid_resolution("ESLOG", self.nu_grid)
         dv = delta_velocity_from_resolution(self.resolution)
 
         if int_grid == "velocity":
