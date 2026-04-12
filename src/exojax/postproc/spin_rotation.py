@@ -5,6 +5,7 @@ from jax.lax import scan
 from exojax.signal.convolve import convolve_same
 from exojax.signal.ola import generate_zeropad, ola_lengths, olaconv
 from exojax.postproc.response import sampling
+from exojax.utils.constants import c
 
 
 @jit
@@ -224,4 +225,9 @@ def apply_weighted_rv_shifts(F0, nu_grid, rv_array, weight_array):
     ipt = [rv_array, weight_array]
     acc, _ = scan(f, acc0, ipt)
 
-    return acc/jnp.sum(weight_array)
+    acc = acc/jnp.sum(weight_array)
+
+    acc = jnp.where(nu_grid >= jnp.min(nu_grid / (1.0 + jnp.min(rv_array)/c)), acc, 0.0)
+    acc = jnp.where(nu_grid <= jnp.max(nu_grid / (1.0 + jnp.max(rv_array)/c)), acc, 0.0)
+
+    return acc
