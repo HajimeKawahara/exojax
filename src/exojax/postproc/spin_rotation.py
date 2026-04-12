@@ -202,7 +202,7 @@ def generate_equal_theta_array(Nt, hemisphere=True):
     return theta_array
 
 @jit
-def rv_profile(F0, nu_grid, rv_array, weight_array):
+def apply_weighted_rv_shifts(F0, nu_grid, rv_array, weight_array):
     """Apply the user-specified radial velocity response to a spectrum F
 
     Args:
