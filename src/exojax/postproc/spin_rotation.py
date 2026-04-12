@@ -4,7 +4,6 @@ from jax.lax import scan
 
 from exojax.signal.convolve import convolve_same
 from exojax.signal.ola import generate_zeropad, ola_lengths, olaconv
-from exojax.utils.grids import grid_resolution, delta_velocity_from_resolution
 from exojax.postproc.response import sampling
 
 

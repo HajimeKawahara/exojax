@@ -11,7 +11,6 @@ import pathlib
 
 import numpy as np
 import pandas as pd
-import jax.numpy as jnp
 
 from exojax.postproc.response import ipgauss, ipgauss_ola, sampling
 from exojax.postproc.spin_rotation import (
