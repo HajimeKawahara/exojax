@@ -63,7 +63,7 @@ def convolve_rigid_rotation(F0, vr_array, vsini, u1=0.0, u2=0.0):
 
 @custom_jvp
 def rotkernel(x, u1, u2):
-    """rotation kernel w/ the quadratic limb darkening law, the numerator of (54) in Kawahara+2022
+    """rotation kernel w/ the quadratic limb darkening law, the numerator of (56) in Kawahara+2022
 
     Args:
         x: x variable
@@ -153,7 +153,7 @@ def convolve_rigid_rotation_trans(F0, vr_array, dv, vsini):
     return convolved_signal
 
 
-@jit
+@custom_jvp
 def integrated_rotkernel_trans(x1, x2):
     """integrated rotation kernel
 
@@ -169,6 +169,20 @@ def integrated_rotkernel_trans(x1, x2):
     x2_c = jnp.clip(x2, -1., 1.)
     int_kernel = jnp.abs(jnp.arcsin(x2_c) - jnp.arcsin(x1_c)) / jnp.pi
     return int_kernel
+
+
+@integrated_rotkernel_trans.defjvp
+def integrated_rotkernel_trans_jvp(primals, tangents):
+    x1, x2 = primals
+    ux1, ux2 = tangents
+    x1_2 = x1 * x1
+    x2_2 = x2 * x2
+    dHdx1 = jnp.where(x1_2 < 1.0, 1./jnp.sqrt(1. - x1_2)/jnp.pi, 0.0)
+    dHdx2 = jnp.where(x2_2 < 1.0, 1./jnp.sqrt(1. - x2_2)/jnp.pi, 0.0)
+
+    primal_out = integrated_rotkernel_trans(x1, x2)
+    tangent_out = dHdx1 * ux1 + dHdx2 * ux2
+    return primal_out, tangent_out
 
 
 def generate_equal_theta_array(Nt, hemisphere=True):
