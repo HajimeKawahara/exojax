@@ -167,7 +167,7 @@ def integrated_rotkernel_trans(x1, x2):
     # clip outside the [-vsini, vsini] range
     x1_c = jnp.clip(x1, -1., 1.)
     x2_c = jnp.clip(x2, -1., 1.)
-    int_kernel = jnp.abs(jnp.arcsin(x2_c) - jnp.arcsin(x1_c)) / jnp.pi
+    int_kernel = (jnp.arcsin(x2_c) - jnp.arcsin(x1_c)) / jnp.pi
     return int_kernel
 
 
@@ -177,7 +177,7 @@ def integrated_rotkernel_trans_jvp(primals, tangents):
     ux1, ux2 = tangents
     x1_2 = x1 * x1
     x2_2 = x2 * x2
-    dHdx1 = jnp.where(x1_2 < 1.0, 1./jnp.sqrt(1. - x1_2)/jnp.pi, 0.0)
+    dHdx1 = jnp.where(x1_2 < 1.0, -1./jnp.sqrt(1. - x1_2)/jnp.pi, 0.0)
     dHdx2 = jnp.where(x2_2 < 1.0, 1./jnp.sqrt(1. - x2_2)/jnp.pi, 0.0)
 
     primal_out = integrated_rotkernel_trans(x1, x2)
