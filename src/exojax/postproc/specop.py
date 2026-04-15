@@ -16,8 +16,10 @@ from exojax.postproc.response import ipgauss, ipgauss_ola, sampling
 from exojax.postproc.spin_rotation import (
     convolve_rigid_rotation,
     convolve_rigid_rotation_ola,
+    convolve_rigid_rotation_trans,
+    convolve_rigid_rotation_ola_trans
 )
-from exojax.utils.grids import grid_resolution, velocity_grid
+from exojax.utils.grids import grid_resolution, velocity_grid, delta_velocity_from_resolution
 from exojax.utils.photometry import apparent_magnitude
 
 
@@ -239,6 +241,28 @@ class SopRotation(SopCommonConv):
             )
         else:
             raise ValueError("No convolution_method.")
+
+    def rigid_rotation_trans(self, spectrum, vsini):
+        """apply a rigid rotation for transmission geometry
+
+        Args:
+            spectrum (nd array): 1D spectrum
+            vsini (float): V sini in km/s
+
+        Returns:
+            nd array: rotationally broaden spectrum
+        """
+        dv = delta_velocity_from_resolution(self.resolution)
+        if (
+            self.convolution_method == self.convolution_method_list[0]
+        ):  # "exojax.signal.convolve"
+            return convolve_rigid_rotation_trans(spectrum, self.vrarray, dv, vsini)
+        elif (
+            self.convolution_method == self.convolution_method_list[1]
+        ):  # "exojax.signal.olaconv"
+            div_length = self.check_ola_reducible(spectrum)
+            folded_spectrum = spectrum.reshape((self.ola_ndiv, div_length))
+            return convolve_rigid_rotation_ola_trans(folded_spectrum, self.vrarray, dv, vsini)
 
 
 class SopInstProfile(SopCommonConv):
