@@ -24,4 +24,4 @@ In short, ExoJAX allows you to do gradient based optimizations, HMC-NUTS, and SV
 
 ## License
 
-🐈 Copyright 2020-2025 ExoJAX contributors. ExoJAX is publicly available under the MIT license.
+🐈 Copyright 2020-2026 ExoJAX contributors. ExoJAX is publicly available under the MIT license.
