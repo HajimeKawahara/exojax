@@ -137,6 +137,9 @@ def _plotfig(Frot, Frot_):
 
 
 def test_integrated_rotkernel_trans(fig=False):
+    from jax import config
+    config.update("jax_enable_x64", True)
+
     N = 201
     x_1 = jnp.linspace(-2.0, 2.0, N)
     dx = (jnp.max(x_1) - jnp.min(x_1)) / (N-1)
@@ -145,8 +148,8 @@ def test_integrated_rotkernel_trans(fig=False):
     x_2 = jnp.linspace(-1.0, 1.0, N)
     dx = (jnp.max(x_2) - jnp.min(x_2)) / (N-1)
     kernel_2 = integrated_rotkernel_trans(x_2-dx, x_2+dx)
-    assert jnp.sum(kernel_1) == pytest.approx(1.999999)
-    assert jnp.sum(kernel_2) == pytest.approx(1.9998436)
+    assert jnp.sum(kernel_1) == pytest.approx(2.0)
+    assert jnp.sum(kernel_2) == pytest.approx(2.0)
 
     if fig:
         import matplotlib.pyplot as plt
