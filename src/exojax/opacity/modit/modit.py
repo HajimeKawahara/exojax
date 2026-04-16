@@ -40,6 +40,10 @@ from exojax.opacity._common.set_ditgrid import (
 )
 from exojax.utils.constants import Tref_original
 
+VMAP_LINE_STRENGTH = jit(vmap(line_strength, (0, None, None, None, 0, None)))
+VMAP_GAMMA_EXOMOL = jit(vmap(gamma_exomol, (0, 0, None, None)))
+VMAP_GAMMA_HITRAN = jit(vmap(gamma_hitran, (0, 0, 0, None, None, None)))
+
 
 @partial(jit, static_argnums=9)
 def xsvector_open_zeroscan(
@@ -345,10 +349,10 @@ def exomol(mdb, Tarr, Parr, R, molmass):
         normalized sigmaD matrix
     """
     qt = vmap(mdb.qr_interp, (0, None))(Tarr, Tref_original)
-    SijM = jit(vmap(line_strength, (0, None, None, None, 0, None)))(
+    SijM = VMAP_LINE_STRENGTH(
         Tarr, mdb.logsij0, mdb.dev_nu_lines, mdb.elower, qt, Tref_original
     )
-    gammaLMP = jit(vmap(gamma_exomol, (0, 0, None, None)))(
+    gammaLMP = VMAP_GAMMA_EXOMOL(
         Parr, Tarr, mdb.n_Texp, mdb.alpha_ref
     )
     gammaLMN = gamma_natural(mdb.A)
@@ -417,10 +421,10 @@ def hitran(mdb, Tarr, Parr, Pself, R, molmass):
         normalized sigmaD matrix
     """
     qt = vmap(mdb.qr_interp_lines, (0, None))(Tarr, Tref_original)
-    SijM = jit(vmap(line_strength, (0, None, None, None, 0, None)))(
+    SijM = VMAP_LINE_STRENGTH(
         Tarr, mdb.logsij0, mdb.dev_nu_lines, mdb.elower, qt, Tref_original
     )
-    gammaLMP = jit(vmap(gamma_hitran, (0, 0, 0, None, None, None)))(
+    gammaLMP = VMAP_GAMMA_HITRAN(
         Parr, Tarr, Pself, mdb.n_air, mdb.gamma_air, mdb.gamma_self
     )
     gammaLMN = gamma_natural(mdb.A)
@@ -532,7 +536,7 @@ def vald_each(
     qr = qt / QTref_284[QTmask]
 
     # Compute line strength matrix
-    SijM = jit(vmap(line_strength, (0, None, None, None, 0, None)))(
+    SijM = VMAP_LINE_STRENGTH(
         Tarr, logsij0, dev_nu_lines, elower, qr, Tref
     )
 

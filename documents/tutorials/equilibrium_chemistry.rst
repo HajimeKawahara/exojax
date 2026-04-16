@@ -1,7 +1,7 @@
 Emission Spectroscopy with Equilibirum Chemistry
 ================================================
 
-Last update: August 24th (2025) Hajime Kawahara for v2.1
+Last update: March 23th (2026) Hajime Kawahara for v2.1
 
 In this getting started guide, we will use ExoJAX to simulate a
 high-resolution emission spectrum from an atmosphere with CO molecular
@@ -9,6 +9,10 @@ absorption and hydrogen molecule CIA continuum absorption as the opacity
 sources. We assume the thermochemical equilibrium. We will then add
 appropriate noise to the simulated spectrum to create a mock spectrum
 and perform spectral retrieval using NumPyro’s HMC NUTS.
+
+To compute Thermo Chemical Equilibrium (TCE), we use a differentiable
+TCE calculator,
+`ExoGibbs <https://github.com/HajimeKawahara/exogibbs>`__ (v0.3.9)
 
 First, we recommend 64-bit if you do not think about numerical errors.
 Use jax.config to set 64-bit. (But note that 32-bit is sufficient in
@@ -77,7 +81,7 @@ the database name in the ExoMol website (https://www.exomol.com/).
 .. parsed-literal::
 
     HITRAN exact name= (12C)(16O)
-    radis engine =  vaex
+    radis engine =  pytables
     Molecule:  CO
     Isotopologue:  12C-16O
     ExoMol database:  None
@@ -90,7 +94,7 @@ the database name in the ExoMol website (https://www.exomol.com/).
 
 .. parsed-literal::
 
-    /home/kawahara/anaconda3/envs/myenv39/lib/python3.9/site-packages/radis-0.16-py3.9.egg/radis/api/exomolapi.py:687: AccuracyWarning: The default broadening parameter (alpha = 0.07 cm^-1 and n = 0.5) are used for J'' > 80 up to J'' = 152
+    /home/kawahara/miniconda3/lib/python3.12/site-packages/radis-0.16-py3.12.egg/radis/api/exomolapi.py:687: AccuracyWarning: The default broadening parameter (alpha = 0.07 cm^-1 and n = 0.5) are used for J'' > 80 up to J'' = 152
       warnings.warn(
 
 
@@ -115,10 +119,8 @@ tempreature range we will use is 500-1500K.
 
 .. parsed-literal::
 
-    OpaPremodit: params automatically set.
     default elower grid trange (degt) file version: 2
     Robust range: 485.7803992045456 - 1514.171191195336 K
-    OpaPremodit: Tref_broadening is set to  866.0254037844389 K
     max value of  ngamma_ref_grid : 9.450919102366303
     min value of  ngamma_ref_grid : 7.881095721823979
     ngamma_ref_grid grid : [7.88109541 9.4509201 ]
@@ -131,11 +133,15 @@ tempreature range we will use is 500-1500K.
 
     uniqidx: 0it [00:00, ?it/s]
 
-
 .. parsed-literal::
 
     Premodit: Twt= 1108.7151960064205 K Tref= 570.4914318566549 K
     Making LSD:|####################| 100%
+
+
+.. parsed-literal::
+
+    
 
 
 Then let’s compute cross section for two different temperature 500 and
@@ -223,9 +229,9 @@ Sets chemistry presets
 
 .. code:: ipython3
 
-    from exogibbs.presets.ykb4 import prepare_ykb4_setup
+    from exogibbs.presets.fastchem import chemsetup
     # chemical setup
-    chem = prepare_ykb4_setup()
+    chem = chemsetup()
     idx_co = chem.species.index("C1O1")
     print("idx for CO=",idx_co, "JANAF name", chem.species[idx_co])  # check index of CO
     idx_h2 = chem.species.index("H2")
@@ -235,9 +241,12 @@ Sets chemistry presets
 
 .. parsed-literal::
 
-    idx for CO= 26 JANAF name C1O1
-    idx for H2= 1 JANAF name H2
-    element: ('C', 'H', 'He', 'K', 'N', 'Na', 'O', 'P', 'S', 'Ti', 'V', 'e-')
+    restricting species to those composed of the default elements only.
+    fastchem presets in ExoGibbs
+    number of species: 523 elements: 28 molecules: 495
+    idx for CO= 102 JANAF name C1O1
+    idx for H2= 331 JANAF name H2
+    element: ('Al', 'Ar', 'C', 'Ca', 'Cl', 'Co', 'Cr', 'Cu', 'F', 'Fe', 'Ge', 'H', 'He', 'K', 'Mg', 'Mn', 'N', 'Na', 'Ne', 'Ni', 'O', 'P', 'S', 'Si', 'Ti', 'V', 'Zn', 'e-')
 
 
 Sets solar abundance (AAG21) as the elemental vector. Do not forget e-!
@@ -249,6 +258,7 @@ Sets solar abundance (AAG21) as the elemental vector. Do not forget e-!
     solar_abundance = nsol()
     nsol_vector = jnp.array([solar_abundance[el] for el in chem.elements[:-1]]) # no solar abundance for e-
     element_vector = jnp.append(nsol_vector, 0) 
+        
     print("element_vector:", element_vector)
 
 
@@ -256,9 +266,13 @@ Sets solar abundance (AAG21) as the elemental vector. Do not forget e-!
 
     Database for solar abundance =  AAG21
     Asplund, M., Amarsi, A. M., & Grevesse, N. 2021, arXiv:2105.01661
-    element_vector: [2.66271344e-04 9.23260873e-01 7.57398483e-02 1.08473694e-07
-     6.24200958e-05 1.53223166e-06 4.52193620e-04 2.37314585e-07
-     1.21709487e-05 8.61637180e-08 7.33372179e-09 0.00000000e+00]
+    element_vector: [2.48498877e-06 2.21474857e-06 2.66271344e-04 1.84214763e-06
+     1.88505676e-07 8.04126604e-08 3.84879191e-07 1.39741188e-08
+     2.31912646e-08 2.66271344e-05 3.84879191e-09 9.23260873e-01
+     7.57398483e-02 1.08473694e-07 3.27585319e-05 2.42842352e-07
+     6.24200958e-05 1.53223166e-06 1.06004531e-04 1.46326987e-06
+     4.52193620e-04 2.37314585e-07 1.21709487e-05 2.98761362e-05
+     8.61637180e-08 7.33372179e-09 3.35215762e-08 0.00000000e+00]
 
 
 The mass mixing ratio of CO (MMR) should be computed based on the
@@ -266,13 +280,25 @@ thermochemical equilibirum.
 
 .. code:: ipython3
 
-    from exogibbs.api.equilibrium import equilibrium_profile, EquilibriumOptions
+    from exogibbs.api import get_default_equilibrium_grid_path
+    from exogibbs.api import load_equilibrium_grid_netcdf
+    from exogibbs.api.equilibrium import (
+        EquilibriumOptions,
+        GridEquilibriumInitializer,
+        equilibrium_profile,
+    )
+    
     from exojax.atm.atmconvert import vmr_to_mmr
     from exojax.database.molinfo.mass import isotope_molmass
     
     # Thermodynamic conditions
     Pref = 1.0  # bar, reference pressure
-    opts = EquilibriumOptions(epsilon_crit=1e-11, max_iter=1000)
+    
+    grid_path = get_default_equilibrium_grid_path("fastchem")
+    grid = load_equilibrium_grid_netcdf(str(grid_path))
+    initializer = GridEquilibriumInitializer(grid=grid, preset_name="fastchem")
+    method = "vmap_cold"
+    opts = EquilibriumOptions(epsilon_crit=1e-11, max_iter=1000, method=method)
     
     res = equilibrium_profile(
         chem,
@@ -280,6 +306,7 @@ thermochemical equilibirum.
         art.pressure,
         element_vector,
         Pref=Pref,
+        initializer=initializer,
         options=opts,
     )
     nk_result = res.x
@@ -351,7 +378,7 @@ absorption <https://en.wikipedia.org/wiki/Collision-induced_absorption_and_emiss
 
 .. parsed-literal::
 
-    H2-H2
+    Load CIA:  H2-H2
 
 
 Before running the radiative transfer, we need cross sections for
@@ -507,11 +534,6 @@ model has six parameters.
 
 .. code:: ipython3
 
-    from jax import jit
-    soleve_thermochemical_equilibirum = jit(lambda T, P, b_element_vector: equilibrium_profile(chem, T, P, b_element_vector, Pref=Pref, options=opts)) 
-
-.. code:: ipython3
-
     
     def fspec(T0, alpha, g, RV, vsini, b_element_vector_in):
         #molecule
@@ -519,7 +541,7 @@ model has six parameters.
         xsmatrix = opa.xsmatrix(Tarr, art.pressure)
         
         # MMR profile from equilibrium chemistry
-        res = soleve_thermochemical_equilibirum(Tarr, art.pressure, b_element_vector_in)
+        res = equilibrium_profile(chem, Tarr, art.pressure, b_element_vector_in, Pref=Pref, options=opts)
         nk_result = res.x
         vmr_co = nk_result[:, idx_co]
         mmr_arr = vmr_to_mmr(vmr_co, molmass, mean_molecular_weight)
@@ -553,12 +575,12 @@ various parameter sets.
 
 .. parsed-literal::
 
-    [<matplotlib.lines.Line2D at 0x74a72a7fcee0>]
+    [<matplotlib.lines.Line2D at 0x75555849cf20>]
 
 
 
 
-.. image:: equilibrium_chemistry_files/equilibrium_chemistry_54_1.png
+.. image:: equilibrium_chemistry_files/equilibrium_chemistry_53_1.png
 
 
 NumPyro is a probabilistic programming language (PPL), which requires
@@ -578,6 +600,13 @@ arguments of ``fspec``.
     import numpyro.distributions as dist
     import numpyro
     from jax import random
+
+
+.. parsed-literal::
+
+    /home/kawahara/miniconda3/lib/python3.12/site-packages/tqdm/auto.py:21: TqdmWarning: IProgress not found. Please update jupyter and ipywidgets. See https://ipywidgets.readthedocs.io/en/stable/user_install.html
+      from .autonotebook import tqdm as notebook_tqdm
+
 
 .. code:: ipython3
 
@@ -647,19 +676,19 @@ lunch break!
 
 .. parsed-literal::
 
-    sample: 100%|██████████| 1500/1500 [15:38:27<00:00, 37.54s/it, 255 steps of size 8.95e-03. acc. prob=0.94]   
+    sample: 100%|██████████| 1500/1500 [20:52:48<00:00, 50.11s/it, 511 steps of size 5.38e-03. acc. prob=0.95]    
 
 .. parsed-literal::
 
     
                     mean       std    median      5.0%     95.0%     n_eff     r_hat
-            RV     40.06      0.08     40.06     39.95     40.20    676.46      1.00
-            T0   1207.13     14.56   1206.39   1183.92   1230.80    395.24      1.00
-         alpha      0.11      0.01      0.11      0.09      0.14    419.41      1.00
-          logZ     -0.04      0.06     -0.04     -0.14      0.06    399.38      1.00
-          logg      4.32      0.12      4.31      4.12      4.52    401.06      1.00
-       sigmain    498.59     15.17    497.60    474.93    525.32    613.82      1.00
-         vsini      9.65      0.16      9.65      9.37      9.90    623.04      1.00
+            RV     39.97      0.09     39.97     39.82     40.11    567.18      1.00
+            T0   1207.49     20.79   1204.33   1175.80   1241.14    185.37      1.04
+         alpha      0.11      0.02      0.11      0.07      0.15    213.67      1.04
+          logZ     -0.03      0.10     -0.03     -0.19      0.14    223.38      1.03
+          logg      4.35      0.20      4.34      4.02      4.67    220.31      1.03
+       sigmain    519.94     14.67    519.52    496.87    545.15    497.82      1.00
+         vsini     10.01      0.19     10.02      9.67     10.28    409.20      1.00
     
     Number of divergences: 0
 
@@ -707,7 +736,7 @@ is complete, let’s write a predictive model for the spectrum.
 
 
 
-.. image:: equilibrium_chemistry_files/equilibrium_chemistry_67_0.png
+.. image:: equilibrium_chemistry_files/equilibrium_chemistry_66_0.png
 
 
 .. code:: ipython3
@@ -742,7 +771,7 @@ display a corner plot. Here, we’ve used ArviZ for visualization.
 
 
 
-.. image:: equilibrium_chemistry_files/equilibrium_chemistry_70_0.png
+.. image:: equilibrium_chemistry_files/equilibrium_chemistry_69_0.png
 
 
 We see the strong degeneracy between metalicity and gravity!!!

@@ -1,4 +1,4 @@
-from radis.api.dbmanager import get_auto_MEMORY_MAPPING_ENGINE
+from exojax.database._common.radis_adapter import get_auto_memory_mapping_engine
 
 def _set_engine(engine):
     """
@@ -11,7 +11,7 @@ def _set_engine(engine):
         str: engine selected
     """
     if engine == None:
-        engine_selected = get_auto_MEMORY_MAPPING_ENGINE()
+        engine_selected = get_auto_memory_mapping_engine()
     else:
         engine_selected = engine
     print("radis engine = ", engine_selected)

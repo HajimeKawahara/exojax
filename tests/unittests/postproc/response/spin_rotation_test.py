@@ -1,3 +1,5 @@
+import os
+os.environ['CUDA_VISIBLE_DEVICES'] = '1'
 import pytest
 from exojax.postproc.spin_rotation import rotkernel
 import jax.numpy as jnp
@@ -154,8 +156,8 @@ def test_rotkernel(fig=False):
 
 
 if __name__ == "__main__":
-    #test_rotkernel(fig=True)
-    #test_convolve_rigid_rotation(1000,fig=True)
-    #test_convolve_rigid_rotation_ola(10000, fig=True)
-    #test_SopRotation(1000)
+    test_rotkernel(fig=True)
+    test_convolve_rigid_rotation(1000,fig=True)
+    test_convolve_rigid_rotation_ola(10000, fig=True)
+    test_SopRotation(1000)
     test_SopRotation_ola(10000, fig=True)

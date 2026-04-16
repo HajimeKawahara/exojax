@@ -4,7 +4,7 @@
 * That's why we need this module.
 """
 
-from exojax.utils.constants import gJ, gE
+from exojax.utils.constants import gJ, gE, RJ, RE
 from exojax.utils.constants import loggJ
 
 import jax.numpy as jnp
@@ -72,3 +72,20 @@ def gravity_earth(Rp, Mp):
         then gravity is given by (const.G*Mpcgs/Rpcgs**2)
     """
     return gE * Mp / Rp**2
+
+
+def rotational_velocity(Rp, P, unit_radius="jupiter"):
+    """rotational velocity in km/s
+
+    Args:
+        Rp: radius in the unit of Jovian or Earth radius
+        P: rotational period in days
+
+    Returns:
+        rotational velocity (km/s)
+    """
+    if unit_radius == "jupiter":
+        v_rot = 2. * jnp.pi * Rp * RJ * 1.e-5 / (P * 24. * 60. * 60.)
+    elif unit_radius == "earth":
+        v_rot = 2. * jnp.pi * Rp * RE * 1.e-5 / (P * 24. * 60. * 60.)
+    return v_rot

@@ -4,14 +4,14 @@ This module provides the OpaDirect class for direct line-by-line opacity
 calculations using the LPF method.
 """
 
-from typing import Tuple, Union, Literal
+from typing import Literal, Union
 
 import jax.numpy as jnp
 import numpy as np
 from jax import jit, vmap
 
-from exojax.opacity.base import OpaCalc
 from exojax.opacity import initspec
+from exojax.opacity.base import OpaCalc
 from exojax.utils.constants import Tref_original
 from exojax.utils.grids import nu2wav
 
@@ -45,7 +45,6 @@ class OpaDirect(OpaCalc):
         """
         super().__init__(nu_grid)
 
-        # Configuration
         self.method = "lpf"
         self.warning = True
         self.wavelength_order = wavelength_order
@@ -81,7 +80,35 @@ class OpaDirect(OpaCalc):
         """Apply database parameters and initialize opacity info."""
         self.dbtype = self.mdb.dbtype
         self.opainfo = initspec.init_lpf(self.mdb.nu_lines, self.nu_grid)
+        self._init_xsmatrix_wrappers()
         self.ready = True
+
+    def _init_xsmatrix_wrappers(self) -> None:
+        """Build reusable JAX wrappers once per OpaDirect instance.
+
+        Recreating ``jit(vmap(...))`` wrappers inside ``xsmatrix`` causes new
+        Python function objects to appear on each call, which can interfere with
+        JAX cache reuse even when shapes stay the same.
+        """
+        from exojax.database.core.broadening import doppler_sigma
+        from exojax.database.core.broadening import gamma_exomol
+        from exojax.database.core.broadening import gamma_hitran
+        from exojax.database.core.line_strength import line_strength
+
+        self._vmap_line_strength = jit(
+            vmap(line_strength, (0, None, None, None, 0, None))
+        )
+        self._vmap_doppler_sigma = jit(vmap(doppler_sigma, (None, 0, None)))
+
+        if self.dbtype == "hitran":
+            self._vmap_qt = vmap(self.mdb.qr_interp, (None, 0, None))
+            self._vmap_gamma = jit(vmap(gamma_hitran, (0, 0, 0, None, None, None)))
+        elif self.dbtype == "exomol":
+            self._vmap_qt = vmap(self.mdb.qr_interp, (0, None))
+            self._vmap_gamma = jit(vmap(gamma_exomol, (0, 0, None, None)))
+        else:
+            self._vmap_qt = None
+            self._vmap_gamma = None
 
     def xsvector(self, T: float, P: float, Pself: float = 0.0) -> jnp.ndarray:
         """Compute cross section vector for given temperature and pressure.
@@ -106,7 +133,6 @@ class OpaDirect(OpaCalc):
         numatrix = self.opainfo
         dbtype = self.mdb.dbtype
 
-        # Compute broadening and line strength based on database type
         if dbtype == "hitran":
             qt = self.mdb.qr_interp(self.mdb.isotope, T, Tref_original)
             gammaL = gamma_hitran(
@@ -123,7 +149,6 @@ class OpaDirect(OpaCalc):
                 "Supported types: hitran, exomol"
             )
 
-        # Compute Doppler broadening and line strength
         sigmaD = doppler_sigma(self.mdb.nu_lines, T, self.mdb.molmass)
         Sij = line_strength(
             T, self.mdb.logsij0, self.mdb.nu_lines, self.mdb.elower, qt, Tref_original
@@ -131,7 +156,9 @@ class OpaDirect(OpaCalc):
 
         return xsvector_lpf(numatrix, sigmaD, gammaL, Sij)
 
-    def xsmatrix(self, Tarr: Union[np.ndarray, jnp.ndarray], Parr: Union[np.ndarray, jnp.ndarray]) -> jnp.ndarray:
+    def xsmatrix(
+        self, Tarr: Union[np.ndarray, jnp.ndarray], Parr: Union[np.ndarray, jnp.ndarray]
+    ) -> jnp.ndarray:
         """Compute cross section matrix for temperature and pressure arrays.
 
         Note:
@@ -143,29 +170,21 @@ class OpaDirect(OpaCalc):
 
         Returns:
             Cross section matrix with shape (Nlayer, N_wavenumber) in cm²
-            
+
         Raises:
             ValueError: If database type is not supported
         """
-        from exojax.database.core.broadening import doppler_sigma, gamma_natural
+        from exojax.database.core.broadening import gamma_natural
         from exojax.database.core_atom.broadening import gamma_vald3
         from exojax.database.core_atom.pf import interp_QT_284
-        from exojax.database.core.broadening import gamma_exomol
-        from exojax.database.core.broadening import gamma_hitran
-        from exojax.database.core.line_strength import line_strength
         from exojax.opacity.lpf.lpf import xsmatrix as xsmatrix_lpf
 
         numatrix = self.opainfo
         dbtype = self.mdb.dbtype
-        
-        # Vectorized line strength function (fixed typo)
-        vmap_line_strength = jit(vmap(line_strength, (0, None, None, None, 0, None)))
-        
+
         if dbtype == "hitran":
-            vmapqt = vmap(self.mdb.qr_interp, (None, 0, None))
-            qt = vmapqt(self.mdb.isotope, Tarr, Tref_original)
-            vmaphitran = jit(vmap(gamma_hitran, (0, 0, 0, None, None, None)))
-            gammaLM = vmaphitran(
+            qt = self._vmap_qt(self.mdb.isotope, Tarr, Tref_original)
+            gammaLM = self._vmap_gamma(
                 Parr,
                 Tarr,
                 np.zeros_like(Parr),
@@ -173,7 +192,7 @@ class OpaDirect(OpaCalc):
                 self.mdb.gamma_air,
                 self.mdb.gamma_self,
             ) + gamma_natural(self.mdb.A)
-            SijM = vmap_line_strength(
+            SijM = self._vmap_line_strength(
                 Tarr,
                 self.mdb.logsij0,
                 self.mdb.nu_lines,
@@ -181,17 +200,15 @@ class OpaDirect(OpaCalc):
                 qt,
                 Tref_original,
             )
-            sigmaDM = jit(vmap(doppler_sigma, (None, 0, None)))(
+            sigmaDM = self._vmap_doppler_sigma(
                 self.mdb.nu_lines, Tarr, self.mdb.molmass
             )
         elif dbtype == "exomol":
-            vmapqt = vmap(self.mdb.qr_interp, (0, None))
-            qt = vmapqt(Tarr, Tref_original)
-            vmapexomol = jit(vmap(gamma_exomol, (0, 0, None, None)))
-            gammaLMP = vmapexomol(Parr, Tarr, self.mdb.n_Texp, self.mdb.alpha_ref)
+            qt = self._vmap_qt(Tarr, Tref_original)
+            gammaLMP = self._vmap_gamma(Parr, Tarr, self.mdb.n_Texp, self.mdb.alpha_ref)
             gammaLMN = gamma_natural(self.mdb.A)
             gammaLM = gammaLMP + gammaLMN[None, :]
-            SijM = vmap_line_strength(
+            SijM = self._vmap_line_strength(
                 Tarr,
                 self.mdb.logsij0,
                 self.mdb.nu_lines,
@@ -199,14 +216,14 @@ class OpaDirect(OpaCalc):
                 qt,
                 Tref_original,
             )
-            sigmaDM = jit(vmap(doppler_sigma, (None, 0, None)))(
+            sigmaDM = self._vmap_doppler_sigma(
                 self.mdb.nu_lines, Tarr, self.mdb.molmass
             )
         elif dbtype in ("kurucz", "vald"):
             qt_284 = vmap(interp_QT_284, (0, None, None))(
                 Tarr, self.mdb.T_gQT, self.mdb.gQT_284species
             )
-            qt_K = qt_284[:, self.mdb.QTmask]  # e.g., qt_284[:,76] #Fe I
+            qt_K = qt_284[:, self.mdb.QTmask]
             qr_K = qt_K / self.mdb.QTref_284[self.mdb.QTmask]
             vmapvald3 = jit(
                 vmap(
@@ -252,7 +269,7 @@ class OpaDirect(OpaCalc):
                 self.mdb.vdWdamp,
                 1.0,
             )
-            SijM = vmap_line_strength(
+            SijM = self._vmap_line_strength(
                 Tarr,
                 self.mdb.logsij0,
                 self.mdb.nu_lines,
@@ -260,7 +277,7 @@ class OpaDirect(OpaCalc):
                 qr_K.T,
                 Tref_original,
             )
-            sigmaDM = jit(vmap(doppler_sigma, (None, 0, None)))(
+            sigmaDM = self._vmap_doppler_sigma(
                 self.mdb.nu_lines, Tarr, self.mdb.atomicmass
             )
         else:

@@ -15,7 +15,7 @@ def molecule_color(simple_molecule_name):
     Returns:
         str: CN label, such as C1 for "H2O" based on HITRAN identifier. If the molecule does not exist in the HITRAN identifiers, return gray
     """
-    from radis.db.classes import get_molecule_identifier
+    from exojax.database._common.radis_adapter import get_molecule_identifier
 
     try:
         i = get_molecule_identifier(simple_molecule_name)
