@@ -55,16 +55,16 @@ dependencies = [
   "astroquery",
   "psutil",
   "json_tricks",
-  "habanero<=1.2.6",
+  #"habanero<=1.2.6",
   "zarr",
 ]
 
 # install from git for the latest radis+numpy2 support
-[project.optional-dependencies]
-numpy2 = [
-  "numpy>=2.0",
-  "radis @ git+https://github.com/radis/radis.git@master",
-]
+# [project.optional-dependencies]
+#numpy2 = [
+# "numpy>=2.0",
+#  "radis @ git+https://github.com/radis/radis.git@master",
+#]
 
 [project.urls]
 # Fill these as appropriate for your project.
