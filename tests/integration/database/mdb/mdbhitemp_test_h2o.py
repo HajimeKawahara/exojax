@@ -1,5 +1,3 @@
-from encodings.punycode import T
-
 import pytest
 import numpy as np
 from exojax.database.hitemp.api import MdbHitemp
