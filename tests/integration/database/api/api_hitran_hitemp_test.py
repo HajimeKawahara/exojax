@@ -1,4 +1,6 @@
 from exojax.database.hitran.api import MdbHitran
+from exojax.database.hitemp.api import MdbHitemp
+
 from exojax.utils.grids import wavenumber_grid
 import pytest
 
@@ -12,8 +14,7 @@ def test_Hitran_nonair():
                                     unit='AA',
                                     xsmode="modit")
     mdb = MdbHitran("CO",nus, nonair_broadening=True)
-    print(mdb.n_h2)
-
+    
 def test_Hitemp():
     nus,wav,res=wavenumber_grid(23000.,23010.0,100000,unit='AA',xsmode="premodit")
     mdb = MdbHitemp("CO",nus)
@@ -58,6 +59,9 @@ def test_Hitemp_with_error():
 
 if __name__ == "__main__":
     #test_Hitemp()
-    test_Hitran_nonair()
+    #test_Hitran_nonair()
     #test_Hitran()
+    test_Hitran_with_error()
+    #test_Hitemp_with_error()
+    
     #test_noline_Hitran()
