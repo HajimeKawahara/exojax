@@ -95,14 +95,20 @@ def bound_free_absorption(wavelength_um, temperature):
 
     #   //tabulated constant from John (1988)
     def f(wavelength_um):
-        C_n = jnp.vstack(
-            [jnp.arange(7), [0.0, 152.519, 49.534, -118.858, 92.536, -34.194, 4.982]]
-        ).T
+        C_n = jnp.stack(
+            (
+                jnp.arange(7),
+                jnp.array(
+                    [0.0, 152.519, 49.534, -118.858, 92.536, -34.194, 4.982]
+                ),
+            ),
+            axis=1,
+        )
 
         def body_fun(val, x):
             i, C_n_i = x
             return val, val + C_n_i * jnp.power(
-                jnp.clip(1.0 / wavelength_um - 1.0 / lambda_0, a_min=0, a_max=None),
+                jnp.maximum(1.0 / wavelength_um - 1.0 / lambda_0, 0.0),
                 (i - 1) / 2.0,
             )
 
@@ -113,7 +119,7 @@ def bound_free_absorption(wavelength_um, temperature):
         1e-18
         * wavelength_um**3
         * jnp.power(
-            jnp.clip(1.0 / wavelength_um - 1.0 / lambda_0, a_min=0, a_max=None), 1.5
+            jnp.maximum(1.0 / wavelength_um - 1.0 / lambda_0, 0.0), 1.5
         )
         * f(wavelength_um)
     )
