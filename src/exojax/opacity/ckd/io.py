@@ -3,7 +3,7 @@ import json
 import hashlib
 import sys
 import platform
-import datetime
+from datetime import datetime, timezone
 import numpy as np
 from importlib.metadata import version as _pkg_version
 
@@ -32,7 +32,7 @@ def _ckd_metadata_dict(self) -> dict:
         jax_version=_safe_version("jax"),
         python_version=sys.version.split()[0],
         platform=platform.platform(),
-        created_at=datetime.datetime.utcnow().isoformat()+"Z",
+        created_at=datetime.now(timezone.utc).isoformat(),
         base_fingerprint=base_fp,
         base_fingerprint_hash=_hash_json(base_fp),
         Ng=int(self.Ng),
@@ -60,4 +60,3 @@ def _ckd_save_as_npz(self, path: str, overwrite: bool=False) -> None:
         band_edges=np.asarray(info.band_edges),
         meta=np.frombuffer(meta_json, dtype=np.uint8),
     )
-

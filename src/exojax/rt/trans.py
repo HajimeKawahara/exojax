@@ -18,7 +18,13 @@ class ArtTransPure(ArtCommon):
     """
 
     def __init__(
-        self, pressure_top=1.0e-8, pressure_btm=1.0e2, nlayer=100, integration="simpson"
+        self,
+        pressure_top=1.0e-8,
+        pressure_btm=1.0e2,
+        nlayer=100,
+        integration="simpson",
+        nu_grid=None,
+        warn_no_nu_grid=True,
     ):
         """initialization of ArtTransPure
 
@@ -27,12 +33,20 @@ class ArtTransPure(ArtCommon):
             pressure_btm (float, optional): layer bottom pressure in bar. Defaults to 1.0e2.
             nlayer (int, optional): The number of the layers Defaults to 100.
             integration (str, optional): Integration scheme ("simpson", "trapezoid"). Defaults to "simpson".
+            nu_grid (nd.array, optional): Wavenumber grid in cm-1 for line-by-line ``run`` use.
+            warn_no_nu_grid (bool, optional): Warn when ``nu_grid`` is not given.
 
         Note:
             The users can choose the integration scheme of the chord integration from Trapezoid method or Simpson method.
 
         """
-        super().__init__(pressure_top, pressure_btm, nlayer, nu_grid=None)
+        super().__init__(
+            pressure_top,
+            pressure_btm,
+            nlayer,
+            nu_grid=nu_grid,
+            warn_no_nu_grid=warn_no_nu_grid,
+        )
         self.method = "transmission_with_pure_absorption"
         self.set_capable_integration()
         self.set_integration_scheme(integration)
