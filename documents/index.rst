@@ -6,7 +6,7 @@
 ExoJAX
 ==================================
 
-Version 2.2 (:doc:`userguide/history`) 
+Version 2.4.0 (:doc:`userguide/history`) 
 
 |:frog:| `DeepWiki for ExoJAX <https://deepwiki.com/HajimeKawahara/exojax>`_
 
@@ -87,7 +87,7 @@ ExoJAX References
 Publications that have used ExoJAX to date
 ------------------------------------------------
 
-- `Yama et al. ApJ in press <https://arxiv.org/abs/2511.23018>`_ : ExoJAX Retrievals of VLT/CRIRES Spectra of Luhman 16AB: C/O Ratios and Systematic Uncertainties
+- `Yama et al. ApJ 997, 118 (2026) <https://arxiv.org/abs/2511.23018>`_ : ExoJAX Retrievals of VLT/CRIRES Spectra of Luhman 16AB: C/O Ratios and Systematic Uncertainties
 - `Kasagi et al. AJ 170, 211 (2025) <https://arxiv.org/abs/2508.01281>`_ : Unveiling the Atmosphere of HR 7672 B from the Near-Infrared High-Resolution Spectrum Using REACH/Subaru
    |:ringed_planet:| `AtmosphericRetrieval_HR7672B <https://github.com/YuiKasagi/AtmosphericRetrieval_HR7672B>`_ An example of HMC-NUTS for a faint companion HR 7672 B by Subaru/REACH.
 - `Kawashima et al. ApJ 988, 53 (2025) <https://arxiv.org/abs/2410.11561>`_ : Atmospheric retrieval of Subaru/IRD high-resolution spectrum of the archetype T-type brown dwarf Gl 229 B
@@ -105,7 +105,7 @@ Publications that have used ExoJAX to date
 License & Attribution
 ---------------------
 
-Copyright 2021-2025, Contributors
+Copyright 2021-2026, Contributors
 
 - `Hajime Kawahara <http://secondearths.sakura.ne.jp/en/index.html>`_ (@HajimeKawahara, maintainer)
 - `Yui Kawashima <https://sites.google.com/view/yuikawashima/home>`_ (@ykawashima, co-maintainer)
@@ -120,7 +120,7 @@ Copyright 2021-2025, Contributors
 - Erwan Pannier (@erwanp) and Nicolas Minesi (@minouHub) from `RADIS <https://github.com/radis/radis>`_ community
 - Stevanus Nugroho (@astrostevanus)
 - Ko Hosokawa (@KoHosokawa)
-- Hibiki Yama 
+- Hibiki Yama (@HibikiYama)
 
 ExoJAX is free software made available under the MIT License.
    

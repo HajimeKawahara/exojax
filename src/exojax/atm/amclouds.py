@@ -26,7 +26,7 @@ def mixing_ratio_cloud_pressure(pressure, cloud_base_pressure, fsed, mr_cloud_ba
     """
     return jnp.where(
         cloud_base_pressure > pressure,
-        mr_cloud_base * (pressure / cloud_base_pressure) ** (fsed / kc),
+        mr_cloud_base * (pressure / cloud_base_pressure) ** (fsed * kc),
         0.0,
     )
 

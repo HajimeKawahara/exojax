@@ -149,7 +149,8 @@ def olaconv(input_matrix_zeropad, fir_filter_zeropad, ndiv, div_length, filter_l
     ftilde = jnp.fft.rfft(fir_filter_zeropad)
     xtilde = jnp.fft.rfft(input_matrix_zeropad, axis=1)
     ytilde = xtilde * ftilde[jnp.newaxis, :]
-    ftarr = jnp.fft.irfft(ytilde, axis=1)
+    fft_length = np.shape(input_matrix_zeropad)[1]
+    ftarr = jnp.fft.irfft(ytilde, n=fft_length, axis=1)
     output_length = ola_output_length(ndiv, div_length, filter_length)
     fftval = overlap_and_add(ftarr, output_length, div_length)
     return fftval

@@ -1,10 +1,27 @@
 import jax.numpy as jnp
 import numpy as np
-from radis.api.hitranapi import HITRANDatabaseManager
 from exojax.database._common.commonapi import MdbCommonHitempHitran
 from exojax.database._common.isotope_functions import _convert_proper_isotope
+from exojax.database._common.radis_adapter import (
+    get_hitran_database_manager_class,
+    init_hitran_manager,
+)
 from exojax.database.contracts import MDBMeta, Lines, MDBSnapshot
 
+# Inheritance remains for compatibility; backend init details should stay in
+# adapter/backend helpers.
+try:
+    HITRANDatabaseManager = get_hitran_database_manager_class()
+except ImportError as exc:
+    if "requires RADIS" not in str(exc):
+        raise
+    _missing_radis_exc = exc
+
+    class HITRANDatabaseManager:
+        """Fallback manager used when RADIS is unavailable at import time."""
+
+        def __init__(self, *args, **kwargs):
+            raise ImportError(str(_missing_radis_exc)) from _missing_radis_exc
 
 class MdbHitran(MdbCommonHitempHitran, HITRANDatabaseManager):
     """molecular database of HITRAN
@@ -74,22 +91,14 @@ class MdbHitran(MdbCommonHitempHitran, HITRANDatabaseManager):
         )
 
         # HITRAN ONLY FUNCTIONALITY
-        if nonair_broadening:
-            self.nonair_broadening = True
-            extra_params = "all"
-        else:
-            self.nonair_broadening = False
-            extra_params = None
-
-        HITRANDatabaseManager.__init__(
+        self.nonair_broadening = bool(nonair_broadening)
+        # Keep backend manager constructor semantics out of this call site.
+        init_hitran_manager(
             self,
             molecule=self.simple_molecule_name,
-            name="HITRAN-{molecule}",
             local_databases=self.path.parent,
             engine=self.engine,
-            verbose=True,
-            parallel=True,
-            extra_params=extra_params,
+            nonair_broadening=self.nonair_broadening,
         )
 
         # Get list of all expected local files for this database:

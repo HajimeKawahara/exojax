@@ -1,31 +1,35 @@
 import pytest
 import numpy as np
 from exojax.database.hitemp.api import MdbHitemp
-
+from exojax.utils.constants import Tref_original
+number_expected = 767 #521
 
 def test_moldb_hitemp():
     mdb = MdbHitemp(".database/H2O/01_HITEMP2010/",
                     nurange=[4200.0, 4300.0],
                     crit=1.e-30,
+                    Ttyp = Tref_original,
                     isotope=None,
                     inherit_dataframe=True)
-    assert len(mdb.nu_lines) == 521
+    assert len(mdb.nu_lines) == number_expected
 
 
 def test_moldb_hitemp_direct_name():
     mdb = MdbHitemp(".database/H2O/",
                     nurange=[4200.0, 4300.0],
                     isotope=None,
+                    Ttyp = Tref_original,
                     crit=1.e-30)
-    assert len(mdb.nu_lines) == 521
+    assert len(mdb.nu_lines) == number_expected
 
 
 def test_moldb_hitemp_direct_molecid():
     mdb = MdbHitemp(".database/01/",
                     nurange=[4200.0, 4300.0],
                     isotope=None,
+                    Ttyp = Tref_original,
                     crit=1.e-30)
-    assert len(mdb.nu_lines) == 521
+    assert len(mdb.nu_lines) == number_expected
 
 
 def test_moldb_hitemp_interp():

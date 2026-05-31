@@ -3,7 +3,7 @@ import jax.numpy as jnp
 import numpy as np
 from jax.lax import scan
 
-from exojax.database import core_atom.io
+from exojax.database.core_atom import io
 
 def get_unique_species(adb):
     """Extract a unique list of line contributing species from VALD atomic
