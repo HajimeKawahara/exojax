@@ -2500,40 +2500,49 @@ def plot_svi_loss(loss_values, save_path):
     plt.close(fig)
 
 
-def plot_overlay(wavelength_nm, rp_obs, rp_err, rp_hmc, rp_svi, save_path):
-    rp_hmc_np = np.asarray(rp_hmc)
-    mean = rp_hmc_np.mean(axis=0)
-    std = rp_hmc_np.std(axis=0)
-    rp_svi_np = np.asarray(rp_svi)
+def plot_overlay(wavelength_nm, rp_obs, rp_err, rp_mu_hmc, rp_pred_hmc, save_path):
+    rp_mu_hmc_np = np.asarray(rp_mu_hmc)
+    rp_pred_hmc_np = np.asarray(rp_pred_hmc)
+    mean = rp_mu_hmc_np.mean(axis=0)
+    lower, upper = np.percentile(rp_pred_hmc_np, [2.5, 97.5], axis=0)
 
     fig, ax = plt.subplots(figsize=(7, 4.5))
+    ax.fill_between(
+        wavelength_nm,
+        lower,
+        upper,
+        color="0.7",
+        alpha=0.35,
+        label="Predictive 95%",
+        zorder=1,
+    )
     ax.errorbar(
         wavelength_nm,
         rp_obs,
         yerr=rp_err,
         fmt=".",
         ms=1,
-        color="k",
-        ecolor="0.3",
-        elinewidth=0.5,
-        alpha=0.5,
-        label="Observed",
-    )
-    ax.fill_between(
-        wavelength_nm,
-        mean - std,
-        mean + std,
         color="C0",
-        alpha=0.25,
-        label=r"HMC ±1$\sigma$",
+        ecolor="C0",
+        elinewidth=0.5,
+        alpha=0.35,
+        label="Observed",
+        zorder=2,
     )
-    ax.plot(wavelength_nm, mean, color="C0", lw=1.4, label="HMC mean")
-    ax.plot(wavelength_nm, rp_svi_np, color="C3", lw=1.4, label="SVI median model")
+    ax.plot(
+        wavelength_nm,
+        mean,
+        color="k",
+        lw=1.0,
+        label="HMC mean",
+        zorder=3,
+    )
+    ax.set_xscale("log")
     ax.set_xlabel("Wavelength [nm]")
     ax.set_ylabel(r"$R_p/R_s$")
-    ax.set_title("Observed vs SVI vs HMC")
+    ax.set_title("Observed vs HMC")
     ax.legend()
-    ax.grid(True, alpha=0.3)
+    ax.grid(True, which="both", alpha=0.3)
     fig.tight_layout()
     fig.savefig(save_path, dpi=200)
     plt.close(fig)
@@ -2632,7 +2641,7 @@ if not args.skip_diagnostic_plots:
         rp_mean_fit,
         rp_std_fit,
         predictions["rp_mu"],
-        svi_mu,
+        predictions["rp"],
         overlay_plot_path,
     )
 
