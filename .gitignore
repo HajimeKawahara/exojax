@@ -8,3 +8,17 @@ examples/opaCH4.zarr
 examples/opaH2O.zarr
 examples/opaHF.zarr
 examples/opaCO.zarr
+
+# Local example and test artifacts
+.vscode/
+codex_log.txt
+wasp39bckd_workmemo.txt
+wasp39b_transmission_spectrum.png
+examples/wasp39b_transmission_spectrum.png
+examples/path_to/
+.database/
+H2O/
+CO/
+tests/unittests/H2O/
+tests/unittests/CO/
+src/exojax/data/testdata/CO/*.h5

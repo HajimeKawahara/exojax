@@ -15,14 +15,15 @@ class _DummyBaseOpa:
 
 
 def _write_ckd_npz(path, **overrides):
-    arrays = {
-        "meta": np.frombuffer(
-            (
-                '{"Ng": 2, "band_width": 40.0, "band_spacing": "linear", '
-                '"base_fingerprint_hash": "dummy"}'
-            ).encode("utf-8"),
-            dtype=np.uint8,
+    meta = overrides.pop(
+        "meta",
+        (
+            '{"Ng": 2, "band_width": 40.0, "band_spacing": "linear", '
+            '"base_fingerprint_hash": "dummy"}'
         ),
+    )
+    arrays = {
+        "meta": np.frombuffer(meta.encode("utf-8"), dtype=np.uint8),
         "log_kggrid": np.log(np.asarray([[[[1.0, 2.0], [3.0, 4.0]]]])),
         "ggrid": np.asarray([0.25, 0.75]),
         "weights": np.asarray([0.5, 0.5]),
@@ -91,6 +92,11 @@ def test_ckd_table_roundtrip(tmp_path, band_spacing):
 @pytest.mark.parametrize(
     "overrides, message",
     [
+        ({"ggrid": np.asarray(0.25)}, "Inconsistent Ng"),
+        ({"ggrid": np.asarray([[0.25, 0.75]])}, "Inconsistent Ng"),
+        ({"ggrid": np.asarray([0.25, np.nan])}, "ggrid must contain finite"),
+        ({"ggrid": np.asarray([-0.1, 0.75])}, "within \\[0, 1\\]"),
+        ({"ggrid": np.asarray([0.75, 0.25])}, "strictly increasing"),
         ({"weights": np.asarray([1.0])}, "weights shape"),
         ({"weights": np.asarray([0.5, 0.0])}, "weights must be positive"),
         ({"weights": np.asarray([0.25, 0.25])}, "weights must sum to one"),
@@ -98,6 +104,75 @@ def test_ckd_table_roundtrip(tmp_path, band_spacing):
         ({"T_grid": np.asarray([[800.0]])}, "one-dimensional"),
         ({"P_grid": np.asarray([0.1, 1.0])}, "shape does not match"),
         ({"T_grid": np.asarray([0.0])}, "must be positive"),
+        (
+            {
+                "log_kggrid": np.log(
+                    np.asarray(
+                        [
+                            [[[1.0, 2.0], [3.0, 4.0]]],
+                            [[[1.1, 2.1], [3.1, 4.1]]],
+                        ]
+                    )
+                ),
+                "T_grid": np.asarray([900.0, 800.0]),
+            },
+            "strictly increasing",
+        ),
+        (
+            {
+                "log_kggrid": np.log(
+                    np.asarray(
+                        [
+                            [
+                                [[1.0, 2.0], [3.0, 4.0]],
+                                [[1.1, 2.1], [3.1, 4.1]],
+                            ]
+                        ]
+                    )
+                ),
+                "P_grid": np.asarray([0.2, 0.1]),
+            },
+            "strictly increasing",
+        ),
+        ({"nu_bands": np.asarray([[120.0, 160.0]])}, "Spectral band metadata"),
+        (
+            {"band_edges": np.asarray([[100.0, 140.0, 160.0], [140.0, 180.0, 200.0]])},
+            "Spectral band metadata",
+        ),
+        (
+            {"band_edges": np.asarray([[100.0, np.nan], [140.0, 180.0]])},
+            "Spectral band metadata must contain finite",
+        ),
+        (
+            {"nu_bands": np.asarray([0.0, 160.0])},
+            "Spectral band metadata must be positive",
+        ),
+        (
+            {"band_edges": np.asarray([[0.0, 140.0], [140.0, 180.0]])},
+            "Spectral band metadata must be positive",
+        ),
+        (
+            {"band_edges": np.asarray([[100.0, 100.0], [140.0, 180.0]])},
+            "positive widths",
+        ),
+        ({"nu_bands": np.asarray([160.0, 120.0])}, "strictly increasing"),
+        (
+            {"band_edges": np.asarray([[100.0, 110.0], [140.0, 180.0]])},
+            "centers must lie within",
+        ),
+        (
+            {"band_edges": np.asarray([[100.0, 150.0], [140.0, 180.0]])},
+            "must not overlap",
+        ),
+        (
+            {
+                "meta": (
+                    '{"Ng": 2, "band_width": 0.0, "band_spacing": "linear", '
+                    '"base_fingerprint_hash": "dummy"}'
+                )
+            },
+            "band_width metadata",
+        ),
     ],
 )
 def test_ckd_saved_table_rejects_invalid_arrays(tmp_path, overrides, message):

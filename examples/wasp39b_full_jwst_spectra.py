@@ -16,10 +16,13 @@ import argparse
 from dataclasses import dataclass
 import json
 import glob
+import logging
 import math
 import os
 import platform
 import sys
+import tempfile
+import warnings
 
 DEFAULT_MOLECULES = ("H2O", "CO", "CO2", "H2S", "SO2", "SiO")
 SUPPORTED_MOLECULES = set(DEFAULT_MOLECULES)
@@ -39,6 +42,15 @@ CKD_RELATIVE_PATHS = {
     "SO2": os.path.join("SO2", "32S-16O2", "ExoAmes"),
     "SiO": os.path.join("SiO", "28Si-16O", "SiOUVenIR"),
 }
+CKD_REQUIRED_DATASETS = (
+    "mol_mass",
+    "bin_centers",
+    "samples",
+    "weights",
+    "t",
+    "p",
+    "kcoeff",
+)
 
 parser = argparse.ArgumentParser(
     description="WASP-39b wide-wavelength JWST transmission spectrum retrieval.",
@@ -85,6 +97,15 @@ parser.add_argument(
     help="Root directory containing ExoMolOP CKD opacity tables.",
 )
 parser.add_argument(
+    "--ckd-table-paths",
+    default="",
+    help=(
+        "Optional comma-separated CKD table overrides of the form "
+        "MOL=/path/to/table.h5. Use this when a molecule directory contains "
+        "multiple local ExoMolOP tables."
+    ),
+)
+parser.add_argument(
     "--allow-ckd-download",
     action="store_true",
     help="Allow missing ExoMolOP CKD tables to be downloaded during opacity loading.",
@@ -102,7 +123,7 @@ parser.add_argument(
 parser.add_argument(
     "--cia-pairs",
     default=",".join(DEFAULT_CIA_PAIRS),
-    help="Comma-separated CIA opacity pairs.",
+    help="Comma-separated CIA opacity pairs, or 'none' to disable CIA opacity.",
 )
 parser.add_argument(
     "--check-inputs",
@@ -110,14 +131,33 @@ parser.add_argument(
     help="Print the expected input file and directory status, then stop.",
 )
 parser.add_argument(
+    "--input-status-json",
+    default="",
+    help="Optional path to save --check-inputs status as JSON.",
+)
+parser.add_argument(
     "--check-forward",
     action="store_true",
     help="Run one fiducial forward-model evaluation, print shape checks, then stop.",
 )
 parser.add_argument(
+    "--forward-check-json",
+    default="",
+    help="Optional path to save --check-forward diagnostics as JSON.",
+)
+parser.add_argument(
     "--quick",
     action="store_true",
     help="Use short SVI/HMC settings for a smoke test.",
+)
+parser.add_argument(
+    "--max-observed",
+    type=int,
+    default=None,
+    help=(
+        "Use at most this many evenly spaced observed data points for diagnostics. "
+        "Leave unset for the full selected data vector."
+    ),
 )
 parser.add_argument(
     "--jax-platform",
@@ -207,6 +247,11 @@ parser.add_argument(
     help="Skip observed-spectrum plot generation during retrieval.",
 )
 parser.add_argument(
+    "--skip-diagnostic-plots",
+    action="store_true",
+    help="Skip post-HMC SVI-loss, spectrum-overlay, and corner diagnostics.",
+)
+parser.add_argument(
     "--output-dir",
     default="output_full_wasp39b",
     help="Directory for retrieval products.",
@@ -224,6 +269,9 @@ def parse_molecule_list(molecule_text):
     molecules = tuple(mol.strip() for mol in molecule_text.split(",") if mol.strip())
     if not molecules:
         parser.error("--molecules must include at least one molecule.")
+    duplicates = sorted({mol for mol in molecules if molecules.count(mol) > 1})
+    if duplicates:
+        parser.error("Duplicate molecules in --molecules: " + ", ".join(duplicates))
     unsupported = [mol for mol in molecules if mol not in SUPPORTED_MOLECULES]
     if unsupported:
         parser.error(
@@ -242,6 +290,9 @@ def parse_channel_list(channel_text):
     )
     if not channels:
         parser.error("--channels must include at least one channel.")
+    duplicates = sorted({channel for channel in channels if channels.count(channel) > 1})
+    if duplicates:
+        parser.error("Duplicate channels in --channels: " + ", ".join(duplicates))
     unsupported = [channel for channel in channels if channel not in SUPPORTED_CHANNELS]
     if unsupported:
         parser.error(
@@ -255,9 +306,14 @@ def parse_channel_list(channel_text):
 
 def parse_cia_pair_list(cia_pair_text):
     """Parse and validate a comma-separated CIA pair list."""
+    if cia_pair_text.strip().lower() == "none":
+        return tuple()
     cia_pairs = tuple(pair.strip() for pair in cia_pair_text.split(",") if pair.strip())
     if not cia_pairs:
         parser.error("--cia-pairs must include at least one CIA pair.")
+    duplicates = sorted({pair for pair in cia_pairs if cia_pairs.count(pair) > 1})
+    if duplicates:
+        parser.error("Duplicate CIA pairs in --cia-pairs: " + ", ".join(duplicates))
     unsupported = [pair for pair in cia_pairs if pair not in SUPPORTED_CIA_PAIRS]
     if unsupported:
         parser.error(
@@ -267,6 +323,38 @@ def parse_cia_pair_list(cia_pair_text):
             + ", ".join(DEFAULT_CIA_PAIRS)
         )
     return cia_pairs
+
+
+def parse_ckd_table_path_map(table_path_text, molecules):
+    """Parse optional molecule-specific CKD table path overrides."""
+    if not table_path_text.strip():
+        return {}
+
+    table_paths = {}
+    for entry in table_path_text.split(","):
+        entry = entry.strip()
+        if not entry:
+            continue
+        if "=" not in entry:
+            parser.error("--ckd-table-paths entries must use MOL=/path/to/table.h5.")
+        mol, path = (part.strip() for part in entry.split("=", 1))
+        if mol not in SUPPORTED_MOLECULES:
+            parser.error(
+                "Unsupported molecule in --ckd-table-paths: "
+                f"{mol}. Supported molecules are: "
+                + ", ".join(DEFAULT_MOLECULES)
+            )
+        if mol not in molecules:
+            parser.error(
+                f"--ckd-table-paths specifies {mol}, but {mol} is not selected "
+                "by --molecules."
+            )
+        if not path:
+            parser.error(f"--ckd-table-paths entry for {mol} has an empty path.")
+        if mol in table_paths:
+            parser.error(f"--ckd-table-paths specifies {mol} more than once.")
+        table_paths[mol] = path
+    return table_paths
 
 
 def validate_numeric_args(args):
@@ -286,6 +374,8 @@ def validate_numeric_args(args):
         parser.error("--svi-lr must be positive.")
     if args.num_warmup < 0:
         parser.error("--num-warmup must be zero or a positive integer.")
+    if args.max_observed is not None and args.max_observed <= 0:
+        parser.error("--max-observed must be a positive integer when set.")
     if args.rng_seed < 0:
         parser.error("--rng-seed must be zero or a positive integer.")
     if not math.isfinite(args.rv_min) or not math.isfinite(args.rv_max):
@@ -294,10 +384,38 @@ def validate_numeric_args(args):
         parser.error("--rv-min must be smaller than --rv-max.")
 
 
+def validate_artifact_args(args):
+    """Validate artifact path options are used with the mode that writes them."""
+    if args.input_status_json and not args.check_inputs:
+        parser.error("--input-status-json requires --check-inputs.")
+    if args.forward_check_json and not args.check_forward:
+        parser.error("--forward-check-json requires --check-forward.")
+
+
+def validate_mode_specific_args(args):
+    """Reject CKD-only controls when the CKD opacity path is not selected."""
+    if args.opacity_mode != "ckd" and args.ckd_table_paths.strip():
+        parser.error("--ckd-table-paths requires --opacity-mode ckd.")
+    if args.opacity_mode != "ckd" and args.allow_ckd_download:
+        parser.error("--allow-ckd-download requires --opacity-mode ckd.")
+
+
 selected_molecules = parse_molecule_list(args.molecules)
 selected_channels = parse_channel_list(args.channels)
 selected_cia_pairs = parse_cia_pair_list(args.cia_pairs)
+selected_ckd_table_paths = parse_ckd_table_path_map(
+    args.ckd_table_paths, selected_molecules
+)
 validate_numeric_args(args)
+validate_artifact_args(args)
+validate_mode_specific_args(args)
+
+
+def format_selection(values):
+    """Format selected CLI values for human-readable status output."""
+    values = tuple(values)
+    return ", ".join(values) if values else "(none)"
+
 
 if args.quick:
     args.svi_steps = min(args.svi_steps, 20)
@@ -311,7 +429,7 @@ if (
     and args.opacity_mode != "ckd"
     and not (args.plot_data_only or args.summarize_data or args.check_inputs)
 ):
-    raise ValueError(
+    parser.error(
         "Wide-wavelength retrieval requires --opacity-mode ckd. The preMODIT "
         "prototype path is still NIRSpec-only."
     )
@@ -324,7 +442,6 @@ if (
     parser.error("--data-mode nirspec requires --channels to include nirspec_g395h.")
 
 import numpy as np
-import h5py
 
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 
@@ -343,12 +460,223 @@ def resolve_input_path(path):
 args.data_dir = resolve_input_path(args.data_dir)
 args.opacity_root = resolve_input_path(args.opacity_root)
 args.ckd_root = resolve_input_path(args.ckd_root)
+selected_ckd_table_paths = {
+    mol: resolve_input_path(path) for mol, path in selected_ckd_table_paths.items()
+}
 
 ciapath_list = {
     pair: os.path.join(args.opacity_root, CIA_RELATIVE_FILES[pair])
     for pair in DEFAULT_CIA_PAIRS
 }
 ciapath_list = {pair: ciapath_list[pair] for pair in selected_cia_pairs}
+
+
+def ckd_h5_paths(path):
+    """Return sorted CKD h5 table paths in a molecule directory."""
+    return sorted(glob.glob(os.path.join(path, "*.h5")))
+
+
+def ckd_nonempty_h5_paths(path):
+    """Return sorted non-empty CKD h5 table paths in a molecule directory."""
+    return [h5_path for h5_path in ckd_h5_paths(path) if os.path.getsize(h5_path) > 0]
+
+
+def ckd_source_path(mol):
+    """Return explicit CKD table path or the default molecule directory."""
+    return selected_ckd_table_paths.get(
+        mol, os.path.join(args.ckd_root, CKD_RELATIVE_PATHS[mol])
+    )
+
+
+def ckd_resolved_source_path(mol):
+    """Return the CKD source path that will be handed to OpaCKD."""
+    path = ckd_source_path(mol)
+    if mol in selected_ckd_table_paths:
+        return path
+    if os.path.isdir(path):
+        nonempty_h5_paths = ckd_nonempty_h5_paths(path)
+        if len(nonempty_h5_paths) == 1:
+            return nonempty_h5_paths[0]
+    return path
+
+
+def ckd_table_file_metadata(path):
+    """Return lightweight file metadata for a resolved CKD table."""
+    stat = os.stat(path)
+    return {
+        "size_bytes": int(stat.st_size),
+        "mtime_ns": int(stat.st_mtime_ns),
+    }
+
+
+def ckd_table_schema_summary(path):
+    """Return a lightweight ExoMolOP CKD h5 schema summary."""
+    import h5py
+
+    try:
+        with h5py.File(path, "r") as handle:
+            datasets = {}
+            missing = []
+            for key in CKD_REQUIRED_DATASETS:
+                if key not in handle:
+                    missing.append(key)
+                    continue
+                dataset = handle[key]
+                datasets[key] = {
+                    "shape": [int(size) for size in dataset.shape],
+                    "dtype": str(dataset.dtype),
+                }
+            if missing:
+                return {
+                    "status": "missing_datasets",
+                    "missing_datasets": missing,
+                    "datasets": datasets,
+                }
+
+            shape_issues = []
+            value_issues = []
+            shapes = {key: datasets[key]["shape"] for key in CKD_REQUIRED_DATASETS}
+            kcoeff_shape = shapes["kcoeff"]
+            if len(kcoeff_shape) != 4:
+                shape_issues.append("kcoeff must be four-dimensional")
+            else:
+                expected_lengths = {
+                    "p": kcoeff_shape[0],
+                    "t": kcoeff_shape[1],
+                    "bin_centers": kcoeff_shape[2],
+                    "samples": kcoeff_shape[3],
+                }
+                for key, expected_length in expected_lengths.items():
+                    if shapes[key] != [expected_length]:
+                        shape_issues.append(
+                            f"{key} shape {shapes[key]} does not match "
+                            f"kcoeff axis length {expected_length}"
+                        )
+                if shapes["weights"] != shapes["samples"]:
+                    shape_issues.append("weights shape must match samples shape")
+            if "mol_name" in handle:
+                dataset = handle["mol_name"]
+                datasets["mol_name"] = {
+                    "shape": [int(size) for size in dataset.shape],
+                    "dtype": str(dataset.dtype),
+                    "optional": True,
+                }
+                if len(datasets["mol_name"]["shape"]) != 1:
+                    shape_issues.append(
+                        "mol_name must be one-dimensional when present"
+                    )
+            if len(shapes["mol_mass"]) != 1 or shapes["mol_mass"][0] < 1:
+                shape_issues.append("mol_mass must be a non-empty one-dimensional dataset")
+            numeric_arrays = {
+                key: np.asarray(handle[key][:], dtype=float)
+                for key in ("mol_mass", "bin_centers", "samples", "weights", "t", "p")
+            }
+            numeric_summary = {}
+            for key, values in numeric_arrays.items():
+                numeric_summary[key] = {
+                    "min": float(np.nanmin(values)) if values.size else None,
+                    "max": float(np.nanmax(values)) if values.size else None,
+                }
+                if values.size == 0:
+                    value_issues.append(f"{key} must be non-empty")
+                    continue
+                if not np.all(np.isfinite(values)):
+                    value_issues.append(f"{key} must contain finite values")
+            if numeric_arrays["mol_mass"].size and not np.all(
+                numeric_arrays["mol_mass"] > 0.0
+            ):
+                value_issues.append("mol_mass must be positive")
+            for key in ("bin_centers", "t", "p"):
+                values = numeric_arrays[key]
+                if values.size and not np.all(values > 0.0):
+                    value_issues.append(f"{key} must be positive")
+                if values.size > 1 and np.any(np.diff(values) <= 0.0):
+                    value_issues.append(f"{key} must be strictly increasing")
+            samples = numeric_arrays["samples"]
+            if samples.size and not np.all((samples >= 0.0) & (samples <= 1.0)):
+                value_issues.append("samples must lie within [0, 1]")
+            if samples.size > 1 and np.any(np.diff(samples) <= 0.0):
+                value_issues.append("samples must be strictly increasing")
+            weights = numeric_arrays["weights"]
+            if weights.size and not np.all(weights > 0.0):
+                value_issues.append("weights must be positive")
+            if weights.size and not np.isclose(np.sum(weights), 1.0):
+                value_issues.append("weights must sum to one")
+            issues = shape_issues + value_issues
+            if not issues:
+                status = "ok"
+            elif shape_issues:
+                status = "invalid_shape"
+            else:
+                status = "invalid_values"
+            summary = {
+                "status": status,
+                "datasets": datasets,
+                "numeric_summary": numeric_summary,
+            }
+            if issues:
+                summary["issues"] = issues
+            if shape_issues:
+                summary["shape_issues"] = shape_issues
+            if value_issues:
+                summary["value_issues"] = value_issues
+            return summary
+    except OSError as exc:
+        return {"status": "unreadable", "error": str(exc)}
+
+
+def ckd_table_schema_problem_text(schema):
+    """Return a compact human-readable explanation for a bad CKD h5 schema."""
+    if schema.get("status") == "ok":
+        return ""
+    if schema.get("missing_datasets"):
+        return "missing datasets: " + ", ".join(schema["missing_datasets"])
+    if schema.get("issues"):
+        return "; ".join(schema["issues"])
+    if schema.get("error"):
+        return schema["error"]
+    return ""
+
+
+def format_ckd_schema_status(schema):
+    """Return a concise status string with schema issue detail when available."""
+    detail = ckd_table_schema_problem_text(schema)
+    if detail:
+        return f"{schema['status']} ({detail})"
+    return schema["status"]
+
+
+def ckd_download_candidate_tables(directory):
+    """Return default ExoMolOP/petitRADTRANS download candidate table paths."""
+    from exojax.provider.url import petitRADTRANS_ktable_filenames
+
+    exact_molecule_name = os.path.basename(os.path.dirname(directory))
+    database = os.path.basename(directory)
+    return [
+        os.path.join(directory, filename)
+        for filename in petitRADTRANS_ktable_filenames(exact_molecule_name, database)
+    ]
+
+
+def premodit_snapshot_candidates(mol):
+    """Return supported preMODIT snapshot path candidates for a molecule."""
+    script_dir = os.path.dirname(os.path.abspath(__file__))
+    names = (f"opa_{mol}.zarr", f"opa{mol}.zarr")
+    candidates = []
+    for base_dir in ("", script_dir):
+        for name in names:
+            path = os.path.join(base_dir, name) if base_dir else name
+            if path not in candidates:
+                candidates.append(path)
+    return candidates
+
+
+def resolve_premodit_snapshot_path(mol):
+    """Return the first existing preMODIT snapshot path for a molecule."""
+    for path in premodit_snapshot_candidates(mol):
+        if os.path.exists(path):
+            return path
+    return None
 
 
 def configure_jax_platform():
@@ -363,6 +691,31 @@ def configure_jax_platform():
         )
         return
     os.environ["JAX_PLATFORMS"] = args.jax_platform
+    if args.jax_platform == "cpu":
+        # Some environments install a CUDA JAX plugin without visible GPUs. JAX
+        # still discovers that plugin on import, so keep explicit CPU runs quiet.
+        logging.getLogger("jax._src.xla_bridge").setLevel(logging.CRITICAL)
+
+
+def configure_matplotlib_cache():
+    """Use a writable Matplotlib cache when the default user config is blocked."""
+    if os.environ.get("MPLCONFIGDIR"):
+        return
+    default_config_dir = os.path.join(os.path.expanduser("~"), ".config", "matplotlib")
+    if os.path.isdir(default_config_dir):
+        if os.access(default_config_dir, os.W_OK):
+            return
+    else:
+        parent_dir = os.path.dirname(default_config_dir)
+        if os.path.isdir(parent_dir) and os.access(parent_dir, os.W_OK):
+            return
+
+    fallback_dir = os.path.join(tempfile.gettempdir(), "exojax_matplotlib")
+    try:
+        os.makedirs(fallback_dir, exist_ok=True)
+    except OSError:
+        return
+    os.environ["MPLCONFIGDIR"] = fallback_dir
 
 
 def validate_local_inputs_before_heavy_imports():
@@ -375,14 +728,54 @@ def validate_local_inputs_before_heavy_imports():
         if not os.path.exists(path):
             missing.append(f"CIA {label}: {path}")
 
-    if args.opacity_mode == "ckd" and not args.allow_ckd_download:
+    if args.opacity_mode == "ckd":
         for mol in selected_molecules:
-            path = os.path.join(args.ckd_root, CKD_RELATIVE_PATHS[mol])
+            path = ckd_source_path(mol)
+            if mol in selected_ckd_table_paths:
+                if not os.path.isfile(path):
+                    missing.append(f"ExoMolOP CKD {mol} h5 table: {path}")
+                elif not path.endswith(".h5"):
+                    missing.append(f"ExoMolOP CKD {mol} h5 table is not .h5: {path}")
+                elif os.path.getsize(path) == 0:
+                    missing.append(f"ExoMolOP CKD {mol} h5 table is empty: {path}")
+                else:
+                    schema = ckd_table_schema_summary(path)
+                    if schema["status"] != "ok":
+                        missing.append(
+                            f"ExoMolOP CKD {mol} h5 schema is "
+                            f"{format_ckd_schema_status(schema)}: {path}"
+                        )
+                continue
             if not os.path.isdir(path):
+                if args.allow_ckd_download:
+                    continue
                 missing.append(f"ExoMolOP CKD {mol}: {path}")
                 continue
-            if not glob.glob(os.path.join(path, "*.h5")):
-                missing.append(f"ExoMolOP CKD {mol} h5 table: {path}/*.h5")
+            h5_paths = ckd_h5_paths(path)
+            nonempty_h5_paths = [
+                h5_path for h5_path in h5_paths if os.path.getsize(h5_path) > 0
+            ]
+            if not nonempty_h5_paths:
+                if args.allow_ckd_download:
+                    continue
+                if h5_paths:
+                    missing.append(f"ExoMolOP CKD {mol} h5 table is empty: {path}/*.h5")
+                else:
+                    missing.append(f"ExoMolOP CKD {mol} h5 table: {path}/*.h5")
+            elif len(nonempty_h5_paths) > 1:
+                missing.append(
+                    "ExoMolOP CKD "
+                    f"{mol} h5 table is ambiguous: {path}/*.h5 "
+                    f"({len(nonempty_h5_paths)} non-empty files; "
+                    "specify a directory with one table)"
+                )
+            else:
+                schema = ckd_table_schema_summary(nonempty_h5_paths[0])
+                if schema["status"] != "ok":
+                    missing.append(
+                        f"ExoMolOP CKD {mol} h5 schema is "
+                        f"{format_ckd_schema_status(schema)}: {nonempty_h5_paths[0]}"
+                    )
 
     if missing:
         message = (
@@ -397,11 +790,13 @@ def validate_local_inputs_before_heavy_imports():
 validate_local_inputs_before_heavy_imports()
 configure_jax_platform()
 
-needs_plotting = args.plot_data_only or not (
-    args.summarize_data or args.check_inputs or args.check_forward
+needs_plotting = args.plot_data_only or (
+    not (args.summarize_data or args.check_inputs or args.check_forward)
+    and (not args.skip_data_plot or not args.skip_diagnostic_plots)
 )
 
 if needs_plotting:
+    configure_matplotlib_cache()
     import matplotlib.pyplot as plt
 
 if not (args.plot_data_only or args.summarize_data or args.check_inputs):
@@ -411,7 +806,7 @@ if not (args.plot_data_only or args.summarize_data or args.check_inputs):
     from contextlib import redirect_stdout
 
     import exojax
-    if args.check_forward:
+    if args.check_forward or args.skip_diagnostic_plots:
         corner = None
     else:
         try:
@@ -426,6 +821,7 @@ if not (args.plot_data_only or args.summarize_data or args.check_inputs):
 
     from exojax.postproc.ckd import sample_ckd_bands_at_wavelengths
     from exojax.postproc.ckd import validate_ckd_band_coverage
+    from exojax.postproc.ckd import validate_ckd_sampling_inputs
     from exojax.postproc.ckd import wavenumber_range_with_radial_velocity
 
     from exojax.database.cia.api import CdbCIA
@@ -450,7 +846,7 @@ if not (args.plot_data_only or args.summarize_data or args.check_inputs):
         import numpyro.distributions as dist
         import numpyro.optim as optim
         from numpyro import handlers
-        from numpyro.infer.autoguide import AutoMultivariateNormal, AutoGuideList
+        from numpyro.infer.autoguide import AutoMultivariateNormal
         from numpyro.infer.initialization import init_to_value
 else:
     corner = None
@@ -484,6 +880,8 @@ class ObservedSpectrum:
 
 def load_observed_spectra(data_dir="wasp39_data"):
     """Load the NIRISS, NIRSpec, and MIRI WASP-39b transmission spectra."""
+    import h5py
+
     data_dir = os.fspath(data_dir)
 
     wav_niriss_1, rp_niriss_1, err_low_niriss_1, err_high_niriss_1 = np.loadtxt(
@@ -545,7 +943,13 @@ def load_observed_spectra(data_dir="wasp39_data"):
 
 
 def expected_input_paths(
-    data_dir, opacity_root, ckd_root, molecules, channels, cia_pairs
+    data_dir,
+    opacity_root,
+    ckd_root,
+    molecules,
+    channels,
+    cia_pairs,
+    ckd_table_paths,
 ):
     """Return expected data and opacity paths used by this example."""
     data_file_map = {
@@ -583,13 +987,31 @@ def expected_input_paths(
         for mol, relative_path in CKD_RELATIVE_PATHS.items()
     }
     ckd_dirs = {mol: ckd_dir_map[mol] for mol in molecules}
-    return data_files, cia_files, database_dirs, ckd_dirs
+    ckd_table_map = {
+        mol: ckd_table_paths.get(mol, os.path.join(ckd_dirs[mol], "*.h5"))
+        for mol in molecules
+    }
+    return data_files, cia_files, database_dirs, ckd_dirs, ckd_table_map
 
 
-def print_input_status(data_dir, opacity_root, ckd_root, molecules, channels, cia_pairs):
+def print_input_status(
+    data_dir,
+    opacity_root,
+    ckd_root,
+    molecules,
+    channels,
+    cia_pairs,
+    ckd_table_paths,
+):
     """Print whether expected input files and directories exist."""
-    data_files, cia_files, database_dirs, ckd_dirs = expected_input_paths(
-        data_dir, opacity_root, ckd_root, molecules, channels, cia_pairs
+    data_files, cia_files, database_dirs, ckd_dirs, ckd_table_map = expected_input_paths(
+        data_dir,
+        opacity_root,
+        ckd_root,
+        molecules,
+        channels,
+        cia_pairs,
+        ckd_table_paths,
     )
 
     print("Observed data files:")
@@ -604,18 +1026,240 @@ def print_input_status(data_dir, opacity_root, ckd_root, molecules, channels, ci
     for key, path in database_dirs.items():
         print(f"  {key}: {path} ({'ok' if os.path.isdir(path) else 'missing'})")
 
-    print("ExoMolOP CKD directories:")
+    print("ExoMolOP CKD sources:")
     for key, path in ckd_dirs.items():
+        table_path = ckd_table_map[key]
         directory_exists = os.path.isdir(path)
-        print(f"  {key}: {path} ({'ok' if directory_exists else 'missing'})")
-        h5_status = (
-            "ok"
-            if directory_exists and glob.glob(os.path.join(path, "*.h5"))
-            else "missing"
-            if directory_exists
-            else "not checked"
-        )
-        print(f"  {key} h5 table: {os.path.join(path, '*.h5')} ({h5_status})")
+        schema_path = None
+        if key in ckd_table_paths:
+            print(f"  {key} directory: {path} (not used; explicit table override)")
+            h5_status = "ok" if os.path.isfile(table_path) else "missing"
+            if h5_status == "ok" and not table_path.endswith(".h5"):
+                h5_status = "not .h5"
+            elif h5_status == "ok" and os.path.getsize(table_path) == 0:
+                h5_status = "empty"
+            elif h5_status == "ok":
+                schema_path = table_path
+            h5_status += "; explicit"
+        elif directory_exists:
+            print(f"  {key} directory: {path} ({'ok' if directory_exists else 'missing'})")
+            h5_paths = ckd_h5_paths(path)
+            nonempty_h5_paths = [
+                h5_path for h5_path in h5_paths if os.path.getsize(h5_path) > 0
+            ]
+            if not h5_paths:
+                h5_status = "missing"
+            elif not nonempty_h5_paths:
+                h5_status = "empty"
+            elif len(nonempty_h5_paths) == 1:
+                h5_status = "ok"
+                schema_path = nonempty_h5_paths[0]
+            else:
+                h5_status = (
+                    f"multiple ({len(nonempty_h5_paths)} non-empty); "
+                    "specify a directory with one table"
+                )
+        else:
+            print(f"  {key} directory: {path} ({'ok' if directory_exists else 'missing'})")
+            h5_status = "not checked"
+        print(f"  {key} h5 table: {table_path} ({h5_status})")
+        if key not in ckd_table_paths and h5_status in (
+            "missing",
+            "empty",
+            "not checked",
+        ):
+            print(f"  {key} download candidates:")
+            for candidate in ckd_download_candidate_tables(path):
+                print(f"    {candidate}")
+        if schema_path is not None:
+            schema = ckd_table_schema_summary(schema_path)
+            print(f"  {key} h5 schema: {format_ckd_schema_status(schema)}")
+
+
+def input_status_payload(
+    data_dir,
+    opacity_root,
+    ckd_root,
+    molecules,
+    channels,
+    cia_pairs,
+    ckd_table_paths,
+):
+    """Return machine-readable input status for preflight artifacts."""
+    data_files, cia_files, database_dirs, ckd_dirs, ckd_table_map = expected_input_paths(
+        data_dir,
+        opacity_root,
+        ckd_root,
+        molecules,
+        channels,
+        cia_pairs,
+        ckd_table_paths,
+    )
+
+    def file_entries(paths):
+        return {
+            key: {"path": path, "status": "ok" if os.path.exists(path) else "missing"}
+            for key, path in paths.items()
+        }
+
+    def directory_entries(paths):
+        return {
+            key: {"path": path, "status": "ok" if os.path.isdir(path) else "missing"}
+            for key, path in paths.items()
+        }
+
+    problems = []
+    observed_data_files = file_entries(data_files)
+    cia_file_entries = file_entries(cia_files)
+    opacity_root_entries = directory_entries(database_dirs)
+    premodit_snapshots = {
+        mol: {"candidates": premodit_snapshot_candidates(mol)}
+        for mol in molecules
+    }
+    for mol, entry in premodit_snapshots.items():
+        resolved_path = resolve_premodit_snapshot_path(mol)
+        entry["path"] = resolved_path or premodit_snapshot_candidates(mol)[0]
+        entry["status"] = "ok" if resolved_path else "missing"
+        if resolved_path:
+            entry["resolved_path"] = resolved_path
+    for key, entry in observed_data_files.items():
+        if entry["status"] != "ok":
+            problems.append(f"observed_data_files.{key}: {entry['status']}")
+    for key, entry in cia_file_entries.items():
+        if entry["status"] != "ok":
+            problems.append(f"cia_files.{key}: {entry['status']}")
+    if args.opacity_mode != "ckd" and opa_load:
+        for key, entry in premodit_snapshots.items():
+            if entry["status"] != "ok":
+                problems.append(f"premodit_snapshots.{key}: {entry['status']}")
+
+    ckd_sources = {}
+    for mol, directory in ckd_dirs.items():
+        table_path = ckd_table_map[mol]
+        explicit = mol in ckd_table_paths
+        directory_exists = os.path.isdir(directory)
+        source = {
+            "directory": directory,
+            "directory_status": "ok" if directory_exists else "missing",
+            "table": table_path,
+            "explicit_table": explicit,
+            "download_required": False,
+        }
+        if not explicit:
+            source["download_candidate_tables"] = ckd_download_candidate_tables(
+                directory
+            )
+        if explicit:
+            table_status = "ok" if os.path.isfile(table_path) else "missing"
+            if table_status == "ok" and not table_path.endswith(".h5"):
+                table_status = "not_h5"
+            if table_status == "ok" and os.path.getsize(table_path) == 0:
+                table_status = "empty"
+            source["directory_status"] = "not_used_explicit_table"
+            source["table_status"] = table_status
+            if table_status == "ok":
+                source["resolved_table"] = table_path
+                source["resolved_table_metadata"] = ckd_table_file_metadata(table_path)
+                source["table_schema"] = ckd_table_schema_summary(table_path)
+        elif directory_exists:
+            h5_paths = ckd_h5_paths(directory)
+            nonempty_h5_paths = [
+                h5_path for h5_path in h5_paths if os.path.getsize(h5_path) > 0
+            ]
+            source["h5_count"] = len(h5_paths)
+            source["nonempty_h5_count"] = len(nonempty_h5_paths)
+            if not h5_paths:
+                source["table_status"] = "missing"
+                if args.allow_ckd_download:
+                    source["download_required"] = True
+                    source["download_target"] = directory
+            elif not nonempty_h5_paths:
+                source["table_status"] = "empty"
+                source["h5_candidates"] = h5_paths
+                if args.allow_ckd_download:
+                    source["download_required"] = True
+                    source["download_target"] = directory
+            elif len(nonempty_h5_paths) == 1:
+                metadata = ckd_table_file_metadata(nonempty_h5_paths[0])
+                source["table_status"] = "ok"
+                source["resolved_table"] = nonempty_h5_paths[0]
+                source["resolved_table_metadata"] = metadata
+                source["table_schema"] = ckd_table_schema_summary(nonempty_h5_paths[0])
+                empty_h5_paths = sorted(set(h5_paths) - set(nonempty_h5_paths))
+                if empty_h5_paths:
+                    source["ignored_empty_h5_candidates"] = empty_h5_paths
+            else:
+                source["table_status"] = "multiple"
+                source["h5_candidates"] = nonempty_h5_paths
+        else:
+            source["table_status"] = "not_checked"
+            if args.allow_ckd_download and not explicit:
+                source["download_required"] = True
+                source["download_target"] = directory
+        if args.opacity_mode == "ckd":
+            table_schema = source.get("table_schema")
+            if explicit:
+                if source["table_status"] != "ok":
+                    problems.append(
+                        f"ckd_sources.{mol}.table: {source['table_status']}"
+                    )
+                elif table_schema is not None and table_schema["status"] != "ok":
+                    problems.append(
+                        f"ckd_sources.{mol}.schema: {table_schema['status']}"
+                    )
+            elif source["table_status"] == "multiple":
+                problems.append(f"ckd_sources.{mol}.table: {source['table_status']}")
+            elif table_schema is not None and table_schema["status"] != "ok":
+                problems.append(f"ckd_sources.{mol}.schema: {table_schema['status']}")
+            elif not args.allow_ckd_download:
+                if source["directory_status"] != "ok":
+                    problems.append(
+                        f"ckd_sources.{mol}.directory: "
+                        f"{source['directory_status']}"
+                    )
+                elif source["table_status"] != "ok":
+                    problems.append(
+                        f"ckd_sources.{mol}.table: {source['table_status']}"
+                    )
+        ckd_sources[mol] = source
+
+    return {
+        "ready_for_local_run": not problems,
+        "problems": problems,
+        "selections": {
+            "data_mode": args.data_mode,
+            "opacity_mode": args.opacity_mode,
+            "molecules": list(molecules),
+            "channels": list(channels),
+            "cia_pairs": list(cia_pairs),
+            "allow_ckd_download": bool(args.allow_ckd_download),
+        },
+        "observed_data_files": observed_data_files,
+        "cia_files": cia_file_entries,
+        "opacity_roots": opacity_root_entries,
+        "premodit_snapshots": premodit_snapshots,
+        "ckd_sources": ckd_sources,
+    }
+
+
+def save_input_status_json(path, payload):
+    """Save --check-inputs status JSON."""
+    directory = os.path.dirname(os.path.abspath(path))
+    os.makedirs(directory, exist_ok=True)
+    with open(path, "w") as f:
+        json.dump(payload, f, indent=2, sort_keys=True)
+        f.write("\n")
+    print(f"Input status JSON saved to {path}")
+
+
+def save_json(path, payload, label):
+    """Save a JSON artifact."""
+    directory = os.path.dirname(os.path.abspath(path))
+    os.makedirs(directory, exist_ok=True)
+    with open(path, "w") as f:
+        json.dump(payload, f, indent=2, sort_keys=True)
+        f.write("\n")
+    print(f"{label} saved to {path}")
 
 
 def plot_observed_spectra(observed_spectra, save_path):
@@ -704,6 +1348,85 @@ def observed_channel_summary(observed_spectra):
     }
 
 
+def retrieval_channel_summary(channels, channel_index, wavelength_nm):
+    """Return per-channel metadata for the selected retrieval vector."""
+    summary = {}
+    for index, channel in enumerate(channels):
+        mask = channel_index == index
+        n_selected = int(np.sum(mask))
+        channel_summary = {"index": int(index), "n_selected": n_selected}
+        if n_selected:
+            channel_wavelength = wavelength_nm[mask]
+            channel_summary.update(
+                {
+                    "wavelength_nm_min": float(np.min(channel_wavelength)),
+                    "wavelength_nm_max": float(np.max(channel_wavelength)),
+                }
+            )
+        else:
+            channel_summary.update(
+                {"wavelength_nm_min": None, "wavelength_nm_max": None}
+            )
+        summary[channel] = channel_summary
+    return summary
+
+
+def ckd_band_summary():
+    """Return metadata for loaded CKD bands."""
+    if ckd_nu_bands is None:
+        return None
+    summary = {
+        "n_bands": int(np.asarray(ckd_nu_bands).size),
+        "n_g": int(np.asarray(ckd_weights).size),
+        "nu_band_min_cm-1": float(np.min(np.asarray(ckd_nu_bands))),
+        "nu_band_max_cm-1": float(np.max(np.asarray(ckd_nu_bands))),
+    }
+    if ckd_reference.band_edges is not None:
+        band_edges = np.asarray(ckd_reference.band_edges)
+        summary.update(
+            {
+                "nu_edge_min_cm-1": float(np.min(band_edges)),
+                "nu_edge_max_cm-1": float(np.max(band_edges)),
+            }
+        )
+    return summary
+
+
+def ckd_table_summary():
+    """Return molecule-level metadata for loaded CKD tables."""
+    if args.opacity_mode != "ckd":
+        return {}
+    summary = {}
+    for mol, opa in opa_mols.items():
+        info = opa.ckd_info
+        temperatures = np.asarray(info.T_grid)
+        pressures = np.asarray(info.P_grid)
+        ggrid = np.asarray(info.ggrid)
+        weights = np.asarray(info.weights)
+        nu_bands = np.asarray(info.nu_bands)
+        band_edges = np.asarray(info.band_edges)
+        summary[mol] = {
+            "source": ckdpath_list_ExomolOP[mol],
+            "molmass": float(opa.molmass),
+            "n_temperature": int(temperatures.size),
+            "temperature_min_K": float(np.min(temperatures)),
+            "temperature_max_K": float(np.max(temperatures)),
+            "n_pressure": int(pressures.size),
+            "pressure_min_bar": float(np.min(pressures)),
+            "pressure_max_bar": float(np.max(pressures)),
+            "n_g": int(ggrid.size),
+            "g_min": float(np.min(ggrid)),
+            "g_max": float(np.max(ggrid)),
+            "weight_sum": float(np.sum(weights)),
+            "n_bands": int(nu_bands.size),
+            "nu_band_min_cm-1": float(np.min(nu_bands)),
+            "nu_band_max_cm-1": float(np.max(nu_bands)),
+            "nu_edge_min_cm-1": float(np.min(band_edges)),
+            "nu_edge_max_cm-1": float(np.max(band_edges)),
+        }
+    return summary
+
+
 def select_retrieval_data(data_mode, nirspec_spectrum, all_wavelength, all_rp, all_err):
     """Return the observed data vector requested by the retrieval mode."""
     if data_mode == "nirspec":
@@ -715,6 +1438,61 @@ def select_retrieval_data(data_mode, nirspec_spectrum, all_wavelength, all_rp, a
     if data_mode == "wide":
         return all_wavelength, all_rp, all_err
     raise ValueError(f"Unknown data_mode: {data_mode}")
+
+
+def validate_observed_data_vector(label, wavelength, radius_ratio, radius_ratio_error):
+    """Validate the observed data vector before forward/HMC execution."""
+    wavelength = np.asarray(wavelength)
+    radius_ratio = np.asarray(radius_ratio)
+    radius_ratio_error = np.asarray(radius_ratio_error)
+    if (
+        wavelength.ndim != 1
+        or radius_ratio.ndim != 1
+        or radius_ratio_error.ndim != 1
+    ):
+        raise ValueError(f"{label} arrays must be one-dimensional.")
+    if not (
+        wavelength.shape == radius_ratio.shape == radius_ratio_error.shape
+    ):
+        raise ValueError(f"{label} wavelength, radius ratio, and error shapes differ.")
+    if wavelength.size == 0:
+        raise ValueError(f"{label} must contain at least one data point.")
+    if not (
+        np.all(np.isfinite(wavelength))
+        and np.all(np.isfinite(radius_ratio))
+        and np.all(np.isfinite(radius_ratio_error))
+    ):
+        raise ValueError(f"{label} arrays must contain finite values.")
+    if not np.all(wavelength > 0.0):
+        raise ValueError(f"{label} wavelengths must be positive.")
+    if not np.all(radius_ratio > 0.0):
+        raise ValueError(f"{label} radius ratios must be positive.")
+    if not np.all(radius_ratio_error > 0.0):
+        raise ValueError(f"{label} uncertainties must be positive.")
+
+
+def cap_observed_data(wavelength, radius_ratio, radius_ratio_error, channel_index, limit):
+    """Return an evenly spaced subset of the selected observed data vector."""
+    if limit is None or limit >= wavelength.size:
+        return wavelength, radius_ratio, radius_ratio_error, channel_index
+    indices = np.unique(np.linspace(0, wavelength.size - 1, limit, dtype=int))
+    return (
+        wavelength[indices],
+        radius_ratio[indices],
+        radius_ratio_error[indices],
+        channel_index[indices],
+    )
+
+
+def observed_wav2nu(wavelength, unit):
+    """Convert observed wavelengths to wavenumbers without expected order noise."""
+    with warnings.catch_warnings():
+        warnings.filterwarnings(
+            "ignore",
+            message="Both input wavelength and output wavenumber are in ascending order.",
+            category=UserWarning,
+        )
+        return wav2nu(wavelength, unit)
 
 
 # %%
@@ -740,6 +1518,15 @@ opa_save = False
 # -----------------------------------
 
 if args.check_inputs:
+    status_payload = input_status_payload(
+        args.data_dir,
+        args.opacity_root,
+        args.ckd_root,
+        selected_molecules,
+        selected_channels,
+        selected_cia_pairs,
+        selected_ckd_table_paths,
+    )
     print_input_status(
         args.data_dir,
         args.opacity_root,
@@ -747,7 +1534,10 @@ if args.check_inputs:
         selected_molecules,
         selected_channels,
         selected_cia_pairs,
+        selected_ckd_table_paths,
     )
+    if args.input_status_json:
+        save_input_status_json(args.input_status_json, status_payload)
     sys.exit(0)
 
 observed_spectra = load_observed_spectra(args.data_dir)
@@ -755,12 +1545,15 @@ observed_spectra = select_observed_channels(observed_spectra, selected_channels)
 wav_obs_all, rp_mean_all, rp_std_all, channel_index_all = concatenate_observed_spectra(
     observed_spectra
 )
+validate_observed_data_vector(
+    "selected observed data", wav_obs_all, rp_mean_all, rp_std_all
+)
 
 if args.summarize_data:
     summarize_observed_spectra(observed_spectra, wav_obs_all)
-    print("Selected molecules: " + ", ".join(selected_molecules))
-    print("Selected channels: " + ", ".join(selected_channels))
-    print("Selected CIA pairs: " + ", ".join(selected_cia_pairs))
+    print("Selected molecules: " + format_selection(selected_molecules))
+    print("Selected channels: " + format_selection(selected_channels))
+    print("Selected CIA pairs: " + format_selection(selected_cia_pairs))
     sys.exit(0)
 if args.plot_data_only:
     plot_observed_spectra(observed_spectra, args.data_plot_path)
@@ -781,20 +1574,36 @@ else:
         wav_obs_fit.shape, selected_channels.index("nirspec_g395h"), dtype=int
     )
 
+wav_obs_fit, rp_mean_fit, rp_std_fit, channel_index_fit = cap_observed_data(
+    wav_obs_fit,
+    rp_mean_fit,
+    rp_std_fit,
+    channel_index_fit,
+    args.max_observed,
+)
+validate_observed_data_vector(
+    "retrieval observed data", wav_obs_fit, rp_mean_fit, rp_std_fit
+)
+
 wav_obs_nirspec = None
 rp_mean_nirspec = None
 rp_std_nirspec = None
 if nirspec_g395h is not None:
-    wav_obs_nirspec = nirspec_g395h.wavelength_nm
-    rp_mean_nirspec = nirspec_g395h.radius_ratio
-    rp_std_nirspec = nirspec_g395h.radius_ratio_error
+    if args.data_mode == "nirspec":
+        wav_obs_nirspec = wav_obs_fit
+        rp_mean_nirspec = rp_mean_fit
+        rp_std_nirspec = rp_std_fit
+    else:
+        wav_obs_nirspec = nirspec_g395h.wavelength_nm
+        rp_mean_nirspec = nirspec_g395h.radius_ratio
+        rp_std_nirspec = nirspec_g395h.radius_ratio_error
 
 
 # Convert from wavelength to wavenumber for modelling.
 if not args.plot_data_only:
-    inst_fit_nus = wav2nu(wav_obs_fit, "nm")
+    inst_fit_nus = observed_wav2nu(wav_obs_fit, "nm")
     if args.opacity_mode != "ckd":
-        inst_nirspec_nus = wav2nu(wav_obs_nirspec, "nm")
+        inst_nirspec_nus = observed_wav2nu(wav_obs_nirspec, "nm")
         ckd_nurange = None
     else:
         ckd_nurange = wavenumber_range_with_radial_velocity(
@@ -909,10 +1718,7 @@ molpath_list_Exomol = {
     "SiO": os.path.join(db_ExoMol, "SiO", "28Si-16O", "SiOUVenIR"),
 }
 
-ckdpath_map_ExomolOP = {
-    mol: os.path.join(args.ckd_root, relative_path)
-    for mol, relative_path in CKD_RELATIVE_PATHS.items()
-}
+ckdpath_map_ExomolOP = {mol: ckd_resolved_source_path(mol) for mol in DEFAULT_MOLECULES}
 molpath_list_HITEMP = {
     mol: path for mol, path in molpath_list_HITEMP.items() if mol in selected_molecules
 }
@@ -935,9 +1741,10 @@ def validate_required_inputs():
 
     if args.opacity_mode != "ckd" and opa_load:
         for mol in selected_molecules:
-            path = "opa_" + mol + ".zarr"
-            if not os.path.exists(path):
-                missing.append(f"preMODIT snapshot {mol}: {path}")
+            path = resolve_premodit_snapshot_path(mol)
+            if path is None:
+                candidates = ", ".join(premodit_snapshot_candidates(mol))
+                missing.append(f"preMODIT snapshot {mol}: {candidates}")
 
     if missing:
         message = (
@@ -971,7 +1778,11 @@ def load_ckd_from_exomolop(mol, path, nurange):
 def load_or_build_opacity(mol, path, mdb_factory):
     """Load saved opacity or build from database snapshot."""
     if opa_load:
-        opa = OpaPremodit.from_saved_opa("opa_" + mol + ".zarr", strict=False)
+        snapshot_path = resolve_premodit_snapshot_path(mol)
+        if snapshot_path is None:
+            candidates = ", ".join(premodit_snapshot_candidates(mol))
+            raise FileNotFoundError(f"preMODIT snapshot {mol}: {candidates}")
+        opa = OpaPremodit.from_saved_opa(snapshot_path, strict=False)
         return opa, opa.aux["molmass"]
 
     mdb = mdb_factory(path)
@@ -993,7 +1804,7 @@ def load_molecular_opacities():
             f"{ckd_nurange[0]:.3f}-{ckd_nurange[1]:.3f} cm-1"
         )
         for mol, path in ckdpath_list_ExomolOP.items():
-            print(f"  * {mol} (ExoMolOP CKD)")
+            print(f"  * {mol} (ExoMolOP CKD): {path}")
             opa, molmass = load_ckd_from_exomolop(mol, path, nurange=ckd_nurange)
             opa_mols_local[mol] = opa
             molmass_list.append(molmass)
@@ -1017,18 +1828,50 @@ def load_molecular_opacities():
     return opa_mols_local, jnp.array(molmass_list)
 
 
+def validate_ckd_table_compatibility(opa_mols_local):
+    """Validate that loaded molecule CKD tables share the same CKD grid."""
+    reference_mol, reference_opa = next(iter(opa_mols_local.items()))
+    reference_info = reference_opa.ckd_info
+    reference_arrays = {
+        "band centers": np.asarray(reference_opa.nu_bands),
+        "band edges": np.asarray(reference_opa.band_edges),
+        "g-grid": np.asarray(reference_info.ggrid),
+        "quadrature weights": np.asarray(reference_info.weights),
+    }
+    for mol, opa in opa_mols_local.items():
+        info = opa.ckd_info
+        arrays = {
+            "band centers": np.asarray(opa.nu_bands),
+            "band edges": np.asarray(opa.band_edges),
+            "g-grid": np.asarray(info.ggrid),
+            "quadrature weights": np.asarray(info.weights),
+        }
+        for label, reference_array in reference_arrays.items():
+            array = arrays[label]
+            if array.shape != reference_array.shape or not np.allclose(
+                array, reference_array
+            ):
+                raise ValueError(
+                    "CKD table "
+                    f"{label} mismatch for {mol}; expected compatibility with "
+                    f"{reference_mol}. "
+                    f"{reference_mol} source={ckdpath_list_ExomolOP[reference_mol]}, "
+                    f"shape={reference_array.shape}; "
+                    f"{mol} source={ckdpath_list_ExomolOP[mol]}, shape={array.shape}."
+                )
+    return reference_opa
+
+
 validate_required_inputs()
 opa_mols, molmass_arr = load_molecular_opacities()
 if args.opacity_mode == "ckd":
-    ckd_reference = next(iter(opa_mols.values()))
+    ckd_reference = validate_ckd_table_compatibility(opa_mols)
     ckd_nu_bands = ckd_reference.nu_bands
     ckd_weights = ckd_reference.ckd_info.weights
-    for mol, opa in opa_mols.items():
-        if len(opa.nu_bands) != len(ckd_nu_bands):
-            raise ValueError(f"CKD band count mismatch for {mol}.")
-        if not np.allclose(np.asarray(opa.nu_bands), np.asarray(ckd_nu_bands)):
-            raise ValueError(f"CKD band centers mismatch for {mol}.")
-    validate_ckd_band_coverage(ckd_nu_bands, ckd_nurange)
+    validate_ckd_band_coverage(ckd_nu_bands, ckd_nurange, ckd_reference.band_edges)
+    validate_ckd_sampling_inputs(
+        ckd_nu_bands, np.ones_like(np.asarray(ckd_nu_bands)), wav_obs_fit
+    )
     opa_cias = build_cia_opacities(ckd_nu_bands)
 else:
     ckd_nu_bands = None
@@ -1188,37 +2031,95 @@ def run_forward_check():
     for _mol in opa_mols:
         fiducial_vmr.append(art.constant_mmr_profile(1.0e-5))
     fiducial_vmr = jnp.array(fiducial_vmr)
+    fiducial_rv = 0.5 * (args.rv_min + args.rv_max)
 
     fiducial_mu = spectral_model(
         radius_btm=1.27 * RJ,
         Mp=Mp_mean * MJ,
         Rstar=Rstar_mean * Rs,
-        RV=-50.0,
+        RV=fiducial_rv,
         vmr_arr=fiducial_vmr,
         T0=1200.0,
         logP_cloud=-3.0,
     )
     fiducial_mu = fiducial_mu if args.opacity_mode == "ckd" else fiducial_mu[::-1]
     fiducial_mu_np = np.asarray(jax.device_get(fiducial_mu))
+    finite_model = bool(np.all(np.isfinite(fiducial_mu_np)))
+    shape_matches = fiducial_mu_np.shape == rp_mean_fit.shape
+    forward_payload = {
+        "data_mode": args.data_mode,
+        "opacity_mode": args.opacity_mode,
+        "molecules": list(opa_mols.keys()),
+        "channels": list(selected_channels),
+        "cia_pairs": list(selected_cia_pairs),
+        "input_status": input_status_payload(
+            args.data_dir,
+            args.opacity_root,
+            args.ckd_root,
+            selected_molecules,
+            selected_channels,
+            selected_cia_pairs,
+            selected_ckd_table_paths,
+        ),
+        "observed_shape": list(rp_mean_fit.shape),
+        "model_shape": list(fiducial_mu_np.shape),
+        "shape_matches": shape_matches,
+        "finite_model": finite_model,
+        "model_rprs_min": float(np.min(fiducial_mu_np)),
+        "model_rprs_max": float(np.max(fiducial_mu_np)),
+        "fiducial_rv_kms": float(fiducial_rv),
+        "n_observed": int(rp_mean_fit.size),
+        "wavelength_nm_min": float(np.min(wav_obs_fit)),
+        "wavelength_nm_max": float(np.max(wav_obs_fit)),
+        "retrieval_channel_summary": retrieval_channel_summary(
+            selected_channels, channel_index_fit, wav_obs_fit
+        ),
+    }
+    if args.opacity_mode == "ckd":
+        forward_payload["ckd_nurange_cm-1"] = [
+            float(ckd_nurange[0]),
+            float(ckd_nurange[1]),
+        ]
+        forward_payload["ckd_band_summary"] = ckd_band_summary()
+        forward_payload["ckd_sources"] = ckdpath_list_ExomolOP
+        forward_payload["ckd_table_summary"] = ckd_table_summary()
 
     print("Forward-model check:")
     print(f"  data_mode: {args.data_mode}")
     print(f"  opacity_mode: {args.opacity_mode}")
-    print("  molecules: " + ", ".join(opa_mols.keys()))
-    print("  channels: " + ", ".join(selected_channels))
-    print("  CIA pairs: " + ", ".join(selected_cia_pairs))
+    print("  molecules: " + format_selection(opa_mols.keys()))
+    print("  channels: " + format_selection(selected_channels))
+    print("  CIA pairs: " + format_selection(selected_cia_pairs))
+    print(f"  fiducial RV: {fiducial_rv:.3f} km/s")
+    if args.opacity_mode == "ckd":
+        band_summary = ckd_band_summary()
+        print(
+            "  CKD bands: "
+            f"n={band_summary['n_bands']}, "
+            f"g={band_summary['n_g']}, "
+            f"centers=[{band_summary['nu_band_min_cm-1']:.3f}, "
+            f"{band_summary['nu_band_max_cm-1']:.3f}] cm-1"
+        )
+        if "nu_edge_min_cm-1" in band_summary:
+            print(
+                "  CKD band edges: "
+                f"[{band_summary['nu_edge_min_cm-1']:.3f}, "
+                f"{band_summary['nu_edge_max_cm-1']:.3f}] cm-1"
+            )
     print(f"  observed shape: {rp_mean_fit.shape}")
     print(f"  model shape: {fiducial_mu_np.shape}")
-    print(f"  finite model: {np.all(np.isfinite(fiducial_mu_np))}")
+    print(f"  finite model: {finite_model}")
     print(
         "  model Rp/Rs range: "
         f"[{np.min(fiducial_mu_np):.6f}, {np.max(fiducial_mu_np):.6f}]"
     )
-    if fiducial_mu_np.shape != rp_mean_fit.shape:
+    if args.forward_check_json:
+        save_json(args.forward_check_json, forward_payload, "Forward-check JSON")
+    if not shape_matches:
         raise ValueError(
             "Forward-model shape does not match the selected observed data vector."
         )
-    if not np.all(np.isfinite(fiducial_mu_np)):
+    if not finite_model:
         raise ValueError("Forward model returned non-finite values.")
 
 
@@ -1237,21 +2138,10 @@ if args.check_forward:
 # reused as a mass matrix estimate.
 
 
-def prior_guide(rp_mean, rp_std):
-    """Guide for Mp and Rs so they follow their priors during SVI."""
-    Mp = numpyro.sample("Mp", dist.TruncatedNormal(Mp_mean, Mp_std, low=0.0))
-    Rs = numpyro.sample("Rs", dist.TruncatedNormal(Rstar_mean, Rstar_std, low=0.0))
-    return {"Mp": Mp, "Rs": Rs}
-
-
 def build_guide():
-    """Construct guide with separated priors for Mp/Rs and AutoMVN for the rest."""
-    guide = AutoGuideList(model_c)
-    guide.append(prior_guide)
-    # Hide rp_mu so the Auto guide only sees latent sample sites
-    model_hidden = handlers.block(model_c, hide=["Mp", "Rs", "rp_mu"])
-    guide.append(AutoMultivariateNormal(model_hidden))
-    return guide
+    """Construct an AutoMVN guide over the latent sample sites."""
+    model_hidden = handlers.block(model_c, hide=["rp_mu"])
+    return AutoMultivariateNormal(model_hidden)
 
 
 def save_run_config(output_dir):
@@ -1260,14 +2150,22 @@ def save_run_config(output_dir):
     config["molecules"] = list(selected_molecules)
     config["channels"] = list(selected_channels)
     config["channel_summary"] = observed_channel_summary(observed_spectra)
+    config["retrieval_channel_summary"] = retrieval_channel_summary(
+        selected_channels, channel_index_fit, wav_obs_fit
+    )
     config["cia_pairs"] = list(selected_cia_pairs)
     config["data_dir"] = args.data_dir
     config["opacity_root"] = args.opacity_root
     config["ckd_root"] = args.ckd_root
+    config["ckd_table_paths"] = selected_ckd_table_paths
+    config["ckd_sources"] = ckdpath_list_ExomolOP if args.opacity_mode == "ckd" else {}
+    config["ckd_table_summary"] = ckd_table_summary()
     config["rv_min_kms"] = args.rv_min
     config["rv_max_kms"] = args.rv_max
+    config["skip_diagnostic_plots"] = bool(args.skip_diagnostic_plots)
     if ckd_nurange is not None:
         config["ckd_nurange_cm-1"] = [float(ckd_nurange[0]), float(ckd_nurange[1])]
+    config["ckd_band_summary"] = ckd_band_summary()
     config["n_observed"] = int(rp_mean_fit.size)
     config["wavelength_nm_min"] = float(np.min(wav_obs_fit))
     config["wavelength_nm_max"] = float(np.max(wav_obs_fit))
@@ -1321,6 +2219,25 @@ def save_posterior_samples(sample_dict, output_dir):
     print(f"Posterior samples saved to {path}")
 
 
+def save_mcmc_summary(mcmc, output_dir):
+    """Print and persist the MCMC summary when enough samples are available."""
+    path = os.path.join(output_dir, "mcmc_summary.txt")
+    if args.num_samples < 4:
+        message = (
+            "MCMC summary skipped because --num-samples < 4. "
+            "Posterior samples were still saved for smoke-test inspection."
+        )
+        print(message)
+        with open(path, "w") as f:
+            f.write(message + "\n")
+        return
+
+    mcmc.print_summary()
+    with open(path, "w") as f:
+        with redirect_stdout(f):
+            mcmc.print_summary()
+
+
 def save_predictive_spectrum(prediction_dict, output_dir):
     """Persist posterior predictive spectra as host NumPy arrays."""
     predictive_payload = {
@@ -1347,6 +2264,125 @@ def save_predictive_spectrum(prediction_dict, output_dir):
     print(f"Posterior predictive bundle saved to {path_npz}")
 
 
+def save_run_status(output_dir, posterior_samples, prediction_dict, losses):
+    """Persist a compact status artifact for completed HMC smoke/retrieval runs."""
+    artifact_names = [
+        "run_config.json",
+        "observed_data.npz",
+        "svi_params.npz",
+        "svi_losses.npy",
+        "svi_init_values.npz",
+        "posterior_sample.npz",
+        "posterior_predictive.npz",
+        "rp_mu_pred.npy",
+        "rp_pred.npy",
+        "mcmc_summary.txt",
+    ]
+    skipped_artifacts = []
+    if args.skip_diagnostic_plots:
+        skipped_artifacts.extend(["svi_loss.png", "spectrum_overlay.png"])
+    else:
+        artifact_names.extend(["svi_loss.png", "spectrum_overlay.png"])
+    artifacts = {
+        name: os.path.exists(os.path.join(output_dir, name)) for name in artifact_names
+    }
+    posterior_shapes = {
+        key: list(np.asarray(jax.device_get(value)).shape)
+        for key, value in posterior_samples.items()
+    }
+    predictive_shapes = {
+        key: list(np.asarray(jax.device_get(value)).shape)
+        for key, value in prediction_dict.items()
+    }
+    posterior_finite = {
+        key: bool(np.all(np.isfinite(np.asarray(jax.device_get(value)))))
+        for key, value in posterior_samples.items()
+    }
+    predictive_finite = {
+        key: bool(np.all(np.isfinite(np.asarray(jax.device_get(value)))))
+        for key, value in prediction_dict.items()
+    }
+    loss_values = np.asarray(jax.device_get(losses))
+    finite_checks = {
+        "posterior_all_finite": all(posterior_finite.values()),
+        "predictive_all_finite": all(predictive_finite.values()),
+        "svi_losses_all_finite": bool(np.all(np.isfinite(loss_values))),
+    }
+    n_observed = int(rp_mean_fit.size)
+    posterior_rp_mu_shape = posterior_shapes.get("rp_mu")
+    predictive_rp_mu_shape = predictive_shapes.get("rp_mu")
+    predictive_rp_shape = predictive_shapes.get("rp")
+    shape_checks = {
+        "posterior_rp_mu_matches_observed": (
+            bool(posterior_rp_mu_shape) and posterior_rp_mu_shape[-1] == n_observed
+        ),
+        "predictive_rp_mu_matches_observed": (
+            bool(predictive_rp_mu_shape) and predictive_rp_mu_shape[-1] == n_observed
+        ),
+        "predictive_rp_matches_observed": (
+            bool(predictive_rp_shape) and predictive_rp_shape[-1] == n_observed
+        ),
+    }
+    status = {
+        "status": "completed",
+        "data_mode": args.data_mode,
+        "opacity_mode": args.opacity_mode,
+        "molecules": list(selected_molecules),
+        "channels": list(selected_channels),
+        "cia_pairs": list(selected_cia_pairs),
+        "input_status": input_status_payload(
+            args.data_dir,
+            args.opacity_root,
+            args.ckd_root,
+            selected_molecules,
+            selected_channels,
+            selected_cia_pairs,
+            selected_ckd_table_paths,
+        ),
+        "retrieval_channel_summary": retrieval_channel_summary(
+            selected_channels, channel_index_fit, wav_obs_fit
+        ),
+        "ckd_sources": ckdpath_list_ExomolOP if args.opacity_mode == "ckd" else {},
+        "ckd_band_summary": ckd_band_summary(),
+        "ckd_table_summary": ckd_table_summary(),
+        "n_observed": n_observed,
+        "wavelength_nm_min": float(np.min(wav_obs_fit)),
+        "wavelength_nm_max": float(np.max(wav_obs_fit)),
+        "rv_min_kms": float(args.rv_min),
+        "rv_max_kms": float(args.rv_max),
+        "num_warmup": int(args.num_warmup),
+        "num_samples": int(args.num_samples),
+        "num_chains": int(args.num_chains),
+        "svi_steps": int(args.svi_steps),
+        "svi_lr": float(args.svi_lr),
+        "chain_method": args.chain_method,
+        "max_tree_depth": int(args.max_tree_depth),
+        "rng_seed": int(args.rng_seed),
+        "skip_diagnostic_plots": bool(args.skip_diagnostic_plots),
+        "final_svi_loss": float(np.asarray(jax.device_get(losses))[-1]),
+        "jax_default_backend": jax.default_backend(),
+        "jax_devices": [str(device) for device in jax.devices()],
+        "posterior_shapes": posterior_shapes,
+        "predictive_shapes": predictive_shapes,
+        "posterior_finite": posterior_finite,
+        "predictive_finite": predictive_finite,
+        "finite_checks": finite_checks,
+        "shape_checks": shape_checks,
+        "expected_artifacts": artifact_names,
+        "skipped_artifacts": skipped_artifacts,
+        "artifacts": artifacts,
+        "all_expected_artifacts_present": all(artifacts.values()),
+        "ready_for_inspection": (
+            all(artifacts.values())
+            and all(shape_checks.values())
+            and all(finite_checks.values())
+        ),
+    }
+    if ckd_nurange is not None:
+        status["ckd_nurange_cm-1"] = [float(ckd_nurange[0]), float(ckd_nurange[1])]
+    save_json(os.path.join(output_dir, "run_status.json"), status, "Run status JSON")
+
+
 def run_svi(rng_key, rp_mean, rp_std, num_steps=1000, lr=0.005):
     """Execute SVI, return params, losses, init strategy, median, and guide."""
     guide = build_guide()
@@ -1357,13 +2393,14 @@ def run_svi(rng_key, rp_mean, rp_std, num_steps=1000, lr=0.005):
         num_steps,
         rp_mean=rp_mean,
         rp_std=rp_std,
+        progress_bar=not args.no_progress_bar,
     )
 
     params = svi_result.params
     losses = svi_result.losses
 
-    # Median of the AutoMVN part in the constrained space.
-    svi_median = guide[-1].median(params)
+    # Median in the constrained space.
+    svi_median = guide.median(params)
     # Keep Mp and Rs anchored to their prior means for HMC initialisation.
     svi_median.update({"Mp": Mp_mean, "Rs": Rstar_mean})
     init_strategy = init_to_value(values=svi_median)
@@ -1424,10 +2461,7 @@ mcmc = MCMC(
 mcmc.run(rng_key_, rp_mean=rp_mean_fit, rp_std=rp_std_fit)
 
 # Print summary to console *and* save to file
-mcmc.print_summary()
-with open(os.path.join(DIR_SAVE, "mcmc_summary.txt"), "w") as f:
-    with redirect_stdout(f):
-        mcmc.print_summary()
+save_mcmc_summary(mcmc, DIR_SAVE)
 
 # Save posterior samples and predictive spectra
 posterior_sample = mcmc.get_samples()
@@ -1447,7 +2481,10 @@ save_predictive_spectrum(predictions, DIR_SAVE)
 #
 # Generate quick-look diagnostics: SVI loss curve, HMC predictive spectrum,
 # observed/SVI/HMC overlay, and corner plots for a subset of parameters.
-print("Plotting SVI and HMC diagnostics …")
+if args.skip_diagnostic_plots:
+    print("Skipping post-HMC diagnostic plots.")
+else:
+    print("Plotting SVI and HMC diagnostics …")
 
 
 def plot_svi_loss(loss_values, save_path):
@@ -1517,6 +2554,25 @@ def _corner_data(sample_dict, variables):
     return np.column_stack(cols), labels
 
 
+def _corner_dimension_count(sample_dict, variables):
+    """Return number of scalar dimensions that would be plotted by corner."""
+    total = 0
+    for var in variables:
+        if var not in sample_dict:
+            continue
+        arr = np.asarray(sample_dict[var])
+        total += int(np.prod(arr.shape[1:])) if arr.ndim > 1 else 1
+    return total
+
+
+def _posterior_sample_count(sample_dict):
+    """Return the number of flattened HMC posterior samples."""
+    if not sample_dict:
+        return 0
+    first = next(iter(sample_dict.values()))
+    return int(np.asarray(first).shape[0])
+
+
 def plot_corner(hmc_samples=None, svi_samples=None, variables=None, save_path=None):
     """Corner plot helper: supports HMC only, SVI only, or HMC+SVI overlay."""
     if corner is None:
@@ -1560,48 +2616,73 @@ def plot_corner(hmc_samples=None, svi_samples=None, variables=None, save_path=No
 
 
 # Generate deterministic rp_mu from SVI median parameters
-rng_key, rng_plot = random.split(rng_key)
-svi_pred = Predictive(model_c, params=svi_median, num_samples=1, return_sites=["rp_mu"])
-svi_mu = svi_pred(rng_plot, rp_mean=rp_mean_fit, rp_std=rp_std_fit)["rp_mu"][0]
+if not args.skip_diagnostic_plots:
+    rng_key, rng_plot = random.split(rng_key)
+    svi_pred = Predictive(
+        model_c, params=svi_median, num_samples=1, return_sites=["rp_mu"]
+    )
+    svi_mu = svi_pred(rng_plot, rp_mean=rp_mean_fit, rp_std=rp_std_fit)["rp_mu"][0]
 
-loss_plot_path = os.path.join(DIR_SAVE, "svi_loss.png")
-plot_svi_loss(losses, loss_plot_path)
+    loss_plot_path = os.path.join(DIR_SAVE, "svi_loss.png")
+    plot_svi_loss(losses, loss_plot_path)
 
-overlay_plot_path = os.path.join(DIR_SAVE, "spectrum_overlay.png")
-plot_overlay(
-    wav_obs_fit,
-    rp_mean_fit,
-    rp_std_fit,
-    predictions["rp_mu"],
-    svi_mu,
-    overlay_plot_path,
-)
-
-corner_vars = ["Radius_btm", "T0", "logP_cloud", "RV"]
-corner_vars += [f"logVMR_{mol}" for mol in list(opa_mols.keys())]
-if not args.skip_corner:
-    # Draw samples from the SVI guide for visualization only when needed.
-    rng_key, rng_svi = random.split(rng_key)
-    svi_samples = svi_guide[-1].sample_posterior(
-        rng_svi,
-        _svi_params,
-        rp_mean=rp_mean_fit,
-        rp_std=rp_std_fit,
-        sample_shape=(args.svi_plot_samples,),
+    overlay_plot_path = os.path.join(DIR_SAVE, "spectrum_overlay.png")
+    plot_overlay(
+        wav_obs_fit,
+        rp_mean_fit,
+        rp_std_fit,
+        predictions["rp_mu"],
+        svi_mu,
+        overlay_plot_path,
     )
 
-    corner_plot_path = os.path.join(DIR_SAVE, "corner_plot_svi.png")
-    plot_corner(svi_samples=svi_samples, variables=corner_vars, save_path=corner_plot_path)
+    corner_vars = ["Radius_btm", "T0", "logP_cloud", "RV"]
+    corner_vars += [f"logVMR_{mol}" for mol in list(opa_mols.keys())]
+    if not args.skip_corner:
+        corner_dim = _corner_dimension_count(posterior_sample, corner_vars)
+        hmc_corner_samples = _posterior_sample_count(posterior_sample)
+        svi_corner_samples = int(args.svi_plot_samples)
+        if corner is None:
+            print("corner is not installed; skipping corner plots.")
+        elif hmc_corner_samples <= corner_dim or svi_corner_samples <= corner_dim:
+            print(
+                "Skipping corner plots because HMC and SVI guide sample counts must "
+                f"exceed the corner dimension ({corner_dim}); "
+                f"hmc_samples={hmc_corner_samples}, svi_samples={svi_corner_samples}."
+            )
+        else:
+            # Draw samples from the SVI guide for visualization only when needed.
+            rng_key, rng_svi = random.split(rng_key)
+            svi_samples = svi_guide.sample_posterior(
+                rng_svi,
+                _svi_params,
+                rp_mean=rp_mean_fit,
+                rp_std=rp_std_fit,
+                sample_shape=(args.svi_plot_samples,),
+            )
 
-    hmc_corner_plot_path = os.path.join(DIR_SAVE, "corner_plot.png")
-    plot_corner(
-        hmc_samples=posterior_sample, variables=corner_vars, save_path=hmc_corner_plot_path
-    )
+            corner_plot_path = os.path.join(DIR_SAVE, "corner_plot_svi.png")
+            plot_corner(
+                svi_samples=svi_samples,
+                variables=corner_vars,
+                save_path=corner_plot_path,
+            )
 
-    hmc_svi_corner_overlay_path = os.path.join(DIR_SAVE, "corner_plot_hmc_svi_overlay.png")
-    plot_corner(
-        hmc_samples=posterior_sample,
-        svi_samples=svi_samples,
-        variables=corner_vars,
-        save_path=hmc_svi_corner_overlay_path,
-    )
+            hmc_corner_plot_path = os.path.join(DIR_SAVE, "corner_plot.png")
+            plot_corner(
+                hmc_samples=posterior_sample,
+                variables=corner_vars,
+                save_path=hmc_corner_plot_path,
+            )
+
+            hmc_svi_corner_overlay_path = os.path.join(
+                DIR_SAVE, "corner_plot_hmc_svi_overlay.png"
+            )
+            plot_corner(
+                hmc_samples=posterior_sample,
+                svi_samples=svi_samples,
+                variables=corner_vars,
+                save_path=hmc_svi_corner_overlay_path,
+            )
+
+save_run_status(DIR_SAVE, posterior_sample, predictions, losses)

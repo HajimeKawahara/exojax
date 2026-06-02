@@ -367,11 +367,19 @@ class OpaCKD(OpaCalc):
                 band_edges=np.asarray(data["band_edges"]),
             )
 
-        Ng_meta = int(meta.get("Ng", arrays["ggrid"].shape[0]))
-        if arrays["ggrid"].shape[0] != Ng_meta:
+        ggrid_np = arrays["ggrid"]
+        ggrid_len = ggrid_np.shape[0] if ggrid_np.ndim == 1 else ggrid_np.size
+        Ng_meta = int(meta.get("Ng", ggrid_len))
+        if ggrid_np.ndim != 1 or ggrid_np.shape[0] != Ng_meta:
             raise ValueError(
-                f"Inconsistent Ng between metadata ({Ng_meta}) and g-grid ({arrays['ggrid'].shape[0]})"
+                f"Inconsistent Ng between metadata ({Ng_meta}) and g-grid ({ggrid_len})"
             )
+        if not np.all(np.isfinite(ggrid_np)):
+            raise ValueError("ggrid must contain finite values")
+        if not np.all((ggrid_np >= 0.0) & (ggrid_np <= 1.0)):
+            raise ValueError("ggrid values must lie within [0, 1]")
+        if np.any(np.diff(ggrid_np) <= 0.0):
+            raise ValueError("ggrid must be strictly increasing")
         if arrays["weights"].ndim != 1 or arrays["weights"].shape[0] != Ng_meta:
             raise ValueError("weights shape does not match Ng in metadata")
         if not np.all(np.isfinite(arrays["weights"])):
@@ -400,15 +408,41 @@ class OpaCKD(OpaCalc):
             raise ValueError("T_grid and P_grid must contain finite values")
         if not np.all(arrays["T_grid"] > 0.0) or not np.all(arrays["P_grid"] > 0.0):
             raise ValueError("T_grid and P_grid must be positive")
+        if np.any(np.diff(arrays["T_grid"]) <= 0.0) or np.any(
+            np.diff(arrays["P_grid"]) <= 0.0
+        ):
+            raise ValueError("T_grid and P_grid must be strictly increasing")
 
         n_bands = log_kggrid_np.shape[3]
         if (
-            arrays["nu_bands"].shape[0] != n_bands
-            or arrays["band_edges"].shape[0] != n_bands
+            arrays["nu_bands"].ndim != 1
+            or arrays["band_edges"].ndim != 2
+            or arrays["nu_bands"].shape[0] != n_bands
+            or arrays["band_edges"].shape != (n_bands, 2)
         ):
             raise ValueError(
                 "Spectral band metadata does not match log_kggrid dimensions"
             )
+        if not np.all(np.isfinite(arrays["nu_bands"])) or not np.all(
+            np.isfinite(arrays["band_edges"])
+        ):
+            raise ValueError("Spectral band metadata must contain finite values")
+        if not np.all(arrays["nu_bands"] > 0.0) or not np.all(
+            arrays["band_edges"] > 0.0
+        ):
+            raise ValueError("Spectral band metadata must be positive")
+        band_widths = arrays["band_edges"][:, 1] - arrays["band_edges"][:, 0]
+        if not np.all(band_widths > 0.0):
+            raise ValueError("Spectral band edges must have positive widths")
+        if np.any(np.diff(arrays["nu_bands"]) <= 0.0):
+            raise ValueError("Spectral band centers must be strictly increasing")
+        if not np.all(
+            (arrays["band_edges"][:, 0] <= arrays["nu_bands"])
+            & (arrays["nu_bands"] <= arrays["band_edges"][:, 1])
+        ):
+            raise ValueError("Spectral band centers must lie within band edges")
+        if np.any(arrays["band_edges"][1:, 0] < arrays["band_edges"][:-1, 1]):
+            raise ValueError("Spectral band edges must not overlap")
 
         if arrays["band_edges"].size:
             inferred_band_width = float(
@@ -424,6 +458,8 @@ class OpaCKD(OpaCalc):
             raise ValueError(
                 "Missing band_width in metadata and cannot infer from band edges"
             )
+        if not np.isfinite(band_width) or band_width <= 0.0:
+            raise ValueError("band_width metadata must be finite and positive")
         band_spacing = str(meta.get("band_spacing", "log"))
 
         return dict(
@@ -528,6 +564,10 @@ class OpaCKD(OpaCalc):
                 "External CKD xsgrid shape does not match table axes: "
                 f"expected {expected_shape}, got {xsgrid.shape}"
             )
+        if not np.all((arrays["samples"] >= 0.0) & (arrays["samples"] <= 1.0)):
+            raise ValueError("External CKD samples must lie within [0, 1]")
+        if np.any(np.diff(np.sort(arrays["samples"])) <= 0.0):
+            raise ValueError("External CKD samples must be unique")
         if arrays["weights"].size != arrays["samples"].size:
             raise ValueError("External CKD weights must match samples")
         if not np.all(arrays["weights"] > 0.0):
@@ -538,6 +578,14 @@ class OpaCKD(OpaCalc):
             raise ValueError("External CKD temperatures must be positive")
         if not np.all(arrays["pressures"] > 0.0):
             raise ValueError("External CKD pressures must be positive")
+        if not np.all(arrays["nu_centers"] > 0.0):
+            raise ValueError("External CKD nu_centers must be positive")
+        if np.unique(arrays["nu_centers"]).size != arrays["nu_centers"].size:
+            raise ValueError("External CKD nu_centers must be unique")
+        if np.any(np.diff(np.sort(arrays["temperatures"])) <= 0.0):
+            raise ValueError("External CKD temperatures must be unique")
+        if np.any(np.diff(np.sort(arrays["pressures"])) <= 0.0):
+            raise ValueError("External CKD pressures must be unique")
         if not np.all(np.isfinite(xsgrid)):
             raise ValueError("External CKD xsgrid must contain finite values")
         if not np.all(xsgrid > 0.0):
@@ -608,19 +656,27 @@ class OpaCKD(OpaCalc):
         path = pathlib.Path(path).expanduser()
         if path.is_dir():
             h5_paths = sorted(path.glob("*.h5"))
-            if len(h5_paths) == 1:
-                path = h5_paths[0]
-            elif len(h5_paths) > 1:
+            nonempty_h5_paths = [
+                h5_path for h5_path in h5_paths if h5_path.stat().st_size > 0
+            ]
+            if len(nonempty_h5_paths) == 1:
+                path = nonempty_h5_paths[0]
+            elif len(nonempty_h5_paths) > 1:
                 raise ValueError(
-                    f"Multiple CKD h5 files found in {path}. Specify the file path."
+                    f"Multiple non-empty CKD h5 files found in {path}. "
+                    "Specify the file path."
                 )
             else:
                 path = download_exomolop_h5(path)
         elif not path.suffix:
             # download ExoMol opacity file
             path = download_exomolop_h5(path)
+        elif path.suffix != ".h5":
+            raise ValueError(f"CKD table file must have .h5 suffix: {path}")
         elif not path.exists():
             raise FileNotFoundError(f"CKD table file does not exist: {path}")
+        elif path.stat().st_size == 0:
+            raise ValueError(f"CKD table file is empty: {path}")
 
         (
             xsgrid,
@@ -633,14 +689,28 @@ class OpaCKD(OpaCalc):
             molmass,
         ) = exomolop_provider.load_ckd(path)
 
+        molmass = np.asarray(molmass, dtype=float)
+        if molmass.size != 1:
+            raise ValueError("External CKD molmass must be scalar")
+        molmass = float(molmass.reshape(-1)[0])
+        if not np.isfinite(molmass) or molmass <= 0.0:
+            raise ValueError("External CKD molmass must be finite and positive")
         cls._validate_external_table(
             xsgrid, samples, weights, temperatures, pressures, nu_centers
         )
-        band_edges = cls._infer_band_edges_from_centers(nu_centers)
+        temperature_order = np.argsort(temperatures)
+        pressure_order = np.argsort(pressures)
+        sample_order = np.argsort(samples)
+        temperatures = temperatures[temperature_order]
+        pressures = pressures[pressure_order]
+        samples = samples[sample_order]
+        weights = weights[sample_order]
+        xsgrid = xsgrid[temperature_order][:, pressure_order, :, :]
+        xsgrid = xsgrid[:, :, sample_order, :]
         band_order = np.argsort(nu_centers)
         nu_centers = nu_centers[band_order]
         xsgrid = xsgrid[..., band_order]
-        band_edges = band_edges[band_order]
+        band_edges = cls._infer_band_edges_from_centers(nu_centers)
 
         if nurange is not None:
             nurange = np.asarray(nurange)
@@ -651,6 +721,8 @@ class OpaCKD(OpaCalc):
                 )
             if not np.all(np.isfinite(nurange)):
                 raise ValueError("nurange must contain finite values")
+            if not np.all(nurange > 0.0):
+                raise ValueError("nurange must contain positive wavenumbers")
             nu_min = nurange[0]
             nu_max = nurange[-1]
             if nu_min > nu_max:

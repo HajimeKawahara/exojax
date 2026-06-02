@@ -85,6 +85,24 @@ def url_ExoMol():
     return url
 
 
+DEFAULT_PETITRADTRANS_KTABLE_SUFFIXES = (
+    "__R1000_0.3-50mu.ktable.petitRADTRANS.h5",
+    ".R1000_0.3-50mu.ktable.petitRADTRANS.h5",
+    ".R1000_0.1-250mu.ktable.petitRADTRANS.h5",
+)
+
+
+def petitRADTRANS_ktable_filenames(exact_molecule_name, database, extension=None):
+    """Return ExoMolOP/petitRADTRANS k-table filename candidates."""
+    if extension is None:
+        suffixes = DEFAULT_PETITRADTRANS_KTABLE_SUFFIXES
+    elif isinstance(extension, str):
+        suffixes = (extension,)
+    else:
+        suffixes = tuple(extension)
+    return [f"{exact_molecule_name}__{database}{suffix}" for suffix in suffixes]
+
+
 def url_Exomol_iso(molecule, isotope_full_name):
     """returns URL for ExoMol for isotope.
 
@@ -108,4 +126,3 @@ def url_developer_data():
     """
     url = "http://secondearths.sakura.ne.jp/exojax/data/"
     return url
-
