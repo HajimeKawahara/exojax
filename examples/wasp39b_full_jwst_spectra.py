@@ -2,12 +2,43 @@
 WASP-39 b Transmission Spectrum Retrieval with ExoJAX + NumPyro
 ===============================================================
 
-This example demonstrates how to retrieve the JWST transmission 
-spectrum of NIRISS/SOSS+NIRSPEC/G395H+MIRI using *ExoJAX* and 
-*NumPyro*'s Hamiltonian Monte-Carlo **NUTS** sampler for Bayesian 
-inference.
+This example demonstrates a wide-wavelength JWST transmission-spectrum
+retrieval for WASP-39 b using *ExoJAX* and *NumPyro*'s Hamiltonian
+Monte-Carlo **NUTS** sampler.  The main demo path combines
+NIRISS/SOSS, NIRSpec/G395H, and MIRI/LRS observations with ExoMolOP
+correlated-k (CKD) opacity tables.
 
-Hajime Kawahara, Shotaro Tada
+Recommended CKD smoke checks::
+
+    python examples/wasp39b_full_jwst_spectra.py --check-inputs \
+      --data-mode wide --opacity-mode ckd --molecules H2O,CO2 \
+      --cia-pairs H2H2 --ckd-root .database
+
+    python examples/wasp39b_full_jwst_spectra.py --check-forward \
+      --data-mode wide --opacity-mode ckd --molecules H2O,CO2 \
+      --cia-pairs H2H2 --ckd-root .database --max-observed 32
+
+Recommended CKD HMC run::
+
+    python examples/wasp39b_full_jwst_spectra.py \
+      --data-mode wide --opacity-mode ckd \
+      --channels niriss_order1,niriss_order2,nirspec_g395h,miri_lrs \
+      --molecules H2O,CO2 --cia-pairs H2H2 --ckd-root .database \
+      --jax-platform gpu --rv-fixed -83.18 \
+      --num-warmup 500 --num-samples 1000 --num-chains 1 \
+      --max-tree-depth 8 --skip-corner \
+      --output-dir output_wasp39b_ckd_h2o_co2_niriss_rvfixed
+
+The CKD path fixes the radial-velocity shift by default because the
+R~1000 CKD tables are not intended for radial-velocity inference.  The
+``premodit`` path is kept as a NIRSpec-only line-by-line prototype.
+
+The run writes reproducibility and inspection artifacts including
+``run_config.json``, ``run_status.json``, ``observed_data.npz``,
+``posterior_sample.npz``, ``posterior_predictive.npz``, and
+``spectrum_overlay.png``.
+
+Hajime Kawahara, Shotaro Tada, codex
 
 """
 # %%
@@ -461,6 +492,16 @@ ciapath_list = {
     for pair in DEFAULT_CIA_PAIRS
 }
 ciapath_list = {pair: ciapath_list[pair] for pair in selected_cia_pairs}
+
+
+# %%
+# Input discovery and validation helpers
+# --------------------------------------
+#
+# The CKD demo is useful only when the large ExoMolOP tables are present and
+# compatible.  The helpers in this section keep the runtime path explicit:
+# users can run --check-inputs before paying the cost of importing JAX,
+# loading opacity tables, or launching HMC.
 
 
 def ckd_h5_paths(path):
@@ -1538,7 +1579,7 @@ def observed_wav2nu(wavelength, unit):
 # Setup and configuration
 # -------------------------------------------------------------------
 
-# Planet–star system parameters and orbital period (days)
+# Planet-star system parameters and orbital period (days)
 period_day = 4.05528
 Mp_mean, Mp_std = 0.281, 0.032  # [M_J]
 Rstar_mean, Rstar_std = 0.939, 0.022  # [R_Sun]
@@ -1553,8 +1594,12 @@ opa_save = False
 
 
 # %%
-# Load observed transmission spectrum
-# -----------------------------------
+# Load and select observed spectra
+# --------------------------------
+#
+# The wide CKD demo uses the concatenated NIRISS/SOSS, NIRSpec/G395H, and
+# MIRI/LRS data vector. The legacy preMODIT branch remains NIRSpec-only, so
+# keep the NIRSpec arrays available separately for that path.
 
 if args.check_inputs:
     status_payload = input_status_payload(
@@ -1622,7 +1667,9 @@ wav_obs_nirspec, rp_mean_nirspec, rp_std_nirspec = nirspec_data_for_premodit(
 )
 
 
-# Convert from wavelength to wavenumber for modelling.
+# Convert from wavelength to wavenumber for modelling. In the CKD path the
+# opacity-table range is trimmed using the fixed radial-velocity shift rather
+# than an RV prior interval.
 if not args.plot_data_only:
     inst_fit_nus = observed_wav2nu(wav_obs_fit, "nm")
     if args.opacity_mode != "ckd":
@@ -1640,11 +1687,12 @@ if not args.check_forward and not args.skip_data_plot:
 
 
 # %%
-# Instrumental resolution
-# -------------------------
+# Instrumental resolution for the preMODIT prototype
+# --------------------------------------------------
 #
-# Read the NIRSpec/G395H resolving-power curve and interpolate it so the
-# forward model can convert to a Gaussian instrumental broadening kernel.
+# The CKD wide-wavelength path samples the R~1000 CKD band spectrum directly
+# at the observed wavelengths. The NIRSpec resolving-power curve below is used
+# only by the NIRSpec-only preMODIT prototype.
 
 
 def load_nirspec_resolution_curve(data_dir):
@@ -1665,11 +1713,12 @@ if args.opacity_mode != "ckd":
 
 
 # %%
-# Wavenumber grid and spectral operators for NIRSPEC
-# ------------------------------------------------------
+# Wavenumber grid and spectral operators for the NIRSpec preMODIT path
+# --------------------------------------------------------------------
 #
-# Build a high-resolution wavenumber grid for forward modelling and construct
-# spectral operators to mimic rotation and the NIRSpec line-spread function.
+# Build a high-resolution wavenumber grid for line-by-line forward modelling
+# and construct spectral operators to mimic rotation and the NIRSpec
+# line-spread function. The CKD demo bypasses this section.
 
 if args.opacity_mode != "ckd":
     N_nirspec = 30_000  # spectral points; lower for faster demo
@@ -1687,7 +1736,7 @@ if args.opacity_mode != "ckd":
     sop_inst_nirspec = SopInstProfile(nu_grid_nirspec, vrmax=300.0)
 
 # %%
-# Atmospheric radiative‑transfer object
+# Atmospheric radiative-transfer object
 # -------------------------------------
 
 diffmode = 0
@@ -1819,7 +1868,7 @@ def load_molecular_opacities():
     molmass_list = []
 
     if args.opacity_mode == "ckd":
-        print("Loading ExoMolOP CKD tables …")
+        print("Loading ExoMolOP CKD tables ...")
         print(
             "  CKD nurange with fixed RV: "
             f"{ckd_nurange[0]:.3f}-{ckd_nurange[1]:.3f} cm-1"
@@ -1831,7 +1880,7 @@ def load_molecular_opacities():
             molmass_list.append(molmass)
         return opa_mols_local, jnp.array(molmass_list)
 
-    print("Loading HITEMP/ExoMol databases …")
+    print("Loading HITEMP/ExoMol databases ...")
     for mol, path in molpath_list_HITEMP.items():
         print(f"  * {mol} (HITEMP)")
         mdb_factory = lambda p: MdbHitemp(p, nu_grid_nirspec, gpu_transfer=False, isotope=1)
@@ -1989,7 +2038,7 @@ def spectral_model(radius_btm, Mp, Rstar, RV, vmr_arr, T0, logP_cloud):
         xsmatrix = opa_mols[mol].xsmatrix(Tarr, art.pressure)
         dtau_nirspec += art.opacity_profile_xs(xsmatrix, vmr_arr[i], mmw, gravity)
 
-    # --- Radiative‑transfer ------------------------------------------------
+    # --- Radiative-transfer ------------------------------------------------
     rp2 = art.run(
         dtau_nirspec, Tarr, mmw, radius_btm, gravity_btm
     )  # (radius/radius_btm)^2 spectrum
@@ -2037,6 +2086,9 @@ def model_c(rp_mean, rp_std):
         numpyro.sample("Rs", dist.TruncatedNormal(Rstar_mean, Rstar_std, low=0)) * Rs
     )
     radius_btm = numpyro.sample("Radius_btm", dist.Uniform(1.0, 1.5)) * RJ
+    # CKD tables are binned at R~1000, so this demo fixes the wavelength shift
+    # instead of sampling an RV parameter. The preMODIT prototype keeps the old
+    # RV prior because it works on a line-by-line NIRSpec grid.
     if args.opacity_mode == "ckd":
         RV = args.rv_fixed
     else:
@@ -2379,7 +2431,7 @@ save_run_config(DIR_SAVE)
 save_observed_data(DIR_SAVE)
 rng_key = random.PRNGKey(args.rng_seed)
 
-print("Launching HMC-NUTS …")
+print("Launching HMC-NUTS ...")
 rv_run_setting = (
     f"rv_fixed={args.rv_fixed} km/s"
     if args.opacity_mode == "ckd"
@@ -2420,7 +2472,7 @@ save_mcmc_summary(mcmc, DIR_SAVE)
 posterior_sample = mcmc.get_samples()
 save_posterior_samples(posterior_sample, DIR_SAVE)
 
-print("Generating predictive spectrum …")
+print("Generating predictive spectrum ...")
 
 pred = Predictive(model_c, posterior_sample, return_sites=["rp", "rp_mu"])
 predictions = pred(rng_key_, rp_mean=None, rp_std=rp_std_fit)
@@ -2436,7 +2488,7 @@ save_predictive_spectrum(predictions, DIR_SAVE)
 if args.skip_diagnostic_plots:
     print("Skipping post-HMC diagnostic plots.")
 else:
-    print("Plotting HMC diagnostics …")
+    print("Plotting HMC diagnostics ...")
 
 
 def plot_overlay(wavelength_nm, rp_obs, rp_err, rp_mu_hmc, rp_pred_hmc, save_path):
