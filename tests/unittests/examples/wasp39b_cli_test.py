@@ -505,7 +505,7 @@ def test_ckd_check_forward_runs_with_synthetic_wide_channels(tmp_path):
     assert result.returncode == 0, result.stderr
     assert "Forward-model check:" in result.stdout
     assert "  channels: niriss_order1, niriss_order2, nirspec_g395h, miri_lrs" in result.stdout
-    assert "  fiducial RV: -25.000 km/s" in result.stdout
+    assert "  fiducial RV: -83.180 km/s" in result.stdout
     assert "  observed shape: (96,)" in result.stdout
     assert "  model shape: (96,)" in result.stdout
     assert "  finite model: True" in result.stdout
@@ -518,7 +518,8 @@ def test_ckd_check_forward_runs_with_synthetic_wide_channels(tmp_path):
     assert forward_status["finite_model"] is True
     assert forward_status["observed_shape"] == [96]
     assert forward_status["model_shape"] == [96]
-    assert forward_status["fiducial_rv_kms"] == -25.0
+    assert forward_status["rv_fixed_kms"] == -83.18
+    assert forward_status["fiducial_rv_kms"] == -83.18
     assert forward_status["ckd_sources"]["H2O"].endswith("synthetic_h2o.h5")
     assert forward_status["input_status"]["ready_for_local_run"] is True
     assert forward_status["input_status"]["problems"] == []
@@ -1605,8 +1606,6 @@ def test_ckd_wide_hmc_smoke_with_synthetic_table_writes_outputs(tmp_path):
         "50",
         "--max-observed",
         "8",
-        "--svi-steps",
-        "2",
         "--num-warmup",
         "1",
         "--num-samples",
@@ -1614,8 +1613,6 @@ def test_ckd_wide_hmc_smoke_with_synthetic_table_writes_outputs(tmp_path):
         "--num-chains",
         "1",
         "--max-tree-depth",
-        "2",
-        "--svi-plot-samples",
         "2",
         "--skip-data-plot",
         "--no-progress-bar",
@@ -1632,21 +1629,17 @@ def test_ckd_wide_hmc_smoke_with_synthetic_table_writes_outputs(tmp_path):
     assert "Posterior predictive bundle saved" in result.stdout
     assert "Run status JSON saved" in result.stdout
     assert "MCMC summary skipped because --num-samples < 4" in result.stdout
-    assert "Skipping corner plots because HMC and SVI guide sample counts" in result.stdout
+    assert "Skipping corner plots because HMC sample count" in result.stdout
     assert "%|" not in result.stdout
 
     expected_files = {
         "run_config.json",
         "observed_data.npz",
-        "svi_params.npz",
-        "svi_losses.npy",
-        "svi_init_values.npz",
         "posterior_sample.npz",
         "posterior_predictive.npz",
         "rp_mu_pred.npy",
         "rp_pred.npy",
         "mcmc_summary.txt",
-        "svi_loss.png",
         "spectrum_overlay.png",
         "run_status.json",
     }
@@ -1658,8 +1651,6 @@ def test_ckd_wide_hmc_smoke_with_synthetic_table_writes_outputs(tmp_path):
     assert run_config["opacity_mode"] == "ckd"
     assert run_config["max_observed"] == 8
     assert run_config["rng_seed"] == 0
-    assert run_config["svi_steps"] == 2
-    assert run_config["svi_lr"] == 0.005
     assert run_config["num_warmup"] == 1
     assert run_config["num_samples"] == 1
     assert run_config["num_chains"] == 1
@@ -1695,14 +1686,13 @@ def test_ckd_wide_hmc_smoke_with_synthetic_table_writes_outputs(tmp_path):
 
     with np.load(output_dir / "posterior_sample.npz") as data:
         assert data["logVMR_H2O"].shape == (1,)
+        assert "RV" not in data.files
         assert data["rp_mu"].shape[-1] == 8
 
     with np.load(output_dir / "posterior_predictive.npz") as data:
         assert data["wavelength_nm"].shape == (8,)
         assert data["rp_mu"].shape[-1] == 8
         assert data["rp"].shape[-1] == 8
-
-    assert np.load(output_dir / "svi_losses.npy").shape == (2,)
 
     with open(output_dir / "run_status.json") as handle:
         run_status = json.load(handle)
@@ -1728,6 +1718,7 @@ def test_ckd_wide_hmc_smoke_with_synthetic_table_writes_outputs(tmp_path):
     assert run_status["ckd_table_summary"]["H2O"]["n_g"] == 3
     assert run_status["n_observed"] == 8
     assert run_status["wavelength_nm_min"] < run_status["wavelength_nm_max"]
+    assert run_status["rv_fixed_kms"] == -83.18
     assert run_status["rv_min_kms"] == -100.0
     assert run_status["rv_max_kms"] == 50.0
     assert run_status["ckd_nurange_cm-1"][0] < run_status["ckd_nurange_cm-1"][1]
@@ -1740,8 +1731,6 @@ def test_ckd_wide_hmc_smoke_with_synthetic_table_writes_outputs(tmp_path):
         == 8
     )
     assert run_status["rng_seed"] == 0
-    assert run_status["svi_steps"] == 2
-    assert run_status["svi_lr"] == 0.005
     assert run_status["num_warmup"] == 1
     assert run_status["num_samples"] == 1
     assert run_status["num_chains"] == 1
@@ -1756,7 +1745,6 @@ def test_ckd_wide_hmc_smoke_with_synthetic_table_writes_outputs(tmp_path):
     assert run_status["finite_checks"] == {
         "posterior_all_finite": True,
         "predictive_all_finite": True,
-        "svi_losses_all_finite": True,
     }
     assert run_status["artifacts"]["posterior_predictive.npz"] is True
     assert set(run_status["expected_artifacts"]) == expected_files - {"run_status.json"}
@@ -1801,8 +1789,6 @@ def test_ckd_hmc_smoke_can_skip_diagnostic_plots(tmp_path):
         "50",
         "--max-observed",
         "4",
-        "--svi-steps",
-        "2",
         "--num-warmup",
         "1",
         "--num-samples",
@@ -1821,9 +1807,8 @@ def test_ckd_hmc_smoke_can_skip_diagnostic_plots(tmp_path):
 
     assert result.returncode == 0, result.stderr
     assert "Skipping post-HMC diagnostic plots." in result.stdout
-    assert "Plotting SVI and HMC diagnostics" not in result.stdout
+    assert "Plotting HMC diagnostics" not in result.stdout
     assert "Matplotlib created a temporary cache directory" not in result.stderr
-    assert not (output_dir / "svi_loss.png").exists()
     assert not (output_dir / "spectrum_overlay.png").exists()
 
     with open(output_dir / "run_config.json") as handle:
@@ -1834,8 +1819,7 @@ def test_ckd_hmc_smoke_can_skip_diagnostic_plots(tmp_path):
         run_status = json.load(handle)
     assert run_status["cia_pairs"] == []
     assert run_status["skip_diagnostic_plots"] is True
-    assert run_status["skipped_artifacts"] == ["svi_loss.png", "spectrum_overlay.png"]
-    assert "svi_loss.png" not in run_status["expected_artifacts"]
+    assert run_status["skipped_artifacts"] == ["spectrum_overlay.png"]
     assert "spectrum_overlay.png" not in run_status["expected_artifacts"]
     assert run_status["all_expected_artifacts_present"] is True
     assert run_status["ready_for_inspection"] is True

@@ -24,12 +24,20 @@ import sys
 import tempfile
 import warnings
 
+NIRSPEC_G395H_CHANNEL = "nirspec_g395h"
+
 DEFAULT_MOLECULES = ("H2O", "CO", "CO2", "H2S", "SO2", "SiO")
 SUPPORTED_MOLECULES = set(DEFAULT_MOLECULES)
-DEFAULT_CHANNELS = ("niriss_order1", "niriss_order2", "nirspec_g395h", "miri_lrs")
+DEFAULT_CHANNELS = (
+    "niriss_order1",
+    "niriss_order2",
+    NIRSPEC_G395H_CHANNEL,
+    "miri_lrs",
+)
 SUPPORTED_CHANNELS = set(DEFAULT_CHANNELS)
 DEFAULT_CIA_PAIRS = ("H2H2", "H2He")
 SUPPORTED_CIA_PAIRS = set(DEFAULT_CIA_PAIRS)
+DEFAULT_RV_FIXED_KMS = -83.18
 CIA_RELATIVE_FILES = {
     "H2H2": os.path.join(".db_CIA", "H2-H2_2011.cia"),
     "H2He": os.path.join(".db_CIA", "H2-He_2011.cia"),
@@ -148,7 +156,7 @@ parser.add_argument(
 parser.add_argument(
     "--quick",
     action="store_true",
-    help="Use short SVI/HMC settings for a smoke test.",
+    help="Use short HMC settings for a smoke test.",
 )
 parser.add_argument(
     "--max-observed",
@@ -169,31 +177,25 @@ parser.add_argument(
     "--rng-seed",
     type=int,
     default=0,
-    help="Random seed for SVI, HMC, and posterior predictive draws.",
+    help="Random seed for HMC and posterior predictive draws.",
 )
 parser.add_argument(
     "--rv-min",
     type=float,
     default=-200.0,
-    help="Lower radial-velocity prior bound in km/s.",
+    help="Lower radial-velocity prior bound in km/s for the preMODIT path.",
 )
 parser.add_argument(
     "--rv-max",
     type=float,
     default=0.0,
-    help="Upper radial-velocity prior bound in km/s.",
+    help="Upper radial-velocity prior bound in km/s for the preMODIT path.",
 )
 parser.add_argument(
-    "--svi-steps",
-    type=int,
-    default=1000,
-    help="Number of SVI optimization steps before HMC.",
-)
-parser.add_argument(
-    "--svi-lr",
+    "--rv-fixed",
     type=float,
-    default=0.005,
-    help="SVI Adam learning rate.",
+    default=DEFAULT_RV_FIXED_KMS,
+    help="Fixed radial-velocity shift in km/s for the CKD path.",
 )
 parser.add_argument(
     "--num-warmup",
@@ -236,12 +238,6 @@ parser.add_argument(
     help="Skip corner plot generation.",
 )
 parser.add_argument(
-    "--svi-plot-samples",
-    type=int,
-    default=1000,
-    help="Number of SVI guide samples used only for corner plot diagnostics.",
-)
-parser.add_argument(
     "--skip-data-plot",
     action="store_true",
     help="Skip observed-spectrum plot generation during retrieval.",
@@ -249,7 +245,7 @@ parser.add_argument(
 parser.add_argument(
     "--skip-diagnostic-plots",
     action="store_true",
-    help="Skip post-HMC SVI-loss, spectrum-overlay, and corner diagnostics.",
+    help="Skip post-HMC spectrum-overlay and corner diagnostics.",
 )
 parser.add_argument(
     "--output-dir",
@@ -360,24 +356,22 @@ def parse_ckd_table_path_map(table_path_text, molecules):
 def validate_numeric_args(args):
     """Validate scalar run-control arguments before heavy imports."""
     positive_integer_args = {
-        "--svi-steps": args.svi_steps,
         "--num-samples": args.num_samples,
         "--num-chains": args.num_chains,
         "--max-tree-depth": args.max_tree_depth,
-        "--svi-plot-samples": args.svi_plot_samples,
     }
     for name, value in positive_integer_args.items():
         if value <= 0:
             parser.error(f"{name} must be a positive integer.")
 
-    if args.svi_lr <= 0.0:
-        parser.error("--svi-lr must be positive.")
     if args.num_warmup < 0:
         parser.error("--num-warmup must be zero or a positive integer.")
     if args.max_observed is not None and args.max_observed <= 0:
         parser.error("--max-observed must be a positive integer when set.")
     if args.rng_seed < 0:
         parser.error("--rng-seed must be zero or a positive integer.")
+    if not math.isfinite(args.rv_fixed):
+        parser.error("--rv-fixed must be finite.")
     if not math.isfinite(args.rv_min) or not math.isfinite(args.rv_max):
         parser.error("--rv-min and --rv-max must be finite.")
     if args.rv_min >= args.rv_max:
@@ -418,11 +412,9 @@ def format_selection(values):
 
 
 if args.quick:
-    args.svi_steps = min(args.svi_steps, 20)
     args.num_warmup = min(args.num_warmup, 10)
     args.num_samples = min(args.num_samples, 10)
     args.max_tree_depth = min(args.max_tree_depth, 3)
-    args.svi_plot_samples = min(args.svi_plot_samples, 100)
 
 if (
     args.data_mode == "wide"
@@ -436,7 +428,7 @@ if (
 
 if (
     args.data_mode == "nirspec"
-    and "nirspec_g395h" not in selected_channels
+    and NIRSPEC_G395H_CHANNEL not in selected_channels
     and not (args.plot_data_only or args.summarize_data or args.check_inputs)
 ):
     parser.error("--data-mode nirspec requires --channels to include nirspec_g395h.")
@@ -683,14 +675,15 @@ def configure_jax_platform():
     """Apply a JAX platform override before importing JAX."""
     if args.jax_platform == "auto":
         return
-    if "JAX_PLATFORMS" in os.environ and os.environ["JAX_PLATFORMS"] != args.jax_platform:
+    jax_platform = "cuda" if args.jax_platform == "gpu" else args.jax_platform
+    if "JAX_PLATFORMS" in os.environ and os.environ["JAX_PLATFORMS"] != jax_platform:
         print(
             "JAX_PLATFORMS is already set to "
             f"{os.environ['JAX_PLATFORMS']}; --jax-platform {args.jax_platform} "
             "will not override it."
         )
         return
-    os.environ["JAX_PLATFORMS"] = args.jax_platform
+    os.environ["JAX_PLATFORMS"] = jax_platform
     if args.jax_platform == "cpu":
         # Some environments install a CUDA JAX plugin without visible GPUs. JAX
         # still discovers that plugin on import, so keep explicit CPU runs quiet.
@@ -841,13 +834,9 @@ if not (args.plot_data_only or args.summarize_data or args.check_inputs):
 
     if not args.check_forward:
         # --- Probabilistic Programming imports -------------------------------------
-        from numpyro.infer import Predictive, MCMC, NUTS, SVI, Trace_ELBO
+        from numpyro.infer import Predictive, MCMC, NUTS
         import numpyro
         import numpyro.distributions as dist
-        import numpyro.optim as optim
-        from numpyro import handlers
-        from numpyro.infer.autoguide import AutoMultivariateNormal
-        from numpyro.infer.initialization import init_to_value
 else:
     corner = None
 
@@ -876,6 +865,16 @@ class ObservedSpectrum:
         if np.allclose(self.radius_ratio_error_low, self.radius_ratio_error_high):
             return self.radius_ratio_error
         return [self.radius_ratio_error_low, self.radius_ratio_error_high]
+
+
+@dataclass(frozen=True)
+class RetrievalData:
+    """Observed data vector and channel labels used by retrieval."""
+
+    wavelength_nm: np.ndarray
+    radius_ratio: np.ndarray
+    radius_ratio_error: np.ndarray
+    channel_index: np.ndarray
 
 
 def load_observed_spectra(data_dir="wasp39_data"):
@@ -923,7 +922,7 @@ def load_observed_spectra(data_dir="wasp39_data"):
             err_high_niriss_2,
             0.3,
         ),
-        "nirspec_g395h": ObservedSpectrum(
+        NIRSPEC_G395H_CHANNEL: ObservedSpectrum(
             "NIRSpec G395H",
             wav_nirspec,
             rp_nirspec,
@@ -955,7 +954,7 @@ def expected_input_paths(
     data_file_map = {
         "niriss_order1": {"niriss_order1": os.path.join(data_dir, "niriss_order1.txt")},
         "niriss_order2": {"niriss_order2": os.path.join(data_dir, "niriss_order2.txt")},
-        "nirspec_g395h": {
+        NIRSPEC_G395H_CHANNEL: {
             "nirspec_wavelength": os.path.join(data_dir, "wavelength.npy"),
             "nirspec_rp_mean": os.path.join(
                 data_dir, "wasp39b_nirspec_g395h_rp_mean.npy"
@@ -1427,17 +1426,55 @@ def ckd_table_summary():
     return summary
 
 
-def select_retrieval_data(data_mode, nirspec_spectrum, all_wavelength, all_rp, all_err):
+def select_retrieval_data(
+    data_mode,
+    observed_spectra,
+    all_wavelength,
+    all_rp,
+    all_err,
+    all_channel_index,
+    channels,
+):
     """Return the observed data vector requested by the retrieval mode."""
     if data_mode == "nirspec":
-        return (
+        nirspec_spectrum = observed_spectra[NIRSPEC_G395H_CHANNEL]
+        channel_index = np.full(
+            nirspec_spectrum.wavelength_nm.shape,
+            channels.index(NIRSPEC_G395H_CHANNEL),
+            dtype=int,
+        )
+        return RetrievalData(
             nirspec_spectrum.wavelength_nm,
             nirspec_spectrum.radius_ratio,
             nirspec_spectrum.radius_ratio_error,
+            channel_index,
         )
     if data_mode == "wide":
-        return all_wavelength, all_rp, all_err
+        return RetrievalData(all_wavelength, all_rp, all_err, all_channel_index)
     raise ValueError(f"Unknown data_mode: {data_mode}")
+
+
+def selected_nirspec_spectrum(observed_spectra):
+    """Return selected NIRSpec/G395H spectrum when available."""
+    return observed_spectra.get(NIRSPEC_G395H_CHANNEL)
+
+
+def nirspec_data_for_premodit(data_mode, retrieval_data, observed_spectra):
+    """Return NIRSpec arrays needed by the preMODIT path."""
+    nirspec_spectrum = selected_nirspec_spectrum(observed_spectra)
+    if nirspec_spectrum is None:
+        return None, None, None
+    if data_mode == "nirspec":
+        return (
+            retrieval_data.wavelength_nm,
+            retrieval_data.radius_ratio,
+            retrieval_data.radius_ratio_error,
+        )
+    return (
+        nirspec_spectrum.wavelength_nm,
+        nirspec_spectrum.radius_ratio,
+        nirspec_spectrum.radius_ratio_error,
+    )
 
 
 def validate_observed_data_vector(label, wavelength, radius_ratio, radius_ratio_error):
@@ -1471,16 +1508,18 @@ def validate_observed_data_vector(label, wavelength, radius_ratio, radius_ratio_
         raise ValueError(f"{label} uncertainties must be positive.")
 
 
-def cap_observed_data(wavelength, radius_ratio, radius_ratio_error, channel_index, limit):
+def cap_observed_data(retrieval_data, limit):
     """Return an evenly spaced subset of the selected observed data vector."""
-    if limit is None or limit >= wavelength.size:
-        return wavelength, radius_ratio, radius_ratio_error, channel_index
-    indices = np.unique(np.linspace(0, wavelength.size - 1, limit, dtype=int))
-    return (
-        wavelength[indices],
-        radius_ratio[indices],
-        radius_ratio_error[indices],
-        channel_index[indices],
+    if limit is None or limit >= retrieval_data.wavelength_nm.size:
+        return retrieval_data
+    indices = np.unique(
+        np.linspace(0, retrieval_data.wavelength_nm.size - 1, limit, dtype=int)
+    )
+    return RetrievalData(
+        retrieval_data.wavelength_nm[indices],
+        retrieval_data.radius_ratio[indices],
+        retrieval_data.radius_ratio_error[indices],
+        retrieval_data.channel_index[indices],
     )
 
 
@@ -1559,44 +1598,28 @@ if args.plot_data_only:
     plot_observed_spectra(observed_spectra, args.data_plot_path)
     sys.exit(0)
 
-niriss_order1 = observed_spectra.get("niriss_order1")
-niriss_order2 = observed_spectra.get("niriss_order2")
-nirspec_g395h = observed_spectra.get("nirspec_g395h")
-miri_lrs = observed_spectra.get("miri_lrs")
-
-wav_obs_fit, rp_mean_fit, rp_std_fit = select_retrieval_data(
-    args.data_mode, nirspec_g395h, wav_obs_all, rp_mean_all, rp_std_all
+retrieval_data = select_retrieval_data(
+    args.data_mode,
+    observed_spectra,
+    wav_obs_all,
+    rp_mean_all,
+    rp_std_all,
+    channel_index_all,
+    selected_channels,
 )
-if args.data_mode == "wide":
-    channel_index_fit = channel_index_all
-else:
-    channel_index_fit = np.full(
-        wav_obs_fit.shape, selected_channels.index("nirspec_g395h"), dtype=int
-    )
+retrieval_data = cap_observed_data(retrieval_data, args.max_observed)
+wav_obs_fit = retrieval_data.wavelength_nm
+rp_mean_fit = retrieval_data.radius_ratio
+rp_std_fit = retrieval_data.radius_ratio_error
+channel_index_fit = retrieval_data.channel_index
 
-wav_obs_fit, rp_mean_fit, rp_std_fit, channel_index_fit = cap_observed_data(
-    wav_obs_fit,
-    rp_mean_fit,
-    rp_std_fit,
-    channel_index_fit,
-    args.max_observed,
-)
 validate_observed_data_vector(
     "retrieval observed data", wav_obs_fit, rp_mean_fit, rp_std_fit
 )
 
-wav_obs_nirspec = None
-rp_mean_nirspec = None
-rp_std_nirspec = None
-if nirspec_g395h is not None:
-    if args.data_mode == "nirspec":
-        wav_obs_nirspec = wav_obs_fit
-        rp_mean_nirspec = rp_mean_fit
-        rp_std_nirspec = rp_std_fit
-    else:
-        wav_obs_nirspec = nirspec_g395h.wavelength_nm
-        rp_mean_nirspec = nirspec_g395h.radius_ratio
-        rp_std_nirspec = nirspec_g395h.radius_ratio_error
+wav_obs_nirspec, rp_mean_nirspec, rp_std_nirspec = nirspec_data_for_premodit(
+    args.data_mode, retrieval_data, observed_spectra
+)
 
 
 # Convert from wavelength to wavenumber for modelling.
@@ -1607,7 +1630,7 @@ if not args.plot_data_only:
         ckd_nurange = None
     else:
         ckd_nurange = wavenumber_range_with_radial_velocity(
-            inst_fit_nus, args.rv_min, args.rv_max
+            inst_fit_nus, args.rv_fixed, args.rv_fixed
         )
 
 
@@ -1624,23 +1647,21 @@ if not args.check_forward and not args.skip_data_plot:
 # forward model can convert to a Gaussian instrumental broadening kernel.
 
 
-def load_resolution_curve():
+def load_nirspec_resolution_curve(data_dir):
     """Load and cache the NIRSpec/G395H resolution curve from the FITS table."""
-    with fits.open(os.path.join(args.data_dir, "jwst_nirspec_g395h_disp.fits")) as hdul:
+    with fits.open(os.path.join(data_dir, "jwst_nirspec_g395h_disp.fits")) as hdul:
         data = np.asarray([list(row) for row in hdul[1].data])
     return data
 
 
+def nirspec_resolving_power(resolution_curve, wavelength_nm):
+    """Return the resolving power R of JWST NIRSpec/G395H at wavelength_nm."""
+    return np.interp(wavelength_nm / 1000.0, resolution_curve[:, 0], resolution_curve[:, 2])
+
+
 if args.opacity_mode != "ckd":
-    _res_curve = load_resolution_curve()
-
-
-    def res_G395H(wavelength_nm: float) -> float:
-        """Return the resolving power *R* of JWST NIRSpec/G395H at *wavelength_nm*."""
-        return np.interp(wavelength_nm / 1000.0, _res_curve[:, 0], _res_curve[:, 2])
-
-
-    Rinst = res_G395H(np.mean(wav_obs_nirspec))
+    _res_curve = load_nirspec_resolution_curve(args.data_dir)
+    Rinst = nirspec_resolving_power(_res_curve, np.mean(wav_obs_nirspec))
 
 
 # %%
@@ -1800,7 +1821,7 @@ def load_molecular_opacities():
     if args.opacity_mode == "ckd":
         print("Loading ExoMolOP CKD tables …")
         print(
-            "  CKD nurange with RV prior: "
+            "  CKD nurange with fixed RV: "
             f"{ckd_nurange[0]:.3f}-{ckd_nurange[1]:.3f} cm-1"
         )
         for mol, path in ckdpath_list_ExomolOP.items():
@@ -2016,7 +2037,10 @@ def model_c(rp_mean, rp_std):
         numpyro.sample("Rs", dist.TruncatedNormal(Rstar_mean, Rstar_std, low=0)) * Rs
     )
     radius_btm = numpyro.sample("Radius_btm", dist.Uniform(1.0, 1.5)) * RJ
-    RV = numpyro.sample("RV", dist.Uniform(args.rv_min, args.rv_max))
+    if args.opacity_mode == "ckd":
+        RV = args.rv_fixed
+    else:
+        RV = numpyro.sample("RV", dist.Uniform(args.rv_min, args.rv_max))
 
     mu = spectral_model(radius_btm, Mp, Rstar, RV, vmr_arr, T0, logP_cloud)
     mu_obs_order = mu if args.opacity_mode == "ckd" else mu[::-1]
@@ -2031,7 +2055,11 @@ def run_forward_check():
     for _mol in opa_mols:
         fiducial_vmr.append(art.constant_mmr_profile(1.0e-5))
     fiducial_vmr = jnp.array(fiducial_vmr)
-    fiducial_rv = 0.5 * (args.rv_min + args.rv_max)
+    fiducial_rv = (
+        args.rv_fixed
+        if args.opacity_mode == "ckd"
+        else 0.5 * (args.rv_min + args.rv_max)
+    )
 
     fiducial_mu = spectral_model(
         radius_btm=1.27 * RJ,
@@ -2067,6 +2095,7 @@ def run_forward_check():
         "finite_model": finite_model,
         "model_rprs_min": float(np.min(fiducial_mu_np)),
         "model_rprs_max": float(np.max(fiducial_mu_np)),
+        "rv_fixed_kms": float(args.rv_fixed),
         "fiducial_rv_kms": float(fiducial_rv),
         "n_observed": int(rp_mean_fit.size),
         "wavelength_nm_min": float(np.min(wav_obs_fit)),
@@ -2128,22 +2157,6 @@ if args.check_forward:
     sys.exit(0)
 
 
-# %%
-# Stochastic Variational Inference (SVI) warm-up for HMC-NUTS (Optional)
-# ----------------------------------------------------------------------
-#
-# Run stochastic variational inference with a custom guide that keeps Mp and
-# Rs on their priors while fitting an AutoMultivariateNormal to the remaining
-# latent variables. The SVI median seeds HMC and its Fisher information is
-# reused as a mass matrix estimate.
-
-
-def build_guide():
-    """Construct an AutoMVN guide over the latent sample sites."""
-    model_hidden = handlers.block(model_c, hide=["rp_mu"])
-    return AutoMultivariateNormal(model_hidden)
-
-
 def save_run_config(output_dir):
     """Persist the retrieval configuration for reproducibility."""
     config = vars(args).copy()
@@ -2160,6 +2173,7 @@ def save_run_config(output_dir):
     config["ckd_table_paths"] = selected_ckd_table_paths
     config["ckd_sources"] = ckdpath_list_ExomolOP if args.opacity_mode == "ckd" else {}
     config["ckd_table_summary"] = ckd_table_summary()
+    config["rv_fixed_kms"] = args.rv_fixed
     config["rv_min_kms"] = args.rv_min
     config["rv_max_kms"] = args.rv_max
     config["skip_diagnostic_plots"] = bool(args.skip_diagnostic_plots)
@@ -2180,21 +2194,6 @@ def save_run_config(output_dir):
         json.dump(config, f, indent=2, sort_keys=True)
         f.write("\n")
     print(f"Run configuration saved to {path}")
-
-
-def save_svi_outputs(params, losses, init_values, output_dir):
-    """Persist SVI artifacts for reuse or inspection."""
-    params_cpu = {k: np.asarray(jax.device_get(v)) for k, v in params.items()}
-    losses_cpu = np.asarray(jax.device_get(losses))
-    init_cpu = {k: np.asarray(jax.device_get(v)) for k, v in init_values.items()}
-
-    np.savez(os.path.join(output_dir, "svi_params.npz"), **params_cpu)
-    np.save(os.path.join(output_dir, "svi_losses.npy"), losses_cpu)
-    np.savez(os.path.join(output_dir, "svi_init_values.npz"), **init_cpu)
-
-    print(f"SVI params saved to {output_dir}/svi_params.npz")
-    print(f"SVI losses saved to {output_dir}/svi_losses.npy")
-    print(f"SVI init values saved to {output_dir}/svi_init_values.npz")
 
 
 def save_observed_data(output_dir):
@@ -2264,14 +2263,11 @@ def save_predictive_spectrum(prediction_dict, output_dir):
     print(f"Posterior predictive bundle saved to {path_npz}")
 
 
-def save_run_status(output_dir, posterior_samples, prediction_dict, losses):
+def save_run_status(output_dir, posterior_samples, prediction_dict):
     """Persist a compact status artifact for completed HMC smoke/retrieval runs."""
     artifact_names = [
         "run_config.json",
         "observed_data.npz",
-        "svi_params.npz",
-        "svi_losses.npy",
-        "svi_init_values.npz",
         "posterior_sample.npz",
         "posterior_predictive.npz",
         "rp_mu_pred.npy",
@@ -2280,9 +2276,9 @@ def save_run_status(output_dir, posterior_samples, prediction_dict, losses):
     ]
     skipped_artifacts = []
     if args.skip_diagnostic_plots:
-        skipped_artifacts.extend(["svi_loss.png", "spectrum_overlay.png"])
+        skipped_artifacts.extend(["spectrum_overlay.png"])
     else:
-        artifact_names.extend(["svi_loss.png", "spectrum_overlay.png"])
+        artifact_names.extend(["spectrum_overlay.png"])
     artifacts = {
         name: os.path.exists(os.path.join(output_dir, name)) for name in artifact_names
     }
@@ -2302,11 +2298,9 @@ def save_run_status(output_dir, posterior_samples, prediction_dict, losses):
         key: bool(np.all(np.isfinite(np.asarray(jax.device_get(value)))))
         for key, value in prediction_dict.items()
     }
-    loss_values = np.asarray(jax.device_get(losses))
     finite_checks = {
         "posterior_all_finite": all(posterior_finite.values()),
         "predictive_all_finite": all(predictive_finite.values()),
-        "svi_losses_all_finite": bool(np.all(np.isfinite(loss_values))),
     }
     n_observed = int(rp_mean_fit.size)
     posterior_rp_mu_shape = posterior_shapes.get("rp_mu")
@@ -2348,18 +2342,16 @@ def save_run_status(output_dir, posterior_samples, prediction_dict, losses):
         "n_observed": n_observed,
         "wavelength_nm_min": float(np.min(wav_obs_fit)),
         "wavelength_nm_max": float(np.max(wav_obs_fit)),
+        "rv_fixed_kms": float(args.rv_fixed),
         "rv_min_kms": float(args.rv_min),
         "rv_max_kms": float(args.rv_max),
         "num_warmup": int(args.num_warmup),
         "num_samples": int(args.num_samples),
         "num_chains": int(args.num_chains),
-        "svi_steps": int(args.svi_steps),
-        "svi_lr": float(args.svi_lr),
         "chain_method": args.chain_method,
         "max_tree_depth": int(args.max_tree_depth),
         "rng_seed": int(args.rng_seed),
         "skip_diagnostic_plots": bool(args.skip_diagnostic_plots),
-        "final_svi_loss": float(np.asarray(jax.device_get(losses))[-1]),
         "jax_default_backend": jax.default_backend(),
         "jax_devices": [str(device) for device in jax.devices()],
         "posterior_shapes": posterior_shapes,
@@ -2382,71 +2374,32 @@ def save_run_status(output_dir, posterior_samples, prediction_dict, losses):
         status["ckd_nurange_cm-1"] = [float(ckd_nurange[0]), float(ckd_nurange[1])]
     save_json(os.path.join(output_dir, "run_status.json"), status, "Run status JSON")
 
-
-def run_svi(rng_key, rp_mean, rp_std, num_steps=1000, lr=0.005):
-    """Execute SVI, return params, losses, init strategy, median, and guide."""
-    guide = build_guide()
-    optimizer = optim.Adam(lr)
-    svi = SVI(model_c, guide, optimizer, loss=Trace_ELBO())
-    svi_result = svi.run(
-        rng_key,
-        num_steps,
-        rp_mean=rp_mean,
-        rp_std=rp_std,
-        progress_bar=not args.no_progress_bar,
-    )
-
-    params = svi_result.params
-    losses = svi_result.losses
-
-    # Median in the constrained space.
-    svi_median = guide.median(params)
-    # Keep Mp and Rs anchored to their prior means for HMC initialisation.
-    svi_median.update({"Mp": Mp_mean, "Rs": Rstar_mean})
-    init_strategy = init_to_value(values=svi_median)
-
-    save_svi_outputs(params, losses, svi_median, DIR_SAVE)
-    return params, losses, init_strategy, svi_median, guide
-
-
 os.makedirs(DIR_SAVE, exist_ok=True)
 save_run_config(DIR_SAVE)
 save_observed_data(DIR_SAVE)
 rng_key = random.PRNGKey(args.rng_seed)
 
-print("Stochastic Variational Inference (SVI) to find initial values for HMC-NUTS …")
+print("Launching HMC-NUTS …")
+rv_run_setting = (
+    f"rv_fixed={args.rv_fixed} km/s"
+    if args.opacity_mode == "ckd"
+    else f"rv_prior=[{args.rv_min}, {args.rv_max}] km/s"
+)
 print(
     "Run settings: "
-    f"svi_steps={args.svi_steps}, svi_lr={args.svi_lr}, "
     f"num_warmup={args.num_warmup}, num_samples={args.num_samples}, "
     f"num_chains={args.num_chains}, chain_method={args.chain_method}, "
     f"max_tree_depth={args.max_tree_depth}, rng_seed={args.rng_seed}, "
-    f"rv_prior=[{args.rv_min}, {args.rv_max}] km/s, "
-    f"svi_plot_samples={args.svi_plot_samples}"
+    f"{rv_run_setting}"
 )
-
-rng_key, rng_key_ = random.split(rng_key)
-
-_svi_params, losses, init_strategy, svi_median, svi_guide = run_svi(
-    rng_key_,
-    rp_mean=rp_mean_fit,
-    rp_std=rp_std_fit,
-    num_steps=args.svi_steps,
-    lr=args.svi_lr,
-)
-print(f"Final SVI loss: {float(losses[-1]):.2f}")
-print("HMC initial values:", init_strategy)
 
 # %%
 # HMC-NUTS sampling
 # -----------------
 
-print("Launching HMC-NUTS …")
-
 kernel = NUTS(
     model_c,
     max_tree_depth=args.max_tree_depth,
-    init_strategy=init_strategy,
 )
 rng_key, rng_key_ = random.split(rng_key)
 
@@ -2479,25 +2432,11 @@ save_predictive_spectrum(predictions, DIR_SAVE)
 # Plotting
 # --------
 #
-# Generate quick-look diagnostics: SVI loss curve, HMC predictive spectrum,
-# observed/SVI/HMC overlay, and corner plots for a subset of parameters.
+# Generate quick-look diagnostics: HMC predictive spectrum and corner plots.
 if args.skip_diagnostic_plots:
     print("Skipping post-HMC diagnostic plots.")
 else:
-    print("Plotting SVI and HMC diagnostics …")
-
-
-def plot_svi_loss(loss_values, save_path):
-    fig, ax = plt.subplots(figsize=(6, 4))
-    x = np.arange(len(loss_values))
-    ax.plot(x, np.asarray(loss_values), lw=1.5)
-    ax.set_xlabel("SVI step")
-    ax.set_ylabel("Loss")
-    ax.set_title("SVI loss")
-    ax.grid(True, alpha=0.3)
-    fig.tight_layout()
-    fig.savefig(save_path, dpi=200)
-    plt.close(fig)
+    print("Plotting HMC diagnostics …")
 
 
 def plot_overlay(wavelength_nm, rp_obs, rp_err, rp_mu_hmc, rp_pred_hmc, save_path):
@@ -2582,59 +2521,35 @@ def _posterior_sample_count(sample_dict):
     return int(np.asarray(first).shape[0])
 
 
-def plot_corner(hmc_samples=None, svi_samples=None, variables=None, save_path=None):
-    """Corner plot helper: supports HMC only, SVI only, or HMC+SVI overlay."""
+def plot_corner(hmc_samples=None, variables=None, save_path=None):
+    """Corner plot helper for HMC posterior samples."""
     if corner is None:
         print("corner is not installed; skipping corner plot.")
         return
 
-    datasets = []
-    labels = None
-
     if hmc_samples is not None:
-        hmc_data, labels = _corner_data(hmc_samples, variables)
-        if hmc_data is not None:
-            datasets.append((hmc_data, "C0", {}))
+        data, labels = _corner_data(hmc_samples, variables)
+    else:
+        data, labels = None, None
 
-    if svi_samples is not None:
-        svi_data, labels_svi = _corner_data(svi_samples, variables)
-        if labels is None:
-            labels = labels_svi
-        if svi_data is not None:
-            datasets.append((svi_data, "C3", {"hist_kwargs": {"linestyle": "--"}}))
-
-    if not datasets or labels is None:
+    if data is None or labels is None:
         print("No data for corner plot; skipping.")
         return
 
-    fig = None
-    for data, color, extra_kwargs in datasets:
-        fig = corner.corner(
-            data,
-            labels=labels,
-            color=color,
-            bins=40,
-            smooth=1.0,
-            fig=fig,
-            show_titles=True,
-            **extra_kwargs,
-        )
+    fig = corner.corner(
+        data,
+        labels=labels,
+        color="C0",
+        bins=40,
+        smooth=1.0,
+        show_titles=True,
+    )
 
     fig.savefig(save_path, dpi=200)
     plt.close(fig)
 
 
-# Generate deterministic rp_mu from SVI median parameters
 if not args.skip_diagnostic_plots:
-    rng_key, rng_plot = random.split(rng_key)
-    svi_pred = Predictive(
-        model_c, params=svi_median, num_samples=1, return_sites=["rp_mu"]
-    )
-    svi_mu = svi_pred(rng_plot, rp_mean=rp_mean_fit, rp_std=rp_std_fit)["rp_mu"][0]
-
-    loss_plot_path = os.path.join(DIR_SAVE, "svi_loss.png")
-    plot_svi_loss(losses, loss_plot_path)
-
     overlay_plot_path = os.path.join(DIR_SAVE, "spectrum_overlay.png")
     plot_overlay(
         wav_obs_fit,
@@ -2645,38 +2560,22 @@ if not args.skip_diagnostic_plots:
         overlay_plot_path,
     )
 
-    corner_vars = ["Radius_btm", "T0", "logP_cloud", "RV"]
+    corner_vars = ["Radius_btm", "T0", "logP_cloud"]
+    if args.opacity_mode != "ckd":
+        corner_vars.append("RV")
     corner_vars += [f"logVMR_{mol}" for mol in list(opa_mols.keys())]
     if not args.skip_corner:
         corner_dim = _corner_dimension_count(posterior_sample, corner_vars)
         hmc_corner_samples = _posterior_sample_count(posterior_sample)
-        svi_corner_samples = int(args.svi_plot_samples)
         if corner is None:
             print("corner is not installed; skipping corner plots.")
-        elif hmc_corner_samples <= corner_dim or svi_corner_samples <= corner_dim:
+        elif hmc_corner_samples <= corner_dim:
             print(
-                "Skipping corner plots because HMC and SVI guide sample counts must "
+                "Skipping corner plots because HMC sample count must "
                 f"exceed the corner dimension ({corner_dim}); "
-                f"hmc_samples={hmc_corner_samples}, svi_samples={svi_corner_samples}."
+                f"hmc_samples={hmc_corner_samples}."
             )
         else:
-            # Draw samples from the SVI guide for visualization only when needed.
-            rng_key, rng_svi = random.split(rng_key)
-            svi_samples = svi_guide.sample_posterior(
-                rng_svi,
-                _svi_params,
-                rp_mean=rp_mean_fit,
-                rp_std=rp_std_fit,
-                sample_shape=(args.svi_plot_samples,),
-            )
-
-            corner_plot_path = os.path.join(DIR_SAVE, "corner_plot_svi.png")
-            plot_corner(
-                svi_samples=svi_samples,
-                variables=corner_vars,
-                save_path=corner_plot_path,
-            )
-
             hmc_corner_plot_path = os.path.join(DIR_SAVE, "corner_plot.png")
             plot_corner(
                 hmc_samples=posterior_sample,
@@ -2684,14 +2583,4 @@ if not args.skip_diagnostic_plots:
                 save_path=hmc_corner_plot_path,
             )
 
-            hmc_svi_corner_overlay_path = os.path.join(
-                DIR_SAVE, "corner_plot_hmc_svi_overlay.png"
-            )
-            plot_corner(
-                hmc_samples=posterior_sample,
-                svi_samples=svi_samples,
-                variables=corner_vars,
-                save_path=hmc_svi_corner_overlay_path,
-            )
-
-save_run_status(DIR_SAVE, posterior_sample, predictions, losses)
+save_run_status(DIR_SAVE, posterior_sample, predictions)
