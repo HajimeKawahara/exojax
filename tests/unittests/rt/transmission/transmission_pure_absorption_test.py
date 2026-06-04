@@ -36,7 +36,7 @@ def test_chord_geometric_matrix_lower():
     ref[2,0]=_manual_coeff(radius_upper, radius_lower, radius_lower, height, 2, 0)
     ref[2,1]=_manual_coeff(radius_upper, radius_lower, radius_lower, height, 2, 1)
     ref[2,2]=2*jnp.sqrt(radius_upper[2]**2 - radius_lower[2]**2)/height[2]
-    assert np.all(ref == cgm)
+    np.testing.assert_allclose(ref, cgm, rtol=1.0e-12, atol=1.0e-12)
 
 def test_chord_geometric_matrix():
     Nlayer = 3

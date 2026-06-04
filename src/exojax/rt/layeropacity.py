@@ -42,7 +42,18 @@ def layer_optical_depth(dParr, xsmatrix, mixing_ratio, mass, gravity):
         2D array: optical depth matrix, dtau  [N_layer, N_nus]
     """
 
-    return opacity_factor * xsmatrix * dParr[:, None] * mixing_ratio[:, None] / (mass * gravity)
+    if jnp.ndim(mass) == 1:
+        mass = mass[:, None]
+    if jnp.ndim(gravity) == 1:
+        gravity = gravity[:, None]
+
+    return (
+        opacity_factor
+        * xsmatrix
+        * dParr[:, None]
+        * mixing_ratio[:, None]
+        / (mass * gravity)
+    )
 
 
 def layer_optical_depth_ckd(dParr, xstensor_ckd, mixing_ratio, mass, gravity):
@@ -53,13 +64,34 @@ def layer_optical_depth_ckd(dParr, xstensor_ckd, mixing_ratio, mass, gravity):
         xstensor_ckd (3D array): CKD cross section tensor (cm2) [N_layer, N_g, N_bands]
         mixing_ratio (array): volume mixing ratio (VMR) or mass mixing ratio (MMR) [N_layer]
         mass: mean molecular weight for VMR or molecular mass for MMR
-        gravity: gravity (cm/s2)
+        gravity: gravity (cm/s2), scalar or 1D profile [N_layer]
 
     Returns:
         3D array: optical depth tensor, dtau_ckd [N_layer, N_g, N_bands]
     """
 
-    return opacity_factor * xstensor_ckd * dParr[:, None, None] * mixing_ratio[:, None, None] / (mass * gravity)
+    def _layer_factor(value):
+        value = jnp.asarray(value)
+        if value.ndim == 0:
+            return value
+        if value.ndim == 1:
+            return value[:, None, None]
+        if value.ndim == 2 and value.shape[1] == 1:
+            return value.reshape((value.shape[0], 1, 1))
+        return value
+
+    dParr = _layer_factor(dParr)
+    mixing_ratio = _layer_factor(mixing_ratio)
+    mass = _layer_factor(mass)
+    gravity = _layer_factor(gravity)
+
+    return (
+        opacity_factor
+        * xstensor_ckd
+        * dParr
+        * mixing_ratio
+        / (mass * gravity)
+    )
 
 
 def single_layer_optical_depth_CIA(
