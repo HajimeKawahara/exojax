@@ -1,3 +1,9 @@
+Voigt-Hjerting Function
+=======================
+
+.. role:: raw-latex(raw)
+   :format: latex
+
 The Voigt-Hjerting is defined as
 
 $ H(x,a) = :raw-latex:`\frac{a}{\pi}`
@@ -71,4 +77,3 @@ need to wrap it by jax.vmap.
 
 
 .. image:: hjerting_files/hjerting_5_1.png
-

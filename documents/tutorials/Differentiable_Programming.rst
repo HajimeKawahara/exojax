@@ -1,7 +1,7 @@
 Why Differentiable Spectral Modeling?
 =====================================
 
-Last Update: Febrary 4th (2025) Hajime Kawahara
+Last Update: February 4th (2025) Hajime Kawahara
 
 `ExoJAX <https://github.com/HajimeKawahara/exojax>`__ is a
 differentiable spectral model written in
@@ -22,7 +22,7 @@ follows:
 
     import jax.numpy as jnp
     import matplotlib.pyplot as plt
-    from exojax.database.core.broadening import voigt
+    from exojax.opacity.lpf.lpf import voigt
     
     logbeta = 1.0
     gamma = 1.0
@@ -32,21 +32,14 @@ follows:
     
     sigma = line_strength*voigt(nu_grid - nu0,logbeta,gamma)
     
-    plt.plot(nu_grid, sigma) 
+    plt.plot(nu_grid, sigma)
     plt.xlabel("wavenumber (cm$^{-1}$)")
     plt.ylabel("cross section (cm$^2$)")
+    plt.show()
 
 
 
-
-.. parsed-literal::
-
-    Text(0, 0.5, 'cross section (cm$^2$)')
-
-
-
-
-.. image:: Differentiable_Programming_files/Differentiable_Programming_4_1.png
+.. image:: Differentiable_Programming_files/Differentiable_Programming_4_0.png
 
 
 When light with a flat spectrum :math:`f_0` passes through a region
@@ -62,8 +55,8 @@ filled with molecule X at a number density :math:`n` over a path length
     f0 = jnp.ones_like(nu_grid)
     n = 1.e17
     L = 1.e4
-    logN = n*L
-    f = f0*jnp.exp(-sigma*logN)
+    N = n*L
+    f = f0*jnp.exp(-sigma*N)
     
     plt.plot(nu_grid, f)
     plt.show()
@@ -162,18 +155,11 @@ this case. In general, such an approach would be challenging.
     plt.contour(Narray, betaarray, chi2arr, levels=levels, colors="white")
     plt.xlabel("log N")
     plt.ylabel("log beta")
+    plt.show()
 
 
 
-
-.. parsed-literal::
-
-    Text(0, 0.5, 'log beta')
-
-
-
-
-.. image:: Differentiable_Programming_files/Differentiable_Programming_15_1.png
+.. image:: Differentiable_Programming_files/Differentiable_Programming_15_0.png
 
 
 The key point here is that the :math:`\chi^2` defined using a
@@ -368,27 +354,22 @@ such as NumPyro and BlackJAX can be used. Here, we’ll use NumPyro.
 
 .. parsed-literal::
 
-    sample: 100%|██████████| 3000/3000 [00:08<00:00, 361.90it/s, 3 steps of size 6.79e-01. acc. prob=0.91] 
+    sample: 100%|██████████| 3000/3000 [00:12<00:00, 246.81it/s, 3 steps of size 6.56e-01. acc. prob=0.93]
+
 
 .. parsed-literal::
 
     
                     mean       std    median      5.0%     95.0%     n_eff     r_hat
-          logN     20.99      0.01     20.99     20.97     21.01   1217.43      1.00
-       logbeta      0.01      0.03      0.02     -0.03      0.06   1406.41      1.00
-       sigmain      0.10      0.00      0.10      0.10      0.11   1592.57      1.00
+          logN     20.99      0.01     20.99     20.98     21.01   1346.73      1.00
+       logbeta      0.01      0.03      0.02     -0.03      0.06   1466.04      1.00
+       sigmain      0.10      0.00      0.10      0.10      0.11   1374.37      1.00
     
     Number of divergences: 0
 
 
-.. parsed-literal::
-
-    
-
-
 .. code:: ipython3
 
-    import arviz
     from numpyro.diagnostics import hpdi
     from numpyro.infer import Predictive
 
@@ -429,28 +410,20 @@ such as NumPyro and BlackJAX can be used. Here, we’ll use NumPyro.
 .. code:: ipython3
 
     pararr = ["logN", "logbeta", "sigmain"]
-    arviz.plot_pair(
-        arviz.from_numpyro(mcmc),
-        kind="kde",
-        divergences=False,
-        marginals=True,
-        reference_values={"logN": 21.0, "logbeta": 0.0, "sigmain": 0.1},
-    )
+    posterior_hmc = mcmc.get_samples()
+    
+    fig, axes = plt.subplots(1, len(pararr), figsize=(12, 3))
+    for ax, name, truth in zip(axes, pararr, [21.0, 0.0, 0.1]):
+        ax.hist(posterior_hmc[name], bins=40, density=True, alpha=0.7, color="C0")
+        ax.axvline(truth, color="black", linestyle="--", linewidth=1)
+        ax.set_title(name)
+    plt.tight_layout()
+    plt.show()
 
 
 
 
-.. parsed-literal::
-
-    array([[<Axes: ylabel='logN'>, <Axes: >, <Axes: >],
-           [<Axes: ylabel='logbeta'>, <Axes: >, <Axes: >],
-           [<Axes: xlabel='logN', ylabel='sigmain'>,
-            <Axes: xlabel='logbeta'>, <Axes: xlabel='sigmain'>]], dtype=object)
-
-
-
-
-.. image:: Differentiable_Programming_files/Differentiable_Programming_35_1.png
+.. image:: Differentiable_Programming_files/Differentiable_Programming_35_0.png
 
 
 Here, we used a simple absorption line spectrum, so the HMC execution
@@ -489,7 +462,7 @@ SVI is faster compared to HMC.
 
 .. parsed-literal::
 
-    100%|██████████| 10000/10000 [00:04<00:00, 2037.36it/s, init loss: -102.3971, avg. loss [9501-10000]: -840.5520]
+    100%|██████████| 10000/10000 [00:05<00:00, 1990.93it/s, init loss: -102.3971, avg. loss [9501-10000]: -840.5515]
 
 
 .. code:: ipython3
@@ -505,35 +478,21 @@ SVI is faster compared to HMC.
     posterior_sample = predictive_posterior(rng_key, y=None)
 
 
-Let’s compare the posterior distributions of **HMC (orange)** and **SVI
+Let’s compare the posterior distributions of **HMC (blue)** and **SVI
 (green)**.
 
 .. code:: ipython3
 
-    import arviz
-    idata = arviz.from_dict(posterior=posterior_sample)
-    
-    axes = arviz.plot_pair(
-        arviz.from_numpyro(mcmc),
-        var_names=pararr,
-        kind="kde",
-        marginals=True,
-        show=False,
-        kde_kwargs={"contourf_kwargs":{"cmap":"plasma","alpha":0.5},"contour_kwargs":{"alpha":0}},
-        marginal_kwargs={"color":"orange"},
-    )
-    axes2 = arviz.plot_pair(
-        idata,
-        ax = axes,
-        var_names=pararr,
-        kind="kde",
-        marginals=True,
-        show=False,
-        reference_values={"logN": 21.0, "logbeta": 0.0, "sigmain": 0.1},
-        kde_kwargs={"contourf_kwargs":{"alpha":0.5,"cmap":"viridis"}, "contour_kwargs":{"alpha":0}},
-        marginal_kwargs={"color":"green"}
-    )
+    fig, axes = plt.subplots(1, len(pararr), figsize=(12, 3))
+    for ax, name, truth in zip(axes, pararr, [21.0, 0.0, 0.1]):
+        ax.hist(posterior_hmc[name], bins=40, density=True, alpha=0.5, label="HMC")
+        ax.hist(posterior_sample[name], bins=40, density=True, alpha=0.5, label="SVI")
+        ax.axvline(truth, color="black", linestyle="--", linewidth=1)
+        ax.set_title(name)
+    axes[0].legend()
+    plt.tight_layout()
     plt.show()
+
 
 
 

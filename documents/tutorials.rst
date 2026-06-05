@@ -9,6 +9,7 @@
    tutorials/get_started_reflection.rst
    tutorials/get_started_opart.rst
    tutorials/Cross_Section_using_OpaStitch.rst
+   various_forward.rst
    
    
 Retrievals
@@ -18,6 +19,15 @@ HMC-NUTS
 ------------
 
 For HMC-NUTS, visit  `Getting Started Page <tutorials/get_started.html>`_ again.
+
+.. toctree::
+   :maxdepth: 1
+
+   tutorials/Reverse_modeling.rst
+   tutorials/Reverse_modeling_for_methane_using_MODIT.rst
+   tutorials/Reverse_modeling_for_methane_using_PreMODIT.rst
+   Reverse modeling with VALD using MODIT <tutorials/Reverse_modeling_with_VALD_using_MODIT>
+   tutorials/reverse_premodit.rst
 
 SVI using NumPyro
 -----------------------------------
@@ -103,6 +113,7 @@ Tips for Real Analysis
    tutorials/Photometry.rst
    tutorials/Fitting_Telluric_Lines.rst
    tutorials/exomolhr.rst
+   tutorials/Reducing_memory_for_HITEMP.rst
    userguide/memorysetting.rst	
    tutorials/elower_setting.rst
    tutorials/reverse_precompute_grid.rst
@@ -128,10 +139,8 @@ Others
    :maxdepth: 1
 
    tutorials/Using_FastChem2_to_calculate_the_chemical_abundances.rst
-   tutorials/hjerting.rst
-   tutorials/pure_absorption_rt.rst
+   Voigt-Hjerting Function <tutorials/hjerting>
+   Pure Absorption Radiative Transfer <tutorials/pure_absorption_rt>
    tutorials/voigt_function.rst
    tutorials/Cross_Section_using_Discrete_Integral_Transform.rst
    tutorials/Cross_Section_using_Modified_Discrete_Integral_Transform.rst
-
-

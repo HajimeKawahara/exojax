@@ -1,3 +1,6 @@
+Reverse Modeling with VALD using MODIT
+======================================
+
 February 20th (2022) Hiroyuki Tako ISHIKAWA
 
 We try to fit an emission spectrum model to the IRD spectra of Barnard’s
@@ -463,4 +466,3 @@ Visualize results
                  vsini      2.64      0.08      2.64      2.50      2.77     23.36      1.08
     
     Number of divergences: 0
-
