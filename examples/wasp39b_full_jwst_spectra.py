@@ -1,6 +1,6 @@
 """
-WASP-39 b Transmission Spectrum Retrieval with ExoJAX + NumPyro
-===============================================================
+[transmission/CKD] WASP-39 b Transmission Full Spectrum Retrieval using CKD
+============================================================================
 
 This example demonstrates a wide-wavelength JWST transmission-spectrum
 retrieval for WASP-39 b using *ExoJAX* and *NumPyro*'s Hamiltonian
@@ -881,7 +881,7 @@ if not (args.plot_data_only or args.summarize_data or args.check_inputs):
 else:
     corner = None
 
-# sphinx_gallery_thumbnail_path = '_static/transit.png'
+# sphinx_gallery_thumbnail_path = '_static/widehmc.png'
 
 
 @dataclass(frozen=True)
