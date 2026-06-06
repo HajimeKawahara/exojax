@@ -1,50 +1,48 @@
-.. exojax documentation master file, created by
-   sphinx-quickstart on Mon Jan 11 14:38:51 2021.
-   You can adapt this file completely to your liking, but it should at least
-   contain the root `toctree` directive.
-   
 ExoJAX
-==================================
+======
 
-Version 2.4.0 (:doc:`userguide/history`) 
+Version 2.5.0 (:doc:`userguide/history`)
 
-|:frog:| `DeepWiki for ExoJAX <https://deepwiki.com/HajimeKawahara/exojax>`_
+`ExoJAX <https://github.com/HajimeKawahara/exojax>`_ is a JAX-based toolkit for
+differentiable high-resolution spectral modeling of exoplanets and brown
+dwarfs. It provides building blocks for emission, transmission, and reflection
+spectra, from opacity data to inference-ready models.
 
+ExoJAX is designed for workflows that combine line-by-line spectral modeling
+with optimization and Bayesian inference tools such as
+`NumPyro <https://github.com/pyro-ppl/numpyro>`_.
 
-`ExoJAX <https://github.com/HajimeKawahara/exojax>`_ provides an auto-differentiable high-resolution spectrum model 
-for exoplanets/brown dwarfs using `JAX <https://github.com/google/jax>`_. 
-It enables fully Bayesian inference for high-dispersion data, fitting line-by-line spectral computations to observed spectra end-to-end
--- from molecular/atomic databases to real spectra -- 
-by integrating with Hamiltonian Monte Carlo - No U Turn Sampler (HMC-NUTS), Stochastic Variational Inference (SVI), 
-Nested Sampling, and other inference techniques available in modern probabilistic programming frameworks 
-such as `NumPyro <https://github.com/pyro-ppl/numpyro>`_.
-So, the notable features of ExoJAX are summarized as 
+Key Features
+------------
 
-- **HMC-NUTS, SVI, Nested Sampling, Gradient-based Inference Techiques and Optimizers Available**
-- **Easy to use the latest molecular/atomic data in** :doc:`userguide/api`,  **and** :doc:`userguide/atomll` 
-- **A transparent open-source project; anyone who wants to participate can join the development!**
+- High-resolution emission, transmission, and reflection spectroscopy
+- Molecular, atomic, continuum, cloud, and correlated-k opacity workflows
+- Differentiable modeling for optimization, HMC-NUTS, SVI, and nested sampling
 
-.. admonition:: For a more geek-oriented explanation
-   
-   ExoJAX is a spectral model based on the `Differentiable Programming (DP) <https://arxiv.org/abs/2403.14606>`_ paradigm!
-   ExoJAX aims to provide building blocks for retrieval code, much like Minecraft |:bricks:|.
+Start Here
+----------
 
-|:green_circle:| If you have an error and/or want to know the up-to-date info, visit `ExoJAX wiki <https://github.com/HajimeKawahara/exojax/wiki>`_. 
-Or use `the discussions form <https://github.com/HajimeKawahara/exojax/discussions>`_ on github or directly raise `issues <https://github.com/HajimeKawahara/exojax/issues>`_.
+- New users: :doc:`Introduction <introduction>` and :doc:`Tutorials <tutorials>`
+- Practical examples: :doc:`Gallery <examples/index>`
+- Topic-based documentation: :doc:`User Guide <userguide>`
+- API reference: :doc:`API Reference <exojax/exojax>`
+- External notes: `DeepWiki for ExoJAX <https://deepwiki.com/HajimeKawahara/exojax>`_
 
-.. Warning:: 
+.. warning::
 
-	Recently, logging into HITRAN has become mandatory to access HITEMP files, causing issues with automated HITEMP file retrieval by RADIS. For more details, please refer to `this resource <https://github.com/radis/radis/issues/717>`_. (Feb. 3, 2025) 
+   HITEMP access may require HITRAN login credentials. If automated downloads
+   fail, see the database-related user guide pages and the
+   `RADIS issue note <https://github.com/radis/radis/issues/717>`_.
 
 Contents
-==================================
+--------
 
 .. toctree::
    :maxdepth: 2
    :caption: Introduction:
 
    introduction.rst
-   
+
 .. toctree::
    :maxdepth: 2
    :caption: Tutorials:
@@ -57,70 +55,33 @@ Contents
 
    examples/index
 
-
 .. toctree::
    :maxdepth: 2
    :caption: User Guide:
 
-   userguide.rst   
+   userguide.rst
 
-   
 .. toctree::
    :maxdepth: 1
    :caption: API:
 
    exojax/exojax.rst
 
+.. toctree::
+   :maxdepth: 1
+   :caption: Project:
 
-Exoplanets and Inference
-----------------------------
+   publications.rst
+   credits.rst
 
-- `Exoplanets and Inference <https://github.com/HajimeKawahara/exoinference>`_ : Handout on exoplanets and Bayesian inference. 
+References
+----------
 
-ExoJAX References
----------------------
-
-- |:page_facing_up:|  Kawahara, Kawashima, Masuda, Crossfield, Pannier, van den Bekerom, `ApJS 258, 31 (2022) <https://iopscience.iop.org/article/10.3847/1538-4365/ac3b4d>`_ (Paper I)
-- |:page_facing_up:| Kawahara, Kawashima, Tada et al., `ApJ 985, 263 (2025) <https://iopscience.iop.org/article/10.3847/1538-4357/adcba2>`_, (Paper II)
-
-
-Publications that have used ExoJAX to date
-------------------------------------------------
-
-- `Yama et al. ApJ 997, 118 (2026) <https://arxiv.org/abs/2511.23018>`_ : ExoJAX Retrievals of VLT/CRIRES Spectra of Luhman 16AB: C/O Ratios and Systematic Uncertainties
-- `Kasagi et al. AJ 170, 211 (2025) <https://arxiv.org/abs/2508.01281>`_ : Unveiling the Atmosphere of HR 7672 B from the Near-Infrared High-Resolution Spectrum Using REACH/Subaru
-   |:ringed_planet:| `AtmosphericRetrieval_HR7672B <https://github.com/YuiKasagi/AtmosphericRetrieval_HR7672B>`_ An example of HMC-NUTS for a faint companion HR 7672 B by Subaru/REACH.
-- `Kawashima et al. ApJ 988, 53 (2025) <https://arxiv.org/abs/2410.11561>`_ : Atmospheric retrieval of Subaru/IRD high-resolution spectrum of the archetype T-type brown dwarf Gl 229 B
-   GL229B, Subaru/IRD
-- `Hosokawa et al. ApJ 984, 92 (2025) <https://arxiv.org/abs/2503.22031>`_ : Measurement of Methane Line Broadening in Hot Hydrogen/Helium Atmospheres at lambda = 1.60-1.63 mu m for Substellar Object Spectroscopy
-   |:test_tube:| HMC analysis of experimental spectroscopy data for hot methane gas `Gascell_Exojax. <https://github.com/KoHosokawa/Gascell_Exojax>`_
-- `Tada et al. AJ 169, 255 (2025) <https://arxiv.org/abs/2503.08988>`_ : Probing 2D Asymmetries of an Exoplanet Atmosphere from Chromatic Transit Variation
-   WASP-39b, JWST transmission 
-- `Kawahara et al. ApJ 985, 263 (2025) <https://arxiv.org/abs/2410.06900>`_ : Differentiable Modeling of Planet and Substellar Atmosphere: High-Resolution Emission, Transmission, and Reflection Spectroscopy with ExoJAX2, Paper II 
-   |:ringed_planet:| `exojaxample_WASP39b <https://github.com/sh-tada/exojaxample_WASP39b>`_ : An example of HMC-NUTS for actual hot Saturn (JWST/ERS, NIRSPEC/G395H)
-   |:ringed_planet:| `exojaxample_jupiter <https://github.com/HajimeKawahara/exojaxample_jupiter>`_ An example of HMC-NUTS for actual Jupiter reflection spectrum
-- `Kawahara et al. ApJS 258, 31 (2022) <https://arxiv.org/abs/2105.14782>`_ Autodifferentiable Spectrum Model for High-Dispersion Characterization of Exoplanets and Brown Dwarfs, ExoJAX Paper I (CoP)
-   Luhman16A, VLT/CRIRES 
-
-License & Attribution
----------------------
-
-Copyright 2021-2026, Contributors
-
-- `Hajime Kawahara <http://secondearths.sakura.ne.jp/en/index.html>`_ (@HajimeKawahara, maintainer)
-- `Yui Kawashima <https://sites.google.com/view/yuikawashima/home>`_ (@ykawashima, co-maintainer)
-- Shotaro Tada (@sh-tada)
-- Yui Kasagi (@YuiKasagi)
-- Kento Masuda (@kemasuda)
-- Tako Ishikawa (@chonma0ctopus)
-- Ian Crossfield
-- Dirk van den Bekerom (@dcmvdbekerom)
-- Daniel Kitzmann (@daniel-kitzmann)
-- Brett Morris (@bmorris3)
-- Erwan Pannier (@erwanp) and Nicolas Minesi (@minouHub) from `RADIS <https://github.com/radis/radis>`_ community
-- Stevanus Nugroho (@astrostevanus)
-- Ko Hosokawa (@KoHosokawa)
-- Hibiki Yama (@HibikiYama)
+- Kawahara, Kawashima, Masuda, Crossfield, Pannier, van den Bekerom,
+  `ApJS 258, 31 (2022) <https://iopscience.iop.org/article/10.3847/1538-4365/ac3b4d>`_
+  (Paper I)
+- Kawahara, Kawashima, Tada et al.,
+  `ApJ 985, 263 (2025) <https://iopscience.iop.org/article/10.3847/1538-4357/adcba2>`_
+  (Paper II)
 
 ExoJAX is free software made available under the MIT License.
-   

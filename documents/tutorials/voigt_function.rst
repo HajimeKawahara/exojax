@@ -74,7 +74,7 @@ HMC-NUTS of a simple absorption model
 Next, we try to fit a simple absorption model to mock data. The
 absorption model is
 
-$ e^{-a V(:raw-latex:`\nu`,:raw-latex:`\beta`,:raw-latex:`\gamma`\_L)}$
+:math:``e^{-a V(\nu,\beta,\gamma_L)}``
 
 .. code:: ipython3
 
@@ -102,7 +102,7 @@ Adding a noise…
 .. image:: voigt_function_files/voigt_function_11_1.png
 
 
-Then, let’s perfomr a HMC-NUTS.
+Then, let’s perform HMC-NUTS.
 
 .. code:: ipython3
 
@@ -242,8 +242,7 @@ increasing the absorption sterength, the power converges to 1/2.
 Now we have the auto-diff for the Voigt function. So, we can directly
 compute the power as a function of :math:`a`.
 
-$power = :raw-latex:`\frac{\partial}{\partial \log_{10} a }`
-:raw-latex:`\log`\_{10} ( EW ) $
+:math:``power = \frac{\partial}{\partial \log_{10} a } \log_{10} (EW)``
 
 .. code:: ipython3
 

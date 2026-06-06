@@ -220,8 +220,8 @@ We make the grid model using ArtEmissPure and MdbExomol.
 .. parsed-literal::
 
     Premodit: Twt= 483.67862012986944 K Tref= 1171.1891720056747 K
-    Making LSD:|####################| 100%
-    Making LSD:|####################| 100%
+    Making LSD: 100%
+    Making LSD: 100%
     H2-H2
 
 

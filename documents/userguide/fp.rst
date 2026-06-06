@@ -34,7 +34,7 @@ In short, all of the input wavenumber and grids in `initspec <../exojax/exojax.s
 High-dynamic range opacity using MODIT
 ------------------------------------------
 
-Becuase MODIT uses FFT in its algorithm, MODIT w/ F32 has larger error when computing high-dynamic range. The most severe error occurs at lower values of cross section, as shown this figure. The use of F64 siginificanlty improves these errors. 
+Because MODIT uses FFT in its algorithm, MODIT w/ F32 has larger error when computing high-dynamic range. The most severe error occurs at lower values of cross section, as shown in this figure. The use of F64 significantly improves these errors. 
 
 .. image:: fp/comparison_modit.png
 
@@ -44,4 +44,3 @@ PreMODIT
 PreMODIT also assumes 64 bit but you can use 32 bit when using `allow_32bit` option.  See :doc:`userguide/premodit`.   
 Although we haven't well studied what happens when using 32 bit, you might observe many divergences for HMC-NUTS.
 Let us know your experience when using 32 bit for PreMODIT! 
-

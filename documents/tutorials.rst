@@ -1,137 +1,114 @@
-|:jack_o_lantern:| Getting Started
-=====================================
+Tutorials by Use Case
+=====================
+
+Start with the spectroscopy mode closest to your problem, then move to
+retrieval, opacity, database, or atmosphere-specific examples as needed.
+
+Getting Started
+---------------
 
 .. toctree::
    :maxdepth: 1
 
-   tutorials/get_started.rst
-   tutorials/get_started_transmission.rst
-   tutorials/get_started_reflection.rst
-   tutorials/get_started_opart.rst
-   tutorials/Cross_Section_using_OpaStitch.rst
-   
-   
-Retrievals
-===============
+   Emission spectroscopy <tutorials/get_started>
+   Transmission spectroscopy <tutorials/get_started_transmission>
+   Reflection spectroscopy <tutorials/get_started_reflection>
+   GPU memory-efficient emission spectra <tutorials/get_started_opart>
+   Forward modeling overview <various_forward>
 
-HMC-NUTS
-------------
-
-For HMC-NUTS, visit  `Getting Started Page <tutorials/get_started.html>`_ again.
-
-SVI using NumPyro
------------------------------------
-.. toctree::
-   :maxdepth: 1
-
-   tutorials/get_started_svi.rst
-   
-Nested Sampling using JAXNS/NumPyro
---------------------------------------
-
-.. toctree::
-   :maxdepth: 1
-
-   tutorials/get_started_ns.rst
-
-Equilibrium Chemistry Retrieval
---------------------------------------
-
-.. toctree::
-   :maxdepth: 1
-
-   tutorials/equilibrium_chemistry.rst
-
-A Primer on Planet Atmosphere Model in ExoJAX
-===============================================
-
-
-Molecular/Atomic/Continuum Databases
+Forward Modeling and Radiative Transfer
 ---------------------------------------
 
 .. toctree::
    :maxdepth: 1
 
-   tutorials/select_quantum_states.rst
-   tutorials/branch.rst
-   tutorials/Fortrat.rst
-   tutorials/CIA_opacity.rst
-   tutorials/Hminus.rst
-   tutorials/Forward_modeling_for_Fe_I_lines_of_Kurucz.rst
+   Pure Absorption Radiative Transfer <tutorials/pure_absorption_rt>
+   Rigid stellar rotation and Gaussian convolution <tutorials/Rigid_Rotation>
 
-Scattering
---------------------
+Retrievals
+----------
 
 .. toctree::
    :maxdepth: 1
 
-   userguide/rayleigh.rst
-   userguide/mie.rst
+   HMC-NUTS retrieval with LPF <tutorials/Reverse_modeling>
+   HMC-NUTS retrieval with PreMODIT <tutorials/Reverse_modeling_for_methane_using_PreMODIT>
+   Methane high-resolution retrieval with PreMODIT <tutorials/reverse_premodit>
+   Stochastic variational inference <tutorials/get_started_svi>
+   Nested sampling <tutorials/get_started_ns>
+   Equilibrium chemistry retrieval <tutorials/equilibrium_chemistry>
+   Reverse modeling with precomputed grids <tutorials/reverse_precompute_grid>
 
+|:ringed_planet:| An example of HMC-NUTS for an actual Jupiter reflection spectrum is available in
+`exojaxample_jupiter <https://github.com/HajimeKawahara/exojaxample_jupiter>`_.
 
-Clouds and Reflection Spectrum
-------------------------------------
+|:ringed_planet:| An example of HMC-NUTS for an actual hot Saturn transmission spectrum
+(JWST/ERS, NIRSpec/G395H) is available in
+`exojaxample_WASP39b <https://github.com/sh-tada/exojaxample_WASP39b>`_.
 
-.. toctree::
-   :maxdepth: 1
-
-   tutorials/jupiters/Jupiter_cloud_model_using_amp.rst
-   tutorials/jupiters/Jupiter_Hires_Modeling.rst
-   tutorials/Ackerman_and_Marley_cloud_model.rst
-   
-
-|:ringed_planet:| An example of HMC-NUTS for actual Jupiter reflection spectrum can be found `here <https://github.com/HajimeKawahara/exojaxample_jupiter>`_ .
-
-
-Correlated-k-distribution (CKD)
---------------------------------------
+Opacity Methods
+---------------
 
 .. toctree::
    :maxdepth: 1
 
-   tutorials/transmission_ckd_exomolop.rst
-   tutorials/ckd_emispure.rst
-   tutorials/ckd_transpure.rst
-   tutorials/ckd_transpure_loadonly.rst
-   
-Tips for Real Analysis
--------------------------
+   Wavenumber stitching with OpaStitch <tutorials/Cross_Section_using_OpaStitch>
+   Discrete Integral Transform (DIT) <tutorials/Cross_Section_using_Discrete_Integral_Transform>
+   Voigt profile <tutorials/voigt_function>
+   Voigt-Hjerting function <tutorials/hjerting>
+   Correlated-k transmission with ExoMolOP <tutorials/transmission_ckd_exomolop>
+   CKD emission with OpaCKD <tutorials/ckd_emispure>
+   CKD transmission with OpaCKD <tutorials/ckd_transpure>
+   CKD transmission from saved data <tutorials/ckd_transpure_loadonly>
+
+Databases and Line Physics
+--------------------------
 
 .. toctree::
    :maxdepth: 1
 
-   tutorials/Photometry.rst
-   tutorials/Fitting_Telluric_Lines.rst
-   tutorials/exomolhr.rst
-   userguide/memorysetting.rst	
-   tutorials/elower_setting.rst
-   tutorials/reverse_precompute_grid.rst
+   Filtering lines by quantum number <tutorials/select_quantum_states>
+   R-branch and P-branch of CO <tutorials/branch>
+   Fortrat diagram <tutorials/Fortrat>
+   CIA opacity <tutorials/CIA_opacity>
+   H-minus continuum <tutorials/Hminus>
+   Fe I line list from Kurucz <tutorials/Forward_modeling_for_Fe_I_lines_of_Kurucz>
+   Chemical abundances with FastChem2 <tutorials/Using_FastChem2_to_calculate_the_chemical_abundances>
 
-
-|:ringed_planet:| An example of HMC-NUTS for actual hot Saturn (JWST/ERS, NIRSPEC/G395H) can be found `here <https://github.com/sh-tada/exojaxample_WASP39b>`_ .
-
-
-   
-Macro Physical Processes
---------------------------------------
+Atmospheres, Clouds, and Scattering
+-----------------------------------
 
 .. toctree::
    :maxdepth: 1
 
-   tutorials/Rigid_Rotation.rst
+   Rayleigh scattering <userguide/rayleigh>
+   Mie scattering <userguide/mie>
+   Jupiter-like ammonia clouds <tutorials/jupiters/Jupiter_cloud_model_using_amp>
+   High-resolution Jupiter reflection spectrum <tutorials/jupiters/Jupiter_Hires_Modeling>
+   Ackerman and Marley cloud model <tutorials/Ackerman_and_Marley_cloud_model>
 
-
-Others
-------------------
+Practical Analysis Tips
+-----------------------
 
 .. toctree::
    :maxdepth: 1
 
-   tutorials/Using_FastChem2_to_calculate_the_chemical_abundances.rst
-   tutorials/hjerting.rst
-   tutorials/pure_absorption_rt.rst
-   tutorials/voigt_function.rst
-   tutorials/Cross_Section_using_Discrete_Integral_Transform.rst
-   tutorials/Cross_Section_using_Modified_Discrete_Integral_Transform.rst
+   Photometry with SopPhoto <tutorials/Photometry>
+   Fitting telluric lines <tutorials/Fitting_Telluric_Lines>
+   Line identification with ExoMolHR <tutorials/exomolhr>
+   Reducing memory for HITEMP CH4 <tutorials/Reducing_memory_for_HITEMP>
+   Memory settings <userguide/memorysetting>
+   Choosing Elower maximum <tutorials/elower_setting>
 
+Legacy MODIT Tutorials
+----------------------
 
+These pages are kept for reference, but they are not the recommended
+starting point for current workflows.
+
+.. toctree::
+   :maxdepth: 1
+
+   MODIT cross section <tutorials/Cross_Section_using_Modified_Discrete_Integral_Transform>
+   HMC-NUTS retrieval with MODIT <tutorials/Reverse_modeling_for_methane_using_MODIT>
+   Reverse modeling with VALD using MODIT <tutorials/Reverse_modeling_with_VALD_using_MODIT>

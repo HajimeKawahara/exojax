@@ -1,5 +1,5 @@
-Quatum states of Carbon Monoxide and Fortrat Diagram
-====================================================
+Quantum States of Carbon Monoxide and the Fortrat Diagram
+=========================================================
 
 We here see the quantum states of Carbon Monoxide. Also, to see how the
 band head appears, we would like to plot the Fortrat diagram with a

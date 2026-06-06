@@ -1,4 +1,4 @@
-Emission Spectroscopy with Equilibirum Chemistry
+Emission Spectroscopy with Equilibrium Chemistry
 ================================================
 
 Last update: March 23th (2026) Hajime Kawahara for v2.1
@@ -28,7 +28,7 @@ real use case.)
 -----------------------------------------
 
 ExoJAX has an API for molecular databases, called ``mdb`` (or ``adb``
-for atomic datbases). Prior to loading the database, define the
+for atomic databases). Prior to loading the database, define the
 wavenumber range first.
 
 .. code:: ipython3
@@ -102,8 +102,8 @@ the database name in the ExoMol website (https://www.exomol.com/).
 ---------------------------------------------
 
 ExoJAX has various opacity calculator classes, so-called ``opa``. Here,
-we use a memory-saved opa, ``OpaPremodit``. We assume the robust
-tempreature range we will use is 500-1500K.
+we use a memory-saving ``opa``, ``OpaPremodit``. We assume the
+temperature range we will use is 500-1500K.
 
 .. code:: ipython3
 
@@ -136,12 +136,7 @@ tempreature range we will use is 500-1500K.
 .. parsed-literal::
 
     Premodit: Twt= 1108.7151960064205 K Tref= 570.4914318566549 K
-    Making LSD:|####################| 100%
-
-
-.. parsed-literal::
-
-    
+    Making LSD: 100%
 
 
 Then let’s compute cross section for two different temperature 500 and
@@ -181,7 +176,7 @@ temperatures.
 
 ExoJAX can solve the radiative transfer and derive the emission
 spectrum. To do so, ExoJAX has ``art`` class. ``ArtEmisPure`` means
-Atomospheric Radiative Transfer for Emission with Pure absorption. So,
+Atmospheric Radiative Transfer for emission with pure absorption. So,
 ``ArtEmisPure`` does not include scattering. We set the number of the
 atmospheric layer to 200 (nlayer) and the pressure at bottom and top
 atmosphere to 100 and 1.e-5 bar.
@@ -276,7 +271,7 @@ Sets solar abundance (AAG21) as the elemental vector. Do not forget e-!
 
 
 The mass mixing ratio of CO (MMR) should be computed based on the
-thermochemical equilibirum.
+thermochemical equilibrium.
 
 .. code:: ipython3
 
@@ -410,8 +405,8 @@ Then, run the radiative transfer. As you can see, the emission spectrum
 has been generated. This spectrum shows a region near 4360 cm-1, or
 around 22940 AA, where CO features become increasingly dense. This
 region is referred to as the band head. If you’re interested in why the
-band head occurs, please refer to `Quatum states of Carbon Monoxide and
-Fortrat Diagram <Fortrat.html>`__.
+band head occurs, please refer to `Quantum States of Carbon Monoxide and
+the Fortrat Diagram <Fortrat.html>`__.
 
 .. code:: ipython3
 
@@ -691,11 +686,6 @@ lunch break!
          vsini     10.01      0.19     10.02      9.67     10.28    409.20      1.00
     
     Number of divergences: 0
-
-
-.. parsed-literal::
-
-    
 
 
 After returning from your long lunch, if you’re lucky and the sampling

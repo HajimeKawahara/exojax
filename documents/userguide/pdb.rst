@@ -40,7 +40,7 @@ Available information
 +-----------------------+----------------------------------+
 |RI wavenumber          |pdb.refraction_index_wavenumber   |
 +-----------------------+----------------------------------+
-|RI wavelenght (nm)     |pdb.refraction_index_wavelength_nm|
+|RI wavelength (nm)     |pdb.refraction_index_wavelength_nm|
 +-----------------------+----------------------------------+
 |Miegrid                |pdb.miegrid                       |
 +-----------------------+----------------------------------+

@@ -5,7 +5,7 @@ Hajime Kawahara with Claude Code, September 24th (2025)
 
 This tutorial demonstrates how to use the Correlated K-Distribution
 (CKD) method for atmospheric transmission calculations with ExoJAX, by
-loading exisiting saved data. We also run a simple HMC-NUTS using
+loading existing saved data. We also run a simple HMC-NUTS using
 generated data.
 
 .. code:: ipython3
@@ -324,11 +324,6 @@ transmission spectrum.
        sigmain      0.00      0.00      0.00      0.00      0.00   1082.87      1.00
     
     Number of divergences: 0
-
-
-.. parsed-literal::
-
-    
 
 
 .. code:: ipython3

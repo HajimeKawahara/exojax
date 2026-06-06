@@ -1,33 +1,29 @@
-Why ExoJAX Prefers On-Demand Opacity Calculation?
-=================================================
+On-Demand Opacity Calculation
+=============================
 
 Last Update: January 23rd (2025) Hajime Kawahara
 
 One of ExoJAX’s key features is its ability to compute molecular
-cross-sections on demand by reading the latest molecular databases,
-rather than relying on pre-generated table data. Here, we explain the
+cross-sections on demand by reading molecular databases directly, rather
+than relying only on pre-generated table data. This page explains the
 rationale behind this strategy.
 
-The following outlines the standard procedure for calculating
-cross-sections in ExoJAX. First, define the wavenumber range
-(`utils.grid.wavenumber_grid <../exojax/exojax.utils.html#exojax.utils.grids.wavenumber_grid>`__),
-then load the molecular database (`Molecular and Atomic
-Databases <../userguide/mdb.html>`__). Next, create an instance
-specifying the method for computing opacity (`Opacity Calculator
-Class <userguide/opacalc.html>`__). There are several options for
-opacity calculation methods, depending on factors such as the number of
-lines. Finally, by providing temperature and pressure, the cross-section
-can be calculated.
+The standard workflow is simple: define the wavenumber range with
+`wavenumber_grid <../exojax/exojax.utils.html#exojax.utils.grids.wavenumber_grid>`__,
+load the molecular database (`Molecular and Atomic
+Databases <../userguide/mdb.html>`__), create an opacity calculator
+(`Opacity Calculator Class <../userguide/opacalc.html>`__), and evaluate
+the cross-section at the required temperature and pressure.
 
-Currently, molecular databases such as
-`ExoMol <https://www.exomol.com/>`__ and
-`HITRAN/HITEMP <https://hitran.org/>`__ are continuously being improved.
-ExoJAX’s ability to compute cross-sections directly from the molecular
-database level offers the advantage of always utilizing the latest
-versions of these databases.
+Molecular databases such as `ExoMol <https://www.exomol.com/>`__ and
+`HITRAN/HITEMP <https://hitran.org/>`__ are continuously improved.
+Computing cross-sections directly from the molecular database level
+makes it easier to use current data and trace spectral features back to
+individual lines.
 
 .. code:: ipython3
 
+    %%capture --no-display
     import matplotlib.pyplot as plt
     from exojax.utils.grids import wavenumber_grid
     from exojax.database.exomol.api import MdbExomol
@@ -53,51 +49,8 @@ versions of these databases.
     plt.show()
 
 
-.. parsed-literal::
 
-    xsmode =  lpf
-    xsmode assumes ESLOG in wavenumber space: xsmode=lpf
-    ======================================================================
-    The wavenumber grid should be in ascending order.
-    The users can specify the order of the wavelength grid by themselves.
-    Your wavelength grid is in ***  descending  *** order
-    ======================================================================
-    HITRAN exact name= (12C)(16O)
-    radis engine =  vaex
-
-
-.. parsed-literal::
-
-    /home/kawahara/exojax/src/exojax/utils.grids.py:63: UserWarning: Both input wavelength and output wavenumber are in ascending order.
-      warnings.warn(
-    /home/kawahara/exojax/src/exojax/utils/molname.py:197: FutureWarning: e2s will be replaced to exact_molname_exomol_to_simple_molname.
-      warnings.warn(
-    /home/kawahara/exojax/src/exojax/utils/molname.py:91: FutureWarning: exojax.utils.molname.exact_molname_exomol_to_simple_molname will be replaced to radis.api.exomolapi.exact_molname_exomol_to_simple_molname.
-      warnings.warn(
-    /home/kawahara/exojax/src/exojax/utils/molname.py:91: FutureWarning: exojax.utils.molname.exact_molname_exomol_to_simple_molname will be replaced to radis.api.exomolapi.exact_molname_exomol_to_simple_molname.
-      warnings.warn(
-
-
-.. parsed-literal::
-
-    Molecule:  CO
-    Isotopologue:  12C-16O
-    Background atmosphere:  H2
-    ExoMol database:  None
-    Local folder:  .database/CO/12C-16O/Li2015
-    Transition files: 
-    	 => File 12C-16O__Li2015.trans
-    Broadening code level: a0
-
-
-.. parsed-literal::
-
-    /home/kawahara/anaconda3/lib/python3.10/site-packages/radis-0.15.2-py3.10.egg/radis/api/exomolapi.py:685: AccuracyWarning: The default broadening parameter (alpha = 0.07 cm^-1 and n = 0.5) are used for J'' > 80 up to J'' = 152
-      warnings.warn(
-
-
-
-.. image:: OnDemand_Opacity_files/OnDemand_Opacity_3_4.png
+.. image:: OnDemand_Opacity_files/OnDemand_Opacity_3_0.png
 
 
 In this way, ExoJAX directly computes opacity from molecular databases,
@@ -190,10 +143,8 @@ to obtain the cross-section at the desired temperature and pressure.
 Here, we fix the pressure at 1 bar and compare the interpolated
 cross-section at an intermediate temperature ``tc``, derived from the
 cross-sections at 900 K and 1200 K, with the cross-section directly
-calculated at ``tc``. For the direct calculation at the intermediate
-temperature, we will compare two approaches: the arithmetic mean and the
-logarithmic mean.For interpolating the cross-sections, let’s consider
-two approaches: the arithmetic mean and the logarithmic mean.
+calculated at ``tc``. For both the grid interpolation and the direct
+calculation, we compare arithmetic and logarithmic temperature means.
 
 .. code:: ipython3
 
@@ -212,12 +163,12 @@ two approaches: the arithmetic mean and the logarithmic mean.
     averaged_xs_log = 10**((np.log10(xs00) + np.log10(xs10)) / 2.0)
     
     
-    #direct calculation
+    # direct calculation
     xs = opa.xsvector(tc, p0)
     xs_log = opa.xsvector(tc_log, p0)
     
     
-    #diffrence
+    #difference
     diff = np.mean(averaged_xs)/np.mean(xs) - 1.0
     diff_log_lin = np.mean(averaged_xs_log)/np.mean(xs) - 1.0
     diff_lin_log = np.mean(averaged_xs)/np.mean(xs_log) - 1.0
