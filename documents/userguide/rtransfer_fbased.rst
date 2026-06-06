@@ -27,7 +27,7 @@ are the transmission between the layer bottom and top and the scattering from th
 
 :math:`\mathcal{B}_n (\tau) = \frac{ 2 (1-\omega)}{\gamma_1 - \gamma_2} B_\nu(\tau)`.
 
-The coeffcients :math:`\gamma_1, \gamma_2` can be computed using assymetric parameter :math:`g` and single scattering albedo :math:`\omega` as
+The coefficients :math:`\gamma_1, \gamma_2` can be computed using the asymmetric parameter :math:`g` and single scattering albedo :math:`\omega` as
 
 :math:`\gamma_1 = 2 - \omega (1 + g)` and :math:`\gamma_2 = \omega (1 - g)`.
 

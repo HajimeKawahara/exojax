@@ -64,8 +64,8 @@ other options such as BlackJAX, PyMC etc.
     import numpyro
     import numpyro.distributions as dist
 
-We use a sample data of the methane emission spectrum in ExoJAX,
-normlized it, and add Gaussian noise.
+We use sample data from a methane emission spectrum in ExoJAX, normalize
+it, and add Gaussian noise.
 
 .. code:: ipython3
 
@@ -245,7 +245,7 @@ ExoMol website.
 .. parsed-literal::
 
     Premodit: Twt= 457.65619999186345 K Tref= 1108.1485374361412 K
-    Making LSD:|####################| 100%
+    Making LSD: 100%
 
 
 As a continuum model, we assume CIA (H2 vs H2). Check how to use ``cdb``

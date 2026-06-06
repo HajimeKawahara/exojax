@@ -1,5 +1,5 @@
-Forward Modelling of a Spectrum using PreMODIT and Comparison with LPF
-======================================================================
+Forward Modeling of a Spectrum Using PreMODIT and Comparison with LPF
+=====================================================================
 
 Here, we try to compute a emission spectrum using PreMODIT. We recommend
 to use FP64 as follows:

@@ -1,5 +1,5 @@
-Forward Modelling of a Many Lines Spectrum using MODIT
-======================================================
+Forward Modeling of a Many-Line Spectrum Using MODIT
+====================================================
 
 Here, we try to compute a emission spectrum using MODIT.
 

@@ -121,7 +121,7 @@ coefficients.
 .. image:: Rigid_Rotation_files/Rigid_Rotation_14_0.png
 
 
-We can also apply a Gaussian covolution and velocity shift to the
+We can also apply a Gaussian convolution and velocity shift to the
 spectrum. It should be noted that beta is the standard deviation of a
 Gaussian.
 

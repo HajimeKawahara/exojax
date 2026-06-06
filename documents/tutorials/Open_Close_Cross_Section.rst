@@ -163,17 +163,8 @@ wavenumber grids using PreMODIT (``nustitch=1`` by default).
 .. parsed-literal::
 
     Premodit: Twt= 457.65619999186345 K Tref= 1108.1485374361412 K
-    Making LSD:|####################| 100%
-
-
-.. parsed-literal::
-
-    
-
-
-.. parsed-literal::
-
-    cross section (xsvector/xsmatrix) is calculated in the closed mode. The aliasing part cannnot be used.
+    Making LSD: 100%
+    cross section (xsvector/xsmatrix) is calculated in the closed mode. The aliasing part cannot be used.
     wing cut width =  [19.95496988332434, 20.139524518083817] cm-1
 
 
@@ -205,7 +196,7 @@ wavenumber grids using PreMODIT (``nustitch=1`` by default).
 .. parsed-literal::
 
     Premodit: Twt= 457.65619999186345 K Tref= 1108.1485374361412 K
-    Making LSD:|####################| 100%
+    Making LSD: 100%
 
 
 .. parsed-literal::
@@ -216,7 +207,7 @@ wavenumber grids using PreMODIT (``nustitch=1`` by default).
 
 .. parsed-literal::
 
-    cross section (xsvector/xsmatrix) is calculated in the closed mode. The aliasing part cannnot be used.
+    cross section (xsvector/xsmatrix) is calculated in the closed mode. The aliasing part cannot be used.
     wing cut width =  [19.86332317448523, 20.047030209625518] cm-1
     OpaPremodit: params automatically set.
     default elower grid trange (degt) file version: 2
@@ -233,17 +224,8 @@ wavenumber grids using PreMODIT (``nustitch=1`` by default).
 .. parsed-literal::
 
     Premodit: Twt= 457.65619999186345 K Tref= 1108.1485374361412 K
-    Making LSD:|####################| 100%
-
-
-.. parsed-literal::
-
-    
-
-
-.. parsed-literal::
-
-    cross section (xsvector/xsmatrix) is calculated in the closed mode. The aliasing part cannnot be used.
+    Making LSD: 100%
+    cross section (xsvector/xsmatrix) is calculated in the closed mode. The aliasing part cannot be used.
     wing cut width =  [39.63542054375557, 40.37197010095406] cm-1
 
 
@@ -403,8 +385,8 @@ reproduce the algorithm in ``OpaPremodit``. This can be done using
 .. parsed-literal::
 
     Premodit: Twt= 457.65619999186345 K Tref= 1108.1485374361412 K
-    Making LSD:|####################| 100%
-    cross section (xsvector/xsmatrix) is calculated in the closed mode. The aliasing part cannnot be used.
+    Making LSD: 100%
+    cross section (xsvector/xsmatrix) is calculated in the closed mode. The aliasing part cannot be used.
     wing cut width =  [19.95496988332434, 20.139524518083817] cm-1
     cross section (xsvector/xsmatrix) is calculated in the open mode. The aliasing part can be used.
     wing cut width =  [19.95496988332434, 20.139524518083817] cm-1
@@ -440,8 +422,8 @@ reproduce the algorithm in ``OpaPremodit``. This can be done using
 .. parsed-literal::
 
     Premodit: Twt= 457.65619999186345 K Tref= 1108.1485374361412 K
-    Making LSD:|####################| 100%
-    cross section (xsvector/xsmatrix) is calculated in the closed mode. The aliasing part cannnot be used.
+    Making LSD: 100%
+    cross section (xsvector/xsmatrix) is calculated in the closed mode. The aliasing part cannot be used.
     wing cut width =  [19.86332317448523, 20.047030209625518] cm-1
     cross section (xsvector/xsmatrix) is calculated in the open mode. The aliasing part can be used.
     wing cut width =  [19.86332317448523, 20.047030209625518] cm-1
@@ -461,8 +443,8 @@ reproduce the algorithm in ``OpaPremodit``. This can be done using
 .. parsed-literal::
 
     Premodit: Twt= 457.65619999186345 K Tref= 1108.1485374361412 K
-    Making LSD:|####################| 100%
-    cross section (xsvector/xsmatrix) is calculated in the closed mode. The aliasing part cannnot be used.
+    Making LSD: 100%
+    cross section (xsvector/xsmatrix) is calculated in the closed mode. The aliasing part cannot be used.
     wing cut width =  [39.63542054375557, 40.37197010095406] cm-1
     cross section (xsvector/xsmatrix) is calculated in the open mode. The aliasing part can be used.
     wing cut width =  [19.863323174480684, 20.13952451807927] cm-1

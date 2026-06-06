@@ -1,41 +1,42 @@
 Getting Started with Transmission Spectroscopy
 ==============================================
 
-Last update: September 24th (2025) Hajime Kawahara for v2.2.0
+Last update: June 2026, Hajime Kawahara, for ExoJAX 2.5.0
 
-In this getting started guide, we will use ExoJAX to simulate a
-high-resolution **transmission** spectrum from an atmosphere with CO
-molecular absorption and hydrogen molecule CIA continuum absorption as
-the opacity sources. We will then add appropriate noise to the simulated
-spectrum to create a mock spectrum and perform spectral retrieval using
-NumPyro’s HMC NUTS.
+This guide builds a high-resolution transmission spectrum for an
+atmosphere with CO molecular absorption and H2-H2 CIA continuum opacity.
+It then adds mock noise and performs a retrieval with NumPyro’s HMC-NUTS
+sampler.
 
-First, we recommend 64-bit if you do not think about numerical errors.
-Use jax.config to set 64-bit. (But note that 32-bit is sufficient in
-most cases. Consider to use 32-bit (faster, less device memory) for your
-real use case.)
+The structure follows the emission getting-started guide, but the
+radiative-transfer step uses transmission geometry.
+
+This notebook enables 64-bit mode in JAX. This is useful for numerical
+stability in retrieval examples, although 32-bit mode is often
+sufficient and can be faster with lower device-memory use in production
+workflows.
 
 .. code:: ipython3
 
     from jax import config
     config.update("jax_enable_x64", True)
 
-The following schematic figure explains how ExoJAX works; (1) loading
-databases (``*db``), (2) calculating opacity (``opa``), (3) running
-atmospheric radiative transfer (``art``), (4) applying operations on the
-spectrum (``sop``)
+The schematic below summarizes the ExoJAX workflow:
 
-In this “getting started” guide, there are two opacity sources, CO and
-CIA. Their respective databases, ``mdb`` and ``cdb``, are converted by
-``opa`` into the opacity of each atmospheric layer, which is then used
-in the radiative transfer calculation performed by ``art``. Finally,
-``sop`` convolves instrumental profiles, generating the emission
-spectrum.
+1. load databases (``*db``),
+2. compute opacity (``opa``),
+3. run atmospheric radiative transfer (``art``), and
+4. apply spectral operations (``sop``).
 
-``mdb``/``cdb`` –> ``opa`` –> ``art`` –> ``sop`` —> spectrum
+In this guide, CO and CIA provide the opacity sources. Their databases,
+``mdb`` and ``cdb``, are converted by ``opa`` into layer opacities. The
+radiative-transfer object ``art`` computes the raw transmission
+spectrum, and ``sop`` applies instrumental and velocity operations.
 
-This spectral model is incorporated into the probabilistic model in
-NumPyro, and retrieval is performed by sampling using HMC-NUTS.
+``mdb``/``cdb`` -> ``opa`` -> ``art`` -> ``sop`` -> spectrum
+
+The same spectral model is later embedded in a NumPyro probabilistic
+model for HMC-NUTS retrieval.
 
 .. figure:: https://secondearths.sakura.ne.jp/exojax/figures/exojax_get_started_transmission.png
    :alt: Figure. Structure of ExoJAX
@@ -45,9 +46,9 @@ NumPyro, and retrieval is performed by sampling using HMC-NUTS.
 1. Loading a molecular database using mdb
 -----------------------------------------
 
-ExoJAX has an API for molecular databases, called ``mdb`` (or ``adb``
-for atomic datbases). Prior to loading the database, define the
-wavenumber range first.
+ExoJAX provides molecular database APIs called ``mdb`` and atomic
+database APIs called ``adb``. Define the wavenumber grid before loading
+a database.
 
 .. code:: ipython3
 
@@ -75,10 +76,10 @@ wavenumber range first.
       warnings.warn(
 
 
-Then, let’s load the molecular database. We here use Carbon monoxide in
-Exomol. ``CO/12C-16O/Li2015`` means
-``Carbon monoxide/ isotopes = 12C + 16O / database name``. You can check
-the database name in the ExoMol website (https://www.exomol.com/).
+Next, load the molecular database. This example uses carbon monoxide
+from ExoMol. The path ``CO/12C-16O/Li2015`` means
+``molecule / isotopologue / database name``. Database names can be
+checked on the `ExoMol website <https://www.exomol.com/>`__.
 
 .. code:: ipython3
 
@@ -119,9 +120,9 @@ the database name in the ExoMol website (https://www.exomol.com/).
 2. Computation of the Cross Section using opa
 ---------------------------------------------
 
-ExoJAX has various opacity calculator classes, so-called ``opa``. Here,
-we use a memory-saved opa, ``OpaPremodit``. We assume the robust
-tempreature range we will use is 500-1500K.
+ExoJAX provides several opacity calculator classes, collectively called
+``opa``. Here we use the memory-efficient ``OpaPremodit`` calculator. We
+set the temperature range used by the calculator to 500-1500 K.
 
 .. code:: ipython3
 
@@ -157,16 +158,11 @@ tempreature range we will use is 500-1500K.
 .. parsed-literal::
 
     Premodit: Twt= 1108.7151960064205 K Tref= 570.4914318566549 K
-    Making LSD:|####################| 100%
+    Making LSD: 100%
 
 
-.. parsed-literal::
-
-    
-
-
-Then let’s compute cross section for two different temperature 500 and
-1500 K for P=1.0 bar. opa.xsvector can do that!
+Compute cross sections at 500 K and 1500 K for a pressure of 1.0 bar
+using ``opa.xsvector``.
 
 .. code:: ipython3
 
@@ -177,8 +173,8 @@ Then let’s compute cross section for two different temperature 500 and
     T_2 = 1500.0  # K
     xsv_2 = opa.xsvector(T_2, P)  # cm2
 
-Plot them. It can be seen that different lines are stronger at different
-temperatures.
+Plotting the cross sections shows that different lines dominate at
+different temperatures.
 
 .. code:: ipython3
 
@@ -200,15 +196,14 @@ temperatures.
 3. Atmospheric Radiative Transfer
 ---------------------------------
 
-ExoJAX can solve the radiative transfer and derive `the transmission
-spectrum <../userguide/rtransfer_transmission.html>`__. To do so, ExoJAX
-has ``art`` class. ``ArtTransPure`` means Atomospheric Radiative
-Transfer for **Transmission** with Pure absorption. So, ``ArtTransPure``
-does not include scattering. You can choose either the trapezoid or
-Simpson’s rule as the integration scheme. The default setting is
-``integration="simpson"``. We set the number of the atmospheric layer to
-200 (nlayer) and the pressure at bottom and top atmosphere to 1 and
-1.e-11 bar.
+ExoJAX solves radiative transfer and returns `the transmission
+spectrum <../userguide/rtransfer_transmission.html>`__ through an
+``art`` object. ``ArtTransPure`` means atmospheric radiative transfer
+for transmission with pure absorption, without scattering. The
+integration scheme can be either trapezoid or Simpson’s rule; the
+default is ``integration="simpson"``. Here we use 200 atmospheric
+layers, with the pressure ranging from 100 bar at the bottom to 1.0e-5
+bar at the top.
 
 .. code:: ipython3
 
@@ -233,11 +228,11 @@ Simpson’s rule as the integration scheme. The default setting is
       warnings.warn(
 
 
-Let’s assume the power law temperature model, within 500 - 1500 K.
+Assume a power-law temperature profile between 500 K and 1500 K:
 
-:math:`T = T_0 P^\alpha`
+:math:`T = T_0 P^{\alpha}`,
 
-where :math:`T_0=1200` K and :math:`\alpha=0.1`.
+where :math:`T_0 = 1200` K and :math:`\alpha = 0.1`.
 
 .. code:: ipython3
 
@@ -250,15 +245,12 @@ Also, the mass mixing ratio of CO (MMR) should be defined.
 
     mmr_profile = art.constant_mmr_profile(0.01)
 
-Surface gravity is also important quantity of the atmospheric model,
-which is a function of planetary radius and mass. Unlike in the case of
-the emission spectrum, the transmission spectrum is affected by the
-opacity from the lower to the upper layers of the atmosphere. Therefore,
-it is better to calculate gravity as a function of altitude. To achieve
-this, the gravity and radius at the bottom of the atmospheric layer are
-specified as ``gravity_btm`` and ``radius_btm``, respectively, and the
-layer-by-layer gravity profile is computed using
-``art.gravity_profile``.
+Surface gravity is important for transmission spectra. Unlike emission
+spectra, transmission spectra probe opacity along slant paths from lower
+to upper atmospheric layers. It is therefore useful to calculate gravity
+as a function of altitude. This is done by specifying ``gravity_btm``
+and ``radius_btm`` at the bottom layer and using the layer boundaries in
+the transmission geometry.
 
 .. code:: ipython3
 
@@ -292,10 +284,9 @@ When visualized, it looks like this.
 .. image:: get_started_transmission_files/get_started_transmission_27_0.png
 
 
-In addition to the CO cross section, we would consider `collisional
-induced
+In addition to CO absorption, include `collision-induced
 absorption <https://en.wikipedia.org/wiki/Collision-induced_absorption_and_emission>`__
-(CIA) as a continuum opacity. ``cdb`` class can be used.
+(CIA) as continuum opacity. CIA data are handled with a ``cdb`` object.
 
 .. code:: ipython3
 
@@ -311,18 +302,18 @@ absorption <https://en.wikipedia.org/wiki/Collision-induced_absorption_and_emiss
     H2-H2
 
 
-Before running the radiative transfer, we need cross sections for
-layers, called ``xsmatrix`` for CO and ``logacia_matrix`` for CIA
-(strictly speaking, the latter is not cross section but coefficient
-because CIA intensity is proportional density square). See
-`here <CIA_opacity.html>`__ for the details.
+Before running radiative transfer, compute layer quantities:
+``xsmatrix`` for CO and ``logacia_matrix`` for CIA. Strictly speaking,
+CIA uses an absorption coefficient rather than a cross section because
+its intensity is proportional to density squared. See `CIA
+opacity <CIA_opacity.html>`__ for details.
 
 .. code:: ipython3
 
     xsmatrix = opa.xsmatrix(Tarr, art.pressure)
     logacia_matrix = opacia.logacia_matrix(Tarr)
 
-Convert them to opacity
+Convert the layer quantities into optical depth.
 
 .. code:: ipython3
 
@@ -332,7 +323,7 @@ Convert them to opacity
     vmrH2 = 0.855  # VMR of H2
     dtaucia = art.opacity_profile_cia(logacia_matrix, Tarr, vmrH2, vmrH2, mmw[:, None], gravity)
 
-Add two opacities.
+Add the molecular and continuum optical depths.
 
 .. code:: ipython3
 
@@ -351,12 +342,10 @@ Add two opacities.
 
 
 
-Then, run the radiative transfer. As you can see, the emission spectrum
-has been generated. This spectrum shows a region near 4360 cm-1, or
-around 22940 AA, where CO features become increasingly dense. This
-region is referred to as the band head. If you’re interested in why the
-band head occurs, please refer to `Quatum states of Carbon Monoxide and
-Fortrat Diagram <Fortrat.html>`__.
+Run the radiative-transfer solver to generate the transmission spectrum.
+The dense CO features near 4360 cm-1, or about 22940 AA, form a band
+head. For the line-physics background, see `Quantum states of Carbon
+Monoxide and Fortrat Diagram <Fortrat.html>`__.
 
 .. code:: ipython3
 
@@ -410,18 +399,19 @@ upper to the lower layers, is included.
 .. image:: get_started_transmission_files/get_started_transmission_43_1.png
 
 
-4. Spectral Operators:　instrumental profile, Doppler velocity shift and so on, any operation on spectra.
----------------------------------------------------------------------------------------------------------
+4. Spectral Operators
+---------------------
 
-The above spectrum is called “raw spectrum” in ExoJAX. The effects
-applied to the raw spectrum is handled in ExoJAX by the spectral
-operator (``sop``).
+Spectral operators apply effects such as instrumental broadening,
+Doppler velocity shifts, and sampling onto an observational grid.
 
-Then, the instrumental profile with relative radial velocity shift is
-applied. Also, we need to match the computed spectrum to the data grid.
-This process is called ``sampling`` (but just interpolation though).
-Below, let’s perform a simulation that includes noise for use in later
-analysis.
+The spectrum produced by radiative transfer is the raw spectrum. ExoJAX
+applies post-processing effects with spectral operators (``sop``).
+
+Next, apply the instrumental profile and relative radial-velocity shift.
+The computed spectrum must also be evaluated on the data grid; this
+interpolation step is called ``sampling`` in ExoJAX. The result below is
+a mock observation with added noise.
 
 .. code:: ipython3
 
@@ -459,12 +449,10 @@ analysis.
 5. Retrieval of a Transmission Spectrum
 ---------------------------------------
 
-Next, let’s perform a “retrieval” on the simulated spectrum created
-above. Retrieval involves estimating the parameters of an atmospheric
-model in the form of a posterior distribution based on the spectrum. To
-do this, we first need a model. Here, we have compiled the forward
-modeling steps so far and defined the model as follows. The spectral
-model has six parameters.
+Next, retrieve atmospheric parameters from the mock transmission
+spectrum. Retrieval estimates the posterior distribution of model
+parameters given the data. The forward-modeling steps above are
+collected into the spectral model below, which has six parameters.
 
 .. code:: ipython3
 
@@ -502,8 +490,7 @@ model has six parameters.
         mu = sop_inst.sampling(Rp2_inst, RV, nu_obs)
         return mu
 
-Let’s verify that spectra are being generated from ``fspec`` with
-various parameter sets.
+Check that ``fspec`` generates spectra for different parameter sets.
 
 .. code:: ipython3
 
@@ -562,7 +549,7 @@ arguments of ``fspec``.
     
         numpyro.sample('spectrum', dist.Normal(mu, sigmain), obs=spectrum)
 
-Now, let’s define NUTS and start sampling.
+Now define NUTS and start sampling.
 
 .. code:: ipython3
 
@@ -572,8 +559,8 @@ Now, let’s define NUTS and start sampling.
     #kernel = NUTS(model_prob, forward_mode_differentiation=True)
     kernel = NUTS(model_prob, forward_mode_differentiation=False)
 
-Since this process will take several hours, feel free to go for a long
-lunch break!
+This sampling step can take several hours, depending on the machine and
+sampler settings.
 
 .. code:: ipython3
 
@@ -601,13 +588,7 @@ lunch break!
     Number of divergences: 0
 
 
-.. parsed-literal::
-
-    
-
-
-After returning from your long lunch, if you’re lucky and the sampling
-is complete, let’s write a predictive model for the spectrum.
+After sampling finishes, define a predictive model for the spectrum.
 
 .. code:: ipython3
 
@@ -647,8 +628,8 @@ is complete, let’s write a predictive model for the spectrum.
 .. image:: get_started_transmission_files/get_started_transmission_64_0.png
 
 
-You can see that the predictions are working very well! Let’s also
-display a corner plot. Here, we’ve used ArviZ for visualization.
+The predictive spectra match the mock data well. We also show a corner
+plot using ArviZ.
 
 .. code:: ipython3
 
@@ -668,29 +649,23 @@ display a corner plot. Here, we’ve used ArviZ for visualization.
 Further Information
 -------------------
 
-Correlated noise can be introduced using a Gaussian process, and
-parameter estimation can be performed using SVI or Nested Sampling, just
-as in the case of emission spectra. See below for details.
+Correlated noise can be introduced with a Gaussian process, and
+parameter estimation can also be performed with SVI or nested sampling,
+as in the emission-spectrum workflow.
 
 -  `Including GP in an emission
    spectrum <get_started.html#modeling-correlated-noise-with-a-gaussian-process>`__
 -  `SVI for an emission spectrum <get_started_svi.html>`__
--  `Neste Sampling for an emission spectrum <get_started_ns.html>`__
+-  `Nested sampling for an emission spectrum <get_started_ns.html>`__
 
-Not enough GPU device memory? In that case, you can perform wavenumber
-splitting. See below for details.
+If GPU device memory is limited, see:
 
 -  `wavenumber stitching <Cross_Section_using_OpaStitch.html>`__
 
-Want to analyze JWST data? The Gallery and the following repositories
-may be helpful.
+An applied HMC-NUTS analysis of a WASP-39b transmission spectrum
+observed with JWST/NIRSpec G395H is available in the gallery:
 
--  `HMC-NUTS analysis using WASP39b transmission spectrum as observed by
-   JWST
-   G395H <../examples/WASP39b_transmission_JWST-NIRSpec.html#sphx-glr-examples-wasp39b-transmission-jwst-nirspec-py>`__
--  `exojaxample_WASP39b <https://github.com/sh-tada/exojaxample_WASP39b>`__
-   by Shotaro Tada (@sh-tada)
-
-That’s it.
+-  `WASP-39b transmission spectrum
+   example <../examples/WASP39b_transmission_JWST-NIRSpec.html#sphx-glr-examples-wasp39b-transmission-jwst-nirspec-py>`__
 
 

@@ -139,7 +139,7 @@ mechanism of OLA-based combination.
 .. parsed-literal::
 
     Premodit: Twt= 1049.0651485510987 K Tref= 539.7840596059918 K
-    Making LSD:|####################| 100%
+    Making LSD: 100%
 
 
 .. parsed-literal::

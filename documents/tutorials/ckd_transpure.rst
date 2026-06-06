@@ -236,19 +236,10 @@ using line-by-line calculations.
 .. parsed-literal::
 
     Premodit: Twt= 1383.2165049575465 K Tref= 840.335329973883 K
-    Making LSD:|####################| 100%
+    Making LSD: 100%
     Base opacity calculator: OpaPremodit
     
     Computing line-by-line transmission spectrum...
-
-
-.. parsed-literal::
-
-    
-
-
-.. parsed-literal::
-
     Line-by-line spectrum computed!
     Transit radius ratio range: [1.042101, 1.109748]
     Transit depth variation: 67647 ppm

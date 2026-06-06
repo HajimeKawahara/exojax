@@ -334,17 +334,8 @@ We will now compare the spectra from ExoMol and Harg2010.
 .. parsed-literal::
 
     Premodit: Twt= 1823.8027468832422 K Tref= 570.4914318566549 K
-    Making LSD:|--------------------| 0%
-
-.. parsed-literal::
-
-    
-
-
-.. parsed-literal::
-
-    Making LSD:|####################| 100%
-    cross section (xsvector/xsmatrix) is calculated in the closed mode. The aliasing part cannnot be used.
+    Making LSD: 0%Making LSD: 100%
+    cross section (xsvector/xsmatrix) is calculated in the closed mode. The aliasing part cannot be used.
     wing cut width =  [1049.5625053665367, 1682.948173844723] cm-1
     rtsolver:  ibased
     Intensity-based n-stream solver, isothermal layer (e.g. NEMESIS, pRT like)
@@ -379,17 +370,8 @@ We will now compare the spectra from ExoMol and Harg2010.
 .. parsed-literal::
 
     Premodit: Twt= 1823.8027468832422 K Tref= 570.4914318566549 K
-    Making LSD:|####################| 100%
-
-
-.. parsed-literal::
-
-    
-
-
-.. parsed-literal::
-
-    cross section (xsvector/xsmatrix) is calculated in the closed mode. The aliasing part cannnot be used.
+    Making LSD: 100%
+    cross section (xsvector/xsmatrix) is calculated in the closed mode. The aliasing part cannot be used.
     wing cut width =  [1049.5625053665367, 1682.948173844723] cm-1
     rtsolver:  ibased
     Intensity-based n-stream solver, isothermal layer (e.g. NEMESIS, pRT like)
@@ -424,32 +406,23 @@ We will now compare the spectra from ExoMol and Harg2010.
 .. parsed-literal::
 
     Premodit: Twt= 1823.8027468832422 K Tref= 570.4914318566549 K
-    Making LSD:|--------------------| 0%
-
-.. parsed-literal::
-
-    
-
-
-.. parsed-literal::
-
-    Making LSD:|####################| 100%
-    cross section (xsvector/xsmatrix) is calculated in the closed mode. The aliasing part cannnot be used.
+    Making LSD: 0%Making LSD: 100%
+    cross section (xsvector/xsmatrix) is calculated in the closed mode. The aliasing part cannot be used.
     wing cut width =  [1049.5625053665367, 1682.948173844723] cm-1
     rtsolver:  ibased
     Intensity-based n-stream solver, isothermal layer (e.g. NEMESIS, pRT like)
 
 
 
-.. image:: customapi_files/customapi_13_18.png
+.. image:: customapi_files/customapi_13_12.png
 
 
 
-.. image:: customapi_files/customapi_13_19.png
+.. image:: customapi_files/customapi_13_13.png
 
 
 
-.. image:: customapi_files/customapi_13_20.png
+.. image:: customapi_files/customapi_13_14.png
 
 
 Overplot Sonora Model (Diamondback), which includes the Harg2010 FeH
