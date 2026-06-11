@@ -100,6 +100,38 @@ def rtrun_emis_pureabs_fbased2st_surface(dtau, source_matrix, source_surface):
 
 
 @jit
+def rtrun_emis_pureabs_ibased_intensity(dtau, source_matrix, mus):
+    """Emergent intensities for intensity-based pure absorption RT.
+
+    Args:
+        dtau (2D array): optical depth matrix, dtau  (N_layer, N_nus)
+        source_matrix (2D array): source matrix (N_layer, N_nus)
+        mus (list): mu (cos theta) list for integration
+
+    Returns:
+        2D array: emergent intensity matrix (N_mu, N_nus)
+    """
+
+    Nnus = jnp.shape(dtau)[1]
+    tau = jnp.cumsum(dtau, axis=0)
+
+    def f(carry, mu):
+        dtrans = -jnp.diff(jnp.exp(-tau / mu), prepend=1.0, axis=0)
+        intensity = jnp.sum(source_matrix * dtrans, axis=0)
+        return carry, intensity
+
+    _, intensity = scan(f, jnp.zeros(Nnus), mus)
+    return intensity
+
+
+@jit
+def rtrun_emis_pureabs_ibased_flux_from_intensity(intensity, mus, weights):
+    """Integrate emergent intensities over angle using the ibased quadrature."""
+
+    return jnp.einsum("i,i,ij->j", 2.0 * mus, weights, intensity)
+
+
+@jit
 def rtrun_emis_pureabs_ibased(dtau, source_matrix, mus, weights):
     """Radiative Transfer for emission spectrum using intensity-based n-stream pure absorption with no surface (NEMESIS, pRT-like)
     Args:
@@ -112,27 +144,8 @@ def rtrun_emis_pureabs_ibased(dtau, source_matrix, mus, weights):
         flux in the unit of [erg/cm2/s/cm-1] if using piBarr as a source function.
     """
 
-    Nnus = jnp.shape(dtau)[1]
-    tau = jnp.cumsum(dtau, axis=0)
-
-    # The following scan part is equivalent to this for-loop
-    # spec = jnp.zeros(Nnus)
-    # for i, mu in enumerate(mus):
-    #    dtrans = - jnp.diff(jnp.exp(-tau/mu), prepend=1.0, axis=0)
-    #    spec = spec + weights[i]*2.0*mu*jnp.sum(source_matrix*dtrans, axis=0)
-
-    # scan part
-    muws = [mus, weights]
-
-    def f(carry_fmu, muw):
-        mu, w = muw
-        dtrans = -jnp.diff(jnp.exp(-tau / mu), prepend=1.0, axis=0)
-        carry_fmu = carry_fmu + 2.0 * mu * w * jnp.sum(source_matrix * dtrans, axis=0)
-        return carry_fmu, None
-
-    spec, _ = scan(f, jnp.zeros(Nnus), muws)
-
-    return spec
+    intensity = rtrun_emis_pureabs_ibased_intensity(dtau, source_matrix, mus)
+    return rtrun_emis_pureabs_ibased_flux_from_intensity(intensity, mus, weights)
 
 
 def initialize_gaussian_quadrature(nstream):
