@@ -77,6 +77,28 @@ def parser_with_defaults() -> argparse.ArgumentParser:
     parser.add_argument("--self-table", default="")
     parser.add_argument("--output-dir", default="output_wasp39b_self_ckd_compare")
     parser.add_argument("--overwrite-self-table", action="store_true")
+    parser.add_argument(
+        "--build-self-patches",
+        action="store_true",
+        help="Build self CKD tables patch-by-patch and write a manifest, then exit.",
+    )
+    parser.add_argument(
+        "--patch-width",
+        type=float,
+        default=None,
+        help="Patch width in cm-1 for --build-self-patches.",
+    )
+    parser.add_argument(
+        "--patch-nu-grid-points",
+        type=int,
+        default=None,
+        help="Wavenumber grid points per patch. Defaults to scaling --nu-grid-points by patch width.",
+    )
+    parser.add_argument(
+        "--patch-manifest",
+        default="",
+        help="Manifest filename for --build-self-patches. Defaults inside --output-dir.",
+    )
     parser.add_argument("--ckd-resolution", type=float, default=1000.0)
     parser.add_argument("--ckd-band-width", type=float, default=None)
     parser.add_argument("--band-spacing", choices=("log", "linear"), default="log")
@@ -116,6 +138,13 @@ def validate_args(args: argparse.Namespace, parser: argparse.ArgumentParser) -> 
         parser.error("--self-nu-min and --self-nu-max must be positive.")
     if args.self_nu_min >= args.self_nu_max:
         parser.error("--self-nu-min must be smaller than --self-nu-max.")
+    if args.build_self_patches:
+        if args.patch_width is None or args.patch_width <= 0.0:
+            parser.error("--build-self-patches requires positive --patch-width.")
+        if args.patch_nu_grid_points is not None and args.patch_nu_grid_points <= 0:
+            parser.error("--patch-nu-grid-points must be positive when set.")
+        if args.self_table:
+            parser.error("--self-table cannot be used with --build-self-patches.")
     if args.pressure_top <= 0.0 or args.pressure_btm <= 0.0:
         parser.error("--pressure-top and --pressure-btm must be positive.")
     if args.pressure_top >= args.pressure_btm:
@@ -250,6 +279,55 @@ def make_wavenumber_grid(args: argparse.Namespace):
             unit="nm",
             xsmode="premodit",
         )
+
+
+def build_self_ckd_patches(args: argparse.Namespace) -> None:
+    from exojax.opacity.ckd.precompute import precompute_ckd_tables_by_patches
+
+    out_dir = Path(args.output_dir)
+    t_grid = np.linspace(500.0, 2000.0, args.t_grid_size)
+    p_grid = np.logspace(np.log10(args.pressure_top), np.log10(args.pressure_btm), args.p_grid_size)
+    manifest_name = Path(args.patch_manifest).name if args.patch_manifest else "self_ckd_patch_manifest.json"
+    points_per_patch = args.patch_nu_grid_points
+    if points_per_patch is None:
+        points_per_patch = max(
+            16,
+            int(math.ceil(args.nu_grid_points * args.patch_width / (args.self_nu_max - args.self_nu_min))),
+        )
+
+    def make_patch_nu_grid(nu_min, nu_max, n_grid):
+        patch_args = argparse.Namespace(**vars(args))
+        patch_args.self_nu_min = float(nu_min)
+        patch_args.self_nu_max = float(nu_max)
+        patch_args.nu_grid_points = int(n_grid)
+        nu_grid, _wav_grid, _grid_resolution = make_wavenumber_grid(patch_args)
+        return nu_grid
+
+    def make_patch_base_opa(nu_grid, nu_min, nu_max):
+        patch_args = argparse.Namespace(**vars(args))
+        patch_args.self_nu_min = float(nu_min)
+        patch_args.self_nu_max = float(nu_max)
+        base_opa, _molmass, _mdb_path, _n_lines = build_self_base_opa(patch_args, nu_grid)
+        return base_opa
+
+    precompute_ckd_tables_by_patches(
+        make_patch_base_opa,
+        make_patch_nu_grid,
+        args.self_nu_min,
+        args.self_nu_max,
+        args.patch_width,
+        t_grid,
+        p_grid,
+        out_dir,
+        Ng=args.ng,
+        ckd_resolution=args.ckd_resolution,
+        band_spacing=args.band_spacing,
+        nu_grid_points_per_patch=points_per_patch,
+        overwrite=args.overwrite_self_table,
+        manifest_name=manifest_name,
+        table_prefix=f"self_ckd_{args.molecule}",
+    )
+    print(f"Self CKD patch build complete: {out_dir / manifest_name}")
 
 
 def build_self_base_opa(args: argparse.Namespace, nu_grid):
@@ -474,6 +552,10 @@ def main() -> None:
     args.ckd_root = resolve_path(args.ckd_root)
     args.opacity_root = resolve_path(args.opacity_root)
     configure_runtime(args)
+
+    if args.build_self_patches:
+        build_self_ckd_patches(args)
+        return
 
     import jax.numpy as jnp
     from exojax.opacity import OpaCKD
