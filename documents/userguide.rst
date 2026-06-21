@@ -31,6 +31,7 @@ Opacity Calculation
    userguide/opacity_di.rst
    tutorials/Open_Close_Cross_Section.rst
    tutorials/ckd_principle.rst
+   tutorials/ckd_precompute_patches.rst
    userguide/benchmark.rst
    userguide/fp.rst
 

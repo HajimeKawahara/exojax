@@ -58,6 +58,7 @@ Opacity Methods
    Voigt profile <tutorials/voigt_function>
    Voigt-Hjerting function <tutorials/hjerting>
    Correlated-k transmission with ExoMolOP <tutorials/transmission_ckd_exomolop>
+   Patch-based CKD precomputation <tutorials/ckd_precompute_patches>
    CKD emission with OpaCKD <tutorials/ckd_emispure>
    CKD transmission with OpaCKD <tutorials/ckd_transpure>
    CKD transmission from saved data <tutorials/ckd_transpure_loadonly>
