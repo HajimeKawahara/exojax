@@ -1,8 +1,11 @@
 Flux-based Reflection, Emission with Scattering
 ------------------------------------------------------
 
-As of January 2025, the radiative transfer solution in ExoJAX, including scattering and reflection, is based on a flux-based two-stream approximation. 
-By default, the method employs the flux-adding treatment (Robinson and Crisp 2018) as the scheme for solving.
+ExoJAX supports flux-based two-stream radiative transfer for scattering and reflection.
+For emission with scattering, ExoJAX also supports SFM-2st, where SFM stands for the source
+function method (Toon et al. 1989). It uses Toon hemispheric-mean two-stream fluxes to construct
+source functions for the intensity-based formal solution.
+By default, the flux-based solvers employ the flux-adding treatment (Robinson and Crisp 2018).
 
 
 The flux-adding treatment solves the following two recurrence relations iteratively from the bottom upwards:
@@ -37,6 +40,34 @@ The outgoing flux is then computed as
 
 
 See Section 4.3 in `Paper II <https://arxiv.org/abs/2410.06900>`_ and Robinson and Crisp (2019) JQSRT, 211, 78 for further details on the two-stream approximation method.
+
+Emission with Scattering using SFM-2st
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+``ArtEmisScat`` supports SFM-2st by setting
+``rtsolver="sfm2st_toon_hemispheric_mean"``. The two-stream fluxes are used only to construct the layer source
+functions. The final outgoing spectrum is computed by the intensity-based formal solution, whose angular
+quadrature is controlled by ``nstream``.
+
+.. code:: python
+
+    from exojax.rt import ArtEmisScat
+
+    art = ArtEmisScat(
+        pressure_top=1.0e-5,
+        pressure_btm=1.0e1,
+        nlayer=200,
+        nu_grid=nu_grid,
+        rtsolver="sfm2st_toon_hemispheric_mean",
+        nstream=8,
+    )
+
+    F0 = art.run(
+        dtau,
+        single_scattering_albedo,
+        asymmetric_parameter,
+        temperature,
+    )
 
 Radiative transfer with scattering and reflection can be classified into three types:
 

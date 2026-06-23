@@ -23,13 +23,18 @@ See :doc:`../userguide/rtransfer_ibased_pure` for the details of the `ibased` me
 For emission with scattering in ExoJAX, there are implementations for treating the scattering component as an effective reflectivity 
 using **the flux-adding treatment** (`Robinson and Crisp 2018 <https://www.sciencedirect.com/science/article/pii/S0022407317305101?via%3Dihub>`_), 
 and as an effective transmission using the **LART** method.
-These are the fbased computation.
+These are flux-based computations.
+``ArtEmisScat`` also supports SFM-2st, where SFM stands for the source function method
+(Toon et al. 1989), with Toon hemispheric-mean two-stream fluxes
+(``rtsolver="sfm2st_toon_hemispheric_mean"``). This scheme first computes the two-stream fluxes,
+then evaluates the emission spectrum by the intensity-based formal solution.
 Regarding reflected light in ExoJAX, the flux-adding treatment can be utilized.
 
 See :doc:`../userguide/rtransfer_fbased` for the details of the `fbased` method for reflection and/or emission with scattering.
 
-All of the ``fbased`` schemes are currently based on the two-stream approximation, althogh the ``ibased`` schemes can specify the number of the streams. 
-In the future, other ibased schemes for scattering/reflection is planned, but as of January 2025, it has not yet been implemented.
+All of the ``fbased`` schemes are currently based on the two-stream approximation, although the ``ibased`` schemes can specify the number of the streams.
+The SFM-2st emission solver uses a two-stream source function and an intensity-based angular integration with a configurable number of streams.
+Other ibased schemes for scattering/reflection are planned but have not yet been implemented.
 
 For transmission spectroscopy in ExoJAX, the options are primarily limited to differences in the integration methods. 
 Both the Trapezoid integration method and the method using Simpson's rule are available.
@@ -71,4 +76,3 @@ See the following APIs for the details of these art classes:
 - `exojax.spec.atmrt.ArtReflectEmis <../exojax/exojax.spec.html#exojax.spec.atmrt.ArtReflectEmis>`_
 - `exojax.spec.atmrt.ArtTransPure <../exojax/exojax.spec.html#exojax.spec.atmrt.ArtTransPure>`_
 - `exojax.spec.atmrt.ArtAbsPure <../exojax/exojax.spec.html#exojax.spec.atmrt.ArtAbsPure>`_
-
