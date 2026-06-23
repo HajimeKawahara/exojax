@@ -8,6 +8,7 @@ from exojax.rt.rtransfer import (
     rtrun_emis_pureabs_ibased_linsap,
     rtrun_emis_scat_fluxadding_toonhm,
     rtrun_emis_scat_lart_toonhm,
+    rtrun_emis_scat_sfm2st_toonhm,
     initialize_gaussian_quadrature,
     setrt_toonhm,
 )
@@ -412,6 +413,7 @@ class ArtEmisScat(ArtCommon):
         nlayer=100,
         nu_grid=None,
         rtsolver="fluxadding_toon_hemispheric_mean",
+        nstream=8,
     ):
         """initialization of ArtEmisScat
 
@@ -422,11 +424,16 @@ class ArtEmisScat(ArtCommon):
             nu_grid (float, array, optional): the wavenumber grid. Defaults to None.
             rtsolver (str): Radiative Transfer Solver,
                 "fluxadding_toon_hemispheric_mean" (default),
-                "lart_toon_hemispheric_mean"
+                "lart_toon_hemispheric_mean",
+                "sfm2st_toon_hemispheric_mean"
+            nstream (int, optional): the number of streams for SFM-2st.
+                Defaults to 8.
 
         """
         super().__init__(pressure_top, pressure_btm, nlayer, nu_grid)
         self.rtsolver = rtsolver
+        self.nstream = nstream
+        self.mus, self.weights = initialize_gaussian_quadrature(self.nstream)
         self.method = "emission_with_scattering_using_" + self.rtsolver
 
     def run(
@@ -480,6 +487,16 @@ class ArtEmisScat(ArtCommon):
                 dtau, single_scattering_albedo, asymmetric_parameter, sourcef
             )
 
+        elif self.rtsolver == "sfm2st_toon_hemispheric_mean":
+            spectrum = rtrun_emis_scat_sfm2st_toonhm(
+                dtau,
+                single_scattering_albedo,
+                asymmetric_parameter,
+                sourcef,
+                self.mus,
+                self.weights,
+            )
+
         else:
             print("rtsolver=", self.rtsolver)
             raise ValueError("Unknown radiative transfer solver (rtsolver).")
@@ -518,6 +535,15 @@ class ArtEmisScat(ArtCommon):
         elif self.rtsolver == "fluxadding_toon_hemispheric_mean":
             spectrum = rtrun_emis_scat_fluxadding_toonhm(
                 dtau_2d, ssa_2d, g_2d, sourcef
+            )
+        elif self.rtsolver == "sfm2st_toon_hemispheric_mean":
+            spectrum = rtrun_emis_scat_sfm2st_toonhm(
+                dtau_2d,
+                ssa_2d,
+                g_2d,
+                sourcef,
+                self.mus,
+                self.weights,
             )
         else:
             raise ValueError(f"Unknown rtsolver for CKD: {self.rtsolver}")
