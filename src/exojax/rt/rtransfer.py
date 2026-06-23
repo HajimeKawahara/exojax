@@ -17,6 +17,8 @@
     -- pure absorption 
     --- isothermal: rtrun_emis_pureabs_ibased
     --- linear source approximation: rtrun_emis_pureabs_ibased_linsap
+    -- scattering
+    --- SFM-2st: rtrun_emis_scat_sfm2st
 
     - transmision: 
     -- trapezoid integration: rtrun_trans_pureabs_trapezoid
@@ -39,6 +41,7 @@ from exojax.rt.twostream import (
     compute_tridiag_diagonals_and_vector,
     set_scat_trans_coeffs,
     solve_fluxadding_twostream,
+    solve_fluxadding_twostream_fluxes,
     solve_lart_twostream,
 )
 from exojax.special.expn import E1
@@ -452,6 +455,64 @@ def rtrun_emis_scat_fluxadding_toonhm(
     )
 
     return spectrum
+
+
+@jit
+def rtrun_emis_scat_sfm2st_toonhm(
+    dtau,
+    single_scattering_albedo,
+    asymmetric_parameter,
+    source_matrix,
+    mus,
+    weights,
+):
+    """Radiative transfer for emission with scattering using SFM-2st.
+
+    The two-stream fluxes are computed with Toon hemispheric mean and
+    converted into layer source functions. The final intensity transfer
+    reuses the isothermal-layer intensity-based pure absorption solver.
+
+    Args:
+        dtau (2D array): Optical depth matrix, dtau (N_layer, N_nus).
+        single_scattering_albedo (2D array): Single scattering albedo.
+        asymmetric_parameter (2D array): Asymmetric parameter.
+        source_matrix (2D array): Source matrix in pi B scale.
+        mus (1D array): Gaussian quadrature cosine angles.
+        weights (1D array): Gaussian quadrature weights.
+
+    Returns:
+        1D array: Emission spectrum.
+    """
+
+    _, Nnus = dtau.shape
+    source_surface = jnp.zeros(Nnus)
+    reflectivity_surface = jnp.zeros(Nnus)
+
+    trans_coeff, scat_coeff, reduced_piB, _, _, _ = setrt_toonhm(
+        dtau, single_scattering_albedo, asymmetric_parameter, source_matrix
+    )
+
+    flux_plus, flux_minus = solve_fluxadding_twostream_fluxes(
+        trans_coeff,
+        scat_coeff,
+        reduced_piB,
+        reflectivity_surface,
+        source_surface,
+    )
+
+    flux_plus_layer = 0.5 * (flux_plus[:-1] + flux_plus[1:])
+    flux_minus_layer = 0.5 * (flux_minus[:-1] + flux_minus[1:])
+
+    source_sfm = (1.0 - single_scattering_albedo) * source_matrix + (
+        0.5
+        * single_scattering_albedo
+        * (
+            (1.0 + asymmetric_parameter) * flux_plus_layer
+            + (1.0 - asymmetric_parameter) * flux_minus_layer
+        )
+    )
+
+    return rtrun_emis_pureabs_ibased(dtau, source_sfm, mus, weights)
 
 
 def setrt_toonhm(dtau, single_scattering_albedo, asymmetric_parameter, source_matrix):

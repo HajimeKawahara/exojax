@@ -27,39 +27,146 @@ def solve_fluxadding_twostream(
         Effective reflectivity (hat(R^plus)), Effective source (hat(S^plus))
     """
 
-    nlayer, _ = trans_coeff.shape
+    Rplus, Splus = compute_fluxadding_coeffs(
+        trans_coeff,
+        scat_coeff,
+        reduced_source_function,
+        reflectivity_bottom,
+        source_bottom,
+    )
+    return Rplus[0], Splus[0]
+
+
+def compute_fluxadding_coeffs(
+    trans_coeff, scat_coeff, reduced_source_function, reflectivity_bottom, source_bottom
+):
+    """Computes upward effective reflection/source at all interfaces.
+
+    Args:
+        trans_coeff: Transmission coefficient (Nlayer, Nnus).
+        scat_coeff: Scattering coefficient (Nlayer, Nnus).
+        reduced_source_function: Reduced source function (Nlayer, Nnus).
+        reflectivity_bottom: Bottom boundary reflectivity (Nnus).
+        source_bottom: Bottom boundary source (Nnus).
+
+    Returns:
+        tuple: Rplus, Splus, each with shape (Nlayer + 1, Nnus).
+    """
+
     pihatB = (1.0 - trans_coeff - scat_coeff) * reduced_source_function
 
     # bottom reflection
-    Rphat0 = scat_coeff[nlayer - 1, :] + trans_coeff[
-        nlayer - 1, :
-    ] ** 2 * reflectivity_bottom / (
-        1.0 - scat_coeff[nlayer - 1, :] * reflectivity_bottom
-    )
-    Sphat0 = pihatB[nlayer - 1, :] + trans_coeff[nlayer - 1, :] * (
-        source_bottom + pihatB[nlayer - 1, :] * reflectivity_bottom
-    ) / (1.0 - scat_coeff[nlayer - 1, :] * reflectivity_bottom)
+    Rplus_bottom = reflectivity_bottom
+    Splus_bottom = source_bottom
 
     def f(carry_ip1, arr):
-        Rphat_prev, Sphat_prev = carry_ip1
+        Rplus_prev, Splus_prev = carry_ip1
         scat_coeff_i, trans_coeff_i, pihatB_i = arr
-        denom = 1.0 - scat_coeff_i * Rphat_prev
-        Sphat_each = (
-            pihatB_i + trans_coeff_i * (Sphat_prev + pihatB_i * Rphat_prev) / denom
+        denom = 1.0 - scat_coeff_i * Rplus_prev
+        Splus_each = (
+            pihatB_i + trans_coeff_i * (Splus_prev + pihatB_i * Rplus_prev) / denom
         )
-        Rphat_each = scat_coeff_i + trans_coeff_i**2 * Rphat_prev / denom
-        RS = [Rphat_each, Sphat_each]
-        return RS, 0
+        Rplus_each = scat_coeff_i + trans_coeff_i**2 * Rplus_prev / denom
+        RS = [Rplus_each, Splus_each]
+        return RS, RS
 
     # main loop
     arrin = [
-        scat_coeff[nlayer - 2 :: -1],
-        trans_coeff[nlayer - 2 :: -1],
-        pihatB[nlayer - 2 :: -1],
+        scat_coeff[::-1],
+        trans_coeff[::-1],
+        pihatB[::-1],
     ]
-    RS, _ = scan(f, [Rphat0, Sphat0], arrin)
+    _, stackedRS = scan(f, [Rplus_bottom, Splus_bottom], arrin)
+    Rplus_reverse, Splus_reverse = stackedRS
 
-    return RS
+    Rplus = jnp.vstack([Rplus_reverse[::-1], Rplus_bottom])
+    Splus = jnp.vstack([Splus_reverse[::-1], Splus_bottom])
+    return Rplus, Splus
+
+
+def compute_fluxadding_downward_coeffs(
+    trans_coeff, scat_coeff, reduced_source_function, source_top=None
+):
+    """Computes downward effective reflection/source at all interfaces.
+
+    The top boundary is expressed as:
+    F_0^- = 0 * F_0^+ + source_top.
+
+    Args:
+        trans_coeff: Transmission coefficient (Nlayer, Nnus).
+        scat_coeff: Scattering coefficient (Nlayer, Nnus).
+        reduced_source_function: Reduced source function (Nlayer, Nnus).
+        source_top: Top boundary incoming flux (Nnus). Defaults to zero.
+
+    Returns:
+        tuple: Rminus, Sminus, each with shape (Nlayer + 1, Nnus).
+    """
+
+    _, Nnus = trans_coeff.shape
+    if source_top is None:
+        source_top = jnp.zeros(Nnus)
+
+    pihatB = (1.0 - trans_coeff - scat_coeff) * reduced_source_function
+    Rminus_top = jnp.zeros(Nnus)
+    Sminus_top = source_top
+
+    def f(carry_i, arr):
+        Rminus_prev, Sminus_prev = carry_i
+        scat_coeff_i, trans_coeff_i, pihatB_i = arr
+        denom = 1.0 - scat_coeff_i * Rminus_prev
+        Sminus_each = (
+            pihatB_i + trans_coeff_i * (Sminus_prev + pihatB_i * Rminus_prev) / denom
+        )
+        Rminus_each = scat_coeff_i + trans_coeff_i**2 * Rminus_prev / denom
+        RS = [Rminus_each, Sminus_each]
+        return RS, RS
+
+    arrin = [scat_coeff, trans_coeff, pihatB]
+    _, stackedRS = scan(f, [Rminus_top, Sminus_top], arrin)
+    Rminus_layers, Sminus_layers = stackedRS
+
+    Rminus = jnp.vstack([Rminus_top, Rminus_layers])
+    Sminus = jnp.vstack([Sminus_top, Sminus_layers])
+    return Rminus, Sminus
+
+
+def solve_fluxadding_twostream_fluxes(
+    trans_coeff,
+    scat_coeff,
+    reduced_source_function,
+    reflectivity_bottom,
+    source_bottom,
+    source_top=None,
+):
+    """Computes two-stream upward and downward fluxes at all interfaces.
+
+    Args:
+        trans_coeff: Transmission coefficient (Nlayer, Nnus).
+        scat_coeff: Scattering coefficient (Nlayer, Nnus).
+        reduced_source_function: Reduced source function (Nlayer, Nnus).
+        reflectivity_bottom: Bottom boundary reflectivity (Nnus).
+        source_bottom: Bottom boundary source (Nnus).
+        source_top: Top boundary incoming flux (Nnus). Defaults to zero.
+
+    Returns:
+        tuple: flux_plus, flux_minus, each with shape (Nlayer + 1, Nnus).
+    """
+
+    Rplus, Splus = compute_fluxadding_coeffs(
+        trans_coeff,
+        scat_coeff,
+        reduced_source_function,
+        reflectivity_bottom,
+        source_bottom,
+    )
+    Rminus, Sminus = compute_fluxadding_downward_coeffs(
+        trans_coeff, scat_coeff, reduced_source_function, source_top
+    )
+
+    denom = 1.0 - Rplus * Rminus
+    flux_plus = (Rplus * Sminus + Splus) / denom
+    flux_minus = Rminus * flux_plus + Sminus
+    return flux_plus, flux_minus
 
 
 def solve_lart_twostream(diagonal, lower_diagonal, upper_diagonal, vector, flux_bottom):
