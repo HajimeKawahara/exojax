@@ -21,6 +21,12 @@ Recommended smoke run from the repository root::
 
 The ``NUMBA_DISABLE_JIT=1`` setting avoids a RADIS/numba cache issue seen in
 some editable or egg-based environments.
+
+For the WASP-39 b H2O product comparison, first build R=1000 and R=3000 patch
+tables with ``--build-self-patches``.  Then run the R=1000 manifest as
+``--self-patch-manifest`` and pass the R=3000 manifest through
+``--product-r3000-self-patch-manifest``.  The script writes the usual
+``comparison_data.npz`` plus full-range and 3000-3200 nm product figures.
 """
 
 from __future__ import annotations
@@ -80,6 +86,11 @@ def parser_with_defaults() -> argparse.ArgumentParser:
         default="",
         help="Use patch CKD tables from this manifest for the self CKD forward model.",
     )
+    parser.add_argument(
+        "--product-r3000-self-patch-manifest",
+        default="",
+        help="Also forward this self CKD manifest and write ExoMolOP/R1000/R3000 product plots.",
+    )
     parser.add_argument("--output-dir", default="output_wasp39b_self_ckd_compare")
     parser.add_argument("--overwrite-self-table", action="store_true")
     parser.add_argument(
@@ -113,11 +124,16 @@ def parser_with_defaults() -> argparse.ArgumentParser:
     parser.add_argument("--self-nu-max", type=float, default=4399.0)
     parser.add_argument("--t-grid-size", type=int, default=6)
     parser.add_argument("--p-grid-size", type=int, default=6)
-    parser.add_argument("--nlayer", type=int, default=80)
-    parser.add_argument("--pressure-top", type=float, default=1.0e-5)
+    parser.add_argument("--nlayer", type=int, default=120)
+    parser.add_argument("--pressure-top", type=float, default=1.0e-11)
     parser.add_argument("--pressure-btm", type=float, default=1.0e1)
     parser.add_argument("--temperature", type=float, default=1200.0)
     parser.add_argument("--log-vmr", type=float, default=-5.0)
+    parser.add_argument(
+        "--background-vmr",
+        default="",
+        help="Comma list of background VMRs as MOL=log10VMR. These affect MMW but not opacity.",
+    )
     parser.add_argument("--logp-cloud", type=float, default=-3.0)
     parser.add_argument("--cloud-tau", type=float, default=50.0)
     parser.add_argument("--radius-btm-rj", type=float, default=1.27)
@@ -126,6 +142,8 @@ def parser_with_defaults() -> argparse.ArgumentParser:
     parser.add_argument("--rv-fixed", type=float, default=DEFAULT_RV_FIXED_KMS)
     parser.add_argument("--cia-pairs", default="H2H2", help="Comma list or 'none'.")
     parser.add_argument("--max-observed", type=int, default=None)
+    parser.add_argument("--product-zoom-min-nm", type=float, default=3000.0)
+    parser.add_argument("--product-zoom-max-nm", type=float, default=3200.0)
     parser.add_argument("--jax-platform", choices=("auto", "cpu", "gpu", "tpu"), default="cpu")
     parser.add_argument("--skip-plot", action="store_true")
     return parser
@@ -152,6 +170,10 @@ def validate_args(args: argparse.Namespace, parser: argparse.ArgumentParser) -> 
             parser.error("--self-table cannot be used with --build-self-patches.")
         if args.self_patch_manifest:
             parser.error("--self-patch-manifest cannot be used with --build-self-patches.")
+        if args.product_r3000_self_patch_manifest:
+            parser.error("--product-r3000-self-patch-manifest cannot be used with --build-self-patches.")
+    if args.product_r3000_self_patch_manifest and not math.isclose(args.ckd_resolution, 1000.0):
+        parser.error("--product-r3000-self-patch-manifest expects the primary self run to be R=1000.")
     if args.self_patch_manifest and args.self_table:
         parser.error("--self-table cannot be used with --self-patch-manifest.")
     if args.pressure_top <= 0.0 or args.pressure_btm <= 0.0:
@@ -160,6 +182,32 @@ def validate_args(args: argparse.Namespace, parser: argparse.ArgumentParser) -> 
         parser.error("--pressure-top must be smaller than --pressure-btm.")
     if args.max_observed is not None and args.max_observed <= 0:
         parser.error("--max-observed must be positive when set.")
+    if args.product_zoom_min_nm >= args.product_zoom_max_nm:
+        parser.error("--product-zoom-min-nm must be smaller than --product-zoom-max-nm.")
+    try:
+        parse_background_vmr(args.background_vmr)
+    except ValueError as exc:
+        parser.error(str(exc))
+
+
+def parse_background_vmr(text: str) -> dict[str, float]:
+    entries = {}
+    if not text.strip():
+        return entries
+    for item in text.split(","):
+        if not item.strip():
+            continue
+        if "=" not in item:
+            raise ValueError("--background-vmr entries must be MOL=log10VMR.")
+        name, value = item.split("=", 1)
+        name = name.strip()
+        if not name:
+            raise ValueError("--background-vmr entries must include a molecule name.")
+        try:
+            entries[name] = float(value)
+        except ValueError as exc:
+            raise ValueError(f"Invalid log10VMR for --background-vmr {name}.") from exc
+    return entries
 
 
 def configure_runtime(args: argparse.Namespace) -> None:
@@ -555,13 +603,21 @@ def compute_transmission(
 
     temperature = args.temperature * jnp.ones_like(art.pressure)
     vmr_mol = art.constant_profile(10.0 ** args.log_vmr)
-    vmr_h2 = (1.0 - vmr_mol) * 6.0 / 7.0
-    vmr_he = (1.0 - vmr_mol) * 1.0 / 7.0
+    background_vmr = {
+        name: art.constant_profile(10.0**log_vmr)
+        for name, log_vmr in parse_background_vmr(args.background_vmr).items()
+    }
+    vmr_background_total = sum(background_vmr.values(), jnp.zeros_like(vmr_mol))
+    vmr_total = jnp.clip(vmr_mol + vmr_background_total, 0.0, 1.0)
+    vmr_h2 = (1.0 - vmr_total) * 6.0 / 7.0
+    vmr_he = (1.0 - vmr_total) * 1.0 / 7.0
     mmw = (
         molinfo.molmass_isotope("H2") * vmr_h2
         + molinfo.molmass_isotope("He", db_HIT=False) * vmr_he
         + molmass * vmr_mol
     )
+    for name, vmr in background_vmr.items():
+        mmw = mmw + molinfo.molmass_isotope(name) * vmr
 
     radius_btm = args.radius_btm_rj * RJ
     mass = args.mass_mj * MJ
@@ -627,6 +683,10 @@ def comparison_summary(args, wav, obs, err, self_mu, external_mu, self_ckd, exte
         "ckd_resolution_requested": float(args.ckd_resolution),
         "self_band_width_cm-1": float(self_band_width(args)),
         "ng": int(args.ng),
+        "nlayer": int(args.nlayer),
+        "pressure_top_bar": float(args.pressure_top),
+        "pressure_btm_bar": float(args.pressure_btm),
+        "background_vmr_log10": parse_background_vmr(args.background_vmr),
         "self_n_bands": int(self_n_bands),
         "external_n_bands": int(np.asarray(external_ckd.nu_bands).size),
         "self_table": paths["self_table"],
@@ -686,6 +746,200 @@ def save_outputs(args, wav, obs, err, channel, self_mu, external_mu, summary):
     fig.tight_layout()
     fig.savefig(out_dir / "comparison_self_vs_exomolop.png", dpi=200)
     plt.close(fig)
+
+
+def product_stats(wav, obs, external_mu, self_r1000_mu, self_r3000_mu, mask):
+    stats = {"n": int(np.count_nonzero(mask))}
+    if stats["n"] == 0:
+        return stats
+    stats["wavelength_nm_min"] = float(np.min(wav[mask]))
+    stats["wavelength_nm_max"] = float(np.max(wav[mask]))
+    for label, values in [
+        ("observed", obs),
+        ("exomolop", external_mu),
+        ("self_R1000", self_r1000_mu),
+        ("self_R3000", self_r3000_mu),
+    ]:
+        selected = values[mask]
+        stats[label] = {
+            "mean": float(np.mean(selected)),
+            "p95_minus_p05_ppm": float(
+                (np.percentile(selected, 95) - np.percentile(selected, 5)) * 1.0e6
+            ),
+            "peak_to_peak_ppm": float((np.max(selected) - np.min(selected)) * 1.0e6),
+        }
+    for label, values in [
+        ("self_R1000_minus_exomolop", self_r1000_mu - external_mu),
+        ("self_R3000_minus_exomolop", self_r3000_mu - external_mu),
+        ("self_R3000_minus_self_R1000", self_r3000_mu - self_r1000_mu),
+    ]:
+        selected_ppm = values[mask] * 1.0e6
+        stats[label] = {
+            "mean_ppm": float(np.mean(selected_ppm)),
+            "rms_ppm": float(np.sqrt(np.mean(selected_ppm**2))),
+            "max_abs_ppm": float(np.max(np.abs(selected_ppm))),
+        }
+    return stats
+
+
+def save_product_plot(
+    path,
+    wav,
+    obs,
+    err,
+    external_mu,
+    self_r1000_mu,
+    self_r3000_mu,
+    mask,
+    title,
+    logx,
+):
+    import matplotlib.pyplot as plt
+
+    fig, (ax0, ax1) = plt.subplots(
+        2, 1, figsize=(10, 7), sharex=True, gridspec_kw={"height_ratios": [2.2, 1.0]}
+    )
+    wav_plot = wav[mask]
+    ax0.errorbar(
+        wav_plot,
+        obs[mask],
+        yerr=err[mask],
+        fmt=".",
+        ms=3,
+        color="0.45",
+        ecolor="0.75",
+        elinewidth=0.6,
+        alpha=0.45,
+        label="Observed",
+    )
+    ax0.plot(
+        wav_plot,
+        external_mu[mask],
+        ".",
+        ms=4.0,
+        color="C0",
+        alpha=0.5,
+        label="ExoMolOP CKD R1000",
+    )
+    ax0.plot(
+        wav_plot,
+        self_r1000_mu[mask],
+        ".",
+        ms=4.0,
+        color="C1",
+        alpha=0.5,
+        label="Self CKD R1000",
+    )
+    ax0.plot(
+        wav_plot,
+        self_r3000_mu[mask],
+        ".",
+        ms=4.0,
+        color="C3",
+        alpha=0.5,
+        label="Self CKD R3000",
+    )
+    ax0.set_ylabel("Rp/Rs")
+    ax0.legend(loc="upper right", frameon=True)
+    ax0.set_title(title)
+
+    ax1.axhline(0.0, color="0.25", lw=1.0)
+    ax1.plot(
+        wav_plot,
+        (self_r1000_mu[mask] - external_mu[mask]) * 1.0e6,
+        ".",
+        ms=4.0,
+        color="C1",
+        alpha=0.5,
+        label="Self R1000 - ExoMolOP",
+    )
+    ax1.plot(
+        wav_plot,
+        (self_r3000_mu[mask] - external_mu[mask]) * 1.0e6,
+        ".",
+        ms=4.0,
+        color="C3",
+        alpha=0.5,
+        label="Self R3000 - ExoMolOP",
+    )
+    ax1.set_xlabel("Wavelength [nm]")
+    ax1.set_ylabel("Delta Rp/Rs [ppm]")
+    ax1.legend(loc="lower right", frameon=True)
+    if logx:
+        ax0.set_xscale("log")
+        ax1.set_xscale("log")
+    else:
+        ax1.set_xlim(float(np.min(wav_plot)), float(np.max(wav_plot)))
+    fig.tight_layout()
+    fig.savefig(path.with_suffix(".png"), dpi=200)
+    fig.savefig(path.with_suffix(".pdf"))
+    plt.close(fig)
+
+
+def save_product_outputs(args, wav, obs, err, external_mu, self_r1000_mu, self_r3000_mu):
+    out_dir = Path(args.output_dir)
+    full_mask = np.ones_like(wav, dtype=bool)
+    zoom_mask = (wav >= args.product_zoom_min_nm) & (wav <= args.product_zoom_max_nm)
+    if not np.any(zoom_mask):
+        raise ValueError(
+            "No selected observed points fall in the product zoom range "
+            f"{args.product_zoom_min_nm}-{args.product_zoom_max_nm} nm."
+        )
+
+    full_base = out_dir / "comparison_exomolop_self_R1000_R3000"
+    zoom_base = (
+        out_dir
+        / f"comparison_exomolop_self_R1000_R3000_{args.product_zoom_min_nm:.0f}_"
+        f"{args.product_zoom_max_nm:.0f}nm"
+    )
+    save_product_plot(
+        full_base,
+        wav,
+        obs,
+        err,
+        external_mu,
+        self_r1000_mu,
+        self_r3000_mu,
+        full_mask,
+        "WASP-39b H2O CKD comparison",
+        logx=True,
+    )
+    save_product_plot(
+        zoom_base,
+        wav,
+        obs,
+        err,
+        external_mu,
+        self_r1000_mu,
+        self_r3000_mu,
+        zoom_mask,
+        (
+            "WASP-39b H2O CKD comparison, "
+            f"{args.product_zoom_min_nm:.0f}-{args.product_zoom_max_nm:.0f} nm"
+        ),
+        logx=False,
+    )
+
+    stats = {
+        "full": product_stats(wav, obs, external_mu, self_r1000_mu, self_r3000_mu, full_mask),
+        "zoom": product_stats(wav, obs, external_mu, self_r1000_mu, self_r3000_mu, zoom_mask),
+    }
+    np.savez(
+        out_dir / "comparison_exomolop_self_R1000_R3000_data.npz",
+        wavelength_nm=wav,
+        observed_rprs=obs,
+        observed_error=err,
+        exomolop_rprs=external_mu,
+        self_r1000_rprs=self_r1000_mu,
+        self_r3000_rprs=self_r3000_mu,
+        delta_self_r1000_exomolop=self_r1000_mu - external_mu,
+        delta_self_r3000_exomolop=self_r3000_mu - external_mu,
+    )
+    with open(out_dir / "comparison_exomolop_self_R1000_R3000_stats.json", "w") as handle:
+        json.dump(stats, handle, indent=2, sort_keys=True)
+        handle.write("\n")
+    print(f"  product plot: {full_base.with_suffix('.png')}")
+    print(f"  product zoom: {zoom_base.with_suffix('.png')}")
 
 
 def main() -> None:
@@ -809,6 +1063,32 @@ def main() -> None:
     summary["jax_platforms_env"] = os.environ.get("JAX_PLATFORMS", "")
     save_outputs(args, wav, obs, err, channel, self_mu, external_mu, summary)
 
+    product_r3000_mu = None
+    if args.product_r3000_self_patch_manifest:
+        product_manifest = load_self_patch_manifest(args.product_r3000_self_patch_manifest)
+        product_molmass = float(product_manifest.get("_self_molmass") or external_ckd.molmass)
+        product_r3000_mu, product_reports = compute_transmission_from_self_patches(
+            args,
+            art,
+            product_manifest,
+            product_molmass,
+            wav,
+        )
+        save_product_outputs(args, wav, obs, err, external_mu, self_mu, product_r3000_mu)
+        product_summary = {
+            "r3000_self_patch_manifest": product_manifest["_manifest_path"],
+            "r3000_self_patch_table_count": int(len(product_manifest["tables"])),
+            "r3000_self_patch_used_count": int(
+                sum(report["n_observed"] > 0 for report in product_reports)
+            ),
+            "r3000_self_n_bands": int(
+                sum(table["n_bands"] for table in product_manifest["tables"])
+            ),
+        }
+        with open(Path(args.output_dir) / "comparison_product_summary.json", "w") as handle:
+            json.dump(product_summary, handle, indent=2, sort_keys=True)
+            handle.write("\n")
+
     print("Self CKD vs ExoMolOP CKD comparison complete.")
     print(f"  molecule: {args.molecule}")
     print(f"  observed points: {wav.size}")
@@ -822,6 +1102,8 @@ def main() -> None:
         )
     print(f"  self bands: {self_n_bands}")
     print(f"  ExoMolOP bands: {np.asarray(external_ckd.nu_bands).size}")
+    if product_r3000_mu is not None:
+        print("  product comparison: ExoMolOP R1000, self R1000, self R3000")
     print(f"  RMS delta Rp/Rs: {summary['delta_rprs_rms_ppm']:.3f} ppm")
     print(f"  Max |delta Rp/Rs|: {summary['delta_rprs_max_abs_ppm']:.3f} ppm")
     print(f"  summary: {Path(args.output_dir) / 'comparison_summary.json'}")
