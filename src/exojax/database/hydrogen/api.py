@@ -12,10 +12,10 @@ from exojax.database.core_atom.io import load_pf_Barklem2016
 from exojax.database.core_atom.io import pick_ionE
 from exojax.database.core_atom.line_strength import line_strength_atom
 from exojax.database.core_atom.pf import interp_QT_284
+from exojax.database.core_atom.transition import (
+    einstein_a_from_oscillator_strength,
+)
 from exojax.utils.constants import Tref_original
-from exojax.utils.constants import ccgs
-from exojax.utils.constants import ecgs
-from exojax.utils.constants import mecgs
 
 __all__ = ["AdbHydrogen"]
 
@@ -92,7 +92,7 @@ class AdbHydrogen:
         self._iion = np.ones_like(upper)
 
         f_lu = np.array([_BALMER_F_LU[int(n)] for n in upper])
-        self._A = _einstein_a_from_oscillator_strength(
+        self._A = einstein_a_from_oscillator_strength(
             self.nu_lines,
             f_lu,
             _hydrogen_level_degeneracy(lower),
@@ -263,14 +263,3 @@ def _hydrogen_level_energy_cm(n):
 def _hydrogen_level_degeneracy(n):
     return 2.0 * np.asarray(n, dtype=float) ** 2
 
-
-def _einstein_a_from_oscillator_strength(nu_lines, f_lu, glower, gupper):
-    return (
-        8.0
-        * np.pi**2
-        * ecgs**2
-        * nu_lines**2
-        * glower
-        * f_lu
-        / (mecgs * ccgs * gupper)
-    )
