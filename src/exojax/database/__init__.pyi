@@ -6,6 +6,7 @@ from exojax.database.hargreaves.api import MdbHargreaves as MdbHargreaves
 from exojax.database.vald.api import AdbVald as AdbVald
 from exojax.database.vald.api import AdbSepVald as AdbSepVald
 from exojax.database.kurucz.api import AdbKurucz as AdbKurucz
+from exojax.database.hydrogen.api import AdbHydrogen as AdbHydrogen
 from exojax.database.exomolhr.api import XdbExomolHR as XdbExomolHR
 from exojax.database.pardb import PdbCloud as PdbCloud
 from exojax.database.cia.api import CdbCIA as CdbCIA

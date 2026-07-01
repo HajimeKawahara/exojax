@@ -22,3 +22,8 @@ CO/
 tests/unittests/H2O/
 tests/unittests/CO/
 src/exojax/data/testdata/CO/*.h5
+
+# Local Codex review and scratch outputs
+implementation_candidates/
+volatiles_codes/
+volatiles_artifacts/

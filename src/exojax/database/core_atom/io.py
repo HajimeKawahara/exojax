@@ -7,7 +7,8 @@ from io import BytesIO
 import numpy as np
 import pandas as pd
 
-from exojax.utils.constants import ccgs, ecgs, eV2wn, mecgs
+from exojax.database.core_atom.transition import einstein_a_from_loggf
+from exojax.utils.constants import eV2wn
 
 PeriodicTable = np.zeros([119], dtype=object)
 PeriodicTable[:] = [
@@ -380,13 +381,7 @@ def read_kurucz(kuruczf):
     jupper = jupper[::-1]
     glower = jlower * 2 + 1
     gupper = jupper * 2 + 1
-    A = (
-        10**loggf
-        / gupper
-        * (ccgs * nu_lines) ** 2
-        * (8 * np.pi**2 * ecgs**2)
-        / (mecgs * ccgs**3)
-    )
+    A = einstein_a_from_loggf(nu_lines, loggf, gupper)
     gamRad = gamRad[::-1]
     gamSta = gamSta[::-1]
     gamvdW = gamvdW[::-1]
@@ -445,12 +440,8 @@ def pickup_param(ExAll):
     ExAll["gupper"] = ExAll["jupper"] * 2 + 1
     ExAll["glower"] = ExAll["jlower"] * 2 + 1
     # notes4Tako#どうせ比をとるので電子の縮退度等の係数は落ちる.(MyLog2017.rtf)
-    ExAll["A"] = (
-        10 ** ExAll["loggf"]
-        / ExAll["gupper"]
-        * (ccgs * ExAll["nu_lines"]) ** 2
-        * (8 * np.pi**2 * ecgs**2)
-        / (mecgs * ccgs**3)
+    ExAll["A"] = einstein_a_from_loggf(
+        ExAll["nu_lines"], ExAll["loggf"], ExAll["gupper"]
     )
 
     A = ExAll["A"].to_numpy()
@@ -641,5 +632,4 @@ def load_pf_Barklem2016():
     pfTdat = pd.read_csv(io.StringIO(pfT_str), sep="\s+")
     pfdat = pd.read_csv(BytesIO(pffdata), sep="\s+", comment="#", names=pfTdat.columns)
     return pfTdat, pfdat
-
 
