@@ -1,6 +1,21 @@
 import numpy as np
 
 
+def require_ndim(name, array, ndim):
+    """Require an array to have a specified number of dimensions.
+
+    Args:
+        name: Name used in the error message.
+        array: Array-like object with an ``ndim`` attribute.
+        ndim: Required number of dimensions.
+
+    Raises:
+        ValueError: If ``array.ndim`` differs from ``ndim``.
+    """
+    if array.ndim != ndim:
+        raise ValueError(f"{name} must be {ndim}-dimensional, got shape {array.shape}.")
+
+
 def is_sorted(x):
     """Check if a list is sorted in ascending or descending order.
 

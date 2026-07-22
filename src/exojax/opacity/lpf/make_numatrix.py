@@ -4,6 +4,9 @@ import jax.numpy as jnp
 import numpy as np
 from jax import jit
 
+from exojax.utils.checkarray import require_ndim
+from exojax.utils.constants import c
+
 
 def make_numatrix0(nu, hatnu, warning=True):
     """Generate numatrix0.
@@ -27,6 +30,56 @@ def make_numatrix0(nu, hatnu, warning=True):
         warnings.warn("line center is not np.float64 but " + str(nu.dtype), UserWarning)
     numatrix = nu[None, :] - hatnu[:, None]
     return jnp.array(numatrix)
+
+
+def doppler_shifted_line_detuning(numatrix0, nu_lines, velocity_los):
+    """Add layer-dependent Doppler shifts to a rest-frame LPF numatrix.
+
+    This function applies the velocity correction to an already computed
+    rest-frame detuning matrix. Keeping the large absolute wavenumbers out of
+    the subtraction avoids loss of small detunings in JAX float32 mode.
+
+    Args:
+        numatrix0: Rest-frame detuning matrix in cm-1 with shape
+            ``(N_line, N_wavenumber)``.
+        nu_lines: Rest line centers in cm-1 with shape ``(N_line,)``.
+        velocity_los: Line-of-sight velocity in km/s. A vector has shape
+            ``(N_layer,)`` and applies the same velocity to every line. A
+            matrix must have shape ``(N_layer, N_line)``. Positive velocity is
+            receding/redshift. Values must be greater than ``-c``.
+
+    Returns:
+        Detuning tensor with shape ``(N_layer, N_line, N_wavenumber)``.
+    """
+    numatrix0 = jnp.asarray(numatrix0)
+    nu_lines = jnp.asarray(nu_lines)
+    velocity_los = jnp.asarray(velocity_los)
+
+    require_ndim("numatrix0", numatrix0, 2)
+    require_ndim("nu_lines", nu_lines, 1)
+    if numatrix0.shape[0] != nu_lines.shape[0]:
+        raise ValueError(
+            "numatrix0 line axis must match nu_lines: "
+            f"{numatrix0.shape[0]} != {nu_lines.shape[0]}."
+        )
+
+    if velocity_los.ndim == 1:
+        velocity_los = velocity_los[:, None]
+    elif velocity_los.ndim == 2:
+        if velocity_los.shape[1] != nu_lines.shape[0]:
+            raise ValueError(
+                "velocity_los line axis must match nu_lines: "
+                f"{velocity_los.shape[1]} != {nu_lines.shape[0]}."
+            )
+    else:
+        raise ValueError(
+            "velocity_los must have shape (N_layer,) or (N_layer, N_line), "
+            f"got {velocity_los.shape}."
+        )
+
+    velocity_ratio = velocity_los / c
+    center_correction = nu_lines[None, :] * velocity_ratio / (1.0 + velocity_ratio)
+    return numatrix0[None, :, :] + center_correction[:, :, None]
 
 
 def divwavnum(nu, Nz=1):

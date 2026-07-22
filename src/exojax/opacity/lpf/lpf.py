@@ -11,6 +11,7 @@ from exojax.database.core.broadening  import doppler_sigma
 from exojax.database.core.broadening  import gamma_natural
 from exojax.database.core.line_strength  import line_strength
 from exojax.special.faddeeva import asymptotic_wofz, imwofz, rewofz
+from exojax.utils.checkarray import require_ndim
 
 
 def exomol(mdb, Tarr, Parr, molmass):
@@ -318,6 +319,39 @@ def vvoigt(numatrix, sigmaD, gammaL):
     """
     vmap_voigt = vmap(voigt, (0, 0, 0), 0)
     return vmap_voigt(numatrix, sigmaD, gammaL)
+
+
+@jit
+def voigt_profile_tensor(detuning, sigma_doppler, gamma_lorentz):
+    """Evaluate normalized Voigt profiles for all layers and lines.
+
+    Args:
+        detuning: Shape ``(N_layer, N_line, N_wavenumber)`` in cm-1.
+        sigma_doppler: Shape ``(N_layer, N_line)`` in cm-1.
+        gamma_lorentz: Shape ``(N_layer, N_line)`` in cm-1.
+
+    Returns:
+        Voigt profile tensor with the same shape as ``detuning``, normalized
+        with respect to wavenumber for each layer and line.
+    """
+    detuning = jnp.asarray(detuning)
+    sigma_doppler = jnp.asarray(sigma_doppler)
+    gamma_lorentz = jnp.asarray(gamma_lorentz)
+
+    require_ndim("detuning", detuning, 3)
+    require_ndim("sigma_doppler", sigma_doppler, 2)
+    require_ndim("gamma_lorentz", gamma_lorentz, 2)
+    expected = detuning.shape[:2]
+    if sigma_doppler.shape != expected:
+        raise ValueError(
+            f"sigma_doppler must have shape {expected}, got {sigma_doppler.shape}."
+        )
+    if gamma_lorentz.shape != expected:
+        raise ValueError(
+            f"gamma_lorentz must have shape {expected}, got {gamma_lorentz.shape}."
+        )
+
+    return vmap(vvoigt, (0, 0, 0))(detuning, sigma_doppler, gamma_lorentz)
 
 
 @jit
