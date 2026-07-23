@@ -52,6 +52,34 @@ def test_population_inversion_is_identified():
     np.testing.assert_array_equal(mask, np.array([[False], [True]]))
 
 
+def test_source_matches_bound_bound_population_formula():
+    n_lower = 2.0e3
+    n_upper = 3.0
+    alpha, eta_pi = bound_bound_absorption_emission(
+        jnp.ones((1, 1, 1)),
+        jnp.array([NU0]),
+        jnp.array([A_VALUE]),
+        jnp.array([G_LOWER]),
+        jnp.array([G_UPPER]),
+        jnp.array([[n_lower]]),
+        jnp.array([[n_upper]]),
+    )
+
+    expected_source = (
+        2.0
+        * 6.62607015e-27
+        * 2.99792458e10**2
+        * NU0**3
+        * G_LOWER
+        * n_upper
+        / (G_UPPER * n_lower - G_LOWER * n_upper)
+    )
+    assert float(eta_pi[0, 0] / alpha[0, 0] / np.pi) == pytest.approx(
+        expected_source,
+        rel=2.0e-6,
+    )
+
+
 def test_population_shape_must_match_profile_layers_and_lines():
     with pytest.raises(ValueError, match="number_density_upper must have shape"):
         bound_bound_absorption_emission(

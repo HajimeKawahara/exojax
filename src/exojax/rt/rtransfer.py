@@ -128,6 +128,28 @@ def rtrun_emis_pureabs_ibased_intensity(dtau, source_matrix, mus):
 
 
 @jit
+def rtrun_emis_pureabs_ibased_intensity_surface(
+    dtau, source_matrix, source_surface, mus
+):
+    """Emergent pure-absorption intensities with a lower surface.
+
+    Args:
+        dtau: Layer optical depths with shape ``(N_layer, N_nus)``.
+        source_matrix: Layer source functions with shape
+            ``(N_layer, N_nus)``.
+        source_surface: Lower-boundary source with shape ``(N_nus,)``.
+        mus: Positive ray-angle cosines with shape ``(N_mu,)``.
+
+    Returns:
+        Emergent intensity matrix with shape ``(N_mu, N_nus)``.
+    """
+    intensity = rtrun_emis_pureabs_ibased_intensity(dtau, source_matrix, mus)
+    tau_bottom = jnp.sum(dtau, axis=0)
+    transmission_surface = jnp.exp(-tau_bottom[None, :] / mus[:, None])
+    return intensity + source_surface[None, :] * transmission_surface
+
+
+@jit
 def rtrun_emis_pureabs_ibased_flux_from_intensity(intensity, mus, weights):
     """Integrate emergent intensities over angle using the ibased quadrature."""
 

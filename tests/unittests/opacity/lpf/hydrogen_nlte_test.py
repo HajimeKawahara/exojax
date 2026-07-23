@@ -124,32 +124,35 @@ def test_halpha_lte_population_limit_gives_planck_source():
     )
 
 
-def test_halpha_kernel_is_jittable_and_has_finite_velocity_gradient():
+def test_halpha_kernel_has_finite_parameter_gradients_under_jit():
     nu_grid = np.linspace(NU0 - 2.0, NU0 + 2.0, 2001, dtype=np.float64)
     numatrix0 = _rest_numatrix(nu_grid)
     nu_lines, einstein_a, g_lower, g_upper = _line_arrays()
-    n_lower = jnp.array([[2.0e3]])
-    n_upper = jnp.array([[1.0]])
     weights = jnp.linspace(0.5, 1.5, nu_grid.size)
 
-    def objective(velocity):
-        profile = _profiles(numatrix0, jnp.array([6000.0]), velocity[None])
+    def objective(temperature, log_n_lower, log_n_upper, velocity):
+        profile = _profiles(numatrix0, temperature[None], velocity[None])
         alpha, eta_pi = bound_bound_absorption_emission(
             profile,
             nu_lines,
             einstein_a,
             g_lower,
             g_upper,
-            n_lower,
-            n_upper,
+            jnp.exp(log_n_lower)[None, None],
+            jnp.exp(log_n_upper)[None, None],
         )
         return jnp.sum(weights * (alpha[0] + 1.0e-13 * eta_pi[0]))
 
-    value, gradient = jax.jit(jax.value_and_grad(objective))(5.0)
+    value, gradients = jax.jit(jax.value_and_grad(objective, argnums=(0, 1, 2, 3)))(
+        6000.0,
+        jnp.log(2.0e3),
+        jnp.log(1.0),
+        5.0,
+    )
 
     assert jnp.isfinite(value)
-    assert jnp.isfinite(gradient)
-    assert gradient != 0.0
+    assert all(jnp.isfinite(gradient) for gradient in gradients)
+    assert all(gradient != 0.0 for gradient in gradients)
 
 
 def _two_layer_nlte_intensity(velocities):

@@ -7,6 +7,7 @@ from exojax.rt.rtransfer import (
     rtrun_emis_pureabs_ibased,
     rtrun_emis_pureabs_ibased_flux_from_intensity,
     rtrun_emis_pureabs_ibased_intensity,
+    rtrun_emis_pureabs_ibased_intensity_surface,
 )
 
 
@@ -24,6 +25,58 @@ def test_ibased_intensity_reconstructs_flux():
     flux = rtrun_emis_pureabs_ibased(dtau, source_matrix, art.mus, art.weights)
 
     assert flux_from_intensity == pytest.approx(flux)
+
+
+def test_ibased_intensity_surface_zero_matches_no_surface_solver():
+    dtau = jnp.array([[0.1, 0.2], [0.3, 0.4]])
+    source_matrix = jnp.array([[1.0, 2.0], [3.0, 4.0]])
+    mus = jnp.array([0.25, 0.75])
+
+    intensity = rtrun_emis_pureabs_ibased_intensity_surface(
+        dtau,
+        source_matrix,
+        jnp.zeros(2),
+        mus,
+    )
+    expected = rtrun_emis_pureabs_ibased_intensity(dtau, source_matrix, mus)
+
+    assert intensity == pytest.approx(expected)
+
+
+def test_ibased_intensity_surface_transparent_limit():
+    dtau = jnp.zeros((2, 3))
+    source_matrix = jnp.arange(6.0).reshape(2, 3)
+    source_surface = jnp.array([1.0, 2.0, 3.0])
+    mus = jnp.array([0.2, 1.0])
+
+    intensity = rtrun_emis_pureabs_ibased_intensity_surface(
+        dtau,
+        source_matrix,
+        source_surface,
+        mus,
+    )
+
+    assert intensity == pytest.approx(jnp.broadcast_to(source_surface, (2, 3)))
+
+
+def test_ibased_intensity_surface_single_layer_analytic_solution():
+    dtau = jnp.array([[0.2, 0.5]])
+    source_matrix = jnp.array([[3.0, 4.0]])
+    source_surface = jnp.array([1.0, 2.0])
+    mus = jnp.array([0.3, 0.9])
+
+    intensity = rtrun_emis_pureabs_ibased_intensity_surface(
+        dtau,
+        source_matrix,
+        source_surface,
+        mus,
+    )
+    transmission = jnp.exp(-dtau / mus[:, None])
+    expected = source_matrix * (1.0 - transmission) + (
+        source_surface[None, :] * transmission
+    )
+
+    assert intensity == pytest.approx(expected)
 
 
 def test_artemispure_run_with_limb_darkening_reuses_intensity():
