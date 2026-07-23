@@ -1,4 +1,7 @@
+import warnings
+
 import numpy as np
+import pytest
 import jax.numpy as jnp
 from jax import jit
 from exojax.utils.grids import wavenumber_grid
@@ -125,6 +128,53 @@ def test_SopInstProfile():
     assert res < 1.e-4 #0.1% allowed
 
 
+def test_SopInstProfile_warns_from_vrmax_independent_of_nu_grid():
+    from exojax.postproc.specop import SopInstProfile
+
+    nu_grid = np.geomspace(4000.0, 8000.0, 100)
+    spectrum = np.ones_like(nu_grid)
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore", UserWarning)
+        sop_inst = SopInstProfile(nu_grid, vrmax=10.0)
+
+    assert np.max(np.abs(np.asarray(sop_inst.vrarray))) > 5.0 * 3.0
+    with pytest.warns(UserWarning, match="`vrmax`.*too small"):
+        sop_inst.check_vrmax(standard_deviation=3.0)
+    with pytest.warns(UserWarning, match="`vrmax`.*too small"):
+        sop_inst.ipgauss(spectrum, standard_deviation=3.0)
+
+
+def test_SopInstProfile_does_not_warn_for_sufficient_vrmax():
+    from exojax.postproc.specop import SopInstProfile
+
+    nu_grid = np.geomspace(4000.0, 4000.4, 100)
+    spectrum = np.ones_like(nu_grid)
+    sop_inst = SopInstProfile(nu_grid, vrmax=10.0)
+
+    with warnings.catch_warnings():
+        warnings.simplefilter("error", UserWarning)
+        sop_inst.ipgauss(spectrum, standard_deviation=2.0)
+
+
+def test_SopInstProfile_accepts_traced_standard_deviation():
+    from exojax.postproc.specop import SopInstProfile
+
+    nu_grid = np.geomspace(4000.0, 4000.4, 100)
+    spectrum = np.ones_like(nu_grid)
+    sop_inst = SopInstProfile(nu_grid, vrmax=10.0)
+    apply_ipgauss = jit(
+        lambda standard_deviation: sop_inst.ipgauss(
+            spectrum, standard_deviation
+        )
+    )
+
+    with warnings.catch_warnings():
+        warnings.simplefilter("error", UserWarning)
+        result = apply_ipgauss(3.0)
+
+    assert result.shape == spectrum.shape
+
+
 def test_ipgauss_variable_sampling_using_constant_beta_array(fig=False):
     nus, wav, resolution = wavenumber_grid(4000.0,
                                                4010.0,
@@ -193,4 +243,3 @@ if __name__ == "__main__":
     #test_SopInstProfile()
     #test_ipgauss_ola_sampling(fig=True)
     test_SopInstProfile_ola(fig=True)
-    
