@@ -139,9 +139,18 @@ def sampling_band_integral(nus, F, wavd_min, wavd_max):
     # add 0 for the first point
     cumlative = jnp.concatenate([jnp.zeros((1,), dtype=F_wav.dtype), jnp.cumsum(dF_wav)])
 
-    cum_wav_min = jnp.interp(wavd_min, wav, cumlative)
-    cum_wav_max = jnp.interp(wavd_max, wav, cumlative)
-    F_band_integral = (cum_wav_max - cum_wav_min) / (wavd_max - wavd_min)
+    F_min = jnp.interp(wavd_min, wav, F_wav)
+    F_max = jnp.interp(wavd_max, wav, F_wav)
+
+    k_min = jnp.searchsorted(wav, wavd_min)
+    k_max = jnp.searchsorted(wav, wavd_max) - 1
+
+    F_int = 0.0
+    F_int += 0.5 * (F_min + F_wav[k_min]) * (wav[k_min] - wavd_min)
+    F_int += cumlative[k_max] - cumlative[k_min]
+    F_int += 0.5 * (F_wav[k_max] + F_max) * (wavd_max - wav[k_max])
+
+    F_band_integral = F_int / (wavd_max - wavd_min)
 
     return F_band_integral
 
