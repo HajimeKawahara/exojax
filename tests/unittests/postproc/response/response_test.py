@@ -8,6 +8,7 @@ from exojax.utils.grids import wavenumber_grid
 from exojax.postproc.response import ipgauss_sampling
 from exojax.postproc.response import ipgauss_ola_sampling
 from exojax.postproc.response import ipgauss_variable_sampling
+from exojax.postproc.response import sampling_band_integral
 from exojax.utils.grids import velocity_grid
 
 from exojax.utils.constants import c
@@ -98,6 +99,39 @@ def test_ipgauss_ola_sampling(fig=False):
         import matplotlib.pyplot as plt
         plt.plot(nusd,F)
         plt.plot(nusd,F_naive,ls="dashed")
+        plt.show()
+
+def test_sampling_band_integral(fig=False):
+    nus, wav, resolution = wavenumber_grid(4000.0,
+                                               4010.0,
+                                               1000,
+                                               xsmode="premodit")
+    F0 = 2.0 * wav
+    nusd, wav, resolution_inst = wavenumber_grid(4003.0,
+                                               4007.0,
+                                               250,
+                                               xsmode="lpf")
+                                               #settings before HMC
+
+    logstep = 1. / resolution_inst
+    nusd_max = nusd * np.exp(logstep/2.)
+    nusd_min = nusd / np.exp(logstep/2.)
+
+    wavd = 1.0e8 / nusd
+    wavd_min = 1.0e8 / nusd_max
+    wavd_max = 1.0e8 / nusd_min
+
+    F_band_sampling = sampling_band_integral(nus, F0, wavd_min, wavd_max)
+    F_ana = (wavd_max**2. - wavd_min**2.) / (wavd_max - wavd_min)
+
+    res = np.max(np.abs(1.0 - F_ana/F_band_sampling))
+    print(res)
+    assert res < 1.e-4 #0.01% allowed
+    if fig:
+        import matplotlib.pyplot as plt
+        plt.plot(nus,F0, '+')
+        plt.plot(nusd, F_band_sampling, '+')
+        plt.plot(nusd, F_ana, '+')
         plt.show()
 
 
@@ -243,3 +277,4 @@ if __name__ == "__main__":
     #test_SopInstProfile()
     #test_ipgauss_ola_sampling(fig=True)
     test_SopInstProfile_ola(fig=True)
+    # test_sampling_band_integral(fig=True)
