@@ -118,6 +118,35 @@ def sampling(nusd, nus, F, RV):
 
 
 @jit
+def sampling_band_integral(nus, F, wavd_min, wavd_max):
+    """Sampling w/ band integral.
+
+    Args:
+        nus: input wavenumber
+        F: input spectrum
+        wavd_min: minimum wavelength (AA)
+        wavd_max: maximum wavelength (AA)
+
+    Returns:
+        sampled spectrum w/ band integral
+    """
+    # wav ascending order
+    wav = 1.0e8 / nus[::-1]
+    F_wav = F[::-1]
+
+    dwav = jnp.diff(wav)
+    dF_wav = 0.5 * (F_wav[:-1] + F_wav[1:]) * dwav
+    # add 0 for the first point
+    cumlative = jnp.concatenate([jnp.zeros((1,), dtype=F_wav.dtype), jnp.cumsum(dF_wav)])
+
+    cum_wav_min = jnp.interp(wavd_min, wav, cumlative)
+    cum_wav_max = jnp.interp(wavd_max, wav, cumlative)
+    F_band_integral = (cum_wav_max - cum_wav_min) / (wavd_max - wavd_min)
+
+    return F_band_integral
+
+
+@jit
 def ipgauss_variable_sampling(nusd, nus, spectrum, beta_variable, RV):
     """Apply the variable Gaussian IP response + sampling to a spectrum F.
 
