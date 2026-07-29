@@ -122,7 +122,7 @@ def sampling_band_integral(nus, F, wavd_min, wavd_max):
     """Sampling w/ band integral.
 
     Args:
-        nus: input wavenumber
+        nus: input wavenumber (cm-1)
         F: input spectrum
         wavd_min: minimum wavelength (AA)
         wavd_max: maximum wavelength (AA)
