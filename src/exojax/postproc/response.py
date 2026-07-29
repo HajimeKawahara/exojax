@@ -131,8 +131,8 @@ def sampling_band_integral(nus, F, wavd_min, wavd_max):
         sampled spectrum w/ band integral
     """
     # wav ascending order
-    wav = 1.0e8 / nus[::-1]
-    F_wav = F[::-1]
+    wav = jnp.asarray(1.0e8 / nus[::-1])
+    F_wav = jnp.asarray(F[::-1])
 
     dwav = jnp.diff(wav)
     dF_wav = 0.5 * (F_wav[:-1] + F_wav[1:]) * dwav
