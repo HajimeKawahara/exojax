@@ -1,7 +1,7 @@
 Getting Started with Transmission Spectroscopy
 ==============================================
 
-Last update: June 2026, Hajime Kawahara, for ExoJAX 2.5.0
+Last update: August 2026, Hajime Kawahara, for ExoJAX 2.6.0
 
 This guide builds a high-resolution transmission spectrum for an
 atmosphere with CO molecular absorption and H2-H2 CIA continuum opacity.
@@ -667,5 +667,4 @@ observed with JWST/NIRSpec G395H is available in the gallery:
 
 -  `WASP-39b transmission spectrum
    example <../examples/WASP39b_transmission_JWST-NIRSpec.html#sphx-glr-examples-wasp39b-transmission-jwst-nirspec-py>`__
-
 

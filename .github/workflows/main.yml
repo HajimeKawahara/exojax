@@ -26,6 +26,9 @@ jobs:
       # Checkout repository
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          # setuptools-scm needs the tag history to compute the package version.
+          fetch-depth: 0
 
       # Set up Python with pip cache
       - name: Set up Python ${{ matrix.python-version }}
@@ -49,7 +52,6 @@ jobs:
           mkdir -p results
           # Use --junitxml (correct long option name)
           python -m pytest tests/unittests --junitxml results/pytest.xml
-        continue-on-error: true  # Let subsequent steps publish results even on failures
 
       # Upload raw JUnit XML as an artifact (useful for debugging)
       - name: Upload Unit Test Results
@@ -72,6 +74,3 @@ jobs:
         uses: EnricoMi/publish-unit-test-result-action@v2
         with:
           files: artifacts/**/*.xml
-
-
-  

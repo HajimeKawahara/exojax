@@ -1,7 +1,7 @@
 Getting Started with Emission Spectroscopy
 ==========================================
 
-Last update: June 2026, Hajime Kawahara, for ExoJAX 2.5.0
+Last update: August 2026, Hajime Kawahara, for ExoJAX 2.6.0
 
 This guide builds a high-resolution emission spectrum for an atmosphere
 with CO molecular absorption and H2-H2 CIA continuum opacity. It then
@@ -1017,5 +1017,4 @@ of this!). Let’s create a corner plot to verify the results.
 
 
 This completes the emission-spectrum getting started workflow.
-
 

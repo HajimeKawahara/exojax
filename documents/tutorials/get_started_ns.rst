@@ -1,7 +1,7 @@
 Nested Sampling of an Emission Spectrum Using JAXNS
 ===================================================
 
-Last update: June 2026, Hajime Kawahara, for ExoJAX 2.5.0
+Last update: August 2026, Hajime Kawahara, for ExoJAX 2.6.0
 
 This guide performs retrieval of an emission spectrum using `nested
 sampling <https://en.wikipedia.org/wiki/Nested_sampling_algorithm>`__.
@@ -579,5 +579,4 @@ plot using ArviZ.
 
 
 This completes the nested-sampling getting-started workflow.
-
 

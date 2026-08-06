@@ -353,8 +353,8 @@ def model_c(rp_mean, rp_std):
 #
 # Run stochastic variational inference with a custom guide that keeps Mp and
 # Rs on their priors while fitting an AutoMultivariateNormal to the remaining
-# latent variables. The SVI median seeds HMC and its Fisher information is
-# reused as a mass matrix estimate.
+# latent variables. The SVI median seeds HMC. The guide covariance is not
+# passed to NUTS as an inverse mass matrix; that follow-up is tracked in #642.
 
 
 def prior_guide(rp_mean, rp_std):

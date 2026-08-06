@@ -1,6 +1,3 @@
-.. container::
-   :name: toc
-
 Forward modeling of the emission spectrum using VALD3
 =====================================================
 
@@ -401,4 +398,3 @@ Rotational & instrumental broadening
 
 
 .. image:: Forward_modeling_for_metal_line_files/Forward_modeling_for_metal_line_40_0.png
-

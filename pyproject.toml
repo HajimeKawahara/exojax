@@ -21,7 +21,7 @@ maintainers = [{ name = "Hajime Kawahara", email = "divrot@gmail.com" }]
 
 description = "Differentiable exoplanet spectroscopy and atmospheric tools in JAX."
 readme = { file = "README.md", content-type = "text/markdown" }
-requires-python = ">=3.9"
+requires-python = ">=3.10"
 
 # Classifiers ported from setup.py. Add more if applicable.
 classifiers = [
@@ -34,12 +34,15 @@ classifiers = [
 ]
 
 # Runtime dependencies migrated from requirements.txt.
-# NOTE:
-# - Keep "numpy<2" because your requirements pin it.
-# - jax/jaxlib wheels are platform-specific; declaring both is common.
+# JAX/JAXlib wheels are platform-specific; declaring both is common.
 dependencies = [
   "jax",
   "jaxlib",
+  "numpy",
+  "scipy",
+  "requests",
+  "packaging",
+  "matplotlib",
   "hitran-api",
   "beautifulsoup4",
   "hjson",
@@ -82,6 +85,8 @@ include-package-data = true
 [tool.setuptools.packages.find]
 # Equivalent to find_packages(where="src")
 where = ["src"]
+# Keep local source checkouts under src/ from leaking into release wheels.
+include = ["exojax*"]
 
 [tool.setuptools_scm]
 # Configure setuptools-scm to write the resolved version string into your package.

@@ -1,7 +1,6 @@
 """Plotting tool for DIT/MODIT."""
 import numpy as np
 import matplotlib.pyplot as plt
-import seaborn as sns
 
 
 def plot_dgmn(Parr, dgm_ngammaL, ngammaLM, js, je):

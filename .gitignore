@@ -3,6 +3,7 @@ dist/
 *.ipynb_checkpoints/
 *.egg-info/
 __pycache__
+src/exojax/ExoJAX_version.py
 
 examples/opaCH4.zarr
 examples/opaH2O.zarr

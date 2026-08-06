@@ -1,10 +1,10 @@
 Installation
 ============
 
-Last update: June 2026
+Last update: August 2026
 
-ExoJAX requires Python 3.9 or later. Linux, macOS, and Windows through WSL are
-the primary supported environments.
+ExoJAX requires Python 3.10 or later and is tested on Python 3.10--3.13. Linux,
+macOS, and Windows through WSL are the primary supported environments.
 
 Install from PyPI
 -----------------
@@ -63,9 +63,9 @@ Platform Notes
 - Linux and macOS are supported.
 - On Windows, use Windows Subsystem for Linux (WSL). Native Windows is not a
   primary supported environment.
-- Some molecular database workflows may depend on optional packages such as
-  ``vaex`` or RADIS. If those packages are needed, Python 3.9 or 3.10 may be
-  the most reliable choice depending on their upstream support.
+- VALD line lists use the bundled-dependency PyTables cache backend by
+  default. The optional ``vaex`` backend requires a separately installed
+  version of ``vaex`` that is compatible with your Python environment.
 
 Related Pages
 -------------

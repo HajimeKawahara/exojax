@@ -1,7 +1,7 @@
 Getting Started with Reflection Spectroscopy
 ============================================
 
-Last update: June 2026, Hajime Kawahara, for ExoJAX 2.5.0
+Last update: August 2026, Hajime Kawahara, for ExoJAX 2.6.0
 
 This guide models a high-resolution near-infrared reflection spectrum of
 Jupiter. It is a simplified version of the analysis in

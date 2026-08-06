@@ -9,15 +9,15 @@ Saving Pre‑calculated ``OpaPremodit`` Objects with ``cloudpickle`` (not recomm
 
 
 
-When you work with **ExoJAX** over a very wide spectral range, the number of molecular lines can be enormous.  Initialising an :class:`exojax.spec.opacalc.OpaPremodit` instance may therefore take several minutes.  If you need to run the calculation repeatedly under different conditions, it is convenient to serialise the initialised object once and reload it later instead of rebuilding it every time.
+When you work with **ExoJAX** over a very wide spectral range, the number of molecular lines can be enormous.  Initialising an ``OpaPremodit`` instance may therefore take several minutes.  If you need to run the calculation repeatedly under different conditions, it is convenient to serialise the initialised object once and reload it later instead of rebuilding it every time.
 
-Unfortunately, the standard :pymod:`pickle` module sometimes fails to serialise :class:`OpaPremodit` because of internal JIT‑compiled functions.  In that case you will see an error similar to
+Unfortunately, the standard ``pickle`` module sometimes fails to serialise ``OpaPremodit`` because of internal JIT‑compiled functions.  In that case you will see an error similar to
 
 .. code-block:: text
 
     _pickle.PicklingError: Can't pickle <function xsvector_zeroth at 0x7be0f3f29b40>: it's not the same object as exojax.spec.premodit.xsvector_zeroth
 
-The solution is to use :pymod:`cloudpickle`, which is able to handle dynamic objects created by **JAX**.
+The solution is to use ``cloudpickle``, which is able to handle dynamic objects created by **JAX**.
 
 Worked example
 --------------

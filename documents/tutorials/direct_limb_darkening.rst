@@ -1,7 +1,7 @@
 Direct Limb Darkening from Intensity-Based Emission
 ===================================================
 
-Last update: June 2026, for ExoJAX 2.5.0
+Last update: August 2026, for ExoJAX 2.6.0
 
 This tutorial shows how to derive quadratic limb-darkening coefficients
 directly from the angular intensities computed by the intensity-based
@@ -163,12 +163,7 @@ setup close to the standard emission workflow.
 .. parsed-literal::
 
     Premodit: Twt= 1108.7151960064205 K Tref= 570.4914318566549 K
-    Making LSD:|####################| 100%
-
-
-.. parsed-literal::
-
-    
+    Making LSD: [####################] 100%
 
 
 .. code:: ipython3
@@ -531,12 +526,7 @@ difference is that the user-supplied layer update function should call
 .. parsed-literal::
 
     Premodit: Twt= 1108.7151960064205 K Tref= 570.4914318566549 K
-    Making LSD:|####################| 100%
-
-
-.. parsed-literal::
-
-    
+    Making LSD: [####################] 100%
 
 
 .. parsed-literal::

@@ -1,6 +1,42 @@
 History
 ===============
 
+Version 2.6.0
+---------------
+
+ExoJAX 2.6.0 expands correlated-k and radiative-transfer workflows, adds a
+minimal hydrogen Balmer-line opacity path, and improves inference-oriented
+spectral post-processing.
+
+Highlights
+^^^^^^^^^^^^^^^^^^^
+
+- Added wide-wavelength JWST correlated-k examples and support for
+  patch-based, bounded-memory CKD table precomputation (#713, #718, #721).
+- Added intensity outputs and direct quadratic limb-darkening estimation for
+  pure-emission, CKD, and Opart workflows (#717).
+- Added the SFM-2st source-function correction for emission with scattering,
+  including CKD support (#719, #720).
+- Added a minimal hydrogen Balmer-line database and direct natural+Doppler
+  Voigt opacity. Stark broadening and the other follow-up items in #722 are
+  outside this release (#723).
+- Added validation and warnings for an insufficient instrumental-profile
+  velocity range (#725, #726).
+- Added ``sampling_band_integral`` for sampling spectra with band integrals
+  (#727).
+- Restored the deprecated ``exojax.spec`` import compatibility layer for the
+  package split introduced in v2.2. These shims remain scheduled for removal
+  in v3.
+- Restored the VALD PyTables cache backend and made it the dependency-safe
+  default. The legacy ``pandas`` engine name remains an alias, while ``vaex``
+  is still available as an optional backend.
+- Set the supported Python floor to 3.10 and aligned package metadata with the
+  Python 3.10--3.13 CI matrix.
+- Refactored and refreshed the documentation navigation and introductory
+  material (#714, #716).
+
+**Full Changelog**: https://github.com/HajimeKawahara/exojax/compare/v2.5.0...v2.6.0
+
 Version 2.2.2
 ---------------
 
@@ -450,4 +486,3 @@ Version 1.0
 
 Before Version 1
 ----------------------
-

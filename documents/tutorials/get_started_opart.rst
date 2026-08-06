@@ -1,7 +1,7 @@
 Getting Started with Opart; GPU memory-efficient Emission Spectrum
 ==================================================================
 
-Last update: June 2026, Hajime Kawahara, for ExoJAX 2.5.0
+Last update: August 2026, Hajime Kawahara, for ExoJAX 2.6.0
 
 This guide is a device-memory-efficient version of `Getting Started with
 Emission Spectroscopy <get_started.html>`__. It uses ``opart``, which
@@ -529,5 +529,4 @@ the same as standard HMC-NUTS.
 
 This completes the memory-efficient emission-spectrum workflow with
 ``opart``.
-
 

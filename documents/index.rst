@@ -1,7 +1,7 @@
 ExoJAX
 ======
 
-Version 2.5.0 (:doc:`userguide/history`)
+Version 2.6.0 (:doc:`userguide/history`)
 
 `ExoJAX <https://github.com/HajimeKawahara/exojax>`_ is a JAX-based toolkit for
 differentiable high-resolution spectral modeling of exoplanets and brown
