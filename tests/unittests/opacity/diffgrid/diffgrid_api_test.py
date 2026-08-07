@@ -154,7 +154,9 @@ def test_diffgrid_rejects_pressure_mismatch(diffgrid_setup):
 
 
 def test_diffgrid_rejects_temperature_nodes_collapsed_by_jax_dtype():
-    with jax.experimental.disable_x64():
+    previous_x64 = jax.config.jax_enable_x64
+    try:
+        jax.config.update("jax_enable_x64", False)
         with pytest.raises(ValueError, match="active JAX dtype"):
             OpaDiffgrid(
                 _AnalyticTeacher(),
@@ -168,6 +170,8 @@ def test_diffgrid_rejects_temperature_nodes_collapsed_by_jax_dtype():
                 np.asarray([1.0]),
                 min_cross_section=1.0e-45,
             )
+    finally:
+        jax.config.update("jax_enable_x64", previous_x64)
 
 
 def test_diffgrid_supports_jax_transformations(diffgrid_setup):
