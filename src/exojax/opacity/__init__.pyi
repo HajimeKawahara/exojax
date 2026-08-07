@@ -1,5 +1,6 @@
 from typing import Type
 from exojax.opacity.premodit.api import OpaPremodit as OpaPremodit
+from exojax.opacity.diffgrid.api import OpaDiffgrid as OpaDiffgrid
 from exojax.opacity.lpf.api import OpaDirect as OpaDirect
 from exojax.opacity.modit.api import OpaModit as OpaModit
 from exojax.opacity.ckd.api import OpaCKD as OpaCKD
@@ -11,6 +12,7 @@ from exojax.opacity.io.ioopa import saveopa as saveopa
 
 __all__: list[str] = [
     "OpaPremodit",
+    "OpaDiffgrid",
     "OpaDirect",
     "OpaModit",
     "OpaCKD",

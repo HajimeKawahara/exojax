@@ -17,6 +17,7 @@ from typing import Final
 # --------------------------------------------------------------------
 _ALIAS: Final[dict[str, str]] = {
     "OpaPremodit": "exojax.opacity.premodit.api:OpaPremodit",
+    "OpaDiffgrid": "exojax.opacity.diffgrid.api:OpaDiffgrid",
     "OpaDirect":   "exojax.opacity.lpf.api:OpaDirect",
     "OpaModit":    "exojax.opacity.modit.api:OpaModit",
     "OpaCKD":      "exojax.opacity.ckd.api:OpaCKD",

@@ -88,11 +88,13 @@ def test_check_scale_xsmode():
     assert check_grid_mode_in_xsmode("lpf") == "ESLOG"
     assert check_grid_mode_in_xsmode("modit") == "ESLOG"
     assert check_grid_mode_in_xsmode("premodit") == "ESLOG"
+    assert check_grid_mode_in_xsmode("diffgrid") == "ESLOG"
     assert check_grid_mode_in_xsmode("presolar") == "ESLOG"
     assert check_grid_mode_in_xsmode("dit") == "ESLIN"
     assert check_grid_mode_in_xsmode("LPF") == "ESLOG"
     assert check_grid_mode_in_xsmode("MODIT") == "ESLOG"
     assert check_grid_mode_in_xsmode("PREMODIT") == "ESLOG"
+    assert check_grid_mode_in_xsmode("DIFFGRID") == "ESLOG"
     assert check_grid_mode_in_xsmode("PRESOLAR") == "ESLOG"
     assert check_grid_mode_in_xsmode("DIT") == "ESLIN"
 
