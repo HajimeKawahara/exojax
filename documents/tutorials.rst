@@ -35,7 +35,7 @@ Retrievals
    HMC-NUTS retrieval with LPF <tutorials/Reverse_modeling>
    HMC-NUTS retrieval with PreMODIT <tutorials/Reverse_modeling_for_methane_using_PreMODIT>
    Methane high-resolution retrieval with PreMODIT <tutorials/reverse_premodit>
-   NUTS retrieval with Diffgrid and PreMODIT comparison <tutorials/diffgrid_nuts_retrieval>
+   HMC-NUTS retrieval with DiffGrid <tutorials/diffgrid_nuts_retrieval>
    Stochastic variational inference <tutorials/get_started_svi>
    Nested sampling <tutorials/get_started_ns>
    Equilibrium chemistry retrieval <tutorials/equilibrium_chemistry>
