@@ -125,7 +125,7 @@ def wavenumber_grid(x0, x1, N, xsmode, wavelength_order="descending", unit="cm-1
         x0: start wavenumber (cm-1) or wavelength (nm) or (AA)
         x1: end wavenumber (cm-1) or wavelength (nm) or (AA)
         N: the number of the wavenumber grid (even number)
-        xsmode: cross section computation mode (lpf, dit, modit, premodit)
+        xsmode: cross section computation mode (lpf, dit, modit, premodit, diffgrid)
         wavlength order: wavelength order: "ascending" or "descending"
         unit: unit of the input grid, "cm-1", "nm", or "AA"
 
@@ -253,7 +253,7 @@ def check_grid_mode_in_xsmode(xsmode):
     """checking if the scale of grid_mode assumes ESLOG(log) or ESLIN(linear)
 
     Args:
-        xsmode: xsmode, (lpf, dit, modit, premodit)
+        xsmode: xsmode, (lpf, dit, modit, premodit, diffgrid)
 
     Return:
         grid_mode (ESLOG/ESLIN/UNKNOWN)
@@ -262,7 +262,9 @@ def check_grid_mode_in_xsmode(xsmode):
     def _add_upper_case(strlist):
         return strlist + [x.upper() for x in strlist]
 
-    eslog_list = _add_upper_case(["lpf", "modit", "premodit", "presolar"])
+    eslog_list = _add_upper_case(
+        ["lpf", "modit", "premodit", "diffgrid", "presolar"]
+    )
     eslin_list = _add_upper_case(["dit"])
     if xsmode in eslog_list:
         print("xsmode assumes ESLOG in wavenumber space: xsmode=" + str(xsmode))
