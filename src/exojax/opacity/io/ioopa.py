@@ -4,6 +4,8 @@ from typing import Any, Dict, Literal
 
 from exojax.opacity.base import OpaCalc
 from exojax.opacity.ckd.api import OpaCKD
+from exojax.opacity.diffgrid.api import OpaDiffgrid
+from exojax.opacity.diffgrid.io import saveopa_diffgrid
 from exojax.opacity.lpf.api import OpaDirect
 from exojax.opacity.modit.api import OpaModit
 from exojax.opacity.premodit.api import OpaPremodit
@@ -20,10 +22,19 @@ def saveopa(
 ) -> None:
     """Generic entry point for persisting ``Opa*`` calculators to disk.
 
-    Currently only :class:`OpaPremodit` is implemented; other calculators raise
-    ``NotImplementedError`` placeholders (``saveopa_ckd``, ``saveopa_modit``,
-    ``saveopa_direct``) to document the expected extension points.
+    Diffgrid and PreMODIT calculators can be saved as NPZ or Zarr archives.
+    Other calculators raise ``NotImplementedError`` placeholders to document
+    the expected extension points.
     """
+    if isinstance(opa, OpaDiffgrid):
+        saveopa_diffgrid(
+            opa,
+            path,
+            format=format,
+            extra_meta=extra_meta,
+            aux=aux,
+        )
+        return
     if isinstance(opa, OpaPremodit):
         saveopa_premodit(
             opa,
@@ -48,5 +59,4 @@ def saveopa(
     raise TypeError(
         "saveopa does not support persisting instances of " f"{opa.__class__.__name__}."
     )
-
 
