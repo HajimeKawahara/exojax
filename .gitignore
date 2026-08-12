@@ -22,6 +22,7 @@ CO/
 tests/unittests/H2O/
 tests/unittests/CO/
 src/exojax/data/testdata/CO/*.h5
+tests/benchmark/output_diffgrid_nuts*/
 
 # Local Codex review and scratch outputs
 implementation_candidates/
