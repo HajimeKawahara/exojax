@@ -34,11 +34,13 @@ classifiers = [
 ]
 
 # Runtime dependencies migrated from requirements.txt.
-# JAX/JAXlib wheels are platform-specific; declaring both is common.
+# NOTE:
+# - Keep "numpy<2.5" until RADIS supports NumPy 2.5.
+# - JAX/JAXlib wheels are platform-specific; declaring both is common.
 dependencies = [
+  "numpy<2.5",
   "jax",
   "jaxlib",
-  "numpy",
   "scipy",
   "requests",
   "packaging",
