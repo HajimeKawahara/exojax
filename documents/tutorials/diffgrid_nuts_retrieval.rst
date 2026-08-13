@@ -690,6 +690,81 @@ in this notebook.
 .. image:: diffgrid_nuts_retrieval_files/diffgrid_nuts_retrieval_19_1.png
 
 
+Reference benchmark against on-the-fly PreMODIT
+-----------------------------------------------
+
+The manual runner at
+``tests/benchmark/run_diffgrid_nuts_benchmark_gpu.csh`` compares DiffGrid
+with PreMODIT cross sections evaluated on the fly. Both methods used the
+same serialized mock observation, forward model, priors, initial point,
+random seed, and NUTS configuration. Each method ran in a fresh Python
+process with XLA GPU preallocation disabled. The runs used 64-bit
+arithmetic on an NVIDIA RTX 6000 Ada Generation GPU with ExoJAX
+2.4.1.dev41+g69dc7ccc2, JAX 0.6.2, and NumPyro 0.16.1. The NUTS
+configuration was one chain, 500 warmup steps, 1000 posterior samples, a
+dense mass matrix, a target acceptance probability of 0.95, and a
+maximum tree depth of 10.
+
+.. list-table:: Measured performance for the same retrieval problem
+   :header-rows: 1
+
+   * - Metric
+     - On-the-fly PreMODIT
+     - DiffGrid
+     - DiffGrid result
+   * - Measured retrieval subtotal (s)
+     - 4476.30
+     - 805.94
+     - 5.55 times faster
+   * - Compile and warmup (s)
+     - 1573.26
+     - 289.17
+     - 5.44 times faster
+   * - Cold sampling call (s)
+     - 2899.34
+     - 514.07
+     - 5.64 times faster
+   * - Cold sampling time per leapfrog step (ms)
+     - 10.239
+     - 1.551
+     - 6.60 times faster
+   * - Median compiled potential-and-gradient evaluation (ms)
+     - 10.946
+     - 2.241
+     - 4.88 times faster
+   * - Peak device memory (GiB)
+     - 1.519
+     - 0.444
+     - 70.75 percent lower
+   * - Divergences
+     - 0
+     - 0
+     - Same
+
+The measured retrieval subtotal is the sum of opacity loading, model
+setup, compile and warmup, and the cold sampling call; it excludes
+process startup, preparation, diagnostics, and the isolated gradient
+benchmark. The DiffGrid table had 21 nodes uniformly spaced in inverse
+temperature between 400 and 1500 K, a shape of ``(100, 21, 7500)``, and
+a payload of 252,000,000 bytes (240.3 MiB). Its incremental construction
+took 2.071 s after the PreMODIT teacher was available, excluding
+molecular-database loading, teacher construction, and serialization.
+The gradient row is the median of five compiled potential-and-gradient
+evaluations at the generating point. From those timings, the
+construction cost is recovered after about 238 evaluations. The largest
+flux difference over the mock parameters and the four temperature-prior
+corners was ``6.25e-4`` times the per-pixel noise standard deviation.
+
+The sampling calls include compilation of the sampling scan on first
+use. NUTS also selected different trajectory lengths: 283,172 total
+leapfrog steps for PreMODIT and 331,406 for DiffGrid. The per-step and
+isolated-gradient measurements therefore provide important context for
+the wall times. Peak device memory is the fresh-process JAX allocator
+statistic, not total memory reported by ``nvidia-smi``. These are
+single-chain, single-seed measurements on one GPU; both performance and
+the five-profile interpolation check are specific to this example.
+
+
 Notes for production retrievals
 -------------------------------
 
