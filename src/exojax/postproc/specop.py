@@ -219,8 +219,8 @@ class SopRotation(SopCommonConv):
         Args:
             spectrum (nd array): 1D spectrum
             vsini (float): V sini in km/s
-            u1 (float): Limb darkening parameter u1
-            u2 (float): Limb darkening parameter u2
+            u1 (float): Standard quadratic limb-darkening coefficient 1
+            u2 (float): Standard quadratic limb-darkening coefficient 2
 
         Raises:
             ValueError: _description_
