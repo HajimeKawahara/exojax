@@ -377,6 +377,9 @@ class OpaMie(OpaCont):
         refraction_index_wavenumber_restricted = self.pdb.refraction_index_wavenumber[
             imin:imax
         ]
+        refraction_index_wavelength_nm_restricted = (
+            self.pdb.refraction_index_wavelength_nm[imin:imax]
+        )
         nind = len(refraction_index_wavenumber_restricted)
         refraction_index_restricted = self.pdb.refraction_index[imin:imax]
 
@@ -395,7 +398,7 @@ class OpaMie(OpaCont):
         for ind_m, m in enumerate(tqdm(refraction_index_restricted)):
             coeff = mie_lognormal_pymiescatt(
                 m,
-                refraction_index_wavenumber_restricted[ind_m],
+                refraction_index_wavelength_nm_restricted[ind_m],
                 sigmag,
                 rg_nm,
                 self.pdb.N0,

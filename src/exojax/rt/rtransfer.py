@@ -34,7 +34,6 @@ from jax.scipy.integrate import trapezoid
 from exojax.signal.integrate import simpson
 from exojax.rt.toon import (
     params_hemispheric_mean,
-    reduced_source_function_isothermal_layer,
     zetalambda_coeffs,
 )
 from exojax.rt.twostream import (
@@ -61,7 +60,14 @@ def trans2E3(x):
     Returns:
         Transmission function T=2 E3(x)
     """
-    return (1.0 - x) * jnp.exp(-x) + x**2 * E1(x)
+    x = jnp.asarray(x)
+    float_dtype = jnp.result_type(x, 1.0)
+    # Keep x**2 and its reverse-mode cotangent below dtype overflow.
+    too_large = x >= jnp.sqrt(jnp.finfo(float_dtype).max)
+    x_eval = jnp.where(too_large, 1.0, x)
+    x_e1 = jnp.where(x_eval == 0.0, 1.0, x_eval)
+    value = (1.0 - x_eval) * jnp.exp(-x_eval) + x_eval**2 * E1(x_e1)
+    return jnp.where(too_large, 0.0, value)
 
 
 @jit
@@ -75,9 +81,9 @@ def rtrun_emis_pureabs_fbased2st(dtau, source_matrix):
         flux in the unit of [erg/cm2/s/cm-1] if using piBarr as a source function.
     """
     Nnus = jnp.shape(dtau)[1]
-    TransM = jnp.where(dtau == 0, 1.0, trans2E3(dtau))
+    TransM = trans2E3(dtau)
     Qv = jnp.vstack([(1 - TransM) * source_matrix, jnp.zeros(Nnus)])
-    return jnp.nansum(
+    return jnp.sum(
         Qv * jnp.cumprod(jnp.vstack([jnp.ones(Nnus), TransM]), axis=0), axis=0
     )
 
@@ -95,9 +101,9 @@ def rtrun_emis_pureabs_fbased2st_surface(dtau, source_matrix, source_surface):
         flux in the unit of [erg/cm2/s/cm-1] if using piBarr as a source function.
     """
     Nnus = jnp.shape(dtau)[1]
-    trans = jnp.where(dtau == 0, 1.0, trans2E3(dtau))
+    trans = trans2E3(dtau)
     Qv = jnp.vstack([(1 - trans) * source_matrix, source_surface])
-    return jnp.nansum(
+    return jnp.sum(
         Qv * jnp.cumprod(jnp.vstack([jnp.ones(Nnus), trans]), axis=0), axis=0
     )
 
@@ -238,9 +244,19 @@ def coeffs_linsap(dtau_per_mu, trans):
     Returns:
         _type_: beta coefficient, gamma coefficient
     """
-    fac = (1.0 - trans) / dtau_per_mu
-    beta = 1.0 - fac
-    gamma = -trans + fac
+    # Use the series near zero; safe_dtau also keeps the inactive branch AD-safe.
+    small = jnp.abs(dtau_per_mu) < 1.0e-3
+    safe_dtau = jnp.where(small, 1.0, dtau_per_mu)
+    fac = -jnp.expm1(-dtau_per_mu) / safe_dtau
+
+    beta_small = dtau_per_mu * (
+        0.5 + dtau_per_mu * (-1.0 / 6.0 + dtau_per_mu / 24.0)
+    )
+    gamma_small = dtau_per_mu * (
+        0.5 + dtau_per_mu * (-1.0 / 3.0 + dtau_per_mu / 8.0)
+    )
+    beta = jnp.where(small, beta_small, 1.0 - fac)
+    gamma = jnp.where(small, gamma_small, -trans + fac)
     return beta, gamma
 
 
@@ -537,13 +553,9 @@ def setrt_toonhm(dtau, single_scattering_albedo, asymmetric_parameter, source_ma
         single_scattering_albedo, asymmetric_parameter
     )
     zeta_plus, zeta_minus, lambdan = zetalambda_coeffs(gamma_1, gamma_2)
-    trans_coeff, scat_coeff = set_scat_trans_coeffs(
-        zeta_plus, zeta_minus, lambdan, dtau
-    )
+    trans_coeff, scat_coeff = set_scat_trans_coeffs(gamma_1, gamma_2, dtau)
 
-    reduced_piB = reduced_source_function_isothermal_layer(
-        single_scattering_albedo, gamma_1, gamma_2, source_matrix
-    )
+    reduced_piB = source_matrix
 
     return trans_coeff, scat_coeff, reduced_piB, zeta_plus, zeta_minus, lambdan
 
@@ -554,15 +566,8 @@ def settridiag_toohm(
     diagonal_top = 1.0 * jnp.ones_like(trans_coeff[0, :])  # setting b0=1
     upper_diagonal_top = trans_coeff[0, :]
 
-    zeta_plus0 = zeta_plus[0, :]
-    zeta_minus0 = zeta_minus[0, :]
-
     # emission (no reflection)
-    trans_func0 = jnp.exp(-lambdan[0, :] * dtau[0, :])
-    denom = zeta_plus0**2 - (zeta_minus0 * trans_func0) ** 2
-    omtrans = 1.0 - trans_func0
-    fac = zeta_plus0 * omtrans - zeta_minus0 * trans_func0 * omtrans
-    vector_top = (zeta_plus0**2 - zeta_minus0**2) / denom * fac * reduced_piB[0, :]
+    vector_top = (1.0 - trans_coeff[0, :] - scat_coeff[0, :]) * reduced_piB[0, :]
 
     # tridiagonal elements
     (

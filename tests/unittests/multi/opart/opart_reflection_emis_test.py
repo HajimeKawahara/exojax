@@ -60,7 +60,7 @@ def test_forward_reflection_emis_opart():
     flux = opart(
         layer_params, layer_update_function, source_bottom, reflectivity_surface, incoming_flux
     )
-    ref = 1764352.3124300546 #2021 1/28
+    ref = 768779.7391443906  # 8/16 2026
     print(np.mean(flux))
     assert np.mean(flux) == pytest.approx(ref)
     plot = False

@@ -26,8 +26,12 @@ def piBarr(Tarr, nu_grid):
     Note:
        hcperk = hc/k in cgs, fac = 2*h*c*c*pi in cgs
     """
-    
-    return (fac_planck*nu_grid**3)/(jnp.exp(hcperk*nu_grid/Tarr[:, None])-1.0)
+    exponent = (hcperk / Tarr[:, None]) * nu_grid
+    log_numerator = (
+        jnp.log(fac_planck * nu_grid) + 2.0 * jnp.log(nu_grid) - exponent
+    )
+    return jnp.exp(log_numerator) / (-jnp.expm1(-exponent))
+
 
 def piB(T, nu_grid):
     """pi B_nu (Planck Function)
@@ -42,4 +46,8 @@ def piB(T, nu_grid):
     Note:
         hcperk = hc/k in cgs, fac = 2*h*c*c*pi in cgs
     """
-    return (fac_planck * nu_grid**3) / (jnp.exp(hcperk * nu_grid / T) - 1.0)
+    exponent = (hcperk / T) * nu_grid
+    log_numerator = (
+        jnp.log(fac_planck * nu_grid) + 2.0 * jnp.log(nu_grid) - exponent
+    )
+    return jnp.exp(log_numerator) / (-jnp.expm1(-exponent))

@@ -1405,7 +1405,7 @@ def _check_single_broadening(ngamma_ref_grid, n_Texp_grid):
             "Single broadening parameter: ngamma_ref=",
             ngamma_ref_grid[0],
             "n_Texp=",
-            n_Texp_grid[1],
+            n_Texp_grid[0],
         )
         single_broadening = True
     else:

@@ -265,24 +265,43 @@ def contribution_function_lart(cumT, Q):
     return cumT * Q
 
 
-def set_scat_trans_coeffs(zeta_plus, zeta_minus, lambdan, dtau):
-    """sets scattering and transmission coefficients from zeta and lambda coefficient and dtau
+def set_scat_trans_coeffs(gamma_1, gamma_2, dtau):
+    """sets scattering and transmission coefficients from gamma coefficients and dtau
 
     Args:
-        zeta_plus (_type_): coupling zeta (+) coefficient (e.g. Heng 2017)
-        zeta_minus (_type_): coupling zeta (-) coefficient (e.g. Heng 2017)
-        lambdan (_type_): lambda coefficient
+        gamma_1 (_type_): Toon+89 gamma_1 coefficient
+        gamma_2 (_type_): Toon+89 gamma_2 coefficient
         dtau (_type_): optical depth interval of the layers
 
     Returns:
         _type_: transmission coefficient, scattering coeffcient
     """
-    trans_func = jnp.exp(-lambdan * dtau)  # transmission function (Heng 2017, 3.58)
-    denom = zeta_plus**2 - (zeta_minus * trans_func) ** 2
-    trans_coeff = trans_func * (zeta_plus**2 - zeta_minus**2) / denom
-    scat_coeff = (1.0 - trans_func**2) * zeta_plus * zeta_minus / denom
+    lambda_dtau_squared = jnp.asarray(
+        (gamma_1 - gamma_2) * (gamma_1 + gamma_2) * dtau**2
+    )
+    use_taylor = jnp.abs(lambda_dtau_squared) < jnp.sqrt(
+        jnp.finfo(lambda_dtau_squared.dtype).eps
+    )
 
-    return trans_coeff, scat_coeff
+    safe_squared = jnp.where(use_taylor, 1.0, lambda_dtau_squared)
+    lambda_dtau = jnp.sqrt(safe_squared)
+    trans_func = jnp.exp(-lambda_dtau)
+    phi = -jnp.expm1(-2.0 * lambda_dtau) / (2.0 * lambda_dtau)
+    denom = 1.0 + trans_func**2 + 2.0 * gamma_1 * dtau * phi
+    trans_coeff = 2.0 * trans_func / denom
+    scat_coeff = 2.0 * gamma_2 * dtau * phi / denom
+
+    squared2 = lambda_dtau_squared**2
+    cosh_taylor = 1.0 + lambda_dtau_squared / 2.0 + squared2 / 24.0
+    sinhc_taylor = 1.0 + lambda_dtau_squared / 6.0 + squared2 / 120.0
+    denom_taylor = cosh_taylor + gamma_1 * dtau * sinhc_taylor
+    trans_taylor = 1.0 / denom_taylor
+    scat_taylor = gamma_2 * dtau * sinhc_taylor / denom_taylor
+
+    return (
+        jnp.where(use_taylor, trans_taylor, trans_coeff),
+        jnp.where(use_taylor, scat_taylor, scat_coeff),
+    )
 
 
 def compute_tridiag_diagonals_and_vector(
