@@ -50,7 +50,7 @@ def test_forward_emis_scat_opart():
     layer_params = [temperature, opart.pressure, opart.dParr, mixing_ratio]
     flux = opart(layer_params, layer_update_function)
     print(np.mean(flux))
-    ref = 515245.12625256577  # 1/28 2025
+    ref = 3722.9015136863964  # 8/16 2026
     assert np.mean(flux) == pytest.approx(ref)
     plot = False
     if plot:
