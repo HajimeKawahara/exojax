@@ -122,3 +122,19 @@ def test_opart_reflect_emis_matches_batch_for_top_to_bottom_layers():
     )
 
     np.testing.assert_allclose(actual, expected, rtol=1.0e-6)
+
+
+def test_reflect_fluxadding_toonhm_conservative_scattering_limit():
+    asymmetric_parameter = jnp.array([[0.0, 0.5, 1.0]])
+    reflected_flux = rtrun_reflect_fluxadding_toonhm(
+        jnp.ones((1, 3)),
+        jnp.ones((1, 3)),
+        asymmetric_parameter,
+        jnp.zeros((1, 3)),
+        jnp.zeros(3),
+        jnp.zeros(3),
+        jnp.ones(3),
+    )
+
+    expected = (1.0 - asymmetric_parameter[0]) / (2.0 - asymmetric_parameter[0])
+    np.testing.assert_allclose(reflected_flux, expected, rtol=1.0e-6)
