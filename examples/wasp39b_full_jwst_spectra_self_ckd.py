@@ -342,21 +342,6 @@ def make_wavenumber_grid(args: argparse.Namespace):
         )
 
 
-class CartesianXsmatrixOpa:
-    def __init__(self, base_opa):
-        self.base_opa = base_opa
-        self.nu_grid = base_opa.nu_grid
-
-    def xsmatrix(self, T_grid, P_grid):
-        import jax.numpy as jnp
-
-        T_grid = jnp.asarray(T_grid)
-        P_grid = jnp.asarray(P_grid)
-        TT, PP = jnp.meshgrid(T_grid, P_grid, indexing="ij")
-        xs = self.base_opa.xsmatrix(TT.ravel(), PP.ravel())
-        return xs.reshape((T_grid.size, P_grid.size, self.nu_grid.size))
-
-
 def build_self_ckd_patches(args: argparse.Namespace) -> None:
     from exojax.opacity.ckd.precompute import precompute_ckd_tables_by_patches
 
@@ -384,7 +369,7 @@ def build_self_ckd_patches(args: argparse.Namespace) -> None:
         patch_args.self_nu_min = float(nu_min)
         patch_args.self_nu_max = float(nu_max)
         base_opa, _molmass, _mdb_path, _n_lines = build_self_base_opa(patch_args, nu_grid)
-        return CartesianXsmatrixOpa(base_opa)
+        return base_opa
 
     precompute_ckd_tables_by_patches(
         make_patch_base_opa,
