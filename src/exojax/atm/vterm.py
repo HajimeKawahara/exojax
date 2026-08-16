@@ -103,12 +103,12 @@ def terminal_velocity(r, gravity, dynamic_viscosity, rho_cloud, rho_atm, Nkn=0.0
 
         >>> #terminal velocity at T=300K, for Earth atmosphere/gravity.
         >>> g=980.
-        >>> drho=1.0
+        >>> rho_cloud=1.0
         >>> rho=1.29*1.e-3 #g/cm3
         >>> vfactor,Tr=vc.calc_vfactor(atm="Air")
         >>> eta=vc.eta_Rosner(300.0,vfactor)
         >>> r=jnp.logspace(-5,0,70)
-        >>> terminal_velocity(r,g,eta,drho,rho) #terminal velocity (cm/s)
+        >>> terminal_velocity(r,g,eta,rho_cloud,rho) #terminal velocity (cm/s)
     """
     drho = rho_cloud - rho_atm
     ND = Ndavies(r, gravity, dynamic_viscosity, drho, rho_atm)
