@@ -1,7 +1,10 @@
 import os
 os.environ['CUDA_VISIBLE_DEVICES'] = '1'
 import pytest
+from jax import grad
+from jax import jvp
 from exojax.postproc.spin_rotation import rotkernel
+from exojax.postproc.spin_rotation import rotkernel_Gimenez
 import jax.numpy as jnp
 import numpy as np
 from exojax.utils.grids import wavenumber_grid
@@ -142,17 +145,64 @@ def test_rotkernel(fig=False):
     u1 = 0.1
     u2 = 0.1
     kernel_1 = rotkernel(x_1, u1, u2)
+    one_minus_x2 = jnp.maximum(1.0 - x_1**2, 0.0)
+    expected = jnp.where(
+        x_1**2 <= 1.0,
+        2.0 * (1.0 - u1 - u2) * jnp.sqrt(one_minus_x2)
+        + jnp.pi / 2.0 * (u1 + 2.0 * u2) * one_minus_x2
+        - 4.0 / 3.0 * u2 * one_minus_x2**1.5,
+        0.0,
+    )
+    assert kernel_1 == pytest.approx(expected)
     N = 101
     x_2 = jnp.linspace(-1.0, 1.0, N)
     kernel_2 = rotkernel(x_2, u1, u2)
-    assert jnp.sum(kernel_1) == pytest.approx(143.85559)
-    assert jnp.sum(kernel_2) == pytest.approx(143.85559)
+    assert jnp.sum(kernel_1) == pytest.approx(149.08960)
+    assert jnp.sum(kernel_2) == pytest.approx(149.08960)
 
     if fig:
         import matplotlib.pyplot as plt
         plt.plot(x_1, kernel_1)
         plt.plot(x_2, kernel_2)
         plt.show()
+
+
+def test_rotkernel_Gimenez():
+    x = jnp.linspace(-2.0, 2.0, 201)
+    u1_g = 0.1
+    u2_g = 0.1
+    kernel = rotkernel_Gimenez(x, u1_g, u2_g)
+    one_minus_x2 = jnp.maximum(1.0 - x**2, 0.0)
+    expected = jnp.where(
+        x**2 <= 1.0,
+        2.0 * (1.0 - u1_g - u2_g) * jnp.sqrt(one_minus_x2)
+        + jnp.pi / 2.0 * u1_g * one_minus_x2
+        + 4.0 / 3.0 * u2_g * one_minus_x2**1.5,
+        0.0,
+    )
+    assert kernel == pytest.approx(expected)
+
+
+def test_rotkernel_Gimenez_jvp():
+    x = 0.2
+    u1_g = 0.1
+    u2_g = 0.1
+    one_minus_x2 = 1.0 - x**2
+    expected = (
+        -2.0 * (1.0 - u1_g - u2_g) * x / jnp.sqrt(one_minus_x2)
+        - jnp.pi * u1_g * x
+        - 4.0 * u2_g * x * jnp.sqrt(one_minus_x2)
+    )
+    primal, tangent = jvp(
+        lambda z: rotkernel_Gimenez(z, u1_g, u2_g), (x,), (1.0,)
+    )
+    assert primal == pytest.approx(rotkernel_Gimenez(x, u1_g, u2_g))
+    assert tangent == pytest.approx(expected)
+    assert grad(lambda z: rotkernel_Gimenez(z, u1_g, u2_g))(x) == pytest.approx(
+        expected
+    )
+    assert grad(lambda z: rotkernel(z, 0.1, 0.1))(1.0) == pytest.approx(0.0)
+    assert grad(grad(lambda z: rotkernel(z, 0.1, 0.1)))(1.1) == pytest.approx(0.0)
 
 
 if __name__ == "__main__":

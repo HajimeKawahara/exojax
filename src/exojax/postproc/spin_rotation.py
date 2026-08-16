@@ -16,8 +16,8 @@ def convolve_rigid_rotation_ola(folded_F0, vr_array, vsini, u1=0.0, u2=0.0):
         folded_F0: original spectrum (F0) folded to (ndiv, div_length) form
         vr_array: fix-sized vr array for kernel, see utils.dvgrid_rigid_rotation
         vsini: V sini for rotation (km/s)
-        u1: Limb-darkening coefficient 1
-        u2: Limb-darkening coefficient 2
+        u1: Standard quadratic limb-darkening coefficient 1
+        u2: Standard quadratic limb-darkening coefficient 2
 
     Return:
         response-applied spectrum (F)
@@ -44,8 +44,8 @@ def convolve_rigid_rotation(F0, vr_array, vsini, u1=0.0, u2=0.0):
         vr_array: fix-sized vr array for kernel, see utils.dvgrid_rigid_rotation
         vsini: V sini for rotation (km/s)
         RV: radial velocity
-        u1: Limb-darkening coefficient 1
-        u2: Limb-darkening coefficient 2
+        u1: Standard quadratic limb-darkening coefficient 1
+        u2: Standard quadratic limb-darkening coefficient 2
 
     Return:
         response-applied spectrum (F)
@@ -62,43 +62,85 @@ def convolve_rigid_rotation(F0, vr_array, vsini, u1=0.0, u2=0.0):
     return convolved_signal
 
 
-@custom_jvp
 def rotkernel(x, u1, u2):
-    """rotation kernel w/ the quadratic limb darkening law, the numerator of (56) in Kawahara+2022
+    """Rotational kernel for the quadratic limb-darkening law.
+
+    The intensity law is ``1 - u1 * (1 - mu) - u2 * (1 - mu) ** 2``.
 
     Args:
-        x: x variable
-        u1: Limb-darkening coefficient 1
-        u2: Limb-darkening coefficient 2
+        x: Projected velocity normalized by vsini
+        u1: Standard quadratic limb-darkening coefficient 1
+        u2: Standard quadratic limb-darkening coefficient 2
 
     Return:
-        rotational kernel
+        Unnormalized rotational kernel
+    """
+    return rotkernel_Gimenez(x, u1 + 2.0 * u2, -u2)
+
+
+@custom_jvp
+def rotkernel_Gimenez(x, u1_g, u2_g):
+    """Rotational kernel for the Gimenez N=2 limb-darkening law.
+
+    The intensity law is
+    ``1 - u1_g * (1 - mu) - u2_g * (1 - mu ** 2)``. This is the
+    numerator of Equation (56) in Kawahara et al. (2022).
+
+    Note:
+        For the standard quadratic coefficients, the equivalent Gimenez
+        coefficients are ``u1_g = u1 + 2 * u2`` and ``u2_g = -u2``.
+        See Gimenez (2006), A&A, 450, 1231, Equation (4), and Parviainen
+        (2015), MNRAS, 450, 3233.
+
+    Args:
+        x: Projected velocity normalized by vsini
+        u1_g: Gimenez limb-darkening coefficient 1
+        u2_g: Gimenez limb-darkening coefficient 2
+
+    Return:
+        Unnormalized rotational kernel
     """
     x2 = x * x
+    one_minus_x2 = jnp.maximum(1.0 - x2, 0.0)
     kernel = jnp.where(
         x2 <= 1.0,
-        jnp.pi / 2.0 * u1 * (1.0 - x2) - 2.0 / 3.0 * jnp.sqrt(1.0 - x2) *
-        (-3.0 + 3.0 * u1 + u2 + 2.0 * u2 * x2), 0.0)
+        jnp.pi / 2.0 * u1_g * one_minus_x2
+        - (2.0 / 3.0)
+        * jnp.sqrt(one_minus_x2)
+        * (-3.0 + 3.0 * u1_g + u2_g + 2.0 * u2_g * x2),
+        0.0,
+    )
     return kernel
 
 
-@rotkernel.defjvp
-def rotkernel_jvp(primals, tangents):
-    x, u1, u2 = primals
+@rotkernel_Gimenez.defjvp
+def rotkernel_Gimenez_jvp(primals, tangents):
+    x, u1_g, u2_g = primals
     ux, uu1, uu2 = tangents
     x2 = x * x
+    inside = x2 < 1.0
+    one_minus_x2 = jnp.where(inside, 1.0 - x2, 1.0)
+    sqrt_one_minus_x2 = jnp.sqrt(one_minus_x2)
     dHdx = jnp.where(
-        x2 <= 1.0, -jnp.pi * x * u1 + 2.0 / 3.0 * x / jnp.sqrt(1.0 - x2) *
-        (-3.0 + 3.0 * u1 + u2 + 2.0 * u2 * x2) +
-        8.0 * x * u2 * jnp.sqrt(1.0 - x2), 0.0)
-    dHdu1 = jnp.where(x2 <= 1.0,
-                      -2.0 * jnp.sqrt(1.0 - x2) + jnp.pi / 2.0 * (1.0 - x2),
-                      0.0)
-    dHdu2 = jnp.where(x2 <= 1.0,
-                      -2.0 * (1.0 + 2.0 * x2) * (jnp.sqrt(1.0 - x2)) / 3.0,
-                      0.0)
+        inside,
+        -jnp.pi * x * u1_g
+        + (2.0 / 3.0) * x / sqrt_one_minus_x2
+        * (-3.0 + 3.0 * u1_g + u2_g + 2.0 * u2_g * x2)
+        - (8.0 / 3.0) * x * u2_g * sqrt_one_minus_x2,
+        0.0,
+    )
+    dHdu1 = jnp.where(
+        inside,
+        -2.0 * sqrt_one_minus_x2 + jnp.pi / 2.0 * one_minus_x2,
+        0.0,
+    )
+    dHdu2 = jnp.where(
+        inside,
+        -2.0 * (1.0 + 2.0 * x2) * sqrt_one_minus_x2 / 3.0,
+        0.0,
+    )
 
-    primal_out = rotkernel(x, u1, u2)
+    primal_out = rotkernel_Gimenez(x, u1_g, u2_g)
     tangent_out = dHdx * ux + dHdu1 * uu1 + dHdu2 * uu2
     return primal_out, tangent_out
 
