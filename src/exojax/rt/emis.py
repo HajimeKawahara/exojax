@@ -591,9 +591,10 @@ class OpartEmisScat(ArtCommon):
         source_vector = piB(temparature, self.nu_grid)
         # -------------------------------------------------
         dtau, single_scattering_albedo, asymmetric_parameter = self.opalayer(params)
-        trans_coeff_i, scat_coeff_i, pihatB_i, _, _, _ = setrt_toonhm(
+        trans_coeff_i, scat_coeff_i, reduced_piB_i, _, _, _ = setrt_toonhm(
             dtau, single_scattering_albedo, asymmetric_parameter, source_vector
         )
+        pihatB_i = (1.0 - trans_coeff_i - scat_coeff_i) * reduced_piB_i
         denom = 1.0 - scat_coeff_i * Rphat_prev
         Sphat_each = (
             pihatB_i + trans_coeff_i * (Sphat_prev + pihatB_i * Rphat_prev) / denom
@@ -621,7 +622,7 @@ class OpartEmisScat(ArtCommon):
         # no source term at the bottom
         source_bottom = jnp.zeros_like(self.nu_grid)
         rs_bottom = [reflectivity_bottom, source_bottom]
-        rs, _ = scan(layer_update_function, rs_bottom, layer_params)
+        rs, _ = scan(layer_update_function, rs_bottom, layer_params, reverse=True)
         return rs[1]
 
     def run(self, opalayer, layer_params, flbl):
