@@ -20,6 +20,14 @@ def test_zetalambda_coeffs():
     assert jnp.isclose(lambdan, lambdan_ref), f"Expected {jnp.sqrt(3.0)}, got {lambdan}"
 
 
+def test_zetalambda_coeffs_zero_gamma():
+    zeta_plus, zeta_minus, lambdan = zetalambda_coeffs(0.0, 0.0)
+
+    assert jnp.isclose(zeta_plus, 0.5)
+    assert jnp.isclose(zeta_minus, 0.5)
+    assert jnp.isclose(lambdan, 0.0)
+
+
 def test_reduced_source_function_isothermal_layer():
     single_scattering_albedo = 0.5
     gamma_1 = 2.0

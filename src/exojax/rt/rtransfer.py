@@ -34,7 +34,6 @@ from jax.scipy.integrate import trapezoid
 from exojax.signal.integrate import simpson
 from exojax.rt.toon import (
     params_hemispheric_mean,
-    reduced_source_function_isothermal_layer,
     zetalambda_coeffs,
 )
 from exojax.rt.twostream import (
@@ -537,13 +536,9 @@ def setrt_toonhm(dtau, single_scattering_albedo, asymmetric_parameter, source_ma
         single_scattering_albedo, asymmetric_parameter
     )
     zeta_plus, zeta_minus, lambdan = zetalambda_coeffs(gamma_1, gamma_2)
-    trans_coeff, scat_coeff = set_scat_trans_coeffs(
-        zeta_plus, zeta_minus, lambdan, dtau
-    )
+    trans_coeff, scat_coeff = set_scat_trans_coeffs(gamma_1, gamma_2, dtau)
 
-    reduced_piB = reduced_source_function_isothermal_layer(
-        single_scattering_albedo, gamma_1, gamma_2, source_matrix
-    )
+    reduced_piB = source_matrix
 
     return trans_coeff, scat_coeff, reduced_piB, zeta_plus, zeta_minus, lambdan
 
@@ -554,15 +549,8 @@ def settridiag_toohm(
     diagonal_top = 1.0 * jnp.ones_like(trans_coeff[0, :])  # setting b0=1
     upper_diagonal_top = trans_coeff[0, :]
 
-    zeta_plus0 = zeta_plus[0, :]
-    zeta_minus0 = zeta_minus[0, :]
-
     # emission (no reflection)
-    trans_func0 = jnp.exp(-lambdan[0, :] * dtau[0, :])
-    denom = zeta_plus0**2 - (zeta_minus0 * trans_func0) ** 2
-    omtrans = 1.0 - trans_func0
-    fac = zeta_plus0 * omtrans - zeta_minus0 * trans_func0 * omtrans
-    vector_top = (zeta_plus0**2 - zeta_minus0**2) / denom * fac * reduced_piB[0, :]
+    vector_top = (1.0 - trans_coeff[0, :] - scat_coeff[0, :]) * reduced_piB[0, :]
 
     # tridiagonal elements
     (
