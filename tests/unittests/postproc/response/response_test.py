@@ -239,6 +239,23 @@ def test_ipgauss_variable_sampling_using_constant_beta_array(fig=False):
         plt.show()
 
 
+def test_ipgauss_variable_sampling_handles_wide_wavenumber_range():
+    nus = np.geomspace(1.0, 4.0, 5)
+    nusd = np.array([1.0])
+    spectrum = np.arange(1.0, 6.0)
+    beta_variable = np.array([c])
+
+    result = ipgauss_variable_sampling(
+        nusd, nus, spectrum, beta_variable, RV=0.0
+    )
+
+    dvgrid = c * np.log(nusd[0] / nus)
+    kernel = np.exp(-(dvgrid**2) / (2.0 * beta_variable[0] ** 2))
+    expected = np.array([kernel @ spectrum / np.sum(kernel)])
+    assert np.all(np.isfinite(result))
+    np.testing.assert_allclose(result, expected, rtol=1.0e-6)
+
+
 def test_SopInstProfile_ola(fig=False):
     from exojax.postproc.specop import SopInstProfile
     

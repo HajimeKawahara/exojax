@@ -175,7 +175,7 @@ def ipgauss_variable_sampling(nusd, nus, spectrum, beta_variable, RV):
     def convolve_ipgauss_scan(carry, arr):
         nusd_each = arr[0]
         beta_each = arr[1]
-        dvgrid = c * (jnp.log1p(1.0 - nus / nusd_each))
+        dvgrid = c * jnp.log(nusd_each / nus)
         kernel = jnp.exp(-((dvgrid + RV) ** 2) / (2.0 * beta_each**2))
         kernel = kernel / jnp.sum(kernel)
         return carry, kernel @ spectrum
