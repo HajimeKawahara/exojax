@@ -67,15 +67,15 @@ def cubeweighted_mean(rg, sigmag):
 
 
 def cubeweighted_std(rg, sigmag):
-    """variance of the cube weighted lognormal distribution
+    """standard deviation of the cube weighted lognormal distribution
 
     Args:
         rg (float)): rg parameter
         sigmag (float): sigmag parameter must be > 1.
 
     Returns:
-        float: variance of the cube weighted lognormal distribution
+        float: standard deviation of the cube weighted lognormal distribution
     """
     mu = cubeweighted_mean(rg, sigmag)
-    var = moment(rg, sigmag, 5) / moment(rg, sigmag, 3)
-    return jnp.sqrt(var - mu**2)
+    log_variance = jnp.log(sigmag) ** 2
+    return mu * jnp.sqrt(jnp.expm1(log_variance))
