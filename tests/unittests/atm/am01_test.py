@@ -90,6 +90,44 @@ def test_calc_ammodel_rw_uses_cgs_density_once():
     assert rw[1] == pytest.approx(expected_rw, rel=5.0e-3)
 
 
+def test_calc_ammodel_rw_with_layer_dependent_kzz():
+    pressures = jnp.array([100.0, 1000.0])
+    temperatures = jnp.full_like(pressures, 300.0)
+    mean_molecular_weight = 2.22
+    gravity = 2478.6
+    scale_height = atmprof.pressure_scale_height(
+        gravity, temperatures[0], mean_molecular_weight
+    )
+    amp = AmpAmcloud(
+        _DummyPdb(),
+        bkgatm="H2",
+        size_min=1.0e-7,
+        size_max=1.0e-3,
+        nsize=4000,
+    )
+
+    def calculate_rw(Kzz):
+        return amp.calc_ammodel_rw(
+            pressures,
+            temperatures,
+            mean_molecular_weight=mean_molecular_weight,
+            molecular_mass_condensate=mean_molecular_weight,
+            gravity=gravity,
+            fsed=1.0,
+            Kzz=Kzz,
+            MMR_base=1.0,
+        )[0]
+
+    Kzz = jnp.array([1.0e-3, 1.0e-2]) * scale_height
+    rw = calculate_rw(Kzz)
+    expected_rw = jnp.array(
+        [calculate_rw(layer_Kzz)[i] for i, layer_Kzz in enumerate(Kzz)]
+    )
+
+    assert rw.shape == pressures.shape
+    assert jnp.array_equal(rw, expected_rw)
+
+
 def _am01_test_param_set():
     rw = 1.0e-4
     fsed = 2.0
