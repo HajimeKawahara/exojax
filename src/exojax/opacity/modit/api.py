@@ -153,7 +153,7 @@ class OpaModit(OpaCalc):
 
         # Compute broadening and line strength based on database type
         if dbtype == "hitran":
-            qt = self.mdb.qr_interp(self.mdb.isotope, T, Tref_original)
+            qt = self.mdb.qr_interp_lines(T, Tref_original)
             gammaL = gamma_hitran(
                 P, T, Pself, self.mdb.n_air, self.mdb.gamma_air, self.mdb.gamma_self
             ) + gamma_natural(self.mdb.A)
