@@ -113,8 +113,10 @@ class ArtCommon:
         normalized_height, normalized_radius_lower = self.atmosphere_height(
             temperature, mean_molecular_weight, radius_btm, gravity_btm
         )
+#        normalized_radius_layer = normalized_radius_lower + 0.5 * normalized_height
+#        return jnp.array([gravity_btm / normalized_radius_layer]).T
         normalized_radius_layer = normalized_radius_lower + 0.5 * normalized_height
-        return jnp.array([gravity_btm / normalized_radius_layer]).T
+        return jnp.array([gravity_btm / normalized_radius_layer**2]).T
 
     def constant_profile(self, value):
         return value * np.ones_like(self.pressure)
