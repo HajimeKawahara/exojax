@@ -18,6 +18,7 @@ from exojax.opacity.ckd.contracts import CKDTableInfo
 from exojax.opacity.ckd.core import gauss_legendre_grid
 from exojax.opacity.ckd.core import compute_ckd_tables
 from exojax.opacity.ckd.core import interpolate_log_k_2d
+from exojax.opacity.ckd.core import safe_log_k
 from exojax.opacity.ckd.io import _hash_json
 from exojax.opacity.ckd.io import _base_fingerprint
 from exojax.opacity.ckd.io import _ckd_save_as_npz
@@ -230,7 +231,12 @@ class OpaCKD(OpaCalc):
 
         # Initialize storage for all bands
         nnu_bands = len(self.nu_bands)
-        log_kggrid = jnp.zeros((nT, nP, self.Ng, nnu_bands))
+        empty_log_k = safe_log_k(jnp.zeros((), dtype=xsmatrix_full.dtype))
+        log_kggrid = jnp.full(
+            (nT, nP, self.Ng, nnu_bands),
+            empty_log_k,
+            dtype=xsmatrix_full.dtype,
+        )
 
         # Process each spectral band using precise edges
         print(f"Processing {nnu_bands} spectral bands...")

@@ -4,6 +4,7 @@ import pytest
 import numpy as np
 import jax.numpy as jnp
 from exojax.opacity.ckd.api import OpaCKD
+from exojax.opacity.ckd.core import safe_log_k
 
 
 class MockBaseOpa:
@@ -23,6 +24,16 @@ class PairedMockBaseOpa:
         return jnp.broadcast_to(
             cross_section[:, None], (cross_section.size, self.nu_grid.size)
         )
+
+
+class SparseMockBaseOpa:
+    """Base opacity mock with an uncovered spectral band."""
+
+    def __init__(self):
+        self.nu_grid = jnp.array([1000.0, 1003.0])
+
+    def xsmatrix(self, T_array, P_array):
+        return jnp.full((T_array.size, self.nu_grid.size), 2.0e-20)
 
 
 def test_opa_ckd_init():
@@ -70,6 +81,18 @@ def test_precompute_tables_uses_cartesian_temperature_pressure_grid():
     expected = T_grid[:, None] + 10.0 * P_grid[None, :]
     actual = jnp.exp(opa_ckd.ckd_info.log_kggrid[:, :, :, 0])
     assert jnp.allclose(actual, expected[:, :, None])
+
+
+def test_precompute_tables_uses_opacity_floor_for_empty_band():
+    opa_ckd = OpaCKD(
+        SparseMockBaseOpa(), Ng=2, band_width=1.0, band_spacing="linear"
+    )
+
+    opa_ckd.precompute_tables(jnp.array([1000.0]), jnp.array([1.0]))
+
+    actual = opa_ckd.xsarray_ckd(1000.0, 1.0)[:, 1]
+    expected = jnp.exp(safe_log_k(jnp.zeros_like(actual)))
+    assert jnp.allclose(actual, expected, rtol=1.0e-6, atol=0.0)
 
 
 if __name__ == "__main__":
