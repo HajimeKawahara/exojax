@@ -2,6 +2,7 @@
 
 import pytest
 import numpy as np
+import jax.numpy as jnp
 from exojax.opacity.ckd.api import OpaCKD
 
 
@@ -9,6 +10,19 @@ class MockBaseOpa:
     """Mock base opacity calculator for testing."""
     def __init__(self):
         self.nu_grid = np.linspace(1000.0, 2000.0, 1000)
+
+
+class PairedMockBaseOpa:
+    """Base opacity mock whose xsmatrix inputs are layer-aligned."""
+
+    def __init__(self):
+        self.nu_grid = jnp.linspace(1000.0, 1003.0, 4)
+
+    def xsmatrix(self, T_array, P_array):
+        cross_section = T_array + 10.0 * P_array
+        return jnp.broadcast_to(
+            cross_section[:, None], (cross_section.size, self.nu_grid.size)
+        )
 
 
 def test_opa_ckd_init():
@@ -42,6 +56,20 @@ def test_opa_ckd_custom_bands():
     assert opa_ckd.band_spacing == "linear"
     assert len(opa_ckd.nu_bands) > 0
     assert hasattr(opa_ckd, 'band_edges')
+
+
+def test_precompute_tables_uses_cartesian_temperature_pressure_grid():
+    opa_ckd = OpaCKD(
+        PairedMockBaseOpa(), Ng=2, band_width=10.0, band_spacing="linear"
+    )
+    T_grid = jnp.array([1.0, 2.0])
+    P_grid = jnp.array([10.0, 20.0])
+
+    opa_ckd.precompute_tables(T_grid, P_grid)
+
+    expected = T_grid[:, None] + 10.0 * P_grid[None, :]
+    actual = jnp.exp(opa_ckd.ckd_info.log_kggrid[:, :, :, 0])
+    assert jnp.allclose(actual, expected[:, :, None])
 
 
 if __name__ == "__main__":

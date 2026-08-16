@@ -217,10 +217,18 @@ class OpaCKD(OpaCalc):
         print(
             f"Generated g-grid: {self.Ng} points, range [{ggrid[0]:.4f}, {ggrid[-1]:.4f}]"
         )
-        xsmatrix_full = self.base_opa.xsmatrix(T_grid, P_grid)
+        nT, nP = len(T_grid), len(P_grid)
+        T_mesh, P_mesh = jnp.meshgrid(T_grid, P_grid, indexing="ij")
+        xsmatrix_flat = self.base_opa.xsmatrix(T_mesh.ravel(), P_mesh.ravel())
+        expected_shape = (nT * nP, len(self.base_opa.nu_grid))
+        if xsmatrix_flat.shape != expected_shape:
+            raise ValueError(
+                "Base opacity xsmatrix must return a layer-aligned matrix with "
+                f"shape {expected_shape}; got {xsmatrix_flat.shape}."
+            )
+        xsmatrix_full = xsmatrix_flat.reshape(nT, nP, expected_shape[1])
 
         # Initialize storage for all bands
-        nT, nP = len(T_grid), len(P_grid)
         nnu_bands = len(self.nu_bands)
         log_kggrid = jnp.zeros((nT, nP, self.Ng, nnu_bands))
 
