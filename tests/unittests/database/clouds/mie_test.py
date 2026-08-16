@@ -26,6 +26,15 @@ def test_autogrid():
         assert check
 
 
+def test_autogrid_narrow_distribution_float32():
+    rg_nm = np.float32(50.0)
+    sigmag = np.float32(1.0001)
+
+    rgrid = auto_rgrid(rg_nm, sigmag)
+
+    assert cubeweighted_integral_checker(rgrid, rg_nm, sigmag)
+
+
 def test_cubeweighted_integral_checker():
     rg_um = 0.05  # 0.1um = 100nm
     sigmag = 2.0
