@@ -238,9 +238,19 @@ def coeffs_linsap(dtau_per_mu, trans):
     Returns:
         _type_: beta coefficient, gamma coefficient
     """
-    fac = (1.0 - trans) / dtau_per_mu
-    beta = 1.0 - fac
-    gamma = -trans + fac
+    # Use the series near zero; safe_dtau also keeps the inactive branch AD-safe.
+    small = jnp.abs(dtau_per_mu) < 1.0e-3
+    safe_dtau = jnp.where(small, 1.0, dtau_per_mu)
+    fac = -jnp.expm1(-dtau_per_mu) / safe_dtau
+
+    beta_small = dtau_per_mu * (
+        0.5 + dtau_per_mu * (-1.0 / 6.0 + dtau_per_mu / 24.0)
+    )
+    gamma_small = dtau_per_mu * (
+        0.5 + dtau_per_mu * (-1.0 / 3.0 + dtau_per_mu / 8.0)
+    )
+    beta = jnp.where(small, beta_small, 1.0 - fac)
+    gamma = jnp.where(small, gamma_small, -trans + fac)
     return beta, gamma
 
 

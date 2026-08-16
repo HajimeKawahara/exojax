@@ -1,13 +1,30 @@
 import jax.numpy as jnp
 import pytest
+from jax import jacfwd, jit
 
 from exojax.rt import ArtEmisPure
 from exojax.rt.planck import piBarr
 from exojax.rt.rtransfer import (
+    coeffs_linsap,
     rtrun_emis_pureabs_ibased,
     rtrun_emis_pureabs_ibased_flux_from_intensity,
     rtrun_emis_pureabs_ibased_intensity,
 )
+
+
+def test_linsap_coefficients_at_small_optical_depth():
+    x = jnp.array([0.0, 1.0e-8], dtype=jnp.float32)
+    expected = jnp.array([0.0, 5.0e-9], dtype=jnp.float32)
+
+    beta, gamma = jit(coeffs_linsap)(x, jnp.exp(-x))
+
+    assert beta == pytest.approx(expected, rel=1.0e-6, abs=0.0)
+    assert gamma == pytest.approx(expected, rel=1.0e-6, abs=0.0)
+
+    derivatives = jacfwd(
+        lambda value: jnp.stack(coeffs_linsap(value, jnp.exp(-value)))
+    )(jnp.float32(0.0))
+    assert derivatives == pytest.approx(jnp.full(2, 0.5), rel=1.0e-6)
 
 
 def test_ibased_intensity_reconstructs_flux():
