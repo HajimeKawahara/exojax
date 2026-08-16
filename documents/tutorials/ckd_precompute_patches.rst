@@ -49,11 +49,11 @@ that patch.
             nu_scale = self.nu_grid / self.nu_grid[0]
             return (
                 1.0e-24
-                * T_grid[:, None, None]
+                * T_grid[:, None]
                 / T_grid[0]
-                * P_grid[None, :, None]
+                * P_grid[:, None]
                 / P_grid[0]
-                * nu_scale[None, None, :]
+                * nu_scale[None, :]
             )
     
     
