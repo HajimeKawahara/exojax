@@ -296,7 +296,7 @@ class OpaDirect(OpaCalc):
                 self.mdb.logsij0,
                 self.mdb.nu_lines,
                 self.mdb.elower,
-                qr_K.T,
+                qr_K,
                 Tref_original,
             )
             sigmaDM = self._vmap_doppler_sigma(
