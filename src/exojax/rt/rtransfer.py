@@ -61,7 +61,14 @@ def trans2E3(x):
     Returns:
         Transmission function T=2 E3(x)
     """
-    return (1.0 - x) * jnp.exp(-x) + x**2 * E1(x)
+    x = jnp.asarray(x)
+    float_dtype = jnp.result_type(x, 1.0)
+    # Keep x**2 and its reverse-mode cotangent below dtype overflow.
+    too_large = x >= jnp.sqrt(jnp.finfo(float_dtype).max)
+    x_eval = jnp.where(too_large, 1.0, x)
+    x_e1 = jnp.where(x_eval == 0.0, 1.0, x_eval)
+    value = (1.0 - x_eval) * jnp.exp(-x_eval) + x_eval**2 * E1(x_e1)
+    return jnp.where(too_large, 0.0, value)
 
 
 @jit
@@ -75,9 +82,9 @@ def rtrun_emis_pureabs_fbased2st(dtau, source_matrix):
         flux in the unit of [erg/cm2/s/cm-1] if using piBarr as a source function.
     """
     Nnus = jnp.shape(dtau)[1]
-    TransM = jnp.where(dtau == 0, 1.0, trans2E3(dtau))
+    TransM = trans2E3(dtau)
     Qv = jnp.vstack([(1 - TransM) * source_matrix, jnp.zeros(Nnus)])
-    return jnp.nansum(
+    return jnp.sum(
         Qv * jnp.cumprod(jnp.vstack([jnp.ones(Nnus), TransM]), axis=0), axis=0
     )
 
@@ -95,9 +102,9 @@ def rtrun_emis_pureabs_fbased2st_surface(dtau, source_matrix, source_surface):
         flux in the unit of [erg/cm2/s/cm-1] if using piBarr as a source function.
     """
     Nnus = jnp.shape(dtau)[1]
-    trans = jnp.where(dtau == 0, 1.0, trans2E3(dtau))
+    trans = trans2E3(dtau)
     Qv = jnp.vstack([(1 - trans) * source_matrix, source_surface])
-    return jnp.nansum(
+    return jnp.sum(
         Qv * jnp.cumprod(jnp.vstack([jnp.ones(Nnus), trans]), axis=0), axis=0
     )
 
