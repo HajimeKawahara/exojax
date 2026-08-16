@@ -174,8 +174,8 @@ def test_lpffilter_aliasing_area(i, figure=False):
     elif i==-1:
         diff = noaliase_area[-filter_length_oneside-1:] - shapefilter[0:filter_length_oneside+1]
     res = jnp.max(jnp.abs(diff))
-    #print("max diff",res)
-    assert res < 1.e-16 #2.7755575615628914e-17, 5.55111512e-17
+    tolerance = jnp.finfo(shapefilter.dtype).eps
+    assert res < tolerance
 
     if figure:
         import matplotlib.pyplot as plt

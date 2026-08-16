@@ -345,10 +345,19 @@ class OpaDiffgrid(OpaCalc):
                 f"range [{temperature_min}, {temperature_max}] K."
             )
         inverse_temperature = 1.0 / temperature
+        coordinate_tolerance = (
+            8.0 * np.finfo(self._inverse_temperature_grid_host.dtype).eps
+        )
+        inverse_temperature_min = self._inverse_temperature_grid_host[0]
+        inverse_temperature_max = self._inverse_temperature_grid_host[-1]
         if (
-            np.any(inverse_temperature < self._inverse_temperature_grid_host[0])
+            np.any(
+                inverse_temperature
+                < inverse_temperature_min * (1.0 - coordinate_tolerance)
+            )
             or np.any(
-                inverse_temperature > self._inverse_temperature_grid_host[-1]
+                inverse_temperature
+                > inverse_temperature_max * (1.0 + coordinate_tolerance)
             )
         ):
             raise ValueError(
