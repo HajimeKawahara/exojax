@@ -176,8 +176,9 @@ class AmpAmcloud(AmpCloud):
         )
 
         # condensate size
-        vfind_rw = vmap(find_rw, (None, 0, None), 0)
-        rw = vfind_rw(self.rcond_arr, vterminal, Kzz / L_cloud)
+        Kzz_over_L = jnp.broadcast_to(Kzz / L_cloud, pressures.shape)
+        vfind_rw = vmap(find_rw, (None, 0, 0), 0)
+        rw = vfind_rw(self.rcond_arr, vterminal, Kzz_over_L)
         # MMR of condensates
         MMR_condensate = mixing_ratio_cloud_profile(
             pressures, pressure_base, fsed, MMR_base
