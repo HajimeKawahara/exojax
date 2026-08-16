@@ -2,11 +2,23 @@ import jax.numpy as jnp
 from exojax.rt.common import ArtCommon
 from exojax.rt.planck import piB, piBarr
 from exojax.rt.rtransfer import rtrun_reflect_fluxadding_toonhm, setrt_toonhm
-from exojax.utils.indexing import get_smooth_index
 from exojax.rt.common import ArtCommon
 
 import jax.numpy as jnp
 from jax.lax import scan
+
+
+def _surface_optical_depth(dtau, pressure_boundary, pressure_surface):
+    """Integrate layer optical depths down to a surface pressure."""
+    log_pressure_boundary = jnp.log10(pressure_boundary)
+    log_pressure_surface = jnp.log10(pressure_surface)
+    layer_fraction = jnp.clip(
+        (log_pressure_surface - log_pressure_boundary[:-1])
+        / jnp.diff(log_pressure_boundary),
+        0.0,
+        1.0,
+    )
+    return jnp.sum(dtau * layer_fraction[:, jnp.newaxis], axis=0)
 
 
 class ArtAbsPure(ArtCommon):
@@ -50,15 +62,8 @@ class ArtAbsPure(ArtCommon):
         if mu_out is not None:
             factor = factor + 1.0 / mu_out
 
-        logk = jnp.log10(self.pressure_decrease_rate)
-        logp_btm = jnp.log10(self.pressure) + (self.reference_point - 1.0) * logk
-        logp_surface = jnp.log10(pressure_surface)
-        smooth_index = get_smooth_index(logp_btm, logp_surface)
-        ind = smooth_index.astype(int)
-        res = smooth_index - jnp.floor(smooth_index)
-        stepfunc = jnp.heaviside(logp_surface - logp_btm, 0.5)
-        tau_opaque = (
-            jnp.sum(dtau * stepfunc[:, jnp.newaxis], axis=0) + dtau[ind, :] * res
+        tau_opaque = _surface_optical_depth(
+            dtau, self.pressure_boundary, pressure_surface
         )
         trans = jnp.exp(-factor * tau_opaque)
 
@@ -93,17 +98,8 @@ class ArtAbsPure(ArtCommon):
         # Reshape dtau_ckd to 2D for calculations
         dtau_2d = dtau_ckd.reshape((nlayer, Ng * Nbands))
         
-        # Compute absorption using same logic as standard run method
-        logk = jnp.log10(self.pressure_decrease_rate)
-        logp_btm = jnp.log10(self.pressure) + (self.reference_point - 1.0) * logk
-        logp_surface = jnp.log10(pressure_surface)
-        smooth_index = get_smooth_index(logp_btm, logp_surface)
-        ind = smooth_index.astype(int)
-        res = smooth_index - jnp.floor(smooth_index)
-        stepfunc = jnp.heaviside(logp_surface - logp_btm, 0.5)
-        
-        tau_opaque = (
-            jnp.sum(dtau_2d * stepfunc[:, jnp.newaxis], axis=0) + dtau_2d[ind, :] * res
+        tau_opaque = _surface_optical_depth(
+            dtau_2d, self.pressure_boundary, pressure_surface
         )
         trans_2d = jnp.exp(-factor * tau_opaque)
         spectrum_2d = trans_2d * incoming_flux_2d
