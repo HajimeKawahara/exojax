@@ -127,10 +127,17 @@ def cross_section_matrix(
     xsmatrix = jnp.exp(log_cross_section)
 
     inverse_temperature = 1.0 / temperature
+    coordinate_tolerance = 8.0 * jnp.finfo(inverse_temperature_grid.dtype).eps
     valid = (
         jnp.isfinite(temperature)
         & (temperature > 0.0)
-        & (inverse_temperature >= inverse_temperature_grid[0])
-        & (inverse_temperature <= inverse_temperature_grid[-1])
+        & (
+            inverse_temperature
+            >= inverse_temperature_grid[0] * (1.0 - coordinate_tolerance)
+        )
+        & (
+            inverse_temperature
+            <= inverse_temperature_grid[-1] * (1.0 + coordinate_tolerance)
+        )
     )
     return jnp.where(valid[:, None], xsmatrix, jnp.nan)

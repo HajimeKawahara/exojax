@@ -126,6 +126,27 @@ def test_diffgrid_matches_premodit_at_temperature_nodes(diffgrid_setup):
     np.testing.assert_allclose(actual, expected, rtol=3.0e-5, atol=0.0)
 
 
+def test_diffgrid_accepts_range_boundaries_across_dtypes():
+    previous_x64 = jax.config.jax_enable_x64
+    try:
+        jax.config.update("jax_enable_x64", True)
+        pressure = np.asarray([1.0, 2.0])
+        opa = OpaDiffgrid(
+            _AnalyticTeacher(),
+            np.asarray([25.0, 30.0], dtype=np.float32),
+            pressure,
+        )
+
+        temperature = np.asarray([25.0, 30.0])
+        actual = opa.xsmatrix(temperature, pressure)
+        compiled = jax.jit(opa.xsmatrix)(temperature)
+
+        assert np.all(np.isfinite(np.asarray(actual)))
+        assert np.all(np.isfinite(np.asarray(compiled)))
+    finally:
+        jax.config.update("jax_enable_x64", previous_x64)
+
+
 def test_diffgrid_improves_on_linear_log_interpolation(diffgrid_setup):
     opa, teacher, pressure, _ = diffgrid_setup
     temperature = np.asarray([720.0, 1000.0, 1700.0])
