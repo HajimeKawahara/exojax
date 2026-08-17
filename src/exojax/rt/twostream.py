@@ -309,10 +309,9 @@ def set_scat_trans_coeffs(gamma_1, gamma_2, dtau):
     Returns:
         _type_: transmission coefficient, scattering coeffcient
     """
-    trans_coeff, scat_coeff, _ = set_scat_trans_absorption_coeffs(
-        gamma_1, gamma_2, dtau
+    return _set_scat_trans_coefficients(
+        gamma_1, gamma_2, dtau, return_absorption=False
     )
-    return trans_coeff, scat_coeff
 
 
 def set_scat_trans_absorption_coeffs(gamma_1, gamma_2, dtau):
@@ -330,6 +329,14 @@ def set_scat_trans_absorption_coeffs(gamma_1, gamma_2, dtau):
     Returns:
         _type_: transmission, scattering, and absorption coefficients
     """
+    return _set_scat_trans_coefficients(
+        gamma_1, gamma_2, dtau, return_absorption=True
+    )
+
+
+def _set_scat_trans_coefficients(
+    gamma_1, gamma_2, dtau, return_absorption
+):
     lambda_dtau_squared = jnp.asarray(
         (gamma_1 - gamma_2) * (gamma_1 + gamma_2) * dtau**2
     )
@@ -342,29 +349,39 @@ def set_scat_trans_absorption_coeffs(gamma_1, gamma_2, dtau):
     trans_func = jnp.exp(-lambda_dtau)
     phi = -jnp.expm1(-2.0 * lambda_dtau) / (2.0 * lambda_dtau)
     denom = 1.0 + trans_func**2 + 2.0 * gamma_1 * dtau * phi
-    trans_coeff = 2.0 * trans_func / denom
-    scat_coeff = 2.0 * gamma_2 * dtau * phi / denom
-    one_minus_trans_func = -jnp.expm1(-lambda_dtau)
-    absorption_coeff = (
-        one_minus_trans_func**2 + 2.0 * (gamma_1 - gamma_2) * dtau * phi
-    ) / denom
+    trans_numerator = 2.0 * trans_func
+    scat_numerator = 2.0 * gamma_2 * dtau * phi
 
     squared2 = lambda_dtau_squared**2
-    coshm1_taylor = lambda_dtau_squared / 2.0 + squared2 / 24.0
     cosh_taylor = 1.0 + lambda_dtau_squared / 2.0 + squared2 / 24.0
     sinhc_taylor = 1.0 + lambda_dtau_squared / 6.0 + squared2 / 120.0
     denom_taylor = cosh_taylor + gamma_1 * dtau * sinhc_taylor
-    trans_taylor = 1.0 / denom_taylor
-    scat_taylor = gamma_2 * dtau * sinhc_taylor / denom_taylor
-    absorption_taylor = (
-        coshm1_taylor + (gamma_1 - gamma_2) * dtau * sinhc_taylor
-    ) / denom_taylor
+    trans_numerator_taylor = jnp.ones_like(lambda_dtau_squared)
+    scat_numerator_taylor = gamma_2 * dtau * sinhc_taylor
 
-    return (
-        jnp.where(use_taylor, trans_taylor, trans_coeff),
-        jnp.where(use_taylor, scat_taylor, scat_coeff),
-        jnp.where(use_taylor, absorption_taylor, absorption_coeff),
+    selected_denom = jnp.where(use_taylor, denom_taylor, denom)
+    trans_coeff = jnp.where(
+        use_taylor, trans_numerator_taylor, trans_numerator
+    ) / selected_denom
+    scat_coeff = jnp.where(
+        use_taylor, scat_numerator_taylor, scat_numerator
+    ) / selected_denom
+    if not return_absorption:
+        return trans_coeff, scat_coeff
+
+    one_minus_trans_func = -jnp.expm1(-lambda_dtau)
+    absorption_numerator = (
+        one_minus_trans_func**2 + 2.0 * (gamma_1 - gamma_2) * dtau * phi
     )
+    coshm1_taylor = lambda_dtau_squared / 2.0 + squared2 / 24.0
+    absorption_numerator_taylor = (
+        coshm1_taylor + (gamma_1 - gamma_2) * dtau * sinhc_taylor
+    )
+    absorption_coeff = jnp.where(
+        use_taylor, absorption_numerator_taylor, absorption_numerator
+    ) / selected_denom
+
+    return trans_coeff, scat_coeff, absorption_coeff
 
 
 def compute_tridiag_diagonals_and_vector(

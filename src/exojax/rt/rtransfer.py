@@ -47,6 +47,9 @@ from exojax.rt.twostream import (
 from exojax.special.expn import E1
 
 
+_TRANS2E3_COMPLEMENT_SWITCH = 0.4190354
+
+
 def _trans2E3_coefficients(x):
     """Returns transmission and absorption coefficients for pure absorption."""
     x = jnp.asarray(x)
@@ -65,6 +68,61 @@ def _trans2E3_coefficients(x):
         jnp.where(too_large, 0.0, transmission),
         jnp.where(too_large, 1.0, absorption),
     )
+
+
+def _trans2E3_stable_coefficient(x):
+    """Returns the smaller coefficient and its complementary-form selector."""
+    trans_coeff, absorption_coeff = _trans2E3_coefficients(x)
+    # 2 E3(x) = 0.5 at x = 0.419..., where both complementary forms
+    # are equally well conditioned.
+    use_absorption = jnp.asarray(x) <= _TRANS2E3_COMPLEMENT_SWITCH
+    stable_coeff = jnp.where(
+        use_absorption,
+        absorption_coeff,
+        trans_coeff,
+    )
+    return stable_coeff, use_absorption
+
+
+def _solve_pure_absorption_emission(
+    stable_coeff, use_absorption, source_matrix, source_surface
+):
+    """Integrates pure-absorption emission using stable complementary forms."""
+    calculation_dtype = jnp.result_type(
+        stable_coeff, source_matrix, source_surface
+    )
+    stable_coeff = jnp.asarray(stable_coeff, dtype=calculation_dtype)
+    source_matrix = jnp.asarray(source_matrix, dtype=calculation_dtype)
+    source_surface = jnp.asarray(source_surface, dtype=calculation_dtype)
+    source_surface = jnp.broadcast_to(source_surface, source_matrix.shape[1:])
+
+    def integrate_layer(carry, layer):
+        flux, correction = carry
+        coeff_layer, use_absorption_layer, source_layer = layer
+        source_difference = (source_layer - flux) - correction
+        absorption_increment = correction + coeff_layer * source_difference
+        transmission_increment = -coeff_layer * source_difference
+        base = jnp.where(use_absorption_layer, flux, source_layer)
+        # Use the smaller complementary coefficient to avoid cancellation in
+        # both optically thin and optically thick layers.
+        increment = jnp.where(
+            use_absorption_layer,
+            absorption_increment,
+            transmission_increment,
+        )
+
+        updated_flux = base + increment
+        # Carry the rounded-off part of the update into the next layer.
+        correction = increment - (updated_flux - base)
+        return (updated_flux, correction), None
+
+    (flux, correction), _ = scan(
+        integrate_layer,
+        (source_surface, jnp.zeros_like(source_surface)),
+        (stable_coeff, use_absorption, source_matrix),
+        reverse=True,
+    )
+    return flux + correction
 
 
 @jit
@@ -95,11 +153,12 @@ def rtrun_emis_pureabs_fbased2st(dtau, source_matrix):
     Returns:
         flux in the unit of [erg/cm2/s/cm-1] if using piBarr as a source function.
     """
-    Nnus = jnp.shape(dtau)[1]
-    TransM, absorption = _trans2E3_coefficients(dtau)
-    Qv = jnp.vstack([absorption * source_matrix, jnp.zeros(Nnus)])
-    return jnp.sum(
-        Qv * jnp.cumprod(jnp.vstack([jnp.ones(Nnus), TransM]), axis=0), axis=0
+    stable_coeff, use_absorption = _trans2E3_stable_coefficient(dtau)
+    return _solve_pure_absorption_emission(
+        stable_coeff,
+        use_absorption,
+        source_matrix,
+        jnp.zeros_like(source_matrix[0]),
     )
 
 
@@ -115,11 +174,9 @@ def rtrun_emis_pureabs_fbased2st_surface(dtau, source_matrix, source_surface):
     Returns:
         flux in the unit of [erg/cm2/s/cm-1] if using piBarr as a source function.
     """
-    Nnus = jnp.shape(dtau)[1]
-    trans, absorption = _trans2E3_coefficients(dtau)
-    Qv = jnp.vstack([absorption * source_matrix, source_surface])
-    return jnp.sum(
-        Qv * jnp.cumprod(jnp.vstack([jnp.ones(Nnus), trans]), axis=0), axis=0
+    stable_coeff, use_absorption = _trans2E3_stable_coefficient(dtau)
+    return _solve_pure_absorption_emission(
+        stable_coeff, use_absorption, source_matrix, source_surface
     )
 
 
@@ -595,12 +652,20 @@ def setrt_toonhm(
     Returns:
         tuple: Transmission, scattering, source, zeta, and lambda coefficients.
     """
-    toon_coeffs = setrt_toonhm_with_absorption(
-        dtau, single_scattering_albedo, asymmetric_parameter, source_matrix
+    gamma_1, gamma_2, _ = params_hemispheric_mean(
+        single_scattering_albedo, asymmetric_parameter
     )
-    trans_coeff, scat_coeff, _, reduced_piB = toon_coeffs[:4]
-    zeta_plus, zeta_minus, lambdan = toon_coeffs[4:]
-    return trans_coeff, scat_coeff, reduced_piB, zeta_plus, zeta_minus, lambdan
+    zeta_plus, zeta_minus, lambdan = zetalambda_coeffs(gamma_1, gamma_2)
+    trans_coeff, scat_coeff = set_scat_trans_coeffs(gamma_1, gamma_2, dtau)
+
+    return (
+        trans_coeff,
+        scat_coeff,
+        source_matrix,
+        zeta_plus,
+        zeta_minus,
+        lambdan,
+    )
 
 
 def setrt_toonhm_with_absorption(
