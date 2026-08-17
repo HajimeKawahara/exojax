@@ -22,8 +22,7 @@ def convolve_rigid_rotation_ola(folded_F0, vr_array, vsini, u1=0.0, u2=0.0):
     Return:
         response-applied spectrum (F)
     """
-    kernel = rotkernel(vr_array/vsini, u1, u2)
-    kernel = kernel / jnp.sum(kernel, axis=0)
+    kernel = _normalized_rotkernel(vr_array, vsini, u1, u2)
 
     ndiv, div_length, filter_length = ola_lengths(folded_F0, kernel)
     F0_hat, kernel_hat = generate_zeropad(folded_F0, kernel)
@@ -50,8 +49,7 @@ def convolve_rigid_rotation(F0, vr_array, vsini, u1=0.0, u2=0.0):
     Return:
         response-applied spectrum (F)
     """
-    kernel = rotkernel(vr_array/vsini, u1, u2)
-    kernel = kernel / jnp.sum(kernel, axis=0)
+    kernel = _normalized_rotkernel(vr_array, vsini, u1, u2)
 
     #==== still require cuDNN in Oct.15 2022================
     #convolved_signal = jnp.convolve(F0,kernel,mode="same")
@@ -60,6 +58,16 @@ def convolve_rigid_rotation(F0, vr_array, vsini, u1=0.0, u2=0.0):
     convolved_signal = convolve_same(F0, kernel)
 
     return convolved_signal
+
+
+def _normalized_rotkernel(vr_array, vsini, u1, u2):
+    """Return a normalized kernel, using a centered delta when vsini is zero."""
+    is_zero = vsini == 0.0
+    safe_vsini = jnp.where(is_zero, jnp.ones_like(vsini), vsini)
+    kernel = rotkernel(vr_array / safe_vsini, u1, u2)
+    delta_kernel = jnp.zeros_like(kernel).at[kernel.size // 2].set(1.0)
+    kernel = jnp.where(is_zero, delta_kernel, kernel)
+    return kernel / jnp.sum(kernel, axis=0)
 
 
 def rotkernel(x, u1, u2):
