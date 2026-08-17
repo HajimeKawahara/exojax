@@ -91,17 +91,14 @@ def safe_log_k(k_values: jnp.ndarray, min_value: float = None) -> jnp.ndarray:
     
     Args:
         k_values: K-values (cross-sections), shape (nnu,)
-        min_value: Minimum value to avoid log(0). If None, uses precision-aware default:
-                  1e-100 for float64, 1e-30 for float32
+        min_value: Minimum value to avoid log(0). If None, uses the smallest
+            positive normal value for the input dtype.
         
     Returns:
         log_k: Safe logarithm of k-values, shape (nnu,)
     """
     if min_value is None:
-        if k_values.dtype == jnp.float64:
-            min_value = 1e-100  # Much smaller for float64
-        else:
-            min_value = 1e-30   # Current default for float32
+        min_value = jnp.finfo(k_values.dtype).tiny
     return jnp.log(jnp.maximum(k_values, min_value))
 
 
@@ -291,4 +288,3 @@ def interpolate_log_k_2d(
     log_k_interp = log_k_flat.reshape(Ng, nnu_bands)
     
     return log_k_interp
-

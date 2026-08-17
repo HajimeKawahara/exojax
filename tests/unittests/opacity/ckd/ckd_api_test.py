@@ -4,7 +4,8 @@ import pytest
 import numpy as np
 import jax.numpy as jnp
 from exojax.opacity.ckd.api import OpaCKD
-from exojax.opacity.ckd.core import safe_log_k
+from exojax.rt import ArtAbsPure
+from exojax.rt.layeropacity import layer_optical_depth_ckd
 
 
 class MockBaseOpa:
@@ -33,7 +34,9 @@ class SparseMockBaseOpa:
         self.nu_grid = jnp.array([1000.0, 1003.0])
 
     def xsmatrix(self, T_array, P_array):
-        return jnp.full((T_array.size, self.nu_grid.size), 2.0e-20)
+        return jnp.full(
+            (T_array.size, self.nu_grid.size), 2.0e-20, dtype=jnp.float32
+        )
 
 
 def test_opa_ckd_init():
@@ -91,8 +94,38 @@ def test_precompute_tables_uses_opacity_floor_for_empty_band():
     opa_ckd.precompute_tables(jnp.array([1000.0]), jnp.array([1.0]))
 
     actual = opa_ckd.xsarray_ckd(1000.0, 1.0)[:, 1]
-    expected = jnp.exp(safe_log_k(jnp.zeros_like(actual)))
-    assert jnp.allclose(actual, expected, rtol=1.0e-6, atol=0.0)
+    assert jnp.all(actual < 1.0e-37)
+
+
+@pytest.mark.parametrize("gravity", [1000.0, 100.0])
+def test_empty_band_is_transparent_in_radiative_transfer(gravity):
+    opa_ckd = OpaCKD(
+        SparseMockBaseOpa(), Ng=2, band_width=1.0, band_spacing="linear"
+    )
+    opa_ckd.precompute_tables(jnp.array([1000.0]), jnp.array([1.0]))
+    xs_ckd = opa_ckd.xstensor_ckd(
+        jnp.array([1000.0, 1000.0]), jnp.array([1.0, 1.0])
+    )
+    art = ArtAbsPure(
+        pressure_top=1.0e-8,
+        pressure_btm=100.0,
+        nlayer=2,
+        nu_grid=opa_ckd.nu_bands,
+    )
+
+    dtau_ckd = layer_optical_depth_ckd(
+        jnp.array([50.0, 50.0]), xs_ckd, jnp.ones(2), 2.3, gravity
+    )
+    transmission = art.run_ckd(
+        dtau_ckd,
+        art.pressure_boundary[-1],
+        jnp.ones_like(opa_ckd.nu_bands),
+        1.0,
+        None,
+        opa_ckd.ckd_info.weights,
+    )
+
+    assert transmission[1] > 1.0 - 1.0e-7
 
 
 if __name__ == "__main__":
