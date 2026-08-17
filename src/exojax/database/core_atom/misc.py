@@ -35,7 +35,7 @@ def ielemion_to_FastChemSymbol(ielem, iion):
     Returns:
         SpeciesSymbol in FastChem (str) (cf. https://github.com/exoclime/FastChem/blob/master/input/logK_ext.dat)
     """
-    return (core_atom.io.PeriodicTable[ielem] + "1" + "+" * (iion - 1)).rstrip("1")
+    return (io.PeriodicTable[ielem] + "1" + "+" * (iion - 1)).rstrip("1")
 
 
 def get_VMR_uspecies(
@@ -73,8 +73,8 @@ def get_VMR_uspecies(
 
     mods_ID_uspecies = scan(f_miu, (0, mods_ID_uspecies), uspecies)[0][1]
 
-    ipccd = core_atom.io.load_atomicdata()
-    ItIoI = core_atom.io.ielem_to_index_of_ipccd
+    ipccd = io.load_atomicdata()
+    ItIoI = io.ielem_to_index_of_ipccd
     Narr = jnp.array(10 ** (ipccd["solarA"]))  # number density in the Sun
 
     def f_vmr(i, sp):
@@ -152,7 +152,7 @@ def uspecies_info(
         atomicmass_uspecies_list: jnp.array of atomic mass [amu] of each species in "uspecies"
         mods_uspecies_list: jnp.array of abundance deviation from the Sun [dex] for each species in "uspecies"
     """
-    ipccd = core_atom.io.load_atomicdata()
+    ipccd = io.load_atomicdata()
     Narr = jnp.array(10 ** (ipccd["solarA"]))  # number density
     # mass of each neutral atom per particle [amu]
     massarr = jnp.array(ipccd["mass"])
