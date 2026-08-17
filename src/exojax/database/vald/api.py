@@ -404,6 +404,7 @@ class AdbSepVald:
         gQT_284species (jnp array): partition function grid of 284 species
         T_gQT (jnp array): temperatures in the partition function grid
         QTref_284 (jnp array): partition function at the reference temperature Q(Tref), for 284 species
+        Tref (float): reference temperature
     """
 
     def __init__(self, adb):
@@ -436,3 +437,4 @@ class AdbSepVald:
         self.gQT_284species = adb.gQT_284species
         self.T_gQT = adb.T_gQT
         self.QTref_284 = adb.QTref_284
+        self.Tref = adb.Tref

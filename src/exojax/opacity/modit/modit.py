@@ -618,7 +618,7 @@ def vald_all(asdb, Tarr, PH, PHe, PHH, R):
                 None,
                 None,
                 0,
-                0,
+                None,
                 0,
                 0,
                 0,

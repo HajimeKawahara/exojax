@@ -1,7 +1,11 @@
 import jax.numpy as jnp
 from exojax.rt.common import ArtCommon
 from exojax.rt.planck import piB, piBarr
-from exojax.rt.rtransfer import rtrun_reflect_fluxadding_toonhm, setrt_toonhm
+from exojax.rt.rtransfer import (
+    rtrun_reflect_fluxadding_toonhm,
+    setrt_toonhm,
+    setrt_toonhm_with_absorption,
+)
 from exojax.rt.common import ArtCommon
 
 import jax.numpy as jnp
@@ -9,12 +13,9 @@ from jax.lax import scan
 
 
 def _surface_optical_depth(dtau, pressure_boundary, pressure_surface):
-    """Integrate layer optical depths down to a surface pressure."""
-    log_pressure_boundary = jnp.log10(pressure_boundary)
-    log_pressure_surface = jnp.log10(pressure_surface)
+    """Integrate layer optical depths using linear-pressure fractions."""
     layer_fraction = jnp.clip(
-        (log_pressure_surface - log_pressure_boundary[:-1])
-        / jnp.diff(log_pressure_boundary),
+        (pressure_surface - pressure_boundary[:-1]) / jnp.diff(pressure_boundary),
         0.0,
         1.0,
     )
@@ -492,11 +493,19 @@ class OpartReflectEmis(ArtCommon):
         source_vector = piB(temparature, self.nu_grid)
         # -------------------------------------------------
         dtau, single_scattering_albedo, asymmetric_parameter = self.opalayer(params)
-        trans_coeff_i, scat_coeff_i, reduced_piB_i, _, _, _ = setrt_toonhm(
-            dtau, single_scattering_albedo, asymmetric_parameter, source_vector
+        toon_coeffs = setrt_toonhm_with_absorption(
+            dtau,
+            single_scattering_albedo,
+            asymmetric_parameter,
+            source_vector,
         )
-        pihatB_i = (1.0 - trans_coeff_i - scat_coeff_i) * reduced_piB_i
-        denom = 1.0 - scat_coeff_i * Rphat_prev
+        trans_coeff_i, scat_coeff_i, absorption_coeff_i, reduced_piB_i = toon_coeffs[:4]
+        pihatB_i = absorption_coeff_i * reduced_piB_i
+        non_scattering_coeff_i = trans_coeff_i + absorption_coeff_i
+        denom = (
+            non_scattering_coeff_i
+            + scat_coeff_i * (1.0 - Rphat_prev)
+        )
         Sphat_each = (
             pihatB_i + trans_coeff_i * (Sphat_prev + pihatB_i * Rphat_prev) / denom
         )

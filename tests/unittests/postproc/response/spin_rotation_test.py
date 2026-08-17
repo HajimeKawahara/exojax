@@ -104,6 +104,28 @@ def test_convolve_rigid_rotation_ola(N=10000, fig=False):
     res = np.sqrt(np.sum(np.abs(1.0 - Frot / Frot_)**2))
     assert res < 1.e-5
 
+
+def test_convolve_rigid_rotation_zero_vsini():
+    F0 = jnp.array([1.0, 2.0, 4.0, 8.0, 3.0, 1.0, 0.5, 0.25])
+    vr_array = jnp.linspace(-1.0, 1.0, 5)
+    broadeners = (
+        lambda vsini: convolve_rigid_rotation(
+            F0, vr_array, vsini, u1=0.1, u2=0.1
+        ),
+        lambda vsini: convolve_rigid_rotation_ola(
+            F0.reshape((2, 4)), vr_array, vsini, u1=0.1, u2=0.1
+        ),
+    )
+
+    for broaden in broadeners:
+        value, derivative = jvp(broaden, (0.0,), (1.0,))
+        assert value == pytest.approx(F0, abs=1.0e-6)
+        assert derivative == pytest.approx(jnp.zeros_like(F0))
+        assert grad(lambda vsini: jnp.sum(broaden(vsini)))(0.0) == pytest.approx(
+            0.0
+        )
+
+
 def test_SopRotation_ola(N=10000, fig=False):
     from jax import config
     from exojax.postproc.specop import SopRotation
