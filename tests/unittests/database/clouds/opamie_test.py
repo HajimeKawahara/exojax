@@ -56,6 +56,31 @@ def test_mieparams_vector_direct_uses_wavelength_nm(monkeypatch):
     np.testing.assert_allclose(passed_wavelengths, wavelength_nm)
 
 
+def test_mieparams_matrix_direct_uses_scalar_calls(monkeypatch):
+    opa = OpaMie(SimpleNamespace(), np.arange(3))
+
+    def mock_mieparams_vector(rg, sigmag):
+        rg = float(rg)
+        sigmag = float(sigmag)
+        return (
+            np.full(3, rg),
+            np.full(3, sigmag),
+            np.full(3, rg + sigmag),
+        )
+
+    monkeypatch.setattr(
+        opa, "mieparams_vector_direct_from_pymiescatt", mock_mieparams_vector
+    )
+
+    result = opa.mieparams_matrix_direct_from_pymiescatt(
+        jnp.array([1.0, 2.0]), jnp.array([3.0, 4.0])
+    )
+
+    np.testing.assert_allclose(result[0], [[1.0] * 3, [2.0] * 3])
+    np.testing.assert_allclose(result[1], [[3.0] * 3, [4.0] * 3])
+    np.testing.assert_allclose(result[2], [[4.0] * 3, [6.0] * 3])
+
+
 def test_mieparams_matrix():
     pdb = mock_PdbPlouds(nurange=[12000.0, 15000.0])
     pdb.load_miegrid()
