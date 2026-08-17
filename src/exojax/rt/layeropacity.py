@@ -321,14 +321,21 @@ def layer_optical_depth_clouds_lognormal(
         extinction coefficient (array): extinction coefficient  in cgs (cm-1) [N_layer, N_nus]
         condensate_substance_density (float): condensate substance density (g/cm3)
         mmr_condensate (array): Mass mixing ratio (array) of condensate [Nlayer]
-        rg (float): rg parameter in the lognormal distribution of condensate size, defined by (9) in AM01
-        sigmag (float):sigmag parameter (geometric standard deviation) in the lognormal distribution of condensate size, defined by (9) in AM01, must be sigmag > 1
-        gravity (float): gravity (cm/s2)
+        rg (float or array): rg parameter in the lognormal distribution of condensate size, defined by (9) in AM01 [N_layer]
+        sigmag (float or array): sigmag parameter (geometric standard deviation) in the lognormal distribution of condensate size, defined by (9) in AM01, must be sigmag > 1 [N_layer]
+        gravity (float or array): gravity (cm/s2) [N_layer]
         N0 (float, optional): the normalization of the lognormal distribution ($N_0$). Defaults to 1.0.
 
     Returns:
         2D array: optical depth matrix, dtau  [N_layer, N_nus]
     """
+    if jnp.ndim(rg) == 1:
+        rg = rg[:, None]
+    if jnp.ndim(sigmag) == 1:
+        sigmag = sigmag[:, None]
+    if jnp.ndim(gravity) == 1:
+        gravity = gravity[:, None]
+
     expfac = bar_cgs * sigmag ** (
         jnp.log(sigmag**-4.5)
     )  # bar_cgs * exp(-9/2 * (log sigmag)**2), see tests/manual_check/f32/lnmoment_amcloud.py

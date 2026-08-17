@@ -62,6 +62,47 @@ def test_layer_optical_depth_clouds_lognormal():
     assert dtau.shape == (1, 1000)
     assert np.sum(dtau) == pytest.approx(ref_value)
 
+
+@pytest.mark.parametrize("nnu", [2, 3])
+def test_layer_optical_depth_clouds_lognormal_with_layer_profiles(nnu):
+    dpressure = jnp.array([1.0, 2.0])
+    extinction_coefficient = (
+        jnp.arange(1, 2 * nnu + 1, dtype=float).reshape(2, nnu) * 1.0e-11
+    )
+    condensate_substance_density = 3.0
+    mmr_condensate = jnp.array([1.0e-5, 3.0e-5])
+    rg = jnp.array([1.0e-5, 2.0e-5])
+    sigmag = jnp.array([1.5, 2.0])
+    gravity = jnp.array([1.0e3, 2.0e3])
+
+    dtau = layer_optical_depth_clouds_lognormal(
+        dpressure,
+        extinction_coefficient,
+        condensate_substance_density,
+        mmr_condensate,
+        rg,
+        sigmag,
+        gravity,
+    )
+    expected = jnp.stack(
+        [
+            single_layer_optical_depth_clouds_lognormal(
+                dpressure[i],
+                extinction_coefficient[i],
+                condensate_substance_density,
+                mmr_condensate[i],
+                rg[i],
+                sigmag[i],
+                gravity[i],
+            )
+            for i in range(2)
+        ]
+    )
+
+    assert dtau.shape == (2, nnu)
+    np.testing.assert_allclose(dtau, expected, rtol=1.0e-6)
+
+
 def test_single_layer_optical_depth_clouds_lognormal():
 
     (
