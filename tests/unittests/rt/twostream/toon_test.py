@@ -1,11 +1,13 @@
+import jax
+import jax.numpy as jnp
+
 from exojax.rt.toon import zetalambda_coeffs
 from exojax.rt.toon import reduced_source_function_isothermal_layer
 from exojax.rt.toon import reduced_source_function
 from exojax.rt.toon import params_eddington
 from exojax.rt.toon import params_quadrature
 from exojax.rt.toon import params_hemispheric_mean
-
-import jax.numpy as jnp
+from exojax.rt.twostream import set_scat_trans_absorption_coeffs
 
 
 def test_zetalambda_coeffs():
@@ -26,6 +28,15 @@ def test_zetalambda_coeffs_zero_gamma():
     assert jnp.isclose(zeta_plus, 0.5)
     assert jnp.isclose(zeta_minus, 0.5)
     assert jnp.isclose(lambdan, 0.0)
+
+
+def test_absorption_coeff_zero_depth_value_and_gradient():
+    def absorption(dtau):
+        return set_scat_trans_absorption_coeffs(1.5, 0.5, dtau)[2]
+
+    dtau = jnp.float32(0.0)
+    assert jnp.isclose(absorption(dtau), 0.0)
+    assert jnp.isclose(jax.grad(absorption)(dtau), 1.0)
 
 
 def test_reduced_source_function_isothermal_layer():

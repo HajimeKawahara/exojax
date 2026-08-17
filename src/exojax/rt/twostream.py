@@ -12,7 +12,12 @@ from jax.lax import scan
 
 
 def solve_fluxadding_twostream(
-    trans_coeff, scat_coeff, reduced_source_function, reflectivity_bottom, source_bottom
+    trans_coeff,
+    scat_coeff,
+    reduced_source_function,
+    reflectivity_bottom,
+    source_bottom,
+    absorption_coeff=None,
 ):
     """Two-stream RT solver using flux adding
 
@@ -22,6 +27,8 @@ def solve_fluxadding_twostream(
         reduced_source_function :  pi \mathcal{B} (Nlayer, Nnus)
         reflectivity_bottom (_type_): R^+_N (Nnus)
         source_bottom (_type_): S^+_N (Nnus)
+        absorption_coeff: Absorption coefficient (Nlayer, Nnus). If omitted,
+            it is reconstructed from the transmission and scattering coefficients.
 
     Returns:
         Effective reflectivity (hat(R^plus)), Effective source (hat(S^plus))
@@ -33,12 +40,18 @@ def solve_fluxadding_twostream(
         reduced_source_function,
         reflectivity_bottom,
         source_bottom,
+        absorption_coeff,
     )
     return Rplus[0], Splus[0]
 
 
 def compute_fluxadding_coeffs(
-    trans_coeff, scat_coeff, reduced_source_function, reflectivity_bottom, source_bottom
+    trans_coeff,
+    scat_coeff,
+    reduced_source_function,
+    reflectivity_bottom,
+    source_bottom,
+    absorption_coeff=None,
 ):
     """Computes upward effective reflection/source at all interfaces.
 
@@ -48,12 +61,16 @@ def compute_fluxadding_coeffs(
         reduced_source_function: Reduced source function (Nlayer, Nnus).
         reflectivity_bottom: Bottom boundary reflectivity (Nnus).
         source_bottom: Bottom boundary source (Nnus).
+        absorption_coeff: Absorption coefficient (Nlayer, Nnus). If omitted,
+            it is reconstructed from the transmission and scattering coefficients.
 
     Returns:
         tuple: Rplus, Splus, each with shape (Nlayer + 1, Nnus).
     """
 
-    pihatB = (1.0 - trans_coeff - scat_coeff) * reduced_source_function
+    if absorption_coeff is None:
+        absorption_coeff = 1.0 - trans_coeff - scat_coeff
+    pihatB = absorption_coeff * reduced_source_function
 
     # bottom reflection
     Rplus_bottom = reflectivity_bottom
@@ -85,7 +102,11 @@ def compute_fluxadding_coeffs(
 
 
 def compute_fluxadding_downward_coeffs(
-    trans_coeff, scat_coeff, reduced_source_function, source_top=None
+    trans_coeff,
+    scat_coeff,
+    reduced_source_function,
+    source_top=None,
+    absorption_coeff=None,
 ):
     """Computes downward effective reflection/source at all interfaces.
 
@@ -97,6 +118,8 @@ def compute_fluxadding_downward_coeffs(
         scat_coeff: Scattering coefficient (Nlayer, Nnus).
         reduced_source_function: Reduced source function (Nlayer, Nnus).
         source_top: Top boundary incoming flux (Nnus). Defaults to zero.
+        absorption_coeff: Absorption coefficient (Nlayer, Nnus). If omitted,
+            it is reconstructed from the transmission and scattering coefficients.
 
     Returns:
         tuple: Rminus, Sminus, each with shape (Nlayer + 1, Nnus).
@@ -106,7 +129,9 @@ def compute_fluxadding_downward_coeffs(
     if source_top is None:
         source_top = jnp.zeros(Nnus)
 
-    pihatB = (1.0 - trans_coeff - scat_coeff) * reduced_source_function
+    if absorption_coeff is None:
+        absorption_coeff = 1.0 - trans_coeff - scat_coeff
+    pihatB = absorption_coeff * reduced_source_function
     Rminus_top = jnp.zeros(Nnus)
     Sminus_top = source_top
 
@@ -137,6 +162,7 @@ def solve_fluxadding_twostream_fluxes(
     reflectivity_bottom,
     source_bottom,
     source_top=None,
+    absorption_coeff=None,
 ):
     """Computes two-stream upward and downward fluxes at all interfaces.
 
@@ -147,6 +173,8 @@ def solve_fluxadding_twostream_fluxes(
         reflectivity_bottom: Bottom boundary reflectivity (Nnus).
         source_bottom: Bottom boundary source (Nnus).
         source_top: Top boundary incoming flux (Nnus). Defaults to zero.
+        absorption_coeff: Absorption coefficient (Nlayer, Nnus). If omitted,
+            it is reconstructed from the transmission and scattering coefficients.
 
     Returns:
         tuple: flux_plus, flux_minus, each with shape (Nlayer + 1, Nnus).
@@ -158,9 +186,14 @@ def solve_fluxadding_twostream_fluxes(
         reduced_source_function,
         reflectivity_bottom,
         source_bottom,
+        absorption_coeff,
     )
     Rminus, Sminus = compute_fluxadding_downward_coeffs(
-        trans_coeff, scat_coeff, reduced_source_function, source_top
+        trans_coeff,
+        scat_coeff,
+        reduced_source_function,
+        source_top,
+        absorption_coeff,
     )
 
     denom = 1.0 - Rplus * Rminus
@@ -276,6 +309,27 @@ def set_scat_trans_coeffs(gamma_1, gamma_2, dtau):
     Returns:
         _type_: transmission coefficient, scattering coeffcient
     """
+    trans_coeff, scat_coeff, _ = set_scat_trans_absorption_coeffs(
+        gamma_1, gamma_2, dtau
+    )
+    return trans_coeff, scat_coeff
+
+
+def set_scat_trans_absorption_coeffs(gamma_1, gamma_2, dtau):
+    """Sets scattering, transmission, and absorption coefficients.
+
+    The absorption coefficient is evaluated directly rather than reconstructed
+    as ``1 - transmission - scattering`` so that it remains accurate for thin
+    layers in float32.
+
+    Args:
+        gamma_1 (_type_): Toon+89 gamma_1 coefficient
+        gamma_2 (_type_): Toon+89 gamma_2 coefficient
+        dtau (_type_): optical depth interval of the layers
+
+    Returns:
+        _type_: transmission, scattering, and absorption coefficients
+    """
     lambda_dtau_squared = jnp.asarray(
         (gamma_1 - gamma_2) * (gamma_1 + gamma_2) * dtau**2
     )
@@ -290,22 +344,37 @@ def set_scat_trans_coeffs(gamma_1, gamma_2, dtau):
     denom = 1.0 + trans_func**2 + 2.0 * gamma_1 * dtau * phi
     trans_coeff = 2.0 * trans_func / denom
     scat_coeff = 2.0 * gamma_2 * dtau * phi / denom
+    one_minus_trans_func = -jnp.expm1(-lambda_dtau)
+    absorption_coeff = (
+        one_minus_trans_func**2 + 2.0 * (gamma_1 - gamma_2) * dtau * phi
+    ) / denom
 
     squared2 = lambda_dtau_squared**2
+    coshm1_taylor = lambda_dtau_squared / 2.0 + squared2 / 24.0
     cosh_taylor = 1.0 + lambda_dtau_squared / 2.0 + squared2 / 24.0
     sinhc_taylor = 1.0 + lambda_dtau_squared / 6.0 + squared2 / 120.0
     denom_taylor = cosh_taylor + gamma_1 * dtau * sinhc_taylor
     trans_taylor = 1.0 / denom_taylor
     scat_taylor = gamma_2 * dtau * sinhc_taylor / denom_taylor
+    absorption_taylor = (
+        coshm1_taylor + (gamma_1 - gamma_2) * dtau * sinhc_taylor
+    ) / denom_taylor
 
     return (
         jnp.where(use_taylor, trans_taylor, trans_coeff),
         jnp.where(use_taylor, scat_taylor, scat_coeff),
+        jnp.where(use_taylor, absorption_taylor, absorption_coeff),
     )
 
 
 def compute_tridiag_diagonals_and_vector(
-    scat_coeff, trans_coeff, piB, upper_diagonal_top, diagonal_top, vector_top
+    scat_coeff,
+    trans_coeff,
+    piB,
+    upper_diagonal_top,
+    diagonal_top,
+    vector_top,
+    absorption_coeff=None,
 ):
     """computes the diagonals and right-handside vector from scattering and transmission coefficients for the tridiagonal system
 
@@ -316,6 +385,8 @@ def compute_tridiag_diagonals_and_vector(
         upper_diagonal_top (_type_): a[0] upper diagonal top boundary
         diagonal_top (_type_): b[0] diagonal top boundary
         vector_top (_type_): vector top boundary
+        absorption_coeff: Absorption coefficient (Nlayer, Nnus). If omitted,
+            it is reconstructed from the transmission and scattering coefficients.
 
     Notes:
         In ExoJAX 2 paper, we assume the tridiagonal form as -an F_{n+1}^+ + b_n F_n^+ - cn F_{n-1}^+ = dn
@@ -340,7 +411,9 @@ def compute_tridiag_diagonals_and_vector(
     diagonal = diagonal.at[0].set(diagonal_top)
 
     # vector
-    hatpiB = (1.0 - trans_coeff - scat_coeff) * piB
+    if absorption_coeff is None:
+        absorption_coeff = 1.0 - trans_coeff - scat_coeff
+    hatpiB = absorption_coeff * piB
     hatpiB_minus_one = jnp.roll(hatpiB, 1, axis=0)
     vector = rn_minus * hatpiB - rn * (Tn_minus_one - Sn_minus_one) * hatpiB_minus_one
 

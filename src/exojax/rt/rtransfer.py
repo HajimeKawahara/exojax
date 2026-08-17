@@ -38,12 +38,33 @@ from exojax.rt.toon import (
 )
 from exojax.rt.twostream import (
     compute_tridiag_diagonals_and_vector,
-    set_scat_trans_coeffs,
+    set_scat_trans_absorption_coeffs,
+    set_scat_trans_coeffs,  # re-exported for backward compatibility
     solve_fluxadding_twostream,
     solve_fluxadding_twostream_fluxes,
     solve_lart_twostream,
 )
 from exojax.special.expn import E1
+
+
+def _trans2E3_coefficients(x):
+    """Returns transmission and absorption coefficients for pure absorption."""
+    x = jnp.asarray(x)
+    float_dtype = jnp.result_type(x, 1.0)
+    # Keep x**2 and its reverse-mode cotangent below dtype overflow.
+    too_large = x >= jnp.sqrt(jnp.finfo(float_dtype).max)
+    x_eval = jnp.where(too_large, 1.0, x)
+    x_e1 = jnp.where(x_eval == 0.0, 1.0, x_eval)
+    exp_negative_x = jnp.exp(-x_eval)
+    e1_term = x_eval**2 * E1(x_e1)
+    transmission = (1.0 - x_eval) * exp_negative_x + e1_term
+    absorption = (
+        -jnp.expm1(-x_eval) + x_eval * exp_negative_x - e1_term
+    )
+    return (
+        jnp.where(too_large, 0.0, transmission),
+        jnp.where(too_large, 1.0, absorption),
+    )
 
 
 @jit
@@ -60,14 +81,8 @@ def trans2E3(x):
     Returns:
         Transmission function T=2 E3(x)
     """
-    x = jnp.asarray(x)
-    float_dtype = jnp.result_type(x, 1.0)
-    # Keep x**2 and its reverse-mode cotangent below dtype overflow.
-    too_large = x >= jnp.sqrt(jnp.finfo(float_dtype).max)
-    x_eval = jnp.where(too_large, 1.0, x)
-    x_e1 = jnp.where(x_eval == 0.0, 1.0, x_eval)
-    value = (1.0 - x_eval) * jnp.exp(-x_eval) + x_eval**2 * E1(x_e1)
-    return jnp.where(too_large, 0.0, value)
+    transmission, _ = _trans2E3_coefficients(x)
+    return transmission
 
 
 @jit
@@ -81,8 +96,8 @@ def rtrun_emis_pureabs_fbased2st(dtau, source_matrix):
         flux in the unit of [erg/cm2/s/cm-1] if using piBarr as a source function.
     """
     Nnus = jnp.shape(dtau)[1]
-    TransM = trans2E3(dtau)
-    Qv = jnp.vstack([(1 - TransM) * source_matrix, jnp.zeros(Nnus)])
+    TransM, absorption = _trans2E3_coefficients(dtau)
+    Qv = jnp.vstack([absorption * source_matrix, jnp.zeros(Nnus)])
     return jnp.sum(
         Qv * jnp.cumprod(jnp.vstack([jnp.ones(Nnus), TransM]), axis=0), axis=0
     )
@@ -101,8 +116,8 @@ def rtrun_emis_pureabs_fbased2st_surface(dtau, source_matrix, source_surface):
         flux in the unit of [erg/cm2/s/cm-1] if using piBarr as a source function.
     """
     Nnus = jnp.shape(dtau)[1]
-    trans = trans2E3(dtau)
-    Qv = jnp.vstack([(1 - trans) * source_matrix, source_surface])
+    trans, absorption = _trans2E3_coefficients(dtau)
+    Qv = jnp.vstack([absorption * source_matrix, source_surface])
     return jnp.sum(
         Qv * jnp.cumprod(jnp.vstack([jnp.ones(Nnus), trans]), axis=0), axis=0
     )
@@ -353,9 +368,11 @@ def rtrun_emis_scat_lart_toonhm(
             - scat_coeff (2D array): Scattering coefficients.
             - reduced_piB (2D array): Reduced source function.
     """
-    trans_coeff, scat_coeff, reduced_piB, zeta_plus, zeta_minus, lambdan = setrt_toonhm(
+    toon_coeffs = setrt_toonhm_with_absorption(
         dtau, single_scattering_albedo, asymmetric_parameter, source_matrix
     )
+    trans_coeff, scat_coeff, absorption_coeff, reduced_piB = toon_coeffs[:4]
+    zeta_plus, zeta_minus, lambdan = toon_coeffs[4:]
 
     # avoids zero
     epsilon = 1.0e-8
@@ -363,7 +380,14 @@ def rtrun_emis_scat_lart_toonhm(
     trans_coeff = trans_coeff + epsilon
 
     diagonal, lower_diagonal, upper_diagonal, vector = settridiag_toohm(
-        dtau, zeta_plus, zeta_minus, lambdan, trans_coeff, scat_coeff, reduced_piB
+        dtau,
+        zeta_plus,
+        zeta_minus,
+        lambdan,
+        trans_coeff,
+        scat_coeff,
+        reduced_piB,
+        absorption_coeff,
     )
     nlayer, Nnus = diagonal.shape
     cumTtilde, Qtilde, spectrum = solve_lart_twostream(
@@ -395,11 +419,20 @@ def rtrun_emis_scat_lart_toonhm_surface(
             - scat_coeff (2D array): Scattering coefficients.
             - piB (2D array): Reduced source function.
     """
-    trans_coeff, scat_coeff, piB, zeta_plus, zeta_minus, lambdan = setrt_toonhm(
+    toon_coeffs = setrt_toonhm_with_absorption(
         dtau, single_scattering_albedo, asymmetric_parameter, source_matrix
     )
+    trans_coeff, scat_coeff, absorption_coeff, piB = toon_coeffs[:4]
+    zeta_plus, zeta_minus, lambdan = toon_coeffs[4:]
     diagonal, lower_diagonal, upper_diagonal, vector = settridiag_toohm(
-        dtau, zeta_plus, zeta_minus, lambdan, trans_coeff, scat_coeff, piB
+        dtau,
+        zeta_plus,
+        zeta_minus,
+        lambdan,
+        trans_coeff,
+        scat_coeff,
+        piB,
+        absorption_coeff,
     )
 
     cumTtilde, Qtilde, spectrum = solve_lart_twostream(
@@ -432,12 +465,18 @@ def rtrun_reflect_fluxadding_toonhm(
     Returns:
         1D array: Reflected spectrum in the unit of [erg/cm2/s/cm-1] if using piBarr as a source function.
     """
-    trans_coeff, scat_coeff, reduced_piB, zeta_plus, zeta_minus, lambdan = setrt_toonhm(
+    toon_coeffs = setrt_toonhm_with_absorption(
         dtau, single_scattering_albedo, asymmetric_parameter, source_matrix
     )
+    trans_coeff, scat_coeff, absorption_coeff, reduced_piB = toon_coeffs[:4]
     
     Rphat, Sphat = solve_fluxadding_twostream(
-        trans_coeff, scat_coeff, reduced_piB, reflectivity_surface, source_surface
+        trans_coeff,
+        scat_coeff,
+        reduced_piB,
+        reflectivity_surface,
+        source_surface,
+        absorption_coeff,
     )
     
     return Rphat * incoming_flux + Sphat
@@ -462,12 +501,18 @@ def rtrun_emis_scat_fluxadding_toonhm(
     source_surface = jnp.zeros(Nnus)
     reflectivity_surface = jnp.zeros(Nnus)
 
-    trans_coeff, scat_coeff, reduced_piB, zeta_plus, zeta_minus, lambdan = setrt_toonhm(
+    toon_coeffs = setrt_toonhm_with_absorption(
         dtau, single_scattering_albedo, asymmetric_parameter, source_matrix
     )
+    trans_coeff, scat_coeff, absorption_coeff, reduced_piB = toon_coeffs[:4]
 
     _, spectrum = solve_fluxadding_twostream(
-        trans_coeff, scat_coeff, reduced_piB, reflectivity_surface, source_surface
+        trans_coeff,
+        scat_coeff,
+        reduced_piB,
+        reflectivity_surface,
+        source_surface,
+        absorption_coeff,
     )
 
     return spectrum
@@ -504,9 +549,10 @@ def rtrun_emis_scat_sfm2st_toonhm(
     source_surface = jnp.zeros(Nnus)
     reflectivity_surface = jnp.zeros(Nnus)
 
-    trans_coeff, scat_coeff, reduced_piB, _, _, _ = setrt_toonhm(
+    toon_coeffs = setrt_toonhm_with_absorption(
         dtau, single_scattering_albedo, asymmetric_parameter, source_matrix
     )
+    trans_coeff, scat_coeff, absorption_coeff, reduced_piB = toon_coeffs[:4]
 
     flux_plus, flux_minus = solve_fluxadding_twostream_fluxes(
         trans_coeff,
@@ -514,6 +560,7 @@ def rtrun_emis_scat_sfm2st_toonhm(
         reduced_piB,
         reflectivity_surface,
         source_surface,
+        absorption_coeff=absorption_coeff,
     )
 
     flux_plus_layer = 0.5 * (flux_plus[:-1] + flux_plus[1:])
@@ -531,7 +578,12 @@ def rtrun_emis_scat_sfm2st_toonhm(
     return rtrun_emis_pureabs_ibased(dtau, source_sfm, mus, weights)
 
 
-def setrt_toonhm(dtau, single_scattering_albedo, asymmetric_parameter, source_matrix):
+def setrt_toonhm(
+    dtau,
+    single_scattering_albedo,
+    asymmetric_parameter,
+    source_matrix,
+):
     """Sets some coefficients for radiative transfer assuming Toon Hemispheric Mean.
 
     Args:
@@ -541,33 +593,62 @@ def setrt_toonhm(dtau, single_scattering_albedo, asymmetric_parameter, source_ma
         source_matrix (2D array): Source matrix (N_layer, N_nus)
 
     Returns:
-        trans_coeff (2D array): Transmission coefficients.
-        scat_coeff (2D array): Scattering coefficients.
-        reduced_piB (2D array): Reduced source function.
-        zeta_plus (2D array): Zeta plus coefficients.
-        zeta_minus (2D array): Zeta minus coefficients.
-        lambdan (2D array): Lambda coefficients.
+        tuple: Transmission, scattering, source, zeta, and lambda coefficients.
     """
-    
+    toon_coeffs = setrt_toonhm_with_absorption(
+        dtau, single_scattering_albedo, asymmetric_parameter, source_matrix
+    )
+    trans_coeff, scat_coeff, _, reduced_piB = toon_coeffs[:4]
+    zeta_plus, zeta_minus, lambdan = toon_coeffs[4:]
+    return trans_coeff, scat_coeff, reduced_piB, zeta_plus, zeta_minus, lambdan
+
+
+def setrt_toonhm_with_absorption(
+    dtau, single_scattering_albedo, asymmetric_parameter, source_matrix
+):
+    """Sets Toon hemispheric-mean coefficients including absorption.
+
+    The absorption coefficient is evaluated directly and returned after the
+    scattering coefficient so that thin-layer thermal sources remain accurate.
+    """
     gamma_1, gamma_2, mu1 = params_hemispheric_mean(
         single_scattering_albedo, asymmetric_parameter
     )
     zeta_plus, zeta_minus, lambdan = zetalambda_coeffs(gamma_1, gamma_2)
-    trans_coeff, scat_coeff = set_scat_trans_coeffs(gamma_1, gamma_2, dtau)
+    trans_coeff, scat_coeff, absorption_coeff = set_scat_trans_absorption_coeffs(
+        gamma_1, gamma_2, dtau
+    )
 
     reduced_piB = source_matrix
 
-    return trans_coeff, scat_coeff, reduced_piB, zeta_plus, zeta_minus, lambdan
+    return (
+        trans_coeff,
+        scat_coeff,
+        absorption_coeff,
+        reduced_piB,
+        zeta_plus,
+        zeta_minus,
+        lambdan,
+    )
 
 
 def settridiag_toohm(
-    dtau, zeta_plus, zeta_minus, lambdan, trans_coeff, scat_coeff, reduced_piB
+    dtau,
+    zeta_plus,
+    zeta_minus,
+    lambdan,
+    trans_coeff,
+    scat_coeff,
+    reduced_piB,
+    absorption_coeff=None,
 ):
     diagonal_top = 1.0 * jnp.ones_like(trans_coeff[0, :])  # setting b0=1
     upper_diagonal_top = trans_coeff[0, :]
 
     # emission (no reflection)
-    vector_top = (1.0 - trans_coeff[0, :] - scat_coeff[0, :]) * reduced_piB[0, :]
+    if absorption_coeff is None:
+        absorption_coeff = 1.0 - trans_coeff - scat_coeff
+    vector_top = absorption_coeff[0, :] * reduced_piB[0, :]
 
     # tridiagonal elements
     (
@@ -582,6 +663,7 @@ def settridiag_toohm(
         upper_diagonal_top,
         diagonal_top,
         vector_top,
+        absorption_coeff,
     )
 
     return diagonal, lower_diagonal, upper_diagonal, vector

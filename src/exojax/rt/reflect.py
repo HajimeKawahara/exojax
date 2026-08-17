@@ -1,7 +1,11 @@
 import jax.numpy as jnp
 from exojax.rt.common import ArtCommon
 from exojax.rt.planck import piB, piBarr
-from exojax.rt.rtransfer import rtrun_reflect_fluxadding_toonhm, setrt_toonhm
+from exojax.rt.rtransfer import (
+    rtrun_reflect_fluxadding_toonhm,
+    setrt_toonhm,
+    setrt_toonhm_with_absorption,
+)
 from exojax.rt.common import ArtCommon
 
 import jax.numpy as jnp
@@ -492,10 +496,14 @@ class OpartReflectEmis(ArtCommon):
         source_vector = piB(temparature, self.nu_grid)
         # -------------------------------------------------
         dtau, single_scattering_albedo, asymmetric_parameter = self.opalayer(params)
-        trans_coeff_i, scat_coeff_i, reduced_piB_i, _, _, _ = setrt_toonhm(
-            dtau, single_scattering_albedo, asymmetric_parameter, source_vector
+        toon_coeffs = setrt_toonhm_with_absorption(
+            dtau,
+            single_scattering_albedo,
+            asymmetric_parameter,
+            source_vector,
         )
-        pihatB_i = (1.0 - trans_coeff_i - scat_coeff_i) * reduced_piB_i
+        trans_coeff_i, scat_coeff_i, absorption_coeff_i, reduced_piB_i = toon_coeffs[:4]
+        pihatB_i = absorption_coeff_i * reduced_piB_i
         denom = 1.0 - scat_coeff_i * Rphat_prev
         Sphat_each = (
             pihatB_i + trans_coeff_i * (Sphat_prev + pihatB_i * Rphat_prev) / denom

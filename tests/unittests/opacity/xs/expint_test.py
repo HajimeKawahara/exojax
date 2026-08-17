@@ -12,6 +12,30 @@ def test_comparison_expint():
     assert np.max(dif) < 2.0e-7
 
 
+def test_fbased2st_thin_float32_layers():
+    dtau = jnp.full((100, 1), 1.0e-8, dtype=jnp.float32)
+    source = jnp.ones_like(dtau)
+    source_surface = jnp.zeros(1, dtype=jnp.float32)
+
+    transmission = 2.0 * expn(3, 1.0e-8)
+    expected = -np.expm1(100.0 * np.log(transmission))
+
+    np.testing.assert_allclose(
+        rt.rtrun_emis_pureabs_fbased2st(dtau, source),
+        expected,
+        rtol=2.0e-6,
+        atol=0.0,
+    )
+    np.testing.assert_allclose(
+        rt.rtrun_emis_pureabs_fbased2st_surface(
+            dtau, source, source_surface
+        ),
+        expected,
+        rtol=2.0e-6,
+        atol=0.0,
+    )
+
+
 def test_trans2E3_zero_limit_and_reverse_gradient():
     x = jnp.float32(0.0)
     np.testing.assert_allclose(rt.trans2E3(x), 1.0)
