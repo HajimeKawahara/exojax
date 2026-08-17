@@ -248,6 +248,11 @@ def mie_lognormal_pymiescatt(
     Returns:
         _type_: _description_
     """
+    from scipy import integrate
+
+    if not hasattr(integrate, "trapz"):
+        integrate.trapz = integrate.trapezoid
+
     from PyMieScatt.Mie import Mie_SD
 
     from exojax.special.lognormal import pdf

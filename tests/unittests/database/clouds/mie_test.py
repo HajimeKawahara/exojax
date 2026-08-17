@@ -1,7 +1,9 @@
 from exojax.special.lognormal import cubeweighted_pdf
 from exojax.database.mie import auto_rgrid
 from exojax.database.mie import cubeweighted_integral_checker
+from exojax.database.mie import mie_lognormal_pymiescatt
 import numpy as np
+from scipy import integrate
 
 
 def test_autogrid():
@@ -50,6 +52,23 @@ def test_cubeweighted_integral_checker():
     check = cubeweighted_integral_checker(rgrid, rg_nm, sigmag)
 
     assert check
+
+
+def test_mie_lognormal_pymiescatt_without_scipy_trapz(monkeypatch):
+    monkeypatch.delattr(integrate, "trapz", raising=False)
+
+    coefficients = mie_lognormal_pymiescatt(
+        1.5 + 0.01j,
+        wavelength=500.0,
+        sigmag=2.0,
+        rg=100.0,
+        N0=1.0,
+        rgrid=np.linspace(1.0, 1000.0, 10),
+    )
+
+    assert integrate.trapz is integrate.trapezoid
+    assert np.shape(coefficients) == (7,)
+    assert np.all(np.isfinite(coefficients))
 
 
 if __name__ == "__main__":
