@@ -599,7 +599,11 @@ class OpartEmisScat(ArtCommon):
         )
         trans_coeff_i, scat_coeff_i, absorption_coeff_i, reduced_piB_i = toon_coeffs[:4]
         pihatB_i = absorption_coeff_i * reduced_piB_i
-        denom = 1.0 - scat_coeff_i * Rphat_prev
+        non_scattering_coeff_i = trans_coeff_i + absorption_coeff_i
+        denom = (
+            non_scattering_coeff_i
+            + scat_coeff_i * (1.0 - Rphat_prev)
+        )
         Sphat_each = (
             pihatB_i + trans_coeff_i * (Sphat_prev + pihatB_i * Rphat_prev) / denom
         )

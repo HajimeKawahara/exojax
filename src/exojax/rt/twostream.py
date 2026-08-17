@@ -11,6 +11,17 @@ import jax.numpy as jnp
 from jax.lax import scan
 
 
+def _pack_scat_and_non_scattering_coeffs(
+    scat_coeff, non_scattering_coeff
+):
+    """Packs the smaller complement, using negative values to mark T + A."""
+    return jnp.where(
+        non_scattering_coeff < scat_coeff,
+        -non_scattering_coeff,
+        scat_coeff,
+    )
+
+
 def solve_fluxadding_twostream(
     trans_coeff,
     scat_coeff,
@@ -69,8 +80,16 @@ def compute_fluxadding_coeffs(
     """
 
     if absorption_coeff is None:
-        absorption_coeff = 1.0 - trans_coeff - scat_coeff
+        raw_absorption_coeff = (1.0 - trans_coeff) - scat_coeff
+        absorption_coeff = jnp.where(
+            raw_absorption_coeff < 0.0, 0.0, raw_absorption_coeff
+        )
+    absorption_coeff = jnp.broadcast_to(absorption_coeff, trans_coeff.shape)
     pihatB = absorption_coeff * reduced_source_function
+    non_scattering_coeff = trans_coeff + absorption_coeff
+    stable_scat_coeff = _pack_scat_and_non_scattering_coeffs(
+        scat_coeff, non_scattering_coeff
+    )
 
     # bottom reflection
     Rplus_bottom = reflectivity_bottom
@@ -78,8 +97,19 @@ def compute_fluxadding_coeffs(
 
     def f(carry_ip1, arr):
         Rplus_prev, Splus_prev = carry_ip1
-        scat_coeff_i, trans_coeff_i, pihatB_i = arr
-        denom = 1.0 - scat_coeff_i * Rplus_prev
+        stable_scat_coeff_i, trans_coeff_i, pihatB_i = arr
+        stores_non_scattering = jnp.signbit(stable_scat_coeff_i)
+        scat_coeff_i = jnp.where(
+            stores_non_scattering,
+            1.0 + stable_scat_coeff_i,
+            stable_scat_coeff_i,
+        )
+        scat_reflect = stable_scat_coeff_i * Rplus_prev
+        denom = jnp.where(
+            stores_non_scattering,
+            (1.0 - Rplus_prev) - scat_reflect,
+            1.0 - scat_reflect,
+        )
         Splus_each = (
             pihatB_i + trans_coeff_i * (Splus_prev + pihatB_i * Rplus_prev) / denom
         )
@@ -89,7 +119,7 @@ def compute_fluxadding_coeffs(
 
     # main loop
     arrin = [
-        scat_coeff[::-1],
+        stable_scat_coeff[::-1],
         trans_coeff[::-1],
         pihatB[::-1],
     ]
@@ -130,15 +160,34 @@ def compute_fluxadding_downward_coeffs(
         source_top = jnp.zeros(Nnus)
 
     if absorption_coeff is None:
-        absorption_coeff = 1.0 - trans_coeff - scat_coeff
+        raw_absorption_coeff = (1.0 - trans_coeff) - scat_coeff
+        absorption_coeff = jnp.where(
+            raw_absorption_coeff < 0.0, 0.0, raw_absorption_coeff
+        )
+    absorption_coeff = jnp.broadcast_to(absorption_coeff, trans_coeff.shape)
     pihatB = absorption_coeff * reduced_source_function
+    non_scattering_coeff = trans_coeff + absorption_coeff
+    stable_scat_coeff = _pack_scat_and_non_scattering_coeffs(
+        scat_coeff, non_scattering_coeff
+    )
     Rminus_top = jnp.zeros(Nnus)
     Sminus_top = source_top
 
     def f(carry_i, arr):
         Rminus_prev, Sminus_prev = carry_i
-        scat_coeff_i, trans_coeff_i, pihatB_i = arr
-        denom = 1.0 - scat_coeff_i * Rminus_prev
+        stable_scat_coeff_i, trans_coeff_i, pihatB_i = arr
+        stores_non_scattering = jnp.signbit(stable_scat_coeff_i)
+        scat_coeff_i = jnp.where(
+            stores_non_scattering,
+            1.0 + stable_scat_coeff_i,
+            stable_scat_coeff_i,
+        )
+        scat_reflect = stable_scat_coeff_i * Rminus_prev
+        denom = jnp.where(
+            stores_non_scattering,
+            (1.0 - Rminus_prev) - scat_reflect,
+            1.0 - scat_reflect,
+        )
         Sminus_each = (
             pihatB_i + trans_coeff_i * (Sminus_prev + pihatB_i * Rminus_prev) / denom
         )
@@ -146,7 +195,7 @@ def compute_fluxadding_downward_coeffs(
         RS = [Rminus_each, Sminus_each]
         return RS, RS
 
-    arrin = [scat_coeff, trans_coeff, pihatB]
+    arrin = [stable_scat_coeff, trans_coeff, pihatB]
     _, stackedRS = scan(f, [Rminus_top, Sminus_top], arrin)
     Rminus_layers, Sminus_layers = stackedRS
 
@@ -196,8 +245,9 @@ def solve_fluxadding_twostream_fluxes(
         absorption_coeff,
     )
 
-    denom = 1.0 - Rplus * Rminus
-    flux_plus = (Rplus * Sminus + Splus) / denom
+    denom = (1.0 - Rplus) + Rplus * (1.0 - Rminus)
+    numerator = Rplus * Sminus + Splus
+    flux_plus = numerator / denom
     flux_minus = Rminus * flux_plus + Sminus
     return flux_plus, flux_minus
 
@@ -363,12 +413,30 @@ def _set_scat_trans_coefficients(
     trans_coeff = jnp.where(
         use_taylor, trans_numerator_taylor, trans_numerator
     ) / selected_denom
+    if not return_absorption:
+        non_scattering_numerator_taylor = (
+            cosh_taylor
+            + (gamma_1 - gamma_2) * dtau * sinhc_taylor
+        )
+        use_scat_complement = use_taylor & (
+            non_scattering_numerator_taylor < scat_numerator_taylor
+        )
+        stable_scat_numerator_taylor = jnp.where(
+            use_scat_complement,
+            non_scattering_numerator_taylor,
+            scat_numerator_taylor,
+        )
+        scat_coeff = jnp.where(
+            use_taylor, stable_scat_numerator_taylor, scat_numerator
+        ) / selected_denom
+        scat_coeff = jnp.where(
+            use_scat_complement, 1.0 - scat_coeff, scat_coeff
+        )
+        return trans_coeff, scat_coeff
+
     scat_coeff = jnp.where(
         use_taylor, scat_numerator_taylor, scat_numerator
     ) / selected_denom
-    if not return_absorption:
-        return trans_coeff, scat_coeff
-
     one_minus_trans_func = -jnp.expm1(-lambda_dtau)
     absorption_numerator = (
         one_minus_trans_func**2 + 2.0 * (gamma_1 - gamma_2) * dtau * phi
@@ -380,7 +448,12 @@ def _set_scat_trans_coefficients(
     absorption_coeff = jnp.where(
         use_taylor, absorption_numerator_taylor, absorption_numerator
     ) / selected_denom
-
+    non_scattering_coeff = trans_coeff + absorption_coeff
+    scat_coeff = jnp.where(
+        non_scattering_coeff < scat_coeff,
+        1.0 - non_scattering_coeff,
+        scat_coeff,
+    )
     return trans_coeff, scat_coeff, absorption_coeff
 
 
@@ -429,7 +502,10 @@ def compute_tridiag_diagonals_and_vector(
 
     # vector
     if absorption_coeff is None:
-        absorption_coeff = 1.0 - trans_coeff - scat_coeff
+        raw_absorption_coeff = (1.0 - trans_coeff) - scat_coeff
+        absorption_coeff = jnp.where(
+            raw_absorption_coeff < 0.0, 0.0, raw_absorption_coeff
+        )
     hatpiB = absorption_coeff * piB
     hatpiB_minus_one = jnp.roll(hatpiB, 1, axis=0)
     vector = rn_minus * hatpiB - rn * (Tn_minus_one - Sn_minus_one) * hatpiB_minus_one
