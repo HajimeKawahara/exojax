@@ -1,11 +1,16 @@
+import jax
+import jax.numpy as jnp
+
 from exojax.rt.toon import zetalambda_coeffs
 from exojax.rt.toon import reduced_source_function_isothermal_layer
 from exojax.rt.toon import reduced_source_function
 from exojax.rt.toon import params_eddington
 from exojax.rt.toon import params_quadrature
 from exojax.rt.toon import params_hemispheric_mean
-
-import jax.numpy as jnp
+from exojax.rt.twostream import (
+    set_scat_trans_absorption_coeffs,
+    set_scat_trans_coeffs,
+)
 
 
 def test_zetalambda_coeffs():
@@ -26,6 +31,37 @@ def test_zetalambda_coeffs_zero_gamma():
     assert jnp.isclose(zeta_plus, 0.5)
     assert jnp.isclose(zeta_minus, 0.5)
     assert jnp.isclose(lambdan, 0.0)
+
+
+def test_absorption_coeff_zero_depth_value_and_gradient():
+    def absorption(dtau):
+        return set_scat_trans_absorption_coeffs(1.5, 0.5, dtau)[2]
+
+    dtau = jnp.float32(0.0)
+    assert jnp.isclose(absorption(dtau), 0.0)
+    assert jnp.isclose(jax.grad(absorption)(dtau), 1.0)
+
+
+def test_legacy_scat_trans_coeff_api_matches_full_coefficients():
+    gamma_1 = jnp.full(2, 1.5, dtype=jnp.float32)
+    gamma_2 = jnp.full(2, 0.5, dtype=jnp.float32)
+    dtau = jnp.array([1.0e-8, 0.1], dtype=jnp.float32)
+
+    legacy_coeffs = set_scat_trans_coeffs(gamma_1, gamma_2, dtau)
+    full_coeffs = set_scat_trans_absorption_coeffs(
+        gamma_1, gamma_2, dtau
+    )
+    jitted_legacy_coeffs = jax.jit(set_scat_trans_coeffs)(
+        gamma_1, gamma_2, dtau
+    )
+
+    assert len(legacy_coeffs) == 2
+    assert len(full_coeffs) == 3
+    for legacy, full, jitted in zip(
+        legacy_coeffs, full_coeffs[:2], jitted_legacy_coeffs
+    ):
+        assert jnp.array_equal(legacy, full)
+        assert jnp.array_equal(jitted, full)
 
 
 def test_reduced_source_function_isothermal_layer():
