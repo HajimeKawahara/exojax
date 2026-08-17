@@ -712,7 +712,10 @@ def settridiag_toohm(
 
     # emission (no reflection)
     if absorption_coeff is None:
-        absorption_coeff = 1.0 - trans_coeff - scat_coeff
+        raw_absorption_coeff = (1.0 - trans_coeff) - scat_coeff
+        absorption_coeff = jnp.where(
+            raw_absorption_coeff < 0.0, 0.0, raw_absorption_coeff
+        )
     vector_top = absorption_coeff[0, :] * reduced_piB[0, :]
 
     # tridiagonal elements
