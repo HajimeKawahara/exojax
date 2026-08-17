@@ -9,12 +9,9 @@ from jax.lax import scan
 
 
 def _surface_optical_depth(dtau, pressure_boundary, pressure_surface):
-    """Integrate layer optical depths down to a surface pressure."""
-    log_pressure_boundary = jnp.log10(pressure_boundary)
-    log_pressure_surface = jnp.log10(pressure_surface)
+    """Integrate layer optical depths using linear-pressure fractions."""
     layer_fraction = jnp.clip(
-        (log_pressure_surface - log_pressure_boundary[:-1])
-        / jnp.diff(log_pressure_boundary),
+        (pressure_surface - pressure_boundary[:-1]) / jnp.diff(pressure_boundary),
         0.0,
         1.0,
     )
