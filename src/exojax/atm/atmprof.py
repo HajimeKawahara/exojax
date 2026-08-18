@@ -1,6 +1,6 @@
 """Atmospheric profile function."""
 
-from exojax.utils.constants import kB, m_u
+from exojax.utils.constants import G, bar_cgs, kB, m_u
 import jax.numpy as jnp
 import numpy as np
 from jax.lax import scan
@@ -101,6 +101,60 @@ def pressure_boundary_logspace(
         return np.append(pressure_upper, pressure_bottom_boundary)
     else:
         return jnp.append(pressure_upper, pressure_bottom_boundary)
+
+
+@jit
+def hydrostatic_radius_profile(
+    pressure_boundaries,
+    mass_density_layers,
+    planet_mass,
+    radius_bottom,
+):
+    """Compute radius and gravity at pressure boundaries.
+
+    This function integrates hydrostatic equilibrium from the bottom boundary
+    upward, neglecting atmospheric mass and treating density as constant in
+    each layer.
+
+    Args:
+        pressure_boundaries (1D array): pressure boundaries in bar, ordered
+            from atmospheric top to bottom, with shape (Nlayer + 1,)
+        mass_density_layers (1D array): layer mass densities in g/cm3, ordered
+            from atmospheric top to bottom, with shape (Nlayer,)
+        planet_mass (float): planet mass in g
+        radius_bottom (float): radius in cm at pressure_boundaries[-1]
+
+    Returns:
+        tuple: radius boundaries in cm and gravity boundaries in cm/s2, both
+            with shape (Nlayer + 1,)
+    """
+    delta_pressure_layers = jnp.diff(pressure_boundaries) * bar_cgs
+    gravity_bottom = G * planet_mass / radius_bottom / radius_bottom
+
+    def integrate_layer(normalized_inverse_radius_lower, layer):
+        delta_pressure_layer, mass_density_layer = layer
+        normalized_inverse_radius_upper = (
+            normalized_inverse_radius_lower
+            - delta_pressure_layer
+            / mass_density_layer
+            / gravity_bottom
+            / radius_bottom
+        )
+        return normalized_inverse_radius_upper, normalized_inverse_radius_upper
+
+    normalized_inverse_radius_bottom = jnp.ones_like(radius_bottom)
+    _, normalized_inverse_radius_upper = scan(
+        integrate_layer,
+        normalized_inverse_radius_bottom,
+        (delta_pressure_layers, mass_density_layers),
+        reverse=True,
+    )
+    normalized_inverse_radius_boundaries = jnp.append(
+        normalized_inverse_radius_upper, normalized_inverse_radius_bottom
+    )
+    radius_boundaries = radius_bottom / normalized_inverse_radius_boundaries
+    gravity_boundaries = gravity_bottom * normalized_inverse_radius_boundaries**2
+    return radius_boundaries, gravity_boundaries
 
 
 @jit

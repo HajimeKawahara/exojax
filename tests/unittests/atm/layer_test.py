@@ -1,9 +1,13 @@
+import jax
+import jax.numpy as jnp
 import pytest
 import numpy as np
+from exojax.atm.atmprof import hydrostatic_radius_profile
 from exojax.atm.atmprof import pressure_layer_logspace
 from exojax.atm.atmprof import pressure_upper_logspace
 from exojax.atm.atmprof import pressure_lower_logspace
 from exojax.atm.atmprof import pressure_scale_height
+from exojax.utils.constants import G, bar_cgs
 
 
 def test_log_pressure_is_constant():
@@ -53,6 +57,61 @@ def test_pressure_scale_height_earth():
     ref = 843465.7516276574  # cm (8.4km)
 
     assert H == pytest.approx(ref)
+
+
+def test_hydrostatic_radius_profile_matches_layer_solution():
+    pressure_boundaries = jnp.array([1.0, 4.0, 10.0])
+    mass_density_layers = jnp.array([5.0e-4, 2.0e-3])
+    planet_mass = 5.0e27
+    radius_bottom = 6.0e8
+
+    radius, gravity = hydrostatic_radius_profile(
+        pressure_boundaries,
+        mass_density_layers,
+        planet_mass,
+        radius_bottom,
+    )
+
+    gravitational_parameter = G * planet_mass
+    inverse_radius_bottom = 1.0 / radius_bottom
+    inverse_radius_middle = inverse_radius_bottom - (
+        (10.0 - 4.0) * bar_cgs
+        / (2.0e-3 * gravitational_parameter)
+    )
+    inverse_radius_top = inverse_radius_middle - (
+        (4.0 - 1.0) * bar_cgs
+        / (5.0e-4 * gravitational_parameter)
+    )
+    expected_radius = 1.0 / np.array(
+        [inverse_radius_top, inverse_radius_middle, inverse_radius_bottom]
+    )
+    expected_gravity = gravitational_parameter / expected_radius**2
+
+    assert radius.shape == pressure_boundaries.shape
+    assert gravity.shape == pressure_boundaries.shape
+    assert radius[-1] == jnp.asarray(radius_bottom, dtype=radius.dtype)
+    np.testing.assert_allclose(radius, expected_radius, rtol=1.0e-6)
+    np.testing.assert_allclose(gravity, expected_gravity, rtol=1.0e-6)
+
+
+def test_hydrostatic_radius_profile_supports_jit_and_grad():
+    pressure_boundaries = jnp.array([1.0, 4.0, 10.0])
+    mass_density_layers = jnp.array([5.0e-4, 2.0e-3])
+
+    def radius_top(log_scales):
+        density_scale, mass_scale = jnp.exp(log_scales)
+        radius, _ = hydrostatic_radius_profile(
+            pressure_boundaries,
+            mass_density_layers * density_scale,
+            1.8986e30 * mass_scale,
+            7.1492e9,
+        )
+        return radius[0]
+
+    radius, gradient = jax.jit(jax.value_and_grad(radius_top))(jnp.zeros(2))
+    assert jnp.isfinite(radius)
+    assert jnp.all(jnp.isfinite(gradient))
+    assert jnp.all(gradient < 0.0)
 
 
 def test_atmospheric_scale_height_for_isothermal_with_analytic():
