@@ -135,7 +135,8 @@ def test_partition_function_query_returns_positive_scalar(monkeypatch):
     [
         ("0.14", False, "compute_broadening"),
         ("0.15.2", False, "set_broadening_coef_legacy"),
-        ("0.16", True, "set_broadening_coef_species"),
+        ("0.16", False, "set_broadening_coef_species"),
+        ("0.16.1", True, "set_broadening_coef_species"),
     ],
 )
 def test_capability_helpers_are_version_gated(
@@ -152,7 +153,7 @@ def test_warn_if_exomol_broadf_download_unsupported_emits_only_for_legacy(monkey
     with pytest.warns(UserWarning, match="does not support broadf_download"):
         radis_adapter.warn_if_exomol_broadf_download_unsupported()
 
-    monkeypatch.setattr(radis_adapter, "get_radis_version", lambda: "0.16")
+    monkeypatch.setattr(radis_adapter, "get_radis_version", lambda: "0.16.1")
     with warnings.catch_warnings(record=True) as caught:
         warnings.simplefilter("always")
         radis_adapter.warn_if_exomol_broadf_download_unsupported()

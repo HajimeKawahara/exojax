@@ -156,12 +156,12 @@ def _list_exomolhr_molecules(
     *,
     session: Optional[requests.Session] = None,
 ) -> Sequence[str]:
-    """Return the list of molecule formulas shown on the ExoMolHR landing page.
+    """Return the list of molecule formulas shown on the ExoMolHR data page.
 
     The function can work in three modes:
 
     1. **Online**  `html_source is None`
-       → download *https://www.exomol.com/exomolhr/* live.
+       → download *https://www.exomol.com/exomolhr/db/* live.
     2. **From file** `html_source` is a `pathlib.Path` or filename
        → read the saved HTML.
     3. **From string/bytes**  `html_source` is raw HTML content
@@ -187,7 +187,7 @@ def _list_exomolhr_molecules(
     # ------------------------------------------------------------------
     if html_source is None:
         sess = session or requests.Session()
-        resp = sess.get(EXOMOLHR_HOME, timeout=60)
+        resp = sess.get(urljoin(EXOMOLHR_HOME, "db/"), timeout=60)
         resp.raise_for_status()
         html_text = resp.text
     elif isinstance(html_source, (bytes, str)):
