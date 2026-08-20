@@ -77,6 +77,7 @@ Radiative Transfer
 .. toctree::
    :maxdepth: 1
 
+   userguide/layer_contract.rst
    userguide/rtransfer.rst
    userguide/rtransfer_ibased_pure.rst
    userguide/rtransfer_fbased.rst

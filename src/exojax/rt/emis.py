@@ -13,7 +13,6 @@ from exojax.rt.rtransfer import (
     setrt_toonhm_with_absorption,
 )
 from exojax.rt.rtlayer import fluxsum_scan
-from exojax.rt.common import ArtCommon
 from exojax.postproc.limb_darkening import (
     average_limb_darkening_coefficients,
     quadratic_ld_from_intensity,
@@ -47,8 +46,10 @@ class ArtEmisPure(ArtCommon):
         initialization of ArtEmisPure
 
         Args:
-            pressure_top (float, optional): top pressure in bar. Defaults to 1.0e-8.
-            pressure_btm (float, optional): bottom pressure in bar. Defaults to 1.0e2.
+            pressure_top (float, optional): Representative pressure of the top
+                atmospheric layer in bar. Defaults to 1.0e-8.
+            pressure_btm (float, optional): Representative pressure of the bottom
+                atmospheric layer in bar. Defaults to 1.0e2.
             nlayer (int, optional): the number of the atmospheric layers. Defaults to 100.
             nu_grid (float, array, optional): the wavenumber grid. Defaults to None.
             rtsolver (str, optional): radiative transfer solver (ibased, fbased2st, ibased_linsap). Defaults to "ibased".
@@ -253,8 +254,10 @@ class OpartEmisPure(ArtCommon):
 
         Args:
             opalayer (class): user defined class, needs to define self.nu_grid
-            pressure_top (float, optional): top pressure in bar. Defaults to 1.0e-8.
-            pressure_btm (float, optional): bottom pressure in bar. Defaults to 1.0e2.
+            pressure_top (float, optional): Representative pressure of the top
+                atmospheric layer in bar. Defaults to 1.0e-8.
+            pressure_btm (float, optional): Representative pressure of the bottom
+                atmospheric layer in bar. Defaults to 1.0e2.
             nlayer (int, optional): the number of the atmospheric layers. Defaults to 100.
             nstream (int, optional): the number of the gaussian quadrature. Defaults to 8.
         """
@@ -418,8 +421,10 @@ class ArtEmisScat(ArtCommon):
         """initialization of ArtEmisScat
 
         Args:
-            pressure_top (float, optional): top pressure in bar. Defaults to 1.0e-8.
-            pressure_btm (float, optional): bottom pressure in bar. Defaults to 1.0e2.
+            pressure_top (float, optional): Representative pressure of the top
+                atmospheric layer in bar. Defaults to 1.0e-8.
+            pressure_btm (float, optional): Representative pressure of the bottom
+                atmospheric layer in bar. Defaults to 1.0e2.
             nlayer (int, optional): the number of the atmospheric layers. Defaults to 100.
             nu_grid (float, array, optional): the wavenumber grid. Defaults to None.
             rtsolver (str): Radiative Transfer Solver,
@@ -566,8 +571,10 @@ class OpartEmisScat(ArtCommon):
 
         Args:
             opalayer (class): user defined class, needs to define self.nu_grid
-            pressure_top (float, optional): top pressure in bar. Defaults to 1.0e-8.
-            pressure_btm (float, optional): bottom pressure in bar. Defaults to 1.0e2.
+            pressure_top (float, optional): Representative pressure of the top
+                atmospheric layer in bar. Defaults to 1.0e-8.
+            pressure_btm (float, optional): Representative pressure of the bottom
+                atmospheric layer in bar. Defaults to 1.0e2.
             nlayer (int, optional): the number of the atmospheric layers. Defaults to 100.
         """
         super().__init__(pressure_top, pressure_btm, nlayer, opalayer.nu_grid)

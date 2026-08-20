@@ -202,8 +202,8 @@ spectrum <../userguide/rtransfer_transmission.html>`__ through an
 for transmission with pure absorption, without scattering. The
 integration scheme can be either trapezoid or Simpson’s rule; the
 default is ``integration="simpson"``. Here we use 200 atmospheric
-layers, with the pressure ranging from 100 bar at the bottom to 1.0e-5
-bar at the top.
+layers whose representative pressures range from 1.0e-11 bar at the
+top to 10 bar at the bottom.
 
 .. code:: ipython3
 
@@ -249,8 +249,8 @@ Surface gravity is important for transmission spectra. Unlike emission
 spectra, transmission spectra probe opacity along slant paths from lower
 to upper atmospheric layers. It is therefore useful to calculate gravity
 as a function of altitude. This is done by specifying ``gravity_btm``
-and ``radius_btm`` at the bottom layer and using the layer boundaries in
-the transmission geometry.
+and ``radius_btm`` at the lower boundary of the bottom layer and using
+the layer boundaries in the transmission geometry.
 
 .. code:: ipython3
 
@@ -270,7 +270,7 @@ When visualized, it looks like this.
 
     
     plt.plot(gravity, art.pressure)
-    plt.plot(gravity_btm, art.pressure[-1], "ro", label="gravity_btm")
+    plt.plot(gravity_btm, art.pressure_btm_boundary, "ro", label="gravity_btm")
     plt.yscale("log")
     plt.xlim(2300,2600)
     plt.gca().invert_yaxis()
@@ -667,5 +667,4 @@ observed with JWST/NIRSpec G395H is available in the gallery:
 
 -  `WASP-39b transmission spectrum
    example <../examples/WASP39b_transmission_JWST-NIRSpec.html#sphx-glr-examples-wasp39b-transmission-jwst-nirspec-py>`__
-
 
