@@ -46,7 +46,7 @@ dependencies = [
   "hjson",
   "tqdm",
   "PyMieScatt",
-  "radis>=0.15.2",
+  "radis>=0.16.1",
   "numba",
   "tables",
   "pandas",

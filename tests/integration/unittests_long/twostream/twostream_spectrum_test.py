@@ -38,7 +38,7 @@ def test_ArtEmisScat_fluxadding_gives_consistent_results_with_pure_absorption(
     )
 
     xsmatrix = opa.xsmatrix(Tarr, art.pressure)
-    dtau = art.opacity_profile_xs(xsmatrix, mmr_arr, opa.mdb.molmass, gravity)
+    dtau = art.opacity_profile_xs(xsmatrix, mmr_arr, opa.molmass, gravity)
 
     # almost pure absorption
     import jax.numpy as jnp
@@ -79,7 +79,7 @@ def test_ArtEmisScat_LART_gives_consistent_results_with_pure_absorption(
     )
 
     xsmatrix = opa.xsmatrix(Tarr, art.pressure)
-    dtau = art.opacity_profile_xs(xsmatrix, mmr_arr, opa.mdb.molmass, gravity)
+    dtau = art.opacity_profile_xs(xsmatrix, mmr_arr, opa.molmass, gravity)
 
     # almost pure absorption
     import jax.numpy as jnp

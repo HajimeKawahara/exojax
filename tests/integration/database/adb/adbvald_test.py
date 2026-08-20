@@ -1,39 +1,45 @@
-import os
-from exojax.database.moldb  import AdbVald, AdbSepVald
+from pathlib import Path
 
-import urllib.request
-from exojax.provider.url import url_developer_data
+import pytest
 
-filepath_VALD3 = '.database/vald2600.gz'
-path_ValdLineList = '.database/vald4214450.gz'
-if not os.path.isfile(filepath_VALD3):
-    try:
-        url = url_developer_data()+'vald2600.gz'
-        urllib.request.urlretrieve(url, filepath_VALD3)
-    except:
-        print('could not connect ', url_developer_data())
-if not os.path.isfile(path_ValdLineList):
-    try:
-        url = url_developer_data()+'vald4214450.gz'
-        urllib.request.urlretrieve(url, path_ValdLineList)
-    except:
-        print('could not connect ', url_developer_data())
+from exojax.database import AdbSepVald, AdbVald
 
+
+DATABASE_DIR = Path(__file__).resolve().parents[4] / ".database"
+VALD2600_PATH = DATABASE_DIR / "vald2600.gz"
+VALD4214450_PATH = DATABASE_DIR / "vald4214450.gz"
+
+requires_vald2600 = pytest.mark.skipif(
+    not VALD2600_PATH.is_file(),
+    reason="requires locally provisioned .database/vald2600.gz",
+)
+requires_vald4214450 = pytest.mark.skipif(
+    not VALD4214450_PATH.is_file(),
+    reason="requires locally provisioned .database/vald4214450.gz",
+)
+
+
+@requires_vald2600
 def test_adb_vald():
-    adbV = AdbVald(filepath_VALD3, nurange=[9660., 9570.])
+    adbV = AdbVald(VALD2600_PATH, nurange=[9660.0, 9570.0])
     assert adbV.atomicmass[0] == 55.847
 
+
+@requires_vald2600
 def test_adb_vald_interp():
-    adbV = AdbVald(filepath_VALD3, nurange=[9660., 9570.])
+    adbV = AdbVald(VALD2600_PATH, nurange=[9660.0, 9570.0])
     T = 1000.0
     qt_284 = adbV.QT_interp_284(T)
-    assert qt_284[76] == 15.7458 #Fe I
+    assert qt_284[76] == 15.7458  # Fe I
 
+
+@requires_vald4214450
 def test_adb_sepvald():
-    adbV = AdbVald(path_ValdLineList,  nurange=[9660., 9570.], crit = 1e-100) 
-    #The crit is defined just in case some weak lines may cause an error that results in a gamma of 0... (220219)
+    adbV = AdbVald(VALD4214450_PATH, nurange=[9660.0, 9570.0], crit=1e-100)
+    # The criterion avoids errors caused by zero broadening for weak lines.
     asdb = AdbSepVald(adbV)
-    assert asdb.atomicmass[asdb.ielem==26][0] == 55.847
+    assert asdb.atomicmass[asdb.ielem == 26][0] == 55.847
+
 
 if __name__ == "__main__":
     test_adb_vald()

@@ -35,7 +35,7 @@ def test_ArtReflectPure_no_scattering_reflected_by_surface(db, diffmode, fig=Fal
     )
 
     xsmatrix = opa.xsmatrix(Tarr, art.pressure)
-    dtau = art.opacity_profile_xs(xsmatrix, mmr_arr, opa.mdb.molmass, gravity)
+    dtau = art.opacity_profile_xs(xsmatrix, mmr_arr, opa.molmass, gravity)
 
     # almost pure absorption
     import jax.numpy as jnp
@@ -81,7 +81,7 @@ def test_ArtReflectEmis_Emission_plus_stellar_refelction(db, diffmode, fig=False
     )
 
     xsmatrix = opa.xsmatrix(Tarr, art.pressure)
-    dtau = art.opacity_profile_xs(xsmatrix, mmr_arr, opa.mdb.molmass, gravity)
+    dtau = art.opacity_profile_xs(xsmatrix, mmr_arr, opa.molmass, gravity)
 
     # almost pure absorption
     import jax.numpy as jnp

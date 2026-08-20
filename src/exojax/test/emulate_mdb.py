@@ -109,9 +109,31 @@ def mock_mdbVALD():
     Returns:
         AdbVald instance
     """
+    class _AdbValdUnpickler(pickle.Unpickler):
+        def find_class(self, module, name):
+            if module == "exojax.spec.moldb" and name == "AdbVald":
+                from exojax.database.vald.api import AdbVald
+
+                return AdbVald
+            if module == "pandas.core.internals.blocks" and name == "new_block":
+                from pandas._libs.internals import BlockPlacement
+                from pandas.core.internals.blocks import new_block
+
+                def new_block_compat(values, placement, ndim=None):
+                    if isinstance(placement, slice):
+                        placement = BlockPlacement(placement)
+                    return new_block(values, placement=placement, ndim=ndim)
+
+                return new_block_compat
+            return super().find_class(module, name)
+
     filename = get_testdata_filename(TESTDATA_moldb_VALD)
     with open(filename, "rb") as f:
-        mdb = pickle.load(f)
+        mdb = _AdbValdUnpickler(f).load()
+    if not hasattr(mdb, "Tref"):
+        from exojax.utils.constants import Tref_original
+
+        mdb.Tref = Tref_original
     return mdb
 
 

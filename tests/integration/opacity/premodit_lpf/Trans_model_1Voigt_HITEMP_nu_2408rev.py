@@ -4,8 +4,9 @@
 
 # Import the modules
 from exojax.utils.constants import Patm, Tref_original  # [bar/atm]
-from exojax.database.core.line_strength import line_strength, doppler_sigma, gamma_hitran
-from exojax.opacity import initspec, voigt
+from exojax.database.core.broadening import doppler_sigma, gamma_hitran
+from exojax.database.core.line_strength import line_strength
+from exojax.opacity import initspec
 from exojax.opacity.lpf.lpf import xsmatrix as lpf_xsmatrix
 from jax import jit, vmap
 import numpy as np
