@@ -647,7 +647,7 @@ def pick_ionE(ielem, iion, df_ionE):
             df_ionE[
                 (df_ionE["At. num "] == ielem) & (df_ionE[" Ion Charge "] == iion - 1)
             ]["      Ionization Energy (a) (eV)      "]
-        )
+        ).item()
     )
     return ionE
 
