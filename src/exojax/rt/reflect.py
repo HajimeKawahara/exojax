@@ -6,9 +6,6 @@ from exojax.rt.rtransfer import (
     setrt_toonhm,
     setrt_toonhm_with_absorption,
 )
-from exojax.rt.common import ArtCommon
-
-import jax.numpy as jnp
 from jax.lax import scan
 
 
@@ -33,8 +30,10 @@ class ArtAbsPure(ArtCommon):
         """initialization of ArtAbsPure
 
         Args:
-            pressure_top (float, optional): top pressure in bar. Defaults to 1.0e-8.
-            pressure_btm (float, optional): bottom pressure in bar. Defaults to 1.0e2.
+            pressure_top (float, optional): Representative pressure of the top
+                atmospheric layer in bar. Defaults to 1.0e-8.
+            pressure_btm (float, optional): Representative pressure of the bottom
+                atmospheric layer in bar. Defaults to 1.0e2.
             nlayer (int, optional): the number of the atmospheric layers. Defaults to 100.
             nu_grid (float, array, optional): the wavenumber grid. Defaults to None.
         """
@@ -129,8 +128,10 @@ class ArtReflectPure(ArtCommon):
         """initialization of ArtReflectPure
 
         Args:
-            pressure_top (float, optional): top pressure in bar. Defaults to 1.0e-8.
-            pressure_btm (float, optional): bottom pressure in bar. Defaults to 1.0e2.
+            pressure_top (float, optional): Representative pressure of the top
+                atmospheric layer in bar. Defaults to 1.0e-8.
+            pressure_btm (float, optional): Representative pressure of the bottom
+                atmospheric layer in bar. Defaults to 1.0e2.
             nlayer (int, optional): the number of the atmospheric layers. Defaults to 100.
             nu_grid (float, array, optional): the wavenumber grid. Defaults to None.
             rtsolver (str): Radiative Transfer Solver, fluxadding_toon_hemispheric_mean
@@ -256,8 +257,10 @@ class ArtReflectEmis(ArtCommon):
         """initialization of ArtReflectionPure
 
         Args:
-            pressure_top (float, optional): top pressure in bar. Defaults to 1.0e-8.
-            pressure_btm (float, optional): bottom pressure in bar. Defaults to 1.0e2.
+            pressure_top (float, optional): Representative pressure of the top
+                atmospheric layer in bar. Defaults to 1.0e-8.
+            pressure_btm (float, optional): Representative pressure of the bottom
+                atmospheric layer in bar. Defaults to 1.0e2.
             nlayer (int, optional): the number of the atmospheric layers. Defaults to 100.
             nu_grid (float, array, optional): the wavenumber grid. Defaults to None.
             rtsolver (str): Radiative Transfer Solver, fluxadding_toon_hemispheric_mean
@@ -393,8 +396,10 @@ class OpartReflectPure(ArtCommon):
 
         Args:
             opalayer (class): user defined class, needs to define self.nu_grid
-            pressure_top (float, optional): top pressure in bar. Defaults to 1.0e-8.
-            pressure_btm (float, optional): bottom pressure in bar. Defaults to 1.0e2.
+            pressure_top (float, optional): Representative pressure of the top
+                atmospheric layer in bar. Defaults to 1.0e-8.
+            pressure_btm (float, optional): Representative pressure of the bottom
+                atmospheric layer in bar. Defaults to 1.0e2.
             nlayer (int, optional): the number of the atmospheric layers. Defaults to 100.
         """
         super().__init__(pressure_top, pressure_btm, nlayer, opalayer.nu_grid)
@@ -468,8 +473,10 @@ class OpartReflectEmis(ArtCommon):
 
         Args:
             opalayer (class): user defined class, needs to define self.nu_grid
-            pressure_top (float, optional): top pressure in bar. Defaults to 1.0e-8.
-            pressure_btm (float, optional): bottom pressure in bar. Defaults to 1.0e2.
+            pressure_top (float, optional): Representative pressure of the top
+                atmospheric layer in bar. Defaults to 1.0e-8.
+            pressure_btm (float, optional): Representative pressure of the bottom
+                atmospheric layer in bar. Defaults to 1.0e2.
             nlayer (int, optional): the number of the atmospheric layers. Defaults to 100.
         """
         super().__init__(pressure_top, pressure_btm, nlayer, opalayer.nu_grid)

@@ -614,11 +614,8 @@ def compute_transmission(
     ng = opa_ckd.ckd_info.weights.size
     pressure_log = jnp.log10(art.pressure)
     width_cloud = 1.0 / 25.0
-    dtau_c = (
-        args.cloud_tau
-        * ((jnp.log10(args.pressure_btm) - jnp.log10(args.pressure_top)) / args.nlayer)
-        / width_cloud
-    )
+    delta_log_pressure = -jnp.log10(art.pressure_decrease_rate)
+    dtau_c = args.cloud_tau * delta_log_pressure / width_cloud
     cloud_profile = (pressure_log[:, None] - args.logp_cloud) / width_cloud
     dtau_cloud = dtau_c / jnp.sqrt(jnp.pi) * jnp.exp(-jnp.clip(cloud_profile**2, -50, 50))
     dtau_ckd = jnp.broadcast_to(dtau_cloud[:, None], (pressure_log.size, ng, nband))

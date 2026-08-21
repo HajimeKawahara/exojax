@@ -1,6 +1,7 @@
 """Atmospheric profile function."""
 
 from exojax.utils.constants import G, bar_cgs, kB, m_u
+import jax
 import jax.numpy as jnp
 import numpy as np
 from jax.lax import scan
@@ -47,6 +48,177 @@ def pressure_layer_logspace(
         delta_pressures = delta_pressures[::-1]
 
     return pressures, delta_pressures, k
+
+
+def pressure_layer_logspace_from_boundaries(
+    log_pressure_top_boundary,
+    log_pressure_btm_boundary,
+    nlayer,
+    reference_point=0.5,
+    numpy=False,
+):
+    """Create a log-spaced pressure grid from exact layer boundaries.
+
+    Args:
+        log_pressure_top_boundary (float): Log10 pressure in bar at the top
+            boundary.
+        log_pressure_btm_boundary (float): Log10 pressure in bar at the bottom
+            boundary.
+        nlayer (int): Number of atmospheric layers.
+        reference_point (float): Fractional position of the representative
+            pressure within each layer in log pressure. The upper boundary is
+            0, the geometric center is 0.5, and the lower boundary is 1.
+        numpy (bool): If True, use NumPy arrays instead of JAX arrays.
+
+    Returns:
+        tuple: Representative pressures, layer pressure differences, pressure
+            decrease rate, and the ``nlayer + 1`` pressure boundaries. The
+            pressure boundaries are the source of truth for the other arrays.
+
+    Notes:
+        Backend representability is validated during eager execution and is
+        skipped while JAX is tracing. Build the grid eagerly when validation
+        is required. Valid traced inputs remain compatible with JIT
+        compilation and automatic differentiation.
+    """
+    if not isinstance(nlayer, (int, np.integer)) or isinstance(nlayer, bool):
+        raise ValueError("Number of layers must be a positive integer.")
+    if nlayer < 1:
+        raise ValueError("Number of layers must be a positive integer.")
+    for name, value in (
+        ("Top boundary log pressure", log_pressure_top_boundary),
+        ("Bottom boundary log pressure", log_pressure_btm_boundary),
+        ("Reference point", reference_point),
+    ):
+        ndim = value.ndim if hasattr(value, "ndim") else np.ndim(value)
+        if ndim != 0:
+            raise ValueError(f"{name} must be scalar.")
+    top_boundary_is_traced = isinstance(
+        log_pressure_top_boundary, jax.core.Tracer
+    )
+    bottom_boundary_is_traced = isinstance(
+        log_pressure_btm_boundary, jax.core.Tracer
+    )
+    reference_point_is_traced = isinstance(reference_point, jax.core.Tracer)
+    if numpy and (
+        top_boundary_is_traced
+        or bottom_boundary_is_traced
+        or reference_point_is_traced
+    ):
+        raise ValueError("The NumPy backend does not support traced inputs.")
+    if not reference_point_is_traced:
+        if not 0.0 <= reference_point <= 1.0:
+            raise ValueError("Reference point must be between 0 and 1.")
+    if not top_boundary_is_traced and not np.isfinite(
+        log_pressure_top_boundary
+    ):
+        raise ValueError("Pressure boundary logs must be finite.")
+    if not bottom_boundary_is_traced and not np.isfinite(
+        log_pressure_btm_boundary
+    ):
+        raise ValueError("Pressure boundary logs must be finite.")
+    if not top_boundary_is_traced and not bottom_boundary_is_traced:
+        if log_pressure_btm_boundary <= log_pressure_top_boundary:
+            raise ValueError(
+                "Bottom boundary pressure must be greater than the top "
+                "boundary pressure."
+            )
+
+    array_module = np if numpy else jnp
+    if numpy:
+        with np.errstate(over="ignore", under="ignore"):
+            pressure_boundaries = np.logspace(
+                log_pressure_top_boundary,
+                log_pressure_btm_boundary,
+                nlayer + 1,
+            )
+    else:
+        pressure_boundaries = jnp.logspace(
+            log_pressure_top_boundary,
+            log_pressure_btm_boundary,
+            nlayer + 1,
+        )
+    try:
+        with np.errstate(over="ignore", under="ignore"):
+            pressure_endpoints = array_module.asarray(
+                [
+                    10.0**log_pressure_top_boundary,
+                    10.0**log_pressure_btm_boundary,
+                ],
+                dtype=pressure_boundaries.dtype,
+            )
+    except OverflowError as err:
+        raise ValueError(
+            "Pressure boundaries cannot be represented by the array backend."
+        ) from err
+    if numpy:
+        pressure_boundaries[[0, -1]] = pressure_endpoints
+    else:
+        pressure_boundaries = pressure_boundaries.at[0].set(
+            pressure_endpoints[0]
+        )
+        pressure_boundaries = pressure_boundaries.at[-1].set(
+            pressure_endpoints[1]
+        )
+    if not isinstance(pressure_boundaries, jax.core.Tracer):
+        pressure_boundaries_host = np.asarray(pressure_boundaries)
+        smallest_normal = jnp.finfo(pressure_boundaries.dtype).tiny
+        if not np.all(np.isfinite(pressure_boundaries_host)) or np.any(
+            pressure_boundaries_host < smallest_normal
+        ):
+            raise ValueError(
+                "Pressure boundaries cannot be represented by the active "
+                "array dtype."
+            )
+        if np.any(np.diff(pressure_boundaries_host) <= 0.0):
+            raise ValueError(
+                "Pressure layers are not distinct in the active array dtype."
+            )
+    pressure_upper = pressure_boundaries[:-1]
+    pressure_lower = pressure_boundaries[1:]
+    pressures = (
+        pressure_upper ** (1.0 - reference_point)
+        * pressure_lower**reference_point
+    )
+    delta_pressures = array_module.diff(pressure_boundaries)
+    dlogP = (log_pressure_btm_boundary - log_pressure_top_boundary) / nlayer
+    pressure_decrease_rate = array_module.asarray(
+        10.0**-dlogP, dtype=pressure_boundaries.dtype
+    )
+    smallest_normal = jnp.finfo(pressure_boundaries.dtype).tiny
+    if not isinstance(pressures, jax.core.Tracer):
+        pressures_host = np.asarray(pressures)
+        if not np.all(np.isfinite(pressures_host)) or np.any(
+            pressures_host < smallest_normal
+        ):
+            raise ValueError(
+                "Pressure grid cannot be represented by the active array dtype."
+            )
+    if not isinstance(delta_pressures, jax.core.Tracer):
+        delta_pressures_host = np.asarray(delta_pressures)
+        if not np.all(np.isfinite(delta_pressures_host)) or np.any(
+            delta_pressures_host < smallest_normal
+        ):
+            raise ValueError(
+                "Pressure grid cannot be represented by the active array dtype."
+            )
+    if not isinstance(pressure_decrease_rate, jax.core.Tracer):
+        pressure_decrease_rate_host = np.asarray(pressure_decrease_rate)
+        if (
+            not np.isfinite(pressure_decrease_rate_host)
+            or pressure_decrease_rate_host < smallest_normal
+            or pressure_decrease_rate_host >= 1.0
+        ):
+            raise ValueError(
+                "Pressure grid cannot be represented by the active array dtype."
+            )
+
+    return (
+        pressures,
+        delta_pressures,
+        pressure_decrease_rate,
+        pressure_boundaries,
+    )
 
 
 def pressure_upper_logspace(pressures, pressure_decrease_rate, reference_point=0.5):
@@ -319,4 +491,3 @@ def Teff2Tirr(Teff, Tint):
         Here we assume A=0 (albedo) and beta=1 (fully-energy distributed)
     """
     return (4.0 * Teff**4 - Tint**4) ** 0.25
-

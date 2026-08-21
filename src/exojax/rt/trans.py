@@ -29,8 +29,10 @@ class ArtTransPure(ArtCommon):
         """initialization of ArtTransPure
 
         Args:
-            pressure_top (float, optional): layer top pressure in bar. Defaults to 1.0e-8.
-            pressure_btm (float, optional): layer bottom pressure in bar. Defaults to 1.0e2.
+            pressure_top (float, optional): Representative pressure of the top
+                atmospheric layer in bar. Defaults to 1.0e-8.
+            pressure_btm (float, optional): Representative pressure of the bottom
+                atmospheric layer in bar. Defaults to 1.0e2.
             nlayer (int, optional): The number of the layers Defaults to 100.
             integration (str, optional): Integration scheme ("simpson", "trapezoid"). Defaults to "simpson".
             nu_grid (nd.array, optional): Wavenumber grid in cm-1 for line-by-line ``run`` use.

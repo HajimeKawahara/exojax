@@ -250,8 +250,8 @@ different temperatures.
 ExoJAX solves radiative transfer and returns the emission spectrum
 through an ``art`` object. ``ArtEmisPure`` means atmospheric radiative
 transfer for emission with pure absorption, without scattering. Here we
-use 200 atmospheric layers, with the pressure ranging from 100 bar at
-the bottom to 1.0e-5 bar at the top.
+use 100 atmospheric layers whose representative pressures range from
+1.0e-5 bar at the top to 10 bar at the bottom.
 
 Since v1.5, ExoJAX supports both the flux-based two-stream solver
 (``fbased2st``) and the intensity-based n-stream solver (``ibased``).
@@ -1017,5 +1017,4 @@ of this!). Let’s create a corner plot to verify the results.
 
 
 This completes the emission-spectrum getting started workflow.
-
 
