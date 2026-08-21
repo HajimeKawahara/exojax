@@ -1,5 +1,6 @@
 import copy
 import pickle
+from contextlib import contextmanager
 
 import jax
 import numpy as np
@@ -8,6 +9,16 @@ import pytest
 from exojax.rt.common import ArtCommon
 from exojax.rt.reflect import ArtAbsPure, OpartReflectPure
 from exojax.rt.trans import ArtTransPure
+
+
+@contextmanager
+def temporary_x64(enabled):
+    previous = jax.config.read("jax_enable_x64")
+    try:
+        jax.config.update("jax_enable_x64", enabled)
+        yield
+    finally:
+        jax.config.update("jax_enable_x64", previous)
 
 
 def test_legacy_pressure_arguments_remain_representative_values():
@@ -123,7 +134,7 @@ def test_from_pressure_boundaries_supports_one_layer():
 
 
 def test_from_pressure_boundaries_rejects_grid_unstable_in_active_jax_dtype():
-    with jax.experimental.disable_x64():
+    with temporary_x64(False):
         with pytest.raises(ValueError, match="active JAX dtype"):
             ArtCommon.from_pressure_boundaries(
                 pressure_top_boundary=1.0e-40,
@@ -132,7 +143,7 @@ def test_from_pressure_boundaries_rejects_grid_unstable_in_active_jax_dtype():
                 warn_no_nu_grid=False,
             )
 
-    with jax.experimental.enable_x64():
+    with temporary_x64(True):
         art = ArtCommon.from_pressure_boundaries(
             pressure_top_boundary=1.0e-40,
             pressure_btm_boundary=1.0,

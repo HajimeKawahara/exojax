@@ -1,3 +1,5 @@
+from contextlib import contextmanager
+
 import jax
 import jax.numpy as jnp
 import pytest
@@ -10,6 +12,16 @@ from exojax.atm.atmprof import pressure_upper_logspace
 from exojax.atm.atmprof import pressure_lower_logspace
 from exojax.atm.atmprof import pressure_scale_height
 from exojax.utils.constants import G, bar_cgs
+
+
+@contextmanager
+def temporary_x64(enabled):
+    previous = jax.config.read("jax_enable_x64")
+    try:
+        jax.config.update("jax_enable_x64", enabled)
+        yield
+    finally:
+        jax.config.update("jax_enable_x64", previous)
 
 
 def test_log_pressure_is_constant():
@@ -74,12 +86,7 @@ def test_log_pressure_from_boundaries_preserves_endpoints(use_numpy):
 
 @pytest.mark.parametrize("enable_x64", [False, True])
 def test_log_pressure_from_boundaries_uses_active_jax_dtype(enable_x64):
-    context = (
-        jax.experimental.enable_x64()
-        if enable_x64
-        else jax.experimental.disable_x64()
-    )
-    with context:
+    with temporary_x64(enable_x64):
         pressure, dpressure, k, pressure_boundary = (
             pressure_layer_logspace_from_boundaries(-4.0, 2.0, nlayer=4)
         )
@@ -175,7 +182,7 @@ def test_log_pressure_from_boundaries_validates_static_outputs_during_grad():
         )
         return jnp.sum(pressure)
 
-    with jax.experimental.disable_x64():
+    with temporary_x64(False):
         with pytest.raises(ValueError, match="active array dtype"):
             jax.grad(pressure_sum)(0.5)
 
@@ -338,7 +345,7 @@ def test_log_pressure_from_boundaries_rejects_unrepresentable_numpy_bounds(
 def test_log_pressure_from_boundaries_rejects_unrepresentable_jax_bounds(
     top_boundary, bottom_boundary
 ):
-    with jax.experimental.disable_x64():
+    with temporary_x64(False):
         with pytest.raises(ValueError, match="cannot be represented"):
             pressure_layer_logspace_from_boundaries(
                 top_boundary, bottom_boundary, nlayer=1
@@ -346,7 +353,7 @@ def test_log_pressure_from_boundaries_rejects_unrepresentable_jax_bounds(
 
 
 def test_log_pressure_from_boundaries_rejects_indistinct_jax_layers():
-    with jax.experimental.disable_x64():
+    with temporary_x64(False):
         with pytest.raises(ValueError, match="not distinct"):
             pressure_layer_logspace_from_boundaries(0.0, 1.0e-8, nlayer=2)
 
@@ -362,7 +369,7 @@ def test_log_pressure_from_boundaries_rejects_indistinct_jax_layers():
 def test_log_pressure_from_boundaries_rejects_unstable_float32_grid(
     top_boundary, bottom_boundary, nlayer
 ):
-    with jax.experimental.disable_x64():
+    with temporary_x64(False):
         with pytest.raises(ValueError, match="active array dtype"):
             pressure_layer_logspace_from_boundaries(
                 top_boundary, bottom_boundary, nlayer
