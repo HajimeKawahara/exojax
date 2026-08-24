@@ -1,5 +1,7 @@
 """Atmospheric profile function."""
 
+from functools import partial
+
 from exojax.utils.constants import G, bar_cgs, kB, m_u
 import jax
 import jax.numpy as jnp
@@ -326,6 +328,129 @@ def hydrostatic_radius_profile(
     )
     radius_boundaries = radius_bottom / normalized_inverse_radius_boundaries
     gravity_boundaries = gravity_bottom * normalized_inverse_radius_boundaries**2
+    return radius_boundaries, gravity_boundaries
+
+
+@partial(jit, static_argnames=("hydrostatic_scheme",))
+def hydrostatic_radius_profile_ideal_gas(
+    pressure_boundaries,
+    temperature,
+    mean_molecular_weight,
+    radius_bottom,
+    gravity_bottom,
+    hydrostatic_scheme="variable_gravity",
+):
+    """Compute ideal-gas radius and gravity at pressure boundaries.
+
+    The atmosphere is integrated upward from the bottom boundary using the
+    hydrostatic equation and the ideal-gas pressure scale height. Atmospheric
+    mass is neglected. The pressure grid may have nonuniform log-pressure
+    spacing.
+
+    Args:
+        pressure_boundaries (1D array): Pressure boundaries in bar, ordered
+            from atmospheric top to bottom, with shape ``(Nlayer + 1,)``.
+        temperature (1D array): Layer temperatures in K, ordered from
+            atmospheric top to bottom, with shape ``(Nlayer,)``.
+        mean_molecular_weight (float or 1D array): Mean molecular weight in
+            atomic mass units, either scalar or with shape ``(Nlayer,)``.
+        radius_bottom (float): Radius in cm at
+            ``pressure_boundaries[-1]``.
+        gravity_bottom (float): Gravity in cm/s2 at
+            ``pressure_boundaries[-1]``.
+        hydrostatic_scheme (str): Hydrostatic discretization.
+            ``"variable_gravity"`` analytically accounts for inverse-square
+            gravity within each layer. ``"layer_constant_gravity"`` holds
+            gravity fixed at the lower boundary of each layer.
+
+    Returns:
+        tuple: Radius boundaries in cm and gravity boundaries in cm/s2, both
+            with shape ``(Nlayer + 1,)`` and ordered from atmospheric top to
+            bottom.
+    """
+    if hydrostatic_scheme not in (
+        "variable_gravity",
+        "layer_constant_gravity",
+    ):
+        raise ValueError(
+            "Unknown hydrostatic scheme. Choose 'variable_gravity' or "
+            "'layer_constant_gravity'."
+        )
+
+    pressure_boundaries = jnp.asarray(pressure_boundaries)
+    temperature = jnp.asarray(temperature)
+    mean_molecular_weight = jnp.asarray(mean_molecular_weight)
+    radius_bottom = jnp.asarray(radius_bottom)
+    gravity_bottom = jnp.asarray(gravity_bottom)
+
+    if pressure_boundaries.ndim != 1 or pressure_boundaries.shape[0] < 2:
+        raise ValueError(
+            "pressure_boundaries must be one-dimensional with at least two "
+            "elements."
+        )
+    nlayer = pressure_boundaries.shape[0] - 1
+    if temperature.ndim != 1 or temperature.shape[0] != nlayer:
+        raise ValueError("temperature must have shape (Nlayer,).")
+    if mean_molecular_weight.ndim not in (0, 1) or (
+        mean_molecular_weight.ndim == 1
+        and mean_molecular_weight.shape[0] != nlayer
+    ):
+        raise ValueError(
+            "mean_molecular_weight must be scalar or have shape (Nlayer,)."
+        )
+    if radius_bottom.ndim != 0:
+        raise ValueError("radius_bottom must be scalar.")
+    if gravity_bottom.ndim != 0:
+        raise ValueError("gravity_bottom must be scalar.")
+
+    dtype = jnp.result_type(
+        pressure_boundaries,
+        temperature,
+        mean_molecular_weight,
+        radius_bottom,
+        gravity_bottom,
+        1.0,
+    )
+    pressure_boundaries = pressure_boundaries.astype(dtype)
+    temperature = temperature.astype(dtype)
+    mean_molecular_weight = jnp.broadcast_to(
+        mean_molecular_weight.astype(dtype), temperature.shape
+    )
+    radius_bottom = radius_bottom.astype(dtype)
+    gravity_bottom = gravity_bottom.astype(dtype)
+    log_pressure_ratio = jnp.diff(jnp.log(pressure_boundaries))
+
+    def integrate_layer(radius_lower, layer):
+        temperature_layer, mean_molecular_weight_layer, log_pressure_layer = (
+            layer
+        )
+        gravity_lower = gravity_bottom * (radius_bottom / radius_lower) ** 2
+        scale_height_lower = pressure_scale_height(
+            gravity_lower,
+            temperature_layer,
+            mean_molecular_weight_layer,
+        )
+        if hydrostatic_scheme == "variable_gravity":
+            radius_upper = radius_lower / (
+                1.0
+                - scale_height_lower * log_pressure_layer / radius_lower
+            )
+        else:
+            radius_upper = (
+                radius_lower + scale_height_lower * log_pressure_layer
+            )
+        return radius_upper, radius_upper
+
+    _, radius_upper = scan(
+        integrate_layer,
+        radius_bottom,
+        (temperature, mean_molecular_weight, log_pressure_ratio),
+        reverse=True,
+    )
+    radius_boundaries = jnp.append(radius_upper, radius_bottom)
+    gravity_boundaries = gravity_bottom * (
+        radius_bottom / radius_boundaries
+    ) ** 2
     return radius_boundaries, gravity_boundaries
 
 
