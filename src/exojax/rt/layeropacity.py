@@ -128,7 +128,18 @@ def single_layer_optical_depth_CIA(
 
 
 def layer_optical_depth_CIA(
-    nu_grid, temperature, pressure, dParr, vmr1arr, vmr2arr, mmw, g, nucia, tcia, logac
+    nu_grid,
+    temperature,
+    pressure,
+    dParr,
+    vmr1arr,
+    vmr2arr,
+    mmw,
+    g,
+    nucia,
+    tcia,
+    logac,
+    wavenumber_interpolation="interp",
 ):
     """dtau of the CIA continuum.
 
@@ -147,6 +158,8 @@ def layer_optical_depth_CIA(
         nucia (array): wavenumber array for CIA
         tcia (array): temperature array for CIA
         logac: log10(absorption coefficient of CIA)
+        wavenumber_interpolation: CIA interpolation method, ``"interp"`` or
+            ``"digitize"``.
 
     Returns:
         2D array: optical depth matrix, dtau  [N_layer, N_nus]
@@ -159,7 +172,14 @@ def layer_optical_depth_CIA(
     dtauc = (
         10
         ** (
-            interp_logacia_matrix(temperature, nu_grid, nucia, tcia, logac)
+            interp_logacia_matrix(
+                temperature,
+                nu_grid,
+                nucia,
+                tcia,
+                logac,
+                wavenumber_interpolation,
+            )
             + lognarr1[:, None]
             + lognarr2[:, None]
             + logkB

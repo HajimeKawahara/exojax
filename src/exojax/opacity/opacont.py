@@ -41,30 +41,40 @@ class OpaCIA(OpaCont):
         method: Always "cia" for this calculator
         cdb: CIA continuum database instance
         nu_grid: Wavenumber grid in cm⁻¹
+        wavenumber_interpolation: CIA interpolation method
         ready: Whether the calculator is ready for computation
     """
 
     def __init__(
-        self, 
-        cdb, 
-        nu_grid: Union[np.ndarray, jnp.ndarray]
+        self,
+        cdb,
+        nu_grid: Union[np.ndarray, jnp.ndarray],
+        wavenumber_interpolation: str = "interp",
     ) -> None:
         """Initialize opacity calculator for CIA.
 
         Args:
             cdb: Continuum database containing CIA coefficients
             nu_grid: Wavenumber grid in cm⁻¹
+            wavenumber_interpolation: ``"interp"`` interpolates linear CIA
+                coefficients in temperature and wavenumber. ``"digitize"``
+                reproduces the legacy interpolation.
             
         Raises:
-            ValueError: If nu_grid is empty or invalid
+            ValueError: If nu_grid or wavenumber_interpolation is invalid
         """
         if len(nu_grid) == 0:
             raise ValueError("nu_grid cannot be empty")
+        if wavenumber_interpolation not in ("interp", "digitize"):
+            raise ValueError(
+                "wavenumber_interpolation must be 'interp' or 'digitize'."
+            )
             
         self.method = "cia"
         self.warning = True
         self.nu_grid = nu_grid
         self.cdb = cdb
+        self.wavenumber_interpolation = wavenumber_interpolation
         self.ready = True
 
     def logacia_vector(self, T: float) -> jnp.ndarray:
@@ -77,7 +87,12 @@ class OpaCIA(OpaCont):
             Logarithm of absorption coefficient [Nnus] at T in units of cm⁵
         """
         return interp_logacia_vector(
-            T, self.nu_grid, self.cdb.nucia, self.cdb.tcia, self.cdb.logac
+            T,
+            self.nu_grid,
+            self.cdb.nucia,
+            self.cdb.tcia,
+            self.cdb.logac,
+            self.wavenumber_interpolation,
         )
 
     def logacia_matrix(
@@ -93,7 +108,12 @@ class OpaCIA(OpaCont):
             Logarithm of absorption coefficient [Nlayer, Nnus] in units of cm⁵
         """
         return interp_logacia_matrix(
-            temperatures, self.nu_grid, self.cdb.nucia, self.cdb.tcia, self.cdb.logac
+            temperatures,
+            self.nu_grid,
+            self.cdb.nucia,
+            self.cdb.tcia,
+            self.cdb.logac,
+            self.wavenumber_interpolation,
         )
 
 
