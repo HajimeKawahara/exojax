@@ -9,6 +9,180 @@ from exojax.database.hminus  import log_hminus_continuum, log_hminus_continuum_s
 from exojax.utils.constants import bar_cgs, logkB, logm_ucgs, opacity_factor
 
 
+def _geometric_opacity_array(coefficient, number_of_layers, name):
+    """Add a layer axis to a common spectrum or validate a layered array."""
+    coefficient = jnp.asarray(coefficient)
+    if coefficient.ndim == 0:
+        raise ValueError(f"{name} must have at least one dimension.")
+    if coefficient.ndim == 1:
+        return coefficient[None, :]
+    if coefficient.shape[0] != number_of_layers:
+        raise ValueError(
+            f"The leading axis of {name} must have length "
+            f"{number_of_layers}, but has length {coefficient.shape[0]}."
+        )
+    return coefficient
+
+
+def _geometric_layer_profile(profile, number_of_layers, target_ndim, name):
+    """Reshape a scalar or one-dimensional layer profile for broadcasting."""
+    profile = jnp.asarray(profile)
+    if profile.ndim == 0:
+        return profile
+    if profile.ndim != 1 or profile.shape[0] != number_of_layers:
+        raise ValueError(
+            f"{name} must be a scalar or a one-dimensional array of length "
+            f"{number_of_layers}."
+        )
+    return profile.reshape((number_of_layers,) + (1,) * (target_ndim - 1))
+
+
+def _geometric_opacity_inputs(coefficient, layer_height, coefficient_name):
+    """Validate the common shape contract for geometric optical depth."""
+    layer_height = jnp.asarray(layer_height)
+    if layer_height.ndim != 1:
+        raise ValueError("layer_height must be a one-dimensional array.")
+    if layer_height.shape[0] == 0:
+        raise ValueError("layer_height must contain at least one layer.")
+
+    coefficient = _geometric_opacity_array(
+        coefficient, layer_height.shape[0], coefficient_name
+    )
+    layer_height = _geometric_layer_profile(
+        layer_height,
+        layer_height.shape[0],
+        coefficient.ndim,
+        "layer_height",
+    )
+    return coefficient, layer_height
+
+
+def layer_optical_depth_from_cross_section(
+    cross_section, absorber_number_density, layer_height
+):
+    """Compute geometric layer optical depth from an absorption cross section.
+
+    This function evaluates ``dtau = sigma * n_absorber * dz`` in cgs units.
+    A one-dimensional cross section is interpreted as a common spectral vector
+    and is broadcast over all layers. Arrays with two or more dimensions must
+    have the layer axis first, for example ``(Nlayer, Nnu)`` for line-by-line
+    opacity or ``(Nlayer, Ng, Nband)`` for correlated-k opacity.
+
+    Args:
+        cross_section: Absorption cross section in cm2. Its shape is ``(Nnu,)``
+            or ``(Nlayer, ...)``.
+        absorber_number_density: Absorber number density in cm-3, provided as a
+            scalar or an array with shape ``(Nlayer,)``.
+        layer_height: Geometric layer thickness in cm with shape ``(Nlayer,)``.
+
+    Returns:
+        Dimensionless layer optical depth with shape ``(Nlayer, ...)``.
+    """
+    cross_section, layer_height = _geometric_opacity_inputs(
+        cross_section, layer_height, "cross_section"
+    )
+    absorber_number_density = _geometric_layer_profile(
+        absorber_number_density,
+        layer_height.shape[0],
+        cross_section.ndim,
+        "absorber_number_density",
+    )
+    return cross_section * absorber_number_density * layer_height
+
+
+def layer_optical_depth_from_log_cia(
+    log_cia_coefficient, number_density_1, number_density_2, layer_height
+):
+    """Compute geometric CIA optical depth without linearizing the coefficient.
+
+    The calculation is performed as
+    ``log10(dtau) = log10(k_cia) + log10(n1) + log10(n2) + log10(dz)``.
+    Keeping the CIA coefficient in logarithmic form avoids an intermediate
+    underflow in single precision. No symmetry factor is applied when the two
+    collision partners are identical.
+
+    Args:
+        log_cia_coefficient: Base-10 logarithm of the CIA coefficient in cm5.
+            Its shape is ``(Nnu,)`` or ``(Nlayer, ...)``.
+        number_density_1: Number density of the first collision partner in
+            cm-3, provided as a scalar or an array with shape ``(Nlayer,)``.
+        number_density_2: Number density of the second collision partner in
+            cm-3, provided as a scalar or an array with shape ``(Nlayer,)``.
+        layer_height: Geometric layer thickness in cm with shape ``(Nlayer,)``.
+
+    Returns:
+        Dimensionless layer optical depth with shape ``(Nlayer, ...)``. A zero
+        number density or zero layer height produces exactly zero.
+    """
+    log_cia_coefficient, layer_height = _geometric_opacity_inputs(
+        log_cia_coefficient, layer_height, "log_cia_coefficient"
+    )
+    number_of_layers = layer_height.shape[0]
+    number_density_1 = _geometric_layer_profile(
+        number_density_1,
+        number_of_layers,
+        log_cia_coefficient.ndim,
+        "number_density_1",
+    )
+    number_density_2 = _geometric_layer_profile(
+        number_density_2,
+        number_of_layers,
+        log_cia_coefficient.ndim,
+        "number_density_2",
+    )
+
+    zero_optical_depth = (
+        (number_density_1 == 0)
+        | (number_density_2 == 0)
+        | (layer_height == 0)
+    )
+    safe_number_density_1 = jnp.where(
+        number_density_1 == 0, jnp.ones_like(number_density_1), number_density_1
+    )
+    safe_number_density_2 = jnp.where(
+        number_density_2 == 0, jnp.ones_like(number_density_2), number_density_2
+    )
+    safe_layer_height = jnp.where(
+        layer_height == 0, jnp.ones_like(layer_height), layer_height
+    )
+    log_optical_depth = (
+        log_cia_coefficient
+        + jnp.log10(safe_number_density_1)
+        + jnp.log10(safe_number_density_2)
+        + jnp.log10(safe_layer_height)
+    )
+    log_optical_depth = jnp.where(
+        zero_optical_depth,
+        jnp.full_like(log_optical_depth, -jnp.inf),
+        log_optical_depth,
+    )
+    return jnp.power(
+        jnp.asarray(10.0, dtype=log_optical_depth.dtype), log_optical_depth
+    )
+
+
+def layer_optical_depth_from_extinction(extinction_coefficient, layer_height):
+    """Compute geometric layer optical depth from an extinction coefficient.
+
+    This function evaluates ``dtau = alpha * dz`` with the extinction
+    coefficient in cm-1 and the layer thickness in cm. A one-dimensional
+    coefficient is interpreted as a common spectral vector; layered arrays
+    must have the layer axis first.
+
+    Args:
+        extinction_coefficient: Extinction coefficient in cm-1. Its shape is
+            ``(Nnu,)`` or ``(Nlayer, ...)``.
+        layer_height: Geometric layer thickness in cm with shape ``(Nlayer,)``.
+
+    Returns:
+        Dimensionless layer optical depth with shape ``(Nlayer, ...)``.
+    """
+    extinction_coefficient, layer_height = _geometric_opacity_inputs(
+        extinction_coefficient, layer_height, "extinction_coefficient"
+    )
+    return extinction_coefficient * layer_height
+
+
 def single_layer_optical_depth(dpressure, xsv, mixing_ratio, mass, gravity):
     """opacity for a single layer (delta tau) from cross section vector, molecular line/Rayleigh scattering (for opart)
 
