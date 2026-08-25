@@ -1,7 +1,7 @@
 DiffGrid
 ========
 
-`Last update: August 8th (2026)`
+`Last update: August 25th (2026)`
 
 **DiffGrid** is a pressure-layer-aligned opacity table for repeated,
 differentiable spectral calculations.  It is useful when the atmospheric
@@ -143,20 +143,49 @@ Checking interpolation accuracy
 -------------------------------
 
 The required node density depends on the molecule, spectral range,
-temperature range, and data precision.  Compare DiffGrid with its teacher at
-representative profiles, including the edges of the intended parameter range.
+temperature range, and data precision. Compare DiffGrid with its teacher away
+from the stored nodes, where interpolation error can be measured. The helper
+below returns the temperature at the midpoint of every interval in
+:math:`1/T`; these are harmonic, not arithmetic, temperature means.
 
 .. code-block:: python
 
-    expected = teacher.xsmatrix(temperature, art.pressure)
-    actual = opa.xsmatrix(temperature)
-
-    comparison_floor = 1.0e-35
-    log10_error = jnp.abs(
-        jnp.log10(jnp.maximum(actual, comparison_floor))
-        - jnp.log10(jnp.maximum(expected, comparison_floor))
+    from exojax.opacity.diffgrid.diagnostics import (
+        compare_diffgrid_with_teacher,
+        diffgrid_interval_midpoint_temperatures,
     )
-    print("maximum absolute log10 error:", float(jnp.max(log10_error)))
+
+    validation_temperatures = diffgrid_interval_midpoint_temperatures(opa)
+    for validation_temperature in validation_temperatures:
+        validation_profile = np.full(
+            art.pressure.shape,
+            validation_temperature,
+        )
+        summary = compare_diffgrid_with_teacher(
+            opa,
+            teacher,
+            validation_profile,
+            quantiles=(0.99,),
+        )
+        print(
+            validation_temperature,
+            summary.absolute_log_cross_section_error_quantiles[0],
+            summary.maximum_absolute_log_cross_section_error,
+        )
+
+The reported error is the absolute natural-log cross-section ratio after the
+cross-section floor stored by ``opa`` has been applied to both calculators.
+For example, an error of 0.05 corresponds to a multiplicative ratio of about
+1.05. Quantiles combine every pressure-layer and wavenumber entry. The
+diagnostic reports numbers only; the application chooses its thresholds and
+decides whether to reject a table.
+
+``compare_diffgrid_with_teacher`` is a host-side archive-build diagnostic, not
+an operation for a JIT-compiled retrieval. It processes one temperature
+profile at a time, uses a reusable JAX kernel for the pointwise error, and
+transfers that one error matrix to the host for exact NumPy quantiles. Looping
+over profiles as above therefore avoids constructing a large
+``(nprofile, nlayer, nnu)`` batch.
 
 A stronger application-level test propagates both matrices through the full
 forward model and compares the spectral difference with the observational
