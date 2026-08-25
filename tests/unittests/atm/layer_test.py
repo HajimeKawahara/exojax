@@ -5,13 +5,15 @@ import jax.numpy as jnp
 import pytest
 import numpy as np
 from exojax.atm.atmprof import hydrostatic_radius_profile
+from exojax.atm.atmprof import hydrostatic_radius_profile_ideal_gas
+from exojax.atm.atmprof import normalized_layer_height
 from exojax.atm.atmprof import pressure_boundary_logspace
 from exojax.atm.atmprof import pressure_layer_logspace
 from exojax.atm.atmprof import pressure_layer_logspace_from_boundaries
 from exojax.atm.atmprof import pressure_upper_logspace
 from exojax.atm.atmprof import pressure_lower_logspace
 from exojax.atm.atmprof import pressure_scale_height
-from exojax.utils.constants import G, bar_cgs
+from exojax.utils.constants import G, bar_cgs, kB, m_u
 
 
 @contextmanager
@@ -472,6 +474,191 @@ def test_hydrostatic_radius_profile_supports_jit_and_grad():
     assert jnp.isfinite(radius)
     assert jnp.all(jnp.isfinite(gradient))
     assert jnp.all(gradient < 0.0)
+
+
+@pytest.mark.parametrize(
+    "scheme", ["variable_gravity", "layer_constant_gravity"]
+)
+def test_hydrostatic_radius_profile_ideal_gas_nonuniform_manual(scheme):
+    pressure_boundaries = np.array([1.0e-5, 3.0e-4, 2.0e-2, 1.0])
+    temperature = np.array([500.0, 800.0, 1200.0])
+    mean_molecular_weight = np.array([2.3, 5.0, 18.0])
+    radius_bottom = 7.0e9
+    gravity_bottom = 2500.0
+
+    expected_radius = np.empty_like(pressure_boundaries)
+    expected_radius[-1] = radius_bottom
+    for index in range(len(temperature) - 1, -1, -1):
+        radius_lower = expected_radius[index + 1]
+        gravity_lower = gravity_bottom * (radius_bottom / radius_lower) ** 2
+        scale_height = (
+            kB
+            * temperature[index]
+            / (m_u * mean_molecular_weight[index] * gravity_lower)
+        )
+        log_pressure_ratio = np.log(
+            pressure_boundaries[index + 1] / pressure_boundaries[index]
+        )
+        if scheme == "variable_gravity":
+            expected_radius[index] = radius_lower / (
+                1.0 - scale_height * log_pressure_ratio / radius_lower
+            )
+        else:
+            expected_radius[index] = (
+                radius_lower + scale_height * log_pressure_ratio
+            )
+    expected_gravity = gravity_bottom * (
+        radius_bottom / expected_radius
+    ) ** 2
+
+    radius, gravity = hydrostatic_radius_profile_ideal_gas(
+        pressure_boundaries,
+        temperature,
+        mean_molecular_weight,
+        radius_bottom,
+        gravity_bottom,
+        hydrostatic_scheme=scheme,
+    )
+
+    np.testing.assert_allclose(radius, expected_radius, rtol=2.0e-6)
+    np.testing.assert_allclose(gravity, expected_gravity, rtol=2.0e-6)
+    assert radius.shape == pressure_boundaries.shape
+    assert gravity.shape == pressure_boundaries.shape
+    assert radius[-1] == jnp.asarray(radius_bottom, dtype=radius.dtype)
+    assert gravity[-1] == jnp.asarray(gravity_bottom, dtype=gravity.dtype)
+    assert jnp.all(radius[:-1] > radius[1:])
+    assert jnp.all(gravity[:-1] < gravity[1:])
+
+
+def test_hydrostatic_radius_profile_ideal_gas_matches_normalized_height():
+    pressure_boundaries = jnp.logspace(-6.0, 1.0, 9)
+    pressure_decrease_rate = pressure_boundaries[0] / pressure_boundaries[1]
+    temperature = jnp.linspace(450.0, 950.0, 8)
+    mean_molecular_weight = jnp.linspace(2.3, 12.0, 8)
+    radius_bottom = 7.1492e9
+    gravity_bottom = 2478.6
+
+    radius, _ = hydrostatic_radius_profile_ideal_gas(
+        pressure_boundaries,
+        temperature,
+        mean_molecular_weight,
+        radius_bottom,
+        gravity_bottom,
+    )
+    normalized_height, normalized_radius_lower = normalized_layer_height(
+        temperature,
+        pressure_decrease_rate,
+        mean_molecular_weight,
+        radius_bottom,
+        gravity_bottom,
+    )
+
+    np.testing.assert_allclose(
+        radius[1:] / radius_bottom,
+        normalized_radius_lower,
+        rtol=2.0e-6,
+    )
+    np.testing.assert_allclose(
+        radius[:-1] / radius_bottom,
+        normalized_radius_lower + normalized_height,
+        rtol=2.0e-6,
+    )
+
+
+def test_hydrostatic_radius_profile_ideal_gas_scalar_mmw_one_layer():
+    pressure_boundaries = jnp.array([0.1, 1.0])
+    temperature = jnp.array([700.0])
+    radius_bottom = 6.0e9
+    gravity_bottom = 1000.0
+
+    radius_scalar, gravity_scalar = hydrostatic_radius_profile_ideal_gas(
+        pressure_boundaries,
+        temperature,
+        2.3,
+        radius_bottom,
+        gravity_bottom,
+    )
+    radius_profile, gravity_profile = hydrostatic_radius_profile_ideal_gas(
+        pressure_boundaries,
+        temperature,
+        jnp.array([2.3]),
+        radius_bottom,
+        gravity_bottom,
+    )
+
+    np.testing.assert_allclose(radius_scalar, radius_profile)
+    np.testing.assert_allclose(gravity_scalar, gravity_profile)
+    assert radius_scalar[-1] == jnp.asarray(
+        radius_bottom, dtype=radius_scalar.dtype
+    )
+    assert gravity_scalar[-1] == jnp.asarray(
+        gravity_bottom, dtype=gravity_scalar.dtype
+    )
+
+
+@pytest.mark.parametrize(
+    "argument,value,error",
+    [
+        ("pressure_boundaries", jnp.ones((2, 2)), "pressure_boundaries"),
+        ("pressure_boundaries", jnp.ones(1), "pressure_boundaries"),
+        ("temperature", jnp.ones(3), "temperature"),
+        ("temperature", jnp.asarray(500.0), "temperature"),
+        ("mean_molecular_weight", jnp.ones(3), "mean_molecular_weight"),
+        ("mean_molecular_weight", jnp.ones((2, 1)), "mean_molecular_weight"),
+        ("radius_bottom", jnp.ones(1), "radius_bottom"),
+        ("gravity_bottom", jnp.ones(1), "gravity_bottom"),
+    ],
+)
+def test_hydrostatic_radius_profile_ideal_gas_rejects_bad_shapes(
+    argument, value, error
+):
+    inputs = {
+        "pressure_boundaries": jnp.array([0.01, 0.1, 1.0]),
+        "temperature": jnp.array([500.0, 700.0]),
+        "mean_molecular_weight": jnp.array([2.3, 2.5]),
+        "radius_bottom": 7.0e9,
+        "gravity_bottom": 2500.0,
+    }
+    inputs[argument] = value
+
+    with pytest.raises(ValueError, match=error):
+        hydrostatic_radius_profile_ideal_gas(**inputs)
+
+
+def test_hydrostatic_radius_profile_ideal_gas_rejects_bad_scheme():
+    with pytest.raises(ValueError, match="Unknown hydrostatic scheme"):
+        hydrostatic_radius_profile_ideal_gas(
+            jnp.array([0.01, 0.1, 1.0]),
+            jnp.array([500.0, 700.0]),
+            2.3,
+            7.0e9,
+            2500.0,
+            hydrostatic_scheme="unknown",
+        )
+
+
+@pytest.mark.parametrize(
+    "scheme", ["variable_gravity", "layer_constant_gravity"]
+)
+def test_hydrostatic_radius_profile_ideal_gas_supports_jit_and_grad(scheme):
+    pressure_boundaries = jnp.array([1.0e-5, 1.0e-2, 1.0])
+    temperature = jnp.array([500.0, 900.0])
+
+    def radius_top(log_temperature_scale):
+        radius, _ = hydrostatic_radius_profile_ideal_gas(
+            pressure_boundaries,
+            temperature * jnp.exp(log_temperature_scale),
+            2.3,
+            7.0e9,
+            2500.0,
+            hydrostatic_scheme=scheme,
+        )
+        return radius[0]
+
+    radius, gradient = jax.jit(jax.value_and_grad(radius_top))(0.0)
+    assert jnp.isfinite(radius)
+    assert jnp.isfinite(gradient)
+    assert gradient > 0.0
 
 
 def test_atmospheric_scale_height_for_isothermal_with_analytic():
