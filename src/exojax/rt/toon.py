@@ -19,10 +19,19 @@ def zetalambda_coeffs(gamma_1, gamma_2):
     Returns:
         _type_: coupling zeta (+), coupling zeta (-), lambda coefficients
     """
-    delta = jnp.sqrt((gamma_1 - gamma_2) / (gamma_1 + gamma_2))
+    gamma_plus = gamma_1 + gamma_2
+    gamma_minus = gamma_1 - gamma_2
+    zero_gamma = gamma_plus == 0.0
+    safe_gamma_plus = jnp.where(zero_gamma, 1.0, gamma_plus)
+    delta_squared = jnp.where(zero_gamma, 1.0, gamma_minus / safe_gamma_plus)
+    delta = jnp.where(zero_gamma, 0.0, jnp.sqrt(delta_squared))
     zeta_plus = 0.5 * (1.0 + delta)
     zeta_minus = 0.5 * (1.0 - delta)
-    lambdan = jnp.sqrt(gamma_1**2 - gamma_2**2)
+    lambda_squared = gamma_minus * gamma_plus
+    zero_lambda = lambda_squared == 0.0
+    lambdan = jnp.where(
+        zero_lambda, 0.0, jnp.sqrt(jnp.where(zero_lambda, 1.0, lambda_squared))
+    )
     return zeta_plus, zeta_minus, lambdan
 
 
@@ -123,7 +132,9 @@ def params_hemispheric_mean(single_scattering_albedo, asymmetric_parameter):
     Returns:
         _type_: gamma_1, gamma_2, mu1
     """
-    gamma_1 = 2.0 - single_scattering_albedo * (1.0 + asymmetric_parameter)
-    gamma_2 = single_scattering_albedo * (1.0 - asymmetric_parameter)
+    absorption = 1.0 - single_scattering_albedo
+    transport = 1.0 - single_scattering_albedo * asymmetric_parameter
+    gamma_1 = transport + absorption
+    gamma_2 = transport - absorption
     mu1 = 0.5
     return gamma_1, gamma_2, mu1

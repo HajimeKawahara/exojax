@@ -101,7 +101,7 @@ class OpaDirect(OpaCalc):
         self._vmap_doppler_sigma = jit(vmap(doppler_sigma, (None, 0, None)))
 
         if self.dbtype == "hitran":
-            self._vmap_qt = vmap(self.mdb.qr_interp, (None, 0, None))
+            self._vmap_qt = vmap(self.mdb.qr_interp_lines, (0, None))
             self._vmap_gamma = jit(vmap(gamma_hitran, (0, 0, 0, None, None, None)))
         elif self.dbtype == "exomol":
             self._vmap_qt = vmap(self.mdb.qr_interp, (0, None))
@@ -134,22 +134,28 @@ class OpaDirect(OpaCalc):
         dbtype = self.mdb.dbtype
 
         if dbtype == "hitran":
-            qt = self.mdb.qr_interp(self.mdb.isotope, T, Tref_original)
+            qt = self.mdb.qr_interp_lines(T, Tref_original)
             gammaL = gamma_hitran(
                 P, T, Pself, self.mdb.n_air, self.mdb.gamma_air, self.mdb.gamma_self
             ) + gamma_natural(self.mdb.A)
+            line_masses = self.mdb.molmass
         elif dbtype == "exomol":
             qt = self.mdb.qr_interp(T, Tref_original)
             gammaL = gamma_exomol(
                 P, T, self.mdb.n_Texp, self.mdb.alpha_ref
             ) + gamma_natural(self.mdb.A)
+            line_masses = self.mdb.molmass
+        elif dbtype == "hydrogen":
+            qt = self.mdb.qr_interp_lines(T, Tref_original)
+            gammaL = gamma_natural(self.mdb.A)
+            line_masses = self.mdb.line_masses
         else:
             raise ValueError(
                 f"Unsupported database type for xsvector: '{dbtype}'. "
-                "Supported types: hitran, exomol"
+                "Supported types: hitran, exomol, hydrogen"
             )
 
-        sigmaD = doppler_sigma(self.mdb.nu_lines, T, self.mdb.molmass)
+        sigmaD = doppler_sigma(self.mdb.nu_lines, T, line_masses)
         Sij = line_strength(
             T, self.mdb.logsij0, self.mdb.nu_lines, self.mdb.elower, qt, Tref_original
         )
@@ -183,7 +189,7 @@ class OpaDirect(OpaCalc):
         dbtype = self.mdb.dbtype
 
         if dbtype == "hitran":
-            qt = self._vmap_qt(self.mdb.isotope, Tarr, Tref_original)
+            qt = self._vmap_qt(Tarr, Tref_original)
             gammaLM = self._vmap_gamma(
                 Parr,
                 Tarr,
@@ -218,6 +224,22 @@ class OpaDirect(OpaCalc):
             )
             sigmaDM = self._vmap_doppler_sigma(
                 self.mdb.nu_lines, Tarr, self.mdb.molmass
+            )
+        elif dbtype == "hydrogen":
+            qt = vmap(self.mdb.qr_interp_lines, (0, None))(Tarr, Tref_original)
+            gammaLM = gamma_natural(self.mdb.A)[None, :] + jnp.zeros(
+                (len(Tarr), 1)
+            )
+            SijM = self._vmap_line_strength(
+                Tarr,
+                self.mdb.logsij0,
+                self.mdb.nu_lines,
+                self.mdb.elower,
+                qt,
+                Tref_original,
+            )
+            sigmaDM = self._vmap_doppler_sigma(
+                self.mdb.nu_lines, Tarr, self.mdb.line_masses
             )
         elif dbtype in ("kurucz", "vald"):
             qt_284 = vmap(interp_QT_284, (0, None, None))(
@@ -274,7 +296,7 @@ class OpaDirect(OpaCalc):
                 self.mdb.logsij0,
                 self.mdb.nu_lines,
                 self.mdb.elower,
-                qr_K.T,
+                qr_K,
                 Tref_original,
             )
             sigmaDM = self._vmap_doppler_sigma(
@@ -283,7 +305,7 @@ class OpaDirect(OpaCalc):
         else:
             raise ValueError(
                 f"Unsupported database type for xsmatrix: '{dbtype}'. "
-                "Supported types: hitran, exomol, kurucz, vald"
+                "Supported types: hitran, exomol, hydrogen, kurucz, vald"
             )
 
         return xsmatrix_lpf(numatrix, sigmaDM, gammaLM, SijM)

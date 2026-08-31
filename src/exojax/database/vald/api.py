@@ -9,6 +9,8 @@ from exojax.database.core_atom.io import load_atomicdata
 from exojax.database.core_atom.io import load_ionization_energies
 from exojax.database.core_atom.io import pick_ionE
 from exojax.database.core_atom.io import PeriodicTable
+from exojax.database.core_atom.io import _normalize_vald_engine
+from exojax.database.core_atom.io import _vald_cache_path
 from exojax.database.core_atom.io import read_ExAll
 from exojax.database.core_atom.io import pickup_param
 
@@ -26,7 +28,30 @@ explanation_states = "Note: Couldn't find the hdf5 format. We convert data to th
 explanation_trans = "Note: Couldn't find the hdf5 format. We convert data to the hdf5 format. After the second time, it will become much faster."
 warning_old_exojax = "It seems that the hdf5 file for the transition file was created using the old version of exojax<1.1. Try again after removing "
 
-warnings.warn("moldb module will be renenamed to adb in future.", FutureWarning)
+
+def _load_vald_dataframe(vald3_file, engine):
+    """Load a VALD line list from a backend-specific cache or create it."""
+    engine = _normalize_vald_engine(engine)
+    cache_path = _vald_cache_path(vald3_file, engine)
+
+    if cache_path.exists():
+        if engine == "vaex":
+            import vaex
+
+            return vaex.open(cache_path).to_pandas_df()
+
+        import pandas as pd
+
+        return pd.read_hdf(cache_path, key="dat")
+
+    print(
+        f"Note: Couldn't find the {engine} cache. "
+        f"Converting the VALD line list to {cache_path.name}."
+    )
+    dataframe = read_ExAll(vald3_file, engine=engine)
+    if engine == "vaex":
+        return dataframe.to_pandas_df()
+    return dataframe
 
 
 class AdbVald:
@@ -60,7 +85,9 @@ class AdbVald:
         QTref_284 (jnp array): partition function at the reference temperature Q(Tref), for 284 species
 
         Note:
-            For the first time to read the VALD line list, it is converted to HDF/vaex. After the second-time, we use the HDF5 format with vaex instead.
+            On first use, the VALD line list is converted to a backend-specific
+            HDF5 cache. PyTables uses ``.h5`` and vaex uses ``.hdf5``. Later
+            reads reuse that cache.
     """
 
     def __init__(
@@ -72,7 +99,7 @@ class AdbVald:
         Irwin=False,
         gpu_transfer=True,
         vmr_fraction=None,
-        engine="vaex",
+        engine="pytables",
     ):
         """Atomic database for VALD3 "Long format".
 
@@ -84,7 +111,8 @@ class AdbVald:
             Irwin: if True(1), the partition functions of Irwin1981 is used, otherwise those of Barklem&Collet2016
             gpu_transfer: tranfer data to jnp.array?
             vmr_fraction: list of the vmr fractions of hydrogen, H2 molecule, helium. if None, typical quasi-"solar-fraction" will be applied.
-            engine: "vaex" or "pandas"
+            engine: ``"pytables"`` (default), its legacy alias ``"pandas"``,
+                or the optional ``"vaex"`` backend.
 
         Note:
             (written with reference to moldb.py, but without using feather format)
@@ -97,6 +125,7 @@ class AdbVald:
         self.nurange = [np.min(nurange), np.max(nurange)]
         self.margin = margin
         self.crit = crit
+        self.engine = _normalize_vald_engine(engine)
         if vmr_fraction is None:
             self.vmrH, self.vmrHe, self.vmrHH = [
                 0.0,
@@ -108,22 +137,7 @@ class AdbVald:
 
         # load vald file
         print("Reading VALD file")
-        if self.vald3_file.with_suffix(".hdf5").exists() and engine == "vaex":
-            import vaex
-
-            valdd = vaex.open(self.vald3_file.with_suffix(".hdf5"))
-        elif self.vald3_file.with_suffix(".hdf5").exists() and engine == "pytables":
-            import pandas as pd
-
-            valdd = pd.read_hdf(self.vald3_file.with_suffix(".hdf5"))
-        else:
-            print(
-                "Note: Couldn't find the hdf5 format. We convert data to the hdf5 format."
-            )
-            valdd = read_ExAll(
-                self.vald3_file, engine=engine
-            )  # vaex.DataFrame
-        pvaldd = valdd.to_pandas_df()  # pandas.DataFrame
+        pvaldd = _load_vald_dataframe(self.vald3_file, self.engine)
 
         # compute additional transition parameters
         (
@@ -179,22 +193,22 @@ class AdbVald:
         # Compile atomic-specific data for each absorption line of interest
         ipccd = load_atomicdata()
         self.solarA = jnp.array(
-            list(map(lambda x: ipccd[ipccd["ielem"] == x].iat[0, 4], self.ielem))
+            list(map(lambda x: ipccd[ipccd["ielem"] == x].iat[0, 4], self._ielem))
         )
         self.atomicmass = jnp.array(
-            list(map(lambda x: ipccd[ipccd["ielem"] == x].iat[0, 5], self.ielem))
+            list(map(lambda x: ipccd[ipccd["ielem"] == x].iat[0, 5], self._ielem))
         )
         df_ionE = load_ionization_energies()
         self.ionE = jnp.array(
             list(
                 map(
                     pick_ionE,
-                    self.ielem,
-                    self.iion,
+                    self._ielem,
+                    self._iion,
                     [
                         df_ionE,
                     ]
-                    * len(self.ielem),
+                    * len(self._ielem),
                 )
             )
         )
@@ -390,6 +404,7 @@ class AdbSepVald:
         gQT_284species (jnp array): partition function grid of 284 species
         T_gQT (jnp array): temperatures in the partition function grid
         QTref_284 (jnp array): partition function at the reference temperature Q(Tref), for 284 species
+        Tref (float): reference temperature
     """
 
     def __init__(self, adb):
@@ -422,3 +437,4 @@ class AdbSepVald:
         self.gQT_284species = adb.gQT_284species
         self.T_gQT = adb.T_gQT
         self.QTref_284 = adb.QTref_284
+        self.Tref = adb.Tref

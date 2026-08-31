@@ -103,8 +103,11 @@ you need to set some margin to avoid to use the edges in the analysis.
 
 
 We confirmed that the rotation convolution was applied to the spectrum.
-The parameters of u1 and u2 are the quadratic Limb darkening
-coefficients.
+The parameters ``u1`` and ``u2`` follow the standard quadratic
+limb-darkening law,
+:math:`I(\mu)/I(1) = 1 - u_1(1 - \mu) - u_2(1 - \mu)^2`.
+The alternative Gimenez N=2 law is available through
+``rotkernel_Gimenez``.
 
 .. code:: ipython3
 
@@ -121,7 +124,7 @@ coefficients.
 .. image:: Rigid_Rotation_files/Rigid_Rotation_14_0.png
 
 
-We can also apply a Gaussian covolution and velocity shift to the
+We can also apply a Gaussian convolution and velocity shift to the
 spectrum. It should be noted that beta is the standard deviation of a
 Gaussian.
 
@@ -147,5 +150,4 @@ Gaussian.
 
 
 .. image:: Rigid_Rotation_files/Rigid_Rotation_17_0.png
-
 

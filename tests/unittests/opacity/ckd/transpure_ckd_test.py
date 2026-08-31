@@ -19,7 +19,11 @@ class TestArtTransPureCKD:
         self.mdb = mock_mdbExomol("H2O")
 
         self.base_art = ArtTransPure(
-            pressure_top=1.0e-8, pressure_btm=1.0e2, nlayer=50, integration="simpson"
+            pressure_top=1.0e-8,
+            pressure_btm=1.0e2,
+            nlayer=50,
+            integration="simpson",
+            nu_grid=nu_grid,
         )
 
         self.Tarr = np.linspace(1000.0, 1500.0, 50)

@@ -82,8 +82,7 @@ Then, compute the Lorentz gamma factor (pressure+natural broadening)
 
 where the pressure broadning
 
-$:raw-latex:`\gamma`^p_L = :raw-latex:`\alpha`\ *{ref} ( T/T*\ {ref}
-)^{-n\_{texp}} ( P/P\_{ref}), $
+``gamma_L^p = alpha_ref (T/T_ref)^(-n_texp) (P/P_ref)``
 
 and the natural broadening
 

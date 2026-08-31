@@ -28,16 +28,26 @@ def E1(x):
     C3 = 21.0996530827
     C4 = 3.9584969228
 
-    x2 = x**2
-    x3 = x**3
-    x4 = x**4
-    x5 = x**5
-    ep1A = -jnp.log(x) + A0 + A1 * x + A2 * x2 + A3 * x3 + A4 * x4 + A5 * x5
+    # Branch-local inputs keep the inactive expression from contaminating autodiff.
+    use_small_x = x <= 1.0
+    x_small = jnp.where(use_small_x, x, 1.0)
+    x_large = jnp.where(use_small_x, 1.0, x)
+
+    x2 = x_small**2
+    x3 = x_small**3
+    x4 = x_small**4
+    x5 = x_small**5
+    ep1A = -jnp.log(x_small) + A0 + A1 * x_small + A2 * x2 + A3 * x3 + A4 * x4 + A5 * x5
+
+    z = 1.0 / x_large
+    z2 = z**2
+    z3 = z**3
+    z4 = z**4
     ep1B = (
-        jnp.exp(-x)
-        / x
-        * (x4 + B1 * x3 + B2 * x2 + B3 * x + B4)
-        / (x4 + C1 * x3 + C2 * x2 + C3 * x + C4)
+        jnp.exp(-x_large)
+        * z
+        * (1.0 + B1 * z + B2 * z2 + B3 * z3 + B4 * z4)
+        / (1.0 + C1 * z + C2 * z2 + C3 * z3 + C4 * z4)
     )
-    ep = jnp.where(x <= 1.0, ep1A, ep1B)
+    ep = jnp.where(use_small_x, ep1A, ep1B)
     return ep

@@ -1,12 +1,25 @@
 import jax.numpy as jnp
 from exojax.rt.common import ArtCommon
 from exojax.rt.planck import piB, piBarr
-from exojax.rt.rtransfer import rtrun_reflect_fluxadding_toonhm, setrt_toonhm
-from exojax.utils.indexing import get_smooth_index
+from exojax.rt.rtransfer import (
+    rtrun_reflect_fluxadding_toonhm,
+    setrt_toonhm,
+    setrt_toonhm_with_absorption,
+)
 from exojax.rt.common import ArtCommon
 
 import jax.numpy as jnp
 from jax.lax import scan
+
+
+def _surface_optical_depth(dtau, pressure_boundary, pressure_surface):
+    """Integrate layer optical depths using linear-pressure fractions."""
+    layer_fraction = jnp.clip(
+        (pressure_surface - pressure_boundary[:-1]) / jnp.diff(pressure_boundary),
+        0.0,
+        1.0,
+    )
+    return jnp.sum(dtau * layer_fraction[:, jnp.newaxis], axis=0)
 
 
 class ArtAbsPure(ArtCommon):
@@ -50,15 +63,8 @@ class ArtAbsPure(ArtCommon):
         if mu_out is not None:
             factor = factor + 1.0 / mu_out
 
-        logk = jnp.log10(self.pressure_decrease_rate)
-        logp_btm = jnp.log10(self.pressure) + (self.reference_point - 1.0) * logk
-        logp_surface = jnp.log10(pressure_surface)
-        smooth_index = get_smooth_index(logp_btm, logp_surface)
-        ind = smooth_index.astype(int)
-        res = smooth_index - jnp.floor(smooth_index)
-        stepfunc = jnp.heaviside(logp_surface - logp_btm, 0.5)
-        tau_opaque = (
-            jnp.sum(dtau * stepfunc[:, jnp.newaxis], axis=0) + dtau[ind, :] * res
+        tau_opaque = _surface_optical_depth(
+            dtau, self.pressure_boundary, pressure_surface
         )
         trans = jnp.exp(-factor * tau_opaque)
 
@@ -93,17 +99,8 @@ class ArtAbsPure(ArtCommon):
         # Reshape dtau_ckd to 2D for calculations
         dtau_2d = dtau_ckd.reshape((nlayer, Ng * Nbands))
         
-        # Compute absorption using same logic as standard run method
-        logk = jnp.log10(self.pressure_decrease_rate)
-        logp_btm = jnp.log10(self.pressure) + (self.reference_point - 1.0) * logk
-        logp_surface = jnp.log10(pressure_surface)
-        smooth_index = get_smooth_index(logp_btm, logp_surface)
-        ind = smooth_index.astype(int)
-        res = smooth_index - jnp.floor(smooth_index)
-        stepfunc = jnp.heaviside(logp_surface - logp_btm, 0.5)
-        
-        tau_opaque = (
-            jnp.sum(dtau_2d * stepfunc[:, jnp.newaxis], axis=0) + dtau_2d[ind, :] * res
+        tau_opaque = _surface_optical_depth(
+            dtau_2d, self.pressure_boundary, pressure_surface
         )
         trans_2d = jnp.exp(-factor * tau_opaque)
         spectrum_2d = trans_2d * incoming_flux_2d
@@ -451,7 +448,7 @@ class OpartReflectPure(ArtCommon):
         # rs_bottom = (refectivity_bottom, source_bottom)
         source_bottom = jnp.zeros_like(self.nu_grid)
         rs_bottom = [reflectivity_bottom, source_bottom]
-        rs, _ = scan(layer_update_function, rs_bottom, layer_params)
+        rs, _ = scan(layer_update_function, rs_bottom, layer_params, reverse=True)
         return rs[0] * incoming_flux + rs[1]
 
     def run(self, opalayer, layer_params, flbl):
@@ -496,10 +493,19 @@ class OpartReflectEmis(ArtCommon):
         source_vector = piB(temparature, self.nu_grid)
         # -------------------------------------------------
         dtau, single_scattering_albedo, asymmetric_parameter = self.opalayer(params)
-        trans_coeff_i, scat_coeff_i, pihatB_i, _, _, _ = setrt_toonhm(
-            dtau, single_scattering_albedo, asymmetric_parameter, source_vector
+        toon_coeffs = setrt_toonhm_with_absorption(
+            dtau,
+            single_scattering_albedo,
+            asymmetric_parameter,
+            source_vector,
         )
-        denom = 1.0 - scat_coeff_i * Rphat_prev
+        trans_coeff_i, scat_coeff_i, absorption_coeff_i, reduced_piB_i = toon_coeffs[:4]
+        pihatB_i = absorption_coeff_i * reduced_piB_i
+        non_scattering_coeff_i = trans_coeff_i + absorption_coeff_i
+        denom = (
+            non_scattering_coeff_i
+            + scat_coeff_i * (1.0 - Rphat_prev)
+        )
         Sphat_each = (
             pihatB_i + trans_coeff_i * (Sphat_prev + pihatB_i * Rphat_prev) / denom
         )
@@ -528,7 +534,7 @@ class OpartReflectEmis(ArtCommon):
             array: flux [Nnus]
         """
         rs_bottom = [reflectivity_bottom, source_bottom]
-        rs, _ = scan(layer_update_function, rs_bottom, layer_params)
+        rs, _ = scan(layer_update_function, rs_bottom, layer_params, reverse=True)
         return rs[0] * incoming_flux + rs[1]
 
     def run(self, opalayer, layer_params, flbl):

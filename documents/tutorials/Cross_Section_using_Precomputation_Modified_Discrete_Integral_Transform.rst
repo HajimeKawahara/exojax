@@ -95,12 +95,7 @@ section.
 .. parsed-literal::
 
     Premodit: Twt= 1000.0 K Tref= 296.0 K
-    Making LSD:|####################| 100%
-
-
-.. parsed-literal::
-
-    
+    Making LSD: 100%
 
 
 Precompute the normalized Dopper width and the partition function ratio:

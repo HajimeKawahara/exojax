@@ -1,10 +1,14 @@
+import warnings
+
 import numpy as np
+import pytest
 import jax.numpy as jnp
 from jax import jit
 from exojax.utils.grids import wavenumber_grid
 from exojax.postproc.response import ipgauss_sampling
 from exojax.postproc.response import ipgauss_ola_sampling
 from exojax.postproc.response import ipgauss_variable_sampling
+from exojax.postproc.response import sampling_band_integral
 from exojax.utils.grids import velocity_grid
 
 from exojax.utils.constants import c
@@ -97,6 +101,39 @@ def test_ipgauss_ola_sampling(fig=False):
         plt.plot(nusd,F_naive,ls="dashed")
         plt.show()
 
+def test_sampling_band_integral(fig=False):
+    nus, wav, resolution = wavenumber_grid(4000.0,
+                                               4010.0,
+                                               1000,
+                                               xsmode="premodit")
+    F0 = 2.0 * wav
+    nusd, wav, resolution_inst = wavenumber_grid(4003.0,
+                                               4007.0,
+                                               250,
+                                               xsmode="lpf")
+                                               #settings before HMC
+
+    logstep = 1. / resolution_inst
+    nusd_max = nusd * np.exp(logstep/2.)
+    nusd_min = nusd / np.exp(logstep/2.)
+
+    wavd = 1.0e8 / nusd
+    wavd_min = 1.0e8 / nusd_max
+    wavd_max = 1.0e8 / nusd_min
+
+    F_band_sampling = sampling_band_integral(nus, F0, wavd_min, wavd_max)
+    F_ana = (wavd_max**2. - wavd_min**2.) / (wavd_max - wavd_min)
+
+    res = np.max(np.abs(1.0 - F_ana/F_band_sampling))
+    print(res)
+    assert res < 1.e-4 #0.01% allowed
+    if fig:
+        import matplotlib.pyplot as plt
+        plt.plot(nus,F0, '+')
+        plt.plot(nusd, F_band_sampling, '+')
+        plt.plot(nusd, F_ana, '+')
+        plt.show()
+
 
 
 def test_SopInstProfile():
@@ -123,6 +160,53 @@ def test_SopInstProfile():
     res = np.max(np.abs(1.0 - F_naive/F))
     print(res)
     assert res < 1.e-4 #0.1% allowed
+
+
+def test_SopInstProfile_warns_from_vrmax_independent_of_nu_grid():
+    from exojax.postproc.specop import SopInstProfile
+
+    nu_grid = np.geomspace(4000.0, 8000.0, 100)
+    spectrum = np.ones_like(nu_grid)
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore", UserWarning)
+        sop_inst = SopInstProfile(nu_grid, vrmax=10.0)
+
+    assert np.max(np.abs(np.asarray(sop_inst.vrarray))) > 5.0 * 3.0
+    with pytest.warns(UserWarning, match="`vrmax`.*too small"):
+        sop_inst.check_vrmax(standard_deviation=3.0)
+    with pytest.warns(UserWarning, match="`vrmax`.*too small"):
+        sop_inst.ipgauss(spectrum, standard_deviation=3.0)
+
+
+def test_SopInstProfile_does_not_warn_for_sufficient_vrmax():
+    from exojax.postproc.specop import SopInstProfile
+
+    nu_grid = np.geomspace(4000.0, 4000.4, 100)
+    spectrum = np.ones_like(nu_grid)
+    sop_inst = SopInstProfile(nu_grid, vrmax=10.0)
+
+    with warnings.catch_warnings():
+        warnings.simplefilter("error", UserWarning)
+        sop_inst.ipgauss(spectrum, standard_deviation=2.0)
+
+
+def test_SopInstProfile_accepts_traced_standard_deviation():
+    from exojax.postproc.specop import SopInstProfile
+
+    nu_grid = np.geomspace(4000.0, 4000.4, 100)
+    spectrum = np.ones_like(nu_grid)
+    sop_inst = SopInstProfile(nu_grid, vrmax=10.0)
+    apply_ipgauss = jit(
+        lambda standard_deviation: sop_inst.ipgauss(
+            spectrum, standard_deviation
+        )
+    )
+
+    with warnings.catch_warnings():
+        warnings.simplefilter("error", UserWarning)
+        result = apply_ipgauss(3.0)
+
+    assert result.shape == spectrum.shape
 
 
 def test_ipgauss_variable_sampling_using_constant_beta_array(fig=False):
@@ -153,6 +237,23 @@ def test_ipgauss_variable_sampling_using_constant_beta_array(fig=False):
         plt.plot(nusd,F)
         plt.plot(nusd,F_naive,ls="dashed")
         plt.show()
+
+
+def test_ipgauss_variable_sampling_handles_wide_wavenumber_range():
+    nus = np.geomspace(1.0, 4.0, 5)
+    nusd = np.array([1.0])
+    spectrum = np.arange(1.0, 6.0)
+    beta_variable = np.array([c])
+
+    result = ipgauss_variable_sampling(
+        nusd, nus, spectrum, beta_variable, RV=0.0
+    )
+
+    dvgrid = c * np.log(nusd[0] / nus)
+    kernel = np.exp(-(dvgrid**2) / (2.0 * beta_variable[0] ** 2))
+    expected = np.array([kernel @ spectrum / np.sum(kernel)])
+    assert np.all(np.isfinite(result))
+    np.testing.assert_allclose(result, expected, rtol=1.0e-6)
 
 
 def test_SopInstProfile_ola(fig=False):
@@ -193,4 +294,4 @@ if __name__ == "__main__":
     #test_SopInstProfile()
     #test_ipgauss_ola_sampling(fig=True)
     test_SopInstProfile_ola(fig=True)
-    
+    # test_sampling_band_integral(fig=True)

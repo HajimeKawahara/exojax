@@ -1,3 +1,6 @@
+Pure Absorption Radiative Transfer
+==================================
+
 We compare trans2E3 (2 E3) with a simple transmission.
 
 .. code:: ipython3
@@ -33,5 +36,4 @@ We compare trans2E3 (2 E3) with a simple transmission.
 
 
 .. image:: pure_absorption_rt_files/pure_absorption_rt_4_0.png
-
 

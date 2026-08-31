@@ -5,11 +5,12 @@ Databases
 .. toctree::
    :maxdepth: 1
 
-   userguide/database.rst	
    userguide/mdb.rst
+   userguide/moldb.rst
+   userguide/exomol.rst
+   userguide/hitran.rst
    userguide/api.rst
    userguide/nonair.rst
-   userguide/qstates.rst
    userguide/atomll.rst
    tutorials/multimol.rst
    userguide/pdb.rst
@@ -26,11 +27,13 @@ Opacity Calculation
    userguide/hjerting.rst
    userguide/modit.rst
    userguide/premodit.rst
+   userguide/diffgrid.rst
    userguide/saveopa.rst
-   userguide/premodit_trange.rst
+   userguide/save_diffgrid.rst
    userguide/opacity_di.rst
    tutorials/Open_Close_Cross_Section.rst
    tutorials/ckd_principle.rst
+   tutorials/ckd_precompute_patches.rst
    userguide/benchmark.rst
    userguide/fp.rst
 
@@ -53,6 +56,7 @@ You do not need `opa` nor `art` to compute opacity and spectra, if you want.
    :maxdepth: 1
 
    tutorials/opacity.rst
+   tutorials/opacity_exomol.rst
    tutorials/Cross_Section_using_Precomputation_Modified_Discrete_Integral_Transform.rst
    tutorials/Comparing_HITEMP_and_ExoMol.rst
    
@@ -106,6 +110,7 @@ For Developers
 	     
    developers/pytest.rst   
    developers/doc.rst   
+   developers/experimental.rst
    
 
 History

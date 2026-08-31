@@ -179,12 +179,7 @@ the corresponding ν space in the domain.
 .. parsed-literal::
 
     Premodit: Twt= 1108.7151960064205 K Tref= 570.4914318566549 K
-    Making LSD:|####################| 100%
-
-
-.. parsed-literal::
-
-    
+    Making LSD: 100%
 
 
 In practice, σ(g) can be obtained by finely dividing σ(ν) into a table,

@@ -6,25 +6,24 @@
 
 # -- Path setup --------------------------------------------------------------
 
-# If extensions (or modules to document with autodoc) are in another directory,
-# add these directories to sys.path here. If the directory is relative to the
-# documentation root, use os.path.abspath to make it absolute, like shown here.
-#
-import sphinx_rtd_theme
-import os
+# Make the src-layout package importable for autodoc without relying on the
+# current working directory.
+from pathlib import Path
 import sys
 
-sys.path.insert(0, os.path.abspath("~/exojax"))
+import sphinx_rtd_theme
+
+sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
 
 # -- Project information -----------------------------------------------------
 
 project = "ExoJAX"
-copyright = "2020-2025, ExoJAX contributors"
+copyright = "2020-2026, ExoJAX contributors"
 author = "ExoJAX contributors"
 
 # The full version, including alpha/beta/rc tags
-release = "2.2.0"
+release = "2.6.0"
 
 
 # -- General configuration ---------------------------------------------------

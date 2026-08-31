@@ -213,18 +213,9 @@ line-by-line calculations.
 .. parsed-literal::
 
     Premodit: Twt= 1108.7151960064205 K Tref= 570.4914318566549 K
-    Making LSD:|####################| 100%
+    Making LSD: 100%
     
     Computing line-by-line emission spectrum...
-
-
-.. parsed-literal::
-
-    
-
-
-.. parsed-literal::
-
     Line-by-line spectrum computed!
 
 

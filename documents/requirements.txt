@@ -2,3 +2,6 @@
 sphinx >=3
 sphinx_rtd_theme
 sphinxemoji
+sphinx-gallery
+Pillow >=9.1
+ipython

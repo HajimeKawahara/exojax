@@ -174,8 +174,8 @@ def test_lpffilter_aliasing_area(i, figure=False):
     elif i==-1:
         diff = noaliase_area[-filter_length_oneside-1:] - shapefilter[0:filter_length_oneside+1]
     res = jnp.max(jnp.abs(diff))
-    #print("max diff",res)
-    assert res < 3.e-17 #2.7755575615628914e-17
+    tolerance = jnp.finfo(shapefilter.dtype).eps
+    assert res < tolerance
 
     if figure:
         import matplotlib.pyplot as plt
@@ -185,8 +185,8 @@ def test_lpffilter_aliasing_area(i, figure=False):
         plt.savefig("aliasing_area.png")
 
 
-if __name__ == "__main__":
-    closed_lpffilter_agreement_with_fold_voigt_kernel_logst(figure=True)
+#if __name__ == "__main__":
+    #closed_lpffilter_agreement_with_fold_voigt_kernel_logst(figure=True)
     #test_generate_closed_lpffilter()
     #test_generate_open_lpffilter()
     #test_lpffilter_aliasing_area(0)

@@ -24,6 +24,7 @@ _ALIAS: Final[dict[str, str]] = {
     "AdbVald": "exojax.database.vald.api:AdbVald",
     "AdbSepVald": "exojax.database.vald.api:AdbSepVald",
     "AdbKurucz": "exojax.database.kurucz.api:AdbKurucz",
+    "AdbHydrogen": "exojax.database.hydrogen.api:AdbHydrogen",
     "PdbCloud": "exojax.database.pardb:PdbCloud",
     "CdbCIA": "exojax.database.cia.api:CdbCIA",
 }

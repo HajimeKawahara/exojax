@@ -1,13 +1,40 @@
 """API for VALD 3."""
 
 import io
+import pathlib
 import pkgutil
 from io import BytesIO
 
 import numpy as np
 import pandas as pd
 
-from exojax.utils.constants import ccgs, ecgs, eV2wn, mecgs
+from exojax.database.core_atom.transition import einstein_a_from_loggf
+from exojax.utils.constants import eV2wn
+
+
+def _normalize_vald_engine(engine):
+    """Normalize the storage engine used for VALD line-list caches."""
+    if not isinstance(engine, str):
+        raise ValueError(
+            "VALD engine must be 'pytables', 'pandas', or 'vaex'."
+        )
+
+    normalized_engine = engine.lower()
+    if normalized_engine == "pandas":
+        normalized_engine = "pytables"
+    if normalized_engine not in ("pytables", "vaex"):
+        raise ValueError(
+            f"Unsupported VALD engine {engine!r}; use 'pytables' or 'vaex'."
+        )
+    return normalized_engine
+
+
+def _vald_cache_path(path, engine):
+    """Return a backend-specific cache path for a VALD line list."""
+    normalized_engine = _normalize_vald_engine(engine)
+    suffix = ".h5" if normalized_engine == "pytables" else ".hdf5"
+    return pathlib.Path(path).expanduser().with_suffix(suffix)
+
 
 PeriodicTable = np.zeros([119], dtype=object)
 PeriodicTable[:] = [
@@ -133,7 +160,7 @@ PeriodicTable[:] = [
 ]
 
 
-def read_ExAll(allf, engine="vaex"):
+def read_ExAll(allf, engine="pytables"):
     """IO for linelists downloaded from VALD3 with a query of "Long format" in the format of "Extract All" or "Extract Element".
 
     Note:
@@ -167,11 +194,15 @@ def read_ExAll(allf, engine="vaex"):
         Damping Rad.
         Damping Stark
         Damping Waals
-        engine: "vaex" or "pytables" (default: "vaex")
+        engine: ``"pytables"`` (default), its legacy alias ``"pandas"``,
+            or the optional ``"vaex"`` backend.
 
     Returns:
-        line data in vaex/pytables DataFrame
+        line data as a pandas DataFrame for the PyTables backend, or as a
+        vaex DataFrame for the vaex backend.
     """
+    allf = pathlib.Path(allf).expanduser()
+    engine = _normalize_vald_engine(engine)
     dat = pd.read_csv(
         allf,
         sep=",",
@@ -234,14 +265,16 @@ def read_ExAll(allf, engine="vaex"):
             )[0]
         ]
     )
-    for i, sp in enumerate(dat.species):
+    species_codes = []
+    for sp in dat.species:
         symbol = sp.strip("'").split(" ")[0]
         ielem = (
             np.where(PeriodicTable == symbol)[0][0] if (symbol in PeriodicTable) else 0
         )
         iion = int(sp.strip("'").split(" ")[-1])
-        dat.species.values[i] = ielem * 100 + iion - 1
-    dat = dat.reset_index(drop=True)
+        species_codes.append(ielem * 100 + iion - 1)
+    dat = dat.reset_index(drop=True).copy()
+    dat["species"] = species_codes
     dat = dat.astype("float64")
     # dat = dat.astype({'wav_lines': 'float64', 'loggf': 'float64', 'elowereV': 'float64', 'jlower': 'float64', 'euppereV': 'float64'})
     if colWL == "WL_air(A)":
@@ -251,10 +284,16 @@ def read_ExAll(allf, engine="vaex"):
         )
     if engine == "vaex":
         import vaex
+
         dat = vaex.from_pandas(dat)
-        dat.export_hdf5(allf.with_suffix(".hdf5"))
+        dat.export_hdf5(_vald_cache_path(allf, engine))
     elif engine == "pytables":
-        dat.to_hdf(allf.with_suffix(".h5"), key="dat", mode="w",fomrat="table")
+        dat.to_hdf(
+            _vald_cache_path(allf, engine),
+            key="dat",
+            mode="w",
+            format="table",
+        )
 
     return dat
 
@@ -380,13 +419,7 @@ def read_kurucz(kuruczf):
     jupper = jupper[::-1]
     glower = jlower * 2 + 1
     gupper = jupper * 2 + 1
-    A = (
-        10**loggf
-        / gupper
-        * (ccgs * nu_lines) ** 2
-        * (8 * np.pi**2 * ecgs**2)
-        / (mecgs * ccgs**3)
-    )
+    A = einstein_a_from_loggf(nu_lines, loggf, gupper)
     gamRad = gamRad[::-1]
     gamSta = gamSta[::-1]
     gamvdW = gamvdW[::-1]
@@ -445,12 +478,8 @@ def pickup_param(ExAll):
     ExAll["gupper"] = ExAll["jupper"] * 2 + 1
     ExAll["glower"] = ExAll["jlower"] * 2 + 1
     # notes4Tako#どうせ比をとるので電子の縮退度等の係数は落ちる.(MyLog2017.rtf)
-    ExAll["A"] = (
-        10 ** ExAll["loggf"]
-        / ExAll["gupper"]
-        * (ccgs * ExAll["nu_lines"]) ** 2
-        * (8 * np.pi**2 * ecgs**2)
-        / (mecgs * ccgs**3)
+    ExAll["A"] = einstein_a_from_loggf(
+        ExAll["nu_lines"], ExAll["loggf"], ExAll["gupper"]
     )
 
     A = ExAll["A"].to_numpy()
@@ -543,7 +572,7 @@ def load_atomicdata():
     adata = pkgutil.get_data("exojax", "data/atom/atomic.txt")
     ipccd = pd.read_csv(
         BytesIO(adata),
-        sep="\s+",
+        sep=r"\s+",
         skiprows=1,
         usecols=[1, 2, 3, 4, 5, 6, 7],
         names=ipccc,
@@ -615,14 +644,12 @@ def pick_ionE(ielem, iion, df_ionE):
         )
         return y
 
-    ionE = float(
-        f_droppare(
-            df_ionE[
-                (df_ionE["At. num "] == ielem) & (df_ionE[" Ion Charge "] == iion - 1)
-            ]["      Ionization Energy (a) (eV)      "]
-        )
+    ionization_energies = f_droppare(
+        df_ionE[
+            (df_ionE["At. num "] == ielem) & (df_ionE[" Ion Charge "] == iion - 1)
+        ]["      Ionization Energy (a) (eV)      "]
     )
-    return ionE
+    return float(ionization_energies.iloc[0])
 
 
 def load_pf_Barklem2016():
@@ -638,8 +665,6 @@ def load_pf_Barklem2016():
     pffdata = pkgutil.get_data("exojax", "data/atom/barklem_collet_2016_pff.txt")
 
     # T label for grid QT
-    pfTdat = pd.read_csv(io.StringIO(pfT_str), sep="\s+")
-    pfdat = pd.read_csv(BytesIO(pffdata), sep="\s+", comment="#", names=pfTdat.columns)
+    pfTdat = pd.read_csv(io.StringIO(pfT_str), sep=r"\s+")
+    pfdat = pd.read_csv(BytesIO(pffdata), sep=r"\s+", comment="#", names=pfTdat.columns)
     return pfTdat, pfdat
-
-

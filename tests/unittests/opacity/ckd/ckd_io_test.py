@@ -14,6 +14,28 @@ class _DummyBaseOpa:
         return {"tag": "dummy"}
 
 
+def _write_ckd_npz(path, **overrides):
+    meta = overrides.pop(
+        "meta",
+        (
+            '{"Ng": 2, "band_width": 40.0, "band_spacing": "linear", '
+            '"base_fingerprint_hash": "dummy"}'
+        ),
+    )
+    arrays = {
+        "meta": np.frombuffer(meta.encode("utf-8"), dtype=np.uint8),
+        "log_kggrid": np.log(np.asarray([[[[1.0, 2.0], [3.0, 4.0]]]])),
+        "ggrid": np.asarray([0.25, 0.75]),
+        "weights": np.asarray([0.5, 0.5]),
+        "T_grid": np.asarray([800.0]),
+        "P_grid": np.asarray([0.1]),
+        "nu_bands": np.asarray([120.0, 160.0]),
+        "band_edges": np.asarray([[100.0, 140.0], [140.0, 180.0]]),
+    }
+    arrays.update(overrides)
+    np.savez(path, **arrays)
+
+
 @pytest.mark.parametrize("band_spacing", ["linear", "log"])
 def test_ckd_table_roundtrip(tmp_path, band_spacing):
     base = _DummyBaseOpa(jnp.linspace(100.0, 200.0, 5))
@@ -53,6 +75,7 @@ def test_ckd_table_roundtrip(tmp_path, band_spacing):
     inplace = OpaCKD(base, Ng=4, band_width=1.0, band_spacing="linear")
     inplace.load_tables(out_path)
     assert inplace.ready is True
+    assert inplace.base_opa is base
     assert inplace.Ng == opa.Ng
     assert inplace.band_spacing == loaded.band_spacing
     np.testing.assert_allclose(np.asarray(inplace.ckd_info.log_kggrid), np.asarray(log_kggrid))
@@ -64,3 +87,128 @@ def test_ckd_table_roundtrip(tmp_path, band_spacing):
     np.testing.assert_array_equal(
         np.asarray(loaded.ckd_info.band_edges), np.asarray(band_edges)
     )
+
+
+@pytest.mark.parametrize(
+    "overrides, message",
+    [
+        ({"ggrid": np.asarray(0.25)}, "Inconsistent Ng"),
+        ({"ggrid": np.asarray([[0.25, 0.75]])}, "Inconsistent Ng"),
+        ({"ggrid": np.asarray([0.25, np.nan])}, "ggrid must contain finite"),
+        ({"ggrid": np.asarray([-0.1, 0.75])}, "within \\[0, 1\\]"),
+        ({"ggrid": np.asarray([0.75, 0.25])}, "strictly increasing"),
+        ({"weights": np.asarray([1.0])}, "weights shape"),
+        ({"weights": np.asarray([0.5, 0.0])}, "weights must be positive"),
+        ({"weights": np.asarray([0.25, 0.25])}, "weights must sum to one"),
+        ({"log_kggrid": np.asarray([[[[0.0, np.nan], [0.0, 0.0]]]])}, "log_kggrid"),
+        ({"T_grid": np.asarray([[800.0]])}, "one-dimensional"),
+        ({"P_grid": np.asarray([0.1, 1.0])}, "shape does not match"),
+        ({"T_grid": np.asarray([0.0])}, "must be positive"),
+        (
+            {
+                "log_kggrid": np.log(
+                    np.asarray(
+                        [
+                            [[[1.0, 2.0], [3.0, 4.0]]],
+                            [[[1.1, 2.1], [3.1, 4.1]]],
+                        ]
+                    )
+                ),
+                "T_grid": np.asarray([900.0, 800.0]),
+            },
+            "strictly increasing",
+        ),
+        (
+            {
+                "log_kggrid": np.log(
+                    np.asarray(
+                        [
+                            [
+                                [[1.0, 2.0], [3.0, 4.0]],
+                                [[1.1, 2.1], [3.1, 4.1]],
+                            ]
+                        ]
+                    )
+                ),
+                "P_grid": np.asarray([0.2, 0.1]),
+            },
+            "strictly increasing",
+        ),
+        ({"nu_bands": np.asarray([[120.0, 160.0]])}, "Spectral band metadata"),
+        (
+            {"band_edges": np.asarray([[100.0, 140.0, 160.0], [140.0, 180.0, 200.0]])},
+            "Spectral band metadata",
+        ),
+        (
+            {"band_edges": np.asarray([[100.0, np.nan], [140.0, 180.0]])},
+            "Spectral band metadata must contain finite",
+        ),
+        (
+            {"nu_bands": np.asarray([0.0, 160.0])},
+            "Spectral band metadata must be positive",
+        ),
+        (
+            {"band_edges": np.asarray([[0.0, 140.0], [140.0, 180.0]])},
+            "Spectral band metadata must be positive",
+        ),
+        (
+            {"band_edges": np.asarray([[100.0, 100.0], [140.0, 180.0]])},
+            "positive widths",
+        ),
+        ({"nu_bands": np.asarray([160.0, 120.0])}, "strictly increasing"),
+        (
+            {"band_edges": np.asarray([[100.0, 110.0], [140.0, 180.0]])},
+            "centers must lie within",
+        ),
+        (
+            {"band_edges": np.asarray([[100.0, 150.0], [140.0, 180.0]])},
+            "must not overlap",
+        ),
+        (
+            {
+                "meta": (
+                    '{"Ng": 2, "band_width": 0.0, "band_spacing": "linear", '
+                    '"base_fingerprint_hash": "dummy"}'
+                )
+            },
+            "band_width metadata",
+        ),
+    ],
+)
+def test_ckd_saved_table_rejects_invalid_arrays(tmp_path, overrides, message):
+    path = tmp_path / "bad_ckd_table.npz"
+    _write_ckd_npz(path, **overrides)
+
+    with pytest.raises(ValueError, match=message):
+        OpaCKD.from_saved_tables(path)
+
+
+def test_ckd_load_tables_validates_existing_base_opa(tmp_path):
+    base = _DummyBaseOpa(jnp.linspace(100.0, 200.0, 5))
+    other_base = _DummyBaseOpa(jnp.linspace(110.0, 210.0, 5))
+    opa = OpaCKD(base, Ng=2, band_width=25.0, band_spacing="linear")
+
+    nu_bands = jnp.asarray([120.0, 160.0])
+    band_edges = jnp.asarray([[100.0, 140.0], [140.0, 180.0]])
+    opa.ckd_info = CKDTableInfo(
+        log_kggrid=jnp.log(jnp.asarray([[[[1.0, 2.0], [3.0, 4.0]]]])),
+        ggrid=jnp.asarray([0.25, 0.75]),
+        weights=jnp.asarray([0.5, 0.5]),
+        T_grid=jnp.asarray([800.0]),
+        P_grid=jnp.asarray([0.1]),
+        nu_bands=nu_bands,
+        band_edges=band_edges,
+    )
+    opa.nu_bands = nu_bands
+    opa.band_edges = band_edges
+    opa.ready = True
+    path = tmp_path / "ckd_table.npz"
+    _ckd_save_as_npz(opa, path)
+
+    compatible = OpaCKD(base, Ng=4, band_width=1.0, band_spacing="linear")
+    compatible.load_tables(path)
+    assert compatible.base_opa is base
+
+    incompatible = OpaCKD(other_base, Ng=4, band_width=1.0, band_spacing="linear")
+    with pytest.raises(ValueError, match="base_opa fingerprint"):
+        incompatible.load_tables(path)

@@ -3,14 +3,21 @@ from exojax.rt.planck import piB, piBarr
 from exojax.rt.rtransfer import (
     rtrun_emis_pureabs_fbased2st,
     rtrun_emis_pureabs_ibased,
+    rtrun_emis_pureabs_ibased_flux_from_intensity,
+    rtrun_emis_pureabs_ibased_intensity,
     rtrun_emis_pureabs_ibased_linsap,
     rtrun_emis_scat_fluxadding_toonhm,
     rtrun_emis_scat_lart_toonhm,
+    rtrun_emis_scat_sfm2st_toonhm,
     initialize_gaussian_quadrature,
-    setrt_toonhm,
+    setrt_toonhm_with_absorption,
 )
 from exojax.rt.rtlayer import fluxsum_scan
 from exojax.rt.common import ArtCommon
+from exojax.postproc.limb_darkening import (
+    average_limb_darkening_coefficients,
+    quadratic_ld_from_intensity,
+)
 
 import jax.numpy as jnp
 from jax.lax import scan
@@ -123,6 +130,46 @@ class ArtEmisPure(ArtCommon):
         elif self.rtsolver == "ibased" or self.rtsolver == "ibased_linsap":
             return rtfunc(dtau, sourcef, self.mus, self.weights)
 
+    def run_intensity(self, dtau, temperature, nu_grid=None):
+        """run intensity-based radiative transfer and return emergent intensities.
+
+        Args:
+            dtau (2D array): optical depth matrix, dtau  (N_layer, N_nus)
+            temperature (1D array): temperature profile (Nlayer)
+            nu_grid (1D array): if nu_grid is not initialized, provide it.
+
+        Returns:
+            2D array: emergent intensity matrix (N_mu, N_nus)
+        """
+        if self.rtsolver != "ibased":
+            raise ValueError("run_intensity currently supports rtsolver='ibased'.")
+        if self.nu_grid is not None:
+            nu_grid = self.nu_grid
+
+        sourcef = piBarr(temperature, nu_grid)
+        return rtrun_emis_pureabs_ibased_intensity(dtau, sourcef, self.mus)
+
+    def run_with_limb_darkening(self, dtau, temperature, nu_grid=None, reduce_ld=False):
+        """run ibased RT once and derive flux and quadratic LD coefficients.
+
+        Args:
+            dtau (2D array): optical depth matrix, dtau  (N_layer, N_nus)
+            temperature (1D array): temperature profile (Nlayer)
+            nu_grid (1D array): if nu_grid is not initialized, provide it.
+            reduce_ld (bool): If True, return flux-weighted scalar u1 and u2.
+
+        Returns:
+            tuple: emission spectrum, u1, u2
+        """
+        intensity = self.run_intensity(dtau, temperature, nu_grid)
+        flux = rtrun_emis_pureabs_ibased_flux_from_intensity(
+            intensity, self.mus, self.weights
+        )
+        u1, u2 = quadratic_ld_from_intensity(self.mus, intensity, self.weights)
+        if reduce_ld:
+            u1, u2 = average_limb_darkening_coefficients(u1, u2, flux)
+        return flux, u1, u2
+
     def run_ckd(self, dtau_ckd, temperature, weights, nu_bands):
         """run radiative transfer for CKD
 
@@ -137,16 +184,59 @@ class ArtEmisPure(ArtCommon):
         """
 
         nlayer, Ng, Nbands = dtau_ckd.shape
-        #sourcef = piBarr(temperature, jnp.tile(nu_bands, Ng))
         sourcef = jnp.tile(piBarr(temperature, nu_bands), Ng)
-
-
         flux_ckd = rtrun_emis_pureabs_ibased(
             dtau_ckd.reshape((nlayer, Ng * Nbands)), sourcef, self.mus, self.weights
         )
         flux_ckd = flux_ckd.reshape((Ng, Nbands))
-        # integrate over the Gaussian quadrature
-        return jnp.einsum("n,nm->m", weights, flux_ckd)
+        return jnp.einsum("g,gb->b", weights, flux_ckd)
+
+    def run_ckd_intensity(self, dtau_ckd, temperature, weights, nu_bands):
+        """run intensity-based radiative transfer for CKD.
+
+        Args:
+            dtau_ckd (3D array): optical depth matrix, dtau (N_layer, Ng, Nbands)
+            temperature (1D array): temperature profile (Nlayer,)
+            weights (1D array): weights for the CKD g quadrature (Ng,)
+            nu_bands (1D array): wavenumber grid for the CKD, (Nbands)
+
+        Returns:
+            2D array: CKD-integrated emergent intensity matrix (N_mu, Nbands)
+        """
+        if self.rtsolver != "ibased":
+            raise ValueError("run_ckd_intensity currently supports rtsolver='ibased'.")
+
+        nlayer, Ng, Nbands = dtau_ckd.shape
+        sourcef = jnp.tile(piBarr(temperature, nu_bands), Ng)
+        intensity_ckd = rtrun_emis_pureabs_ibased_intensity(
+            dtau_ckd.reshape((nlayer, Ng * Nbands)), sourcef, self.mus
+        )
+        intensity_ckd = intensity_ckd.reshape((len(self.mus), Ng, Nbands))
+        return jnp.einsum("g,mgb->mb", weights, intensity_ckd)
+
+    def run_ckd_with_limb_darkening(
+        self, dtau_ckd, temperature, weights, nu_bands, reduce_ld=False
+    ):
+        """run CKD ibased RT once and derive flux and quadratic LD coefficients.
+
+        Args:
+            dtau_ckd (3D array): optical depth matrix, dtau (N_layer, Ng, Nbands)
+            temperature (1D array): temperature profile (Nlayer,)
+            weights (1D array): weights for the CKD g quadrature (Ng,)
+            nu_bands (1D array): wavenumber grid for the CKD, (Nbands)
+            reduce_ld (bool): If True, return flux-weighted scalar u1 and u2.
+
+        Returns:
+            tuple: CKD emission spectrum, u1, u2
+        """
+        intensity_ckd = self.run_ckd_intensity(dtau_ckd, temperature, weights, nu_bands)
+        flux_ckd = rtrun_emis_pureabs_ibased_flux_from_intensity(
+            intensity_ckd, self.mus, self.weights
+        )
+        u1, u2 = quadratic_ld_from_intensity(self.mus, intensity_ckd, self.weights)
+        if reduce_ld:
+            u1, u2 = average_limb_darkening_coefficients(u1, u2, flux_ckd)
+        return flux_ckd, u1, u2
 
 
 class OpartEmisPure(ArtCommon):
@@ -222,6 +312,25 @@ class OpartEmisPure(ArtCommon):
         )
         return flux
 
+    def update_layer_intensity(self, carry_tauintensity, params):
+        """updates the layer opacity and emergent intensity."""
+
+        tauup, intensity = carry_tauintensity
+        taulow = self.update_layeropacity(tauup, params)
+        intensity = self.update_layer_intensity_source(
+            params[0], tauup, taulow, intensity
+        )
+        return (taulow, intensity)
+
+    def update_layer_intensity_source(self, temperature, tauup, taulow, intensity):
+        """updates the emergent intensity of the layer."""
+
+        sourcef = piB(temperature, self.opalayer.nu_grid)
+        dtrans = jnp.exp(-tauup / self.mus[:, None]) - jnp.exp(
+            -taulow / self.mus[:, None]
+        )
+        return intensity + sourcef[None, :] * dtrans
+
     # --------------------------------------------------------
     # Developer Note (Hajime Kawahara Dec.7 2024):
     # If you wanna refactor this method, read Issue 542 on github.
@@ -249,6 +358,42 @@ class OpartEmisPure(ArtCommon):
         )
         return tauflux[1]
 
+    def run_intensity(self, layer_params, layer_update_function):
+        """computes outgoing intensity for each Gaussian quadrature angle.
+
+        Args:
+            layer_params (list): user defined layer parameters, layer_params[0] should be temperature array
+            layer_update_function (method):
+
+        Returns:
+            2D array: emergent intensity matrix (N_mu, Nnus)
+        """
+        Nnus = len(self.opalayer.nu_grid)
+        init_tauintensity = (
+            jnp.zeros(Nnus),
+            jnp.zeros((len(self.mus), Nnus)),
+        )
+        tauintensity, _ = scan(
+            layer_update_function,
+            init_tauintensity,
+            layer_params,
+        )
+        return tauintensity[1]
+
+    def run_with_limb_darkening(
+        self, layer_params, layer_update_function, reduce_ld=False
+    ):
+        """computes flux and quadratic LD coefficients from one intensity run."""
+
+        intensity = self.run_intensity(layer_params, layer_update_function)
+        flux = rtrun_emis_pureabs_ibased_flux_from_intensity(
+            intensity, self.mus, self.weights
+        )
+        u1, u2 = quadratic_ld_from_intensity(self.mus, intensity, self.weights)
+        if reduce_ld:
+            u1, u2 = average_limb_darkening_coefficients(u1, u2, flux)
+        return flux, u1, u2
+
     def run(self, opalayer, layer_params, flbl):
         return self(opalayer, layer_params, flbl)
 
@@ -268,6 +413,7 @@ class ArtEmisScat(ArtCommon):
         nlayer=100,
         nu_grid=None,
         rtsolver="fluxadding_toon_hemispheric_mean",
+        nstream=8,
     ):
         """initialization of ArtEmisScat
 
@@ -278,11 +424,16 @@ class ArtEmisScat(ArtCommon):
             nu_grid (float, array, optional): the wavenumber grid. Defaults to None.
             rtsolver (str): Radiative Transfer Solver,
                 "fluxadding_toon_hemispheric_mean" (default),
-                "lart_toon_hemispheric_mean"
+                "lart_toon_hemispheric_mean",
+                "sfm2st_toon_hemispheric_mean"
+            nstream (int, optional): the number of streams for SFM-2st.
+                Defaults to 8.
 
         """
         super().__init__(pressure_top, pressure_btm, nlayer, nu_grid)
         self.rtsolver = rtsolver
+        self.nstream = nstream
+        self.mus, self.weights = initialize_gaussian_quadrature(self.nstream)
         self.method = "emission_with_scattering_using_" + self.rtsolver
 
     def run(
@@ -336,6 +487,16 @@ class ArtEmisScat(ArtCommon):
                 dtau, single_scattering_albedo, asymmetric_parameter, sourcef
             )
 
+        elif self.rtsolver == "sfm2st_toon_hemispheric_mean":
+            spectrum = rtrun_emis_scat_sfm2st_toonhm(
+                dtau,
+                single_scattering_albedo,
+                asymmetric_parameter,
+                sourcef,
+                self.mus,
+                self.weights,
+            )
+
         else:
             print("rtsolver=", self.rtsolver)
             raise ValueError("Unknown radiative transfer solver (rtsolver).")
@@ -374,6 +535,15 @@ class ArtEmisScat(ArtCommon):
         elif self.rtsolver == "fluxadding_toon_hemispheric_mean":
             spectrum = rtrun_emis_scat_fluxadding_toonhm(
                 dtau_2d, ssa_2d, g_2d, sourcef
+            )
+        elif self.rtsolver == "sfm2st_toon_hemispheric_mean":
+            spectrum = rtrun_emis_scat_sfm2st_toonhm(
+                dtau_2d,
+                ssa_2d,
+                g_2d,
+                sourcef,
+                self.mus,
+                self.weights,
             )
         else:
             raise ValueError(f"Unknown rtsolver for CKD: {self.rtsolver}")
@@ -421,10 +591,19 @@ class OpartEmisScat(ArtCommon):
         source_vector = piB(temparature, self.nu_grid)
         # -------------------------------------------------
         dtau, single_scattering_albedo, asymmetric_parameter = self.opalayer(params)
-        trans_coeff_i, scat_coeff_i, pihatB_i, _, _, _ = setrt_toonhm(
-            dtau, single_scattering_albedo, asymmetric_parameter, source_vector
+        toon_coeffs = setrt_toonhm_with_absorption(
+            dtau,
+            single_scattering_albedo,
+            asymmetric_parameter,
+            source_vector,
         )
-        denom = 1.0 - scat_coeff_i * Rphat_prev
+        trans_coeff_i, scat_coeff_i, absorption_coeff_i, reduced_piB_i = toon_coeffs[:4]
+        pihatB_i = absorption_coeff_i * reduced_piB_i
+        non_scattering_coeff_i = trans_coeff_i + absorption_coeff_i
+        denom = (
+            non_scattering_coeff_i
+            + scat_coeff_i * (1.0 - Rphat_prev)
+        )
         Sphat_each = (
             pihatB_i + trans_coeff_i * (Sphat_prev + pihatB_i * Rphat_prev) / denom
         )
@@ -451,7 +630,7 @@ class OpartEmisScat(ArtCommon):
         # no source term at the bottom
         source_bottom = jnp.zeros_like(self.nu_grid)
         rs_bottom = [reflectivity_bottom, source_bottom]
-        rs, _ = scan(layer_update_function, rs_bottom, layer_params)
+        rs, _ = scan(layer_update_function, rs_bottom, layer_params, reverse=True)
         return rs[1]
 
     def run(self, opalayer, layer_params, flbl):

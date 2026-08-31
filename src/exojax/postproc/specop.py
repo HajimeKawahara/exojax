@@ -8,6 +8,7 @@
 """
 
 import pathlib
+import warnings
 
 import numpy as np
 import pandas as pd
@@ -218,8 +219,8 @@ class SopRotation(SopCommonConv):
         Args:
             spectrum (nd array): 1D spectrum
             vsini (float): V sini in km/s
-            u1 (float): Limb darkening parameter u1
-            u2 (float): Limb darkening parameter u2
+            u1 (float): Standard quadratic limb-darkening coefficient 1
+            u2 (float): Standard quadratic limb-darkening coefficient 2
 
         Raises:
             ValueError: _description_
@@ -273,6 +274,48 @@ class SopInstProfile(SopCommonConv):
     ):
         super().__init__(nu_grid, vrmax, convolution_method)
 
+    def check_vrmax(self, standard_deviation):
+        """Check vrmax for a Gaussian instrumental profile.
+
+        The instrumental resolution is represented by standard_deviation;
+        the model wavenumber grid is intentionally not used in this check.
+        This method is intended for an explicit check before JIT compilation
+        and is also called automatically by ipgauss.
+
+        Args:
+            standard_deviation (float): standard deviation of the Gaussian
+                instrumental profile in km/s
+
+        Warns:
+            UserWarning: if vrmax covers fewer than five standard deviations
+        """
+        try:
+            standard_deviation = float(standard_deviation)
+        except (TypeError, ValueError):
+            # A traced value cannot be checked without a runtime callback.
+            return
+
+        if not np.isfinite(standard_deviation) or standard_deviation <= 0.0:
+            return
+
+        required_nsigma = 5.0
+        required_velocity_span = required_nsigma * standard_deviation
+        if self.vrmax < required_velocity_span:
+            covered_nsigma = self.vrmax / standard_deviation
+            warnings.warn(
+                "`vrmax` for the Gaussian instrumental profile is too small: "
+                f"vrmax={self.vrmax:.3g} km/s covers "
+                f"{covered_nsigma:.3g} Gaussian standard deviations for "
+                f"standard_deviation={standard_deviation:.3g} km/s. "
+                f"Use `vrmax >= {required_velocity_span:.3g} km/s` when "
+                "constructing `SopInstProfile` to cover at least "
+                f"{required_nsigma:g} standard deviations. "
+                "For a variable standard deviation, set `vrmax` "
+                "from its maximum expected value before JIT compilation.",
+                UserWarning,
+                stacklevel=2,
+            )
+
     def ipgauss(self, spectrum, standard_deviation):
         """Gaussian Instrumental Profile
 
@@ -286,6 +329,7 @@ class SopInstProfile(SopCommonConv):
         Returns:
             array: IP applied spectrum
         """
+        self.check_vrmax(standard_deviation)
         if (
             self.convolution_method == self.convolution_method_list[0]
         ):  # "exojax.signal.convolve"

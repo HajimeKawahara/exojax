@@ -618,7 +618,7 @@ def vald_all(asdb, Tarr, PH, PHe, PHH, R):
                 None,
                 None,
                 0,
-                0,
+                None,
                 0,
                 0,
                 0,
@@ -901,7 +901,7 @@ def xsmatrix_vald(
     Return:
         xsmS: cross section matrix [N_species x N_layer x N_wav]
     """
-    xsmS = jit(vmap(xsmatrix, (0, 0, None, None, 0, 0, 0, None, 0)))(
+    xsmS = jit(vmap(xsmatrix_zeroscan, (0, 0, None, None, 0, 0, 0, None, 0)))(
         cnuS, indexnuS, R, pmarray, nsigmaDlS, ngammaLMS, SijMS, nu_grid, dgm_ngammaLS
     )
     xsmS = jnp.abs(xsmS)

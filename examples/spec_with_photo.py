@@ -1,6 +1,6 @@
 """
-NUTS analysis of the high-resolution emission spectrum with photometric information
-====================================================================================
+[emission/PreMODIT] NUTS analysis of the high-resolution emission spectrum with photometric information
+========================================================================================================
 
 This script performs a Bayesian analysis of the high-resolution emission spectrum with photometric information.
 

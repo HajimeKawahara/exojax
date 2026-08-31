@@ -9,10 +9,11 @@ from exojax.atm.amclouds import get_value_at_smooth_index
 from exojax.atm.amclouds import mixing_ratio_cloud_profile
 from exojax.atm.atmprof import pressure_scale_height
 from exojax.atm.atmconvert import mmr_to_vmr
+from exojax.atm.idealgas import number_density
 from exojax.atm.vterm import terminal_velocity
 from exojax.atm.viscosity import calc_vfactor
 from exojax.atm.viscosity import eta_Rosner
-from exojax.utils.constants import kB, m_u
+from exojax.utils.constants import m_u
 import warnings
 from jax import vmap
 import jax.numpy as jnp
@@ -141,9 +142,10 @@ class AmpAmcloud(AmpCloud):
             rw (array): Parameter in the lognormal distribution of condensate size, defined by (9) in AM01
             MMR_condensate (array): Mass Mixing Ratio (MMR) of condensates
         """
-        # density difference
-        rho = mean_molecular_weight * m_u * pressures / (kB * temperatures)
-        drho = self.pdb.condensate_substance_density - rho
+        # atmospheric density
+        rho_atm = mean_molecular_weight * m_u * number_density(
+            pressures, temperatures
+        )
 
         # saturation pressure
         psat = self.pdb.saturation_pressure(temperatures)
@@ -164,12 +166,19 @@ class AmpAmcloud(AmpCloud):
         eta_dvisc = self.dynamic_viscosity(temperatures)
 
         # terminal velocity
-        vf_vmap = vmap(terminal_velocity, (None, None, 0, 0, 0))
-        vterminal = vf_vmap(self.rcond_arr, gravity, eta_dvisc, drho, rho)
+        vf_vmap = vmap(terminal_velocity, (None, None, 0, None, 0))
+        vterminal = vf_vmap(
+            self.rcond_arr,
+            gravity,
+            eta_dvisc,
+            self.pdb.condensate_substance_density,
+            rho_atm,
+        )
 
         # condensate size
-        vfind_rw = vmap(find_rw, (None, 0, None), 0)
-        rw = vfind_rw(self.rcond_arr, vterminal, Kzz / L_cloud)
+        Kzz_over_L = jnp.broadcast_to(Kzz / L_cloud, pressures.shape)
+        vfind_rw = vmap(find_rw, (None, 0, 0), 0)
+        rw = vfind_rw(self.rcond_arr, vterminal, Kzz_over_L)
         # MMR of condensates
         MMR_condensate = mixing_ratio_cloud_profile(
             pressures, pressure_base, fsed, MMR_base

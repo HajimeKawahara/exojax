@@ -1,4 +1,5 @@
 get_started.ipynb
+diffgrid_nuts_retrieval.ipynb
 #Transmission_beta.ipynb
 #reverse_precompute_grid.ipynb
 #reverse_premodit.ipynb
@@ -20,6 +21,7 @@ Forward_modeling_using_PreMODIT.ipynb
 Forward_modeling_using_the_DIT_Cross_Section_for_methane.ipynb
 Forward_modeling_using_the_MODIT_Cross_Section_for_methane.ipynb
 Forward_modeling_using_PreMODIT_Cross_Section_for_methane.ipynb
+direct_limb_darkening.ipynb
 Reducing_memory_for_HITEMP.ipynb
 Reverse_modeling.ipynb
 Reverse_modeling_for_methane_using_MODIT.ipynb
@@ -29,6 +31,7 @@ Rigid_Rotation.ipynb
 Terminal_Velocity_of_Cloud_Particles.ipynb
 Using_FastChem2_to_calculate_the_chemical_abundances.ipynb
 branch.ipynb
+ckd_precompute_patches.ipynb
 hjerting.ipynb
 opacity.ipynb
 opacity_exomol.ipynb

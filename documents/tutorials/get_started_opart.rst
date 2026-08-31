@@ -1,20 +1,20 @@
 Getting Started with Opart; GPU memory-efficient Emission Spectrum
 ==================================================================
 
-Last update: September 25th (2025) Hajime Kawahara
+Last update: August 2026, Hajime Kawahara, for ExoJAX 2.6.0
 
-This is a device memory efficient version of `Getting Started with
-Simulating the Emission Spectra <get_started.html>`__!
+This guide is a device-memory-efficient version of `Getting Started with
+Emission Spectroscopy <get_started.html>`__. It uses ``opart``, which
+combines opacity calculation and radiative transfer layer by layer.
 
-Note: It is worth noting that batch execution of this notebook
-(``jupyter nbconvert --to script get_started_opart.ipynb; python get_started_opart.py``)
-was successfully performed on a laptop equipped with an RTX 3080 (8GB
-device memory).　The device memory usage was approximately 2.4 GB.
+Batch execution of this notebook has been tested on an 8 GB GPU. The
+example uses about 2.4 GB of device memory, although actual usage
+depends on the local JAX and CUDA setup.
 
-First, we recommend 64-bit if you do not think about numerical errors.
-Use jax.config to set 64-bit. (But note that 32-bit is sufficient in
-most cases. Consider to use 32-bit (faster, less device memory) for your
-real use case.)
+This notebook enables 64-bit mode in JAX. This is useful for numerical
+stability in retrieval examples, although 32-bit mode is often
+sufficient and can be faster with lower device-memory use in production
+workflows.
 
 .. code:: ipython3
 
@@ -34,20 +34,18 @@ calculator (``opa``) and the radiative transfer (``art``), leading to
 the use of the ``opart`` class (opa + art). Here, we demonstrate the
 calculation of a pure absorption emission spectrum using ``opart``.
 
-1. Computes an Emission Spectrum using ``opart``
-------------------------------------------------
+1. Compute an Emission Spectrum with ``opart``
+----------------------------------------------
 
-The user needs to define a class, ``OpaLayer``, that specifies how to
-calculate opacity for each layer. The ``OpaLayer`` class must define at
-least an ``__init__`` method and a ``__call__`` method. Additionally,
-``self.nu_grid`` must be defined. In this example, molecular absorption
-by CO and the CIA continuum opacity of H2 are defined for each layer.
-The ``__call__`` method should take the parameters of a layer as input
-and return the optical depth (delta tau) for that layer.
+Define an ``OpaLayer`` class that computes opacity for one atmospheric
+layer. The class must define at least ``__init__`` and ``__call__``, and
+it must set ``self.nu_grid``. In this example, each layer includes CO
+molecular absorption and H2-H2 CIA continuum opacity. The ``__call__``
+method receives layer parameters and returns the optical depth for that
+layer.
 
-Note that you can also use the
-`nu-stitching <Cross_Section_using_OpaStitch.html>`__ option in
-``OpaPremodit`` if you want to cut the wing.
+If line wings need to be truncated, ``OpaPremodit`` can also use
+`wavenumber stitching <Cross_Section_using_OpaStitch.html>`__.
 
 .. code:: ipython3
 
@@ -102,27 +100,18 @@ Note that you can also use the
             dtau_cia = single_layer_optical_depth_CIA(temperature, pressure, dP, self.vmrH2, self.vmrH2, self.mmw, self.gravity, logacia_vector)
             return dtau_co + dtau_cia
 
-For molecular opacity, note that the opacity for a single layer is
-calculated here. First, ``opa.xsvector`` (the cross-section vector along
-the wavenumber direction) is computed, and then it is converted into the
-optical depth for a single layer using
-`spec.layeropacity.single_layer_optical_depth <../exojax/exojax.spec.html#exojax.spec.layeropacity.single_layer_optical_depth>`__.
+For molecular opacity, this example computes a single-layer
+cross-section vector with ``opa.xsvector`` and converts it into optical
+depth using
+`single_layer_optical_depth <../exojax/exojax.spec.html#exojax.spec.layeropacity.single_layer_optical_depth>`__.
 
-In the code above, CIA is assumed as the continuum, and
-`spec.layeropacity.single_layer_optical_depth_CIA <../exojax/exojax.spec.html#exojax.spec.layeropacity.single_layer_optical_depth_CIA>`__
-is used. However, other options such as
-`spec.layeropacity.single_layer_optical_depth_Hminus <../exojax/exojax.spec.html#exojax.spec.layeropacity.single_layer_optical_depth_Hminus>`__
-for H-, for example.
+For CIA continuum opacity, it uses
+`single_layer_optical_depth_CIA <../exojax/exojax.spec.html#exojax.spec.layeropacity.single_layer_optical_depth_CIA>`__.
+The H-minus and Rayleigh examples shown in the comments follow the same
+pattern.
 
-For Rayleigh scattering,
-`spec.rayleigh.xsvector_rayleigh_gas <../exojax/exojax.spec.html#exojax.spec.rayleigh.xsvector_rayleigh_gas>`__
-provides the cross-section vector (a vector of cross-sections along the
-wavenumber direction), so you can use
-`spec.layeropacity.single_layer_optical_depth <../exojax/exojax.spec.html#exojax.spec.layeropacity.single_layer_optical_depth>`__
-in the same way as for molecules.
-
-Do not put ``@partial(jit, static_argnums=(0,))`` on ``__call__``. This
-is not necessary and makes the code significantly slow.
+Do not place ``@partial(jit, static_argnums=(0,))`` on ``__call__``. It
+is unnecessary here and can significantly slow down the workflow.
 
 Next, the user will utilize the ``OpaLayer`` class in the ``Opart``
 class. Here, since the goal is to calculate pure absorption emission,
@@ -188,28 +177,16 @@ instead.)
 .. parsed-literal::
 
     Premodit: Twt= 1108.7151960064205 K Tref= 570.4914318566549 K
-    Making LSD:|####################| 100%
-
-
-.. parsed-literal::
-
-    
-
-
-.. parsed-literal::
-
+    Making LSD: 100%
     H2-H2
 
 
-Here, somewhat abruptly, we define a function to update a layer. This
-function simply calls ``update_layer`` within ``opart`` and returns its
-output along with ``None``. You might wonder why you need to define such
-a function yourself. To get a bit technical, this function is used with
-``jax.lax.scan`` when updating layers. However, if it is defined inside
-a class, XLA will recompile every time the parameters change, leading to
-a performance slowdown. For this reason, in the current implementation,
-users are required to define this function outside the class. This
-implementation may be revisited and revised in the future.
+Define a small helper function to update one atmospheric layer. It calls
+``update_layer`` inside ``opart`` and returns the layer output with
+``None`` for use in ``jax.lax.scan``.
+
+Keeping this function outside the class avoids repeated XLA
+recompilation when parameters change.
 
 .. code:: ipython3
 
@@ -217,12 +194,11 @@ implementation may be revisited and revised in the future.
         carry_tauflux = opart.update_layer(carry_tauflux, params)
         return carry_tauflux, None
 
-Now, let’s define the temperature and mixing ratio profiles (in the same
-way as for ``art``) and calculate the flux. Define the
-``layer_parameter`` input, which is a list of parameters for all layers.
-The temperature profile must be specified as the first element (index
-0). For the remaining elements, arrange them in the same order as used
-in the user-defined ``OpaLayer``.
+Define the temperature and mixing-ratio profiles as in the standard
+``art`` workflow, then calculate the flux. The ``layer_parameter`` input
+is a list of per-layer parameters. The temperature profile must be the
+first element, followed by the parameters expected by the user-defined
+``OpaLayer``.
 
 .. code:: ipython3
 
@@ -231,10 +207,9 @@ in the user-defined ``OpaLayer``.
     layer_params = [temperature, opart.pressure, opart.dParr, mixing_ratio]
     flux = opart(layer_params, layer_update_function)
 
-The spectrum has now been calculated. Let’s plot it. In this example, we
-calculate 200,000 wavenumber grid points across 200 layers. Even if the
-GPU you’re using has only 8 GB of device memory, such as an RTX 2080, it
-should be sufficient to perform the computation.
+The spectrum has now been calculated. This example uses 200,000
+wavenumber grid points and 200 atmospheric layers while keeping
+device-memory use modest.
 
 .. code:: ipython3
 
@@ -275,45 +250,16 @@ First, let’s generate mock data.
 
 Next, define the objective function.
 
-In this example, we will optimize two parameters of the temperature
-profile (T0 and powerlaw index alpha). For gradient-based optimization,
-we need to compute gradients. Typically, gradients are calculated using
-``jax.grad``, which employs reverse-mode differentiation. However, this
-approach consumes a significant amount of memory. Instead, we use
-forward-mode differentiation.
+This example optimizes two parameters of the temperature profile: ``T0``
+and the power-law index ``alpha``. Gradient-based optimization requires
+derivatives. Standard ``jax.grad`` uses reverse-mode differentiation,
+which can consume substantial memory for this workflow, so we use
+forward-mode differentiation instead.
 
 The differences between forward-mode and reverse-mode differentiation
-can be summarized as shown in the figure below. In forward-mode
-differentiation, function composition and differentiation propagate from
-the input side (left) to the output side (right), allowing function
-values and derivative values at each step to be discarded from memory.
-Each step of computation uses the Jacobian-Vector Product (JVP;
-directional derivative itself).
-
-On the other hand, in reverse-mode differentiation (also known as
-backpropagation), differentiation proceeds from the output side (right)
-to the input side (left). Each step uses the Vector-Jacobian Product
-(VJP), but computing the VJP requires function values after updates
-(denoted as :math:`f({\bf \omega})`) in the figure. Therefore, the
-function must first be composed from the input side to the output side,
-and intermediate results must be stored. This leads to higher (device)
-memory usage.
-
-The advantage of reverse-mode differentiation is that when the input
-vector has a higher dimension than the output vector (e.g., when the
-output is a single cost function), its computational cost is lower than
-that of forward-mode differentiation. In typical retrieval scenarios,
-this advantage is not very significant. However, when the number of
-estimated parameters is large, it can become a critical issue, so
-careful consideration of the memory-computation tradeoff is recommended.
-
-.. figure:: https://secondearths.sakura.ne.jp/exojax/figures/exojax_fr.png
-   :alt: Figure forward-mode and reverse-mode differentiation
-
-   Figure forward-mode and reverse-mode differentiation
-
-For this purpose, we utilize ``jax.jacfwd`` as the Jacobian computation
-using the forward-mode.
+are summarized in the figure below. In short, forward-mode
+differentiation is often efficient when the number of parameters is
+smaller than the number of outputs.
 
 .. code:: ipython3
 
@@ -345,8 +291,9 @@ using the forward-mode.
     [Array(0.27718641, dtype=float64), Array(0.04045218, dtype=float64)]
 
 
-Or alternatively ``jax.jvp`` (Jacobian-Vector Product) can be
-used.　Using ``jax.jvp`` might be slightly slower than ``jacfwd``, but…
+Alternatively, ``jax.jvp`` (Jacobian-vector product) can be used. It may
+be slightly slower than ``jacfwd``, but it gives explicit control over
+the derivative direction.
 
 .. code:: ipython3
 
@@ -463,7 +410,7 @@ Let’s perform optimization using the gradient (JVP) with
     Objective function: 1.50E-01 T0:  900.3106409251709 alpha:  0.10006144102716251
 
 
-Plots the optimization trajectory
+Plot the optimization trajectory.
 
 .. code:: ipython3
 
@@ -511,16 +458,16 @@ Let’s compare the model using the best-fit values with the mock data.
 .. image:: get_started_opart_files/get_started_opart_36_0.png
 
 
-In this way, gradient optimization can be performed in a device
-memory-efficient manner using forward differentiation.
+This demonstrates gradient optimization with forward-mode
+differentiation while keeping device-memory use low.
 
 3. HMC-NUTS using forward differentiation
 -----------------------------------------
 
-Forward differentiation must also be used in HMC-NUTS. In NumPyro’s
-NUTS, this can be achieved by setting the option
-``forward_mode_differentiation=True``. Other than this, the execution
-method is the same as the standard HMC-NUTS.
+Forward-mode differentiation is also needed for HMC-NUTS with this
+memory-efficient workflow. In NumPyro’s NUTS, set
+``forward_mode_differentiation=True``. The rest of the sampling setup is
+the same as standard HMC-NUTS.
 
 .. code:: ipython3
 
@@ -580,6 +527,6 @@ method is the same as the standard HMC-NUTS.
     Number of divergences: 0
 
 
-That’s it.
-
+This completes the memory-efficient emission-spectrum workflow with
+``opart``.
 

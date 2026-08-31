@@ -42,7 +42,18 @@ def layer_optical_depth(dParr, xsmatrix, mixing_ratio, mass, gravity):
         2D array: optical depth matrix, dtau  [N_layer, N_nus]
     """
 
-    return opacity_factor * xsmatrix * dParr[:, None] * mixing_ratio[:, None] / (mass * gravity)
+    if jnp.ndim(mass) == 1:
+        mass = mass[:, None]
+    if jnp.ndim(gravity) == 1:
+        gravity = gravity[:, None]
+
+    return (
+        opacity_factor
+        * xsmatrix
+        * dParr[:, None]
+        * mixing_ratio[:, None]
+        / (mass * gravity)
+    )
 
 
 def layer_optical_depth_ckd(dParr, xstensor_ckd, mixing_ratio, mass, gravity):
@@ -53,13 +64,34 @@ def layer_optical_depth_ckd(dParr, xstensor_ckd, mixing_ratio, mass, gravity):
         xstensor_ckd (3D array): CKD cross section tensor (cm2) [N_layer, N_g, N_bands]
         mixing_ratio (array): volume mixing ratio (VMR) or mass mixing ratio (MMR) [N_layer]
         mass: mean molecular weight for VMR or molecular mass for MMR
-        gravity: gravity (cm/s2)
+        gravity: gravity (cm/s2), scalar or 1D profile [N_layer]
 
     Returns:
         3D array: optical depth tensor, dtau_ckd [N_layer, N_g, N_bands]
     """
 
-    return opacity_factor * xstensor_ckd * dParr[:, None, None] * mixing_ratio[:, None, None] / (mass * gravity)
+    def _layer_factor(value):
+        value = jnp.asarray(value)
+        if value.ndim == 0:
+            return value
+        if value.ndim == 1:
+            return value[:, None, None]
+        if value.ndim == 2 and value.shape[1] == 1:
+            return value.reshape((value.shape[0], 1, 1))
+        return value
+
+    dParr = _layer_factor(dParr)
+    mixing_ratio = _layer_factor(mixing_ratio)
+    mass = _layer_factor(mass)
+    gravity = _layer_factor(gravity)
+
+    return (
+        opacity_factor
+        * xstensor_ckd
+        * dParr
+        * mixing_ratio
+        / (mass * gravity)
+    )
 
 
 def single_layer_optical_depth_CIA(
@@ -289,14 +321,21 @@ def layer_optical_depth_clouds_lognormal(
         extinction coefficient (array): extinction coefficient  in cgs (cm-1) [N_layer, N_nus]
         condensate_substance_density (float): condensate substance density (g/cm3)
         mmr_condensate (array): Mass mixing ratio (array) of condensate [Nlayer]
-        rg (float): rg parameter in the lognormal distribution of condensate size, defined by (9) in AM01
-        sigmag (float):sigmag parameter (geometric standard deviation) in the lognormal distribution of condensate size, defined by (9) in AM01, must be sigmag > 1
-        gravity (float): gravity (cm/s2)
+        rg (float or array): rg parameter in the lognormal distribution of condensate size, defined by (9) in AM01 [N_layer]
+        sigmag (float or array): sigmag parameter (geometric standard deviation) in the lognormal distribution of condensate size, defined by (9) in AM01, must be sigmag > 1 [N_layer]
+        gravity (float or array): gravity (cm/s2) [N_layer]
         N0 (float, optional): the normalization of the lognormal distribution ($N_0$). Defaults to 1.0.
 
     Returns:
         2D array: optical depth matrix, dtau  [N_layer, N_nus]
     """
+    if jnp.ndim(rg) == 1:
+        rg = rg[:, None]
+    if jnp.ndim(sigmag) == 1:
+        sigmag = sigmag[:, None]
+    if jnp.ndim(gravity) == 1:
+        gravity = gravity[:, None]
+
     expfac = bar_cgs * sigmag ** (
         jnp.log(sigmag**-4.5)
     )  # bar_cgs * exp(-9/2 * (log sigmag)**2), see tests/manual_check/f32/lnmoment_amcloud.py

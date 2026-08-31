@@ -22,7 +22,7 @@ See Section 4.2 in `Paper II <https://arxiv.org/abs/2410.06900>`_ for further de
 Uses ``ArtPureEmis`` class
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-To perform tue ibased calculation using ``ArtEmisPure`` in ExoJAX, 
+To perform the ibased calculation using ``ArtEmisPure`` in ExoJAX, 
 one simply needs to change the ``rtsolver`` option to either ``ibased`` or ``ibased_linsap``. 
 
 The difference between **ibased** and **ibased_linsap** (ibased w/ linear source approximation) in ExoJAX lies in the assumptions 

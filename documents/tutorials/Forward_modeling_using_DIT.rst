@@ -1,5 +1,5 @@
-Forward Modelling of a Many Lines Spectrum using DIT
-====================================================
+Forward Modeling of a Many-Line Spectrum Using DIT
+==================================================
 
 Here, we try to compute a emission spectrum using DIT.
 

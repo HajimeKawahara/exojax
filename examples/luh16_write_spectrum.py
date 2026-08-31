@@ -1,6 +1,6 @@
 """
-Computing real brown dwarf spectrum of Luhman16B, mimicking the analysis in Yama et al. arXiv:2511.23018
-==============================================================================================================================
+[emission/PreMODIT] Computing real brown dwarf spectrum of Luhman16B, mimicking the analysis in Yama et al. arXiv:2511.23018
+======================================================================================================================================================
 
 This script computes the brown dwarf spectrum of Luhman16B using ExoJAX, and compares real VLT/CRIRES data  from Crossfield et al. (2014) Nature, 505(7485):654–656.
 

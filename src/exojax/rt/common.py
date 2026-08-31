@@ -20,7 +20,9 @@ from exojax.utils.constants import logkB, logm_ucgs
 class ArtCommon:
     """Common Atmospheric Radiative Transfer"""
 
-    def __init__(self, pressure_top, pressure_btm, nlayer, nu_grid=None):
+    def __init__(
+        self, pressure_top, pressure_btm, nlayer, nu_grid=None, warn_no_nu_grid=True
+    ):
         """initialization of art
 
         Args:
@@ -28,6 +30,7 @@ class ArtCommon:
             pressure_bottom (float): bottom pressure in bar
             nlayer (int): # of atmospheric layers
             nu_grid (nd.array, optional): wavenumber grid in cm-1
+            warn_no_nu_grid (bool, optional): Warn when ``nu_grid`` is not given.
         """
         self.artinfo = None
         self.method = None  # which art is used
@@ -36,7 +39,7 @@ class ArtCommon:
         self.Thigh = jnp.inf
         self.reference_point = 0.5  # ref point (r) for pressure layers
 
-        if nu_grid is None:
+        if nu_grid is None and warn_no_nu_grid:
             warnings.warn(
                 "nu_grid is not given. specify nu_grid when using 'run' ", UserWarning
             )
@@ -63,7 +66,8 @@ class ArtCommon:
                 mean molecular weight profile (float/Nlayer)
             radius_btm (float):
                 the bottom radius of the atmospheric layer
-            gravity_btm (float): the bottom gravity cm2/s at radius_btm, i.e. G M_p/radius_btm
+            gravity_btm (float): the bottom gravity in cm/s2 at radius_btm,
+                i.e. G M_p/radius_btm**2
 
         Returns:
             1D array: height normalized by radius_btm (Nlayer)
@@ -101,17 +105,18 @@ class ArtCommon:
                 mean molecular weight profile (float/Nlayer)
             radius_btm (float): the bottom radius of the atmospheric layer
             gravity_btm (float):
-                the bottom gravity cm2/s at radius_btm, i.e. G M_p/radius_btm
+                the bottom gravity in cm/s2 at radius_btm,
+                i.e. G M_p/radius_btm**2
 
         Returns:
             2D array:
-                gravity in cm2/s (Nlayer, 1), suitable for the input of opacity_profile_lines
+                gravity in cm/s2 (Nlayer, 1), suitable for the input of opacity_profile_lines
         """
         normalized_height, normalized_radius_lower = self.atmosphere_height(
             temperature, mean_molecular_weight, radius_btm, gravity_btm
         )
         normalized_radius_layer = normalized_radius_lower + 0.5 * normalized_height
-        return jnp.array([gravity_btm / normalized_radius_layer]).T
+        return jnp.array([gravity_btm / normalized_radius_layer**2]).T
 
     def constant_profile(self, value):
         return value * np.ones_like(self.pressure)
@@ -209,6 +214,11 @@ class ArtCommon:
         Returns:
             _type_: _description_
         """
+        if jnp.ndim(mmw) == 1:
+            mmw = mmw[:, None]
+        if jnp.ndim(gravity) == 1:
+            gravity = gravity[:, None]
+
         narr = number_density(self.pressure, temperature)
         lognarr1 = jnp.log10(vmr1 * narr)  # log number density
         lognarr2 = jnp.log10(vmr2 * narr)  # log number density

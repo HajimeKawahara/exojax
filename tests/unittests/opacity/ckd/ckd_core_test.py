@@ -106,13 +106,14 @@ def test_safe_log_k():
     k_values_f32 = jnp.array([1.0, 0.0, 2.0], dtype=jnp.float32)
     k_values_f64 = jnp.array([1.0, 0.0, 2.0], dtype=jnp.float64)
     
-    log_k_f32 = safe_log_k(k_values_f32)  # Should use 1e-30
-    log_k_f64 = safe_log_k(k_values_f64)  # Should use 1e-100
+    log_k_f32 = safe_log_k(k_values_f32)
+    log_k_f64 = safe_log_k(k_values_f64)
     
-    # Both should be finite but f64 should allow smaller values
+    # Both should use the smallest finite normal value for their dtype
     assert jnp.isfinite(log_k_f32[1])
     assert jnp.isfinite(log_k_f64[1])
-    assert log_k_f64[1] < log_k_f32[1]  # 1e-100 gives smaller log than 1e-30
+    assert jnp.isclose(log_k_f32[1], jnp.log(jnp.finfo(jnp.float32).tiny))
+    assert jnp.isclose(log_k_f64[1], jnp.log(jnp.finfo(jnp.float64).tiny))
 
 
 def test_interpolate_log_k_to_g_grid():

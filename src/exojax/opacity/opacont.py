@@ -377,6 +377,9 @@ class OpaMie(OpaCont):
         refraction_index_wavenumber_restricted = self.pdb.refraction_index_wavenumber[
             imin:imax
         ]
+        refraction_index_wavelength_nm_restricted = (
+            self.pdb.refraction_index_wavelength_nm[imin:imax]
+        )
         nind = len(refraction_index_wavenumber_restricted)
         refraction_index_restricted = self.pdb.refraction_index[imin:imax]
 
@@ -395,7 +398,7 @@ class OpaMie(OpaCont):
         for ind_m, m in enumerate(tqdm(refraction_index_restricted)):
             coeff = mie_lognormal_pymiescatt(
                 m,
-                refraction_index_wavenumber_restricted[ind_m],
+                refraction_index_wavelength_nm_restricted[ind_m],
                 sigmag,
                 rg_nm,
                 self.pdb.N0,
@@ -437,9 +440,22 @@ class OpaMie(OpaCont):
                 - asymmetric_factor: Asymmetry parameter matrix [Nlayer, Nnu]
 
         Notes:
-            Uses vectorized direct PyMieScatt calculations.
+            Evaluates each layer sequentially because PyMieScatt uses NumPy.
             Slower than grid interpolation but avoids pre-computation requirements.
         """
 
-        f = vmap(self.mieparams_vector_direct_from_pymiescatt, (0, 0), 0)
-        return f(rg_layer, sigmag_layer)
+        rg_layer = np.asarray(rg_layer)
+        sigmag_layer = np.asarray(sigmag_layer)
+        if len(rg_layer) != len(sigmag_layer):
+            raise ValueError("rg_layer and sigmag_layer must have the same length")
+
+        mieparams = [
+            self.mieparams_vector_direct_from_pymiescatt(rg, sigmag)
+            for rg, sigmag in zip(rg_layer, sigmag_layer)
+        ]
+        sigma_extinction, sigma_scattering, asymmetric_factor = zip(*mieparams)
+        return (
+            jnp.stack(sigma_extinction),
+            jnp.stack(sigma_scattering),
+            jnp.stack(asymmetric_factor),
+        )

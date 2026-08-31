@@ -1,25 +1,22 @@
 Getting Started with Reflection Spectroscopy
 ============================================
 
-Hajime Kawahara September 24th (2025)
+Last update: August 2026, Hajime Kawahara, for ExoJAX 2.6.0
 
-In this tutorial, we analyze the high-resolution near-infrared
-reflection spectrum of Jupiter. This is a simplified version of the
-analysis performed in
+This guide models a high-resolution near-infrared reflection spectrum of
+Jupiter. It is a simplified version of the analysis in
 `exojaxample_jupiter <https://github.com/HajimeKawahara/exojaxample_jupiter>`__.
 
-In this *Getting Started* guide, we include a cloud model for reflected
-light calculations, making it more detailed than other *Getting Started*
-guides. It may be helpful to first read about `the Ackerman & Marley
-cloud model <Ackerman_and_Marley_cloud_model.html>`__.
+Reflection spectroscopy requires additional ingredients compared with
+the emission and transmission getting-started guides, especially a cloud
+model and an incident stellar or solar spectrum. If you are new to the
+cloud model used here, see the `Ackerman and Marley cloud
+model <Ackerman_and_Marley_cloud_model.html>`__ first.
 
-The spectrum to be analyzed is as follows. The absorption lines observed
-in the spectrum are primarily due to methane. While a comprehensive line
-database for methane in the visible range is still lacking (see
-`here <https://secondearths.sakura.ne.jp/exojax/tutorials/jupiters/Jupiter_Hires_Modeling.html>`__),
-the near-infrared range allows for a reasonable explanation of the
-observed data. Additionally, since this is a reflection spectrum, the
-original solar spectrum must also be taken into account.
+The observed spectrum is dominated by methane absorption. In this
+near-infrared wavelength range, available methane data are sufficient
+for this demonstration. Because this is a reflection spectrum, the
+incident solar spectrum must also be included.
 
 .. code:: ipython3
 
@@ -45,8 +42,8 @@ original solar spectrum must also be taken into account.
 .. image:: get_started_reflection_files/get_started_reflection_3_0.png
 
 
-I found very good one: High-resolution solar spectrum taken from Meftar
-et al. (2023). Get the data.
+This example uses the high-resolution solar spectrum from Meftah et
+al. (2023):
 
 -  10.21413/SOLAR-HRS-DATASET.V1.1_LATMOS
 -  http://doi.latmos.ipsl.fr/DOI_SOLAR_HRS.v1.1.html
@@ -82,8 +79,7 @@ et al. (2023). Get the data.
 .. image:: get_started_reflection_files/get_started_reflection_6_0.png
 
 
-Now, we will use ``ArtReflectPure`` for the radiative transfer of
-reflected light.
+Use ``ArtReflectPure`` for reflected-light radiative transfer.
 
 .. code:: ipython3
 
@@ -110,8 +106,8 @@ reflected light.
     Please be careful when you use the wavelength grid.
 
 
-Now, let’s use the temperature-pressure (T-P) profile of Jupiter
-obtained by the Galileo probe. Please install
+Use the Jupiter temperature-pressure profile measured by the Galileo
+probe. This section requires
 `jovispec <https://github.com/HajimeKawahara/jovispec>`__.
 
 .. code:: ipython3
@@ -121,9 +117,8 @@ obtained by the Galileo probe. Please install
     torig = dat["Temperature (K)"]
     porig = dat["Pressure (bar)"]
 
-Let’s interpolate the temperature grid to match the pressure grid of
-``art``. For simplicity, we will assume an isothermal atmosphere in the
-upper layers.
+Interpolate the temperature grid onto the pressure grid used by ``art``.
+For simplicity, assume an isothermal atmosphere in the upper layers.
 
 .. code:: ipython3
 
@@ -156,16 +151,15 @@ Set the mean molecular weight and gravity.
     mu = 2.22  # mean molecular weight NASA Jupiter fact sheet
     gravity = gravity_jupiter(1.0, 1.0)
 
-In Jupiter’s atmosphere, the primary reflectors of sunlight are ammonia
-clouds. Therefore, we retrieve ammonia from the ``PdbCloud`` database.
-As the cloud model, we use the `Ackerman & Marley (AM)-like
-model <Ackerman_and_Marley_cloud_model.html>`__, which can be accessed
-via ``AmpAmcloud`` from ``atmphys``.
+In Jupiter’s atmosphere, ammonia clouds are major reflectors of
+sunlight. We retrieve ammonia from the ``PdbCloud`` database and use an
+`Ackerman and Marley-like
+model <Ackerman_and_Marley_cloud_model.html>`__ through ``AmpAmcloud``
+from ``atmphys``.
 
-Whether a simple gray cloud model would suffice is worth considering.
-Using an overly complex model for the data can obscure the assumptions
-being made. However, since the cloud composition and the T-P profile of
-Jupiter are well understood, using an AM model should not be excessive.
+A simpler gray cloud model may be sufficient for some data. The more
+detailed model used here is useful for demonstrating how composition and
+particle-size assumptions enter the reflection spectrum.
 
 .. code:: ipython3
 
@@ -216,13 +210,11 @@ ammonia at the cloud base.
     Anders E. & Grevesse N. (1989, Geochimica et Cosmochimica Acta 53, 197) (Photospheric, using Table 2)
 
 
-In the AM model, parameters are currently made differentiable by
-creating a grid dataset called ``miegrid`` and interpolating it. The
-parameters of ``miegrid`` are ``sigmag`` and ``rg`` in the AM model;
-however, in this example, we fix ``sigmag`` and create a grid only for
-``rg``. How should we determine the grid range for ``rg``? Let’s convert
-the expected range of ``fsed`` (here 0.1 - 10) to ``rg`` and use that to
-define the grid range.
+In the AM model, differentiability is achieved by precomputing a grid
+dataset called ``miegrid`` and interpolating within it. The AM model
+parameters are ``sigmag`` and ``rg``; in this example, we fix ``sigmag``
+and construct a grid only for ``rg``. To choose the grid range, convert
+the expected ``fsed`` range, here 0.1-10, into ``rg``.
 
 .. code:: ipython3
 
@@ -254,19 +246,14 @@ define the grid range.
 .. image:: get_started_reflection_files/get_started_reflection_21_0.png
 
 
-Through the above procedure, we found that ``rg`` should be gridded over
-approximately one order of magnitude, ranging from (10^{-5}) to
-(10^{-6}). The ``miegrid`` can be generated using ``generate_miegrid``
-from ``pdb``. Once generated, it does not need to be regenerated for
-future use.
+This gives an ``rg`` grid spanning roughly one order of magnitude, from
+1.0e-6 to 1.0e-5 cm. The ``miegrid`` can be generated with
+``generate_miegrid`` from ``pdb`` and reused after it has been created.
 
 This ``miegrid`` uses
 `PyMieScatt <https://github.com/bsumlin/PyMieScatt>`__ as the backend.
-If you installed it via pip, you might encounter an error with
-``scipy.integrate.trapz``. In that case, clone the repository from
-GitHub and install it using ``python setup.py install``.
-
-https://github.com/bsumlin/PyMieScatt
+If a pip-installed version fails with ``scipy.integrate.trapz``, install
+PyMieScatt from its source repository.
 
 .. code:: ipython3
 
@@ -373,12 +360,7 @@ Mie scattering is ``OpaMie``.
 .. parsed-literal::
 
     Premodit: Twt= 328.42341041740974 K Tref= 91.89455622053987 K
-    Making LSD:|####################| 100%
-
-
-.. parsed-literal::
-
-    
+    Making LSD: 100%
 
 
 Encapsulate the methane opacity calculation into a function.
@@ -393,10 +375,10 @@ Encapsulate the methane opacity calculation into a function.
         dtau_ch4 = art.opacity_profile_xs(xsmatrix, mmr_ch4, molmass_ch4, gravity)
         return dtau_ch4
 
-Oh, I almost forgot—this data was obtained from a test observation of
-Jupiter using a 20 cm telescope before installing the IRD spectrograph
-on the Subaru Telescope. For details, ask Takayuki Kotani. A spectral
-resolution of around 25,000 seems appropriate.
+This spectrum comes from a Jupiter test observation with a 20 cm
+telescope before the IRD spectrograph was installed on the Subaru
+Telescope. A spectral resolution of about 25,000 is appropriate for this
+dataset.
 
 .. code:: ipython3
 
@@ -432,14 +414,11 @@ HMC.
     
 
 
-Next, we define the long-awaited atmospheric model. The key point here
-is that ``rg`` does not vary significantly across atmospheric layers, so
-we use the average as the representative value.
-
-We calculate *the Three Sacred Treasures* in `the two-stream
-approximation for radiative transfer of reflected and scattered
-light <../userguide/rtransfer_fbased.html>`__: opacity, single
-scattering albedo, and the asymmetry parameter.
+Next, define the atmospheric model. The key simplification is that
+``rg`` is represented by its atmospheric average. The reflected-light
+two-stream calculation uses three quantities from `radiative transfer of
+reflected and scattered light <../userguide/rtransfer_fbased.html>`__:
+opacity, single-scattering albedo, and asymmetry parameter.
 
 .. code:: ipython3
 
@@ -521,10 +500,10 @@ defined separately, this definition remains concise.
 Optimization
 ------------
 
-This model works with reverse-mode differentiation, but to accommodate
-the use of *Opart* for reducing device memory, we implement optimization
-in forward-mode as well. Yes, *Opart* can also be used for reflected
-light calculations, using
+This model supports reverse-mode differentiation. To keep the workflow
+compatible with memory-efficient ``Opart`` calculations, this example
+also demonstrates forward-mode optimization. ``Opart`` can be used for
+reflected-light calculations through
 `OpartReflectPure <../exojax/exojax.spec.html#exojax.spec.opart.OpartReflectPure>`__.
 
 .. code:: ipython3
@@ -574,7 +553,7 @@ light calculations, using
     100%|██████████| 3000/3000 [14:00<00:00,  3.57it/s]
 
 
-Nice L-curve!
+The L-curve provides a useful diagnostic for the optimization path.
 
 .. code:: ipython3
 
@@ -611,7 +590,8 @@ Nice L-curve!
        2.49925011   1.54595203   9.98806778]
 
 
-The optimization seems to be working well.
+The optimized model follows the observed spectrum well for this
+demonstration.
 
 .. code:: ipython3
 
@@ -650,9 +630,9 @@ The optimization seems to be working well.
 HMC-NUTS retrieval
 ------------------
 
-HMC-NUTS can be run in the same way as before. Here, I’ll take a
-shortcut (I need to head to work soon!) and run it with only five
-parameters.
+HMC-NUTS can be run with the same basic structure as in the other
+getting-started guides. To keep this example compact, the retrieval
+below uses five parameters.
 
 .. code:: ipython3
 
@@ -710,11 +690,6 @@ parameters.
     Number of divergences: 0
 
 
-.. parsed-literal::
-
-    
-
-
 .. code:: ipython3
 
     from numpyro.diagnostics import hpdi
@@ -764,4 +739,4 @@ parameters.
 .. image:: get_started_reflection_files/get_started_reflection_54_0.png
 
 
-That’s it!
+This completes the reflection-spectrum getting started workflow.
