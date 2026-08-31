@@ -2,7 +2,9 @@ import jax.numpy as jnp
 from exojax.rt.common import ArtCommon
 from exojax.rt.planck import piB, piBarr
 from exojax.rt.rtransfer import (
+    initialize_gaussian_quadrature,
     rtrun_reflect_fluxadding_toonhm,
+    rtrun_reflect_sfm2st_toonhm,
     setrt_toonhm,
     setrt_toonhm_with_absorption,
 )
@@ -124,6 +126,7 @@ class ArtReflectPure(ArtCommon):
         nlayer=100,
         nu_grid=None,
         rtsolver="fluxadding_toon_hemispheric_mean",
+        nstream=8,
     ):
         """initialization of ArtReflectPure
 
@@ -134,12 +137,17 @@ class ArtReflectPure(ArtCommon):
                 atmospheric layer in bar. Defaults to 1.0e2.
             nlayer (int, optional): the number of the atmospheric layers. Defaults to 100.
             nu_grid (float, array, optional): the wavenumber grid. Defaults to None.
-            rtsolver (str): Radiative Transfer Solver, fluxadding_toon_hemispheric_mean
+            rtsolver (str): Radiative transfer solver. Supported values are
+                "fluxadding_toon_hemispheric_mean" and
+                "sfm2st_toon_hemispheric_mean".
+            nstream (int): Number of streams for SFM-2st. Defaults to 8.
 
 
         """
         super().__init__(pressure_top, pressure_btm, nlayer, nu_grid)
         self.rtsolver = rtsolver
+        self.nstream = nstream
+        self.mus, self.weights = initialize_gaussian_quadrature(self.nstream)
         self.method = "reflection_using_" + self.rtsolver
 
     def run(
@@ -157,7 +165,7 @@ class ArtReflectPure(ArtCommon):
             single_scattering_albedo: single scattering albedo (Nlayer, N_nus)
             asymmetric_parameter: assymetric parameter (Nlayer, N_nus)
             reflectivity_surface: reflectivity from the surface (N_nus)
-            incoming flux: incoming flux F_0^- (N_nus)
+            incoming flux: diffuse incoming flux F_0^- (N_nus)
 
 
         Returns:
@@ -176,6 +184,21 @@ class ArtReflectPure(ArtCommon):
                 source_surface,
                 reflectivity_surface,
                 incoming_flux,
+            )
+        elif self.rtsolver == "sfm2st_toon_hemispheric_mean":
+            _, Nnus = dtau.shape
+            sourcef = jnp.zeros_like(dtau)
+            source_surface = jnp.zeros(Nnus)
+            return rtrun_reflect_sfm2st_toonhm(
+                dtau,
+                single_scattering_albedo,
+                asymmetric_parameter,
+                sourcef,
+                source_surface,
+                reflectivity_surface,
+                incoming_flux,
+                self.mus,
+                self.weights,
             )
         else:
             print("rtsolver=", self.rtsolver)
@@ -197,7 +220,7 @@ class ArtReflectPure(ArtCommon):
             single_scattering_albedo (2D array): single scattering albedo (Nlayer, Nbands)
             asymmetric_parameter (2D array): asymmetric parameter (Nlayer, Nbands)
             reflectivity_surface (1D array): reflectivity from the surface (Nbands)
-            incoming_flux (1D array): incoming flux F_0^- (Nbands)
+            incoming_flux (1D array): diffuse incoming flux F_0^- (Nbands)
             weights (1D array): weights for the Gaussian quadrature (Ng,)
             
         Returns:
@@ -229,6 +252,20 @@ class ArtReflectPure(ArtCommon):
                 reflectivity_2d,
                 incoming_flux_2d,
             )
+        elif self.rtsolver == "sfm2st_toon_hemispheric_mean":
+            sourcef = jnp.zeros_like(dtau_2d)
+            source_surface = jnp.zeros(Ng * Nbands)
+            spectrum = rtrun_reflect_sfm2st_toonhm(
+                dtau_2d,
+                ssa_2d,
+                g_2d,
+                sourcef,
+                source_surface,
+                reflectivity_2d,
+                incoming_flux_2d,
+                self.mus,
+                self.weights,
+            )
         else:
             print("rtsolver=", self.rtsolver)
             raise ValueError("Unknown radiative transfer solver (rtsolver).")
@@ -253,6 +290,7 @@ class ArtReflectEmis(ArtCommon):
         nlayer=100,
         nu_grid=None,
         rtsolver="fluxadding_toon_hemispheric_mean",
+        nstream=8,
     ):
         """initialization of ArtReflectionPure
 
@@ -263,12 +301,17 @@ class ArtReflectEmis(ArtCommon):
                 atmospheric layer in bar. Defaults to 1.0e2.
             nlayer (int, optional): the number of the atmospheric layers. Defaults to 100.
             nu_grid (float, array, optional): the wavenumber grid. Defaults to None.
-            rtsolver (str): Radiative Transfer Solver, fluxadding_toon_hemispheric_mean
+            rtsolver (str): Radiative transfer solver. Supported values are
+                "fluxadding_toon_hemispheric_mean" and
+                "sfm2st_toon_hemispheric_mean".
+            nstream (int): Number of streams for SFM-2st. Defaults to 8.
 
 
         """
         super().__init__(pressure_top, pressure_btm, nlayer, nu_grid)
         self.rtsolver = rtsolver
+        self.nstream = nstream
+        self.mus, self.weights = initialize_gaussian_quadrature(self.nstream)
         self.method = "reflection_using_" + self.rtsolver
 
     def run(
@@ -291,7 +334,7 @@ class ArtReflectEmis(ArtCommon):
             temperature (1D array): temperature profile (Nlayer)
             source_surface: source from the surface (N_nus)
             reflectivity_surface: reflectivity from the surface (N_nus)
-            incoming flux: incoming flux F_0^- (N_nus)
+            incoming flux: diffuse incoming flux F_0^- (N_nus)
             nu_grid (1D array): if nu_grid is not initialized, provide it.
 
 
@@ -314,6 +357,18 @@ class ArtReflectEmis(ArtCommon):
                 source_surface,
                 reflectivity_surface,
                 incoming_flux,
+            )
+        elif self.rtsolver == "sfm2st_toon_hemispheric_mean":
+            return rtrun_reflect_sfm2st_toonhm(
+                dtau,
+                single_scattering_albedo,
+                asymmetric_parameter,
+                sourcef,
+                source_surface,
+                reflectivity_surface,
+                incoming_flux,
+                self.mus,
+                self.weights,
             )
         else:
             print("rtsolver=", self.rtsolver)
@@ -340,7 +395,7 @@ class ArtReflectEmis(ArtCommon):
             temperature (1D array): temperature profile (Nlayer)
             source_surface (1D array): source from the surface (Nbands)
             reflectivity_surface (1D array): reflectivity from the surface (Nbands)
-            incoming_flux (1D array): incoming flux F_0^- (Nbands)
+            incoming_flux (1D array): diffuse incoming flux F_0^- (Nbands)
             weights (1D array): weights for the Gaussian quadrature (Ng,)
             nu_bands (1D array): wavenumber grid for the CKD (Nbands)
             
@@ -373,6 +428,18 @@ class ArtReflectEmis(ArtCommon):
                 source_surface_2d,
                 reflectivity_2d,
                 incoming_flux_2d,
+            )
+        elif self.rtsolver == "sfm2st_toon_hemispheric_mean":
+            spectrum = rtrun_reflect_sfm2st_toonhm(
+                dtau_2d,
+                ssa_2d,
+                g_2d,
+                sourcef,
+                source_surface_2d,
+                reflectivity_2d,
+                incoming_flux_2d,
+                self.mus,
+                self.weights,
             )
         else:
             print("rtsolver=", self.rtsolver)

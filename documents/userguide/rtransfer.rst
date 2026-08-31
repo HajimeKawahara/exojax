@@ -28,13 +28,16 @@ These are flux-based computations.
 (Toon et al. 1989), with Toon hemispheric-mean two-stream fluxes
 (``rtsolver="sfm2st_toon_hemispheric_mean"``). This scheme first computes the two-stream fluxes,
 then evaluates the emission spectrum by the intensity-based formal solution.
-Regarding reflected light in ExoJAX, the flux-adding treatment can be utilized.
+For reflected light, ``ArtReflectPure`` and ``ArtReflectEmis`` support both the
+flux-adding treatment and SFM-2st. The latter treats ``incoming_flux`` as a
+diffuse hemispheric flux at the top boundary.
 
 See :doc:`../userguide/rtransfer_fbased` for the details of the `fbased` method for reflection and/or emission with scattering.
 
 All of the ``fbased`` schemes are currently based on the two-stream approximation, although the ``ibased`` schemes can specify the number of the streams.
-The SFM-2st emission solver uses a two-stream source function and an intensity-based angular integration with a configurable number of streams.
-Other ibased schemes for scattering/reflection are planned but have not yet been implemented.
+The SFM-2st emission and reflection solvers use a two-stream source function
+and an intensity-based angular integration with a configurable number of
+streams.
 
 For transmission spectroscopy in ExoJAX, the options are primarily limited to differences in the integration methods. 
 Both the Trapezoid integration method and the method using Simpson's rule are available.
