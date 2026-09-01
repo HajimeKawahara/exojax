@@ -9,6 +9,7 @@ from exojax.rt.rtransfer import (
     rtrun_emis_pureabs_ibased,
     rtrun_emis_pureabs_ibased_flux_from_intensity,
     rtrun_emis_pureabs_ibased_intensity,
+    rtrun_emis_pureabs_ibased_intensity_surface,
 )
 
 
@@ -41,6 +42,22 @@ def test_ibased_intensity_reconstructs_flux():
     flux = rtrun_emis_pureabs_ibased(dtau, source_matrix, art.mus, art.weights)
 
     assert flux_from_intensity == pytest.approx(flux)
+
+
+def test_ibased_intensity_surface_adds_attenuated_lower_boundary():
+    dtau = jnp.array([[0.2, 0.4], [0.3, 0.1]])
+    source_matrix = jnp.zeros_like(dtau)
+    source_surface = jnp.array([2.0, 3.0])
+    mus = jnp.array([0.25, 0.75])
+
+    actual = rtrun_emis_pureabs_ibased_intensity_surface(
+        dtau, source_matrix, source_surface, mus
+    )
+    expected = source_surface[None, :] * jnp.exp(
+        -jnp.sum(dtau, axis=0)[None, :] / mus[:, None]
+    )
+
+    assert actual == pytest.approx(expected)
 
 
 def test_artemispure_run_with_limb_darkening_reuses_intensity():
