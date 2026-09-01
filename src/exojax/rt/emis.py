@@ -9,6 +9,7 @@ from exojax.rt.rtransfer import (
     rtrun_emis_scat_fluxadding_toonhm,
     rtrun_emis_scat_lart_toonhm,
     rtrun_emis_scat_sfm2st_toonhm,
+    rtrun_emis_scat_sfm2st_toonhm_surface,
     initialize_gaussian_quadrature,
     setrt_toonhm_with_absorption,
 )
@@ -441,6 +442,13 @@ class ArtEmisScat(ArtCommon):
         self.mus, self.weights = initialize_gaussian_quadrature(self.nstream)
         self.method = "emission_with_scattering_using_" + self.rtsolver
 
+    def _source_function(self, temperature, nu_grid):
+        if self.nu_grid is not None:
+            return piBarr(temperature, self.nu_grid)
+        if nu_grid is not None:
+            return piBarr(temperature, nu_grid)
+        raise ValueError("the wavenumber grid is not given.")
+
     def run(
         self,
         dtau,
@@ -461,12 +469,7 @@ class ArtEmisScat(ArtCommon):
         Returns:
             1D array: spectrum
         """
-        if self.nu_grid is not None:
-            sourcef = piBarr(temperature, self.nu_grid)
-        elif nu_grid is not None:
-            sourcef = piBarr(temperature, nu_grid)
-        else:
-            raise ValueError("the wavenumber grid is not given.")
+        sourcef = self._source_function(temperature, nu_grid)
 
         if self.rtsolver == "lart_toon_hemispheric_mean":
             (
@@ -507,6 +510,48 @@ class ArtEmisScat(ArtCommon):
             raise ValueError("Unknown radiative transfer solver (rtsolver).")
 
         return spectrum
+
+    def run_with_surface(
+        self,
+        dtau,
+        single_scattering_albedo,
+        asymmetric_parameter,
+        temperature,
+        source_surface,
+        nu_grid=None,
+    ):
+        """Run SFM-2st emission with an isotropic lower thermal source.
+
+        Args:
+            dtau (2D array): Layer optical depths, shape ``(N_layer, N_nus)``.
+            single_scattering_albedo (2D array): Single-scattering albedo.
+            asymmetric_parameter (2D array): Scattering asymmetry parameter.
+            temperature (1D array): Layer temperatures, shape ``(N_layer,)``.
+            source_surface (1D array): Upward source at
+                ``pressure_boundary[-1]`` in pi B_nu scale. Use
+                ``piB(temperature_surface, nu_grid)`` for a black lower
+                boundary.
+            nu_grid (1D array): Wavenumber grid when it was not initialized.
+
+        Returns:
+            1D array: Top-of-atmosphere emission spectrum.
+        """
+        if self.rtsolver != "sfm2st_toon_hemispheric_mean":
+            raise ValueError(
+                "run_with_surface currently supports "
+                "rtsolver='sfm2st_toon_hemispheric_mean'."
+            )
+
+        sourcef = self._source_function(temperature, nu_grid)
+        return rtrun_emis_scat_sfm2st_toonhm_surface(
+            dtau,
+            single_scattering_albedo,
+            asymmetric_parameter,
+            sourcef,
+            source_surface,
+            self.mus,
+            self.weights,
+        )
 
     def run_ckd(self, dtau_ckd, single_scattering_albedo, asymmetric_parameter, 
                 temperature, weights, nu_bands):
