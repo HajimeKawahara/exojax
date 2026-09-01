@@ -69,6 +69,27 @@ quadrature is controlled by ``nstream``.
         temperature,
     )
 
+Use ``run_with_surface`` to add an isotropic thermal source immediately below
+the last atmospheric layer, at ``pressure_boundary[-1]``. The surface source
+uses the same :math:`\pi B_\nu` scale as the atmospheric source function.
+
+.. code:: python
+
+    from exojax.rt.planck import piB
+
+    source_surface = piB(temperature_surface, nu_grid)
+    F0 = art.run_with_surface(
+        dtau,
+        single_scattering_albedo,
+        asymmetric_parameter,
+        temperature,
+        source_surface,
+    )
+
+``run_with_surface`` currently supports the line-by-line
+``sfm2st_toon_hemispheric_mean`` solver. The existing ``run`` method retains
+its zero lower-boundary source.
+
 Reflection using SFM-2st
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 

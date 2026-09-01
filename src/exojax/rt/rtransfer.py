@@ -18,7 +18,8 @@
     --- isothermal: rtrun_emis_pureabs_ibased
     --- linear source approximation: rtrun_emis_pureabs_ibased_linsap
     -- scattering
-    --- SFM-2st: rtrun_emis_scat_sfm2st
+    --- SFM-2st: rtrun_emis_scat_sfm2st_toonhm,
+        rtrun_emis_scat_sfm2st_toonhm_surface
 
     - intensity-based reflection
     -- scattering
@@ -639,6 +640,34 @@ def _solve_sfm2st_layer_source(
     return source_sfm, flux_plus[-1]
 
 
+def _rtrun_sfm2st_toonhm(
+    dtau,
+    single_scattering_albedo,
+    asymmetric_parameter,
+    source_matrix,
+    source_surface,
+    reflectivity_surface,
+    incoming_flux,
+    mus,
+    weights,
+):
+    """Run the shared SFM-2st formal solution with boundary sources."""
+    source_sfm, source_bottom = _solve_sfm2st_layer_source(
+        dtau,
+        single_scattering_albedo,
+        asymmetric_parameter,
+        source_matrix,
+        reflectivity_surface,
+        source_surface,
+        incoming_flux,
+    )
+
+    intensity = rtrun_emis_pureabs_ibased_intensity_surface(
+        dtau, source_sfm, source_bottom, mus
+    )
+    return rtrun_emis_pureabs_ibased_flux_from_intensity(intensity, mus, weights)
+
+
 @jit
 def rtrun_emis_scat_sfm2st_toonhm(
     dtau,
@@ -683,6 +712,44 @@ def rtrun_emis_scat_sfm2st_toonhm(
 
 
 @jit
+def rtrun_emis_scat_sfm2st_toonhm_surface(
+    dtau,
+    single_scattering_albedo,
+    asymmetric_parameter,
+    source_matrix,
+    source_surface,
+    mus,
+    weights,
+):
+    """Radiative transfer for SFM-2st emission with a lower thermal source.
+
+    Args:
+        dtau: Layer optical depths with shape ``(N_layer, N_nus)``.
+        single_scattering_albedo: Single-scattering albedo.
+        asymmetric_parameter: Scattering asymmetry parameter.
+        source_matrix: Thermal layer source in pi B scale.
+        source_surface: Isotropic lower-boundary source in pi B scale.
+        mus: Positive ray-angle cosines.
+        weights: Gaussian quadrature weights.
+
+    Returns:
+        Top-of-atmosphere emission flux.
+    """
+    _, Nnus = dtau.shape
+    return _rtrun_sfm2st_toonhm(
+        dtau,
+        single_scattering_albedo,
+        asymmetric_parameter,
+        source_matrix,
+        source_surface,
+        jnp.zeros(Nnus),
+        jnp.zeros(Nnus),
+        mus,
+        weights,
+    )
+
+
+@jit
 def rtrun_reflect_sfm2st_toonhm(
     dtau,
     single_scattering_albedo,
@@ -715,21 +782,16 @@ def rtrun_reflect_sfm2st_toonhm(
     Returns:
         Reflected and emitted top-of-atmosphere flux.
     """
-    source_sfm, source_bottom = _solve_sfm2st_layer_source(
+    return _rtrun_sfm2st_toonhm(
         dtau,
         single_scattering_albedo,
         asymmetric_parameter,
         source_matrix,
-        reflectivity_surface,
         source_surface,
+        reflectivity_surface,
         incoming_flux,
-    )
-
-    intensity = rtrun_emis_pureabs_ibased_intensity_surface(
-        dtau, source_sfm, source_bottom, mus
-    )
-    return rtrun_emis_pureabs_ibased_flux_from_intensity(
-        intensity, mus, weights
+        mus,
+        weights,
     )
 
 
