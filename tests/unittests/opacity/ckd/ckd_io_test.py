@@ -1,9 +1,12 @@
+import json
+from types import SimpleNamespace
+
 import numpy as np
 import jax.numpy as jnp
 import pytest
 
 from exojax.opacity.ckd.api import OpaCKD, CKDTableInfo
-from exojax.opacity.ckd.io import _ckd_save_as_npz
+from exojax.opacity.ckd.io import _ckd_save_as_npz, _hash_json
 
 
 class _DummyBaseOpa:
@@ -12,6 +15,102 @@ class _DummyBaseOpa:
 
     def meta(self):
         return {"tag": "dummy"}
+
+
+class _ScaledBaseOpa(_DummyBaseOpa):
+    def __init__(self, scale=1.0):
+        super().__init__(jnp.linspace(100.0, 200.0, 5))
+        self.scale = scale
+        self._scale = 1.0
+        self.alias = "close"
+        self.opainfo = (np.asarray([1.0, 2.0]), [np.asarray([3.0])])
+        self.mdb = SimpleNamespace(
+            line_strength_ref_original=np.asarray([1.0e-20]),
+            gQT=np.asarray([1.0, 2.0]),
+        )
+
+    def xsmatrix(self, temperatures, pressures):
+        return jnp.full(
+            (len(temperatures), len(self.nu_grid)),
+            self.scale * self._scale * self.mdb.line_strength_ref_original[0],
+        )
+
+
+@pytest.mark.parametrize(
+    "difference", ["scale", "private_scale", "grid", "lines", "partition", "alias", "opainfo"]
+)
+def test_ckd_rejects_different_base_opacity(tmp_path, difference):
+    base = _ScaledBaseOpa()
+    opa = OpaCKD(base, Ng=2, band_width=100.0, band_spacing="linear")
+    path = tmp_path / "ckd.npz"
+    opa.precompute_tables(jnp.asarray([800.0]), jnp.asarray([0.1]), to_path=path)
+
+    other = _ScaledBaseOpa()
+    if difference == "scale":
+        other.scale = 100.0
+        np.testing.assert_allclose(
+            other.xsmatrix([800.0], [0.1]) / base.xsmatrix([800.0], [0.1]),
+            100.0,
+        )
+    elif difference == "private_scale":
+        other._scale = 100.0
+    elif difference == "grid":
+        other.nu_grid = other.nu_grid.at[2].add(1.0)
+    elif difference == "lines":
+        other.mdb.line_strength_ref_original *= 100.0
+    elif difference == "partition":
+        other.mdb.gQT *= 2.0
+    elif difference == "alias":
+        other.alias = "open"
+    else:
+        other.opainfo[1][0][0] = 4.0
+
+    with pytest.raises(ValueError, match="fingerprint"):
+        OpaCKD.from_saved_tables(other, path)
+    loaded = OpaCKD.from_saved_tables(path)
+    with pytest.raises(ValueError, match="fingerprint"):
+        loaded.attach_base(other)
+    loaded.attach_base(_ScaledBaseOpa())
+
+
+def test_ckd_headless_resave_preserves_base_fingerprint(tmp_path):
+    base = _ScaledBaseOpa()
+    opa = OpaCKD(base, Ng=2, band_width=100.0, band_spacing="linear")
+    path = tmp_path / "ckd.npz"
+    opa.precompute_tables(jnp.asarray([800.0]), jnp.asarray([0.1]), to_path=path)
+
+    loaded = OpaCKD.from_saved_tables(path)
+    second_path = tmp_path / "ckd_copy.npz"
+    loaded.save_tables(second_path)
+    restored = OpaCKD.from_saved_tables(_ScaledBaseOpa(), second_path)
+    np.testing.assert_array_equal(restored.ckd_info.log_kggrid, opa.ckd_info.log_kggrid)
+    with pytest.raises(ValueError, match="fingerprint"):
+        OpaCKD.from_saved_tables(_ScaledBaseOpa(scale=100.0), second_path)
+
+
+def test_ckd_legacy_fingerprint_requires_explicit_base_override(tmp_path):
+    base = _DummyBaseOpa(jnp.linspace(100.0, 200.0, 5))
+    legacy_fingerprint = dict(
+        class_name=type(base).__name__, nu_min=100.0, nu_max=200.0,
+        nu_len=5, base_meta=base.meta(),
+    )
+    path = tmp_path / "legacy.npz"
+    _write_ckd_npz(
+        path,
+        meta=json.dumps(dict(
+            Ng=2, band_width=40.0, band_spacing="linear",
+            base_fingerprint=legacy_fingerprint,
+            base_fingerprint_hash=_hash_json(legacy_fingerprint),
+        )),
+    )
+
+    with pytest.raises(ValueError, match="fingerprint"):
+        OpaCKD.from_saved_tables(base, path)
+    loaded = OpaCKD.from_saved_tables(path)
+    with pytest.raises(ValueError, match="fingerprint"):
+        loaded.attach_base(base)
+    loaded.attach_base(base, strict=False)
+    assert loaded.base_opa is base
 
 
 def _write_ckd_npz(path, **overrides):

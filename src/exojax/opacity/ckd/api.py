@@ -361,14 +361,14 @@ class OpaCKD(OpaCalc):
             if base_opa is not None:
                 actual_fp = _base_fingerprint(base_opa)
                 actual_hash = _hash_json(actual_fp)
-                if expected_hash is not None and expected_hash != actual_hash:
+                if expected_hash != actual_hash:
                     raise ValueError(
                         "Loaded CKD table does not match base_opa fingerprint."
                     )
             else:
                 if expected_hash is None:
                     raise ValueError(
-                        "Loaded CKD table is missing base fingerprint metadata; provide base_opa to validate."
+                        "Loaded CKD table is missing base fingerprint metadata; regenerate the table."
                     )
 
             arrays = dict(
@@ -606,7 +606,12 @@ class OpaCKD(OpaCalc):
             raise ValueError("External CKD xsgrid must be positive")
 
     def attach_base(self, base_opa, *, strict: bool = True) -> None:
-        """attach base opacity calculator after loading tables."""
+        """Attach a base calculator, validating its data and settings by default.
+
+        Legacy tables lack a complete fingerprint and require ``strict=False``
+        to attach a base after loading without one.
+        Custom calculators must describe opaque calculation inputs in ``meta()``.
+        """
         actual = _hash_json(_base_fingerprint(base_opa))
         if strict and getattr(self, "_expected_base_hash", None) not in (None, actual):
             raise ValueError("base_opa fingerprint mismatch with loaded CKD table.")
@@ -619,6 +624,11 @@ class OpaCKD(OpaCalc):
         Supports both ``OpaCKD.from_saved_tables(path, base_opa=...)`` and the legacy
         calling pattern ``OpaCKD.from_saved_tables(base_opa, path)`` used in earlier
         code and tests.
+
+        Base validation checks numerical calculator and database state. Custom
+        calculators must expose opaque inputs through ``meta()`` when saving.
+        Legacy tables can be loaded without a base and attached explicitly with
+        ``attach_base(base_opa, strict=False)``.
         """
         if kwargs:
             raise TypeError(
