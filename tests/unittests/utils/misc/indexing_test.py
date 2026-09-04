@@ -5,6 +5,7 @@ from exojax.utils.indexing import unique_rows
 from exojax.utils.indexing import get_smooth_index
 from exojax.utils.indexing import get_value_at_smooth_index
 import numpy as np
+import pytest
 
 
 def test_uniqidx_2D():
@@ -23,6 +24,42 @@ def test_uniqidx_3D():
     assert np.all(uidx - ref == 0.0)
     refval = np.array([[4, 1, 1], [4, 1, 2], [7, 1, 2], [7, 2, 2], [8, 0, 2]])
     assert np.all(val - refval == 0.0)
+
+
+@pytest.mark.parametrize("dtype", [np.int32, np.int64, np.float64])
+@pytest.mark.parametrize(
+    "rows, expected_indices, expected_rows",
+    [
+        (
+            [[2], [-1], [2], [0], [-1], [-1]],
+            [2, 0, 2, 1, 0, 0],
+            [[-1], [0], [2]],
+        ),
+        (
+            [[2, -1], [-1, 2], [2, -1], [0, -2], [-1, 2], [-1, 2]],
+            [2, 0, 2, 1, 0, 0],
+            [[-1, 2], [0, -2], [2, -1]],
+        ),
+        (
+            [[2, -1, 3], [-1, 2, -3], [2, -1, 3], [0, -2, 1],
+             [-1, 2, -3], [-1, 2, 1]],
+            [3, 0, 3, 2, 0, 1],
+            [[-1, 2, -3], [-1, 2, 1], [0, -2, 1], [2, -1, 3]],
+        ),
+    ],
+)
+def test_uniqidx_signed_duplicates(dtype, rows, expected_indices, expected_rows):
+    a = np.array(rows, dtype=dtype)
+
+    uidx, values = uniqidx(a)
+
+    assert uidx.shape == (len(a),)
+    assert uidx.dtype == np.dtype(int)
+    assert values.dtype == a.dtype
+    np.testing.assert_array_equal(uidx, expected_indices)
+    np.testing.assert_array_equal(values, expected_rows)
+    np.testing.assert_array_equal(values[uidx], a)
+    np.testing.assert_array_equal(values, unique_rows(a))
 
 
 def test_find_or_add_index():
@@ -55,6 +92,23 @@ def test_uniqidx_neibouring():
     assert np.all(
         multi_index_update[k] == multi_index_update[index_of_uidx] + np.array([1, 1])
     )
+
+
+def test_uniqidx_neibouring_full_map():
+    a = np.array([[0, 0], [-1, 0], [0, 0], [-1, -1], [0, 1]])
+
+    uidx, neighbors, multi_index = uniqidx_neibouring(a)
+
+    np.testing.assert_array_equal(uidx, [2, 1, 2, 0, 3])
+    np.testing.assert_array_equal(
+        neighbors, [[4, 1, 2], [2, 5, 3], [6, 3, 7], [7, 8, 9]]
+    )
+    np.testing.assert_array_equal(
+        multi_index,
+        [[-1, -1], [-1, 0], [0, 0], [0, 1], [0, -1],
+         [-1, 1], [1, 0], [1, 1], [0, 2], [1, 2]],
+    )
+    np.testing.assert_array_equal(multi_index[uidx], a)
 
 
 def test_unique_rows():
