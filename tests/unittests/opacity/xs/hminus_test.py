@@ -39,9 +39,11 @@ def test_hminus_bf():
 
 @pytest.mark.parametrize("wavelength", [1.4, 1.6419, 2.0])
 def test_hminus_continuum_temperature_gradient(wavelength):
-    from jax.experimental import enable_x64
+    from jax import config
 
-    with enable_x64():
+    previous_x64 = config.jax_enable_x64
+    try:
+        config.update("jax_enable_x64", True)
         nu_grid = jnp.array([1.0e4 / wavelength])
 
         def continuum(temperature):
@@ -60,6 +62,8 @@ def test_hminus_continuum_temperature_gradient(wavelength):
             ))(3000.0)
             assert bf_value == 0.0
             assert bf_derivative == 0.0
+    finally:
+        config.update("jax_enable_x64", previous_x64)
 
 
 def _setting_test_hminus():

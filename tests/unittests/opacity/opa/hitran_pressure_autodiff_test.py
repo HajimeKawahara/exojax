@@ -12,7 +12,9 @@ from exojax.opacity import OpaDirect, OpaModit
 
 @pytest.mark.parametrize("calculator", [OpaDirect, OpaModit])
 def test_hitran_xsmatrix_pressure_jit_and_gradient(calculator):
-    with jax.experimental.enable_x64():
+    previous_x64 = jax.config.jax_enable_x64
+    try:
+        jax.config.update("jax_enable_x64", True)
         nu_lines = np.array([1000.3, 1000.7])
         mdb = SimpleNamespace(
             dbtype="hitran",
@@ -54,3 +56,5 @@ def test_hitran_xsmatrix_pressure_jit_and_gradient(calculator):
         finite_difference = (signal(1.0 + step) - signal(1.0 - step)) / (2.0 * step)
         assert np.isfinite(derivative)
         np.testing.assert_allclose(derivative, finite_difference, rtol=1.0e-5)
+    finally:
+        jax.config.update("jax_enable_x64", previous_x64)
