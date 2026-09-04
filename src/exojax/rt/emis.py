@@ -115,7 +115,8 @@ class ArtEmisPure(ArtCommon):
 
         Args:
             dtau (2D array): optical depth matrix, dtau  (N_layer, N_nus)
-            temperature (1D array): temperature profile (Nlayer)
+            temperature (1D array): temperature profile (Nlayer, or Nlayer + 1
+                at layer boundaries for ibased_linsap)
             nu_grid (1D array): if nu_grid is not initialized, provide it.
 
         Returns:
@@ -125,6 +126,10 @@ class ArtEmisPure(ArtCommon):
             nu_grid = self.nu_grid
 
         sourcef = piBarr(temperature, nu_grid)
+        return self._run_solver(dtau, sourcef)
+
+    def _run_solver(self, dtau, sourcef):
+        """Run the selected solver with an already evaluated source function."""
         rtfunc = self.rtsolver_dict[self.rtsolver]
 
         if self.rtsolver == "fbased2st":
@@ -177,7 +182,8 @@ class ArtEmisPure(ArtCommon):
 
         Args:
             dtau_ckd (3D array): optical depth matrix, dtau  (N_layer, Ng, Nbands)
-            temperature (1D array): temperature profile (Nlayer,)
+            temperature (1D array): temperature profile (Nlayer, or Nlayer + 1
+                at layer boundaries for ibased_linsap)
             weights (1D array): weights for the Gaussian quadrature (Ng,)
             nu_bands (1D array): wavenumber grid for the CKD, (Nbands)
 
@@ -187,8 +193,8 @@ class ArtEmisPure(ArtCommon):
 
         nlayer, Ng, Nbands = dtau_ckd.shape
         sourcef = jnp.tile(piBarr(temperature, nu_bands), Ng)
-        flux_ckd = rtrun_emis_pureabs_ibased(
-            dtau_ckd.reshape((nlayer, Ng * Nbands)), sourcef, self.mus, self.weights
+        flux_ckd = self._run_solver(
+            dtau_ckd.reshape((nlayer, Ng * Nbands)), sourcef
         )
         flux_ckd = flux_ckd.reshape((Ng, Nbands))
         return jnp.einsum("g,gb->b", weights, flux_ckd)
