@@ -1,16 +1,51 @@
 import jax.numpy as jnp
+import numpy as np
 import pytest
-from jax import jacfwd, jit
+from jax import grad, jacfwd, jit
 
 from exojax.rt import ArtEmisPure
 from exojax.rt.planck import piBarr
 from exojax.rt.rtransfer import (
     coeffs_linsap,
+    initialize_gaussian_quadrature,
     rtrun_emis_pureabs_ibased,
     rtrun_emis_pureabs_ibased_flux_from_intensity,
     rtrun_emis_pureabs_ibased_intensity,
     rtrun_emis_pureabs_ibased_intensity_surface,
 )
+
+
+@pytest.mark.parametrize("optical_depth", [0.0, 1.0e-9, 1.0e-3, 1.0])
+def test_ibased_float32_slab_flux_and_gradient(optical_depth):
+    mus, weights = initialize_gaussian_quadrature(8)
+    mus = jnp.asarray(mus, dtype=jnp.float32)
+    weights = jnp.asarray(weights, dtype=jnp.float32)
+
+    def flux(depth):
+        dtau = depth.reshape((1, 1))
+        return rtrun_emis_pureabs_ibased(
+            dtau, jnp.ones_like(dtau), mus, weights
+        )[0]
+
+    depth = jnp.float32(optical_depth)
+    mu64 = np.asarray(mus, dtype=np.float64)
+    weight64 = np.asarray(weights, dtype=np.float64)
+    expected = np.sum(2.0 * mu64 * weight64 * -np.expm1(-float(depth) / mu64))
+    expected_gradient = np.sum(2.0 * weight64 * np.exp(-float(depth) / mu64))
+
+    assert flux(depth) == pytest.approx(expected, rel=1.0e-6, abs=0.0)
+    assert grad(flux)(depth) == pytest.approx(expected_gradient, rel=1.0e-6)
+
+
+def test_ibased_thin_float32_layer_below_absorbing_layer():
+    dtau = jnp.array([[1.0], [1.0e-9]], dtype=jnp.float32)
+    source = jnp.array([[0.0], [1.0]], dtype=jnp.float32)
+    mus = jnp.array([0.5], dtype=jnp.float32)
+
+    intensity = rtrun_emis_pureabs_ibased_intensity(dtau, source, mus)
+    expected = np.exp(-2.0) * -np.expm1(-2.0e-9)
+
+    assert intensity == pytest.approx(np.array([[expected]]), rel=1.0e-6, abs=0.0)
 
 
 def test_linsap_coefficients_at_small_optical_depth():
