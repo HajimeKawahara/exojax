@@ -200,9 +200,11 @@ def rtrun_emis_pureabs_ibased_intensity(dtau, source_matrix, mus):
 
     Nnus = jnp.shape(dtau)[1]
     tau = jnp.cumsum(dtau, axis=0)
+    tau_upper = jnp.concatenate((jnp.zeros_like(dtau[:1]), tau[:-1]), axis=0)
 
     def f(carry, mu):
-        dtrans = -jnp.diff(jnp.exp(-tau / mu), prepend=1.0, axis=0)
+        # Preserve absorption in optically thin layers.
+        dtrans = jnp.exp(-tau_upper / mu) * -jnp.expm1(-dtau / mu)
         intensity = jnp.sum(source_matrix * dtrans, axis=0)
         return carry, intensity
 

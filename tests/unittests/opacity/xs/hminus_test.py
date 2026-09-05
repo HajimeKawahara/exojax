@@ -1,6 +1,7 @@
 import numpy as np
 import jax.numpy as jnp
 import pytest
+from jax import jit, value_and_grad
 from exojax.database.hminus  import free_free_absorption
 from exojax.database.hminus  import bound_free_absorption
 from exojax.database.hminus  import log_hminus_continuum
@@ -34,6 +35,35 @@ def test_hminus_bf():
     diff = np.abs(ref - val)
     print(diff)
     assert diff < 1.0e-30
+
+
+@pytest.mark.parametrize("wavelength", [1.4, 1.6419, 2.0])
+def test_hminus_continuum_temperature_gradient(wavelength):
+    from jax import config
+
+    previous_x64 = config.jax_enable_x64
+    try:
+        config.update("jax_enable_x64", True)
+        nu_grid = jnp.array([1.0e4 / wavelength])
+
+        def continuum(temperature):
+            return log_hminus_continuum_single(
+                nu_grid, temperature, 1.0, 1.0
+            )[0]
+
+        value, derivative = jit(value_and_grad(continuum))(3000.0)
+        finite_difference = (continuum(3000.1) - continuum(2999.9)) / 0.2
+        assert np.isfinite(value)
+        assert np.isfinite(derivative)
+        np.testing.assert_allclose(derivative, finite_difference, rtol=1.0e-7)
+        if wavelength >= 1.6419:
+            bf_value, bf_derivative = jit(value_and_grad(
+                lambda temperature: bound_free_absorption(wavelength, temperature)
+            ))(3000.0)
+            assert bf_value == 0.0
+            assert bf_derivative == 0.0
+    finally:
+        config.update("jax_enable_x64", previous_x64)
 
 
 def _setting_test_hminus():

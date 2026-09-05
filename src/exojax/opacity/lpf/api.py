@@ -193,7 +193,7 @@ class OpaDirect(OpaCalc):
             gammaLM = self._vmap_gamma(
                 Parr,
                 Tarr,
-                np.zeros_like(Parr),
+                jnp.zeros_like(Parr),
                 self.mdb.n_air,
                 self.mdb.gamma_air,
                 self.mdb.gamma_self,
