@@ -92,3 +92,7 @@ write_to = "src/exojax/ExoJAX_version.py"
 # write_to_template = "__version__ = \"{version}\"\n"
 # version_scheme = "guess-next-dev"
 # local_scheme = "node-and-date"
+
+[tool.pytest.ini_options]
+testpaths = ["tests/unittests"]
+addopts = "--import-mode=importlib"

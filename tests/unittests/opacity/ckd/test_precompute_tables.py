@@ -2,13 +2,11 @@
 
 import pytest
 import jax.numpy as jnp
-from jax import config
 
 from exojax.test.emulate_mdb import mock_mdbExomol, mock_wavenumber_grid
-from exojax.opacity.opacalc import OpaPremodit
+from exojax.opacity import OpaPremodit
 from exojax.opacity.ckd.api import OpaCKD
 
-config.update("jax_enable_x64", True)
 
 
 class TestPrecomputeTables:
@@ -203,29 +201,3 @@ class TestPrecomputeTables:
         
         # Assert that CKD approximation is accurate across all layers
         assert max_error_across_layers < 0.005  # 0.5% accuracy for all layers (relaxed for multi-layer test)
-        
-
-if __name__ == "__main__":
-    test_suite = TestPrecomputeTables()
-    test_suite.setup_method()
-
-    print("Running precompute_tables tests...")
-    test_suite.test_precompute_tables_basic()
-    print("✓ Basic functionality test passed")
-
-    test_suite.test_precompute_tables_dimensions()
-    print("✓ Dimensions test passed")
-
-    test_suite.test_validation_errors()
-    print("✓ Validation test passed")
-
-    test_suite.test_average_transmission()
-    print("✓ Integration test passed")
-
-    test_suite.test_xstensor_ckd_method()
-    print("✓ xstensor_ckd test passed")
-
-    test_suite.test_xstensor_ckd_average_transmission()
-    print("✓ xstensor_ckd transmission test passed")
-
-    print("✅ All tests passed!")

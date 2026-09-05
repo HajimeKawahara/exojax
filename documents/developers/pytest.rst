@@ -1,21 +1,35 @@
 Test codes for developers
 ==============================
 
-ExoJAX has many test codes in the ``tests`` directory. ExoJAX has three test categories. 
+ExoJAX tests are organized by the current package modules and the data and
+computation needed to run them. See ``tests/README.md`` for the test conventions.
 
 Unit Tests
 -----------------
-``tests/unittests``: Tests in this category are automatically executed by GitHub Actions 
-when a pull request is made to the develop or master branch. 
-Therefore, items that need to be downloaded from external sites or take more than 10 seconds to run should not be included in this category. 
-Tests that take a long time but are considered unit tests should be placed in ``integrations/unittests_long``.
+``tests/unittests`` contains small numerical, API, and regression tests.
+These run automatically for pull requests to develop and master. Tests use
+synthetic inputs or small bundled samples and must not download data.
+
+Run the unit suite with ``JAX_PLATFORMS=cpu python -m pytest``. Each test uses a
+temporary working directory and starts with JAX x64 enabled. Precision-specific
+tests select their precision before creating arrays; the fixture restores the
+previous setting after each test. Test modules must not change global precision
+or device settings during import.
 
 Integration Tests
 -----------------
-``tests/integration``:　This category is for testing the behavior of multiple integrated functions. Tests that have a long execution time, 
-involve external downloads, or depend on the status of external servers should be included here if they are to be part of automated testing.
-ntegration tests also include comparisons with other codes or outputs, ensuring higher reliability. 
-However, since changes in the counterpart code can occur, the tests do not always succeed. 
+``tests/integration/offline`` contains spectrum comparisons and CLI workflows
+that use bundled or synthetic data. CI runs these alongside unit tests:
+
+.. code-block:: sh
+
+   JAX_PLATFORMS=cpu python -m pytest tests/unittests tests/integration/offline
+
+Other integration directories may require external databases, downloads, or
+manual setup. Run them explicitly after preparing their inputs. Comparisons
+with external codes can also depend on the version of the reference code.
+Measure runtime with ``--durations=20`` before moving expensive tests, and
+preserve their numerical checks and CI execution when reorganizing them.
 
 - ``tests/integration/comparison/transmission`` : An example of a transmission comparison with calculations done by Y. Kawashima using a different method.
 - ``tests/integration/comparison/twostream``: A comparison code with the radiative spectrum calculations performed by petitRADTRANS.
@@ -40,4 +54,3 @@ You can download them from `here <http://secondearths.sakura.ne.jp/exojax/data/>
 .. warning::
    
    Note that if you use Windows or Mac, .gz might be unziped when downloading despite no renaming. I mean, the same name with .gz, but unziped!  In this case, download ``extradata.tar`` and untar it.
-

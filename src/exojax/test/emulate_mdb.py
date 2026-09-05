@@ -1,8 +1,9 @@
 """emulate mdb class for unittest"""
 
 import pickle
-import os
 import shutil
+from pathlib import Path
+from tempfile import mkdtemp
 
 from exojax.database.exomol.api import MdbExomol
 from exojax.database.hitemp.api import MdbHitemp
@@ -53,16 +54,17 @@ def mock_mdbExomol(molecule="CO", crit=0.0):
     """
 
     dirname = get_testdata_filename(molecule)
-    target_dir = os.getcwd() + "/" + molecule
-    if os.path.exists(target_dir):
-        shutil.rmtree(target_dir)
+    # Keep both source data and other database instances intact. Tests run in
+    # a temporary working directory that owns these copies and their caches.
+    root = Path(mkdtemp(prefix="exojax-exomol-", dir=Path.cwd()))
+    target_dir = root / molecule
     shutil.copytree(dirname, target_dir)
 
     path_dict = {
         "CO": "CO/12C-16O/SAMPLE",
         "H2O": "H2O/1H2-16O/SAMPLE",
     }
-    path = path_dict[molecule]
+    path = root / path_dict[molecule]
     nus, wav, res = mock_wavenumber_grid()
     mdb = MdbExomol(
         str(path),
@@ -91,13 +93,16 @@ def mock_mdbHitemp(multi_isotope=False):
 
     from exojax.test.data import TESTDATA_CO_HITEMP_PARFILE
 
-    parfile = get_testdata_filename(TESTDATA_CO_HITEMP_PARFILE)
+    source_parfile = Path(get_testdata_filename(TESTDATA_CO_HITEMP_PARFILE))
+    root = Path(mkdtemp(prefix="exojax-hitemp-", dir=Path.cwd()))
+    parfile = root / source_parfile.name
+    shutil.copy2(source_parfile, parfile)
     nus, _, _ = mock_wavenumber_grid()
     mdb = MdbHitemp(
         "CO",
         nus,
         isotope=isotope,
-        parfile=parfile,
+        parfile=str(parfile),
         inherit_dataframe=True,
         gpu_transfer=True,
     )
