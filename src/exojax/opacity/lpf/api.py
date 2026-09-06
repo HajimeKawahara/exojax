@@ -25,9 +25,15 @@ class OpaDirect(OpaCalc):
 
     Attributes:
         method: Always "lpf" for this calculator
-        mdb: Molecular database instance
+        mdb: Molecular or atomic line database instance
         wavelength_order: Order of wavelength grid
         opainfo: Opacity information from initialization
+
+    Notes:
+        VALD and Kurucz support both ``xsvector`` and ``xsmatrix``. Their
+        H, He, and H2 partial pressures use the database's ``vmr_fraction``
+        in that order. Select a single atomic species before applying its
+        abundance to the cross section.
     """
 
     def __init__(
@@ -39,7 +45,7 @@ class OpaDirect(OpaCalc):
         """Initialize OpaDirect (LPF) opacity calculator.
 
         Args:
-            mdb: Molecular database (mdbExomol, mdbHitemp, mdbHitran, etc.)
+            mdb: Molecular or atomic line database
             nu_grid: Wavenumber grid in cm⁻¹
             wavelength_order: Order of wavelength grid
         """
@@ -110,6 +116,17 @@ class OpaDirect(OpaCalc):
             self._vmap_qt = None
             self._vmap_gamma = None
 
+    def _atomic_line_parameters(self, T, P):
+        """Use the same atomic parameter calculation for vectors and matrices."""
+        from exojax.opacity.lpf.lpf import vald
+
+        Tarr = jnp.atleast_1d(T)
+        Parr = jnp.atleast_1d(P)
+        return vald(
+            self.mdb, Tarr, Parr * self.mdb.vmrH,
+            Parr * self.mdb.vmrHe, Parr * self.mdb.vmrHH,
+        )
+
     def xsvector(self, T: float, P: float, Pself: float = 0.0) -> jnp.ndarray:
         """Compute cross section vector for given temperature and pressure.
 
@@ -149,10 +166,13 @@ class OpaDirect(OpaCalc):
             qt = self.mdb.qr_interp_lines(T, Tref_original)
             gammaL = gamma_natural(self.mdb.A)
             line_masses = self.mdb.line_masses
+        elif dbtype in ("kurucz", "vald"):
+            SijM, gammaLM, sigmaDM = self._atomic_line_parameters(T, P)
+            return xsvector_lpf(numatrix, sigmaDM[0], gammaLM[0], SijM[0])
         else:
             raise ValueError(
                 f"Unsupported database type for xsvector: '{dbtype}'. "
-                "Supported types: hitran, exomol, hydrogen"
+                "Supported types: hitran, exomol, hydrogen, kurucz, vald"
             )
 
         sigmaD = doppler_sigma(self.mdb.nu_lines, T, line_masses)
@@ -181,8 +201,6 @@ class OpaDirect(OpaCalc):
             ValueError: If database type is not supported
         """
         from exojax.database.core.broadening import gamma_natural
-        from exojax.database.core_atom.broadening import gamma_vald3
-        from exojax.database.core_atom.pf import interp_QT_284
         from exojax.opacity.lpf.lpf import xsmatrix as xsmatrix_lpf
 
         numatrix = self.opainfo
@@ -242,66 +260,7 @@ class OpaDirect(OpaCalc):
                 self.mdb.nu_lines, Tarr, self.mdb.line_masses
             )
         elif dbtype in ("kurucz", "vald"):
-            qt_284 = vmap(interp_QT_284, (0, None, None))(
-                Tarr, self.mdb.T_gQT, self.mdb.gQT_284species
-            )
-            qt_K = qt_284[:, self.mdb.QTmask]
-            qr_K = qt_K / self.mdb.QTref_284[self.mdb.QTmask]
-            vmapvald3 = jit(
-                vmap(
-                    gamma_vald3,
-                    (
-                        0,
-                        0,
-                        0,
-                        0,
-                        None,
-                        None,
-                        None,
-                        None,
-                        None,
-                        None,
-                        None,
-                        None,
-                        None,
-                        None,
-                        None,
-                    ),
-                )
-            )
-            PH, PHe, PHH = (
-                Parr * self.mdb.vmrH,
-                Parr * self.mdb.vmrHe,
-                Parr * self.mdb.vmrHH,
-            )
-            gammaLM = vmapvald3(
-                Tarr,
-                PH,
-                PHH,
-                PHe,
-                self.mdb.ielem,
-                self.mdb.iion,
-                self.mdb.dev_nu_lines,
-                self.mdb.elower,
-                self.mdb.eupper,
-                self.mdb.atomicmass,
-                self.mdb.ionE,
-                self.mdb.gamRad,
-                self.mdb.gamSta,
-                self.mdb.vdWdamp,
-                1.0,
-            )
-            SijM = self._vmap_line_strength(
-                Tarr,
-                self.mdb.logsij0,
-                self.mdb.nu_lines,
-                self.mdb.elower,
-                qr_K,
-                Tref_original,
-            )
-            sigmaDM = self._vmap_doppler_sigma(
-                self.mdb.nu_lines, Tarr, self.mdb.atomicmass
-            )
+            SijM, gammaLM, sigmaDM = self._atomic_line_parameters(Tarr, Parr)
         else:
             raise ValueError(
                 f"Unsupported database type for xsmatrix: '{dbtype}'. "

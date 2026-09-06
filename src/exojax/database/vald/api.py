@@ -19,6 +19,7 @@ from exojax.database.core_atom.io import pickup_param
 from exojax.database.core_atom.line_strength import line_strength_atom
 from exojax.database.core_atom.pf import interp_QT_284
 from exojax.database.core_atom.pf import partfn_Fe
+from exojax.database.core_atom.pf import qr_interp_lines
 from exojax.database.core_atom.misc import get_unique_species
 from exojax.database.core_atom.misc import sep_arr_of_sp
 
@@ -110,9 +111,9 @@ class AdbVald:
             nurange: wavenumber range list (cm-1) or wavenumber array
             margin: margin for nurange (cm-1)
             crit: line strength lower limit for extraction
-            Irwin: if True(1), the partition functions of Irwin1981 is used, otherwise those of Barklem&Collet2016
+            Irwin: Use Irwin (1981) for Fe I; other species use Barklem & Collet (2016).
             gpu_transfer: If True, generate JAX line arrays at initialization.
-            vmr_fraction: list of the vmr fractions of hydrogen, H2 molecule, helium. if None, typical quasi-"solar-fraction" will be applied.
+            vmr_fraction: VMR fractions of H, He, and H2, in that order. Defaults to [0.0, 0.16, 0.84].
             engine: ``"pytables"`` (default), its legacy alias ``"pandas"``,
                 or the optional ``"vaex"`` backend.
 
@@ -121,6 +122,7 @@ class AdbVald:
         """
 
         self.dbtype = "vald"
+        self.Irwin = Irwin
 
         # load args
         self.vald3_file = pathlib.Path(path).expanduser()  # VALD3 output
@@ -165,7 +167,7 @@ class AdbVald:
         )  # grid Q vs T vs Species
         self.Tref = Tref_original
         self.QTref_284 = np.array(
-            interp_QT_284(Tref_original, self.T_gQT, self.gQT_284species)
+            interp_QT_284(Tref_original, self.T_gQT, self.gQT_284species, self.Irwin)
         )
         # identify index of QT grid (gQT) for each line
         self._QTmask = self.make_QTmask(self._ielem, self._iion)
@@ -178,7 +180,6 @@ class AdbVald:
             self._elower,
             self.QTref_284,
             self._QTmask,
-            Irwin,
         )  # 211013
 
         ### MASKING ###
@@ -211,6 +212,22 @@ class AdbVald:
         """Generate JAX line arrays and metadata for the current selection."""
         _generate_atomic_jnp_arrays(self)
 
+    @property
+    def line_masses(self):
+        """Atomic masses for the current line selection, in amu."""
+        return self.atomicmass
+
+    def qr_interp_lines(self, T, Tref):
+        """Return Q(T)/Q(Tref) for the current line selection."""
+        return qr_interp_lines(
+            T,
+            Tref,
+            self.T_gQT,
+            self.gQT_284species,
+            self._QTmask,
+            getattr(self, "Irwin", False),
+        )
+
     def Atomic_gQT(self, atomspecies):
         """Select grid of partition function especially for the species of
         interest.
@@ -228,8 +245,7 @@ class AdbVald:
         return gQT
 
     def QT_interp(self, atomspecies, T):
-        """interpolated partition function The partition functions of Barklem &
-        Collet (2016) are adopted.
+        """Interpolate the selected partition function for an atomic species.
 
         Args:
             atomspecies: species e.g., "Fe 1"
@@ -238,6 +254,8 @@ class AdbVald:
         Returns:
             Q(T): interpolated in jnp.array for the Atomic Species
         """
+        if getattr(self, "Irwin", False) and atomspecies == "Fe 1":
+            return partfn_Fe(T)
         gQT = self.Atomic_gQT(atomspecies)
         QT = jnp.interp(T, self.T_gQT, gQT)
         return QT
@@ -259,8 +277,7 @@ class AdbVald:
         return QT
 
     def qr_interp(self, atomspecies, T):
-        """interpolated partition function ratio The partition functions of
-        Barklem & Collet (2016) are adopted.
+        """Return the selected partition-function ratio for an atomic species.
 
         Args:
             T: temperature
@@ -300,7 +317,9 @@ class AdbVald:
         """
         warn_msg = "Deprecated Use `atomll.interp_QT_284` instead"
         warnings.warn(warn_msg, FutureWarning)
-        return interp_QT_284(T, self.T_gQT, self.gQT_284species)
+        return interp_QT_284(
+            T, self.T_gQT, self.gQT_284species, getattr(self, "Irwin", False)
+        )
 
     def make_QTmask(self, ielem, iion):
         """Convert the species identifier to the index for Q(Tref) grid (gQT)
@@ -383,3 +402,4 @@ class AdbSepVald:
         self.T_gQT = adb.T_gQT
         self.QTref_284 = adb.QTref_284
         self.Tref = adb.Tref
+        self.Irwin = getattr(adb, "Irwin", False)
