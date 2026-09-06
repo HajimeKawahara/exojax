@@ -491,12 +491,10 @@ def pickup_param(ExAll):
     gamSta = ExAll["stark_damping"].to_numpy()
     vdWdamp = ExAll["waals_damping"].to_numpy()
 
-    ielem = np.zeros(len(ExAll), dtype="int")  # atomic number (e.g., Fe=26)
-    # e.g., neutral=1, singly ionized=2, ...
-    iion = np.zeros(len(ExAll), dtype="int")
-    for i, sp in enumerate(ExAll["species"]):
-        ielem[i] = int(str(int(sp))[:2])
-        iion[i] = int(str(int(sp))[2:]) + 1
+    # Species codes store 100 * atomic number + ion charge.
+    species = ExAll["species"].to_numpy(dtype=int)
+    ielem = species // 100
+    iion = species % 100 + 1
 
     return (
         A,
