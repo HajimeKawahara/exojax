@@ -90,3 +90,31 @@ Lorentz HWHM exactly as in ``OpaDirect``. The symmetric wing fit and its
 extension to all lines are approximations; matching this prescription does
 not reproduce POSEIDON's line list or pressure widths. JAX temperature and
 pressure derivatives are supported away from the profile joins.
+
+.. figure:: alkali_profiles.png
+    :alt: Na and K sub-Voigt profiles and their ratios to the existing Voigt profile.
+
+    Single-line shapes at 1200 K with the same illustrative Doppler and Lorentz
+    widths for both species; no line strengths or abundances are applied.
+    Dashed lines mark the core/wing joins and dotted lines the 9000 cm-1 cutoff.
+    The intermediate wings can exceed Voigt before exponential suppression
+    dominates. The core ratio is 1/0.998, and zero profiles are omitted only
+    from the logarithmic upper panels.
+
+Regenerate the figure with ``python examples/plot_alkali_profiles.py`` from
+the repository root. The essential profile comparison is:
+
+.. code-block:: python
+
+    import numpy as np
+    import matplotlib.pyplot as plt
+    from exojax.opacity.lpf.lpf import voigt
+    from exojax.opacity.alkali import subvoigt
+
+    d = np.geomspace(1e-3, 1e4, 2000)  # cm-1 from line center
+    T, sigmaD, gammaL = 1200.0, 0.03, 0.1  # K, cm-1, cm-1
+    plt.loglog(d, voigt(d, sigmaD, gammaL), label="Voigt")
+    for name, a, b in (("Na", 30.0, 5000.0), ("K", 20.0, 1600.0)):
+        plt.loglog(d, subvoigt(d, sigmaD, gammaL, T, a, b), label=name)
+    plt.legend()
+    plt.show()
