@@ -6,6 +6,7 @@ Databases
    :maxdepth: 1
 
    userguide/mdb.rst
+   userguide/nist.rst
    userguide/moldb.rst
    userguide/exomol.rst
    userguide/hitran.rst

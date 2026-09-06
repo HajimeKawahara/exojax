@@ -102,6 +102,30 @@ def test_opadirect_atomic_temperature_and_pressure_gradients(make_adb):
     np.testing.assert_allclose(actual, expected, rtol=1.0e-4, atol=1.0e-9)
 
 
+def test_opadirect_atomic_broadening_override(make_adb):
+    from exojax.database.core.broadening import doppler_sigma
+    from exojax.database.core.line_strength import line_strength
+    from exojax.opacity.lpf.lpf import xsvector
+
+    adb = make_adb()
+    broadening = lambda T, P: jnp.full_like(adb.A, 0.02)
+    opa = OpaDirect(
+        adb, np.linspace(999.8, 1002.2, 61), atomic_broadening=broadening
+    )
+    temperature, pressure = 1800.0, 0.1
+    strengths = line_strength(
+        temperature, adb.logsij0, adb.nu_lines, adb.elower,
+        adb.qr_interp_lines(temperature, adb.Tref), adb.Tref,
+    )
+    expected = xsvector(
+        opa.opainfo, doppler_sigma(adb.nu_lines, temperature, adb.line_masses),
+        broadening(temperature, pressure), strengths,
+    )
+    np.testing.assert_allclose(
+        opa.xsvector(temperature, pressure), expected, rtol=1e-12, atol=0.0
+    )
+
+
 @pytest.mark.parametrize("irwin", [False, True])
 def test_separated_atomic_line_parameters_preserve_values_and_padding(make_adb, irwin):
     from exojax.database import AdbSepVald
