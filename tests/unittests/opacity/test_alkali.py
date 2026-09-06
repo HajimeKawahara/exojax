@@ -11,7 +11,7 @@ from scipy.special import voigt_profile
 
 from exojax.database.core.broadening import doppler_sigma
 from exojax.database.core.line_strength import line_strength_numpy
-from exojax.opacity import OpaAlkali
+from exojax.opacity import OpaAlkali, OpaDirect
 from exojax.opacity.alkali import subvoigt
 from exojax.opacity.lpf.lpf import vald
 from exojax.utils.constants import hcperk
@@ -116,7 +116,13 @@ def test_alkali_matches_scipy_with_default_and_custom_widths(
     broadening = None
     if override_width:
         broadening = lambda T, P: jnp.array([0.05, 0.09]) * P * (500.0 / T)**0.7
-    opa = OpaAlkali(adb, nu_grid, atomic_broadening=broadening)
+    opa = OpaDirect(
+        adb, nu_grid, line_profile="alkali_subvoigt", atomic_broadening=broadening
+    )
+    wrapper = OpaAlkali(adb, nu_grid, atomic_broadening=broadening)
+    assert opa == wrapper and wrapper == opa
+    assert opa.method == wrapper.method == "lpf"
+    assert opa.line_profile == wrapper.line_profile == "alkali_subvoigt"
     if override_width:
         gamma = np.asarray(broadening(temperature, pressure))
         sigma = np.asarray(doppler_sigma(adb.nu_lines, temperature, adb.line_masses))
@@ -143,6 +149,9 @@ def test_alkali_matches_scipy_with_default_and_custom_widths(
     np.testing.assert_allclose(
         opa.xsvector(temperature, pressure), expected, rtol=2.0e-6, atol=0.0
     )
+    np.testing.assert_array_equal(
+        wrapper.xsvector(temperature, pressure), opa.xsvector(temperature, pressure)
+    )
 
 
 @pytest.mark.parametrize("element", [11, 19])
@@ -155,7 +164,7 @@ def test_alkali_vector_matrix_and_gradients(make_adb, element):
         adb.nu_lines[1] + 0.03,
         adb.nu_lines[1] + 1000.0,
     ])
-    opa = OpaAlkali(adb, nu_grid)
+    opa = OpaDirect(adb, nu_grid, line_profile="alkali_subvoigt")
     temperatures = jnp.array([830.0, 1370.0, 1830.0])
     pressures = jnp.array([0.01, 0.1, 1.0])
     matrix = jax.jit(opa.xsmatrix)(temperatures, pressures)
@@ -167,6 +176,10 @@ def test_alkali_vector_matrix_and_gradients(make_adb, element):
     assert np.all(np.isfinite(matrix))
     assert np.all(matrix > 0.0)
     np.testing.assert_allclose(matrix, vectors, rtol=1.0e-11, atol=0.0)
+    np.testing.assert_allclose(
+        OpaAlkali(adb, nu_grid).xsmatrix(temperatures, pressures), matrix,
+        rtol=1.0e-11, atol=0.0,
+    )
 
     def signal(temperature, pressure):
         return jnp.mean(jnp.log(opa.xsvector(temperature, pressure)))
@@ -201,17 +214,64 @@ def test_alkali_vector_matrix_and_gradients(make_adb, element):
 @pytest.mark.parametrize("element,ion", [(None, 1), (26, 1), (11, 2)])
 def test_alkali_rejects_mixed_or_unsupported_species(make_adb, element, ion):
     with pytest.raises(ValueError):
-        OpaAlkali(make_adb(element, ion), np.linspace(12000.0, 18000.0, 21))
+        OpaDirect(
+            make_adb(element, ion), np.linspace(12000.0, 18000.0, 21),
+            line_profile="alkali_subvoigt",
+        )
 
 
 def test_alkali_rejects_empty_selection(make_adb):
     with pytest.warns(UserWarning, match="no lines"):
         adb = make_adb(99)
     with pytest.raises(ValueError):
-        OpaAlkali(adb, np.linspace(12000.0, 18000.0, 21))
+        OpaDirect(
+            adb, np.linspace(12000.0, 18000.0, 21), line_profile="alkali_subvoigt"
+        )
 
 
-@pytest.mark.parametrize("dbtype", ["exomol", "nist"])
+@pytest.mark.parametrize("dbtype", ["exomol", "hitran", "hydrogen", "nist"])
 def test_alkali_rejects_other_databases(dbtype):
     with pytest.raises(ValueError):
-        OpaAlkali(SimpleNamespace(dbtype=dbtype), np.linspace(12000.0, 18000.0, 21))
+        OpaDirect(
+            SimpleNamespace(dbtype=dbtype), np.linspace(12000.0, 18000.0, 21),
+            line_profile="alkali_subvoigt",
+            atomic_broadening=(lambda T, P: jnp.zeros(1)) if dbtype == "nist" else None,
+        )
+
+
+def test_direct_profile_defaults_and_equality(make_adb):
+    adb = make_adb(11)
+    nu_grid = np.array([adb.nu_lines[0], adb.nu_lines[1] + 300.0])
+    default = OpaDirect(adb, nu_grid)
+    voigt = OpaDirect(adb, nu_grid, line_profile="voigt")
+    alkali = OpaDirect(adb, nu_grid, line_profile="alkali_subvoigt")
+    assert default.line_profile == "voigt"
+    assert default == voigt and voigt == default
+    assert default != alkali and alkali != default
+    assert default != OpaAlkali(adb, nu_grid)
+    assert OpaAlkali(adb, nu_grid) != default
+    np.testing.assert_array_equal(default.xsvector(1370.0, 0.3), voigt.xsvector(1370.0, 0.3))
+    temperatures, pressures = jnp.array([830.0, 1370.0]), jnp.array([0.1, 0.3])
+    np.testing.assert_array_equal(
+        default.xsmatrix(temperatures, pressures), voigt.xsmatrix(temperatures, pressures)
+    )
+    assert not np.allclose(
+        alkali.xsvector(1370.0, 0.3), voigt.xsvector(1370.0, 0.3), atol=0.0
+    )
+    assert alkali != OpaAlkali(
+        adb, nu_grid, atomic_broadening=lambda T, P: jnp.full(2, 0.1)
+    )
+    assert alkali != OpaAlkali(adb, nu_grid + 1.0)
+    ascending = OpaDirect(
+        adb, nu_grid, "ascending", line_profile="alkali_subvoigt"
+    )
+    wrapper = OpaAlkali(adb, nu_grid, "ascending")
+    assert wrapper == ascending and ascending == wrapper
+    assert alkali != wrapper
+
+
+def test_direct_rejects_unknown_profile(make_adb):
+    with pytest.raises(ValueError, match="line_profile"):
+        OpaDirect(
+            make_adb(11), np.linspace(16000.0, 18000.0, 21), line_profile="unknown"
+        )

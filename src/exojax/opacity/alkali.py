@@ -1,7 +1,6 @@
 """Neutral Na/K opacity with the sub-Voigt wings used by Cthulhu/POSEIDON."""
 
 import jax.numpy as jnp
-import numpy as np
 from jax import jit, vmap
 
 from exojax.opacity.lpf.api import OpaDirect
@@ -42,7 +41,7 @@ def _xsvector(numatrix, sigmaD, gammaL, strengths, T, detuning_ref, wing_cutoff)
 
 
 class OpaAlkali(OpaDirect):
-    """Na I or K I line opacity using existing VALD/Kurucz line parameters.
+    """Convenience wrapper for OpaDirect with line_profile="alkali_subvoigt".
 
     Apply the Cthulhu sub-Voigt prescription to every selected line, as in
     Mullens et al. (2024), rather than only the resonance doublet. Select one
@@ -63,39 +62,7 @@ class OpaAlkali(OpaDirect):
         atomic_broadening optionally supplies the total Lorentz HWHM through
         the same JAX-compatible (T, P) callback as OpaDirect.
         """
-        if adb.dbtype not in ("vald", "kurucz"):
-            raise ValueError("OpaAlkali requires a VALD or Kurucz database.")
-        elements, ions = np.asarray(adb._ielem), np.asarray(adb._iion)
-        if (
-            elements.size == 0
-            or not np.all(ions == 1)
-            or not (np.all(elements == 11) or np.all(elements == 19))
-        ):
-            raise ValueError("Select a single neutral species, Na I or K I, for OpaAlkali.")
-        self.species = "Na" if elements[0] == 11 else "K"
-        self.detuning_ref, self.wing_cutoff = (
-            (30.0, 5000.0) if self.species == "Na" else (20.0, 1600.0)
-        )
         super().__init__(
-            adb, nu_grid, wavelength_order, atomic_broadening=atomic_broadening
-        )
-        self.method = "alkali"
-
-    def __eq__(self, other):
-        return isinstance(other, OpaAlkali) and super().__eq__(other)
-
-    def xsvector(self, T, P):
-        """Return cross sections in cm2 per atom at T (K) and P (bar)."""
-        strengths, gammaL, sigmaD = self._atomic_line_parameters(T, P)
-        return _xsvector(
-            self.opainfo, sigmaD[0], gammaL[0], strengths[0],
-            T, self.detuning_ref, self.wing_cutoff,
-        )
-
-    def xsmatrix(self, Tarr, Parr):
-        """Return (Nlayer, Nwavenumber) cross sections in cm2 per atom."""
-        strengths, gammaL, sigmaD = self._atomic_line_parameters(Tarr, Parr)
-        return vmap(_xsvector, (None, 0, 0, 0, 0, None, None))(
-            self.opainfo, sigmaD, gammaL, strengths,
-            Tarr, self.detuning_ref, self.wing_cutoff,
+            adb, nu_grid, wavelength_order, line_profile="alkali_subvoigt",
+            atomic_broadening=atomic_broadening,
         )

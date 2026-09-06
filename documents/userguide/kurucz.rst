@@ -51,20 +51,25 @@ transfer; partition-function calculations still use JAX.
 Visible Na and K
 ---------------
 
-``OpaAlkali`` applies sub-Voigt wings to every selected Na I or K I line,
+``OpaDirect(..., line_profile="alkali_subvoigt")`` applies sub-Voigt wings
+to every selected Na I or K I line,
 as in the Clear-Base update of `Mullens et al. (2024), Section 2.4.3
 <https://arxiv.org/html/2410.19253v1#S2.SS4.SSS3>`_. It accepts an
 ``AdbKurucz`` or ``AdbVald`` containing one neutral species:
 
 .. code-block:: python
 
-    from exojax.opacity import OpaAlkali
+    from exojax.opacity import OpaDirect
 
     nu_grid = np.linspace(10000.0, 50000.0, 20000)
     adb = AdbKurucz("gf1100.all", nurange=nu_grid, margin=9000.0)
-    opa = OpaAlkali(adb, nu_grid)
+    opa = OpaDirect(adb, nu_grid, line_profile="alkali_subvoigt")
     cross_section = opa.xsvector(1200.0, 0.1)  # cm2 per Na atom
     # Use gf1900.all for K I, and apply each species' abundance separately.
+
+The default ``line_profile="voigt"`` retains the existing Voigt calculation.
+``OpaAlkali(adb, nu_grid)`` is a thin convenience wrapper selecting
+``"alkali_subvoigt"``, with the same ``xsvector`` and ``xsmatrix`` interface.
 
 Include line centers up to 9000 cm-1 outside the evaluation grid. For large
 grids, evaluate wavelength chunks to limit direct line-by-line memory use.
