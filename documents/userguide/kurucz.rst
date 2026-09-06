@@ -1,5 +1,5 @@
 Kurucz atomic lines
-==================
+===================
 
 Load an existing Kurucz line list with ``AdbKurucz(path, nurange=nu_grid)``.
 To let RADIS download and cache one atomic species, use the explicit
@@ -48,45 +48,17 @@ at the reference and evaluation temperatures; other species retain the
 Barklem and Collet partition functions. ``gpu_transfer=False`` delays line-array
 transfer; partition-function calculations still use JAX.
 
+.. _alkali-line-profile:
+
 Visible Na and K
----------------
+----------------
 
 ``OpaDirect(..., line_profile="alkali_subvoigt")`` applies sub-Voigt wings
 to every selected Na I or K I line,
 as in the Clear-Base update of `Mullens et al. (2024), Section 2.4.3
 <https://arxiv.org/html/2410.19253v1#S2.SS4.SSS3>`_. It accepts an
-``AdbKurucz`` or ``AdbVald`` containing one neutral species:
-
-Download the neutral Kurucz lists
-`gf1100.all (Na I) <http://kurucz.harvard.edu/linelists/gfall/gf1100.all>`_ and
-`gf1900.all (K I) <http://kurucz.harvard.edu/linelists/gfall/gf1900.all>`_
-into the working directory. This complete example loads each species and
-computes single-layer and multilayer cross sections:
-
-.. literalinclude:: ../../examples/alkali_opacity.py
-    :language: python
-    :start-at: import jax
-
-Run ``python examples/alkali_opacity.py`` from the repository root with both
-line-list files in that directory.
-
-``vmr_fraction`` sets the H, He, H2 broadener fractions, not the Na/K
-abundances. Apply each species' abundance separately when converting its
-cross section to atmospheric opacity. The coarse example grid demonstrates
-the API; choose a finer grid to resolve individual line cores.
-
-For automatic download and caching, replace the constructor with
-``AdbKurucz.from_radis("Na_I", nu_grid, margin=9000.0)`` (or ``"K_I"``).
-The default broadener fractions are the same as in the example.
-
-The default ``line_profile="voigt"`` retains the existing Voigt calculation.
-``OpaAlkali(adb, nu_grid)`` is a thin convenience wrapper selecting
-``"alkali_subvoigt"``, with the same ``xsvector`` and ``xsmatrix`` interface.
-
-Include line centers up to 9000 cm-1 outside the evaluation grid. For large
-grids, evaluate wavelength chunks to limit direct line-by-line memory use.
-Temperatures are in K and total pressures are in bar; ``xsmatrix(Tarr, Parr)``
-returns an array of shape ``(Nlayer, Nwavenumber)``.
+``AdbKurucz`` or ``AdbVald`` containing one neutral species. See
+:doc:`alkali` for a minimal example from database loading to cross sections.
 
 The profile follows the `Cthulhu implementation
 <https://github.com/MartianColonist/Cthulhu/blob/f9c72089e3ed71335223cefa0641b1ff24760008/Cthulhu/Voigt.py>`_
