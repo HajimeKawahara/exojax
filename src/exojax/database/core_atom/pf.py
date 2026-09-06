@@ -1,42 +1,68 @@
+"""Atomic partition functions and line-specific ratios."""
+
 import jax.numpy as jnp
-import numpy as np
-def interp_QT_284(T, T_gQT, gQT_284species):
-    """interpolated partition function of all 284 species.
+from jax import vmap
+
+
+_FE_I_QT_INDEX = 76
+
+
+def interp_QT_284(T, T_gQT, gQT_284species, Irwin=False):
+    """Interpolate partition functions for the tabulated atomic species.
 
     Args:
-        T: temperature
-        T_gQT: temperature in the grid obtained from the adb instance [N_grid(42)]
-        gQT_284species: partition function in the grid from the adb instance [N_species(284) x N_grid(42)]
+        T: Temperature in K.
+        T_gQT: Partition-function temperature grid.
+        gQT_284species: Partition-function grid, shaped (284, N_temperature).
+        Irwin: Use the Irwin (1981) polynomial for Fe I only.
 
     Returns:
-        QT_284: interpolated partition function at T Q(T) for all 284 Atomic Species [284]
+        Partition functions for all tabulated species.
     """
-    list_gQT_eachspecies = gQT_284species.tolist()
-    listofDA_gQT_eachspecies = list(map(lambda x: jnp.array(x), list_gQT_eachspecies))
-    listofQT = list(map(lambda x: jnp.interp(T, T_gQT, x), listofDA_gQT_eachspecies))
-    QT_284 = jnp.array(listofQT)
-    return QT_284
+    qt = vmap(jnp.interp, (None, None, 0))(T, T_gQT, gQT_284species)
+    is_fe_i = (jnp.arange(qt.shape[0]) == _FE_I_QT_INDEX).reshape(
+        (-1,) + (1,) * (qt.ndim - 1)
+    )
+    return jnp.where(is_fe_i & Irwin, partfn_Fe(T), qt)
+
+
+def qr_interp_lines(T, Tref, T_gQT, gQT_284species, QTmask, Irwin=False):
+    """Return Q(T)/Q(Tref) for each selected atomic line.
+
+    Args:
+        T: Temperature in K.
+        Tref: Reference temperature in K.
+        T_gQT: Partition-function temperature grid.
+        gQT_284species: Partition-function grid, shaped (284, N_temperature).
+        QTmask: Partition-function row index for each selected line.
+        Irwin: Use the Irwin (1981) polynomial for Fe I only.
+
+    Returns:
+        Partition-function ratios with one entry per selected line.
+    """
+    qt = interp_QT_284(T, T_gQT, gQT_284species, Irwin)
+    qtref = interp_QT_284(Tref, T_gQT, gQT_284species, Irwin)
+    return qt[QTmask] / qtref[QTmask]
+
 
 def partfn_Fe(T):
-    """Partition function of Fe I from Irwin_1981.
+    """Return the Fe I partition function from Irwin (1981).
 
     Args:
-        T: temperature
+        T: Temperature in K.
 
     Returns:
-        partition function Q
+        Partition function Q(T).
     """
-    # Irwin_1981
-    a = np.zeros(6)
-    a[0] = -1.15609527e3
-    a[1] = 7.46597652e2
-    a[2] = -1.92865672e2
-    a[3] = 2.49658410e1
-    a[4] = -1.61934455e0
-    a[5] = 4.21182087e-2
-
-    Qln = 0.0
-    for i, a in enumerate(a):
-        Qln = Qln + a * np.log(T) ** i
-    Q = np.exp(Qln)
-    return Q
+    # The original polynomial is recentered at log(T) = 8 to reduce cancellation.
+    coefficients = jnp.array(
+        [
+            0.0421182087,
+            0.0653837980,
+            0.1024689680,
+            0.1314333440,
+            0.3516477760,
+            3.0877158816,
+        ]
+    )
+    return jnp.exp(jnp.polyval(coefficients, jnp.log(T) - 8.0))
