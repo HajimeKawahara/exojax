@@ -47,3 +47,46 @@ and broadening. ``Irwin=True`` selects the Irwin polynomial for Fe I consistentl
 at the reference and evaluation temperatures; other species retain the
 Barklem and Collet partition functions. ``gpu_transfer=False`` delays line-array
 transfer; partition-function calculations still use JAX.
+
+Visible Na and K
+---------------
+
+``OpaAlkali`` applies sub-Voigt wings to every selected Na I or K I line,
+as in the Clear-Base update of `Mullens et al. (2024), Section 2.4.3
+<https://arxiv.org/html/2410.19253v1#S2.SS4.SSS3>`_. It accepts an
+``AdbKurucz`` or ``AdbVald`` containing one neutral species:
+
+.. code-block:: python
+
+    from exojax.opacity import OpaAlkali
+
+    nu_grid = np.linspace(10000.0, 50000.0, 20000)
+    adb = AdbKurucz("gf1100.all", nurange=nu_grid, margin=9000.0)
+    opa = OpaAlkali(adb, nu_grid)
+    cross_section = opa.xsvector(1200.0, 0.1)  # cm2 per Na atom
+    # Use gf1900.all for K I, and apply each species' abundance separately.
+
+Include line centers up to 9000 cm-1 outside the evaluation grid. For large
+grids, evaluate wavelength chunks to limit direct line-by-line memory use.
+Temperatures are in K and total pressures are in bar; ``xsmatrix(Tarr, Parr)``
+returns an array of shape ``(Nlayer, Nwavenumber)``.
+
+The profile follows the `Cthulhu implementation
+<https://github.com/MartianColonist/Cthulhu/blob/f9c72089e3ed71335223cefa0641b1ff24760008/Cthulhu/Voigt.py>`_
+of `Baudino et al. (2015), Equation 1 <https://arxiv.org/abs/1504.04876>`_.
+For distance ``d`` from line center and ``D = a * (T/500)**0.6``, it uses
+the Voigt core for ``d < D`` and
+``V(D) * (D/d)**1.5 * exp(-hcperk*d**2/(T*b))`` outside.
+The constants ``(a, b)`` are ``(30, 5000)`` for Na and ``(20, 1600)`` for K,
+in cm-1. Cthulhu's K detuning differs from the value 50 in the original
+Baudino paper. The whole profile is divided by 0.998 and set to zero beyond
+9000 cm-1. This preserves the source's small discontinuity at ``D`` and fixed
+normalization; it does not enforce unit area or smooth the join.
+
+Line strengths, partition functions, and default Lorentz widths retain
+``OpaDirect``'s VALD/Kurucz treatment, including ``vmr_fraction`` in H, He, H2
+order. The optional ``atomic_broadening(T, P)`` callback replaces the total
+Lorentz HWHM exactly as in ``OpaDirect``. The symmetric wing fit and its
+extension to all lines are approximations; matching this prescription does
+not reproduce POSEIDON's line list or pressure widths. JAX temperature and
+pressure derivatives are supported away from the profile joins.
