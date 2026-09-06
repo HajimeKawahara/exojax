@@ -32,6 +32,44 @@ For reflected light, ``ArtReflectPure`` and ``ArtReflectEmis`` support both the
 flux-adding treatment and SFM-2st. The latter treats ``incoming_flux`` as a
 diffuse hemispheric flux at the top boundary.
 
+``ArtReflectPure.run_direct`` computes the reflected specific intensity for
+a direct stellar beam using SFM and Toon quadrature. Specify positive cosines
+of the incident and outgoing zenith angles, and their relative azimuth:
+
+.. code-block:: python
+
+    intensity = art.run_direct(
+        dtau, single_scattering_albedo,
+        reflectivity_surface, incoming_flux,
+        mu_in=0.6, mu_out=0.6,
+        relative_azimuth=0.0, phase_function="rayleigh",
+    )
+
+Here ``incoming_flux`` is irradiance normal to the beam; the local horizontal
+incident flux is ``mu_in * incoming_flux``. The result is specific intensity
+in the incident irradiance units per steradian. The relative azimuth is the
+angle in radians between the outward star and observer directions; full phase
+has equal direction cosines and zero relative azimuth. Use ``jax.vmap`` to
+evaluate multiple direction pairs. This method always uses direct SFM,
+independently of the diffuse ``rtsolver`` setting.
+
+The supported phase functions are ``"rayleigh"`` and ``"isotropic"``. Single
+scattering is integrated analytically in each homogeneous layer. Multiple
+scattering uses a Toon-style hemispheric source reconstructed from quadrature
+fluxes, averaged across each layer. Refine layers to check this approximation;
+Rayleigh's higher angular moments, polarization, and cloud phase functions are
+not included. Angular integration of this intensity does not exactly preserve
+the two-stream energy balance, even after layer convergence. For example,
+an isotropically scattering, conservative atmosphere of total optical depth 10 above a perfectly
+reflecting surface has about 1--5% flux errors for incident cosines 0.1--1.
+Direction-cosine derivatives at exactly normal incidence or emergence are
+not guaranteed because the angular coordinates are singular there.
+The lower boundary is Lambertian. For a transparent atmosphere,
+``intensity = reflectivity_surface * mu_in * incoming_flux / pi``.
+Disk integration to obtain geometric albedo is a separate step.
+See `Toon et al. (1989) <https://doi.org/10.1029/JD094iD13p16287>`_
+for the two-stream and source-function methods.
+
 See :doc:`../userguide/rtransfer_fbased` for the details of the `fbased` method for reflection and/or emission with scattering.
 
 All of the ``fbased`` schemes are currently based on the two-stream approximation, although the ``ibased`` schemes can specify the number of the streams.

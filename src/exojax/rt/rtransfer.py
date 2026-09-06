@@ -31,6 +31,8 @@
 
 """
 
+from functools import partial
+
 import jax.numpy as jnp
 from jax import jit
 from jax.lax import scan
@@ -39,8 +41,10 @@ from jax.scipy.integrate import trapezoid
 from exojax.signal.integrate import simpson
 from exojax.rt.toon import (
     params_hemispheric_mean,
+    params_quadrature,
     zetalambda_coeffs,
 )
+from exojax.rt.direct_sfm import _direct_layer_sources
 from exojax.rt.twostream import (
     compute_tridiag_diagonals_and_vector,
     set_scat_trans_absorption_coeffs,
@@ -795,6 +799,94 @@ def rtrun_reflect_sfm2st_toonhm(
         mus,
         weights,
     )
+
+
+@partial(jit, static_argnames=("phase_function",))
+def rtrun_reflect_sfm2st_direct(
+    dtau,
+    single_scattering_albedo,
+    reflectivity_surface,
+    incoming_flux,
+    mu_in,
+    mu_out,
+    relative_azimuth=0.0,
+    phase_function="rayleigh",
+):
+    """Return specific intensity for direct illumination using two-stream SFM.
+
+    ``incoming_flux`` is beam-normal irradiance; the horizontal incident flux
+    is ``mu_in * incoming_flux``. Both positive direction cosines are scalar.
+    ``relative_azimuth`` is the azimuth difference between the outward star
+    and observer directions, in radians. The result is physical intensity
+    (irradiance per steradian), rather than the pi-I scale used internally.
+
+    Isotropic and Rayleigh single scattering are integrated analytically in
+    each homogeneous layer. Multiple scattering uses Toon quadrature with
+    g=0 and a Toon-style hemispheric, layer-averaged source reconstruction. This
+    approximation does not retain Rayleigh's higher angular moments or
+    polarization. Resolve the diffuse source by refining the optical-depth
+    layers. Angular integration of this approximate intensity need not conserve
+    the two-stream flux exactly, even after layer convergence. The lower
+    boundary is Lambertian; the top has no diffuse source.
+    No disk integration is performed.
+    """
+    if phase_function not in ("isotropic", "rayleigh"):
+        raise ValueError("phase_function must be 'isotropic' or 'rayleigh'")
+
+    gamma_1, gamma_2, gamma_3, _ = params_quadrature(
+        single_scattering_albedo, jnp.zeros_like(dtau), mu_in
+    )
+    trans, scat, absorption = set_scat_trans_absorption_coeffs(
+        gamma_1, gamma_2, dtau
+    )
+    source_plus, source_minus = _direct_layer_sources(
+        dtau, gamma_1, gamma_2, single_scattering_albedo, mu_in, gamma_3
+    )
+    tau = jnp.concatenate((jnp.zeros_like(dtau[:1]), jnp.cumsum(dtau, axis=0)))
+    beam = incoming_flux * jnp.exp(-tau / mu_in)
+    surface = jnp.broadcast_to(reflectivity_surface, dtau.shape[1:])
+    flux_plus, flux_minus = solve_fluxadding_twostream_fluxes(
+        trans,
+        scat,
+        jnp.zeros_like(dtau),
+        surface,
+        surface * mu_in * beam[-1],
+        absorption_coeff=absorption,
+        source_plus=source_plus * beam[:-1],
+        source_minus=source_minus * beam[:-1],
+    )
+
+    # F+ and F- contain scattered light only, so scattering this field adds
+    # the multiple-scattering contribution without counting the beam twice.
+    diffuse_source = 0.25 * single_scattering_albedo * (
+        flux_plus[:-1] + flux_plus[1:] + flux_minus[:-1] + flux_minus[1:]
+    )
+    diffuse_pi_intensity = rtrun_emis_pureabs_ibased_intensity_surface(
+        dtau, diffuse_source, flux_plus[-1], jnp.atleast_1d(mu_out)
+    )[0]
+
+    phase = 1.0
+    if phase_function == "rayleigh":
+        sine_product_squared = (1.0 - mu_in**2) * (1.0 - mu_out**2)
+        # Keep derivatives finite when either direction is exactly normal.
+        at_normal = sine_product_squared == 0.0
+        sine_product = jnp.where(
+            at_normal, 0.0, jnp.sqrt(jnp.where(at_normal, 1.0, sine_product_squared))
+        )
+        cos_scattering = -(
+            mu_in * mu_out + sine_product * jnp.cos(relative_azimuth)
+        )
+        phase = 0.75 * (1.0 + cos_scattering**2)
+
+    attenuation = jnp.exp(-tau[:-1] / mu_out) * -jnp.expm1(
+        -dtau * (1.0 / mu_in + 1.0 / mu_out)
+    )
+    single_pi_intensity = jnp.sum(
+        0.25 * single_scattering_albedo * phase * beam[:-1] * attenuation
+        * mu_in / (mu_in + mu_out),
+        axis=0,
+    )
+    return (diffuse_pi_intensity + single_pi_intensity) / jnp.pi
 
 
 def setrt_toonhm(
