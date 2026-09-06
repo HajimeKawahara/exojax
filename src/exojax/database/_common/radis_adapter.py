@@ -83,6 +83,28 @@ def get_auto_memory_mapping_engine():
     return get_auto_MEMORY_MAPPING_ENGINE()
 
 
+def fetch_kurucz_dataframe(
+    species, *, nurange, local_databases, databank_name, engine, cache
+):
+    """Fetch Kurucz lines as pandas data, retaining RADIS cache paths."""
+    fetch = _import_attr(
+        "radis.io.kurucz", "fetch_kurucz", "Kurucz database download"
+    )
+    return fetch(
+        molecule=species,
+        local_databases=local_databases,
+        databank_name=databank_name,
+        load_wavenum_min=nurange[0],
+        load_wavenum_max=nurange[1],
+        cache=cache,
+        engine=engine,
+        output="pandas",
+        return_local_path=True,
+        verbose=False,
+        parallel=False,
+    )
+
+
 def get_exomol_mdb_class():
     """Return RADIS common-API ExoMol MDB class."""
     return _import_attr(

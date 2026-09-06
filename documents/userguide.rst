@@ -8,6 +8,7 @@ Databases
    userguide/mdb.rst
    userguide/moldb.rst
    userguide/exomol.rst
+   userguide/kurucz.rst
    userguide/hitran.rst
    userguide/api.rst
    userguide/nonair.rst
