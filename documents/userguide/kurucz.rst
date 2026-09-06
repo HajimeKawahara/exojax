@@ -57,15 +57,27 @@ as in the Clear-Base update of `Mullens et al. (2024), Section 2.4.3
 <https://arxiv.org/html/2410.19253v1#S2.SS4.SSS3>`_. It accepts an
 ``AdbKurucz`` or ``AdbVald`` containing one neutral species:
 
-.. code-block:: python
+Download the neutral Kurucz lists
+`gf1100.all (Na I) <http://kurucz.harvard.edu/linelists/gfall/gf1100.all>`_ and
+`gf1900.all (K I) <http://kurucz.harvard.edu/linelists/gfall/gf1900.all>`_
+into the working directory. This complete example loads each species and
+computes single-layer and multilayer cross sections:
 
-    from exojax.opacity import OpaDirect
+.. literalinclude:: ../../examples/alkali_opacity.py
+    :language: python
+    :start-at: import jax
 
-    nu_grid = np.linspace(10000.0, 50000.0, 20000)
-    adb = AdbKurucz("gf1100.all", nurange=nu_grid, margin=9000.0)
-    opa = OpaDirect(adb, nu_grid, line_profile="alkali_subvoigt")
-    cross_section = opa.xsvector(1200.0, 0.1)  # cm2 per Na atom
-    # Use gf1900.all for K I, and apply each species' abundance separately.
+Run ``python examples/alkali_opacity.py`` from the repository root with both
+line-list files in that directory.
+
+``vmr_fraction`` sets the H, He, H2 broadener fractions, not the Na/K
+abundances. Apply each species' abundance separately when converting its
+cross section to atmospheric opacity. The coarse example grid demonstrates
+the API; choose a finer grid to resolve individual line cores.
+
+For automatic download and caching, replace the constructor with
+``AdbKurucz.from_radis("Na_I", nu_grid, margin=9000.0)`` (or ``"K_I"``).
+The default broadener fractions are the same as in the example.
 
 The default ``line_profile="voigt"`` retains the existing Voigt calculation.
 ``OpaAlkali(adb, nu_grid)`` is a thin convenience wrapper selecting
@@ -107,19 +119,4 @@ pressure derivatives are supported away from the profile joins.
     from the logarithmic upper panels.
 
 Regenerate the figure with ``python examples/plot_alkali_profiles.py`` from
-the repository root. The essential profile comparison is:
-
-.. code-block:: python
-
-    import numpy as np
-    import matplotlib.pyplot as plt
-    from exojax.opacity.lpf.lpf import voigt
-    from exojax.opacity.alkali import subvoigt
-
-    d = np.geomspace(1e-3, 1e4, 2000)  # cm-1 from line center
-    T, sigmaD, gammaL = 1200.0, 0.03, 0.1  # K, cm-1, cm-1
-    plt.loglog(d, voigt(d, sigmaD, gammaL), label="Voigt")
-    for name, a, b in (("Na", 30.0, 5000.0), ("K", 20.0, 1600.0)):
-        plt.loglog(d, subvoigt(d, sigmaD, gammaL, T, a, b), label=name)
-    plt.legend()
-    plt.show()
+the repository root.
