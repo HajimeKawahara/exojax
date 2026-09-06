@@ -23,6 +23,7 @@ Start Here
 ----------
 
 - New users: :doc:`Introduction <introduction>` and :doc:`Tutorials <tutorials>`
+- Precomputed opacity and a small first example: :doc:`Starter Opacity Data <opacity_data>`
 - Practical examples: :doc:`Gallery <examples/index>`
 - Topic-based documentation: :doc:`User Guide <userguide>`
 - API reference: :doc:`API Reference <exojax/exojax>`
@@ -48,6 +49,7 @@ Contents
    :caption: Tutorials:
 
    tutorials.rst
+   opacity_data.rst
 
 .. toctree::
    :maxdepth: 2

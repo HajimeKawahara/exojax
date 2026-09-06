@@ -10,6 +10,7 @@ Getting Started
 .. toctree::
    :maxdepth: 1
 
+   Spectra from small precomputed opacity tables <tutorials/starter_opacity>
    Emission spectroscopy <tutorials/get_started>
    Transmission spectroscopy <tutorials/get_started_transmission>
    Reflection spectroscopy <tutorials/get_started_reflection>

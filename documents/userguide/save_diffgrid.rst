@@ -6,6 +6,9 @@ without its PreMODIT teacher or molecular database.  This avoids rebuilding
 the table when the same spectral, pressure, and temperature grids are used
 again.  See :doc:`diffgrid` for the opacity calculation itself.
 
+For an example that starts with a distributed CO table, see
+:doc:`../tutorials/starter_opacity` and :doc:`../opacity_data`.
+
 Worked example
 --------------
 
