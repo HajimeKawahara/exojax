@@ -26,6 +26,7 @@ Opacity Calculation
    :maxdepth: 1
 
    userguide/opacalc.rst
+   userguide/alkali.rst
    userguide/hjerting.rst
    userguide/modit.rst
    userguide/premodit.rst
