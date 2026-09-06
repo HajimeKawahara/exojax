@@ -19,6 +19,10 @@ from exojax.database.core_atom.pf import qr_interp_lines
 from exojax.database.core_atom.io import read_kurucz
 from exojax.database.core_atom.io import load_pf_Barklem2016
 from exojax.database.core_atom.io import PeriodicTable
+from exojax.database._common.radis_adapter import (
+    fetch_kurucz_dataframe,
+    get_radis_version,
+)
 from exojax.utils.constants import Tref_original
 
 __all__ = ["AdbKurucz"]
@@ -78,11 +82,79 @@ class AdbKurucz:
             (written with reference to moldb.py, but without using feather format)
         """
 
+        self.kurucz_file = pathlib.Path(path).expanduser()
+        print("Reading Kurucz file")
+        self._initialize(
+            read_kurucz(self.kurucz_file), nurange, margin, crit, Irwin,
+            gpu_transfer, vmr_fraction,
+        )
+
+    @classmethod
+    def from_radis(
+        cls, species, nurange, *, local_databases=None, cache=True,
+        databank_name="ExoJAX-Kurucz-{molecule}", engine="pytables", margin=0.0,
+        crit=0.0, Irwin=False, gpu_transfer=True, vmr_fraction=None,
+    ):
+        """Download or reuse one Kurucz species through RADIS.
+
+        Args:
+            species: Spectroscopic species, for example ``"Fe_I"`` or ``"Fe_II"``.
+            nurange: Finite positive wavenumber interval or grid in cm-1.
+            local_databases: RADIS cache directory, or its configured default.
+            cache: RADIS cache policy; True reuses cached data.
+            databank_name: RADIS registration name; ``{molecule}`` is replaced
+                with the species. Use a distinct name for a separate cache.
+            engine: RADIS cache engine, ``"pytables"`` or ``"vaex"``.
+            margin: Extra wavenumber coverage in cm-1.
+            crit: Nonnegative reference line-strength cutoff in cm.
+            Irwin: Use Irwin (1981) for Fe I only.
+            gpu_transfer: Generate JAX line arrays immediately if True.
+            vmr_fraction: VMR fractions of H, He, and H2, in that order.
+
+        Returns:
+            An AdbKurucz with ExoJAX partition functions and broadening.
+
+        Notes:
+            RADIS controls downloads and cache registration. ``provenance``
+            records the species, RADIS version, and returned cache paths.
+            RADIS line positions and A coefficients are retained; its air/vacuum
+            conversion can differ from the local-file constructor.
+        """
+        from exojax.database.kurucz._radis import (
+            transitions_from_dataframe, validate_options, validate_species,
+        )
+
+        nurange = validate_options(nurange, margin, crit, vmr_fraction)
+        ielem, iion = validate_species(species)
+        if engine not in ("pytables", "vaex"):
+            raise ValueError("engine must be 'pytables' or 'vaex'.")
+        dataframe, local_paths = fetch_kurucz_dataframe(
+            species,
+            nurange=[max(0.0, nurange[0] - margin), nurange[1] + margin],
+            local_databases=local_databases,
+            databank_name=databank_name,
+            engine=engine,
+            cache=cache,
+        )
+        instance = cls.__new__(cls)
+        instance.kurucz_file = None
+        instance.provenance = {
+            "backend": "radis",
+            "radis_version": get_radis_version(),
+            "species": species,
+            "local_paths": [str(path) for path in local_paths],
+        }
+        instance._initialize(
+            transitions_from_dataframe(dataframe, ielem, iion), nurange, margin,
+            crit, Irwin, gpu_transfer, vmr_fraction,
+        )
+        return instance
+
+    def _initialize(self, transitions, nurange, margin, crit, Irwin,
+                    gpu_transfer, vmr_fraction):
+        """Initialize either reader's normalized host transitions."""
         self.dbtype = "kurucz"
         self.Irwin = Irwin
-
-        # load args
-        self.kurucz_file = pathlib.Path(path).expanduser()
         self.nurange = [np.min(nurange), np.max(nurange)]
         self.margin = margin
         self.crit = crit
@@ -95,8 +167,6 @@ class AdbKurucz:
         else:
             self.vmrH, self.vmrHe, self.vmrHH = vmr_fraction
 
-        # load kurucz file
-        print("Reading Kurucz file")
         (
             self._A,
             self.nu_lines,
@@ -110,7 +180,7 @@ class AdbKurucz:
             self._gamRad,
             self._gamSta,
             self._vdWdamp,
-        ) = read_kurucz(self.kurucz_file)
+        ) = transitions
 
         # load the partition functions (for 284 atomic species)
         pfTdat, self.pfdat = load_pf_Barklem2016()  # Barklem & Collet (2016)
