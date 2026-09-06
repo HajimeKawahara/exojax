@@ -322,3 +322,23 @@ def get_isotope_name_dict():
         "isotope_name_dict",
         "isotope-name table lookup",
     )
+
+
+def fetch_nist_lines(
+    species, *, nurange, local_databases, databank_name, engine, cache
+):
+    """Fetch NIST lines through RADIS, returning a Pandas frame and paths."""
+    fetch_nist = _import_attr("radis.io.nist", "fetch_nist", "NIST line retrieval")
+    return fetch_nist(
+        species,
+        local_databases=local_databases,
+        databank_name=databank_name,
+        load_wavenum_min=nurange[0],
+        load_wavenum_max=nurange[1],
+        engine=engine,
+        cache=cache,
+        output="pandas",
+        return_local_path=True,
+        verbose=False,
+        parallel=False,
+    )
