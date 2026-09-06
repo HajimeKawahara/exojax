@@ -1,3 +1,5 @@
+from math import isfinite
+
 import jax.numpy as jnp
 from exojax.rt.common import ArtCommon
 from exojax.rt.planck import piB, piBarr
@@ -5,10 +7,12 @@ from exojax.rt.rtransfer import (
     initialize_gaussian_quadrature,
     rtrun_reflect_fluxadding_toonhm,
     rtrun_reflect_sfm2st_toonhm,
+    rtrun_reflect_sfm2st_direct,
     setrt_toonhm,
     setrt_toonhm_with_absorption,
 )
 from jax.lax import scan
+from jax.core import Tracer
 
 
 def _surface_optical_depth(dtau, pressure_boundary, pressure_surface):
@@ -112,7 +116,10 @@ class ArtAbsPure(ArtCommon):
 
 
 class ArtReflectPure(ArtCommon):
-    """Atmospheric RT for Pure Reflected light (no source term)
+    """Atmospheric RT for reflected light without thermal emission.
+
+    ``run`` solves diffuse illumination. ``run_direct`` separately returns
+    directional intensity for an incident stellar beam using two-stream SFM.
 
     Attributes:
         pressure_layer: pressure profile in bar
@@ -203,6 +210,75 @@ class ArtReflectPure(ArtCommon):
         else:
             print("rtsolver=", self.rtsolver)
             raise ValueError("Unknown radiative transfer solver (rtsolver).")
+
+    def run_direct(
+        self,
+        dtau,
+        single_scattering_albedo,
+        reflectivity_surface,
+        incoming_flux,
+        mu_in,
+        mu_out,
+        relative_azimuth=0.0,
+        phase_function="rayleigh",
+    ):
+        """Compute reflected specific intensity for a direct stellar beam.
+
+        This method uses SFM with Toon quadrature independently of the
+        diffuse ``rtsolver`` setting. It supports isotropic or Rayleigh
+        scattering, a Lambertian lower boundary, and no thermal emission.
+
+        Args:
+            dtau: Total layer optical depths, top to bottom (N_layer, N_nus).
+            single_scattering_albedo: Scattering / total extinction, with
+                the same shape as dtau and values in [0, 1].
+            reflectivity_surface: Lambertian surface albedo (N_nus or scalar).
+            incoming_flux: Beam-normal spectral irradiance (N_nus or scalar).
+                The horizontal incident flux is mu_in times this value.
+            mu_in: Positive cosine of the stellar zenith angle, scalar (0, 1].
+            mu_out: Positive cosine of the observer zenith angle, scalar (0, 1].
+            relative_azimuth: Azimuth difference between the outward star and
+                observer directions, in radians. Full phase has mu_in=mu_out
+                and relative_azimuth=0.
+            phase_function: "rayleigh" (default) or "isotropic".
+
+        Returns:
+            Specific intensity (N_nus), in the incoming irradiance units per
+            steradian. This is neither hemispheric flux nor geometric albedo.
+
+        Notes:
+            Single scattering is integrated analytically. Multiple scattering
+            uses a Toon-style hemispheric source reconstructed from quadrature
+            fluxes and averaged across each layer. Refine layers to check
+            convergence. Angular integration of the approximate intensity does
+            not exactly preserve the two-stream energy balance. Higher Rayleigh
+            angular moments, polarization, cloud phase functions and disk integration
+            are not included. Use jax.vmap for multiple direction pairs.
+            Angle bounds must also hold when inputs are traced by JAX.
+            Derivatives with respect to a direction cosine are not guaranteed
+            at exactly normal incidence or emergence (a coordinate singularity).
+        """
+        for name, value in (("mu_in", mu_in), ("mu_out", mu_out)):
+            if jnp.ndim(value) != 0:
+                raise ValueError(f"{name} must be a scalar; use jax.vmap for angles")
+            if not isinstance(value, Tracer) and not 0.0 < float(value) <= 1.0:
+                raise ValueError(f"{name} must satisfy 0 < {name} <= 1")
+        if jnp.ndim(relative_azimuth) != 0:
+            raise ValueError("relative_azimuth must be a scalar")
+        if not isinstance(relative_azimuth, Tracer) and not isfinite(
+            float(relative_azimuth)
+        ):
+            raise ValueError("relative_azimuth must be finite")
+        return rtrun_reflect_sfm2st_direct(
+            jnp.asarray(dtau),
+            jnp.asarray(single_scattering_albedo),
+            jnp.asarray(reflectivity_surface),
+            jnp.asarray(incoming_flux),
+            mu_in,
+            mu_out,
+            relative_azimuth,
+            phase_function,
+        )
 
     def run_ckd(
         self,
