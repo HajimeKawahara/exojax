@@ -4,10 +4,12 @@ import pathlib
 import warnings
 import jax.numpy as jnp
 import numpy as np
+from exojax.database.core_atom._arrays import (
+    _generate_atomic_jnp_arrays,
+    _mask_atomic_lines,
+    _set_atomic_metadata,
+)
 from exojax.database.core_atom.io import load_pf_Barklem2016
-from exojax.database.core_atom.io import load_atomicdata
-from exojax.database.core_atom.io import load_ionization_energies
-from exojax.database.core_atom.io import pick_ionE
 from exojax.database.core_atom.io import PeriodicTable
 from exojax.database.core_atom.io import _normalize_vald_engine
 from exojax.database.core_atom.io import _vald_cache_path
@@ -109,7 +111,7 @@ class AdbVald:
             margin: margin for nurange (cm-1)
             crit: line strength lower limit for extraction
             Irwin: if True(1), the partition functions of Irwin1981 is used, otherwise those of Barklem&Collet2016
-            gpu_transfer: tranfer data to jnp.array?
+            gpu_transfer: If True, generate JAX line arrays at initialization.
             vmr_fraction: list of the vmr fractions of hydrogen, H2 molecule, helium. if None, typical quasi-"solar-fraction" will be applied.
             engine: ``"pytables"`` (default), its legacy alias ``"pandas"``,
                 or the optional ``"vaex"`` backend.
@@ -187,54 +189,17 @@ class AdbVald:
         )
 
         self.masking(mask)
+        _set_atomic_metadata(self)
         if gpu_transfer:
             self.generate_jnp_arrays()
 
-        # Compile atomic-specific data for each absorption line of interest
-        ipccd = load_atomicdata()
-        self.solarA = jnp.array(
-            list(map(lambda x: ipccd[ipccd["ielem"] == x].iat[0, 4], self.ielem))
-        )
-        self.atomicmass = jnp.array(
-            list(map(lambda x: ipccd[ipccd["ielem"] == x].iat[0, 5], self.ielem))
-        )
-        df_ionE = load_ionization_energies()
-        self.ionE = jnp.array(
-            list(
-                map(
-                    pick_ionE,
-                    self.ielem,
-                    self.iion,
-                    [
-                        df_ionE,
-                    ]
-                    * len(self.ielem),
-                )
-            )
-        )
-
     def masking(self, mask):
-        """applying mask.
+        """Select lines and metadata, refreshing existing JAX arrays.
 
         Args:
-            mask: mask to be applied. self.mask is updated.
-
+            mask: Boolean mask for the current lines.
         """
-        # numpy float 64 Do not convert them jnp array
-        self.nu_lines = self.nu_lines[mask]
-        self.Sij0 = self.Sij0[mask]
-        self._A = self._A[mask]
-        self._elower = self._elower[mask]
-        self._eupper = self._eupper[mask]
-        self._gupper = self._gupper[mask]
-        self._jlower = self._jlower[mask]
-        self._jupper = self._jupper[mask]
-        self._QTmask = self._QTmask[mask]
-        self._ielem = self._ielem[mask]
-        self._iion = self._iion[mask]
-        self._gamRad = self._gamRad[mask]
-        self._gamSta = self._gamSta[mask]
-        self._vdWdamp = self._vdWdamp[mask]
+        _mask_atomic_lines(self, mask)
 
         if len(self.nu_lines) < 1:
             warn_msg = (
@@ -243,28 +208,8 @@ class AdbVald:
             warnings.warn(warn_msg, UserWarning)
 
     def generate_jnp_arrays(self):
-        """(re)generate jnp.arrays.
-
-        Note:
-            We have nd arrays and jnp arrays. We usually apply the mask to nd arrays and then generate jnp array from the corresponding nd array. For instance, self._A is nd array and self.A is jnp array.
-
-        """
-        # jnp arrays
-        self.dev_nu_lines = jnp.array(self.nu_lines)
-        self.logsij0 = jnp.array(np.log(self.Sij0))
-        self.A = jnp.array(self._A)
-        self.elower = jnp.array(self._elower)
-        self.eupper = jnp.array(self._eupper)
-        self.gupper = jnp.array(self._gupper)
-        self.jlower = jnp.array(self._jlower, dtype=int)
-        self.jupper = jnp.array(self._jupper, dtype=int)
-
-        self.QTmask = jnp.array(self._QTmask, dtype=int)
-        self.ielem = jnp.array(self._ielem, dtype=int)
-        self.iion = jnp.array(self._iion, dtype=int)
-        self.gamRad = jnp.array(self._gamRad)
-        self.gamSta = jnp.array(self._gamSta)
-        self.vdWdamp = jnp.array(self._vdWdamp)
+        """Generate JAX line arrays and metadata for the current selection."""
+        _generate_atomic_jnp_arrays(self)
 
     def Atomic_gQT(self, atomspecies):
         """Select grid of partition function especially for the species of
