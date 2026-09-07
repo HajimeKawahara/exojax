@@ -286,6 +286,7 @@ def collect_provenance(repo_root: Path, input_paths, settings: dict[str, Any]):
         "jax",
         "jaxlib",
         "numpyro",
+        "arviz",
         "scipy",
         "radis",
         "numba",

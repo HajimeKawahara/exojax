@@ -882,10 +882,11 @@ runs and record failure stages. Only completed runs can be summarized.
 Raw samples and extra fields retain ``(chain, draw, ...)`` axes in a
 pickle-free archive; the JSON records parameter order, shapes, dtypes,
 and file hashes. Summaries validate these records and input hashes, then
-recompute diagnostics from saved samples. ESS is null when NumPyro is
-unavailable or the estimate is undefined. Version 1 results remain
-readable, with unavailable provenance and raw samples marked as unknown;
-unknown schema versions are rejected.
+recompute diagnostics from saved samples. The legacy minimum ESS remains
+a NumPyro estimate and is null when NumPyro is unavailable or the
+estimate is undefined; it is separate from the bulk/tail ESS below.
+Version 1 results remain readable, with unavailable provenance and raw
+samples marked as unknown; unknown schema versions are rejected.
 
 Provenance records code, configuration, and input hashes, Git commit and
 dirty state, a tracked-diff hash, dependency versions, and
@@ -894,10 +895,121 @@ manifests and checksums are recorded during preparation, separately from
 opacity archive hashes. A dirty checkout is not fully reproducible from
 its recorded commit alone.
 
-These commands retain the existing single-chain case. The reference GPU
-measurements above have not been rerun for these persistence and
-validation updates; saved results and offline contract tests alone do
-not establish a new scientific benchmark.
+The default run still uses one chain initialized at truth. The reference
+GPU measurements above have not been rerun for these persistence,
+validation, and inference-quality updates; saved results and offline
+contract tests alone do not establish a new scientific benchmark.
+
+Multiple chains, independent repetitions, and inference quality
+---------------------------------------------------------------
+
+P0/PR3 adds an explicit protocol for comparing inference quality and
+cost. Start with four chains, 500 warmup steps, and 1000 retained draws
+per chain. Use ``--initialization prior`` for dispersed initial points
+and pass the same run seed and initialization seed to both methods. Use
+a different seed for each independent repetition. These are proposed
+measurement settings, not a claim that convergence has been achieved.
+
+After the accuracy validation succeeds, run each method in a fresh
+process:
+
+.. code:: bash
+
+   case_dir=/path/to/prepared/case
+   for seed in 0 1; do
+     for method in premodit diffgrid; do
+       python tests/benchmark/diffgrid_nuts_benchmark.py run --output-dir "$case_dir" --run-id "science-$seed" --method "$method" --validation-id accuracy-baseline --num-chains 4 --chain-method sequential --initialization prior --initialization-seed "$seed" --seed "$seed" --num-warmup 500 --num-samples 1000 --measure-steady-sampling
+     done
+   done
+   python tests/benchmark/diffgrid_nuts_benchmark.py summarize --output-dir "$case_dir" --run-id science-0 --repeat-run-id science-1
+
+``--chain-method`` also accepts ``parallel`` and ``vectorized``;
+parallel execution requires enough devices for the requested chains. The
+report records the execution method, device count, per-chain random keys
+and initial points, and initialization policy. ``--initialization-seed``
+defaults to ``--seed``. Additional ``--repeat-run-id`` arguments select
+more independent pairs; they cannot be combined with the code-revision
+option ``--compare-run-id``.
+
+The saved quality rules are rank-normalized split Rhat below ``1.01``,
+bulk ESS and tail ESS each at least ``400``, and zero divergences. The
+diagnostics use ArviZ, record its version and estimator definitions, and
+retain unavailable estimates with a reason. ArviZ is an optional
+benchmark dependency; its absence prevents a scientific quality pass.
+The old minimum ESS has not been relabeled as bulk or tail ESS.
+Scientific eligibility requires these exact recorded quality rules,
+compatible passing PR2 evidence, matching comparison conditions, at
+least four chains initialized within the prior, at least 500 warmup
+steps and 1000 retained draws per chain, finite posterior predictions,
+and at least two independent run pairs. A failed quality rule remains
+visible in the summary; increase sampling effort for both methods under
+common settings and retain failed runs with their original IDs.
+
+The summary recomputes diagnostics from the saved chains and writes
+``comparison.json``, ``comparison.csv``, ``comparison.png``, and
+``diagnostics.csv`` under ``runs/<first-run-id>/``. In
+``comparison.json``, ``quality.eligible`` and ``quality.reasons`` give
+the decision and unmet requirements, while ``repetitions`` retains every
+selected pair. Existing timing ratios remain descriptive;
+``scientific_sampling_speedup_premodit_over_diffgrid`` is null unless
+all eligibility requirements pass. It records posterior means,
+quantiles, Monte Carlo standard errors, and differences between methods.
+``--predictive-draws`` defaults to 100 selected draws per chain. Their
+indices, noiseless forward predictions, and replicated observations with
+the fixed measurement noise are saved with predictive summaries. A
+single synthetic observation does not establish frequentist coverage.
+
+To inspect a saved chain from the repository root with the same hash,
+shape, and dtype checks used by the summary:
+
+.. code:: python
+
+   from pathlib import Path
+   import sys
+
+   sys.path.insert(0, str(Path("tests/benchmark").resolve()))
+   from diffgrid_nuts_storage import load_samples, read_metadata
+
+   run_dir = Path("/path/to/prepared/case/runs/science-0/diffgrid")
+   result = read_metadata(run_dir / "result.json")
+   samples, extra_fields = load_samples(run_dir / "samples.npz", result["samples"])
+   print(samples["temperature_at_1bar"].shape)  # (chain, draw)
+
+Timing reports distinguish loading/setup, first compiled forward and
+value-and-gradient calls, repeated compiled evaluations, NUTS
+compile-and-warmup, and the cold sampling call.
+``compile_and_warmup_seconds`` and ``sampling_compile_and_run_seconds``
+remain composite intervals. The optional ``--measure-steady-sampling``
+adds a same-sized continuation with a warm compilation cache; this
+interval may include NumPyro wrapper recompilation and does not isolate
+pure steady-state sampling. Its chains are saved separately in
+``steady_samples.npz`` and excluded from the primary posterior
+diagnostics. Device memory snapshots and ratios use JAX allocator
+statistics from the first device only, without summing memory across
+devices used by parallel chains. Host memory records the process
+high-water mark, with missing measurements and reasons retained.
+
+The GPU launcher runs validation and two independent pairs with these
+four-chain settings, retaining fresh processes, CUDA, 64-bit arithmetic,
+disabled XLA preallocation, and the cleared persistent-cache directory
+setting:
+
+.. code:: bash
+
+   tcsh tests/benchmark/run_diffgrid_nuts_benchmark_gpu.csh /path/to/prepared/case
+
+It defaults to ``baseline-accuracy``, ``baseline-0``, and
+``baseline-1``. Set ``EXOJAX_BENCHMARK_RUN_PREFIX`` to use new IDs and
+retain earlier results. ``EXOJAX_BENCHMARK_SEED_0`` and
+``EXOJAX_BENCHMARK_SEED_1`` default to 0 and 1 and must differ. The
+existing ``EXOJAX_CH4_MDB_PATH``, ``EXOJAX_H2H2_CIA_PATH``, and
+``EXOJAX_BENCHMARK_PYTHON`` overrides remain available. Files in
+``process_times/`` record ``/usr/bin/time -p`` whole-process wall, user,
+and system times separately from the Python module’s elapsed interval.
+Existing run, validation, and timing paths are rejected. The launcher
+settings and short offline CPU checks do not substitute for an executed
+CH4/GPU scientific comparison. Eligibility applies only to the recorded
+case and backend; CPU timings do not measure GPU performance.
 
 
 Notes for production retrievals
