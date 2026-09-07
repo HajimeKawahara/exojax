@@ -15,6 +15,7 @@ import argparse
 import csv
 import gc
 import json
+import os
 from contextlib import contextmanager
 from importlib.metadata import PackageNotFoundError, version
 import platform
@@ -24,6 +25,8 @@ import time
 from dataclasses import asdict, dataclass
 from pathlib import Path
 from typing import Any
+
+_PROCESS_START = time.perf_counter()
 
 from jax import config
 
@@ -176,6 +179,7 @@ def _environment() -> dict[str, Any]:
         "jaxlib": jaxlib.__version__,
         "numpyro": numpyro_version,
         "numpy": np.__version__,
+        "arviz": _optional_version("arviz"),
         "jax_enable_x64": bool(config.values["jax_enable_x64"]),
         "device": str(device),
         "device_kind": getattr(device, "device_kind", "unknown"),
@@ -186,6 +190,13 @@ def _environment() -> dict[str, Any]:
             if "cache" in key and isinstance(value, (str, int, float, bool, type(None)))
         },
     }
+
+
+def _optional_version(package):
+    try:
+        return version(package)
+    except PackageNotFoundError:
+        return None
 
 
 def _case_paths(output_dir: Path) -> dict[str, Path]:
@@ -463,6 +474,7 @@ def _provenance(args, inputs):
             script.with_name("diffgrid_nuts_storage.py"),
             script.with_name("diffgrid_nuts_validation.py"),
             script.with_name("benchmark_metrics.py"),
+            script.with_name("benchmark_inference.py"),
             *inputs,
         ],
         settings,
@@ -916,7 +928,151 @@ def run_method(args: argparse.Namespace) -> None:
         _load_scientific_runtime()
         state["provenance"] = _provenance(args, [args.output_dir / "prepare.json"])
         _run_method(args, state, saved)
+        state["process"] = {
+            "pid": os.getpid(),
+            "elapsed_seconds": time.perf_counter() - _PROCESS_START,
+            "scope": "Benchmark module entry through result construction; excludes interpreter startup, final JSON write, and shutdown. Launcher /usr/bin/time records whole-process wall/user/system time.",
+        }
     print(f"Wrote {saved['result']}")
+
+
+def _chain_initialization(args, truth, prior_bounds):
+    """Use identical, recorded physical starts and random keys for both methods."""
+    if args.chain_method == "parallel" and args.num_chains > jax.local_device_count():
+        raise ValueError("Parallel chains require at least one local device per chain.")
+    seed = args.seed if args.initialization_seed is None else args.initialization_seed
+    if args.initialization == "prior":
+        rng = np.random.default_rng(seed)
+        # Restrict initialization only, not the model's prior. Avoid infinite logits.
+        unit = rng.uniform(0.05, 0.95, (args.num_chains, len(truth)))
+        values = [
+            {
+                name: float(
+                    prior_bounds[name][0]
+                    + row[index] * (prior_bounds[name][1] - prior_bounds[name][0])
+                )
+                for index, name in enumerate(truth)
+            }
+            for row in unit
+        ]
+    else:
+        values = [dict(truth) for _ in range(args.num_chains)]
+    warmup_key, sampling_key = jax.random.split(jax.random.PRNGKey(args.seed))
+    if args.num_chains > 1:
+        warmup_key = jax.random.split(warmup_key, args.num_chains)
+        sampling_key = jax.random.split(sampling_key, args.num_chains)
+    metadata = {
+        "policy": args.initialization,
+        "seed": seed,
+        "physical_values": values,
+        "warmup_keys": np.asarray(warmup_key).reshape(-1, 2).tolist(),
+        "sampling_keys": np.asarray(sampling_key).reshape(-1, 2).tolist(),
+        "prior_fraction_range": [0.05, 0.95]
+        if args.initialization == "prior"
+        else None,
+    }
+    initial = None
+    if args.num_chains > 1 or args.initialization != "truth":
+        initial = {}
+        for name, (lower, upper) in prior_bounds.items():
+            unit = (np.asarray([row[name] for row in values]) - lower) / (upper - lower)
+            if np.any(unit <= 0) or np.any(unit >= 1) or not np.all(np.isfinite(unit)):
+                raise ValueError(
+                    "Initialization must lie strictly inside each Uniform prior."
+                )
+            q = jnp.asarray(np.log(unit) - np.log1p(-unit))
+            initial[name] = q if args.num_chains > 1 else q[0]
+    return metadata, initial, warmup_key, sampling_key
+
+
+def _benchmark_forward(forward, art, truth, repetitions):
+    arguments = (
+        art.powerlaw_temperature(
+            truth["temperature_at_1bar"], truth["temperature_index"]
+        ),
+        *[
+            jnp.asarray(truth[name])
+            for name in (
+                "methane_mass_mixing_ratio",
+                "radius",
+                "radial_velocity",
+                "vsini",
+            )
+        ],
+    )
+    start = time.perf_counter()
+    compiled = jax.jit(forward).lower(*arguments).compile()
+    compile_seconds = time.perf_counter() - start
+    jax.block_until_ready(compiled(*arguments))
+    durations = []
+    for _ in range(repetitions):
+        start = time.perf_counter()
+        jax.block_until_ready(compiled(*arguments))
+        durations.append(time.perf_counter() - start)
+    return {
+        "compile_seconds": compile_seconds,
+        "repetitions": repetitions,
+        "evaluation_seconds": durations,
+        "median_evaluation_seconds": float(np.median(durations)),
+        "memory_analysis": _compiled_memory_analysis(compiled),
+    }
+
+
+def _posterior_predictive(
+    path, forward, art, samples, nu_data, noise_sigma, count, seed
+):
+    from benchmark_inference import predictive_summary
+
+    if count == 0:
+        return {"available": False, "reason": "Disabled with --predictive-draws 0."}
+    nchain, ndraw = next(iter(samples.values())).shape[:2]
+    indices = np.linspace(0, ndraw - 1, min(count, ndraw), dtype=int)
+    compiled = jax.jit(forward)
+    prediction = []
+    # Sequential forwards avoid replicating large opacity intermediates per draw.
+    for chain in range(nchain):
+        values = []
+        for draw in indices:
+            p = {
+                name: jnp.asarray(array[chain, draw]) for name, array in samples.items()
+            }
+            temperature = art.powerlaw_temperature(
+                p["temperature_at_1bar"], p["temperature_index"]
+            )
+            values.append(
+                np.asarray(
+                    compiled(
+                        temperature,
+                        p["methane_mass_mixing_ratio"],
+                        p["radius"],
+                        p["radial_velocity"],
+                        p["vsini"],
+                    )
+                )
+            )
+        prediction.append(values)
+    prediction = np.asarray(prediction)
+    noise_seed = [seed & 0xFFFFFFFF, 707]
+    rng = np.random.default_rng(noise_seed)
+    replicated = prediction + noise_sigma * rng.normal(size=prediction.shape)
+    write_npz(
+        path,
+        prediction=prediction,
+        replicated_observation=replicated,
+        draw_indices=indices,
+        nu_data=np.asarray(nu_data),
+    )
+    return {
+        "available": True,
+        "filename": path.name,
+        "sha256": _sha256(path),
+        "shape": list(prediction.shape),
+        "draw_indices": indices.tolist(),
+        "noise_seed": noise_seed,
+        "prediction": predictive_summary(prediction),
+        "replicated_observation": predictive_summary(replicated, includes_noise=True),
+        "scope": "Evenly spaced retained draws in every chain; noiseless prediction and fixed-noise replicated observation. No coverage claim from one mock.",
+    }
 
 
 def _validate_artifacts(paths, metadata, methods):
@@ -951,10 +1107,17 @@ def _load_opacity(method, archive_path, allow_code_revision=False):
 
 
 def _run_method(args, state, saved):
+    from benchmark_inference import DEFAULT_RULES, posterior_diagnostics
     from numpyro.infer import MCMC, NUTS
     from numpyro.infer.initialization import init_to_value
 
     output_dir = args.output_dir.resolve()
+
+    def auxiliary(name):
+        return saved["result"].with_name(
+            f"{args.method}_{name}" if args.run_id is None else name
+        )
+
     _stage(state, saved["result"], "input_validation")
     paths, prepare_metadata, case, case_digest = _load_case(output_dir)
     # Materialize and close the archive even when subsequent setup fails.
@@ -974,6 +1137,27 @@ def _run_method(args, state, saved):
     prior_bounds = {
         key: tuple(float(value) for value in bounds)
         for key, bounds in prepare_metadata["prior_bounds"].items()
+    }
+    initialization, initial_params, warmup_key, sampling_key = _chain_initialization(
+        args, truth, prior_bounds
+    )
+    state["quality_rules"] = dict(DEFAULT_RULES)
+    state["run"] = {
+        "seed": args.seed,
+        "num_warmup": args.num_warmup,
+        "num_samples": args.num_samples,
+        "gradient_repetitions": args.gradient_repetitions,
+        "num_chains": args.num_chains,
+        "chain_method": args.chain_method,
+        "initialization": initialization,
+        "local_device_count": jax.local_device_count(),
+        "devices": [str(device) for device in jax.local_devices()],
+        "predictive_draws": args.predictive_draws,
+        "measure_steady_sampling": args.measure_steady_sampling,
+        "dense_mass": True,
+        "target_accept_probability": 0.95,
+        "max_tree_depth": 10,
+        "forward_mode_differentiation": False,
     }
     archive_path = paths[args.method]
     _stage(state, saved["result"], "opacity_load")
@@ -1022,15 +1206,14 @@ def _run_method(args, state, saved):
         kernel,
         num_warmup=args.num_warmup,
         num_samples=args.num_samples,
-        num_chains=1,
+        num_chains=args.num_chains,
+        chain_method=args.chain_method,
         thinning=1,
         progress_bar=False,
     )
-    warmup_key, sampling_key = jax.random.split(jax.random.PRNGKey(args.seed))
-
     _stage(state, saved["result"], "warmup")
     start = time.perf_counter()
-    mcmc.warmup(warmup_key, observation=observation)
+    mcmc.warmup(warmup_key, observation=observation, init_params=initial_params)
     jax.block_until_ready(mcmc.last_state)
     compile_and_warmup_seconds = time.perf_counter() - start
     memory["after_warmup"] = _device_memory_stats()
@@ -1056,10 +1239,54 @@ def _run_method(args, state, saved):
     )
     total_num_steps = int(np.sum(extra_host["num_steps"]))
     diagnostics = _sample_diagnostics(samples_host, extra_host, sampling_seconds)
+    state["posterior_inference"] = posterior_diagnostics(
+        samples_host, extra_host, state["quality_rules"]
+    )
+    state["steady_sampling"] = {
+        "available": False,
+        "seconds": None,
+        "reason": "Not requested; use --measure-steady-sampling for a separate warm-cache continuation.",
+    }
+    if args.measure_steady_sampling:
+        _stage(state, saved["result"], "steady_sampling")
+        mcmc.post_warmup_state = mcmc.last_state
+        # Continue from the recorded cold trajectory; retain its RNG state.
+        continuation_key = mcmc.last_state.rng_key
+        start = time.perf_counter()
+        mcmc.run(
+            continuation_key,
+            observation=observation,
+            extra_fields=("num_steps", "accept_prob"),
+        )
+        steady_samples = mcmc.get_samples(group_by_chain=True)
+        steady_extra = mcmc.get_extra_fields(group_by_chain=True)
+        jax.block_until_ready((steady_samples, steady_extra))
+        seconds = time.perf_counter() - start
+        state["steady_samples"] = save_samples(
+            auxiliary("steady_samples.npz"),
+            jax.device_get(steady_samples),
+            jax.device_get(steady_extra),
+            list(TRUTH),
+        )
+        state["steady_sampling"] = {
+            "available": True,
+            "seconds": seconds,
+            "reason": None,
+            "initial_rng_keys": np.asarray(continuation_key).reshape(-1, 2).tolist(),
+            "scope": "Same-shape warm-cache continuation including dispatch and synchronization; may include wrapper recompilation. Pure steady-state sampling is not isolated. Secondary draws are excluded from the primary diagnostics.",
+        }
+        memory["after_steady_sampling"] = _device_memory_stats()
+        del steady_samples, steady_extra
     del samples, extra_fields, mcmc, kernel
     jax.clear_caches()
     gc.collect()
 
+    _stage(state, saved["result"], "forward_benchmark")
+    state["forward_benchmark"] = _benchmark_forward(
+        forward_model, context["art"], truth, args.gradient_repetitions
+    )
+    jax.clear_caches()
+    gc.collect()
     _stage(state, saved["result"], "gradient_benchmark")
     gradient_benchmark = _benchmark_potential_gradient(
         model,
@@ -1069,28 +1296,32 @@ def _run_method(args, state, saved):
         args.gradient_repetitions,
     )
     memory["after_gradient_benchmark"] = _device_memory_stats()
+    _stage(state, saved["result"], "posterior_predictive")
+    start = time.perf_counter()
+    state["posterior_predictive"] = _posterior_predictive(
+        auxiliary("posterior_predictive.npz"),
+        forward_model,
+        context["art"],
+        samples_host,
+        case["nu_data"],
+        case_config.noise_sigma,
+        args.predictive_draws,
+        args.seed,
+    )
+    predictive_seconds = time.perf_counter() - start
     result = {
         "schema_version": SCHEMA_VERSION,
         "method": args.method,
         "case_sha256": case_digest,
         "environment": _environment(),
-        "run": {
-            "seed": args.seed,
-            "num_warmup": args.num_warmup,
-            "num_samples": args.num_samples,
-            "gradient_repetitions": args.gradient_repetitions,
-            "num_chains": 1,
-            "dense_mass": True,
-            "target_accept_probability": 0.95,
-            "max_tree_depth": 10,
-            "forward_mode_differentiation": False,
-        },
         "timings": {
             "opacity_load_seconds": opacity_load_seconds,
             "model_setup_seconds": model_setup_seconds,
             "compile_and_warmup_seconds": compile_and_warmup_seconds,
             "sampling_compile_and_run_seconds": sampling_seconds,
-            "sampling_seconds_per_sample": sampling_seconds / args.num_samples,
+            "sampling_seconds_per_sample": sampling_seconds
+            / (args.num_chains * args.num_samples),
+            "posterior_predictive_seconds": predictive_seconds,
             "cold_milliseconds_per_leapfrog_step": (
                 1000.0 * sampling_seconds / total_num_steps
                 if total_num_steps > 0
@@ -1101,6 +1332,13 @@ def _run_method(args, state, saved):
         "diagnostics": diagnostics,
         "device_memory": memory,
         "host_peak_rss_bytes": _host_peak_rss_bytes(),
+        "measurement_definitions": {
+            "compile_and_warmup_seconds": "Combined initialization, compilation, and adaptation; synchronized.",
+            "sampling_compile_and_run_seconds": "First post-warmup sampling call, including cold-scan compilation and synchronization.",
+            "sampling_seconds_per_sample": "Cold sampling seconds divided by chains times retained draws per chain.",
+            "host_peak_rss_bytes": "resource.getrusage(RUSAGE_SELF).ru_maxrss, process-lifetime peak, converted to bytes.",
+            "device_memory": "First device only: jax.devices()[0].memory_stats snapshots; peak_bytes_in_use is process lifetime, not an isolated phase or sum across parallel chain devices. Missing fields remain unavailable.",
+        },
     }
     state.update(result)
     print(
@@ -1142,6 +1380,7 @@ def _comparison_payload(
         "schema_version": SCHEMA_VERSION,
         "status": "completed",
         "methods": results,
+        "device_memory_scope": "First device only; no aggregate peak across parallel chain devices.",
         "diffgrid_build_seconds": diffgrid_build,
         "diffgrid_table_payload_bytes": prepare_metadata["diffgrid"][
             "table_payload_bytes"
@@ -1173,8 +1412,11 @@ def _comparison_payload(
     }
 
 
-def _write_comparison_csv(path: Path, results: dict[str, dict[str, Any]]) -> None:
+def _write_comparison_csv(
+    path: Path, results: dict[str, dict[str, Any]], repetitions=None
+) -> None:
     fieldnames = [
+        "run_id",
         "method",
         "opacity_load_seconds",
         "model_setup_seconds",
@@ -1190,15 +1432,32 @@ def _write_comparison_csv(path: Path, results: dict[str, dict[str, Any]]) -> Non
         "pre_first_evaluation_device_bytes",
         "peak_device_bytes",
         "host_peak_rss_bytes",
+        "posterior_predictive_seconds",
+        "quality_passed",
+        "max_rhat_rank",
+        "min_ess_bulk",
+        "min_ess_tail",
+        "warm_cache_sampling_seconds",
+        "forward_compile_seconds",
+        "median_forward_seconds",
+        "process_elapsed_seconds",
+        "whole_process_wall_seconds",
+        "bulk_ess_per_cold_second",
+        "tail_ess_per_cold_second",
     ]
     with path.open("w", newline="") as stream:
         writer = csv.DictWriter(stream, fieldnames=fieldnames)
         writer.writeheader()
-        for method in ("premodit", "diffgrid"):
-            result = results[method]
+        for result in [
+            pair[method]
+            for pair in (repetitions or [results])
+            for method in ("premodit", "diffgrid")
+        ]:
+            method = result["method"]
             writer.writerow(
                 {
                     "method": method,
+                    "run_id": result.get("run_id"),
                     **result["timings"],
                     "median_potential_gradient_seconds": result[
                         "potential_gradient_benchmark"
@@ -1220,6 +1479,37 @@ def _write_comparison_csv(path: Path, results: dict[str, dict[str, Any]]) -> Non
                         result, "after_sampling", "peak_bytes_in_use"
                     ),
                     "host_peak_rss_bytes": result["host_peak_rss_bytes"],
+                    "quality_passed": result.get("posterior_inference", {}).get(
+                        "quality_passed"
+                    ),
+                    **{
+                        key: result.get("posterior_inference", {})
+                        .get("summary", {})
+                        .get(key)
+                        for key in ("max_rhat_rank", "min_ess_bulk", "min_ess_tail")
+                    },
+                    "warm_cache_sampling_seconds": result.get(
+                        "steady_sampling", {}
+                    ).get("seconds"),
+                    "forward_compile_seconds": result.get("forward_benchmark", {}).get(
+                        "compile_seconds"
+                    ),
+                    "median_forward_seconds": result.get("forward_benchmark", {}).get(
+                        "median_evaluation_seconds"
+                    ),
+                    "process_elapsed_seconds": result.get("process", {}).get(
+                        "elapsed_seconds"
+                    ),
+                    "whole_process_wall_seconds": result.get(
+                        "whole_process_time", {}
+                    ).get("real"),
+                    **{
+                        key: result.get("posterior_cost", {}).get(key)
+                        for key in (
+                            "bulk_ess_per_cold_second",
+                            "tail_ess_per_cold_second",
+                        )
+                    },
                 }
             )
 
@@ -1269,7 +1559,7 @@ def _plot_comparison(
             axes[1].bar(x + (index - 0.5) * width, gib, width, label=label)
     axes[1].set_xticks(x, labels)
     axes[1].set_ylabel("device memory (GiB)")
-    axes[1].set_title("Fresh-process device memory")
+    axes[1].set_title("First-device process memory")
     if plotted_memory:
         axes[1].legend(fontsize=8)
     else:
@@ -1307,6 +1597,10 @@ def _validate_results(prepare_metadata, results, revision_comparison=False):
     for candidate in results[1:]:
         if candidate["run"] != reference["run"]:
             raise ValueError("Method results do not use the same NUTS settings.")
+        if candidate.get("quality_rules") != reference.get("quality_rules"):
+            raise ValueError(
+                "Method results do not use the same posterior quality rules."
+            )
         # Schema 1 lacks Python/platform/cache and full dependency provenance.
         legacy = any(result["schema_version"] == 1 for result in (reference, candidate))
         environment_fields = (
@@ -1329,7 +1623,9 @@ def _validate_results(prepare_metadata, results, revision_comparison=False):
             if reference["environment"].get(field) != candidate["environment"].get(
                 field
             ):
-                raise ValueError(f"Run environment mismatch: {field}")
+                raise ValueError(
+                    f"Run environment mismatch: {field}: {reference['environment'].get(field)!r} != {candidate['environment'].get(field)!r}"
+                )
         if not legacy:
             if reference["physics"] != candidate["physics"]:
                 raise ValueError("Run physics mismatch.")
@@ -1357,6 +1653,8 @@ def _validate_results(prepare_metadata, results, revision_comparison=False):
 
 
 def _read_result(output_dir, method, run_id, prepare_digest):
+    from benchmark_inference import posterior_diagnostics, predictive_summary
+
     paths = result_paths(output_dir, method, run_id)
     result = _read_json(paths["result"])
     if result.get("method") != method or result.get("run_id") != run_id:
@@ -1377,6 +1675,69 @@ def _read_result(output_dir, method, run_id, prepare_digest):
             samples, extra, result["timings"]["sampling_compile_and_run_seconds"]
         )
         result["diagnostics_source"] = "recomputed from saved chains"
+        result["posterior_inference"] = posterior_diagnostics(
+            samples, extra, result.get("quality_rules")
+        )
+        result["posterior_inference_source"] = (
+            "Recomputed from hash-verified primary chains, using the recorded rules and current recorded diagnostic implementation."
+        )
+        steady = result.get("steady_samples")
+        if steady is not None:
+            load_samples(
+                paths["result"].with_name(validate_run_id(steady["filename"])), steady
+            )
+            if steady["chain_shape"] != expected_shape:
+                raise ValueError(
+                    "Steady sampling chains do not match the run dimensions."
+                )
+        predictive = result.get("posterior_predictive", {})
+        if predictive.get("available"):
+            prediction_path = paths["result"].with_name(
+                validate_run_id(predictive["filename"])
+            )
+            if _sha256(prediction_path) != predictive["sha256"]:
+                raise ValueError(
+                    "Posterior predictive archive digest does not match result metadata."
+                )
+            with np.load(prediction_path, allow_pickle=False) as archive:
+                if (
+                    list(archive["prediction"].shape) != predictive["shape"]
+                    or archive["draw_indices"].tolist() != predictive["draw_indices"]
+                ):
+                    raise ValueError(
+                        "Posterior predictive shape or selected draws do not match metadata."
+                    )
+                with np.load(
+                    _case_paths(Path(output_dir))["case"], allow_pickle=False
+                ) as case:
+                    if not np.array_equal(archive["nu_data"], case["nu_data"]):
+                        raise ValueError(
+                            "Posterior predictive observation grid differs from the saved case."
+                        )
+                    shape = (
+                        result["run"]["num_chains"],
+                        len(predictive["draw_indices"]),
+                        len(case["nu_data"]),
+                    )
+                indices = archive["draw_indices"]
+                if (
+                    indices.ndim != 1
+                    or indices.dtype.kind not in "iu"
+                    or np.any(indices < 0)
+                    or np.any(indices >= result["run"]["num_samples"])
+                    or np.any(np.diff(indices) <= 0)
+                ):
+                    raise ValueError(
+                        "Posterior predictive draw indices are invalid for the run."
+                    )
+                for name in ("prediction", "replicated_observation"):
+                    if archive[name].shape != shape:
+                        raise ValueError(
+                            "Posterior predictive shape does not match the run and observation."
+                        )
+                    predictive[name] = predictive_summary(
+                        archive[name], includes_noise=name == "replicated_observation"
+                    )
         try:
             result["diagnostics_numpyro_version"] = version("numpyro")
         except PackageNotFoundError:
@@ -1385,7 +1746,43 @@ def _read_result(output_dir, method, run_id, prepare_digest):
             result["diagnostics_note"] = (
                 "ESS unavailable: NumPyro missing or diagnostics undefined."
             )
+    summary = result.get("posterior_inference", {}).get("summary", {})
+    seconds = result["timings"]["sampling_compile_and_run_seconds"]
+    result["posterior_cost"] = {
+        "bulk_ess_per_cold_second": _safe_ratio(summary.get("min_ess_bulk"), seconds),
+        "tail_ess_per_cold_second": _safe_ratio(summary.get("min_ess_tail"), seconds),
+        "scope": "Minimum over parameters; primary retained-chain ESS divided by cold sampling compile-and-run wall time. Interpret only with comparison quality eligibility.",
+    }
+    result["whole_process_time"] = _read_process_time(output_dir, method, run_id)
     return result
+
+
+def _read_process_time(output_dir, method, run_id):
+    path = Path(output_dir) / "process_times" / f"{run_id}-{method}.txt"
+    if run_id is None or not path.is_file():
+        return {
+            "available": False,
+            "real": None,
+            "user": None,
+            "sys": None,
+            "reason": "Whole-process /usr/bin/time log was not recorded by the launcher.",
+        }
+    values = {}
+    for line in path.read_text().splitlines():
+        fields = line.split()
+        if len(fields) == 2 and fields[0] in ("real", "user", "sys"):
+            values[fields[0]] = float(fields[1])
+    if set(values) != {"real", "user", "sys"} or not all(
+        np.isfinite(value) and value >= 0 for value in values.values()
+    ):
+        raise ValueError(f"Invalid whole-process timing log: {path}")
+    return {
+        "available": True,
+        **values,
+        "filename": str(path),
+        "sha256": _sha256(path),
+        "scope": "Launcher /usr/bin/time -p, including interpreter startup and shutdown.",
+    }
 
 
 def _validation_gate(
@@ -1480,11 +1877,208 @@ def _validate_result_evidence(output_dir, result, prepare_digest, validation_id)
     result["accuracy_validation"] = evidence
 
 
+def _comparison_quality(results, pair_count=1):
+    from benchmark_inference import DEFAULT_RULES
+
+    reasons = []
+    if pair_count < 2:
+        reasons.append("At least two independent paired runs are required.")
+    for result in results:
+        label = f"{result.get('run_id')}/{result.get('method')}"
+        checks = {
+            "The fixed posterior quality rules must be recorded before sampling.": result.get(
+                "quality_rules"
+            )
+            == DEFAULT_RULES,
+            "Observation-space validation is missing or failed.": result.get(
+                "accuracy_validation", {}
+            ).get("passed")
+            is True,
+            "Posterior convergence criteria are missing or failed.": result.get(
+                "posterior_inference", {}
+            ).get("quality_passed")
+            is True,
+            "Dispersed prior-interior initialization is required.": result["run"]
+            .get("initialization", {})
+            .get("policy")
+            == "prior",
+            "At least four chains are required.": result["run"].get("num_chains", 0)
+            >= 4,
+            "At least 500 warmup steps and 1000 retained draws per chain are required.": result[
+                "run"
+            ].get("num_warmup", 0)
+            >= 500
+            and result["run"].get("num_samples", 0) >= 1000,
+            "Finite posterior predictions are required.": result.get(
+                "posterior_predictive", {}
+            )
+            .get("prediction", {})
+            .get("finite")
+            is True,
+        }
+        reasons.extend(
+            f"{label}: {reason}" for reason, passed in checks.items() if not passed
+        )
+    return {
+        "eligible": not reasons,
+        "reasons": reasons,
+        "paired_runs": pair_count,
+        "scope": "Convergence and teacher-relative accuracy for the recorded case/backend; no repeated-mock coverage or absolute-accuracy claim.",
+    }
+
+
+def _validate_repeat_results(prepare_metadata, pairs):
+    """Allow independent seeds/starts across repeats, preserving all other controls."""
+    import copy
+
+    reference = pairs[0]["premodit"]
+    seeds, initial_seeds, keys = set(), set(), set()
+    for pair in pairs:
+        _validate_results(prepare_metadata, list(pair.values()))
+        candidate = pair["premodit"]
+        initialization = candidate["run"].get("initialization")
+        if initialization is None:
+            raise ValueError(
+                "Independent repeats require recorded initialization and random keys."
+            )
+        for field in ("policy", "prior_fraction_range"):
+            if initialization.get(field) != reference["run"]["initialization"].get(
+                field
+            ):
+                raise ValueError(
+                    f"Repeated runs use different initialization settings: {field}"
+                )
+        seed = candidate["run"]["seed"]
+        initial_seed = initialization["seed"]
+        current_keys = [
+            tuple(key)
+            for group in ("warmup_keys", "sampling_keys")
+            for key in initialization[group]
+        ]
+        if (
+            seed in seeds
+            or initial_seed in initial_seeds
+            or len(set(current_keys)) != len(current_keys)
+            or keys.intersection(current_keys)
+        ):
+            raise ValueError(
+                "Repeated runs must use independent seeds, initializations, and random keys."
+            )
+        seeds.add(seed)
+        initial_seeds.add(initial_seed)
+        keys.update(current_keys)
+        normalized = copy.deepcopy(candidate)
+        normalized["run"]["seed"] = reference["run"]["seed"]
+        normalized["run"]["initialization"] = copy.deepcopy(
+            reference["run"]["initialization"]
+        )
+        _validate_results(prepare_metadata, [reference, normalized])
+        if candidate.get("quality_rules") != reference.get("quality_rules"):
+            raise ValueError("Repeated runs use different posterior quality rules.")
+
+
+def _write_diagnostic_table(path, results):
+    columns = [
+        "run_id",
+        "method",
+        "parameter",
+        "mean",
+        "mcse_mean",
+        "rhat_rank",
+        "ess_bulk",
+        "ess_tail",
+        "quality_passed",
+    ]
+    with path.open("w", newline="") as stream:
+        writer = csv.DictWriter(stream, fieldnames=columns)
+        writer.writeheader()
+        for result in results:
+            inference = result.get("posterior_inference", {})
+            for name, parameter in inference.get("per_parameter", {}).items():
+                writer.writerow(
+                    {
+                        "run_id": result.get("run_id"),
+                        "method": result["method"],
+                        "parameter": name,
+                        "quality_passed": inference.get("quality_passed"),
+                        **{key: parameter.get(key) for key in columns[3:-1]},
+                    }
+                )
+
+
+def _posterior_comparison(left, right):
+    from benchmark_inference import posterior_difference
+
+    if not all("posterior_inference" in result for result in (left, right)):
+        return {
+            "available": False,
+            "reason": "Raw posterior diagnostics are unavailable for legacy results.",
+        }
+    comparison = posterior_difference(
+        left["posterior_inference"], right["posterior_inference"]
+    )
+    predictions = [
+        result.get("posterior_predictive", {}).get("prediction", {})
+        for result in (left, right)
+    ]
+    if all(prediction.get("finite") for prediction in predictions):
+        comparison["prediction_mean_difference"] = (
+            np.asarray(predictions[1]["mean"]) - np.asarray(predictions[0]["mean"])
+        ).tolist()
+        comparison["prediction_quantile_difference"] = {
+            key: (
+                np.asarray(predictions[1]["quantiles"][key])
+                - np.asarray(predictions[0]["quantiles"][key])
+            ).tolist()
+            for key in predictions[0]["quantiles"]
+        }
+    return comparison
+
+
 def summarize_results(args: argparse.Namespace) -> None:
+    destination = args.output_dir.resolve()
+    if args.run_id is not None:
+        destination = destination / "runs" / args.run_id
+    try:
+        _summarize_results(args)
+    except (ValueError, FileNotFoundError) as error:
+        destination.mkdir(parents=True, exist_ok=True)
+        failure = {
+            "schema_version": SCHEMA_VERSION,
+            "status": "failed",
+            "run_id": args.run_id,
+            "repeat_run_ids": args.repeat_run_id,
+            "compare_run_id": args.compare_run_id,
+            "reason": str(error),
+        }
+        _write_json(destination / "comparison_failed.json", failure)
+        # Generated summaries must not retain a stale successful ranking after
+        # a later validation/hash failure for the same explicit selection.
+        target = destination / "comparison.json"
+        if args.compare_run_id is not None and args.method is not None:
+            target = (
+                args.output_dir.resolve()
+                / "runs"
+                / args.compare_run_id
+                / args.method
+                / f"comparison_from_{args.run_id}.json"
+            )
+            target.parent.mkdir(parents=True, exist_ok=True)
+        _write_json(target, failure)
+        raise
+
+
+def _summarize_results(args: argparse.Namespace) -> None:
     output_dir = args.output_dir.resolve()
     paths, prepare_metadata, case, _ = _load_case(output_dir)
     case.close()
     revision = args.compare_run_id is not None
+    if args.repeat_run_id and (revision or args.run_id is None):
+        raise ValueError(
+            "--repeat-run-id requires --run-id and cannot be combined with --compare-run-id."
+        )
+    if len(set([args.run_id, *args.repeat_run_id])) != 1 + len(args.repeat_run_id):
+        raise ValueError("Repeated run IDs must be distinct.")
     if revision and (args.run_id is None or args.method is None):
         raise ValueError("--compare-run-id requires --run-id and --method.")
     if args.method is not None and not revision:
@@ -1513,6 +2107,10 @@ def summarize_results(args: argparse.Namespace) -> None:
             "candidate_run_id": args.compare_run_id,
             "baseline": baseline,
             "candidate": candidate,
+            "quality": _comparison_quality([baseline, candidate]),
+            "posterior_comparison": _posterior_comparison(baseline, candidate),
+            "scientific_sampling_speedup_baseline_over_candidate": None,
+            "timing_ratio_scope": "Descriptive single-pair revision comparison; repeated revision pairs are not aggregated by this command.",
             "accuracy_validated": all(
                 result["accuracy_validation"]["passed"] is True
                 for result in (baseline, candidate)
@@ -1532,9 +2130,12 @@ def summarize_results(args: argparse.Namespace) -> None:
         target = output_dir / "runs" / args.compare_run_id / args.method
         destination = target / f"comparison_from_{args.run_id}.json"
         _write_json(destination, comparison)
-        if not comparison["accuracy_validated"]:
+        _write_diagnostic_table(
+            target / f"diagnostics_from_{args.run_id}.csv", [baseline, candidate]
+        )
+        if not comparison["quality"]["eligible"]:
             print(
-                "Accuracy validation not recorded: timing ratios are descriptive only."
+                "Single revision pair: timing ratios are descriptive only; see quality reasons."
             )
         print(f"Wrote revision comparison: {destination}")
         return
@@ -1546,7 +2147,23 @@ def summarize_results(args: argparse.Namespace) -> None:
         _validate_result_evidence(
             output_dir, result, prepare_digest, args.validation_id
         )
-    _validate_results(prepare_metadata, list(results.values()))
+    pairs = [results]
+    for run_id in args.repeat_run_id:
+        pair = {
+            method: _read_result(output_dir, method, run_id, prepare_digest)
+            for method in methods
+        }
+        for result in pair.values():
+            _validate_result_evidence(
+                output_dir, result, prepare_digest, args.validation_id
+            )
+        pairs.append(pair)
+    if len(pairs) > 1:
+        _validate_repeat_results(prepare_metadata, pairs)
+    else:
+        _validate_results(prepare_metadata, list(results.values()))
+    all_results = [result for pair in pairs for result in pair.values()]
+    quality = _comparison_quality(all_results, len(pairs))
     output_dir = (
         output_dir if args.run_id is None else output_dir / "runs" / args.run_id
     )
@@ -1558,28 +2175,63 @@ def summarize_results(args: argparse.Namespace) -> None:
         comparison_kind="methods",
         run_id=args.run_id,
         accuracy_validated=all(
-            result["accuracy_validation"]["passed"] is True
-            for result in results.values()
+            result["accuracy_validation"]["passed"] is True for result in all_results
         ),
+        quality=quality,
+        timing_ratio_scope="Raw timing ratios are descriptive. The scientific ratio is available only when every explicitly selected independent pair satisfies the protocol.",
+        posterior_comparison=_posterior_comparison(
+            results["premodit"], results["diffgrid"]
+        ),
+        repetitions=[
+            {
+                "run_id": pair["premodit"].get("run_id"),
+                "methods": pair,
+                "sampling_speedup_premodit_over_diffgrid": _safe_ratio(
+                    pair["premodit"]["timings"]["sampling_compile_and_run_seconds"],
+                    pair["diffgrid"]["timings"]["sampling_compile_and_run_seconds"],
+                ),
+                "posterior_comparison": _posterior_comparison(
+                    pair["premodit"], pair["diffgrid"]
+                ),
+            }
+            for pair in pairs
+        ],
     )
-    if not comparison["accuracy_validated"]:
-        print("Accuracy validation not recorded: timing ratios are descriptive only.")
+    comparison["scientific_sampling_speedup_premodit_over_diffgrid"] = (
+        float(
+            np.median(
+                [
+                    pair["sampling_speedup_premodit_over_diffgrid"]
+                    for pair in comparison["repetitions"]
+                ]
+            )
+        )
+        if quality["eligible"]
+        else None
+    )
+    if not quality["eligible"]:
+        print(
+            "Comparison protocol is not satisfied: timing ratios are descriptive only."
+        )
+        for reason in quality["reasons"]:
+            print(f"  {reason}")
     _write_json(output_dir / "comparison.json", comparison)
-    _write_comparison_csv(output_dir / "comparison.csv", results)
+    _write_comparison_csv(output_dir / "comparison.csv", results, pairs)
+    _write_diagnostic_table(output_dir / "diagnostics.csv", all_results)
     _plot_comparison(output_dir / "comparison.png", prepare_metadata, results)
 
     print(f"Wrote comparison artifacts in {output_dir}")
     print(
-        "Sampling speedup (PreMODIT / DiffGrid): "
+        "Descriptive cold sampling ratio (PreMODIT / DiffGrid): "
         f"{comparison['sampling_speedup_premodit_over_diffgrid']:.4g}"
     )
     print(
-        "Potential-gradient speedup (PreMODIT / DiffGrid): "
+        "Descriptive potential-gradient ratio (PreMODIT / DiffGrid): "
         f"{comparison['potential_gradient_speedup_premodit_over_diffgrid']:.4g}"
     )
     memory_ratio = comparison["peak_device_memory_ratio_premodit_over_diffgrid"]
     if memory_ratio is not None:
-        print(f"Peak device-memory ratio: {memory_ratio:.4g}")
+        print(f"First-device peak memory ratio: {memory_ratio:.4g}")
     else:
         print("Peak device-memory ratio: unavailable")
 
@@ -1621,6 +2273,31 @@ def _parser() -> argparse.ArgumentParser:
     run_parser.add_argument("--num-warmup", type=_positive_int, default=500)
     run_parser.add_argument("--num-samples", type=_positive_int, default=1000)
     run_parser.add_argument("--seed", type=int, default=0)
+    run_parser.add_argument("--num-chains", type=_positive_int, default=1)
+    run_parser.add_argument(
+        "--chain-method",
+        choices=("sequential", "parallel", "vectorized"),
+        default="sequential",
+    )
+    run_parser.add_argument(
+        "--initialization", choices=("truth", "prior"), default="truth"
+    )
+    run_parser.add_argument(
+        "--initialization-seed",
+        type=_nonnegative_int,
+        help="Seed for common dispersed starts; omitted uses --seed.",
+    )
+    run_parser.add_argument(
+        "--predictive-draws",
+        type=_nonnegative_int,
+        default=100,
+        help="Maximum evenly spaced posterior predictive draws per chain; 0 disables.",
+    )
+    run_parser.add_argument(
+        "--measure-steady-sampling",
+        action="store_true",
+        help="Measure and save a separate same-sized warm-cache continuation.",
+    )
     run_parser.add_argument("--gradient-repetitions", type=_positive_int, default=5)
     run_parser.add_argument(
         "--run-id",
@@ -1652,6 +2329,13 @@ def _parser() -> argparse.ArgumentParser:
         "--compare-run-id",
         type=_run_id,
         help="Compare this candidate revision with the baseline --run-id.",
+    )
+    summary_parser.add_argument(
+        "--repeat-run-id",
+        type=_run_id,
+        action="append",
+        default=[],
+        help="Add an independent pair of method runs; repeat for each explicit ID.",
     )
     summary_parser.add_argument(
         "--method",
@@ -1692,6 +2376,13 @@ def _nonnegative_float(value):
     result = float(value)
     if not np.isfinite(result) or result < 0:
         raise argparse.ArgumentTypeError("value must be finite and nonnegative")
+    return result
+
+
+def _nonnegative_int(value):
+    result = int(value)
+    if result < 0:
+        raise argparse.ArgumentTypeError("value must be nonnegative")
     return result
 
 

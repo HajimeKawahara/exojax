@@ -100,7 +100,7 @@ assert str(sys.modules['exojax.special.faddeeva'].an.dtype) == 'float64'
     )
     assert result.returncode == 0, result.stdout + result.stderr
     assert "--run-id" in result.stdout
-    assert "--num-chains" not in result.stdout
+    assert "--num-chains" in result.stdout
 
 
 def test_legacy_cli_arguments_and_defaults(benchmark, tmp_path):
