@@ -427,11 +427,16 @@ def _check_fixed_points(forward, metadata, arrays):
 
 
 def _run_nuts(forward, observation, metadata, args):
+    model = make_numpyro_model(forward, metadata["priors"])
+    return _run_numpyro_model(model, observation, args)
+
+
+def _run_numpyro_model(model, observation, args):
+    """Run a model with one spectrum site and retain the original chain axes."""
     import jax
     import jax.numpy as jnp
     from numpyro.infer import MCMC, NUTS
 
-    model = make_numpyro_model(forward, metadata["priors"])
     kernel = NUTS(model, forward_mode_differentiation=False)
     sampler = MCMC(
         kernel,
@@ -533,15 +538,7 @@ def run(args):
             report.setdefault("parameter_order", list(metadata["priors"]))
         state["nuts" if args.method == "nuts" else "nested"] = report
         _stage(target / "result.json", state, "sample_save")
-        storage.write_npz(target / "samples.npz", **samples)
-        state["samples"] = {
-            "filename": "samples.npz",
-            "sha256": storage.sha256(target / "samples.npz"),
-            "arrays": {
-                name: {"shape": list(value.shape), "dtype": value.dtype.str}
-                for name, value in samples.items()
-            },
-        }
+        state["samples"] = _save_raw_samples(target, samples)
     print(f"Saved {args.method} run: {target}")
 
 
@@ -559,7 +556,25 @@ def load_run(directory, method, run_id):
     ):
         if report.get(name) != expected:
             raise ValueError(f"Run {name} differs from the prepared case.")
-    if storage.sha256(target / "samples.npz") != report["samples"]["sha256"]:
+    return _load_raw_samples(target, report, metadata["priors"])
+
+
+def _save_raw_samples(target, samples):
+    storage = _storage()
+    storage.write_npz(target / "samples.npz", **samples)
+    return {
+        "filename": "samples.npz",
+        "sha256": storage.sha256(target / "samples.npz"),
+        "arrays": {
+            name: {"shape": list(value.shape), "dtype": value.dtype.str}
+            for name, value in samples.items()
+        },
+    }
+
+
+def _load_raw_samples(target, report, priors):
+    """Validate either sampler's saved arrays and recompute its diagnostics."""
+    if _storage().sha256(target / "samples.npz") != report["samples"]["sha256"]:
         raise ValueError("Saved sample digest differs from the run.")
     with np.load(target / "samples.npz", allow_pickle=False) as archive:
         arrays = dict(archive)
@@ -576,9 +591,9 @@ def load_run(directory, method, run_id):
         name.removeprefix("samples__")
         for name in arrays
         if name.startswith("samples__")
-    } != set(metadata["priors"]):
+    } != set(priors):
         raise ValueError("Saved posterior parameters differ from the shared prior.")
-    if method == "nuts":
+    if report["method"] == "nuts":
         expected_shape = (
             report["settings"]["num_chains"],
             report["settings"]["num_samples"],
@@ -603,9 +618,7 @@ def load_run(directory, method, run_id):
     else:
         from _compare_samplers_jaxns import validate_saved_results
 
-        report["nested"] = validate_saved_results(
-            report["nested"], arrays, metadata["priors"]
-        )
+        report["nested"] = validate_saved_results(report["nested"], arrays, priors)
     return report, arrays
 
 
