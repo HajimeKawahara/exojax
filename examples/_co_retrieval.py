@@ -54,11 +54,11 @@ class CaseConfig:
     broadening_resolution: float = 1.0
 
 
-def make_forward(context):
-    """Return the original fspec(T0, alpha, MMR, g, RV, vsini) operator."""
+def make_rotated_flux(context):
+    """Return the shared CO emission and rotation before instrument response."""
     art, opa, opacia = (context[name] for name in ("art", "opa", "opacia"))
 
-    def fspec(T0, alpha, MMR, g, RV, vsini):
+    def rotated_flux(T0, alpha, MMR, g, vsini):
         temperature = art.powerlaw_temperature(T0, alpha)
         cross_sections = opa.xsmatrix(temperature, art.pressure)
         dtau = art.opacity_profile_xs(
@@ -69,7 +69,17 @@ def make_forward(context):
             logacia, temperature, context["vmrH2"], context["vmrH2"], context["mmw"], g
         )
         flux = art.run(dtau, temperature)
-        rotated = context["sop_rot"].rigid_rotation(flux, vsini, 0.0, 0.0)
+        return context["sop_rot"].rigid_rotation(flux, vsini, 0.0, 0.0)
+
+    return rotated_flux
+
+
+def make_forward(context):
+    """Return the original fspec(T0, alpha, MMR, g, RV, vsini) operator."""
+    rotated_flux = make_rotated_flux(context)
+
+    def fspec(T0, alpha, MMR, g, RV, vsini):
+        rotated = rotated_flux(T0, alpha, MMR, g, vsini)
         blurred = context["sop_inst"].ipgauss(rotated, context["beta_inst"])
         return context["sop_inst"].sampling(blurred, RV, context["nu_obs"])
 

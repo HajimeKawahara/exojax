@@ -662,6 +662,93 @@ complete degeneracy. However, the presence of CIA breaks this
 degeneracy. For more details, please refer to `Kawashima et
 al. <https://arxiv.org/abs/2410.11561>`__
 
+Next example: one atmosphere observed by two instruments
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The separate `joint-observation
+example <https://github.com/HajimeKawahara/exojax/blob/develop/examples/joint_observation_retrieval.py>`__
+generates one CO emission spectrum and observes it through two
+instruments. It shares the six atmospheric parameters ``T0``, ``alpha``,
+``MMR``, ``logg``, ``vsini``, and ``RV``, with the same priors as this
+tutorial. It then fits independent noise scales and a relative flux
+offset:
+
++-----------------------+-----------------------+-----------------------+
+| Quantity              | Instrument A          | Instrument B          |
++=======================+=======================+=======================+
+| Fixed resolving power | 70,000                | 20,000                |
++-----------------------+-----------------------+-----------------------+
+| Wavenumber bins       | 64                    | 32, merging pairs of  |
+|                       |                       | A’s bins              |
++-----------------------+-----------------------+-----------------------+
+| Additive flux offset  | Fixed at zero         | ``offset_b ~ U        |
+|                       |                       | niform(-1000, 1000)`` |
++-----------------------+-----------------------+-----------------------+
+| Quoted noise standard | 500                   | 800                   |
+| deviation             |                       |                       |
++-----------------------+-----------------------+-----------------------+
+| Multiplier of quoted  | ``scale_              | ``scale_              |
+| noise                 | a ~ Uniform(0.5, 2)`` | b ~ Uniform(0.5, 2)`` |
++-----------------------+-----------------------+-----------------------+
+
+Offsets and noise standard deviations use the flux units of ``F_nu``,
+erg/s/cm2/cm-1. The two noise scales replace the single ``sigmain``
+parameter for this example. Fixing A’s offset anchors the relative
+offset; no extra jitter, separate RV zero points, or fitted resolving
+powers are introduced.
+
+For each instrument, Gaussian LSF broadening and the shared RV shift
+precede binning. The LSF kernel velocity setting is 100 km/s; padding
+checks use its full discrete support. The saved bins contain the mean of
+``F_nu`` over wavenumber in cm-1, using the existing piecewise-linear
+bin integrator; they are not wavelength averages or bin-integrated
+fluxes. The source grid must cover the bins and the LSF/velocity
+padding. Insufficient coverage is rejected. These are settings of the
+new joint example; the single-instrument tutorial above keeps its
+original settings.
+
+Run the following commands from the repository root. The default source
+is a small atmosphere with three synthetic CO lines and synthetic CIA,
+so preparation needs no molecular database download. The seed fixes both
+saved mock observations.
+
+.. code:: bash
+
+   python examples/joint_observation_retrieval.py prepare --output-dir output/joint_observation --seed 0
+   python examples/joint_observation_retrieval.py run --output-dir output/joint_observation --method nuts --run-id repeat-0 --seed 0
+   python examples/joint_observation_retrieval.py summarize --output-dir output/joint_observation --method nuts --run-id repeat-0
+
+To use the saved CO source from the sampler comparison instead, prepare
+a new output directory with ``--co-case output/co_sampler_comparison``.
+This requires that comparison case and its recorded local inputs. After
+checking the NUTS run, the same saved joint case can be run and
+summarized with ``--method jaxns``, using the optional adapter described
+in the `nested-sampling tutorial <get_started_ns.html>`__. Use new run
+IDs and seeds for independent repetitions.
+
+The summary is saved at
+``output/joint_observation/runs/repeat-0/nuts/summary.json``. After the
+commands finish, the following snippet loads it using the
+source-checkout setup at the start of this notebook. The loader verifies
+the saved inputs and run artifacts before returning the summary.
+
+.. code:: python
+
+   from pprint import pprint
+   from joint_observation_retrieval import load_summary
+
+   joint_case_dir = repo_root / "output" / "joint_observation"
+   joint_summary = load_summary(joint_case_dir, "nuts", "repeat-0")
+   pprint(joint_summary)
+
+This section provides commands and a loading snippet, without stored
+retrieval outputs. Inspect the saved diagnostics before interpreting
+posterior estimates. CPU wiring checks and local checks of
+offset/noise-scale identifiability do not establish global atmospheric
+identifiability, converged CO recovery, or performance on real
+observations. SVI and the Gaussian-process extension remain separate
+examples.
+
 6. Modeling Correlated Noise with a Gaussian Process
 ----------------------------------------------------
 
