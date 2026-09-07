@@ -14,6 +14,7 @@ from __future__ import annotations
 import argparse
 import csv
 import gc
+import json
 from contextlib import contextmanager
 from importlib.metadata import PackageNotFoundError, version
 import platform
@@ -289,6 +290,8 @@ def _forward_context(
         "velocity_array": velocity_array,
         "instrument_beta": instrument_beta,
         "hydrogen_volume_mixing_ratio": hydrogen_volume_mixing_ratio,
+        "cia_temperature_grid": np.asarray(cia_database.tcia),
+        "cia_wavenumber_grid": np.asarray(cia_database.nucia),
     }
 
 
@@ -455,7 +458,13 @@ def _provenance(args, inputs):
     }
     return collect_provenance(
         script.parents[2],
-        [script, script.with_name("diffgrid_nuts_storage.py"), *inputs],
+        [
+            script,
+            script.with_name("diffgrid_nuts_storage.py"),
+            script.with_name("diffgrid_nuts_validation.py"),
+            script.with_name("benchmark_metrics.py"),
+            *inputs,
+        ],
         settings,
     )
 
@@ -953,6 +962,13 @@ def _run_method(args, state, saved):
         case = dict(case)
     _validate_artifacts(paths, prepare_metadata, [args.method])
     state.update(case_sha256=case_digest, prepare_sha256=_sha256(paths["prepare"]))
+    state["validation"] = _validation_gate(
+        output_dir,
+        state["prepare_sha256"],
+        state["provenance"]["code_sha256"],
+        validation_id=args.validation_id,
+        environment=_environment(),
+    )
     case_config = CaseConfig(**prepare_metadata["config"])
     truth = {key: float(value) for key, value in prepare_metadata["truth"].items()}
     prior_bounds = {
@@ -1372,6 +1388,98 @@ def _read_result(output_dir, method, run_id, prepare_digest):
     return result
 
 
+def _validation_gate(
+    output_dir,
+    prepare_digest,
+    code_sha256=None,
+    required=False,
+    validation_id=None,
+    environment=None,
+):
+    """Bind explicit successful evidence; never choose the latest validation."""
+    root = Path(output_dir) / "validations"
+    if validation_id is None:
+        reports = [
+            path
+            for path in root.glob("*/validation.json")
+            if json.loads(path.read_text()).get("prepare_sha256") == prepare_digest
+        ]
+        if reports or required:
+            raise ValueError(
+                "Select a successful --validation-id explicitly before using this case; validation evidence cannot be ignored."
+            )
+        return {"status": "not_run", "passed": None}
+    path = root / validate_run_id(validation_id) / "validation.json"
+    result = _read_json(path)
+    if (
+        result.get("validation_id") != validation_id
+        or result.get("prepare_sha256") != prepare_digest
+    ):
+        raise ValueError(
+            "Validation ID or prepare digest does not match the selected case."
+        )
+    if result.get("passed") is not True:
+        raise ValueError(
+            "Validation failed; this case cannot enter a performance comparison."
+        )
+    if code_sha256 is not None and result["provenance"]["code_sha256"] != code_sha256:
+        raise ValueError("Validation execution code does not match the run.")
+    if environment is not None:
+        for key in (
+            "jax",
+            "jaxlib",
+            "numpyro",
+            "numpy",
+            "jax_enable_x64",
+            "device_platform",
+            "device_kind",
+        ):
+            if result["environment"].get(key) != environment.get(key):
+                raise ValueError(
+                    f"Validation environment does not match the run: {key}"
+                )
+    if _sha256(path.with_name("residuals.npz")) != result["residuals"]["sha256"]:
+        raise ValueError(
+            "Validation residual archive digest does not match the report."
+        )
+    return {
+        "status": "passed",
+        "passed": True,
+        "validation_id": validation_id,
+        "sha256": _sha256(path),
+        "reference_convergence": result["reference_convergence"],
+    }
+
+
+def _validate_result_evidence(output_dir, result, prepare_digest, validation_id):
+    recorded = result.get("validation", {})
+    selected = (
+        validation_id if validation_id is not None else recorded.get("validation_id")
+    )
+    provenance = result.get("provenance") or {}
+    evidence = _validation_gate(
+        output_dir,
+        prepare_digest,
+        provenance.get("code_sha256"),
+        validation_id=selected,
+        environment=result.get("environment"),
+    )
+    if (
+        recorded.get("sha256") is not None
+        and evidence.get("sha256") != recorded["sha256"]
+    ):
+        raise ValueError(
+            "Validation report digest differs from the evidence recorded by the run."
+        )
+    if evidence["passed"] is True and (
+        provenance.get("code_sha256") is None or not result.get("environment")
+    ):
+        raise ValueError(
+            "Run lacks code/environment provenance needed to attach validation."
+        )
+    result["accuracy_validation"] = evidence
+
+
 def summarize_results(args: argparse.Namespace) -> None:
     output_dir = args.output_dir.resolve()
     paths, prepare_metadata, case, _ = _load_case(output_dir)
@@ -1389,6 +1497,10 @@ def summarize_results(args: argparse.Namespace) -> None:
         candidate = _read_result(
             output_dir, args.method, args.compare_run_id, prepare_digest
         )
+        for result in (baseline, candidate):
+            _validate_result_evidence(
+                output_dir, result, prepare_digest, args.validation_id
+            )
         _validate_results(
             prepare_metadata, [baseline, candidate], revision_comparison=True
         )
@@ -1401,6 +1513,10 @@ def summarize_results(args: argparse.Namespace) -> None:
             "candidate_run_id": args.compare_run_id,
             "baseline": baseline,
             "candidate": candidate,
+            "accuracy_validated": all(
+                result["accuracy_validation"]["passed"] is True
+                for result in (baseline, candidate)
+            ),
             "sampling_speedup_baseline_over_candidate": _safe_ratio(
                 baseline["timings"]["sampling_compile_and_run_seconds"],
                 candidate["timings"]["sampling_compile_and_run_seconds"],
@@ -1416,12 +1532,20 @@ def summarize_results(args: argparse.Namespace) -> None:
         target = output_dir / "runs" / args.compare_run_id / args.method
         destination = target / f"comparison_from_{args.run_id}.json"
         _write_json(destination, comparison)
+        if not comparison["accuracy_validated"]:
+            print(
+                "Accuracy validation not recorded: timing ratios are descriptive only."
+            )
         print(f"Wrote revision comparison: {destination}")
         return
     results = {
         method: _read_result(output_dir, method, args.run_id, prepare_digest)
         for method in methods
     }
+    for result in results.values():
+        _validate_result_evidence(
+            output_dir, result, prepare_digest, args.validation_id
+        )
     _validate_results(prepare_metadata, list(results.values()))
     output_dir = (
         output_dir if args.run_id is None else output_dir / "runs" / args.run_id
@@ -1430,7 +1554,16 @@ def summarize_results(args: argparse.Namespace) -> None:
         f"Selected run: {args.run_id if args.run_id is not None else 'legacy root results'}"
     )
     comparison = _comparison_payload(prepare_metadata, results)
-    comparison.update(comparison_kind="methods", run_id=args.run_id)
+    comparison.update(
+        comparison_kind="methods",
+        run_id=args.run_id,
+        accuracy_validated=all(
+            result["accuracy_validation"]["passed"] is True
+            for result in results.values()
+        ),
+    )
+    if not comparison["accuracy_validated"]:
+        print("Accuracy validation not recorded: timing ratios are descriptive only.")
     _write_json(output_dir / "comparison.json", comparison)
     _write_comparison_csv(output_dir / "comparison.csv", results)
     _plot_comparison(output_dir / "comparison.png", prepare_metadata, results)
@@ -1499,6 +1632,11 @@ def _parser() -> argparse.ArgumentParser:
         action="store_true",
         help="Reuse opacity from another ExoJAX version; keep schema, hash, and dtype checks.",
     )
+    run_parser.add_argument(
+        "--validation-id",
+        type=_run_id,
+        help="Use this successful validation for the same case and code.",
+    )
     run_parser.set_defaults(handler=run_method)
 
     summary_parser = subparsers.add_parser(
@@ -1520,8 +1658,47 @@ def _parser() -> argparse.ArgumentParser:
         choices=("premodit", "diffgrid"),
         help="Method for an explicit revision comparison.",
     )
+    summary_parser.add_argument(
+        "--validation-id",
+        type=_run_id,
+        help="Select successful validation explicitly for existing runs.",
+    )
     summary_parser.set_defaults(handler=summarize_results)
+
+    validation_parser = subparsers.add_parser(
+        "validate",
+        help="Check observed spectra, domains, and gradients of a prepared case.",
+    )
+    validation_parser.add_argument(
+        "--output-dir", type=Path, default=DEFAULT_OUTPUT_DIR
+    )
+    validation_parser.add_argument("--validation-id", type=_run_id, required=True)
+    validation_parser.add_argument("--seed", type=int, default=0)
+    validation_parser.add_argument("--num-prior-points", type=_positive_int, default=16)
+    validation_parser.add_argument(
+        "--max-interpolation-error-in-noise", type=_nonnegative_float, default=0.01
+    )
+    validation_parser.add_argument("--max-q", type=_nonnegative_float, default=0.1)
+    validation_parser.add_argument(
+        "--gradient-tolerance", type=_nonnegative_float, default=1e-3
+    )
+    validation_parser.add_argument("--allow-code-revision", action="store_true")
+    validation_parser.add_argument("--reference-output-dir", type=Path)
+    validation_parser.set_defaults(handler=validate)
     return parser
+
+
+def _nonnegative_float(value):
+    result = float(value)
+    if not np.isfinite(result) or result < 0:
+        raise argparse.ArgumentTypeError("value must be finite and nonnegative")
+    return result
+
+
+def validate(args):
+    from diffgrid_nuts_validation import validate_case
+
+    validate_case(args, sys.modules[__name__])
 
 
 def main() -> None:
