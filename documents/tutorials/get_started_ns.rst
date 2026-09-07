@@ -1,13 +1,20 @@
 Nested Sampling of an Emission Spectrum Using JAXNS
 ===================================================
 
-Last update: June 2026, Hajime Kawahara, for ExoJAX 2.5.0
+Last update: September 2026, Hajime Kawahara, for ExoJAX 2.5.0
 
 This guide performs retrieval of an emission spectrum using `nested
 sampling <https://en.wikipedia.org/wiki/Nested_sampling_algorithm>`__.
 It follows the same forward-modeling workflow as `Getting Started with
 Emission Spectroscopy <get_started.html>`__, but uses nested sampling
 instead of HMC-NUTS for parameter inference.
+
+Both sampler tutorials now read one saved, seeded mock observation and
+use one shared retrieval model. Prepare the case with the commands in
+Section 5 before running the observation cell. This update has not rerun
+the full CO/database retrieval. Earlier forward-model figures are
+retained from the previous execution; outputs from the changed
+observation and subsequent retrieval cells have been cleared.
 
 This notebook enables 64-bit mode in JAX. This is useful for numerical
 stability in retrieval examples, although 32-bit mode is often
@@ -18,6 +25,17 @@ workflows.
 
     from jax import config
     config.update("jax_enable_x64", True)
+
+    from pathlib import Path
+    import sys
+
+    # Open this notebook inside an ExoJAX source checkout.
+    repo_root = next(
+        path for path in (Path.cwd(), *Path.cwd().parents)
+        if (path / "examples" / "compare_samplers.py").is_file()
+    )
+    sys.path.insert(0, str(repo_root / "examples"))
+
 
 The schematic below summarizes the ExoJAX workflow:
 
@@ -51,7 +69,7 @@ a database.
 .. code:: ipython3
 
     from exojax.utils.grids import wavenumber_grid
-    
+
     nu_grid, wav, resolution = wavenumber_grid(
         22920.0, 23000.0, 3500, unit="AA", xsmode="premodit"
     )
@@ -104,7 +122,7 @@ checked on the `ExoMol website <https://www.exomol.com/>`__.
     Isotopologue:  12C-16O
     ExoMol database:  None
     Local folder:  .database/CO/12C-16O/Li2015
-    Transition files: 
+    Transition files:
     	 => File 12C-16O__Li2015.trans
     Broadener:  H2
     Broadening code level: a0
@@ -167,7 +185,7 @@ using ``opa.xsvector``.
     P = 1.0  # bar
     T_1 = 500.0  # K
     xsv_1 = opa.xsvector(T_1, P)  # cm2
-    
+
     T_2 = 1500.0  # K
     xsv_2 = opa.xsvector(T_2, P)  # cm2
 
@@ -177,7 +195,7 @@ different temperatures.
 .. code:: ipython3
 
     import matplotlib.pyplot as plt
-    
+
     plt.plot(nu_grid, xsv_1, label=str(T_1) + "K")  # cm2
     plt.plot(nu_grid, xsv_2, alpha=0.5, label=str(T_2) + "K")  # cm2
     plt.yscale("log")
@@ -207,7 +225,7 @@ This example uses ``rtsolver="ibased"``.
 .. code:: ipython3
 
     from exojax.rt import ArtEmisPure
-    
+
     art = ArtEmisPure(
         nu_grid=nu_grid,
         pressure_btm=1.0e1,
@@ -248,7 +266,7 @@ Jupiter masses.
 .. code:: ipython3
 
     from exojax.utils.astrofunc import gravity_jupiter
-    
+
     gravity = gravity_jupiter(1.0, 10.0)
 
 In addition to CO absorption, include `collision-induced
@@ -259,7 +277,7 @@ absorption <https://en.wikipedia.org/wiki/Collision-induced_absorption_and_emiss
 
     from exojax.database.contdb  import CdbCIA
     from exojax.opacity import OpaCIA
-    
+
     cdb = CdbCIA(".database/H2-H2_2011.cia", nurange=nu_grid)
     opacia = OpaCIA(cdb, nu_grid=nu_grid)
 
@@ -303,7 +321,7 @@ and Fortrat Diagram <Fortrat.html>`__.
 .. code:: ipython3
 
     F = art.run(dtau, Tarr)
-    
+
     fig = plt.figure(figsize=(15, 4))
     plt.plot(nu_grid, F)
     plt.xlabel("wavenumber (cm-1)")
@@ -346,9 +364,9 @@ First, apply rotational broadening from planetary spin.
 .. code:: ipython3
 
     from exojax.postproc.specop import SopRotation
-    
+
     sop_rot = SopRotation(nu_grid, vsini_max=100.0)
-    
+
     vsini = 10.0
     u1 = 0.0
     u2 = 0.0
@@ -370,27 +388,31 @@ First, apply rotational broadening from planetary spin.
 
 
 Next, apply the instrumental profile and relative radial-velocity shift.
-The computed spectrum must also be evaluated on the data grid; this
-interpolation step is called ``sampling`` in ExoJAX. The result below is
-a mock observation with added noise.
+Evaluating the model on the observed wavenumber grid is called
+``sampling`` in ExoJAX. The physical operations remain visible below,
+while the observation itself is loaded from the case prepared once for
+both samplers.
 
 .. code:: ipython3
 
     from exojax.postproc.specop import SopInstProfile
     from exojax.utils.instfunc import resolution_to_gaussian_std
-    
+    from compare_samplers import load_context
+
     sop_inst = SopInstProfile(nu_grid, vrmax=1000.0)
-    
     RV = 40.0  # km/s
-    resolution_inst =70000.0
+    resolution_inst = 70000.0
     beta_inst = resolution_to_gaussian_std(resolution_inst)
     Finst = sop_inst.ipgauss(Frot, beta_inst)
-    nu_obs = nu_grid[::5][:-50]
-    
-    
-    from numpy.random import normal
-    noise = 500.0
-    Fobs = sop_inst.sampling(Finst, RV, nu_obs) + normal(0.0, noise, len(nu_obs))
+
+    # Both sampler tutorials read the observation prepared once by the CLI.
+    case_dir = repo_root / "output" / "co_sampler_comparison"
+    case_metadata, case_data, model_context = load_context(case_dir)
+    nu_obs = case_data["nu_obs"]
+    Fobs = case_data["observed_flux"]
+    noise = float(case_data["noise_sigma"])
+    print("Shared saved case:", case_dir)
+
 
 .. code:: ipython3
 
@@ -406,123 +428,127 @@ a mock observation with added noise.
     plt.legend()
     plt.show()
 
-
-
-.. image:: get_started_ns_files/get_started_ns_45_0.png
-
-
 5. Retrieval of an Emission Spectrum
 ------------------------------------
 
-Next, retrieve atmospheric parameters from the mock spectrum. Retrieval
-estimates the posterior distribution of model parameters given the data.
-The forward-modeling steps above are collected into the spectral model
-below, which has six parameters.
+Next, retrieve atmospheric parameters from the saved mock spectrum. The
+explanatory steps above show how opacity, radiative transfer, and
+spectral operations fit together. The shared forward factory below
+applies those same steps using the saved case, so both sampler entry
+points use identical physical inputs.
 
 .. code:: ipython3
 
-    def fspec(T0, alpha, mmr, g, RV, vsini):
-        #molecule
-        Tarr = art.powerlaw_temperature(T0, alpha)
-        xsmatrix = opa.xsmatrix(Tarr, art.pressure)
-        mmr_arr = art.constant_mmr_profile(mmr)
-        dtau = art.opacity_profile_xs(xsmatrix, mmr_arr, molmass, g)
-        #continuum
-        logacia_matrix = opacia.logacia_matrix(Tarr)
-        dtaucH2H2 = art.opacity_profile_cia(logacia_matrix, Tarr, vmrH2, vmrH2,
-                                            mmw, g)
-        #total tau
-        dtau = dtau + dtaucH2H2
-        F = art.run(dtau, Tarr)
-        Frot = sop_rot.rigid_rotation(F, vsini, u1, u2)
-        Finst = sop_inst.ipgauss(Frot, beta_inst)
-        mu = sop_inst.sampling(Finst, RV, nu_obs)
-        return mu
+    from _co_retrieval import make_forward, make_numpyro_model
+
+    # The saved case supplies the same opacities and operators for both samplers.
+    fspec = make_forward(model_context)
+
 
 Check that ``fspec`` generates spectra for different parameter sets.
 
 .. code:: ipython3
 
     fig = plt.figure(figsize=(12, 3))
-    
+
     plt.plot(nu_obs, fspec(1200.0, 0.09, 0.01, gravity_jupiter(1.0, 1.0), 40.0, 10.0),label="model")
     plt.plot(nu_obs, fspec(1100.0, 0.12, 0.01, gravity_jupiter(1.0, 10.0), 20.0, 5.0),label="model")
 
+Both sampler entry points use the same forward model, prior
+specifications, and normalized likelihood. The six physical priors are
+``logg ~ Uniform(4, 5)``, ``RV ~ Uniform(35, 45)`` km/s,
+``MMR ~ Uniform(0, 0.015)``, ``T0 ~ Uniform(1000, 1500)`` K,
+``alpha ~ Uniform(0.05, 0.2)``, and ``vsini ~ Uniform(5, 15)`` km/s.
+Here ``logg`` is the base-10 logarithm of gravity in cm/s2; MMR and
+``alpha`` are dimensionless.
 
+The noise standard deviation has the original
+``sigmain ~ Exponential(1e-3)`` prior, whose mean is 1000 in the flux
+units erg/s/cm2/cm-1. The saved mock observation uses a standard
+deviation of 500 in these same units. The normalized likelihood is a
+product of independent Gaussian densities, with mean ``fspec`` and
+standard deviation ``sigmain``; its normalization is included when
+calculating evidence.
 
-
-.. parsed-literal::
-
-    [<matplotlib.lines.Line2D at 0x7604285e2bc0>]
-
-
-
-
-.. image:: get_started_ns_files/get_started_ns_50_1.png
-
-
-NumPyro is a probabilistic programming language (PPL), which requires
-the definition of a probabilistic model. In the probabilistic model
-``model_prob`` defined below, the prior distributions of each parameter
-are specified. The previously defined spectral model is used within this
-probabilistic model as a function that provides the mean :math:`\mu`.
-The spectrum is assumed to be generated according to a Gaussian
-distribution with this mean and a standard deviation :math:`\sigma`.
-i.e. :math:`f(\nu_i) \sim \mathcal{N}(\mu(\nu_i; {\bf p}), \sigma^2 I)`,
-where :math:`{\bf p}` is the spectral model parameter set, which are the
-arguments of ``fspec``.
+NUTS transforms these physical parameters to unconstrained coordinates.
+JAXNS uses a unit-cube prior transform. Offline tests check that their
+physical-space likelihoods and normalized priors agree, including the
+transformations’ Jacobians.
 
 .. code:: ipython3
 
-    import numpyro.distributions as dist
-    import numpyro
     from jax import random
-    from numpyro.contrib.nested_sampling import NestedSampler
-
-
-
-.. parsed-literal::
-
-    2025-09-25 09:03:06.062605: E external/local_xla/xla/stream_executor/cuda/cuda_fft.cc:485] Unable to register cuFFT factory: Attempting to register factory for plugin cuFFT when one has already been registered
-    2025-09-25 09:03:06.075042: E external/local_xla/xla/stream_executor/cuda/cuda_dnn.cc:8454] Unable to register cuDNN factory: Attempting to register factory for plugin cuDNN when one has already been registered
-    2025-09-25 09:03:06.079436: E external/local_xla/xla/stream_executor/cuda/cuda_blas.cc:1452] Unable to register cuBLAS factory: Attempting to register factory for plugin cuBLAS when one has already been registered
-    2025-09-25 09:03:06.764560: W tensorflow/compiler/tf2tensorrt/utils/py_utils.cc:38] TF-TRT Warning: Could not find TensorRT
+    import numpy as np
+    from compare_samplers import load_run
 
 
 .. code:: ipython3
 
-    def model_prob(spectrum):
-    
-        #atmospheric/spectral model parameters priors
-        logg = numpyro.sample('logg', dist.Uniform(4.0, 5.0))
-        RV = numpyro.sample('RV', dist.Uniform(35.0, 45.0))
-        mmr = numpyro.sample('MMR', dist.Uniform(0.0, 0.015))
-        T0 = numpyro.sample('T0', dist.Uniform(1000.0, 1500.0))
-        alpha = numpyro.sample('alpha', dist.Uniform(0.05, 0.2))
-        vsini = numpyro.sample('vsini', dist.Uniform(5.0, 15.0))
-        mu = fspec(T0, alpha, mmr, 10**logg, RV, vsini)
-    
-        #noise model parameters priors
-        sigmain = numpyro.sample('sigmain', dist.Exponential(1.e-3)) 
-    
-        return numpyro.sample('spectrum', dist.Normal(mu, sigmain), obs=spectrum)
+    model_prob = make_numpyro_model(fspec)
 
-Define and run the nested sampler. This example uses ``NestedSampler``,
-a wrapper for JAXNS. Runtime depends strongly on the machine and sampler
-settings.
+
+Run the sampler comparison from the source checkout
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Prepare one observation with seed 0, then run each sampler in a separate
+process. Run these commands from the repository root; adjust the
+database paths if needed. Preparation preserves this tutorial’s CO
+atmosphere, spectral grid, and priors. Both tutorials load the resulting
+``output/co_sampler_comparison`` case.
+
+.. code:: bash
+
+   python examples/compare_samplers.py prepare --output-dir output/co_sampler_comparison --seed 0 --mdb-path .database/CO/12C-16O/Li2015 --cia-path .database/H2-H2_2011.cia
+   python examples/compare_samplers.py run --output-dir output/co_sampler_comparison --method nuts --run-id repeat-0 --seed 0
+   python examples/compare_samplers.py run --output-dir output/co_sampler_comparison --method jaxns --run-id repeat-0 --seed 0
+   python examples/compare_samplers.py summarize --output-dir output/co_sampler_comparison --run-id repeat-0
+
+Use a new run ID and seed for independent repetitions. Keep the saved
+case unchanged. Reports link the observation and model hashes to the
+settings and sampler-specific diagnostics; a short smoke run does not
+demonstrate convergence. NUTS chain diagnostics and JAXNS weighted
+samples, evidence uncertainty, and stopping conditions measure different
+properties. A NUTS runtime does not measure evidence performance, and
+the number of equal-weight draws resampled from nested output is not its
+weighted ESS.
+
+The numerical comparison lives in
+```examples/compare_samplers.py`` <https://github.com/HajimeKawahara/exojax/blob/develop/examples/compare_samplers.py>`__.
+See the `NUTS tutorial <get_started.html>`__, `nested-sampling
+tutorial <get_started_ns.html>`__, and the separate `SVI
+tutorial <get_started_svi.html>`__. SVI and the Gaussian-process
+extension are outside this comparison.
+
+Read a completed nested-sampling run
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+JAXNS is an optional dependency used by the CLI adapter. Load its saved
+weighted result after the run finishes; the report preserves the raw
+weights, evidence uncertainty, and termination status. Inspect those
+diagnostics before interpreting posterior plots.
+
+The optional adapter targets JAXNS 2.6.9. Its small CPU check used
+JAX/JAXlib 0.6.2, NumPyro 0.19.0, and ``tfp-nightly``
+0.26.0.dev20260907. To reproduce that dependency combination, install it
+in a separate virtual environment with ExoJAX available:
+
+.. code:: bash
+
+   python -m pip install 'jaxns==2.6.9' 'jax[cpu]==0.6.2' 'tfp-nightly==0.26.0.dev20260907' 'numpyro==0.19.0' 'numpy<2.5'
+
+This dependency check and the small CPU smoke run do not establish
+convergence or performance for the full CO retrieval.
 
 .. code:: ipython3
 
-    ns = NestedSampler(model_prob)
-    ns.run(random.PRNGKey(0), Fobs)
+    nested_report, nested_arrays = load_run(case_dir, "jaxns", "repeat-0")
+    print(nested_report["nested"])
 
 
-.. parsed-literal::
-
-    INFO:jaxns:Number of Markov-chains set to: 175
-
-
-After sampling finishes, define a predictive model for the spectrum.
+For this predictive illustration only, resample the weighted posterior
+into 1000 equal-weight draws. This count is a plotting choice, not a
+nested-sampling ESS or additional independent information. The saved
+result retains the original weights.
 
 .. code:: ipython3
 
@@ -532,11 +558,17 @@ After sampling finishes, define a predictive model for the spectrum.
 
 .. code:: ipython3
 
-    posterior_sample = ns.get_samples(random.PRNGKey(3), num_samples=1000)
-    pred = Predictive(model_prob, posterior_sample, return_sites=['spectrum'])
+    weights = nested_arrays["weights"]
+    indices = np.random.default_rng(3).choice(len(weights), size=1000, p=weights)
+    posterior_sample = {
+        name: jnp.asarray(nested_arrays["samples__" + name][indices])
+        for name in case_metadata["priors"]
+    }
+    pred = Predictive(model_prob, posterior_sample, return_sites=["spectrum"])
     predictions = pred(random.PRNGKey(0), spectrum=None)
-    median_mu1 = jnp.median(predictions['spectrum'], axis=0)
-    hpdi_mu1 = hpdi(predictions['spectrum'], 0.9)
+    median_mu1 = jnp.median(predictions["spectrum"], axis=0)
+    hpdi_mu1 = hpdi(predictions["spectrum"], 0.9)
+
 
 .. code:: ipython3
 
@@ -555,13 +587,9 @@ After sampling finishes, define a predictive model for the spectrum.
     plt.tick_params(labelsize=14)
     plt.show()
 
-
-
-.. image:: get_started_ns_files/get_started_ns_59_0.png
-
-
-The predictive spectra match the mock data well. We also show a corner
-plot using ArviZ.
+After running the saved comparison, inspect the predictive intervals
+against the common mock observation. The corner plot below uses the same
+illustrative resampled draws.
 
 .. code:: ipython3
 
@@ -573,10 +601,4 @@ plot using ArviZ.
                     marginals=True)
     plt.show()
 
-
-
-.. image:: get_started_ns_files/get_started_ns_61_0.png
-
-
 This completes the nested-sampling getting-started workflow.
-
