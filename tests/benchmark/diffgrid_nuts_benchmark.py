@@ -14,8 +14,8 @@ from __future__ import annotations
 import argparse
 import csv
 import gc
-import hashlib
-import json
+from contextlib import contextmanager
+from importlib.metadata import PackageNotFoundError, version
 import platform
 import resource
 import sys
@@ -26,35 +26,48 @@ from typing import Any
 
 from jax import config
 
-config.update("jax_enable_x64", True)
-
 import jax
 import jax.numpy as jnp
 import jaxlib
 import numpy as np
-import numpyro
-import numpyro.distributions as dist
-from numpyro.diagnostics import summary
-from numpyro.infer import MCMC, NUTS
-from numpyro.infer.initialization import init_to_value
-from numpyro.infer.util import initialize_model
 
 import exojax
-from exojax.database import molinfo
-from exojax.database.cia.api import CdbCIA
-from exojax.opacity import OpaCIA, OpaDiffgrid, OpaPremodit, saveopa
-from exojax.postproc.response import ipgauss_sampling
-from exojax.postproc.spin_rotation import convolve_rigid_rotation
-from exojax.rt import ArtEmisPure
-from exojax.utils.astrofunc import gravity_jupiter
-from exojax.utils.grids import velocity_grid, wavenumber_grid
-from exojax.utils.instfunc import resolution_to_gaussian_std
 
 
-SCHEMA_VERSION = 1
+from diffgrid_nuts_storage import (
+    SCHEMA_VERSION,
+    collect_provenance,
+    load_samples,
+    read_metadata as _read_json,
+    reserve_result,
+    result_paths,
+    save_samples,
+    sha256 as _sha256,
+    validate_run_id,
+    write_json as _write_json,
+    write_npz,
+)
+
 DEFAULT_OUTPUT_DIR = Path("tests/benchmark/output_diffgrid_nuts")
 DEFAULT_MDB_PATH = Path(".database/CH4/12C-1H4/YT10to10")
 DEFAULT_CIA_PATH = Path(".database/H2-H2_2011.cia")
+
+
+def _load_scientific_runtime():
+    """Import numerical constants only after the execution entry selects x64."""
+    global molinfo, CdbCIA, OpaCIA, OpaDiffgrid, OpaPremodit, saveopa
+    global ipgauss_sampling, convolve_rigid_rotation, ArtEmisPure, gravity_jupiter
+    global velocity_grid, wavenumber_grid, resolution_to_gaussian_std
+    from exojax.database import molinfo
+    from exojax.database.cia.api import CdbCIA
+    from exojax.opacity import OpaCIA, OpaDiffgrid, OpaPremodit, saveopa
+    from exojax.postproc.response import ipgauss_sampling
+    from exojax.postproc.spin_rotation import convolve_rigid_rotation
+    from exojax.rt import ArtEmisPure
+    from exojax.utils.astrofunc import gravity_jupiter
+    from exojax.utils.grids import velocity_grid, wavenumber_grid
+    from exojax.utils.instfunc import resolution_to_gaussian_std
+
 
 TRUTH = {
     "radius": 0.88,
@@ -100,24 +113,6 @@ class CaseConfig:
     premodit_diffmode: int = 1
     broadening_resolution: float = 0.2
     observation_seed: int = 1
-
-
-def _write_json(path: Path, payload: dict[str, Any]) -> None:
-    temporary_path = path.with_suffix(path.suffix + ".tmp")
-    temporary_path.write_text(json.dumps(payload, indent=2, sort_keys=True) + "\n")
-    temporary_path.replace(path)
-
-
-def _read_json(path: Path) -> dict[str, Any]:
-    return json.loads(path.read_text())
-
-
-def _sha256(path: Path) -> str:
-    digest = hashlib.sha256()
-    with path.open("rb") as stream:
-        for chunk in iter(lambda: stream.read(1024 * 1024), b""):
-            digest.update(chunk)
-    return digest.hexdigest()
 
 
 def _finite_or_none(value: Any) -> float | None:
@@ -168,17 +163,27 @@ def _host_peak_rss_bytes() -> int:
 
 def _environment() -> dict[str, Any]:
     device = jax.devices()[0]
+    try:
+        numpyro_version = version("numpyro")
+    except PackageNotFoundError:
+        numpyro_version = None
     return {
         "python": platform.python_version(),
         "platform": platform.platform(),
         "exojax": getattr(exojax, "__version__", "unknown"),
         "jax": jax.__version__,
         "jaxlib": jaxlib.__version__,
-        "numpyro": numpyro.__version__,
+        "numpyro": numpyro_version,
+        "numpy": np.__version__,
         "jax_enable_x64": bool(config.values["jax_enable_x64"]),
         "device": str(device),
         "device_kind": getattr(device, "device_kind", "unknown"),
         "device_platform": device.platform,
+        "jax_runtime": {
+            key: value
+            for key, value in config.values.items()
+            if "cache" in key and isinstance(value, (str, int, float, bool, type(None)))
+        },
     }
 
 
@@ -354,6 +359,9 @@ def _make_numpyro_model(
     case_config: CaseConfig,
     prior_bounds: dict[str, tuple[float, float]],
 ):
+    import numpyro
+    import numpyro.distributions as dist
+
     def model(observation=None):
         radius = numpyro.sample("radius", dist.Uniform(*prior_bounds["radius"]))
         radial_velocity = numpyro.sample(
@@ -410,9 +418,136 @@ def _validation_profiles(
     return profiles
 
 
-def prepare(args: argparse.Namespace) -> None:
-    from exojax.database.exomol.api import MdbExomol
+@contextmanager
+def _record_execution(path: Path, state: dict[str, Any]):
+    """A killed process leaves partial metadata; handled failures retain a cause."""
+    state.update(schema_version=SCHEMA_VERSION, status="partial", stage="initializing")
+    _write_json(path, state)
+    try:
+        yield state
+    except BaseException as error:
+        state.update(
+            status="failed",
+            failure={
+                "stage": state["stage"],
+                "type": type(error).__name__,
+                "message": str(error),
+            },
+        )
+        _write_json(path, state)
+        raise
+    else:
+        state.update(status="completed", stage="completed")
+        _write_json(path, state)
 
+
+def _stage(state, path, name):
+    state["stage"] = name
+    _write_json(path, state)
+
+
+def _provenance(args, inputs):
+    script = Path(__file__).resolve()
+    settings = {
+        key: str(value) if isinstance(value, Path) else value
+        for key, value in vars(args).items()
+        if key != "handler"
+    }
+    return collect_provenance(
+        script.parents[2],
+        [script, script.with_name("diffgrid_nuts_storage.py"), *inputs],
+        settings,
+    )
+
+
+def _database_provenance(mdb, cia_path):
+    """Hash selected source/cache files once, during preparation only."""
+    manager = mdb.get_datafile_manager()
+    candidates = {}
+    for path in mdb.trans_file:
+        candidates[Path(path)] = "transition source"
+        candidates[Path(manager.cache_file(path))] = "loaded transition cache"
+    for attribute in ("states_file", "pf_file", "def_file", "broad_file"):
+        value = getattr(mdb, attribute, None)
+        if value is not None:
+            candidates[Path(value)] = attribute
+            if attribute == "states_file":
+                candidates[Path(manager.cache_file(value))] = "states cache"
+    files = []
+    for path, role in sorted(candidates.items()):
+        present = path.is_file()
+        files.append(
+            {
+                "path": str(path.resolve()),
+                "role": role,
+                "sha256": _sha256(path) if present else None,
+                "reason": None
+                if present
+                else "File unavailable; the adapter may use a cache.",
+            }
+        )
+    return {
+        "molecular_database": {
+            "provider": "ExoMol",
+            "dataset": mdb.database,
+            "isotopologue": mdb.exact_molecule_name,
+            "retrieval_url": None,
+            "release": None,
+            "reason": "The local adapter does not establish acquisition URL or release.",
+            "files": files,
+        },
+        "cia": {
+            "path": str(cia_path),
+            "sha256": _sha256(cia_path),
+            "provider": None,
+            "retrieval_url": None,
+            "release": None,
+            "reason": "Source and release are not established by the local CIA file.",
+        },
+    }
+
+
+def _physical_metadata(context, case_config):
+    art = context["art"]
+    return {
+        "solver": {
+            "class": "ArtEmisPure",
+            "rtsolver": art.rtsolver,
+            "nstream": art.nstream,
+        },
+        "units": {
+            "wavelength": "angstrom",
+            "wavenumber": "cm^-1",
+            "pressure": "bar",
+            "temperature": "K",
+            "velocity": "km/s",
+            "radius": "Jupiter radius",
+            "mass": "Jupiter mass",
+            "cross_section": "cm^2/molecule",
+            "flux": "F_nu / flux_scale; F_nu in erg/s/cm^2/(cm^-1)",
+            "composition": "mass mixing ratio",
+        },
+        "temperature": {
+            "profile": "T0 * pressure**alpha",
+            "clip": [case_config.temperature_min, case_config.temperature_max],
+        },
+        "observation": [
+            "CH4 + H2-H2 CIA",
+            "pure emission",
+            "divide by flux_scale",
+            "rigid rotation (u1=u2=0)",
+            "Gaussian LSF",
+            "RV and sampling",
+        ],
+        "noise": "independent Normal with fixed noise_sigma",
+        "opacity": {
+            "premodit": "saved PreMODIT teacher",
+            "diffgrid": "saved DiffGrid of the same teacher at fixed pressures",
+        },
+    }
+
+
+def prepare(args: argparse.Namespace) -> None:
     output_dir = args.output_dir.resolve()
     output_dir.mkdir(parents=True, exist_ok=True)
     paths = _case_paths(output_dir)
@@ -423,6 +558,20 @@ def prepare(args: argparse.Namespace) -> None:
             f"Preparation artifacts already exist: {names}. "
             "Use a new output directory or pass --overwrite."
         )
+
+    with _record_execution(paths["prepare"], {}) as state:
+        config.update("jax_enable_x64", True)
+        _load_scientific_runtime()
+        state["provenance"] = _provenance(args, [args.cia_path.expanduser().resolve()])
+        _prepare(args, state)
+
+
+def _prepare(args, state):
+    from exojax.database.exomol.api import MdbExomol
+
+    output_dir = args.output_dir.resolve()
+    paths = _case_paths(output_dir)
+    _stage(state, paths["prepare"], "database_load")
 
     case_config = CaseConfig(
         number_of_observed_wavenumbers=args.number_of_observed_wavenumbers,
@@ -451,6 +600,8 @@ def prepare(args: argparse.Namespace) -> None:
     mdb = MdbExomol(str(mdb_path), nurange=nu_grid, gpu_transfer=False)
     number_of_lines = int(len(mdb.nu_lines))
     timings["database_load_seconds"] = time.perf_counter() - start
+    database_provenance = _database_provenance(mdb, cia_path)
+    _stage(state, paths["prepare"], "opacity_build")
 
     start = time.perf_counter()
     teacher = OpaPremodit(
@@ -494,6 +645,7 @@ def prepare(args: argparse.Namespace) -> None:
     art = context["art"]
 
     validation_error_in_noise: dict[str, float] = {}
+    _stage(state, paths["prepare"], "accuracy_validation")
     teacher_flux = None
     diffgrid_flux = None
     start = time.perf_counter()
@@ -522,7 +674,14 @@ def prepare(args: argparse.Namespace) -> None:
     device_snapshots["after_accuracy_validation"] = _device_memory_stats()
 
     maximum_error = max(validation_error_in_noise.values())
-    if maximum_error > args.max_interpolation_error_in_noise:
+    state["validation"] = {
+        "maximum_error_in_noise": _finite_or_none(maximum_error),
+        "error_in_noise": validation_error_in_noise,
+    }
+    if (
+        not all(np.isfinite(value) for value in validation_error_in_noise.values())
+        or maximum_error > args.max_interpolation_error_in_noise
+    ):
         raise RuntimeError(
             "DiffGrid interpolation error exceeds the configured limit: "
             f"{maximum_error:.6g} > "
@@ -536,6 +695,7 @@ def prepare(args: argparse.Namespace) -> None:
     )
 
     start = time.perf_counter()
+    _stage(state, paths["prepare"], "artifact_save")
     saveopa(
         teacher,
         str(paths["premodit"]),
@@ -552,7 +712,7 @@ def prepare(args: argparse.Namespace) -> None:
     )
     timings["diffgrid_save_seconds"] = time.perf_counter() - start
 
-    np.savez_compressed(
+    write_npz(
         paths["case"],
         nu_data=nu_data,
         wavelength_data=wavelength_data,
@@ -575,6 +735,8 @@ def prepare(args: argparse.Namespace) -> None:
         "config": asdict(case_config),
         "truth": TRUTH,
         "prior_bounds": PRIOR_BOUNDS,
+        "physics": _physical_metadata(context, case_config),
+        "database_provenance": database_provenance,
         "inputs": {
             "mdb_path": str(mdb_path),
             "cia_path": str(cia_path),
@@ -601,7 +763,7 @@ def prepare(args: argparse.Namespace) -> None:
         "device_memory": device_snapshots,
         "host_peak_rss_bytes": _host_peak_rss_bytes(),
     }
-    _write_json(paths["prepare"], payload)
+    state.update(payload)
     print(f"Prepared benchmark artifacts in {output_dir}")
     print(f"CH4 lines: {number_of_lines}")
     print(f"DiffGrid build: {timings['diffgrid_build_seconds']:.3f} s")
@@ -616,8 +778,6 @@ def _load_case(output_dir: Path):
             f"Preparation artifacts are missing in {output_dir}. Run prepare first."
         )
     metadata = _read_json(paths["prepare"])
-    if metadata.get("schema_version") != SCHEMA_VERSION:
-        raise ValueError("Unsupported benchmark artifact schema version.")
     expected_digest = metadata["artifacts"]["case_sha256"]
     actual_digest = _sha256(paths["case"])
     if actual_digest != expected_digest:
@@ -628,6 +788,8 @@ def _load_case(output_dir: Path):
 
 def _minimum_effective_sample_size(samples: dict[str, np.ndarray]) -> float | None:
     try:
+        from numpyro.diagnostics import summary
+
         diagnostics = summary(samples, group_by_chain=True)
     except Exception:
         return None
@@ -637,6 +799,21 @@ def _minimum_effective_sample_size(samples: dict[str, np.ndarray]) -> float | No
         if np.isfinite(site["n_eff"])
     ]
     return min(values) if values else None
+
+
+def _sample_diagnostics(samples, extra_fields, sampling_seconds):
+    minimum_ess = _minimum_effective_sample_size(samples)
+    return {
+        "total_num_steps": int(np.sum(extra_fields["num_steps"])),
+        "mean_accept_probability": _finite_or_none(
+            np.mean(extra_fields["accept_prob"])
+        ),
+        "number_of_divergences": int(np.sum(extra_fields["diverging"])),
+        "minimum_effective_sample_size": _finite_or_none(minimum_ess),
+        "minimum_effective_sample_size_per_second": _finite_or_none(
+            minimum_ess / sampling_seconds if minimum_ess is not None else None
+        ),
+    }
 
 
 def _compiled_memory_analysis(compiled: Any) -> dict[str, int] | None:
@@ -686,6 +863,9 @@ def _benchmark_potential_gradient(
     repetitions: int,
 ) -> dict[str, Any]:
     """Benchmark one compiled reverse-mode potential-and-gradient evaluation."""
+    from numpyro.infer.initialization import init_to_value
+    from numpyro.infer.util import initialize_model
+
     model_info = initialize_model(
         jax.random.PRNGKey(seed),
         model,
@@ -720,8 +900,59 @@ def _benchmark_potential_gradient(
 
 
 def run_method(args: argparse.Namespace) -> None:
+    saved = reserve_result(args.output_dir.resolve(), args.method, args.run_id)
+    state = {"method": args.method, "run_id": args.run_id}
+    with _record_execution(saved["result"], state):
+        config.update("jax_enable_x64", True)
+        _load_scientific_runtime()
+        state["provenance"] = _provenance(args, [args.output_dir / "prepare.json"])
+        _run_method(args, state, saved)
+    print(f"Wrote {saved['result']}")
+
+
+def _validate_artifacts(paths, metadata, methods):
+    for method in methods:
+        for name in (method, f"{method}_metadata"):
+            if _sha256(paths[name]) != metadata["artifacts"][f"{name}_sha256"]:
+                raise ValueError(
+                    f"{paths[name].name} digest does not match prepare.json."
+                )
+    cia_path = Path(metadata["inputs"]["cia_path"])
+    if _sha256(cia_path) != metadata["inputs"]["cia_sha256"]:
+        raise ValueError("CIA input digest does not match prepare.json.")
+
+
+def _load_opacity(method, archive_path, allow_code_revision=False):
+    """Relax only code version matching for explicit revision reuse.
+
+    DiffGrid loading has two stages because its public ``strict`` option also
+    controls device dtype conversion, which must remain strict here.
+    """
+    opacity_class = {"premodit": OpaPremodit, "diffgrid": OpaDiffgrid}[method]
+    if not allow_code_revision:
+        return opacity_class.from_saved_opa(str(archive_path))
+    if method == "premodit":
+        return opacity_class.from_saved_opa(str(archive_path), strict=False)
+    from exojax.opacity.diffgrid.io import load_diffgrid_payload
+
+    arrays, metadata = load_diffgrid_payload(str(archive_path), strict=False)
+    opacity = OpaDiffgrid.__new__(OpaDiffgrid)
+    opacity._init_from_saved_payload(arrays, metadata, strict=True)
+    return opacity
+
+
+def _run_method(args, state, saved):
+    from numpyro.infer import MCMC, NUTS
+    from numpyro.infer.initialization import init_to_value
+
     output_dir = args.output_dir.resolve()
+    _stage(state, saved["result"], "input_validation")
     paths, prepare_metadata, case, case_digest = _load_case(output_dir)
+    # Materialize and close the archive even when subsequent setup fails.
+    with case:
+        case = dict(case)
+    _validate_artifacts(paths, prepare_metadata, [args.method])
+    state.update(case_sha256=case_digest, prepare_sha256=_sha256(paths["prepare"]))
     case_config = CaseConfig(**prepare_metadata["config"])
     truth = {key: float(value) for key, value in prepare_metadata["truth"].items()}
     prior_bounds = {
@@ -729,25 +960,10 @@ def run_method(args: argparse.Namespace) -> None:
         for key, bounds in prepare_metadata["prior_bounds"].items()
     }
     archive_path = paths[args.method]
-    metadata_path = paths[f"{args.method}_metadata"]
-    for artifact_name, artifact_path in (
-        (args.method, archive_path),
-        (f"{args.method}_metadata", metadata_path),
-    ):
-        if not artifact_path.exists():
-            raise FileNotFoundError(f"Opacity artifact is missing: {artifact_path}")
-        expected_digest = prepare_metadata["artifacts"][f"{artifact_name}_sha256"]
-        if _sha256(artifact_path) != expected_digest:
-            raise ValueError(
-                f"{artifact_path.name} digest does not match prepare.json."
-            )
-
+    _stage(state, saved["result"], "opacity_load")
     memory = {"process_start": _device_memory_stats()}
     start = time.perf_counter()
-    if args.method == "premodit":
-        opacity = OpaPremodit.from_saved_opa(str(archive_path))
-    else:
-        opacity = OpaDiffgrid.from_saved_opa(str(archive_path))
+    opacity = _load_opacity(args.method, archive_path, args.allow_code_revision)
     _block_opacity(opacity)
     opacity_load_seconds = time.perf_counter() - start
     memory["after_opacity_load"] = _device_memory_stats()
@@ -756,8 +972,7 @@ def run_method(args: argparse.Namespace) -> None:
     if not np.array_equal(np.asarray(opacity.nu_grid), nu_grid):
         raise ValueError("Saved opacity and benchmark case use different nu grids.")
     cia_path = Path(prepare_metadata["inputs"]["cia_path"])
-    if _sha256(cia_path) != prepare_metadata["inputs"]["cia_sha256"]:
-        raise ValueError("CIA input digest does not match prepare.json.")
+    _stage(state, saved["result"], "model_setup")
     start = time.perf_counter()
     context = _forward_context(
         nu_grid,
@@ -776,6 +991,8 @@ def run_method(args: argparse.Namespace) -> None:
     jax.block_until_ready(observation)
     model_setup_seconds = time.perf_counter() - start
     memory["after_model_setup"] = _device_memory_stats()
+    state["physics"] = _physical_metadata(context, case_config)
+    state["environment"] = _environment()
 
     kernel = NUTS(
         model,
@@ -795,12 +1012,14 @@ def run_method(args: argparse.Namespace) -> None:
     )
     warmup_key, sampling_key = jax.random.split(jax.random.PRNGKey(args.seed))
 
+    _stage(state, saved["result"], "warmup")
     start = time.perf_counter()
     mcmc.warmup(warmup_key, observation=observation)
     jax.block_until_ready(mcmc.last_state)
     compile_and_warmup_seconds = time.perf_counter() - start
     memory["after_warmup"] = _device_memory_stats()
 
+    _stage(state, saved["result"], "sampling")
     start = time.perf_counter()
     mcmc.run(
         sampling_key,
@@ -815,15 +1034,17 @@ def run_method(args: argparse.Namespace) -> None:
 
     samples_host = jax.device_get(samples)
     extra_host = jax.device_get(extra_fields)
-    total_num_steps = int(np.sum(extra_host["num_steps"]))
-    minimum_ess = _minimum_effective_sample_size(samples_host)
-    minimum_ess_per_second = (
-        minimum_ess / sampling_seconds if minimum_ess is not None else None
+    _stage(state, saved["result"], "sample_save")
+    state["samples"] = save_samples(
+        saved["samples"], samples_host, extra_host, list(TRUTH)
     )
+    total_num_steps = int(np.sum(extra_host["num_steps"]))
+    diagnostics = _sample_diagnostics(samples_host, extra_host, sampling_seconds)
     del samples, extra_fields, mcmc, kernel
     jax.clear_caches()
     gc.collect()
 
+    _stage(state, saved["result"], "gradient_benchmark")
     gradient_benchmark = _benchmark_potential_gradient(
         model,
         observation,
@@ -861,22 +1082,11 @@ def run_method(args: argparse.Namespace) -> None:
             ),
         },
         "potential_gradient_benchmark": gradient_benchmark,
-        "diagnostics": {
-            "total_num_steps": total_num_steps,
-            "mean_accept_probability": float(np.mean(extra_host["accept_prob"])),
-            "number_of_divergences": int(np.sum(extra_host["diverging"])),
-            "minimum_effective_sample_size": _finite_or_none(minimum_ess),
-            "minimum_effective_sample_size_per_second": _finite_or_none(
-                minimum_ess_per_second
-            ),
-        },
+        "diagnostics": diagnostics,
         "device_memory": memory,
         "host_peak_rss_bytes": _host_peak_rss_bytes(),
     }
-    result_path = output_dir / f"{args.method}.json"
-    _write_json(result_path, result)
-    case.close()
-    print(f"Wrote {result_path}")
+    state.update(result)
     print(
         f"{args.method}: warmup={compile_and_warmup_seconds:.3f} s, "
         f"sampling={sampling_seconds:.3f} s, steps={total_num_steps}, "
@@ -914,6 +1124,7 @@ def _comparison_payload(
     diffgrid_build = prepare_metadata["timings"]["diffgrid_build_seconds"]
     return {
         "schema_version": SCHEMA_VERSION,
+        "status": "completed",
         "methods": results,
         "diffgrid_build_seconds": diffgrid_build,
         "diffgrid_table_payload_bytes": prepare_metadata["diffgrid"][
@@ -1066,50 +1277,160 @@ def _plot_comparison(
     plt.close(fig)
 
 
+def _validate_results(prepare_metadata, results, revision_comparison=False):
+    """Revision comparisons relax code identity only, retaining experimental controls."""
+    for result in results:
+        schema = result.get("schema_version")
+        if schema not in (1, SCHEMA_VERSION):
+            raise ValueError(f"Unsupported benchmark result schema version: {schema}")
+        if schema == SCHEMA_VERSION and result.get("status") != "completed":
+            raise ValueError("Only completed runs can be compared.")
+        if result["case_sha256"] != prepare_metadata["artifacts"]["case_sha256"]:
+            raise ValueError("Method results do not use the same case.")
+    reference = results[0]
+    for candidate in results[1:]:
+        if candidate["run"] != reference["run"]:
+            raise ValueError("Method results do not use the same NUTS settings.")
+        # Schema 1 lacks Python/platform/cache and full dependency provenance.
+        legacy = any(result["schema_version"] == 1 for result in (reference, candidate))
+        environment_fields = (
+            (
+                "exojax",
+                "jax",
+                "jaxlib",
+                "numpyro",
+                "jax_enable_x64",
+                "device",
+                "device_kind",
+                "device_platform",
+            )
+            if legacy
+            else set(reference["environment"]) | set(candidate["environment"])
+        )
+        for field in environment_fields:
+            if revision_comparison and field == "exojax":
+                continue
+            if reference["environment"].get(field) != candidate["environment"].get(
+                field
+            ):
+                raise ValueError(f"Run environment mismatch: {field}")
+        if not legacy:
+            if reference["physics"] != candidate["physics"]:
+                raise ValueError("Run physics mismatch.")
+            for field in ("environment", "dependencies"):
+                left = dict(reference["provenance"][field])
+                right = dict(candidate["provenance"][field])
+                if revision_comparison and field == "dependencies":
+                    left = {k: v for k, v in left.items() if k.lower() != "exojax"}
+                    right = {k: v for k, v in right.items() if k.lower() != "exojax"}
+                if left != right:
+                    raise ValueError(f"Run provenance mismatch: {field}")
+            if not revision_comparison:
+                for field in ("code_sha256",):
+                    if reference["provenance"][field] != candidate["provenance"][field]:
+                        raise ValueError(
+                            "Run code differs; select an explicit revision comparison."
+                        )
+                if (
+                    reference["provenance"]["git"]["commit"]
+                    != candidate["provenance"]["git"]["commit"]
+                ):
+                    raise ValueError(
+                        "Run git commits differ; select an explicit revision comparison."
+                    )
+
+
+def _read_result(output_dir, method, run_id, prepare_digest):
+    paths = result_paths(output_dir, method, run_id)
+    result = _read_json(paths["result"])
+    if result.get("method") != method or result.get("run_id") != run_id:
+        raise ValueError(
+            "Result method or run ID does not match the requested selection."
+        )
+    if result["schema_version"] == SCHEMA_VERSION:
+        if result["prepare_sha256"] != prepare_digest:
+            raise ValueError(
+                "Run prepare.json digest does not match the selected case."
+            )
+        # Always check raw samples, even when stored diagnostics are reused.
+        samples, extra = load_samples(paths["samples"], result["samples"])
+        expected_shape = [result["run"]["num_chains"], result["run"]["num_samples"]]
+        if result["samples"]["chain_shape"] != expected_shape:
+            raise ValueError("Saved chains do not match the run's chain/draw counts.")
+        result["diagnostics"] = _sample_diagnostics(
+            samples, extra, result["timings"]["sampling_compile_and_run_seconds"]
+        )
+        result["diagnostics_source"] = "recomputed from saved chains"
+        try:
+            result["diagnostics_numpyro_version"] = version("numpyro")
+        except PackageNotFoundError:
+            result["diagnostics_numpyro_version"] = None
+        if result["diagnostics"]["minimum_effective_sample_size"] is None:
+            result["diagnostics_note"] = (
+                "ESS unavailable: NumPyro missing or diagnostics undefined."
+            )
+    return result
+
+
 def summarize_results(args: argparse.Namespace) -> None:
     output_dir = args.output_dir.resolve()
-    paths = _case_paths(output_dir)
-    prepare_metadata = _read_json(paths["prepare"])
-    results = {
-        method: _read_json(output_dir / f"{method}.json")
-        for method in ("premodit", "diffgrid")
-    }
-    case_digests = {result["case_sha256"] for result in results.values()}
-    expected_case_digest = prepare_metadata["artifacts"]["case_sha256"]
-    run_settings = {
-        json.dumps(result["run"], sort_keys=True) for result in results.values()
-    }
-    environment_fields = (
-        "exojax",
-        "jax",
-        "jaxlib",
-        "numpyro",
-        "jax_enable_x64",
-        "device",
-        "device_kind",
-        "device_platform",
-    )
-    environments = {
-        json.dumps(
-            {field: result["environment"].get(field) for field in environment_fields},
-            sort_keys=True,
+    paths, prepare_metadata, case, _ = _load_case(output_dir)
+    case.close()
+    revision = args.compare_run_id is not None
+    if revision and (args.run_id is None or args.method is None):
+        raise ValueError("--compare-run-id requires --run-id and --method.")
+    if args.method is not None and not revision:
+        raise ValueError("--method in summarize requires --compare-run-id.")
+    methods = [args.method] if revision else ["premodit", "diffgrid"]
+    _validate_artifacts(paths, prepare_metadata, methods)
+    prepare_digest = _sha256(paths["prepare"])
+    if revision:
+        baseline = _read_result(output_dir, args.method, args.run_id, prepare_digest)
+        candidate = _read_result(
+            output_dir, args.method, args.compare_run_id, prepare_digest
         )
-        for result in results.values()
+        _validate_results(
+            prepare_metadata, [baseline, candidate], revision_comparison=True
+        )
+        comparison = {
+            "schema_version": SCHEMA_VERSION,
+            "status": "completed",
+            "comparison_kind": "revision",
+            "method": args.method,
+            "baseline_run_id": args.run_id,
+            "candidate_run_id": args.compare_run_id,
+            "baseline": baseline,
+            "candidate": candidate,
+            "sampling_speedup_baseline_over_candidate": _safe_ratio(
+                baseline["timings"]["sampling_compile_and_run_seconds"],
+                candidate["timings"]["sampling_compile_and_run_seconds"],
+            ),
+            "code_versions": {
+                label: {
+                    "exojax": result["environment"].get("exojax"),
+                    "provenance": result.get("provenance"),
+                }
+                for label, result in (("baseline", baseline), ("candidate", candidate))
+            },
+        }
+        target = output_dir / "runs" / args.compare_run_id / args.method
+        destination = target / f"comparison_from_{args.run_id}.json"
+        _write_json(destination, comparison)
+        print(f"Wrote revision comparison: {destination}")
+        return
+    results = {
+        method: _read_result(output_dir, method, args.run_id, prepare_digest)
+        for method in methods
     }
-    method_labels = {method: result.get("method") for method, result in results.items()}
-    schema_versions = {
-        prepare_metadata.get("schema_version"),
-        *(result.get("schema_version") for result in results.values()),
-    }
-    if (
-        schema_versions != {SCHEMA_VERSION}
-        or case_digests != {expected_case_digest}
-        or len(run_settings) != 1
-        or len(environments) != 1
-        or any(method_labels[method] != method for method in results)
-    ):
-        raise ValueError("Method results do not use the same case and NUTS settings.")
+    _validate_results(prepare_metadata, list(results.values()))
+    output_dir = (
+        output_dir if args.run_id is None else output_dir / "runs" / args.run_id
+    )
+    print(
+        f"Selected run: {args.run_id if args.run_id is not None else 'legacy root results'}"
+    )
     comparison = _comparison_payload(prepare_metadata, results)
+    comparison.update(comparison_kind="methods", run_id=args.run_id)
     _write_json(output_dir / "comparison.json", comparison)
     _write_comparison_csv(output_dir / "comparison.csv", results)
     _plot_comparison(output_dir / "comparison.png", prepare_metadata, results)
@@ -1128,6 +1449,13 @@ def summarize_results(args: argparse.Namespace) -> None:
         print(f"Peak device-memory ratio: {memory_ratio:.4g}")
     else:
         print("Peak device-memory ratio: unavailable")
+
+
+def _run_id(value):
+    try:
+        return validate_run_id(value)
+    except ValueError as error:
+        raise argparse.ArgumentTypeError(str(error)) from error
 
 
 def _parser() -> argparse.ArgumentParser:
@@ -1161,12 +1489,37 @@ def _parser() -> argparse.ArgumentParser:
     run_parser.add_argument("--num-samples", type=_positive_int, default=1000)
     run_parser.add_argument("--seed", type=int, default=0)
     run_parser.add_argument("--gradient-repetitions", type=_positive_int, default=5)
+    run_parser.add_argument(
+        "--run-id",
+        type=_run_id,
+        help="Save under runs/ID/METHOD; existing method runs are rejected.",
+    )
+    run_parser.add_argument(
+        "--allow-code-revision",
+        action="store_true",
+        help="Reuse opacity from another ExoJAX version; keep schema, hash, and dtype checks.",
+    )
     run_parser.set_defaults(handler=run_method)
 
     summary_parser = subparsers.add_parser(
         "summarize", help="Combine method JSON files and make the comparison plot."
     )
     summary_parser.add_argument("--output-dir", type=Path, default=DEFAULT_OUTPUT_DIR)
+    summary_parser.add_argument(
+        "--run-id",
+        type=_run_id,
+        help="Read this run only; omitted selects legacy root results.",
+    )
+    summary_parser.add_argument(
+        "--compare-run-id",
+        type=_run_id,
+        help="Compare this candidate revision with the baseline --run-id.",
+    )
+    summary_parser.add_argument(
+        "--method",
+        choices=("premodit", "diffgrid"),
+        help="Method for an explicit revision comparison.",
+    )
     summary_parser.set_defaults(handler=summarize_results)
     return parser
 

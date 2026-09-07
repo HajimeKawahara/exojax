@@ -765,6 +765,66 @@ single-chain, single-seed measurements on one GPU; both performance and
 the five-profile interpolation check are specific to this example.
 
 
+Saving and comparing benchmark runs
+-----------------------------------
+
+After ``prepare``, reuse the same output directory and its shared
+``prepare.json``, ``case.npz``, and opacity archives. From the
+repository root, give each measurement a run ID:
+
+.. code:: bash
+
+   case_dir=/path/to/prepared/case
+   python tests/benchmark/diffgrid_nuts_benchmark.py run --output-dir "$case_dir" --run-id baseline --method premodit
+   python tests/benchmark/diffgrid_nuts_benchmark.py run --output-dir "$case_dir" --run-id baseline --method diffgrid
+   python tests/benchmark/diffgrid_nuts_benchmark.py summarize --output-dir "$case_dir" --run-id baseline
+
+Each method writes ``runs/baseline/<method>/result.json`` and
+``samples.npz``; an existing method directory is rejected. Run IDs must
+be single path components. Omitting ``--run-id`` preserves the original
+paths and overwrite behavior; ``summarize`` then explicitly selects the
+legacy root results. No command implicitly selects the latest run.
+
+To compare a code revision, run the same method after the change with a
+new ID and request that comparison explicitly:
+
+.. code:: bash
+
+   python tests/benchmark/diffgrid_nuts_benchmark.py run --output-dir "$case_dir" --run-id candidate --method diffgrid --allow-code-revision
+   python tests/benchmark/diffgrid_nuts_benchmark.py summarize --output-dir "$case_dir" --run-id baseline --compare-run-id candidate --method diffgrid
+
+``--allow-code-revision`` explicitly permits loading opacity saved by a
+different ExoJAX version while retaining schema, hash, and dtype checks.
+Loading otherwise keeps the strict version check. The comparison writes
+``runs/candidate/diffgrid/comparison_from_baseline.json``. Revision
+comparisons allow different ExoJAX and code revisions while requiring
+matching case, physical and sampler settings, hardware, dtype, and other
+dependencies. Comparisons between methods also require the same code
+version.
+
+Version 2 results distinguish ``partial``, ``failed``, and ``completed``
+runs and record failure stages. Only completed runs can be summarized.
+Raw samples and extra fields retain ``(chain, draw, ...)`` axes in a
+pickle-free archive; the JSON records parameter order, shapes, dtypes,
+and file hashes. Summaries validate these records and input hashes, then
+recompute diagnostics from saved samples. ESS is null when NumPyro is
+unavailable or the estimate is undefined. Version 1 results remain
+readable, with unavailable provenance and raw samples marked as unknown;
+unknown schema versions are rejected.
+
+Provenance records code, configuration, and input hashes, Git commit and
+dirty state, a tracked-diff hash, dependency versions, and
+device/cache/allocator settings. Database source and cache file
+manifests and checksums are recorded during preparation, separately from
+opacity archive hashes. A dirty checkout is not fully reproducible from
+its recorded commit alone.
+
+These commands retain the existing single-chain case. The reference GPU
+measurements above have not been rerun for this persistence update;
+saved results and offline contract tests alone do not establish a new
+scientific benchmark.
+
+
 Notes for production retrievals
 -------------------------------
 
