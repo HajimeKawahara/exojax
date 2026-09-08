@@ -130,7 +130,9 @@ def test_invalid_profile_kernel_is_rejected():
 
 @pytest.mark.parametrize("enable_x64", [False, True])
 def test_real_space_float32_inputs_preserve_precision(enable_x64):
-    with jax.experimental.enable_x64(enable_x64):
+    previous_x64 = jax.config.jax_enable_x64
+    jax.config.update("jax_enable_x64", enable_x64)
+    try:
         density = jnp.asarray(_density(), dtype=jnp.float32)
         sigma = jnp.float32(0.6)
         gammas = jnp.array([0.05, 0.4], dtype=jnp.float32)
@@ -146,3 +148,5 @@ def test_real_space_float32_inputs_preserve_precision(enable_x64):
         expected = _direct_convolution(density, sigma, gammas, 1.0, nu_grid)
         assert actual.dtype == jnp.float32
         np.testing.assert_allclose(actual, expected, rtol=1e-4, atol=5e-7)
+    finally:
+        jax.config.update("jax_enable_x64", previous_x64)

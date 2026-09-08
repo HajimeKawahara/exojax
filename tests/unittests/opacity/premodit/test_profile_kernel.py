@@ -135,6 +135,7 @@ def test_diffgrid_selects_kernel_without_mutating_compiled_teacher(
     pressure = np.asarray([0.3, 1.0])
     compiled_teacher = jax.jit(teacher.xsmatrix)
     before = compiled_teacher(temperature, pressure)
+    before_eager = teacher.xsmatrix(temperature, pressure)
     coefficients = teacher.lbd_coeff
 
     diffgrid = OpaDiffgrid(
@@ -145,8 +146,8 @@ def test_diffgrid_selects_kernel_without_mutating_compiled_teacher(
     assert teacher.profile_kernel == teacher_mode
     assert teacher.lbd_coeff is coefficients
     np.testing.assert_array_equal(compiled_teacher(temperature, pressure), before)
-    np.testing.assert_allclose(
-        teacher.xsmatrix(temperature, pressure), before, rtol=1.0e-12
+    np.testing.assert_array_equal(
+        teacher.xsmatrix(temperature, pressure), before_eager
     )
     selected_teacher = teacher.with_profile_kernel(expected_mode)
     np.testing.assert_allclose(
