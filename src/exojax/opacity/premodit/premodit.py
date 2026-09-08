@@ -724,7 +724,7 @@ def xsmatrix_nu_open_second(
     return xsm
 
 
-@jit
+@partial(jit, static_argnames=("profile_kernel",))
 def xsvector_zeroth(
     T,
     P,
@@ -741,6 +741,8 @@ def xsvector_zeroth(
     qt,
     Tref_broadening,
     Twt=None,
+    *,
+    profile_kernel="analytic",
 ):
     """compute cross section vector, with scan+fft, using the zero-th Taylor expansion
 
@@ -760,6 +762,7 @@ def xsvector_zeroth(
         qt (_type_): partirion function ratio
         Tref_broadening: reference temperature for broadening in Kelvin
         Twt: not used
+        profile_kernel: "analytic" or "real_space" Voigt kernel
     Returns:
         jnp.array: cross section in cgs vector
     """
@@ -772,12 +775,18 @@ def xsvector_zeroth(
     #    Slsd, R, pmarray, nsigmaD, nu_grid, log_ngammaL_grid
     # )
     xs = calc_xsection_from_lsd_zeroscan(
-        Slsd, R, pmarray, nsigmaD, nu_grid, log_ngammaL_grid
+        Slsd,
+        R,
+        pmarray,
+        nsigmaD,
+        nu_grid,
+        log_ngammaL_grid,
+        profile_kernel=profile_kernel,
     )
     return xs
 
 
-@jit
+@partial(jit, static_argnames=("profile_kernel",))
 def xsvector_first(
     T,
     P,
@@ -794,6 +803,8 @@ def xsvector_first(
     qt,
     Tref_broadening,
     Twt,
+    *,
+    profile_kernel="analytic",
 ):
     """compute cross section vector, with scan+fft, using the first Taylor expansion
 
@@ -814,6 +825,7 @@ def xsvector_first(
         qt (_type_): partirion function ratio
         Tref_broadening: reference temperature for broadening in Kelvin
         Twt: temperature used in the weight point
+        profile_kernel: "analytic" or "real_space" Voigt kernel
 
     Returns:
         jnp.array: cross section in cgs vector
@@ -827,12 +839,18 @@ def xsvector_first(
     #    Slsd, R, pmarray, nsigmaD, nu_grid, log_ngammaL_grid
     # )
     xs = calc_xsection_from_lsd_zeroscan(
-        Slsd, R, pmarray, nsigmaD, nu_grid, log_ngammaL_grid
+        Slsd,
+        R,
+        pmarray,
+        nsigmaD,
+        nu_grid,
+        log_ngammaL_grid,
+        profile_kernel=profile_kernel,
     )
     return xs
 
 
-@jit
+@partial(jit, static_argnames=("profile_kernel",))
 def xsvector_second(
     T,
     P,
@@ -849,6 +867,8 @@ def xsvector_second(
     qt,
     Tref_broadening,
     Twt,
+    *,
+    profile_kernel="analytic",
 ):
     """compute cross section vector, with scan+fft, using the second Taylor expansion
 
@@ -868,6 +888,7 @@ def xsvector_second(
         qt (_type_): partirion function ratio
         Tref_broadening: reference temperature for broadening in Kelvin
         Twt: temperature used in the weight point
+        profile_kernel: "analytic" or "real_space" Voigt kernel
 
     Returns:
         jnp.array: cross section in cgs vector
@@ -880,12 +901,18 @@ def xsvector_second(
     # xs = calc_xsection_from_lsd_scanfft(Slsd, R, pmarray, nsigmaD, nu_grid,
     #                                    log_ngammaL_grid)
     xs = calc_xsection_from_lsd_zeroscan(
-        Slsd, R, pmarray, nsigmaD, nu_grid, log_ngammaL_grid
+        Slsd,
+        R,
+        pmarray,
+        nsigmaD,
+        nu_grid,
+        log_ngammaL_grid,
+        profile_kernel=profile_kernel,
     )
     return xs
 
 
-@jit
+@partial(jit, static_argnames=("profile_kernel",))
 def xsmatrix_zeroth(
     Tarr,
     Parr,
@@ -902,6 +929,8 @@ def xsmatrix_zeroth(
     qtarr,
     Tref_broadening,
     Twt=None,
+    *,
+    profile_kernel="analytic",
 ):
     """compute cross section matrix given atmospheric layers, for diffmode=0, with scan+fft
 
@@ -921,6 +950,7 @@ def xsmatrix_zeroth(
         qtarr (_type_): partition function ratio layers
         Tref_broadening: reference temperature for broadening in Kelvin
         Twt: not used
+        profile_kernel: "analytic" or "real_space" Voigt kernel
 
     Returns:
         jnp.array : cross section matrix (Nlayer, N_wavenumber)
@@ -936,13 +966,14 @@ def xsmatrix_zeroth(
     # v1.6
     # xsm = vmap(calc_xsection_from_lsd_scanfft, (0, None, None, 0, None, 0),
     #           0)(Slsd, R, pmarray, nsigmaD, nu_grid, log_ngammaL_grid)
-    xsm = vmap(calc_xsection_from_lsd_zeroscan, (0, None, None, 0, None, 0), 0)(
+    convolve = partial(calc_xsection_from_lsd_zeroscan, profile_kernel=profile_kernel)
+    xsm = vmap(convolve, (0, None, None, 0, None, 0), 0)(
         Slsd, R, pmarray, nsigmaD, nu_grid, log_ngammaL_grid
     )
     return xsm
 
 
-@jit
+@partial(jit, static_argnames=("profile_kernel",))
 def xsmatrix_first(
     Tarr,
     Parr,
@@ -959,6 +990,8 @@ def xsmatrix_first(
     qtarr,
     Tref_broadening,
     Twt,
+    *,
+    profile_kernel="analytic",
 ):
     """compute cross section matrix given atmospheric layers, for diffmode=1, with scan+fft
 
@@ -978,6 +1011,7 @@ def xsmatrix_first(
         qtarr (_type_): partition function ratio layers
         Tref_broadening: reference temperature for broadening in Kelvin
         Twt: weight temperature in K
+        profile_kernel: "analytic" or "real_space" Voigt kernel
 
     Returns:
         jnp.array : cross section matrix (Nlayer, N_wavenumber)
@@ -994,13 +1028,14 @@ def xsmatrix_first(
     # xsm = vmap(calc_xsection_from_lsd_scanfft, (0, None, None, 0, None, 0), 0)(
     #    Slsd, R, pmarray, nsigmaD, nu_grid, log_ngammaL_grid
     # )
-    xsm = vmap(calc_xsection_from_lsd_zeroscan, (0, None, None, 0, None, 0), 0)(
+    convolve = partial(calc_xsection_from_lsd_zeroscan, profile_kernel=profile_kernel)
+    xsm = vmap(convolve, (0, None, None, 0, None, 0), 0)(
         Slsd, R, pmarray, nsigmaD, nu_grid, log_ngammaL_grid
     )
     return xsm
 
 
-@jit
+@partial(jit, static_argnames=("profile_kernel",))
 def xsmatrix_second(
     Tarr,
     Parr,
@@ -1017,6 +1052,8 @@ def xsmatrix_second(
     qtarr,
     Tref_broadening,
     Twt,
+    *,
+    profile_kernel="analytic",
 ):
     """compute cross section matrix given atmospheric layers, for diffmode=1, with scan+fft
 
@@ -1036,6 +1073,7 @@ def xsmatrix_second(
         qtarr (_type_): partition function ratio layers
         Tref_broadening: reference temperature for broadening in Kelvin
         Twt: weight temperature in K
+        profile_kernel: "analytic" or "real_space" Voigt kernel
 
     Returns:
         jnp.array : cross section matrix (Nlayer, N_wavenumber)
@@ -1052,7 +1090,8 @@ def xsmatrix_second(
     # xsm = vmap(calc_xsection_from_lsd_scanfft, (0, None, None, 0, None, 0), 0)(
     #    Slsd, R, pmarray, nsigmaD, nu_grid, log_ngammaL_grid
     # )
-    xsm = vmap(calc_xsection_from_lsd_zeroscan, (0, None, None, 0, None, 0), 0)(
+    convolve = partial(calc_xsection_from_lsd_zeroscan, profile_kernel=profile_kernel)
+    xsm = vmap(convolve, (0, None, None, 0, None, 0), 0)(
         Slsd, R, pmarray, nsigmaD, nu_grid, log_ngammaL_grid
     )
     return xsm

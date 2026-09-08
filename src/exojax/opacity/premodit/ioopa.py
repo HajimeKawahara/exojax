@@ -111,6 +111,9 @@ def saveopa_premodit(
             "dbtype": opa.dbtype,
             "molmass": float(opa.molmass),
             "diffmode": int(opa.diffmode),
+            "profile_kernel": opa._resolve_profile_kernel(
+                getattr(opa, "profile_kernel", None), opa.nstitch
+            ),
             "wavelength_order": opa.wavelength_order,
             "version_auto_trange": int(opa.version_auto_trange),
             "dit_grid_resolution": (

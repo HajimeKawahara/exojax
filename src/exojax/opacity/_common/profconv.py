@@ -11,7 +11,11 @@ from jax.lax import scan
 
 from exojax.signal.ola import _fft_length
 from exojax.opacity._common.ditkernel import fold_voigt_kernel_logst
-from exojax.opacity._common.lpffilter import _open_filter_length, generate_open_lpffilter
+from exojax.opacity._common.lpffilter import (
+    _open_filter_length,
+    generate_closed_lpffilter,
+    generate_open_lpffilter,
+)
 
 
 def _check_complex(x):
@@ -72,7 +76,7 @@ def calc_open_nu_xsection_from_lsd_zeroscan(
     return  jnp.fft.irfft(fftvalvk) * R 
     
 def calc_xsection_from_lsd_zeroscan(
-    Slsd, R, pmarray, nsigmaD, nu_grid, log_ngammaL_grid
+    Slsd, R, pmarray, nsigmaD, nu_grid, log_ngammaL_grid, *, profile_kernel="analytic"
 ):
     """Compute cross section from LSD in MODIT algorithm using scan+fft to avoid 4GB memory limit in fft and zero padding in scan
 
@@ -87,10 +91,38 @@ def calc_xsection_from_lsd_zeroscan(
         nsigmaD (float): normaized Gaussian STD
         nu_grid (array): wavenumber grid [Nnus]
         log_gammaL_grid (array): logarithm of gammaL grid [Ngamma]
+        profile_kernel (str): "analytic" for the Fourier-space Voigt kernel,
+            or "real_space" for the FFT of the sampled LPF Voigt profile.
 
     Returns:
         Closed Cross section in the log nu grid [Nnus]
     """
+    if profile_kernel not in ("analytic", "real_space"):
+        raise ValueError("profile_kernel must be 'analytic' or 'real_space'.")
+
+    Ng_nu = len(nu_grid)
+    if profile_kernel == "real_space":
+        profile_dtype = jnp.result_type(Slsd, nsigmaD, log_ngammaL_grid)
+
+        def convolve_profile(value, inputs):
+            density, gamma = inputs
+            profile = generate_closed_lpffilter(Ng_nu, nsigmaD, gamma).astype(
+                profile_dtype
+            )
+            density_fft = jnp.fft.rfft(
+                jnp.concatenate([density, jnp.zeros_like(density)])
+            )
+            return value + density_fft * jnp.fft.rfft(profile), None
+
+        # Build each profile inside the scan to avoid a full profile-grid buffer.
+        init = jnp.zeros(
+            Ng_nu + 1,
+            dtype=jnp.result_type(profile_dtype, jnp.complex64),
+        )
+        fftvalvk, _ = scan(
+            convolve_profile, init, (Slsd.T, jnp.exp(log_ngammaL_grid))
+        )
+        return jnp.fft.irfft(fftvalvk)[:Ng_nu] * R / nu_grid
 
     def f(val, x):
         Slsd_k, vk_k = x
@@ -100,7 +132,6 @@ def calc_xsection_from_lsd_zeroscan(
         val += v
         return val, None
 
-    Ng_nu = len(nu_grid)
     vk = fold_voigt_kernel_logst(
         jnp.fft.rfftfreq(2 * Ng_nu, 1),
         nsigmaD,

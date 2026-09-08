@@ -193,7 +193,9 @@ def compare_diffgrid_with_teacher(
         diffgrid: Ready pressure-aligned Diffgrid opacity calculator.
         teacher: Ready reference opacity calculator on the same wavenumber
             grid. Its ``xsmatrix`` method must accept temperature and pressure
-            profiles.
+            profiles. A PreMODIT teacher must use the table's recorded kernel;
+            use ``teacher.with_profile_kernel(diffgrid.teacher_profile_kernel)``
+            to make a matching copy when necessary.
         temperature_profile: Layer temperatures in K, shape ``(nlayer,)``.
         quantiles: Quantile levels to report. Defaults to ``(0.99,)``.
 
@@ -209,6 +211,20 @@ def compare_diffgrid_with_teacher(
 
     quantiles = _validated_quantiles(quantiles)
     pressure_grid, nu_grid = _validated_comparison_grids(diffgrid, teacher)
+    from exojax.opacity.premodit.api import OpaPremodit
+
+    recorded_kernel = getattr(diffgrid, "teacher_profile_kernel", None)
+    if (
+        isinstance(teacher, OpaPremodit)
+        and recorded_kernel is not None
+        and recorded_kernel != teacher._resolve_profile_kernel(
+            getattr(teacher, "profile_kernel", None), teacher.nstitch
+        )
+    ):
+        raise ValueError(
+            "PreMODIT profile_kernel differs from the DiffGrid teacher. Use "
+            "teacher.with_profile_kernel(diffgrid.teacher_profile_kernel)."
+        )
     log_cross_section_floor = _validated_log_cross_section_floor(diffgrid)
 
     temperature_profile = np.asarray(temperature_profile)

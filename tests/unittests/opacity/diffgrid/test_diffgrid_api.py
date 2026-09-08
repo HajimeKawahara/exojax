@@ -75,7 +75,10 @@ def diffgrid_setup():
         temperature_grid = np.asarray(
             [600.0, 850.0, 1150.0, 1500.0, 1900.0], dtype=np.float32
         )
-        opa = OpaDiffgrid(teacher, temperature_grid, pressure)
+        # Keep this interpolation regression on its original analytic teacher.
+        opa = OpaDiffgrid(
+            teacher, temperature_grid, pressure, profile_kernel="analytic"
+        )
         return opa, teacher, pressure, temperature_grid
 
 
@@ -152,6 +155,31 @@ def test_diffgrid_accepts_range_boundaries_across_dtypes():
         assert np.all(np.isfinite(np.asarray(compiled)))
     finally:
         jax.config.update("jax_enable_x64", previous_x64)
+
+
+@pytest.mark.parametrize("profile_kernel", ["analytic", "real_space", None])
+def test_generic_teacher_is_unchanged_by_profile_selection(profile_kernel):
+    teacher = _AnalyticTeacher()
+    temperature = np.asarray([800.0, 1200.0])
+    pressure = np.asarray([0.3, 1.0])
+    diffgrid = OpaDiffgrid(
+        teacher, temperature, pressure, profile_kernel=profile_kernel
+    )
+
+    assert diffgrid.teacher_profile_kernel is None
+    assert not hasattr(teacher, "profile_kernel")
+    np.testing.assert_allclose(
+        diffgrid.xsmatrix(temperature),
+        teacher.xsmatrix(temperature, pressure),
+        rtol=1.0e-12,
+    )
+
+
+def test_diffgrid_rejects_invalid_profile_kernel():
+    with pytest.raises(ValueError, match="profile_kernel"):
+        OpaDiffgrid(
+            _AnalyticTeacher(), [800.0, 1200.0], [1.0], profile_kernel="unknown"
+        )
 
 
 def test_diffgrid_improves_on_linear_log_interpolation(diffgrid_setup):

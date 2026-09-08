@@ -117,6 +117,8 @@ class CaseConfig:
     premodit_diffmode: int = 1
     broadening_resolution: float = 0.2
     observation_seed: int = 1
+    # Missing fields in existing prepared cases retain the original teacher.
+    profile_kernel: str = "analytic"
 
 
 def _finite_or_none(value: Any) -> float | None:
@@ -599,6 +601,7 @@ def _prepare(args, state):
         number_of_wavenumbers=args.number_of_wavenumbers,
         number_of_layers=args.number_of_layers,
         number_of_temperature_nodes=args.number_of_temperature_nodes,
+        profile_kernel=args.profile_kernel,
     )
     mdb_path = args.mdb_path.expanduser().resolve()
     cia_path = args.cia_path.expanduser().resolve()
@@ -638,6 +641,7 @@ def _prepare(args, state):
             "value": case_config.broadening_resolution,
         },
         wavelength_order="ascending",
+        profile_kernel=case_config.profile_kernel,
     )
     _block_opacity(teacher)
     timings["premodit_build_seconds"] = time.perf_counter() - start
@@ -654,6 +658,7 @@ def _prepare(args, state):
         teacher,
         temperature_grid=temperature_nodes,
         pressure_grid=np.asarray(art_for_grid.pressure),
+        profile_kernel=case_config.profile_kernel,
     )
     _block_opacity(diffgrid)
     timings["diffgrid_build_seconds"] = time.perf_counter() - start
@@ -2259,6 +2264,12 @@ def _parser() -> argparse.ArgumentParser:
     prepare_parser.add_argument("--number-of-wavenumbers", type=int, default=7500)
     prepare_parser.add_argument("--number-of-layers", type=int, default=100)
     prepare_parser.add_argument("--number-of-temperature-nodes", type=int, default=21)
+    prepare_parser.add_argument(
+        "--profile-kernel",
+        choices=("analytic", "real_space"),
+        default="real_space",
+        help="Kernel used by both the saved PreMODIT teacher and DiffGrid construction.",
+    )
     prepare_parser.add_argument(
         "--max-interpolation-error-in-noise", type=float, default=0.01
     )

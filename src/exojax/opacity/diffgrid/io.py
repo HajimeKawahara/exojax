@@ -148,6 +148,7 @@ def _diffgrid_metadata(
             "teacher_method": _normalize_json_value(
                 getattr(opa, "teacher_method", None)
             ),
+            "teacher_profile_kernel": getattr(opa, "teacher_profile_kernel", None),
             "optional_attributes": optional_attributes,
         },
     }
@@ -417,6 +418,10 @@ def _validate_archive_metadata(
         opa_state["teacher_method"], str
     ):
         raise ValueError("teacher_method metadata must be a string or null.")
+    if opa_state.get("teacher_profile_kernel") not in (
+        None, "analytic", "real_space"
+    ):
+        raise ValueError("Invalid saved DiffGrid teacher_profile_kernel.")
     optional_attributes = opa_state["optional_attributes"]
     if not isinstance(optional_attributes, Mapping):
         raise ValueError("optional_attributes metadata must be a mapping.")
