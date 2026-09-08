@@ -129,6 +129,7 @@ def test_legacy_cli_arguments_and_defaults(benchmark, tmp_path):
     )
     assert prepare.handler == benchmark.prepare
     assert prepare.number_of_layers == 4 and prepare.overwrite
+    assert prepare.profile_kernel == "real_space"
     run = parser.parse_args(
         [
             "run",
@@ -168,6 +169,17 @@ def test_legacy_cli_arguments_and_defaults(benchmark, tmp_path):
         parser.parse_args(["run", "--method", "diffgrid", "--run-id", "before"]).run_id
         == "before"
     )
+
+
+@pytest.mark.parametrize("profile_kernel", ["analytic", "real_space"])
+def test_profile_kernel_selection_and_legacy_case_metadata(benchmark, profile_kernel):
+    args = benchmark._parser().parse_args(
+        ["prepare", "--profile-kernel", profile_kernel]
+    )
+    case_config = benchmark.CaseConfig(profile_kernel=args.profile_kernel)
+
+    assert benchmark.asdict(case_config)["profile_kernel"] == profile_kernel
+    assert benchmark.CaseConfig(**{}).profile_kernel == "analytic"
 
 
 @pytest.mark.parametrize(

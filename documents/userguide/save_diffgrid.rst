@@ -108,3 +108,7 @@ Notes
   values, and integrity digests are still validated.
 * Values supplied through ``aux`` and ``extra_meta`` must be JSON-compatible;
   finite NumPy or JAX scalars and arrays are also accepted.
+* The saved ``teacher_profile_kernel`` records which PreMODIT kernel built
+  the table. Loading preserves the stored values and does not rebuild them
+  using the current default. Older archives without this metadata load with
+  ``teacher_profile_kernel=None`` because their kernel is unknown.

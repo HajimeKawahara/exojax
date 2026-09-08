@@ -139,6 +139,7 @@ def _assert_same_diffgrid(expected, actual):
     assert actual.ready is True
     assert actual.method == "diffgrid"
     assert actual.teacher_method == expected.teacher_method
+    assert actual.teacher_profile_kernel == expected.teacher_profile_kernel
     assert actual.opainfo is actual.diffgrid_info
     for key in ARRAY_KEYS:
         actual_array = (
@@ -189,6 +190,7 @@ def test_npz_roundtrip_preserves_tables_metadata_and_optional_attributes(
     assert metadata["opa_type"] == "OpaDiffgrid"
     assert metadata["exojax_version"] == __version__
     assert metadata["opa_state"]["teacher_method"] == "analytic"
+    assert metadata["opa_state"]["teacher_profile_kernel"] is None
     assert metadata["units"] == {
         "wavenumber": "cm^-1",
         "pressure": "bar",
@@ -231,6 +233,48 @@ def test_zarr_roundtrip_preserves_tables(tmp_path, diffgrid_case):
     assert loaded.wavelength_order == opa.wavelength_order
     np.testing.assert_array_equal(loaded.wav, opa.wav)
     assert loaded.resolution == pytest.approx(opa.resolution)
+
+
+@pytest.mark.parametrize("format", ["npz", "zarr"])
+def test_legacy_archive_has_unknown_teacher_kernel(tmp_path, diffgrid_case, format):
+    opa, _, _ = diffgrid_case
+    path = tmp_path / "legacy_diffgrid"
+    saveopa(opa, str(path), format=format)
+    if format == "npz":
+        metadata_path = _metadata_path(path.with_suffix(".npz"))
+        metadata = json.loads(metadata_path.read_text())
+        del metadata["opa_state"]["teacher_profile_kernel"]
+        metadata_path.write_text(json.dumps(metadata))
+    else:
+        import zarr
+
+        group = zarr.open(str(path.with_suffix(".zarr")), mode="a")
+        state = dict(group.attrs["opa_state"])
+        del state["teacher_profile_kernel"]
+        group.attrs["opa_state"] = state
+
+    loaded = OpaDiffgrid.from_saved_opa(str(path.with_suffix("." + format)))
+
+    assert loaded.teacher_profile_kernel is None
+    np.testing.assert_array_equal(
+        loaded.xsmatrix(np.asarray([800.0, 1200.0])),
+        opa.xsmatrix(np.asarray([800.0, 1200.0])),
+    )
+
+
+@pytest.mark.parametrize("profile_kernel", ["unsupported", 42, ["real_space"]])
+def test_load_rejects_invalid_teacher_kernel_metadata(
+    tmp_path, diffgrid_case, profile_kernel
+):
+    opa, _, _ = diffgrid_case
+    path = tmp_path / "invalid_kernel"
+    saveopa(opa, str(path), format="npz")
+    arrays, metadata = _read_npz_archive(path.with_suffix(".npz"))
+    metadata["opa_state"]["teacher_profile_kernel"] = profile_kernel
+    _write_npz_archive(path.with_suffix(".npz"), arrays, metadata)
+
+    with pytest.raises(ValueError, match="teacher_profile_kernel"):
+        OpaDiffgrid.from_saved_opa(str(path.with_suffix(".npz")))
 
 
 def test_loads_schema_compliant_npz_from_external_producer(tmp_path):

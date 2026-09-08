@@ -1,3 +1,5 @@
+import json
+
 import numpy as np
 import pytest
 
@@ -37,12 +39,13 @@ def _build_minimal_ready_opa() -> OpaPremodit:
     opa.cutwing = 1.0
     opa.nstitch = 1
     opa.alias = "close"
+    opa.profile_kernel = "analytic"
 
     multi_index_uniqgrid = np.array([[0, 0]])
     elower_grid = np.array([0.1, 0.2])
     ngamma_ref_grid = np.array([0.05])
     n_Texp_grid = np.array([0.01])
-    R = np.array([1.0])
+    R = np.array(1.0)
     pmarray = np.ones(len(nu_grid) + 1, dtype=np.float64)
     pmarray[1::2] *= -1.0
     opa.ngrid_broadpar = len(multi_index_uniqgrid)
@@ -84,8 +87,9 @@ def _build_minimal_ready_opa() -> OpaPremodit:
 
 
 @pytest.mark.parametrize("format", ["npz", "zarr"])
-def test_save_and_load_roundtrip(tmp_path, format):
-    opa = _build_minimal_ready_opa()
+@pytest.mark.parametrize("profile_kernel", ["analytic", "real_space"])
+def test_save_and_load_roundtrip(tmp_path, format, profile_kernel):
+    opa = _build_minimal_ready_opa().with_profile_kernel(profile_kernel)
     artifact = tmp_path / "opa_roundtrip"
     expected_cross_section = np.asarray(opa.xsvector(500.0, 1.0))
     saveopa_premodit(opa, str(artifact), format=format)
@@ -93,6 +97,7 @@ def test_save_and_load_roundtrip(tmp_path, format):
     loaded = OpaPremodit.from_saved_opa(str(artifact) + "." + format)
 
     assert loaded == opa
+    assert loaded.profile_kernel == profile_kernel
     assert np.allclose(loaded.gamma_ref, opa.gamma_ref)
     assert np.allclose(loaded.n_Texp, opa.n_Texp)
     assert np.array_equal(loaded.opainfo[0], opa.opainfo[0])
@@ -122,3 +127,17 @@ def test_aux_metadata_persists_through_roundtrip(tmp_path):
         "labels": ["co", 1],
         "nested": {"values": [1, 2, 3]},
     }
+
+
+@pytest.mark.parametrize("profile_kernel", ["unsupported", None, 42])
+def test_load_rejects_invalid_profile_kernel_metadata(tmp_path, profile_kernel):
+    opa = _build_minimal_ready_opa()
+    artifact = tmp_path / "invalid_profile"
+    saveopa_premodit(opa, str(artifact), format="npz")
+    metadata_path = tmp_path / "invalid_profile_metadata.json"
+    metadata = json.loads(metadata_path.read_text())
+    metadata["opa_state"]["profile_kernel"] = profile_kernel
+    metadata_path.write_text(json.dumps(metadata))
+
+    with pytest.raises(ValueError, match="profile_kernel"):
+        OpaPremodit.from_saved_opa(str(artifact.with_suffix(".npz")))

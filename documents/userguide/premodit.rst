@@ -51,6 +51,30 @@ For users who are well-acquainted with the PreMODIT algorithm, parameters can be
                       diffmode=diffmode,
                       manual_params=[dE, Tref, Twt])
 
+Profile kernel
+^^^^^^^^^^^^^^
+
+``OpaPremodit`` accepts ``profile_kernel="analytic"`` or
+``profile_kernel="real_space"``. The analytic mode uses the existing Fourier
+Voigt kernel with its alias correction. The real-space mode samples the LPF
+Voigt profile and Fourier transforms it for convolution; it can reduce
+negative kernel oscillations on coarse grids at additional evaluation cost.
+Both modes currently use Voigt profiles.
+
+Omitting the argument preserves the existing behavior: analytic for closed
+calculations and real space for stitching (``nstitch > 1``). Analytic mode
+is unavailable for stitching. An initialized calculator can be copied with
+another selection without rebuilding its line-density arrays:
+
+.. code-block:: python
+
+    sampled_opa = opa.with_profile_kernel("real_space")
+
+The original calculator is unchanged. The selected ``profile_kernel`` is
+saved and restored with PreMODIT archives; archives without this field retain
+their original closed or stitching behavior. :doc:`diffgrid` uses real space
+by default when building a table from a PreMODIT teacher.
+
 Visulization of the Line Base Density
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 

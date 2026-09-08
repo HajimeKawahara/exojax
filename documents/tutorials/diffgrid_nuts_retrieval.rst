@@ -186,6 +186,11 @@ therefore place the nodes uniformly in :math:`1/T`. The example starts
 with 21 nodes; the validation below determines whether that is
 sufficient for the intended noise level.
 
+This demonstration explicitly keeps the analytic kernel used for its
+recorded outputs. New DiffGrid tables default to the real-space kernel;
+see :doc:`../userguide/diffgrid` for selecting a kernel and matching the
+validation teacher.
+
 .. code:: ipython3
 
     mdb = MdbExomol(
@@ -216,6 +221,7 @@ sufficient for the intended noise level.
         teacher,
         temperature_grid=temperature_nodes,
         pressure_grid=np.asarray(art.pressure),
+        profile_kernel="analytic",
     )
     jax.block_until_ready(opa.log_cross_section_grid)
     jax.block_until_ready(opa.log_cross_section_derivative_grid)
@@ -767,6 +773,11 @@ the five-profile interpolation check are specific to this example.
 
 Validate observation-space accuracy and gradients
 -------------------------------------------------
+
+New benchmark preparations use ``prepare --profile-kernel real_space``
+by default for both the saved PreMODIT teacher and DiffGrid construction.
+Use ``--profile-kernel analytic`` to reproduce the original kernel choice.
+Existing saved cases retain their recorded calculations.
 
 The benchmark’s ``validate`` command adds the P0/PR2 checks to an
 existing prepared case. It reuses the saved observations and opacity
