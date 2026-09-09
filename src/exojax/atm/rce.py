@@ -1,4 +1,4 @@
-"""Steady, dry radiative-convective equilibrium on a fixed pressure grid.
+"""Steady radiative-convective equilibrium on a fixed pressure grid.
 
 Temperatures live at layer centers and at a black lower boundary. Radiation
 is supplied as a JAX-compatible callback returning net upward bolometric flux
@@ -20,7 +20,7 @@ class RceResult:
     Fluxes and ``flux_residual`` are in erg/s/cm2 and have shape ``(N+1,)``.
     Convective flux is zero at the top and on inactive connections.
     ``flux_residual`` is the total upward flux minus the internal flux.
-    ``gradient_residual`` is d log(T)/d log(P) minus the dry adiabat, with
+    ``gradient_residual`` is d log(T)/d log(P) minus the prescribed adiabat, with
     shape ``(N,)``; it must be nonpositive on inactive connections and zero
     on active ones. ``scaled_residual`` contains the equations selected by
     the mask, divided by their respective tolerances.
@@ -67,6 +67,12 @@ def reconstruct_boundary_temperature(
     )
 
 
+def _evaluate_adiabatic_gradient(adiabatic_gradient, temperature, bottom_temperature):
+    if callable(adiabatic_gradient):
+        return jnp.asarray(adiabatic_gradient(temperature, bottom_temperature))
+    return jnp.asarray(adiabatic_gradient)
+
+
 def rce_residual(
     log_temperature,
     pressure_bar,
@@ -82,19 +88,24 @@ def rce_residual(
 
     ``log_temperature`` holds N center values followed by the bottom value.
     ``radiative_flux(T, T_bottom)`` returns N+1 net upward interface fluxes
-    in erg/s/cm2. ``convective_mask`` and the scalar or N-element dry
-    ``adiabatic_gradient`` describe center-to-center connections followed
-    by the last center-to-bottom connection. The top equation always imposes
+    in erg/s/cm2. ``convective_mask`` and ``adiabatic_gradient`` describe
+    center-to-center connections followed by the last center-to-bottom
+    connection. The gradient is a scalar, an N-element array, or a
+    JAX-compatible callable ``(T, T_bottom)`` returning either. Its temperature
+    dependence participates in the Jacobian. The top equation always imposes
     radiative energy balance. Other equations impose either energy balance
-    or a neutral dry gradient. Scales are positive scalar normalizations.
+    or the prescribed neutral gradient. Scales are positive normalizations.
     """
     temperature = jnp.exp(log_temperature)
     flux_error = (
         radiative_flux(temperature[:-1], temperature[-1]) - internal_flux
     ) / flux_scale
     dlog_pressure = jnp.diff(jnp.log(jnp.append(pressure_bar, bottom_pressure_bar)))
+    adiabat = _evaluate_adiabatic_gradient(
+        adiabatic_gradient, temperature[:-1], temperature[-1]
+    )
     gradient_error = (
-        jnp.diff(log_temperature) / dlog_pressure - adiabatic_gradient
+        jnp.diff(log_temperature) / dlog_pressure - adiabat
     ) / gradient_scale
     return jnp.concatenate(
         (flux_error[:1], jnp.where(convective_mask, gradient_error, flux_error[1:]))
@@ -119,7 +130,7 @@ def solve_rce(
     max_active_set_iterations=30,
     max_backtracks=25,
 ):
-    """Solve efficient dry RCE using damped Newton steps and an active set.
+    """Solve RCE using damped Newton steps and an active set.
 
     Args:
         pressure_bar: Positive, increasing layer-center pressures, shape (N,).
@@ -133,7 +144,11 @@ def solve_rce(
             each call and return N+1 interface fluxes, positive upward, with
             any downward stellar flux subtracted. The black bottom source
             uses T_bottom, not the internal effective temperature.
-        adiabatic_gradient: Fixed dry d log(T)/d log(P), scalar or shape (N,).
+        adiabatic_gradient: Positive neutral d log(T)/d log(P), scalar or
+            shape (N,), or a JAX-compatible callable ``(T, T_bottom)`` returning
+            either. Values refer to center-to-center connections followed by
+            the last center-to-bottom connection. The callable is evaluated
+            at every state, and its derivatives enter the Newton Jacobian.
         convective_mask_initial: Optional boolean array of N connections.
             The default starts with all connections radiative.
         valid_state: Optional host callable ``(T, T_bottom) -> bool``. Checked
@@ -143,7 +158,7 @@ def solve_rce(
         flux_atol: Absolute energy-balance tolerance in erg/s/cm2.
         flux_rtol: Relative tolerance against abs(internal_flux), never against
             incident stellar flux. The flux tolerance is atol + rtol * abs(F_int).
-        gradient_atol: Absolute tolerance for dry gradient neutrality/stability.
+        gradient_atol: Absolute tolerance for gradient neutrality/stability.
         max_iterations: Maximum Newton steps per active set.
         max_active_set_iterations: Maximum number of masks to solve.
         max_backtracks: Maximum line-search trials per Newton step.
@@ -157,8 +172,10 @@ def solve_rce(
     Notes:
         Enable JAX x64 at the call site for precision-sensitive columns. The
         iteration driver uses NumPy, while the residual and its Jacobian use
-        JAX. This baseline assumes fixed composition and a prescribed dry
-        adiabat; it does not model latent heat, scattering, or interior cooling.
+        JAX. The default gradient is a fixed dry adiabat. A state-dependent
+        gradient can prescribe a pseudoadiabat; its thermodynamics and any
+        composition dependence of radiation must be supplied by the callbacks.
+        The solver does not evolve condensate, scattering, or interior cooling.
     """
     pressure = np.asarray(pressure_bar, dtype=float)
     boundaries = np.asarray(pressure_boundaries_bar, dtype=float)
@@ -188,12 +205,6 @@ def solve_rce(
         or internal_flux < 0
     ):
         raise ValueError("internal_flux must be a finite, nonnegative scalar.")
-    adiabat = np.asarray(adiabatic_gradient, dtype=float)
-    if adiabat.shape not in ((), (nlayer,)):
-        raise ValueError("adiabatic_gradient must be scalar or have shape (N,).")
-    adiabat = np.broadcast_to(adiabat, (nlayer,))
-    if not np.all(np.isfinite(adiabat)) or np.any(adiabat <= 0.0):
-        raise ValueError("adiabatic_gradient must be finite and positive.")
     for name, value, allow_zero in (
         ("flux_atol", flux_atol, True),
         ("flux_rtol", flux_rtol, True),
@@ -247,7 +258,7 @@ def solve_rce(
             boundaries[-1],
             internal_flux,
             radiative_flux,
-            jnp.asarray(adiabat),
+            adiabatic_gradient,
             active,
             flux_tolerance,
             gradient_atol,
@@ -256,7 +267,11 @@ def solve_rce(
     @jax.jit
     def evaluate(log_t, active):
         values = jnp.exp(log_t)
-        return residual(log_t, active), radiative_flux(values[:-1], values[-1])
+        return (
+            residual(log_t, active),
+            radiative_flux(values[:-1], values[-1]),
+            _evaluate_adiabatic_gradient(adiabatic_gradient, values[:-1], values[-1]),
+        )
 
     jacobian = jax.jit(jax.jacfwd(residual, argnums=0))
     log_t = np.log(temperatures)
@@ -270,6 +285,15 @@ def solve_rce(
         raise ValueError(
             "Initial temperatures are outside the valid_state domain in JAX precision."
         )
+    initial_gradient = np.asarray(
+        _evaluate_adiabatic_gradient(
+            adiabatic_gradient, jnp.asarray(initial_state[:-1]), initial_state[-1]
+        )
+    )
+    if initial_gradient.shape not in ((), (nlayer,)):
+        raise ValueError("adiabatic_gradient must be scalar or have shape (N,).")
+    if not np.all(np.isfinite(initial_gradient)) or np.any(initial_gradient <= 0.0):
+        raise ValueError("adiabatic_gradient must be finite and positive.")
     initial_flux = np.asarray(
         radiative_flux(jnp.asarray(initial_state[:-1]), initial_state[-1])
     )
@@ -282,6 +306,11 @@ def solve_rce(
     def result(status):
         values = state_temperature(log_t)
         flux = np.asarray(radiative_flux(jnp.asarray(values[:-1]), values[-1]))
+        adiabat = np.asarray(
+            _evaluate_adiabatic_gradient(
+                adiabatic_gradient, jnp.asarray(values[:-1]), values[-1]
+            )
+        )
         convective = np.concatenate(
             ([0.0], np.where(mask, internal_flux - flux[1:], 0.0))
         )
@@ -294,6 +323,8 @@ def solve_rce(
         # host/device rounding can differ, especially without caller-enabled x64.
         if status == "converged" and not (
             np.all(np.isfinite(flux))
+            and np.all(np.isfinite(adiabat))
+            and np.all(adiabat > 0.0)
             and np.all(np.abs(flux_error) <= flux_tolerance)
             and np.all(np.abs(gradient_error[mask]) <= gradient_atol)
             and np.all(gradient_error[~mask] <= gradient_atol)
@@ -324,9 +355,15 @@ def solve_rce(
             return result("active_set_cycle")
         seen_masks.add(key)
         for step_index in range(max_iterations + 1):
-            error, full_flux = map(np.asarray, evaluate(log_t, mask))
-            if not np.all(np.isfinite(error)) or not np.all(np.isfinite(full_flux)):
+            error, full_flux, full_gradient = map(np.asarray, evaluate(log_t, mask))
+            if (
+                not np.all(np.isfinite(error))
+                or not np.all(np.isfinite(full_flux))
+                or not np.all(np.isfinite(full_gradient))
+            ):
                 return result("nonfinite_residual")
+            if np.any(full_gradient <= 0.0):
+                return result("invalid_adiabatic_gradient")
             norm = np.max(np.abs(error))
             if norm <= 1.0:
                 break
@@ -350,9 +387,14 @@ def solve_rce(
                 trial_temperature = state_temperature(trial)
                 if in_domain(trial_temperature):
                     had_valid_trial = True
-                    trial_error, trial_flux = map(np.asarray, evaluate(trial, mask))
-                    if np.all(np.isfinite(trial_error)) and np.all(
-                        np.isfinite(trial_flux)
+                    trial_error, trial_flux, trial_gradient = map(
+                        np.asarray, evaluate(trial, mask)
+                    )
+                    if (
+                        np.all(np.isfinite(trial_error))
+                        and np.all(np.isfinite(trial_flux))
+                        and np.all(np.isfinite(trial_gradient))
+                        and np.all(trial_gradient > 0.0)
                     ):
                         trial_norm = np.max(np.abs(trial_error))
                         if (
@@ -371,6 +413,11 @@ def solve_rce(
 
         values = state_temperature(log_t)
         flux = np.asarray(radiative_flux(jnp.asarray(values[:-1]), values[-1]))
+        adiabat = np.asarray(
+            _evaluate_adiabatic_gradient(
+                adiabatic_gradient, jnp.asarray(values[:-1]), values[-1]
+            )
+        )
         gradient_excess = (
             np.diff(np.log(values.astype(float))) / dlog_pressure - adiabat
         )

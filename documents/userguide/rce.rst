@@ -1,11 +1,16 @@
-Dry radiative-convective equilibrium
-========================================
+Radiative-convective equilibrium
+================================
 
 ``exojax.atm.rce.solve_rce`` determines layer temperatures and a black lower
-boundary temperature on a fixed pressure grid. The baseline assumes a static,
-plane-parallel atmosphere, fixed composition and gravity, pure absorption,
-and efficient dry convection with a prescribed adiabatic gradient. Internal
-heat flux and irradiation are boundary inputs.
+boundary temperature on a fixed pressure grid. It uses a static,
+plane-parallel column with efficient convection. Radiation and the neutral
+convective gradient are supplied by callbacks; the default gradient is the
+dry value 2/7. Internal heat flux and irradiation are boundary inputs.
+
+The :doc:`../tutorials/rce_earth` forward example couples ExoJAX water line
+opacity, a water-vapor continuum, an ocean saturation boundary, and a
+temperature-dependent pseudoadiabat. Its outputs include the solved
+temperature profile and outgoing band spectrum.
 
 Run the gray example from the repository root:
 
@@ -52,18 +57,22 @@ is solved from energy balance, including downward radiation and convective
 transport; it is not the internal effective temperature defined by
 ``internal_flux = sigma * T_int**4``.
 
-Dry closure and convergence
-----------------------------------------
+Convective closure and convergence
+----------------------------------
 
 The solver uses logarithmic temperatures and damped Newton steps for a fixed
 convective mask, then updates that mask. Connections join adjacent centers,
 with the last connection joining the lowest center to the bottom boundary.
-``adiabatic_gradient`` is a positive scalar or an N-element array on those
-connections.
+``adiabatic_gradient`` is a positive scalar, an N-element array on those
+connections, or a JAX-compatible callable ``(T, T_bottom) -> gradient``
+returning either shape. A callable is reevaluated at every trial state;
+its temperature derivatives enter the Newton Jacobian. This allows a
+pseudoadiabatic closure to respond to temperature and available vapor.
+The caller supplies the thermodynamics and composition model.
 
 At the top, radiative flux equals ``internal_flux`` and convection is zero.
 Inactive connections require radiative energy balance and a subadiabatic
-temperature gradient. Active connections require a neutral dry gradient and
+temperature gradient. Active connections require the supplied neutral gradient and
 nonnegative upward convective flux. Both activation and deactivation are
 supported. The host iteration is not itself differentiable; the fixed-mask
 ``rce_residual`` is JAX-compatible.
@@ -76,10 +85,10 @@ bottom temperatures, radiative and convective fluxes, the convective mask,
 and ``domain_valid``. Convective flux is zero on inactive connections;
 ``flux_residual`` is total upward flux minus internal flux.
 
-Convergence checks the selected equations and dry stability inequalities,
+Convergence checks the selected equations and convective stability inequalities,
 including the returned physical state. Flux tolerance is
 ``flux_atol + flux_rtol * abs(internal_flux)``; it is not normalized by a much
-larger stellar flux. ``gradient_atol`` controls dry gradient errors. Enable
+larger stellar flux. ``gradient_atol`` controls neutral-gradient errors. Enable
 JAX x64 at the call site for precision-sensitive calculations; a small
 temperature step alone does not establish convergence.
 
@@ -179,9 +188,12 @@ treatment.
 Scope
 -----
 
-This baseline does not include scattering, moist convection, latent heat,
-composition feedback, interior cooling evolution, or an elemental inventory
-solve. Numerical convergence does not establish thermal stability or
-hysteresis. Non-isothermal pure-absorption transport is motivated by methods
+The solver does not prescribe scattering, moist thermodynamics, composition,
+or an elemental inventory solve. These must be provided consistently by the
+callbacks; the supplied transfer kernel assumes pure absorption. The
+Earth-analogue tutorial demonstrates moist composition feedback within a
+fixed-pressure approximation. There is no interior cooling evolution.
+Numerical convergence does not establish thermal stability or hysteresis.
+Non-isothermal pure-absorption transport is motivated by methods
 such as `HELIOS <https://arxiv.org/abs/1606.05474>`_; the discretization and
 boundary conditions used here are specified above.
