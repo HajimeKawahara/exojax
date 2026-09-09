@@ -24,6 +24,7 @@ Forward Modeling and Radiative Transfer
    :maxdepth: 1
 
    Pure Absorption Radiative Transfer <tutorials/pure_absorption_rt>
+   Forward RCE for an N2--H2O ocean planet <tutorials/rce_earth>
    Direct limb darkening from emission intensities <tutorials/direct_limb_darkening>
    Rigid stellar rotation and Gaussian convolution <tutorials/Rigid_Rotation>
 

@@ -87,6 +87,14 @@ Radiative Transfer
    userguide/rtransfer_transmission.rst
    userguide/rtransfer_fbased_pure.rst
    
+Atmospheric Structure
+=======================
+
+.. toctree::
+   :maxdepth: 1
+
+   userguide/rce.rst
+
 Spectral Operators
 =======================
 
