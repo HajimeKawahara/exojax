@@ -18,6 +18,9 @@ from benchmark_metrics import (
 from diffgrid_nuts_storage import sha256, validate_run_id, write_npz
 
 
+DEFAULT_STEPS = (1e-2, 1e-3, 1e-4, 1e-5, 1e-6, 1e-7)
+
+
 def _json_report(value):
     """Keep failed numerical values JSON-safe; residual archives preserve NaNs."""
     if isinstance(value, dict):
@@ -212,6 +215,7 @@ def evaluate_case(
     import jax.numpy as jnp
     from jax.scipy.special import expit
     from jax.scipy.stats import norm
+    from exojax.utils.constants import c
     from exojax.opacity.diffgrid.diagnostics import (
         diffgrid_interval_midpoint_temperatures,
     )
@@ -241,12 +245,28 @@ def evaluate_case(
         physical = lower + width * np.asarray(unit)
         return physical[t_index] * pressure ** physical[a_index]
 
+    rv_index = names.index("radial_velocity")
+    physical_coordinates = jax.jit(lambda unit: lower + width * unit)
+
+    @jax.jit
+    def sampling_coordinates(unit):
+        # Match the current observation operator, including its Doppler convention.
+        physical = lower + width * unit
+        return context["nu_data"] * (1.0 + physical[rv_index] / c)
+
     def region(unit):
-        return _clip(
+        clipping = _clip(
             raw_temperature(unit),
             case_config.temperature_min,
             case_config.temperature_max,
         )["region"]
+        shifted = np.asarray(sampling_coordinates(unit))
+        nu_grid = np.asarray(context["nu_grid"])
+        # Exact knots have their own labels, distinct from either open cell.
+        cells = np.searchsorted(nu_grid, shifted, side="left") + np.searchsorted(
+            nu_grid, shifted, side="right"
+        )
+        return np.concatenate((clipping, cells))
 
     def in_domain(unit):
         unit = np.asarray(unit)
@@ -325,6 +345,7 @@ def evaluate_case(
             "potential": "NumPyro unconstrained q (Uniform-prior log odds)",
             "potential_definition": "U(q) = -log L(theta(q)) - log p(theta(q)) - log|dtheta/dq|",
             "derivative_scale": "max absolute AD-FD / max(1, max absolute AD, max absolute FD); forward divided by noise_sigma",
+            "smooth_regions": "Temperature clipping states and linear RV sampling cells; exact RV knots have separate labels.",
         },
     }
     fluxes = {method: [] for method in forwards}
@@ -406,6 +427,22 @@ def evaluate_case(
             unit = (np.asarray([values[name] for name in names]) - lower) / width
             direction = rng.normal(size=len(names))
             direction /= np.linalg.norm(direction)
+
+            def stencil_resolved(center, plus, minus):
+                active = direction != 0
+                physical = np.asarray(physical_coordinates(center))
+                shifted = np.asarray(sampling_coordinates(center))
+                for endpoint in (plus, minus):
+                    if np.any(
+                        (np.asarray(physical_coordinates(endpoint)) == physical)[active]
+                    ):
+                        return False
+                    if active[rv_index] and np.any(
+                        np.asarray(sampling_coordinates(endpoint)) == shifted
+                    ):
+                        return False
+                return True
+
             q = np.log(unit) - np.log1p(-unit)
             entry = {
                 "label": label,
@@ -431,6 +468,7 @@ def evaluate_case(
                         tolerance=settings["gradient_tolerance"],
                         in_domain=in_domain,
                         region=region,
+                        stencil_resolved=stencil_resolved,
                     )
                 if method in potentials:
                     result["potential"] = directional_check(
@@ -441,6 +479,11 @@ def evaluate_case(
                         tolerance=settings["gradient_tolerance"],
                         in_domain=lambda x: in_domain(np.asarray(expit(x))),
                         region=lambda x: region(np.asarray(expit(x))),
+                        stencil_resolved=lambda x, plus, minus: stencil_resolved(
+                            np.asarray(expit(x)),
+                            np.asarray(expit(plus)),
+                            np.asarray(expit(minus)),
+                        ),
                     )
                 else:
                     result["potential"] = {
@@ -620,7 +663,7 @@ def validate_case(args, benchmark):
             "max_interpolation_error_in_noise": args.max_interpolation_error_in_noise,
             "max_q": args.max_q,
             "gradient_tolerance": args.gradient_tolerance,
-            "steps": [1e-2, 1e-3, 1e-4, 1e-5],
+            "steps": list(DEFAULT_STEPS),
         },
     }
     with benchmark._record_execution(result_path, state):

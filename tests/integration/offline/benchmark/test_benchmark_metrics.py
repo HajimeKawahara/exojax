@@ -189,3 +189,28 @@ def test_invalid_step_sequences_are_rejected(metrics, steps):
 def test_a_single_good_step_does_not_establish_convergence(metrics):
     result = metrics.directional_check(lambda x: x**2, 1.0, 1.0, steps=[0.01])
     assert result["steps"][0]["passed"] and not result["passed"]
+
+
+def test_roundoff_cannot_verify_small_or_partially_lost_derivatives(metrics):
+    result = metrics.directional_check(
+        lambda x: 1e-6 * jnp.sum(x),
+        [0.0, 1.0],
+        [1.0, 1.0],
+        steps=[1e-17, 1e-18],
+    )
+    assert not result["passed"] and result["reason"] == "roundoff_limited"
+    assert all(record["status"] == "roundoff_limited" for record in result["steps"])
+    json.dumps(result, allow_nan=False)
+
+
+def test_transformed_roundoff_exclusion_cannot_bridge_passing_steps(metrics):
+    result = metrics.directional_check(
+        lambda x: x**2,
+        0.0,
+        1.0,
+        steps=[0.1, 0.01, 0.001],
+        stencil_resolved=lambda center, plus, minus: not np.isclose(plus, 0.01),
+    )
+    assert [record["passed"] for record in result["steps"]] == [True, False, True]
+    assert result["steps"][1]["status"] == "roundoff_limited"
+    assert not result["passed"]

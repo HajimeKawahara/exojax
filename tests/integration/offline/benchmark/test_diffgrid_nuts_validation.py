@@ -304,6 +304,88 @@ def test_exact_opacity_interpolant_passes_actual_observation_path(
     assert arrays and all(np.all(np.isfinite(array)) for array in arrays.values())
 
 
+def test_rv_stencils_detect_crossings_exact_knots_and_roundoff_in_both_coordinates(
+    validation, benchmark, synthetic_case, settings, analytic_potential, monkeypatch
+):
+    import jax.numpy as jnp
+    from exojax.postproc.response import sampling
+
+    fixture = synthetic_case
+    fixture.truth["radial_velocity"] = 0.0
+    fixture.bounds["radial_velocity"] = (-5.0, 5.0)
+    grid = jnp.asarray(fixture.case["nu_grid"])
+    # Zero RV puts all six observations exactly on interior interpolation knots.
+    fixture.case["nu_data"] = np.asarray(grid)[[24, 27, 30, 33, 36, 39]]
+    fixture.context["nu_data"] = jnp.asarray(fixture.case["nu_data"])
+    spectrum = jnp.arange(grid.size, dtype=grid.dtype) ** 2
+
+    def factory(opacity, context, config):
+        return lambda temperature, methane, radius, rv, vsini: sampling(
+            context["nu_data"], grid, spectrum, rv
+        )
+
+    monkeypatch.setattr(benchmark, "_make_forward_model", factory)
+    check = validation.directional_check
+    calls = []
+
+    def capture(function, position, direction, **kwargs):
+        calls.append((function, position, direction, kwargs))
+        return {"passed": True}
+
+    monkeypatch.setattr(validation, "directional_check", capture)
+    custom_steps = [3e-3, 2e-4]
+    report, _ = _evaluate(
+        validation,
+        benchmark,
+        fixture,
+        dict(settings, num_prior_points=0, steps=custom_steps),
+    )
+    assert report["passed"] and len(calls) == 6
+    assert all(call[3]["steps"] == custom_steps for call in calls)
+
+    # Forward uses unit-prior coordinates; potential uses logit coordinates.
+    for function, position, direction, options in (calls[0], calls[2]):
+        options = dict(options, steps=validation.DEFAULT_STEPS)
+        boundary = check(function, position, direction, **options)
+        assert not boundary["passed"]
+        assert all(record["status"] == "kink" for record in boundary["steps"])
+        assert all("one_sided_derivatives" in record for record in boundary["steps"])
+
+        nearby = position + 2.7e-6 * direction
+        result = check(function, nearby, direction, **options)
+        assert result["passed"], result
+        assert [record["status"] for record in result["steps"]] == (
+            ["kink"] * 4 + ["smooth"] * 2
+        )
+        assert all(record["passed"] for record in result["steps"][-2:])
+        coarse = check(function, nearby, direction, **dict(options, steps=custom_steps))
+        assert not coarse["passed"]
+        assert [record["step"] for record in coarse["steps"]] == custom_steps
+
+        # Inputs still move, but the Doppler factor rounds back to its center.
+        tiny_steps = [1e-12, 1e-13]
+        for step in tiny_steps:
+            for sign in (-1, 1):
+                endpoint = np.asarray(jnp.asarray(position + sign * step * direction))
+                assert np.all(endpoint != np.asarray(jnp.asarray(position)))
+        unresolved = check(
+            function, position, direction, **dict(options, steps=tiny_steps)
+        )
+        assert not unresolved["passed"] and unresolved["reason"] == "roundoff_limited"
+        assert all(
+            record["status"] == "roundoff_limited" for record in unresolved["steps"]
+        )
+
+    # A finite logit near saturation can move while its physical parameters do not.
+    function, position, direction, options = calls[2]
+    saturated = np.full_like(position, 30.0)
+    assert options["in_domain"](saturated)
+    result = check(
+        function, saturated, direction, **dict(options, steps=[1e-3, 1e-4])
+    )
+    assert not result["passed"] and result["reason"] == "roundoff_limited"
+
+
 @pytest.mark.parametrize(
     "fault",
     ["nonfinite", "offset", "broken_gradient", "missing_numpyro", "nonfinite_domain"],
@@ -466,6 +548,7 @@ def test_validation_selection_and_saved_residuals_are_verified(
         )
     report_path = saved_case.output_dir / "validations/baseline/validation.json"
     report = json.loads(report_path.read_text())
+    assert report["settings"]["steps"] == list(validation.DEFAULT_STEPS)
     with pytest.raises(ValueError, match="provenance"):
         benchmark._validate_result_evidence(
             saved_case.output_dir, {}, digest, "baseline"
