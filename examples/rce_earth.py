@@ -16,6 +16,7 @@ import jax.numpy as jnp
 import numpy as np
 
 from exojax.atm.rce import solve_rce
+from exojax.atm.rce_implicit import make_implicit_rce_solver
 from exojax.opacity import OpaCKD
 from exojax.opacity.ckd.core import gauss_legendre_grid
 from exojax.rt.flux import (
@@ -139,6 +140,35 @@ class EarthColumn:
             0.0, self.radiative_flux, neutral_gradient=self.adiabat,
             convective_mask_initial=np.asarray(self.pressure > 0.05),
             valid_state=self.valid_state, flux_atol=flux_atol, flux_rtol=0.0,
+        )
+
+    def make_solar_solver(self, result, flux_atol=1.0e-6):
+        """Return a differentiable equilibrium solver with solar flux in W/m2.
+
+        The supplied converged result provides a fixed initial guess. Each
+        call solves the temperatures again, including water and opacity
+        feedback. Derivatives apply locally to the converged active set.
+        """
+        if not result.converged:
+            raise ValueError("The solar solver requires a converged initial result.")
+
+        def radiation(temperature, bottom, solar_constant):
+            up, down, stellar = self.spectral_fluxes(temperature, bottom)
+            return integrate_ckd_flux(
+                up - down - (solar_constant / self.solar_constant) * stellar,
+                self.g_weights, self.widths,
+            )
+
+        return make_implicit_rce_solver(
+            self.pressure, self.boundaries,
+            result.temperature, result.bottom_temperature,
+            0.0, radiation,
+            lambda t, tb, solar: self.adiabat(t, tb),
+            convective_mask_initial=result.convective_mask,
+            valid_state=lambda t, tb, solar: (
+                np.isfinite(solar) and solar > 0.0 and self.valid_state(t, tb)
+            ),
+            flux_atol=flux_atol, flux_rtol=0.0,
         )
 
 
@@ -269,6 +299,8 @@ def main():
                         help="Also recompute 500--2500 cm-1 emission from this HITRAN .par")
     parser.add_argument("--line-dnu", type=float, default=0.02,
                         help="Sampling step of the separate line spectrum in cm-1")
+    parser.add_argument("--solar-sensitivity", action="store_true",
+                        help="Compute implicit dT_ocean/dS0 in K/(W/m2)")
     args = parser.parse_args()
     if (not np.all(np.isfinite([args.line_dnu, args.solar_constant, args.albedo, args.flux_atol]))
             or args.line_dnu <= 0 or args.solar_constant <= 0 or not 0 <= args.albedo < 1
@@ -285,6 +317,17 @@ def main():
     if not result.converged:
         raise RuntimeError(f"RCE did not converge: {result.status}")
     save_result(column, result, args.output)
+    if args.solar_sensitivity:
+        solar_solver = column.make_solar_solver(result, flux_atol=args.flux_atol)
+        bottom, sensitivity = jax.jit(jax.value_and_grad(
+            lambda solar: solar_solver(solar).bottom_temperature
+        ))(jnp.asarray(args.solar_constant))
+        if not np.all(np.isfinite([bottom, sensitivity])):
+            raise RuntimeError("Solar sensitivity is undefined or the implicit solve failed.")
+        print(f"Implicit dT_ocean/dS0: {float(sensitivity):.8f} K/(W/m2)")
+        np.savez(args.output / "rce_earth_solar_sensitivity.npz",
+                 solar_constant_W_m2=args.solar_constant,
+                 ocean_temperature_K=bottom, dT_ocean_dS0_K_per_W_m2=sensitivity)
     if args.line_data is not None:
         save_line_spectrum(column, result, args.line_data, args.output, args.line_dnu)
     print(f"Saved profile, spectra, and figure to {args.output}")

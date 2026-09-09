@@ -97,6 +97,131 @@ A failed solve does not establish that no equilibrium exists. Compare
 multiple initial states and refine the pressure and angular grids, checking
 the temperature profile and convective boundary as well as energy balance.
 
+Implicit sensitivities
+----------------------
+
+``exojax.atm.rce_implicit.make_implicit_rce_solver`` constructs a
+``solve(params)`` function compatible with ``jax.jit``, ``jax.grad``, and
+``jax.jvp``. It uses the existing host solver for the forward solution and
+implicitly differentiates the converged equations. It does not differentiate
+the Newton iterations, stopping decisions, or mask updates.
+
+The factory takes
+``(pressure_bar, pressure_boundaries_bar, temperature_initial,
+bottom_temperature_initial, internal_flux, radiative_flux, neutral_gradient,
+*, valid_state=None, **solver_options)``. Pressure arrays, initial guesses,
+and numerical settings are fixed when constructing it. Every call to
+``solve(params)`` solves the forward problem again with the current parameters.
+All differentiable physical inputs must be explicit leaves of ``params``,
+which is a PyTree of real floating-point scalars or arrays. Do not hide
+differentiated values in callback closures.
+
+``radiative_flux`` has signature ``(T, T_bottom, params)``. The neutral
+gradient can remain a scalar or array, or use the same callback signature.
+The optional ``valid_state`` also receives ``(T, T_bottom, params)``.
+``internal_flux`` can be a fixed scalar or a callable ``internal_flux(params)``.
+Other solver options have the same meaning as in ``solve_rce``.
+The returned ``ImplicitRceResult`` is a NamedTuple with ``temperature``,
+``bottom_temperature``, ``convective_mask``, and ``converged`` fields.
+
+Let :math:`u=\log(T_1,\ldots,T_N,T_{\mathrm{bottom}})`, let :math:`\theta`
+denote the parameters, and hold the converged mask :math:`m` fixed locally.
+Writing the selected equations as :math:`R(u,\theta;m)=0`, the JVP solves
+
+.. math::
+
+   R_u\,\dot u=-R_\theta\,\dot\theta.
+
+This includes parameter and temperature dependence in both radiation and the
+neutral gradient. For reverse mode, an incoming cotangent :math:`\bar u`
+gives the equivalent adjoint equations
+
+.. math::
+
+   R_u^\mathsf{T}\lambda=\bar u,
+   \qquad
+   \bar\theta=-R_\theta^\mathsf{T}\lambda.
+
+JAX also includes any direct parameter dependence of a surrounding objective
+and converts log-temperature sensitivities to temperature sensitivities.
+These formulas require a nonsingular :math:`R_u` and a locally smooth branch
+of every supplied physical callback. The mask is recomputed in each forward
+solve; only its local derivative is held fixed.
+
+Sensitivity evaluation requires strict separation from a convective switch:
+
+.. math::
+
+   F_{\mathrm{conv},i}>\epsilon_F\quad\text{on active connections},
+   \qquad
+   \nabla_i-\nabla_{\mathrm{neutral},i}<-\epsilon_\nabla
+   \quad\text{on inactive connections},
+
+where :math:`\epsilon_F` is the combined flux tolerance and
+:math:`\epsilon_\nabla` is ``gradient_atol``. A converged primal solution can
+fail this stricter sensitivity guard. Sensitivities are then invalidated
+with NaN coefficients. This guard does not detect other branch changes
+inside user callbacks. A singular tangent system can also produce nonfinite
+sensitivities; check sensitivity finiteness as well as primal convergence.
+
+Convergence tolerances alone do not guarantee accurate sensitivities,
+especially for poorly conditioned equations in thin upper layers. Check
+tolerance and grid refinement, and compare against finite differences of
+separately converged solutions over a range of perturbation sizes. Those
+perturbations must remain on the same convective and physical branches.
+
+Nonconvergence or an expected input/domain ``ValueError`` in the host solve
+returns NaN temperatures and ``converged=False``. Use ordinary ``solve_rce``
+for detailed failure diagnostics.
+
+The forward solve runs on the host, with its JAX callback calculations on
+CPU. A CPU backend must be available, and callbacks must support CPU
+execution without explicitly pinning operations or inputs to a GPU. The
+wrapper uses `JAX pure callbacks
+<https://docs.jax.dev/en/latest/_autosummary/jax.pure_callback.html>`_
+and a custom JVP; wrapping the call in ``jit`` does not turn the forward
+Newton loop into an accelerator program. Model callbacks must be pure,
+without externally visible side effects.
+
+The following self-contained one-layer example uses two independent,
+artificial flux formulas to check the API; it is not a radiative-transfer
+model. Near :math:`F=a=1`, its solution is :math:`T=300F^{1/4}` and
+:math:`T_{\mathrm{bottom}}=400(F/a)^{1/4}`, where :math:`F` and :math:`a`
+are the two supplied parameters.
+
+.. code-block:: python
+
+   import jax
+   import jax.numpy as jnp
+
+   from exojax.atm.rce_implicit import make_implicit_rce_solver
+
+   jax.config.update("jax_enable_x64", True)
+
+   def radiation(temperature, bottom_temperature, params):
+       return jnp.array([
+           (temperature[0] / 300.0)**4,
+           params["coefficient"] * (bottom_temperature / 400.0)**4,
+       ])
+
+   solve = make_implicit_rce_solver(
+       jnp.array([1.0]), jnp.array([0.5, 4.0]),
+       jnp.array([280.0]), 380.0,
+       lambda params: params["flux"], radiation, 0.3,
+       flux_atol=1.0e-9, flux_rtol=0.0,
+   )
+   params = {"flux": jnp.array(1.0), "coefficient": jnp.array(1.0)}
+   result = jax.jit(solve)(params)
+   assert bool(result.converged)
+
+   bottom = lambda values: solve(values).bottom_temperature
+   derivatives = jax.jit(jax.grad(bottom))(params)
+   direction = {"flux": jnp.array(1.0), "coefficient": jnp.array(0.0)}
+   _, directional_derivative = jax.jvp(bottom, (params,), (direction,))
+   print(result.bottom_temperature)   # 400 K
+   print(derivatives)                 # flux: 100, coefficient: -100
+   print(directional_derivative)      # 100
+
 Connecting an existing CKD table
 ----------------------------------------
 

@@ -327,6 +327,71 @@ The CKD calculation also assumes correlated absorption ranks between
 layers; the line-by-line spectrum provides an independent check of this
 approximation at the converged state.
 
+Differentiate the equilibrium with respect to sunlight
+------------------------------------------------------
+
+Add ``--solar-sensitivity`` to calculate the local response of the solved
+ocean temperature to the solar constant. The opacity tables can be reused:
+
+.. code-block:: console
+
+   JAX_PLATFORMS=cpu MPLBACKEND=Agg python examples/rce_earth.py \
+       --table .database/rce_earth/water_ckd.npz \
+       --continuum .database/rce_earth/mt_ckd_4.3/absco-ref_wv-mt-ckd.nc \
+       --solar-sensitivity --output rce_earth_output
+
+The script first obtains a converged state, then builds a differentiable
+solver using it as a fixed initial guess. Each call of this solver solves
+the equilibrium again at the supplied :math:`S_0`. It recomputes water
+abundance, line and continuum opacity, and thermal radiation at every
+trial temperature; the direct stellar spectrum scales with :math:`S_0`.
+
+.. code-block:: python
+
+   solar_solver = column.make_solar_solver(result)
+   temperature, sensitivity = jax.jit(jax.value_and_grad(
+       lambda solar: solar_solver(solar).bottom_temperature
+   ))(jnp.asarray(1361.0))
+
+The derivative comes from the converged equations rather than the Newton
+iteration history. With :math:`u=(\ln T_0,\ldots,\ln T_N)` and the final
+convective mask held fixed, the equilibrium residual satisfies
+
+.. math::
+
+   R(u_*, S_0)&=0,\\
+   \frac{\partial R}{\partial u}\frac{d u_*}{d S_0}
+     &=-\frac{\partial R}{\partial S_0},\\
+   \frac{d T_{\rm ocean}}{d S_0}
+     &=T_{\rm ocean}\left(\frac{d u_*}{d S_0}\right)_N.
+
+Here the residual contains radiative energy balance on inactive
+connections and the temperature-dependent neutral-gradient equation on
+active connections. Both derivatives include the temperature feedback
+through water, opacity, and the pseudoadiabatic gradient. JAX solves this
+linear system and transposes it for ``jax.grad``. The forward equilibrium
+solve uses a host callback and requires a CPU backend. The script reports
+the sensitivity in K/(W/m2) and saves it with :math:`S_0` and ocean
+temperature in ``rce_earth_solar_sensitivity.npz``.
+
+For the reference 24-layer, 40-point k table above, this gives
+:math:`dT_{\rm ocean}/dS_0=0.117993724` K/(W/m2) at 1361 W/m2.
+Independent equilibrium solves at :math:`S_0\pm0.1` W/m2 give a central
+finite difference of 0.117993736 K/(W/m2), agreeing to about
+10\ :sup:`-7` in relative terms. Using :math:`S_0\pm1` W/m2 gives
+0.117994966 K/(W/m2). All four perturbed solves converge with the same
+convective mask. This checks the local ocean-temperature derivative of
+this discrete model; it does not validate derivatives throughout the
+upper temperature profile, establish grid convergence, or measure the
+climate sensitivity of present-day Earth.
+
+This is a local derivative on a fixed pressure grid. It requires a
+nonsingular residual Jacobian and a locally unchanged convective mask,
+cold-trap location, and saturation branch. The generic wrapper returns
+NaN derivatives at a convective switch within the solver tolerances;
+other branch changes in the example physics require separate inspection.
+The numerical refinement limitations above also apply to sensitivities.
+
 What to inspect and refine
 ---------------------------
 

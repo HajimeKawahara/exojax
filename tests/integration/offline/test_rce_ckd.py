@@ -6,6 +6,7 @@ import numpy as np
 import pytest
 
 from exojax.atm.rce import solve_rce
+from exojax.atm.rce_implicit import make_implicit_rce_solver
 from exojax.opacity import OpaCKD
 from exojax.opacity.ckd.contracts import CKDTableInfo
 from exojax.opacity.ckd.core import gauss_legendre_grid
@@ -121,6 +122,31 @@ def test_rce_with_temperature_dependent_ckd():
     assert np.all(result.convective_flux >= -0.3)
     np.testing.assert_allclose(result.flux_residual, 0.0, atol=0.3)
     assert np.max(result.gradient_residual) <= 1.0e-6
+
+    implicit_solve = make_implicit_rce_solver(
+        pressure, boundaries, result.temperature, result.bottom_temperature,
+        lambda flux: flux, lambda t, tb, flux: radiative_flux(t, tb),
+        neutral_gradient=2.0 / 7.0,
+        convective_mask_initial=result.convective_mask,
+        valid_state=lambda t, tb, flux: valid_state(t, tb),
+        flux_atol=1.0e-5, flux_rtol=0.0, gradient_atol=1.0e-9,
+    )
+    def profile(flux):
+        state = implicit_solve(flux)
+        return jnp.append(state.temperature, state.bottom_temperature)
+
+    sensitivity = jax.jit(jax.jacfwd(profile))(internal_flux)
+    delta_flux = 200.0
+    lower = implicit_solve(internal_flux - delta_flux)
+    upper = implicit_solve(internal_flux + delta_flux)
+    assert lower.converged and upper.converged
+    np.testing.assert_array_equal(lower.convective_mask, result.convective_mask)
+    np.testing.assert_array_equal(upper.convective_mask, result.convective_mask)
+    finite_difference = (
+        np.append(upper.temperature, upper.bottom_temperature)
+        - np.append(lower.temperature, lower.bottom_temperature)
+    ) / (2.0 * delta_flux)
+    np.testing.assert_allclose(sensitivity, finite_difference, rtol=2.0e-5)
 
     assert valid_state(temperature, 2500.0)
     for invalid_temperature in (200.0, 2200.0):

@@ -4,7 +4,8 @@ Temperatures live at layer centers and at the lower boundary. The caller
 supplies radiative fluxes, the neutral convective gradient, and any physical
 domain constraints. This module only solves energy balance and convective
 stability; it selects no gas, condensate, or radiation model. The host-controlled
-active-set Newton iteration is not itself differentiable.
+active-set Newton iteration is not itself differentiable. Parameter sensitivities
+of the converged state are provided by ``exojax.atm.rce_implicit``.
 """
 
 from dataclasses import dataclass
