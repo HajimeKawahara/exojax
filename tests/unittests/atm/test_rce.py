@@ -5,8 +5,12 @@ import jax.numpy as jnp
 import numpy as np
 import pytest
 
-from exojax.atm.rce import reconstruct_boundary_temperature, rce_residual, solve_rce
-from exojax.rt.flux import direct_beam_fluxes, rtrun_emis_pureabs_ibased_linsap_fluxes
+from exojax.atm.rce import rce_residual, solve_rce
+from exojax.rt.flux import (
+    direct_beam_fluxes,
+    reconstruct_boundary_temperature,
+    rtrun_emis_pureabs_ibased_linsap_fluxes,
+)
 from exojax.rt.rtransfer import initialize_gaussian_quadrature
 
 
@@ -23,7 +27,7 @@ def _toy_solve(**kwargs):
         bottom_temperature_initial=400.0,
         internal_flux=1.0,
         radiative_flux=_toy_flux,
-        adiabatic_gradient=0.25,
+        neutral_gradient=0.25,
         flux_atol=1.0e-9,
         flux_rtol=1.0e-9,
         gradient_atol=1.0e-9,
@@ -53,7 +57,7 @@ def test_active_set_grows_and_shrinks_to_exact_solution(warm, initial_mask):
 
 
 def test_stable_column_and_fixed_mask_jacobian():
-    result = _toy_solve(adiabatic_gradient=np.array([0.3, 1.0]))
+    result = _toy_solve(neutral_gradient=np.array([0.3, 1.0]))
     assert result.converged, result.status
     assert not np.any(result.convective_mask)
     np.testing.assert_allclose(result.radiative_flux, 1.0, atol=2e-9)
@@ -68,16 +72,6 @@ def test_stable_column_and_fixed_mask_jacobian():
     step = 1.0e-5
     finite_difference = (residual(log_t + step * direction) - residual(log_t - step * direction)) / (2 * step)
     np.testing.assert_allclose(jax.jacfwd(residual)(log_t) @ direction, finite_difference, rtol=1e-8)
-
-
-def test_boundary_reconstruction_including_top_and_bottom():
-    pressure = jnp.array([1.0, 4.0, 16.0])
-    boundaries = jnp.array([0.5, 2.0, 8.0, 32.0])
-    temperature = 300.0 * pressure**0.2
-    bottom = 300.0 * boundaries[-1]**0.2
-    actual = jax.jit(reconstruct_boundary_temperature)(pressure, boundaries, temperature, bottom)
-    expected = np.append(temperature[0], 300.0 * np.asarray(boundaries[1:])**0.2)
-    np.testing.assert_allclose(actual, expected, rtol=1e-14)
 
 
 def _independent_gray_flux(source, dtau):
@@ -115,7 +109,7 @@ def test_gray_radiative_equilibrium_against_independent_linear_solve(
     matrix = np.column_stack([_independent_gray_flux(basis, np.asarray(dtau)) for basis in np.eye(5)])
     expected_source = np.linalg.solve(matrix, internal_flux + np.asarray(stellar))
     result = solve_rce(pressure, boundaries, jnp.full(4, 160.0), 220.0,
-                       internal_flux, flux, adiabatic_gradient=10.0,
+                       internal_flux, flux, neutral_gradient=10.0,
                        flux_atol=1e-6, flux_rtol=1e-10)
     assert result.converged, result.status
     actual_tb = reconstruct_boundary_temperature(pressure, boundaries, result.temperature, result.bottom_temperature)
@@ -180,7 +174,7 @@ def test_active_set_cycle_is_reported():
         return jnp.array([temperature[0], 1.5 - gradient])
 
     result = solve_rce(np.array([1.0]), np.array([0.5, np.e]), np.array([1.0]),
-                       np.exp(0.4), 1.0, flux, adiabatic_gradient=0.25)
+                       np.exp(0.4), 1.0, flux, neutral_gradient=0.25)
     assert not result.converged
     assert result.status == "active_set_cycle"
 
@@ -190,7 +184,7 @@ def test_nonfinite_flux_cannot_hide_in_an_active_connection():
         return jnp.array([(temperature[0] / 300.0)**4, -jnp.inf])
 
     result = solve_rce(np.array([1.0]), np.array([0.5, 2.0]), np.array([300.0]),
-                       300.0 * 2**0.25, 1.0, flux, adiabatic_gradient=0.25,
+                       300.0 * 2**0.25, 1.0, flux, neutral_gradient=0.25,
                        convective_mask_initial=np.array([True]))
     assert not result.converged
     assert result.status == "nonfinite_residual"
@@ -204,7 +198,7 @@ def test_float32_cannot_converge_with_inconsistent_physical_gradients():
 
     result = solve_rce(np.array([1.0]), np.array([0.5, np.exp(0.03125)]),
                        np.array([301.0]), 301.0 * np.exp((0.25 + 5e-6) * 0.03125),
-                       1.0, flux, adiabatic_gradient=0.25,
+                       1.0, flux, neutral_gradient=0.25,
                        convective_mask_initial=np.array([True]))
     if result.converged:
         assert np.max(np.abs(result.gradient_residual)) <= 1e-6
@@ -243,7 +237,8 @@ def _gray_rce(nlayer, initial_scale=1.0, nangle=4):
 
     initial = initial_scale * 150.0 * (0.5 + 75.0 * (pressure / 100.0)**2)**0.25
     result = solve_rce(pressure, boundaries, initial, initial_scale * 450.0,
-                       sigma * 150.0**4, flux, flux_atol=1e-5, flux_rtol=1e-8)
+                       sigma * 150.0**4, flux, neutral_gradient=2.0 / 7.0,
+                       flux_atol=1e-5, flux_rtol=1e-8)
     return pressure, boundaries, result
 
 
@@ -288,7 +283,7 @@ def test_gray_rce_warm_cold_starts_and_angular_resolution():
     dict(pressure_boundaries_bar=[0.0, 2.0, 16.0]),
     dict(temperature_initial=[0.0, 300.0]),
     dict(internal_flux=-1.0),
-    dict(adiabatic_gradient=[0.25]),
+    dict(neutral_gradient=[0.25]),
     dict(convective_mask_initial=[0, 1]),
     dict(flux_atol=0.0, flux_rtol=0.0),
     dict(max_iterations=0),

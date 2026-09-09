@@ -31,7 +31,7 @@ def _solve(**kwargs):
         bottom_temperature_initial=400.0,
         internal_flux=1.0,
         radiative_flux=_flux,
-        adiabatic_gradient=_gradient,
+        neutral_gradient=_gradient,
         flux_atol=1.0e-9,
         flux_rtol=1.0e-9,
         gradient_atol=1.0e-9,
@@ -97,8 +97,8 @@ def test_gradient_callback_derivatives_enter_fixed_mask_jacobian():
 
 @pytest.mark.parametrize("gradient", [0.25, np.array([0.25, 0.3])])
 def test_constant_callback_preserves_fixed_gradient_solution(gradient):
-    fixed = _solve(adiabatic_gradient=gradient)
-    callback = _solve(adiabatic_gradient=lambda t, tb: jnp.asarray(gradient))
+    fixed = _solve(neutral_gradient=gradient)
+    callback = _solve(neutral_gradient=lambda t, tb: jnp.asarray(gradient))
     assert fixed.converged and callback.converged
     np.testing.assert_array_equal(callback.convective_mask, fixed.convective_mask)
     np.testing.assert_allclose(callback.temperature, fixed.temperature, rtol=1e-13)
@@ -108,14 +108,14 @@ def test_constant_callback_preserves_fixed_gradient_solution(gradient):
 
 @pytest.mark.parametrize("value", [jnp.nan, jnp.inf, 0.0, -0.1])
 def test_invalid_initial_gradient_is_rejected_on_inactive_connection(value):
-    with pytest.raises(ValueError, match="adiabatic_gradient must be finite and positive"):
-        _solve(adiabatic_gradient=lambda t, tb: jnp.array([0.25, value]))
+    with pytest.raises(ValueError, match="neutral_gradient must be finite and positive"):
+        _solve(neutral_gradient=lambda t, tb: jnp.array([0.25, value]))
 
 
 @pytest.mark.parametrize("shape", [(3,), (2, 1)])
 def test_gradient_callback_shape_is_validated(shape):
-    with pytest.raises(ValueError, match="adiabatic_gradient must be scalar or have shape"):
-        _solve(adiabatic_gradient=lambda t, tb: jnp.full(shape, 0.25))
+    with pytest.raises(ValueError, match="neutral_gradient must be scalar or have shape"):
+        _solve(neutral_gradient=lambda t, tb: jnp.full(shape, 0.25))
 
 
 @pytest.mark.parametrize("invalid", [jnp.nan, jnp.inf, 0.0, -0.1])
@@ -125,7 +125,7 @@ def test_invalid_trial_gradient_cannot_hide_on_inactive_connection(invalid):
     def gradient(temperature, bottom):
         return jnp.array([0.25, jnp.where(temperature[0] <= 250.0, 0.25, invalid)])
 
-    result = _solve(adiabatic_gradient=gradient)
+    result = _solve(neutral_gradient=gradient)
     assert not result.converged
     assert result.status == "line_search_failed"
     assert result.iterations == 0

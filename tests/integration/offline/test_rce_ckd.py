@@ -5,12 +5,13 @@ import jax.numpy as jnp
 import numpy as np
 import pytest
 
-from exojax.atm.rce import reconstruct_boundary_temperature, solve_rce
+from exojax.atm.rce import solve_rce
 from exojax.opacity import OpaCKD
 from exojax.opacity.ckd.contracts import CKDTableInfo
 from exojax.opacity.ckd.core import gauss_legendre_grid
 from exojax.rt.flux import (
     integrate_ckd_flux,
+    reconstruct_boundary_temperature,
     rtrun_emis_pureabs_ibased_linsap_fluxes,
 )
 from exojax.rt.layeropacity import layer_optical_depth, layer_optical_depth_ckd
@@ -111,7 +112,8 @@ def test_rce_with_temperature_dependent_ckd():
 
     result = solve_rce(
         pressure, boundaries, temperature, bottom_temperature, internal_flux,
-        radiative_flux, valid_state=valid_state, flux_atol=0.1, flux_rtol=1.0e-7,
+        radiative_flux, neutral_gradient=2.0 / 7.0,
+        valid_state=valid_state, flux_atol=0.1, flux_rtol=1.0e-7,
     )
     assert result.converged, result.status
     assert result.domain_valid
@@ -126,14 +128,14 @@ def test_rce_with_temperature_dependent_ckd():
             solve_rce(
                 pressure, boundaries, np.full(len(pressure), invalid_temperature),
                 bottom_temperature, internal_flux, radiative_flux,
-                valid_state=valid_state,
+                neutral_gradient=2.0 / 7.0, valid_state=valid_state,
             )
     pressure *= 1.0e-3
     boundaries *= 1.0e-3
     with pytest.raises(ValueError, match="valid_state"):
         solve_rce(
             pressure, boundaries, temperature, bottom_temperature, internal_flux,
-            radiative_flux, valid_state=valid_state,
+            radiative_flux, neutral_gradient=2.0 / 7.0, valid_state=valid_state,
         )
 
 

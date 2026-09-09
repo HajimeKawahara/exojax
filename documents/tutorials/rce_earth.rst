@@ -14,6 +14,13 @@ The model is a saturated nitrogen--water Earth analogue. The surface
 temperature is an unknown: the initial value of 288 K is only a numerical
 guess. See :doc:`../userguide/rce` for the general solver contract.
 
+Water thermodynamics and convective gradients are defined in
+:download:`rce_earth_physics.py <../../examples/rce_earth_physics.py>`.
+:download:`rce_earth.py <../../examples/rce_earth.py>` assembles the spectral
+column and liquid-ocean domain check, and explicitly supplies
+``neutral_gradient`` to ``solve_rce``. Interface-temperature reconstruction
+and radiation routines live in ``exojax.rt.flux``.
+
 Prepare the opacity and run
 ---------------------------
 

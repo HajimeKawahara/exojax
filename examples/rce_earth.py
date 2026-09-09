@@ -15,12 +15,13 @@ import jax
 import jax.numpy as jnp
 import numpy as np
 
-from exojax.atm.rce import reconstruct_boundary_temperature, solve_rce
+from exojax.atm.rce import solve_rce
 from exojax.opacity import OpaCKD
 from exojax.opacity.ckd.core import gauss_legendre_grid
 from exojax.rt.flux import (
     direct_beam_fluxes,
     integrate_ckd_flux,
+    reconstruct_boundary_temperature,
     rtrun_emis_pureabs_ibased_linsap_fluxes,
 )
 from exojax.rt.layeropacity import layer_optical_depth, layer_optical_depth_ckd
@@ -135,7 +136,7 @@ class EarthColumn:
         initial = jnp.maximum(120.0, surface_initial * self.pressure**0.23)
         return solve_rce(
             self.pressure, self.boundaries, initial, surface_initial,
-            0.0, self.radiative_flux, adiabatic_gradient=self.adiabat,
+            0.0, self.radiative_flux, neutral_gradient=self.adiabat,
             convective_mask_initial=np.asarray(self.pressure > 0.05),
             valid_state=self.valid_state, flux_atol=flux_atol, flux_rtol=0.0,
         )

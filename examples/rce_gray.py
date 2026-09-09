@@ -9,8 +9,12 @@ import jax.numpy as jnp
 import numpy as np
 
 from exojax.atm.atmprof import pressure_layer_logspace_from_boundaries
-from exojax.atm.rce import reconstruct_boundary_temperature, solve_rce
-from exojax.rt.flux import direct_beam_fluxes, rtrun_emis_pureabs_ibased_linsap_fluxes
+from exojax.atm.rce import solve_rce
+from exojax.rt.flux import (
+    direct_beam_fluxes,
+    reconstruct_boundary_temperature,
+    rtrun_emis_pureabs_ibased_linsap_fluxes,
+)
 from exojax.rt.rtransfer import initialize_gaussian_quadrature
 
 
@@ -49,7 +53,7 @@ def gray_column(nlayer=48, nangle=4, irradiation_temperature=200.0):
     result = solve_rce(
         pressure, boundaries, initial, float(initial[-1]),
         sigma * internal_temperature**4, radiative_flux,
-        adiabatic_gradient=2.0 / 7.0,
+        neutral_gradient=2.0 / 7.0,
     )
     return pressure, boundaries, result
 

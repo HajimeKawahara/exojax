@@ -1,16 +1,14 @@
 Radiative-convective equilibrium
 ================================
 
-``exojax.atm.rce.solve_rce`` determines layer temperatures and a black lower
-boundary temperature on a fixed pressure grid. It uses a static,
-plane-parallel column with efficient convection. Radiation and the neutral
-convective gradient are supplied by callbacks; the default gradient is the
-dry value 2/7. Internal heat flux and irradiation are boundary inputs.
+``exojax.atm.rce.solve_rce`` determines layer and lower-boundary temperatures
+on a fixed pressure grid. The core provides the active-set Newton iteration;
+the caller supplies the radiation callback and required ``neutral_gradient``.
 
-The :doc:`../tutorials/rce_earth` forward example couples ExoJAX water line
-opacity, a water-vapor continuum, an ocean saturation boundary, and a
-temperature-dependent pseudoadiabat. Its outputs include the solved
-temperature profile and outgoing band spectrum.
+``exojax.rt.flux`` provides interface-temperature reconstruction and
+pure-absorption radiation routines. Thermodynamics, composition, and
+boundary assumptions belong to the application, as illustrated by the
+:doc:`../tutorials/rce_earth` forward example.
 
 Run the gray example from the repository root:
 
@@ -37,11 +35,11 @@ opacity and sources at every trial state. Downward stellar flux is subtracted
 from upward minus downward thermal flux. ``direct_beam_fluxes`` takes incident
 flux through a horizontal surface and an incidence cosine ``mu0``; the flux
 already includes the projection factor. Its bottom value includes radiation
-absorbed by the black lower boundary.
+reaching the lower boundary.
 
 For the provided pure-absorption transfer kernel, reconstruct boundary
-temperatures with ``reconstruct_boundary_temperature``. This interpolates
-log T in log P, takes the first center temperature at the top, and uses
+temperatures with ``exojax.rt.flux.reconstruct_boundary_temperature``.
+This interpolates log T in log P, takes the first center temperature at the top, and uses
 ``T_bottom`` at the bottom. Also pass the actual center Planck sources as
 ``source_center`` and
 ``upper_fraction=(P_center-P_upper)/(P_lower-P_upper)``. This splits each
@@ -52,10 +50,10 @@ directly to each solved layer temperature and suppresses alternating errors
 in center temperature.
 Returned fluxes remain at the original N+1 pressure boundaries.
 
-The bottom gas source and black surface source share ``T_bottom``. Its value
-is solved from energy balance, including downward radiation and convective
-transport; it is not the internal effective temperature defined by
-``internal_flux = sigma * T_int**4``.
+With this transfer kernel's default black boundary, the bottom gas and
+surface sources share ``T_bottom``. Its value is solved from energy balance,
+including downward radiation and convective transport; it is not the
+internal effective temperature defined by ``internal_flux = sigma * T_int**4``.
 
 Convective closure and convergence
 ----------------------------------
@@ -63,17 +61,16 @@ Convective closure and convergence
 The solver uses logarithmic temperatures and damped Newton steps for a fixed
 convective mask, then updates that mask. Connections join adjacent centers,
 with the last connection joining the lowest center to the bottom boundary.
-``adiabatic_gradient`` is a positive scalar, an N-element array on those
-connections, or a JAX-compatible callable ``(T, T_bottom) -> gradient``
+The required ``neutral_gradient`` is a positive scalar, an N-element array
+on those connections, or a JAX-compatible callable ``(T, T_bottom) -> gradient``
 returning either shape. A callable is reevaluated at every trial state;
-its temperature derivatives enter the Newton Jacobian. This allows a
-pseudoadiabatic closure to respond to temperature and available vapor.
-The caller supplies the thermodynamics and composition model.
+its temperature derivatives enter the Newton Jacobian. The caller defines
+the neutral gradient from the chosen thermodynamics and composition model.
 
 At the top, radiative flux equals ``internal_flux`` and convection is zero.
-Inactive connections require radiative energy balance and a subadiabatic
-temperature gradient. Active connections require the supplied neutral gradient and
-nonnegative upward convective flux. Both activation and deactivation are
+Inactive connections require radiative energy balance and a temperature
+gradient at or below the supplied neutral value. Active connections require
+that gradient and nonnegative upward convective flux. Both activation and deactivation are
 supported. The host iteration is not itself differentiable; the fixed-mask
 ``rce_residual`` is JAX-compatible.
 
@@ -109,7 +106,8 @@ Prepare or load an ``OpaCKD`` object before the nonlinear solve; see
 ready object ``opa`` and a single absorber with mass mixing ratio ``mmr``
 and molecular mass ``molecular_mass`` in atomic mass units. ``gravity`` is in
 cm/s2. Set the pressure arrays, initial temperatures and internal flux for
-the column before running this snippet. This example has no stellar input.
+the column before running this snippet. This example explicitly supplies a
+dry neutral gradient of 2/7 and has no stellar input.
 
 .. code-block:: python
 
@@ -117,9 +115,10 @@ the column before running this snippet. This example has no stellar input.
    import jax.numpy as jnp
    import numpy as np
 
-   from exojax.atm.rce import reconstruct_boundary_temperature, solve_rce
+   from exojax.atm.rce import solve_rce
    from exojax.rt.flux import (
        integrate_ckd_flux,
+       reconstruct_boundary_temperature,
        rtrun_emis_pureabs_ibased_linsap_fluxes,
    )
    from exojax.rt.layeropacity import layer_optical_depth_ckd
@@ -170,7 +169,7 @@ the column before running this snippet. This example has no stellar input.
        bottom_temperature_initial,
        internal_flux,
        radiative_flux,
-       adiabatic_gradient=2.0 / 7.0,
+       neutral_gradient=2.0 / 7.0,
        valid_state=valid_state,
    )
    if not result.converged:

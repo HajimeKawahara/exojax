@@ -6,6 +6,32 @@ from jax import jit, lax
 from exojax.rt.rtransfer import coeffs_linsap
 
 
+def reconstruct_boundary_temperature(
+    pressure_bar, pressure_boundaries_bar, temperature, bottom_temperature
+):
+    """Interpolate log T in log P from layer centers to RT interfaces.
+
+    Arrays run from top to bottom. Center pressures and temperatures have
+    shape ``(N,)``; boundary pressures have shape ``(N+1,)``. The top
+    boundary takes the first layer temperature (an isothermal upper half
+    layer), and the bottom takes ``bottom_temperature``. This reconstruction
+    specifies interface sources. Also pass the center source to the linear
+    RT flux routine, splitting each layer at its pressure center. Including
+    both source locations avoids alternating temperature modes in thin layers.
+    The source is linear in optical depth in each half; opacity is evaluated
+    at layer centers and held constant through the layer.
+    """
+    pressure_nodes = jnp.append(pressure_bar, pressure_boundaries_bar[-1])
+    temperature_nodes = jnp.append(temperature, bottom_temperature)
+    return jnp.exp(
+        jnp.interp(
+            jnp.log(pressure_boundaries_bar),
+            jnp.log(pressure_nodes),
+            jnp.log(temperature_nodes),
+        )
+    )
+
+
 @jit
 def rtrun_emis_pureabs_ibased_linsap_fluxes(
     dtau,

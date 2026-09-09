@@ -6,12 +6,23 @@ from jax import grad, jacfwd, jit
 from exojax.rt.flux import (
     direct_beam_fluxes,
     integrate_ckd_flux,
+    reconstruct_boundary_temperature,
     rtrun_emis_pureabs_ibased_linsap_fluxes,
 )
 from exojax.rt.rtransfer import (
     initialize_gaussian_quadrature,
     rtrun_emis_pureabs_ibased_linsap,
 )
+
+
+def test_boundary_reconstruction_including_top_and_bottom():
+    pressure = jnp.array([1.0, 4.0, 16.0])
+    boundaries = jnp.array([0.5, 2.0, 8.0, 32.0])
+    temperature = 300.0 * pressure**0.2
+    bottom = 300.0 * boundaries[-1]**0.2
+    actual = jit(reconstruct_boundary_temperature)(pressure, boundaries, temperature, bottom)
+    expected = np.append(temperature[0], 300.0 * np.asarray(boundaries[1:])**0.2)
+    np.testing.assert_allclose(actual, expected, rtol=1e-14)
 
 
 @pytest.mark.parametrize("spectral_shape", [(), (3,), (2, 3)])
