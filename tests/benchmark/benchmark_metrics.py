@@ -113,14 +113,18 @@ def directional_check(
     tolerance=1e-3,
     in_domain=None,
     region=None,
+    stencil_resolved=None,
 ):
     """Compare JAX JVP with central differences at two adjacent supplied steps.
 
     ``in_domain`` rejects endpoints outside the allowed physical/prior domain.
     ``region`` returns scalar/array labels for smooth regions, such as per-layer
-    temperature clipping states. A region change gives one-sided diagnostics
-    only; excluded steps cannot bridge a pair of passing smooth steps. Neither
+    temperature clipping states and RV interpolation cells. A region change
+    gives one-sided diagnostics only; excluded steps cannot bridge a pair of
+    passing smooth steps. Neither
     finite sampling nor this check guarantees accuracy over an entire prior.
+    ``stencil_resolved(center, plus, minus)`` can additionally reject steps lost
+    to rounding in transformed model coordinates.
     """
     import jax
     import jax.numpy as jnp
@@ -161,6 +165,8 @@ def directional_check(
     result["nonfinite_center_indices"] = _nonfinite(center)
     center_finite = bool(np.all(np.isfinite(center)) and np.all(np.isfinite(ad)))
     center_region = region(position) if region is not None else None
+    active = direction != 0
+    represented_position = np.asarray(jnp.asarray(position))
     previous_passed = False
     for step in steps:
         record = {"step": float(step), "status": None, "passed": False}
@@ -168,6 +174,19 @@ def directional_check(
         plus, minus = position + step * direction, position - step * direction
         if not bool(domain(plus)) or not bool(domain(minus)):
             record["status"] = "out_of_domain"
+            previous_passed = False
+            continue
+        resolved = all(
+            np.all(
+                (np.asarray(jnp.asarray(endpoint)) != represented_position)[active]
+            )
+            for endpoint in (plus, minus)
+        )
+        if not resolved or (
+            stencil_resolved is not None
+            and not stencil_resolved(position, plus, minus)
+        ):
+            record["status"] = "roundoff_limited"
             previous_passed = False
             continue
         plus_value, minus_value = _array(function(plus)), _array(function(minus))
@@ -221,5 +240,9 @@ def directional_check(
     ):
         result.update(passed=False, reason="nonfinite_evaluation")
     elif not result["passed"]:
-        result["reason"] = "no_adjacent_passing_smooth_steps"
+        result["reason"] = (
+            "roundoff_limited"
+            if any(record["status"] == "roundoff_limited" for record in result["steps"])
+            else "no_adjacent_passing_smooth_steps"
+        )
     return result
