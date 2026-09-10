@@ -249,7 +249,19 @@ def solve_rce(
             _evaluate_gradient(neutral_gradient, values[:-1], values[-1]),
         )
 
-    jacobian = jax.jit(jax.jacfwd(residual, argnums=0))
+    @jax.jit
+    def jacobian(log_t, active):
+        # Evaluate one tangent at a time to avoid a full spectral batch per
+        # temperature variable. Rows of mapped JVPs are Jacobian columns.
+        columns = jax.lax.map(
+            lambda tangent: jax.jvp(
+                lambda values: residual(values, active),
+                (log_t,), (tangent,),
+            )[1],
+            jnp.eye(log_t.size, dtype=log_t.dtype),
+        )
+        return columns.T
+
     log_t = np.log(temperatures)
 
     def state_temperature(log_values):

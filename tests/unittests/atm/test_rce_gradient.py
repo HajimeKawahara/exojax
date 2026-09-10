@@ -95,6 +95,39 @@ def test_gradient_callback_derivatives_enter_fixed_mask_jacobian():
     np.testing.assert_allclose(matrix, finite_difference, rtol=1e-8, atol=1e-10)
 
 
+@pytest.mark.parametrize("gradient", [0.25, _gradient], ids=["fixed", "state_dependent"])
+@pytest.mark.parametrize("initial_mask", [[False, False], [False, True], [True, True]])
+def test_newton_matrix_matches_forward_jacobian(monkeypatch, gradient, initial_mask):
+    log_t = jnp.asarray(np.log([250.0, 350.0, 400.0]))
+    mask = jnp.array(initial_mask)
+
+    def residual(values):
+        return rce_residual(
+            values, jnp.array([1.0, 4.0]), 16.0, 1.0,
+            _flux, gradient, mask, flux_scale=2e-9, gradient_scale=1e-9,
+        )
+
+    expected = np.asarray(jax.jit(jax.jacfwd(residual))(log_t))
+    assert not np.allclose(expected, expected.T)
+    captured = []
+    linear_solve = np.linalg.solve
+
+    def capture_matrix(matrix, rhs):
+        if not captured:
+            captured.append((matrix.copy(), rhs.copy()))
+        return linear_solve(matrix, rhs)
+
+    monkeypatch.setattr(np.linalg, "solve", capture_matrix)
+    result = _solve(neutral_gradient=gradient, convective_mask_initial=np.array(initial_mask))
+    assert result.converged, result.status
+    assert captured
+    matrix, rhs = captured[0]
+    # Normalize tolerance-scaled equations before comparing roundoff.
+    scale = np.max(np.abs(expected))
+    np.testing.assert_allclose(matrix / scale, expected / scale, rtol=1e-13, atol=1e-14)
+    np.testing.assert_allclose(rhs / scale, -residual(log_t) / scale, rtol=1e-13, atol=1e-14)
+
+
 @pytest.mark.parametrize("gradient", [0.25, np.array([0.25, 0.3])])
 def test_constant_callback_preserves_fixed_gradient_solution(gradient):
     fixed = _solve(neutral_gradient=gradient)
