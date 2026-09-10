@@ -292,3 +292,9 @@ def test_gray_rce_warm_cold_starts_and_angular_resolution():
 def test_invalid_inputs_raise(options):
     with pytest.raises(ValueError):
         _toy_solve(**options)
+
+
+@pytest.mark.parametrize("jacobian_mode", ["unknown", None, 1, ["sequential"]])
+def test_invalid_jacobian_mode_raises(jacobian_mode):
+    with pytest.raises(ValueError, match="jacobian_mode"):
+        _toy_solve(jacobian_mode=jacobian_mode)

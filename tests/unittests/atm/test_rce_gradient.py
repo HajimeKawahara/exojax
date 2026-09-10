@@ -97,7 +97,10 @@ def test_gradient_callback_derivatives_enter_fixed_mask_jacobian():
 
 @pytest.mark.parametrize("gradient", [0.25, _gradient], ids=["fixed", "state_dependent"])
 @pytest.mark.parametrize("initial_mask", [[False, False], [False, True], [True, True]])
-def test_newton_matrix_matches_forward_jacobian(monkeypatch, gradient, initial_mask):
+@pytest.mark.parametrize("jacobian_mode", ["sequential", "jacfwd"])
+def test_newton_matrix_matches_forward_jacobian(
+    monkeypatch, gradient, initial_mask, jacobian_mode
+):
     log_t = jnp.asarray(np.log([250.0, 350.0, 400.0]))
     mask = jnp.array(initial_mask)
 
@@ -118,7 +121,10 @@ def test_newton_matrix_matches_forward_jacobian(monkeypatch, gradient, initial_m
         return linear_solve(matrix, rhs)
 
     monkeypatch.setattr(np.linalg, "solve", capture_matrix)
-    result = _solve(neutral_gradient=gradient, convective_mask_initial=np.array(initial_mask))
+    result = _solve(
+        neutral_gradient=gradient, convective_mask_initial=np.array(initial_mask),
+        jacobian_mode=jacobian_mode,
+    )
     assert result.converged, result.status
     assert captured
     matrix, rhs = captured[0]
@@ -126,6 +132,24 @@ def test_newton_matrix_matches_forward_jacobian(monkeypatch, gradient, initial_m
     scale = np.max(np.abs(expected))
     np.testing.assert_allclose(matrix / scale, expected / scale, rtol=1e-13, atol=1e-14)
     np.testing.assert_allclose(rhs / scale, -residual(log_t) / scale, rtol=1e-13, atol=1e-14)
+
+
+@pytest.mark.parametrize("gradient", [0.25, _gradient], ids=["fixed", "state_dependent"])
+def test_jacobian_modes_have_same_solution_and_diagnostics(gradient):
+    sequential = _solve(neutral_gradient=gradient)
+    batched = _solve(neutral_gradient=gradient, jacobian_mode="jacfwd")
+    assert sequential.converged and batched.converged
+    for name in (
+        "temperature", "bottom_temperature", "radiative_flux", "convective_flux",
+        "flux_residual", "gradient_residual",
+    ):
+        np.testing.assert_allclose(
+            getattr(batched, name), getattr(sequential, name), rtol=1e-13, atol=1e-13
+        )
+    np.testing.assert_allclose(batched.scaled_residual, sequential.scaled_residual, atol=1e-5)
+    np.testing.assert_array_equal(batched.convective_mask, sequential.convective_mask)
+    for name in ("iterations", "active_set_iterations", "domain_valid", "status"):
+        assert getattr(batched, name) == getattr(sequential, name)
 
 
 @pytest.mark.parametrize("gradient", [0.25, np.array([0.25, 0.3])])
