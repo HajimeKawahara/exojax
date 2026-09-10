@@ -105,8 +105,9 @@ def test_forward_recomputes_parameters_and_matches_normal_solve():
     assert np.max(np.abs(outputs[0] - outputs[1])) > 1.0
 
 
-def test_jvp_vjp_and_jacobians_match_analytic_solution_and_finite_difference():
-    solve = _make_solver()
+@pytest.mark.parametrize("jacobian_mode", ["sequential", "jacfwd"])
+def test_jvp_vjp_and_jacobians_match_analytic_solution_and_finite_difference(jacobian_mode):
+    solve = _make_solver(jacobian_mode=jacobian_mode)
     vector = jnp.array([1.0, 0.05, 0.16])
 
     def state(values):

@@ -105,6 +105,7 @@ def solve_rce(
     max_iterations=50,
     max_active_set_iterations=30,
     max_backtracks=25,
+    jacobian_mode="sequential",
 ):
     """Solve RCE using damped Newton steps and an active set.
 
@@ -139,6 +140,11 @@ def solve_rce(
         max_iterations: Maximum Newton steps per active set.
         max_active_set_iterations: Maximum number of masks to solve.
         max_backtracks: Maximum line-search trials per Newton step.
+        jacobian_mode: Newton temperature Jacobian evaluation: ``"sequential"``
+            (default) evaluates one JVP at a time to limit spectral intermediate
+            memory; ``"jacfwd"`` batches all directions and may be faster when
+            memory permits. This does not control the separate Jacobian used
+            for implicit differentiation in ``exojax.atm.rce_implicit``.
 
     Returns:
         RceResult: Convergence requires the selected equations, stable inactive
@@ -207,6 +213,10 @@ def solve_rce(
             or value < 1
         ):
             raise ValueError(f"{name} must be a positive integer.")
+    if not isinstance(jacobian_mode, str) or jacobian_mode not in (
+        "sequential", "jacfwd"
+    ):
+        raise ValueError("jacobian_mode must be 'sequential' or 'jacfwd'.")
     if convective_mask_initial is None:
         mask = np.zeros(nlayer, dtype=bool)
     else:
@@ -249,7 +259,22 @@ def solve_rce(
             _evaluate_gradient(neutral_gradient, values[:-1], values[-1]),
         )
 
-    jacobian = jax.jit(jax.jacfwd(residual, argnums=0))
+    if jacobian_mode == "jacfwd":
+        jacobian = jax.jit(jax.jacfwd(residual, argnums=0))
+    else:
+        @jax.jit
+        def jacobian(log_t, active):
+            # Evaluate one tangent at a time to avoid a full spectral batch per
+            # temperature variable. Rows of mapped JVPs are Jacobian columns.
+            columns = jax.lax.map(
+                lambda tangent: jax.jvp(
+                    lambda values: residual(values, active),
+                    (log_t,), (tangent,),
+                )[1],
+                jnp.eye(log_t.size, dtype=log_t.dtype),
+            )
+            return columns.T
+
     log_t = np.log(temperatures)
 
     def state_temperature(log_values):
