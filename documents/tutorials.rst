@@ -63,6 +63,7 @@ Opacity Methods
    Correlated-k transmission with ExoMolOP <tutorials/transmission_ckd_exomolop>
    Patch-based CKD precomputation <tutorials/ckd_precompute_patches>
    CKD emission with OpaCKD <tutorials/ckd_emispure>
+   CKD mixtures with random overlap and rebinning <tutorials/ckd_mixture>
    CKD transmission with OpaCKD <tutorials/ckd_transpure>
    CKD transmission from saved data <tutorials/ckd_transpure_loadonly>
 
