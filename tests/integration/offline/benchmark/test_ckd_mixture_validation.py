@@ -3,6 +3,7 @@
 import importlib
 import json
 from pathlib import Path
+import shutil
 from types import SimpleNamespace
 
 import jax
@@ -20,13 +21,23 @@ def modules(monkeypatch):
             importlib.import_module("ckd_mixture_validation"))
 
 
-def test_real_co_h2o_saved_forward_and_integrity(tmp_path, modules):
+def test_real_co_h2o_saved_forward_and_integrity(tmp_path, modules, monkeypatch):
+    from exojax.test import data
+
     case, _ = modules
+    # Wheel installs place bundled data outside the example's checkout.
+    installed_data = tmp_path / "installed-data"
+    for entry in ("CO/12C-16O/SAMPLE", "H2O/1H2-16O/SAMPLE"):
+        shutil.copytree(data.get_testdata_filename(entry), installed_data / entry)
+    monkeypatch.setattr(data, "get_testdata_filename", lambda entry: installed_data / entry)
     directory = tmp_path / "real-case"
     context = case.prepare_case(directory, samples_per_band=16, ng=4,
                                 temperature_nodes=3, validation_points=1)
     assert context["metadata"]["species_order"] == ["CO", "H2O"]
     assert [entry["lines"] for entry in context["metadata"]["molecules"]] == [259, 197]
+    assert [entry["source"] for entry in context["metadata"]["molecules"]] == [
+        str(installed_data / entry) for entry in ("CO/12C-16O/SAMPLE", "H2O/1H2-16O/SAMPLE")
+    ]
     restored = case.load_context(directory)
     for method in case.METHODS:
         forward = jax.jit(case.make_forward(context, method))

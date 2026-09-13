@@ -260,7 +260,7 @@ def prepare_case(output_dir, *, samples_per_band=1024, ng=16, temperature_nodes=
             for name in LINE_FIELDS:
                 arrays[f"species_{index}_{name}"] = np.asarray(getattr(mdb, name))
             molecule_metadata.append({"species": SPECIES[index], "lines": len(mdb.nu_lines),
-                                      "source": str(source.relative_to(ROOT)),
+                                      "source": str(source.relative_to(ROOT) if source.is_relative_to(ROOT) else source),
                                       "original_line_list": "Li2015" if index == 0 else "POKAZATEL"})
     arrays["molecular_masses"] = np.asarray(masses)
     metadata["molecules"] = molecule_metadata
