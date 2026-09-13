@@ -33,6 +33,17 @@ The CKD path fixes the radial-velocity shift by default because the
 R~1000 CKD tables are not intended for radial-velocity inference.  The
 ``premodit`` path is kept as a NIRSpec-only line-by-line prototype.
 
+CKD mixing defaults to ``--ckd-mixing same_g``, the original addition of
+corresponding g terms. Select ``--ckd-mixing rorr`` for random overlap with
+resorting and rebinning of molecular optical depths. CIA and gray clouds
+remain independent of g. The ``molecules`` list in the input, forward-check,
+run-configuration, and run-status JSON files records the fixed mixing order;
+``ckd_mixing`` records the method. RORR requires identical bands and weights,
+and each table must cover the temperature prior and atmospheric pressures.
+It approximates spectral overlap and vertical rank correlation; for three or
+more species, rebinning errors also depend on their order. A finite forward
+check does not establish accuracy against line-by-line spectra.
+
 The run writes reproducibility and inspection artifacts including
 ``run_config.json``, ``run_status.json``, ``observed_data.npz``,
 ``posterior_sample.npz``, ``posterior_predictive.npz``, and
@@ -119,6 +130,15 @@ parser.add_argument(
     choices=("premodit", "ckd"),
     default="premodit",
     help="Opacity mode used by the forward model.",
+)
+parser.add_argument(
+    "--ckd-mixing",
+    choices=("same_g", "rorr"),
+    default=None,
+    help=(
+        "CKD molecular mixing: corresponding g-term addition (same_g, default) "
+        "or random overlap with resorting and rebinning (rorr). Requires CKD."
+    ),
 )
 parser.add_argument(
     "--data-dir",
@@ -423,6 +443,8 @@ def validate_mode_specific_args(args):
         parser.error("--ckd-table-paths requires --opacity-mode ckd.")
     if args.opacity_mode != "ckd" and args.allow_ckd_download:
         parser.error("--allow-ckd-download requires --opacity-mode ckd.")
+    if args.opacity_mode != "ckd" and args.ckd_mixing is not None:
+        parser.error("--ckd-mixing requires --opacity-mode ckd.")
 
 
 selected_molecules = parse_molecule_list(args.molecules)
@@ -434,6 +456,8 @@ selected_ckd_table_paths = parse_ckd_table_path_map(
 validate_numeric_args(args)
 validate_artifact_args(args)
 validate_mode_specific_args(args)
+if args.opacity_mode == "ckd" and args.ckd_mixing is None:
+    args.ckd_mixing = "same_g"
 
 
 def format_selection(values):
@@ -863,6 +887,7 @@ if not (args.plot_data_only or args.summarize_data or args.check_inputs):
     from exojax.database import molinfo
     if args.opacity_mode == "ckd":
         from exojax.opacity import OpaCKD
+        from exojax.opacity.ckd.mixing import mix_ckd_rorr, validate_ckd_mixture_tables
     else:
         from astropy.io import fits
         from exojax.postproc.specop import SopRotation, SopInstProfile
@@ -1269,6 +1294,7 @@ def input_status_payload(
         "selections": {
             "data_mode": args.data_mode,
             "opacity_mode": args.opacity_mode,
+            "ckd_mixing": args.ckd_mixing,
             "molecules": list(molecules),
             "channels": list(channels),
             "cia_pairs": list(cia_pairs),
@@ -1936,6 +1962,22 @@ validate_required_inputs()
 opa_mols, molmass_arr = load_molecular_opacities()
 if args.opacity_mode == "ckd":
     ckd_reference = validate_ckd_table_compatibility(opa_mols)
+    if args.ckd_mixing == "rorr":
+        validate_ckd_mixture_tables(opa_mols.values())
+        for mol, opa in opa_mols.items():
+            info = opa.ckd_info
+            if np.min(info.T_grid) > Tlow or np.max(info.T_grid) < Thigh:
+                raise ValueError(
+                    f"RORR CKD table {mol} must cover the temperature prior "
+                    f"[{Tlow}, {Thigh}] K."
+                )
+            if (
+                np.min(info.P_grid) > np.min(art.pressure)
+                or np.max(info.P_grid) < np.max(art.pressure)
+            ):
+                raise ValueError(
+                    f"RORR CKD table {mol} must cover all atmospheric pressures."
+                )
     ckd_nu_bands = ckd_reference.nu_bands
     ckd_weights = ckd_reference.ckd_info.weights
     validate_ckd_band_coverage(ckd_nu_bands, ckd_nurange, ckd_reference.band_edges)
@@ -2001,11 +2043,18 @@ def spectral_model(radius_btm, Mp, Rstar, RV, vmr_arr, T0, logP_cloud):
             )
             dtau_ckd += dtau_cia[:, None, :]
 
+        gas_dtau = []
         for i, mol in enumerate(opa_mols):
             xstensor_ckd = opa_mols[mol].xstensor_ckd(Tarr, art.pressure)
-            dtau_ckd += art.opacity_profile_xs_ckd(
+            dtau_molecule = art.opacity_profile_xs_ckd(
                 xstensor_ckd, vmr_arr[i], mmw, gravity
             )
+            if args.ckd_mixing == "rorr":
+                gas_dtau.append(dtau_molecule)
+            else:
+                dtau_ckd += dtau_molecule
+        if args.ckd_mixing == "rorr":
+            dtau_ckd += mix_ckd_rorr(jnp.stack(gas_dtau), ckd_weights)
 
         rp2_bands = art.run_ckd(
             dtau_ckd, Tarr, mmw, radius_btm, gravity_btm, ckd_weights
@@ -2126,6 +2175,7 @@ def run_forward_check():
     forward_payload = {
         "data_mode": args.data_mode,
         "opacity_mode": args.opacity_mode,
+        "ckd_mixing": args.ckd_mixing,
         "molecules": list(opa_mols.keys()),
         "channels": list(selected_channels),
         "cia_pairs": list(selected_cia_pairs),
@@ -2171,6 +2221,7 @@ def run_forward_check():
     print(f"  fiducial RV: {fiducial_rv:.3f} km/s")
     if args.opacity_mode == "ckd":
         band_summary = ckd_band_summary()
+        print(f"  CKD mixing: {args.ckd_mixing}")
         print(
             "  CKD bands: "
             f"n={band_summary['n_bands']}, "
@@ -2370,6 +2421,7 @@ def save_run_status(output_dir, posterior_samples, prediction_dict):
         "status": "completed",
         "data_mode": args.data_mode,
         "opacity_mode": args.opacity_mode,
+        "ckd_mixing": args.ckd_mixing,
         "molecules": list(selected_molecules),
         "channels": list(selected_channels),
         "cia_pairs": list(selected_cia_pairs),
