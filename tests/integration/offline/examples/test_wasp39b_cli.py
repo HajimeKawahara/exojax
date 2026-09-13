@@ -1,14 +1,17 @@
 """CLI smoke tests for the WASP-39b full JWST spectra example."""
 
+import ast
 import json
 import os
 import shutil
 import subprocess
 import sys
 from pathlib import Path
+from types import SimpleNamespace
 
 import h5py
 import numpy as np
+import pytest
 
 
 REPO_ROOT = Path(__file__).resolve().parents[4]
@@ -311,6 +314,14 @@ def test_ckd_only_options_require_ckd_opacity_mode():
             ["--allow-ckd-download"],
             "--allow-ckd-download requires --opacity-mode ckd",
         ),
+        (
+            ["--ckd-mixing", "rorr"],
+            "--ckd-mixing requires --opacity-mode ckd",
+        ),
+        (
+            ["--ckd-mixing", "same_g"],
+            "--ckd-mixing requires --opacity-mode ckd",
+        ),
     ]
     for extra_args, message in cases:
         result = run_example(
@@ -540,7 +551,8 @@ def test_ckd_check_forward_runs_with_synthetic_wide_channels(tmp_path):
     ) == 96
 
 
-def test_ckd_check_forward_runs_with_matching_h2o_co2_tables(tmp_path):
+@pytest.mark.parametrize("mixing", [None, "same_g", "rorr"])
+def test_ckd_check_forward_runs_with_matching_h2o_co2_tables(tmp_path, mixing):
     ckd_root = tmp_path / "ckd"
     forward_json = tmp_path / "forward_check_h2o_co2.json"
     table_h2o = write_synthetic_exomolop_ckd(ckd_root)
@@ -549,6 +561,12 @@ def test_ckd_check_forward_runs_with_matching_h2o_co2_tables(tmp_path):
         molecule="CO2",
         mol_mass=44.0,
     )
+    molecules = ["CO2", "H2O"] if mixing == "rorr" else ["H2O", "CO2"]
+    if mixing == "rorr":
+        # Each species may use its own T/P grid if both cover the model domain.
+        with h5py.File(table_co2, "r+") as handle:
+            handle["t"][...] = [400.0, 2100.0]
+            handle["p"][...] = [1.e-13, 1.e3]
 
     result = run_example(
         "--check-forward",
@@ -559,7 +577,7 @@ def test_ckd_check_forward_runs_with_matching_h2o_co2_tables(tmp_path):
         "--channels",
         "nirspec_g395h",
         "--molecules",
-        "H2O,CO2",
+        ",".join(molecules),
         "--cia-pairs",
         "none",
         "--ckd-root",
@@ -575,16 +593,21 @@ def test_ckd_check_forward_runs_with_matching_h2o_co2_tables(tmp_path):
         "--forward-check-json",
         str(forward_json),
         "--skip-corner",
+        *([] if mixing is None else ["--ckd-mixing", mixing]),
     )
 
     assert result.returncode == 0, result.stderr
-    assert "  molecules: H2O, CO2" in result.stdout
+    assert "  molecules: " + ", ".join(molecules) in result.stdout
     assert "  observed shape: (64,)" in result.stdout
     assert "  model shape: (64,)" in result.stdout
     assert "  finite model: True" in result.stdout
     with open(forward_json) as handle:
         forward_status = json.load(handle)
-    assert forward_status["molecules"] == ["H2O", "CO2"]
+    assert forward_status["molecules"] == molecules
+    assert forward_status["ckd_mixing"] == (mixing or "same_g")
+    selections = forward_status["input_status"]["selections"]
+    assert selections["molecules"] == molecules
+    assert selections["ckd_mixing"] == (mixing or "same_g")
     assert forward_status["ckd_sources"]["H2O"] == str(table_h2o)
     assert forward_status["ckd_sources"]["CO2"] == str(table_co2)
     assert forward_status["input_status"]["ready_for_local_run"] is True
@@ -593,6 +616,108 @@ def test_ckd_check_forward_runs_with_matching_h2o_co2_tables(tmp_path):
     assert forward_status["ckd_table_summary"]["CO2"]["molmass"] == 44.0
     assert forward_status["ckd_table_summary"]["H2O"]["n_g"] == 3
     assert forward_status["ckd_table_summary"]["CO2"]["n_g"] == 3
+
+
+@pytest.mark.parametrize(
+    "dataset, values, message",
+    [
+        ("t", [600.0, 2000.0], "must cover the temperature prior"),
+        ("p", [1.e-6, 1.e2], "must cover all atmospheric pressures"),
+        ("weights", [0.250001, 0.499999, 0.25], "share identical weights"),
+    ],
+)
+def test_rorr_rejects_incompatible_tables(tmp_path, dataset, values, message):
+    ckd_root = tmp_path / "ckd"
+    write_synthetic_exomolop_ckd(ckd_root)
+    co2 = write_synthetic_exomolop_ckd(ckd_root, molecule="CO2", mol_mass=44.0)
+    with h5py.File(co2, "r+") as handle:
+        handle[dataset][...] = values
+    result = run_example(
+        "--check-forward", "--opacity-mode", "ckd", "--ckd-mixing", "rorr",
+        "--channels", "nirspec_g395h", "--molecules", "H2O,CO2",
+        "--cia-pairs", "none", "--ckd-root", str(ckd_root),
+        "--max-observed", "4", "--jax-platform", "cpu",
+    )
+    assert result.returncode == 1
+    assert message in result.stderr
+
+
+def test_rorr_forward_preserves_species_order_and_differentiates(tmp_path):
+    """Exercise the actual example model without executing its top-level NUTS run."""
+    import jax
+    import jax.numpy as jnp
+    from exojax.database import molinfo
+    from exojax.opacity import OpaCKD
+    from exojax.opacity.ckd.mixing import mix_ckd_rorr
+    from exojax.postproc.ckd import sample_ckd_bands_at_wavelengths
+    from exojax.rt import ArtTransPure
+    from exojax.utils.astrofunc import gravity_jupiter
+    from exojax.utils.constants import RJ, Rs, MJ
+
+    opas = {}
+    for molecule, mass in [("CO2", 44.0), ("H2O", 18.0)]:
+        path = write_synthetic_exomolop_ckd(
+            tmp_path / "ckd", molecule=molecule, mol_mass=mass, n_band=4
+        )
+        with h5py.File(path, "r+") as handle:
+            handle["kcoeff"][...] *= np.array([1.e3, 1.e4, 1.e5])
+        opas[molecule] = OpaCKD.from_external("exomolop", path)
+    art = ArtTransPure(
+        pressure_top=1.e-8, pressure_btm=10.0, nlayer=8, warn_no_nu_grid=False
+    )
+    reference = opas["CO2"]
+    args = SimpleNamespace(opacity_mode="ckd", ckd_mixing="rorr")
+    calls = []
+
+    def record_mix(dtau_species, weights):
+        calls.append(dtau_species)
+        return mix_ckd_rorr(dtau_species, weights)
+
+    namespace = dict(
+        jnp=jnp, args=args, molinfo=molinfo, molmass_arr=jnp.array([44.0, 18.0]),
+        art=art, opa_mols=opas, opa_cias={}, RJ=RJ, MJ=MJ,
+        gravity_jupiter=gravity_jupiter, ckd_nu_bands=reference.nu_bands,
+        ckd_weights=reference.ckd_info.weights, mix_ckd_rorr=record_mix,
+        sample_ckd_bands_at_wavelengths=sample_ckd_bands_at_wavelengths,
+        wav_obs_fit=jnp.array([3000.0, 3500.0]),
+    )
+    tree = ast.parse(SCRIPT.read_text())
+    model = next(node for node in tree.body if isinstance(node, ast.FunctionDef)
+                 and node.name == "spectral_model")
+    exec(compile(ast.Module(body=[model], type_ignores=[]), str(SCRIPT), "exec"), namespace)
+
+    def forward(theta):
+        vmr = jnp.broadcast_to(10.0 ** theta[1:, None], (2, art.pressure.size))
+        return namespace["spectral_model"](
+            1.27 * RJ, 0.28 * MJ, 0.93 * Rs, -83.18, vmr, theta[0], -3.0
+        )
+
+    point = jnp.array([1200.0, -4.3, -3.9])
+    rorr = forward(point)
+    assert len(calls) == 1
+    assert calls[0].shape == (2, 8, 3, 4)
+    np.testing.assert_allclose(calls[0][0] / calls[0][1], 10.0 ** (-4.3 + 3.9))
+    assert np.all(np.isfinite(rorr))
+    np.testing.assert_allclose(jax.jit(forward)(point), rorr, rtol=1.e-12)
+    actual = jax.jacfwd(forward)(point)
+    np.testing.assert_allclose(jax.jacrev(forward)(point), actual, rtol=1.e-10)
+    steps = [0.01, 1.e-4, 1.e-4]
+    expected = np.column_stack([
+        (forward(point.at[i].add(h)) - forward(point.at[i].add(-h))) / (2 * h)
+        for i, h in enumerate(steps)
+    ])
+    np.testing.assert_allclose(actual, expected, rtol=3.e-5, atol=1.e-10)
+    args.ckd_mixing = "same_g"
+    same_g = forward(point)
+    assert not np.array_equal(same_g, rorr)
+    # A single absorber must give the original forward spectrum exactly.
+    opas.pop("H2O")
+    namespace["molmass_arr"] = jnp.array([44.0])
+    vmr = jnp.full((1, art.pressure.size), 1.e-4)
+    params = (1.27 * RJ, 0.28 * MJ, 0.93 * Rs, -83.18, vmr, 1200.0, -3.0)
+    single_same_g = namespace["spectral_model"](*params)
+    args.ckd_mixing = "rorr"
+    np.testing.assert_array_equal(namespace["spectral_model"](*params), single_same_g)
 
 
 def test_ckd_check_forward_rejects_mismatched_quadrature_weights(tmp_path):
