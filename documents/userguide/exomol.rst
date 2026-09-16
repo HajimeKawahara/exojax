@@ -36,6 +36,50 @@ An example to use the ExoMol database from exojax is like that.
 
 
 
+Choosing a loader
+======================
+
+``MdbExomol`` uses ``backend="radis"`` by default. To use the optional
+PyExoCross reader, install the extra in a Python 3.9--3.12 environment:
+
+.. code:: sh
+
+    pip install 'exojax[pyexocross]'
+
+For a source checkout, use ``pip install -e '.[pyexocross]'``. PyExoCross
+1.1.16 requires NumPy below 2; the extra also selects RADIS below 0.17 and
+Zarr below 3 to keep their requirements compatible. A separate environment
+is recommended if your existing installation uses NumPy 2.
+
+.. code:: python
+
+    from exojax.database.exomol.api import MdbExomol
+
+    mdb = MdbExomol(
+        "CO/12C-16O/Li2015",
+        [4330.0, 4360.0],
+        backend="pyexocross",
+        gpu_transfer=False,
+    )
+
+The same line arrays, partition functions, ``crit`` / ``elower_max`` filters,
+``activate``, ``apply_mask_mdb``, and ``to_snapshot`` methods are available.
+``optional_quantum_states=True`` adds quantum columns such as ``v_l`` and
+``v_u`` to the pandas dataframe retained by ``inherit_dataframe=True`` or
+``activation=False``. The ``engine`` option applies only to RADIS; leave it
+as ``None`` when selecting PyExoCross.
+
+The PyExoCross backend reuses local raw ExoMol files and downloads missing
+files for the specified dataset and wavenumber interval. It reads transitions
+in chunks, retains rows within the requested interval, and loads the states
+table into memory. It creates no parsed-file or Parquet cache, so subsequent
+loads parse the raw files again. Supplied transition wavenumbers and the
+existing reference-strength convention are preserved. Broadening supports
+``a0`` and ``a1`` recipes with definition-file defaults for missing entries;
+other recipes raise an error. Set ``broadf_download=False`` to disable
+downloading missing broadening files, or ``broadf=False`` to use only defaults.
+
+
 Broadening Parameters
 ======================
 
@@ -175,4 +219,3 @@ Read .broad file
     elif codelv=="a1":
         j2alpha_ref, j2n_Texp=make_j2b(bdat,jlower_max=100)
         jj2alpha_ref, jj2n_Texp=make_jj2b(bdat,j2alpha_ref,j2n_Texp,jupper_max=100)
-
