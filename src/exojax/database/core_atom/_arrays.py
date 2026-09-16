@@ -66,7 +66,10 @@ def _generate_atomic_jnp_arrays(
 ):
     """Generate JAX arrays from selected lines while preserving fractional J."""
     adb.dev_nu_lines = jnp.array(adb.nu_lines)
-    adb.logsij0 = jnp.array(np.log(adb.Sij0))
+    # Some readers retain log strengths directly, including lines whose
+    # reference strengths underflow at low temperature.
+    if "logsij0" not in line_fields:
+        adb.logsij0 = jnp.array(np.log(adb.Sij0))
     for name in line_fields:
         dtype = int if name in _INTEGER_FIELDS else None
         setattr(adb, name, jnp.array(getattr(adb, "_" + name), dtype=dtype))

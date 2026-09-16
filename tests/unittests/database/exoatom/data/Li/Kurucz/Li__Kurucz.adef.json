@@ -1,0 +1,143 @@
+{
+  "species": {
+    "atom": "Li",
+    "ordinary_formula": "Li",
+    "spectroscopic_notation": "Li I",
+    "charge": 0,
+    "name": "lithium",
+    "mass_in_Da": 6.94
+  },
+  "dataset": {
+    "name": "Kurucz",
+    "version": 20240901,
+    "doi": "",
+    "max_temperature": 3874.655,
+    "n_L_default": 0.5,
+    "num_pressure_broadeners": 0,
+    "nxsec_files": 0,
+    "nkcoeff_files": 0,
+    "dipole_available": false,
+    "cooling_function_available": false,
+    "specific_heat_available": false,
+    "Ionisation": null,
+    "states": {
+      "number_of_states": 6,
+      "max_energy": 41772.58,
+      "lifetime_available": true,
+      "lande_g_available": true,
+      "uncertainty_available": true,
+      "num_quanta": 1,
+      "states_file_fields": [
+        {
+          "name": "ID",
+          "desc": "Unique integer identifier for the energy level",
+          "ffmt": "I12",
+          "cfmt": "%12d"
+        },
+        {
+          "name": "E",
+          "desc": "State energy in cm^-1",
+          "ffmt": "F12.6",
+          "cfmt": "%12.6f"
+        },
+        {
+          "name": "gtot",
+          "desc": "State degeneracy",
+          "ffmt": "I6",
+          "cfmt": "%6d"
+        },
+        {
+          "name": "J",
+          "desc": "Total angular momentum quantum number, J (integer/half-integer)",
+          "ffmt": "F7.1",
+          "cfmt": "%7.1f"
+        },
+        {
+          "name": "Unc",
+          "desc": "Uncertainty in the state energy in cm^-1. Always 0.1",
+          "ffmt": "F12.6",
+          "cfmt": "%12.6f"
+        },
+        {
+          "name": "tau",
+          "desc": "State lifetime in s",
+          "ffmt": "ES12.4",
+          "cfmt": "%12.4e"
+        },
+        {
+          "name": "gfactor",
+          "desc": "Land\u00e9 g-factor",
+          "ffmt": "F10.6",
+          "cfmt": "%10.6f"
+        },
+        {
+          "name": "Configuration",
+          "desc": "Configuration Value for the current state",
+          "ffmt": "A12",
+          "cfmt": "%12s"
+        },
+        {
+          "name": "qn:LSCoupling",
+          "desc": "Term Value for the current state",
+          "ffmt": "A7",
+          "cfmt": "%7s"
+        },
+        {
+          "name": "Auxiliary:SourceType",
+          "desc": "Abbreviation defining if state energy is predicted (NI) or measured (CA)",
+          "ffmt": "A2",
+          "cfmt": "%2s"
+        }
+      ]
+    },
+    "transitions": {
+      "number_of_transitions": 4,
+      "number_of_transition_files": 1,
+      "max_wavenumber": 30925.63,
+      "transitions_file_fields": [
+        {
+          "name": "i",
+          "desc": "First state ID",
+          "ffmt": "I12",
+          "cfmt": "%12d"
+        },
+        {
+          "name": "f",
+          "desc": "Second state ID",
+          "ffmt": "I12",
+          "cfmt": "%12d"
+        },
+        {
+          "name": "A",
+          "desc": "Einstein A coefficient in s^-1",
+          "ffmt": "ES10.4",
+          "cfmt": "%10.4e"
+        },
+        {
+          "name": "Wavenumber",
+          "desc": "Transition wavenumber in cm^-1",
+          "ffmt": "E15.6",
+          "cfmt": "%15.6e"
+        }
+      ]
+    },
+    "partition_function": {
+      "max_partition_function_temperature": 208930.0,
+      "partition_function_step_size": "nonlinear",
+      "fields": [
+        {
+          "name": "T",
+          "desc": "Temperature in K",
+          "ffmt": "F8.1",
+          "cfmt": "%8.1d"
+        },
+        {
+          "name": "Q(T)",
+          "desc": "Partition function",
+          "ffmt": "F15.4",
+          "cfmt": "%15.4d"
+        }
+      ]
+    }
+  }
+}

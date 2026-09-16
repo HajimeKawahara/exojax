@@ -36,8 +36,10 @@ class OpaDirect(OpaCalc):
         abundance to the cross section.
 
         NIST requires ``atomic_broadening`` because its line list does not
-        provide damping parameters. A supplied callback replaces the total
-        Lorentzian width for NIST, VALD, or Kurucz.
+        provide damping parameters. ExoAtom uses natural widths from complete
+        state lifetimes, or requires a callback when they are unavailable.
+        A supplied callback replaces the total Lorentzian width for atomic
+        databases; it does not receive an additional natural-width term.
     """
 
     def __init__(
@@ -60,18 +62,32 @@ class OpaDirect(OpaCalc):
                 only K I and applies sub-Voigt wings to every selected line.
                 Include line centers up to 9000 cm-1 outside the grid.
             atomic_broadening: JAX-compatible callable ``(T, P) -> gammaL``
-                for NIST, VALD, or Kurucz. T is in K and P in bar. Return
+                for NIST, VALD, Kurucz, or ExoAtom. T is in K and P in bar. Return
                 the total Lorentzian HWHM in cm-1, shaped ``(Nline,)``.
                 Include every desired broadening contribution; no natural
-                or pressure width is added automatically. Required for NIST.
+                or pressure width is added automatically. Required for NIST
+                and ExoAtom without complete natural widths. ExoAtom's default
+                natural widths contain no pressure broadening.
         """
         if atomic_broadening is not None:
-            if mdb.dbtype not in ("nist", "vald", "kurucz"):
-                raise ValueError("atomic_broadening supports only NIST, VALD, and Kurucz.")
+            if mdb.dbtype not in ("nist", "vald", "kurucz", "exoatom"):
+                raise ValueError("atomic_broadening supports only NIST, VALD, Kurucz, and ExoAtom.")
             if not callable(atomic_broadening):
                 raise TypeError("atomic_broadening must be callable.")
         if mdb.dbtype == "nist" and atomic_broadening is None:
             raise ValueError("NIST requires an explicit atomic_broadening(T, P) callable.")
+        if mdb.dbtype == "exoatom" and atomic_broadening is None:
+            natural_width = getattr(mdb, "gamma_natural", None)
+            if (
+                natural_width is None
+                or np.shape(natural_width) != (len(mdb.nu_lines),)
+                or not np.all(np.isfinite(natural_width))
+                or np.any(np.asarray(natural_width) < 0)
+            ):
+                raise ValueError(
+                    "ExoAtom requires finite, nonnegative natural widths for every line "
+                    "or an explicit atomic_broadening(T, P) callable."
+                )
         super().__init__(nu_grid)
 
         self.method = "lpf"
@@ -164,7 +180,7 @@ class OpaDirect(OpaCalc):
         elif self.dbtype == "exomol":
             self._vmap_qt = vmap(self.mdb.qr_interp, (0, None))
             self._vmap_gamma = jit(vmap(gamma_exomol, (0, 0, None, None)))
-        elif getattr(self, "atomic_broadening", None) is not None:
+        elif self.dbtype == "exoatom" or getattr(self, "atomic_broadening", None) is not None:
             self._vmap_qt = vmap(self.mdb.qr_interp_lines, (0, None))
             self._vmap_gamma = jit(vmap(self._atomic_gamma, (0, 0)))
         else:
@@ -177,8 +193,12 @@ class OpaDirect(OpaCalc):
             self._vmap_subvoigt = vmap(_xsvector, (None, 0, 0, 0, 0, None, None))
 
     def _atomic_gamma(self, T, P):
-        """Check the static shape of a user-supplied atomic Lorentz width."""
-        gammaL = jnp.asarray(self.atomic_broadening(T, P))
+        """Use the selected total atomic width and check its static shape."""
+        gammaL = jnp.asarray(
+            self.mdb.gamma_natural
+            if self.atomic_broadening is None
+            else self.atomic_broadening(T, P)
+        )
         expected_shape = (len(self.mdb.nu_lines),)
         if gammaL.shape != expected_shape:
             raise ValueError(
@@ -193,7 +213,7 @@ class OpaDirect(OpaCalc):
 
         Tarr = jnp.atleast_1d(T)
         Parr = jnp.atleast_1d(P)
-        if getattr(self, "atomic_broadening", None) is not None:
+        if self.dbtype == "exoatom" or getattr(self, "atomic_broadening", None) is not None:
             qr = self._vmap_qt(Tarr, self.mdb.Tref)
             SijM = self._vmap_line_strength(
                 Tarr, self.mdb.logsij0, self.mdb.nu_lines, self.mdb.elower,
@@ -248,7 +268,7 @@ class OpaDirect(OpaCalc):
             qt = self.mdb.qr_interp_lines(T, Tref_original)
             gammaL = gamma_natural(self.mdb.A)
             line_masses = self.mdb.line_masses
-        elif dbtype in ("kurucz", "vald", "nist"):
+        elif dbtype in ("kurucz", "vald", "nist", "exoatom"):
             SijM, gammaLM, sigmaDM = self._atomic_line_parameters(T, P)
             if self.line_profile == "alkali_subvoigt":
                 from exojax.opacity.alkali import _xsvector
@@ -261,7 +281,7 @@ class OpaDirect(OpaCalc):
         else:
             raise ValueError(
                 f"Unsupported database type for xsvector: '{dbtype}'. "
-                "Supported types: hitran, exomol, hydrogen, kurucz, vald, nist"
+                "Supported types: hitran, exomol, hydrogen, kurucz, vald, nist, exoatom"
             )
 
         sigmaD = doppler_sigma(self.mdb.nu_lines, T, line_masses)
@@ -348,7 +368,7 @@ class OpaDirect(OpaCalc):
             sigmaDM = self._vmap_doppler_sigma(
                 self.mdb.nu_lines, Tarr, self.mdb.line_masses
             )
-        elif dbtype in ("kurucz", "vald", "nist"):
+        elif dbtype in ("kurucz", "vald", "nist", "exoatom"):
             SijM, gammaLM, sigmaDM = self._atomic_line_parameters(Tarr, Parr)
             if self.line_profile == "alkali_subvoigt":
                 return self._vmap_subvoigt(
@@ -358,7 +378,7 @@ class OpaDirect(OpaCalc):
         else:
             raise ValueError(
                 f"Unsupported database type for xsmatrix: '{dbtype}'. "
-                "Supported types: hitran, exomol, hydrogen, kurucz, vald, nist"
+                "Supported types: hitran, exomol, hydrogen, kurucz, vald, nist, exoatom"
             )
 
         return xsmatrix_lpf(numatrix, sigmaDM, gammaLM, SijM)

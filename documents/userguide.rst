@@ -7,6 +7,7 @@ Databases
 
    userguide/mdb.rst
    userguide/nist.rst
+   userguide/exoatom.rst
    userguide/moldb.rst
    userguide/exomol.rst
    userguide/kurucz.rst

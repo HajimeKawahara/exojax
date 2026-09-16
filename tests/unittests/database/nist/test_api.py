@@ -165,7 +165,7 @@ def test_nist_direct_requires_broadening_and_checks_callback_shape(make_adb):
         OpaDirect(adb, grid)
     with pytest.raises(TypeError, match="must be callable"):
         OpaDirect(adb, grid, atomic_broadening=0.1)
-    with pytest.raises(ValueError, match="only NIST, VALD, and Kurucz"):
+    with pytest.raises(ValueError, match="only NIST, VALD, Kurucz, and ExoAtom"):
         OpaDirect(SimpleNamespace(dbtype="exomol"), grid, atomic_broadening=lambda T, P: 0.1)
     for width in (0.1, jnp.ones(2), jnp.ones((1, 3))):
         opa = OpaDirect(adb, grid, atomic_broadening=lambda T, P: width)
