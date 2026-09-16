@@ -27,6 +27,9 @@ jobs:
       # Checkout repository
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          # setuptools-scm needs the tag history to compute the package version.
+          fetch-depth: 0
 
       # Set up Python with pip cache
       - name: Set up Python ${{ matrix.python-version }}
