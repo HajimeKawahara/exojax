@@ -21,7 +21,7 @@ maintainers = [{ name = "Hajime Kawahara", email = "divrot@gmail.com" }]
 
 description = "Differentiable exoplanet spectroscopy and atmospheric tools in JAX."
 readme = { file = "README.md", content-type = "text/markdown" }
-requires-python = ">=3.9"
+requires-python = ">=3.10"
 
 # Classifiers ported from setup.py. Add more if applicable.
 classifiers = [
@@ -41,6 +41,10 @@ dependencies = [
   "numpy<2.5",
   "jax",
   "jaxlib",
+  "scipy",
+  "requests",
+  "packaging",
+  "matplotlib",
   "hitran-api",
   "beautifulsoup4",
   "hjson",
@@ -81,6 +85,8 @@ include-package-data = true
 [tool.setuptools.packages.find]
 # Equivalent to find_packages(where="src")
 where = ["src"]
+# Keep local source checkouts under src/ from leaking into release wheels.
+include = ["exojax*"]
 
 [tool.setuptools_scm]
 # Configure setuptools-scm to write the resolved version string into your package.

@@ -40,7 +40,7 @@ Choosing a loader
 ======================
 
 ``MdbExomol`` uses ``backend="radis"`` by default. To use the optional
-PyExoCross reader, install the extra in a Python 3.9--3.12 environment:
+PyExoCross reader, install the extra in a Python 3.10--3.12 environment:
 
 .. code:: sh
 

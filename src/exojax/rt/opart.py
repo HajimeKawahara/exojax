@@ -1,6 +1,6 @@
 """
 Deprecated shim: the real classes are in `exojax.rt`.
-Kept only so that legacy code `from exojax.rt import OpartEmisPure`
+Kept only so that legacy code `from exojax.rt.opart import OpartEmisPure`
 continues to work until v3.0.
 """
 
@@ -17,10 +17,10 @@ warnings.warn(
 
 # Re-export the public classes
 _RT = import_module("exojax.rt")
-OpartEmisPure = _RT.OprtEmisPure
+OpartEmisPure = _RT.OpartEmisPure
 OpartEmisScat = _RT.OpartEmisScat
 OpartReflectPure = _RT.OpartReflectPure
-OpartReflectEmis = _RT.OPartReflectEmis
+OpartReflectEmis = _RT.OpartReflectEmis
 
 
 __all__ = [
