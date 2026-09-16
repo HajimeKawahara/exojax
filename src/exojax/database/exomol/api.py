@@ -1,14 +1,4 @@
-"""Molecular database API class using a common API w/ RADIS = (CAPI)
-
-* MdbExomol is the MDB for ExoMol
-* MdbHitran is the MDB for HITRAN
-* MdbHitemp is the MDB for HITEMP
-* MdbCommonHitempHitran is the common MDB for HITEMP and HITRAN
-
-Notes:
-    If you use vaex as radis engine, hdf5 files are saved while pytables uses .h5 files.
-
-"""
+"""ExoMol molecular databases with selectable RADIS or PyExoCross readers."""
 
 import pathlib
 import warnings
@@ -50,7 +40,8 @@ except ImportError as exc:
 class MdbExomol(CapiMdbExomol):
     """molecular database of ExoMol form.
 
-    MdbExomol is a class for ExoMol database. It inherits the CAPI class MdbExomol and adds some additional features.
+    RADIS is the default backend. PyExoCross is an optional reader that exposes
+    the same line arrays, partition functions, and activation methods.
 
     Attributes:
         simple_molecule_name: simple molecule name
@@ -87,6 +78,8 @@ class MdbExomol(CapiMdbExomol):
         activation=True,
         local_databases="./",
         engine=None,
+        *,
+        backend="radis",
     ):
         """Molecular database for Exomol form.
 
@@ -103,31 +96,57 @@ class MdbExomol(CapiMdbExomol):
             optional_quantum_states: if True, all of the fields available in self.df will be loaded. if False, the mandatory fields (i,E,g,J) will be loaded.
             activation: if True, the activation of mdb will be done when initialization, if False, the activation won't be done and it makes self.df attribute available.
             engine: engine for radis api ("pytables" or "vaex" or None). if None, radis automatically determines. default to None
+            backend: line-list reader, "radis" (default) or "pyexocross".
+                PyExoCross requires the ``pyexocross`` extra and ``engine=None``.
 
         Note:
-            The trans/states files can be very large. For the first time to read it, we convert it to HDF/vaex. After the second-time, we use the HDF5 format with vaex instead.
+            RADIS caches parsed files with its selected engine. PyExoCross
+            streams raw transitions and returns a pandas DataFrame when
+            requested. It does not use Parquet range caches, which can discard
+            lines whose supplied wavenumbers differ from state energy gaps.
         """
+        if backend not in ("radis", "pyexocross"):
+            raise ValueError("backend must be 'radis' or 'pyexocross'.")
+        if backend == "pyexocross" and engine is not None:
+            raise ValueError("engine is a RADIS option; use engine=None with backend='pyexocross'.")
+        self.backend = backend
         self.dbtype = "exomol"
         self.path = pathlib.Path(path).expanduser()
         self.exact_molecule_name = self.path.parents[0].stem
         self.database = str(self.path.stem)
         self.bkgdatm = bkgdatm
-        # molecbroad = self.exact_molecule_name + '__' + self.bkgdatm
         self.gpu_transfer = gpu_transfer
         self.Ttyp = Ttyp
         self.broadf = broadf
-        if supports_exomol_broadf_download():
-            self.broadf_download = broadf_download
+        self.broadf_download = broadf_download
+        self.skip_optional_data = not optional_quantum_states
+        self.activation = activation
+        self.crit = crit
+        self.elower_max = elower_max
+        wavenum_min, wavenum_max = self.set_wavenum(nurange)
+        if backend == "pyexocross":
+            df = self._load_pyexocross(
+                wavenum_min, wavenum_max, local_databases,
+                filter_wavenumbers=nurange is not None,
+            )
         else:
+            df = self._load_radis(wavenum_min, wavenum_max, local_databases, engine)
+
+        self.QTtyp = np.array(self.QT_interp(self.Ttyp))
+        self.df_load_mask = self.compute_load_mask(df)
+        if self.activation:
+            self.activate(df)
+        if inherit_dataframe or not self.activation:
+            print("DataFrame (self.df) available.")
+            self.df = df
+
+    def _load_radis(self, wavenum_min, wavenum_max, local_databases, engine):
+        """Keep the existing RADIS manager and cache behavior."""
+        if not supports_exomol_broadf_download():
             warn_if_exomol_broadf_download_unsupported()
         self.simple_molecule_name = e2s(self.exact_molecule_name)
         self.molmass = isotope_molmass(self.exact_molecule_name)
-        self.skip_optional_data = not optional_quantum_states
-        self.activation = activation
-        wavenum_min, wavenum_max = self.set_wavenum(nurange)
         self.engine = _set_engine(engine)
-
-        # Keep RADIS constructor differences localized in backend layer.
         init_exomol_manager(
             self,
             path=str(self.path),
@@ -135,35 +154,52 @@ class MdbExomol(CapiMdbExomol):
             molecule=self.simple_molecule_name,
             nurange=[wavenum_min, wavenum_max],
             engine=self.engine,
-            crit=crit,
+            crit=self.crit,
             broadf=self.broadf,
-            broadf_download=getattr(self, "broadf_download", broadf_download),
+            broadf_download=self.broadf_download,
             skip_optional_data=self.skip_optional_data,
             bkgdatm=self.bkgdatm,
         )
 
-        self.crit = crit
-        self.elower_max = elower_max
-        self.QTtyp = np.array(self.QT_interp(self.Ttyp))
-
-        # Get cache files to load :
         mgr = self.get_datafile_manager()
         local_files = [mgr.cache_file(f) for f in self.trans_file]
+        return self.load(local_files, output=self.engine)
 
-        # data frame attribute:
-        df = self.load(
-            local_files,
-            # lower_bound=([("Sij0", 0.0)]),
-            output=self.engine,
+    def _load_pyexocross(
+        self, wavenum_min, wavenum_max, local_databases, filter_wavenumbers=True
+    ):
+        """Normalize the optional reader to the existing dataframe contract."""
+        from exojax.database.exomol._pyexocross import (
+            import_pyexocross,
+            load_exomol_data,
         )
+        from exojax.database.exomol._pyexocross_download import ensure_exomol_files
 
-        self.df_load_mask = self.compute_load_mask(df)
-
-        if self.activation:
-            self.activate(df)
-        if inherit_dataframe or not self.activation:
-            print("DataFrame (self.df) available.")
-            self.df = df
+        import_pyexocross()
+        self.path = (pathlib.Path(local_databases or "./").expanduser() / self.path).resolve()
+        self.simple_molecule_name = self.path.parents[1].name
+        self.molecule = self.simple_molecule_name
+        self.nurange = [
+            -np.inf if wavenum_min is None else wavenum_min,
+            np.inf if wavenum_max is None else wavenum_max,
+        ]
+        self.wmin, self.wmax = self.nurange
+        self.margin = 0.0
+        self.engine = "pandas"
+        self.Tref = Tref_original
+        ensure_exomol_files(
+            self.path, self.nurange, bkgdatm=self.bkgdatm,
+            broadf=self.broadf, broadf_download=self.broadf_download,
+        )
+        df, metadata = load_exomol_data(
+            self.path, self.nurange, optional_quantum_states=not self.skip_optional_data,
+            filter_wavenumbers=filter_wavenumbers,
+        )
+        for name, value in metadata.items():
+            setattr(self, name, value)
+        self.Sij0 = df.Sij0.to_numpy()
+        self.QTref = np.array(self.QT_interp(self.Tref))
+        return df
 
     def __eq__(self, other):
         """eq method for MdbExomol, definied by comparing all the attributes and important status
@@ -267,20 +303,32 @@ class MdbExomol(CapiMdbExomol):
 
         self.attributes_from_dataframes(df[mask])
 
+        if getattr(self, "backend", "radis") == "pyexocross":
+            from exojax.database.exomol._pyexocross import compute_broadening
+
+            self.alpha_ref, self.n_Texp = compute_broadening(
+                self.path, df[mask], bkgdatm=self.bkgdatm, broadf=self.broadf,
+                alpha_ref_def=self.alpha_ref_def, n_Texp_def=self.n_Texp_def,
+            )
+        else:
+            self._set_radis_broadening(df[mask])
+
+        self.gamma_natural = gn(self.A)
+        if self.gpu_transfer:
+            self.generate_jnp_arrays()
+
+    def _set_radis_broadening(self, df):
+        """Select the installed RADIS version's broadening interface."""
         broadening_mode = exomol_broadening_mode()
         if broadening_mode == "compute_broadening":
             self.compute_broadening(self.jlower.astype(int), self.jupper.astype(int))
         elif broadening_mode == "set_broadening_coef_legacy":
             print("Broadener: ", self.bkgdatm)
-            self.set_broadening_coef(df[mask], add_columns=False)
+            self.set_broadening_coef(df, add_columns=False)
         else:
             # new broadener see radis#716, radis#742
             print("Broadener: ", self.bkgdatm)
-            self.set_broadening_coef(df[mask], add_columns=False, species=self.bkgdatm)
-
-        self.gamma_natural = gn(self.A)
-        if self.gpu_transfer:
-            self.generate_jnp_arrays()
+            self.set_broadening_coef(df, add_columns=False, species=self.bkgdatm)
 
     def compute_load_mask(self, df):
         # wavelength
