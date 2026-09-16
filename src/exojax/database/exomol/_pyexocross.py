@@ -1,8 +1,6 @@
 """PyExoCross readers adapted to ExoJAX's ExoMol line-data interface.
 
-Only the reader functions are used: the high-level PyExoCross loader changes
-process configuration and its range caches discard supplied line positions.
-Raw files are streamed without creating a backend cache.
+Raw reader functions avoid global configuration and range-cache line loss.
 """
 
 import json
@@ -14,26 +12,8 @@ import numpy as np
 import pandas as pd
 from scipy.constants import c, h, k
 
+from exojax.database._common.pyexocross import import_pyexocross, read_exomol_lines
 from exojax.utils.constants import Tref_original
-
-
-def import_pyexocross():
-    """Import the optional reader dependency and check its supported version."""
-    try:
-        import pyexocross
-    except ModuleNotFoundError as exc:
-        if exc.name != "pyexocross":
-            raise
-        raise ImportError(
-            "backend='pyexocross' requires PyExoCross. "
-            "Install it with `pip install 'exojax[pyexocross]'`."
-        ) from exc
-    if pyexocross.__version__ != "1.1.16":
-        raise ImportError(
-            "backend='pyexocross' supports PyExoCross 1.1.16. "
-            "Install it with `pip install 'pyexocross==1.1.16'`."
-        )
-    return pyexocross
 
 
 def _definition(path):
@@ -130,8 +110,6 @@ def load_exomol_data(
     the public ``nurange=None`` inactive mode.
     """
     import_pyexocross()
-    from pyexocross.base.large_file import read_trans_chunks
-    from pyexocross.database.data import textcolumns
     from pyexocross.database.load_exomol import get_statesfile, preferred_files
 
     if chunk_size < 1:
@@ -154,7 +132,8 @@ def load_exomol_data(
         bounds = (-np.inf, np.inf)
     quantum_labels = metadata["quantum_labels"] if optional_quantum_states else []
     output_columns = [
-        "i_upper", "i_lower", "A", "nu_lines", "elower", "gup", "jlower", "jupper", "Sij0"
+        "i_upper", "i_lower", "A", "nu_lines", "elower", "eupper",
+        "glower", "gup", "jlower", "jupper", "Sij0"
     ] + [f"{label}_{level}" for label in quantum_labels for level in ("l", "u")]
     if not sources or bounds[0] == bounds[1]:
         return pd.DataFrame({name: pd.Series(dtype=float) for name in output_columns}), metadata
@@ -162,55 +141,20 @@ def load_exomol_data(
     read_path = str(path.parents[2]) + "/"
     data_info = [path.parents[1].name, path.parent.name, path.name]
     states_path = get_statesfile(read_path, data_info)
-    state_columns = metadata["states_columns"] if optional_quantum_states else ["id", "E", "g", "J"]
-    states = pd.concat(
-        read_trans_chunks(states_path, list(range(len(state_columns))), state_columns, chunk_size),
-        ignore_index=True,
-    ).set_index("id", verify_integrity=True)
-    chunks = []
+    lines = read_exomol_lines(
+        states_path, sources, metadata["states_columns"], bounds,
+        extra_state_columns=quantum_labels, chunk_size=chunk_size,
+    )
     # Exact SI constants preserve the reference-strength convention used by
     # RADIS; temperature scaling remains the caller's existing ExoJAX method.
     c2 = h * c / k * 100.0
-    for source in sources:
-        ncolumns = textcolumns(source)
-        if ncolumns not in (3, 4):
-            raise ValueError(f"Expected three/four transition columns in {source}.")
-        names = ["i_upper", "i_lower", "A"] + (["nu_lines"] if ncolumns == 4 else [])
-        supplied_nu = ncolumns == 4 and all(
-            chunk["nu_lines"].notna().all()
-            for chunk in read_trans_chunks(source, [3], ["nu_lines"], chunk_size)
-        )
-        for chunk in read_trans_chunks(source, list(range(ncolumns)), names, chunk_size):
-            if supplied_nu:
-                chunk = chunk[(chunk.nu_lines > bounds[0]) & (chunk.nu_lines < bounds[1])].copy()
-                if chunk.empty:
-                    continue
-            upper_states = states.reindex(chunk.i_upper.to_numpy())
-            lower_states = states.reindex(chunk.i_lower.to_numpy())
-            if upper_states.E.isna().any() or lower_states.E.isna().any():
-                raise ValueError(f"Transition references an absent state in {source}.")
-            if not supplied_nu:
-                chunk["nu_lines"] = upper_states.E.to_numpy() - lower_states.E.to_numpy()
-            chunk["elower"] = lower_states.E.to_numpy()
-            chunk["gup"] = upper_states.g.to_numpy()
-            chunk["jlower"] = lower_states.J.to_numpy()
-            chunk["jupper"] = upper_states.J.to_numpy()
-            for label in quantum_labels:
-                chunk[f"{label}_l"] = lower_states[label].to_numpy()
-                chunk[f"{label}_u"] = upper_states[label].to_numpy()
-            chunk = chunk[(chunk.nu_lines > bounds[0]) & (chunk.nu_lines < bounds[1])].copy()
-            if chunk.empty:
-                continue
-            chunk["Sij0"] = (
-                -chunk.A * chunk.gup
-                * np.exp(-c2 * chunk.elower / Tref_original)
-                * np.expm1(-c2 * chunk.nu_lines / Tref_original)
-                / (8.0 * np.pi * c * 100.0 * chunk.nu_lines**2 * qref)
-            )
-            chunks.append(chunk[output_columns])
-    if not chunks:
-        return pd.DataFrame({name: pd.Series(dtype=float) for name in output_columns}), metadata
-    return pd.concat(chunks, ignore_index=True), metadata
+    lines["Sij0"] = (
+        -lines.A * lines.gup
+        * np.exp(-c2 * lines.elower / Tref_original)
+        * np.expm1(-c2 * lines.nu_lines / Tref_original)
+        / (8.0 * np.pi * c * 100.0 * lines.nu_lines**2 * qref)
+    )
+    return lines[output_columns], metadata
 
 
 def compute_broadening(

@@ -1,0 +1,137 @@
+{
+  "species": {
+    "atom": "Li",
+    "ordinary_formula": "Li",
+    "spectroscopic_notation": "Li I",
+    "charge": 0,
+    "name": "lithium",
+    "mass_in_Da": 6.941
+  },
+  "dataset": {
+    "name": "NIST",
+    "version": 20240901,
+    "doi": "",
+    "max_temperature": 6000,
+    "n_L_default": 0.5,
+    "num_pressure_broadeners": 0,
+    "nxsec_files": 0,
+    "nkcoeff_files": 0,
+    "dipole_available": false,
+    "cooling_function_available": false,
+    "specific_heat_available": false,
+    "Ionisation": null,
+    "states": {
+      "number_of_states": 6,
+      "max_energy": 36630.2,
+      "uncertainty_description": true,
+      "lifetime_available": false,
+      "lande_g_available": true,
+      "num_quanta": 1,
+      "states_file_fields": [
+        {
+          "name": "i",
+          "desc": "Unique integer identifier for the energy level",
+          "ffmt": "I12",
+          "cfmt": "%12d"
+        },
+        {
+          "name": "E",
+          "desc": "State energy in cm^-1",
+          "ffmt": "F12.6",
+          "cfmt": "%12.6f"
+        },
+        {
+          "name": "g_tot",
+          "desc": "State degeneracy",
+          "ffmt": "I6",
+          "cfmt": "%6d"
+        },
+        {
+          "name": "J",
+          "desc": "Total angular momentum quantum number, J (half-integer)",
+          "ffmt": "F7.1",
+          "cfmt": "%7.1f"
+        },
+        {
+          "name": "Unc",
+          "desc": "Uncertainty in the state energy in cm^-1",
+          "ffmt": "F12.6",
+          "cfmt": "%12.6f"
+        },
+        {
+          "name": "(g)",
+          "desc": "Land\u00e9 g-factor (optional)",
+          "ffmt": "F10.6",
+          "cfmt": "%10.6f"
+        },
+        {
+          "name": "configuration",
+          "desc": "Configuration for the state",
+          "ffmt": "A50",
+          "cfmt": "%50s"
+        },
+        {
+          "name": "LS Coupling",
+          "desc": "Term for the state",
+          "ffmt": "A30",
+          "cfmt": "%30s"
+        },
+        {
+          "name": "parity",
+          "desc": "Parity for the state",
+          "ffmt": "A2",
+          "cfmt": "%2s"
+        }
+      ]
+    },
+    "transitions": {
+      "number_of_transitions": 4,
+      "number_of_transition_files": 1,
+      "max_wavenumber": 30925.4,
+      "transitions_file_fields": [
+        {
+          "name": "i",
+          "desc": "Upper state ID",
+          "ffmt": "I12",
+          "cfmt": "%12d"
+        },
+        {
+          "name": "f",
+          "desc": "Lower state ID",
+          "ffmt": "I12",
+          "cfmt": "%12d"
+        },
+        {
+          "name": "A",
+          "desc": "Einstein A coefficient in s^-1",
+          "ffmt": "ES10.4",
+          "cfmt": "%10.4e"
+        },
+        {
+          "name": "Wavenumber",
+          "desc": "Transition wavenumber in cm^-1",
+          "ffmt": "E15.6",
+          "cfmt": "%15.6e"
+        }
+      ]
+    },
+    "partition_function": {
+      "max_partition_function_temperature": 6000.0,
+      "partition_function_step_size": 1,
+      "fields": [
+        {
+          "name": "T",
+          "desc": "Temperature in Kelvin",
+          "ffmt": "F8.1",
+          "cfmt": "%8.1d"
+        },
+        {
+          "name": "Q(T)",
+          "desc": "Partition function (dimensionless)",
+          "ffmt": "F15.4",
+          "cfmt": "%15.4d"
+        }
+      ]
+    }
+  }
+}
