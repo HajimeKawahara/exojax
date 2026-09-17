@@ -69,6 +69,57 @@ quadrature is controlled by ``nstream``.
         temperature,
     )
 
+Use ``run_with_surface`` to add an isotropic thermal source immediately below
+the last atmospheric layer, at ``pressure_boundary[-1]``. The surface source
+uses the same :math:`\pi B_\nu` scale as the atmospheric source function.
+
+.. code:: python
+
+    from exojax.rt.planck import piB
+
+    source_surface = piB(temperature_surface, nu_grid)
+    F0 = art.run_with_surface(
+        dtau,
+        single_scattering_albedo,
+        asymmetric_parameter,
+        temperature,
+        source_surface,
+    )
+
+``run_with_surface`` currently supports the line-by-line
+``sfm2st_toon_hemispheric_mean`` solver. The existing ``run`` method retains
+its zero lower-boundary source.
+
+Reflection using SFM-2st
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+``ArtReflectPure`` and ``ArtReflectEmis`` support the same SFM-2st angular
+formal solution. Set ``rtsolver="sfm2st_toon_hemispheric_mean"`` and use
+``nstream`` to control the outgoing-angle quadrature. ``incoming_flux`` is a
+diffuse hemispheric flux at the top boundary; collimated-beam illumination and
+phase-dependent disk integration are outside this solver.
+
+.. code:: python
+
+    from exojax.rt import ArtReflectPure
+
+    art = ArtReflectPure(
+        pressure_top=1.0e-5,
+        pressure_btm=1.0e1,
+        nlayer=200,
+        nu_grid=nu_grid,
+        rtsolver="sfm2st_toon_hemispheric_mean",
+        nstream=8,
+    )
+
+    F0 = art.run(
+        dtau,
+        single_scattering_albedo,
+        asymmetric_parameter,
+        reflectivity_surface,
+        incoming_flux,
+    )
+
 Radiative transfer with scattering and reflection can be classified into three types:
 
 - 1. ``ReflectPure``: The scattering and reflection spectrum of incident light, excluding radiation from the atmospheric layers.  

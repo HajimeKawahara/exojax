@@ -5,8 +5,8 @@ from exojax.database._common.commonapi import MdbCommonHitempHitran
 from exojax.database._common.isotope_functions import _convert_proper_isotope
 from exojax.database._common.radis_adapter import (
     get_hitemp_database_manager_class,
-    get_hit2df_func,
     init_hitemp_manager,
+    read_hitran_parfile,
 )
 from exojax.database.contracts import MDBMeta, Lines, MDBSnapshot
 
@@ -104,8 +104,12 @@ class MdbHitemp(MdbCommonHitempHitran, HITEMPDatabaseManager):
         )
 
         if parfile is not None:
-            hit2df = get_hit2df_func()
-            df = hit2df(parfile, engine=self.engine, cache="regen")
+            df = read_hitran_parfile(
+                parfile,
+                engine=self.engine,
+                molecule=self.simple_molecule_name,
+                with_error=self.with_error,
+            )
             if isotope is None:
                 mask = None
             elif isotope == 0:
@@ -244,7 +248,7 @@ class MdbHitemp(MdbCommonHitempHitran, HITEMPDatabaseManager):
         self.uniqiso = np.unique(self.isoid)
         if self.with_error:
             # uncertainties
-            self.ierr = df_masked.ierr.values.to_numpy().astype(np.int64)
+            self.ierr = np.asarray(df_masked.ierr.values, dtype=np.int64)
 
     def generate_jnp_arrays(self):
         """(re)generate jnp.arrays.

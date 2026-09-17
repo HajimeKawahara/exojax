@@ -9,11 +9,11 @@ from exojax.rt.rtransfer import (
     rtrun_emis_scat_fluxadding_toonhm,
     rtrun_emis_scat_lart_toonhm,
     rtrun_emis_scat_sfm2st_toonhm,
+    rtrun_emis_scat_sfm2st_toonhm_surface,
     initialize_gaussian_quadrature,
     setrt_toonhm_with_absorption,
 )
 from exojax.rt.rtlayer import fluxsum_scan
-from exojax.rt.common import ArtCommon
 from exojax.postproc.limb_darkening import (
     average_limb_darkening_coefficients,
     quadratic_ld_from_intensity,
@@ -47,8 +47,10 @@ class ArtEmisPure(ArtCommon):
         initialization of ArtEmisPure
 
         Args:
-            pressure_top (float, optional): top pressure in bar. Defaults to 1.0e-8.
-            pressure_btm (float, optional): bottom pressure in bar. Defaults to 1.0e2.
+            pressure_top (float, optional): Representative pressure of the top
+                atmospheric layer in bar. Defaults to 1.0e-8.
+            pressure_btm (float, optional): Representative pressure of the bottom
+                atmospheric layer in bar. Defaults to 1.0e2.
             nlayer (int, optional): the number of the atmospheric layers. Defaults to 100.
             nu_grid (float, array, optional): the wavenumber grid. Defaults to None.
             rtsolver (str, optional): radiative transfer solver (ibased, fbased2st, ibased_linsap). Defaults to "ibased".
@@ -113,7 +115,8 @@ class ArtEmisPure(ArtCommon):
 
         Args:
             dtau (2D array): optical depth matrix, dtau  (N_layer, N_nus)
-            temperature (1D array): temperature profile (Nlayer)
+            temperature (1D array): temperature profile (Nlayer, or Nlayer + 1
+                at layer boundaries for ibased_linsap)
             nu_grid (1D array): if nu_grid is not initialized, provide it.
 
         Returns:
@@ -123,6 +126,10 @@ class ArtEmisPure(ArtCommon):
             nu_grid = self.nu_grid
 
         sourcef = piBarr(temperature, nu_grid)
+        return self._run_solver(dtau, sourcef)
+
+    def _run_solver(self, dtau, sourcef):
+        """Run the selected solver with an already evaluated source function."""
         rtfunc = self.rtsolver_dict[self.rtsolver]
 
         if self.rtsolver == "fbased2st":
@@ -175,7 +182,8 @@ class ArtEmisPure(ArtCommon):
 
         Args:
             dtau_ckd (3D array): optical depth matrix, dtau  (N_layer, Ng, Nbands)
-            temperature (1D array): temperature profile (Nlayer,)
+            temperature (1D array): temperature profile (Nlayer, or Nlayer + 1
+                at layer boundaries for ibased_linsap)
             weights (1D array): weights for the Gaussian quadrature (Ng,)
             nu_bands (1D array): wavenumber grid for the CKD, (Nbands)
 
@@ -185,8 +193,8 @@ class ArtEmisPure(ArtCommon):
 
         nlayer, Ng, Nbands = dtau_ckd.shape
         sourcef = jnp.tile(piBarr(temperature, nu_bands), Ng)
-        flux_ckd = rtrun_emis_pureabs_ibased(
-            dtau_ckd.reshape((nlayer, Ng * Nbands)), sourcef, self.mus, self.weights
+        flux_ckd = self._run_solver(
+            dtau_ckd.reshape((nlayer, Ng * Nbands)), sourcef
         )
         flux_ckd = flux_ckd.reshape((Ng, Nbands))
         return jnp.einsum("g,gb->b", weights, flux_ckd)
@@ -253,8 +261,10 @@ class OpartEmisPure(ArtCommon):
 
         Args:
             opalayer (class): user defined class, needs to define self.nu_grid
-            pressure_top (float, optional): top pressure in bar. Defaults to 1.0e-8.
-            pressure_btm (float, optional): bottom pressure in bar. Defaults to 1.0e2.
+            pressure_top (float, optional): Representative pressure of the top
+                atmospheric layer in bar. Defaults to 1.0e-8.
+            pressure_btm (float, optional): Representative pressure of the bottom
+                atmospheric layer in bar. Defaults to 1.0e2.
             nlayer (int, optional): the number of the atmospheric layers. Defaults to 100.
             nstream (int, optional): the number of the gaussian quadrature. Defaults to 8.
         """
@@ -418,8 +428,10 @@ class ArtEmisScat(ArtCommon):
         """initialization of ArtEmisScat
 
         Args:
-            pressure_top (float, optional): top pressure in bar. Defaults to 1.0e-8.
-            pressure_btm (float, optional): bottom pressure in bar. Defaults to 1.0e2.
+            pressure_top (float, optional): Representative pressure of the top
+                atmospheric layer in bar. Defaults to 1.0e-8.
+            pressure_btm (float, optional): Representative pressure of the bottom
+                atmospheric layer in bar. Defaults to 1.0e2.
             nlayer (int, optional): the number of the atmospheric layers. Defaults to 100.
             nu_grid (float, array, optional): the wavenumber grid. Defaults to None.
             rtsolver (str): Radiative Transfer Solver,
@@ -435,6 +447,13 @@ class ArtEmisScat(ArtCommon):
         self.nstream = nstream
         self.mus, self.weights = initialize_gaussian_quadrature(self.nstream)
         self.method = "emission_with_scattering_using_" + self.rtsolver
+
+    def _source_function(self, temperature, nu_grid):
+        if self.nu_grid is not None:
+            return piBarr(temperature, self.nu_grid)
+        if nu_grid is not None:
+            return piBarr(temperature, nu_grid)
+        raise ValueError("the wavenumber grid is not given.")
 
     def run(
         self,
@@ -456,12 +475,7 @@ class ArtEmisScat(ArtCommon):
         Returns:
             1D array: spectrum
         """
-        if self.nu_grid is not None:
-            sourcef = piBarr(temperature, self.nu_grid)
-        elif nu_grid is not None:
-            sourcef = piBarr(temperature, nu_grid)
-        else:
-            raise ValueError("the wavenumber grid is not given.")
+        sourcef = self._source_function(temperature, nu_grid)
 
         if self.rtsolver == "lart_toon_hemispheric_mean":
             (
@@ -502,6 +516,48 @@ class ArtEmisScat(ArtCommon):
             raise ValueError("Unknown radiative transfer solver (rtsolver).")
 
         return spectrum
+
+    def run_with_surface(
+        self,
+        dtau,
+        single_scattering_albedo,
+        asymmetric_parameter,
+        temperature,
+        source_surface,
+        nu_grid=None,
+    ):
+        """Run SFM-2st emission with an isotropic lower thermal source.
+
+        Args:
+            dtau (2D array): Layer optical depths, shape ``(N_layer, N_nus)``.
+            single_scattering_albedo (2D array): Single-scattering albedo.
+            asymmetric_parameter (2D array): Scattering asymmetry parameter.
+            temperature (1D array): Layer temperatures, shape ``(N_layer,)``.
+            source_surface (1D array): Upward source at
+                ``pressure_boundary[-1]`` in pi B_nu scale. Use
+                ``piB(temperature_surface, nu_grid)`` for a black lower
+                boundary.
+            nu_grid (1D array): Wavenumber grid when it was not initialized.
+
+        Returns:
+            1D array: Top-of-atmosphere emission spectrum.
+        """
+        if self.rtsolver != "sfm2st_toon_hemispheric_mean":
+            raise ValueError(
+                "run_with_surface currently supports "
+                "rtsolver='sfm2st_toon_hemispheric_mean'."
+            )
+
+        sourcef = self._source_function(temperature, nu_grid)
+        return rtrun_emis_scat_sfm2st_toonhm_surface(
+            dtau,
+            single_scattering_albedo,
+            asymmetric_parameter,
+            sourcef,
+            source_surface,
+            self.mus,
+            self.weights,
+        )
 
     def run_ckd(self, dtau_ckd, single_scattering_albedo, asymmetric_parameter, 
                 temperature, weights, nu_bands):
@@ -566,8 +622,10 @@ class OpartEmisScat(ArtCommon):
 
         Args:
             opalayer (class): user defined class, needs to define self.nu_grid
-            pressure_top (float, optional): top pressure in bar. Defaults to 1.0e-8.
-            pressure_btm (float, optional): bottom pressure in bar. Defaults to 1.0e2.
+            pressure_top (float, optional): Representative pressure of the top
+                atmospheric layer in bar. Defaults to 1.0e-8.
+            pressure_btm (float, optional): Representative pressure of the bottom
+                atmospheric layer in bar. Defaults to 1.0e2.
             nlayer (int, optional): the number of the atmospheric layers. Defaults to 100.
         """
         super().__init__(pressure_top, pressure_btm, nlayer, opalayer.nu_grid)

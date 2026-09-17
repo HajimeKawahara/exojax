@@ -1,6 +1,5 @@
 import numpy as np
-import jax.numpy as jnp
-from exojax.database.core_atom.pf import partfn_Fe
+from exojax.database.core_atom.pf import _FE_I_QT_INDEX, partfn_Fe
 from exojax.utils.constants import Tref_original
 from exojax.utils.constants import ccgs
 from exojax.utils.constants import hcperk
@@ -23,13 +22,12 @@ def line_strength_atom(A, gupper, nu_lines, elower, QTref_284, QTmask, Irwin=Fal
     """
 
     # Assign Q(Tref) for each line
-    QTref = np.zeros_like(QTmask, dtype=float)
-    for i, mask in enumerate(QTmask):
-        QTref[i] = QTref_284[mask]
+    QTref = np.asarray(QTref_284, dtype=float)[np.asarray(QTmask, dtype=int)]
 
-    # Use Irwin_1981 for Fe I (mask==76)  #test211013Tako
-    if Irwin == True:
-        QTref[jnp.where(QTmask == 76)[0]] = partfn_Fe(Tref_original)
+    if Irwin:
+        QTref = np.where(
+            np.asarray(QTmask) == _FE_I_QT_INDEX, partfn_Fe(Tref_original), QTref
+        )
 
     S0 = (
         -A

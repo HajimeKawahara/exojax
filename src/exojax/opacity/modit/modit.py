@@ -19,7 +19,7 @@ from exojax.database.core.broadening import gamma_natural
 from exojax.database.core.broadening import normalized_doppler_sigma
 
 # vald
-from exojax.database.core_atom.broadening import gamma_vald3
+from exojax.database.core_atom.line_parameters import line_parameter_matrix
 from exojax.database.core_atom.pf import interp_QT_284
 
 # exomol
@@ -531,53 +531,11 @@ def vald_each(
         ngammaLM:  normalized gammaL matrix [N_layer x N_line]
         nsigmaDl:  normalized sigmaD matrix [N_layer x 1]
     """
-    # Compute normalized partition function for each species
-    qt = qt_284_T[:, QTmask]
-    qr = qt / QTref_284[QTmask]
-
-    # Compute line strength matrix
-    SijM = VMAP_LINE_STRENGTH(
-        Tarr, logsij0, dev_nu_lines, elower, qr, Tref
-    )
-
-    # Compute gamma parameters for the pressure and natural broadenings
-    gammaLM = jit(
-        vmap(
-            gamma_vald3,
-            (
-                0,
-                0,
-                0,
-                0,
-                None,
-                None,
-                None,
-                None,
-                None,
-                None,
-                None,
-                None,
-                None,
-                None,
-                None,
-            ),
-        )
-    )(
-        Tarr,
-        PH,
-        PHH,
-        PHe,
-        ielem,
-        iion,
-        dev_nu_lines,
-        elower,
-        eupper,
-        atomicmass,
-        ionE,
-        gamRad,
-        gamSta,
-        vdWdamp,
-        1.0,
+    qr = qt_284_T[:, QTmask] / QTref_284[QTmask]
+    SijM, gammaLM, _ = line_parameter_matrix(
+        Tarr, PH, PHe, PHH, qr, logsij0, dev_nu_lines, dev_nu_lines,
+        elower, eupper, ielem, iion, atomicmass, ionE,
+        gamRad, gamSta, vdWdamp, Tref,
     )
     ngammaLM = gammaLM / (dev_nu_lines / R)
     # Do NOT remove NaN because "set_ditgrid_matrix_vald_each" makes good use of them. # ngammaLM = jnp.nan_to_num(ngammaLM, nan = 0.0)
@@ -605,7 +563,9 @@ def vald_all(asdb, Tarr, PH, PHe, PHH, R):
     """
     gQT_284species = asdb.gQT_284species
     T_gQT = asdb.T_gQT
-    qt_284_T = vmap(interp_QT_284, (0, None, None))(Tarr, T_gQT, gQT_284species)
+    qt_284_T = vmap(interp_QT_284, (0, None, None, None))(
+        Tarr, T_gQT, gQT_284species, getattr(asdb, "Irwin", False)
+    )
 
     SijMS, ngammaLMS, nsigmaDlS = jit(
         vmap(
@@ -733,7 +693,8 @@ def set_ditgrid_matrix_vald_each(
     R,
     fT,
     dit_grid_resolution,
-    *kargs
+    *kargs,
+    Irwin=False,
 ):
     """Easy Setting of DIT Grid Matrix (dgm) using VALD.
 
@@ -760,6 +721,7 @@ def set_ditgrid_matrix_vald_each(
         fT:  function of temperature array
         dit_grid_resolution:  resolution of dgm
         *kargs:  arguments for fT
+        Irwin: Use the Irwin partition function for Fe I.
 
     Returns:
         dgm_ngammaL:  DIT Grid Matrix (dgm) of normalized gammaL [N_layer x N_DITgrid]
@@ -767,8 +729,10 @@ def set_ditgrid_matrix_vald_each(
     set_dgm_minmax = []
     Tarr_list = fT(*kargs)
     for Tarr in Tarr_list:
-        qt_284_T = vmap(interp_QT_284, (0, None, None))(Tarr, T_gQT, gQT_284species)
-        QTref_284 = jnp.array(interp_QT_284(Tref, T_gQT, gQT_284species))
+        qt_284_T = vmap(interp_QT_284, (0, None, None, None))(
+            Tarr, T_gQT, gQT_284species, Irwin
+        )
+        QTref_284 = interp_QT_284(Tref, T_gQT, gQT_284species, Irwin)
 
         SijM, ngammaLM, nsigmaDl = vald_each(
             Tarr,
@@ -865,7 +829,8 @@ def set_ditgrid_matrix_vald_all(asdb, PH, PHe, PHH, R, fT, dit_grid_resolution, 
             R,
             fT,
             dit_grid_resolution,
-            *kargs
+            *kargs,
+            Irwin=getattr(asdb, "Irwin", False),
         )
         dgm_ngammaLS_BeforePadding.append(dgm_ngammaL_sp)
         lendgm.append(dgm_ngammaL_sp.shape[1])

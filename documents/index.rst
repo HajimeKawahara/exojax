@@ -1,7 +1,7 @@
 ExoJAX
 ======
 
-Version 2.6.0 (:doc:`userguide/history`)
+Version 2.6.1 (:doc:`userguide/history`)
 
 `ExoJAX <https://github.com/HajimeKawahara/exojax>`_ is a JAX-based toolkit for
 differentiable high-resolution spectral modeling of exoplanets and brown
@@ -23,6 +23,7 @@ Start Here
 ----------
 
 - New users: :doc:`Introduction <introduction>` and :doc:`Tutorials <tutorials>`
+- Precomputed opacity and a small first example: :doc:`Starter Opacity Data <opacity_data>`
 - Practical examples: :doc:`Gallery <examples/index>`
 - Topic-based documentation: :doc:`User Guide <userguide>`
 - API reference: :doc:`API Reference <exojax/exojax>`
@@ -48,6 +49,7 @@ Contents
    :caption: Tutorials:
 
    tutorials.rst
+   opacity_data.rst
 
 .. toctree::
    :maxdepth: 2

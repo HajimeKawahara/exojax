@@ -7,11 +7,12 @@ import jax.numpy as jnp
 from jax import config
 import pandas as pd
 import numpy as np
+import pytest
 from importlib.resources import files
 
 from exojax.opacity import OpaPremodit
 from exojax.rt import ArtTransPure
-from exojax.database.api  import MdbHitran
+from exojax.database.hitran.api import MdbHitran
 from exojax.utils.grids import wavenumber_grid
 from exojax.utils.astrofunc import gravity_jupiter
 from exojax.utils.constants import RJ
@@ -24,6 +25,7 @@ config.update("jax_enable_x64", True)
 
 
 def test_transmission_is_differentiable():
+    pytest.importorskip("pyarrow", reason="reading the Feather reference requires pyarrow")
     filename = files("exojax").joinpath("data/testdata/" + COMPDATA_TRANSMISSION_CO)
     dat = pd.read_feather(filename)
     wav = (dat["Wavelength[um]"],)
@@ -56,7 +58,7 @@ def test_transmission_is_differentiable():
         mmw = mu_fid * np.ones_like(art.pressure)
         gravity = art.gravity_profile(Tarr, mmw, radius_btm, gravity_btm)
         xsmatrix = opa.xsmatrix(Tarr, art.pressure)
-        dtau = art.opacity_profile_xs(xsmatrix, mmr_arr, opa.mdb.molmass, gravity)
+        dtau = art.opacity_profile_xs(xsmatrix, mmr_arr, opa.molmass, gravity)
         Rp2 = art.run(dtau, Tarr, mmw, radius_btm, gravity_btm)
         Rp2_sample = sop_inst.sampling(Rp2, RV, inst_nus)
         return jnp.sqrt(Rp2_sample)

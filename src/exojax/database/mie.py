@@ -280,7 +280,7 @@ def auto_rgrid(rg, sigmag, nrgrid=1500):
         1. if the cube-weighted lognormal distribution q(x) is enough compact, the sampling points is given by the linear within the range of [mean - m sigma, mean + n sigma]
         where sigma is the STD of q(x).
         2. else, i.e., the distribution starts from close to 0 (large sigmag), the range is [0 + dr, n*mean].
-        Currently sigmag = 1.0001 to 4 is within 1 % error for the defalut setting. See tests/unittests/spec/clouds/mie_test.py
+        Currently sigmag = 1.0001 to 4 is within 1 % error for the defalut setting. See tests/unittests/database/test_mie.py
 
     Args:
         rg (float): rg parameter in lognormal distribution in cgs

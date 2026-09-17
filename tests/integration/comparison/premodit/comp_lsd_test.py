@@ -59,7 +59,7 @@ def compare_line_shape_density(mdb,nu_grid,Ttest=1000.0,Ttyp=2000.0):
     #                   ngamma_ref_grid, mdb.n_Texp, n_Texp_grid, mdb.elower,
     #                   elower_grid, Ttyp)
     Tref=296.0
-    lbd_array, multi_index_uniqgrid = generate_lbd(mdb.line_strength_ref,
+    lbd_array, multi_index_uniqgrid = generate_lbd(mdb.line_strength_ref_original,
                  mdb.nu_lines,
                  nu_grid,
                  ngamma_ref,
@@ -73,12 +73,12 @@ def compare_line_shape_density(mdb,nu_grid,Ttest=1000.0,Ttyp=2000.0):
                  diffmode=0)
     lbd = lbd_array[0]
     print(len(elower_grid),len(nu_grid))
-    qT = mdb.qr_interp(Ttest)
+    qT = mdb.qr_interp(Ttest, Tref)
     Slsd=unbiased_lsd_zeroth(lbd,Ttest,Tref, nu_grid,elower_grid,qT)
     Slsd=np.sum(Slsd,axis=1)
     cont_inilsd_nu, index_inilsd_nu = npgetix(mdb.nu_lines, nu_grid)
-    logsij0 = jnp.array(np.log(mdb.line_strength_ref))
-    S=line_strength(Ttest, logsij0, mdb.nu_lines, mdb.elower, qT, mdb.Tref)
+    logsij0 = jnp.array(np.log(mdb.line_strength_ref_original))
+    S=line_strength(Ttest, logsij0, mdb.nu_lines, mdb.elower, qT, Tref)
     Slsd_direct = np.zeros_like(nu_grid,dtype=np.float64)
     Slsd_direct = npadd1D(Slsd_direct, S, cont_inilsd_nu, index_inilsd_nu)
     return Slsd, Slsd_direct

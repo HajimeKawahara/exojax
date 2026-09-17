@@ -1,6 +1,33 @@
 History
 ===============
 
+Version 2.6.1
+---------------
+
+Highlights
+^^^^^^^^^^^^^^^^^^^
+
+- Added NIST and ExoAtom atomic databases, RADIS-backed Kurucz loading, and
+  selectable Voigt or sub-Voigt Na/K opacity profiles.
+- Added an optional PyExoCross reader for ExoMol and small starter opacity
+  datasets with introductory examples.
+- Added radiative-convective equilibrium solvers, including implicit
+  differentiation and a spectral ocean-planet tutorial.
+- Added differentiable RORR mixing for correlated-k gas mixtures, with
+  validation and retrieval examples.
+- Added exact atmospheric pressure boundaries, hydrostatic radius profiles,
+  geometry-based layer optical depths, and direct-beam SFM reflection.
+- Added exact spectral binning, selectable DiffGrid profile kernels,
+  interpolation diagnostics, and inference validation workflows.
+- Fixed H-minus thresholds and gradients, HITRAN isotope masking, VALD species
+  decoding, and optically thin emission; added selectable CIA interpolation.
+
+Python 3.10 remains the minimum supported version. The deprecated
+``exojax.spec`` and ``exojax.rt.opart`` compatibility imports remain available
+until v3.0.
+
+**Full Changelog**: https://github.com/HajimeKawahara/exojax/compare/v2.6.0...v2.6.1
+
 Version 2.6.0
 ---------------
 

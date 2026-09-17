@@ -15,9 +15,7 @@ from exojax.utils.constants import eV2wn
 def _normalize_vald_engine(engine):
     """Normalize the storage engine used for VALD line-list caches."""
     if not isinstance(engine, str):
-        raise ValueError(
-            "VALD engine must be 'pytables', 'pandas', or 'vaex'."
-        )
+        raise ValueError("VALD engine must be 'pytables', 'pandas', or 'vaex'.")
 
     normalized_engine = engine.lower()
     if normalized_engine == "pandas":
@@ -30,7 +28,7 @@ def _normalize_vald_engine(engine):
 
 
 def _vald_cache_path(path, engine):
-    """Return a backend-specific cache path for a VALD line list."""
+    """Return the backend-specific cache path for a VALD line list."""
     normalized_engine = _normalize_vald_engine(engine)
     suffix = ".h5" if normalized_engine == "pytables" else ".hdf5"
     return pathlib.Path(path).expanduser().with_suffix(suffix)
@@ -493,12 +491,10 @@ def pickup_param(ExAll):
     gamSta = ExAll["stark_damping"].to_numpy()
     vdWdamp = ExAll["waals_damping"].to_numpy()
 
-    ielem = np.zeros(len(ExAll), dtype="int")  # atomic number (e.g., Fe=26)
-    # e.g., neutral=1, singly ionized=2, ...
-    iion = np.zeros(len(ExAll), dtype="int")
-    for i, sp in enumerate(ExAll["species"]):
-        ielem[i] = int(str(int(sp))[:2])
-        iion[i] = int(str(int(sp))[2:]) + 1
+    # Species codes store 100 * atomic number + ion charge.
+    species = ExAll["species"].to_numpy(dtype=int)
+    ielem = species // 100
+    iion = species % 100 + 1
 
     return (
         A,
@@ -644,12 +640,14 @@ def pick_ionE(ielem, iion, df_ionE):
         )
         return y
 
-    ionization_energies = f_droppare(
-        df_ionE[
-            (df_ionE["At. num "] == ielem) & (df_ionE[" Ion Charge "] == iion - 1)
-        ]["      Ionization Energy (a) (eV)      "]
+    ionE = float(
+        f_droppare(
+            df_ionE[
+                (df_ionE["At. num "] == ielem) & (df_ionE[" Ion Charge "] == iion - 1)
+            ]["      Ionization Energy (a) (eV)      "]
+        ).item()
     )
-    return float(ionization_energies.iloc[0])
+    return ionE
 
 
 def load_pf_Barklem2016():

@@ -5,6 +5,7 @@ using pre-computed grids. PreMODIT offers the fastest computation speed by using
 optimized parameter grids and efficient memory management.
 """
 
+from copy import copy
 from functools import partial
 import logging
 from typing import Optional, Union, Literal, Dict, Any, Tuple, List
@@ -60,6 +61,7 @@ class OpaPremodit(OpaCalc):
         broadening_parameter_resolution: Broadening parameter resolution configuration
         single_broadening: Whether using single broadening mode
         ngrid_broadpar: Number of broadening parameter grid points
+        profile_kernel: ``"analytic"`` or ``"real_space"`` Voigt kernel.
         aux: User-specified auxiliary metadata persisted through save/load
     """
 
@@ -80,6 +82,7 @@ class OpaPremodit(OpaCalc):
         memory_policy: Optional[MemoryPolicy] = None,
         *,
         delete_mdb_after_init: bool = True,
+        profile_kernel: Optional[Literal["analytic", "real_space"]] = None,
     ) -> None:
         """Initialize OpaPremodit opacity calculator.
 
@@ -111,6 +114,11 @@ class OpaPremodit(OpaCalc):
             delete_mdb_after_init: Drop the local reference to the provided mdb
                 inside ``__init__`` to encourage early GC. External references are
                 unaffected. Defaults to True (same as prior behavior).
+            profile_kernel: Closed-mode Voigt kernel: ``"analytic"`` uses the
+                existing Fourier expression; ``"real_space"`` FFTs the sampled
+                LPF Voigt. None preserves the existing defaults: analytic for
+                nstitch=1, real_space for stitching. Stitching requires
+                real_space.
 
         Raises:
             ValueError: If no molecular lines are within the wavenumber grid
@@ -130,6 +138,7 @@ class OpaPremodit(OpaCalc):
                 _cutwing = memory_policy.cutwing
 
         check_jax64bit(_allow_32bit)
+        self.profile_kernel = self._resolve_profile_kernel(profile_kernel, _nstitch)
 
         # default setting
         self.method = "premodit"
@@ -343,6 +352,13 @@ class OpaPremodit(OpaCalc):
             self.dit_grid_resolution = float(self.dit_grid_resolution)
         self.cutwing = float(state["cutwing"])
         self.nstitch = int(state["nstitch"])
+        if "profile_kernel" in state and state["profile_kernel"] not in (
+            "analytic", "real_space"
+        ):
+            raise ValueError("Invalid saved PreMODIT profile_kernel.")
+        self.profile_kernel = self._resolve_profile_kernel(
+            state.get("profile_kernel"), self.nstitch
+        )
         self.alias = state["alias"]
         self.ngrid_broadpar = int(state["ngrid_broadpar"])
         self.ngrid_elower = int(state["ngrid_elower"])
@@ -399,6 +415,29 @@ class OpaPremodit(OpaCalc):
             else:
                 raise ValueError("Serialized opa missing lbd coefficients for stitching mode.")
         self.ready = True
+
+    @staticmethod
+    def _resolve_profile_kernel(profile_kernel, nstitch):
+        if profile_kernel is None:
+            return "real_space" if nstitch > 1 else "analytic"
+        if profile_kernel not in ("analytic", "real_space"):
+            raise ValueError("profile_kernel must be 'analytic' or 'real_space'.")
+        if nstitch > 1 and profile_kernel != "real_space":
+            raise ValueError("Stitching requires profile_kernel='real_space'.")
+        return profile_kernel
+
+    def with_profile_kernel(self, profile_kernel):
+        """Return a calculator with another kernel, sharing precomputed arrays.
+
+        The original calculator is unchanged. No line-density rebuild is needed;
+        the selected kernel applies to both vector and matrix evaluations.
+        """
+        result = copy(self)
+        result.profile_kernel = self._resolve_profile_kernel(
+            profile_kernel, self.nstitch
+        )
+        return result
+
     def __eq__(self, other: object) -> bool:
         """Check equality with another OpaPremodit instance.
 
@@ -417,6 +456,14 @@ class OpaPremodit(OpaCalc):
             and np.array_equal(self.T_gQT, other.T_gQT)
             and np.array_equal(self.gQT, other.gQT)
             and (self.diffmode == other.diffmode)
+            and (
+                self._resolve_profile_kernel(
+                    getattr(self, "profile_kernel", None), self.nstitch
+                )
+                == self._resolve_profile_kernel(
+                    getattr(other, "profile_kernel", None), other.nstitch
+                )
+            )
             and (self.ngrid_broadpar == other.ngrid_broadpar)
             and (self.wavelength_order == other.wavelength_order)
             and (self.version_auto_trange == other.version_auto_trange)
@@ -762,6 +809,7 @@ class OpaPremodit(OpaCalc):
                 qt,
                 self.Tref_broadening,
                 self.Twt,
+                profile_kernel=getattr(self, "profile_kernel", "analytic"),
             )
         else:
             raise ValueError("nstitch should be integer and larger than 1.")
@@ -851,6 +899,7 @@ class OpaPremodit(OpaCalc):
                 qtarr,
                 self.Tref_broadening,
                 self.Twt,
+                profile_kernel=getattr(self, "profile_kernel", "analytic"),
             )
         else:
             raise ValueError("nstitch should be integer and larger than 1.")

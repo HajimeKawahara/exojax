@@ -45,7 +45,7 @@ def get_radis_version():
 
 def supports_exomol_broadf_download():
     """Return whether backend supports ExoMol ``broadf_download``."""
-    return version.parse(get_radis_version()) >= version.parse("0.16")
+    return version.parse(get_radis_version()) >= version.parse("0.16.1")
 
 
 def exomol_init_needs_bkgdatm():
@@ -59,7 +59,7 @@ def warn_if_exomol_broadf_download_unsupported():
         return
     radis_version = get_radis_version()
     print("radis==", radis_version)
-    msg = "The current version of radis does not support broadf_download (requires >=0.16)."
+    msg = "The current version of radis does not support broadf_download (requires >=0.16.1)."
     warnings.warn(msg, UserWarning)
 
 
@@ -81,6 +81,28 @@ def get_auto_memory_mapping_engine():
         "RADIS-backed engine auto-selection",
     )
     return get_auto_MEMORY_MAPPING_ENGINE()
+
+
+def fetch_kurucz_dataframe(
+    species, *, nurange, local_databases, databank_name, engine, cache
+):
+    """Fetch Kurucz lines as pandas data, retaining RADIS cache paths."""
+    fetch = _import_attr(
+        "radis.io.kurucz", "fetch_kurucz", "Kurucz database download"
+    )
+    return fetch(
+        molecule=species,
+        local_databases=local_databases,
+        databank_name=databank_name,
+        load_wavenum_min=nurange[0],
+        load_wavenum_max=nurange[1],
+        cache=cache,
+        engine=engine,
+        output="pandas",
+        return_local_path=True,
+        verbose=False,
+        parallel=False,
+    )
 
 
 def get_exomol_mdb_class():
@@ -231,6 +253,39 @@ def get_hit2df_func():
     return _import_attr("radis.api.hitranapi", "hit2df", "HITRAN/HITEMP parser access")
 
 
+def read_hitran_parfile(parfile, *, engine, molecule, with_error):
+    """Read a HITRAN-format file, preserving uncertainty codes when requested."""
+    if not with_error:
+        return get_hit2df_func()(parfile, engine=engine, cache="regen")
+
+    parse_hitran_file = _import_attr(
+        "radis.api.hitranapi",
+        "parse_hitran_file",
+        "HITRAN/HITEMP parser access",
+    )
+    columns_2004 = _import_attr(
+        "radis.api.hitranapi",
+        "columns_2004",
+        "HITRAN/HITEMP parser access",
+    )
+    post_process_hitran_data = _import_attr(
+        "radis.api.hitranapi",
+        "post_process_hitran_data",
+        "HITRAN/HITEMP parser access",
+    )
+    dataframe = parse_hitran_file(
+        parfile,
+        columns_2004,
+        output="pandas",
+    )
+    return post_process_hitran_data(
+        dataframe,
+        molecule=molecule,
+        drop_non_numeric=True,
+        add_HITRAN_uncertainty_code=True,
+    )
+
+
 def get_exomol_database_list_func():
     """Return ``radis.api.exomolapi.get_exomol_database_list`` lazily."""
     return _import_attr(
@@ -288,4 +343,24 @@ def get_isotope_name_dict():
         "radis.db.molparam",
         "isotope_name_dict",
         "isotope-name table lookup",
+    )
+
+
+def fetch_nist_lines(
+    species, *, nurange, local_databases, databank_name, engine, cache
+):
+    """Fetch NIST lines through RADIS, returning a Pandas frame and paths."""
+    fetch_nist = _import_attr("radis.io.nist", "fetch_nist", "NIST line retrieval")
+    return fetch_nist(
+        species,
+        local_databases=local_databases,
+        databank_name=databank_name,
+        load_wavenum_min=nurange[0],
+        load_wavenum_max=nurange[1],
+        engine=engine,
+        cache=cache,
+        output="pandas",
+        return_local_path=True,
+        verbose=False,
+        parallel=False,
     )

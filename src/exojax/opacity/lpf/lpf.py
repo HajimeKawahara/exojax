@@ -4,8 +4,7 @@ import jax.numpy as jnp
 from jax import custom_jvp, jit, vmap
 
 # vald
-from exojax.database.core_atom.broadening import gamma_vald3
-from exojax.database.core_atom.pf import interp_QT_284
+from exojax.database.core_atom.line_parameters import line_parameter_matrix
 from exojax.database.core.broadening  import gamma_exomol
 from exojax.database.core.broadening  import doppler_sigma
 from exojax.database.core.broadening  import gamma_natural
@@ -57,60 +56,12 @@ def vald(adb, Tarr, PH, PHe, PHH):
         sigmaDM: sigmaD matrix
 
     """
-    # Compute normalized partition function for each species
-    qt_284 = vmap(interp_QT_284, (0, None, None))(Tarr, adb.T_gQT, adb.gQT_284species)
-    qt = qt_284[:, adb.QTmask]
-    qr = qt / adb.QTref_284[adb.QTmask]
-    
-    # Compute line strength matrix
-    SijM = jit(vmap(line_strength,(0,None,None,None,0,None)))\
-        (Tarr, adb.logsij0, adb.nu_lines, adb.elower, qr, adb.Tref)
-    # Compute gamma parameters for the pressure and natural broadenings
-    gammaLM = jit(
-        vmap(
-            gamma_vald3,
-            (
-                0,
-                0,
-                0,
-                0,
-                None,
-                None,
-                None,
-                None,
-                None,
-                None,
-                None,
-                None,
-                None,
-                None,
-                None,
-            ),
-        )
-    )(
-        Tarr,
-        PH,
-        PHH,
-        PHe,
-        adb.ielem,
-        adb.iion,
-        adb.dev_nu_lines,
-        adb.elower,
-        adb.eupper,
-        adb.atomicmass,
-        adb.ionE,
-        adb.gamRad,
-        adb.gamSta,
-        adb.vdWdamp,
-        1.0,
+    qr = vmap(adb.qr_interp_lines, (0, None))(Tarr, adb.Tref)
+    return line_parameter_matrix(
+        Tarr, PH, PHe, PHH, qr, adb.logsij0, adb.nu_lines, adb.dev_nu_lines,
+        adb.elower, adb.eupper, adb.ielem, adb.iion, adb.line_masses, adb.ionE,
+        adb.gamRad, adb.gamSta, adb.vdWdamp, adb.Tref,
     )
-
-    # Compute doppler broadening
-    sigmaDM = jit(vmap(doppler_sigma, (None, 0, None)))(
-        adb.nu_lines, Tarr, adb.atomicmass
-    )
-
-    return SijM, gammaLM, sigmaDM
 
 
 
@@ -146,62 +97,17 @@ def vald_each(Tarr, PH, PHe, PHH, \
         sigmaDM: sigmaD matrix [N_layer x N_line]
 
     """
-    # Compute normalized partition function for each species
-    qt = qt_284_T[:, QTmask]
-    qr = qt / QTref_284[QTmask]
-
-    # Compute line strength matrix
-
-    SijM = jit(vmap(line_strength,(0,None,None,None,0,None)))\
-        (Tarr, logsij0, nu_lines, elower, qr, Tref)
-
-    SijM = jnp.nan_to_num(SijM, nan=0.0)
-
-    # Compute gamma parameters for the pressure and natural broadenings
-    gammaLM = jit(
-        vmap(
-            gamma_vald3,
-            (
-                0,
-                0,
-                0,
-                0,
-                None,
-                None,
-                None,
-                None,
-                None,
-                None,
-                None,
-                None,
-                None,
-                None,
-                None,
-            ),
-        )
-    )(
-        Tarr,
-        PH,
-        PHH,
-        PHe,
-        ielem,
-        iion,
-        dev_nu_lines,
-        elower,
-        eupper,
-        atomicmass,
-        ionE,
-        gamRad,
-        gamSta,
-        vdWdamp,
-        1.0,
+    qr = qt_284_T[:, QTmask] / QTref_284[QTmask]
+    SijM, gammaLM, sigmaDM = line_parameter_matrix(
+        Tarr, PH, PHe, PHH, qr, logsij0, nu_lines, dev_nu_lines,
+        elower, eupper, ielem, iion, atomicmass, ionE,
+        gamRad, gamSta, vdWdamp, Tref,
     )
-
-    # Compute doppler broadening
-    sigmaDMn = jit(vmap(doppler_sigma, (None, 0, None)))(nu_lines, Tarr, atomicmass)
-    sigmaDM = jnp.where(sigmaDMn != 0, sigmaDMn, 1.0)
-
-    return SijM, gammaLM, sigmaDM
+    return (
+        jnp.nan_to_num(SijM, nan=0.0),
+        gammaLM,
+        jnp.where(sigmaDM != 0, sigmaDM, 1.0),
+    )
 
 
 @jit

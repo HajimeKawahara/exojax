@@ -186,6 +186,11 @@ therefore place the nodes uniformly in :math:`1/T`. The example starts
 with 21 nodes; the validation below determines whether that is
 sufficient for the intended noise level.
 
+This demonstration explicitly keeps the analytic kernel used for its
+recorded outputs. New DiffGrid tables default to the real-space kernel;
+see :doc:`../userguide/diffgrid` for selecting a kernel and matching the
+validation teacher.
+
 .. code:: ipython3
 
     mdb = MdbExomol(
@@ -216,6 +221,7 @@ sufficient for the intended noise level.
         teacher,
         temperature_grid=temperature_nodes,
         pressure_grid=np.asarray(art.pressure),
+        profile_kernel="analytic",
     )
     jax.block_until_ready(opa.log_cross_section_grid)
     jax.block_until_ready(opa.log_cross_section_derivative_grid)
@@ -763,6 +769,258 @@ the wall times. Peak device memory is the fresh-process JAX allocator
 statistic, not total memory reported by ``nvidia-smi``. These are
 single-chain, single-seed measurements on one GPU; both performance and
 the five-profile interpolation check are specific to this example.
+
+
+Validate observation-space accuracy and gradients
+-------------------------------------------------
+
+New benchmark preparations use ``prepare --profile-kernel real_space``
+by default for both the saved PreMODIT teacher and DiffGrid construction.
+Use ``--profile-kernel analytic`` to reproduce the original kernel choice.
+Existing saved cases retain their recorded calculations.
+
+The benchmark’s ``validate`` command adds the P0/PR2 checks to an
+existing prepared case. It reuses the saved observations and opacity
+archives; the numerical notebook cells above remain the original
+demonstration. From the repository root:
+
+.. code:: bash
+
+   case_dir=/path/to/prepared/case
+   python tests/benchmark/diffgrid_nuts_benchmark.py validate --output-dir "$case_dir" --validation-id accuracy-baseline
+
+Results go to ``validations/accuracy-baseline/validation.json`` and
+``residuals.npz``. Validation IDs must be single path components, and an
+existing ID is rejected. The report retains failing probes and
+derivative diagnostics; ``passed: false`` is distinct from an
+interrupted or failed execution.
+
+The default probes include the original truth and four temperature-prior
+corners, an isothermal profile at every inverse-temperature interval
+midpoint, and 16 prior-interior points generated with ``--seed 0``. The
+isothermal probes test the opacity interpolation and can lie outside the
+power-law prior family. The report checks layer pressures, common
+opacity/CIA temperature coverage, and wavelength coverage through
+rotation, the finite Gaussian kernel, and RV sampling. It preserves the
+existing temperature clip and records affected layers.
+
+Both methods use the same complete observation operator. With residual
+``delta_m`` and the existing diagonal noise covariance ``C``, validation
+requires maximum absolute residual/noise at most ``0.01`` and
+``Q = delta_m.T @ inv(C) @ delta_m`` at most ``0.1``. The former retains
+the existing threshold; the Q threshold is a provisional choice saved
+before evaluation. Configure them with
+``--max-interpolation-error-in-noise`` and ``--max-q``.
+
+At truth and the prior-interior points, validation compares automatic
+directional derivatives with central differences at
+``h = 1e-2, 1e-3, 1e-4, 1e-5``. Parameters are scaled by their prior
+widths and the forward prediction is divided by noise. Two adjacent
+smooth steps must have scaled error at most
+``--gradient-tolerance 1e-3``. The same data are used for log-likelihood
+derivatives and NumPyro’s actual unconstrained potential, including the
+prior-transform Jacobian and its negative-log-density sign. Clip
+crossings receive separate one-sided diagnostics. Differences between
+PreMODIT and DiffGrid derivatives are reported separately from each
+method’s AD/finite-difference agreement.
+
+Passing these finite probes establishes agreement with the saved teacher
+at those probes. Production reference convergence remains
+``not_established`` unless an additional prepared reference is supplied:
+
+.. code:: bash
+
+   python tests/benchmark/diffgrid_nuts_benchmark.py validate --output-dir "$case_dir" --validation-id accuracy-refined --reference-output-dir /path/to/refined/case
+
+The reference must use matching physical conditions, molecular/CIA
+inputs, observation settings, and physical pressure boundaries with
+finer numerical settings. The teachers are evaluated under the current
+code. The refinement check at truth uses one tenth of the residual/noise
+budget and one hundredth of the Q budget. Changing layer counts while
+retaining representative layer endpoints changes the physical boundaries
+and is rejected. One refinement at truth does not establish an exact
+teacher or accuracy throughout the prior. The small offline regression
+exercises real PreMODIT and radiative transfer on five synthetic lines;
+it provides no production CH4/GPU measurement.
+
+Saving and comparing benchmark runs
+-----------------------------------
+
+After ``prepare``, reuse the same output directory and its shared
+``prepare.json``, ``case.npz``, and opacity archives. After the
+validation above succeeds, select its ID and give each measurement a run
+ID:
+
+.. code:: bash
+
+   case_dir=/path/to/prepared/case
+   python tests/benchmark/diffgrid_nuts_benchmark.py run --output-dir "$case_dir" --run-id baseline --method premodit --validation-id accuracy-baseline
+   python tests/benchmark/diffgrid_nuts_benchmark.py run --output-dir "$case_dir" --run-id baseline --method diffgrid --validation-id accuracy-baseline
+   python tests/benchmark/diffgrid_nuts_benchmark.py summarize --output-dir "$case_dir" --run-id baseline --validation-id accuracy-baseline
+
+Each method writes ``runs/baseline/<method>/result.json`` and
+``samples.npz``; an existing method directory is rejected. Run IDs must
+be single path components. Omitting ``--run-id`` preserves the original
+paths and overwrite behavior; ``summarize`` then explicitly selects the
+legacy root results. No command implicitly selects the latest run or
+validation. Once validation reports exist for the case, ``run`` must
+explicitly select successful evidence. ``summarize`` checks each run’s
+recorded evidence; use ``--validation-id`` to attach compatible evidence
+to earlier runs. Cases without validation reports retain the legacy
+commands, with timing ratios labeled descriptive only.
+
+To compare a code revision, validate and run the same method after the
+change with new IDs, then request that comparison explicitly:
+
+.. code:: bash
+
+   python tests/benchmark/diffgrid_nuts_benchmark.py validate --output-dir "$case_dir" --validation-id accuracy-candidate --allow-code-revision
+   python tests/benchmark/diffgrid_nuts_benchmark.py run --output-dir "$case_dir" --run-id candidate --method diffgrid --allow-code-revision --validation-id accuracy-candidate
+   python tests/benchmark/diffgrid_nuts_benchmark.py summarize --output-dir "$case_dir" --run-id baseline --compare-run-id candidate --method diffgrid
+
+``--allow-code-revision`` explicitly permits loading opacity saved by a
+different ExoJAX version while retaining schema, hash, and dtype checks.
+Loading otherwise keeps the strict version check. The revision summary
+uses the separate validation recorded by each run. The comparison writes
+``runs/candidate/diffgrid/comparison_from_baseline.json``. Revision
+comparisons allow different ExoJAX and code revisions while requiring
+matching case, physical and sampler settings, hardware, dtype, and other
+dependencies. Comparisons between methods also require the same code
+version.
+
+Version 2 results distinguish ``partial``, ``failed``, and ``completed``
+runs and record failure stages. Only completed runs can be summarized.
+Raw samples and extra fields retain ``(chain, draw, ...)`` axes in a
+pickle-free archive; the JSON records parameter order, shapes, dtypes,
+and file hashes. Summaries validate these records and input hashes, then
+recompute diagnostics from saved samples. The legacy minimum ESS remains
+a NumPyro estimate and is null when NumPyro is unavailable or the
+estimate is undefined; it is separate from the bulk/tail ESS below.
+Version 1 results remain readable, with unavailable provenance and raw
+samples marked as unknown; unknown schema versions are rejected.
+
+Provenance records code, configuration, and input hashes, Git commit and
+dirty state, a tracked-diff hash, dependency versions, and
+device/cache/allocator settings. Database source and cache file
+manifests and checksums are recorded during preparation, separately from
+opacity archive hashes. A dirty checkout is not fully reproducible from
+its recorded commit alone.
+
+The default run still uses one chain initialized at truth. The reference
+GPU measurements above have not been rerun for these persistence,
+validation, and inference-quality updates; saved results and offline
+contract tests alone do not establish a new scientific benchmark.
+
+Multiple chains, independent repetitions, and inference quality
+---------------------------------------------------------------
+
+P0/PR3 adds an explicit protocol for comparing inference quality and
+cost. Start with four chains, 500 warmup steps, and 1000 retained draws
+per chain. Use ``--initialization prior`` for dispersed initial points
+and pass the same run seed and initialization seed to both methods. Use
+a different seed for each independent repetition. These are proposed
+measurement settings, not a claim that convergence has been achieved.
+
+After the accuracy validation succeeds, run each method in a fresh
+process:
+
+.. code:: bash
+
+   case_dir=/path/to/prepared/case
+   for seed in 0 1; do
+     for method in premodit diffgrid; do
+       python tests/benchmark/diffgrid_nuts_benchmark.py run --output-dir "$case_dir" --run-id "science-$seed" --method "$method" --validation-id accuracy-baseline --num-chains 4 --chain-method sequential --initialization prior --initialization-seed "$seed" --seed "$seed" --num-warmup 500 --num-samples 1000 --measure-steady-sampling
+     done
+   done
+   python tests/benchmark/diffgrid_nuts_benchmark.py summarize --output-dir "$case_dir" --run-id science-0 --repeat-run-id science-1
+
+``--chain-method`` also accepts ``parallel`` and ``vectorized``;
+parallel execution requires enough devices for the requested chains. The
+report records the execution method, device count, per-chain random keys
+and initial points, and initialization policy. ``--initialization-seed``
+defaults to ``--seed``. Additional ``--repeat-run-id`` arguments select
+more independent pairs; they cannot be combined with the code-revision
+option ``--compare-run-id``.
+
+The saved quality rules are rank-normalized split Rhat below ``1.01``,
+bulk ESS and tail ESS each at least ``400``, and zero divergences. The
+diagnostics use ArviZ, record its version and estimator definitions, and
+retain unavailable estimates with a reason. ArviZ is an optional
+benchmark dependency; its absence prevents a scientific quality pass.
+The old minimum ESS has not been relabeled as bulk or tail ESS.
+Scientific eligibility requires these exact recorded quality rules,
+compatible passing PR2 evidence, matching comparison conditions, at
+least four chains initialized within the prior, at least 500 warmup
+steps and 1000 retained draws per chain, finite posterior predictions,
+and at least two independent run pairs. A failed quality rule remains
+visible in the summary; increase sampling effort for both methods under
+common settings and retain failed runs with their original IDs.
+
+The summary recomputes diagnostics from the saved chains and writes
+``comparison.json``, ``comparison.csv``, ``comparison.png``, and
+``diagnostics.csv`` under ``runs/<first-run-id>/``. In
+``comparison.json``, ``quality.eligible`` and ``quality.reasons`` give
+the decision and unmet requirements, while ``repetitions`` retains every
+selected pair. Existing timing ratios remain descriptive;
+``scientific_sampling_speedup_premodit_over_diffgrid`` is null unless
+all eligibility requirements pass. It records posterior means,
+quantiles, Monte Carlo standard errors, and differences between methods.
+``--predictive-draws`` defaults to 100 selected draws per chain. Their
+indices, noiseless forward predictions, and replicated observations with
+the fixed measurement noise are saved with predictive summaries. A
+single synthetic observation does not establish frequentist coverage.
+
+To inspect a saved chain from the repository root with the same hash,
+shape, and dtype checks used by the summary:
+
+.. code:: python
+
+   from pathlib import Path
+   import sys
+
+   sys.path.insert(0, str(Path("tests/benchmark").resolve()))
+   from diffgrid_nuts_storage import load_samples, read_metadata
+
+   run_dir = Path("/path/to/prepared/case/runs/science-0/diffgrid")
+   result = read_metadata(run_dir / "result.json")
+   samples, extra_fields = load_samples(run_dir / "samples.npz", result["samples"])
+   print(samples["temperature_at_1bar"].shape)  # (chain, draw)
+
+Timing reports distinguish loading/setup, first compiled forward and
+value-and-gradient calls, repeated compiled evaluations, NUTS
+compile-and-warmup, and the cold sampling call.
+``compile_and_warmup_seconds`` and ``sampling_compile_and_run_seconds``
+remain composite intervals. The optional ``--measure-steady-sampling``
+adds a same-sized continuation with a warm compilation cache; this
+interval may include NumPyro wrapper recompilation and does not isolate
+pure steady-state sampling. Its chains are saved separately in
+``steady_samples.npz`` and excluded from the primary posterior
+diagnostics. Device memory snapshots and ratios use JAX allocator
+statistics from the first device only, without summing memory across
+devices used by parallel chains. Host memory records the process
+high-water mark, with missing measurements and reasons retained.
+
+The GPU launcher runs validation and two independent pairs with these
+four-chain settings, retaining fresh processes, CUDA, 64-bit arithmetic,
+disabled XLA preallocation, and the cleared persistent-cache directory
+setting:
+
+.. code:: bash
+
+   tcsh tests/benchmark/run_diffgrid_nuts_benchmark_gpu.csh /path/to/prepared/case
+
+It defaults to ``baseline-accuracy``, ``baseline-0``, and
+``baseline-1``. Set ``EXOJAX_BENCHMARK_RUN_PREFIX`` to use new IDs and
+retain earlier results. ``EXOJAX_BENCHMARK_SEED_0`` and
+``EXOJAX_BENCHMARK_SEED_1`` default to 0 and 1 and must differ. The
+existing ``EXOJAX_CH4_MDB_PATH``, ``EXOJAX_H2H2_CIA_PATH``, and
+``EXOJAX_BENCHMARK_PYTHON`` overrides remain available. Files in
+``process_times/`` record ``/usr/bin/time -p`` whole-process wall, user,
+and system times separately from the Python module’s elapsed interval.
+Existing run, validation, and timing paths are rejected. The launcher
+settings and short offline CPU checks do not substitute for an executed
+CH4/GPU scientific comparison. Eligibility applies only to the recorded
+case and backend; CPU timings do not measure GPU performance.
 
 
 Notes for production retrievals

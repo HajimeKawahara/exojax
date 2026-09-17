@@ -63,6 +63,8 @@ def compute_fluxadding_coeffs(
     reflectivity_bottom,
     source_bottom,
     absorption_coeff=None,
+    source_plus=None,
+    source_minus=None,
 ):
     """Computes upward effective reflection/source at all interfaces.
 
@@ -74,6 +76,8 @@ def compute_fluxadding_coeffs(
         source_bottom: Bottom boundary source (Nnus).
         absorption_coeff: Absorption coefficient (Nlayer, Nnus). If omitted,
             it is reconstructed from the transmission and scattering coefficients.
+        source_plus, source_minus: Optional upward/downward layer source fluxes.
+            Each overrides the corresponding thermal source when provided.
 
     Returns:
         tuple: Rplus, Splus, each with shape (Nlayer + 1, Nnus).
@@ -86,6 +90,8 @@ def compute_fluxadding_coeffs(
         )
     absorption_coeff = jnp.broadcast_to(absorption_coeff, trans_coeff.shape)
     pihatB = absorption_coeff * reduced_source_function
+    source_plus = pihatB if source_plus is None else source_plus
+    source_minus = pihatB if source_minus is None else source_minus
     non_scattering_coeff = trans_coeff + absorption_coeff
     stable_scat_coeff = _pack_scat_and_non_scattering_coeffs(
         scat_coeff, non_scattering_coeff
@@ -97,7 +103,7 @@ def compute_fluxadding_coeffs(
 
     def f(carry_ip1, arr):
         Rplus_prev, Splus_prev = carry_ip1
-        stable_scat_coeff_i, trans_coeff_i, pihatB_i = arr
+        stable_scat_coeff_i, trans_coeff_i, source_plus_i, source_minus_i = arr
         stores_non_scattering = jnp.signbit(stable_scat_coeff_i)
         scat_coeff_i = jnp.where(
             stores_non_scattering,
@@ -111,7 +117,8 @@ def compute_fluxadding_coeffs(
             1.0 - scat_reflect,
         )
         Splus_each = (
-            pihatB_i + trans_coeff_i * (Splus_prev + pihatB_i * Rplus_prev) / denom
+            source_plus_i
+            + trans_coeff_i * (Splus_prev + source_minus_i * Rplus_prev) / denom
         )
         Rplus_each = scat_coeff_i + trans_coeff_i**2 * Rplus_prev / denom
         RS = [Rplus_each, Splus_each]
@@ -121,7 +128,8 @@ def compute_fluxadding_coeffs(
     arrin = [
         stable_scat_coeff[::-1],
         trans_coeff[::-1],
-        pihatB[::-1],
+        source_plus[::-1],
+        source_minus[::-1],
     ]
     _, stackedRS = scan(f, [Rplus_bottom, Splus_bottom], arrin)
     Rplus_reverse, Splus_reverse = stackedRS
@@ -137,6 +145,8 @@ def compute_fluxadding_downward_coeffs(
     reduced_source_function,
     source_top=None,
     absorption_coeff=None,
+    source_plus=None,
+    source_minus=None,
 ):
     """Computes downward effective reflection/source at all interfaces.
 
@@ -150,6 +160,8 @@ def compute_fluxadding_downward_coeffs(
         source_top: Top boundary incoming flux (Nnus). Defaults to zero.
         absorption_coeff: Absorption coefficient (Nlayer, Nnus). If omitted,
             it is reconstructed from the transmission and scattering coefficients.
+        source_plus, source_minus: Optional upward/downward layer source fluxes.
+            Each overrides the corresponding thermal source when provided.
 
     Returns:
         tuple: Rminus, Sminus, each with shape (Nlayer + 1, Nnus).
@@ -166,6 +178,8 @@ def compute_fluxadding_downward_coeffs(
         )
     absorption_coeff = jnp.broadcast_to(absorption_coeff, trans_coeff.shape)
     pihatB = absorption_coeff * reduced_source_function
+    source_plus = pihatB if source_plus is None else source_plus
+    source_minus = pihatB if source_minus is None else source_minus
     non_scattering_coeff = trans_coeff + absorption_coeff
     stable_scat_coeff = _pack_scat_and_non_scattering_coeffs(
         scat_coeff, non_scattering_coeff
@@ -175,7 +189,7 @@ def compute_fluxadding_downward_coeffs(
 
     def f(carry_i, arr):
         Rminus_prev, Sminus_prev = carry_i
-        stable_scat_coeff_i, trans_coeff_i, pihatB_i = arr
+        stable_scat_coeff_i, trans_coeff_i, source_plus_i, source_minus_i = arr
         stores_non_scattering = jnp.signbit(stable_scat_coeff_i)
         scat_coeff_i = jnp.where(
             stores_non_scattering,
@@ -189,13 +203,14 @@ def compute_fluxadding_downward_coeffs(
             1.0 - scat_reflect,
         )
         Sminus_each = (
-            pihatB_i + trans_coeff_i * (Sminus_prev + pihatB_i * Rminus_prev) / denom
+            source_minus_i
+            + trans_coeff_i * (Sminus_prev + source_plus_i * Rminus_prev) / denom
         )
         Rminus_each = scat_coeff_i + trans_coeff_i**2 * Rminus_prev / denom
         RS = [Rminus_each, Sminus_each]
         return RS, RS
 
-    arrin = [stable_scat_coeff, trans_coeff, pihatB]
+    arrin = [stable_scat_coeff, trans_coeff, source_plus, source_minus]
     _, stackedRS = scan(f, [Rminus_top, Sminus_top], arrin)
     Rminus_layers, Sminus_layers = stackedRS
 
@@ -212,6 +227,8 @@ def solve_fluxadding_twostream_fluxes(
     source_bottom,
     source_top=None,
     absorption_coeff=None,
+    source_plus=None,
+    source_minus=None,
 ):
     """Computes two-stream upward and downward fluxes at all interfaces.
 
@@ -224,6 +241,8 @@ def solve_fluxadding_twostream_fluxes(
         source_top: Top boundary incoming flux (Nnus). Defaults to zero.
         absorption_coeff: Absorption coefficient (Nlayer, Nnus). If omitted,
             it is reconstructed from the transmission and scattering coefficients.
+        source_plus, source_minus: Optional upward/downward layer source fluxes.
+            Each overrides the corresponding thermal source when provided.
 
     Returns:
         tuple: flux_plus, flux_minus, each with shape (Nlayer + 1, Nnus).
@@ -236,6 +255,8 @@ def solve_fluxadding_twostream_fluxes(
         reflectivity_bottom,
         source_bottom,
         absorption_coeff,
+        source_plus,
+        source_minus,
     )
     Rminus, Sminus = compute_fluxadding_downward_coeffs(
         trans_coeff,
@@ -243,6 +264,8 @@ def solve_fluxadding_twostream_fluxes(
         reduced_source_function,
         source_top,
         absorption_coeff,
+        source_plus,
+        source_minus,
     )
 
     denom = (1.0 - Rplus) + Rplus * (1.0 - Rminus)

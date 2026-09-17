@@ -1,6 +1,9 @@
 """Atmospheric profile function."""
 
-from exojax.utils.constants import kB, m_u
+from functools import partial
+
+from exojax.utils.constants import G, bar_cgs, kB, m_u
+import jax
 import jax.numpy as jnp
 import numpy as np
 from jax.lax import scan
@@ -47,6 +50,177 @@ def pressure_layer_logspace(
         delta_pressures = delta_pressures[::-1]
 
     return pressures, delta_pressures, k
+
+
+def pressure_layer_logspace_from_boundaries(
+    log_pressure_top_boundary,
+    log_pressure_btm_boundary,
+    nlayer,
+    reference_point=0.5,
+    numpy=False,
+):
+    """Create a log-spaced pressure grid from exact layer boundaries.
+
+    Args:
+        log_pressure_top_boundary (float): Log10 pressure in bar at the top
+            boundary.
+        log_pressure_btm_boundary (float): Log10 pressure in bar at the bottom
+            boundary.
+        nlayer (int): Number of atmospheric layers.
+        reference_point (float): Fractional position of the representative
+            pressure within each layer in log pressure. The upper boundary is
+            0, the geometric center is 0.5, and the lower boundary is 1.
+        numpy (bool): If True, use NumPy arrays instead of JAX arrays.
+
+    Returns:
+        tuple: Representative pressures, layer pressure differences, pressure
+            decrease rate, and the ``nlayer + 1`` pressure boundaries. The
+            pressure boundaries are the source of truth for the other arrays.
+
+    Notes:
+        Backend representability is validated during eager execution and is
+        skipped while JAX is tracing. Build the grid eagerly when validation
+        is required. Valid traced inputs remain compatible with JIT
+        compilation and automatic differentiation.
+    """
+    if not isinstance(nlayer, (int, np.integer)) or isinstance(nlayer, bool):
+        raise ValueError("Number of layers must be a positive integer.")
+    if nlayer < 1:
+        raise ValueError("Number of layers must be a positive integer.")
+    for name, value in (
+        ("Top boundary log pressure", log_pressure_top_boundary),
+        ("Bottom boundary log pressure", log_pressure_btm_boundary),
+        ("Reference point", reference_point),
+    ):
+        ndim = value.ndim if hasattr(value, "ndim") else np.ndim(value)
+        if ndim != 0:
+            raise ValueError(f"{name} must be scalar.")
+    top_boundary_is_traced = isinstance(
+        log_pressure_top_boundary, jax.core.Tracer
+    )
+    bottom_boundary_is_traced = isinstance(
+        log_pressure_btm_boundary, jax.core.Tracer
+    )
+    reference_point_is_traced = isinstance(reference_point, jax.core.Tracer)
+    if numpy and (
+        top_boundary_is_traced
+        or bottom_boundary_is_traced
+        or reference_point_is_traced
+    ):
+        raise ValueError("The NumPy backend does not support traced inputs.")
+    if not reference_point_is_traced:
+        if not 0.0 <= reference_point <= 1.0:
+            raise ValueError("Reference point must be between 0 and 1.")
+    if not top_boundary_is_traced and not np.isfinite(
+        log_pressure_top_boundary
+    ):
+        raise ValueError("Pressure boundary logs must be finite.")
+    if not bottom_boundary_is_traced and not np.isfinite(
+        log_pressure_btm_boundary
+    ):
+        raise ValueError("Pressure boundary logs must be finite.")
+    if not top_boundary_is_traced and not bottom_boundary_is_traced:
+        if log_pressure_btm_boundary <= log_pressure_top_boundary:
+            raise ValueError(
+                "Bottom boundary pressure must be greater than the top "
+                "boundary pressure."
+            )
+
+    array_module = np if numpy else jnp
+    if numpy:
+        with np.errstate(over="ignore", under="ignore"):
+            pressure_boundaries = np.logspace(
+                log_pressure_top_boundary,
+                log_pressure_btm_boundary,
+                nlayer + 1,
+            )
+    else:
+        pressure_boundaries = jnp.logspace(
+            log_pressure_top_boundary,
+            log_pressure_btm_boundary,
+            nlayer + 1,
+        )
+    try:
+        with np.errstate(over="ignore", under="ignore"):
+            pressure_endpoints = array_module.asarray(
+                [
+                    10.0**log_pressure_top_boundary,
+                    10.0**log_pressure_btm_boundary,
+                ],
+                dtype=pressure_boundaries.dtype,
+            )
+    except OverflowError as err:
+        raise ValueError(
+            "Pressure boundaries cannot be represented by the array backend."
+        ) from err
+    if numpy:
+        pressure_boundaries[[0, -1]] = pressure_endpoints
+    else:
+        pressure_boundaries = pressure_boundaries.at[0].set(
+            pressure_endpoints[0]
+        )
+        pressure_boundaries = pressure_boundaries.at[-1].set(
+            pressure_endpoints[1]
+        )
+    if not isinstance(pressure_boundaries, jax.core.Tracer):
+        pressure_boundaries_host = np.asarray(pressure_boundaries)
+        smallest_normal = jnp.finfo(pressure_boundaries.dtype).tiny
+        if not np.all(np.isfinite(pressure_boundaries_host)) or np.any(
+            pressure_boundaries_host < smallest_normal
+        ):
+            raise ValueError(
+                "Pressure boundaries cannot be represented by the active "
+                "array dtype."
+            )
+        if np.any(np.diff(pressure_boundaries_host) <= 0.0):
+            raise ValueError(
+                "Pressure layers are not distinct in the active array dtype."
+            )
+    pressure_upper = pressure_boundaries[:-1]
+    pressure_lower = pressure_boundaries[1:]
+    pressures = (
+        pressure_upper ** (1.0 - reference_point)
+        * pressure_lower**reference_point
+    )
+    delta_pressures = array_module.diff(pressure_boundaries)
+    dlogP = (log_pressure_btm_boundary - log_pressure_top_boundary) / nlayer
+    pressure_decrease_rate = array_module.asarray(
+        10.0**-dlogP, dtype=pressure_boundaries.dtype
+    )
+    smallest_normal = jnp.finfo(pressure_boundaries.dtype).tiny
+    if not isinstance(pressures, jax.core.Tracer):
+        pressures_host = np.asarray(pressures)
+        if not np.all(np.isfinite(pressures_host)) or np.any(
+            pressures_host < smallest_normal
+        ):
+            raise ValueError(
+                "Pressure grid cannot be represented by the active array dtype."
+            )
+    if not isinstance(delta_pressures, jax.core.Tracer):
+        delta_pressures_host = np.asarray(delta_pressures)
+        if not np.all(np.isfinite(delta_pressures_host)) or np.any(
+            delta_pressures_host < smallest_normal
+        ):
+            raise ValueError(
+                "Pressure grid cannot be represented by the active array dtype."
+            )
+    if not isinstance(pressure_decrease_rate, jax.core.Tracer):
+        pressure_decrease_rate_host = np.asarray(pressure_decrease_rate)
+        if (
+            not np.isfinite(pressure_decrease_rate_host)
+            or pressure_decrease_rate_host < smallest_normal
+            or pressure_decrease_rate_host >= 1.0
+        ):
+            raise ValueError(
+                "Pressure grid cannot be represented by the active array dtype."
+            )
+
+    return (
+        pressures,
+        delta_pressures,
+        pressure_decrease_rate,
+        pressure_boundaries,
+    )
 
 
 def pressure_upper_logspace(pressures, pressure_decrease_rate, reference_point=0.5):
@@ -101,6 +275,183 @@ def pressure_boundary_logspace(
         return np.append(pressure_upper, pressure_bottom_boundary)
     else:
         return jnp.append(pressure_upper, pressure_bottom_boundary)
+
+
+@jit
+def hydrostatic_radius_profile(
+    pressure_boundaries,
+    mass_density_layers,
+    planet_mass,
+    radius_bottom,
+):
+    """Compute radius and gravity at pressure boundaries.
+
+    This function integrates hydrostatic equilibrium from the bottom boundary
+    upward, neglecting atmospheric mass and treating density as constant in
+    each layer.
+
+    Args:
+        pressure_boundaries (1D array): pressure boundaries in bar, ordered
+            from atmospheric top to bottom, with shape (Nlayer + 1,)
+        mass_density_layers (1D array): layer mass densities in g/cm3, ordered
+            from atmospheric top to bottom, with shape (Nlayer,)
+        planet_mass (float): planet mass in g
+        radius_bottom (float): radius in cm at pressure_boundaries[-1]
+
+    Returns:
+        tuple: radius boundaries in cm and gravity boundaries in cm/s2, both
+            with shape (Nlayer + 1,)
+    """
+    delta_pressure_layers = jnp.diff(pressure_boundaries) * bar_cgs
+    gravity_bottom = G * planet_mass / radius_bottom / radius_bottom
+
+    def integrate_layer(normalized_inverse_radius_lower, layer):
+        delta_pressure_layer, mass_density_layer = layer
+        normalized_inverse_radius_upper = (
+            normalized_inverse_radius_lower
+            - delta_pressure_layer
+            / mass_density_layer
+            / gravity_bottom
+            / radius_bottom
+        )
+        return normalized_inverse_radius_upper, normalized_inverse_radius_upper
+
+    normalized_inverse_radius_bottom = jnp.ones_like(radius_bottom)
+    _, normalized_inverse_radius_upper = scan(
+        integrate_layer,
+        normalized_inverse_radius_bottom,
+        (delta_pressure_layers, mass_density_layers),
+        reverse=True,
+    )
+    normalized_inverse_radius_boundaries = jnp.append(
+        normalized_inverse_radius_upper, normalized_inverse_radius_bottom
+    )
+    radius_boundaries = radius_bottom / normalized_inverse_radius_boundaries
+    gravity_boundaries = gravity_bottom * normalized_inverse_radius_boundaries**2
+    return radius_boundaries, gravity_boundaries
+
+
+@partial(jit, static_argnames=("hydrostatic_scheme",))
+def hydrostatic_radius_profile_ideal_gas(
+    pressure_boundaries,
+    temperature,
+    mean_molecular_weight,
+    radius_bottom,
+    gravity_bottom,
+    hydrostatic_scheme="variable_gravity",
+):
+    """Compute ideal-gas radius and gravity at pressure boundaries.
+
+    The atmosphere is integrated upward from the bottom boundary using the
+    hydrostatic equation and the ideal-gas pressure scale height. Atmospheric
+    mass is neglected. The pressure grid may have nonuniform log-pressure
+    spacing.
+
+    Args:
+        pressure_boundaries (1D array): Pressure boundaries in bar, ordered
+            from atmospheric top to bottom, with shape ``(Nlayer + 1,)``.
+        temperature (1D array): Layer temperatures in K, ordered from
+            atmospheric top to bottom, with shape ``(Nlayer,)``.
+        mean_molecular_weight (float or 1D array): Mean molecular weight in
+            atomic mass units, either scalar or with shape ``(Nlayer,)``.
+        radius_bottom (float): Radius in cm at
+            ``pressure_boundaries[-1]``.
+        gravity_bottom (float): Gravity in cm/s2 at
+            ``pressure_boundaries[-1]``.
+        hydrostatic_scheme (str): Hydrostatic discretization.
+            ``"variable_gravity"`` analytically accounts for inverse-square
+            gravity within each layer. ``"layer_constant_gravity"`` holds
+            gravity fixed at the lower boundary of each layer.
+
+    Returns:
+        tuple: Radius boundaries in cm and gravity boundaries in cm/s2, both
+            with shape ``(Nlayer + 1,)`` and ordered from atmospheric top to
+            bottom.
+    """
+    if hydrostatic_scheme not in (
+        "variable_gravity",
+        "layer_constant_gravity",
+    ):
+        raise ValueError(
+            "Unknown hydrostatic scheme. Choose 'variable_gravity' or "
+            "'layer_constant_gravity'."
+        )
+
+    pressure_boundaries = jnp.asarray(pressure_boundaries)
+    temperature = jnp.asarray(temperature)
+    mean_molecular_weight = jnp.asarray(mean_molecular_weight)
+    radius_bottom = jnp.asarray(radius_bottom)
+    gravity_bottom = jnp.asarray(gravity_bottom)
+
+    if pressure_boundaries.ndim != 1 or pressure_boundaries.shape[0] < 2:
+        raise ValueError(
+            "pressure_boundaries must be one-dimensional with at least two "
+            "elements."
+        )
+    nlayer = pressure_boundaries.shape[0] - 1
+    if temperature.ndim != 1 or temperature.shape[0] != nlayer:
+        raise ValueError("temperature must have shape (Nlayer,).")
+    if mean_molecular_weight.ndim not in (0, 1) or (
+        mean_molecular_weight.ndim == 1
+        and mean_molecular_weight.shape[0] != nlayer
+    ):
+        raise ValueError(
+            "mean_molecular_weight must be scalar or have shape (Nlayer,)."
+        )
+    if radius_bottom.ndim != 0:
+        raise ValueError("radius_bottom must be scalar.")
+    if gravity_bottom.ndim != 0:
+        raise ValueError("gravity_bottom must be scalar.")
+
+    dtype = jnp.result_type(
+        pressure_boundaries,
+        temperature,
+        mean_molecular_weight,
+        radius_bottom,
+        gravity_bottom,
+        1.0,
+    )
+    pressure_boundaries = pressure_boundaries.astype(dtype)
+    temperature = temperature.astype(dtype)
+    mean_molecular_weight = jnp.broadcast_to(
+        mean_molecular_weight.astype(dtype), temperature.shape
+    )
+    radius_bottom = radius_bottom.astype(dtype)
+    gravity_bottom = gravity_bottom.astype(dtype)
+    log_pressure_ratio = jnp.diff(jnp.log(pressure_boundaries))
+
+    def integrate_layer(radius_lower, layer):
+        temperature_layer, mean_molecular_weight_layer, log_pressure_layer = (
+            layer
+        )
+        gravity_lower = gravity_bottom * (radius_bottom / radius_lower) ** 2
+        scale_height_lower = pressure_scale_height(
+            gravity_lower,
+            temperature_layer,
+            mean_molecular_weight_layer,
+        )
+        if hydrostatic_scheme == "variable_gravity":
+            radius_upper = radius_lower / (
+                1.0
+                - scale_height_lower * log_pressure_layer / radius_lower
+            )
+        else:
+            radius_upper = (
+                radius_lower + scale_height_lower * log_pressure_layer
+            )
+        return radius_upper, radius_upper
+
+    _, radius_upper = scan(
+        integrate_layer,
+        radius_bottom,
+        (temperature, mean_molecular_weight, log_pressure_ratio),
+        reverse=True,
+    )
+    radius_boundaries = jnp.append(radius_upper, radius_bottom)
+    gravity_boundaries = gravity_bottom * (
+        radius_bottom / radius_boundaries
+    ) ** 2
+    return radius_boundaries, gravity_boundaries
 
 
 @jit
@@ -265,4 +616,3 @@ def Teff2Tirr(Teff, Tint):
         Here we assume A=0 (albedo) and beta=1 (fully-energy distributed)
     """
     return (4.0 * Teff**4 - Tint**4) ** 0.25
-

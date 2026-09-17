@@ -237,7 +237,7 @@ class OpaModit(OpaCalc):
         # Compute parameters based on database type
         if dbtype == "hitran":
             SijM, ngammaLM, nsigmaDl = hitran(
-                self.mdb, Tarr, Parr, np.zeros_like(Parr), R, self.mdb.molmass
+                self.mdb, Tarr, Parr, jnp.zeros_like(Parr), R, self.mdb.molmass
             )
         elif dbtype == "exomol":
             SijM, ngammaLM, nsigmaDl = exomol(self.mdb, Tarr, Parr, R, self.mdb.molmass)

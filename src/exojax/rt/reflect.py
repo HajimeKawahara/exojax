@@ -1,15 +1,18 @@
+from math import isfinite
+
 import jax.numpy as jnp
 from exojax.rt.common import ArtCommon
 from exojax.rt.planck import piB, piBarr
 from exojax.rt.rtransfer import (
+    initialize_gaussian_quadrature,
     rtrun_reflect_fluxadding_toonhm,
+    rtrun_reflect_sfm2st_toonhm,
+    rtrun_reflect_sfm2st_direct,
     setrt_toonhm,
     setrt_toonhm_with_absorption,
 )
-from exojax.rt.common import ArtCommon
-
-import jax.numpy as jnp
 from jax.lax import scan
+from jax.core import Tracer
 
 
 def _surface_optical_depth(dtau, pressure_boundary, pressure_surface):
@@ -33,8 +36,10 @@ class ArtAbsPure(ArtCommon):
         """initialization of ArtAbsPure
 
         Args:
-            pressure_top (float, optional): top pressure in bar. Defaults to 1.0e-8.
-            pressure_btm (float, optional): bottom pressure in bar. Defaults to 1.0e2.
+            pressure_top (float, optional): Representative pressure of the top
+                atmospheric layer in bar. Defaults to 1.0e-8.
+            pressure_btm (float, optional): Representative pressure of the bottom
+                atmospheric layer in bar. Defaults to 1.0e2.
             nlayer (int, optional): the number of the atmospheric layers. Defaults to 100.
             nu_grid (float, array, optional): the wavenumber grid. Defaults to None.
         """
@@ -111,7 +116,10 @@ class ArtAbsPure(ArtCommon):
 
 
 class ArtReflectPure(ArtCommon):
-    """Atmospheric RT for Pure Reflected light (no source term)
+    """Atmospheric RT for reflected light without thermal emission.
+
+    ``run`` solves diffuse illumination. ``run_direct`` separately returns
+    directional intensity for an incident stellar beam using two-stream SFM.
 
     Attributes:
         pressure_layer: pressure profile in bar
@@ -125,20 +133,28 @@ class ArtReflectPure(ArtCommon):
         nlayer=100,
         nu_grid=None,
         rtsolver="fluxadding_toon_hemispheric_mean",
+        nstream=8,
     ):
         """initialization of ArtReflectPure
 
         Args:
-            pressure_top (float, optional): top pressure in bar. Defaults to 1.0e-8.
-            pressure_btm (float, optional): bottom pressure in bar. Defaults to 1.0e2.
+            pressure_top (float, optional): Representative pressure of the top
+                atmospheric layer in bar. Defaults to 1.0e-8.
+            pressure_btm (float, optional): Representative pressure of the bottom
+                atmospheric layer in bar. Defaults to 1.0e2.
             nlayer (int, optional): the number of the atmospheric layers. Defaults to 100.
             nu_grid (float, array, optional): the wavenumber grid. Defaults to None.
-            rtsolver (str): Radiative Transfer Solver, fluxadding_toon_hemispheric_mean
+            rtsolver (str): Radiative transfer solver. Supported values are
+                "fluxadding_toon_hemispheric_mean" and
+                "sfm2st_toon_hemispheric_mean".
+            nstream (int): Number of streams for SFM-2st. Defaults to 8.
 
 
         """
         super().__init__(pressure_top, pressure_btm, nlayer, nu_grid)
         self.rtsolver = rtsolver
+        self.nstream = nstream
+        self.mus, self.weights = initialize_gaussian_quadrature(self.nstream)
         self.method = "reflection_using_" + self.rtsolver
 
     def run(
@@ -156,7 +172,7 @@ class ArtReflectPure(ArtCommon):
             single_scattering_albedo: single scattering albedo (Nlayer, N_nus)
             asymmetric_parameter: assymetric parameter (Nlayer, N_nus)
             reflectivity_surface: reflectivity from the surface (N_nus)
-            incoming flux: incoming flux F_0^- (N_nus)
+            incoming flux: diffuse incoming flux F_0^- (N_nus)
 
 
         Returns:
@@ -176,9 +192,93 @@ class ArtReflectPure(ArtCommon):
                 reflectivity_surface,
                 incoming_flux,
             )
+        elif self.rtsolver == "sfm2st_toon_hemispheric_mean":
+            _, Nnus = dtau.shape
+            sourcef = jnp.zeros_like(dtau)
+            source_surface = jnp.zeros(Nnus)
+            return rtrun_reflect_sfm2st_toonhm(
+                dtau,
+                single_scattering_albedo,
+                asymmetric_parameter,
+                sourcef,
+                source_surface,
+                reflectivity_surface,
+                incoming_flux,
+                self.mus,
+                self.weights,
+            )
         else:
             print("rtsolver=", self.rtsolver)
             raise ValueError("Unknown radiative transfer solver (rtsolver).")
+
+    def run_direct(
+        self,
+        dtau,
+        single_scattering_albedo,
+        reflectivity_surface,
+        incoming_flux,
+        mu_in,
+        mu_out,
+        relative_azimuth=0.0,
+        phase_function="rayleigh",
+    ):
+        """Compute reflected specific intensity for a direct stellar beam.
+
+        This method uses SFM with Toon quadrature independently of the
+        diffuse ``rtsolver`` setting. It supports isotropic or Rayleigh
+        scattering, a Lambertian lower boundary, and no thermal emission.
+
+        Args:
+            dtau: Total layer optical depths, top to bottom (N_layer, N_nus).
+            single_scattering_albedo: Scattering / total extinction, with
+                the same shape as dtau and values in [0, 1].
+            reflectivity_surface: Lambertian surface albedo (N_nus or scalar).
+            incoming_flux: Beam-normal spectral irradiance (N_nus or scalar).
+                The horizontal incident flux is mu_in times this value.
+            mu_in: Positive cosine of the stellar zenith angle, scalar (0, 1].
+            mu_out: Positive cosine of the observer zenith angle, scalar (0, 1].
+            relative_azimuth: Azimuth difference between the outward star and
+                observer directions, in radians. Full phase has mu_in=mu_out
+                and relative_azimuth=0.
+            phase_function: "rayleigh" (default) or "isotropic".
+
+        Returns:
+            Specific intensity (N_nus), in the incoming irradiance units per
+            steradian. This is neither hemispheric flux nor geometric albedo.
+
+        Notes:
+            Single scattering is integrated analytically. Multiple scattering
+            uses a Toon-style hemispheric source reconstructed from quadrature
+            fluxes and averaged across each layer. Refine layers to check
+            convergence. Angular integration of the approximate intensity does
+            not exactly preserve the two-stream energy balance. Higher Rayleigh
+            angular moments, polarization, cloud phase functions and disk integration
+            are not included. Use jax.vmap for multiple direction pairs.
+            Angle bounds must also hold when inputs are traced by JAX.
+            Derivatives with respect to a direction cosine are not guaranteed
+            at exactly normal incidence or emergence (a coordinate singularity).
+        """
+        for name, value in (("mu_in", mu_in), ("mu_out", mu_out)):
+            if jnp.ndim(value) != 0:
+                raise ValueError(f"{name} must be a scalar; use jax.vmap for angles")
+            if not isinstance(value, Tracer) and not 0.0 < float(value) <= 1.0:
+                raise ValueError(f"{name} must satisfy 0 < {name} <= 1")
+        if jnp.ndim(relative_azimuth) != 0:
+            raise ValueError("relative_azimuth must be a scalar")
+        if not isinstance(relative_azimuth, Tracer) and not isfinite(
+            float(relative_azimuth)
+        ):
+            raise ValueError("relative_azimuth must be finite")
+        return rtrun_reflect_sfm2st_direct(
+            jnp.asarray(dtau),
+            jnp.asarray(single_scattering_albedo),
+            jnp.asarray(reflectivity_surface),
+            jnp.asarray(incoming_flux),
+            mu_in,
+            mu_out,
+            relative_azimuth,
+            phase_function,
+        )
 
     def run_ckd(
         self,
@@ -196,7 +296,7 @@ class ArtReflectPure(ArtCommon):
             single_scattering_albedo (2D array): single scattering albedo (Nlayer, Nbands)
             asymmetric_parameter (2D array): asymmetric parameter (Nlayer, Nbands)
             reflectivity_surface (1D array): reflectivity from the surface (Nbands)
-            incoming_flux (1D array): incoming flux F_0^- (Nbands)
+            incoming_flux (1D array): diffuse incoming flux F_0^- (Nbands)
             weights (1D array): weights for the Gaussian quadrature (Ng,)
             
         Returns:
@@ -228,6 +328,20 @@ class ArtReflectPure(ArtCommon):
                 reflectivity_2d,
                 incoming_flux_2d,
             )
+        elif self.rtsolver == "sfm2st_toon_hemispheric_mean":
+            sourcef = jnp.zeros_like(dtau_2d)
+            source_surface = jnp.zeros(Ng * Nbands)
+            spectrum = rtrun_reflect_sfm2st_toonhm(
+                dtau_2d,
+                ssa_2d,
+                g_2d,
+                sourcef,
+                source_surface,
+                reflectivity_2d,
+                incoming_flux_2d,
+                self.mus,
+                self.weights,
+            )
         else:
             print("rtsolver=", self.rtsolver)
             raise ValueError("Unknown radiative transfer solver (rtsolver).")
@@ -252,20 +366,28 @@ class ArtReflectEmis(ArtCommon):
         nlayer=100,
         nu_grid=None,
         rtsolver="fluxadding_toon_hemispheric_mean",
+        nstream=8,
     ):
         """initialization of ArtReflectionPure
 
         Args:
-            pressure_top (float, optional): top pressure in bar. Defaults to 1.0e-8.
-            pressure_btm (float, optional): bottom pressure in bar. Defaults to 1.0e2.
+            pressure_top (float, optional): Representative pressure of the top
+                atmospheric layer in bar. Defaults to 1.0e-8.
+            pressure_btm (float, optional): Representative pressure of the bottom
+                atmospheric layer in bar. Defaults to 1.0e2.
             nlayer (int, optional): the number of the atmospheric layers. Defaults to 100.
             nu_grid (float, array, optional): the wavenumber grid. Defaults to None.
-            rtsolver (str): Radiative Transfer Solver, fluxadding_toon_hemispheric_mean
+            rtsolver (str): Radiative transfer solver. Supported values are
+                "fluxadding_toon_hemispheric_mean" and
+                "sfm2st_toon_hemispheric_mean".
+            nstream (int): Number of streams for SFM-2st. Defaults to 8.
 
 
         """
         super().__init__(pressure_top, pressure_btm, nlayer, nu_grid)
         self.rtsolver = rtsolver
+        self.nstream = nstream
+        self.mus, self.weights = initialize_gaussian_quadrature(self.nstream)
         self.method = "reflection_using_" + self.rtsolver
 
     def run(
@@ -288,7 +410,7 @@ class ArtReflectEmis(ArtCommon):
             temperature (1D array): temperature profile (Nlayer)
             source_surface: source from the surface (N_nus)
             reflectivity_surface: reflectivity from the surface (N_nus)
-            incoming flux: incoming flux F_0^- (N_nus)
+            incoming flux: diffuse incoming flux F_0^- (N_nus)
             nu_grid (1D array): if nu_grid is not initialized, provide it.
 
 
@@ -311,6 +433,18 @@ class ArtReflectEmis(ArtCommon):
                 source_surface,
                 reflectivity_surface,
                 incoming_flux,
+            )
+        elif self.rtsolver == "sfm2st_toon_hemispheric_mean":
+            return rtrun_reflect_sfm2st_toonhm(
+                dtau,
+                single_scattering_albedo,
+                asymmetric_parameter,
+                sourcef,
+                source_surface,
+                reflectivity_surface,
+                incoming_flux,
+                self.mus,
+                self.weights,
             )
         else:
             print("rtsolver=", self.rtsolver)
@@ -337,7 +471,7 @@ class ArtReflectEmis(ArtCommon):
             temperature (1D array): temperature profile (Nlayer)
             source_surface (1D array): source from the surface (Nbands)
             reflectivity_surface (1D array): reflectivity from the surface (Nbands)
-            incoming_flux (1D array): incoming flux F_0^- (Nbands)
+            incoming_flux (1D array): diffuse incoming flux F_0^- (Nbands)
             weights (1D array): weights for the Gaussian quadrature (Ng,)
             nu_bands (1D array): wavenumber grid for the CKD (Nbands)
             
@@ -371,6 +505,18 @@ class ArtReflectEmis(ArtCommon):
                 reflectivity_2d,
                 incoming_flux_2d,
             )
+        elif self.rtsolver == "sfm2st_toon_hemispheric_mean":
+            spectrum = rtrun_reflect_sfm2st_toonhm(
+                dtau_2d,
+                ssa_2d,
+                g_2d,
+                sourcef,
+                source_surface_2d,
+                reflectivity_2d,
+                incoming_flux_2d,
+                self.mus,
+                self.weights,
+            )
         else:
             print("rtsolver=", self.rtsolver)
             raise ValueError("Unknown radiative transfer solver (rtsolver).")
@@ -393,8 +539,10 @@ class OpartReflectPure(ArtCommon):
 
         Args:
             opalayer (class): user defined class, needs to define self.nu_grid
-            pressure_top (float, optional): top pressure in bar. Defaults to 1.0e-8.
-            pressure_btm (float, optional): bottom pressure in bar. Defaults to 1.0e2.
+            pressure_top (float, optional): Representative pressure of the top
+                atmospheric layer in bar. Defaults to 1.0e-8.
+            pressure_btm (float, optional): Representative pressure of the bottom
+                atmospheric layer in bar. Defaults to 1.0e2.
             nlayer (int, optional): the number of the atmospheric layers. Defaults to 100.
         """
         super().__init__(pressure_top, pressure_btm, nlayer, opalayer.nu_grid)
@@ -468,8 +616,10 @@ class OpartReflectEmis(ArtCommon):
 
         Args:
             opalayer (class): user defined class, needs to define self.nu_grid
-            pressure_top (float, optional): top pressure in bar. Defaults to 1.0e-8.
-            pressure_btm (float, optional): bottom pressure in bar. Defaults to 1.0e2.
+            pressure_top (float, optional): Representative pressure of the top
+                atmospheric layer in bar. Defaults to 1.0e-8.
+            pressure_btm (float, optional): Representative pressure of the bottom
+                atmospheric layer in bar. Defaults to 1.0e2.
             nlayer (int, optional): the number of the atmospheric layers. Defaults to 100.
         """
         super().__init__(pressure_top, pressure_btm, nlayer, opalayer.nu_grid)

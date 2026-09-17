@@ -50,7 +50,7 @@ dependencies = [
   "hjson",
   "tqdm",
   "PyMieScatt",
-  "radis>=0.15.2",
+  "radis>=0.16.1",
   "numba",
   "tables",
   "pandas",
@@ -64,12 +64,10 @@ dependencies = [
   "zarr",
 ]
 
-# install from git for the latest radis+numpy2 support
-# [project.optional-dependencies]
-#numpy2 = [
-# "numpy>=2.0",
-#  "radis @ git+https://github.com/radis/radis.git@master",
-#]
+[project.optional-dependencies]
+# PyExoCross 1.1.16 requires NumPy <2 and Python <3.13. RADIS 0.17+
+# requires NumPy 2; Zarr 2 keeps the optional environment compatible.
+pyexocross = ["pyexocross==1.1.16", "radis<0.17", "zarr<3"]
 
 [project.urls]
 # Fill these as appropriate for your project.
@@ -98,3 +96,7 @@ write_to = "src/exojax/ExoJAX_version.py"
 # write_to_template = "__version__ = \"{version}\"\n"
 # version_scheme = "guess-next-dev"
 # local_scheme = "node-and-date"
+
+[tool.pytest.ini_options]
+testpaths = ["tests/unittests"]
+addopts = "--import-mode=importlib"

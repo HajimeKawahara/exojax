@@ -13,8 +13,9 @@ ExoJAX References
 
 Publications Using ExoJAX
 -------------------------
-
-- `Ureshino et al. ApJ in press <https://arxiv.org/abs/2605.08544>`_:
+- `Heraty (2026), Machine Learning and the Physical Sciences Workshop, NeurIPS 2026 <https://arxiv.org/abs/2609.01665>`_: 
+Amortized Opacity Marginalization Improves C/O Interval Calibration for Brown-Dwarf Retrievals. 
+- `Ureshino et al. ApJ 1004, 150 (2026) <https://arxiv.org/abs/2605.08544>`_:
   Bayesian Doppler Imaging: Simultaneous Inference of Surface Maps and
   Geometric Parameters. ExoJAX is used as a spectrum template for Doppler
   imaging of Luhman 16 B.

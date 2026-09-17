@@ -233,7 +233,19 @@ def compute_ckd_tables(
     return log_kggrid, ggrid, weights
 
 
-@jit  
+def _interpolation_interval(x, grid):
+    """Return adjacent indices and a weight with jnp.interp boundary behavior."""
+    upper = jnp.clip(jnp.searchsorted(grid, x, side="right"), 1, grid.size - 1)
+    lower = jnp.maximum(upper - 1, 0)
+    # A singleton grid selects its only point twice. Using interp for the
+    # local weight also preserves endpoint derivatives and dtype promotion.
+    weight = jnp.interp(
+        x, grid[jnp.stack((lower, upper))], jnp.array([0, 1], dtype=jnp.int32)
+    )
+    return lower, upper, weight
+
+
+@jit
 def interpolate_log_k_2d(
     log_kggrid: jnp.ndarray,
     T_grid: jnp.ndarray,
@@ -243,8 +255,9 @@ def interpolate_log_k_2d(
 ) -> jnp.ndarray:
     """JAX-compatible 2D interpolation of log_kggrid at given T,P.
     
-    Pure JAX function for interpolating pre-computed CKD tables at a specific
-    temperature and pressure point. Uses vectorized operations for efficiency.
+    Interpolate linearly in temperature and log pressure using the four
+    neighboring table entries. Out-of-range coordinates are clamped to the
+    boundary values, and singleton temperature or pressure grids are supported.
     
     Args:
         log_kggrid: Pre-computed log k-values, shape (nT, nP, Ng, nnu_bands)
@@ -256,35 +269,13 @@ def interpolate_log_k_2d(
     Returns:
         Interpolated log k-values, shape (Ng, nnu_bands)
     """
-    # log_kggrid shape: (nT, nP, Ng, nnu_bands)
-    # Vectorized interpolation approach
-    
-    def interpolate_2d_slice(log_k_2d_slice):
-        """Interpolate single 2D slice (nT, nP) at given T,P."""
-        # log_k_2d_slice shape: (nT, nP)
-        # First interpolate over T dimension for each P
-        def interp_over_T(log_k_column):
-            """Interpolate over T for single P column."""
-            return jnp.interp(T, T_grid, log_k_column)
-        
-        # Apply to each P column: (nT, nP) -> (nP,)
-        log_k_T = vmap(interp_over_T, in_axes=1)(log_k_2d_slice)
-        
-        # Then interpolate over P dimension in log scale: (nP,) -> scalar
-        # Use log scale for pressure due to wide dynamic range
-        log_k_TP = jnp.interp(jnp.log(P), jnp.log(P_grid), log_k_T)
-        
-        return log_k_TP
-    
-    # Apply vectorized interpolation over (Ng, nnu_bands) dimensions
-    # Reshape from (nT, nP, Ng, nnu_bands) to (Ng*nnu_bands, nT, nP)
-    nT, nP, Ng, nnu_bands = log_kggrid.shape
-    log_k_reshaped = log_kggrid.transpose(2, 3, 0, 1).reshape(-1, nT, nP)
-    
-    # Vectorize interpolation over all (g, band) combinations
-    log_k_flat = vmap(interpolate_2d_slice)(log_k_reshaped)  # Shape: (Ng*nnu_bands,)
-    
-    # Reshape back to (Ng, nnu_bands)
-    log_k_interp = log_k_flat.reshape(Ng, nnu_bands)
-    
-    return log_k_interp
+    t_lower, t_upper, t_weight = _interpolation_interval(T, T_grid)
+    p_lower, p_upper, p_weight = _interpolation_interval(jnp.log(P), jnp.log(P_grid))
+
+    lower_pressure = log_kggrid[t_lower, p_lower] + t_weight * (
+        log_kggrid[t_upper, p_lower] - log_kggrid[t_lower, p_lower]
+    )
+    upper_pressure = log_kggrid[t_lower, p_upper] + t_weight * (
+        log_kggrid[t_upper, p_upper] - log_kggrid[t_lower, p_upper]
+    )
+    return lower_pressure + p_weight * (upper_pressure - lower_pressure)

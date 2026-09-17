@@ -97,9 +97,9 @@ def bound_free_absorption(wavelength_um, temperature):
     def f(wavelength_um):
         C_n = jnp.stack(
             (
-                jnp.arange(7),
+                jnp.arange(1, 7),
                 jnp.array(
-                    [0.0, 152.519, 49.534, -118.858, 92.536, -34.194, 4.982]
+                    [152.519, 49.534, -118.858, 92.536, -34.194, 4.982]
                 ),
             ),
             axis=1,

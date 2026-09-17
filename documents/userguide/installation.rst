@@ -1,7 +1,7 @@
 Installation
 ============
 
-Last update: August 2026
+Last update: September 2026
 
 ExoJAX requires Python 3.10 or later and is tested on Python 3.10--3.13. Linux,
 macOS, and Windows through WSL are the primary supported environments.

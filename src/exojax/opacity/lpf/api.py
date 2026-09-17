@@ -4,7 +4,7 @@ This module provides the OpaDirect class for direct line-by-line opacity
 calculations using the LPF method.
 """
 
-from typing import Literal, Union
+from typing import Callable, Literal, Optional, Union
 
 import jax.numpy as jnp
 import numpy as np
@@ -19,15 +19,27 @@ from exojax.utils.grids import nu2wav
 class OpaDirect(OpaCalc):
     """Opacity Calculator Class for Direct Line-by-Line calculations (LPF).
 
-    This class performs direct line-by-line opacity calculations without
-    approximations, providing the most accurate results at the cost of
-    computational efficiency.
+    This class directly sums the selected line profiles. The default is Voigt;
+    ``alkali_subvoigt`` selects the Na/K-specific core and wing prescription.
 
     Attributes:
         method: Always "lpf" for this calculator
-        mdb: Molecular database instance
+        mdb: Molecular or atomic line database instance
         wavelength_order: Order of wavelength grid
+        line_profile: "voigt" or "alkali_subvoigt"
         opainfo: Opacity information from initialization
+
+    Notes:
+        VALD and Kurucz support both ``xsvector`` and ``xsmatrix``. Their
+        H, He, and H2 partial pressures use the database's ``vmr_fraction``
+        in that order. Select a single atomic species before applying its
+        abundance to the cross section.
+
+        NIST requires ``atomic_broadening`` because its line list does not
+        provide damping parameters. ExoAtom uses natural widths from complete
+        state lifetimes, or requires a callback when they are unavailable.
+        A supplied callback replaces the total Lorentzian width for atomic
+        databases; it does not receive an additional natural-width term.
     """
 
     def __init__(
@@ -35,14 +47,47 @@ class OpaDirect(OpaCalc):
         mdb,
         nu_grid: np.ndarray,
         wavelength_order: Literal["ascending", "descending"] = "descending",
+        *,
+        line_profile: Literal["voigt", "alkali_subvoigt"] = "voigt",
+        atomic_broadening: Optional[Callable] = None,
     ) -> None:
         """Initialize OpaDirect (LPF) opacity calculator.
 
         Args:
-            mdb: Molecular database (mdbExomol, mdbHitemp, mdbHitran, etc.)
+            mdb: Molecular or atomic line database
             nu_grid: Wavenumber grid in cm⁻¹
             wavelength_order: Order of wavelength grid
+            line_profile: "voigt" (default) or "alkali_subvoigt". The latter
+                requires a VALD or Kurucz selection containing only Na I or
+                only K I and applies sub-Voigt wings to every selected line.
+                Include line centers up to 9000 cm-1 outside the grid.
+            atomic_broadening: JAX-compatible callable ``(T, P) -> gammaL``
+                for NIST, VALD, Kurucz, or ExoAtom. T is in K and P in bar. Return
+                the total Lorentzian HWHM in cm-1, shaped ``(Nline,)``.
+                Include every desired broadening contribution; no natural
+                or pressure width is added automatically. Required for NIST
+                and ExoAtom without complete natural widths. ExoAtom's default
+                natural widths contain no pressure broadening.
         """
+        if atomic_broadening is not None:
+            if mdb.dbtype not in ("nist", "vald", "kurucz", "exoatom"):
+                raise ValueError("atomic_broadening supports only NIST, VALD, Kurucz, and ExoAtom.")
+            if not callable(atomic_broadening):
+                raise TypeError("atomic_broadening must be callable.")
+        if mdb.dbtype == "nist" and atomic_broadening is None:
+            raise ValueError("NIST requires an explicit atomic_broadening(T, P) callable.")
+        if mdb.dbtype == "exoatom" and atomic_broadening is None:
+            natural_width = getattr(mdb, "gamma_natural", None)
+            if (
+                natural_width is None
+                or np.shape(natural_width) != (len(mdb.nu_lines),)
+                or not np.all(np.isfinite(natural_width))
+                or np.any(np.asarray(natural_width) < 0)
+            ):
+                raise ValueError(
+                    "ExoAtom requires finite, nonnegative natural widths for every line "
+                    "or an explicit atomic_broadening(T, P) callable."
+                )
         super().__init__(nu_grid)
 
         self.method = "lpf"
@@ -52,6 +97,8 @@ class OpaDirect(OpaCalc):
             self.nu_grid, wavelength_order=self.wavelength_order, unit="AA"
         )
         self.mdb = mdb
+        self.line_profile = line_profile
+        self.atomic_broadening = atomic_broadening
         self.apply_params()
 
     def __eq__(self, other: object) -> bool:
@@ -68,6 +115,11 @@ class OpaDirect(OpaCalc):
 
         return (
             (self.mdb == other.mdb)
+            and (self.line_profile == other.line_profile)
+            and (
+                getattr(self, "atomic_broadening", None)
+                is getattr(other, "atomic_broadening", None)
+            )
             and (self.wavelength_order == other.wavelength_order)
             and np.array_equal(self.nu_grid, other.nu_grid)
         )
@@ -79,9 +131,31 @@ class OpaDirect(OpaCalc):
     def apply_params(self) -> None:
         """Apply database parameters and initialize opacity info."""
         self.dbtype = self.mdb.dbtype
+        self._init_line_profile()
         self.opainfo = initspec.init_lpf(self.mdb.nu_lines, self.nu_grid)
         self._init_xsmatrix_wrappers()
         self.ready = True
+
+    def _init_line_profile(self) -> None:
+        """Validate the selected profile and set species-specific constants."""
+        if self.line_profile not in ("voigt", "alkali_subvoigt"):
+            raise ValueError("line_profile must be 'voigt' or 'alkali_subvoigt'.")
+        if self.line_profile == "voigt":
+            return
+        if self.dbtype not in ("vald", "kurucz"):
+            raise ValueError("alkali_subvoigt requires a VALD or Kurucz database.")
+        elements = np.asarray(self.mdb._ielem)
+        ions = np.asarray(self.mdb._iion)
+        if (
+            elements.size == 0
+            or not np.all(ions == 1)
+            or not (np.all(elements == 11) or np.all(elements == 19))
+        ):
+            raise ValueError("Select a single neutral species, Na I or K I, for alkali_subvoigt.")
+        self.species = "Na" if elements[0] == 11 else "K"
+        self.detuning_ref, self.wing_cutoff = (
+            (30.0, 5000.0) if self.species == "Na" else (20.0, 1600.0)
+        )
 
     def _init_xsmatrix_wrappers(self) -> None:
         """Build reusable JAX wrappers once per OpaDirect instance.
@@ -106,9 +180,54 @@ class OpaDirect(OpaCalc):
         elif self.dbtype == "exomol":
             self._vmap_qt = vmap(self.mdb.qr_interp, (0, None))
             self._vmap_gamma = jit(vmap(gamma_exomol, (0, 0, None, None)))
+        elif self.dbtype == "exoatom" or getattr(self, "atomic_broadening", None) is not None:
+            self._vmap_qt = vmap(self.mdb.qr_interp_lines, (0, None))
+            self._vmap_gamma = jit(vmap(self._atomic_gamma, (0, 0)))
         else:
             self._vmap_qt = None
             self._vmap_gamma = None
+
+        if self.line_profile == "alkali_subvoigt":
+            from exojax.opacity.alkali import _xsvector
+
+            self._vmap_subvoigt = vmap(_xsvector, (None, 0, 0, 0, 0, None, None))
+
+    def _atomic_gamma(self, T, P):
+        """Use the selected total atomic width and check its static shape."""
+        gammaL = jnp.asarray(
+            self.mdb.gamma_natural
+            if self.atomic_broadening is None
+            else self.atomic_broadening(T, P)
+        )
+        expected_shape = (len(self.mdb.nu_lines),)
+        if gammaL.shape != expected_shape:
+            raise ValueError(
+                f"atomic_broadening must return shape {expected_shape}, "
+                f"but returned {gammaL.shape}."
+            )
+        return gammaL
+
+    def _atomic_line_parameters(self, T, P):
+        """Use the same atomic parameter calculation for vectors and matrices."""
+        from exojax.opacity.lpf.lpf import vald
+
+        Tarr = jnp.atleast_1d(T)
+        Parr = jnp.atleast_1d(P)
+        if self.dbtype == "exoatom" or getattr(self, "atomic_broadening", None) is not None:
+            qr = self._vmap_qt(Tarr, self.mdb.Tref)
+            SijM = self._vmap_line_strength(
+                Tarr, self.mdb.logsij0, self.mdb.nu_lines, self.mdb.elower,
+                qr, self.mdb.Tref,
+            )
+            gammaLM = self._vmap_gamma(Tarr, Parr)
+            sigmaDM = self._vmap_doppler_sigma(
+                self.mdb.nu_lines, Tarr, self.mdb.line_masses
+            )
+            return SijM, gammaLM, sigmaDM
+        return vald(
+            self.mdb, Tarr, Parr * self.mdb.vmrH,
+            Parr * self.mdb.vmrHe, Parr * self.mdb.vmrHH,
+        )
 
     def xsvector(self, T: float, P: float, Pself: float = 0.0) -> jnp.ndarray:
         """Compute cross section vector for given temperature and pressure.
@@ -149,10 +268,20 @@ class OpaDirect(OpaCalc):
             qt = self.mdb.qr_interp_lines(T, Tref_original)
             gammaL = gamma_natural(self.mdb.A)
             line_masses = self.mdb.line_masses
+        elif dbtype in ("kurucz", "vald", "nist", "exoatom"):
+            SijM, gammaLM, sigmaDM = self._atomic_line_parameters(T, P)
+            if self.line_profile == "alkali_subvoigt":
+                from exojax.opacity.alkali import _xsvector
+
+                return _xsvector(
+                    numatrix, sigmaDM[0], gammaLM[0], SijM[0],
+                    T, self.detuning_ref, self.wing_cutoff,
+                )
+            return xsvector_lpf(numatrix, sigmaDM[0], gammaLM[0], SijM[0])
         else:
             raise ValueError(
                 f"Unsupported database type for xsvector: '{dbtype}'. "
-                "Supported types: hitran, exomol, hydrogen"
+                "Supported types: hitran, exomol, hydrogen, kurucz, vald, nist, exoatom"
             )
 
         sigmaD = doppler_sigma(self.mdb.nu_lines, T, line_masses)
@@ -181,8 +310,6 @@ class OpaDirect(OpaCalc):
             ValueError: If database type is not supported
         """
         from exojax.database.core.broadening import gamma_natural
-        from exojax.database.core_atom.broadening import gamma_vald3
-        from exojax.database.core_atom.pf import interp_QT_284
         from exojax.opacity.lpf.lpf import xsmatrix as xsmatrix_lpf
 
         numatrix = self.opainfo
@@ -193,7 +320,7 @@ class OpaDirect(OpaCalc):
             gammaLM = self._vmap_gamma(
                 Parr,
                 Tarr,
-                np.zeros_like(Parr),
+                jnp.zeros_like(Parr),
                 self.mdb.n_air,
                 self.mdb.gamma_air,
                 self.mdb.gamma_self,
@@ -241,71 +368,17 @@ class OpaDirect(OpaCalc):
             sigmaDM = self._vmap_doppler_sigma(
                 self.mdb.nu_lines, Tarr, self.mdb.line_masses
             )
-        elif dbtype in ("kurucz", "vald"):
-            qt_284 = vmap(interp_QT_284, (0, None, None))(
-                Tarr, self.mdb.T_gQT, self.mdb.gQT_284species
-            )
-            qt_K = qt_284[:, self.mdb.QTmask]
-            qr_K = qt_K / self.mdb.QTref_284[self.mdb.QTmask]
-            vmapvald3 = jit(
-                vmap(
-                    gamma_vald3,
-                    (
-                        0,
-                        0,
-                        0,
-                        0,
-                        None,
-                        None,
-                        None,
-                        None,
-                        None,
-                        None,
-                        None,
-                        None,
-                        None,
-                        None,
-                        None,
-                    ),
+        elif dbtype in ("kurucz", "vald", "nist", "exoatom"):
+            SijM, gammaLM, sigmaDM = self._atomic_line_parameters(Tarr, Parr)
+            if self.line_profile == "alkali_subvoigt":
+                return self._vmap_subvoigt(
+                    numatrix, sigmaDM, gammaLM, SijM,
+                    Tarr, self.detuning_ref, self.wing_cutoff,
                 )
-            )
-            PH, PHe, PHH = (
-                Parr * self.mdb.vmrH,
-                Parr * self.mdb.vmrHe,
-                Parr * self.mdb.vmrHH,
-            )
-            gammaLM = vmapvald3(
-                Tarr,
-                PH,
-                PHH,
-                PHe,
-                self.mdb.ielem,
-                self.mdb.iion,
-                self.mdb.dev_nu_lines,
-                self.mdb.elower,
-                self.mdb.eupper,
-                self.mdb.atomicmass,
-                self.mdb.ionE,
-                self.mdb.gamRad,
-                self.mdb.gamSta,
-                self.mdb.vdWdamp,
-                1.0,
-            )
-            SijM = self._vmap_line_strength(
-                Tarr,
-                self.mdb.logsij0,
-                self.mdb.nu_lines,
-                self.mdb.elower,
-                qr_K,
-                Tref_original,
-            )
-            sigmaDM = self._vmap_doppler_sigma(
-                self.mdb.nu_lines, Tarr, self.mdb.atomicmass
-            )
         else:
             raise ValueError(
                 f"Unsupported database type for xsmatrix: '{dbtype}'. "
-                "Supported types: hitran, exomol, hydrogen, kurucz, vald"
+                "Supported types: hitran, exomol, hydrogen, kurucz, vald, nist, exoatom"
             )
 
         return xsmatrix_lpf(numatrix, sigmaDM, gammaLM, SijM)

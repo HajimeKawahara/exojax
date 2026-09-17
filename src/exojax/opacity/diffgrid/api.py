@@ -24,6 +24,8 @@ class OpaDiffgrid(OpaCalc):
     Attributes:
         method: Always ``"diffgrid"`` for this calculator.
         teacher_method: Method name of the calculator used to build the table.
+        teacher_profile_kernel: PreMODIT kernel used for construction, or None
+            for other teachers and legacy archives with unknown kernel.
         diffgrid_info: Immutable table values and coordinates.
         aux: User-specified auxiliary metadata restored from a saved archive.
         user_meta: User provenance metadata restored from a saved archive.
@@ -35,6 +37,8 @@ class OpaDiffgrid(OpaCalc):
         temperature_grid: Union[np.ndarray, jnp.ndarray],
         pressure_grid: Union[np.ndarray, jnp.ndarray],
         min_cross_section: float = 1.0e-35,
+        *,
+        profile_kernel: Optional[str] = "real_space",
     ) -> None:
         """Initialize and build a diffgrid opacity table.
 
@@ -47,11 +51,21 @@ class OpaDiffgrid(OpaCalc):
             min_cross_section: Positive floor applied before taking logarithms.
                 Defaults to ``1e-35`` cm2 to stabilize zero or negative
                 round-off from the teacher.
+            profile_kernel: For a PreMODIT teacher, select ``"real_space"``
+                (default) or ``"analytic"``; None inherits its current mode.
+                The supplied teacher is not modified. Other teacher types use
+                their own xsmatrix implementation unchanged.
 
         Raises:
             ValueError: If a grid is invalid or the teacher is not ready.
         """
         self._validate_teacher(base_opa)
+        if profile_kernel not in (None, "analytic", "real_space"):
+            raise ValueError("profile_kernel must be 'analytic', 'real_space', or None.")
+        from exojax.opacity.premodit.api import OpaPremodit
+
+        if isinstance(base_opa, OpaPremodit) and profile_kernel is not None:
+            base_opa = base_opa.with_profile_kernel(profile_kernel)
         temperature_grid = self._validated_grid(
             "temperature_grid", temperature_grid, minimum_size=2
         )
@@ -68,6 +82,13 @@ class OpaDiffgrid(OpaCalc):
         super().__init__(base_opa.nu_grid)
         self.method = "diffgrid"
         self.teacher_method = getattr(base_opa, "method", None)
+        self.teacher_profile_kernel = (
+            base_opa._resolve_profile_kernel(
+                getattr(base_opa, "profile_kernel", None), base_opa.nstitch
+            )
+            if isinstance(base_opa, OpaPremodit)
+            else None
+        )
         self.aux = {}
         self.user_meta = {}
 
@@ -125,6 +146,9 @@ class OpaDiffgrid(OpaCalc):
 
         state = meta["opa_state"]
         self.teacher_method = state.get("teacher_method")
+        self.teacher_profile_kernel = state.get("teacher_profile_kernel")
+        if self.teacher_profile_kernel not in (None, "analytic", "real_space"):
+            raise ValueError("Invalid saved DiffGrid teacher_profile_kernel.")
         optional_attributes = state.get("optional_attributes", {})
         for attribute in ("wavelength_order", "resolution", "molmass"):
             if attribute in optional_attributes:

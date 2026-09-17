@@ -10,6 +10,7 @@ Getting Started
 .. toctree::
    :maxdepth: 1
 
+   Spectra from small precomputed opacity tables <tutorials/starter_opacity>
    Emission spectroscopy <tutorials/get_started>
    Transmission spectroscopy <tutorials/get_started_transmission>
    Reflection spectroscopy <tutorials/get_started_reflection>
@@ -23,6 +24,7 @@ Forward Modeling and Radiative Transfer
    :maxdepth: 1
 
    Pure Absorption Radiative Transfer <tutorials/pure_absorption_rt>
+   Forward RCE for an N2--H2O ocean planet <tutorials/rce_earth>
    Direct limb darkening from emission intensities <tutorials/direct_limb_darkening>
    Rigid stellar rotation and Gaussian convolution <tutorials/Rigid_Rotation>
 
@@ -61,6 +63,7 @@ Opacity Methods
    Correlated-k transmission with ExoMolOP <tutorials/transmission_ckd_exomolop>
    Patch-based CKD precomputation <tutorials/ckd_precompute_patches>
    CKD emission with OpaCKD <tutorials/ckd_emispure>
+   CKD mixtures with random overlap and rebinning <tutorials/ckd_mixture>
    CKD transmission with OpaCKD <tutorials/ckd_transpure>
    CKD transmission from saved data <tutorials/ckd_transpure_loadonly>
 

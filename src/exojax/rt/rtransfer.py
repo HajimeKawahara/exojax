@@ -18,13 +18,20 @@
     --- isothermal: rtrun_emis_pureabs_ibased
     --- linear source approximation: rtrun_emis_pureabs_ibased_linsap
     -- scattering
-    --- SFM-2st: rtrun_emis_scat_sfm2st
+    --- SFM-2st: rtrun_emis_scat_sfm2st_toonhm,
+        rtrun_emis_scat_sfm2st_toonhm_surface
+
+    - intensity-based reflection
+    -- scattering
+    --- SFM-2st: rtrun_reflect_sfm2st_toonhm
 
     - transmision: 
     -- trapezoid integration: rtrun_trans_pureabs_trapezoid
     -- simpson integration: rtrun_trans_pureabs_simpson
 
 """
+
+from functools import partial
 
 import jax.numpy as jnp
 from jax import jit
@@ -34,8 +41,10 @@ from jax.scipy.integrate import trapezoid
 from exojax.signal.integrate import simpson
 from exojax.rt.toon import (
     params_hemispheric_mean,
+    params_quadrature,
     zetalambda_coeffs,
 )
+from exojax.rt.direct_sfm import _direct_layer_sources
 from exojax.rt.twostream import (
     compute_tridiag_diagonals_and_vector,
     set_scat_trans_absorption_coeffs,
@@ -195,14 +204,38 @@ def rtrun_emis_pureabs_ibased_intensity(dtau, source_matrix, mus):
 
     Nnus = jnp.shape(dtau)[1]
     tau = jnp.cumsum(dtau, axis=0)
+    tau_upper = jnp.concatenate((jnp.zeros_like(dtau[:1]), tau[:-1]), axis=0)
 
     def f(carry, mu):
-        dtrans = -jnp.diff(jnp.exp(-tau / mu), prepend=1.0, axis=0)
+        # Preserve absorption in optically thin layers.
+        dtrans = jnp.exp(-tau_upper / mu) * -jnp.expm1(-dtau / mu)
         intensity = jnp.sum(source_matrix * dtrans, axis=0)
         return carry, intensity
 
     _, intensity = scan(f, jnp.zeros(Nnus), mus)
     return intensity
+
+
+@jit
+def rtrun_emis_pureabs_ibased_intensity_surface(
+    dtau, source_matrix, source_surface, mus
+):
+    """Emergent pure-absorption intensities with a lower surface.
+
+    Args:
+        dtau: Layer optical depths with shape ``(N_layer, N_nus)``.
+        source_matrix: Layer source functions with shape
+            ``(N_layer, N_nus)``.
+        source_surface: Isotropic lower-boundary source with shape ``(N_nus,)``.
+        mus: Positive ray-angle cosines with shape ``(N_mu,)``.
+
+    Returns:
+        Emergent intensity matrix with shape ``(N_mu, N_nus)``.
+    """
+    intensity = rtrun_emis_pureabs_ibased_intensity(dtau, source_matrix, mus)
+    tau_bottom = jnp.sum(dtau, axis=0)
+    transmission_surface = jnp.exp(-tau_bottom[None, :] / mus[:, None])
+    return intensity + source_surface[None, :] * transmission_surface
 
 
 @jit
@@ -575,6 +608,72 @@ def rtrun_emis_scat_fluxadding_toonhm(
     return spectrum
 
 
+def _solve_sfm2st_layer_source(
+    dtau,
+    single_scattering_albedo,
+    asymmetric_parameter,
+    source_matrix,
+    reflectivity_bottom,
+    source_bottom,
+    source_top=None,
+):
+    """Build the SFM-2st layer source from the two-stream flux solution."""
+    toon_coeffs = setrt_toonhm_with_absorption(
+        dtau, single_scattering_albedo, asymmetric_parameter, source_matrix
+    )
+    trans_coeff, scat_coeff, absorption_coeff, reduced_piB = toon_coeffs[:4]
+
+    flux_plus, flux_minus = solve_fluxadding_twostream_fluxes(
+        trans_coeff,
+        scat_coeff,
+        reduced_piB,
+        reflectivity_bottom,
+        source_bottom,
+        source_top=source_top,
+        absorption_coeff=absorption_coeff,
+    )
+
+    flux_plus_layer = 0.5 * (flux_plus[:-1] + flux_plus[1:])
+    flux_minus_layer = 0.5 * (flux_minus[:-1] + flux_minus[1:])
+    source_sfm = (1.0 - single_scattering_albedo) * source_matrix + (
+        0.5
+        * single_scattering_albedo
+        * (
+            (1.0 + asymmetric_parameter) * flux_plus_layer
+            + (1.0 - asymmetric_parameter) * flux_minus_layer
+        )
+    )
+    return source_sfm, flux_plus[-1]
+
+
+def _rtrun_sfm2st_toonhm(
+    dtau,
+    single_scattering_albedo,
+    asymmetric_parameter,
+    source_matrix,
+    source_surface,
+    reflectivity_surface,
+    incoming_flux,
+    mus,
+    weights,
+):
+    """Run the shared SFM-2st formal solution with boundary sources."""
+    source_sfm, source_bottom = _solve_sfm2st_layer_source(
+        dtau,
+        single_scattering_albedo,
+        asymmetric_parameter,
+        source_matrix,
+        reflectivity_surface,
+        source_surface,
+        incoming_flux,
+    )
+
+    intensity = rtrun_emis_pureabs_ibased_intensity_surface(
+        dtau, source_sfm, source_bottom, mus
+    )
+    return rtrun_emis_pureabs_ibased_flux_from_intensity(intensity, mus, weights)
+
+
 @jit
 def rtrun_emis_scat_sfm2st_toonhm(
     dtau,
@@ -606,33 +705,188 @@ def rtrun_emis_scat_sfm2st_toonhm(
     source_surface = jnp.zeros(Nnus)
     reflectivity_surface = jnp.zeros(Nnus)
 
-    toon_coeffs = setrt_toonhm_with_absorption(
-        dtau, single_scattering_albedo, asymmetric_parameter, source_matrix
-    )
-    trans_coeff, scat_coeff, absorption_coeff, reduced_piB = toon_coeffs[:4]
-
-    flux_plus, flux_minus = solve_fluxadding_twostream_fluxes(
-        trans_coeff,
-        scat_coeff,
-        reduced_piB,
+    source_sfm, _ = _solve_sfm2st_layer_source(
+        dtau,
+        single_scattering_albedo,
+        asymmetric_parameter,
+        source_matrix,
         reflectivity_surface,
         source_surface,
-        absorption_coeff=absorption_coeff,
-    )
-
-    flux_plus_layer = 0.5 * (flux_plus[:-1] + flux_plus[1:])
-    flux_minus_layer = 0.5 * (flux_minus[:-1] + flux_minus[1:])
-
-    source_sfm = (1.0 - single_scattering_albedo) * source_matrix + (
-        0.5
-        * single_scattering_albedo
-        * (
-            (1.0 + asymmetric_parameter) * flux_plus_layer
-            + (1.0 - asymmetric_parameter) * flux_minus_layer
-        )
     )
 
     return rtrun_emis_pureabs_ibased(dtau, source_sfm, mus, weights)
+
+
+@jit
+def rtrun_emis_scat_sfm2st_toonhm_surface(
+    dtau,
+    single_scattering_albedo,
+    asymmetric_parameter,
+    source_matrix,
+    source_surface,
+    mus,
+    weights,
+):
+    """Radiative transfer for SFM-2st emission with a lower thermal source.
+
+    Args:
+        dtau: Layer optical depths with shape ``(N_layer, N_nus)``.
+        single_scattering_albedo: Single-scattering albedo.
+        asymmetric_parameter: Scattering asymmetry parameter.
+        source_matrix: Thermal layer source in pi B scale.
+        source_surface: Isotropic lower-boundary source in pi B scale.
+        mus: Positive ray-angle cosines.
+        weights: Gaussian quadrature weights.
+
+    Returns:
+        Top-of-atmosphere emission flux.
+    """
+    _, Nnus = dtau.shape
+    return _rtrun_sfm2st_toonhm(
+        dtau,
+        single_scattering_albedo,
+        asymmetric_parameter,
+        source_matrix,
+        source_surface,
+        jnp.zeros(Nnus),
+        jnp.zeros(Nnus),
+        mus,
+        weights,
+    )
+
+
+@jit
+def rtrun_reflect_sfm2st_toonhm(
+    dtau,
+    single_scattering_albedo,
+    asymmetric_parameter,
+    source_matrix,
+    source_surface,
+    reflectivity_surface,
+    incoming_flux,
+    mus,
+    weights,
+):
+    """Radiative transfer for diffuse reflection using SFM-2st.
+
+    Toon hemispheric-mean two-stream fluxes are converted into layer source
+    functions. The final outgoing flux is obtained from an intensity-based
+    formal solution. The incident radiation is a diffuse hemispheric flux at
+    the top boundary.
+
+    Args:
+        dtau: Layer optical depths with shape ``(N_layer, N_nus)``.
+        single_scattering_albedo: Single-scattering albedo.
+        asymmetric_parameter: Scattering asymmetry parameter.
+        source_matrix: Thermal layer source in pi B scale.
+        source_surface: Emitting lower-boundary source.
+        reflectivity_surface: Lambertian lower-boundary reflectivity.
+        incoming_flux: Diffuse downward flux at the top boundary.
+        mus: Positive ray-angle cosines.
+        weights: Gaussian quadrature weights.
+
+    Returns:
+        Reflected and emitted top-of-atmosphere flux.
+    """
+    return _rtrun_sfm2st_toonhm(
+        dtau,
+        single_scattering_albedo,
+        asymmetric_parameter,
+        source_matrix,
+        source_surface,
+        reflectivity_surface,
+        incoming_flux,
+        mus,
+        weights,
+    )
+
+
+@partial(jit, static_argnames=("phase_function",))
+def rtrun_reflect_sfm2st_direct(
+    dtau,
+    single_scattering_albedo,
+    reflectivity_surface,
+    incoming_flux,
+    mu_in,
+    mu_out,
+    relative_azimuth=0.0,
+    phase_function="rayleigh",
+):
+    """Return specific intensity for direct illumination using two-stream SFM.
+
+    ``incoming_flux`` is beam-normal irradiance; the horizontal incident flux
+    is ``mu_in * incoming_flux``. Both positive direction cosines are scalar.
+    ``relative_azimuth`` is the azimuth difference between the outward star
+    and observer directions, in radians. The result is physical intensity
+    (irradiance per steradian), rather than the pi-I scale used internally.
+
+    Isotropic and Rayleigh single scattering are integrated analytically in
+    each homogeneous layer. Multiple scattering uses Toon quadrature with
+    g=0 and a Toon-style hemispheric, layer-averaged source reconstruction. This
+    approximation does not retain Rayleigh's higher angular moments or
+    polarization. Resolve the diffuse source by refining the optical-depth
+    layers. Angular integration of this approximate intensity need not conserve
+    the two-stream flux exactly, even after layer convergence. The lower
+    boundary is Lambertian; the top has no diffuse source.
+    No disk integration is performed.
+    """
+    if phase_function not in ("isotropic", "rayleigh"):
+        raise ValueError("phase_function must be 'isotropic' or 'rayleigh'")
+
+    gamma_1, gamma_2, gamma_3, _ = params_quadrature(
+        single_scattering_albedo, jnp.zeros_like(dtau), mu_in
+    )
+    trans, scat, absorption = set_scat_trans_absorption_coeffs(
+        gamma_1, gamma_2, dtau
+    )
+    source_plus, source_minus = _direct_layer_sources(
+        dtau, gamma_1, gamma_2, single_scattering_albedo, mu_in, gamma_3
+    )
+    tau = jnp.concatenate((jnp.zeros_like(dtau[:1]), jnp.cumsum(dtau, axis=0)))
+    beam = incoming_flux * jnp.exp(-tau / mu_in)
+    surface = jnp.broadcast_to(reflectivity_surface, dtau.shape[1:])
+    flux_plus, flux_minus = solve_fluxadding_twostream_fluxes(
+        trans,
+        scat,
+        jnp.zeros_like(dtau),
+        surface,
+        surface * mu_in * beam[-1],
+        absorption_coeff=absorption,
+        source_plus=source_plus * beam[:-1],
+        source_minus=source_minus * beam[:-1],
+    )
+
+    # F+ and F- contain scattered light only, so scattering this field adds
+    # the multiple-scattering contribution without counting the beam twice.
+    diffuse_source = 0.25 * single_scattering_albedo * (
+        flux_plus[:-1] + flux_plus[1:] + flux_minus[:-1] + flux_minus[1:]
+    )
+    diffuse_pi_intensity = rtrun_emis_pureabs_ibased_intensity_surface(
+        dtau, diffuse_source, flux_plus[-1], jnp.atleast_1d(mu_out)
+    )[0]
+
+    phase = 1.0
+    if phase_function == "rayleigh":
+        sine_product_squared = (1.0 - mu_in**2) * (1.0 - mu_out**2)
+        # Keep derivatives finite when either direction is exactly normal.
+        at_normal = sine_product_squared == 0.0
+        sine_product = jnp.where(
+            at_normal, 0.0, jnp.sqrt(jnp.where(at_normal, 1.0, sine_product_squared))
+        )
+        cos_scattering = -(
+            mu_in * mu_out + sine_product * jnp.cos(relative_azimuth)
+        )
+        phase = 0.75 * (1.0 + cos_scattering**2)
+
+    attenuation = jnp.exp(-tau[:-1] / mu_out) * -jnp.expm1(
+        -dtau * (1.0 / mu_in + 1.0 / mu_out)
+    )
+    single_pi_intensity = jnp.sum(
+        0.25 * single_scattering_albedo * phase * beam[:-1] * attenuation
+        * mu_in / (mu_in + mu_out),
+        axis=0,
+    )
+    return (diffuse_pi_intensity + single_pi_intensity) / jnp.pi
 
 
 def setrt_toonhm(

@@ -37,7 +37,12 @@ The ``gravity_profile`` instance in the ``ArtTransPure`` class allows for easy c
     from exojax.rt import ArtTransPure
     from exojax.utils.constants import RJ
 
-    art = ArtTransPure(pressure_top=1.e-8, pressure_btm=1.e2, nlayer=100, integration="simpson") # integration="trapezoid" if you want
+    art = ArtTransPure.from_pressure_boundaries(
+        pressure_top_boundary=1.e-8,
+        pressure_btm_boundary=1.e2,
+        nlayer=100,
+        integration="simpson",  # use "trapezoid" if desired
+    )
     art.change_temperature_range(400.0, 1500.0)
     Tarr = art.powerlaw_temperature(1300.0, 0.1)
     mmr_arr = art.constant_mmr_profile(0.1) # constant mass mixing ratio profile 
@@ -54,6 +59,10 @@ The ``gravity_profile`` instance in the ``ArtTransPure`` class allows for easy c
     
     dtau = art.opacity_profile_xs(xsmatrix, mmr_arr, opa.mdb.molmass,gravity)
     Rp2 = art.run(dtau, Tarr, mmw, radius_btm, gravity_btm)
+
+Here ``radius_btm`` and ``gravity_btm`` are defined at the exact pressure
+``art.pressure_btm_boundary``.  See :ref:`atmospheric-layer-contract` for the
+pressure-grid and surface-connection contract.
 
 
 |:jack_o_lantern:| See 

@@ -1,4 +1,6 @@
 import os
+import hashlib
+import json
 import zipfile
 from urllib.parse import urljoin
 import pandas as pd
@@ -29,9 +31,9 @@ def _fetch_opacity_zip(  # noqa: WPS211 (a few branches are fine here)
 ) -> pathlib.Path:
     """Return a local ExoMolHR CSV—downloaded only if necessary.
 
-    The function skips the network step when a file with the same physics
-    (identical *iso* and *T*) is already present in *out_dir*; only the
-    timestamp differs between downloads.
+    The function skips the network step when a file for the identical query
+    is already present in a query-specific subdirectory of *out_dir*.
+    Legacy files without query identity are not reused.
 
     Args:
         wvmin / wvmax : float | None
@@ -59,11 +61,23 @@ def _fetch_opacity_zip(  # noqa: WPS211 (a few branches are fine here)
         RuntimeError
             When the expected download link is missing or HTTP fails.
     """
-    out_dir = pathlib.Path(out_dir)
+    query = {
+        "wvmin": wvmin,
+        **({} if wvmax is None else {"wvmax": wvmax}),
+        "numin": numin,
+        "numax": numax,
+        "T": T,
+        "Smin": Smin,
+        "iso": iso,
+    }
+    query_key = hashlib.sha256(
+        json.dumps(query, sort_keys=True, default=float).encode("utf-8")
+    ).hexdigest()
+    out_dir = pathlib.Path(out_dir) / query_key
     out_dir.mkdir(parents=True, exist_ok=True)
 
     # ------------------------------------------------------------------
-    # 0. reuse if the same physics file already exists
+    # 0. reuse only within the matching query directory
     # ------------------------------------------------------------------
     csv_suffix = f"__{iso}__{float(T):.1f}K.csv"  # 1200  -> 1200.0K
     existing = sorted(out_dir.glob(f"*{csv_suffix}"))
@@ -74,15 +88,6 @@ def _fetch_opacity_zip(  # noqa: WPS211 (a few branches are fine here)
     # 1. build query and fetch HTML page
     # ------------------------------------------------------------------
     sess = session or requests.Session()
-    query = {
-        "wvmin": wvmin,
-        **({} if wvmax is None else {"wvmax": wvmax}),
-        "numin": numin,
-        "numax": numax,
-        "T": T,
-        "Smin": Smin,
-        "iso": iso,
-    }
     html_resp = sess.get(EXOMOLHR_API_ROOT, params=query, timeout=120)
     html_resp.raise_for_status()
 
@@ -156,12 +161,12 @@ def _list_exomolhr_molecules(
     *,
     session: Optional[requests.Session] = None,
 ) -> Sequence[str]:
-    """Return the list of molecule formulas shown on the ExoMolHR landing page.
+    """Return the list of molecule formulas shown on the ExoMolHR data page.
 
     The function can work in three modes:
 
     1. **Online**  `html_source is None`
-       → download *https://www.exomol.com/exomolhr/* live.
+       → download *https://www.exomol.com/exomolhr/db/* live.
     2. **From file** `html_source` is a `pathlib.Path` or filename
        → read the saved HTML.
     3. **From string/bytes**  `html_source` is raw HTML content
@@ -187,7 +192,7 @@ def _list_exomolhr_molecules(
     # ------------------------------------------------------------------
     if html_source is None:
         sess = session or requests.Session()
-        resp = sess.get(EXOMOLHR_HOME, timeout=60)
+        resp = sess.get(urljoin(EXOMOLHR_HOME, "db/"), timeout=60)
         resp.raise_for_status()
         html_text = resp.text
     elif isinstance(html_source, (bytes, str)):

@@ -291,14 +291,11 @@ def model_c(rp_mean, rp_std):
 
     # Fixed cloud width in log10(P) space (narrow deck).
     width_cloud = 1.0 / 25.0
+    delta_log_pressure = -jnp.log10(art.pressure_decrease_rate)
 
     # Set the Gaussian amplitude so that the *integrated* cloud optical depth
     # over the atmosphere is ~50, independent of the number of layers.
-    dtau_c = (
-        50.0
-        * ((jnp.log10(pressure_btm) - jnp.log10(pressure_top)) / nlayer)
-        / width_cloud
-    )
+    dtau_c = 50.0 * delta_log_pressure / width_cloud
     pressure_arr = jnp.log10(art.pressure)
     cloud_profile = (pressure_arr[:, None] - logP_cloud) / width_cloud
     # Per-layer optical-depth increment: normalized Gaussian in log10(P).

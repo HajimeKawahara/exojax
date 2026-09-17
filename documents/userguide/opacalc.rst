@@ -22,6 +22,11 @@ Opacity calculations can be controlled using the opacity calculation class
 |DIT                       |N/A          |ESLIN      | linear grid                        |
 +--------------------------+-------------+-----------+------------------------------------+
 
+``OpaDirect`` uses ``line_profile="voigt"`` by default. For neutral Na or K
+in a VALD/Kurucz database, ``line_profile="alkali_subvoigt"`` selects the
+:doc:`Na/K sub-Voigt calculation <alkali>`. ``OpaAlkali`` is a convenience
+wrapper for this option. Both use the direct LPF method.
+
 Links to API
 ----------------
 

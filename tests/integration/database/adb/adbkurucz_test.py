@@ -1,5 +1,5 @@
 import os
-from exojax.database.moldb  import AdbKurucz
+from exojax.database import AdbKurucz
 
 filepath_Kurucz = '.database/gf2600.all'
 if not os.path.isfile(filepath_Kurucz):

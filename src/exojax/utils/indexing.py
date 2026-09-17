@@ -89,6 +89,13 @@ def npgetix(x, xv):
     return cont, index.astype(int)
 
 
+def _structured_row_view(x):
+    """View each row as one structured value without copying the array."""
+    if not x.data.contiguous:
+        warnings.warn("input should be contiguous.", UserWarning)
+    return x.view(x.dtype.descr * x.shape[1])
+
+
 def unique_rows(x):
     """memory saved version of np.unique(,axis=0)
 
@@ -102,9 +109,7 @@ def unique_rows(x):
     Returns:
         2D array: unique 2D array (N' x M), where N' <= N, removed duplicated M vector.
     """
-    if not x.data.contiguous:
-        warnings.warn("input should be contiguous.", UserWarning)
-    uniq = np.unique(x.view(x.dtype.descr * x.shape[1]))
+    uniq = np.unique(_structured_row_view(x))
     return uniq.view(x.dtype).reshape(-1, x.shape[1])
 
 
@@ -123,8 +128,10 @@ def uniqidx(input_array):
         >>> uidx, uval=uniqidx(a) #->[0,1,2,1,3,0], [[4,1],[7,1],[7,2],[8,0]]
 
     """
-    uniqvals = unique_rows(input_array)
-    uidx = genearte_uidx_from_uniqvals(input_array, uniqvals)
+    uniq, uidx = np.unique(_structured_row_view(input_array), return_inverse=True)
+    uniqvals = uniq.view(input_array.dtype).reshape(-1, input_array.shape[1])
+    # NumPy versions differ in the shape of inverse indices for a 2D view.
+    uidx = uidx.reshape(-1).astype(int, copy=False)
     return uidx, uniqvals
 
 def genearte_uidx_from_uniqvals(input_array, uniqvals):

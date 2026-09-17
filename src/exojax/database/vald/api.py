@@ -4,10 +4,12 @@ import pathlib
 import warnings
 import jax.numpy as jnp
 import numpy as np
+from exojax.database.core_atom._arrays import (
+    _generate_atomic_jnp_arrays,
+    _mask_atomic_lines,
+    _set_atomic_metadata,
+)
 from exojax.database.core_atom.io import load_pf_Barklem2016
-from exojax.database.core_atom.io import load_atomicdata
-from exojax.database.core_atom.io import load_ionization_energies
-from exojax.database.core_atom.io import pick_ionE
 from exojax.database.core_atom.io import PeriodicTable
 from exojax.database.core_atom.io import _normalize_vald_engine
 from exojax.database.core_atom.io import _vald_cache_path
@@ -17,6 +19,7 @@ from exojax.database.core_atom.io import pickup_param
 from exojax.database.core_atom.line_strength import line_strength_atom
 from exojax.database.core_atom.pf import interp_QT_284
 from exojax.database.core_atom.pf import partfn_Fe
+from exojax.database.core_atom.pf import qr_interp_lines
 from exojax.database.core_atom.misc import get_unique_species
 from exojax.database.core_atom.misc import sep_arr_of_sp
 
@@ -30,7 +33,7 @@ warning_old_exojax = "It seems that the hdf5 file for the transition file was cr
 
 
 def _load_vald_dataframe(vald3_file, engine):
-    """Load a VALD line list from a backend-specific cache or create it."""
+    """Load a VALD line list from its cache, creating the cache if needed."""
     engine = _normalize_vald_engine(engine)
     cache_path = _vald_cache_path(vald3_file, engine)
 
@@ -108,9 +111,9 @@ class AdbVald:
             nurange: wavenumber range list (cm-1) or wavenumber array
             margin: margin for nurange (cm-1)
             crit: line strength lower limit for extraction
-            Irwin: if True(1), the partition functions of Irwin1981 is used, otherwise those of Barklem&Collet2016
-            gpu_transfer: tranfer data to jnp.array?
-            vmr_fraction: list of the vmr fractions of hydrogen, H2 molecule, helium. if None, typical quasi-"solar-fraction" will be applied.
+            Irwin: Use Irwin (1981) for Fe I; other species use Barklem & Collet (2016).
+            gpu_transfer: If True, generate JAX line arrays at initialization.
+            vmr_fraction: VMR fractions of H, He, and H2, in that order. Defaults to [0.0, 0.16, 0.84].
             engine: ``"pytables"`` (default), its legacy alias ``"pandas"``,
                 or the optional ``"vaex"`` backend.
 
@@ -119,6 +122,7 @@ class AdbVald:
         """
 
         self.dbtype = "vald"
+        self.Irwin = Irwin
 
         # load args
         self.vald3_file = pathlib.Path(path).expanduser()  # VALD3 output
@@ -163,7 +167,7 @@ class AdbVald:
         )  # grid Q vs T vs Species
         self.Tref = Tref_original
         self.QTref_284 = np.array(
-            interp_QT_284(Tref_original, self.T_gQT, self.gQT_284species)
+            interp_QT_284(Tref_original, self.T_gQT, self.gQT_284species, self.Irwin)
         )
         # identify index of QT grid (gQT) for each line
         self._QTmask = self.make_QTmask(self._ielem, self._iion)
@@ -176,7 +180,6 @@ class AdbVald:
             self._elower,
             self.QTref_284,
             self._QTmask,
-            Irwin,
         )  # 211013
 
         ### MASKING ###
@@ -187,54 +190,17 @@ class AdbVald:
         )
 
         self.masking(mask)
+        _set_atomic_metadata(self)
         if gpu_transfer:
             self.generate_jnp_arrays()
 
-        # Compile atomic-specific data for each absorption line of interest
-        ipccd = load_atomicdata()
-        self.solarA = jnp.array(
-            list(map(lambda x: ipccd[ipccd["ielem"] == x].iat[0, 4], self._ielem))
-        )
-        self.atomicmass = jnp.array(
-            list(map(lambda x: ipccd[ipccd["ielem"] == x].iat[0, 5], self._ielem))
-        )
-        df_ionE = load_ionization_energies()
-        self.ionE = jnp.array(
-            list(
-                map(
-                    pick_ionE,
-                    self._ielem,
-                    self._iion,
-                    [
-                        df_ionE,
-                    ]
-                    * len(self._ielem),
-                )
-            )
-        )
-
     def masking(self, mask):
-        """applying mask.
+        """Select lines and metadata, refreshing existing JAX arrays.
 
         Args:
-            mask: mask to be applied. self.mask is updated.
-
+            mask: Boolean mask for the current lines.
         """
-        # numpy float 64 Do not convert them jnp array
-        self.nu_lines = self.nu_lines[mask]
-        self.Sij0 = self.Sij0[mask]
-        self._A = self._A[mask]
-        self._elower = self._elower[mask]
-        self._eupper = self._eupper[mask]
-        self._gupper = self._gupper[mask]
-        self._jlower = self._jlower[mask]
-        self._jupper = self._jupper[mask]
-        self._QTmask = self._QTmask[mask]
-        self._ielem = self._ielem[mask]
-        self._iion = self._iion[mask]
-        self._gamRad = self._gamRad[mask]
-        self._gamSta = self._gamSta[mask]
-        self._vdWdamp = self._vdWdamp[mask]
+        _mask_atomic_lines(self, mask)
 
         if len(self.nu_lines) < 1:
             warn_msg = (
@@ -243,28 +209,24 @@ class AdbVald:
             warnings.warn(warn_msg, UserWarning)
 
     def generate_jnp_arrays(self):
-        """(re)generate jnp.arrays.
+        """Generate JAX line arrays and metadata for the current selection."""
+        _generate_atomic_jnp_arrays(self)
 
-        Note:
-            We have nd arrays and jnp arrays. We usually apply the mask to nd arrays and then generate jnp array from the corresponding nd array. For instance, self._A is nd array and self.A is jnp array.
+    @property
+    def line_masses(self):
+        """Atomic masses for the current line selection, in amu."""
+        return self.atomicmass
 
-        """
-        # jnp arrays
-        self.dev_nu_lines = jnp.array(self.nu_lines)
-        self.logsij0 = jnp.array(np.log(self.Sij0))
-        self.A = jnp.array(self._A)
-        self.elower = jnp.array(self._elower)
-        self.eupper = jnp.array(self._eupper)
-        self.gupper = jnp.array(self._gupper)
-        self.jlower = jnp.array(self._jlower, dtype=int)
-        self.jupper = jnp.array(self._jupper, dtype=int)
-
-        self.QTmask = jnp.array(self._QTmask, dtype=int)
-        self.ielem = jnp.array(self._ielem, dtype=int)
-        self.iion = jnp.array(self._iion, dtype=int)
-        self.gamRad = jnp.array(self._gamRad)
-        self.gamSta = jnp.array(self._gamSta)
-        self.vdWdamp = jnp.array(self._vdWdamp)
+    def qr_interp_lines(self, T, Tref):
+        """Return Q(T)/Q(Tref) for the current line selection."""
+        return qr_interp_lines(
+            T,
+            Tref,
+            self.T_gQT,
+            self.gQT_284species,
+            self._QTmask,
+            getattr(self, "Irwin", False),
+        )
 
     def Atomic_gQT(self, atomspecies):
         """Select grid of partition function especially for the species of
@@ -283,8 +245,7 @@ class AdbVald:
         return gQT
 
     def QT_interp(self, atomspecies, T):
-        """interpolated partition function The partition functions of Barklem &
-        Collet (2016) are adopted.
+        """Interpolate the selected partition function for an atomic species.
 
         Args:
             atomspecies: species e.g., "Fe 1"
@@ -293,6 +254,8 @@ class AdbVald:
         Returns:
             Q(T): interpolated in jnp.array for the Atomic Species
         """
+        if getattr(self, "Irwin", False) and atomspecies == "Fe 1":
+            return partfn_Fe(T)
         gQT = self.Atomic_gQT(atomspecies)
         QT = jnp.interp(T, self.T_gQT, gQT)
         return QT
@@ -314,8 +277,7 @@ class AdbVald:
         return QT
 
     def qr_interp(self, atomspecies, T):
-        """interpolated partition function ratio The partition functions of
-        Barklem & Collet (2016) are adopted.
+        """Return the selected partition-function ratio for an atomic species.
 
         Args:
             T: temperature
@@ -355,7 +317,9 @@ class AdbVald:
         """
         warn_msg = "Deprecated Use `atomll.interp_QT_284` instead"
         warnings.warn(warn_msg, FutureWarning)
-        return interp_QT_284(T, self.T_gQT, self.gQT_284species)
+        return interp_QT_284(
+            T, self.T_gQT, self.gQT_284species, getattr(self, "Irwin", False)
+        )
 
     def make_QTmask(self, ielem, iion):
         """Convert the species identifier to the index for Q(Tref) grid (gQT)
@@ -438,3 +402,4 @@ class AdbSepVald:
         self.T_gQT = adb.T_gQT
         self.QTref_284 = adb.QTref_284
         self.Tref = adb.Tref
+        self.Irwin = getattr(adb, "Irwin", False)

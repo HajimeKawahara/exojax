@@ -6,8 +6,11 @@ Databases
    :maxdepth: 1
 
    userguide/mdb.rst
+   userguide/nist.rst
+   userguide/exoatom.rst
    userguide/moldb.rst
    userguide/exomol.rst
+   userguide/kurucz.rst
    userguide/hitran.rst
    userguide/api.rst
    userguide/nonair.rst
@@ -24,6 +27,7 @@ Opacity Calculation
    :maxdepth: 1
 
    userguide/opacalc.rst
+   userguide/alkali.rst
    userguide/hjerting.rst
    userguide/modit.rst
    userguide/premodit.rst
@@ -77,12 +81,21 @@ Radiative Transfer
 .. toctree::
    :maxdepth: 1
 
+   userguide/layer_contract.rst
    userguide/rtransfer.rst
    userguide/rtransfer_ibased_pure.rst
    userguide/rtransfer_fbased.rst
    userguide/rtransfer_transmission.rst
    userguide/rtransfer_fbased_pure.rst
    
+Atmospheric Structure
+=======================
+
+.. toctree::
+   :maxdepth: 1
+
+   userguide/rce.rst
+
 Spectral Operators
 =======================
 

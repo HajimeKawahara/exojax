@@ -20,14 +20,193 @@ from exojax.utils.constants import logkB, logm_ucgs
 class ArtCommon:
     """Common Atmospheric Radiative Transfer"""
 
+    @property
+    def pressure_top_boundary(self):
+        """Pressure at the top boundary of the atmospheric grid in bar."""
+        return self.pressure_boundary[0]
+
+    @property
+    def pressure_btm_boundary(self):
+        """Pressure at the bottom boundary of the atmospheric grid in bar."""
+        return self.pressure_boundary[-1]
+
+    @staticmethod
+    def _pressure_profile_from_exact_boundaries(
+        pressure_top_boundary,
+        pressure_btm_boundary,
+        nlayer,
+        reference_point,
+    ):
+        from exojax.atm.atmprof import pressure_layer_logspace_from_boundaries
+
+        grid_arguments = {
+            "log_pressure_top_boundary": np.log10(pressure_top_boundary),
+            "log_pressure_btm_boundary": np.log10(pressure_btm_boundary),
+            "nlayer": nlayer,
+            "reference_point": reference_point,
+        }
+        (
+            _,
+            _,
+            pressure_decrease_rate,
+            pressure_boundary,
+        ) = pressure_layer_logspace_from_boundaries(
+            **grid_arguments,
+            numpy=True,
+        )
+        pressure_boundary = pressure_boundary.copy()
+        pressure_boundary[0] = pressure_top_boundary
+        pressure_boundary[-1] = pressure_btm_boundary
+        pressure = (
+            pressure_boundary[:-1] ** (1.0 - reference_point)
+            * pressure_boundary[1:] ** reference_point
+        )
+        dpressure = np.diff(pressure_boundary)
+
+        from jax import config
+
+        active_dtype = np.dtype(np.float64 if config.x64_enabled else np.float32)
+        smallest_normal = np.finfo(active_dtype).tiny
+        with np.errstate(over="ignore", under="ignore"):
+            active_boundary = pressure_boundary.astype(active_dtype)
+            active_pressure = pressure.astype(active_dtype)
+            active_dpressure = np.diff(active_boundary)
+            active_decrease_rate = np.asarray(
+                pressure_decrease_rate, dtype=active_dtype
+            )
+        active_grid_values = (
+            active_boundary,
+            active_pressure,
+            active_dpressure,
+            active_decrease_rate,
+        )
+        if any(
+            not np.all(np.isfinite(value)) or np.any(value < smallest_normal)
+            for value in active_grid_values
+        ) or np.any(active_dpressure <= 0.0):
+            raise ValueError(
+                "Pressure grid cannot be represented by the active JAX dtype."
+            )
+        if active_decrease_rate >= 1.0:
+            raise ValueError(
+                "Pressure grid cannot be represented by the active JAX dtype."
+            )
+        return (
+            pressure,
+            dpressure,
+            pressure_decrease_rate,
+            pressure_boundary,
+        )
+
+    @classmethod
+    def from_pressure_boundaries(
+        cls,
+        pressure_top_boundary,
+        pressure_btm_boundary,
+        nlayer,
+        **kwargs,
+    ):
+        """Initialize an atmospheric model from its exact pressure boundaries.
+
+        Args:
+            pressure_top_boundary (float): Pressure at the top boundary in bar.
+            pressure_btm_boundary (float): Pressure at the bottom boundary in bar.
+            nlayer (int): Number of atmospheric layers.
+            **kwargs: Additional arguments passed to the subclass constructor.
+
+        Returns:
+            ArtCommon: An instance whose pressure grid spans the specified
+                boundaries exactly.
+
+        Notes:
+            ``pressure`` contains representative layer pressures, while
+            ``pressure_boundary`` contains the physical layer boundaries.
+            Subclass-specific required arguments, such as ``opalayer``, must be
+            supplied as keyword arguments.
+        """
+        if "pressure_top" in kwargs or "pressure_btm" in kwargs:
+            raise TypeError(
+                "pressure_top and pressure_btm cannot be used with "
+                "from_pressure_boundaries."
+            )
+        if type(nlayer) is not int:
+            raise ValueError("Number of the layer should be integer")
+        if nlayer < 1:
+            raise ValueError("Number of the layer should be positive")
+
+        if np.ndim(pressure_top_boundary) != 0 or np.ndim(
+            pressure_btm_boundary
+        ) != 0:
+            raise ValueError("Pressure boundaries should be scalar values.")
+        try:
+            pressure_top_boundary = float(pressure_top_boundary)
+            pressure_btm_boundary = float(pressure_btm_boundary)
+        except (TypeError, ValueError) as err:
+            raise ValueError("Pressure boundaries should be scalar values.") from err
+        if not np.isfinite(pressure_top_boundary) or not np.isfinite(
+            pressure_btm_boundary
+        ):
+            raise ValueError("Pressure boundaries should be finite.")
+        if pressure_top_boundary <= 0.0 or pressure_btm_boundary <= 0.0:
+            raise ValueError("Pressure boundaries should be positive.")
+        if pressure_btm_boundary <= pressure_top_boundary:
+            raise ValueError(
+                "Pressure at the bottom boundary should be higher than that "
+                "at the top boundary."
+            )
+
+        log_pressure_top_boundary = np.log10(pressure_top_boundary)
+        log_pressure_btm_boundary = np.log10(pressure_btm_boundary)
+        dlog_pressure = (
+            log_pressure_btm_boundary - log_pressure_top_boundary
+        ) / nlayer
+        constructor_kwargs = {
+            "pressure_top": 10.0
+            ** (log_pressure_top_boundary + 0.5 * dlog_pressure),
+            "pressure_btm": 10.0
+            ** (log_pressure_btm_boundary - 0.5 * dlog_pressure),
+            "nlayer": nlayer,
+            **kwargs,
+        }
+
+        if cls.__new__ is object.__new__:
+            instance = cls.__new__(cls)
+        else:
+            instance = cls.__new__(cls, **constructor_kwargs)
+        if not isinstance(instance, cls):
+            raise TypeError(f"{cls.__name__}.__new__ did not return an instance.")
+
+        missing = object()
+        previous_specification = getattr(
+            instance, "_pressure_boundary_specification", missing
+        )
+        instance._pressure_boundary_specification = (
+            pressure_top_boundary,
+            pressure_btm_boundary,
+        )
+        try:
+            type(instance).__init__(instance, **constructor_kwargs)
+        except BaseException:
+            if previous_specification is missing:
+                if hasattr(instance, "_pressure_boundary_specification"):
+                    del instance._pressure_boundary_specification
+            else:
+                instance._pressure_boundary_specification = previous_specification
+            raise
+        instance._pressure_boundary_specification = (
+            pressure_top_boundary,
+            pressure_btm_boundary,
+        )
+        return instance
+
     def __init__(
         self, pressure_top, pressure_btm, nlayer, nu_grid=None, warn_no_nu_grid=True
     ):
         """initialization of art
 
         Args:
-            pressure_top (float):top pressure in bar
-            pressure_bottom (float): bottom pressure in bar
+            pressure_top (float): Representative pressure of the top layer in bar.
+            pressure_btm (float): Representative pressure of the bottom layer in bar.
             nlayer (int): # of atmospheric layers
             nu_grid (nd.array, optional): wavenumber grid in cm-1
             warn_no_nu_grid (bool, optional): Warn when ``nu_grid`` is not given.
@@ -248,6 +427,27 @@ class ArtCommon:
             raise ValueError("Number of the layer should be integer")
 
     def init_pressure_profile(self):
+        pressure_boundary_specification = getattr(
+            self, "_pressure_boundary_specification", None
+        )
+        if pressure_boundary_specification is not None:
+            (
+                self.pressure,
+                self.dParr,
+                self.pressure_decrease_rate,
+                self.pressure_boundary,
+            ) = self._pressure_profile_from_exact_boundaries(
+                pressure_top_boundary=pressure_boundary_specification[0],
+                pressure_btm_boundary=pressure_boundary_specification[1],
+                nlayer=self.nlayer,
+                reference_point=self.reference_point,
+            )
+            self.pressure_top = self.pressure[0]
+            self.pressure_btm = self.pressure[-1]
+            self.log_pressure_top = np.log10(self.pressure_top)
+            self.log_pressure_btm = np.log10(self.pressure_btm)
+            return
+
         from exojax.atm.atmprof import (
             pressure_boundary_logspace,
             pressure_layer_logspace,
@@ -269,7 +469,9 @@ class ArtCommon:
             self.pressure,
             self.pressure_decrease_rate,
             reference_point=self.reference_point,
+            numpy=True,
         )
+        self.dParr = np.diff(self.pressure_boundary)
 
     def change_temperature_range(self, Tlow, Thigh):
         """temperature range to be assumed.

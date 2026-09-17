@@ -152,6 +152,7 @@ class MdbCommonHitempHitran:
         """
         self.nu_lines = self.nu_lines[mask]
         self.line_strength_ref_original = self.line_strength_ref_original[mask]
+        self.logsij0 = self.logsij0[mask]
         self.delta_air = self.delta_air[mask]
         self.A = self.A[mask]
         self.n_air = self.n_air[mask]
@@ -161,10 +162,24 @@ class MdbCommonHitempHitran:
         self.gpp = self.gpp[mask]
         # isotope
         self.isoid = self.isoid[mask]
+        isotope_mask = np.isin(self.uniqiso, self.isoid)
+        self.gQT = self.gQT[isotope_mask]
+        self.T_gQT = self.T_gQT[isotope_mask]
         self.uniqiso = np.unique(self.isoid)
         if self.with_error:
             # uncertainties
             self.ierr = self.ierr[mask]
+        for attribute in (
+            "dev_nu_lines",
+            "n_h2", "gamma_h2",
+            "n_he", "gamma_he",
+            "n_co2", "gamma_co2",
+            "n_h2o", "gamma_h2o",
+            "nu_lines_err", "line_strength_ref_err",
+            "gamma_air_err", "gamma_self_err", "n_air_err", "delta_air_err",
+        ):
+            if hasattr(self, attribute):
+                setattr(self, attribute, getattr(self, attribute)[mask])
 
     def QT_interp(self, isotope, T):
         """interpolated partition function.

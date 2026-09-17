@@ -163,7 +163,9 @@ def test_unbiased_lsd():
     T = 1000.0
     assert np.sum(logf_bias(elower_grid, T,
                             Tref_original)) == 638.3176862916531
-    assert np.sum(g_bias(nu_grid, T, Tref_original)) == 19940.996503337694
+    assert np.sum(g_bias(nu_grid, T, Tref_original)) == pytest.approx(
+        19940.996503337694, rel=1.0e-12
+    )
 
     Tref = 500.0
     Twt = 1100.0
