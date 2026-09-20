@@ -3,7 +3,8 @@ Na and K opacity
 
 Load neutral Na or K lines with ``AdbKurucz``, then compute cross sections
 with ``OpaDirect(..., line_profile="alkali_subvoigt")``. Each database must
-contain one neutral species; ``AdbVald`` is also supported.
+contain one neutral species; ``AdbVald`` and ``AdbExoAtom`` are also supported.
+See :doc:`exoatom` for an ExoAtom example and its broadening requirements.
 
 Download the Kurucz lists
 `gf1100.all (Na I) <http://kurucz.harvard.edu/linelists/gfall/gf1100.all>`_ and

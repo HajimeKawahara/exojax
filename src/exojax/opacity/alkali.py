@@ -49,18 +49,20 @@ class OpaAlkali(OpaDirect):
     to 9000 cm-1 outside the evaluation grid to retain their wings.
 
     Line strengths, partition functions, Doppler widths, and default atomic
-    broadening are inherited from OpaDirect. In particular, vmr_fraction is
-    ordered H, He, H2. This matches the wing prescription, not POSEIDON's
-    precomputed opacity tables or its line-specific pressure broadening.
+    broadening are inherited from OpaDirect. For VALD/Kurucz, vmr_fraction is
+    ordered H, He, H2. ExoAtom uses natural widths unless atomic_broadening
+    supplies the total Lorentz HWHM; missing natural widths require a callback.
+    This matches the wing prescription, not POSEIDON's precomputed opacity
+    tables or its line-specific pressure broadening.
     """
 
     def __init__(
         self, adb, nu_grid, wavelength_order="descending", *, atomic_broadening=None
     ):
-        """Initialize with a single-species AdbVald or AdbKurucz and cm-1 grid.
+        """Initialize with neutral Na/K in AdbVald, AdbKurucz, or AdbExoAtom.
 
-        atomic_broadening optionally supplies the total Lorentz HWHM through
-        the same JAX-compatible (T, P) callback as OpaDirect.
+        nu_grid is in cm-1. atomic_broadening supplies the total Lorentz HWHM
+        through the same JAX-compatible (T, P) callback as OpaDirect.
         """
         super().__init__(
             adb, nu_grid, wavelength_order, line_profile="alkali_subvoigt",

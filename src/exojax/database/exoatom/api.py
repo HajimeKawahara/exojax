@@ -1,4 +1,4 @@
-"""ExoAtom atomic lines read with PyExoCross, for direct Voigt opacity."""
+"""ExoAtom atomic lines read with PyExoCross, for direct opacity."""
 
 import json
 from pathlib import Path

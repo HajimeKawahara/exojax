@@ -57,8 +57,9 @@ Visible Na and K
 to every selected Na I or K I line,
 as in the Clear-Base update of `Mullens et al. (2024), Section 2.4.3
 <https://arxiv.org/html/2410.19253v1#S2.SS4.SSS3>`_. It accepts an
-``AdbKurucz`` or ``AdbVald`` containing one neutral species. See
+``AdbKurucz``, ``AdbVald``, or ``AdbExoAtom`` containing one neutral species. See
 :doc:`alkali` for a minimal example from database loading to cross sections.
+For ExoAtom loading and its natural-width or callback treatment, see :doc:`exoatom`.
 
 The profile follows the `Cthulhu implementation
 <https://github.com/MartianColonist/Cthulhu/blob/f9c72089e3ed71335223cefa0641b1ff24760008/Cthulhu/Voigt.py>`_
@@ -72,8 +73,8 @@ Baudino paper. The whole profile is divided by 0.998 and set to zero beyond
 9000 cm-1. This preserves the source's small discontinuity at ``D`` and fixed
 normalization; it does not enforce unit area or smooth the join.
 
-Line strengths, partition functions, and default Lorentz widths retain
-``OpaDirect``'s VALD/Kurucz treatment, including ``vmr_fraction`` in H, He, H2
+For VALD/Kurucz, line strengths, partition functions, and default Lorentz widths
+retain ``OpaDirect``'s treatment, including ``vmr_fraction`` in H, He, H2
 order. The optional ``atomic_broadening(T, P)`` callback replaces the total
 Lorentz HWHM exactly as in ``OpaDirect``. The symmetric wing fit and its
 extension to all lines are approximations; matching this prescription does
