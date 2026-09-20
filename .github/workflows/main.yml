@@ -1,9 +1,7 @@
 name: Run pytest
 
 on:
-  # Run on pushes and PRs to develop and master
-  push:
-    branches: [ "develop", "master" ]
+  # Test PRs before merging; avoid duplicate runs on merge pushes.
   pull_request:
     branches: [ "develop", "master" ]
 
