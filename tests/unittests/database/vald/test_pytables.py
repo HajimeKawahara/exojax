@@ -73,3 +73,20 @@ def test_pandas_alias_creates_and_reuses_pytables_cache(tmp_path):
 def test_read_exall_rejects_unknown_engine(tmp_path):
     with pytest.raises(ValueError, match="Unsupported VALD engine"):
         read_ExAll(tmp_path / "unused.gz", engine="not-an-engine")
+
+
+def test_adbvald_supports_cpu_only_arrays(tmp_path):
+    vald_path = tmp_path / "vald_fixture.gz"
+    _write_vald_fixture(vald_path)
+
+    adb = AdbVald(
+        vald_path,
+        nurange=[19999.5, 20000.5],
+        gpu_transfer=False,
+    )
+
+    assert adb._ielem.tolist() == [26]
+    assert adb._iion.tolist() == [1]
+    assert adb.solarA.shape == (1,)
+    assert adb.atomicmass.shape == (1,)
+    assert adb.ionE.shape == (1,)

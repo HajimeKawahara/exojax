@@ -1,7 +1,7 @@
 Stochastic Variational Inference with Auto Guide Generation of an Emission Spectrum Using NumPyro
 =================================================================================================
 
-Last update: June 2026, Hajime Kawahara, for ExoJAX 2.5.0
+Last update: August 2026, Hajime Kawahara, for ExoJAX 2.6.0
 
 This guide performs retrieval of an emission spectrum using `stochastic
 variational inference (SVI) <https://num.pyro.ai/en/latest/svi.html>`__

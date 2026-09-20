@@ -568,7 +568,7 @@ def load_atomicdata():
     adata = pkgutil.get_data("exojax", "data/atom/atomic.txt")
     ipccd = pd.read_csv(
         BytesIO(adata),
-        sep="\s+",
+        sep=r"\s+",
         skiprows=1,
         usecols=[1, 2, 3, 4, 5, 6, 7],
         names=ipccc,
@@ -663,6 +663,6 @@ def load_pf_Barklem2016():
     pffdata = pkgutil.get_data("exojax", "data/atom/barklem_collet_2016_pff.txt")
 
     # T label for grid QT
-    pfTdat = pd.read_csv(io.StringIO(pfT_str), sep="\s+")
-    pfdat = pd.read_csv(BytesIO(pffdata), sep="\s+", comment="#", names=pfTdat.columns)
+    pfTdat = pd.read_csv(io.StringIO(pfT_str), sep=r"\s+")
+    pfdat = pd.read_csv(BytesIO(pffdata), sep=r"\s+", comment="#", names=pfTdat.columns)
     return pfTdat, pfdat

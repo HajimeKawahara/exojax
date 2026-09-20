@@ -1,6 +1,110 @@
 History
 ===============
 
+Version 2.6.1
+---------------
+
+Highlights
+^^^^^^^^^^^^^^^^^^^
+
+- Added NIST and ExoAtom atomic databases, RADIS-backed Kurucz loading, and
+  selectable Voigt or sub-Voigt Na/K opacity profiles.
+- Added an optional PyExoCross reader for ExoMol and small starter opacity
+  datasets with introductory examples.
+- Added radiative-convective equilibrium solvers, including implicit
+  differentiation and a spectral ocean-planet tutorial.
+- Added differentiable RORR mixing for correlated-k gas mixtures, with
+  validation and retrieval examples.
+- Added exact atmospheric pressure boundaries, hydrostatic radius profiles,
+  geometry-based layer optical depths, and direct-beam SFM reflection.
+- Added exact spectral binning, selectable DiffGrid profile kernels,
+  interpolation diagnostics, and inference validation workflows.
+- Fixed H-minus thresholds and gradients, HITRAN isotope masking, VALD species
+  decoding, and optically thin emission; added selectable CIA interpolation.
+
+Python 3.10 remains the minimum supported version. The deprecated
+``exojax.spec`` and ``exojax.rt.opart`` compatibility imports remain available
+until v3.0.
+
+**Full Changelog**: https://github.com/HajimeKawahara/exojax/compare/v2.6.0...v2.6.1
+
+Version 2.6.0
+---------------
+
+ExoJAX 2.6.0 expands correlated-k and radiative-transfer workflows, introduces
+DiffGrid opacity interpolation, adds a minimal hydrogen Balmer-line opacity
+path, and improves inference-oriented spectral post-processing.
+
+Highlights
+^^^^^^^^^^^^^^^^^^^
+
+- Added wide-wavelength JWST correlated-k examples and support for
+  patch-based, bounded-memory CKD table precomputation (#713, #718, #721).
+- Added pressure-aligned DiffGrid opacity interpolation, archive I/O,
+  precomputation and validation utilities, tutorials, and a NUTS-oriented
+  benchmark against PreMODIT (#731--#734).
+- Added intensity outputs and direct quadratic limb-darkening estimation for
+  pure-emission, CKD, and Opart workflows (#717).
+- Added the SFM-2st source-function correction for emission with scattering,
+  including CKD support (#719, #720).
+- Added a minimal hydrogen Balmer-line database and direct natural+Doppler
+  Voigt opacity. Stark broadening and the other follow-up items in #722 are
+  outside this release (#723).
+- Added validation and warnings for an insufficient instrumental-profile
+  velocity range (#725, #726).
+- Added ``sampling_band_integral`` for sampling spectra with band integrals
+  (#727).
+- Restored the deprecated ``exojax.spec`` import compatibility layer for the
+  package split introduced in v2.2. These shims remain scheduled for removal
+  in v3.
+- Restored the VALD PyTables cache backend and made it the dependency-safe
+  default. The legacy ``pandas`` engine name remains an alias, while ``vaex``
+  is still available as an optional backend.
+- Set the supported Python floor to 3.10 and aligned package metadata with the
+  Python 3.10--3.13 CI matrix.
+- Refactored and refreshed the documentation navigation and introductory
+  material (#714, #716).
+
+Important compatibility notes
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+- ``rotkernel`` now follows the standard quadratic limb-darkening law. The
+  previous convention remains available as ``rotkernel_Gimenez`` (#737).
+- Self-generated CKD tables made before 2.6.0 should be regenerated. This
+  release corrects both Cartesian temperature--pressure table generation and
+  the opacity floor used for uncovered bands (#738, #752, #756).
+- Python 3.10 is now the minimum supported version. The restored
+  ``exojax.spec`` compatibility imports remain deprecated and are scheduled
+  for removal in v3.
+
+Correctness and stability
+^^^^^^^^^^^^^^^^^^^^^^^^^
+
+- Corrected inverse-square gravity scaling in hydrostatic calculations (#736).
+- Fixed quadratic rotation kernels and made ``vsini=0`` an AD-safe identity
+  (#737, #761).
+- Fixed Ackerman--Marley density conversion, layer-dependent ``Kzz`` cloud
+  radii, and cloud-opacity broadcasting (#739, #750, #755).
+- Fixed atomic OpaDirect partition-function axes, all-isotope HITRAN/HITEMP
+  opacity, and atomic MODIT/VALD dispatch and species mapping (#740, #743,
+  #751, #758).
+- Fixed source scaling and layer order in Opart flux adding, plus partial-layer
+  surface optical-depth integration in line-by-line and CKD solvers (#741,
+  #742, #759).
+- Stabilized emission and two-stream kernels at zero, optically thin, extreme,
+  and conservative-scattering limits in float32, while preserving finite JAX
+  derivatives (#744, #745, #747, #757, #762).
+- Corrected the variable-sampling Gaussian velocity coordinate for wide
+  spectral ranges (#746).
+- Stabilized narrow lognormal Mie-grid sampling, corrected direct Mie
+  wavelength units, and restored direct PyMieScatt execution (#748, #754,
+  #760).
+- Fixed PreMODIT initialization for a single broadening-grid point (#749).
+- Stabilized float32 Planck-function values and gradients in cold,
+  high-wavenumber regimes (#753).
+
+**Full Changelog**: https://github.com/HajimeKawahara/exojax/compare/v2.5.0...v2.6.0
+
 Version 2.2.2
 ---------------
 
@@ -450,4 +554,3 @@ Version 1.0
 
 Before Version 1
 ----------------------
-

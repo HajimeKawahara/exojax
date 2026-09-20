@@ -8,7 +8,7 @@ the molecular database class. The raw states/transitions reader is shared
 with the PyExoCross ExoMol backend; mass, partition functions, line strengths,
 and broadening are handled by the atomic adapter.
 
-Install the optional dependency in a separate Python 3.9--3.12 environment:
+Install the optional dependency in a separate Python 3.10--3.12 environment:
 
 .. code:: sh
 
