@@ -28,6 +28,7 @@ Opacity Calculation
 
    userguide/opacalc.rst
    userguide/alkali.rst
+   tutorials/alkali_models.rst
    userguide/hjerting.rst
    userguide/modit.rst
    userguide/premodit.rst
