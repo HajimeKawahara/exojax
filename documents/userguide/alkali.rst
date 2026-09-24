@@ -162,3 +162,6 @@ the maximum accepted He density. This is an adopted software boundary,
 not a published guarantee of the truncated expansion's accuracy at every
 wavenumber. Values beyond this boundary return NaNs. Validate the profile
 and the chosen core transition for the atmospheric conditions of interest.
+
+See :doc:`../tutorials/alkali_models` for an executable comparison with
+sub-Voigt and Voigt profiles using matched resonance-line parameters.
