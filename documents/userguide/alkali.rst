@@ -125,7 +125,7 @@ through the large perturber density can underflow even when the cross
 sections look reasonable. Enable it before constructing the calculator.
 
 Allard (2024) K--He resonance wings
----------------------------------
+-----------------------------------
 
 Select ``model="allard2024_k_he"`` to use the K I D1/D2 doublet of
 `Allard et al. (2024) <https://doi.org/10.1051/0004-6361/202348711>`_.
