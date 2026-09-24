@@ -35,3 +35,89 @@ Omitting ``line_profile`` selects the existing Voigt profile.
 ``OpaAlkali(adb, nu_grid)`` is a convenience wrapper for the sub-Voigt option
 with the same ``xsvector`` and ``xsmatrix`` methods. See
 :ref:`alkali-line-profile` for the wing prescription and comparison with Voigt.
+
+Allard (2019) Na--H2 resonance wings
+----------------------------------
+
+``OpaAlkaliTable`` provides the Na I D1/D2 resonance doublet using the
+`Allard et al. (2019) <https://doi.org/10.1051/0004-6361/201935593>`_
+density-expansion tables. It treats collisions with **H2 only**. Download
+`opacity.tar.gz <https://cdsarc.cds.unistra.fr/ftp/J/A+A/628/A120/opacity.tar.gz>`_
+from CDS and retain the accompanying
+`README <https://cdsarc.cds.unistra.fr/ftp/J/A+A/628/A120/README.pdf>`_.
+The original archive can be read directly, including its nested archives;
+an extracted ``ALLARD_NaH2`` directory is also accepted. No network access
+occurs when constructing or evaluating the calculator.
+
+.. code-block:: python
+
+    import jax
+    import numpy as np
+    from exojax.opacity import OpaAlkaliTable
+
+    jax.config.update("jax_enable_x64", True)
+    nu_grid = np.linspace(12000.0, 22000.0, 10001)
+    opa = OpaAlkaliTable(
+        nu_grid, "opacity.tar.gz", model="allard2019_na_h2",
+        vmr_perturber=0.85, core_transition=(20.0, 30.0),
+    )
+    xs = jax.jit(opa.xsvector)(1000.0, 1.0)
+    xs_layers = jax.jit(opa.xsmatrix)(
+        np.array([1000.0, 1500.0]), np.array([1.0, 10.0]),
+    )
+
+The inputs are temperature in K, total pressure in bar, and increasing
+vacuum wavenumber in cm-1. The perturber density is
+``vmr_perturber * P * 1e6 / (kB * T)`` in cm-3. Setting the fraction to
+0.85 includes only H2 collisions at that partial density; it does not
+add He broadening. Do not sum two complete single-perturber doublets to
+approximate H2/He broadening.
+
+The output is cm2 per **ground-state neutral Na atom**, including both
+resonance components. Oscillator strengths are already included. Apply
+abundance and, if required, lower-state population and stimulated-emission
+corrections separately. An atomic line list must exclude these two lines
+when other transitions are added. This differs from ``OpaAlkali``, which
+applies its prescription to every selected line.
+
+Numerical prescription and limits
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The CDS files provide signed density-expansion coefficients, not a
+temperature/pressure opacity grid. ExoJAX follows the powers starting at
+``q**1`` in ``lect_sig.f`` and the published numerical examples. The
+distributed Python reader starts at ``q**0``; it is not used. The Na D1
+far red wing is a separate table and uses the supplied linear density
+scaling. It is joined to the near-wing grid, with the near-wing value
+used at the shared endpoint.
+
+The reference programs output separate Lorentz cores and wings without
+a unique joining prescription. ExoJAX uses a **numerical hybrid**:
+
+* Inside 20 cm-1 of each unperturbed line center, a Voigt core uses the
+  table's impact width and shift, thermal Doppler width, and natural width
+  derived from the table's oscillator strength and D1/D2 statistical weights.
+* Between 20 and 30 cm-1, a cubic smoothstep blends the core with the wing.
+  ``core_transition`` changes these two detunings.
+* Outside 30 cm-1, the tabulated collision wing is used. Doppler and natural
+  convolution of the whole wing is not performed.
+
+This construction does not reproduce an exact unified line core or its
+full asymmetry. The transition interval is an exposed numerical choice;
+check sensitivity to it when fitting near-core observations. No numerical
+renormalization is applied to the assembled profile.
+
+Negative results of the truncated density expansion are set to zero
+before linear interpolation in wavenumber; the Fortran program instead
+omits nonpositive points. The wing is zero outside each table's finite
+spectral range, rather than extrapolated. Temperature interpolation is
+linear in the assembled cross sections, evaluating each bounding table
+at the requested density and Doppler temperature. It is piecewise
+differentiable; derivatives may jump at interpolation knots or clipping
+boundaries.
+
+The full archive contains 500, 600, 725, 1000, 1500, 2000, 2500 and 3000 K.
+The supported Na--H2 density range is 0 to 1e21 cm-3. Out-of-range T or
+density, negative pressure and nonfinite inputs return NaNs, also under
+``jax.jit``. No silent temperature or density extrapolation is performed.
+Use 64-bit JAX for density-expansion cancellation and narrow-core work.

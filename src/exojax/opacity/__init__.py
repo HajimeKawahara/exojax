@@ -20,6 +20,7 @@ _ALIAS: Final[dict[str, str]] = {
     "OpaDiffgrid": "exojax.opacity.diffgrid.api:OpaDiffgrid",
     "OpaDirect":   "exojax.opacity.lpf.api:OpaDirect",
     "OpaAlkali":   "exojax.opacity.alkali:OpaAlkali",
+    "OpaAlkaliTable": "exojax.opacity.allard:OpaAlkaliTable",
     "OpaModit":    "exojax.opacity.modit.api:OpaModit",
     "OpaCKD":      "exojax.opacity.ckd.api:OpaCKD",
     "OpaCIA": "exojax.opacity.opacont:OpaCIA",
