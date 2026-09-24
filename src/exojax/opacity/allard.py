@@ -8,6 +8,7 @@ from exojax.atm.idealgas import number_density
 from exojax.database.core.broadening import doppler_sigma
 from exojax.opacity.base import OpaCalc
 from exojax.opacity.lpf.lpf import voigt
+from exojax.utils.jaxstatus import check_jax64bit
 
 
 @jit
@@ -69,6 +70,8 @@ class OpaAlkaliTable(OpaCalc):
     reference reader's omission of nonpositive points. Outside each table's
     spectral support the wing is zero; no wing extrapolation is attempted.
 
+    JAX 64-bit mode is required: reverse-mode differentiation through number
+    densities near 1e21 can underflow in 32-bit arithmetic.
     T or density outside the supported range produces NaNs, including under
     jit. The density ceiling is 1e21 cm-3 (the Na table's stated limit).
     Interpolation and clipping give piecewise differentiable T/P dependence.
@@ -92,6 +95,7 @@ class OpaAlkaliTable(OpaCalc):
         """
         from exojax.database.alkali import load_allard2019
 
+        check_jax64bit(False)
         if model != "allard2019_na_h2":
             raise ValueError("model must be 'allard2019_na_h2'.")
         self.profiles = load_allard2019(data_path)
@@ -118,7 +122,7 @@ class OpaAlkaliTable(OpaCalc):
 
     def _at_temperature(self, line, profile, T, density):
         center = 1.0e8 / profile.wavelength
-        offsets = jnp.asarray(self.nu_grid) - center
+        offsets = jnp.asarray(self.nu_grid - center)
         q = density / profile.density
         # A/(4 pi c) = 2 (pi r_e f) (g_lower/g_upper) nu_0**2.
         # D1: g_lower/g_upper=1; D2: 1/2. Ground-state lifetime is infinite.
@@ -139,7 +143,7 @@ class OpaAlkaliTable(OpaCalc):
         Nonfinite inputs, negative pressure, out-of-range temperature, or
         perturber densities above ``density_max`` return an all-NaN vector.
         """
-        T, P = jnp.asarray(T), jnp.asarray(P)
+        T, P = jnp.asarray(T, dtype=jnp.float64), jnp.asarray(P, dtype=jnp.float64)
         if T.ndim != 0 or P.ndim != 0:
             raise ValueError("xsvector requires scalar T and P; use xsmatrix for layers.")
         temperatures = jnp.asarray(self.temperatures)

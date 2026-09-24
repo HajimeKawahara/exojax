@@ -120,4 +120,6 @@ The full archive contains 500, 600, 725, 1000, 1500, 2000, 2500 and 3000 K.
 The supported Na--H2 density range is 0 to 1e21 cm-3. Out-of-range T or
 density, negative pressure and nonfinite inputs return NaNs, also under
 ``jax.jit``. No silent temperature or density extrapolation is performed.
-Use 64-bit JAX for density-expansion cancellation and narrow-core work.
+64-bit JAX is required. With 32-bit arithmetic, reverse-mode derivatives
+through the large perturber density can underflow even when the cross
+sections look reasonable. Enable it before constructing the calculator.

@@ -99,6 +99,12 @@ def test_temperature_interpolation_jit_layers_and_gradients(profiles):
     expected_derivatives = [(signal(T+0.01, P)-signal(T-0.01, P))/0.02,
                             (signal(T, P+1e-5)-signal(T, P-1e-5))/2e-5]
     np.testing.assert_allclose(derivatives, expected_derivatives, rtol=2e-5)
+    # Direct reverse-mode derivatives must work without rescaling the output.
+    direct = jax.jit(jax.jacrev(opa.xsvector, (0, 1)))(T, P)
+    finite = [(opa.xsvector(T+0.01, P)-opa.xsvector(T-0.01, P))/0.02,
+              (opa.xsvector(T, P+1e-5)-opa.xsvector(T, P-1e-5))/2e-5]
+    for derivative, reference in zip(direct, finite):
+        np.testing.assert_allclose(derivative, reference, rtol=2e-5, atol=1e-30)
 
 
 @pytest.mark.parametrize("T,P", [(499., 1.), (2001., 1.), (1000., -1.),
@@ -144,3 +150,9 @@ def test_constructor_and_layer_validation(profiles):
         opa.xsvector(jnp.array([1000.]), 1.)
     with pytest.raises(ValueError, match="equal shape"):
         opa.xsmatrix(jnp.array([1000.]), jnp.array([1., 2.]))
+
+
+def test_float64_required(profiles):
+    jax.config.update("jax_enable_x64", False)
+    with pytest.raises(ValueError, match="32bit mode is not allowed"):
+        OpaAlkaliTable([16970.], "unused")
