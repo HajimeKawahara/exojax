@@ -37,7 +37,7 @@ with the same ``xsvector`` and ``xsmatrix`` methods. See
 :ref:`alkali-line-profile` for the wing prescription and comparison with Voigt.
 
 Allard (2019) Na--H2 resonance wings
-----------------------------------
+------------------------------------
 
 ``OpaAlkaliTable`` provides the Na I D1/D2 resonance doublet using the
 `Allard et al. (2019) <https://doi.org/10.1051/0004-6361/201935593>`_
@@ -81,7 +81,7 @@ when other transitions are added. This differs from ``OpaAlkali``, which
 applies its prescription to every selected line.
 
 Numerical prescription and limits
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 The CDS files provide signed density-expansion coefficients, not a
 temperature/pressure opacity grid. ExoJAX follows the powers starting at
