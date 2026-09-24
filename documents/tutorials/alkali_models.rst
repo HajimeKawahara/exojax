@@ -1,5 +1,5 @@
 Comparing Na and K resonance profiles
-====================================
+=====================================
 
 ``OpaAlkaliTable`` combines tabulated Allard wings with an approximate Voigt
 core. This tutorial compares it with the existing sub-Voigt prescription and
@@ -23,7 +23,7 @@ The two table models have different collision partners:
      - `Allard et al. (2024) <https://doi.org/10.1051/0004-6361/202348711>`_
 
 Obtain the data
---------------
+---------------
 
 For Na, download ``opacity.tar.gz`` from the
 `CDS Na-H2 catalogue <https://cdsarc.cds.unistra.fr/viz-bin/cat/J/A+A/628/A120>`_.
