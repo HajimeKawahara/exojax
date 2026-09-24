@@ -123,3 +123,41 @@ density, negative pressure and nonfinite inputs return NaNs, also under
 64-bit JAX is required. With 32-bit arithmetic, reverse-mode derivatives
 through the large perturber density can underflow even when the cross
 sections look reasonable. Enable it before constructing the calculator.
+
+Allard (2024) K--He resonance wings
+---------------------------------
+
+Select ``model="allard2024_k_he"`` to use the K I D1/D2 doublet of
+`Allard et al. (2024) <https://doi.org/10.1051/0004-6361/202348711>`_.
+This model includes **He collisions only**; it does not provide K--H2
+broadening. Download the ``D1`` and ``D2`` directories from
+`CDS J/A+A/683/A188 <https://cdsarc.cds.unistra.fr/ftp/J/A+A/683/A188/>`_,
+and use their parent directory as ``data_path``. A local tar archive of
+the distribution is also accepted. All 14 tables are required, covering
+500, 800, 1000, 1500, 2000, 2500 and 3000 K for each component.
+
+The loader requires ``tableD2_KHe_800_1e21_2025.omg``, which implements
+the `2025 correction <https://doi.org/10.1051/0004-6361/202554036e>`_.
+It ignores the superseded 800 K D2 table if both versions are present.
+The archive's ``README.pdf`` and ``lect_sig.f`` describe its format and
+normalization; retain them alongside the downloaded tables.
+
+.. code-block:: python
+
+    opa_k = OpaAlkaliTable(
+        np.linspace(10000.0, 16000.0, 10001),
+        "A188", model="allard2024_k_he", vmr_perturber=0.15,
+    )
+    xs_k = jax.jit(opa_k.xsvector)(1000.0, 1.0)
+
+Here ``xs_k`` is in cm2 per ground-state neutral K atom, and the He
+density is 0.15 times the total gas number density. The numerical core/wing
+join, temperature interpolation, clipping and finite spectral support
+follow the prescription above. K D1 does not use a separate red-wing table.
+Its spectral support is particularly asymmetric and varies with temperature.
+
+For K--He, ExoJAX adopts 1e21 cm-3, the supplied reference density, as
+the maximum accepted He density. This is an adopted software boundary,
+not a published guarantee of the truncated expansion's accuracy at every
+wavenumber. Values beyond this boundary return NaNs. Validate the profile
+and the chosen core transition for the atmospheric conditions of interest.

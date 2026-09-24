@@ -73,7 +73,9 @@ class OpaAlkaliTable(OpaCalc):
     JAX 64-bit mode is required: reverse-mode differentiation through number
     densities near 1e21 can underflow in 32-bit arithmetic.
     T or density outside the supported range produces NaNs, including under
-    jit. The density ceiling is 1e21 cm-3 (the Na table's stated limit).
+    jit. The density ceiling is 1e21 cm-3: the stated limit for Na-H2 and
+    an adopted ceiling at the K-He reference density, not a guarantee of
+    K-He expansion accuracy throughout the entire spectral range.
     Interpolation and clipping give piecewise differentiable T/P dependence.
     """
 
@@ -86,7 +88,8 @@ class OpaAlkaliTable(OpaCalc):
         Args:
             nu_grid: Increasing vacuum wavenumbers (cm-1).
             data_path: Local CDS archive or extracted data directory.
-            model: ``allard2019_na_h2`` for Na broadened by H2.
+            model: ``allard2019_na_h2`` for Na broadened by H2, or
+                ``allard2024_k_he`` for K broadened by He (2025 correction).
             vmr_perturber: Perturber number fraction of the total gas. P in
                 xsvector/xsmatrix is total pressure in bar. Other collision
                 partners are not included by setting a fraction below one.
@@ -96,10 +99,18 @@ class OpaAlkaliTable(OpaCalc):
         from exojax.database.alkali import load_allard2019
 
         check_jax64bit(False)
-        if model != "allard2019_na_h2":
-            raise ValueError("model must be 'allard2019_na_h2'.")
-        self.profiles = load_allard2019(data_path)
-        self.species, self.perturber, self.mass = "Na", "H2", 22.98976928
+        if model == "allard2019_na_h2":
+            self.profiles = load_allard2019(data_path)
+            self.species, self.perturber, self.mass = "Na", "H2", 22.98976928
+        elif model == "allard2024_k_he":
+            from exojax.database.alkali_k import load_allard2024
+
+            self.profiles = load_allard2024(data_path)
+            self.species, self.perturber, self.mass = "K", "He", 39.0983
+        else:
+            raise ValueError(
+                "model must be 'allard2019_na_h2' or 'allard2024_k_he'."
+            )
 
         grid = np.asarray(nu_grid, dtype=float)
         if (grid.ndim != 1 or grid.size == 0 or not np.all(np.isfinite(grid))
