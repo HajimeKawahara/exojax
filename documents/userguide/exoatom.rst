@@ -1,5 +1,5 @@
 ExoAtom atomic lines
-===================
+====================
 
 ``AdbExoAtom`` reads one neutral atom, ion, or isotope from the
 `ExoAtom database <https://www.exomol.com/exoatom/>`_ using PyExoCross.
@@ -79,6 +79,43 @@ for source data conventions and the
 `NIST lifetime reference <https://physics.nist.gov/Pubs/AtSpec/node18.html>`_
 for level decay rates.
 
+Sub-Voigt wings for Na and K
+----------------------------
+
+``OpaDirect(..., line_profile="alkali_subvoigt")`` applies the same
+:ref:`Na/K wing prescription <alkali-line-profile>` used with ``AdbKurucz``
+to every selected line of neutral Na or K. Using the imports above:
+
+.. code:: python
+
+    nu_grid = np.linspace(16000.0, 18000.0, 512)
+    adb = AdbExoAtom(
+        "Na/Kurucz", nu_grid,
+        local_databases=".database/exoatom", margin=9000.0,
+    )
+    opa = OpaDirect(adb, nu_grid, line_profile="alkali_subvoigt")
+    xs = jax.jit(opa.xsvector)(1200.0, 0.0)
+    xsm = jax.jit(opa.xsmatrix)(
+        jnp.array([1200.0, 1500.0]), jnp.zeros(2)
+    )
+
+For K, use ``"K/Kurucz"`` with
+``nu_grid = np.linspace(12000.0, 14000.0, 512)``.
+``xs`` and ``xsm`` have shapes ``(512,)`` and ``(2, 512)``, respectively,
+in cm2 per atom. The grids are illustrative; use finer sampling to resolve
+line cores. ``margin=9000.0`` includes line centers outside the grid whose
+wings can contribute. ``OpaAlkali(adb, nu_grid)`` is an equivalent convenience
+wrapper, also accepting ``atomic_broadening``.
+
+These examples use the datasets' natural widths and have no pressure
+broadening. Line strengths, partition functions, masses, and width handling
+retain the ExoAtom conventions described above. Pressure broadening requires
+an explicit ``atomic_broadening(T, P)`` callback returning the total Lorentzian
+HWHM, including any desired natural width. ExoAtom data with missing lifetimes
+also require this callback. The Kurucz source label alone does not supply
+``AdbKurucz``'s pressure widths. Other elements and ions are rejected for
+``alkali_subvoigt``; the default remains ``line_profile="voigt"``.
+
 Selection and numerical conventions
 -----------------------------------
 
@@ -100,8 +137,8 @@ constants as ExoJAX's temperature scaling. Thus high-excitation lines remain
 usable at high temperature even if ``Sij0`` underflows at 296 K. ``crit=0``
 keeps these lines; a positive cutoff is evaluated in log space.
 
-This adapter supports ``OpaDirect`` with the Voigt profile, one species and
-one transition file per dataset. Atomic abundances and ionization fractions
-remain inputs to the optical-depth calculation. Large-list memory and
-performance have not been benchmarked; states are held in memory while
-transitions are read in chunks.
+This adapter supports ``OpaDirect`` with Voigt profiles and sub-Voigt wings
+for neutral Na/K, with one species and one transition file per dataset.
+Atomic abundances and ionization fractions remain inputs to the optical-depth
+calculation. Large-list memory and performance have not been benchmarked;
+states are held in memory while transitions are read in chunks.

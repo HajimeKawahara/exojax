@@ -58,9 +58,9 @@ class OpaDirect(OpaCalc):
             nu_grid: Wavenumber grid in cm⁻¹
             wavelength_order: Order of wavelength grid
             line_profile: "voigt" (default) or "alkali_subvoigt". The latter
-                requires a VALD or Kurucz selection containing only Na I or
-                only K I and applies sub-Voigt wings to every selected line.
-                Include line centers up to 9000 cm-1 outside the grid.
+                requires a VALD, Kurucz, or ExoAtom selection containing only
+                Na I or only K I. It applies sub-Voigt wings to every selected
+                line. Include line centers up to 9000 cm-1 outside the grid.
             atomic_broadening: JAX-compatible callable ``(T, P) -> gammaL``
                 for NIST, VALD, Kurucz, or ExoAtom. T is in K and P in bar. Return
                 the total Lorentzian HWHM in cm-1, shaped ``(Nline,)``.
@@ -142,8 +142,8 @@ class OpaDirect(OpaCalc):
             raise ValueError("line_profile must be 'voigt' or 'alkali_subvoigt'.")
         if self.line_profile == "voigt":
             return
-        if self.dbtype not in ("vald", "kurucz"):
-            raise ValueError("alkali_subvoigt requires a VALD or Kurucz database.")
+        if self.dbtype not in ("vald", "kurucz", "exoatom"):
+            raise ValueError("alkali_subvoigt requires a VALD, Kurucz, or ExoAtom database.")
         elements = np.asarray(self.mdb._ielem)
         ions = np.asarray(self.mdb._iion)
         if (
