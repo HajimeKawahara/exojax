@@ -42,6 +42,7 @@ Retrievals
    Nested sampling <tutorials/get_started_ns>
    Equilibrium chemistry retrieval <tutorials/equilibrium_chemistry>
    Reverse modeling with precomputed grids <tutorials/reverse_precompute_grid>
+   Spectral sensitivity, information, and degeneracy <tutorials/spectral_sensitivity>
 
 |:ringed_planet:| An example of HMC-NUTS for an actual Jupiter reflection spectrum is available in
 `exojaxample_jupiter <https://github.com/HajimeKawahara/exojaxample_jupiter>`_.
