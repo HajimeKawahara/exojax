@@ -1,4 +1,4 @@
-"""Offline physical checks for the CO information-content tutorial."""
+"""Offline physical checks for the CO/H2O information-content tutorial."""
 
 import importlib.util
 from pathlib import Path
@@ -19,7 +19,7 @@ _SPEC.loader.exec_module(tutorial)
 @pytest.fixture(autouse=True)
 def forbid_network(monkeypatch):
     def fail(*args, **kwargs):
-        raise AssertionError("The bundled CO tutorial must not access the network")
+        raise AssertionError("The bundled CO/H2O tutorial must not access the network")
 
     monkeypatch.setattr(socket.socket, "connect", fail)
     monkeypatch.setattr(socket, "create_connection", fail)
@@ -41,27 +41,29 @@ def test_bundled_cia_retains_temperature_dependence():
     assert np.all(np.linalg.norm(derivative, axis=1) > 0.0)
 
 
-def test_observed_co_spectrum_jacobian_matches_finite_difference():
+def test_observed_co_h2o_jacobian_and_joint_constraints():
     # Use fewer quadrature samples for a fast integration check; this does not
     # test the spectral convergence of the tutorial's default 4096-cell grid.
     observed_spectrum, nu = tutorial.make_observed_spectrum(samples_per_bin=2)
     forward = jax.jit(observed_spectrum)
-    theta = jnp.array([1200.0, -2.3, 0.1])
+    theta = jnp.array([1200.0, -2.3, -2.3, 0.1])
     flux = np.asarray(forward(theta))
     jacobian = np.asarray(jax.jit(jax.jacfwd(observed_spectrum))(theta))
     assert flux.shape == nu.shape == (256,)
-    assert jacobian.shape == (256, 3)
+    assert jacobian.shape == (256, 4)
     assert np.all(np.isfinite(flux))
     assert np.all(flux > 0.0)
     assert np.all(np.isfinite(jacobian))
     assert np.all(np.linalg.norm(jacobian, axis=0) > 0.0)
+    # The molecular bands must carry distinct abundance information.
+    assert np.linalg.matrix_rank(jacobian[:, [1, 2]]) == 2
 
-    steps = np.array([1.0e-2, 1.0e-5, 1.0e-6])
+    steps = np.array([1.0e-2, 1.0e-5, 1.0e-5, 1.0e-6])
     differences = np.stack(
         [
             (forward(theta + direction * step) - forward(theta - direction * step))
             / (2.0 * step)
-            for direction, step in zip(np.eye(3), steps)
+            for direction, step in zip(np.eye(4), steps)
         ], axis=-1,
     )
     # A derivative can cross zero within the band, so use each parameter's
@@ -70,3 +72,13 @@ def test_observed_co_spectrum_jacobian_matches_finite_difference():
     np.testing.assert_allclose(
         jacobian / scale, differences / scale, rtol=2.0e-6, atol=2.0e-6
     )
+
+    # Marginalizing over unknown water cannot improve the CO constraint.
+    prior_std = np.array([100.0, 0.5, 0.5, 0.03])
+    noise_std = np.full(nu.size, 0.03)
+    joint = tutorial.linear_gaussian_diagnostics(jacobian, noise_std, prior_std)
+    free = [0, 1, 3]
+    fixed_water = tutorial.linear_gaussian_diagnostics(
+        jacobian[:, free], noise_std, prior_std[free]
+    )
+    assert joint["posterior_std"][1] >= fixed_water["posterior_std"][1]

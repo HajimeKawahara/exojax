@@ -1,6 +1,6 @@
-"""Forecast local constraints from CO emission near 2.3 microns.
+"""Forecast joint CO and H2O constraints from emission near 2.3 microns.
 
-Use the bundled ExoMol CO lines and a small HITRAN H2-H2 CIA table. Run
+Use the bundled ExoMol CO/H2O lines and a small HITRAN H2-H2 CIA table. Run
 ``python examples/spectral_sensitivity.py`` to regenerate the tutorial
 figures; no downloads are needed.
 """
@@ -24,8 +24,8 @@ from exojax.test.data import get_testdata_filename
 from exojax.utils.information import linear_gaussian_diagnostics
 
 
-PARAMETER_LABELS = (r"$T_0$", r"$\log_{10} q_{\rm CO}$", r"$\alpha$")
-COLORS = ("#3969ac", "#e58606", "#008a78")
+PARAMETER_LABELS = (r"$T_0$", r"$\log_{10} q_{\rm CO}$", r"$\log_{10} q_{\rm H_2O}$", r"$\alpha$")
+COLORS = ("#3969ac", "#e58606", "#008a78", "#a65ab8")
 
 
 def make_observed_spectrum(samples_per_bin=16):
@@ -42,15 +42,16 @@ def make_observed_spectrum(samples_per_bin=16):
         nstream=4,
     )
     # Parse in a temporary copy so RADIS caches never modify installed data.
-    relative = "CO/12C-16O/SAMPLE"
+    databases = []
     with TemporaryDirectory(prefix="exojax-sensitivity-") as temporary:
-        target = Path(temporary) / relative
-        shutil.copytree(get_testdata_filename(relative), target)
-        mdb = MdbExomol(
-            str(target), [4329.0, 4363.0], crit=0.0,
-            broadf_download=False, gpu_transfer=True, engine="pytables",
-        )
-    opa = OpaDirect(mdb, nu_grid)
+        for relative in ("CO/12C-16O/SAMPLE", "H2O/1H2-16O/SAMPLE"):
+            target = Path(temporary) / relative
+            shutil.copytree(get_testdata_filename(relative), target)
+            databases.append(MdbExomol(
+                str(target), [4329.0, 4363.0], crit=0.0,
+                broadf_download=False, gpu_transfer=True, engine="pytables",
+            ))
+    opacities = [OpaDirect(mdb, nu_grid) for mdb in databases]
     cia_path = Path(__file__).with_name("spectral_sensitivity_data") / "H2-H2_2011_4320-4370.cia"
     cia = OpaCIA(CdbCIA(str(cia_path), nu_grid), nu_grid)
     gravity = 10.0**4.4  # cm s-2
@@ -59,16 +60,17 @@ def make_observed_spectrum(samples_per_bin=16):
 
     # BEGIN OBSERVED SPECTRUM
     def observed_spectrum(theta):
-        temperature_0, log10_q_co, alpha = theta
+        temperature_0, log10_q_co, log10_q_h2o, alpha = theta
         temperature = temperature_0 * (art.pressure / 1.0) ** alpha
-        dtau = art.opacity_profile_xs(
-            opa.xsmatrix(temperature, art.pressure),
-            10.0**log10_q_co, mdb.molmass, gravity,
-        )
-        dtau += art.opacity_profile_cia(
+        dtau = art.opacity_profile_cia(
             cia.logacia_matrix(temperature), temperature,
             vmr_h2, vmr_h2, mean_molecular_weight, gravity,
         )
+        for log_q, opa, mdb in zip((log10_q_co, log10_q_h2o), opacities, databases):
+            dtau += art.opacity_profile_xs(
+                opa.xsmatrix(temperature, art.pressure),
+                10.0**log_q, mdb.molmass, gravity,
+            )
         flux = art.run(dtau, temperature) / 1.0e4
         return flux.reshape(256, samples_per_bin).mean(axis=1)
     # END OBSERVED SPECTRUM
@@ -84,7 +86,7 @@ def plot_sensitivities(wavelength, flux, jacobian, noise_std, prior_std):
     axes[0].plot(coarse_wavelength, flux.reshape(-1, 8).mean(axis=1),
                  color=COLORS[1], lw=1.5, drawstyle="steps-mid",
                  label=r"Coarse: $\Delta\tilde\nu=1$ cm$^{-1}$")
-    axes[0].set(ylabel=r"$F_{\tilde\nu}/10^4$", title=r"CO + H$_2$-H$_2$ CIA emission")
+    axes[0].set(ylabel=r"$F_{\tilde\nu}/10^4$", title=r"CO + H$_2$O + H$_2$-H$_2$ CIA emission")
     axes[0].set_ylim(top=flux.max() * 1.2)
     axes[0].legend(fontsize=9, loc="upper right")
     scaled_jacobian = np.asarray(jacobian) * prior_std[None, :] / noise_std[:, None]
@@ -93,7 +95,7 @@ def plot_sensitivities(wavelength, flux, jacobian, noise_std, prior_std):
     axes[1].set(xlabel=r"Wavelength [$\mu$m]", ylabel=r"$K_{ij}\,\sigma_{a,j}/\sigma_{e,i}$")
     axes[1].axhline(0.0, color="0.6", lw=0.6)
     axes[1].set_ylim(top=scaled_jacobian.max() * 1.25)
-    axes[1].legend(ncol=3, loc="upper left")
+    axes[1].legend(ncol=4, loc="upper left")
     for axis in axes:
         axis.set_xlim(wavelength.min(), wavelength.max())
         axis.grid(alpha=0.2)
@@ -103,7 +105,7 @@ def plot_sensitivities(wavelength, flux, jacobian, noise_std, prior_std):
 def plot_constraints(results, prior_std):
     """Show marginal errors and the least constrained coarse-bin combination."""
     fig, axes = plt.subplots(1, 3, figsize=(12, 3.8), layout="constrained")
-    positions = np.arange(3)
+    positions = np.arange(len(PARAMETER_LABELS))
     for index, (name, result) in enumerate(results.items()):
         axes[0].bar(
             positions + (index - 0.5) * 0.35,
@@ -132,8 +134,8 @@ def plot_constraints(results, prior_std):
     std = np.asarray(coarse["posterior_std"])
     correlation = covariance / np.outer(std, std)
     mesh = axes[2].imshow(correlation, vmin=-1, vmax=1, cmap="RdBu_r")
-    for row in range(3):
-        for column in range(3):
+    for row in positions:
+        for column in positions:
             value = correlation[row, column]
             axes[2].text(column, row, f"{value:.2f}", ha="center", va="center",
                          color="white" if abs(value) > 0.6 else "black")
@@ -157,26 +159,39 @@ def main():
     observed_spectrum, nu_bins = make_observed_spectrum()
 
     # BEGIN DIAGNOSTICS
-    theta0 = jnp.array([1200.0, -2.3, 0.1])
-    prior_std = jnp.array([100.0, 0.5, 0.03])  # K, dex, dimensionless
+    theta0 = jnp.array([1200.0, -2.3, -2.3, 0.1])
+    prior_std = jnp.array([100.0, 0.5, 0.5, 0.03])  # K, dex, dex, dimensionless
     noise_std = jnp.full(nu_bins.size, 0.03)  # fixed error on the scaled flux
     jacobian = jax.jit(jax.jacfwd(observed_spectrum))(theta0)
     fine = linear_gaussian_diagnostics(jacobian, noise_std, prior_std)
 
     # Average the same measurements, propagating their independent errors.
-    coarse_jacobian = jacobian.reshape(-1, 8, 3).mean(axis=1)
+    coarse_jacobian = jacobian.reshape(-1, 8, theta0.size).mean(axis=1)
     coarse_noise = jnp.sqrt((noise_std.reshape(-1, 8)**2).sum(axis=1)) / 8
     coarse = linear_gaussian_diagnostics(
         coarse_jacobian, coarse_noise, prior_std
     )
     # END DIAGNOSTICS
 
+    # BEGIN FIXED WATER
+    # Keep H2O opacity in the spectrum, but hold its abundance exactly known.
+    free = jnp.array([0, 1, 3])
+    fixed_water = {
+        name: linear_gaussian_diagnostics(k[:, free], noise, prior_std[free])
+        for name, k, noise in (
+            ("Fine bins", jacobian, noise_std),
+            ("Coarse bins", coarse_jacobian, coarse_noise),
+        )
+    }
+    # END FIXED WATER
+
     results = {"Fine bins": fine, "Coarse bins": coarse}
     for name, result in results.items():
-        print(f"{name}: posterior std [K, dex, dimensionless] = {np.asarray(result['posterior_std'])}")
+        print(f"{name}: posterior std [K, dex, dex, dimensionless] = {np.asarray(result['posterior_std'])}")
         print(f"  information = {float(result['information_bits']):.3f} bits, "
               f"degrees of freedom = {float(result['degrees_of_freedom']):.3f}")
         print(f"  singular values = {np.asarray(result['singular_values'])}")
+        print(f"  CO uncertainty with H2O fixed = {float(fixed_water[name]['posterior_std'][1]):.6f} dex")
     print(f"Setup and diagnostics: {perf_counter() - started:.2f} s on {jax.default_backend()} (including JIT)")
 
     args.output_dir.mkdir(parents=True, exist_ok=True)
