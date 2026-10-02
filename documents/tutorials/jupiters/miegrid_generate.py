@@ -32,8 +32,4 @@ def generate_miegrid_new(Tarr, Parr, mu, gravity, pdb_nh3, amp_nh3, molmass_nh3,
         log_rg_max=np.log10(rg_range[1]),
         Nrg=N_rg,
     )
-    print("Please rerun after setting miegird_generate = True")
-    import sys
-
-    sys.exit()
     return Kzz,rg_layer,MMRc

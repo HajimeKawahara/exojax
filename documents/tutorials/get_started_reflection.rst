@@ -1,7 +1,7 @@
 Getting Started with Reflection Spectroscopy
 ============================================
 
-Last update: August 2026, Hajime Kawahara, for ExoJAX 2.6.0
+Last update: October 2026, Hajime Kawahara, for ExoJAX 2.6.0
 
 This guide models a high-resolution near-infrared reflection spectrum of
 Jupiter. It is a simplified version of the analysis in
@@ -21,16 +21,16 @@ incident solar spectrum must also be included.
 .. code:: ipython3
 
     from jax import config
-    
+
     config.update("jax_enable_x64", True)
 
 .. code:: ipython3
 
     from exojax.test.emulate_spec import sample_reflection_spectrum
     import matplotlib.pyplot as plt
-    
+
     nu_obs, flux, err_flux = sample_reflection_spectrum()
-    
+
     fig = plt.figure(figsize=(12,4))
     plt.errorbar(nu_obs,flux,yerr=err_flux,fmt=".",color="gray", alpha=0.3)
     plt.xlabel("wavenumber (cm-1)")
@@ -49,17 +49,33 @@ al. (2023):
 -  http://doi.latmos.ipsl.fr/DOI_SOLAR_HRS.v1.1.html
 -  http://bdap.ipsl.fr/voscat_en/solarspectra.html
 
+The cell below downloads the public SOLAR-HRS file (about 67 MB) once.
+Set ``EXOJAX_SOLAR_SPECTRUM`` to reuse a local copy.
+
 .. code:: ipython3
+
+    import os
+    from pathlib import Path
+    from urllib.request import urlretrieve
 
     from exojax.utils.grids import wav2nu
     import pandas as pd
-    filename = "/home/kawahara/solar-hrs/Spectre_HR_LATMOS_Meftah_V1.txt"
-    dat = pd.read_csv(filename, names=("wav","flux"), comment=";", delimiter="\t")
-    dat["wav"] = dat["wav"]*10
-    
+
+    filename = Path(os.environ.get(
+        "EXOJAX_SOLAR_SPECTRUM", ".database/Spectre_HR_LATMOS_Meftah_V1.txt"
+    ))
+    if not filename.exists():
+        filename.parent.mkdir(parents=True, exist_ok=True)
+        urlretrieve(
+            "https://vizier.cfa.harvard.edu/ftp/cats/vi/159/sp/Spectre_HR_LATMOS_Meftah_V1.txt",
+            filename,
+        )
+    dat = pd.read_csv(filename, names=("wav", "flux"), comment=";", sep=r"\s+")
+    dat["wav"] = dat["wav"] * 10  # nm to Angstrom
+
     wav_solar = dat["wav"][::-1]
     solspec = dat["flux"][::-1]
-    nus_solar = wav2nu(wav_solar,unit="AA")
+    nus_solar = wav2nu(wav_solar, unit="AA")
 
 .. code:: ipython3
 
@@ -86,12 +102,12 @@ Use ``ArtReflectPure`` for reflected-light radiative transfer.
     import numpy as np
     from exojax.utils.grids import wavenumber_grid
     from exojax.rt import ArtReflectPure
-    
+
     nus, wav, res = wavenumber_grid(
         np.min(nu_obs) - 5.0, np.max(nu_obs) + 5.0, 10000, xsmode="premodit", unit="cm-1"
     )
-    
-    
+
+
     art = ArtReflectPure(
             nu_grid=nus, pressure_btm=3.0e1, pressure_top=1.0e-3, nlayer=200
         )
@@ -125,7 +141,7 @@ For simplicity, assume an isothermal atmosphere in the upper layers.
     Tarr_np = np.interp(art.pressure, porig, torig)
     i = np.argmin(Tarr_np)
     Tarr_np[0:i] = Tarr_np[i]
-    
+
     # acutually, this just convert Tarr_np to jnp.array
     Tarr = art.custom_temperature(Tarr_np)
 
@@ -165,8 +181,8 @@ particle-size assumptions enter the reflection spectrum.
 
     from exojax.database.pardb  import PdbCloud
     from exojax.atm.atmphys import AmpAmcloud
-    
-    
+
+
     pdb_nh3 = PdbCloud("NH3")
     amp_nh3 = AmpAmcloud(pdb_nh3, bkgatm="H2")
     amp_nh3.check_temperature_range(Tarr)
@@ -181,7 +197,7 @@ particle-size assumptions enter the reflection spectrum.
 
 .. parsed-literal::
 
-    /home/kawahara/exojax/src/exojax/atm/atmphys.py:54: UserWarning: min temperature 107.99141615972869 K is smaller than min(vfactor t range) 179.10000000000002 K
+    /home/kawahara/exojax/src/exojax/atm/atmphys.py:55: UserWarning: min temperature 107.99141615972869 K is smaller than min(vfactor t range) 179.10000000000002 K
       warnings.warn(
 
 
@@ -195,7 +211,7 @@ ammonia at the cloud base.
     from exojax.utils.zsol import nsol
     from exojax.atm.atmconvert import vmr_to_mmr
     from exojax.database.molinfo  import molmass_isotope
-    
+
     # condensate substance density
     rhoc = pdb_nh3.condensate_substance_density  # g/cc
     n = nsol("AG89")
@@ -223,9 +239,9 @@ the expected ``fsed`` range, here 0.1-10, into ``rg``.
     sigmag_fixed = 2.0
     vrv_fixed = 0.0
     N_fsed = 3
-    
+
     fsed_grid = np.logspace(np.log10(fsed_range[0]), np.log10(fsed_range[1]), N_fsed)
-    
+
     rg_val = []
     for fsed in fsed_grid:
         rg_layer, MMRc = amp_nh3.calc_ammodel(
@@ -251,11 +267,11 @@ This gives an ``rg`` grid spanning roughly one order of magnitude, from
 ``generate_miegrid`` from ``pdb`` and reused after it has been created.
 
 This ``miegrid`` uses `miepython <https://miepython.readthedocs.io/>`__
-for single-particle scattering and ExoJAX for integration over the lognormal
-size distribution.
+for single-particle scattering and ExoJAX for integration over the
+lognormal size distribution.
 
-For large grids, enable miepython's Numba acceleration before the first import
-of miepython, for example by starting Jupyter with
+For large grids, enable miepython’s Numba acceleration before the first
+import of miepython, for example by starting Jupyter with
 ``MIEPYTHON_USE_JIT=1 jupyter lab``.
 
 .. code:: ipython3
@@ -263,7 +279,7 @@ of miepython, for example by starting Jupyter with
     rg_range = [np.min(rg_val), np.max(rg_val)]
     N_rg = 10
     print("rg range=",rg_range)
-        
+
     pdb_nh3.generate_miegrid(
             sigmagmin=sigmag_fixed,
             sigmagmax=sigmag_fixed,
@@ -272,6 +288,54 @@ of miepython, for example by starting Jupyter with
             log_rg_max=np.log10(rg_range[1]),
             Nrg=N_rg,
     )
+
+
+.. parsed-literal::
+
+    rg range= [np.float64(1.1036325377533624e-06), np.float64(1.1036325377533625e-05)]
+    sigmag arr =  [2.]
+
+
+.. parsed-literal::
+
+
+      0%|          | 0/1 [00:00<?, ?it/s]
+
+      0%|          | 0/10 [00:00<?, ?it/s]
+
+     10%|█         | 1/10 [00:01<00:15,  1.69s/it]
+
+     20%|██        | 2/10 [00:02<00:08,  1.03s/it]
+
+     30%|███       | 3/10 [00:02<00:05,  1.20it/s]
+
+     40%|████      | 4/10 [00:03<00:04,  1.36it/s]
+
+     50%|█████     | 5/10 [00:04<00:03,  1.42it/s]
+
+     60%|██████    | 6/10 [00:04<00:02,  1.51it/s]
+
+     70%|███████   | 7/10 [00:05<00:01,  1.57it/s]
+
+     80%|████████  | 8/10 [00:05<00:01,  1.53it/s]
+
+     90%|█████████ | 9/10 [00:06<00:00,  1.46it/s]
+
+    100%|██████████| 10/10 [00:07<00:00,  1.40it/s]
+    100%|██████████| 10/10 [00:07<00:00,  1.34it/s]
+
+    100%|██████████| 1/1 [00:07<00:00,  7.49s/it]
+    100%|██████████| 1/1 [00:07<00:00,  7.49s/it]
+
+.. parsed-literal::
+
+    miegrid_lognorm_NH3.mg  was generated.
+
+
+.. parsed-literal::
+
+
+
 
 If you have already generated *miegrid*, you can load it using
 ``load_miegrid``.
@@ -292,33 +356,23 @@ Mie scattering is ``OpaMie``.
 .. code:: ipython3
 
     from exojax.opacity import OpaMie
-    
+
     opa_nh3 = OpaMie(pdb_nh3, nus)
 
 .. code:: ipython3
 
     from exojax.database.hitemp.api import MdbHitemp
-    mdb_reduced = MdbHitemp("CH4", nurange=[nus[0], nus[-1]], isotope=1, elower_max=3300.0)
+
+    # Downloading HITEMP requires a HITRAN account; an existing database can be reused.
+    database_root = Path(os.environ.get("EXOJAX_DATABASE", ".database"))
+    mdb_reduced = MdbHitemp(
+        database_root / "CH4", nurange=[nus[0], nus[-1]], isotope=1, elower_max=3300.0
+    )
 
 
 .. parsed-literal::
 
     radis engine =  vaex
-    tosss  {'ENCRYPTION_KEY': 'Y4OG6orz1ng3xBpegpj_QmYb-3f7_OvMx6UfMiyRlTw=', 'HITRAN_USERNAME': 'gAAAAABn4pSK0S_unODzf8VGcmEv9LOE59ieBYv8sDVPZB25LRvs-c3z9_lnLlhd2gGYbMR-wOHIyQqkm-DIZ58_L2uAduTvbjJ0JBjAgZddtWgmO-TLCfI=', 'HITRAN_PASSWORD': 'gAAAAABn4pSKXNM5OmFnW_WWeFp_mPg1UlVQg2FuSPsg192eWgpSephsl1b4LuSs-QtuMupi9xUuKnmfS3V7BYudOHnYIaIZLQ==', 'HITRAN_EMAIL': 'gAAAAABn4pSK0S_unODzf8VGcmEv9LOE59ieBYv8sDVPZB25LRvs-c3z9_lnLlhd2gGYbMR-wOHIyQqkm-DIZ58_L2uAduTvbjJ0JBjAgZddtWgmO-TLCfI='}
-    Login successful.
-    Starting download from https://hitran.org/files/HITEMP/bzip2format/06_HITEMP2020.par.bz2 to 06_HITEMP2020.par.bz2
-    Total size to download: 445562914 bytes
-
-
-.. parsed-literal::
-
-    06_HITEMP2020.par.bz2: 100%|██████████| 446M/446M [02:14<00:00, 3.31MB/s]   
-
-
-.. parsed-literal::
-
-    
-    Download complete!
 
 
 .. code:: ipython3
@@ -326,15 +380,15 @@ Mie scattering is ``OpaMie``.
     import jax.numpy as jnp
     from exojax.opacity import OpaPremodit
     molmass = mdb_reduced.molmass # we use molmass later
-    
+
     # one liner version
-    #opa = OpaPremodit.from_mdb(mdb_reduced, nu_grid=nus, allow_32bit=True, auto_trange=[80.0, 300.0])  
-    
+    #opa = OpaPremodit.from_mdb(mdb_reduced, nu_grid=nus, allow_32bit=True, auto_trange=[80.0, 300.0])
+
     # uses snap and delete mdb_reduced to save memory
     snap = mdb_reduced.to_snapshot() # extract snapshot from mdb
     del mdb_reduced # save the memory
     opa = OpaPremodit.from_snapshot(snap, nu_grid=nus, allow_32bit=True, auto_trange=[80.0, 300.0])
-    
+
     ## Spectrum Model
     nusjax = jnp.array(nus)
     nusjax_solar = jnp.array(nus_solar)
@@ -354,16 +408,13 @@ Mie scattering is ``OpaMie``.
     max value of  n_Texp_grid : 1.13
     min value of  n_Texp_grid : 0.57
     n_Texp_grid grid : [0.56999993 0.75666667 0.94333333 1.13000011]
-
-
-.. parsed-literal::
-
-    uniqidx: 100%|██████████| 8/8 [00:00<00:00, 1808.77it/s]
-
-.. parsed-literal::
-
     Premodit: Twt= 328.42341041740974 K Tref= 91.89455622053987 K
-    Making LSD: 100%
+
+    Making LSD:|--------------------| 0%
+    Making LSD:|#####---------------| 25%
+    Making LSD:|##########----------| 50%
+    Making LSD:|###############-----| 75%
+    Making LSD:|####################| 100%
 
 
 Encapsulate the methane opacity calculation into a function.
@@ -371,7 +422,7 @@ Encapsulate the methane opacity calculation into a function.
 .. code:: ipython3
 
     molmass_ch4 = molmass_isotope("CH4", db_HIT=False)
-    
+
     def methane_opacity(const_mmr_ch4):
         mmr_ch4 = art.constant_mmr_profile(const_mmr_ch4)
         xsmatrix = opa.xsmatrix(Tarr, art.pressure)
@@ -386,11 +437,11 @@ dataset.
 .. code:: ipython3
 
     from exojax.postproc.specop import SopInstProfile
-    
+
     # asymmetric_parameter = asymmetric_factor + np.zeros((len(art.pressure), len(nus)))
     reflectivity_surface = np.zeros(len(nus))
     sop = SopInstProfile(nus)
-    
+
     broadening = 25000.0
 
 Since we want to normalize the data for optimization, we encapsulate the
@@ -412,9 +463,9 @@ HMC.
             factor = par[7]
             fsed = 10**log_fsed
             Kzz = 10**log_Kzz
-    
+
             return fsed, sigmag, Kzz, vrv, vv, _broadening, const_mmr_ch4, factor
-    
+
 
 
 Next, define the atmospheric model. The key simplification is that
@@ -425,13 +476,13 @@ opacity, single-scattering albedo, and asymmetry parameter.
 
 .. code:: ipython3
 
-    
+
     def atmospheric_model(params):
             # unused parameters are marked with _
             fsed, _sigmag, _Kzz, _vrv, vv, _broadening, const_mmr_ch4, factor = (
                 unpack_params(params)
             )
-    
+
             broadening = 25000.0
             rg_layer, MMRc = amp_nh3.calc_ammodel(
                 art.pressure,
@@ -445,7 +496,7 @@ opacity, single-scattering albedo, and asymmetry parameter.
                 MMRbase_nh3,
             )
             rg = jnp.mean(rg_layer)
-    
+
             sigma_extinction, sigma_scattering, asymmetric_factor = (
                 opa_nh3.mieparams_vector(rg, sigmag_fixed)
             )
@@ -455,11 +506,11 @@ opacity, single-scattering albedo, and asymmetry parameter.
             dtau_cld_scat = art.opacity_profile_cloud_lognormal(
                 sigma_scattering, rhoc, MMRc, rg, sigmag_fixed, gravity
             )
-    
+
             asymmetric_parameter = asymmetric_factor + np.zeros(
                 (len(art.pressure), len(nus))
             )
-    
+
             dtau_ch4 = methane_opacity(const_mmr_ch4)
             single_scattering_albedo = (dtau_cld_scat) / (dtau_cld + dtau_ch4)
             dtau = dtau_cld + dtau_ch4
@@ -478,7 +529,7 @@ defined separately, this definition remains concise.
 .. code:: ipython3
 
     from exojax.utils.instfunc import resolution_to_gaussian_std
-    
+
     def spectral_model(params):
         vv, factor, broadening, asymmetric_parameter, single_scattering_albedo, dtau = (
             atmospheric_model(params)
@@ -486,7 +537,7 @@ defined separately, this definition remains concise.
         # velocity
         vpercp = (vrv_fixed + vv) / c
         incoming_flux = jnp.interp(nusjax, nusjax_solar * (1.0 + vpercp), solspecjax)
-    
+
         Fr = art.run(
             dtau,
             single_scattering_albedo,
@@ -494,14 +545,38 @@ defined separately, this definition remains concise.
             reflectivity_surface,
             incoming_flux,
         )
-    
+
         std = resolution_to_gaussian_std(broadening)
         Fr_inst = sop.ipgauss(Fr, std)
         Fr_samp = sop.sampling(Fr_inst, vv, nu_obs)
         return factor * Fr_samp
 
-Optimization
-------------
+Evaluate the forward model before running inference. This uses the
+miepython grid for ammonia-cloud opacity and the observed solar spectrum
+as incident light.
+
+.. code:: ipython3
+
+    parinit = jnp.array(
+        [jnp.log10(3.0), sigmag_fixed, jnp.log10(Kzz_fixed), -5.0, -55.0, 2.5, 1.0, 11.0]
+    )
+
+    F_samp_init = spectral_model(parinit)
+    fig, ax = plt.subplots(figsize=(12, 4))
+    ax.errorbar(nu_obs, flux, yerr=err_flux, fmt=".", color="gray", alpha=0.3,
+                label="observed spectrum")
+    ax.plot(nu_obs, F_samp_init, label="initial model")
+    ax.set(xlabel="wavenumber (cm-1)", ylabel="flux", xlim=(nu_obs[0], nu_obs[-1]))
+    ax.legend()
+    plt.show()
+
+
+
+.. image:: get_started_reflection_files/get_started_reflection_41_0.png
+
+
+Optimization (optional)
+-----------------------
 
 This model supports reverse-mode differentiation. To keep the workflow
 compatible with memory-efficient ``Opart`` calculations, this example
@@ -509,32 +584,30 @@ also demonstrates forward-mode optimization. ``Opart`` can be used for
 reflected-light calculations through
 `OpartReflectPure <../exojax/exojax.spec.html#exojax.spec.opart.OpartReflectPure>`__.
 
+The following optional inference examples are left unexecuted in this
+notebook. Run them after checking the forward model above.
+
 .. code:: ipython3
 
     from jax import jacfwd
     import jax.numpy as jnp
-    
-    
+
+
     def cost_function(params):
         return jnp.sum((flux - spectral_model(params)) ** 2)
-    
-    
+
+
     def dfluxt_jacfwd(params):
         return jacfwd(cost_function)(params)
-    
-    
-    parinit = jnp.array(
-        [jnp.log10(3.0), sigmag_fixed, jnp.log10(Kzz_fixed), -5.0, -55.0, 2.5, 1.0, 11.0]
-    )
 
 .. code:: ipython3
 
-    
+
     import optax
     import tqdm
-    
+
     solver = optax.adamw(learning_rate=1.e-3)
-    
+
     params = np.copy(parinit)
     state = solver.init(params)
     val = []
@@ -547,58 +620,36 @@ reflected-light calculations through
         loss.append(cost_function(params))
     val = np.array(val)
     loss = np.array(loss)
-    
 
-
-
-.. parsed-literal::
-
-    100%|██████████| 3000/3000 [14:00<00:00,  3.57it/s]
 
 
 The L-curve provides a useful diagnostic for the optimization path.
 
 .. code:: ipython3
 
-    
+
     fig = plt.figure()
     ax = fig.add_subplot(111)
     plt.plot(loss)
     plt.yscale("log")
     plt.show()
-    
+
     # res.params
     print("fsed, sigmag, Kzz, vrv, vr, _broadening, const_mmr_ch4, factor")
     print("init:", unpack_params(parinit))
     print("best:", unpack_params(params))
-    
+
     print("fsed, sigmag, Kzz, vrv, vr, _broadening, const_mmr_ch4, factor")
     print("best (packed):", params)
-    
+
     F_samp = spectral_model(params)
     F_samp_init = spectral_model(parinit)
 
-
-
-.. image:: get_started_reflection_files/get_started_reflection_44_0.png
-
-
-.. parsed-literal::
-
-    fsed, sigmag, Kzz, vrv, vr, _broadening, const_mmr_ch4, factor
-    init: (Array(3., dtype=float64), Array(2., dtype=float64), Array(10000., dtype=float64), Array(-5., dtype=float64), Array(-55., dtype=float64), Array(25000., dtype=float64), Array(0.01, dtype=float64), Array(11., dtype=float64))
-    best: (Array(8.53499414, dtype=float64), Array(1.99940009, dtype=float64), Array(9972.41124884, dtype=float64), Array(-4.99850022, dtype=float64), Array(-57.69619346, dtype=float64), Array(24992.50112451, dtype=float64), Array(0.01545952, dtype=float64), Array(9.98806778, dtype=float64))
-    fsed, sigmag, Kzz, vrv, vr, _broadening, const_mmr_ch4, factor
-    best (packed): [  0.93120323   1.99940009   3.99880018  -4.99850022 -57.69619346
-       2.49925011   1.54595203   9.98806778]
-
-
-The optimized model follows the observed spectrum well for this
-demonstration.
+Compare the optimized model with the initial model and observations.
 
 .. code:: ipython3
 
-    
+
     F_samp = spectral_model(params)
     F_samp_init = spectral_model(parinit)
     fig = plt.figure(figsize=(30, 5))
@@ -610,25 +661,10 @@ demonstration.
     plt.xlim(np.min(nu_obs), np.max(nu_obs))
     plt.show()
 
-
-
-.. image:: get_started_reflection_files/get_started_reflection_46_0.png
-
-
 .. code:: ipython3
 
-    unpack_params(params) #fsed, _sigmag, _Kzz, _vrv, vv, _broadening, const_mmr_ch4, factor 
+    unpack_params(params) #fsed, _sigmag, _Kzz, _vrv, vv, _broadening, const_mmr_ch4, factor
     params
-
-
-
-
-.. parsed-literal::
-
-    Array([  0.93120323,   1.99940009,   3.99880018,  -4.99850022,
-           -57.69619346,   2.49925011,   1.54595203,   9.98806778],      dtype=float64)
-
-
 
 HMC-NUTS retrieval
 ------------------
@@ -641,7 +677,7 @@ below uses five parameters.
 
     import numpyro
     import numpyro.distributions as dist
-    
+
     def model_c(y1, y1err):
         log_fsed_n = numpyro.sample("log_fsed_n", dist.Uniform(0.0, 2.0))
         numpyro.deterministic("fsed", 10**log_fsed_n)
@@ -650,22 +686,22 @@ below uses five parameters.
         molmass_ch4_n = 10**log_molmass_ch4_n
         numpyro.deterministic("mmr_ch4", molmass_ch4_n * 0.01)
         factor = numpyro.sample("factor", dist.Uniform(5.0, 15.0))
-    
-    
+
+
         params = jnp.array([  log_fsed_n,   2.0,   4.0,  -5.0, vr,   2.5,   molmass_ch4_n,   factor])
-    
+
         mean = spectral_model(params)
         sigma = numpyro.sample("sigma", dist.Exponential(1.0))
         err_all = jnp.sqrt(y1err**2. + sigma**2.)
         numpyro.sample("y1", dist.Normal(mean, err_all), obs=y1)
-    
+
 
 
 .. code:: ipython3
 
     from numpyro.infer import MCMC, NUTS
     from jax import random
-    
+
     rng_key = random.PRNGKey(0)
     rng_key, rng_key_ = random.split(rng_key)
     num_warmup, num_samples = 500, 1000
@@ -675,29 +711,11 @@ below uses five parameters.
     mcmc.print_summary()
 
 
-
-.. parsed-literal::
-
-    sample: 100%|██████████| 1500/1500 [41:00<00:00,  1.64s/it, 31 steps of size 8.39e-02. acc. prob=0.93]  
-
-.. parsed-literal::
-
-    
-                       mean       std    median      5.0%     95.0%     n_eff     r_hat
-           factor      8.67      0.15      8.67      8.43      8.92    382.42      1.01
-      log_MMR_CH4      0.31      0.12      0.31      0.11      0.51    272.91      1.00
-       log_fsed_n      0.73      0.07      0.73      0.63      0.85    309.07      1.00
-            sigma      0.15      0.01      0.15      0.13      0.17    550.99      1.00
-               vr    -60.17      0.26    -60.17    -60.55    -59.70    868.34      1.00
-    
-    Number of divergences: 0
-
-
 .. code:: ipython3
 
     from numpyro.diagnostics import hpdi
     from numpyro.infer import Predictive
-    
+
     posterior_sample = mcmc.get_samples()
     pred = Predictive(model_c, posterior_sample, return_sites=['y1'])
     predictions = pred(rng_key_, y1=None, y1err=err_flux)
@@ -721,11 +739,6 @@ below uses five parameters.
     plt.tick_params(labelsize=14)
     plt.show()
 
-
-
-.. image:: get_started_reflection_files/get_started_reflection_53_0.png
-
-
 .. code:: ipython3
 
     import arviz
@@ -736,10 +749,5 @@ below uses five parameters.
                     divergences=False,
                     marginals=True)
     plt.show()
-
-
-
-.. image:: get_started_reflection_files/get_started_reflection_54_0.png
-
 
 This completes the reflection-spectrum getting started workflow.
