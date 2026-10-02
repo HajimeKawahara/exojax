@@ -376,11 +376,11 @@ The Mie scattering can be computed using ``OpaMie``.
     
     opa_enstatite = OpaMie(pdb_enstatite, nugrid)
     
-    rg = 1.0e-4  # 0.1um
+    rg = 1.0e-4  # 1 micrometer in cm
     # beta0, betasct, g = opa.mieparams_vector(rg,sigmag) # if you've already generated miegrid
-    beta0, betasct, g = opa_enstatite.mieparams_vector_direct_from_pymiescatt(
+    beta0, betasct, g = opa_enstatite.mieparams_vector_direct(
         rg, sigmag
-    )  # uses direct computation of Mie params using PyMieScatt
+    )  # computes Mie parameters directly using miepython
     
     
     from exojax.rt.layeropacity import layer_optical_depth_clouds_lognormal
@@ -399,11 +399,6 @@ The Mie scattering can be computed using ``OpaMie``.
     The users can specify the order of the wavelength grid by themselves.
     Your wavelength grid is in ***  descending  *** order
     ======================================================================
-
-
-.. parsed-literal::
-
-    100%|██████████| 63/63 [00:17<00:00,  3.57it/s]
 
 
 The difference of the geometric approximation and Mie scattering is a

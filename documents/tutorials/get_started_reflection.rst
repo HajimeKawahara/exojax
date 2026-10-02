@@ -250,10 +250,13 @@ This gives an ``rg`` grid spanning roughly one order of magnitude, from
 1.0e-6 to 1.0e-5 cm. The ``miegrid`` can be generated with
 ``generate_miegrid`` from ``pdb`` and reused after it has been created.
 
-This ``miegrid`` uses
-`PyMieScatt <https://github.com/bsumlin/PyMieScatt>`__ as the backend.
-If a pip-installed version fails with ``scipy.integrate.trapz``, install
-PyMieScatt from its source repository.
+This ``miegrid`` uses `miepython <https://miepython.readthedocs.io/>`__
+for single-particle scattering and ExoJAX for integration over the lognormal
+size distribution.
+
+For large grids, enable miepython's Numba acceleration before the first import
+of miepython, for example by starting Jupyter with
+``MIEPYTHON_USE_JIT=1 jupyter lab``.
 
 .. code:: ipython3
 

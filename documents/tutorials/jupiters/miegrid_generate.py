@@ -1,3 +1,5 @@
+"""Generate a cloud grid; set MIEPYTHON_USE_JIT=1 before starting Python for large grids."""
+
 import numpy as np
 import matplotlib.pyplot as plt
 

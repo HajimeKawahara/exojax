@@ -1,7 +1,4 @@
-""" Mie scattering calculation using PyMieScatt
-
-
-"""
+"""Mie scattering calculations using miepython."""
 
 import warnings
 
@@ -20,13 +17,13 @@ from exojax.utils.interp import interp2d_bilinear
 def compute_mie_coeff_lognormal_grid(
     refractive_indices, refractive_wavenm, sigmag_arr, rg_arr, N0=1.0
 ):
-    """computes miegrid for lognomal distribution parameters rg and sigmag
+    r"""computes miegrid for lognormal distribution parameters rg and sigmag
 
     Args:
         refractive_indices (_type_): refractive indices (m = n + ik)
         refractive_wavenm (_type_):  wavenlenth in nm for refractive indices
         sigmag_arr (1d array): sigmag ($\sigma_g$) array
-        rg_arr (1d array): rg ($r_g$) array
+        rg_arr (1d array): rg ($r_g$) array in cm
         N0 (_type_, optional): the normalization of the lognormal distribution ($N_0$). Defaults to 1.0.
 
     Note:
@@ -35,10 +32,8 @@ def compute_mie_coeff_lognormal_grid(
         where $r$ is the particulate radius and
         $p(r)  = \frac{1}{sqrt{2 \pi}} \frac{1}{r \log{\sigma_g}} \exp{-\frac{(\log{r} - \log{r_g})^2}{2 \log^2{\sigma_g}}}$$
         is the lognormal distribution.
-        See also https://pymiescatt.readthedocs.io/en/latest/forward.html
-        they use the diameter instead (but p(d) )
-        $p(d) pd = \frac{N_0}{sqrt{2 \pi}} \frac{1}{d \log{\sigma_g}} \exp{-\frac{(\log{d} - \log{d_g})^2}{2 \log^2{\sigma_g}}}$ pd
-        where  and $d = 2 r$ and $d_g = 2 r_g$.
+        Integration uses the equivalent diameter distribution with d = 2 r
+        and d_g = 2 r_g. Single-particle efficiencies are computed by miepython.
         In ExoJAX Ackerman and Marley cloud model, $N_0$ can be evaluated by `atm.amclouds.normalization_lognormal`.
 
     Returns:
@@ -47,7 +42,6 @@ def compute_mie_coeff_lognormal_grid(
     """
     from tqdm import tqdm
 
-    # from PyMieScatt import Mie_Lognormal as mief
     cm2nm = 1.0e7
     Nwav = len(refractive_indices)
     Nsigmag = len(sigmag_arr)
@@ -57,14 +51,11 @@ def compute_mie_coeff_lognormal_grid(
 
     for ind_sigmag, sigmag in enumerate(tqdm(sigmag_arr)):
         for ind_rg, rg_nm in enumerate(tqdm(np.array(rg_arr) * cm2nm)):
+            rgrid = auto_rgrid(rg_nm, sigmag)
             for ind_m, m in enumerate(refractive_indices):
-                rgrid = auto_rgrid(rg_nm, sigmag)
-                coeff = mie_lognormal_pymiescatt(
+                coeff = mie_lognormal(
                     m, refractive_wavenm[ind_m], sigmag, rg_nm, N0, rgrid
                 )
-                # coeff = mief(
-                #    m, refractive_wavenm[ind_m], sigmag, 2.0 * rg_nm, N0
-                # )  # geoMean is a diameter (nm) in PyMieScatt
                 miegrid[ind_rg, ind_sigmag, ind_m, :] = coeff
 
     return miegrid
@@ -113,7 +104,7 @@ def make_miegrid_lognormal(
     Nrg=40,
     N0=1.0,
 ):
-    """generates miegrid assuming lognormal size distribution
+    r"""generates miegrid assuming lognormal size distribution
 
 
     Args:
@@ -134,10 +125,8 @@ def make_miegrid_lognormal(
         where $r$ is the particulate radius and
         $p(r)  = \frac{1}{sqrt{2 \pi}} \frac{1}{r \log{\sigma_g}} \exp{-\frac{(\log{r} - \log{r_g})^2}{2 \log^2{\sigma_g}}}$$
         is the lognormal distribution.
-        See also https://pymiescatt.readthedocs.io/en/latest/forward.html
-        they use the diameter instead (but p(d) )
-        $p(d) pd = \frac{N_0}{sqrt{2 \pi}} \frac{1}{d \log{\sigma_g}} \exp{-\frac{(\log{d} - \log{d_g})^2}{2 \log^2{\sigma_g}}}$ pd
-        where  and $d = 2 r$ and $d_g = 2 r_g$.
+        Integration uses the equivalent diameter distribution with d = 2 r
+        and d_g = 2 r_g. Single-particle efficiencies are computed by miepython.
         In ExoJAX Ackerman and Marley cloud model, $N_0$ can be evaluated by `atm.amclouds.normalization_lognormal`.
 
     """
@@ -168,12 +157,12 @@ def evaluate_miegrid(rg, sigmag, miegrid, rg_arr, sigmag_arr):
         rg_arr (1d array): rg array
 
     Note:
-        beta derived here is in the unit of 1/Mm (Mega meter) for diameter
-        multiply 1.e-8 to convert to 1/cm for radius.
+        The grid stores volume coefficients in inverse megameters.
+        Multiply by 1.e-8 to convert to inverse centimeters.
 
 
     Returns:
-        _type_: evaluated values of miegrid, output of MieQ_lognormal Bext (1/Mm), Bsca, Babs, G, Bpr, Bback, Bratio (wavenumber, number of mieparams)
+        _type_: evaluated values of miegrid: Bext (1/Mm), Bsca, Babs, G, Bpr, Bback, Bratio (wavenumber, number of mieparams)
     """
     # mieparams = interp2d_bilinear(rg, sigmag, rg_arr, sigmag_arr, miegrid)
     mieparams = interp2d_bilinear(
@@ -183,7 +172,7 @@ def evaluate_miegrid(rg, sigmag, miegrid, rg_arr, sigmag_arr):
 
 
 def compute_mieparams_cgs_from_miegrid(rg, sigmag, miegrid, rg_arr, sigmag_arr, N0):
-    """computes Mie parameters i.e. extinction coeff, sinigle scattering albedo, asymmetric factor using miegrid. This process also convert the unit to cgs
+    r"""computes Mie parameters i.e. extinction coeff, sinigle scattering albedo, asymmetric factor using miegrid. This process also convert the unit to cgs
 
     Args:
         rg_layer (1d array): layer wise rg parameters
@@ -199,16 +188,14 @@ def compute_mieparams_cgs_from_miegrid(rg, sigmag, miegrid, rg_arr, sigmag_arr, 
         where $r$ is the particulate radius and
         $p(r)  = \frac{1}{sqrt{2 \pi}} \frac{1}{r \log{\sigma_g}} \exp{-\frac{(\log{r} - \log{r_g})^2}{2 \log^2{\sigma_g}}}$$
         is the lognormal distribution.
-        See also https://pymiescatt.readthedocs.io/en/latest/forward.html
-        they use the diameter instead (but p(d) )
-        $p(d) pd = \frac{N_0}{sqrt{2 \pi}} \frac{1}{d \log{\sigma_g}} \exp{-\frac{(\log{d} - \log{d_g})^2}{2 \log^2{\sigma_g}}}$ pd
-        where  and $d = 2 r$ and $d_g = 2 r_g$.
+        Integration uses the equivalent diameter distribution with d = 2 r
+        and d_g = 2 r_g. Single-particle efficiencies are computed by miepython.
         In ExoJAX Ackerman and Marley cloud model, $N_0$ can be evaluated by `atm.amclouds.normalization_lognormal`.
 
     Note:
         Volume extinction coefficient (1/cm) for the number density N can be computed by beta_extinction = N*sigma0_extinction
-        The original extinction coefficient (beta) from PyMieScat has the unit of 1/Mm (Mega meter) for diameter.
-        Therefore, this method multiplies 1.e-8 to beta for conversion to 1/cm for radius.
+        Grid volume coefficients are stored in inverse megameters for compatibility
+        with existing MieGrid files. Multiplication by 1.e-8 / N0 gives cm2.
 
     Returns:
         sigma_extinction, extinction cross section (cm2) = volume extinction coefficient (1/cm) normalized by the reference numbver density N0.
@@ -225,7 +212,7 @@ def compute_mieparams_cgs_from_miegrid(rg, sigmag, miegrid, rg_arr, sigmag_arr, 
     return sigma_extinction, sigma_scattering, g
 
 
-def mie_lognormal_pymiescatt(
+def mie_lognormal(
     m,
     wavelength,
     sigmag,
@@ -234,41 +221,59 @@ def mie_lognormal_pymiescatt(
     rgrid,
     nMedium=1.0,
 ):
-    """Mie parameters assuming a lognormal distribution
+    """Integrate miepython efficiencies over a lognormal size distribution.
 
     Args:
-        m (_type_): _description_
-        wavelength (_type_): _description_
-        sigmag (float): sigma_g parameter in lognormal distribution
-        rg (float): rg parameter in lognormal distribution in cgs
-        N0 (_type_):
-        rgrid: grid of the particulate radius
-        nMedium (float, optional): _description_. Defaults to 1.0.
+        m (complex): Particle refractive index, using the ExoJAX convention n + ik.
+        wavelength (float): Vacuum wavelength in nm.
+        sigmag (float): Geometric standard deviation of the size distribution.
+        rg (float): Geometric mean radius in nm.
+        N0 (float): Total particle number density in cm^-3.
+        rgrid (array): Particle radii in nm for numerical integration.
+        nMedium (float): Real refractive index of the surrounding medium.
 
     Returns:
-        _type_: _description_
+        tuple: Bext, Bsca, Babs, G, Bpr, Bback, Bratio, preserving the
+        seven-column MieGrid format. Volume coefficients are in Mm^-1;
+        G is the scattering-weighted asymmetry parameter. The legacy Bratio
+        integrates Qback/Qsca with the same area and number-density weight.
+        G and Qback/Qsca are taken as zero when scattering vanishes.
+
+    Note:
+        This CPU calculation is not differentiable with JAX. Use a MieGrid
+        for differentiable interpolation. Set MIEPYTHON_USE_JIT=1 before
+        importing miepython to enable its optional Numba acceleration.
     """
-    from scipy import integrate
-
-    if not hasattr(integrate, "trapz"):
-        integrate.trapz = integrate.trapezoid
-
-    from PyMieScatt.Mie import Mie_SD
-
+    import miepython
     from exojax.special.lognormal import pdf
 
-    #  http://pymiescatt.readthedocs.io/en/latest/forward.html#Mie_Lognormal
-    nMedium = nMedium.real
-    m /= nMedium
-    wavelength /= nMedium
-
-    dp = 2.0 * rgrid
-    ndp = N0 * pdf(dp, 2.0 * rg, sigmag)
-
-    Bext, Bsca, Babs, bigG, Bpr, Bback, Bratio = Mie_SD(
-        m, wavelength, dp, ndp, SMPS=False
+    dp = 2.0 * np.asarray(rgrid, dtype=float)
+    ndp = N0 * np.asarray(pdf(dp, 2.0 * rg, sigmag))
+    # miepython uses n - ik and handles the medium correction internally.
+    qext, qsca, qback, g = miepython.efficiencies(
+        np.conjugate(m), dp, wavelength, n_env=np.real(nMedium)
     )
+    # nm2 * cm^-3 -> Mm^-1, with integration over diameter in nm.
+    weight = np.pi * (dp / 2.0) ** 2 * ndp * 1.0e-6
+    Bext = trapezoid(qext * weight, dp)
+    Bsca = trapezoid(qsca * weight, dp)
+    Babs = Bext - Bsca
+    bigG = trapezoid(g * qsca * weight, dp) / Bsca if Bsca != 0.0 else 0.0
+    Bpr = Bext - bigG * Bsca
+    Bback = trapezoid(qback * weight, dp)
+    qratio = np.divide(qback, qsca, out=np.zeros_like(qsca), where=qsca != 0.0)
+    Bratio = trapezoid(qratio * weight, dp)
     return Bext, Bsca, Babs, bigG, Bpr, Bback, Bratio
+
+
+def mie_lognormal_pymiescatt(m, wavelength, sigmag, rg, N0, rgrid, nMedium=1.0):
+    """Deprecated alias for :func:`mie_lognormal`, now using miepython."""
+    warnings.warn(
+        "mie_lognormal_pymiescatt is deprecated; use mie_lognormal (miepython).",
+        DeprecationWarning,
+        stacklevel=2,
+    )
+    return mie_lognormal(m, wavelength, sigmag, rg, N0, rgrid, nMedium)
 
 
 def auto_rgrid(rg, sigmag, nrgrid=1500):
@@ -280,7 +285,9 @@ def auto_rgrid(rg, sigmag, nrgrid=1500):
         1. if the cube-weighted lognormal distribution q(x) is enough compact, the sampling points is given by the linear within the range of [mean - m sigma, mean + n sigma]
         where sigma is the STD of q(x).
         2. else, i.e., the distribution starts from close to 0 (large sigmag), the range is [0 + dr, n*mean].
-        Currently sigmag = 1.0001 to 4 is within 1 % error for the defalut setting. See tests/unittests/database/test_mie.py
+        For sigmag = 1.0001 to 4, the cube-weighted PDF normalization is
+        accurate to 1% with the default grid. This does not bound the error
+        in the integrated Mie coefficients. See tests/unittests/database/test_mie.py.
 
     Args:
         rg (float): rg parameter in lognormal distribution in cgs
