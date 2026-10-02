@@ -23,7 +23,7 @@ from exojax.opacity.base import OpaCont
 from exojax.database.core.abscoeff import interp_logacia_matrix
 from exojax.database.core.abscoeff import interp_logacia_vector
 from exojax.database.hminus import log_hminus_continuum
-from exojax.database.mie import mie_lognormal_pymiescatt
+from exojax.database.mie import mie_lognormal
 from exojax.opacity.rayleigh import xsvector_rayleigh_gas
 
 logger = logging.getLogger(__name__)
@@ -260,7 +260,7 @@ class OpaMie(OpaCont):
     """Opacity Calculator for Mie Scattering from Aerosols and Clouds.
     
     Computes Mie scattering parameters for spherical particles using
-    pre-computed grids or direct PyMieScatt calculations. Handles
+    pre-computed grids or direct miepython calculations. Handles
     lognormal size distributions of condensate particles.
     
     Attributes:
@@ -359,12 +359,12 @@ class OpaMie(OpaCont):
         f = vmap(self.mieparams_vector, (0, 0), 0)
         return f(rg_layer, sigmag_layer)
 
-    def mieparams_vector_direct_from_pymiescatt(
+    def mieparams_vector_direct(
         self, 
         rg: float, 
         sigmag: float
     ) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
-        """Compute Mie parameters directly from PyMieScatt (slow but accurate).
+        """Compute Mie parameters directly with miepython.
 
         Args:
             rg: Geometric mean radius in lognormal distribution (cm)
@@ -377,9 +377,9 @@ class OpaMie(OpaCont):
                 - asymmetric_factor: Mean asymmetry parameter g
 
         Notes:
-            Direct PyMieScatt calculation - no pre-computed grid needed.
+            Direct miepython calculation - no pre-computed grid needed.
             Slower than grid interpolation but more flexible for arbitrary parameters.
-            Progress bar shows calculation status.
+            This calculation is not differentiable with JAX.
         """
         from tqdm import tqdm
 
@@ -416,7 +416,7 @@ class OpaMie(OpaCont):
         rg_nm = rg * cm2nm
         rgrid = auto_rgrid(rg_nm, sigmag)
         for ind_m, m in enumerate(tqdm(refraction_index_restricted)):
-            coeff = mie_lognormal_pymiescatt(
+            coeff = mie_lognormal(
                 m,
                 refraction_index_wavelength_nm_restricted[ind_m],
                 sigmag,
@@ -442,12 +442,12 @@ class OpaMie(OpaCont):
 
         return sigma_extinction, sigma_scattering, asymmetric_factor
 
-    def mieparams_matrix_direct_from_pymiescatt(
+    def mieparams_matrix_direct(
         self, 
         rg_layer: Union[np.ndarray, jnp.ndarray], 
         sigmag_layer: Union[np.ndarray, jnp.ndarray]
     ) -> Tuple[jnp.ndarray, jnp.ndarray, jnp.ndarray]:
-        """Compute Mie parameters matrix directly from PyMieScatt (slow).
+        """Compute Mie parameters matrix directly with miepython.
         
         Args:
             rg_layer: Geometric mean radius for each layer (cm) [Nlayer]
@@ -460,7 +460,7 @@ class OpaMie(OpaCont):
                 - asymmetric_factor: Asymmetry parameter matrix [Nlayer, Nnu]
 
         Notes:
-            Evaluates each layer sequentially because PyMieScatt uses NumPy.
+            Evaluates each layer sequentially because miepython uses NumPy.
             Slower than grid interpolation but avoids pre-computation requirements.
         """
 
@@ -470,7 +470,7 @@ class OpaMie(OpaCont):
             raise ValueError("rg_layer and sigmag_layer must have the same length")
 
         mieparams = [
-            self.mieparams_vector_direct_from_pymiescatt(rg, sigmag)
+            self.mieparams_vector_direct(rg, sigmag)
             for rg, sigmag in zip(rg_layer, sigmag_layer)
         ]
         sigma_extinction, sigma_scattering, asymmetric_factor = zip(*mieparams)

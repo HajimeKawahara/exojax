@@ -56,7 +56,7 @@ class PdbCloud:
 
         # Mie scattering
         self.ready_mie = False
-        self.N0 = 1.0  # reference number density (cm^-3) to compute beta_0 (mie coefficient as an input of PyMieScatt)
+        self.N0 = 1.0  # Reference number density (cm^-3) for MieGrid coefficients.
         self.set_miegrid_filename()
         self.set_miegrid_path()
 
@@ -78,7 +78,7 @@ class PdbCloud:
         self.refraction_index_wavelength_nm = wave * 1.0e3  #descending
         self.refraction_index = nn + kk * (
             1j
-        )  # m = n + ik because PyMieScatt uses this form (not m = n - ik).
+        )  # ExoJAX uses m = n + ik; the Mie solver wrapper converts conventions.
 
 
 

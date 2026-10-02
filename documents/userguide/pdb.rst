@@ -20,7 +20,7 @@ Currently, the refractive index is downloaded from ``VIRGA`` and made available 
 
 
 For specific examples, please refer to 
-:doc:`comp_pymiescatt`
+:doc:`comp_miepython`
 for example.
 
 

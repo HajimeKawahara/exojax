@@ -73,7 +73,7 @@ Clouds
 
    userguide/vterm.rst
    userguide/amp.rst
-   userguide/comp_pymiescatt.rst
+   userguide/comp_miepython.rst
    userguide/amclouds_comparison_virga.rst
 
 Radiative Transfer
