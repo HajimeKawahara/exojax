@@ -230,11 +230,12 @@ In the AM model, differentiability is achieved by precomputing a grid
 dataset called ``miegrid`` and interpolating within it. The AM model
 parameters are ``sigmag`` and ``rg``; in this example, we fix ``sigmag``
 and construct a grid only for ``rg``. To choose the grid range, convert
-the expected ``fsed`` range, here 0.1-10, into ``rg``.
+the expected ``fsed`` range, here 0.1-100, into ``rg``. This covers the
+retrieval prior ``fsed = 1-100``.
 
 .. code:: ipython3
 
-    fsed_range = [0.1, 10.0]
+    fsed_range = [0.1, 100.0]
     Kzz_fixed = 1.0e4
     sigmag_fixed = 2.0
     vrv_fixed = 0.0
@@ -262,9 +263,9 @@ the expected ``fsed`` range, here 0.1-10, into ``rg``.
 .. image:: get_started_reflection_files/get_started_reflection_21_0.png
 
 
-This gives an ``rg`` grid spanning roughly one order of magnitude, from
-1.0e-6 to 1.0e-5 cm. The ``miegrid`` can be generated with
-``generate_miegrid`` from ``pdb`` and reused after it has been created.
+This gives an ``rg`` grid spanning approximately 1.1e-6 to 3.5e-5 cm.
+The ``miegrid`` can be generated with ``generate_miegrid`` from ``pdb``
+and reused after it has been created.
 
 This ``miegrid`` uses `miepython <https://miepython.readthedocs.io/>`__
 for single-particle scattering and ExoJAX for integration over the
@@ -277,7 +278,7 @@ import of miepython, for example by starting Jupyter with
 .. code:: ipython3
 
     rg_range = [np.min(rg_val), np.max(rg_val)]
-    N_rg = 10
+    N_rg = 16
     print("rg range=",rg_range)
 
     pdb_nh3.generate_miegrid(
@@ -292,7 +293,7 @@ import of miepython, for example by starting Jupyter with
 
 .. parsed-literal::
 
-    rg range= [np.float64(1.1036325377533624e-06), np.float64(1.1036325377533625e-05)]
+    rg range= [np.float64(1.1036325377533624e-06), np.float64(3.4899925191723945e-05)]
     sigmag arr =  [2.]
 
 
@@ -301,31 +302,43 @@ import of miepython, for example by starting Jupyter with
 
       0%|          | 0/1 [00:00<?, ?it/s]
 
-      0%|          | 0/10 [00:00<?, ?it/s]
+      0%|          | 0/16 [00:00<?, ?it/s]
 
-     10%|█         | 1/10 [00:01<00:15,  1.69s/it]
+      6%|▋         | 1/16 [00:02<00:31,  2.13s/it]
 
-     20%|██        | 2/10 [00:02<00:08,  1.03s/it]
+     12%|█▎        | 2/16 [00:02<00:17,  1.23s/it]
 
-     30%|███       | 3/10 [00:02<00:05,  1.20it/s]
+     19%|█▉        | 3/16 [00:03<00:12,  1.06it/s]
 
-     40%|████      | 4/10 [00:03<00:04,  1.36it/s]
+     25%|██▌       | 4/16 [00:03<00:09,  1.21it/s]
 
-     50%|█████     | 5/10 [00:04<00:03,  1.42it/s]
+     31%|███▏      | 5/16 [00:04<00:08,  1.31it/s]
 
-     60%|██████    | 6/10 [00:04<00:02,  1.51it/s]
+     38%|███▊      | 6/16 [00:05<00:07,  1.35it/s]
 
-     70%|███████   | 7/10 [00:05<00:01,  1.57it/s]
+     44%|████▍     | 7/16 [00:06<00:06,  1.36it/s]
 
-     80%|████████  | 8/10 [00:05<00:01,  1.53it/s]
+     50%|█████     | 8/16 [00:06<00:05,  1.34it/s]
 
-     90%|█████████ | 9/10 [00:06<00:00,  1.46it/s]
+     56%|█████▋    | 9/16 [00:07<00:05,  1.30it/s]
 
-    100%|██████████| 10/10 [00:07<00:00,  1.40it/s]
-    100%|██████████| 10/10 [00:07<00:00,  1.34it/s]
+     62%|██████▎   | 10/16 [00:08<00:04,  1.24it/s]
 
-    100%|██████████| 1/1 [00:07<00:00,  7.49s/it]
-    100%|██████████| 1/1 [00:07<00:00,  7.49s/it]
+     69%|██████▉   | 11/16 [00:09<00:04,  1.20it/s]
+
+     75%|███████▌  | 12/16 [00:10<00:03,  1.22it/s]
+
+     81%|████████▏ | 13/16 [00:11<00:02,  1.19it/s]
+
+     88%|████████▊ | 14/16 [00:12<00:01,  1.13it/s]
+
+     94%|█████████▍| 15/16 [00:13<00:00,  1.05it/s]
+
+    100%|██████████| 16/16 [00:14<00:00,  1.05s/it]
+    100%|██████████| 16/16 [00:14<00:00,  1.10it/s]
+
+    100%|██████████| 1/1 [00:14<00:00, 14.49s/it]
+    100%|██████████| 1/1 [00:14<00:00, 14.49s/it]
 
 .. parsed-literal::
 
@@ -671,7 +684,20 @@ HMC-NUTS retrieval
 
 HMC-NUTS can be run with the same basic structure as in the other
 getting-started guides. To keep this example compact, the retrieval
-below uses five parameters.
+below uses five parameters. To run NUTS without the optional optimizer
+or posterior plots, use the following command from the repository root
+in a GPU-enabled Python environment with NumPyro and jovispec installed:
+
+.. code:: bash
+
+   JAX_PLATFORMS=cuda MIEPYTHON_USE_JIT=1 python documents/tutorials/run_reflection_mcmc.py --output output/reflection_mcmc/samples.npz
+
+The defaults are 500 warmup steps, 1,000 posterior draws, and one chain.
+The NPZ file stores posterior samples with ``(chain, draw)`` leading
+dimensions, divergence flags, and the input spectrum. The same
+``EXOJAX_DATABASE`` and ``EXOJAX_SOLAR_SPECTRUM`` settings used above
+apply; HITEMP must be registered locally or downloaded with a HITRAN
+account.
 
 .. code:: ipython3
 
