@@ -28,8 +28,12 @@ the asymmetry factor is dimensionless. For layer-dependent parameters, use
 
 The refractive index convention in ExoJAX remains ``m = n + ik`` for
 absorbing particles. ExoJAX converts it internally to miepython's ``n - ik``
-convention. Existing ``*_direct_from_pymiescatt`` methods are deprecated
-aliases of the corresponding ``*_direct`` methods.
+convention. PyMieScatt is a legacy backend and is no longer supported.
+The old APIs have been removed; update existing code as follows:
+
+* ``mie_lognormal_pymiescatt`` → ``mie_lognormal``
+* ``mieparams_vector_direct_from_pymiescatt`` → ``mieparams_vector_direct``
+* ``mieparams_matrix_direct_from_pymiescatt`` → ``mieparams_matrix_direct``
 
 For specific examples, please refer to 
 :doc:`../tutorials/Ackerman_and_Marley_cloud_model`

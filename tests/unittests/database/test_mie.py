@@ -3,7 +3,6 @@ from exojax.database.mie import compute_mie_coeff_lognormal_grid
 from exojax.database.mie import compute_mieparams_cgs_from_miegrid
 from exojax.database.mie import cubeweighted_integral_checker
 from exojax.database.mie import mie_lognormal
-from exojax.database.mie import mie_lognormal_pymiescatt
 from exojax.database.mie import read_miegrid
 from exojax.database.mie import save_miegrid
 import numpy as np
@@ -171,17 +170,15 @@ def test_generated_miegrid_roundtrip_at_reference_node(monkeypatch, tmp_path):
     np.testing.assert_allclose(actual, expected, rtol=2.0e-6, atol=0.0)
 
 
-def test_mie_lognormal_legacy_alias_without_pymiescatt(monkeypatch):
+def test_mie_lognormal_without_pymiescatt(monkeypatch):
     import sys
 
     monkeypatch.delattr(integrate, "trapz", raising=False)
     monkeypatch.setitem(sys.modules, "PyMieScatt", None)
     monkeypatch.setitem(sys.modules, "PyMieScatt.Mie", None)
     args = (1.5 + 0.01j, 550.0, 1.7, 100.0, 1.0, np.geomspace(10.0, 1500.0, 128))
-    expected = mie_lognormal(*args, nMedium=1.33)
+    actual = mie_lognormal(*args, nMedium=1.33)
 
-    with pytest.warns(DeprecationWarning, match="mie_lognormal"):
-        actual = mie_lognormal_pymiescatt(*args, nMedium=1.33)
-
-    np.testing.assert_array_equal(actual, expected)
+    assert np.shape(actual) == (7,)
+    assert np.all(np.isfinite(actual))
     assert not hasattr(integrate, "trapz")

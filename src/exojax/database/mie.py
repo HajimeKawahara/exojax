@@ -266,16 +266,6 @@ def mie_lognormal(
     return Bext, Bsca, Babs, bigG, Bpr, Bback, Bratio
 
 
-def mie_lognormal_pymiescatt(m, wavelength, sigmag, rg, N0, rgrid, nMedium=1.0):
-    """Deprecated alias for :func:`mie_lognormal`, now using miepython."""
-    warnings.warn(
-        "mie_lognormal_pymiescatt is deprecated; use mie_lognormal (miepython).",
-        DeprecationWarning,
-        stacklevel=2,
-    )
-    return mie_lognormal(m, wavelength, sigmag, rg, N0, rgrid, nMedium)
-
-
 def auto_rgrid(rg, sigmag, nrgrid=1500):
     """sets the automatic rgrid (particulate radius grid).
 

@@ -479,23 +479,3 @@ class OpaMie(OpaCont):
             jnp.stack(sigma_scattering),
             jnp.stack(asymmetric_factor),
         )
-
-    def mieparams_vector_direct_from_pymiescatt(self, rg, sigmag):
-        """Deprecated alias for :meth:`mieparams_vector_direct`, using miepython."""
-        warnings.warn(
-            "mieparams_vector_direct_from_pymiescatt is deprecated; "
-            "use mieparams_vector_direct (miepython).",
-            DeprecationWarning,
-            stacklevel=2,
-        )
-        return self.mieparams_vector_direct(rg, sigmag)
-
-    def mieparams_matrix_direct_from_pymiescatt(self, rg_layer, sigmag_layer):
-        """Deprecated alias for :meth:`mieparams_matrix_direct`, using miepython."""
-        warnings.warn(
-            "mieparams_matrix_direct_from_pymiescatt is deprecated; "
-            "use mieparams_matrix_direct (miepython).",
-            DeprecationWarning,
-            stacklevel=2,
-        )
-        return self.mieparams_matrix_direct(rg_layer, sigmag_layer)

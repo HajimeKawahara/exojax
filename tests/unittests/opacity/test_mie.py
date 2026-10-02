@@ -92,20 +92,6 @@ def test_mieparams_matrix_direct_mismatched_layers():
         opa.mieparams_matrix_direct(np.ones(2), np.ones(3))
 
 
-@pytest.mark.parametrize("kind", ["vector", "matrix"])
-def test_mieparams_direct_legacy_alias(monkeypatch, kind):
-    opa = OpaMie(SimpleNamespace(), np.arange(3))
-    method_name = "mieparams_" + kind + "_direct"
-    expected = tuple(np.arange(3) for _ in range(3))
-    monkeypatch.setattr(opa, method_name, lambda rg, sigmag: expected)
-    legacy_method = getattr(opa, method_name + "_from_pymiescatt")
-
-    with pytest.warns(DeprecationWarning, match=method_name):
-        actual = legacy_method(1.0e-5, 1.7)
-
-    assert actual is expected
-
-
 def test_mieparams_matrix():
     pdb = mock_PdbPlouds(nurange=[12000.0, 15000.0])
     pdb.load_miegrid()
