@@ -222,6 +222,64 @@ are the two supplied parameters.
    print(derivatives)                 # flux: 100, coefficient: -100
    print(directional_derivative)      # 100
 
+Device-resident forward solves
+------------------------------
+
+``exojax.atm.rce_device.make_device_rce_solver`` prepares a reusable forward
+solver whose Newton, line-search, and active-set iterations run in JAX
+control flow. Construct it once outside JAX transformations and pass changing
+physical inputs through ``parameters``. The host reference solver remains
+available. This device path provides the primal solve only; it does not yet
+provide implicit retrieval gradients. The host implicit solver described
+above remains the sensitivity interface.
+
+The device callback evaluates radiation, convective stability, and validity
+together. It returns ``ColumnEvaluation(net_flux, stability_excess,
+physics_valid, physics_status)``. The flux has shape ``(N+1,)`` and the
+dimensionless stability excess has shape ``(N,)``. Positive excess denotes
+instability; active connections impose zero excess. ``physics_valid`` and
+``physics_status`` are scalar JAX boolean/integer values. This interface lets
+an application share one composition calculation across radiation and its
+stability condition. It does not select a chemistry or thermodynamics model.
+
+For the usual neutral-gradient condition, ``make_gradient_evaluator`` builds
+the combined callback. Using ``radiation`` and ``params`` from the preceding
+one-layer example:
+
+.. code-block:: python
+
+   from exojax.atm.rce_device import (
+       make_device_rce_solver,
+       make_gradient_evaluator,
+   )
+
+   pressure = jnp.array([1.0])
+   boundaries = jnp.array([0.5, 4.0])
+   evaluate = make_gradient_evaluator(
+       pressure, boundaries[-1], radiation, 0.3,
+   )
+   device_solve = make_device_rce_solver(
+       pressure, boundaries, jnp.array([280.0]), 380.0,
+       lambda parameters: parameters["flux"], evaluate,
+       flux_atol=1.0e-9, flux_rtol=0.0,
+   )
+   device_result = device_solve(params)
+   assert bool(device_result.converged)
+
+Use ``valid_temperature(T, T_bottom, parameters)`` for a cheap device-side
+domain predicate before physics evaluation. A failed trial is rejected by
+line search, while an invalid initial state returns failure diagnostics.
+Inspect ``converged``, ``status``, and ``physics_status`` before using the
+last accepted state. Stability residuals have their own ``stability_atol``;
+the gradient adapter makes this equivalent to the host ``gradient_atol``.
+
+The default Jacobian builds one JVP column at a time; ``jacobian_mode='jacfwd'``
+selects batched columns when memory permits. Use ``jax.lax.map`` initially
+for batches containing invalid states: ``vmap`` can transform a scalar
+``lax.cond`` into selection and evaluate both physics branches. Callbacks
+must then be safe on every evaluated input before unrestricted batching is
+appropriate. No state from a previous parameter evaluation is retained.
+
 Connecting an existing CKD table
 ----------------------------------------
 

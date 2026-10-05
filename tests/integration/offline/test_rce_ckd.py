@@ -6,6 +6,7 @@ import numpy as np
 import pytest
 
 from exojax.atm.rce import solve_rce
+from exojax.atm.rce_device import make_device_rce_solver, make_gradient_evaluator
 from exojax.atm.rce_implicit import make_implicit_rce_solver
 from exojax.opacity import OpaCKD
 from exojax.opacity.ckd.contracts import CKDTableInfo
@@ -122,6 +123,23 @@ def test_rce_with_temperature_dependent_ckd():
     assert np.all(result.convective_flux >= -0.3)
     np.testing.assert_allclose(result.flux_residual, 0.0, atol=0.3)
     assert np.max(result.gradient_residual) <= 1.0e-6
+
+    device_solve = make_device_rce_solver(
+        pressure, boundaries, temperature, bottom_temperature, internal_flux,
+        make_gradient_evaluator(
+            pressure, boundaries[-1], lambda t, tb, p: radiative_flux(t, tb), 2.0 / 7.0,
+        ),
+        valid_temperature=lambda t, tb, p: jnp.all((t >= tmin) & (t <= tmax))
+        & jnp.all((pressure >= pmin) & (pressure <= pmax)),
+        flux_atol=0.1, flux_rtol=1.0e-7,
+    )
+    device = device_solve(None)
+    assert device.converged, device.status
+    assert device.physics_valid and device.domain_valid
+    np.testing.assert_array_equal(device.convective_mask, result.convective_mask)
+    np.testing.assert_allclose(device.temperature, result.temperature, rtol=1e-8)
+    np.testing.assert_allclose(device.bottom_temperature, result.bottom_temperature, rtol=1e-8)
+    np.testing.assert_allclose(device.radiative_flux, result.radiative_flux, atol=0.3)
 
     implicit_solve = make_implicit_rce_solver(
         pressure, boundaries, result.temperature, result.bottom_temperature,
