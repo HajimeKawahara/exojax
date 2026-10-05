@@ -57,12 +57,15 @@ class ChemistryState(NamedTuple):
 class PreparedChemistry:
     species: tuple[str, ...]
     elements: tuple[str, ...]
+    formula_matrix: jax.Array
     masses_u: jax.Array
+    element_masses_u: jax.Array
     charges: jax.Array
     isotope_convention: str
     pressure_bar: jax.Array
     temperature_range: tuple[float, float]
     pressure_range: tuple[float, float]
+    hvector_func: Callable
     elemental_abundances: Callable
     evaluate: Callable
 
@@ -332,12 +335,15 @@ def prepare_chemistry(
     return PreparedChemistry(
         species,
         elements,
+        jnp.asarray(matrix),
         masses,
+        element_masses,
         charges,
         isotope_convention,
         pressure,
         tuple(temperature_range),
         tuple(pressure_range),
+        setup.hvector_func,
         elemental_abundances,
         evaluate,
     )
