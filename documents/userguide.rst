@@ -96,6 +96,7 @@ Atmospheric Structure
    :maxdepth: 1
 
    userguide/rce.rst
+   userguide/rce_entropy.rst
 
 Spectral Operators
 =======================
