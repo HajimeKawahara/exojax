@@ -229,9 +229,8 @@ Device-resident forward solves
 solver whose Newton, line-search, and active-set iterations run in JAX
 control flow. Construct it once outside JAX transformations and pass changing
 physical inputs through ``parameters``. The host reference solver remains
-available. This device path provides the primal solve only; it does not yet
-provide implicit retrieval gradients. The host implicit solver described
-above remains the sensitivity interface.
+available. For first-order device sensitivities, use the implicit interface
+below; the forward-only interface avoids constructing sensitivity matrices.
 
 The device callback evaluates radiation, convective stability, and validity
 together. It returns ``ColumnEvaluation(net_flux, stability_excess,
@@ -279,6 +278,79 @@ for batches containing invalid states: ``vmap`` can transform a scalar
 ``lax.cond`` into selection and evaluate both physics branches. Callbacks
 must then be safe on every evaluated input before unrestricted batching is
 appropriate. No state from a previous parameter evaluation is retained.
+
+Device implicit sensitivities and guarded log densities
+-------------------------------------------------------
+
+``exojax.atm.rce_device_implicit.make_device_implicit_rce_solver`` takes the
+same prepared column and options. It solves the primal once, fixes its final
+convective mask, and obtains first-order sensitivities from ``A D = -B``,
+where ``A`` and ``B`` differentiate the same scaled residual used by Newton
+with respect to log temperatures and the parameter PyTree. A custom JVP
+applies this response, and JAX transposes it for reverse AD. The iteration
+itself is not differentiated, and no host callback is needed. Higher-order
+derivatives are outside this interface's contract.
+
+The result contains ``state`` (the device forward result),
+``derivative_valid``, ``derivative_status``, ``complementarity_margin``, and
+``linear_residual``. All continuous physical fields in ``state`` are
+differentiable; counters, masks, statuses, and sensitivity diagnostics have
+zero tangents. Derivative validity requires primal convergence, strict
+convective inequalities, finite local temperature and parameter Jacobians,
+and an accurate, unregularized linear solve in every parameter direction.
+The default switch margin is one primal tolerance. Jacobians include the
+unselected radiation and stability outputs as well, so their nonfinite
+derivatives cannot silently contaminate reverse AD. Dense parameter
+Jacobians are intended for small retrieval parameter vectors.
+
+Finite Jacobians do not establish local smoothness. Supply
+``local_smoothness(T, T_bottom, parameters)`` to exclude interpolation knots,
+table boundaries, or other model branches without a smooth neighborhood.
+This check precedes construction of local Jacobians. Domain predicates still
+belong in ``valid_temperature`` and the combined physics evaluator.
+
+By default, invalid sensitivities are NaN, even when the primal converged.
+For likelihood rejection, explicitly select ``invalid_derivative='zero'`` and
+use ``make_rce_log_prob``. Its guards exclude prior support before solving,
+exclude failed or nondifferentiable columns before downstream physics, and
+optionally check the likelihood domain before evaluating a scalar log density.
+Rejected proposals return ``-inf`` with zero gradients and distinct statuses.
+Those zero gradients are rejection bookkeeping, not physical sensitivities.
+Nonfinite log density values also receive a separate failure status and are
+rejected before likelihood differentiation. A finite log density still needs
+locally smooth derivatives; the helper cannot establish this automatically.
+
+Using the one-layer ``evaluate`` and ``params`` above:
+
+.. code-block:: python
+
+   from exojax.atm.rce_device_implicit import (
+       make_device_implicit_rce_solver,
+       make_rce_log_prob,
+   )
+
+   implicit_solve = make_device_implicit_rce_solver(
+       pressure, boundaries, jnp.array([280.0]), 380.0,
+       lambda p: p["flux"], evaluate,
+       flux_atol=1.0e-9, flux_rtol=0.0,
+       invalid_derivative="zero",
+   )
+   log_prob = make_rce_log_prob(
+       implicit_solve,
+       lambda state, p: -0.5 * ((state.temperature[0] - 300.0) / 10.0)**2,
+       prior_valid=lambda p: p["flux"] > 0.0,
+   )
+   (value, diagnostics), gradient = jax.jit(
+       jax.value_and_grad(log_prob, has_aux=True)
+   )(params)
+   assert diagnostics.status == 0
+
+Use ``lax.map`` for mixed accepted/rejected batches. An outer ``where`` around
+the strict NaN derivative interface does not provide these guards. Record
+``LogProbStatus`` separately from the primal and derivative statuses: a
+numerical failure inside the intended prior must not be interpreted as prior
+exclusion. A substantial rate of such failures requires improving the model
+or solver before inference.
 
 Connecting an existing CKD table
 ----------------------------------------
