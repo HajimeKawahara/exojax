@@ -1,7 +1,7 @@
 """Prepared RCE primal solves with device-side active-set Newton iteration.
 
 The host solver in :mod:`exojax.atm.rce` remains the reference implementation.
-This module does not provide implicit derivatives of the converged solution.
+For implicit derivatives, use :mod:`exojax.atm.rce_device_implicit`.
 """
 
 from enum import IntEnum
@@ -143,7 +143,7 @@ def _scaled_residual(column, mask, internal_flux, flux_tolerance, stability_atol
 
 
 def _dense_jacobian(residual, log_temperature, mode):
-    """Share the primal Jacobian construction with future implicit AD."""
+    """Share the Jacobian construction with device implicit AD."""
     if mode == "jacfwd":
         return jax.jacfwd(residual)(log_temperature)
     columns = jax.lax.map(
@@ -206,8 +206,8 @@ def make_device_rce_solver(
     tangents. No previous solve is cached as an initial state. For batches with
     invalid states, use ``jax.lax.map(solve, parameters_batch)``: unrestricted
     ``vmap`` can execute both branches of domain guards and is not supported.
-    This primal interface does not supply equilibrium sensitivities; implicit
-    differentiation is a separate implementation stage.
+    This primal interface does not supply equilibrium sensitivities; use
+    ``rce_device_implicit.make_device_implicit_rce_solver`` for first-order AD.
     """
     pressure = np.asarray(pressure_bar, dtype=float)
     boundaries = np.asarray(pressure_boundaries_bar, dtype=float)

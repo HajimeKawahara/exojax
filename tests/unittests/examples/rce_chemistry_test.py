@@ -129,6 +129,45 @@ def test_repeated_jit_no_leaks_and_derivatives_against_resolved_finite_differenc
         assert tangent == pytest.approx(finite_difference, rel=1e-5, abs=1e-10)
 
 
+def test_device_rce_implicit_ad_uses_first_order_chemistry():
+    from exojax.atm.rce_device import ColumnEvaluation
+    from exojax.atm.rce_device_implicit import make_device_implicit_rce_solver
+
+    adapter = prepare()
+    nodes = adapter.pressure_bar
+
+    def column(t, tb, p):
+        temperature = jnp.append(t, tb)
+        gas = adapter(temperature, p[0], p[1])
+        flux = (
+            (temperature / jnp.array([1600.0, 1800.0, 2100.0])) ** 4 * gas.mmw / 2.3
+        )
+        excess = jnp.diff(jnp.log(temperature)) / jnp.diff(jnp.log(nodes)) - 0.3
+        valid = jnp.all(gas.diagnostics.valid)
+        return ColumnEvaluation(flux, excess, valid, jnp.where(valid, 0, 1))
+
+    solve = make_device_implicit_rce_solver(
+        nodes[:-1], [0.01, 0.1, 2.0], [1400.0, 1700.0], 2000.0, 1.0, column,
+        valid_temperature=lambda t, tb, p: jnp.all((t >= 500) & (t <= 5000))
+        & (tb >= 500)
+        & (tb <= 5000),
+        flux_atol=1e-10, flux_rtol=0.0, stability_atol=1e-9,
+    )
+    p, direction = jnp.array([0.2, 0.8]), jnp.array([0.3, 0.4])
+    result = solve(p)
+    assert result.derivative_valid
+    def objective(p):
+        return solve(p).state.bottom_temperature
+    gradient = jax.jit(jax.grad(objective))(p)
+    _, tangent = jax.jvp(objective, (p,), (direction,))
+    np.testing.assert_allclose(tangent, jnp.dot(gradient, direction), rtol=1e-10)
+    for step in (1e-3, 3e-4):
+        plus, minus = p + step * direction, p - step * direction
+        assert solve(plus).derivative_valid and solve(minus).derivative_valid
+        difference = (objective(plus) - objective(minus)) / (2 * step)
+        np.testing.assert_allclose(tangent, difference, rtol=1e-5, atol=1e-8)
+
+
 def test_failure_domain_guard_and_mixed_columns():
     adapter = prepare(max_iter=1)
     failed = jax.jit(adapter)(jnp.array([1500.0, 2200.0, 3500.0]), 0.0, 0.6)
