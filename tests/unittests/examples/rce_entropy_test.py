@@ -18,12 +18,6 @@ sys.modules[_SPEC.name] = entropy
 _SPEC.loader.exec_module(entropy)
 
 
-@pytest.fixture(autouse=True)
-def x64():
-    with jax.experimental.enable_x64():
-        yield
-
-
 def test_constant_cp_adiabat_and_pressure_temperature_derivatives():
     n = jnp.array([0.5, 0.1])
     masses = jnp.array([2.0, 4.0])
@@ -443,7 +437,9 @@ def test_stoichiometry_and_mass_metadata_follow_the_actual_prepared_setup(toy_mo
     # a noninteger mass to float32 is not an isotope-convention mismatch.
     rounded_provider = copy(provider)
     rounded_provider.element_masses_u = dict(provider.element_masses_u, H=1.00794)
-    with jax.experimental.enable_x64(False):
+    previous_x64 = jax.config.jax_enable_x64
+    jax.config.update("jax_enable_x64", False)
+    try:
         rounded = prepare_with(
             provider.chemical_setup, rounded_provider.element_masses_u
         )
@@ -451,6 +447,8 @@ def test_stoichiometry_and_mass_metadata_follow_the_actual_prepared_setup(toy_mo
         entropy.prepare_equilibrium_entropy(
             rounded, rounded_provider, entropy_scale=1e4
         )
+    finally:
+        jax.config.update("jax_enable_x64", previous_x64)
 
 
 def _prepare_full_model(pressure):
