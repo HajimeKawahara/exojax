@@ -49,7 +49,7 @@ dependencies = [
   "beautifulsoup4",
   "hjson",
   "tqdm",
-  "PyMieScatt",
+  "miepython>=3.3,<4",
   "radis>=0.16.1",
   "numba",
   "tables",
