@@ -6,6 +6,56 @@ and abundances. ``build_premodit`` creates a dictionary of opacity calculators;
 ``layer_optical_depth_multi`` combines their line absorption into the optical
 depth matrix consumed by the radiative-transfer solver.
 
+How the three stages fit together
+------------------------------------
+
+Database preparation, opacity construction, and optical-depth evaluation live in
+separate modules:
+
+.. list-table::
+   :header-rows: 1
+   :widths: 28 47 25
+
+   * - Module
+     - Responsibility
+     - Output
+   * - ``exojax.database.multimol``
+     - Discover and load databases, select lines, and export snapshots.
+     - MDB collections or snapshots
+   * - ``exojax.opacity.multimol``
+     - Normalize MDB/snapshot inputs, build named opacity calculators, and
+       validate their grids and metadata.
+     - ``{name: opa}``
+   * - ``exojax.rt.multimol``
+     - Evaluate each named calculator and sum molecular optical depths using
+       the existing ``layer_optical_depth`` kernel.
+     - ``dtau`` with shape ``(Nlayer, Nnu)``
+
+.. figure:: multimol_files/multimol_architecture.svg
+   :alt: Database loading and snapshots feed named opacity construction, then molecular optical-depth evaluation; a separate legacy path delegates from MultiMol to the opacity builder.
+   :width: 100%
+
+   Solid arrows show data flow through preparation and evaluation. The dashed
+   arrow shows the deprecated legacy methods delegating to the opacity layer.
+
+The database module is retained. New code can supply MDB objects or snapshots
+directly to ``build_premodit`` without creating a ``MultiMol`` instance, as in
+the example below. Existing ``MultiMol.multiopa_premodit`` and
+``MultiMol.store_single_opa`` calls issue deprecation warnings and import the
+opacity builder when called. A database-to-opacity dependency therefore remains
+in these compatibility paths.
+
+Loading and opacity construction run before ``jax.jit``. The forward model
+captures the prepared calculators, names, and grids as fixed configuration;
+temperature, pressure, layer pressure intervals, MMRs, and gravity can vary as
+JAX inputs. The RT helper also checks fixed calculator metadata on the host,
+including during tracing, while dynamic input checks use array shapes.
+
+Within this organization, ``_load_single_mdb`` centralizes backend construction,
+and ``MultiMol`` updates selection metadata only after loading all segments
+successfully. ``_normalize_mdb`` exports a snapshot once when the MDB supports
+it, so named and legacy opacity builders share the same input conversion.
+
 Two molecules on one grid
 -------------------------
 
@@ -106,10 +156,10 @@ Differentiate a scalar observable, here the mean spectral flux:
     print(dmean_dT)
     print(dmean_dlog_mmr["H2O"], dmean_dlog_mmr["CO"])
 
-Keep database loading, opacity construction, and grid validation outside
-``jax.jit`` and ``jax.grad``. The prepared calculators and their molecule keys
-stay fixed while temperature and abundance values vary. All layer temperatures
-must remain within the configured ``auto_trange``.
+Keep database loading and opacity construction outside ``jax.jit`` and
+``jax.grad``. The prepared calculators and their molecule keys stay fixed while
+temperature and abundance values vary. All layer temperatures must remain
+within the configured ``auto_trange``.
 
 Reusing calculators and extending the model
 --------------------------------------------
