@@ -26,6 +26,7 @@ _ALIAS: Final[dict[str, str]] = {
     "OpartEmisScat": "exojax.rt.emis:OpartEmisScat",
     "OpartReflectPure": "exojax.rt.reflect:OpartReflectPure",
     "OpartReflectEmis": "exojax.rt.reflect:OpartReflectEmis",
+    "layer_optical_depth_multi": "exojax.rt.multimol:layer_optical_depth_multi",
 }
 
 __all__ = list(_ALIAS)          # tab completion & help()

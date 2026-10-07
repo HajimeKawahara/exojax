@@ -8,6 +8,9 @@ _BLOCKED_MODULES = (
     "exojax.database.hitran.api",
     "exojax.database.hitemp.api",
     "exojax.test.emulate_mdb",
+    "exojax.opacity",
+    "exojax.opacity.multimol",
+    "exojax.opacity.premodit.api",
 )
 
 

@@ -1,16 +1,12 @@
 import os
-import traceback
+import warnings
 
 import numpy as np
-
-from exojax.database.contracts import MDBSnapshot
-from exojax.opacity import OpaPremodit
 
 # Lazily imported RADIS-backed classes to reduce import-time pressure.
 MdbExomol = None
 MdbHitran = None
 MdbHitemp = None
-mock_mdbExomol = None
 
 
 def _load_mdb_exomol():
@@ -38,15 +34,6 @@ def _load_mdb_hitemp():
 
         MdbHitemp = _MdbHitemp
     return MdbHitemp
-
-
-def _load_mock_mdb_exomol():
-    global mock_mdbExomol
-    if mock_mdbExomol is None:
-        from exojax.test.emulate_mdb import mock_mdbExomol as _mock_mdbExomol
-
-        mock_mdbExomol = _mock_mdbExomol
-    return mock_mdbExomol
 
 
 class MultiMDBCollection(list):
@@ -98,7 +85,8 @@ class MultiMol:
     Attributes:
         molmulti: multiple simple molecule names [n_wavenumber_segments, n_molecules], such as [["H2O","CO"],["H2O"],["CO"]]
         dbmulti: multiple database names, such as [["HITEMP","EXOMOL"],["HITEMP","HITRAN12"]]]
-        masked_molmulti: masked multiple simple molecule names [n_wavenumber_segments, n_molecules], such as [["H2O","CO"],["H2O"],[False]] Note that "False" is assigned when the code fails to get mdb because, for example, there are no transition lines for the specified condition.
+        masked_molmulti: Names with selected lines in each segment. This legacy
+            list describes line availability, not the atmospheric composition.
         database_root_path: database root path
         db_dirs: database directories
         mols_unique: the list of the unique molecules,
@@ -165,7 +153,6 @@ class MultiMol:
             "exomol": lambda mol: database_path_exomol(mol, self.database_root_path),
             "hitran12": database_path_hitran12,
             "hitemp": database_path_hitemp,
-            "SAMPLE": database_path_sample,
         }
         self.db_dirs = []
         for mol_k, db_k in zip(self.molmulti, self.dbmulti):
@@ -253,28 +240,23 @@ class MultiMol:
                                 isotope=1,
                             )
                         )
-                    elif self.dbmulti[k][i] in ["SAMPLE"]:
-                        mock_mdb_exomol_func = _load_mock_mdb_exomol()
-                        mdb_k.append(mock_mdb_exomol_func(simple_molecule_name))
-
-                except Exception as e:
-                    if "No line found in " in e.args:
-                        print(
-                            self.molmulti[k][i],
-                            self.dbmulti[k][i],
-                            "in the range of",
-                            e.args[1],
-                            e.args[2],
-                            "will be ignored due to no available lines found",
+                except ValueError as e:
+                    if e.args and e.args[0] == "No line found in ":
+                        warnings.warn(
+                            f"{simple_molecule_name} ({self.dbmulti[k][i]}) has no "
+                            f"selected lines in segment {k}; omitted from the legacy "
+                            "MDB list, not from atmospheric composition.",
+                            UserWarning,
+                            stacklevel=2,
                         )
                         mask[i] = False
                     else:
-                        print(traceback.format_exc())
-                        exit()
+                        raise
 
             self.masked_molmulti[k] = np.array(self.molmulti[k])[mask].tolist()
             _multimdb.append(mdb_k)
-            self.derive_unique_molecules()
+
+        self.derive_unique_molecules()
 
         return MultiMDBCollection(_multimdb)
 
@@ -313,46 +295,28 @@ class MultiMol:
         dit_grid_resolution=0.2,
         allow_32bit=False,
     ):
-        """multiple opa for PreMODIT
+        """Compatibility wrapper for the opacity-layer nested-list builder."""
+        warnings.warn(
+            "MultiMol.multiopa_premodit is deprecated. Use "
+            "exojax.opacity.multimol.multiopa_premodit for legacy lists, or "
+            "exojax.opacity.build_premodit for named species.",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+        from exojax.opacity.multimol import multiopa_premodit
 
-        Args:
-            multimdb (): multimdb
-            nu_grid_list (): wavenumber grid list
-            auto_trange (list): temperature range [Tl, Tu], in which line strength is within 1 % prescision. Defaults to None.
-            nstitch_list (list): The list of the number of nu-stitching segments for nu_grid_list (same structure). If None, no nu-stitching.
-            diffmode (int, optional): _description_. Defaults to 0.
-            dit_grid_resolution (float, optional): force to set broadening_parameter_resolution={mode:manual, value: dit_grid_resolution}), ignores broadening_parameter_resolution.
-
-        Returns:
-            _type_: _description_
-        """
-
-        nu_grid_segments = self._prepare_nu_grid_list(nu_grid_list)
-
-        if nstitch_list is not None:
-            self._check_structure(nu_grid_segments, nstitch_list)
-            self.nstitch_list = nstitch_list
-        else:
-            self.nstitch_list = [1] * len(nu_grid_segments)
-        del nstitch_list
-
-        multiopa = []
-        for k_nuseg in range(len(multimdb)):
-            opa_k = []
-            for i_mol in range(len(multimdb[k_nuseg])):
-                opa_i = self.store_single_opa(
-                    multimdb[k_nuseg][i_mol],
-                    nu_grid_segments[k_nuseg],
-                    auto_trange,
-                    diffmode,
-                    dit_grid_resolution,
-                    allow_32bit,
-                    self.nstitch_list[k_nuseg],
-                )
-                opa_k.append(opa_i)
-            multiopa.append(opa_k)
-
-        return multiopa
+        grids = self._prepare_nu_grid_list(nu_grid_list)
+        result = multiopa_premodit(
+            multimdb,
+            grids,
+            auto_trange,
+            nstitch_list=nstitch_list,
+            diffmode=diffmode,
+            dit_grid_resolution=dit_grid_resolution,
+            allow_32bit=allow_32bit,
+        )
+        self.nstitch_list = [1] * len(grids) if nstitch_list is None else list(nstitch_list)
+        return result
 
     def store_single_opa(
         self,
@@ -364,24 +328,23 @@ class MultiMol:
         allow_32bit,
         nstitch,
     ):
-        opa_kwargs = {
-            "diffmode": diffmode,
-            "auto_trange": auto_trange,
-            "dit_grid_resolution": dit_grid_resolution,
-            "allow_32bit": allow_32bit,
-            "nstitch": nstitch,
-        }
+        """Compatibility wrapper for constructing a single PreMODIT opacity."""
+        warnings.warn(
+            "MultiMol.store_single_opa is deprecated. Use "
+            "OpaPremodit.from_mdb or OpaPremodit.from_snapshot.",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+        from exojax.opacity.multimol import _build_single_opa
 
-        if isinstance(multimdb_each, MDBSnapshot):
-            return OpaPremodit.from_snapshot(multimdb_each, nu_grid_list_seg, **opa_kwargs)
-        if hasattr(multimdb_each, "to_snapshot"):
-            return OpaPremodit.from_mdb(multimdb_each, nu_grid_list_seg, **opa_kwargs)
-
-        # Legacy path for custom MDB implementations without snapshot support.
-        return OpaPremodit(
-            mdb=multimdb_each,
-            nu_grid=nu_grid_list_seg,
-            **opa_kwargs,
+        return _build_single_opa(
+            multimdb_each,
+            nu_grid_list_seg,
+            diffmode=diffmode,
+            auto_trange=auto_trange,
+            dit_grid_resolution=dit_grid_resolution,
+            allow_32bit=allow_32bit,
+            nstitch=nstitch,
         )
 
     def molmass(self):
@@ -520,19 +483,3 @@ def _query_recommended_exomol_dataset(simple_molecule_name, exact_name):
         ) from exc
 
     return recommended
-
-
-def database_path_sample(simple_molname):
-    """default SAMPLE (emulated mdb)
-
-    Args:
-        simple_molecule_name (str): simple molecule name "CO" or "H2O"
-
-    Returns:
-        str: HITEMP default data path, such as "H2O/01_HITEMP2010" for "H2O"
-    """
-    _sample_dbpath = {
-        "H2O": "H2O/1H2-16O/SAMPLE",
-        "CO": "CO/12C-16O/SAMPLE",
-    }
-    return _sample_dbpath[simple_molname]

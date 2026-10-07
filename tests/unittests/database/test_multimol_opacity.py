@@ -1,99 +1,126 @@
+"""Compatibility of the legacy nested opacity builder and its new location."""
+
+from types import SimpleNamespace
+
+import numpy as np
 import pytest
-from exojax.database.multimol  import MultiMol
-from exojax.test.emulate_mdb import mock_wavenumber_grid
+
+from exojax.database.contracts import Lines, MDBMeta, MDBSnapshot
+from exojax.database.multimol import MultiMDBCollection, MultiMol
 from exojax.opacity import OpaPremodit
-
-def test_multiopa_single_nu_grid():
-    mul = MultiMol(molmulti=[["CO", "H2O"]], dbmulti=[["SAMPLE", "SAMPLE"]])
-    nu_grid, wav, res = mock_wavenumber_grid()
-    nu_grid_list = [nu_grid]
-    multimdb = mul.multimdb(nu_grid_list)
-
-    multiopa = mul.multiopa_premodit(
-        multimdb,
-        nu_grid_list,
-        auto_trange=[500.0, 1500.0],
-        dit_grid_resolution=0.2,
-        allow_32bit=True,
-    )
-
-    assert type(multiopa[0][0]) == OpaPremodit
-    assert type(multiopa[0][1]) == OpaPremodit
+from exojax.opacity.multimol import multiopa_premodit
 
 
-def test_multiopa_multi_nu_grid():
-    molmulti = [["CO", "H2O"], ["H2O"]]
-    dbmulti = [["SAMPLE", "SAMPLE"], ["SAMPLE"]]
-    mul = MultiMol(molmulti=molmulti, dbmulti=dbmulti)
-    nu_grid, wav, res = mock_wavenumber_grid()
-    N = int(len(nu_grid) / 2)
-    nu_grid_list = [nu_grid[:N], nu_grid[N:]]
-    multimdb = mul.multimdb(nu_grid_list)
-
-    multiopa = mul.multiopa_premodit(
-        multimdb,
-        nu_grid_list,
-        auto_trange=[500.0, 1500.0],
-        dit_grid_resolution=0.2,
-        allow_32bit=True,
-    )
-
-    assert _check_structure(multiopa, [["CO", "H2O"], ["H2O"]])
-
-
-def _check_structure(a, b):
-    if isinstance(a, list) and isinstance(b, list):
-        if len(a) != len(b):
-            return False
-        return all(_check_structure(sub_a, sub_b) for sub_a, sub_b in zip(a, b))
-    return not isinstance(a, list) and not isinstance(b, list)
-
-
-def test_multiopa_stitching_rejects_indivisible_grid():
-    molmulti = [["CO", "H2O"], ["H2O"]]
-    dbmulti = [["SAMPLE", "SAMPLE"], ["SAMPLE"]]
-    mul = MultiMol(molmulti=molmulti, dbmulti=dbmulti)
-    nu_grid, wav, res = mock_wavenumber_grid()
-    N = int(len(nu_grid) / 2)
-    nu_grid_list = [nu_grid[:N], nu_grid[N:]]
-    multimdb = mul.multimdb(nu_grid_list)
-    
-    #N=10000 cannot be divided by 3"
-    nstitch_list = [1,3]
-
-    with pytest.raises(ValueError):
-        multiopa = mul.multiopa_premodit(
-            multimdb,
-            nu_grid_list,
-            auto_trange=[500.0, 1500.0],
-            dit_grid_resolution=0.2,
-            allow_32bit=True,
-            nstitch_list=nstitch_list
+class SnapshotMDB:
+    def __init__(self, grid):
+        self.snapshot = MDBSnapshot(
+            meta=MDBMeta(
+                dbtype="exomol", molmass=28.0,
+                T_gQT=np.array([300.0, 1000.0, 2000.0]),
+                gQT=np.array([1.0, 2.0, 4.0]),
+            ),
+            lines=Lines(
+                nu_lines=grid[[2, len(grid) // 2, -3]],
+                elower=np.array([10.0, 20.0, 30.0]),
+                line_strength_ref_original=np.array([1.e-23, 2.e-23, 3.e-23]),
+            ),
+            n_Texp=np.full(3, 0.5),
+            alpha_ref=np.full(3, 0.1),
         )
 
+    def to_snapshot(self):
+        return self.snapshot
 
-def test_multiopa_preserves_stitching_per_grid():
-    molmulti = [["CO", "H2O"], ["H2O"]]
-    dbmulti = [["SAMPLE", "SAMPLE"], ["SAMPLE"]]
-    mul = MultiMol(molmulti=molmulti, dbmulti=dbmulti)
-    nu_grid, wav, res = mock_wavenumber_grid()
-    N = int(len(nu_grid) / 2)
-    nu_grid_list = [nu_grid[:N], nu_grid[N:]]
-    multimdb = mul.multimdb(nu_grid_list)
-    
-    nstitch_list = [1,4]
 
-    multiopa = mul.multiopa_premodit(
-            multimdb,
-            nu_grid_list,
-            auto_trange=[500.0, 1500.0],
-            dit_grid_resolution=0.2,
-            allow_32bit=True,
-            nstitch_list=nstitch_list
+@pytest.fixture
+def legacy_inputs():
+    grids = [np.geomspace(990.0, 1020.0, 32), np.geomspace(1020.0, 1050.0, 32)]
+    mdbs = MultiMDBCollection([
+        [SnapshotMDB(grids[0]), SnapshotMDB(grids[0])],
+        [SnapshotMDB(grids[1])],
+    ])
+    handler = MultiMol([["CO", "H2O"], ["H2O"]], [["HITEMP", "HITEMP"], ["HITEMP"]])
+    return handler, mdbs, grids
+
+
+def test_multiopa_single_nu_grid():
+    grid = np.geomspace(990.0, 1020.0, 32)
+    handler = MultiMol([["CO", "H2O"]], [["HITEMP", "HITEMP"]])
+    mdbs = [[SnapshotMDB(grid), SnapshotMDB(grid)]]
+    with pytest.warns(DeprecationWarning, match="MultiMol.multiopa_premodit"):
+        opas = handler.multiopa_premodit(mdbs, grid, auto_trange=(500.0, 1500.0))
+    assert all(isinstance(opa, OpaPremodit) and opa.ready for opa in opas[0])
+
+
+@pytest.mark.parametrize("snapshot", [False, True])
+def test_multiopa_multi_nu_grid(legacy_inputs, snapshot):
+    handler, mdbs, grids = legacy_inputs
+    payload = mdbs.to_snapshot() if snapshot else mdbs
+    with pytest.warns(DeprecationWarning, match="MultiMol.multiopa_premodit"):
+        opas = handler.multiopa_premodit(payload, grids, auto_trange=(500.0, 1500.0))
+    assert [len(row) for row in opas] == [2, 1]
+    for row, grid in zip(opas, grids):
+        for opa in row:
+            assert isinstance(opa, OpaPremodit)
+            np.testing.assert_array_equal(opa.nu_grid, grid)
+
+
+def test_multiopa_stitching_rejects_indivisible_grid(legacy_inputs):
+    handler, mdbs, grids = legacy_inputs
+    with pytest.warns(DeprecationWarning), pytest.raises(ValueError, match="cannot be divided"):
+        handler.multiopa_premodit(mdbs, grids, (500.0, 1500.0), nstitch_list=[1, 3])
+
+
+def test_multiopa_preserves_stitching_per_grid(legacy_inputs):
+    handler, mdbs, grids = legacy_inputs
+    with pytest.warns(DeprecationWarning):
+        opas = handler.multiopa_premodit(mdbs, grids, (500.0, 1500.0), nstitch_list=[1, 4])
+    assert handler.nstitch_list == [1, 4]
+    for row, stitching in zip(opas, [1, 4]):
+        assert all(opa.nstitch == stitching for opa in row)
+
+
+@pytest.mark.parametrize("stitching", [[1], [1, 0], [1, 1.5]])
+def test_multiopa_rejects_invalid_segment_stitching(legacy_inputs, stitching):
+    _, mdbs, grids = legacy_inputs
+    with pytest.raises(ValueError, match="nstitch_list"):
+        multiopa_premodit(mdbs, grids, (500.0, 1500.0), nstitch_list=stitching)
+
+
+def test_opacity_layer_builder_preserves_legacy_values(legacy_inputs):
+    handler, mdbs, grids = legacy_inputs
+    kwargs = dict(auto_trange=(500.0, 1500.0), nstitch_list=[1, 2])
+    direct = multiopa_premodit(mdbs, grids, **kwargs)
+    with pytest.warns(DeprecationWarning):
+        legacy = handler.multiopa_premodit(mdbs, grids, **kwargs)
+    for row, old_row in zip(direct, legacy):
+        for opa, old_opa in zip(row, old_row):
+            np.testing.assert_array_equal(
+                opa.xsmatrix(np.array([1000.0]), np.array([0.1])),
+                old_opa.xsmatrix(np.array([1000.0]), np.array([0.1])),
+            )
+
+
+def test_opacity_layer_builder_rejects_segment_count_mismatch(legacy_inputs):
+    _, mdbs, grids = legacy_inputs
+    with pytest.raises(ValueError, match="same number of segments"):
+        multiopa_premodit(mdbs[:1], grids, (500.0, 1500.0))
+
+
+def test_legacy_custom_mdb_without_snapshot_and_single_opa_wrapper():
+    grid = np.geomspace(990.0, 1020.0, 32)
+    snapshot = SnapshotMDB(grid).snapshot
+    custom_mdb = SimpleNamespace(
+        **vars(snapshot.meta), **vars(snapshot.lines),
+        n_Texp=snapshot.n_Texp, alpha_ref=snapshot.alpha_ref,
     )
-
-
-    assert [len(segment) for segment in multiopa] == [2, 1]
-    for segment, expected_stitching in zip(multiopa, nstitch_list):
-        assert all(isinstance(opa, OpaPremodit) for opa in segment)
-        assert all(opa.nstitch == expected_stitching for opa in segment)
+    handler = MultiMol([["CO"]], [["HITEMP"]])
+    with pytest.warns(DeprecationWarning, match="store_single_opa"):
+        legacy = handler.store_single_opa(
+            custom_mdb, grid, (500.0, 1500.0), 0, 0.2, False, 1
+        )
+    direct = OpaPremodit.from_snapshot(snapshot, grid, auto_trange=(500.0, 1500.0))
+    temperature, pressure = np.array([1000.0]), np.array([0.1])
+    np.testing.assert_array_equal(
+        legacy.xsmatrix(temperature, pressure), direct.xsmatrix(temperature, pressure)
+    )
