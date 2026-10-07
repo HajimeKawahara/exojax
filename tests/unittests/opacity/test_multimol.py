@@ -8,7 +8,11 @@ import numpy as np
 import pytest
 
 from exojax.database.contracts import Lines, MDBMeta, MDBSnapshot
-from exojax.opacity.multimol import build_premodit, validate_opacity_grids
+from exojax.opacity.multimol import (
+    build_premodit,
+    multiopa_premodit,
+    validate_opacity_grids,
+)
 from exojax.opacity.policies import MemoryPolicy
 from exojax.opacity.premodit.api import OpaPremodit
 
@@ -129,6 +133,30 @@ def test_build_forwards_current_premodit_options(
 def test_build_requires_complete_premodit_setup(nu_grid):
     with pytest.raises(ValueError, match="auto_trange|manual_params"):
         build_premodit({"H2O": _snapshot()}, nu_grid)
+
+
+@pytest.mark.parametrize("named", [True, False])
+def test_both_builders_export_mdb_snapshot_once(monkeypatch, nu_grid, named):
+    snapshot = _snapshot()
+    mdb = _MDB(snapshot)
+    constructed = []
+
+    def from_snapshot(payload, grid, **kwargs):
+        constructed.append(payload)
+        return _ready_opa(grid, payload.meta.molmass)
+
+    monkeypatch.setattr(OpaPremodit, "from_snapshot", staticmethod(from_snapshot))
+    if named:
+        result = build_premodit({"water": mdb}, nu_grid, auto_trange=(500.0, 1500.0))
+        opa = result["water"]
+    else:
+        result = multiopa_premodit([[mdb]], nu_grid, auto_trange=(500.0, 1500.0))
+        opa = result[0][0]
+
+    assert mdb.snapshot_calls == 1
+    assert len(constructed) == 1
+    assert constructed[0] is snapshot
+    assert opa.molmass == snapshot.meta.molmass
 
 
 def test_fixed_pressure_diffgrid_interface_is_rejected(nu_grid):

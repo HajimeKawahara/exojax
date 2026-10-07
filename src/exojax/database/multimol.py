@@ -1,8 +1,6 @@
 import os
 import warnings
 
-import numpy as np
-
 # Lazily imported RADIS-backed classes to reduce import-time pressure.
 MdbExomol = None
 MdbHitran = None
@@ -107,14 +105,10 @@ class MultiMol:
             dbmulti (nested list): multiple database names, such as [["HITEMP","EXOMOL"],["HITEMP"],["HITRAN12"]]
             database_root_path (str, optional): database root path. Defaults to ".database".
         """
-        self.molmulti = molmulti
-        self.dbmulti = dbmulti
-
-        if self._check_structure(self.molmulti, self.dbmulti):
-            pass
-        else:
-            print("molmulti=", molmulti, "dbmulti=", dbmulti)
+        if not self._check_structure(molmulti, dbmulti):
             raise ValueError("molmulti and dbmulti have different structures")
+        self.molmulti = [list(row) for row in molmulti]
+        self.dbmulti = [list(row) for row in dbmulti]
 
         self.database_root_path = database_root_path
         self.generate_database_directories()
@@ -171,6 +165,24 @@ class MultiMol:
 
             self.db_dirs.append(db_dir_k)
 
+    def _load_single_mdb(self, database, directory, nu_grid, crit, Ttyp):
+        """Apply common loading options and each provider's fixed defaults."""
+        options = {"crit": crit, "Ttyp": Ttyp, "gpu_transfer": False}
+        if database in ("ExoMol", "exomol"):
+            mdb_class = _load_mdb_exomol()
+            options["broadf_download"] = False
+        elif database in ("HITRAN12", "hitran12"):
+            mdb_class = _load_mdb_hitran()
+            options["isotope"] = 1
+        elif database in ("HITEMP", "hitemp"):
+            mdb_class = _load_mdb_hitemp()
+            options["isotope"] = 1
+        else:
+            raise ValueError(f"Unsupported database: {database}")
+        return mdb_class(
+            os.path.join(self.database_root_path, directory), nu_grid, **options
+        )
+
     def multimdb(self, nu_grid_list, crit=0.0, Ttyp=1000.0):
         """select current multimols from wavenumber grid
 
@@ -188,77 +200,37 @@ class MultiMol:
         """
         nu_grid_segments = self._prepare_nu_grid_list(nu_grid_list)
 
-        _multimdb = []
-        self.masked_molmulti = self.molmulti[:]
-        for k, mol in enumerate(self.molmulti):
-
-            mdb_k = []
-            mask = np.ones_like(mol, dtype=bool)
-
-            for i, simple_molecule_name in enumerate(mol):
-                print("Sets mdb for ", simple_molecule_name)
+        mdb_rows = []
+        masked_molmulti = []
+        segments = zip(self.molmulti, self.dbmulti, self.db_dirs, nu_grid_segments)
+        for k, (molecules, databases, directories, nu_grid) in enumerate(segments):
+            mdb_row = []
+            selected_names = []
+            for name, database, directory in zip(molecules, databases, directories):
+                print("Sets mdb for ", name)
                 try:
-                    if self.dbmulti[k][i] in ["ExoMol", "exomol"]:
-                        mdb_exomol_class = _load_mdb_exomol()
-                        mdb_k.append(
-                            mdb_exomol_class(
-                                os.path.join(
-                                    self.database_root_path, self.db_dirs[k][i]
-                                ),
-                                nu_grid_segments[k],
-                                crit=crit,
-                                Ttyp=Ttyp,
-                                gpu_transfer=False,
-                                broadf_download=False,
-                            )
-                        )
-                    elif self.dbmulti[k][i] in ["HITRAN12", "hitran12"]:
-                        mdb_hitran_class = _load_mdb_hitran()
-                        mdb_k.append(
-                            mdb_hitran_class(
-                                os.path.join(
-                                    self.database_root_path, self.db_dirs[k][i]
-                                ),
-                                nu_grid_segments[k],
-                                crit=crit,
-                                Ttyp=Ttyp,
-                                gpu_transfer=False,
-                                isotope=1,
-                            )
-                        )
-                    elif self.dbmulti[k][i] in ["HITEMP", "hitemp"]:
-                        mdb_hitemp_class = _load_mdb_hitemp()
-                        mdb_k.append(
-                            mdb_hitemp_class(
-                                os.path.join(
-                                    self.database_root_path, self.db_dirs[k][i]
-                                ),
-                                nu_grid_segments[k],
-                                crit=crit,
-                                Ttyp=Ttyp,
-                                gpu_transfer=False,
-                                isotope=1,
-                            )
-                        )
+                    mdb = self._load_single_mdb(database, directory, nu_grid, crit, Ttyp)
                 except ValueError as e:
                     if e.args and e.args[0] == "No line found in ":
                         warnings.warn(
-                            f"{simple_molecule_name} ({self.dbmulti[k][i]}) has no "
+                            f"{name} ({database}) has no "
                             f"selected lines in segment {k}; omitted from the legacy "
                             "MDB list, not from atmospheric composition.",
                             UserWarning,
                             stacklevel=2,
                         )
-                        mask[i] = False
+                        continue
                     else:
                         raise
+                mdb_row.append(mdb)
+                selected_names.append(name)
 
-            self.masked_molmulti[k] = np.array(self.molmulti[k])[mask].tolist()
-            _multimdb.append(mdb_k)
+            masked_molmulti.append(selected_names)
+            mdb_rows.append(mdb_row)
 
+        self.masked_molmulti = masked_molmulti
         self.derive_unique_molecules()
-
-        return MultiMDBCollection(_multimdb)
+        return MultiMDBCollection(mdb_rows)
 
     def derive_unique_molecules(self):
         """derive unique molecules in masked_molmulti and set self.mols_unique and self.mols_num
@@ -269,21 +241,15 @@ class MultiMol:
 
 
         """
-        self.mols_unique = []
-        self.mols_num = []
-        for k in range(len(self.masked_molmulti)):
-            mols_num_k = []
-            for i in range(len(self.masked_molmulti[k])):
-                if self.masked_molmulti[k][i] in self.mols_unique:
-                    mols_num_k.append(
-                        self.mols_unique.index(self.masked_molmulti[k][i])
-                    )
-                else:
-                    self.mols_unique.append(self.masked_molmulti[k][i])
-                    mols_num_k.append(
-                        self.mols_unique.index(self.masked_molmulti[k][i])
-                    )
-            self.mols_num.append(mols_num_k)
+        molecule_indices = {}
+        mols_num = []
+        for molecules in self.masked_molmulti:
+            mols_num.append([
+                molecule_indices.setdefault(name, len(molecule_indices))
+                for name in molecules
+            ])
+        self.mols_unique = list(molecule_indices)
+        self.mols_num = mols_num
 
     def multiopa_premodit(
         self,
@@ -335,17 +301,17 @@ class MultiMol:
             DeprecationWarning,
             stacklevel=2,
         )
-        from exojax.opacity.multimol import _build_single_opa
+        from exojax.opacity.multimol import multiopa_premodit
 
-        return _build_single_opa(
-            multimdb_each,
-            nu_grid_list_seg,
+        return multiopa_premodit(
+            [[multimdb_each]],
+            [nu_grid_list_seg],
             diffmode=diffmode,
             auto_trange=auto_trange,
             dit_grid_resolution=dit_grid_resolution,
             allow_32bit=allow_32bit,
-            nstitch=nstitch,
-        )
+            nstitch_list=[nstitch],
+        )[0][0]
 
     def molmass(self):
         """return molecular mass list and H and He

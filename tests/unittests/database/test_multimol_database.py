@@ -24,20 +24,25 @@ def loader(monkeypatch):
     return DummyMDB
 
 
-@pytest.mark.parametrize("database", ["ExoMol", "HITRAN12", "HITEMP"])
+@pytest.mark.parametrize("database", ["ExoMol", "exomol", "HITRAN12", "hitran12", "HITEMP", "hitemp"])
 def test_multimdb_single_nu_grid(loader, database):
-    handler = MultiMol([["CO", "H2O"]], [[database, database]])
+    handler = MultiMol(
+        [["CO", "H2O"]], [[database, database]], database_root_path="test-databases"
+    )
     grid = np.geomspace(990.0, 1020.0, 32)
     mdbs = handler.multimdb([grid], crit=1.e-30, Ttyp=1200.0)
 
     assert len(mdbs) == 1
     assert len(mdbs[0]) == 2
-    for mdb in mdbs[0]:
+    provider_options = {"broadf_download": False} if database.lower() == "exomol" else {"isotope": 1}
+    for mdb, directory in zip(mdbs[0], handler.db_dirs[0]):
         assert isinstance(mdb, loader)
+        assert Path(mdb.path) == Path("test-databases") / directory
         np.testing.assert_array_equal(mdb.nu_grid, grid)
-        assert mdb.options["gpu_transfer"] is False
-        assert mdb.options["crit"] == 1.e-30
-        assert mdb.options["Ttyp"] == 1200.0
+        assert mdb.options == {
+            "gpu_transfer": False, "crit": 1.e-30, "Ttyp": 1200.0,
+            **provider_options,
+        }
     assert handler.mols_unique == ["CO", "H2O"]
 
 
@@ -74,6 +79,68 @@ def test_load_failures_propagate_instead_of_exiting(loader, monkeypatch, error):
     handler = MultiMol([["CO"]], [["ExoMol"]])
     with pytest.raises(type(error), match=str(error)):
         handler.multimdb(np.geomspace(990.0, 1020.0, 32))
+
+
+def test_failed_reload_preserves_last_complete_selection(loader, monkeypatch):
+    grids = [np.geomspace(990.0, 1020.0, 32), np.geomspace(1030.0, 1060.0, 32)]
+    state = {"empty_first_co": True, "fail_second_segment": False}
+
+    def load(path, nu_grid, **kwargs):
+        if nu_grid is grids[1] and state["fail_second_segment"]:
+            raise OSError("Second segment download failed.")
+        if nu_grid is grids[0] and Path(path).name == "CO" and state["empty_first_co"]:
+            raise ValueError("No line found in ", [990.0, 1020.0], "cm-1")
+        return loader(path, nu_grid, **kwargs)
+
+    monkeypatch.setattr(multimol, "MdbExomol", load)
+    handler = MultiMol(
+        [["CO", "H2O"], ["CO"]], [["ExoMol", "ExoMol"], ["ExoMol"]]
+    )
+    with pytest.warns(UserWarning, match="CO.*no selected lines"):
+        handler.multimdb(grids)
+    previous = (handler.masked_molmulti, handler.mols_unique, handler.mols_num)
+    assert previous == ([["H2O"], ["CO"]], ["H2O", "CO"], [[0], [1]])
+
+    state.update(empty_first_co=False, fail_second_segment=True)
+    with pytest.raises(OSError, match="Second segment"):
+        handler.multimdb(grids)
+    assert handler.masked_molmulti is previous[0]
+    assert handler.mols_unique is previous[1]
+    assert handler.mols_num is previous[2]
+
+    state["fail_second_segment"] = False
+    handler.multimdb(grids)
+    assert handler.masked_molmulti == [["CO", "H2O"], ["CO"]]
+    assert handler.mols_unique == ["CO", "H2O"]
+    assert handler.mols_num == [[0, 1], [0]]
+
+
+def test_unique_indices_preserve_first_occurrence_and_empty_segments(loader):
+    names = [["CO", "H2O", "CO"], [], ["H2O", "CH4", "CO"]]
+    handler = MultiMol(names, [["ExoMol"] * len(row) for row in names])
+    grid = np.geomspace(990.0, 1020.0, 32)
+
+    handler.multimdb([grid] * len(names))
+
+    assert handler.mols_unique == ["CO", "H2O", "CH4"]
+    assert handler.mols_num == [[0, 1, 0], [], [1, 2, 0]]
+
+
+def test_caller_mutation_does_not_change_configured_database_paths(loader):
+    names = [["CO", "H2O"]]
+    databases = [["ExoMol", "ExoMol"]]
+    handler = MultiMol(names, databases)
+    names[0][0] = "CH4"
+    names.append(["CO"])
+    databases[0][0] = "HITEMP"
+    databases.append(["HITEMP"])
+
+    result = handler.multimdb(np.geomspace(990.0, 1020.0, 32))
+
+    assert handler.molmulti == [["CO", "H2O"]]
+    assert handler.dbmulti == [["ExoMol", "ExoMol"]]
+    assert [Path(mdb.path).name for mdb in result[0]] == ["CO", "H2O"]
+    assert all(mdb.options["broadf_download"] is False for mdb in result[0])
 
 
 def test_sample_is_not_a_production_backend():

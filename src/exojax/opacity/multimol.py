@@ -84,15 +84,21 @@ class _ZeroOpacity:
         )
 
 
-def _build_single_opa(mdb, nu_grid, **kwargs):
-    """Adapt snapshots, current MDBs, and legacy custom MDBs to PreMODIT."""
+def _normalize_mdb(mdb):
+    """Export a snapshot once when available, preserving legacy MDB inputs."""
+    if isinstance(mdb, MDBSnapshot):
+        return mdb
+    to_snapshot = getattr(mdb, "to_snapshot", None)
+    return to_snapshot() if callable(to_snapshot) else mdb
+
+
+def _build_single_opa(payload, nu_grid, **kwargs):
+    """Construct PreMODIT from an already-normalized snapshot or legacy MDB."""
     from exojax.opacity.premodit.api import OpaPremodit
 
-    if isinstance(mdb, MDBSnapshot):
-        return OpaPremodit.from_snapshot(mdb, nu_grid, **kwargs)
-    if callable(getattr(mdb, "to_snapshot", None)):
-        return OpaPremodit.from_mdb(mdb, nu_grid, **kwargs)
-    return OpaPremodit(mdb=mdb, nu_grid=nu_grid, **kwargs)
+    if isinstance(payload, MDBSnapshot):
+        return OpaPremodit.from_snapshot(payload, nu_grid, **kwargs)
+    return OpaPremodit(mdb=payload, nu_grid=nu_grid, **kwargs)
 
 
 def build_premodit(databases, nu_grid, *, on_empty="raise", **kwargs):
@@ -130,20 +136,19 @@ def build_premodit(databases, nu_grid, *, on_empty="raise", **kwargs):
 
     opas = {}
     for name, mdb in databases.items():
-        if callable(getattr(mdb, "to_snapshot", None)):
-            mdb = mdb.to_snapshot()
-        if isinstance(mdb, MDBSnapshot):
-            nu_lines = mdb.lines.nu_lines
-            molmass = mdb.meta.molmass
+        payload = _normalize_mdb(mdb)
+        if isinstance(payload, MDBSnapshot):
+            nu_lines = payload.lines.nu_lines
+            molmass = payload.meta.molmass
         else:
-            nu_lines = mdb.nu_lines
-            molmass = mdb.molmass
+            nu_lines = payload.nu_lines
+            molmass = payload.molmass
         if np.size(nu_lines) == 0:
             if on_empty == "raise":
                 raise ValueError(f"{name}: no selected lines; use on_empty='zero' explicitly.")
             opas[name] = _ZeroOpacity(nu_grid, molmass)
         else:
-            opas[name] = _build_single_opa(mdb, nu_grid, **kwargs)
+            opas[name] = _build_single_opa(payload, nu_grid, **kwargs)
     validate_opacity_grids(opas)
     return opas
 
@@ -174,7 +179,7 @@ def multiopa_premodit(
     return [
         [
             _build_single_opa(
-                mdb,
+                _normalize_mdb(mdb),
                 grid,
                 auto_trange=auto_trange,
                 nstitch=nstitch,

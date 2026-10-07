@@ -107,7 +107,8 @@ def test_opacity_layer_builder_rejects_segment_count_mismatch(legacy_inputs):
         multiopa_premodit(mdbs[:1], grids, (500.0, 1500.0))
 
 
-def test_legacy_custom_mdb_without_snapshot_and_single_opa_wrapper():
+@pytest.mark.parametrize("nstitch", [1, 2])
+def test_legacy_custom_mdb_without_snapshot_and_single_opa_wrapper(nstitch):
     grid = np.geomspace(990.0, 1020.0, 32)
     snapshot = SnapshotMDB(grid).snapshot
     custom_mdb = SimpleNamespace(
@@ -117,9 +118,11 @@ def test_legacy_custom_mdb_without_snapshot_and_single_opa_wrapper():
     handler = MultiMol([["CO"]], [["HITEMP"]])
     with pytest.warns(DeprecationWarning, match="store_single_opa"):
         legacy = handler.store_single_opa(
-            custom_mdb, grid, (500.0, 1500.0), 0, 0.2, False, 1
+            custom_mdb, grid, (500.0, 1500.0), 0, 0.2, False, nstitch
         )
-    direct = OpaPremodit.from_snapshot(snapshot, grid, auto_trange=(500.0, 1500.0))
+    direct = OpaPremodit.from_snapshot(
+        snapshot, grid, auto_trange=(500.0, 1500.0), nstitch=nstitch
+    )
     temperature, pressure = np.array([1000.0]), np.array([0.1])
     np.testing.assert_array_equal(
         legacy.xsmatrix(temperature, pressure), direct.xsmatrix(temperature, pressure)
