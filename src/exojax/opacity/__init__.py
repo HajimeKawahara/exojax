@@ -16,6 +16,8 @@ from typing import Final
 # Mapping: public name  →  "module.path:attribute"
 # --------------------------------------------------------------------
 _ALIAS: Final[dict[str, str]] = {
+    "build_premodit": "exojax.opacity.multimol:build_premodit",
+    "validate_opacity_grids": "exojax.opacity.multimol:validate_opacity_grids",
     "OpaPremodit": "exojax.opacity.premodit.api:OpaPremodit",
     "OpaDiffgrid": "exojax.opacity.diffgrid.api:OpaDiffgrid",
     "OpaDirect":   "exojax.opacity.lpf.api:OpaDirect",

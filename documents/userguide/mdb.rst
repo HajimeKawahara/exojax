@@ -33,8 +33,10 @@ Molecular databases
 Select ``MdbExomol(..., backend="pyexocross")`` after installing the
 :doc:`optional dependency <exomol>`. Leave ``engine=None`` for this backend;
 ``engine`` selects the storage/DataFrame implementation where supported.
-:doc:`MultiMol <../tutorials/multimol>` combines molecular databases and
-currently uses the RADIS default for ExoMol.
+For multiple absorbers, see :doc:`Multiple molecules <../tutorials/multimol>`:
+named database dictionaries feed opacity construction and differentiable
+optical-depth summation. The legacy ``MultiMol`` database loader uses the RADIS
+default for ExoMol.
 
 .. figure:: mdb_files/molecular_databases.png
    :alt: ExoMol, HITRAN, HITEMP, FeH and ExoMolHR loading paths through RADIS, PyExoCross and ExoJAX.

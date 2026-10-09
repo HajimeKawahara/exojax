@@ -1,0 +1,102 @@
+// Regenerate from this directory:
+// dot -Tsvg multimol_architecture.dot -o multimol_architecture.svg
+// dot -Tpng -Gdpi=144 multimol_architecture.dot -o multimol_architecture.png
+digraph multimol {
+    graph [
+        rankdir=LR, bgcolor="white", pad=0.25, nodesep=0.5, ranksep=0.7,
+        fontname="DejaVu Sans", fontsize=14, compound=true,
+        label="Multi-molecule architecture\nSolid arrows: data flow    |    Dashed arrow: legacy call delegation",
+        labelloc=t, labeljust=l
+    ];
+    node [
+        shape=box, style="rounded,filled", fillcolor="white", color="#55718a",
+        fontname="DejaVu Sans", fontsize=13, fontcolor="#183247",
+        margin="0.18,0.16", penwidth=1.3
+    ];
+    edge [
+        color="#3d627f", penwidth=1.5, arrowsize=0.75,
+        fontname="DejaVu Sans", fontsize=11, fontcolor="#3d627f"
+    ];
+
+    subgraph cluster_setup {
+        label="PREPARATION  /  outside JIT";
+        style="rounded,filled";
+        fillcolor="#f2f6fb";
+        color="#cedbe8";
+        margin=22;
+
+        database [label=<
+            <B>1. Database inputs</B><BR/><BR/>
+            Existing MDBs or snapshots<BR/>
+            <FONT POINT-SIZE="11">or use the retained</FONT><BR/>
+            <B>database.multimol</B><BR/>
+            MultiMol.multimdb()<BR/>
+            <FONT POINT-SIZE="11">Paths, loading, line selection</FONT>
+        >];
+        builder [label=<
+            <B>2. opacity.multimol</B><BR/><BR/>
+            build_premodit()<BR/>
+            <FONT POINT-SIZE="11">Normalize MDB / snapshot inputs<BR/>
+            Build and validate calculators</FONT><BR/><BR/>
+            Output: {name: opa}
+        >];
+        compatibility [
+            color="#b17c3c", fillcolor="#fff8ec", fontcolor="#6d4b22",
+            label=<
+                <B>Deprecated MultiMol methods</B><BR/><BR/>
+                multiopa_premodit()<BR/>
+                store_single_opa()
+            >
+        ];
+        legacy_builder [
+            color="#b17c3c", fillcolor="#fff8ec", fontcolor="#6d4b22",
+            label=<
+                <B>opacity.multimol</B><BR/><BR/>
+                multiopa_premodit()<BR/>
+                <FONT POINT-SIZE="11">Legacy nested-list builder</FONT>
+            >
+        ];
+
+        database -> builder [label="Named MDBs\n/ snapshots"];
+        compatibility -> legacy_builder [
+            style=dashed, color="#a56b29", fontcolor="#8b5d26",
+            label="Lazy import\nand delegation"
+        ];
+        compatibility -> database [style=invis];
+        legacy_builder -> builder [style=invis];
+        { rank=same; database; compatibility; }
+        { rank=same; builder; legacy_builder; }
+    }
+
+    subgraph cluster_evaluation {
+        label="EVALUATION  /  JIT + autodiff";
+        style="rounded,filled";
+        fillcolor="#eff8f5";
+        color="#c1ded3";
+        margin=22;
+
+        evaluate [
+            color="#45816c",
+            label=<
+                <B>3. rt.multimol</B><BR/><BR/>
+                layer_optical_depth_multi()<BR/>
+                <FONT POINT-SIZE="11">xsmatrix(T, P) for each species<BR/>
+                Existing layer_optical_depth kernel<BR/>
+                Sum species contributions</FONT><BR/><BR/>
+                <B>Dynamic inputs</B><BR/>
+                T, P, dP, MMRs, gravity
+            >
+        ];
+        transfer [
+            color="#45816c",
+            label=<
+                <B>Existing radiative transfer</B><BR/><BR/>
+                Emission or transmission spectrum
+            >
+        ];
+        transfer -> evaluate [dir=back, xlabel="Total dtau\n(Nlayer, Nnu)"];
+        { rank=same; evaluate; transfer; }
+    }
+
+    builder -> evaluate [label="Named OPAs\n(fixed configuration)"];
+}
