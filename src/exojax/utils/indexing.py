@@ -128,6 +128,24 @@ def uniqidx(input_array):
         >>> uidx, uval=uniqidx(a) #->[0,1,2,1,3,0], [[4,1],[7,1],[7,2],[8,0]]
 
     """
+    if (input_array.ndim == 2 and input_array.shape[1] == 2
+            and input_array.shape[0] > 0 and input_array.dtype.kind == "i"
+            and input_array.flags.c_contiguous):
+        # Pack broadening-index pairs in lexicographic order. Python integers
+        # make the range/product guard safe even at signed dtype extrema.
+        min0, min1 = int(input_array[:, 0].min()), int(input_array[:, 1].min())
+        range0 = int(input_array[:, 0].max()) - min0
+        range1 = int(input_array[:, 1].max()) - min1
+        radix, maximum = range1 + 1, np.iinfo(np.int64).max
+        if radix <= maximum and range0 * radix + range1 <= maximum:
+            codes = input_array[:, 0].astype(np.int64) - min0
+            codes *= radix
+            codes += input_array[:, 1].astype(np.int64) - min1
+            unique, inverse = np.unique(codes, return_inverse=True)
+            rows = np.empty((len(unique), 2), dtype=input_array.dtype)
+            rows[:, 0] = unique // radix + min0
+            rows[:, 1] = unique % radix + min1
+            return inverse.reshape(-1).astype(int, copy=False), rows
     uniq, uidx = np.unique(_structured_row_view(input_array), return_inverse=True)
     uniqvals = uniq.view(input_array.dtype).reshape(-1, input_array.shape[1])
     # NumPy versions differ in the shape of inverse indices for a 2D view.

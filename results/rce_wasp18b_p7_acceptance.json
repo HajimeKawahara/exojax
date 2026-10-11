@@ -1,0 +1,1985 @@
+{
+  "schema_version": "exojax.p7-acceptance/1",
+  "created_utc": "2026-10-11T01:38:47.259838+00:00",
+  "status": "accepted_with_recorded_approximations",
+  "p7_complete": true,
+  "unresolved_p7": [],
+  "scope": "Adopted eight-absorber, 32-layer WASP-18b forward model with R700 observations; finite numerical comparisons and 27 returned-state diagnostics.",
+  "runtime": {
+    "code_sha256": "f8262fd9a6d0cb6ebcddd7151be2cf2556aa155a6ef36f61bd2d58ac5db7da72",
+    "exogibbs_code_sha256": "48c08a79d971c47aea36559d8fdf28865c5e4d9e6dc2b5b9390739a9e00f42a2",
+    "jax": "0.6.2",
+    "jaxlib": "0.6.2",
+    "x64": true
+  },
+  "manifest": {
+    "path": "/home/kawahara/exojax/results/rce_wasp18b_final8_manifest.json",
+    "sha256": "3a47729633649ebf0c21455616b6ad1aaaabf0faf855c1031edb9d5e4c027cd9"
+  },
+  "baseline": {
+    "path": "/home/kawahara/exojax/results/rce_wasp18b_final8_endpoint_retry_job/explicit_ckd_baseline.json",
+    "sha256": "3a12e81545cf071759a236913788a4d610b36b139a69e6c13e41c9fee0c35eb4"
+  },
+  "adopted_settings": {
+    "species": [
+      "H2O1",
+      "C1O1",
+      "C1O2",
+      "Fe1",
+      "O1Ti1",
+      "O1Si1",
+      "Na1",
+      "K1"
+    ],
+    "layers": 32,
+    "bottom_pressure_bar": 100.0,
+    "wavelength_um": [
+      0.2,
+      50.0
+    ],
+    "g_points": 16,
+    "bands": 5522,
+    "native_samples_per_band": 512,
+    "opacity_temperature_nodes": 16,
+    "opacity_pressure_nodes": 32,
+    "nstream": 8,
+    "planck_order": 8,
+    "response_resolution": 700,
+    "column_settings": {
+      "gravity_cgs": 17990.0,
+      "internal_temperature": 200.0,
+      "mu0": 0.5,
+      "chemistry_conservation_convergence": true,
+      "chemistry_equilibrate_constraints": true,
+      "stellar_scattering": true,
+      "stellar_scattering_outside_range": "zero"
+    }
+  },
+  "input_scope": "Observation files, reports, and source pins were rechecked. Large opacity assets retain their execution-time checksum evidence; no coefficient reload or regeneration.",
+  "numerical_budget": {
+    "max_sigma": 0.1,
+    "weighted_norm": 0.3
+  },
+  "required_comparisons": {
+    "inner_122_vs_62": {
+      "max_sigma": 0.00265782843036827,
+      "weighted_norm": 0.013432669607715879,
+      "rms_sigma": 0.0012211517825196252,
+      "max_absolute_ppm": 0.15316351849184798,
+      "peak_sigma_bin": {
+        "wavelength_um": 1.084475857921684,
+        "delta_sigma": 0.00265782843036827,
+        "delta_ppm": 0.11495189800861047
+      },
+      "maximum_temperature_change_K": 1.2340206737758308,
+      "temperature_peak_pressure_bar": 6.208243607191254e-05,
+      "bottom_temperature_change_K": 0.08778801744892917,
+      "shared_boundaries": 63,
+      "maximum_flux_difference_over_incident": {
+        "upward": 0.00010992397338226808,
+        "downward": 0.0006266963244445086,
+        "incident": 0.00073662029782767,
+        "net": 1.996318473623639e-15,
+        "convective": 0.0,
+        "total_net": 1.996318473623639e-15
+      }
+    },
+    "ng32": {
+      "max_sigma": 0.0069959168091219956,
+      "weighted_norm": 0.04724251253413284,
+      "rms_sigma": 0.0042947738667393496,
+      "max_absolute_ppm": 0.43680062896322636,
+      "peak_sigma_wavelength_um": 1.1863133889910158,
+      "peak_sigma_signed": 0.0069959168091219956,
+      "max_temperature_change_K": 21.628704497571107,
+      "temperature_peak_pressure_bar": 9.646616199111992e-05,
+      "signed_temperature_at_peak_K": 21.628704497571107,
+      "bottom_temperature_change_K": 0.17392368947548675,
+      "max_temperature_change_at_or_below_pressure_K": {
+        "0.0001": 16.125015892858755,
+        "0.001": 4.5239390026881665,
+        "0.01": 0.4324430722058423,
+        "0.1": 0.18421821194851873,
+        "1.0": 0.17663718816538676
+      },
+      "max_flux_difference_over_incident": {
+        "upward": 0.0002017522841626298,
+        "downward": 0.0003789936533917436,
+        "incident": 0.0004994438986275921,
+        "net": 1.650133123561343e-15,
+        "convective": 0.0,
+        "total_net": 1.650133123561343e-15
+      },
+      "max_flux_difference_boundary_bar": {
+        "upward": 0.3924189758484536,
+        "downward": 0.03162277660168379,
+        "incident": 0.03162277660168379,
+        "net": 0.23713737056616552,
+        "convective": 1e-05,
+        "total_net": 0.23713737056616552
+      },
+      "incident_normalization_cgs": 3870250253.701064,
+      "stellar_bottom": {
+        "status": "measured",
+        "bottom_pressure_bar": 100.0,
+        "direct_cgs": 7.929938189070214e-71,
+        "diffuse_downward_cgs": 1.025644599302285e-62,
+        "total_downward_cgs": 1.0256446072322231e-62,
+        "incident_flux_cgs": 3870250253.701064,
+        "total_over_incident": 2.650073096052159e-72,
+        "internal_flux_cgs": 90725.990704,
+        "total_over_internal": 1.1304859823228182e-67
+      },
+      "passed": true
+    },
+    "bands2": {
+      "max_sigma": 0.008835059306407012,
+      "weighted_norm": 0.059319514842662756,
+      "rms_sigma": 0.005392683167514796,
+      "max_absolute_ppm": 0.5688800002719239,
+      "peak_sigma_wavelength_um": 1.598690982302941,
+      "peak_sigma_signed": 0.008835059306407012,
+      "max_temperature_change_K": 61.8339785787648,
+      "temperature_peak_pressure_bar": 1.2863969449369745e-05,
+      "signed_temperature_at_peak_K": -61.8339785787648,
+      "bottom_temperature_change_K": 0.4792600238088198,
+      "max_temperature_change_at_or_below_pressure_K": {
+        "0.0001": 14.457875726355269,
+        "0.001": 4.261487007818232,
+        "0.01": 0.4782615356025417,
+        "0.1": 0.4782615356025417,
+        "1.0": 0.4782615356025417
+      },
+      "max_flux_difference_over_incident": {
+        "upward": 0.0006014073412237602,
+        "downward": 0.0006813826040043579,
+        "incident": 0.0007072172086588057,
+        "net": 2.9526671589899295e-15,
+        "convective": 0.0,
+        "total_net": 2.9526671589899295e-15
+      },
+      "max_flux_difference_boundary_bar": {
+        "upward": 0.08659643233600653,
+        "downward": 0.3924189758484536,
+        "incident": 0.011547819846894581,
+        "net": 0.08659643233600653,
+        "convective": 1e-05,
+        "total_net": 0.08659643233600653
+      },
+      "incident_normalization_cgs": 3870250253.701064,
+      "stellar_bottom": {
+        "status": "measured",
+        "bottom_pressure_bar": 100.0,
+        "direct_cgs": 6.297502296966731e-71,
+        "diffuse_downward_cgs": 8.382699437209861e-63,
+        "total_downward_cgs": 8.382699500184884e-63,
+        "incident_flux_cgs": 3870250253.701064,
+        "total_over_incident": 2.165932162182182e-72,
+        "internal_flux_cgs": 90725.990704,
+        "total_over_internal": 9.2395789069243e-68
+      },
+      "passed": true
+    },
+    "sampling256": {
+      "max_sigma": 0.01329038668605346,
+      "weighted_norm": 0.1001789676927262,
+      "rms_sigma": 0.009107178881156926,
+      "max_absolute_ppm": 0.7838038829067161,
+      "peak_sigma_wavelength_um": 1.2101022449027545,
+      "peak_sigma_signed": -0.01329038668605346,
+      "max_temperature_change_K": 4.738009250480445,
+      "temperature_peak_pressure_bar": 5.829415347136074e-05,
+      "signed_temperature_at_peak_K": -4.738009250480445,
+      "bottom_temperature_change_K": -0.27547581653016096,
+      "max_temperature_change_at_or_below_pressure_K": {
+        "0.0001": 2.6584121677692565,
+        "0.001": 1.8795849251137042,
+        "0.01": 0.5523702614377726,
+        "0.1": 0.4999943124521451,
+        "1.0": 0.2812638755331136
+      },
+      "max_flux_difference_over_incident": {
+        "upward": 0.0003909059305703723,
+        "downward": 0.0006026944190840113,
+        "incident": 0.0009465740693145209,
+        "net": 3.603467943936305e-15,
+        "convective": 0.0,
+        "total_net": 3.603467943936305e-15
+      },
+      "max_flux_difference_boundary_bar": {
+        "upward": 0.14330125702369628,
+        "downward": 0.05232991146814947,
+        "incident": 0.05232991146814947,
+        "net": 0.23713737056616552,
+        "convective": 1e-05,
+        "total_net": 0.23713737056616552
+      },
+      "incident_normalization_cgs": 3870250253.701064,
+      "stellar_bottom": {
+        "status": "measured",
+        "bottom_pressure_bar": 100.0,
+        "direct_cgs": 1.0186072254266916e-70,
+        "diffuse_downward_cgs": 1.2765482462795213e-62,
+        "total_downward_cgs": 1.2765482564655935e-62,
+        "incident_flux_cgs": 3870250253.701064,
+        "total_over_incident": 3.2983610174686996e-72,
+        "internal_flux_cgs": 90725.990704,
+        "total_over_internal": 1.4070369985051175e-67
+      },
+      "passed": true
+    },
+    "endpoints_upper": {
+      "max_sigma": 0.013091738722095092,
+      "weighted_norm": 0.08721173238780358,
+      "rms_sigma": 0.007928339307982143,
+      "max_absolute_ppm": 0.8960062940614223,
+      "peak_sigma_wavelength_um": 1.174446362977937,
+      "peak_sigma_signed": 0.013091738722095092,
+      "max_temperature_change_K": 6.367819506349406,
+      "temperature_peak_pressure_bar": 0.005424690937011326,
+      "signed_temperature_at_peak_K": 6.367819506349406,
+      "bottom_temperature_change_K": 0.24076392951064918,
+      "max_temperature_change_at_or_below_pressure_K": {
+        "0.0001": 6.367819506349406,
+        "0.001": 6.367819506349406,
+        "0.01": 0.808130532433097,
+        "0.1": 0.25169608878513827,
+        "1.0": 0.23971528431638944
+      },
+      "max_flux_difference_over_incident": {
+        "upward": 0.0007130293457355718,
+        "downward": 0.0002946651118148358,
+        "incident": 0.0007134005989337418,
+        "net": 5.4164817409347265e-15,
+        "convective": 0.0,
+        "total_net": 5.4164817409347265e-15
+      },
+      "max_flux_difference_boundary_bar": {
+        "upward": 7.498942093324559e-05,
+        "downward": 0.23713737056616552,
+        "incident": 0.00012409377607517196,
+        "net": 0.05232991146814947,
+        "convective": 1e-05,
+        "total_net": 0.05232991146814947
+      },
+      "incident_normalization_cgs": 3870250253.701064,
+      "stellar_bottom": {
+        "status": "measured",
+        "bottom_pressure_bar": 100.0,
+        "direct_cgs": 12.651428787132168,
+        "diffuse_downward_cgs": 9.871066971247968e-63,
+        "total_downward_cgs": 12.651428787132168,
+        "incident_flux_cgs": 3873003713.527148,
+        "total_over_incident": 3.2665676882634593e-09,
+        "internal_flux_cgs": 90725.990704,
+        "total_over_internal": 0.00013944657632241632
+      },
+      "passed": true
+    },
+    "endpoints_both": {
+      "max_sigma": 0.012233477501878916,
+      "weighted_norm": 0.08146256442416366,
+      "rms_sigma": 0.00740568767492397,
+      "max_absolute_ppm": 0.8390506127334968,
+      "peak_sigma_wavelength_um": 1.174446362977937,
+      "peak_sigma_signed": 0.012233477501878916,
+      "max_temperature_change_K": 6.103457022598832,
+      "temperature_peak_pressure_bar": 0.005424690937011326,
+      "signed_temperature_at_peak_K": 6.103457022598832,
+      "bottom_temperature_change_K": 0.22572437335566065,
+      "max_temperature_change_at_or_below_pressure_K": {
+        "0.0001": 6.103457022598832,
+        "0.001": 6.103457022598832,
+        "0.01": 0.7111262590401566,
+        "0.1": 0.23434253184950649,
+        "1.0": 0.22470808035723167
+      },
+      "max_flux_difference_over_incident": {
+        "upward": 0.0007165548893786029,
+        "downward": 0.0003171549886672795,
+        "incident": 0.0007167973835958092,
+        "net": 4.4204280714618905e-15,
+        "convective": 0.0,
+        "total_net": 4.4204280714618905e-15
+      },
+      "max_flux_difference_boundary_bar": {
+        "upward": 7.498942093324559e-05,
+        "downward": 0.23713737056616552,
+        "incident": 0.00012409377607517196,
+        "net": 0.23713737056616552,
+        "convective": 1e-05,
+        "total_net": 0.23713737056616552
+      },
+      "incident_normalization_cgs": 3870250253.701064,
+      "stellar_bottom": {
+        "status": "measured",
+        "bottom_pressure_bar": 100.0,
+        "direct_cgs": 12.651455298437938,
+        "diffuse_downward_cgs": 9.946823074990732e-63,
+        "total_downward_cgs": 12.651455298437938,
+        "incident_flux_cgs": 3873017623.7944126,
+        "total_over_incident": 3.2665628012410774e-09,
+        "internal_flux_cgs": 90725.990704,
+        "total_over_internal": 0.00013944686853532647
+      },
+      "passed": true
+    },
+    "endpoints_lower_previous": {
+      "max_sigma": 0.0008572037387865071,
+      "weighted_norm": 0.005744816288588442,
+      "rms_sigma": 0.0005222560262353128,
+      "max_absolute_ppm": 0.057082637397280755,
+      "peak_sigma_wavelength_um": 1.174446362977937,
+      "peak_sigma_signed": -0.0008572037387865071,
+      "max_temperature_change_K": 0.2726605016496251,
+      "temperature_peak_pressure_bar": 0.008976871324473142,
+      "signed_temperature_at_peak_K": -0.2726605016496251,
+      "bottom_temperature_change_K": -0.015020819230358029,
+      "max_temperature_change_at_or_below_pressure_K": {
+        "0.0001": 0.2726605016496251,
+        "0.001": 0.2726605016496251,
+        "0.01": 0.0963542517301903,
+        "0.1": 0.01738507694835789,
+        "1.0": 0.014988554395586107
+      },
+      "max_flux_difference_over_incident": {
+        "upward": 2.6680534809737893e-05,
+        "downward": 4.2355087158359946e-05,
+        "incident": 2.670426732737201e-05,
+        "net": 3.220194529174486e-15,
+        "convective": 0.0,
+        "total_net": 3.220194529174486e-15
+      },
+      "max_flux_difference_boundary_bar": {
+        "upward": 0.3924189758484536,
+        "downward": 0.03162277660168379,
+        "incident": 0.03162277660168379,
+        "net": 0.05232991146814947,
+        "convective": 1e-05,
+        "total_net": 0.05232991146814947
+      },
+      "incident_normalization_cgs": 3870250253.701064,
+      "stellar_bottom": {
+        "status": "measured",
+        "bottom_pressure_bar": 100.0,
+        "direct_cgs": 8.797377573706328e-71,
+        "diffuse_downward_cgs": 1.1233167835803181e-62,
+        "total_downward_cgs": 1.1233167923776957e-62,
+        "incident_flux_cgs": 3870264163.9683285,
+        "total_over_incident": 2.90242925233795e-72,
+        "internal_flux_cgs": 90725.990704,
+        "total_over_internal": 1.2381422166472633e-67
+      },
+      "passed": true
+    },
+    "opacity_temperature_1": {
+      "suite": "opacity_temperature",
+      "current": "opacity_temperature_16_nodes",
+      "reference": "opacity_temperature_09_nodes",
+      "required_observation_budget": true,
+      "bottom_pressures_equal": true,
+      "max_sigma": 0.012911646342960414,
+      "weighted_norm": 0.09053887947360877,
+      "rms_sigma": 0.008230807224873522,
+      "max_absolute_ppm": 0.888491627634106,
+      "peak_sigma_wavelength_um": 1.4189787075034441,
+      "peak_sigma_signed": -0.012911646342960414,
+      "max_temperature_change_K": 3.511148016950301,
+      "temperature_peak_pressure_bar": 5.829415347136074e-05,
+      "signed_temperature_at_peak_K": -3.511148016950301,
+      "bottom_temperature_change_K": 0.44637236332482644,
+      "max_temperature_change_at_or_below_pressure_K": {
+        "0.0001": 1.5321997085134171,
+        "0.001": 1.5321997085134171,
+        "0.01": 0.9563387726175279,
+        "0.1": 0.5854257020928344,
+        "1.0": 0.41507354931081863
+      },
+      "max_flux_difference_over_incident": {
+        "upward": 0.00047257086053639904,
+        "downward": 0.0008804120474871106,
+        "incident": 0.0012156094155030839,
+        "net": 2.561573065540458e-15,
+        "convective": 0.0,
+        "total_net": 2.561573065540458e-15
+      },
+      "max_flux_difference_boundary_bar": {
+        "upward": 100.0,
+        "downward": 0.05232991146814947,
+        "incident": 0.05232991146814947,
+        "net": 0.03162277660168379,
+        "convective": 1e-05,
+        "total_net": 0.03162277660168379
+      },
+      "incident_normalization_cgs": 3870250253.701064,
+      "stellar_bottom": {
+        "status": "measured",
+        "bottom_pressure_bar": 100.0,
+        "direct_cgs": 8.720839443822761e-71,
+        "diffuse_downward_cgs": 1.1147810320406097e-62,
+        "total_downward_cgs": 1.1147810407614492e-62,
+        "incident_flux_cgs": 3870250253.701064,
+        "total_over_incident": 2.8803849045559787e-72,
+        "internal_flux_cgs": 90725.990704,
+        "total_over_internal": 1.22873394063946e-67
+      },
+      "passed": true
+    },
+    "opacity_pressure_1": {
+      "suite": "opacity_pressure",
+      "current": "opacity_pressure_32_nodes",
+      "reference": "opacity_pressure_17_nodes",
+      "required_observation_budget": true,
+      "bottom_pressures_equal": true,
+      "max_sigma": 0.0037796292116284726,
+      "weighted_norm": 0.018091020385554664,
+      "rms_sigma": 0.0016446382168686057,
+      "max_absolute_ppm": 0.34526672550508347,
+      "peak_sigma_wavelength_um": 1.2717832898602979,
+      "peak_sigma_signed": 0.0037796292116284726,
+      "max_temperature_change_K": 1.206688237039998,
+      "temperature_peak_pressure_bar": 0.008976871324473142,
+      "signed_temperature_at_peak_K": -1.206688237039998,
+      "bottom_temperature_change_K": 0.020716938776786264,
+      "max_temperature_change_at_or_below_pressure_K": {
+        "0.0001": 1.206688237039998,
+        "0.001": 1.206688237039998,
+        "0.01": 0.4375610158658674,
+        "0.1": 0.1841122805294617,
+        "1.0": 0.020676299847309565
+      },
+      "max_flux_difference_over_incident": {
+        "upward": 0.00013972349003501226,
+        "downward": 0.00026070688875808105,
+        "incident": 0.0004004303787968819,
+        "net": 3.928387063874868e-15,
+        "convective": 0.0,
+        "total_net": 3.928387063874868e-15
+      },
+      "max_flux_difference_boundary_bar": {
+        "upward": 0.23713737056616552,
+        "downward": 0.23713737056616552,
+        "incident": 0.23713737056616552,
+        "net": 0.23713737056616552,
+        "convective": 1e-05,
+        "total_net": 0.23713737056616552
+      },
+      "incident_normalization_cgs": 3870250253.701064,
+      "stellar_bottom": {
+        "status": "measured",
+        "bottom_pressure_bar": 100.0,
+        "direct_cgs": 8.720839443822761e-71,
+        "diffuse_downward_cgs": 1.1147810320406097e-62,
+        "total_downward_cgs": 1.1147810407614492e-62,
+        "incident_flux_cgs": 3870250253.701064,
+        "total_over_incident": 2.8803849045559787e-72,
+        "internal_flux_cgs": 90725.990704,
+        "total_over_internal": 1.22873394063946e-67
+      },
+      "passed": true
+    },
+    "depth_1": {
+      "suite": "depth",
+      "current": "depth_32_layers",
+      "reference": "depth_31_layers",
+      "required_observation_budget": true,
+      "bottom_pressures_equal": false,
+      "max_sigma": 0.0,
+      "weighted_norm": 0.0,
+      "rms_sigma": 0.0,
+      "max_absolute_ppm": 0.0,
+      "peak_sigma_wavelength_um": 0.8553878391057816,
+      "peak_sigma_signed": 0.0,
+      "max_temperature_change_K": 1.171031271951506e-06,
+      "temperature_peak_pressure_bar": 46.975888167064916,
+      "signed_temperature_at_peak_K": 1.171031271951506e-06,
+      "bottom_temperature_change_K": 4.626264151464966,
+      "max_temperature_change_at_or_below_pressure_K": {
+        "0.0001": 1.171031271951506e-06,
+        "0.001": 1.171031271951506e-06,
+        "0.01": 1.171031271951506e-06,
+        "0.1": 1.171031271951506e-06,
+        "1.0": 1.171031271951506e-06
+      },
+      "max_flux_difference_over_incident": {
+        "upward": 0.0007768654456922479,
+        "downward": 0.0007768654456922479,
+        "incident": 1.389481925719284e-26,
+        "net": 1.3827937504606244e-16,
+        "convective": 0.0,
+        "total_net": 1.3827937504606244e-16
+      },
+      "max_flux_difference_boundary_bar": {
+        "upward": 60.42963902381328,
+        "downward": 60.42963902381328,
+        "incident": 22.0673406908459,
+        "net": 13.33521432163324,
+        "convective": 1e-05,
+        "total_net": 13.33521432163324
+      },
+      "incident_normalization_cgs": 3870250253.701064,
+      "stellar_bottom": {
+        "status": "measured",
+        "bottom_pressure_bar": 100.0,
+        "direct_cgs": 8.720839443822761e-71,
+        "diffuse_downward_cgs": 1.1147810320406097e-62,
+        "total_downward_cgs": 1.1147810407614492e-62,
+        "incident_flux_cgs": 3870250253.701064,
+        "total_over_incident": 2.8803849045559787e-72,
+        "internal_flux_cgs": 90725.990704,
+        "total_over_internal": 1.22873394063946e-67
+      },
+      "passed": true
+    },
+    "quadrature_0": {
+      "suite": "quadrature",
+      "current": "angular_doubled",
+      "reference": "baseline",
+      "required_observation_budget": true,
+      "bottom_pressures_equal": true,
+      "max_sigma": 0.006291365424018977,
+      "weighted_norm": 0.035958524008475844,
+      "rms_sigma": 0.0032689567280432584,
+      "max_absolute_ppm": 0.40948053808722956,
+      "peak_sigma_wavelength_um": 1.476300626488174,
+      "peak_sigma_signed": -0.006291365424018977,
+      "max_temperature_change_K": 2.8477787830211128,
+      "temperature_peak_pressure_bar": 0.01485508017172775,
+      "signed_temperature_at_peak_K": 2.8477787830211128,
+      "bottom_temperature_change_K": 0.07812534161894291,
+      "max_temperature_change_at_or_below_pressure_K": {
+        "0.0001": 2.8477787830211128,
+        "0.001": 2.8477787830211128,
+        "0.01": 2.8477787830211128,
+        "0.1": 0.7117482127582662,
+        "1.0": 0.07839569410725744
+      },
+      "max_flux_difference_over_incident": {
+        "upward": 0.00032791437147979154,
+        "downward": 0.0007751141846177018,
+        "incident": 0.0006951688654715365,
+        "net": 3.799646660862736e-15,
+        "convective": 0.0,
+        "total_net": 3.799646660862736e-15
+      },
+      "max_flux_difference_boundary_bar": {
+        "upward": 0.08659643233600653,
+        "downward": 0.03162277660168379,
+        "incident": 0.03162277660168379,
+        "net": 0.23713737056616552,
+        "convective": 1e-05,
+        "total_net": 0.23713737056616552
+      },
+      "incident_normalization_cgs": 3870250253.701064,
+      "stellar_bottom": {
+        "status": "measured",
+        "bottom_pressure_bar": 100.0,
+        "direct_cgs": 8.333754299890238e-71,
+        "diffuse_downward_cgs": 1.0714761891005248e-62,
+        "total_downward_cgs": 1.0714761974342791e-62,
+        "incident_flux_cgs": 3870250253.701064,
+        "total_over_incident": 2.76849332006281e-72,
+        "internal_flux_cgs": 90725.990704,
+        "total_over_internal": 1.181002476930835e-67
+      },
+      "passed": true
+    },
+    "quadrature_1": {
+      "suite": "quadrature",
+      "current": "planck_doubled",
+      "reference": "baseline",
+      "required_observation_budget": true,
+      "bottom_pressures_equal": true,
+      "max_sigma": 2.769695555793849e-10,
+      "weighted_norm": 9.1713099289042e-10,
+      "rms_sigma": 8.337554480822e-11,
+      "max_absolute_ppm": 1.3983605939849044e-08,
+      "peak_sigma_wavelength_um": 1.2972379295810865,
+      "peak_sigma_signed": -2.769695555793849e-10,
+      "max_temperature_change_K": 1.2031568985548802e-07,
+      "temperature_peak_pressure_bar": 77.73650302387757,
+      "signed_temperature_at_peak_K": -1.2031568985548802e-07,
+      "bottom_temperature_change_K": -1.504881765868049e-07,
+      "max_temperature_change_at_or_below_pressure_K": {
+        "0.0001": 1.2031568985548802e-07,
+        "0.001": 1.2031568985548802e-07,
+        "0.01": 1.2031568985548802e-07,
+        "0.1": 1.2031568985548802e-07,
+        "1.0": 1.2031568985548802e-07
+      },
+      "max_flux_difference_over_incident": {
+        "upward": 1.5936148738322297e-10,
+        "downward": 1.5936136417745412e-10,
+        "incident": 2.5349660097182328e-11,
+        "net": 2.1180804248837115e-15,
+        "convective": 0.0,
+        "total_net": 2.1180804248837115e-15
+      },
+      "max_flux_difference_boundary_bar": {
+        "upward": 100.0,
+        "downward": 100.0,
+        "incident": 1.0746078283213174,
+        "net": 0.0025482967479793467,
+        "convective": 1e-05,
+        "total_net": 0.0025482967479793467
+      },
+      "incident_normalization_cgs": 3870250253.701064,
+      "stellar_bottom": {
+        "status": "measured",
+        "bottom_pressure_bar": 100.0,
+        "direct_cgs": 8.720767576176599e-71,
+        "diffuse_downward_cgs": 1.114774166048878e-62,
+        "total_downward_cgs": 1.1147741747696456e-62,
+        "incident_flux_cgs": 3870250253.701064,
+        "total_over_incident": 2.8803671641222767e-72,
+        "internal_flux_cgs": 90725.990704,
+        "total_over_internal": 1.2287263728060857e-67
+      },
+      "passed": true
+    }
+  },
+  "nominal_blackbody": {
+    "temperature_K": [
+      1500.0,
+      2500.0,
+      3500.0,
+      4500.0
+    ],
+    "relative_error": [
+      -0.0003383202157359877,
+      -7.62899320415622e-05,
+      -3.083527294156507e-05,
+      -0.0001014698897914279
+    ]
+  },
+  "nominal_resolved": {
+    "chunks": 84,
+    "observed_bins": 121,
+    "success": true
+  },
+  "prior_summary": {
+    "planned": 27,
+    "finished": 27,
+    "converged": 20,
+    "finite_valid_returned_states": 27,
+    "unresolved_cases": [
+      "prior_01",
+      "prior_02",
+      "prior_04",
+      "prior_10",
+      "prior_13",
+      "prior_18",
+      "prior_21"
+    ],
+    "review_cases": [],
+    "statuses": {
+      "CONVERGED": 20,
+      "MAX_ITERATIONS": 4,
+      "DOMAIN_STEP_FAILED": 3
+    }
+  },
+  "derivative_transition": {
+    "changes": [
+      {
+        "path": "examples/_rce_wasp18b_scattering.py",
+        "before_sha256": "5d0972789037307e7b2061f9465b9a78474bee6b9be9e39e9c2c92216571b933",
+        "after_sha256": "52fc6f622e011374546871d18084d2ff2c99cc944262f4033c407bd8f965ab89",
+        "reason": "Reviewed first-derivative repair; historical result retained with nominal reproduction evidence."
+      },
+      {
+        "path": "src/exojax/rt/direct_sfm.py",
+        "before_sha256": "96a2bc9030d294e9d10948c09ee83e60da0a4b21a7a9b7d50df5dc9548dc017b",
+        "after_sha256": "4e05a8bd4fa08406498450b2ede0decfea34b2c2dd8698eae1f2963a7c96fa3f",
+        "reason": "Reviewed first-derivative repair; historical result retained with nominal reproduction evidence."
+      }
+    ],
+    "regression_cases": 91,
+    "maximum_nominal_temperature_difference_K": 7.275957614183426e-12,
+    "prediction_exactly_reproduced": true,
+    "completed_endpoint_evidence": "results/rce_wasp18b_final8_endpoint_analysis.json"
+  },
+  "recorded_approximations": [
+    "R700 retained by user decision; wide response sensitivity reaches 0.128425 sigma and is record-only.",
+    "OH/FeH/VO/HCN-HNC fixed-column additions were measured; user retains eight absorbers. OH/FeH effects are not numerical errors or bounds after RCE re-equilibration.",
+    "CO2 declared completeness ends at 4000 K; nominal hot-layer contribution and 18 hot prior cases are recorded. Missing hot lines are not bounded.",
+    "Fixed broadening mixtures, dominant-isotope convention, native line wings, atomic completeness and CIA/scattering finite support remain physical assumptions.",
+    "Stellar-tail window/temperature RCE sensitivities were measured on the earlier Fe model; not an eight-species or continuous-prior bound.",
+    "The uppermost temperature changes by 61.834 K on halving bands; retain the measured finite comparison without a sub-kelvin claim.",
+    "Coarse 16-versus-5 temperature nodes give norm 0.3733; the required 16-versus-9 comparison passes and 16 nodes are retained."
+  ],
+  "regression_review": {
+    "status": "complete",
+    "logs": [
+      {
+        "log": {
+          "path": "/home/kawahara/exojax/results/rce_wasp18b_adapter_equilibrated_tests.log",
+          "sha256": "30c110149a5fcebec18a5078ed93ef79b3a1a94de917a72a8b1ac7420e750253"
+        },
+        "summary": "11 passed in 20.03s",
+        "counts": {
+          "passed": 11
+        },
+        "disposition": "Recorded passing component run; scopes overlap, do not sum as unique tests."
+      },
+      {
+        "log": {
+          "path": "/home/kawahara/exojax/results/rce_wasp18b_albedo_derivative_before_tests.log",
+          "sha256": "7aac92733abb3faaf0c5777acd1a5972624115ddc2fbb83cc929ef9b9483d580"
+        },
+        "summary": "6 failed, 8 deselected in 6.78s",
+        "counts": {
+          "failed": 6,
+          "deselected": 8
+        },
+        "disposition": "Reproduced pre-fix derivative failures; superseded by the pinned 47+44 passing cases."
+      },
+      {
+        "log": {
+          "path": "/home/kawahara/exojax/results/rce_wasp18b_albedo_derivative_column_tests.log",
+          "sha256": "54d97c6c799340efef1c2c3e5013080f7cfe8cfe1a9e8e72501e18635467f3fb"
+        },
+        "summary": "44 passed in 45.95s",
+        "counts": {
+          "passed": 44
+        },
+        "disposition": "Recorded passing component run; scopes overlap, do not sum as unique tests."
+      },
+      {
+        "log": {
+          "path": "/home/kawahara/exojax/results/rce_wasp18b_albedo_derivative_flux_tests.log",
+          "sha256": "038e8d4a8d17a689801673e2f6ece521d6a95765b66d2259d00f310452cb80fa"
+        },
+        "summary": "47 passed in 32.91s",
+        "counts": {
+          "passed": 47
+        },
+        "disposition": "Recorded passing component run; scopes overlap, do not sum as unique tests."
+      },
+      {
+        "log": {
+          "path": "/home/kawahara/exojax/results/rce_wasp18b_albedo_derivative_initial_tests.log",
+          "sha256": "7731565e471701c062c0375127057cd08fcb083e503bcd945d9dac193d3f1b82"
+        },
+        "summary": "6 failed, 8 passed in 19.57s",
+        "counts": {
+          "failed": 6,
+          "passed": 8
+        },
+        "disposition": "Intermediate albedo-only repair; reverse AD failures resolved by the direct-source repair."
+      },
+      {
+        "log": {
+          "path": "/home/kawahara/exojax/results/rce_wasp18b_atomic_broadening_generalized_tests.log",
+          "sha256": "dd2ced2101c02e5155568293966ba14b7a407140a28c93daaf348e011dea420f"
+        },
+        "summary": "14 passed in 31.57s",
+        "counts": {
+          "passed": 14
+        },
+        "disposition": "Recorded passing component run; scopes overlap, do not sum as unique tests."
+      },
+      {
+        "log": {
+          "path": "/home/kawahara/exojax/results/rce_wasp18b_atomic_broadening_tests.log",
+          "sha256": "7a0c2e9304d3a16e5c32879b62da556c3750759c38c42a852d1ead95b7b0a7d6"
+        },
+        "summary": "8 passed in 10.59s",
+        "counts": {
+          "passed": 8
+        },
+        "disposition": "Recorded passing component run; scopes overlap, do not sum as unique tests."
+      },
+      {
+        "log": {
+          "path": "/home/kawahara/exojax/results/rce_wasp18b_atomic_jit_tests.log",
+          "sha256": "75e6a041a4812c2888d77f26514ac705787ca635fb0590681aeec9d57c94846a"
+        },
+        "summary": "6 passed, 1 warning in 13.99s",
+        "counts": {
+          "passed": 6
+        },
+        "disposition": "Recorded passing component run; scopes overlap, do not sum as unique tests."
+      },
+      {
+        "log": {
+          "path": "/home/kawahara/exojax/results/rce_wasp18b_audit_roles_regression.log",
+          "sha256": "9a4166a3137c3212553bd1fd80a1455f47edbcbca9c98e62c67a1999b9dff7da"
+        },
+        "summary": "10 passed in 0.85s",
+        "counts": {
+          "passed": 10
+        },
+        "disposition": "Recorded passing component run; scopes overlap, do not sum as unique tests."
+      },
+      {
+        "log": {
+          "path": "/home/kawahara/exojax/results/rce_wasp18b_ckd_sampling_tests.log",
+          "sha256": "26d164747ea98da8886e3b5009e5908ff953b8d9fd02c1cc890a736faa3fcbeb"
+        },
+        "summary": "10 passed in 12.24s",
+        "counts": {
+          "passed": 10
+        },
+        "disposition": "Recorded passing component run; scopes overlap, do not sum as unique tests."
+      },
+      {
+        "log": {
+          "path": "/home/kawahara/exojax/results/rce_wasp18b_comparison_inputs_tests.log",
+          "sha256": "1a2400ebc42e6d23d2a98572a0a623f57b379bf98c0a3a1fd3f3aefcf9cc4ee0"
+        },
+        "summary": "11 passed in 21.31s",
+        "counts": {
+          "passed": 11
+        },
+        "disposition": "Recorded passing component run; scopes overlap, do not sum as unique tests."
+      },
+      {
+        "log": {
+          "path": "/home/kawahara/exojax/results/rce_wasp18b_continuation_cycle_tests.log",
+          "sha256": "0cd05b908e9989b81ec3278ca3800318abdbde5d05b34e10151233b7d9e25493"
+        },
+        "summary": "8 passed in 2.36s",
+        "counts": {
+          "passed": 8
+        },
+        "disposition": "Recorded passing component run; scopes overlap, do not sum as unique tests."
+      },
+      {
+        "log": {
+          "path": "/home/kawahara/exojax/results/rce_wasp18b_exogibbs_equilibrated_tests.log",
+          "sha256": "91cfc8c9d0fbd06bc6d804ce7f072f25d1c830793c48a12d5289b3745f986c75"
+        },
+        "summary": "65 passed in 27.18s",
+        "counts": {
+          "passed": 65
+        },
+        "disposition": "Recorded passing component run; scopes overlap, do not sum as unique tests."
+      },
+      {
+        "log": {
+          "path": "/home/kawahara/exojax/results/rce_wasp18b_failed_comparison_test.log",
+          "sha256": "e0a931b9dca1780822715a39aa25ff3901fbb11582ecf02164b30ec0dedcf0ff"
+        },
+        "summary": "1 passed, 13 deselected in 6.66s",
+        "counts": {
+          "passed": 1,
+          "deselected": 13
+        },
+        "disposition": "Recorded passing component run; scopes overlap, do not sum as unique tests."
+      },
+      {
+        "log": {
+          "path": "/home/kawahara/exojax/results/rce_wasp18b_final8_grid_checks_tests.log",
+          "sha256": "cf7ad87511c29fbf084008a81878ad07bb53269ad49a3ce5e6900cc99c2e7abb"
+        },
+        "summary": "16 passed in 29.83s",
+        "counts": {
+          "passed": 16
+        },
+        "disposition": "Recorded passing component run; scopes overlap, do not sum as unique tests."
+      },
+      {
+        "log": {
+          "path": "/home/kawahara/exojax/results/rce_wasp18b_final8_prior_tests.log",
+          "sha256": "349e6e9e25bb77c46102602886c29c4ff75923f33df6bbecce88638987949f8d"
+        },
+        "summary": "19 passed in 38.92s",
+        "counts": {
+          "passed": 19
+        },
+        "disposition": "Recorded passing component run; scopes overlap, do not sum as unique tests."
+      },
+      {
+        "log": {
+          "path": "/home/kawahara/exojax/results/rce_wasp18b_flux_audit_tests.log",
+          "sha256": "c5110d1d6c629e34ec2a517edfb75a108cc438ca0ff113f9897c80faba161ddd"
+        },
+        "summary": "5 passed in 11.26s",
+        "counts": {
+          "passed": 5
+        },
+        "disposition": "Recorded passing component run; scopes overlap, do not sum as unique tests."
+      },
+      {
+        "log": {
+          "path": "/home/kawahara/exojax/results/rce_wasp18b_forward_continuation_test.log",
+          "sha256": "9c69df0fb20e15ecfc044780ca23efdfd0dacbf305ffb3700868ce249acfff53"
+        },
+        "summary": "1 passed, 10 deselected in 20.67s",
+        "counts": {
+          "passed": 1,
+          "deselected": 10
+        },
+        "disposition": "Recorded passing component run; scopes overlap, do not sum as unique tests."
+      },
+      {
+        "log": {
+          "path": "/home/kawahara/exojax/results/rce_wasp18b_forward_stream_integration_tests.log",
+          "sha256": "55ff0932259e9a804978f041482d3cdb400eed7d5d4b68d7c50e66bc4f52cf5c"
+        },
+        "summary": "2 passed, 8 deselected in 33.00s",
+        "counts": {
+          "passed": 2,
+          "deselected": 8
+        },
+        "disposition": "Recorded passing component run; scopes overlap, do not sum as unique tests."
+      },
+      {
+        "log": {
+          "path": "/home/kawahara/exojax/results/rce_wasp18b_hcn_molecular_tests.log",
+          "sha256": "0779541a766359d7e8d4b24eacdbc17f3e31e1c956c19e0da07f89d38bc8cde2"
+        },
+        "summary": "20 passed, 10 warnings in 50.16s",
+        "counts": {
+          "passed": 20
+        },
+        "disposition": "Recorded passing component run; scopes overlap, do not sum as unique tests."
+      },
+      {
+        "log": {
+          "path": "/home/kawahara/exojax/results/rce_wasp18b_hcn_partition_final_tests.log",
+          "sha256": "fd18a4da724fec169567e0bb4f48b9b6b70de87b21fe3e66c44b6d74cdeab98c"
+        },
+        "summary": "4 passed in 0.35s",
+        "counts": {
+          "passed": 4
+        },
+        "disposition": "Recorded passing component run; scopes overlap, do not sum as unique tests."
+      },
+      {
+        "log": {
+          "path": "/home/kawahara/exojax/results/rce_wasp18b_indexing_optimization_selected_tests.log",
+          "sha256": "839f03f96dcc8eed2b29472ab7f98a5449f72e3f3533e1707f1726ae2052bb83"
+        },
+        "summary": "63 passed, 4 deselected, 63 warnings in 39.35s",
+        "counts": {
+          "passed": 63,
+          "deselected": 4
+        },
+        "disposition": "Recorded passing component run; scopes overlap, do not sum as unique tests."
+      },
+      {
+        "log": {
+          "path": "/home/kawahara/exojax/results/rce_wasp18b_indexing_optimization_tests.log",
+          "sha256": "20eb866df46457b2b438d5d99d433e1d09605fbd9c2c697c79127b4c2885b0cd"
+        },
+        "summary": "4 failed, 63 passed, 68 warnings in 30.52s",
+        "counts": {
+          "failed": 4,
+          "passed": 63
+        },
+        "disposition": "Four optional Zarr tests lacked the zarr dependency; 63 selected cases passed. Adopted P7 assets use NPZ. Zarr is not certified."
+      },
+      {
+        "log": {
+          "path": "/home/kawahara/exojax/results/rce_wasp18b_lsd_flat_tests.log",
+          "sha256": "d82a75f2dbc4eb74585f955ca2827ef8f67094be0d049af1d38aa52da26b6b95"
+        },
+        "summary": "14 passed, 2 warnings in 10.91s",
+        "counts": {
+          "passed": 14
+        },
+        "disposition": "Recorded passing component run; scopes overlap, do not sum as unique tests."
+      },
+      {
+        "log": {
+          "path": "/home/kawahara/exojax/results/rce_wasp18b_lsd_reference_tests.log",
+          "sha256": "45f342b06ddfec11398f7048452e09802f765a8be91964958508e643d9760915"
+        },
+        "summary": "9 passed in 0.13s",
+        "counts": {
+          "passed": 9
+        },
+        "disposition": "Recorded passing component run; scopes overlap, do not sum as unique tests."
+      },
+      {
+        "log": {
+          "path": "/home/kawahara/exojax/results/rce_wasp18b_molecular_omission_cpu_tests.log",
+          "sha256": "d2a43d5c7669f7d6ee65e9145f637a1e9c850137aea1c2e68d33a46ef900ab50"
+        },
+        "summary": "14 passed, 10 warnings in 36.59s",
+        "counts": {
+          "passed": 14
+        },
+        "disposition": "Recorded passing component run; scopes overlap, do not sum as unique tests."
+      },
+      {
+        "log": {
+          "path": "/home/kawahara/exojax/results/rce_wasp18b_molecular_width_tests.log",
+          "sha256": "73606f0fdd8d2b1efa0d8609f2509e54e938c1ad166b776dd787b0dfba86b15a"
+        },
+        "summary": "3 passed in 0.30s",
+        "counts": {
+          "passed": 3
+        },
+        "disposition": "Recorded passing component run; scopes overlap, do not sum as unique tests."
+      },
+      {
+        "log": {
+          "path": "/home/kawahara/exojax/results/rce_wasp18b_opacity_node_tests.log",
+          "sha256": "60a07194ee538b0294eab025a23ca82727584e0b5010c602390f70389eacf64a"
+        },
+        "summary": "22 passed in 47.64s",
+        "counts": {
+          "passed": 22
+        },
+        "disposition": "Recorded passing component run; scopes overlap, do not sum as unique tests."
+      },
+      {
+        "log": {
+          "path": "/home/kawahara/exojax/results/rce_wasp18b_opacity_node_tests_initial.log",
+          "sha256": "0047a588c4d7bad2c9a3c858fe2f7ed221c1dc6d7c488447e8aa1bd85dfcd7dc"
+        },
+        "summary": "1 failed, 21 passed in 46.67s",
+        "counts": {
+          "failed": 1,
+          "passed": 21
+        },
+        "disposition": "One test used a Python-list JAX index; the corrected 22-case suite passed."
+      },
+      {
+        "log": {
+          "path": "/home/kawahara/exojax/results/rce_wasp18b_opacity_pressure_tests.log",
+          "sha256": "27bb2ebea7ea037754ba1e160ef8034c0b34a54e69f30b49ccd3c261fc344c9b"
+        },
+        "summary": "17 passed in 31.65s",
+        "counts": {
+          "passed": 17
+        },
+        "disposition": "Recorded passing component run; scopes overlap, do not sum as unique tests."
+      },
+      {
+        "log": {
+          "path": "/home/kawahara/exojax/results/rce_wasp18b_prefill_tests.log",
+          "sha256": "1324efe6cc8b1c1906aff918f5d0778293de6ec7b6393a0129cde75b29391271"
+        },
+        "summary": "4 passed in 5.90s",
+        "counts": {
+          "passed": 4
+        },
+        "disposition": "Recorded passing component run; scopes overlap, do not sum as unique tests."
+      },
+      {
+        "log": {
+          "path": "/home/kawahara/exojax/results/rce_wasp18b_pressure_refinement_tests.log",
+          "sha256": "ef2ccea1af8dae146d6599ec18ea389303bca63713be98f6b4992c9664125cf0"
+        },
+        "summary": "20 passed in 38.43s",
+        "counts": {
+          "passed": 20
+        },
+        "disposition": "Recorded passing component run; scopes overlap, do not sum as unique tests."
+      },
+      {
+        "log": {
+          "path": "/home/kawahara/exojax/results/rce_wasp18b_pressure_stream_tests.log",
+          "sha256": "a7ef04ce9824a45ecf79fc6051ccc8c81c7719f5b94865c52bba239a22885f08"
+        },
+        "summary": "6 passed in 21.65s",
+        "counts": {
+          "passed": 6
+        },
+        "disposition": "Recorded passing component run; scopes overlap, do not sum as unique tests."
+      },
+      {
+        "log": {
+          "path": "/home/kawahara/exojax/results/rce_wasp18b_scattering_audit_tests.log",
+          "sha256": "f1b8ffb7bda049f8cf872e99e8bd8c72e73d8efce04fb2bfbd1fa3948b4720fc"
+        },
+        "summary": "18 passed in 4.70s",
+        "counts": {
+          "passed": 18
+        },
+        "disposition": "Recorded passing component run; scopes overlap, do not sum as unique tests."
+      },
+      {
+        "log": {
+          "path": "/home/kawahara/exojax/results/rce_wasp18b_scattering_support_policy_tests.log",
+          "sha256": "db4b7ca0e3ff6bcf95cd442dd8542ca8d7bbb9d641c94328d003b66ee0cbd5cf"
+        },
+        "summary": "23 passed in 10.01s",
+        "counts": {
+          "passed": 23
+        },
+        "disposition": "Recorded passing component run; scopes overlap, do not sum as unique tests."
+      },
+      {
+        "log": {
+          "path": "/home/kawahara/exojax/results/rce_wasp18b_scattering_support_regression.log",
+          "sha256": "49077e89d7db01cf1bde00e3b9fb3e7fcbb09424141830905937a94b8a6c3c13"
+        },
+        "summary": "1 failed, 75 passed, 2 deselected in 82.79s (0:01:22)",
+        "counts": {
+          "failed": 1,
+          "passed": 75,
+          "deselected": 2
+        },
+        "disposition": "One 1.16e-16 relative transfer comparison failure; corrected policy tests and later 44-case suite passed."
+      },
+      {
+        "log": {
+          "path": "/home/kawahara/exojax/results/rce_wasp18b_scattering_support_tests.log",
+          "sha256": "8765c1c151a1d93540b8dee37178959a58418809119ff14282ae24d37542437f"
+        },
+        "summary": "56 passed, 1 skipped in 37.09s",
+        "counts": {
+          "passed": 56,
+          "skipped": 1
+        },
+        "disposition": "Recorded passing component run; scopes overlap, do not sum as unique tests."
+      },
+      {
+        "log": {
+          "path": "/home/kawahara/exojax/results/rce_wasp18b_stellar_scattering_regression.log",
+          "sha256": "f0c30f9df3d5b1622dadcbd9bcf425059b9b64c462da32d9a3504a1375e22a1c"
+        },
+        "summary": "21 passed, 2 deselected in 62.91s (0:01:02)",
+        "counts": {
+          "passed": 21,
+          "deselected": 2
+        },
+        "disposition": "Recorded passing component run; scopes overlap, do not sum as unique tests."
+      },
+      {
+        "log": {
+          "path": "/home/kawahara/exojax/results/rce_wasp18b_stellar_scattering_tests.log",
+          "sha256": "0db98f9296f58fff8ba3b97abe4b22f6e4f279a686ae81b6e2c22bef99b913a1"
+        },
+        "summary": "30 passed in 33.18s",
+        "counts": {
+          "passed": 30
+        },
+        "disposition": "Recorded passing component run; scopes overlap, do not sum as unique tests."
+      },
+      {
+        "log": {
+          "path": "/home/kawahara/exojax/results/rce_wasp18b_thermal_scattering_tests.log",
+          "sha256": "bf61006396e0cf42e65d2b0b2c0edfa6761c573a6564048bc74dd306430b7af8"
+        },
+        "summary": "7 passed in 6.39s",
+        "counts": {
+          "passed": 7
+        },
+        "disposition": "Recorded passing component run; scopes overlap, do not sum as unique tests."
+      },
+      {
+        "log": {
+          "path": "/home/kawahara/exojax/results/rce_wasp18b_validation_stellar_audit_tests.log",
+          "sha256": "8aff3376a016affb961977d4ec69fea301ce66cb73289b926c5b885ea7bf9f45"
+        },
+        "summary": "2 failed, 43 passed in 80.67s (0:01:20)",
+        "counts": {
+          "failed": 2,
+          "passed": 43
+        },
+        "disposition": "Two one-ulp comparison failures; corrected cases passed, with source/test/log pins in the implementation record."
+      },
+      {
+        "log": {
+          "path": "/home/kawahara/exojax/results/rce_wasp18b_validation_stellar_audit_zero_tests.log",
+          "sha256": "e9914bd4568aff6c72470d4621c6f23b4cbdabc66b6b54c64f1ddca3fa4b8995"
+        },
+        "summary": "2 passed, 4 deselected in 21.91s",
+        "counts": {
+          "passed": 2,
+          "deselected": 4
+        },
+        "disposition": "Recorded passing component run; scopes overlap, do not sum as unique tests."
+      }
+    ],
+    "archived_historical_runs": [
+      {
+        "label": "new_p7_cpu",
+        "log": {
+          "path": "/home/kawahara/exojax/results/rce_wasp18b_p7_acceptance_evidence/rce_p7_final_cpu.log",
+          "sha256": "d0e784b8a8608c8113df56aac99527a95372e8a9a274844a93c564ceb4f44317"
+        },
+        "summary": "42 passed, 2 warnings in 67.21s (0:01:07)",
+        "counts": {
+          "passed": 42
+        }
+      },
+      {
+        "label": "new_p7_a100",
+        "log": {
+          "path": "/home/kawahara/exojax/results/rce_wasp18b_p7_acceptance_evidence/rce_p7_final_gpu.log",
+          "sha256": "3afad3622b1bb9c52e6f5c7d93df2a9a371b7f0c29312767e65b62abd6130897"
+        },
+        "summary": "42 passed, 2 warnings in 102.46s (0:01:42)",
+        "counts": {
+          "passed": 42
+        }
+      },
+      {
+        "label": "p1_p2_p5_p6_and_initial_loader_cpu",
+        "log": {
+          "path": "/home/kawahara/exojax/results/rce_wasp18b_p7_acceptance_evidence/rce_p7_legacy_cpu_tests.log",
+          "sha256": "f2e9cd4a706a0c830956052f12d75aa2b56cf2c726fd20610796dd182805abca"
+        },
+        "summary": "67 passed, 1 warning in 291.01s (0:04:51)",
+        "counts": {
+          "passed": 67
+        }
+      },
+      {
+        "label": "p6_a100",
+        "log": {
+          "path": "/home/kawahara/exojax/results/rce_wasp18b_p7_acceptance_evidence/rce_p6_gpu_tests.log",
+          "sha256": "3254bf64f4e993a9198b705e31a0b29d11150e3497a77110d020b2a5cf09bbc2"
+        },
+        "summary": "5 passed in 294.53s (0:04:54)",
+        "counts": {
+          "passed": 5
+        }
+      }
+    ],
+    "fixture_checks": {
+      "explicit_ckd_cpu": {
+        "count": 36,
+        "scope": "Tiny two-species CPU column, existing RT/CKD operators and primal toy evaluator; no production chemistry, full tables or GPU memory validation."
+      },
+      "explicit_ckd_wrapper_final": {
+        "count": 13,
+        "scope": "CPU CLI lifecycle checks in a temporary directory. Real missing-input forward failure; success and raised-exception use temporary in-memory entry fixtures. No full scientific run."
+      },
+      "final8_grid_checks_launcher": {
+        "count": 42,
+        "scope": "Synthetic saved reports and mocked child execution; numerical kernels are checked separately."
+      },
+      "final8_prior": {
+        "count": 22,
+        "scope": "Small real CKD CPU fixture and synthetic reports; no full-column GPU computation."
+      }
+    },
+    "counting": "Overlapping suites and fixtures are not summed as unique scientific tests.",
+    "scope": "Existing execution records reviewed; no pytest suite rerun and no project-wide all-green claim.",
+    "known_out_of_scope": [
+      "Four Zarr tests were not validated without the optional dependency.",
+      "The historical ExoGibbs whole-suite two 80-bar failures in implementation_plan.rst remain outside P7 acceptance."
+    ]
+  },
+  "handoff_p8": [
+    "Investigate the seven unresolved prior RCE attempts without silently trimming the prior.",
+    "Validate implicit AD and local smoothness on the real model, including convective switches.",
+    "Run prior predictive checks and synthetic recovery in the adopted WASP-18b configuration before retrieval.",
+    "Implement and diagnose conditional retrieval; data remain candidate, with the stated observational assumptions."
+  ],
+  "handoff_p9": [
+    "Assess posterior sensitivity to the recorded opacity, stellar, geometric, response and covariance assumptions."
+  ],
+  "evidence": [
+    {
+      "path": "/home/kawahara/ExoSpecDB/production/wasp18b-soss-emission-spatial-gls-0.1.0-r1/diagnostics.npz",
+      "sha256": "e836e21e81e816c8a286e3b1089eca8b5d629585434767daf7140f0cd0aed0ef"
+    },
+    {
+      "path": "/home/kawahara/ExoSpecDB/production/wasp18b-soss-emission-spatial-gls-0.1.0-r1/emission_candidate.ecsv",
+      "sha256": "81e71c2b367ef7bd6706e5672497ed02fdb84dddd06b7c68fa6d3fa03e8f6543"
+    },
+    {
+      "path": "/home/kawahara/ExoSpecDB/production/wasp18b-soss-emission-spatial-gls-0.1.0-r1/recipe.json",
+      "sha256": "fe52a6012586856b26868755c57ec28428d04c312a5ddde99cfdd4c9bf14fd15"
+    },
+    {
+      "path": "/home/kawahara/ExoSpecDB/production/wasp18b-soss-emission-spatial-gls-0.1.0-r1/summary.json",
+      "sha256": "be7265794437103108ed44c63dae1fdb551e8392c0feb7306685999515ac5c3e"
+    },
+    {
+      "path": "/home/kawahara/exojax/documents/design/rce/molecular_omission.rst",
+      "sha256": "6fddf92cd1c22785886d647e523ea0febf21fc0a87e24a4e910053a5bb527fb5"
+    },
+    {
+      "path": "/home/kawahara/exojax/documents/design/rce/stellar_longwave.rst",
+      "sha256": "4acbc493dc54515a47bbec58dc0e1949bef84d527175b5aea79eaa03fc2f9b8e"
+    },
+    {
+      "path": "/home/kawahara/exojax/documents/design/rce/stellar_scattering_and_broadening.rst",
+      "sha256": "94576e22d3d9ebf8ab6e9fe6ad518f4a3d2c73fc332fd7a3d3051ea76f4e3de4"
+    },
+    {
+      "path": "/home/kawahara/exojax/examples/_rce_wasp18b_audit.py",
+      "sha256": "d010a0c03166323e441662640f712f269cf6e44e80fc52c0cf2d974b12f2507f"
+    },
+    {
+      "path": "/home/kawahara/exojax/examples/_rce_wasp18b_scattering.py",
+      "sha256": "52fc6f622e011374546871d18084d2ff2c99cc944262f4033c407bd8f965ab89"
+    },
+    {
+      "path": "/home/kawahara/exojax/examples/rce_wasp18b_forward.py",
+      "sha256": "ad8e54928f806f436cba365468e3ebd061288df381cb88189a2533b691ff448c"
+    },
+    {
+      "path": "/home/kawahara/exojax/examples/rce_wasp18b_validation.py",
+      "sha256": "b02b51e39a6602810f2e0a3b357b7a8bea444984458b0e9dc4d97abfe5c80486"
+    },
+    {
+      "path": "/home/kawahara/exojax/results/analyze_rce_wasp18b_final8_endpoints.py",
+      "sha256": "2aa41e1e3aea8c8a3d95cc89c18d4896e6e8f7d06e6102466d4719ab78e16b5a"
+    },
+    {
+      "path": "/home/kawahara/exojax/results/analyze_rce_wasp18b_final8_grids.py",
+      "sha256": "9e30c67d5bd605c00653e4e32b0149e00be348df732c22753a704e128c9fb89f"
+    },
+    {
+      "path": "/home/kawahara/exojax/results/analyze_rce_wasp18b_final8_inner.py",
+      "sha256": "2dcb1104dcf1e82fb4ffdf5510774796fe4701bc3a216713baaae7cb3fc3eecf"
+    },
+    {
+      "path": "/home/kawahara/exojax/results/analyze_rce_wasp18b_final8_omission.py",
+      "sha256": "940b555eedc46873ad62867398e3f5ab3ff64364e3d0fb8c1fd812938ed1f92f"
+    },
+    {
+      "path": "/home/kawahara/exojax/results/analyze_rce_wasp18b_final8_opacity.py",
+      "sha256": "c5fce59c0843451a4343d058f64363331d7fa8b87a728a1a939ebf806e76c829"
+    },
+    {
+      "path": "/home/kawahara/exojax/results/analyze_rce_wasp18b_final8_prior.py",
+      "sha256": "65ca43d2b8b1a363ad7225acd9377411ccc97b8856e7692e6f6505f2af3efb23"
+    },
+    {
+      "path": "/home/kawahara/exojax/results/check_rce_wasp18b_final8_grid_checks.py",
+      "sha256": "248c657f996ac07c01f03d387c19e1553c5eab157e618169ee74c909e674aa56"
+    },
+    {
+      "path": "/home/kawahara/exojax/results/check_rce_wasp18b_final8_prior.py",
+      "sha256": "105111426255e745e20cfcccee172d8758040e420af56abe7dd99fbf6ce11657"
+    },
+    {
+      "path": "/home/kawahara/exojax/results/rce_wasp18b_adapter_equilibrated_tests.log",
+      "sha256": "30c110149a5fcebec18a5078ed93ef79b3a1a94de917a72a8b1ac7420e750253"
+    },
+    {
+      "path": "/home/kawahara/exojax/results/rce_wasp18b_albedo_derivative_before_tests.log",
+      "sha256": "7aac92733abb3faaf0c5777acd1a5972624115ddc2fbb83cc929ef9b9483d580"
+    },
+    {
+      "path": "/home/kawahara/exojax/results/rce_wasp18b_albedo_derivative_column_tests.log",
+      "sha256": "54d97c6c799340efef1c2c3e5013080f7cfe8cfe1a9e8e72501e18635467f3fb"
+    },
+    {
+      "path": "/home/kawahara/exojax/results/rce_wasp18b_albedo_derivative_fix.json",
+      "sha256": "df9ca773d6a69dee93a4d3a1fac24e25102b154c01b9f3e97e8bb42348b9d17f"
+    },
+    {
+      "path": "/home/kawahara/exojax/results/rce_wasp18b_albedo_derivative_flux_tests.log",
+      "sha256": "038e8d4a8d17a689801673e2f6ece521d6a95765b66d2259d00f310452cb80fa"
+    },
+    {
+      "path": "/home/kawahara/exojax/results/rce_wasp18b_albedo_derivative_initial_tests.log",
+      "sha256": "7731565e471701c062c0375127057cd08fcb083e503bcd945d9dac193d3f1b82"
+    },
+    {
+      "path": "/home/kawahara/exojax/results/rce_wasp18b_atomic_broadening_generalized_tests.log",
+      "sha256": "dd2ced2101c02e5155568293966ba14b7a407140a28c93daaf348e011dea420f"
+    },
+    {
+      "path": "/home/kawahara/exojax/results/rce_wasp18b_atomic_broadening_tests.log",
+      "sha256": "7a0c2e9304d3a16e5c32879b62da556c3750759c38c42a852d1ead95b7b0a7d6"
+    },
+    {
+      "path": "/home/kawahara/exojax/results/rce_wasp18b_atomic_jit_tests.log",
+      "sha256": "75e6a041a4812c2888d77f26514ac705787ca635fb0590681aeec9d57c94846a"
+    },
+    {
+      "path": "/home/kawahara/exojax/results/rce_wasp18b_audit_roles_regression.log",
+      "sha256": "9a4166a3137c3212553bd1fd80a1455f47edbcbca9c98e62c67a1999b9dff7da"
+    },
+    {
+      "path": "/home/kawahara/exojax/results/rce_wasp18b_ckd_sampling_tests.log",
+      "sha256": "26d164747ea98da8886e3b5009e5908ff953b8d9fd02c1cc890a736faa3fcbeb"
+    },
+    {
+      "path": "/home/kawahara/exojax/results/rce_wasp18b_comparison_inputs_tests.log",
+      "sha256": "1a2400ebc42e6d23d2a98572a0a623f57b379bf98c0a3a1fd3f3aefcf9cc4ee0"
+    },
+    {
+      "path": "/home/kawahara/exojax/results/rce_wasp18b_continuation_cycle_tests.log",
+      "sha256": "0cd05b908e9989b81ec3278ca3800318abdbde5d05b34e10151233b7d9e25493"
+    },
+    {
+      "path": "/home/kawahara/exojax/results/rce_wasp18b_exogibbs_equilibrated_tests.log",
+      "sha256": "91cfc8c9d0fbd06bc6d804ce7f072f25d1c830793c48a12d5289b3745f986c75"
+    },
+    {
+      "path": "/home/kawahara/exojax/results/rce_wasp18b_explicit_ckd_cpu_checks.json",
+      "sha256": "97bba4153f14e26a5f19cfb83aed0ac393ed81d6b8463427a767587a85b4cee2"
+    },
+    {
+      "path": "/home/kawahara/exojax/results/rce_wasp18b_explicit_ckd_wrapper_final_checks.json",
+      "sha256": "530ac10335b310675cf23aa866a9370a98448cc6f6acbf26ad4b7d7c0db6c95b"
+    },
+    {
+      "path": "/home/kawahara/exojax/results/rce_wasp18b_failed_comparison_test.log",
+      "sha256": "e0a931b9dca1780822715a39aa25ff3901fbb11582ecf02164b30ec0dedcf0ff"
+    },
+    {
+      "path": "/home/kawahara/exojax/results/rce_wasp18b_final8_a100.json",
+      "sha256": "fad3468edfa3b58c6157f785a1f6aed98a0a7fd2765bcb26d73ccd9b7c9b8671"
+    },
+    {
+      "path": "/home/kawahara/exojax/results/rce_wasp18b_final8_bands2_a100.json",
+      "sha256": "a5578dc7ca2e306b56df6341ceeffc01f0dc4531998ab28e9f5f60e8e127bb0a"
+    },
+    {
+      "path": "/home/kawahara/exojax/results/rce_wasp18b_final8_co2_audits.json",
+      "sha256": "19dff597ac45b5456fd76ec9e25f6531f9c4d45e801066950fb938a752202c4b"
+    },
+    {
+      "path": "/home/kawahara/exojax/results/rce_wasp18b_final8_co2_removal_audit.json",
+      "sha256": "615fa646c6a07b32105a17ead379b50803d3167a2a942a062200183a52aa68ab"
+    },
+    {
+      "path": "/home/kawahara/exojax/results/rce_wasp18b_final8_co2_removal_verification.json",
+      "sha256": "61817cbe13f50860704c87774c565b911746be11c8c87c8ecbb81a53ed4e8a82"
+    },
+    {
+      "path": "/home/kawahara/exojax/results/rce_wasp18b_final8_component_audit.json",
+      "sha256": "a1bace73d00691c087256099a3c75462eeaea2aae730007fecdcd7e2b1022d23"
+    },
+    {
+      "path": "/home/kawahara/exojax/results/rce_wasp18b_final8_depth_a100.json",
+      "sha256": "b5dbf0669c6f6d2e4458cbb7f348f30effa2b9e430fe8a5fce78ac5135201aa0"
+    },
+    {
+      "path": "/home/kawahara/exojax/results/rce_wasp18b_final8_endpoint_analysis.json",
+      "sha256": "b1a509e33971f40459b65c9661615d9e5d0f5960b334fbb6ba217e6fdeb469f2"
+    },
+    {
+      "path": "/home/kawahara/exojax/results/rce_wasp18b_final8_endpoint_retry_both_manifest.json",
+      "sha256": "118af9b4b982305bb960974e7cfebcf675cb39e9490193340c9bba231915dc12"
+    },
+    {
+      "path": "/home/kawahara/exojax/results/rce_wasp18b_final8_endpoint_retry_job/endpoints_both.json",
+      "sha256": "8ab913d13685af9a56ecd52725f8ed80c12d6dedaf1ec93296ea57ebe28f55eb"
+    },
+    {
+      "path": "/home/kawahara/exojax/results/rce_wasp18b_final8_endpoint_retry_job/endpoints_both/execution_adapter.json",
+      "sha256": "59dda8816143ff703b2ea43a9e6c61f53aa5eb758b3bdf633909174dae731ee8"
+    },
+    {
+      "path": "/home/kawahara/exojax/results/rce_wasp18b_final8_endpoint_retry_job/endpoints_both/resources.jsonl",
+      "sha256": "043165ab3449cd3fa772784222ccbfba9757007d45e892b8bce816f5154dcce6"
+    },
+    {
+      "path": "/home/kawahara/exojax/results/rce_wasp18b_final8_endpoint_retry_job/endpoints_both_pair.json",
+      "sha256": "73402a8e5d04162ad958dbede6bc2f2da6e2c92b95fbb4bee5f0dd9400c00792"
+    },
+    {
+      "path": "/home/kawahara/exojax/results/rce_wasp18b_final8_endpoint_retry_job/endpoints_upper.json",
+      "sha256": "d2a2f94423fc60e989096a48be89baeddb18d065fd925c02c3c577e4bc56213b"
+    },
+    {
+      "path": "/home/kawahara/exojax/results/rce_wasp18b_final8_endpoint_retry_job/endpoints_upper/execution_adapter.json",
+      "sha256": "4b8760786fb893c66bc5b5d1aa1cf9caefa28771724702551e98786057583ea0"
+    },
+    {
+      "path": "/home/kawahara/exojax/results/rce_wasp18b_final8_endpoint_retry_job/endpoints_upper/resources.jsonl",
+      "sha256": "d96e3af2aea4f311e5d754a54a5c1916f119702708d1fc15329d709d8f131bd4"
+    },
+    {
+      "path": "/home/kawahara/exojax/results/rce_wasp18b_final8_endpoint_retry_job/endpoints_upper_pair.json",
+      "sha256": "81d898172588a58d039fd6058c1a93c09533cc6f9181fe04da7310e34b757955"
+    },
+    {
+      "path": "/home/kawahara/exojax/results/rce_wasp18b_final8_endpoint_retry_job/explicit_ckd_baseline.json",
+      "sha256": "3a12e81545cf071759a236913788a4d610b36b139a69e6c13e41c9fee0c35eb4"
+    },
+    {
+      "path": "/home/kawahara/exojax/results/rce_wasp18b_final8_endpoint_retry_job/explicit_ckd_baseline/execution_adapter.json",
+      "sha256": "06c4c962cdc023f372ea7fbfcc51c8c2b50979c3161a4a8471a9ac19d458421a"
+    },
+    {
+      "path": "/home/kawahara/exojax/results/rce_wasp18b_final8_endpoint_retry_job/explicit_ckd_baseline/resources.jsonl",
+      "sha256": "24f6b6a92b12697b795637d017abfb4cadaad2f8620d10e745ec54161aa4d973"
+    },
+    {
+      "path": "/home/kawahara/exojax/results/rce_wasp18b_final8_endpoint_retry_job/explicit_ckd_baseline_pair.json",
+      "sha256": "3dd154eac987f15f79c2a4bf37d8b8da1130835b34fd843e53459bfa1d18d8f0"
+    },
+    {
+      "path": "/home/kawahara/exojax/results/rce_wasp18b_final8_endpoint_retry_job/status.json",
+      "sha256": "d78ec781bb81f2e0a258d8fb664d7753cead35eed21f9938e46cbe7a010d50bf"
+    },
+    {
+      "path": "/home/kawahara/exojax/results/rce_wasp18b_final8_endpoint_retry_plan.json",
+      "sha256": "30d9815cdb009a5c3800d421c81424aa1f045fab8e05d43cb6b9d254456ba184"
+    },
+    {
+      "path": "/home/kawahara/exojax/results/rce_wasp18b_final8_endpoints_lower_a100.json",
+      "sha256": "5101ab9744b26e42dbe79ea21f7c9c4e1fa4d5cd5e491adc713845f4572015ff"
+    },
+    {
+      "path": "/home/kawahara/exojax/results/rce_wasp18b_final8_endpoints_upper_a100.json",
+      "sha256": "af7ead080c49ea42bd0ed319fb08bbc9c35e8778d279b5ac9b0fa882058fe867"
+    },
+    {
+      "path": "/home/kawahara/exojax/results/rce_wasp18b_final8_fixed_audits_verification.json",
+      "sha256": "a0cf5de2190c6ba0dc021447f63bad0e89e0e691e615677dea142b7af388ea2d"
+    },
+    {
+      "path": "/home/kawahara/exojax/results/rce_wasp18b_final8_flux_audit.json",
+      "sha256": "297dd1bb276b3877b51ff50615d530631e80a9225c18b28aaea096b9ce8e042d"
+    },
+    {
+      "path": "/home/kawahara/exojax/results/rce_wasp18b_final8_grid_analysis.json",
+      "sha256": "b858a6c9536076aaa7203b217854ffcb3d5210e69c9ecd1d369ee11d18f41907"
+    },
+    {
+      "path": "/home/kawahara/exojax/results/rce_wasp18b_final8_grid_checks_job/depth/execution_adapter.json",
+      "sha256": "e9ff112e08b3b8ba259ab319f58efc9c5a36845d39b587868609a5ef84444719"
+    },
+    {
+      "path": "/home/kawahara/exojax/results/rce_wasp18b_final8_grid_checks_job/depth/resources.jsonl",
+      "sha256": "3237f2745e1303cf7fd9b4f0a3d929ef1d0d6318d1442995a454c7c5b7fa2f68"
+    },
+    {
+      "path": "/home/kawahara/exojax/results/rce_wasp18b_final8_grid_checks_job/depth/time.txt",
+      "sha256": "93fa5f7c652420ee5eb4abf5810e93386219a5aacea3f6aeaf2c7858d3b1561c"
+    },
+    {
+      "path": "/home/kawahara/exojax/results/rce_wasp18b_final8_grid_checks_job/depth_comparisons.json",
+      "sha256": "c3c28ee5ae1eaa44a5c70695a9d296672cc19669a4a586f6a38dbd3cb2a86ca8"
+    },
+    {
+      "path": "/home/kawahara/exojax/results/rce_wasp18b_final8_grid_checks_job/opacity_pressure/execution_adapter.json",
+      "sha256": "2caa383bf9ce08cc6bad5b6286f602cba19e86bf327c3fb7c3e9c41ac247ad2e"
+    },
+    {
+      "path": "/home/kawahara/exojax/results/rce_wasp18b_final8_grid_checks_job/opacity_pressure/resources.jsonl",
+      "sha256": "85fbaa2d20152fe0161d67e625ce9e0d81b3b407afd4200f8605bd277d8ed06d"
+    },
+    {
+      "path": "/home/kawahara/exojax/results/rce_wasp18b_final8_grid_checks_job/opacity_pressure/time.txt",
+      "sha256": "99dbc2fd95f87b584b8f8df90539d79a4cd0be2fb0508246bbf9a12225f33be6"
+    },
+    {
+      "path": "/home/kawahara/exojax/results/rce_wasp18b_final8_grid_checks_job/opacity_pressure_comparisons.json",
+      "sha256": "9c6515203c0ad83e7e3e4054c1fcd577b579d2611c5fcf57ada2f196c132ca53"
+    },
+    {
+      "path": "/home/kawahara/exojax/results/rce_wasp18b_final8_grid_checks_job/opacity_temperature/execution_adapter.json",
+      "sha256": "c514dd4a41291e895067ee1b94b7a1ddc839dd7fc985ad49c1e3ef0c7e28ea41"
+    },
+    {
+      "path": "/home/kawahara/exojax/results/rce_wasp18b_final8_grid_checks_job/opacity_temperature/resources.jsonl",
+      "sha256": "88a9632549d590e881ed49d30f718fbcf3be358c335a9f6f1001bb5afc812014"
+    },
+    {
+      "path": "/home/kawahara/exojax/results/rce_wasp18b_final8_grid_checks_job/opacity_temperature/time.txt",
+      "sha256": "0a7bb61266700c930cd00e08933da3bc115d80f4ea0c8b1e737aad2ba30a35e0"
+    },
+    {
+      "path": "/home/kawahara/exojax/results/rce_wasp18b_final8_grid_checks_job/opacity_temperature_comparisons.json",
+      "sha256": "ce69f9510d4c24312e3ed6b716de231fbd739217f8e276f89465222e5bdb5c9e"
+    },
+    {
+      "path": "/home/kawahara/exojax/results/rce_wasp18b_final8_grid_checks_job/quadrature/execution_adapter.json",
+      "sha256": "d19ee2831b2440972ee73efe84c0a39fe552305297f2869fc120863ea9d9f474"
+    },
+    {
+      "path": "/home/kawahara/exojax/results/rce_wasp18b_final8_grid_checks_job/quadrature/resources.jsonl",
+      "sha256": "5ea8d1c2e68a57af930862046faf50a53a60b9e19829f8d7364a212714a6a217"
+    },
+    {
+      "path": "/home/kawahara/exojax/results/rce_wasp18b_final8_grid_checks_job/quadrature/time.txt",
+      "sha256": "bc1b47704563c0e5be1b585761a7835fa101d954f76de03dc10aef7dc7761044"
+    },
+    {
+      "path": "/home/kawahara/exojax/results/rce_wasp18b_final8_grid_checks_job/quadrature_comparisons.json",
+      "sha256": "86aab16be4cf966e65c2a51bfbcd99d323697bd1cb5a5ea6d9f0b6d706dd3404"
+    },
+    {
+      "path": "/home/kawahara/exojax/results/rce_wasp18b_final8_grid_checks_job/status.json",
+      "sha256": "79bd1ef6d780a9db0a028676261055ea84cd91e38ce1d0dee3ea7f3037a53faa"
+    },
+    {
+      "path": "/home/kawahara/exojax/results/rce_wasp18b_final8_grid_checks_launcher_checks.json",
+      "sha256": "a6ac3081089861ac9f8fc87a098979f3548a1c0635d3360591bd0dc36e66756c"
+    },
+    {
+      "path": "/home/kawahara/exojax/results/rce_wasp18b_final8_grid_checks_plan.json",
+      "sha256": "27b17125d05999eaa033f54140918f2768e473a1960c2adb7ddd4b8182985726"
+    },
+    {
+      "path": "/home/kawahara/exojax/results/rce_wasp18b_final8_grid_checks_tests.log",
+      "sha256": "cf7ad87511c29fbf084008a81878ad07bb53269ad49a3ce5e6900cc99c2e7abb"
+    },
+    {
+      "path": "/home/kawahara/exojax/results/rce_wasp18b_final8_inner_analysis.json",
+      "sha256": "f181a68361f93dfc8ddd5d4586613d1ce840c744fee5de9cb302c418c08a8994"
+    },
+    {
+      "path": "/home/kawahara/exojax/results/rce_wasp18b_final8_inner_refinement_a100.json",
+      "sha256": "d957c9fa21c5632307174d89a4e006b615e650c390710dd91a3f7573f9ba1bf8"
+    },
+    {
+      "path": "/home/kawahara/exojax/results/rce_wasp18b_final8_inner_review_decision.json",
+      "sha256": "a44073b3d3f5ab080a19a84d3dd3c4b44893f7b95154a2691621d78fbcd8d2a4"
+    },
+    {
+      "path": "/home/kawahara/exojax/results/rce_wasp18b_final8_manifest.json",
+      "sha256": "3a47729633649ebf0c21455616b6ad1aaaabf0faf855c1031edb9d5e4c027cd9"
+    },
+    {
+      "path": "/home/kawahara/exojax/results/rce_wasp18b_final8_molecular_omission_archived_full.json",
+      "sha256": "fb0b35a0173cb48eb10b7fc0509bcc8c465309bdd63dee36915692797f420761"
+    },
+    {
+      "path": "/home/kawahara/exojax/results/rce_wasp18b_final8_ng32_a100.json",
+      "sha256": "b8e578ef7693d7e99b01c8b1f1470dc0ac652ed63b7a848d259fe8a6c7082820"
+    },
+    {
+      "path": "/home/kawahara/exojax/results/rce_wasp18b_final8_nominal_verification.json",
+      "sha256": "f08e520d4b1e180116b4f57ea2b2810675e126aea2c8a8e06fb8962fab7bdba0"
+    },
+    {
+      "path": "/home/kawahara/exojax/results/rce_wasp18b_final8_omission_analysis.json",
+      "sha256": "06808cf944c4dbba39a515702f167aa70661308e3889be8200af5f05e8252de6"
+    },
+    {
+      "path": "/home/kawahara/exojax/results/rce_wasp18b_final8_omission_job.json",
+      "sha256": "6868a04e1d1ee4b717c6a518a708aba4e6fdcd0ed6ccf75631646c390c7de1f0"
+    },
+    {
+      "path": "/home/kawahara/exojax/results/rce_wasp18b_final8_opacity_analysis.json",
+      "sha256": "04589cd66a3a4e37343b7defe1b7d05e056bebf69081e31cb321cdfed4fc8115"
+    },
+    {
+      "path": "/home/kawahara/exojax/results/rce_wasp18b_final8_opacity_execution_plan.json",
+      "sha256": "8c43345932f16b11a64b48e333d71c2e7b191883b96e7d261aeaf7ca5be6ad43"
+    },
+    {
+      "path": "/home/kawahara/exojax/results/rce_wasp18b_final8_opacity_job/bands2/execution_adapter.json",
+      "sha256": "e0126a2b68e5e67cd9bbce4c62bbb088a4d34967e7a764d3070586be3aa5f43f"
+    },
+    {
+      "path": "/home/kawahara/exojax/results/rce_wasp18b_final8_opacity_job/bands2_pair.json",
+      "sha256": "5d15899536671adcbd13f915cf65f916803d786691a3bc0bc67f25082f62d766"
+    },
+    {
+      "path": "/home/kawahara/exojax/results/rce_wasp18b_final8_opacity_job/endpoints_lower/execution_adapter.json",
+      "sha256": "ec0b1b10df73f7619f4adb1b8a479bf57ddac4fba3e0422cbf8d1b95694af221"
+    },
+    {
+      "path": "/home/kawahara/exojax/results/rce_wasp18b_final8_opacity_job/endpoints_lower_pair.json",
+      "sha256": "2001222eda87b9da2750240cac4d0a0282f20b552e276cb351664c6e6cec596c"
+    },
+    {
+      "path": "/home/kawahara/exojax/results/rce_wasp18b_final8_opacity_job/endpoints_upper_manifest.json",
+      "sha256": "7189a96816c1f46786425c08883a10cf2863a05dd7fb0480e7c156d0f55f5afa"
+    },
+    {
+      "path": "/home/kawahara/exojax/results/rce_wasp18b_final8_opacity_job/explicit_ckd_baseline.json",
+      "sha256": "191bfbdccb1183abc80a1b67ea110b4b9fdab98ee651768d29d31e0ae614d050"
+    },
+    {
+      "path": "/home/kawahara/exojax/results/rce_wasp18b_final8_opacity_job/ng32/execution_adapter.json",
+      "sha256": "f2c57381e3c68934a38b474b79982f0655d8c794e181956d091406f6c8168333"
+    },
+    {
+      "path": "/home/kawahara/exojax/results/rce_wasp18b_final8_opacity_job/ng32_pair.json",
+      "sha256": "927d4f5364f1d05b223843d680238a668a65726548a4398a502d3f35c69fb4e7"
+    },
+    {
+      "path": "/home/kawahara/exojax/results/rce_wasp18b_final8_opacity_job/sampling128/execution_adapter.json",
+      "sha256": "103be2a608a3c4bea597f9c2c8a5b404fb624114ceef0d6caeaf7c31403677dc"
+    },
+    {
+      "path": "/home/kawahara/exojax/results/rce_wasp18b_final8_opacity_job/sampling128_pair.json",
+      "sha256": "5429cb50c37f0d737c7e9c7ad0c63a249bd19a5d237d5b2e40c3f6aedec9c2af"
+    },
+    {
+      "path": "/home/kawahara/exojax/results/rce_wasp18b_final8_opacity_job/sampling256/execution_adapter.json",
+      "sha256": "00e671185b5c8a384d0cba322c7b4ad5197f01adb1fd375a77284f733068485b"
+    },
+    {
+      "path": "/home/kawahara/exojax/results/rce_wasp18b_final8_opacity_job/sampling256_pair.json",
+      "sha256": "2084716c566f705dc59439cf87c89859e4055bdaeaa454f4d5bf18604a0e24fa"
+    },
+    {
+      "path": "/home/kawahara/exojax/results/rce_wasp18b_final8_opacity_job/status.json",
+      "sha256": "4b451f5e6d9f81bbce9bfcec4d4e956d602470f25d875b783bbb7ec861b389c1"
+    },
+    {
+      "path": "/home/kawahara/exojax/results/rce_wasp18b_final8_opacity_pressure_a100.json",
+      "sha256": "3a50cd3ac2b6bd5c40b19bf48e2398cfb2d4990c0f0ba07a5789f35020140321"
+    },
+    {
+      "path": "/home/kawahara/exojax/results/rce_wasp18b_final8_opacity_temperature_a100.json",
+      "sha256": "9a5924a8c337ea8ec784b498df5d101b432e96a966fdf0d6db19c2ec8461a685"
+    },
+    {
+      "path": "/home/kawahara/exojax/results/rce_wasp18b_final8_prior.py",
+      "sha256": "7d69ee8e6ab8ba7cfde57cdb3fce78b568a873722f879d4c715904d23dcb30b0"
+    },
+    {
+      "path": "/home/kawahara/exojax/results/rce_wasp18b_final8_prior_analysis.json",
+      "sha256": "31f2723817069da13922b0e802658a3371d3a7af2d9383432bea4f4352be24bb"
+    },
+    {
+      "path": "/home/kawahara/exojax/results/rce_wasp18b_final8_prior_checks.json",
+      "sha256": "e936a72d2fbed76181cc769598a715a5c34ee8f81c95178d12b0faf534404e74"
+    },
+    {
+      "path": "/home/kawahara/exojax/results/rce_wasp18b_final8_prior_diagnostic.json",
+      "sha256": "962c6c8cb11800b2d16c24697ed55920d355a694cc5aa2cf183cbcaf43d6c46d"
+    },
+    {
+      "path": "/home/kawahara/exojax/results/rce_wasp18b_final8_prior_job/prior/resources.jsonl",
+      "sha256": "8276aa3637a0d9cc53c4cf2723b0f877e2820168a276b6ab8331ead41d0fce23"
+    },
+    {
+      "path": "/home/kawahara/exojax/results/rce_wasp18b_final8_prior_job/prior/time.txt",
+      "sha256": "545100124a2d57edfacd4d316c737e0f194d6b977f7d5da18232cae1fb4966a3"
+    },
+    {
+      "path": "/home/kawahara/exojax/results/rce_wasp18b_final8_prior_job/status.json",
+      "sha256": "0f2aa7b46f46fa501391539977da9f263e2af4736fb5ce85740213661b41c5b7"
+    },
+    {
+      "path": "/home/kawahara/exojax/results/rce_wasp18b_final8_prior_plan.json",
+      "sha256": "c6835c9415f92bb0e2aed338a70bccd6bc9fbccd3653b8235fb1a2d78dd7862f"
+    },
+    {
+      "path": "/home/kawahara/exojax/results/rce_wasp18b_final8_prior_tests.log",
+      "sha256": "349e6e9e25bb77c46102602886c29c4ff75923f33df6bbecce88638987949f8d"
+    },
+    {
+      "path": "/home/kawahara/exojax/results/rce_wasp18b_final8_quadrature_a100.json",
+      "sha256": "9b4212f3951ebeae9d1c3f3fb2989188f4c9691bbb9a4b090ec50c9cb8b5f55c"
+    },
+    {
+      "path": "/home/kawahara/exojax/results/rce_wasp18b_final8_sampling128_a100.json",
+      "sha256": "da05e34f441bd7cd20b5ea0fb3739a9b4677a76fe9d9eb33d63c1917d214335d"
+    },
+    {
+      "path": "/home/kawahara/exojax/results/rce_wasp18b_final8_sampling256_a100.json",
+      "sha256": "d77fc11b8b0775c5488ea6edac44d68c4adbf16fcd654c2e0369ebb20c6ac7ee"
+    },
+    {
+      "path": "/home/kawahara/exojax/results/rce_wasp18b_final8_spectral_audit.json",
+      "sha256": "2c32792c44f9d21ebdff659636723496853de68431d60ec37a40c5492799d7d3"
+    },
+    {
+      "path": "/home/kawahara/exojax/results/rce_wasp18b_final8_spectrum.npz",
+      "sha256": "775dbb0b601c865b87f1a3b13f651f1eda1ab274455f04d08195416e5ec0c639"
+    },
+    {
+      "path": "/home/kawahara/exojax/results/rce_wasp18b_final8_stellar_scattering_audit.json",
+      "sha256": "ef7651455e7ba3024b466504221fb655cb4c9cfb501fd30e1cee10629831e6e3"
+    },
+    {
+      "path": "/home/kawahara/exojax/results/rce_wasp18b_final8_thermal_scattering_audit.json",
+      "sha256": "98ff0ad73efbdc5ed381dc42f2b36fac7072d31668413932810b058705edcd53"
+    },
+    {
+      "path": "/home/kawahara/exojax/results/rce_wasp18b_final8_upper_primitive_diagnostic.json",
+      "sha256": "275aeb45e0f3023dfd567ab406a5568301d9b0b445731e1462d93a62401a3a57"
+    },
+    {
+      "path": "/home/kawahara/exojax/results/rce_wasp18b_final8_upper_table_diagnostic.json",
+      "sha256": "ac7a6809ea4199c630fba606a5ddac84ebc7d9060a838e4b7feb6fb50ced2b44"
+    },
+    {
+      "path": "/home/kawahara/exojax/results/rce_wasp18b_flux_audit_tests.log",
+      "sha256": "c5110d1d6c629e34ec2a517edfb75a108cc438ca0ff113f9897c80faba161ddd"
+    },
+    {
+      "path": "/home/kawahara/exojax/results/rce_wasp18b_forward_continuation_test.log",
+      "sha256": "9c69df0fb20e15ecfc044780ca23efdfd0dacbf305ffb3700868ce249acfff53"
+    },
+    {
+      "path": "/home/kawahara/exojax/results/rce_wasp18b_forward_stream_integration_tests.log",
+      "sha256": "55ff0932259e9a804978f041482d3cdb400eed7d5d4b68d7c50e66bc4f52cf5c"
+    },
+    {
+      "path": "/home/kawahara/exojax/results/rce_wasp18b_hcn_molecular_tests.log",
+      "sha256": "0779541a766359d7e8d4b24eacdbc17f3e31e1c956c19e0da07f89d38bc8cde2"
+    },
+    {
+      "path": "/home/kawahara/exojax/results/rce_wasp18b_hcn_partition_final_tests.log",
+      "sha256": "fd18a4da724fec169567e0bb4f48b9b6b70de87b21fe3e66c44b6d74cdeab98c"
+    },
+    {
+      "path": "/home/kawahara/exojax/results/rce_wasp18b_indexing_optimization_selected_tests.log",
+      "sha256": "839f03f96dcc8eed2b29472ab7f98a5449f72e3f3533e1707f1726ae2052bb83"
+    },
+    {
+      "path": "/home/kawahara/exojax/results/rce_wasp18b_indexing_optimization_tests.log",
+      "sha256": "20eb866df46457b2b438d5d99d433e1d09605fbd9c2c697c79127b4c2885b0cd"
+    },
+    {
+      "path": "/home/kawahara/exojax/results/rce_wasp18b_lsd_flat_tests.log",
+      "sha256": "d82a75f2dbc4eb74585f955ca2827ef8f67094be0d049af1d38aa52da26b6b95"
+    },
+    {
+      "path": "/home/kawahara/exojax/results/rce_wasp18b_lsd_reference_tests.log",
+      "sha256": "45f342b06ddfec11398f7048452e09802f765a8be91964958508e643d9760915"
+    },
+    {
+      "path": "/home/kawahara/exojax/results/rce_wasp18b_molecular_broadening_inventory.json",
+      "sha256": "94b651620adee753b19ccef6fb5a74ab0c427a4e4997faeb359d749137d69790"
+    },
+    {
+      "path": "/home/kawahara/exojax/results/rce_wasp18b_molecular_omission_cpu_tests.log",
+      "sha256": "d2a43d5c7669f7d6ee65e9145f637a1e9c850137aea1c2e68d33a46ef900ab50"
+    },
+    {
+      "path": "/home/kawahara/exojax/results/rce_wasp18b_molecular_width_tests.log",
+      "sha256": "73606f0fdd8d2b1efa0d8609f2509e54e938c1ad166b776dd787b0dfba86b15a"
+    },
+    {
+      "path": "/home/kawahara/exojax/results/rce_wasp18b_opacity_node_tests.log",
+      "sha256": "60a07194ee538b0294eab025a23ca82727584e0b5010c602390f70389eacf64a"
+    },
+    {
+      "path": "/home/kawahara/exojax/results/rce_wasp18b_opacity_node_tests_initial.log",
+      "sha256": "0047a588c4d7bad2c9a3c858fe2f7ed221c1dc6d7c488447e8aa1bd85dfcd7dc"
+    },
+    {
+      "path": "/home/kawahara/exojax/results/rce_wasp18b_opacity_pressure_tests.log",
+      "sha256": "27bb2ebea7ea037754ba1e160ef8034c0b34a54e69f30b49ccd3c261fc344c9b"
+    },
+    {
+      "path": "/home/kawahara/exojax/results/rce_wasp18b_p7_acceptance_evidence/archive.json",
+      "sha256": "cee643da0426884428cd42ce53e6fa623d856f24b932646113d5a474183ce426"
+    },
+    {
+      "path": "/home/kawahara/exojax/results/rce_wasp18b_p7_acceptance_evidence/rce_p6_gpu_tests.log",
+      "sha256": "3254bf64f4e993a9198b705e31a0b29d11150e3497a77110d020b2a5cf09bbc2"
+    },
+    {
+      "path": "/home/kawahara/exojax/results/rce_wasp18b_p7_acceptance_evidence/rce_p7_final_cpu.log",
+      "sha256": "d0e784b8a8608c8113df56aac99527a95372e8a9a274844a93c564ceb4f44317"
+    },
+    {
+      "path": "/home/kawahara/exojax/results/rce_wasp18b_p7_acceptance_evidence/rce_p7_final_gpu.log",
+      "sha256": "3afad3622b1bb9c52e6f5c7d93df2a9a371b7f0c29312767e65b62abd6130897"
+    },
+    {
+      "path": "/home/kawahara/exojax/results/rce_wasp18b_p7_acceptance_evidence/rce_p7_legacy_cpu_tests.log",
+      "sha256": "f2e9cd4a706a0c830956052f12d75aa2b56cf2c726fd20610796dd182805abca"
+    },
+    {
+      "path": "/home/kawahara/exojax/results/rce_wasp18b_prefill_tests.log",
+      "sha256": "1324efe6cc8b1c1906aff918f5d0778293de6ec7b6393a0129cde75b29391271"
+    },
+    {
+      "path": "/home/kawahara/exojax/results/rce_wasp18b_pressure_refinement_tests.log",
+      "sha256": "ef2ccea1af8dae146d6599ec18ea389303bca63713be98f6b4992c9664125cf0"
+    },
+    {
+      "path": "/home/kawahara/exojax/results/rce_wasp18b_pressure_stream_tests.log",
+      "sha256": "a7ef04ce9824a45ecf79fc6051ccc8c81c7719f5b94865c52bba239a22885f08"
+    },
+    {
+      "path": "/home/kawahara/exojax/results/rce_wasp18b_remaining_job/status.json",
+      "sha256": "17471484549b2307d802660e4ec879dd5893979dac62f84b17ffdd48324571c8"
+    },
+    {
+      "path": "/home/kawahara/exojax/results/rce_wasp18b_scattering_audit_tests.log",
+      "sha256": "f1b8ffb7bda049f8cf872e99e8bd8c72e73d8efce04fb2bfbd1fa3948b4720fc"
+    },
+    {
+      "path": "/home/kawahara/exojax/results/rce_wasp18b_scattering_support_implementation.json",
+      "sha256": "b57c09707cedbdd45018a17fbd04420e0035ebfcb26a69154da4a1c224ca6a36"
+    },
+    {
+      "path": "/home/kawahara/exojax/results/rce_wasp18b_scattering_support_policy_tests.log",
+      "sha256": "db4b7ca0e3ff6bcf95cd442dd8542ca8d7bbb9d641c94328d003b66ee0cbd5cf"
+    },
+    {
+      "path": "/home/kawahara/exojax/results/rce_wasp18b_scattering_support_regression.log",
+      "sha256": "49077e89d7db01cf1bde00e3b9fb3e7fcbb09424141830905937a94b8a6c3c13"
+    },
+    {
+      "path": "/home/kawahara/exojax/results/rce_wasp18b_scattering_support_tests.log",
+      "sha256": "8765c1c151a1d93540b8dee37178959a58418809119ff14282ae24d37542437f"
+    },
+    {
+      "path": "/home/kawahara/exojax/results/rce_wasp18b_seeded_spectral_audit_wavelength.json",
+      "sha256": "d22fdda6d2c30730470388c3276456c55a9089f172a8978d260bb1699e09c867"
+    },
+    {
+      "path": "/home/kawahara/exojax/results/rce_wasp18b_stellar_scattering_regression.log",
+      "sha256": "f0c30f9df3d5b1622dadcbd9bcf425059b9b64c462da32d9a3504a1375e22a1c"
+    },
+    {
+      "path": "/home/kawahara/exojax/results/rce_wasp18b_stellar_scattering_tests.log",
+      "sha256": "0db98f9296f58fff8ba3b97abe4b22f6e4f279a686ae81b6e2c22bef99b913a1"
+    },
+    {
+      "path": "/home/kawahara/exojax/results/rce_wasp18b_test_summary.json",
+      "sha256": "361d795c435cfb3cbe028839762fc93cc3b7e7149f69da3d411c43318c99c361"
+    },
+    {
+      "path": "/home/kawahara/exojax/results/rce_wasp18b_thermal_scattering_tests.log",
+      "sha256": "bf61006396e0cf42e65d2b0b2c0edfa6761c573a6564048bc74dd306430b7af8"
+    },
+    {
+      "path": "/home/kawahara/exojax/results/rce_wasp18b_validation_stellar_audit_implementation.json",
+      "sha256": "feb789b434f52b9332e2b18e12e68e432b861eeed6e06b704fd551a7154c646e"
+    },
+    {
+      "path": "/home/kawahara/exojax/results/rce_wasp18b_validation_stellar_audit_tests.log",
+      "sha256": "8aff3376a016affb961977d4ec69fea301ce66cb73289b926c5b885ea7bf9f45"
+    },
+    {
+      "path": "/home/kawahara/exojax/results/rce_wasp18b_validation_stellar_audit_zero_tests.log",
+      "sha256": "e9914bd4568aff6c72470d4621c6f23b4cbdabc66b6b54c64f1ddca3fa4b8995"
+    },
+    {
+      "path": "/home/kawahara/exojax/results/run_rce_wasp18b_final8_grid_checks.py",
+      "sha256": "6cc5b7a4a96ed4b5387b657b854c3edea90fa97baf335703b171376fbf0613ec"
+    },
+    {
+      "path": "/home/kawahara/exojax/results/run_rce_wasp18b_final8_prior.py",
+      "sha256": "d0821de19fc5892ba9e9eb106f40a55c180a5b4ed3903bfefce0569a2394a827"
+    },
+    {
+      "path": "/home/kawahara/exojax/results/run_rce_wasp18b_remaining.py",
+      "sha256": "7f5b4d7d389a279d74280773389e21c2ef300183aa8f9ba5ce125688ad15744f"
+    },
+    {
+      "path": "/home/kawahara/exojax/results/summarize_rce_wasp18b_numerical_pair.py",
+      "sha256": "38c24161f83dde4f18c23547621b8332cd04138fdc19ad0a425ee06b6ac2d348"
+    },
+    {
+      "path": "/home/kawahara/exojax/src/exojax/rt/direct_sfm.py",
+      "sha256": "4e05a8bd4fa08406498450b2ede0decfea34b2c2dd8698eae1f2963a7c96fa3f"
+    },
+    {
+      "path": "/home/kawahara/exojax/tests/integration/offline/examples/test_rce_wasp18b_scattering_audit.py",
+      "sha256": "59babeef41542d9bf40e47171f8ca319ea330b6eb29d0bee5c282eba5a552ab9"
+    },
+    {
+      "path": "/home/kawahara/exojax/tests/integration/offline/examples/test_rce_wasp18b_scattering_support.py",
+      "sha256": "50afcce48d7bbaabd5a26c38b18e3daf89e26680581265b15162dcc508e93efe"
+    },
+    {
+      "path": "/home/kawahara/exojax/tests/integration/offline/examples/test_rce_wasp18b_stellar_scattering.py",
+      "sha256": "0bb0b1ae968104d391aa225c89ce9fce1c4e4ef38b01950b5e2004f64acf1ab4"
+    },
+    {
+      "path": "/home/kawahara/exojax/tests/integration/offline/examples/test_rce_wasp18b_thermal_scattering_audit.py",
+      "sha256": "b3f0c752d8372eb26c7065e25c87b66c7146dcf40b97ef85579eeb1350dca054"
+    },
+    {
+      "path": "/home/kawahara/exojax/tests/integration/offline/examples/test_rce_wasp18b_validation_stellar_audit.py",
+      "sha256": "32bde9c0e2d762fccea9680330c960384f005169b9ffc91961273bde98ed96d5"
+    },
+    {
+      "path": "/home/kawahara/exojax/tests/unittests/rt/test_reflect_direct.py",
+      "sha256": "1e19444a1ae8b56e3b96caee88d7d1d217b11d290384d7f32bf48ada65f6d3ae"
+    }
+  ],
+  "finalizer": {
+    "path": "/home/kawahara/exojax/results/finalize_rce_wasp18b_p7.py",
+    "sha256": "f6eba938fd2bcd308f79a58e225e467af042a141a19b5ba51caf266045e00945"
+  },
+  "new_test_runs": 0,
+  "new_forward_runs": 0,
+  "GPU_started": false,
+  "long_run_required": false,
+  "instruction": "P7 completion does not certify P8 retrieval readiness or continuous-prior convergence."
+}

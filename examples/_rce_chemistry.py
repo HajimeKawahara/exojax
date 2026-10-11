@@ -87,6 +87,8 @@ def prepare_chemistry(
     epsilon_crit: float = 1e-11,
     max_iter: int = 1000,
     conservation_rtol: float = 1e-8,
+    conservation_convergence: bool = False,
+    equilibrate_constraints: bool = False,
 ) -> PreparedChemistry:
     """Fix species order, masses, charges, pressure grid and validity domains.
 
@@ -101,6 +103,9 @@ def prepare_chemistry(
     Its physical outputs are NaN and its status is OUTSIDE_DOMAIN. Evaluate
     mixed valid/invalid columns with ``lax.map``, since ``vmap`` can evaluate
     both branches of a conditional. Only converged states have physical AD.
+    ``conservation_convergence`` also requires the existing conservation guard
+    inside ExoGibbs' stopping condition, retaining the absolute residual test.
+    ``equilibrate_constraints`` optionally normalizes its primal linear solve.
     """
     from exogibbs.api.equilibrium import EquilibriumOptions, equilibrium_profile
 
@@ -196,6 +201,10 @@ def prepare_chemistry(
         raise ValueError(
             "Solver tolerances must be positive and max_iter a positive integer."
         )
+    if not isinstance(conservation_convergence, bool):
+        raise ValueError("conservation_convergence must be boolean.")
+    if not isinstance(equilibrate_constraints, bool):
+        raise ValueError("equilibrate_constraints must be boolean.")
 
     pressure = jnp.asarray(pressure)
     reference = jnp.asarray(reference)
@@ -205,9 +214,12 @@ def prepare_chemistry(
     element_masses = jnp.asarray(element_masses)
     metal_mask = jnp.asarray([name not in ("H", "He", "e-") for name in elements])
     carbon, oxygen = elements.index("C"), elements.index("O")
-    options = EquilibriumOptions(
-        epsilon_crit=epsilon_crit, max_iter=max_iter, method="vmap_cold"
-    )
+    options_kwargs = dict(epsilon_crit=epsilon_crit, max_iter=max_iter, method="vmap_cold")
+    if conservation_convergence:
+        options_kwargs["conservation_rtol"] = conservation_rtol
+    if equilibrate_constraints:
+        options_kwargs["equilibrate_constraints"] = True
+    options = EquilibriumOptions(**options_kwargs)
 
     def elemental_abundances(log_metal_scale, c_over_o):
         b = reference * jnp.where(metal_mask, jnp.power(10.0, log_metal_scale), 1.0)

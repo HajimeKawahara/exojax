@@ -259,3 +259,24 @@ def test_direct_conservative_layer_stack_conserves_beam_energy(mu_in):
     np.testing.assert_allclose(
         flux_plus[0] + flux_minus[-1] + mu_in * beam[-1], mu_in, rtol=1.0e-12
     )
+
+
+@pytest.mark.parametrize("omega", [0., .5, 1.])
+@pytest.mark.parametrize("dtype,tiny,rtol", [(jnp.float64, 1e-290, 1e-9),
+                                           (jnp.float32, 1e-30, 2e-6)])
+def test_direct_tiny_layer_derivatives_match_single_scattering(omega, dtype, tiny, rtol):
+    depth = jnp.array([0., tiny, 1e-10], dtype=dtype)
+    gamma1 = np.sqrt(3.) * (1. - omega / 2.)
+    gamma2 = np.sqrt(3.) * omega / 2.
+
+    @jax.jit
+    def source(tau):
+        return jnp.stack(_direct_layer_sources(tau, gamma1, gamma2, omega, .5, .5))
+
+    # With beam-normal unit irradiance, half the first scattered energy
+    # leaves each boundary. Absorption and repeat scattering are higher order.
+    _, tangent = jax.jvp(source, (depth,), (jnp.ones_like(depth),))
+    np.testing.assert_allclose(tangent, omega / 2., rtol=rtol, atol=0.)
+    # Summing both boundaries gives an independent check of reverse AD.
+    np.testing.assert_allclose(jax.grad(lambda tau: jnp.sum(source(tau)))(depth),
+                               omega, rtol=rtol, atol=0.)

@@ -1,0 +1,2348 @@
+{
+  "schema_version": "exojax.saved-prior-analysis/1",
+  "created_utc": "2026-10-11T01:20:53.819832+00:00",
+  "status": "complete_analyzed_finite_prior",
+  "inputs": [
+    {
+      "path": "/home/kawahara/exojax/results/analyze_rce_wasp18b_final8_prior.py",
+      "sha256": "65ca43d2b8b1a363ad7225acd9377411ccc97b8856e7692e6f6505f2af3efb23"
+    },
+    {
+      "path": "/home/kawahara/exojax/results/analyze_rce_wasp18b_final8_opacity.py",
+      "sha256": "c5fce59c0843451a4343d058f64363331d7fa8b87a728a1a939ebf806e76c829"
+    },
+    {
+      "path": "/home/kawahara/exojax/results/rce_wasp18b_final8_prior_plan.json",
+      "sha256": "c6835c9415f92bb0e2aed338a70bccd6bc9fbccd3653b8235fb1a2d78dd7862f"
+    },
+    {
+      "path": "/home/kawahara/exojax/results/rce_wasp18b_final8_prior_diagnostic.json",
+      "sha256": "962c6c8cb11800b2d16c24697ed55920d355a694cc5aa2cf183cbcaf43d6c46d"
+    },
+    {
+      "path": "/home/kawahara/exojax/results/rce_wasp18b_final8_prior_job/status.json",
+      "sha256": "0f2aa7b46f46fa501391539977da9f263e2af4736fb5ce85740213661b41c5b7"
+    },
+    {
+      "path": "/home/kawahara/exojax/results/rce_wasp18b_final8_endpoint_retry_job/explicit_ckd_baseline.json",
+      "sha256": "3a12e81545cf071759a236913788a4d610b36b139a69e6c13e41c9fee0c35eb4"
+    },
+    {
+      "path": "/home/kawahara/exojax/results/rce_wasp18b_final8_prior_job/prior/resources.jsonl",
+      "sha256": "8276aa3637a0d9cc53c4cf2723b0f877e2820168a276b6ab8331ead41d0fce23"
+    },
+    {
+      "path": "/home/kawahara/exojax/results/rce_wasp18b_final8_prior_job/prior/time.txt",
+      "sha256": "545100124a2d57edfacd4d316c737e0f194d6b977f7d5da18232cae1fb4966a3"
+    }
+  ],
+  "summary": {
+    "planned": 27,
+    "finished": 27,
+    "converged": 20,
+    "finite_valid_returned_states": 27,
+    "unresolved_cases": [
+      "prior_01",
+      "prior_02",
+      "prior_04",
+      "prior_10",
+      "prior_13",
+      "prior_18",
+      "prior_21"
+    ],
+    "review_cases": [],
+    "statuses": {
+      "CONVERGED": 20,
+      "MAX_ITERATIONS": 4,
+      "DOMAIN_STEP_FAILED": 3
+    }
+  },
+  "job": {
+    "started_utc": "2026-10-10T22:13:42.680314+00:00",
+    "finished_utc": "2026-10-11T00:39:11.934467+00:00",
+    "elapsed_seconds": 8729.254153
+  },
+  "baseline_exact_reproduction": {
+    "temperature": true,
+    "bottom": true,
+    "mask": true,
+    "broadband_flux": true
+  },
+  "by_irradiation": {
+    "0.1": {
+      "total": 9,
+      "converged": 3,
+      "finite_valid": 9
+    },
+    "0.5": {
+      "total": 9,
+      "converged": 8,
+      "finite_valid": 9
+    },
+    "1.0": {
+      "total": 9,
+      "converged": 9,
+      "finite_valid": 9
+    }
+  },
+  "cases": [
+    {
+      "case": "prior_00",
+      "log10_metal_H": 0.0,
+      "C_O": 0.6,
+      "irradiation": 0.5,
+      "status": "CONVERGED",
+      "stop_reason": "converged",
+      "converged": true,
+      "finite_valid": true,
+      "stages": 2,
+      "iterations": 10,
+      "backtracks": 0,
+      "solve_seconds": 72.70151435025036,
+      "temperature_min_K": 2615.4728575436916,
+      "temperature_max_K": 4157.905900224818,
+      "bottom_temperature_K": 2624.1293511654226,
+      "lower_temperature_margin_K": 1115.4728575436916,
+      "upper_temperature_margin_K": 342.09409977518226,
+      "minimum_temperature_pressure_bar": 10.36632928437698,
+      "maximum_energy_residual_cgs": 1.0067597031593323e-05,
+      "maximum_energy_residual_over_incident": 2.601278049647003e-15,
+      "maximum_scaled_residual": 0.00010067597031593323,
+      "convective_connections": 0,
+      "maximum_element_relative_error": 4.7496640747705543e-07,
+      "maximum_charge_relative_error": 3.1999276717478296e-14,
+      "co2_hot_layers": 3,
+      "co2_hot_maximum_mole_fraction": 2.762771489354927e-14,
+      "bottom_stellar_cgs": 1.1147810407614492e-62,
+      "bottom_stellar_over_incident": 2.8803849045559787e-72,
+      "bottom_stellar_over_internal": 1.22873394063946e-67,
+      "stellar_energy_closure": 1.2320576886394685e-16,
+      "reevaluated_net_flux_difference_over_incident": 0.0
+    },
+    {
+      "case": "prior_01",
+      "log10_metal_H": -1.0,
+      "C_O": 0.2,
+      "irradiation": 0.09999999999999998,
+      "status": "MAX_ITERATIONS",
+      "stop_reason": "stage_budget_exhausted",
+      "converged": false,
+      "finite_valid": true,
+      "stages": 15,
+      "iterations": 150,
+      "backtracks": 2003,
+      "solve_seconds": 1369.814941374585,
+      "temperature_min_K": 1868.690093692487,
+      "temperature_max_K": 3543.585252259481,
+      "bottom_temperature_K": 1894.8927202987043,
+      "lower_temperature_margin_K": 368.6900936924869,
+      "upper_temperature_margin_K": 956.414747740519,
+      "minimum_temperature_pressure_bar": 0.8353625469578261,
+      "maximum_energy_residual_cgs": 131907.27933249658,
+      "maximum_energy_residual_over_incident": 0.00017041182182774304,
+      "maximum_scaled_residual": 1319072.7933249658,
+      "convective_connections": 1,
+      "maximum_element_relative_error": 2.9979189915048546e-06,
+      "maximum_charge_relative_error": 2.4995168980655275e-14,
+      "co2_hot_layers": 0,
+      "co2_hot_maximum_mole_fraction": null,
+      "bottom_stellar_cgs": 0.0067959812049807385,
+      "bottom_stellar_over_incident": 8.77976972998302e-12,
+      "bottom_stellar_over_internal": 7.49066629335921e-08,
+      "stellar_energy_closure": 0.0,
+      "reevaluated_net_flux_difference_over_incident": 0.0
+    },
+    {
+      "case": "prior_02",
+      "log10_metal_H": -1.0,
+      "C_O": 0.2,
+      "irradiation": 0.5,
+      "status": "MAX_ITERATIONS",
+      "stop_reason": "stage_budget_exhausted",
+      "converged": false,
+      "finite_valid": true,
+      "stages": 15,
+      "iterations": 145,
+      "backtracks": 1844,
+      "solve_seconds": 1333.993276676163,
+      "temperature_min_K": 2760.8042923652083,
+      "temperature_max_K": 4146.725895283842,
+      "bottom_temperature_K": 2763.112365315339,
+      "lower_temperature_margin_K": 1260.8042923652083,
+      "upper_temperature_margin_K": 353.27410471615804,
+      "minimum_temperature_pressure_bar": 17.15437896342879,
+      "maximum_energy_residual_cgs": 1039070.2686565891,
+      "maximum_energy_residual_over_incident": 0.0002684762484449013,
+      "maximum_scaled_residual": 10390702.68656589,
+      "convective_connections": 0,
+      "maximum_element_relative_error": 2.7523630039209318e-06,
+      "maximum_charge_relative_error": 8.587187675320932e-14,
+      "co2_hot_layers": 7,
+      "co2_hot_maximum_mole_fraction": 1.816738700931904e-15,
+      "bottom_stellar_cgs": 3.177557836737388e-26,
+      "bottom_stellar_over_incident": 8.21021285044484e-36,
+      "bottom_stellar_over_internal": 3.5023677471920884e-31,
+      "stellar_energy_closure": 0.0,
+      "reevaluated_net_flux_difference_over_incident": 0.0
+    },
+    {
+      "case": "prior_03",
+      "log10_metal_H": -1.0,
+      "C_O": 0.2,
+      "irradiation": 1.0,
+      "status": "CONVERGED",
+      "stop_reason": "converged",
+      "converged": true,
+      "finite_valid": true,
+      "stages": 2,
+      "iterations": 12,
+      "backtracks": 1,
+      "solve_seconds": 88.79116894677281,
+      "temperature_min_K": 3215.393564989243,
+      "temperature_max_K": 4437.058278184542,
+      "bottom_temperature_K": 3219.4632794521167,
+      "lower_temperature_margin_K": 1715.3935649892428,
+      "upper_temperature_margin_K": 62.94172181545764,
+      "minimum_temperature_pressure_bar": 6.264335366568855,
+      "maximum_energy_residual_cgs": 0.09890761785209179,
+      "maximum_energy_residual_over_incident": 1.2777935710682775e-11,
+      "maximum_scaled_residual": 0.9890761785209179,
+      "convective_connections": 0,
+      "maximum_element_relative_error": 2.118727718363061e-06,
+      "maximum_charge_relative_error": 1.81219825500504e-14,
+      "co2_hot_layers": 11,
+      "co2_hot_maximum_mole_fraction": 3.889212966238793e-14,
+      "bottom_stellar_cgs": 2.8116537116528e-121,
+      "bottom_stellar_over_incident": 3.632392645622924e-131,
+      "bottom_stellar_over_internal": 3.09906090838514e-126,
+      "stellar_energy_closure": 0.0,
+      "reevaluated_net_flux_difference_over_incident": 0.0
+    },
+    {
+      "case": "prior_04",
+      "log10_metal_H": -1.0,
+      "C_O": 0.6,
+      "irradiation": 0.09999999999999998,
+      "status": "MAX_ITERATIONS",
+      "stop_reason": "stage_budget_exhausted",
+      "converged": false,
+      "finite_valid": true,
+      "stages": 15,
+      "iterations": 150,
+      "backtracks": 1596,
+      "solve_seconds": 1300.467318765819,
+      "temperature_min_K": 1837.899148920025,
+      "temperature_max_K": 3519.6159827169795,
+      "bottom_temperature_K": 1876.0709486133746,
+      "lower_temperature_margin_K": 337.899148920025,
+      "upper_temperature_margin_K": 980.3840172830205,
+      "minimum_temperature_pressure_bar": 1.3823722273578996,
+      "maximum_energy_residual_cgs": 19468848.481070697,
+      "maximum_energy_residual_over_incident": 0.025151924558951873,
+      "maximum_scaled_residual": 194688484.81070697,
+      "convective_connections": 0,
+      "maximum_element_relative_error": 2.781005489209534e-06,
+      "maximum_charge_relative_error": 3.842150224717706e-14,
+      "co2_hot_layers": 0,
+      "co2_hot_maximum_mole_fraction": null,
+      "bottom_stellar_cgs": 0.10803197429018785,
+      "bottom_stellar_over_incident": 1.3956716905693433e-10,
+      "bottom_stellar_over_internal": 1.190750009472477e-06,
+      "stellar_energy_closure": 0.0,
+      "reevaluated_net_flux_difference_over_incident": 0.0
+    },
+    {
+      "case": "prior_05",
+      "log10_metal_H": -1.0,
+      "C_O": 0.6,
+      "irradiation": 0.5,
+      "status": "CONVERGED",
+      "stop_reason": "converged",
+      "converged": true,
+      "finite_valid": true,
+      "stages": 2,
+      "iterations": 13,
+      "backtracks": 4,
+      "solve_seconds": 95.92280906625092,
+      "temperature_min_K": 2729.281051811464,
+      "temperature_max_K": 4143.43403806839,
+      "bottom_temperature_K": 2731.2564959804236,
+      "lower_temperature_margin_K": 1229.2810518114638,
+      "upper_temperature_margin_K": 356.5659619316102,
+      "minimum_temperature_pressure_bar": 17.15437896342879,
+      "maximum_energy_residual_cgs": 8.874339982867241e-06,
+      "maximum_energy_residual_over_incident": 2.2929628321529954e-15,
+      "maximum_scaled_residual": 8.874339982867241e-05,
+      "convective_connections": 0,
+      "maximum_element_relative_error": 1.9357950542532605e-06,
+      "maximum_charge_relative_error": 2.4465029082973315e-14,
+      "co2_hot_layers": 7,
+      "co2_hot_maximum_mole_fraction": 2.6473399868563374e-15,
+      "bottom_stellar_cgs": 4.0811458358241085e-21,
+      "bottom_stellar_over_incident": 1.0544914587684266e-30,
+      "bottom_stellar_over_internal": 4.4983204968674715e-26,
+      "stellar_energy_closure": 1.2320576886394685e-16,
+      "reevaluated_net_flux_difference_over_incident": 0.0
+    },
+    {
+      "case": "prior_06",
+      "log10_metal_H": -1.0,
+      "C_O": 0.6,
+      "irradiation": 1.0,
+      "status": "CONVERGED",
+      "stop_reason": "converged",
+      "converged": true,
+      "finite_valid": true,
+      "stages": 2,
+      "iterations": 12,
+      "backtracks": 2,
+      "solve_seconds": 88.84204280935228,
+      "temperature_min_K": 3158.6550860251014,
+      "temperature_max_K": 4436.306797507797,
+      "bottom_temperature_K": 3162.1779074425413,
+      "lower_temperature_margin_K": 1658.6550860251014,
+      "upper_temperature_margin_K": 63.693202492203454,
+      "minimum_temperature_pressure_bar": 10.36632928437698,
+      "maximum_energy_residual_cgs": 0.004156365990638733,
+      "maximum_energy_residual_over_incident": 5.369634672414349e-13,
+      "maximum_scaled_residual": 0.04156365990638733,
+      "convective_connections": 0,
+      "maximum_element_relative_error": 1.3512847493072247e-06,
+      "maximum_charge_relative_error": 1.6283683799756968e-14,
+      "co2_hot_layers": 11,
+      "co2_hot_maximum_mole_fraction": 5.3226563703717593e-14,
+      "bottom_stellar_cgs": 1.0450654139865046e-95,
+      "bottom_stellar_over_incident": 1.3501264071840364e-105,
+      "bottom_stellar_over_internal": 1.1518919836280486e-100,
+      "stellar_energy_closure": 1.2320576886394685e-16,
+      "reevaluated_net_flux_difference_over_incident": 0.0
+    },
+    {
+      "case": "prior_07",
+      "log10_metal_H": -1.0,
+      "C_O": 1.2,
+      "irradiation": 0.09999999999999998,
+      "status": "CONVERGED",
+      "stop_reason": "converged",
+      "converged": true,
+      "finite_valid": true,
+      "stages": 2,
+      "iterations": 16,
+      "backtracks": 5,
+      "solve_seconds": 121.12203946523368,
+      "temperature_min_K": 1865.0739933182008,
+      "temperature_max_K": 3500.369592924076,
+      "bottom_temperature_K": 1901.6172254186768,
+      "lower_temperature_margin_K": 365.0739933182008,
+      "upper_temperature_margin_K": 999.6304070759238,
+      "minimum_temperature_pressure_bar": 1.3823722273578996,
+      "maximum_energy_residual_cgs": 2.5423942133784294e-06,
+      "maximum_energy_residual_over_incident": 3.284534651147139e-15,
+      "maximum_scaled_residual": 2.5423942133784294e-05,
+      "convective_connections": 0,
+      "maximum_element_relative_error": 2.771507405502663e-06,
+      "maximum_charge_relative_error": 1.3972476153040623e-14,
+      "co2_hot_layers": 0,
+      "co2_hot_maximum_mole_fraction": null,
+      "bottom_stellar_cgs": 0.5964068962447076,
+      "bottom_stellar_over_incident": 7.705017210119326e-10,
+      "bottom_stellar_over_internal": 6.573715994907429e-06,
+      "stellar_energy_closure": 1.5400721107993362e-16,
+      "reevaluated_net_flux_difference_over_incident": 0.0
+    },
+    {
+      "case": "prior_08",
+      "log10_metal_H": -1.0,
+      "C_O": 1.2,
+      "irradiation": 0.5,
+      "status": "CONVERGED",
+      "stop_reason": "converged",
+      "converged": true,
+      "finite_valid": true,
+      "stages": 2,
+      "iterations": 13,
+      "backtracks": 5,
+      "solve_seconds": 96.24562779441476,
+      "temperature_min_K": 2698.5206474819424,
+      "temperature_max_K": 4142.791123195067,
+      "bottom_temperature_K": 2700.290296328054,
+      "lower_temperature_margin_K": 1198.5206474819424,
+      "upper_temperature_margin_K": 357.2088768049334,
+      "minimum_temperature_pressure_bar": 28.387359647587548,
+      "maximum_energy_residual_cgs": 0.0683391341008246,
+      "maximum_energy_residual_over_incident": 1.7657549156019787e-11,
+      "maximum_scaled_residual": 0.683391341008246,
+      "convective_connections": 0,
+      "maximum_element_relative_error": 2.9426514871799955e-06,
+      "maximum_charge_relative_error": 6.318559273620553e-14,
+      "co2_hot_layers": 7,
+      "co2_hot_maximum_mole_fraction": 2.0650353411048717e-15,
+      "bottom_stellar_cgs": 1.547400878285331e-16,
+      "bottom_stellar_over_incident": 3.998193338545935e-26,
+      "bottom_stellar_over_internal": 1.705576170927509e-21,
+      "stellar_energy_closure": 1.2320576886394685e-16,
+      "reevaluated_net_flux_difference_over_incident": 0.0
+    },
+    {
+      "case": "prior_09",
+      "log10_metal_H": -1.0,
+      "C_O": 1.2,
+      "irradiation": 1.0,
+      "status": "CONVERGED",
+      "stop_reason": "converged",
+      "converged": true,
+      "finite_valid": true,
+      "stages": 4,
+      "iterations": 33,
+      "backtracks": 63,
+      "solve_seconds": 250.16967467963696,
+      "temperature_min_K": 3086.0802118095326,
+      "temperature_max_K": 4436.297528811237,
+      "bottom_temperature_K": 3089.115886416076,
+      "lower_temperature_margin_K": 1586.0802118095326,
+      "upper_temperature_margin_K": 63.70247118876341,
+      "minimum_temperature_pressure_bar": 10.36632928437698,
+      "maximum_energy_residual_cgs": 2.7023721486330032e-05,
+      "maximum_energy_residual_over_incident": 3.4912111252350722e-15,
+      "maximum_scaled_residual": 0.0002702372148633003,
+      "convective_connections": 0,
+      "maximum_element_relative_error": 1.8110397725213263e-06,
+      "maximum_charge_relative_error": 5.926158059670936e-14,
+      "co2_hot_layers": 11,
+      "co2_hot_maximum_mole_fraction": 3.8431777836352076e-14,
+      "bottom_stellar_cgs": 3.740910578709001e-70,
+      "bottom_stellar_over_incident": 4.8329052819409065e-80,
+      "bottom_stellar_over_internal": 4.1233063972968764e-75,
+      "stellar_energy_closure": 2.464115377278937e-16,
+      "reevaluated_net_flux_difference_over_incident": 0.0
+    },
+    {
+      "case": "prior_10",
+      "log10_metal_H": 0.0,
+      "C_O": 0.2,
+      "irradiation": 0.09999999999999998,
+      "status": "MAX_ITERATIONS",
+      "stop_reason": "stage_budget_exhausted",
+      "converged": false,
+      "finite_valid": true,
+      "stages": 15,
+      "iterations": 150,
+      "backtracks": 2029,
+      "solve_seconds": 1335.3859863057733,
+      "temperature_min_K": 1823.9593487284105,
+      "temperature_max_K": 3416.5494342153847,
+      "bottom_temperature_K": 1879.6283007048903,
+      "lower_temperature_margin_K": 323.95934872841053,
+      "upper_temperature_margin_K": 1083.4505657846153,
+      "minimum_temperature_pressure_bar": 0.008976871324473142,
+      "maximum_energy_residual_cgs": 42524296.97876558,
+      "maximum_energy_residual_over_incident": 0.05493739963985562,
+      "maximum_scaled_residual": 425242969.7876558,
+      "convective_connections": 1,
+      "maximum_element_relative_error": 7.959074553182119e-07,
+      "maximum_charge_relative_error": 1.3445180716188575e-13,
+      "co2_hot_layers": 0,
+      "co2_hot_maximum_mole_fraction": null,
+      "bottom_stellar_cgs": 1.5599007239404863e-15,
+      "bottom_stellar_over_incident": 2.0152452964104536e-24,
+      "bottom_stellar_over_internal": 1.7193537506024856e-20,
+      "stellar_energy_closure": 1.5400721107993362e-16,
+      "reevaluated_net_flux_difference_over_incident": 0.0
+    },
+    {
+      "case": "prior_11",
+      "log10_metal_H": 0.0,
+      "C_O": 0.2,
+      "irradiation": 0.5,
+      "status": "CONVERGED",
+      "stop_reason": "converged",
+      "converged": true,
+      "finite_valid": true,
+      "stages": 2,
+      "iterations": 11,
+      "backtracks": 0,
+      "solve_seconds": 79.79108705557883,
+      "temperature_min_K": 2689.1159348587607,
+      "temperature_max_K": 4164.785568781005,
+      "bottom_temperature_K": 2701.326998474622,
+      "lower_temperature_margin_K": 1189.1159348587607,
+      "upper_temperature_margin_K": 335.21443121899483,
+      "minimum_temperature_pressure_bar": 6.264335366568855,
+      "maximum_energy_residual_cgs": 4.825182259082794e-06,
+      "maximum_energy_residual_over_incident": 1.2467365009455248e-15,
+      "maximum_scaled_residual": 4.825182259082794e-05,
+      "convective_connections": 0,
+      "maximum_element_relative_error": 7.170694993014406e-07,
+      "maximum_charge_relative_error": 2.0391441451483544e-14,
+      "co2_hot_layers": 4,
+      "co2_hot_maximum_mole_fraction": 8.601844076875685e-14,
+      "bottom_stellar_cgs": 7.813318747900336e-92,
+      "bottom_stellar_over_incident": 2.0188148661520204e-101,
+      "bottom_stellar_over_internal": 8.611996063390308e-97,
+      "stellar_energy_closure": 2.464115377278937e-16,
+      "reevaluated_net_flux_difference_over_incident": 0.0
+    },
+    {
+      "case": "prior_12",
+      "log10_metal_H": 0.0,
+      "C_O": 0.2,
+      "irradiation": 1.0,
+      "status": "CONVERGED",
+      "stop_reason": "converged",
+      "converged": true,
+      "finite_valid": true,
+      "stages": 2,
+      "iterations": 13,
+      "backtracks": 5,
+      "solve_seconds": 95.26088242046535,
+      "temperature_min_K": 3148.378902171626,
+      "temperature_max_K": 4481.003633835428,
+      "bottom_temperature_K": 3167.632263643031,
+      "lower_temperature_margin_K": 1648.3789021716261,
+      "upper_temperature_margin_K": 18.996366164571555,
+      "minimum_temperature_pressure_bar": 2.2875732003183957,
+      "maximum_energy_residual_cgs": 9.682215750217438e-05,
+      "maximum_energy_residual_over_incident": 1.2508513811165668e-14,
+      "maximum_scaled_residual": 0.0009682215750217438,
+      "convective_connections": 0,
+      "maximum_element_relative_error": 1.841174094249294e-07,
+      "maximum_charge_relative_error": 1.353812280752908e-14,
+      "co2_hot_layers": 11,
+      "co2_hot_maximum_mole_fraction": 1.3874786790644654e-11,
+      "bottom_stellar_cgs": 0.0,
+      "bottom_stellar_over_incident": 0.0,
+      "bottom_stellar_over_internal": 0.0,
+      "stellar_energy_closure": 2.464115377278937e-16,
+      "reevaluated_net_flux_difference_over_incident": 0.0
+    },
+    {
+      "case": "prior_13",
+      "log10_metal_H": 0.0,
+      "C_O": 0.6,
+      "irradiation": 0.09999999999999998,
+      "status": "DOMAIN_STEP_FAILED",
+      "stop_reason": "repeated_failed_state",
+      "converged": false,
+      "finite_valid": true,
+      "stages": 4,
+      "iterations": 17,
+      "backtracks": 245,
+      "solve_seconds": 142.74106594920158,
+      "temperature_min_K": 1500.0000128103782,
+      "temperature_max_K": 3437.564303950182,
+      "bottom_temperature_K": 1926.6383217500793,
+      "lower_temperature_margin_K": 1.2810378166250302e-05,
+      "upper_temperature_margin_K": 1062.435696049818,
+      "minimum_temperature_pressure_bar": 0.008976871324473142,
+      "maximum_energy_residual_cgs": 549056889.338232,
+      "maximum_energy_residual_over_incident": 0.7093299571690191,
+      "maximum_scaled_residual": 5490568893.38232,
+      "convective_connections": 4,
+      "maximum_element_relative_error": 9.004670416013979e-07,
+      "maximum_charge_relative_error": 1.7091015890791718e-14,
+      "co2_hot_layers": 0,
+      "co2_hot_maximum_mole_fraction": null,
+      "bottom_stellar_cgs": 3.295404322322856e-14,
+      "bottom_stellar_over_incident": 4.257353021515223e-23,
+      "bottom_stellar_over_internal": 3.632260498619791e-19,
+      "stellar_energy_closure": 0.0,
+      "reevaluated_net_flux_difference_over_incident": 0.0
+    },
+    {
+      "case": "prior_14",
+      "log10_metal_H": 0.0,
+      "C_O": 0.6,
+      "irradiation": 1.0,
+      "status": "CONVERGED",
+      "stop_reason": "converged",
+      "converged": true,
+      "finite_valid": true,
+      "stages": 2,
+      "iterations": 15,
+      "backtracks": 22,
+      "solve_seconds": 111.98464725166559,
+      "temperature_min_K": 3085.8033146900493,
+      "temperature_max_K": 4479.192127281625,
+      "bottom_temperature_K": 3099.854800071492,
+      "lower_temperature_margin_K": 1585.8033146900493,
+      "upper_temperature_margin_K": 20.80787271837471,
+      "minimum_temperature_pressure_bar": 3.78551524925863,
+      "maximum_energy_residual_cgs": 0.00207439623773098,
+      "maximum_energy_residual_over_incident": 2.6799252008927134e-13,
+      "maximum_scaled_residual": 0.0207439623773098,
+      "convective_connections": 0,
+      "maximum_element_relative_error": 2.6589673164108924e-07,
+      "maximum_charge_relative_error": 1.4087212429273577e-14,
+      "co2_hot_layers": 10,
+      "co2_hot_maximum_mole_fraction": 6.3244291457410206e-12,
+      "bottom_stellar_cgs": 2.9154632667905905e-272,
+      "bottom_stellar_over_incident": 3.766504845523329e-282,
+      "bottom_stellar_over_internal": 3.213481874562822e-277,
+      "stellar_energy_closure": 1.2320576886394685e-16,
+      "reevaluated_net_flux_difference_over_incident": 0.0
+    },
+    {
+      "case": "prior_15",
+      "log10_metal_H": 0.0,
+      "C_O": 1.2,
+      "irradiation": 0.09999999999999998,
+      "status": "CONVERGED",
+      "stop_reason": "converged",
+      "converged": true,
+      "finite_valid": true,
+      "stages": 3,
+      "iterations": 23,
+      "backtracks": 66,
+      "solve_seconds": 175.65903739258647,
+      "temperature_min_K": 1773.830230554862,
+      "temperature_max_K": 3248.8385871194405,
+      "bottom_temperature_K": 1798.8400444865993,
+      "lower_temperature_margin_K": 273.83023055486206,
+      "upper_temperature_margin_K": 1251.1614128805595,
+      "minimum_temperature_pressure_bar": 3.78551524925863,
+      "maximum_energy_residual_cgs": 3.901252057403326e-06,
+      "maximum_energy_residual_over_incident": 5.0400514200246054e-15,
+      "maximum_scaled_residual": 3.901252057403326e-05,
+      "convective_connections": 0,
+      "maximum_element_relative_error": 5.124253622425529e-07,
+      "maximum_charge_relative_error": 2.359980935440714e-12,
+      "co2_hot_layers": 0,
+      "co2_hot_maximum_mole_fraction": null,
+      "bottom_stellar_cgs": 5.3216080896730595e-11,
+      "bottom_stellar_over_incident": 6.875018074844236e-20,
+      "bottom_stellar_over_internal": 5.865582782154658e-16,
+      "stellar_energy_closure": 0.0,
+      "reevaluated_net_flux_difference_over_incident": 0.0
+    },
+    {
+      "case": "prior_16",
+      "log10_metal_H": 0.0,
+      "C_O": 1.2,
+      "irradiation": 0.5,
+      "status": "CONVERGED",
+      "stop_reason": "converged",
+      "converged": true,
+      "finite_valid": true,
+      "stages": 2,
+      "iterations": 13,
+      "backtracks": 7,
+      "solve_seconds": 95.46767359785736,
+      "temperature_min_K": 2564.869916696113,
+      "temperature_max_K": 4155.708098242528,
+      "bottom_temperature_K": 2570.2270505275997,
+      "lower_temperature_margin_K": 1064.8699166961128,
+      "upper_temperature_margin_K": 344.29190175747226,
+      "minimum_temperature_pressure_bar": 17.15437896342879,
+      "maximum_energy_residual_cgs": 5.980487912893295e-06,
+      "maximum_energy_residual_over_incident": 1.5452457905465522e-15,
+      "maximum_scaled_residual": 5.980487912893295e-05,
+      "convective_connections": 0,
+      "maximum_element_relative_error": 3.621687558427698e-07,
+      "maximum_charge_relative_error": 1.2846716884875502e-14,
+      "co2_hot_layers": 3,
+      "co2_hot_maximum_mole_fraction": 2.2502595208293905e-14,
+      "bottom_stellar_cgs": 9.015588997478789e-45,
+      "bottom_stellar_over_incident": 2.3294589255196902e-54,
+      "bottom_stellar_over_internal": 9.93716235835086e-50,
+      "stellar_energy_closure": 1.2320576886394685e-16,
+      "reevaluated_net_flux_difference_over_incident": 0.0
+    },
+    {
+      "case": "prior_17",
+      "log10_metal_H": 0.0,
+      "C_O": 1.2,
+      "irradiation": 1.0,
+      "status": "CONVERGED",
+      "stop_reason": "converged",
+      "converged": true,
+      "finite_valid": true,
+      "stages": 5,
+      "iterations": 44,
+      "backtracks": 114,
+      "solve_seconds": 337.8562818635255,
+      "temperature_min_K": 2929.174330530384,
+      "temperature_max_K": 4478.80921988822,
+      "bottom_temperature_K": 2937.479950837444,
+      "lower_temperature_margin_K": 1429.174330530384,
+      "upper_temperature_margin_K": 21.19078011178044,
+      "minimum_temperature_pressure_bar": 10.36632928437698,
+      "maximum_energy_residual_cgs": 0.0017618201673030853,
+      "maximum_energy_residual_over_incident": 2.276106261627762e-13,
+      "maximum_scaled_residual": 0.017618201673030853,
+      "convective_connections": 0,
+      "maximum_element_relative_error": 7.544733228281054e-07,
+      "maximum_charge_relative_error": 1.1254669660063754e-14,
+      "co2_hot_layers": 10,
+      "co2_hot_maximum_mole_fraction": 3.659114903412505e-12,
+      "bottom_stellar_cgs": 5.032462830724036e-142,
+      "bottom_stellar_over_incident": 6.501469544393886e-152,
+      "bottom_stellar_over_internal": 5.546881099532772e-147,
+      "stellar_energy_closure": 0.0,
+      "reevaluated_net_flux_difference_over_incident": 0.0
+    },
+    {
+      "case": "prior_18",
+      "log10_metal_H": 1.0,
+      "C_O": 0.2,
+      "irradiation": 0.09999999999999998,
+      "status": "DOMAIN_STEP_FAILED",
+      "stop_reason": "repeated_failed_state",
+      "converged": false,
+      "finite_valid": true,
+      "stages": 6,
+      "iterations": 37,
+      "backtracks": 415,
+      "solve_seconds": 285.8887943327427,
+      "temperature_min_K": 1500.0000151824593,
+      "temperature_max_K": 3878.1600621501775,
+      "bottom_temperature_K": 2224.349090853953,
+      "lower_temperature_margin_K": 1.5182459264906356e-05,
+      "upper_temperature_margin_K": 621.8399378498225,
+      "minimum_temperature_pressure_bar": 0.008976871324473142,
+      "maximum_energy_residual_cgs": 588162045.4468796,
+      "maximum_energy_residual_over_incident": 0.7598501477836336,
+      "maximum_scaled_residual": 5881620454.468796,
+      "convective_connections": 1,
+      "maximum_element_relative_error": 7.90390550509017e-08,
+      "maximum_charge_relative_error": 2.8270499394648968e-14,
+      "co2_hot_layers": 0,
+      "co2_hot_maximum_mole_fraction": null,
+      "bottom_stellar_cgs": 1.3801829579861305e-109,
+      "bottom_stellar_over_incident": 1.783066814176011e-118,
+      "bottom_stellar_over_internal": 1.5212652375316304e-114,
+      "stellar_energy_closure": 0.0,
+      "reevaluated_net_flux_difference_over_incident": 0.0
+    },
+    {
+      "case": "prior_19",
+      "log10_metal_H": 1.0,
+      "C_O": 0.2,
+      "irradiation": 0.5,
+      "status": "CONVERGED",
+      "stop_reason": "converged",
+      "converged": true,
+      "finite_valid": true,
+      "stages": 2,
+      "iterations": 9,
+      "backtracks": 0,
+      "solve_seconds": 64.48365402966738,
+      "temperature_min_K": 2690.33611846936,
+      "temperature_max_K": 4067.6168724913227,
+      "bottom_temperature_K": 2768.75489760523,
+      "lower_temperature_margin_K": 1190.33611846936,
+      "upper_temperature_margin_K": 432.38312750867726,
+      "minimum_temperature_pressure_bar": 1.3823722273578996,
+      "maximum_energy_residual_cgs": 0.06026513618417084,
+      "maximum_energy_residual_over_incident": 1.5571379687021574e-11,
+      "maximum_scaled_residual": 0.6026513618417084,
+      "convective_connections": 0,
+      "maximum_element_relative_error": 2.5723054209260524e-08,
+      "maximum_charge_relative_error": 1.4694571923910834e-14,
+      "co2_hot_layers": 1,
+      "co2_hot_maximum_mole_fraction": 2.1124931374417337e-12,
+      "bottom_stellar_cgs": 0.0,
+      "bottom_stellar_over_incident": 0.0,
+      "bottom_stellar_over_internal": 0.0,
+      "stellar_energy_closure": 1.2320576886394685e-16,
+      "reevaluated_net_flux_difference_over_incident": 0.0
+    },
+    {
+      "case": "prior_20",
+      "log10_metal_H": 1.0,
+      "C_O": 0.2,
+      "irradiation": 1.0,
+      "status": "CONVERGED",
+      "stop_reason": "converged",
+      "converged": true,
+      "finite_valid": true,
+      "stages": 2,
+      "iterations": 13,
+      "backtracks": 2,
+      "solve_seconds": 93.65590283088386,
+      "temperature_min_K": 3061.5546879682415,
+      "temperature_max_K": 4463.6737776437085,
+      "bottom_temperature_K": 3167.039032186719,
+      "lower_temperature_margin_K": 1561.5546879682415,
+      "upper_temperature_margin_K": 36.32622235629151,
+      "minimum_temperature_pressure_bar": 0.5048065716667471,
+      "maximum_energy_residual_cgs": 1.0922551155090332e-05,
+      "maximum_energy_residual_over_incident": 1.4110910715198914e-15,
+      "maximum_scaled_residual": 0.00010922551155090332,
+      "convective_connections": 0,
+      "maximum_element_relative_error": 2.6244189840846917e-08,
+      "maximum_charge_relative_error": 1.289925467161362e-14,
+      "co2_hot_layers": 10,
+      "co2_hot_maximum_mole_fraction": 7.745196652056886e-10,
+      "bottom_stellar_cgs": 0.0,
+      "bottom_stellar_over_incident": 0.0,
+      "bottom_stellar_over_internal": 0.0,
+      "stellar_energy_closure": 0.0,
+      "reevaluated_net_flux_difference_over_incident": 0.0
+    },
+    {
+      "case": "prior_21",
+      "log10_metal_H": 1.0,
+      "C_O": 0.6,
+      "irradiation": 0.09999999999999998,
+      "status": "DOMAIN_STEP_FAILED",
+      "stop_reason": "repeated_failed_state",
+      "converged": false,
+      "finite_valid": true,
+      "stages": 7,
+      "iterations": 29,
+      "backtracks": 398,
+      "solve_seconds": 240.84851681254804,
+      "temperature_min_K": 1500.0000100155005,
+      "temperature_max_K": 3861.096201960036,
+      "bottom_temperature_K": 1938.4853788363134,
+      "lower_temperature_margin_K": 1.0015500492954743e-05,
+      "upper_temperature_margin_K": 638.9037980399639,
+      "minimum_temperature_pressure_bar": 2.1287516617963725e-05,
+      "maximum_energy_residual_cgs": 390207050.612862,
+      "maximum_energy_residual_over_incident": 0.5041108778944111,
+      "maximum_scaled_residual": 3902070506.12862,
+      "convective_connections": 1,
+      "maximum_element_relative_error": 4.402915933983441e-08,
+      "maximum_charge_relative_error": 6.897876408089421e-14,
+      "co2_hot_layers": 0,
+      "co2_hot_maximum_mole_fraction": null,
+      "bottom_stellar_cgs": 7.80309116446924e-39,
+      "bottom_stellar_over_incident": 1.0080861253102768e-47,
+      "bottom_stellar_over_internal": 8.600723016547022e-44,
+      "stellar_energy_closure": 1.5400721107993362e-16,
+      "reevaluated_net_flux_difference_over_incident": 0.0
+    },
+    {
+      "case": "prior_22",
+      "log10_metal_H": 1.0,
+      "C_O": 0.6,
+      "irradiation": 0.5,
+      "status": "CONVERGED",
+      "stop_reason": "converged",
+      "converged": true,
+      "finite_valid": true,
+      "stages": 2,
+      "iterations": 10,
+      "backtracks": 0,
+      "solve_seconds": 71.62876221165061,
+      "temperature_min_K": 2562.574827515978,
+      "temperature_max_K": 4036.535028876303,
+      "bottom_temperature_K": 2611.073054439975,
+      "lower_temperature_margin_K": 1062.574827515978,
+      "upper_temperature_margin_K": 463.46497112369707,
+      "minimum_temperature_pressure_bar": 2.2875732003183957,
+      "maximum_energy_residual_cgs": 0.04100971668958664,
+      "maximum_energy_residual_over_incident": 1.0596140818121423e-11,
+      "maximum_scaled_residual": 0.4100971668958664,
+      "convective_connections": 0,
+      "maximum_element_relative_error": 3.128605738112737e-08,
+      "maximum_charge_relative_error": 1.5451836624962993e-14,
+      "co2_hot_layers": 1,
+      "co2_hot_maximum_mole_fraction": 3.3370546962955876e-12,
+      "bottom_stellar_cgs": 1.7751340347674028e-261,
+      "bottom_stellar_over_incident": 4.5866130570493934e-271,
+      "bottom_stellar_over_internal": 1.9565882069658562e-266,
+      "stellar_energy_closure": 1.2320576886394685e-16,
+      "reevaluated_net_flux_difference_over_incident": 0.0
+    },
+    {
+      "case": "prior_23",
+      "log10_metal_H": 1.0,
+      "C_O": 0.6,
+      "irradiation": 1.0,
+      "status": "CONVERGED",
+      "stop_reason": "converged",
+      "converged": true,
+      "finite_valid": true,
+      "stages": 2,
+      "iterations": 13,
+      "backtracks": 2,
+      "solve_seconds": 93.74855355359614,
+      "temperature_min_K": 2995.343730772995,
+      "temperature_max_K": 4457.7723211593275,
+      "bottom_temperature_K": 3063.0228016881724,
+      "lower_temperature_margin_K": 1495.343730772995,
+      "upper_temperature_margin_K": 42.227678840672525,
+      "minimum_temperature_pressure_bar": 0.8353625469578261,
+      "maximum_energy_residual_cgs": 8.819159120321274e-06,
+      "maximum_energy_residual_over_incident": 1.139352566657368e-15,
+      "maximum_scaled_residual": 8.819159120321274e-05,
+      "convective_connections": 0,
+      "maximum_element_relative_error": 6.176900597529943e-08,
+      "maximum_charge_relative_error": 1.2430735523202776e-14,
+      "co2_hot_layers": 9,
+      "co2_hot_maximum_mole_fraction": 3.929838209883615e-10,
+      "bottom_stellar_cgs": 0.0,
+      "bottom_stellar_over_incident": 0.0,
+      "bottom_stellar_over_internal": 0.0,
+      "stellar_energy_closure": 1.2320576886394685e-16,
+      "reevaluated_net_flux_difference_over_incident": 0.0
+    },
+    {
+      "case": "prior_24",
+      "log10_metal_H": 1.0,
+      "C_O": 1.2,
+      "irradiation": 0.09999999999999998,
+      "status": "CONVERGED",
+      "stop_reason": "converged",
+      "converged": true,
+      "finite_valid": true,
+      "stages": 2,
+      "iterations": 16,
+      "backtracks": 13,
+      "solve_seconds": 121.13725390098989,
+      "temperature_min_K": 1650.3623061015949,
+      "temperature_max_K": 2784.2749199044683,
+      "bottom_temperature_K": 1736.3956241796307,
+      "lower_temperature_margin_K": 150.36230610159487,
+      "upper_temperature_margin_K": 1715.7250800955317,
+      "minimum_temperature_pressure_bar": 2.2875732003183957,
+      "maximum_energy_residual_cgs": 0.06551850051619112,
+      "maximum_energy_residual_over_incident": 8.464375198158925e-11,
+      "maximum_scaled_residual": 0.6551850051619112,
+      "convective_connections": 0,
+      "maximum_element_relative_error": 3.234274549849465e-08,
+      "maximum_charge_relative_error": 4.729715518740065e-09,
+      "co2_hot_layers": 0,
+      "co2_hot_maximum_mole_fraction": null,
+      "bottom_stellar_cgs": 3.6126399063834984e-19,
+      "bottom_stellar_over_incident": 4.667191614972164e-28,
+      "bottom_stellar_over_internal": 3.981923898929903e-24,
+      "stellar_energy_closure": 1.5400721107993362e-16,
+      "reevaluated_net_flux_difference_over_incident": 0.0
+    },
+    {
+      "case": "prior_25",
+      "log10_metal_H": 1.0,
+      "C_O": 1.2,
+      "irradiation": 0.5,
+      "status": "CONVERGED",
+      "stop_reason": "converged",
+      "converged": true,
+      "finite_valid": true,
+      "stages": 2,
+      "iterations": 14,
+      "backtracks": 8,
+      "solve_seconds": 103.0826659090817,
+      "temperature_min_K": 2438.9485365189194,
+      "temperature_max_K": 4023.6755155971505,
+      "bottom_temperature_K": 2453.8963307421195,
+      "lower_temperature_margin_K": 938.9485365189194,
+      "upper_temperature_margin_K": 476.3244844028495,
+      "minimum_temperature_pressure_bar": 10.36632928437698,
+      "maximum_energy_residual_cgs": 5.270121619105339e-06,
+      "maximum_energy_residual_over_incident": 1.361700477654022e-15,
+      "maximum_scaled_residual": 5.270121619105339e-05,
+      "convective_connections": 0,
+      "maximum_element_relative_error": 4.868257077483573e-08,
+      "maximum_charge_relative_error": 1.0715827238914189e-14,
+      "co2_hot_layers": 1,
+      "co2_hot_maximum_mole_fraction": 2.6670168529930443e-12,
+      "bottom_stellar_cgs": 4.845311941964064e-94,
+      "bottom_stellar_over_incident": 1.2519376330588863e-103,
+      "bottom_stellar_over_internal": 5.340599649963855e-99,
+      "stellar_energy_closure": 1.2320576886394685e-16,
+      "reevaluated_net_flux_difference_over_incident": 0.0
+    },
+    {
+      "case": "prior_26",
+      "log10_metal_H": 1.0,
+      "C_O": 1.2,
+      "irradiation": 1.0,
+      "status": "CONVERGED",
+      "stop_reason": "converged",
+      "converged": true,
+      "finite_valid": true,
+      "stages": 4,
+      "iterations": 32,
+      "backtracks": 101,
+      "solve_seconds": 247.2095133829862,
+      "temperature_min_K": 2827.5161227298536,
+      "temperature_max_K": 4455.582023063505,
+      "bottom_temperature_K": 2848.066395917595,
+      "lower_temperature_margin_K": 1327.5161227298536,
+      "upper_temperature_margin_K": 44.4179769364946,
+      "minimum_temperature_pressure_bar": 10.36632928437698,
+      "maximum_energy_residual_cgs": 0.003299318253993988,
+      "maximum_energy_residual_over_incident": 4.262409453805859e-13,
+      "maximum_scaled_residual": 0.03299318253993988,
+      "convective_connections": 0,
+      "maximum_element_relative_error": 6.14071528877514e-08,
+      "maximum_charge_relative_error": 1.10709110462732e-14,
+      "co2_hot_layers": 8,
+      "co2_hot_maximum_mole_fraction": 9.317297365696526e-11,
+      "bottom_stellar_cgs": 4.169375860437629e-243,
+      "bottom_stellar_over_incident": 5.386442202865972e-253,
+      "bottom_stellar_over_internal": 4.595569393163768e-248,
+      "stellar_energy_closure": 1.2320576886394685e-16,
+      "reevaluated_net_flux_difference_over_incident": 0.0
+    }
+  ],
+  "chemistry": {
+    "nodes_checked": 891,
+    "all_valid": true,
+    "field_ranges": {
+      "n": {
+        "minimum": 1.7652107340949736e-193,
+        "maximum": 0.9232536613491521
+      },
+      "x": {
+        "minimum": 1.7666078587968406e-193,
+        "maximum": 0.9240585730054445
+      },
+      "mmw": {
+        "minimum": 1.236412450404485,
+        "maximum": 2.6126000691649276
+      },
+      "mass_fractions": {
+        "minimum": 3.6305050068955553e-191,
+        "maximum": 0.7532290840198483
+      },
+      "number_density_e": {
+        "minimum": 8574352.801823625,
+        "maximum": 181812790258143.3
+      },
+      "number_density_h": {
+        "minimum": 360731314374.89685,
+        "maximum": 6.08888231882825e+18
+      },
+      "b": {
+        "minimum": 0.0,
+        "maximum": 0.9232608725415705
+      },
+      "metal_mass_fraction": {
+        "minimum": 0.0013657349062087994,
+        "maximum": 0.1270635223915884
+      }
+    },
+    "maximum_element_relative_error": 2.9979189915048546e-06,
+    "maximum_charge_relative_error": 4.729715518740065e-09
+  },
+  "domains": {
+    "temperature_K": [
+      1500.0,
+      4500.0
+    ],
+    "pressure_bar": [
+      1.2863969449369745e-05,
+      2.1287516617963725e-05,
+      3.522694651473102e-05,
+      5.829415347136074e-05,
+      9.646616199111992e-05,
+      0.00015963385442879422,
+      0.0002641648320386093,
+      0.00043714448126110897,
+      0.0007233941627366748,
+      0.00119708503049573,
+      0.0019809567785503386,
+      0.003278121151393459,
+      0.005424690937011326,
+      0.008976871324473142,
+      0.01485508017172775,
+      0.024582440689201974,
+      0.040679443210830474,
+      0.06731703824144983,
+      0.11139738599948024,
+      0.18434229924091106,
+      0.3050527890267026,
+      0.5048065716667471,
+      0.8353625469578261,
+      1.3823722273578996,
+      2.2875732003183957,
+      3.78551524925863,
+      6.264335366568855,
+      10.36632928437698,
+      17.15437896342879,
+      28.387359647587548,
+      46.975888167064916,
+      77.73650302387757
+    ],
+    "chemistry_pressure_bar": [
+      1.2863969449369745e-05,
+      2.1287516617963725e-05,
+      3.522694651473102e-05,
+      5.829415347136074e-05,
+      9.646616199111992e-05,
+      0.00015963385442879422,
+      0.0002641648320386093,
+      0.00043714448126110897,
+      0.0007233941627366748,
+      0.00119708503049573,
+      0.0019809567785503386,
+      0.003278121151393459,
+      0.005424690937011326,
+      0.008976871324473142,
+      0.01485508017172775,
+      0.024582440689201974,
+      0.040679443210830474,
+      0.06731703824144983,
+      0.11139738599948024,
+      0.18434229924091106,
+      0.3050527890267026,
+      0.5048065716667471,
+      0.8353625469578261,
+      1.3823722273578996,
+      2.2875732003183957,
+      3.78551524925863,
+      6.264335366568855,
+      10.36632928437698,
+      17.15437896342879,
+      28.387359647587548,
+      46.975888167064916,
+      77.73650302387757,
+      100.0
+    ],
+    "chemistry_pressure_range_bar": [
+      1e-05,
+      100.0
+    ],
+    "species": {
+      "H2O1": {
+        "ckd_temperature_K": [
+          1500.0,
+          4500.0
+        ],
+        "ckd_pressure_bar": [
+          1.2863969449369745e-05,
+          77.73650302387757
+        ],
+        "lbl_temperature_K": [
+          1500.0,
+          4500.0
+        ],
+        "lbl_pressure_bar": [
+          1.2863969449369745e-05,
+          77.73650302387757
+        ],
+        "lbl_native_pressure_matches": true,
+        "partition_temperature_K": [
+          1.0,
+          10000.0
+        ],
+        "declared_linelist_maximum_K": 6000.0,
+        "source_files": [
+          {
+            "path": "/home/kawahara/.database/H2O/1H2-16O/POKAZATEL/1H2-16O__POKAZATEL.def",
+            "sha256": "fda741a06f984c22bbf9ffc8ad2c1b9c942a77c314b91e7f991086c2bea1c6f9",
+            "bytes": 13982
+          },
+          {
+            "path": "/home/kawahara/.database/H2O/1H2-16O/POKAZATEL/1H2-16O__POKAZATEL.pf",
+            "sha256": "39441c486f09e50fcc450e85e321dff968a2db4e8a606af50ae346cb293dae39",
+            "bytes": 260000
+          }
+        ]
+      },
+      "C1O1": {
+        "ckd_temperature_K": [
+          1500.0,
+          4500.0
+        ],
+        "ckd_pressure_bar": [
+          1.2863969449369745e-05,
+          77.73650302387757
+        ],
+        "lbl_temperature_K": [
+          1500.0,
+          4500.0
+        ],
+        "lbl_pressure_bar": [
+          1.2863969449369745e-05,
+          77.73650302387757
+        ],
+        "lbl_native_pressure_matches": true,
+        "partition_temperature_K": [
+          1.0,
+          9000.0
+        ],
+        "declared_linelist_maximum_K": 9000.0,
+        "source_files": [
+          {
+            "path": "/home/kawahara/.database/CO/12C-16O/Li2015/12C-16O__Li2015.def",
+            "sha256": "8ecf65cdfdc28546ff4afe80baf4abba1045f80c120cc199f268c0944e420b3d",
+            "bytes": 5277
+          },
+          {
+            "path": "/home/kawahara/.database/CO/12C-16O/Li2015/12C-16O__Li2015.pf",
+            "sha256": "0a6c56318875a4cf6bfc7f8aa9b5609865025c922bf0ccf42f6b017c1ed29b43",
+            "bytes": 234000
+          }
+        ]
+      },
+      "C1O2": {
+        "ckd_temperature_K": [
+          1500.0,
+          4500.0
+        ],
+        "ckd_pressure_bar": [
+          1.2863969449369745e-05,
+          77.73650302387757
+        ],
+        "lbl_temperature_K": [
+          1500.0,
+          4500.0
+        ],
+        "lbl_pressure_bar": [
+          1.2863969449369745e-05,
+          77.73650302387757
+        ],
+        "lbl_native_pressure_matches": true,
+        "partition_temperature_K": [
+          1.0,
+          5000.0
+        ],
+        "declared_linelist_maximum_K": 4000.0,
+        "source_files": [
+          {
+            "path": "/home/kawahara/.database/CO2/12C-16O2/UCL-4000/12C-16O2__UCL-4000.def",
+            "sha256": "ea3bf32d6a4e629af1714401147355784c6571aeee4f440d908d180640fd7d5f",
+            "bytes": 10461
+          },
+          {
+            "path": "/home/kawahara/.database/CO2/12C-16O2/UCL-4000/12C-16O2__UCL-4000.pf",
+            "sha256": "195e908b723a931e3b56d4e2359cd1eff13b42e2c68811b60a8c6c8a918ff4fd",
+            "bytes": 125000
+          }
+        ]
+      },
+      "Fe1": {
+        "ckd_temperature_K": [
+          1500.0,
+          4500.0
+        ],
+        "ckd_pressure_bar": [
+          1.2863969449369745e-05,
+          77.73650302387757
+        ],
+        "lbl_temperature_K": [
+          1500.0,
+          4500.0
+        ],
+        "lbl_pressure_bar": [
+          1.2863969449369745e-05,
+          77.73650302387757
+        ],
+        "lbl_native_pressure_matches": true,
+        "partition_temperature_K": [
+          1e-05,
+          10000.0
+        ],
+        "declared_linelist_maximum_K": null,
+        "source_files": [
+          {
+            "path": "/home/kawahara/exojax/src/exojax/data/atom/barklem_collet_2016_pff.txt",
+            "sha256": "6c7910298838addf3c366f5d86985f1a64c866cef5ce65613e9a126fef312650",
+            "bytes": 171536
+          }
+        ],
+        "completeness": "No declared atomic line-completeness temperature."
+      },
+      "O1Ti1": {
+        "ckd_temperature_K": [
+          1500.0,
+          4500.0
+        ],
+        "ckd_pressure_bar": [
+          1.2863969449369745e-05,
+          77.73650302387757
+        ],
+        "lbl_temperature_K": [
+          1500.0,
+          4500.0
+        ],
+        "lbl_pressure_bar": [
+          1.2863969449369745e-05,
+          77.73650302387757
+        ],
+        "lbl_native_pressure_matches": true,
+        "partition_temperature_K": [
+          1.0,
+          8000.0
+        ],
+        "declared_linelist_maximum_K": 5000.0,
+        "source_files": [
+          {
+            "path": "/home/kawahara/.database/TiO/48Ti-16O/Toto/48Ti-16O__Toto.def",
+            "sha256": "d556d86736ac0b9ceae94427efd5108f4f9ba93d7d7bc22c414ffed868ffeb88",
+            "bytes": 7461
+          },
+          {
+            "path": "/home/kawahara/.database/TiO/48Ti-16O/Toto/48Ti-16O__Toto.pf",
+            "sha256": "38c80b7adaed26bce40f6c31f52280305626c1ea021028474f48b23d08ab9c30",
+            "bytes": 200000
+          }
+        ]
+      },
+      "O1Si1": {
+        "ckd_temperature_K": [
+          1500.0,
+          4500.0
+        ],
+        "ckd_pressure_bar": [
+          1.2863969449369745e-05,
+          77.73650302387757
+        ],
+        "lbl_temperature_K": [
+          1500.0,
+          4500.0
+        ],
+        "lbl_pressure_bar": [
+          1.2863969449369745e-05,
+          77.73650302387757
+        ],
+        "lbl_native_pressure_matches": true,
+        "partition_temperature_K": [
+          1.0,
+          10000.0
+        ],
+        "declared_linelist_maximum_K": 10000.0,
+        "source_files": [
+          {
+            "path": "/home/kawahara/.database/SiO/28Si-16O/SiOUVenIR/28Si-16O__SiOUVenIR.def",
+            "sha256": "934e4d53aae9e25686b27e9aca1382e7bdab23415da9afe0a2a35234327bb8bb",
+            "bytes": 7461
+          },
+          {
+            "path": "/home/kawahara/.database/SiO/28Si-16O/SiOUVenIR/28Si-16O__SiOUVenIR.pf",
+            "sha256": "bdd468fabb897535d91c05609d3264bd90455b63c17a32bcb11c7323b5238cc9",
+            "bytes": 250000
+          }
+        ]
+      },
+      "Na1": {
+        "ckd_temperature_K": [
+          1500.0,
+          4500.0
+        ],
+        "ckd_pressure_bar": [
+          1.2863969449369745e-05,
+          77.73650302387757
+        ],
+        "lbl_temperature_K": [
+          1500.0,
+          4500.0
+        ],
+        "lbl_pressure_bar": [
+          1.2863969449369745e-05,
+          77.73650302387757
+        ],
+        "lbl_native_pressure_matches": true,
+        "partition_temperature_K": [
+          1e-05,
+          10000.0
+        ],
+        "declared_linelist_maximum_K": null,
+        "source_files": [
+          {
+            "path": "/home/kawahara/exojax/src/exojax/data/atom/barklem_collet_2016_pff.txt",
+            "sha256": "6c7910298838addf3c366f5d86985f1a64c866cef5ce65613e9a126fef312650",
+            "bytes": 171536
+          }
+        ],
+        "completeness": "No declared atomic line-completeness temperature."
+      },
+      "K1": {
+        "ckd_temperature_K": [
+          1500.0,
+          4500.0
+        ],
+        "ckd_pressure_bar": [
+          1.2863969449369745e-05,
+          77.73650302387757
+        ],
+        "lbl_temperature_K": [
+          1500.0,
+          4500.0
+        ],
+        "lbl_pressure_bar": [
+          1.2863969449369745e-05,
+          77.73650302387757
+        ],
+        "lbl_native_pressure_matches": true,
+        "partition_temperature_K": [
+          1e-05,
+          10000.0
+        ],
+        "declared_linelist_maximum_K": null,
+        "source_files": [
+          {
+            "path": "/home/kawahara/exojax/src/exojax/data/atom/barklem_collet_2016_pff.txt",
+            "sha256": "6c7910298838addf3c366f5d86985f1a64c866cef5ce65613e9a126fef312650",
+            "bytes": 171536
+          }
+        ],
+        "completeness": "No declared atomic line-completeness temperature."
+      }
+    },
+    "cia": {
+      "H2-H2": {
+        "temperature_K": [
+          1000.0,
+          7000.0
+        ],
+        "wavenumber_cm1": [
+          20.0,
+          20000.0
+        ],
+        "outside_spectral_range": "zero",
+        "pressure_axis": null
+      },
+      "H2-He1": {
+        "temperature_K": [
+          200.0,
+          9900.0
+        ],
+        "wavenumber_cm1": [
+          20.0,
+          20000.0
+        ],
+        "outside_spectral_range": "zero",
+        "pressure_axis": null
+      }
+    },
+    "broadband_cm1": [
+      200.0,
+      50000.0
+    ],
+    "resolved_cm1": [
+      3300.002248801023,
+      12499.975876303293
+    ],
+    "bottom_scope": "Gas opacity is evaluated at layer centers only; the bottom node supplies chemistry and blackbody emission.",
+    "spectral_scope": "Prepared finite CIA/scattering support and stellar tail are unchanged; this is not a missing-opacity bound."
+  },
+  "temperature": {
+    "minimum_K": 1500.0000100155005,
+    "maximum_K": 4481.003633835428,
+    "converged_minimum_K": 1650.3623061015949,
+    "minimum_lower_margin_K": 1.0015500492954743e-05,
+    "minimum_upper_margin_K": 18.996366164571555
+  },
+  "stages": {
+    "total": 125,
+    "all_saved_temperatures_in_domain": true,
+    "all_saved_solver_fields_finite": true,
+    "all_saved_guard_flags_valid": true,
+    "statuses": {
+      "MAX_ACTIVE_SET_ITERATIONS": 17,
+      "CONVERGED": 20,
+      "MAX_ITERATIONS": 77,
+      "DOMAIN_STEP_FAILED": 11
+    }
+  },
+  "co2_declared_temperature": {
+    "maximum_K": 4000.0,
+    "affected_cases": 18,
+    "affected_case_layers": 125,
+    "maximum_mole_fraction": 7.745196652056886e-10,
+    "layers": [
+      {
+        "case": "prior_00",
+        "layer": 0,
+        "temperature_K": 4157.905900224818,
+        "pressure_bar": 1.2863969449369745e-05,
+        "mole_fraction": 1.3483346201192506e-15
+      },
+      {
+        "case": "prior_00",
+        "layer": 1,
+        "temperature_K": 4112.100872060024,
+        "pressure_bar": 2.1287516617963725e-05,
+        "mole_fraction": 6.050048753382171e-15
+      },
+      {
+        "case": "prior_00",
+        "layer": 2,
+        "temperature_K": 4061.5618181678224,
+        "pressure_bar": 3.522694651473102e-05,
+        "mole_fraction": 2.762771489354927e-14
+      },
+      {
+        "case": "prior_02",
+        "layer": 0,
+        "temperature_K": 4145.687598287011,
+        "pressure_bar": 1.2863969449369745e-05,
+        "mole_fraction": 1.2379144434715131e-18
+      },
+      {
+        "case": "prior_02",
+        "layer": 1,
+        "temperature_K": 4146.725895283842,
+        "pressure_bar": 2.1287516617963725e-05,
+        "mole_fraction": 3.3642859467311595e-18
+      },
+      {
+        "case": "prior_02",
+        "layer": 2,
+        "temperature_K": 4144.362650999146,
+        "pressure_bar": 3.522694651473102e-05,
+        "mole_fraction": 9.482098920133451e-18
+      },
+      {
+        "case": "prior_02",
+        "layer": 3,
+        "temperature_K": 4135.421851731559,
+        "pressure_bar": 5.829415347136074e-05,
+        "mole_fraction": 2.871429257519842e-17
+      },
+      {
+        "case": "prior_02",
+        "layer": 4,
+        "temperature_K": 4113.27308414706,
+        "pressure_bar": 9.646616199111992e-05,
+        "mole_fraction": 1.0059295269271345e-16
+      },
+      {
+        "case": "prior_02",
+        "layer": 5,
+        "temperature_K": 4078.5540659636317,
+        "pressure_bar": 0.00015963385442879422,
+        "mole_fraction": 4.028529378449849e-16
+      },
+      {
+        "case": "prior_02",
+        "layer": 6,
+        "temperature_K": 4031.0818101724144,
+        "pressure_bar": 0.0002641648320386093,
+        "mole_fraction": 1.816738700931904e-15
+      },
+      {
+        "case": "prior_03",
+        "layer": 0,
+        "temperature_K": 4432.980725006862,
+        "pressure_bar": 1.2863969449369745e-05,
+        "mole_fraction": 5.608048659354541e-20
+      },
+      {
+        "case": "prior_03",
+        "layer": 1,
+        "temperature_K": 4436.388901014896,
+        "pressure_bar": 2.1287516617963725e-05,
+        "mole_fraction": 1.5045963650481336e-19
+      },
+      {
+        "case": "prior_03",
+        "layer": 2,
+        "temperature_K": 4437.058278184542,
+        "pressure_bar": 3.522694651473102e-05,
+        "mole_fraction": 4.1373883130904306e-19
+      },
+      {
+        "case": "prior_03",
+        "layer": 3,
+        "temperature_K": 4434.348952495255,
+        "pressure_bar": 5.829415347136074e-05,
+        "mole_fraction": 1.1738568470699504e-18
+      },
+      {
+        "case": "prior_03",
+        "layer": 4,
+        "temperature_K": 4422.5599096446085,
+        "pressure_bar": 9.646616199111992e-05,
+        "mole_fraction": 3.639552509505226e-18
+      },
+      {
+        "case": "prior_03",
+        "layer": 5,
+        "temperature_K": 4398.269055125383,
+        "pressure_bar": 0.00015963385442879422,
+        "mole_fraction": 1.2776753782765856e-17
+      },
+      {
+        "case": "prior_03",
+        "layer": 6,
+        "temperature_K": 4364.2475052028885,
+        "pressure_bar": 0.0002641648320386093,
+        "mole_fraction": 4.947482530889901e-17
+      },
+      {
+        "case": "prior_03",
+        "layer": 7,
+        "temperature_K": 4320.7072964002655,
+        "pressure_bar": 0.00043714448126110897,
+        "mole_fraction": 2.1096366281116339e-16
+      },
+      {
+        "case": "prior_03",
+        "layer": 8,
+        "temperature_K": 4259.197994728558,
+        "pressure_bar": 0.0007233941627366748,
+        "mole_fraction": 1.0757602321946885e-15
+      },
+      {
+        "case": "prior_03",
+        "layer": 9,
+        "temperature_K": 4176.807550538815,
+        "pressure_bar": 0.00119708503049573,
+        "mole_fraction": 6.555581826736886e-15
+      },
+      {
+        "case": "prior_03",
+        "layer": 10,
+        "temperature_K": 4082.65175703637,
+        "pressure_bar": 0.0019809567785503386,
+        "mole_fraction": 3.889212966238793e-14
+      },
+      {
+        "case": "prior_05",
+        "layer": 0,
+        "temperature_K": 4142.672433069637,
+        "pressure_bar": 1.2863969449369745e-05,
+        "mole_fraction": 1.6213025712057e-18
+      },
+      {
+        "case": "prior_05",
+        "layer": 1,
+        "temperature_K": 4143.43403806839,
+        "pressure_bar": 2.1287516617963725e-05,
+        "mole_fraction": 4.4182392835796415e-18
+      },
+      {
+        "case": "prior_05",
+        "layer": 2,
+        "temperature_K": 4140.649076311161,
+        "pressure_bar": 3.522694651473102e-05,
+        "mole_fraction": 1.2504946557281255e-17
+      },
+      {
+        "case": "prior_05",
+        "layer": 3,
+        "temperature_K": 4130.89342500609,
+        "pressure_bar": 5.829415347136074e-05,
+        "mole_fraction": 3.818322420017949e-17
+      },
+      {
+        "case": "prior_05",
+        "layer": 4,
+        "temperature_K": 4107.19235798672,
+        "pressure_bar": 9.646616199111992e-05,
+        "mole_fraction": 1.3587753084664758e-16
+      },
+      {
+        "case": "prior_05",
+        "layer": 5,
+        "temperature_K": 4069.669712833052,
+        "pressure_bar": 0.00015963385442879422,
+        "mole_fraction": 5.58898454169107e-16
+      },
+      {
+        "case": "prior_05",
+        "layer": 6,
+        "temperature_K": 4016.4309323456837,
+        "pressure_bar": 0.0002641648320386093,
+        "mole_fraction": 2.6473399868563374e-15
+      },
+      {
+        "case": "prior_06",
+        "layer": 0,
+        "temperature_K": 4432.3258223047,
+        "pressure_bar": 1.2863969449369745e-05,
+        "mole_fraction": 7.146417770074517e-20
+      },
+      {
+        "case": "prior_06",
+        "layer": 1,
+        "temperature_K": 4435.699902935412,
+        "pressure_bar": 2.1287516617963725e-05,
+        "mole_fraction": 1.9177504863060574e-19
+      },
+      {
+        "case": "prior_06",
+        "layer": 2,
+        "temperature_K": 4436.306797507797,
+        "pressure_bar": 3.522694651473102e-05,
+        "mole_fraction": 5.276131072430965e-19
+      },
+      {
+        "case": "prior_06",
+        "layer": 3,
+        "temperature_K": 4433.475425723476,
+        "pressure_bar": 5.829415347136074e-05,
+        "mole_fraction": 1.4985485623987868e-18
+      },
+      {
+        "case": "prior_06",
+        "layer": 4,
+        "temperature_K": 4421.455473586356,
+        "pressure_bar": 9.646616199111992e-05,
+        "mole_fraction": 4.656101804375784e-18
+      },
+      {
+        "case": "prior_06",
+        "layer": 5,
+        "temperature_K": 4396.797457656938,
+        "pressure_bar": 0.00015963385442879422,
+        "mole_fraction": 1.6400289822769972e-17
+      },
+      {
+        "case": "prior_06",
+        "layer": 6,
+        "temperature_K": 4362.201178740566,
+        "pressure_bar": 0.0002641648320386093,
+        "mole_fraction": 6.38288405419356e-17
+      },
+      {
+        "case": "prior_06",
+        "layer": 7,
+        "temperature_K": 4317.584339489927,
+        "pressure_bar": 0.00043714448126110897,
+        "mole_fraction": 2.7465420694550964e-16
+      },
+      {
+        "case": "prior_06",
+        "layer": 8,
+        "temperature_K": 4253.754317536109,
+        "pressure_bar": 0.0007233941627366748,
+        "mole_fraction": 1.4259675706323493e-15
+      },
+      {
+        "case": "prior_06",
+        "layer": 9,
+        "temperature_K": 4166.140954928758,
+        "pressure_bar": 0.00119708503049573,
+        "mole_fraction": 8.969101851152262e-15
+      },
+      {
+        "case": "prior_06",
+        "layer": 10,
+        "temperature_K": 4064.727974026672,
+        "pressure_bar": 0.0019809567785503386,
+        "mole_fraction": 5.3226563703717593e-14
+      },
+      {
+        "case": "prior_08",
+        "layer": 0,
+        "temperature_K": 4142.087886039928,
+        "pressure_bar": 1.2863969449369745e-05,
+        "mole_fraction": 1.25540380039069e-18
+      },
+      {
+        "case": "prior_08",
+        "layer": 1,
+        "temperature_K": 4142.791123195067,
+        "pressure_bar": 2.1287516617963725e-05,
+        "mole_fraction": 3.4224129942648878e-18
+      },
+      {
+        "case": "prior_08",
+        "layer": 2,
+        "temperature_K": 4139.910809736787,
+        "pressure_bar": 3.522694651473102e-05,
+        "mole_fraction": 9.692541658701153e-18
+      },
+      {
+        "case": "prior_08",
+        "layer": 3,
+        "temperature_K": 4129.956492487546,
+        "pressure_bar": 5.829415347136074e-05,
+        "mole_fraction": 2.963815607195706e-17
+      },
+      {
+        "case": "prior_08",
+        "layer": 4,
+        "temperature_K": 4105.906162648656,
+        "pressure_bar": 9.646616199111992e-05,
+        "mole_fraction": 1.0569864950466931e-16
+      },
+      {
+        "case": "prior_08",
+        "layer": 5,
+        "temperature_K": 4067.8106944728315,
+        "pressure_bar": 0.00015963385442879422,
+        "mole_fraction": 4.3564510559772073e-16
+      },
+      {
+        "case": "prior_08",
+        "layer": 6,
+        "temperature_K": 4013.3657515500063,
+        "pressure_bar": 0.0002641648320386093,
+        "mole_fraction": 2.0650353411048717e-15
+      },
+      {
+        "case": "prior_09",
+        "layer": 0,
+        "temperature_K": 4432.325518486169,
+        "pressure_bar": 1.2863969449369745e-05,
+        "mole_fraction": 5.498973188990298e-20
+      },
+      {
+        "case": "prior_09",
+        "layer": 1,
+        "temperature_K": 4435.699403598082,
+        "pressure_bar": 2.1287516617963725e-05,
+        "mole_fraction": 1.4755532727207129e-19
+      },
+      {
+        "case": "prior_09",
+        "layer": 2,
+        "temperature_K": 4436.297528811237,
+        "pressure_bar": 3.522694651473102e-05,
+        "mole_fraction": 4.059571761878547e-19
+      },
+      {
+        "case": "prior_09",
+        "layer": 3,
+        "temperature_K": 4433.437822469616,
+        "pressure_bar": 5.829415347136074e-05,
+        "mole_fraction": 1.1532141054461253e-18
+      },
+      {
+        "case": "prior_09",
+        "layer": 4,
+        "temperature_K": 4421.358108187458,
+        "pressure_bar": 9.646616199111992e-05,
+        "mole_fraction": 3.584609654629375e-18
+      },
+      {
+        "case": "prior_09",
+        "layer": 5,
+        "temperature_K": 4396.630728841197,
+        "pressure_bar": 0.00015963385442879422,
+        "mole_fraction": 1.2630430558021277e-17
+      },
+      {
+        "case": "prior_09",
+        "layer": 6,
+        "temperature_K": 4361.963914438743,
+        "pressure_bar": 0.0002641648320386093,
+        "mole_fraction": 4.915361313031591e-17
+      },
+      {
+        "case": "prior_09",
+        "layer": 7,
+        "temperature_K": 4317.210993400871,
+        "pressure_bar": 0.00043714448126110897,
+        "mole_fraction": 2.114073077113772e-16
+      },
+      {
+        "case": "prior_09",
+        "layer": 8,
+        "temperature_K": 4253.094308994682,
+        "pressure_bar": 0.0007233941627366748,
+        "mole_fraction": 1.0949555885347224e-15
+      },
+      {
+        "case": "prior_09",
+        "layer": 9,
+        "temperature_K": 4164.834653434445,
+        "pressure_bar": 0.00119708503049573,
+        "mole_fraction": 6.807650470878684e-15
+      },
+      {
+        "case": "prior_09",
+        "layer": 10,
+        "temperature_K": 4062.482627786589,
+        "pressure_bar": 0.0019809567785503386,
+        "mole_fraction": 3.8431777836352076e-14
+      },
+      {
+        "case": "prior_11",
+        "layer": 0,
+        "temperature_K": 4164.785568781005,
+        "pressure_bar": 1.2863969449369745e-05,
+        "mole_fraction": 9.902085804542356e-16
+      },
+      {
+        "case": "prior_11",
+        "layer": 1,
+        "temperature_K": 4124.9020726683375,
+        "pressure_bar": 2.1287516617963725e-05,
+        "mole_fraction": 4.1798938851008506e-15
+      },
+      {
+        "case": "prior_11",
+        "layer": 2,
+        "temperature_K": 4082.8574653583228,
+        "pressure_bar": 3.522694651473102e-05,
+        "mole_fraction": 1.764737854257086e-14
+      },
+      {
+        "case": "prior_11",
+        "layer": 3,
+        "temperature_K": 4021.611728590973,
+        "pressure_bar": 5.829415347136074e-05,
+        "mole_fraction": 8.601844076875685e-14
+      },
+      {
+        "case": "prior_12",
+        "layer": 0,
+        "temperature_K": 4481.003633835428,
+        "pressure_bar": 1.2863969449369745e-05,
+        "mole_fraction": 3.518678528854358e-17
+      },
+      {
+        "case": "prior_12",
+        "layer": 1,
+        "temperature_K": 4478.222471089994,
+        "pressure_bar": 2.1287516617963725e-05,
+        "mole_fraction": 1.0034993290630722e-16
+      },
+      {
+        "case": "prior_12",
+        "layer": 2,
+        "temperature_K": 4456.253566846818,
+        "pressure_bar": 3.522694651473102e-05,
+        "mole_fraction": 3.4426970045294907e-16
+      },
+      {
+        "case": "prior_12",
+        "layer": 3,
+        "temperature_K": 4430.19045056273,
+        "pressure_bar": 5.829415347136074e-05,
+        "mole_fraction": 1.2233903210316933e-15
+      },
+      {
+        "case": "prior_12",
+        "layer": 4,
+        "temperature_K": 4395.069456446096,
+        "pressure_bar": 9.646616199111992e-05,
+        "mole_fraction": 4.723591426919186e-15
+      },
+      {
+        "case": "prior_12",
+        "layer": 5,
+        "temperature_K": 4346.079320626924,
+        "pressure_bar": 0.00015963385442879422,
+        "mole_fraction": 2.0645538788311348e-14
+      },
+      {
+        "case": "prior_12",
+        "layer": 6,
+        "temperature_K": 4289.483131794096,
+        "pressure_bar": 0.0002641648320386093,
+        "mole_fraction": 9.36568401943359e-14
+      },
+      {
+        "case": "prior_12",
+        "layer": 7,
+        "temperature_K": 4224.212668575648,
+        "pressure_bar": 0.00043714448126110897,
+        "mole_fraction": 4.1930180372867203e-13
+      },
+      {
+        "case": "prior_12",
+        "layer": 8,
+        "temperature_K": 4150.626754487291,
+        "pressure_bar": 0.0007233941627366748,
+        "mole_fraction": 1.6695572805423622e-12
+      },
+      {
+        "case": "prior_12",
+        "layer": 9,
+        "temperature_K": 4073.875900787057,
+        "pressure_bar": 0.00119708503049573,
+        "mole_fraction": 5.334513318020892e-12
+      },
+      {
+        "case": "prior_12",
+        "layer": 10,
+        "temperature_K": 4000.708240119654,
+        "pressure_bar": 0.0019809567785503386,
+        "mole_fraction": 1.3874786790644654e-11
+      },
+      {
+        "case": "prior_14",
+        "layer": 0,
+        "temperature_K": 4479.192127281625,
+        "pressure_bar": 1.2863969449369745e-05,
+        "mole_fraction": 4.5378581925142076e-17
+      },
+      {
+        "case": "prior_14",
+        "layer": 1,
+        "temperature_K": 4475.353693090874,
+        "pressure_bar": 2.1287516617963725e-05,
+        "mole_fraction": 1.3067215627913504e-16
+      },
+      {
+        "case": "prior_14",
+        "layer": 2,
+        "temperature_K": 4452.225399429819,
+        "pressure_bar": 3.522694651473102e-05,
+        "mole_fraction": 4.530671364145451e-16
+      },
+      {
+        "case": "prior_14",
+        "layer": 3,
+        "temperature_K": 4424.678924380784,
+        "pressure_bar": 5.829415347136074e-05,
+        "mole_fraction": 1.6317147097480281e-15
+      },
+      {
+        "case": "prior_14",
+        "layer": 4,
+        "temperature_K": 4386.754556461738,
+        "pressure_bar": 9.646616199111992e-05,
+        "mole_fraction": 6.460447781123683e-15
+      },
+      {
+        "case": "prior_14",
+        "layer": 5,
+        "temperature_K": 4332.933757987374,
+        "pressure_bar": 0.00015963385442879422,
+        "mole_fraction": 2.939742813699043e-14
+      },
+      {
+        "case": "prior_14",
+        "layer": 6,
+        "temperature_K": 4269.238068673135,
+        "pressure_bar": 0.0002641648320386093,
+        "mole_fraction": 1.3964122575312927e-13
+      },
+      {
+        "case": "prior_14",
+        "layer": 7,
+        "temperature_K": 4197.1378409513945,
+        "pressure_bar": 0.00043714448126110897,
+        "mole_fraction": 6.266530728908736e-13
+      },
+      {
+        "case": "prior_14",
+        "layer": 8,
+        "temperature_K": 4123.773139155083,
+        "pressure_bar": 0.0007233941627366748,
+        "mole_fraction": 2.2498683225873272e-12
+      },
+      {
+        "case": "prior_14",
+        "layer": 9,
+        "temperature_K": 4049.0845996926855,
+        "pressure_bar": 0.00119708503049573,
+        "mole_fraction": 6.3244291457410206e-12
+      },
+      {
+        "case": "prior_16",
+        "layer": 0,
+        "temperature_K": 4155.708098242528,
+        "pressure_bar": 1.2863969449369745e-05,
+        "mole_fraction": 1.0597102930610232e-15
+      },
+      {
+        "case": "prior_16",
+        "layer": 1,
+        "temperature_K": 4107.909986408761,
+        "pressure_bar": 2.1287516617963725e-05,
+        "mole_fraction": 4.839304818311776e-15
+      },
+      {
+        "case": "prior_16",
+        "layer": 2,
+        "temperature_K": 4054.5258421465387,
+        "pressure_bar": 3.522694651473102e-05,
+        "mole_fraction": 2.2502595208293905e-14
+      },
+      {
+        "case": "prior_17",
+        "layer": 0,
+        "temperature_K": 4478.80921988822,
+        "pressure_bar": 1.2863969449369745e-05,
+        "mole_fraction": 3.506509268751129e-17
+      },
+      {
+        "case": "prior_17",
+        "layer": 1,
+        "temperature_K": 4474.485032998273,
+        "pressure_bar": 2.1287516617963725e-05,
+        "mole_fraction": 1.0140068613052523e-16
+      },
+      {
+        "case": "prior_17",
+        "layer": 2,
+        "temperature_K": 4450.965224133258,
+        "pressure_bar": 3.522694651473102e-05,
+        "mole_fraction": 3.526708517319112e-16
+      },
+      {
+        "case": "prior_17",
+        "layer": 3,
+        "temperature_K": 4423.070092836832,
+        "pressure_bar": 5.829415347136074e-05,
+        "mole_fraction": 1.273010925222183e-15
+      },
+      {
+        "case": "prior_17",
+        "layer": 4,
+        "temperature_K": 4384.450293726341,
+        "pressure_bar": 9.646616199111992e-05,
+        "mole_fraction": 5.0624022658647296e-15
+      },
+      {
+        "case": "prior_17",
+        "layer": 5,
+        "temperature_K": 4329.544830700088,
+        "pressure_bar": 0.00015963385442879422,
+        "mole_fraction": 2.3128710433334296e-14
+      },
+      {
+        "case": "prior_17",
+        "layer": 6,
+        "temperature_K": 4264.19029319682,
+        "pressure_bar": 0.0002641648320386093,
+        "mole_fraction": 1.0956119784819291e-13
+      },
+      {
+        "case": "prior_17",
+        "layer": 7,
+        "temperature_K": 4190.225115418003,
+        "pressure_bar": 0.00043714448126110897,
+        "mole_fraction": 4.757742026834276e-13
+      },
+      {
+        "case": "prior_17",
+        "layer": 8,
+        "temperature_K": 4115.581037986568,
+        "pressure_bar": 0.0007233941627366748,
+        "mole_fraction": 1.5540722451193405e-12
+      },
+      {
+        "case": "prior_17",
+        "layer": 9,
+        "temperature_K": 4037.88060338579,
+        "pressure_bar": 0.00119708503049573,
+        "mole_fraction": 3.659114903412505e-12
+      },
+      {
+        "case": "prior_19",
+        "layer": 0,
+        "temperature_K": 4067.6168724913227,
+        "pressure_bar": 1.2863969449369745e-05,
+        "mole_fraction": 2.1124931374417337e-12
+      },
+      {
+        "case": "prior_20",
+        "layer": 0,
+        "temperature_K": 4463.6737776437085,
+        "pressure_bar": 1.2863969449369745e-05,
+        "mole_fraction": 4.1264193154555435e-14
+      },
+      {
+        "case": "prior_20",
+        "layer": 1,
+        "temperature_K": 4397.311780778885,
+        "pressure_bar": 2.1287516617963725e-05,
+        "mole_fraction": 2.1198984845904984e-13
+      },
+      {
+        "case": "prior_20",
+        "layer": 2,
+        "temperature_K": 4356.925052396443,
+        "pressure_bar": 3.522694651473102e-05,
+        "mole_fraction": 8.201100266091055e-13
+      },
+      {
+        "case": "prior_20",
+        "layer": 3,
+        "temperature_K": 4314.412415870721,
+        "pressure_bar": 5.829415347136074e-05,
+        "mole_fraction": 3.0453569130437227e-12
+      },
+      {
+        "case": "prior_20",
+        "layer": 4,
+        "temperature_K": 4268.144680473945,
+        "pressure_bar": 9.646616199111992e-05,
+        "mole_fraction": 1.0487570882020523e-11
+      },
+      {
+        "case": "prior_20",
+        "layer": 5,
+        "temperature_K": 4222.817651836488,
+        "pressure_bar": 0.00015963385442879422,
+        "mole_fraction": 3.090085041413901e-11
+      },
+      {
+        "case": "prior_20",
+        "layer": 6,
+        "temperature_K": 4183.721675580092,
+        "pressure_bar": 0.0002641648320386093,
+        "mole_fraction": 7.579905441538265e-11
+      },
+      {
+        "case": "prior_20",
+        "layer": 7,
+        "temperature_K": 4143.994282268823,
+        "pressure_bar": 0.00043714448126110897,
+        "mole_fraction": 1.6774365130703298e-10
+      },
+      {
+        "case": "prior_20",
+        "layer": 8,
+        "temperature_K": 4098.588627612388,
+        "pressure_bar": 0.0007233941627366748,
+        "mole_fraction": 3.552147493803594e-10
+      },
+      {
+        "case": "prior_20",
+        "layer": 9,
+        "temperature_K": 4036.4338794747837,
+        "pressure_bar": 0.00119708503049573,
+        "mole_fraction": 7.745196652056886e-10
+      },
+      {
+        "case": "prior_22",
+        "layer": 0,
+        "temperature_K": 4036.535028876303,
+        "pressure_bar": 1.2863969449369745e-05,
+        "mole_fraction": 3.3370546962955876e-12
+      },
+      {
+        "case": "prior_23",
+        "layer": 0,
+        "temperature_K": 4457.7723211593275,
+        "pressure_bar": 1.2863969449369745e-05,
+        "mole_fraction": 5.5068884545316185e-14
+      },
+      {
+        "case": "prior_23",
+        "layer": 1,
+        "temperature_K": 4382.804436327075,
+        "pressure_bar": 2.1287516617963725e-05,
+        "mole_fraction": 3.053975426725374e-13
+      },
+      {
+        "case": "prior_23",
+        "layer": 2,
+        "temperature_K": 4334.88133909328,
+        "pressure_bar": 3.522694651473102e-05,
+        "mole_fraction": 1.246628667052249e-12
+      },
+      {
+        "case": "prior_23",
+        "layer": 3,
+        "temperature_K": 4285.451466174811,
+        "pressure_bar": 5.829415347136074e-05,
+        "mole_fraction": 4.7255377823550675e-12
+      },
+      {
+        "case": "prior_23",
+        "layer": 4,
+        "temperature_K": 4237.424383870286,
+        "pressure_bar": 9.646616199111992e-05,
+        "mole_fraction": 1.5349888091713738e-11
+      },
+      {
+        "case": "prior_23",
+        "layer": 5,
+        "temperature_K": 4193.695577640186,
+        "pressure_bar": 0.00015963385442879422,
+        "mole_fraction": 4.0907771753182983e-11
+      },
+      {
+        "case": "prior_23",
+        "layer": 6,
+        "temperature_K": 4151.663529819861,
+        "pressure_bar": 0.0002641648320386093,
+        "mole_fraction": 9.321871179628142e-11
+      },
+      {
+        "case": "prior_23",
+        "layer": 7,
+        "temperature_K": 4105.288569379325,
+        "pressure_bar": 0.00043714448126110897,
+        "mole_fraction": 1.9513626144520204e-10
+      },
+      {
+        "case": "prior_23",
+        "layer": 8,
+        "temperature_K": 4054.4794487740064,
+        "pressure_bar": 0.0007233941627366748,
+        "mole_fraction": 3.929838209883615e-10
+      },
+      {
+        "case": "prior_25",
+        "layer": 0,
+        "temperature_K": 4023.6755155971505,
+        "pressure_bar": 1.2863969449369745e-05,
+        "mole_fraction": 2.6670168529930443e-12
+      },
+      {
+        "case": "prior_26",
+        "layer": 0,
+        "temperature_K": 4455.582023063505,
+        "pressure_bar": 1.2863969449369745e-05,
+        "mole_fraction": 4.3116927614594307e-14
+      },
+      {
+        "case": "prior_26",
+        "layer": 1,
+        "temperature_K": 4377.520041714411,
+        "pressure_bar": 2.1287516617963725e-05,
+        "mole_fraction": 2.4472158728721203e-13
+      },
+      {
+        "case": "prior_26",
+        "layer": 2,
+        "temperature_K": 4326.819663994885,
+        "pressure_bar": 3.522694651473102e-05,
+        "mole_fraction": 1.0095080798522678e-12
+      },
+      {
+        "case": "prior_26",
+        "layer": 3,
+        "temperature_K": 4274.281799901074,
+        "pressure_bar": 5.829415347136074e-05,
+        "mole_fraction": 3.791076524656868e-12
+      },
+      {
+        "case": "prior_26",
+        "layer": 4,
+        "temperature_K": 4223.546783379182,
+        "pressure_bar": 9.646616199111992e-05,
+        "mole_fraction": 1.1711804886306525e-11
+      },
+      {
+        "case": "prior_26",
+        "layer": 5,
+        "temperature_K": 4175.980582352741,
+        "pressure_bar": 0.00015963385442879422,
+        "mole_fraction": 2.8495774699550782e-11
+      },
+      {
+        "case": "prior_26",
+        "layer": 6,
+        "temperature_K": 4126.650253356783,
+        "pressure_bar": 0.0002641648320386093,
+        "mole_fraction": 5.6345764923589284e-11
+      },
+      {
+        "case": "prior_26",
+        "layer": 7,
+        "temperature_K": 4068.2549917850747,
+        "pressure_bar": 0.00043714448126110897,
+        "mole_fraction": 9.317297365696526e-11
+      }
+    ],
+    "interpretation": "Recorded line-completeness limitation; low abundance alone is not a prior-wide opacity-error bound."
+  },
+  "radiation": {
+    "maximum_stellar_energy_closure": 2.464115377278937e-16,
+    "maximum_bottom_stellar_cgs": 0.5964068962447076,
+    "maximum_bottom_stellar_over_internal": 6.573715994907429e-06,
+    "maximum_bottom_stellar_over_incident": 7.705017210119326e-10,
+    "maximum_saved_vs_reevaluated_net_over_incident": 0.0
+  },
+  "resources": {
+    "maximum_rss_GiB": 3.4175453186035156,
+    "elapsed": "2:25:26",
+    "minimum_host_available_GiB": 53.8631706237793,
+    "maximum_sampled_GPU_used_GiB": 8.7626953125,
+    "swaps": 0,
+    "timing": {
+      "path": "/home/kawahara/exojax/results/rce_wasp18b_final8_prior_job/prior/time.txt",
+      "sha256": "545100124a2d57edfacd4d316c737e0f194d6b977f7d5da18232cae1fb4966a3"
+    }
+  },
+  "interpretation": "The finite-prior diagnostic is complete. Retain seven unresolved RCE attempts for P8 solver work; no automatic retry or range extension.",
+  "limitations": [
+    "Only 27 fixed-seed returned states; not continuous-prior validity or convergence certification.",
+    "Raw saved states, entropy, diagnostic arrays and broadband fluxes were rechecked; full chemistry and spectral CKD arrays are represented by saved finiteness statistics.",
+    "Rejected line-search trial vectors are not saved. Domain-step failure is not proof that a physical root lies outside the tables.",
+    "Existing CIA/scattering support, atomic completeness, CO2 hot-line and omitted-absorber approximations remain in force.",
+    "No resolved spectra, implicit AD, retrieval or new forward calculations were performed."
+  ],
+  "remaining_p7": [
+    "Final acceptance record and related regression checks, retaining accepted physical approximations."
+  ],
+  "GPU_started_during_analysis": false,
+  "p7_complete": false
+}

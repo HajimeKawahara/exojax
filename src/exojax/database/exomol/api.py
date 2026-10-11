@@ -130,7 +130,10 @@ class MdbExomol(CapiMdbExomol):
                 filter_wavenumbers=nurange is not None,
             )
         else:
-            df = self._load_radis(wavenum_min, wavenum_max, local_databases, engine)
+            df = self._load_radis(
+                wavenum_min, wavenum_max, local_databases, engine,
+                filter_wavenumbers=nurange is not None,
+            )
 
         self.QTtyp = np.array(self.QT_interp(self.Ttyp))
         self.df_load_mask = self.compute_load_mask(df)
@@ -140,8 +143,11 @@ class MdbExomol(CapiMdbExomol):
             print("DataFrame (self.df) available.")
             self.df = df
 
-    def _load_radis(self, wavenum_min, wavenum_max, local_databases, engine):
-        """Keep the existing RADIS manager and cache behavior."""
+    def _load_radis(
+        self, wavenum_min, wavenum_max, local_databases, engine,
+        *, filter_wavenumbers=True,
+    ):
+        """Select cached lines on disk before materializing and joining frames."""
         if not supports_exomol_broadf_download():
             warn_if_exomol_broadf_download_unsupported()
         self.simple_molecule_name = e2s(self.exact_molecule_name)
@@ -163,7 +169,16 @@ class MdbExomol(CapiMdbExomol):
 
         mgr = self.get_datafile_manager()
         local_files = [mgr.cache_file(f) for f in self.trans_file]
-        return self.load(local_files, output=self.engine)
+        lower_bound, upper_bound = [], []
+        if filter_wavenumbers:
+            if wavenum_min is not None and np.isfinite(wavenum_min):
+                lower_bound = [("nu_lines", float(wavenum_min))]
+            if wavenum_max is not None and np.isfinite(wavenum_max):
+                upper_bound = [("nu_lines", float(wavenum_max))]
+        return self.load(
+            local_files, output=self.engine,
+            lower_bound=lower_bound, upper_bound=upper_bound,
+        )
 
     def _load_pyexocross(
         self, wavenum_min, wavenum_max, local_databases, filter_wavenumbers=True

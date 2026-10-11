@@ -49,7 +49,9 @@ def _direct_layer_sources(dtau, gamma1, gamma2, omega, mu0, gamma3):
     use_taylor = squared < jnp.sqrt(jnp.finfo(squared.dtype).eps)
     safe_squared = jnp.where(use_taylor, 1.0, squared)
     u = jnp.sqrt(safe_squared)
-    safe_dtau = jnp.where(dtau == 0.0, 1.0, dtau)
+    # This denominator is unused in the Taylor branch. Mask tiny depths too,
+    # so the reciprocal's reverse derivative cannot overflow before selection.
+    safe_dtau = jnp.where(use_taylor, 1.0, dtau)
     lam = u / safe_dtau
     k = 1.0 / mu0
     x = dtau * k
