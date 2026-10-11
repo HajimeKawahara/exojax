@@ -49,6 +49,7 @@ def _column(streaming):
     arguments = ([1.], [.1, 10.], [2000.], 2500., 100., evaluate)
     options = dict(flux_atol=.1, flux_rtol=0., stability_atol=1e-8)
     column = SimpleNamespace(
+        settings=SimpleNamespace(stellar_scattering=False),
         solver_arguments=arguments, solver_options=options, temperature_valid=valid,
         internal_flux=100., pressure=jnp.array([1.]), temperature_range=(1500., 4500.),
         check_response_coverage=lambda resolution: None,
