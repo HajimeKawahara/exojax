@@ -182,7 +182,7 @@ def make_device_rce_solver(
     max_backtracks=25,
     jacobian_mode="sequential",
 ):
-    """Prepare a reusable, JIT-compiled ``solve(parameters)`` primal solver.
+    """Prepare ``solve(parameters, initial_state=None)`` for primal RCE.
 
     Construct once outside JAX transformations. Fixed inputs and numerical
     options follow ``solve_rce``; stability_atol replaces gradient_atol and
@@ -200,6 +200,13 @@ def make_device_rce_solver(
     at valid states. Shape/type mistakes raise on first tracing; runtime
     numerical/physical failures return integer RceStatus codes. Enable JAX x64
     before preparing precision-sensitive columns.
+
+    ``initial_state=(temperature, bottom_temperature, convective_mask)`` may
+    override the factory seed for one call. Temperatures must be real numeric
+    arrays of shape ``(N,)`` and ``()``; the mask must be boolean with shape
+    ``(N,)``. They are cast to the factory precision and checked by the same
+    domain guards before physics. Same-shaped runtime seeds reuse compilation;
+    omitting the argument always uses the original factory seed.
 
     Newton, line-search, and active-set loops run entirely on device. The default
     Jacobian uses sequential JVPs; ``jacfwd`` explicitly opts into batched
@@ -351,7 +358,20 @@ def make_device_rce_solver(
         ).astype(jnp.int32)
 
     @jax.jit
-    def solve(parameters):
+    def solve(parameters, initial_state=None):
+        initial_log_t, initial_mask = log_initial, mask_initial
+        if initial_state is not None:
+            if not isinstance(initial_state, (tuple, list)) or len(initial_state) != 3:
+                raise ValueError("initial_state must contain temperature, bottom and mask.")
+            temperature, bottom, initial_mask = map(jnp.asarray, initial_state)
+            if (temperature.shape != (nlayer,) or bottom.shape != ()
+                    or initial_mask.shape != (nlayer,) or initial_mask.dtype != jnp.bool_):
+                raise ValueError("initial_state requires shapes (N,), (), (N,) and a boolean mask.")
+            if any(not (jnp.issubdtype(value.dtype, jnp.floating)
+                        or jnp.issubdtype(value.dtype, jnp.integer))
+                   for value in (temperature, bottom)):
+                raise ValueError("initial_state temperatures must have real numeric dtypes.")
+            initial_log_t = jnp.log(jnp.append(temperature.astype(dtype), bottom.astype(dtype)))
         flux = jnp.asarray(
             internal_flux(parameters) if callable(internal_flux) else internal_flux,
             dtype=dtype,
@@ -365,10 +385,10 @@ def make_device_rce_solver(
             & jnp.isfinite(flux_tolerance)
             & (flux_tolerance >= np.finfo(dtype).tiny)
         )
-        valid_initial = domain(log_initial, parameters)
+        valid_initial = domain(initial_log_t, parameters)
         column = jax.lax.cond(
             valid_initial & valid_flux,
-            lambda: evaluate(log_initial, parameters),
+            lambda: evaluate(initial_log_t, parameters),
             lambda: empty,
         )
         status = jnp.where(
@@ -389,11 +409,11 @@ def make_device_rce_solver(
             )
 
         state = _State(
-            log_initial,
-            mask_initial,
+            initial_log_t,
+            initial_mask,
             column,
             _scaled_residual(
-                column, mask_initial, flux, flux_tolerance, stability_atol
+                column, initial_mask, flux, flux_tolerance, stability_atol
             ),
             status,
             zero,

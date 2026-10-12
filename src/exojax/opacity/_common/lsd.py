@@ -100,6 +100,25 @@ def npadd3D_direct1D(a,
     conjugate_cx = sumx - cx
     conjugate_cz = sumz - cz
 
+    # Flatten only the common native-index, float64 case. Preserve the four
+    # passes and line order exactly; regrouping sums would change roundoff.
+    if (type(a) is np.ndarray and a.ndim == 3 and a.dtype == np.float64
+            and a.flags.c_contiguous
+            and all(isinstance(i, np.ndarray) and i.dtype == np.dtype(np.intp)
+                    and i.ndim == 1 and i.shape == ix.shape
+                    and not np.may_share_memory(a, i) for i in (ix, direct_iy, iz))
+            and ix.size and min(ix.min(), direct_iy.min(), iz.min()) >= 0
+            and ix.max() < a.shape[0] - 1 and direct_iy.max() < a.shape[1]
+            and iz.max() < a.shape[2] - 1):
+        index = (ix * a.shape[1] + direct_iy) * a.shape[2] + iz
+        stride = a.shape[1] * a.shape[2]
+        flat = a.reshape(-1)
+        np.add.at(flat, index, w * conjugate_cx * direct_cy * conjugate_cz)
+        np.add.at(flat, index + stride, w * cx * direct_cy * conjugate_cz)
+        np.add.at(flat, index + 1, w * conjugate_cx * direct_cy * cz)
+        np.add.at(flat, index + stride + 1, w * cx * direct_cy * cz)
+        return a
+
     np.add.at(a, (ix, direct_iy, iz),
               w * conjugate_cx * direct_cy * conjugate_cz)
     np.add.at(a, (ix + 1, direct_iy, iz), w * cx * direct_cy * conjugate_cz)

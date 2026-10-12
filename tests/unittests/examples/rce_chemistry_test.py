@@ -21,12 +21,6 @@ sys.modules[_SPEC.name] = chemistry
 _SPEC.loader.exec_module(chemistry)
 
 
-@pytest.fixture(autouse=True)
-def x64():
-    with jax.experimental.enable_x64():
-        yield
-
-
 def small_setup(hvector=None):
     # Independent ideal-gas H/H2 and C/O/CO association plus H+/e-/H- ions.
     return ChemicalSetup(
@@ -106,8 +100,12 @@ def test_units_conservation_abundance_convention_and_layer_masses():
     assert state.diagnostics.charge_relative_error.max() < 1e-8
 
 
-def test_repeated_jit_no_leaks_and_derivatives_against_resolved_finite_differences():
-    adapter = prepare()
+@pytest.mark.parametrize("conservation_convergence", [False, True])
+@pytest.mark.parametrize("equilibrate_constraints", [False, True])
+def test_repeated_jit_no_leaks_and_derivatives_against_resolved_finite_differences(
+        conservation_convergence, equilibrate_constraints):
+    adapter = prepare(conservation_convergence=conservation_convergence,
+                      equilibrate_constraints=equilibrate_constraints)
     temperature = jnp.array([1500.0, 2200.0, 3500.0])
     run = jax.jit(lambda p: adapter(temperature * jnp.exp(p[0]), p[1], p[2]))
     point, direction = jnp.array([0.0, 0.2, 0.8]), jnp.array([0.2, 0.3, 0.4])
@@ -208,6 +206,10 @@ def test_solver_convergence_is_not_sufficient_for_valid_composition():
         loose.diagnostics.status, chemistry.CONSERVATION_FAILED
     )
     assert not np.any(loose.diagnostics.valid)
+    conserved = prepare(epsilon_crit=1e3, conservation_convergence=True)(temperature, 0.0, 0.6)
+    assert np.all(conserved.diagnostics.valid)
+    assert np.all(conserved.diagnostics.element_relative_error <= 1e-8)
+    assert np.all(conserved.diagnostics.charge_relative_error <= 1e-8)
     broken = prepare(small_setup(lambda t: jnp.full(9, jnp.nan)))(temperature, 0.0, 0.6)
     np.testing.assert_array_equal(broken.diagnostics.status, chemistry.NONFINITE)
     assert not np.any(broken.diagnostics.valid)
@@ -224,6 +226,10 @@ def test_missing_species_and_invalid_metadata_fail_at_preparation():
         prepare(isotope_convention="")
     with pytest.raises(ValueError, match="pressure grid"):
         prepare(pressure_range=(1.0, 100.0))
+    with pytest.raises(ValueError, match="conservation_convergence must be boolean"):
+        prepare(conservation_convergence="yes")
+    with pytest.raises(ValueError, match="equilibrate_constraints must be boolean"):
+        prepare(equilibrate_constraints="yes")
 
 
 def test_hminus_uses_number_densities_and_broadcasts_varying_layer_mmw():

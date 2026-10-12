@@ -379,6 +379,66 @@ def test_repeated_same_shape_parameters_do_not_retrace_or_change_initial_state()
         np.testing.assert_array_equal(a, b)
 
 
+def test_runtime_seed_matches_factory_and_reuses_one_executable():
+    solve = _prepare()
+    parameters = _parameters()
+    default = solve(parameters)
+    temperature, bottom = jnp.array([180.0, 220.0]), jnp.array(260.0)
+    compiled = solve.lower(
+        parameters, (temperature, bottom, jnp.array([False, False]))
+    ).compile()
+    for mask in ([False, False], [True, True]):
+        state = compiled(parameters, (temperature, bottom, jnp.array(mask)))
+        reference = _prepare(
+            temperature_initial=np.asarray(temperature),
+            bottom_temperature_initial=float(bottom),
+            convective_mask_initial=np.array(mask),
+        )(parameters)
+        assert state.converged and reference.converged
+        for actual, expected in zip(state, reference):
+            np.testing.assert_allclose(actual, expected, rtol=1e-11, atol=2e-9)
+    # Runtime calls do not replace the factory's default seed.
+    for actual, expected in zip(solve(parameters), default):
+        np.testing.assert_array_equal(actual, expected)
+
+
+@pytest.mark.parametrize("bad_temperature", [0.0, -1.0, np.nan, np.inf, 5000.0])
+def test_invalid_runtime_seed_skips_all_column_physics(bad_temperature):
+    base = make_gradient_evaluator([1.0, 4.0], 16.0, _flux, 0.25)
+
+    def valid(t, tb, parameters):
+        nodes = jnp.append(t, tb)
+        return jnp.all(jnp.isfinite(nodes) & (nodes >= 100) & (nodes <= 900))
+
+    def column(t, tb, parameters):
+        checkify.check(valid(t, tb, parameters), "Invalid runtime seed reached physics")
+        return base(t, tb, parameters)
+
+    solve = _prepare(evaluate_column=column, valid_temperature=valid)
+    seed = (jnp.array([bad_temperature, 350.0]), jnp.array(400.0),
+            jnp.array([False, False]))
+    error, state = jax.jit(checkify.checkify(solve))(_parameters(), seed)
+    error.throw()
+    assert state.status == RceStatus.INVALID_INITIAL_STATE
+    assert not state.domain_valid and not state.physics_valid
+    assert state.physics_status == -1 and state.iterations == 0
+
+
+@pytest.mark.parametrize("seed", [
+    (jnp.array([250.0, 350.0]), 400.0),
+    (jnp.array([250.0]), 400.0, jnp.array([False, False])),
+    (jnp.array([250.0, 350.0]), jnp.array([400.0]), jnp.array([False, False])),
+    (jnp.array([250.0, 350.0]), 400.0, jnp.array([False])),
+    (jnp.array([250.0, 350.0]), 400.0, jnp.array([0, 1])),
+    (jnp.array([250.0+0j, 350.0+0j]), 400.0, jnp.array([False, False])),
+    (jnp.array([250.0, 350.0]), 400.0+0j, jnp.array([False, False])),
+    (jnp.array([True, False]), 400.0, jnp.array([False, False])),
+])
+def test_runtime_seed_shape_and_dtype_errors(seed):
+    with pytest.raises(ValueError, match="initial_state"):
+        _prepare()(_parameters(), seed)
+
+
 def test_float32_initial_domain_guard_uses_actual_callback_precision():
     jax.config.update("jax_enable_x64", False)
     solve = _prepare(

@@ -64,6 +64,59 @@ def test_uniqidx_signed_duplicates(dtype, rows, expected_indices, expected_rows)
     np.testing.assert_array_equal(values, unique_rows(a))
 
 
+def _structured_reference(array):
+    """Freeze the original algorithm independently of the optimized function."""
+    unique, inverse = np.unique(array.view(array.dtype.descr * array.shape[1]), return_inverse=True)
+    return inverse.reshape(-1).astype(int, copy=False), unique.view(array.dtype).reshape(-1, array.shape[1])
+
+
+@pytest.mark.parametrize("dtype", [np.int8, np.int16, np.int32, np.int64, np.dtype(">i8")])
+def test_uniqidx_packed_pairs_preserve_signed_order_and_dtype(dtype):
+    original = np.random.default_rng(18).integers(-128, 128, size=(1024, 2)).astype(dtype)
+    for array in (original, original[::-1].copy(), original[:, ::-1].copy(), np.full((13, 2), -5, dtype=dtype)):
+        actual = uniqidx(array)
+        for result, expected in zip(actual, _structured_reference(array)):
+            np.testing.assert_array_equal(result, expected)
+            assert result.dtype == expected.dtype and result.shape == expected.shape
+        np.testing.assert_array_equal(actual[1][actual[0]], array)
+
+
+@pytest.mark.parametrize("rows", [
+    [[-2**63, -3], [-2**63 + 1, -7], [-2**63 + 2, -3]],
+    [[2**63 - 1, -2**63], [2**63 - 2, -2**63 + 1], [2**63 - 1, -2**63 + 1]],
+    [[-2**63, 0], [2**63 - 1, 0]],
+    [[0, 0], [2**32, 2**32]],
+    [[0, 0], [0, 2**63 - 1]],
+])
+def test_uniqidx_packed_pairs_guard_integer_overflow(rows):
+    array = np.asarray(rows, dtype=np.int64)
+    for result, expected in zip(uniqidx(array), _structured_reference(array)):
+        np.testing.assert_array_equal(result, expected)
+
+
+@pytest.mark.parametrize("array", [
+    np.empty((0, 2), dtype=np.int64),
+    np.asarray([[0, 2**64 - 1], [2**64 - 1, 0]], dtype=np.uint64),
+    np.asarray([[0., 1.5], [-2., 3.], [0., 1.5]]),
+    np.asarray([[3, 2, 1], [0, 4, 5], [3, 2, 1]]),
+])
+def test_uniqidx_retains_nonpacked_contract(array):
+    for result, expected in zip(uniqidx(array), _structured_reference(array)):
+        np.testing.assert_array_equal(result, expected)
+        assert result.dtype == expected.dtype
+
+
+def test_packed_neighbor_mapping_matches_original_order(monkeypatch):
+    import exojax.utils.indexing as indexing
+
+    array = np.random.default_rng(33).integers(-5, 6, size=(400, 2))
+    actual = indexing.uniqidx_neibouring(array)
+    monkeypatch.setattr(indexing, "uniqidx", _structured_reference)
+    expected = indexing.uniqidx_neibouring(array)
+    for result, reference in zip(actual, expected):
+        np.testing.assert_array_equal(result, reference)
+
+
 def test_find_or_add_index():
     # case for existed in index_array
     a = np.array([[4, 1], [7, 1], [7, 2], [8, 0]])
