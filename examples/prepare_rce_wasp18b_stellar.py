@@ -13,6 +13,7 @@ from pathlib import Path
 import tempfile
 
 import numpy as np
+from scipy.integrate import trapezoid
 
 from _rce_wasp18b_assets import (
     SURFACE_FLUX_UNIT, _sha256, load_manifest, load_stellar_spectrum,
@@ -80,8 +81,8 @@ def extend_spectrum(spectrum, *, temperature=None, fit_window=(4.5, 5.5),
     fit_nu = np.concatenate(([lower], nu[(nu > lower) & (nu < upper)], [upper]))
     if fit_nu.size < 4:
         raise ValueError("fit_window must contain at least two interior native samples")
-    native_fit = float(np.trapz(np.interp(fit_nu, nu, flux), fit_nu))
-    planck_fit = float(np.trapz(planck_surface_flux(fit_nu, temperature), fit_nu))
+    native_fit = float(trapezoid(np.interp(fit_nu, nu, flux), fit_nu))
+    planck_fit = float(trapezoid(planck_surface_flux(fit_nu, temperature), fit_nu))
     amplitude = native_fit / planck_fit
     if not np.isfinite(amplitude) or amplitude <= 0:
         raise ValueError("The integrated fitting flux must be positive and finite")
@@ -99,8 +100,8 @@ def extend_spectrum(spectrum, *, temperature=None, fit_window=(4.5, 5.5),
                  * correction)[::-1]
     output_nu = np.concatenate((tail_nu, nu))
     output_flux = np.concatenate((tail_flux, flux))
-    native_integral = float(np.trapz(flux, nu))
-    tail_integral = float(np.trapz(
+    native_integral = float(trapezoid(flux, nu))
+    tail_integral = float(trapezoid(
         np.concatenate((tail_flux, flux[:1])), np.concatenate((tail_nu, nu[:1]))))
     total = native_integral + tail_integral
     metadata = {

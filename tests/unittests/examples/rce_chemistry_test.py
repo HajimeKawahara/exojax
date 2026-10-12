@@ -21,12 +21,6 @@ sys.modules[_SPEC.name] = chemistry
 _SPEC.loader.exec_module(chemistry)
 
 
-@pytest.fixture(autouse=True)
-def x64():
-    with jax.experimental.enable_x64():
-        yield
-
-
 def small_setup(hvector=None):
     # Independent ideal-gas H/H2 and C/O/CO association plus H+/e-/H- ions.
     return ChemicalSetup(

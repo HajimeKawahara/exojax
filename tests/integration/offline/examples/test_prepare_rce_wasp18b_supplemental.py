@@ -49,8 +49,9 @@ def test_dry_run_preserves_base_grid_and_no_writes(preparation, tmp_path, capsys
 
 
 def test_species_match_fastchem_setup(preparation):
-    from exogibbs.thermo.standard import prepare_fastchem_thermodynamics
-    species = prepare_fastchem_thermodynamics().chemical_setup.species
+    standard = pytest.importorskip("exogibbs.thermo.standard",
+                                  reason="Optional RCE/TCE chemistry dependency")
+    species = standard.prepare_fastchem_thermodynamics().chemical_setup.species
     assert set(preparation.SUPPLEMENTAL_LINE_LISTS) <= set(species)
 
 

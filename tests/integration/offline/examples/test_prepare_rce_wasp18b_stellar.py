@@ -6,6 +6,7 @@ from pathlib import Path
 
 import numpy as np
 import pytest
+from scipy.integrate import trapezoid
 
 
 @pytest.fixture
@@ -59,7 +60,7 @@ def test_planck_units_and_integrated_flux_recovery(preparation):
     expected = (np.pi * BlackBody(temperature=6400 * u.K)(nu * u.cm**-1)
                 * (2.99792458e10 * u.cm / u.s)).to_value(u.erg / u.s / u.cm / u.sr)
     np.testing.assert_allclose(flux, expected, rtol=2e-12, atol=0.)
-    assert np.trapz(flux, nu) == pytest.approx(preparation.SIGMA_CGS * 6400**4, rel=1e-8)
+    assert trapezoid(flux, nu) == pytest.approx(preparation.SIGMA_CGS * 6400**4, rel=1e-8)
     native = native_planck(preparation)
     extended_nu, extended_flux, metadata = preparation.extend_spectrum(native)
     assert metadata["amplitude"] == pytest.approx(1.7, rel=1e-10)
@@ -85,7 +86,7 @@ def test_native_samples_soss_and_join_are_preserved(preparation):
     assert flux[-n - 1] / flux[-n] == pytest.approx(1., rel=0.004)
     assert metadata["fit_window_um"][1] == pytest.approx(5.499975)
     assert metadata["tail_integral_erg_s_cm2"] > 0
-    assert metadata["total_integral_erg_s_cm2"] == pytest.approx(np.trapz(flux, nu))
+    assert metadata["total_integral_erg_s_cm2"] == pytest.approx(trapezoid(flux, nu))
 
 
 @pytest.mark.parametrize("options,message", [

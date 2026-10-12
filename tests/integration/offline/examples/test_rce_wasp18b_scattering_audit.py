@@ -35,8 +35,10 @@ def test_zero_scattering_matches_shared_p7_boundaries(audit, closure):
         incident_flux=horizontal, mu0=.37)
     np.testing.assert_array_equal(actual.upward, np.zeros((3, 2, 3)))
     np.testing.assert_array_equal(actual.downward, np.zeros((3, 2, 3)))
-    np.testing.assert_allclose(actual.incident, reference.incident, rtol=2e-15, atol=0.)
-    np.testing.assert_allclose(actual.net, -reference.incident, rtol=2e-15, atol=0.)
+    # JIT fusion can shift the exponent by one float64 ULP; relative beam
+    # errors then grow with slant optical depth (up to 19 / .37 here).
+    np.testing.assert_allclose(actual.incident, reference.incident, rtol=1e-14, atol=0.)
+    np.testing.assert_allclose(actual.net, -reference.incident, rtol=1e-14, atol=0.)
 
 
 @pytest.mark.parametrize("closure", ["quadrature", "hemispheric_mean"])

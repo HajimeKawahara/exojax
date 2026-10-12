@@ -5,6 +5,7 @@ import pytest
 
 
 def _import_exomol_api_with_missing_base(monkeypatch):
+    from exojax.database import exomol
     from exojax.database._common import radis_adapter
 
     def _raise_missing_radis():
@@ -14,6 +15,8 @@ def _import_exomol_api_with_missing_base(monkeypatch):
         )
 
     monkeypatch.setattr(radis_adapter, "get_exomol_mdb_class", _raise_missing_radis)
+    # import_module also replaces the parent attribute; restore both bindings.
+    monkeypatch.delattr(exomol, "api", raising=False)
     monkeypatch.delitem(sys.modules, "exojax.database.exomol.api", raising=False)
     return importlib.import_module("exojax.database.exomol.api")
 

@@ -77,41 +77,40 @@ def test_matched_tables_merge_manifest_and_resume(preparation, tmp_path):
     plan = preparation.make_plan(args)
     spec = plan["settings"]
     records = []
-    with jax.experimental.enable_x64():
-        for index in range(plan["number_of_chunks"]):
-            padded, nu, crop, edges = preparation.chunk_grid(plan, index)
-            directory = Path(plan["output_dir"]) / "C1O1" / f"chunk_{index:05d}"
-            directory.mkdir(parents=True)
-            provenance = dict(profile_kernel=None, sources={}, no_lines_reason=None)
-            teacher = preparation.CroppedTeacher(AnalyticTeacher(padded), nu, crop, provenance)
-            preparation.build_tables(teacher, edges, np.array(spec["temperature_grid_K"]),
-                                     np.array(spec["pressure_grid_bar"]), spec["ng"], directory, provenance,
-                                     (spec["resolved_nu_min"], spec["resolved_nu_max"]))
-            files = {name: preparation._file_entry(directory / name, "offline analytic fixture")
-                     for name in ("ckd.npz", "diffgrid.npz", "diffgrid_metadata.json") if (directory / name).exists()}
-            record = dict(grid_fingerprint=plan["grid_fingerprint"], mdb_path=plan["mdb_path"],
-                          files=files, provenance=provenance)
-            preparation._write_json(directory / "complete.json", record)
-            records.append(record)
-        assert preparation.completed_chunks(plan) == records
-        preparation.merge_species(plan, records)
-        manifest_path = preparation.assemble_manifest(plan, ["C1O1"])
-        assets = importlib.import_module("_rce_wasp18b_assets")
-        manifest = assets.load_manifest(manifest_path)
-        assert set(manifest.config["opacity"]["ckd"]) == {"C1O1"}
-        assert "H3N1" in manifest.config["opacity"]["omitted_absorbers"]
-        ckd = assets.load_ckd_opacities(manifest)["C1O1"]
-        lbl = assets.load_lbl_opacities(manifest)["C1O1"]
-        assert lbl.nu_grid.size == plan["resolved_points"]
-        assert np.all(np.diff(lbl.nu_grid) > 0)
-        assert ckd.band_edges[0, 0] == 4300.
-        assert ckd.band_edges[-1, -1] == 4400.
-        np.testing.assert_array_equal(ckd.band_edges[1:, 0], ckd.band_edges[:-1, -1])
-        pressure = jnp.array(spec["pressure_grid_bar"])
-        temperature = jnp.full(pressure.shape, spec["temperature_max"])
-        expected = AnalyticTeacher(lbl.nu_grid).xsmatrix(temperature, pressure)
-        np.testing.assert_allclose(lbl.xsmatrix(temperature), expected, rtol=1.e-12)
-        np.testing.assert_allclose(np.asarray(ckd.xstensor_ckd(temperature, pressure))[:, 0, 0], expected[:, 0], rtol=1.e-12)
+    for index in range(plan["number_of_chunks"]):
+        padded, nu, crop, edges = preparation.chunk_grid(plan, index)
+        directory = Path(plan["output_dir"]) / "C1O1" / f"chunk_{index:05d}"
+        directory.mkdir(parents=True)
+        provenance = dict(profile_kernel=None, sources={}, no_lines_reason=None)
+        teacher = preparation.CroppedTeacher(AnalyticTeacher(padded), nu, crop, provenance)
+        preparation.build_tables(teacher, edges, np.array(spec["temperature_grid_K"]),
+                                 np.array(spec["pressure_grid_bar"]), spec["ng"], directory, provenance,
+                                 (spec["resolved_nu_min"], spec["resolved_nu_max"]))
+        files = {name: preparation._file_entry(directory / name, "offline analytic fixture")
+                 for name in ("ckd.npz", "diffgrid.npz", "diffgrid_metadata.json") if (directory / name).exists()}
+        record = dict(grid_fingerprint=plan["grid_fingerprint"], mdb_path=plan["mdb_path"],
+                      files=files, provenance=provenance)
+        preparation._write_json(directory / "complete.json", record)
+        records.append(record)
+    assert preparation.completed_chunks(plan) == records
+    preparation.merge_species(plan, records)
+    manifest_path = preparation.assemble_manifest(plan, ["C1O1"])
+    assets = importlib.import_module("_rce_wasp18b_assets")
+    manifest = assets.load_manifest(manifest_path)
+    assert set(manifest.config["opacity"]["ckd"]) == {"C1O1"}
+    assert "H3N1" in manifest.config["opacity"]["omitted_absorbers"]
+    ckd = assets.load_ckd_opacities(manifest)["C1O1"]
+    lbl = assets.load_lbl_opacities(manifest)["C1O1"]
+    assert lbl.nu_grid.size == plan["resolved_points"]
+    assert np.all(np.diff(lbl.nu_grid) > 0)
+    assert ckd.band_edges[0, 0] == 4300.
+    assert ckd.band_edges[-1, -1] == 4400.
+    np.testing.assert_array_equal(ckd.band_edges[1:, 0], ckd.band_edges[:-1, -1])
+    pressure = jnp.array(spec["pressure_grid_bar"])
+    temperature = jnp.full(pressure.shape, spec["temperature_max"])
+    expected = AnalyticTeacher(lbl.nu_grid).xsmatrix(temperature, pressure)
+    np.testing.assert_allclose(lbl.xsmatrix(temperature), expected, rtol=1.e-12)
+    np.testing.assert_allclose(np.asarray(ckd.xstensor_ckd(temperature, pressure))[:, 0, 0], expected[:, 0], rtol=1.e-12)
     corrupt = Path(records[0]["files"]["ckd.npz"]["path"])
     corrupt.write_bytes(b"changed")
     with pytest.raises(ValueError, match="Changed or missing"):
@@ -155,19 +154,18 @@ def test_real_bundled_co_chunk(preparation, tmp_path, monkeypatch):
         "--samples-per-band", "64", "--ckd-resolution", "1000",
     ])
     plan = preparation.make_plan(args)
-    with jax.experimental.enable_x64():
-        preparation.prepare_chunk(plan, 0)
-        records = preparation.completed_chunks(plan)
-        assert records[0]["provenance"]["number_of_lines"] > 0
-        assert records[0]["provenance"]["sources"]
-        preparation.merge_species(plan, records)
-        assets = importlib.import_module("_rce_wasp18b_assets")
-        manifest = assets.load_manifest(preparation.assemble_manifest(plan, ["C1O1"]))
-        ckd = assets.load_ckd_opacities(manifest)["C1O1"]
-        lbl = assets.load_lbl_opacities(manifest)["C1O1"]
-        temperatures = jnp.array([2000., 3000.])
-        assert np.all(np.isfinite(ckd.xstensor_ckd(temperatures, jnp.array(plan["settings"]["pressure_grid_bar"])) ))
-        assert np.all(np.isfinite(lbl.xsmatrix(temperatures)))
+    preparation.prepare_chunk(plan, 0)
+    records = preparation.completed_chunks(plan)
+    assert records[0]["provenance"]["number_of_lines"] > 0
+    assert records[0]["provenance"]["sources"]
+    preparation.merge_species(plan, records)
+    assets = importlib.import_module("_rce_wasp18b_assets")
+    manifest = assets.load_manifest(preparation.assemble_manifest(plan, ["C1O1"]))
+    ckd = assets.load_ckd_opacities(manifest)["C1O1"]
+    lbl = assets.load_lbl_opacities(manifest)["C1O1"]
+    temperatures = jnp.array([2000., 3000.])
+    assert np.all(np.isfinite(ckd.xstensor_ckd(temperatures, jnp.array(plan["settings"]["pressure_grid_bar"])) ))
+    assert np.all(np.isfinite(lbl.xsmatrix(temperatures)))
 
 
 def test_teacher_batching_preserves_values_and_derivatives(preparation):

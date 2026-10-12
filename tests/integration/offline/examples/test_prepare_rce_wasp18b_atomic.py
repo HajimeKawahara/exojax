@@ -40,10 +40,13 @@ def arguments(preparation, tmp_path):
         "--temperature-nodes", "2", "--ng", "2"]
 
 
-def test_grid_contract_and_dry_run(preparation, tmp_path, capsys):
-    from exogibbs.thermo.standard import prepare_fastchem_thermodynamics
+def test_species_match_fastchem_setup(preparation):
+    standard = pytest.importorskip("exogibbs.thermo.standard",
+                                  reason="Optional RCE/TCE chemistry dependency")
+    assert set(preparation.ATOMIC_LINES) <= set(standard.prepare_fastchem_thermodynamics().chemical_setup.species)
 
-    assert set(preparation.ATOMIC_LINES) <= set(prepare_fastchem_thermodynamics().chemical_setup.species)
+
+def test_grid_contract_and_dry_run(preparation, tmp_path, capsys):
     argv = arguments(preparation, tmp_path)
     args = preparation.parser_with_defaults().parse_args(argv)
     plan = preparation.make_plan(args)

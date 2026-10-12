@@ -15,7 +15,6 @@ def preparation(monkeypatch):
 
 
 def test_borysow_units_and_cdb_roundtrip(preparation, tmp_path):
-    from jax.experimental import enable_x64
     from exojax.database.cia.api import CdbCIA
 
     source = tmp_path / "CIA.H2H2.Yi"
@@ -23,9 +22,8 @@ def test_borysow_units_and_cdb_roundtrip(preparation, tmp_path):
                       "20 1.0e-5 2.0e-5 3.0e-5\n40 4.0e-5 5.0e-5 6.0e-5\n")
     converted = tmp_path / "H2-H2_Borysow2001.cia"
     metadata = preparation.convert_borysow(source, converted)
-    with enable_x64():
-        cdb = CdbCIA(str(converted))
-        actual = np.asarray(10.0 ** cdb.logac)
+    cdb = CdbCIA(str(converted))
+    actual = np.asarray(10.0 ** cdb.logac)
     np.testing.assert_array_equal(cdb.nucia, [20.0, 40.0])
     np.testing.assert_array_equal(cdb.tcia, [1000.0, 4000.0, 7000.0])
     expected = np.asarray([[1., 4.], [2., 5.], [3., 6.]]) * 1e-5 / (2.68676e19)**2
