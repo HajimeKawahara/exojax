@@ -147,7 +147,7 @@ class MdbExomol(CapiMdbExomol):
         self, wavenum_min, wavenum_max, local_databases, engine,
         *, filter_wavenumbers=True,
     ):
-        """Select cached lines on disk before materializing and joining frames."""
+        """Push down PyTables ranges and keep Vaex frames lazily masked."""
         if not supports_exomol_broadf_download():
             warn_if_exomol_broadf_download_unsupported()
         self.simple_molecule_name = e2s(self.exact_molecule_name)
@@ -170,7 +170,9 @@ class MdbExomol(CapiMdbExomol):
         mgr = self.get_datafile_manager()
         local_files = [mgr.cache_file(f) for f in self.trans_file]
         lower_bound, upper_bound = [], []
-        if filter_wavenumbers:
+        # RADIS extracts Vaex range filters, which can produce empty chunks
+        # during activation (#827). Keep Vaex filtering in compute_load_mask.
+        if filter_wavenumbers and self.engine == "pytables":
             if wavenum_min is not None and np.isfinite(wavenum_min):
                 lower_bound = [("nu_lines", float(wavenum_min))]
             if wavenum_max is not None and np.isfinite(wavenum_max):
