@@ -31,9 +31,9 @@ def local_co(tmp_path, monkeypatch):
     return target
 
 
-def load(path, nurange, **kwargs):
+def load(path, nurange, *, engine="pytables", **kwargs):
     return MdbExomol(
-        path, nurange=nurange, engine="pytables", gpu_transfer=False,
+        path, nurange=nurange, engine=engine, gpu_transfer=False,
         broadf_download=False, local_databases=str(path.parents[2]), **kwargs,
     )
 
@@ -85,6 +85,35 @@ def test_cache_predicate_preserves_full_load_result(local_co, monkeypatch, bound
     if bounds == "finite":
         assert not np.any(selected.nu_lines == lower)
         assert not np.any(selected.nu_lines == upper)
+
+
+@pytest.mark.parametrize("engine", ["vaex", None])
+@pytest.mark.parametrize("empty", [False, True])
+def test_vaex_activation_with_empty_filtered_chunks(local_co, monkeypatch, engine, empty):
+    """RADIS extract() must not leave empty chunks for activation (#827)."""
+    vaex = pytest.importorskip("vaex")
+    full = load(local_co, [1., 1.e9], activation=False)
+    centers = np.sort(full.df.nu_lines.to_numpy())
+    # Select exactly one two-row chunk, leaving the rest outside the range.
+    requested = [centers[0], centers[3]]
+    if empty:
+        requested = [centers[-1] + 1., centers[-1] + 2.]
+    monkeypatch.setattr(vaex.dataframe.get_main_executor(), "chunk_size", 2)
+
+    if empty:
+        with pytest.raises(ValueError, match="No line found"):
+            load(local_co, requested, engine=engine)
+        return
+
+    reference = load(local_co, requested)
+    selected = load(local_co, requested, engine=engine)
+    assert selected.engine == "vaex"
+    assert len(selected.nu_lines) == 2
+    for field in (
+        "nu_lines", "A", "elower", "gpp", "jlower", "jupper", "alpha_ref",
+        "n_Texp", "line_strength_ref_original", "logsij0", "gamma_natural",
+    ):
+        np.testing.assert_array_equal(getattr(selected, field), getattr(reference, field))
 
 
 @pytest.mark.parametrize("lower,upper,filter_wavenumbers,lengths", [
