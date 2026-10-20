@@ -114,7 +114,7 @@ def make_device_implicit_rce_solver(
     invalid_derivative="nan",
     **solver_options,
 ):
-    """Prepare ``solve(parameters)`` with device-only, fixed-mask implicit AD.
+    """Prepare ``solve(parameters, initial_state=None)`` with fixed-mask implicit AD.
 
     The primal arguments/options are those of ``make_device_rce_solver``.
     Parameters must be a nonempty PyTree of real floating-point leaves. The
@@ -130,6 +130,15 @@ def make_device_implicit_rce_solver(
     finite. Solve A D = -B without regularization and check its residual for
     every parameter direction. This uses dense matrices including one column
     per scalar parameter, intended for small retrieval parameter vectors.
+
+    An explicit ``initial_state`` has the primal solver's temperature/bottom/
+    mask contract. It changes initialization only and has zero sensitivities:
+    the converged equilibrium is differentiated with respect to physical
+    parameters. A caller selecting seeds must make that choice deterministic
+    and separately check equilibrium branch changes; no previous call is cached.
+    Reuse the prepared solver with ``solve(parameters, initial_state=seed)``.
+    Sensitivities are local to the selected branch and do not differentiate
+    the choice between multiple equilibria.
 
     ``invalid_derivative='nan'`` gives strict diagnostic NaN sensitivities.
     ``'zero'`` supplies finite zero tangents solely for guarded rejection, while
@@ -180,9 +189,11 @@ def make_device_implicit_rce_solver(
     def flux(parameters):
         return internal_flux(parameters) if callable(internal_flux) else internal_flux
 
-    def solve_and_linearize(parameters):
+    def solve_and_linearize(parameters, initial_state):
         # The primal is executed once and is never differentiated through.
-        state = jax.tree_util.tree_map(jax.lax.stop_gradient, primal_solve(parameters))
+        state = jax.tree_util.tree_map(
+            jax.lax.stop_gradient, primal_solve(parameters, initial_state)
+        )
         flat_parameters, unpack_parameters = ravel_pytree(parameters)
         physical, unpack_physical = ravel_pytree(
             tuple(getattr(state, name) for name in _PHYSICAL_FIELDS)
@@ -334,13 +345,14 @@ def make_device_implicit_rce_solver(
         return result, response, unpack_physical
 
     @jax.custom_jvp
-    def equilibrium(parameters):
-        return solve_and_linearize(parameters)[0]
+    def equilibrium(parameters, initial_state):
+        return solve_and_linearize(parameters, initial_state)[0]
 
     @equilibrium.defjvp
     def equilibrium_jvp(primals, tangents):
-        (parameters,), (parameter_tangent,) = primals, tangents
-        result, response, unpack_physical = solve_and_linearize(parameters)
+        parameters, initial_state = primals
+        parameter_tangent, _ = tangents
+        result, response, unpack_physical = solve_and_linearize(parameters, initial_state)
         tangent, _ = ravel_pytree(parameter_tangent)
 
         def rejected_tangent():
@@ -362,7 +374,7 @@ def make_device_implicit_rce_solver(
         return result, result_tangent._replace(state=state_tangent)
 
     @jax.jit
-    def solve(parameters):
+    def solve(parameters, initial_state=None):
         parameters = jax.tree_util.tree_map(jnp.asarray, parameters)
         leaves = jax.tree_util.tree_leaves(parameters)
         if not leaves or not sum(leaf.size for leaf in leaves):
@@ -371,7 +383,7 @@ def make_device_implicit_rce_solver(
             )
         if any(not jnp.issubdtype(leaf.dtype, jnp.floating) for leaf in leaves):
             raise TypeError("parameters must contain only real floating-point leaves.")
-        return equilibrium(parameters)
+        return equilibrium(parameters, initial_state)
 
     solve.invalid_derivative = invalid_derivative
     return solve
