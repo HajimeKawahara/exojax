@@ -57,7 +57,7 @@ class DeviceRceResult(NamedTuple):
 
     ``scaled_residual`` is the fixed-mask residual divided by the tolerances.
     ``flux_residual`` includes convective flux. ``backtracks`` counts rejected
-    line-search trials; ``iterations`` counts accepted Newton steps. Physics
+    line-search trials; ``iterations`` counts accepted steps. Physics
     diagnostics refer to the returned state, never a rejected trial. Invalid
     initial states have NaN flux/stability diagnostics and physics_status=-1.
     ``converged`` describes only the primal, not derivative validity.
@@ -181,6 +181,7 @@ def make_device_rce_solver(
     max_active_set_iterations=30,
     max_backtracks=25,
     jacobian_mode="sequential",
+    max_residual_fallback=False,
 ):
     """Prepare ``solve(parameters, initial_state=None)`` for primal RCE.
 
@@ -215,6 +216,15 @@ def make_device_rce_solver(
     ``vmap`` can execute both branches of domain guards and is not supported.
     This primal interface does not supply equilibrium sensitivities; use
     ``rce_device_implicit.make_device_implicit_rce_solver`` for first-order AD.
+
+    ``max_residual_fallback=True`` tries an alternative direction when a finite
+    Newton step fails line search or reduces the maximum scaled residual by
+    less than 1e-4 relative. For the largest residual component i, the direction
+    is -r[i] * J[i] / dot(J[i], J[i]), capped at 0.05 in log temperature. It uses
+    the same domain, physics, and sufficient-decrease checks, with at most
+    ``max_backtracks`` additional trials. A previously accepted Newton candidate
+    is retained unless the alternative improves it. Convergence tolerances and
+    active-mask updates are unchanged; singular/nonfinite Jacobians still fail.
     """
     pressure = np.asarray(pressure_bar, dtype=float)
     boundaries = np.asarray(pressure_boundaries_bar, dtype=float)
@@ -278,6 +288,8 @@ def make_device_rce_solver(
         "jacfwd",
     ):
         raise ValueError("jacobian_mode must be 'sequential' or 'jacfwd'.")
+    if not isinstance(max_residual_fallback, (bool, np.bool_)):
+        raise ValueError("max_residual_fallback must be boolean.")
     mask = (
         np.zeros(nlayer, dtype=bool)
         if convective_mask_initial is None
@@ -455,55 +467,85 @@ def make_device_rce_solver(
             damping = 1.0 / jnp.maximum(1.0, jnp.max(jnp.abs(step)))
             norm = jnp.max(jnp.abs(state.residual))
 
-            def search_body(carry):
-                trial_index, damping, accepted, had_domain, current = carry
-                log_trial = state.log_t + damping * step
-                valid = domain(log_trial, parameters)
-                trial_column = jax.lax.cond(
-                    valid, lambda: evaluate(log_trial, parameters), lambda: empty
+            def search_direction(direction, damping, current, enabled):
+                best_norm = jnp.max(jnp.abs(current.residual))
+
+                def search_body(carry):
+                    trial_index, damping, accepted, had_domain, current = carry
+                    log_trial = state.log_t + damping * direction
+                    valid = domain(log_trial, parameters)
+                    trial_column = jax.lax.cond(
+                        valid, lambda: evaluate(log_trial, parameters), lambda: empty
+                    )
+                    trial_residual = _scaled_residual(
+                        trial_column, state.mask, flux, flux_tolerance, stability_atol
+                    )
+                    trial_norm = jnp.max(jnp.abs(trial_residual))
+                    accept = (
+                        valid
+                        & (column_status(trial_column) == RceStatus.RUNNING)
+                        & jnp.isfinite(trial_norm)
+                        & (trial_norm < best_norm)
+                        & ((trial_norm <= 1) | (trial_norm < (1 - 1.0e-4 * damping) * norm))
+                    )
+                    current = jax.lax.cond(
+                        accept,
+                        lambda: current._replace(
+                            log_t=log_trial,
+                            column=trial_column,
+                            residual=trial_residual,
+                            iterations=state.iterations + 1,
+                        ),
+                        lambda: current._replace(backtracks=current.backtracks + 1),
+                    )
+                    return (
+                        trial_index + 1,
+                        damping * 0.5,
+                        accept,
+                        had_domain | valid,
+                        current,
+                    )
+
+                search_initial = (
+                    zero, damping, jnp.asarray(False), jnp.asarray(False), current
                 )
-                trial_residual = _scaled_residual(
-                    trial_column, state.mask, flux, flux_tolerance, stability_atol
+                _, _, accepted, had_domain, updated = jax.lax.while_loop(
+                    lambda carry: enabled & (carry[0] < max_backtracks) & ~carry[2],
+                    search_body,
+                    search_initial,
                 )
-                trial_norm = jnp.max(jnp.abs(trial_residual))
-                accept = (
-                    valid
-                    & (column_status(trial_column) == RceStatus.RUNNING)
-                    & jnp.isfinite(trial_norm)
-                    & ((trial_norm <= 1) | (trial_norm < (1 - 1.0e-4 * damping) * norm))
-                )
-                current = jax.lax.cond(
-                    accept,
-                    lambda: current._replace(
-                        log_t=log_trial,
-                        column=trial_column,
-                        residual=trial_residual,
-                        iterations=current.iterations + 1,
-                    ),
-                    lambda: current._replace(backtracks=current.backtracks + 1),
-                )
-                return (
-                    trial_index + 1,
-                    damping * 0.5,
-                    accept,
-                    had_domain | valid,
-                    current,
+                return accepted, had_domain, updated
+
+            accepted, had_domain, updated = search_direction(
+                step, damping, state, step_status == RceStatus.RUNNING
+            )
+            if max_residual_fallback:
+                candidate_norm = jnp.max(jnp.abs(updated.residual))
+                stalled = (step_status == RceStatus.RUNNING) & (
+                    ~accepted | ((candidate_norm > 1) & (candidate_norm > (1 - 1e-4) * norm))
                 )
 
-            search_initial = (
-                zero,
-                damping,
-                jnp.asarray(False),
-                jnp.asarray(False),
-                state,
-            )
-            _, _, accepted, had_domain, updated = jax.lax.while_loop(
-                lambda carry: (step_status == RceStatus.RUNNING)
-                & (carry[0] < max_backtracks)
-                & ~carry[2],
-                search_body,
-                search_initial,
-            )
+                def try_alternative():
+                    index = jnp.argmax(jnp.abs(state.residual))
+                    row = matrix[index]
+                    scale = jnp.max(jnp.abs(row))
+                    # Normalize before squaring to avoid overflow in dot(J[i], J[i]).
+                    safe_scale = jnp.where(scale > 0, scale, 1.0)
+                    row = row / safe_scale
+                    squared = jnp.dot(row, row)
+                    direction = -(state.residual[index] / safe_scale) * (
+                        row / jnp.where(squared > 0, squared, 1.0)
+                    )
+                    usable = (scale > 0) & jnp.all(jnp.isfinite(direction))
+                    damping = 0.05 / jnp.maximum(0.05, jnp.max(jnp.abs(direction)))
+                    other_accepted, other_domain, other = search_direction(
+                        direction, damping, updated, usable
+                    )
+                    return accepted | other_accepted, had_domain | other_domain, other
+
+                accepted, had_domain, updated = jax.lax.cond(
+                    stalled, try_alternative, lambda: (accepted, had_domain, updated)
+                )
             status = jnp.where(
                 step_status != RceStatus.RUNNING,
                 step_status,

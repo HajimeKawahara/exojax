@@ -444,3 +444,39 @@ def test_parameter_contract(parameters):
 def test_strict_solver_cannot_be_used_as_guarded_likelihood():
     with pytest.raises(ValueError, match="invalid_derivative='zero'"):
         make_rce_log_prob(_prepare(), lambda state, p: -state.bottom_temperature)
+
+
+@pytest.mark.parametrize("mode", ["sequential", "jacfwd"])
+def test_implicit_derivatives_after_fallback_recovery(mode):
+    def column(t, tb, p):
+        x, y = jnp.log(t[0]), jnp.log(tb)
+        return ColumnEvaluation(
+            jnp.array([1 + x - p, 0.9 + x + 1e-20 * y + x * y + y**2]),
+            jnp.array([-1.0]), True, 0,
+        )
+
+    options = dict(internal_flux=0.0, jacobian_mode=mode)
+    p = jnp.array(0.0)
+    failed = _one_layer(column, **options)(p)
+    assert failed.state.status == RceStatus.LINE_SEARCH_FAILED
+    assert not failed.derivative_valid
+    solve = _one_layer(column, max_residual_fallback=True, **options)
+    result = solve(p)
+    assert result.state.converged and result.derivative_valid
+
+    def temperatures(p):
+        state = solve(p).state
+        return jnp.append(state.temperature, state.bottom_temperature)
+
+    value, tangent = jax.jvp(temperatures, (p,), (jnp.array(1.0),))
+    x, y = -1.0, (1 - np.sqrt(1.4)) / 2
+    np.testing.assert_allclose(value, np.exp([x, y]), atol=1e-9)
+    expected = np.exp([x, y]) * [1.0, -(1 + y) / (x + 2 * y)]
+    np.testing.assert_allclose(tangent, expected, rtol=1e-8)
+    for h in (1e-3, 3e-4, 1e-4):
+        assert solve(p + h).derivative_valid and solve(p - h).derivative_valid
+        difference = (temperatures(p + h) - temperatures(p - h)) / (2 * h)
+        np.testing.assert_allclose(tangent, difference, rtol=1e-5, atol=1e-8)
+    weights = jnp.array([2.0, -0.5])
+    _, pullback = jax.vjp(temperatures, p)
+    np.testing.assert_allclose(pullback(weights)[0], jnp.dot(weights, tangent), rtol=1e-12)
