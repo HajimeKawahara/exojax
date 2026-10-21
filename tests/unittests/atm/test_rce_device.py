@@ -50,12 +50,13 @@ def _parameters():
 
 @pytest.mark.parametrize("jacobian_mode", ["sequential", "jacfwd"])
 @pytest.mark.parametrize("initial_mask", [[False, False], [True, True]])
-def test_mixed_convection_matches_host_and_residual(jacobian_mode, initial_mask):
+@pytest.mark.parametrize("fallback", [False, True])
+def test_mixed_convection_matches_host_and_residual(jacobian_mode, initial_mask, fallback):
     parameters = _parameters()
     options = dict(
         convective_mask_initial=np.array(initial_mask), jacobian_mode=jacobian_mode
     )
-    result = _prepare(**options)(parameters)
+    result = _prepare(**options, max_residual_fallback=fallback)(parameters)
     host = solve_rce(
         [1.0, 4.0],
         [0.5, 2.0, 16.0],
@@ -242,7 +243,8 @@ def test_dynamic_zero_internal_flux_requires_positive_tolerance():
         ("negative_gradient", RceStatus.INVALID_PHYSICS),
     ],
 )
-def test_invalid_columns(kind, status):
+@pytest.mark.parametrize("fallback", [False, True])
+def test_invalid_columns(kind, status, fallback):
     evaluate = make_gradient_evaluator(
         [1.0, 4.0], 16.0, _flux, -0.25 if kind == "negative_gradient" else 0.25
     )
@@ -257,7 +259,7 @@ def test_invalid_columns(kind, status):
             return value._replace(physics_valid=False, physics_status=71)
         return value
 
-    result = _prepare(evaluate_column=column)(_parameters())
+    result = _prepare(evaluate_column=column, max_residual_fallback=fallback)(_parameters())
     assert result.status == status
     assert not result.converged
     assert result.physics_valid == (kind == "singular")
@@ -325,6 +327,132 @@ def test_line_search_failure_returns_last_physics_diagnostics():
     assert result.physics_valid and result.physics_status == 0
     assert result.backtracks == 25
     np.testing.assert_allclose(result.temperature, [200.0, 200.0])
+
+
+def _stalled_column(t, tb, p):
+    x, y = jnp.log(t[0]), jnp.log(tb)
+    return ColumnEvaluation(
+        jnp.array([1 + x, 0.9 + x + 1e-9 * y + y**2]),
+        jnp.array([-1.0]), True, 0,
+    )
+
+
+def _stalled_solver(**options):
+    return make_device_rce_solver(
+        [1.0], [0.5, 2.0], [1.0], 1.0, 0.0,
+        options.pop("evaluate_column", _stalled_column),
+        flux_atol=1e-6, flux_rtol=0.0, max_iterations=1, **options,
+    )
+
+
+@pytest.mark.parametrize("budget", [1, 25])
+@pytest.mark.parametrize("jacobian_mode", ["sequential", "jacfwd"])
+def test_fallback_improves_failed_or_stagnating_newton(budget, jacobian_mode):
+    options = dict(max_backtracks=budget, jacobian_mode=jacobian_mode)
+    newton = _stalled_solver(**options)(None)
+    improved = _stalled_solver(**options, max_residual_fallback=True)(None)
+    assert newton.status == (RceStatus.LINE_SEARCH_FAILED if budget == 1
+                             else RceStatus.MAX_ITERATIONS)
+    assert np.max(np.abs(newton.scaled_residual)) > 0.9999e6
+    assert improved.status == RceStatus.MAX_ITERATIONS
+    assert not improved.converged and improved.domain_valid and improved.physics_valid
+    assert improved.iterations == 1  # Replacing a candidate is not a second step.
+    assert improved.backtracks == newton.backtracks
+    np.testing.assert_allclose(improved.scaled_residual, [0.95e6, 0.85e6], rtol=1e-12)
+    np.testing.assert_allclose(np.log(improved.temperature), [-0.05], atol=1e-14)
+    assert improved.bottom_temperature == 1.0
+
+
+@pytest.mark.parametrize("budget", [1, 25])
+@pytest.mark.parametrize("jacobian_mode", ["sequential", "jacfwd"])
+def test_fallback_reaches_analytic_equilibrium_after_newton_failure(budget, jacobian_mode):
+    def column(t, tb, p):
+        x, y = jnp.log(t[0]), jnp.log(tb)
+        # The first fallback step restores coupling to the bottom temperature.
+        return ColumnEvaluation(
+            jnp.array([1 + x, 0.9 + x + 1e-20 * y + x * y + y**2]),
+            jnp.array([-1.0]), True, 0,
+        )
+
+    options = dict(
+        flux_atol=1e-9, flux_rtol=0.0, stability_atol=1e-8,
+        max_iterations=50, max_backtracks=budget, jacobian_mode=jacobian_mode,
+    )
+    newton = make_device_rce_solver(
+        [1.0], [0.5, 2.0], [1.0], 1.0, 0.0, column, **options,
+    )(None)
+    result = make_device_rce_solver(
+        [1.0], [0.5, 2.0], [1.0], 1.0, 0.0, column,
+        max_residual_fallback=True, **options,
+    )(None)
+    assert newton.status == RceStatus.LINE_SEARCH_FAILED
+    assert not newton.converged and newton.iterations == 0
+    assert result.converged and result.status == RceStatus.CONVERGED
+    assert result.domain_valid and result.physics_valid
+    np.testing.assert_allclose(np.log(result.temperature), [-1.0], atol=1e-9)
+    np.testing.assert_allclose(
+        np.log(result.bottom_temperature), (1 - np.sqrt(1.4)) / 2, atol=1e-9,
+    )
+    independent = column(result.temperature, result.bottom_temperature, None)
+    np.testing.assert_allclose(independent.net_flux, 0.0, atol=1e-9)
+    assert np.all(independent.stability_excess < 0)
+    np.testing.assert_array_equal(result.convective_mask, [False])
+    np.testing.assert_array_equal(result.convective_flux, 0.0)
+
+
+@pytest.mark.parametrize("guard", ["domain", "physics"])
+def test_failed_fallback_retains_accepted_newton_and_diagnostics(guard):
+    def valid(t, tb, p):
+        return (tb > 1.0) | (t[0] >= 1.0)
+
+    def column(t, tb, p):
+        value = _stalled_column(t, tb, p)
+        if guard == "domain":
+            checkify.check(valid(t, tb, p), "Rejected alternative reached physics")
+            return value
+        return value._replace(physics_valid=valid(t, tb, p),
+                              physics_status=jnp.where(valid(t, tb, p), 0, 9))
+
+    options = dict(evaluate_column=column,
+                   valid_temperature=valid if guard == "domain" else None)
+    error, newton = jax.jit(checkify.checkify(_stalled_solver(**options)))(None)
+    error.throw()
+    error, result = jax.jit(checkify.checkify(
+        _stalled_solver(**options, max_residual_fallback=True)))(None)
+    error.throw()
+    assert result.status == RceStatus.MAX_ITERATIONS and result.iterations == 1
+    assert result.backtracks == newton.backtracks + 25
+    assert result.physics_valid and result.physics_status == 0
+    for field in result._fields:
+        if field != "backtracks":
+            np.testing.assert_array_equal(getattr(result, field), getattr(newton, field))
+
+
+@pytest.mark.parametrize("tie", [False, True])
+def test_fallback_cannot_accept_domain_violation_or_increasing_maximum(tie):
+    def column(t, tb, p):
+        x, y = jnp.log(t[0]), jnp.log(tb)
+        return ColumnEvaluation(jnp.array([1 + x, 1 - x + 1e-9*y + y**2]),
+                                jnp.array([-1.0]), True, 0)
+
+    result = _stalled_solver(
+        evaluate_column=column if tie else _stalled_column,
+        valid_temperature=None if tie else lambda t, tb, p: t[0] >= 1.0,
+        max_residual_fallback=True,
+    )(None)
+    assert result.status == (RceStatus.LINE_SEARCH_FAILED if tie
+                             else RceStatus.DOMAIN_STEP_FAILED)
+    assert result.iterations == 0 and result.backtracks == 50
+    assert result.domain_valid and result.physics_valid and not result.converged
+    np.testing.assert_array_equal(result.temperature, [1.0])
+    assert result.bottom_temperature == 1.0
+
+
+def test_fallback_preserves_normal_newton_execution():
+    newton = _prepare()(_parameters())
+    result = _prepare(max_residual_fallback=True)(_parameters())
+    for actual, expected in zip(result, newton):
+        np.testing.assert_array_equal(actual, expected)
 
 
 def test_guarded_mixed_batch_skips_invalid_physics_and_needs_no_callback():
@@ -467,6 +595,8 @@ def test_float32_initial_domain_guard_uses_actual_callback_precision():
         dict(max_active_set_iterations=True),
         dict(max_backtracks=2.5),
         dict(jacobian_mode="invalid"),
+        dict(max_residual_fallback=1),
+        dict(max_residual_fallback="true"),
     ],
 )
 def test_static_input_validation(options):
@@ -543,7 +673,8 @@ def test_final_total_flux_cancellation_is_not_convergence():
     assert abs(result.flux_residual[-1]) > 1e-3
 
 
-def test_nonfinite_jacobian_is_distinct_from_invalid_physics():
+@pytest.mark.parametrize("fallback", [False, True])
+def test_nonfinite_jacobian_is_distinct_from_invalid_physics(fallback):
     @jax.custom_jvp
     def bad_flux(t):
         return jnp.zeros(3)
@@ -555,7 +686,7 @@ def test_nonfinite_jacobian_is_distinct_from_invalid_physics():
     result = _prepare(
         evaluate_column=make_gradient_evaluator(
             [1.0, 4.0], 16.0, lambda t, tb, p: bad_flux(t), 0.25
-        )
+        ), max_residual_fallback=fallback,
     )(_parameters())
     assert result.status == RceStatus.NONFINITE_JACOBIAN
     assert result.physics_valid
