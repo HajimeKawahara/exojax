@@ -61,9 +61,42 @@ def _observable(solve, p):
     )
 
 
+def test_runtime_seed_preserves_parameter_ad_and_has_zero_sensitivity():
+    solve = _prepare()
+    p = _parameters()
+    reference = solve(p)
+    seed = (reference.state.temperature * .99,
+            reference.state.bottom_temperature * 1.01, reference.state.convective_mask)
+    seeded = solve(p, seed)
+    assert seeded.state.converged and seeded.derivative_valid
+    np.testing.assert_allclose(seeded.state.temperature, reference.state.temperature, atol=1e-7)
+    expected = jax.jacrev(lambda p: solve(p).state.temperature)(p)
+    actual = jax.jacrev(lambda p: solve(p, seed).state.temperature)(p)
+    for left, right in zip(jax.tree_util.tree_leaves(actual), jax.tree_util.tree_leaves(expected)):
+        np.testing.assert_allclose(left, right, rtol=1e-9, atol=1e-9)
+    seed_gradient = jax.grad(lambda t, tb: jnp.sum(solve(p, (t, tb, seed[2])).state.temperature),
+                             argnums=(0, 1))(*seed[:2])
+    for leaf in seed_gradient:
+        np.testing.assert_array_equal(leaf, 0.)
+    _, seed_tangent = jax.jvp(
+        lambda t, tb: solve(p, (t, tb, seed[2])).state.temperature,
+        seed[:2], (jnp.ones_like(seed[0]), jnp.ones_like(seed[1])),
+    )
+    np.testing.assert_array_equal(seed_tangent, 0.)
+    # A parameter-dependent initializer must not contribute a spurious tangent.
+    dynamic = jax.jacrev(lambda p: solve(p, (seed[0] * p["flux"], seed[1], seed[2])).state.temperature)(p)
+    for left, right in zip(jax.tree_util.tree_leaves(dynamic), jax.tree_util.tree_leaves(expected)):
+        np.testing.assert_allclose(left, right, rtol=1e-9, atol=1e-9)
+    for actual, expected in zip(solve(p).state, reference.state):
+        np.testing.assert_array_equal(actual, expected)
+
+
 @pytest.mark.parametrize("mode", ["sequential", "jacfwd"])
-def test_jvp_vjp_match_reconverged_finite_differences(mode):
-    solve = _prepare(jacobian_mode=mode)
+@pytest.mark.parametrize("seeded", [False, True])
+def test_jvp_vjp_match_reconverged_finite_differences(mode, seeded):
+    prepared = _prepare(jacobian_mode=mode)
+    seed = (jnp.array([260., 360.]), jnp.array(420.), jnp.array([False, True]))
+    solve = (lambda p: prepared(p, seed)) if seeded else prepared
     p = _parameters()
     direction = {
         "flux": jnp.array(0.13),
@@ -137,6 +170,50 @@ def _one_layer(column, **options):
 
 def _column(t, tb, p):
     return ColumnEvaluation(jnp.array([t[0] + p, tb]), jnp.array([-0.1]), True, 0)
+
+
+@pytest.mark.parametrize("policy", ["nan", "zero"])
+def test_runtime_seed_failure_preserves_derivative_policy(policy):
+    solve = _one_layer(_column, invalid_derivative=policy,
+                       valid_temperature=lambda t, tb, p: jnp.all(t >= .5) & (tb >= .5))
+    seed = (jnp.array([.1]), jnp.array(1.), jnp.array([False]))
+    result = solve(jnp.array(0.), seed)
+    assert not result.state.converged
+    assert result.state.status == RceStatus.INVALID_INITIAL_STATE
+    assert result.derivative_status == DerivativeStatus.PRIMAL_FAILED
+    gradient = jax.grad(lambda p: solve(p, seed).state.temperature.sum())(jnp.array(0.))
+    _, tangent = jax.jvp(lambda p: solve(p, seed).state.temperature,
+                         (jnp.array(0.),), (jnp.array(1.),))
+    if policy == "nan":
+        assert np.isnan(gradient) and np.all(np.isnan(tangent))
+    else:
+        np.testing.assert_array_equal(gradient, 0.)
+        np.testing.assert_array_equal(tangent, 0.)
+
+
+@pytest.mark.parametrize("seed", [
+    (jnp.ones(2), jnp.array(1.), jnp.array([False])),
+    (jnp.ones(1), jnp.array(1.), jnp.array([0.])),
+])
+def test_runtime_seed_keeps_the_primal_shape_and_mask_contract(seed):
+    with pytest.raises(ValueError, match="initial_state"):
+        _one_layer(_column)(jnp.array(0.), seed)
+
+
+def test_runtime_seed_selects_a_branch_with_local_implicit_derivatives():
+    # Both radiative equilibria are valid; the seed selects the local root.
+    def column(t, tb, p):
+        return ColumnEvaluation(jnp.array([1. + jnp.log(t[0])**2 - p, tb]),
+                                jnp.array([-1.]), True, 0)
+
+    solve = _one_layer(column)
+    for sign in (-1., 1., -1.):
+        seed = (jnp.array([np.exp(.8 * sign)]), jnp.array(.9), jnp.array([False]))
+        result = solve(jnp.array(1.), seed)
+        assert result.state.converged and result.derivative_valid
+        np.testing.assert_allclose(result.state.temperature, np.exp(sign), atol=1e-9)
+        gradient = jax.grad(lambda p: solve(p, seed).state.temperature.sum())(jnp.array(1.))
+        np.testing.assert_allclose(gradient, .5 * sign * np.exp(sign), rtol=1e-8)
 
 
 @pytest.mark.parametrize(
@@ -298,7 +375,8 @@ def test_numerical_nonconvergence_is_not_prior_exclusion():
         np.testing.assert_array_equal(leaf, 0)
 
 
-def test_no_retrace_no_host_callback_and_one_primal_solve(monkeypatch):
+@pytest.mark.parametrize("seeded", [False, True])
+def test_no_retrace_no_host_callback_and_one_primal_solve(monkeypatch, seeded):
     import exojax.atm.rce_device_implicit as module
 
     original = module.make_device_rce_solver
@@ -307,23 +385,27 @@ def test_no_retrace_no_host_callback_and_one_primal_solve(monkeypatch):
     def counting_factory(*args, **kwargs):
         primal = original(*args, **kwargs)
 
-        def wrapped(parameters):
+        def wrapped(parameters, initial_state=None):
             traces.append(None)
             jax.debug.callback(lambda: executions.append(None), ordered=True)
-            return primal(parameters)
+            return primal(parameters, initial_state)
 
         return wrapped
 
     monkeypatch.setattr(module, "make_device_rce_solver", counting_factory)
     solve = _prepare()
-    objective = jax.jit(jax.value_and_grad(lambda p: solve(p).state.bottom_temperature))
+    objective = jax.jit(jax.value_and_grad(lambda p, seed: solve(p, seed).state.bottom_temperature))
     p = _parameters()
-    value, _ = objective(p)
+    seed = ((jnp.array([260., 360.]), jnp.array(420.), jnp.array([False, True]))
+            if seeded else None)
+    value, _ = objective(p, seed)
     value.block_until_ready()
     jax.effects_barrier()
     assert len(executions) == 1
     trace_count = len(traces)
-    value, _ = objective(dict(p, flux=jnp.array(1.01)))
+    if seeded:
+        seed = (seed[0] * 1.01, seed[1] * .99, seed[2])
+    value, _ = objective(dict(p, flux=jnp.array(1.01)), seed)
     value.block_until_ready()
     jax.effects_barrier()
     assert len(executions) == 2 and len(traces) == trace_count
