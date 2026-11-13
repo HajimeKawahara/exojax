@@ -1,5 +1,7 @@
 """Hydrogen atomic database."""
 
+from __future__ import annotations
+
 import warnings
 
 import jax.numpy as jnp
@@ -85,6 +87,7 @@ class AdbHydrogen:
         self.nu_lines = _HYDROGEN_RYDBERG_CM * (1.0 / lower**2 - 1.0 / upper**2)
         self._elower = _hydrogen_level_energy_cm(lower)
         self._eupper = _hydrogen_level_energy_cm(upper)
+        self._glower = _hydrogen_level_degeneracy(lower)
         self._gupper = _hydrogen_level_degeneracy(upper)
         self._jlower = np.zeros_like(self.nu_lines)
         self._jupper = np.zeros_like(self.nu_lines)
@@ -95,7 +98,7 @@ class AdbHydrogen:
         self._A = einstein_a_from_oscillator_strength(
             self.nu_lines,
             f_lu,
-            _hydrogen_level_degeneracy(lower),
+            self._glower,
             self._gupper,
         )
         self._gamRad = np.log10(self._A)
@@ -161,6 +164,7 @@ class AdbHydrogen:
         self._A = self._A[mask]
         self._elower = self._elower[mask]
         self._eupper = self._eupper[mask]
+        self._glower = self._glower[mask]
         self._gupper = self._gupper[mask]
         self._jlower = self._jlower[mask]
         self._jupper = self._jupper[mask]
@@ -180,6 +184,7 @@ class AdbHydrogen:
         self.A = jnp.array(self._A)
         self.elower = jnp.array(self._elower)
         self.eupper = jnp.array(self._eupper)
+        self.glower = jnp.array(self._glower)
         self.gupper = jnp.array(self._gupper)
         self.jlower = jnp.array(self._jlower, dtype=int)
         self.jupper = jnp.array(self._jupper, dtype=int)

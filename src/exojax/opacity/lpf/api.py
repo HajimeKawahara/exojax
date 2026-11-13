@@ -4,6 +4,8 @@ This module provides the OpaDirect class for direct line-by-line opacity
 calculations using the LPF method.
 """
 
+from __future__ import annotations
+
 from typing import Callable, Literal, Optional, Union
 
 import jax.numpy as jnp
@@ -174,6 +176,9 @@ class OpaDirect(OpaCalc):
         )
         self._vmap_doppler_sigma = jit(vmap(doppler_sigma, (None, 0, None)))
 
+        if self.dbtype == "hydrogen":
+            self._vmap_line_profiles = jit(vmap(self.line_profiles, (0, 0)))
+
         if self.dbtype == "hitran":
             self._vmap_qt = vmap(self.mdb.qr_interp_lines, (0, None))
             self._vmap_gamma = jit(vmap(gamma_hitran, (0, 0, 0, None, None, None)))
@@ -229,6 +234,41 @@ class OpaDirect(OpaCalc):
             Parr * self.mdb.vmrHe, Parr * self.mdb.vmrHH,
         )
 
+    def line_profiles(self, T: float, velocity: float = 0.0) -> jnp.ndarray:
+        """Evaluate normalized hydrogen profiles independently of populations.
+
+        Args:
+            T: Scalar kinetic temperature in K.
+            velocity: Scalar line-of-sight velocity in km/s. Positive values
+                recede from the observer, shifting centers to lower wavenumber.
+
+        Returns:
+            Profiles shaped ``(Nline, Nnu)`` in cm, with unit integral over
+            wavenumber on the infinite domain. A finite grid truncates wings;
+            profiles are not renormalized to that grid.
+
+        Notes:
+            This experimental API supports AdbHydrogen only, using natural
+            and thermal Doppler widths. Apply ``jax.vmap`` over temperature
+            and velocity for layers. The nonrelativistic center shift is
+            ``nu0 * (1 - velocity / c)``; widths stay in the rest frame and
+            relativistic intensity transformations are omitted. Use |v| << c.
+            No LTE strength or level population is included.
+        """
+        from exojax.database.core.broadening import doppler_sigma, gamma_natural
+        from exojax.opacity.lpf.lpf import vvoigt
+        from exojax.utils.constants import c
+
+        if self.dbtype != "hydrogen":
+            raise ValueError("line_profiles currently supports only AdbHydrogen.")
+        T, velocity = jnp.asarray(T), jnp.asarray(velocity)
+        if T.ndim != 0 or velocity.ndim != 0:
+            raise ValueError("T and velocity must be scalars; use jax.vmap for layers.")
+        # Retain the accurately precomputed rest detuning, including in x32.
+        detuning = self.opainfo + self.mdb.nu_lines[:, None] * (velocity / c)
+        sigma_d = doppler_sigma(self.mdb.nu_lines, T, self.mdb.line_masses)
+        return vvoigt(detuning, sigma_d, gamma_natural(self.mdb.A))
+
     def xsvector(self, T: float, P: float, Pself: float = 0.0) -> jnp.ndarray:
         """Compute cross section vector for given temperature and pressure.
 
@@ -265,9 +305,7 @@ class OpaDirect(OpaCalc):
             ) + gamma_natural(self.mdb.A)
             line_masses = self.mdb.molmass
         elif dbtype == "hydrogen":
-            qt = self.mdb.qr_interp_lines(T, Tref_original)
-            gammaL = gamma_natural(self.mdb.A)
-            line_masses = self.mdb.line_masses
+            return jnp.dot(self.mdb.line_strength(T), self.line_profiles(T))
         elif dbtype in ("kurucz", "vald", "nist", "exoatom"):
             SijM, gammaLM, sigmaDM = self._atomic_line_parameters(T, P)
             if self.line_profile == "alkali_subvoigt":
@@ -354,9 +392,6 @@ class OpaDirect(OpaCalc):
             )
         elif dbtype == "hydrogen":
             qt = vmap(self.mdb.qr_interp_lines, (0, None))(Tarr, Tref_original)
-            gammaLM = gamma_natural(self.mdb.A)[None, :] + jnp.zeros(
-                (len(Tarr), 1)
-            )
             SijM = self._vmap_line_strength(
                 Tarr,
                 self.mdb.logsij0,
@@ -365,9 +400,8 @@ class OpaDirect(OpaCalc):
                 qt,
                 Tref_original,
             )
-            sigmaDM = self._vmap_doppler_sigma(
-                self.mdb.nu_lines, Tarr, self.mdb.line_masses
-            )
+            profiles = self._vmap_line_profiles(Tarr, jnp.zeros_like(Tarr))
+            return jnp.einsum("li,lij->lj", SijM, profiles)
         elif dbtype in ("kurucz", "vald", "nist", "exoatom"):
             SijM, gammaLM, sigmaDM = self._atomic_line_parameters(Tarr, Parr)
             if self.line_profile == "alkali_subvoigt":
