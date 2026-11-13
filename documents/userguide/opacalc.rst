@@ -38,6 +38,12 @@ profiles are not renormalized to that window. LTE strengths and level
 populations are not included. Existing ``xsvector`` and ``xsmatrix`` calls
 continue to return LTE cross sections.
 
+Select lines with ``adb.masking(mask)`` before constructing ``OpaDirect``.
+The selection keeps line data, statistical weights, masses, and existing
+JAX arrays aligned. With ``gpu_transfer=False``, call
+``adb.generate_jnp_arrays()`` after selection and before creating the
+opacity calculator.
+
 ``velocity`` is the line-of-sight velocity in km/s, positive for recession.
 It shifts the center to ``nu_line * (1 - velocity / c)`` while retaining
 the rest-frame widths. This approximation assumes velocities much smaller

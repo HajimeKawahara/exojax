@@ -177,7 +177,7 @@ class OpaDirect(OpaCalc):
         self._vmap_doppler_sigma = jit(vmap(doppler_sigma, (None, 0, None)))
 
         if self.dbtype == "hydrogen":
-            self._vmap_line_profiles = jit(vmap(self.line_profiles, (0, 0)))
+            self._vmap_hydrogen_xsvector = jit(vmap(self.xsvector, (0, None)))
 
         if self.dbtype == "hitran":
             self._vmap_qt = vmap(self.mdb.qr_interp_lines, (0, None))
@@ -391,17 +391,8 @@ class OpaDirect(OpaCalc):
                 self.mdb.nu_lines, Tarr, self.mdb.molmass
             )
         elif dbtype == "hydrogen":
-            qt = vmap(self.mdb.qr_interp_lines, (0, None))(Tarr, Tref_original)
-            SijM = self._vmap_line_strength(
-                Tarr,
-                self.mdb.logsij0,
-                self.mdb.nu_lines,
-                self.mdb.elower,
-                qt,
-                Tref_original,
-            )
-            profiles = self._vmap_line_profiles(Tarr, jnp.zeros_like(Tarr))
-            return jnp.einsum("li,lij->lj", SijM, profiles)
+            # Natural and thermal widths are independent of pressure.
+            return self._vmap_hydrogen_xsvector(Tarr, 0.0)
         elif dbtype in ("kurucz", "vald", "nist", "exoatom"):
             SijM, gammaLM, sigmaDM = self._atomic_line_parameters(Tarr, Parr)
             if self.line_profile == "alkali_subvoigt":

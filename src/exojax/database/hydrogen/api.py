@@ -8,10 +8,13 @@ import jax.numpy as jnp
 import numpy as np
 
 from exojax.database.core.line_strength import line_strength
-from exojax.database.core_atom.io import load_atomicdata
-from exojax.database.core_atom.io import load_ionization_energies
+from exojax.database.core_atom._arrays import (
+    _LINE_FIELDS,
+    _generate_atomic_jnp_arrays,
+    _mask_atomic_lines,
+    _set_atomic_metadata,
+)
 from exojax.database.core_atom.io import load_pf_Barklem2016
-from exojax.database.core_atom.io import pick_ionE
 from exojax.database.core_atom.line_strength import line_strength_atom
 from exojax.database.core_atom.pf import interp_QT_284
 from exojax.database.core_atom.transition import (
@@ -33,6 +36,7 @@ _BALMER_F_LU = {
 }
 
 _HYDROGEN_RYDBERG_CM = 109677.5834
+_HYDROGEN_LINE_FIELDS = _LINE_FIELDS + ("glower",)
 
 
 class AdbHydrogen:
@@ -128,19 +132,14 @@ class AdbHydrogen:
             * (self.Sij0 > self.crit)
         )
         self.masking(mask)
+        _set_atomic_metadata(self)
         if gpu_transfer:
             self.generate_jnp_arrays()
 
-        ipccd = load_atomicdata()
-        self.solarA = jnp.array(
-            [ipccd[ipccd["ielem"] == 1].iat[0, 4]] * len(self.nu_lines)
-        )
-        self.atomicmass = jnp.array(
-            [ipccd[ipccd["ielem"] == 1].iat[0, 5]] * len(self.nu_lines)
-        )
-        self.line_masses = self.atomicmass
-        df_ionE = load_ionization_energies()
-        self.ionE = jnp.array([pick_ionE(1, 1, df_ionE)] * len(self.nu_lines))
+    @property
+    def line_masses(self):
+        """Atomic masses for the current line selection, in amu."""
+        return self.atomicmass
 
     def make_QTmask(self):
         """Return the H I partition-function index.
@@ -152,48 +151,22 @@ class AdbHydrogen:
         return np.full_like(self.nu_lines, qtmask, dtype=int)
 
     def masking(self, mask):
-        """Apply a line mask.
+        """Select lines and metadata, refreshing existing JAX arrays.
+
+        Select lines before constructing an OpaDirect instance.
 
         Args:
             mask: Boolean mask for selected lines.
         """
         self.n_lower = self.n_lower[mask]
         self.n_upper = self.n_upper[mask]
-        self.nu_lines = self.nu_lines[mask]
-        self.Sij0 = self.Sij0[mask]
-        self._A = self._A[mask]
-        self._elower = self._elower[mask]
-        self._eupper = self._eupper[mask]
-        self._glower = self._glower[mask]
-        self._gupper = self._gupper[mask]
-        self._jlower = self._jlower[mask]
-        self._jupper = self._jupper[mask]
-        self._QTmask = self._QTmask[mask]
-        self._ielem = self._ielem[mask]
-        self._iion = self._iion[mask]
-        self._gamRad = self._gamRad[mask]
-        self._gamSta = self._gamSta[mask]
-        self._vdWdamp = self._vdWdamp[mask]
+        _mask_atomic_lines(self, mask, line_fields=_HYDROGEN_LINE_FIELDS)
         if len(self.nu_lines) < 1:
             warnings.warn("No hydrogen lines are selected.", UserWarning)
 
     def generate_jnp_arrays(self):
-        """Generate JAX arrays."""
-        self.dev_nu_lines = jnp.array(self.nu_lines)
-        self.logsij0 = jnp.array(np.log(self.Sij0))
-        self.A = jnp.array(self._A)
-        self.elower = jnp.array(self._elower)
-        self.eupper = jnp.array(self._eupper)
-        self.glower = jnp.array(self._glower)
-        self.gupper = jnp.array(self._gupper)
-        self.jlower = jnp.array(self._jlower, dtype=int)
-        self.jupper = jnp.array(self._jupper, dtype=int)
-        self.QTmask = jnp.array(self._QTmask, dtype=int)
-        self.ielem = jnp.array(self._ielem, dtype=int)
-        self.iion = jnp.array(self._iion, dtype=int)
-        self.gamRad = jnp.array(self._gamRad)
-        self.gamSta = jnp.array(self._gamSta)
-        self.vdWdamp = jnp.array(self._vdWdamp)
+        """Generate JAX arrays for the current line selection."""
+        _generate_atomic_jnp_arrays(self, line_fields=_HYDROGEN_LINE_FIELDS)
 
     def Atomic_gQT(self, atomspecies="H 1"):
         """Return the H I partition-function grid.
