@@ -44,8 +44,9 @@ the rest-frame widths. This approximation assumes velocities much smaller
 than the speed of light and includes no relativistic intensity transformation.
 Use ``jax.vmap`` to evaluate different temperatures and velocities per layer.
 
-``exojax.opacity.lpf.atomic.line_coefficients`` combines these profiles with
-prescribed lower- and upper-level number densities in cm\ :sup:`-3`.
+The ``line_coefficients`` function in ``exojax.opacity.lpf.line_coefficients``
+combines these profiles with prescribed lower- and upper-level number
+densities in cm\ :sup:`-3`.
 Profiles have shape ``(..., Nline, Nnu)`` and populations ``(..., Nline)``.
 The function sums over lines and returns extinction in cm\ :sup:`-1` and
 emissivity in erg s\ :sup:`-1` cm\ :sup:`-3` sr\ :sup:`-1` per cm\ :sup:`-1`.
@@ -64,7 +65,7 @@ from the observer toward the lower boundary:
 
     from exojax.database import AdbHydrogen
     from exojax.opacity import OpaDirect
-    from exojax.opacity.lpf.atomic import line_coefficients
+    from exojax.opacity.lpf.line_coefficients import line_coefficients
     from exojax.rt.layeropacity import layer_optical_depth_from_extinction
     from exojax.rt.planck import piBarr
     from exojax.rt.rtransfer import rtrun_emis_pureabs_ibased_intensity_surface

@@ -1,4 +1,4 @@
-"""Atomic line absorption and emission from supplied level populations."""
+"""Line extinction and emissivity from supplied level populations."""
 
 from __future__ import annotations
 

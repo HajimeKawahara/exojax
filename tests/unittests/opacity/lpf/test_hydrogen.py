@@ -12,7 +12,7 @@ from scipy.special import voigt_profile
 from exojax.database import AdbHydrogen
 from exojax.database.core.broadening import doppler_sigma, gamma_natural
 from exojax.opacity import OpaDirect
-from exojax.opacity.lpf.atomic import line_coefficients
+from exojax.opacity.lpf.line_coefficients import line_coefficients
 from exojax.rt.layeropacity import layer_optical_depth_from_extinction
 from exojax.rt.planck import piB
 from exojax.rt.rtransfer import rtrun_emis_pureabs_ibased_intensity_surface
