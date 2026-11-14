@@ -61,7 +61,9 @@ and emission, with photon energies evaluated at the rest line centers.
 ``adb.n_lower`` and ``adb.n_upper`` are quantum numbers, not populations.
 
 This two-layer Halpha example uses illustrative populations and orders layers
-from the observer toward the lower boundary:
+from the observer toward the lower boundary. It assumes ``n2 > 0`` and
+``0 <= n3 / n2 < adb.gupper / adb.glower`` (2.25 for Halpha), giving positive
+line extinction so the source function is ``emissivity / extinction``:
 
 .. code-block:: python
 
@@ -72,8 +74,9 @@ from the observer toward the lower boundary:
     from exojax.database import AdbHydrogen
     from exojax.opacity import OpaDirect
     from exojax.opacity.lpf.line_coefficients import line_coefficients
+    from exojax.rt.layeropacity import layer_optical_depth_from_extinction
     from exojax.rt.planck import piBarr
-    from exojax.rt.rtransfer import rtrun_emis_pureabs_ray
+    from exojax.rt.rtransfer import rtrun_emis_pureabs_ibased_intensity_surface
 
     jax.config.update("jax_enable_x64", True)
     adb = AdbHydrogen(n_upper_max=3)
@@ -90,23 +93,23 @@ from the observer toward the lower boundary:
         profiles, adb.nu_lines, adb.A, adb.glower, adb.gupper, n2, n3
     )
     path_length = jnp.array([3.0e9, 2.0e9])
+    dtau = layer_optical_depth_from_extinction(extinction, path_length)
+    source = emissivity / extinction
     lower_boundary = piBarr(jnp.array([4500.0]), nu_grid)[0] / jnp.pi
-    intensity = rtrun_emis_pureabs_ray(
-        extinction, emissivity, path_length, lower_boundary
+    intensity = rtrun_emis_pureabs_ibased_intensity_surface(
+        dtau, source, lower_boundary, jnp.array([1.0])
     )
 
-``rtrun_emis_pureabs_ray`` integrates constant coefficients within each ray
-segment. It accepts coefficient arrays of shape ``(Nsegment, Nnu)``, path
-lengths in cm of shape ``(Nsegment,)``, and a boundary intensity of shape
-``(Nnu,)``. The result is physical specific intensity with shape ``(Nnu,)``.
-It avoids division by extinction, retaining emission and finite derivatives
-at zero extinction; negative extinction gives unsaturated amplification.
+The existing intensity solver accepts the Doppler-shifted coefficients through
+``dtau`` and ``source``. Both the source and lower boundary use physical
+intensity units here, so the result is physical specific intensity with shape
+``(1, Nnu)``. To use ``rtrun_emis_pureabs_ibased_flux_from_intensity`` for
+angular quadrature, pass pi times these physical intensities.
 
-For a plane-parallel layer of vertical thickness ``dz``, the inclined ray
-path is ``dz / mu`` with ``mu > 0``. Use ``jax.vmap`` for multiple rays,
-evaluating profiles with each ray's line-of-sight velocities. To use the
-existing ``rtrun_emis_pureabs_ibased_flux_from_intensity`` angular quadrature,
-pass pi times these physical intensities.
+For plane-parallel layers, use vertical thicknesses with the desired ``mus``,
+or along-ray distances ``dz / mu`` with ``mus=[1.0]``. Apply the viewing-angle
+factor only once. When projected velocities vary between rays, evaluate
+profiles, coefficients, and transfer separately for each ray with ``jax.vmap``.
 
 This prototype accepts populations supplied by the caller. It does not solve
 NLTE statistical equilibrium, include Stark broadening, or provide a
