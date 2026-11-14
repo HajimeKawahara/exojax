@@ -44,7 +44,7 @@ from exojax.rt.toon import (
     params_quadrature,
     zetalambda_coeffs,
 )
-from exojax.rt.direct_sfm import _direct_layer_sources
+from exojax.rt.direct_sfm import _attenuation_average, _direct_layer_sources
 from exojax.rt.twostream import (
     compute_tridiag_diagonals_and_vector,
     set_scat_trans_absorption_coeffs,
@@ -236,6 +236,67 @@ def rtrun_emis_pureabs_ibased_intensity_surface(
     tau_bottom = jnp.sum(dtau, axis=0)
     transmission_surface = jnp.exp(-tau_bottom[None, :] / mus[:, None])
     return intensity + source_surface[None, :] * transmission_surface
+
+
+@jit
+def rtrun_emis_pureabs_ray(
+    extinction, emissivity, path_length, boundary_intensity
+):
+    """Integrate prescribed emission and extinction along one ray.
+
+    Each segment has constant coefficients. Order segments from the observer
+    toward the far boundary; ``path_length`` is the distance along the ray,
+    not a vertical thickness. For plane-parallel layers use ``dz / mu``.
+    Apply ``jax.vmap`` for multiple rays.
+
+    Args:
+        extinction: Signed extinction in cm-1, shape ``(Nsegment, Nnu)``.
+        emissivity: Emissivity in erg s-1 cm-3 sr-1 per cm-1, same shape.
+        path_length: Nonnegative segment lengths in cm, shape ``(Nsegment,)``.
+        boundary_intensity: Incident intensity at the far boundary in
+            erg s-1 cm-2 sr-1 per cm-1, shape ``(Nnu,)``. Use zeros for
+            a dark boundary.
+
+    Returns:
+        Emergent specific intensity with shape ``(Nnu,)`` in the same units
+        as ``boundary_intensity``; no factor of pi is applied.
+
+    Notes:
+        Evaluates each segment as ``I * exp(-t) + j * ds * A(t)``, where
+        ``t = alpha * ds`` and ``A(t) = (1 - exp(-t)) / t``. The smooth
+        limit ``A(0) = 1`` retains emission and gradients at zero extinction
+        without dividing by extinction. Negative extinction produces
+        unsaturated amplification; scattering and saturation are omitted.
+    """
+    extinction, emissivity, path_length, boundary_intensity = map(
+        jnp.asarray, (extinction, emissivity, path_length, boundary_intensity)
+    )
+    if extinction.ndim != 2 or emissivity.shape != extinction.shape:
+        raise ValueError("extinction and emissivity must have shape (Nsegment, Nnu).")
+    nsegment, nnu = extinction.shape
+    if nsegment == 0 or path_length.shape != (nsegment,):
+        raise ValueError("path_length must have shape (Nsegment,) with Nsegment > 0.")
+    if boundary_intensity.shape != (nnu,):
+        raise ValueError("boundary_intensity must have shape (Nnu,).")
+    dtype = jnp.result_type(
+        extinction, emissivity, path_length, boundary_intensity, 1.0
+    )
+    distance = path_length.astype(dtype)[:, None]
+    dtau = extinction.astype(dtype) * distance
+    emission = emissivity.astype(dtype) * distance
+
+    def integrate_segment(intensity, segment):
+        depth, emitted = segment
+        intensity = (
+            intensity * jnp.exp(-depth) + emitted * _attenuation_average(depth)
+        )
+        return intensity, None
+
+    intensity, _ = scan(
+        integrate_segment, boundary_intensity.astype(dtype),
+        (dtau, emission), reverse=True,
+    )
+    return intensity
 
 
 @jit
