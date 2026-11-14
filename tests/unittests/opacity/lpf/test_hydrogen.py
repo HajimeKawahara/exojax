@@ -15,7 +15,7 @@ from exojax.opacity import OpaDirect
 from exojax.opacity.lpf.line_coefficients import line_coefficients
 from exojax.rt.layeropacity import layer_optical_depth_from_extinction
 from exojax.rt.planck import piB
-from exojax.rt.rtransfer import rtrun_emis_pureabs_ibased_intensity_surface
+from exojax.rt.rtransfer import rtrun_emis_pureabs_ray
 from exojax.utils.constants import c, ccgs, hcgs, hcperk
 
 
@@ -160,9 +160,14 @@ def test_two_moving_layers_match_formal_solution_and_have_gradients(halpha):
         velocities = parameters[2] * jnp.array([-1.0, 0.5])
         profiles = jax.vmap(opa.line_profiles)(temperatures, velocities)
         extinction, emissivity = _coefficients(adb, profiles, lower, upper)
-        dtau = layer_optical_depth_from_extinction(extinction, jnp.array([2e7, 1e7]))
+        thickness = jnp.array([2e7, 1e7])
+        dtau = layer_optical_depth_from_extinction(extinction, thickness)
         source = emissivity / extinction
-        intensity = rtrun_emis_pureabs_ibased_intensity_surface(dtau, source, boundary, mus)
+        intensity = jax.vmap(
+            lambda mu: rtrun_emis_pureabs_ray(
+                extinction, emissivity, thickness / mu, boundary
+            )
+        )(mus)
         transmission = jnp.exp(-dtau[None, :, :] / mus[:, None, None])
         expected = (
             source[0] * (1 - transmission[:, 0])
@@ -184,3 +189,35 @@ def test_two_moving_layers_match_formal_solution_and_have_gradients(halpha):
     ])
     assert np.all(np.isfinite(gradient)) and np.all(np.abs(gradient) > 1e-8)
     np.testing.assert_allclose(gradient, finite_difference, rtol=2e-4, atol=1e-8)
+
+
+def test_transfer_at_zero_extinction_keeps_emission_and_population_gradient(halpha):
+    adb, opa = halpha
+    profiles = opa.line_profiles(8000.0)
+    lower = jnp.array([1e6])
+    distance = jnp.array([2e7])
+    boundary = piB(4000.0, opa.nu_grid) / jnp.pi
+    cancellation_ratio = adb.gupper[0] / adb.glower[0]
+
+    def intensity(ratio):
+        extinction, emissivity = _coefficients(adb, profiles, lower, lower * ratio)
+        return rtrun_emis_pureabs_ray(
+            extinction[None, :], emissivity[None, :], distance, boundary
+        )
+
+    extinction, emissivity = _coefficients(
+        adb, profiles, lower, lower * cancellation_ratio
+    )
+    np.testing.assert_array_equal(extinction, 0.0)
+    np.testing.assert_allclose(
+        jax.jit(intensity)(cancellation_ratio),
+        boundary + emissivity * distance[0], rtol=2e-12,
+    )
+    objective = lambda ratio: jnp.log(intensity(ratio)[1000])
+    gradient = jax.jit(jax.grad(objective))(cancellation_ratio)
+    step = 1e-5
+    expected = (
+        objective(cancellation_ratio + step) - objective(cancellation_ratio - step)
+    ) / (2 * step)
+    assert np.isfinite(gradient) and gradient != 0.0
+    np.testing.assert_allclose(gradient, expected, rtol=2e-5)

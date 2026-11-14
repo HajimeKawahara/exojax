@@ -72,9 +72,8 @@ from the observer toward the lower boundary:
     from exojax.database import AdbHydrogen
     from exojax.opacity import OpaDirect
     from exojax.opacity.lpf.line_coefficients import line_coefficients
-    from exojax.rt.layeropacity import layer_optical_depth_from_extinction
     from exojax.rt.planck import piBarr
-    from exojax.rt.rtransfer import rtrun_emis_pureabs_ibased_intensity_surface
+    from exojax.rt.rtransfer import rtrun_emis_pureabs_ray
 
     jax.config.update("jax_enable_x64", True)
     adb = AdbHydrogen(n_upper_max=3)
@@ -90,23 +89,24 @@ from the observer toward the lower boundary:
     extinction, emissivity = line_coefficients(
         profiles, adb.nu_lines, adb.A, adb.glower, adb.gupper, n2, n3
     )
-    dtau = layer_optical_depth_from_extinction(
-        extinction, jnp.array([3.0e9, 2.0e9])
-    )
-    safe_extinction = jnp.where(extinction > 0.0, extinction, 1.0)
-    source = jnp.where(
-        extinction > 0.0, jnp.pi * emissivity / safe_extinction, 0.0
-    )
-    lower_boundary = piBarr(jnp.array([4500.0]), nu_grid)[0]
-    pi_intensity = rtrun_emis_pureabs_ibased_intensity_surface(
-        dtau, source, lower_boundary, jnp.array([1.0])
+    path_length = jnp.array([3.0e9, 2.0e9])
+    lower_boundary = piBarr(jnp.array([4500.0]), nu_grid)[0] / jnp.pi
+    intensity = rtrun_emis_pureabs_ray(
+        extinction, emissivity, path_length, lower_boundary
     )
 
-Here the source and lower boundary both use the ``piBarr`` convention,
-so the result is pi times the physical specific intensity. Passing
-``emissivity / extinction`` and a physical boundary intensity instead gives
-physical intensity directly. The example has positive extinction; it does
-not handle population inversion or zero extinction with nonzero emissivity.
+``rtrun_emis_pureabs_ray`` integrates constant coefficients within each ray
+segment. It accepts coefficient arrays of shape ``(Nsegment, Nnu)``, path
+lengths in cm of shape ``(Nsegment,)``, and a boundary intensity of shape
+``(Nnu,)``. The result is physical specific intensity with shape ``(Nnu,)``.
+It avoids division by extinction, retaining emission and finite derivatives
+at zero extinction; negative extinction gives unsaturated amplification.
+
+For a plane-parallel layer of vertical thickness ``dz``, the inclined ray
+path is ``dz / mu`` with ``mu > 0``. Use ``jax.vmap`` for multiple rays,
+evaluating profiles with each ray's line-of-sight velocities. To use the
+existing ``rtrun_emis_pureabs_ibased_flux_from_intensity`` angular quadrature,
+pass pi times these physical intensities.
 
 This prototype accepts populations supplied by the caller. It does not solve
 NLTE statistical equilibrium, include Stark broadening, or provide a
