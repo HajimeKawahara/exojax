@@ -31,9 +31,20 @@ _BALMER_F_LU = {
 }
 
 _HYDROGEN_RYDBERG_CM = 109677.5834
-# Representative unresolved H-alpha vacuum wavelength, not a fine-structure component.
-# https://www.sdss4.org/dr12/spectro/spectro_basics/
-_HALPHA_VACUUM_ANGSTROM = 6564.614
+# Representative vacuum wavelengths, not individual fine-structure components.
+# H-alpha: https://www.sdss4.org/dr12/spectro/spectro_basics/
+# n=4..10: NIST ASD unresolved n=2 -> n Ritz entries, archived in:
+# https://github.com/dlinssen/sunbather/blob/4916ed1173b85dee9a0dec794a33c1a881e6bcd4/src/sunbather/RT_tables/H_lines_NIST.txt
+_BALMER_VACUUM_ANGSTROM = {
+    3: 6564.614,
+    4: 4862.691,
+    5: 4341.691,
+    6: 4102.8991,
+    7: 3971.2020,
+    8: 3890.1577,
+    9: 3836.4789,
+    10: 3798.9827,
+}
 
 
 class AdbHydrogen:
@@ -62,10 +73,11 @@ class AdbHydrogen:
             n_upper_max: Maximum upper principal quantum number.
             gpu_transfer: If True, create JAX arrays.
             vmr_fraction: VMR fractions of H, He, and H2.
-            wavelength_model: ``"reference"`` uses the representative H-alpha
-                vacuum wavelength 6564.614 angstrom; higher Balmer lines retain
-                Rydberg positions. ``"rydberg"`` uses the original Rydberg
-                formula for all lines. Neither resolves fine structure.
+            wavelength_model: ``"reference"`` uses representative vacuum
+                wavelengths: SDSS for H-alpha (6564.614 angstrom), and NIST ASD
+                unresolved n-shell Ritz entries for n=4 through 10.
+                ``"rydberg"`` uses the original Rydberg formula for all lines.
+                Neither resolves fine structure.
         """
         if series != "balmer":
             raise NotImplementedError(
@@ -97,10 +109,10 @@ class AdbHydrogen:
         self._elower = _hydrogen_level_energy_cm(lower)
         self._eupper = _hydrogen_level_energy_cm(upper)
         if wavelength_model == "reference":
-            halpha = upper == 3
-            self.nu_lines[halpha] = 1.0e8 / _HALPHA_VACUUM_ANGSTROM
-            # Keep the effective level gap consistent with the photon energy.
-            self._eupper[halpha] = self._elower[halpha] + self.nu_lines[halpha]
+            wavelength = np.array([_BALMER_VACUUM_ANGSTROM[n] for n in upper])
+            self.nu_lines = 1.0e8 / wavelength
+            # Keep effective level gaps consistent with the photon energies.
+            self._eupper = self._elower + self.nu_lines
         self._gupper = _hydrogen_level_degeneracy(upper)
         self._jlower = np.zeros_like(self.nu_lines)
         self._jupper = np.zeros_like(self.nu_lines)
