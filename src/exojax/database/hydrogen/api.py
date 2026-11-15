@@ -31,6 +31,9 @@ _BALMER_F_LU = {
 }
 
 _HYDROGEN_RYDBERG_CM = 109677.5834
+# Representative unresolved H-alpha vacuum wavelength, not a fine-structure component.
+# https://www.sdss4.org/dr12/spectro/spectro_basics/
+_HALPHA_VACUUM_ANGSTROM = 6564.614
 
 
 class AdbHydrogen:
@@ -46,6 +49,7 @@ class AdbHydrogen:
         n_upper_max=10,
         gpu_transfer=True,
         vmr_fraction=None,
+        wavelength_model="reference",
     ):
         """Initialize hydrogen atomic lines.
 
@@ -58,14 +62,21 @@ class AdbHydrogen:
             n_upper_max: Maximum upper principal quantum number.
             gpu_transfer: If True, create JAX arrays.
             vmr_fraction: VMR fractions of H, He, and H2.
+            wavelength_model: ``"reference"`` uses the representative H-alpha
+                vacuum wavelength 6564.614 angstrom; higher Balmer lines retain
+                Rydberg positions. ``"rydberg"`` uses the original Rydberg
+                formula for all lines. Neither resolves fine structure.
         """
         if series != "balmer":
             raise NotImplementedError(
                 "AdbHydrogen currently supports only Balmer lines."
             )
+        if wavelength_model not in ("reference", "rydberg"):
+            raise ValueError("wavelength_model must be 'reference' or 'rydberg'.")
 
         self.dbtype = "hydrogen"
         self.series = series
+        self.wavelength_model = wavelength_model
         self.nurange = [np.min(nurange), np.max(nurange)]
         self.margin = margin
         self.crit = crit
@@ -85,6 +96,11 @@ class AdbHydrogen:
         self.nu_lines = _HYDROGEN_RYDBERG_CM * (1.0 / lower**2 - 1.0 / upper**2)
         self._elower = _hydrogen_level_energy_cm(lower)
         self._eupper = _hydrogen_level_energy_cm(upper)
+        if wavelength_model == "reference":
+            halpha = upper == 3
+            self.nu_lines[halpha] = 1.0e8 / _HALPHA_VACUUM_ANGSTROM
+            # Keep the effective level gap consistent with the photon energy.
+            self._eupper[halpha] = self._elower[halpha] + self.nu_lines[halpha]
         self._gupper = _hydrogen_level_degeneracy(upper)
         self._jlower = np.zeros_like(self.nu_lines)
         self._jupper = np.zeros_like(self.nu_lines)
