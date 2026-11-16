@@ -106,7 +106,7 @@ def test_convolve_rigid_rotation_zero_vsini():
 
     for broaden in broadeners:
         value, derivative = jvp(broaden, (0.0,), (1.0,))
-        assert value == pytest.approx(F0, abs=1.0e-6)
+        assert value == pytest.approx(np.asarray(F0), abs=1.0e-6)
         assert derivative == pytest.approx(jnp.zeros_like(F0))
         assert grad(lambda vsini: jnp.sum(broaden(vsini)))(0.0) == pytest.approx(
             0.0

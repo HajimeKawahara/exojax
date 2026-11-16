@@ -5,6 +5,7 @@ from exojax.postproc.limb_darkening import (
 )
 from exojax.rt.rtransfer import initialize_gaussian_quadrature
 import jax.numpy as jnp
+import numpy as np
 import pytest
 
 def test_ld_kipping():
@@ -25,8 +26,8 @@ def test_quadratic_ld_from_intensity():
 
     u1_fit, u2_fit = quadratic_ld_from_intensity(mus, intensity, weights)
 
-    assert u1_fit == pytest.approx(u1, rel=1.0e-4, abs=1.0e-6)
-    assert u2_fit == pytest.approx(u2, rel=1.0e-4, abs=1.0e-6)
+    assert u1_fit == pytest.approx(np.asarray(u1), rel=1.0e-4, abs=1.0e-6)
+    assert u2_fit == pytest.approx(np.asarray(u2), rel=1.0e-4, abs=1.0e-6)
 
 
 def test_average_limb_darkening_coefficients():

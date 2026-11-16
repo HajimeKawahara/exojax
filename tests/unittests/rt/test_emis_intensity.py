@@ -50,7 +50,7 @@ def test_ibased_thin_float32_layer_below_absorbing_layer():
 
 def test_linsap_coefficients_at_small_optical_depth():
     x = jnp.array([0.0, 1.0e-8], dtype=jnp.float32)
-    expected = jnp.array([0.0, 5.0e-9], dtype=jnp.float32)
+    expected = np.array([0.0, 5.0e-9], dtype=np.float32)
 
     beta, gamma = jit(coeffs_linsap)(x, jnp.exp(-x))
 
@@ -60,7 +60,7 @@ def test_linsap_coefficients_at_small_optical_depth():
     derivatives = jacfwd(
         lambda value: jnp.stack(coeffs_linsap(value, jnp.exp(-value)))
     )(jnp.float32(0.0))
-    assert derivatives == pytest.approx(jnp.full(2, 0.5), rel=1.0e-6)
+    assert derivatives == pytest.approx(np.full(2, 0.5), rel=1.0e-6)
 
 
 def test_ibased_intensity_reconstructs_flux():
