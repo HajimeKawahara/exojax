@@ -4,6 +4,8 @@ This module provides the OpaDirect class for direct line-by-line opacity
 calculations using the LPF method.
 """
 
+from __future__ import annotations
+
 from typing import Callable, Literal, Optional, Union
 
 import jax.numpy as jnp
@@ -229,6 +231,48 @@ class OpaDirect(OpaCalc):
             Parr * self.mdb.vmrHe, Parr * self.mdb.vmrHH,
         )
 
+    def line_profiles(
+        self, T: float, P: float = 0.0, *, velocity: float = 0.0
+    ) -> jnp.ndarray:
+        """Evaluate normalized atomic Voigt profiles without populations.
+
+        Args:
+            T: Scalar kinetic temperature in K.
+            P: Scalar total pressure in bar, passed to the selected broadening
+                prescription used by ``xsvector`` and ``xsmatrix``.
+            velocity: Scalar line-of-sight velocity in km/s. Positive values
+                recede from the observer, shifting centers to lower wavenumber.
+
+        Returns:
+            Profiles shaped ``(Nline, Nnu)`` in cm, with unit integral over
+            wavenumber on the infinite domain. A finite grid truncates wings;
+            profiles are not renormalized to that grid.
+
+        Notes:
+            Supports NIST, VALD, Kurucz, and ExoAtom with ``line_profile="voigt"``.
+            Widths follow the same prescription as the LTE cross sections,
+            including the required ``atomic_broadening`` callback for NIST.
+            Apply ``jax.vmap`` over temperature, pressure, and velocity for
+            layers. The nonrelativistic center shift is
+            ``nu0 * (1 - velocity / c)``; widths stay in the rest frame and
+            relativistic intensity transformations are omitted. Use |v| << c.
+            No LTE strength or level population is included in the result.
+        """
+        from exojax.opacity.lpf.lpf import vvoigt
+        from exojax.utils.constants import c
+
+        if self.dbtype not in ("nist", "vald", "kurucz", "exoatom"):
+            raise ValueError("line_profiles supports NIST, VALD, Kurucz, and ExoAtom.")
+        if self.line_profile != "voigt":
+            raise ValueError("line_profiles requires line_profile='voigt'.")
+        T, P, velocity = jnp.asarray(T), jnp.asarray(P), jnp.asarray(velocity)
+        if T.ndim != 0 or P.ndim != 0 or velocity.ndim != 0:
+            raise ValueError("T, P, and velocity must be scalars; use jax.vmap for layers.")
+        _, gammaLM, sigmaDM = self._atomic_line_parameters(T, P)
+        # Retain the accurately precomputed rest detuning, including in x32.
+        detuning = self.opainfo + self.mdb.nu_lines[:, None] * (velocity / c)
+        return vvoigt(detuning, sigmaDM[0], gammaLM[0])
+
     def xsvector(self, T: float, P: float, Pself: float = 0.0) -> jnp.ndarray:
         """Compute cross section vector for given temperature and pressure.
 
@@ -264,10 +308,6 @@ class OpaDirect(OpaCalc):
                 P, T, self.mdb.n_Texp, self.mdb.alpha_ref
             ) + gamma_natural(self.mdb.A)
             line_masses = self.mdb.molmass
-        elif dbtype == "hydrogen":
-            qt = self.mdb.qr_interp_lines(T, Tref_original)
-            gammaL = gamma_natural(self.mdb.A)
-            line_masses = self.mdb.line_masses
         elif dbtype in ("kurucz", "vald", "nist", "exoatom"):
             SijM, gammaLM, sigmaDM = self._atomic_line_parameters(T, P)
             if self.line_profile == "alkali_subvoigt":
@@ -281,7 +321,7 @@ class OpaDirect(OpaCalc):
         else:
             raise ValueError(
                 f"Unsupported database type for xsvector: '{dbtype}'. "
-                "Supported types: hitran, exomol, hydrogen, kurucz, vald, nist, exoatom"
+                "Supported types: hitran, exomol, kurucz, vald, nist, exoatom"
             )
 
         sigmaD = doppler_sigma(self.mdb.nu_lines, T, line_masses)
@@ -352,22 +392,6 @@ class OpaDirect(OpaCalc):
             sigmaDM = self._vmap_doppler_sigma(
                 self.mdb.nu_lines, Tarr, self.mdb.molmass
             )
-        elif dbtype == "hydrogen":
-            qt = vmap(self.mdb.qr_interp_lines, (0, None))(Tarr, Tref_original)
-            gammaLM = gamma_natural(self.mdb.A)[None, :] + jnp.zeros(
-                (len(Tarr), 1)
-            )
-            SijM = self._vmap_line_strength(
-                Tarr,
-                self.mdb.logsij0,
-                self.mdb.nu_lines,
-                self.mdb.elower,
-                qt,
-                Tref_original,
-            )
-            sigmaDM = self._vmap_doppler_sigma(
-                self.mdb.nu_lines, Tarr, self.mdb.line_masses
-            )
         elif dbtype in ("kurucz", "vald", "nist", "exoatom"):
             SijM, gammaLM, sigmaDM = self._atomic_line_parameters(Tarr, Parr)
             if self.line_profile == "alkali_subvoigt":
@@ -378,7 +402,7 @@ class OpaDirect(OpaCalc):
         else:
             raise ValueError(
                 f"Unsupported database type for xsmatrix: '{dbtype}'. "
-                "Supported types: hitran, exomol, hydrogen, kurucz, vald, nist, exoatom"
+                "Supported types: hitran, exomol, kurucz, vald, nist, exoatom"
             )
 
         return xsmatrix_lpf(numatrix, sigmaDM, gammaLM, SijM)

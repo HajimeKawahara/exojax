@@ -68,3 +68,19 @@ Their existing broadening calculations remain the default when no callback
 is provided. ``OpaModit`` and ``OpaPremodit`` do not accept ``AdbNist``.
 Atomic abundances and ionization fractions remain inputs to the optical-depth
 calculation, separate from the cross section.
+
+Hydrogen lines
+--------------
+
+Use ``AdbNist("H_I", nu_grid)`` for neutral hydrogen, including Balmer lines.
+This replaces the removed experimental ``AdbHydrogen`` class; there is no
+compatibility alias. Select the desired transition by its wavenumber range
+or with ``adb.masking(mask)`` before constructing ``OpaDirect``.
+
+RADIS selects the unresolved principal-level H I transitions from NIST,
+with statistical weights ``g = 2*n**2``. The line centers follow the NIST
+level-energy differences, rather than the former Rydberg approximation.
+For example, the Halpha center is about 6564.632 Angstrom in vacuum.
+The same explicit broadening callback is required for hydrogen as for
+other NIST species. See :doc:`opacalc` for individual profiles and
+prescribed-population extinction and emissivity.

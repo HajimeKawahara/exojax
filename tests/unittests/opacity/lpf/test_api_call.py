@@ -1,4 +1,5 @@
 import numpy as np
+import pytest
 
 from exojax.test.emulate_mdb import mock_mdbHitemp
 from exojax.utils.grids import wavenumber_grid
@@ -16,3 +17,5 @@ def test_opadirect_hitemp_call():
     assert xsm.shape == (2, len(nus))
     assert np.all(np.isfinite(xsv))
     assert np.all(np.isfinite(xsm))
+    with pytest.raises(ValueError, match="line_profiles supports NIST"):
+        opa.line_profiles(1000.0)

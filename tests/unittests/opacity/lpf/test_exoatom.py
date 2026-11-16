@@ -98,6 +98,12 @@ def test_natural_widths_match_scipy_and_are_pressure_independent(reference_tempe
         opacity.xsvector(1800.0, 0.0), opacity.xsvector(1800.0, 10.0),
     )
     assert jax.grad(lambda P: jnp.sum(opacity.xsvector(1800.0, P)))(1.0) == 0.0
+    expected_profiles = voigt_profile(
+        GRID[None, :] - adb.nu_lines[:, None],
+        np.asarray(doppler_sigma(adb.nu_lines, 1800.0, adb.line_masses))[:, None],
+        np.asarray(adb.gamma_natural)[:, None],
+    )
+    np.testing.assert_allclose(opacity.line_profiles(1800.0), expected_profiles, rtol=2e-6)
 
 
 @pytest.mark.parametrize("natural_width", [
