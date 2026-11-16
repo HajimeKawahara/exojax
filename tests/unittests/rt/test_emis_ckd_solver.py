@@ -1,4 +1,5 @@
 import jax.numpy as jnp
+import numpy as np
 import pytest
 
 from exojax.rt import ArtEmisPure
@@ -23,4 +24,4 @@ def test_ckd_matches_weighted_monochromatic_solver(rtsolver, nstream, ng):
 
     actual = art.run_ckd(dtau_ckd, temperature, weights, nu_bands)
 
-    assert actual == pytest.approx(expected, rel=1.0e-6)
+    assert actual == pytest.approx(np.asarray(expected), rel=1.0e-6)
