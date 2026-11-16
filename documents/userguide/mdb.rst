@@ -62,13 +62,10 @@ Atomic databases
      - ExoJAX local-file reader, or RADIS download/cache via ``from_radis()``.
    * - :doc:`NIST ASD <nist>`
      - ``AdbNist``
-     - RADIS download/cache.
+     - RADIS download/cache, including H I.
    * - :doc:`ExoAtom <exoatom>`
      - ``AdbExoAtom``
      - ExoJAX raw-file download/reuse and PyExoCross reader; source partition function.
-   * - Hydrogen Balmer lines
-     - ``AdbHydrogen``
-     - Built-in line data for upper levels 3--10; no download.
 
 ExoAtom's NIST/Kurucz datasets use a separate loading path from
 ``AdbNist``/``AdbKurucz``. For ``OpaDirect``, NIST requires an explicit
@@ -77,10 +74,10 @@ available and otherwise requires this callback; it supplies no default
 pressure broadening. See :doc:`nist` and :doc:`exoatom` for examples.
 ``AdbSepVald`` groups an existing VALD database by species.
 
-.. figure:: mdb_files/atomic_databases.png
-   :alt: VALD, Kurucz, NIST, ExoAtom and built-in hydrogen loading paths to atomic database objects and OpaDirect.
+.. figure:: mdb_files/atomic_databases.svg
+   :alt: VALD, Kurucz, NIST including H I, and ExoAtom loading paths to atomic database objects and OpaDirect.
    :width: 100%
 
    Atomic loading paths and their connection to ``OpaDirect``.
 
-Diagrams from `issue #807 <https://github.com/HajimeKawahara/exojax/issues/807>`_.
+Diagrams adapted from `issue #807 <https://github.com/HajimeKawahara/exojax/issues/807>`_.

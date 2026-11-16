@@ -229,7 +229,7 @@ def test_alkali_rejects_empty_selection(make_adb):
         )
 
 
-@pytest.mark.parametrize("dbtype", ["exomol", "hitran", "hydrogen", "nist"])
+@pytest.mark.parametrize("dbtype", ["exomol", "hitran", "nist"])
 def test_alkali_rejects_other_databases(dbtype):
     with pytest.raises(ValueError):
         OpaDirect(
@@ -248,9 +248,19 @@ def test_direct_profile_defaults_and_equality(make_adb):
     assert default.line_profile == "voigt"
     assert default == voigt and voigt == default
     assert default != alkali and alkali != default
+    with pytest.raises(ValueError, match="line_profile='voigt'"):
+        alkali.line_profiles(1370.0, 0.3)
     assert default != OpaAlkali(adb, nu_grid)
     assert OpaAlkali(adb, nu_grid) != default
     np.testing.assert_array_equal(default.xsvector(1370.0, 0.3), voigt.xsvector(1370.0, 0.3))
+    strengths = line_strength_numpy(
+        1370.0, adb.Sij0, adb.nu_lines, np.asarray(adb.elower),
+        np.asarray(adb.qr_interp_lines(1370.0, adb.Tref)), adb.Tref,
+    )
+    np.testing.assert_allclose(
+        jnp.sum(strengths[:, None] * default.line_profiles(1370.0, 0.3), axis=0),
+        default.xsvector(1370.0, 0.3), rtol=1e-12,
+    )
     temperatures, pressures = jnp.array([830.0, 1370.0]), jnp.array([0.1, 0.3])
     np.testing.assert_array_equal(
         default.xsmatrix(temperatures, pressures), voigt.xsmatrix(temperatures, pressures)

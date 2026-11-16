@@ -1,0 +1,43 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1100" height="510" viewBox="0 0 1100 510" role="img" aria-labelledby="title desc">
+<title id="title">Atomic database flow</title>
+<desc id="desc">VALD, Kurucz, NIST including neutral hydrogen, and ExoAtom load into atomic database objects used by OpaDirect. AdbSepVald groups VALD lines by species.</desc>
+<defs><marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#777"/></marker></defs>
+<style>
+text {font-family: sans-serif; font-size: 16px; fill: #20252a; text-anchor: middle}
+.heading {font-size: 24px; font-weight: bold; fill: #4b8030; text-anchor: start}
+.source {fill: #deedf8; stroke: #365675}
+.reader {fill: #ddedc9; stroke: #365675}
+.adapter {fill: #a6cbea; stroke: #365675}
+.label {font-weight: bold}
+.path {fill: none; stroke: #777; stroke-width: 2; marker-end: url(#arrow)}
+</style>
+<rect width="1100" height="510" fill="white"/>
+<text class="heading" x="15" y="30">Atomic database flow</text>
+<g class="path">
+<path d="M 185 90 H 230"/><path d="M 430 90 H 480"/>
+<path d="M 655 90 H 790"/><path d="M 655 95 L 840 260"/>
+<path d="M 185 175 H 230"/><path d="M 430 175 L 480 212"/>
+<path d="M 185 250 H 230"/><path d="M 430 250 L 480 212"/>
+<path d="M 655 212 L 840 270"/>
+<path d="M 185 335 H 230"/><path d="M 430 335 H 480"/>
+<path d="M 655 335 L 840 280"/>
+<path d="M 185 440 H 230"/><path d="M 430 440 H 480"/>
+<path d="M 705 440 L 840 290"/>
+</g>
+<rect class="source" x="15" y="65" width="170" height="50"/><text class="label" x="100" y="86">Local VALD<tspan x="100" dy="19">extract</tspan></text>
+<rect class="reader" x="230" y="60" width="200" height="60"/><text x="330" y="86">ExoJAX parser<tspan x="330" dy="19">and HDF5 cache</tspan></text>
+<rect class="adapter" x="480" y="65" width="175" height="50"/><text class="label" x="567.5" y="96">AdbVald</text>
+<rect class="source" x="790" y="60" width="285" height="60"/><text class="label" x="932.5" y="85">AdbSepVald<tspan x="932.5" dy="21">species-separated arrays</tspan></text>
+<rect class="source" x="15" y="150" width="170" height="50"/><text class="label" x="100" y="171">Local Kurucz<tspan x="100" dy="19">file</tspan></text>
+<rect class="reader" x="230" y="145" width="200" height="60"/><text x="330" y="170">ExoJAX fixed-width<tspan x="330" dy="20">parser</tspan></text>
+<rect class="source" x="15" y="225" width="170" height="50"/><text class="label" x="100" y="246">AdbKurucz.<tspan x="100" dy="19">from_radis</tspan></text>
+<rect class="reader" x="230" y="220" width="200" height="60"/><text x="330" y="245">RADIS fetch_kurucz<tspan x="330" dy="20">and cache</tspan></text>
+<rect class="adapter" x="480" y="187" width="175" height="50"/><text class="label" x="567.5" y="218">AdbKurucz</text>
+<rect class="source" x="15" y="305" width="170" height="60"/><text class="label" x="100" y="331">NIST ASD<tspan x="100" dy="20">including H I</tspan></text>
+<rect class="reader" x="230" y="305" width="200" height="60"/><text x="330" y="330">RADIS fetch_nist<tspan x="330" dy="20">and cache</tspan></text>
+<rect class="adapter" x="480" y="310" width="175" height="50"/><text class="label" x="567.5" y="341">AdbNist</text>
+<rect class="source" x="15" y="405" width="170" height="70"/><text class="label" x="100" y="431">ExoAtom NIST or<tspan x="100" dy="20">Kurucz dataset</tspan></text>
+<rect class="reader" x="230" y="400" width="200" height="80"/><text x="330" y="422">ExoJAX download/reuse<tspan x="330" dy="20">+ PyExoCross reader</tspan><tspan x="330" dy="20">+ ExoJAX line join</tspan></text>
+<rect class="adapter" x="480" y="400" width="225" height="80"/><text class="label" x="592.5" y="422" style="font-size: 15px">AdbExoAtom<tspan x="592.5" dy="20">source partition function</tspan><tspan x="592.5" dy="20">and lifetimes</tspan></text>
+<rect class="source" x="840" y="235" width="235" height="80"/><text class="label" x="957.5" y="258">OpaDirect<tspan x="957.5" dy="21">source-specific line</tspan><tspan x="957.5" dy="21">physics</tspan></text>
+</svg>
