@@ -57,7 +57,7 @@ def test_calc_ammodel_rw_uses_cgs_density_once():
         / (2.0 * gravity * (_DummyPdb.condensate_substance_density - rho_atm))
     )
 
-    assert rw[1] == pytest.approx(expected_rw, rel=5.0e-3)
+    assert rw[1] == pytest.approx(float(expected_rw), rel=5.0e-3)
 
 
 def test_calc_ammodel_rw_with_layer_dependent_kzz():

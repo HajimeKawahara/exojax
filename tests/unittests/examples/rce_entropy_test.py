@@ -106,8 +106,8 @@ def test_exactly_absent_species_has_finite_entropy_and_physical_tangent():
     )
     assert np.isfinite(value) and np.isfinite(tangent)
     expected = entropy.GAS_CONSTANT * (n @ cp_over_r) / (n @ masses * 1e-3)
-    assert tangent == pytest.approx(expected, rel=1e-13)
-    assert jax.grad(evaluate)(0.2) == pytest.approx(expected, rel=1e-13)
+    assert tangent == pytest.approx(float(expected), rel=1e-13)
+    assert jax.grad(evaluate)(0.2) == pytest.approx(float(expected), rel=1e-13)
 
 
 def test_reference_pressure_conversion_leaves_entropy_unchanged():
@@ -121,7 +121,7 @@ def test_reference_pressure_conversion_leaves_entropy_unchanged():
         s0 - jnp.log(1.01325),
         reference_pressure_bar=1.01325,
     )
-    assert shifted == pytest.approx(base, rel=1e-13)
+    assert shifted == pytest.approx(float(base), rel=1e-13)
 
 
 @pytest.fixture
