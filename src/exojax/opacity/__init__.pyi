@@ -11,6 +11,8 @@ from exojax.opacity.opacont import OpaRayleigh as OpaRayleigh
 from exojax.opacity.opacont import OpaHminus as OpaHminus
 from exojax.opacity.opacont import OpaMie as OpaMie
 from exojax.opacity.io.ioopa import saveopa as saveopa
+from exojax.opacity.premodit.lbd_io import save_lbd as save_lbd
+from exojax.opacity.premodit.lbd_io import load_lbd as load_lbd
 
 __all__: list[str] = [
     "build_premodit",
@@ -25,4 +27,6 @@ __all__: list[str] = [
     "OpaHminus",
     "OpaMie",
     "saveopa",
+    "save_lbd",
+    "load_lbd",
 ]

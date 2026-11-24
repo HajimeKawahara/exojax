@@ -22,6 +22,10 @@ The functionality of ``auto_trange`` depends on the version of the default elowe
 For more details, refer to :doc:`premodit_trange`. Users can specify the degt file version through the ``version_auto_trange`` option.
 Details of the PreMODIT algorithm will be described in `Paper II <https://arxiv.org/abs/2410.06900>`_.
 
+To share prepared LBDs with another PreMODIT implementation, see
+:doc:`lbd_hdf5`. This HDF5 format includes the grids, partition function and
+metadata needed to evaluate the LBD without the original line list.
+
 .. code:: ipython
 	
     from exojax.opacity import OpaPremodit

@@ -30,6 +30,8 @@ _ALIAS: Final[dict[str, str]] = {
     "OpaHminus": "exojax.opacity.opacont:OpaHminus",
     "OpaMie": "exojax.opacity.opacont:OpaMie", 
     "saveopa": "exojax.opacity.io.ioopa:saveopa",
+    "save_lbd": "exojax.opacity.premodit.lbd_io:save_lbd",
+    "load_lbd": "exojax.opacity.premodit.lbd_io:load_lbd",
 }
 
 __all__ = list(_ALIAS)          # tab completion & help()
