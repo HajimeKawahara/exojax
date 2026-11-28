@@ -1,0 +1,741 @@
+{
+  "format": "exojax.initial_mceg_review.v1",
+  "started_at": "2026-11-28T02:31:53.399448+00:00",
+  "finished_at": "2026-11-28T02:32:14.360149+00:00",
+  "command": [
+    "/home/kawahara/miniconda3/bin/python",
+    "-m",
+    "pytest",
+    "-q",
+    "-rXx",
+    "tests/model_contracts",
+    "tests/unittests/rt/test_planck.py",
+    "tests/unittests/rt/test_layeropacity.py",
+    "tests/unittests/rt/test_chord.py",
+    "tests/unittests/rt/test_rtransfer_transmission.py",
+    "tests/unittests/postproc/test_spin_rotation.py::test_rotkernel_Gimenez_jvp",
+    "tests/unittests/opacity/lpf/test_lpf.py",
+    "--junitxml=mceg/evidence/initial_review/junit.xml"
+  ],
+  "cwd": "/tmp/exojax-planetlib",
+  "environment": {
+    "PYTHONPATH": "src:/home/kawahara/planetlib/.venv/lib/python3.12/site-packages",
+    "JAX_PLATFORMS": "cpu",
+    "JAX_ENABLE_X64": "1",
+    "OPENBLAS_NUM_THREADS": "1"
+  },
+  "python": "3.12.7 | packaged by Anaconda, Inc. | (main, Oct  4 2024, 13:27:36) [GCC 11.2.0]",
+  "platform": "Linux-6.8.0-111-generic-x86_64-with-glibc2.35",
+  "versions": {
+    "jax": "0.6.2",
+    "jaxlib": "0.6.2",
+    "numpy": "2.1.0",
+    "scipy": "1.14.1",
+    "sympy": "1.14.0",
+    "mceg": "0.1.1",
+    "pytest": "9.2.0",
+    "pydantic": "2.14.4",
+    "PyYAML": "6.0.4"
+  },
+  "jax": {
+    "backend": "cpu",
+    "devices": [
+      "TFRT_CPU_0"
+    ],
+    "x64_enabled": true
+  },
+  "precision_scope": "Companion comparisons use the isolated_test_environment fixture and CPU float64. Existing Planck tests explicitly use float32; existing LPF tests select both float32 and float64. No GPU or global precision-domain claim.",
+  "git_head": "544c1378d17b0920a9b38fbd012400d919cc3405",
+  "working_tree_note": "Source paths retain the recorded baseline implementation. New companion tests are uncommitted at this capture; all selected bytes below, not a future commit, identify this run.",
+  "planetlib_commit": "20c0a3936cc6c1ad790945b936c1ef3ad74af31e",
+  "returncode": 0,
+  "cases": [
+    {
+      "nodeid": "tests/model_contracts/test_core_models.py::test_lte_strength_value_and_partial_temperature_derivative[296.0]",
+      "result": "passed",
+      "seconds": 0.123,
+      "details": null
+    },
+    {
+      "nodeid": "tests/model_contracts/test_core_models.py::test_lte_strength_value_and_partial_temperature_derivative[900.0]",
+      "result": "passed",
+      "seconds": 0.01,
+      "details": null
+    },
+    {
+      "nodeid": "tests/model_contracts/test_core_models.py::test_lte_strength_value_and_partial_temperature_derivative[1800.0]",
+      "result": "passed",
+      "seconds": 0.009,
+      "details": null
+    },
+    {
+      "nodeid": "tests/model_contracts/test_core_models.py::test_doppler_width_records_rounded_prefactor",
+      "result": "passed",
+      "seconds": 0.028,
+      "details": null
+    },
+    {
+      "nodeid": "tests/model_contracts/test_core_models.py::test_lpf_voigt_convolution_and_finite_line_sum",
+      "result": "passed",
+      "seconds": 6.251,
+      "details": null
+    },
+    {
+      "nodeid": "tests/model_contracts/test_core_models.py::test_columns_pressure_bases_and_cia_identical_partners",
+      "result": "passed",
+      "seconds": 0.238,
+      "details": null
+    },
+    {
+      "nodeid": "tests/model_contracts/test_core_models.py::test_inverse_square_hydrostatic_constant_density_integral",
+      "result": "passed",
+      "seconds": 0.134,
+      "details": null
+    },
+    {
+      "nodeid": "tests/model_contracts/test_core_models.py::test_ideal_gas_isothermal_hydrostatic_inverse_square_integral",
+      "result": "passed",
+      "seconds": 0.072,
+      "details": null
+    },
+    {
+      "nodeid": "tests/model_contracts/test_core_models.py::test_homogeneous_emission_pi_convention_surface_and_derivative",
+      "result": "passed",
+      "seconds": 0.426,
+      "details": null
+    },
+    {
+      "nodeid": "tests/model_contracts/test_core_models.py::test_two_unequal_emitting_layers_preserve_top_to_bottom_order",
+      "result": "passed",
+      "seconds": 0.073,
+      "details": null
+    },
+    {
+      "nodeid": "tests/model_contracts/test_core_models.py::test_chords_and_area_converge_to_shared_continuous_relation",
+      "result": "passed",
+      "seconds": 0.802,
+      "details": null
+    },
+    {
+      "nodeid": "tests/model_contracts/test_core_models.py::test_transparent_art_output_is_bottom_normalized_area[simpson]",
+      "result": "passed",
+      "seconds": 0.273,
+      "details": null
+    },
+    {
+      "nodeid": "tests/model_contracts/test_core_models.py::test_transparent_art_output_is_bottom_normalized_area[trapezoid]",
+      "result": "passed",
+      "seconds": 0.053,
+      "details": null
+    },
+    {
+      "nodeid": "tests/model_contracts/test_core_models.py::test_gaussian_and_rotation_discrete_kernels_and_zero_rotation",
+      "result": "passed",
+      "seconds": 0.477,
+      "details": null
+    },
+    {
+      "nodeid": "tests/model_contracts/test_core_models.py::test_sampling_velocity_sign_units_and_derivative",
+      "result": "passed",
+      "seconds": 0.333,
+      "details": null
+    },
+    {
+      "nodeid": "tests/model_contracts/test_core_models.py::test_single_line_column_emission_sampling_interfaces",
+      "result": "passed",
+      "seconds": 2.14,
+      "details": null
+    },
+    {
+      "nodeid": "tests/model_contracts/test_core_models.py::test_odd_length_convolution_preserves_shape",
+      "result": "xfailed",
+      "seconds": 0.072,
+      "details": "convolve_same omits irfft length for odd total FFT length; tracked in the spectral observation FollowUp"
+    },
+    {
+      "nodeid": "tests/model_contracts/test_planetlib.py::test_flux_coordinate_jacobian_and_derivatives[100.0]",
+      "result": "passed",
+      "seconds": 0.57,
+      "details": null
+    },
+    {
+      "nodeid": "tests/model_contracts/test_planetlib.py::test_flux_coordinate_jacobian_and_derivatives[800.0]",
+      "result": "passed",
+      "seconds": 0.012,
+      "details": null
+    },
+    {
+      "nodeid": "tests/model_contracts/test_planetlib.py::test_flux_coordinate_jacobian_and_derivatives[2500.0]",
+      "result": "passed",
+      "seconds": 0.011,
+      "details": null
+    },
+    {
+      "nodeid": "tests/model_contracts/test_planetlib.py::test_layer_and_spectral_axes",
+      "result": "passed",
+      "seconds": 0.691,
+      "details": null
+    },
+    {
+      "nodeid": "tests/unittests/rt/test_planck.py::test_float32_forward_and_gradients[piB]",
+      "result": "passed",
+      "seconds": 0.701,
+      "details": null
+    },
+    {
+      "nodeid": "tests/unittests/rt/test_planck.py::test_float32_forward_and_gradients[piBarr]",
+      "result": "passed",
+      "seconds": 0.536,
+      "details": null
+    },
+    {
+      "nodeid": "tests/unittests/rt/test_layeropacity.py::test_cross_section_common_spectrum_matches_analytic_equation",
+      "result": "passed",
+      "seconds": 0.05,
+      "details": null
+    },
+    {
+      "nodeid": "tests/unittests/rt/test_layeropacity.py::test_cross_section_layer_resolved_lbl_array",
+      "result": "passed",
+      "seconds": 0.038,
+      "details": null
+    },
+    {
+      "nodeid": "tests/unittests/rt/test_layeropacity.py::test_cross_section_layer_resolved_ckd_array",
+      "result": "passed",
+      "seconds": 0.063,
+      "details": null
+    },
+    {
+      "nodeid": "tests/unittests/rt/test_layeropacity.py::test_log_cia_matches_analytic_equation_for_layered_ckd_array",
+      "result": "passed",
+      "seconds": 0.153,
+      "details": null
+    },
+    {
+      "nodeid": "tests/unittests/rt/test_layeropacity.py::test_extinction_common_spectrum_matches_analytic_equation",
+      "result": "passed",
+      "seconds": 0.033,
+      "details": null
+    },
+    {
+      "nodeid": "tests/unittests/rt/test_layeropacity.py::test_geometric_optical_depth_does_not_silently_make_opacity_positive",
+      "result": "passed",
+      "seconds": 0.016,
+      "details": null
+    },
+    {
+      "nodeid": "tests/unittests/rt/test_layeropacity.py::test_log_cia_preserves_float32_dynamic_range_and_identical_partner_rule",
+      "result": "passed",
+      "seconds": 0.252,
+      "details": null
+    },
+    {
+      "nodeid": "tests/unittests/rt/test_layeropacity.py::test_log_cia_zero_density_and_height_return_zero_without_nan_gradient",
+      "result": "passed",
+      "seconds": 0.533,
+      "details": null
+    },
+    {
+      "nodeid": "tests/unittests/rt/test_layeropacity.py::test_geometric_optical_depth_supports_jit_and_grad",
+      "result": "passed",
+      "seconds": 0.088,
+      "details": null
+    },
+    {
+      "nodeid": "tests/unittests/rt/test_layeropacity.py::test_geometric_optical_depth_rejects_invalid_shapes",
+      "result": "passed",
+      "seconds": 0.052,
+      "details": null
+    },
+    {
+      "nodeid": "tests/unittests/rt/test_layeropacity.py::test_pressure_wrapper_matches_common_number_column_api",
+      "result": "passed",
+      "seconds": 0.044,
+      "details": null
+    },
+    {
+      "nodeid": "tests/unittests/rt/test_layeropacity.py::test_pressure_wrapper_preserves_leading_singleton_broadcasting",
+      "result": "passed",
+      "seconds": 0.09,
+      "details": null
+    },
+    {
+      "nodeid": "tests/unittests/rt/test_chord.py::test_chord_geometric_matrix_lower",
+      "result": "passed",
+      "seconds": 0.1,
+      "details": null
+    },
+    {
+      "nodeid": "tests/unittests/rt/test_chord.py::test_chord_geometric_matrix",
+      "result": "passed",
+      "seconds": 0.03,
+      "details": null
+    },
+    {
+      "nodeid": "tests/unittests/rt/test_chord.py::test_check_parallel_Ax_tauchord",
+      "result": "passed",
+      "seconds": 0.13,
+      "details": null
+    },
+    {
+      "nodeid": "tests/unittests/rt/test_rtransfer_transmission.py::test_opaque_transmission_radius_is_bounded_by_top_layer",
+      "result": "passed",
+      "seconds": 0.128,
+      "details": null
+    },
+    {
+      "nodeid": "tests/unittests/postproc/test_spin_rotation.py::test_rotkernel_Gimenez_jvp",
+      "result": "passed",
+      "seconds": 0.363,
+      "details": null
+    },
+    {
+      "nodeid": "tests/unittests/opacity/lpf/test_lpf.py::test_voigt_profile_matches_scipy[hjert-False]",
+      "result": "passed",
+      "seconds": 0.208,
+      "details": null
+    },
+    {
+      "nodeid": "tests/unittests/opacity/lpf/test_lpf.py::test_voigt_profile_matches_scipy[hjert-True]",
+      "result": "passed",
+      "seconds": 0.195,
+      "details": null
+    },
+    {
+      "nodeid": "tests/unittests/opacity/lpf/test_lpf.py::test_voigt_profile_matches_scipy[ljert-False]",
+      "result": "passed",
+      "seconds": 0.13,
+      "details": null
+    },
+    {
+      "nodeid": "tests/unittests/opacity/lpf/test_lpf.py::test_voigt_profile_matches_scipy[ljert-True]",
+      "result": "passed",
+      "seconds": 0.236,
+      "details": null
+    }
+  ],
+  "counts": {
+    "passed": 43,
+    "failed": 0,
+    "error": 0,
+    "skipped": 0,
+    "xfailed": 1
+  },
+  "selected_files": {
+    "pyproject.toml": "1343ad1836f56412889ebb4748b5e4ef20a150ec58fe4b8a04083e58672a359a",
+    "src/exojax/atm/atmprof.py": "bba0ee11db0bcc45f34f932ca7e12013369e61f8121016a3292c3aa9edf38654",
+    "src/exojax/database/core/broadening.py": "941baede9603921b47d3bbcbc5902740046123f101875824dcd50b197404b563",
+    "src/exojax/database/core/line_strength.py": "f39014d7b4c2349ab021b3f0084754ba2c7ed35c175e00fcd3cef40b71e7318f",
+    "src/exojax/opacity/lpf/lpf.py": "fd73cc4f6c5d46e25b701d22d93db3c17ce1e7d3e0fdd22584817761f1347a3c",
+    "src/exojax/opacity/modit/modit.py": "d5f3bed1459a952a8ed49c856ca3b0e003513b7b23be5cf2adea4c8f6d9d471b",
+    "src/exojax/opacity/premodit/premodit.py": "10c251df4c2725eaf7b9789d174cb073111f04688d36f9981cecd3184b93a516",
+    "src/exojax/postproc/response.py": "6cf4941286c55091d66b4f26042d5090e0ebf06d22caa00f2ad1538c8dd2692c",
+    "src/exojax/postproc/spin_rotation.py": "41d5e99ea31bffa64c18ba43fcdcf2cfc999d385660db132343aab913f2dd447",
+    "src/exojax/rt/chord.py": "af51e8a61ee15bb9d3048c310a7512a188b0a89548ce6c2aefce4d3420490bbd",
+    "src/exojax/rt/common.py": "3b05610ce0dc6d491ed2003a9f96eaacc5745cdeb766d334d2d2e501a2ab8ef0",
+    "src/exojax/rt/emis.py": "e0668f38f84fc6dd17d3fcfe42e26f7ed7b089edda8b195f75e9d1253e2ae918",
+    "src/exojax/rt/layeropacity.py": "f66d17f6a8e418efed567c2a130f4a556735d885f040b009c65c1ca39bff99b8",
+    "src/exojax/rt/planck.py": "670a9d66a5bbbcfe2947f92bc55f529270dc802b3ecd73b3e0aba88d4f3fe3b1",
+    "src/exojax/rt/rtransfer.py": "7e66948b22e81492a0931f7ea5aed2dd7a8f72077be461582af440c7771288fe",
+    "src/exojax/rt/trans.py": "8c0d51d67e46ebc40703a7f2186d0a98269d87e01f659d0dc65b7c2cf83f18fc",
+    "src/exojax/signal/convolve.py": "d217c75401a2bf53a6bfa0e5a3ee6c2efe2d2b59addc50da3c49de5efb8c6a10",
+    "src/exojax/signal/integrate.py": "16c48aca5683c435bdfe62ebe83347975981e849c2266efe3bd674a5633d6543",
+    "src/exojax/special/faddeeva.py": "2de87610fa047d8afd9a4f4364954408655b19723749391fb7f0ee035a14cb8c",
+    "src/exojax/utils/constants.py": "a2f34c9a4debd0d61b4c2c0e1ef0b269b10f21d972195c6b74cd169d4f0c1b81",
+    "tests/conftest.py": "e282c84343d4b267ae46874b1c950bfa61c9257a60fbf7336e51a0bc5babbab5",
+    "tests/model_contracts/test_core_models.py": "219266d8de527ccde71554b36e3f3404dda72a415c07e7fedc7c780d0a4dd216",
+    "tests/model_contracts/test_planetlib.py": "04d9d60e96b9561eaa9f4ed718dc942696cb9aa5c0dbc2133ed4f92a86a3795c",
+    "tests/unittests/opacity/lpf/test_lpf.py": "fc8a982cdb40793d1442d2109ba333b88f659389ffa71e172a1371c0a226130f",
+    "tests/unittests/postproc/test_spin_rotation.py": "d0da97a121dbb781cf458a24692f1ba1f596614456f39a23945230eae98d7f30",
+    "tests/unittests/rt/test_chord.py": "96d6189b6a554e55bf9ef0b316e16a7fae16906014d84ef29003c217c3e3de7b",
+    "tests/unittests/rt/test_layeropacity.py": "67c2f3caab24303ecc5df6da7fec0588c5a4f2199230e91121c8b5bb2b027c54",
+    "tests/unittests/rt/test_planck.py": "db7d495980888d93d0f3736af3bafdbd414933378387cab15a1622d168333702",
+    "tests/unittests/rt/test_rtransfer_transmission.py": "4b776c74ef85a5f3209c7e8359dfd1df01c1137f807909133e51d0ff724e7d10",
+    "mceg/requirements.txt": "ac204e416685f42f47169e02a7ebc3e448ced3297605c9147ab2dbca90e33db7"
+  },
+  "native_definitions": {
+    "atmospheric_columns": {
+      "equations": [
+        {
+          "id": "planetlib.atmosphere.columns.cia_depth",
+          "revision": "1",
+          "sha256": "0c6b46de1c3e5953931d6395bb95f9a10bcffa0ccd36112aff55ede26b721be9"
+        },
+        {
+          "id": "planetlib.atmosphere.columns.cross_section_depth",
+          "revision": "1",
+          "sha256": "4027855a49e55111983716c203b61750311498f4a3c5e3779c193ebc39bf0340"
+        },
+        {
+          "id": "planetlib.atmosphere.columns.geometric_column",
+          "revision": "1",
+          "sha256": "493b249bf76f38d23590360752ca5cc3dbe596abcdda1a727fd98f8b3121a653"
+        },
+        {
+          "id": "planetlib.atmosphere.columns.hydrostatic",
+          "revision": "1",
+          "sha256": "9f3fa2c49c872b4810f87adef446b50c33944c8db6572088e3a86aa736d1e80b"
+        },
+        {
+          "id": "planetlib.atmosphere.columns.ideal_gas_density",
+          "revision": "1",
+          "sha256": "5a247be52be22fa2f4372a7f3eac7d4381a12b5e1ecfcc425fb26d7369aadc07"
+        },
+        {
+          "id": "planetlib.atmosphere.columns.mixing_conversion",
+          "revision": "1",
+          "sha256": "6013bc9d2eda90ae73f30f4ebee6203eb54e35f27f404d9a2f2fe6c75c4572cf"
+        },
+        {
+          "id": "planetlib.atmosphere.columns.pressure_column_mass",
+          "revision": "1",
+          "sha256": "65ea2189045c00bd41ba467984faa89a9ac9957811a98f879280980e38370322"
+        },
+        {
+          "id": "planetlib.atmosphere.columns.pressure_column_volume",
+          "revision": "1",
+          "sha256": "0b4c64d9cc74d4b17ab065010768b41a38968c8a19347c9c6bfa5831d6002986"
+        }
+      ],
+      "mathematical_models": [
+        {
+          "id": "planetlib.atmosphere.columns.model",
+          "revision": "1",
+          "sha256": "909de66814d8be1ef9274aa838639f2f24be1a863920d0207f43f56e3eaef1ee"
+        }
+      ],
+      "bindings": [
+        {
+          "id": "exojax.atmospheric_columns.binding.1",
+          "sha256": "fe37f8ba519f36938a1c951649b8be425f8a3d79de1c930316c73c0ccdd32f44"
+        },
+        {
+          "id": "exojax.atmospheric_columns.binding.2",
+          "sha256": "7f109272d156efe658d476cf8100b1df0a0438b048c27d4c3c45870f057f7c6d"
+        },
+        {
+          "id": "exojax.atmospheric_columns.binding.3",
+          "sha256": "66b26d50f5e05b10ee07a831393789d1af43a6182043fbb878ff032e4c9b88e6"
+        },
+        {
+          "id": "exojax.atmospheric_columns.binding.4",
+          "sha256": "16419aa0cb4790396dd9909a2e4503fc86c8d8c0e7d043a2aafcbe3879087638"
+        },
+        {
+          "id": "exojax.atmospheric_columns.binding.5",
+          "sha256": "626888da6e70d7decf69dcab20ba73c6aa194827d7ea3de513c9256d0fa210ea"
+        },
+        {
+          "id": "exojax.atmospheric_columns.binding.6",
+          "sha256": "5e3ea244c8f4d73e0ea4feb0b5e4d25c879ef736c6dc392f90a00c1b14ae1c35"
+        }
+      ]
+    },
+    "lte_line_opacity": {
+      "equations": [
+        {
+          "id": "planetlib.spectroscopy.lte_lines.doppler_width",
+          "revision": "1",
+          "sha256": "9c3a418e46dc675c126dc563454d6f43b4edb6cda32abba532dcf6e7c1229ac1"
+        },
+        {
+          "id": "planetlib.spectroscopy.lte_lines.gaussian_profile",
+          "revision": "1",
+          "sha256": "081b086d6cd62918fb434117e68b24c0011d677038dd0eb78e82df01f6a335ae"
+        },
+        {
+          "id": "planetlib.spectroscopy.lte_lines.line_cross_section",
+          "revision": "1",
+          "sha256": "9a84712a324531f399c87d0f5f9c335ed215dca91afe70442882692c9242bb59"
+        },
+        {
+          "id": "planetlib.spectroscopy.lte_lines.line_sum",
+          "revision": "1",
+          "sha256": "747a43f4b663667ba25bcfaac1a928bf46cf03b6253a982b221339009dcc229e"
+        },
+        {
+          "id": "planetlib.spectroscopy.lte_lines.lorentz_profile",
+          "revision": "1",
+          "sha256": "3df4a10464c3ac1d2e47b22820155adeed3a8926b51da0083a6b267b25b05d72"
+        },
+        {
+          "id": "planetlib.spectroscopy.lte_lines.strength_temperature",
+          "revision": "1",
+          "sha256": "4056ae7bac594c8e14e5791485a04e57006986ea1eee9520aeeb889de9bd409f"
+        },
+        {
+          "id": "planetlib.spectroscopy.lte_lines.voigt_profile",
+          "revision": "1",
+          "sha256": "0ac6fb90f254d98faab8eb9a2312e51f227712ae5f76899c36e6e9aa8b148ee5"
+        }
+      ],
+      "mathematical_models": [
+        {
+          "id": "planetlib.spectroscopy.lte_lines.model",
+          "revision": "1",
+          "sha256": "bbe8214a2324d664806346af57723e37c2a218aefe484e595bcab9ba1a5cde0e"
+        }
+      ],
+      "bindings": [
+        {
+          "id": "exojax.lte_line_opacity.binding.1",
+          "sha256": "07b93d0a64796d88925eda63d12f6222850b22e8135e23cfd4c960df73a7b646"
+        },
+        {
+          "id": "exojax.lte_line_opacity.binding.2",
+          "sha256": "b27fa3dfc9ba70be7bbe9ef4841a925540cf1b30f702d8b3ff690ce95e3478ab"
+        },
+        {
+          "id": "exojax.lte_line_opacity.binding.3",
+          "sha256": "aa593a4ac52831b4813c715d6d424f545608ee478eb0f5897dd91b0bbe674cc2"
+        },
+        {
+          "id": "exojax.lte_line_opacity.binding.4",
+          "sha256": "e47b0e89a28093496582c524c6d64dd73e90ad13ef841e44a342d023b6ce2d46"
+        },
+        {
+          "id": "exojax.lte_line_opacity.binding.5",
+          "sha256": "ef7773a9c36e554a376d0e30b48cc775874da6252f72962079b71cd04cffbeef"
+        }
+      ]
+    },
+    "planck": {
+      "equations": [
+        {
+          "id": "planetlib.radiation.lte.boltzmann_ratio",
+          "revision": "1",
+          "sha256": "eb1bd32e2c45336cc8f5ab4910f664f1ba3c13439094bbcc480e29725925f679"
+        },
+        {
+          "id": "planetlib.radiation.lte.planck_frequency",
+          "revision": "1",
+          "sha256": "f2629ad571c0beb5c0c462942ab3e714a5021945f4db2a72b8983010707cb39b"
+        },
+        {
+          "id": "planetlib.radiation.lte.emission_conversion",
+          "revision": "1",
+          "sha256": "9f1fa21404d115918c60604f9066b684db4dc09d36ce2f64250924ffce1f3bf5"
+        },
+        {
+          "id": "planetlib.radiation.lte.extinction_conversion",
+          "revision": "1",
+          "sha256": "a45f76b15e3efb2e255031bdde5c82e451c5adaf391097311953799a0b36669e"
+        },
+        {
+          "id": "planetlib.radiation.lte.frequency_coordinate",
+          "revision": "1",
+          "sha256": "263dfbd41449587706df8efcb63f23a7db4347584269ac376fd4aeb4306473e2"
+        },
+        {
+          "id": "planetlib.radiation.lte.hemisphere_planck",
+          "revision": "1",
+          "sha256": "34cd436dd032945b0b346cb5df963848df3665796d55d3ebac4ee54415e90fbc"
+        },
+        {
+          "id": "planetlib.radiation.lte.intensity_conversion",
+          "revision": "1",
+          "sha256": "d50ba92d7af326628485b16099e11bf8344584c62a8450b01fad8cd48dc20b50"
+        },
+        {
+          "id": "planetlib.radiation.lte.profile_conversion",
+          "revision": "1",
+          "sha256": "1c37742745e9129cad9083e908eafa5914769eca91f837769d8747f247fcd6e5"
+        }
+      ],
+      "mathematical_models": [
+        {
+          "id": "exojax.planetlib.planck.flux",
+          "revision": "1",
+          "sha256": "c83cd02d8630ad45c93c52ce4cb99481a86cb0c988719340278fce732ecf78ca"
+        },
+        {
+          "id": "planetlib.radiation.lte.populations",
+          "revision": "1",
+          "sha256": "87bd802c94020dc5a3d9fa17b7de52d5ffebb9412d65f009b0a47b1b407d6c3d"
+        },
+        {
+          "id": "planetlib.radiation.lte.coordinates",
+          "revision": "1",
+          "sha256": "31790f5fe2a48eb9b6f15f2d86e5901c890052b2d18d5328b23b6ea1bf7d7d33"
+        }
+      ],
+      "bindings": [
+        {
+          "id": "exojax.planetlib.piB.flux",
+          "sha256": "e551316606fb45ad73ccdaf5ca2fdaab31c66c17e17270426577966567634141"
+        },
+        {
+          "id": "exojax.planetlib.piBarr.flux",
+          "sha256": "0457b011a6cd5c6d7399050076b561662a2b5e9ff24ba0cbdef91f286996fd55"
+        }
+      ]
+    },
+    "spectral_observation": {
+      "equations": [
+        {
+          "id": "planetlib.spectroscopy.observation.convolution",
+          "revision": "1",
+          "sha256": "07985b13dd0b1fc398f0a7e811d6811ccb4dc623b9b2862933bb1d8ee9b4de17"
+        },
+        {
+          "id": "planetlib.spectroscopy.observation.doppler_sampling",
+          "revision": "1",
+          "sha256": "cef46080bee2c640c9448618ae654c892958509b9343b53ef11f0744d13edc0b"
+        },
+        {
+          "id": "planetlib.spectroscopy.observation.gaussian_kernel",
+          "revision": "1",
+          "sha256": "9938eda5c39c74466069b90cb3bc44b2375849348469efeb10b2b68262dc639a"
+        },
+        {
+          "id": "planetlib.spectroscopy.observation.limb_darkening",
+          "revision": "1",
+          "sha256": "e3a43889c82b54d974fe93108967e70adbf2bfa8876680163d4bb315eb0f57bc"
+        },
+        {
+          "id": "planetlib.spectroscopy.observation.rotation_normalized",
+          "revision": "1",
+          "sha256": "a6c96244fb25ffae6c063f191b1944799473acbdf8cf7c0770698b3f87dfdbda"
+        },
+        {
+          "id": "planetlib.spectroscopy.observation.rotation_raw",
+          "revision": "1",
+          "sha256": "02933843440f2b0f1dbfbdd807b7ca61131a2c2c33710b87ff396a60e3d8123d"
+        }
+      ],
+      "mathematical_models": [
+        {
+          "id": "planetlib.spectroscopy.observation.model",
+          "revision": "1",
+          "sha256": "a9d3a172375a18cb613ba914bda7774008294c28ac65cd30fb693ce97332612e"
+        }
+      ],
+      "bindings": [
+        {
+          "id": "exojax.spectral_observation.binding.1",
+          "sha256": "d76c03d0593ef1a724c496fc5b3d6d8af438d50d30fc59159b5ae8ab19b05a31"
+        },
+        {
+          "id": "exojax.spectral_observation.binding.2",
+          "sha256": "89152d262ff1570d1efeda326c79feb87a2ac49668c0537742b7bd4c3f5411c6"
+        },
+        {
+          "id": "exojax.spectral_observation.binding.3",
+          "sha256": "6493a7857b5dee835e602b3032e986db23836a92d4248afabf7cd9c98a8eabb4"
+        },
+        {
+          "id": "exojax.spectral_observation.binding.4",
+          "sha256": "2145cdf1e411a817934e2d1103ddbf9957dd49a816564802f4bdc30f0561eb9b"
+        }
+      ]
+    },
+    "thermal_emission": {
+      "equations": [
+        {
+          "id": "planetlib.radiation.pure_absorption.flux",
+          "revision": "1",
+          "sha256": "48c82f34d487639ca7ee75b2f43c8d4d2c0b2eeff399ab696828825b2abc1d21"
+        },
+        {
+          "id": "planetlib.radiation.pure_absorption.homogeneous_layer",
+          "revision": "1",
+          "sha256": "36936e648f29985ee36992ba8f0651e92b6d9c9d3c787d080640c6ed96c3b35e"
+        },
+        {
+          "id": "planetlib.radiation.pure_absorption.transfer_equation",
+          "revision": "1",
+          "sha256": "f5310fa5eb69f4975e0341a2f0e911613fdd41bffe0ecbdaa1beced7ffeb6b3d"
+        },
+        {
+          "id": "planetlib.radiation.pure_absorption.transmission",
+          "revision": "1",
+          "sha256": "34ee6e461a842ebd682c6342caf83f29bb379471b0ff784f684257b5a6b854c0"
+        }
+      ],
+      "mathematical_models": [
+        {
+          "id": "planetlib.radiation.pure_absorption.model",
+          "revision": "1",
+          "sha256": "9bb0f9253e3a17106fcfc047fe4707c00f6884a410a6d740d07d3a5b213aae94"
+        }
+      ],
+      "bindings": [
+        {
+          "id": "exojax.thermal_emission.binding.1",
+          "sha256": "1f5521c588b5e19db7f6acb7d38bdfec6d251bf87f9693fd9eedb5f545d7bcbe"
+        },
+        {
+          "id": "exojax.thermal_emission.binding.2",
+          "sha256": "f96da34187cc2286c923c83f3ca12ee17a8485dd3859a61a6c5687ff1fe6762f"
+        },
+        {
+          "id": "exojax.thermal_emission.binding.3",
+          "sha256": "f5d41a83fbd85d11a8f56c7252ea785ea56566df5f9955ab49f68bbbc7c27040"
+        }
+      ]
+    },
+    "transmission": {
+      "equations": [
+        {
+          "id": "planetlib.radiation.spherical_transmission.blocked_area",
+          "revision": "1",
+          "sha256": "7eeba9e40357f77537434dce971031ef51734e2fe363d4d302beab7b1c02f929"
+        },
+        {
+          "id": "planetlib.radiation.spherical_transmission.chord_depth",
+          "revision": "1",
+          "sha256": "dec6c3373494ff2272ecee6aecf99be4bf78a711ce001ee14c3de5c50af30a2d"
+        },
+        {
+          "id": "planetlib.radiation.spherical_transmission.normalized_radius",
+          "revision": "1",
+          "sha256": "600969d283caea16e918e867a4a5982e91eb8044657a37f453c9398c5d7eb7d6"
+        },
+        {
+          "id": "planetlib.radiation.spherical_transmission.transit_depth",
+          "revision": "1",
+          "sha256": "e3fe4ca496af39a028b034489bfee482929eaf17853bc0eb2fcd65f8a01f6fff"
+        }
+      ],
+      "mathematical_models": [
+        {
+          "id": "planetlib.radiation.spherical_transmission.model",
+          "revision": "1",
+          "sha256": "6afb6aea8996dcccf06486b11adc82dc8725bbae2c0db50392c20d6a5de5dba4"
+        }
+      ],
+      "bindings": [
+        {
+          "id": "exojax.transmission.binding.1",
+          "sha256": "7c6676f2b9b172d18002e61406087ec37c67df6923f77c9a19f82278f9e928f6"
+        },
+        {
+          "id": "exojax.transmission.binding.2",
+          "sha256": "a9faa32e6d022dab4fc6bcc7a3404d725d3b06a0f761e9b162f5365c74379906"
+        },
+        {
+          "id": "exojax.transmission.binding.3",
+          "sha256": "9685d943f2ba32364a73ce897e206963973b94b4239e218aa513d17a202d1eb4"
+        },
+        {
+          "id": "exojax.transmission.binding.4",
+          "sha256": "c25308cf1bcbd1379d92484cc0442d6d87311ac8836ac3b18c5b5412f671ebbc"
+        }
+      ]
+    }
+  },
+  "artifacts": {
+    "mceg/evidence/initial_review/pytest.log": "899a83317e4034aee410deb3db0bcb05cad0eca0137deb593dfe78fe4751c281",
+    "mceg/evidence/initial_review/junit.xml": "d43736396273b3926e2cb42e0d93266775036e401b4030593df75e3cdf9b8978"
+  },
+  "interpretation": "Only explicitly reviewed scoped assessments may use this run as evidence. Passing samples do not validate full algorithms or physical applicability. The strict expected failure records a contradicted odd-length convolution shape check; pytest exit zero does not make that claim supported.",
+  "mceg_installation": {
+    "url": "https://github.com/HajimeKawahara/mceg.git",
+    "vcs_info": {
+      "commit_id": "4034c9259c9c2e7d55243d69f3ab2f22c9cc7d88",
+      "requested_revision": "4034c9259c9c2e7d55243d69f3ab2f22c9cc7d88",
+      "vcs": "git"
+    }
+  }
+}

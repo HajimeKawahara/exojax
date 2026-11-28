@@ -1,0 +1,108 @@
+name: Optional MCEG companion
+
+on:
+  pull_request:
+    paths:
+      - 'mceg/**'
+      - 'tests/model_contracts/**'
+      - 'tests/conftest.py'
+      - 'tests/unittests/rt/**'
+      - 'src/exojax/**'
+      - 'pyproject.toml'
+      - 'MANIFEST.in'
+      - '.github/workflows/mceg.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  metadata:
+    name: Inspect without the numerical provider
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
+        with:
+          repository: HajimeKawahara/planetlib
+          ref: 20c0a3936cc6c1ad790945b936c1ef3ad74af31e
+          path: planetlib-source
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install the optional inspection environment
+        run: python -m pip install -r mceg/requirements.txt
+      - name: Check environment separation
+        run: |
+          python -I - <<'PY'
+          from importlib.util import find_spec
+          assert all(find_spec(name) is None for name in ('exojax', 'jax', 'jaxlib'))
+          PY
+      - name: Reproduce all pinned native snapshots
+        run: |
+          for template in mceg/templates/*.yaml; do
+            family=$(basename "$template" .yaml)
+            python planetlib-source/tools/planetlib.py build "$template" \
+              --lock "mceg/imports/$family.lock.json" \
+              --output "$RUNNER_TEMP/$family.yaml"
+            diff -u "mceg/contracts/$family.yaml" "$RUNNER_TEMP/$family.yaml"
+          done
+      - name: Check native coverage, review pins and separation
+        run: python -m pytest -q mceg/tests
+
+  provider:
+    name: Compare selected provider kernels
+    runs-on: ubuntu-latest
+    env:
+      JAX_PLATFORMS: cpu
+      JAX_ENABLE_X64: '1'
+      OPENBLAS_NUM_THREADS: '1'
+      OMP_NUM_THREADS: '1'
+      PYTHONPATH: src
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install the optional comparison environment
+        run: python -m pip install -r mceg/requirements.txt 'jax[cpu]' numpy scipy
+      - name: Run offline provider comparisons
+        run: python -m pytest -q tests/model_contracts
+
+  separability:
+    name: Build and run without the companion
+    runs-on: ubuntu-latest
+    env:
+      JAX_PLATFORMS: cpu
+      OPENBLAS_NUM_THREADS: '1'
+      OMP_NUM_THREADS: '1'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install ordinary build and selected test dependencies
+        run: python -m pip install build pytest 'jax[cpu]' numpy scipy
+      - name: Remove the optional companion from this checkout
+        run: rm -rf mceg tests/model_contracts .github/workflows/mceg.yml
+      - name: Build and install the ordinary package
+        run: |
+          python -m build
+          python -m pip install --no-deps dist/*.whl
+      - name: Import the installed wheel without MCEG or Planetlib
+        run: |
+          python -I - <<'PY'
+          from importlib.util import find_spec
+          from pathlib import Path
+          import exojax
+          from exojax.rt.planck import piB
+          assert 'site-packages' in Path(exojax.__file__).parts
+          assert all(find_spec(name) is None for name in ('mceg', 'planetlib'))
+          PY
+      - name: Run representative ordinary tests against the wheel
+        run: |
+          python -m pytest -q tests/unittests/rt/test_planck.py \
+            tests/unittests/rt/test_layeropacity_profiles.py \
+            tests/unittests/rt/test_rtransfer_transmission.py

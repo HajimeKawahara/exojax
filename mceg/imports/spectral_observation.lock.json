@@ -1,0 +1,14 @@
+{
+  "format": "planetlib.imports.v1",
+  "imports": [
+    {
+      "path": "catalog/spectroscopy/observation.yaml",
+      "sha256": "6f4f245276e37628ab1757d22422103fd21b021ba3f0b88fa66cd43033e73a3f",
+      "model": {
+        "id": "planetlib.spectroscopy.observation.model",
+        "revision": "1",
+        "sha256": "a9d3a172375a18cb613ba914bda7774008294c28ac65cd30fb693ce97332612e"
+      }
+    }
+  ]
+}

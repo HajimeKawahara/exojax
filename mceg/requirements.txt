@@ -1,3 +1,3 @@
-# Optional authoring/checking environment; no numerical runtime dependency.
+# Optional inspection environment; never a numerical runtime dependency.
 mceg[symbolic] @ git+https://github.com/HajimeKawahara/mceg.git@4034c9259c9c2e7d55243d69f3ab2f22c9cc7d88
 pytest>=8,<10

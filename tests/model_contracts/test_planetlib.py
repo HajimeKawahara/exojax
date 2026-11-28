@@ -1,6 +1,5 @@
 """Read shared expressions through MCEG and compare the actual Planck kernels."""
 
-import json
 from pathlib import Path
 
 import jax
@@ -11,16 +10,14 @@ import pytest
 pytest.importorskip("mceg.schema_v06")
 sp = pytest.importorskip("sympy")
 
-from mceg import load_contract, mathematical_model_digest, to_sympy
-from mceg.equation_checks import equation_checks
-from mceg.integrity import file_integrity
+from mceg import load_contract, to_sympy
 
 from exojax.rt.planck import fac_planck, piB, piBarr
 from exojax.utils.constants import ccgs, hcperk
 
 
 ROOT = Path(__file__).resolve().parents[2]
-CONTRACT = load_contract(ROOT / "mceg/planetlib/contract.yaml")
+CONTRACT = load_contract(ROOT / "mceg/contracts/planck.yaml")
 MODEL = next(m for m in CONTRACT.mathematical_models if m.id == "exojax.planetlib.planck.flux")
 EQUATIONS = {e.id: to_sympy(e.sympy) for e in CONTRACT.equations}
 
@@ -54,26 +51,6 @@ def kernel_parameters():
     effective_h = fac_planck / (2 * np.pi * ccgs**2)
     effective_k = effective_h * ccgs / hcperk
     return effective_h, ccgs, effective_k
-
-
-def test_native_composition_and_pins():
-    lock = json.loads((ROOT / "mceg/planetlib/imports.lock.json").read_text())
-    for entry in lock["imports"]:
-        pin = entry["model"]
-        assert mathematical_model_digest(CONTRACT, pin["id"], pin["revision"]) == pin["sha256"]
-    assert {r.equation.id.rsplit(".", 1)[-1] for r in MODEL.relations} == {
-        "frequency_coordinate", "planck_frequency", "intensity_conversion", "hemisphere_planck"
-    }
-    assert {q.role for key, q in MODEL.quantities.items() if key in ("h", "c", "k")} == {"parameter"}
-    for collection in (CONTRACT.subjects, CONTRACT.contexts, CONTRACT.claims, CONTRACT.assessments):
-        assert all(record.id.startswith("exojax.") for record in collection)
-    for assessment in CONTRACT.assessments:
-        assert assessment.status == "unknown"
-        checks = equation_checks(CONTRACT, assessment, root=ROOT)
-        assert checks and all(c["status"] == "PASS" for c in checks)
-        integrity = file_integrity(CONTRACT, assessment, set(assessment.evidence), ROOT)
-        files = integrity["selected_files"] + integrity["artifact_hashes"]
-        assert files and all(f["status"] == "PASS" for f in files)
 
 
 @pytest.mark.parametrize("temperature", [100., 800., 2500.])

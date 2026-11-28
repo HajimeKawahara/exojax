@@ -1,0 +1,3 @@
+# Preserve raw, hashed execution output, including pytest diagnostic whitespace.
+initial_review/*.log -text -whitespace
+initial_review/*.xml -text -whitespace

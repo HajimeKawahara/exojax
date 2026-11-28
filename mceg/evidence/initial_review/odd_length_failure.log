@@ -1,0 +1,18 @@
+F                                                                        [100%]
+=================================== FAILURES ===================================
+_________________ test_odd_length_convolution_preserves_shape __________________
+
+    @pytest.mark.xfail(strict=True, reason="convolve_same omits irfft length for odd total FFT length; tracked in the spectral observation FollowUp")
+    def test_odd_length_convolution_preserves_shape():
+        spectrum = jnp.zeros(41).at[20].set(1.)
+        actual = ipgauss(spectrum, jnp.arange(-6., 7.), 1.3)
+>       assert actual.shape == spectrum.shape
+E       assert (40,) == (41,)
+E         
+E         At index 0 diff: 40 != 41
+E         Use -v to get more diff
+
+/tmp/exojax-planetlib/tests/model_contracts/test_core_models.py:375: AssertionError
+=========================== short test summary info ============================
+FAILED tests/model_contracts/test_core_models.py::test_odd_length_convolution_preserves_shape
+1 failed in 1.11s

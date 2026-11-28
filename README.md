@@ -22,9 +22,10 @@ In short, ExoJAX allows you to do gradient based optimizations, HMC-NUTS, and SV
 
 </details>
 
-The optional [Planetlib/MCEG adoption record](mceg/planetlib/README.md) describes
-the Planck kernels using fixed shared equations, explicit spectral conventions,
-and local correspondence checks. It adds no numerical runtime dependency.
+The optional [MCEG model records](mceg/README.md) describe the scientific model
+inventory, shared Planetlib definitions, implementation conventions and scoped
+evidence. Their inspection and comparison tests are separate from numerical
+runtime dependencies and ordinary package development.
 
 ## License
 

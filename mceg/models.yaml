@@ -1,0 +1,1021 @@
+inventory_version: '0.1'
+scope: All packaged files under src/exojax, including coefficient and test data. This initial inventory maps the
+  main scientific families and selected variants; it is not an exhaustive review of every branch, callback or external
+  dataset. Only inspected API/model-boundary files are classified. Other files remain visible as unreviewed, and
+  uncontracted families retain explicit gaps. The six linked contracts cover scoped shared definitions, not complete
+  provider equivalence or physical accuracy. Research examples, observation-specific priors/likelihoods and external
+  downloads are outside the scan roots. File hashes identify an inspection snapshot, not an execution or scientific
+  judgment.
+source_roots:
+- src/exojax
+contract_roots:
+- mceg/contracts
+files:
+  src/exojax/atm/amclouds.py:
+    sha256: 9b57b37ff5b0a99aa46dc28f0d3a4f1630af5ff83fda7ee41976dbdc3ac167d9
+    role: model
+    note: API and model-boundary inspection identifies clouds.microphysics. Detailed scientific review remains pending;
+      this hash is not validation.
+  src/exojax/atm/atmconvert.py:
+    sha256: 9b2f980c00d07115df32934ee0ba2b0c1ca6e15036dc2b7d68d71cda0eea5400
+    role: model
+    note: API and model-boundary inspection identifies atmosphere.mixing_ratios. Detailed scientific review remains
+      pending; this hash is not validation.
+  src/exojax/atm/atmphys.py:
+    sha256: f97287e23506e393c4c1fd6e35733f62cff6d2e592754b5fdd0a0978be273add
+    role: model
+    note: API and model-boundary inspection identifies clouds.microphysics. Detailed scientific review remains pending;
+      this hash is not validation.
+  src/exojax/atm/atmprof.py:
+    sha256: bba0ee11db0bcc45f34f932ca7e12013369e61f8121016a3292c3aa9edf38654
+    role: model
+    note: API and model-boundary inspection identifies atmosphere.hydrostatic, temperature.powerlaw, temperature.gray,
+      temperature.guillot. Detailed scientific review remains pending; this hash is not validation.
+  src/exojax/atm/condensate.py:
+    sha256: fd4bbf366c01f2f128be35eaa1b851208c12d01d5de3748968b0592c96b9f97c
+    role: model
+    note: API and model-boundary inspection identifies clouds.condensation. Detailed scientific review remains pending;
+      this hash is not validation.
+  src/exojax/atm/idealgas.py:
+    sha256: e2a412b51e73352ac6ab74bea2c799c56e27a4ae608374da934bfaf279b37b1c
+    role: model
+    note: API and model-boundary inspection identifies atmosphere.hydrostatic. Detailed scientific review remains
+      pending; this hash is not validation.
+  src/exojax/atm/psat.py:
+    sha256: 96f61004d96b3f82e6132ee91358f9cbaa78231403b78579a80bc364c745a5bb
+    role: model
+    note: API and model-boundary inspection identifies clouds.condensation. Detailed scientific review remains pending;
+      this hash is not validation.
+  src/exojax/atm/rce.py:
+    sha256: 97a1781bff330f999889da6ba4968f583460f71f261aa486168dfdac5f8765c2
+    role: model
+    note: API and model-boundary inspection identifies rce.host. Detailed scientific review remains pending; this
+      hash is not validation.
+  src/exojax/atm/rce_device.py:
+    sha256: e4cbb3f9f2f4ebd8fe3422ded8ad80a4f99ae32b84b618f0058498b62287c29f
+    role: model
+    note: API and model-boundary inspection identifies rce.device. Detailed scientific review remains pending; this
+      hash is not validation.
+  src/exojax/atm/rce_device_implicit.py:
+    sha256: 37e2c3be19cae54005bcb7e93188cdbeda61666115dae8afae1397adfc2a1fdd
+    role: model
+    note: API and model-boundary inspection identifies rce.derivative.device, rce.likelihood_adapter. Detailed scientific
+      review remains pending; this hash is not validation.
+  src/exojax/atm/rce_implicit.py:
+    sha256: 49079de3f7c1607e066917089176235ea74228c759f462f73e0c557a0e94fc5c
+    role: model
+    note: API and model-boundary inspection identifies rce.derivative.host. Detailed scientific review remains pending;
+      this hash is not validation.
+  src/exojax/atm/viscosity.py:
+    sha256: 1de67001c2b6b5a3847ca0d5eb275da6cd0d38887651263c31989ecf3c3e65fc
+    role: model
+    note: API and model-boundary inspection identifies clouds.microphysics. Detailed scientific review remains pending;
+      this hash is not validation.
+  src/exojax/atm/vterm.py:
+    sha256: 0d2f57fa20ad2b570ccd027cfa9dd43cfa5d39a04b645a7362989a00521655c1
+    role: model
+    note: API and model-boundary inspection identifies clouds.microphysics. Detailed scientific review remains pending;
+      this hash is not validation.
+  src/exojax/database/_common/partition_function.py:
+    sha256: 025400ad9f20cc06a900af9349172660c969294c175b7200545caf2cedf38f0d
+    role: model
+    note: API and model-boundary inspection identifies data.partition_functions. Detailed scientific review remains
+      pending; this hash is not validation.
+  src/exojax/database/core/abscoeff.py:
+    sha256: 8d89511ebb6e33f01cca3fe3de35dacd1980ddd3aba5443c0b8d22b577ac8039
+    role: model
+    note: API and model-boundary inspection identifies continuum.cia. Detailed scientific review remains pending;
+      this hash is not validation.
+  src/exojax/database/core/broadening.py:
+    sha256: 941baede9603921b47d3bbcbc5902740046123f101875824dcd50b197404b563
+    role: model
+    note: API and model-boundary inspection identifies molecular.doppler_natural_width, molecular.exomol_pressure_width,
+      molecular.hitran_pressure_width. Detailed scientific review remains pending; this hash is not validation.
+  src/exojax/database/core/line_strength.py:
+    sha256: f39014d7b4c2349ab021b3f0084754ba2c7ed35c175e00fcd3cef40b71e7318f
+    role: model
+    note: API and model-boundary inspection identifies molecular.lte_line_strength. Detailed scientific review remains
+      pending; this hash is not validation.
+  src/exojax/database/core_atom/broadening.py:
+    sha256: 616a1cf9ed2e8ef356f8e2bb46b40c672d2a5c4cc1abbbcb61790e396b76ff49
+    role: model
+    note: API and model-boundary inspection identifies atomic.broadening.gamma_vald3, atomic.broadening.gamma_uns,
+      atomic.broadening.gamma_KA3, atomic.broadening.gamma_KA4, atomic.broadening.gamma_KA3s. Detailed scientific
+      review remains pending; this hash is not validation.
+  src/exojax/database/core_atom/line_parameters.py:
+    sha256: ce42cb99b9d3f243a35b7686b2ddb3f7d432dbe51af81dfcdffefdfdbdd5e209
+    role: model
+    note: API and model-boundary inspection identifies atomic.lte_lines. Detailed scientific review remains pending;
+      this hash is not validation.
+  src/exojax/database/core_atom/line_strength.py:
+    sha256: 34946ba2eb9b718a64d5581faf3c2e8df1816f8d4df67e4ba990ab009a57dd50
+    role: model
+    note: API and model-boundary inspection identifies atomic.lte_lines. Detailed scientific review remains pending;
+      this hash is not validation.
+  src/exojax/database/core_atom/pf.py:
+    sha256: 6fc74a444754089f83e823f34158394dabee832912a77592b129617434a55f0c
+    role: model
+    note: API and model-boundary inspection identifies atomic.lte_lines. Detailed scientific review remains pending;
+      this hash is not validation.
+  src/exojax/database/exoatom/api.py:
+    sha256: 55bf65a157e52e51dc5857dc58ffdf12eb3c8ac832bbc292325dacff2d7e0d82
+    role: model
+    note: API and model-boundary inspection identifies data.atomic. Detailed scientific review remains pending;
+      this hash is not validation.
+  src/exojax/database/exomol/api.py:
+    sha256: 2e3857121fb1c64169cc54fa6b2d2086a5c89e95f14da2e696723090608718ad
+    role: model
+    note: API and model-boundary inspection identifies data.molecular. Detailed scientific review remains pending;
+      this hash is not validation.
+  src/exojax/database/exomol/partition_function.py:
+    sha256: 4459068d56bf68bbb85b7e3fc138e0929e5e463f444f65cc310b213bb5c2d17a
+    role: model
+    note: API and model-boundary inspection identifies data.partition_functions. Detailed scientific review remains
+      pending; this hash is not validation.
+  src/exojax/database/hitemp/api.py:
+    sha256: 6b1a1ccf74ce1947d6aa5c06a19fdd6c45e0fb14ce805c443e52d87e12d4bf66
+    role: model
+    note: API and model-boundary inspection identifies data.molecular. Detailed scientific review remains pending;
+      this hash is not validation.
+  src/exojax/database/hitran/api.py:
+    sha256: 6181d09dd781088ad27839b0450d435b5cc9876cfdbe477a941a42085bd9b8a6
+    role: model
+    note: API and model-boundary inspection identifies data.molecular. Detailed scientific review remains pending;
+      this hash is not validation.
+  src/exojax/database/hminus.py:
+    sha256: a3186088c36871c591ecef232629e0e5a12e2fb50574a400d8f5d93d9e9dff29
+    role: model
+    note: API and model-boundary inspection identifies continuum.hminus. Detailed scientific review remains pending;
+      this hash is not validation.
+  src/exojax/database/kurucz/api.py:
+    sha256: adab8222543d4e700f13a07aa37a780edbbfee61a0c6b47fe750fde024505059
+    role: model
+    note: API and model-boundary inspection identifies data.atomic. Detailed scientific review remains pending;
+      this hash is not validation.
+  src/exojax/database/mie.py:
+    sha256: 6001fe6d5fdfd5a7afa655201bb64373f2cbd430466005efd8bae9a5e2ce4855
+    role: model
+    note: API and model-boundary inspection identifies continuum.mie. Detailed scientific review remains pending;
+      this hash is not validation.
+  src/exojax/database/nist/api.py:
+    sha256: 7b14fb73ef0239618b4e5c20abcaaa3147e0689a5e6cd7f1fc28e7162dc5cf6c
+    role: model
+    note: API and model-boundary inspection identifies data.atomic. Detailed scientific review remains pending;
+      this hash is not validation.
+  src/exojax/database/vald/api.py:
+    sha256: 206c8192e856d22d04e46ef17a7954833e730738fc70eda386efba7960f1beb7
+    role: model
+    note: API and model-boundary inspection identifies data.atomic. Detailed scientific review remains pending;
+      this hash is not validation.
+  src/exojax/opacity/alkali.py:
+    sha256: 99b278e8b682137fb48f57d6512201302e25abfff8f635ef182f22287728e589
+    role: model
+    note: API and model-boundary inspection identifies alkali.subvoigt. Detailed scientific review remains pending;
+      this hash is not validation.
+  src/exojax/opacity/allard.py:
+    sha256: ebbc903a1856ea71aa3706aa2e401d5afd89b2b4bf9d01df2cb096916a156949
+    role: model
+    note: API and model-boundary inspection identifies alkali.allard. Detailed scientific review remains pending;
+      this hash is not validation.
+  src/exojax/opacity/ckd/api.py:
+    sha256: d7e85b4c8eb9e2ba155bcc4e8f969fbd0c781ecf781fb19c3e64c79c5a1dc448
+    role: model
+    note: API and model-boundary inspection identifies ckd.tables. Detailed scientific review remains pending; this
+      hash is not validation.
+  src/exojax/opacity/ckd/core.py:
+    sha256: 8ea03de60c95e4afb1fb22c328ba0bd1d8f3ab804745d5158e265983ea96e3c5
+    role: model
+    note: API and model-boundary inspection identifies ckd.tables. Detailed scientific review remains pending; this
+      hash is not validation.
+  src/exojax/opacity/ckd/mixing.py:
+    sha256: a7bb3052b4c73d61b74cf2602bf79468351a48735befd58a61d3df8ff7a24639
+    role: model
+    note: API and model-boundary inspection identifies ckd.mixing. Detailed scientific review remains pending; this
+      hash is not validation.
+  src/exojax/opacity/diffgrid/api.py:
+    sha256: 8b0bc73aa57ab1c52a781e4b2f0a4a5b2ac972f47ded45c8d0cad384afa128c2
+    role: model
+    note: API and model-boundary inspection identifies opacity.diffgrid. Detailed scientific review remains pending;
+      this hash is not validation.
+  src/exojax/opacity/diffgrid/core.py:
+    sha256: 7c1fcdf2633e8abacd1f9cc0c282430fed877942f6f0a60895bd5ef45709e82e
+    role: model
+    note: API and model-boundary inspection identifies opacity.diffgrid. Detailed scientific review remains pending;
+      this hash is not validation.
+  src/exojax/opacity/lpf/lpf.py:
+    sha256: fd73cc4f6c5d46e25b701d22d93db3c17ce1e7d3e0fdd22584817761f1347a3c
+    role: model
+    note: API and model-boundary inspection identifies opacity.lpf. Detailed scientific review remains pending;
+      this hash is not validation.
+  src/exojax/opacity/modit/api.py:
+    sha256: 4e8cd4f8fa245d7286ee2e0b1f3df3576b0ef32b1b4778c4881dcb82b48f0a49
+    role: model
+    note: API and model-boundary inspection identifies opacity.modit. Detailed scientific review remains pending;
+      this hash is not validation.
+  src/exojax/opacity/modit/modit.py:
+    sha256: d5f3bed1459a952a8ed49c856ca3b0e003513b7b23be5cf2adea4c8f6d9d471b
+    role: model
+    note: API and model-boundary inspection identifies opacity.modit. Detailed scientific review remains pending;
+      this hash is not validation.
+  src/exojax/opacity/opacont.py:
+    sha256: 290361eac4930ad4ed9907f53b11106091ff6bef1d4fe99ed00189bcb6d02951
+    role: model
+    note: API and model-boundary inspection identifies continuum.cia, continuum.hminus, continuum.mie. Detailed
+      scientific review remains pending; this hash is not validation.
+  src/exojax/opacity/premodit/api.py:
+    sha256: e47486ff9d59a5deb1ce61cc51798e371b99674c11fd470e390e35b704bf1259
+    role: model
+    note: API and model-boundary inspection identifies opacity.premodit.order0, opacity.premodit.order1, opacity.premodit.order2.
+      Detailed scientific review remains pending; this hash is not validation.
+  src/exojax/opacity/premodit/premodit.py:
+    sha256: 10c251df4c2725eaf7b9789d174cb073111f04688d36f9981cecd3184b93a516
+    role: model
+    note: API and model-boundary inspection identifies opacity.premodit.order0, opacity.premodit.order1, opacity.premodit.order2.
+      Detailed scientific review remains pending; this hash is not validation.
+  src/exojax/opacity/providers.py:
+    sha256: b7e54590521c7ea137387e1b79cff920f81c0f0f7e038477240cfd981ba91905
+    role: model
+    note: API and model-boundary inspection identifies data.partition_functions. Detailed scientific review remains
+      pending; this hash is not validation.
+  src/exojax/opacity/rayleigh.py:
+    sha256: 706e88517fa1defdc84d1a8df18078b399ed0db506195987eb2fd7f2bb27838f
+    role: model
+    note: API and model-boundary inspection identifies continuum.rayleigh. Detailed scientific review remains pending;
+      this hash is not validation.
+  src/exojax/postproc/binning.py:
+    sha256: bebf70d6c53e621ee8703c6f7dc36b1951ad10d697a4acc83ea49e2e9977b584
+    role: model
+    note: API and model-boundary inspection identifies observation.binning. Detailed scientific review remains pending;
+      this hash is not validation.
+  src/exojax/postproc/ckd.py:
+    sha256: 935aa8710e41f60a4845590a92b8191d9c68f376ddb7023ca2d45789d5c6a2c4
+    role: model
+    note: API and model-boundary inspection identifies ckd.transfer. Detailed scientific review remains pending;
+      this hash is not validation.
+  src/exojax/postproc/limb_darkening.py:
+    sha256: 6b276548fa31d08ac1e0c0b2b52d55876d7e3b59938c044403b36a833c7179ce
+    role: model
+    note: API and model-boundary inspection identifies observation.rotation. Detailed scientific review remains
+      pending; this hash is not validation.
+  src/exojax/postproc/response.py:
+    sha256: 6cf4941286c55091d66b4f26042d5090e0ebf06d22caa00f2ad1538c8dd2692c
+    role: model
+    note: API and model-boundary inspection identifies observation.doppler, observation.gaussian. Detailed scientific
+      review remains pending; this hash is not validation.
+  src/exojax/postproc/spin_rotation.py:
+    sha256: 41d5e99ea31bffa64c18ba43fcdcf2cfc999d385660db132343aab913f2dd447
+    role: model
+    note: API and model-boundary inspection identifies observation.rotation, observation.rotation_transit. Detailed
+      scientific review remains pending; this hash is not validation.
+  src/exojax/rt/chord.py:
+    sha256: af51e8a61ee15bb9d3048c310a7512a188b0a89548ce6c2aefce4d3420490bbd
+    role: model
+    note: API and model-boundary inspection identifies transmission.simpson, transmission.trapezoid. Detailed scientific
+      review remains pending; this hash is not validation.
+  src/exojax/rt/emis.py:
+    sha256: e0668f38f84fc6dd17d3fcfe42e26f7ed7b089edda8b195f75e9d1253e2ae918
+    role: model
+    note: API and model-boundary inspection identifies emission.ibased, emission.ibased_surface, emission.linsap,
+      emission.fbased2st, emission.fbased2st_surface, scattering.emission.lart, scattering.emission.fluxadding,
+      scattering.emission.sfm2st, ckd.transfer. Detailed scientific review remains pending; this hash is not validation.
+  src/exojax/rt/flux.py:
+    sha256: bff589de7053463f86b022c74bd30ff1c2742b56e83fab4b5f4f0808ae8e1b3e
+    role: model
+    note: API and model-boundary inspection identifies absorption.direct_beam, ckd.transfer. Detailed scientific
+      review remains pending; this hash is not validation.
+  src/exojax/rt/layeropacity.py:
+    sha256: f66d17f6a8e418efed567c2a130f4a556735d885f040b009c65c1ca39bff99b8
+    role: model
+    note: API and model-boundary inspection identifies columns.cross_section, columns.extinction, columns.cia. Detailed
+      scientific review remains pending; this hash is not validation.
+  src/exojax/rt/planck.py:
+    sha256: 670a9d66a5bbbcfe2947f92bc55f529270dc802b3ecd73b3e0aba88d4f3fe3b1
+    role: model
+    note: API and model-boundary inspection identifies spectral.planck. Detailed scientific review remains pending;
+      this hash is not validation.
+  src/exojax/rt/reflect.py:
+    sha256: ff96ca3632272fe2a56b665e79f194d75a93d33900d7be6f9dfa9b346ae6cc2e
+    role: model
+    note: API and model-boundary inspection identifies scattering.reflection, absorption.direct_beam. Detailed scientific
+      review remains pending; this hash is not validation.
+  src/exojax/rt/rtransfer.py:
+    sha256: 7e66948b22e81492a0931f7ea5aed2dd7a8f72077be461582af440c7771288fe
+    role: model
+    note: API and model-boundary inspection identifies emission.ibased, emission.ibased_surface, emission.linsap,
+      emission.fbased2st, emission.fbased2st_surface, transmission.simpson, transmission.trapezoid, scattering.emission.lart,
+      scattering.emission.fluxadding, scattering.emission.sfm2st, scattering.reflection. Detailed scientific review
+      remains pending; this hash is not validation.
+  src/exojax/rt/toon.py:
+    sha256: 3010a7416ca86d0f5878e48bf6609a1d8fae5d7d661b1dc358eb02c062e9288a
+    role: model
+    note: API and model-boundary inspection identifies scattering.closure.params_eddington, scattering.closure.params_quadrature,
+      scattering.closure.params_hemispheric_mean. Detailed scientific review remains pending; this hash is not validation.
+  src/exojax/rt/trans.py:
+    sha256: 8c0d51d67e46ebc40703a7f2186d0a98269d87e01f659d0dc65b7c2cf83f18fc
+    role: model
+    note: API and model-boundary inspection identifies transmission.simpson, transmission.trapezoid, ckd.transfer.
+      Detailed scientific review remains pending; this hash is not validation.
+  src/exojax/utils/constants.py:
+    sha256: a2f34c9a4debd0d61b4c2c0e1ef0b269b10f21d972195c6b74cd169d4f0c1b81
+    role: model
+    note: API and model-boundary inspection identifies spectral.constants. Detailed scientific review remains pending;
+      this hash is not validation.
+  src/exojax/__init__.py:
+    sha256: f8bef220648b129cd61146b0df2a0262e1ae82b0a3be3d454b4e26a41dadb303
+    role: support
+    note: Package metadata and version lookup; no scientific model is defined here.
+  src/exojax/opacity/contracts.py:
+    sha256: 0aa8e480293a03e40873a586fb2a96e3662d44a681e799eb6ba94d9a11f24c71
+    role: support
+    note: Python Protocols for partition-function and broadening injection; these are runtime interfaces, not MCEG
+      integration.
+models:
+- id: exojax.spectral.planck
+  description: Blackbody flux per wavenumber with the actual kernel constants. The linked four-relation composition
+    excludes a population closure.
+  review_pending: true
+  bindings:
+  - path: src/exojax/rt/planck.py
+    symbol: piB
+  - path: src/exojax/rt/planck.py
+    symbol: piBarr
+  contracts:
+  - path: mceg/contracts/planck.yaml
+    model_id: exojax.planetlib.adoption
+- id: exojax.spectral.constants
+  description: Mixed historical cgs and astronomical constant conventions. Initial inventory identifies the module,
+    not a uniform reference-standard adoption.
+  review_pending: true
+  bindings:
+  - path: src/exojax/utils/constants.py
+  contracts: []
+- id: exojax.molecular.lte_line_strength
+  description: LTE reference-temperature line strengths and partition-function ratios. Caller-selected line lists
+    and isotope conventions require their own evidence.
+  review_pending: true
+  bindings:
+  - path: src/exojax/database/core/line_strength.py
+    symbol: line_strength
+  - path: src/exojax/database/core/line_strength.py
+    symbol: line_strength_numpy
+  contracts:
+  - path: mceg/contracts/lte_line_opacity.yaml
+    model_id: exojax.lte_line_opacity
+- id: exojax.molecular.doppler_natural_width
+  description: Doppler standard deviation and natural Lorentz half-width; the shared contract does not validate
+    a broadening dataset.
+  review_pending: true
+  bindings:
+  - path: src/exojax/database/core/broadening.py
+    symbol: doppler_sigma
+  - path: src/exojax/database/core/broadening.py
+    symbol: gamma_natural
+  contracts:
+  - path: mceg/contracts/lte_line_opacity.yaml
+    model_id: exojax.lte_line_opacity
+- id: exojax.molecular.exomol_pressure_width
+  description: ExoMol power-law pressure width and supplied broadener parameters; distinct from HITRAN air/self
+    mixing.
+  review_pending: true
+  bindings:
+  - path: src/exojax/database/core/broadening.py
+    symbol: gamma_exomol
+  contracts: []
+- id: exojax.molecular.hitran_pressure_width
+  description: HITRAN air/self pressure broadening with its reference pressure and temperature conventions.
+  review_pending: true
+  bindings:
+  - path: src/exojax/database/core/broadening.py
+    symbol: gamma_hitran
+  contracts: []
+- id: exojax.opacity.lpf
+  description: Direct Voigt line summation. The family contract records the common line law; custom JVPs and implementation
+    error bounds remain separate review targets.
+  review_pending: true
+  bindings:
+  - path: src/exojax/opacity/lpf/lpf.py
+    symbol: voigtone
+  - path: src/exojax/opacity/lpf/lpf.py
+    symbol: xsvector
+  contracts:
+  - path: mceg/contracts/lte_line_opacity.yaml
+    model_id: exojax.lte_line_opacity
+- id: exojax.opacity.modit
+  description: MODIT discretization of the line law on log-wavenumber/broadening grids; FFT support and open/closed-grid
+    variants remain numerical choices.
+  review_pending: true
+  bindings:
+  - path: src/exojax/opacity/modit/api.py
+    symbol: OpaModit
+  - path: src/exojax/opacity/modit/modit.py
+  contracts:
+  - path: mceg/contracts/lte_line_opacity.yaml
+    model_id: exojax.lte_line_opacity
+- id: exojax.opacity.premodit.order0
+  description: PreMODIT line law with retained temperature expansion order 0. Reference temperatures, energy grids
+    and truncation errors require a scoped numerical review.
+  review_pending: true
+  bindings:
+  - path: src/exojax/opacity/premodit/api.py
+    symbol: OpaPremodit
+    settings: &id001
+      diffmode: 0
+  - path: src/exojax/opacity/premodit/premodit.py
+    settings: *id001
+  contracts:
+  - path: mceg/contracts/lte_line_opacity.yaml
+    model_id: exojax.lte_line_opacity
+- id: exojax.opacity.premodit.order1
+  description: PreMODIT line law with retained temperature expansion order 1. Reference temperatures, energy grids
+    and truncation errors require a scoped numerical review.
+  review_pending: true
+  bindings:
+  - path: src/exojax/opacity/premodit/api.py
+    symbol: OpaPremodit
+    settings: &id002
+      diffmode: 1
+  - path: src/exojax/opacity/premodit/premodit.py
+    settings: *id002
+  contracts:
+  - path: mceg/contracts/lte_line_opacity.yaml
+    model_id: exojax.lte_line_opacity
+- id: exojax.opacity.premodit.order2
+  description: PreMODIT line law with retained temperature expansion order 2. Reference temperatures, energy grids
+    and truncation errors require a scoped numerical review.
+  review_pending: true
+  bindings:
+  - path: src/exojax/opacity/premodit/api.py
+    symbol: OpaPremodit
+    settings: &id003
+      diffmode: 2
+  - path: src/exojax/opacity/premodit/premodit.py
+    settings: *id003
+  contracts:
+  - path: mceg/contracts/lte_line_opacity.yaml
+    model_id: exojax.lte_line_opacity
+- id: exojax.opacity.diffgrid
+  description: Teacher-derived log cross-section interpolation and derivative tables. Teacher identity, finite T/P
+    range and interpolation errors are not independent physical validation.
+  review_pending: true
+  bindings:
+  - path: src/exojax/opacity/diffgrid/core.py
+    symbol: interpolate_log_cross_section
+  - path: src/exojax/opacity/diffgrid/api.py
+    symbol: OpaDiffgrid
+  contracts: []
+- id: exojax.columns.cross_section
+  description: Dimensionless layer optical depth from per-absorber cross section and number column, with explicit
+    layer/spectral axes.
+  review_pending: true
+  bindings:
+  - path: src/exojax/rt/layeropacity.py
+    symbol: layer_optical_depth_from_cross_section
+  - path: src/exojax/rt/layeropacity.py
+    symbol: layer_optical_depth
+  contracts:
+  - path: mceg/contracts/atmospheric_columns.yaml
+    model_id: exojax.atmospheric_columns
+- id: exojax.columns.extinction
+  description: Geometric optical depth from inverse-length extinction and path length; signed extinction and caller
+    domains remain explicit.
+  review_pending: true
+  bindings:
+  - path: src/exojax/rt/layeropacity.py
+    symbol: layer_optical_depth_from_extinction
+  contracts:
+  - path: mceg/contracts/atmospheric_columns.yaml
+    model_id: exojax.atmospheric_columns
+- id: exojax.columns.cia
+  description: CIA number-pair column convention with cm5 coefficients and no extra identical-partner factor. This
+    contract does not adopt a CIA coefficient table.
+  review_pending: true
+  bindings:
+  - path: src/exojax/rt/layeropacity.py
+    symbol: layer_optical_depth_from_log_cia
+  contracts:
+  - path: mceg/contracts/atmospheric_columns.yaml
+    model_id: exojax.atmospheric_columns
+- id: exojax.atmosphere.hydrostatic
+  description: Pressure-to-radius hydrostatic profiles with supplied mass density or ideal-gas closure, neglecting
+    atmospheric self-gravity.
+  review_pending: true
+  bindings:
+  - path: src/exojax/atm/atmprof.py
+    symbol: hydrostatic_radius_profile
+  - path: src/exojax/atm/atmprof.py
+    symbol: hydrostatic_radius_profile_ideal_gas
+  - path: src/exojax/atm/idealgas.py
+    symbol: number_density
+  contracts:
+  - path: mceg/contracts/atmospheric_columns.yaml
+    model_id: exojax.atmospheric_columns
+- id: exojax.atmosphere.mixing_ratios
+  description: Mass and volume mixing-ratio conversions with explicit component and mean molecular masses.
+  review_pending: true
+  bindings:
+  - path: src/exojax/atm/atmconvert.py
+    symbol: mmr_to_vmr
+  - path: src/exojax/atm/atmconvert.py
+    symbol: vmr_to_mmr
+  contracts:
+  - path: mceg/contracts/atmospheric_columns.yaml
+    model_id: exojax.atmospheric_columns
+- id: exojax.emission.ibased
+  description: Piecewise-constant source with angular quadrature. The linked contract selects the continuous absorption
+    law and explicit source/flux conventions, not an all-scheme equivalence assertion.
+  review_pending: true
+  bindings:
+  - path: src/exojax/rt/rtransfer.py
+    symbol: rtrun_emis_pureabs_ibased
+  - path: src/exojax/rt/emis.py
+    symbol: ArtEmisPure
+  contracts:
+  - path: mceg/contracts/thermal_emission.yaml
+    model_id: exojax.thermal_emission
+- id: exojax.emission.ibased_surface
+  description: Piecewise-constant source with a supplied lower surface. The linked contract selects the continuous
+    absorption law and explicit source/flux conventions, not an all-scheme equivalence assertion.
+  review_pending: true
+  bindings:
+  - path: src/exojax/rt/rtransfer.py
+    symbol: rtrun_emis_pureabs_ibased_intensity_surface
+  - path: src/exojax/rt/emis.py
+    symbol: ArtEmisPure
+  contracts:
+  - path: mceg/contracts/thermal_emission.yaml
+    model_id: exojax.thermal_emission
+- id: exojax.emission.linsap
+  description: Piecewise-linear source with angular quadrature. The linked contract selects the continuous absorption
+    law and explicit source/flux conventions, not an all-scheme equivalence assertion.
+  review_pending: true
+  bindings:
+  - path: src/exojax/rt/rtransfer.py
+    symbol: rtrun_emis_pureabs_ibased_linsap
+  - path: src/exojax/rt/emis.py
+    symbol: ArtEmisPure
+  contracts:
+  - path: mceg/contracts/thermal_emission.yaml
+    model_id: exojax.thermal_emission
+- id: exojax.emission.fbased2st
+  description: Flux-based pure absorption using the 2E3 transmission function. The linked contract selects the continuous
+    absorption law and explicit source/flux conventions, not an all-scheme equivalence assertion.
+  review_pending: true
+  bindings:
+  - path: src/exojax/rt/rtransfer.py
+    symbol: rtrun_emis_pureabs_fbased2st
+  - path: src/exojax/rt/emis.py
+    symbol: ArtEmisPure
+  contracts:
+  - path: mceg/contracts/thermal_emission.yaml
+    model_id: exojax.thermal_emission
+- id: exojax.emission.fbased2st_surface
+  description: Flux-based pure absorption with a supplied surface. The linked contract selects the continuous absorption
+    law and explicit source/flux conventions, not an all-scheme equivalence assertion.
+  review_pending: true
+  bindings:
+  - path: src/exojax/rt/rtransfer.py
+    symbol: rtrun_emis_pureabs_fbased2st_surface
+  - path: src/exojax/rt/emis.py
+    symbol: ArtEmisPure
+  contracts:
+  - path: mceg/contracts/thermal_emission.yaml
+    model_id: exojax.thermal_emission
+- id: exojax.transmission.simpson
+  description: Spherical pure-absorption transit with simpson area integration. ArtTransPure returns squared radius
+    normalized by the bottom radius, not stellar-normalized transit depth.
+  review_pending: true
+  bindings:
+  - path: src/exojax/rt/trans.py
+    symbol: ArtTransPure.run
+    settings: &id004
+      integration: simpson
+  - path: src/exojax/rt/chord.py
+    symbol: chord_optical_depth
+    settings: *id004
+  - path: src/exojax/rt/rtransfer.py
+    symbol: rtrun_trans_pureabs_simpson
+    settings: *id004
+  contracts:
+  - path: mceg/contracts/transmission.yaml
+    model_id: exojax.transmission
+- id: exojax.transmission.trapezoid
+  description: Spherical pure-absorption transit with trapezoid area integration. ArtTransPure returns squared radius
+    normalized by the bottom radius, not stellar-normalized transit depth.
+  review_pending: true
+  bindings:
+  - path: src/exojax/rt/trans.py
+    symbol: ArtTransPure.run
+    settings: &id005
+      integration: trapezoid
+  - path: src/exojax/rt/chord.py
+    symbol: chord_optical_depth
+    settings: *id005
+  - path: src/exojax/rt/rtransfer.py
+    symbol: rtrun_trans_pureabs_trapezoid
+    settings: *id005
+  contracts:
+  - path: mceg/contracts/transmission.yaml
+    model_id: exojax.transmission
+- id: exojax.observation.doppler
+  description: Nonrelativistic RV sampling of an existing spectrum, with RV in km/s and explicit edge interpolation
+    behavior.
+  review_pending: true
+  bindings:
+  - path: src/exojax/postproc/response.py
+    symbol: sampling
+  contracts:
+  - path: mceg/contracts/spectral_observation.yaml
+    model_id: exojax.spectral_observation
+- id: exojax.observation.gaussian
+  description: Normalized discrete Gaussian instrumental broadening; direct and overlap-add implementations have
+    finite-grid edge effects.
+  review_pending: true
+  bindings:
+  - path: src/exojax/postproc/response.py
+    symbol: ipgauss
+  - path: src/exojax/postproc/response.py
+    symbol: ipgauss_ola
+  contracts:
+  - path: mceg/contracts/spectral_observation.yaml
+    model_id: exojax.spectral_observation
+- id: exojax.observation.rotation
+  description: Rigid rotational broadening with a quadratic limb-darkening prescription; interpolation and finite
+    kernel support need separate numerical scope.
+  review_pending: true
+  bindings:
+  - path: src/exojax/postproc/spin_rotation.py
+    symbol: rotkernel
+  - path: src/exojax/postproc/spin_rotation.py
+    symbol: convolve_rigid_rotation
+  - path: src/exojax/postproc/limb_darkening.py
+    symbol: ld_kipping
+  contracts:
+  - path: mceg/contracts/spectral_observation.yaml
+    model_id: exojax.spectral_observation
+- id: exojax.observation.rotation_transit
+  description: Transit-specific rotational kernels and weighted velocity shifts; not the full-disk rotational relation.
+  review_pending: true
+  bindings:
+  - path: src/exojax/postproc/spin_rotation.py
+    symbol: integrated_rotkernel_trans
+  - path: src/exojax/postproc/spin_rotation.py
+    symbol: apply_weighted_rv_shifts
+  contracts: []
+- id: exojax.observation.binning
+  description: Piecewise-linear top-hat averages and overlap averages of band means are distinct representations
+    of spectral data.
+  review_pending: true
+  bindings:
+  - path: src/exojax/postproc/binning.py
+    symbol: piecewise_linear_bin_operator
+  - path: src/exojax/postproc/binning.py
+    symbol: band_mean_bin_operator
+  contracts: []
+- id: exojax.continuum.cia
+  description: Temperature interpolation of tabulated collision-induced absorption. Coefficient provenance, pair
+    conventions and fit domains need detailed contracts.
+  review_pending: true
+  bindings:
+  - path: src/exojax/database/core/abscoeff.py
+    symbol: interp_logacia_matrix
+  - path: src/exojax/opacity/opacont.py
+    symbol: OpaCIA
+  contracts: []
+- id: exojax.continuum.hminus
+  description: Bound-free and free-free H-minus absorption with different wavelength/temperature branches and supplied
+    electron/neutral densities.
+  review_pending: true
+  bindings:
+  - path: src/exojax/database/hminus.py
+    symbol: bound_free_absorption
+  - path: src/exojax/database/hminus.py
+    symbol: free_free_absorption
+  - path: src/exojax/opacity/opacont.py
+    symbol: OpaHminus
+  contracts: []
+- id: exojax.continuum.rayleigh
+  description: Rayleigh scattering from gas polarizability or refractive index; composition and optical constants
+    remain supplied data.
+  review_pending: true
+  bindings:
+  - path: src/exojax/opacity/rayleigh.py
+    symbol: xsvector_rayleigh_gas
+  - path: src/exojax/opacity/rayleigh.py
+    symbol: xsvector_rayleigh_gas_from_refractive_index
+  contracts: []
+- id: exojax.continuum.mie
+  description: Lognormal particle distribution and Mie optical-property tables; refractive-index dataset and size
+    assumptions need explicit adoption.
+  review_pending: true
+  bindings:
+  - path: src/exojax/database/mie.py
+    symbol: mie_lognormal
+  - path: src/exojax/opacity/opacont.py
+    symbol: OpaMie
+  contracts: []
+- id: exojax.alkali.subvoigt
+  description: Parameterized sub-Voigt alkali far wings, distinct from tabulated Allard density expansions.
+  review_pending: true
+  bindings:
+  - path: src/exojax/opacity/alkali.py
+    symbol: subvoigt
+  contracts: []
+- id: exojax.alkali.allard
+  description: Tabulated Allard wings joined to an impact core, retaining signed density-expansion coefficients
+    and selected source data.
+  review_pending: true
+  bindings:
+  - path: src/exojax/opacity/allard.py
+    symbol: OpaAlkaliTable
+  - path: src/exojax/opacity/allard.py
+    symbol: density_expansion
+  contracts: []
+- id: exojax.atomic.lte_lines
+  description: Atomic LTE line strengths, ionization and partition-function conventions. Per-species datasets and
+    populations are not covered by the molecular contract.
+  review_pending: true
+  bindings:
+  - path: src/exojax/database/core_atom/line_strength.py
+    symbol: line_strength_atom
+  - path: src/exojax/database/core_atom/line_parameters.py
+    symbol: line_parameters
+  - path: src/exojax/database/core_atom/pf.py
+    symbol: qr_interp_lines
+  contracts: []
+- id: exojax.atomic.broadening.gamma_vald3
+  description: Selected atomic broadening prescription gamma_vald3; neutral perturbers, damping sources and applicability
+    require separate review.
+  review_pending: true
+  bindings:
+  - path: src/exojax/database/core_atom/broadening.py
+    symbol: gamma_vald3
+  contracts: []
+- id: exojax.atomic.broadening.gamma_uns
+  description: Selected atomic broadening prescription gamma_uns; neutral perturbers, damping sources and applicability
+    require separate review.
+  review_pending: true
+  bindings:
+  - path: src/exojax/database/core_atom/broadening.py
+    symbol: gamma_uns
+  contracts: []
+- id: exojax.atomic.broadening.gamma_KA3
+  description: Selected atomic broadening prescription gamma_KA3; neutral perturbers, damping sources and applicability
+    require separate review.
+  review_pending: true
+  bindings:
+  - path: src/exojax/database/core_atom/broadening.py
+    symbol: gamma_KA3
+  contracts: []
+- id: exojax.atomic.broadening.gamma_KA4
+  description: Selected atomic broadening prescription gamma_KA4; neutral perturbers, damping sources and applicability
+    require separate review.
+  review_pending: true
+  bindings:
+  - path: src/exojax/database/core_atom/broadening.py
+    symbol: gamma_KA4
+  contracts: []
+- id: exojax.atomic.broadening.gamma_KA3s
+  description: Selected atomic broadening prescription gamma_KA3s; neutral perturbers, damping sources and applicability
+    require separate review.
+  review_pending: true
+  bindings:
+  - path: src/exojax/database/core_atom/broadening.py
+    symbol: gamma_KA3s
+  contracts: []
+- id: exojax.data.molecular
+  description: Source selection, isotope/species identity, units and filtering for molecular databases. This family
+    entry does not enumerate every dataset or establish source accuracy.
+  review_pending: true
+  bindings:
+  - path: src/exojax/database/exomol/api.py
+    symbol: MdbExomol
+  - path: src/exojax/database/hitran/api.py
+    symbol: MdbHitran
+  - path: src/exojax/database/hitemp/api.py
+    symbol: MdbHitemp
+  contracts: []
+- id: exojax.data.atomic
+  description: Source selection, isotope/species identity, units and filtering for atomic databases. This family
+    entry does not enumerate every dataset or establish source accuracy.
+  review_pending: true
+  bindings:
+  - path: src/exojax/database/vald/api.py
+    symbol: AdbVald
+  - path: src/exojax/database/kurucz/api.py
+    symbol: AdbKurucz
+  - path: src/exojax/database/nist/api.py
+    symbol: AdbNist
+  - path: src/exojax/database/exoatom/api.py
+    symbol: AdbExoAtom
+  contracts: []
+- id: exojax.data.partition_functions
+  description: Partition-function interpolation and provider-specific isotope conventions; extrapolation and reference
+    temperatures need per-dataset review.
+  review_pending: true
+  bindings:
+  - path: src/exojax/database/_common/partition_function.py
+    symbol: qr_interp
+  - path: src/exojax/database/exomol/partition_function.py
+    symbol: qr_interp
+  - path: src/exojax/opacity/providers.py
+    symbol: ExomolPartitionProvider
+  - path: src/exojax/opacity/providers.py
+    symbol: HitranPartitionProvider
+  contracts: []
+- id: exojax.scattering.closure.params_eddington
+  description: Two-stream closure params_eddington with its own angular assumptions; closure choice is distinct
+    from the numerical linear solver.
+  review_pending: true
+  bindings:
+  - path: src/exojax/rt/toon.py
+    symbol: params_eddington
+  contracts: []
+- id: exojax.scattering.closure.params_quadrature
+  description: Two-stream closure params_quadrature with its own angular assumptions; closure choice is distinct
+    from the numerical linear solver.
+  review_pending: true
+  bindings:
+  - path: src/exojax/rt/toon.py
+    symbol: params_quadrature
+  contracts: []
+- id: exojax.scattering.closure.params_hemispheric_mean
+  description: Two-stream closure params_hemispheric_mean with its own angular assumptions; closure choice is distinct
+    from the numerical linear solver.
+  review_pending: true
+  bindings:
+  - path: src/exojax/rt/toon.py
+    symbol: params_hemispheric_mean
+  contracts: []
+- id: exojax.scattering.emission.lart
+  description: Thermal scattering with Toon hemispheric-mean coefficients using lart. Surface branches and scattering
+    limits require detailed follow-up.
+  review_pending: true
+  bindings:
+  - path: src/exojax/rt/rtransfer.py
+    symbol: rtrun_emis_scat_lart_toonhm
+  - path: src/exojax/rt/emis.py
+    symbol: ArtEmisScat
+  contracts: []
+- id: exojax.scattering.emission.fluxadding
+  description: Thermal scattering with Toon hemispheric-mean coefficients using fluxadding. Surface branches and
+    scattering limits require detailed follow-up.
+  review_pending: true
+  bindings:
+  - path: src/exojax/rt/rtransfer.py
+    symbol: rtrun_emis_scat_fluxadding_toonhm
+  - path: src/exojax/rt/emis.py
+    symbol: ArtEmisScat
+  contracts: []
+- id: exojax.scattering.emission.sfm2st
+  description: Thermal scattering with Toon hemispheric-mean coefficients using sfm2st. Surface branches and scattering
+    limits require detailed follow-up.
+  review_pending: true
+  bindings:
+  - path: src/exojax/rt/rtransfer.py
+    symbol: rtrun_emis_scat_sfm2st_toonhm
+  - path: src/exojax/rt/emis.py
+    symbol: ArtEmisScat
+  contracts: []
+- id: exojax.scattering.reflection
+  description: Diffuse/direct reflected spectra with selected surface boundaries and hemispheric-mean closure; emitted
+    and reflected source terms remain distinct.
+  review_pending: true
+  bindings:
+  - path: src/exojax/rt/reflect.py
+    symbol: ArtReflectPure
+  - path: src/exojax/rt/reflect.py
+    symbol: ArtReflectEmis
+  - path: src/exojax/rt/rtransfer.py
+    symbol: rtrun_reflect_sfm2st_direct
+  contracts: []
+- id: exojax.absorption.direct_beam
+  description: External pure-absorption attenuation through full or partial layers, with incoming and outgoing ray
+    cosines.
+  review_pending: true
+  bindings:
+  - path: src/exojax/rt/reflect.py
+    symbol: ArtAbsPure
+  - path: src/exojax/rt/flux.py
+    symbol: direct_beam_fluxes
+  contracts: []
+- id: exojax.ckd.tables
+  description: Correlated-k ordering, g quadrature and T/P interpolation. Reference line law, spectral bands and
+    floors belong to table identity.
+  review_pending: true
+  bindings:
+  - path: src/exojax/opacity/ckd/core.py
+    symbol: compute_ckd_from_xsv
+  - path: src/exojax/opacity/ckd/core.py
+    symbol: interpolate_log_k_2d
+  - path: src/exojax/opacity/ckd/api.py
+    symbol: OpaCKD
+  contracts: []
+- id: exojax.ckd.mixing
+  description: Random-overlap resorting/rebinning mixture of correlated-k tables; composition and table compatibility
+    are part of the model choice.
+  review_pending: true
+  bindings:
+  - path: src/exojax/opacity/ckd/mixing.py
+    symbol: mix_ckd_rorr
+  contracts: []
+- id: exojax.ckd.transfer
+  description: Integration over g ordinates and finite bands, including emission/transit/reflection consumers. Common
+    weights do not establish joint spectral correlation.
+  review_pending: true
+  bindings:
+  - path: src/exojax/rt/flux.py
+    symbol: integrate_ckd_flux
+  - path: src/exojax/rt/emis.py
+    symbol: ArtEmisPure.run_ckd
+  - path: src/exojax/rt/trans.py
+    symbol: ArtTransPure.run_ckd
+  - path: src/exojax/postproc/ckd.py
+    symbol: sample_ckd_bands_at_wavelengths
+  contracts: []
+- id: exojax.rce.host
+  description: Radiative-convective balance using a caller-supplied radiation model, neutral gradient and domain;
+    host solver convergence does not validate these supplied physics.
+  review_pending: true
+  bindings:
+  - path: src/exojax/atm/rce.py
+    symbol: solve_rce
+  contracts: []
+- id: exojax.rce.device
+  description: Radiative-convective balance using a caller-supplied radiation model, neutral gradient and domain;
+    device solver convergence does not validate these supplied physics.
+  review_pending: true
+  bindings:
+  - path: src/exojax/atm/rce_device.py
+    symbol: make_device_rce_solver
+  contracts: []
+- id: exojax.rce.derivative.host
+  description: Local implicit sensitivities on an accepted fixed convective active set; not a derivative across
+    phase/active-set changes.
+  review_pending: true
+  bindings:
+  - path: src/exojax/atm/rce_implicit.py
+    symbol: make_implicit_rce_solver
+  contracts: []
+- id: exojax.rce.derivative.device
+  description: Local implicit sensitivities on an accepted fixed convective active set; not a derivative across
+    phase/active-set changes.
+  review_pending: true
+  bindings:
+  - path: src/exojax/atm/rce_device_implicit.py
+    symbol: make_device_implicit_rce_solver
+  contracts: []
+- id: exojax.rce.likelihood_adapter
+  description: Numerical and derivative admission for a caller-defined RCE likelihood/prior. The statistical model
+    and observational adoption remain study-owned.
+  review_pending: true
+  bindings:
+  - path: src/exojax/atm/rce_device_implicit.py
+    symbol: make_rce_log_prob
+  contracts: []
+- id: exojax.clouds.microphysics
+  description: Ackerman-Marley cloud profiles, particle radii and settling prescriptions. Internal material and
+    turbulence choices are not exhaustively enumerated in this initial inventory.
+  review_pending: true
+  bindings:
+  - path: src/exojax/atm/amclouds.py
+    symbol: mixing_ratio_cloud_profile
+  - path: src/exojax/atm/atmphys.py
+    symbol: AmpAmcloud
+  - path: src/exojax/atm/vterm.py
+    symbol: terminal_velocity
+  - path: src/exojax/atm/viscosity.py
+    symbol: eta_Rosner
+  contracts: []
+- id: exojax.clouds.condensation
+  description: Material-dependent saturation-pressure and condensate-density laws; water ice/liquid and iron solid/liquid
+    branches remain distinct review targets.
+  review_pending: true
+  bindings:
+  - path: src/exojax/atm/psat.py
+  - path: src/exojax/atm/condensate.py
+    symbol: condensate_density_liquid_ammonia
+  contracts: []
+- id: exojax.temperature.powerlaw
+  description: Prescribed powerlaw temperature-pressure profile; parameters and boundaries are supplied rather than
+    inferred from a complete planetary energy balance.
+  review_pending: true
+  bindings:
+  - path: src/exojax/atm/atmprof.py
+    symbol: atmprof_powerlow
+  contracts: []
+- id: exojax.temperature.gray
+  description: Prescribed gray temperature-pressure profile; parameters and boundaries are supplied rather than
+    inferred from a complete planetary energy balance.
+  review_pending: true
+  bindings:
+  - path: src/exojax/atm/atmprof.py
+    symbol: atmprof_gray
+  contracts: []
+- id: exojax.temperature.guillot
+  description: Prescribed guillot temperature-pressure profile; parameters and boundaries are supplied rather than
+    inferred from a complete planetary energy balance.
+  review_pending: true
+  bindings:
+  - path: src/exojax/atm/atmprof.py
+    symbol: atmprof_Guillot
+  contracts: []

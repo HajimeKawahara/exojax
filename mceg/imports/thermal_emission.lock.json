@@ -1,0 +1,14 @@
+{
+  "format": "planetlib.imports.v1",
+  "imports": [
+    {
+      "path": "catalog/radiation/pure_absorption.yaml",
+      "sha256": "21ef7dc68d80d11d7cfd78b5aac9dcd8f851cd518a649e7e0b9f338988df6dcc",
+      "model": {
+        "id": "planetlib.radiation.pure_absorption.model",
+        "revision": "1",
+        "sha256": "9bb0f9253e3a17106fcfc047fe4707c00f6884a410a6d740d07d3a5b213aae94"
+      }
+    }
+  ]
+}

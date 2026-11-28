@@ -1,0 +1,28 @@
+{
+  "format": "exojax.initial_mceg_counterexample.v1",
+  "started_at": "2026-11-28T02:33:19.421456+00:00",
+  "finished_at": "2026-11-28T02:33:21.871951+00:00",
+  "command": [
+    "/home/kawahara/miniconda3/bin/python",
+    "-m",
+    "pytest",
+    "-q",
+    "--runxfail",
+    "tests/model_contracts/test_core_models.py::test_odd_length_convolution_preserves_shape",
+    "--junitxml=mceg/evidence/initial_review/odd_length_failure.xml"
+  ],
+  "cwd": "/tmp/exojax-planetlib",
+  "returncode": 1,
+  "nodeid": "tests/model_contracts/test_core_models.py::test_odd_length_convolution_preserves_shape",
+  "result": "failed",
+  "failure": "@pytest.mark.xfail(strict=True, reason=\"convolve_same omits irfft length for odd total FFT length; tracked in the spectral observation FollowUp\")\n    def test_odd_length_convolution_preserves_shape():\n        spectrum = jnp.zeros(41).at[20].set(1.)\n        actual = ipgauss(spectrum, jnp.arange(-6., 7.), 1.3)\n>       assert actual.shape == spectrum.shape\nE       assert (40,) == (41,)\nE         \nE         At index 0 diff: 40 != 41\nE         Use -v to get more diff\n\n/tmp/exojax-planetlib/tests/model_contracts/test_core_models.py:375: AssertionError",
+  "environment_manifest": {
+    "source": "mceg/evidence/initial_review/receipt.json",
+    "sha256": "486009c644a4e4b976826f8c7985c06f20b50dc9192d207de3fbca856fa48658"
+  },
+  "artifacts": {
+    "mceg/evidence/initial_review/odd_length_failure.log": "1d7d82debb80c984b339e994d17cdf3fcac49a3bc9875f3f03e611049ce4c93b",
+    "mceg/evidence/initial_review/odd_length_failure.xml": "03c28d299c4ab09eb7d7743e4af46b22f997559ccb8ab2a71ea9172f598c3743"
+  },
+  "interpretation": "The existing strict expected-failure marker was disabled by pytest --runxfail, without changing any test or source bytes. This is a failed numerical shape-preservation assertion, separately reviewed as a counterexample; the positive run excludes it from supported samples."
+}

@@ -1,0 +1,14 @@
+{
+  "format": "planetlib.imports.v1",
+  "imports": [
+    {
+      "path": "catalog/atmosphere/columns.yaml",
+      "sha256": "c3376179ee25ad622f1b38d721cfc8b052f6f0dfb08c1edae294b0cc1c57b9e7",
+      "model": {
+        "id": "planetlib.atmosphere.columns.model",
+        "revision": "1",
+        "sha256": "909de66814d8be1ef9274aa838639f2f24be1a863920d0207f43f56e3eaef1ee"
+      }
+    }
+  ]
+}
