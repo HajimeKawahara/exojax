@@ -1,0 +1,4 @@
+................x...........................                             [100%]
+=========================== short test summary info ============================
+XFAIL tests/model_contracts/test_core_models.py::test_odd_length_convolution_preserves_shape - convolve_same omits irfft length for odd total FFT length; tracked in the spectral observation FollowUp
+43 passed, 1 xfailed in 18.40s

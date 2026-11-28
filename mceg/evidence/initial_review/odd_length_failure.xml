@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="1" skipped="0" tests="1" time="1.116" timestamp="2026-11-28T11:33:20.404801+09:00" hostname="ricefish"><testcase classname="tests.model_contracts.test_core_models" name="test_odd_length_convolution_preserves_shape" time="0.108"><failure message="assert (40,) == (41,)&#10;  &#10;  At index 0 diff: 40 != 41&#10;  Use -v to get more diff">@pytest.mark.xfail(strict=True, reason="convolve_same omits irfft length for odd total FFT length; tracked in the spectral observation FollowUp")
+    def test_odd_length_convolution_preserves_shape():
+        spectrum = jnp.zeros(41).at[20].set(1.)
+        actual = ipgauss(spectrum, jnp.arange(-6., 7.), 1.3)
+&gt;       assert actual.shape == spectrum.shape
+E       assert (40,) == (41,)
+E         
+E         At index 0 diff: 40 != 41
+E         Use -v to get more diff
+
+/tmp/exojax-planetlib/tests/model_contracts/test_core_models.py:375: AssertionError</failure></testcase></testsuite></testsuites>

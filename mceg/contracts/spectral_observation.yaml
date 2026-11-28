@@ -1,0 +1,1556 @@
+schema_version: '0.6'
+model:
+  id: exojax.spectral_observation
+  name: Spectral convolution, rotation and Doppler sampling
+  description: Provider-owned conventions and bounded review scope for shared Planetlib
+    definitions.
+  implementation:
+    repository: https://github.com/HajimeKawahara/exojax
+    revision: 38cb2e44f153ad6d729e3253e235702de52920cf
+    entry_points:
+    - src/exojax/postproc/response.py:ipgauss
+    - src/exojax/postproc/response.py:sampling
+    - src/exojax/postproc/spin_rotation.py:rotkernel
+    - src/exojax/postproc/spin_rotation.py:convolve_rigid_rotation
+assumptions:
+- statement: Velocity coordinates, beta, vsini, RV and c use km/s. response.sampling
+    evaluates the input at w_obs*(1+RV/c), a nonrelativistic convention with this
+    explicit positive-RV sign. Continuous Gaussian and rigid-rotation kernels are
+    normalized in the shared definitions; the provider samples a finite window and
+    renormalizes its discrete sum. Rotation adopts quadratic limb darkening 1-u1*(1-mu)-u2*(1-mu)^2
+    and support |v|<=vsini. Convolution uses finite-array edge handling and interpolation
+    follows the provider grid; these are not continuous-infinite-domain identities.
+    Passing convolution samples use even-length spectra and odd-length kernels. For
+    the shared convolution binding only, F0 and F_out denote dimensionless continuum-normalized
+    spectra. The provider also accepts other flux units; that broader numerical use
+    is outside the shared convolution quantity declaration.
+  evidence:
+  - exojax.spectral_observation.source
+domains:
+- kind: scientific_applicability
+  status: unknown
+  description: Application to a particular atmosphere or observation needs independent
+    validation.
+  conditions: []
+  evidence:
+  - exojax.spectral_observation.source
+claims:
+- id: exojax.spectral_observation.source_correspondence
+  revision: '1'
+  statement: The declared provider subset represents the selected shared relations
+    under the stated conventions.
+  kind: theoretical
+  scope: Velocity coordinates, beta, vsini, RV and c use km/s. response.sampling evaluates
+    the input at w_obs*(1+RV/c), a nonrelativistic convention with this explicit positive-RV
+    sign. Continuous Gaussian and rigid-rotation kernels are normalized in the shared
+    definitions; the provider samples a finite window and renormalizes its discrete
+    sum. Rotation adopts quadratic limb darkening 1-u1*(1-mu)-u2*(1-mu)^2 and support
+    |v|<=vsini. Convolution uses finite-array edge handling and interpolation follows
+    the provider grid; these are not continuous-infinite-domain identities. Passing
+    convolution samples use even-length spectra and odd-length kernels. For the shared
+    convolution binding only, F0 and F_out denote dimensionless continuum-normalized
+    spectra. The provider also accepts other flux units; that broader numerical use
+    is outside the shared convolution quantity declaration.
+  equations:
+  - id: planetlib.spectroscopy.observation.gaussian_kernel
+    revision: '1'
+  - id: planetlib.spectroscopy.observation.doppler_sampling
+    revision: '1'
+  - id: planetlib.spectroscopy.observation.limb_darkening
+    revision: '1'
+  - id: planetlib.spectroscopy.observation.rotation_raw
+    revision: '1'
+  - id: planetlib.spectroscopy.observation.rotation_normalized
+    revision: '1'
+  - id: planetlib.spectroscopy.observation.convolution
+    revision: '1'
+  mathematical_models:
+  - id: planetlib.spectroscopy.observation.model
+    revision: '1'
+- id: exojax.spectral_observation.numerical_domain
+  revision: '1'
+  statement: The selected algorithms approximate the shared relations throughout a
+    documented numerical domain.
+  kind: numerical_verification
+  scope: Velocity coordinates, beta, vsini, RV and c use km/s. response.sampling evaluates
+    the input at w_obs*(1+RV/c), a nonrelativistic convention with this explicit positive-RV
+    sign. Continuous Gaussian and rigid-rotation kernels are normalized in the shared
+    definitions; the provider samples a finite window and renormalizes its discrete
+    sum. Rotation adopts quadratic limb darkening 1-u1*(1-mu)-u2*(1-mu)^2 and support
+    |v|<=vsini. Convolution uses finite-array edge handling and interpolation follows
+    the provider grid; these are not continuous-infinite-domain identities. Passing
+    convolution samples use even-length spectra and odd-length kernels. For the shared
+    convolution binding only, F0 and F_out denote dimensionless continuum-normalized
+    spectra. The provider also accepts other flux units; that broader numerical use
+    is outside the shared convolution quantity declaration.
+  equations:
+  - id: planetlib.spectroscopy.observation.gaussian_kernel
+    revision: '1'
+  - id: planetlib.spectroscopy.observation.doppler_sampling
+    revision: '1'
+  - id: planetlib.spectroscopy.observation.limb_darkening
+    revision: '1'
+  - id: planetlib.spectroscopy.observation.rotation_raw
+    revision: '1'
+  - id: planetlib.spectroscopy.observation.rotation_normalized
+    revision: '1'
+  - id: planetlib.spectroscopy.observation.convolution
+    revision: '1'
+  mathematical_models:
+  - id: planetlib.spectroscopy.observation.model
+    revision: '1'
+- id: exojax.spectral_observation.derivative_domain
+  revision: '1'
+  statement: Provider derivatives represent the selected relations throughout a documented
+    differentiable domain.
+  kind: numerical_verification
+  scope: Velocity coordinates, beta, vsini, RV and c use km/s. response.sampling evaluates
+    the input at w_obs*(1+RV/c), a nonrelativistic convention with this explicit positive-RV
+    sign. Continuous Gaussian and rigid-rotation kernels are normalized in the shared
+    definitions; the provider samples a finite window and renormalizes its discrete
+    sum. Rotation adopts quadratic limb darkening 1-u1*(1-mu)-u2*(1-mu)^2 and support
+    |v|<=vsini. Convolution uses finite-array edge handling and interpolation follows
+    the provider grid; these are not continuous-infinite-domain identities. Passing
+    convolution samples use even-length spectra and odd-length kernels. For the shared
+    convolution binding only, F0 and F_out denote dimensionless continuum-normalized
+    spectra. The provider also accepts other flux units; that broader numerical use
+    is outside the shared convolution quantity declaration.
+  equations:
+  - id: planetlib.spectroscopy.observation.gaussian_kernel
+    revision: '1'
+  - id: planetlib.spectroscopy.observation.doppler_sampling
+    revision: '1'
+  - id: planetlib.spectroscopy.observation.limb_darkening
+    revision: '1'
+  - id: planetlib.spectroscopy.observation.rotation_raw
+    revision: '1'
+  - id: planetlib.spectroscopy.observation.rotation_normalized
+    revision: '1'
+  - id: planetlib.spectroscopy.observation.convolution
+    revision: '1'
+  mathematical_models:
+  - id: planetlib.spectroscopy.observation.model
+    revision: '1'
+- id: exojax.spectral_observation.applicability
+  revision: '1'
+  statement: The selected assumptions apply to the intended atmospheric or observational
+    conditions.
+  kind: physical_validation
+  scope: Velocity coordinates, beta, vsini, RV and c use km/s. response.sampling evaluates
+    the input at w_obs*(1+RV/c), a nonrelativistic convention with this explicit positive-RV
+    sign. Continuous Gaussian and rigid-rotation kernels are normalized in the shared
+    definitions; the provider samples a finite window and renormalizes its discrete
+    sum. Rotation adopts quadratic limb darkening 1-u1*(1-mu)-u2*(1-mu)^2 and support
+    |v|<=vsini. Convolution uses finite-array edge handling and interpolation follows
+    the provider grid; these are not continuous-infinite-domain identities. Passing
+    convolution samples use even-length spectra and odd-length kernels. For the shared
+    convolution binding only, F0 and F_out denote dimensionless continuum-normalized
+    spectra. The provider also accepts other flux units; that broader numerical use
+    is outside the shared convolution quantity declaration.
+  equations:
+  - id: planetlib.spectroscopy.observation.gaussian_kernel
+    revision: '1'
+  - id: planetlib.spectroscopy.observation.doppler_sampling
+    revision: '1'
+  - id: planetlib.spectroscopy.observation.limb_darkening
+    revision: '1'
+  - id: planetlib.spectroscopy.observation.rotation_raw
+    revision: '1'
+  - id: planetlib.spectroscopy.observation.rotation_normalized
+    revision: '1'
+  - id: planetlib.spectroscopy.observation.convolution
+    revision: '1'
+  mathematical_models:
+  - id: planetlib.spectroscopy.observation.model
+    revision: '1'
+- id: exojax.spectral_observation.initial_samples
+  revision: '1'
+  statement: The explicitly selected provider sample comparisons pass with their declared
+    inputs, precision and tolerances.
+  kind: numerical_verification
+  scope: An even-length impulse spectrum and odd-length Gaussian/rotation kernels,
+    zero-rotation identity, selected quadratic-rotation values/interior derivative,
+    positive-RV km/s sampling and its derivative, plus the existing Gimenez JVP case.
+    Shared convolution quantities are dimensionless continuum-normalized spectra.
+    The odd-length shape counterexample is excluded and assessed separately. Exact
+    points, arrays, boundary choices and tolerances are those in the hashed tests
+    and named JUnit cases. This is a finite execution result, not a proof, primary-source
+    correspondence review or empirical applicability judgment.
+  equations:
+  - id: planetlib.spectroscopy.observation.gaussian_kernel
+    revision: '1'
+  - id: planetlib.spectroscopy.observation.doppler_sampling
+    revision: '1'
+  - id: planetlib.spectroscopy.observation.limb_darkening
+    revision: '1'
+  - id: planetlib.spectroscopy.observation.rotation_raw
+    revision: '1'
+  - id: planetlib.spectroscopy.observation.rotation_normalized
+    revision: '1'
+  - id: planetlib.spectroscopy.observation.convolution
+    revision: '1'
+  mathematical_models:
+  - id: planetlib.spectroscopy.observation.model
+    revision: '1'
+- id: exojax.spectral_observation.odd_length_shape
+  revision: '1'
+  statement: The selected odd-length spectral convolution preserves the input spectrum
+    length.
+  kind: numerical_verification
+  scope: ipgauss applied to a 41-element dimensionless impulse spectrum and the 13-point
+    velocity kernel arange(-6,7), beta=1.3 km/s, using the exact captured CPU/source/test
+    configuration. The assertion requires output shape (41,); actual shape is (40,).
+    This says nothing about the separately tested even-length spectrum.
+  equations:
+  - id: planetlib.spectroscopy.observation.convolution
+    revision: '1'
+  - id: planetlib.spectroscopy.observation.gaussian_kernel
+    revision: '1'
+  mathematical_models:
+  - id: planetlib.spectroscopy.observation.model
+    revision: '1'
+evidence:
+- id: exojax.spectral_observation.source
+  kind: implementation
+  summary: Pinned provider source and declared scientific conventions; no primary-source
+    review is inherited.
+  sources:
+  - https://github.com/HajimeKawahara/exojax/blob/38cb2e44f153ad6d729e3253e235702de52920cf/src/exojax/postproc/response.py
+  - https://github.com/HajimeKawahara/exojax/blob/38cb2e44f153ad6d729e3253e235702de52920cf/src/exojax/postproc/spin_rotation.py
+  - https://github.com/HajimeKawahara/exojax/blob/38cb2e44f153ad6d729e3253e235702de52920cf/src/exojax/signal/convolve.py
+  - https://github.com/HajimeKawahara/exojax/blob/38cb2e44f153ad6d729e3253e235702de52920cf/src/exojax/utils/constants.py
+  scope: Velocity coordinates, beta, vsini, RV and c use km/s. response.sampling evaluates
+    the input at w_obs*(1+RV/c), a nonrelativistic convention with this explicit positive-RV
+    sign. Continuous Gaussian and rigid-rotation kernels are normalized in the shared
+    definitions; the provider samples a finite window and renormalizes its discrete
+    sum. Rotation adopts quadratic limb darkening 1-u1*(1-mu)-u2*(1-mu)^2 and support
+    |v|<=vsini. Convolution uses finite-array edge handling and interpolation follows
+    the provider grid; these are not continuous-infinite-domain identities. Passing
+    convolution samples use even-length spectra and odd-length kernels. For the shared
+    convolution binding only, F0 and F_out denote dimensionless continuum-normalized
+    spectra. The provider also accepts other flux units; that broader numerical use
+    is outside the shared convolution quantity declaration.
+  result: null
+  provenance: null
+  subject: exojax.spectral_observation.source
+  context: exojax.spectral_observation.scope
+  artifacts: []
+- id: exojax.spectral_observation.initial_samples.execution
+  kind: numerical_test
+  summary: 'Archived CPU execution: 3 named passing comparisons in this scope; the
+    separate odd-length expected failure is excluded.'
+  sources:
+  - mceg/evidence/initial_review/receipt.json
+  - tests/model_contracts/test_core_models.py::test_gaussian_and_rotation_discrete_kernels_and_zero_rotation
+  - tests/model_contracts/test_core_models.py::test_sampling_velocity_sign_units_and_derivative
+  - tests/unittests/postproc/test_spin_rotation.py::test_rotkernel_Gimenez_jvp
+  scope: An even-length impulse spectrum and odd-length Gaussian/rotation kernels,
+    zero-rotation identity, selected quadratic-rotation values/interior derivative,
+    positive-RV km/s sampling and its derivative, plus the existing Gimenez JVP case.
+    Shared convolution quantities are dimensionless continuum-normalized spectra.
+    The odd-length shape counterexample is excluded and assessed separately. Exact
+    points, arrays, boundary choices and tolerances are those in the hashed tests
+    and named JUnit cases. This is a finite execution result, not a proof, primary-source
+    correspondence review or empirical applicability judgment.
+  result: passed
+  provenance:
+    role: implementation
+    location: mceg/evidence/initial_review/receipt.json
+    inspection: inspected
+    note: Saved outcomes and selected source/test hashes reviewed; no upstream judgment
+      or fresh experimental evidence is inferred.
+    derived_from: []
+  subject: exojax.spectral_observation.source
+  context: exojax.spectral_observation.initial_samples.cpu
+  artifacts:
+  - source: mceg/evidence/initial_review/receipt.json
+    sha256: 486009c644a4e4b976826f8c7985c06f20b50dc9192d207de3fbca856fa48658
+  - source: mceg/evidence/initial_review/pytest.log
+    sha256: 899a83317e4034aee410deb3db0bcb05cad0eca0137deb593dfe78fe4751c281
+  - source: mceg/evidence/initial_review/junit.xml
+    sha256: d43736396273b3926e2cb42e0d93266775036e401b4030593df75e3cdf9b8978
+  - source: mceg/requirements.txt
+    sha256: ac204e416685f42f47169e02a7ebc3e448ced3297605c9147ab2dbca90e33db7
+  - source: pyproject.toml
+    sha256: 1343ad1836f56412889ebb4748b5e4ef20a150ec58fe4b8a04083e58672a359a
+  - source: src/exojax/atm/atmprof.py
+    sha256: bba0ee11db0bcc45f34f932ca7e12013369e61f8121016a3292c3aa9edf38654
+  - source: src/exojax/database/core/broadening.py
+    sha256: 941baede9603921b47d3bbcbc5902740046123f101875824dcd50b197404b563
+  - source: src/exojax/database/core/line_strength.py
+    sha256: f39014d7b4c2349ab021b3f0084754ba2c7ed35c175e00fcd3cef40b71e7318f
+  - source: src/exojax/opacity/lpf/lpf.py
+    sha256: fd73cc4f6c5d46e25b701d22d93db3c17ce1e7d3e0fdd22584817761f1347a3c
+  - source: src/exojax/opacity/modit/modit.py
+    sha256: d5f3bed1459a952a8ed49c856ca3b0e003513b7b23be5cf2adea4c8f6d9d471b
+  - source: src/exojax/opacity/premodit/premodit.py
+    sha256: 10c251df4c2725eaf7b9789d174cb073111f04688d36f9981cecd3184b93a516
+  - source: src/exojax/postproc/response.py
+    sha256: 6cf4941286c55091d66b4f26042d5090e0ebf06d22caa00f2ad1538c8dd2692c
+  - source: src/exojax/postproc/spin_rotation.py
+    sha256: 41d5e99ea31bffa64c18ba43fcdcf2cfc999d385660db132343aab913f2dd447
+  - source: src/exojax/rt/chord.py
+    sha256: af51e8a61ee15bb9d3048c310a7512a188b0a89548ce6c2aefce4d3420490bbd
+  - source: src/exojax/rt/common.py
+    sha256: 3b05610ce0dc6d491ed2003a9f96eaacc5745cdeb766d334d2d2e501a2ab8ef0
+  - source: src/exojax/rt/emis.py
+    sha256: e0668f38f84fc6dd17d3fcfe42e26f7ed7b089edda8b195f75e9d1253e2ae918
+  - source: src/exojax/rt/layeropacity.py
+    sha256: f66d17f6a8e418efed567c2a130f4a556735d885f040b009c65c1ca39bff99b8
+  - source: src/exojax/rt/planck.py
+    sha256: 670a9d66a5bbbcfe2947f92bc55f529270dc802b3ecd73b3e0aba88d4f3fe3b1
+  - source: src/exojax/rt/rtransfer.py
+    sha256: 7e66948b22e81492a0931f7ea5aed2dd7a8f72077be461582af440c7771288fe
+  - source: src/exojax/rt/trans.py
+    sha256: 8c0d51d67e46ebc40703a7f2186d0a98269d87e01f659d0dc65b7c2cf83f18fc
+  - source: src/exojax/signal/convolve.py
+    sha256: d217c75401a2bf53a6bfa0e5a3ee6c2efe2d2b59addc50da3c49de5efb8c6a10
+  - source: src/exojax/signal/integrate.py
+    sha256: 16c48aca5683c435bdfe62ebe83347975981e849c2266efe3bd674a5633d6543
+  - source: src/exojax/special/faddeeva.py
+    sha256: 2de87610fa047d8afd9a4f4364954408655b19723749391fb7f0ee035a14cb8c
+  - source: src/exojax/utils/constants.py
+    sha256: a2f34c9a4debd0d61b4c2c0e1ef0b269b10f21d972195c6b74cd169d4f0c1b81
+  - source: tests/conftest.py
+    sha256: e282c84343d4b267ae46874b1c950bfa61c9257a60fbf7336e51a0bc5babbab5
+  - source: tests/model_contracts/test_core_models.py
+    sha256: 219266d8de527ccde71554b36e3f3404dda72a415c07e7fedc7c780d0a4dd216
+  - source: tests/model_contracts/test_planetlib.py
+    sha256: 04d9d60e96b9561eaa9f4ed718dc942696cb9aa5c0dbc2133ed4f92a86a3795c
+  - source: tests/unittests/opacity/lpf/test_lpf.py
+    sha256: fc8a982cdb40793d1442d2109ba333b88f659389ffa71e172a1371c0a226130f
+  - source: tests/unittests/postproc/test_spin_rotation.py
+    sha256: d0da97a121dbb781cf458a24692f1ba1f596614456f39a23945230eae98d7f30
+  - source: tests/unittests/rt/test_chord.py
+    sha256: 96d6189b6a554e55bf9ef0b316e16a7fae16906014d84ef29003c217c3e3de7b
+  - source: tests/unittests/rt/test_layeropacity.py
+    sha256: 67c2f3caab24303ecc5df6da7fec0588c5a4f2199230e91121c8b5bb2b027c54
+  - source: tests/unittests/rt/test_planck.py
+    sha256: db7d495980888d93d0f3736af3bafdbd414933378387cab15a1622d168333702
+  - source: tests/unittests/rt/test_rtransfer_transmission.py
+    sha256: 4b776c74ef85a5f3209c7e8359dfd1df01c1137f807909133e51d0ff724e7d10
+- id: exojax.spectral_observation.odd_length_shape.counterexample
+  kind: numerical_test
+  summary: 'The shape-preservation assertion fails: actual (40,) versus expected (41,);
+    a separate --runxfail invocation exposes the counterexample.'
+  sources:
+  - mceg/evidence/initial_review/odd_length_receipt.json
+  - tests/model_contracts/test_core_models.py::test_odd_length_convolution_preserves_shape
+  scope: ipgauss applied to a 41-element dimensionless impulse spectrum and the 13-point
+    velocity kernel arange(-6,7), beta=1.3 km/s, using the exact captured CPU/source/test
+    configuration. The assertion requires output shape (41,); actual shape is (40,).
+    This says nothing about the separately tested even-length spectrum.
+  result: failed
+  provenance: null
+  subject: exojax.spectral_observation.source
+  context: exojax.spectral_observation.odd_length_shape.cpu
+  artifacts:
+  - source: mceg/evidence/initial_review/receipt.json
+    sha256: 486009c644a4e4b976826f8c7985c06f20b50dc9192d207de3fbca856fa48658
+  - source: mceg/evidence/initial_review/pytest.log
+    sha256: 899a83317e4034aee410deb3db0bcb05cad0eca0137deb593dfe78fe4751c281
+  - source: mceg/evidence/initial_review/junit.xml
+    sha256: d43736396273b3926e2cb42e0d93266775036e401b4030593df75e3cdf9b8978
+  - source: mceg/requirements.txt
+    sha256: ac204e416685f42f47169e02a7ebc3e448ced3297605c9147ab2dbca90e33db7
+  - source: pyproject.toml
+    sha256: 1343ad1836f56412889ebb4748b5e4ef20a150ec58fe4b8a04083e58672a359a
+  - source: src/exojax/atm/atmprof.py
+    sha256: bba0ee11db0bcc45f34f932ca7e12013369e61f8121016a3292c3aa9edf38654
+  - source: src/exojax/database/core/broadening.py
+    sha256: 941baede9603921b47d3bbcbc5902740046123f101875824dcd50b197404b563
+  - source: src/exojax/database/core/line_strength.py
+    sha256: f39014d7b4c2349ab021b3f0084754ba2c7ed35c175e00fcd3cef40b71e7318f
+  - source: src/exojax/opacity/lpf/lpf.py
+    sha256: fd73cc4f6c5d46e25b701d22d93db3c17ce1e7d3e0fdd22584817761f1347a3c
+  - source: src/exojax/opacity/modit/modit.py
+    sha256: d5f3bed1459a952a8ed49c856ca3b0e003513b7b23be5cf2adea4c8f6d9d471b
+  - source: src/exojax/opacity/premodit/premodit.py
+    sha256: 10c251df4c2725eaf7b9789d174cb073111f04688d36f9981cecd3184b93a516
+  - source: src/exojax/postproc/response.py
+    sha256: 6cf4941286c55091d66b4f26042d5090e0ebf06d22caa00f2ad1538c8dd2692c
+  - source: src/exojax/postproc/spin_rotation.py
+    sha256: 41d5e99ea31bffa64c18ba43fcdcf2cfc999d385660db132343aab913f2dd447
+  - source: src/exojax/rt/chord.py
+    sha256: af51e8a61ee15bb9d3048c310a7512a188b0a89548ce6c2aefce4d3420490bbd
+  - source: src/exojax/rt/common.py
+    sha256: 3b05610ce0dc6d491ed2003a9f96eaacc5745cdeb766d334d2d2e501a2ab8ef0
+  - source: src/exojax/rt/emis.py
+    sha256: e0668f38f84fc6dd17d3fcfe42e26f7ed7b089edda8b195f75e9d1253e2ae918
+  - source: src/exojax/rt/layeropacity.py
+    sha256: f66d17f6a8e418efed567c2a130f4a556735d885f040b009c65c1ca39bff99b8
+  - source: src/exojax/rt/planck.py
+    sha256: 670a9d66a5bbbcfe2947f92bc55f529270dc802b3ecd73b3e0aba88d4f3fe3b1
+  - source: src/exojax/rt/rtransfer.py
+    sha256: 7e66948b22e81492a0931f7ea5aed2dd7a8f72077be461582af440c7771288fe
+  - source: src/exojax/rt/trans.py
+    sha256: 8c0d51d67e46ebc40703a7f2186d0a98269d87e01f659d0dc65b7c2cf83f18fc
+  - source: src/exojax/signal/convolve.py
+    sha256: d217c75401a2bf53a6bfa0e5a3ee6c2efe2d2b59addc50da3c49de5efb8c6a10
+  - source: src/exojax/signal/integrate.py
+    sha256: 16c48aca5683c435bdfe62ebe83347975981e849c2266efe3bd674a5633d6543
+  - source: src/exojax/special/faddeeva.py
+    sha256: 2de87610fa047d8afd9a4f4364954408655b19723749391fb7f0ee035a14cb8c
+  - source: src/exojax/utils/constants.py
+    sha256: a2f34c9a4debd0d61b4c2c0e1ef0b269b10f21d972195c6b74cd169d4f0c1b81
+  - source: tests/conftest.py
+    sha256: e282c84343d4b267ae46874b1c950bfa61c9257a60fbf7336e51a0bc5babbab5
+  - source: tests/model_contracts/test_core_models.py
+    sha256: 219266d8de527ccde71554b36e3f3404dda72a415c07e7fedc7c780d0a4dd216
+  - source: tests/model_contracts/test_planetlib.py
+    sha256: 04d9d60e96b9561eaa9f4ed718dc942696cb9aa5c0dbc2133ed4f92a86a3795c
+  - source: tests/unittests/opacity/lpf/test_lpf.py
+    sha256: fc8a982cdb40793d1442d2109ba333b88f659389ffa71e172a1371c0a226130f
+  - source: tests/unittests/postproc/test_spin_rotation.py
+    sha256: d0da97a121dbb781cf458a24692f1ba1f596614456f39a23945230eae98d7f30
+  - source: tests/unittests/rt/test_chord.py
+    sha256: 96d6189b6a554e55bf9ef0b316e16a7fae16906014d84ef29003c217c3e3de7b
+  - source: tests/unittests/rt/test_layeropacity.py
+    sha256: 67c2f3caab24303ecc5df6da7fec0588c5a4f2199230e91121c8b5bb2b027c54
+  - source: tests/unittests/rt/test_planck.py
+    sha256: db7d495980888d93d0f3736af3bafdbd414933378387cab15a1622d168333702
+  - source: tests/unittests/rt/test_rtransfer_transmission.py
+    sha256: 4b776c74ef85a5f3209c7e8359dfd1df01c1137f807909133e51d0ff724e7d10
+  - source: mceg/evidence/initial_review/odd_length_receipt.json
+    sha256: 490dfa69b1de12bddd722e4714530029d4c0475a84762d1c1dad08cfa1de0ad3
+  - source: mceg/evidence/initial_review/odd_length_failure.log
+    sha256: 1d7d82debb80c984b339e994d17cdf3fcac49a3bc9875f3f03e611049ce4c93b
+  - source: mceg/evidence/initial_review/odd_length_failure.xml
+    sha256: 03c28d299c4ab09eb7d7743e4af46b22f997559ccb8ab2a71ea9172f598c3743
+- id: planetlib.spectroscopy.observation.source
+  kind: implementation
+  summary: Mathematical conventions extracted from immutable ExoJAX source.
+  sources:
+  - https://github.com/HajimeKawahara/exojax/blob/38cb2e44f153ad6d729e3253e235702de52920cf/src/exojax/postproc/response.py
+  - https://github.com/HajimeKawahara/exojax/blob/38cb2e44f153ad6d729e3253e235702de52920cf/src/exojax/postproc/spin_rotation.py
+  - https://github.com/HajimeKawahara/exojax/blob/38cb2e44f153ad6d729e3253e235702de52920cf/src/exojax/postproc/limb_darkening.py
+  scope: The cited source implementations were inspected. This is not a new inspection
+    of their original literature or a transferred provider assessment.
+  result: null
+  provenance:
+    role: implementation
+    location: The functions and conventions identified by the immutable source paths.
+    inspection: inspected
+    note: Shared mathematical definitions are distinct from numerical approximation
+      and physical applicability.
+    derived_from: []
+  subject: null
+  context: null
+  artifacts: []
+limitations:
+- statement: No relativistic Doppler law, spatially varying line spread function,
+    transmission-annulus rotation, detector bin integration, or boundary-independent
+    flux conservation is asserted. The odd-length spectrum/odd-length kernel case
+    currently loses one output sample because convolve_same does not supply the inverse
+    FFT length; a strict expected-failure regression records this known numerical
+    defect.
+  evidence:
+  - exojax.spectral_observation.source
+subjects:
+- id: exojax.spectral_observation.source
+  implementation:
+    repository: https://github.com/HajimeKawahara/exojax
+    revision: 38cb2e44f153ad6d729e3253e235702de52920cf
+    entry_points:
+    - src/exojax/postproc/response.py:ipgauss
+    - src/exojax/postproc/response.py:sampling
+    - src/exojax/postproc/spin_rotation.py:rotkernel
+    - src/exojax/postproc/spin_rotation.py:convolve_rigid_rotation
+  selected_files:
+    src/exojax/postproc/response.py: 6cf4941286c55091d66b4f26042d5090e0ebf06d22caa00f2ad1538c8dd2692c
+    src/exojax/postproc/spin_rotation.py: 41d5e99ea31bffa64c18ba43fcdcf2cfc999d385660db132343aab913f2dd447
+    src/exojax/signal/convolve.py: d217c75401a2bf53a6bfa0e5a3ee6c2efe2d2b59addc50da3c49de5efb8c6a10
+    src/exojax/utils/constants.py: a2f34c9a4debd0d61b4c2c0e1ef0b269b10f21d972195c6b74cd169d4f0c1b81
+contexts:
+- id: exojax.spectral_observation.scope
+  scope: Velocity coordinates, beta, vsini, RV and c use km/s. response.sampling evaluates
+    the input at w_obs*(1+RV/c), a nonrelativistic convention with this explicit positive-RV
+    sign. Continuous Gaussian and rigid-rotation kernels are normalized in the shared
+    definitions; the provider samples a finite window and renormalizes its discrete
+    sum. Rotation adopts quadratic limb darkening 1-u1*(1-mu)-u2*(1-mu)^2 and support
+    |v|<=vsini. Convolution uses finite-array edge handling and interpolation follows
+    the provider grid; these are not continuous-infinite-domain identities. Passing
+    convolution samples use even-length spectra and odd-length kernels. For the shared
+    convolution binding only, F0 and F_out denote dimensionless continuum-normalized
+    spectra. The provider also accepts other flux units; that broader numerical use
+    is outside the shared convolution quantity declaration.
+  quantities: {}
+  settings:
+    planetlib_revision: 20c0a3936cc6c1ad790945b936c1ef3ad74af31e
+    precision: Selected CPU float64 comparisons; no global float32/float64 error bound
+    numerical_choices: No relativistic Doppler law, spatially varying line spread
+      function, transmission-annulus rotation, detector bin integration, or boundary-independent
+      flux conservation is asserted. The odd-length spectrum/odd-length kernel case
+      currently loses one output sample because convolve_same does not supply the
+      inverse FFT length; a strict expected-failure regression records this known
+      numerical defect.
+- id: exojax.spectral_observation.initial_samples.cpu
+  scope: An even-length impulse spectrum and odd-length Gaussian/rotation kernels,
+    zero-rotation identity, selected quadratic-rotation values/interior derivative,
+    positive-RV km/s sampling and its derivative, plus the existing Gimenez JVP case.
+    Shared convolution quantities are dimensionless continuum-normalized spectra.
+    The odd-length shape counterexample is excluded and assessed separately. Exact
+    points, arrays, boundary choices and tolerances are those in the hashed tests
+    and named JUnit cases. This is a finite execution result, not a proof, primary-source
+    correspondence review or empirical applicability judgment.
+  quantities: {}
+  settings:
+    backend: cpu
+    precision: Companion comparisons use the isolated_test_environment fixture and
+      CPU float64. Existing Planck tests explicitly use float32; existing LPF tests
+      select both float32 and float64. No GPU or global precision-domain claim.
+    selected_passed_cases: 3
+    receipt: mceg/evidence/initial_review/receipt.json
+    planetlib_revision: 20c0a3936cc6c1ad790945b936c1ef3ad74af31e
+    mceg_revision: 4034c9259c9c2e7d55243d69f3ab2f22c9cc7d88
+- id: exojax.spectral_observation.odd_length_shape.cpu
+  scope: ipgauss applied to a 41-element dimensionless impulse spectrum and the 13-point
+    velocity kernel arange(-6,7), beta=1.3 km/s, using the exact captured CPU/source/test
+    configuration. The assertion requires output shape (41,); actual shape is (40,).
+    This says nothing about the separately tested even-length spectrum.
+  quantities: {}
+  settings:
+    backend: cpu
+    precision: float64
+    spectrum_length: 41
+    kernel_length: 13
+    beta_km_s: 1.3
+    pytest_marker_handling: --runxfail disables the known-failure marker without modifying
+      test bytes
+conditions: []
+assessments:
+- id: exojax.spectral_observation.source_correspondence.pending
+  subject: exojax.spectral_observation.source
+  context: exojax.spectral_observation.scope
+  method:
+    id: exojax.initial_scope_review
+    revision: '1'
+    description: Keep source, numerical, derivative and physical questions separate;
+      selected regression runs require separate scoped assessments.
+  evidence:
+  - exojax.spectral_observation.source
+  reasons:
+  - This full-scope claim has no archived review establishing support. Selected regression
+    points cannot establish the stated domain.
+  kind: evidence_support
+  claim: exojax.spectral_observation.source_correspondence
+  claim_revision: '1'
+  status: unknown
+  origin: reviewed
+  equation_pins:
+  - id: planetlib.spectroscopy.observation.gaussian_kernel
+    revision: '1'
+    sha256: 9938eda5c39c74466069b90cb3bc44b2375849348469efeb10b2b68262dc639a
+  - id: planetlib.spectroscopy.observation.doppler_sampling
+    revision: '1'
+    sha256: cef46080bee2c640c9448618ae654c892958509b9343b53ef11f0744d13edc0b
+  - id: planetlib.spectroscopy.observation.limb_darkening
+    revision: '1'
+    sha256: e3a43889c82b54d974fe93108967e70adbf2bfa8876680163d4bb315eb0f57bc
+  - id: planetlib.spectroscopy.observation.rotation_raw
+    revision: '1'
+    sha256: 02933843440f2b0f1dbfbdd807b7ca61131a2c2c33710b87ff396a60e3d8123d
+  - id: planetlib.spectroscopy.observation.rotation_normalized
+    revision: '1'
+    sha256: a6c96244fb25ffae6c063f191b1944799473acbdf8cf7c0770698b3f87dfdbda
+  - id: planetlib.spectroscopy.observation.convolution
+    revision: '1'
+    sha256: 07985b13dd0b1fc398f0a7e811d6811ccb4dc623b9b2862933bb1d8ee9b4de17
+  binding_pins:
+  - id: exojax.spectral_observation.binding.1
+    sha256: d76c03d0593ef1a724c496fc5b3d6d8af438d50d30fc59159b5ae8ab19b05a31
+  - id: exojax.spectral_observation.binding.2
+    sha256: 89152d262ff1570d1efeda326c79feb87a2ac49668c0537742b7bd4c3f5411c6
+  - id: exojax.spectral_observation.binding.3
+    sha256: 6493a7857b5dee835e602b3032e986db23836a92d4248afabf7cd9c98a8eabb4
+  - id: exojax.spectral_observation.binding.4
+    sha256: 2145cdf1e411a817934e2d1103ddbf9957dd49a816564802f4bdc30f0561eb9b
+  mathematical_model_pins:
+  - id: planetlib.spectroscopy.observation.model
+    revision: '1'
+    sha256: a9d3a172375a18cb613ba914bda7774008294c28ac65cd30fb693ce97332612e
+- id: exojax.spectral_observation.numerical_domain.pending
+  subject: exojax.spectral_observation.source
+  context: exojax.spectral_observation.scope
+  method:
+    id: exojax.initial_scope_review
+    revision: '1'
+    description: Keep source, numerical, derivative and physical questions separate;
+      selected regression runs require separate scoped assessments.
+  evidence:
+  - exojax.spectral_observation.source
+  reasons:
+  - This full-scope claim has no archived review establishing support. Selected regression
+    points cannot establish the stated domain.
+  kind: evidence_support
+  claim: exojax.spectral_observation.numerical_domain
+  claim_revision: '1'
+  status: unknown
+  origin: reviewed
+  equation_pins:
+  - id: planetlib.spectroscopy.observation.gaussian_kernel
+    revision: '1'
+    sha256: 9938eda5c39c74466069b90cb3bc44b2375849348469efeb10b2b68262dc639a
+  - id: planetlib.spectroscopy.observation.doppler_sampling
+    revision: '1'
+    sha256: cef46080bee2c640c9448618ae654c892958509b9343b53ef11f0744d13edc0b
+  - id: planetlib.spectroscopy.observation.limb_darkening
+    revision: '1'
+    sha256: e3a43889c82b54d974fe93108967e70adbf2bfa8876680163d4bb315eb0f57bc
+  - id: planetlib.spectroscopy.observation.rotation_raw
+    revision: '1'
+    sha256: 02933843440f2b0f1dbfbdd807b7ca61131a2c2c33710b87ff396a60e3d8123d
+  - id: planetlib.spectroscopy.observation.rotation_normalized
+    revision: '1'
+    sha256: a6c96244fb25ffae6c063f191b1944799473acbdf8cf7c0770698b3f87dfdbda
+  - id: planetlib.spectroscopy.observation.convolution
+    revision: '1'
+    sha256: 07985b13dd0b1fc398f0a7e811d6811ccb4dc623b9b2862933bb1d8ee9b4de17
+  binding_pins:
+  - id: exojax.spectral_observation.binding.1
+    sha256: d76c03d0593ef1a724c496fc5b3d6d8af438d50d30fc59159b5ae8ab19b05a31
+  - id: exojax.spectral_observation.binding.2
+    sha256: 89152d262ff1570d1efeda326c79feb87a2ac49668c0537742b7bd4c3f5411c6
+  - id: exojax.spectral_observation.binding.3
+    sha256: 6493a7857b5dee835e602b3032e986db23836a92d4248afabf7cd9c98a8eabb4
+  - id: exojax.spectral_observation.binding.4
+    sha256: 2145cdf1e411a817934e2d1103ddbf9957dd49a816564802f4bdc30f0561eb9b
+  mathematical_model_pins:
+  - id: planetlib.spectroscopy.observation.model
+    revision: '1'
+    sha256: a9d3a172375a18cb613ba914bda7774008294c28ac65cd30fb693ce97332612e
+- id: exojax.spectral_observation.derivative_domain.pending
+  subject: exojax.spectral_observation.source
+  context: exojax.spectral_observation.scope
+  method:
+    id: exojax.initial_scope_review
+    revision: '1'
+    description: Keep source, numerical, derivative and physical questions separate;
+      selected regression runs require separate scoped assessments.
+  evidence:
+  - exojax.spectral_observation.source
+  reasons:
+  - This full-scope claim has no archived review establishing support. Selected regression
+    points cannot establish the stated domain.
+  kind: evidence_support
+  claim: exojax.spectral_observation.derivative_domain
+  claim_revision: '1'
+  status: unknown
+  origin: reviewed
+  equation_pins:
+  - id: planetlib.spectroscopy.observation.gaussian_kernel
+    revision: '1'
+    sha256: 9938eda5c39c74466069b90cb3bc44b2375849348469efeb10b2b68262dc639a
+  - id: planetlib.spectroscopy.observation.doppler_sampling
+    revision: '1'
+    sha256: cef46080bee2c640c9448618ae654c892958509b9343b53ef11f0744d13edc0b
+  - id: planetlib.spectroscopy.observation.limb_darkening
+    revision: '1'
+    sha256: e3a43889c82b54d974fe93108967e70adbf2bfa8876680163d4bb315eb0f57bc
+  - id: planetlib.spectroscopy.observation.rotation_raw
+    revision: '1'
+    sha256: 02933843440f2b0f1dbfbdd807b7ca61131a2c2c33710b87ff396a60e3d8123d
+  - id: planetlib.spectroscopy.observation.rotation_normalized
+    revision: '1'
+    sha256: a6c96244fb25ffae6c063f191b1944799473acbdf8cf7c0770698b3f87dfdbda
+  - id: planetlib.spectroscopy.observation.convolution
+    revision: '1'
+    sha256: 07985b13dd0b1fc398f0a7e811d6811ccb4dc623b9b2862933bb1d8ee9b4de17
+  binding_pins:
+  - id: exojax.spectral_observation.binding.1
+    sha256: d76c03d0593ef1a724c496fc5b3d6d8af438d50d30fc59159b5ae8ab19b05a31
+  - id: exojax.spectral_observation.binding.2
+    sha256: 89152d262ff1570d1efeda326c79feb87a2ac49668c0537742b7bd4c3f5411c6
+  - id: exojax.spectral_observation.binding.3
+    sha256: 6493a7857b5dee835e602b3032e986db23836a92d4248afabf7cd9c98a8eabb4
+  - id: exojax.spectral_observation.binding.4
+    sha256: 2145cdf1e411a817934e2d1103ddbf9957dd49a816564802f4bdc30f0561eb9b
+  mathematical_model_pins:
+  - id: planetlib.spectroscopy.observation.model
+    revision: '1'
+    sha256: a9d3a172375a18cb613ba914bda7774008294c28ac65cd30fb693ce97332612e
+- id: exojax.spectral_observation.applicability.pending
+  subject: exojax.spectral_observation.source
+  context: exojax.spectral_observation.scope
+  method:
+    id: exojax.initial_scope_review
+    revision: '1'
+    description: Keep source, numerical, derivative and physical questions separate;
+      selected regression runs require separate scoped assessments.
+  evidence:
+  - exojax.spectral_observation.source
+  reasons:
+  - This full-scope claim has no archived review establishing support. Selected regression
+    points cannot establish the stated domain.
+  kind: evidence_support
+  claim: exojax.spectral_observation.applicability
+  claim_revision: '1'
+  status: unknown
+  origin: reviewed
+  equation_pins:
+  - id: planetlib.spectroscopy.observation.gaussian_kernel
+    revision: '1'
+    sha256: 9938eda5c39c74466069b90cb3bc44b2375849348469efeb10b2b68262dc639a
+  - id: planetlib.spectroscopy.observation.doppler_sampling
+    revision: '1'
+    sha256: cef46080bee2c640c9448618ae654c892958509b9343b53ef11f0744d13edc0b
+  - id: planetlib.spectroscopy.observation.limb_darkening
+    revision: '1'
+    sha256: e3a43889c82b54d974fe93108967e70adbf2bfa8876680163d4bb315eb0f57bc
+  - id: planetlib.spectroscopy.observation.rotation_raw
+    revision: '1'
+    sha256: 02933843440f2b0f1dbfbdd807b7ca61131a2c2c33710b87ff396a60e3d8123d
+  - id: planetlib.spectroscopy.observation.rotation_normalized
+    revision: '1'
+    sha256: a6c96244fb25ffae6c063f191b1944799473acbdf8cf7c0770698b3f87dfdbda
+  - id: planetlib.spectroscopy.observation.convolution
+    revision: '1'
+    sha256: 07985b13dd0b1fc398f0a7e811d6811ccb4dc623b9b2862933bb1d8ee9b4de17
+  binding_pins:
+  - id: exojax.spectral_observation.binding.1
+    sha256: d76c03d0593ef1a724c496fc5b3d6d8af438d50d30fc59159b5ae8ab19b05a31
+  - id: exojax.spectral_observation.binding.2
+    sha256: 89152d262ff1570d1efeda326c79feb87a2ac49668c0537742b7bd4c3f5411c6
+  - id: exojax.spectral_observation.binding.3
+    sha256: 6493a7857b5dee835e602b3032e986db23836a92d4248afabf7cd9c98a8eabb4
+  - id: exojax.spectral_observation.binding.4
+    sha256: 2145cdf1e411a817934e2d1103ddbf9957dd49a816564802f4bdc30f0561eb9b
+  mathematical_model_pins:
+  - id: planetlib.spectroscopy.observation.model
+    revision: '1'
+    sha256: a9d3a172375a18cb613ba914bda7774008294c28ac65cd30fb693ce97332612e
+- id: exojax.spectral_observation.initial_samples.reviewed
+  subject: exojax.spectral_observation.source
+  context: exojax.spectral_observation.initial_samples.cpu
+  method:
+    id: exojax.initial_execution_review
+    revision: '1'
+    description: Explicit review of captured commands, JUnit outcomes, exact selected-file
+      hashes, native definition pins and test scopes. Only named passing assertions
+      support the bounded sample claim; a separate assertion failure contradicts its
+      own shape claim.
+  evidence:
+  - exojax.spectral_observation.initial_samples.execution
+  reasons:
+  - 'Reviewed the saved JUnit and log: all 3 listed cases passed against the exact
+    hashed source and test bytes.'
+  - This assessment is limited to the named sample assertions; all existing general
+    correspondence, numerical-domain, derivative-domain and applicability assessments
+    retain their earlier status.
+  kind: evidence_support
+  claim: exojax.spectral_observation.initial_samples
+  claim_revision: '1'
+  status: supported
+  origin: reviewed
+  equation_pins:
+  - id: planetlib.spectroscopy.observation.gaussian_kernel
+    revision: '1'
+    sha256: 9938eda5c39c74466069b90cb3bc44b2375849348469efeb10b2b68262dc639a
+  - id: planetlib.spectroscopy.observation.doppler_sampling
+    revision: '1'
+    sha256: cef46080bee2c640c9448618ae654c892958509b9343b53ef11f0744d13edc0b
+  - id: planetlib.spectroscopy.observation.limb_darkening
+    revision: '1'
+    sha256: e3a43889c82b54d974fe93108967e70adbf2bfa8876680163d4bb315eb0f57bc
+  - id: planetlib.spectroscopy.observation.rotation_raw
+    revision: '1'
+    sha256: 02933843440f2b0f1dbfbdd807b7ca61131a2c2c33710b87ff396a60e3d8123d
+  - id: planetlib.spectroscopy.observation.rotation_normalized
+    revision: '1'
+    sha256: a6c96244fb25ffae6c063f191b1944799473acbdf8cf7c0770698b3f87dfdbda
+  - id: planetlib.spectroscopy.observation.convolution
+    revision: '1'
+    sha256: 07985b13dd0b1fc398f0a7e811d6811ccb4dc623b9b2862933bb1d8ee9b4de17
+  binding_pins:
+  - id: exojax.spectral_observation.binding.1
+    sha256: d76c03d0593ef1a724c496fc5b3d6d8af438d50d30fc59159b5ae8ab19b05a31
+  - id: exojax.spectral_observation.binding.2
+    sha256: 89152d262ff1570d1efeda326c79feb87a2ac49668c0537742b7bd4c3f5411c6
+  - id: exojax.spectral_observation.binding.3
+    sha256: 6493a7857b5dee835e602b3032e986db23836a92d4248afabf7cd9c98a8eabb4
+  - id: exojax.spectral_observation.binding.4
+    sha256: 2145cdf1e411a817934e2d1103ddbf9957dd49a816564802f4bdc30f0561eb9b
+  mathematical_model_pins:
+  - id: planetlib.spectroscopy.observation.model
+    revision: '1'
+    sha256: a9d3a172375a18cb613ba914bda7774008294c28ac65cd30fb693ce97332612e
+- id: exojax.spectral_observation.odd_length_shape.reviewed
+  subject: exojax.spectral_observation.source
+  context: exojax.spectral_observation.odd_length_shape.cpu
+  method:
+    id: exojax.initial_execution_review
+    revision: '1'
+    description: Explicit review of captured commands, JUnit outcomes, exact selected-file
+      hashes, native definition pins and test scopes. Only named passing assertions
+      support the bounded sample claim; a separate assertion failure contradicts its
+      own shape claim.
+  evidence:
+  - exojax.spectral_observation.odd_length_shape.counterexample
+  reasons:
+  - The archived --runxfail execution fails the exact shape assertion with (40,) versus
+    (41,).
+  - convolve_same omits n=fft_length in irfft; an odd transform length defaults to
+    the adjacent even inverse length. This recorded counterexample does not invalidate
+    the separately bounded even-length comparisons.
+  kind: evidence_support
+  claim: exojax.spectral_observation.odd_length_shape
+  claim_revision: '1'
+  status: contradicted
+  origin: reviewed
+  equation_pins:
+  - id: planetlib.spectroscopy.observation.gaussian_kernel
+    revision: '1'
+    sha256: 9938eda5c39c74466069b90cb3bc44b2375849348469efeb10b2b68262dc639a
+  - id: planetlib.spectroscopy.observation.convolution
+    revision: '1'
+    sha256: 07985b13dd0b1fc398f0a7e811d6811ccb4dc623b9b2862933bb1d8ee9b4de17
+  binding_pins:
+  - id: exojax.spectral_observation.binding.1
+    sha256: d76c03d0593ef1a724c496fc5b3d6d8af438d50d30fc59159b5ae8ab19b05a31
+  - id: exojax.spectral_observation.binding.4
+    sha256: 2145cdf1e411a817934e2d1103ddbf9957dd49a816564802f4bdc30f0561eb9b
+  mathematical_model_pins:
+  - id: planetlib.spectroscopy.observation.model
+    revision: '1'
+    sha256: a9d3a172375a18cb613ba914bda7774008294c28ac65cd30fb693ce97332612e
+follow_ups:
+- id: exojax.spectral_observation.source_correspondence.review
+  target_kind: assessment
+  target: exojax.spectral_observation.source_correspondence.pending
+  revision: null
+  action: Review each bound source path, units, normalization, boundary choice and
+    constants against the selected definitions and their primary sources.
+  requires:
+  - Explicit bounded conditions and an immutable review or execution artifact.
+  completion: Append a separately scoped assessment with evidence and pins; retain
+    this assessment.
+  sources:
+  - tests/model_contracts/test_core_models.py
+- id: exojax.spectral_observation.numerical_domain.review
+  target_kind: assessment
+  target: exojax.spectral_observation.numerical_domain.pending
+  revision: null
+  action: Establish error budgets over spectral/vertical/angular resolution, parameter
+    extremes and algorithm branches; archive immutable results and tolerances.
+  requires:
+  - Explicit bounded conditions and an immutable review or execution artifact.
+  completion: Append a separately scoped assessment with evidence and pins; retain
+    this assessment.
+  sources:
+  - tests/model_contracts/test_core_models.py
+- id: exojax.spectral_observation.derivative_domain.review
+  target_kind: assessment
+  target: exojax.spectral_observation.derivative_domain.pending
+  revision: null
+  action: Review custom derivatives, interpolation knots, zero limits and truncation
+    boundaries; compare independent derivatives over an explicitly bounded domain.
+  requires:
+  - Explicit bounded conditions and an immutable review or execution artifact.
+  completion: Append a separately scoped assessment with evidence and pins; retain
+    this assessment.
+  sources:
+  - tests/model_contracts/test_core_models.py
+- id: exojax.spectral_observation.applicability.review
+  target_kind: assessment
+  target: exojax.spectral_observation.applicability.pending
+  revision: null
+  action: Specify a target atmosphere or observation and compare independent physical
+    or empirical evidence for the adopted assumptions.
+  requires:
+  - Explicit bounded conditions and an immutable review or execution artifact.
+  completion: Append a separately scoped assessment with evidence and pins; retain
+    this assessment.
+  sources:
+  - tests/model_contracts/test_core_models.py
+- id: exojax.spectral_observation.odd_fft_length
+  target_kind: assessment
+  target: exojax.spectral_observation.numerical_domain.pending
+  revision: null
+  action: Correct or explicitly reject odd total FFT lengths in convolve_same, then
+    remove the strict expected-failure marker only after the shape and kernel comparison
+    passes.
+  requires:
+  - Exercise odd/even spectrum and kernel lengths, including zero-rotation identity.
+  completion: Archive a separate defect-fix run and append a narrowly scoped numerical
+    assessment.
+  sources:
+  - src/exojax/signal/convolve.py
+  - tests/model_contracts/test_core_models.py::test_odd_length_convolution_preserves_shape
+- id: exojax.spectral_observation.odd_length_shape.fix
+  target_kind: assessment
+  target: exojax.spectral_observation.odd_length_shape.reviewed
+  revision: null
+  action: Correct or reject unsupported FFT-length parity combinations and verify
+    shape plus kernel values, including zero-rotation identity; remove the strict
+    xfail only after the test passes.
+  requires:
+  - A new pinned implementation and archived odd/even input/kernel length regressions.
+  completion: Append a new assessment for the corrected implementation; preserve this
+    counterexample and its execution artifacts.
+  sources:
+  - src/exojax/signal/convolve.py
+  - tests/model_contracts/test_core_models.py::test_odd_length_convolution_preserves_shape
+follow_up_resolutions: []
+migration: null
+equations:
+- id: planetlib.spectroscopy.observation.convolution
+  revision: '1'
+  description: Continuous convolution with an externally selected normalized kernel.
+  scope: Continuous normalized velocity kernels and first-order Doppler sampling of
+    a supplied spectrum. Velocity quantities use km/s consistently. Rotation assumes
+    a rigid spherical disk with a spatially common local spectrum and the stated quadratic
+    limb-darkening law. Finite sampled kernels, log-grid approximations, interpolation,
+    endpoint padding and zero-rotation delta handling remain provider choices.
+  symbols:
+    F_in:
+      latex: F_{in}
+      description: Supplied continuum-normalized spectrum on the chosen velocity coordinate.
+      unit: '1'
+    F_out:
+      latex: F_{out}
+      description: Continuum-normalized spectrum after continuous convolution.
+      unit: '1'
+    K:
+      latex: K
+      description: Chosen externally supplied normalized broadening kernel.
+      unit: (km s^-1)^-1
+    u:
+      latex: u
+      description: Integration velocity offset in continuous convolution.
+      unit: km s^-1
+    v:
+      latex: v
+      description: Velocity-offset coordinate for the chosen broadening kernel.
+      unit: km s^-1
+  assumptions:
+  - beta and vsini are positive. The limb-darkening profile is nonnegative on 0 <=
+    mu <= 1 and 1-u1/3-u2/6 > 0.
+  - The first-order radial-velocity rule uses |RV/c| << 1 and samples the input spectrum
+    at w_obs*(1+RV/c); it is not a relativistic transformation or a spectral-flux
+    amplitude transformation.
+  - Continuous convolution preserves an integrable spectrum over the whole real coordinate
+    when the chosen kernel integrates to one. Finite grids may lose edge flux.
+  evidence:
+  - planetlib.spectroscopy.observation.source
+  sympy:
+    format: sympy-srepr-v1
+    expression: Equality(Function('F_out')(Symbol('v', real=True)), Integral(Add(Mul(Function('F_in')(Add(Mul(Integer(-1),
+      Symbol('u', real=True)), Symbol('v', real=True))), Function('K')(Symbol('u',
+      real=True))), Mul(Function('F_in')(Add(Symbol('u', real=True), Symbol('v', real=True))),
+      Function('K')(Mul(Integer(-1), Symbol('u', real=True))))), Tuple(Symbol('u',
+      real=True), Integer(0), oo)))
+- id: planetlib.spectroscopy.observation.doppler_sampling
+  revision: '1'
+  description: First-order signed radial-velocity sampling coordinate.
+  scope: Continuous normalized velocity kernels and first-order Doppler sampling of
+    a supplied spectrum. Velocity quantities use km/s consistently. Rotation assumes
+    a rigid spherical disk with a spatially common local spectrum and the stated quadratic
+    limb-darkening law. Finite sampled kernels, log-grid approximations, interpolation,
+    endpoint padding and zero-rotation delta handling remain provider choices.
+  symbols:
+    RV:
+      latex: RV
+      description: Signed radial velocity under the explicit sampling convention.
+      unit: km s^-1
+    c:
+      latex: c
+      description: Speed of light in the same velocity units as RV.
+      unit: km s^-1
+    w_obs:
+      latex: w_{obs}
+      description: Observed spectroscopic wavenumber.
+      unit: cm^-1
+    w_sample:
+      latex: w_{sample}
+      description: Input spectral wavenumber sampled for an observed grid point.
+      unit: cm^-1
+  assumptions:
+  - beta and vsini are positive. The limb-darkening profile is nonnegative on 0 <=
+    mu <= 1 and 1-u1/3-u2/6 > 0.
+  - The first-order radial-velocity rule uses |RV/c| << 1 and samples the input spectrum
+    at w_obs*(1+RV/c); it is not a relativistic transformation or a spectral-flux
+    amplitude transformation.
+  - Continuous convolution preserves an integrable spectrum over the whole real coordinate
+    when the chosen kernel integrates to one. Finite grids may lose edge flux.
+  evidence:
+  - planetlib.spectroscopy.observation.source
+  sympy:
+    format: sympy-srepr-v1
+    expression: Equality(Symbol('w_sample', real=True), Mul(Symbol('w_obs', real=True),
+      Add(Mul(Symbol('RV', real=True), Pow(Symbol('c', real=True), Integer(-1))),
+      Integer(1))))
+- id: planetlib.spectroscopy.observation.gaussian_kernel
+  revision: '1'
+  description: Continuous normalized Gaussian broadening kernel.
+  scope: Continuous normalized velocity kernels and first-order Doppler sampling of
+    a supplied spectrum. Velocity quantities use km/s consistently. Rotation assumes
+    a rigid spherical disk with a spatially common local spectrum and the stated quadratic
+    limb-darkening law. Finite sampled kernels, log-grid approximations, interpolation,
+    endpoint padding and zero-rotation delta handling remain provider choices.
+  symbols:
+    K_G:
+      latex: K_{G}
+      description: Normalized continuous Gaussian kernel.
+      unit: (km s^-1)^-1
+    beta:
+      latex: \beta
+      description: Gaussian instrumental velocity standard deviation.
+      unit: km s^-1
+    v:
+      latex: v
+      description: Velocity-offset coordinate for the chosen broadening kernel.
+      unit: km s^-1
+  assumptions:
+  - beta and vsini are positive. The limb-darkening profile is nonnegative on 0 <=
+    mu <= 1 and 1-u1/3-u2/6 > 0.
+  - The first-order radial-velocity rule uses |RV/c| << 1 and samples the input spectrum
+    at w_obs*(1+RV/c); it is not a relativistic transformation or a spectral-flux
+    amplitude transformation.
+  - Continuous convolution preserves an integrable spectrum over the whole real coordinate
+    when the chosen kernel integrates to one. Finite grids may lose edge flux.
+  evidence:
+  - planetlib.spectroscopy.observation.source
+  sympy:
+    format: sympy-srepr-v1
+    expression: Equality(Function('K_G')(Symbol('v', real=True)), Mul(Rational(1,
+      2), Pow(Integer(2), Rational(1, 2)), Pow(pi, Rational(-1, 2)), Pow(Symbol('beta',
+      real=True), Integer(-1)), exp(Mul(Integer(-1), Rational(1, 2), Pow(Symbol('beta',
+      real=True), Integer(-2)), Pow(Symbol('v', real=True), Integer(2))))))
+- id: planetlib.spectroscopy.observation.limb_darkening
+  revision: '1'
+  description: Standard quadratic limb-darkening law.
+  scope: Continuous normalized velocity kernels and first-order Doppler sampling of
+    a supplied spectrum. Velocity quantities use km/s consistently. Rotation assumes
+    a rigid spherical disk with a spatially common local spectrum and the stated quadratic
+    limb-darkening law. Finite sampled kernels, log-grid approximations, interpolation,
+    endpoint padding and zero-rotation delta handling remain provider choices.
+  symbols:
+    L_mu:
+      latex: L_{\mu}
+      description: Local disk intensity divided by its central intensity.
+      unit: '1'
+    mu:
+      latex: \mu
+      description: Cosine of the disk surface angle.
+      unit: '1'
+    u1:
+      latex: u_{1}
+      description: Linear coefficient in the standard quadratic limb-darkening law.
+      unit: '1'
+    u2:
+      latex: u_{2}
+      description: Quadratic coefficient in the standard quadratic limb-darkening
+        law.
+      unit: '1'
+  assumptions:
+  - beta and vsini are positive. The limb-darkening profile is nonnegative on 0 <=
+    mu <= 1 and 1-u1/3-u2/6 > 0.
+  - The first-order radial-velocity rule uses |RV/c| << 1 and samples the input spectrum
+    at w_obs*(1+RV/c); it is not a relativistic transformation or a spectral-flux
+    amplitude transformation.
+  - Continuous convolution preserves an integrable spectrum over the whole real coordinate
+    when the chosen kernel integrates to one. Finite grids may lose edge flux.
+  evidence:
+  - planetlib.spectroscopy.observation.source
+  sympy:
+    format: sympy-srepr-v1
+    expression: Equality(Function('L_mu')(Symbol('mu', real=True)), Add(Mul(Integer(-1),
+      Symbol('u1', real=True), Add(Integer(1), Mul(Integer(-1), Symbol('mu', real=True)))),
+      Mul(Integer(-1), Symbol('u2', real=True), Pow(Add(Integer(1), Mul(Integer(-1),
+      Symbol('mu', real=True))), Integer(2))), Integer(1)))
+- id: planetlib.spectroscopy.observation.rotation_normalized
+  revision: '1'
+  description: Normalize the rotational strip integral over velocity.
+  scope: Continuous normalized velocity kernels and first-order Doppler sampling of
+    a supplied spectrum. Velocity quantities use km/s consistently. Rotation assumes
+    a rigid spherical disk with a spatially common local spectrum and the stated quadratic
+    limb-darkening law. Finite sampled kernels, log-grid approximations, interpolation,
+    endpoint padding and zero-rotation delta handling remain provider choices.
+  symbols:
+    K_raw:
+      latex: K_{raw}
+      description: Unnormalized rigid-rotation strip integral in dimensionless velocity.
+      unit: '1'
+    K_rot:
+      latex: K_{rot}
+      description: Continuous rotation kernel normalized over physical velocity.
+      unit: (km s^-1)^-1
+    u1:
+      latex: u_{1}
+      description: Linear coefficient in the standard quadratic limb-darkening law.
+      unit: '1'
+    u2:
+      latex: u_{2}
+      description: Quadratic coefficient in the standard quadratic limb-darkening
+        law.
+      unit: '1'
+    v:
+      latex: v
+      description: Velocity-offset coordinate for the chosen broadening kernel.
+      unit: km s^-1
+    vsini:
+      latex: vsini
+      description: Positive projected equatorial rotation speed.
+      unit: km s^-1
+  assumptions:
+  - beta and vsini are positive. The limb-darkening profile is nonnegative on 0 <=
+    mu <= 1 and 1-u1/3-u2/6 > 0.
+  - The first-order radial-velocity rule uses |RV/c| << 1 and samples the input spectrum
+    at w_obs*(1+RV/c); it is not a relativistic transformation or a spectral-flux
+    amplitude transformation.
+  - Continuous convolution preserves an integrable spectrum over the whole real coordinate
+    when the chosen kernel integrates to one. Finite grids may lose edge flux.
+  evidence:
+  - planetlib.spectroscopy.observation.source
+  sympy:
+    format: sympy-srepr-v1
+    expression: Equality(Function('K_rot')(Symbol('v', real=True)), Mul(Pow(pi, Integer(-1)),
+      Pow(Symbol('vsini', real=True), Integer(-1)), Pow(Add(Mul(Integer(-1), Rational(1,
+      3), Symbol('u1', real=True)), Mul(Integer(-1), Rational(1, 6), Symbol('u2',
+      real=True)), Integer(1)), Integer(-1)), Function('K_raw')(Mul(Symbol('v', real=True),
+      Pow(Symbol('vsini', real=True), Integer(-1))))))
+- id: planetlib.spectroscopy.observation.rotation_raw
+  revision: '1'
+  description: Rigid-rotation strip integral, zero outside the rotational support.
+  scope: Continuous normalized velocity kernels and first-order Doppler sampling of
+    a supplied spectrum. Velocity quantities use km/s consistently. Rotation assumes
+    a rigid spherical disk with a spatially common local spectrum and the stated quadratic
+    limb-darkening law. Finite sampled kernels, log-grid approximations, interpolation,
+    endpoint padding and zero-rotation delta handling remain provider choices.
+  symbols:
+    K_raw:
+      latex: K_{raw}
+      description: Unnormalized rigid-rotation strip integral in dimensionless velocity.
+      unit: '1'
+    u1:
+      latex: u_{1}
+      description: Linear coefficient in the standard quadratic limb-darkening law.
+      unit: '1'
+    u2:
+      latex: u_{2}
+      description: Quadratic coefficient in the standard quadratic limb-darkening
+        law.
+      unit: '1'
+    x:
+      latex: x
+      description: Projected rotation velocity divided by vsini.
+      unit: '1'
+  assumptions:
+  - beta and vsini are positive. The limb-darkening profile is nonnegative on 0 <=
+    mu <= 1 and 1-u1/3-u2/6 > 0.
+  - The first-order radial-velocity rule uses |RV/c| << 1 and samples the input spectrum
+    at w_obs*(1+RV/c); it is not a relativistic transformation or a spectral-flux
+    amplitude transformation.
+  - Continuous convolution preserves an integrable spectrum over the whole real coordinate
+    when the chosen kernel integrates to one. Finite grids may lose edge flux.
+  evidence:
+  - planetlib.spectroscopy.observation.source
+  sympy:
+    format: sympy-srepr-v1
+    expression: Equality(Function('K_raw')(Symbol('x', real=True)), Add(Mul(Integer(-1),
+      Rational(4, 3), Symbol('u2', real=True), Pow(Max(Integer(0), Add(Integer(1),
+      Mul(Integer(-1), Pow(Symbol('x', real=True), Integer(2))))), Rational(3, 2))),
+      Mul(Rational(1, 2), pi, Add(Symbol('u1', real=True), Mul(Integer(2), Symbol('u2',
+      real=True))), Max(Integer(0), Add(Integer(1), Mul(Integer(-1), Pow(Symbol('x',
+      real=True), Integer(2)))))), Mul(Add(Mul(Integer(-1), Integer(2), Symbol('u1',
+      real=True)), Mul(Integer(-1), Integer(2), Symbol('u2', real=True)), Integer(2)),
+      Pow(Max(Integer(0), Add(Integer(1), Mul(Integer(-1), Pow(Symbol('x', real=True),
+      Integer(2))))), Rational(1, 2)))))
+bindings:
+- id: exojax.spectral_observation.binding.1
+  equation:
+    id: planetlib.spectroscopy.observation.gaussian_kernel
+    revision: '1'
+  subject: exojax.spectral_observation.source
+  source: src/exojax/postproc/response.py
+  symbol: ipgauss
+  arguments:
+    beta:
+      symbol: beta
+      scale: 1.0
+      offset: 0.0
+  result: null
+  constants: {}
+  note: Kernel generation is internal; the function returns a convolved spectrum,
+    not a kernel. Finite discrete sum normalization is tested separately.
+- id: exojax.spectral_observation.binding.2
+  equation:
+    id: planetlib.spectroscopy.observation.doppler_sampling
+    revision: '1'
+  subject: exojax.spectral_observation.source
+  source: src/exojax/postproc/response.py
+  symbol: sampling
+  arguments:
+    nusd:
+      symbol: w_obs
+      scale: 1.0
+      offset: 0.0
+    RV:
+      symbol: RV
+      scale: 1.0
+      offset: 0.0
+  result: null
+  constants: {}
+  note: The function returns interpolated flux, not w_sample. w_sample is the internal
+    interpolation coordinate.
+- id: exojax.spectral_observation.binding.3
+  equation:
+    id: planetlib.spectroscopy.observation.rotation_raw
+    revision: '1'
+  subject: exojax.spectral_observation.source
+  source: src/exojax/postproc/spin_rotation.py
+  symbol: rotkernel
+  arguments:
+    x:
+      symbol: x
+      scale: 1.0
+      offset: 0.0
+    u1:
+      symbol: u1
+      scale: 1.0
+      offset: 0.0
+    u2:
+      symbol: u2
+      scale: 1.0
+      offset: 0.0
+  result: K_raw
+  constants: {}
+  note: Unnormalized raw rotation profile with compact support. Discrete normalization
+    is a separate provider operation.
+- id: exojax.spectral_observation.binding.4
+  equation:
+    id: planetlib.spectroscopy.observation.convolution
+    revision: '1'
+  subject: exojax.spectral_observation.source
+  source: src/exojax/postproc/spin_rotation.py
+  symbol: convolve_rigid_rotation
+  arguments: {}
+  result: F_out
+  constants: {}
+  note: Correspondence concerns a finite discrete approximation; zero vsini is handled
+    by a delta kernel. For the shared convolution binding only, F0 and F_out denote
+    dimensionless continuum-normalized spectra. The provider also accepts other flux
+    units; that broader numerical use is outside the shared convolution quantity declaration.
+decisions: []
+quantities:
+- id: planetlib.spectroscopy.observation.quantity.F_in
+  revision: '1'
+  latex: F_{in}
+  description: Supplied continuum-normalized spectrum on the chosen velocity coordinate.
+  unit: '1'
+  domain: Finite real value within the stated scope.
+  coordinates:
+  - id: planetlib.spectroscopy.observation.quantity.v
+    revision: '1'
+- id: planetlib.spectroscopy.observation.quantity.F_out
+  revision: '1'
+  latex: F_{out}
+  description: Continuum-normalized spectrum after continuous convolution.
+  unit: '1'
+  domain: Finite real value within the stated scope.
+  coordinates:
+  - id: planetlib.spectroscopy.observation.quantity.v
+    revision: '1'
+- id: planetlib.spectroscopy.observation.quantity.K
+  revision: '1'
+  latex: K
+  description: Chosen externally supplied normalized broadening kernel.
+  unit: (km s^-1)^-1
+  domain: Integrates to one.
+  coordinates:
+  - id: planetlib.spectroscopy.observation.quantity.v
+    revision: '1'
+- id: planetlib.spectroscopy.observation.quantity.K_G
+  revision: '1'
+  latex: K_{G}
+  description: Normalized continuous Gaussian kernel.
+  unit: (km s^-1)^-1
+  domain: Finite real value within the stated scope.
+  coordinates:
+  - id: planetlib.spectroscopy.observation.quantity.v
+    revision: '1'
+- id: planetlib.spectroscopy.observation.quantity.K_raw
+  revision: '1'
+  latex: K_{raw}
+  description: Unnormalized rigid-rotation strip integral in dimensionless velocity.
+  unit: '1'
+  domain: Finite real value within the stated scope.
+  coordinates:
+  - id: planetlib.spectroscopy.observation.quantity.x
+    revision: '1'
+- id: planetlib.spectroscopy.observation.quantity.K_rot
+  revision: '1'
+  latex: K_{rot}
+  description: Continuous rotation kernel normalized over physical velocity.
+  unit: (km s^-1)^-1
+  domain: Finite real value within the stated scope.
+  coordinates:
+  - id: planetlib.spectroscopy.observation.quantity.v
+    revision: '1'
+- id: planetlib.spectroscopy.observation.quantity.L_mu
+  revision: '1'
+  latex: L_{\mu}
+  description: Local disk intensity divided by its central intensity.
+  unit: '1'
+  domain: Finite real value within the stated scope.
+  coordinates:
+  - id: planetlib.spectroscopy.observation.quantity.mu
+    revision: '1'
+- id: planetlib.spectroscopy.observation.quantity.RV
+  revision: '1'
+  latex: RV
+  description: Signed radial velocity under the explicit sampling convention.
+  unit: km s^-1
+  domain: Magnitude much smaller than c.
+  coordinates: []
+- id: planetlib.spectroscopy.observation.quantity.beta
+  revision: '1'
+  latex: \beta
+  description: Gaussian instrumental velocity standard deviation.
+  unit: km s^-1
+  domain: Positive.
+  coordinates: []
+- id: planetlib.spectroscopy.observation.quantity.c
+  revision: '1'
+  latex: c
+  description: Speed of light in the same velocity units as RV.
+  unit: km s^-1
+  domain: Positive.
+  coordinates: []
+- id: planetlib.spectroscopy.observation.quantity.mu
+  revision: '1'
+  latex: \mu
+  description: Cosine of the disk surface angle.
+  unit: '1'
+  domain: Between zero and one.
+  coordinates: []
+- id: planetlib.spectroscopy.observation.quantity.u
+  revision: '1'
+  latex: u
+  description: Integration velocity offset in continuous convolution.
+  unit: km s^-1
+  domain: Finite real value within the stated scope.
+  coordinates: []
+- id: planetlib.spectroscopy.observation.quantity.u1
+  revision: '1'
+  latex: u_{1}
+  description: Linear coefficient in the standard quadratic limb-darkening law.
+  unit: '1'
+  domain: Finite real value within the stated scope.
+  coordinates: []
+- id: planetlib.spectroscopy.observation.quantity.u2
+  revision: '1'
+  latex: u_{2}
+  description: Quadratic coefficient in the standard quadratic limb-darkening law.
+  unit: '1'
+  domain: Finite real value within the stated scope.
+  coordinates: []
+- id: planetlib.spectroscopy.observation.quantity.v
+  revision: '1'
+  latex: v
+  description: Velocity-offset coordinate for the chosen broadening kernel.
+  unit: km s^-1
+  domain: Finite real value within the stated scope.
+  coordinates: []
+- id: planetlib.spectroscopy.observation.quantity.vsini
+  revision: '1'
+  latex: vsini
+  description: Positive projected equatorial rotation speed.
+  unit: km s^-1
+  domain: Positive.
+  coordinates: []
+- id: planetlib.spectroscopy.observation.quantity.w_obs
+  revision: '1'
+  latex: w_{obs}
+  description: Observed spectroscopic wavenumber.
+  unit: cm^-1
+  domain: Positive.
+  coordinates: []
+- id: planetlib.spectroscopy.observation.quantity.w_sample
+  revision: '1'
+  latex: w_{sample}
+  description: Input spectral wavenumber sampled for an observed grid point.
+  unit: cm^-1
+  domain: Finite real value within the stated scope.
+  coordinates: []
+- id: planetlib.spectroscopy.observation.quantity.x
+  revision: '1'
+  latex: x
+  description: Projected rotation velocity divided by vsini.
+  unit: '1'
+  domain: Finite real value within the stated scope.
+  coordinates: []
+mathematical_models:
+- id: planetlib.spectroscopy.observation.model
+  revision: '1'
+  description: Spectral broadening and first-order Doppler sampling
+  scope: Continuous normalized velocity kernels and first-order Doppler sampling of
+    a supplied spectrum. Velocity quantities use km/s consistently. Rotation assumes
+    a rigid spherical disk with a spatially common local spectrum and the stated quadratic
+    limb-darkening law. Finite sampled kernels, log-grid approximations, interpolation,
+    endpoint padding and zero-rotation delta handling remain provider choices.
+  quantities:
+    v:
+      quantity:
+        id: planetlib.spectroscopy.observation.quantity.v
+        revision: '1'
+      role: coordinate
+    u:
+      quantity:
+        id: planetlib.spectroscopy.observation.quantity.u
+        revision: '1'
+      role: coordinate
+    beta:
+      quantity:
+        id: planetlib.spectroscopy.observation.quantity.beta
+        revision: '1'
+      role: input
+    K_G:
+      quantity:
+        id: planetlib.spectroscopy.observation.quantity.K_G
+        revision: '1'
+      role: derived
+    w_sample:
+      quantity:
+        id: planetlib.spectroscopy.observation.quantity.w_sample
+        revision: '1'
+      role: derived
+    w_obs:
+      quantity:
+        id: planetlib.spectroscopy.observation.quantity.w_obs
+        revision: '1'
+      role: input
+    RV:
+      quantity:
+        id: planetlib.spectroscopy.observation.quantity.RV
+        revision: '1'
+      role: input
+    c:
+      quantity:
+        id: planetlib.spectroscopy.observation.quantity.c
+        revision: '1'
+      role: parameter
+    mu:
+      quantity:
+        id: planetlib.spectroscopy.observation.quantity.mu
+        revision: '1'
+      role: coordinate
+    u1:
+      quantity:
+        id: planetlib.spectroscopy.observation.quantity.u1
+        revision: '1'
+      role: input
+    u2:
+      quantity:
+        id: planetlib.spectroscopy.observation.quantity.u2
+        revision: '1'
+      role: input
+    L_mu:
+      quantity:
+        id: planetlib.spectroscopy.observation.quantity.L_mu
+        revision: '1'
+      role: derived
+    x:
+      quantity:
+        id: planetlib.spectroscopy.observation.quantity.x
+        revision: '1'
+      role: coordinate
+    vsini:
+      quantity:
+        id: planetlib.spectroscopy.observation.quantity.vsini
+        revision: '1'
+      role: input
+    K_raw:
+      quantity:
+        id: planetlib.spectroscopy.observation.quantity.K_raw
+        revision: '1'
+      role: derived
+    K_rot:
+      quantity:
+        id: planetlib.spectroscopy.observation.quantity.K_rot
+        revision: '1'
+      role: derived
+    K:
+      quantity:
+        id: planetlib.spectroscopy.observation.quantity.K
+        revision: '1'
+      role: input
+    F_in:
+      quantity:
+        id: planetlib.spectroscopy.observation.quantity.F_in
+        revision: '1'
+      role: input
+    F_out:
+      quantity:
+        id: planetlib.spectroscopy.observation.quantity.F_out
+        revision: '1'
+      role: derived
+  relations:
+  - id: gaussian_kernel
+    equation:
+      id: planetlib.spectroscopy.observation.gaussian_kernel
+      revision: '1'
+    kind: equation
+    role: Continuous normalized Gaussian broadening kernel.
+    quantities:
+      K_G: K_G
+      beta: beta
+      v: v
+  - id: doppler_sampling
+    equation:
+      id: planetlib.spectroscopy.observation.doppler_sampling
+      revision: '1'
+    kind: equation
+    role: First-order signed radial-velocity sampling coordinate.
+    quantities:
+      RV: RV
+      c: c
+      w_obs: w_obs
+      w_sample: w_sample
+  - id: limb_darkening
+    equation:
+      id: planetlib.spectroscopy.observation.limb_darkening
+      revision: '1'
+    kind: equation
+    role: Standard quadratic limb-darkening law.
+    quantities:
+      L_mu: L_mu
+      mu: mu
+      u1: u1
+      u2: u2
+  - id: rotation_raw
+    equation:
+      id: planetlib.spectroscopy.observation.rotation_raw
+      revision: '1'
+    kind: equation
+    role: Rigid-rotation strip integral, zero outside the rotational support.
+    quantities:
+      K_raw: K_raw
+      u1: u1
+      u2: u2
+      x: x
+  - id: rotation_normalized
+    equation:
+      id: planetlib.spectroscopy.observation.rotation_normalized
+      revision: '1'
+    kind: equation
+    role: Normalize the rotational strip integral over velocity.
+    quantities:
+      K_raw: K_raw
+      K_rot: K_rot
+      u1: u1
+      u2: u2
+      v: v
+      vsini: vsini
+  - id: convolution
+    equation:
+      id: planetlib.spectroscopy.observation.convolution
+      revision: '1'
+    kind: equation
+    role: Continuous convolution with an externally selected normalized kernel.
+    quantities:
+      F_in: F_in
+      F_out: F_out
+      K: K
+      u: u
+      v: v

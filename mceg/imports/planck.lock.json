@@ -1,0 +1,23 @@
+{
+  "format": "planetlib.imports.v1",
+  "imports": [
+    {
+      "path": "catalog/radiation/lte_coordinates.yaml",
+      "sha256": "f19e14d68fb6c3e4e8ef7394436bb85780226ad8eb5e6b69bd283753c7bdad0f",
+      "model": {
+        "id": "planetlib.radiation.lte.populations",
+        "revision": "1",
+        "sha256": "87bd802c94020dc5a3d9fa17b7de52d5ffebb9412d65f009b0a47b1b407d6c3d"
+      }
+    },
+    {
+      "path": "catalog/radiation/lte_coordinates.yaml",
+      "sha256": "f19e14d68fb6c3e4e8ef7394436bb85780226ad8eb5e6b69bd283753c7bdad0f",
+      "model": {
+        "id": "planetlib.radiation.lte.coordinates",
+        "revision": "1",
+        "sha256": "31790f5fe2a48eb9b6f15f2d86e5901c890052b2d18d5328b23b6ea1bf7d7d33"
+      }
+    }
+  ]
+}

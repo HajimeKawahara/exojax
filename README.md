@@ -22,6 +22,11 @@ In short, ExoJAX allows you to do gradient based optimizations, HMC-NUTS, and SV
 
 </details>
 
+The optional [MCEG model records](mceg/README.md) describe the scientific model
+inventory, shared Planetlib definitions, implementation conventions and scoped
+evidence. Their inspection and comparison tests are separate from numerical
+runtime dependencies and ordinary package development.
+
 ## License
 
 🐈 Copyright 2020-2026 ExoJAX contributors. ExoJAX is publicly available under the MIT license.

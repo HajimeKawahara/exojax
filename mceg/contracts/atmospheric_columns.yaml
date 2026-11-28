@@ -1,0 +1,1637 @@
+schema_version: '0.6'
+model:
+  id: exojax.atmospheric_columns
+  name: Atmospheric absorber columns and hydrostatic geometry
+  description: Provider-owned conventions and bounded review scope for shared Planetlib
+    definitions.
+  implementation:
+    repository: https://github.com/HajimeKawahara/exojax
+    revision: 38cb2e44f153ad6d729e3253e235702de52920cf
+    entry_points:
+    - src/exojax/rt/layeropacity.py:layer_optical_depth_from_cross_section
+    - src/exojax/rt/layeropacity.py:layer_optical_depth_from_log_cia
+    - src/exojax/atm/atmprof.py:hydrostatic_radius_profile
+    - src/exojax/atm/atmprof.py:hydrostatic_radius_profile_ideal_gas
+    - src/exojax/rt/layeropacity.py:layer_optical_depth
+    - src/exojax/rt/layeropacity.py:layer_optical_depth
+assumptions:
+- statement: Layer quantities use cgs units, except pressure APIs take bar and molecular-mass
+    inputs take amu. Cross-section arrays are (Nlayer,Nwavenumber); number columns
+    are cm^-2. Pressure-column evaluation uses effective mass unit bar_cgs/opacity_factor;
+    the hydrostatic ideal-gas path uses exported m_u, so constant sets must not be
+    silently equated. MMR q uses absorber mass, VMR x_abs uses mean molecular mass;
+    q=x_abs*m_abs/m_mean. CIA coefficient is cm^5 and tau=k*n1*n2*dz, including identical
+    partners without a factor one-half. Hydrostatic boundaries run top to bottom,
+    dP>0, with lower radius prescribed and g proportional to r^-2; constant-density
+    and ideal-gas layer closures are distinct.
+  evidence:
+  - exojax.atmospheric_columns.source
+domains:
+- kind: scientific_applicability
+  status: unknown
+  description: Application to a particular atmosphere or observation needs independent
+    validation.
+  conditions: []
+  evidence:
+  - exojax.atmospheric_columns.source
+claims:
+- id: exojax.atmospheric_columns.source_correspondence
+  revision: '1'
+  statement: The declared provider subset represents the selected shared relations
+    under the stated conventions.
+  kind: theoretical
+  scope: Layer quantities use cgs units, except pressure APIs take bar and molecular-mass
+    inputs take amu. Cross-section arrays are (Nlayer,Nwavenumber); number columns
+    are cm^-2. Pressure-column evaluation uses effective mass unit bar_cgs/opacity_factor;
+    the hydrostatic ideal-gas path uses exported m_u, so constant sets must not be
+    silently equated. MMR q uses absorber mass, VMR x_abs uses mean molecular mass;
+    q=x_abs*m_abs/m_mean. CIA coefficient is cm^5 and tau=k*n1*n2*dz, including identical
+    partners without a factor one-half. Hydrostatic boundaries run top to bottom,
+    dP>0, with lower radius prescribed and g proportional to r^-2; constant-density
+    and ideal-gas layer closures are distinct.
+  equations:
+  - id: planetlib.atmosphere.columns.cross_section_depth
+    revision: '1'
+  - id: planetlib.atmosphere.columns.geometric_column
+    revision: '1'
+  - id: planetlib.atmosphere.columns.pressure_column_mass
+    revision: '1'
+  - id: planetlib.atmosphere.columns.pressure_column_volume
+    revision: '1'
+  - id: planetlib.atmosphere.columns.mixing_conversion
+    revision: '1'
+  - id: planetlib.atmosphere.columns.cia_depth
+    revision: '1'
+  - id: planetlib.atmosphere.columns.hydrostatic
+    revision: '1'
+  - id: planetlib.atmosphere.columns.ideal_gas_density
+    revision: '1'
+  mathematical_models:
+  - id: planetlib.atmosphere.columns.model
+    revision: '1'
+- id: exojax.atmospheric_columns.numerical_domain
+  revision: '1'
+  statement: The selected algorithms approximate the shared relations throughout a
+    documented numerical domain.
+  kind: numerical_verification
+  scope: Layer quantities use cgs units, except pressure APIs take bar and molecular-mass
+    inputs take amu. Cross-section arrays are (Nlayer,Nwavenumber); number columns
+    are cm^-2. Pressure-column evaluation uses effective mass unit bar_cgs/opacity_factor;
+    the hydrostatic ideal-gas path uses exported m_u, so constant sets must not be
+    silently equated. MMR q uses absorber mass, VMR x_abs uses mean molecular mass;
+    q=x_abs*m_abs/m_mean. CIA coefficient is cm^5 and tau=k*n1*n2*dz, including identical
+    partners without a factor one-half. Hydrostatic boundaries run top to bottom,
+    dP>0, with lower radius prescribed and g proportional to r^-2; constant-density
+    and ideal-gas layer closures are distinct.
+  equations:
+  - id: planetlib.atmosphere.columns.cross_section_depth
+    revision: '1'
+  - id: planetlib.atmosphere.columns.geometric_column
+    revision: '1'
+  - id: planetlib.atmosphere.columns.pressure_column_mass
+    revision: '1'
+  - id: planetlib.atmosphere.columns.pressure_column_volume
+    revision: '1'
+  - id: planetlib.atmosphere.columns.mixing_conversion
+    revision: '1'
+  - id: planetlib.atmosphere.columns.cia_depth
+    revision: '1'
+  - id: planetlib.atmosphere.columns.hydrostatic
+    revision: '1'
+  - id: planetlib.atmosphere.columns.ideal_gas_density
+    revision: '1'
+  mathematical_models:
+  - id: planetlib.atmosphere.columns.model
+    revision: '1'
+- id: exojax.atmospheric_columns.derivative_domain
+  revision: '1'
+  statement: Provider derivatives represent the selected relations throughout a documented
+    differentiable domain.
+  kind: numerical_verification
+  scope: Layer quantities use cgs units, except pressure APIs take bar and molecular-mass
+    inputs take amu. Cross-section arrays are (Nlayer,Nwavenumber); number columns
+    are cm^-2. Pressure-column evaluation uses effective mass unit bar_cgs/opacity_factor;
+    the hydrostatic ideal-gas path uses exported m_u, so constant sets must not be
+    silently equated. MMR q uses absorber mass, VMR x_abs uses mean molecular mass;
+    q=x_abs*m_abs/m_mean. CIA coefficient is cm^5 and tau=k*n1*n2*dz, including identical
+    partners without a factor one-half. Hydrostatic boundaries run top to bottom,
+    dP>0, with lower radius prescribed and g proportional to r^-2; constant-density
+    and ideal-gas layer closures are distinct.
+  equations:
+  - id: planetlib.atmosphere.columns.cross_section_depth
+    revision: '1'
+  - id: planetlib.atmosphere.columns.geometric_column
+    revision: '1'
+  - id: planetlib.atmosphere.columns.pressure_column_mass
+    revision: '1'
+  - id: planetlib.atmosphere.columns.pressure_column_volume
+    revision: '1'
+  - id: planetlib.atmosphere.columns.mixing_conversion
+    revision: '1'
+  - id: planetlib.atmosphere.columns.cia_depth
+    revision: '1'
+  - id: planetlib.atmosphere.columns.hydrostatic
+    revision: '1'
+  - id: planetlib.atmosphere.columns.ideal_gas_density
+    revision: '1'
+  mathematical_models:
+  - id: planetlib.atmosphere.columns.model
+    revision: '1'
+- id: exojax.atmospheric_columns.applicability
+  revision: '1'
+  statement: The selected assumptions apply to the intended atmospheric or observational
+    conditions.
+  kind: physical_validation
+  scope: Layer quantities use cgs units, except pressure APIs take bar and molecular-mass
+    inputs take amu. Cross-section arrays are (Nlayer,Nwavenumber); number columns
+    are cm^-2. Pressure-column evaluation uses effective mass unit bar_cgs/opacity_factor;
+    the hydrostatic ideal-gas path uses exported m_u, so constant sets must not be
+    silently equated. MMR q uses absorber mass, VMR x_abs uses mean molecular mass;
+    q=x_abs*m_abs/m_mean. CIA coefficient is cm^5 and tau=k*n1*n2*dz, including identical
+    partners without a factor one-half. Hydrostatic boundaries run top to bottom,
+    dP>0, with lower radius prescribed and g proportional to r^-2; constant-density
+    and ideal-gas layer closures are distinct.
+  equations:
+  - id: planetlib.atmosphere.columns.cross_section_depth
+    revision: '1'
+  - id: planetlib.atmosphere.columns.geometric_column
+    revision: '1'
+  - id: planetlib.atmosphere.columns.pressure_column_mass
+    revision: '1'
+  - id: planetlib.atmosphere.columns.pressure_column_volume
+    revision: '1'
+  - id: planetlib.atmosphere.columns.mixing_conversion
+    revision: '1'
+  - id: planetlib.atmosphere.columns.cia_depth
+    revision: '1'
+  - id: planetlib.atmosphere.columns.hydrostatic
+    revision: '1'
+  - id: planetlib.atmosphere.columns.ideal_gas_density
+    revision: '1'
+  mathematical_models:
+  - id: planetlib.atmosphere.columns.model
+    revision: '1'
+- id: exojax.atmospheric_columns.initial_samples
+  revision: '1'
+  statement: The explicitly selected provider sample comparisons pass with their declared
+    inputs, precision and tolerances.
+  kind: numerical_verification
+  scope: Synthetic geometric and pressure columns with explicit MMR/VMR conversion,
+    identical-partner CIA without one-half, zero-density and shape/gradient controls,
+    constant-density inverse-square hydrostatic layers, and the isothermal ideal-gas
+    hydrostatic relation. The pressure opacity_factor and ideal-gas exported mass
+    constant remain distinct. Exact points, arrays, boundary choices and tolerances
+    are those in the hashed tests and named JUnit cases. This is a finite execution
+    result, not a proof, primary-source correspondence review or empirical applicability
+    judgment.
+  equations:
+  - id: planetlib.atmosphere.columns.cross_section_depth
+    revision: '1'
+  - id: planetlib.atmosphere.columns.geometric_column
+    revision: '1'
+  - id: planetlib.atmosphere.columns.pressure_column_mass
+    revision: '1'
+  - id: planetlib.atmosphere.columns.pressure_column_volume
+    revision: '1'
+  - id: planetlib.atmosphere.columns.mixing_conversion
+    revision: '1'
+  - id: planetlib.atmosphere.columns.cia_depth
+    revision: '1'
+  - id: planetlib.atmosphere.columns.hydrostatic
+    revision: '1'
+  - id: planetlib.atmosphere.columns.ideal_gas_density
+    revision: '1'
+  mathematical_models:
+  - id: planetlib.atmosphere.columns.model
+    revision: '1'
+evidence:
+- id: exojax.atmospheric_columns.source
+  kind: implementation
+  summary: Pinned provider source and declared scientific conventions; no primary-source
+    review is inherited.
+  sources:
+  - https://github.com/HajimeKawahara/exojax/blob/38cb2e44f153ad6d729e3253e235702de52920cf/src/exojax/rt/layeropacity.py
+  - https://github.com/HajimeKawahara/exojax/blob/38cb2e44f153ad6d729e3253e235702de52920cf/src/exojax/atm/atmprof.py
+  - https://github.com/HajimeKawahara/exojax/blob/38cb2e44f153ad6d729e3253e235702de52920cf/src/exojax/utils/constants.py
+  scope: Layer quantities use cgs units, except pressure APIs take bar and molecular-mass
+    inputs take amu. Cross-section arrays are (Nlayer,Nwavenumber); number columns
+    are cm^-2. Pressure-column evaluation uses effective mass unit bar_cgs/opacity_factor;
+    the hydrostatic ideal-gas path uses exported m_u, so constant sets must not be
+    silently equated. MMR q uses absorber mass, VMR x_abs uses mean molecular mass;
+    q=x_abs*m_abs/m_mean. CIA coefficient is cm^5 and tau=k*n1*n2*dz, including identical
+    partners without a factor one-half. Hydrostatic boundaries run top to bottom,
+    dP>0, with lower radius prescribed and g proportional to r^-2; constant-density
+    and ideal-gas layer closures are distinct.
+  result: null
+  provenance: null
+  subject: exojax.atmospheric_columns.source
+  context: exojax.atmospheric_columns.scope
+  artifacts: []
+- id: exojax.atmospheric_columns.initial_samples.execution
+  kind: numerical_test
+  summary: 'Archived CPU execution: 15 named passing comparisons in this scope; the
+    separate odd-length expected failure is excluded.'
+  sources:
+  - mceg/evidence/initial_review/receipt.json
+  - tests/model_contracts/test_core_models.py::test_columns_pressure_bases_and_cia_identical_partners
+  - tests/model_contracts/test_core_models.py::test_inverse_square_hydrostatic_constant_density_integral
+  - tests/model_contracts/test_core_models.py::test_ideal_gas_isothermal_hydrostatic_inverse_square_integral
+  - tests/unittests/rt/test_layeropacity.py::test_cross_section_common_spectrum_matches_analytic_equation
+  - tests/unittests/rt/test_layeropacity.py::test_cross_section_layer_resolved_lbl_array
+  - tests/unittests/rt/test_layeropacity.py::test_cross_section_layer_resolved_ckd_array
+  - tests/unittests/rt/test_layeropacity.py::test_log_cia_matches_analytic_equation_for_layered_ckd_array
+  - tests/unittests/rt/test_layeropacity.py::test_extinction_common_spectrum_matches_analytic_equation
+  - tests/unittests/rt/test_layeropacity.py::test_geometric_optical_depth_does_not_silently_make_opacity_positive
+  - tests/unittests/rt/test_layeropacity.py::test_log_cia_preserves_float32_dynamic_range_and_identical_partner_rule
+  - tests/unittests/rt/test_layeropacity.py::test_log_cia_zero_density_and_height_return_zero_without_nan_gradient
+  - tests/unittests/rt/test_layeropacity.py::test_geometric_optical_depth_supports_jit_and_grad
+  - tests/unittests/rt/test_layeropacity.py::test_geometric_optical_depth_rejects_invalid_shapes
+  - tests/unittests/rt/test_layeropacity.py::test_pressure_wrapper_matches_common_number_column_api
+  - tests/unittests/rt/test_layeropacity.py::test_pressure_wrapper_preserves_leading_singleton_broadcasting
+  scope: Synthetic geometric and pressure columns with explicit MMR/VMR conversion,
+    identical-partner CIA without one-half, zero-density and shape/gradient controls,
+    constant-density inverse-square hydrostatic layers, and the isothermal ideal-gas
+    hydrostatic relation. The pressure opacity_factor and ideal-gas exported mass
+    constant remain distinct. Exact points, arrays, boundary choices and tolerances
+    are those in the hashed tests and named JUnit cases. This is a finite execution
+    result, not a proof, primary-source correspondence review or empirical applicability
+    judgment.
+  result: passed
+  provenance:
+    role: implementation
+    location: mceg/evidence/initial_review/receipt.json
+    inspection: inspected
+    note: Saved outcomes and selected source/test hashes reviewed; no upstream judgment
+      or fresh experimental evidence is inferred.
+    derived_from: []
+  subject: exojax.atmospheric_columns.source
+  context: exojax.atmospheric_columns.initial_samples.cpu
+  artifacts:
+  - source: mceg/evidence/initial_review/receipt.json
+    sha256: 486009c644a4e4b976826f8c7985c06f20b50dc9192d207de3fbca856fa48658
+  - source: mceg/evidence/initial_review/pytest.log
+    sha256: 899a83317e4034aee410deb3db0bcb05cad0eca0137deb593dfe78fe4751c281
+  - source: mceg/evidence/initial_review/junit.xml
+    sha256: d43736396273b3926e2cb42e0d93266775036e401b4030593df75e3cdf9b8978
+  - source: mceg/requirements.txt
+    sha256: ac204e416685f42f47169e02a7ebc3e448ced3297605c9147ab2dbca90e33db7
+  - source: pyproject.toml
+    sha256: 1343ad1836f56412889ebb4748b5e4ef20a150ec58fe4b8a04083e58672a359a
+  - source: src/exojax/atm/atmprof.py
+    sha256: bba0ee11db0bcc45f34f932ca7e12013369e61f8121016a3292c3aa9edf38654
+  - source: src/exojax/database/core/broadening.py
+    sha256: 941baede9603921b47d3bbcbc5902740046123f101875824dcd50b197404b563
+  - source: src/exojax/database/core/line_strength.py
+    sha256: f39014d7b4c2349ab021b3f0084754ba2c7ed35c175e00fcd3cef40b71e7318f
+  - source: src/exojax/opacity/lpf/lpf.py
+    sha256: fd73cc4f6c5d46e25b701d22d93db3c17ce1e7d3e0fdd22584817761f1347a3c
+  - source: src/exojax/opacity/modit/modit.py
+    sha256: d5f3bed1459a952a8ed49c856ca3b0e003513b7b23be5cf2adea4c8f6d9d471b
+  - source: src/exojax/opacity/premodit/premodit.py
+    sha256: 10c251df4c2725eaf7b9789d174cb073111f04688d36f9981cecd3184b93a516
+  - source: src/exojax/postproc/response.py
+    sha256: 6cf4941286c55091d66b4f26042d5090e0ebf06d22caa00f2ad1538c8dd2692c
+  - source: src/exojax/postproc/spin_rotation.py
+    sha256: 41d5e99ea31bffa64c18ba43fcdcf2cfc999d385660db132343aab913f2dd447
+  - source: src/exojax/rt/chord.py
+    sha256: af51e8a61ee15bb9d3048c310a7512a188b0a89548ce6c2aefce4d3420490bbd
+  - source: src/exojax/rt/common.py
+    sha256: 3b05610ce0dc6d491ed2003a9f96eaacc5745cdeb766d334d2d2e501a2ab8ef0
+  - source: src/exojax/rt/emis.py
+    sha256: e0668f38f84fc6dd17d3fcfe42e26f7ed7b089edda8b195f75e9d1253e2ae918
+  - source: src/exojax/rt/layeropacity.py
+    sha256: f66d17f6a8e418efed567c2a130f4a556735d885f040b009c65c1ca39bff99b8
+  - source: src/exojax/rt/planck.py
+    sha256: 670a9d66a5bbbcfe2947f92bc55f529270dc802b3ecd73b3e0aba88d4f3fe3b1
+  - source: src/exojax/rt/rtransfer.py
+    sha256: 7e66948b22e81492a0931f7ea5aed2dd7a8f72077be461582af440c7771288fe
+  - source: src/exojax/rt/trans.py
+    sha256: 8c0d51d67e46ebc40703a7f2186d0a98269d87e01f659d0dc65b7c2cf83f18fc
+  - source: src/exojax/signal/convolve.py
+    sha256: d217c75401a2bf53a6bfa0e5a3ee6c2efe2d2b59addc50da3c49de5efb8c6a10
+  - source: src/exojax/signal/integrate.py
+    sha256: 16c48aca5683c435bdfe62ebe83347975981e849c2266efe3bd674a5633d6543
+  - source: src/exojax/special/faddeeva.py
+    sha256: 2de87610fa047d8afd9a4f4364954408655b19723749391fb7f0ee035a14cb8c
+  - source: src/exojax/utils/constants.py
+    sha256: a2f34c9a4debd0d61b4c2c0e1ef0b269b10f21d972195c6b74cd169d4f0c1b81
+  - source: tests/conftest.py
+    sha256: e282c84343d4b267ae46874b1c950bfa61c9257a60fbf7336e51a0bc5babbab5
+  - source: tests/model_contracts/test_core_models.py
+    sha256: 219266d8de527ccde71554b36e3f3404dda72a415c07e7fedc7c780d0a4dd216
+  - source: tests/model_contracts/test_planetlib.py
+    sha256: 04d9d60e96b9561eaa9f4ed718dc942696cb9aa5c0dbc2133ed4f92a86a3795c
+  - source: tests/unittests/opacity/lpf/test_lpf.py
+    sha256: fc8a982cdb40793d1442d2109ba333b88f659389ffa71e172a1371c0a226130f
+  - source: tests/unittests/postproc/test_spin_rotation.py
+    sha256: d0da97a121dbb781cf458a24692f1ba1f596614456f39a23945230eae98d7f30
+  - source: tests/unittests/rt/test_chord.py
+    sha256: 96d6189b6a554e55bf9ef0b316e16a7fae16906014d84ef29003c217c3e3de7b
+  - source: tests/unittests/rt/test_layeropacity.py
+    sha256: 67c2f3caab24303ecc5df6da7fec0588c5a4f2199230e91121c8b5bb2b027c54
+  - source: tests/unittests/rt/test_planck.py
+    sha256: db7d495980888d93d0f3736af3bafdbd414933378387cab15a1622d168333702
+  - source: tests/unittests/rt/test_rtransfer_transmission.py
+    sha256: 4b776c74ef85a5f3209c7e8359dfd1df01c1137f807909133e51d0ff724e7d10
+- id: planetlib.atmosphere.columns.source
+  kind: implementation
+  summary: Mathematical conventions extracted from immutable ExoJAX source.
+  sources:
+  - https://github.com/HajimeKawahara/exojax/blob/38cb2e44f153ad6d729e3253e235702de52920cf/src/exojax/rt/layeropacity.py
+  - https://github.com/HajimeKawahara/exojax/blob/38cb2e44f153ad6d729e3253e235702de52920cf/src/exojax/atm/atmprof.py
+  - https://github.com/HajimeKawahara/exojax/blob/38cb2e44f153ad6d729e3253e235702de52920cf/src/exojax/atm/idealgas.py
+  scope: The cited source implementations were inspected. This is not a new inspection
+    of their original literature or a transferred provider assessment.
+  result: null
+  provenance:
+    role: implementation
+    location: The functions and conventions identified by the immutable source paths.
+    inspection: inspected
+    note: Shared mathematical definitions are distinct from numerical approximation
+      and physical applicability.
+    derived_from: []
+  subject: null
+  context: null
+  artifacts: []
+limitations:
+- statement: A pressure-based column assumes hydrostatic support and layer representative
+    quantities. Shape validation does not establish composition consistency, physical
+    stratification or accuracy of a finite hydrostatic mesh.
+  evidence:
+  - exojax.atmospheric_columns.source
+subjects:
+- id: exojax.atmospheric_columns.source
+  implementation:
+    repository: https://github.com/HajimeKawahara/exojax
+    revision: 38cb2e44f153ad6d729e3253e235702de52920cf
+    entry_points:
+    - src/exojax/rt/layeropacity.py:layer_optical_depth_from_cross_section
+    - src/exojax/rt/layeropacity.py:layer_optical_depth_from_log_cia
+    - src/exojax/atm/atmprof.py:hydrostatic_radius_profile
+    - src/exojax/atm/atmprof.py:hydrostatic_radius_profile_ideal_gas
+    - src/exojax/rt/layeropacity.py:layer_optical_depth
+    - src/exojax/rt/layeropacity.py:layer_optical_depth
+  selected_files:
+    src/exojax/rt/layeropacity.py: f66d17f6a8e418efed567c2a130f4a556735d885f040b009c65c1ca39bff99b8
+    src/exojax/atm/atmprof.py: bba0ee11db0bcc45f34f932ca7e12013369e61f8121016a3292c3aa9edf38654
+    src/exojax/utils/constants.py: a2f34c9a4debd0d61b4c2c0e1ef0b269b10f21d972195c6b74cd169d4f0c1b81
+contexts:
+- id: exojax.atmospheric_columns.scope
+  scope: Layer quantities use cgs units, except pressure APIs take bar and molecular-mass
+    inputs take amu. Cross-section arrays are (Nlayer,Nwavenumber); number columns
+    are cm^-2. Pressure-column evaluation uses effective mass unit bar_cgs/opacity_factor;
+    the hydrostatic ideal-gas path uses exported m_u, so constant sets must not be
+    silently equated. MMR q uses absorber mass, VMR x_abs uses mean molecular mass;
+    q=x_abs*m_abs/m_mean. CIA coefficient is cm^5 and tau=k*n1*n2*dz, including identical
+    partners without a factor one-half. Hydrostatic boundaries run top to bottom,
+    dP>0, with lower radius prescribed and g proportional to r^-2; constant-density
+    and ideal-gas layer closures are distinct.
+  quantities: {}
+  settings:
+    planetlib_revision: 20c0a3936cc6c1ad790945b936c1ef3ad74af31e
+    precision: Selected CPU float64 comparisons; no global float32/float64 error bound
+    numerical_choices: A pressure-based column assumes hydrostatic support and layer
+      representative quantities. Shape validation does not establish composition consistency,
+      physical stratification or accuracy of a finite hydrostatic mesh.
+- id: exojax.atmospheric_columns.initial_samples.cpu
+  scope: Synthetic geometric and pressure columns with explicit MMR/VMR conversion,
+    identical-partner CIA without one-half, zero-density and shape/gradient controls,
+    constant-density inverse-square hydrostatic layers, and the isothermal ideal-gas
+    hydrostatic relation. The pressure opacity_factor and ideal-gas exported mass
+    constant remain distinct. Exact points, arrays, boundary choices and tolerances
+    are those in the hashed tests and named JUnit cases. This is a finite execution
+    result, not a proof, primary-source correspondence review or empirical applicability
+    judgment.
+  quantities: {}
+  settings:
+    backend: cpu
+    precision: Companion comparisons use the isolated_test_environment fixture and
+      CPU float64. Existing Planck tests explicitly use float32; existing LPF tests
+      select both float32 and float64. No GPU or global precision-domain claim.
+    selected_passed_cases: 15
+    receipt: mceg/evidence/initial_review/receipt.json
+    planetlib_revision: 20c0a3936cc6c1ad790945b936c1ef3ad74af31e
+    mceg_revision: 4034c9259c9c2e7d55243d69f3ab2f22c9cc7d88
+conditions: []
+assessments:
+- id: exojax.atmospheric_columns.source_correspondence.pending
+  subject: exojax.atmospheric_columns.source
+  context: exojax.atmospheric_columns.scope
+  method:
+    id: exojax.initial_scope_review
+    revision: '1'
+    description: Keep source, numerical, derivative and physical questions separate;
+      selected regression runs require separate scoped assessments.
+  evidence:
+  - exojax.atmospheric_columns.source
+  reasons:
+  - This full-scope claim has no archived review establishing support. Selected regression
+    points cannot establish the stated domain.
+  kind: evidence_support
+  claim: exojax.atmospheric_columns.source_correspondence
+  claim_revision: '1'
+  status: unknown
+  origin: reviewed
+  equation_pins:
+  - id: planetlib.atmosphere.columns.cross_section_depth
+    revision: '1'
+    sha256: 4027855a49e55111983716c203b61750311498f4a3c5e3779c193ebc39bf0340
+  - id: planetlib.atmosphere.columns.geometric_column
+    revision: '1'
+    sha256: 493b249bf76f38d23590360752ca5cc3dbe596abcdda1a727fd98f8b3121a653
+  - id: planetlib.atmosphere.columns.pressure_column_mass
+    revision: '1'
+    sha256: 65ea2189045c00bd41ba467984faa89a9ac9957811a98f879280980e38370322
+  - id: planetlib.atmosphere.columns.pressure_column_volume
+    revision: '1'
+    sha256: 0b4c64d9cc74d4b17ab065010768b41a38968c8a19347c9c6bfa5831d6002986
+  - id: planetlib.atmosphere.columns.mixing_conversion
+    revision: '1'
+    sha256: 6013bc9d2eda90ae73f30f4ebee6203eb54e35f27f404d9a2f2fe6c75c4572cf
+  - id: planetlib.atmosphere.columns.cia_depth
+    revision: '1'
+    sha256: 0c6b46de1c3e5953931d6395bb95f9a10bcffa0ccd36112aff55ede26b721be9
+  - id: planetlib.atmosphere.columns.hydrostatic
+    revision: '1'
+    sha256: 9f3fa2c49c872b4810f87adef446b50c33944c8db6572088e3a86aa736d1e80b
+  - id: planetlib.atmosphere.columns.ideal_gas_density
+    revision: '1'
+    sha256: 5a247be52be22fa2f4372a7f3eac7d4381a12b5e1ecfcc425fb26d7369aadc07
+  binding_pins:
+  - id: exojax.atmospheric_columns.binding.1
+    sha256: fe37f8ba519f36938a1c951649b8be425f8a3d79de1c930316c73c0ccdd32f44
+  - id: exojax.atmospheric_columns.binding.2
+    sha256: 7f109272d156efe658d476cf8100b1df0a0438b048c27d4c3c45870f057f7c6d
+  - id: exojax.atmospheric_columns.binding.3
+    sha256: 66b26d50f5e05b10ee07a831393789d1af43a6182043fbb878ff032e4c9b88e6
+  - id: exojax.atmospheric_columns.binding.4
+    sha256: 16419aa0cb4790396dd9909a2e4503fc86c8d8c0e7d043a2aafcbe3879087638
+  - id: exojax.atmospheric_columns.binding.5
+    sha256: 626888da6e70d7decf69dcab20ba73c6aa194827d7ea3de513c9256d0fa210ea
+  - id: exojax.atmospheric_columns.binding.6
+    sha256: 5e3ea244c8f4d73e0ea4feb0b5e4d25c879ef736c6dc392f90a00c1b14ae1c35
+  mathematical_model_pins:
+  - id: planetlib.atmosphere.columns.model
+    revision: '1'
+    sha256: 909de66814d8be1ef9274aa838639f2f24be1a863920d0207f43f56e3eaef1ee
+- id: exojax.atmospheric_columns.numerical_domain.pending
+  subject: exojax.atmospheric_columns.source
+  context: exojax.atmospheric_columns.scope
+  method:
+    id: exojax.initial_scope_review
+    revision: '1'
+    description: Keep source, numerical, derivative and physical questions separate;
+      selected regression runs require separate scoped assessments.
+  evidence:
+  - exojax.atmospheric_columns.source
+  reasons:
+  - This full-scope claim has no archived review establishing support. Selected regression
+    points cannot establish the stated domain.
+  kind: evidence_support
+  claim: exojax.atmospheric_columns.numerical_domain
+  claim_revision: '1'
+  status: unknown
+  origin: reviewed
+  equation_pins:
+  - id: planetlib.atmosphere.columns.cross_section_depth
+    revision: '1'
+    sha256: 4027855a49e55111983716c203b61750311498f4a3c5e3779c193ebc39bf0340
+  - id: planetlib.atmosphere.columns.geometric_column
+    revision: '1'
+    sha256: 493b249bf76f38d23590360752ca5cc3dbe596abcdda1a727fd98f8b3121a653
+  - id: planetlib.atmosphere.columns.pressure_column_mass
+    revision: '1'
+    sha256: 65ea2189045c00bd41ba467984faa89a9ac9957811a98f879280980e38370322
+  - id: planetlib.atmosphere.columns.pressure_column_volume
+    revision: '1'
+    sha256: 0b4c64d9cc74d4b17ab065010768b41a38968c8a19347c9c6bfa5831d6002986
+  - id: planetlib.atmosphere.columns.mixing_conversion
+    revision: '1'
+    sha256: 6013bc9d2eda90ae73f30f4ebee6203eb54e35f27f404d9a2f2fe6c75c4572cf
+  - id: planetlib.atmosphere.columns.cia_depth
+    revision: '1'
+    sha256: 0c6b46de1c3e5953931d6395bb95f9a10bcffa0ccd36112aff55ede26b721be9
+  - id: planetlib.atmosphere.columns.hydrostatic
+    revision: '1'
+    sha256: 9f3fa2c49c872b4810f87adef446b50c33944c8db6572088e3a86aa736d1e80b
+  - id: planetlib.atmosphere.columns.ideal_gas_density
+    revision: '1'
+    sha256: 5a247be52be22fa2f4372a7f3eac7d4381a12b5e1ecfcc425fb26d7369aadc07
+  binding_pins:
+  - id: exojax.atmospheric_columns.binding.1
+    sha256: fe37f8ba519f36938a1c951649b8be425f8a3d79de1c930316c73c0ccdd32f44
+  - id: exojax.atmospheric_columns.binding.2
+    sha256: 7f109272d156efe658d476cf8100b1df0a0438b048c27d4c3c45870f057f7c6d
+  - id: exojax.atmospheric_columns.binding.3
+    sha256: 66b26d50f5e05b10ee07a831393789d1af43a6182043fbb878ff032e4c9b88e6
+  - id: exojax.atmospheric_columns.binding.4
+    sha256: 16419aa0cb4790396dd9909a2e4503fc86c8d8c0e7d043a2aafcbe3879087638
+  - id: exojax.atmospheric_columns.binding.5
+    sha256: 626888da6e70d7decf69dcab20ba73c6aa194827d7ea3de513c9256d0fa210ea
+  - id: exojax.atmospheric_columns.binding.6
+    sha256: 5e3ea244c8f4d73e0ea4feb0b5e4d25c879ef736c6dc392f90a00c1b14ae1c35
+  mathematical_model_pins:
+  - id: planetlib.atmosphere.columns.model
+    revision: '1'
+    sha256: 909de66814d8be1ef9274aa838639f2f24be1a863920d0207f43f56e3eaef1ee
+- id: exojax.atmospheric_columns.derivative_domain.pending
+  subject: exojax.atmospheric_columns.source
+  context: exojax.atmospheric_columns.scope
+  method:
+    id: exojax.initial_scope_review
+    revision: '1'
+    description: Keep source, numerical, derivative and physical questions separate;
+      selected regression runs require separate scoped assessments.
+  evidence:
+  - exojax.atmospheric_columns.source
+  reasons:
+  - This full-scope claim has no archived review establishing support. Selected regression
+    points cannot establish the stated domain.
+  kind: evidence_support
+  claim: exojax.atmospheric_columns.derivative_domain
+  claim_revision: '1'
+  status: unknown
+  origin: reviewed
+  equation_pins:
+  - id: planetlib.atmosphere.columns.cross_section_depth
+    revision: '1'
+    sha256: 4027855a49e55111983716c203b61750311498f4a3c5e3779c193ebc39bf0340
+  - id: planetlib.atmosphere.columns.geometric_column
+    revision: '1'
+    sha256: 493b249bf76f38d23590360752ca5cc3dbe596abcdda1a727fd98f8b3121a653
+  - id: planetlib.atmosphere.columns.pressure_column_mass
+    revision: '1'
+    sha256: 65ea2189045c00bd41ba467984faa89a9ac9957811a98f879280980e38370322
+  - id: planetlib.atmosphere.columns.pressure_column_volume
+    revision: '1'
+    sha256: 0b4c64d9cc74d4b17ab065010768b41a38968c8a19347c9c6bfa5831d6002986
+  - id: planetlib.atmosphere.columns.mixing_conversion
+    revision: '1'
+    sha256: 6013bc9d2eda90ae73f30f4ebee6203eb54e35f27f404d9a2f2fe6c75c4572cf
+  - id: planetlib.atmosphere.columns.cia_depth
+    revision: '1'
+    sha256: 0c6b46de1c3e5953931d6395bb95f9a10bcffa0ccd36112aff55ede26b721be9
+  - id: planetlib.atmosphere.columns.hydrostatic
+    revision: '1'
+    sha256: 9f3fa2c49c872b4810f87adef446b50c33944c8db6572088e3a86aa736d1e80b
+  - id: planetlib.atmosphere.columns.ideal_gas_density
+    revision: '1'
+    sha256: 5a247be52be22fa2f4372a7f3eac7d4381a12b5e1ecfcc425fb26d7369aadc07
+  binding_pins:
+  - id: exojax.atmospheric_columns.binding.1
+    sha256: fe37f8ba519f36938a1c951649b8be425f8a3d79de1c930316c73c0ccdd32f44
+  - id: exojax.atmospheric_columns.binding.2
+    sha256: 7f109272d156efe658d476cf8100b1df0a0438b048c27d4c3c45870f057f7c6d
+  - id: exojax.atmospheric_columns.binding.3
+    sha256: 66b26d50f5e05b10ee07a831393789d1af43a6182043fbb878ff032e4c9b88e6
+  - id: exojax.atmospheric_columns.binding.4
+    sha256: 16419aa0cb4790396dd9909a2e4503fc86c8d8c0e7d043a2aafcbe3879087638
+  - id: exojax.atmospheric_columns.binding.5
+    sha256: 626888da6e70d7decf69dcab20ba73c6aa194827d7ea3de513c9256d0fa210ea
+  - id: exojax.atmospheric_columns.binding.6
+    sha256: 5e3ea244c8f4d73e0ea4feb0b5e4d25c879ef736c6dc392f90a00c1b14ae1c35
+  mathematical_model_pins:
+  - id: planetlib.atmosphere.columns.model
+    revision: '1'
+    sha256: 909de66814d8be1ef9274aa838639f2f24be1a863920d0207f43f56e3eaef1ee
+- id: exojax.atmospheric_columns.applicability.pending
+  subject: exojax.atmospheric_columns.source
+  context: exojax.atmospheric_columns.scope
+  method:
+    id: exojax.initial_scope_review
+    revision: '1'
+    description: Keep source, numerical, derivative and physical questions separate;
+      selected regression runs require separate scoped assessments.
+  evidence:
+  - exojax.atmospheric_columns.source
+  reasons:
+  - This full-scope claim has no archived review establishing support. Selected regression
+    points cannot establish the stated domain.
+  kind: evidence_support
+  claim: exojax.atmospheric_columns.applicability
+  claim_revision: '1'
+  status: unknown
+  origin: reviewed
+  equation_pins:
+  - id: planetlib.atmosphere.columns.cross_section_depth
+    revision: '1'
+    sha256: 4027855a49e55111983716c203b61750311498f4a3c5e3779c193ebc39bf0340
+  - id: planetlib.atmosphere.columns.geometric_column
+    revision: '1'
+    sha256: 493b249bf76f38d23590360752ca5cc3dbe596abcdda1a727fd98f8b3121a653
+  - id: planetlib.atmosphere.columns.pressure_column_mass
+    revision: '1'
+    sha256: 65ea2189045c00bd41ba467984faa89a9ac9957811a98f879280980e38370322
+  - id: planetlib.atmosphere.columns.pressure_column_volume
+    revision: '1'
+    sha256: 0b4c64d9cc74d4b17ab065010768b41a38968c8a19347c9c6bfa5831d6002986
+  - id: planetlib.atmosphere.columns.mixing_conversion
+    revision: '1'
+    sha256: 6013bc9d2eda90ae73f30f4ebee6203eb54e35f27f404d9a2f2fe6c75c4572cf
+  - id: planetlib.atmosphere.columns.cia_depth
+    revision: '1'
+    sha256: 0c6b46de1c3e5953931d6395bb95f9a10bcffa0ccd36112aff55ede26b721be9
+  - id: planetlib.atmosphere.columns.hydrostatic
+    revision: '1'
+    sha256: 9f3fa2c49c872b4810f87adef446b50c33944c8db6572088e3a86aa736d1e80b
+  - id: planetlib.atmosphere.columns.ideal_gas_density
+    revision: '1'
+    sha256: 5a247be52be22fa2f4372a7f3eac7d4381a12b5e1ecfcc425fb26d7369aadc07
+  binding_pins:
+  - id: exojax.atmospheric_columns.binding.1
+    sha256: fe37f8ba519f36938a1c951649b8be425f8a3d79de1c930316c73c0ccdd32f44
+  - id: exojax.atmospheric_columns.binding.2
+    sha256: 7f109272d156efe658d476cf8100b1df0a0438b048c27d4c3c45870f057f7c6d
+  - id: exojax.atmospheric_columns.binding.3
+    sha256: 66b26d50f5e05b10ee07a831393789d1af43a6182043fbb878ff032e4c9b88e6
+  - id: exojax.atmospheric_columns.binding.4
+    sha256: 16419aa0cb4790396dd9909a2e4503fc86c8d8c0e7d043a2aafcbe3879087638
+  - id: exojax.atmospheric_columns.binding.5
+    sha256: 626888da6e70d7decf69dcab20ba73c6aa194827d7ea3de513c9256d0fa210ea
+  - id: exojax.atmospheric_columns.binding.6
+    sha256: 5e3ea244c8f4d73e0ea4feb0b5e4d25c879ef736c6dc392f90a00c1b14ae1c35
+  mathematical_model_pins:
+  - id: planetlib.atmosphere.columns.model
+    revision: '1'
+    sha256: 909de66814d8be1ef9274aa838639f2f24be1a863920d0207f43f56e3eaef1ee
+- id: exojax.atmospheric_columns.initial_samples.reviewed
+  subject: exojax.atmospheric_columns.source
+  context: exojax.atmospheric_columns.initial_samples.cpu
+  method:
+    id: exojax.initial_execution_review
+    revision: '1'
+    description: Explicit review of captured commands, JUnit outcomes, exact selected-file
+      hashes, native definition pins and test scopes. Only named passing assertions
+      support the bounded sample claim; a separate assertion failure contradicts its
+      own shape claim.
+  evidence:
+  - exojax.atmospheric_columns.initial_samples.execution
+  reasons:
+  - 'Reviewed the saved JUnit and log: all 15 listed cases passed against the exact
+    hashed source and test bytes.'
+  - This assessment is limited to the named sample assertions; all existing general
+    correspondence, numerical-domain, derivative-domain and applicability assessments
+    retain their earlier status.
+  kind: evidence_support
+  claim: exojax.atmospheric_columns.initial_samples
+  claim_revision: '1'
+  status: supported
+  origin: reviewed
+  equation_pins:
+  - id: planetlib.atmosphere.columns.cross_section_depth
+    revision: '1'
+    sha256: 4027855a49e55111983716c203b61750311498f4a3c5e3779c193ebc39bf0340
+  - id: planetlib.atmosphere.columns.geometric_column
+    revision: '1'
+    sha256: 493b249bf76f38d23590360752ca5cc3dbe596abcdda1a727fd98f8b3121a653
+  - id: planetlib.atmosphere.columns.pressure_column_mass
+    revision: '1'
+    sha256: 65ea2189045c00bd41ba467984faa89a9ac9957811a98f879280980e38370322
+  - id: planetlib.atmosphere.columns.pressure_column_volume
+    revision: '1'
+    sha256: 0b4c64d9cc74d4b17ab065010768b41a38968c8a19347c9c6bfa5831d6002986
+  - id: planetlib.atmosphere.columns.mixing_conversion
+    revision: '1'
+    sha256: 6013bc9d2eda90ae73f30f4ebee6203eb54e35f27f404d9a2f2fe6c75c4572cf
+  - id: planetlib.atmosphere.columns.cia_depth
+    revision: '1'
+    sha256: 0c6b46de1c3e5953931d6395bb95f9a10bcffa0ccd36112aff55ede26b721be9
+  - id: planetlib.atmosphere.columns.hydrostatic
+    revision: '1'
+    sha256: 9f3fa2c49c872b4810f87adef446b50c33944c8db6572088e3a86aa736d1e80b
+  - id: planetlib.atmosphere.columns.ideal_gas_density
+    revision: '1'
+    sha256: 5a247be52be22fa2f4372a7f3eac7d4381a12b5e1ecfcc425fb26d7369aadc07
+  binding_pins:
+  - id: exojax.atmospheric_columns.binding.1
+    sha256: fe37f8ba519f36938a1c951649b8be425f8a3d79de1c930316c73c0ccdd32f44
+  - id: exojax.atmospheric_columns.binding.2
+    sha256: 7f109272d156efe658d476cf8100b1df0a0438b048c27d4c3c45870f057f7c6d
+  - id: exojax.atmospheric_columns.binding.3
+    sha256: 66b26d50f5e05b10ee07a831393789d1af43a6182043fbb878ff032e4c9b88e6
+  - id: exojax.atmospheric_columns.binding.4
+    sha256: 16419aa0cb4790396dd9909a2e4503fc86c8d8c0e7d043a2aafcbe3879087638
+  - id: exojax.atmospheric_columns.binding.5
+    sha256: 626888da6e70d7decf69dcab20ba73c6aa194827d7ea3de513c9256d0fa210ea
+  - id: exojax.atmospheric_columns.binding.6
+    sha256: 5e3ea244c8f4d73e0ea4feb0b5e4d25c879ef736c6dc392f90a00c1b14ae1c35
+  mathematical_model_pins:
+  - id: planetlib.atmosphere.columns.model
+    revision: '1'
+    sha256: 909de66814d8be1ef9274aa838639f2f24be1a863920d0207f43f56e3eaef1ee
+follow_ups:
+- id: exojax.atmospheric_columns.source_correspondence.review
+  target_kind: assessment
+  target: exojax.atmospheric_columns.source_correspondence.pending
+  revision: null
+  action: Review each bound source path, units, normalization, boundary choice and
+    constants against the selected definitions and their primary sources.
+  requires:
+  - Explicit bounded conditions and an immutable review or execution artifact.
+  completion: Append a separately scoped assessment with evidence and pins; retain
+    this assessment.
+  sources:
+  - tests/model_contracts/test_core_models.py
+- id: exojax.atmospheric_columns.numerical_domain.review
+  target_kind: assessment
+  target: exojax.atmospheric_columns.numerical_domain.pending
+  revision: null
+  action: Establish error budgets over spectral/vertical/angular resolution, parameter
+    extremes and algorithm branches; archive immutable results and tolerances.
+  requires:
+  - Explicit bounded conditions and an immutable review or execution artifact.
+  completion: Append a separately scoped assessment with evidence and pins; retain
+    this assessment.
+  sources:
+  - tests/model_contracts/test_core_models.py
+- id: exojax.atmospheric_columns.derivative_domain.review
+  target_kind: assessment
+  target: exojax.atmospheric_columns.derivative_domain.pending
+  revision: null
+  action: Review custom derivatives, interpolation knots, zero limits and truncation
+    boundaries; compare independent derivatives over an explicitly bounded domain.
+  requires:
+  - Explicit bounded conditions and an immutable review or execution artifact.
+  completion: Append a separately scoped assessment with evidence and pins; retain
+    this assessment.
+  sources:
+  - tests/model_contracts/test_core_models.py
+- id: exojax.atmospheric_columns.applicability.review
+  target_kind: assessment
+  target: exojax.atmospheric_columns.applicability.pending
+  revision: null
+  action: Specify a target atmosphere or observation and compare independent physical
+    or empirical evidence for the adopted assumptions.
+  requires:
+  - Explicit bounded conditions and an immutable review or execution artifact.
+  completion: Append a separately scoped assessment with evidence and pins; retain
+    this assessment.
+  sources:
+  - tests/model_contracts/test_core_models.py
+follow_up_resolutions: []
+migration: null
+equations:
+- id: planetlib.atmosphere.columns.cia_depth
+  revision: '1'
+  description: CIA optical depth under the explicit pair convention.
+  scope: Local cgs absorber-column relations with positive gravity and particle masses.
+    Pressure differences are in dyn cm^-2, not bar. Pressure-column formulas assume
+    constant composition and gravity over the pressure interval. The separate differential
+    hydrostatic relation allows inverse-square gravity; integrating a finite atmosphere
+    still requires thermal/composition profiles and a boundary.
+  symbols:
+    dz:
+      latex: dz
+      description: Positive geometric path length for the local column.
+      unit: cm
+    k_cia:
+      latex: k_{cia}
+      description: CIA absorption coefficient defined by alpha=k_cia*n1*n2.
+      unit: cm^5
+    n1:
+      latex: n_{1}
+      description: Number density of first collision partner.
+      unit: cm^-3
+    n2:
+      latex: n_{2}
+      description: Number density of second collision partner, possibly the same species.
+      unit: cm^-3
+    tau_cia:
+      latex: \tau_{cia}
+      description: CIA optical depth for the declared collision-pair convention.
+      unit: '1'
+  assumptions:
+  - Cross section is per absorbing particle; mass mixing ratio is absorber mass divided
+    by total gas mass, whereas volume mixing ratio is absorber number divided by total
+    gas particle number.
+  - CIA coefficient k_cia is defined by alpha=k_cia*n1*n2. Its supplied convention
+    already accounts for identical partners; no additional factor 1/2 is applied.
+  - The pressure-column approximation and the differential inverse-square hydrostatic
+    relation are distinct relations, not a claim that finite layers have exactly constant
+    gravity. The scalar m_mean is the selected layer value of the separately supplied
+    radial mean-mass field m_mean_r.
+  evidence:
+  - planetlib.atmosphere.columns.source
+  sympy:
+    format: sympy-srepr-v1
+    expression: Equality(Symbol('tau_cia', real=True), Mul(Symbol('dz', real=True),
+      Symbol('k_cia', real=True), Symbol('n1', real=True), Symbol('n2', real=True)))
+- id: planetlib.atmosphere.columns.cross_section_depth
+  revision: '1'
+  description: Absorption optical depth from absorber column.
+  scope: Local cgs absorber-column relations with positive gravity and particle masses.
+    Pressure differences are in dyn cm^-2, not bar. Pressure-column formulas assume
+    constant composition and gravity over the pressure interval. The separate differential
+    hydrostatic relation allows inverse-square gravity; integrating a finite atmosphere
+    still requires thermal/composition profiles and a boundary.
+  symbols:
+    N_abs:
+      latex: N_{abs}
+      description: Number of absorbing particles per unit area through the layer.
+      unit: cm^-2
+    sigma_abs:
+      latex: \sigma_{abs}
+      description: Absorption cross section per absorber.
+      unit: cm^2
+    tau:
+      latex: \tau
+      description: Vertical absorption optical depth of the chosen layer.
+      unit: '1'
+  assumptions:
+  - Cross section is per absorbing particle; mass mixing ratio is absorber mass divided
+    by total gas mass, whereas volume mixing ratio is absorber number divided by total
+    gas particle number.
+  - CIA coefficient k_cia is defined by alpha=k_cia*n1*n2. Its supplied convention
+    already accounts for identical partners; no additional factor 1/2 is applied.
+  - The pressure-column approximation and the differential inverse-square hydrostatic
+    relation are distinct relations, not a claim that finite layers have exactly constant
+    gravity. The scalar m_mean is the selected layer value of the separately supplied
+    radial mean-mass field m_mean_r.
+  evidence:
+  - planetlib.atmosphere.columns.source
+  sympy:
+    format: sympy-srepr-v1
+    expression: Equality(Symbol('tau', real=True), Mul(Symbol('N_abs', real=True),
+      Symbol('sigma_abs', real=True)))
+- id: planetlib.atmosphere.columns.geometric_column
+  revision: '1'
+  description: Uniform-density geometric absorber column.
+  scope: Local cgs absorber-column relations with positive gravity and particle masses.
+    Pressure differences are in dyn cm^-2, not bar. Pressure-column formulas assume
+    constant composition and gravity over the pressure interval. The separate differential
+    hydrostatic relation allows inverse-square gravity; integrating a finite atmosphere
+    still requires thermal/composition profiles and a boundary.
+  symbols:
+    N_abs:
+      latex: N_{abs}
+      description: Number of absorbing particles per unit area through the layer.
+      unit: cm^-2
+    dz:
+      latex: dz
+      description: Positive geometric path length for the local column.
+      unit: cm
+    n_abs:
+      latex: n_{abs}
+      description: Uniform absorber number density on the supplied geometric path.
+      unit: cm^-3
+  assumptions:
+  - Cross section is per absorbing particle; mass mixing ratio is absorber mass divided
+    by total gas mass, whereas volume mixing ratio is absorber number divided by total
+    gas particle number.
+  - CIA coefficient k_cia is defined by alpha=k_cia*n1*n2. Its supplied convention
+    already accounts for identical partners; no additional factor 1/2 is applied.
+  - The pressure-column approximation and the differential inverse-square hydrostatic
+    relation are distinct relations, not a claim that finite layers have exactly constant
+    gravity. The scalar m_mean is the selected layer value of the separately supplied
+    radial mean-mass field m_mean_r.
+  evidence:
+  - planetlib.atmosphere.columns.source
+  sympy:
+    format: sympy-srepr-v1
+    expression: Equality(Symbol('N_abs', real=True), Mul(Symbol('dz', real=True),
+      Symbol('n_abs', real=True)))
+- id: planetlib.atmosphere.columns.hydrostatic
+  revision: '1'
+  description: Inverse-square spherical hydrostatic balance.
+  scope: Local cgs absorber-column relations with positive gravity and particle masses.
+    Pressure differences are in dyn cm^-2, not bar. Pressure-column formulas assume
+    constant composition and gravity over the pressure interval. The separate differential
+    hydrostatic relation allows inverse-square gravity; integrating a finite atmosphere
+    still requires thermal/composition profiles and a boundary.
+  symbols:
+    P:
+      latex: P
+      description: Total gas pressure field.
+      unit: dyn cm^-2
+    g0:
+      latex: g_{0}
+      description: Gravity at reference radius r0.
+      unit: cm s^-2
+    r:
+      latex: r
+      description: Outward radial coordinate.
+      unit: cm
+    r0:
+      latex: r_{0}
+      description: Reference radius for the supplied gravity.
+      unit: cm
+    rho:
+      latex: \rho
+      description: Total gas mass-density field.
+      unit: g cm^-3
+  assumptions:
+  - Cross section is per absorbing particle; mass mixing ratio is absorber mass divided
+    by total gas mass, whereas volume mixing ratio is absorber number divided by total
+    gas particle number.
+  - CIA coefficient k_cia is defined by alpha=k_cia*n1*n2. Its supplied convention
+    already accounts for identical partners; no additional factor 1/2 is applied.
+  - The pressure-column approximation and the differential inverse-square hydrostatic
+    relation are distinct relations, not a claim that finite layers have exactly constant
+    gravity. The scalar m_mean is the selected layer value of the separately supplied
+    radial mean-mass field m_mean_r.
+  evidence:
+  - planetlib.atmosphere.columns.source
+  sympy:
+    format: sympy-srepr-v1
+    expression: Equality(Derivative(Function('P')(Symbol('r', real=True)), Tuple(Symbol('r',
+      real=True), Integer(1))), Mul(Integer(-1), Symbol('g0', real=True), Pow(Symbol('r',
+      real=True), Integer(-2)), Pow(Symbol('r0', real=True), Integer(2)), Function('rho')(Symbol('r',
+      real=True))))
+- id: planetlib.atmosphere.columns.ideal_gas_density
+  revision: '1'
+  description: Ideal-gas mass density using mean particle mass.
+  scope: Local cgs absorber-column relations with positive gravity and particle masses.
+    Pressure differences are in dyn cm^-2, not bar. Pressure-column formulas assume
+    constant composition and gravity over the pressure interval. The separate differential
+    hydrostatic relation allows inverse-square gravity; integrating a finite atmosphere
+    still requires thermal/composition profiles and a boundary.
+  symbols:
+    P:
+      latex: P
+      description: Total gas pressure field.
+      unit: dyn cm^-2
+    T:
+      latex: T
+      description: Externally supplied local temperature field.
+      unit: K
+    k_B:
+      latex: k_{B}
+      description: Boltzmann constant.
+      unit: erg K^-1
+    m_mean_r:
+      latex: m_{mean r}
+      description: Externally supplied mean mass per gas particle as a radial field.
+      unit: g
+    r:
+      latex: r
+      description: Outward radial coordinate.
+      unit: cm
+    rho:
+      latex: \rho
+      description: Total gas mass-density field.
+      unit: g cm^-3
+  assumptions:
+  - Cross section is per absorbing particle; mass mixing ratio is absorber mass divided
+    by total gas mass, whereas volume mixing ratio is absorber number divided by total
+    gas particle number.
+  - CIA coefficient k_cia is defined by alpha=k_cia*n1*n2. Its supplied convention
+    already accounts for identical partners; no additional factor 1/2 is applied.
+  - The pressure-column approximation and the differential inverse-square hydrostatic
+    relation are distinct relations, not a claim that finite layers have exactly constant
+    gravity. The scalar m_mean is the selected layer value of the separately supplied
+    radial mean-mass field m_mean_r.
+  evidence:
+  - planetlib.atmosphere.columns.source
+  sympy:
+    format: sympy-srepr-v1
+    expression: Equality(Function('rho')(Symbol('r', real=True)), Mul(Pow(Symbol('k_B',
+      real=True), Integer(-1)), Function('P')(Symbol('r', real=True)), Pow(Function('T')(Symbol('r',
+      real=True)), Integer(-1)), Function('m_mean_r')(Symbol('r', real=True))))
+- id: planetlib.atmosphere.columns.mixing_conversion
+  revision: '1'
+  description: Mass and particle-number mixing-ratio conversion.
+  scope: Local cgs absorber-column relations with positive gravity and particle masses.
+    Pressure differences are in dyn cm^-2, not bar. Pressure-column formulas assume
+    constant composition and gravity over the pressure interval. The separate differential
+    hydrostatic relation allows inverse-square gravity; integrating a finite atmosphere
+    still requires thermal/composition profiles and a boundary.
+  symbols:
+    m_abs:
+      latex: m_{abs}
+      description: Mass of one absorber.
+      unit: g
+    m_mean:
+      latex: m_{mean}
+      description: Mean mass per gas particle, not molar mass.
+      unit: g
+    q:
+      latex: q
+      description: Absorber mass mixing ratio.
+      unit: '1'
+    x_abs:
+      latex: x_{abs}
+      description: Absorber particle-number or volume mixing ratio.
+      unit: '1'
+  assumptions:
+  - Cross section is per absorbing particle; mass mixing ratio is absorber mass divided
+    by total gas mass, whereas volume mixing ratio is absorber number divided by total
+    gas particle number.
+  - CIA coefficient k_cia is defined by alpha=k_cia*n1*n2. Its supplied convention
+    already accounts for identical partners; no additional factor 1/2 is applied.
+  - The pressure-column approximation and the differential inverse-square hydrostatic
+    relation are distinct relations, not a claim that finite layers have exactly constant
+    gravity. The scalar m_mean is the selected layer value of the separately supplied
+    radial mean-mass field m_mean_r.
+  evidence:
+  - planetlib.atmosphere.columns.source
+  sympy:
+    format: sympy-srepr-v1
+    expression: Equality(Symbol('q', real=True), Mul(Symbol('m_abs', real=True), Pow(Symbol('m_mean',
+      real=True), Integer(-1)), Symbol('x_abs', real=True)))
+- id: planetlib.atmosphere.columns.pressure_column_mass
+  revision: '1'
+  description: Hydrostatic absorber column from mass mixing ratio.
+  scope: Local cgs absorber-column relations with positive gravity and particle masses.
+    Pressure differences are in dyn cm^-2, not bar. Pressure-column formulas assume
+    constant composition and gravity over the pressure interval. The separate differential
+    hydrostatic relation allows inverse-square gravity; integrating a finite atmosphere
+    still requires thermal/composition profiles and a boundary.
+  symbols:
+    N_abs:
+      latex: N_{abs}
+      description: Number of absorbing particles per unit area through the layer.
+      unit: cm^-2
+    dP:
+      latex: dP
+      description: Positive pressure difference between lower and upper faces.
+      unit: dyn cm^-2
+    g:
+      latex: g
+      description: Constant gravitational acceleration used for this pressure interval.
+      unit: cm s^-2
+    m_abs:
+      latex: m_{abs}
+      description: Mass of one absorber.
+      unit: g
+    q:
+      latex: q
+      description: Absorber mass mixing ratio.
+      unit: '1'
+  assumptions:
+  - Cross section is per absorbing particle; mass mixing ratio is absorber mass divided
+    by total gas mass, whereas volume mixing ratio is absorber number divided by total
+    gas particle number.
+  - CIA coefficient k_cia is defined by alpha=k_cia*n1*n2. Its supplied convention
+    already accounts for identical partners; no additional factor 1/2 is applied.
+  - The pressure-column approximation and the differential inverse-square hydrostatic
+    relation are distinct relations, not a claim that finite layers have exactly constant
+    gravity. The scalar m_mean is the selected layer value of the separately supplied
+    radial mean-mass field m_mean_r.
+  evidence:
+  - planetlib.atmosphere.columns.source
+  sympy:
+    format: sympy-srepr-v1
+    expression: Equality(Symbol('N_abs', real=True), Mul(Symbol('dP', real=True),
+      Pow(Symbol('g', real=True), Integer(-1)), Pow(Symbol('m_abs', real=True), Integer(-1)),
+      Symbol('q', real=True)))
+- id: planetlib.atmosphere.columns.pressure_column_volume
+  revision: '1'
+  description: Hydrostatic absorber column from volume mixing ratio.
+  scope: Local cgs absorber-column relations with positive gravity and particle masses.
+    Pressure differences are in dyn cm^-2, not bar. Pressure-column formulas assume
+    constant composition and gravity over the pressure interval. The separate differential
+    hydrostatic relation allows inverse-square gravity; integrating a finite atmosphere
+    still requires thermal/composition profiles and a boundary.
+  symbols:
+    N_abs:
+      latex: N_{abs}
+      description: Number of absorbing particles per unit area through the layer.
+      unit: cm^-2
+    dP:
+      latex: dP
+      description: Positive pressure difference between lower and upper faces.
+      unit: dyn cm^-2
+    g:
+      latex: g
+      description: Constant gravitational acceleration used for this pressure interval.
+      unit: cm s^-2
+    m_mean:
+      latex: m_{mean}
+      description: Mean mass per gas particle, not molar mass.
+      unit: g
+    x_abs:
+      latex: x_{abs}
+      description: Absorber particle-number or volume mixing ratio.
+      unit: '1'
+  assumptions:
+  - Cross section is per absorbing particle; mass mixing ratio is absorber mass divided
+    by total gas mass, whereas volume mixing ratio is absorber number divided by total
+    gas particle number.
+  - CIA coefficient k_cia is defined by alpha=k_cia*n1*n2. Its supplied convention
+    already accounts for identical partners; no additional factor 1/2 is applied.
+  - The pressure-column approximation and the differential inverse-square hydrostatic
+    relation are distinct relations, not a claim that finite layers have exactly constant
+    gravity. The scalar m_mean is the selected layer value of the separately supplied
+    radial mean-mass field m_mean_r.
+  evidence:
+  - planetlib.atmosphere.columns.source
+  sympy:
+    format: sympy-srepr-v1
+    expression: Equality(Symbol('N_abs', real=True), Mul(Symbol('dP', real=True),
+      Pow(Symbol('g', real=True), Integer(-1)), Pow(Symbol('m_mean', real=True), Integer(-1)),
+      Symbol('x_abs', real=True)))
+bindings:
+- id: exojax.atmospheric_columns.binding.1
+  equation:
+    id: planetlib.atmosphere.columns.cross_section_depth
+    revision: '1'
+  subject: exojax.atmospheric_columns.source
+  source: src/exojax/rt/layeropacity.py
+  symbol: layer_optical_depth_from_cross_section
+  arguments:
+    cross_section:
+      symbol: sigma_abs
+      scale: 1.0
+      offset: 0.0
+    absorber_number_column:
+      symbol: N_abs
+      scale: 1.0
+      offset: 0.0
+  result: tau
+  constants: {}
+  note: Per-grid-point correspondence with explicit layer broadcasting.
+- id: exojax.atmospheric_columns.binding.2
+  equation:
+    id: planetlib.atmosphere.columns.cia_depth
+    revision: '1'
+  subject: exojax.atmospheric_columns.source
+  source: src/exojax/rt/layeropacity.py
+  symbol: layer_optical_depth_from_log_cia
+  arguments:
+    number_density_1:
+      symbol: n1
+      scale: 1.0
+      offset: 0.0
+    number_density_2:
+      symbol: n2
+      scale: 1.0
+      offset: 0.0
+    path_length:
+      symbol: dz
+      scale: 1.0
+      offset: 0.0
+  result: tau_cia
+  constants: {}
+  note: Input log_cia_coefficient is log10(k_cia), a non-affine conversion documented
+    and compared numerically.
+- id: exojax.atmospheric_columns.binding.3
+  equation:
+    id: planetlib.atmosphere.columns.hydrostatic
+    revision: '1'
+  subject: exojax.atmospheric_columns.source
+  source: src/exojax/atm/atmprof.py
+  symbol: hydrostatic_radius_profile
+  arguments: {}
+  result: null
+  constants: {}
+  note: Location-only binding to the hydrostatic relation. The implementation integrates
+    piecewise constant density and returns radius and gravity arrays.
+- id: exojax.atmospheric_columns.binding.4
+  equation:
+    id: planetlib.atmosphere.columns.ideal_gas_density
+    revision: '1'
+  subject: exojax.atmospheric_columns.source
+  source: src/exojax/atm/atmprof.py
+  symbol: hydrostatic_radius_profile_ideal_gas
+  arguments: {}
+  result: null
+  constants: {}
+  note: 'Location-only binding: ideal-gas closure is combined with hydrostatic integration.
+    variable_gravity and layer_constant_gravity are separate numerical choices.'
+- id: exojax.atmospheric_columns.binding.5
+  equation:
+    id: planetlib.atmosphere.columns.pressure_column_mass
+    revision: '1'
+  subject: exojax.atmospheric_columns.source
+  source: src/exojax/rt/layeropacity.py
+  symbol: layer_optical_depth
+  arguments:
+    dParr:
+      symbol: dP
+      scale: 1000000.0
+      offset: 0.0
+    mixing_ratio:
+      symbol: q
+      scale: 1.0
+      offset: 0.0
+    mass:
+      symbol: m_abs
+      scale: 1.66053904e-24
+      offset: 0.0
+    gravity:
+      symbol: g
+      scale: 1.0
+      offset: 0.0
+  result: null
+  constants: {}
+  note: The pressure column is internal and the result is optical depth. Select MMR
+    with absorber mass or VMR with mean mass as declared; these mappings are alternative
+    semantic uses, not simultaneous inputs.
+- id: exojax.atmospheric_columns.binding.6
+  equation:
+    id: planetlib.atmosphere.columns.pressure_column_volume
+    revision: '1'
+  subject: exojax.atmospheric_columns.source
+  source: src/exojax/rt/layeropacity.py
+  symbol: layer_optical_depth
+  arguments:
+    dParr:
+      symbol: dP
+      scale: 1000000.0
+      offset: 0.0
+    mixing_ratio:
+      symbol: x_abs
+      scale: 1.0
+      offset: 0.0
+    mass:
+      symbol: m_mean
+      scale: 1.66053904e-24
+      offset: 0.0
+    gravity:
+      symbol: g
+      scale: 1.0
+      offset: 0.0
+  result: null
+  constants: {}
+  note: The pressure column is internal and the result is optical depth. Select MMR
+    with absorber mass or VMR with mean mass as declared; these mappings are alternative
+    semantic uses, not simultaneous inputs.
+decisions: []
+quantities:
+- id: planetlib.atmosphere.columns.quantity.N_abs
+  revision: '1'
+  latex: N_{abs}
+  description: Number of absorbing particles per unit area through the layer.
+  unit: cm^-2
+  domain: Nonnegative.
+  coordinates: []
+- id: planetlib.atmosphere.columns.quantity.P
+  revision: '1'
+  latex: P
+  description: Total gas pressure field.
+  unit: dyn cm^-2
+  domain: Finite real value within the stated scope.
+  coordinates:
+  - id: planetlib.atmosphere.columns.quantity.r
+    revision: '1'
+- id: planetlib.atmosphere.columns.quantity.T
+  revision: '1'
+  latex: T
+  description: Externally supplied local temperature field.
+  unit: K
+  domain: Positive.
+  coordinates:
+  - id: planetlib.atmosphere.columns.quantity.r
+    revision: '1'
+- id: planetlib.atmosphere.columns.quantity.dP
+  revision: '1'
+  latex: dP
+  description: Positive pressure difference between lower and upper faces.
+  unit: dyn cm^-2
+  domain: Nonnegative.
+  coordinates: []
+- id: planetlib.atmosphere.columns.quantity.dz
+  revision: '1'
+  latex: dz
+  description: Positive geometric path length for the local column.
+  unit: cm
+  domain: Nonnegative.
+  coordinates: []
+- id: planetlib.atmosphere.columns.quantity.g
+  revision: '1'
+  latex: g
+  description: Constant gravitational acceleration used for this pressure interval.
+  unit: cm s^-2
+  domain: Positive.
+  coordinates: []
+- id: planetlib.atmosphere.columns.quantity.g0
+  revision: '1'
+  latex: g_{0}
+  description: Gravity at reference radius r0.
+  unit: cm s^-2
+  domain: Positive.
+  coordinates: []
+- id: planetlib.atmosphere.columns.quantity.k_B
+  revision: '1'
+  latex: k_{B}
+  description: Boltzmann constant.
+  unit: erg K^-1
+  domain: Positive.
+  coordinates: []
+- id: planetlib.atmosphere.columns.quantity.k_cia
+  revision: '1'
+  latex: k_{cia}
+  description: CIA absorption coefficient defined by alpha=k_cia*n1*n2.
+  unit: cm^5
+  domain: Nonnegative.
+  coordinates: []
+- id: planetlib.atmosphere.columns.quantity.m_abs
+  revision: '1'
+  latex: m_{abs}
+  description: Mass of one absorber.
+  unit: g
+  domain: Positive.
+  coordinates: []
+- id: planetlib.atmosphere.columns.quantity.m_mean
+  revision: '1'
+  latex: m_{mean}
+  description: Mean mass per gas particle, not molar mass.
+  unit: g
+  domain: Positive.
+  coordinates: []
+- id: planetlib.atmosphere.columns.quantity.m_mean_r
+  revision: '1'
+  latex: m_{mean r}
+  description: Externally supplied mean mass per gas particle as a radial field.
+  unit: g
+  domain: Positive.
+  coordinates:
+  - id: planetlib.atmosphere.columns.quantity.r
+    revision: '1'
+- id: planetlib.atmosphere.columns.quantity.n1
+  revision: '1'
+  latex: n_{1}
+  description: Number density of first collision partner.
+  unit: cm^-3
+  domain: Nonnegative.
+  coordinates: []
+- id: planetlib.atmosphere.columns.quantity.n2
+  revision: '1'
+  latex: n_{2}
+  description: Number density of second collision partner, possibly the same species.
+  unit: cm^-3
+  domain: Nonnegative.
+  coordinates: []
+- id: planetlib.atmosphere.columns.quantity.n_abs
+  revision: '1'
+  latex: n_{abs}
+  description: Uniform absorber number density on the supplied geometric path.
+  unit: cm^-3
+  domain: Nonnegative.
+  coordinates: []
+- id: planetlib.atmosphere.columns.quantity.q
+  revision: '1'
+  latex: q
+  description: Absorber mass mixing ratio.
+  unit: '1'
+  domain: Between zero and one.
+  coordinates: []
+- id: planetlib.atmosphere.columns.quantity.r
+  revision: '1'
+  latex: r
+  description: Outward radial coordinate.
+  unit: cm
+  domain: Positive.
+  coordinates: []
+- id: planetlib.atmosphere.columns.quantity.r0
+  revision: '1'
+  latex: r_{0}
+  description: Reference radius for the supplied gravity.
+  unit: cm
+  domain: Positive.
+  coordinates: []
+- id: planetlib.atmosphere.columns.quantity.rho
+  revision: '1'
+  latex: \rho
+  description: Total gas mass-density field.
+  unit: g cm^-3
+  domain: Finite real value within the stated scope.
+  coordinates:
+  - id: planetlib.atmosphere.columns.quantity.r
+    revision: '1'
+- id: planetlib.atmosphere.columns.quantity.sigma_abs
+  revision: '1'
+  latex: \sigma_{abs}
+  description: Absorption cross section per absorber.
+  unit: cm^2
+  domain: Nonnegative.
+  coordinates: []
+- id: planetlib.atmosphere.columns.quantity.tau
+  revision: '1'
+  latex: \tau
+  description: Vertical absorption optical depth of the chosen layer.
+  unit: '1'
+  domain: Finite real value within the stated scope.
+  coordinates: []
+- id: planetlib.atmosphere.columns.quantity.tau_cia
+  revision: '1'
+  latex: \tau_{cia}
+  description: CIA optical depth for the declared collision-pair convention.
+  unit: '1'
+  domain: Finite real value within the stated scope.
+  coordinates: []
+- id: planetlib.atmosphere.columns.quantity.x_abs
+  revision: '1'
+  latex: x_{abs}
+  description: Absorber particle-number or volume mixing ratio.
+  unit: '1'
+  domain: Between zero and one.
+  coordinates: []
+mathematical_models:
+- id: planetlib.atmosphere.columns.model
+  revision: '1'
+  description: Atmospheric absorber columns and optical depth
+  scope: Local cgs absorber-column relations with positive gravity and particle masses.
+    Pressure differences are in dyn cm^-2, not bar. Pressure-column formulas assume
+    constant composition and gravity over the pressure interval. The separate differential
+    hydrostatic relation allows inverse-square gravity; integrating a finite atmosphere
+    still requires thermal/composition profiles and a boundary.
+  quantities:
+    tau:
+      quantity:
+        id: planetlib.atmosphere.columns.quantity.tau
+        revision: '1'
+      role: derived
+    sigma_abs:
+      quantity:
+        id: planetlib.atmosphere.columns.quantity.sigma_abs
+        revision: '1'
+      role: input
+    N_abs:
+      quantity:
+        id: planetlib.atmosphere.columns.quantity.N_abs
+        revision: '1'
+      role: derived
+    n_abs:
+      quantity:
+        id: planetlib.atmosphere.columns.quantity.n_abs
+        revision: '1'
+      role: input
+    dz:
+      quantity:
+        id: planetlib.atmosphere.columns.quantity.dz
+        revision: '1'
+      role: input
+    dP:
+      quantity:
+        id: planetlib.atmosphere.columns.quantity.dP
+        revision: '1'
+      role: input
+    q:
+      quantity:
+        id: planetlib.atmosphere.columns.quantity.q
+        revision: '1'
+      role: derived
+    m_abs:
+      quantity:
+        id: planetlib.atmosphere.columns.quantity.m_abs
+        revision: '1'
+      role: input
+    g:
+      quantity:
+        id: planetlib.atmosphere.columns.quantity.g
+        revision: '1'
+      role: input
+    x_abs:
+      quantity:
+        id: planetlib.atmosphere.columns.quantity.x_abs
+        revision: '1'
+      role: input
+    m_mean:
+      quantity:
+        id: planetlib.atmosphere.columns.quantity.m_mean
+        revision: '1'
+      role: input
+    tau_cia:
+      quantity:
+        id: planetlib.atmosphere.columns.quantity.tau_cia
+        revision: '1'
+      role: derived
+    k_cia:
+      quantity:
+        id: planetlib.atmosphere.columns.quantity.k_cia
+        revision: '1'
+      role: input
+    n1:
+      quantity:
+        id: planetlib.atmosphere.columns.quantity.n1
+        revision: '1'
+      role: input
+    n2:
+      quantity:
+        id: planetlib.atmosphere.columns.quantity.n2
+        revision: '1'
+      role: input
+    r:
+      quantity:
+        id: planetlib.atmosphere.columns.quantity.r
+        revision: '1'
+      role: coordinate
+    r0:
+      quantity:
+        id: planetlib.atmosphere.columns.quantity.r0
+        revision: '1'
+      role: input
+    g0:
+      quantity:
+        id: planetlib.atmosphere.columns.quantity.g0
+        revision: '1'
+      role: input
+    P:
+      quantity:
+        id: planetlib.atmosphere.columns.quantity.P
+        revision: '1'
+      role: unknown
+    rho:
+      quantity:
+        id: planetlib.atmosphere.columns.quantity.rho
+        revision: '1'
+      role: derived
+    T:
+      quantity:
+        id: planetlib.atmosphere.columns.quantity.T
+        revision: '1'
+      role: input
+    m_mean_r:
+      quantity:
+        id: planetlib.atmosphere.columns.quantity.m_mean_r
+        revision: '1'
+      role: input
+    k_B:
+      quantity:
+        id: planetlib.atmosphere.columns.quantity.k_B
+        revision: '1'
+      role: parameter
+  relations:
+  - id: cross_section_depth
+    equation:
+      id: planetlib.atmosphere.columns.cross_section_depth
+      revision: '1'
+    kind: equation
+    role: Absorption optical depth from absorber column.
+    quantities:
+      N_abs: N_abs
+      sigma_abs: sigma_abs
+      tau: tau
+  - id: geometric_column
+    equation:
+      id: planetlib.atmosphere.columns.geometric_column
+      revision: '1'
+    kind: equation
+    role: Uniform-density geometric absorber column.
+    quantities:
+      N_abs: N_abs
+      dz: dz
+      n_abs: n_abs
+  - id: pressure_column_mass
+    equation:
+      id: planetlib.atmosphere.columns.pressure_column_mass
+      revision: '1'
+    kind: equation
+    role: Hydrostatic absorber column from mass mixing ratio.
+    quantities:
+      N_abs: N_abs
+      dP: dP
+      g: g
+      m_abs: m_abs
+      q: q
+  - id: pressure_column_volume
+    equation:
+      id: planetlib.atmosphere.columns.pressure_column_volume
+      revision: '1'
+    kind: equation
+    role: Hydrostatic absorber column from volume mixing ratio.
+    quantities:
+      N_abs: N_abs
+      dP: dP
+      g: g
+      m_mean: m_mean
+      x_abs: x_abs
+  - id: mixing_conversion
+    equation:
+      id: planetlib.atmosphere.columns.mixing_conversion
+      revision: '1'
+    kind: equation
+    role: Mass and particle-number mixing-ratio conversion.
+    quantities:
+      m_abs: m_abs
+      m_mean: m_mean
+      q: q
+      x_abs: x_abs
+  - id: cia_depth
+    equation:
+      id: planetlib.atmosphere.columns.cia_depth
+      revision: '1'
+    kind: equation
+    role: CIA optical depth under the explicit pair convention.
+    quantities:
+      dz: dz
+      k_cia: k_cia
+      n1: n1
+      n2: n2
+      tau_cia: tau_cia
+  - id: hydrostatic
+    equation:
+      id: planetlib.atmosphere.columns.hydrostatic
+      revision: '1'
+    kind: equation
+    role: Inverse-square spherical hydrostatic balance.
+    quantities:
+      P: P
+      g0: g0
+      r: r
+      r0: r0
+      rho: rho
+  - id: ideal_gas_density
+    equation:
+      id: planetlib.atmosphere.columns.ideal_gas_density
+      revision: '1'
+    kind: equation
+    role: Ideal-gas mass density using mean particle mass.
+    quantities:
+      P: P
+      T: T
+      k_B: k_B
+      m_mean_r: m_mean_r
+      r: r
+      rho: rho

@@ -1,0 +1,14 @@
+{
+  "format": "planetlib.imports.v1",
+  "imports": [
+    {
+      "path": "catalog/radiation/spherical_transmission.yaml",
+      "sha256": "c9759f346dfb8faab58f32bf7e50b7e773fcb673e8fda937c12e87dc09a5fb03",
+      "model": {
+        "id": "planetlib.radiation.spherical_transmission.model",
+        "revision": "1",
+        "sha256": "6afb6aea8996dcccf06486b11adc82dc8725bbae2c0db50392c20d6a5de5dba4"
+      }
+    }
+  ]
+}

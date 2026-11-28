@@ -1,0 +1,14 @@
+{
+  "format": "planetlib.imports.v1",
+  "imports": [
+    {
+      "path": "catalog/spectroscopy/lte_lines.yaml",
+      "sha256": "fa2c8c4a201956b19d16375c0794abb8b1590a24a3bc4ff7f31497315796d3cc",
+      "model": {
+        "id": "planetlib.spectroscopy.lte_lines.model",
+        "revision": "1",
+        "sha256": "bbe8214a2324d664806346af57723e37c2a218aefe484e595bcab9ba1a5cde0e"
+      }
+    }
+  ]
+}

@@ -1,0 +1,419 @@
+schema_version: '0.6'
+model:
+  id: exojax.planetlib.adoption
+  name: ExoJAX adoption of shared Planck and coordinate definitions
+  description: A local four-relation model records the actual Planck kernel conventions; imported closure records
+    make the contract standalone, without claiming that the full LTE models are implemented.
+  implementation: &id001
+    repository: https://github.com/HajimeKawahara/exojax
+    revision: 38cb2e44f153ad6d729e3253e235702de52920cf
+    entry_points:
+    - src/exojax/rt/planck.py:piB
+    - src/exojax/rt/planck.py:piBarr
+assumptions:
+- statement: At each grid point, T (or Tarr along the layer axis) is Kelvin and nu_grid is spectroscopic wavenumber
+    in cm^-1. piB returns shape (Nnu,), piBarr returns (Nlayer,Nnu). Shared h is the effective kernel parameter
+    fac_planck/(2*pi*ccgs**2)=6.62607004e-27 erg*s; c=ccgs and k=h*c/hcperk=1.38064852e-16 erg/K. The exported
+    constants.hcgs=6.62607015e-27 is not used by this kernel and differs from the effective h by about 1.66e-8
+    relative. No numerical constants are changed by this adoption.
+  evidence:
+  - exojax.planetlib.source
+domains:
+- kind: scientific_applicability
+  status: unknown
+  description: No atmospheric LTE applicability or radiative-transfer model is assessed.
+  conditions: []
+  evidence:
+  - exojax.planetlib.source
+limitations:
+- statement: The catalog model closures also contain Boltzmann, profile, emission and extinction definitions.
+    They are not relations of the local Planck flux model and no correspondence or support is claimed for them.
+  evidence:
+  - exojax.planetlib.selection
+- statement: Location/result bindings do not encode an array axis or the internally composed Planck intensity.
+    Sampled value and derivative checks supply finite numerical comparisons, not a proof or a new physical
+    review.
+  evidence:
+  - exojax.planetlib.source
+subjects:
+- id: exojax.planetlib.source
+  implementation: *id001
+  selected_files:
+    src/exojax/rt/planck.py: 670a9d66a5bbbcfe2947f92bc55f529270dc802b3ecd73b3e0aba88d4f3fe3b1
+    src/exojax/utils/constants.py: a2f34c9a4debd0d61b4c2c0e1ef0b269b10f21d972195c6b74cd169d4f0c1b81
+contexts:
+- id: exojax.planetlib.mapping
+  scope: At each grid point, T (or Tarr along the layer axis) is Kelvin and nu_grid is spectroscopic wavenumber
+    in cm^-1. piB returns shape (Nnu,), piBarr returns (Nlayer,Nnu). Shared h is the effective kernel parameter
+    fac_planck/(2*pi*ccgs**2)=6.62607004e-27 erg*s; c=ccgs and k=h*c/hcperk=1.38064852e-16 erg/K. The exported
+    constants.hcgs=6.62607015e-27 is not used by this kernel and differs from the effective h by about 1.66e-8
+    relative. No numerical constants are changed by this adoption.
+  settings:
+    planetlib_revision: a83b3fb255c7a383c6a8ef502328266f4dd16bff
+    input_coordinate: spectroscopic wavenumber cm^-1
+    output: hemispheric flux per cm^-1
+    mapping_status: declared; no archived correspondence review
+- id: exojax.planetlib.planck.initial_samples.cpu
+  scope: Three float64 temperatures with near-Rayleigh-Jeans/intermediate/Wien wavenumbers, selected temperature/wavenumber
+    derivatives, layer axes, and the two existing float32 high-exponent value/gradient cases. Effective fac_planck/hcperk
+    constants are retained. Exact points, arrays, boundary choices and tolerances are those in the hashed tests
+    and named JUnit cases. This is a finite execution result, not a proof, primary-source correspondence review
+    or empirical applicability judgment.
+  settings:
+    backend: cpu
+    precision: Companion comparisons use the isolated_test_environment fixture and CPU float64. Existing Planck
+      tests explicitly use float32; existing LPF tests select both float32 and float64. No GPU or global precision-domain
+      claim.
+    selected_passed_cases: 6
+    receipt: mceg/evidence/initial_review/receipt.json
+    planetlib_revision: a83b3fb255c7a383c6a8ef502328266f4dd16bff
+    mceg_revision: 4034c9259c9c2e7d55243d69f3ab2f22c9cc7d88
+evidence:
+- id: exojax.planetlib.source
+  kind: implementation
+  summary: Pinned provider kernel and constants with explicit effective-constant and axis conventions.
+  sources:
+  - https://github.com/HajimeKawahara/exojax/blob/38cb2e44f153ad6d729e3253e235702de52920cf/src/exojax/rt/planck.py
+  - https://github.com/HajimeKawahara/exojax/blob/38cb2e44f153ad6d729e3253e235702de52920cf/src/exojax/utils/constants.py
+  scope: At each grid point, T (or Tarr along the layer axis) is Kelvin and nu_grid is spectroscopic wavenumber
+    in cm^-1. piB returns shape (Nnu,), piBarr returns (Nlayer,Nnu). Shared h is the effective kernel parameter
+    fac_planck/(2*pi*ccgs**2)=6.62607004e-27 erg*s; c=ccgs and k=h*c/hcperk=1.38064852e-16 erg/K. The exported
+    constants.hcgs=6.62607015e-27 is not used by this kernel and differs from the effective h by about 1.66e-8
+    relative. No numerical constants are changed by this adoption.
+  subject: exojax.planetlib.source
+  context: exojax.planetlib.mapping
+- id: exojax.planetlib.selection
+  kind: implementation
+  summary: Immutable selection of Planetlib definitions and their provenance, without upstream judgments.
+  sources:
+  - https://github.com/HajimeKawahara/planetlib/tree/a83b3fb255c7a383c6a8ef502328266f4dd16bff
+  - mceg/planetlib/imports.lock.json
+  artifacts:
+  - source: mceg/planetlib/imports.lock.json
+    sha256: ff550a7016c4d8514952f24c9d2bbc1d85003124f6530a17747a426fea8f5156
+  scope: Only the four selected relations are composed into exojax.planetlib.planck.flux. The two complete
+    upstream models remain unchanged as imported dependency closures; no Subject, Context, Claim, Assessment
+    or binding is imported.
+- id: exojax.planetlib.planck.initial_samples.execution
+  kind: numerical_test
+  result: passed
+  summary: 'Archived CPU execution: 6 named passing comparisons in this scope; the separate odd-length expected
+    failure is excluded.'
+  sources:
+  - mceg/evidence/initial_review/receipt.json
+  - tests/model_contracts/test_planetlib.py::test_flux_coordinate_jacobian_and_derivatives[100.0]
+  - tests/model_contracts/test_planetlib.py::test_flux_coordinate_jacobian_and_derivatives[800.0]
+  - tests/model_contracts/test_planetlib.py::test_flux_coordinate_jacobian_and_derivatives[2500.0]
+  - tests/model_contracts/test_planetlib.py::test_layer_and_spectral_axes
+  - tests/unittests/rt/test_planck.py::test_float32_forward_and_gradients[piB]
+  - tests/unittests/rt/test_planck.py::test_float32_forward_and_gradients[piBarr]
+  scope: Three float64 temperatures with near-Rayleigh-Jeans/intermediate/Wien wavenumbers, selected temperature/wavenumber
+    derivatives, layer axes, and the two existing float32 high-exponent value/gradient cases. Effective fac_planck/hcperk
+    constants are retained. Exact points, arrays, boundary choices and tolerances are those in the hashed tests
+    and named JUnit cases. This is a finite execution result, not a proof, primary-source correspondence review
+    or empirical applicability judgment.
+  subject: exojax.planetlib.source
+  context: exojax.planetlib.planck.initial_samples.cpu
+  artifacts:
+  - source: mceg/evidence/initial_review/receipt.json
+    sha256: 486009c644a4e4b976826f8c7985c06f20b50dc9192d207de3fbca856fa48658
+  - source: mceg/evidence/initial_review/pytest.log
+    sha256: 899a83317e4034aee410deb3db0bcb05cad0eca0137deb593dfe78fe4751c281
+  - source: mceg/evidence/initial_review/junit.xml
+    sha256: d43736396273b3926e2cb42e0d93266775036e401b4030593df75e3cdf9b8978
+  - source: mceg/requirements.txt
+    sha256: ac204e416685f42f47169e02a7ebc3e448ced3297605c9147ab2dbca90e33db7
+  - source: pyproject.toml
+    sha256: 1343ad1836f56412889ebb4748b5e4ef20a150ec58fe4b8a04083e58672a359a
+  - source: src/exojax/atm/atmprof.py
+    sha256: bba0ee11db0bcc45f34f932ca7e12013369e61f8121016a3292c3aa9edf38654
+  - source: src/exojax/database/core/broadening.py
+    sha256: 941baede9603921b47d3bbcbc5902740046123f101875824dcd50b197404b563
+  - source: src/exojax/database/core/line_strength.py
+    sha256: f39014d7b4c2349ab021b3f0084754ba2c7ed35c175e00fcd3cef40b71e7318f
+  - source: src/exojax/opacity/lpf/lpf.py
+    sha256: fd73cc4f6c5d46e25b701d22d93db3c17ce1e7d3e0fdd22584817761f1347a3c
+  - source: src/exojax/opacity/modit/modit.py
+    sha256: d5f3bed1459a952a8ed49c856ca3b0e003513b7b23be5cf2adea4c8f6d9d471b
+  - source: src/exojax/opacity/premodit/premodit.py
+    sha256: 10c251df4c2725eaf7b9789d174cb073111f04688d36f9981cecd3184b93a516
+  - source: src/exojax/postproc/response.py
+    sha256: 6cf4941286c55091d66b4f26042d5090e0ebf06d22caa00f2ad1538c8dd2692c
+  - source: src/exojax/postproc/spin_rotation.py
+    sha256: 41d5e99ea31bffa64c18ba43fcdcf2cfc999d385660db132343aab913f2dd447
+  - source: src/exojax/rt/chord.py
+    sha256: af51e8a61ee15bb9d3048c310a7512a188b0a89548ce6c2aefce4d3420490bbd
+  - source: src/exojax/rt/common.py
+    sha256: 3b05610ce0dc6d491ed2003a9f96eaacc5745cdeb766d334d2d2e501a2ab8ef0
+  - source: src/exojax/rt/emis.py
+    sha256: e0668f38f84fc6dd17d3fcfe42e26f7ed7b089edda8b195f75e9d1253e2ae918
+  - source: src/exojax/rt/layeropacity.py
+    sha256: f66d17f6a8e418efed567c2a130f4a556735d885f040b009c65c1ca39bff99b8
+  - source: src/exojax/rt/planck.py
+    sha256: 670a9d66a5bbbcfe2947f92bc55f529270dc802b3ecd73b3e0aba88d4f3fe3b1
+  - source: src/exojax/rt/rtransfer.py
+    sha256: 7e66948b22e81492a0931f7ea5aed2dd7a8f72077be461582af440c7771288fe
+  - source: src/exojax/rt/trans.py
+    sha256: 8c0d51d67e46ebc40703a7f2186d0a98269d87e01f659d0dc65b7c2cf83f18fc
+  - source: src/exojax/signal/convolve.py
+    sha256: d217c75401a2bf53a6bfa0e5a3ee6c2efe2d2b59addc50da3c49de5efb8c6a10
+  - source: src/exojax/signal/integrate.py
+    sha256: 16c48aca5683c435bdfe62ebe83347975981e849c2266efe3bd674a5633d6543
+  - source: src/exojax/special/faddeeva.py
+    sha256: 2de87610fa047d8afd9a4f4364954408655b19723749391fb7f0ee035a14cb8c
+  - source: src/exojax/utils/constants.py
+    sha256: a2f34c9a4debd0d61b4c2c0e1ef0b269b10f21d972195c6b74cd169d4f0c1b81
+  - source: tests/conftest.py
+    sha256: e282c84343d4b267ae46874b1c950bfa61c9257a60fbf7336e51a0bc5babbab5
+  - source: tests/model_contracts/test_core_models.py
+    sha256: 219266d8de527ccde71554b36e3f3404dda72a415c07e7fedc7c780d0a4dd216
+  - source: tests/model_contracts/test_planetlib.py
+    sha256: 04d9d60e96b9561eaa9f4ed718dc942696cb9aa5c0dbc2133ed4f92a86a3795c
+  - source: tests/unittests/opacity/lpf/test_lpf.py
+    sha256: fc8a982cdb40793d1442d2109ba333b88f659389ffa71e172a1371c0a226130f
+  - source: tests/unittests/postproc/test_spin_rotation.py
+    sha256: d0da97a121dbb781cf458a24692f1ba1f596614456f39a23945230eae98d7f30
+  - source: tests/unittests/rt/test_chord.py
+    sha256: 96d6189b6a554e55bf9ef0b316e16a7fae16906014d84ef29003c217c3e3de7b
+  - source: tests/unittests/rt/test_layeropacity.py
+    sha256: 67c2f3caab24303ecc5df6da7fec0588c5a4f2199230e91121c8b5bb2b027c54
+  - source: tests/unittests/rt/test_planck.py
+    sha256: db7d495980888d93d0f3736af3bafdbd414933378387cab15a1622d168333702
+  - source: tests/unittests/rt/test_rtransfer_transmission.py
+    sha256: 4b776c74ef85a5f3209c7e8359dfd1df01c1137f807909133e51d0ff724e7d10
+  provenance:
+    role: implementation
+    location: mceg/evidence/initial_review/receipt.json
+    inspection: inspected
+    note: Saved outcomes and selected source/test hashes reviewed; no upstream judgment or fresh experimental
+      evidence is inferred.
+mathematical_models:
+- id: exojax.planetlib.planck.flux
+  revision: '1'
+  description: Planck hemispheric flux per spectroscopic wavenumber from four shared Planetlib relations.
+  scope: Positive temperature and wavenumber in a static local frame; blackbody intensity integrated over an
+    isotropic hemisphere. ExoJAX piB and piBarr return flux per inverse centimetre, not specific intensity
+    per Hz or per steradian. No population closure, line strength, line profile or extinction model is selected.
+  quantities:
+    Bf:
+      quantity:
+        id: planetlib.radiation.lte.quantity.Bf
+        revision: '1'
+      role: derived
+    T:
+      quantity:
+        id: planetlib.radiation.lte.quantity.T
+        revision: '1'
+      role: input
+    c:
+      quantity:
+        id: planetlib.radiation.lte.quantity.c
+        revision: '1'
+      role: parameter
+    frequency:
+      quantity:
+        id: planetlib.radiation.lte.quantity.frequency
+        revision: '1'
+      role: derived
+    h:
+      quantity:
+        id: planetlib.radiation.lte.quantity.h
+        revision: '1'
+      role: parameter
+    k:
+      quantity:
+        id: planetlib.radiation.lte.quantity.k
+        revision: '1'
+      role: parameter
+    Bk:
+      quantity:
+        id: planetlib.radiation.lte.quantity.Bk
+        revision: '1'
+      role: derived
+    piB:
+      quantity:
+        id: planetlib.radiation.lte.quantity.piB
+        revision: '1'
+      role: derived
+    wavenumber:
+      quantity:
+        id: planetlib.radiation.lte.quantity.wavenumber
+        revision: '1'
+      role: input
+  relations:
+  - id: exojax.planetlib.planck.relation.frequency_coordinate
+    equation: &id002
+      id: planetlib.radiation.lte.frequency_coordinate
+      revision: '1'
+    kind: equation
+    role: Coordinate transformation for ordinary frequency and spectroscopic wavenumber.
+    quantities:
+      c: c
+      frequency: frequency
+      wavenumber: wavenumber
+  - id: exojax.planetlib.planck.relation.planck_frequency
+    equation: &id003
+      id: planetlib.radiation.lte.planck_frequency
+      revision: '1'
+    kind: equation
+    role: Planck specific intensity per ordinary frequency and steradian.
+    quantities:
+      Bf: Bf
+      T: T
+      c: c
+      frequency: frequency
+      h: h
+      k: k
+  - id: exojax.planetlib.planck.relation.intensity_conversion
+    equation: &id004
+      id: planetlib.radiation.lte.intensity_conversion
+      revision: '1'
+    kind: equation
+    role: Planck intensity transformed to the wavenumber coordinate.
+    quantities:
+      Bf: Bf
+      Bk: Bk
+      c: c
+  - id: exojax.planetlib.planck.relation.hemisphere_planck
+    equation: &id005
+      id: planetlib.radiation.lte.hemisphere_planck
+      revision: '1'
+    kind: equation
+    role: Hemispheric flux for isotropic blackbody intensity.
+    quantities:
+      Bk: Bk
+      piB: piB
+claims:
+- id: exojax.planetlib.planck.correspondence
+  revision: '1'
+  kind: numerical_verification
+  statement: With the documented kernel constants and array conventions, piB and piBarr evaluate the four-relation
+    Planck flux composition and its temperature and wavenumber derivatives.
+  scope: At each grid point, T (or Tarr along the layer axis) is Kelvin and nu_grid is spectroscopic wavenumber
+    in cm^-1. piB returns shape (Nnu,), piBarr returns (Nlayer,Nnu). Shared h is the effective kernel parameter
+    fac_planck/(2*pi*ccgs**2)=6.62607004e-27 erg*s; c=ccgs and k=h*c/hcperk=1.38064852e-16 erg/K. The exported
+    constants.hcgs=6.62607015e-27 is not used by this kernel and differs from the effective h by about 1.66e-8
+    relative. No numerical constants are changed by this adoption. Positive finite interior inputs only; no
+    complete float32/float64 stability bound, zero-frequency limit, population solver or atmospheric LTE assumption
+    is established.
+  equations: &id006
+  - *id002
+  - *id003
+  - *id004
+  - *id005
+  mathematical_models: &id007
+  - id: exojax.planetlib.planck.flux
+    revision: '1'
+- id: exojax.planetlib.planck.initial_samples
+  revision: '1'
+  kind: numerical_verification
+  statement: The explicitly selected provider sample comparisons pass with their declared inputs, precision
+    and tolerances.
+  scope: Three float64 temperatures with near-Rayleigh-Jeans/intermediate/Wien wavenumbers, selected temperature/wavenumber
+    derivatives, layer axes, and the two existing float32 high-exponent value/gradient cases. Effective fac_planck/hcperk
+    constants are retained. Exact points, arrays, boundary choices and tolerances are those in the hashed tests
+    and named JUnit cases. This is a finite execution result, not a proof, primary-source correspondence review
+    or empirical applicability judgment.
+  equations: *id006
+  mathematical_models: *id007
+bindings:
+- id: exojax.planetlib.piB.flux
+  equation:
+    id: planetlib.radiation.lte.hemisphere_planck
+    revision: '1'
+  subject: exojax.planetlib.source
+  source: src/exojax/rt/planck.py
+  symbol: piB
+  result: piB
+  note: Result quantity/location declaration at each spectral grid point. Bk is supplied internally by the
+    other three relations of exojax.planetlib.planck.flux, not by a Bk argument. The full temperature/wavenumber
+    inputs, effective constants and array axes are specified in the Context and checked separately; native
+    AST checks do not infer composition or array semantics.
+- id: exojax.planetlib.piBarr.flux
+  equation:
+    id: planetlib.radiation.lte.hemisphere_planck
+    revision: '1'
+  subject: exojax.planetlib.source
+  source: src/exojax/rt/planck.py
+  symbol: piBarr
+  result: piB
+  note: Result quantity/location declaration at each spectral grid point. Bk is supplied internally by the
+    other three relations of exojax.planetlib.planck.flux, not by a Bk argument. The full temperature/wavenumber
+    inputs, effective constants and array axes are specified in the Context and checked separately; native
+    AST checks do not infer composition or array semantics.
+assessments:
+- id: exojax.planetlib.planck.pending
+  kind: evidence_support
+  claim: exojax.planetlib.planck.correspondence
+  claim_revision: '1'
+  subject: exojax.planetlib.source
+  context: exojax.planetlib.mapping
+  method:
+    id: exojax.planetlib.initial_adoption
+    revision: '1'
+    description: Record the local model composition and correspondence for scoped review without transferring
+      support.
+  status: unknown
+  origin: reviewed
+  evidence:
+  - exojax.planetlib.source
+  - exojax.planetlib.selection
+  reasons:
+  - No archived review of general code correspondence is recorded. Sampled CI comparisons do not automatically
+    promote scientific support.
+  equation_pins: &id008
+  - id: planetlib.radiation.lte.planck_frequency
+    revision: '1'
+    sha256: f2629ad571c0beb5c0c462942ab3e714a5021945f4db2a72b8983010707cb39b
+  - id: planetlib.radiation.lte.frequency_coordinate
+    revision: '1'
+    sha256: 263dfbd41449587706df8efcb63f23a7db4347584269ac376fd4aeb4306473e2
+  - id: planetlib.radiation.lte.intensity_conversion
+    revision: '1'
+    sha256: d50ba92d7af326628485b16099e11bf8344584c62a8450b01fad8cd48dc20b50
+  - id: planetlib.radiation.lte.hemisphere_planck
+    revision: '1'
+    sha256: 34cd436dd032945b0b346cb5df963848df3665796d55d3ebac4ee54415e90fbc
+  binding_pins: &id010
+  - id: exojax.planetlib.piB.flux
+    sha256: e551316606fb45ad73ccdaf5ca2fdaab31c66c17e17270426577966567634141
+  - id: exojax.planetlib.piBarr.flux
+    sha256: 0457b011a6cd5c6d7399050076b561662a2b5e9ff24ba0cbdef91f286996fd55
+  mathematical_model_pins: &id009
+  - id: exojax.planetlib.planck.flux
+    revision: '1'
+    sha256: c83cd02d8630ad45c93c52ce4cb99481a86cb0c988719340278fce732ecf78ca
+- id: exojax.planetlib.planck.initial_samples.reviewed
+  kind: evidence_support
+  claim: exojax.planetlib.planck.initial_samples
+  claim_revision: '1'
+  subject: exojax.planetlib.source
+  context: exojax.planetlib.planck.initial_samples.cpu
+  method:
+    id: exojax.initial_execution_review
+    revision: '1'
+    description: Explicit review of captured commands, JUnit outcomes, exact selected-file hashes, native definition
+      pins and test scopes. Only named passing assertions support the bounded sample claim; a separate assertion
+      failure contradicts its own shape claim.
+  status: supported
+  origin: reviewed
+  evidence:
+  - exojax.planetlib.planck.initial_samples.execution
+  reasons:
+  - 'Reviewed the saved JUnit and log: all 6 listed cases passed against the exact hashed source and test bytes.'
+  - This assessment is limited to the named sample assertions; all existing general correspondence, numerical-domain,
+    derivative-domain and applicability assessments retain their earlier status.
+  equation_pins: *id008
+  mathematical_model_pins: *id009
+  binding_pins: *id010
+follow_ups:
+- id: exojax.planetlib.planck.review
+  target_kind: assessment
+  target: exojax.planetlib.planck.pending
+  action: Review the four-relation composition, effective constants, array axes and derivative domain against
+    the pinned source; archive a separate scoped review.
+  requires:
+  - An explicit review of source correspondence beyond sampled regression points.
+  completion: Append a new assessment with archived review evidence while retaining the pending assessment.
+  sources:
+  - tests/model_contracts/test_planetlib.py
