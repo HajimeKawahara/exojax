@@ -32,6 +32,7 @@ Opacity Calculation
    userguide/hjerting.rst
    userguide/modit.rst
    userguide/premodit.rst
+   userguide/lbd_hdf5.rst
    userguide/diffgrid.rst
    userguide/saveopa.rst
    userguide/save_diffgrid.rst
