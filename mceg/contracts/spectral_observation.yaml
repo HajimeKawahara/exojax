@@ -6,7 +6,7 @@ model:
     definitions.
   implementation:
     repository: https://github.com/HajimeKawahara/exojax
-    revision: 38cb2e44f153ad6d729e3253e235702de52920cf
+    revision: db83eb2ee527a53362bd17c33e0e79e87af7d3b4
     entry_points:
     - src/exojax/postproc/response.py:ipgauss
     - src/exojax/postproc/response.py:sampling
@@ -20,12 +20,14 @@ assumptions:
     renormalizes its discrete sum. Rotation adopts quadratic limb darkening 1-u1*(1-mu)-u2*(1-mu)^2
     and support |v|<=vsini. Convolution uses finite-array edge handling and interpolation
     follows the provider grid; these are not continuous-infinite-domain identities.
-    Passing convolution samples use even-length spectra and odd-length kernels. For
+    Initial convolution samples use even-length spectra and odd-length kernels; the
+    separate fix execution adds 40/41-point comparisons with a 13-point kernel. For
     the shared convolution binding only, F0 and F_out denote dimensionless continuum-normalized
     spectra. The provider also accepts other flux units; that broader numerical use
     is outside the shared convolution quantity declaration.
   evidence:
   - exojax.spectral_observation.source
+  - exojax.spectral_observation.odd_length_fix.execution
 domains:
 - kind: scientific_applicability
   status: unknown
@@ -209,6 +211,26 @@ claims:
   mathematical_models:
   - id: planetlib.spectroscopy.observation.model
     revision: '1'
+- id: exojax.spectral_observation.odd_length_fix.samples
+  revision: '1'
+  statement: The selected odd/even input spectra retain their length and match direct
+    convolution for the tested 13-point kernel; the original ipgauss shape case and
+    selected zero-rotation cases pass.
+  kind: numerical_verification
+  scope: 'CPU float64 execution of five named cases: convolve_same for 40/41-point
+    ramps with a normalized 13-point Gaussian kernel compared to numpy.convolve(mode=same),
+    the original 41-point ipgauss shape case with beta=1.3 km/s, and existing Gaussian/rotation
+    and zero-rotation comparisons. Exact arrays and tolerances are in the hashed tests.
+    Even-length and singleton kernels, general input sizes, GPU behavior and physical
+    applicability are not established.'
+  equations:
+  - id: planetlib.spectroscopy.observation.convolution
+    revision: '1'
+  - id: planetlib.spectroscopy.observation.gaussian_kernel
+    revision: '1'
+  mathematical_models:
+  - id: planetlib.spectroscopy.observation.model
+    revision: '1'
 evidence:
 - id: exojax.spectral_observation.source
   kind: implementation
@@ -303,7 +325,7 @@ evidence:
     sha256: 7e66948b22e81492a0931f7ea5aed2dd7a8f72077be461582af440c7771288fe
   - source: src/exojax/rt/trans.py
     sha256: 8c0d51d67e46ebc40703a7f2186d0a98269d87e01f659d0dc65b7c2cf83f18fc
-  - source: src/exojax/signal/convolve.py
+  - source: mceg/evidence/initial_review/source_snapshot/src/exojax/signal/convolve.py
     sha256: d217c75401a2bf53a6bfa0e5a3ee6c2efe2d2b59addc50da3c49de5efb8c6a10
   - source: src/exojax/signal/integrate.py
     sha256: 16c48aca5683c435bdfe62ebe83347975981e849c2266efe3bd674a5633d6543
@@ -313,7 +335,7 @@ evidence:
     sha256: a2f34c9a4debd0d61b4c2c0e1ef0b269b10f21d972195c6b74cd169d4f0c1b81
   - source: tests/conftest.py
     sha256: e282c84343d4b267ae46874b1c950bfa61c9257a60fbf7336e51a0bc5babbab5
-  - source: tests/model_contracts/test_core_models.py
+  - source: mceg/evidence/initial_review/source_snapshot/tests/model_contracts/test_core_models.py
     sha256: 219266d8de527ccde71554b36e3f3404dda72a415c07e7fedc7c780d0a4dd216
   - source: tests/model_contracts/test_planetlib.py
     sha256: 04d9d60e96b9561eaa9f4ed718dc942696cb9aa5c0dbc2133ed4f92a86a3795c
@@ -385,7 +407,7 @@ evidence:
     sha256: 7e66948b22e81492a0931f7ea5aed2dd7a8f72077be461582af440c7771288fe
   - source: src/exojax/rt/trans.py
     sha256: 8c0d51d67e46ebc40703a7f2186d0a98269d87e01f659d0dc65b7c2cf83f18fc
-  - source: src/exojax/signal/convolve.py
+  - source: mceg/evidence/initial_review/source_snapshot/src/exojax/signal/convolve.py
     sha256: d217c75401a2bf53a6bfa0e5a3ee6c2efe2d2b59addc50da3c49de5efb8c6a10
   - source: src/exojax/signal/integrate.py
     sha256: 16c48aca5683c435bdfe62ebe83347975981e849c2266efe3bd674a5633d6543
@@ -395,7 +417,7 @@ evidence:
     sha256: a2f34c9a4debd0d61b4c2c0e1ef0b269b10f21d972195c6b74cd169d4f0c1b81
   - source: tests/conftest.py
     sha256: e282c84343d4b267ae46874b1c950bfa61c9257a60fbf7336e51a0bc5babbab5
-  - source: tests/model_contracts/test_core_models.py
+  - source: mceg/evidence/initial_review/source_snapshot/tests/model_contracts/test_core_models.py
     sha256: 219266d8de527ccde71554b36e3f3404dda72a415c07e7fedc7c780d0a4dd216
   - source: tests/model_contracts/test_planetlib.py
     sha256: 04d9d60e96b9561eaa9f4ed718dc942696cb9aa5c0dbc2133ed4f92a86a3795c
@@ -417,6 +439,60 @@ evidence:
     sha256: 1d7d82debb80c984b339e994d17cdf3fcac49a3bc9875f3f03e611049ce4c93b
   - source: mceg/evidence/initial_review/odd_length_failure.xml
     sha256: 03c28d299c4ab09eb7d7743e4af46b22f997559ccb8ab2a71ea9172f598c3743
+- id: exojax.spectral_observation.odd_length_fix.execution
+  kind: numerical_test
+  summary: Five named cases pass after specifying n=fft_length in convolve_same; the
+    original odd-length shape regression is no longer marked xfail.
+  sources:
+  - mceg/evidence/odd_length_fix/receipt.json
+  - https://github.com/HajimeKawahara/exojax/commit/db83eb2ee527a53362bd17c33e0e79e87af7d3b4
+  - https://github.com/HajimeKawahara/exojax/pull/705
+  scope: 'CPU float64 execution of five named cases: convolve_same for 40/41-point
+    ramps with a normalized 13-point Gaussian kernel compared to numpy.convolve(mode=same),
+    the original 41-point ipgauss shape case with beta=1.3 km/s, and existing Gaussian/rotation
+    and zero-rotation comparisons. Exact arrays and tolerances are in the hashed tests.
+    Even-length and singleton kernels, general input sizes, GPU behavior and physical
+    applicability are not established.'
+  result: passed
+  provenance:
+    role: implementation
+    location: mceg/evidence/odd_length_fix/receipt.json
+    inspection: inspected
+    note: Reviewed the saved five passing outcomes, exact source/test hashes and scoped
+      assertions. This execution supplies no primary-source correspondence or physical
+      validation judgment.
+    derived_from: []
+  subject: exojax.spectral_observation.odd_length_fix.source
+  context: exojax.spectral_observation.odd_length_fix.cpu
+  artifacts:
+  - source: src/exojax/signal/convolve.py
+    sha256: dcc1c834b32f91cb387a3b362ddcae2fcb4f5b10d39e07d7da20d30aff166b56
+  - source: src/exojax/postproc/response.py
+    sha256: 6cf4941286c55091d66b4f26042d5090e0ebf06d22caa00f2ad1538c8dd2692c
+  - source: src/exojax/postproc/spin_rotation.py
+    sha256: 41d5e99ea31bffa64c18ba43fcdcf2cfc999d385660db132343aab913f2dd447
+  - source: src/exojax/utils/constants.py
+    sha256: a2f34c9a4debd0d61b4c2c0e1ef0b269b10f21d972195c6b74cd169d4f0c1b81
+  - source: tests/unittests/signal/test_convolve.py
+    sha256: 1e218e10b9dd6d8e81c3a3293ec2a55655b4b5a86c66333426b39ec41ce2264d
+  - source: tests/model_contracts/test_core_models.py
+    sha256: 1df372276117f14f06efd0613c02bcc486103b238b1ef464c705439698203d21
+  - source: tests/unittests/postproc/test_spin_rotation.py
+    sha256: d0da97a121dbb781cf458a24692f1ba1f596614456f39a23945230eae98d7f30
+  - source: tests/conftest.py
+    sha256: e282c84343d4b267ae46874b1c950bfa61c9257a60fbf7336e51a0bc5babbab5
+  - source: tests/unittests/conftest.py
+    sha256: 02cc326d8a3306a99611ae694eb595402bff443d432a3d3ea2cf9baaea4604ac
+  - source: pyproject.toml
+    sha256: 1343ad1836f56412889ebb4748b5e4ef20a150ec58fe4b8a04083e58672a359a
+  - source: mceg/requirements.txt
+    sha256: ac204e416685f42f47169e02a7ebc3e448ced3297605c9147ab2dbca90e33db7
+  - source: mceg/evidence/odd_length_fix/pytest.log
+    sha256: d5359d43fa2c2a9d7c04ba0537e410bf130207992a656b0226dc751593647477
+  - source: mceg/evidence/odd_length_fix/junit.xml
+    sha256: 7243b2ec8f2d228d8464359a06a7dd7bebde5c2de3853d669cabc3eba269d12b
+  - source: mceg/evidence/odd_length_fix/receipt.json
+    sha256: 6e82f1c7e643a092a11f70045224d0f71ca1507c3f94fcb2f7fa0f41c1cfda48
 - id: planetlib.spectroscopy.observation.source
   kind: implementation
   summary: Mathematical conventions extracted from immutable ExoJAX source.
@@ -440,12 +516,12 @@ evidence:
 limitations:
 - statement: No relativistic Doppler law, spatially varying line spread function,
     transmission-annulus rotation, detector bin integration, or boundary-independent
-    flux conservation is asserted. The odd-length spectrum/odd-length kernel case
-    currently loses one output sample because convolve_same does not supply the inverse
-    FFT length; a strict expected-failure regression records this known numerical
-    defect.
+    flux conservation is asserted. The archived odd-length counterexample is corrected
+    for the separately tested 13-point kernel. Even-length and singleton kernel slicing
+    remains outside this fix and has no new correctness claim.
   evidence:
   - exojax.spectral_observation.source
+  - exojax.spectral_observation.odd_length_fix.execution
 subjects:
 - id: exojax.spectral_observation.source
   implementation:
@@ -459,7 +535,19 @@ subjects:
   selected_files:
     src/exojax/postproc/response.py: 6cf4941286c55091d66b4f26042d5090e0ebf06d22caa00f2ad1538c8dd2692c
     src/exojax/postproc/spin_rotation.py: 41d5e99ea31bffa64c18ba43fcdcf2cfc999d385660db132343aab913f2dd447
-    src/exojax/signal/convolve.py: d217c75401a2bf53a6bfa0e5a3ee6c2efe2d2b59addc50da3c49de5efb8c6a10
+    mceg/evidence/initial_review/source_snapshot/src/exojax/signal/convolve.py: d217c75401a2bf53a6bfa0e5a3ee6c2efe2d2b59addc50da3c49de5efb8c6a10
+    src/exojax/utils/constants.py: a2f34c9a4debd0d61b4c2c0e1ef0b269b10f21d972195c6b74cd169d4f0c1b81
+- id: exojax.spectral_observation.odd_length_fix.source
+  implementation:
+    repository: https://github.com/HajimeKawahara/exojax
+    revision: db83eb2ee527a53362bd17c33e0e79e87af7d3b4
+    entry_points:
+    - src/exojax/signal/convolve.py:convolve_same
+    - src/exojax/postproc/response.py:ipgauss
+  selected_files:
+    src/exojax/signal/convolve.py: dcc1c834b32f91cb387a3b362ddcae2fcb4f5b10d39e07d7da20d30aff166b56
+    src/exojax/postproc/response.py: 6cf4941286c55091d66b4f26042d5090e0ebf06d22caa00f2ad1538c8dd2692c
+    src/exojax/postproc/spin_rotation.py: 41d5e99ea31bffa64c18ba43fcdcf2cfc999d385660db132343aab913f2dd447
     src/exojax/utils/constants.py: a2f34c9a4debd0d61b4c2c0e1ef0b269b10f21d972195c6b74cd169d4f0c1b81
 contexts:
 - id: exojax.spectral_observation.scope
@@ -517,6 +605,22 @@ contexts:
     beta_km_s: 1.3
     pytest_marker_handling: --runxfail disables the known-failure marker without modifying
       test bytes
+- id: exojax.spectral_observation.odd_length_fix.cpu
+  scope: 'CPU float64 execution of five named cases: convolve_same for 40/41-point
+    ramps with a normalized 13-point Gaussian kernel compared to numpy.convolve(mode=same),
+    the original 41-point ipgauss shape case with beta=1.3 km/s, and existing Gaussian/rotation
+    and zero-rotation comparisons. Exact arrays and tolerances are in the hashed tests.
+    Even-length and singleton kernels, general input sizes, GPU behavior and physical
+    applicability are not established.'
+  quantities: {}
+  settings:
+    backend: cpu
+    precision: float64
+    direct_convolution_spectrum_lengths: 40 and 41
+    direct_convolution_kernel_length: 13
+    selected_passed_cases: 5
+    receipt: mceg/evidence/odd_length_fix/receipt.json
+    mceg_revision: 4034c9259c9c2e7d55243d69f3ab2f22c9cc7d88
 conditions: []
 assessments:
 - id: exojax.spectral_observation.source_correspondence.pending
@@ -813,6 +917,41 @@ assessments:
   - id: planetlib.spectroscopy.observation.model
     revision: '1'
     sha256: a9d3a172375a18cb613ba914bda7774008294c28ac65cd30fb693ce97332612e
+- id: exojax.spectral_observation.odd_length_fix.reviewed
+  subject: exojax.spectral_observation.odd_length_fix.source
+  context: exojax.spectral_observation.odd_length_fix.cpu
+  method:
+    id: exojax.odd_length_fix_review
+    revision: '1'
+    description: Review the saved command, five passing JUnit outcomes, source/test
+      hashes and explicitly bounded shape/value comparisons.
+  evidence:
+  - exojax.spectral_observation.odd_length_fix.execution
+  reasons:
+  - The saved five-case run passes on CPU float64 for the fixed implementation pinned
+    by commit and selected-file hashes.
+  - The original failing execution and contradicted assessment remain unchanged in
+    meaning and bound to archived source bytes.
+  - 'PR #705 applied the same inverse-length correction to olaconv; this execution
+    concerns convolve_same. Even-length and singleton kernel slicing remains outside
+    this fix.'
+  kind: evidence_support
+  claim: exojax.spectral_observation.odd_length_fix.samples
+  claim_revision: '1'
+  status: supported
+  origin: reviewed
+  equation_pins:
+  - id: planetlib.spectroscopy.observation.gaussian_kernel
+    revision: '1'
+    sha256: 9938eda5c39c74466069b90cb3bc44b2375849348469efeb10b2b68262dc639a
+  - id: planetlib.spectroscopy.observation.convolution
+    revision: '1'
+    sha256: 07985b13dd0b1fc398f0a7e811d6811ccb4dc623b9b2862933bb1d8ee9b4de17
+  binding_pins: []
+  mathematical_model_pins:
+  - id: planetlib.spectroscopy.observation.model
+    revision: '1'
+    sha256: a9d3a172375a18cb613ba914bda7774008294c28ac65cd30fb693ce97332612e
 follow_ups:
 - id: exojax.spectral_observation.source_correspondence.review
   target_kind: assessment
@@ -866,9 +1005,10 @@ follow_ups:
   target_kind: assessment
   target: exojax.spectral_observation.numerical_domain.pending
   revision: null
-  action: Correct or explicitly reject odd total FFT lengths in convolve_same, then
-    remove the strict expected-failure marker only after the shape and kernel comparison
-    passes.
+  action: Complete kernel-shape coverage beyond the corrected odd-kernel FFT case.
+    The separate fix execution passes the 40/41-point cases and removes the strict
+    xfail; even-length and singleton kernel slicing still needs correction or explicit
+    rejection.
   requires:
   - Exercise odd/even spectrum and kernel lengths, including zero-rotation identity.
   completion: Archive a separate defect-fix run and append a narrowly scoped numerical
@@ -880,9 +1020,9 @@ follow_ups:
   target_kind: assessment
   target: exojax.spectral_observation.odd_length_shape.reviewed
   revision: null
-  action: Correct or reject unsupported FFT-length parity combinations and verify
-    shape plus kernel values, including zero-rotation identity; remove the strict
-    xfail only after the test passes.
+  action: Review the remaining even-length and singleton kernel cases after the separately
+    archived odd-kernel fix. The original 41-point shape regression now passes without
+    xfail; broader kernel parity coverage remains open.
   requires:
   - A new pinned implementation and archived odd/even input/kernel length regressions.
   completion: Append a new assessment for the corrected implementation; preserve this

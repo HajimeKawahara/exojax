@@ -1,0 +1,80 @@
+{
+  "format": "exojax.odd_length_fix_execution.v1",
+  "started_at": "2026-11-28T05:20:24.584293+00:00",
+  "finished_at": "2026-11-28T05:20:29.419454+00:00",
+  "command": [
+    "/home/kawahara/miniconda3/bin/python",
+    "-m",
+    "pytest",
+    "-q",
+    "-p",
+    "no:cacheprovider",
+    "tests/unittests/signal/test_convolve.py",
+    "tests/model_contracts/test_core_models.py::test_odd_length_convolution_preserves_shape",
+    "tests/model_contracts/test_core_models.py::test_gaussian_and_rotation_discrete_kernels_and_zero_rotation",
+    "tests/unittests/postproc/test_spin_rotation.py::test_convolve_rigid_rotation_zero_vsini",
+    "--junitxml=mceg/evidence/odd_length_fix/junit.xml"
+  ],
+  "cwd": "/tmp/exojax-fix-convolve-odd-fft",
+  "returncode": 0,
+  "implementation_revision": "db83eb2ee527a53362bd17c33e0e79e87af7d3b4",
+  "environment": {
+    "PYTHONPATH": "src:/home/kawahara/planetlib/.venv/lib/python3.12/site-packages",
+    "JAX_PLATFORMS": "cpu",
+    "JAX_ENABLE_X64": "1",
+    "JAX_SKIP_CUDA_CONSTRAINTS_CHECK": "1",
+    "OPENBLAS_NUM_THREADS": "1",
+    "PYTHONDONTWRITEBYTECODE": "1"
+  },
+  "python": "3.12.7",
+  "packages": {
+    "jax": "0.6.2",
+    "jaxlib": "0.6.2",
+    "numpy": "2.1.0",
+    "scipy": "1.14.1",
+    "pytest": "9.2.0",
+    "mceg": "0.1.1",
+    "sympy": "1.14.0"
+  },
+  "mceg_revision": "4034c9259c9c2e7d55243d69f3ab2f22c9cc7d88",
+  "tests": [
+    {
+      "nodeid": "tests/unittests/signal/test_convolve.py::test_convolve_same_matches_direct_convolution[40]",
+      "result": "passed"
+    },
+    {
+      "nodeid": "tests/unittests/signal/test_convolve.py::test_convolve_same_matches_direct_convolution[41]",
+      "result": "passed"
+    },
+    {
+      "nodeid": "tests/model_contracts/test_core_models.py::test_odd_length_convolution_preserves_shape",
+      "result": "passed"
+    },
+    {
+      "nodeid": "tests/model_contracts/test_core_models.py::test_gaussian_and_rotation_discrete_kernels_and_zero_rotation",
+      "result": "passed"
+    },
+    {
+      "nodeid": "tests/unittests/postproc/test_spin_rotation.py::test_convolve_rigid_rotation_zero_vsini",
+      "result": "passed"
+    }
+  ],
+  "source_manifest": {
+    "src/exojax/signal/convolve.py": "dcc1c834b32f91cb387a3b362ddcae2fcb4f5b10d39e07d7da20d30aff166b56",
+    "src/exojax/postproc/response.py": "6cf4941286c55091d66b4f26042d5090e0ebf06d22caa00f2ad1538c8dd2692c",
+    "src/exojax/postproc/spin_rotation.py": "41d5e99ea31bffa64c18ba43fcdcf2cfc999d385660db132343aab913f2dd447",
+    "src/exojax/utils/constants.py": "a2f34c9a4debd0d61b4c2c0e1ef0b269b10f21d972195c6b74cd169d4f0c1b81",
+    "tests/unittests/signal/test_convolve.py": "1e218e10b9dd6d8e81c3a3293ec2a55655b4b5a86c66333426b39ec41ce2264d",
+    "tests/model_contracts/test_core_models.py": "1df372276117f14f06efd0613c02bcc486103b238b1ef464c705439698203d21",
+    "tests/unittests/postproc/test_spin_rotation.py": "d0da97a121dbb781cf458a24692f1ba1f596614456f39a23945230eae98d7f30",
+    "tests/conftest.py": "e282c84343d4b267ae46874b1c950bfa61c9257a60fbf7336e51a0bc5babbab5",
+    "tests/unittests/conftest.py": "02cc326d8a3306a99611ae694eb595402bff443d432a3d3ea2cf9baaea4604ac",
+    "pyproject.toml": "1343ad1836f56412889ebb4748b5e4ef20a150ec58fe4b8a04083e58672a359a",
+    "mceg/requirements.txt": "ac204e416685f42f47169e02a7ebc3e448ced3297605c9147ab2dbca90e33db7"
+  },
+  "artifacts": {
+    "mceg/evidence/odd_length_fix/pytest.log": "d5359d43fa2c2a9d7c04ba0537e410bf130207992a656b0226dc751593647477",
+    "mceg/evidence/odd_length_fix/junit.xml": "7243b2ec8f2d228d8464359a06a7dd7bebde5c2de3853d669cabc3eba269d12b"
+  },
+  "interpretation": "Five cases pass on CPU float64: 40/41-point convolution against NumPy with a normalized 13-point Gaussian kernel; the original 41-point ipgauss shape counterexample; existing Gaussian/rotation and zero-rotation comparisons. This verifies these finite cases for the hashed implementation, not even-length/singleton kernels, all input sizes, GPU behavior, or physical applicability."
+}
