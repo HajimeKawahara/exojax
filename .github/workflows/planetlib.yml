@@ -1,0 +1,46 @@
+name: Planetlib adoption
+
+on:
+  pull_request:
+    paths:
+      - 'mceg/planetlib/**'
+      - 'tests/model_contracts/test_planetlib.py'
+      - 'tests/unittests/rt/test_planck.py'
+      - 'src/exojax/rt/planck.py'
+      - 'src/exojax/utils/constants.py'
+      - '.github/workflows/planetlib.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  adoption:
+    runs-on: ubuntu-latest
+    env:
+      JAX_PLATFORMS: cpu
+      JAX_ENABLE_X64: '1'
+      OPENBLAS_NUM_THREADS: '1'
+      OMP_NUM_THREADS: '1'
+      PYTHONPATH: src
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
+        with:
+          repository: HajimeKawahara/planetlib
+          ref: a83b3fb255c7a383c6a8ef502328266f4dd16bff
+          path: planetlib-source
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install lightweight development dependencies
+        run: python -m pip install -r mceg/planetlib/requirements.txt 'jax[cpu]' numpy
+      - name: Reproduce the native snapshot offline
+        run: |
+          python planetlib-source/tools/planetlib.py build \
+            mceg/planetlib/adoption.yaml --lock mceg/planetlib/imports.lock.json \
+            --output "$RUNNER_TEMP/planetlib-contract.yaml"
+          diff -u mceg/planetlib/contract.yaml "$RUNNER_TEMP/planetlib-contract.yaml"
+          python -m mceg mceg/planetlib/contract.yaml
+      - name: Check pins and Planck kernel correspondence offline
+        run: python -m pytest -q tests/model_contracts/test_planetlib.py tests/unittests/rt/test_planck.py

@@ -22,6 +22,10 @@ In short, ExoJAX allows you to do gradient based optimizations, HMC-NUTS, and SV
 
 </details>
 
+The optional [Planetlib/MCEG adoption record](mceg/planetlib/README.md) describes
+the Planck kernels using fixed shared equations, explicit spectral conventions,
+and local correspondence checks. It adds no numerical runtime dependency.
+
 ## License
 
 🐈 Copyright 2020-2026 ExoJAX contributors. ExoJAX is publicly available under the MIT license.
