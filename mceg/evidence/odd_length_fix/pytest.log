@@ -1,0 +1,44 @@
+.....                                                                    [100%]
+=============================== warnings summary ===============================
+src/exojax/atm/atmprof.py:227
+  /tmp/exojax-fix-convolve-odd-fft/src/exojax/atm/atmprof.py:227: SyntaxWarning: invalid escape sequence '\o'
+    """computes pressure at the upper point of the layers
+
+src/exojax/atm/atmprof.py:461
+  /tmp/exojax-fix-convolve-odd-fft/src/exojax/atm/atmprof.py:461: SyntaxWarning: invalid escape sequence '\p'
+    """compute normalized height/radius at the upper boundary of the atmospheric layer, neglecting atmospheric mass, examining non-constant gravity.
+
+src/exojax/database/core_atom/broadening.py:34
+  /tmp/exojax-fix-convolve-odd-fft/src/exojax/database/core_atom/broadening.py:34: SyntaxWarning: invalid escape sequence '\s'
+    """HWHM of Lorentzian (cm-1) caluculated as gamma/(4*pi*c) [cm-1] for lines
+
+src/exojax/database/core_atom/broadening.py:128
+  /tmp/exojax-fix-convolve-odd-fft/src/exojax/database/core_atom/broadening.py:128: SyntaxWarning: invalid escape sequence '\s'
+    """HWHM of Lorentzian (cm-1) estimated with the classical approximation by
+
+src/exojax/database/core_atom/broadening.py:204
+  /tmp/exojax-fix-convolve-odd-fft/src/exojax/database/core_atom/broadening.py:204: SyntaxWarning: invalid escape sequence '\s'
+    """HWHM of Lorentzian (cm-1) caluculated with the 3rd equation in p.4 of
+
+src/exojax/database/core_atom/broadening.py:315
+  /tmp/exojax-fix-convolve-odd-fft/src/exojax/database/core_atom/broadening.py:315: SyntaxWarning: invalid escape sequence '\s'
+    """HWHM of Lorentzian (cm-1) caluculated with the 4rd equation in p.4 of
+
+src/exojax/database/core_atom/broadening.py:402
+  /tmp/exojax-fix-convolve-odd-fft/src/exojax/database/core_atom/broadening.py:402: SyntaxWarning: invalid escape sequence '\s'
+    """(supplemetary:) HWHM of Lorentzian (cm-1) caluculated with the 3rd
+
+src/exojax/rt/toon.py:41
+  /tmp/exojax-fix-convolve-odd-fft/src/exojax/rt/toon.py:41: SyntaxWarning: invalid escape sequence '\m'
+    """computes reduced source functions (pi \mathcal{B}) for the isothermal layer
+
+src/exojax/rt/toon.py:66
+  /tmp/exojax-fix-convolve-odd-fft/src/exojax/rt/toon.py:66: SyntaxWarning: invalid escape sequence '\m'
+    """computes reduced source functions (pi \mathcal{B}^+ or -)
+
+src/exojax/rt/twostream.py:33
+  /tmp/exojax-fix-convolve-odd-fft/src/exojax/rt/twostream.py:33: SyntaxWarning: invalid escape sequence '\m'
+    """Two-stream RT solver using flux adding
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+5 passed, 10 warnings in 2.90s

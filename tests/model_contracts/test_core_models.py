@@ -368,7 +368,6 @@ def test_single_line_column_emission_sampling_interfaces():
     np.testing.assert_allclose(actual, expected, rtol=1e-6)
 
 
-@pytest.mark.xfail(strict=True, reason="convolve_same omits irfft length for odd total FFT length; tracked in the spectral observation FollowUp")
 def test_odd_length_convolution_preserves_shape():
     spectrum = jnp.zeros(41).at[20].set(1.)
     actual = ipgauss(spectrum, jnp.arange(-6., 7.), 1.3)
